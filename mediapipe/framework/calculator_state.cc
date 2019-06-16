@@ -1,0 +1,82 @@
+// Copyright 2019 The MediaPipe Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+// Definitions for CalculatorNode.
+
+#include "mediapipe/framework/calculator_state.h"
+
+#include <string>
+
+#include "absl/strings/str_cat.h"
+#include "mediapipe/framework/port/logging.h"
+
+namespace mediapipe {
+
+CalculatorState::CalculatorState(
+    const std::string& node_name, int node_id,
+    const std::string& calculator_type,
+    const CalculatorGraphConfig::Node& node_config,
+    std::shared_ptr<ProfilingContext> profiling_context)
+    : node_name_(node_name),
+      node_id_(node_id),
+      calculator_type_(calculator_type),
+      node_config_(node_config),
+      profiling_context_(profiling_context),
+      input_streams_(nullptr),
+      output_streams_(nullptr),
+      counter_factory_(nullptr) {
+  options_.Initialize(node_config);
+  ResetBetweenRuns();
+}
+
+CalculatorState::~CalculatorState() {}
+
+void CalculatorState::SetInputStreamSet(InputStreamSet* input_stream_set) {
+  CHECK(input_stream_set);
+  input_streams_ = input_stream_set;
+}
+
+void CalculatorState::SetOutputStreamSet(OutputStreamSet* output_stream_set) {
+  CHECK(output_stream_set);
+  output_streams_ = output_stream_set;
+}
+
+void CalculatorState::ResetBetweenRuns() {
+  input_side_packets_ = nullptr;
+  input_streams_ = nullptr;
+  output_streams_ = nullptr;
+  counter_factory_ = nullptr;
+}
+
+void CalculatorState::SetInputSidePackets(const PacketSet* input_side_packets) {
+  CHECK(input_side_packets);
+  input_side_packets_ = input_side_packets;
+}
+
+void CalculatorState::SetOutputSidePackets(
+    OutputSidePacketSet* output_side_packets) {
+  CHECK(output_side_packets);
+  output_side_packets_ = output_side_packets;
+}
+
+Counter* CalculatorState::GetCounter(const std::string& name) {
+  CHECK(counter_factory_);
+  return counter_factory_->GetCounter(absl::StrCat(NodeName(), "-", name));
+}
+
+void CalculatorState::SetServicePacket(const std::string& key, Packet packet) {
+  service_packets_[key] = std::move(packet);
+}
+
+}  // namespace mediapipe

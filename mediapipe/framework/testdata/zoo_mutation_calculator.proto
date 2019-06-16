@@ -1,0 +1,14 @@
+// We need to use proto2 for now as proto3 does not support Extensions. We will
+// be able to switch to proto3 when MediaPipe supports Any.
+syntax = "proto2";
+
+package google_zoo;
+
+import "mediapipe/framework/packet_generator.proto";
+import "mediapipe/framework/testdata/zoo_mutator.proto";
+
+// Configuration of a ZooMutator is stored as an extension of
+// mediapipe.PacketGeneratorOptions.
+extend mediapipe.PacketGeneratorOptions {
+  optional ZooMutatorConfig zoo_mutator_config_ext = 235240278;
+}

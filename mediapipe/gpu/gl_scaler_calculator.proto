@@ -1,0 +1,37 @@
+// Copyright 2019 The MediaPipe Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto2";
+
+package mediapipe;
+
+import "mediapipe/framework/calculator.proto";
+import "mediapipe/gpu/scale_mode.proto";
+
+message GlScalerCalculatorOptions {
+  extend CalculatorOptions {
+    optional GlScalerCalculatorOptions ext = 166373014;
+  }
+
+  // Output dimensions.
+  optional int32 output_width = 1;
+  optional int32 output_height = 2;
+  // Counterclockwise rotation in degrees. Must be a multiple of 90.
+  optional int32 rotation = 3;
+  // Flip the output texture vertically. This is applied after rotation.
+  optional bool flip_vertical = 4;
+  // Flip the output texture horizontally. This is applied after rotation.
+  optional bool flip_horizontal = 5;
+  optional ScaleMode.Mode scale_mode = 6;
+}

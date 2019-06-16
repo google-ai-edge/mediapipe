@@ -1,0 +1,53 @@
+// Copyright 2019 The MediaPipe Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+// Forked from mediapipe/framework/tool/source.proto.
+// The forked proto must remain identical to the original proto and should be
+// ONLY used by mediapipe open source project.
+
+syntax = "proto2";
+
+package mediapipe;
+
+import "mediapipe/framework/calculator.proto";
+
+message SidePacketsToStreamsCalculatorOptions {
+  extend CalculatorOptions {
+    optional SidePacketsToStreamsCalculatorOptions ext = 60982839;
+  }
+
+  // Number of side packets which are fed to graph internal streams.
+  optional int32 num_inputs = 1 [default = 1];
+  // We need to accommodate various timestamp modes depending on what
+  // we're connecting to.
+  enum SetTimestampMode {
+    // For vectors of packets, the timestamp is the index of the packet
+    // within the vector.  For single packets, the timestamp is zero.
+    VECTOR_INDEX = 0;
+    // Timestamps are always set to PreStream.
+    PRE_STREAM = 1;
+    // Timestamps are always set to PostStream.
+    // TODO Rename to POST_STREAM.
+    WHOLE_STREAM = 2;
+    // Do not set timestamp.  Can only be used if vectors_of_packets is
+    // true.  Will cause Timestamp::Unset() run-time errors if the inner
+    // packets in the vectors do not already have Timestamps.
+    NONE = 3;
+  }
+  // If true, then a timestamp is set for each packet.
+  optional SetTimestampMode set_timestamp = 2 [default = VECTOR_INDEX];
+  // If true, then side packets are vectors of packets; otherwise,
+  // they are single packets.
+  optional bool vectors_of_packets = 3 [default = true];
+}

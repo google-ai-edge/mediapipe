@@ -1,0 +1,34 @@
+# The bazelrc file for MediaPipe OSS.
+
+# Basic build settings
+build --jobs 128
+build --define='absl=1'
+build --cxxopt='-std=c++11'
+build --copt='-Wno-sign-compare'
+build --copt='-Wno-unused-function'
+build --copt='-Wno-uninitialized'
+build --copt='-Wno-unused-result'
+build --copt='-Wno-comment'
+build --copt='-Wno-return-type'
+build --copt='-Wno-unused-local-typedefs'
+build --copt='-Wno-ignored-attributes'
+
+# Sets the default Apple platform to macOS.
+build --apple_platform_type=macos
+
+# Android configs.
+build:android --crosstool_top=//external:android/crosstool
+build:android --host_crosstool_top=@bazel_tools//tools/cpp:toolchain
+build:android --linkopt=-landroid
+build:android --linkopt=-ldl
+build:android --linkopt=-llog
+build:android --linkopt=-lm
+build:android --linkopt=-Wl,--gc-sections
+
+build:android_arm --config=android
+build:android_arm --cpu=armeabi-v7a
+build:android_arm --fat_apk_cpu=armeabi-v7a
+
+build:android_arm64 --config=android
+build:android_arm64 --cpu=arm64-v8a
+build:android_arm64 --fat_apk_cpu=arm64-v8a

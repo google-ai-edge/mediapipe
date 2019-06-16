@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+package google_zoo;
+
+import "google/protobuf/any.proto";
+
+// Configurations for DragonMutator.
+message DragonMutatorConfig {
+  // The confidence value of the dragon.
+  double dragon_factor = 1;
+  // Parameters passed to the dragon.
+  string dragon_params = 2;
+}
+
+// Configuration of a ZooMutator.
+message ZooMutatorConfig {
+  string name = 1;
+  string instance_name = 2;
+
+  // Subclass-specific configuration as a proto message or a file containing a
+  // text proto message.
+  oneof sub_config_oneof {
+    google.protobuf.Any sub_config = 3;
+  }
+}

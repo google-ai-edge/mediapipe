@@ -1,0 +1,48 @@
+// Copyright 2019 The MediaPipe Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+// Forked from mediapipe/framework/packet_factory.proto.
+// The forked proto must remain identical to the original proto and should be
+// ONLY used by mediapipe open source project.
+//
+// Messages for PacketFactory and PacketManager.
+
+syntax = "proto2";
+
+package mediapipe;
+
+// Options used by a PacketFactory to create the Packet.
+message PacketFactoryOptions {
+  extensions 20000 to max;
+}
+
+// A PacketFactory creates a side packet.
+message PacketFactoryConfig {
+  // The name of the registered packet factory class.
+  optional string packet_factory = 1;
+
+  // The name of the output side packet that this packet factory creates.
+  optional string output_side_packet = 2;
+
+  // DEPRECATED: The old name for output_side_packet.
+  optional string external_output = 1002;
+
+  // The options for the packet factory.
+  optional PacketFactoryOptions options = 3;
+}
+
+// The configuration for a PacketManager.
+message PacketManagerConfig {
+  repeated PacketFactoryConfig packet = 1;
+}

@@ -1,0 +1,16 @@
+// Options for SetAlphaCalculator
+syntax = "proto2";
+
+package mediapipe;
+
+import "mediapipe/framework/calculator.proto";
+
+message SetAlphaCalculatorOptions {
+  extend CalculatorOptions {
+    optional SetAlphaCalculatorOptions ext = 250949799;
+  }
+
+  // The value to set the alpha channel to (0-255).
+  // This option is ignored when set to -1 (use image mask instead).
+  optional sint32 alpha_value = 1 [default = -1];
+}

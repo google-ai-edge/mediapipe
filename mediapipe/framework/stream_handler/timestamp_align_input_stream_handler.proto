@@ -1,0 +1,16 @@
+syntax = "proto2";
+
+package mediapipe;
+
+import "mediapipe/framework/mediapipe_options.proto";
+
+message TimestampAlignInputStreamHandlerOptions {
+  extend MediaPipeOptions {
+    optional TimestampAlignInputStreamHandlerOptions ext = 190104979;
+  }
+
+  // The TAG:index of the input stream used as the timestamp base.
+  // TimestampAlignInputStreamHandler aligns the packet timestamps of all
+  // other input streams with the packet timestamps of this input stream.
+  optional string timestamp_base_tag_index = 1;
+}

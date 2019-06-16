@@ -1,0 +1,41 @@
+syntax = "proto2";
+
+package mediapipe;
+
+import "mediapipe/framework/calculator.proto";
+
+// Full Example:
+//
+// node {
+//   calculator: "TfLiteConverterCalculator"
+//   input_stream: "IMAGE_IN:input_image"
+//   output_stream: "TENSOR_OUT:image_tensor"
+//   options {
+//     [mediapipe.TfLiteConverterCalculatorOptions.ext] {
+//       zero_center: true
+//     }
+//   }
+// }
+//
+message TfLiteConverterCalculatorOptions {
+  extend mediapipe.CalculatorOptions {
+    optional TfLiteConverterCalculatorOptions ext = 245817797;
+  }
+
+  // Choose normalization mode for output:
+  // true = [-1,1]
+  // false = [0,1]
+  optional bool zero_center = 1 [default = true];
+
+  // Whether the input image should be flipped vertically (along the
+  // y-direction). This is useful, for example, when the input image is defined
+  // with a coordinate system where the origin is at the bottom-left corner
+  // (e.g., in OpenGL) whereas the ML model expects an image with a top-left
+  // origin.
+  optional bool flip_vertically = 2 [default = false];
+
+  // Controls how many channels of the input image get passed through to the
+  // tensor. Currently this only controls whether or not to ignore alpha
+  // channel, so it must be 3 or 4.
+  optional int32 max_num_channels = 3 [default = 3];
+}
