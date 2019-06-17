@@ -5,7 +5,7 @@
 
 [MediaPipe](http://g.co/mediapipe) is a framework for building multimodal (eg. video, audio, any time series data) applied ML pipelines. With MediaPipe, a perception pipeline can be built as a graph of modular components, including, for instance, inference models (e.g., TensorFlow, TFLite) and media processing functions.
 
-![Real-time Face Detection](mediapipe/docs/images/mobile/face_detection_android_gpu_small.gif)
+![Real-time Face Detection](mediapipe/docs/images/realtime_face_detection.gif)
 
 ## Installation
 Follow these [instructions](mediapipe/docs/install.md).
@@ -14,14 +14,14 @@ Follow these [instructions](mediapipe/docs/install.md).
 See mobile and desktop [examples](mediapipe/docs/examples.md).
 
 ## Documentation
-On [MediaPipe Read-the-Docs](https://mediapipe.readthedocs.io/).
+[MediaPipe Read-the-Docs](https://mediapipe.readthedocs.io/).
 
 ## Visualizing MediaPipe graphs
 A web-based visualizer is hosted on [MediaPipe Visualizer](https://mediapipe-viz.appspot.com/). Please also see instructions [here](mediapipe/docs/visualizer.md).
 
 ## Publications
-* [MediaPipe: A Framework for Building Perception Pipelines](https://arxiv.org/) on [arXiv](https://arxiv.org/).
-* [MediaPipe: A Framework for Perceiving and Augmenting Reality](http://mixedreality.cs.cornell.edu/s/22_crv2_MediaPipe_CVPR_CV4ARVR_Workshop_2019_v2.pdf), extended abstract for [Third Workshop on Computer Vision for AR/VR](http://mixedreality.cs.cornell.edu/workshop/program).
+* [MediaPipe: A Framework for Perceiving and Augmenting Reality](http://mixedreality.cs.cornell.edu/s/22_crv2_MediaPipe_CVPR_CV4ARVR_Workshop_2019_v2.pdf), extended abstract for [Third Workshop on Computer Vision for AR/VR](https://sites.google.com/corp/view/perception-cv4arvr/mediapipe).
+* Full-length draft: [MediaPipe: A Framework for Building Perception Pipelines](https://tiny.cc/mediapipe_paper)
 
 ## Contributing
 We welcome contributions. Please follow these [guidelines](./CONTRIBUTING.md).

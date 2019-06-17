@@ -8,9 +8,9 @@ machine learning pipeline can be built as a graph of modular components,
 including, for instance, inference models and media processing functions. Sensory
 data such as audio and video streams enter the graph, and perceived descriptions
 such as object-localization and face-landmark streams exit the graph. An example
-graph that performs real-time face detection on mobile GPU is shown below.
+graph that performs real-time hair segmentation on mobile GPU is shown below.
 
-.. image:: images/mobile/face_detection_android_gpu.png
+.. image:: images/mobile/hair_segmentation_android_gpu.png
    :width: 400
    :alt: Example MediaPipe graph
 
