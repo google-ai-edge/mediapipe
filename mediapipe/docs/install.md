@@ -55,7 +55,7 @@ Required libraries
     Option 1. Use package manager tool to install the pre-compiled OpenCV
     libraries.
 
-    Note that Debian 9 and Ubuntu 16.04 provide OpenCV 2.4.9. You may want to
+    Note: Debian 9 and Ubuntu 16.04 provide OpenCV 2.4.9. You may want to
     take option 2 or 3 to install OpenCV 3 or above.
 
     ```bash
@@ -70,11 +70,11 @@ Required libraries
     [documentation](https://docs.opencv.org/3.4.6/d7/d9f/tutorial_linux_install.html)
     to manually build OpenCV from source code.
 
-    You may need to modify [`WORKSAPCE`] and [`opencv_linux.BUILD`] to point
-    MediaPipe to your own OpenCV libraries. For example, if OpenCV 4 is
+    Note: You may need to modify [`WORKSAPCE`] and [`opencv_linux.BUILD`] to point
+    MediaPipe to your own OpenCV libraries, e.g., if OpenCV 4 is
     installed in "/usr/local/", you need to update the "linux_opencv"
     new_local_repository rule in [`WORKSAPCE`] and "opencv" cc_library rule in
-    [`opencv_linux.BUILD`] to be:
+    [`opencv_linux.BUILD`] like the following:
 
     ```bash
     new_local_repository(
@@ -145,7 +145,7 @@ Required libraries
 
     Option 1. Use package manager tool to install the pre-compiled version.
 
-    Note that yum installs OpenCV 2.4.5, which may have an opencv/gstreamer
+    Note: yum installs OpenCV 2.4.5, which may have an opencv/gstreamer
     [issue](https://github.com/opencv/opencv/issues/4592).
 
     ```bash
@@ -154,11 +154,11 @@ Required libraries
 
     Option 2. Build OpenCV from source code.
 
-    You may need to modify [`WORKSAPCE`] and [`opencv_linux.BUILD`] to point
-    MediaPipe to your own OpenCV libraries. For example, if OpenCV 4 is
+    Note: You may need to modify [`WORKSAPCE`] and [`opencv_linux.BUILD`] to point
+    MediaPipe to your own OpenCV libraries, e.g., if OpenCV 4 is
     installed in "/usr/local/", you need to update the "linux_opencv"
     new_local_repository rule in [`WORKSAPCE`] and "opencv" cc_library rule in
-    [`opencv_linux.BUILD`] to be:
+    [`opencv_linux.BUILD`] like the following:
 
     ```bash
     new_local_repository(
@@ -234,10 +234,46 @@ Required libraries
 
 3.  Install OpenCV
 
-    Use package manager tool to install the pre-compiled OpenCV libraries.
+    Option 1. Use HomeBrew package manager tool to install the pre-compiled
+    OpenCV libraries.
 
     ```bash
     $ brew install opencv
+    ```
+
+    Option 2. Use MacPorts package manager tool to install the OpenCV libraries.
+
+    ```bash
+    $ port install opencv
+    ```
+
+    Note: when using MacPorts, please edit the [`WORKSAPCE`] and
+    [`opencv_linux.BUILD`] files like the following:
+
+    ```bash
+    new_local_repository(
+      name = "macos_opencv",
+      build_file = "@//third_party:opencv_macos.BUILD",
+      path = "/opt",
+    )
+
+    cc_library(
+      name = "opencv",
+      srcs = glob(
+        [
+            "local/lib/libopencv_core.dylib",
+            "local/lib/libopencv_highgui.dylib",
+            "local/lib/libopencv_imgcodecs.dylib",
+            "local/lib/libopencv_imgproc.dylib",
+            "local/lib/libopencv_video.dylib",
+            "local/lib/libopencv_videoio.dylib",
+        ],
+      ),
+      hdrs = glob(["local/include/opencv2/**/*.h*"]),
+      includes = ["local/include/"],
+      linkstatic = 1,
+      visibility = ["//visibility:public"],
+    )
     ```
 
 4.  Run the hello world desktop example

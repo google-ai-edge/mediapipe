@@ -15,6 +15,7 @@
 #include "mediapipe/framework/profiler/graph_profiler.h"
 
 #include "absl/synchronization/mutex.h"
+#include "absl/time/time.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/mediapipe_profiling.h"
 #include "mediapipe/framework/port/core_proto_inc.h"
@@ -674,7 +675,7 @@ TEST_F(GraphProfilerTestPeer, SetOpenRuntimeWithStreamLatency) {
   source_context.AddOutputs(
       {{}, {MakePacket<std::string>("15").At(Timestamp(100))}});
 
-  simulation_clock->SleepUntil(base::FromUnixMicros(1000));
+  simulation_clock->SleepUntil(absl::FromUnixMicros(1000));
   {
     GraphProfiler::Scope profiler_scope(GraphTrace::OPEN, source_context.get(),
                                         &profiler_);
@@ -775,7 +776,7 @@ TEST_F(GraphProfilerTestPeer, SetCloseRuntimeWithStreamLatency) {
       {{MakePacket<std::string>("15").At(Timestamp::PostStream())}});
   CalculatorContextManager().PushInputTimestampToContext(
       source_context.get(), Timestamp::PostStream());
-  simulation_clock->SleepUntil(base::FromUnixMicros(1000));
+  simulation_clock->SleepUntil(absl::FromUnixMicros(1000));
   {
     GraphProfiler::Scope profiler_scope(GraphTrace::CLOSE, source_context.get(),
                                         &profiler_);
@@ -973,7 +974,7 @@ TEST_F(GraphProfilerTestPeer, AddProcessSampleWithStreamLatency) {
 
   int64 when_source_started = 1000;
   int64 when_source_finished = when_source_started + 150;
-  simulation_clock->SleepUntil(base::FromUnixMicros(when_source_started));
+  simulation_clock->SleepUntil(absl::FromUnixMicros(when_source_started));
   {
     GraphProfiler::Scope profiler_scope(GraphTrace::PROCESS,
                                         source_context.get(), &profiler_);
@@ -1006,7 +1007,7 @@ TEST_F(GraphProfilerTestPeer, AddProcessSampleWithStreamLatency) {
   consumer_context.AddInputs(
       {Packet(), MakePacket<std::string>("15").At(Timestamp(100))});
 
-  simulation_clock->SleepUntil(base::FromUnixMicros(2000));
+  simulation_clock->SleepUntil(absl::FromUnixMicros(2000));
   {
     GraphProfiler::Scope profiler_scope(GraphTrace::PROCESS,
                                         consumer_context.get(), &profiler_);
