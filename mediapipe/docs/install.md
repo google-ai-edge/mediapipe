@@ -30,7 +30,7 @@ Required libraries
 1.  Checkout mediapipe repository
 
     ```bash
-    $ git clone https://github.com/google/mediapipe/mediapipe.git
+    $ git clone https://github.com/google/mediapipe.git
 
     # Change directory into mediapipe root directory
     $ cd mediapipe
@@ -129,7 +129,7 @@ Required libraries
 1.  Checkout mediapipe repository
 
     ```bash
-    $ git clone https://github.com/google/mediapipe/mediapipe.git
+    $ git clone https://github.com/google/mediapipe.git
 
     # Change directory into mediapipe root directory
     $ cd mediapipe
@@ -213,7 +213,7 @@ Required libraries
 1.  Checkout mediapipe repository
 
     ```bash
-    $ git clone https://github.com/google/mediapipe/mediapipe.git
+    $ git clone https://github.com/google/mediapipe.git
 
     $ cd mediapipe
     ```
@@ -306,7 +306,7 @@ This will use a Docker image that will isolate mediapipe's installation from the
 2.  Build a docker image with tag "mediapipe"
 
     ```bash
-    $ git clone https://github.com/google/mediapipe/mediapipe.git
+    $ git clone https://github.com/google/mediapipe.git
     $ cd mediapipe
     $ docker build --tag=mediapipe .
 
