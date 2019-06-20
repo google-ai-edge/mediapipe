@@ -54,5 +54,6 @@ cc_library(
         "@org_tensorflow//tensorflow/lite/kernels:padding",
         "@org_tensorflow//tensorflow/lite/kernels/internal:tensor",
         "@org_tensorflow//tensorflow/lite/kernels/internal:tensor_utils",
+        "@org_tensorflow//tensorflow/lite/kernels/internal:types",
     ],
 )

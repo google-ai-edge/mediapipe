@@ -117,7 +117,7 @@ combination of tag name and index number. You can see some examples of input and
 output identifiers in the example below. `SomeAudioVideoCalculator` identifies
 its video output by tag and its audio outputs by the combination of tag and
 index. The input with tag `VIDEO` is connected to the stream named
-`video_stream`. The inputs with tag `AUDIO` and indices `0` and `1` are
+`video_stream`. The outputs with tag `AUDIO` and indices `0` and `1` are
 connected to the streams named `audio_left` and `audio_right`.
 `SomeAudioCalculator` identifies its audio inputs by index only (no tag needed).
 

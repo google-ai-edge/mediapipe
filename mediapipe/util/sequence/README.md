@@ -6,8 +6,6 @@ prototypes used in MediaSequence for storing multimedia data in
 SequenceExamples. Finally, the documentation will describe the specific keys for
 storing specific types of data.
 
-[TOC]
-
 ## Overview of MediaSequence for machine learning
 
 The goal of MediaSequence is to provide a tool for transforming annotations of

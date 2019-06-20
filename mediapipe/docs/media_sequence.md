@@ -20,7 +20,7 @@ process new data sets, in the [documentation](https://github.com/google/mediapip
 1.  Checkout mediapipe repository
 
     ```bash
-    git clone https://github.com/google/mediapipe/mediapipe
+    git clone https://github.com/google/mediapipe.git
     cd mediapipe
     ```
 
@@ -115,7 +115,7 @@ python -m mediapipe.examples.desktop.media_sequence.demo_dataset \
 
 ### Preparing your own data set
 The process for preparing your own data set is described in the [MediaSequence
-documentation](https://github.com/google/mediapipe/tree/master/mediapipe/util/sequence/README.md).
+documentation](https://github.com/google/mediapipe/blob/master/mediapipe/util/sequence/README.md).
 The Python code for Charades can easily be modified to process most annotations,
 but the MediaPipe processing warrants further discussion. MediaSequence uses
 MediaPipe graphs to extract features related to the metadata or previously
