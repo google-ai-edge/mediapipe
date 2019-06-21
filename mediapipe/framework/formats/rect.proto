@@ -30,3 +30,19 @@ message Rect {
   // Rotation angle is counter-clockwise in radian.
   optional float rotation = 5 [default = 0.0];
 }
+
+// A rectangle with rotation in normalized coordinates. The values of box center
+// location and size are within [0, 1].
+message NormalizedRect {
+  // Location of the center of the rectangle in image coordinates.
+  // The (0.0, 0.0) point is at the (top, left) corner.
+  required float x_center = 1;
+  required float y_center = 2;
+
+  // Size of the rectangle.
+  required float height = 3;
+  required float width = 4;
+
+  // Rotation angle is counter-clockwise in radian.
+  optional float rotation = 5 [default = 0.0];
+}

@@ -20,8 +20,7 @@ See mobile and desktop [examples](mediapipe/docs/examples.md).
 A web-based visualizer is hosted on [MediaPipe Visualizer](https://mediapipe-viz.appspot.com/). Please also see instructions [here](mediapipe/docs/visualizer.md).
 
 ## Publications
-* [MediaPipe: A Framework for Perceiving and Augmenting Reality](http://mixedreality.cs.cornell.edu/s/22_crv2_MediaPipe_CVPR_CV4ARVR_Workshop_2019_v2.pdf), extended abstract for [Third Workshop on Computer Vision for AR/VR](https://sites.google.com/corp/view/perception-cv4arvr/mediapipe).
-* Full-length draft: [MediaPipe: A Framework for Building Perception Pipelines](https://tiny.cc/mediapipe_paper)
+* [MediaPipe: A Framework for Building Perception Pipelines](https://tiny.cc/mediapipe_paper) (draft)
 
 ## Contributing
 We welcome contributions. Please follow these [guidelines](./CONTRIBUTING.md).
