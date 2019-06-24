@@ -8,7 +8,14 @@ interested in running the same TensorfFlow Lite model on Android, please see the
 [Object Detection on GPU on Android](object_detection_android_gpu.md) and
 [Object Detection on CPU on Android](object_detection_android_cpu.md) examples.
 
-### TensorFlow Model
+We show the object detection demo with both TensorFlow model and TensorFlow Lite model:
+
+-  [TensorFlow Object Detection Demo](#tensorflow-object-detection-demo)
+-  [TensorFlow Lite Object Detection Demo](#tensorflow-lite-object-detection-demo)
+
+Note: If MediaPipe depends on OpenCV 2, please see the [known issues with OpenCV 2](#known-issues-with-opencv-2) section.
+
+### TensorFlow Object Detection Demo
 
 To build and run the TensorFlow example on desktop, run:
 
@@ -40,7 +47,7 @@ $ bazel-bin/mediapipe/examples/desktop/object_detection/object_detection_tensorf
 
 To visualize the graph as shown above, copy the text specification of the graph
 below and paste it into
-[MediaPipe Visualizer](https://mediapipe-viz.appspot.com).
+[MediaPipe Visualizer](https://viz.mediapipe.dev).
 
 ```bash
 # MediaPipe graph that performs object detection on desktop with TensorFlow
@@ -176,7 +183,7 @@ node {
 }
 ```
 
-### TensorFlow Lite Model
+### TensorFlow Lite Object Detection Demo
 
 To build and run the TensorFlow Lite example on desktop, run:
 
@@ -204,7 +211,7 @@ $ bazel-bin/mediapipe/examples/desktop/object_detection/object_detection_tflite 
 
 To visualize the graph as shown above, copy the text specification of the graph
 below and paste it into
-[MediaPipe Visualizer](https://mediapipe-viz.appspot.com).
+[MediaPipe Visualizer](https://viz.mediapipe.dev).
 
 ```bash
 # MediaPipe graph that performs object detection on desktop with TensorFlow Lite

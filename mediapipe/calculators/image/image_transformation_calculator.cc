@@ -300,6 +300,37 @@ REGISTER_CALCULATOR(ImageTransformationCalculator);
   int input_width = cc->Inputs().Tag("IMAGE").Get<ImageFrame>().Width();
   int input_height = cc->Inputs().Tag("IMAGE").Get<ImageFrame>().Height();
 
+  const auto& input_img = cc->Inputs().Tag("IMAGE").Get<ImageFrame>();
+  cv::Mat input_mat = formats::MatView(&input_img);
+  cv::Mat scaled_mat;
+
+  if (scale_mode_ == mediapipe::ScaleMode_Mode_STRETCH) {
+    cv::resize(input_mat, scaled_mat, cv::Size(output_width_, output_height_));
+  } else {
+    const float scale =
+        std::min(static_cast<float>(output_width_) / input_width,
+                 static_cast<float>(output_height_) / input_height);
+    const int target_width = std::round(input_width * scale);
+    const int target_height = std::round(input_height * scale);
+
+    if (scale_mode_ == mediapipe::ScaleMode_Mode_FIT) {
+      cv::Mat intermediate_mat;
+      cv::resize(input_mat, intermediate_mat,
+                 cv::Size(target_width, target_height));
+      const int top = (output_height_ - target_height) / 2;
+      const int bottom = output_height_ - target_height - top;
+      const int left = (output_width_ - target_width) / 2;
+      const int right = output_width_ - target_width - left;
+      cv::copyMakeBorder(intermediate_mat, scaled_mat, top, bottom, left, right,
+                         options_.constant_padding() ? cv::BORDER_CONSTANT
+                                                     : cv::BORDER_REPLICATE);
+    } else {
+      cv::resize(input_mat, scaled_mat, cv::Size(target_width, target_height));
+      output_width_ = target_width;
+      output_height_ = target_height;
+    }
+  }
+
   int output_width;
   int output_height;
   ComputeOutputDimensions(input_width, input_height, &output_width,
@@ -318,26 +349,15 @@ REGISTER_CALCULATOR(ImageTransformationCalculator);
         cc->InputSidePackets().Tag("ROTATION_DEGREES").Get<int>());
   }
 
-  const auto& input_img = cc->Inputs().Tag("IMAGE").Get<ImageFrame>();
-  std::unique_ptr<ImageFrame> output_frame(
-      new ImageFrame(input_img.Format(), output_width, output_height));
-  cv::Mat input_mat = formats::MatView(&input_img);
-  cv::Mat output_mat = formats::MatView(output_frame.get());
-
-  cv::Mat scaled_mat;
-  if (scale_mode_ != mediapipe::ScaleMode_Mode_STRETCH) {
-    // TODO finish CPU version features.
-    return ::mediapipe::UnimplementedError(
-        "Only STRETCH scale mode currently supported.");
-  }
-  cv::resize(input_mat, scaled_mat, cv::Size(output_width_, output_height_));
-
   cv::Mat rotated_mat;
   const int angle = RotationModeToDegrees(rotation_);
   cv::Point2f src_center(scaled_mat.cols / 2.0, scaled_mat.rows / 2.0);
   cv::Mat rotation_mat = cv::getRotationMatrix2D(src_center, angle, 1.0);
   cv::warpAffine(scaled_mat, rotated_mat, rotation_mat, scaled_mat.size());
 
+  std::unique_ptr<ImageFrame> output_frame(
+      new ImageFrame(input_img.Format(), output_width, output_height));
+  cv::Mat output_mat = formats::MatView(output_frame.get());
   rotated_mat.copyTo(output_mat);
   cc->Outputs().Tag("IMAGE").Add(output_frame.release(), cc->InputTimestamp());
 

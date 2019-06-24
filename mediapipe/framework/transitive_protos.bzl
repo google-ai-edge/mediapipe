@@ -94,7 +94,7 @@ def _transitive_protos_aspect_impl(target, ctx):
 
     proto_libs = []
     if ctx.rule.kind == "proto_library":
-        proto_libs = [f for f in target.files if f.extension == "a"]
+        proto_libs = [f for f in target.files.to_list() if f.extension == "a"]
 
     # Searching through the hdrs attribute is necessary because of
     # portable_proto_library. In portable mode, that macro

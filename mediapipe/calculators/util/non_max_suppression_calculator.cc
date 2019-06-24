@@ -323,6 +323,9 @@ class NonMaxSuppressionCalculator : public CalculatorBase {
       }
       auto weighted_detection = detection;
       if (!candidates.empty()) {
+        const int num_keypoints =
+            detection.location_data().relative_keypoints_size();
+        std::vector<float> keypoints(num_keypoints * 2);
         float w_xmin = 0.0f;
         float w_ymin = 0.0f;
         float w_xmax = 0.0f;
@@ -330,13 +333,20 @@ class NonMaxSuppressionCalculator : public CalculatorBase {
         float total_score = 0.0f;
         for (const auto& candidate : candidates) {
           total_score += candidate.second;
-          const auto& bbox = detections[candidate.first]
-                                 .location_data()
-                                 .relative_bounding_box();
+          const auto& location_data =
+              detections[candidate.first].location_data();
+          const auto& bbox = location_data.relative_bounding_box();
           w_xmin += bbox.xmin() * candidate.second;
           w_ymin += bbox.ymin() * candidate.second;
           w_xmax += (bbox.xmin() + bbox.width()) * candidate.second;
           w_ymax += (bbox.ymin() + bbox.height()) * candidate.second;
+
+          for (int i = 0; i < num_keypoints; ++i) {
+            keypoints[i * 2] +=
+                location_data.relative_keypoints(i).x() * candidate.second;
+            keypoints[i * 2 + 1] +=
+                location_data.relative_keypoints(i).y() * candidate.second;
+          }
         }
         auto* weighted_location = weighted_detection.mutable_location_data()
                                       ->mutable_relative_bounding_box();
@@ -346,6 +356,12 @@ class NonMaxSuppressionCalculator : public CalculatorBase {
                                      weighted_location->xmin());
         weighted_location->set_height((w_ymax / total_score) -
                                       weighted_location->ymin());
+        for (int i = 0; i < num_keypoints; ++i) {
+          auto* keypoint = weighted_detection.mutable_location_data()
+                               ->mutable_relative_keypoints(i);
+          keypoint->set_x(keypoints[i * 2] / total_score);
+          keypoint->set_y(keypoints[i * 2 + 1] / total_score);
+        }
       }
       remained_indexed_scores = std::move(remained);
       output_detections->push_back(weighted_detection);

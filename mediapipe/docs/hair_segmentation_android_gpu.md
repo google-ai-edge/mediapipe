@@ -29,7 +29,7 @@ adb install bazel-bin/mediapipe/examples/android/src/java/com/google/mediapipe/a
 ![hair_segmentation_android_gpu_graph](images/mobile/hair_segmentation_android_gpu.png){width="600"}
 
 To visualize the graph as shown above, copy the text specification of the graph
-below and paste it into [MediaPipe Visualizer](https://mediapipe-viz.appspot.com/).
+below and paste it into [MediaPipe Visualizer](https://viz.mediapipe.dev/).
 
 ```bash
 # MediaPipe graph that performs hair segmentation with TensorFlow Lite on GPU.

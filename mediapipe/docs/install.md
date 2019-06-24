@@ -23,7 +23,7 @@ Required libraries
 
 *   Android SDK release 28.0.3 and above
 
-*   Android NDK r18b and above
+*   Android NDK r17c and above
 
 ### Installing on Debian and Ubuntu
 

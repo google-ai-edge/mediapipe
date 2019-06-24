@@ -247,6 +247,23 @@ cc_library(
 )
 
 cc_library(
+    name = "image_cropping_calculator",
+    srcs = ["image_cropping_calculator.cc"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/formats:image_frame",
+        "//mediapipe/framework/formats:image_frame_opencv",
+        "//mediapipe/framework/formats:rect_cc_proto",
+        "//mediapipe/framework/port:opencv_core",
+        "//mediapipe/framework/port:opencv_imgproc",
+        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:status",
+    ],
+    alwayslink = 1,
+)
+
+cc_library(
     name = "luminance_calculator",
     srcs = ["luminance_calculator.cc"],
     visibility = ["//visibility:public"],

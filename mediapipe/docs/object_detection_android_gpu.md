@@ -29,7 +29,7 @@ adb install bazel-bin/mediapipe/examples/android/src/java/com/google/mediapipe/a
 ![object_detection_android_gpu_graph](images/mobile/object_detection_android_gpu.png){width="400"}
 
 To visualize the graph as shown above, copy the text specification of the graph
-below and paste it into [MediaPipe Visualizer](https://mediapipe-viz.appspot.com/).
+below and paste it into [MediaPipe Visualizer](https://viz.mediapipe.dev/).
 
 ```bash
 # MediaPipe graph that performs object detection with TensorFlow Lite on GPU.

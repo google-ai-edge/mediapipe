@@ -49,7 +49,7 @@
     ```
 
     You can visualize this graph using
-    [MediaPipe Visualizer](https://mediapipe-viz.appspot.com) by pasting the
+    [MediaPipe Visualizer](https://viz.mediapipe.dev) by pasting the
     CalculatorGraphConfig content below into the visualizer. See
     [here](./visualizer.md) for help on the visualizer.
 

@@ -33,7 +33,7 @@ def _canonicalize_proto_path_oss(all_protos, genfile_path):
     """
     proto_paths = []
     proto_file_names = []
-    for s in all_protos:
+    for s in all_protos.to_list():
         if s.path.startswith(genfile_path):
             repo_name, _, file_name = s.path[len(genfile_path + "/external/"):].partition("/")
             proto_paths.append(genfile_path + "/external/" + repo_name)
@@ -60,7 +60,7 @@ def _encode_binary_proto_impl(ctx):
     # order of gendir before ., is needed for the proto compiler to resolve
     # import statements that reference proto files produced by a genrule.
     ctx.actions.run_shell(
-        inputs = list(all_protos) + [textpb, ctx.executable._proto_compiler],
+        tools = all_protos.to_list() + [textpb, ctx.executable._proto_compiler],
         outputs = [binarypb],
         command = " ".join(
             [
@@ -110,7 +110,7 @@ def _generate_proto_descriptor_set_impl(ctx):
     # order of gendir before ., is needed for the proto compiler to resolve
     # import statements that reference proto files produced by a genrule.
     ctx.actions.run(
-        inputs = list(all_protos) + [ctx.executable._proto_compiler],
+        inputs = all_protos.to_list() + [ctx.executable._proto_compiler],
         outputs = [descriptor],
         executable = ctx.executable._proto_compiler,
         arguments = [
@@ -119,7 +119,7 @@ def _generate_proto_descriptor_set_impl(ctx):
                         "--proto_path=" + ctx.genfiles_dir.path,
                         "--proto_path=.",
                     ] +
-                    [s.path for s in all_protos],
+                    [s.path for s in all_protos.to_list()],
         mnemonic = "GenerateProtoDescriptor",
     )
 

@@ -46,4 +46,8 @@ message ImageTransformationCalculatorOptions {
   optional bool flip_horizontally = 5 [default = false];
   // Scale mode.
   optional ScaleMode.Mode scale_mode = 6;
+  // Padding type. This option is only used when the scale mode is FIT.
+  // Default is to use BORDER_CONSTANT. If set to false, it will use
+  // BORDER_REPLICATE instead.
+  optional bool constant_padding = 7 [default = true];
 }

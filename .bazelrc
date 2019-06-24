@@ -12,6 +12,8 @@ build --copt='-Wno-comment'
 build --copt='-Wno-return-type'
 build --copt='-Wno-unused-local-typedefs'
 build --copt='-Wno-ignored-attributes'
+# Temporarily set the incompatiblity flag for Bazel 0.27.0 and above
+build --incompatible_disable_deprecated_attr_params=false
 
 # Sets the default Apple platform to macOS.
 build --apple_platform_type=macos

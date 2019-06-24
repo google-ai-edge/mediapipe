@@ -31,6 +31,10 @@ APIs for MediaPipe
     * Graph Execution API in Java (Android)
     * (Coming Soon) Graph Execution API in Objective-C (iOS)
 
+Alpha Disclaimer
+==================
+MediaPipe is currently in alpha for v0.5. We are still making breaking API changes and expect to get to stable API by v1.0. We recommend that you target a specific version of MediaPipe, and periodically bump to the latest release. That way you have control over when a breaking change affects you.
+
 User Documentation
 ==================
 

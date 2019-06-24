@@ -77,7 +77,8 @@ bool GlTextureBuffer::CreateInternal(const void* data) {
       // TODO: maybe we do not actually have to wait for the
       // consumer sync here. Check docs.
       sync_token->WaitOnGpu();
-      if (glIsTexture(name_to_delete)) glDeleteTextures(1, &name_to_delete);
+      DCHECK(glIsTexture(name_to_delete));
+      glDeleteTextures(1, &name_to_delete);
     });
   };
 

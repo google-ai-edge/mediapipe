@@ -84,6 +84,11 @@ class DetectionLetterboxRemovalCalculator : public CalculatorBase {
   }
 
   ::mediapipe::Status Process(CalculatorContext* cc) override {
+    // Only process if there's input detections.
+    if (cc->Inputs().Tag(kDetectionsTag).IsEmpty()) {
+      return ::mediapipe::OkStatus();
+    }
+
     const auto& input_detections =
         cc->Inputs().Tag(kDetectionsTag).Get<std::vector<Detection>>();
     const auto& letterbox_padding =
