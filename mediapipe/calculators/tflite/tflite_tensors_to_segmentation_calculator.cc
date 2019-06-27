@@ -301,6 +301,8 @@ REGISTER_CALCULATOR(TfLiteTensorsToSegmentationCalculator);
       glActiveTexture(GL_TEXTURE1);
       glBindTexture(GL_TEXTURE_2D, input_mask_texture.name());
       mask_program_with_prev_->Dispatch(workgroups);
+      glActiveTexture(GL_TEXTURE1);
+      glBindTexture(GL_TEXTURE_2D, 0);
     }
   }
 
@@ -413,8 +415,7 @@ void TfLiteTensorsToSegmentationCalculator::GlRender() {
   // Currently uses 4 channels for output,
   // and sets both R and A channels as mask value.
   const std::string shader_src_template =
-      R"(
-#version 310 es
+      R"( #version 310 es
 
 layout(local_size_x = $0, local_size_y = $0, local_size_z = 1) in;
 

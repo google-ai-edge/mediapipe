@@ -14,7 +14,7 @@ See mobile and desktop [examples](mediapipe/docs/examples.md).
 ## Documentation
 [MediaPipe Read-the-Docs](https://mediapipe.readthedocs.io/) or [docs.mediapipe.dev](https://docs.mediapipe.dev)
 
-Check out the [Examples page] for tutorials on how to use MediaPipe. [Concepts page](https://mediapipe.readthedocs.io/en/latest/concepts.html) for basic definitions
+Check out the [Examples page](https://mediapipe.readthedocs.io/en/latest/examples.html) for tutorials on how to use MediaPipe. [Concepts page](https://mediapipe.readthedocs.io/en/latest/concepts.html) for basic definitions
 
 ## Visualizing MediaPipe graphs
 A web-based visualizer is hosted on [viz.mediapipe.dev](https://viz.mediapipe.dev/). Please also see instructions [here](mediapipe/docs/visualizer.md).

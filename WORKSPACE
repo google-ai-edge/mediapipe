@@ -115,36 +115,50 @@ http_archive(
     build_file = "@//third_party:opencv_android.BUILD",
     strip_prefix = "OpenCV-android-sdk",
     type = "zip",
-    url = "https://sourceforge.net/projects/opencvlibrary/files/4.0.1/opencv-4.0.1-android-sdk.zip/download"
+    urls = [
+        "https://sourceforge.net/projects/opencvlibrary/files/4.0.1/opencv-4.0.1-android-sdk.zip/download",
+        "https://github.com/opencv/opencv/releases/download/4.1.0/opencv-4.1.0-android-sdk.zip",
+    ],
 )
 
-# Google Maven Repository
-GMAVEN_TAG = "20181212-2"
+RULES_JVM_EXTERNAL_TAG = "2.2"
+RULES_JVM_EXTERNAL_SHA = "f1203ce04e232ab6fdd81897cf0ff76f2c04c0741424d192f28e65ae752ce2d6"
 
 http_archive(
-    name = "gmaven_rules",
-    strip_prefix = "gmaven_rules-%s" % GMAVEN_TAG,
-    url = "https://github.com/bazelbuild/gmaven_rules/archive/%s.tar.gz" % GMAVEN_TAG,
+    name = "rules_jvm_external",
+    strip_prefix = "rules_jvm_external-%s" % RULES_JVM_EXTERNAL_TAG,
+    sha256 = RULES_JVM_EXTERNAL_SHA,
+    url = "https://github.com/bazelbuild/rules_jvm_external/archive/%s.zip" % RULES_JVM_EXTERNAL_TAG,
 )
 
-load("@gmaven_rules//:gmaven.bzl", "gmaven_rules")
+load("@rules_jvm_external//:defs.bzl", "maven_install")
 
-gmaven_rules()
+maven_install(
+    artifacts = [
+        "com.android.support.constraint:constraint-layout:aar:1.0.2",
+        "androidx.appcompat:appcompat:aar:1.0.2",
+    ],
+    repositories = [
+        "https://dl.google.com/dl/android/maven2",
+    ],
+)
 
 maven_server(
     name = "google_server",
-    url = "http://maven.google.com",
+    url = "https://dl.google.com/dl/android/maven2",
 )
 
 maven_jar(
     name = "androidx_lifecycle",
     artifact = "androidx.lifecycle:lifecycle-common:2.0.0",
+    sha1 = "e070ffae07452331bc5684734fce6831d531785c",
     server = "google_server",
 )
 
 maven_jar(
      name = "androidx_concurrent_futures",
      artifact = "androidx.concurrent:concurrent-futures:1.0.0-alpha03",
+     sha1 = "b528df95c7e2fefa2210c0c742bf3e491c1818ae",
      server = "google_server",
 )
 
@@ -169,6 +183,7 @@ maven_jar(
 maven_jar(
     name = "com_google_code_findbugs",
     artifact = "com.google.code.findbugs:jsr305:3.0.2",
+    sha1 = "25ea2e8b0c338a877313bd4672d3fe056ea78f0d",
 )
 
 # You may run setup_android.sh to install Android SDK and NDK.

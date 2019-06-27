@@ -19,8 +19,6 @@ exports_files(["LICENSE"])
 
 package(default_visibility = ["//visibility:public"])
 
-load("@gmaven_rules//:defs.bzl", "gmaven_artifact")
-
 cc_library(
     name = "opencv",
     visibility = ["//visibility:public"],
@@ -52,14 +50,14 @@ cc_library(
 android_library(
     name = "android_constraint_layout",
     exports = [
-        gmaven_artifact("com.android.support.constraint:constraint_layout:aar:1.0.2"),
+        "@maven//:com_android_support_constraint_constraint_layout",
     ],
 )
 
 android_library(
     name = "androidx_appcompat",
     exports = [
-        gmaven_artifact("androidx.appcompat:appcompat:aar:1.0.2"),
+        "@maven//:androidx_appcompat_appcompat",
     ],
 )
 

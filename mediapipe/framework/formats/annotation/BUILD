@@ -25,7 +25,6 @@ package(default_visibility = ["//visibility:private"])
 proto_library(
     name = "locus_proto",
     srcs = ["locus.proto"],
-    visibility = ["//mediapipe:__subpackages__"],
     deps = ["//mediapipe/framework/formats/annotation:rasterization_proto"],
 )
 

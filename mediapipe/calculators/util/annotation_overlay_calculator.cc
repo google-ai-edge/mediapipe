@@ -359,6 +359,9 @@ REGISTER_CALCULATOR(AnnotationOverlayCalculator);
 
     RETURN_IF_ERROR(GlRender(cc));
 
+    glActiveTexture(GL_TEXTURE2);
+    glBindTexture(GL_TEXTURE_2D, 0);
+    glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, 0);
     glFlush();
   }

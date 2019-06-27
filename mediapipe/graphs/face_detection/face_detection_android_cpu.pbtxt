@@ -45,8 +45,8 @@ node: {
 # resulting in potential letterboxing in the transformed image.
 node: {
   calculator: "ImageTransformationCalculator"
-  input_stream: "IMAGE_GPU:throttled_input_video"
-  output_stream: "IMAGE_GPU:transformed_input_video"
+  input_stream: "IMAGE:input_video_cpu"
+  output_stream: "IMAGE:transformed_input_video_cpu"
   output_stream: "LETTERBOX_PADDING:letterbox_padding"
   node_options: {
     [type.googleapis.com/mediapipe.ImageTransformationCalculatorOptions] {
@@ -55,13 +55,6 @@ node: {
       scale_mode: FIT
     }
   }
-}
-
-# Transfers the transformed input image from GPU to CPU memory.
-node: {
-  calculator: "GpuBufferToImageFrameCalculator"
-  input_stream: "transformed_input_video"
-  output_stream: "transformed_input_video_cpu"
 }
 
 # Converts the transformed input image on CPU into an image tensor as a

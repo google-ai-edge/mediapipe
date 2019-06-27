@@ -321,13 +321,20 @@ REGISTER_CALCULATOR(SetAlphaCalculator);
     glActiveTexture(GL_TEXTURE2);
     glBindTexture(GL_TEXTURE_2D, alpha_texture.name());
     GlRender(cc);  // use channel 0 of mask
+    glActiveTexture(GL_TEXTURE2);
+    glBindTexture(GL_TEXTURE_2D, 0);
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, 0);
     alpha_texture.Release();
   } else {
     gpu_helper_.BindFramebuffer(output_texture);  // GL_TEXTURE0
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, input_texture.name());
     GlRender(cc);  // use value from options
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, 0);
   }
+  glFlush();
 
   // Send out image as GPU packet.
   auto output_frame = output_texture.GetFrame<mediapipe::GpuBuffer>();
@@ -393,9 +400,6 @@ REGISTER_CALCULATOR(SetAlphaCalculator);
   glDeleteVertexArrays(1, &vao);
   glDeleteBuffers(2, vbo);
 
-  // execute command queue
-  glBindTexture(GL_TEXTURE_2D, 0);
-  glFlush();
 #endif  // __ANDROID__
 
   return ::mediapipe::OkStatus();

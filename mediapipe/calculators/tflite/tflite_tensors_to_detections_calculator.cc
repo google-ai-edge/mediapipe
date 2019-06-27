@@ -506,8 +506,7 @@ Detection TfLiteTensorsToDetectionsCalculator::ConvertToDetection(
 #if defined(__ANDROID__)
   // A shader to decode detection boxes.
   const std::string decode_src = absl::Substitute(
-      R"(
-#version 310 es
+      R"( #version 310 es
 
 layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
 
@@ -643,8 +642,7 @@ void main() {
 
   // A shader to score detection boxes.
   const std::string score_src = absl::Substitute(
-      R"(
-#version 310 es
+      R"( #version 310 es
 
 layout(local_size_x = 1, local_size_y = $0, local_size_z = 1) in;
 
