@@ -107,6 +107,7 @@ Required libraries
 4.  Run the hello world desktop example
 
     ```bash
+    $ export GLOG_logtostderr=1
     # Need bazel flag 'MEDIAPIPE_DISABLE_GPU=1' as desktop GPU is currently not supported
     $ bazel run --define 'MEDIAPIPE_DISABLE_GPU=1' \
         mediapipe/examples/desktop/hello_world:hello_world
@@ -191,6 +192,7 @@ Required libraries
 4.  Run the hello world desktop example
 
     ```bash
+    $ export GLOG_logtostderr=1
     # Need bazel flag 'MEDIAPIPE_DISABLE_GPU=1' as desktop GPU is currently not supported
     $ bazel run --define 'MEDIAPIPE_DISABLE_GPU=1' \
         mediapipe/examples/desktop/hello_world:hello_world
@@ -279,6 +281,7 @@ Required libraries
 4.  Run the hello world desktop example
 
     ```bash
+    $ export GLOG_logtostderr=1
     # Need bazel flag 'MEDIAPIPE_DISABLE_GPU=1' as desktop GPU is currently not supported
     $ bazel run --define 'MEDIAPIPE_DISABLE_GPU=1' \
         mediapipe/examples/desktop/hello_world:hello_world
@@ -331,7 +334,7 @@ This will use a Docker image that will isolate mediapipe's installation from the
     ```bash
     $ docker run -it --name mediapipe mediapipe:latest
 
-    root@bca08b91ff63:/mediapipe# bazel run --define 'MEDIAPIPE_DISABLE_GPU=1' mediapipe/examples/desktop/hello_world:hello_world
+    root@bca08b91ff63:/mediapipe# GLOG_logtostderr=1 bazel run --define 'MEDIAPIPE_DISABLE_GPU=1' mediapipe/examples/desktop/hello_world:hello_world
 
     # Should print:
     # Hello World!

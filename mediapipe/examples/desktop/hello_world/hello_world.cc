@@ -60,6 +60,7 @@ namespace mediapipe {
 }  // namespace mediapipe
 
 int main(int argc, char** argv) {
+  google::InitGoogleLogging(argv[0]);
   CHECK(mediapipe::PrintHelloWorld().ok());
   return 0;
 }

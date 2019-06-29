@@ -34,6 +34,7 @@ $ bazel build -c opt \
 # INFO: 2675 processes: 2673 linux-sandbox, 2 local.
 # INFO: Build completed successfully, 2807 total actions
 
+$ export GLOG_logtostderr=1
 # Replace <input video path> and <output video path>.
 # You can find a test video in mediapipe/examples/desktop/object_detection.
 $ bazel-bin/mediapipe/examples/desktop/object_detection/object_detection_tensorflow \
@@ -198,6 +199,7 @@ $ bazel build -c opt --define 'MEDIAPIPE_DISABLE_GPU=1' \
 # INFO: 711 processes: 710 linux-sandbox, 1 local.
 # INFO: Build completed successfully, 734 total actions
 
+$ export GLOG_logtostderr=1
 # Replace <input video path> and <output video path>.
 # You can find a test video in mediapipe/examples/desktop/object_detection.
 $ bazel-bin/mediapipe/examples/desktop/object_detection/object_detection_tflite \

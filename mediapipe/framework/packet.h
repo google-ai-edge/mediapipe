@@ -128,16 +128,16 @@ class Packet {
   // responsible for ensuring that no other thread is doing anything
   // with the Packet.
   // Example usage:
-  //   ASSIGN_OR_RETURN(std::unique_ptr<ImageFrame> frame,
-  //                    p.ConsumeOrCopy<ImageFrame>());
+  //   ASSIGN_OR_RETURN(std::unique_ptr<Detection> detection,
+  //                    p.ConsumeOrCopy<Detection>());
   //   // The unique_ptr type can be omitted with auto.
-  //   ASSIGN_OR_RETURN(auto frame, p.ConsumeOrCopy<ImageFrame>());
+  //   ASSIGN_OR_RETURN(auto detection, p.ConsumeOrCopy<Detection>());
   //   If you would like to crash on failure (prefer ASSIGN_OR_RETURN):
-  //   auto frame = p.ConsumeOrCopy<ImageFrame>().ValueOrDie();
+  //   auto detection = p.ConsumeOrCopy<Detection>().ValueOrDie();
   //   // In functions which do not return ::mediapipe::Status use an adaptor
   //   // function as the third argument to ASSIGN_OR_RETURN.  In tests,
   //   // use an adaptor which returns void.
-  //   ASSIGN_OR_RETURN(auto frame, p.ConsumeOrCopy<ImageFrame>(),
+  //   ASSIGN_OR_RETURN(auto detection, p.ConsumeOrCopy<Detection>(),
   //                    _.With([](const ::mediapipe::Status& status) {
   //                      EXPECT_OK(status);
   //                      // Use CHECK_OK to crash and report a usable line

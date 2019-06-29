@@ -58,6 +58,7 @@ DEFINE_string(input_side_packets, "",
 }
 
 int main(int argc, char** argv) {
+  google::InitGoogleLogging(argv[0]);
   gflags::ParseCommandLineFlags(&argc, &argv, true);
   ::mediapipe::Status run_status = RunMediaPipeGraph();
   if (!run_status.ok()) {

@@ -14,6 +14,6 @@ answers and support from the MediaPipe community.
 ### Bugs and Feature requests
 
 To report bugs or make feature requests,
-[file an issue on Github](https://github.com/google/mediapipe/mediapipe/issues).
+[file an issue on GitHub](https://github.com/google/mediapipe/mediapipe/issues).
 Please choose the appropriate repository for the project from the
 [MediaPipe repo](https://github.com/google/mediapipe/mediapipe)
