@@ -112,9 +112,7 @@ mediapipe_cc_proto_library(
 cc_library(
     name = "ssd_anchors_calculator",
     srcs = ["ssd_anchors_calculator.cc"],
-    visibility = [
-        "//visibility:public",
-    ],
+    visibility = ["//visibility:public"],
     deps = [
         ":ssd_anchors_calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
@@ -128,9 +126,7 @@ cc_library(
 cc_library(
     name = "tflite_custom_op_resolver_calculator",
     srcs = ["tflite_custom_op_resolver_calculator.cc"],
-    visibility = [
-        "//visibility:public",
-    ],
+    visibility = ["//visibility:public"],
     deps = [
         ":tflite_custom_op_resolver_calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",

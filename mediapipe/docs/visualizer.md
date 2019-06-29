@@ -1,11 +1,12 @@
 ## Visualizing MediaPipe Graphs
 
 -   [Working within the editor](#working-within-the-editor)
--   [Understanding the Graph](#understanding-the-graph)
+-   [Understanding the graph](#understanding-the-graph)
 
 To help users understand the structure of their calculator graphs and to
 understand the overall behavior of their machine learning inference pipelines,
-we have built the [MediaPipe Visualizer](https://viz.mediapipe.dev/) that is available online.
+we have built the [MediaPipe Visualizer](https://viz.mediapipe.dev/)
+that is available online.
 
 *   A graph view allows users to see a connected calculator graph as expressed
     through a graph configuration that is pasted into the graph editor or
@@ -58,4 +59,3 @@ The visualizer graph shows the connections between calculator nodes.
 
     ![Special nodes](./images/special_nodes.png){width="350"}
     ![Special nodes](./images/special_nodes_code.png){width="350"}
-

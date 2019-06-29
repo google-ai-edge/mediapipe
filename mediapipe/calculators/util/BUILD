@@ -220,9 +220,7 @@ cc_test(
 cc_library(
     name = "annotation_overlay_calculator",
     srcs = ["annotation_overlay_calculator.cc"],
-    visibility = [
-        "//visibility:public",
-    ],
+    visibility = ["//visibility:public"],
     deps = [
         ":annotation_overlay_calculator_cc_proto",
         "//mediapipe/framework:calculator_options_cc_proto",
@@ -251,9 +249,7 @@ cc_library(
 cc_library(
     name = "detection_label_id_to_text_calculator",
     srcs = ["detection_label_id_to_text_calculator.cc"],
-    visibility = [
-        "//visibility:public",
-    ],
+    visibility = ["//visibility:public"],
     deps = [
         ":detection_label_id_to_text_calculator_cc_proto",
         "//mediapipe/framework/formats:detection_cc_proto",
@@ -357,9 +353,7 @@ cc_test(
 cc_library(
     name = "detection_letterbox_removal_calculator",
     srcs = ["detection_letterbox_removal_calculator.cc"],
-    visibility = [
-        "//visibility:public",
-    ],
+    visibility = ["//visibility:public"],
     deps = [
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/formats:detection_cc_proto",

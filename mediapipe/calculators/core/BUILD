@@ -132,9 +132,7 @@ cc_library(
 cc_library(
     name = "previous_loopback_calculator",
     srcs = ["previous_loopback_calculator.cc"],
-    visibility = [
-        "//visibility:public",
-    ],
+    visibility = ["//visibility:public"],
     deps = [
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework:packet",
@@ -149,9 +147,7 @@ cc_library(
 cc_library(
     name = "real_time_flow_limiter_calculator",
     srcs = ["real_time_flow_limiter_calculator.cc"],
-    visibility = [
-        "//visibility:public",
-    ],
+    visibility = ["//visibility:public"],
     deps = [
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework:packet",

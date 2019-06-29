@@ -111,14 +111,11 @@ new_local_repository(
 
 http_archive(
     name = "android_opencv",
-    sha256="cd7e5d5ec76eeddadf36a1cfe5197129328e80287d4d198c169e090421f838ba",
+    sha256="056b849842e4fa8751d09edbb64530cfa7a63c84ccd232d0ace330e27ba55d0b",
     build_file = "@//third_party:opencv_android.BUILD",
     strip_prefix = "OpenCV-android-sdk",
     type = "zip",
-    urls = [
-        "https://sourceforge.net/projects/opencvlibrary/files/4.0.1/opencv-4.0.1-android-sdk.zip/download",
-        "https://github.com/opencv/opencv/releases/download/4.1.0/opencv-4.1.0-android-sdk.zip",
-    ],
+    url = "https://github.com/opencv/opencv/releases/download/4.1.0/opencv-4.1.0-android-sdk.zip",
 )
 
 RULES_JVM_EXTERNAL_TAG = "2.2"

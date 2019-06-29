@@ -173,9 +173,7 @@ cc_library(
 cc_library(
     name = "set_alpha_calculator",
     srcs = ["set_alpha_calculator.cc"],
-    visibility = [
-        "//visibility:public",
-    ],
+    visibility = ["//visibility:public"],
     deps = [
         ":set_alpha_calculator_cc_proto",
         "//mediapipe/framework:calculator_options_cc_proto",
@@ -294,9 +292,7 @@ cc_library(
 cc_library(
     name = "recolor_calculator",
     srcs = ["recolor_calculator.cc"],
-    visibility = [
-        "//visibility:public",
-    ],
+    visibility = ["//visibility:public"],
     deps = [
         ":recolor_calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
