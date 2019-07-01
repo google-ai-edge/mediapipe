@@ -216,6 +216,10 @@ mediapipe::Counter* CalculatorRunner::GetCounter(const std::string& name) {
   return graph_->GetCounterFactory()->GetCounter(name);
 }
 
+std::map<std::string, int64> CalculatorRunner::GetCountersValues() {
+  return graph_->GetCounterFactory()->GetCounterSet()->GetCountersValues();
+}
+
 ::mediapipe::Status CalculatorRunner::BuildGraph() {
   if (graph_ != nullptr) {
     // The graph was already built.

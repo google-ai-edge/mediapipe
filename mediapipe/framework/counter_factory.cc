@@ -73,6 +73,16 @@ Counter* CounterSet::Get(const std::string& name) LOCKS_EXCLUDED(mu_) {
   return counters_[name].get();
 }
 
+std::map<std::string, int64> CounterSet::GetCountersValues()
+    LOCKS_EXCLUDED(mu_) {
+  absl::ReaderMutexLock lock(&mu_);
+  std::map<std::string, int64> result;
+  for (const auto& it : counters_) {
+    result[it.first] = it.second->Get();
+  }
+  return result;
+}
+
 Counter* BasicCounterFactory::GetCounter(const std::string& name) {
   return counter_set_.Emplace<BasicCounter>(name, name);
 }

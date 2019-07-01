@@ -65,6 +65,9 @@ class CounterSet {
   // exist.
   Counter* Get(const std::string& name);
 
+  // Retrieves all counters names and current values from the internal map.
+  std::map<std::string, int64> GetCountersValues() LOCKS_EXCLUDED(mu_);
+
  private:
   absl::Mutex mu_;
   std::map<std::string, std::unique_ptr<Counter>> counters_ GUARDED_BY(mu_);

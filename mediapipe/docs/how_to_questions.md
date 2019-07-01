@@ -23,7 +23,7 @@ You can see an example in:
 
 ### How to visualize perception results
 
-The [`AnnotationOverlayCalculator`] allows perception results, such as boudning
+The [`AnnotationOverlayCalculator`] allows perception results, such as bounding
 boxes, arrows, and ovals, to be superimposed on the video frames aligned with
 the recognized objects. The results can be displayed in a diagnostic window when
 running on a workstation, or in a texture frame when running on device. You can
@@ -85,7 +85,7 @@ The first approach has the advantage of leveraging [`CalculatorGraphConfig`]
 processing tools such as "subgraphs". The second approach has the advantage of
 allowing active calculators and packets to remain in-flight while settings
 change. Mediapipe contributors are currently investigating alternative approaches
-to achieve both of these adantages.
+to achieve both of these advantages.
 
 ### How to process realtime input streams
 

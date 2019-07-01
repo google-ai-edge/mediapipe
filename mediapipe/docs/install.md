@@ -6,6 +6,7 @@ Choose your operating system:
 -   [Installing on Debian and Ubuntu](#installing-on-debian-and-ubuntu)
 -   [Installing on CentOS](#installing-on-centos)
 -   [Installing on macOS](#installing-on-macos)
+-   [Installing on Windows Subsystem for Linux (WSL)](#installing-on-windows-subsystem-for-linux-wsl)
 -   [Installing using Docker](#installing-using-docker)
 -   [Setting up Android SDK and NDK](#setting-up-android-sdk-and-ndk)
 
@@ -284,6 +285,125 @@ Required libraries
     $ export GLOG_logtostderr=1
     # Need bazel flag 'MEDIAPIPE_DISABLE_GPU=1' as desktop GPU is currently not supported
     $ bazel run --define 'MEDIAPIPE_DISABLE_GPU=1' \
+        mediapipe/examples/desktop/hello_world:hello_world
+
+    # Should print:
+    # Hello World!
+    # Hello World!
+    # Hello World!
+    # Hello World!
+    # Hello World!
+    # Hello World!
+    # Hello World!
+    # Hello World!
+    # Hello World!
+    # Hello World!
+    ```
+
+### Installing on Windows Subsystem for Linux (WSL)
+
+1.  Follow
+    [the instruction](https://docs.microsoft.com/en-us/windows/wsl/install-win10)
+    to install Windows Sysystem for Linux (Ubuntu)
+
+2.  Install Windows ADB and start the ADB server in Windows
+
+    Note: Window’s and WSL’s adb versions must be the same version, e.g., if WSL
+    has ADB 1.0.39, you need to download the corresponding Windows ADB from
+    [here](https://dl.google.com/android/repository/platform-tools_r26.0.1-windows.zip).
+
+3.  Launch WSL
+
+    Note: All the following steps will be executed in WSL. The Windows directory
+    of the Linux Subsystem can be found in
+    C:\Users\YourUsername\AppData\Local\Packages\CanonicalGroupLimited.UbuntuonWindows_SomeID\LocalState\rootfs\home
+
+4.  Install the needed packages
+
+    ```bash
+    username@DESKTOP-TMVLBJ1:~$ sudo apt-get update && sudo apt-get install -y --no-install-recommends build-essential git python zip adb openjdk-8-jdk
+    ```
+
+5.  Install Bazel
+
+    ```bash
+    username@DESKTOP-TMVLBJ1:~$ curl -sLO --retry 5 --retry-max-time 10 \
+    https://storage.googleapis.com/bazel/0.27.0/release/bazel-0.27.0-installer-linux-x86_64.sh && \
+    sudo mkdir -p /usr/local/bazel/0.27.0 && \
+    chmod 755 bazel-0.27.0-installer-linux-x86_64.sh && \
+    sudo ./bazel-0.27.0-installer-linux-x86_64.sh --prefix=/usr/local/bazel/0.27.0 && \
+    source /usr/local/bazel/0.27.0/lib/bazel/bin/bazel-complete.bash
+
+    username@DESKTOP-TMVLBJ1:~$ /usr/local/bazel/0.27.0/lib/bazel/bin/bazel version && \
+    alias bazel='/usr/local/bazel/0.27.0/lib/bazel/bin/bazel'
+    ```
+
+6.  Checkout mediapipe repository
+
+    ```bash
+    username@DESKTOP-TMVLBJ1:~$ git clone https://github.com/google/mediapipe.git
+
+    username@DESKTOP-TMVLBJ1:~$ cd mediapipe
+    ```
+
+7.  Install OpenCV
+
+    Option 1. Use package manager tool to install the pre-compiled OpenCV
+    libraries.
+
+    ```bash
+    username@DESKTOP-TMVLBJ1:~/mediapipe$ sudo apt-get install libopencv-core-dev libopencv-highgui-dev \
+                           libopencv-imgproc-dev libopencv-video-dev
+    ```
+
+    Option 2. Run [`setup_opencv.sh`] to automatically build OpenCV from source
+    and modify MediaPipe's OpenCV config.
+
+    Option 3. Follow OpenCV's
+    [documentation](https://docs.opencv.org/3.4.6/d7/d9f/tutorial_linux_install.html)
+    to manually build OpenCV from source code.
+
+    Note: You may need to modify [`WORKSAPCE`] and [`opencv_linux.BUILD`] to
+    point MediaPipe to your own OpenCV libraries, e.g., if OpenCV 4 is installed
+    in "/usr/local/", you need to update the "linux_opencv" new_local_repository
+    rule in [`WORKSAPCE`] and "opencv" cc_library rule in [`opencv_linux.BUILD`]
+    like the following:
+
+    ```bash
+    new_local_repository(
+        name = "linux_opencv",
+        build_file = "@//third_party:opencv_linux.BUILD",
+        path = "/usr/local",
+    )
+
+    cc_library(
+      name = "opencv",
+      srcs = glob(
+          [
+              "lib/libopencv_core.so*",
+              "lib/libopencv_highgui.so*",
+              "lib/libopencv_imgcodecs.so*",
+              "lib/libopencv_imgproc.so*",
+              "lib/libopencv_video.so*",
+              "lib/libopencv_videoio.so*",
+
+          ],
+      ),
+      hdrs = glob(["include/opencv4/**/*.h*"]),
+      includes = ["include/opencv4/"],
+      linkstatic = 1,
+      visibility = ["//visibility:public"],
+    )
+
+    ```
+
+8.  Run the hello world desktop example
+
+    ```bash
+    username@DESKTOP-TMVLBJ1:~/mediapipe$ export GLOG_logtostderr=1
+
+    # Need bazel flag 'MEDIAPIPE_DISABLE_GPU=1' as desktop GPU is currently not supported
+    username@DESKTOP-TMVLBJ1:~/mediapipe$ bazel run --define 'MEDIAPIPE_DISABLE_GPU=1' \
         mediapipe/examples/desktop/hello_world:hello_world
 
     # Should print:

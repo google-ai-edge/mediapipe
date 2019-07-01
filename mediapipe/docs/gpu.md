@@ -36,7 +36,7 @@ calculator derived from base class GlSimpleCalculator. The GPU calculator
 `LuminanceCalculator` is shown as an example. The method
 `LuminanceCalculator::GlRender` is called from `GlSimpleCalculator::Process`.
 
-```
+```c++
 // Converts RGB images into luminance images, still stored in RGB format.
 // See GlSimpleCalculator for inputs, outputs and input side packets.
 class LuminanceCalculator : public GlSimpleCalculator {

@@ -127,6 +127,9 @@ class CalculatorRunner {
   // Returns a graph counter.
   mediapipe::Counter* GetCounter(const std::string& name);
 
+  // Returns all graph counters values.
+  std::map<std::string, int64> GetCountersValues();
+
  private:
   static const char kSourcePrefix[];
   static const char kSinkPrefix[];
