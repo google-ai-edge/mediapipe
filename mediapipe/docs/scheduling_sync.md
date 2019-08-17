@@ -143,14 +143,13 @@ system that relaxes configured limits when needed.
 
 The second system consists of inserting special nodes which can drop packets
 according to real-time constraints (typically using custom input policies)
-defined by [`RealTimeFlowLimiterCalculator`]. For example, a common pattern
-places a flow-control node at the input of a subgraph, with a loopback
-connection from the final output to the flow-control node. The flow-control node
-is thus able to keep track of how many timestamps are being processed in the
-downstream graph, and drop packets if this count hits a (configurable) limit;
-and since packets are dropped upstream, we avoid the wasted work that would
-result from partially processing a timestamp and then dropping packets between
-intermediate stages.
+defined by [`FlowLimiterCalculator`]. For example, a common pattern places a
+flow-control node at the input of a subgraph, with a loopback connection from
+the final output to the flow-control node. The flow-control node is thus able to
+keep track of how many timestamps are being processed in the downstream graph,
+and drop packets if this count hits a (configurable) limit; and since packets
+are dropped upstream, we avoid the wasted work that would result from partially
+processing a timestamp and then dropping packets between intermediate stages.
 
 This calculator-based approach gives the graph author control of where packets
 can be dropped, and allows flexibility in adapting and customizing the graph’s
@@ -161,4 +160,4 @@ behavior depending on resource constraints.
 [`SyncSetInputStreamHandler`]: https://github.com/google/mediapipe/tree/master/mediapipe/framework/stream_handler/sync_set_input_stream_handler.h
 [`ImmediateInputStreamHandler`]: https://github.com/google/mediapipe/tree/master/mediapipe/framework/stream_handler/immediate_input_stream_handler.h
 [`CalculatorGraphConfig::max_queue_size`]: https://github.com/google/mediapipe/tree/master/mediapipe/framework/calculator.proto
-[`RealTimeFlowLimiterCalculator`]: https://github.com/google/mediapipe/tree/master/mediapipe/calculators/core/real_time_flow_limiter_calculator.cc
+[`FlowLimiterCalculator`]: https://github.com/google/mediapipe/tree/master/mediapipe/calculators/core/flow_limiter_calculator.cc

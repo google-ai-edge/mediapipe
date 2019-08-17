@@ -22,7 +22,7 @@
 #include "mediapipe/gpu/gpu_shared_data_internal.h"
 
 #ifdef __APPLE__
-#include "mediapipe/framework/ios/CFHolder.h"
+#include "mediapipe/objc/CFHolder.h"
 #endif  // __APPLE__
 
 namespace mediapipe {
@@ -129,7 +129,7 @@ GpuBufferMultiPool::~GpuBufferMultiPool() {
 
 #ifdef __APPLE__
 void GpuBufferMultiPool::RegisterTextureCache(CVTextureCacheType cache) {
-  MutexLock lock(&mutex_);
+  absl::MutexLock lock(&mutex_);
 
   CHECK(std::find(texture_caches_.begin(), texture_caches_.end(), cache) ==
         texture_caches_.end())
@@ -138,7 +138,7 @@ void GpuBufferMultiPool::RegisterTextureCache(CVTextureCacheType cache) {
 }
 
 void GpuBufferMultiPool::UnregisterTextureCache(CVTextureCacheType cache) {
-  MutexLock lock(&mutex_);
+  absl::MutexLock lock(&mutex_);
 
   auto it = std::find(texture_caches_.begin(), texture_caches_.end(), cache);
   CHECK(it != texture_caches_.end())

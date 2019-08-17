@@ -2,11 +2,12 @@ workspace(name = "mediapipe")
 
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
+skylib_version = "0.8.0"
 http_archive(
     name = "bazel_skylib",
-    sha256 = "bbccf674aa441c266df9894182d80de104cabd19be98be002f6d478aaa31574d",
-    strip_prefix = "bazel-skylib-2169ae1c374aab4a09aa90e65efe1a3aad4e279b",
-    urls = ["https://github.com/bazelbuild/bazel-skylib/archive/2169ae1c374aab4a09aa90e65efe1a3aad4e279b.tar.gz"],
+    type = "tar.gz",
+    url = "https://github.com/bazelbuild/bazel-skylib/releases/download/{}/bazel-skylib.{}.tar.gz".format (skylib_version, skylib_version),
+    sha256 = "2ef429f5d7ce7111263289644d233707dba35e39696377ebab8b0bc701f7818e",
 )
 load("@bazel_skylib//lib:versions.bzl", "versions")
 versions.check(minimum_bazel_version = "0.23.0")
@@ -52,7 +53,7 @@ http_archive(
 
 # glog
 http_archive(
-    name = "com_google_glog",
+    name = "com_github_glog_glog",
     url = "https://github.com/google/glog/archive/v0.3.5.zip",
     sha256 = "267103f8a1e9578978aa1dc256001e6529ef593e5aea38193d31c2872ee025e8",
     strip_prefix = "glog-0.3.5",
@@ -73,6 +74,12 @@ http_archive(
     urls = ["https://github.com/google/protobuf/archive/384989534b2246d413dbcd750744faab2607b516.zip"],
 )
 
+http_archive(
+    name = "com_google_audio_tools",
+    strip_prefix = "multichannel-audio-tools-master",
+    urls = ["https://github.com/google/multichannel-audio-tools/archive/master.zip"],
+)
+
 # Needed by TensorFlow
 http_archive(
     name = "io_bazel_rules_closure",
@@ -84,12 +91,24 @@ http_archive(
     ],
 )
 
-# TensorFlow r1.14-rc0
+# 2019-08-15
+_TENSORFLOW_GIT_COMMIT = "67def62936e28f97c16182dfcc467d8d1cae02b4"
+_TENSORFLOW_SHA256= "ddd4e3c056e7c0ff2ef29133b30fa62781dfbf8a903e99efb91a02d292fa9562"
 http_archive(
     name = "org_tensorflow",
-    strip_prefix = "tensorflow-1.14.0-rc0",
-    sha256 = "76404a6157a45e8d7a07e4f5690275256260130145924c2a7c73f6eda2a3de10",
-    urls = ["https://github.com/tensorflow/tensorflow/archive/v1.14.0-rc0.zip"],
+    urls = [
+      "https://mirror.bazel.build/github.com/tensorflow/tensorflow/archive/%s.tar.gz" % _TENSORFLOW_GIT_COMMIT,
+      "https://github.com/tensorflow/tensorflow/archive/%s.tar.gz" % _TENSORFLOW_GIT_COMMIT,
+    ],
+    strip_prefix = "tensorflow-%s" % _TENSORFLOW_GIT_COMMIT,
+    sha256 = _TENSORFLOW_SHA256,
+    patches = [
+        "@//third_party:tensorflow_065c20bf79253257c87bd4614bb9a7fdef015cbb.diff",
+        "@//third_party:tensorflow_f67fcbefce906cd419e4657f0d41e21019b71abd.diff",
+    ],
+    patch_args = [
+        "-p1",
+    ],
 )
 
 load("@org_tensorflow//tensorflow:workspace.bzl", "tf_workspace")
@@ -102,6 +121,12 @@ new_local_repository(
     path = "/usr",
 )
 
+new_local_repository(
+    name = "linux_ffmpeg",
+    build_file = "@//third_party:ffmpeg_linux.BUILD",
+    path = "/usr"
+)
+
 # Please run $ brew install opencv
 new_local_repository(
     name = "macos_opencv",
@@ -109,13 +134,31 @@ new_local_repository(
     path = "/usr",
 )
 
+new_local_repository(
+    name = "macos_ffmpeg",
+    build_file = "@//third_party:ffmpeg_macos.BUILD",
+    path = "/usr",
+)
+
 http_archive(
     name = "android_opencv",
-    sha256="056b849842e4fa8751d09edbb64530cfa7a63c84ccd232d0ace330e27ba55d0b",
+    sha256 = "056b849842e4fa8751d09edbb64530cfa7a63c84ccd232d0ace330e27ba55d0b",
     build_file = "@//third_party:opencv_android.BUILD",
     strip_prefix = "OpenCV-android-sdk",
     type = "zip",
     url = "https://github.com/opencv/opencv/releases/download/4.1.0/opencv-4.1.0-android-sdk.zip",
+)
+
+# After OpenCV 3.2.0, the pre-compiled opencv2.framework has google protobuf symbols, which will
+# trigger duplicate symbol errors in the linking stage of building a mediapipe ios app.
+# To get a higher version of OpenCV for iOS, opencv2.framework needs to be built from source with
+# '-DBUILD_PROTOBUF=OFF -DBUILD_opencv_dnn=OFF'.
+http_archive(
+    name = "ios_opencv",
+    sha256 = "7dd536d06f59e6e1156b546bd581523d8df92ce83440002885ec5abc06558de2",
+    build_file = "@//third_party:opencv_ios.BUILD",
+    type = "zip",
+    url = "https://github.com/opencv/opencv/releases/download/3.2.0/opencv-3.2.0-ios-framework.zip",
 )
 
 RULES_JVM_EXTERNAL_TAG = "2.2"
@@ -132,12 +175,15 @@ load("@rules_jvm_external//:defs.bzl", "maven_install")
 
 maven_install(
     artifacts = [
-        "com.android.support.constraint:constraint-layout:aar:1.0.2",
-        "androidx.appcompat:appcompat:aar:1.0.2",
+        "androidx.annotation:annotation:aar:1.1.0",
+        "androidx.appcompat:appcompat:aar:1.1.0-rc01",
+        "androidx.constraintlayout:constraintlayout:aar:1.1.3",
+        "androidx.core:core:aar:1.1.0-rc03",
+        "androidx.legacy:legacy-support-v4:aar:1.0.0",
+        "androidx.recyclerview:recyclerview:aar:1.1.0-beta02",
+        "com.google.android.material:material:aar:1.0.0-rc01",
     ],
-    repositories = [
-        "https://dl.google.com/dl/android/maven2",
-    ],
+    repositories = ["https://dl.google.com/dl/android/maven2"],
 )
 
 maven_server(
@@ -190,4 +236,51 @@ android_ndk_repository(
 
 android_sdk_repository(
     name = "androidsdk",
+)
+
+# iOS basic build deps.
+
+load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
+
+git_repository(
+    name = "build_bazel_rules_apple",
+    remote = "https://github.com/bazelbuild/rules_apple.git",
+    tag = "0.18.0",
+    patches = [
+        "@//third_party:rules_apple_c0863d0596ae6b769a29fa3fb72ff036444fd249.diff",
+    ],
+    patch_args = [
+        "-p1",
+    ],
+)
+
+load(
+    "@build_bazel_rules_apple//apple:repositories.bzl",
+    "apple_rules_dependencies",
+)
+
+apple_rules_dependencies()
+
+load(
+    "@build_bazel_rules_swift//swift:repositories.bzl",
+    "swift_rules_dependencies",
+)
+
+swift_rules_dependencies()
+
+load(
+    "@build_bazel_apple_support//lib:repositories.bzl",
+    "apple_support_dependencies",
+)
+
+apple_support_dependencies()
+
+# More iOS deps.
+
+http_archive(
+    name = "google_toolbox_for_mac",
+    url = "https://github.com/google/google-toolbox-for-mac/archive/v2.2.1.zip",
+    sha256 = "e3ac053813c989a88703556df4dc4466e424e30d32108433ed6beaec76ba4fdc",
+    strip_prefix = "google-toolbox-for-mac-2.2.1",
+    build_file = "@//third_party:google_toolbox_for_mac.BUILD",
 )

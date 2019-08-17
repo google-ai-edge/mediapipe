@@ -99,6 +99,23 @@ class LegacyCalculatorSupport {
   };
 };
 
+// We only declare this variable for two specializations of the template because
+// it is only meant to be used for these two types.
+#if EMSCRIPTEN_WORKAROUND_FOR_B121216479
+template <>
+CalculatorContext* LegacyCalculatorSupport::Scoped<CalculatorContext>::current_;
+template <>
+CalculatorContract*
+    LegacyCalculatorSupport::Scoped<CalculatorContract>::current_;
+#else
+template <>
+thread_local CalculatorContext*
+    LegacyCalculatorSupport::Scoped<CalculatorContext>::current_;
+template <>
+thread_local CalculatorContract*
+    LegacyCalculatorSupport::Scoped<CalculatorContract>::current_;
+#endif  // EMSCRIPTEN_WORKAROUND_FOR_B121216479
+
 }  // namespace mediapipe
 
 #endif  // MEDIAPIPE_FRAMEWORK_LEGACY_CALCULATOR_SUPPORT_H_

@@ -37,6 +37,7 @@ const char kImageTag[] = "IMAGE";
 const char kFloatFeaturePrefixTag[] = "FLOAT_FEATURE_";
 const char kForwardFlowEncodedTag[] = "FORWARD_FLOW_ENCODED";
 const char kBBoxTag[] = "BBOX";
+const char kKeypointsTag[] = "KEYPOINTS";
 const char kSegmentationMaskTag[] = "CLASS_SEGMENTATION";
 
 namespace tf = ::tensorflow;
@@ -54,16 +55,11 @@ namespace mpms = ::mediapipe::mediasequence;
 // stores the encoded optical flow from the same calculator, "BBOX" which stores
 // bounding boxes from vector<Detections>, and streams with the
 // "FLOAT_FEATURE_${NAME}" pattern, which stores the values from vector<float>'s
-// associated with the name ${NAME}. Audio streams (i.e. Matrix with a
-// TimeSeriesHeader) are given extra packing and unpacking support and are named
-// similar to floats with the pattern "AUDIO_${NAME}". "IMAGE_${NAME}" and
-// "BBOX_${NAME}" will also store prefixed versions of each stream, which allows
-// for multiple image streams to be included. However, the default names are
-// suppored by more tools. "ENCODED_MEDIA" stores a video encoding for the clip
-// directly. The last packet on this stream is stored, and can be unpacked with
-// the metadata generator. Because the media decoder always starts with
-// timestamp zero, the "ENCODED_MEDIA_START_TIMESTAMP" should be recorded as
-// well. Use the FirstTimestampCalculator to determine this value.
+// associated with the name ${NAME}. "KEYPOINTS" stores a map of 2D keypoints
+// from unordered_map<std::string, vector<pair<float, float>>>. "IMAGE_${NAME}",
+// "BBOX_${NAME}", and "KEYPOINTS_${NAME}" will also store prefixed versions of
+// each stream, which allows for multiple image streams to be included. However,
+// the default names are suppored by more tools.
 //
 // Example config:
 // node {
@@ -122,6 +118,21 @@ class PackMediaSequenceCalculator : public CalculatorBase {
         }
         cc->Inputs().Tag(tag).Set<OpenCvImageEncoderCalculatorResults>();
       }
+      if (absl::StartsWith(tag, kKeypointsTag)) {
+        std::string key = "";
+        if (tag != kKeypointsTag) {
+          int tag_length = sizeof(kKeypointsTag) / sizeof(*kKeypointsTag) - 1;
+          if (tag[tag_length] == '_') {
+            key = tag.substr(tag_length + 1);
+          } else {
+            continue;  // Skip keys that don't match "(kKeypointsTag)_?"
+          }
+        }
+        cc->Inputs()
+            .Tag(tag)
+            .Set<std::unordered_map<std::string,
+                                    std::vector<std::pair<float, float>>>>();
+      }
       if (absl::StartsWith(tag, kBBoxTag)) {
         std::string key = "";
         if (tag != kBBoxTag) {
@@ -169,8 +180,7 @@ class PackMediaSequenceCalculator : public CalculatorBase {
       features_present_[tag] = false;
     }
 
-    if (cc->Options()
-            .GetExtension(PackMediaSequenceCalculatorOptions::ext)
+    if (cc->Options<PackMediaSequenceCalculatorOptions>()
             .replace_data_instead_of_append()) {
       for (const auto& tag : cc->Inputs().GetTags()) {
         if (absl::StartsWith(tag, kImageTag)) {
@@ -186,13 +196,19 @@ class PackMediaSequenceCalculator : public CalculatorBase {
           mpms::ClearImageEncoded(key, sequence_.get());
           mpms::ClearImageTimestamp(key, sequence_.get());
         }
-      }
-      if (cc->Inputs().HasTag(kForwardFlowEncodedTag)) {
-        mpms::ClearForwardFlowEncoded(sequence_.get());
-        mpms::ClearForwardFlowTimestamp(sequence_.get());
-      }
-
-      for (const auto& tag : cc->Inputs().GetTags()) {
+        if (absl::StartsWith(tag, kBBoxTag)) {
+          std::string key = "";
+          if (tag != kBBoxTag) {
+            int tag_length = sizeof(kBBoxTag) / sizeof(*kBBoxTag) - 1;
+            if (tag[tag_length] == '_') {
+              key = tag.substr(tag_length + 1);
+            } else {
+              continue;  // Skip keys that don't match "(kBBoxTag)_?"
+            }
+          }
+          mpms::ClearBBox(key, sequence_.get());
+          mpms::ClearBBoxTimestamp(key, sequence_.get());
+        }
         if (absl::StartsWith(tag, kFloatFeaturePrefixTag)) {
           std::string key = tag.substr(sizeof(kFloatFeaturePrefixTag) /
                                            sizeof(*kFloatFeaturePrefixTag) -
@@ -200,6 +216,16 @@ class PackMediaSequenceCalculator : public CalculatorBase {
           mpms::ClearFeatureFloats(key, sequence_.get());
           mpms::ClearFeatureTimestamp(key, sequence_.get());
         }
+        if (absl::StartsWith(tag, kKeypointsTag)) {
+          std::string key =
+              tag.substr(sizeof(kKeypointsTag) / sizeof(*kKeypointsTag) - 1);
+          mpms::ClearBBoxPoint(key, sequence_.get());
+          mpms::ClearBBoxTimestamp(key, sequence_.get());
+        }
+      }
+      if (cc->Inputs().HasTag(kForwardFlowEncodedTag)) {
+        mpms::ClearForwardFlowEncoded(sequence_.get());
+        mpms::ClearForwardFlowTimestamp(sequence_.get());
       }
     }
 
@@ -228,11 +254,11 @@ class PackMediaSequenceCalculator : public CalculatorBase {
   }
 
   ::mediapipe::Status Close(CalculatorContext* cc) override {
-    auto& options =
-        cc->Options().GetExtension(PackMediaSequenceCalculatorOptions::ext);
+    auto& options = cc->Options<PackMediaSequenceCalculatorOptions>();
     if (options.reconcile_metadata()) {
-      RET_CHECK_OK(mpms::ReconcileMetadata(options.reconcile_bbox_annotations(),
-                                           sequence_.get()));
+      RET_CHECK_OK(mpms::ReconcileMetadata(
+          options.reconcile_bbox_annotations(),
+          options.reconcile_region_annotations(), sequence_.get()));
     }
 
     if (options.output_only_if_all_present()) {
@@ -260,6 +286,9 @@ class PackMediaSequenceCalculator : public CalculatorBase {
 
   ::mediapipe::Status Process(CalculatorContext* cc) override {
     for (const auto& tag : cc->Inputs().GetTags()) {
+      if (!cc->Inputs().Tag(tag).IsEmpty()) {
+        features_present_[tag] = true;
+      }
       if (absl::StartsWith(tag, kImageTag) &&
           !cc->Inputs().Tag(tag).IsEmpty()) {
         std::string key = "";
@@ -281,23 +310,29 @@ class PackMediaSequenceCalculator : public CalculatorBase {
                                 sequence_.get());
         mpms::AddImageEncoded(key, image.encoded_image(), sequence_.get());
       }
-    }
-    if (cc->Inputs().HasTag(kForwardFlowEncodedTag) &&
-        !cc->Inputs().Tag(kForwardFlowEncodedTag).IsEmpty()) {
-      const OpenCvImageEncoderCalculatorResults& forward_flow =
-          cc->Inputs()
-              .Tag(kForwardFlowEncodedTag)
-              .Get<OpenCvImageEncoderCalculatorResults>();
-      if (!forward_flow.has_encoded_image()) {
-        return ::mediapipe::InvalidArgumentErrorBuilder(MEDIAPIPE_LOC)
-               << "No encoded forward flow";
+      if (absl::StartsWith(tag, kKeypointsTag) &&
+          !cc->Inputs().Tag(tag).IsEmpty()) {
+        std::string key = "";
+        if (tag != kImageTag) {
+          int tag_length = sizeof(kKeypointsTag) / sizeof(*kKeypointsTag) - 1;
+          if (tag[tag_length] == '_') {
+            key = tag.substr(tag_length + 1);
+          } else {
+            continue;  // Skip keys that don't match "(kKeypointsTag)_?"
+          }
+        }
+        const auto& keypoints =
+            cc->Inputs()
+                .Tag(tag)
+                .Get<std::unordered_map<
+                    std::string, std::vector<std::pair<float, float>>>>();
+        for (const auto& pair : keypoints) {
+          mpms::AddBBoxTimestamp(mpms::merge_prefix(key, pair.first),
+                                 cc->InputTimestamp().Value(), sequence_.get());
+          mpms::AddBBoxPoint(mpms::merge_prefix(key, pair.first), pair.second,
+                             sequence_.get());
+        }
       }
-      mpms::AddForwardFlowTimestamp(cc->InputTimestamp().Value(),
-                                    sequence_.get());
-      mpms::AddForwardFlowEncoded(forward_flow.encoded_image(),
-                                  sequence_.get());
-    }
-    for (const auto& tag : cc->Inputs().GetTags()) {
       if (absl::StartsWith(tag, kFloatFeaturePrefixTag) &&
           !cc->Inputs().Tag(tag).IsEmpty()) {
         std::string key = tag.substr(sizeof(kFloatFeaturePrefixTag) /
@@ -309,8 +344,6 @@ class PackMediaSequenceCalculator : public CalculatorBase {
                                cc->Inputs().Tag(tag).Get<std::vector<float>>(),
                                sequence_.get());
       }
-    }
-    for (const auto& tag : cc->Inputs().GetTags()) {
       if (absl::StartsWith(tag, kBBoxTag) && !cc->Inputs().Tag(tag).IsEmpty()) {
         std::string key = "";
         if (tag != kBBoxTag) {
@@ -349,14 +382,29 @@ class PackMediaSequenceCalculator : public CalculatorBase {
           mpms::AddBBoxTimestamp(key, cc->InputTimestamp().Value(),
                                  sequence_.get());
           if (!predicted_class_strings.empty()) {
-            mpms::AddBBoxClassString(key, predicted_class_strings,
+            mpms::AddBBoxLabelString(key, predicted_class_strings,
                                      sequence_.get());
           }
           if (!predicted_label_ids.empty()) {
-            mpms::AddBBoxClassIndex(key, predicted_label_ids, sequence_.get());
+            mpms::AddBBoxLabelIndex(key, predicted_label_ids, sequence_.get());
           }
         }
       }
+    }
+    if (cc->Inputs().HasTag(kForwardFlowEncodedTag) &&
+        !cc->Inputs().Tag(kForwardFlowEncodedTag).IsEmpty()) {
+      const OpenCvImageEncoderCalculatorResults& forward_flow =
+          cc->Inputs()
+              .Tag(kForwardFlowEncodedTag)
+              .Get<OpenCvImageEncoderCalculatorResults>();
+      if (!forward_flow.has_encoded_image()) {
+        return ::mediapipe::InvalidArgumentErrorBuilder(MEDIAPIPE_LOC)
+               << "No encoded forward flow";
+      }
+      mpms::AddForwardFlowTimestamp(cc->InputTimestamp().Value(),
+                                    sequence_.get());
+      mpms::AddForwardFlowEncoded(forward_flow.encoded_image(),
+                                  sequence_.get());
     }
     if (cc->Inputs().HasTag(kSegmentationMaskTag) &&
         !cc->Inputs().Tag(kSegmentationMaskTag).IsEmpty()) {
@@ -385,11 +433,6 @@ class PackMediaSequenceCalculator : public CalculatorBase {
           return ::mediapipe::UnimplementedError(
               "Global detections and empty detections are not supported.");
         }
-      }
-    }
-    for (const auto& tag : cc->Inputs().GetTags()) {
-      if (!cc->Inputs().Tag(tag).IsEmpty()) {
-        features_present_[tag] = true;
       }
     }
     return ::mediapipe::OkStatus();

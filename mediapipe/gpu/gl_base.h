@@ -70,7 +70,7 @@
 #include <GLES3/gl32.h>
 
 // When using the Linux EGL headers, we may end up pulling a
-// "#define Status int" from Xlib.h, which interferes with util::Status.
+// "#define Status int" from Xlib.h, which interferes with mediapipe::Status.
 #undef Status
 
 // More crud from X

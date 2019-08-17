@@ -1,0 +1,30 @@
+// Copyright 2019 The MediaPipe Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto2";
+
+package mediapipe;
+
+import "mediapipe/framework/calculator.proto";
+
+message GateCalculatorOptions {
+  extend mediapipe.CalculatorOptions {
+    optional GateCalculatorOptions ext = 261754847;
+  }
+
+  // By default an empty packet in the ALLOW or DISALLOW input stream indicates
+  // disallowing the corresponding packets in the data input streams. Setting
+  // this option to true inverts that, allowing the data packets to go through.
+  optional bool empty_packets_as_allow = 1;
+}

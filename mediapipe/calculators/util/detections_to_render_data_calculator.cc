@@ -27,8 +27,8 @@ namespace mediapipe {
 
 namespace {
 
+constexpr char kDetectionsTag[] = "DETECTIONS";
 constexpr char kDetectionListTag[] = "DETECTION_LIST";
-constexpr char kDetectionVectorTag[] = "DETECTION_VECTOR";
 constexpr char kRenderDataTag[] = "RENDER_DATA";
 
 constexpr char kSceneLabelLabel[] = "LABEL";
@@ -60,8 +60,8 @@ constexpr double kLabelToBoundingBoxRatio = 0.1;
 // Example config:
 // node {
 //   calculator: "DetectionsToRenderDataCalculator"
+//   input_stream: "DETECTIONS:detections"
 //   input_stream: "DETECTION_LIST:detection_list"
-//   input_stream: "DETECTION_VECTOR:detection_vector"
 //   output_stream: "RENDER_DATA:render_data"
 //   options {
 //     [DetectionsToRenderDataCalculatorOptions.ext] {
@@ -79,6 +79,8 @@ class DetectionsToRenderDataCalculator : public CalculatorBase {
       const DetectionsToRenderDataCalculator&) = delete;
 
   static ::mediapipe::Status GetContract(CalculatorContract* cc);
+
+  ::mediapipe::Status Open(CalculatorContext* cc) override;
 
   ::mediapipe::Status Process(CalculatorContext* cc) override;
 
@@ -119,16 +121,23 @@ REGISTER_CALCULATOR(DetectionsToRenderDataCalculator);
 ::mediapipe::Status DetectionsToRenderDataCalculator::GetContract(
     CalculatorContract* cc) {
   RET_CHECK(cc->Inputs().HasTag(kDetectionListTag) ||
-            cc->Inputs().HasTag(kDetectionVectorTag))
+            cc->Inputs().HasTag(kDetectionsTag))
       << "None of the input streams are provided.";
 
   if (cc->Inputs().HasTag(kDetectionListTag)) {
     cc->Inputs().Tag(kDetectionListTag).Set<DetectionList>();
   }
-  if (cc->Inputs().HasTag(kDetectionVectorTag)) {
-    cc->Inputs().Tag(kDetectionVectorTag).Set<std::vector<Detection>>();
+  if (cc->Inputs().HasTag(kDetectionsTag)) {
+    cc->Inputs().Tag(kDetectionsTag).Set<std::vector<Detection>>();
   }
   cc->Outputs().Tag(kRenderDataTag).Set<RenderData>();
+  return ::mediapipe::OkStatus();
+}
+
+::mediapipe::Status DetectionsToRenderDataCalculator::Open(
+    CalculatorContext* cc) {
+  cc->SetOffset(TimestampDiff(0));
+
   return ::mediapipe::OkStatus();
 }
 
@@ -142,11 +151,8 @@ REGISTER_CALCULATOR(DetectionsToRenderDataCalculator);
                                                      .detection()
                                                      .empty();
   const bool has_detection_from_vector =
-      cc->Inputs().HasTag(kDetectionVectorTag) &&
-      !cc->Inputs()
-           .Tag(kDetectionVectorTag)
-           .Get<std::vector<Detection>>()
-           .empty();
+      cc->Inputs().HasTag(kDetectionsTag) &&
+      !cc->Inputs().Tag(kDetectionsTag).Get<std::vector<Detection>>().empty();
   if (!options.produce_empty_packet() && !has_detection_from_list &&
       !has_detection_from_vector) {
     return ::mediapipe::OkStatus();
@@ -164,7 +170,7 @@ REGISTER_CALCULATOR(DetectionsToRenderDataCalculator);
   }
   if (has_detection_from_vector) {
     for (const auto& detection :
-         cc->Inputs().Tag(kDetectionVectorTag).Get<std::vector<Detection>>()) {
+         cc->Inputs().Tag(kDetectionsTag).Get<std::vector<Detection>>()) {
       AddDetectionToRenderData(detection, options, render_data.get());
     }
   }

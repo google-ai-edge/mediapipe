@@ -19,7 +19,7 @@
 
 #define HAVE_GPU_BUFFER
 #ifdef __APPLE__
-#include "mediapipe/framework/ios/util.h"
+#include "mediapipe/objc/util.h"
 #endif
 
 #include "mediapipe/gpu/gl_calculator_helper.h"

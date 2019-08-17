@@ -15,6 +15,7 @@
 
 #import <Foundation/Foundation.h>
 
+#include "mediapipe/framework/port/canonical_errors.h"
 #include "mediapipe/framework/profiler/profiler_resource_util.h"
 
 namespace mediapipe {
@@ -24,10 +25,24 @@ StatusOr<std::string> GetDefaultTraceLogDirectory() {
   NSURL* documents_directory_url = [[[NSFileManager defaultManager]
       URLsForDirectory:NSDocumentDirectory
              inDomains:NSUserDomainMask] lastObject];
-  NSString* ns_documents_directory = [documents_directory_url absoluteString];
 
-  std::string documents_directory = [ns_documents_directory UTF8String];
-  return documents_directory;
+  // Note: "createDirectoryAtURL:..." method doesn't successfully create
+  // the directory, hence this code uses "createDirectoryAtPath:..".
+  NSString* ns_documents_directory = [documents_directory_url absoluteString];
+  NSError* error;
+  BOOL success = [[NSFileManager defaultManager]
+            createDirectoryAtPath:ns_documents_directory
+      withIntermediateDirectories:YES
+                       attributes:nil
+                            error:&error];
+  if (!success) {
+    // TODO: Use NSError+util_status to get status from NSError.
+    return ::mediapipe::InternalError(
+        [[error localizedDescription] UTF8String]);
+  }
+
+  std::string trace_log_directory = [ns_documents_directory UTF8String];
+  return trace_log_directory;
 }
 
 }  // namespace mediapipe

@@ -19,6 +19,7 @@ package(default_visibility = ["//visibility:private"])
 exports_files(["LICENSE"])
 
 load("//mediapipe/framework/port:build_config.bzl", "mediapipe_cc_proto_library")
+load("@bazel_skylib//lib:selects.bzl", "selects")
 
 proto_library(
     name = "opencv_image_encoder_calculator_proto",
@@ -41,6 +42,26 @@ proto_library(
     name = "set_alpha_calculator_proto",
     srcs = ["set_alpha_calculator.proto"],
     visibility = ["//visibility:public"],
+    deps = [
+        "//mediapipe/framework:calculator_proto",
+    ],
+)
+
+proto_library(
+    name = "image_cropping_calculator_proto",
+    srcs = ["image_cropping_calculator.proto"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//mediapipe/framework:calculator_proto",
+    ],
+)
+
+proto_library(
+    name = "bilateral_filter_calculator_proto",
+    srcs = ["bilateral_filter_calculator.proto"],
+    visibility = [
+        "//visibility:public",
+    ],
     deps = [
         "//mediapipe/framework:calculator_proto",
     ],
@@ -91,6 +112,26 @@ mediapipe_cc_proto_library(
     ],
     visibility = ["//mediapipe:__subpackages__"],
     deps = [":set_alpha_calculator_proto"],
+)
+
+mediapipe_cc_proto_library(
+    name = "image_cropping_calculator_cc_proto",
+    srcs = ["image_cropping_calculator.proto"],
+    cc_deps = [
+        "//mediapipe/framework:calculator_cc_proto",
+    ],
+    visibility = ["//mediapipe:__subpackages__"],
+    deps = [":image_cropping_calculator_proto"],
+)
+
+mediapipe_cc_proto_library(
+    name = "bilateral_filter_calculator_cc_proto",
+    srcs = ["bilateral_filter_calculator.proto"],
+    cc_deps = [
+        "//mediapipe/framework:calculator_cc_proto",
+    ],
+    visibility = ["//mediapipe:__subpackages__"],
+    deps = [":bilateral_filter_calculator_proto"],
 )
 
 mediapipe_cc_proto_library(
@@ -192,6 +233,42 @@ cc_library(
             "//mediapipe/gpu:gpu_buffer",
             "//mediapipe/gpu:shader_util",
         ],
+        "//mediapipe:ios": [
+            "//mediapipe/gpu:gl_calculator_helper",
+            "//mediapipe/gpu:gl_simple_shaders",
+            "//mediapipe/gpu:gpu_buffer",
+            "//mediapipe/gpu:shader_util",
+        ],
+        "//conditions:default": [],
+    }),
+    alwayslink = 1,
+)
+
+cc_library(
+    name = "bilateral_filter_calculator",
+    srcs = ["bilateral_filter_calculator.cc"],
+    visibility = [
+        "//visibility:public",
+    ],
+    deps = [
+        ":bilateral_filter_calculator_cc_proto",
+        "//mediapipe/framework:calculator_options_cc_proto",
+        "//mediapipe/framework/formats:image_format_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/formats:image_frame",
+        "//mediapipe/framework/formats:image_frame_opencv",
+        "//mediapipe/framework/port:logging",
+        "//mediapipe/framework/port:opencv_core",
+        "//mediapipe/framework/port:opencv_imgproc",
+        "//mediapipe/framework/port:status",
+        "//mediapipe/framework/port:vector",
+    ] + select({
+        "//mediapipe:android": [
+            "//mediapipe/gpu:gl_calculator_helper",
+            "//mediapipe/gpu:gl_simple_shaders",
+            "//mediapipe/gpu:gpu_buffer",
+            "//mediapipe/gpu:shader_util",
+        ],
         "//conditions:default": [],
     }),
     alwayslink = 1,
@@ -221,6 +298,19 @@ mediapipe_cc_proto_library(
 cc_library(
     name = "image_transformation_calculator",
     srcs = ["image_transformation_calculator.cc"],
+    copts = select({
+        "//mediapipe:apple": [
+            "-x objective-c++",
+        ],
+        "//conditions:default": [],
+    }),
+    linkopts = select({
+        "//mediapipe:apple": [
+            "-framework CoreVideo",
+            "-framework MetalKit",
+        ],
+        "//conditions:default": [],
+    }),
     visibility = ["//visibility:public"],
     deps = [
         ":image_transformation_calculator_cc_proto",
@@ -232,8 +322,8 @@ cc_library(
         "//mediapipe/framework/port:opencv_imgproc",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
-    ] + select({
-        "//mediapipe:android": [
+    ] + selects.with_or({
+        ("//mediapipe:android", "//mediapipe:ios"): [
             "//mediapipe/gpu:gl_calculator_helper",
             "//mediapipe/gpu:gl_simple_shaders",
             "//mediapipe/gpu:gl_quad_renderer",
@@ -247,8 +337,24 @@ cc_library(
 cc_library(
     name = "image_cropping_calculator",
     srcs = ["image_cropping_calculator.cc"],
-    visibility = ["//visibility:public"],
+    copts = select({
+        "//mediapipe:apple": [
+            "-x objective-c++",
+        ],
+        "//conditions:default": [],
+    }),
+    linkopts = select({
+        "//mediapipe:apple": [
+            "-framework CoreVideo",
+            "-framework MetalKit",
+        ],
+        "//conditions:default": [],
+    }),
+    visibility = [
+        "//visibility:public",
+    ],
     deps = [
+        ":image_cropping_calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/formats:image_frame",
         "//mediapipe/framework/formats:image_frame_opencv",
@@ -257,7 +363,15 @@ cc_library(
         "//mediapipe/framework/port:opencv_imgproc",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
-    ],
+    ] + selects.with_or({
+        ("//mediapipe:android", "//mediapipe:ios"): [
+            "//mediapipe/gpu:gl_calculator_helper",
+            "//mediapipe/gpu:gl_simple_shaders",
+            "//mediapipe/gpu:gl_quad_renderer",
+            "//mediapipe/gpu:shader_util",
+        ],
+        "//conditions:default": [],
+    }),
     alwayslink = 1,
 )
 
@@ -302,6 +416,12 @@ cc_library(
         "//mediapipe/util:color_cc_proto",
     ] + select({
         "//mediapipe:android": [
+            "//mediapipe/gpu:gl_calculator_helper",
+            "//mediapipe/gpu:gl_simple_shaders",
+            "//mediapipe/gpu:gpu_buffer",
+            "//mediapipe/gpu:shader_util",
+        ],
+        "//mediapipe:ios": [
             "//mediapipe/gpu:gl_calculator_helper",
             "//mediapipe/gpu:gl_simple_shaders",
             "//mediapipe/gpu:gpu_buffer",
@@ -354,6 +474,24 @@ cc_library(
         "@com_google_absl//absl/strings",
         "@libyuv",
     ],
+    alwayslink = 1,
+)
+
+cc_library(
+    name = "image_properties_calculator",
+    srcs = ["image_properties_calculator.cc"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/formats:image_frame",
+        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:status",
+    ] + selects.with_or({
+        ("//mediapipe:android", "//mediapipe:ios"): [
+            "//mediapipe/gpu:gpu_buffer",
+        ],
+        "//conditions:default": [],
+    }),
     alwayslink = 1,
 )
 

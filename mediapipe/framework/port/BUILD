@@ -60,7 +60,7 @@ cc_library(
         ":core_proto",
         "//mediapipe/framework:port",
     ] + select({
-        "//conditions:default": ["@protobuf_archive//:protobuf"],
+        "//conditions:default": ["@com_google_protobuf//:protobuf"],
     }),
 )
 
@@ -75,7 +75,7 @@ cc_library(
         ":core_proto",
         "//mediapipe/framework:port",
     ] + select({
-        "//conditions:default": ["@protobuf_archive//:protobuf"],
+        "//conditions:default": ["@com_google_protobuf//:protobuf"],
     }),
 )
 
@@ -96,7 +96,7 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         "//mediapipe/framework:port",
-        "@com_google_glog//:glog",
+        "@com_github_glog_glog//:glog",
     ],
 )
 
@@ -110,7 +110,7 @@ cc_library(
     deps = [
         "//mediapipe/framework:port",
     ] + select({
-        "//conditions:default": ["@protobuf_archive//:protobuf"],
+        "//conditions:default": ["@com_google_protobuf//:protobuf"],
     }),
 )
 
@@ -175,7 +175,7 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         "//mediapipe/framework:port",
-        "@com_google_glog//:glog",
+        "@com_github_glog_glog//:glog",
     ],
 )
 
@@ -258,7 +258,7 @@ cc_library(
         ":logging",
         "//mediapipe/framework:port",
     ] + select({
-        "//conditions:default": ["@protobuf_archive//:protobuf"],
+        "//conditions:default": ["@com_google_protobuf//:protobuf"],
     }),
 )
 
@@ -351,6 +351,7 @@ cc_library(
     deps = select({
         "//conditions:default": [":threadpool_impl_default_to_google"],
         "//mediapipe:android": [":threadpool_impl_default_to_mediapipe"],
+        "//mediapipe:apple": [":threadpool_impl_default_to_mediapipe"],
     }),
 )
 

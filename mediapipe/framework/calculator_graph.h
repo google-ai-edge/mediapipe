@@ -56,7 +56,7 @@
 #ifndef MEDIAPIPE_DISABLE_GPU
 namespace mediapipe {
 class GpuResources;
-class GpuSharedData;
+struct GpuSharedData;
 }  // namespace mediapipe
 #endif  // !defined(MEDIAPIPE_DISABLE_GPU)
 
@@ -77,8 +77,8 @@ typedef ::mediapipe::StatusOr<OutputStreamPoller> StatusOrPoller;
 //   #include "mediapipe/framework/calculator_framework.h"
 //
 //   mediapipe::CalculatorGraphConfig config;
-//   RETURN_IF_ERROR(mediapipe::tool::ParseGraphFromString(THE_CONFIG,
-//   &config)); mediapipe::CalculatorGraph graph;
+//   RETURN_IF_ERROR(mediapipe::tool::ParseGraphFromString(kGraphStr, &config));
+//   mediapipe::CalculatorGraph graph;
 //   RETURN_IF_ERROR(graph.Initialize(config));
 //
 //   std::map<std::string, mediapipe::Packet> extra_side_packets;
@@ -135,7 +135,7 @@ class CalculatorGraph {
   // |input_templates|.  Every subgraph must have its graph type specified in
   // CalclatorGraphConfig.type.  A subgraph can be instantiated directly by
   // specifying its type in |graph_type|.  A template graph can be instantiated
-  // directly by specifying its template arguments in |arguments|.
+  // directly by specifying its template arguments in |options|.
   ::mediapipe::Status Initialize(
       const std::vector<CalculatorGraphConfig>& configs,
       const std::vector<CalculatorGraphTemplate>& templates,

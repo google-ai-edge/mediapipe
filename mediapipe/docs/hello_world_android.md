@@ -27,18 +27,26 @@ stream on an Android device.
 
 ## Graph for edge detection
 
-We will be using the following graph, [`edge_detection_android_gpu.pbtxt`]:
+We will be using the following graph, [`edge_detection_mobile_gpu.pbtxt`]:
 
 ```
+# MediaPipe graph that performs GPU Sobel edge detection on a live video stream.
+# Used in the examples
+# mediapipe/examples/android/src/java/com/mediapipe/apps/edgedetectiongpu.
+# mediapipe/examples/ios/edgedetectiongpu.
+
+# Images coming into and out of the graph.
 input_stream: "input_video"
 output_stream: "output_video"
 
+# Converts RGB images into luminance images, still stored in RGB format.
 node: {
   calculator: "LuminanceCalculator"
   input_stream: "input_video"
   output_stream: "luma_video"
 }
 
+# Applies the Sobel filter to luminance images sotred in RGB format.
 node: {
   calculator: "SobelEdgesCalculator"
   input_stream: "luma_video"
@@ -48,7 +56,7 @@ node: {
 
 A visualization of the graph is shown below:
 
-![edge_detection_android_gpu_graph](images/mobile/edge_detection_android_graph_gpu.png){width="200"}
+![edge_detection_mobile_gpu_graph](images/mobile/edge_detection_mobile_graph_gpu.png){width="200"}
 
 This graph has a single input stream named `input_video` for all incoming frames
 that will be provided by your device's camera.
@@ -62,7 +70,7 @@ packets in the `luma_video` stream and outputs results in `output_video` output
 stream.
 
 Our Android application will display the output image frames of the
-`sobel_video` stream.
+`output_video` stream.
 
 ## Initial minimal application setup
 
@@ -582,7 +590,7 @@ First, add dependencies to all calculator code in the `libmediapipe_jni.so`
 build rule:
 
 ```
-"//mediapipe/graphs/edge_detection:android_calculators",
+"//mediapipe/graphs/edge_detection:mobile_calculators",
 ```
 
 MediaPipe graphs are `.pbtxt` files, but to use them in the application, we need
@@ -594,7 +602,7 @@ graph:
 ```
 genrule(
     name = "binary_graph",
-    srcs = ["//mediapipe/graphs/edge_detection:android_gpu_binary_graph"],
+    srcs = ["//mediapipe/graphs/edge_detection:mobile_gpu_binary_graph"],
     outs = ["edgedetectiongpu.binarypb"],
     cmd = "cp $< $@",
 )
@@ -712,7 +720,7 @@ If you ran into any issues, please see the full code of the tutorial
 [CameraX]:https://developer.android.com/training/camerax
 [`CameraXPreviewHelper`]:https://github.com/google/mediapipe/tree/master/mediapipe/java/com/google/mediapipe/components/CameraXPreviewHelper.java
 [developer options]:https://developer.android.com/studio/debug/dev-options
-[`edge_detection_android_gpu.pbtxt`]:https://github.com/google/mediapipe/tree/master/mediapipe/graphs/object_detection/object_detection_android_gpu.pbtxt
+[`edge_detection_mobile_gpu.pbtxt`]:https://github.com/google/mediapipe/tree/master/mediapipe/graphs/object_detection/object_detection_mobile_gpu.pbtxt
 [`EdgeDetectionGPU` example]:https://github.com/google/mediapipe/tree/master/mediapipe/examples/android/src/java/com/google/mediapipe/apps/edgedetectiongpu/
 [`EglManager`]:https://github.com/google/mediapipe/tree/master/mediapipe/java/com/google/mediapipe/glutil/EglManager.java
 [`ExternalTextureConverter`]:https://github.com/google/mediapipe/tree/master/mediapipe/java/com/google/mediapipe/components/ExternalTextureConverter.java

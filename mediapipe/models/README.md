@@ -10,7 +10,7 @@ For details on the models, see [here](object_detection_saved_model/README.md).
    * [Object Detection on CPU on Android](../docs/object_detection_android_cpu.md)
 
 ### BlazeFace face detection model
-  *  [TFLite model](https://github.com/google/mediapipe/tree/master/mediapipe/models/facedetector_front.tflite)
+  *  [TFLite model](https://github.com/google/mediapipe/tree/master/mediapipe/models/face_detection_front.tflite)
   *  Paper: ["BlazeFace: Sub-millisecond Neural Face Detection on Mobile GPUs"](https://sites.google.com/corp/view/perception-cv4arvr/blazeface)
   *  Model card: [BlazeFace model card](https://sites.google.com/corp/view/perception-cv4arvr/blazeface#h.p_21ojPZDx3cqq)
 

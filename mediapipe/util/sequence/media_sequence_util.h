@@ -125,7 +125,8 @@ inline const tensorflow::Feature& GetContext(
   // print the missing key when it check-fails.
   const auto it = sequence.context().feature().find(key);
   CHECK(it != sequence.context().feature().end())
-      << "Could not find context key " << key;
+      << "Could not find context key " << key << ". Sequence: \n"
+      << sequence.DebugString();
   return it->second;
 }
 
@@ -219,7 +220,8 @@ inline const proto_ns::RepeatedField<float>& GetFloatsAt(
     const tensorflow::SequenceExample& sequence, const std::string& key,
     const int index) {
   const tensorflow::FeatureList& fl = GetFeatureList(sequence, key);
-  CHECK_LT(index, fl.feature_size());
+  CHECK_LT(index, fl.feature_size())
+      << "Sequence: \n " << sequence.DebugString();
   return fl.feature().Get(index).float_list().value();
 }
 
@@ -229,7 +231,8 @@ inline const proto_ns::RepeatedField<int64>& GetInt64sAt(
     const tensorflow::SequenceExample& sequence, const std::string& key,
     const int index) {
   const tensorflow::FeatureList& fl = GetFeatureList(sequence, key);
-  CHECK_LT(index, fl.feature_size());
+  CHECK_LT(index, fl.feature_size())
+      << "Sequence: \n " << sequence.DebugString();
   return fl.feature().Get(index).int64_list().value();
 }
 
@@ -239,7 +242,8 @@ inline const proto_ns::RepeatedPtrField<std::string>& GetBytesAt(
     const tensorflow::SequenceExample& sequence, const std::string& key,
     const int index) {
   const tensorflow::FeatureList& fl = GetFeatureList(sequence, key);
-  CHECK_LT(index, fl.feature_size());
+  CHECK_LT(index, fl.feature_size())
+      << "Sequence: \n " << sequence.DebugString();
   return fl.feature().Get(index).bytes_list().value();
 }
 

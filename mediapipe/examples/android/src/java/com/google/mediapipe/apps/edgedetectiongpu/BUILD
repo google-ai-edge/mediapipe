@@ -21,7 +21,7 @@ cc_binary(
     linkshared = 1,
     linkstatic = 1,
     deps = [
-        "//mediapipe/graphs/edge_detection:android_calculators",
+        "//mediapipe/graphs/edge_detection:mobile_calculators",
         "//mediapipe/java/com/google/mediapipe/framework/jni:mediapipe_framework_jni",
     ],
 )
@@ -37,7 +37,7 @@ cc_library(
 # MainActivity.BINARY_GRAPH_NAME = "appname.binarypb".
 genrule(
     name = "binary_graph",
-    srcs = ["//mediapipe/graphs/edge_detection:android_gpu_binary_graph"],
+    srcs = ["//mediapipe/graphs/edge_detection:mobile_gpu_binary_graph"],
     outs = ["edgedetectiongpu.binarypb"],
     cmd = "cp $< $@",
 )
@@ -57,8 +57,8 @@ android_library(
         "//mediapipe/java/com/google/mediapipe/components:android_components",
         "//mediapipe/java/com/google/mediapipe/framework:android_framework",
         "//mediapipe/java/com/google/mediapipe/glutil",
-        "//third_party:android_constraint_layout",
         "//third_party:androidx_appcompat",
+        "//third_party:androidx_constraint_layout",
         "//third_party:opencv",
         "@androidx_concurrent_futures//jar",
         "@com_google_guava_android//jar",
@@ -67,7 +67,6 @@ android_library(
 
 android_binary(
     name = "edgedetectiongpu",
-    aapt_version = "aapt2",
     manifest = "AndroidManifest.xml",
     manifest_values = {"applicationId": "com.google.mediapipe.apps.edgedetectiongpu"},
     multidex = "native",

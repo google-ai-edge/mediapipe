@@ -128,7 +128,7 @@ REGISTER_CALCULATOR(GlSurfaceSinkCalculator);
         renderer_->GlRender(src.width(), src.height(), dst_width, dst_height,
                             scale_mode_, FrameRotation::kNone,
                             /*flip_horizontal=*/false, /*flip_vertical=*/false,
-                            /*flip_texture=*/false));
+                            /*flip_texture=*/surface_holder_->flip_y));
 
     glBindTexture(src.target(), 0);
 

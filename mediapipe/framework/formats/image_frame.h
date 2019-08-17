@@ -12,28 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-//
-// Get a WImageView of the ImageFrame
-//   WImageView_b wimage_view =
-//       ::mediapipe::formats::WImageView<WImageView_b>(&const_frame);
-// The mutable version.
-//   WImageView_b wimage_view =
-//       ::mediapipe::formats::MutableWImageView<WImageView_b>(&frame);
-//
-// Get an IplImage view of the ImageFrame (this is efficient):
-//   ::mediapipe::formats::IplView(&frame);
-//
 // Get a cv::Mat view of the ImageFrame (this is efficient):
 //   ::mediapipe::formats::MatView(&frame);
-//
-// Make a constant colored ImageFrame:
-//   const uint8 kColor[] = {kRed, kGreen, kBlue, kAlpha};
-//   ImageFrame frame(ImageFormat::SRGB, kWidth, kHeight);
-//   ::mediapipe::formats::MutableWImageView<WImageView_b>(&frame).Set(kColor);
-//
-// Copying image data from a WImage:
-//   ::mediapipe::formats::MutableWImageView<WImageView1_b>(&gray8_image_frame)
-//       .CopyFrom(grayscale_wimage);
 //
 // Copying data from raw data (stored contiguously):
 //   frame.CopyPixelData(format, width, height, raw_data_ptr,
@@ -51,29 +31,6 @@
 //   cv::Mat destination = ::mediapipe::formats::MatView(&small_image);
 //   cv::resize(::mediapipe::formats::MatView(&large_image), destination,
 //              destination.size(), 0, 0, cv::INTER_LINEAR);
-//
-// Copy an ImageFrame into a RawImage:
-//   RawImage image;
-//   frame.CopyToResizeableImage(&image);
-//
-// Encoding a PNG image:
-//   WImageIO::EncodePNG(frame.Image<WImage_b>(), &image_string);
-//
-// Encoding a JPEG image:
-//   WImageIO::EncodeJPEG(frame.Image<WImage_b>(), 75 /* quality */,
-//                        &image_string);
-//
-// Decoding a (RGB) JPEG/PNG/WebP image:
-//   auto wimage = gtl::MakeUnique<WImageBuffer3_b>();
-//   auto* wimage_ptr = wimage.get();
-//   WImageIO::DecodeImage(image_string, wimage.get());
-//   auto frame = gtl::MakeUnique<ImageFrame>(
-//       /*format=*/ImageFormat::SRGB, /*width=*/wimage->Width(),
-//       /*height=*/wimage->Height(),
-//       /*width_step=*/wimage->WidthStep(),
-//       /*pixel_data=*/wimage->ImageData(),
-//       /*deleter=*/[wimage_ptr](uint8*) { delete wimage_ptr; });
-//   wimage.release();  // wimage is owned by frame now.
 
 #ifndef MEDIAPIPE_FRAMEWORK_FORMATS_IMAGE_FRAME_H_
 #define MEDIAPIPE_FRAMEWORK_FORMATS_IMAGE_FRAME_H_

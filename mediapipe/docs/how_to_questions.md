@@ -19,7 +19,7 @@ section
 [GpuBuffer to ImageFrame converters](./gpu.md).
 You can see an example in:
 
-   * [`object_detection_android_cpu.pbtxt`]
+*   [`object_detection_mobile_cpu.pbtxt`]
 
 ### How to visualize perception results
 
@@ -29,7 +29,7 @@ the recognized objects. The results can be displayed in a diagnostic window when
 running on a workstation, or in a texture frame when running on device. You can
 see an example use of [`AnnotationOverlayCalculator`] in:
 
-   * [`face_detection_android_gpu.pbtxt`].
+*   [`face_detection_mobile_gpu.pbtxt`].
 
 ### How to run calculators in parallel
 
@@ -106,7 +106,7 @@ continues as long as necessary. For online processing, it is often necessary to
 drop input packets in order to keep pace with the arrival of input data frames.
 When inputs arrive too frequently, the recommended technique for dropping
 packets is to use the MediaPipe calculators designed specifically for this
-purpose such as [`RealTimeFlowLimiterCalculator`] and [`PacketClonerCalculator`].
+purpose such as [`FlowLimiterCalculator`] and [`PacketClonerCalculator`].
 
 For online processing, it is also necessary to promptly determine when processing
 can proceed. MediaPipe supports this by propagating timestamp bounds between
@@ -124,20 +124,19 @@ MacOS, Android, and iOS.  The core of MediaPipe framework is a C++ library
 conforming to the C++11 standard, so it is relatively easy to port to
 additional platforms.
 
-[`object_detection_android_cpu.pbtxt`]: https://github.com/google/mediapipe/tree/master/mediapipe/graphs/object_detection/object_detection_android_cpu.pbtxt
-
+[`object_detection_mobile_cpu.pbtxt`]: https://github.com/google/mediapipe/tree/master/mediapipe/graphs/object_detection/object_detection_mobile_cpu.pbtxt
 [`ImageFrame`]: https://github.com/google/mediapipe/tree/master/mediapipe/framework/formats/image_frame.h
 [`GpuBuffer`]: https://github.com/google/mediapipe/tree/master/mediapipe/gpu/gpu_buffer.h
 [`GpuBufferToImageFrameCalculator`]: https://github.com/google/mediapipe/tree/master/mediapipe/gpu/gpu_buffer_to_image_frame_calculator.cc
 [`ImageFrameToGpuBufferCalculator`]: https://github.com/google/mediapipe/tree/master/mediapipe/gpu/image_frame_to_gpu_buffer_calculator.cc
 [`AnnotationOverlayCalculator`]: https://github.com/google/mediapipe/tree/master/mediapipe/calculators/util/annotation_overlay_calculator.cc
-[`face_detection_android_gpu.pbtxt`]: https://github.com/google/mediapipe/tree/master/mediapipe/graphs/face_detection/face_detection_android_gpu.pbtxt
+[`face_detection_mobile_gpu.pbtxt`]: https://github.com/google/mediapipe/tree/master/mediapipe/graphs/face_detection/face_detection_mobile_gpu.pbtxt
 [`CalculatorBase::Process`]: https://github.com/google/mediapipe/tree/master/mediapipe/framework/calculator_base.h
 [`max_in_flight`]: https://github.com/google/mediapipe/tree/master/mediapipe/framework/calculator.proto
 [`RoundRobinDemuxCalculator`]: https://github.com/google/mediapipe/tree/master//mediapipe/calculators/core/round_robin_demux_calculator.cc
 [`ScaleImageCalculator`]: https://github.com/google/mediapipe/tree/master/mediapipe/calculators/image/scale_image_calculator.cc
 [`ImmediateInputStreamHandler`]: https://github.com/google/mediapipe/tree/master/mediapipe/framework/stream_handler/immediate_input_stream_handler.cc
 [`CalculatorGraphConfig`]: https://github.com/google/mediapipe/tree/master/mediapipe/framework/calculator.proto
-[`RealTimeFlowLimiterCalculator`]: https://github.com/google/mediapipe/tree/master/mediapipe/calculators/core/real_time_flow_limiter_calculator.cc
+[`FlowLimiterCalculator`]: https://github.com/google/mediapipe/tree/master/mediapipe/calculators/core/flow_limiter_calculator.cc
 [`PacketClonerCalculator`]: https://github.com/google/mediapipe/tree/master/mediapipe/calculators/core/packet_cloner_calculator.cc
 [`MakePairCalculator`]: https://github.com/google/mediapipe/tree/master/mediapipe/calculators/core/make_pair_calculator.cc

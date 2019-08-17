@@ -17,7 +17,7 @@ package com.google.mediapipe.framework;
 import android.content.Context;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.res.AssetManager;
-import android.support.annotation.VisibleForTesting;
+import androidx.annotation.VisibleForTesting;
 import android.text.TextUtils;
 import com.google.common.base.Preconditions;
 import com.google.common.flogger.FluentLogger;

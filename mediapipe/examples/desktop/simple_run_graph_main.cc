@@ -31,7 +31,7 @@ DEFINE_string(input_side_packets, "",
               "for the CalculatorGraph. All values will be treated as the "
               "string type even if they represent doubles, floats, etc.");
 
-::mediapipe::Status RunMediaPipeGraph() {
+::mediapipe::Status RunMPPGraph() {
   std::string calculator_graph_config_contents;
   RETURN_IF_ERROR(mediapipe::file::GetContents(
       FLAGS_calculator_graph_config_file, &calculator_graph_config_contents));
@@ -60,7 +60,7 @@ DEFINE_string(input_side_packets, "",
 int main(int argc, char** argv) {
   google::InitGoogleLogging(argv[0]);
   gflags::ParseCommandLineFlags(&argc, &argv, true);
-  ::mediapipe::Status run_status = RunMediaPipeGraph();
+  ::mediapipe::Status run_status = RunMPPGraph();
   if (!run_status.ok()) {
     LOG(ERROR) << "Failed to run the graph: " << run_status.message();
   } else {

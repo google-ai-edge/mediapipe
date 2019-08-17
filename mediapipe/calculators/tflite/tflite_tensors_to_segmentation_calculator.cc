@@ -20,6 +20,9 @@
 #include "mediapipe/framework/calculator_context.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/image_frame.h"
+#include "mediapipe/framework/formats/image_frame_opencv.h"
+#include "mediapipe/framework/port/opencv_imgcodecs_inc.h"
+#include "mediapipe/framework/port/opencv_imgproc_inc.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/util/resource_util.h"
 #include "tensorflow/lite/interpreter.h"
@@ -39,8 +42,11 @@ namespace {
 constexpr int kWorkgroupSize = 8;  // Block size for GPU shader.
 enum { ATTRIB_VERTEX, ATTRIB_TEXTURE_POSITION, NUM_ATTRIBUTES };
 // Commonly used to compute the number of blocks to launch in a kernel.
-int RoundUp(const int size, const int multiple) {
-  return (size + multiple - 1) / multiple;
+int NumGroups(const int size, const int group_size) {  // NOLINT
+  return (size + group_size - 1) / group_size;
+}
+float Clamp(float val, float min, float max) {
+  return std::min(std::max(val, min), max);
 }
 }  // namespace
 
@@ -58,7 +64,7 @@ using ::tflite::gpu::gl::GlShader;
 // Performs optional upscale to REFERENCE_IMAGE dimensions if provided,
 // otherwise the mask is the same size as input tensor.
 //
-// Note: This calculator is currently GPU only, so only *_GPU tags can be used.
+// Produces result as an RGBA image, with the mask in both R & A channels.
 //
 // Inputs:
 //   One of the following TENSORS tags:
@@ -71,11 +77,11 @@ using ::tflite::gpu::gl::GlShader;
 //   REFERENCE_IMAGE_GPU (optional): A GpuBuffer input image,
 //                                   used only for output dimensions.
 //   One of the following PREV_MASK tags:
-//   PREV_MASK (optional): An ImageFrame input mask, Gray, RGB or RGBA.
-//   PREV_MASK_GPU (optional): A GpuBuffer input mask, RGBA.
+//   PREV_MASK (optional): An ImageFrame input mask, Gray, RGB or RGBA, [0-255].
+//   PREV_MASK_GPU (optional): A GpuBuffer input mask, RGBA, [0-1].
 // Output:
 //   One of the following MASK tags:
-//   MASK: An ImageFrame output mask, Gray, RGB or RGBA.
+//   MASK: An ImageFrame output mask, RGBA.
 //   MASK_GPU: A GpuBuffer output mask, RGBA.
 //
 // Options:
@@ -141,10 +147,10 @@ REGISTER_CALCULATOR(TfLiteTensorsToSegmentationCalculator);
     cc->Inputs().Tag("TENSORS").Set<std::vector<TfLiteTensor>>();
   }
   if (cc->Inputs().HasTag("PREV_MASK")) {
-    cc->Inputs().Tag("PREV_MASK").Set<mediapipe::ImageFrame>();
+    cc->Inputs().Tag("PREV_MASK").Set<ImageFrame>();
   }
   if (cc->Inputs().HasTag("REFERENCE_IMAGE")) {
-    cc->Inputs().Tag("REFERENCE_IMAGE").Set<mediapipe::ImageFrame>();
+    cc->Inputs().Tag("REFERENCE_IMAGE").Set<ImageFrame>();
   }
 
   // Inputs GPU.
@@ -162,7 +168,7 @@ REGISTER_CALCULATOR(TfLiteTensorsToSegmentationCalculator);
 
   // Outputs.
   if (cc->Outputs().HasTag("MASK")) {
-    cc->Outputs().Tag("MASK").Set<mediapipe::ImageFrame>();
+    cc->Outputs().Tag("MASK").Set<ImageFrame>();
   }
 #if defined(__ANDROID__)
   if (cc->Outputs().HasTag("MASK_GPU")) {
@@ -179,6 +185,8 @@ REGISTER_CALCULATOR(TfLiteTensorsToSegmentationCalculator);
 
 ::mediapipe::Status TfLiteTensorsToSegmentationCalculator::Open(
     CalculatorContext* cc) {
+  cc->SetOffset(TimestampDiff(0));
+
   if (cc->Inputs().HasTag("TENSORS_GPU")) {
     use_gpu_ = true;
 #if defined(__ANDROID__)
@@ -238,7 +246,107 @@ REGISTER_CALCULATOR(TfLiteTensorsToSegmentationCalculator);
 
 ::mediapipe::Status TfLiteTensorsToSegmentationCalculator::ProcessCpu(
     CalculatorContext* cc) {
-  return ::mediapipe::UnimplementedError("CPU support is not implemented yet.");
+  if (cc->Inputs().Tag("TENSORS").IsEmpty()) {
+    return ::mediapipe::OkStatus();
+  }
+
+  // Get input streams.
+  const auto& input_tensors =
+      cc->Inputs().Tag("TENSORS").Get<std::vector<TfLiteTensor>>();
+  const bool has_prev_mask = cc->Inputs().HasTag("PREV_MASK") &&
+                             !cc->Inputs().Tag("PREV_MASK").IsEmpty();
+  const ImageFrame placeholder;
+  const auto& input_mask = has_prev_mask
+                               ? cc->Inputs().Tag("PREV_MASK").Get<ImageFrame>()
+                               : placeholder;
+  int output_width = tensor_width_, output_height = tensor_height_;
+  if (cc->Inputs().HasTag("REFERENCE_IMAGE")) {
+    const auto& input_image =
+        cc->Inputs().Tag("REFERENCE_IMAGE").Get<ImageFrame>();
+    output_width = input_image.Width();
+    output_height = input_image.Height();
+  }
+  RET_CHECK_EQ(input_tensors.size(), 1);
+
+  // Create initial working mask.
+  cv::Mat small_mask_mat(cv::Size(tensor_width_, tensor_height_), CV_8UC4);
+
+  // Get input previous mask.
+  cv::Mat input_mask_mat;
+  if (has_prev_mask) {
+    cv::Mat temp_mask_mat = formats::MatView(&input_mask);
+    if (temp_mask_mat.channels() != 4) {
+      cv::Mat converted_mat;
+      cv::cvtColor(temp_mask_mat, converted_mat,
+                   temp_mask_mat.channels() == 1 ? cv::COLOR_GRAY2RGBA
+                                                 : cv::COLOR_RGB2RGBA);
+      temp_mask_mat = converted_mat.clone();
+    }
+    cv::resize(temp_mask_mat, input_mask_mat, small_mask_mat.size());
+  }
+
+  // Copy input tensor.
+  const TfLiteTensor* raw_input_tensor = &input_tensors[0];
+  const float* raw_input_data = raw_input_tensor->data.f;
+  cv::Mat tensor_mat(cv::Size(tensor_width_, tensor_height_),
+                     CV_MAKETYPE(CV_32F, tensor_channels_));
+  float* tensor_mat_ptr = tensor_mat.ptr<float>();
+  memcpy(tensor_mat_ptr, raw_input_data, raw_input_tensor->bytes);
+
+  // Process mask tensor.
+  // Run softmax over tensor output and blend with previous mask.
+  const int output_layer_index = options_.output_layer_index();
+  const float combine_with_prev_ratio = options_.combine_with_previous_ratio();
+  for (int i = 0; i < tensor_height_; ++i) {
+    for (int j = 0; j < tensor_width_; ++j) {
+      // Only two channel input tensor is supported.
+      const cv::Vec2f input_pix = tensor_mat.at<cv::Vec2f>(i, j);
+      const float shift = std::max(input_pix[0], input_pix[1]);
+      const float softmax_denom =
+          std::exp(input_pix[0] - shift) + std::exp(input_pix[1] - shift);
+      float new_mask_value =
+          std::exp(input_pix[output_layer_index] - shift) / softmax_denom;
+      // Combine previous value with current using uncertainty^2 as mixing coeff
+      if (has_prev_mask) {
+        const float prev_mask_value =
+            input_mask_mat.at<cv::Vec4b>(i, j)[0] / 255.0f;
+        const float eps = 0.001;
+        float uncertainty_alpha =
+            1.0 +
+            (new_mask_value * std::log(new_mask_value + eps) +
+             (1.0 - new_mask_value) * std::log(1.0 - new_mask_value + eps)) /
+                std::log(2.0f);
+        uncertainty_alpha = Clamp(uncertainty_alpha, 0.0f, 1.0f);
+        // Equivalent to: a = 1 - (1 - a) * (1 - a);  (squaring the uncertainty)
+        uncertainty_alpha *= 2.0 - uncertainty_alpha;
+        const float mixed_mask_value =
+            new_mask_value * uncertainty_alpha +
+            prev_mask_value * (1.0f - uncertainty_alpha);
+        new_mask_value = mixed_mask_value * combine_with_prev_ratio +
+                         (1.0f - combine_with_prev_ratio) * new_mask_value;
+      }
+      const uchar mask_value = static_cast<uchar>(new_mask_value * 255);
+      // Set both R and A channels for convenience.
+      const cv::Vec4b out_value = {mask_value, 0, 0, mask_value};
+      small_mask_mat.at<cv::Vec4b>(i, j) = out_value;
+    }
+  }
+
+  if (options_.flip_vertically()) cv::flip(small_mask_mat, small_mask_mat, 0);
+
+  // Upsample small mask into output.
+  cv::Mat large_mask_mat;
+  cv::resize(small_mask_mat, large_mask_mat,
+             cv::Size(output_width, output_height));
+
+  // Send out image as CPU packet.
+  std::unique_ptr<ImageFrame> output_mask = absl::make_unique<ImageFrame>(
+      ImageFormat::SRGBA, output_width, output_height);
+  cv::Mat output_mat = formats::MatView(output_mask.get());
+  large_mask_mat.copyTo(output_mat);
+  cc->Outputs().Tag("MASK").Add(output_mask.release(), cc->InputTimestamp());
+
+  return ::mediapipe::OkStatus();
 }
 
 // Steps:
@@ -267,10 +375,9 @@ REGISTER_CALCULATOR(TfLiteTensorsToSegmentationCalculator);
     output_width = input_image.width();
     output_height = input_image.height();
   }
-
   RET_CHECK_EQ(input_tensors.size(), 1);
 
-  // Create initial output mask texture.
+  // Create initial working mask texture.
   ::tflite::gpu::gl::GlTexture small_mask_texture;
   ::tflite::gpu::gl::CreateReadWriteRgbaImageTexture(
       tflite::gpu::DataType::UINT8,  // GL_RGBA8
@@ -285,6 +392,7 @@ REGISTER_CALCULATOR(TfLiteTensorsToSegmentationCalculator);
   tflite::gpu::gl::CopyBuffer(input_tensors[0], *tensor_buffer_);
 
   // Run shader, process mask tensor.
+  // Run softmax over tensor output and blend with previous mask.
   {
     const int output_index = 0;
     glBindImageTexture(output_index, small_mask_texture.id(), 0, GL_FALSE, 0,
@@ -292,8 +400,8 @@ REGISTER_CALCULATOR(TfLiteTensorsToSegmentationCalculator);
     tensor_buffer_->BindToIndex(2);
 
     const tflite::gpu::uint3 workgroups = {
-        RoundUp(tensor_width_, kWorkgroupSize),
-        RoundUp(tensor_height_, kWorkgroupSize), 1};
+        NumGroups(tensor_width_, kWorkgroupSize),
+        NumGroups(tensor_height_, kWorkgroupSize), 1};
 
     if (!has_prev_mask) {
       mask_program_no_prev_->Dispatch(workgroups);
@@ -330,8 +438,8 @@ REGISTER_CALCULATOR(TfLiteTensorsToSegmentationCalculator);
   // Cleanup
   input_mask_texture.Release();
   output_texture.Release();
-
 #endif  // __ANDROID__
+
   return ::mediapipe::OkStatus();
 }
 
@@ -445,7 +553,7 @@ void main() {
   int linear_index = gid.y * out_width + gid.x;
   vec2 input_value = input_data.elements[linear_index];
 
-  // Only two channel output is supported.
+  // Only two channel input tensor is supported.
   vec2 input_px = input_value.rg;
   float shift = max(input_px.r, input_px.g);
   float softmax_denom = exp(input_px.r - shift) + exp(input_px.g - shift);
@@ -474,8 +582,8 @@ void main() {
                  (1.0f - combine_with_previous_ratio) * new_mask_value;
 #endif  // READ_PREVIOUS
 
-  // Texture coordinates are inverted on y axis.
-  ivec2 output_coordinate = ivec2(gid.x, out_height - gid.y - 1);
+  int y_coord = int($4);
+  ivec2 output_coordinate = ivec2(gid.x, y_coord);
   // Set both R and A channels for convenience.
   vec4 out_value = vec4(new_mask_value, 0.0, 0.0, new_mask_value);
   imageStore(output_texture, output_coordinate, out_value);
@@ -483,10 +591,12 @@ void main() {
 
   const std::string shader_src_no_previous = absl::Substitute(
       shader_src_template, kWorkgroupSize, options_.output_layer_index(),
-      options_.combine_with_previous_ratio(), "");
+      options_.combine_with_previous_ratio(), "",
+      options_.flip_vertically() ? "out_height - gid.y - 1" : "gid.y");
   const std::string shader_src_with_previous = absl::Substitute(
       shader_src_template, kWorkgroupSize, options_.output_layer_index(),
-      options_.combine_with_previous_ratio(), "#define READ_PREVIOUS");
+      options_.combine_with_previous_ratio(), "#define READ_PREVIOUS",
+      options_.flip_vertically() ? "out_height - gid.y - 1" : "gid.y");
 
   auto status = ::tflite::gpu::OkStatus();
 

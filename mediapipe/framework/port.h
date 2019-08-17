@@ -22,8 +22,9 @@
 // For consistency, we now set MEDIAPIPE_MOBILE there too. However, for the sake
 // of projects that may want to build MediaPipe using alternative build systems,
 // we also try to set platform-specific defines in this header if missing.
-#if !defined(MEDIAPIPE_MOBILE) && \
-    (defined(__ANDROID__) || defined(__APPLE__) || defined(__EMSCRIPTEN__))
+#if !defined(MEDIAPIPE_MOBILE) &&                                      \
+    (defined(__ANDROID__) || (defined(__APPLE__) && !TARGET_OS_OSX) || \
+     defined(__EMSCRIPTEN__))
 #define MEDIAPIPE_MOBILE
 #endif
 

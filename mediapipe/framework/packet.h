@@ -46,12 +46,6 @@ class Packet;
 namespace packet_internal {
 class HolderBase;
 
-// Defined in packet_serialization.cc
-// TODO Remove once friend statements are unneeded.
-::mediapipe::StatusOr<std::string> SerializePacket(const Packet& packet);
-::mediapipe::StatusOr<std::string> SerializePacketContents(
-    const Packet& packet);
-
 Packet Create(HolderBase* holder);
 Packet Create(HolderBase* holder, Timestamp timestamp);
 const HolderBase* GetHolder(const Packet& packet);
@@ -69,9 +63,6 @@ const HolderBase* GetHolder(const Packet& packet);
 // The Packet typically owns the object that it contains, but
 // PointToForeign allows a Packet to be constructed which does not
 // own it's data.
-//
-// See packet_serialization.h for helper functions to serialize and
-// deserialize packets.
 //
 // This class is thread compatible.
 class Packet {
@@ -200,13 +191,6 @@ class Packet {
   std::string DebugTypeName() const;
 
  private:
-  // TODO Change serialize_fn to take a Packet instead of a
-  // HolderBase, removing the need to friend these classes.
-  friend ::mediapipe::StatusOr<std::string> SerializePacket(
-      const Packet& packet);
-  friend ::mediapipe::StatusOr<std::string> SerializePacketContents(
-      const Packet& packet);
-
   friend Packet packet_internal::Create(packet_internal::HolderBase* holder);
   friend Packet packet_internal::Create(packet_internal::HolderBase* holder,
                                         class Timestamp timestamp);

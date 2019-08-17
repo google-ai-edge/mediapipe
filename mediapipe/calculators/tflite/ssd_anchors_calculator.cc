@@ -73,6 +73,8 @@ class SsdAnchorsCalculator : public CalculatorBase {
   }
 
   ::mediapipe::Status Open(CalculatorContext* cc) override {
+    cc->SetOffset(TimestampDiff(0));
+
     const SsdAnchorsCalculatorOptions& options =
         cc->Options<SsdAnchorsCalculatorOptions>();
 

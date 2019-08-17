@@ -21,7 +21,7 @@ cc_binary(
     linkshared = 1,
     linkstatic = 1,
     deps = [
-        "//mediapipe/graphs/face_detection:android_calculators",
+        "//mediapipe/graphs/face_detection:mobile_calculators",
         "//mediapipe/java/com/google/mediapipe/framework/jni:mediapipe_framework_jni",
     ],
 )
@@ -37,7 +37,7 @@ cc_library(
 # MainActivity.BINARY_GRAPH_NAME = "appname.binarypb".
 genrule(
     name = "binary_graph",
-    srcs = ["//mediapipe/graphs/face_detection:android_gpu_binary_graph"],
+    srcs = ["//mediapipe/graphs/face_detection:mobile_gpu_binary_graph"],
     outs = ["facedetectiongpu.binarypb"],
     cmd = "cp $< $@",
 )
@@ -47,8 +47,8 @@ android_library(
     srcs = glob(["*.java"]),
     assets = [
         ":binary_graph",
-        "//mediapipe/models:facedetector_front.tflite",
-        "//mediapipe/models:facedetector_front_labelmap.txt",
+        "//mediapipe/models:face_detection_front.tflite",
+        "//mediapipe/models:face_detection_front_labelmap.txt",
     ],
     assets_dir = "",
     manifest = "AndroidManifest.xml",
@@ -59,11 +59,12 @@ android_library(
         "//mediapipe/java/com/google/mediapipe/components:android_components",
         "//mediapipe/java/com/google/mediapipe/framework:android_framework",
         "//mediapipe/java/com/google/mediapipe/glutil",
-        "//third_party:android_constraint_layout",
         "//third_party:androidx_appcompat",
+        "//third_party:androidx_constraint_layout",
+        "//third_party:androidx_legacy_support_v4",
+        "//third_party:androidx_material",
+        "//third_party:androidx_recyclerview",
         "//third_party:opencv",
-        "@androidsdk//com.android.support:recyclerview-v7-25.0.0",
-        "@androidsdk//com.android.support:support-v4-25.0.0",
         "@androidx_concurrent_futures//jar",
         "@androidx_lifecycle//jar",
         "@com_google_code_findbugs//jar",
@@ -73,7 +74,6 @@ android_library(
 
 android_binary(
     name = "facedetectiongpu",
-    aapt_version = "aapt2",
     manifest = "AndroidManifest.xml",
     manifest_values = {"applicationId": "com.google.mediapipe.apps.facedetectiongpu"},
     multidex = "native",

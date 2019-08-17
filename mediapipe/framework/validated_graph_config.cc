@@ -218,6 +218,8 @@ std::string NodeTypeInfo::NodeTypeToString(NodeType node_type) {
   node_.type = NodeType::CALCULATOR;
   node_.index = node_index;
   RETURN_IF_ERROR(contract_.Initialize(node));
+  contract_.SetNodeName(
+      CanonicalNodeName(validated_graph.Config(), node_index));
 
   // Ensure input_stream_info field is well formed.
   if (!node.input_stream_info().empty()) {

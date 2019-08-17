@@ -15,6 +15,7 @@
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status.h"
+#include "mediapipe/framework/tool/options_util.h"
 #include "mediapipe/gpu/gl_calculator_helper.h"
 #include "mediapipe/gpu/gl_quad_renderer.h"
 #include "mediapipe/gpu/gl_scaler_calculator.pb.h"
@@ -52,6 +53,8 @@ namespace mediapipe {
 //   both having padding of 1 pixels. So the value of output stream is 1 / 5 =
 //   0.2.
 // Additional input side packets:
+//   OPTIONS: the GlScalerCalculatorOptions to use. Will replace or merge with
+//   existing calculator options, depending on field merge_fields.
 //   OUTPUT_DIMENSIONS: the output width and height in pixels.
 //   ROTATION: the counterclockwise rotation angle in degrees.
 // These can also be specified as options.
@@ -101,6 +104,9 @@ REGISTER_CALCULATOR(GlScalerCalculator);
   }
   RETURN_IF_ERROR(GlCalculatorHelper::UpdateContract(cc));
 
+  if (cc->InputSidePackets().HasTag("OPTIONS")) {
+    cc->InputSidePackets().Tag("OPTIONS").Set<GlScalerCalculatorOptions>();
+  }
   if (HasTagOrIndex(&cc->InputSidePackets(), "OUTPUT_DIMENSIONS", 1)) {
     TagOrIndex(&cc->InputSidePackets(), "OUTPUT_DIMENSIONS", 1)
         .Set<DimensionsPacketType>();
@@ -127,7 +133,9 @@ REGISTER_CALCULATOR(GlScalerCalculator);
   RETURN_IF_ERROR(helper_.Open(cc));
 
   int rotation_ccw = 0;
-  const auto& options = cc->Options<GlScalerCalculatorOptions>();
+  const auto& options =
+      tool::RetrieveOptions(cc->Options<GlScalerCalculatorOptions>(),
+                            cc->InputSidePackets(), "OPTIONS");
   if (options.has_output_width()) {
     dst_width_ = options.output_width();
   }

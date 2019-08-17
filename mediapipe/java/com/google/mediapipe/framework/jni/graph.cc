@@ -114,9 +114,7 @@ class CallbackHandler {
 }  // namespace internal
 
 Graph::Graph()
-    : graph_loaded_(false),
-      executor_stack_size_increased_(false),
-      global_java_packet_cls_(nullptr) {}
+    : executor_stack_size_increased_(false), global_java_packet_cls_(nullptr) {}
 
 Graph::~Graph() {
   if (running_graph_) {
@@ -175,13 +173,14 @@ void Graph::EnsureMinimumExecutorStackSizeForJava() {}
 
 ::mediapipe::Status Graph::AddCallbackHandler(std::string output_stream_name,
                                               jobject java_callback) {
-  if (!graph_loaded_) {
+  if (!graph_config()) {
     return ::mediapipe::InternalError("Graph is not loaded!");
   }
   std::unique_ptr<internal::CallbackHandler> handler(
       new internal::CallbackHandler(this, java_callback));
   std::string side_packet_name;
-  tool::AddCallbackCalculator(output_stream_name, &graph_, &side_packet_name,
+  tool::AddCallbackCalculator(output_stream_name, graph_config(),
+                              &side_packet_name,
                               /* use_std_function = */ true);
   EnsureMinimumExecutorStackSizeForJava();
   side_packets_callbacks_.emplace(
@@ -193,14 +192,14 @@ void Graph::EnsureMinimumExecutorStackSizeForJava() {}
 
 ::mediapipe::Status Graph::AddCallbackWithHeaderHandler(
     std::string output_stream_name, jobject java_callback) {
-  if (!graph_loaded_) {
+  if (!graph_config()) {
     return ::mediapipe::InternalError("Graph is not loaded!");
   }
   std::unique_ptr<internal::CallbackHandler> handler(
       new internal::CallbackHandler(this, java_callback));
   std::string side_packet_name;
   tool::AddCallbackWithHeaderCalculator(output_stream_name, output_stream_name,
-                                        &graph_, &side_packet_name,
+                                        graph_config(), &side_packet_name,
                                         /* use_std_function = */ true);
   EnsureMinimumExecutorStackSizeForJava();
   side_packets_callbacks_.emplace(
@@ -212,7 +211,7 @@ void Graph::EnsureMinimumExecutorStackSizeForJava() {}
 }
 
 int64_t Graph::AddSurfaceOutput(const std::string& output_stream_name) {
-  if (!graph_loaded_) {
+  if (!graph_config()) {
     LOG(ERROR) << "Graph is not loaded!";
     return 0;
   }
@@ -220,9 +219,9 @@ int64_t Graph::AddSurfaceOutput(const std::string& output_stream_name) {
 #ifdef MEDIAPIPE_DISABLE_GPU
   LOG(FATAL) << "GPU support has been disabled in this build!";
 #else
-  CalculatorGraphConfig::Node* sink_node = graph_.add_node();
+  CalculatorGraphConfig::Node* sink_node = graph_config()->add_node();
   sink_node->set_name(::mediapipe::tool::GetUnusedNodeName(
-      graph_, absl::StrCat("egl_surface_sink_", output_stream_name)));
+      *graph_config(), absl::StrCat("egl_surface_sink_", output_stream_name)));
   sink_node->set_calculator("GlSurfaceSinkCalculator");
   sink_node->add_input_stream(output_stream_name);
   sink_node->add_input_side_packet(
@@ -230,7 +229,7 @@ int64_t Graph::AddSurfaceOutput(const std::string& output_stream_name) {
 
   const std::string input_side_packet_name =
       ::mediapipe::tool::GetUnusedSidePacketName(
-          graph_, absl::StrCat(output_stream_name, "_surface"));
+          *graph_config(), absl::StrCat(output_stream_name, "_surface"));
   sink_node->add_input_side_packet(
       absl::StrCat("SURFACE:", input_side_packet_name));
 
@@ -249,24 +248,47 @@ int64_t Graph::AddSurfaceOutput(const std::string& output_stream_name) {
   if (!status.ok()) {
     return status;
   }
-  if (!graph_.ParseFromString(graph_config_string)) {
-    return ::mediapipe::InvalidArgumentError(
-        absl::StrCat("Failed to parse the graph: ", path_to_graph));
-  }
-  graph_loaded_ = true;
-  return ::mediapipe::OkStatus();
+  return LoadBinaryGraph(graph_config_string.c_str(),
+                         graph_config_string.length());
 }
 
 ::mediapipe::Status Graph::LoadBinaryGraph(const char* data, int size) {
-  if (!graph_.ParseFromArray(data, size)) {
+  CalculatorGraphConfig graph_config;
+  if (!graph_config.ParseFromArray(data, size)) {
     return ::mediapipe::InvalidArgumentError("Failed to parse the graph");
   }
-  graph_loaded_ = true;
+  graph_configs_.push_back(graph_config);
   return ::mediapipe::OkStatus();
 }
 
-const CalculatorGraphConfig& Graph::GetCalculatorGraphConfig() {
-  return graph_;
+::mediapipe::Status Graph::LoadBinaryGraphTemplate(const char* data, int size) {
+  CalculatorGraphTemplate graph_template;
+  if (!graph_template.ParseFromArray(data, size)) {
+    return ::mediapipe::InvalidArgumentError("Failed to parse the graph");
+  }
+  graph_templates_.push_back(graph_template);
+  return ::mediapipe::OkStatus();
+}
+
+::mediapipe::Status Graph::SetGraphType(std::string graph_type) {
+  graph_type_ = graph_type;
+  return ::mediapipe::OkStatus();
+}
+
+::mediapipe::Status Graph::SetGraphOptions(const char* data, int size) {
+  if (!graph_options_.ParseFromArray(data, size)) {
+    return ::mediapipe::InvalidArgumentError("Failed to parse the graph");
+  }
+  return ::mediapipe::OkStatus();
+}
+
+CalculatorGraphConfig Graph::GetCalculatorGraphConfig() {
+  CalculatorGraph temp_graph;
+  ::mediapipe::Status status = InitializeGraph(&temp_graph);
+  if (!status.ok()) {
+    LOG(ERROR) << "GetCalculatorGraphConfig failed:\n" << status.message();
+  }
+  return temp_graph.Config();
 }
 
 void Graph::CallbackToJava(JNIEnv* env, jobject java_callback_obj,
@@ -332,10 +354,15 @@ void Graph::SetPacketJavaClass(JNIEnv* env) {
   SetPacketJavaClass(env);
   // Running as a synchronized mode, the same Java thread is available through
   // out the run.
-  CalculatorGraph calculator_graph(graph_);
+  CalculatorGraph calculator_graph;
+  ::mediapipe::Status status = InitializeGraph(&calculator_graph);
+  if (!status.ok()) {
+    LOG(ERROR) << status.message();
+    running_graph_.reset(nullptr);
+    return status;
+  }
   // TODO: gpu & services set up!
-  ::mediapipe::Status status =
-      calculator_graph.Run(CreateCombinedSidePackets());
+  status = calculator_graph.Run(CreateCombinedSidePackets());
   LOG(INFO) << "Graph run finished.";
 
   return status;
@@ -354,8 +381,8 @@ void Graph::SetPacketJavaClass(JNIEnv* env) {
   // Set the mode for adding packets to graph input streams.
   running_graph_->SetGraphInputStreamAddMode(graph_input_stream_add_mode_);
   if (VLOG_IS_ON(2)) {
-    LOG(INFO) << "input side packet streams:";
-    for (auto& name : graph_.input_stream()) {
+    LOG(INFO) << "input packet streams:";
+    for (auto& name : graph_config()->input_stream()) {
       LOG(INFO) << name;
     }
   }
@@ -379,7 +406,7 @@ void Graph::SetPacketJavaClass(JNIEnv* env) {
     }
   }
 
-  status = running_graph_->Initialize(graph_);
+  status = InitializeGraph(running_graph_.get());
   if (!status.ok()) {
     LOG(ERROR) << status.message();
     running_graph_.reset(nullptr);
@@ -527,6 +554,46 @@ ProfilingContext* Graph::GetProfilingContext() {
     return running_graph_->profiler();
   }
   return nullptr;
+}
+
+CalculatorGraphConfig* Graph::graph_config() {
+  // Return the last specified graph config with the required graph_type.
+  for (auto it = graph_configs_.rbegin(); it != graph_configs_.rend(); ++it) {
+    if (it->type() == graph_type()) {
+      return &*it;
+    }
+  }
+  for (auto it = graph_templates_.rbegin(); it != graph_templates_.rend();
+       ++it) {
+    if (it->mutable_config()->type() == graph_type()) {
+      return it->mutable_config();
+    }
+  }
+  return nullptr;
+}
+
+std::string Graph::graph_type() {
+  // If a graph-type is specified, that type is used.  Otherwise the
+  // graph-type of the last specified graph config is used.
+  if (graph_type_ != "<none>") {
+    return graph_type_;
+  }
+  if (!graph_configs_.empty()) {
+    return graph_configs_.back().type();
+  }
+  if (!graph_templates_.empty()) {
+    return graph_templates_.back().config().type();
+  }
+  return "";
+}
+
+::mediapipe::Status Graph::InitializeGraph(CalculatorGraph* graph) {
+  if (graph_configs_.size() == 1 && graph_templates_.empty()) {
+    return graph->Initialize(*graph_config());
+  } else {
+    return graph->Initialize(graph_configs_, graph_templates_, {}, graph_type(),
+                             &graph_options_);
+  }
 }
 
 }  // namespace android

@@ -66,7 +66,7 @@ bool IsProfilerEnabled(const ProfilerConfig& profiler_config) {
 
 // Returns true if trace events are recorded.
 bool IsTracerEnabled(const ProfilerConfig& profiler_config) {
-  return profiler_config.trace_log_capacity() > 0;
+  return profiler_config.trace_enabled();
 }
 
 // Returns true if trace events are written to a log file.
@@ -586,7 +586,7 @@ void AssignNodeNames(GraphProfile* profile) {
       absl::Microseconds(profiler_config_.trace_log_margin_usec());
   GraphProfile profile;
   GraphTrace* trace = profile.add_graph_trace();
-  if (profiler_config_.trace_log_duration_events()) {
+  if (!profiler_config_.trace_log_duration_events()) {
     tracer()->GetTrace(previous_log_end_time_, end_time, trace);
   } else {
     tracer()->GetLog(previous_log_end_time_, end_time, trace);

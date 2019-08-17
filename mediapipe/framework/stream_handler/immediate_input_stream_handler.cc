@@ -61,9 +61,9 @@ ImmediateInputStreamHandler::ImmediateInputStreamHandler(
       timestamp_bounds_(std::move(tag_map)) {}
 
 NodeReadiness ImmediateInputStreamHandler::GetNodeReadiness(
-    Timestamp* input_timestamp) {
-  Timestamp min_stream_timestamp = Timestamp::Done();
-  *input_timestamp = Timestamp::Done();
+    Timestamp* min_stream_timestamp) {
+  *min_stream_timestamp = Timestamp::Done();
+  Timestamp input_timestamp = Timestamp::Done();
   bool stream_became_done = false;
 
   for (CollectionItemId i = input_stream_managers_.BeginId();
@@ -72,9 +72,9 @@ NodeReadiness ImmediateInputStreamHandler::GetNodeReadiness(
     bool empty;
     Timestamp stream_timestamp = stream->MinTimestampOrBound(&empty);
     if (!empty) {
-      *input_timestamp = std::min(*input_timestamp, stream_timestamp);
+      input_timestamp = std::min(input_timestamp, stream_timestamp);
     }
-    min_stream_timestamp = std::min(min_stream_timestamp, stream_timestamp);
+    *min_stream_timestamp = std::min(*min_stream_timestamp, stream_timestamp);
     if (stream_timestamp != timestamp_bounds_.Get(i)) {
       if (stream_timestamp == Timestamp::Done()) {
         stream_became_done = true;
@@ -83,16 +83,17 @@ NodeReadiness ImmediateInputStreamHandler::GetNodeReadiness(
     }
   }
 
-  if (min_stream_timestamp == Timestamp::Done()) {
+  if (*min_stream_timestamp == Timestamp::Done()) {
     return NodeReadiness::kReadyForClose;
   }
 
-  if (*input_timestamp < Timestamp::Done()) {
+  if (input_timestamp < Timestamp::Done()) {
+    // On kReadyForProcess, the input_timestamp is returned.
+    *min_stream_timestamp = input_timestamp;
     return NodeReadiness::kReadyForProcess;
   }
 
   if (stream_became_done) {
-    *input_timestamp = min_stream_timestamp;
     return NodeReadiness::kReadyForProcess;
   }
 

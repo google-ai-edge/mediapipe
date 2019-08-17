@@ -47,6 +47,8 @@ class TfLiteCustomOpResolverCalculator : public CalculatorBase {
   }
 
   ::mediapipe::Status Open(CalculatorContext* cc) override {
+    cc->SetOffset(TimestampDiff(0));
+
     const TfLiteCustomOpResolverCalculatorOptions& options =
         cc->Options<TfLiteCustomOpResolverCalculatorOptions>();
 

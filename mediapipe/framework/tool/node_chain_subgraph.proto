@@ -1,0 +1,19 @@
+syntax = "proto2";
+
+package mediapipe;
+
+import "mediapipe/framework/calculator.proto";
+
+// Options for NodeChainSubgraph.
+message NodeChainSubgraphOptions {
+  extend CalculatorOptions {
+    optional NodeChainSubgraphOptions ext = 167210579;
+  }
+
+  // The type of the node. The node must have exactly one input stream and
+  // exactly one output stream.
+  optional string node_type = 1;
+
+  // How many copies of the node should be chained in series.
+  optional int32 chain_length = 2;
+}

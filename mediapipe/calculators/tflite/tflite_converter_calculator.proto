@@ -22,9 +22,10 @@ message TfLiteConverterCalculatorOptions {
     optional TfLiteConverterCalculatorOptions ext = 245817797;
   }
 
-  // Choose normalization mode for output:
+  // Choose normalization mode for output (not applied for Matrix inputs).
   // true = [-1,1]
   // false = [0,1]
+  // Ignored if using quantization.
   optional bool zero_center = 1 [default = true];
 
   // Whether the input image should be flipped vertically (along the
@@ -38,4 +39,12 @@ message TfLiteConverterCalculatorOptions {
   // tensor. Currently this only controls whether or not to ignore alpha
   // channel, so it must be 3 or 4.
   optional int32 max_num_channels = 3 [default = 3];
+
+  // The calculator expects Matrix inputs to be in column-major order. Set
+  // row_major_matrix to true if the inputs are in row-major order.
+  optional bool row_major_matrix = 4 [default = false];
+
+  // Quantization option (CPU only).
+  // When true, output kTfLiteUInt8 tensor instead of kTfLiteFloat32.
+  optional bool use_quantized_tensors = 5 [default = false];
 }

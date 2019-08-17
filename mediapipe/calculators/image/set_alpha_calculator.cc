@@ -25,11 +25,12 @@
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/port/vector.h"
 
-#if defined(__ANDROID__)
+#if defined(__ANDROID__) || (defined(__APPLE__) && !TARGET_OS_OSX)
 #include "mediapipe/gpu/gl_calculator_helper.h"
 #include "mediapipe/gpu/gl_simple_shaders.h"
+#include "mediapipe/gpu/gpu_buffer.h"
 #include "mediapipe/gpu/shader_util.h"
-#endif  // __ANDROID__
+#endif  // __ANDROID__ or iOS
 
 namespace mediapipe {
 
@@ -98,18 +99,18 @@ class SetAlphaCalculator : public CalculatorBase {
   ::mediapipe::Status RenderGpu(CalculatorContext* cc);
   ::mediapipe::Status RenderCpu(CalculatorContext* cc);
 
-  ::mediapipe::Status GlRender(CalculatorContext* cc);
   ::mediapipe::Status GlSetup(CalculatorContext* cc);
+  void GlRender(CalculatorContext* cc);
 
   mediapipe::SetAlphaCalculatorOptions options_;
   float alpha_value_ = -1.f;
 
   bool use_gpu_ = false;
   bool gpu_initialized_ = false;
-#if defined(__ANDROID__)
+#if defined(__ANDROID__) || (defined(__APPLE__) && !TARGET_OS_OSX)
   mediapipe::GlCalculatorHelper gpu_helper_;
   GLuint program_ = 0;
-#endif  // __ANDROID__
+#endif  // __ANDROID__ or iOS
 };
 REGISTER_CALCULATOR(SetAlphaCalculator);
 
@@ -126,52 +127,54 @@ REGISTER_CALCULATOR(SetAlphaCalculator);
   }
 
   // Input image to add/edit alpha channel.
-#if defined(__ANDROID__)
+#if defined(__ANDROID__) || (defined(__APPLE__) && !TARGET_OS_OSX)
   if (cc->Inputs().HasTag(kInputFrameTagGpu)) {
     cc->Inputs().Tag(kInputFrameTagGpu).Set<mediapipe::GpuBuffer>();
   }
-#endif  // __ANDROID__
+#endif  // __ANDROID__ or iOS
   if (cc->Inputs().HasTag(kInputFrameTag)) {
     cc->Inputs().Tag(kInputFrameTag).Set<ImageFrame>();
   }
 
   // Input alpha image mask (optional)
-#if defined(__ANDROID__)
+#if defined(__ANDROID__) || (defined(__APPLE__) && !TARGET_OS_OSX)
   if (cc->Inputs().HasTag(kInputAlphaTagGpu)) {
     cc->Inputs().Tag(kInputAlphaTagGpu).Set<mediapipe::GpuBuffer>();
   }
-#endif  // __ANDROID__
+#endif  // __ANDROID__ or iOS
   if (cc->Inputs().HasTag(kInputAlphaTag)) {
     cc->Inputs().Tag(kInputAlphaTag).Set<ImageFrame>();
   }
 
   // RGBA output image.
-#if defined(__ANDROID__)
+#if defined(__ANDROID__) || (defined(__APPLE__) && !TARGET_OS_OSX)
   if (cc->Outputs().HasTag(kOutputFrameTagGpu)) {
     cc->Outputs().Tag(kOutputFrameTagGpu).Set<mediapipe::GpuBuffer>();
   }
-#endif  // __ANDROID__
+#endif  // __ANDROID__ or iOS
   if (cc->Outputs().HasTag(kOutputFrameTag)) {
     cc->Outputs().Tag(kOutputFrameTag).Set<ImageFrame>();
   }
 
-#if defined(__ANDROID__)
+#if defined(__ANDROID__) || (defined(__APPLE__) && !TARGET_OS_OSX)
   RETURN_IF_ERROR(mediapipe::GlCalculatorHelper::UpdateContract(cc));
-#endif  // __ANDROID__
+#endif  // __ANDROID__ or iOS
 
   return ::mediapipe::OkStatus();
 }
 
 ::mediapipe::Status SetAlphaCalculator::Open(CalculatorContext* cc) {
+  cc->SetOffset(TimestampDiff(0));
+
   options_ = cc->Options<mediapipe::SetAlphaCalculatorOptions>();
 
   if (cc->Inputs().HasTag(kInputFrameTagGpu) &&
       cc->Outputs().HasTag(kOutputFrameTagGpu)) {
-#if defined(__ANDROID__)
+#if defined(__ANDROID__) || (defined(__APPLE__) && !TARGET_OS_OSX)
     use_gpu_ = true;
 #else
-    RET_CHECK_FAIL() << "GPU processing on non-Android not supported yet.";
-#endif  // __ANDROID__
+    RET_CHECK_FAIL() << "GPU processing is for Android and iOS only.";
+#endif  // __ANDROID__ or iOS
   }
 
   // Get global value from options (-1 if not set).
@@ -184,7 +187,7 @@ REGISTER_CALCULATOR(SetAlphaCalculator);
     RET_CHECK_FAIL() << "Must use either image mask or options alpha value.";
 
   if (use_gpu_) {
-#if defined(__ANDROID__)
+#if defined(__ANDROID__) || (defined(__APPLE__) && !TARGET_OS_OSX)
     RETURN_IF_ERROR(gpu_helper_.Open(cc));
 #endif
   }
@@ -194,7 +197,7 @@ REGISTER_CALCULATOR(SetAlphaCalculator);
 
 ::mediapipe::Status SetAlphaCalculator::Process(CalculatorContext* cc) {
   if (use_gpu_) {
-#if defined(__ANDROID__)
+#if defined(__ANDROID__) || (defined(__APPLE__) && !TARGET_OS_OSX)
     RETURN_IF_ERROR(
         gpu_helper_.RunInGlContext([this, cc]() -> ::mediapipe::Status {
           if (!gpu_initialized_) {
@@ -204,7 +207,7 @@ REGISTER_CALCULATOR(SetAlphaCalculator);
           RETURN_IF_ERROR(RenderGpu(cc));
           return ::mediapipe::OkStatus();
         }));
-#endif  // __ANDROID__
+#endif  // __ANDROID__ or iOS
   } else {
     RETURN_IF_ERROR(RenderCpu(cc));
   }
@@ -213,12 +216,12 @@ REGISTER_CALCULATOR(SetAlphaCalculator);
 }
 
 ::mediapipe::Status SetAlphaCalculator::Close(CalculatorContext* cc) {
-#if defined(__ANDROID__)
+#if defined(__ANDROID__) || (defined(__APPLE__) && !TARGET_OS_OSX)
   gpu_helper_.RunInGlContext([this] {
     if (program_) glDeleteProgram(program_);
     program_ = 0;
   });
-#endif  // __ANDROID__
+#endif  // __ANDROID__ or iOS
 
   return ::mediapipe::OkStatus();
 }
@@ -292,7 +295,7 @@ REGISTER_CALCULATOR(SetAlphaCalculator);
   if (cc->Inputs().Tag(kInputFrameTagGpu).IsEmpty()) {
     return ::mediapipe::OkStatus();
   }
-#if defined(__ANDROID__)
+#if defined(__ANDROID__) || (defined(__APPLE__) && !TARGET_OS_OSX)
   // Setup source texture.
   const auto& input_frame =
       cc->Inputs().Tag(kInputFrameTagGpu).Get<mediapipe::GpuBuffer>();
@@ -345,13 +348,13 @@ REGISTER_CALCULATOR(SetAlphaCalculator);
   // Cleanup
   input_texture.Release();
   output_texture.Release();
-#endif  // __ANDROID__
+#endif  // __ANDROID__ or iOS
 
   return ::mediapipe::OkStatus();
 }
 
-::mediapipe::Status SetAlphaCalculator::GlRender(CalculatorContext* cc) {
-#if defined(__ANDROID__)
+void SetAlphaCalculator::GlRender(CalculatorContext* cc) {
+#if defined(__ANDROID__) || (defined(__APPLE__) && !TARGET_OS_OSX)
   static const GLfloat square_vertices[] = {
       -1.0f, -1.0f,  // bottom left
       1.0f,  -1.0f,  // bottom right
@@ -400,13 +403,11 @@ REGISTER_CALCULATOR(SetAlphaCalculator);
   glDeleteVertexArrays(1, &vao);
   glDeleteBuffers(2, vbo);
 
-#endif  // __ANDROID__
-
-  return ::mediapipe::OkStatus();
+#endif  // __ANDROID__ or iOS
 }
 
 ::mediapipe::Status SetAlphaCalculator::GlSetup(CalculatorContext* cc) {
-#if defined(__ANDROID__)
+#if defined(__ANDROID__) || (defined(__APPLE__) && !TARGET_OS_OSX)
   const GLint attr_location[NUM_ATTRIBUTES] = {
       ATTRIB_VERTEX,
       ATTRIB_TEXTURE_POSITION,
@@ -417,6 +418,7 @@ REGISTER_CALCULATOR(SetAlphaCalculator);
   };
 
   // Shader to overlay a texture onto another when overlay is non-zero.
+  // TODO split into two shaders to handle alpha_value<0 separately
   const GLchar* frag_src = GLES_VERSION_COMPAT
       R"(
   #if __VERSION__ < 130
@@ -458,7 +460,7 @@ REGISTER_CALCULATOR(SetAlphaCalculator);
   glUniform1i(glGetUniformLocation(program_, "alpha_mask"), 2);
   glUniform1f(glGetUniformLocation(program_, "alpha_value"), alpha_value_);
 
-#endif  // __ANDROID__
+#endif  // __ANDROID__ or iOS
 
   return ::mediapipe::OkStatus();
 }

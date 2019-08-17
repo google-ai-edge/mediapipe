@@ -1,0 +1,73 @@
+# MediaPipe graph that performs hand detection with TensorFlow Lite on GPU.
+# Used in the examples in
+# mediapipie/examples/android/src/java/com/mediapipe/apps/handdetectiongpu and
+# mediapipie/examples/ios/handdetectiongpu.
+
+# Images coming into and out of the graph.
+input_stream: "input_video"
+output_stream: "output_video"
+
+# Throttles the images flowing downstream for flow control. It passes through
+# the very first incoming image unaltered, and waits for HandDetectionSubgraph
+# downstream in the graph to finish its tasks before it passes through another
+# image. All images that come in while waiting are dropped, limiting the number
+# of in-flight images in HandDetectionSubgraph to 1. This prevents the nodes in
+# HandDetectionSubgraph from queuing up incoming images and data excessively,
+# which leads to increased latency and memory usage, unwanted in real-time
+# mobile applications. It also eliminates unnecessarily computation, e.g., the
+# output produced by a node in the subgraph may get dropped downstream if the
+# subsequent nodes are still busy processing previous inputs.
+node {
+  calculator: "FlowLimiterCalculator"
+  input_stream: "input_video"
+  input_stream: "FINISHED:hand_rect_from_palm_detections"
+  input_stream_info: {
+    tag_index: "FINISHED"
+    back_edge: true
+  }
+  output_stream: "throttled_input_video"
+}
+
+# Subgraph that detections hands (see hand_detection_gpu.pbtxt).
+node {
+  calculator: "HandDetectionSubgraph"
+  input_stream: "throttled_input_video"
+  output_stream: "DETECTIONS:palm_detections"
+  output_stream: "NORM_RECT:hand_rect_from_palm_detections"
+}
+
+# Converts detections to drawing primitives for annotation overlay.
+node {
+  calculator: "DetectionsToRenderDataCalculator"
+  input_stream: "DETECTIONS:palm_detections"
+  output_stream: "RENDER_DATA:detection_render_data"
+  node_options: {
+    [type.googleapis.com/mediapipe.DetectionsToRenderDataCalculatorOptions] {
+      thickness: 4.0
+      color { r: 0 g: 255 b: 0 }
+    }
+  }
+}
+
+# Converts normalized rects to drawing primitives for annotation overlay.
+node {
+  calculator: "RectToRenderDataCalculator"
+  input_stream: "NORM_RECT:hand_rect_from_palm_detections"
+  output_stream: "RENDER_DATA:rect_render_data"
+  node_options: {
+    [type.googleapis.com/mediapipe.RectToRenderDataCalculatorOptions] {
+      filled: false
+      color { r: 255 g: 0 b: 0 }
+      thickness: 4.0
+    }
+  }
+}
+
+# Draws annotations and overlays them on top of the input images.
+node {
+  calculator: "AnnotationOverlayCalculator"
+  input_stream: "INPUT_FRAME_GPU:throttled_input_video"
+  input_stream: "detection_render_data"
+  input_stream: "rect_render_data"
+  output_stream: "OUTPUT_FRAME_GPU:output_video"
+}

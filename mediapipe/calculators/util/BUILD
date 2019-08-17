@@ -241,6 +241,12 @@ cc_library(
             "//mediapipe/gpu:gpu_buffer",
             "//mediapipe/gpu:shader_util",
         ],
+        "//mediapipe:ios": [
+            "//mediapipe/gpu:gl_calculator_helper",
+            "//mediapipe/gpu:gl_simple_shaders",
+            "//mediapipe/gpu:gpu_buffer",
+            "//mediapipe/gpu:shader_util",
+        ],
         "//conditions:default": [],
     }),
     alwayslink = 1,
@@ -260,6 +266,12 @@ cc_library(
     ] + select({
         "//mediapipe:android": [
             "//mediapipe/util/android/file/base",
+        ],
+        "//mediapipe:apple": [
+            "//mediapipe/util/android/file/base",
+        ],
+        "//mediapipe:macos": [
+            "//mediapipe/framework/port:file_helpers",
         ],
         "//conditions:default": [
             "//mediapipe/framework/port:file_helpers",
@@ -285,6 +297,147 @@ cc_library(
     alwayslink = 1,
 )
 
+mediapipe_cc_proto_library(
+    name = "thresholding_calculator_cc_proto",
+    srcs = ["thresholding_calculator.proto"],
+    cc_deps = [
+        "//mediapipe/framework:calculator_cc_proto",
+    ],
+    visibility = ["//mediapipe:__subpackages__"],
+    deps = [":thresholding_calculator_proto"],
+)
+
+cc_library(
+    name = "thresholding_calculator",
+    srcs = ["thresholding_calculator.cc"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":thresholding_calculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:status",
+    ],
+    alwayslink = 1,
+)
+
+mediapipe_cc_proto_library(
+    name = "landmarks_to_detection_calculator_cc_proto",
+    srcs = ["landmarks_to_detection_calculator.proto"],
+    cc_deps = [
+        "//mediapipe/framework:calculator_cc_proto",
+    ],
+    visibility = ["//mediapipe:__subpackages__"],
+    deps = [":landmarks_to_detection_calculator_proto"],
+)
+
+cc_library(
+    name = "landmarks_to_detection_calculator",
+    srcs = ["landmarks_to_detection_calculator.cc"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":landmarks_to_detection_calculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/formats:detection_cc_proto",
+        "//mediapipe/framework/formats:landmark_cc_proto",
+        "//mediapipe/framework/formats:location_data_cc_proto",
+        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:status",
+    ],
+    alwayslink = 1,
+)
+
+mediapipe_cc_proto_library(
+    name = "detections_to_rects_calculator_cc_proto",
+    srcs = ["detections_to_rects_calculator.proto"],
+    cc_deps = [
+        "//mediapipe/framework:calculator_cc_proto",
+    ],
+    visibility = ["//mediapipe:__subpackages__"],
+    deps = [":detections_to_rects_calculator_proto"],
+)
+
+mediapipe_cc_proto_library(
+    name = "landmark_projection_calculator_cc_proto",
+    srcs = ["landmark_projection_calculator.proto"],
+    cc_deps = [
+        "//mediapipe/framework:calculator_cc_proto",
+    ],
+    visibility = ["//mediapipe:__subpackages__"],
+    deps = [":landmark_projection_calculator_proto"],
+)
+
+mediapipe_cc_proto_library(
+    name = "rect_transformation_calculator_cc_proto",
+    srcs = ["rect_transformation_calculator.proto"],
+    cc_deps = [
+        "//mediapipe/framework:calculator_cc_proto",
+    ],
+    visibility = ["//mediapipe:__subpackages__"],
+    deps = [":rect_transformation_calculator_proto"],
+)
+
+cc_library(
+    name = "detections_to_rects_calculator",
+    srcs = ["detections_to_rects_calculator.cc"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":detections_to_rects_calculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:calculator_options_cc_proto",
+        "//mediapipe/framework/formats:detection_cc_proto",
+        "//mediapipe/framework/formats:location_data_cc_proto",
+        "//mediapipe/framework/formats:rect_cc_proto",
+        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:status",
+    ],
+    alwayslink = 1,
+)
+
+cc_library(
+    name = "rect_transformation_calculator",
+    srcs = ["rect_transformation_calculator.cc"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":rect_transformation_calculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:calculator_options_cc_proto",
+        "//mediapipe/framework/formats:rect_cc_proto",
+        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:status",
+    ],
+    alwayslink = 1,
+)
+
+cc_test(
+    name = "detections_to_rects_calculator_test",
+    size = "small",
+    srcs = ["detections_to_rects_calculator_test.cc"],
+    deps = [
+        ":detections_to_rects_calculator",
+        "//mediapipe/framework:calculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:calculator_runner",
+        "//mediapipe/framework:packet",
+        "//mediapipe/framework/deps:message_matchers",
+        "//mediapipe/framework/formats:detection_cc_proto",
+        "//mediapipe/framework/formats:location_data_cc_proto",
+        "//mediapipe/framework/formats:rect_cc_proto",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:parse_text_proto",
+    ],
+)
+
+proto_library(
+    name = "rect_to_render_data_calculator_proto",
+    srcs = ["rect_to_render_data_calculator.proto"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//mediapipe/framework:calculator_proto",
+        "//mediapipe/util:color_proto",
+        "//mediapipe/util:render_data_proto",
+    ],
+)
+
 proto_library(
     name = "detections_to_render_data_calculator_proto",
     srcs = ["detections_to_render_data_calculator.proto"],
@@ -294,6 +447,78 @@ proto_library(
         "//mediapipe/util:color_proto",
         "//mediapipe/util:render_data_proto",
     ],
+)
+
+proto_library(
+    name = "landmarks_to_render_data_calculator_proto",
+    srcs = ["landmarks_to_render_data_calculator.proto"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//mediapipe/framework:calculator_proto",
+        "//mediapipe/util:color_proto",
+        "//mediapipe/util:render_data_proto",
+    ],
+)
+
+proto_library(
+    name = "thresholding_calculator_proto",
+    srcs = ["thresholding_calculator.proto"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//mediapipe/framework:calculator_proto",
+        "//mediapipe/util:color_proto",
+        "//mediapipe/util:render_data_proto",
+    ],
+)
+
+proto_library(
+    name = "detections_to_rects_calculator_proto",
+    srcs = ["detections_to_rects_calculator.proto"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//mediapipe/framework:calculator_proto",
+    ],
+)
+
+proto_library(
+    name = "landmark_projection_calculator_proto",
+    srcs = ["landmark_projection_calculator.proto"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//mediapipe/framework:calculator_proto",
+    ],
+)
+
+proto_library(
+    name = "rect_transformation_calculator_proto",
+    srcs = ["rect_transformation_calculator.proto"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//mediapipe/framework:calculator_proto",
+    ],
+)
+
+proto_library(
+    name = "landmarks_to_detection_calculator_proto",
+    srcs = ["landmarks_to_detection_calculator.proto"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//mediapipe/framework:calculator_proto",
+        "//mediapipe/util:color_proto",
+        "//mediapipe/util:render_data_proto",
+    ],
+)
+
+mediapipe_cc_proto_library(
+    name = "rect_to_render_data_calculator_cc_proto",
+    srcs = ["rect_to_render_data_calculator.proto"],
+    cc_deps = [
+        "//mediapipe/framework:calculator_cc_proto",
+        "//mediapipe/util:color_cc_proto",
+        "//mediapipe/util:render_data_cc_proto",
+    ],
+    visibility = ["//mediapipe:__subpackages__"],
+    deps = [":rect_to_render_data_calculator_proto"],
 )
 
 mediapipe_cc_proto_library(
@@ -323,6 +548,52 @@ cc_library(
         "//mediapipe/util:render_data_cc_proto",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
+    ],
+    alwayslink = 1,
+)
+
+mediapipe_cc_proto_library(
+    name = "landmarks_to_render_data_calculator_cc_proto",
+    srcs = ["landmarks_to_render_data_calculator.proto"],
+    cc_deps = [
+        "//mediapipe/framework:calculator_cc_proto",
+        "//mediapipe/util:color_cc_proto",
+        "//mediapipe/util:render_data_cc_proto",
+    ],
+    visibility = ["//mediapipe:__subpackages__"],
+    deps = [":landmarks_to_render_data_calculator_proto"],
+)
+
+cc_library(
+    name = "landmarks_to_render_data_calculator",
+    srcs = ["landmarks_to_render_data_calculator.cc"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":landmarks_to_render_data_calculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:calculator_options_cc_proto",
+        "//mediapipe/framework/formats:landmark_cc_proto",
+        "//mediapipe/framework/formats:location_data_cc_proto",
+        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/util:color_cc_proto",
+        "//mediapipe/util:render_data_cc_proto",
+        "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/strings",
+    ],
+    alwayslink = 1,
+)
+
+cc_library(
+    name = "rect_to_render_data_calculator",
+    srcs = ["rect_to_render_data_calculator.cc"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":rect_to_render_data_calculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/formats:rect_cc_proto",
+        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/util:color_cc_proto",
+        "//mediapipe/util:render_data_cc_proto",
     ],
     alwayslink = 1,
 )
@@ -364,6 +635,35 @@ cc_library(
     alwayslink = 1,
 )
 
+cc_library(
+    name = "landmark_letterbox_removal_calculator",
+    srcs = ["landmark_letterbox_removal_calculator.cc"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/formats:landmark_cc_proto",
+        "//mediapipe/framework/formats:location",
+        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:status",
+    ],
+    alwayslink = 1,
+)
+
+cc_library(
+    name = "landmark_projection_calculator",
+    srcs = ["landmark_projection_calculator.cc"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":landmark_projection_calculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/formats:landmark_cc_proto",
+        "//mediapipe/framework/formats:rect_cc_proto",
+        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:status",
+    ],
+    alwayslink = 1,
+)
+
 cc_test(
     name = "detection_letterbox_removal_calculator_test",
     srcs = ["detection_letterbox_removal_calculator_test.cc"],
@@ -373,6 +673,21 @@ cc_test(
         "//mediapipe/framework:calculator_runner",
         "//mediapipe/framework/formats:detection_cc_proto",
         "//mediapipe/framework/formats:location",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:integral_types",
+        "//mediapipe/framework/port:parse_text_proto",
+        "//mediapipe/framework/tool:validate_type",
+    ],
+)
+
+cc_test(
+    name = "landmark_letterbox_removal_calculator_test",
+    srcs = ["landmark_letterbox_removal_calculator_test.cc"],
+    deps = [
+        ":landmark_letterbox_removal_calculator",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:calculator_runner",
+        "//mediapipe/framework/formats:landmark_cc_proto",
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/framework/port:integral_types",
         "//mediapipe/framework/port:parse_text_proto",

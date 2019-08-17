@@ -43,12 +43,10 @@ public class ExternalTextureConverter implements TextureFrameProducer {
   /**
    * Creates the ExternalTextureConverter to create a working copy of each camera frame.
    *
-   * @param numBuffers  The number of camera frames that can enter processing simultaneously.
+   * @param numBuffers the number of camera frames that can enter processing simultaneously.
    */
   public ExternalTextureConverter(EGLContext parentContext, int numBuffers) {
     thread = new RenderThread(parentContext, numBuffers);
-    // Give the thread a consistent name so it can be whitelisted for use in TikTok apps
-    // (go/tiktok-tattletale).
     thread.setName(THREAD_NAME);
     thread.start();
     try {
@@ -64,6 +62,16 @@ public class ExternalTextureConverter implements TextureFrameProducer {
       Log.e(TAG, "thread was unexpectedly interrupted: " + ie.getMessage());
       throw new RuntimeException(ie);
     }
+  }
+
+  /**
+   * Sets vertical flipping of the texture, useful for conversion between coordinate systems with
+   * top-left v.s. bottom-left origins. This should be called before {@link
+   * #setSurfaceTexture(SurfaceTexture, int, int)} or {@link
+   * #setSurfaceTextureAndAttachToGLContext(SurfaceTexture, int, int)}.
+   */
+  public void setFlipY(boolean flip) {
+    thread.setFlipY(flip);
   }
 
   public ExternalTextureConverter(EGLContext parentContext) {
@@ -152,6 +160,10 @@ public class ExternalTextureConverter implements TextureFrameProducer {
       outputFrames.addAll(Collections.nCopies(numBuffers, null));
       renderer = new ExternalTextureRenderer();
       consumers = new ArrayList<>();
+    }
+
+    public void setFlipY(boolean flip) {
+      renderer.setFlipY(flip);
     }
 
     public void setSurfaceTexture(SurfaceTexture texture, int width, int height) {

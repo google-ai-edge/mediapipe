@@ -17,16 +17,55 @@ licenses(["notice"])  # Apache 2.0
 
 package(default_visibility = ["//visibility:private"])
 
-load("//mediapipe/framework/port:build_config.bzl", "mediapipe_cc_proto_library")
+load(
+    "//mediapipe/framework/port:build_config.bzl",
+    "mediapipe_cc_proto_library",
+)
+load(
+    "//mediapipe/framework/tool:mediapipe_graph.bzl",
+    "data_as_c_string",
+    "mediapipe_binary_graph",
+)
+
+exports_files([
+    "simple_subgraph_template.cc",
+])
+
+cc_library(
+    name = "text_to_binary_graph",
+    srcs = ["text_to_binary_graph.cc"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//mediapipe/framework:calculator_cc_proto",
+        "//mediapipe/framework/port:advanced_proto",
+        "//mediapipe/framework/port:commandlineflags",
+        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:status",
+    ],
+)
 
 proto_library(
     name = "calculator_graph_template_proto",
     srcs = ["calculator_graph_template.proto"],
     visibility = ["//visibility:public"],
     deps = [
+        "//mediapipe/framework:calculator_options_proto",
         "//mediapipe/framework:calculator_proto",
         "//mediapipe/framework/deps:proto_descriptor_proto",
     ],
+)
+
+java_proto_library(
+    name = "calculator_graph_template_java_proto",
+    visibility = ["//visibility:public"],
+    deps = [":calculator_graph_template_proto"],
+)
+
+java_lite_proto_library(
+    name = "calculator_graph_template_java_proto_lite",
+    strict_deps = 0,
+    visibility = ["//visibility:public"],
+    deps = [":calculator_graph_template_proto"],
 )
 
 proto_library(
@@ -43,7 +82,10 @@ mediapipe_cc_proto_library(
         "//mediapipe/framework:calculator_cc_proto",
         "//mediapipe/framework/deps:proto_descriptor_cc_proto",
     ],
-    visibility = ["//mediapipe/framework:__subpackages__"],
+    visibility = [
+        "//mediapipe/framework:__subpackages__",
+        "//mediapipe/java/com/google/mediapipe/framework:__subpackages__",
+    ],
     deps = [":calculator_graph_template_proto"],
 )
 
@@ -53,6 +95,15 @@ mediapipe_cc_proto_library(
     cc_deps = ["//mediapipe/framework:calculator_cc_proto"],
     visibility = ["//mediapipe/framework:__subpackages__"],
     deps = [":source_proto"],
+)
+
+cc_binary(
+    name = "encode_as_c_string",
+    srcs = ["encode_as_c_string.cc"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "@com_google_absl//absl/strings",
+    ],
 )
 
 cc_library(
@@ -464,8 +515,8 @@ cc_test(
     deps = [
         ":simulation_clock",
         ":simulation_clock_executor",
+        "//mediapipe/calculators/core:flow_limiter_calculator",
         "//mediapipe/calculators/core:immediate_mux_calculator",
-        "//mediapipe/calculators/core:real_time_flow_limiter_calculator",
         "//mediapipe/calculators/core:round_robin_demux_calculator",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework:executor",
@@ -480,6 +531,74 @@ cc_test(
         "//mediapipe/framework/stream_handler:immediate_input_stream_handler",
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+mediapipe_binary_graph(
+    name = "test_binarypb",
+    graph = "//mediapipe/framework/tool/testdata:test_graph",
+    output_name = "test.binarypb",
+    visibility = ["//visibility:private"],
+)
+
+data_as_c_string(
+    name = "test_binarypb_inc",
+    testonly = 1,
+    srcs = [":test_binarypb"],
+    outs = ["test_binarypb.inc"],
+)
+
+proto_library(
+    name = "node_chain_subgraph_proto",
+    srcs = ["node_chain_subgraph.proto"],
+    deps = [
+        "//mediapipe/framework:calculator_proto",
+    ],
+)
+
+mediapipe_cc_proto_library(
+    name = "node_chain_subgraph_cc_proto",
+    srcs = ["node_chain_subgraph.proto"],
+    cc_deps = ["//mediapipe/framework:calculator_cc_proto"],
+    visibility = ["//mediapipe:__subpackages__"],
+    deps = [":node_chain_subgraph_proto"],
+)
+
+cc_test(
+    name = "data_as_c_string_test",
+    srcs = [
+        "data_as_c_string_test.cc",
+        ":test_binarypb_inc",
+    ],
+    deps = [
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/port:gtest_main",
+    ],
+)
+
+cc_test(
+    name = "subgraph_expansion_test",
+    size = "small",
+    srcs = ["subgraph_expansion_test.cc"],
+    deps = [
+        ":node_chain_subgraph_cc_proto",
+        ":subgraph_expansion",
+        "//mediapipe/framework:calculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:mediapipe_options_cc_proto",
+        "//mediapipe/framework:packet_generator_cc_proto",
+        "//mediapipe/framework:packet_set",
+        "//mediapipe/framework:packet_type",
+        "//mediapipe/framework:status_handler",
+        "//mediapipe/framework:subgraph",
+        "//mediapipe/framework/deps:message_matchers",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:logging",
+        "//mediapipe/framework/port:parse_text_proto",
+        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/tool/testdata:dub_quad_test_subgraph",
+        "//mediapipe/framework/tool/testdata:nested_test_subgraph",
         "@com_google_absl//absl/strings",
     ],
 )

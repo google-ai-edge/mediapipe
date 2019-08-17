@@ -31,6 +31,15 @@ public class SurfaceOutput {
   }
 
   /**
+   * Sets vertical flipping of the output surface, useful for conversion between coordinate systems
+   * with top-left v.s. bottom-left origins. This should be called before {@link
+   * #setSurface(Object)} or {@link #setEglSurface(long)}.
+   */
+  public void setFlipY(boolean flip) {
+    nativeSetFlipY(surfaceHolderPacket.getNativeHandle(), flip);
+  }
+
+  /**
    * Connects an Android {@link Surface} to an output.
    *
    * <p>This creates the requisite {@link EGLSurface} internally. If one has already been created
@@ -60,6 +69,8 @@ public class SurfaceOutput {
     nativeSetEglSurface(
         mediapipeGraph.getNativeHandle(), surfaceHolderPacket.getNativeHandle(), nativeEglSurface);
   }
+
+  private native void nativeSetFlipY(long nativePacket, boolean flip);
 
   private native void nativeSetSurface(
       long nativeContext, long nativePacket, Object surface);

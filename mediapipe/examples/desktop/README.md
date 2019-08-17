@@ -14,10 +14,10 @@ bazel-bin/mediapipe/examples/desktop/hello_world/hello_world --logtostderr
 
 **TFlite Object Detection**
 
-To build the objet detection demo using a TFLite model on desktop, use:
+To build the object detection demo using a TFLite model on desktop, use:
 
 ```
-bazel build -c opt mediapipe/examples/desktop/object_detection:object_detection_tflite --define 'MEDIAPIPE_DISABLE_GPU=1'
+bazel build -c opt mediapipe/examples/desktop/object_detection:object_detection_tflite --define MEDIAPIPE_DISABLE_GPU=1
 ```
 
 and run it using:
@@ -35,7 +35,7 @@ To build the object detection demo using a TensorFlow model on desktop, use:
 
 ```
 bazel build -c opt mediapipe/examples/desktop/object_detection:object_detection_tensorflow \
-  --define 'MEDIAPIPE_DISABLE_GPU=1'
+  --define MEDIAPIPE_DISABLE_GPU=1
 ```
 
 and run it using:
@@ -44,5 +44,56 @@ and run it using:
 bazel-bin/mediapipe/examples/desktop/object_detection/object_detection_tensorflow  \
   --calculator_graph_config_file=mediapipe/graphs/object_detection/object_detection_desktop_tensorflow_graph.pbtxt  \
   --input_side_packets=input_video_path=/path/to/input/file,output_video_path=/path/to/output/file
+  --alsologtostderr
+```
+
+**TFlite Face Detection**
+
+To build the face detection demo using a TFLite model on desktop, use:
+
+```
+bazel build -c opt mediapipe/examples/desktop/face_detection:face_detection_tflite --define MEDIAPIPE_DISABLE_GPU=1
+```
+
+and run it using:
+
+```
+bazel-bin/mediapipe/examples/desktop/face_detection/face_detection_tflite \
+  --calculator_graph_config_file=mediapipe/graphs/face_detection/face_detection_desktop_tflite_graph.pbtxt \
+  --input_side_packets=input_video_path=/path/to/input/file,output_video_path=/path/to/output/file \
+  --alsologtostderr
+```
+
+**TFlite Hand Detection**
+
+To build the hand detection demo using a TFLite model on desktop, use:
+
+```
+bazel build -c opt mediapipe/examples/desktop/hand_tracking:hand_tracking_tflite --define MEDIAPIPE_DISABLE_GPU=1
+```
+
+and run it using:
+
+```
+bazel-bin/mediapipe/examples/desktop/hand_tracking/hand_tracking_tflite \
+  --calculator_graph_config_file=mediapipe/graphs/hand_tracking/hand_detection_desktop_tflite_graph.pbtxt \
+  --input_side_packets=input_video_path=/path/to/input/file,output_video_path=/path/to/output/file \
+  --alsologtostderr
+```
+
+**TFlite Hand Tracking**
+
+To build the hand tracking demo using a TFLite model on desktop, use:
+
+```
+bazel build -c opt mediapipe/examples/desktop/hand_tracking:hand_tracking_tflite --define MEDIAPIPE_DISABLE_GPU=1
+```
+
+and run it using:
+
+```
+bazel-bin/mediapipe/examples/desktop/hand_tracking/hand_tracking_tflite \
+  --calculator_graph_config_file=mediapipe/graphs/hand_tracking/hand_tracking_with_flag_desktop_tflite_graph.pbtxt \
+  --input_side_packets=input_video_path=/path/to/input/file,output_video_path=/path/to/output/file \
   --alsologtostderr
 ```

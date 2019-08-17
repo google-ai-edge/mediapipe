@@ -2,15 +2,25 @@
 
 Choose your operating system:
 
+-   [Prework](#prework)
 -   [Dependences](#dependences)
 -   [Installing on Debian and Ubuntu](#installing-on-debian-and-ubuntu)
 -   [Installing on CentOS](#installing-on-centos)
 -   [Installing on macOS](#installing-on-macos)
 -   [Installing on Windows Subsystem for Linux (WSL)](#installing-on-windows-subsystem-for-linux-wsl)
 -   [Installing using Docker](#installing-using-docker)
+-   [Setting up Android Studio with MediaPipe](#setting-up-android-studio-with-mediapipe)
 -   [Setting up Android SDK and NDK](#setting-up-android-sdk-and-ndk)
 
-### Dependences
+### Prework
+
+* Install a package manager, e.g., Homebrew for macOS, and APT for Debian and Ubuntu
+
+* Install Xcode for the iOS apps (macOS only)
+
+* Install Android Studio for the Android apps
+
+### Dependencies
 
 Required libraries
 
@@ -56,8 +66,8 @@ Required libraries
     Option 1. Use package manager tool to install the pre-compiled OpenCV
     libraries.
 
-    Note: Debian 9 and Ubuntu 16.04 provide OpenCV 2.4.9. You may want to
-    take option 2 or 3 to install OpenCV 3 or above.
+    Note: Debian 9 and Ubuntu 16.04 provide OpenCV 2.4.9. You may want to take
+    option 2 or 3 to install OpenCV 3 or above.
 
     ```bash
     $ sudo apt-get install libopencv-core-dev libopencv-highgui-dev \
@@ -71,11 +81,11 @@ Required libraries
     [documentation](https://docs.opencv.org/3.4.6/d7/d9f/tutorial_linux_install.html)
     to manually build OpenCV from source code.
 
-    Note: You may need to modify [`WORKSAPCE`] and [`opencv_linux.BUILD`] to point
-    MediaPipe to your own OpenCV libraries, e.g., if OpenCV 4 is
-    installed in "/usr/local/", you need to update the "linux_opencv"
-    new_local_repository rule in [`WORKSAPCE`] and "opencv" cc_library rule in
-    [`opencv_linux.BUILD`] like the following:
+    Note: You may need to modify [`WORKSAPCE`] and [`opencv_linux.BUILD`] to
+    point MediaPipe to your own OpenCV libraries, e.g., if OpenCV 4 is installed
+    in "/usr/local/", you need to update the "linux_opencv" new_local_repository
+    rule in [`WORKSAPCE`] and "opencv" cc_library rule in [`opencv_linux.BUILD`]
+    like the following:
 
     ```bash
     new_local_repository(
@@ -110,7 +120,7 @@ Required libraries
     ```bash
     $ export GLOG_logtostderr=1
     # Need bazel flag 'MEDIAPIPE_DISABLE_GPU=1' as desktop GPU is currently not supported
-    $ bazel run --define 'MEDIAPIPE_DISABLE_GPU=1' \
+    $ bazel run --define MEDIAPIPE_DISABLE_GPU=1 \
         mediapipe/examples/desktop/hello_world:hello_world
 
     # Should print:
@@ -156,11 +166,11 @@ Required libraries
 
     Option 2. Build OpenCV from source code.
 
-    Note: You may need to modify [`WORKSAPCE`] and [`opencv_linux.BUILD`] to point
-    MediaPipe to your own OpenCV libraries, e.g., if OpenCV 4 is
-    installed in "/usr/local/", you need to update the "linux_opencv"
-    new_local_repository rule in [`WORKSAPCE`] and "opencv" cc_library rule in
-    [`opencv_linux.BUILD`] like the following:
+    Note: You may need to modify [`WORKSAPCE`] and [`opencv_linux.BUILD`] to
+    point MediaPipe to your own OpenCV libraries, e.g., if OpenCV 4 is installed
+    in "/usr/local/", you need to update the "linux_opencv" new_local_repository
+    rule in [`WORKSAPCE`] and "opencv" cc_library rule in [`opencv_linux.BUILD`]
+    like the following:
 
     ```bash
     new_local_repository(
@@ -195,7 +205,7 @@ Required libraries
     ```bash
     $ export GLOG_logtostderr=1
     # Need bazel flag 'MEDIAPIPE_DISABLE_GPU=1' as desktop GPU is currently not supported
-    $ bazel run --define 'MEDIAPIPE_DISABLE_GPU=1' \
+    $ bazel run --define MEDIAPIPE_DISABLE_GPU=1 \
         mediapipe/examples/desktop/hello_world:hello_world
 
     # Should print:
@@ -284,7 +294,7 @@ Required libraries
     ```bash
     $ export GLOG_logtostderr=1
     # Need bazel flag 'MEDIAPIPE_DISABLE_GPU=1' as desktop GPU is currently not supported
-    $ bazel run --define 'MEDIAPIPE_DISABLE_GPU=1' \
+    $ bazel run --define MEDIAPIPE_DISABLE_GPU=1 \
         mediapipe/examples/desktop/hello_world:hello_world
 
     # Should print:
@@ -403,7 +413,7 @@ Required libraries
     username@DESKTOP-TMVLBJ1:~/mediapipe$ export GLOG_logtostderr=1
 
     # Need bazel flag 'MEDIAPIPE_DISABLE_GPU=1' as desktop GPU is currently not supported
-    username@DESKTOP-TMVLBJ1:~/mediapipe$ bazel run --define 'MEDIAPIPE_DISABLE_GPU=1' \
+    username@DESKTOP-TMVLBJ1:~/mediapipe$ bazel run --define MEDIAPIPE_DISABLE_GPU=1 \
         mediapipe/examples/desktop/hello_world:hello_world
 
     # Should print:
@@ -454,7 +464,7 @@ This will use a Docker image that will isolate mediapipe's installation from the
     ```bash
     $ docker run -it --name mediapipe mediapipe:latest
 
-    root@bca08b91ff63:/mediapipe# GLOG_logtostderr=1 bazel run --define 'MEDIAPIPE_DISABLE_GPU=1' mediapipe/examples/desktop/hello_world:hello_world
+    root@bca08b91ff63:/mediapipe# GLOG_logtostderr=1 bazel run --define MEDIAPIPE_DISABLE_GPU=1 mediapipe/examples/desktop/hello_world:hello_world
 
     # Should print:
     # Hello World!
@@ -472,7 +482,7 @@ This will use a Docker image that will isolate mediapipe's installation from the
 <!-- 4.  Uncomment the last line of the Dockerfile
 
     ```bash
-    RUN bazel build -c opt --define 'MEDIAPIPE_DISABLE_GPU=1' mediapipe/examples/desktop/demo:object_detection_tensorflow_demo
+    RUN bazel build -c opt --define MEDIAPIPE_DISABLE_GPU=1 mediapipe/examples/desktop/demo:object_detection_tensorflow_demo
     ```
 
     and rebuild the image and then run the docker image
@@ -482,7 +492,6 @@ This will use a Docker image that will isolate mediapipe's installation from the
     docker run -i -t mediapipe:latest
     ``` -->
 
-
 ### Setting up Android Studio with MediaPipe
 
 The steps below use Android Studio to build and install a MediaPipe demo app.
@@ -491,13 +500,16 @@ The steps below use Android Studio to build and install a MediaPipe demo app.
 
 2.  Select `Configure` | `SDK Manager` | `SDK Platforms`
 
-    *   verify that an Android SDK is installed
-    *   note the Android SDK Location such as `/usr/local/home/Android/Sdk`
+    *   Verify that Android SDK Platform API Level 28 or 29 is installed
+    *   Note the Android SDK Location such as `/usr/local/home/Android/Sdk`
 
 3.  Select `Configure` | `SDK Manager` | `SDK Tools`
 
-    *   verify that an Android NDK is installed
-    *   note the Android NDK Location such as `/usr/local/home/Android/Sdk/ndk-bundle`
+    *   Verify that Android SDK Build-Tools 28 or 29 is installed
+    *   Verify that Android SDK Platform-Tools 28 or 29 is installed
+    *   Verify that Android SDK Tools 26.1.1 is installed
+    *   Verify that Android NDK 17c or above is installed
+    *   Note the Android NDK Location such as `/usr/local/home/Android/Sdk/ndk-bundle`
 
 4.  Set environment variables `$ANDROID_HOME` and `$ANDROID_NDK_HOME` to point to
     the installed SDK and NDK.
@@ -511,18 +523,18 @@ The steps below use Android Studio to build and install a MediaPipe demo app.
 
 6.  Select `Import Bazel Project`
 
-    *   select `Workspace`: `/path/to/mediapipe`
-    *   select `Generate from BUILD file`: `/path/to/mediapipe/BUILD`
-    *   select `Finish`
+    *   Select `Workspace`: `/path/to/mediapipe`
+    *   Select `Generate from BUILD file`: `/path/to/mediapipe/BUILD`
+    *   Select `Finish`
 
 7.  Connect an android device to the workstation.
 
 8.  Select `Run...` | `Edit Configurations...`
 
-    *   enter Target Expression:
+    *   Enter Target Expression:
         `//mediapipe/examples/android/src/java/com/google/mediapipe/apps/facedetectioncpu`
-    *   enter Bazel command: `mobile-install`
-    *   enter Bazel flags: `-c opt --config=android_arm64` select `Run`
+    *   Enter Bazel command: `mobile-install`
+    *   Enter Bazel flags: `-c opt --config=android_arm64` select `Run`
 
 ### Setting up Android SDK and NDK
 
@@ -534,8 +546,18 @@ export ANDROID_HOME=<path to the Android SDK>
 export ANDROID_NDK_HOME=<path to the Android NDK>
 ```
 
-Otherwise, please run [`setup_android_sdk_and_ndk.sh`] to download and setup
-Android SDK and NDK for MediaPipe before building any Android demos.
+Please verify all the necessary packages are installed
+
+* Android SDK Platform API Level 28 or 29
+* Android SDK Build-Tools 28 or 29
+* Android SDK Platform-Tools 28 or 29
+* Android SDK Tools 26.1.1
+* Android NDK 17c or above
+
+MediaPipe prefers to use the Android SDK and NDK from Android Studio. See
+[the previous section](#setting-up-android-studio-with-mediapipe) for the
+Android Studio setup. If you prefer to try MediaPipe without Android Studio, please run [`setup_android_sdk_and_ndk.sh`] to download and setup Android SDK and NDK for
+MediaPipe before building any Android demos.
 
 [`WORKSAPCE`]: https://github.com/google/mediapipe/tree/master/WORKSPACE
 [`opencv_linux.BUILD`]: https://github.com/google/mediapipe/tree/master/third_party/opencv_linux.BUILD

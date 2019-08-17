@@ -1,18 +1,18 @@
-r"""Copyright 2019 The MediaPipe Authors.
+# Copyright 2019 The MediaPipe Authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-     http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-
-Code to download and parse the Charades dataset for TensorFlow models.
+r"""Code to download and parse the Charades dataset for TensorFlow models.
 
 The [Charades data set](https://allenai.org/plato/charades/) is a data set of
 human action recognition collected with and maintained by the Allen Institute
@@ -141,7 +141,6 @@ class Charades(object):
           shape [num_segments].
         "num_segments": the number of segments in the example, shape [].
         "num_timesteps": the number of timesteps in the example, shape [].
-        "images": the [time, height, width, channels] tensor of images.
     """
     def parse_fn(sequence_example):
       """Parses a Charades example."""

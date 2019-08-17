@@ -52,7 +52,7 @@ mediapipe_cc_proto_library(
 proto_library(
     name = "zoo_mutator_proto",
     srcs = ["zoo_mutator.proto"],
-    deps = ["@protobuf_archive//:any_proto"],
+    deps = ["@com_google_protobuf//:any_proto"],
 )
 
 proto_library(

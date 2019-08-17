@@ -1,0 +1,38 @@
+// Copyright 2019 The MediaPipe Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto2";
+
+package mediapipe;
+
+import "mediapipe/framework/calculator.proto";
+
+message DetectionsToRectsCalculatorOptions {
+  extend mediapipe.CalculatorOptions {
+    optional DetectionsToRectsCalculatorOptions ext = 262691807;
+  }
+
+  // Specify the rotation angle of the output rect with a vector formed by
+  // connecting two keypoints in the detection, together with the target angle
+  // (can be in radians or in degrees) of that vector after rotation. The target
+  // angle is counter-clockwise starting from the positive x-axis.
+  optional int32 rotation_vector_start_keypoint_index = 1;
+  optional int32 rotation_vector_end_keypoint_index = 2;
+  optional float rotation_vector_target_angle = 3;          // In radians.
+  optional float rotation_vector_target_angle_degrees = 4;  // In degrees.
+
+  // Whether to output a zero-rect (with origin and size both zero) when the
+  // input detection vector is empty.
+  optional bool output_zero_rect_for_empty_detections = 5;
+}

@@ -151,15 +151,15 @@ template <typename Container>
 
       // If the caller is MovePackets(), packet's underlying holder should be
       // transferred into queue_. Otherwise, queue_ keeps a copy of the packet.
+      ++num_packets_added_;
+      VLOG(2) << "Input stream:" << name_
+              << " has added packet at time: " << packet.Timestamp();
       if (std::is_const<
               typename std::remove_reference<Container>::type>::value) {
         queue_.emplace_back(packet);
       } else {
         queue_.emplace_back(std::move(packet));
       }
-      ++num_packets_added_;
-      VLOG(2) << "Input stream:" << name_
-              << " has added packet at time: " << packet.Timestamp();
     }
     queue_became_full = (!was_queue_full && max_queue_size_ != -1 &&
                          queue_.size() >= max_queue_size_);

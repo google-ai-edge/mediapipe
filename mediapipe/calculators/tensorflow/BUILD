@@ -417,6 +417,9 @@ cc_library(
         "//mediapipe:android": [
             "@org_tensorflow//tensorflow/core:android_tensorflow_lib_lite_nortti_lite_protos",
         ],
+        "//mediapipe:ios": [
+            "@org_tensorflow//tensorflow/core:ios_tensorflow_lib",
+        ],
     }),
     alwayslink = 1,
 )
@@ -434,6 +437,9 @@ cc_library(
         ],
         "//mediapipe:android": [
             "@org_tensorflow//tensorflow/core:android_tensorflow_lib_lite_nortti_lite_protos",
+        ],
+        "//mediapipe:ios": [
+            "@org_tensorflow//tensorflow/core:ios_tensorflow_lib",
         ],
     }),
 )
@@ -457,6 +463,10 @@ cc_library(
         ],
         "//mediapipe:android": [
             "@org_tensorflow//tensorflow/core:android_tensorflow_lib_lite_nortti_lite_protos",
+            "//mediapipe/android/file/base",
+        ],
+        "//mediapipe:ios": [
+            "@org_tensorflow//tensorflow/core:ios_tensorflow_lib",
             "//mediapipe/android/file/base",
         ],
     }),
@@ -783,6 +793,7 @@ cc_test(
         "@org_tensorflow//tensorflow/core/kernels:io",
         "@org_tensorflow//tensorflow/core/kernels:state",
         "@org_tensorflow//tensorflow/core/kernels:string",
+        "@org_tensorflow//tensorflow/core/kernels/data:tensor_dataset_op",
     ],
 )
 
@@ -813,6 +824,7 @@ cc_test(
         "@org_tensorflow//tensorflow/core/kernels:io",
         "@org_tensorflow//tensorflow/core/kernels:state",
         "@org_tensorflow//tensorflow/core/kernels:string",
+        "@org_tensorflow//tensorflow/core/kernels/data:tensor_dataset_op",
     ],
 )
 
@@ -948,6 +960,9 @@ cc_test(
         ],
         "//mediapipe:android": [
             "@org_tensorflow//tensorflow/core:android_tensorflow_lib_with_ops_lite_proto_no_rtti_lib",
+        ],
+        "//mediapipe:ios": [
+            "@org_tensorflow//tensorflow/core:ios_tensorflow_test_lib",
         ],
     }),
 )

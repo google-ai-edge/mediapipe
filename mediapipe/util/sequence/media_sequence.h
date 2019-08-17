@@ -112,7 +112,7 @@
 //   tensorflow::SequenceExample example;
 //   SetClipLabelString({"run", "jump"}, &example);
 //   if (HasClipLabelString(example)) {
-//      ::std::vector<std::string> values = GetClipLabelString(example);
+//      std::vector<std::string> values = GetClipLabelString(example);
 //      ClearClipLabelString(&example);
 //   }
 //
@@ -140,7 +140,7 @@
 //   AddBBoxLabelString({"run", "fall"}, &example);
 //   if (HasBBoxLabelString(example)) {
 //     for (int i = 0; i < GetBBoxLabelStringSize(); ++i) {
-//       ::std::vector<std::string> labels = GetBBoxLabelStringAt(example, i);
+//       std::vector<std::string> labels = GetBBoxLabelStringAt(example, i);
 //     }
 //     ClearBBoxLabelString(&example);
 //   }
@@ -315,17 +315,21 @@ std::vector<::mediapipe::Location> GetBBoxAt(
 void AddBBox(const std::string& prefix,
              const std::vector<::mediapipe::Location>& bboxes,
              tensorflow::SequenceExample* sequence);
+void ClearBBox(const std::string& prefix,
+               tensorflow::SequenceExample* sequence);
 
 // The input and output format is a pair of <y, x> coordinates to match the
 // order of bounding box coordinates.
 int GetPointSize(const std::string& prefix,
                  const tensorflow::SequenceExample& sequence);
-::std::vector<::std::pair<float, float>> GetPointAt(
+std::vector<std::pair<float, float>> GetPointAt(
     const std::string& prefix, const tensorflow::SequenceExample& sequence,
     int index);
 void AddPoint(const std::string& prefix,
-              const ::std::vector<::std::pair<float, float>>& points,
+              const std::vector<std::pair<float, float>>& points,
               tensorflow::SequenceExample* sequence);
+void ClearPoint(const std::string& prefix,
+                tensorflow::SequenceExample* sequence);
 
 #define FIXED_PREFIX_BBOX_ACCESSORS(identifier, prefix)                       \
   inline int CONCAT_STR3(Get, identifier,                                     \
@@ -341,19 +345,47 @@ void AddPoint(const std::string& prefix,
       tensorflow::SequenceExample* sequence) {                                \
     return AddBBox(prefix, bboxes, sequence);                                 \
   }                                                                           \
+  inline void CONCAT_STR2(                                                    \
+      Clear, identifier)(tensorflow::SequenceExample * sequence) {            \
+    return ClearBBox(prefix, sequence);                                       \
+  }                                                                           \
   inline int CONCAT_STR3(Get, identifier, PointSize)(                         \
       const tensorflow::SequenceExample& sequence) {                          \
     return GetPointSize(prefix, sequence);                                    \
   }                                                                           \
-  inline ::std::vector<::std::pair<float, float>> CONCAT_STR3(                \
+  inline int CONCAT_STR3(Get, identifier, PointSize)(                         \
+      const std::string& name, const tensorflow::SequenceExample& sequence) { \
+    return GetPointSize(name, sequence);                                      \
+  }                                                                           \
+  inline std::vector<std::pair<float, float>> CONCAT_STR3(                    \
       Get, identifier, PointAt)(const tensorflow::SequenceExample& sequence,  \
                                 int index) {                                  \
     return GetPointAt(prefix, sequence, index);                               \
   }                                                                           \
+  inline std::vector<std::pair<float, float>> CONCAT_STR3(                    \
+      Get, identifier, PointAt)(const std::string& name,                      \
+                                const tensorflow::SequenceExample& sequence,  \
+                                int index) {                                  \
+    return GetPointAt(name, sequence, index);                                 \
+  }                                                                           \
   inline void CONCAT_STR3(Add, identifier, Point)(                            \
-      const ::std::vector<::std::pair<float, float>>& points,                 \
+      const std::vector<std::pair<float, float>>& points,                     \
       tensorflow::SequenceExample* sequence) {                                \
     return AddPoint(prefix, points, sequence);                                \
+  }                                                                           \
+  inline void CONCAT_STR3(Add, identifier, Point)(                            \
+      const std::string& name,                                                \
+      const std::vector<std::pair<float, float>>& points,                     \
+      tensorflow::SequenceExample* sequence) {                                \
+    return AddPoint(name, points, sequence);                                  \
+  }                                                                           \
+  inline void CONCAT_STR3(Clear, identifier,                                  \
+                          Point)(tensorflow::SequenceExample * sequence) {    \
+    return ClearPoint(prefix, sequence);                                      \
+  }                                                                           \
+  inline void CONCAT_STR3(Clear, identifier, Point)(                          \
+      std::string name, tensorflow::SequenceExample * sequence) {             \
+    return ClearPoint(name, sequence);                                        \
   }
 
 #define PREFIXED_BBOX(identifier, prefix)                                      \
@@ -579,6 +611,7 @@ PREFIXED_FLOAT_CONTEXT_FEATURE(FeatureAudioSampleRate,
 // Reconciling bounding box annotations is optional because will remove
 // annotations if the sequence rate is lower than the annotation rate.
 ::mediapipe::Status ReconcileMetadata(bool reconcile_bbox_annotations,
+                                      bool reconcile_region_annotations,
                                       tensorflow::SequenceExample* sequence);
 }  // namespace mediasequence
 }  // namespace mediapipe

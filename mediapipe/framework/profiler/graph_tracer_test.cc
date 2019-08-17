@@ -70,6 +70,7 @@ class GraphTracerTest : public ::testing::Test {
   void SetUpGraphTracer(size_t size) {
     ProfilerConfig profiler_config;
     profiler_config.set_trace_log_capacity(size);
+    profiler_config.set_trace_enabled(true);
     tracer_ = absl::make_unique<GraphTracer>(profiler_config);
   }
 
@@ -334,7 +335,7 @@ class GraphTracerE2ETest : public ::testing::Test {
         profiler_config {
           histogram_interval_size_usec: 1000
           num_histogram_intervals: 100
-          trace_log_capacity: 1000000
+          trace_enabled: true
         }
         )",
                                                 &graph_config_));
@@ -348,7 +349,7 @@ class GraphTracerE2ETest : public ::testing::Test {
           output_stream: "input_packets_0"
         }
         node {
-          calculator: 'RealTimeFlowLimiterCalculator'
+          calculator: 'FlowLimiterCalculator'
           input_stream_handler {
             input_stream_handler: 'ImmediateInputStreamHandler'
           }
@@ -392,7 +393,7 @@ class GraphTracerE2ETest : public ::testing::Test {
         profiler_config {
           histogram_interval_size_usec: 1000
           num_histogram_intervals: 100
-          trace_log_capacity: 1000000
+          trace_enabled: true
         }
         )",
                                                 &graph_config_));
@@ -928,7 +929,7 @@ TEST_F(GraphTracerE2ETest, DemuxGraphLogFile) {
   RunDemuxInFlightGraph();
   GraphProfile profile;
   ReadGraphProfile(absl::StrCat(log_path, 0, ".binarypb"), &profile);
-  EXPECT_EQ(117, profile.graph_trace(0).calculator_trace().size());
+  EXPECT_EQ(89, profile.graph_trace(0).calculator_trace().size());
 }
 
 TEST_F(GraphTracerE2ETest, DemuxGraphLogFiles) {
@@ -951,7 +952,7 @@ TEST_F(GraphTracerE2ETest, DemuxGraphLogFiles) {
     event_counts.push_back(count);
     graph_profiles.push_back(profile);
   }
-  std::vector<int> expected = {45, 50, 22, 0, 0, 0, 0};
+  std::vector<int> expected = {37, 42, 19, 0, 0, 0, 0};
   EXPECT_EQ(event_counts, expected);
   GraphProfile& profile_2 = graph_profiles[2];
   profile_2.clear_calculator_profiles();
@@ -966,7 +967,7 @@ TEST_F(GraphTracerE2ETest, DemuxGraphLogFiles) {
                   base_time: 1544086800000000
                   base_timestamp: 0
                   calculator_name: "LambdaCalculator_1"
-                  calculator_name: "RealTimeFlowLimiterCalculator"
+                  calculator_name: "FlowLimiterCalculator"
                   calculator_name: "RoundRobinDemuxCalculator"
                   calculator_name: "LambdaCalculator_1"
                   calculator_name: "LambdaCalculator"
@@ -1080,20 +1081,14 @@ TEST_F(GraphTracerE2ETest, DemuxGraphLogFiles) {
                     input_timestamp: 50000
                     event_type: PROCESS
                     start_time: 65004
-                    input_trace { packet_timestamp: 50000 stream_id: 5 }
-                  }
-                  calculator_trace {
-                    node_id: 5
-                    input_timestamp: 50000
-                    event_type: PROCESS
                     finish_time: 65004
+                    input_trace {
+                      start_time: 65004
+                      finish_time: 65004
+                      packet_timestamp: 50000
+                      stream_id: 5
+                    }
                     output_trace { packet_timestamp: 50000 stream_id: 6 }
-                  }
-                  calculator_trace {
-                    node_id: 5
-                    input_timestamp: 50000
-                    event_type: PROCESS
-                    finish_time: 65004
                     output_trace { packet_timestamp: 50000 stream_id: 7 }
                   }
                   calculator_trace {
@@ -1121,7 +1116,12 @@ TEST_F(GraphTracerE2ETest, DemuxGraphLogFiles) {
                     input_timestamp: 50000
                     event_type: PROCESS
                     start_time: 65004
-                    input_trace { packet_timestamp: 50000 stream_id: 7 }
+                    input_trace {
+                      start_time: 65004
+                      finish_time: 65004
+                      packet_timestamp: 50000
+                      stream_id: 7
+                    }
                   }
                   calculator_trace {
                     node_id: 1
@@ -1176,13 +1176,13 @@ TEST_F(GraphTracerE2ETest, DemuxGraphLogFiles) {
                     input_timestamp: 40000
                     event_type: PROCESS
                     start_time: 70004
-                    input_trace { packet_timestamp: 40000 stream_id: 8 }
-                  }
-                  calculator_trace {
-                    node_id: 5
-                    input_timestamp: 40000
-                    event_type: PROCESS
                     finish_time: 70004
+                    input_trace {
+                      start_time: 70004
+                      finish_time: 70004
+                      packet_timestamp: 40000
+                      stream_id: 8
+                    }
                     output_trace { packet_timestamp: 50001 stream_id: 7 }
                   }
                   calculator_trace {
@@ -1205,7 +1205,12 @@ TEST_F(GraphTracerE2ETest, DemuxGraphLogFiles) {
                     input_timestamp: 50001
                     event_type: PROCESS
                     start_time: 70004
-                    input_trace { packet_timestamp: 50001 stream_id: 7 }
+                    input_trace {
+                      start_time: 70004
+                      finish_time: 70004
+                      packet_timestamp: 50001
+                      stream_id: 7
+                    }
                   }
                   calculator_trace {
                     node_id: 1
@@ -1234,8 +1239,8 @@ TEST_F(GraphTracerE2ETest, DemuxGraphLogFiles) {
                     input_side_packet: "callback_2"
                   }
                   node {
-                    name: "RealTimeFlowLimiterCalculator"
-                    calculator: "RealTimeFlowLimiterCalculator"
+                    name: "FlowLimiterCalculator"
+                    calculator: "FlowLimiterCalculator"
                     input_stream: "input_packets_0"
                     input_stream: "FINISHED:finish_indicator"
                     output_stream: "input_0_sampled"
@@ -1281,10 +1286,10 @@ TEST_F(GraphTracerE2ETest, DemuxGraphLogFiles) {
                   profiler_config {
                     histogram_interval_size_usec: 1000
                     num_histogram_intervals: 100
-                    trace_log_capacity: 1000000
                     trace_log_count: 100
                     trace_log_interval_usec: 2500
                     trace_log_interval_count: 10
+                    trace_enabled: true
                   }
                 }
               )")));

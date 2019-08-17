@@ -191,7 +191,8 @@ msu.create_bytes_context_feature(
 msu.create_bytes_context_feature(
     "clip_media_id", CLIP_MEDIA_ID_KEY, module_dict=globals())
 msu.create_bytes_context_feature(
-    "clip_alternative_media_id", CLIP_MEDIA_ID_KEY, module_dict=globals())
+    "clip_alternative_media_id", ALTERNATIVE_CLIP_MEDIA_ID_KEY,
+    module_dict=globals())
 msu.create_bytes_context_feature(
     "clip_encoded_media_bytes", CLIP_ENCODED_MEDIA_BYTES_KEY,
     module_dict=globals())

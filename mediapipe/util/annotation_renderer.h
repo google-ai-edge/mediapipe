@@ -93,6 +93,9 @@ class AnnotationRenderer {
   // Draws a line segment on the image as described in the annotation.
   void DrawLine(const RenderAnnotation& annotation);
 
+  // Draws a 2-tone line segment on the image as described in the annotation.
+  void DrawGradientLine(const RenderAnnotation& annotation);
+
   // Draws a text on the image as described in the annotation.
   void DrawText(const RenderAnnotation& annotation);
 

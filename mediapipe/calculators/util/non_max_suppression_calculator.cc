@@ -167,6 +167,8 @@ class NonMaxSuppressionCalculator : public CalculatorBase {
   }
 
   ::mediapipe::Status Open(CalculatorContext* cc) override {
+    cc->SetOffset(TimestampDiff(0));
+
     options_ = cc->Options<NonMaxSuppressionCalculatorOptions>();
     CHECK_GT(options_.num_detection_streams(), 0)
         << "At least one detection stream need to be specified.";

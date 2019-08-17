@@ -186,7 +186,7 @@ cc_library(
         "//mediapipe/framework/port:statusor",
         "//mediapipe/framework/formats/annotation:rasterization_cc_proto",
     ] + select({
-        "//conditions:default": ["@protobuf_archive//:protobuf"],
+        "//conditions:default": ["@com_google_protobuf//:protobuf"],
     }) + select({
         "//conditions:default": [
             "//mediapipe/framework/port:opencv_imgproc",
@@ -195,6 +195,7 @@ cc_library(
         "//conditions:default": [
         ],
         "//mediapipe:android": [],
+        "//mediapipe:apple": [],
     }),
     alwayslink = 1,
 )
@@ -241,6 +242,21 @@ proto_library(
 mediapipe_cc_proto_library(
     name = "rect_cc_proto",
     srcs = ["rect.proto"],
-    visibility = ["//mediapipe:__subpackages__"],
+    visibility = [
+        "//mediapipe:__subpackages__",
+    ],
     deps = [":rect_proto"],
+)
+
+proto_library(
+    name = "landmark_proto",
+    srcs = ["landmark.proto"],
+    visibility = ["//mediapipe:__subpackages__"],
+)
+
+mediapipe_cc_proto_library(
+    name = "landmark_cc_proto",
+    srcs = ["landmark.proto"],
+    visibility = ["//mediapipe:__subpackages__"],
+    deps = [":landmark_proto"],
 )

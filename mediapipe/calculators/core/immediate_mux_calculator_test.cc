@@ -146,7 +146,7 @@ class ImmediateMuxCalculatorTest : public ::testing::Test {
     ASSERT_TRUE(proto_ns::TextFormat::ParseFromString(R"(
         input_stream: "input_packets_0"
         node {
-          calculator: 'RealTimeFlowLimiterCalculator'
+          calculator: 'FlowLimiterCalculator'
           input_stream_handler {
             input_stream_handler: 'ImmediateInputStreamHandler'
           }

@@ -12,6 +12,9 @@ This directory contains MediaPipe Android example applications for different use
 |  Face Detection on GPU                |  facedetectiongpu                   |
 |  Object Detection on CPU              |  objectdetectioncpu                 |
 |  Object Detection on GPU              |  objectdetectiongpu                 |
+|  Hair Segmentation on GPU             |  hairsegmentationgpu                |
+|  Hand Detection on GPU                |  handdetectiongpu                   |
+|  Hand Tracking on GPU                 |  handtrackinggpu                    |
 
 For instance, to build an example app for face detection on CPU, run:
 

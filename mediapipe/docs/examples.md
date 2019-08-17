@@ -9,47 +9,72 @@ for Objective-C shortly.
 ### Hello World! on Android
 
 [Hello World! on Android](./hello_world_android.md) should be the first mobile
-example users go through in detail. It teaches the following:
+Android example users go through in detail. It teaches the following:
 
 *   Introduction of a simple MediaPipe graph running on mobile GPUs for
-    [Sobel edge detection].
+    [Sobel edge detection](https://en.wikipedia.org/wiki/Sobel_operator).
 *   Building a simple baseline Android application that displays "Hello World!".
 *   Adding camera preview support into the baseline application using the
     Android [CameraX] API.
 *   Incorporating the Sobel edge detection graph to process the live camera
     preview and display the processed video in real-time.
 
-### Object Detection with GPU on Android
+### Hello World! on iOS
 
-[Object Detection on GPU on Android](./object_detection_android_gpu.md)
-illustrates how to use MediaPipe with a TFLite model for object detection in a
-GPU-accelerated pipeline.
+[Hello World! on iOS](./hello_world_ios.md) is the iOS version of Sobel edge
+detection example
 
-### Object Detection with CPU on Android
+### Object Detection with GPU
 
-[Object Detection on CPU on Android](./object_detection_android_cpu.md)
-illustrates using the same TFLite model in a CPU-based pipeline. This example
-highlights how graphs can be easily adapted to run on CPU v.s. GPU.
-
-### Face Detection on Android
-
-[Face Detection on Android](./face_detection_android_gpu.md) illustrates how to
-use MediaPipe with a TFLite model for face detection in a GPU-accelerated
+[Object Detection with GPU](./object_detection_mobile_gpu.md) illustrates how to
+use MediaPipe with a TFLite model for object detection in a GPU-accelerated
 pipeline.
 
-*   The selfie face detection TFLite model is based on
-    ["BlazeFace: Sub-millisecond Neural Face Detection on Mobile GPUs"](https://sites.google.com/view/perception-cv4arvr/blazeface).
-*   [Model card](https://sites.google.com/corp/view/perception-cv4arvr/blazeface#h.p_21ojPZDx3cqq).
+*   [Android](./object_detection_mobile_gpu.md#android)
+*   [iOS](./object_detection_mobile_gpu.md#ios)
 
-### Hair Segmentation on Android
+### Object Detection with CPU
 
-[Hair Segmentation on Android](./hair_segmentation_android_gpu.md) illustrates
-how to use MediaPipe with a TFLite model for hair segmentation in a
-GPU-accelerated pipeline.
+[Object Detection with CPU](./object_detection_mobile_cpu.md) illustrates using
+the same TFLite model in a CPU-based pipeline. This example highlights how
+graphs can be easily adapted to run on CPU v.s. GPU.
 
-*   The selfie hair segmentation TFLite model is based on
-    ["Real-time Hair segmentation and recoloring on Mobile GPUs"](https://sites.google.com/view/perception-cv4arvr/hair-segmentation).
-*   [Model card](https://sites.google.com/corp/view/perception-cv4arvr/hair-segmentation#h.p_NimuO7PgHxlY).
+### Face Detection with GPU
+
+[Face Detection with GPU](./face_detection_mobile_gpu.md) illustrates how to use
+MediaPipe with a TFLite model for face detection in a GPU-accelerated pipeline.
+The selfie face detection TFLite model is based on
+["BlazeFace: Sub-millisecond Neural Face Detection on Mobile GPUs"](https://sites.google.com/view/perception-cv4arvr/blazeface).
+[Model card](https://sites.google.com/corp/view/perception-cv4arvr/blazeface#h.p_21ojPZDx3cqq).
+
+*   [Android](./face_detection_mobile_gpu.md#android)
+*   [iOS](./face_detection_mobile_gpu.md#ios)
+
+### Hand Detection with GPU
+
+[Hand Detection with GPU](./hand_detection_mobile_gpu.md) illustrates how to use
+MediaPipe with a TFLite model for hand detection in a GPU-accelerated pipeline.
+
+*   [Android](./hand_detection_mobile_gpu.md#android)
+*   [iOS](./hand_detection_mobile_gpu.md#ios)
+
+### Hand Tracking with GPU
+
+[Hand Tracking with GPU](./hand_tracking_mobile_gpu.md) illustrates how to use
+MediaPipe with a TFLite model for hand tracking in a GPU-accelerated pipeline.
+
+*   [Android](./hand_tracking_mobile_gpu.md#android)
+*   [iOS](./hand_tracking_mobile_gpu.md#ios)
+
+### Hair Segmentation with GPU
+
+[Hair Segmentation on GPU](./hair_segmentation_mobile_gpu.md) illustrates how to
+use MediaPipe with a TFLite model for hair segmentation in a GPU-accelerated
+pipeline. The selfie hair segmentation TFLite model is based on
+["Real-time Hair segmentation and recoloring on Mobile GPUs"](https://sites.google.com/view/perception-cv4arvr/hair-segmentation).
+[Model card](https://sites.google.com/corp/view/perception-cv4arvr/hair-segmentation#h.p_NimuO7PgHxlY).
+
+*   [Android](./hair_segmentation_mobile_gpu.md#android)
 
 ## Desktop
 

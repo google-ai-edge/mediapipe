@@ -68,4 +68,7 @@ message TfLiteTensorsToDetectionsCalculatorOptions {
   // the origin is at the top-left corner, whereas the desired detection
   // representation has a bottom-left origin (e.g., in OpenGL).
   optional bool flip_vertically = 18 [default = false];
+
+  // Score threshold for perserving decoded detections.
+  optional float min_score_thresh = 19;
 }

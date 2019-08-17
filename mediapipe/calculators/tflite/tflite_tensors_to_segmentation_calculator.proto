@@ -34,4 +34,7 @@ message TfLiteTensorsToSegmentationCalculatorOptions {
 
   // Model specific: Channel to use for processing tensor.
   optional int32 output_layer_index = 5 [default = 1];
+
+  // Flip result image mask along y-axis.
+  optional bool flip_vertically = 6;
 }

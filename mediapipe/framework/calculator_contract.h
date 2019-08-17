@@ -50,9 +50,13 @@ class CalculatorContract {
   ::mediapipe::Status Initialize(const CalculatorGraphConfig::Node& node);
   ::mediapipe::Status Initialize(const PacketGeneratorConfig& node);
   ::mediapipe::Status Initialize(const StatusHandlerConfig& node);
+  void SetNodeName(const std::string& node_name) { node_name_ = node_name; }
 
   // Returns the options given to this node.
   const CalculatorOptions& Options() const { return node_config_->options(); }
+
+  // Returns the name given to this node.
+  const std::string& GetNodeName() { return node_name_; }
 
   // Returns the options given to this calculator.  Template argument T must
   // be the type of the protobuf extension message or the protobuf::Any
@@ -141,6 +145,7 @@ class CalculatorContract {
   std::unique_ptr<PacketTypeSet> output_side_packets_;
   std::string input_stream_handler_;
   MediaPipeOptions input_stream_handler_options_;
+  std::string node_name_;
   std::map<std::string, GraphServiceRequest> service_requests_;
 };
 

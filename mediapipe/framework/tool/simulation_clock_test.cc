@@ -46,7 +46,7 @@ class SimulationClockTest : public ::testing::Test {
     graph_config_ = ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
       input_stream: "input_packets_0"
       node {
-        calculator: 'RealTimeFlowLimiterCalculator'
+        calculator: 'FlowLimiterCalculator'
         input_stream_handler {
           input_stream_handler: 'ImmediateInputStreamHandler'
         }

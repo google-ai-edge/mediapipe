@@ -32,7 +32,7 @@
 #ifdef __APPLE__
 #include <CoreVideo/CoreVideo.h>
 
-#include "mediapipe/framework/ios/CFHolder.h"
+#include "mediapipe/objc/CFHolder.h"
 #endif  // __APPLE__
 
 namespace mediapipe {
@@ -40,7 +40,7 @@ namespace mediapipe {
 class GlCalculatorHelperImpl;
 class GlTexture;
 class GpuResources;
-class GpuSharedData;
+struct GpuSharedData;
 
 #ifdef __APPLE__
 #if TARGET_OS_OSX

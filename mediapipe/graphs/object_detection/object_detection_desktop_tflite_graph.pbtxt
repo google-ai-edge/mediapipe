@@ -146,7 +146,7 @@ node {
 # Converts the detections to drawing primitives for annotation overlay.
 node {
   calculator: "DetectionsToRenderDataCalculator"
-  input_stream: "DETECTION_VECTOR:output_detections"
+  input_stream: "DETECTIONS:output_detections"
   output_stream: "RENDER_DATA:render_data"
   node_options: {
     [type.googleapis.com/mediapipe.DetectionsToRenderDataCalculatorOptions] {
@@ -156,8 +156,7 @@ node {
   }
 }
 
-# Draws annotations and overlays them on top of the original image coming into
-# the graph.
+# Draws annotations and overlays them on top of the input images.
 node {
   calculator: "AnnotationOverlayCalculator"
   input_stream: "INPUT_FRAME:input_video"

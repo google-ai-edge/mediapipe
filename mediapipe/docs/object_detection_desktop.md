@@ -23,8 +23,8 @@ To build and run the TensorFlow example on desktop, run:
 # Note that this command also builds TensorFlow targets from scratch, it may
 # take a long time (e.g., up to 30 mins) to build for the first time.
 $ bazel build -c opt \
-    --define 'MEDIAPIPE_DISABLE_GPU=1' \
-    --define 'no_aws_support=true' \
+    --define MEDIAPIPE_DISABLE_GPU=1 \
+    --define no_aws_support=true \
     mediapipe/examples/desktop/object_detection:object_detection_tensorflow
 
 # It should print:
@@ -189,7 +189,7 @@ node {
 To build and run the TensorFlow Lite example on desktop, run:
 
 ```bash
-$ bazel build -c opt --define 'MEDIAPIPE_DISABLE_GPU=1' \
+$ bazel build -c opt --define MEDIAPIPE_DISABLE_GPU=1 \
     mediapipe/examples/desktop/object_detection:object_detection_tflite
 
 # It should print:

@@ -31,6 +31,7 @@ using FilledRectangle = RenderAnnotation::FilledRectangle;
 using FilledRoundedRectangle = RenderAnnotation::FilledRoundedRectangle;
 using Point = RenderAnnotation::Point;
 using Line = RenderAnnotation::Line;
+using GradientLine = RenderAnnotation::GradientLine;
 using Oval = RenderAnnotation::Oval;
 using Rectangle = RenderAnnotation::Rectangle;
 using RoundedRectangle = RenderAnnotation::RoundedRectangle;
@@ -56,10 +57,28 @@ bool NormalizedtoPixelCoordinates(double normalized_x, double normalized_y,
 }
 
 cv::Scalar MediapipeColorToOpenCVColor(const Color& color) {
-  return cv::Scalar(static_cast<int32>(color.r() * 255.0f),
-                    static_cast<int32>(color.g() * 255.0f),
-                    static_cast<int32>(color.b() * 255.0f));
+  return cv::Scalar(color.r(), color.g(), color.b());
 }
+
+cv::RotatedRect RectangleToOpenCVRotatedRect(int left, int top, int right,
+                                             int bottom, double rotation) {
+  return cv::RotatedRect(
+      cv::Point2f((left + right) / 2.f, (top + bottom) / 2.f),
+      cv::Size2f(right - left, bottom - top), rotation / M_PI * 180.f);
+}
+
+void cv_line2(cv::Mat& img, const cv::Point& start, const cv::Point& end,
+              const cv::Scalar& color1, const cv::Scalar& color2,
+              int thickness) {
+  cv::LineIterator iter(img, start, end, /*cv::LINE_4=*/4);
+  for (int i = 0; i < iter.count; i++, iter++) {
+    const double alpha = static_cast<double>(i) / iter.count;
+    const cv::Scalar new_color(color1 * (1.0 - alpha) + color2 * alpha);
+    const cv::Rect rect(iter.pos(), cv::Size(thickness, thickness));
+    cv::rectangle(img, rect, new_color, /*cv::FILLED=*/-1, /*cv::LINE_4=*/4);
+  }
+}
+
 }  // namespace
 
 void AnnotationRenderer::RenderDataOnImage(const RenderData& render_data) {
@@ -83,6 +102,8 @@ void AnnotationRenderer::RenderDataOnImage(const RenderData& render_data) {
       DrawPoint(annotation);
     } else if (annotation.data_case() == RenderAnnotation::kLine) {
       DrawLine(annotation);
+    } else if (annotation.data_case() == RenderAnnotation::kGradientLine) {
+      DrawGradientLine(annotation);
     } else if (annotation.data_case() == RenderAnnotation::kArrow) {
       DrawArrow(annotation);
     } else {
@@ -126,10 +147,23 @@ void AnnotationRenderer::DrawRectangle(const RenderAnnotation& annotation) {
     bottom = static_cast<int>(rectangle.bottom());
   }
 
-  cv::Rect rect(left, top, right - left, bottom - top);
   const cv::Scalar color = MediapipeColorToOpenCVColor(annotation.color());
   const int thickness = annotation.thickness();
-  cv::rectangle(mat_image_, rect, color, thickness);
+
+  if (rectangle.rotation() != 0.0) {
+    const auto& rect = RectangleToOpenCVRotatedRect(left, top, right, bottom,
+                                                    rectangle.rotation());
+    const int kNumVertices = 4;
+    cv::Point2f vertices[kNumVertices];
+    rect.points(vertices);
+    for (int i = 0; i < kNumVertices; i++) {
+      cv::line(mat_image_, vertices[i], vertices[(i + 1) % kNumVertices], color,
+               thickness);
+    }
+  } else {
+    cv::Rect rect(left, top, right - left, bottom - top);
+    cv::rectangle(mat_image_, rect, color, thickness);
+  }
 }
 
 void AnnotationRenderer::DrawFilledRectangle(
@@ -154,9 +188,24 @@ void AnnotationRenderer::DrawFilledRectangle(
     bottom = static_cast<int>(rectangle.bottom());
   }
 
-  cv::Rect rect(left, top, right - left, bottom - top);
   const cv::Scalar color = MediapipeColorToOpenCVColor(annotation.color());
-  cv::rectangle(mat_image_, rect, color, -1);
+
+  if (rectangle.rotation() != 0.0) {
+    const auto& rect = RectangleToOpenCVRotatedRect(left, top, right, bottom,
+                                                    rectangle.rotation());
+    const int kNumVertices = 4;
+    cv::Point2f vertices2f[kNumVertices];
+    rect.points(vertices2f);
+    // Convert cv::Point2f[] to cv::Point[].
+    cv::Point vertices[kNumVertices];
+    for (int i = 0; i < kNumVertices; ++i) {
+      vertices[i] = vertices2f[i];
+    }
+    cv::fillConvexPoly(mat_image_, vertices, kNumVertices, color);
+  } else {
+    cv::Rect rect(left, top, right - left, bottom - top);
+    cv::rectangle(mat_image_, rect, color, -1);
+  }
 }
 
 void AnnotationRenderer::DrawRoundedRectangle(
@@ -403,6 +452,33 @@ void AnnotationRenderer::DrawLine(const RenderAnnotation& annotation) {
   const cv::Scalar color = MediapipeColorToOpenCVColor(annotation.color());
   const int thickness = annotation.thickness();
   cv::line(mat_image_, start, end, color, thickness);
+}
+
+void AnnotationRenderer::DrawGradientLine(const RenderAnnotation& annotation) {
+  int x_start = -1;
+  int y_start = -1;
+  int x_end = -1;
+  int y_end = -1;
+
+  const auto& line = annotation.gradient_line();
+  if (line.normalized()) {
+    CHECK(NormalizedtoPixelCoordinates(line.x_start(), line.y_start(),
+                                       image_width_, image_height_, &x_start,
+                                       &y_start));
+    CHECK(NormalizedtoPixelCoordinates(line.x_end(), line.y_end(), image_width_,
+                                       image_height_, &x_end, &y_end));
+  } else {
+    x_start = static_cast<int>(line.x_start());
+    y_start = static_cast<int>(line.y_start());
+    x_end = static_cast<int>(line.x_end());
+    y_end = static_cast<int>(line.y_end());
+  }
+  const cv::Point start(x_start, y_start);
+  const cv::Point end(x_end, y_end);
+  const int thickness = annotation.thickness();
+  const cv::Scalar color1 = MediapipeColorToOpenCVColor(line.color1());
+  const cv::Scalar color2 = MediapipeColorToOpenCVColor(line.color2());
+  cv_line2(mat_image_, start, end, color1, color2, thickness);
 }
 
 void AnnotationRenderer::DrawText(const RenderAnnotation& annotation) {

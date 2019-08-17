@@ -113,6 +113,22 @@ cc_library(
     alwayslink = 1,
 )
 
+cc_library(
+    name = "tvl1_optical_flow_calculator",
+    srcs = ["tvl1_optical_flow_calculator.cc"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/formats:image_frame",
+        "//mediapipe/framework/formats:image_frame_opencv",
+        "//mediapipe/framework/formats/motion:optical_flow_field",
+        "//mediapipe/framework/port:opencv_video",
+        "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/synchronization",
+    ],
+    alwayslink = 1,
+)
+
 cc_test(
     name = "opencv_video_decoder_calculator_test",
     srcs = ["opencv_video_decoder_calculator_test.cc"],
@@ -152,6 +168,25 @@ cc_test(
         "//mediapipe/framework/port:opencv_highgui",
         "//mediapipe/framework/port:opencv_imgproc",
         "//mediapipe/framework/port:opencv_video",
+        "//mediapipe/framework/port:parse_text_proto",
+    ],
+)
+
+cc_test(
+    name = "tvl1_optical_flow_calculator_test",
+    srcs = ["tvl1_optical_flow_calculator_test.cc"],
+    data = ["//mediapipe/calculators/image/testdata:test_images"],
+    deps = [
+        ":tvl1_optical_flow_calculator",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:calculator_runner",
+        "//mediapipe/framework/deps:file_path",
+        "//mediapipe/framework/formats:image_frame_opencv",
+        "//mediapipe/framework/formats/motion:optical_flow_field",
+        "//mediapipe/framework/port:file_helpers",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:opencv_imgcodecs",
+        "//mediapipe/framework/port:opencv_imgproc",
         "//mediapipe/framework/port:parse_text_proto",
     ],
 )

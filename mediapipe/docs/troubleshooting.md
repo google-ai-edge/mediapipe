@@ -128,7 +128,7 @@ If some of the calculators in the graph cannot keep pace with the realtime input
 streams, then latency will continue to increase, and it becomes necessary to
 drop some input packets. The recommended technique is to use the MediaPipe
 calculators designed specifically for this purpose such as
-[`RealTimeFlowLimiterCalculator`] as described in
+[`FlowLimiterCalculator`] as described in
 [How to process realtime input streams](how_to_questions.md#how-to-process-realtime-input-streams).
 
 [`CalculatorGraphConfig`]: https://github.com/google/mediapipe/tree/master/mediapipe/framework/calculator.proto
@@ -141,4 +141,4 @@ calculators designed specifically for this purpose such as
 [`CalculatorGraph::WaitUntilDone`]: https://github.com/google/mediapipe/tree/master/mediapipe/framework/calculator_graph.h
 [`Timestamp::Done`]: https://github.com/google/mediapipe/tree/master/mediapipe/framework/timestamp.h
 [`CalculatorBase::Close`]: https://github.com/google/mediapipe/tree/master/mediapipe/framework/calculator_base.h
-[`RealTimeFlowLimiterCalculator`]: https://github.com/google/mediapipe/tree/master/mediapipe/calculators/core/real_time_flow_limiter_calculator.cc
+[`FlowLimiterCalculator`]: https://github.com/google/mediapipe/tree/master/mediapipe/calculators/core/flow_limiter_calculator.cc

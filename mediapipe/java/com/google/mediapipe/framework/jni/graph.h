@@ -64,8 +64,15 @@ class Graph {
   ::mediapipe::Status LoadBinaryGraph(std::string path_to_graph);
   // Loads a binary graph from a buffer.
   ::mediapipe::Status LoadBinaryGraph(const char* data, int size);
-  // Gets the calculator graph config.
-  const CalculatorGraphConfig& GetCalculatorGraphConfig();
+  // Loads a binary graph template from a buffer.
+  ::mediapipe::Status LoadBinaryGraphTemplate(const char* data, int size);
+  // Specifies the CalculatorGraphConfig::type of the top level graph.
+  ::mediapipe::Status SetGraphType(std::string graph_type);
+  // Specifies options such as template arguments for the graph.
+  ::mediapipe::Status SetGraphOptions(const char* data, int size);
+
+  // Returns the expanded calculator graph config.
+  CalculatorGraphConfig GetCalculatorGraphConfig();
 
   // Runs the graph until it closes.
   // Mainly is used for writing tests.
@@ -170,9 +177,24 @@ class Graph {
   void EnsureMinimumExecutorStackSizeForJava();
   void SetPacketJavaClass(JNIEnv* env);
   std::map<std::string, Packet> CreateCombinedSidePackets();
+  // Returns the top-level CalculatorGraphConfig, or nullptr if the top-level
+  // CalculatorGraphConfig is not yet defined.
+  CalculatorGraphConfig* graph_config();
+  // Returns the top-level CalculatorGraphConfig::type, or "" if the top-level
+  // CalculatorGraphConfig::type is not yet defined.
+  std::string graph_type();
+  // Initializes CalculatorGraph |graph| using the loaded graph-configs.
+  ::mediapipe::Status InitializeGraph(CalculatorGraph* graph);
 
-  CalculatorGraphConfig graph_;
-  bool graph_loaded_;
+  // CalculatorGraphConfigs for the calculator graph and subgraphs.
+  std::vector<CalculatorGraphConfig> graph_configs_;
+  // CalculatorGraphTemplates for the calculator graph and subgraphs.
+  std::vector<CalculatorGraphTemplate> graph_templates_;
+  // Options such as template arguments for the top-level calculator graph.
+  CalculatorOptions graph_options_;
+  // The CalculatorGraphConfig::type of the top-level calculator graph.
+  std::string graph_type_ = "<none>";
+
   // Used by EnsureMinimumExecutorStackSizeForJava() to ensure that the
   // default executor's stack size is increased only once.
   bool executor_stack_size_increased_;

@@ -16,8 +16,6 @@
 
 namespace mediapipe {
 
-// We only define this variable for two specializations of the template
-// because it is only meant to be used for these two types.
 #if EMSCRIPTEN_WORKAROUND_FOR_B121216479
 template <>
 CalculatorContext*

@@ -31,9 +31,9 @@
 
 #ifdef __APPLE__
 #ifdef __OBJC__
-@class MediaPipeGraphGPUData;
+@class MPPGraphGPUData;
 #else
-struct MediaPipeGraphGPUData;
+struct MPPGraphGPUData;
 #endif  // __OBJC__
 #endif  // defined(__APPLE__)
 
@@ -66,7 +66,7 @@ class GpuResources {
   GpuBufferMultiPool& gpu_buffer_pool() { return gpu_buffer_pool_; }
 
 #ifdef __APPLE__
-  MediaPipeGraphGPUData* ios_gpu_data();
+  MPPGraphGPUData* ios_gpu_data();
 #endif  // defined(__APPLE__)
 
   void PrepareGpuNode(CalculatorNode* node);
@@ -93,7 +93,7 @@ class GpuResources {
 
 #ifdef __APPLE__
   // Note that this is an Objective-C object.
-  MediaPipeGraphGPUData* ios_gpu_data_;
+  MPPGraphGPUData* ios_gpu_data_;
 #endif  // defined(__APPLE__)
 
   std::map<std::string, std::shared_ptr<Executor>> named_executors_;

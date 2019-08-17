@@ -232,8 +232,7 @@ class UnpackMediaSequenceCalculator : public CalculatorBase {
     current_timestamp_index_ = 0;
 
     // Determine the data path and output it.
-    const auto& options =
-        cc->Options().GetExtension(UnpackMediaSequenceCalculatorOptions::ext);
+    const auto& options = cc->Options<UnpackMediaSequenceCalculatorOptions>();
     const auto& sequence = cc->InputSidePackets()
                                .Tag(kSequenceExampleTag)
                                .Get<tensorflow::SequenceExample>();
@@ -338,7 +337,6 @@ class UnpackMediaSequenceCalculator : public CalculatorBase {
                   ? Timestamp::PostStream()
                   : Timestamp(map_kv.second[i]);
 
-          LOG(INFO) << "key: " << map_kv.first;
           if (absl::StrContains(map_kv.first, mpms::GetImageTimestampKey())) {
             std::vector<std::string> pieces = absl::StrSplit(map_kv.first, '/');
             std::string feature_key = "";

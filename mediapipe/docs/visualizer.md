@@ -59,3 +59,24 @@ The visualizer graph shows the connections between calculator nodes.
 
     ![Special nodes](./images/special_nodes.png){width="350"}
     ![Special nodes](./images/special_nodes_code.png){width="350"}
+
+### Visualizing subgraphs
+
+The MediaPipe visualizer can display multiple graphs. If a graph has a name (designated by assigning a string to the "type" field in the top level of the graph's proto file) and that name is used as a calculator name in a separate graph, it is considered a subgraph and colored appropriately where it is used.  Clicking on a subgraph will navigate to the corresponding tab which holds the subgraph's definition. In this example, for hand detection GPU we have 2 pbtxt files:
+[hand_detection_mobile.pbtxt](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/hand_tracking/hand_detection_mobile.pbtxt)
+and its associated [subgraph](./framework_concepts.md#subgraph) called
+[hand_detection_gpu.pbtxt](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/hand_tracking/hand_detection_gpu.pbtxt)
+
+*   In the default MediaPipe visualizer, click on upload graph button and select
+    the 2 pbtxt files to visualize (main graph and all its associated subgraphs)
+
+    ![Upload graph button](./images/upload_button.png){width="250"}
+
+    ![Choose the 2 files](./images/upload_2pbtxt.png){width="400"}
+
+*   You will see 3 tabs. The main graph tab is `hand_detection_mobile.pbtxt`
+    ![hand_detection_mobile_gpu.pbtxt](./images/maingraph_visualizer.png){width="1500"}
+
+*   Click on the subgraph block in purple `Hand Detection` and the
+    `hand_detection_gpu.pbtxt` tab will open
+    ![Hand detection subgraph](./images/clicksubgraph_handdetection.png){width="1500"}

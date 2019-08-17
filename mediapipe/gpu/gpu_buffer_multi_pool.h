@@ -39,7 +39,7 @@
 
 namespace mediapipe {
 
-class GpuSharedData;
+struct GpuSharedData;
 
 struct BufferSpec {
   BufferSpec(int w, int h, GpuBufferFormat f)

@@ -1,4 +1,4 @@
-# Copyright 2019 The MediaPipeOSS Authors.
+# Copyright 2019 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -25,9 +25,9 @@ node {
   input_side_packet: "SEQUENCE_EXAMPLE:parsed_sequence_example"
   output_side_packet: "DATA_PATH:input_video_path"
   output_side_packet: "RESAMPLER_OPTIONS:packet_resampler_options"
-  options {
-    [mediapipe.UnpackMediaSequenceCalculatorOptions.ext]: {
-      base_packet_resampler_options {
+  node_options: {
+    [type.googleapis.com/mediapipe.UnpackMediaSequenceCalculatorOptions]: {
+      base_packet_resampler_options: {
         frame_rate: 24.0
         base_timestamp: 0
       }
@@ -55,7 +55,7 @@ node {
   calculator: "OpenCvImageEncoderCalculator"
   input_stream: "sampled_frames"
   output_stream: "encoded_frames"
-  node_options {
+  node_options: {
     [type.googleapis.com/mediapipe.OpenCvImageEncoderCalculatorOptions]: {
       quality: 80
     }

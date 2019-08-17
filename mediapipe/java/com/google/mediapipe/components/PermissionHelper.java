@@ -17,8 +17,8 @@ package com.google.mediapipe.components;
 import android.Manifest;
 import android.app.Activity;
 import android.content.pm.PackageManager;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import android.util.Log;
 
 /** Manages camera permission request and handling. */
@@ -31,7 +31,7 @@ public class PermissionHelper {
 
   private static final int REQUEST_CODE = 0;
 
-  private static boolean permissionsGranted(Activity context, String[] permissions) {
+  public static boolean permissionsGranted(Activity context, String[] permissions) {
     for (String permission : permissions) {
       int permissionStatus = ContextCompat.checkSelfPermission(context, permission);
       if (permissionStatus != PackageManager.PERMISSION_GRANTED) {
@@ -41,10 +41,9 @@ public class PermissionHelper {
     return true;
   }
 
-  private static void checkAndRequestPermissions(
-      Activity context, String[] permissions, int permissionCode) {
+  public static void checkAndRequestPermissions(Activity context, String[] permissions) {
     if (!permissionsGranted(context, permissions)) {
-      ActivityCompat.requestPermissions(context, permissions, permissionCode);
+      ActivityCompat.requestPermissions(context, permissions, REQUEST_CODE);
     }
   }
 
@@ -58,7 +57,7 @@ public class PermissionHelper {
    */
   public static void checkAndRequestCameraPermissions(Activity context) {
     Log.d(TAG, "checkAndRequestCameraPermissions");
-    checkAndRequestPermissions(context, new String[] {CAMERA_PERMISSION}, REQUEST_CODE);
+    checkAndRequestPermissions(context, new String[] {CAMERA_PERMISSION});
   }
 
   /** Called by context to check if audio permissions have been granted. */
@@ -69,22 +68,7 @@ public class PermissionHelper {
   /** Called by context to check if audio permissions have been granted and if not, request them. */
   public static void checkAndRequestAudioPermissions(Activity context) {
     Log.d(TAG, "checkAndRequestAudioPermissions");
-    checkAndRequestPermissions(context, new String[] {AUDIO_PERMISSION}, REQUEST_CODE);
-  }
-
-  /** Called by context to check if audio and camera permissions have been granted. */
-  public static boolean audioCameraPermissionsGranted(Activity context) {
-    return permissionsGranted(context, new String[] {AUDIO_PERMISSION, CAMERA_PERMISSION});
-  }
-
-  /**
-   * Called by context to check if audio and camera permissions have been granted and if not,
-   * request them.
-   */
-  public static void checkAndRequestAudioCameraPermissions(Activity context) {
-    Log.d(TAG, "checkAndRequestAudioCameraPermissions");
-    checkAndRequestPermissions(
-        context, new String[] {AUDIO_PERMISSION, CAMERA_PERMISSION}, REQUEST_CODE);
+    checkAndRequestPermissions(context, new String[] {AUDIO_PERMISSION});
   }
 
   /** Called by context when permissions request has been completed. */

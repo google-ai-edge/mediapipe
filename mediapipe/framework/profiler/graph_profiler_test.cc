@@ -342,7 +342,7 @@ TEST_F(GraphProfilerTestPeer, Initialize) {
       output_stream: "source_stream2"
     }
     node {
-      calculator: "RealTimeFlowLimiterCalculator"
+      calculator: "FlowLimiterCalculator"
       input_stream: "FINISHED:my_other_stream"
       input_stream: "source_stream2"
       input_stream_info: {
@@ -378,7 +378,7 @@ TEST_F(GraphProfilerTestPeer, Initialize) {
   CheckHasProfilesWithInputStreamName("A_Normal_Calc",
                                       {"input_stream", "source_stream1"});
   CheckHasProfilesWithInputStreamName("Another_Source_Calc", {});
-  CheckHasProfilesWithInputStreamName("RealTimeFlowLimiterCalculator",
+  CheckHasProfilesWithInputStreamName("FlowLimiterCalculator",
                                       {"source_stream2", "my_other_stream"});
   CheckHasProfilesWithInputStreamName("Another_Normal_Calc",
                                       {"my_stream", "gated_source_stream2"});

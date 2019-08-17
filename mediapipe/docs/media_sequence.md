@@ -13,7 +13,8 @@ tasks like video object detection, but very difficult to encode in
 TensorFlow.Examples. The goal of MediaSequence is to simplify working with
 SequenceExamples and to automate common preparation tasks. Much more information
 is available about the MediaSequence pipeline, including how to use it to
-process new data sets, in the [documentation](https://github.com/google/mediapipe/tree/master/mediapipe/util/sequence/README.md).
+process new data sets, in the documentation of
+[MediaSequence](https://github.com/google/mediapipe/tree/master/mediapipe/util/sequence).
 
 ### Preparing an example data set
 
@@ -27,20 +28,20 @@ process new data sets, in the [documentation](https://github.com/google/mediapip
 1.  Compile the MediaSequence demo C++ binary
 
     ```bash
-    bazel build -c opt mediapipe/examples/desktop/media_sequence:media_sequence_demo --define 'MEDIAPIPE_DISABLE_GPU=1'
+    bazel build -c opt mediapipe/examples/desktop/media_sequence:media_sequence_demo --define MEDIAPIPE_DISABLE_GPU=1
     ```
 
     MediaSequence uses C++ binaries to improve multimedia processing speed and
     encourage a strong separation between annotations and the image data or
     other features. The binary code is very general in that it reads from files
     into input side packets and writes output side packets to files when
-    completed, but it also links in all of the calculators for necessary for
-    the MediaPipe graphs preparing the Charades data set.
+    completed, but it also links in all of the calculators for necessary for the
+    MediaPipe graphs preparing the Charades data set.
 
 1.  Download and prepare the data set through Python
 
     To run this step, you must have Python 2.7 or 3.5+ installed with the
-    TensorFlow 1.19+ package installed.
+    TensorFlow 1.14+ package installed.
 
     ```bash
     python -m mediapipe.examples.desktop.media_sequence.demo_dataset \
@@ -56,10 +57,11 @@ process new data sets, in the [documentation](https://github.com/google/mediapip
     MediaPipe graphs during processing.
 
     Running this module
-    1. Downloads videos from the internet.
-    1. For each annotation in a CSV, creates a structured metadata file.
-    1. Runs MediaPipe to extract images as defined by the metadata.
-    1. Stores the results in numbered set of TFRecords files.
+
+    1.  Downloads videos from the internet.
+    1.  For each annotation in a CSV, creates a structured metadata file.
+    1.  Runs MediaPipe to extract images as defined by the metadata.
+    1.  Stores the results in numbered set of TFRecords files.
 
     MediaSequence uses SequenceExamples as the format of both inputs and
     outputs. Annotations are encoded as inputs in a SequenceExample of metadata
@@ -84,12 +86,16 @@ process new data sets, in the [documentation](https://github.com/google/mediapip
     demo_data_path = '/tmp/demo_data/'
     with tf.Graph().as_default():
        d = DemoDataset(demo_data_path)
-       dataset = d.as_dataset("test")
+       dataset = d.as_dataset('test')
        # implement additional processing and batching here
-       output = dataset.make_one_shot_iterator().get_next()
+       dataset_output = dataset.make_one_shot_iterator().get_next()
+       images = dataset_output=['images']
+       labels = dataset_output=['labels']
 
        with tf.Session() as sess:
-         output_ = sess.run(output)
+         images_, labels_ = sess.run(images, labels)
+       print('The shape of images_ is %s' % str(images_.shape))
+       print('The shape of labels_ is %s' % str(labels_.shape))
     ```
 
 ### Preparing a practical data set
@@ -104,9 +110,9 @@ The Charades data set is large (~150 GB), and will take considerable time to
 download and process (4-8 hours).
 
 ```bash
-bazel build -c opt mediapipe/examples/desktop/media_sequence:media_sequence_demo --define 'MEDIAPIPE_DISABLE_GPU=1'
+bazel build -c opt mediapipe/examples/desktop/media_sequence:media_sequence_demo --define MEDIAPIPE_DISABLE_GPU=1
 
-python -m mediapipe.examples.desktop.media_sequence.demo_dataset \
+python -m mediapipe.examples.desktop.media_sequence.charades_dataset \
   --alsologtostderr \
   --path_to_charades_data=/tmp/demo_data/ \
   --path_to_mediapipe_binary=bazel-bin/mediapipe/examples/desktop/media_sequence/media_sequence_demo \
@@ -115,7 +121,7 @@ python -m mediapipe.examples.desktop.media_sequence.demo_dataset \
 
 ### Preparing your own data set
 The process for preparing your own data set is described in the [MediaSequence
-documentation](https://github.com/google/mediapipe/blob/master/mediapipe/util/sequence/README.md).
+documentation](https://github.com/google/mediapipe/tree/master/mediapipe/util/sequence).
 The Python code for Charades can easily be modified to process most annotations,
 but the MediaPipe processing warrants further discussion. MediaSequence uses
 MediaPipe graphs to extract features related to the metadata or previously
@@ -145,7 +151,7 @@ node {
   output_side_packet: "DATA_PATH:input_video_path"
   output_side_packet: "RESAMPLER_OPTIONS:packet_resampler_options"
   options {
-    [mediapipe.UnpackMediaSequenceCalculatorOptions.ext]: {
+    [type.googleapis.com/mediapipe.UnpackMediaSequenceCalculatorOptions]: {
       base_packet_resampler_options {
         frame_rate: 24.0
         base_timestamp: 0

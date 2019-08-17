@@ -3,8 +3,7 @@
 
 """.bzl file for mediapipe open source build configs."""
 
-load("@protobuf_archive//:protobuf.bzl", "cc_proto_library")
-load("@protobuf_archive//:protobuf.bzl", "py_proto_library")
+load("@com_google_protobuf//:protobuf.bzl", "cc_proto_library", "py_proto_library")
 
 def mediapipe_py_proto_library(
         name,
@@ -26,9 +25,9 @@ def mediapipe_py_proto_library(
         name = name,
         srcs = srcs,
         visibility = visibility,
-        default_runtime = "@protobuf_archive//:protobuf_python",
-        protoc = "@protobuf_archive//:protoc",
-        deps = py_proto_deps + ["@protobuf_archive//:protobuf_python"],
+        default_runtime = "@com_google_protobuf//:protobuf_python",
+        protoc = "@com_google_protobuf//:protoc",
+        deps = py_proto_deps + ["@com_google_protobuf//:protobuf_python"],
     )
 
 def mediapipe_cc_proto_library(name, srcs, visibility, deps = [], cc_deps = [], testonly = 0):
@@ -48,7 +47,8 @@ def mediapipe_cc_proto_library(name, srcs, visibility, deps = [], cc_deps = [], 
         visibility = visibility,
         deps = cc_deps,
         testonly = testonly,
-        cc_libs = ["@protobuf_archive//:protobuf"],
-        protoc = "@protobuf_archive//:protoc",
-        default_runtime = "@protobuf_archive//:protobuf",
+        cc_libs = ["@com_google_protobuf//:protobuf"],
+        protoc = "@com_google_protobuf//:protoc",
+        default_runtime = "@com_google_protobuf//:protobuf",
+        alwayslink = 1,
     )

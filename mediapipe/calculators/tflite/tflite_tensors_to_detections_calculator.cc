@@ -120,11 +120,19 @@ class TfLiteTensorsToDetectionsCalculator : public CalculatorBase {
   ::mediapipe::Status Close(CalculatorContext* cc) override;
 
  private:
+  ::mediapipe::Status ProcessCPU(CalculatorContext* cc,
+                                 std::vector<Detection>* output_detections);
+  ::mediapipe::Status ProcessGPU(CalculatorContext* cc,
+                                 std::vector<Detection>* output_detections);
+
   ::mediapipe::Status LoadOptions(CalculatorContext* cc);
   ::mediapipe::Status GlSetup(CalculatorContext* cc);
   ::mediapipe::Status DecodeBoxes(const float* raw_boxes,
                                   const std::vector<Anchor>& anchors,
                                   std::vector<float>* boxes);
+  ::mediapipe::Status ConvertToDetections(
+      const float* detection_boxes, const float* detection_scores,
+      const int* detection_classes, std::vector<Detection>* output_detections);
   Detection ConvertToDetection(float box_ymin, float box_xmin, float box_ymax,
                                float box_xmax, float score, int class_id,
                                bool flip_vertically);
@@ -136,6 +144,7 @@ class TfLiteTensorsToDetectionsCalculator : public CalculatorBase {
 
   ::mediapipe::TfLiteTensorsToDetectionsCalculatorOptions options_;
   std::vector<Anchor> anchors_;
+  bool side_packet_anchors_{};
 
 #if defined(__ANDROID__)
   mediapipe::GlCalculatorHelper gpu_helper_;
@@ -187,6 +196,8 @@ REGISTER_CALCULATOR(TfLiteTensorsToDetectionsCalculator);
 
 ::mediapipe::Status TfLiteTensorsToDetectionsCalculator::Open(
     CalculatorContext* cc) {
+  cc->SetOffset(TimestampDiff(0));
+
   if (cc->Inputs().HasTag("TENSORS_GPU")) {
     gpu_input_ = true;
 #if defined(__ANDROID__)
@@ -195,6 +206,7 @@ REGISTER_CALCULATOR(TfLiteTensorsToDetectionsCalculator);
   }
 
   RETURN_IF_ERROR(LoadOptions(cc));
+  side_packet_anchors_ = cc->InputSidePackets().HasTag("ANCHORS");
 
   if (gpu_input_) {
     RETURN_IF_ERROR(GlSetup(cc));
@@ -210,72 +222,32 @@ REGISTER_CALCULATOR(TfLiteTensorsToDetectionsCalculator);
     return ::mediapipe::OkStatus();
   }
 
-  const bool side_packet_anchors =
-      cc->InputSidePackets().HasTag("ANCHORS") &&
-      !cc->InputSidePackets().Tag("ANCHORS").IsEmpty();
   auto output_detections = absl::make_unique<std::vector<Detection>>();
 
-  std::vector<float> boxes(num_boxes_ * num_coords_);
-  std::vector<float> score_class_id_pairs(num_boxes_ * 2);
-
   if (gpu_input_) {
-#if defined(__ANDROID__)
-    const auto& input_tensors =
-        cc->Inputs().Tag("TENSORS_GPU").Get<std::vector<GlBuffer>>();
-
-    // Copy inputs.
-    tflite::gpu::gl::CopyBuffer(input_tensors[0], *raw_boxes_buffer_.get());
-    tflite::gpu::gl::CopyBuffer(input_tensors[1], *raw_scores_buffer_.get());
-    if (!anchors_init_) {
-      if (side_packet_anchors) {
-        const auto& anchors =
-            cc->InputSidePackets().Tag("ANCHORS").Get<std::vector<Anchor>>();
-        std::vector<float> raw_anchors(num_boxes_ * kNumCoordsPerBox);
-        ConvertAnchorsToRawValues(anchors, num_boxes_, raw_anchors.data());
-        raw_anchors_buffer_->Write<float>(absl::MakeSpan(raw_anchors));
-      } else {
-        CHECK_EQ(input_tensors.size(), 3);
-        tflite::gpu::gl::CopyBuffer(input_tensors[2],
-                                    *raw_anchors_buffer_.get());
-      }
-      anchors_init_ = true;
-    }
-
-    // Run shaders.
-    RETURN_IF_ERROR(gpu_helper_.RunInGlContext(
-        [this, &input_tensors]() -> ::mediapipe::Status {
-          // Decode boxes.
-          decoded_boxes_buffer_->BindToIndex(0);
-          raw_boxes_buffer_->BindToIndex(1);
-          raw_anchors_buffer_->BindToIndex(2);
-          const tflite::gpu::uint3 decode_workgroups = {num_boxes_, 1, 1};
-          decode_program_->Dispatch(decode_workgroups);
-
-          // Score boxes.
-          scored_boxes_buffer_->BindToIndex(0);
-          raw_scores_buffer_->BindToIndex(1);
-          const tflite::gpu::uint3 score_workgroups = {num_boxes_, 1, 1};
-          score_program_->Dispatch(score_workgroups);
-
-          return ::mediapipe::OkStatus();
-        }));
-
-    // Copy decoded boxes from GPU to CPU.
-    auto status = decoded_boxes_buffer_->Read(absl::MakeSpan(boxes));
-    if (!status.ok()) {
-      return ::mediapipe::InternalError(status.error_message());
-    }
-    status = scored_boxes_buffer_->Read(absl::MakeSpan(score_class_id_pairs));
-    if (!status.ok()) {
-      return ::mediapipe::InternalError(status.error_message());
-    }
-#else
-    LOG(ERROR) << "GPU input on non-Android not supported yet.";
-#endif  // defined(__ANDROID__)
+    RETURN_IF_ERROR(ProcessGPU(cc, output_detections.get()));
   } else {
-    const auto& input_tensors =
-        cc->Inputs().Tag("TENSORS").Get<std::vector<TfLiteTensor>>();
+    RETURN_IF_ERROR(ProcessCPU(cc, output_detections.get()));
+  }  // if gpu_input_
 
+  // Output
+  if (cc->Outputs().HasTag("DETECTIONS")) {
+    cc->Outputs()
+        .Tag("DETECTIONS")
+        .Add(output_detections.release(), cc->InputTimestamp());
+  }
+
+  return ::mediapipe::OkStatus();
+}
+
+::mediapipe::Status TfLiteTensorsToDetectionsCalculator::ProcessCPU(
+    CalculatorContext* cc, std::vector<Detection>* output_detections) {
+  const auto& input_tensors =
+      cc->Inputs().Tag("TENSORS").Get<std::vector<TfLiteTensor>>();
+
+  if (input_tensors.size() == 2) {
+    // Postprocessing on CPU for model without postprocessing op. E.g. output
+    // raw score tensor and box tensor. Anchor decoding will be handled below.
     const TfLiteTensor* raw_box_tensor = &input_tensors[0];
     const TfLiteTensor* raw_score_tensor = &input_tensors[1];
 
@@ -300,7 +272,8 @@ REGISTER_CALCULATOR(TfLiteTensorsToDetectionsCalculator);
         CHECK_EQ(anchor_tensor->dims->data[1], kNumCoordsPerBox);
         const float* raw_anchors = anchor_tensor->data.f;
         ConvertRawValuesToAnchors(raw_anchors, num_boxes_, &anchors_);
-      } else if (side_packet_anchors) {
+      } else if (side_packet_anchors_) {
+        CHECK(!cc->InputSidePackets().Tag("ANCHORS").IsEmpty());
         anchors_ =
             cc->InputSidePackets().Tag("ANCHORS").Get<std::vector<Anchor>>();
       } else {
@@ -308,7 +281,11 @@ REGISTER_CALCULATOR(TfLiteTensorsToDetectionsCalculator);
       }
       anchors_init_ = true;
     }
+    std::vector<float> boxes(num_boxes_ * num_coords_);
     RETURN_IF_ERROR(DecodeBoxes(raw_boxes, anchors_, &boxes));
+
+    std::vector<float> detection_scores(num_boxes_);
+    std::vector<int> detection_classes(num_boxes_);
 
     // Filter classes by scores.
     for (int i = 0; i < num_boxes_; ++i) {
@@ -335,44 +312,119 @@ REGISTER_CALCULATOR(TfLiteTensorsToDetectionsCalculator);
           }
         }
       }
-      score_class_id_pairs[i * 2 + 0] = max_score;
-      score_class_id_pairs[i * 2 + 1] = class_id;
+      detection_scores[i] = max_score;
+      detection_classes[i] = class_id;
     }
-  }  // if gpu_input_
 
-  // Convert to Detection.
+    RETURN_IF_ERROR(ConvertToDetections(boxes.data(), detection_scores.data(),
+                                        detection_classes.data(),
+                                        output_detections));
+  } else {
+    // Postprocessing on CPU with postprocessing op (e.g. anchor decoding and
+    // non-maximum suppression) within the model.
+    RET_CHECK_EQ(input_tensors.size(), 4);
+
+    const TfLiteTensor* detection_boxes_tensor = &input_tensors[0];
+    const TfLiteTensor* detection_classes_tensor = &input_tensors[1];
+    const TfLiteTensor* detection_scores_tensor = &input_tensors[2];
+    const TfLiteTensor* num_boxes_tensor = &input_tensors[3];
+    RET_CHECK_EQ(num_boxes_tensor->dims->size, 1);
+    RET_CHECK_EQ(num_boxes_tensor->dims->data[0], 1);
+    const float* num_boxes = num_boxes_tensor->data.f;
+    num_boxes_ = num_boxes[0];
+    RET_CHECK_EQ(detection_boxes_tensor->dims->size, 3);
+    RET_CHECK_EQ(detection_boxes_tensor->dims->data[0], 1);
+    const int max_detections = detection_boxes_tensor->dims->data[1];
+    RET_CHECK_EQ(detection_boxes_tensor->dims->data[2], num_coords_);
+    RET_CHECK_EQ(detection_classes_tensor->dims->size, 2);
+    RET_CHECK_EQ(detection_classes_tensor->dims->data[0], 1);
+    RET_CHECK_EQ(detection_classes_tensor->dims->data[1], max_detections);
+    RET_CHECK_EQ(detection_scores_tensor->dims->size, 2);
+    RET_CHECK_EQ(detection_scores_tensor->dims->data[0], 1);
+    RET_CHECK_EQ(detection_scores_tensor->dims->data[1], max_detections);
+
+    const float* detection_boxes = detection_boxes_tensor->data.f;
+    const float* detection_scores = detection_scores_tensor->data.f;
+    std::vector<int> detection_classes(num_boxes_);
+    for (int i = 0; i < num_boxes_; ++i) {
+      detection_classes[i] =
+          static_cast<int>(detection_classes_tensor->data.f[i]);
+    }
+    RETURN_IF_ERROR(ConvertToDetections(detection_boxes, detection_scores,
+                                        detection_classes.data(),
+                                        output_detections));
+  }
+  return ::mediapipe::OkStatus();
+}
+::mediapipe::Status TfLiteTensorsToDetectionsCalculator::ProcessGPU(
+    CalculatorContext* cc, std::vector<Detection>* output_detections) {
+#if defined(__ANDROID__)
+  const auto& input_tensors =
+      cc->Inputs().Tag("TENSORS_GPU").Get<std::vector<GlBuffer>>();
+
+  // Copy inputs.
+  tflite::gpu::gl::CopyBuffer(input_tensors[0], *raw_boxes_buffer_.get());
+  tflite::gpu::gl::CopyBuffer(input_tensors[1], *raw_scores_buffer_.get());
+  if (!anchors_init_) {
+    if (side_packet_anchors_) {
+      CHECK(!cc->InputSidePackets().Tag("ANCHORS").IsEmpty());
+      const auto& anchors =
+          cc->InputSidePackets().Tag("ANCHORS").Get<std::vector<Anchor>>();
+      std::vector<float> raw_anchors(num_boxes_ * kNumCoordsPerBox);
+      ConvertAnchorsToRawValues(anchors, num_boxes_, raw_anchors.data());
+      raw_anchors_buffer_->Write<float>(absl::MakeSpan(raw_anchors));
+    } else {
+      CHECK_EQ(input_tensors.size(), 3);
+      tflite::gpu::gl::CopyBuffer(input_tensors[2], *raw_anchors_buffer_.get());
+    }
+    anchors_init_ = true;
+  }
+
+  // Run shaders.
+  RETURN_IF_ERROR(gpu_helper_.RunInGlContext(
+      [this, &input_tensors]() -> ::mediapipe::Status {
+        // Decode boxes.
+        decoded_boxes_buffer_->BindToIndex(0);
+        raw_boxes_buffer_->BindToIndex(1);
+        raw_anchors_buffer_->BindToIndex(2);
+        const tflite::gpu::uint3 decode_workgroups = {num_boxes_, 1, 1};
+        decode_program_->Dispatch(decode_workgroups);
+
+        // Score boxes.
+        scored_boxes_buffer_->BindToIndex(0);
+        raw_scores_buffer_->BindToIndex(1);
+        const tflite::gpu::uint3 score_workgroups = {num_boxes_, 1, 1};
+        score_program_->Dispatch(score_workgroups);
+
+        return ::mediapipe::OkStatus();
+      }));
+
+  // Copy decoded boxes from GPU to CPU.
+  std::vector<float> boxes(num_boxes_ * num_coords_);
+  auto status = decoded_boxes_buffer_->Read(absl::MakeSpan(boxes));
+  if (!status.ok()) {
+    return ::mediapipe::InternalError(status.error_message());
+  }
+  std::vector<float> score_class_id_pairs(num_boxes_ * 2);
+  status = scored_boxes_buffer_->Read(absl::MakeSpan(score_class_id_pairs));
+  if (!status.ok()) {
+    return ::mediapipe::InternalError(status.error_message());
+  }
+
+  // TODO: b/138851969. Is it possible to output a float vector
+  // for score and an int vector for class so that we can avoid copying twice?
+  std::vector<float> detection_scores(num_boxes_);
+  std::vector<int> detection_classes(num_boxes_);
   for (int i = 0; i < num_boxes_; ++i) {
-    const float score = score_class_id_pairs[i * 2 + 0];
-    const int class_id = score_class_id_pairs[i * 2 + 1];
-    const int box_offset = i * num_coords_;
-    Detection detection = ConvertToDetection(
-        boxes[box_offset + 0], boxes[box_offset + 1], boxes[box_offset + 2],
-        boxes[box_offset + 3], score, class_id, options_.flip_vertically());
-    // Add keypoints.
-    if (options_.num_keypoints() > 0) {
-      auto* location_data = detection.mutable_location_data();
-      for (int kp_id = 0; kp_id < options_.num_keypoints() *
-                                      options_.num_values_per_keypoint();
-           kp_id += options_.num_values_per_keypoint()) {
-        auto keypoint = location_data->add_relative_keypoints();
-        const int keypoint_index =
-            box_offset + options_.keypoint_coord_offset() + kp_id;
-        keypoint->set_x(boxes[keypoint_index + 0]);
-        keypoint->set_y(options_.flip_vertically()
-                            ? 1.f - boxes[keypoint_index + 1]
-                            : boxes[keypoint_index + 1]);
-      }
-    }
-    output_detections->emplace_back(detection);
+    detection_scores[i] = score_class_id_pairs[i * 2];
+    detection_classes[i] = static_cast<int>(score_class_id_pairs[i * 2 + 1]);
   }
-
-  // Output
-  if (cc->Outputs().HasTag("DETECTIONS")) {
-    cc->Outputs()
-        .Tag("DETECTIONS")
-        .Add(output_detections.release(), cc->InputTimestamp());
-  }
-
+  RETURN_IF_ERROR(ConvertToDetections(boxes.data(), detection_scores.data(),
+                                      detection_classes.data(),
+                                      output_detections));
+#else
+  LOG(ERROR) << "GPU input on non-Android not supported yet.";
+#endif  // defined(__ANDROID__)
   return ::mediapipe::OkStatus();
 }
 
@@ -477,6 +529,39 @@ REGISTER_CALCULATOR(TfLiteTensorsToDetectionsCalculator);
             anchors[i].y_center();
       }
     }
+  }
+  return ::mediapipe::OkStatus();
+}
+
+::mediapipe::Status TfLiteTensorsToDetectionsCalculator::ConvertToDetections(
+    const float* detection_boxes, const float* detection_scores,
+    const int* detection_classes, std::vector<Detection>* output_detections) {
+  for (int i = 0; i < num_boxes_; ++i) {
+    if (options_.has_min_score_thresh() &&
+        detection_scores[i] < options_.min_score_thresh()) {
+      continue;
+    }
+    const int box_offset = i * num_coords_;
+    Detection detection = ConvertToDetection(
+        detection_boxes[box_offset + 0], detection_boxes[box_offset + 1],
+        detection_boxes[box_offset + 2], detection_boxes[box_offset + 3],
+        detection_scores[i], detection_classes[i], options_.flip_vertically());
+    // Add keypoints.
+    if (options_.num_keypoints() > 0) {
+      auto* location_data = detection.mutable_location_data();
+      for (int kp_id = 0; kp_id < options_.num_keypoints() *
+                                      options_.num_values_per_keypoint();
+           kp_id += options_.num_values_per_keypoint()) {
+        auto keypoint = location_data->add_relative_keypoints();
+        const int keypoint_index =
+            box_offset + options_.keypoint_coord_offset() + kp_id;
+        keypoint->set_x(detection_boxes[keypoint_index + 0]);
+        keypoint->set_y(options_.flip_vertically()
+                            ? 1.f - detection_boxes[keypoint_index + 1]
+                            : detection_boxes[keypoint_index + 1]);
+      }
+    }
+    output_detections->emplace_back(detection);
   }
   return ::mediapipe::OkStatus();
 }
@@ -628,7 +713,7 @@ void main() {
   if (!status.ok()) {
     return ::mediapipe::InternalError(status.error_message());
   }
-  size_t raw_anchors_length = num_boxes_ * num_coords_;
+  size_t raw_anchors_length = num_boxes_ * kNumCoordsPerBox;
   raw_anchors_buffer_ = absl::make_unique<GlBuffer>();
   status = CreateReadWriteShaderStorageBuffer<float>(raw_anchors_length,
                                                      raw_anchors_buffer_.get());

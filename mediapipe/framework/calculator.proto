@@ -170,6 +170,7 @@ message ProfilerConfig {
   bool use_packet_timestamp_for_added_packet = 6;
 
   // The maximum number of trace events buffered in memory.
+  // The default value buffers up to 20000 events.
   int64 trace_log_capacity = 7;
 
   // Trace event types that are not logged.
@@ -185,8 +186,7 @@ message ProfilerConfig {
   int32 trace_log_count = 10;
 
   // The interval in microseconds between trace log output.
-  // The value -1 specifies output only when the graph is closed.
-  // The default value specifies trace log output once every 1 sec.
+  // The default value specifies trace log output once every 0.5 sec.
   int64 trace_log_interval_usec = 11;
 
   // The interval in microseconds between TimeNow and the highest times
@@ -194,8 +194,8 @@ message ProfilerConfig {
   // to be appended to the TraceBuffer.
   int64 trace_log_margin_usec = 12;
 
-  // True specifies an event for each calculator invocation.
-  // False specifies a separate event for each start and finish time.
+  // False specifies an event for each calculator invocation.
+  // True specifies a separate event for each start and finish time.
   bool trace_log_duration_events = 13;
 
   // The number of trace log intervals per file. The total log duration is:
@@ -206,6 +206,9 @@ message ProfilerConfig {
   // An option to turn ON/OFF writing trace files to disk. Saving trace files to
   // disk is enabled by default.
   bool trace_log_disabled = 15;
+
+  // If true, tracer timing events are recorded and reported.
+  bool trace_enabled = 16;
 }
 
 // Describes the topology and function of a MediaPipe Graph.  The graph of

@@ -21,7 +21,7 @@ cc_library(
             "lib/x86_64-linux-gnu/libopencv_videoio.so*",
         ],
     ),
-    hdrs = glob(["include/opencv/*.h*"]),
+    hdrs = glob(["include/opencv2/**/*.h*"]),
     includes = ["include"],
     linkstatic = 1,
     visibility = ["//visibility:public"],

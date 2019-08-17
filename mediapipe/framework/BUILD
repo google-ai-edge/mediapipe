@@ -45,7 +45,7 @@ proto_library(
         "//mediapipe/framework:packet_generator_proto",
         "//mediapipe/framework:status_handler_proto",
         "//mediapipe/framework:stream_handler_proto",
-        "@protobuf_archive//:any_proto",
+        "@com_google_protobuf//:any_proto",
     ],
 )
 
@@ -137,7 +137,7 @@ mediapipe_cc_proto_library(
         ":packet_generator_cc_proto",
         ":status_handler_cc_proto",
         ":stream_handler_cc_proto",
-        "@protobuf_archive//:cc_wkt_protos",
+        "@com_google_protobuf//:cc_wkt_protos",
     ],
     visibility = ["//mediapipe:__subpackages__"],
     deps = [":calculator_proto"],
@@ -1083,6 +1083,13 @@ cc_library(
         "scheduler_queue.h",
         "scheduler_shared.h",
     ],
+    copts = select({
+        "//conditions:default": [],
+        "//mediapipe:apple": [
+            "-std=c++11",
+            "-ObjC++",
+        ],
+    }),
     visibility = [":mediapipe_internal"],
     deps = [
         ":calculator_context",
@@ -1483,6 +1490,26 @@ cc_test(
 )
 
 cc_test(
+    name = "calculator_graph_bounds_test",
+    size = "small",
+    srcs = [
+        "calculator_graph_bounds_test.cc",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":calculator_context",
+        ":calculator_framework",
+        ":timestamp",
+        "//mediapipe/calculators/core:pass_through_calculator",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:logging",
+        "//mediapipe/framework/port:parse_text_proto",
+        "//mediapipe/framework/port:status",
+        "//mediapipe/framework/stream_handler:immediate_input_stream_handler",
+    ],
+)
+
+cc_test(
     name = "collection_test",
     size = "small",
     srcs = ["collection_test.cc"],
@@ -1634,5 +1661,20 @@ cc_test(
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/framework/port:parse_text_proto",
         "//mediapipe/framework/tool:template_parser",
+    ],
+)
+
+cc_test(
+    name = "subgraph_test",
+    srcs = ["subgraph_test.cc"],
+    deps = [
+        ":calculator_framework",
+        ":subgraph",
+        ":test_calculators",
+        "//mediapipe/calculators/core:pass_through_calculator",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:status",
+        "//mediapipe/framework/tool:sink",
+        "//mediapipe/framework/tool/testdata:dub_quad_test_subgraph",
     ],
 )

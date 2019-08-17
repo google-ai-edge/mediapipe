@@ -20,6 +20,15 @@ package(default_visibility = ["//visibility:private"])
 load("//mediapipe/framework/port:build_config.bzl", "mediapipe_cc_proto_library")
 
 proto_library(
+    name = "audio_decoder_proto",
+    srcs = ["audio_decoder.proto"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//mediapipe/framework:calculator_proto",
+    ],
+)
+
+proto_library(
     name = "color_proto",
     srcs = ["color.proto"],
     visibility = ["//visibility:public"],
@@ -45,6 +54,40 @@ mediapipe_cc_proto_library(
     cc_deps = [":color_cc_proto"],
     visibility = ["//mediapipe:__subpackages__"],
     deps = [":render_data_proto"],
+)
+
+mediapipe_cc_proto_library(
+    name = "audio_decoder_cc_proto",
+    srcs = ["audio_decoder.proto"],
+    cc_deps = ["//mediapipe/framework:calculator_cc_proto"],
+    visibility = ["//mediapipe:__subpackages__"],
+    deps = [":audio_decoder_proto"],
+)
+
+cc_library(
+    name = "audio_decoder",
+    srcs = ["audio_decoder.cc"],
+    hdrs = ["audio_decoder.h"],
+    visibility = ["//mediapipe:__subpackages__"],
+    deps = [
+        ":audio_decoder_cc_proto",
+        "//mediapipe/framework:packet",
+        "//mediapipe/framework:timestamp",
+        "//mediapipe/framework/deps:cleanup",
+        "//mediapipe/framework/formats:matrix",
+        "//mediapipe/framework/formats:time_series_header_cc_proto",
+        "//mediapipe/framework/port:commandlineflags",
+        "//mediapipe/framework/port:integral_types",
+        "//mediapipe/framework/port:map_util",
+        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:status",
+        "//mediapipe/framework/tool:status_util",
+        "//third_party:libffmpeg",
+        "@com_google_absl//absl/base:endian",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/time",
+        "@eigen_archive//:eigen",
+    ],
 )
 
 cc_library(
@@ -130,9 +173,19 @@ cc_library(
     srcs = select({
         "//conditions:default": ["resource_util.cc"],
         "//mediapipe:android": ["resource_util_android.cc"],
+        "//mediapipe:apple": ["resource_util_apple.cc"],
+        "//mediapipe:macos": ["resource_util.cc"],
     }),
     hdrs = ["resource_util.h"],
     # We use Objective-C++ on iOS.
+    copts = select({
+        "//conditions:default": [],
+        "//mediapipe:apple": [
+            "-std=c++11",
+            "-ObjC++",
+        ],
+        "//mediapipe:macos": [],
+    }),
     visibility = [
         "//mediapipe/framework:mediapipe_internal",
     ],
@@ -148,6 +201,10 @@ cc_library(
         "//mediapipe:android": [
             "//mediapipe/util/android:asset_manager_util",
             "//mediapipe/util/android/file/base",
+        ],
+        "//mediapipe:apple": [],
+        "//mediapipe:macos": [
+            "//mediapipe/framework/port:file_helpers",
         ],
     }),
 )
@@ -178,4 +235,60 @@ cc_library(
             "@org_tensorflow//tensorflow/core:android_tensorflow_lib_lite",
         ],
     }),
+)
+
+cc_library(
+    name = "time_series_util",
+    srcs = ["time_series_util.cc"],
+    hdrs = ["time_series_util.h"],
+    visibility = [
+        "//visibility:public",
+    ],
+    deps = [
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/formats:matrix",
+        "//mediapipe/framework/formats:time_series_header_cc_proto",
+        "//mediapipe/framework/port:integral_types",
+        "//mediapipe/framework/port:logging",
+        "//mediapipe/framework/port:status",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_library(
+    name = "time_series_test_util",
+    testonly = 1,
+    hdrs = ["time_series_test_util.h"],
+    visibility = [
+        "//visibility:public",
+    ],
+    deps = [
+        ":time_series_util",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:calculator_runner",
+        "//mediapipe/framework/deps:message_matchers",
+        "//mediapipe/framework/formats:matrix",
+        "//mediapipe/framework/formats:time_series_header_cc_proto",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:integral_types",
+        "//mediapipe/framework/port:logging",
+        "//mediapipe/framework/port:parse_text_proto",
+        "//mediapipe/framework/port:status",
+        "@com_google_absl//absl/strings",
+        "@eigen_archive//:eigen",
+    ],
+)
+
+cc_test(
+    name = "time_series_util_test",
+    size = "small",
+    srcs = ["time_series_util_test.cc"],
+    deps = [
+        ":time_series_util",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/deps:message_matchers",
+        "//mediapipe/framework/formats:time_series_header_cc_proto",
+        "//mediapipe/framework/port:gtest_main",
+        "@eigen_archive//:eigen",
+    ],
 )

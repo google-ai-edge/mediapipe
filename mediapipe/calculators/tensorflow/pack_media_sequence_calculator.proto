@@ -32,18 +32,29 @@ message PackMediaSequenceCalculatorOptions {
   // (e.g. fills in the image height, width, and number of frames.)
   optional bool reconcile_metadata = 2 [default = true];
 
-  // If true, updates the metadata for sequences with bounding boxes. This will
-  // align each bounding box annotation with the nearest frame and insert empty
-  // annotations as needed to satisfy the frame rate.
+  // If true, updates the metadata for bounding box portions of sequences. This
+  // will align each bounding box annotation with the nearest frame and insert
+  // empty annotations as needed to satisfy the frame rate.
   // NOTE: IF YOU DOWNSAMPLE IN TIME YOU WILL LOSE ANNOTATIONS.
   //       If two or more annotations are closest to the same frame, then only
   //       the closest annotation is saved. This matches the behavior of
   //       downsampling images in time.
-  optional bool reconcile_bbox_annotations = 5 [default = true];
+  optional bool reconcile_bbox_annotations = 5 [default = false];
+
+  // If true, updates the metadata for all regions annotations, regardless of
+  // prefix, in the sequence. This will align each region annotation with the
+  // nearest frame and insert empty annotations as needed to satisfy the frame
+  // rate. This is particularly useful for key point annotations that are
+  // represented as region points. This does not exclude bboxes.
+  // NOTE: IF YOU DOWNSAMPLE IN TIME YOU WILL LOSE ANNOTATIONS.
+  //       If two or more annotations are closest to the same frame, then only
+  //       the closest annotation is saved. This matches the behavior of
+  //       downsampling images in time.
+  optional bool reconcile_region_annotations = 6 [default = true];
 
   // If true, the SequenceExample is output only if all input streams are
   // present.
-  optional bool output_only_if_all_present = 3 [default = false];
+  optional bool output_only_if_all_present = 3 [default = true];
 
   // If true, will remove all data from a sequence example for a corresponding
   // input stream. E.g. if images are already present and an IMAGE stream is

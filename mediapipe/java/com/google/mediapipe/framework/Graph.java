@@ -16,7 +16,9 @@ package com.google.mediapipe.framework;
 
 import com.google.common.base.Preconditions;
 import com.google.common.flogger.FluentLogger;
+import com.google.mediapipe.proto.CalculatorOptionsProto.CalculatorOptions;
 import com.google.mediapipe.proto.CalculatorProto.CalculatorGraphConfig;
+import com.google.mediapipe.proto.GraphTemplateProto.CalculatorGraphTemplate;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -101,13 +103,28 @@ public class Graph {
     nativeLoadBinaryGraphBytes(nativeGraphHandle, data);
   }
 
-  /** Loads a binary mediapipe graph from a CalculatorGraphConfig. */
+  /** Specifies a CalculatorGraphConfig for a mediapipe graph or subgraph. */
   public synchronized void loadBinaryGraph(CalculatorGraphConfig config) {
     loadBinaryGraph(config.toByteArray());
   }
 
+  /** Specifies a CalculatorGraphTemplate for a mediapipe graph or subgraph. */
+  public synchronized void loadBinaryGraphTemplate(CalculatorGraphTemplate template) {
+    nativeLoadBinaryGraphTemplate(nativeGraphHandle, template.toByteArray());
+  }
+
+  /** Specifies the CalculatorGraphConfig::type of the top level graph. */
+  public synchronized void setGraphType(String graphType) {
+    nativeSetGraphType(nativeGraphHandle, graphType);
+  }
+
+  /** Specifies options such as template arguments for the graph. */
+  public synchronized void setGraphOptions(CalculatorOptions options) {
+    nativeSetGraphOptions(nativeGraphHandle, options.toByteArray());
+  }
+
   /**
-   * Returns the CalculatorGraphConfig if a graph is loaded.
+   * Returns the canonicalized CalculatorGraphConfig with subgraphs and graph templates expanded.
    */
   public synchronized CalculatorGraphConfig getCalculatorGraphConfig() {
     Preconditions.checkState(
@@ -593,6 +610,12 @@ public class Graph {
   private native void nativeLoadBinaryGraph(long context, String path);
 
   private native void nativeLoadBinaryGraphBytes(long context, byte[] data);
+
+  private native void nativeLoadBinaryGraphTemplate(long context, byte[] data);
+
+  private native void nativeSetGraphType(long context, String graphType);
+
+  private native void nativeSetGraphOptions(long context, byte[] data);
 
   private native byte[] nativeGetCalculatorGraphConfig(long context);
 

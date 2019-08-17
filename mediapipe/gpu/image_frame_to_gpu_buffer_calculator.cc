@@ -18,7 +18,7 @@
 #include "mediapipe/gpu/gl_calculator_helper.h"
 
 #ifdef __APPLE__
-#include "mediapipe/framework/ios/util.h"
+#include "mediapipe/objc/util.h"
 #endif
 
 namespace mediapipe {

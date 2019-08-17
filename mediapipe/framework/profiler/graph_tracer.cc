@@ -27,7 +27,7 @@ namespace mediapipe {
 
 namespace {
 
-const absl::Duration kDefaultTraceLogInterval = absl::Milliseconds(100);
+const absl::Duration kDefaultTraceLogInterval = absl::Milliseconds(500);
 
 // Returns a unique identifier for the current thread.
 inline int GetCurrentThreadId() {
@@ -45,7 +45,9 @@ absl::Duration GraphTracer::GetTraceLogInterval() {
 }
 
 int64 GraphTracer::GetTraceLogCapacity() {
-  return profiler_config_.trace_log_capacity();
+  return profiler_config_.trace_log_capacity()
+             ? profiler_config_.trace_log_capacity()
+             : 20000;
 }
 
 GraphTracer::GraphTracer(const ProfilerConfig& profiler_config)

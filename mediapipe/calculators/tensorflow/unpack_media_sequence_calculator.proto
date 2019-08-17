@@ -40,7 +40,7 @@ message UnpackMediaSequenceCalculatorOptions {
   optional float extra_padding_from_media_decoder = 5 [default = 0.0];
 
   // Stores the packet resampler settings for the graph. The most accurate
-  // proceedure for sampling a range of frames is to request a padded time range
+  // procedure for sampling a range of frames is to request a padded time range
   // from the MediaDecoderCalculator and then trim it down to the proper time
   // range with the PacketResamplerCalculator.
   optional PacketResamplerCalculatorOptions base_packet_resampler_options = 6;

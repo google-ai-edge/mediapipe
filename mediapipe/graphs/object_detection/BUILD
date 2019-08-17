@@ -1,4 +1,4 @@
-# Copyright 2019 The MediaPipeOSS Authors.
+# Copyright 2019 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,16 +11,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#
 
 licenses(["notice"])  # Apache 2.0
 
 package(default_visibility = ["//visibility:public"])
 
 cc_library(
-    name = "android_calculators",
+    name = "mobile_calculators",
     deps = [
-        "//mediapipe/calculators/core:real_time_flow_limiter_calculator",
+        "//mediapipe/calculators/core:flow_limiter_calculator",
         "//mediapipe/calculators/image:image_transformation_calculator",
         "//mediapipe/calculators/tflite:ssd_anchors_calculator",
         "//mediapipe/calculators/tflite:tflite_converter_calculator",
@@ -77,35 +76,15 @@ load(
 )
 
 mediapipe_binary_graph(
-    name = "android_cpu_binary_graph",
-    graph = "object_detection_android_cpu.pbtxt",
-    output_name = "android_cpu.binarypb",
-    deps = [
-        "//mediapipe/calculators/image:image_transformation_calculator_proto",
-        "//mediapipe/calculators/tflite:ssd_anchors_calculator_proto",
-        "//mediapipe/calculators/tflite:tflite_converter_calculator_proto",
-        "//mediapipe/calculators/tflite:tflite_inference_calculator_proto",
-        "//mediapipe/calculators/tflite:tflite_tensors_to_detections_calculator_proto",
-        "//mediapipe/calculators/util:annotation_overlay_calculator_proto",
-        "//mediapipe/calculators/util:detection_label_id_to_text_calculator_proto",
-        "//mediapipe/calculators/util:detections_to_render_data_calculator_proto",
-        "//mediapipe/calculators/util:non_max_suppression_calculator_proto",
-    ],
+    name = "mobile_cpu_binary_graph",
+    graph = "object_detection_mobile_cpu.pbtxt",
+    output_name = "mobile_cpu.binarypb",
+    deps = [":mobile_calculators"],
 )
 
 mediapipe_binary_graph(
-    name = "android_gpu_binary_graph",
-    graph = "object_detection_android_gpu.pbtxt",
-    output_name = "android_gpu.binarypb",
-    deps = [
-        "//mediapipe/calculators/image:image_transformation_calculator_proto",
-        "//mediapipe/calculators/tflite:ssd_anchors_calculator_proto",
-        "//mediapipe/calculators/tflite:tflite_converter_calculator_proto",
-        "//mediapipe/calculators/tflite:tflite_inference_calculator_proto",
-        "//mediapipe/calculators/tflite:tflite_tensors_to_detections_calculator_proto",
-        "//mediapipe/calculators/util:annotation_overlay_calculator_proto",
-        "//mediapipe/calculators/util:detection_label_id_to_text_calculator_proto",
-        "//mediapipe/calculators/util:detections_to_render_data_calculator_proto",
-        "//mediapipe/calculators/util:non_max_suppression_calculator_proto",
-    ],
+    name = "mobile_gpu_binary_graph",
+    graph = "object_detection_mobile_gpu.pbtxt",
+    output_name = "mobile_gpu.binarypb",
+    deps = [":mobile_calculators"],
 )

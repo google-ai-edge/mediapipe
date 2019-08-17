@@ -33,7 +33,7 @@
 #ifdef __APPLE__
 #include <CoreVideo/CoreVideo.h>
 
-#include "mediapipe/framework/ios/CFHolder.h"
+#include "mediapipe/objc/CFHolder.h"
 
 #if TARGET_OS_OSX
 

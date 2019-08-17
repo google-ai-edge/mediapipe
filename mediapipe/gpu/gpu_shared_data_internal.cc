@@ -20,7 +20,7 @@
 #include "mediapipe/gpu/graph_support.h"
 
 #if __APPLE__
-#import "mediapipe/gpu/MediaPipeGraphGPUData.h"
+#import "mediapipe/gpu/MPPGraphGPUData.h"
 #endif  // __APPLE__
 
 namespace mediapipe {
@@ -85,9 +85,8 @@ GpuResources::GpuResources(std::shared_ptr<GlContext> gl_context) {
       std::make_shared<GlContextExecutor>(gl_context.get());
 #if __APPLE__
   gpu_buffer_pool().RegisterTextureCache(gl_context->cv_texture_cache());
-  ios_gpu_data_ =
-      [[MediaPipeGraphGPUData alloc] initWithContext:gl_context.get()
-                                           multiPool:&gpu_buffer_pool_];
+  ios_gpu_data_ = [[MPPGraphGPUData alloc] initWithContext:gl_context.get()
+                                                 multiPool:&gpu_buffer_pool_];
 #endif  // __APPLE__
 }
 
@@ -170,7 +169,7 @@ const std::shared_ptr<GlContext>& GpuResources::gl_context(
 GpuSharedData::GpuSharedData() : GpuSharedData(kPlatformGlContextNone) {}
 
 #if __APPLE__
-MediaPipeGraphGPUData* GpuResources::ios_gpu_data() { return ios_gpu_data_; }
+MPPGraphGPUData* GpuResources::ios_gpu_data() { return ios_gpu_data_; }
 #endif  // __APPLE__
 
 }  // namespace mediapipe

@@ -118,7 +118,7 @@ REGISTER_CALCULATOR(MatrixToTensorCalculator);
 
   // Inform the framework that we always output at the same timestamp
   // as we receive a packet at.
-  cc->SetOffset(mediapipe::TimestampDiff(0));
+  cc->SetOffset(TimestampDiff(0));
   return ::mediapipe::OkStatus();
 }
 

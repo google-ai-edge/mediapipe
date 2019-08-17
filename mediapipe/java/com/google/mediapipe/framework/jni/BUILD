@@ -88,6 +88,7 @@ cc_library(
         ":jni_util",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework:calculator_profile_cc_proto",
+        "//mediapipe/framework/tool:calculator_graph_template_cc_proto",
         "//mediapipe/framework/formats:image_format_cc_proto",
         "//mediapipe/framework/formats:matrix_data_cc_proto",
         "//mediapipe/framework/formats:time_series_header_cc_proto",

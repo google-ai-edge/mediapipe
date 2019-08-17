@@ -22,12 +22,12 @@
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/gpu/scale_mode.pb.h"
 
-#if defined(__ANDROID__)
+#if defined(__ANDROID__) || defined(__APPLE__) && !TARGET_OS_OSX
 #include "mediapipe/gpu/gl_calculator_helper.h"
 #include "mediapipe/gpu/gl_quad_renderer.h"
 #include "mediapipe/gpu/gl_simple_shaders.h"
 #include "mediapipe/gpu/shader_util.h"
-#endif  // __ANDROID__
+#endif  // __ANDROID__ || iOS
 
 #if defined(__ANDROID__)
 // The size of Java arrays is dynamic, which makes it difficult to
@@ -42,9 +42,9 @@ typedef int DimensionsPacketType[2];
 
 namespace mediapipe {
 
-#if defined(__ANDROID__)
+#if defined(__ANDROID__) || defined(__APPLE__) && !TARGET_OS_OSX
 
-#endif  // __ANDROID__
+#endif  // __ANDROID__ || iOS
 
 namespace {
 int RotationModeToDegrees(mediapipe::RotationMode_Mode rotation) {
@@ -170,11 +170,12 @@ class ImageTransformationCalculator : public CalculatorBase {
   mediapipe::ScaleMode_Mode scale_mode_;
 
   bool use_gpu_ = false;
-#if defined(__ANDROID__)
+#if defined(__ANDROID__) || defined(__APPLE__) && !TARGET_OS_OSX
   GlCalculatorHelper helper_;
   std::unique_ptr<QuadRenderer> rgb_renderer_;
+  std::unique_ptr<QuadRenderer> yuv_renderer_;
   std::unique_ptr<QuadRenderer> ext_rgb_renderer_;
-#endif  // __ANDROID__
+#endif  // __ANDROID__ || iOS
 };
 REGISTER_CALCULATOR(ImageTransformationCalculator);
 
@@ -189,13 +190,13 @@ REGISTER_CALCULATOR(ImageTransformationCalculator);
     cc->Inputs().Tag("IMAGE").Set<ImageFrame>();
     cc->Outputs().Tag("IMAGE").Set<ImageFrame>();
   }
-#if defined(__ANDROID__)
+#if defined(__ANDROID__) || defined(__APPLE__) && !TARGET_OS_OSX
   if (cc->Inputs().HasTag("IMAGE_GPU")) {
     RET_CHECK(cc->Outputs().HasTag("IMAGE_GPU"));
     cc->Inputs().Tag("IMAGE_GPU").Set<GpuBuffer>();
     cc->Outputs().Tag("IMAGE_GPU").Set<GpuBuffer>();
   }
-#endif  // __ANDROID__
+#endif  // __ANDROID__ || iOS
   if (cc->Inputs().HasTag("ROTATION_DEGREES")) {
     cc->Inputs().Tag("ROTATION_DEGREES").Set<int>();
   }
@@ -211,9 +212,9 @@ REGISTER_CALCULATOR(ImageTransformationCalculator);
     cc->Outputs().Tag("LETTERBOX_PADDING").Set<std::array<float, 4>>();
   }
 
-#if defined(__ANDROID__)
+#if defined(__ANDROID__) || defined(__APPLE__) && !TARGET_OS_OSX
   RETURN_IF_ERROR(GlCalculatorHelper::UpdateContract(cc));
-#endif  // __ANDROID__
+#endif  // __ANDROID__ || iOS
 
   return ::mediapipe::OkStatus();
 }
@@ -221,7 +222,7 @@ REGISTER_CALCULATOR(ImageTransformationCalculator);
 ::mediapipe::Status ImageTransformationCalculator::Open(CalculatorContext* cc) {
   // Inform the framework that we always output at the same timestamp
   // as we receive a packet at.
-  cc->SetOffset(mediapipe::TimestampDiff(0));
+  cc->SetOffset(TimestampDiff(0));
 
   options_ = cc->Options<ImageTransformationCalculatorOptions>();
 
@@ -249,12 +250,12 @@ REGISTER_CALCULATOR(ImageTransformationCalculator);
   scale_mode_ = ParseScaleMode(options_.scale_mode(), DEFAULT_SCALE_MODE);
 
   if (use_gpu_) {
-#if defined(__ANDROID__)
+#if defined(__ANDROID__) || defined(__APPLE__) && !TARGET_OS_OSX
     // Let the helper access the GL context information.
     RETURN_IF_ERROR(helper_.Open(cc));
 #else
-    RET_CHECK_FAIL() << "GPU processing for non-Android not supported yet.";
-#endif  // __ANDROID__
+    RET_CHECK_FAIL() << "GPU processing is for Android and iOS only.";
+#endif  // __ANDROID__ || iOS
   }
 
   return ::mediapipe::OkStatus();
@@ -263,10 +264,10 @@ REGISTER_CALCULATOR(ImageTransformationCalculator);
 ::mediapipe::Status ImageTransformationCalculator::Process(
     CalculatorContext* cc) {
   if (use_gpu_) {
-#if defined(__ANDROID__)
+#if defined(__ANDROID__) || defined(__APPLE__) && !TARGET_OS_OSX
     return helper_.RunInGlContext(
         [this, cc]() -> ::mediapipe::Status { return RenderGpu(cc); });
-#endif  // __ANDROID__
+#endif  // __ANDROID__ || iOS
   } else {
     return RenderCpu(cc);
   }
@@ -276,10 +277,11 @@ REGISTER_CALCULATOR(ImageTransformationCalculator);
 ::mediapipe::Status ImageTransformationCalculator::Close(
     CalculatorContext* cc) {
   if (use_gpu_) {
-#if defined(__ANDROID__)
+#if defined(__ANDROID__) || defined(__APPLE__) && !TARGET_OS_OSX
     QuadRenderer* rgb_renderer = rgb_renderer_.release();
+    QuadRenderer* yuv_renderer = yuv_renderer_.release();
     QuadRenderer* ext_rgb_renderer = ext_rgb_renderer_.release();
-    helper_.RunInGlContext([rgb_renderer, ext_rgb_renderer] {
+    helper_.RunInGlContext([rgb_renderer, yuv_renderer, ext_rgb_renderer] {
       if (rgb_renderer) {
         rgb_renderer->GlTeardown();
         delete rgb_renderer;
@@ -288,10 +290,13 @@ REGISTER_CALCULATOR(ImageTransformationCalculator);
         ext_rgb_renderer->GlTeardown();
         delete ext_rgb_renderer;
       }
+      if (yuv_renderer) {
+        yuv_renderer->GlTeardown();
+        delete yuv_renderer;
+      }
     });
-#endif  // __ANDROID__
+#endif  // __ANDROID__ || iOS
   }
-
   return ::mediapipe::OkStatus();
 }
 
@@ -366,7 +371,7 @@ REGISTER_CALCULATOR(ImageTransformationCalculator);
 
 ::mediapipe::Status ImageTransformationCalculator::RenderGpu(
     CalculatorContext* cc) {
-#if defined(__ANDROID__)
+#if defined(__ANDROID__) || defined(__APPLE__) && !TARGET_OS_OSX
   int input_width = cc->Inputs().Tag("IMAGE_GPU").Get<GpuBuffer>().width();
   int input_height = cc->Inputs().Tag("IMAGE_GPU").Get<GpuBuffer>().height();
 
@@ -387,8 +392,23 @@ REGISTER_CALCULATOR(ImageTransformationCalculator);
   const auto& input = cc->Inputs().Tag("IMAGE_GPU").Get<GpuBuffer>();
   QuadRenderer* renderer = nullptr;
   GlTexture src1;
+
+#if defined(__APPLE__) && !TARGET_OS_OSX
+  if (input.format() == GpuBufferFormat::kBiPlanar420YpCbCr8VideoRange ||
+      input.format() == GpuBufferFormat::kBiPlanar420YpCbCr8FullRange) {
+    if (!yuv_renderer_) {
+      yuv_renderer_ = absl::make_unique<QuadRenderer>();
+      RETURN_IF_ERROR(
+          yuv_renderer_->GlSetup(::mediapipe::kYUV2TexToRGBFragmentShader,
+                                 {"video_frame_y", "video_frame_uv"}));
+    }
+    renderer = yuv_renderer_.get();
+    src1 = helper_.CreateSourceTexture(input, 0);
+  } else  // NOLINT(readability/braces)
+#endif    // iOS
   {
     src1 = helper_.CreateSourceTexture(input);
+#if defined(__ANDROID__)
     if (src1.target() == GL_TEXTURE_EXTERNAL_OES) {
       if (!ext_rgb_renderer_) {
         ext_rgb_renderer_ = absl::make_unique<QuadRenderer>();
@@ -396,7 +416,9 @@ REGISTER_CALCULATOR(ImageTransformationCalculator);
             ::mediapipe::kBasicTexturedFragmentShaderOES, {"video_frame"}));
       }
       renderer = ext_rgb_renderer_.get();
-    } else {
+    } else  // NOLINT(readability/braces)
+#endif      // __ANDROID__
+    {
       if (!rgb_renderer_) {
         rgb_renderer_ = absl::make_unique<QuadRenderer>();
         RETURN_IF_ERROR(rgb_renderer_->GlSetup());
@@ -438,7 +460,7 @@ REGISTER_CALCULATOR(ImageTransformationCalculator);
   auto output = dst.GetFrame<GpuBuffer>();
   cc->Outputs().Tag("IMAGE_GPU").Add(output.release(), cc->InputTimestamp());
 
-#endif  // __ANDROID__
+#endif  // __ANDROID__ || iOS
 
   return ::mediapipe::OkStatus();
 }

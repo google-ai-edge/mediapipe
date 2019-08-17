@@ -5,6 +5,9 @@ package mediapipe;
 import "mediapipe/framework/calculator.proto";
 import "mediapipe/framework/deps/proto_descriptor.proto";
 
+option java_package = "com.google.mediapipe.proto";
+option java_outer_classname = "GraphTemplateProto";
+
 // A template rule or a template rule argument expression.
 message TemplateExpression {
   // A template parameter name or a literal value.

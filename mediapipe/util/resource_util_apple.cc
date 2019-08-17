@@ -30,7 +30,7 @@ namespace mediapipe {
   }
 
   NSString* ns_path = [NSString stringWithUTF8String:path.c_str()];
-  Class mediapipeGraphClass = NSClassFromString(@"MediaPipeGraph");
+  Class mediapipeGraphClass = NSClassFromString(@"MPPGraph");
   NSString* resource_dir =
       [[NSBundle bundleForClass:mediapipeGraphClass] resourcePath];
   NSString* resolved_ns_path =

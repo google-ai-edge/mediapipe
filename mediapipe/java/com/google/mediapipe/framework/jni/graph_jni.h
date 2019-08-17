@@ -42,6 +42,19 @@ JNIEXPORT void JNICALL GRAPH_METHOD(nativeLoadBinaryGraph)(JNIEnv* env,
 JNIEXPORT void JNICALL GRAPH_METHOD(nativeLoadBinaryGraphBytes)(
     JNIEnv* env, jobject thiz, jlong context, jbyteArray data);
 
+JNIEXPORT void JNICALL GRAPH_METHOD(nativeLoadBinaryGraphTemplate)(
+    JNIEnv* env, jobject thiz, jlong context, jbyteArray data);
+
+JNIEXPORT void JNICALL GRAPH_METHOD(nativeSetGraphType)(JNIEnv* env,
+                                                        jobject thiz,
+                                                        jlong context,
+                                                        jstring graph_type);
+
+JNIEXPORT void JNICALL GRAPH_METHOD(nativeSetGraphOptions)(JNIEnv* env,
+                                                           jobject thiz,
+                                                           jlong context,
+                                                           jbyteArray data);
+
 JNIEXPORT jbyteArray JNICALL GRAPH_METHOD(nativeGetCalculatorGraphConfig)(
     JNIEnv* env, jobject thiz, jlong context);
 

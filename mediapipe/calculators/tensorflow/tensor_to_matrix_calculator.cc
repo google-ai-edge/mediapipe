@@ -183,7 +183,7 @@ REGISTER_CALCULATOR(TensorToMatrixCalculator);
     header_ = *input_header;
     cc->Outputs().Tag(kMatrix).SetHeader(Adopt(input_header.release()));
   }
-  cc->SetOffset(mediapipe::TimestampDiff(0));
+  cc->SetOffset(TimestampDiff(0));
   return ::mediapipe::OkStatus();
 }
 

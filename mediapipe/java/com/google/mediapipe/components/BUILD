@@ -28,8 +28,9 @@ android_library(
         "//mediapipe/java/com/google/mediapipe/framework:android_framework",
         "//mediapipe/java/com/google/mediapipe/glutil",
         "//third_party:androidx_appcompat",
-        "@androidsdk//com.android.support:recyclerview-v7-25.0.0",
-        "@androidsdk//com.android.support:support-v4-25.0.0",
+        "//third_party:androidx_core",
+        "//third_party:androidx_legacy_support_v4",
+        "//third_party:androidx_recyclerview",
         "@com_google_code_findbugs//jar",
         "@com_google_guava_android//jar",
     ],
@@ -46,12 +47,23 @@ android_library(
     visibility = ["//visibility:public"],
     deps = [
         "//third_party:androidx_appcompat",
+        "//third_party:androidx_legacy_support_v4",
         "//third_party:camera2",
         "//third_party:camerax_core",
-        "@androidsdk//com.android.support:support-v4-25.0.0",
         "@androidx_concurrent_futures//jar",
         "@androidx_lifecycle//jar",
         "@com_google_code_findbugs//jar",
         "@com_google_guava_android//jar",
+    ],
+)
+
+android_library(
+    name = "android_microphone_helper",
+    srcs = [
+        "MicrophoneHelper.java",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//third_party/java/jsr305_annotations",
     ],
 )

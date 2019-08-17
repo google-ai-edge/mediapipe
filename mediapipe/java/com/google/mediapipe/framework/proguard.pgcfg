@@ -11,6 +11,8 @@
 # This method is invoked by native code.
 -keep public class com.google.mediapipe.framework.Packet {
   public static *** create(***);
+  public long getNativeHandle();
+  public void release();
 }
 
 # This method is invoked by native code.

@@ -21,12 +21,12 @@
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/util/color.pb.h"
 
-#if defined(__ANDROID__)
+#if defined(__ANDROID__) || (defined(__APPLE__) && !TARGET_OS_OSX)
 #include "mediapipe/gpu/gl_calculator_helper.h"
 #include "mediapipe/gpu/gl_simple_shaders.h"
 #include "mediapipe/gpu/gpu_buffer.h"
 #include "mediapipe/gpu/shader_util.h"
-#endif  // __ANDROID__
+#endif  // __ANDROID__ or iOS
 
 namespace {
 enum { ATTRIB_VERTEX, ATTRIB_TEXTURE_POSITION, NUM_ATTRIBUTES };
@@ -95,10 +95,10 @@ class RecolorCalculator : public CalculatorBase {
   mediapipe::RecolorCalculatorOptions::MaskChannel mask_channel_;
 
   bool use_gpu_ = false;
-#if defined(__ANDROID__)
+#if defined(__ANDROID__) || (defined(__APPLE__) && !TARGET_OS_OSX)
   mediapipe::GlCalculatorHelper gpu_helper_;
   GLuint program_ = 0;
-#endif  // __ANDROID__
+#endif  // __ANDROID__ or iOS
 };
 REGISTER_CALCULATOR(RecolorCalculator);
 
@@ -107,46 +107,48 @@ REGISTER_CALCULATOR(RecolorCalculator);
   RET_CHECK(!cc->Inputs().GetTags().empty());
   RET_CHECK(!cc->Outputs().GetTags().empty());
 
-#if defined(__ANDROID__)
+#if defined(__ANDROID__) || (defined(__APPLE__) && !TARGET_OS_OSX)
   if (cc->Inputs().HasTag("IMAGE_GPU")) {
     cc->Inputs().Tag("IMAGE_GPU").Set<mediapipe::GpuBuffer>();
   }
-#endif  // __ANDROID__
+#endif  // __ANDROID__ or iOS
   if (cc->Inputs().HasTag("IMAGE")) {
     cc->Inputs().Tag("IMAGE").Set<ImageFrame>();
   }
 
-#if defined(__ANDROID__)
+#if defined(__ANDROID__) || (defined(__APPLE__) && !TARGET_OS_OSX)
   if (cc->Inputs().HasTag("MASK_GPU")) {
     cc->Inputs().Tag("MASK_GPU").Set<mediapipe::GpuBuffer>();
   }
-#endif  // __ANDROID__
+#endif  // __ANDROID__ or iOS
   if (cc->Inputs().HasTag("MASK")) {
     cc->Inputs().Tag("MASK").Set<ImageFrame>();
   }
 
-#if defined(__ANDROID__)
+#if defined(__ANDROID__) || (defined(__APPLE__) && !TARGET_OS_OSX)
   if (cc->Outputs().HasTag("IMAGE_GPU")) {
     cc->Outputs().Tag("IMAGE_GPU").Set<mediapipe::GpuBuffer>();
   }
-#endif  // __ANDROID__
+#endif  // __ANDROID__ or iOS
   if (cc->Outputs().HasTag("IMAGE")) {
     cc->Outputs().Tag("IMAGE").Set<ImageFrame>();
   }
 
-#if defined(__ANDROID__)
+#if defined(__ANDROID__) || (defined(__APPLE__) && !TARGET_OS_OSX)
   RETURN_IF_ERROR(mediapipe::GlCalculatorHelper::UpdateContract(cc));
-#endif  // __ANDROID__
+#endif  // __ANDROID__ or iOS
 
   return ::mediapipe::OkStatus();
 }
 
 ::mediapipe::Status RecolorCalculator::Open(CalculatorContext* cc) {
+  cc->SetOffset(TimestampDiff(0));
+
   if (cc->Inputs().HasTag("IMAGE_GPU")) {
     use_gpu_ = true;
-#if defined(__ANDROID__)
+#if defined(__ANDROID__) || (defined(__APPLE__) && !TARGET_OS_OSX)
     RETURN_IF_ERROR(gpu_helper_.Open(cc));
-#endif  // __ANDROID__
+#endif  // __ANDROID__ or iOS
   }
 
   RETURN_IF_ERROR(LoadOptions(cc));
@@ -156,7 +158,7 @@ REGISTER_CALCULATOR(RecolorCalculator);
 
 ::mediapipe::Status RecolorCalculator::Process(CalculatorContext* cc) {
   if (use_gpu_) {
-#if defined(__ANDROID__)
+#if defined(__ANDROID__) || (defined(__APPLE__) && !TARGET_OS_OSX)
     RETURN_IF_ERROR(
         gpu_helper_.RunInGlContext([this, &cc]() -> ::mediapipe::Status {
           if (!initialized_) {
@@ -166,7 +168,7 @@ REGISTER_CALCULATOR(RecolorCalculator);
           RETURN_IF_ERROR(RenderGpu(cc));
           return ::mediapipe::OkStatus();
         }));
-#endif  // __ANDROID__
+#endif  // __ANDROID__ or iOS
   } else {
     RETURN_IF_ERROR(RenderCpu(cc));
   }
@@ -174,12 +176,12 @@ REGISTER_CALCULATOR(RecolorCalculator);
 }
 
 ::mediapipe::Status RecolorCalculator::Close(CalculatorContext* cc) {
-#if defined(__ANDROID__)
+#if defined(__ANDROID__) || (defined(__APPLE__) && !TARGET_OS_OSX)
   gpu_helper_.RunInGlContext([this] {
     if (program_) glDeleteProgram(program_);
     program_ = 0;
   });
-#endif  // __ANDROID__
+#endif  // __ANDROID__ or iOS
 
   return ::mediapipe::OkStatus();
 }
@@ -192,7 +194,7 @@ REGISTER_CALCULATOR(RecolorCalculator);
   if (cc->Inputs().Tag("MASK_GPU").IsEmpty()) {
     return ::mediapipe::OkStatus();
   }
-#if defined(__ANDROID__)
+#if defined(__ANDROID__) || (defined(__APPLE__) && !TARGET_OS_OSX)
   // Get inputs and setup output.
   const Packet& input_packet = cc->Inputs().Tag("IMAGE_GPU").Value();
   const Packet& mask_packet = cc->Inputs().Tag("MASK_GPU").Value();
@@ -231,13 +233,13 @@ REGISTER_CALCULATOR(RecolorCalculator);
   img_tex.Release();
   mask_tex.Release();
   dst_tex.Release();
-#endif  // __ANDROID__
+#endif  // __ANDROID__ or iOS
 
   return ::mediapipe::OkStatus();
 }
 
 void RecolorCalculator::GlRender() {
-#if defined(__ANDROID__)
+#if defined(__ANDROID__) || (defined(__APPLE__) && !TARGET_OS_OSX)
   static const GLfloat square_vertices[] = {
       -1.0f, -1.0f,  // bottom left
       1.0f,  -1.0f,  // bottom right
@@ -285,7 +287,7 @@ void RecolorCalculator::GlRender() {
   glBindVertexArray(0);
   glDeleteVertexArrays(1, &vao);
   glDeleteBuffers(2, vbo);
-#endif  // __ANDROID__
+#endif  // __ANDROID__ or iOS
 }
 
 ::mediapipe::Status RecolorCalculator::LoadOptions(CalculatorContext* cc) {
@@ -303,7 +305,7 @@ void RecolorCalculator::GlRender() {
 }
 
 ::mediapipe::Status RecolorCalculator::InitGpu(CalculatorContext* cc) {
-#if defined(__ANDROID__)
+#if defined(__ANDROID__) || (defined(__APPLE__) && !TARGET_OS_OSX)
   const GLint attr_location[NUM_ATTRIBUTES] = {
       ATTRIB_VERTEX,
       ATTRIB_TEXTURE_POSITION,
@@ -372,7 +374,7 @@ void RecolorCalculator::GlRender() {
   glUniform1i(glGetUniformLocation(program_, "mask"), 2);
   glUniform3f(glGetUniformLocation(program_, "recolor"), color_[0], color_[1],
               color_[2]);
-#endif  // __ANDROID__
+#endif  // __ANDROID__ or iOS
 
   return ::mediapipe::OkStatus();
 }

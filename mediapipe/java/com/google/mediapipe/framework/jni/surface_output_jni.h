@@ -24,6 +24,9 @@ extern "C" {
 #define MEDIAPIPE_SURFACE_OUTPUT_METHOD(METHOD_NAME) \
   Java_com_google_mediapipe_framework_SurfaceOutput_##METHOD_NAME
 
+JNIEXPORT void JNICALL MEDIAPIPE_SURFACE_OUTPUT_METHOD(nativeSetFlipY)(
+    JNIEnv* env, jobject thiz, jlong packet, jboolean flip);
+
 #ifdef __ANDROID__
 JNIEXPORT void JNICALL MEDIAPIPE_SURFACE_OUTPUT_METHOD(nativeSetSurface)(
     JNIEnv* env, jobject thiz, jlong context, jlong packet, jobject surface);

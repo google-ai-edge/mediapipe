@@ -102,7 +102,14 @@ GlContext::StatusOrGlContext GlContext::Create(NSOpenGLContext* share_context,
   return ::mediapipe::OkStatus();
 }
 
-void GlContext::DestroyContext() {}
+void GlContext::DestroyContext() {
+  if (*texture_cache_) {
+    // The texture cache must be flushed on tear down, otherwise we potentially
+    // leak pixel buffers whose textures have pending GL operations after the
+    // CVOpenGLTextureRef is released in GlTexture::Release.
+    CVOpenGLTextureCacheFlush(*texture_cache_, 0);
+  }
+}
 
 GlContext::ContextBinding GlContext::ThisContextBinding() {
   GlContext::ContextBinding result;

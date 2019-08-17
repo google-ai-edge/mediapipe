@@ -67,6 +67,8 @@ REGISTER_CALCULATOR(DetectionLabelIdToTextCalculator);
 
 ::mediapipe::Status DetectionLabelIdToTextCalculator::Open(
     CalculatorContext* cc) {
+  cc->SetOffset(TimestampDiff(0));
+
   const auto& options =
       cc->Options<::mediapipe::DetectionLabelIdToTextCalculatorOptions>();
 

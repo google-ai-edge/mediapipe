@@ -33,6 +33,7 @@ cc_library(
         "@org_tensorflow//tensorflow/core/kernels:fused_batch_norm_op",
         "@org_tensorflow//tensorflow/core/kernels:gather_op",
         "@org_tensorflow//tensorflow/core/kernels:identity_op",
+        "@org_tensorflow//tensorflow/core/kernels:logging_ops",
         "@org_tensorflow//tensorflow/core/kernels:matmul_op",
         "@org_tensorflow//tensorflow/core/kernels:non_max_suppression_op",
         "@org_tensorflow//tensorflow/core/kernels:pack_op",
@@ -49,7 +50,9 @@ cc_library(
         "@org_tensorflow//tensorflow/core/kernels:topk_op",
         "@org_tensorflow//tensorflow/core/kernels:transpose_op",
         "@org_tensorflow//tensorflow/core/kernels:unpack_op",
+        "@org_tensorflow//tensorflow/core/kernels/data:tensor_dataset_op",
     ],
+    alwayslink = 1,
 )
 
 cc_binary(
@@ -58,6 +61,7 @@ cc_binary(
         ":object_detection_tensorflow_deps",
         "//mediapipe/examples/desktop:simple_run_graph_main",
         "//mediapipe/graphs/object_detection:desktop_tensorflow_calculators",
+        "@org_tensorflow//tensorflow/core:direct_session",
     ],
 )
 

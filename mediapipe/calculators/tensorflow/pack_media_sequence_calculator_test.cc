@@ -348,13 +348,49 @@ TEST_F(PackMediaSequenceCalculatorTest, PacksTwoBBoxDetections) {
       ASSERT_NEAR(1.0, rect.ymax(), 0.001);
     }
     auto class_strings =
-        mpms::GetPredictedBBoxClassStringAt(output_sequence, i);
+        mpms::GetPredictedBBoxLabelStringAt(output_sequence, i);
     ASSERT_EQ("absolute bbox", class_strings[0]);
     ASSERT_EQ("relative bbox", class_strings[1]);
-    auto class_indices = mpms::GetPredictedBBoxClassIndexAt(output_sequence, i);
+    auto class_indices = mpms::GetPredictedBBoxLabelIndexAt(output_sequence, i);
     ASSERT_EQ(0, class_indices[0]);
     ASSERT_EQ(1, class_indices[1]);
   }
+}
+
+TEST_F(PackMediaSequenceCalculatorTest, PacksTwoKeypoints) {
+  SetUpCalculator({"KEYPOINTS_TEST:keypoints"}, {}, false, true);
+  auto input_sequence = ::absl::make_unique<tf::SequenceExample>();
+  std::string test_video_id = "test_video_id";
+  mpms::SetClipMediaId(test_video_id, input_sequence.get());
+
+  std::unordered_map<std::string, std::vector<std::pair<float, float>>> points =
+      {{"HEAD", {{0.1, 0.2}, {0.3, 0.4}}}, {"TAIL", {{0.5, 0.6}}}};
+  runner_->MutableInputs()
+      ->Tag("KEYPOINTS_TEST")
+      .packets.push_back(PointToForeign(&points).At(Timestamp(0)));
+  runner_->MutableInputs()
+      ->Tag("KEYPOINTS_TEST")
+      .packets.push_back(PointToForeign(&points).At(Timestamp(1)));
+  runner_->MutableSidePackets()->Tag("SEQUENCE_EXAMPLE") =
+      Adopt(input_sequence.release());
+
+  MEDIAPIPE_ASSERT_OK(runner_->Run());
+
+  const std::vector<Packet>& output_packets =
+      runner_->Outputs().Tag("SEQUENCE_EXAMPLE").packets;
+  ASSERT_EQ(1, output_packets.size());
+  const tf::SequenceExample& output_sequence =
+      output_packets[0].Get<tf::SequenceExample>();
+
+  ASSERT_EQ(test_video_id, mpms::GetClipMediaId(output_sequence));
+  ASSERT_EQ(2, mpms::GetBBoxPointSize("TEST/HEAD", output_sequence));
+  ASSERT_EQ(2, mpms::GetBBoxPointSize("TEST/TAIL", output_sequence));
+  ASSERT_NEAR(0.2,
+              mpms::GetBBoxPointAt("TEST/HEAD", output_sequence, 0)[0].second,
+              0.001);
+  ASSERT_NEAR(0.5,
+              mpms::GetBBoxPointAt("TEST/TAIL", output_sequence, 1)[0].first,
+              0.001);
 }
 
 TEST_F(PackMediaSequenceCalculatorTest, PacksTwoMaskDetections) {
@@ -395,7 +431,6 @@ TEST_F(PackMediaSequenceCalculatorTest, PacksTwoMaskDetections) {
   ASSERT_EQ(1, output_packets.size());
   const tf::SequenceExample& output_sequence =
       output_packets[0].Get<tf::SequenceExample>();
-  LOG(INFO) << "output_sequence: \n" << output_sequence.DebugString();
 
   ASSERT_EQ(test_video_id, mpms::GetClipMediaId(output_sequence));
   ASSERT_EQ(height, mpms::GetImageHeight(output_sequence));
@@ -602,6 +637,10 @@ TEST_F(PackMediaSequenceCalculatorTest, TestReconcilingAnnotations) {
   mpms::AddBBoxTimestamp(21, input_sequence.get());
   mpms::AddBBoxTimestamp(22, input_sequence.get());
 
+  mpms::AddBBoxTimestamp("PREFIX", 8, input_sequence.get());
+  mpms::AddBBoxTimestamp("PREFIX", 9, input_sequence.get());
+  mpms::AddBBoxTimestamp("PREFIX", 22, input_sequence.get());
+
   runner_->MutableSidePackets()->Tag("SEQUENCE_EXAMPLE") =
       Adopt(input_sequence.release());
   MEDIAPIPE_ASSERT_OK(runner_->Run());
@@ -617,6 +656,13 @@ TEST_F(PackMediaSequenceCalculatorTest, TestReconcilingAnnotations) {
   ASSERT_EQ(mpms::GetBBoxTimestampAt(output_sequence, 2), 30);
   ASSERT_EQ(mpms::GetBBoxTimestampAt(output_sequence, 3), 40);
   ASSERT_EQ(mpms::GetBBoxTimestampAt(output_sequence, 4), 50);
+
+  ASSERT_EQ(mpms::GetBBoxTimestampSize("PREFIX", output_sequence), 5);
+  ASSERT_EQ(mpms::GetBBoxTimestampAt("PREFIX", output_sequence, 0), 10);
+  ASSERT_EQ(mpms::GetBBoxTimestampAt("PREFIX", output_sequence, 1), 20);
+  ASSERT_EQ(mpms::GetBBoxTimestampAt("PREFIX", output_sequence, 2), 30);
+  ASSERT_EQ(mpms::GetBBoxTimestampAt("PREFIX", output_sequence, 3), 40);
+  ASSERT_EQ(mpms::GetBBoxTimestampAt("PREFIX", output_sequence, 4), 50);
 }
 
 }  // namespace

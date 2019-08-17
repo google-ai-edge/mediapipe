@@ -32,6 +32,9 @@ struct EglSurfaceHolder {
   EGLSurface surface GUARDED_BY(mutex) = EGL_NO_SURFACE;
   // True if MediaPipe created the surface and is responsible for destroying it.
   bool owned GUARDED_BY(mutex) = false;
+  // Vertical flip of the surface, useful for conversion between coordinate
+  // systems with top-left v.s. bottom-left origins.
+  bool flip_y = false;
 };
 
 }  // namespace mediapipe

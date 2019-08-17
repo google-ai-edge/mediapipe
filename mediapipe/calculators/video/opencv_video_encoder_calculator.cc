@@ -139,9 +139,9 @@ class OpenCvVideoEncoderCalculator : public CalculatorBase {
              << " in OpenCvVideoEncoderCalculator::Process()";
     }
     if (format == ImageFormat::SRGB) {
-      cv::cvtColor(tmp_frame, frame, cv::COLOR_BGR2RGB);
+      cv::cvtColor(tmp_frame, frame, cv::COLOR_RGB2BGR);
     } else if (format == ImageFormat::SRGBA) {
-      cv::cvtColor(tmp_frame, frame, cv::COLOR_BGRA2RGBA);
+      cv::cvtColor(tmp_frame, frame, cv::COLOR_RGBA2BGR);
     } else {
       return ::mediapipe::InvalidArgumentErrorBuilder(MEDIAPIPE_LOC)
              << "Unsupported image format: " << format;

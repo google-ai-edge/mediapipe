@@ -48,7 +48,8 @@ android_library(
     ],
     deps = [
         ":android_core",
-        "@androidsdk//com.android.support:support-v4-25.0.0",
+        "//third_party:androidx_annotation",
+        "//third_party:androidx_legacy_support_v4",
         "@com_google_code_findbugs//jar",
         "@com_google_common_flogger//jar",
         "@com_google_common_flogger_system_backend//jar",
@@ -74,6 +75,7 @@ android_library(
     deps = [
         "//mediapipe/framework:calculator_java_proto_lite",
         "//mediapipe/framework:calculator_profile_java_proto_lite",
+        "//mediapipe/framework/tool:calculator_graph_template_java_proto_lite",
         "@com_google_code_findbugs//jar",
         "@com_google_common_flogger//jar",
         "@com_google_common_flogger_system_backend//jar",

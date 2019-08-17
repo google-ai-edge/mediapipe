@@ -19,6 +19,7 @@
 #include <vector>
 
 #include "absl/strings/str_cat.h"
+#include "mediapipe/calculators/core/packet_cloner_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
 
 namespace mediapipe {
@@ -39,6 +40,7 @@ namespace mediapipe {
 // }
 //
 // Related:
+//   packet_cloner_calculator.proto: Options for this calculator.
 //   merge_input_streams_calculator.cc: One output stream.
 //   packet_inner_join_calculator.cc: Don't output unless all inputs are new.
 class PacketClonerCalculator : public CalculatorBase {
@@ -54,6 +56,13 @@ class PacketClonerCalculator : public CalculatorBase {
   }
 
   ::mediapipe::Status Open(CalculatorContext* cc) final {
+    // Load options.
+    const auto calculator_options =
+        cc->Options<mediapipe::PacketClonerCalculatorOptions>();
+    output_only_when_all_inputs_received_ =
+        calculator_options.output_only_when_all_inputs_received();
+
+    // Parse input streams.
     tick_signal_index_ = cc->Inputs().NumEntries() - 1;
     current_.resize(tick_signal_index_);
     // Pass along the header for each stream if present.
@@ -73,8 +82,17 @@ class PacketClonerCalculator : public CalculatorBase {
       }
     }
 
-    // Output if the tick signal is non-empty.
+    // Output according to the TICK signal.
     if (!cc->Inputs().Index(tick_signal_index_).Value().IsEmpty()) {
+      if (output_only_when_all_inputs_received_) {
+        // Return if one of the input is null.
+        for (int i = 0; i < tick_signal_index_; ++i) {
+          if (current_[i].IsEmpty()) {
+            return ::mediapipe::OkStatus();
+          }
+        }
+      }
+      // Output each stream.
       for (int i = 0; i < tick_signal_index_; ++i) {
         if (!current_[i].IsEmpty()) {
           cc->Outputs().Index(i).AddPacket(
@@ -91,6 +109,7 @@ class PacketClonerCalculator : public CalculatorBase {
  private:
   std::vector<Packet> current_;
   int tick_signal_index_;
+  bool output_only_when_all_inputs_received_;
 };
 
 REGISTER_CALCULATOR(PacketClonerCalculator);

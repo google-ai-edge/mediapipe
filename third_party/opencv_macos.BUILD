@@ -16,6 +16,7 @@ cc_library(
             "local/opt/opencv/lib/libopencv_highgui.dylib",
             "local/opt/opencv/lib/libopencv_imgcodecs.dylib",
             "local/opt/opencv/lib/libopencv_imgproc.dylib",
+            "local/opt/opencv/lib/libopencv_optflow.dylib",
             "local/opt/opencv/lib/libopencv_video.dylib",
             "local/opt/opencv/lib/libopencv_videoio.dylib",
         ],

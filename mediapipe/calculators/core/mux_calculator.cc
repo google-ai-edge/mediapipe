@@ -51,7 +51,7 @@ class MuxCalculator : public CalculatorBase {
     data_input_base_ = cc->Inputs().GetId("INPUT", 0);
     num_data_inputs_ = cc->Inputs().NumEntries("INPUT");
     output_ = cc->Outputs().GetId("OUTPUT", 0);
-    cc->SetOffset(mediapipe::TimestampDiff(0));
+    cc->SetOffset(TimestampDiff(0));
     return ::mediapipe::OkStatus();
   }
 

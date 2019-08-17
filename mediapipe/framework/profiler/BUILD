@@ -18,7 +18,7 @@ licenses(["notice"])  # Apache 2.0
 package(default_visibility = ["//mediapipe/framework:__subpackages__"])
 
 # This is used to enable the profiler on platforms where it is not on by default.
-# To enable, pass --define=MEDIAPIPE_PROFILING=1 to bazel.
+# To enable, pass --define MEDIAPIPE_PROFILING=1 to bazel.
 config_setting(
     name = "graph_profiler_enabled",
     values = {
@@ -223,8 +223,8 @@ cc_test(
         ":graph_profiler",
         ":graph_tracer",
         ":test_context_builder",
+        "//mediapipe/calculators/core:flow_limiter_calculator",
         "//mediapipe/calculators/core:immediate_mux_calculator",
-        "//mediapipe/calculators/core:real_time_flow_limiter_calculator",
         "//mediapipe/calculators/core:round_robin_demux_calculator",
         "//mediapipe/framework:calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
@@ -268,9 +268,19 @@ cc_library(
     srcs = select({
         "//conditions:default": ["profiler_resource_util.cc"],
         "//mediapipe:android": ["profiler_resource_util_android.cc"],
+        "//mediapipe:apple": ["profiler_resource_util_apple.cc"],
+        "//mediapipe:macos": ["profiler_resource_util.cc"],
     }),
     hdrs = ["profiler_resource_util.h"],
     # We use Objective-C++ on iOS.
+    copts = select({
+        "//conditions:default": [],
+        "//mediapipe:apple": [
+            "-std=c++11",
+            "-ObjC++",
+        ],
+        "//mediapipe:macos": [],
+    }),
     visibility = [
         "//mediapipe/framework:mediapipe_internal",
     ],
@@ -285,5 +295,6 @@ cc_library(
         "//mediapipe:android": [
             "//mediapipe/java/com/google/mediapipe/framework/jni:jni_util",
         ],
+        "//mediapipe:apple": [],
     }),
 )

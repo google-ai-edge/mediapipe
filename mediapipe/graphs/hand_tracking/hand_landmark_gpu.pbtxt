@@ -1,0 +1,175 @@
+# MediaPipe hand landmark localization subgraph.
+
+type: "HandLandmarkSubgraph"
+
+input_stream: "IMAGE:input_video"
+input_stream: "NORM_RECT:hand_rect"
+output_stream: "LANDMARKS:hand_landmarks"
+output_stream: "NORM_RECT:hand_rect_for_next_frame"
+output_stream: "PRESENCE:hand_presence"
+
+# Crops the rectangle that contains a hand from the input image.
+node {
+  calculator: "ImageCroppingCalculator"
+  input_stream: "IMAGE_GPU:input_video"
+  input_stream: "NORM_RECT:hand_rect"
+  output_stream: "IMAGE_GPU:hand_image"
+}
+
+# Transforms the input image on GPU to a 256x256 image. To scale the input
+# image, the scale_mode option is set to FIT to preserve the aspect ratio,
+# resulting in potential letterboxing in the transformed image.
+node: {
+  calculator: "ImageTransformationCalculator"
+  input_stream: "IMAGE_GPU:hand_image"
+  output_stream: "IMAGE_GPU:transformed_hand_image"
+  output_stream: "LETTERBOX_PADDING:letterbox_padding"
+  node_options: {
+    [type.googleapis.com/mediapipe.ImageTransformationCalculatorOptions] {
+      output_width: 256
+      output_height: 256
+      scale_mode: FIT
+    }
+  }
+}
+
+# Converts the transformed input image on GPU into an image tensor stored as a
+# TfLiteTensor.
+node {
+  calculator: "TfLiteConverterCalculator"
+  input_stream: "IMAGE_GPU:transformed_hand_image"
+  output_stream: "TENSORS_GPU:image_tensor"
+}
+
+# Runs a TensorFlow Lite model on GPU that takes an image tensor and outputs a
+# vector of tensors representing, for instance, detection boxes/keypoints and
+# scores.
+node {
+  calculator: "TfLiteInferenceCalculator"
+  input_stream: "TENSORS_GPU:image_tensor"
+  output_stream: "TENSORS:output_tensors"
+  node_options: {
+    [type.googleapis.com/mediapipe.TfLiteInferenceCalculatorOptions] {
+      model_path: "hand_landmark.tflite"
+      use_gpu: true
+    }
+  }
+}
+
+# Splits a vector of tensors into multiple vectors.
+node {
+  calculator: "SplitTfLiteTensorVectorCalculator"
+  input_stream: "output_tensors"
+  output_stream: "landmark_tensors"
+  output_stream: "hand_flag_tensor"
+  node_options: {
+    [type.googleapis.com/mediapipe.SplitVectorCalculatorOptions] {
+      ranges: { begin: 0 end: 1 }
+      ranges: { begin: 1 end: 2 }
+    }
+  }
+}
+
+# Converts the hand-flag tensor into a float that represents the confidence
+# score of hand presence.
+node {
+  calculator: "TfLiteTensorsToFloatsCalculator"
+  input_stream: "TENSORS:hand_flag_tensor"
+  output_stream: "FLOAT:hand_presence_score"
+}
+
+# Applies a threshold to the confidence score to determine whether a hand is
+# present.
+node {
+  calculator: "ThresholdingCalculator"
+  input_stream: "FLOAT:hand_presence_score"
+  output_stream: "FLAG:hand_presence"
+  node_options: {
+    [type.googleapis.com/mediapipe.ThresholdingCalculatorOptions] {
+      threshold: 0.1
+    }
+  }
+}
+
+# Decodes the landmark tensors into a vector of lanmarks, where the landmark
+# coordinates are normalized by the size of the input image to the model.
+node {
+  calculator: "TfLiteTensorsToLandmarksCalculator"
+  input_stream: "TENSORS:landmark_tensors"
+  output_stream: "NORM_LANDMARKS:landmarks"
+  node_options: {
+    [type.googleapis.com/mediapipe.TfLiteTensorsToLandmarksCalculatorOptions] {
+      num_landmarks: 21
+      input_image_width: 256
+      input_image_height: 256
+    }
+  }
+}
+
+# Adjusts landmarks (already normalized to [0.f, 1.f]) on the letterboxed hand
+# image (after image transformation with the FIT scale mode) to the
+# corresponding locations on the same image with the letterbox removed (hand
+# image before image transformation).
+node {
+  calculator: "LandmarkLetterboxRemovalCalculator"
+  input_stream: "LANDMARKS:landmarks"
+  input_stream: "LETTERBOX_PADDING:letterbox_padding"
+  output_stream: "LANDMARKS:scaled_landmarks"
+}
+
+# Projects the landmarks from the cropped hand image to the corresponding
+# locations on the full image before cropping (input to the graph).
+node {
+  calculator: "LandmarkProjectionCalculator"
+  input_stream: "NORM_LANDMARKS:scaled_landmarks"
+  input_stream: "NORM_RECT:hand_rect"
+  output_stream: "NORM_LANDMARKS:hand_landmarks"
+}
+
+# Extracts image size from the input images.
+node {
+  calculator: "ImagePropertiesCalculator"
+  input_stream: "IMAGE_GPU:input_video"
+  output_stream: "SIZE:image_size"
+}
+
+# Converts hand landmarks to a detection that tightly encloses all landmarks.
+node {
+  calculator: "LandmarksToDetectionCalculator"
+  input_stream: "NORM_LANDMARKS:hand_landmarks"
+  output_stream: "DETECTION:hand_detection"
+}
+
+# Converts the hand detection into a rectangle (normalized by image size)
+# that encloses the hand and is rotated such that the line connecting center of
+# the wrist and MCP of the middle finger is aligned with the Y-axis of the
+# rectangle.
+node {
+  calculator: "DetectionsToRectsCalculator"
+  input_stream: "DETECTION:hand_detection"
+  input_stream: "IMAGE_SIZE:image_size"
+  output_stream: "NORM_RECT:hand_rect_from_landmarks"
+  node_options: {
+    [type.googleapis.com/mediapipe.DetectionsToRectsCalculatorOptions] {
+      rotation_vector_start_keypoint_index: 0  # Center of wrist.
+      rotation_vector_end_keypoint_index: 9  # MCP of middle finger.
+      rotation_vector_target_angle_degrees: 90
+    }
+  }
+}
+
+# Expands the hand rectangle so that in the next video frame it's likely to
+# still contain the hand even with some motion.
+node {
+  calculator: "RectTransformationCalculator"
+  input_stream: "NORM_RECT:hand_rect_from_landmarks"
+  input_stream: "IMAGE_SIZE:image_size"
+  output_stream: "hand_rect_for_next_frame"
+  node_options: {
+    [type.googleapis.com/mediapipe.RectTransformationCalculatorOptions] {
+      scale_x: 1.6
+      scale_y: 1.6
+      square_long: true
+    }
+  }
+}
