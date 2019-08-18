@@ -79,4 +79,4 @@ and its associated [subgraph](./framework_concepts.md#subgraph) called
 
 *   Click on the subgraph block in purple `Hand Detection` and the
     `hand_detection_gpu.pbtxt` tab will open
-    ![Hand detection subgraph](./images/clicksubgraph_handdetection.png){width="1500"}
+    ![Hand detection subgraph](./images/click_subgraph_handdetection.png){width="1500"}

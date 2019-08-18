@@ -20,7 +20,7 @@ Check out the [Examples page](https://mediapipe.readthedocs.io/en/latest/example
 A web-based visualizer is hosted on [viz.mediapipe.dev](https://viz.mediapipe.dev/). Please also see instructions [here](mediapipe/docs/visualizer.md).
 
 ## Community forum
-*  [discuss](https://groups.google.com/forum/#!forum/mediapipe) - General community discussion around MediaPipe
+*  [Discuss](https://groups.google.com/forum/#!forum/mediapipe) - General community discussion around MediaPipe
 
 ## Publications
 * [MediaPipe: A Framework for Building Perception Pipelines](https://arxiv.org/abs/1906.08172)
@@ -29,7 +29,7 @@ A web-based visualizer is hosted on [viz.mediapipe.dev](https://viz.mediapipe.de
 [Open sourced at CVPR 2019](https://sites.google.com/corp/view/perception-cv4arvr/mediapipe) on June 17~20 in Long Beach, CA
 
 ## Alpha Disclaimer
-MediaPipe is currently in alpha for v0.5. We are still making breaking API changes and expect to get to stable API by v1.0.
+MediaPipe is currently in alpha for v0.6. We are still making breaking API changes and expect to get to stable API by v1.0.
 
 ## Contributing
 We welcome contributions. Please follow these [guidelines](./CONTRIBUTING.md).

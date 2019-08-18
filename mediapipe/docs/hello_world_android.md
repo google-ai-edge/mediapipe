@@ -14,7 +14,7 @@ graph on Android.
 A simple camera app for real-time Sobel edge detection applied to a live video
 stream on an Android device.
 
-![edge_detection_android_gpu_gif](images/mobile/edge_detection_android_gpu.gif){width="300"}
+![edge_detection_android_gpu_gif](images/mobile/edge_detection_android_gpu.gif)
 
 ## Setup
 
@@ -56,7 +56,7 @@ node: {
 
 A visualization of the graph is shown below:
 
-![edge_detection_mobile_gpu_graph](images/mobile/edge_detection_mobile_graph_gpu.png){width="200"}
+![edge_detection_mobile_gpu](images/mobile/edge_detection_mobile_gpu.png)
 
 This graph has a single input stream named `input_video` for all incoming frames
 that will be provided by your device's camera.
@@ -252,7 +252,7 @@ adb install bazel-bin/$APPLICATION_PATH/edgedetectiongpu.apk
 Open the application on your device. It should display a screen with the text
 `Hello World!`.
 
-![bazel_hello_world_android](images/mobile/bazel_hello_world_android.png){width="300"}
+![bazel_hello_world_android](images/mobile/bazel_hello_world_android.png)
 
 ## Using the camera via `CameraX`
 
@@ -369,7 +369,7 @@ Add the following line in the `$APPLICATION_PATH/res/values/strings.xml` file:
 When the user doesn't grant camera permission, the screen will now look like
 this:
 
-![missing_camera_permission_android](images/mobile/missing_camera_permission_android.png){width="300"}
+![missing_camera_permission_android](images/mobile/missing_camera_permission_android.png)
 
 Now, we will add the [`SurfaceTexture`] and [`SurfaceView`] objects to
 `MainActivity`:
@@ -709,7 +709,7 @@ And that's it! You should now be able to successfully build and run the
 application on the device and see Sobel edge detection running on a live camera
 feed! Congrats!
 
-![edge_detection_android_gpu_gif](images/mobile/edge_detection_android_gpu.gif){width="300"}
+![edge_detection_android_gpu_gif](images/mobile/edge_detection_android_gpu.gif)
 
 If you ran into any issues, please see the full code of the tutorial
 [here](https://github.com/google/mediapipe/tree/master/mediapipe/examples/android/src/java/com/google/mediapipe/apps/edgedetectiongpu).

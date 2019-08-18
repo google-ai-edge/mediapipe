@@ -22,7 +22,7 @@ Android example users go through in detail. It teaches the following:
 ### Hello World! on iOS
 
 [Hello World! on iOS](./hello_world_ios.md) is the iOS version of Sobel edge
-detection example
+detection example.
 
 ### Object Detection with GPU
 
@@ -44,8 +44,9 @@ graphs can be easily adapted to run on CPU v.s. GPU.
 [Face Detection with GPU](./face_detection_mobile_gpu.md) illustrates how to use
 MediaPipe with a TFLite model for face detection in a GPU-accelerated pipeline.
 The selfie face detection TFLite model is based on
-["BlazeFace: Sub-millisecond Neural Face Detection on Mobile GPUs"](https://sites.google.com/view/perception-cv4arvr/blazeface).
-[Model card](https://sites.google.com/corp/view/perception-cv4arvr/blazeface#h.p_21ojPZDx3cqq).
+["BlazeFace: Sub-millisecond Neural Face Detection on Mobile GPUs"](https://sites.google.com/view/perception-cv4arvr/blazeface),
+and model details are described in the
+[model card](https://sites.google.com/corp/view/perception-cv4arvr/blazeface#h.p_21ojPZDx3cqq).
 
 *   [Android](./face_detection_mobile_gpu.md#android)
 *   [iOS](./face_detection_mobile_gpu.md#ios)
@@ -71,8 +72,9 @@ MediaPipe with a TFLite model for hand tracking in a GPU-accelerated pipeline.
 [Hair Segmentation on GPU](./hair_segmentation_mobile_gpu.md) illustrates how to
 use MediaPipe with a TFLite model for hair segmentation in a GPU-accelerated
 pipeline. The selfie hair segmentation TFLite model is based on
-["Real-time Hair segmentation and recoloring on Mobile GPUs"](https://sites.google.com/view/perception-cv4arvr/hair-segmentation).
-[Model card](https://sites.google.com/corp/view/perception-cv4arvr/hair-segmentation#h.p_NimuO7PgHxlY).
+["Real-time Hair segmentation and recoloring on Mobile GPUs"](https://sites.google.com/view/perception-cv4arvr/hair-segmentation),
+and model details are described in the
+[model card](https://sites.google.com/corp/view/perception-cv4arvr/hair-segmentation#h.p_NimuO7PgHxlY).
 
 *   [Android](./hair_segmentation_mobile_gpu.md#android)
 

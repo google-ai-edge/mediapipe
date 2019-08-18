@@ -44,7 +44,7 @@ $ bazel-bin/mediapipe/examples/desktop/object_detection/object_detection_tensorf
 
 #### Graph
 
-![graph visualization](images/object_detection_desktop_tensorflow.png){width="800"}
+![graph visualization](images/object_detection_desktop_tensorflow.png)
 
 To visualize the graph as shown above, copy the text specification of the graph
 below and paste it into
@@ -209,7 +209,7 @@ $ bazel-bin/mediapipe/examples/desktop/object_detection/object_detection_tflite 
 
 #### Graph
 
-![graph visualization](images/object_detection_desktop_tflite.png){width="400"}
+![graph visualization](images/object_detection_desktop_tflite.png)
 
 To visualize the graph as shown above, copy the text specification of the graph
 below and paste it into

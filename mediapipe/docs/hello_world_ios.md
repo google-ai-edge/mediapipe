@@ -14,7 +14,7 @@ graph on iOS.
 A simple camera app for real-time Sobel edge detection applied to a live video
 stream on an iOS device.
 
-![edge_detection_ios_gpu_gif](images/mobile/edge_detection_ios_gpu.gif){width="300"}
+![edge_detection_ios_gpu_gif](images/mobile/edge_detection_ios_gpu.gif)
 
 ## Setup
 
@@ -54,7 +54,7 @@ node: {
 
 A visualization of the graph is shown below:
 
-![edge_detection_mobile_gpu_graph](images/mobile/edge_detection_mobile_graph_gpu.png){width="200"}
+![edge_detection_mobile_gpu](images/mobile/edge_detection_mobile_gpu.png)
 
 This graph has a single input stream named `input_video` for all incoming frames
 that will be provided by your device's camera.
@@ -174,10 +174,11 @@ bazel build -c opt --config=ios_arm64 <$APPLICATION_PATH>:EdgeDetectionGpuApp'
 ```
 
 For example, to build the `EdgeDetectionGpuApp` application in
-`mediapipe/examples/ios/edgedetection`, use the following command:
+`mediapipe/examples/ios/edgedetectiongpu`, use the following
+command:
 
 ```
-bazel build -c opt --config=ios_arm64 mediapipe/examples/ios/edgedetection:EdgeDetectionGpuApp
+bazel build -c opt --config=ios_arm64 mediapipe/examples/ios/edgedetectiongpu:EdgeDetectionGpuApp
 ```
 
 Then, go back to XCode, open Window > Devices and Simulators, select your
@@ -188,9 +189,9 @@ blank white screen.
 
 ## Use the camera for the live view feed
 
-In this tutorial, we will use the `MediaPipeCameraInputSource` class to access
-and grab frames from the camera. This class uses the `AVCaptureSession` API to
-get the frames from the camera.
+In this tutorial, we will use the `MPPCameraInputSource` class to access and
+grab frames from the camera. This class uses the `AVCaptureSession` API to get
+the frames from the camera.
 
 But before using this class, change the `Info.plist` file to support camera
 usage in the app.
@@ -198,7 +199,7 @@ usage in the app.
 In `ViewController.m`, add the following import line:
 
 ```
-#import "mediapipe/objc/MediaPipeCameraInputSource.h"
+#import "mediapipe/objc/MPPCameraInputSource.h"
 ```
 
 Add the following to its implementation block to create an object
@@ -207,7 +208,7 @@ Add the following to its implementation block to create an object
 ```
 @implementation ViewController {
   // Handles camera access via AVCaptureSession library.
-  MediaPipeCameraInputSource* _cameraSource;
+  MPPCameraInputSource* _cameraSource;
 }
 ```
 
@@ -217,7 +218,7 @@ Add the following code to `viewDidLoad()`:
 -(void)viewDidLoad {
   [super viewDidLoad];
 
-  _cameraSource = [[MediaPipeCameraInputSource alloc] init];
+  _cameraSource = [[MPPCameraInputSource alloc] init];
   _cameraSource.sessionPreset = AVCaptureSessionPresetHigh;
   _cameraSource.cameraPosition = AVCaptureDevicePositionBack;
   // The frame's native format is rotated with respect to the portrait orientation.
@@ -229,10 +230,10 @@ The code initializes `_cameraSource`, sets the capture session preset, and which
 camera to use.
 
 We need to get frames from the `_cameraSource` into our application
-`ViewController` to display them. `MediaPipeCameraInputSource` is a subclass of
-`MediaPipeInputSource`, which provides a protocol for its delegates, namely the
-`MediaPipeInputSourceDelegate`. So our application `ViewController` can be a
-delegate of `_cameraSource`.
+`ViewController` to display them. `MPPCameraInputSource` is a subclass of
+`MPPInputSource`, which provides a protocol for its delegates, namely the
+`MPPInputSourceDelegate`. So our application `ViewController` can be a delegate
+of `_cameraSource`.
 
 To handle camera setup and process incoming frames, we should use a queue
 different from the main queue. Add the following to the implementation block of
@@ -269,11 +270,11 @@ the interface/implementation of the `ViewController`:
 static const char* kVideoQueueLabel = "com.google.mediapipe.example.videoQueue";
 ```
 
-Before implementing any method from `MediaPipeInputSourceDelegate` protocol, we
-must first set up a way to display the camera frames. MediaPipe provides another
-utility called `MediaPipeLayerRenderer` to display images on the screen. This
-utility can be used to display `CVPixelBufferRef` objects, which is the type of
-the images provided by `MediaPipeCameraInputSource` to its delegates.
+Before implementing any method from `MPPInputSourceDelegate` protocol, we must
+first set up a way to display the camera frames. MediaPipe provides another
+utility called `MPPLayerRenderer` to display images on the screen. This utility
+can be used to display `CVPixelBufferRef` objects, which is the type of the
+images provided by `MPPCameraInputSource` to its delegates.
 
 To display images of the screen, we need to add a new `UIView` object called
 `_liveView` to the `ViewController`.
@@ -284,7 +285,7 @@ Add the following lines to the implementation block of the `ViewController`:
 // Display the camera preview frames.
 IBOutlet UIView* _liveView;
 // Render frames in a layer.
-MediaPipeLayerRenderer* _renderer;
+MPPLayerRenderer* _renderer;
 ```
 
 Go to `Main.storyboard`, add a `UIView` object from the object library to the
@@ -296,7 +297,7 @@ Go back to `ViewController.m` and add the following code to `viewDidLoad()` to
 initialize the `_renderer` object:
 
 ```
-_renderer = [[MediaPipeLayerRenderer alloc] init];
+_renderer = [[MPPLayerRenderer alloc] init];
 _renderer.layer.frame = _liveView.layer.bounds;
 [_liveView.layer addSublayer:_renderer.layer];
 _renderer.frameScaleMode = MediaPipeFrameScaleFillAndCrop;
@@ -308,7 +309,7 @@ To get frames from the camera, we will implement the following method:
 // Must be invoked on _videoQueue.
 - (void)processVideoFrame:(CVPixelBufferRef)imageBuffer
                 timestamp:(CMTime)timestamp
-               fromSource:(MediaPipeInputSource*)source {
+               fromSource:(MPPInputSource*)source {
   if (source != _cameraSource) {
     NSLog(@"Unknown source: %@", source);
     return;
@@ -322,7 +323,7 @@ To get frames from the camera, we will implement the following method:
 }
 ```
 
-This is a delegate method of `MediaPipeInputSource`. We first check that we are
+This is a delegate method of `MPPInputSource`. We first check that we are
 getting frames from the right source, i.e. the `_cameraSource`. Then we display
 the frame received from the camera via `_renderer` on the main queue.
 
@@ -337,7 +338,7 @@ about to appear. To do this, we will implement the
 ```
 
 Before we start running the camera, we need the user's permission to access it.
-`MediaPipeCameraInputSource` provides a function
+`MPPCameraInputSource` provides a function
 `requestCameraAccessWithCompletionHandler:(void (^_Nullable)(BOOL
 granted))handler` to request camera access and do some work when the user has
 responded. Add the following code to `viewWillAppear:animated`:
@@ -413,7 +414,7 @@ Add the following property to the interface of the `ViewController`:
 ```
 // The MediaPipe graph currently in use. Initialized in viewDidLoad, started in viewWillAppear: and
 // sent video frames on _videoQueue.
-@property(nonatomic) MediaPipeGraph* mediapipeGraph;
+@property(nonatomic) MPPGraph* mediapipeGraph;
 ```
 
 As explained in the comment above, we will initialize this graph in
@@ -421,7 +422,7 @@ As explained in the comment above, we will initialize this graph in
 using the following function:
 
 ```
-+ (MediaPipeGraph*)loadGraphFromResource:(NSString*)resource {
++ (MPPGraph*)loadGraphFromResource:(NSString*)resource {
   // Load the graph config resource.
   NSError* configLoadError = nil;
   NSBundle* bundle = [NSBundle bundleForClass:[self class]];
@@ -440,7 +441,7 @@ using the following function:
   config.ParseFromArray(data.bytes, data.length);
 
   // Create MediaPipe graph with mediapipe::CalculatorGraphConfig proto object.
-  MediaPipeGraph* newGraph = [[MediaPipeGraph alloc] initWithGraphConfig:config];
+  MPPGraph* newGraph = [[MPPGraph alloc] initWithGraphConfig:config];
   [newGraph addFrameOutputStream:kOutputStream outputPacketType:MediaPipePacketPixelBuffer];
   return newGraph;
 }
@@ -498,7 +499,7 @@ this function's implementation to do the following:
 ```
 - (void)processVideoFrame:(CVPixelBufferRef)imageBuffer
                 timestamp:(CMTime)timestamp
-               fromSource:(MediaPipeInputSource*)source {
+               fromSource:(MPPInputSource*)source {
   if (source != _cameraSource) {
     NSLog(@"Unknown source: %@", source);
     return;
@@ -518,9 +519,9 @@ The graph will run with this input packet and output a result in
 method to receive packets on this output stream and display them on the screen:
 
 ```
-- (void)mediapipeGraph:(MediaPipeGraph*)graph
-    didOutputPixelBuffer:(CVPixelBufferRef)pixelBuffer
-              fromStream:(const std::string&)streamName {
+- (void)mediapipeGraph:(MPPGraph*)graph
+   didOutputPixelBuffer:(CVPixelBufferRef)pixelBuffer
+             fromStream:(const std::string&)streamName {
   if (streamName == kOutputStream) {
     // Display the captured image on the screen.
     CVPixelBufferRetain(pixelBuffer);
@@ -535,7 +536,7 @@ method to receive packets on this output stream and display them on the screen:
 And that is all! Build and run the app on your iOS device. You should see the
 results of running the edge detection graph on a live video feed. Congrats!
 
-![edge_detection_ios_gpu_gif](images/mobile/edge_detection_ios_gpu.gif){width="300"}
+![edge_detection_ios_gpu_gif](images/mobile/edge_detection_ios_gpu.gif)
 
 If you ran into any issues, please see the full code of the tutorial
 [here](https://github.com/google/mediapipe/tree/master/mediapipe/examples/ios/edgedetectiongpu).

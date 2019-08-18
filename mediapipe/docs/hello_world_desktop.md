@@ -72,7 +72,7 @@
     This graph consists of 1 graph input stream (`in`) and 1 graph output stream
     (`out`), and 2 [`PassThroughCalculator`]s connected serially.
 
-    ![hello_world.cc graph](./images/hello_world_graph.png){width="200"}
+    ![hello_world graph](./images/hello_world.png)
 
 4.  Before running the graph, an `OutputStreamPoller` object is connected to the
     output stream in order to later retrieve the graph output, and a graph run

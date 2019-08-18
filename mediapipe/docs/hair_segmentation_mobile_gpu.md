@@ -1,25 +1,25 @@
 # Hair Segmentation (GPU)
 
 This doc focuses on the
-[below example graph](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/hair_segmentation/hair_segmentation_android_gpu.pbtxt)
+[example graph](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/hair_segmentation/hair_segmentation_mobile_gpu.pbtxt)
 that performs hair segmentation with TensorFlow Lite on GPU.
 
-![hair_segmentation_android_gpu_gif](images/mobile/hair_segmentation_android_gpu.gif){width="300"}
+![hair_segmentation_android_gpu_gif](images/mobile/hair_segmentation_android_gpu.gif)
 
 ## Android
 
 Please see [Hello World! in MediaPipe on Android](hello_world_android.md) for
 general instructions to develop an Android application that uses MediaPipe.
 
-The graph is used in the
-[Hair Segmentation GPU](https://github.com/google/mediapipe/tree/master/mediapipe/examples/android/src/java/com/google/mediapipe/apps/hairsegmentationgpu)
-example app. To build the app, run:
+The graph below is used in the
+[Hair Segmentation GPU Android example app](https://github.com/google/mediapipe/tree/master/mediapipe/examples/android/src/java/com/google/mediapipe/apps/hairsegmentationgpu).
+To build the app, run:
 
 ```bash
 bazel build -c opt --config=android_arm64 mediapipe/examples/android/src/java/com/google/mediapipe/apps/hairsegmentationgpu
 ```
 
-To further install the app on android device, run:
+To further install the app on an Android device, run:
 
 ```bash
 adb install bazel-bin/mediapipe/examples/android/src/java/com/google/mediapipe/apps/hairsegmentationgpu/hairsegmentationgpu.apk
@@ -27,10 +27,12 @@ adb install bazel-bin/mediapipe/examples/android/src/java/com/google/mediapipe/a
 
 ## Graph
 
-![hair_segmentation_mobile_gpu_graph](images/mobile/hair_segmentation_mobile_gpu.png){width="600"}
+![hair_segmentation_mobile_gpu_graph](images/mobile/hair_segmentation_mobile_gpu.png)
 
 To visualize the graph as shown above, copy the text specification of the graph
 below and paste it into [MediaPipe Visualizer](https://viz.mediapipe.dev/).
+
+[Source pbtxt file](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/hair_segmentation/hair_segmentation_mobile_gpu.pbtxt)
 
 ```bash
 # MediaPipe graph that performs hair segmentation with TensorFlow Lite on GPU.

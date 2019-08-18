@@ -4,22 +4,22 @@ This doc focuses on the
 [example graph](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/face_detection/face_detection_mobile_gpu.pbtxt)
 that performs face detection with TensorFlow Lite on GPU.
 
-![face_detection_android_gpu_gif](images/mobile/face_detection_android_gpu.gif){width="300"}
+![face_detection_android_gpu_gif](images/mobile/face_detection_android_gpu.gif)
 
 ## Android
 
 Please see [Hello World! in MediaPipe on Android](hello_world_android.md) for
 general instructions to develop an Android application that uses MediaPipe.
 
-The graph is used in the
-[Face Detection GPU](https://github.com/google/mediapipe/tree/master/mediapipe/examples/android/src/java/com/google/mediapipe/apps/facedetectiongpu)
-example app. To build the app, run:
+The graph below is used in the
+[Face Detection GPU Android example app](https://github.com/google/mediapipe/tree/master/mediapipe/examples/android/src/java/com/google/mediapipe/apps/facedetectiongpu).
+To build the app, run:
 
 ```bash
 bazel build -c opt --config=android_arm64 mediapipe/examples/android/src/java/com/google/mediapipe/apps/facedetectiongpu
 ```
 
-To further install the app on android device, run:
+To further install the app on an Android device, run:
 
 ```bash
 adb install bazel-bin/mediapipe/examples/android/src/java/com/google/mediapipe/apps/facedetectiongpu/facedetectiongpu.apk
@@ -28,13 +28,13 @@ adb install bazel-bin/mediapipe/examples/android/src/java/com/google/mediapipe/a
 ## iOS
 
 Please see [Hello World! in MediaPipe on iOS](hello_world_ios.md) for general
-instructions to develop an iOS application that uses MediaPipe. The graph below
-is used in the
-[Face Detection GPU iOS example app](https://github.com/google/mediapipe/tree/master/mediapipe/examples/ios/facedetectiongpu).
+instructions to develop an iOS application that uses MediaPipe.
 
-To build the iOS app, please see the general
+The graph below is used in the
+[Face Detection GPU iOS example app](https://github.com/google/mediapipe/tree/master/mediapipe/examples/ios/facedetectiongpu).
+To build the app, please see the general
 [MediaPipe iOS app building and setup instructions](./mediapipe_ios_setup.md).
-Specifically, run:
+Specific to this example, run:
 
 ```bash
 bazel build -c opt --config=ios_arm64 mediapipe/examples/ios/facedetectiongpu:FaceDetectionGpuApp
@@ -42,10 +42,12 @@ bazel build -c opt --config=ios_arm64 mediapipe/examples/ios/facedetectiongpu:Fa
 
 ## Graph
 
-![face_detection_mobile_gpu_graph](images/mobile/face_detection_mobile_gpu.png){width="400"}
+![face_detection_mobile_gpu_graph](images/mobile/face_detection_mobile_gpu.png)
 
 To visualize the graph as shown above, copy the text specification of the graph
 below and paste it into [MediaPipe Visualizer](https://viz.mediapipe.dev/).
+
+[Source pbtxt file](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/face_detection/face_detection_mobile_gpu.pbtxt)
 
 ```bash
 # MediaPipe graph that performs face detection with TensorFlow Lite on GPU.

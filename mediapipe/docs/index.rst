@@ -8,9 +8,9 @@ machine learning pipeline can be built as a graph of modular components,
 including, for instance, inference models and media processing functions. Sensory
 data such as audio and video streams enter the graph, and perceived descriptions
 such as object-localization and face-landmark streams exit the graph. An example
-graph that performs real-time hair segmentation on mobile GPU is shown below.
+graph that performs real-time hand tracking on mobile GPU is shown below.
 
-.. image:: images/mobile/hair_segmentation_android_gpu.png
+.. image:: images/mobile/hand_tracking_mobile.png
    :width: 400
    :alt: Example MediaPipe graph
 
@@ -29,11 +29,11 @@ APIs for MediaPipe
     * (Coming Soon) Graph Construction API in C++
     * Graph Execution API in C++
     * Graph Execution API in Java (Android)
-    * (Coming Soon) Graph Execution API in Objective-C (iOS)
+    * Graph Execution API in Objective-C (iOS)
 
 Alpha Disclaimer
 ==================
-MediaPipe is currently in alpha for v0.5. We are still making breaking API changes and expect to get to stable API by v1.0. We recommend that you target a specific version of MediaPipe, and periodically bump to the latest release. That way you have control over when a breaking change affects you.
+MediaPipe is currently in alpha for v0.6. We are still making breaking API changes and expect to get to stable API by v1.0. We recommend that you target a specific version of MediaPipe, and periodically bump to the latest release. That way you have control over when a breaking change affects you.
 
 User Documentation
 ==================

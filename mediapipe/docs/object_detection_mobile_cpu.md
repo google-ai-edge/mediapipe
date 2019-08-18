@@ -1,8 +1,6 @@
 # Object Detection (CPU)
 
-Please see [Hello World! in MediaPipe on Android](hello_world_android.md) for
-general instructions to develop an Android application that uses MediaPipe. This
-doc focuses on the
+This doc focuses on the
 [example graph](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/object_detection/object_detection_mobile_cpu.pbtxt)
 that performs object detection with TensorFlow Lite on CPU.
 
@@ -11,22 +9,25 @@ This is very similar to the
 except that at the beginning and the end of the graph it performs GPU-to-CPU and
 CPU-to-GPU image transfer respectively. As a result, the rest of graph, which
 shares the same configuration as the
-[GPU graph](images/mobile/object_detection_android_gpu.png), runs entirely on
+[GPU graph](images/mobile/object_detection_mobile_gpu.png), runs entirely on
 CPU.
 
-![object_detection_android_cpu_gif](images/mobile/object_detection_android_cpu.gif){width="300"}
+![object_detection_android_cpu_gif](images/mobile/object_detection_android_cpu.gif)
 
 ## Android
 
-The graph is used in the
-[Object Detection CPU](https://github.com/google/mediapipe/tree/master/mediapipe/examples/android/src/java/com/google/mediapipe/apps/objectdetectioncpu)
-example app. To build the app, run:
+Please see [Hello World! in MediaPipe on Android](hello_world_android.md) for
+general instructions to develop an Android application that uses MediaPipe.
+
+The graph below is used in the
+[Object Detection CPU Android example app](https://github.com/google/mediapipe/tree/master/mediapipe/examples/android/src/java/com/google/mediapipe/apps/objectdetectioncpu).
+To build the app, run:
 
 ```bash
 bazel build -c opt --config=android_arm64 mediapipe/examples/android/src/java/com/google/mediapipe/apps/objectdetectioncpu
 ```
 
-To further install the app on android device, run:
+To further install the app on an Android device, run:
 
 ```bash
 adb install bazel-bin/mediapipe/examples/android/src/java/com/google/mediapipe/apps/objectdetectioncpu/objectdetectioncpu.apk
@@ -35,13 +36,13 @@ adb install bazel-bin/mediapipe/examples/android/src/java/com/google/mediapipe/a
 ## iOS
 
 Please see [Hello World! in MediaPipe on iOS](hello_world_ios.md) for general
-instructions to develop an iOS application that uses MediaPipe. The graph below
-is used in the
-[Object Detection GPU iOS example app](https://github.com/google/mediapipe/tree/master/mediapipe/examples/ios/objectdetectioncpu).
+instructions to develop an iOS application that uses MediaPipe.
 
-To build the iOS app, please see the general
+The graph below is used in the
+[Object Detection GPU iOS example app](https://github.com/google/mediapipe/tree/master/mediapipe/examples/ios/objectdetectioncpu).
+To build the app, please see the general
 [MediaPipe iOS app building and setup instructions](./mediapipe_ios_setup.md).
-Specifically, run:
+Specific to this example, run:
 
 ```bash
 bazel build -c opt --config=ios_arm64 mediapipe/examples/ios/objectdetectioncpu:ObjectDetectionCpuApp
@@ -49,10 +50,12 @@ bazel build -c opt --config=ios_arm64 mediapipe/examples/ios/objectdetectioncpu:
 
 ## Graph
 
-![object_detection_mobile_cpu_graph](images/mobile/object_detection_mobile_cpu.png){width="400"}
+![object_detection_mobile_cpu_graph](images/mobile/object_detection_mobile_cpu.png)
 
 To visualize the graph as shown above, copy the text specification of the graph
 below and paste it into [MediaPipe Visualizer](https://viz.mediapipe.dev/).
+
+[Source pbtxt file](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/object_detection/object_detection_mobile_cpu.pbtxt)
 
 ```bash
 # MediaPipe graph that performs object detection with TensorFlow Lite on CPU.

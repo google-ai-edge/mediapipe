@@ -1,32 +1,41 @@
 # Hand Tracking (GPU)
 
 This doc focuses on the
-[example graph](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/hand_tracking/hand_detection_android_gpu.pbtxt)
-that performs hand tracking with TensorFlow Lite on GPU. This hand tracking
-example is related to
-[hand detection GPU example](./hand_detection_mobile_gpu.md). We recommend users
-to review the hand detection GPU example first. Here is the
-[model card](https://mediapipe.page.link/handmc) for hand tracking.
+[example graph](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/hand_tracking/hand_tracking_mobile.pbtxt)
+that performs hand tracking with TensorFlow Lite on GPU. It is related to the
+[hand detection example](./hand_detection_mobile_gpu.md), and we recommend users
+to review the hand detection example first.
 
-For overall context on hand detection and hand tracking, please read
-[this Google AI blog post](https://mediapipe.page.link/handgoogleaiblog).
+For overall context on hand detection and hand tracking, please read this
+[Google AI Blog post](https://mediapipe.page.link/handgoogleaiblog).
 
-![hand_tracking_android_gpu.gif](images/mobile/hand_tracking_android_gpu.gif){width="300"}
+![hand_tracking_android_gpu.gif](images/mobile/hand_tracking_android_gpu.gif)
+
+In the visualization above, the red dots represent the localized hand landmarks,
+and the green lines are simply connections between selected landmark pairs for
+visualization of the hand skeleton. The red box represents a hand rectangle that
+covers the entire hand, derived either from hand detection (see
+[hand detection example](./hand_detection_mobile_gpu.md)) or from the pervious
+round of hand landmark localization using an ML model (see also
+[model card](https://mediapipe.page.link/handmc)). Hand landmark localization is
+performed only within the hand rectangle for computational efficiency and
+accuracy, and hand detection is only invoked when landmark localization could
+not identify hand presence in the previous iteration.
 
 ## Android
 
 Please see [Hello World! in MediaPipe on Android](hello_world_android.md) for
 general instructions to develop an Android application that uses MediaPipe.
 
-The graph is used in the
-[Hand Tracking GPU](https://github.com/google/mediapipe/tree/master/mediapipe/examples/android/src/java/com/google/mediapipe/apps/handtrackinggpu)
-example app. To build the app, run:
+The graph below is used in the
+[Hand Tracking GPU Android example app](https://github.com/google/mediapipe/tree/master/mediapipe/examples/android/src/java/com/google/mediapipe/apps/handtrackinggpu).
+To build the app, run:
 
 ```bash
 bazel build -c opt --config=android_arm64 mediapipe/examples/android/src/java/com/google/mediapipe/apps/handtrackinggpu
 ```
 
-To further install the app on android device, run:
+To further install the app on an Android device, run:
 
 ```bash
 adb install bazel-bin/mediapipe/examples/android/src/java/com/google/mediapipe/apps/handtrackinggpu/handtrackinggpu.apk
@@ -35,13 +44,13 @@ adb install bazel-bin/mediapipe/examples/android/src/java/com/google/mediapipe/a
 ## iOS
 
 Please see [Hello World! in MediaPipe on iOS](hello_world_ios.md) for general
-instructions to develop an iOS application that uses MediaPipe. The graph below
-is used in the
-[Hand Tracking GPU iOS example app](https://github.com/google/mediapipe/tree/master/mediapipe/examples/ios/handtrackinggpu)
+instructions to develop an iOS application that uses MediaPipe.
 
-To build the iOS app, please see the general
+The graph below is used in the
+[Hand Tracking GPU iOS example app](https://github.com/google/mediapipe/tree/master/mediapipe/examples/ios/handtrackinggpu).
+To build the app, please see the general
 [MediaPipe iOS app building and setup instructions](./mediapipe_ios_setup.md).
-Specifically, run:
+Specific to this example, run:
 
 ```bash
 bazel build -c opt --config=ios_arm64 mediapipe/examples/ios/handtrackinggpu:HandTrackingGpuApp
@@ -49,20 +58,21 @@ bazel build -c opt --config=ios_arm64 mediapipe/examples/ios/handtrackinggpu:Han
 
 ## Graph
 
-For more information on how to visualize a graph that includes subgraphs, see
-[subgraph documentation](./visualizer.md#visualizing-subgraphs) for Visualizer.
+The hand tracking [main graph](#main-graph) internally utilizes a
+[hand detection subgraph](#hand-detection-subgraph), a
+[hand landmark subgraph](#hand-landmark-subgraph) and a
+[renderer subgraph](#renderer-subgraph).
 
-The hand tracking graph is
-[hand_tracking_mobile.pbtxt](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/hand_tracking/hand_tracking_mobile.pbtxt)
-and it includes 3 [subgraphs](./framework_concepts.md#subgraph):
+The subgraphs show up in the main graph visualization as nodes colored in
+purple, and the subgraph itself can also be visualized just like a regular
+graph. For more information on how to visualize a graph that includes subgraphs,
+see [visualizing subgraphs](./visualizer.md#visualizing-subgraphs).
 
-*   [HandDetectionSubgraph - hand_detection_gpu.pbtxt](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/hand_tracking/hand_detection_gpu.pbtxt)
+### Main Graph
 
-*   [HandLandmarkSubgraph - hand_landmark_gpu.pbtxt](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/hand_tracking/hand_landmark_gpu.pbtxt)
+![hand_tracking_mobile_graph](images/mobile/hand_tracking_mobile.png)
 
-*   [RendererSubgraph - renderer_gpu.pbtxt](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/hand_tracking/renderer_gpu.pbtxt)
-
-![hand_tracking_mobile_graph](images/mobile/hand_tracking_mobile.png){width="400"}
+[Source pbtxt file](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/hand_tracking/hand_tracking_mobile.pbtxt)
 
 ```bash
 # MediaPipe graph that performs hand tracking with TensorFlow Lite on GPU.
@@ -152,9 +162,15 @@ node {
 }
 ```
 
-![hand_detection_gpu_subgraph](images/mobile/hand_detection_gpu_subgraph.png){width="500"}
+### Hand Detection Subgraph
+
+![hand_detection_gpu_subgraph](images/mobile/hand_detection_gpu_subgraph.png)
+
+[Source pbtxt file](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/hand_tracking/hand_detection_gpu.pbtxt)
 
 ```bash
+# MediaPipe hand detection subgraph.
+
 type: "HandDetectionSubgraph"
 
 input_stream: "input_video"
@@ -352,7 +368,11 @@ node {
 }
 ```
 
-![hand_landmark_gpu_subgraph.pbtxt](images/mobile/hand_landmark_gpu_subgraph.png){width="400"}
+### Hand Landmark Subgraph
+
+![hand_landmark_gpu_subgraph.pbtxt](images/mobile/hand_landmark_gpu_subgraph.png)
+
+[Source pbtxt file](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/hand_tracking/hand_landmark_gpu.pbtxt)
 
 ```bash
 # MediaPipe hand landmark localization subgraph.
@@ -532,7 +552,11 @@ node {
 }
 ```
 
-![hand_renderer_gpu_subgraph.pbtxt](images/mobile/hand_renderer_gpu_subgraph.png){width="500"}
+### Renderer Subgraph
+
+![hand_renderer_gpu_subgraph.pbtxt](images/mobile/hand_renderer_gpu_subgraph.png)
+
+[Source pbtxt file](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/hand_tracking/renderer_gpu.pbtxt)
 
 ```bash
 # MediaPipe hand tracking rendering subgraph.
