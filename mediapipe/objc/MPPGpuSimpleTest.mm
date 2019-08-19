@@ -50,7 +50,7 @@
   MPPGraph* mediapipeGraph = [[MPPGraph alloc] initWithGraphConfig:config];
   // We receive output by setting ourselves as the delegate.
   mediapipeGraph.delegate = self;
-  [mediapipeGraph addFrameOutputStream:"output_video" outputPacketType:MediaPipePacketPixelBuffer];
+  [mediapipeGraph addFrameOutputStream:"output_video" outputPacketType:MPPPacketTypePixelBuffer];
 
   // Start running the graph.
   NSError *error;
@@ -60,7 +60,7 @@
   // Send a frame.
   XCTAssertTrue([mediapipeGraph sendPixelBuffer:*_inputPixelBuffer
                                    intoStream:"input_video"
-                                   packetType:MediaPipePacketPixelBuffer
+                                   packetType:MPPPacketTypePixelBuffer
                                     timestamp:mediapipe::Timestamp(0)]);
 
   // Shut down the graph.

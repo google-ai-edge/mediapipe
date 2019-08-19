@@ -115,7 +115,7 @@
 
   _graph = [[MPPGraph alloc] initWithGraphConfig:config];
   [_graph addFrameOutputStream:"output_frames"
-              outputPacketType:MediaPipePacketPixelBuffer];
+              outputPacketType:MPPPacketTypePixelBuffer];
   [self testGraph:_graph input:*originalPixelBuffer expectedOutput:*originalPixelBuffer];
 }
 
@@ -143,7 +143,7 @@
 
   _graph = [[MPPGraph alloc] initWithGraphConfig:config];
   [_graph addFrameOutputStream:"output_frames"
-              outputPacketType:MediaPipePacketPixelBuffer];
+              outputPacketType:MPPPacketTypePixelBuffer];
   [self testGraph:_graph input:*originalPixelBuffer expectedOutput:*originalPixelBuffer];
 }
 
@@ -166,7 +166,7 @@
 
   _graph = [[MPPGraph alloc] initWithGraphConfig:config];
   [_graph addFrameOutputStream:"output_frames"
-              outputPacketType:MediaPipePacketPixelBuffer];
+              outputPacketType:MPPPacketTypePixelBuffer];
   [self testGraph:_graph input:*originalPixelBuffer expectedOutput:*originalPixelBuffer];
 }
 
@@ -210,7 +210,7 @@
 
   _graph = [[MPPGraph alloc] initWithGraphConfig:config];
   [_graph addFrameOutputStream:"output_frames"
-              outputPacketType:MediaPipePacketPixelBuffer];
+              outputPacketType:MPPPacketTypePixelBuffer];
   [self testGraph:_graph input:convertedPixelBuffer expectedOutput:bgraPixelBuffer];
   CFRelease(convertedPixelBuffer);
   CFRelease(bgraPixelBuffer);
@@ -240,7 +240,7 @@
 
   _graph = [[MPPGraph alloc] initWithGraphConfig:config];
   [_graph addFrameOutputStream:"output_frames"
-              outputPacketType:MediaPipePacketPixelBuffer];
+              outputPacketType:MPPPacketTypePixelBuffer];
   [_graph setSidePacket:(mediapipe::MakePacket<float[3]>(1.0, 0.0, 0.0))
                   named:"rgb_weights"];
 

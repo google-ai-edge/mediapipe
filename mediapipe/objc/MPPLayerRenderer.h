@@ -26,12 +26,12 @@
 - (void)renderPixelBuffer:(CVPixelBufferRef)pixelBuffer;
 
 /// Sets which way to rotate input frames before rendering them.
-/// Default value is MediaPipeFrameRotationNone.
-@property(nonatomic) MediaPipeFrameRotationMode frameRotationMode;
+/// Default value is MPPFrameRotationNone.
+@property(nonatomic) MPPFrameRotation frameRotationMode;
 
 /// Sets how to scale the frame within the layer.
 /// Default value is MediaPipeFrameScaleScaleToFit.
-@property(nonatomic) MediaPipeFrameScaleMode frameScaleMode;
+@property(nonatomic) MPPFrameScaleMode frameScaleMode;
 
 /// If YES, swap left and right. Useful for the front camera.
 @property(nonatomic) BOOL mirrored;

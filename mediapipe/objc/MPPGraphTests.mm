@@ -125,13 +125,13 @@ REGISTER_CALCULATOR(ErrorCalculator);
   node->add_output_stream("output_frames");
 
   _graph = [[MPPGraph alloc] initWithGraphConfig:config];
-  [_graph addFrameOutputStream:"output_frames" outputPacketType:MediaPipePacketPixelBuffer];
+  [_graph addFrameOutputStream:"output_frames" outputPacketType:MPPPacketTypePixelBuffer];
   CFHolder<CVPixelBufferRef> inputBuffer;
   ::mediapipe::Status status = CreateCVPixelBufferFromCGImage(_sourceImage.CGImage, &inputBuffer);
   XCTAssert(status.ok());
   CVPixelBufferRef outputBuffer = [self runGraph:_graph
                                  withPixelBuffer:*inputBuffer
-                                      packetType:MediaPipePacketPixelBuffer];
+                                      packetType:MPPPacketTypePixelBuffer];
   XCTAssert([self pixelBuffer:outputBuffer isEqualTo:*inputBuffer]);
 }
 
@@ -162,8 +162,8 @@ REGISTER_CALCULATOR(ErrorCalculator);
   grayNode->add_output_stream("gray_frames");
 
   _graph = [[MPPGraph alloc] initWithGraphConfig:config];
-  [_graph addFrameOutputStream:"pass_frames" outputPacketType:MediaPipePacketImageFrame];
-  [_graph addFrameOutputStream:"gray_frames" outputPacketType:MediaPipePacketImageFrame];
+  [_graph addFrameOutputStream:"pass_frames" outputPacketType:MPPPacketTypeImageFrame];
+  [_graph addFrameOutputStream:"gray_frames" outputPacketType:MPPPacketTypeImageFrame];
 
   CFHolder<CVPixelBufferRef> inputBuffer;
   ::mediapipe::Status status = CreateCVPixelBufferFromCGImage(_sourceImage.CGImage, &inputBuffer);
@@ -185,7 +185,7 @@ REGISTER_CALCULATOR(ErrorCalculator);
     }
   };
 
-  [self runGraph:_graph withPixelBuffer:*inputBuffer packetType:MediaPipePacketImageFrame];
+  [self runGraph:_graph withPixelBuffer:*inputBuffer packetType:MPPPacketTypeImageFrame];
 }
 
 - (void)testGrayscaleOutput {
@@ -202,13 +202,13 @@ REGISTER_CALCULATOR(ErrorCalculator);
   node->add_output_stream("output_frames");
 
   _graph = [[MPPGraph alloc] initWithGraphConfig:config];
-  [_graph addFrameOutputStream:"output_frames" outputPacketType:MediaPipePacketImageFrame];
+  [_graph addFrameOutputStream:"output_frames" outputPacketType:MPPPacketTypeImageFrame];
   CFHolder<CVPixelBufferRef> inputBuffer;
   ::mediapipe::Status status = CreateCVPixelBufferFromCGImage(grayImage.CGImage, &inputBuffer);
   XCTAssert(status.ok());
   CVPixelBufferRef outputBuffer = [self runGraph:_graph
                                  withPixelBuffer:*inputBuffer
-                                      packetType:MediaPipePacketImageFrame];
+                                      packetType:MPPPacketTypeImageFrame];
   // We accept a small difference due to gamma correction and whatnot.
   XCTAssert([self pixelBuffer:outputBuffer isCloseTo:*inputBuffer
              maxLocalDifference:5 maxAverageDifference:FLT_MAX]);
@@ -226,13 +226,13 @@ REGISTER_CALCULATOR(ErrorCalculator);
       CreateCVPixelBufferFromCGImage(_sourceImage.CGImage, &srcPixelBuffer);
   XCTAssert(status.ok());
   _graph = [[MPPGraph alloc] initWithGraphConfig:config];
-  [_graph addFrameOutputStream:"output_frames" outputPacketType:MediaPipePacketImageFrame];
+  [_graph addFrameOutputStream:"output_frames" outputPacketType:MPPPacketTypeImageFrame];
   _graph.delegate = self;
 
   XCTAssert([_graph startWithError:nil]);
   [_graph sendPixelBuffer:*srcPixelBuffer
                intoStream:"input_frames"
-               packetType:MediaPipePacketImageFrame];
+               packetType:MPPPacketTypeImageFrame];
   XCTAssert([_graph closeInputStream:"input_frames" error:nil]);
 
   __block NSError* error = nil;
@@ -259,7 +259,7 @@ REGISTER_CALCULATOR(ErrorCalculator);
   node->add_output_stream("output_frames");
 
   _graph = [[MPPGraph alloc] initWithGraphConfig:config];
-  [_graph addFrameOutputStream:"output_frames" outputPacketType:MediaPipePacketImageFrame];
+  [_graph addFrameOutputStream:"output_frames" outputPacketType:MPPPacketTypeImageFrame];
 
   // We're no longer using video headers, let's just use an int as the header.
   auto header_packet = mediapipe::MakePacket<int>(0xDEADBEEF);
@@ -288,13 +288,13 @@ REGISTER_CALCULATOR(ErrorCalculator);
   node->add_output_stream("output_frames");
 
   _graph = [[MPPGraph alloc] initWithGraphConfig:config];
-  [_graph addFrameOutputStream:"output_frames" outputPacketType:MediaPipePacketPixelBuffer];
+  [_graph addFrameOutputStream:"output_frames" outputPacketType:MPPPacketTypePixelBuffer];
   CFHolder<CVPixelBufferRef> inputBuffer;
   ::mediapipe::Status status = CreateCVPixelBufferFromCGImage(_sourceImage.CGImage, &inputBuffer);
   XCTAssert(status.ok());
   CVPixelBufferRef outputBuffer = [self runGraph:_graph
                                  withPixelBuffer:*inputBuffer
-                                      packetType:MediaPipePacketPixelBuffer];
+                                      packetType:MPPPacketTypePixelBuffer];
   __weak MPPGraph* weakGraph = _graph;
   _graph = nil;
   XCTAssertNil(weakGraph);
@@ -311,7 +311,7 @@ REGISTER_CALCULATOR(ErrorCalculator);
   const int kTestValue = 10;
 
   _graph = [[MPPGraph alloc] initWithGraphConfig:config];
-  [_graph addFrameOutputStream:"output_ints" outputPacketType:MediaPipePacketRaw];
+  [_graph addFrameOutputStream:"output_ints" outputPacketType:MPPPacketTypeRaw];
   _graph.delegate = self;
 
   WEAKIFY(self);

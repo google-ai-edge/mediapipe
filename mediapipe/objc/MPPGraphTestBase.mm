@@ -81,7 +81,7 @@ static void EnsureOutputDirFor(NSString *outputFile) {
                 inputPackets:(const std::map<std::string, mediapipe::Packet>&)inputPackets
                    timestamp:(mediapipe::Timestamp)timestamp
                 outputStream:(const std::string&)outputStream
-                  packetType:(MediaPipePacketType)inputPacketType {
+                  packetType:(MPPPacketType)inputPacketType {
   __block CVPixelBufferRef output;
   graph.delegate = self;
 
@@ -143,7 +143,7 @@ static void EnsureOutputDirFor(NSString *outputFile) {
 
 - (CVPixelBufferRef)runGraph:(MPPGraph*)graph
              withPixelBuffer:(CVPixelBufferRef)inputBuffer
-                  packetType:(MediaPipePacketType)inputPacketType {
+                  packetType:(MPPPacketType)inputPacketType {
   return [self runGraph:graph
       withInputPixelBuffers:{{"input_frames", MakeCFHolder(inputBuffer)}}
                inputPackets:{}
@@ -156,7 +156,7 @@ static void EnsureOutputDirFor(NSString *outputFile) {
        withInputPixelBuffers:
            (const std::unordered_map<std::string, CFHolder<CVPixelBufferRef>>&)inputBuffers
                 outputStream:(const std::string&)output
-                  packetType:(MediaPipePacketType)inputPacketType {
+                  packetType:(MPPPacketType)inputPacketType {
   return [self runGraph:graph
                withInputPixelBuffers:inputBuffers
            inputPackets:{}
@@ -362,7 +362,7 @@ static void EnsureOutputDirFor(NSString *outputFile) {
 {
   CVPixelBufferRef outputBuffer = [self runGraph:graph
                                  withPixelBuffer:inputBuffer
-                                      packetType:MediaPipePacketPixelBuffer];
+                                      packetType:MPPPacketTypePixelBuffer];
 #if DEBUG
   // Xcode can display UIImage objects right in the debugger. It is handy to
   // have these variables defined if the test fails.
@@ -405,7 +405,7 @@ static void EnsureOutputDirFor(NSString *outputFile) {
   MPPGraph* graph = [[MPPGraph alloc] initWithGraphConfig:config];
   [graph addSidePackets:sidePackets];
   [graph addFrameOutputStream:outputStream.UTF8String
-             outputPacketType:MediaPipePacketPixelBuffer];
+             outputPacketType:MPPPacketTypePixelBuffer];
 
   std::unordered_map<std::string, CFHolder<CVPixelBufferRef>> inputBuffers;
   for (NSString* inputStream in fileInputs) {
@@ -428,7 +428,7 @@ static void EnsureOutputDirFor(NSString *outputFile) {
                                     inputPackets:packetInputs
                                        timestamp:timestamp
                                     outputStream:outputStream.UTF8String
-                                      packetType:MediaPipePacketPixelBuffer];
+                                      packetType:MPPPacketTypePixelBuffer];
 
   UIImage* output = UIImageWithPixelBuffer(outputBuffer);
   XCTAssertNotNil(output);

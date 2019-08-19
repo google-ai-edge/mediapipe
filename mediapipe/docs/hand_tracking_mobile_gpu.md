@@ -22,8 +22,8 @@ performed only within the hand rectangle for computational efficiency and
 accuracy, and hand detection is only invoked when landmark localization could
 not identify hand presence in the previous iteration.
 
-The example also comes with an experimental mode that localizes hand landmarks
-in 3D (i.e., estimating an extra z coordinate):
+The example can also run in a mode that localizes hand landmarks in 3D (i.e.,
+estimating an extra z coordinate):
 
 ![hand_tracking_3d_android_gpu.gif](images/mobile/hand_tracking_3d_android_gpu.gif)
 
@@ -33,24 +33,26 @@ camera.
 
 ## Android
 
-Please see [Hello World! in MediaPipe on Android](hello_world_android.md) for
-general instructions to develop an Android application that uses MediaPipe.
+[Source](https://github.com/google/mediapipe/tree/master/mediapipe/examples/android/src/java/com/google/mediapipe/apps/handtrackinggpu)
 
-The graph below is used in the
-[Hand Tracking GPU Android example app](https://github.com/google/mediapipe/tree/master/mediapipe/examples/android/src/java/com/google/mediapipe/apps/handtrackinggpu).
-To build the app, run:
+An arm64 APK can be
+[downloaded here](https://drive.google.com/open?id=1uCjS0y0O0dTDItsMh8x2cf4-l3uHW1vE),
+and a version running the 3D mode can be
+[downloaded here](https://drive.google.com/open?id=1tGgzOGkcZglJO2i7e8NKSxJgVtJYS3ka).
+
+To build the app yourself, run:
 
 ```bash
 bazel build -c opt --config=android_arm64 mediapipe/examples/android/src/java/com/google/mediapipe/apps/handtrackinggpu
 ```
 
-To build for the experimental mode that localizes hand landmarks in 3D, run:
+To build for the 3D mode, run:
 
 ```bash
 bazel build -c opt --config=android_arm64 --define 3D=true mediapipe/examples/android/src/java/com/google/mediapipe/apps/handtrackinggpu
 ```
 
-To further install the app on an Android device, run:
+Once the app is built, install it on Android device with:
 
 ```bash
 adb install bazel-bin/mediapipe/examples/android/src/java/com/google/mediapipe/apps/handtrackinggpu/handtrackinggpu.apk
@@ -58,20 +60,19 @@ adb install bazel-bin/mediapipe/examples/android/src/java/com/google/mediapipe/a
 
 ## iOS
 
-Please see [Hello World! in MediaPipe on iOS](hello_world_ios.md) for general
-instructions to develop an iOS application that uses MediaPipe.
+[Source](https://github.com/google/mediapipe/tree/master/mediapipe/examples/ios/handtrackinggpu).
 
-The graph below is used in the
-[Hand Tracking GPU iOS example app](https://github.com/google/mediapipe/tree/master/mediapipe/examples/ios/handtrackinggpu).
-To build the app, please see the general
-[MediaPipe iOS app building and setup instructions](./mediapipe_ios_setup.md).
-Specific to this example, run:
+See the general [instructions](./mediapipe_ios_setup.md) for building iOS
+examples and generating an Xcode project. This will be the HandDetectionGpuApp
+target.
+
+To build on the command line:
 
 ```bash
 bazel build -c opt --config=ios_arm64 mediapipe/examples/ios/handtrackinggpu:HandTrackingGpuApp
 ```
 
-To build for the experimental mode that localizes hand landmarks in 3D, run:
+To build for the 3D mode, run:
 
 ```bash
 bazel build -c opt --config=ios_arm64 --define 3D=true mediapipe/examples/ios/handtrackinggpu:HandTrackingGpuApp
@@ -98,13 +99,24 @@ see the Visualizing Subgraphs section in the
 
 ```bash
 # MediaPipe graph that performs hand tracking with TensorFlow Lite on GPU.
-# Used in the example in
-# mediapipie/examples/android/src/java/com/mediapipe/apps/handtrackinggpu.
+# Used in the examples in
+# mediapipie/examples/android/src/java/com/mediapipe/apps/handtrackinggpu and
+# mediapipie/examples/ios/handtrackinggpu.
 
 # Images coming into and out of the graph.
 input_stream: "input_video"
 output_stream: "output_video"
 
+# Throttles the images flowing downstream for flow control. It passes through
+# the very first incoming image unaltered, and waits for downstream nodes
+# (calculators and subgraphs) in the graph to finish their tasks before it
+# passes through another image. All images that come in while waiting are
+# dropped, limiting the number of in-flight images in most part of the graph to
+# 1. This prevents the downstream nodes from queuing up incoming images and data
+# excessively, which leads to increased latency and memory usage, unwanted in
+# real-time mobile applications. It also eliminates unnecessarily computation,
+# e.g., the output produced by a node may get dropped downstream if the
+# subsequent nodes are still busy processing previous inputs.
 node {
   calculator: "FlowLimiterCalculator"
   input_stream: "input_video"
@@ -116,6 +128,12 @@ node {
   output_stream: "throttled_input_video"
 }
 
+# Caches a hand-presence decision fed back from HandLandmarkSubgraph, and upon
+# the arrival of the next input image sends out the cached decision with the
+# timestamp replaced by that of the input image, essentially generating a packet
+# that carries the previous hand-presence decision. Note that upon the arrival
+# of the very first input image, an empty packet is sent out to jump start the
+# feedback loop.
 node {
   calculator: "PreviousLoopbackCalculator"
   input_stream: "MAIN:throttled_input_video"
@@ -127,6 +145,9 @@ node {
   output_stream: "PREV_LOOP:prev_hand_presence"
 }
 
+# Drops the incoming image if HandLandmarkSubgraph was able to identify hand
+# presence in the previous image. Otherwise, passes the incoming image through
+# to trigger a new round of hand detection in HandDetectionSubgraph.
 node {
   calculator: "GateCalculator"
   input_stream: "throttled_input_video"
@@ -140,6 +161,7 @@ node {
   }
 }
 
+# Subgraph that detections hands (see hand_detection_gpu.pbtxt).
 node {
   calculator: "HandDetectionSubgraph"
   input_stream: "hand_detection_input_video"
@@ -147,6 +169,7 @@ node {
   output_stream: "NORM_RECT:hand_rect_from_palm_detections"
 }
 
+# Subgraph that localizes hand landmarks (see hand_landmark_gpu.pbtxt).
 node {
   calculator: "HandLandmarkSubgraph"
   input_stream: "IMAGE:throttled_input_video"
@@ -156,6 +179,12 @@ node {
   output_stream: "PRESENCE:hand_presence"
 }
 
+# Caches a hand rectangle fed back from HandLandmarkSubgraph, and upon the
+# arrival of the next input image sends out the cached rectangle with the
+# timestamp replaced by that of the input image, essentially generating a packet
+# that carries the previous hand rectangle. Note that upon the arrival of the
+# very first input image, an empty packet is sent out to jump start the
+# feedback loop.
 node {
   calculator: "PreviousLoopbackCalculator"
   input_stream: "MAIN:throttled_input_video"
@@ -167,6 +196,14 @@ node {
   output_stream: "PREV_LOOP:prev_hand_rect_from_landmarks"
 }
 
+# Merges a stream of hand rectangles generated by HandDetectionSubgraph and that
+# generated by HandLandmarkSubgraph into a single output stream by selecting
+# between one of the two streams. The formal is selected if the incoming packet
+# is not empty, i.e., hand detection is performed on the current image by
+# HandDetectionSubgraph (because HandLandmarkSubgraph could not identify hand
+# presence in the previous image). Otherwise, the latter is selected, which is
+# never empty because HandLandmarkSubgraphs processes all images (that went
+# through FlowLimiterCaculator).
 node {
   calculator: "MergeCalculator"
   input_stream: "hand_rect_from_palm_detections"
@@ -174,6 +211,8 @@ node {
   output_stream: "hand_rect"
 }
 
+# Subgraph that renders annotations and overlays them on top of the input
+# images (see renderer_gpu.pbtxt).
 node {
   calculator: "RendererSubgraph"
   input_stream: "IMAGE:throttled_input_video"
@@ -322,8 +361,8 @@ node {
   }
 }
 
-# Maps detection label IDs to the corresponding label text. The label map is
-# provided in the label_map_path option.
+# Maps detection label IDs to the corresponding label text ("Palm"). The label
+# map is provided in the label_map_path option.
 node {
   calculator: "DetectionLabelIdToTextCalculator"
   input_stream: "filtered_detections"
@@ -655,7 +694,7 @@ node {
       landmark_connections: 20
       landmark_color { r: 255 g: 0 b: 0 }
       connection_color { r: 0 g: 255 b: 0 }
-      thickness: 5.0
+      thickness: 4.0
     }
   }
 }

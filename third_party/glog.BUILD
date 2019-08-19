@@ -170,8 +170,11 @@ genrule(
     name = "logging_h",
     srcs = select({
         "//conditions:default": ["src/glog/logging.h.tmp"],
-        ":android_arm": ["src/glog/logging.h.android_arm"],
-        ":android_arm64": ["src/glog/logging.h.android_arm"],
+        ":android_arm": ["src/glog/logging.h.arm"],
+        ":android_arm64": ["src/glog/logging.h.arm"],
+        ":ios_armv7": ["src/glog/logging.h.arm"],
+        ":ios_arm64": ["src/glog/logging.h.arm"],
+        ":ios_arm64e": ["src/glog/logging.h.arm"],
     }),
     outs = ["src/glog/logging.h"],
     cmd = "echo select $< to be the glog logging.h file. && cp $< $@",
@@ -371,9 +374,9 @@ genrule(
 )
 
 genrule(
-    name = "generate_android_arm_glog_logging_h",
+    name = "generate_arm_glog_logging_h",
     srcs = ["src/glog/logging.h.in"],
-    outs = ["src/glog/logging.h.android_arm"],
+    outs = ["src/glog/logging.h.arm"],
     cmd = ("sed -e 's/@ac_cv___attribute___noinline@/__attribute__((__noinline__))/g'" +
            "    -e 's/@ac_cv___attribute___noreturn@/__attribute__((__noreturn__))/g'" +
            "    -e 's/@ac_cv_have___builtin_expect@/1/g'" +

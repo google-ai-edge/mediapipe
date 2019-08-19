@@ -43,7 +43,7 @@
 /// completes the run, and returns the output frame.
 - (CVPixelBufferRef)runGraph:(MPPGraph*)graph
              withPixelBuffer:(CVPixelBufferRef)inputBuffer
-                  packetType:(MediaPipePacketType)inputPacketType;
+                  packetType:(MPPPacketType)inputPacketType;
 
 /// Runs a simple graph, providing a single frame to zero or more inputs. Input images are wrapped
 /// in packets each with timestamp mediapipe::Timestamp(1). Those packets are added to the
@@ -53,7 +53,7 @@
        withInputPixelBuffers:
            (const std::unordered_map<std::string, CFHolder<CVPixelBufferRef>>&)inputBuffers
                 outputStream:(const std::string&)output
-                  packetType:(MediaPipePacketType)inputPacketType;
+                  packetType:(MPPPacketType)inputPacketType;
 
 /// Loads a data file from the test bundle.
 - (NSData*)testDataNamed:(NSString*)name extension:(NSString*)extension;

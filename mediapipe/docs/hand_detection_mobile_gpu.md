@@ -20,18 +20,18 @@ confidence score to generate the hand rectangle, to be further utilized in the
 
 ## Android
 
-Please see [Hello World! in MediaPipe on Android](hello_world_android.md) for
-general instructions to develop an Android application that uses MediaPipe.
+[Source](https://github.com/google/mediapipe/tree/master/mediapipe/examples/android/src/java/com/google/mediapipe/apps/handdetectiongpu)
 
-The graph below is used in the
-[Hand Detection GPU Android example app](https://github.com/google/mediapipe/tree/master/mediapipe/examples/android/src/java/com/google/mediapipe/apps/handdetectiongpu).
-To build the app, run:
+An arm64 APK can be
+[downloaded here](https://drive.google.com/open?id=1qUlTtH7Ydg-wl_H6VVL8vueu2UCTu37E).
+
+To build the app yourself:
 
 ```bash
 bazel build -c opt --config=android_arm64 mediapipe/examples/android/src/java/com/google/mediapipe/apps/handdetectiongpu
 ```
 
-To further install the app on an Android device, run:
+Once the app is built, install it on Android device with:
 
 ```bash
 adb install bazel-bin/mediapipe/examples/android/src/java/com/google/mediapipe/apps/handdetectiongpu/handdetectiongpu.apk
@@ -39,14 +39,13 @@ adb install bazel-bin/mediapipe/examples/android/src/java/com/google/mediapipe/a
 
 ## iOS
 
-Please see [Hello World! in MediaPipe on iOS](hello_world_ios.md) for general
-instructions to develop an iOS application that uses MediaPipe.
+[Source](https://github.com/google/mediapipe/tree/master/mediapipe/examples/ios/handdetectiongpu).
 
-The graph below is used in the
-[Hand Detection GPU iOS example app](https://github.com/google/mediapipe/tree/master/mediapipe/examples/ios/handdetectiongpu).
-To build the app, please see the general
-[MediaPipe iOS app building and setup instructions](./mediapipe_ios_setup.md).
-Specific to this example, run:
+See the general [instructions](./mediapipe_ios_setup.md) for building iOS
+examples and generating an Xcode project. This will be the HandDetectionGpuApp
+target.
+
+To build on the command line:
 
 ```bash
 bazel build -c opt --config=ios_arm64 mediapipe/examples/ios/handdetectiongpu:HandDetectionGpuApp
@@ -70,14 +69,24 @@ Visualizing Subgraphs section in the
 
 ```bash
 # MediaPipe graph that performs hand detection with TensorFlow Lite on GPU.
-# Used in the example in
-# mediapipie/examples/android/src/java/com/mediapipe/apps/handdetectiongpu.
+# Used in the examples in
+# mediapipie/examples/android/src/java/com/mediapipe/apps/handdetectiongpu and
 # mediapipie/examples/ios/handdetectiongpu.
 
 # Images coming into and out of the graph.
 input_stream: "input_video"
 output_stream: "output_video"
 
+# Throttles the images flowing downstream for flow control. It passes through
+# the very first incoming image unaltered, and waits for HandDetectionSubgraph
+# downstream in the graph to finish its tasks before it passes through another
+# image. All images that come in while waiting are dropped, limiting the number
+# of in-flight images in HandDetectionSubgraph to 1. This prevents the nodes in
+# HandDetectionSubgraph from queuing up incoming images and data excessively,
+# which leads to increased latency and memory usage, unwanted in real-time
+# mobile applications. It also eliminates unnecessarily computation, e.g., the
+# output produced by a node in the subgraph may get dropped downstream if the
+# subsequent nodes are still busy processing previous inputs.
 node {
   calculator: "FlowLimiterCalculator"
   input_stream: "input_video"
@@ -89,6 +98,7 @@ node {
   output_stream: "throttled_input_video"
 }
 
+# Subgraph that detections hands (see hand_detection_gpu.pbtxt).
 node {
   calculator: "HandDetectionSubgraph"
   input_stream: "throttled_input_video"
@@ -123,7 +133,7 @@ node {
   }
 }
 
-# Draws annotations and overlays them on top of the input image into the graph.
+# Draws annotations and overlays them on top of the input images.
 node {
   calculator: "AnnotationOverlayCalculator"
   input_stream: "INPUT_FRAME_GPU:throttled_input_video"
@@ -271,8 +281,8 @@ node {
   }
 }
 
-# Maps detection label IDs to the corresponding label text. The label map is
-# provided in the label_map_path option.
+# Maps detection label IDs to the corresponding label text ("Palm"). The label
+# map is provided in the label_map_path option.
 node {
   calculator: "DetectionLabelIdToTextCalculator"
   input_stream: "filtered_detections"

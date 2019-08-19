@@ -46,8 +46,8 @@
   if (self) {
     _glContext = [[EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES2];
     _bufferLock = OS_SPINLOCK_INIT;
-    _frameRotationMode = MediaPipeFrameRotationNone;
-    _frameScaleMode = MediaPipeFrameScaleFit;
+    _frameRotationMode = MPPFrameRotationNone;
+    _frameScaleMode = MPPFrameScaleModeFit;
   }
   return self;
 }
@@ -90,24 +90,24 @@
                 @"renderer setup failed: %@", [NSError gus_errorWithStatus:status]);
 }
 
-mediapipe::FrameScaleMode InternalScaleMode(MediaPipeFrameScaleMode mode) {
+mediapipe::FrameScaleMode InternalScaleMode(MPPFrameScaleMode mode) {
   switch (mode) {
-    case MediaPipeFrameScaleFit:
+    case MPPFrameScaleModeFit:
       return mediapipe::FrameScaleMode::kFit;
-    case MediaPipeFrameScaleFillAndCrop:
+    case MPPFrameScaleModeFillAndCrop:
       return mediapipe::FrameScaleMode::kFillAndCrop;
   }
 }
 
-mediapipe::FrameRotation InternalRotationMode(MediaPipeFrameRotationMode rot) {
+mediapipe::FrameRotation InternalRotationMode(MPPFrameRotation rot) {
   switch (rot) {
-    case MediaPipeFrameRotationNone:
+    case MPPFrameRotationNone:
       return mediapipe::FrameRotation::kNone;
-    case MediaPipeFrameRotation90:
+    case MPPFrameRotationCw90:
       return mediapipe::FrameRotation::k90;
-    case MediaPipeFrameRotation180:
+    case MPPFrameRotationCw180:
       return mediapipe::FrameRotation::k180;
-    case MediaPipeFrameRotation270:
+    case MPPFrameRotationCw270:
       return mediapipe::FrameRotation::k270;
   }
 }

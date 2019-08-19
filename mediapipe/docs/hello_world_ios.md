@@ -302,7 +302,7 @@ initialize the `_renderer` object:
 _renderer = [[MPPLayerRenderer alloc] init];
 _renderer.layer.frame = _liveView.layer.bounds;
 [_liveView.layer addSublayer:_renderer.layer];
-_renderer.frameScaleMode = MediaPipeFrameScaleFillAndCrop;
+_renderer.frameScaleMode = MPPFrameScaleModeFillAndCrop;
 ```
 
 To get frames from the camera, we will implement the following method:
@@ -444,7 +444,7 @@ using the following function:
 
   // Create MediaPipe graph with mediapipe::CalculatorGraphConfig proto object.
   MPPGraph* newGraph = [[MPPGraph alloc] initWithGraphConfig:config];
-  [newGraph addFrameOutputStream:kOutputStream outputPacketType:MediaPipePacketPixelBuffer];
+  [newGraph addFrameOutputStream:kOutputStream outputPacketType:MPPPacketTypePixelBuffer];
   return newGraph;
 }
 ```
@@ -508,12 +508,12 @@ this function's implementation to do the following:
   }
   [self.mediapipeGraph sendPixelBuffer:imageBuffer
                             intoStream:kInputStream
-                            packetType:MediaPipePacketPixelBuffer];
+                            packetType:MPPPacketTypePixelBuffer];
 }
 ```
 
 We send the `imageBuffer` to `self.mediapipeGraph` as a packet of type
-`MediaPipePacketPixelBuffer` into the input stream `kInputStream`, i.e.
+`MPPPacketTypePixelBuffer` into the input stream `kInputStream`, i.e.
 "input_video".
 
 The graph will run with this input packet and output a result in

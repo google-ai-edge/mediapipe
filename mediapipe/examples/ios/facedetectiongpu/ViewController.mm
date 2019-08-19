@@ -79,7 +79,7 @@ static const char* kVideoQueueLabel = "com.google.mediapipe.example.videoQueue";
 
   // Create MediaPipe graph with mediapipe::CalculatorGraphConfig proto object.
   MPPGraph* newGraph = [[MPPGraph alloc] initWithGraphConfig:config];
-  [newGraph addFrameOutputStream:kOutputStream outputPacketType:MediaPipePacketPixelBuffer];
+  [newGraph addFrameOutputStream:kOutputStream outputPacketType:MPPPacketTypePixelBuffer];
   return newGraph;
 }
 
@@ -91,7 +91,7 @@ static const char* kVideoQueueLabel = "com.google.mediapipe.example.videoQueue";
   _renderer = [[MPPLayerRenderer alloc] init];
   _renderer.layer.frame = _liveView.layer.bounds;
   [_liveView.layer addSublayer:_renderer.layer];
-  _renderer.frameScaleMode = MediaPipeFrameScaleFillAndCrop;
+  _renderer.frameScaleMode = MPPFrameScaleModeFillAndCrop;
   // When using the front camera, mirror the input for a more natural look.
   _renderer.mirrored = YES;
 
@@ -172,7 +172,7 @@ static const char* kVideoQueueLabel = "com.google.mediapipe.example.videoQueue";
   }
   [self.mediapipeGraph sendPixelBuffer:imageBuffer
                             intoStream:kInputStream
-                            packetType:MediaPipePacketPixelBuffer];
+                            packetType:MPPPacketTypePixelBuffer];
 }
 
 @end

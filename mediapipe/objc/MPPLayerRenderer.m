@@ -73,19 +73,19 @@
   if (!success) NSLog(@"presentRenderbuffer failed");
 }
 
-- (MediaPipeFrameRotationMode)frameRotationMode {
+- (MPPFrameRotation)frameRotationMode {
   return _glRenderer.frameRotationMode;
 }
 
-- (void)setFrameRotationMode:(MediaPipeFrameRotationMode)frameRotationMode {
+- (void)setFrameRotationMode:(MPPFrameRotation)frameRotationMode {
   _glRenderer.frameRotationMode = frameRotationMode;
 }
 
-- (MediaPipeFrameScaleMode)frameScaleMode {
+- (MPPFrameScaleMode)frameScaleMode {
   return _glRenderer.frameScaleMode;
 }
 
-- (void)setFrameScaleMode:(MediaPipeFrameScaleMode)frameScaleMode {
+- (void)setFrameScaleMode:(MPPFrameScaleMode)frameScaleMode {
   _glRenderer.frameScaleMode = frameScaleMode;
 }
 

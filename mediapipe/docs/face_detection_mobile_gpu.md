@@ -8,33 +8,24 @@ that performs face detection with TensorFlow Lite on GPU.
 
 ## Android
 
-Please see [Hello World! in MediaPipe on Android](hello_world_android.md) for
-general instructions to develop an Android application that uses MediaPipe.
+[Source](https://github.com/google/mediapipe/tree/master/mediapipe/examples/android/src/java/com/google/mediapipe/apps/facedetectiongpu)
 
-The graph below is used in the
-[Face Detection GPU Android example app](https://github.com/google/mediapipe/tree/master/mediapipe/examples/android/src/java/com/google/mediapipe/apps/facedetectiongpu).
-To build the app, run:
+To build and install the app:
 
 ```bash
 bazel build -c opt --config=android_arm64 mediapipe/examples/android/src/java/com/google/mediapipe/apps/facedetectiongpu
-```
-
-To further install the app on an Android device, run:
-
-```bash
 adb install bazel-bin/mediapipe/examples/android/src/java/com/google/mediapipe/apps/facedetectiongpu/facedetectiongpu.apk
 ```
 
 ## iOS
 
-Please see [Hello World! in MediaPipe on iOS](hello_world_ios.md) for general
-instructions to develop an iOS application that uses MediaPipe.
+[Source](https://github.com/google/mediapipe/tree/master/mediapipe/examples/ios/facedetectiongpu).
 
-The graph below is used in the
-[Face Detection GPU iOS example app](https://github.com/google/mediapipe/tree/master/mediapipe/examples/ios/facedetectiongpu).
-To build the app, please see the general
-[MediaPipe iOS app building and setup instructions](./mediapipe_ios_setup.md).
-Specific to this example, run:
+See the general [instructions](./mediapipe_ios_setup.md) for building iOS
+examples and generating an Xcode project. This will be the FaceDetectionGpuApp
+target.
+
+To build on the command line:
 
 ```bash
 bazel build -c opt --config=ios_arm64 mediapipe/examples/ios/facedetectiongpu:FaceDetectionGpuApp
@@ -51,7 +42,7 @@ below and paste it into [MediaPipe Visualizer](https://viz.mediapipe.dev/).
 
 ```bash
 # MediaPipe graph that performs face detection with TensorFlow Lite on GPU.
-# Used in the example in
+# Used in the examples in
 # mediapipie/examples/android/src/java/com/mediapipe/apps/facedetectiongpu and
 # mediapipie/examples/ios/facedetectiongpu.
 
@@ -227,9 +218,7 @@ node {
   }
 }
 
-# Draws annotations and overlays them on top of a GPU copy of the original
-# image coming into the graph. The calculator assumes that image origin is
-# always at the top-left corner and renders text accordingly.
+# Draws annotations and overlays them on top of the input images.
 node {
   calculator: "AnnotationOverlayCalculator"
   input_stream: "INPUT_FRAME_GPU:throttled_input_video"

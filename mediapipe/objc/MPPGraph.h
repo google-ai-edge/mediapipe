@@ -54,26 +54,26 @@ struct GpuSharedData;
 
 /// Chooses the packet type used by MPPGraph to send and receive packets
 /// from the graph.
-typedef NS_ENUM(int, MediaPipePacketType) {
+typedef NS_ENUM(int, MPPPacketType) {
   /// Any packet type.
   /// Calls mediapipeGraph:didOutputPacket:fromStream:
-  MediaPipePacketRaw,
+  MPPPacketTypeRaw,
 
   /// CFHolder<CVPixelBufferRef>.
   /// Calls mediapipeGraph:didOutputPixelBuffer:fromStream:
   /// Use this packet type to pass GPU frames to calculators.
-  MediaPipePacketPixelBuffer,
+  MPPPacketTypePixelBuffer,
 
   /// ImageFrame.
   /// Calls mediapipeGraph:didOutputPixelBuffer:fromStream:
-  MediaPipePacketImageFrame,
+  MPPPacketTypeImageFrame,
 
   /// RGBA ImageFrame, but do not swap the channels if the input pixel buffer
   /// is BGRA. This is useful when the graph needs RGBA ImageFrames, but the
   /// calculators do not care about the order of the channels, so BGRA data can
   /// be used as-is.
   /// Calls mediapipeGraph:didOutputPixelBuffer:fromStream:
-  MediaPipePacketImageFrameBGRANoSwap,
+  MPPPacketTypeImageFrameBGRANoSwap,
 };
 
 /// This class is an Objective-C wrapper around a MediaPipe graph object, and
@@ -129,7 +129,7 @@ typedef NS_ENUM(int, MediaPipePacketType) {
 ///                         the delegate will receive frames.
 /// @param packetType The type of packet provided by the output streams.
 - (void)addFrameOutputStream:(const std::string&)outputStreamName
-            outputPacketType:(MediaPipePacketType)packetType;
+            outputPacketType:(MPPPacketType)packetType;
 
 /// Starts running the graph.
 /// @return YES if successful.
@@ -155,7 +155,7 @@ typedef NS_ENUM(int, MediaPipePacketType) {
 
 /// Creates a MediaPipe packet wrapping the given pixelBuffer;
 - (mediapipe::Packet)packetWithPixelBuffer:(CVPixelBufferRef)pixelBuffer
-                                packetType:(MediaPipePacketType)packetType;
+                                packetType:(MPPPacketType)packetType;
 
 /// Sends a pixel buffer into a graph input stream, using the specified packet
 /// type. The graph must have been started before calling this. Drops frames and
@@ -164,7 +164,7 @@ typedef NS_ENUM(int, MediaPipePacketType) {
 /// possibly increased efficiency. Returns YES if the packet was successfully sent.
 - (BOOL)sendPixelBuffer:(CVPixelBufferRef)imageBuffer
              intoStream:(const std::string&)inputName
-             packetType:(MediaPipePacketType)packetType
+             packetType:(MPPPacketType)packetType
               timestamp:(const mediapipe::Timestamp&)timestamp
          allowOverwrite:(BOOL)allowOverwrite;
 
@@ -174,7 +174,7 @@ typedef NS_ENUM(int, MediaPipePacketType) {
 /// successfully sent.
 - (BOOL)sendPixelBuffer:(CVPixelBufferRef)pixelBuffer
              intoStream:(const std::string&)inputName
-             packetType:(MediaPipePacketType)packetType
+             packetType:(MPPPacketType)packetType
               timestamp:(const mediapipe::Timestamp&)timestamp;
 
 /// Sends a pixel buffer into a graph input stream, using the specified packet
@@ -184,7 +184,7 @@ typedef NS_ENUM(int, MediaPipePacketType) {
 /// packet was successfully sent.
 - (BOOL)sendPixelBuffer:(CVPixelBufferRef)pixelBuffer
              intoStream:(const std::string&)inputName
-             packetType:(MediaPipePacketType)packetType;
+             packetType:(MPPPacketType)packetType;
 
 /// Cancels a graph run. You must still call waitUntilDoneWithError: after this.
 - (void)cancel;

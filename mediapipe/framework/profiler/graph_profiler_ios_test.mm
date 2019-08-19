@@ -50,7 +50,7 @@ static const char* kOutputStream = "counter";
   profilerConfig->set_trace_log_disabled(false);
 
   MPPGraph* graph = [[MPPGraph alloc] initWithGraphConfig:graphConfig];
-  [graph addFrameOutputStream:kOutputStream outputPacketType:MediaPipePacketRaw];
+  [graph addFrameOutputStream:kOutputStream outputPacketType:MPPPacketTypeRaw];
   graph.delegate = self;
 
   NSError* error;

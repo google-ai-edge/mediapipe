@@ -77,7 +77,7 @@
 }
 
 - (void)addFrameOutputStream:(const std::string&)outputStreamName
-            outputPacketType:(MediaPipePacketType)packetType {
+            outputPacketType:(MPPPacketType)packetType {
   std::string callbackInputName;
   mediapipe::tool::AddCallbackCalculator(outputStreamName, &_config, &callbackInputName,
                                        /*use_std_function=*/true);
@@ -99,14 +99,14 @@
 /// This is the function that gets called by the CallbackCalculator that
 /// receives the graph's output.
 void CallFrameDelegate(void* wrapperVoid, const std::string& streamName,
-                       MediaPipePacketType packetType, const mediapipe::Packet& packet) {
+                       MPPPacketType packetType, const mediapipe::Packet& packet) {
   MPPGraph* wrapper = (__bridge MPPGraph*)wrapperVoid;
   @autoreleasepool {
-    if (packetType == MediaPipePacketRaw) {
+    if (packetType == MPPPacketTypeRaw) {
       [wrapper.delegate mediapipeGraph:wrapper
                      didOutputPacket:packet
                           fromStream:streamName];
-    } else if (packetType == MediaPipePacketImageFrame) {
+    } else if (packetType == MPPPacketTypeImageFrame) {
       const auto& frame = packet.Get<mediapipe::ImageFrame>();
       mediapipe::ImageFormat::Format format = frame.Format();
 
@@ -162,7 +162,7 @@ void CallFrameDelegate(void* wrapperVoid, const std::string& streamName,
         _GTMDevLog(@"unsupported ImageFormat: %d", format);
       }
 #if MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
-    } else if (packetType == MediaPipePacketPixelBuffer) {
+    } else if (packetType == MPPPacketTypePixelBuffer) {
       CVPixelBufferRef pixelBuffer = packet.Get<mediapipe::GpuBuffer>().GetCVPixelBufferRef();
       if ([wrapper.delegate
               respondsToSelector:@selector
@@ -283,15 +283,15 @@ void CallFrameDelegate(void* wrapperVoid, const std::string& streamName,
 }
 
 - (mediapipe::Packet)packetWithPixelBuffer:(CVPixelBufferRef)imageBuffer
-                              packetType:(MediaPipePacketType)packetType {
+                              packetType:(MPPPacketType)packetType {
   mediapipe::Packet packet;
-  if (packetType == MediaPipePacketImageFrame || packetType == MediaPipePacketImageFrameBGRANoSwap) {
+  if (packetType == MPPPacketTypeImageFrame || packetType == MPPPacketTypeImageFrameBGRANoSwap) {
     auto frame = CreateImageFrameForCVPixelBuffer(
         imageBuffer, /* canOverwrite = */ false,
-        /* bgrAsRgb = */ packetType == MediaPipePacketImageFrameBGRANoSwap);
+        /* bgrAsRgb = */ packetType == MPPPacketTypeImageFrameBGRANoSwap);
     packet = mediapipe::Adopt(frame.release());
 #if MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
-  } else if (packetType == MediaPipePacketPixelBuffer) {
+  } else if (packetType == MPPPacketTypePixelBuffer) {
     packet = mediapipe::MakePacket<mediapipe::GpuBuffer>(imageBuffer);
 #endif  // MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
   } else {
@@ -302,7 +302,7 @@ void CallFrameDelegate(void* wrapperVoid, const std::string& streamName,
 
 - (BOOL)sendPixelBuffer:(CVPixelBufferRef)imageBuffer
              intoStream:(const std::string&)inputName
-             packetType:(MediaPipePacketType)packetType
+             packetType:(MPPPacketType)packetType
               timestamp:(const mediapipe::Timestamp&)timestamp
          allowOverwrite:(BOOL)allowOverwrite {
   if (_maxFramesInFlight && _framesInFlight >= _maxFramesInFlight) return NO;
@@ -326,7 +326,7 @@ void CallFrameDelegate(void* wrapperVoid, const std::string& streamName,
 
 - (BOOL)sendPixelBuffer:(CVPixelBufferRef)imageBuffer
              intoStream:(const std::string&)inputName
-             packetType:(MediaPipePacketType)packetType
+             packetType:(MPPPacketType)packetType
               timestamp:(const mediapipe::Timestamp&)timestamp {
   return [self sendPixelBuffer:imageBuffer
                     intoStream:inputName
@@ -337,7 +337,7 @@ void CallFrameDelegate(void* wrapperVoid, const std::string& streamName,
 
 - (BOOL)sendPixelBuffer:(CVPixelBufferRef)imageBuffer
              intoStream:(const std::string&)inputName
-             packetType:(MediaPipePacketType)packetType {
+             packetType:(MPPPacketType)packetType {
   _GTMDevAssert(_frameTimestamp < mediapipe::Timestamp::Done(),
                 @"Trying to send frame after stream is done.");
   if (_frameTimestamp < mediapipe::Timestamp::Min()) {

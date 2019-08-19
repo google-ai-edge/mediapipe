@@ -15,20 +15,20 @@
 #import <Foundation/Foundation.h>
 #import <GLKit/GLKit.h>
 
-/// Modes of clockwise rotation for input frames.
-typedef enum {
-  MediaPipeFrameRotationNone,
-  MediaPipeFrameRotation90,
-  MediaPipeFrameRotation180,
-  MediaPipeFrameRotation270
-} MediaPipeFrameRotationMode;
+/// Modes of rotation (clockwise) for input frames.
+typedef NS_ENUM(int, MPPFrameRotation) {
+  MPPFrameRotationNone,
+  MPPFrameRotationCw90,
+  MPPFrameRotationCw180,
+  MPPFrameRotationCw270,
+};
 
-typedef enum {
+typedef NS_ENUM(int, MPPFrameScaleMode) {
   // Scale the frame up to fit the drawing area, preserving aspect ratio; may letterbox.
-  MediaPipeFrameScaleFit,
+  MPPFrameScaleModeFit,
   // Scale the frame up to fill the drawing area, preserving aspect ratio; may crop.
-  MediaPipeFrameScaleFillAndCrop,
-} MediaPipeFrameScaleMode;
+  MPPFrameScaleModeFillAndCrop,
+};
 
 /// Renders frames in a GLKView.
 @interface MPPGLViewRenderer : NSObject <GLKViewDelegate>
@@ -47,15 +47,15 @@ typedef enum {
 @property(nonatomic, assign) BOOL retainsLastPixelBuffer;
 
 /// Sets which way to rotate input frames before rendering them.
-/// Default value is MediaPipeFrameRotationNone.
+/// Default value is MPPFrameRotationNone.
 /// Note that changing the transform property of a GLKView once rendering has
 /// started causes problems inside GLKView. Instead, we perform the rotation
 /// in our rendering code.
-@property(nonatomic) MediaPipeFrameRotationMode frameRotationMode;
+@property(nonatomic) MPPFrameRotation frameRotationMode;
 
 /// Sets how to scale the frame within the view.
-/// Default value is MediaPipeFrameScaleScaleToFit.
-@property(nonatomic) MediaPipeFrameScaleMode frameScaleMode;
+/// Default value is MPPFrameScaleModeFit.
+@property(nonatomic) MPPFrameScaleMode frameScaleMode;
 
 /// If YES, swap left and right. Useful for the front camera.
 @property(nonatomic) BOOL mirrored;
