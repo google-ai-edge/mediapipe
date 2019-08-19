@@ -1,0 +1,24 @@
+{
+  "configDefaults" : {
+    "optionSet" : {
+      "CLANG_CXX_LANGUAGE_STANDARD" : {
+        "p" : "c++14"
+      }
+    }
+  },
+  "packages" : [
+    "",
+    "mediapipe",
+    "mediapipe/objc",
+    "mediapipe/examples/ios",
+    "mediapipe/examples/ios/edgedetectiongpu",
+    "mediapipe/examples/ios/facedetectioncpu",
+    "mediapipe/examples/ios/facedetectiongpu",
+    "mediapipe/examples/ios/handdetectiongpu",
+    "mediapipe/examples/ios/handtrackinggpu",
+    "mediapipe/examples/ios/objectdetectioncpu",
+    "mediapipe/examples/ios/objectdetectiongpu"
+  ],
+  "projectName" : "Mediapipe",
+  "workspaceRoot" : "../.."
+}

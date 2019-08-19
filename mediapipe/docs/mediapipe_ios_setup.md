@@ -28,6 +28,29 @@
     ln -s ~/Downloads/MyProvisioningProfile.mobileprovision mediapipe/provisioning_profile.mobileprovision
     ```
 
+## Creating an Xcode project
+
+1.  We will use a tool called [Tulsi](https://tulsi.bazel.build/) for generating Xcode projects from Bazel
+    build configurations.
+
+    ```bash
+    git clone https://github.com/bazelbuild/tulsi.git
+    cd tulsi
+    sh build_and_run.sh
+    ```
+
+    This will install Tulsi.app inside the Applications directory inside your
+    home directory.
+
+2.  Open `mediapipe/Mediapipe.tulsiproj` using the Tulsi app.
+
+3.  Select the MediaPipe config in the Configs tab, then press the Generate
+    button below. You will be asked for a location to save the Xcode project.
+    Once the project is generated, it will be opened in Xcode.
+
+4.  You can now select any of the MediaPipe demos in the target menu, and build
+    and run them as normal.
+
 ## Building an iOS app from the command line
 
 1.  Build one of the example apps for iOS. We will be using the

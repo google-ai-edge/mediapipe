@@ -208,8 +208,8 @@ of a MediaPipe graph. In the specification, a node in the graph represents an
 instance of a particular calculator. All the necessary configurations of the
 node, such its type, inputs and outputs must be described in the specification.
 Description of the node can also include several optional fields, such as
-node-specific options, input policy and executor, discussed in Section
-[Framework Concepts > Scheduling mechanics](scheduling_sync.md#scheduling-mechanics).
+node-specific options, input policy and executor, discussed in
+[Framework Architecture](scheduling_sync.md).
 
 `GraphConfig` has several other fields to configure the global graph-level
 settings, eg, graph executor configs, number of threads, and maximum queue size

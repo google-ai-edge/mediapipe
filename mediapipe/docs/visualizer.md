@@ -1,7 +1,8 @@
 ## Visualizing MediaPipe Graphs
 
--   [Working within the editor](#working-within-the-editor)
--   [Understanding the graph](#understanding-the-graph)
+-   [Working within the Editor](#working-within-the-editor)
+-   [Understanding the Graph](#understanding-the-graph)
+-   [Visualizing Subgraphs](#visualizing-subgraphs)
 
 To help users understand the structure of their calculator graphs and to
 understand the overall behavior of their machine learning inference pipelines,
@@ -12,20 +13,20 @@ that is available online.
     through a graph configuration that is pasted into the graph editor or
     uploaded. The user can visualize and troubleshoot a graph they have created.
 
-    ![Startup screen](./images/startup_screen.png){width="800"}
+    ![Startup screen](./images/startup_screen.png)
 
-### Working within the editor
+### Working within the Editor
 
 Getting Started:
 
 The graph can be modified by adding and editing code in the Editor view.
 
-![Editor UI](./images/editor_view.png){width="600"}
+![Editor UI](./images/editor_view.png)
 
 *   Pressing the "New" button in the upper right corner will clear any existing
     code in the Editor window.
 
-    ![New Button](./images/upload_button.png){width="300"}
+    ![New Button](./images/upload_button.png)
 
 *   Pressing the "Upload" button will prompt the user to select a local PBTXT
     file, which will everwrite the current code within the editor.
@@ -34,7 +35,7 @@ The graph can be modified by adding and editing code in the Editor view.
 
 *   Errors and informational messages will appear in the Feedback window.
 
-    ![Error Msg](./images/console_error.png){width="400"}
+    ![Error Msg](./images/console_error.png)
 
 ### Understanding the Graph
 
@@ -44,39 +45,54 @@ The visualizer graph shows the connections between calculator nodes.
     enter the top of any calculator receiving the stream. (Notice the use of the
     key, "input_stream" and "output_stream").
 
-    ![Stream UI](./images/stream_ui.png){width="350"}
-    ![Stream_code](./images/stream_code.png){width="350"}
+    ![Stream UI](./images/stream_ui.png)
+
+    ![Stream_code](./images/stream_code.png)
 
 *   Sidepackets work the same, except that they exit a node on the right and
     enter on the left. (Notice the use of the key, "input_side_packet" and
     "output_side_packet").
 
-    ![Sidepacket UI](./images/side_packet.png){width="350"}
-    ![Sidepacket_code](./images/side_packet_code.png){width="350"}
+    ![Sidepacket UI](./images/side_packet.png)
+
+    ![Sidepacket_code](./images/side_packet_code.png)
 
 *   There are special nodes that represent inputs and outputs to the graph and
     can supply either side packets or streams.
 
-    ![Special nodes](./images/special_nodes.png){width="350"}
-    ![Special nodes](./images/special_nodes_code.png){width="350"}
+    ![Special nodes](./images/special_nodes.png)
 
-### Visualizing subgraphs
+    ![Special nodes](./images/special_nodes_code.png)
 
-The MediaPipe visualizer can display multiple graphs. If a graph has a name (designated by assigning a string to the "type" field in the top level of the graph's proto file) and that name is used as a calculator name in a separate graph, it is considered a subgraph and colored appropriately where it is used.  Clicking on a subgraph will navigate to the corresponding tab which holds the subgraph's definition. In this example, for hand detection GPU we have 2 pbtxt files:
-[hand_detection_mobile.pbtxt](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/hand_tracking/hand_detection_mobile.pbtxt)
-and its associated [subgraph](./framework_concepts.md#subgraph) called
-[hand_detection_gpu.pbtxt](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/hand_tracking/hand_detection_gpu.pbtxt)
+### Visualizing Subgraphs
 
-*   In the default MediaPipe visualizer, click on upload graph button and select
-    the 2 pbtxt files to visualize (main graph and all its associated subgraphs)
+The MediaPipe visualizer can display multiple graphs in separate tabs. If a
+graph has a `type` field in the top level of the graph's text proto definition,
+and that value of graph `type` is used as a calculator name in another graph, it
+is considered a subgraph by the visualizer and colored appropriately where it is
+used. Clicking on a subgraph will navigate to the corresponding tab which holds
+the subgraph's definition.
 
-    ![Upload graph button](./images/upload_button.png){width="250"}
+For instance, there are two graphs involved in the
+[hand detection example](./hand_detection_mobile_gpu.md): the main graph
+([source pbtxt file](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/hand_tracking/hand_detection_mobile.pbtxt))
+and its associated subgraph
+([source pbtxt file](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/hand_tracking/hand_detection_gpu.pbtxt)).
+To visualize them:
 
-    ![Choose the 2 files](./images/upload_2pbtxt.png){width="400"}
+*   In the MediaPipe visualizer, click on the upload graph button and select the
+    2 pbtxt files to visualize (main graph and its associated subgraph).
 
-*   You will see 3 tabs. The main graph tab is `hand_detection_mobile.pbtxt`
-    ![hand_detection_mobile_gpu.pbtxt](./images/maingraph_visualizer.png){width="1500"}
+    ![Upload graph button](./images/upload_button.png)
 
-*   Click on the subgraph block in purple `Hand Detection` and the
-    `hand_detection_gpu.pbtxt` tab will open
-    ![Hand detection subgraph](./images/click_subgraph_handdetection.png){width="1500"}
+    ![Choose the 2 files](./images/upload_2pbtxt.png)
+
+*   There will be 2 additional tabs. The main graph tab is
+    `hand_detection_mobile.pbtxt`.
+
+    ![hand_detection_mobile_gpu.pbtxt](./images/maingraph_visualizer.png)
+
+*   Clicking on the `HandDetection` node in purple redirects the view to the
+    `hand_detection_gpu.pbtxt` tab.
+
+    ![Hand detection subgraph](./images/click_subgraph_handdetection.png)

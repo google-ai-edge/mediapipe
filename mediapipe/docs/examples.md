@@ -30,8 +30,8 @@ detection example.
 use MediaPipe with a TFLite model for object detection in a GPU-accelerated
 pipeline.
 
-*   [Android](./object_detection_mobile_gpu.md#android)
-*   [iOS](./object_detection_mobile_gpu.md#ios)
+*   [Android](./object_detection_mobile_gpu.md)
+*   [iOS](./object_detection_mobile_gpu.md)
 
 ### Object Detection with CPU
 
@@ -48,24 +48,24 @@ The selfie face detection TFLite model is based on
 and model details are described in the
 [model card](https://sites.google.com/corp/view/perception-cv4arvr/blazeface#h.p_21ojPZDx3cqq).
 
-*   [Android](./face_detection_mobile_gpu.md#android)
-*   [iOS](./face_detection_mobile_gpu.md#ios)
+*   [Android](./face_detection_mobile_gpu.md)
+*   [iOS](./face_detection_mobile_gpu.md)
 
 ### Hand Detection with GPU
 
 [Hand Detection with GPU](./hand_detection_mobile_gpu.md) illustrates how to use
 MediaPipe with a TFLite model for hand detection in a GPU-accelerated pipeline.
 
-*   [Android](./hand_detection_mobile_gpu.md#android)
-*   [iOS](./hand_detection_mobile_gpu.md#ios)
+*   [Android](./hand_detection_mobile_gpu.md)
+*   [iOS](./hand_detection_mobile_gpu.md)
 
 ### Hand Tracking with GPU
 
 [Hand Tracking with GPU](./hand_tracking_mobile_gpu.md) illustrates how to use
 MediaPipe with a TFLite model for hand tracking in a GPU-accelerated pipeline.
 
-*   [Android](./hand_tracking_mobile_gpu.md#android)
-*   [iOS](./hand_tracking_mobile_gpu.md#ios)
+*   [Android](./hand_tracking_mobile_gpu.md)
+*   [iOS](./hand_tracking_mobile_gpu.md)
 
 ### Hair Segmentation with GPU
 
@@ -76,7 +76,7 @@ pipeline. The selfie hair segmentation TFLite model is based on
 and model details are described in the
 [model card](https://sites.google.com/corp/view/perception-cv4arvr/hair-segmentation#h.p_NimuO7PgHxlY).
 
-*   [Android](./hair_segmentation_mobile_gpu.md#android)
+*   [Android](./hair_segmentation_mobile_gpu.md)
 
 ## Desktop
 

@@ -1,53 +1,41 @@
 ## Installing MediaPipe
 
+Note: To interoperate with OpenCV, OpenCV 3.x and above are preferred. OpenCV
+2.x currently works but interoperability support may be deprecated in the
+future.
+
+Note: If you plan to use TensorFlow calculators and example apps, there is a
+known issue with gcc and g++ version 6.3 and 7.3. Please use other versions.
+
 Choose your operating system:
 
--   [Prework](#prework)
--   [Dependences](#dependences)
 -   [Installing on Debian and Ubuntu](#installing-on-debian-and-ubuntu)
 -   [Installing on CentOS](#installing-on-centos)
 -   [Installing on macOS](#installing-on-macos)
 -   [Installing on Windows Subsystem for Linux (WSL)](#installing-on-windows-subsystem-for-linux-wsl)
 -   [Installing using Docker](#installing-using-docker)
--   [Setting up Android Studio with MediaPipe](#setting-up-android-studio-with-mediapipe)
+
+To build and run Android apps:
+
 -   [Setting up Android SDK and NDK](#setting-up-android-sdk-and-ndk)
+-   [Setting up Android Studio with MediaPipe](#setting-up-android-studio-with-mediapipe)
 
-### Prework
+To build and run iOS apps:
 
-* Install a package manager, e.g., Homebrew for macOS, and APT for Debian and Ubuntu
-
-* Install Xcode for the iOS apps (macOS only)
-
-* Install Android Studio for the Android apps
-
-### Dependencies
-
-Required libraries
-
-*   Prefer OpenCV 3.x and above but can work with OpenCV 2.x (deprecation in the
-    future)
-
-*   Bazel 0.23 and above
-
-*   gcc and g++ version other than 6.3 and 7.3 (if you need TensorFlow
-    calculators/demos)
-
-*   Android SDK release 28.0.3 and above
-
-*   Android NDK r17c and above
+-   Please see the separate [iOS setup](./mediapipe_ios_setup.md) documentation.
 
 ### Installing on Debian and Ubuntu
 
-1.  Checkout mediapipe repository
+1.  Checkout MediaPipe repository.
 
     ```bash
     $ git clone https://github.com/google/mediapipe.git
 
-    # Change directory into mediapipe root directory
+    # Change directory into MediaPipe root directory
     $ cd mediapipe
     ```
 
-2.  Install Bazel
+2.  Install Bazel (0.23 and above required).
 
     Option 1. Use package manager tool to install the latest version of Bazel.
 
@@ -61,7 +49,7 @@ Required libraries
     [documentation](https://docs.bazel.build/versions/master/install-ubuntu.html)
     to install any version of Bazel manually.
 
-3.  Install OpenCV
+3.  Install OpenCV.
 
     Option 1. Use package manager tool to install the pre-compiled OpenCV
     libraries.
@@ -115,7 +103,7 @@ Required libraries
 
     ```
 
-4.  Run the hello world desktop example
+4.  Run the [Hello World desktop example](./hello_world_desktop.md).
 
     ```bash
     $ export GLOG_logtostderr=1
@@ -138,22 +126,22 @@ Required libraries
 
 ### Installing on CentOS
 
-1.  Checkout mediapipe repository
+1.  Checkout MediaPipe repository.
 
     ```bash
     $ git clone https://github.com/google/mediapipe.git
 
-    # Change directory into mediapipe root directory
+    # Change directory into MediaPipe root directory
     $ cd mediapipe
     ```
 
-2.  Install Bazel
+2.  Install Bazel (0.23 and above required).
 
     Follow Bazel's
     [documentation](https://docs.bazel.build/versions/master/install-redhat.html)
     to install Bazel manually.
 
-3.  Install OpenCV
+3.  Install OpenCV.
 
     Option 1. Use package manager tool to install the pre-compiled version.
 
@@ -200,7 +188,7 @@ Required libraries
 
     ```
 
-4.  Run the hello world desktop example
+4.  Run the [Hello World desktop example](./hello_world_desktop.md).
 
     ```bash
     $ export GLOG_logtostderr=1
@@ -223,7 +211,13 @@ Required libraries
 
 ### Installing on macOS
 
-1.  Checkout mediapipe repository
+1.  Prework:
+
+    *   Install [Homebrew](https://brew.sh).
+    *   Install [Xcode](https://developer.apple.com/xcode/) and its Command Line
+        Tools.
+
+2.  Checkout MediaPipe repository.
 
     ```bash
     $ git clone https://github.com/google/mediapipe.git
@@ -231,7 +225,7 @@ Required libraries
     $ cd mediapipe
     ```
 
-2.  Install Bazel
+3.  Install Bazel (0.23 and above required).
 
     Option 1. Use package manager tool to install the latest version of Bazel.
 
@@ -245,7 +239,7 @@ Required libraries
     [documentation](https://docs.bazel.build/versions/master/install-ubuntu.html)
     to install any version of Bazel manually.
 
-3.  Install OpenCV
+4.  Install OpenCV.
 
     Option 1. Use HomeBrew package manager tool to install the pre-compiled
     OpenCV libraries.
@@ -289,7 +283,7 @@ Required libraries
     )
     ```
 
-4.  Run the hello world desktop example
+5.  Run the [Hello World desktop example](./hello_world_desktop.md).
 
     ```bash
     $ export GLOG_logtostderr=1
@@ -312,29 +306,29 @@ Required libraries
 
 ### Installing on Windows Subsystem for Linux (WSL)
 
-1.  Follow
-    [the instruction](https://docs.microsoft.com/en-us/windows/wsl/install-win10)
-    to install Windows Sysystem for Linux (Ubuntu)
+1.  Follow the
+    [instruction](https://docs.microsoft.com/en-us/windows/wsl/install-win10) to
+    install Windows Sysystem for Linux (Ubuntu).
 
-2.  Install Windows ADB and start the ADB server in Windows
+2.  Install Windows ADB and start the ADB server in Windows.
 
     Note: Window’s and WSL’s adb versions must be the same version, e.g., if WSL
     has ADB 1.0.39, you need to download the corresponding Windows ADB from
     [here](https://dl.google.com/android/repository/platform-tools_r26.0.1-windows.zip).
 
-3.  Launch WSL
+3.  Launch WSL.
 
     Note: All the following steps will be executed in WSL. The Windows directory
     of the Linux Subsystem can be found in
     C:\Users\YourUsername\AppData\Local\Packages\CanonicalGroupLimited.UbuntuonWindows_SomeID\LocalState\rootfs\home
 
-4.  Install the needed packages
+4.  Install the needed packages.
 
     ```bash
     username@DESKTOP-TMVLBJ1:~$ sudo apt-get update && sudo apt-get install -y --no-install-recommends build-essential git python zip adb openjdk-8-jdk
     ```
 
-5.  Install Bazel
+5.  Install Bazel (0.23 and above required).
 
     ```bash
     username@DESKTOP-TMVLBJ1:~$ curl -sLO --retry 5 --retry-max-time 10 \
@@ -348,7 +342,7 @@ Required libraries
     alias bazel='/usr/local/bazel/0.27.0/lib/bazel/bin/bazel'
     ```
 
-6.  Checkout mediapipe repository
+6.  Checkout MediaPipe repository.
 
     ```bash
     username@DESKTOP-TMVLBJ1:~$ git clone https://github.com/google/mediapipe.git
@@ -356,7 +350,7 @@ Required libraries
     username@DESKTOP-TMVLBJ1:~$ cd mediapipe
     ```
 
-7.  Install OpenCV
+7.  Install OpenCV.
 
     Option 1. Use package manager tool to install the pre-compiled OpenCV
     libraries.
@@ -407,7 +401,7 @@ Required libraries
 
     ```
 
-8.  Run the hello world desktop example
+8.  Run the [Hello World desktop example](./hello_world_desktop.md).
 
     ```bash
     username@DESKTOP-TMVLBJ1:~/mediapipe$ export GLOG_logtostderr=1
@@ -434,9 +428,9 @@ Required libraries
 This will use a Docker image that will isolate mediapipe's installation from the rest of the system.
 
 1.  [Install Docker](https://docs.docker.com/install/#supported-platforms) on
-    your host sytem
+    your host sytem.
 
-2.  Build a docker image with tag "mediapipe"
+2.  Build a docker image with tag "mediapipe".
 
     ```bash
     $ git clone https://github.com/google/mediapipe.git
@@ -459,7 +453,7 @@ This will use a Docker image that will isolate mediapipe's installation from the
     # Successfully tagged mediapipe:latest
     ```
 
-3.  Run the hello world desktop example in docker
+3.  Run the [Hello World desktop example](./hello_world_desktop.md).
 
     ```bash
     $ docker run -it --name mediapipe mediapipe:latest
@@ -492,27 +486,58 @@ This will use a Docker image that will isolate mediapipe's installation from the
     docker run -i -t mediapipe:latest
     ``` -->
 
+### Setting up Android SDK and NDK
+
+Requirements:
+
+*   Android SDK release 28.0.3 and above.
+*   Android NDK r17c and above.
+
+MediaPipe recommends setting up Android SDK and NDK via Android Studio, and see
+[next section](#setting-up-android-studio-with-mediapipe) for Android Studio
+setup. However, if you prefer using MediaPipe without Android Studio, please run
+[`setup_android_sdk_and_ndk.sh`] to download and setup Android SDK and NDK
+before building any Android example apps.
+
+If Android SDK and NDK are already installed (e.g., by Android Studio), set
+$ANDROID_HOME and $ANDROID_NDK_HOME to point to the installed SDK and NDK.
+
+```bash
+export ANDROID_HOME=<path to the Android SDK>
+export ANDROID_NDK_HOME=<path to the Android NDK>
+```
+
+Please verify all the necessary packages are installed.
+
+*   Android SDK Platform API Level 28 or 29
+*   Android SDK Build-Tools 28 or 29
+*   Android SDK Platform-Tools 28 or 29
+*   Android SDK Tools 26.1.1
+*   Android NDK 17c or above
+
 ### Setting up Android Studio with MediaPipe
 
-The steps below use Android Studio to build and install a MediaPipe demo app.
+The steps below use Android Studio to build and install a MediaPipe example app.
 
-1.  Install and launch android studio.
+1.  Install and launch Android Studio.
 
-2.  Select `Configure` | `SDK Manager` | `SDK Platforms`
+2.  Select `Configure` | `SDK Manager` | `SDK Platforms`.
 
-    *   Verify that Android SDK Platform API Level 28 or 29 is installed
-    *   Note the Android SDK Location such as `/usr/local/home/Android/Sdk`
+    *   Verify that Android SDK Platform API Level 28 or 29 is installed.
+    *   Take note of the Android SDK Location, e.g.,
+        `/usr/local/home/Android/Sdk`.
 
-3.  Select `Configure` | `SDK Manager` | `SDK Tools`
+3.  Select `Configure` | `SDK Manager` | `SDK Tools`.
 
-    *   Verify that Android SDK Build-Tools 28 or 29 is installed
-    *   Verify that Android SDK Platform-Tools 28 or 29 is installed
-    *   Verify that Android SDK Tools 26.1.1 is installed
-    *   Verify that Android NDK 17c or above is installed
-    *   Note the Android NDK Location such as `/usr/local/home/Android/Sdk/ndk-bundle`
+    *   Verify that Android SDK Build-Tools 28 or 29 is installed.
+    *   Verify that Android SDK Platform-Tools 28 or 29 is installed.
+    *   Verify that Android SDK Tools 26.1.1 is installed.
+    *   Verify that Android NDK 17c or above is installed.
+    *   Take note of the Android NDK Location, e.g.,
+        `/usr/local/home/Android/Sdk/ndk-bundle`.
 
-4.  Set environment variables `$ANDROID_HOME` and `$ANDROID_NDK_HOME` to point to
-    the installed SDK and NDK.
+4.  Set environment variables `$ANDROID_HOME` and `$ANDROID_NDK_HOME` to point
+    to the installed SDK and NDK.
 
     ```bash
     export ANDROID_HOME=/usr/local/home/Android/Sdk
@@ -521,43 +546,20 @@ The steps below use Android Studio to build and install a MediaPipe demo app.
 
 5.  Select `Configure` | `Plugins` install `Bazel`.
 
-6.  Select `Import Bazel Project`
+6.  Select `Import Bazel Project`.
 
-    *   Select `Workspace`: `/path/to/mediapipe`
-    *   Select `Generate from BUILD file`: `/path/to/mediapipe/BUILD`
-    *   Select `Finish`
+    *   Select `Workspace`: `/path/to/mediapipe`.
+    *   Select `Generate from BUILD file`: `/path/to/mediapipe/BUILD`.
+    *   Select `Finish`.
 
-7.  Connect an android device to the workstation.
+7.  Connect an Android device to the workstation.
 
-8.  Select `Run...` | `Edit Configurations...`
+8.  Select `Run...` | `Edit Configurations...`.
 
     *   Enter Target Expression:
         `//mediapipe/examples/android/src/java/com/google/mediapipe/apps/facedetectioncpu`
     *   Enter Bazel command: `mobile-install`
     *   Enter Bazel flags: `-c opt --config=android_arm64` select `Run`
-
-### Setting up Android SDK and NDK
-
-If Android SDK and NDK are installed (likely by Android Studio), please set
-$ANDROID_HOME and $ANDROID_NDK_HOME to point to the installed SDK and NDK.
-
-```bash
-export ANDROID_HOME=<path to the Android SDK>
-export ANDROID_NDK_HOME=<path to the Android NDK>
-```
-
-Please verify all the necessary packages are installed
-
-* Android SDK Platform API Level 28 or 29
-* Android SDK Build-Tools 28 or 29
-* Android SDK Platform-Tools 28 or 29
-* Android SDK Tools 26.1.1
-* Android NDK 17c or above
-
-MediaPipe prefers to use the Android SDK and NDK from Android Studio. See
-[the previous section](#setting-up-android-studio-with-mediapipe) for the
-Android Studio setup. If you prefer to try MediaPipe without Android Studio, please run [`setup_android_sdk_and_ndk.sh`] to download and setup Android SDK and NDK for
-MediaPipe before building any Android demos.
 
 [`WORKSAPCE`]: https://github.com/google/mediapipe/tree/master/WORKSPACE
 [`opencv_linux.BUILD`]: https://github.com/google/mediapipe/tree/master/third_party/opencv_linux.BUILD

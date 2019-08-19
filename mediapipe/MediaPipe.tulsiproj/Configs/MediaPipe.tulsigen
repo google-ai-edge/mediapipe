@@ -1,0 +1,115 @@
+{
+  "additionalFilePaths" : [
+    "/BUILD",
+    "mediapipe/BUILD",
+    "mediapipe/objc/BUILD",
+    "mediapipe/examples/ios/BUILD",
+    "mediapipe/examples/ios/edgedetectiongpu/BUILD",
+    "mediapipe/examples/ios/facedetectioncpu/BUILD",
+    "mediapipe/examples/ios/facedetectiongpu/BUILD",
+    "mediapipe/examples/ios/handdetectiongpu/BUILD",
+    "mediapipe/examples/ios/handtrackinggpu/BUILD",
+    "mediapipe/examples/ios/objectdetectioncpu/BUILD",
+    "mediapipe/examples/ios/objectdetectiongpu/BUILD"
+  ],
+  "buildTargets" : [
+    "//mediapipe/examples/ios/edgedetectiongpu:EdgeDetectionGpuApp",
+    "//mediapipe/examples/ios/facedetectioncpu:FaceDetectionCpuApp",
+    "//mediapipe/examples/ios/facedetectiongpu:FaceDetectionGpuApp",
+    "//mediapipe/examples/ios/handdetectiongpu:HandDetectionGpuApp",
+    "//mediapipe/examples/ios/handtrackinggpu:HandTrackingGpuApp",
+    "//mediapipe/examples/ios/objectdetectioncpu:ObjectDetectionCpuApp",
+    "//mediapipe/examples/ios/objectdetectiongpu:ObjectDetectionGpuApp",
+    "//mediapipe/objc:mediapipe_framework_ios"
+  ],
+  "optionSet" : {
+    "BazelBuildOptionsDebug" : {
+      "p" : "$(inherited)"
+    },
+    "BazelBuildOptionsRelease" : {
+      "p" : "$(inherited)"
+    },
+    "BazelBuildStartupOptionsDebug" : {
+      "p" : "$(inherited)"
+    },
+    "BazelBuildStartupOptionsRelease" : {
+      "p" : "$(inherited)"
+    },
+    "BuildActionPostActionScript" : {
+      "p" : "$(inherited)"
+    },
+    "BuildActionPreActionScript" : {
+      "p" : "$(inherited)"
+    },
+    "CommandlineArguments" : {
+      "p" : "$(inherited)"
+    },
+    "EnvironmentVariables" : {
+      "p" : "$(inherited)"
+    },
+    "LaunchActionPostActionScript" : {
+      "p" : "$(inherited)"
+    },
+    "LaunchActionPreActionScript" : {
+      "p" : "$(inherited)"
+    },
+    "ProjectGenerationBazelStartupOptions" : {
+      "p" : "$(inherited)"
+    },
+    "TestActionPostActionScript" : {
+      "p" : "$(inherited)"
+    },
+    "TestActionPreActionScript" : {
+      "p" : "$(inherited)"
+    }
+  },
+  "projectName" : "Mediapipe",
+  "sourceFilters" : [
+    "mediapipe",
+    "mediapipe/calculators",
+    "mediapipe/calculators/core",
+    "mediapipe/calculators/image",
+    "mediapipe/calculators/internal",
+    "mediapipe/calculators/tflite",
+    "mediapipe/calculators/util",
+    "mediapipe/examples",
+    "mediapipe/examples/ios",
+    "mediapipe/examples/ios/edgedetectiongpu",
+    "mediapipe/examples/ios/edgedetectiongpu/Base.lproj",
+    "mediapipe/examples/ios/facedetectioncpu",
+    "mediapipe/examples/ios/facedetectioncpu/Base.lproj",
+    "mediapipe/examples/ios/facedetectiongpu",
+    "mediapipe/examples/ios/facedetectiongpu/Base.lproj",
+    "mediapipe/examples/ios/handdetectiongpu",
+    "mediapipe/examples/ios/handdetectiongpu/Base.lproj",
+    "mediapipe/examples/ios/handtrackinggpu",
+    "mediapipe/examples/ios/handtrackinggpu/Base.lproj",
+    "mediapipe/examples/ios/objectdetectioncpu",
+    "mediapipe/examples/ios/objectdetectioncpu/Base.lproj",
+    "mediapipe/examples/ios/objectdetectiongpu",
+    "mediapipe/examples/ios/objectdetectiongpu/Base.lproj",
+    "mediapipe/framework",
+    "mediapipe/framework/deps",
+    "mediapipe/framework/formats",
+    "mediapipe/framework/formats/annotation",
+    "mediapipe/framework/formats/object_detection",
+    "mediapipe/framework/port",
+    "mediapipe/framework/profiler",
+    "mediapipe/framework/stream_handler",
+    "mediapipe/framework/tool",
+    "mediapipe/gpu",
+    "mediapipe/graphs",
+    "mediapipe/graphs/edge_detection",
+    "mediapipe/graphs/face_detection",
+    "mediapipe/graphs/hand_tracking",
+    "mediapipe/graphs/object_detection",
+    "mediapipe/models",
+    "mediapipe/objc",
+    "mediapipe/util",
+    "mediapipe/util/android",
+    "mediapipe/util/android/file",
+    "mediapipe/util/android/file/base",
+    "mediapipe/util/tflite",
+    "mediapipe/util/tflite/operations"
+  ]
+}

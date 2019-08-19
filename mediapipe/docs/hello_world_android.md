@@ -20,8 +20,8 @@ stream on an Android device.
 
 1.  Install MediaPipe on your system, see [MediaPipe installation guide] for
     details.
-2.  Install Android Development SDK and Android NDK. See how to do so in
-    [Setting up Android SDK and NDK].
+2.  Install Android Development SDK and Android NDK. See how to do so also in
+    [MediaPipe installation guide].
 3.  Enable [developer options] on your Android device.
 4.  Setup [Bazel] on your system to build and deploy the Android app.
 
@@ -728,7 +728,6 @@ If you ran into any issues, please see the full code of the tutorial
 [`FrameProcessor`]:https://github.com/google/mediapipe/tree/master/mediapipe/java/com/google/mediapipe/components/FrameProcessor.java
 [MediaPipe installation guide]:./install.md
 [`PermissionHelper`]: https://github.com/google/mediapipe/tree/master/mediapipe/java/com/google/mediapipe/components/PermissionHelper.java
-[Setting up Android SDK and NDK]:./install.md#setting-up-android-sdk-and-ndk
 [`SurfaceHolder.Callback`]:https://developer.android.com/reference/android/view/SurfaceHolder.Callback.html
 [`SurfaceView`]:https://developer.android.com/reference/android/view/SurfaceView
 [`SurfaceView`]:https://developer.android.com/reference/android/view/SurfaceView

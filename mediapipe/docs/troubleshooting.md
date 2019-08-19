@@ -55,7 +55,7 @@ running MediaPipe graph. This can occur for a number of reasons, such as:
 
 For problem (1), it may be necessary to drop some old packets in older to
 process the more recent packets. For some hints, see:
-[How to process realtime input streams](how_to_questions.md#how-to-process-realtime-input-streams)
+[How to process realtime input streams](how_to_questions.md).
 
 For problem (2), it could be that one input stream is lacking packets for some
 reason. A device or a calculator may be misconfigured or may produce packets
@@ -63,7 +63,7 @@ only sporadically. This can cause downstream calculators to wait for many
 packets that will never arrive, which in turn causes packets to accumulate on
 some of their input streams. MediaPipe addresses this sort of problem using
 "timestamp bounds". For some hints see:
-[How to process realtime input streams](how_to_questions.md#how-to-process-realtime-input-streams)
+[How to process realtime input streams](how_to_questions.md).
 
 The MediaPipe setting [`CalculatorGraphConfig::max_queue_size`] limits the
 number of packets enqueued on any input stream by throttling inputs to the
@@ -129,7 +129,7 @@ streams, then latency will continue to increase, and it becomes necessary to
 drop some input packets. The recommended technique is to use the MediaPipe
 calculators designed specifically for this purpose such as
 [`FlowLimiterCalculator`] as described in
-[How to process realtime input streams](how_to_questions.md#how-to-process-realtime-input-streams).
+[How to process realtime input streams](how_to_questions.md).
 
 [`CalculatorGraphConfig`]: https://github.com/google/mediapipe/tree/master/mediapipe/framework/calculator.proto
 [`CalculatorGraphConfig::max_queue_size`]: https://github.com/google/mediapipe/tree/master/mediapipe/framework/calculator.proto

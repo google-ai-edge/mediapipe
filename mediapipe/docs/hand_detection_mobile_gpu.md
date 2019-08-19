@@ -58,8 +58,9 @@ The hand detection [main graph](#main-graph) internally utilizes a
 [hand detection subgraph](#hand-detection-subgraph). The subgraph shows up in
 the main graph visualization as the `HandDetection` node colored in purple, and
 the subgraph itself can also be visualized just like a regular graph. For more
-information on how to visualize a graph that includes subgraphs, see
-[visualizing subgraphs](./visualizer.md#visualizing-subgraphs).
+information on how to visualize a graph that includes subgraphs, see the
+Visualizing Subgraphs section in the
+[visualizer documentation](./visualizer.md).
 
 ### Main Graph
 

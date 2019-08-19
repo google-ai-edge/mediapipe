@@ -22,6 +22,15 @@ performed only within the hand rectangle for computational efficiency and
 accuracy, and hand detection is only invoked when landmark localization could
 not identify hand presence in the previous iteration.
 
+The example also comes with an experimental mode that localizes hand landmarks
+in 3D (i.e., estimating an extra z coordinate):
+
+![hand_tracking_3d_android_gpu.gif](images/mobile/hand_tracking_3d_android_gpu.gif)
+
+In the visualization above, the localized hand landmarks are represented by dots
+in different shades, with the brighter ones denoting landmarks closer to the
+camera.
+
 ## Android
 
 Please see [Hello World! in MediaPipe on Android](hello_world_android.md) for
@@ -33,6 +42,12 @@ To build the app, run:
 
 ```bash
 bazel build -c opt --config=android_arm64 mediapipe/examples/android/src/java/com/google/mediapipe/apps/handtrackinggpu
+```
+
+To build for the experimental mode that localizes hand landmarks in 3D, run:
+
+```bash
+bazel build -c opt --config=android_arm64 --define 3D=true mediapipe/examples/android/src/java/com/google/mediapipe/apps/handtrackinggpu
 ```
 
 To further install the app on an Android device, run:
@@ -56,6 +71,12 @@ Specific to this example, run:
 bazel build -c opt --config=ios_arm64 mediapipe/examples/ios/handtrackinggpu:HandTrackingGpuApp
 ```
 
+To build for the experimental mode that localizes hand landmarks in 3D, run:
+
+```bash
+bazel build -c opt --config=ios_arm64 --define 3D=true mediapipe/examples/ios/handtrackinggpu:HandTrackingGpuApp
+```
+
 ## Graph
 
 The hand tracking [main graph](#main-graph) internally utilizes a
@@ -66,7 +87,8 @@ The hand tracking [main graph](#main-graph) internally utilizes a
 The subgraphs show up in the main graph visualization as nodes colored in
 purple, and the subgraph itself can also be visualized just like a regular
 graph. For more information on how to visualize a graph that includes subgraphs,
-see [visualizing subgraphs](./visualizer.md#visualizing-subgraphs).
+see the Visualizing Subgraphs section in the
+[visualizer documentation](./visualizer.md).
 
 ### Main Graph
 
