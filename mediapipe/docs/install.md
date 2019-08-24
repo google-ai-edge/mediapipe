@@ -102,8 +102,14 @@ To build and run iOS apps:
     )
 
     ```
+    
+4.  Install GLog
 
-4.  Run the [Hello World desktop example](./hello_world_desktop.md).
+    ```
+    sudo apt-get install libgoogle-glog-dev
+    ```
+
+5.  Run the [Hello World desktop example](./hello_world_desktop.md).
 
     ```bash
     $ export GLOG_logtostderr=1
@@ -187,8 +193,14 @@ To build and run iOS apps:
     )
 
     ```
+    
+5.  Install GLog
 
-4.  Run the [Hello World desktop example](./hello_world_desktop.md).
+    ```
+    sudo apt-get install libgoogle-glog-dev
+    ```
+
+6.  Run the [Hello World desktop example](./hello_world_desktop.md).
 
     ```bash
     $ export GLOG_logtostderr=1
