@@ -111,7 +111,7 @@ class GlContextProfilerStub {
   // Not copyable or movable.
   GlContextProfilerStub(const GlContextProfilerStub&) = delete;
   GlContextProfilerStub& operator=(const GlContextProfilerStub&) = delete;
-  bool Initialze() { return false; }
+  bool Initialize() { return false; }
   void MarkTimestamp(int node_id, Timestamp input_timestamp, bool is_finish) {}
   void LogAllTimestamps() {}
 };

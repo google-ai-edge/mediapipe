@@ -643,7 +643,7 @@ Initialize the asset manager in `onCreate(Bundle)` before initializing
 `eglManager`:
 
 ```
-// Initilize asset manager so that MediaPipe native libraries can access the app assets, e.g.,
+// Initialize asset manager so that MediaPipe native libraries can access the app assets, e.g.,
 // binary graphs.
 AndroidAssetUtil.initializeNativeAssetManager(this);
 ```

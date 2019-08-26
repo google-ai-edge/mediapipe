@@ -61,7 +61,7 @@ ordering and ignores packet timestamps, which will eliminate this inconvenience.
 By default, MediaPipe calls the `Close()` method of a non-source calculator when
 all of its input streams are done. In the example graph, we want to stop the
 adder node as soon as the integer source is done. This is accomplished by
-configuring the adder node with an alternative input stream hander,
+configuring the adder node with an alternative input stream handler,
 `EarlyCloseInputStreamHandler`.
 
 ## Relevant Source Code

@@ -75,7 +75,7 @@ public class MainActivity extends AppCompatActivity {
     previewDisplayView = new SurfaceView(this);
     setupPreviewDisplayView();
 
-    // Initilize asset manager so that MediaPipe native libraries can access the app assets, e.g.,
+    // Initialize asset manager so that MediaPipe native libraries can access the app assets, e.g.,
     // binary graphs.
     AndroidAssetUtil.initializeNativeAssetManager(this);
 

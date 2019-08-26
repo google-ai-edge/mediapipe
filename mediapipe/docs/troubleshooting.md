@@ -41,7 +41,7 @@ When the library for a calculator is linked into an application binary, the
 calculator is automatically registered by name through the
 [`REGISTER_CALCULATOR`] macro using the [`registration.h`] library. Note that
 [`REGISTER_CALCULATOR`] can register a calculator with a namespace prefix,
-identical to its C++ namespace. In this case, the calcultor graph must also use
+identical to its C++ namespace. In this case, the calculator graph must also use
 the same namespace prefix.
 
 ## Out Of Memory error

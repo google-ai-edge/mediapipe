@@ -82,7 +82,7 @@ class BasePacketProcessor {
 
   // Corrects the given PTS for MPEG PTS rollover. Assumed to be called with
   // the PTS of each frame in decode order. We detect a rollover whenever the
-  // PTS timestamp changes by more than 2^33/2 (half the timstamp space). For
+  // PTS timestamp changes by more than 2^33/2 (half the timestamp space). For
   // video this means every 26.5h with 1 PTS tick = 1/90000 of a second.
   // Example timeline:
   // CorrectPtsForRollover(0) -> 0

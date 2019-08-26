@@ -32,7 +32,7 @@ namespace mediapipe {
 namespace {
 
 // Shows validation success for a graph and a subgraph.
-TEST(ValidatedGraphConfigTest, InitilizeGraphFromProtos) {
+TEST(ValidatedGraphConfigTest, InitializeGraphFromProtos) {
   auto config_1 = ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
     type: "PassThroughGraph"
     input_stream: "INPUT:stream_1"
@@ -102,7 +102,7 @@ TEST(ValidatedGraphConfigTest, InitilizeGraphFromProtos) {
 }
 
 // Shows validation failure due to an unregistered subgraph.
-TEST(ValidatedGraphConfigTest, InitilizeGraphFromLinker) {
+TEST(ValidatedGraphConfigTest, InitializeGraphFromLinker) {
   EXPECT_FALSE(SubgraphRegistry::IsRegistered("DubQuadTestSubgraph"));
   ValidatedGraphConfig builder_1;
   ::mediapipe::Status status_1 =
@@ -114,7 +114,7 @@ TEST(ValidatedGraphConfigTest, InitilizeGraphFromLinker) {
 }
 
 // Shows validation success for a graph and a template subgraph.
-TEST(ValidatedGraphConfigTest, InitilizeTemplateFromProtos) {
+TEST(ValidatedGraphConfigTest, InitializeTemplateFromProtos) {
   mediapipe::tool::TemplateParser::Parser parser;
   CalculatorGraphTemplate config_1;
   CHECK(parser.ParseFromString(R"(
