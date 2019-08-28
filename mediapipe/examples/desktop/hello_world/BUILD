@@ -27,4 +27,7 @@ cc_binary(
         "//mediapipe/framework/port:parse_text_proto",
         "//mediapipe/framework/port:status",
     ],
+    linkopts = [
+        "-lunwind",
+    ],
 )
