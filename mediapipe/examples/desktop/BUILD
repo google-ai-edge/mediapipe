@@ -27,6 +27,5 @@ cc_library(
         "//mediapipe/framework/port:parse_text_proto",
         "//mediapipe/framework/port:status",
         "@com_google_absl//absl/strings",
-	"//external:unwind"
     ],
 )

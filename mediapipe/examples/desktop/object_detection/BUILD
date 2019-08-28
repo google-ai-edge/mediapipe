@@ -63,6 +63,9 @@ cc_binary(
         "//mediapipe/graphs/object_detection:desktop_tensorflow_calculators",
         "@org_tensorflow//tensorflow/core:direct_session",
     ],
+    linkopts = [
+        "-lunwind",
+    ],
 )
 
 cc_binary(
@@ -70,5 +73,8 @@ cc_binary(
     deps = [
         "//mediapipe/examples/desktop:simple_run_graph_main",
         "//mediapipe/graphs/object_detection:desktop_tflite_calculators",
+    ],
+    linkopts = [
+        "-lunwind",
     ],
 )
