@@ -120,7 +120,9 @@ http_archive(
 load("@org_tensorflow//tensorflow:workspace.bzl", "tf_workspace")
 tf_workspace(tf_repo_name = "org_tensorflow")
 
-# Please run $ sudo apt-get install libopencv-dev
+# Please run
+# $ sudo apt-get install libopencv-core-dev libopencv-highgui-dev \
+#                        libopencv-imgproc-dev libopencv-video-dev
 new_local_repository(
     name = "linux_opencv",
     build_file = "@//third_party:opencv_linux.BUILD",
@@ -133,7 +135,7 @@ new_local_repository(
     path = "/usr"
 )
 
-# Please run $ brew install opencv
+# Please run $ brew install opencv@3
 new_local_repository(
     name = "macos_opencv",
     build_file = "@//third_party:opencv_macos.BUILD",

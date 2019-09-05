@@ -8,9 +8,10 @@ Note: If you plan to use TensorFlow calculators and example apps, there is a
 known issue with gcc and g++ version 6.3 and 7.3. Please use other versions.
 
 Note: While Mediapipe configuring TensorFlow with Python 2, if you see the
-following error: "org_tensorflow/third_party/git/git_configure.bzl", line 14, in
-_fail fail(("%sGit Configuration Error:%s %...)))", please install the python
-future library by `$ pip install --user future `
+following error:
+'"/private/var/.../org_tensorflow/third_party/git/git_configure.bzl", line 14,
+in _fail fail(("%sGit Configuration Error:%s %...)))', please install the python
+future library by `$ pip install --user future`
 
 Choose your operating system:
 
@@ -243,22 +244,16 @@ To build and run iOS apps:
 4.  Install OpenCV and FFmpeg.
 
     Option 1. Use HomeBrew package manager tool to install the pre-compiled
-    OpenCV libraries. FFmpeg will be installed via OpenCV.
+    OpenCV 3.4.5 libraries. FFmpeg will be installed via OpenCV.
 
     ```bash
-    $ brew install opencv
-
-    # A Known issue with OpenCV 4.1.1 or above:
-    # If you see a missing dependency declaration error when building mediapipe target,
-    # you may need to uninstall glog as a temporary workaround. The error message looks like:
-    # ERROR: this rule is missing dependency declarations for the following files included
-    # by 'mediapipe/calculators/image/scale_image_utils.cc':
-    # '/usr/local/include/glog/logging.h'
-    # '/usr/local/include/glog/log_severity.h'
-    # '/usr/local/include/glog/vlog_is_on.h'
-    $ brew uninstall --ignore-dependencies glog
-    $ bazel clean --expunge
+    $ brew install opencv@3
     ```
+
+    Note: If you do `$brew install opencv`, there is a known issue caused by the
+    glog dependency of OpenCV 4.1.1 or above. The problem is solvable by
+    uninstalling the glog. You need to do `$ brew uninstall
+    --ignore-dependencies glog`
 
     Option 2. Use MacPorts package manager tool to install the OpenCV libraries.
 
