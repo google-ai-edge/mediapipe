@@ -1,0 +1,27 @@
+# MediaPipe graph, simple input and output video 
+# on CPU.
+# Used in the example in
+# mediapipie/examples/desktop/object_detection:object_detection_tensorflow.
+
+# Decodes an input video file into images and a video header.
+node {
+  calculator: "OpenCvVideoDecoderCalculator"
+  input_side_packet: "INPUT_FILE_PATH:input_video_path"
+  output_stream: "VIDEO:input_video"
+  output_stream: "VIDEO_PRESTREAM:input_video_header"
+}
+
+# Encodes the annotated images into a video file, adopting properties specified
+# in the input video header, e.g., video framerate.
+node {
+  calculator: "OpenCvVideoEncoderCalculator"
+  input_stream: "VIDEO:input_video"
+  input_stream: "VIDEO_PRESTREAM:input_video_header"
+  input_side_packet: "OUTPUT_FILE_PATH:output_video_path"
+  node_options: {
+    [type.googleapis.com/mediapipe.OpenCvVideoEncoderCalculatorOptions]: {
+      codec: "avc1"
+      video_format: "mp4"
+    }
+  }
+}

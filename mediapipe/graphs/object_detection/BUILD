@@ -50,6 +50,7 @@ cc_library(
         "//mediapipe/calculators/util:non_max_suppression_calculator",
         "//mediapipe/calculators/video:opencv_video_decoder_calculator",
         "//mediapipe/calculators/video:opencv_video_encoder_calculator",
+        "//mediapipe/calculators/video:opencv_video_imshow_calculator",
     ],
 )
 
@@ -67,6 +68,7 @@ cc_library(
         "//mediapipe/calculators/util:non_max_suppression_calculator",
         "//mediapipe/calculators/video:opencv_video_decoder_calculator",
         "//mediapipe/calculators/video:opencv_video_encoder_calculator",
+        "//mediapipe/calculators/video:opencv_video_imshow_calculator",
     ],
 )
 
