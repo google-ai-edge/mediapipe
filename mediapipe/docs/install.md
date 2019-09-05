@@ -7,6 +7,11 @@ future.
 Note: If you plan to use TensorFlow calculators and example apps, there is a
 known issue with gcc and g++ version 6.3 and 7.3. Please use other versions.
 
+Note: While Mediapipe configuring TensorFlow with Python 2, if you see the
+following error: "org_tensorflow/third_party/git/git_configure.bzl", line 14, in
+_fail fail(("%sGit Configuration Error:%s %...)))", please install the python
+future library by `$ pip install --user future `
+
 Choose your operating system:
 
 -   [Installing on Debian and Ubuntu](#installing-on-debian-and-ubuntu)
@@ -242,6 +247,17 @@ To build and run iOS apps:
 
     ```bash
     $ brew install opencv
+
+    # A Known issue with OpenCV 4.1.1 or above:
+    # If you see a missing dependency declaration error when building mediapipe target,
+    # you may need to uninstall glog as a temporary workaround. The error message looks like:
+    # ERROR: this rule is missing dependency declarations for the following files included
+    # by 'mediapipe/calculators/image/scale_image_utils.cc':
+    # '/usr/local/include/glog/logging.h'
+    # '/usr/local/include/glog/log_severity.h'
+    # '/usr/local/include/glog/vlog_is_on.h'
+    $ brew uninstall --ignore-dependencies glog
+    $ bazel clean --expunge
     ```
 
     Option 2. Use MacPorts package manager tool to install the OpenCV libraries.
