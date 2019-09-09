@@ -67,9 +67,8 @@ class GraphTracerTest : public ::testing::Test {
   }
 
   // Initializes the GraphTracer.
-  void SetUpGraphTracer(size_t size) {
+  void SetUpGraphTracer() {
     ProfilerConfig profiler_config;
-    profiler_config.set_trace_log_capacity(size);
     profiler_config.set_trace_enabled(true);
     tracer_ = absl::make_unique<GraphTracer>(profiler_config);
   }
@@ -118,7 +117,7 @@ class GraphTracerTest : public ::testing::Test {
 
 TEST_F(GraphTracerTest, EmptyTrace) {
   // Define the GraphTracer.
-  SetUpGraphTracer(1024 * 1024);
+  SetUpGraphTracer();
 
   // Validate the GraphTrace data.
   EXPECT_THAT(GetTrace(),
@@ -131,7 +130,7 @@ TEST_F(GraphTracerTest, EmptyTrace) {
 
 TEST_F(GraphTracerTest, CalculatorTrace) {
   // Define the GraphTracer, the CalculatorState, and the stream specs.
-  SetUpGraphTracer(1024 * 1024);
+  SetUpGraphTracer();
   SetUpCalculatorContext("PCalculator_1", /*node_id=*/0, {"input_stream"},
                          {"output_stream"});
   absl::Time curr_time = start_time_;
@@ -171,7 +170,7 @@ TEST_F(GraphTracerTest, CalculatorTrace) {
 
 TEST_F(GraphTracerTest, GraphTrace) {
   // Define the GraphTracer, the CalculatorState, and the stream specs.
-  SetUpGraphTracer(1024 * 1024);
+  SetUpGraphTracer();
   SetUpCalculatorContext("PCalculator_1", /*node_id=*/0, {"input_stream"},
                          {"up_1", "up_2"});
   absl::Time curr_time = start_time_;
@@ -914,11 +913,14 @@ TEST_F(GraphTracerE2ETest, DemuxGraphLog) {
 }
 
 // Read a GraphProfile from a file path.
-void ReadGraphProfile(const std::string& path, GraphProfile* profile) {
+::mediapipe::Status ReadGraphProfile(const std::string& path,
+                                     GraphProfile* profile) {
   std::ifstream ifs;
   ifs.open(path);
   proto_ns::io::IstreamInputStream in_stream(&ifs);
   profile->ParseFromZeroCopyStream(&in_stream);
+  return ifs.is_open() ? ::mediapipe::OkStatus()
+                       : ::mediapipe::UnavailableError("Cannot open");
 }
 
 TEST_F(GraphTracerE2ETest, DemuxGraphLogFile) {
@@ -928,7 +930,8 @@ TEST_F(GraphTracerE2ETest, DemuxGraphLogFile) {
   graph_config_.mutable_profiler_config()->set_trace_log_interval_usec(-1);
   RunDemuxInFlightGraph();
   GraphProfile profile;
-  ReadGraphProfile(absl::StrCat(log_path, 0, ".binarypb"), &profile);
+  MEDIAPIPE_EXPECT_OK(
+      ReadGraphProfile(absl::StrCat(log_path, 0, ".binarypb"), &profile));
   EXPECT_EQ(89, profile.graph_trace(0).calculator_trace().size());
 }
 
@@ -937,22 +940,24 @@ TEST_F(GraphTracerE2ETest, DemuxGraphLogFiles) {
   SetUpDemuxInFlightGraph();
   graph_config_.mutable_profiler_config()->set_trace_log_path(log_path);
   graph_config_.mutable_profiler_config()->set_trace_log_count(100);
-  graph_config_.mutable_profiler_config()->set_trace_log_interval_count(10);
+  graph_config_.mutable_profiler_config()->set_trace_log_interval_count(5);
   graph_config_.mutable_profiler_config()->set_trace_log_interval_usec(2500);
   RunDemuxInFlightGraph();
   std::vector<int> event_counts;
   std::vector<GraphProfile> graph_profiles;
   for (int i = 0; i < 7; ++i) {
     GraphProfile profile;
-    ReadGraphProfile(absl::StrCat(log_path, i, ".binarypb"), &profile);
-    int count = 0;
-    for (auto trace : *profile.mutable_graph_trace()) {
-      count += trace.calculator_trace().size();
+    std::string log_file_name = absl::StrCat(log_path, i, ".binarypb");
+    if (ReadGraphProfile(log_file_name, &profile).ok()) {
+      int count = 0;
+      for (auto trace : *profile.mutable_graph_trace()) {
+        count += trace.calculator_trace().size();
+      }
+      event_counts.push_back(count);
+      graph_profiles.push_back(profile);
     }
-    event_counts.push_back(count);
-    graph_profiles.push_back(profile);
   }
-  std::vector<int> expected = {37, 42, 19, 0, 0, 0, 0};
+  std::vector<int> expected = {37, 52, 9};
   EXPECT_EQ(event_counts, expected);
   GraphProfile& profile_2 = graph_profiles[2];
   profile_2.clear_calculator_profiles();
@@ -972,179 +977,6 @@ TEST_F(GraphTracerE2ETest, DemuxGraphLogFiles) {
                   calculator_name: "LambdaCalculator_1"
                   calculator_name: "LambdaCalculator"
                   calculator_name: "ImmediateMuxCalculator"
-                  stream_name: ""
-                  stream_name: "input_packets_0"
-                  stream_name: "input_0_sampled"
-                  stream_name: "input_0"
-                  stream_name: "input_1"
-                  stream_name: "output_0"
-                  stream_name: "output_packets_0"
-                  stream_name: "finish_indicator"
-                  stream_name: "output_1"
-                }
-                graph_trace {
-                  base_time: 1544086800000000
-                  base_timestamp: 0
-                  stream_name: ""
-                  stream_name: "input_packets_0"
-                  stream_name: "input_0_sampled"
-                  stream_name: "input_0"
-                  stream_name: "input_1"
-                  stream_name: "output_0"
-                  stream_name: "output_packets_0"
-                  stream_name: "finish_indicator"
-                  stream_name: "output_1"
-                }
-                graph_trace {
-                  base_time: 1544086800000000
-                  base_timestamp: 0
-                  stream_name: ""
-                  stream_name: "input_packets_0"
-                  stream_name: "input_0_sampled"
-                  stream_name: "input_0"
-                  stream_name: "input_1"
-                  stream_name: "output_0"
-                  stream_name: "output_packets_0"
-                  stream_name: "finish_indicator"
-                  stream_name: "output_1"
-                }
-                graph_trace {
-                  base_time: 1544086800000000
-                  base_timestamp: 0
-                  stream_name: ""
-                  stream_name: "input_packets_0"
-                  stream_name: "input_0_sampled"
-                  stream_name: "input_0"
-                  stream_name: "input_1"
-                  stream_name: "output_0"
-                  stream_name: "output_packets_0"
-                  stream_name: "finish_indicator"
-                  stream_name: "output_1"
-                }
-                graph_trace {
-                  base_time: 1544086800000000
-                  base_timestamp: 0
-                  stream_name: ""
-                  stream_name: "input_packets_0"
-                  stream_name: "input_0_sampled"
-                  stream_name: "input_0"
-                  stream_name: "input_1"
-                  stream_name: "output_0"
-                  stream_name: "output_packets_0"
-                  stream_name: "finish_indicator"
-                  stream_name: "output_1"
-                }
-                graph_trace {
-                  base_time: 1544086800000000
-                  base_timestamp: 0
-                  stream_name: ""
-                  stream_name: "input_packets_0"
-                  stream_name: "input_0_sampled"
-                  stream_name: "input_0"
-                  stream_name: "input_1"
-                  stream_name: "output_0"
-                  stream_name: "output_packets_0"
-                  stream_name: "finish_indicator"
-                  stream_name: "output_1"
-                }
-                graph_trace {
-                  base_time: 1544086800000000
-                  base_timestamp: 0
-                  stream_name: ""
-                  stream_name: "input_packets_0"
-                  stream_name: "input_0_sampled"
-                  stream_name: "input_0"
-                  stream_name: "input_1"
-                  stream_name: "output_0"
-                  stream_name: "output_packets_0"
-                  stream_name: "finish_indicator"
-                  stream_name: "output_1"
-                  calculator_trace {
-                    node_id: 3
-                    input_timestamp: 50000
-                    event_type: PROCESS
-                    finish_time: 65004
-                    output_trace { packet_timestamp: 50000 stream_id: 5 }
-                  }
-                  calculator_trace {
-                    node_id: 5
-                    event_type: READY_FOR_PROCESS
-                    start_time: 65004
-                  }
-                  calculator_trace {
-                    node_id: 3
-                    event_type: READY_FOR_CLOSE
-                    start_time: 65004
-                  }
-                  calculator_trace {
-                    node_id: 5
-                    input_timestamp: 50000
-                    event_type: PROCESS
-                    start_time: 65004
-                    finish_time: 65004
-                    input_trace {
-                      start_time: 65004
-                      finish_time: 65004
-                      packet_timestamp: 50000
-                      stream_id: 5
-                    }
-                    output_trace { packet_timestamp: 50000 stream_id: 6 }
-                    output_trace { packet_timestamp: 50000 stream_id: 7 }
-                  }
-                  calculator_trace {
-                    node_id: 1
-                    event_type: READY_FOR_PROCESS
-                    start_time: 65004
-                  }
-                  calculator_trace {
-                    node_id: 5
-                    event_type: NOT_READY
-                    start_time: 65004
-                  }
-                  calculator_trace {
-                    node_id: 5
-                    event_type: READY_FOR_PROCESS
-                    start_time: 65004
-                  }
-                  calculator_trace {
-                    node_id: 5
-                    event_type: NOT_READY
-                    start_time: 65004
-                  }
-                  calculator_trace {
-                    node_id: 1
-                    input_timestamp: 50000
-                    event_type: PROCESS
-                    start_time: 65004
-                    input_trace {
-                      start_time: 65004
-                      finish_time: 65004
-                      packet_timestamp: 50000
-                      stream_id: 7
-                    }
-                  }
-                  calculator_trace {
-                    node_id: 1
-                    event_type: NOT_READY
-                    start_time: 65004
-                  }
-                }
-                graph_trace {
-                  base_time: 1544086800000000
-                  base_timestamp: 0
-                  stream_name: ""
-                  stream_name: "input_packets_0"
-                  stream_name: "input_0_sampled"
-                  stream_name: "input_0"
-                  stream_name: "input_1"
-                  stream_name: "output_0"
-                  stream_name: "output_packets_0"
-                  stream_name: "finish_indicator"
-                  stream_name: "output_1"
-                }
-                graph_trace {
-                  base_time: 1544086800000000
-                  base_timestamp: 0
                   stream_name: ""
                   stream_name: "input_packets_0"
                   stream_name: "input_0_sampled"
@@ -1288,7 +1120,7 @@ TEST_F(GraphTracerE2ETest, DemuxGraphLogFiles) {
                     num_histogram_intervals: 100
                     trace_log_count: 100
                     trace_log_interval_usec: 2500
-                    trace_log_interval_count: 10
+                    trace_log_interval_count: 5
                     trace_enabled: true
                   }
                 }
@@ -1426,6 +1258,31 @@ TEST_F(GraphTracerE2ETest, GpuTaskTrace) {
               thread_id: 0
             }
           )")));
+}
+
+// Show that trace_enabled activates the GlContextProfiler.
+TEST_F(GraphTracerE2ETest, GpuTracing) {
+  CHECK(proto_ns::TextFormat::ParseFromString(R"(
+        input_stream: "input_buffer"
+        input_stream: "render_data"
+        output_stream: "annotated_buffer"
+        node {
+          calculator: "AnnotationOverlayCalculator"
+          input_stream: "INPUT_FRAME:input_buffer"
+          input_stream: "render_data"
+          output_stream: "OUTPUT_FRAME:annotated_buffer"
+        }
+        profiler_config {
+          trace_enabled: true
+        }
+        )",
+                                              &graph_config_));
+
+  // Create the CalculatorGraph with only trace_enabled set.
+  MEDIAPIPE_ASSERT_OK(graph_.Initialize(graph_config_, {}));
+  // Check that GPU profiling is enabled wihout running the graph.
+  // This graph with GlFlatColorCalculator cannot run on desktop.
+  EXPECT_NE(nullptr, graph_.profiler()->CreateGlProfilingHelper());
 }
 
 }  // namespace

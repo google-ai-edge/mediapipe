@@ -226,6 +226,7 @@ cc_test(
         "//mediapipe/calculators/core:flow_limiter_calculator",
         "//mediapipe/calculators/core:immediate_mux_calculator",
         "//mediapipe/calculators/core:round_robin_demux_calculator",
+        "//mediapipe/calculators/util:annotation_overlay_calculator",
         "//mediapipe/framework:calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework:calculator_profile_cc_proto",

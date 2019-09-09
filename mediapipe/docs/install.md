@@ -238,7 +238,7 @@ To build and run iOS apps:
     ```
 
     Option 2. Follow Bazel's
-    [documentation](https://docs.bazel.build/versions/master/install-ubuntu.html)
+    [documentation](https://docs.bazel.build/versions/master/install-os-x.html#install-with-installer-mac-os-x)
     to install any version of Bazel manually.
 
 4.  Install OpenCV and FFmpeg.
@@ -600,15 +600,30 @@ The steps below use Android Studio to build and install a MediaPipe example app.
 
 5.  Select `Configure` | `Plugins` install `Bazel`.
 
-6.  Select `Import Bazel Project`.
+6.  Select `Android Studio` | `Preferences` | `Bazel settings` and modify `Bazel binary location` to be the same as the output of `$ which bazel`.
+
+7.  Select `Import Bazel Project`.
 
     *   Select `Workspace`: `/path/to/mediapipe`.
     *   Select `Generate from BUILD file`: `/path/to/mediapipe/BUILD`.
-    *   Select `Finish`.
+    *   Modify `Project View` to be the following and select `Finish`.
 
-7.  Connect an Android device to the workstation.
+    ```
+    directories:
+      # read project settings, e.g., .bazelrc
+      .
+      -mediapipe/objc
+      -mediapipe/examples/ios
 
-8.  Select `Run...` | `Edit Configurations...`.
+    targets:
+      //mediapipe/...:all
+
+    android_sdk_platform: android-29
+    ```
+
+8.  Connect an Android device to the workstation.
+
+9.  Select `Run...` | `Edit Configurations...`.
 
     *   Enter Target Expression:
         `//mediapipe/examples/android/src/java/com/google/mediapipe/apps/facedetectioncpu`

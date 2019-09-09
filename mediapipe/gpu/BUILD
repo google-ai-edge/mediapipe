@@ -766,6 +766,16 @@ proto_library(
     deps = ["//mediapipe/framework:calculator_proto"],
 )
 
+mediapipe_cc_proto_library(
+    name = "copy_calculator_cc_proto",
+    srcs = ["copy_calculator.proto"],
+    cc_deps = [
+        "//mediapipe/framework:calculator_cc_proto",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [":copy_calculator_proto"],
+)
+
 objc_library(
     name = "metal_copy_calculator",
     srcs = ["MetalCopyCalculator.mm"],
@@ -850,19 +860,6 @@ objc_library(
         "//mediapipe/objc:mediapipe_framework_ios",
     ],
     alwayslink = 1,
-)
-
-### Tests
-
-cc_library(
-    name = "gpu_test_base",
-    testonly = 1,
-    hdrs = ["gpu_test_base.h"],
-    deps = [
-        ":gl_calculator_helper",
-        ":gpu_shared_data_internal",
-        "//testing/base/public:gunit_for_library_testonly",
-    ],
 )
 
 MIN_IOS_VERSION = "9.0"  # For thread_local.
