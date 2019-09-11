@@ -194,7 +194,7 @@ const float SpectrogramCalculator::kLnPowerToDb = 4.342944819032518;
   }
 
   TimeSeriesHeader input_header;
-  RETURN_IF_ERROR(time_series_util::FillTimeSeriesHeaderIfValid(
+  MP_RETURN_IF_ERROR(time_series_util::FillTimeSeriesHeaderIfValid(
       cc->Inputs().Index(0).Header(), &input_header));
 
   input_sample_rate_ = input_header.sample_rate();

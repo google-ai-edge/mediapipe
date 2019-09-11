@@ -277,7 +277,6 @@ cc_library(
     copts = select({
         "//conditions:default": [],
         "//mediapipe:apple": [
-            "-std=c++11",
             "-ObjC++",
         ],
         "//mediapipe:macos": [],

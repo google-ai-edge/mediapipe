@@ -171,7 +171,7 @@ TEST_F(ImageFrameToTensorCalculatorTest, SolidRedRGBFrame) {
     runner_ = ::absl::make_unique<CalculatorRunner>(
         "ImageFrameToTensorCalculator", "", 1, 1, 0);
     AddRGBFrame(width, height);
-    MEDIAPIPE_ASSERT_OK(runner_->Run());
+    MP_ASSERT_OK(runner_->Run());
     const std::vector<Packet>& output_packets =
         runner_->Outputs().Index(0).packets;
     ASSERT_EQ(1, output_packets.size());
@@ -212,7 +212,7 @@ TEST_F(ImageFrameToTensorCalculatorTest, SolidRedRGBAFrame) {
     runner_.reset(
         new CalculatorRunner("ImageFrameToTensorCalculator", "", 1, 1, 0));
     AddRGBAFrame(width, height);
-    MEDIAPIPE_ASSERT_OK(runner_->Run());
+    MP_ASSERT_OK(runner_->Run());
     const std::vector<Packet>& output_packets =
         runner_->Outputs().Index(0).packets;
     ASSERT_EQ(1, output_packets.size());
@@ -254,7 +254,7 @@ TEST_F(ImageFrameToTensorCalculatorTest, SolidGray8Frame) {
     runner_.reset(
         new CalculatorRunner("ImageFrameToTensorCalculator", "", 1, 1, 0));
     AddGray8Frame(width, height);
-    MEDIAPIPE_ASSERT_OK(runner_->Run());
+    MP_ASSERT_OK(runner_->Run());
     const std::vector<Packet>& output_packets =
         runner_->Outputs().Index(0).packets;
     ASSERT_EQ(1, output_packets.size());
@@ -293,7 +293,7 @@ TEST_F(ImageFrameToTensorCalculatorTest, SolidGray16Frame) {
     runner_.reset(
         new CalculatorRunner("ImageFrameToTensorCalculator", "", 1, 1, 0));
     AddGray16Frame(width, height);
-    MEDIAPIPE_ASSERT_OK(runner_->Run());
+    MP_ASSERT_OK(runner_->Run());
     const std::vector<Packet>& output_packets =
         runner_->Outputs().Index(0).packets;
     ASSERT_EQ(1, output_packets.size());
@@ -332,7 +332,7 @@ TEST_F(ImageFrameToTensorCalculatorTest, SolidFloatFrame) {
     runner_.reset(
         new CalculatorRunner("ImageFrameToTensorCalculator", "", 1, 1, 0));
     AddFloatFrame(width, height);
-    MEDIAPIPE_ASSERT_OK(runner_->Run());
+    MP_ASSERT_OK(runner_->Run());
     const std::vector<Packet>& output_packets =
         runner_->Outputs().Index(0).packets;
     ASSERT_EQ(1, output_packets.size());
@@ -363,7 +363,7 @@ TEST_F(ImageFrameToTensorCalculatorTest, FixedNoiseRGBFrame) {
   runner_.reset(
       new CalculatorRunner("ImageFrameToTensorCalculator", "", 1, 1, 0));
   AddFixedNoiseRGBFrame();
-  MEDIAPIPE_ASSERT_OK(runner_->Run());
+  MP_ASSERT_OK(runner_->Run());
   const std::vector<Packet>& output_packets =
       runner_->Outputs().Index(0).packets;
   ASSERT_EQ(1, output_packets.size());
@@ -396,7 +396,7 @@ TEST_F(ImageFrameToTensorCalculatorTest, RandomRGBFrame) {
     runner_.reset(
         new CalculatorRunner("ImageFrameToTensorCalculator", "", 1, 1, 0));
     AddRandomRGBFrame(width, height, seed);
-    MEDIAPIPE_ASSERT_OK(runner_->Run());
+    MP_ASSERT_OK(runner_->Run());
     const std::vector<Packet>& output_packets =
         runner_->Outputs().Index(0).packets;
     ASSERT_EQ(1, output_packets.size());
@@ -440,7 +440,7 @@ TEST_F(ImageFrameToTensorCalculatorTest, FixedRGBFrameWithMeanAndStddev) {
 
   runner_->MutableInputs()->Index(0).packets.push_back(
       Adopt(image_frame.release()).At(Timestamp(0)));
-  MEDIAPIPE_ASSERT_OK(runner_->Run());
+  MP_ASSERT_OK(runner_->Run());
 
   const auto& tensor = runner_->Outputs().Index(0).packets[0].Get<tf::Tensor>();
   EXPECT_EQ(tensor.dtype(), tf::DT_FLOAT);

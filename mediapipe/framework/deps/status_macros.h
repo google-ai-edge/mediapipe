@@ -31,8 +31,8 @@
 //
 // For example:
 //   ::mediapipe::Status MultiStepFunction() {
-//     RETURN_IF_ERROR(Function(args...));
-//     RETURN_IF_ERROR(foo.Method(args...));
+//     MP_RETURN_IF_ERROR(Function(args...));
+//     MP_RETURN_IF_ERROR(foo.Method(args...));
 //     return ::mediapipe::OkStatus();
 //   }
 //
@@ -42,8 +42,8 @@
 //
 // For example:
 //   ::mediapipe::Status MultiStepFunction() {
-//     RETURN_IF_ERROR(Function(args...)) << "in MultiStepFunction";
-//     RETURN_IF_ERROR(foo.Method(args...)).Log(base_logging::ERROR)
+//     MP_RETURN_IF_ERROR(Function(args...)) << "in MultiStepFunction";
+//     MP_RETURN_IF_ERROR(foo.Method(args...)).Log(base_logging::ERROR)
 //         << "while processing query: " << query.DebugString();
 //     return ::mediapipe::OkStatus();
 //   }
@@ -58,8 +58,8 @@
 //     return std::move(builder.Log(base_logging::WARNING).Attach(...));
 //   }
 //
-//   RETURN_IF_ERROR(foo()).With(TeamPolicy);
-//   RETURN_IF_ERROR(bar()).With(TeamPolicy);
+//   MP_RETURN_IF_ERROR(foo()).With(TeamPolicy);
+//   MP_RETURN_IF_ERROR(bar()).With(TeamPolicy);
 //
 // Changing the return type allows the macro to be used with Task and Rpc
 // interfaces.  See `::mediapipe::TaskReturn` and `rpc::RpcSetStatus` for
@@ -67,8 +67,8 @@
 //
 //   void Read(StringPiece name, ::mediapipe::Task* task) {
 //     int64 id;
-//     RETURN_IF_ERROR(GetIdForName(name, &id)).With(TaskReturn(task));
-//     RETURN_IF_ERROR(ReadForId(id)).With(TaskReturn(task));
+//     MP_RETURN_IF_ERROR(GetIdForName(name, &id)).With(TaskReturn(task));
+//     MP_RETURN_IF_ERROR(ReadForId(id)).With(TaskReturn(task));
 //     task->Return();
 //   }
 //
@@ -77,11 +77,11 @@
 // `::mediapipe::Status` type. E.g.
 //
 //   []() -> ::mediapipe::Status {
-//     RETURN_IF_ERROR(Function(args...));
-//     RETURN_IF_ERROR(foo.Method(args...));
+//     MP_RETURN_IF_ERROR(Function(args...));
+//     MP_RETURN_IF_ERROR(foo.Method(args...));
 //     return ::mediapipe::OkStatus();
 //   }
-#define RETURN_IF_ERROR(expr)                                             \
+#define MP_RETURN_IF_ERROR(expr)                                          \
   STATUS_MACROS_IMPL_ELSE_BLOCKER_                                        \
   if (::mediapipe::status_macro_internal::StatusAdaptorForMacros          \
           status_macro_internal_adaptor = {(expr), __FILE__, __LINE__}) { \
@@ -124,7 +124,7 @@
 // well as a `::mediapipe::StatusBuilder` object populated with the error and
 // named by a single underscore `_`. The expression typically uses the
 // builder to modify the status and is returned directly in manner similar
-// to RETURN_IF_ERROR. The expression may, however, evaluate to any type
+// to MP_RETURN_IF_ERROR. The expression may, however, evaluate to any type
 // returnable by the function, including (void). For example:
 //
 // Example: Adjusting the error message.
@@ -175,7 +175,7 @@
 // because it thinks you might want the else to bind to the first if.  This
 // leads to problems with code like:
 //
-//   if (do_expr) RETURN_IF_ERROR(expr) << "Some message";
+//   if (do_expr) MP_RETURN_IF_ERROR(expr) << "Some message";
 //
 // The "switch (0) case 0:" idiom is used to suppress this.
 #define STATUS_MACROS_IMPL_ELSE_BLOCKER_ \

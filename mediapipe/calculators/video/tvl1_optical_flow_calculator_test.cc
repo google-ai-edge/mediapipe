@@ -49,12 +49,12 @@ void AddInputPackets(int num_packets, CalculatorGraph* graph) {
   }
 
   for (int i = 0; i < num_packets; ++i) {
-    MEDIAPIPE_ASSERT_OK(graph->AddPacketToInputStream(
-        "first_frames", packet1.At(Timestamp(i))));
-    MEDIAPIPE_ASSERT_OK(graph->AddPacketToInputStream(
-        "second_frames", packet2.At(Timestamp(i))));
+    MP_ASSERT_OK(graph->AddPacketToInputStream("first_frames",
+                                               packet1.At(Timestamp(i))));
+    MP_ASSERT_OK(graph->AddPacketToInputStream("second_frames",
+                                               packet2.At(Timestamp(i))));
   }
-  MEDIAPIPE_ASSERT_OK(graph->CloseAllInputStreams());
+  MP_ASSERT_OK(graph->CloseAllInputStreams());
 }
 
 void RunTest(int num_input_packets, int max_in_flight) {
@@ -74,7 +74,7 @@ void RunTest(int num_input_packets, int max_in_flight) {
   )",
                        max_in_flight));
   CalculatorGraph graph;
-  MEDIAPIPE_ASSERT_OK(graph.Initialize(config));
+  MP_ASSERT_OK(graph.Initialize(config));
   StatusOrPoller status_or_poller1 =
       graph.AddOutputStreamPoller("forward_flow");
   ASSERT_TRUE(status_or_poller1.ok());
@@ -84,7 +84,7 @@ void RunTest(int num_input_packets, int max_in_flight) {
   ASSERT_TRUE(status_or_poller2.ok());
   OutputStreamPoller poller2 = std::move(status_or_poller2.ValueOrDie());
 
-  MEDIAPIPE_ASSERT_OK(graph.StartRun({}));
+  MP_ASSERT_OK(graph.StartRun({}));
   AddInputPackets(num_input_packets, &graph);
   Packet packet;
   std::vector<Packet> forward_optical_flow_packets;
@@ -95,7 +95,7 @@ void RunTest(int num_input_packets, int max_in_flight) {
   while (poller2.Next(&packet)) {
     backward_optical_flow_packets.emplace_back(packet);
   }
-  MEDIAPIPE_ASSERT_OK(graph.WaitUntilDone());
+  MP_ASSERT_OK(graph.WaitUntilDone());
   EXPECT_EQ(num_input_packets, forward_optical_flow_packets.size());
 
   int count = 0;

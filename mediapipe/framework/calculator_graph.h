@@ -77,17 +77,17 @@ typedef ::mediapipe::StatusOr<OutputStreamPoller> StatusOrPoller;
 //   #include "mediapipe/framework/calculator_framework.h"
 //
 //   mediapipe::CalculatorGraphConfig config;
-//   RETURN_IF_ERROR(mediapipe::tool::ParseGraphFromString(kGraphStr, &config));
-//   mediapipe::CalculatorGraph graph;
-//   RETURN_IF_ERROR(graph.Initialize(config));
+//   MP_RETURN_IF_ERROR(mediapipe::tool::ParseGraphFromString(kGraphStr,
+//   &config)); mediapipe::CalculatorGraph graph;
+//   MP_RETURN_IF_ERROR(graph.Initialize(config));
 //
 //   std::map<std::string, mediapipe::Packet> extra_side_packets;
 //   extra_side_packets["video_id"] = mediapipe::MakePacket<std::string>(
 //       "3edb9503834e9b42");
-//   RETURN_IF_ERROR(graph.Run(extra_side_packets));
+//   MP_RETURN_IF_ERROR(graph.Run(extra_side_packets));
 //
 //   // Run again (demonstrating the more concise initializer list syntax).
-//   RETURN_IF_ERROR(graph.Run(
+//   MP_RETURN_IF_ERROR(graph.Run(
 //       {{"video_id", mediapipe::MakePacket<std::string>("Ex-uGhDzue4")}}));
 //   // See mediapipe/framework/graph_runner.h for an interface
 //   // to insert and extract packets from a graph as it runs.
@@ -186,15 +186,15 @@ class CalculatorGraph {
   // subsequent call to StartRun can be attempted.
   //
   // Example:
-  //   RETURN_IF_ERROR(graph.StartRun(...));
+  //   MP_RETURN_IF_ERROR(graph.StartRun(...));
   //   while (true) {
   //     if (graph.HasError() || want_to_stop) break;
-  //     RETURN_IF_ERROR(graph.AddPacketToInputStream(...));
+  //     MP_RETURN_IF_ERROR(graph.AddPacketToInputStream(...));
   //   }
   //   for (const std::string& stream : streams) {
-  //     RETURN_IF_ERROR(graph.CloseInputStream(stream));
+  //     MP_RETURN_IF_ERROR(graph.CloseInputStream(stream));
   //   }
-  //   RETURN_IF_ERROR(graph.WaitUntilDone());
+  //   MP_RETURN_IF_ERROR(graph.WaitUntilDone());
   ::mediapipe::Status StartRun(
       const std::map<std::string, Packet>& extra_side_packets) {
     return StartRun(extra_side_packets, {});

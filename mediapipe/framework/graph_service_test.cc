@@ -56,8 +56,8 @@ class GraphServiceTest : public ::testing::Test {
             output_stream: "out"
           }
         )");
-    MEDIAPIPE_ASSERT_OK(graph_.Initialize(config));
-    MEDIAPIPE_ASSERT_OK(
+    MP_ASSERT_OK(graph_.Initialize(config));
+    MP_ASSERT_OK(
         graph_.ObserveOutputStream("out", [this](const Packet& packet) {
           output_packets_.push_back(packet);
           return ::mediapipe::OkStatus();
@@ -72,26 +72,26 @@ TEST_F(GraphServiceTest, SetOnGraph) {
   EXPECT_EQ(graph_.GetServiceObject(kTestService).get(), nullptr);
   auto service_object =
       std::make_shared<TestServiceObject>(TestServiceObject{{"delta", 3}});
-  MEDIAPIPE_EXPECT_OK(graph_.SetServiceObject(kTestService, service_object));
+  MP_EXPECT_OK(graph_.SetServiceObject(kTestService, service_object));
   EXPECT_EQ(graph_.GetServiceObject(kTestService), service_object);
 
   service_object = std::make_shared<TestServiceObject>(
       TestServiceObject{{"delta", 5}, {"count", 0}});
 
-  MEDIAPIPE_EXPECT_OK(graph_.SetServiceObject(kTestService, service_object));
+  MP_EXPECT_OK(graph_.SetServiceObject(kTestService, service_object));
   EXPECT_EQ(graph_.GetServiceObject(kTestService), service_object);
 }
 
 TEST_F(GraphServiceTest, UseInCalculator) {
   auto service_object = std::make_shared<TestServiceObject>(
       TestServiceObject{{"delta", 5}, {"count", 0}});
-  MEDIAPIPE_EXPECT_OK(graph_.SetServiceObject(kTestService, service_object));
+  MP_EXPECT_OK(graph_.SetServiceObject(kTestService, service_object));
 
-  MEDIAPIPE_ASSERT_OK(graph_.StartRun({}));
-  MEDIAPIPE_ASSERT_OK(
+  MP_ASSERT_OK(graph_.StartRun({}));
+  MP_ASSERT_OK(
       graph_.AddPacketToInputStream("in", MakePacket<int>(3).At(Timestamp(0))));
-  MEDIAPIPE_ASSERT_OK(graph_.CloseAllInputStreams());
-  MEDIAPIPE_ASSERT_OK(graph_.WaitUntilDone());
+  MP_ASSERT_OK(graph_.CloseAllInputStreams());
+  MP_ASSERT_OK(graph_.WaitUntilDone());
   EXPECT_EQ(PacketValues<int>(output_packets_), (std::vector<int>{8}));
   EXPECT_EQ(1, (*service_object)["count"]);
 }
@@ -104,8 +104,8 @@ TEST_F(GraphServiceTest, Contract) {
         output_stream: "out"
       )");
   CalculatorContract contract;
-  MEDIAPIPE_EXPECT_OK(contract.Initialize(node));
-  MEDIAPIPE_EXPECT_OK(TestServiceCalculator::GetContract(&contract));
+  MP_EXPECT_OK(contract.Initialize(node));
+  MP_EXPECT_OK(TestServiceCalculator::GetContract(&contract));
   EXPECT_THAT(
       contract.ServiceRequests(),
       UnorderedElementsAre(Key(kTestService.key), Key(kAnotherService.key)));
@@ -125,28 +125,28 @@ TEST_F(GraphServiceTest, OptionalIsOptional) {
   // Provide only required service.
   auto service_object = std::make_shared<TestServiceObject>(
       TestServiceObject{{"delta", 5}, {"count", 0}});
-  MEDIAPIPE_EXPECT_OK(graph_.SetServiceObject(kTestService, service_object));
+  MP_EXPECT_OK(graph_.SetServiceObject(kTestService, service_object));
 
-  MEDIAPIPE_EXPECT_OK(graph_.StartRun({}));
-  MEDIAPIPE_ASSERT_OK(
+  MP_EXPECT_OK(graph_.StartRun({}));
+  MP_ASSERT_OK(
       graph_.AddPacketToInputStream("in", MakePacket<int>(3).At(Timestamp(0))));
-  MEDIAPIPE_ASSERT_OK(graph_.CloseAllInputStreams());
-  MEDIAPIPE_ASSERT_OK(graph_.WaitUntilDone());
+  MP_ASSERT_OK(graph_.CloseAllInputStreams());
+  MP_ASSERT_OK(graph_.WaitUntilDone());
   EXPECT_EQ(PacketValues<int>(output_packets_), (std::vector<int>{8}));
 }
 
 TEST_F(GraphServiceTest, OptionalIsAvailable) {
   auto service_object = std::make_shared<TestServiceObject>(
       TestServiceObject{{"delta", 5}, {"count", 0}});
-  MEDIAPIPE_EXPECT_OK(graph_.SetServiceObject(kTestService, service_object));
-  MEDIAPIPE_EXPECT_OK(
+  MP_EXPECT_OK(graph_.SetServiceObject(kTestService, service_object));
+  MP_EXPECT_OK(
       graph_.SetServiceObject(kAnotherService, std::make_shared<int>(100)));
 
-  MEDIAPIPE_EXPECT_OK(graph_.StartRun({}));
-  MEDIAPIPE_ASSERT_OK(
+  MP_EXPECT_OK(graph_.StartRun({}));
+  MP_ASSERT_OK(
       graph_.AddPacketToInputStream("in", MakePacket<int>(3).At(Timestamp(0))));
-  MEDIAPIPE_ASSERT_OK(graph_.CloseAllInputStreams());
-  MEDIAPIPE_ASSERT_OK(graph_.WaitUntilDone());
+  MP_ASSERT_OK(graph_.CloseAllInputStreams());
+  MP_ASSERT_OK(graph_.WaitUntilDone());
   EXPECT_EQ(PacketValues<int>(output_packets_), (std::vector<int>{108}));
 }
 

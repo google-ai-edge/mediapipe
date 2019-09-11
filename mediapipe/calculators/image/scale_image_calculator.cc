@@ -253,21 +253,21 @@ ScaleImageCalculator::~ScaleImageCalculator() {}
 
 ::mediapipe::Status ScaleImageCalculator::InitializeFrameInfo(
     CalculatorContext* cc) {
-  RETURN_IF_ERROR(
+  MP_RETURN_IF_ERROR(
       scale_image::FindCropDimensions(input_width_, input_height_,  //
                                       options_.min_aspect_ratio(),  //
                                       options_.max_aspect_ratio(),  //
                                       &crop_width_, &crop_height_,  //
                                       &col_start_, &row_start_));
-  RETURN_IF_ERROR(
+  MP_RETURN_IF_ERROR(
       scale_image::FindOutputDimensions(crop_width_, crop_height_,            //
                                         options_.target_width(),              //
                                         options_.target_height(),             //
                                         options_.preserve_aspect_ratio(),     //
                                         options_.scale_to_multiple_of_two(),  //
                                         &output_width_, &output_height_));
-  RETURN_IF_ERROR(FindInterpolationAlgorithm(options_.algorithm(),
-                                             &interpolation_algorithm_));
+  MP_RETURN_IF_ERROR(FindInterpolationAlgorithm(options_.algorithm(),
+                                                &interpolation_algorithm_));
   if (interpolation_algorithm_ == -1 &&
       (output_width_ > crop_width_ || output_height_ > crop_height_)) {
     output_width_ = crop_width_;
@@ -327,7 +327,7 @@ ScaleImageCalculator::~ScaleImageCalculator() {}
   bool has_override_options = cc->Inputs().HasTag("OVERRIDE_OPTIONS");
 
   if (!has_override_options) {
-    RETURN_IF_ERROR(InitializeFromOptions());
+    MP_RETURN_IF_ERROR(InitializeFromOptions());
   }
 
   if (!cc->Inputs().Get(input_data_id_).Header().IsEmpty()) {
@@ -377,8 +377,8 @@ ScaleImageCalculator::~ScaleImageCalculator() {}
     if (input_width_ > 0 && input_height_ > 0 &&
         input_format_ != ImageFormat::UNKNOWN &&
         output_format_ != ImageFormat::UNKNOWN) {
-      RETURN_IF_ERROR(ValidateImageFormats());
-      RETURN_IF_ERROR(InitializeFrameInfo(cc));
+      MP_RETURN_IF_ERROR(ValidateImageFormats());
+      MP_RETURN_IF_ERROR(InitializeFrameInfo(cc));
       std::unique_ptr<VideoHeader> output_header(new VideoHeader());
       *output_header = input_video_header_;
       output_header->format = output_format_;
@@ -461,9 +461,9 @@ ScaleImageCalculator::~ScaleImageCalculator() {}
       } else {
         output_format_ = input_format_;
       }
-      RETURN_IF_ERROR(InitializeFrameInfo(cc));
+      MP_RETURN_IF_ERROR(InitializeFrameInfo(cc));
     }
-    RETURN_IF_ERROR(ValidateImageFormats());
+    MP_RETURN_IF_ERROR(ValidateImageFormats());
   } else {
     if (input_width_ != image_frame.Width() ||
         input_height_ != image_frame.Height()) {
@@ -503,9 +503,9 @@ ScaleImageCalculator::~ScaleImageCalculator() {}
       } else {
         output_format_ = input_format_;
       }
-      RETURN_IF_ERROR(InitializeFrameInfo(cc));
+      MP_RETURN_IF_ERROR(InitializeFrameInfo(cc));
     }
-    RETURN_IF_ERROR(ValidateImageFormats());
+    MP_RETURN_IF_ERROR(ValidateImageFormats());
   } else {
     if (input_width_ != yuv_image.width() ||
         input_height_ != yuv_image.height()) {
@@ -531,7 +531,7 @@ ScaleImageCalculator::~ScaleImageCalculator() {}
       options_.MergeFrom(cc->Inputs()
                              .Tag("OVERRIDE_OPTIONS")
                              .Get<ScaleImageCalculatorOptions>());
-      RETURN_IF_ERROR(InitializeFromOptions());
+      MP_RETURN_IF_ERROR(InitializeFromOptions());
     }
     if (cc->Inputs().UsesTags() && cc->Inputs().HasTag("VIDEO_HEADER") &&
         !cc->Inputs().Tag("VIDEO_HEADER").IsEmpty()) {
@@ -548,7 +548,7 @@ ScaleImageCalculator::~ScaleImageCalculator() {}
   if (input_format_ == ImageFormat::YCBCR420P) {
     const YUVImage* yuv_image =
         &cc->Inputs().Get(input_data_id_).Get<YUVImage>();
-    RETURN_IF_ERROR(ValidateYUVImage(cc, *yuv_image));
+    MP_RETURN_IF_ERROR(ValidateYUVImage(cc, *yuv_image));
 
     if (output_format_ == ImageFormat::SRGB) {
       // TODO: For ease of implementation, YUVImage is converted to
@@ -596,7 +596,7 @@ ScaleImageCalculator::~ScaleImageCalculator() {}
     }
   } else {
     image_frame = &cc->Inputs().Get(input_data_id_).Get<ImageFrame>();
-    RETURN_IF_ERROR(ValidateImageFrame(cc, *image_frame));
+    MP_RETURN_IF_ERROR(ValidateImageFrame(cc, *image_frame));
   }
 
   std::unique_ptr<ImageFrame> cropped_image;

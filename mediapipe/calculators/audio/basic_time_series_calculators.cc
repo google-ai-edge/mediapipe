@@ -51,11 +51,11 @@ static bool SafeMultiply(int x, int y, int* result) {
 
 ::mediapipe::Status BasicTimeSeriesCalculatorBase::Open(CalculatorContext* cc) {
   TimeSeriesHeader input_header;
-  RETURN_IF_ERROR(time_series_util::FillTimeSeriesHeaderIfValid(
+  MP_RETURN_IF_ERROR(time_series_util::FillTimeSeriesHeaderIfValid(
       cc->Inputs().Index(0).Header(), &input_header));
 
   auto output_header = new TimeSeriesHeader(input_header);
-  RETURN_IF_ERROR(MutateHeader(output_header));
+  MP_RETURN_IF_ERROR(MutateHeader(output_header));
   cc->Outputs().Index(0).SetHeader(Adopt(output_header));
   return ::mediapipe::OkStatus();
 }
@@ -63,11 +63,11 @@ static bool SafeMultiply(int x, int y, int* result) {
 ::mediapipe::Status BasicTimeSeriesCalculatorBase::Process(
     CalculatorContext* cc) {
   const Matrix& input = cc->Inputs().Index(0).Get<Matrix>();
-  RETURN_IF_ERROR(time_series_util::IsMatrixShapeConsistentWithHeader(
+  MP_RETURN_IF_ERROR(time_series_util::IsMatrixShapeConsistentWithHeader(
       input, cc->Inputs().Index(0).Header().Get<TimeSeriesHeader>()));
 
   std::unique_ptr<Matrix> output(new Matrix(ProcessMatrix(input)));
-  RETURN_IF_ERROR(time_series_util::IsMatrixShapeConsistentWithHeader(
+  MP_RETURN_IF_ERROR(time_series_util::IsMatrixShapeConsistentWithHeader(
       *output, cc->Outputs().Index(0).Header().Get<TimeSeriesHeader>()));
 
   cc->Outputs().Index(0).Add(output.release(), cc->InputTimestamp());

@@ -66,17 +66,17 @@ TEST(OpenCvVideoEncoderCalculatorTest, DISABLED_TestMp4Avc720pVideo) {
   input_side_packets["output_file_path"] =
       MakePacket<std::string>(output_file_path);
   CalculatorGraph graph;
-  MEDIAPIPE_ASSERT_OK(graph.Initialize(config, input_side_packets));
+  MP_ASSERT_OK(graph.Initialize(config, input_side_packets));
   StatusOrPoller status_or_poller =
       graph.AddOutputStreamPoller("video_prestream");
   ASSERT_TRUE(status_or_poller.ok());
   OutputStreamPoller poller = std::move(status_or_poller.ValueOrDie());
 
-  MEDIAPIPE_ASSERT_OK(graph.StartRun({}));
+  MP_ASSERT_OK(graph.StartRun({}));
   Packet packet;
   while (poller.Next(&packet)) {
   }
-  MEDIAPIPE_ASSERT_OK(graph.WaitUntilDone());
+  MP_ASSERT_OK(graph.WaitUntilDone());
   const VideoHeader& video_header = packet.Get<VideoHeader>();
 
   // Checks the generated video file has the same width, height, fps, and
@@ -125,17 +125,17 @@ TEST(OpenCvVideoEncoderCalculatorTest, TestFlvH264Video) {
   input_side_packets["output_file_path"] =
       MakePacket<std::string>(output_file_path);
   CalculatorGraph graph;
-  MEDIAPIPE_ASSERT_OK(graph.Initialize(config, input_side_packets));
+  MP_ASSERT_OK(graph.Initialize(config, input_side_packets));
   StatusOrPoller status_or_poller =
       graph.AddOutputStreamPoller("video_prestream");
   ASSERT_TRUE(status_or_poller.ok());
   OutputStreamPoller poller = std::move(status_or_poller.ValueOrDie());
 
-  MEDIAPIPE_ASSERT_OK(graph.StartRun({}));
+  MP_ASSERT_OK(graph.StartRun({}));
   Packet packet;
   while (poller.Next(&packet)) {
   }
-  MEDIAPIPE_ASSERT_OK(graph.WaitUntilDone());
+  MP_ASSERT_OK(graph.WaitUntilDone());
   const VideoHeader& video_header = packet.Get<VideoHeader>();
 
   // Checks the generated video file has the same width, height, fps, and
@@ -186,17 +186,17 @@ TEST(OpenCvVideoEncoderCalculatorTest, TestMkvVp8Video) {
   input_side_packets["output_file_path"] =
       MakePacket<std::string>(output_file_path);
   CalculatorGraph graph;
-  MEDIAPIPE_ASSERT_OK(graph.Initialize(config, input_side_packets));
+  MP_ASSERT_OK(graph.Initialize(config, input_side_packets));
   StatusOrPoller status_or_poller =
       graph.AddOutputStreamPoller("video_prestream");
   ASSERT_TRUE(status_or_poller.ok());
   OutputStreamPoller poller = std::move(status_or_poller.ValueOrDie());
 
-  MEDIAPIPE_ASSERT_OK(graph.StartRun({}));
+  MP_ASSERT_OK(graph.StartRun({}));
   Packet packet;
   while (poller.Next(&packet)) {
   }
-  MEDIAPIPE_ASSERT_OK(graph.WaitUntilDone());
+  MP_ASSERT_OK(graph.WaitUntilDone());
   const VideoHeader& video_header = packet.Get<VideoHeader>();
 
   // Checks the generated video file has the same width, height, fps, and

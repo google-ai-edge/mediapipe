@@ -108,7 +108,7 @@ TEST_F(TensorFlowSessionFromFrozenGraphCalculatorTest,
         })",
                                            calculator_options_->DebugString()));
 
-  MEDIAPIPE_ASSERT_OK(runner.Run());
+  MP_ASSERT_OK(runner.Run());
   const TensorFlowSession& session =
       runner.OutputSidePackets().Tag("SESSION").Get<TensorFlowSession>();
   VerifySignatureMap(session);
@@ -148,17 +148,17 @@ TEST_F(TensorFlowSessionFromFrozenGraphCalculatorTest,
                            calculator_options_->DebugString()));
 
   CalculatorGraph graph;
-  MEDIAPIPE_ASSERT_OK(graph.Initialize(config));
+  MP_ASSERT_OK(graph.Initialize(config));
   StatusOrPoller status_or_poller =
       graph.AddOutputStreamPoller("multiplied_tensor");
   ASSERT_TRUE(status_or_poller.ok());
   OutputStreamPoller poller = std::move(status_or_poller.ValueOrDie());
 
-  MEDIAPIPE_ASSERT_OK(graph.StartRun({}));
-  MEDIAPIPE_ASSERT_OK(graph.AddPacketToInputStream(
+  MP_ASSERT_OK(graph.StartRun({}));
+  MP_ASSERT_OK(graph.AddPacketToInputStream(
       "a_tensor",
       Adopt(new auto(TensorMatrix1x3(1, -1, 10))).At(Timestamp(0))));
-  MEDIAPIPE_ASSERT_OK(graph.CloseInputStream("a_tensor"));
+  MP_ASSERT_OK(graph.CloseInputStream("a_tensor"));
 
   Packet packet;
   ASSERT_TRUE(poller.Next(&packet));
@@ -168,7 +168,7 @@ TEST_F(TensorFlowSessionFromFrozenGraphCalculatorTest,
             packet.Get<tf::Tensor>().DebugString());
 
   ASSERT_FALSE(poller.Next(&packet));
-  MEDIAPIPE_ASSERT_OK(graph.WaitUntilDone());
+  MP_ASSERT_OK(graph.WaitUntilDone());
 }
 
 TEST_F(TensorFlowSessionFromFrozenGraphCalculatorTest,
@@ -186,11 +186,11 @@ TEST_F(TensorFlowSessionFromFrozenGraphCalculatorTest,
                                            calculator_options_->DebugString()));
 
   std::string serialized_graph_contents;
-  MEDIAPIPE_EXPECT_OK(mediapipe::file::GetContents(GetGraphDefPath(),
-                                                   &serialized_graph_contents));
+  MP_EXPECT_OK(mediapipe::file::GetContents(GetGraphDefPath(),
+                                            &serialized_graph_contents));
   runner.MutableSidePackets()->Tag("STRING_MODEL") =
       Adopt(new std::string(serialized_graph_contents));
-  MEDIAPIPE_ASSERT_OK(runner.Run());
+  MP_ASSERT_OK(runner.Run());
 
   const TensorFlowSession& session =
       runner.OutputSidePackets().Tag("SESSION").Get<TensorFlowSession>();
@@ -213,7 +213,7 @@ TEST_F(
                                            calculator_options_->DebugString()));
   runner.MutableSidePackets()->Tag("STRING_MODEL_FILE_PATH") =
       Adopt(new std::string(GetGraphDefPath()));
-  MEDIAPIPE_ASSERT_OK(runner.Run());
+  MP_ASSERT_OK(runner.Run());
 
   const TensorFlowSession& session =
       runner.OutputSidePackets().Tag("SESSION").Get<TensorFlowSession>();
@@ -256,8 +256,8 @@ TEST_F(TensorFlowSessionFromFrozenGraphCalculatorTest,
   runner.MutableSidePackets()->Tag("STRING_MODEL_FILE_PATH") =
       Adopt(new std::string(GetGraphDefPath()));
   std::string serialized_graph_contents;
-  MEDIAPIPE_EXPECT_OK(mediapipe::file::GetContents(GetGraphDefPath(),
-                                                   &serialized_graph_contents));
+  MP_EXPECT_OK(mediapipe::file::GetContents(GetGraphDefPath(),
+                                            &serialized_graph_contents));
   runner.MutableSidePackets()->Tag("STRING_MODEL") =
       Adopt(new std::string(serialized_graph_contents));
   auto run_status = runner.Run();
@@ -283,8 +283,8 @@ TEST_F(TensorFlowSessionFromFrozenGraphCalculatorTest,
   runner.MutableSidePackets()->Tag("STRING_MODEL_FILE_PATH") =
       Adopt(new std::string(GetGraphDefPath()));
   std::string serialized_graph_contents;
-  MEDIAPIPE_EXPECT_OK(mediapipe::file::GetContents(GetGraphDefPath(),
-                                                   &serialized_graph_contents));
+  MP_EXPECT_OK(mediapipe::file::GetContents(GetGraphDefPath(),
+                                            &serialized_graph_contents));
   runner.MutableSidePackets()->Tag("STRING_MODEL") =
       Adopt(new std::string(serialized_graph_contents));
   auto run_status = runner.Run();
@@ -305,7 +305,7 @@ TEST_F(TensorFlowSessionFromFrozenGraphCalculatorTest,
           }
         })",
                                            calculator_options_->DebugString()));
-  MEDIAPIPE_ASSERT_OK(runner.Run());
+  MP_ASSERT_OK(runner.Run());
 
   const TensorFlowSession& session =
       runner.OutputSidePackets().Tag("SESSION").Get<TensorFlowSession>();

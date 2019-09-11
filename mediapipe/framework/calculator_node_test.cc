@@ -159,7 +159,7 @@ class CalculatorNodeTest : public ::testing::Test {
     input_side_packets_.emplace("input_b", Adopt(new int(42)));
 
     node_.reset(new CalculatorNode());
-    MEDIAPIPE_ASSERT_OK(node_->Initialize(
+    MP_ASSERT_OK(node_->Initialize(
         &validated_graph_, 2, input_stream_managers_.get(),
         output_stream_managers_.get(), output_side_packets_.get(),
         &buffer_size_hint_, graph_profiler_));
@@ -190,7 +190,7 @@ class CalculatorNodeTest : public ::testing::Test {
          ++index) {
       const EdgeInfo& edge_info =
           validated_graph_.OutputSidePacketInfos()[index];
-      RETURN_IF_ERROR(output_side_packets_[index].Initialize(
+      MP_RETURN_IF_ERROR(output_side_packets_[index].Initialize(
           edge_info.name, edge_info.packet_type));
     }
     // END OF: code is copied from
@@ -203,7 +203,7 @@ class CalculatorNodeTest : public ::testing::Test {
     for (int index = 0; index < validated_graph_.InputStreamInfos().size();
          ++index) {
       const EdgeInfo& edge_info = validated_graph_.InputStreamInfos()[index];
-      RETURN_IF_ERROR(input_stream_managers_[index].Initialize(
+      MP_RETURN_IF_ERROR(input_stream_managers_[index].Initialize(
           edge_info.name, edge_info.packet_type, edge_info.back_edge));
     }
 
@@ -213,7 +213,7 @@ class CalculatorNodeTest : public ::testing::Test {
     for (int index = 0; index < validated_graph_.OutputStreamInfos().size();
          ++index) {
       const EdgeInfo& edge_info = validated_graph_.OutputStreamInfos()[index];
-      RETURN_IF_ERROR(output_stream_managers_[index].Initialize(
+      MP_RETURN_IF_ERROR(output_stream_managers_[index].Initialize(
           edge_info.name, edge_info.packet_type));
     }
     // END OF: code is copied from CalculatorGraph::InitializeStreams.
@@ -277,7 +277,7 @@ TEST_F(CalculatorNodeTest, Initialize) {
 
 TEST_F(CalculatorNodeTest, PrepareForRun) {
   InitializeEnvironment(/*use_tags=*/false);
-  MEDIAPIPE_ASSERT_OK(PrepareNodeForRun());
+  MP_ASSERT_OK(PrepareNodeForRun());
 
   EXPECT_TRUE(node_->Prepared());
   EXPECT_FALSE(node_->Opened());
@@ -296,11 +296,11 @@ TEST_F(CalculatorNodeTest, PrepareForRun) {
 
 TEST_F(CalculatorNodeTest, Open) {
   InitializeEnvironment(/*use_tags=*/false);
-  MEDIAPIPE_ASSERT_OK(PrepareNodeForRun());
+  MP_ASSERT_OK(PrepareNodeForRun());
 
   EXPECT_EQ(0, ready_for_open_count_);
   SimulateParentOpenNode();
-  MEDIAPIPE_EXPECT_OK(node_->OpenNode());
+  MP_EXPECT_OK(node_->OpenNode());
 
   EXPECT_TRUE(node_->Prepared());
   EXPECT_TRUE(node_->Opened());
@@ -319,10 +319,10 @@ TEST_F(CalculatorNodeTest, Open) {
 
 TEST_F(CalculatorNodeTest, Process) {
   InitializeEnvironment(/*use_tags=*/false);
-  MEDIAPIPE_ASSERT_OK(PrepareNodeForRun());
+  MP_ASSERT_OK(PrepareNodeForRun());
 
   SimulateParentOpenNode();
-  MEDIAPIPE_EXPECT_OK(node_->OpenNode());
+  MP_EXPECT_OK(node_->OpenNode());
 
   OutputStreamShard stream_a_shard;
   stream_a_shard.SetSpec(stream_a_manager_->Spec());
@@ -332,7 +332,7 @@ TEST_F(CalculatorNodeTest, Process) {
   // Expects that a CalculatorContext has been prepared.
   EXPECT_NE(nullptr, cc_);
   EXPECT_TRUE(node_->TryToBeginScheduling());
-  MEDIAPIPE_EXPECT_OK(node_->ProcessNode(cc_));
+  MP_EXPECT_OK(node_->ProcessNode(cc_));
 
   cc_ = nullptr;
   node_->EndScheduling();
@@ -356,10 +356,10 @@ TEST_F(CalculatorNodeTest, Process) {
 
 TEST_F(CalculatorNodeTest, ProcessSeveral) {
   InitializeEnvironment(/*use_tags=*/false);
-  MEDIAPIPE_ASSERT_OK(PrepareNodeForRun());
+  MP_ASSERT_OK(PrepareNodeForRun());
 
   SimulateParentOpenNode();
-  MEDIAPIPE_EXPECT_OK(node_->OpenNode());
+  MP_EXPECT_OK(node_->OpenNode());
 
   OutputStreamShard stream_a_shard;
   stream_a_shard.SetSpec(stream_a_manager_->Spec());
@@ -369,7 +369,7 @@ TEST_F(CalculatorNodeTest, ProcessSeveral) {
   EXPECT_EQ(1, schedule_count_);
   EXPECT_TRUE(node_->TryToBeginScheduling());
   EXPECT_NE(nullptr, cc_);
-  MEDIAPIPE_EXPECT_OK(node_->ProcessNode(cc_));
+  MP_EXPECT_OK(node_->ProcessNode(cc_));
   node_->EndScheduling();
   EXPECT_EQ(1, schedule_count_);
 
@@ -383,7 +383,7 @@ TEST_F(CalculatorNodeTest, ProcessSeveral) {
   EXPECT_TRUE(node_->TryToBeginScheduling());
   // Expects that a CalculatorContext has been prepared.
   EXPECT_NE(nullptr, cc_);
-  MEDIAPIPE_EXPECT_OK(node_->ProcessNode(cc_));
+  MP_EXPECT_OK(node_->ProcessNode(cc_));
   node_->EndScheduling();
   EXPECT_EQ(3, schedule_count_);
   EXPECT_TRUE(node_->TryToBeginScheduling());
@@ -397,13 +397,13 @@ TEST_F(CalculatorNodeTest, ProcessSeveral) {
   // The max parallelism is already reached.
   EXPECT_FALSE(node_->TryToBeginScheduling());
   EXPECT_NE(nullptr, cc_);
-  MEDIAPIPE_EXPECT_OK(node_->ProcessNode(cc_));
+  MP_EXPECT_OK(node_->ProcessNode(cc_));
   node_->EndScheduling();
   EXPECT_EQ(4, schedule_count_);
   EXPECT_TRUE(node_->TryToBeginScheduling());
 
   EXPECT_NE(nullptr, cc_);
-  MEDIAPIPE_EXPECT_OK(node_->ProcessNode(cc_));
+  MP_EXPECT_OK(node_->ProcessNode(cc_));
 
   cc_ = nullptr;
   node_->EndScheduling();
@@ -425,10 +425,10 @@ TEST_F(CalculatorNodeTest, ProcessSeveral) {
 
 TEST_F(CalculatorNodeTest, Close) {
   InitializeEnvironment(/*use_tags=*/false);
-  MEDIAPIPE_ASSERT_OK(PrepareNodeForRun());
+  MP_ASSERT_OK(PrepareNodeForRun());
 
   SimulateParentOpenNode();
-  MEDIAPIPE_EXPECT_OK(node_->OpenNode());
+  MP_EXPECT_OK(node_->OpenNode());
 
   OutputStreamShard stream_a_shard;
   stream_a_shard.SetSpec(stream_a_manager_->Spec());
@@ -438,11 +438,11 @@ TEST_F(CalculatorNodeTest, Close) {
   stream_a_manager_->Close();
   // The max parallelism is already reached.
   EXPECT_FALSE(node_->TryToBeginScheduling());
-  MEDIAPIPE_EXPECT_OK(node_->ProcessNode(cc_));
+  MP_EXPECT_OK(node_->ProcessNode(cc_));
   node_->EndScheduling();
 
   EXPECT_TRUE(node_->TryToBeginScheduling());
-  MEDIAPIPE_EXPECT_OK(node_->ProcessNode(cc_));
+  MP_EXPECT_OK(node_->ProcessNode(cc_));
   EXPECT_TRUE(node_->Closed());
   EXPECT_EQ(2, schedule_count_);
 
@@ -464,10 +464,10 @@ TEST_F(CalculatorNodeTest, Close) {
 
 TEST_F(CalculatorNodeTest, CleanupAfterRun) {
   InitializeEnvironment(/*use_tags=*/false);
-  MEDIAPIPE_ASSERT_OK(PrepareNodeForRun());
+  MP_ASSERT_OK(PrepareNodeForRun());
 
   SimulateParentOpenNode();
-  MEDIAPIPE_EXPECT_OK(node_->OpenNode());
+  MP_EXPECT_OK(node_->OpenNode());
   OutputStreamShard stream_a_shard;
   stream_a_shard.SetSpec(stream_a_manager_->Spec());
   stream_a_shard.Add(new int(1), Timestamp(1));
@@ -476,11 +476,11 @@ TEST_F(CalculatorNodeTest, CleanupAfterRun) {
   stream_a_manager_->Close();
   // The max parallelism is already reached.
   EXPECT_FALSE(node_->TryToBeginScheduling());
-  MEDIAPIPE_EXPECT_OK(node_->ProcessNode(cc_));
+  MP_EXPECT_OK(node_->ProcessNode(cc_));
   node_->EndScheduling();
   // Call ProcessNode again for the node to see the end of the stream.
   EXPECT_TRUE(node_->TryToBeginScheduling());
-  MEDIAPIPE_EXPECT_OK(node_->ProcessNode(cc_));
+  MP_EXPECT_OK(node_->ProcessNode(cc_));
   node_->EndScheduling();
   // The max parallelism is already reached.
   EXPECT_FALSE(node_->TryToBeginScheduling());
@@ -501,10 +501,10 @@ TEST_F(CalculatorNodeTest, CleanupAfterRun) {
 }
 
 void CalculatorNodeTest::TestCleanupAfterRunTwice() {
-  MEDIAPIPE_ASSERT_OK(PrepareNodeForRun());
+  MP_ASSERT_OK(PrepareNodeForRun());
 
   SimulateParentOpenNode();
-  MEDIAPIPE_EXPECT_OK(node_->OpenNode());
+  MP_EXPECT_OK(node_->OpenNode());
   OutputStreamShard stream_a_shard;
   stream_a_shard.SetSpec(stream_a_manager_->Spec());
   stream_a_shard.Add(new int(1), Timestamp(1));
@@ -513,20 +513,20 @@ void CalculatorNodeTest::TestCleanupAfterRunTwice() {
   stream_a_manager_->Close();
   // The max parallelism is already reached.
   EXPECT_FALSE(node_->TryToBeginScheduling());
-  MEDIAPIPE_EXPECT_OK(node_->ProcessNode(cc_));
+  MP_EXPECT_OK(node_->ProcessNode(cc_));
   node_->EndScheduling();
   // We should get Timestamp::Done here.
   EXPECT_TRUE(node_->TryToBeginScheduling());
-  MEDIAPIPE_EXPECT_OK(node_->ProcessNode(cc_));
+  MP_EXPECT_OK(node_->ProcessNode(cc_));
   node_->EndScheduling();
   node_->CleanupAfterRun(::mediapipe::OkStatus());
 
   stream_a_manager_->PrepareForRun(nullptr);
 
-  MEDIAPIPE_ASSERT_OK(PrepareNodeForRun());
+  MP_ASSERT_OK(PrepareNodeForRun());
 
   SimulateParentOpenNode();
-  MEDIAPIPE_EXPECT_OK(node_->OpenNode());
+  MP_EXPECT_OK(node_->OpenNode());
   stream_a_manager_->ResetShard(&stream_a_shard);
   stream_a_shard.Add(new int(2), Timestamp(4));
   stream_a_shard.Add(new int(3), Timestamp(8));
@@ -534,14 +534,14 @@ void CalculatorNodeTest::TestCleanupAfterRunTwice() {
   EXPECT_TRUE(node_->TryToBeginScheduling());
   stream_a_manager_->Close();
   EXPECT_FALSE(node_->TryToBeginScheduling());
-  MEDIAPIPE_EXPECT_OK(node_->ProcessNode(cc_));
+  MP_EXPECT_OK(node_->ProcessNode(cc_));
   node_->EndScheduling();
   EXPECT_TRUE(node_->TryToBeginScheduling());
-  MEDIAPIPE_EXPECT_OK(node_->ProcessNode(cc_));
+  MP_EXPECT_OK(node_->ProcessNode(cc_));
   node_->EndScheduling();
   // We should get Timestamp::Done here.
   EXPECT_TRUE(node_->TryToBeginScheduling());
-  MEDIAPIPE_EXPECT_OK(node_->ProcessNode(cc_));
+  MP_EXPECT_OK(node_->ProcessNode(cc_));
   node_->EndScheduling();
   // The max parallelism is already reached.
   EXPECT_FALSE(node_->TryToBeginScheduling());

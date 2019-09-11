@@ -58,14 +58,14 @@ TEST(CallbackFromGeneratorTest, TestAddVectorSink) {
   tool::AddVectorSink("input_packets", &graph_config, &dumped_data);
   graph_config.add_input_stream("input_packets");
   CalculatorGraph graph(graph_config);
-  MEDIAPIPE_ASSERT_OK(graph.StartRun({}));
+  MP_ASSERT_OK(graph.StartRun({}));
   for (int i = 0; i < 10; ++i) {
-    MEDIAPIPE_ASSERT_OK(graph.AddPacketToInputStream(
+    MP_ASSERT_OK(graph.AddPacketToInputStream(
         "input_packets", MakePacket<int>(i).At(Timestamp(i))));
-    MEDIAPIPE_ASSERT_OK(graph.WaitUntilIdle());
+    MP_ASSERT_OK(graph.WaitUntilIdle());
   }
-  MEDIAPIPE_ASSERT_OK(graph.CloseInputStream("input_packets"));
-  MEDIAPIPE_ASSERT_OK(graph.WaitUntilDone());
+  MP_ASSERT_OK(graph.CloseInputStream("input_packets"));
+  MP_ASSERT_OK(graph.WaitUntilDone());
   ASSERT_EQ(10, dumped_data.size());
   for (int i = 0; i < 10; ++i) {
     EXPECT_EQ(Timestamp(i), dumped_data[i].Timestamp());
@@ -87,18 +87,18 @@ TEST(CalculatorGraph, OutputSummarySidePacketInClose) {
   Packet summary_packet;
   tool::AddSidePacketSink("num_of_packets", &config, &summary_packet);
   CalculatorGraph graph;
-  MEDIAPIPE_ASSERT_OK(graph.Initialize(config));
+  MP_ASSERT_OK(graph.Initialize(config));
 
   // Run the graph twice.
   int max_count = 100;
   for (int run = 0; run < 1; ++run) {
-    MEDIAPIPE_ASSERT_OK(graph.StartRun({}));
+    MP_ASSERT_OK(graph.StartRun({}));
     for (int i = 0; i < max_count; ++i) {
-      MEDIAPIPE_ASSERT_OK(graph.AddPacketToInputStream(
+      MP_ASSERT_OK(graph.AddPacketToInputStream(
           "input_packets", MakePacket<int>(i).At(Timestamp(i))));
     }
-    MEDIAPIPE_ASSERT_OK(graph.CloseInputStream("input_packets"));
-    MEDIAPIPE_ASSERT_OK(graph.WaitUntilDone());
+    MP_ASSERT_OK(graph.CloseInputStream("input_packets"));
+    MP_ASSERT_OK(graph.WaitUntilDone());
     EXPECT_EQ(max_count, summary_packet.Get<int>());
     EXPECT_EQ(Timestamp::PostStream(), summary_packet.Timestamp());
   }
@@ -124,24 +124,24 @@ TEST(CallbackTest, TestAddMultiStreamCallback) {
       &graph_config, &cb_packet);
 
   CalculatorGraph graph(graph_config);
-  MEDIAPIPE_ASSERT_OK(graph.StartRun({cb_packet}));
+  MP_ASSERT_OK(graph.StartRun({cb_packet}));
 
-  MEDIAPIPE_ASSERT_OK(graph.AddPacketToInputStream(
+  MP_ASSERT_OK(graph.AddPacketToInputStream(
       "foo", MakePacket<int>(10).At(Timestamp(1))));
-  MEDIAPIPE_ASSERT_OK(
+  MP_ASSERT_OK(
       graph.AddPacketToInputStream("bar", MakePacket<int>(5).At(Timestamp(1))));
 
-  MEDIAPIPE_ASSERT_OK(
+  MP_ASSERT_OK(
       graph.AddPacketToInputStream("foo", MakePacket<int>(7).At(Timestamp(2))));
   // no bar input at 2
 
-  MEDIAPIPE_ASSERT_OK(
+  MP_ASSERT_OK(
       graph.AddPacketToInputStream("foo", MakePacket<int>(4).At(Timestamp(3))));
-  MEDIAPIPE_ASSERT_OK(
+  MP_ASSERT_OK(
       graph.AddPacketToInputStream("bar", MakePacket<int>(5).At(Timestamp(3))));
 
-  MEDIAPIPE_ASSERT_OK(graph.CloseAllInputStreams());
-  MEDIAPIPE_ASSERT_OK(graph.WaitUntilDone());
+  MP_ASSERT_OK(graph.CloseAllInputStreams());
+  MP_ASSERT_OK(graph.WaitUntilDone());
 
   EXPECT_THAT(sums, testing::ElementsAre(15, 7, 9));
 }

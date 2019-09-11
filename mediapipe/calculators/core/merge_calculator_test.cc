@@ -78,7 +78,7 @@ TEST(MediaPipeDetectionToSoapboxDetectionCalculatorTest,
   runner.MutableInputs()->Index(1).packets.push_back(
       Adopt(new float(35.5)).At(Timestamp(35)));
 
-  MEDIAPIPE_ASSERT_OK(runner.Run());
+  MP_ASSERT_OK(runner.Run());
 
   // Expected combined_output: 5.5, 10, 20, 30, 35.5 at times 5, 10, 20, 30, 35.
   const std::vector<Packet>& actual_output = runner.Outputs().Index(0).packets;
@@ -120,7 +120,7 @@ TEST(MediaPipeDetectionToSoapboxDetectionCalculatorTest,
   runner.MutableInputs()->Index(2).packets.push_back(
       Adopt(new char('c')).At(Timestamp(10)));
 
-  MEDIAPIPE_ASSERT_OK(runner.Run());
+  MP_ASSERT_OK(runner.Run());
 
   // Expected combined_output: 'c', 20.5, 30 at times 10, 20, 30.
   const std::vector<Packet>& actual_output = runner.Outputs().Index(0).packets;

@@ -27,12 +27,12 @@ namespace mediapipe {
 namespace {
 
 TEST(ValidateNameTest, ValidateName) {
-  MEDIAPIPE_EXPECT_OK(tool::ValidateName("humphrey"));
-  MEDIAPIPE_EXPECT_OK(tool::ValidateName("humphrey_bogart"));
-  MEDIAPIPE_EXPECT_OK(tool::ValidateName("humphrey_bogart_1899"));
-  MEDIAPIPE_EXPECT_OK(tool::ValidateName("aa"));
-  MEDIAPIPE_EXPECT_OK(tool::ValidateName("b1"));
-  MEDIAPIPE_EXPECT_OK(tool::ValidateName("_1"));
+  MP_EXPECT_OK(tool::ValidateName("humphrey"));
+  MP_EXPECT_OK(tool::ValidateName("humphrey_bogart"));
+  MP_EXPECT_OK(tool::ValidateName("humphrey_bogart_1899"));
+  MP_EXPECT_OK(tool::ValidateName("aa"));
+  MP_EXPECT_OK(tool::ValidateName("b1"));
+  MP_EXPECT_OK(tool::ValidateName("_1"));
   EXPECT_FALSE(tool::ValidateName("").ok());
   EXPECT_FALSE(tool::ValidateName("humphrey bogart").ok());
   EXPECT_FALSE(tool::ValidateName("humphreyBogart").ok());
@@ -54,12 +54,12 @@ TEST(ValidateNameTest, ValidateName) {
 }
 
 TEST(ValidateNameTest, ValidateTag) {
-  MEDIAPIPE_EXPECT_OK(tool::ValidateTag("MALE"));
-  MEDIAPIPE_EXPECT_OK(tool::ValidateTag("MALE_ACTOR"));
-  MEDIAPIPE_EXPECT_OK(tool::ValidateTag("ACTOR_1899"));
-  MEDIAPIPE_EXPECT_OK(tool::ValidateTag("AA"));
-  MEDIAPIPE_EXPECT_OK(tool::ValidateTag("B1"));
-  MEDIAPIPE_EXPECT_OK(tool::ValidateTag("_1"));
+  MP_EXPECT_OK(tool::ValidateTag("MALE"));
+  MP_EXPECT_OK(tool::ValidateTag("MALE_ACTOR"));
+  MP_EXPECT_OK(tool::ValidateTag("ACTOR_1899"));
+  MP_EXPECT_OK(tool::ValidateTag("AA"));
+  MP_EXPECT_OK(tool::ValidateTag("B1"));
+  MP_EXPECT_OK(tool::ValidateTag("_1"));
   EXPECT_FALSE(tool::ValidateTag("").ok());
   EXPECT_FALSE(tool::ValidateTag("MALE ACTOR").ok());
   EXPECT_FALSE(tool::ValidateTag("MALEaCTOR").ok());
@@ -82,24 +82,22 @@ TEST(ValidateNameTest, ParseTagAndName) {
   std::string name;
   tag = "blah";
   name = "blah";
-  MEDIAPIPE_EXPECT_OK(tool::ParseTagAndName("MALE:humphrey", &tag, &name));
+  MP_EXPECT_OK(tool::ParseTagAndName("MALE:humphrey", &tag, &name));
   EXPECT_EQ("MALE", tag);
   EXPECT_EQ("humphrey", name);
   tag = "blah";
   name = "blah";
-  MEDIAPIPE_EXPECT_OK(
-      tool::ParseTagAndName("ACTOR:humphrey_bogart", &tag, &name));
+  MP_EXPECT_OK(tool::ParseTagAndName("ACTOR:humphrey_bogart", &tag, &name));
   EXPECT_EQ("ACTOR", tag);
   EXPECT_EQ("humphrey_bogart", name);
   tag = "blah";
   name = "blah";
-  MEDIAPIPE_EXPECT_OK(
-      tool::ParseTagAndName("ACTOR_1899:humphrey_1899", &tag, &name));
+  MP_EXPECT_OK(tool::ParseTagAndName("ACTOR_1899:humphrey_1899", &tag, &name));
   EXPECT_EQ("ACTOR_1899", tag);
   EXPECT_EQ("humphrey_1899", name);
   tag = "blah";
   name = "blah";
-  MEDIAPIPE_EXPECT_OK(tool::ParseTagAndName("humphrey_bogart", &tag, &name));
+  MP_EXPECT_OK(tool::ParseTagAndName("humphrey_bogart", &tag, &name));
   EXPECT_EQ("", tag);
   EXPECT_EQ("humphrey_bogart", name);
 
@@ -122,7 +120,7 @@ TEST(ValidateNameTest, ParseTagAndName) {
   EXPECT_EQ("", name);
   tag = "blah";
   name = "blah";
-  MEDIAPIPE_EXPECT_OK(tool::ParseTagAndName("ACTOR:humphrey", &tag, &name));
+  MP_EXPECT_OK(tool::ParseTagAndName("ACTOR:humphrey", &tag, &name));
   EXPECT_EQ("ACTOR", tag);
   EXPECT_EQ("humphrey", name);
 
@@ -166,8 +164,8 @@ void TestPassParseTagIndexName(const std::string& tag_index_name,
   std::string actual_tag = "UNTOUCHED";
   int actual_index = -100;
   std::string actual_name = "untouched";
-  MEDIAPIPE_ASSERT_OK(tool::ParseTagIndexName(tag_index_name, &actual_tag,
-                                              &actual_index, &actual_name))
+  MP_ASSERT_OK(tool::ParseTagIndexName(tag_index_name, &actual_tag,
+                                       &actual_index, &actual_name))
       << "With tag_index_name " << tag_index_name;
   EXPECT_EQ(expected_tag, actual_tag)
       << "With tag_index_name " << tag_index_name;
@@ -280,8 +278,7 @@ void TestPassParseTagIndex(const std::string& tag_index,
                            const int expected_index) {
   std::string actual_tag = "UNTOUCHED";
   int actual_index = -100;
-  MEDIAPIPE_ASSERT_OK(
-      tool::ParseTagIndex(tag_index, &actual_tag, &actual_index))
+  MP_ASSERT_OK(tool::ParseTagIndex(tag_index, &actual_tag, &actual_index))
       << "With tag_index" << tag_index;
   EXPECT_EQ(expected_tag, actual_tag) << "With tag_index " << tag_index;
   EXPECT_EQ(expected_index, actual_index) << "With tag_index " << tag_index;
@@ -360,22 +357,22 @@ TEST(ValidateNameTest, GetTagAndNameInfo) {
   fields.Clear();
   fields.Add()->assign("transcoded_input_file");
   tool::TagAndNameInfo info;
-  MEDIAPIPE_ASSERT_OK(tool::GetTagAndNameInfo(fields, &info));
+  MP_ASSERT_OK(tool::GetTagAndNameInfo(fields, &info));
   ASSERT_EQ(0, info.tags.size());
   ASSERT_EQ(1, info.names.size());
   EXPECT_EQ(fields.Get(0), info.names[0]);
-  MEDIAPIPE_ASSERT_OK(tool::SetFromTagAndNameInfo(info, &fields_copy));
+  MP_ASSERT_OK(tool::SetFromTagAndNameInfo(info, &fields_copy));
   EXPECT_THAT(node_config2, EqualsProto(node_config1));
 
   // Single input using tags.
   fields.Clear();
   fields.Add()->assign("FILE:transcoded_input_file");
-  MEDIAPIPE_ASSERT_OK(tool::GetTagAndNameInfo(fields, &info));
+  MP_ASSERT_OK(tool::GetTagAndNameInfo(fields, &info));
   ASSERT_EQ(1, info.tags.size());
   ASSERT_EQ(1, info.names.size());
   EXPECT_EQ("FILE", info.tags[0]);
   EXPECT_EQ("transcoded_input_file", info.names[0]);
-  MEDIAPIPE_ASSERT_OK(tool::SetFromTagAndNameInfo(info, &fields_copy));
+  MP_ASSERT_OK(tool::SetFromTagAndNameInfo(info, &fields_copy));
   EXPECT_THAT(node_config2, EqualsProto(node_config1));
 
   // Mixing indexes and tags.
@@ -390,7 +387,7 @@ TEST(ValidateNameTest, GetTagAndNameInfo) {
   fields.Add()->assign("TAG2:input2");
   fields.Add()->assign("TAG3:input3");
   fields.Add()->assign("TAG4:input4");
-  MEDIAPIPE_ASSERT_OK(tool::GetTagAndNameInfo(fields, &info));
+  MP_ASSERT_OK(tool::GetTagAndNameInfo(fields, &info));
   ASSERT_EQ(4, info.tags.size());
   ASSERT_EQ(4, info.names.size());
   EXPECT_EQ("TAG1", info.tags[0]);
@@ -401,7 +398,7 @@ TEST(ValidateNameTest, GetTagAndNameInfo) {
   EXPECT_EQ("input2", info.names[1]);
   EXPECT_EQ("input3", info.names[2]);
   EXPECT_EQ("input4", info.names[3]);
-  MEDIAPIPE_ASSERT_OK(tool::SetFromTagAndNameInfo(info, &fields_copy));
+  MP_ASSERT_OK(tool::SetFromTagAndNameInfo(info, &fields_copy));
   EXPECT_THAT(node_config2, EqualsProto(node_config1));
 
   // Valid configuration with more than one input using indexes.
@@ -410,14 +407,14 @@ TEST(ValidateNameTest, GetTagAndNameInfo) {
   fields.Add()->assign("input2");
   fields.Add()->assign("input3");
   fields.Add()->assign("input4");
-  MEDIAPIPE_ASSERT_OK(tool::GetTagAndNameInfo(fields, &info));
+  MP_ASSERT_OK(tool::GetTagAndNameInfo(fields, &info));
   ASSERT_EQ(0, info.tags.size());
   ASSERT_EQ(4, info.names.size());
   EXPECT_EQ("input1", info.names[0]);
   EXPECT_EQ("input2", info.names[1]);
   EXPECT_EQ("input3", info.names[2]);
   EXPECT_EQ("input4", info.names[3]);
-  MEDIAPIPE_ASSERT_OK(tool::SetFromTagAndNameInfo(info, &fields_copy));
+  MP_ASSERT_OK(tool::SetFromTagAndNameInfo(info, &fields_copy));
   EXPECT_THAT(node_config2, EqualsProto(node_config1));
 
   // Add an invalid character into the name.

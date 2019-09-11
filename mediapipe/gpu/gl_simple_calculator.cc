@@ -38,7 +38,7 @@ namespace mediapipe {
   return RunInGlContext([this, cc]() -> ::mediapipe::Status {
     const auto& input = TagOrIndex(cc->Inputs(), "VIDEO", 0).Get<GpuBuffer>();
     if (!initialized_) {
-      RETURN_IF_ERROR(GlSetup());
+      MP_RETURN_IF_ERROR(GlSetup());
       initialized_ = true;
     }
 
@@ -53,9 +53,9 @@ namespace mediapipe {
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(src.target(), src.name());
 
-    RETURN_IF_ERROR(GlBind());
+    MP_RETURN_IF_ERROR(GlBind());
     // Run core program.
-    RETURN_IF_ERROR(GlRender(src, dst));
+    MP_RETURN_IF_ERROR(GlRender(src, dst));
 
     glBindTexture(src.target(), 0);
 

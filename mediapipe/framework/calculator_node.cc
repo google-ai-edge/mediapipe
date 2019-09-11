@@ -103,14 +103,14 @@ Timestamp CalculatorNode::SourceProcessOrder(
 
   // TODO Propagate types between calculators when SetAny is used.
 
-  RETURN_IF_ERROR(InitializeOutputSidePackets(
+  MP_RETURN_IF_ERROR(InitializeOutputSidePackets(
       node_type_info.OutputSidePacketTypes(), output_side_packets));
 
-  RETURN_IF_ERROR(InitializeInputSidePackets(output_side_packets));
+  MP_RETURN_IF_ERROR(InitializeInputSidePackets(output_side_packets));
 
-  RETURN_IF_ERROR(InitializeOutputStreamHandler(
+  MP_RETURN_IF_ERROR(InitializeOutputStreamHandler(
       node_config.output_stream_handler(), node_type_info.OutputStreamTypes()));
-  RETURN_IF_ERROR(InitializeOutputStreams(output_stream_managers));
+  MP_RETURN_IF_ERROR(InitializeOutputStreams(output_stream_managers));
 
   calculator_state_ = absl::make_unique<CalculatorState>(
       name_, node_id_, node_config.calculator(), node_config,
@@ -142,7 +142,7 @@ Timestamp CalculatorNode::SourceProcessOrder(
 
   // Use calculator or graph specified InputStreamHandler, or the default ISH
   // already set from graph.
-  RETURN_IF_ERROR(InitializeInputStreamHandler(
+  MP_RETURN_IF_ERROR(InitializeInputStreamHandler(
       use_calc_specified ? handler_config : node_config.input_stream_handler(),
       node_type_info.InputStreamTypes()));
 
@@ -216,7 +216,7 @@ Timestamp CalculatorNode::SourceProcessOrder(
   RET_CHECK_LE(0, node_type_info.InputStreamBaseIndex());
   InputStreamManager* current_input_stream_managers =
       &input_stream_managers[node_type_info.InputStreamBaseIndex()];
-  RETURN_IF_ERROR(input_stream_handler_->InitializeInputStreamManagers(
+  MP_RETURN_IF_ERROR(input_stream_handler_->InitializeInputStreamManagers(
       current_input_stream_managers));
 
   // Set all the mirrors.
@@ -278,7 +278,7 @@ Timestamp CalculatorNode::SourceProcessOrder(
 ::mediapipe::Status CalculatorNode::ConnectShardsToStreams(
     CalculatorContext* calculator_context) {
   RET_CHECK(calculator_context);
-  RETURN_IF_ERROR(
+  MP_RETURN_IF_ERROR(
       input_stream_handler_->SetupInputShards(&calculator_context->Inputs()));
   return output_stream_handler_->SetupOutputShards(
       &calculator_context->Outputs());
@@ -338,7 +338,7 @@ void CalculatorNode::SetMaxInputStreamQueueSize(int max_queue_size) {
 
   const PacketTypeSet* input_side_packet_types =
       &validated_graph_->CalculatorInfos()[node_id_].InputSidePacketTypes();
-  RETURN_IF_ERROR(input_side_packet_handler_.PrepareForRun(
+  MP_RETURN_IF_ERROR(input_side_packet_handler_.PrepareForRun(
       input_side_packet_types, all_side_packets,
       [this]() { CalculatorNode::InputSidePacketsReady(); },
       std::move(error_callback)));
@@ -361,7 +361,7 @@ void CalculatorNode::SetMaxInputStreamQueueSize(int max_queue_size) {
     }
   }
 
-  RETURN_IF_ERROR(calculator_context_manager_.PrepareForRun(std::bind(
+  MP_RETURN_IF_ERROR(calculator_context_manager_.PrepareForRun(std::bind(
       &CalculatorNode::ConnectShardsToStreams, this, std::placeholders::_1)));
 
   auto calculator_statusor = CreateCalculator(
@@ -426,7 +426,7 @@ void CalculatorNode::SetMaxInputStreamQueueSize(int max_queue_size) {
       "Open() on node \"$0\" returned tool::StatusStop() which should only be "
       "used to signal that a source node is done producing data.",
       DebugName());
-  RETURN_IF_ERROR(result).SetPrepend() << absl::Substitute(
+  MP_RETURN_IF_ERROR(result).SetPrepend() << absl::Substitute(
       "Calculator::Open() for node \"$0\" failed: ", DebugName());
   needs_to_close_ = true;
 
@@ -519,7 +519,7 @@ void CalculatorNode::CloseOutputStreams(OutputStreamShardSet* outputs) {
     status_ = kStateClosed;
   }
 
-  RETURN_IF_ERROR(result).SetPrepend() << absl::Substitute(
+  MP_RETURN_IF_ERROR(result).SetPrepend() << absl::Substitute(
       "Calculator::Close() for node \"$0\" failed: ", DebugName());
 
   VLOG(2) << "Closed node " << DebugName();
@@ -745,7 +745,7 @@ std::string CalculatorNode::DebugName() const {
     }
     output_stream_handler_->PostProcess(input_timestamp);
     if (node_stopped) {
-      RETURN_IF_ERROR(
+      MP_RETURN_IF_ERROR(
           CloseNode(::mediapipe::OkStatus(), /*graph_run_ended=*/false));
     }
     return ::mediapipe::OkStatus();

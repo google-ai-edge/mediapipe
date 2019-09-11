@@ -133,16 +133,16 @@ class Tvl1OpticalFlowCalculator : public CalculatorBase {
       cc->Inputs().Tag("SECOND_FRAME").Value().Get<ImageFrame>();
   if (forward_requested_) {
     auto forward_optical_flow_field = absl::make_unique<OpticalFlowField>();
-    RETURN_IF_ERROR(CalculateOpticalFlow(first_frame, second_frame,
-                                         forward_optical_flow_field.get()));
+    MP_RETURN_IF_ERROR(CalculateOpticalFlow(first_frame, second_frame,
+                                            forward_optical_flow_field.get()));
     cc->Outputs()
         .Tag("FORWARD_FLOW")
         .Add(forward_optical_flow_field.release(), cc->InputTimestamp());
   }
   if (backward_requested_) {
     auto backward_optical_flow_field = absl::make_unique<OpticalFlowField>();
-    RETURN_IF_ERROR(CalculateOpticalFlow(second_frame, first_frame,
-                                         backward_optical_flow_field.get()));
+    MP_RETURN_IF_ERROR(CalculateOpticalFlow(second_frame, first_frame,
+                                            backward_optical_flow_field.get()));
     cc->Outputs()
         .Tag("BACKWARD_FLOW")
         .Add(backward_optical_flow_field.release(), cc->InputTimestamp());

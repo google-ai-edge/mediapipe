@@ -74,7 +74,7 @@ TEST_F(GraphTensorsPacketGeneratorTest, VerifyTensorSizeShapeAndValue) {
 
   ::mediapipe::Status run_status = tool::RunGenerateAndValidateTypes(
       "GraphTensorsPacketGenerator", extendable_options_, inputs, &outputs);
-  MEDIAPIPE_EXPECT_OK(run_status) << run_status.message();
+  MP_EXPECT_OK(run_status) << run_status.message();
   VerifyTensorMap(&outputs);
 }
 

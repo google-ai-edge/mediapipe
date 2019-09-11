@@ -266,16 +266,16 @@ TEST(SyncSetInputStreamHandlerTest, OrdinaryOperation) {
     VLOG(2) << "Modified configuration: " << modified_config.DebugString();
 
     // Setup and run the graph.
-    MEDIAPIPE_ASSERT_OK(graph.Initialize(
+    MP_ASSERT_OK(graph.Initialize(
         modified_config,
         {{"lambda", MakePacket<ProcessFunction>(InputsToDebugString)}}));
     std::deque<Packet> outputs;
-    MEDIAPIPE_ASSERT_OK(
+    MP_ASSERT_OK(
         graph.ObserveOutputStream("output", [&outputs](const Packet& packet) {
           outputs.push_back(packet);
           return ::mediapipe::OkStatus();
         }));
-    MEDIAPIPE_ASSERT_OK(graph.StartRun({}));
+    MP_ASSERT_OK(graph.StartRun({}));
     for (int command_index = 0; command_index < shuffled_commands.size();
          /* command_index is incremented by the inner loop. */) {
       int initial_command_index = command_index;
@@ -295,14 +295,14 @@ TEST(SyncSetInputStreamHandlerTest, OrdinaryOperation) {
         VLOG(1) << "Adding (" << stream_name << ", Timestamp: " << timestamp
                 << ")";
         if (timestamp == Timestamp::Done()) {
-          MEDIAPIPE_ASSERT_OK(graph.CloseInputStream(stream_name));
+          MP_ASSERT_OK(graph.CloseInputStream(stream_name));
         } else {
-          MEDIAPIPE_ASSERT_OK(graph.AddPacketToInputStream(
+          MP_ASSERT_OK(graph.AddPacketToInputStream(
               stream_name, MakePacket<int>(0).At(timestamp)));
         }
       }
       // Ensure that we produce all packets which we can.
-      MEDIAPIPE_ASSERT_OK(graph.WaitUntilIdle());
+      MP_ASSERT_OK(graph.WaitUntilIdle());
 
       // Check the output strings (ignoring order, since calculator may
       // have run in parallel).
@@ -319,7 +319,7 @@ TEST(SyncSetInputStreamHandlerTest, OrdinaryOperation) {
       EXPECT_THAT(actual_strings,
                   testing::UnorderedElementsAreArray(expected_strings));
     }
-    MEDIAPIPE_ASSERT_OK(graph.WaitUntilDone());
+    MP_ASSERT_OK(graph.WaitUntilDone());
   }
 }
 

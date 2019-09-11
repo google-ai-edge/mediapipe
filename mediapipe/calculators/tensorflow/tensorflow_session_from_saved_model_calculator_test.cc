@@ -75,7 +75,7 @@ TEST_F(TensorFlowSessionFromSavedModelCalculatorTest,
           }
         })",
                                            options_->DebugString()));
-  MEDIAPIPE_ASSERT_OK(runner.Run());
+  MP_ASSERT_OK(runner.Run());
   const TensorFlowSession& session =
       runner.OutputSidePackets().Tag("SESSION").Get<TensorFlowSession>();
   // Session must be set.
@@ -119,7 +119,7 @@ TEST_F(TensorFlowSessionFromSavedModelCalculatorTest,
                                            options_->DebugString()));
   runner.MutableSidePackets()->Tag("STRING_SAVED_MODEL_PATH") =
       MakePacket<std::string>(GetSavedModelDir());
-  MEDIAPIPE_ASSERT_OK(runner.Run());
+  MP_ASSERT_OK(runner.Run());
   const TensorFlowSession& session =
       runner.OutputSidePackets().Tag("SESSION").Get<TensorFlowSession>();
   // Session must be set.
@@ -159,17 +159,17 @@ TEST_F(TensorFlowSessionFromSavedModelCalculatorTest,
                            options_->DebugString()));
 
   CalculatorGraph graph;
-  MEDIAPIPE_ASSERT_OK(graph.Initialize(graph_config));
+  MP_ASSERT_OK(graph.Initialize(graph_config));
   StatusOrPoller status_or_poller =
       graph.AddOutputStreamPoller("multiplied_tensor");
   ASSERT_TRUE(status_or_poller.ok());
   OutputStreamPoller poller = std::move(status_or_poller.ValueOrDie());
 
-  MEDIAPIPE_ASSERT_OK(graph.StartRun({}));
-  MEDIAPIPE_ASSERT_OK(graph.AddPacketToInputStream(
+  MP_ASSERT_OK(graph.StartRun({}));
+  MP_ASSERT_OK(graph.AddPacketToInputStream(
       "a_tensor",
       Adopt(new auto(TensorMatrix1x3(1, -1, 10))).At(Timestamp(0))));
-  MEDIAPIPE_ASSERT_OK(graph.CloseInputStream("a_tensor"));
+  MP_ASSERT_OK(graph.CloseInputStream("a_tensor"));
 
   Packet packet;
   ASSERT_TRUE(poller.Next(&packet));
@@ -179,7 +179,7 @@ TEST_F(TensorFlowSessionFromSavedModelCalculatorTest,
             packet.Get<tf::Tensor>().DebugString());
 
   ASSERT_FALSE(poller.Next(&packet));
-  MEDIAPIPE_ASSERT_OK(graph.WaitUntilDone());
+  MP_ASSERT_OK(graph.WaitUntilDone());
 }
 
 TEST_F(TensorFlowSessionFromSavedModelCalculatorTest,
@@ -197,7 +197,7 @@ TEST_F(TensorFlowSessionFromSavedModelCalculatorTest,
           }
         })",
                                            options_->DebugString()));
-  MEDIAPIPE_ASSERT_OK(runner.Run());
+  MP_ASSERT_OK(runner.Run());
   const TensorFlowSession& session =
       runner.OutputSidePackets().Tag("SESSION").Get<TensorFlowSession>();
   // Session must be set.

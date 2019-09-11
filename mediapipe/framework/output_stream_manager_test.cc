@@ -53,8 +53,7 @@ class OutputStreamManagerTest : public ::testing::Test {
                   std::placeholders::_1, std::placeholders::_2);
 
     output_stream_manager_ = absl::make_unique<OutputStreamManager>();
-    MEDIAPIPE_ASSERT_OK(
-        output_stream_manager_->Initialize("a_test", &packet_type_));
+    MP_ASSERT_OK(output_stream_manager_->Initialize("a_test", &packet_type_));
     output_stream_manager_->PrepareForRun(error_callback_);
     output_stream_shard_.SetSpec(output_stream_manager_->Spec());
     output_stream_manager_->ResetShard(&output_stream_shard_);
@@ -68,10 +67,9 @@ class OutputStreamManagerTest : public ::testing::Test {
     input_stream_handler_ = std::move(status_or_handler.ValueOrDie());
     const CollectionItemId& id = tag_map->BeginId();
 
-    MEDIAPIPE_ASSERT_OK(input_stream_manager_.Initialize("a_test",
-                                                         &packet_type_,
-                                                         /*back_edge=*/false));
-    MEDIAPIPE_ASSERT_OK(input_stream_handler_->InitializeInputStreamManagers(
+    MP_ASSERT_OK(input_stream_manager_.Initialize("a_test", &packet_type_,
+                                                  /*back_edge=*/false));
+    MP_ASSERT_OK(input_stream_handler_->InitializeInputStreamManagers(
         &input_stream_manager_));
     output_stream_manager_->AddMirror(input_stream_handler_.get(), id);
     input_stream_handler_->PrepareForRun(headers_ready_callback_,
@@ -695,7 +693,7 @@ TEST_F(OutputStreamManagerTest, AddPacketAndMovePacket) {
   output_stream_shard_.AddPacket(packet_1);
   // packet_1 has an extra copy in the output stream.
   ASSERT_FALSE(packet_1.IsEmpty());
-  MEDIAPIPE_ASSERT_OK(packet_1.ValidateAsType<std::string>());
+  MP_ASSERT_OK(packet_1.ValidateAsType<std::string>());
   EXPECT_EQ("packet 1", packet_1.Get<std::string>());
 
   Packet packet_2 = MakePacket<std::string>("packet 2").At(Timestamp(20));

@@ -54,7 +54,7 @@ mediapipe_cc_proto_library(
     name = "default_input_stream_handler_cc_proto",
     srcs = ["default_input_stream_handler.proto"],
     cc_deps = ["//mediapipe/framework:mediapipe_options_cc_proto"],
-    visibility = ["//mediapipe/framework:__subpackages__"],
+    visibility = ["//visibility:public"],
     deps = [":default_input_stream_handler_proto"],
 )
 
@@ -62,7 +62,7 @@ mediapipe_cc_proto_library(
     name = "fixed_size_input_stream_handler_cc_proto",
     srcs = ["fixed_size_input_stream_handler.proto"],
     cc_deps = ["//mediapipe/framework:mediapipe_options_cc_proto"],
-    visibility = ["//mediapipe/framework:__subpackages__"],
+    visibility = ["//visibility:public"],
     deps = [":fixed_size_input_stream_handler_proto"],
 )
 
@@ -70,7 +70,7 @@ mediapipe_cc_proto_library(
     name = "sync_set_input_stream_handler_cc_proto",
     srcs = ["sync_set_input_stream_handler.proto"],
     cc_deps = ["//mediapipe/framework:mediapipe_options_cc_proto"],
-    visibility = ["//mediapipe/framework:__subpackages__"],
+    visibility = ["//visibility:public"],
     deps = [":sync_set_input_stream_handler_proto"],
 )
 
@@ -78,7 +78,7 @@ mediapipe_cc_proto_library(
     name = "timestamp_align_input_stream_handler_cc_proto",
     srcs = ["timestamp_align_input_stream_handler.proto"],
     cc_deps = ["//mediapipe/framework:mediapipe_options_cc_proto"],
-    visibility = ["//mediapipe/framework:__subpackages__"],
+    visibility = ["//visibility:public"],
     deps = [":timestamp_align_input_stream_handler_proto"],
 )
 

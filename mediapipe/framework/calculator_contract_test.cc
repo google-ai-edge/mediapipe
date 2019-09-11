@@ -40,7 +40,7 @@ TEST(CalculatorContractTest, Calculator) {
         output_stream: "egraph_topical_detection"
       )");
   CalculatorContract contract;
-  MEDIAPIPE_EXPECT_OK(contract.Initialize(node));
+  MP_EXPECT_OK(contract.Initialize(node));
   EXPECT_EQ(contract.Inputs().NumEntries(), 4);
   EXPECT_EQ(contract.Outputs().NumEntries(), 1);
   EXPECT_EQ(contract.InputSidePackets().NumEntries(), 1);
@@ -59,7 +59,7 @@ TEST(CalculatorContractTest, CalculatorOptions) {
           [mediapipe.CalculatorContractTestOptions.ext] { test_field: 1.0 }
         })");
   CalculatorContract contract;
-  MEDIAPIPE_EXPECT_OK(contract.Initialize(node));
+  MP_EXPECT_OK(contract.Initialize(node));
   const auto& test_options =
       contract.Options().GetExtension(CalculatorContractTestOptions::ext);
   EXPECT_EQ(test_options.test_field(), 1.0);
@@ -80,7 +80,7 @@ TEST(CalculatorContractTest, PacketGenerator) {
         output_side_packet: "content_fingerprint"
       )");
   CalculatorContract contract;
-  MEDIAPIPE_EXPECT_OK(contract.Initialize(node));
+  MP_EXPECT_OK(contract.Initialize(node));
   EXPECT_EQ(contract.InputSidePackets().NumEntries(), 1);
   EXPECT_EQ(contract.OutputSidePackets().NumEntries(), 4);
 }
@@ -93,7 +93,7 @@ TEST(CalculatorContractTest, StatusHandler) {
         input_side_packet: "SPEC:task_specification"
       )");
   CalculatorContract contract;
-  MEDIAPIPE_EXPECT_OK(contract.Initialize(node));
+  MP_EXPECT_OK(contract.Initialize(node));
   EXPECT_EQ(contract.InputSidePackets().NumEntries(), 2);
 }
 

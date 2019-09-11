@@ -67,7 +67,7 @@ class TfLiteConverterCalculatorTest : public ::testing::Test {
         }
       }
     }
-    MEDIAPIPE_ASSERT_OK(graph_->AddPacketToInputStream(
+    MP_ASSERT_OK(graph_->AddPacketToInputStream(
         "matrix", Adopt(matrix.release()).At(Timestamp(0))));
   }
 
@@ -99,14 +99,14 @@ TEST_F(TfLiteConverterCalculatorTest, RandomMatrixColMajor) {
 
     // Run the graph.
     graph_ = absl::make_unique<CalculatorGraph>();
-    MEDIAPIPE_ASSERT_OK(graph_->Initialize(graph_config));
-    MEDIAPIPE_ASSERT_OK(graph_->StartRun({}));
+    MP_ASSERT_OK(graph_->Initialize(graph_config));
+    MP_ASSERT_OK(graph_->StartRun({}));
 
     // Push the tensor into the graph.
     AddRandomMatrix(num_rows, num_columns, kSeed, /*row_major_matrix=*/false);
 
     // Wait until the calculator done processing.
-    MEDIAPIPE_ASSERT_OK(graph_->WaitUntilIdle());
+    MP_ASSERT_OK(graph_->WaitUntilIdle());
     EXPECT_EQ(1, output_packets.size());
 
     // Get and process results.
@@ -128,8 +128,8 @@ TEST_F(TfLiteConverterCalculatorTest, RandomMatrixColMajor) {
 
     // Fully close graph at end, otherwise calculator+tensors are destroyed
     // after calling WaitUntilDone().
-    MEDIAPIPE_ASSERT_OK(graph_->CloseInputStream("matrix"));
-    MEDIAPIPE_ASSERT_OK(graph_->WaitUntilDone());
+    MP_ASSERT_OK(graph_->CloseInputStream("matrix"));
+    MP_ASSERT_OK(graph_->WaitUntilDone());
 
     graph_.reset();
   }
@@ -160,14 +160,14 @@ TEST_F(TfLiteConverterCalculatorTest, RandomMatrixRowMajor) {
 
     // Run the graph.
     graph_ = absl::make_unique<CalculatorGraph>();
-    MEDIAPIPE_ASSERT_OK(graph_->Initialize(graph_config));
-    MEDIAPIPE_ASSERT_OK(graph_->StartRun({}));
+    MP_ASSERT_OK(graph_->Initialize(graph_config));
+    MP_ASSERT_OK(graph_->StartRun({}));
 
     // Push the tensor into the graph.
     AddRandomMatrix(num_rows, num_columns, kSeed, /*row_major_matrix=*/true);
 
     // Wait until the calculator done processing.
-    MEDIAPIPE_ASSERT_OK(graph_->WaitUntilIdle());
+    MP_ASSERT_OK(graph_->WaitUntilIdle());
     EXPECT_EQ(1, output_packets.size());
 
     // Get and process results.
@@ -189,8 +189,8 @@ TEST_F(TfLiteConverterCalculatorTest, RandomMatrixRowMajor) {
 
     // Fully close graph at end, otherwise calculator+tensors are destroyed
     // after calling WaitUntilDone().
-    MEDIAPIPE_ASSERT_OK(graph_->CloseInputStream("matrix"));
-    MEDIAPIPE_ASSERT_OK(graph_->WaitUntilDone());
+    MP_ASSERT_OK(graph_->CloseInputStream("matrix"));
+    MP_ASSERT_OK(graph_->WaitUntilDone());
 
     graph_.reset();
   }

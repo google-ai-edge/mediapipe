@@ -213,7 +213,7 @@ REGISTER_CALCULATOR(ImageTransformationCalculator);
   }
 
 #if defined(__ANDROID__) || defined(__APPLE__) && !TARGET_OS_OSX
-  RETURN_IF_ERROR(GlCalculatorHelper::UpdateContract(cc));
+  MP_RETURN_IF_ERROR(GlCalculatorHelper::UpdateContract(cc));
 #endif  // __ANDROID__ || iOS
 
   return ::mediapipe::OkStatus();
@@ -252,7 +252,7 @@ REGISTER_CALCULATOR(ImageTransformationCalculator);
   if (use_gpu_) {
 #if defined(__ANDROID__) || defined(__APPLE__) && !TARGET_OS_OSX
     // Let the helper access the GL context information.
-    RETURN_IF_ERROR(helper_.Open(cc));
+    MP_RETURN_IF_ERROR(helper_.Open(cc));
 #else
     RET_CHECK_FAIL() << "GPU processing is for Android and iOS only.";
 #endif  // __ANDROID__ || iOS
@@ -398,7 +398,7 @@ REGISTER_CALCULATOR(ImageTransformationCalculator);
       input.format() == GpuBufferFormat::kBiPlanar420YpCbCr8FullRange) {
     if (!yuv_renderer_) {
       yuv_renderer_ = absl::make_unique<QuadRenderer>();
-      RETURN_IF_ERROR(
+      MP_RETURN_IF_ERROR(
           yuv_renderer_->GlSetup(::mediapipe::kYUV2TexToRGBFragmentShader,
                                  {"video_frame_y", "video_frame_uv"}));
     }
@@ -412,7 +412,7 @@ REGISTER_CALCULATOR(ImageTransformationCalculator);
     if (src1.target() == GL_TEXTURE_EXTERNAL_OES) {
       if (!ext_rgb_renderer_) {
         ext_rgb_renderer_ = absl::make_unique<QuadRenderer>();
-        RETURN_IF_ERROR(ext_rgb_renderer_->GlSetup(
+        MP_RETURN_IF_ERROR(ext_rgb_renderer_->GlSetup(
             ::mediapipe::kBasicTexturedFragmentShaderOES, {"video_frame"}));
       }
       renderer = ext_rgb_renderer_.get();
@@ -421,7 +421,7 @@ REGISTER_CALCULATOR(ImageTransformationCalculator);
     {
       if (!rgb_renderer_) {
         rgb_renderer_ = absl::make_unique<QuadRenderer>();
-        RETURN_IF_ERROR(rgb_renderer_->GlSetup());
+        MP_RETURN_IF_ERROR(rgb_renderer_->GlSetup());
       }
       renderer = rgb_renderer_.get();
     }
@@ -446,7 +446,7 @@ REGISTER_CALCULATOR(ImageTransformationCalculator);
   glActiveTexture(GL_TEXTURE1);
   glBindTexture(src1.target(), src1.name());
 
-  RETURN_IF_ERROR(renderer->GlRender(
+  MP_RETURN_IF_ERROR(renderer->GlRender(
       src1.width(), src1.height(), dst.width(), dst.height(), scale_mode,
       rotation, options_.flip_horizontally(), options_.flip_vertically(),
       /*flip_texture=*/false));

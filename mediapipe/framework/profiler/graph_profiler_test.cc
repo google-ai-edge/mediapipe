@@ -204,7 +204,7 @@ class GraphProfilerTestPeer : public testing::Test {
 
   std::vector<CalculatorProfile> Profiles() {
     std::vector<CalculatorProfile> result;
-    MEDIAPIPE_EXPECT_OK(profiler_.GetCalculatorProfiles(&result));
+    MP_EXPECT_OK(profiler_.GetCalculatorProfiles(&result));
     return result;
   }
 
@@ -1078,28 +1078,28 @@ TEST(GraphProfilerTest, ParallelReads) {
   absl::Mutex out_1_mutex;
   std::vector<Packet> out_1_packets;
   CalculatorGraph graph;
-  ASSERT_OK(graph.Initialize(config));
-  ASSERT_OK(graph.ObserveOutputStream("out_1", [&](const Packet& packet) {
+  MP_ASSERT_OK(graph.Initialize(config));
+  MP_ASSERT_OK(graph.ObserveOutputStream("out_1", [&](const Packet& packet) {
     absl::MutexLock lock(&out_1_mutex);
     out_1_packets.push_back(packet);
     return ::mediapipe::OkStatus();
   }));
-  MEDIAPIPE_EXPECT_OK(graph.StartRun(
+  MP_EXPECT_OK(graph.StartRun(
       {{"range_step", MakePacket<std::pair<uint32, uint32>>(1000, 1)}}));
 
   // Repeatedly poll for profile data while the graph runs.
   while (true) {
     std::vector<CalculatorProfile> profiles;
-    ASSERT_OK(graph.profiler()->GetCalculatorProfiles(&profiles));
+    MP_ASSERT_OK(graph.profiler()->GetCalculatorProfiles(&profiles));
     EXPECT_EQ(2, profiles.size());
     absl::MutexLock lock(&out_1_mutex);
     if (out_1_packets.size() >= 1001) {
       break;
     }
   }
-  ASSERT_OK(graph.WaitUntilDone());
+  MP_ASSERT_OK(graph.WaitUntilDone());
   std::vector<CalculatorProfile> profiles;
-  ASSERT_OK(graph.profiler()->GetCalculatorProfiles(&profiles));
+  MP_ASSERT_OK(graph.profiler()->GetCalculatorProfiles(&profiles));
   // GraphProfiler internally uses map and the profile order is not fixed.
   if (profiles[0].name() == "RangeCalculator") {
     EXPECT_EQ(1000, profiles[0].process_runtime().count(0));

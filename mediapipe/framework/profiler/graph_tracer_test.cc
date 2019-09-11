@@ -413,7 +413,7 @@ class GraphTracerE2ETest : public ::testing::Test {
     simulation_clock_->ThreadStart();
     clock_->SleepUntil(StartTime());
     simulation_clock_->ThreadFinish();
-    MEDIAPIPE_ASSERT_OK(graph_.SetExecutor("", executor));
+    MP_ASSERT_OK(graph_.SetExecutor("", executor));
   }
 
   void SetUpRealClock() { clock_ = ::mediapipe::Clock::RealClock(); }
@@ -490,31 +490,30 @@ class GraphTracerE2ETest : public ::testing::Test {
     };
 
     // Start the graph with the callbacks.
-    MEDIAPIPE_ASSERT_OK(graph_.Initialize(
-        graph_config_, {
-                           {"callback_0", Adopt(new auto(wait_0))},
-                       }));
+    MP_ASSERT_OK(graph_.Initialize(graph_config_,
+                                   {
+                                       {"callback_0", Adopt(new auto(wait_0))},
+                                   }));
     graph_.profiler()->SetClock(simulation_clock_);
     std::vector<Packet> out_packets;
-    MEDIAPIPE_ASSERT_OK(
+    MP_ASSERT_OK(
         graph_.ObserveOutputStream("output_0", [&](const Packet& packet) {
           out_packets.push_back(packet);
           return ::mediapipe::OkStatus();
         }));
     simulation_clock_->ThreadStart();
-    MEDIAPIPE_ASSERT_OK(graph_.StartRun({}));
+    MP_ASSERT_OK(graph_.StartRun({}));
 
     // The first 6 packets to send into the graph at 5001 us intervals.
     for (int ts = 10000; ts < 70000; ts += 10000) {
       clock_->Sleep(absl::Microseconds(5001));
-      MEDIAPIPE_EXPECT_OK(
-          graph_.AddPacketToInputStream("input_0", PacketAt(ts)));
+      MP_EXPECT_OK(graph_.AddPacketToInputStream("input_0", PacketAt(ts)));
     }
 
     // Wait for all packets to be processed.
-    MEDIAPIPE_ASSERT_OK(graph_.CloseAllPacketSources());
+    MP_ASSERT_OK(graph_.CloseAllPacketSources());
     clock_->Sleep(absl::Microseconds(240000 + 0));
-    MEDIAPIPE_ASSERT_OK(graph_.WaitUntilDone());
+    MP_ASSERT_OK(graph_.WaitUntilDone());
     simulation_clock_->ThreadFinish();
 
     // Validate the graph run.
@@ -557,26 +556,26 @@ class GraphTracerE2ETest : public ::testing::Test {
     }
 
     // Start the graph with the callbacks.
-    MEDIAPIPE_ASSERT_OK(graph_.Initialize(
-        graph_config_, {
-                           {"max_in_flight", MakePacket<int>(4)},
-                           {"callback_0", Adopt(new auto(wait_0))},
-                           {"callback_1", Adopt(new auto(wait_1))},
-                           {"callback_2", Adopt(new auto(wait_2))},
-                       }));
+    MP_ASSERT_OK(graph_.Initialize(graph_config_,
+                                   {
+                                       {"max_in_flight", MakePacket<int>(4)},
+                                       {"callback_0", Adopt(new auto(wait_0))},
+                                       {"callback_1", Adopt(new auto(wait_1))},
+                                       {"callback_2", Adopt(new auto(wait_2))},
+                                   }));
     graph_.profiler()->SetClock(simulation_clock_);
     std::vector<Packet> out_packets;
-    MEDIAPIPE_ASSERT_OK(graph_.ObserveOutputStream(
-        "output_packets_0", [&](const Packet& packet) {
-          out_packets.push_back(packet);
-          return ::mediapipe::OkStatus();
-        }));
+    MP_ASSERT_OK(graph_.ObserveOutputStream("output_packets_0",
+                                            [&](const Packet& packet) {
+                                              out_packets.push_back(packet);
+                                              return ::mediapipe::OkStatus();
+                                            }));
     simulation_clock_->ThreadStart();
-    MEDIAPIPE_ASSERT_OK(graph_.StartRun({}));
+    MP_ASSERT_OK(graph_.StartRun({}));
 
     // Wait for all packets to be added and processed.
     clock_->Sleep(absl::Microseconds(160000 + 0));
-    MEDIAPIPE_ASSERT_OK(graph_.WaitUntilDone());
+    MP_ASSERT_OK(graph_.WaitUntilDone());
     simulation_clock_->ThreadFinish();
 
     // Validate the graph run.
@@ -614,7 +613,7 @@ TEST_F(GraphTracerE2ETest, PassThroughGraphProfile) {
   graph_config_.mutable_profiler_config()->set_trace_log_disabled(true);
   RunPassThroughGraph();
   std::vector<CalculatorProfile> profiles;
-  MEDIAPIPE_EXPECT_OK(graph_.profiler()->GetCalculatorProfiles(&profiles));
+  MP_EXPECT_OK(graph_.profiler()->GetCalculatorProfiles(&profiles));
   EXPECT_EQ(1, profiles.size());
   CalculatorProfile expected =
       ::mediapipe::ParseTextProtoOrDie<CalculatorProfile>(R"(
@@ -930,7 +929,7 @@ TEST_F(GraphTracerE2ETest, DemuxGraphLogFile) {
   graph_config_.mutable_profiler_config()->set_trace_log_interval_usec(-1);
   RunDemuxInFlightGraph();
   GraphProfile profile;
-  MEDIAPIPE_EXPECT_OK(
+  MP_EXPECT_OK(
       ReadGraphProfile(absl::StrCat(log_path, 0, ".binarypb"), &profile));
   EXPECT_EQ(89, profile.graph_trace(0).calculator_trace().size());
 }
@@ -1143,7 +1142,7 @@ TEST_F(GraphTracerE2ETest, LoggingHappensWithDefaultPath) {
   SetUpDemuxInFlightGraph();
   graph_config_.mutable_profiler_config()->set_trace_log_disabled(false);
   RunDemuxInFlightGraph();
-  MEDIAPIPE_EXPECT_OK(mediapipe::file::Exists(log_path));
+  MP_EXPECT_OK(mediapipe::file::Exists(log_path));
 }
 
 TEST_F(GraphTracerE2ETest, GpuTaskTrace) {
@@ -1279,7 +1278,7 @@ TEST_F(GraphTracerE2ETest, GpuTracing) {
                                               &graph_config_));
 
   // Create the CalculatorGraph with only trace_enabled set.
-  MEDIAPIPE_ASSERT_OK(graph_.Initialize(graph_config_, {}));
+  MP_ASSERT_OK(graph_.Initialize(graph_config_, {}));
   // Check that GPU profiling is enabled wihout running the graph.
   // This graph with GlFlatColorCalculator cannot run on desktop.
   EXPECT_NE(nullptr, graph_.profiler()->CreateGlProfilingHelper());

@@ -66,7 +66,7 @@ class BarrierInputStreamHandlerTest : public ::testing::Test {
          id < input_tag_map->EndId(); ++id) {
       const std::string& stream_name = names[id.value()];
       name_to_id_[stream_name] = id;
-      MEDIAPIPE_ASSERT_OK(input_stream_managers_[id.value()].Initialize(
+      MP_ASSERT_OK(input_stream_managers_[id.value()].Initialize(
           stream_name, &packet_type_, /*back_edge=*/false));
     }
     SetupInputStreamHandler(input_tag_map);
@@ -89,9 +89,9 @@ class BarrierInputStreamHandlerTest : public ::testing::Test {
             /*calculator_run_in_parallel=*/false);
     ASSERT_TRUE(status_or_handler.ok());
     input_stream_handler_ = std::move(status_or_handler.ValueOrDie());
-    MEDIAPIPE_ASSERT_OK(input_stream_handler_->InitializeInputStreamManagers(
+    MP_ASSERT_OK(input_stream_handler_->InitializeInputStreamManagers(
         input_stream_managers_.get()));
-    MEDIAPIPE_ASSERT_OK(
+    MP_ASSERT_OK(
         calculator_context_manager_.PrepareForRun(setup_shards_callback_));
     input_stream_handler_->PrepareForRun(headers_ready_callback_,
                                          notification_callback_,

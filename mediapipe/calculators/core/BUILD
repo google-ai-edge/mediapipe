@@ -76,7 +76,7 @@ mediapipe_cc_proto_library(
     name = "packet_cloner_calculator_cc_proto",
     srcs = ["packet_cloner_calculator.proto"],
     cc_deps = ["//mediapipe/framework:calculator_cc_proto"],
-    visibility = ["//mediapipe:__subpackages__"],
+    visibility = ["//visibility:public"],
     deps = [":packet_cloner_calculator_proto"],
 )
 
@@ -84,7 +84,7 @@ mediapipe_cc_proto_library(
     name = "packet_resampler_calculator_cc_proto",
     srcs = ["packet_resampler_calculator.proto"],
     cc_deps = ["//mediapipe/framework:calculator_cc_proto"],
-    visibility = ["//mediapipe:__subpackages__"],
+    visibility = ["//visibility:public"],
     deps = [":packet_resampler_calculator_proto"],
 )
 
@@ -92,7 +92,7 @@ mediapipe_cc_proto_library(
     name = "split_vector_calculator_cc_proto",
     srcs = ["split_vector_calculator.proto"],
     cc_deps = ["//mediapipe/framework:calculator_cc_proto"],
-    visibility = ["//mediapipe:__subpackages__"],
+    visibility = ["//visibility:public"],
     deps = [":split_vector_calculator_proto"],
 )
 
@@ -108,7 +108,7 @@ mediapipe_cc_proto_library(
     name = "quantize_float_vector_calculator_cc_proto",
     srcs = ["quantize_float_vector_calculator.proto"],
     cc_deps = ["//mediapipe/framework:calculator_cc_proto"],
-    visibility = ["//mediapipe:__subpackages__"],
+    visibility = ["//visibility:public"],
     deps = [":quantize_float_vector_calculator_proto"],
 )
 
@@ -116,7 +116,7 @@ mediapipe_cc_proto_library(
     name = "sequence_shift_calculator_cc_proto",
     srcs = ["sequence_shift_calculator.proto"],
     cc_deps = ["//mediapipe/framework:calculator_cc_proto"],
-    visibility = ["//mediapipe:__subpackages__"],
+    visibility = ["//visibility:public"],
     deps = [":sequence_shift_calculator_proto"],
 )
 
@@ -124,7 +124,7 @@ mediapipe_cc_proto_library(
     name = "gate_calculator_cc_proto",
     srcs = ["gate_calculator.proto"],
     cc_deps = ["//mediapipe/framework:calculator_cc_proto"],
-    visibility = ["//mediapipe:__subpackages__"],
+    visibility = ["//visibility:public"],
     deps = [":gate_calculator_proto"],
 )
 

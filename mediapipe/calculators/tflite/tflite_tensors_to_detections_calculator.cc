@@ -188,7 +188,7 @@ REGISTER_CALCULATOR(TfLiteTensorsToDetectionsCalculator);
   }
 
 #if defined(__ANDROID__)
-  RETURN_IF_ERROR(mediapipe::GlCalculatorHelper::UpdateContract(cc));
+  MP_RETURN_IF_ERROR(mediapipe::GlCalculatorHelper::UpdateContract(cc));
 #endif
 
   return ::mediapipe::OkStatus();
@@ -201,15 +201,15 @@ REGISTER_CALCULATOR(TfLiteTensorsToDetectionsCalculator);
   if (cc->Inputs().HasTag("TENSORS_GPU")) {
     gpu_input_ = true;
 #if defined(__ANDROID__)
-    RETURN_IF_ERROR(gpu_helper_.Open(cc));
+    MP_RETURN_IF_ERROR(gpu_helper_.Open(cc));
 #endif
   }
 
-  RETURN_IF_ERROR(LoadOptions(cc));
+  MP_RETURN_IF_ERROR(LoadOptions(cc));
   side_packet_anchors_ = cc->InputSidePackets().HasTag("ANCHORS");
 
   if (gpu_input_) {
-    RETURN_IF_ERROR(GlSetup(cc));
+    MP_RETURN_IF_ERROR(GlSetup(cc));
   }
 
   return ::mediapipe::OkStatus();
@@ -225,9 +225,9 @@ REGISTER_CALCULATOR(TfLiteTensorsToDetectionsCalculator);
   auto output_detections = absl::make_unique<std::vector<Detection>>();
 
   if (gpu_input_) {
-    RETURN_IF_ERROR(ProcessGPU(cc, output_detections.get()));
+    MP_RETURN_IF_ERROR(ProcessGPU(cc, output_detections.get()));
   } else {
-    RETURN_IF_ERROR(ProcessCPU(cc, output_detections.get()));
+    MP_RETURN_IF_ERROR(ProcessCPU(cc, output_detections.get()));
   }  // if gpu_input_
 
   // Output
@@ -282,7 +282,7 @@ REGISTER_CALCULATOR(TfLiteTensorsToDetectionsCalculator);
       anchors_init_ = true;
     }
     std::vector<float> boxes(num_boxes_ * num_coords_);
-    RETURN_IF_ERROR(DecodeBoxes(raw_boxes, anchors_, &boxes));
+    MP_RETURN_IF_ERROR(DecodeBoxes(raw_boxes, anchors_, &boxes));
 
     std::vector<float> detection_scores(num_boxes_);
     std::vector<int> detection_classes(num_boxes_);
@@ -316,9 +316,9 @@ REGISTER_CALCULATOR(TfLiteTensorsToDetectionsCalculator);
       detection_classes[i] = class_id;
     }
 
-    RETURN_IF_ERROR(ConvertToDetections(boxes.data(), detection_scores.data(),
-                                        detection_classes.data(),
-                                        output_detections));
+    MP_RETURN_IF_ERROR(
+        ConvertToDetections(boxes.data(), detection_scores.data(),
+                            detection_classes.data(), output_detections));
   } else {
     // Postprocessing on CPU with postprocessing op (e.g. anchor decoding and
     // non-maximum suppression) within the model.
@@ -350,9 +350,9 @@ REGISTER_CALCULATOR(TfLiteTensorsToDetectionsCalculator);
       detection_classes[i] =
           static_cast<int>(detection_classes_tensor->data.f[i]);
     }
-    RETURN_IF_ERROR(ConvertToDetections(detection_boxes, detection_scores,
-                                        detection_classes.data(),
-                                        output_detections));
+    MP_RETURN_IF_ERROR(ConvertToDetections(detection_boxes, detection_scores,
+                                           detection_classes.data(),
+                                           output_detections));
   }
   return ::mediapipe::OkStatus();
 }
@@ -381,7 +381,7 @@ REGISTER_CALCULATOR(TfLiteTensorsToDetectionsCalculator);
   }
 
   // Run shaders.
-  RETURN_IF_ERROR(gpu_helper_.RunInGlContext(
+  MP_RETURN_IF_ERROR(gpu_helper_.RunInGlContext(
       [this, &input_tensors]() -> ::mediapipe::Status {
         // Decode boxes.
         decoded_boxes_buffer_->BindToIndex(0);
@@ -419,9 +419,9 @@ REGISTER_CALCULATOR(TfLiteTensorsToDetectionsCalculator);
     detection_scores[i] = score_class_id_pairs[i * 2];
     detection_classes[i] = static_cast<int>(score_class_id_pairs[i * 2 + 1]);
   }
-  RETURN_IF_ERROR(ConvertToDetections(boxes.data(), detection_scores.data(),
-                                      detection_classes.data(),
-                                      output_detections));
+  MP_RETURN_IF_ERROR(ConvertToDetections(boxes.data(), detection_scores.data(),
+                                         detection_classes.data(),
+                                         output_detections));
 #else
   LOG(ERROR) << "GPU input on non-Android not supported yet.";
 #endif  // defined(__ANDROID__)

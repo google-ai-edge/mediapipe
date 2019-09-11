@@ -600,7 +600,7 @@ TEST(MediaSequenceTest, RoundTripOpticalFlowTimestamp) {
 
 TEST(MediaSequenceTest, ReconcileMetadataOnEmptySequence) {
   tensorflow::SequenceExample sequence;
-  MEDIAPIPE_ASSERT_OK(ReconcileMetadata(true, false, &sequence));
+  MP_ASSERT_OK(ReconcileMetadata(true, false, &sequence));
 }
 
 TEST(MediaSequenceTest, ReconcileMetadataImagestoLabels) {
@@ -616,7 +616,7 @@ TEST(MediaSequenceTest, ReconcileMetadataImagestoLabels) {
   AddImageTimestamp(4, &sequence);
   AddImageTimestamp(5, &sequence);
 
-  MEDIAPIPE_ASSERT_OK(ReconcileMetadata(true, false, &sequence));
+  MP_ASSERT_OK(ReconcileMetadata(true, false, &sequence));
   ASSERT_THAT(GetSegmentStartIndex(sequence),
               testing::ElementsAreArray({2, 3}));
   ASSERT_THAT(GetSegmentEndIndex(sequence), testing::ElementsAreArray({3, 4}));
@@ -633,7 +633,7 @@ TEST(MediaSequenceTest, ReconcileMetadataImages) {
   AddImageTimestamp(1000000, &sequence);
   AddImageTimestamp(2000000, &sequence);
 
-  MEDIAPIPE_ASSERT_OK(ReconcileMetadata(true, false, &sequence));
+  MP_ASSERT_OK(ReconcileMetadata(true, false, &sequence));
   ASSERT_EQ(GetContext(sequence, kImageFormatKey).bytes_list().value(0),
             "JPEG");
   ASSERT_EQ(GetContext(sequence, kImageChannelsKey).int64_list().value(0), 3);
@@ -654,7 +654,7 @@ TEST(MediaSequenceTest, ReconcileMetadataImagesPNG) {
   AddImageTimestamp(1000000, &sequence);
   AddImageTimestamp(2000000, &sequence);
 
-  MEDIAPIPE_ASSERT_OK(ReconcileMetadata(true, false, &sequence));
+  MP_ASSERT_OK(ReconcileMetadata(true, false, &sequence));
   ASSERT_EQ(GetContext(sequence, kImageFormatKey).bytes_list().value(0), "PNG");
   ASSERT_EQ(GetContext(sequence, kImageChannelsKey).int64_list().value(0), 3);
   ASSERT_EQ(GetContext(sequence, kImageWidthKey).int64_list().value(0), 3);
@@ -675,7 +675,7 @@ TEST(MediaSequenceTest, ReconcileMetadataFlowEncoded) {
   AddForwardFlowTimestamp(1000000, &sequence);
   AddForwardFlowTimestamp(2000000, &sequence);
 
-  MEDIAPIPE_ASSERT_OK(ReconcileMetadata(true, false, &sequence));
+  MP_ASSERT_OK(ReconcileMetadata(true, false, &sequence));
   ASSERT_EQ(GetForwardFlowFormat(sequence), "JPEG");
   ASSERT_EQ(GetForwardFlowChannels(sequence), 3);
   ASSERT_EQ(GetForwardFlowWidth(sequence), 3);
@@ -692,7 +692,7 @@ TEST(MediaSequenceTest, ReconcileMetadataFloats) {
   AddFeatureTimestamp(feature_name, 1000000, &sequence);
   AddFeatureTimestamp(feature_name, 2000000, &sequence);
 
-  MEDIAPIPE_ASSERT_OK(ReconcileMetadata(true, false, &sequence));
+  MP_ASSERT_OK(ReconcileMetadata(true, false, &sequence));
   ASSERT_EQ(GetFeatureDimensions(feature_name, sequence).size(), 1);
   ASSERT_EQ(GetFeatureDimensions(feature_name, sequence)[0], 3);
   ASSERT_EQ(GetFeatureRate(feature_name, sequence), 1.0);
@@ -708,7 +708,7 @@ TEST(MediaSequenceTest, ReconcileMetadataFloatsDoesntOverwrite) {
   AddFeatureTimestamp(feature_name, 1000000, &sequence);
   AddFeatureTimestamp(feature_name, 2000000, &sequence);
 
-  MEDIAPIPE_ASSERT_OK(ReconcileMetadata(true, false, &sequence));
+  MP_ASSERT_OK(ReconcileMetadata(true, false, &sequence));
   ASSERT_EQ(GetFeatureDimensions(feature_name, sequence).size(), 3);
   ASSERT_EQ(GetFeatureDimensions(feature_name, sequence)[0], 1);
   ASSERT_EQ(GetFeatureDimensions(feature_name, sequence)[1], 3);
@@ -751,7 +751,7 @@ TEST(MediaSequenceTest,
   AddBBox(bboxes[1], &sequence);
   AddBBox(bboxes[2], &sequence);
 
-  MEDIAPIPE_ASSERT_OK(ReconcileMetadata(true, false, &sequence));
+  MP_ASSERT_OK(ReconcileMetadata(true, false, &sequence));
 
   ASSERT_EQ(GetBBoxTimestampSize(sequence), 3);
   ASSERT_EQ(GetBBoxTimestampAt(sequence, 0), 10);
@@ -769,7 +769,7 @@ TEST(MediaSequenceTest,
   ASSERT_EQ(GetUnmodifiedBBoxTimestampAt(sequence, 1), 21);
 
   // A second reconciliation should not corrupt unmodified bbox timestamps.
-  MEDIAPIPE_ASSERT_OK(ReconcileMetadata(true, false, &sequence));
+  MP_ASSERT_OK(ReconcileMetadata(true, false, &sequence));
 
   ASSERT_EQ(GetBBoxTimestampSize(sequence), 3);
   ASSERT_EQ(GetBBoxTimestampAt(sequence, 0), 10);
@@ -804,7 +804,7 @@ TEST(MediaSequenceTest, ReconcileMetadataBoxAnnotationsFillsMissing) {
   AddBBox(bboxes[1], &sequence);
   AddBBox(bboxes[2], &sequence);
 
-  MEDIAPIPE_ASSERT_OK(ReconcileMetadata(true, false, &sequence));
+  MP_ASSERT_OK(ReconcileMetadata(true, false, &sequence));
   ASSERT_EQ(GetBBoxTimestampSize(sequence), 5);
   ASSERT_EQ(GetBBoxIsAnnotatedSize(sequence), 5);
 
@@ -873,7 +873,7 @@ TEST(MediaSequenceTest, ReconcileMetadataBoxAnnotationsUpdatesAllFeatures) {
   AddBBox(bboxes[0], &sequence);
   AddBBox(bboxes[1], &sequence);
 
-  MEDIAPIPE_ASSERT_OK(ReconcileMetadata(true, false, &sequence));
+  MP_ASSERT_OK(ReconcileMetadata(true, false, &sequence));
   ASSERT_EQ(GetBBoxTimestampSize(sequence), 5);
   ASSERT_EQ(GetBBoxIsAnnotatedSize(sequence), 5);
 
@@ -1003,7 +1003,7 @@ TEST(MediaSequenceTest, ReconcileMetadataBoxAnnotationsDoesNotAddFields) {
   AddBBox(bboxes[1], &sequence);
   AddBBox(bboxes[2], &sequence);
 
-  MEDIAPIPE_ASSERT_OK(ReconcileMetadata(true, false, &sequence));
+  MP_ASSERT_OK(ReconcileMetadata(true, false, &sequence));
   ASSERT_EQ(GetBBoxTimestampSize(sequence), 5);
   ASSERT_EQ(GetBBoxIsAnnotatedSize(sequence), 5);
   ASSERT_FALSE(HasBBoxClassIndex(sequence));
@@ -1031,7 +1031,7 @@ TEST(MediaSequenceTest, ReconcileMetadataRegionAnnotations) {
   AddBBoxTimestamp("PREFIX", 22, &sequence);
 
   // Expect both the default and "PREFIX"-ed keys to be reconciled.
-  MEDIAPIPE_ASSERT_OK(ReconcileMetadata(false, true, &sequence));
+  MP_ASSERT_OK(ReconcileMetadata(false, true, &sequence));
   ASSERT_EQ(GetBBoxTimestampSize(sequence), 3);
   ASSERT_EQ(GetBBoxIsAnnotatedSize(sequence), 3);
   ASSERT_EQ(GetBBoxTimestampSize("PREFIX", sequence), 3);

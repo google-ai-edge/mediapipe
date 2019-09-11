@@ -182,9 +182,9 @@ REGISTER_CALCULATOR(TfLiteInferenceCalculator);
   }
 
 #if defined(__ANDROID__)
-  RETURN_IF_ERROR(mediapipe::GlCalculatorHelper::UpdateContract(cc));
+  MP_RETURN_IF_ERROR(mediapipe::GlCalculatorHelper::UpdateContract(cc));
 #elif defined(__APPLE__) && !TARGET_OS_OSX  // iOS
-  RETURN_IF_ERROR([MPPMetalHelper updateContract:cc]);
+  MP_RETURN_IF_ERROR([MPPMetalHelper updateContract:cc]);
 #endif
 
   // Assign this calculator's default InputStreamHandler.
@@ -196,7 +196,7 @@ REGISTER_CALCULATOR(TfLiteInferenceCalculator);
 ::mediapipe::Status TfLiteInferenceCalculator::Open(CalculatorContext* cc) {
   cc->SetOffset(TimestampDiff(0));
 
-  RETURN_IF_ERROR(LoadOptions(cc));
+  MP_RETURN_IF_ERROR(LoadOptions(cc));
 
   if (cc->Inputs().HasTag("TENSORS_GPU")) {
 #if defined(__ANDROID__) || (defined(__APPLE__) && !TARGET_OS_OSX)
@@ -217,17 +217,17 @@ REGISTER_CALCULATOR(TfLiteInferenceCalculator);
 #endif
   }
 
-  RETURN_IF_ERROR(LoadModel(cc));
+  MP_RETURN_IF_ERROR(LoadModel(cc));
 
   if (gpu_inference_) {
 #if defined(__ANDROID__)
-    RETURN_IF_ERROR(gpu_helper_.Open(cc));
+    MP_RETURN_IF_ERROR(gpu_helper_.Open(cc));
 #elif defined(__APPLE__) && !TARGET_OS_OSX  // iOS
     gpu_helper_ = [[MPPMetalHelper alloc] initWithCalculatorContext:cc];
     RET_CHECK(gpu_helper_);
 #endif
 
-    RETURN_IF_ERROR(LoadDelegate(cc));
+    MP_RETURN_IF_ERROR(LoadDelegate(cc));
   }
 
   return ::mediapipe::OkStatus();
@@ -241,7 +241,7 @@ REGISTER_CALCULATOR(TfLiteInferenceCalculator);
     const auto& input_tensors =
         cc->Inputs().Tag("TENSORS_GPU").Get<std::vector<GpuTensor>>();
     RET_CHECK_EQ(input_tensors.size(), 1);
-    RETURN_IF_ERROR(gpu_helper_.RunInGlContext(
+    MP_RETURN_IF_ERROR(gpu_helper_.RunInGlContext(
         [this, &input_tensors]() -> ::mediapipe::Status {
           // Explicit copy input.
           tflite::gpu::gl::CopyBuffer(input_tensors[0], gpu_data_in_->buffer);
@@ -290,10 +290,11 @@ REGISTER_CALCULATOR(TfLiteInferenceCalculator);
   // 2. Run inference.
   if (gpu_inference_) {
 #if defined(__ANDROID__)
-    RETURN_IF_ERROR(gpu_helper_.RunInGlContext([this]() -> ::mediapipe::Status {
-      RET_CHECK_EQ(interpreter_->Invoke(), kTfLiteOk);
-      return ::mediapipe::OkStatus();
-    }));
+    MP_RETURN_IF_ERROR(
+        gpu_helper_.RunInGlContext([this]() -> ::mediapipe::Status {
+          RET_CHECK_EQ(interpreter_->Invoke(), kTfLiteOk);
+          return ::mediapipe::OkStatus();
+        }));
 #elif defined(__APPLE__) && !TARGET_OS_OSX  // iOS
     RET_CHECK_EQ(interpreter_->Invoke(), kTfLiteOk);
 #endif
@@ -367,7 +368,7 @@ REGISTER_CALCULATOR(TfLiteInferenceCalculator);
 ::mediapipe::Status TfLiteInferenceCalculator::Close(CalculatorContext* cc) {
   if (delegate_) {
 #if defined(__ANDROID__)
-    RETURN_IF_ERROR(gpu_helper_.RunInGlContext([this]() -> Status {
+    MP_RETURN_IF_ERROR(gpu_helper_.RunInGlContext([this]() -> Status {
       TfLiteGpuDelegateDelete(delegate_);
       gpu_data_in_.reset();
       for (int i = 0; i < gpu_data_out_.size(); ++i) {

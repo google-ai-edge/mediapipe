@@ -74,7 +74,7 @@ REGISTER_CALCULATOR(MaskOverlayCalculator);
 
 // static
 ::mediapipe::Status MaskOverlayCalculator::GetContract(CalculatorContract* cc) {
-  RETURN_IF_ERROR(GlCalculatorHelper::UpdateContract(cc));
+  MP_RETURN_IF_ERROR(GlCalculatorHelper::UpdateContract(cc));
   cc->Inputs().Get("VIDEO", 0).Set<GpuBuffer>();
   cc->Inputs().Get("VIDEO", 1).Set<GpuBuffer>();
   if (cc->Inputs().HasTag("MASK"))
@@ -103,7 +103,7 @@ REGISTER_CALCULATOR(MaskOverlayCalculator);
       const auto& options = cc->Options<MaskOverlayCalculatorOptions>();
       const auto mask_channel = options.mask_channel();
 
-      RETURN_IF_ERROR(GlSetup(mask_channel));
+      MP_RETURN_IF_ERROR(GlSetup(mask_channel));
       initialized_ = true;
     }
 
@@ -147,7 +147,7 @@ REGISTER_CALCULATOR(MaskOverlayCalculator);
       glActiveTexture(GL_TEXTURE3);
       glBindTexture(mask_tex.target(), mask_tex.name());
 
-      RETURN_IF_ERROR(GlRender(mask_const));
+      MP_RETURN_IF_ERROR(GlRender(mask_const));
 
       glActiveTexture(GL_TEXTURE3);
       glBindTexture(mask_tex.target(), 0);
@@ -155,7 +155,7 @@ REGISTER_CALCULATOR(MaskOverlayCalculator);
     } else {
       const float mask_const = mask_packet.Get<float>();
 
-      RETURN_IF_ERROR(GlRender(mask_const));
+      MP_RETURN_IF_ERROR(GlRender(mask_const));
     }
 
     glActiveTexture(GL_TEXTURE2);

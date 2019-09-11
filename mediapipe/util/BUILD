@@ -52,7 +52,7 @@ mediapipe_cc_proto_library(
     name = "render_data_cc_proto",
     srcs = ["render_data.proto"],
     cc_deps = [":color_cc_proto"],
-    visibility = ["//mediapipe:__subpackages__"],
+    visibility = ["//visibility:public"],
     deps = [":render_data_proto"],
 )
 
@@ -60,7 +60,7 @@ mediapipe_cc_proto_library(
     name = "audio_decoder_cc_proto",
     srcs = ["audio_decoder.proto"],
     cc_deps = ["//mediapipe/framework:calculator_cc_proto"],
-    visibility = ["//mediapipe:__subpackages__"],
+    visibility = ["//visibility:public"],
     deps = [":audio_decoder_proto"],
 )
 
@@ -181,7 +181,6 @@ cc_library(
     copts = select({
         "//conditions:default": [],
         "//mediapipe:apple": [
-            "-std=c++11",
             "-ObjC++",
         ],
         "//mediapipe:macos": [],

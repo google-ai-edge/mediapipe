@@ -177,7 +177,7 @@ REGISTER_CALCULATOR(TfLiteTensorsToSegmentationCalculator);
 #endif  // __ANDROID__
 
 #if defined(__ANDROID__)
-  RETURN_IF_ERROR(mediapipe::GlCalculatorHelper::UpdateContract(cc));
+  MP_RETURN_IF_ERROR(mediapipe::GlCalculatorHelper::UpdateContract(cc));
 #endif  // __ANDROID__
 
   return ::mediapipe::OkStatus();
@@ -190,17 +190,17 @@ REGISTER_CALCULATOR(TfLiteTensorsToSegmentationCalculator);
   if (cc->Inputs().HasTag("TENSORS_GPU")) {
     use_gpu_ = true;
 #if defined(__ANDROID__)
-    RETURN_IF_ERROR(gpu_helper_.Open(cc));
+    MP_RETURN_IF_ERROR(gpu_helper_.Open(cc));
 #endif  // __ANDROID__
   }
 
-  RETURN_IF_ERROR(LoadOptions(cc));
+  MP_RETURN_IF_ERROR(LoadOptions(cc));
 
   if (use_gpu_) {
 #if defined(__ANDROID__)
-    RETURN_IF_ERROR(
+    MP_RETURN_IF_ERROR(
         gpu_helper_.RunInGlContext([this, cc]() -> ::mediapipe::Status {
-          RETURN_IF_ERROR(InitGpu(cc));
+          MP_RETURN_IF_ERROR(InitGpu(cc));
           return ::mediapipe::OkStatus();
         }));
 #else
@@ -216,14 +216,14 @@ REGISTER_CALCULATOR(TfLiteTensorsToSegmentationCalculator);
     CalculatorContext* cc) {
   if (use_gpu_) {
 #if defined(__ANDROID__)
-    RETURN_IF_ERROR(
+    MP_RETURN_IF_ERROR(
         gpu_helper_.RunInGlContext([this, cc]() -> ::mediapipe::Status {
-          RETURN_IF_ERROR(ProcessGpu(cc));
+          MP_RETURN_IF_ERROR(ProcessGpu(cc));
           return ::mediapipe::OkStatus();
         }));
 #endif  // __ANDROID__
   } else {
-    RETURN_IF_ERROR(ProcessCpu(cc));
+    MP_RETURN_IF_ERROR(ProcessCpu(cc));
   }
 
   return ::mediapipe::OkStatus();

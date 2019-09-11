@@ -224,7 +224,7 @@ void GraphProfiler::Reset() {
   Pause();
   // If specified, write a final profile.
   if (IsTraceLogEnabled(profiler_config_)) {
-    RETURN_IF_ERROR(WriteProfile());
+    MP_RETURN_IF_ERROR(WriteProfile());
   }
   return ::mediapipe::OkStatus();
 }

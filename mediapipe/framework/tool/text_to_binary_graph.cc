@@ -72,7 +72,7 @@ mediapipe::Status ReadFile(const std::string& proto_source, bool read_text,
                            proto_ns::Message* result) {
   std::ifstream ifs(proto_source);
   proto_ns::io::IstreamInputStream in(&ifs);
-  RETURN_IF_ERROR(ReadProto(&in, read_text, proto_source, result));
+  MP_RETURN_IF_ERROR(ReadProto(&in, read_text, proto_source, result));
   return mediapipe::OkStatus();
 }
 
@@ -81,7 +81,7 @@ mediapipe::Status WriteFile(const std::string& proto_output, bool write_text,
                             const proto_ns::Message& message) {
   std::ofstream ofs(proto_output, std::ofstream::out | std::ofstream::trunc);
   proto_ns::io::OstreamOutputStream out(&ofs);
-  RETURN_IF_ERROR(WriteProto(message, write_text, proto_output, &out));
+  MP_RETURN_IF_ERROR(WriteProto(message, write_text, proto_output, &out));
   return mediapipe::OkStatus();
 }
 

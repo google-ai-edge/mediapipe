@@ -60,14 +60,14 @@ namespace tool {
        {config->mutable_input_stream(), config->mutable_output_stream(),
         config->mutable_input_side_packet(),
         config->mutable_output_side_packet()}) {
-    RETURN_IF_ERROR(TransformStreamNames(streams, transform));
+    MP_RETURN_IF_ERROR(TransformStreamNames(streams, transform));
   }
   for (auto& node : *config->mutable_node()) {
     for (auto* streams :
          {node.mutable_input_stream(), node.mutable_output_stream(),
           node.mutable_input_side_packet(),
           node.mutable_output_side_packet()}) {
-      RETURN_IF_ERROR(TransformStreamNames(streams, transform));
+      MP_RETURN_IF_ERROR(TransformStreamNames(streams, transform));
     }
     if (!node.name().empty()) {
       node.set_name(transform(node.name()));
@@ -76,11 +76,11 @@ namespace tool {
   for (auto& generator : *config->mutable_packet_generator()) {
     for (auto* streams : {generator.mutable_input_side_packet(),
                           generator.mutable_output_side_packet()}) {
-      RETURN_IF_ERROR(TransformStreamNames(streams, transform));
+      MP_RETURN_IF_ERROR(TransformStreamNames(streams, transform));
     }
   }
   for (auto& status_handler : *config->mutable_status_handler()) {
-    RETURN_IF_ERROR(TransformStreamNames(
+    MP_RETURN_IF_ERROR(TransformStreamNames(
         status_handler.mutable_input_side_packet(), transform));
   }
   return ::mediapipe::OkStatus();
@@ -164,28 +164,29 @@ static ::mediapipe::Status PrefixNames(int subgraph_index,
     const CalculatorGraphConfig::Node& subgraph_node,
     CalculatorGraphConfig* subgraph_config) {
   std::map<std::string, std::string> stream_map;
-  RETURN_IF_ERROR(FindCorrespondingStreams(&stream_map,
-                                           subgraph_config->input_stream(),
-                                           subgraph_node.input_stream()))
+  MP_RETURN_IF_ERROR(FindCorrespondingStreams(&stream_map,
+                                              subgraph_config->input_stream(),
+                                              subgraph_node.input_stream()))
           .SetPrepend()
       << "while processing the input streams of subgraph node "
       << subgraph_node.calculator() << ": ";
-  RETURN_IF_ERROR(FindCorrespondingStreams(&stream_map,
-                                           subgraph_config->output_stream(),
-                                           subgraph_node.output_stream()))
+  MP_RETURN_IF_ERROR(FindCorrespondingStreams(&stream_map,
+                                              subgraph_config->output_stream(),
+                                              subgraph_node.output_stream()))
           .SetPrepend()
       << "while processing the output streams of subgraph node "
       << subgraph_node.calculator() << ": ";
   std::map<std::string, std::string> side_packet_map;
-  RETURN_IF_ERROR(FindCorrespondingStreams(&side_packet_map,
-                                           subgraph_config->input_side_packet(),
-                                           subgraph_node.input_side_packet()))
+  MP_RETURN_IF_ERROR(FindCorrespondingStreams(
+                         &side_packet_map, subgraph_config->input_side_packet(),
+                         subgraph_node.input_side_packet()))
           .SetPrepend()
       << "while processing the input side packets of subgraph node "
       << subgraph_node.calculator() << ": ";
-  RETURN_IF_ERROR(FindCorrespondingStreams(
-                      &side_packet_map, subgraph_config->output_side_packet(),
-                      subgraph_node.output_side_packet()))
+  MP_RETURN_IF_ERROR(
+      FindCorrespondingStreams(&side_packet_map,
+                               subgraph_config->output_side_packet(),
+                               subgraph_node.output_side_packet()))
           .SetPrepend()
       << "while processing the output side packets of subgraph node "
       << subgraph_node.calculator() << ": ";
@@ -197,22 +198,22 @@ static ::mediapipe::Status PrefixNames(int subgraph_index,
   };
   for (auto& node : *subgraph_config->mutable_node()) {
     name_map = &stream_map;
-    RETURN_IF_ERROR(
+    MP_RETURN_IF_ERROR(
         TransformStreamNames(node.mutable_input_stream(), replace_names));
-    RETURN_IF_ERROR(
+    MP_RETURN_IF_ERROR(
         TransformStreamNames(node.mutable_output_stream(), replace_names));
     name_map = &side_packet_map;
-    RETURN_IF_ERROR(
+    MP_RETURN_IF_ERROR(
         TransformStreamNames(node.mutable_input_side_packet(), replace_names));
-    RETURN_IF_ERROR(
+    MP_RETURN_IF_ERROR(
         TransformStreamNames(node.mutable_output_side_packet(), replace_names));
   }
   name_map = &side_packet_map;
   for (auto& generator : *subgraph_config->mutable_packet_generator()) {
-    RETURN_IF_ERROR(TransformStreamNames(generator.mutable_input_side_packet(),
-                                         replace_names));
-    RETURN_IF_ERROR(TransformStreamNames(generator.mutable_output_side_packet(),
-                                         replace_names));
+    MP_RETURN_IF_ERROR(TransformStreamNames(
+        generator.mutable_input_side_packet(), replace_names));
+    MP_RETURN_IF_ERROR(TransformStreamNames(
+        generator.mutable_output_side_packet(), replace_names));
   }
   return ::mediapipe::OkStatus();
 }
@@ -235,12 +236,12 @@ static ::mediapipe::Status PrefixNames(int subgraph_index,
     std::vector<CalculatorGraphConfig> subgraphs;
     for (auto it = subgraph_nodes_start; it != nodes->end(); ++it) {
       const auto& node = *it;
-      RETURN_IF_ERROR(ValidateSubgraphFields(node));
+      MP_RETURN_IF_ERROR(ValidateSubgraphFields(node));
       ASSIGN_OR_RETURN(auto subgraph, graph_registry->CreateByName(
                                           config->package(), node.calculator(),
                                           &node.options()));
-      RETURN_IF_ERROR(PrefixNames(subgraph_counter++, &subgraph));
-      RETURN_IF_ERROR(ConnectSubgraphStreams(node, &subgraph));
+      MP_RETURN_IF_ERROR(PrefixNames(subgraph_counter++, &subgraph));
+      MP_RETURN_IF_ERROR(ConnectSubgraphStreams(node, &subgraph));
       subgraphs.push_back(subgraph);
     }
     nodes->erase(subgraph_nodes_start, nodes->end());

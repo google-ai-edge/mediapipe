@@ -59,10 +59,10 @@ TEST(ValidatedGraphConfigTest, InitializeGraphFromProtos) {
   )");
 
   GraphValidation validation_1;
-  MEDIAPIPE_EXPECT_OK(
+  MP_EXPECT_OK(
       validation_1.Validate({config_1, config_2}, {}, {}, "PassThroughGraph"));
   CalculatorGraph graph_1;
-  MEDIAPIPE_EXPECT_OK(
+  MP_EXPECT_OK(
       graph_1.Initialize({config_1, config_2}, {}, {}, "PassThroughGraph"));
   EXPECT_THAT(
       graph_1.Config(),
@@ -79,9 +79,9 @@ TEST(ValidatedGraphConfigTest, InitializeGraphFromProtos) {
       )")));
 
   GraphValidation validation_2;
-  MEDIAPIPE_EXPECT_OK(validation_2.Validate({config_1, config_2}, {}));
+  MP_EXPECT_OK(validation_2.Validate({config_1, config_2}, {}));
   CalculatorGraph graph_2;
-  MEDIAPIPE_EXPECT_OK(graph_2.Initialize({config_1, config_2}, {}));
+  MP_EXPECT_OK(graph_2.Initialize({config_1, config_2}, {}));
   EXPECT_THAT(
       graph_2.Config(),
       EqualsProto(::mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
@@ -164,11 +164,11 @@ TEST(ValidatedGraphConfigTest, InitializeTemplateFromProtos) {
     })");
 
   GraphValidation validation_1;
-  MEDIAPIPE_EXPECT_OK(validation_1.Validate({config_2}, {config_1}, {},
-                                            "PassThroughGraph", &options));
+  MP_EXPECT_OK(validation_1.Validate({config_2}, {config_1}, {},
+                                     "PassThroughGraph", &options));
   CalculatorGraph graph_1;
-  MEDIAPIPE_EXPECT_OK(graph_1.Initialize({config_2}, {config_1}, {},
-                                         "PassThroughGraph", &options));
+  MP_EXPECT_OK(graph_1.Initialize({config_2}, {config_1}, {},
+                                  "PassThroughGraph", &options));
   EXPECT_THAT(
       graph_1.Config(),
       EqualsProto(::mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
@@ -185,9 +185,9 @@ TEST(ValidatedGraphConfigTest, InitializeTemplateFromProtos) {
       )")));
 
   GraphValidation validation_2;
-  MEDIAPIPE_EXPECT_OK(validation_2.Validate({config_2}, {config_1}));
+  MP_EXPECT_OK(validation_2.Validate({config_2}, {config_1}));
   CalculatorGraph graph_2;
-  MEDIAPIPE_EXPECT_OK(graph_2.Initialize({config_2}, {config_1}));
+  MP_EXPECT_OK(graph_2.Initialize({config_2}, {config_1}));
   EXPECT_THAT(
       graph_2.Config(),
       EqualsProto(::mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(

@@ -39,7 +39,7 @@ DEFINE_string(output_side_packets, "",
 
 ::mediapipe::Status RunMPPGraph() {
   std::string calculator_graph_config_contents;
-  RETURN_IF_ERROR(mediapipe::file::GetContents(
+  MP_RETURN_IF_ERROR(mediapipe::file::GetContents(
       FLAGS_calculator_graph_config_file, &calculator_graph_config_contents));
   LOG(INFO) << "Get calculator graph config contents: "
             << calculator_graph_config_contents;
@@ -54,16 +54,16 @@ DEFINE_string(output_side_packets, "",
     RET_CHECK(name_and_value.size() == 2);
     RET_CHECK(!::mediapipe::ContainsKey(input_side_packets, name_and_value[0]));
     std::string input_side_packet_contents;
-    RETURN_IF_ERROR(mediapipe::file::GetContents(name_and_value[1],
-                                                 &input_side_packet_contents));
+    MP_RETURN_IF_ERROR(mediapipe::file::GetContents(
+        name_and_value[1], &input_side_packet_contents));
     input_side_packets[name_and_value[0]] =
         ::mediapipe::MakePacket<std::string>(input_side_packet_contents);
   }
   LOG(INFO) << "Initialize the calculator graph.";
   mediapipe::CalculatorGraph graph;
-  RETURN_IF_ERROR(graph.Initialize(config, input_side_packets));
+  MP_RETURN_IF_ERROR(graph.Initialize(config, input_side_packets));
   LOG(INFO) << "Start running the calculator graph.";
-  RETURN_IF_ERROR(graph.Run());
+  MP_RETURN_IF_ERROR(graph.Run());
   LOG(INFO) << "Gathering output side packets.";
   kv_pairs = absl::StrSplit(FLAGS_output_side_packets, ',');
   for (const std::string& kv_pair : kv_pairs) {
@@ -75,7 +75,7 @@ DEFINE_string(output_side_packets, "",
         << "Packet " << name_and_value[0] << " was not available.";
     const std::string& serialized_string =
         output_packet.ValueOrDie().Get<std::string>();
-    RETURN_IF_ERROR(
+    MP_RETURN_IF_ERROR(
         mediapipe::file::SetContents(name_and_value[1], serialized_string));
   }
   return ::mediapipe::OkStatus();

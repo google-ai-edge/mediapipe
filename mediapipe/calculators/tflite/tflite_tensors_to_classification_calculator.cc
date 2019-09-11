@@ -103,7 +103,7 @@ REGISTER_CALCULATOR(TfLiteTensorsToClassificationCalculator);
     ASSIGN_OR_RETURN(string_path,
                      PathToResourceAsFile(options.label_map_path()));
     std::string label_map_string;
-    RETURN_IF_ERROR(file::GetContents(string_path, &label_map_string));
+    MP_RETURN_IF_ERROR(file::GetContents(string_path, &label_map_string));
 
     std::istringstream stream(label_map_string);
     std::string line;

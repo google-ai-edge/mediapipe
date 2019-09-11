@@ -102,7 +102,7 @@ REGISTER_CALCULATOR(GlScalerCalculator);
   if (cc->Inputs().HasTag("ROTATION")) {
     cc->Inputs().Tag("ROTATION").Set<int>();
   }
-  RETURN_IF_ERROR(GlCalculatorHelper::UpdateContract(cc));
+  MP_RETURN_IF_ERROR(GlCalculatorHelper::UpdateContract(cc));
 
   if (cc->InputSidePackets().HasTag("OPTIONS")) {
     cc->InputSidePackets().Tag("OPTIONS").Set<GlScalerCalculatorOptions>();
@@ -130,7 +130,7 @@ REGISTER_CALCULATOR(GlScalerCalculator);
   cc->SetOffset(mediapipe::TimestampDiff(0));
 
   // Let the helper access the GL context information.
-  RETURN_IF_ERROR(helper_.Open(cc));
+  MP_RETURN_IF_ERROR(helper_.Open(cc));
 
   int rotation_ccw = 0;
   const auto& options =
@@ -171,7 +171,7 @@ REGISTER_CALCULATOR(GlScalerCalculator);
     rotation_ccw = cc->InputSidePackets().Tag("ROTATION").Get<int>();
   }
 
-  RETURN_IF_ERROR(FrameRotationFromInt(&rotation_, rotation_ccw));
+  MP_RETURN_IF_ERROR(FrameRotationFromInt(&rotation_, rotation_ccw));
 
   return ::mediapipe::OkStatus();
 }
@@ -188,7 +188,7 @@ REGISTER_CALCULATOR(GlScalerCalculator);
         input.format() == GpuBufferFormat::kBiPlanar420YpCbCr8FullRange) {
       if (!yuv_renderer_) {
         yuv_renderer_ = absl::make_unique<QuadRenderer>();
-        RETURN_IF_ERROR(yuv_renderer_->GlSetup(
+        MP_RETURN_IF_ERROR(yuv_renderer_->GlSetup(
             kYUV2TexToRGBFragmentShader, {"video_frame_y", "video_frame_uv"}));
       }
       renderer = yuv_renderer_.get();
@@ -202,7 +202,7 @@ REGISTER_CALCULATOR(GlScalerCalculator);
       if (src1.target() == GL_TEXTURE_EXTERNAL_OES) {
         if (!ext_rgb_renderer_) {
           ext_rgb_renderer_ = absl::make_unique<QuadRenderer>();
-          RETURN_IF_ERROR(ext_rgb_renderer_->GlSetup(
+          MP_RETURN_IF_ERROR(ext_rgb_renderer_->GlSetup(
               kBasicTexturedFragmentShaderOES, {"video_frame"}));
         }
         renderer = ext_rgb_renderer_.get();
@@ -211,7 +211,7 @@ REGISTER_CALCULATOR(GlScalerCalculator);
       {
         if (!rgb_renderer_) {
           rgb_renderer_ = absl::make_unique<QuadRenderer>();
-          RETURN_IF_ERROR(rgb_renderer_->GlSetup());
+          MP_RETURN_IF_ERROR(rgb_renderer_->GlSetup());
         }
         renderer = rgb_renderer_.get();
       }
@@ -221,7 +221,7 @@ REGISTER_CALCULATOR(GlScalerCalculator);
     // Override input side packet if ROTATION input packet is provided.
     if (cc->Inputs().HasTag("ROTATION")) {
       int rotation_ccw = cc->Inputs().Tag("ROTATION").Get<int>();
-      RETURN_IF_ERROR(FrameRotationFromInt(&rotation_, rotation_ccw));
+      MP_RETURN_IF_ERROR(FrameRotationFromInt(&rotation_, rotation_ccw));
     }
 
     int dst_width;
@@ -255,7 +255,7 @@ REGISTER_CALCULATOR(GlScalerCalculator);
       glBindTexture(src2.target(), src2.name());
     }
 
-    RETURN_IF_ERROR(renderer->GlRender(
+    MP_RETURN_IF_ERROR(renderer->GlRender(
         src1.width(), src1.height(), dst.width(), dst.height(), scale_mode_,
         rotation_, horizontal_flip_output_, vertical_flip_output_,
         /*flip_texture*/ false));

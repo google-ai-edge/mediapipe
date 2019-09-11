@@ -200,7 +200,7 @@ REGISTER_CALCULATOR(AnnotationOverlayCalculator);
   }
 
 #if defined(__ANDROID__) || (defined(__APPLE__) && !TARGET_OS_OSX)
-  RETURN_IF_ERROR(mediapipe::GlCalculatorHelper::UpdateContract(cc));
+  MP_RETURN_IF_ERROR(mediapipe::GlCalculatorHelper::UpdateContract(cc));
 #endif  // __ANDROID__ or iOS
 
   return ::mediapipe::OkStatus();
@@ -247,7 +247,7 @@ REGISTER_CALCULATOR(AnnotationOverlayCalculator);
 
   if (use_gpu_) {
 #if defined(__ANDROID__) || (defined(__APPLE__) && !TARGET_OS_OSX)
-    RETURN_IF_ERROR(gpu_helper_.Open(cc));
+    MP_RETURN_IF_ERROR(gpu_helper_.Open(cc));
 #endif  // __ANDROID__ or iOS
   }
 
@@ -262,17 +262,17 @@ REGISTER_CALCULATOR(AnnotationOverlayCalculator);
   if (use_gpu_) {
 #if defined(__ANDROID__) || (defined(__APPLE__) && !TARGET_OS_OSX)
     if (!gpu_initialized_) {
-      RETURN_IF_ERROR(
+      MP_RETURN_IF_ERROR(
           gpu_helper_.RunInGlContext([this, cc]() -> ::mediapipe::Status {
-            RETURN_IF_ERROR(GlSetup(cc));
+            MP_RETURN_IF_ERROR(GlSetup(cc));
             return ::mediapipe::OkStatus();
           }));
       gpu_initialized_ = true;
     }
 #endif  // __ANDROID__ or iOS
-    RETURN_IF_ERROR(CreateRenderTargetGpu(cc, image_mat));
+    MP_RETURN_IF_ERROR(CreateRenderTargetGpu(cc, image_mat));
   } else {
-    RETURN_IF_ERROR(CreateRenderTargetCpu(cc, image_mat, &target_format));
+    MP_RETURN_IF_ERROR(CreateRenderTargetCpu(cc, image_mat, &target_format));
   }
 
   // Reset the renderer with the image_mat. No copy here.
@@ -291,16 +291,16 @@ REGISTER_CALCULATOR(AnnotationOverlayCalculator);
 #if defined(__ANDROID__) || (defined(__APPLE__) && !TARGET_OS_OSX)
     // Overlay rendered image in OpenGL, onto a copy of input.
     uchar* image_mat_ptr = image_mat->data;
-    RETURN_IF_ERROR(gpu_helper_.RunInGlContext(
+    MP_RETURN_IF_ERROR(gpu_helper_.RunInGlContext(
         [this, cc, image_mat_ptr]() -> ::mediapipe::Status {
-          RETURN_IF_ERROR(RenderToGpu(cc, image_mat_ptr));
+          MP_RETURN_IF_ERROR(RenderToGpu(cc, image_mat_ptr));
           return ::mediapipe::OkStatus();
         }));
 #endif  // __ANDROID__ or iOS
   } else {
     // Copy the rendered image to output.
     uchar* image_mat_ptr = image_mat->data;
-    RETURN_IF_ERROR(RenderToCpu(cc, target_format, image_mat_ptr));
+    MP_RETURN_IF_ERROR(RenderToCpu(cc, target_format, image_mat_ptr));
   }
 
   return ::mediapipe::OkStatus();
@@ -372,7 +372,7 @@ REGISTER_CALCULATOR(AnnotationOverlayCalculator);
     glActiveTexture(GL_TEXTURE2);
     glBindTexture(GL_TEXTURE_2D, image_mat_tex_);
 
-    RETURN_IF_ERROR(GlRender(cc));
+    MP_RETURN_IF_ERROR(GlRender(cc));
 
     glActiveTexture(GL_TEXTURE2);
     glBindTexture(GL_TEXTURE_2D, 0);

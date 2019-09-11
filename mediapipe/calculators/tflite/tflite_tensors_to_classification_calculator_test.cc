@@ -83,7 +83,7 @@ TEST_F(TfLiteTensorsToClassificationCalculatorTest, CorrectOutput) {
   )"));
 
   BuildGraph(&runner, {0, 0.5, 1});
-  MEDIAPIPE_ASSERT_OK(runner.Run());
+  MP_ASSERT_OK(runner.Run());
 
   const auto& output_packets_ = runner.Outputs().Tag("CLASSIFICATIONS").packets;
 
@@ -115,7 +115,7 @@ TEST_F(TfLiteTensorsToClassificationCalculatorTest,
   )"));
 
   BuildGraph(&runner, {0, 0.5, 1});
-  MEDIAPIPE_ASSERT_OK(runner.Run());
+  MP_ASSERT_OK(runner.Run());
 
   const auto& output_packets_ = runner.Outputs().Tag("CLASSIFICATIONS").packets;
 
@@ -147,7 +147,7 @@ TEST_F(TfLiteTensorsToClassificationCalculatorTest,
   )"));
 
   BuildGraph(&runner, {0, 0.5, 1});
-  MEDIAPIPE_ASSERT_OK(runner.Run());
+  MP_ASSERT_OK(runner.Run());
 
   const auto& output_packets_ = runner.Outputs().Tag("CLASSIFICATIONS").packets;
 
@@ -174,7 +174,7 @@ TEST_F(TfLiteTensorsToClassificationCalculatorTest, CorrectOutputWithTopK) {
   )"));
 
   BuildGraph(&runner, {0, 0.5, 1});
-  MEDIAPIPE_ASSERT_OK(runner.Run());
+  MP_ASSERT_OK(runner.Run());
 
   const auto& output_packets_ = runner.Outputs().Tag("CLASSIFICATIONS").packets;
 

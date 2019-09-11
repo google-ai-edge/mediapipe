@@ -51,7 +51,7 @@ REGISTER_CALCULATOR(GpuBufferToImageFrameCalculator);
   // Note: we call this method even on platforms where we don't use the helper,
   // to ensure the calculator's contract is the same. In particular, the helper
   // enables support for the legacy side packet, which several graphs still use.
-  RETURN_IF_ERROR(GlCalculatorHelper::UpdateContract(cc));
+  MP_RETURN_IF_ERROR(GlCalculatorHelper::UpdateContract(cc));
   return ::mediapipe::OkStatus();
 }
 
@@ -61,7 +61,7 @@ REGISTER_CALCULATOR(GpuBufferToImageFrameCalculator);
   // as we receive a packet at.
   cc->SetOffset(TimestampDiff(0));
 #if !MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
-  RETURN_IF_ERROR(helper_.Open(cc));
+  MP_RETURN_IF_ERROR(helper_.Open(cc));
 #endif  // MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
   return ::mediapipe::OkStatus();
 }

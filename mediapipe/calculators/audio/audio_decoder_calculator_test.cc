@@ -39,11 +39,10 @@ TEST(AudioDecoderCalculatorTest, TestWAV) {
       file::JoinPath("./",
                      "/mediapipe/calculators/audio/"
                      "testdata/sine_wave_1k_44100_mono_2_sec_wav.audio"));
-  MEDIAPIPE_ASSERT_OK(runner.Run());
-  MEDIAPIPE_EXPECT_OK(
-      runner.Outputs()
-          .Tag("AUDIO_HEADER")
-          .header.ValidateAsType<mediapipe::TimeSeriesHeader>());
+  MP_ASSERT_OK(runner.Run());
+  MP_EXPECT_OK(runner.Outputs()
+                   .Tag("AUDIO_HEADER")
+                   .header.ValidateAsType<mediapipe::TimeSeriesHeader>());
   const mediapipe::TimeSeriesHeader& header =
       runner.Outputs()
           .Tag("AUDIO_HEADER")
@@ -71,11 +70,10 @@ TEST(AudioDecoderCalculatorTest, Test48KWAV) {
       file::JoinPath("./",
                      "/mediapipe/calculators/audio/"
                      "testdata/sine_wave_1k_48000_stereo_2_sec_wav.audio"));
-  MEDIAPIPE_ASSERT_OK(runner.Run());
-  MEDIAPIPE_EXPECT_OK(
-      runner.Outputs()
-          .Tag("AUDIO_HEADER")
-          .header.ValidateAsType<mediapipe::TimeSeriesHeader>());
+  MP_ASSERT_OK(runner.Run());
+  MP_EXPECT_OK(runner.Outputs()
+                   .Tag("AUDIO_HEADER")
+                   .header.ValidateAsType<mediapipe::TimeSeriesHeader>());
   const mediapipe::TimeSeriesHeader& header =
       runner.Outputs()
           .Tag("AUDIO_HEADER")
@@ -103,11 +101,10 @@ TEST(AudioDecoderCalculatorTest, TestMP3) {
       file::JoinPath("./",
                      "/mediapipe/calculators/audio/"
                      "testdata/sine_wave_1k_44100_stereo_2_sec_mp3.audio"));
-  MEDIAPIPE_ASSERT_OK(runner.Run());
-  MEDIAPIPE_EXPECT_OK(
-      runner.Outputs()
-          .Tag("AUDIO_HEADER")
-          .header.ValidateAsType<mediapipe::TimeSeriesHeader>());
+  MP_ASSERT_OK(runner.Run());
+  MP_EXPECT_OK(runner.Outputs()
+                   .Tag("AUDIO_HEADER")
+                   .header.ValidateAsType<mediapipe::TimeSeriesHeader>());
   const mediapipe::TimeSeriesHeader& header =
       runner.Outputs()
           .Tag("AUDIO_HEADER")
@@ -135,11 +132,10 @@ TEST(AudioDecoderCalculatorTest, TestAAC) {
       file::JoinPath("./",
                      "/mediapipe/calculators/audio/"
                      "testdata/sine_wave_1k_44100_stereo_2_sec_aac.audio"));
-  MEDIAPIPE_ASSERT_OK(runner.Run());
-  MEDIAPIPE_EXPECT_OK(
-      runner.Outputs()
-          .Tag("AUDIO_HEADER")
-          .header.ValidateAsType<mediapipe::TimeSeriesHeader>());
+  MP_ASSERT_OK(runner.Run());
+  MP_EXPECT_OK(runner.Outputs()
+                   .Tag("AUDIO_HEADER")
+                   .header.ValidateAsType<mediapipe::TimeSeriesHeader>());
   const mediapipe::TimeSeriesHeader& header =
       runner.Outputs()
           .Tag("AUDIO_HEADER")

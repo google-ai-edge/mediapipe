@@ -49,38 +49,38 @@ TEST(TimestampAlignInputStreamHandlerTest, Initialization) {
   tool::AddVectorSink("output_camera", &config, &sink_camera);
 
   CalculatorGraph graph;
-  MEDIAPIPE_ASSERT_OK(graph.Initialize(config));
-  MEDIAPIPE_ASSERT_OK(graph.StartRun({}));
+  MP_ASSERT_OK(graph.Initialize(config));
+  MP_ASSERT_OK(graph.StartRun({}));
 
-  MEDIAPIPE_ASSERT_OK(graph.AddPacketToInputStream(
+  MP_ASSERT_OK(graph.AddPacketToInputStream(
       "input_camera", Adopt(new int(1)).At(Timestamp(101))));
-  MEDIAPIPE_ASSERT_OK(graph.WaitUntilIdle());
+  MP_ASSERT_OK(graph.WaitUntilIdle());
   // The timestamp base stream's packet is output immediately.
   EXPECT_EQ(0, sink_video.size());
   ASSERT_EQ(1, sink_camera.size());
   EXPECT_EQ(1, sink_camera[0].Get<int>());
   EXPECT_EQ(Timestamp(101), sink_camera[0].Timestamp());
 
-  MEDIAPIPE_ASSERT_OK(graph.AddPacketToInputStream(
+  MP_ASSERT_OK(graph.AddPacketToInputStream(
       "input_camera", Adopt(new int(2)).At(Timestamp(102))));
-  MEDIAPIPE_ASSERT_OK(graph.WaitUntilIdle());
+  MP_ASSERT_OK(graph.WaitUntilIdle());
   // The timestamp base stream's packet is output immediately.
   EXPECT_EQ(0, sink_video.size());
   ASSERT_EQ(2, sink_camera.size());
   EXPECT_EQ(2, sink_camera[1].Get<int>());
   EXPECT_EQ(Timestamp(102), sink_camera[1].Timestamp());
 
-  MEDIAPIPE_ASSERT_OK(graph.AddPacketToInputStream(
+  MP_ASSERT_OK(graph.AddPacketToInputStream(
       "input_video", Adopt(new int(1)).At(Timestamp(1))));
-  MEDIAPIPE_ASSERT_OK(graph.WaitUntilIdle());
+  MP_ASSERT_OK(graph.WaitUntilIdle());
   // No packet is output. The packet added to input_video is buffered in the
   // input stream.
   EXPECT_EQ(0, sink_video.size());
   EXPECT_EQ(2, sink_camera.size());
 
-  MEDIAPIPE_ASSERT_OK(graph.AddPacketToInputStream(
+  MP_ASSERT_OK(graph.AddPacketToInputStream(
       "input_camera", Adopt(new int(3)).At(Timestamp(103))));
-  MEDIAPIPE_ASSERT_OK(graph.WaitUntilIdle());
+  MP_ASSERT_OK(graph.WaitUntilIdle());
   // Both input streams have a packet. The following equivalence of timestamps
   // is established:
   //   input_video    input_camera
@@ -96,23 +96,23 @@ TEST(TimestampAlignInputStreamHandlerTest, Initialization) {
   EXPECT_EQ(3, sink_camera[2].Get<int>());
   EXPECT_EQ(Timestamp(103), sink_camera[2].Timestamp());
 
-  MEDIAPIPE_ASSERT_OK(graph.AddPacketToInputStream(
+  MP_ASSERT_OK(graph.AddPacketToInputStream(
       "input_camera", Adopt(new int(4)).At(Timestamp(104))));
-  MEDIAPIPE_ASSERT_OK(graph.WaitUntilIdle());
+  MP_ASSERT_OK(graph.WaitUntilIdle());
   // The timestamp base stream does not receive special treatment now.
   EXPECT_EQ(1, sink_video.size());
   EXPECT_EQ(3, sink_camera.size());
 
-  MEDIAPIPE_ASSERT_OK(graph.AddPacketToInputStream(
+  MP_ASSERT_OK(graph.AddPacketToInputStream(
       "input_video", Adopt(new int(4)).At(Timestamp(4))));
-  MEDIAPIPE_ASSERT_OK(graph.WaitUntilIdle());
+  MP_ASSERT_OK(graph.WaitUntilIdle());
   EXPECT_EQ(1, sink_video.size());
   ASSERT_EQ(4, sink_camera.size());
   EXPECT_EQ(4, sink_camera[3].Get<int>());
   EXPECT_EQ(Timestamp(104), sink_camera[3].Timestamp());
 
-  MEDIAPIPE_ASSERT_OK(graph.CloseAllInputStreams());
-  MEDIAPIPE_ASSERT_OK(graph.WaitUntilDone());
+  MP_ASSERT_OK(graph.CloseAllInputStreams());
+  MP_ASSERT_OK(graph.WaitUntilDone());
   ASSERT_EQ(2, sink_video.size());
   EXPECT_EQ(4, sink_camera.size());
   EXPECT_EQ(4, sink_video[1].Get<int>());
@@ -145,21 +145,21 @@ TEST(TimestampAlignInputStreamHandlerTest, TickRate) {
   tool::AddVectorSink("output_camera", &config, &sink_camera);
 
   CalculatorGraph graph;
-  MEDIAPIPE_ASSERT_OK(graph.Initialize(config));
-  MEDIAPIPE_ASSERT_OK(graph.StartRun({}));
+  MP_ASSERT_OK(graph.Initialize(config));
+  MP_ASSERT_OK(graph.StartRun({}));
 
   // Video timestamps start from 0 seconds. Video frame rate is 2 fps.
-  MEDIAPIPE_ASSERT_OK(graph.AddPacketToInputStream(
+  MP_ASSERT_OK(graph.AddPacketToInputStream(
       "input_video", Adopt(new int(0)).At(Timestamp(0))));
-  MEDIAPIPE_ASSERT_OK(graph.WaitUntilIdle());
+  MP_ASSERT_OK(graph.WaitUntilIdle());
   // No packets expected as the timestamp base stream has not seen any packet.
   EXPECT_EQ(0, sink_video.size());
   EXPECT_EQ(0, sink_camera.size());
 
   // Camera timestamps start from 100 seconds. Camera frame rate is 1 fps.
-  MEDIAPIPE_ASSERT_OK(graph.AddPacketToInputStream(
+  MP_ASSERT_OK(graph.AddPacketToInputStream(
       "input_camera", Adopt(new int(0)).At(Timestamp(100000000))));
-  MEDIAPIPE_ASSERT_OK(graph.WaitUntilIdle());
+  MP_ASSERT_OK(graph.WaitUntilIdle());
   // Both input streams have a packet. The following equivalence of timestamps
   // is established:
   //   input_video    input_camera
@@ -171,17 +171,17 @@ TEST(TimestampAlignInputStreamHandlerTest, TickRate) {
   EXPECT_EQ(0, sink_camera[0].Get<int>());
   EXPECT_EQ(Timestamp(100000000), sink_camera[0].Timestamp());
 
-  MEDIAPIPE_ASSERT_OK(graph.AddPacketToInputStream(
+  MP_ASSERT_OK(graph.AddPacketToInputStream(
       "input_video", Adopt(new int(1)).At(Timestamp(500000))));
-  MEDIAPIPE_ASSERT_OK(graph.WaitUntilIdle());
+  MP_ASSERT_OK(graph.WaitUntilIdle());
   EXPECT_EQ(1, sink_video.size());
   EXPECT_EQ(1, sink_camera.size());
 
-  MEDIAPIPE_ASSERT_OK(graph.AddPacketToInputStream(
+  MP_ASSERT_OK(graph.AddPacketToInputStream(
       "input_video", Adopt(new int(2)).At(Timestamp(1000000))));
-  MEDIAPIPE_ASSERT_OK(graph.AddPacketToInputStream(
+  MP_ASSERT_OK(graph.AddPacketToInputStream(
       "input_camera", Adopt(new int(1)).At(Timestamp(101000000))));
-  MEDIAPIPE_ASSERT_OK(graph.WaitUntilIdle());
+  MP_ASSERT_OK(graph.WaitUntilIdle());
   ASSERT_EQ(3, sink_video.size());
   ASSERT_EQ(3, sink_camera.size());
   EXPECT_EQ(1, sink_video[1].Get<int>());
@@ -193,8 +193,8 @@ TEST(TimestampAlignInputStreamHandlerTest, TickRate) {
   EXPECT_EQ(1, sink_camera[2].Get<int>());
   EXPECT_EQ(Timestamp(101000000), sink_camera[2].Timestamp());
 
-  MEDIAPIPE_ASSERT_OK(graph.CloseAllInputStreams());
-  MEDIAPIPE_ASSERT_OK(graph.WaitUntilDone());
+  MP_ASSERT_OK(graph.CloseAllInputStreams());
+  MP_ASSERT_OK(graph.WaitUntilDone());
   ASSERT_EQ(3, sink_video.size());
   ASSERT_EQ(3, sink_camera.size());
 }

@@ -41,13 +41,13 @@ TEST(OpenCvVideoDecoderCalculatorTest, TestMp4Avc720pVideo) {
       file::JoinPath("./",
                      "/mediapipe/calculators/video/"
                      "testdata/format_MP4_AVC720P_AAC.video"));
-  MEDIAPIPE_EXPECT_OK(runner.Run());
+  MP_EXPECT_OK(runner.Run());
 
   EXPECT_EQ(runner.Outputs().Tag("VIDEO_PRESTREAM").packets.size(), 1);
-  MEDIAPIPE_EXPECT_OK(runner.Outputs()
-                          .Tag("VIDEO_PRESTREAM")
-                          .packets[0]
-                          .ValidateAsType<VideoHeader>());
+  MP_EXPECT_OK(runner.Outputs()
+                   .Tag("VIDEO_PRESTREAM")
+                   .packets[0]
+                   .ValidateAsType<VideoHeader>());
   const mediapipe::VideoHeader& header =
       runner.Outputs().Tag("VIDEO_PRESTREAM").packets[0].Get<VideoHeader>();
   EXPECT_EQ(ImageFormat::SRGB, header.format);
@@ -83,13 +83,13 @@ TEST(OpenCvVideoDecoderCalculatorTest, TestFlvH264Video) {
       file::JoinPath("./",
                      "/mediapipe/calculators/video/"
                      "testdata/format_FLV_H264_AAC.video"));
-  MEDIAPIPE_EXPECT_OK(runner.Run());
+  MP_EXPECT_OK(runner.Run());
 
   EXPECT_EQ(runner.Outputs().Tag("VIDEO_PRESTREAM").packets.size(), 1);
-  MEDIAPIPE_EXPECT_OK(runner.Outputs()
-                          .Tag("VIDEO_PRESTREAM")
-                          .packets[0]
-                          .ValidateAsType<VideoHeader>());
+  MP_EXPECT_OK(runner.Outputs()
+                   .Tag("VIDEO_PRESTREAM")
+                   .packets[0]
+                   .ValidateAsType<VideoHeader>());
   const mediapipe::VideoHeader& header =
       runner.Outputs().Tag("VIDEO_PRESTREAM").packets[0].Get<VideoHeader>();
   EXPECT_EQ(ImageFormat::SRGB, header.format);
@@ -127,13 +127,13 @@ TEST(OpenCvVideoDecoderCalculatorTest, TestMkvVp8Video) {
       file::JoinPath("./",
                      "/mediapipe/calculators/video/"
                      "testdata/format_MKV_VP8_VORBIS.video"));
-  MEDIAPIPE_EXPECT_OK(runner.Run());
+  MP_EXPECT_OK(runner.Run());
 
   EXPECT_EQ(runner.Outputs().Tag("VIDEO_PRESTREAM").packets.size(), 1);
-  MEDIAPIPE_EXPECT_OK(runner.Outputs()
-                          .Tag("VIDEO_PRESTREAM")
-                          .packets[0]
-                          .ValidateAsType<VideoHeader>());
+  MP_EXPECT_OK(runner.Outputs()
+                   .Tag("VIDEO_PRESTREAM")
+                   .packets[0]
+                   .ValidateAsType<VideoHeader>());
   const mediapipe::VideoHeader& header =
       runner.Outputs().Tag("VIDEO_PRESTREAM").packets[0].Get<VideoHeader>();
   EXPECT_EQ(ImageFormat::SRGB, header.format);

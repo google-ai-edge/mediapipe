@@ -604,7 +604,8 @@ class TemplateExpanderImpl {
                                      ? mediapipe::SimpleDtoa(args[i].num())
                                      : args[i].str();
         std::vector<FieldValue> r;
-        RETURN_IF_ERROR(ProtoUtilLite::Serialize({text_value}, field_type, &r));
+        MP_RETURN_IF_ERROR(
+            ProtoUtilLite::Serialize({text_value}, field_type, &r));
         result->push_back(r[0]);
       }
     }

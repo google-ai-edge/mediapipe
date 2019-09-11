@@ -82,10 +82,7 @@ mediapipe_cc_proto_library(
         "//mediapipe/framework:calculator_cc_proto",
         "//mediapipe/framework/deps:proto_descriptor_cc_proto",
     ],
-    visibility = [
-        "//mediapipe/framework:__subpackages__",
-        "//mediapipe/java/com/google/mediapipe/framework:__subpackages__",
-    ],
+    visibility = ["//visibility:public"],
     deps = [":calculator_graph_template_proto"],
 )
 
@@ -93,7 +90,7 @@ mediapipe_cc_proto_library(
     name = "source_cc_proto",
     srcs = ["source.proto"],
     cc_deps = ["//mediapipe/framework:calculator_cc_proto"],
-    visibility = ["//mediapipe/framework:__subpackages__"],
+    visibility = ["//visibility:public"],
     deps = [":source_proto"],
 )
 

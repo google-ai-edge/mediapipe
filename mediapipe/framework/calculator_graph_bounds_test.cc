@@ -77,27 +77,27 @@ TEST(CalculatorGraphBounds, ImmediateHandlerBounds) {
       )");
   CalculatorGraph graph;
   std::vector<Packet> output_packets;
-  MEDIAPIPE_ASSERT_OK(graph.Initialize(config));
-  MEDIAPIPE_ASSERT_OK(graph.ObserveOutputStream("output", [&](const Packet& p) {
+  MP_ASSERT_OK(graph.Initialize(config));
+  MP_ASSERT_OK(graph.ObserveOutputStream("output", [&](const Packet& p) {
     output_packets.push_back(p);
     return ::mediapipe::OkStatus();
   }));
-  MEDIAPIPE_ASSERT_OK(graph.StartRun({}));
-  MEDIAPIPE_ASSERT_OK(graph.WaitUntilIdle());
+  MP_ASSERT_OK(graph.StartRun({}));
+  MP_ASSERT_OK(graph.WaitUntilIdle());
 
   // Add four packets into the graph.
   for (int i = 0; i < 4; ++i) {
     Packet p = MakePacket<int>(33).At(Timestamp(i));
-    MEDIAPIPE_ASSERT_OK(graph.AddPacketToInputStream("input", p));
+    MP_ASSERT_OK(graph.AddPacketToInputStream("input", p));
   }
 
   // Four packets arrive at the output only if timestamp bounds are propagated.
-  MEDIAPIPE_ASSERT_OK(graph.WaitUntilIdle());
+  MP_ASSERT_OK(graph.WaitUntilIdle());
   EXPECT_EQ(output_packets.size(), 4);
 
   // Eventually four packets arrive.
-  MEDIAPIPE_ASSERT_OK(graph.CloseAllPacketSources());
-  MEDIAPIPE_ASSERT_OK(graph.WaitUntilDone());
+  MP_ASSERT_OK(graph.CloseAllPacketSources());
+  MP_ASSERT_OK(graph.WaitUntilDone());
   EXPECT_EQ(output_packets.size(), 4);
 }
 

@@ -92,7 +92,7 @@ class SimulationClockTest : public ::testing::Test {
     auto executor = std::make_shared<SimulationClockExecutor>(4);
     simulation_clock_ = executor->GetClock();
     clock_ = simulation_clock_.get();
-    MEDIAPIPE_ASSERT_OK(graph_.SetExecutor("", executor));
+    MP_ASSERT_OK(graph_.SetExecutor("", executor));
   }
 
   // Initialize the test clock as a RealClock.
@@ -213,20 +213,20 @@ TEST_F(SimulationClockTest, InFlight) {
   SetUpInFlightGraph();
   std::vector<Packet> out_packets;
   tool::AddVectorSink("output_packets_0", &graph_config_, &out_packets);
-  MEDIAPIPE_ASSERT_OK(graph_.Initialize(
-      graph_config_, {
-                         {"max_in_flight", MakePacket<int>(2)},
-                         {"callback_0", Adopt(new auto(wait_0))},
-                         {"callback_1", Adopt(new auto(wait_1))},
-                     }));
-  MEDIAPIPE_ASSERT_OK(graph_.StartRun({}));
+  MP_ASSERT_OK(graph_.Initialize(graph_config_,
+                                 {
+                                     {"max_in_flight", MakePacket<int>(2)},
+                                     {"callback_0", Adopt(new auto(wait_0))},
+                                     {"callback_1", Adopt(new auto(wait_1))},
+                                 }));
+  MP_ASSERT_OK(graph_.StartRun({}));
   simulation_clock_->ThreadStart();
 
   // Add 10 input packets to the graph, one each 10 ms, starting after 11 ms
   // of clock time.  Timestamps lag clock times by 1 ms.
   clock_->Sleep(absl::Microseconds(11000));
   for (uint64 ts = 10000; ts <= 100000; ts += 10000) {
-    MEDIAPIPE_EXPECT_OK(graph_.AddPacketToInputStream(
+    MP_EXPECT_OK(graph_.AddPacketToInputStream(
         "input_packets_0", MakePacket<uint64>(ts).At(Timestamp(ts))));
     clock_->Sleep(absl::Microseconds(10000));
   }
@@ -234,8 +234,8 @@ TEST_F(SimulationClockTest, InFlight) {
   // Wait for 100 ms of clock time, then close the graph.
   clock_->Sleep(absl::Microseconds(100000));
   simulation_clock_->ThreadFinish();
-  MEDIAPIPE_ASSERT_OK(graph_.CloseAllInputStreams());
-  MEDIAPIPE_ASSERT_OK(graph_.WaitUntilDone());
+  MP_ASSERT_OK(graph_.CloseAllInputStreams());
+  MP_ASSERT_OK(graph_.WaitUntilDone());
 
   // Validate the graph run.
   EXPECT_THAT(TimestampValues(out_packets),

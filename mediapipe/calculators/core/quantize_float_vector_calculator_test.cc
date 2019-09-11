@@ -124,7 +124,7 @@ TEST(QuantizeFloatVectorCalculatorTest, TestEmptyVector) {
       ->Tag("FLOAT_VECTOR")
       .packets.push_back(
           MakePacket<std::vector<float>>(empty_vector).At(Timestamp(0)));
-  MEDIAPIPE_ASSERT_OK(runner.Run());
+  MP_ASSERT_OK(runner.Run());
   const std::vector<Packet>& outputs = runner.Outputs().Tag("ENCODED").packets;
   EXPECT_EQ(1, outputs.size());
   EXPECT_TRUE(outputs[0].Get<std::string>().empty());
@@ -150,7 +150,7 @@ TEST(QuantizeFloatVectorCalculatorTest, TestNonEmptyVector) {
       ->Tag("FLOAT_VECTOR")
       .packets.push_back(
           MakePacket<std::vector<float>>(vector).At(Timestamp(0)));
-  MEDIAPIPE_ASSERT_OK(runner.Run());
+  MP_ASSERT_OK(runner.Run());
   const std::vector<Packet>& outputs = runner.Outputs().Tag("ENCODED").packets;
   EXPECT_EQ(1, outputs.size());
   const std::string& result = outputs[0].Get<std::string>();
@@ -188,7 +188,7 @@ TEST(QuantizeFloatVectorCalculatorTest, TestSaturation) {
       ->Tag("FLOAT_VECTOR")
       .packets.push_back(
           MakePacket<std::vector<float>>(vector).At(Timestamp(0)));
-  MEDIAPIPE_ASSERT_OK(runner.Run());
+  MP_ASSERT_OK(runner.Run());
   const std::vector<Packet>& outputs = runner.Outputs().Tag("ENCODED").packets;
   EXPECT_EQ(1, outputs.size());
   const std::string& result = outputs[0].Get<std::string>();

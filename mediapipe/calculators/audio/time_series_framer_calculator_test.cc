@@ -226,7 +226,7 @@ class TimeSeriesFramerCalculatorTest
 
 TEST_F(TimeSeriesFramerCalculatorTest, IntegerSampleDurationNoOverlap) {
   options_.set_frame_duration_seconds(100.0 / input_sample_rate_);
-  MEDIAPIPE_ASSERT_OK(Run());
+  MP_ASSERT_OK(Run());
   CheckOutput();
 }
 
@@ -234,7 +234,7 @@ TEST_F(TimeSeriesFramerCalculatorTest,
        IntegerSampleDurationNoOverlapHammingWindow) {
   options_.set_frame_duration_seconds(100.0 / input_sample_rate_);
   options_.set_window_function(TimeSeriesFramerCalculatorOptions::HAMMING);
-  MEDIAPIPE_ASSERT_OK(Run());
+  MP_ASSERT_OK(Run());
   CheckOutput();
 }
 
@@ -242,14 +242,14 @@ TEST_F(TimeSeriesFramerCalculatorTest,
        IntegerSampleDurationNoOverlapHannWindow) {
   options_.set_frame_duration_seconds(100.0 / input_sample_rate_);
   options_.set_window_function(TimeSeriesFramerCalculatorOptions::HANN);
-  MEDIAPIPE_ASSERT_OK(Run());
+  MP_ASSERT_OK(Run());
   CheckOutput();
 }
 
 TEST_F(TimeSeriesFramerCalculatorTest, IntegerSampleDurationAndOverlap) {
   options_.set_frame_duration_seconds(100.0 / input_sample_rate_);
   options_.set_frame_overlap_seconds(40.0 / input_sample_rate_);
-  MEDIAPIPE_ASSERT_OK(Run());
+  MP_ASSERT_OK(Run());
   CheckOutput();
 }
 
@@ -257,7 +257,7 @@ TEST_F(TimeSeriesFramerCalculatorTest, NonintegerSampleDurationAndOverlap) {
   options_.set_frame_duration_seconds(98.5 / input_sample_rate_);
   options_.set_frame_overlap_seconds(38.4 / input_sample_rate_);
 
-  MEDIAPIPE_ASSERT_OK(Run());
+  MP_ASSERT_OK(Run());
   CheckOutput();
 }
 
@@ -267,7 +267,7 @@ TEST_F(TimeSeriesFramerCalculatorTest, NegativeOverlapExactFrames) {
   // the 1100 input samples.
   options_.set_frame_duration_seconds(100.0 / input_sample_rate_);
   options_.set_frame_overlap_seconds(-10.0 / input_sample_rate_);
-  MEDIAPIPE_ASSERT_OK(Run());
+  MP_ASSERT_OK(Run());
   EXPECT_EQ(output().packets.size(), 10);
   CheckOutput();
 }
@@ -277,7 +277,7 @@ TEST_F(TimeSeriesFramerCalculatorTest, NegativeOverlapExactFramesLessSkip) {
   // the 1100 input samples.
   options_.set_frame_duration_seconds(100.0 / input_sample_rate_);
   options_.set_frame_overlap_seconds(-100.0 / input_sample_rate_);
-  MEDIAPIPE_ASSERT_OK(Run());
+  MP_ASSERT_OK(Run());
   EXPECT_EQ(output().packets.size(), 6);
   CheckOutput();
 }
@@ -287,7 +287,7 @@ TEST_F(TimeSeriesFramerCalculatorTest, NegativeOverlapWithPadding) {
   // on the sixth and last frame given 1100 sample input.
   options_.set_frame_duration_seconds(100.0 / input_sample_rate_);
   options_.set_frame_overlap_seconds(-100.0 / input_sample_rate_);
-  MEDIAPIPE_ASSERT_OK(Run());
+  MP_ASSERT_OK(Run());
   EXPECT_EQ(output().packets.size(), 6);
   CheckOutput();
 }
@@ -297,7 +297,7 @@ TEST_F(TimeSeriesFramerCalculatorTest, FixedFrameOverlap) {
   // results in ceil((1100 - 30) / 11) + 1 = 99 packets.
   options_.set_frame_duration_seconds(30 / input_sample_rate_);
   options_.set_frame_overlap_seconds((30.0 - 11.4) / input_sample_rate_);
-  MEDIAPIPE_ASSERT_OK(Run());
+  MP_ASSERT_OK(Run());
   EXPECT_EQ(output().packets.size(), 99);
   CheckOutput();
 }
@@ -308,7 +308,7 @@ TEST_F(TimeSeriesFramerCalculatorTest, VariableFrameOverlap) {
   options_.set_frame_duration_seconds(30 / input_sample_rate_);
   options_.set_frame_overlap_seconds((30 - 11.4) / input_sample_rate_);
   options_.set_emulate_fractional_frame_overlap(true);
-  MEDIAPIPE_ASSERT_OK(Run());
+  MP_ASSERT_OK(Run());
   EXPECT_EQ(output().packets.size(), 95);
   CheckOutput();
 }
@@ -319,7 +319,7 @@ TEST_F(TimeSeriesFramerCalculatorTest, VariableFrameSkip) {
   options_.set_frame_duration_seconds(30 / input_sample_rate_);
   options_.set_frame_overlap_seconds((30 - 41.4) / input_sample_rate_);
   options_.set_emulate_fractional_frame_overlap(true);
-  MEDIAPIPE_ASSERT_OK(Run());
+  MP_ASSERT_OK(Run());
   EXPECT_EQ(output().packets.size(), 27);
   CheckOutput();
 }
@@ -328,7 +328,7 @@ TEST_F(TimeSeriesFramerCalculatorTest, NoFinalPacketPadding) {
   options_.set_frame_duration_seconds(98.5 / input_sample_rate_);
   options_.set_pad_final_packet(false);
 
-  MEDIAPIPE_ASSERT_OK(Run());
+  MP_ASSERT_OK(Run());
   CheckOutput();
 }
 
@@ -369,7 +369,7 @@ class TimeSeriesFramerCalculatorWindowingSanityTest
     FillInputHeader();
     AppendInputPacket(new Matrix(Matrix::Ones(1, FrameDurationSamples())),
                       kInitialTimestampOffsetMicroseconds);
-    MEDIAPIPE_ASSERT_OK(RunGraph());
+    MP_ASSERT_OK(RunGraph());
     ASSERT_EQ(1, output().packets.size());
     ASSERT_NEAR(expected_average * FrameDurationSamples(),
                 output().packets[0].Get<Matrix>().sum(), 1e-5);

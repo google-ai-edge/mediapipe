@@ -42,7 +42,7 @@ class StabilizedLogCalculatorTest
     num_input_samples_ = kNumSamples;
   }
 
-  void RunGraphNoReturn() { MEDIAPIPE_ASSERT_OK(RunGraph()); }
+  void RunGraphNoReturn() { MP_ASSERT_OK(RunGraph()); }
 };
 
 TEST_F(StabilizedLogCalculatorTest, BasicOperation) {
@@ -60,7 +60,7 @@ TEST_F(StabilizedLogCalculatorTest, BasicOperation) {
     AppendInputPacket(new Matrix(input_data_matrix), timestamp);
   }
 
-  MEDIAPIPE_ASSERT_OK(RunGraph());
+  MP_ASSERT_OK(RunGraph());
   ExpectOutputHeaderEqualsInputHeader();
   for (int output_packet = 0; output_packet < kNumPackets; ++output_packet) {
     ExpectApproximatelyEqual(
@@ -86,7 +86,7 @@ TEST_F(StabilizedLogCalculatorTest, OutputScaleWorks) {
     AppendInputPacket(new Matrix(input_data_matrix), timestamp);
   }
 
-  MEDIAPIPE_ASSERT_OK(RunGraph());
+  MP_ASSERT_OK(RunGraph());
   ExpectOutputHeaderEqualsInputHeader();
   for (int output_packet = 0; output_packet < kNumPackets; ++output_packet) {
     ExpectApproximatelyEqual(
@@ -101,7 +101,7 @@ TEST_F(StabilizedLogCalculatorTest, ZerosAreStabilized) {
   FillInputHeader();
   AppendInputPacket(new Matrix(Matrix::Zero(kNumChannels, kNumSamples)),
                     0 /* timestamp */);
-  MEDIAPIPE_ASSERT_OK(RunGraph());
+  MP_ASSERT_OK(RunGraph());
   ExpectOutputHeaderEqualsInputHeader();
   ExpectApproximatelyEqual(
       Matrix::Constant(kNumChannels, kNumSamples, kStabilizer).array().log(),
@@ -124,7 +124,7 @@ TEST_F(StabilizedLogCalculatorTest, NegativeValuesDoNotCheckFailIfCheckIsOff) {
   AppendInputPacket(
       new Matrix(Matrix::Constant(kNumChannels, kNumSamples, -1.0)),
       0 /* timestamp */);
-  MEDIAPIPE_ASSERT_OK(RunGraph());
+  MP_ASSERT_OK(RunGraph());
   // Results are undefined.
 }
 

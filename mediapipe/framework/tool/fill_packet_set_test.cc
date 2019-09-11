@@ -45,7 +45,7 @@ TEST(FillPacketSetTest, Success) {
       .Set<double>(
           // double2
       );
-  MEDIAPIPE_EXPECT_OK(ValidatePacketTypeSet(input_side_packet_types));
+  MP_EXPECT_OK(ValidatePacketTypeSet(input_side_packet_types));
 
   std::map<std::string, Packet> all_side_packets;
   all_side_packets["side_packet1"] = MakePacket<int>(70);
@@ -87,7 +87,7 @@ TEST(FillPacketSetTest, MissingSidePacketError) {
       .Set<double>(
           // double2
       );
-  MEDIAPIPE_EXPECT_OK(ValidatePacketTypeSet(input_side_packet_types));
+  MP_EXPECT_OK(ValidatePacketTypeSet(input_side_packet_types));
 
   std::map<std::string, Packet> all_side_packets;
   all_side_packets["side_packet1"] = MakePacket<int>(70);
@@ -125,7 +125,7 @@ TEST(FillPacketSetTest, MissingSidePacketOk) {
       .Set<double>(
           // double2
       );
-  MEDIAPIPE_EXPECT_OK(ValidatePacketTypeSet(input_side_packet_types));
+  MP_EXPECT_OK(ValidatePacketTypeSet(input_side_packet_types));
 
   std::map<std::string, Packet> all_side_packets;
   all_side_packets["side_packet1"] = MakePacket<int>(70);
@@ -169,7 +169,7 @@ TEST(FillPacketSetTest, WrongSidePacketType) {
       .Set<double>(
           // double2
       );
-  MEDIAPIPE_EXPECT_OK(ValidatePacketTypeSet(input_side_packet_types));
+  MP_EXPECT_OK(ValidatePacketTypeSet(input_side_packet_types));
 
   std::map<std::string, Packet> all_side_packets;
   all_side_packets["side_packet1"] = MakePacket<float>(3.0f);  // Wrong Type.

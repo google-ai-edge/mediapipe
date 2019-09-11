@@ -24,6 +24,7 @@ load("//mediapipe/framework/port:build_config.bzl", "mediapipe_cc_proto_library"
 proto_library(
     name = "flow_quantizer_model_proto",
     srcs = ["flow_quantizer_model.proto"],
+    visibility = ["//mediapipe:__subpackages__"],
 )
 
 mediapipe_cc_proto_library(

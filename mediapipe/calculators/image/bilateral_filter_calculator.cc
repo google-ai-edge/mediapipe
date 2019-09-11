@@ -153,7 +153,7 @@ REGISTER_CALCULATOR(BilateralFilterCalculator);
   }
 
 #if defined(__ANDROID__) || defined(__EMSCRIPTEN__)
-  RETURN_IF_ERROR(mediapipe::GlCalculatorHelper::UpdateContract(cc));
+  MP_RETURN_IF_ERROR(mediapipe::GlCalculatorHelper::UpdateContract(cc));
 #endif  // __ANDROID__ || __EMSCRIPTEN__
 
   return ::mediapipe::OkStatus();
@@ -181,7 +181,7 @@ REGISTER_CALCULATOR(BilateralFilterCalculator);
 
   if (use_gpu_) {
 #if defined(__ANDROID__) || defined(__EMSCRIPTEN__)
-    RETURN_IF_ERROR(gpu_helper_.Open(cc));
+    MP_RETURN_IF_ERROR(gpu_helper_.Open(cc));
 #endif
   }
 
@@ -191,18 +191,18 @@ REGISTER_CALCULATOR(BilateralFilterCalculator);
 ::mediapipe::Status BilateralFilterCalculator::Process(CalculatorContext* cc) {
   if (use_gpu_) {
 #if defined(__ANDROID__) || defined(__EMSCRIPTEN__)
-    RETURN_IF_ERROR(
+    MP_RETURN_IF_ERROR(
         gpu_helper_.RunInGlContext([this, cc]() -> ::mediapipe::Status {
           if (!gpu_initialized_) {
-            RETURN_IF_ERROR(GlSetup(cc));
+            MP_RETURN_IF_ERROR(GlSetup(cc));
             gpu_initialized_ = true;
           }
-          RETURN_IF_ERROR(RenderGpu(cc));
+          MP_RETURN_IF_ERROR(RenderGpu(cc));
           return ::mediapipe::OkStatus();
         }));
 #endif  // __ANDROID__ || __EMSCRIPTEN__
   } else {
-    RETURN_IF_ERROR(RenderCpu(cc));
+    MP_RETURN_IF_ERROR(RenderCpu(cc));
   }
 
   return ::mediapipe::OkStatus();

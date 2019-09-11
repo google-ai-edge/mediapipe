@@ -102,14 +102,14 @@ namespace {
       internal::StaticAccessToGeneratorRegistry::CreateByNameInNamespace(
           validated_graph.Package(), generator_name),
       _ << generator_name << " is not a valid PacketGenerator.");
-  RETURN_IF_ERROR(static_access->Generate(generator_config.options(),
-                                          input_side_packet_set,
-                                          output_side_packet_set))
+  MP_RETURN_IF_ERROR(static_access->Generate(generator_config.options(),
+                                             input_side_packet_set,
+                                             output_side_packet_set))
           .SetPrepend()
       << generator_name << "::Generate() failed. ";
 
-  RETURN_IF_ERROR(ValidatePacketSet(node_type_info.OutputSidePacketTypes(),
-                                    *output_side_packet_set))
+  MP_RETURN_IF_ERROR(ValidatePacketSet(node_type_info.OutputSidePacketTypes(),
+                                       *output_side_packet_set))
           .SetPrepend()
       << generator_name
       << "::Generate() output packets were of incorrect type: ";
@@ -364,7 +364,8 @@ PacketGeneratorGraph::~PacketGeneratorGraph() {}
   validated_graph_ = validated_graph;
   executor_ = executor;
   base_packets_ = input_side_packets;
-  RETURN_IF_ERROR(validated_graph_->CanAcceptSidePackets(input_side_packets));
+  MP_RETURN_IF_ERROR(
+      validated_graph_->CanAcceptSidePackets(input_side_packets));
   return ExecuteGenerators(&base_packets_, &non_base_generators_,
                            /*initial=*/true);
 }
@@ -383,12 +384,13 @@ PacketGeneratorGraph::~PacketGeneratorGraph() {}
   }
   std::vector<int> non_scheduled_generators;
 
-  RETURN_IF_ERROR(validated_graph_->CanAcceptSidePackets(input_side_packets));
+  MP_RETURN_IF_ERROR(
+      validated_graph_->CanAcceptSidePackets(input_side_packets));
   // This type check on the required side packets is redundant with
   // error checking in ExecuteGenerators, but we do it now to fail early.
-  RETURN_IF_ERROR(
+  MP_RETURN_IF_ERROR(
       validated_graph_->ValidateRequiredSidePackets(*output_side_packets));
-  RETURN_IF_ERROR(ExecuteGenerators(
+  MP_RETURN_IF_ERROR(ExecuteGenerators(
       output_side_packets, &non_scheduled_generators, /*initial=*/false));
   RET_CHECK(non_scheduled_generators.empty())
       << "Some Generators were unrunnable (validation should have failed).\n"

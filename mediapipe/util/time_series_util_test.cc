@@ -52,8 +52,7 @@ TEST(TimeSeriesUtilTest, FillTimeSeriesHeaderIfValid) {
     valid_header->set_num_channels(3);
     Packet valid_packet = Adopt(valid_header.release());
     TimeSeriesHeader packet_header;
-    MEDIAPIPE_EXPECT_OK(
-        FillTimeSeriesHeaderIfValid(valid_packet, &packet_header));
+    MP_EXPECT_OK(FillTimeSeriesHeaderIfValid(valid_packet, &packet_header));
     EXPECT_EQ(packet_header.sample_rate(), 1234.5);
     EXPECT_EQ(packet_header.num_channels(), 3);
   }
@@ -106,7 +105,7 @@ TEST(TimeSeriesUtilTest, FillMultiStreamTimeSeriesHeaderIfValid) {
     valid_header->mutable_time_series_header()->set_num_channels(3);
     Packet valid_packet = Adopt(valid_header.release());
     MultiStreamTimeSeriesHeader packet_header;
-    MEDIAPIPE_EXPECT_OK(
+    MP_EXPECT_OK(
         FillMultiStreamTimeSeriesHeaderIfValid(valid_packet, &packet_header));
     EXPECT_EQ(packet_header.time_series_header().sample_rate(), 1234.5);
     EXPECT_EQ(packet_header.time_series_header().num_channels(), 3);

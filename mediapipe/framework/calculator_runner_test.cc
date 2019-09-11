@@ -150,7 +150,7 @@ TEST(CalculatorRunner, RunsCalculator) {
     const int input_side_packet_content = 10 + iter;
     runner.MutableSidePackets()->Index(0) =
         Adopt(new int(input_side_packet_content));
-    MEDIAPIPE_ASSERT_OK(runner.Run());
+    MP_ASSERT_OK(runner.Run());
     EXPECT_EQ(input_side_packet_content,
               runner.OutputSidePackets().Tag("SIDE_OUTPUT").Get<int>());
     const auto& outputs = runner.Outputs();
@@ -204,7 +204,7 @@ TEST(CalculatorRunner, MultiTagTestCalculatorOk) {
         ->Get("", ts % 2)
         .packets.push_back(Adopt(new int(ts)).At(Timestamp(ts)));
   }
-  MEDIAPIPE_ASSERT_OK(runner.Run());
+  MP_ASSERT_OK(runner.Run());
 
   const auto& outputs = runner.Outputs();
   ASSERT_EQ(3, outputs.NumEntries());

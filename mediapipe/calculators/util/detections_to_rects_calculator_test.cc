@@ -66,7 +66,7 @@ TEST(DetectionsToRectsCalculatorTest, DetectionToRect) {
       .packets.push_back(
           Adopt(detection.release()).At(Timestamp::PostStream()));
 
-  MEDIAPIPE_ASSERT_OK(runner.Run()) << "Calculator execution failed.";
+  MP_ASSERT_OK(runner.Run()) << "Calculator execution failed.";
   const std::vector<Packet>& output = runner.Outputs().Tag("RECT").packets;
   ASSERT_EQ(1, output.size());
   const auto& rect = output[0].Get<Rect>();
@@ -91,7 +91,7 @@ TEST(DetectionsToRectsCalculatorTest, DetectionToNormalizedRect) {
       .packets.push_back(
           Adopt(detection.release()).At(Timestamp::PostStream()));
 
-  MEDIAPIPE_ASSERT_OK(runner.Run()) << "Calculator execution failed.";
+  MP_ASSERT_OK(runner.Run()) << "Calculator execution failed.";
   const std::vector<Packet>& output = runner.Outputs().Tag("NORM_RECT").packets;
   ASSERT_EQ(1, output.size());
   const auto& rect = output[0].Get<NormalizedRect>();
@@ -117,7 +117,7 @@ TEST(DetectionsToRectsCalculatorTest, DetectionsToRect) {
       .packets.push_back(
           Adopt(detections.release()).At(Timestamp::PostStream()));
 
-  MEDIAPIPE_ASSERT_OK(runner.Run()) << "Calculator execution failed.";
+  MP_ASSERT_OK(runner.Run()) << "Calculator execution failed.";
   const std::vector<Packet>& output = runner.Outputs().Tag("RECT").packets;
   ASSERT_EQ(1, output.size());
   const auto& rect = output[0].Get<Rect>();
@@ -143,7 +143,7 @@ TEST(DetectionsToRectsCalculatorTest, DetectionsToNormalizedRect) {
       .packets.push_back(
           Adopt(detections.release()).At(Timestamp::PostStream()));
 
-  MEDIAPIPE_ASSERT_OK(runner.Run()) << "Calculator execution failed.";
+  MP_ASSERT_OK(runner.Run()) << "Calculator execution failed.";
   const std::vector<Packet>& output = runner.Outputs().Tag("NORM_RECT").packets;
   ASSERT_EQ(1, output.size());
   const auto& rect = output[0].Get<NormalizedRect>();
@@ -169,7 +169,7 @@ TEST(DetectionsToRectsCalculatorTest, DetectionsToRects) {
       .packets.push_back(
           Adopt(detections.release()).At(Timestamp::PostStream()));
 
-  MEDIAPIPE_ASSERT_OK(runner.Run()) << "Calculator execution failed.";
+  MP_ASSERT_OK(runner.Run()) << "Calculator execution failed.";
   const std::vector<Packet>& output = runner.Outputs().Tag("RECTS").packets;
   ASSERT_EQ(1, output.size());
   const auto& rects = output[0].Get<std::vector<Rect>>();
@@ -200,7 +200,7 @@ TEST(DetectionsToRectsCalculatorTest, DetectionsToNormalizedRects) {
       .packets.push_back(
           Adopt(detections.release()).At(Timestamp::PostStream()));
 
-  MEDIAPIPE_ASSERT_OK(runner.Run()) << "Calculator execution failed.";
+  MP_ASSERT_OK(runner.Run()) << "Calculator execution failed.";
   const std::vector<Packet>& output =
       runner.Outputs().Tag("NORM_RECTS").packets;
   ASSERT_EQ(1, output.size());
@@ -231,7 +231,7 @@ TEST(DetectionsToRectsCalculatorTest, DetectionToRects) {
       .packets.push_back(
           Adopt(detection.release()).At(Timestamp::PostStream()));
 
-  MEDIAPIPE_ASSERT_OK(runner.Run()) << "Calculator execution failed.";
+  MP_ASSERT_OK(runner.Run()) << "Calculator execution failed.";
   const std::vector<Packet>& output = runner.Outputs().Tag("RECTS").packets;
   ASSERT_EQ(1, output.size());
   const auto& rects = output[0].Get<std::vector<Rect>>();
@@ -257,7 +257,7 @@ TEST(DetectionsToRectsCalculatorTest, DetectionToNormalizedRects) {
       .packets.push_back(
           Adopt(detection.release()).At(Timestamp::PostStream()));
 
-  MEDIAPIPE_ASSERT_OK(runner.Run()) << "Calculator execution failed.";
+  MP_ASSERT_OK(runner.Run()) << "Calculator execution failed.";
   const std::vector<Packet>& output =
       runner.Outputs().Tag("NORM_RECTS").packets;
   ASSERT_EQ(1, output.size());

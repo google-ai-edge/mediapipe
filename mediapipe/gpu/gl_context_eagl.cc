@@ -48,8 +48,8 @@ GlContext::StatusOrGlContext GlContext::Create(EAGLContext* share_context,
 GlContext::StatusOrGlContext GlContext::Create(EAGLSharegroup* sharegroup,
                                                bool create_thread) {
   std::shared_ptr<GlContext> context(new GlContext());
-  RETURN_IF_ERROR(context->CreateContext(sharegroup));
-  RETURN_IF_ERROR(context->FinishInitialization(create_thread));
+  MP_RETURN_IF_ERROR(context->CreateContext(sharegroup));
+  MP_RETURN_IF_ERROR(context->FinishInitialization(create_thread));
   return std::move(context);
 }
 

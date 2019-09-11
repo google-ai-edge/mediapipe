@@ -219,7 +219,7 @@ TEST(MatrixMultiplyCalculatorTest, Multiply) {
         Adopt(sample).At(Timestamp(i)));
   }
 
-  MEDIAPIPE_ASSERT_OK(runner.Run());
+  MP_ASSERT_OK(runner.Run());
   EXPECT_EQ(runner.MutableInputs()->Index(0).packets.size(),
             runner.Outputs().Index(0).packets.size());
 

@@ -48,17 +48,17 @@ class SubgraphTest : public ::testing::Test {
     tool::AddVectorSink("quads", &config, &quads);
 
     CalculatorGraph graph;
-    MEDIAPIPE_ASSERT_OK(graph.Initialize(config));
-    MEDIAPIPE_ASSERT_OK(graph.StartRun({}));
+    MP_ASSERT_OK(graph.Initialize(config));
+    MP_ASSERT_OK(graph.StartRun({}));
 
     constexpr int kCount = 5;
     for (int i = 0; i < kCount; ++i) {
-      MEDIAPIPE_ASSERT_OK(graph.AddPacketToInputStream(
+      MP_ASSERT_OK(graph.AddPacketToInputStream(
           "in", MakePacket<int>(i).At(Timestamp(i))));
     }
 
-    MEDIAPIPE_ASSERT_OK(graph.CloseInputStream("in"));
-    MEDIAPIPE_ASSERT_OK(graph.WaitUntilDone());
+    MP_ASSERT_OK(graph.CloseInputStream("in"));
+    MP_ASSERT_OK(graph.WaitUntilDone());
 
     EXPECT_EQ(dubs.size(), kCount);
     EXPECT_EQ(quads.size(), kCount);

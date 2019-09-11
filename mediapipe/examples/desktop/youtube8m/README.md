@@ -47,7 +47,7 @@
       --define MEDIAPIPE_DISABLE_GPU=1 --define no_aws_support=true \
       mediapipe/examples/desktop/youtube8m:extract_yt8m_features
 
-    ./bazel-bin/mediapipe/examples/desktop/youtube8m/extract_yt8m_features
+    ./bazel-bin/mediapipe/examples/desktop/youtube8m/extract_yt8m_features \
       --calculator_graph_config_file=mediapipe/graphs/youtube8m/feature_extraction.pbtxt \
       --input_side_packets=input_sequence_example=/tmp/mediapipe/metadata.tfrecord  \
       --output_side_packets=output_sequence_example=/tmp/mediapipe/output.tfrecord

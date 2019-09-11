@@ -213,7 +213,7 @@ TEST(SubgraphExpansionTest, TransformStreamNames) {
         }
       )");
   auto add_foo = [](absl::string_view s) { return absl::StrCat(s, "_foo"); };
-  MEDIAPIPE_EXPECT_OK(tool::TransformStreamNames(
+  MP_EXPECT_OK(tool::TransformStreamNames(
       (*config.mutable_node())[0].mutable_input_stream(), add_foo));
   EXPECT_THAT(config, mediapipe::EqualsProto(expected_config));
 }
@@ -258,7 +258,7 @@ TEST(SubgraphExpansionTest, TransformNames) {
   auto add_prefix = [](absl::string_view s) {
     return absl::StrCat("__sg0_", s);
   };
-  MEDIAPIPE_EXPECT_OK(tool::TransformNames(&config, add_prefix));
+  MP_EXPECT_OK(tool::TransformNames(&config, add_prefix));
   EXPECT_THAT(config, mediapipe::EqualsProto(expected_config));
 }
 
@@ -281,7 +281,7 @@ TEST(SubgraphExpansionTest, FindCorrespondingStreams) {
         }
       )");
   std::map<std::string, std::string> stream_map;
-  MEDIAPIPE_EXPECT_OK(tool::FindCorrespondingStreams(
+  MP_EXPECT_OK(tool::FindCorrespondingStreams(
       &stream_map, config1.input_stream(), config2.node()[0].input_stream()));
   EXPECT_THAT(stream_map,
               testing::UnorderedElementsAre(testing::Pair("input_1", "foo"),
@@ -416,8 +416,7 @@ TEST(SubgraphExpansionTest, ConnectSubgraphStreams) {
           output_side_packet: "flop"
         }
       )");
-  MEDIAPIPE_EXPECT_OK(
-      tool::ConnectSubgraphStreams(supergraph.node()[0], &subgraph));
+  MP_EXPECT_OK(tool::ConnectSubgraphStreams(supergraph.node()[0], &subgraph));
   EXPECT_THAT(subgraph, mediapipe::EqualsProto(expected_subgraph));
 }
 
@@ -455,7 +454,7 @@ TEST(SubgraphExpansionTest, ExpandSubgraphs) {
           output_side_packet: "__sg0_side"
         }
       )");
-  MEDIAPIPE_EXPECT_OK(tool::ExpandSubgraphs(&supergraph));
+  MP_EXPECT_OK(tool::ExpandSubgraphs(&supergraph));
   EXPECT_THAT(supergraph, mediapipe::EqualsProto(expected_graph));
 }
 
@@ -521,7 +520,7 @@ TEST(SubgraphExpansionTest, ExecutorFieldOfNodeInSubgraphPreserved) {
           executor: "custom_thread_pool"
         }
       )");
-  MEDIAPIPE_EXPECT_OK(tool::ExpandSubgraphs(&supergraph));
+  MP_EXPECT_OK(tool::ExpandSubgraphs(&supergraph));
   EXPECT_THAT(supergraph, mediapipe::EqualsProto(expected_graph));
 }
 

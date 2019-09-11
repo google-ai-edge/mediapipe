@@ -71,7 +71,7 @@ TEST_F(TensorFlowSessionFromSavedModelGeneratorTest,
   ::mediapipe::Status run_status = tool::RunGenerateAndValidateTypes(
       "TensorFlowSessionFromSavedModelGenerator", extendable_options_,
       input_side_packets, &output_side_packets);
-  MEDIAPIPE_EXPECT_OK(run_status) << run_status.message();
+  MP_EXPECT_OK(run_status) << run_status.message();
   const TensorFlowSession& session =
       output_side_packets.Tag("SESSION").Get<TensorFlowSession>();
   // Session must be set.
@@ -113,7 +113,7 @@ TEST_F(TensorFlowSessionFromSavedModelGeneratorTest,
   ::mediapipe::Status run_status = tool::RunGenerateAndValidateTypes(
       "TensorFlowSessionFromSavedModelGenerator", extendable_options_,
       input_side_packets, &output_side_packets);
-  MEDIAPIPE_EXPECT_OK(run_status) << run_status.message();
+  MP_EXPECT_OK(run_status) << run_status.message();
   const TensorFlowSession& session =
       output_side_packets.Tag("SESSION").Get<TensorFlowSession>();
   // Session must be set.
@@ -154,17 +154,17 @@ TEST_F(TensorFlowSessionFromSavedModelGeneratorTest,
                            generator_options_->DebugString()));
 
   CalculatorGraph graph;
-  MEDIAPIPE_ASSERT_OK(graph.Initialize(graph_config));
+  MP_ASSERT_OK(graph.Initialize(graph_config));
   StatusOrPoller status_or_poller =
       graph.AddOutputStreamPoller("multiplied_tensor");
   ASSERT_TRUE(status_or_poller.ok());
   OutputStreamPoller poller = std::move(status_or_poller.ValueOrDie());
 
-  MEDIAPIPE_ASSERT_OK(graph.StartRun({}));
-  MEDIAPIPE_ASSERT_OK(graph.AddPacketToInputStream(
+  MP_ASSERT_OK(graph.StartRun({}));
+  MP_ASSERT_OK(graph.AddPacketToInputStream(
       "a_tensor",
       Adopt(new auto(TensorMatrix1x3(1, -1, 10))).At(Timestamp(0))));
-  MEDIAPIPE_ASSERT_OK(graph.CloseInputStream("a_tensor"));
+  MP_ASSERT_OK(graph.CloseInputStream("a_tensor"));
 
   Packet packet;
   ASSERT_TRUE(poller.Next(&packet));
@@ -174,7 +174,7 @@ TEST_F(TensorFlowSessionFromSavedModelGeneratorTest,
             packet.Get<tf::Tensor>().DebugString());
 
   ASSERT_FALSE(poller.Next(&packet));
-  MEDIAPIPE_ASSERT_OK(graph.WaitUntilDone());
+  MP_ASSERT_OK(graph.WaitUntilDone());
 }
 
 TEST_F(TensorFlowSessionFromSavedModelGeneratorTest,
@@ -189,7 +189,7 @@ TEST_F(TensorFlowSessionFromSavedModelGeneratorTest,
   ::mediapipe::Status run_status = tool::RunGenerateAndValidateTypes(
       "TensorFlowSessionFromSavedModelGenerator", extendable_options_,
       input_side_packets, &output_side_packets);
-  MEDIAPIPE_EXPECT_OK(run_status) << run_status.message();
+  MP_EXPECT_OK(run_status) << run_status.message();
   const TensorFlowSession& session =
       output_side_packets.Tag("SESSION").Get<TensorFlowSession>();
   // Session must be set.

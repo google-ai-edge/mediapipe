@@ -37,7 +37,7 @@ TEST(PacketInnerJoinCalculatorTest, AllMatching) {
   for (int packet_load : packets_on_stream2) {
     runner.MutableInputs()->Index(1).packets.push_back(PacketFrom(packet_load));
   }
-  MEDIAPIPE_ASSERT_OK(runner.Run());
+  MP_ASSERT_OK(runner.Run());
   // Check.
   const std::vector<int> expected = {0, 1, 2, 3};
   ASSERT_EQ(expected.size(), runner.Outputs().Index(0).packets.size());
@@ -64,7 +64,7 @@ TEST(PacketInnerJoinCalculatorTest, NoneMatching) {
   for (int packet_load : packets_on_stream2) {
     runner.MutableInputs()->Index(1).packets.push_back(PacketFrom(packet_load));
   }
-  MEDIAPIPE_ASSERT_OK(runner.Run());
+  MP_ASSERT_OK(runner.Run());
   // Check.
   EXPECT_TRUE(runner.Outputs().Index(0).packets.empty());
   EXPECT_TRUE(runner.Outputs().Index(1).packets.empty());
@@ -82,7 +82,7 @@ TEST(PacketInnerJoinCalculatorTest, SomeMatching) {
   for (int packet_load : packets_on_stream2) {
     runner.MutableInputs()->Index(1).packets.push_back(PacketFrom(packet_load));
   }
-  MEDIAPIPE_ASSERT_OK(runner.Run());
+  MP_ASSERT_OK(runner.Run());
   // Check.
   const std::vector<int> expected = {0, 2, 4, 6};
   ASSERT_EQ(expected.size(), runner.Outputs().Index(0).packets.size());

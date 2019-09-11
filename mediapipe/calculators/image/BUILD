@@ -81,7 +81,7 @@ mediapipe_cc_proto_library(
     name = "opencv_image_encoder_calculator_cc_proto",
     srcs = ["opencv_image_encoder_calculator.proto"],
     cc_deps = ["//mediapipe/framework:calculator_cc_proto"],
-    visibility = ["//mediapipe:__subpackages__"],
+    visibility = ["//visibility:public"],
     deps = [":opencv_image_encoder_calculator_proto"],
 )
 
@@ -89,7 +89,7 @@ mediapipe_cc_proto_library(
     name = "mask_overlay_calculator_cc_proto",
     srcs = ["mask_overlay_calculator.proto"],
     cc_deps = ["//mediapipe/framework:calculator_cc_proto"],
-    visibility = ["//mediapipe:__subpackages__"],
+    visibility = ["//visibility:public"],
     deps = [":mask_overlay_calculator_proto"],
 )
 
@@ -100,7 +100,7 @@ mediapipe_cc_proto_library(
         "//mediapipe/framework:calculator_cc_proto",
         "//mediapipe/framework/formats:image_format_cc_proto",
     ],
-    visibility = ["//mediapipe:__subpackages__"],
+    visibility = ["//visibility:public"],
     deps = [":scale_image_calculator_proto"],
 )
 
@@ -110,7 +110,7 @@ mediapipe_cc_proto_library(
     cc_deps = [
         "//mediapipe/framework:calculator_cc_proto",
     ],
-    visibility = ["//mediapipe:__subpackages__"],
+    visibility = ["//visibility:public"],
     deps = [":set_alpha_calculator_proto"],
 )
 
@@ -120,17 +120,17 @@ mediapipe_cc_proto_library(
     cc_deps = [
         "//mediapipe/framework:calculator_cc_proto",
     ],
-    visibility = ["//mediapipe:__subpackages__"],
+    visibility = ["//visibility:public"],
     deps = [":image_cropping_calculator_proto"],
 )
 
 mediapipe_cc_proto_library(
     name = "bilateral_filter_calculator_cc_proto",
     srcs = ["bilateral_filter_calculator.proto"],
-    cc_deps = [
-        "//mediapipe/framework:calculator_cc_proto",
+    cc_deps = ["//mediapipe/framework:calculator_cc_proto"],
+    visibility = [
+        "//visibility:public",
     ],
-    visibility = ["//mediapipe:__subpackages__"],
     deps = [":bilateral_filter_calculator_proto"],
 )
 
@@ -141,7 +141,7 @@ mediapipe_cc_proto_library(
         "//mediapipe/framework:calculator_cc_proto",
         "//mediapipe/util:color_cc_proto",
     ],
-    visibility = ["//mediapipe:__subpackages__"],
+    visibility = ["//visibility:public"],
     deps = [":recolor_calculator_proto"],
 )
 
@@ -291,7 +291,7 @@ mediapipe_cc_proto_library(
         "//mediapipe/framework:calculator_cc_proto",
         "//mediapipe/gpu:scale_mode_cc_proto",
     ],
-    visibility = ["//mediapipe:__subpackages__"],
+    visibility = ["//visibility:public"],
     deps = [":image_transformation_calculator_proto"],
 )
 

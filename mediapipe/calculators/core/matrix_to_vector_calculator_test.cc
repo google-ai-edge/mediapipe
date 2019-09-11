@@ -67,7 +67,7 @@ TEST_F(MatrixToVectorCalculatorTest, SingleRow) {
   SetInputHeader(1, 4);  // 1 channel x 4 samples
   const std::vector<float>& data_vector = {1.0, 2.0, 3.0, 4.0};
   AppendInput(data_vector, 0);
-  MEDIAPIPE_ASSERT_OK(RunGraph());
+  MP_ASSERT_OK(RunGraph());
   CheckOutputPacket(0, data_vector);
 }
 
@@ -79,7 +79,7 @@ TEST_F(MatrixToVectorCalculatorTest, RegularMatrix) {
                                            5.0, 6.0, 7.0, 8.0};
   AppendInput(data_vector, 0);
 
-  MEDIAPIPE_ASSERT_OK(RunGraph());
+  MP_ASSERT_OK(RunGraph());
   CheckOutputPacket(0, data_vector);
 }
 

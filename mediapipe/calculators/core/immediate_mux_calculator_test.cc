@@ -217,23 +217,23 @@ class ImmediateMuxCalculatorTest : public ::testing::Test {
 
     // Start running the graph.
     CalculatorGraph graph;
-    MEDIAPIPE_ASSERT_OK(graph.Initialize(graph_config_));
-    MEDIAPIPE_ASSERT_OK(graph.StartRun({}));
+    MP_ASSERT_OK(graph.Initialize(graph_config_));
+    MP_ASSERT_OK(graph.StartRun({}));
 
     // Send each packet to the graph in the specified order.
     for (int t = 0; t < input_sets.size(); t++) {
       const std::vector<Packet>& input_set = input_sets[t];
-      MEDIAPIPE_EXPECT_OK(graph.WaitUntilIdle());
+      MP_EXPECT_OK(graph.WaitUntilIdle());
       for (int i = 0; i < input_set.size(); i++) {
         const Packet& packet = input_set[i];
         if (!IsNone(packet)) {
-          MEDIAPIPE_EXPECT_OK(graph.AddPacketToInputStream(
+          MP_EXPECT_OK(graph.AddPacketToInputStream(
               absl::StrCat("input_packets_", i), packet));
         }
       }
     }
-    MEDIAPIPE_ASSERT_OK(graph.CloseAllInputStreams());
-    MEDIAPIPE_ASSERT_OK(graph.WaitUntilDone());
+    MP_ASSERT_OK(graph.CloseAllInputStreams());
+    MP_ASSERT_OK(graph.WaitUntilDone());
   }
 
   CalculatorGraphConfig graph_config_;
@@ -335,22 +335,22 @@ TEST_F(ImmediateMuxCalculatorTest, Demux) {
 
   // Start the graph and add five input packets.
   CalculatorGraph graph;
-  MEDIAPIPE_ASSERT_OK(graph.Initialize(
-      graph_config_, {
-                         {"callback_0", Adopt(new auto(wait_0))},
-                         {"callback_1", Adopt(new auto(wait_1))},
-                     }));
-  MEDIAPIPE_ASSERT_OK(graph.ObserveOutputStream("output_packets_0", out_cb));
-  MEDIAPIPE_ASSERT_OK(graph.StartRun({}));
-  MEDIAPIPE_EXPECT_OK(
+  MP_ASSERT_OK(graph.Initialize(graph_config_,
+                                {
+                                    {"callback_0", Adopt(new auto(wait_0))},
+                                    {"callback_1", Adopt(new auto(wait_1))},
+                                }));
+  MP_ASSERT_OK(graph.ObserveOutputStream("output_packets_0", out_cb));
+  MP_ASSERT_OK(graph.StartRun({}));
+  MP_EXPECT_OK(
       graph.AddPacketToInputStream("input_packets_0", PacketAt(10000)));
-  MEDIAPIPE_EXPECT_OK(
+  MP_EXPECT_OK(
       graph.AddPacketToInputStream("input_packets_0", PacketAt(20000)));
-  MEDIAPIPE_EXPECT_OK(
+  MP_EXPECT_OK(
       graph.AddPacketToInputStream("input_packets_0", PacketAt(30000)));
-  MEDIAPIPE_EXPECT_OK(
+  MP_EXPECT_OK(
       graph.AddPacketToInputStream("input_packets_0", PacketAt(40000)));
-  MEDIAPIPE_EXPECT_OK(
+  MP_EXPECT_OK(
       graph.AddPacketToInputStream("input_packets_0", PacketAt(50000)));
 
   // Release the outputs in order 20000, 10000, 30000, 50000, 40000.
@@ -362,8 +362,8 @@ TEST_F(ImmediateMuxCalculatorTest, Demux) {
   semaphore_0.Release(1);  // 50000
   wait_for([&] { return out_packets.size() >= 3; });
   semaphore_1.Release(1);  // 40000
-  MEDIAPIPE_ASSERT_OK(graph.CloseAllInputStreams());
-  MEDIAPIPE_ASSERT_OK(graph.WaitUntilDone());
+  MP_ASSERT_OK(graph.CloseAllInputStreams());
+  MP_ASSERT_OK(graph.WaitUntilDone());
 
   // Output packets 10000 and 40000 are superseded and dropped.
   EXPECT_THAT(TimestampValues(out_packets), ElementsAre(20000, 30000, 50000));

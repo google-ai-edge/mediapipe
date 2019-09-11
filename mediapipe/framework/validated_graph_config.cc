@@ -146,9 +146,10 @@ std::string DebugName(const CalculatorGraphConfig& config,
     const GraphRegistry* graph_registry,
     CalculatorGraphConfig* output_graph_config) {
   *output_graph_config = input_graph_config;
-  RETURN_IF_ERROR(tool::ExpandSubgraphs(output_graph_config, graph_registry));
+  MP_RETURN_IF_ERROR(
+      tool::ExpandSubgraphs(output_graph_config, graph_registry));
 
-  RETURN_IF_ERROR(AddPredefinedExecutorConfigs(output_graph_config));
+  MP_RETURN_IF_ERROR(AddPredefinedExecutorConfigs(output_graph_config));
 
   // Populate each node with the graph level input stream handler if a
   // stream handler wasn't explicitly provided.
@@ -217,7 +218,7 @@ std::string NodeTypeInfo::NodeTypeToString(NodeType node_type) {
     const CalculatorGraphConfig::Node& node, int node_index) {
   node_.type = NodeType::CALCULATOR;
   node_.index = node_index;
-  RETURN_IF_ERROR(contract_.Initialize(node));
+  MP_RETURN_IF_ERROR(contract_.Initialize(node));
   contract_.SetNodeName(
       CanonicalNodeName(validated_graph.Config(), node_index));
 
@@ -228,7 +229,7 @@ std::string NodeTypeInfo::NodeTypeToString(NodeType node_type) {
     for (const auto& input_stream_info : node.input_stream_info()) {
       std::string tag;
       int index;
-      RETURN_IF_ERROR(
+      MP_RETURN_IF_ERROR(
           tool::ParseTagIndex(input_stream_info.tag_index(), &tag, &index));
       CollectionItemId id = contract_.Inputs().GetId(tag, index);
       if (!id.IsValid()) {
@@ -260,8 +261,8 @@ std::string NodeTypeInfo::NodeTypeToString(NodeType node_type) {
   }
 #endif
   LegacyCalculatorSupport::Scoped<CalculatorContract> s(&contract_);
-  RETURN_IF_ERROR(VerifyCalculatorWithContract(validated_graph.Package(),
-                                               node_class, &contract_));
+  MP_RETURN_IF_ERROR(VerifyCalculatorWithContract(validated_graph.Package(),
+                                                  node_class, &contract_));
 
   // Validate result of FillExpectations or GetContract.
   std::vector<::mediapipe::Status> statuses;
@@ -303,7 +304,7 @@ std::string NodeTypeInfo::NodeTypeToString(NodeType node_type) {
     const PacketGeneratorConfig& node, int node_index) {
   node_.type = NodeType::PACKET_GENERATOR;
   node_.index = node_index;
-  RETURN_IF_ERROR(contract_.Initialize(node));
+  MP_RETURN_IF_ERROR(contract_.Initialize(node));
 
   // Run FillExpectations.
   const std::string& node_class = node.packet_generator();
@@ -314,9 +315,9 @@ std::string NodeTypeInfo::NodeTypeToString(NodeType node_type) {
       _ << "Unable to find PacketGenerator \"" << node_class << "\"");
   {
     LegacyCalculatorSupport::Scoped<CalculatorContract> s(&contract_);
-    RETURN_IF_ERROR(static_access->FillExpectations(
-                        node.options(), &contract_.InputSidePackets(),
-                        &contract_.OutputSidePackets()))
+    MP_RETURN_IF_ERROR(static_access->FillExpectations(
+                           node.options(), &contract_.InputSidePackets(),
+                           &contract_.OutputSidePackets()))
             .SetPrepend()
         << node_class << ": ";
   }
@@ -345,7 +346,7 @@ std::string NodeTypeInfo::NodeTypeToString(NodeType node_type) {
     const StatusHandlerConfig& node, int node_index) {
   node_.type = NodeType::STATUS_HANDLER;
   node_.index = node_index;
-  RETURN_IF_ERROR(contract_.Initialize(node));
+  MP_RETURN_IF_ERROR(contract_.Initialize(node));
 
   // Run FillExpectations.
   const std::string& node_class = node.status_handler();
@@ -356,14 +357,14 @@ std::string NodeTypeInfo::NodeTypeToString(NodeType node_type) {
       _ << "Unable to find StatusHandler \"" << node_class << "\"");
   {
     LegacyCalculatorSupport::Scoped<CalculatorContract> s(&contract_);
-    RETURN_IF_ERROR(static_access->FillExpectations(
-                        node.options(), &contract_.InputSidePackets()))
+    MP_RETURN_IF_ERROR(static_access->FillExpectations(
+                           node.options(), &contract_.InputSidePackets()))
             .SetPrepend()
         << node_class << ": ";
   }
 
   // Validate result of FillExpectations.
-  RETURN_IF_ERROR(ValidatePacketTypeSet(contract_.InputSidePackets()))
+  MP_RETURN_IF_ERROR(ValidatePacketTypeSet(contract_.InputSidePackets()))
           .SetPrepend()
       << node_class << "::FillExpectations failed to validate: ";
   return ::mediapipe::OkStatus();
@@ -380,13 +381,13 @@ std::string NodeTypeInfo::NodeTypeToString(NodeType node_type) {
           << input_config.DebugString();
 #endif
 
-  RETURN_IF_ERROR(
+  MP_RETURN_IF_ERROR(
       PerformBasicTransforms(input_config, graph_registry, &config_));
 
   // Initialize the basic node information.
-  RETURN_IF_ERROR(InitializeGeneratorInfo());
-  RETURN_IF_ERROR(InitializeCalculatorInfo());
-  RETURN_IF_ERROR(InitializeStatusHandlerInfo());
+  MP_RETURN_IF_ERROR(InitializeGeneratorInfo());
+  MP_RETURN_IF_ERROR(InitializeCalculatorInfo());
+  MP_RETURN_IF_ERROR(InitializeStatusHandlerInfo());
 
   sorted_nodes_.reserve(generators_.size() + calculators_.size());
   // Initialize sorted_nodes_ to list generators before calculators.
@@ -407,11 +408,11 @@ std::string NodeTypeInfo::NodeTypeToString(NodeType node_type) {
 
   // Initialize the side packet information.
   bool need_sorting = false;
-  RETURN_IF_ERROR(InitializeSidePacketInfo(&need_sorting));
+  MP_RETURN_IF_ERROR(InitializeSidePacketInfo(&need_sorting));
   // Initialize the stream information.
-  RETURN_IF_ERROR(InitializeStreamInfo(&need_sorting));
+  MP_RETURN_IF_ERROR(InitializeStreamInfo(&need_sorting));
   if (need_sorting) {
-    RETURN_IF_ERROR(TopologicalSortNodes());
+    MP_RETURN_IF_ERROR(TopologicalSortNodes());
 
     // Clear the information from the unsorted analysis.
     side_packet_to_producer_.clear();
@@ -424,26 +425,27 @@ std::string NodeTypeInfo::NodeTypeToString(NodeType node_type) {
     owned_packet_types_.clear();
 
     // Recompute on sorted graph.
-    RETURN_IF_ERROR(InitializeSidePacketInfo(nullptr));
-    RETURN_IF_ERROR(InitializeStreamInfo(nullptr));
+    MP_RETURN_IF_ERROR(InitializeSidePacketInfo(nullptr));
+    MP_RETURN_IF_ERROR(InitializeStreamInfo(nullptr));
   }
 
   // Fill in all the upstream fields now that we are assured of having
   // things in the right order and all the output streams have been
   // created.
-  RETURN_IF_ERROR(FillUpstreamFieldForBackEdges());
+  MP_RETURN_IF_ERROR(FillUpstreamFieldForBackEdges());
 
   // Set Any types based on what they connect to.
-  RETURN_IF_ERROR(ResolveAnyTypes(&input_streams_, &output_streams_));
-  RETURN_IF_ERROR(ResolveAnyTypes(&input_side_packets_, &output_side_packets_));
+  MP_RETURN_IF_ERROR(ResolveAnyTypes(&input_streams_, &output_streams_));
+  MP_RETURN_IF_ERROR(
+      ResolveAnyTypes(&input_side_packets_, &output_side_packets_));
 
   // Validate consistency of side packets and streams.
-  RETURN_IF_ERROR(ValidateSidePacketTypes());
-  RETURN_IF_ERROR(ValidateStreamTypes());
+  MP_RETURN_IF_ERROR(ValidateSidePacketTypes());
+  MP_RETURN_IF_ERROR(ValidateStreamTypes());
 
-  RETURN_IF_ERROR(ComputeSourceDependence());
+  MP_RETURN_IF_ERROR(ComputeSourceDependence());
 
-  RETURN_IF_ERROR(ValidateExecutors());
+  MP_RETURN_IF_ERROR(ValidateExecutors());
 
 #if !defined(MEDIAPIPE_MOBILE)
   VLOG(1) << "ValidatedGraphConfig produced canonical config:\n"
@@ -459,7 +461,7 @@ std::string NodeTypeInfo::NodeTypeToString(NodeType node_type) {
   graph_registry =
       graph_registry ? graph_registry : &GraphRegistry::global_graph_registry;
   auto status_or_config = graph_registry->CreateByName("", graph_type, options);
-  RETURN_IF_ERROR(status_or_config.status());
+  MP_RETURN_IF_ERROR(status_or_config.status());
   return Initialize(status_or_config.ValueOrDie(), graph_registry);
 }
 
@@ -525,8 +527,8 @@ std::string NodeTypeInfo::NodeTypeToString(NodeType node_type) {
 ::mediapipe::Status ValidatedGraphConfig::InitializeSidePacketInfo(
     bool* need_sorting_ptr) {
   for (NodeTypeInfo* node_type_info : sorted_nodes_) {
-    RETURN_IF_ERROR(AddInputSidePacketsForNode(node_type_info));
-    RETURN_IF_ERROR(
+    MP_RETURN_IF_ERROR(AddInputSidePacketsForNode(node_type_info));
+    MP_RETURN_IF_ERROR(
         AddOutputSidePacketsForNode(node_type_info, need_sorting_ptr));
   }
   if (need_sorting_ptr && *need_sorting_ptr) {
@@ -537,7 +539,7 @@ std::string NodeTypeInfo::NodeTypeToString(NodeType node_type) {
     RET_CHECK(node_type_info->Node().type ==
               NodeTypeInfo::NodeType::STATUS_HANDLER);
     RET_CHECK_EQ(node_type_info->Node().index, index);
-    RETURN_IF_ERROR(AddInputSidePacketsForNode(node_type_info));
+    MP_RETURN_IF_ERROR(AddInputSidePacketsForNode(node_type_info));
   }
   return ::mediapipe::OkStatus();
 }
@@ -616,7 +618,7 @@ std::string NodeTypeInfo::NodeTypeToString(NodeType node_type) {
     NodeTypeInfo::NodeRef virtual_node{
         NodeTypeInfo::NodeType::GRAPH_INPUT_STREAM,
         index + config_.node_size()};
-    RETURN_IF_ERROR(
+    MP_RETURN_IF_ERROR(
         AddOutputStream(virtual_node, name, owned_packet_types_.back().get()));
   }
 
@@ -624,12 +626,13 @@ std::string NodeTypeInfo::NodeTypeToString(NodeType node_type) {
     RET_CHECK(node_type_info.Node().type == NodeTypeInfo::NodeType::CALCULATOR);
     // Add input streams before outputs (so back edges from a node to
     // itself must be marked).
-    RETURN_IF_ERROR(AddInputStreamsForNode(&node_type_info, need_sorting_ptr));
-    RETURN_IF_ERROR(AddOutputStreamsForNode(&node_type_info));
+    MP_RETURN_IF_ERROR(
+        AddInputStreamsForNode(&node_type_info, need_sorting_ptr));
+    MP_RETURN_IF_ERROR(AddOutputStreamsForNode(&node_type_info));
   }
 
   // Validate tag-name-indexes for graph output streams.
-  RETURN_IF_ERROR(tool::TagMap::Create(config_.output_stream()).status());
+  MP_RETURN_IF_ERROR(tool::TagMap::Create(config_.output_stream()).status());
   return ::mediapipe::OkStatus();
 }
 
@@ -639,7 +642,7 @@ std::string NodeTypeInfo::NodeTypeToString(NodeType node_type) {
   node_type_info->SetOutputStreamBaseIndex(output_streams_.size());
   const tool::TagMap& tag_map = *node_type_info->OutputStreamTypes().TagMap();
   for (CollectionItemId id = tag_map.BeginId(); id < tag_map.EndId(); ++id) {
-    RETURN_IF_ERROR(
+    MP_RETURN_IF_ERROR(
         AddOutputStream(node_type_info->Node(), tag_map.Names()[id.value()],
                         &node_type_info->OutputStreamTypes().Get(id)));
   }
@@ -677,7 +680,7 @@ std::string NodeTypeInfo::NodeTypeToString(NodeType node_type) {
       if (input_stream_info.back_edge()) {
         std::string tag;
         int index;
-        RETURN_IF_ERROR(
+        MP_RETURN_IF_ERROR(
             tool::ParseTagIndex(input_stream_info.tag_index(), &tag, &index));
         CollectionItemId id = input_stream_types.GetId(tag, index);
         RET_CHECK(id.IsValid());

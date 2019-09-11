@@ -74,7 +74,7 @@ class AudioDecoderCalculator : public CalculatorBase {
       cc->InputSidePackets().Tag("INPUT_FILE_PATH").Get<std::string>();
   const auto& decoder_options = cc->Options<mediapipe::AudioDecoderOptions>();
   decoder_ = absl::make_unique<AudioDecoder>();
-  RETURN_IF_ERROR(decoder_->Initialize(input_file_path, decoder_options));
+  MP_RETURN_IF_ERROR(decoder_->Initialize(input_file_path, decoder_options));
   std::unique_ptr<mediapipe::TimeSeriesHeader> header =
       absl::make_unique<mediapipe::TimeSeriesHeader>();
   if (decoder_->FillAudioHeader(decoder_options.audio_stream(0), header.get())

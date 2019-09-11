@@ -33,9 +33,9 @@ namespace internal {
       /*calculator_run_in_parallel=*/false);
   const CollectionItemId& id = tag_map->BeginId();
   input_stream_ = absl::make_unique<InputStreamManager>();
-  RETURN_IF_ERROR(
+  MP_RETURN_IF_ERROR(
       input_stream_->Initialize(stream_name, packet_type, /*back_edge=*/false));
-  RETURN_IF_ERROR(input_stream_handler_->InitializeInputStreamManagers(
+  MP_RETURN_IF_ERROR(input_stream_handler_->InitializeInputStreamManagers(
       input_stream_.get()));
   output_stream_manager->AddMirror(input_stream_handler_.get(), id);
   return ::mediapipe::OkStatus();
@@ -74,7 +74,7 @@ void GraphOutputStream::PrepareForRun(
     RET_CHECK_EQ(num_packets_dropped, 0).SetNoLogging()
         << absl::Substitute("Dropped $0 packet(s) on input stream \"$1\".",
                             num_packets_dropped, input_stream_->Name());
-    RETURN_IF_ERROR(packet_callback_(packet));
+    MP_RETURN_IF_ERROR(packet_callback_(packet));
   }
   return ::mediapipe::OkStatus();
 }
@@ -83,8 +83,8 @@ void GraphOutputStream::PrepareForRun(
     const std::string& stream_name, const PacketType* packet_type,
     std::function<void(InputStreamManager*, bool*)> queue_size_callback,
     OutputStreamManager* output_stream_manager) {
-  RETURN_IF_ERROR(GraphOutputStream::Initialize(stream_name, packet_type,
-                                                output_stream_manager));
+  MP_RETURN_IF_ERROR(GraphOutputStream::Initialize(stream_name, packet_type,
+                                                   output_stream_manager));
   input_stream_handler_->SetQueueSizeCallbacks(queue_size_callback,
                                                queue_size_callback);
   return ::mediapipe::OkStatus();

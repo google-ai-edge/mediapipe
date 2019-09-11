@@ -42,9 +42,8 @@ class InputStreamManagerTest : public ::testing::Test {
 
     packet_type_.Set<std::string>();
     input_stream_manager_ = absl::make_unique<InputStreamManager>();
-    MEDIAPIPE_ASSERT_OK(input_stream_manager_->Initialize("a_test",
-                                                          &packet_type_,
-                                                          /*back_edge=*/false));
+    MP_ASSERT_OK(input_stream_manager_->Initialize("a_test", &packet_type_,
+                                                   /*back_edge=*/false));
 
     queue_full_callback_ =
         std::bind(&InputStreamManagerTest::ReportQueueBecomesFull, this,
@@ -99,7 +98,7 @@ TEST_F(InputStreamManagerTest, AddPackets) {
   packets.push_back(MakePacket<std::string>("packet 3").At(Timestamp(30)));
   EXPECT_TRUE(input_stream_manager_->IsEmpty());
 
-  MEDIAPIPE_ASSERT_OK(
+  MP_ASSERT_OK(
       input_stream_manager_->AddPackets(packets, &notify_));  // Notification
   EXPECT_TRUE(notify_);
   EXPECT_FALSE(input_stream_manager_->IsEmpty());
@@ -116,7 +115,7 @@ TEST_F(InputStreamManagerTest, MovePackets) {
   packets.push_back(MakePacket<std::string>("packet 3").At(Timestamp(30)));
   EXPECT_TRUE(input_stream_manager_->IsEmpty());
 
-  MEDIAPIPE_ASSERT_OK(
+  MP_ASSERT_OK(
       input_stream_manager_->MovePackets(&packets, &notify_));  // Notification
   EXPECT_TRUE(notify_);
   EXPECT_FALSE(input_stream_manager_->IsEmpty());
@@ -182,7 +181,7 @@ TEST_F(InputStreamManagerTest, AddPacketsOnlyPreStream) {
       MakePacket<std::string>("packet 1").At(Timestamp::PreStream()));
   EXPECT_TRUE(input_stream_manager_->IsEmpty());
 
-  MEDIAPIPE_ASSERT_OK(
+  MP_ASSERT_OK(
       input_stream_manager_->AddPackets(packets, &notify_));  // Notification
   EXPECT_FALSE(input_stream_manager_->IsEmpty());
   EXPECT_TRUE(notify_);
@@ -210,7 +209,7 @@ TEST_F(InputStreamManagerTest, AddPacketsOnlyPostStream) {
       MakePacket<std::string>("packet 1").At(Timestamp::PostStream()));
   EXPECT_TRUE(input_stream_manager_->IsEmpty());
 
-  MEDIAPIPE_ASSERT_OK(
+  MP_ASSERT_OK(
       input_stream_manager_->AddPackets(packets, &notify_));  // Notification
   EXPECT_FALSE(input_stream_manager_->IsEmpty());
   EXPECT_TRUE(notify_);
@@ -260,7 +259,7 @@ TEST_F(InputStreamManagerTest, PopPacketAtTimestamp) {
   EXPECT_TRUE(input_stream_manager_->IsEmpty());
   EXPECT_TRUE(input_stream_manager_->QueueHead().IsEmpty());
 
-  MEDIAPIPE_ASSERT_OK(
+  MP_ASSERT_OK(
       input_stream_manager_->AddPackets(packets, &notify_));  // Notification
   EXPECT_FALSE(input_stream_manager_->IsEmpty());
   EXPECT_TRUE(notify_);
@@ -319,8 +318,8 @@ TEST_F(InputStreamManagerTest, PopPacketAtTimestamp) {
   num_packets_dropped_ = 0;
   popped_packet_ = Packet();
   stream_is_done_ = false;
-  MEDIAPIPE_ASSERT_OK(input_stream_manager_->SetNextTimestampBound(
-      Timestamp::Done(), &notify_));
+  MP_ASSERT_OK(input_stream_manager_->SetNextTimestampBound(Timestamp::Done(),
+                                                            &notify_));
   EXPECT_TRUE(notify_);
   popped_packet_ = input_stream_manager_->PopPacketAtTimestamp(
       Timestamp(40), &num_packets_dropped_, &stream_is_done_);
@@ -344,7 +343,7 @@ TEST_F(InputStreamManagerTest, PopQueueHead) {
       MakePacket<std::string>(expected_value_at_30).At(Timestamp(30)));
   EXPECT_TRUE(input_stream_manager_->IsEmpty());
   EXPECT_TRUE(input_stream_manager_->QueueHead().IsEmpty());
-  MEDIAPIPE_ASSERT_OK(
+  MP_ASSERT_OK(
       input_stream_manager_->AddPackets(packets, &notify_));  // Notification
   EXPECT_TRUE(notify_);
   EXPECT_FALSE(input_stream_manager_->IsEmpty());
@@ -385,8 +384,8 @@ TEST_F(InputStreamManagerTest, PopQueueHead) {
   num_packets_dropped_ = 0;
   popped_packet_ = Packet();
   stream_is_done_ = false;
-  MEDIAPIPE_ASSERT_OK(input_stream_manager_->SetNextTimestampBound(
-      Timestamp::Done(), &notify_));
+  MP_ASSERT_OK(input_stream_manager_->SetNextTimestampBound(Timestamp::Done(),
+                                                            &notify_));
   EXPECT_TRUE(notify_);
   popped_packet_ = input_stream_manager_->PopQueueHead(&stream_is_done_);
   EXPECT_TRUE(popped_packet_.IsEmpty());
@@ -412,7 +411,7 @@ TEST_F(InputStreamManagerTest, Close) {
   packets.push_back(MakePacket<std::string>("packet 3").At(Timestamp(30)));
   EXPECT_TRUE(input_stream_manager_->IsEmpty());
 
-  MEDIAPIPE_ASSERT_OK(
+  MP_ASSERT_OK(
       input_stream_manager_->AddPackets(packets, &notify_));  // Notification
   EXPECT_FALSE(input_stream_manager_->IsEmpty());
   EXPECT_TRUE(notify_);
@@ -436,7 +435,7 @@ TEST_F(InputStreamManagerTest, ReuseInputStreamManager) {
 
   EXPECT_TRUE(input_stream_manager_->IsEmpty());
 
-  MEDIAPIPE_ASSERT_OK(
+  MP_ASSERT_OK(
       input_stream_manager_->AddPackets(packets, &notify_));  // Notification
   EXPECT_FALSE(input_stream_manager_->IsEmpty());
   EXPECT_TRUE(notify_);
@@ -465,7 +464,7 @@ TEST_F(InputStreamManagerTest, ReuseInputStreamManager) {
   packets.push_back(MakePacket<std::string>("packet 3").At(Timestamp(30)));
 
   EXPECT_TRUE(input_stream_manager_->IsEmpty());
-  MEDIAPIPE_ASSERT_OK(
+  MP_ASSERT_OK(
       input_stream_manager_->AddPackets(packets, &notify_));  // Notification
   EXPECT_FALSE(input_stream_manager_->IsEmpty());
   EXPECT_TRUE(notify_);
@@ -487,7 +486,7 @@ TEST_F(InputStreamManagerTest, MultipleNotifications) {
   packets.push_back(MakePacket<std::string>("packet 2").At(Timestamp(20)));
   EXPECT_TRUE(input_stream_manager_->IsEmpty());
 
-  MEDIAPIPE_ASSERT_OK(
+  MP_ASSERT_OK(
       input_stream_manager_->AddPackets(packets, &notify_));  // Notification
   EXPECT_FALSE(input_stream_manager_->IsEmpty());
   EXPECT_TRUE(notify_);
@@ -495,7 +494,7 @@ TEST_F(InputStreamManagerTest, MultipleNotifications) {
   notify_ = false;
   packets.clear();
   packets.push_back(MakePacket<std::string>("packet 3").At(Timestamp(30)));
-  MEDIAPIPE_ASSERT_OK(
+  MP_ASSERT_OK(
       input_stream_manager_->AddPackets(packets, &notify_));  // No notification
   EXPECT_FALSE(input_stream_manager_->IsEmpty());
   // Notification isn't triggered since the queue is already non-empty.
@@ -511,7 +510,7 @@ TEST_F(InputStreamManagerTest, MultipleNotifications) {
   packets.clear();
   packets.push_back(MakePacket<std::string>("packet 4").At(Timestamp(60)));
   packets.push_back(MakePacket<std::string>("packet 5").At(Timestamp(70)));
-  MEDIAPIPE_ASSERT_OK(
+  MP_ASSERT_OK(
       input_stream_manager_->AddPackets(packets, &notify_));  // Notification
   EXPECT_FALSE(input_stream_manager_->IsEmpty());
   EXPECT_TRUE(notify_);
@@ -519,7 +518,7 @@ TEST_F(InputStreamManagerTest, MultipleNotifications) {
 
 TEST_F(InputStreamManagerTest, SetHeader) {
   Packet header = MakePacket<std::string>("blah");
-  MEDIAPIPE_ASSERT_OK(input_stream_manager_->SetHeader(header));
+  MP_ASSERT_OK(input_stream_manager_->SetHeader(header));
 
   EXPECT_EQ(header.Get<std::string>(),
             input_stream_manager_->Header().Get<std::string>());
@@ -532,13 +531,13 @@ TEST_F(InputStreamManagerTest, BackwardsInTime) {
   packets.push_back(MakePacket<std::string>("packet 2").At(Timestamp(20)));
   EXPECT_TRUE(input_stream_manager_->IsEmpty());
 
-  MEDIAPIPE_ASSERT_OK(
+  MP_ASSERT_OK(
       input_stream_manager_->AddPackets(packets, &notify_));  // Notification
   EXPECT_FALSE(input_stream_manager_->IsEmpty());
   EXPECT_TRUE(notify_);
 
   notify_ = false;
-  MEDIAPIPE_ASSERT_OK(input_stream_manager_->SetNextTimestampBound(
+  MP_ASSERT_OK(input_stream_manager_->SetNextTimestampBound(
       Timestamp(50), &notify_));  // No notification
   // The queue is already non-empty.
   EXPECT_FALSE(notify_);
@@ -572,7 +571,7 @@ TEST_F(InputStreamManagerTest, BackwardsInTime) {
   popped_packet_ = Packet();
   packets.clear();
   packets.push_back(MakePacket<std::string>("packet 4").At(Timestamp(110)));
-  MEDIAPIPE_ASSERT_OK(
+  MP_ASSERT_OK(
       input_stream_manager_->AddPackets(packets, &notify_));  // Notification
   EXPECT_FALSE(input_stream_manager_->IsEmpty());
   EXPECT_TRUE(notify_);
@@ -599,7 +598,7 @@ TEST_F(InputStreamManagerTest, SelectBackwardsInTime) {
   packets.push_back(MakePacket<std::string>("packet 2").At(Timestamp(20)));
   EXPECT_TRUE(input_stream_manager_->IsEmpty());
 
-  MEDIAPIPE_ASSERT_OK(
+  MP_ASSERT_OK(
       input_stream_manager_->AddPackets(packets, &notify_));  // Notification
   EXPECT_FALSE(input_stream_manager_->IsEmpty());
   EXPECT_TRUE(notify_);
@@ -643,7 +642,7 @@ TEST_F(InputStreamManagerTest, TimestampBound) {
   packets.push_back(MakePacket<std::string>("packet 2").At(Timestamp(20)));
   EXPECT_TRUE(input_stream_manager_->IsEmpty());
 
-  MEDIAPIPE_ASSERT_OK(
+  MP_ASSERT_OK(
       input_stream_manager_->AddPackets(packets, &notify_));  // Notification
   EXPECT_FALSE(input_stream_manager_->IsEmpty());
   EXPECT_TRUE(notify_);
@@ -652,19 +651,19 @@ TEST_F(InputStreamManagerTest, TimestampBound) {
   EXPECT_EQ(Timestamp(10),
             input_stream_manager_->MinTimestampOrBound(&is_empty));
   notify_ = false;
-  MEDIAPIPE_ASSERT_OK(input_stream_manager_->SetNextTimestampBound(
+  MP_ASSERT_OK(input_stream_manager_->SetNextTimestampBound(
       Timestamp(30), &notify_));  // No notification.
   EXPECT_FALSE(notify_);
   EXPECT_EQ(Timestamp(10),
             input_stream_manager_->MinTimestampOrBound(&is_empty));
   notify_ = false;
-  MEDIAPIPE_ASSERT_OK(input_stream_manager_->SetNextTimestampBound(
+  MP_ASSERT_OK(input_stream_manager_->SetNextTimestampBound(
       Timestamp(40), &notify_));  // No notification.
   EXPECT_FALSE(notify_);
   EXPECT_EQ(Timestamp(10),
             input_stream_manager_->MinTimestampOrBound(&is_empty));
   notify_ = false;
-  MEDIAPIPE_ASSERT_OK(input_stream_manager_->SetNextTimestampBound(
+  MP_ASSERT_OK(input_stream_manager_->SetNextTimestampBound(
       Timestamp(50), &notify_));  // No notification.
   EXPECT_FALSE(notify_);
 
@@ -701,19 +700,19 @@ TEST_F(InputStreamManagerTest, TimestampBound) {
   // TODO These notifications may be bad if they schedule a
   // Calculator Process() call at times that are irrelevant.
   notify_ = false;
-  MEDIAPIPE_ASSERT_OK(input_stream_manager_->SetNextTimestampBound(
+  MP_ASSERT_OK(input_stream_manager_->SetNextTimestampBound(
       Timestamp(60), &notify_));  // Notification.
   EXPECT_TRUE(notify_);
   EXPECT_EQ(Timestamp(60),
             input_stream_manager_->MinTimestampOrBound(&is_empty));
   notify_ = false;
-  MEDIAPIPE_ASSERT_OK(input_stream_manager_->SetNextTimestampBound(
+  MP_ASSERT_OK(input_stream_manager_->SetNextTimestampBound(
       Timestamp(70), &notify_));  // Notification.
   EXPECT_TRUE(notify_);
   EXPECT_EQ(Timestamp(70),
             input_stream_manager_->MinTimestampOrBound(&is_empty));
   notify_ = false;
-  MEDIAPIPE_ASSERT_OK(input_stream_manager_->SetNextTimestampBound(
+  MP_ASSERT_OK(input_stream_manager_->SetNextTimestampBound(
       Timestamp(80), &notify_));  // Notification.
   EXPECT_TRUE(notify_);
   EXPECT_EQ(Timestamp(80),
@@ -722,7 +721,7 @@ TEST_F(InputStreamManagerTest, TimestampBound) {
   notify_ = false;
   packets.clear();
   packets.push_back(MakePacket<std::string>("packet 3").At(Timestamp(90)));
-  MEDIAPIPE_ASSERT_OK(
+  MP_ASSERT_OK(
       input_stream_manager_->AddPackets(packets, &notify_));  // Notification
   EXPECT_TRUE(notify_);
 
@@ -756,7 +755,7 @@ TEST_F(InputStreamManagerTest, QueueSizeTest) {
   packets.push_back(MakePacket<std::string>("packet 3").At(Timestamp(30)));
   EXPECT_TRUE(input_stream_manager_->IsEmpty());
 
-  MEDIAPIPE_ASSERT_OK(
+  MP_ASSERT_OK(
       input_stream_manager_->AddPackets(packets, &notify_));  // Notification
   EXPECT_FALSE(input_stream_manager_->IsEmpty());
   EXPECT_TRUE(notify_);
@@ -773,7 +772,7 @@ TEST_F(InputStreamManagerTest, QueueSizeTest) {
   packets.push_back(MakePacket<std::string>("packet 4").At(Timestamp(60)));
   packets.push_back(MakePacket<std::string>("packet 5").At(Timestamp(70)));
   notify_ = false;
-  MEDIAPIPE_ASSERT_OK(
+  MP_ASSERT_OK(
       input_stream_manager_->AddPackets(packets, &notify_));  // Notification
   EXPECT_FALSE(input_stream_manager_->IsEmpty());
   EXPECT_TRUE(notify_);
@@ -785,8 +784,8 @@ TEST_F(InputStreamManagerTest, QueueSizeTest) {
 TEST_F(InputStreamManagerTest, InputReleaseTest) {
   packet_type_.Set<LifetimeTracker::Object>();
   input_stream_manager_ = absl::make_unique<InputStreamManager>();
-  MEDIAPIPE_ASSERT_OK(input_stream_manager_->Initialize("a_test", &packet_type_,
-                                                        /*back_edge=*/false));
+  MP_ASSERT_OK(input_stream_manager_->Initialize("a_test", &packet_type_,
+                                                 /*back_edge=*/false));
   input_stream_manager_->PrepareForRun();
   input_stream_manager_->SetQueueSizeCallbacks(queue_full_callback_,
                                                queue_not_full_callback_);
@@ -798,12 +797,9 @@ TEST_F(InputStreamManagerTest, InputReleaseTest) {
   };
 
   input_stream_manager_->SetMaxQueueSize(3);
-  MEDIAPIPE_ASSERT_OK(
-      input_stream_manager_->AddPackets({new_packet()}, &notify_));
-  MEDIAPIPE_ASSERT_OK(
-      input_stream_manager_->AddPackets({new_packet()}, &notify_));
-  MEDIAPIPE_ASSERT_OK(
-      input_stream_manager_->AddPackets({new_packet()}, &notify_));
+  MP_ASSERT_OK(input_stream_manager_->AddPackets({new_packet()}, &notify_));
+  MP_ASSERT_OK(input_stream_manager_->AddPackets({new_packet()}, &notify_));
+  MP_ASSERT_OK(input_stream_manager_->AddPackets({new_packet()}, &notify_));
   EXPECT_EQ(3, tracker.live_count());
 
   popped_packet_ = input_stream_manager_->PopPacketAtTimestamp(
@@ -843,7 +839,7 @@ TEST_F(InputStreamManagerTest, AddPacketsAfterPreStreamUntimed) {
   packets.push_back(MakePacket<std::string>("packet 2").At(Timestamp(10)));
   EXPECT_TRUE(input_stream_manager_->IsEmpty());
 
-  MEDIAPIPE_ASSERT_OK(
+  MP_ASSERT_OK(
       input_stream_manager_->AddPackets(packets, &notify_));  // Notification
   EXPECT_FALSE(input_stream_manager_->IsEmpty());
   EXPECT_TRUE(notify_);
@@ -859,7 +855,7 @@ TEST_F(InputStreamManagerTest, AddPacketsBeforePostStreamUntimed) {
       MakePacket<std::string>("packet 2").At(Timestamp::PostStream()));
   EXPECT_TRUE(input_stream_manager_->IsEmpty());
 
-  MEDIAPIPE_ASSERT_OK(
+  MP_ASSERT_OK(
       input_stream_manager_->AddPackets(packets, &notify_));  // Notification
   EXPECT_FALSE(input_stream_manager_->IsEmpty());
   EXPECT_TRUE(notify_);
@@ -872,18 +868,18 @@ TEST_F(InputStreamManagerTest, BackwardsInTimeUntimed) {
   packets.push_back(MakePacket<std::string>("packet 2").At(Timestamp(20)));
   EXPECT_TRUE(input_stream_manager_->IsEmpty());
 
-  MEDIAPIPE_ASSERT_OK(
+  MP_ASSERT_OK(
       input_stream_manager_->AddPackets(packets, &notify_));  // Notification
   EXPECT_FALSE(input_stream_manager_->IsEmpty());
   EXPECT_TRUE(notify_);
 
   notify_ = false;
-  MEDIAPIPE_ASSERT_OK(input_stream_manager_->SetNextTimestampBound(
+  MP_ASSERT_OK(input_stream_manager_->SetNextTimestampBound(
       Timestamp(50), &notify_));  // No notification
   EXPECT_FALSE(notify_);
 
   notify_ = false;
-  MEDIAPIPE_ASSERT_OK(input_stream_manager_->SetNextTimestampBound(
+  MP_ASSERT_OK(input_stream_manager_->SetNextTimestampBound(
       Timestamp(40), &notify_));  // Set Timestamp bound backwards in time
   EXPECT_FALSE(notify_);
 
@@ -891,7 +887,7 @@ TEST_F(InputStreamManagerTest, BackwardsInTimeUntimed) {
   packets.push_back(MakePacket<std::string>("packet 3")
                         .At(Timestamp(30)));  // Backwards in time
   notify_ = false;
-  MEDIAPIPE_ASSERT_OK(
+  MP_ASSERT_OK(
       input_stream_manager_->AddPackets(packets, &notify_));  // No notification
   // Notification isn't triggered since the queue is already non-empty.
   EXPECT_FALSE(notify_);
@@ -909,7 +905,7 @@ TEST_F(InputStreamManagerTest, BackwardsInTimeUntimed) {
   packets.push_back(MakePacket<std::string>("packet 4").At(Timestamp(110)));
 
   notify_ = false;
-  MEDIAPIPE_ASSERT_OK(
+  MP_ASSERT_OK(
       input_stream_manager_->AddPackets(packets, &notify_));  // Notification
   EXPECT_TRUE(notify_);
 
@@ -921,7 +917,7 @@ TEST_F(InputStreamManagerTest, BackwardsInTimeUntimed) {
                         .At(Timestamp(130)));  // Backwards in time
 
   notify_ = false;
-  MEDIAPIPE_ASSERT_OK(
+  MP_ASSERT_OK(
       input_stream_manager_->AddPackets(packets, &notify_));  // Notification
   EXPECT_TRUE(notify_);
 }

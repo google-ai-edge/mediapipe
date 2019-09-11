@@ -79,7 +79,7 @@ mediapipe_cc_proto_library(
     name = "ssd_anchors_calculator_cc_proto",
     srcs = ["ssd_anchors_calculator.proto"],
     cc_deps = ["//mediapipe/framework:calculator_cc_proto"],
-    visibility = ["//mediapipe:__subpackages__"],
+    visibility = ["//visibility:public"],
     deps = [":ssd_anchors_calculator_proto"],
 )
 
@@ -87,7 +87,7 @@ mediapipe_cc_proto_library(
     name = "tflite_custom_op_resolver_calculator_cc_proto",
     srcs = ["tflite_custom_op_resolver_calculator.proto"],
     cc_deps = ["//mediapipe/framework:calculator_cc_proto"],
-    visibility = ["//mediapipe:__subpackages__"],
+    visibility = ["//visibility:public"],
     deps = [":tflite_custom_op_resolver_calculator_proto"],
 )
 
@@ -95,7 +95,7 @@ mediapipe_cc_proto_library(
     name = "tflite_converter_calculator_cc_proto",
     srcs = ["tflite_converter_calculator.proto"],
     cc_deps = ["//mediapipe/framework:calculator_cc_proto"],
-    visibility = ["//mediapipe:__subpackages__"],
+    visibility = ["//visibility:public"],
     deps = [":tflite_converter_calculator_proto"],
 )
 
@@ -103,7 +103,7 @@ mediapipe_cc_proto_library(
     name = "tflite_tensors_to_segmentation_calculator_cc_proto",
     srcs = ["tflite_tensors_to_segmentation_calculator.proto"],
     cc_deps = ["//mediapipe/framework:calculator_cc_proto"],
-    visibility = ["//mediapipe:__subpackages__"],
+    visibility = ["//visibility:public"],
     deps = [":tflite_tensors_to_segmentation_calculator_proto"],
 )
 
@@ -111,7 +111,7 @@ mediapipe_cc_proto_library(
     name = "tflite_inference_calculator_cc_proto",
     srcs = ["tflite_inference_calculator.proto"],
     cc_deps = ["//mediapipe/framework:calculator_cc_proto"],
-    visibility = ["//mediapipe:__subpackages__"],
+    visibility = ["//visibility:public"],
     deps = [":tflite_inference_calculator_proto"],
 )
 
@@ -119,7 +119,7 @@ mediapipe_cc_proto_library(
     name = "tflite_tensors_to_detections_calculator_cc_proto",
     srcs = ["tflite_tensors_to_detections_calculator.proto"],
     cc_deps = ["//mediapipe/framework:calculator_cc_proto"],
-    visibility = ["//mediapipe:__subpackages__"],
+    visibility = ["//visibility:public"],
     deps = [":tflite_tensors_to_detections_calculator_proto"],
 )
 
@@ -127,7 +127,7 @@ mediapipe_cc_proto_library(
     name = "tflite_tensors_to_classification_calculator_cc_proto",
     srcs = ["tflite_tensors_to_classification_calculator.proto"],
     cc_deps = ["//mediapipe/framework:calculator_cc_proto"],
-    visibility = ["//mediapipe:__subpackages__"],
+    visibility = ["//visibility:public"],
     deps = [":tflite_tensors_to_classification_calculator_proto"],
 )
 
@@ -135,7 +135,7 @@ mediapipe_cc_proto_library(
     name = "tflite_tensors_to_landmarks_calculator_cc_proto",
     srcs = ["tflite_tensors_to_landmarks_calculator.proto"],
     cc_deps = ["//mediapipe/framework:calculator_cc_proto"],
-    visibility = ["//mediapipe:__subpackages__"],
+    visibility = ["//visibility:public"],
     deps = [":tflite_tensors_to_landmarks_calculator_proto"],
 )
 
@@ -200,7 +200,6 @@ cc_library(
     srcs = ["tflite_inference_calculator.cc"],
     copts = select({
         "//mediapipe:ios": [
-            "-std=c++11",
             "-x objective-c++",
             "-fobjc-arc",  # enable reference-counting
         ],
@@ -246,7 +245,6 @@ cc_library(
     srcs = ["tflite_converter_calculator.cc"],
     copts = select({
         "//mediapipe:ios": [
-            "-std=c++11",
             "-x objective-c++",
             "-fobjc-arc",  # enable reference-counting
         ],

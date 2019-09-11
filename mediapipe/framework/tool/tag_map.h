@@ -56,7 +56,7 @@ class TagMap {
   static ::mediapipe::StatusOr<std::shared_ptr<TagMap>> Create(
       const proto_ns::RepeatedPtrField<ProtoString>& tag_index_names) {
     std::shared_ptr<TagMap> output(new TagMap());
-    RETURN_IF_ERROR(output->Initialize(tag_index_names));
+    MP_RETURN_IF_ERROR(output->Initialize(tag_index_names));
     return std::move(output);
   }
 
@@ -67,7 +67,7 @@ class TagMap {
   static ::mediapipe::StatusOr<std::shared_ptr<TagMap>> Create(
       const TagAndNameInfo& info) {
     std::shared_ptr<TagMap> output(new TagMap());
-    RETURN_IF_ERROR(output->Initialize(info));
+    MP_RETURN_IF_ERROR(output->Initialize(info));
     return std::move(output);
   }
 

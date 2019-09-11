@@ -89,7 +89,7 @@ REGISTER_CALCULATOR(TfLiteTensorsToLandmarksCalculator);
     CalculatorContext* cc) {
   cc->SetOffset(TimestampDiff(0));
 
-  RETURN_IF_ERROR(LoadOptions(cc));
+  MP_RETURN_IF_ERROR(LoadOptions(cc));
 
   if (cc->Outputs().HasTag("NORM_LANDMARKS")) {
     RET_CHECK(options_.has_input_image_height() &&

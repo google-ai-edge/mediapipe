@@ -154,7 +154,7 @@ inline std::string* MediaPipeCheckOpHelper(::mediapipe::Status v,
   while (auto _result = ::mediapipe::MediaPipeCheckOpHelper(val, #val)) \
   LOG(level) << *(_result)
 
-// To be consistent with MEDIAPIPE_EXPECT_OK, we add prefix MEDIAPIPE_ to
+// To be consistent with MP_EXPECT_OK, we add prefix MEDIAPIPE_ to
 // CHECK_OK, QCHECK_OK, and DCHECK_OK. We prefer to use the marcos with
 // MEDIAPIPE_ prefix in mediapipe's codebase.
 #define MEDIAPIPE_CHECK_OK(val) MEDIAPIPE_DO_CHECK_OK(val, FATAL)

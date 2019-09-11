@@ -52,13 +52,13 @@ namespace tool {
         << " is not a registered packet generator.");
 
   CalculatorContract contract;
-  RETURN_IF_ERROR(contract.Initialize(config));
+  MP_RETURN_IF_ERROR(contract.Initialize(config));
 
   {
     LegacyCalculatorSupport::Scoped<CalculatorContract> s(&contract);
-    RETURN_IF_ERROR(static_access->FillExpectations(
-                        config.options(), &contract.InputSidePackets(),
-                        &contract.OutputSidePackets()))
+    MP_RETURN_IF_ERROR(static_access->FillExpectations(
+                           config.options(), &contract.InputSidePackets(),
+                           &contract.OutputSidePackets()))
             .SetPrepend()
         << config.packet_generator() << "::FillExpectations failed: ";
   }
@@ -89,30 +89,30 @@ namespace tool {
   PacketTypeSet output_side_packet_types(output_side_packets->TagMap());
 
   // Fill the PacketTypeSets with type information.
-  RETURN_IF_ERROR(static_access->FillExpectations(extendable_options,
-                                                  &input_side_packet_types,
-                                                  &output_side_packet_types))
+  MP_RETURN_IF_ERROR(static_access->FillExpectations(extendable_options,
+                                                     &input_side_packet_types,
+                                                     &output_side_packet_types))
           .SetPrepend()
       << packet_generator_name << "::FillExpectations failed: ";
   // Check that the types were filled well.
   std::vector<::mediapipe::Status> statuses;
   statuses.push_back(ValidatePacketTypeSet(input_side_packet_types));
   statuses.push_back(ValidatePacketTypeSet(output_side_packet_types));
-  RETURN_IF_ERROR(tool::CombinedStatus(
+  MP_RETURN_IF_ERROR(tool::CombinedStatus(
       absl::StrCat(packet_generator_name, "::FillExpectations failed: "),
       statuses));
 
-  RETURN_IF_ERROR(
+  MP_RETURN_IF_ERROR(
       ValidatePacketSet(input_side_packet_types, input_side_packets))
           .SetPrepend()
       << packet_generator_name
       << "::FillExpectations expected different input type than those given: ";
-  RETURN_IF_ERROR(static_access->Generate(extendable_options,
-                                          input_side_packets,
-                                          output_side_packets))
+  MP_RETURN_IF_ERROR(static_access->Generate(extendable_options,
+                                             input_side_packets,
+                                             output_side_packets))
           .SetPrepend()
       << packet_generator_name << "::Generate failed: ";
-  RETURN_IF_ERROR(
+  MP_RETURN_IF_ERROR(
       ValidatePacketSet(output_side_packet_types, *output_side_packets))
           .SetPrepend()
       << packet_generator_name

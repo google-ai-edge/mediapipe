@@ -122,7 +122,7 @@ TEST_F(TensorflowInferenceCalculatorTest, GetConstants) {
   runner_ = absl::make_unique<CalculatorRunner>(config);
   AddSessionInputSidePacket();
   AddVectorToInputsAsTensor({0, 0, 0}, "A", 0);
-  MEDIAPIPE_ASSERT_OK(runner_->Run());
+  MP_ASSERT_OK(runner_->Run());
 
   const std::vector<Packet>& output_packets_b =
       runner_->Outputs().Tag("B").packets;
@@ -163,7 +163,7 @@ TEST_F(TensorflowInferenceCalculatorTest, GetComputed) {
   AddSessionInputSidePacket();
   AddVectorToInputsAsTensor({2, 2, 2}, "A", 0);
   AddVectorToInputsAsTensor({3, 4, 5}, "B", 0);
-  MEDIAPIPE_ASSERT_OK(runner_->Run());
+  MP_ASSERT_OK(runner_->Run());
 
   const std::vector<Packet>& output_packets_mult =
       runner_->Outputs().Tag("MULTIPLIED").packets;
@@ -217,7 +217,7 @@ TEST_F(TensorflowInferenceCalculatorTest, GetMultiBatchComputed) {
   AddVectorToInputsAsTensor({3, 4, 5}, "B", 0);
   AddVectorToInputsAsTensor({3, 3, 3}, "A", 1);
   AddVectorToInputsAsTensor({3, 4, 5}, "B", 1);
-  MEDIAPIPE_ASSERT_OK(runner_->Run());
+  MP_ASSERT_OK(runner_->Run());
 
   const std::vector<Packet>& output_packets_mult =
       runner_->Outputs().Tag("MULTIPLIED").packets;
@@ -255,7 +255,7 @@ TEST_F(TensorflowInferenceCalculatorTest, GetSingleBatchComputed) {
   AddVectorToInputsAsTensor({3, 4, 5}, "B", 0);
   AddVectorToInputsAsTensor({3, 3, 3}, "A", 1);
   AddVectorToInputsAsTensor({3, 4, 5}, "B", 1);
-  MEDIAPIPE_ASSERT_OK(runner_->Run());
+  MP_ASSERT_OK(runner_->Run());
 
   const std::vector<Packet>& output_packets_mult =
       runner_->Outputs().Tag("MULTIPLIED").packets;
@@ -293,7 +293,7 @@ TEST_F(TensorflowInferenceCalculatorTest, GetCloseBatchComputed) {
   AddVectorToInputsAsTensor({3, 4, 5}, "B", 0);
   AddVectorToInputsAsTensor({3, 3, 3}, "A", 1);
   AddVectorToInputsAsTensor({3, 4, 5}, "B", 1);
-  MEDIAPIPE_ASSERT_OK(runner_->Run());
+  MP_ASSERT_OK(runner_->Run());
 
   const std::vector<Packet>& output_packets_mult =
       runner_->Outputs().Tag("MULTIPLIED").packets;
@@ -331,7 +331,7 @@ TEST_F(TensorflowInferenceCalculatorTest, TestRecurrentStates) {
   AddSessionInputSidePacket();
   AddVectorToInputsAsTensor({3, 4, 5}, "B", 0);
   AddVectorToInputsAsTensor({3, 4, 5}, "B", 1);
-  MEDIAPIPE_ASSERT_OK(runner_->Run());
+  MP_ASSERT_OK(runner_->Run());
 
   const std::vector<Packet>& output_packets_mult =
       runner_->Outputs().Tag("MULTIPLIED").packets;
@@ -372,7 +372,7 @@ TEST_F(TensorflowInferenceCalculatorTest, TestRecurrentStateOverride) {
   AddVectorToInputsAsTensor({3, 4, 5}, "B", 0);
   AddVectorToInputsAsTensor({1, 1, 1}, "A", 1);
   AddVectorToInputsAsTensor({3, 4, 5}, "B", 1);
-  MEDIAPIPE_ASSERT_OK(runner_->Run());
+  MP_ASSERT_OK(runner_->Run());
 
   const std::vector<Packet>& output_packets_mult =
       runner_->Outputs().Tag("MULTIPLIED").packets;
@@ -409,7 +409,7 @@ TEST_F(TensorflowInferenceCalculatorTest, DISABLED_CheckTiming) {
   runner_ = absl::make_unique<CalculatorRunner>(config);
   AddSessionInputSidePacket();
   AddVectorToInputsAsTensor({0, 0, 0}, "A", 0);
-  MEDIAPIPE_ASSERT_OK(runner_->Run());
+  MP_ASSERT_OK(runner_->Run());
 
   EXPECT_EQ(1, runner_
                    ->GetCounter(
@@ -465,7 +465,7 @@ TEST_F(TensorflowInferenceCalculatorTest, MissingInputFeature_Skip) {
   runner_ = absl::make_unique<CalculatorRunner>(config);
   AddSessionInputSidePacket();
   AddVectorToInputsAsTensor({2, 2, 2}, "A", 0);
-  MEDIAPIPE_ASSERT_OK(runner_->Run());
+  MP_ASSERT_OK(runner_->Run());
 
   const std::vector<Packet>& output_packets_mult =
       runner_->Outputs().Tag("MULTIPLIED").packets;
@@ -494,7 +494,7 @@ TEST_F(TensorflowInferenceCalculatorTest,
   AddVectorToInputsAsTensor({2, 2, 2}, "A", 0);
   AddVectorToInputsAsTensor({3, 3, 3}, "A", 1);
   AddVectorToInputsAsTensor({3, 4, 5}, "B", 1);
-  MEDIAPIPE_ASSERT_OK(runner_->Run());
+  MP_ASSERT_OK(runner_->Run());
 
   const std::vector<Packet>& output_packets_mult =
       runner_->Outputs().Tag("MULTIPLIED").packets;

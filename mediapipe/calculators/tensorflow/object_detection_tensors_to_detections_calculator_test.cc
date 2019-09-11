@@ -134,7 +134,7 @@ class ObjectDetectionTensorsToDetectionsCalculatorTest
     runner_->MutableInputs()->Tag(kClasses).packets.push_back(
         PointToForeign(&input_classes_).At(Timestamp::PostStream()));
 
-    MEDIAPIPE_ASSERT_OK(runner_->Run());
+    MP_ASSERT_OK(runner_->Run());
     ASSERT_EQ(1, runner_->Outputs().Tag(kDetections).packets.size());
   }
 
@@ -146,7 +146,7 @@ class ObjectDetectionTensorsToDetectionsCalculatorTest
         PointToForeign(&input_scores_for_all_classes_)
             .At(Timestamp::PostStream()));
 
-    MEDIAPIPE_ASSERT_OK(runner_->Run());
+    MP_ASSERT_OK(runner_->Run());
     ASSERT_EQ(1, runner_->Outputs().Tag(kDetections).packets.size());
   }
 
@@ -167,7 +167,7 @@ class ObjectDetectionTensorsToDetectionsCalculatorTest
         .packets.push_back(
             PointToForeign(&input_keypoints_).At(Timestamp::PostStream()));
 
-    MEDIAPIPE_ASSERT_OK(runner_->Run());
+    MP_ASSERT_OK(runner_->Run());
     ASSERT_EQ(1, runner_->Outputs().Tag(kDetections).packets.size());
   }
 
@@ -201,7 +201,7 @@ class ObjectDetectionTensorsToDetectionsCalculatorTest
     runner_->MutableInputs()->Tag(kClasses).packets.push_back(
         PointToForeign(&input_classes_).At(Timestamp::PostStream()));
 
-    MEDIAPIPE_ASSERT_OK(runner_->Run());
+    MP_ASSERT_OK(runner_->Run());
     ASSERT_EQ(1, runner_->Outputs().Tag(kDetections).packets.size());
   }
 

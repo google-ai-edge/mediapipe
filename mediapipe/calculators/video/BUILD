@@ -37,7 +37,7 @@ mediapipe_cc_proto_library(
     name = "flow_to_image_calculator_cc_proto",
     srcs = ["flow_to_image_calculator.proto"],
     cc_deps = ["//mediapipe/framework:calculator_cc_proto"],
-    visibility = ["//mediapipe:__subpackages__"],
+    visibility = ["//visibility:public"],
     deps = [":flow_to_image_calculator_proto"],
 )
 
@@ -45,7 +45,7 @@ mediapipe_cc_proto_library(
     name = "opencv_video_encoder_calculator_cc_proto",
     srcs = ["opencv_video_encoder_calculator.proto"],
     cc_deps = ["//mediapipe/framework:calculator_cc_proto"],
-    visibility = ["//mediapipe:__subpackages__"],
+    visibility = ["//visibility:public"],
     deps = [":opencv_video_encoder_calculator_proto"],
 )
 

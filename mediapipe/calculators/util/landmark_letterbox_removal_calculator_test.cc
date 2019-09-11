@@ -58,7 +58,7 @@ TEST(LandmarkLetterboxRemovalCalculatorTest, PaddingLeftRight) {
       ->Tag("LETTERBOX_PADDING")
       .packets.push_back(Adopt(padding.release()).At(Timestamp::PostStream()));
 
-  MEDIAPIPE_ASSERT_OK(runner.Run()) << "Calculator execution failed.";
+  MP_ASSERT_OK(runner.Run()) << "Calculator execution failed.";
   const std::vector<Packet>& output = runner.Outputs().Tag("LANDMARKS").packets;
   ASSERT_EQ(1, output.size());
   const auto& output_landmarks =
@@ -92,7 +92,7 @@ TEST(LandmarkLetterboxRemovalCalculatorTest, PaddingTopBottom) {
       ->Tag("LETTERBOX_PADDING")
       .packets.push_back(Adopt(padding.release()).At(Timestamp::PostStream()));
 
-  MEDIAPIPE_ASSERT_OK(runner.Run()) << "Calculator execution failed.";
+  MP_ASSERT_OK(runner.Run()) << "Calculator execution failed.";
   const std::vector<Packet>& output = runner.Outputs().Tag("LANDMARKS").packets;
   ASSERT_EQ(1, output.size());
   const auto& output_landmarks =

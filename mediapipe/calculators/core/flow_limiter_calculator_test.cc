@@ -91,7 +91,7 @@ TEST(FlowLimiterCalculator, OneOutputTest) {
   }
 
   // Run the calculator.
-  MEDIAPIPE_ASSERT_OK(runner.Run()) << "Calculator execution failed.";
+  MP_ASSERT_OK(runner.Run()) << "Calculator execution failed.";
   const std::vector<Packet>& frame_output_packets =
       runner.Outputs().Index(0).packets;
 
@@ -117,7 +117,7 @@ TEST(FlowLimiterCalculator, BasicTest) {
   }
 
   // Run the calculator.
-  MEDIAPIPE_ASSERT_OK(runner.Run()) << "Calculator execution failed.";
+  MP_ASSERT_OK(runner.Run()) << "Calculator execution failed.";
   const std::vector<Packet>& frame_output_packets =
       runner.Outputs().Index(0).packets;
 
@@ -198,7 +198,7 @@ class FlowLimiterCalculatorTest : public testing::Test {
       close_count_++;
       return ::mediapipe::OkStatus();
     };
-    MEDIAPIPE_ASSERT_OK(graph_.Initialize(
+    MP_ASSERT_OK(graph_.Initialize(
         graph_config_, {
                            {"max_in_flight", MakePacket<int>(max_in_flight)},
                            {"callback_0", Adopt(new auto(semaphore_0_func))},
@@ -209,7 +209,7 @@ class FlowLimiterCalculatorTest : public testing::Test {
 
   // Adds a packet to a graph input stream.
   void AddPacket(const std::string& input_name, int value) {
-    MEDIAPIPE_EXPECT_OK(graph_.AddPacketToInputStream(
+    MP_EXPECT_OK(graph_.AddPacketToInputStream(
         input_name, MakePacket<int>(value).At(Timestamp(value))));
   }
 
@@ -277,10 +277,10 @@ class FlowLimiterCalculatorTest : public testing::Test {
 //
 TEST_F(FlowLimiterCalculatorTest, BackEdgeCloses) {
   InitializeGraph(1);
-  MEDIAPIPE_ASSERT_OK(graph_.StartRun({}));
+  MP_ASSERT_OK(graph_.StartRun({}));
 
   auto send_packet = [this](const std::string& input_name, int64 n) {
-    MEDIAPIPE_EXPECT_OK(graph_.AddPacketToInputStream(
+    MP_EXPECT_OK(graph_.AddPacketToInputStream(
         input_name, MakePacket<int64>(n).At(Timestamp(n))));
   };
 
@@ -288,14 +288,14 @@ TEST_F(FlowLimiterCalculatorTest, BackEdgeCloses) {
     send_packet("in_1", i * 10);
     // This next input should be dropped.
     send_packet("in_1", i * 10 + 5);
-    MEDIAPIPE_EXPECT_OK(graph_.WaitUntilIdle());
+    MP_EXPECT_OK(graph_.WaitUntilIdle());
     send_packet("in_2", i * 10);
     exit_semaphore_.Release(1);
-    MEDIAPIPE_EXPECT_OK(graph_.WaitUntilIdle());
+    MP_EXPECT_OK(graph_.WaitUntilIdle());
   }
-  MEDIAPIPE_EXPECT_OK(graph_.CloseInputStream("in_1"));
-  MEDIAPIPE_EXPECT_OK(graph_.CloseInputStream("in_2"));
-  MEDIAPIPE_EXPECT_OK(graph_.WaitUntilIdle());
+  MP_EXPECT_OK(graph_.CloseInputStream("in_1"));
+  MP_EXPECT_OK(graph_.CloseInputStream("in_2"));
+  MP_EXPECT_OK(graph_.WaitUntilIdle());
 
   // All output streams are closed and all output packets are delivered,
   // with stream "in_1" and stream "in_2" closed.
@@ -321,17 +321,17 @@ TEST_F(FlowLimiterCalculatorTest, BackEdgeCloses) {
 // input streams are closed after the last input packet has been processed.
 TEST_F(FlowLimiterCalculatorTest, AllStreamsClose) {
   InitializeGraph(1);
-  MEDIAPIPE_ASSERT_OK(graph_.StartRun({}));
+  MP_ASSERT_OK(graph_.StartRun({}));
 
   exit_semaphore_.Release(10);
   for (int i = 0; i < 10; i++) {
     AddPacket("in_1", i);
-    MEDIAPIPE_EXPECT_OK(graph_.WaitUntilIdle());
+    MP_EXPECT_OK(graph_.WaitUntilIdle());
     AddPacket("in_2", i);
-    MEDIAPIPE_EXPECT_OK(graph_.WaitUntilIdle());
+    MP_EXPECT_OK(graph_.WaitUntilIdle());
   }
-  MEDIAPIPE_EXPECT_OK(graph_.CloseAllInputStreams());
-  MEDIAPIPE_EXPECT_OK(graph_.WaitUntilIdle());
+  MP_EXPECT_OK(graph_.CloseAllInputStreams());
+  MP_EXPECT_OK(graph_.WaitUntilIdle());
 
   EXPECT_EQ(TimestampValues(out_1_packets_), TimestampValues(out_2_packets_));
   EXPECT_EQ(TimestampValues(out_1_packets_),
@@ -371,7 +371,7 @@ TEST(FlowLimiterCalculator, TwoStreams) {
   };
 
   CalculatorGraph graph_;
-  MEDIAPIPE_EXPECT_OK(graph_.Initialize(
+  MP_EXPECT_OK(graph_.Initialize(
       graph_config_,
       {
           {"max_in_flight", MakePacket<int>(1)},
@@ -379,63 +379,63 @@ TEST(FlowLimiterCalculator, TwoStreams) {
            MakePacket<std::function<void(const Packet&)>>(allow_cb)},
       }));
 
-  MEDIAPIPE_EXPECT_OK(graph_.StartRun({}));
+  MP_EXPECT_OK(graph_.StartRun({}));
 
   auto send_packet = [&graph_](const std::string& input_name, int n) {
-    MEDIAPIPE_EXPECT_OK(graph_.AddPacketToInputStream(
+    MP_EXPECT_OK(graph_.AddPacketToInputStream(
         input_name, MakePacket<int>(n).At(Timestamp(n))));
   };
   send_packet("in_a", 1);
-  MEDIAPIPE_EXPECT_OK(graph_.WaitUntilIdle());
+  MP_EXPECT_OK(graph_.WaitUntilIdle());
   EXPECT_EQ(allow, false);
   EXPECT_EQ(TimestampValues(a_passed), (std::vector<int64>{1}));
   EXPECT_EQ(TimestampValues(b_passed), (std::vector<int64>{}));
 
   send_packet("in_a", 2);
   send_packet("in_b", 1);
-  MEDIAPIPE_EXPECT_OK(graph_.WaitUntilIdle());
+  MP_EXPECT_OK(graph_.WaitUntilIdle());
   EXPECT_EQ(TimestampValues(a_passed), (std::vector<int64>{1}));
   EXPECT_EQ(TimestampValues(b_passed), (std::vector<int64>{1}));
   EXPECT_EQ(allow, false);
 
   send_packet("finished", 1);
-  MEDIAPIPE_EXPECT_OK(graph_.WaitUntilIdle());
+  MP_EXPECT_OK(graph_.WaitUntilIdle());
   EXPECT_EQ(TimestampValues(a_passed), (std::vector<int64>{1}));
   EXPECT_EQ(TimestampValues(b_passed), (std::vector<int64>{1}));
   EXPECT_EQ(allow, true);
 
   send_packet("in_b", 2);
-  MEDIAPIPE_EXPECT_OK(graph_.WaitUntilIdle());
+  MP_EXPECT_OK(graph_.WaitUntilIdle());
   EXPECT_EQ(TimestampValues(a_passed), (std::vector<int64>{1}));
   EXPECT_EQ(TimestampValues(b_passed), (std::vector<int64>{1}));
   EXPECT_EQ(allow, true);
 
   send_packet("in_b", 3);
-  MEDIAPIPE_EXPECT_OK(graph_.WaitUntilIdle());
+  MP_EXPECT_OK(graph_.WaitUntilIdle());
   EXPECT_EQ(TimestampValues(a_passed), (std::vector<int64>{1}));
   EXPECT_EQ(TimestampValues(b_passed), (std::vector<int64>{1, 3}));
   EXPECT_EQ(allow, false);
 
   send_packet("in_b", 4);
-  MEDIAPIPE_EXPECT_OK(graph_.WaitUntilIdle());
+  MP_EXPECT_OK(graph_.WaitUntilIdle());
   EXPECT_EQ(TimestampValues(a_passed), (std::vector<int64>{1}));
   EXPECT_EQ(TimestampValues(b_passed), (std::vector<int64>{1, 3}));
   EXPECT_EQ(allow, false);
 
   send_packet("in_a", 3);
-  MEDIAPIPE_EXPECT_OK(graph_.WaitUntilIdle());
+  MP_EXPECT_OK(graph_.WaitUntilIdle());
   EXPECT_EQ(TimestampValues(a_passed), (std::vector<int64>{1, 3}));
   EXPECT_EQ(TimestampValues(b_passed), (std::vector<int64>{1, 3}));
   EXPECT_EQ(allow, false);
 
   send_packet("finished", 3);
-  MEDIAPIPE_EXPECT_OK(graph_.WaitUntilIdle());
+  MP_EXPECT_OK(graph_.WaitUntilIdle());
   EXPECT_EQ(TimestampValues(a_passed), (std::vector<int64>{1, 3}));
   EXPECT_EQ(TimestampValues(b_passed), (std::vector<int64>{1, 3}));
   EXPECT_EQ(allow, true);
 
-  MEDIAPIPE_EXPECT_OK(graph_.CloseAllInputStreams());
-  MEDIAPIPE_EXPECT_OK(graph_.WaitUntilDone());
+  MP_EXPECT_OK(graph_.CloseAllInputStreams());
+  MP_EXPECT_OK(graph_.WaitUntilDone());
 }
 
 TEST(FlowLimiterCalculator, CanConsume) {
@@ -465,7 +465,7 @@ TEST(FlowLimiterCalculator, CanConsume) {
   };
 
   CalculatorGraph graph_;
-  MEDIAPIPE_EXPECT_OK(graph_.Initialize(
+  MP_EXPECT_OK(graph_.Initialize(
       graph_config_,
       {
           {"max_in_flight", MakePacket<int>(1)},
@@ -473,21 +473,21 @@ TEST(FlowLimiterCalculator, CanConsume) {
            MakePacket<std::function<void(const Packet&)>>(allow_cb)},
       }));
 
-  MEDIAPIPE_EXPECT_OK(graph_.StartRun({}));
+  MP_EXPECT_OK(graph_.StartRun({}));
 
   auto send_packet = [&graph_](const std::string& input_name, int n) {
-    MEDIAPIPE_EXPECT_OK(graph_.AddPacketToInputStream(
+    MP_EXPECT_OK(graph_.AddPacketToInputStream(
         input_name, MakePacket<int>(n).At(Timestamp(n))));
   };
   send_packet("in", 1);
-  MEDIAPIPE_EXPECT_OK(graph_.WaitUntilIdle());
+  MP_EXPECT_OK(graph_.WaitUntilIdle());
   EXPECT_EQ(allow, false);
   EXPECT_EQ(TimestampValues(in_sampled_packets_), (std::vector<int64>{1}));
 
-  MEDIAPIPE_EXPECT_OK(in_sampled_packets_[0].Consume<int>());
+  MP_EXPECT_OK(in_sampled_packets_[0].Consume<int>());
 
-  MEDIAPIPE_EXPECT_OK(graph_.CloseAllInputStreams());
-  MEDIAPIPE_EXPECT_OK(graph_.WaitUntilDone());
+  MP_EXPECT_OK(graph_.CloseAllInputStreams());
+  MP_EXPECT_OK(graph_.WaitUntilDone());
 }
 
 }  // anonymous namespace

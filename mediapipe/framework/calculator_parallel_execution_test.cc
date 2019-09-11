@@ -117,7 +117,7 @@ TEST_F(ParallelExecutionTest, SlowPlusOneCalculatorsTest) {
   CalculatorGraph graph(graph_config);
   // Runs the graph twice.
   for (int i = 0; i < 2; ++i) {
-    MEDIAPIPE_ASSERT_OK(graph.StartRun(
+    MP_ASSERT_OK(graph.StartRun(
         {{"callback", MakePacket<std::function<void(const Packet&)>>(std::bind(
                           &ParallelExecutionTest::AddThreadSafeVectorSink, this,
                           std::placeholders::_1))}}));
@@ -134,15 +134,15 @@ TEST_F(ParallelExecutionTest, SlowPlusOneCalculatorsTest) {
     EXPECT_EQ(0, fail_count);
 
     // Doesn't wait but just close the input stream.
-    MEDIAPIPE_ASSERT_OK(graph.CloseInputStream("input"));
+    MP_ASSERT_OK(graph.CloseInputStream("input"));
     // Waits properly via the API until the graph is done.
-    MEDIAPIPE_ASSERT_OK(graph.WaitUntilDone());
+    MP_ASSERT_OK(graph.WaitUntilDone());
 
     absl::ReaderMutexLock lock(&output_packets_mutex_);
     ASSERT_EQ(kTotalNums - kTotalNums / 4, output_packets_.size());
     int index = 1;
     for (const Packet& packet : output_packets_) {
-      MEDIAPIPE_ASSERT_OK(packet.ValidateAsType<int>());
+      MP_ASSERT_OK(packet.ValidateAsType<int>());
       EXPECT_EQ(index + 2, packet.Get<int>());
       EXPECT_EQ(Timestamp(index), packet.Timestamp());
       if (++index % 4 == 0) {

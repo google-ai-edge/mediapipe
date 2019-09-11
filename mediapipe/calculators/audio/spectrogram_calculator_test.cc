@@ -303,7 +303,7 @@ TEST_F(SpectrogramCalculatorTest, IntegerFrameDurationNoOverlap) {
   FillInputHeader();
   SetupConstantInputPackets(input_packet_sizes);
 
-  MEDIAPIPE_ASSERT_OK(Run());
+  MP_ASSERT_OK(Run());
 
   CheckOutputHeadersAndTimestamps();
   EXPECT_EQ(OutputFramesPerPacket(), expected_output_packet_sizes);
@@ -324,7 +324,7 @@ TEST_F(SpectrogramCalculatorTest, IntegerFrameDurationSomeOverlap) {
   FillInputHeader();
   SetupConstantInputPackets(input_packet_sizes);
 
-  MEDIAPIPE_ASSERT_OK(Run());
+  MP_ASSERT_OK(Run());
 
   CheckOutputHeadersAndTimestamps();
   EXPECT_EQ(OutputFramesPerPacket(), expected_output_packet_sizes);
@@ -344,7 +344,7 @@ TEST_F(SpectrogramCalculatorTest, NonintegerFrameDurationAndOverlap) {
   FillInputHeader();
   SetupConstantInputPackets(input_packet_sizes);
 
-  MEDIAPIPE_ASSERT_OK(Run());
+  MP_ASSERT_OK(Run());
 
   CheckOutputHeadersAndTimestamps();
   EXPECT_EQ(OutputFramesPerPacket(), expected_output_packet_sizes);
@@ -365,7 +365,7 @@ TEST_F(SpectrogramCalculatorTest, ShortInitialPacketNoOverlap) {
   FillInputHeader();
   SetupConstantInputPackets(input_packet_sizes);
 
-  MEDIAPIPE_ASSERT_OK(Run());
+  MP_ASSERT_OK(Run());
 
   CheckOutputHeadersAndTimestamps();
   EXPECT_EQ(OutputFramesPerPacket(), expected_output_packet_sizes);
@@ -382,7 +382,7 @@ TEST_F(SpectrogramCalculatorTest, TrailingSamplesNoPad) {
   FillInputHeader();
   SetupConstantInputPackets(input_packet_sizes);
 
-  MEDIAPIPE_ASSERT_OK(Run());
+  MP_ASSERT_OK(Run());
 
   CheckOutputHeadersAndTimestamps();
   EXPECT_EQ(OutputFramesPerPacket(), expected_output_packet_sizes);
@@ -399,7 +399,7 @@ TEST_F(SpectrogramCalculatorTest, NoTrailingSamplesWithPad) {
   FillInputHeader();
   SetupConstantInputPackets(input_packet_sizes);
 
-  MEDIAPIPE_ASSERT_OK(Run());
+  MP_ASSERT_OK(Run());
 
   CheckOutputHeadersAndTimestamps();
   EXPECT_EQ(OutputFramesPerPacket(), expected_output_packet_sizes);
@@ -418,7 +418,7 @@ TEST_F(SpectrogramCalculatorTest, TrailingSamplesWithPad) {
   FillInputHeader();
   SetupConstantInputPackets(input_packet_sizes);
 
-  MEDIAPIPE_ASSERT_OK(Run());
+  MP_ASSERT_OK(Run());
 
   CheckOutputHeadersAndTimestamps();
   EXPECT_EQ(OutputFramesPerPacket(), expected_output_packet_sizes);
@@ -435,7 +435,7 @@ TEST_F(SpectrogramCalculatorTest, VeryShortInputWillPad) {
   FillInputHeader();
   SetupConstantInputPackets(input_packet_sizes);
 
-  MEDIAPIPE_ASSERT_OK(Run());
+  MP_ASSERT_OK(Run());
 
   CheckOutputHeadersAndTimestamps();
   EXPECT_EQ(OutputFramesPerPacket(), expected_output_packet_sizes);
@@ -452,7 +452,7 @@ TEST_F(SpectrogramCalculatorTest, VeryShortInputZeroOutputFramesIfNoPad) {
   FillInputHeader();
   SetupConstantInputPackets(input_packet_sizes);
 
-  MEDIAPIPE_ASSERT_OK(Run());
+  MP_ASSERT_OK(Run());
 
   CheckOutputHeadersAndTimestamps();
   EXPECT_EQ(OutputFramesPerPacket(), expected_output_packet_sizes);
@@ -468,7 +468,7 @@ TEST_F(SpectrogramCalculatorTest, DCSignalIsPeakBin) {
   // Setup packets with DC input (non-zero constant value).
   SetupConstantInputPackets(input_packet_sizes);
 
-  MEDIAPIPE_ASSERT_OK(Run());
+  MP_ASSERT_OK(Run());
 
   CheckOutputHeadersAndTimestamps();
   const float dc_frequency_hz = 0.0;
@@ -486,7 +486,7 @@ TEST_F(SpectrogramCalculatorTest, A440ToneIsPeakBin) {
   const float tone_frequency_hz = 440.0;
   SetupCosineInputPackets(input_packet_sizes, tone_frequency_hz);
 
-  MEDIAPIPE_ASSERT_OK(Run());
+  MP_ASSERT_OK(Run());
 
   CheckOutputHeadersAndTimestamps();
   int num_output_frames = output().packets[0].Get<Matrix>().cols();
@@ -507,7 +507,7 @@ TEST_F(SpectrogramCalculatorTest, SquaredMagnitudeOutputLooksRight) {
   // Setup packets with DC input (non-zero constant value).
   SetupConstantInputPackets(input_packet_sizes);
 
-  MEDIAPIPE_ASSERT_OK(Run());
+  MP_ASSERT_OK(Run());
 
   CheckOutputHeadersAndTimestamps();
   EXPECT_FLOAT_EQ(output().packets[0].Get<Matrix>()(0, 0),
@@ -525,7 +525,7 @@ TEST_F(SpectrogramCalculatorTest, DefaultOutputIsSquaredMagnitude) {
   // Setup packets with DC input (non-zero constant value).
   SetupConstantInputPackets(input_packet_sizes);
 
-  MEDIAPIPE_ASSERT_OK(Run());
+  MP_ASSERT_OK(Run());
 
   CheckOutputHeadersAndTimestamps();
   EXPECT_FLOAT_EQ(output().packets[0].Get<Matrix>()(0, 0),
@@ -543,7 +543,7 @@ TEST_F(SpectrogramCalculatorTest, LinearMagnitudeOutputLooksRight) {
   // Setup packets with DC input (non-zero constant value).
   SetupConstantInputPackets(input_packet_sizes);
 
-  MEDIAPIPE_ASSERT_OK(Run());
+  MP_ASSERT_OK(Run());
 
   CheckOutputHeadersAndTimestamps();
   EXPECT_FLOAT_EQ(output().packets[0].Get<Matrix>()(0, 0),
@@ -561,7 +561,7 @@ TEST_F(SpectrogramCalculatorTest, DbMagnitudeOutputLooksRight) {
   // Setup packets with DC input (non-zero constant value).
   SetupConstantInputPackets(input_packet_sizes);
 
-  MEDIAPIPE_ASSERT_OK(Run());
+  MP_ASSERT_OK(Run());
 
   CheckOutputHeadersAndTimestamps();
   EXPECT_FLOAT_EQ(output().packets[0].Get<Matrix>()(0, 0),
@@ -581,7 +581,7 @@ TEST_F(SpectrogramCalculatorTest, OutputScalingLooksRight) {
   // Setup packets with DC input (non-zero constant value).
   SetupConstantInputPackets(input_packet_sizes);
 
-  MEDIAPIPE_ASSERT_OK(Run());
+  MP_ASSERT_OK(Run());
 
   CheckOutputHeadersAndTimestamps();
   EXPECT_FLOAT_EQ(
@@ -600,7 +600,7 @@ TEST_F(SpectrogramCalculatorTest, ComplexOutputLooksRight) {
   // Setup packets with DC input (non-zero constant value).
   SetupConstantInputPackets(input_packet_sizes);
 
-  MEDIAPIPE_ASSERT_OK(Run());
+  MP_ASSERT_OK(Run());
 
   CheckOutputHeadersAndTimestamps();
   EXPECT_FLOAT_EQ(std::norm(output().packets[0].Get<Eigen::MatrixXcf>()(0, 0)),
@@ -623,7 +623,7 @@ TEST_F(SpectrogramCalculatorTest, ComplexOutputLooksRightForImpulses) {
   // Make two impulse packets offset one sample from each other
   SetupImpulseInputPackets(input_packet_sizes, input_packet_impulse_offsets);
 
-  MEDIAPIPE_ASSERT_OK(Run());
+  MP_ASSERT_OK(Run());
 
   CheckOutputHeadersAndTimestamps();
   const int num_buckets =
@@ -671,7 +671,7 @@ TEST_F(SpectrogramCalculatorTest, SquaredMagnitudeOutputLooksRightForNonDC) {
   const float tone_frequency_hz = target_bin * (input_sample_rate_ / fft_size);
   SetupCosineInputPackets(input_packet_sizes, tone_frequency_hz);
 
-  MEDIAPIPE_ASSERT_OK(Run());
+  MP_ASSERT_OK(Run());
 
   CheckOutputHeadersAndTimestamps();
   // For a non-DC bin, the magnitude will be split between positive and
@@ -696,7 +696,7 @@ TEST_F(SpectrogramCalculatorTest, ZeroOutputsForZeroInputsWithPaddingEnabled) {
   FillInputHeader();
   SetupConstantInputPackets(input_packet_sizes);
 
-  MEDIAPIPE_ASSERT_OK(Run());
+  MP_ASSERT_OK(Run());
 
   CheckOutputHeadersAndTimestamps();
   EXPECT_EQ(OutputFramesPerPacket(), expected_output_packet_sizes);
@@ -713,7 +713,7 @@ TEST_F(SpectrogramCalculatorTest, NumChannelsIsRight) {
   FillInputHeader();
   const float tone_frequency_hz = 440.0;
   SetupCosineInputPackets(input_packet_sizes, tone_frequency_hz);
-  MEDIAPIPE_ASSERT_OK(Run());
+  MP_ASSERT_OK(Run());
 
   CheckOutputHeadersAndTimestamps();
   EXPECT_EQ(output().packets[0].Get<std::vector<Matrix>>().size(),
@@ -732,7 +732,7 @@ TEST_F(SpectrogramCalculatorTest, NumSamplesAndPacketRateAreCleared) {
   FillInputHeader();
   SetupConstantInputPackets(input_packet_sizes);
 
-  MEDIAPIPE_ASSERT_OK(Run());
+  MP_ASSERT_OK(Run());
 
   const TimeSeriesHeader& output_header =
       output().header.Get<TimeSeriesHeader>();
@@ -751,7 +751,7 @@ TEST_F(SpectrogramCalculatorTest, MultichannelSpectrogramSizesAreRight) {
   FillInputHeader();
   const float tone_frequency_hz = 440.0;
   SetupCosineInputPackets(input_packet_sizes, tone_frequency_hz);
-  MEDIAPIPE_ASSERT_OK(Run());
+  MP_ASSERT_OK(Run());
 
   CheckOutputHeadersAndTimestamps();
   auto spectrograms = output().packets[0].Get<std::vector<Matrix>>();
@@ -776,7 +776,7 @@ TEST_F(SpectrogramCalculatorTest, MultichannelSpectrogramValuesAreRight) {
   const float tone_frequency_hz = 440.0;
   SetupMultichannelInputPackets(input_packet_sizes, tone_frequency_hz);
 
-  MEDIAPIPE_ASSERT_OK(Run());
+  MP_ASSERT_OK(Run());
 
   CheckOutputHeadersAndTimestamps();
   auto spectrograms = output().packets[0].Get<std::vector<Matrix>>();
@@ -805,7 +805,7 @@ TEST_F(SpectrogramCalculatorTest, MultichannelHandlesShortInitialPacket) {
   FillInputHeader();
   const float tone_frequency_hz = 440.0;
   SetupCosineInputPackets(input_packet_sizes, tone_frequency_hz);
-  MEDIAPIPE_ASSERT_OK(Run());
+  MP_ASSERT_OK(Run());
 
   CheckOutputHeadersAndTimestamps();
   auto spectrograms = output().packets[0].Get<std::vector<Matrix>>();
@@ -833,7 +833,7 @@ TEST_F(SpectrogramCalculatorTest,
   FillInputHeader();
   const float tone_frequency_hz = 440.0;
   SetupCosineInputPackets(input_packet_sizes, tone_frequency_hz);
-  MEDIAPIPE_ASSERT_OK(Run());
+  MP_ASSERT_OK(Run());
 
   CheckOutputHeadersAndTimestamps();
   auto spectrograms = output().packets[0].Get<std::vector<Eigen::MatrixXcf>>();

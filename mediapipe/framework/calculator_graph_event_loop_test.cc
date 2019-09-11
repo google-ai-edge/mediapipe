@@ -136,14 +136,14 @@ TEST_F(CalculatorGraphEventLoopTest, WellProvisionedEventLoop) {
 
   // Start MediaPipe graph.
   CalculatorGraph graph(graph_config);
-  MEDIAPIPE_ASSERT_OK(graph.StartRun(
+  MP_ASSERT_OK(graph.StartRun(
       {{"callback", MakePacket<std::function<void(const Packet&)>>(std::bind(
                         &CalculatorGraphEventLoopTest::AddThreadSafeVectorSink,
                         this, std::placeholders::_1))}}));
 
   // Insert 100 packets at the rate the calculator can keep up with.
   for (int i = 0; i < 100; ++i) {
-    MEDIAPIPE_ASSERT_OK(graph.AddPacketToInputStream(
+    MP_ASSERT_OK(graph.AddPacketToInputStream(
         "input_numbers", Adopt(new int(i)).At(Timestamp(i))));
     // Wait for all packets to be received by the sink.
     while (true) {
@@ -167,13 +167,13 @@ TEST_F(CalculatorGraphEventLoopTest, WellProvisionedEventLoop) {
 
   // Insert 100 more packets at rate the graph can't keep up.
   for (int i = 100; i < 200; ++i) {
-    MEDIAPIPE_ASSERT_OK(graph.AddPacketToInputStream(
+    MP_ASSERT_OK(graph.AddPacketToInputStream(
         "input_numbers", Adopt(new int(i)).At(Timestamp(i))));
   }
   // Don't wait but just close the input stream.
-  MEDIAPIPE_ASSERT_OK(graph.CloseInputStream("input_numbers"));
+  MP_ASSERT_OK(graph.CloseInputStream("input_numbers"));
   // Wait properly via the API until the graph is done.
-  MEDIAPIPE_ASSERT_OK(graph.WaitUntilDone());
+  MP_ASSERT_OK(graph.WaitUntilDone());
   // Check final results.
   {
     absl::ReaderMutexLock lock(&output_packets_mutex_);
@@ -225,7 +225,7 @@ TEST_F(CalculatorGraphEventLoopTest, FailingEventLoop) {
 
   // Start MediaPipe graph.
   CalculatorGraph graph(graph_config);
-  MEDIAPIPE_ASSERT_OK(graph.StartRun(
+  MP_ASSERT_OK(graph.StartRun(
       {{"callback", MakePacket<std::function<void(const Packet&)>>(std::bind(
                         &CalculatorGraphEventLoopTest::AddThreadSafeVectorSink,
                         this, std::placeholders::_1))}}));
@@ -243,7 +243,7 @@ TEST_F(CalculatorGraphEventLoopTest, FailingEventLoop) {
       break;
     }
   }
-  MEDIAPIPE_ASSERT_OK(graph.CloseInputStream("input_numbers"));
+  MP_ASSERT_OK(graph.CloseInputStream("input_numbers"));
   status = graph.WaitUntilDone();
   ASSERT_THAT(status.message(),
               testing::HasSubstr("Meant to fail (magicstringincludedhere)."));
@@ -270,7 +270,7 @@ TEST_F(CalculatorGraphEventLoopTest, StepByStepSchedulerLoop) {
 
   // Start MediaPipe graph.
   CalculatorGraph graph(graph_config);
-  MEDIAPIPE_ASSERT_OK(graph.StartRun(
+  MP_ASSERT_OK(graph.StartRun(
       {{"callback", MakePacket<std::function<void(const Packet&)>>(std::bind(
                         &CalculatorGraphEventLoopTest::AddThreadSafeVectorSink,
                         this, std::placeholders::_1))}}));
@@ -278,16 +278,16 @@ TEST_F(CalculatorGraphEventLoopTest, StepByStepSchedulerLoop) {
   // Add packet one at a time, we should be able to syncrhonize the output for
   // each addition in the step by step mode.
   for (int i = 0; i < 100; ++i) {
-    MEDIAPIPE_ASSERT_OK(graph.AddPacketToInputStream(
+    MP_ASSERT_OK(graph.AddPacketToInputStream(
         "input_numbers", Adopt(new int(i)).At(Timestamp(i))));
-    MEDIAPIPE_ASSERT_OK(graph.WaitUntilIdle());
+    MP_ASSERT_OK(graph.WaitUntilIdle());
     absl::ReaderMutexLock lock(&output_packets_mutex_);
     ASSERT_EQ(i + 1, output_packets_.size());
   }
   // Don't wait but just close the input stream.
-  MEDIAPIPE_ASSERT_OK(graph.CloseInputStream("input_numbers"));
+  MP_ASSERT_OK(graph.CloseInputStream("input_numbers"));
   // Wait properly via the API until the graph is done.
-  MEDIAPIPE_ASSERT_OK(graph.WaitUntilDone());
+  MP_ASSERT_OK(graph.WaitUntilDone());
 }
 
 // Test setting the stream header.
@@ -310,7 +310,7 @@ TEST_F(CalculatorGraphEventLoopTest, SetStreamHeader) {
       &graph_config));
 
   CalculatorGraph graph(graph_config);
-  MEDIAPIPE_ASSERT_OK(graph.StartRun(
+  MP_ASSERT_OK(graph.StartRun(
       {{"callback", MakePacket<std::function<void(const Packet&)>>(std::bind(
                         &CalculatorGraphEventLoopTest::AddThreadSafeVectorSink,
                         this, std::placeholders::_1))}}));
@@ -327,15 +327,15 @@ TEST_F(CalculatorGraphEventLoopTest, SetStreamHeader) {
   header->width = 320;
   header->height = 240;
   // With stream header set, the StartRun should succeed.
-  MEDIAPIPE_ASSERT_OK(graph2.StartRun(
+  MP_ASSERT_OK(graph2.StartRun(
       {{"callback", MakePacket<std::function<void(const Packet&)>>(std::bind(
                         &CalculatorGraphEventLoopTest::AddThreadSafeVectorSink,
                         this, std::placeholders::_1))}},
       {{"input_numbers", Adopt(header.release())}}));
   // Don't wait but just close the input stream.
-  MEDIAPIPE_ASSERT_OK(graph2.CloseInputStream("input_numbers"));
+  MP_ASSERT_OK(graph2.CloseInputStream("input_numbers"));
   // Wait properly via the API until the graph is done.
-  MEDIAPIPE_ASSERT_OK(graph2.WaitUntilDone());
+  MP_ASSERT_OK(graph2.WaitUntilDone());
 }
 
 // Test ADD_IF_NOT_FULL mode for graph input streams (by creating more packets
@@ -369,7 +369,7 @@ TEST_F(CalculatorGraphEventLoopTest, TryToAddPacketToInputStream) {
       CalculatorGraph::GraphInputStreamAddMode::ADD_IF_NOT_FULL);
 
   // Start MediaPipe graph.
-  MEDIAPIPE_ASSERT_OK(graph.StartRun(
+  MP_ASSERT_OK(graph.StartRun(
       {{"callback", MakePacket<std::function<void(const Packet&)>>(std::bind(
                         &CalculatorGraphEventLoopTest::AddThreadSafeVectorSink,
                         this, std::placeholders::_1))},
@@ -397,9 +397,9 @@ TEST_F(CalculatorGraphEventLoopTest, TryToAddPacketToInputStream) {
 
   EXPECT_GE(fail_count, kNumInputPackets - kMaxQueueSize - 1);
   // Don't wait but just close the input stream.
-  MEDIAPIPE_ASSERT_OK(graph.CloseInputStream("input_numbers"));
+  MP_ASSERT_OK(graph.CloseInputStream("input_numbers"));
   // Wait properly via the API until the graph is done.
-  MEDIAPIPE_ASSERT_OK(graph.WaitUntilDone());
+  MP_ASSERT_OK(graph.WaitUntilDone());
 }
 
 // Verify that "max_queue_size: -1" disables throttling of graph-input-streams.
@@ -426,18 +426,18 @@ TEST_F(CalculatorGraphEventLoopTest, ThrottlingDisabled) {
       CalculatorGraph::GraphInputStreamAddMode::ADD_IF_NOT_FULL);
 
   // Start MediaPipe graph.
-  MEDIAPIPE_ASSERT_OK(graph.StartRun({{"blocking_mutex", mutex_side_packet}}));
+  MP_ASSERT_OK(graph.StartRun({{"blocking_mutex", mutex_side_packet}}));
 
   // Lock the mutex so that the BlockingPassThroughCalculator cannot read any
   // of these packets.
   mutex->Lock();
   for (int i = 0; i < 10; ++i) {
-    MEDIAPIPE_EXPECT_OK(graph.AddPacketToInputStream(
+    MP_EXPECT_OK(graph.AddPacketToInputStream(
         "input_numbers", Adopt(new int(i)).At(Timestamp(i))));
   }
   mutex->Unlock();
-  MEDIAPIPE_EXPECT_OK(graph.CloseInputStream("input_numbers"));
-  MEDIAPIPE_EXPECT_OK(graph.WaitUntilDone());
+  MP_EXPECT_OK(graph.CloseInputStream("input_numbers"));
+  MP_EXPECT_OK(graph.WaitUntilDone());
 }
 
 // Verify that the graph input stream throttling code still works if we run the
@@ -467,8 +467,7 @@ TEST_F(CalculatorGraphEventLoopTest, ThrottleGraphInputStreamTwice) {
   // Run the graph twice.
   for (int i = 0; i < 2; ++i) {
     // Start MediaPipe graph.
-    MEDIAPIPE_ASSERT_OK(
-        graph.StartRun({{"blocking_mutex", mutex_side_packet}}));
+    MP_ASSERT_OK(graph.StartRun({{"blocking_mutex", mutex_side_packet}}));
 
     // Lock the mutex so that the BlockingPassThroughCalculator cannot read any
     // of these packets.
@@ -485,8 +484,8 @@ TEST_F(CalculatorGraphEventLoopTest, ThrottleGraphInputStreamTwice) {
     ASSERT_FALSE(status.ok());
     EXPECT_EQ(status.code(), ::mediapipe::StatusCode::kUnavailable);
     EXPECT_THAT(status.message(), testing::HasSubstr("Graph is throttled."));
-    MEDIAPIPE_ASSERT_OK(graph.CloseInputStream("input_numbers"));
-    MEDIAPIPE_ASSERT_OK(graph.WaitUntilDone());
+    MP_ASSERT_OK(graph.CloseInputStream("input_numbers"));
+    MP_ASSERT_OK(graph.WaitUntilDone());
   }
 }
 
@@ -515,7 +514,7 @@ TEST_F(CalculatorGraphEventLoopTest, WaitToAddPacketToInputStream) {
 
   // Start MediaPipe graph.
   CalculatorGraph graph(graph_config);
-  MEDIAPIPE_ASSERT_OK(graph.StartRun(
+  MP_ASSERT_OK(graph.StartRun(
       {{"callback", MakePacket<std::function<void(const Packet&)>>(std::bind(
                         &CalculatorGraphEventLoopTest::AddThreadSafeVectorSink,
                         this, std::placeholders::_1))}}));
@@ -534,9 +533,9 @@ TEST_F(CalculatorGraphEventLoopTest, WaitToAddPacketToInputStream) {
   EXPECT_EQ(0, fail_count);
 
   // Don't wait but just close the input stream.
-  MEDIAPIPE_ASSERT_OK(graph.CloseInputStream("input_numbers"));
+  MP_ASSERT_OK(graph.CloseInputStream("input_numbers"));
   // Wait properly via the API until the graph is done.
-  MEDIAPIPE_ASSERT_OK(graph.WaitUntilDone());
+  MP_ASSERT_OK(graph.WaitUntilDone());
 
   absl::ReaderMutexLock lock(&output_packets_mutex_);
   ASSERT_EQ(kNumInputPackets, output_packets_.size());

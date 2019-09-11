@@ -365,14 +365,14 @@ class TensorFlowInferenceCalculator : public CalculatorBase {
     }
 
     if (batch_timestamps_.size() == options_.batch_size()) {
-      RETURN_IF_ERROR(OutputBatch(cc));
+      MP_RETURN_IF_ERROR(OutputBatch(cc));
     }
     return ::mediapipe::OkStatus();
   }
 
   ::mediapipe::Status Close(CalculatorContext* cc) override {
     if (!batch_timestamps_.empty()) {
-      RETURN_IF_ERROR(OutputBatch(cc));
+      MP_RETURN_IF_ERROR(OutputBatch(cc));
     }
     return ::mediapipe::OkStatus();
   }

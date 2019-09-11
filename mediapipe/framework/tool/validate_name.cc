@@ -50,7 +50,7 @@ namespace tool {
   for (const auto& tag_and_name : tags_and_names) {
     std::string tag;
     std::string name;
-    RETURN_IF_ERROR(ParseTagAndName(tag_and_name, &tag, &name));
+    MP_RETURN_IF_ERROR(ParseTagAndName(tag_and_name, &tag, &name));
     if (!tag.empty()) {
       info->tags.push_back(tag);
     }
@@ -73,7 +73,7 @@ namespace tool {
   tags_and_names->Clear();
   if (info.tags.empty()) {
     for (const auto& name : info.names) {
-      RETURN_IF_ERROR(ValidateName(name));
+      MP_RETURN_IF_ERROR(ValidateName(name));
       *tags_and_names->Add() = name;
     }
   } else {
@@ -83,8 +83,8 @@ namespace tool {
              << " does not match the number of tags " << info.tags.size();
     }
     for (int i = 0; i < info.tags.size(); ++i) {
-      RETURN_IF_ERROR(ValidateTag(info.tags[i]));
-      RETURN_IF_ERROR(ValidateName(info.names[i]));
+      MP_RETURN_IF_ERROR(ValidateTag(info.tags[i]));
+      MP_RETURN_IF_ERROR(ValidateName(info.names[i]));
       *tags_and_names->Add() = absl::StrCat(info.tags[i], ":", info.names[i]);
     }
   }

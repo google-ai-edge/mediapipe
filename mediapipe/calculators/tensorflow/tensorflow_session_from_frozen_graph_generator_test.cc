@@ -106,7 +106,7 @@ TEST_F(TensorFlowSessionFromFrozenGraphGeneratorTest,
   ::mediapipe::Status run_status = tool::RunGenerateAndValidateTypes(
       "TensorFlowSessionFromFrozenGraphGenerator", extendable_options_,
       input_side_packets, &output_side_packets);
-  MEDIAPIPE_EXPECT_OK(run_status) << run_status.message();
+  MP_EXPECT_OK(run_status) << run_status.message();
   VerifySignatureMap(&output_side_packets);
 }
 
@@ -144,17 +144,17 @@ TEST_F(TensorFlowSessionFromFrozenGraphGeneratorTest,
                            generator_options_->DebugString()));
 
   CalculatorGraph graph;
-  MEDIAPIPE_ASSERT_OK(graph.Initialize(config));
+  MP_ASSERT_OK(graph.Initialize(config));
   StatusOrPoller status_or_poller =
       graph.AddOutputStreamPoller("multiplied_tensor");
   ASSERT_TRUE(status_or_poller.ok());
   OutputStreamPoller poller = std::move(status_or_poller.ValueOrDie());
 
-  MEDIAPIPE_ASSERT_OK(graph.StartRun({}));
-  MEDIAPIPE_ASSERT_OK(graph.AddPacketToInputStream(
+  MP_ASSERT_OK(graph.StartRun({}));
+  MP_ASSERT_OK(graph.AddPacketToInputStream(
       "a_tensor",
       Adopt(new auto(TensorMatrix1x3(1, -1, 10))).At(Timestamp(0))));
-  MEDIAPIPE_ASSERT_OK(graph.CloseInputStream("a_tensor"));
+  MP_ASSERT_OK(graph.CloseInputStream("a_tensor"));
 
   Packet packet;
   ASSERT_TRUE(poller.Next(&packet));
@@ -164,7 +164,7 @@ TEST_F(TensorFlowSessionFromFrozenGraphGeneratorTest,
             packet.Get<tf::Tensor>().DebugString());
 
   ASSERT_FALSE(poller.Next(&packet));
-  MEDIAPIPE_ASSERT_OK(graph.WaitUntilDone());
+  MP_ASSERT_OK(graph.WaitUntilDone());
 }
 
 TEST_F(TensorFlowSessionFromFrozenGraphGeneratorTest,
@@ -174,15 +174,15 @@ TEST_F(TensorFlowSessionFromFrozenGraphGeneratorTest,
   PacketSet output_side_packets(
       tool::CreateTagMap({"SESSION:session"}).ValueOrDie());
   std::string serialized_graph_contents;
-  MEDIAPIPE_EXPECT_OK(mediapipe::file::GetContents(GetGraphDefPath(),
-                                                   &serialized_graph_contents));
+  MP_EXPECT_OK(mediapipe::file::GetContents(GetGraphDefPath(),
+                                            &serialized_graph_contents));
   generator_options_->clear_graph_proto_path();
   input_side_packets.Tag("STRING_MODEL") =
       Adopt(new std::string(serialized_graph_contents));
   ::mediapipe::Status run_status = tool::RunGenerateAndValidateTypes(
       "TensorFlowSessionFromFrozenGraphGenerator", extendable_options_,
       input_side_packets, &output_side_packets);
-  MEDIAPIPE_EXPECT_OK(run_status) << run_status.message();
+  MP_EXPECT_OK(run_status) << run_status.message();
   VerifySignatureMap(&output_side_packets);
 }
 
@@ -199,7 +199,7 @@ TEST_F(
   ::mediapipe::Status run_status = tool::RunGenerateAndValidateTypes(
       "TensorFlowSessionFromFrozenGraphGenerator", extendable_options_,
       input_side_packets, &output_side_packets);
-  MEDIAPIPE_EXPECT_OK(run_status) << run_status.message();
+  MP_EXPECT_OK(run_status) << run_status.message();
   VerifySignatureMap(&output_side_packets);
 }
 
@@ -229,8 +229,8 @@ TEST_F(TensorFlowSessionFromFrozenGraphGeneratorTest,
   PacketSet output_side_packets(
       tool::CreateTagMap({"SESSION:session"}).ValueOrDie());
   std::string serialized_graph_contents;
-  MEDIAPIPE_EXPECT_OK(mediapipe::file::GetContents(GetGraphDefPath(),
-                                                   &serialized_graph_contents));
+  MP_EXPECT_OK(mediapipe::file::GetContents(GetGraphDefPath(),
+                                            &serialized_graph_contents));
   input_side_packets.Tag("STRING_MODEL") =
       Adopt(new std::string(serialized_graph_contents));
   input_side_packets.Tag("STRING_MODEL_FILE_PATH") =
@@ -254,8 +254,8 @@ TEST_F(TensorFlowSessionFromFrozenGraphGeneratorTest,
   PacketSet output_side_packets(
       tool::CreateTagMap({"SESSION:session"}).ValueOrDie());
   std::string serialized_graph_contents;
-  EXPECT_OK(mediapipe::file::GetContents(GetGraphDefPath(),
-                                         &serialized_graph_contents));
+  MP_EXPECT_OK(mediapipe::file::GetContents(GetGraphDefPath(),
+                                            &serialized_graph_contents));
   input_side_packets.Tag("STRING_MODEL") =
       Adopt(new std::string(serialized_graph_contents));
   input_side_packets.Tag("STRING_MODEL_FILE_PATH") =
@@ -280,7 +280,7 @@ TEST_F(TensorFlowSessionFromFrozenGraphGeneratorTest,
   ::mediapipe::Status run_status = tool::RunGenerateAndValidateTypes(
       "TensorFlowSessionFromFrozenGraphGenerator", extendable_options_,
       input_side_packets, &output_side_packets);
-  MEDIAPIPE_EXPECT_OK(run_status);
+  MP_EXPECT_OK(run_status);
   VerifySignatureMap(&output_side_packets);
 }
 

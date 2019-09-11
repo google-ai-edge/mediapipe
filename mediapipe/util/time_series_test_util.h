@@ -503,7 +503,7 @@ class BasicTimeSeriesCalculatorTestBase
       AppendInputPacket(new Matrix(input_packets[i]), timestamp);
     }
 
-    MEDIAPIPE_ASSERT_OK(RunGraph());
+    MP_ASSERT_OK(RunGraph());
 
     ExpectOutputHeaderEquals(expected_output_header);
     EXPECT_EQ(input().packets.size(), output().packets.size());

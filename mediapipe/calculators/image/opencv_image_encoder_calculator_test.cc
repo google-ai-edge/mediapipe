@@ -55,7 +55,7 @@ TEST(OpenCvImageEncoderCalculatorTest, TestJpegWithQualities) {
     CalculatorRunner runner(node_config);
     runner.MutableInputs()->Index(0).packets.push_back(
         input_packet.At(Timestamp(0)));
-    MEDIAPIPE_ASSERT_OK(runner.Run());
+    MP_ASSERT_OK(runner.Run());
     const auto& outputs = runner.Outputs();
     ASSERT_EQ(1, outputs.NumEntries());
     const std::vector<Packet>& packets = outputs.Index(0).packets;

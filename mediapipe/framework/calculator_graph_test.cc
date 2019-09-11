@@ -1684,7 +1684,7 @@ void RunComprehensiveTest(CalculatorGraph* graph,
   tool::AddPostStreamPacketSink("final_sum", &proto, &dumped_final_sum_packet);
   tool::AddPostStreamPacketSink("final_stddev", &proto,
                                 &dumped_final_stddev_packet);
-  MEDIAPIPE_ASSERT_OK(graph->Initialize(proto));
+  MP_ASSERT_OK(graph->Initialize(proto));
 
   std::map<std::string, Packet> extra_side_packets;
   extra_side_packets.emplace("node_3", Adopt(new uint64((15LL << 32) | 3)));
@@ -1699,7 +1699,7 @@ void RunComprehensiveTest(CalculatorGraph* graph,
     dumped_final_sum_packet = Packet();
     dumped_final_stddev_packet = Packet();
     dumped_final_packet = Packet();
-    MEDIAPIPE_ASSERT_OK(graph->Run(extra_side_packets));
+    MP_ASSERT_OK(graph->Run(extra_side_packets));
     // The merger will output the timestamp and all ints output from
     // the range calculators.  The saver will concatenate together the
     // strings with a '/' deliminator.
@@ -1764,7 +1764,7 @@ TEST(CalculatorGraph, BadInitialization) {
 TEST(CalculatorGraph, BadRun) {
   CalculatorGraphConfig proto = GetConfig();
   CalculatorGraph graph;
-  MEDIAPIPE_ASSERT_OK(graph.Initialize(proto));
+  MP_ASSERT_OK(graph.Initialize(proto));
   // Don't set the input side packets.
   EXPECT_FALSE(graph.Run().ok());
 }
@@ -1785,8 +1785,7 @@ TEST(CalculatorGraph, RunsCorrectlyOnApplicationThread) {
 
 TEST(CalculatorGraph, RunsCorrectlyWithExternalExecutor) {
   CalculatorGraph graph;
-  MEDIAPIPE_ASSERT_OK(
-      graph.SetExecutor("", std::make_shared<ThreadPoolExecutor>(1)));
+  MP_ASSERT_OK(graph.SetExecutor("", std::make_shared<ThreadPoolExecutor>(1)));
   CalculatorGraphConfig proto = GetConfig();
   RunComprehensiveTest(&graph, proto, /*define_node_5=*/true);
 }
@@ -1796,7 +1795,7 @@ TEST(CalculatorGraph, RunsCorrectlyWithExternalExecutor) {
 // result in a recursive call to itself.
 TEST(CalculatorGraph, RunsCorrectlyWithCurrentThreadExecutor) {
   CalculatorGraph graph;
-  MEDIAPIPE_ASSERT_OK(
+  MP_ASSERT_OK(
       graph.SetExecutor("", std::make_shared<CurrentThreadExecutor>()));
   CalculatorGraphConfig proto = GetConfig();
   RunComprehensiveTest(&graph, proto, /*define_node_5=*/true);
@@ -1805,9 +1804,9 @@ TEST(CalculatorGraph, RunsCorrectlyWithCurrentThreadExecutor) {
 TEST(CalculatorGraph, RunsCorrectlyWithNonDefaultExecutors) {
   CalculatorGraph graph;
   // Add executors "second" and "third".
-  MEDIAPIPE_ASSERT_OK(
+  MP_ASSERT_OK(
       graph.SetExecutor("second", std::make_shared<ThreadPoolExecutor>(1)));
-  MEDIAPIPE_ASSERT_OK(
+  MP_ASSERT_OK(
       graph.SetExecutor("third", std::make_shared<ThreadPoolExecutor>(1)));
   CalculatorGraphConfig proto = GetConfig();
   ExecutorConfig* executor = proto.add_executor();
@@ -1903,23 +1902,23 @@ TEST(CalculatorGraph, TypeMismatch) {
   config.mutable_node(0)->set_calculator("StringEmptySourceCalculator");
   config.mutable_node(1)->set_calculator("StringSinkCalculator");
   graph.reset(new CalculatorGraph());
-  MEDIAPIPE_ASSERT_OK(graph->Initialize(config));
-  MEDIAPIPE_EXPECT_OK(graph->Run());
+  MP_ASSERT_OK(graph->Initialize(config));
+  MP_EXPECT_OK(graph->Run());
   graph.reset(nullptr);
 
   // Type matches, expect success.
   config.mutable_node(0)->set_calculator("IntEmptySourceCalculator");
   config.mutable_node(1)->set_calculator("IntSinkCalculator");
   graph.reset(new CalculatorGraph());
-  MEDIAPIPE_ASSERT_OK(graph->Initialize(config));
-  MEDIAPIPE_EXPECT_OK(graph->Run());
+  MP_ASSERT_OK(graph->Initialize(config));
+  MP_EXPECT_OK(graph->Run());
   graph.reset(nullptr);
 
   // Type mismatch, expect non-crashing failure.
   config.mutable_node(0)->set_calculator("StringEmptySourceCalculator");
   config.mutable_node(1)->set_calculator("IntSinkCalculator");
   graph.reset(new CalculatorGraph());
-  MEDIAPIPE_ASSERT_OK(graph->Initialize(config));
+  MP_ASSERT_OK(graph->Initialize(config));
   EXPECT_FALSE(graph->Run().ok());
   graph.reset(nullptr);
 
@@ -1927,7 +1926,7 @@ TEST(CalculatorGraph, TypeMismatch) {
   config.mutable_node(0)->set_calculator("IntEmptySourceCalculator");
   config.mutable_node(1)->set_calculator("StringSinkCalculator");
   graph.reset(new CalculatorGraph());
-  MEDIAPIPE_ASSERT_OK(graph->Initialize(config));
+  MP_ASSERT_OK(graph->Initialize(config));
   EXPECT_FALSE(graph->Run().ok());
   graph.reset(nullptr);
 }
@@ -1974,8 +1973,8 @@ TEST(CalculatorGraph, LayerOrdering) {
   std::map<std::string, Packet> input_side_packets;
   input_side_packets["global_counter"] = Adopt(new auto(&global_counter));
 
-  MEDIAPIPE_ASSERT_OK(graph->Initialize(config));
-  MEDIAPIPE_ASSERT_OK(graph->Run(input_side_packets));
+  MP_ASSERT_OK(graph->Initialize(config));
+  MP_ASSERT_OK(graph->Run(input_side_packets));
   graph.reset(nullptr);
 
   ASSERT_EQ(GlobalCountSourceCalculator::kNumOutputPackets,
@@ -2047,10 +2046,10 @@ TEST(CalculatorGraph, StatusHandlerInputVerification) {
           input_side_packet: "extra_string"
         }
       )");
-  MEDIAPIPE_ASSERT_OK(graph->Initialize(config));
+  MP_ASSERT_OK(graph->Initialize(config));
   Packet extra_string = Adopt(new std::string("foo"));
   Packet a_uint64 = Adopt(new uint64(0));
-  MEDIAPIPE_EXPECT_OK(
+  MP_EXPECT_OK(
       graph->Run({{"extra_string", extra_string}, {"a_uint64", a_uint64}}));
 
   // Should fail verification when missing a required input. The generator is
@@ -2137,16 +2136,16 @@ TEST(CalculatorGraph, GenerateInInitialize) {
         }
       )");
   int initial_count = StaticCounterStringGenerator::NumPacketsGenerated();
-  MEDIAPIPE_ASSERT_OK(graph.Initialize(
+  MP_ASSERT_OK(graph.Initialize(
       config,
       {{"created_by_factory", MakePacket<std::string>("default string")},
        {"input_in_initialize", MakePacket<int>(10)}}));
   EXPECT_EQ(initial_count + 2,
             StaticCounterStringGenerator::NumPacketsGenerated());
-  MEDIAPIPE_ASSERT_OK(graph.Run({{"input_in_run", MakePacket<int>(11)}}));
+  MP_ASSERT_OK(graph.Run({{"input_in_run", MakePacket<int>(11)}}));
   EXPECT_EQ(initial_count + 4,
             StaticCounterStringGenerator::NumPacketsGenerated());
-  MEDIAPIPE_ASSERT_OK(graph.Run({{"input_in_run", MakePacket<int>(12)}}));
+  MP_ASSERT_OK(graph.Run({{"input_in_run", MakePacket<int>(12)}}));
   EXPECT_EQ(initial_count + 6,
             StaticCounterStringGenerator::NumPacketsGenerated());
 }
@@ -2241,7 +2240,7 @@ TEST(CalculatorGraph, HandlersRun) {
   // run at initialize time.
   config.mutable_packet_generator(0)->add_input_side_packet("unused_input");
   graph.reset(new CalculatorGraph());
-  MEDIAPIPE_ASSERT_OK(graph->Initialize(config));
+  MP_ASSERT_OK(graph->Initialize(config));
   ResetCounters(&input_side_packets);
   EXPECT_THAT(graph->Run(input_side_packets).ToString(),
               testing::HasSubstr("FailingPacketGenerator"));
@@ -2263,7 +2262,7 @@ TEST(CalculatorGraph, HandlersRun) {
   config.mutable_packet_generator(0)->set_packet_generator(
       "StaticCounterStringGenerator");
   graph.reset(new CalculatorGraph());
-  MEDIAPIPE_ASSERT_OK(graph->Initialize(config));
+  MP_ASSERT_OK(graph->Initialize(config));
   ResetCounters(&input_side_packets);
   // The entire graph should still fail because of the FailingSourceCalculator.
   EXPECT_THAT(graph->Run(input_side_packets).ToString(),
@@ -2286,9 +2285,9 @@ TEST(CalculatorGraph, HandlersRun) {
   // of the successful graph run.
   config.mutable_node(0)->set_calculator("StringEmptySourceCalculator");
   graph.reset(new CalculatorGraph());
-  MEDIAPIPE_ASSERT_OK(graph->Initialize(config));
+  MP_ASSERT_OK(graph->Initialize(config));
   ResetCounters(&input_side_packets);
-  MEDIAPIPE_EXPECT_OK(graph->Run(input_side_packets));
+  MP_EXPECT_OK(graph->Run(input_side_packets));
   EXPECT_EQ(1,
             *GetFromUniquePtr<int>(input_side_packets.at("no_input_counter1")));
   EXPECT_EQ(1,
@@ -2309,7 +2308,7 @@ TEST(CalculatorGraph, HandlersRun) {
   IncrementingStatusHandler::SetPreRunStatusResult(
       ::mediapipe::InternalError("Fail at pre-run"));
   graph.reset(new CalculatorGraph());
-  MEDIAPIPE_ASSERT_OK(graph->Initialize(config));
+  MP_ASSERT_OK(graph->Initialize(config));
   ResetCounters(&input_side_packets);
   run_status = graph->Run(input_side_packets);
   EXPECT_TRUE(run_status.code() == ::mediapipe::StatusCode::kInternal);
@@ -2332,7 +2331,7 @@ TEST(CalculatorGraph, HandlersRun) {
   IncrementingStatusHandler::SetPostRunStatusResult(
       ::mediapipe::InternalError("Fail at post-run"));
   graph.reset(new CalculatorGraph());
-  MEDIAPIPE_ASSERT_OK(graph->Initialize(config));
+  MP_ASSERT_OK(graph->Initialize(config));
   ResetCounters(&input_side_packets);
   run_status = graph->Run(input_side_packets);
   EXPECT_TRUE(run_status.code() == ::mediapipe::StatusCode::kInternal);
@@ -2365,9 +2364,9 @@ TEST(CalculatorGraph, SetOffsetInProcess) {
         }
       )");
 
-  MEDIAPIPE_ASSERT_OK(graph.Initialize(config));
-  MEDIAPIPE_EXPECT_OK(graph.StartRun({}));
-  MEDIAPIPE_EXPECT_OK(
+  MP_ASSERT_OK(graph.Initialize(config));
+  MP_EXPECT_OK(graph.StartRun({}));
+  MP_EXPECT_OK(
       graph.AddPacketToInputStream("in", MakePacket<int>(0).At(Timestamp(0))));
   ::mediapipe::Status status = graph.WaitUntilIdle();
   EXPECT_FALSE(status.ok());
@@ -2398,18 +2397,18 @@ TEST(CalculatorGraph, InputPacketLifetime) {
     return Adopt(tracker.MakeObject().release()).At(++timestamp);
   };
 
-  MEDIAPIPE_ASSERT_OK(graph.Initialize(config));
-  MEDIAPIPE_EXPECT_OK(graph.StartRun({}));
-  MEDIAPIPE_EXPECT_OK(graph.AddPacketToInputStream("in", new_packet()));
-  MEDIAPIPE_EXPECT_OK(graph.WaitUntilIdle());
+  MP_ASSERT_OK(graph.Initialize(config));
+  MP_EXPECT_OK(graph.StartRun({}));
+  MP_EXPECT_OK(graph.AddPacketToInputStream("in", new_packet()));
+  MP_EXPECT_OK(graph.WaitUntilIdle());
   EXPECT_EQ(0, tracker.live_count());
-  MEDIAPIPE_EXPECT_OK(graph.AddPacketToInputStream("in", new_packet()));
-  MEDIAPIPE_EXPECT_OK(graph.AddPacketToInputStream("in", new_packet()));
-  MEDIAPIPE_EXPECT_OK(graph.AddPacketToInputStream("in", new_packet()));
-  MEDIAPIPE_EXPECT_OK(graph.WaitUntilIdle());
+  MP_EXPECT_OK(graph.AddPacketToInputStream("in", new_packet()));
+  MP_EXPECT_OK(graph.AddPacketToInputStream("in", new_packet()));
+  MP_EXPECT_OK(graph.AddPacketToInputStream("in", new_packet()));
+  MP_EXPECT_OK(graph.WaitUntilIdle());
   EXPECT_EQ(0, tracker.live_count());
-  MEDIAPIPE_EXPECT_OK(graph.CloseInputStream("in"));
-  MEDIAPIPE_EXPECT_OK(graph.WaitUntilDone());
+  MP_EXPECT_OK(graph.CloseInputStream("in"));
+  MP_EXPECT_OK(graph.WaitUntilDone());
 }
 
 // Test that SetNextTimestampBound propagates.
@@ -2453,15 +2452,14 @@ TEST(CalculatorGraph, SetNextTimestampBoundPropagation) {
   Timestamp timestamp = Timestamp(0);
   auto send_inputs = [&graph, &timestamp](int input, bool pass) {
     ++timestamp;
-    MEDIAPIPE_EXPECT_OK(graph.AddPacketToInputStream(
+    MP_EXPECT_OK(graph.AddPacketToInputStream(
         "in", MakePacket<int>(input).At(timestamp)));
-    MEDIAPIPE_EXPECT_OK(graph.AddPacketToInputStream(
+    MP_EXPECT_OK(graph.AddPacketToInputStream(
         "gate", MakePacket<bool>(pass).At(timestamp)));
   };
 
-  MEDIAPIPE_ASSERT_OK(graph.Initialize(config));
-  MEDIAPIPE_ASSERT_OK(
-      graph.StartRun({{"shift", MakePacket<TimestampDiff>(0)}}));
+  MP_ASSERT_OK(graph.Initialize(config));
+  MP_ASSERT_OK(graph.StartRun({{"shift", MakePacket<TimestampDiff>(0)}}));
 
   auto pass_counter =
       graph.GetCounterFactory()->GetCounter("ValveCalculator-PassThrough");
@@ -2474,7 +2472,7 @@ TEST(CalculatorGraph, SetNextTimestampBoundPropagation) {
   send_inputs(2, true);
   send_inputs(3, false);
   send_inputs(4, false);
-  MEDIAPIPE_ASSERT_OK(graph.WaitUntilIdle());
+  MP_ASSERT_OK(graph.WaitUntilIdle());
 
   // Verify that MergeCalculator was able to run even when the gated branch
   // was blocked.
@@ -2484,21 +2482,20 @@ TEST(CalculatorGraph, SetNextTimestampBoundPropagation) {
 
   send_inputs(5, true);
   send_inputs(6, false);
-  MEDIAPIPE_ASSERT_OK(graph.WaitUntilIdle());
+  MP_ASSERT_OK(graph.WaitUntilIdle());
 
   EXPECT_EQ(3, pass_counter->Get());
   EXPECT_EQ(3, block_counter->Get());
   EXPECT_EQ(6, merged_counter->Get());
 
-  MEDIAPIPE_ASSERT_OK(graph.CloseAllInputStreams());
-  MEDIAPIPE_ASSERT_OK(graph.WaitUntilDone());
+  MP_ASSERT_OK(graph.CloseAllInputStreams());
+  MP_ASSERT_OK(graph.WaitUntilDone());
 
   // Now test with time shift
-  MEDIAPIPE_ASSERT_OK(
-      graph.StartRun({{"shift", MakePacket<TimestampDiff>(-1)}}));
+  MP_ASSERT_OK(graph.StartRun({{"shift", MakePacket<TimestampDiff>(-1)}}));
 
   send_inputs(7, true);
-  MEDIAPIPE_ASSERT_OK(graph.WaitUntilIdle());
+  MP_ASSERT_OK(graph.WaitUntilIdle());
 
   // The merger should have run only once now, at timestamp 6, with inputs
   // <null, 7>. If we do not respect the offset and unblock the merger for
@@ -2508,8 +2505,8 @@ TEST(CalculatorGraph, SetNextTimestampBoundPropagation) {
   EXPECT_EQ(3, block_counter->Get());
   EXPECT_EQ(7, merged_counter->Get());
 
-  MEDIAPIPE_ASSERT_OK(graph.CloseAllInputStreams());
-  MEDIAPIPE_ASSERT_OK(graph.WaitUntilDone());
+  MP_ASSERT_OK(graph.CloseAllInputStreams());
+  MP_ASSERT_OK(graph.WaitUntilDone());
 
   EXPECT_EQ(4, pass_counter->Get());
   EXPECT_EQ(3, block_counter->Get());
@@ -2561,8 +2558,8 @@ TEST(CalculatorGraph, NotAllInputPacketsAtNextTimestampBoundAvailable) {
   std::vector<Packet> packet_dump;
   tool::AddVectorSink("out", &config, &packet_dump);
 
-  MEDIAPIPE_ASSERT_OK(graph.Initialize(config));
-  MEDIAPIPE_ASSERT_OK(graph.StartRun({}));
+  MP_ASSERT_OK(graph.Initialize(config));
+  MP_ASSERT_OK(graph.StartRun({}));
 
   Timestamp timestamp = Timestamp(0);
 
@@ -2573,11 +2570,11 @@ TEST(CalculatorGraph, NotAllInputPacketsAtNextTimestampBoundAvailable) {
   // input streams of the IntAdderCalculator will become 2.
 
   ++timestamp;  // Timestamp 1.
-  MEDIAPIPE_EXPECT_OK(graph.AddPacketToInputStream(
-      "in0_unfiltered", MakePacket<int>(1).At(timestamp)));
-  MEDIAPIPE_EXPECT_OK(graph.AddPacketToInputStream(
-      "in1_to_be_filtered", MakePacket<int>(2).At(timestamp)));
-  MEDIAPIPE_ASSERT_OK(graph.WaitUntilIdle());
+  MP_EXPECT_OK(graph.AddPacketToInputStream("in0_unfiltered",
+                                            MakePacket<int>(1).At(timestamp)));
+  MP_EXPECT_OK(graph.AddPacketToInputStream("in1_to_be_filtered",
+                                            MakePacket<int>(2).At(timestamp)));
+  MP_ASSERT_OK(graph.WaitUntilIdle());
   ASSERT_EQ(1, packet_dump.size());
   EXPECT_EQ(3, packet_dump[0].Get<int>());
 
@@ -2586,30 +2583,30 @@ TEST(CalculatorGraph, NotAllInputPacketsAtNextTimestampBoundAvailable) {
   // in1_filtered input stream of the IntAdderCalculator will become 3.
 
   ++timestamp;  // Timestamp 2.
-  MEDIAPIPE_EXPECT_OK(graph.AddPacketToInputStream(
-      "in1_to_be_filtered", MakePacket<int>(3).At(timestamp)));
+  MP_EXPECT_OK(graph.AddPacketToInputStream("in1_to_be_filtered",
+                                            MakePacket<int>(3).At(timestamp)));
 
   // We send an integer with timestamp 3 to the in0_unfiltered input stream of
   // the IntAdderCalculator. MediaPipe should propagate the next timestamp bound
   // across the IntAdderCalculator but should not run its Process() method.
 
   ++timestamp;  // Timestamp 3.
-  MEDIAPIPE_EXPECT_OK(graph.AddPacketToInputStream(
-      "in0_unfiltered", MakePacket<int>(3).At(timestamp)));
-  MEDIAPIPE_ASSERT_OK(graph.WaitUntilIdle());
+  MP_EXPECT_OK(graph.AddPacketToInputStream("in0_unfiltered",
+                                            MakePacket<int>(3).At(timestamp)));
+  MP_ASSERT_OK(graph.WaitUntilIdle());
   ASSERT_EQ(1, packet_dump.size());
 
   // We send an even integer with timestamp 3 to the IntAdderCalculator. This
   // packet will go through and the IntAdderCalculator will run.
 
-  MEDIAPIPE_EXPECT_OK(graph.AddPacketToInputStream(
-      "in1_to_be_filtered", MakePacket<int>(4).At(timestamp)));
-  MEDIAPIPE_ASSERT_OK(graph.WaitUntilIdle());
+  MP_EXPECT_OK(graph.AddPacketToInputStream("in1_to_be_filtered",
+                                            MakePacket<int>(4).At(timestamp)));
+  MP_ASSERT_OK(graph.WaitUntilIdle());
   ASSERT_EQ(2, packet_dump.size());
   EXPECT_EQ(7, packet_dump[1].Get<int>());
 
-  MEDIAPIPE_ASSERT_OK(graph.CloseAllInputStreams());
-  MEDIAPIPE_ASSERT_OK(graph.WaitUntilDone());
+  MP_ASSERT_OK(graph.CloseAllInputStreams());
+  MP_ASSERT_OK(graph.WaitUntilDone());
   EXPECT_EQ(2, packet_dump.size());
 }
 
@@ -2666,14 +2663,14 @@ TEST(CalculatorGraph, IfThenElse) {
   Timestamp timestamp = Timestamp(0);
   auto send_inputs = [&graph, &timestamp](int input, int select) {
     ++timestamp;
-    MEDIAPIPE_EXPECT_OK(graph.AddPacketToInputStream(
+    MP_EXPECT_OK(graph.AddPacketToInputStream(
         "in", MakePacket<int>(input).At(timestamp)));
-    MEDIAPIPE_EXPECT_OK(graph.AddPacketToInputStream(
+    MP_EXPECT_OK(graph.AddPacketToInputStream(
         "select", MakePacket<int>(select).At(timestamp)));
   };
 
-  MEDIAPIPE_ASSERT_OK(graph.Initialize(config));
-  MEDIAPIPE_ASSERT_OK(graph.StartRun({}));
+  MP_ASSERT_OK(graph.Initialize(config));
+  MP_ASSERT_OK(graph.StartRun({}));
 
   // If the "select" input is 0, we apply a double operation. If "select" is 1,
   // we apply a square operation. To make the code easier to understand, define
@@ -2682,29 +2679,29 @@ TEST(CalculatorGraph, IfThenElse) {
   const int kApplySquare = 1;
 
   send_inputs(1, kApplyDouble);
-  MEDIAPIPE_ASSERT_OK(graph.WaitUntilIdle());
+  MP_ASSERT_OK(graph.WaitUntilIdle());
   ASSERT_EQ(1, packet_dump.size());
   EXPECT_EQ(2, packet_dump[0].Get<int>());
 
   send_inputs(2, kApplySquare);
-  MEDIAPIPE_ASSERT_OK(graph.WaitUntilIdle());
+  MP_ASSERT_OK(graph.WaitUntilIdle());
   ASSERT_EQ(2, packet_dump.size());
   EXPECT_EQ(4, packet_dump[1].Get<int>());
 
   send_inputs(3, kApplyDouble);
   send_inputs(4, kApplyDouble);
-  MEDIAPIPE_ASSERT_OK(graph.WaitUntilIdle());
+  MP_ASSERT_OK(graph.WaitUntilIdle());
   EXPECT_EQ(4, packet_dump.size());
   EXPECT_EQ(6, packet_dump[2].Get<int>());
   EXPECT_EQ(8, packet_dump[3].Get<int>());
 
   send_inputs(5, kApplySquare);
-  MEDIAPIPE_ASSERT_OK(graph.WaitUntilIdle());
+  MP_ASSERT_OK(graph.WaitUntilIdle());
   ASSERT_EQ(5, packet_dump.size());
   EXPECT_EQ(25, packet_dump[4].Get<int>());
 
   send_inputs(6, kApplyDouble);
-  MEDIAPIPE_ASSERT_OK(graph.WaitUntilIdle());
+  MP_ASSERT_OK(graph.WaitUntilIdle());
   ASSERT_EQ(6, packet_dump.size());
   EXPECT_EQ(12, packet_dump[5].Get<int>());
 
@@ -2712,15 +2709,15 @@ TEST(CalculatorGraph, IfThenElse) {
   send_inputs(8, kApplySquare);
   send_inputs(9, kApplySquare);
   send_inputs(10, kApplyDouble);
-  MEDIAPIPE_ASSERT_OK(graph.WaitUntilIdle());
+  MP_ASSERT_OK(graph.WaitUntilIdle());
   ASSERT_EQ(10, packet_dump.size());
   EXPECT_EQ(49, packet_dump[6].Get<int>());
   EXPECT_EQ(64, packet_dump[7].Get<int>());
   EXPECT_EQ(81, packet_dump[8].Get<int>());
   EXPECT_EQ(20, packet_dump[9].Get<int>());
 
-  MEDIAPIPE_ASSERT_OK(graph.CloseAllInputStreams());
-  MEDIAPIPE_ASSERT_OK(graph.WaitUntilDone());
+  MP_ASSERT_OK(graph.CloseAllInputStreams());
+  MP_ASSERT_OK(graph.WaitUntilDone());
   EXPECT_EQ(10, packet_dump.size());
 }
 
@@ -2810,14 +2807,14 @@ TEST(CalculatorGraph, IfThenElse2) {
   Timestamp timestamp = Timestamp(0);
   auto send_inputs = [&graph, &timestamp](int input, int select) {
     ++timestamp;
-    MEDIAPIPE_EXPECT_OK(graph.AddPacketToInputStream(
+    MP_EXPECT_OK(graph.AddPacketToInputStream(
         "in", MakePacket<int>(input).At(timestamp)));
-    MEDIAPIPE_EXPECT_OK(graph.AddPacketToInputStream(
+    MP_EXPECT_OK(graph.AddPacketToInputStream(
         "select", MakePacket<int>(select).At(timestamp)));
   };
 
-  MEDIAPIPE_ASSERT_OK(graph.Initialize(config));
-  MEDIAPIPE_ASSERT_OK(graph.StartRun({}));
+  MP_ASSERT_OK(graph.Initialize(config));
+  MP_ASSERT_OK(graph.StartRun({}));
 
   // If the "select" input is 0, we apply a double operation. If "select" is 1,
   // we apply a square operation. To make the code easier to understand, define
@@ -2826,29 +2823,29 @@ TEST(CalculatorGraph, IfThenElse2) {
   const int kApplySquare = 1;
 
   send_inputs(1, kApplyDouble);
-  MEDIAPIPE_ASSERT_OK(graph.WaitUntilIdle());
+  MP_ASSERT_OK(graph.WaitUntilIdle());
   ASSERT_EQ(1, packet_dump.size());
   EXPECT_EQ(2, packet_dump[0].Get<int>());
 
   send_inputs(2, kApplySquare);
-  MEDIAPIPE_ASSERT_OK(graph.WaitUntilIdle());
+  MP_ASSERT_OK(graph.WaitUntilIdle());
   ASSERT_EQ(2, packet_dump.size());
   EXPECT_EQ(4, packet_dump[1].Get<int>());
 
   send_inputs(3, kApplyDouble);
   send_inputs(4, kApplyDouble);
-  MEDIAPIPE_ASSERT_OK(graph.WaitUntilIdle());
+  MP_ASSERT_OK(graph.WaitUntilIdle());
   EXPECT_EQ(4, packet_dump.size());
   EXPECT_EQ(6, packet_dump[2].Get<int>());
   EXPECT_EQ(8, packet_dump[3].Get<int>());
 
   send_inputs(5, kApplySquare);
-  MEDIAPIPE_ASSERT_OK(graph.WaitUntilIdle());
+  MP_ASSERT_OK(graph.WaitUntilIdle());
   ASSERT_EQ(5, packet_dump.size());
   EXPECT_EQ(25, packet_dump[4].Get<int>());
 
   send_inputs(6, kApplyDouble);
-  MEDIAPIPE_ASSERT_OK(graph.WaitUntilIdle());
+  MP_ASSERT_OK(graph.WaitUntilIdle());
   ASSERT_EQ(6, packet_dump.size());
   EXPECT_EQ(12, packet_dump[5].Get<int>());
 
@@ -2856,15 +2853,15 @@ TEST(CalculatorGraph, IfThenElse2) {
   send_inputs(8, kApplySquare);
   send_inputs(9, kApplySquare);
   send_inputs(10, kApplyDouble);
-  MEDIAPIPE_ASSERT_OK(graph.WaitUntilIdle());
+  MP_ASSERT_OK(graph.WaitUntilIdle());
   ASSERT_EQ(10, packet_dump.size());
   EXPECT_EQ(49, packet_dump[6].Get<int>());
   EXPECT_EQ(64, packet_dump[7].Get<int>());
   EXPECT_EQ(81, packet_dump[8].Get<int>());
   EXPECT_EQ(20, packet_dump[9].Get<int>());
 
-  MEDIAPIPE_ASSERT_OK(graph.CloseAllInputStreams());
-  MEDIAPIPE_ASSERT_OK(graph.WaitUntilDone());
+  MP_ASSERT_OK(graph.CloseAllInputStreams());
+  MP_ASSERT_OK(graph.WaitUntilDone());
   EXPECT_EQ(10, packet_dump.size());
 }
 
@@ -2912,8 +2909,8 @@ TEST(CalculatorGraph, ClosedSourceNodeShouldNotBeUnthrottled) {
       )");
 
   CalculatorGraph graph;
-  MEDIAPIPE_ASSERT_OK(graph.Initialize(config));
-  MEDIAPIPE_ASSERT_OK(graph.Run());
+  MP_ASSERT_OK(graph.Initialize(config));
+  MP_ASSERT_OK(graph.Run());
 }
 
 // Tests that a calculator can output a packet in the Open() method.
@@ -2953,8 +2950,8 @@ TEST(CalculatorGraph, OutputPacketInOpen) {
   input_side_packets["global_counter"] = Adopt(new auto(&global_counter));
 
   CalculatorGraph graph;
-  MEDIAPIPE_ASSERT_OK(graph.Initialize(config));
-  MEDIAPIPE_ASSERT_OK(graph.Run(input_side_packets));
+  MP_ASSERT_OK(graph.Initialize(config));
+  MP_ASSERT_OK(graph.Run(input_side_packets));
   ASSERT_EQ(GlobalCountSourceCalculator::kNumOutputPackets + 1,
             packet_dump.size());
   EXPECT_EQ(0, packet_dump[0].Get<int>());
@@ -3003,8 +3000,8 @@ TEST(CalculatorGraph, OutputPacketInOpen2) {
   input_side_packets["global_counter"] = Adopt(new auto(&global_counter));
 
   CalculatorGraph graph;
-  MEDIAPIPE_ASSERT_OK(graph.Initialize(config));
-  MEDIAPIPE_ASSERT_OK(graph.Run(input_side_packets));
+  MP_ASSERT_OK(graph.Initialize(config));
+  MP_ASSERT_OK(graph.Run(input_side_packets));
   ASSERT_EQ(GlobalCountSourceCalculator::kNumOutputPackets + 1,
             packet_dump.size());
   int i;
@@ -3053,8 +3050,8 @@ TEST(CalculatorGraph, EmptyInputInOpen) {
   input_side_packets["global_counter"] = Adopt(new auto(&global_counter));
 
   CalculatorGraph graph;
-  MEDIAPIPE_ASSERT_OK(graph.Initialize(config));
-  MEDIAPIPE_EXPECT_OK(graph.Run(input_side_packets));
+  MP_ASSERT_OK(graph.Initialize(config));
+  MP_EXPECT_OK(graph.Run(input_side_packets));
 }
 
 // Test for b/33568859.
@@ -3097,8 +3094,8 @@ TEST(CalculatorGraph, UnthrottleRespectsLayers) {
   input_side_packets["output_in_open"] = MakePacket<bool>(kOutputInOpen);
 
   CalculatorGraph graph;
-  MEDIAPIPE_ASSERT_OK(graph.Initialize(config));
-  MEDIAPIPE_ASSERT_OK(graph.Run(input_side_packets));
+  MP_ASSERT_OK(graph.Initialize(config));
+  MP_ASSERT_OK(graph.Run(input_side_packets));
   ASSERT_EQ(GlobalCountSourceCalculator::kNumOutputPackets,
             layer0_packets.size());
   ASSERT_EQ(GlobalCountSourceCalculator::kNumOutputPackets,
@@ -3159,8 +3156,8 @@ TEST(CalculatorGraph, Cycle) {
   input_side_packets["global_counter"] = Adopt(new auto(&global_counter));
 
   CalculatorGraph graph;
-  MEDIAPIPE_ASSERT_OK(graph.Initialize(config));
-  MEDIAPIPE_ASSERT_OK(graph.Run(input_side_packets));
+  MP_ASSERT_OK(graph.Initialize(config));
+  MP_ASSERT_OK(graph.Run(input_side_packets));
   ASSERT_EQ(GlobalCountSourceCalculator::kNumOutputPackets, packet_dump.size());
   int sum = 0;
   for (int i = 0; i < GlobalCountSourceCalculator::kNumOutputPackets; ++i) {
@@ -3210,8 +3207,8 @@ TEST(CalculatorGraph, CycleUntimed) {
   input_side_packets["global_counter"] = Adopt(new auto(&global_counter));
 
   CalculatorGraph graph;
-  MEDIAPIPE_ASSERT_OK(graph.Initialize(config));
-  MEDIAPIPE_ASSERT_OK(graph.Run(input_side_packets));
+  MP_ASSERT_OK(graph.Initialize(config));
+  MP_ASSERT_OK(graph.Run(input_side_packets));
   ASSERT_EQ(GlobalCountSourceCalculator::kNumOutputPackets, packet_dump.size());
   int sum = 0;
   for (int i = 0; i < GlobalCountSourceCalculator::kNumOutputPackets; ++i) {
@@ -3313,8 +3310,8 @@ TEST(CalculatorGraph, DirectFormI) {
   input_side_packets["a1"] = Adopt(new float(1.5));
   input_side_packets["b1"] = Adopt(new float(2.0));
   CalculatorGraph graph;
-  MEDIAPIPE_ASSERT_OK(graph.Initialize(config));
-  MEDIAPIPE_ASSERT_OK(graph.Run(input_side_packets));
+  MP_ASSERT_OK(graph.Initialize(config));
+  MP_ASSERT_OK(graph.Run(input_side_packets));
   ASSERT_EQ(GlobalCountSourceCalculator::kNumOutputPackets, packet_dump.size());
   ASSERT_EQ(GlobalCountSourceCalculator::kNumOutputPackets, 5);
   EXPECT_FLOAT_EQ(1.0, packet_dump[0].Get<float>());
@@ -3416,8 +3413,8 @@ TEST(CalculatorGraph, DirectFormII) {
   input_side_packets["b1"] = Adopt(new float(2.0));
 
   CalculatorGraph graph;
-  MEDIAPIPE_ASSERT_OK(graph.Initialize(config));
-  MEDIAPIPE_ASSERT_OK(graph.Run(input_side_packets));
+  MP_ASSERT_OK(graph.Initialize(config));
+  MP_ASSERT_OK(graph.Run(input_side_packets));
   ASSERT_EQ(GlobalCountSourceCalculator::kNumOutputPackets, packet_dump.size());
   ASSERT_EQ(GlobalCountSourceCalculator::kNumOutputPackets, 5);
   EXPECT_FLOAT_EQ(1.0, packet_dump[0].Get<float>());
@@ -3497,8 +3494,8 @@ TEST(CalculatorGraph, DotProduct) {
   tool::AddVectorSink("dot_product", &config, &packet_dump);
 
   CalculatorGraph graph;
-  MEDIAPIPE_ASSERT_OK(graph.Initialize(config));
-  MEDIAPIPE_ASSERT_OK(graph.Run());
+  MP_ASSERT_OK(graph.Initialize(config));
+  MP_ASSERT_OK(graph.Run());
 
   // The calculator graph performs the following computation:
   //   test_sequence_1 is split into x_1, y_1, z_1.
@@ -3543,14 +3540,14 @@ TEST(CalculatorGraph, TerminatesOnCancelWithOpenGraphInputStreams) {
         input_stream: 'in_b'
       )");
   CalculatorGraph graph;
-  MEDIAPIPE_ASSERT_OK(graph.Initialize(config));
-  MEDIAPIPE_ASSERT_OK(graph.StartRun({}));
-  MEDIAPIPE_EXPECT_OK(graph.AddPacketToInputStream(
+  MP_ASSERT_OK(graph.Initialize(config));
+  MP_ASSERT_OK(graph.StartRun({}));
+  MP_EXPECT_OK(graph.AddPacketToInputStream(
       "in_a", MakePacket<int>(1).At(Timestamp(1))));
-  MEDIAPIPE_EXPECT_OK(graph.CloseInputStream("in_a"));
-  MEDIAPIPE_EXPECT_OK(graph.AddPacketToInputStream(
+  MP_EXPECT_OK(graph.CloseInputStream("in_a"));
+  MP_EXPECT_OK(graph.AddPacketToInputStream(
       "in_b", MakePacket<int>(2).At(Timestamp(2))));
-  MEDIAPIPE_EXPECT_OK(graph.WaitUntilIdle());
+  MP_EXPECT_OK(graph.WaitUntilIdle());
   graph.Cancel();
   // This tests that the graph doesn't deadlock on WaitUntilDone (because
   // the scheduler thread is sleeping).
@@ -3569,11 +3566,11 @@ TEST(CalculatorGraph, TerminatesOnCancelAfterPause) {
         input_stream: 'in'
       )");
   CalculatorGraph graph;
-  MEDIAPIPE_ASSERT_OK(graph.Initialize(config));
-  MEDIAPIPE_ASSERT_OK(graph.StartRun({}));
+  MP_ASSERT_OK(graph.Initialize(config));
+  MP_ASSERT_OK(graph.StartRun({}));
   graph.Pause();
   // Make the PassThroughCalculator runnable while the scheduler is paused.
-  MEDIAPIPE_EXPECT_OK(
+  MP_EXPECT_OK(
       graph.AddPacketToInputStream("in", MakePacket<int>(1).At(Timestamp(1))));
   // Now cancel the graph run. A non-empty scheduler queue should not prevent
   // the scheduler from terminating.
@@ -3699,16 +3696,15 @@ TEST(CalculatorGraph, SharePacketGeneratorGraph) {
 
   // Next, create a ValidatedGraphConfig for both configs.
   ValidatedGraphConfig validated_calculator_config;
-  MEDIAPIPE_ASSERT_OK(
-      validated_calculator_config.Initialize(calculator_config));
+  MP_ASSERT_OK(validated_calculator_config.Initialize(calculator_config));
   ValidatedGraphConfig validated_generator_config;
-  MEDIAPIPE_ASSERT_OK(validated_generator_config.Initialize(generator_config));
+  MP_ASSERT_OK(validated_generator_config.Initialize(generator_config));
 
   // Create a PacketGeneratorGraph.  Side packets max_count1, max_count2,
   // and max_count3 are created upon initialization.
   // Note that validated_generator_config must outlive generator_graph.
   PacketGeneratorGraph generator_graph;
-  MEDIAPIPE_ASSERT_OK(
+  MP_ASSERT_OK(
       generator_graph.Initialize(&validated_generator_config, nullptr,
                                  {{"max_count1", MakePacket<int>(10)},
                                   {"max_count3", MakePacket<int>(20)}}));
@@ -3723,7 +3719,7 @@ TEST(CalculatorGraph, SharePacketGeneratorGraph) {
     graphs.emplace_back(absl::make_unique<CalculatorGraph>());
     // Do not pass extra side packets here.
     // Note that validated_calculator_config must outlive the graph.
-    MEDIAPIPE_ASSERT_OK(graphs.back()->Initialize(calculator_config, {}));
+    MP_ASSERT_OK(graphs.back()->Initialize(calculator_config, {}));
   }
   // Run a bunch of graphs, reusing side packets max_count1, max_count2,
   // and max_count3.  The side packet max_count4 is added per run,
@@ -3732,7 +3728,7 @@ TEST(CalculatorGraph, SharePacketGeneratorGraph) {
   for (int i = 0; i < 100; ++i) {
     std::map<std::string, Packet> all_side_packets;
     // Creates max_count4 and max_count5.
-    MEDIAPIPE_ASSERT_OK(generator_graph.RunGraphSetup(
+    MP_ASSERT_OK(generator_graph.RunGraphSetup(
         {{"max_count4", MakePacket<int>(30 + i)}}, &all_side_packets));
     ASSERT_THAT(all_side_packets,
                 testing::ElementsAre(
@@ -3740,7 +3736,7 @@ TEST(CalculatorGraph, SharePacketGeneratorGraph) {
                     testing::Key("max_count3"), testing::Key("max_count4"),
                     testing::Key("max_count5")));
     // Pass all the side packets prepared by generator_graph here.
-    MEDIAPIPE_ASSERT_OK(graphs[i]->Run(all_side_packets));
+    MP_ASSERT_OK(graphs[i]->Run(all_side_packets));
     // TODO Verify the actual output.
   }
 
@@ -3774,20 +3770,19 @@ TEST(CalculatorGraph, RecoverAfterRunError) {
 
   int packet_count = 0;
   CalculatorGraph graph;
-  MEDIAPIPE_ASSERT_OK(graph.Initialize(config, {}));
-  MEDIAPIPE_ASSERT_OK(graph.ObserveOutputStream(
-      "count1", [&packet_count](const Packet& packet) {
-        ++packet_count;
-        return ::mediapipe::OkStatus();
-      }));
+  MP_ASSERT_OK(graph.Initialize(config, {}));
+  MP_ASSERT_OK(graph.ObserveOutputStream("count1",
+                                         [&packet_count](const Packet& packet) {
+                                           ++packet_count;
+                                           return ::mediapipe::OkStatus();
+                                         }));
   // Set ERROR_COUNT higher than MAX_COUNT and hence the calculator will
   // finish successfully.
   packet_count = 0;
-  MEDIAPIPE_ASSERT_OK(
-      graph.Run({{"max_count1", MakePacket<int>(10)},
-                 {"max_error1", MakePacket<int>(20)},
-                 {"status_handler_command",
-                  MakePacket<int>(FailableStatusHandler::kOk)}}));
+  MP_ASSERT_OK(graph.Run({{"max_count1", MakePacket<int>(10)},
+                          {"max_error1", MakePacket<int>(20)},
+                          {"status_handler_command",
+                           MakePacket<int>(FailableStatusHandler::kOk)}}));
   EXPECT_EQ(packet_count, 10);
   // Fail in PacketGenerator::Generate().
   // Negative max_count1 will cause EnsurePositivePacketGenerator to fail.
@@ -3798,11 +3793,10 @@ TEST(CalculatorGraph, RecoverAfterRunError) {
                           MakePacket<int>(FailableStatusHandler::kOk)}})
                    .ok());
   packet_count = 0;
-  MEDIAPIPE_ASSERT_OK(
-      graph.Run({{"max_count1", MakePacket<int>(10)},
-                 {"max_error1", MakePacket<int>(20)},
-                 {"status_handler_command",
-                  MakePacket<int>(FailableStatusHandler::kOk)}}));
+  MP_ASSERT_OK(graph.Run({{"max_count1", MakePacket<int>(10)},
+                          {"max_error1", MakePacket<int>(20)},
+                          {"status_handler_command",
+                           MakePacket<int>(FailableStatusHandler::kOk)}}));
   EXPECT_EQ(packet_count, 10);
   // Fail in PacketGenerator::Generate() also fail in StatusHandler.
   ASSERT_FALSE(graph
@@ -3812,11 +3806,10 @@ TEST(CalculatorGraph, RecoverAfterRunError) {
                           MakePacket<int>(FailableStatusHandler::kFailPreRun)}})
                    .ok());
   packet_count = 0;
-  MEDIAPIPE_ASSERT_OK(
-      graph.Run({{"max_count1", MakePacket<int>(10)},
-                 {"max_error1", MakePacket<int>(20)},
-                 {"status_handler_command",
-                  MakePacket<int>(FailableStatusHandler::kOk)}}));
+  MP_ASSERT_OK(graph.Run({{"max_count1", MakePacket<int>(10)},
+                          {"max_error1", MakePacket<int>(20)},
+                          {"status_handler_command",
+                           MakePacket<int>(FailableStatusHandler::kOk)}}));
   EXPECT_EQ(packet_count, 10);
   ASSERT_FALSE(
       graph
@@ -3826,11 +3819,10 @@ TEST(CalculatorGraph, RecoverAfterRunError) {
                  MakePacket<int>(FailableStatusHandler::kFailPostRun)}})
           .ok());
   packet_count = 0;
-  MEDIAPIPE_ASSERT_OK(
-      graph.Run({{"max_count1", MakePacket<int>(10)},
-                 {"max_error1", MakePacket<int>(20)},
-                 {"status_handler_command",
-                  MakePacket<int>(FailableStatusHandler::kOk)}}));
+  MP_ASSERT_OK(graph.Run({{"max_count1", MakePacket<int>(10)},
+                          {"max_error1", MakePacket<int>(20)},
+                          {"status_handler_command",
+                           MakePacket<int>(FailableStatusHandler::kOk)}}));
   EXPECT_EQ(packet_count, 10);
   // Fail in Calculator::Process().
   ASSERT_FALSE(graph
@@ -3840,11 +3832,10 @@ TEST(CalculatorGraph, RecoverAfterRunError) {
                           MakePacket<int>(FailableStatusHandler::kOk)}})
                    .ok());
   packet_count = 0;
-  MEDIAPIPE_ASSERT_OK(
-      graph.Run({{"max_count1", MakePacket<int>(10)},
-                 {"max_error1", MakePacket<int>(20)},
-                 {"status_handler_command",
-                  MakePacket<int>(FailableStatusHandler::kOk)}}));
+  MP_ASSERT_OK(graph.Run({{"max_count1", MakePacket<int>(10)},
+                          {"max_error1", MakePacket<int>(20)},
+                          {"status_handler_command",
+                           MakePacket<int>(FailableStatusHandler::kOk)}}));
   EXPECT_EQ(packet_count, 10);
   // Fail in Calculator::Process() also fail in StatusHandler.
   ASSERT_FALSE(graph
@@ -3854,11 +3845,10 @@ TEST(CalculatorGraph, RecoverAfterRunError) {
                           MakePacket<int>(FailableStatusHandler::kFailPreRun)}})
                    .ok());
   packet_count = 0;
-  MEDIAPIPE_ASSERT_OK(
-      graph.Run({{"max_count1", MakePacket<int>(10)},
-                 {"max_error1", MakePacket<int>(20)},
-                 {"status_handler_command",
-                  MakePacket<int>(FailableStatusHandler::kOk)}}));
+  MP_ASSERT_OK(graph.Run({{"max_count1", MakePacket<int>(10)},
+                          {"max_error1", MakePacket<int>(20)},
+                          {"status_handler_command",
+                           MakePacket<int>(FailableStatusHandler::kOk)}}));
   EXPECT_EQ(packet_count, 10);
   ASSERT_FALSE(
       graph
@@ -3868,11 +3858,10 @@ TEST(CalculatorGraph, RecoverAfterRunError) {
                  MakePacket<int>(FailableStatusHandler::kFailPostRun)}})
           .ok());
   packet_count = 0;
-  MEDIAPIPE_ASSERT_OK(
-      graph.Run({{"max_count1", MakePacket<int>(10)},
-                 {"max_error1", MakePacket<int>(20)},
-                 {"status_handler_command",
-                  MakePacket<int>(FailableStatusHandler::kOk)}}));
+  MP_ASSERT_OK(graph.Run({{"max_count1", MakePacket<int>(10)},
+                          {"max_error1", MakePacket<int>(20)},
+                          {"status_handler_command",
+                           MakePacket<int>(FailableStatusHandler::kOk)}}));
   EXPECT_EQ(packet_count, 10);
 }
 
@@ -3899,16 +3888,16 @@ TEST(CalculatorGraph, SetInputStreamMaxQueueSizeWorksSlowCalculator) {
         max_queue_size: 100
       )");
   CalculatorGraph graph;
-  MEDIAPIPE_ASSERT_OK(graph.Initialize(config));
+  MP_ASSERT_OK(graph.Initialize(config));
   graph.SetGraphInputStreamAddMode(
       CalculatorGraph::GraphInputStreamAddMode::ADD_IF_NOT_FULL);
-  MEDIAPIPE_ASSERT_OK(graph.SetInputStreamMaxQueueSize("in", 1));
+  MP_ASSERT_OK(graph.SetInputStreamMaxQueueSize("in", 1));
 
   Semaphore calc_entered_process(0);
   Semaphore calc_can_exit_process(0);
   Semaphore calc_entered_process_busy(0);
   Semaphore calc_can_exit_process_busy(0);
-  MEDIAPIPE_ASSERT_OK(graph.StartRun({
+  MP_ASSERT_OK(graph.StartRun({
       {"post_sem", MakePacket<Semaphore*>(&calc_entered_process)},
       {"wait_sem", MakePacket<Semaphore*>(&calc_can_exit_process)},
       {"post_sem_busy", MakePacket<Semaphore*>(&calc_entered_process_busy)},
@@ -3918,16 +3907,16 @@ TEST(CalculatorGraph, SetInputStreamMaxQueueSizeWorksSlowCalculator) {
   Timestamp timestamp(0);
   // Prevent deadlock resolution by running the "busy" SemaphoreCalculator
   // for the duration of the test.
-  MEDIAPIPE_EXPECT_OK(
+  MP_EXPECT_OK(
       graph.AddPacketToInputStream("in_2", MakePacket<int>(0).At(timestamp)));
-  MEDIAPIPE_EXPECT_OK(
+  MP_EXPECT_OK(
       graph.AddPacketToInputStream("in", MakePacket<int>(0).At(timestamp++)));
   for (int i = 1; i < 20; ++i, ++timestamp) {
     // Wait for the calculator to begin its Process call.
     calc_entered_process.Acquire(1);
     // Now the calculator is stuck processing a packet. We can queue up
     // another one.
-    MEDIAPIPE_EXPECT_OK(
+    MP_EXPECT_OK(
         graph.AddPacketToInputStream("in", MakePacket<int>(i).At(timestamp)));
     // We should be prevented from adding another, since the queue is now full.
     ::mediapipe::Status status = graph.AddPacketToInputStream(
@@ -3940,8 +3929,8 @@ TEST(CalculatorGraph, SetInputStreamMaxQueueSizeWorksSlowCalculator) {
   calc_can_exit_process.Release(1);
   calc_can_exit_process_busy.Release(1);
 
-  MEDIAPIPE_ASSERT_OK(graph.CloseAllInputStreams());
-  MEDIAPIPE_ASSERT_OK(graph.WaitUntilDone());
+  MP_ASSERT_OK(graph.CloseAllInputStreams());
+  MP_ASSERT_OK(graph.WaitUntilDone());
 }
 
 // Verify the scheduler unthrottles the graph input stream to avoid a deadlock,
@@ -3988,36 +3977,36 @@ TEST(CalculatorGraph, AddPacketNoBusyLoop) {
         }
       )");
   CalculatorGraph graph;
-  MEDIAPIPE_ASSERT_OK(graph.Initialize(config));
+  MP_ASSERT_OK(graph.Initialize(config));
   graph.SetGraphInputStreamAddMode(
       CalculatorGraph::GraphInputStreamAddMode::WAIT_TILL_NOT_FULL);
   std::vector<Packet> out_packets;  // Packets from the output stream "out".
-  MEDIAPIPE_ASSERT_OK(
+  MP_ASSERT_OK(
       graph.ObserveOutputStream("out", [&out_packets](const Packet& packet) {
         out_packets.push_back(packet);
         return ::mediapipe::OkStatus();
       }));
 
-  MEDIAPIPE_ASSERT_OK(graph.StartRun({}));
+  MP_ASSERT_OK(graph.StartRun({}));
 
   const int kDecimationRatio = DecimatorCalculator::kDecimationRatio;
   // To leave the graph input stream "in" in the throttled state, kNumPackets
   // can be any value other than a multiple of kDecimationRatio plus one.
   const int kNumPackets = 2 * kDecimationRatio;
   for (int i = 0; i < kNumPackets; ++i) {
-    MEDIAPIPE_EXPECT_OK(graph.AddPacketToInputStream(
+    MP_EXPECT_OK(graph.AddPacketToInputStream(
         "in", MakePacket<int>(i).At(Timestamp(i))));
   }
 
   // The graph input stream "in" is throttled. Wait until the graph is idle.
-  MEDIAPIPE_ASSERT_OK(graph.WaitUntilIdle());
+  MP_ASSERT_OK(graph.WaitUntilIdle());
   // Check that Pause() does not block forever trying to acquire a mutex.
   // This is a regression test for an old bug.
   graph.Pause();
   graph.Resume();
 
-  MEDIAPIPE_ASSERT_OK(graph.CloseAllInputStreams());
-  MEDIAPIPE_ASSERT_OK(graph.WaitUntilDone());
+  MP_ASSERT_OK(graph.CloseAllInputStreams());
+  MP_ASSERT_OK(graph.WaitUntilDone());
 
   // The expected output packets are:
   //   "Timestamp(0) 0 0"
@@ -4086,11 +4075,11 @@ TEST(CalculatorGraph, CalculatorInNamepsace) {
       )",
                                               &config));
   CalculatorGraph graph;
-  MEDIAPIPE_ASSERT_OK(graph.Initialize(config));
+  MP_ASSERT_OK(graph.Initialize(config));
   nested_ns::ProcessFunction callback_1;
-  MEDIAPIPE_ASSERT_OK(
+  MP_ASSERT_OK(
       graph.StartRun({{"callback_1", AdoptAsUniquePtr(new auto(callback_1))}}));
-  MEDIAPIPE_EXPECT_OK(graph.WaitUntilIdle());
+  MP_EXPECT_OK(graph.WaitUntilIdle());
 }
 
 // A ProcessFunction that passes through all packets.
@@ -4125,23 +4114,23 @@ TEST(CalculatorGraph, ObserveOutputStream) {
         }
       )");
   CalculatorGraph graph;
-  MEDIAPIPE_ASSERT_OK(
+  MP_ASSERT_OK(
       graph.Initialize(config, {{"max_count", MakePacket<int>(max_count)}}));
   // Observe the internal output stream "count" and the unconnected output
   // stream "out".
   std::vector<Packet> count_packets;  // Packets from the output stream "count".
   std::vector<Packet> out_packets;    // Packets from the output stream "out".
-  MEDIAPIPE_ASSERT_OK(graph.ObserveOutputStream(
+  MP_ASSERT_OK(graph.ObserveOutputStream(
       "count", [&count_packets](const Packet& packet) {
         count_packets.push_back(packet);
         return ::mediapipe::OkStatus();
       }));
-  MEDIAPIPE_ASSERT_OK(
+  MP_ASSERT_OK(
       graph.ObserveOutputStream("out", [&out_packets](const Packet& packet) {
         out_packets.push_back(packet);
         return ::mediapipe::OkStatus();
       }));
-  MEDIAPIPE_ASSERT_OK(graph.Run());
+  MP_ASSERT_OK(graph.Run());
   ASSERT_EQ(max_count, count_packets.size());
   for (int i = 0; i < count_packets.size(); ++i) {
     EXPECT_EQ(i, count_packets[i].Get<int>());
@@ -4189,16 +4178,16 @@ TEST(CalculatorGraph, ObserveOutputStreamSubgraph) {
         }
       )");
   CalculatorGraph graph;
-  MEDIAPIPE_ASSERT_OK(
+  MP_ASSERT_OK(
       graph.Initialize(config, {{"max_count", MakePacket<int>(max_count)}}));
   // Observe the unconnected output stream "out".
   std::vector<Packet> out_packets;  // Packets from the output stream "out".
-  MEDIAPIPE_ASSERT_OK(
+  MP_ASSERT_OK(
       graph.ObserveOutputStream("out", [&out_packets](const Packet& packet) {
         out_packets.push_back(packet);
         return ::mediapipe::OkStatus();
       }));
-  MEDIAPIPE_ASSERT_OK(graph.Run());
+  MP_ASSERT_OK(graph.Run());
   ASSERT_EQ(max_count, out_packets.size());
   for (int i = 0; i < out_packets.size(); ++i) {
     EXPECT_EQ(i, out_packets[i].Get<int>());
@@ -4228,13 +4217,13 @@ TEST(CalculatorGraph, ObserveOutputStreamError) {
         }
       )");
   CalculatorGraph graph;
-  MEDIAPIPE_ASSERT_OK(
+  MP_ASSERT_OK(
       graph.Initialize(config, {{"max_count", MakePacket<int>(max_count)}}));
   // Observe the internal output stream "count" and the unconnected output
   // stream "out".
   std::vector<Packet> count_packets;  // Packets from the output stream "count".
   std::vector<Packet> out_packets;    // Packets from the output stream "out".
-  MEDIAPIPE_ASSERT_OK(graph.ObserveOutputStream(
+  MP_ASSERT_OK(graph.ObserveOutputStream(
       "count", [&count_packets](const Packet& packet) {
         count_packets.push_back(packet);
         if (count_packets.size() >= fail_count) {
@@ -4243,7 +4232,7 @@ TEST(CalculatorGraph, ObserveOutputStreamError) {
           return ::mediapipe::OkStatus();
         }
       }));
-  MEDIAPIPE_ASSERT_OK(
+  MP_ASSERT_OK(
       graph.ObserveOutputStream("out", [&out_packets](const Packet& packet) {
         out_packets.push_back(packet);
         return ::mediapipe::OkStatus();
@@ -4278,7 +4267,7 @@ TEST(CalculatorGraph, ObserveOutputStreamNonexistent) {
         }
       )");
   CalculatorGraph graph;
-  MEDIAPIPE_ASSERT_OK(
+  MP_ASSERT_OK(
       graph.Initialize(config, {{"max_count", MakePacket<int>(max_count)}}));
   // Observe the internal output stream "count".
   std::vector<Packet> count_packets;  // Packets from the output stream "count".
@@ -4308,9 +4297,9 @@ TEST(CalculatorGraph, FastSourceSlowSink) {
         node { calculator: 'SlowCountingSinkCalculator' input_stream: 'out' }
       )");
   CalculatorGraph graph;
-  MEDIAPIPE_ASSERT_OK(
+  MP_ASSERT_OK(
       graph.Initialize(config, {{"max_count", MakePacket<int>(max_count)}}));
-  MEDIAPIPE_EXPECT_OK(graph.Run());
+  MP_EXPECT_OK(graph.Run());
 }
 
 TEST(CalculatorGraph, GraphFinishesWhilePaused) {
@@ -4331,13 +4320,13 @@ TEST(CalculatorGraph, GraphFinishesWhilePaused) {
         node { calculator: 'OneShot20MsCalculator' }
       )");
   CalculatorGraph graph;
-  MEDIAPIPE_ASSERT_OK(graph.Initialize(config));
-  MEDIAPIPE_EXPECT_OK(graph.StartRun({}));
+  MP_ASSERT_OK(graph.Initialize(config));
+  MP_EXPECT_OK(graph.StartRun({}));
   absl::SleepFor(absl::Milliseconds(10));
   graph.Pause();
   absl::SleepFor(absl::Milliseconds(20));
   graph.Resume();
-  MEDIAPIPE_EXPECT_OK(graph.WaitUntilDone());
+  MP_EXPECT_OK(graph.WaitUntilDone());
 }
 
 // There should be no memory leaks, no error messages (requires manual
@@ -4374,11 +4363,11 @@ TEST(CalculatorGraph, RecoverAfterPreviousFailInOpen) {
         node { calculator: 'IntSinkCalculator' input_stream: 'd' }
       )");
   CalculatorGraph graph;
-  MEDIAPIPE_ASSERT_OK(
+  MP_ASSERT_OK(
       graph.Initialize(config, {{"max_count", MakePacket<int>(max_count)}}));
   for (int i = 0; i < 2; ++i) {
     EXPECT_FALSE(graph.Run({{"fail", MakePacket<bool>(true)}}).ok());
-    MEDIAPIPE_EXPECT_OK(graph.Run({{"fail", MakePacket<bool>(false)}}));
+    MP_EXPECT_OK(graph.Run({{"fail", MakePacket<bool>(false)}}));
   }
 }
 
@@ -4412,8 +4401,8 @@ TEST(CalculatorGraph, PropagateBoundLoop) {
   tool::AddVectorSink("sum", &config, &packet_dump);
 
   CalculatorGraph graph;
-  MEDIAPIPE_ASSERT_OK(graph.Initialize(config));
-  MEDIAPIPE_ASSERT_OK(graph.Run());
+  MP_ASSERT_OK(graph.Initialize(config));
+  MP_ASSERT_OK(graph.Run());
   ASSERT_EQ(101, packet_dump.size());
   int sum = 0;
   for (int i = 0; i < 101; ++i) {
@@ -4461,7 +4450,7 @@ TEST(CalculatorGraph, ReuseValidatedGraphConfig) {
         }
       )");
   ValidatedGraphConfig validated_graph;
-  MEDIAPIPE_ASSERT_OK(validated_graph.Initialize(config));
+  MP_ASSERT_OK(validated_graph.Initialize(config));
 
   std::atomic<int> global_counter(0);
   Packet global_counter_packet = Adopt(new auto(&global_counter));
@@ -4472,7 +4461,7 @@ TEST(CalculatorGraph, ReuseValidatedGraphConfig) {
     int initial_generator_count =
         StaticCounterStringGenerator::NumPacketsGenerated();
     int initial_calculator_count = global_counter.load();
-    MEDIAPIPE_ASSERT_OK(graph.Initialize(
+    MP_ASSERT_OK(graph.Initialize(
         config,
         {{"created_by_factory", MakePacket<std::string>("default string")},
          {"input_in_initialize", MakePacket<int>(10)},
@@ -4487,7 +4476,7 @@ TEST(CalculatorGraph, ReuseValidatedGraphConfig) {
       int initial_generator_count =
           StaticCounterStringGenerator::NumPacketsGenerated();
       int initial_calculator_count = global_counter.load();
-      MEDIAPIPE_ASSERT_OK(graph.Run({{"input_in_run", MakePacket<int>(11)}}));
+      MP_ASSERT_OK(graph.Run({{"input_in_run", MakePacket<int>(11)}}));
       EXPECT_EQ(initial_generator_count + 2,
                 StaticCounterStringGenerator::NumPacketsGenerated());
       EXPECT_EQ(initial_calculator_count +
@@ -4626,9 +4615,9 @@ TEST(CalculatorGraph, RunsCorrectlyWithSubgraphs) {
 TEST(CalculatorGraph, SetExecutorTwice) {
   // SetExecutor must not be called more than once for the same executor name.
   CalculatorGraph graph;
-  MEDIAPIPE_EXPECT_OK(
+  MP_EXPECT_OK(
       graph.SetExecutor("xyz", std::make_shared<ThreadPoolExecutor>(1)));
-  MEDIAPIPE_EXPECT_OK(
+  MP_EXPECT_OK(
       graph.SetExecutor("abc", std::make_shared<ThreadPoolExecutor>(1)));
   ::mediapipe::Status status =
       graph.SetExecutor("xyz", std::make_shared<ThreadPoolExecutor>(1));
@@ -4717,7 +4706,7 @@ TEST(CalculatorGraph, UndeclaredExecutor) {
   // ExecutorConfig, even if the executor is provided to the graph with a
   // CalculatorGraph::SetExecutor() call.
   CalculatorGraph graph;
-  MEDIAPIPE_ASSERT_OK(
+  MP_ASSERT_OK(
       graph.SetExecutor("xyz", std::make_shared<ThreadPoolExecutor>(1)));
   CalculatorGraphConfig config =
       ::mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
@@ -4761,7 +4750,7 @@ TEST(CalculatorGraph, UntypedExecutorDeclaredButNotSet) {
 TEST(CalculatorGraph, DuplicateExecutorConfig) {
   // More than one ExecutorConfig cannot have the same name.
   CalculatorGraph graph;
-  MEDIAPIPE_ASSERT_OK(
+  MP_ASSERT_OK(
       graph.SetExecutor("xyz", std::make_shared<ThreadPoolExecutor>(1)));
   CalculatorGraphConfig config =
       ::mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
@@ -4786,7 +4775,7 @@ TEST(CalculatorGraph, TypedExecutorDeclaredAndSet) {
   // If an executor is declared with a "type" field, it must not be provided
   // to the graph with a CalculatorGraph::SetExecutor() call.
   CalculatorGraph graph;
-  MEDIAPIPE_ASSERT_OK(
+  MP_ASSERT_OK(
       graph.SetExecutor("xyz", std::make_shared<ThreadPoolExecutor>(1)));
   CalculatorGraphConfig config =
       ::mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
@@ -4871,7 +4860,7 @@ TEST(CalculatorGraph, NumThreadsAndNonDefaultExecutorConfig) {
           output_stream: 'out'
         }
       )");
-  MEDIAPIPE_EXPECT_OK(graph.Initialize(config));
+  MP_EXPECT_OK(graph.Initialize(config));
 }
 
 // Verifies that the application thread is used only when
@@ -4906,14 +4895,14 @@ TEST(CalculatorGraph, RunWithNumThreadsInExecutorConfig) {
       config.mutable_executor(0)->set_type(cases[i].executor_type);
     }
     CalculatorGraph graph;
-    MEDIAPIPE_ASSERT_OK(graph.Initialize(config));
+    MP_ASSERT_OK(graph.Initialize(config));
     Packet out_packet;
-    MEDIAPIPE_ASSERT_OK(
+    MP_ASSERT_OK(
         graph.ObserveOutputStream("out", [&out_packet](const Packet& packet) {
           out_packet = packet;
           return ::mediapipe::OkStatus();
         }));
-    MEDIAPIPE_ASSERT_OK(graph.Run());
+    MP_ASSERT_OK(graph.Run());
     EXPECT_EQ(cases[i].use_app_thread_is_expected,
               out_packet.Get<pthread_t>() == pthread_self())
         << "for case " << i;
@@ -4940,9 +4929,9 @@ TEST(CalculatorGraph, SimulateAssertFailure) {
         input_stream: 'in_b'
       )");
   CalculatorGraph graph;
-  MEDIAPIPE_ASSERT_OK(graph.Initialize(config));
-  MEDIAPIPE_ASSERT_OK(graph.StartRun({}));
-  MEDIAPIPE_EXPECT_OK(graph.WaitUntilIdle());
+  MP_ASSERT_OK(graph.Initialize(config));
+  MP_ASSERT_OK(graph.StartRun({}));
+  MP_EXPECT_OK(graph.WaitUntilIdle());
 
   // End the test here to simulate an ASSERT_ failure, which will skip the
   // rest of the test and exit the test function immediately. The test should
@@ -4965,8 +4954,8 @@ TEST(CalculatorGraph, CheckInputTimestamp) {
         }
       )");
   CalculatorGraph graph;
-  MEDIAPIPE_ASSERT_OK(graph.Initialize(config));
-  MEDIAPIPE_ASSERT_OK(graph.Run());
+  MP_ASSERT_OK(graph.Initialize(config));
+  MP_ASSERT_OK(graph.Run());
 }
 
 // Verifies Calculator::InputTimestamp() returns the expected value in Open(),
@@ -4986,8 +4975,8 @@ TEST(CalculatorGraph, CheckInputTimestamp2) {
         }
       )");
   CalculatorGraph graph;
-  MEDIAPIPE_ASSERT_OK(graph.Initialize(config));
-  MEDIAPIPE_ASSERT_OK(graph.Run());
+  MP_ASSERT_OK(graph.Initialize(config));
+  MP_ASSERT_OK(graph.Run());
 }
 
 TEST(CalculatorGraph, CheckBatchProcessingBoundPropagation) {
@@ -5018,8 +5007,8 @@ TEST(CalculatorGraph, CheckBatchProcessingBoundPropagation) {
         node { calculator: 'IntSinkCalculator' input_stream: 'output' }
       )");
   CalculatorGraph graph;
-  MEDIAPIPE_ASSERT_OK(graph.Initialize(config));
-  MEDIAPIPE_ASSERT_OK(graph.Run());
+  MP_ASSERT_OK(graph.Initialize(config));
+  MP_ASSERT_OK(graph.Run());
 }
 
 TEST(CalculatorGraph, OutputSidePacketInProcess) {
@@ -5039,9 +5028,9 @@ TEST(CalculatorGraph, OutputSidePacketInProcess) {
         }
       )");
   CalculatorGraph graph;
-  MEDIAPIPE_ASSERT_OK(graph.Initialize(config));
+  MP_ASSERT_OK(graph.Initialize(config));
   std::vector<Packet> output_packets;
-  MEDIAPIPE_ASSERT_OK(graph.ObserveOutputStream(
+  MP_ASSERT_OK(graph.ObserveOutputStream(
       "output", [&output_packets](const Packet& packet) {
         output_packets.push_back(packet);
         return ::mediapipe::OkStatus();
@@ -5050,11 +5039,11 @@ TEST(CalculatorGraph, OutputSidePacketInProcess) {
   // Run the graph twice.
   for (int run = 0; run < 2; ++run) {
     output_packets.clear();
-    MEDIAPIPE_ASSERT_OK(graph.StartRun({}));
-    MEDIAPIPE_ASSERT_OK(graph.AddPacketToInputStream(
+    MP_ASSERT_OK(graph.StartRun({}));
+    MP_ASSERT_OK(graph.AddPacketToInputStream(
         "offset", MakePacket<TimestampDiff>(offset).At(Timestamp(0))));
-    MEDIAPIPE_ASSERT_OK(graph.CloseInputStream("offset"));
-    MEDIAPIPE_ASSERT_OK(graph.WaitUntilDone());
+    MP_ASSERT_OK(graph.CloseInputStream("offset"));
+    MP_ASSERT_OK(graph.WaitUntilDone());
     ASSERT_EQ(1, output_packets.size());
     EXPECT_EQ(offset, output_packets[0].Get<TimestampDiff>().Value());
   }
@@ -5072,15 +5061,15 @@ TEST(CalculatorGraph, OutputSidePacketAlreadySet) {
         }
       )");
   CalculatorGraph graph;
-  MEDIAPIPE_ASSERT_OK(graph.Initialize(config));
-  MEDIAPIPE_ASSERT_OK(graph.StartRun({}));
+  MP_ASSERT_OK(graph.Initialize(config));
+  MP_ASSERT_OK(graph.StartRun({}));
   // Send two input packets to cause OutputSidePacketInProcessCalculator to
   // set the output side packet twice.
-  MEDIAPIPE_ASSERT_OK(graph.AddPacketToInputStream(
+  MP_ASSERT_OK(graph.AddPacketToInputStream(
       "offset", MakePacket<TimestampDiff>(offset).At(Timestamp(0))));
-  MEDIAPIPE_ASSERT_OK(graph.AddPacketToInputStream(
+  MP_ASSERT_OK(graph.AddPacketToInputStream(
       "offset", MakePacket<TimestampDiff>(offset).At(Timestamp(1))));
-  MEDIAPIPE_ASSERT_OK(graph.CloseInputStream("offset"));
+  MP_ASSERT_OK(graph.CloseInputStream("offset"));
 
   ::mediapipe::Status status = graph.WaitUntilDone();
   EXPECT_EQ(status.code(), ::mediapipe::StatusCode::kAlreadyExists);
@@ -5099,15 +5088,15 @@ TEST(CalculatorGraph, OutputSidePacketWithTimestamp) {
         }
       )");
   CalculatorGraph graph;
-  MEDIAPIPE_ASSERT_OK(graph.Initialize(config));
-  MEDIAPIPE_ASSERT_OK(graph.StartRun({}));
+  MP_ASSERT_OK(graph.Initialize(config));
+  MP_ASSERT_OK(graph.StartRun({}));
   // The OutputSidePacketWithTimestampCalculator neglects to clear the
   // timestamp in the input packet when it copies the input packet to the
   // output side packet. The timestamp value should appear in the error
   // message.
-  MEDIAPIPE_ASSERT_OK(graph.AddPacketToInputStream(
+  MP_ASSERT_OK(graph.AddPacketToInputStream(
       "offset", MakePacket<TimestampDiff>(offset).At(Timestamp(237))));
-  MEDIAPIPE_ASSERT_OK(graph.CloseInputStream("offset"));
+  MP_ASSERT_OK(graph.CloseInputStream("offset"));
   ::mediapipe::Status status = graph.WaitUntilDone();
   EXPECT_EQ(status.code(), ::mediapipe::StatusCode::kInvalidArgument);
   EXPECT_THAT(status.message(), testing::HasSubstr("has a timestamp 237."));
@@ -5135,24 +5124,24 @@ TEST(CalculatorGraph, OutputSidePacketConsumedBySourceNode) {
         }
       )");
   CalculatorGraph graph;
-  MEDIAPIPE_ASSERT_OK(graph.Initialize(config));
+  MP_ASSERT_OK(graph.Initialize(config));
   std::vector<Packet> output_packets;
-  MEDIAPIPE_ASSERT_OK(graph.ObserveOutputStream(
+  MP_ASSERT_OK(graph.ObserveOutputStream(
       "output", [&output_packets](const Packet& packet) {
         output_packets.push_back(packet);
         return ::mediapipe::OkStatus();
       }));
-  MEDIAPIPE_ASSERT_OK(graph.StartRun({}));
+  MP_ASSERT_OK(graph.StartRun({}));
   // Wait until the graph is idle so that
   // Scheduler::TryToScheduleNextSourceLayer() gets called.
   // Scheduler::TryToScheduleNextSourceLayer() should not activate source
   // nodes that haven't been opened. We can't call graph.WaitUntilIdle()
   // because the graph has a source node.
   absl::SleepFor(absl::Milliseconds(10));
-  MEDIAPIPE_ASSERT_OK(graph.AddPacketToInputStream(
+  MP_ASSERT_OK(graph.AddPacketToInputStream(
       "max_count", MakePacket<int>(max_count).At(Timestamp(0))));
-  MEDIAPIPE_ASSERT_OK(graph.CloseInputStream("max_count"));
-  MEDIAPIPE_ASSERT_OK(graph.WaitUntilDone());
+  MP_ASSERT_OK(graph.CloseInputStream("max_count"));
+  MP_ASSERT_OK(graph.WaitUntilDone());
   ASSERT_EQ(max_count, output_packets.size());
   for (int i = 0; i < output_packets.size(); ++i) {
     EXPECT_EQ(i, output_packets[i].Get<int>());
@@ -5176,14 +5165,14 @@ TEST(CalculatorGraph, GraphInputStreamWithTag) {
   std::vector<Packet> packet_dump;
   tool::AddVectorSink("output_0", &config, &packet_dump);
   CalculatorGraph graph;
-  MEDIAPIPE_ASSERT_OK(graph.Initialize(config));
-  MEDIAPIPE_ASSERT_OK(graph.StartRun({}));
+  MP_ASSERT_OK(graph.Initialize(config));
+  MP_ASSERT_OK(graph.StartRun({}));
   for (int i = 0; i < 5; ++i) {
-    MEDIAPIPE_ASSERT_OK(graph.AddPacketToInputStream(
+    MP_ASSERT_OK(graph.AddPacketToInputStream(
         "video_metadata", MakePacket<int>(i).At(Timestamp(i))));
   }
-  MEDIAPIPE_ASSERT_OK(graph.CloseAllPacketSources());
-  MEDIAPIPE_ASSERT_OK(graph.WaitUntilDone());
+  MP_ASSERT_OK(graph.CloseAllPacketSources());
+  MP_ASSERT_OK(graph.WaitUntilDone());
   ASSERT_EQ(5, packet_dump.size());
 }
 
@@ -5272,7 +5261,7 @@ TEST(CalculatorGraph, SourceLayerInversion) {
         }
       )");
   CalculatorGraph graph;
-  MEDIAPIPE_ASSERT_OK(graph.Initialize(
+  MP_ASSERT_OK(graph.Initialize(
       config, {{"max_count", MakePacket<int>(max_count)},
                {"initial_value1", MakePacket<int>(initial_value1)}}));
   ::mediapipe::Status status = graph.Run();
@@ -5316,14 +5305,14 @@ TEST(CalculatorGraph, PacketGeneratorLikeCalculators) {
         }
       )");
   CalculatorGraph graph;
-  MEDIAPIPE_ASSERT_OK(graph.Initialize(config));
+  MP_ASSERT_OK(graph.Initialize(config));
   std::vector<Packet> output_packets;
-  MEDIAPIPE_ASSERT_OK(graph.ObserveOutputStream(
+  MP_ASSERT_OK(graph.ObserveOutputStream(
       "output", [&output_packets](const Packet& packet) {
         output_packets.push_back(packet);
         return ::mediapipe::OkStatus();
       }));
-  MEDIAPIPE_ASSERT_OK(graph.Run());
+  MP_ASSERT_OK(graph.Run());
   ASSERT_EQ(1, output_packets.size());
   EXPECT_EQ(3, output_packets[0].Get<int>());
   EXPECT_EQ(Timestamp::PostStream(), output_packets[0].Timestamp());
@@ -5345,9 +5334,9 @@ TEST(CalculatorGraph, OutputSummarySidePacketInClose) {
         }
       )");
   CalculatorGraph graph;
-  MEDIAPIPE_ASSERT_OK(graph.Initialize(config));
+  MP_ASSERT_OK(graph.Initialize(config));
   std::vector<Packet> output_packets;
-  MEDIAPIPE_ASSERT_OK(graph.ObserveOutputStream(
+  MP_ASSERT_OK(graph.ObserveOutputStream(
       "output", [&output_packets](const Packet& packet) {
         output_packets.push_back(packet);
         return ::mediapipe::OkStatus();
@@ -5357,13 +5346,13 @@ TEST(CalculatorGraph, OutputSummarySidePacketInClose) {
   int max_count = 100;
   for (int run = 0; run < 1; ++run) {
     output_packets.clear();
-    MEDIAPIPE_ASSERT_OK(graph.StartRun({}));
+    MP_ASSERT_OK(graph.StartRun({}));
     for (int i = 0; i < max_count; ++i) {
-      MEDIAPIPE_ASSERT_OK(graph.AddPacketToInputStream(
+      MP_ASSERT_OK(graph.AddPacketToInputStream(
           "input_packets", MakePacket<int>(i).At(Timestamp(i))));
     }
-    MEDIAPIPE_ASSERT_OK(graph.CloseInputStream("input_packets"));
-    MEDIAPIPE_ASSERT_OK(graph.WaitUntilDone());
+    MP_ASSERT_OK(graph.CloseInputStream("input_packets"));
+    MP_ASSERT_OK(graph.WaitUntilDone());
     ASSERT_EQ(1, output_packets.size());
     EXPECT_EQ(max_count, output_packets[0].Get<int>());
     EXPECT_EQ(Timestamp::PostStream(), output_packets[0].Timestamp());
@@ -5390,12 +5379,12 @@ TEST(CalculatorGraph, GetOutputSidePacket) {
         }
       )");
   CalculatorGraph graph;
-  MEDIAPIPE_ASSERT_OK(graph.Initialize(config));
+  MP_ASSERT_OK(graph.Initialize(config));
   // Check a packet generated by the PacketGenerator, which is available after
   // graph initialization, can be fetched before graph starts.
   ::mediapipe::StatusOr<Packet> status_or_packet =
       graph.GetOutputSidePacket("output_uint64");
-  MEDIAPIPE_ASSERT_OK(status_or_packet);
+  MP_ASSERT_OK(status_or_packet);
   EXPECT_EQ(Timestamp::Unset(), status_or_packet.ValueOrDie().Timestamp());
   // IntSplitterPacketGenerator is missing its input side packet and we
   // won't be able to get its output side packet now.
@@ -5407,15 +5396,15 @@ TEST(CalculatorGraph, GetOutputSidePacket) {
   std::map<std::string, Packet> extra_side_packets;
   extra_side_packets.insert({"input_uint64", MakePacket<uint64>(1123)});
   for (int run = 0; run < 1; ++run) {
-    MEDIAPIPE_ASSERT_OK(graph.StartRun(extra_side_packets));
+    MP_ASSERT_OK(graph.StartRun(extra_side_packets));
     status_or_packet = graph.GetOutputSidePacket("output_uint32_pair");
-    MEDIAPIPE_ASSERT_OK(status_or_packet);
+    MP_ASSERT_OK(status_or_packet);
     EXPECT_EQ(Timestamp::Unset(), status_or_packet.ValueOrDie().Timestamp());
     for (int i = 0; i < max_count; ++i) {
-      MEDIAPIPE_ASSERT_OK(graph.AddPacketToInputStream(
+      MP_ASSERT_OK(graph.AddPacketToInputStream(
           "input_packets", MakePacket<int>(i).At(Timestamp(i))));
     }
-    MEDIAPIPE_ASSERT_OK(graph.CloseInputStream("input_packets"));
+    MP_ASSERT_OK(graph.CloseInputStream("input_packets"));
 
     // Should return NOT_FOUND for invalid side packets.
     status_or_packet = graph.GetOutputSidePacket("unknown");
@@ -5430,23 +5419,23 @@ TEST(CalculatorGraph, GetOutputSidePacket) {
               status_or_packet.status().code());
     // Should stil return a base even before graph is done.
     status_or_packet = graph.GetOutputSidePacket("output_uint64");
-    MEDIAPIPE_ASSERT_OK(status_or_packet);
+    MP_ASSERT_OK(status_or_packet);
     EXPECT_EQ(Timestamp::Unset(), status_or_packet.ValueOrDie().Timestamp());
 
-    MEDIAPIPE_ASSERT_OK(graph.WaitUntilDone());
+    MP_ASSERT_OK(graph.WaitUntilDone());
 
     // Check packets are available after graph is done.
     status_or_packet = graph.GetOutputSidePacket("num_of_packets");
-    MEDIAPIPE_ASSERT_OK(status_or_packet);
+    MP_ASSERT_OK(status_or_packet);
     EXPECT_EQ(max_count, status_or_packet.ValueOrDie().Get<int>());
     EXPECT_EQ(Timestamp::Unset(), status_or_packet.ValueOrDie().Timestamp());
     // Should still return a base packet after graph is done.
     status_or_packet = graph.GetOutputSidePacket("output_uint64");
-    MEDIAPIPE_ASSERT_OK(status_or_packet);
+    MP_ASSERT_OK(status_or_packet);
     EXPECT_EQ(Timestamp::Unset(), status_or_packet.ValueOrDie().Timestamp());
     // Should still return a non-base packet after graph is done.
     status_or_packet = graph.GetOutputSidePacket("output_uint32_pair");
-    MEDIAPIPE_ASSERT_OK(status_or_packet);
+    MP_ASSERT_OK(status_or_packet);
     EXPECT_EQ(Timestamp::Unset(), status_or_packet.ValueOrDie().Timestamp());
   }
 }
@@ -5461,11 +5450,11 @@ TEST(CalculatorGraph, TestPollPacket) {
   node->add_input_side_packet("MAX_COUNT:max_count");
 
   CalculatorGraph graph;
-  MEDIAPIPE_ASSERT_OK(graph.Initialize(config));
+  MP_ASSERT_OK(graph.Initialize(config));
   auto status_or_poller = graph.AddOutputStreamPoller("output");
   ASSERT_TRUE(status_or_poller.ok());
   OutputStreamPoller poller = std::move(status_or_poller.ValueOrDie());
-  MEDIAPIPE_ASSERT_OK(
+  MP_ASSERT_OK(
       graph.StartRun({{"max_count", MakePacket<int>(kDefaultMaxCount)}}));
   Packet packet;
   int num_packets = 0;
@@ -5473,8 +5462,8 @@ TEST(CalculatorGraph, TestPollPacket) {
     EXPECT_EQ(num_packets, packet.Get<int>());
     ++num_packets;
   }
-  MEDIAPIPE_ASSERT_OK(graph.CloseAllPacketSources());
-  MEDIAPIPE_ASSERT_OK(graph.WaitUntilDone());
+  MP_ASSERT_OK(graph.CloseAllPacketSources());
+  MP_ASSERT_OK(graph.WaitUntilDone());
   EXPECT_FALSE(poller.Next(&packet));
   EXPECT_EQ(kDefaultMaxCount, num_packets);
 }
@@ -5488,12 +5477,12 @@ TEST(CalculatorGraph, TestOutputStreamPollerDesiredQueueSize) {
 
   for (int queue_size = 1; queue_size < 10; ++queue_size) {
     CalculatorGraph graph;
-    MEDIAPIPE_ASSERT_OK(graph.Initialize(config));
+    MP_ASSERT_OK(graph.Initialize(config));
     auto status_or_poller = graph.AddOutputStreamPoller("output");
     ASSERT_TRUE(status_or_poller.ok());
     OutputStreamPoller poller = std::move(status_or_poller.ValueOrDie());
     poller.SetMaxQueueSize(queue_size);
-    MEDIAPIPE_ASSERT_OK(
+    MP_ASSERT_OK(
         graph.StartRun({{"max_count", MakePacket<int>(kDefaultMaxCount)}}));
     Packet packet;
     int num_packets = 0;
@@ -5501,8 +5490,8 @@ TEST(CalculatorGraph, TestOutputStreamPollerDesiredQueueSize) {
       EXPECT_EQ(num_packets, packet.Get<int>());
       ++num_packets;
     }
-    MEDIAPIPE_ASSERT_OK(graph.CloseAllPacketSources());
-    MEDIAPIPE_ASSERT_OK(graph.WaitUntilDone());
+    MP_ASSERT_OK(graph.CloseAllPacketSources());
+    MP_ASSERT_OK(graph.WaitUntilDone());
     EXPECT_FALSE(poller.Next(&packet));
     EXPECT_EQ(kDefaultMaxCount, num_packets);
   }
@@ -5520,14 +5509,14 @@ TEST(CalculatorGraph, TestPollPacketsFromMultipleStreams) {
   node2->add_output_stream("stream2");
 
   CalculatorGraph graph;
-  MEDIAPIPE_ASSERT_OK(graph.Initialize(config));
+  MP_ASSERT_OK(graph.Initialize(config));
   auto status_or_poller1 = graph.AddOutputStreamPoller("stream1");
   ASSERT_TRUE(status_or_poller1.ok());
   OutputStreamPoller poller1 = std::move(status_or_poller1.ValueOrDie());
   auto status_or_poller2 = graph.AddOutputStreamPoller("stream2");
   ASSERT_TRUE(status_or_poller2.ok());
   OutputStreamPoller poller2 = std::move(status_or_poller2.ValueOrDie());
-  MEDIAPIPE_ASSERT_OK(
+  MP_ASSERT_OK(
       graph.StartRun({{"max_count", MakePacket<int>(kDefaultMaxCount)}}));
   Packet packet1;
   Packet packet2;
@@ -5546,8 +5535,8 @@ TEST(CalculatorGraph, TestPollPacketsFromMultipleStreams) {
       --running_pollers;
     }
   }
-  MEDIAPIPE_ASSERT_OK(graph.CloseAllPacketSources());
-  MEDIAPIPE_ASSERT_OK(graph.WaitUntilDone());
+  MP_ASSERT_OK(graph.CloseAllPacketSources());
+  MP_ASSERT_OK(graph.WaitUntilDone());
   EXPECT_FALSE(poller1.Next(&packet1));
   EXPECT_FALSE(poller2.Next(&packet2));
   EXPECT_EQ(kDefaultMaxCount, num_packets1);
@@ -5577,21 +5566,21 @@ TEST(CalculatorGraph, SimpleMuxCalculatorWithCustomInputStreamHandler) {
   std::vector<Packet> packet_dump;
   tool::AddVectorSink("output", &config, &packet_dump);
 
-  MEDIAPIPE_ASSERT_OK(graph.Initialize(config));
-  MEDIAPIPE_ASSERT_OK(graph.StartRun({}));
+  MP_ASSERT_OK(graph.Initialize(config));
+  MP_ASSERT_OK(graph.StartRun({}));
 
   // Send packets to input stream "input0" at timestamps 0 and 1 consecutively.
   Timestamp input0_timestamp = Timestamp(0);
-  MEDIAPIPE_EXPECT_OK(graph.AddPacketToInputStream(
+  MP_EXPECT_OK(graph.AddPacketToInputStream(
       "input0", MakePacket<int>(1).At(input0_timestamp)));
-  MEDIAPIPE_ASSERT_OK(graph.WaitUntilIdle());
+  MP_ASSERT_OK(graph.WaitUntilIdle());
   ASSERT_EQ(1, packet_dump.size());
   EXPECT_EQ(1, packet_dump[0].Get<int>());
 
   ++input0_timestamp;
-  MEDIAPIPE_EXPECT_OK(graph.AddPacketToInputStream(
+  MP_EXPECT_OK(graph.AddPacketToInputStream(
       "input0", MakePacket<int>(3).At(input0_timestamp)));
-  MEDIAPIPE_ASSERT_OK(graph.WaitUntilIdle());
+  MP_ASSERT_OK(graph.WaitUntilIdle());
   ASSERT_EQ(2, packet_dump.size());
   EXPECT_EQ(3, packet_dump[1].Get<int>());
 
@@ -5600,7 +5589,7 @@ TEST(CalculatorGraph, SimpleMuxCalculatorWithCustomInputStreamHandler) {
   // in a mismatch in timestamps as the SimpleMuxCalculator doesn't handle
   // inputs from all streams in monotonically increasing order of timestamps.
   Timestamp input1_timestamp = Timestamp(0);
-  MEDIAPIPE_EXPECT_OK(graph.AddPacketToInputStream(
+  MP_EXPECT_OK(graph.AddPacketToInputStream(
       "input1", MakePacket<int>(2).At(input1_timestamp)));
   ::mediapipe::Status run_status = graph.WaitUntilIdle();
   EXPECT_THAT(

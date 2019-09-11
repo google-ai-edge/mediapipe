@@ -22,7 +22,7 @@ load("//mediapipe/framework/port:build_config.bzl", "mediapipe_cc_proto_library"
 proto_library(
     name = "graph_tensors_packet_generator_proto",
     srcs = ["graph_tensors_packet_generator.proto"],
-    visibility = ["//mediapipe:__subpackages__"],
+    visibility = ["//visibility:public"],
     deps = [
         "//mediapipe/framework:calculator_proto",
         "//mediapipe/framework:packet_generator_proto",
@@ -118,7 +118,7 @@ mediapipe_cc_proto_library(
         "//mediapipe/framework:calculator_cc_proto",
         "//mediapipe/framework:packet_generator_cc_proto",
     ],
-    visibility = ["//mediapipe:__subpackages__"],
+    visibility = ["//visibility:public"],
     deps = [":graph_tensors_packet_generator_proto"],
 )
 
@@ -129,7 +129,7 @@ mediapipe_cc_proto_library(
         "//mediapipe/framework:calculator_cc_proto",
         "@org_tensorflow//tensorflow/core:protos_all_cc",
     ],
-    visibility = ["//mediapipe:__subpackages__"],
+    visibility = ["//visibility:public"],
     deps = [":image_frame_to_tensor_calculator_proto"],
 )
 
@@ -137,7 +137,7 @@ mediapipe_cc_proto_library(
     name = "matrix_to_tensor_calculator_options_cc_proto",
     srcs = ["matrix_to_tensor_calculator_options.proto"],
     cc_deps = ["//mediapipe/framework:calculator_cc_proto"],
-    visibility = ["//mediapipe:__subpackages__"],
+    visibility = ["//visibility:public"],
     deps = [":matrix_to_tensor_calculator_options_proto"],
 )
 
@@ -145,7 +145,7 @@ mediapipe_cc_proto_library(
     name = "lapped_tensor_buffer_calculator_cc_proto",
     srcs = ["lapped_tensor_buffer_calculator.proto"],
     cc_deps = ["//mediapipe/framework:calculator_cc_proto"],
-    visibility = ["//mediapipe:__subpackages__"],
+    visibility = ["//visibility:public"],
     deps = [":lapped_tensor_buffer_calculator_proto"],
 )
 
@@ -153,7 +153,7 @@ mediapipe_cc_proto_library(
     name = "object_detection_tensors_to_detections_calculator_cc_proto",
     srcs = ["object_detection_tensors_to_detections_calculator.proto"],
     cc_deps = ["//mediapipe/framework:calculator_cc_proto"],
-    visibility = ["//mediapipe:__subpackages__"],
+    visibility = ["//visibility:public"],
     deps = [":object_detection_tensors_to_detections_calculator_proto"],
 )
 
@@ -164,7 +164,7 @@ mediapipe_cc_proto_library(
         "//mediapipe/framework:calculator_cc_proto",
         "@org_tensorflow//tensorflow/core:protos_all_cc",
     ],
-    visibility = ["//mediapipe:__subpackages__"],
+    visibility = ["//visibility:public"],
     deps = [":pack_media_sequence_calculator_proto"],
 )
 
@@ -172,7 +172,7 @@ mediapipe_cc_proto_library(
     name = "tensorflow_inference_calculator_cc_proto",
     srcs = ["tensorflow_inference_calculator.proto"],
     cc_deps = ["//mediapipe/framework:calculator_cc_proto"],
-    visibility = ["//mediapipe:__subpackages__"],
+    visibility = ["//visibility:public"],
     deps = [":tensorflow_inference_calculator_proto"],
 )
 
@@ -183,7 +183,7 @@ mediapipe_cc_proto_library(
         "//mediapipe/framework:packet_generator_cc_proto",
         "@org_tensorflow//tensorflow/core:protos_all_cc",
     ],
-    visibility = ["//mediapipe:__subpackages__"],
+    visibility = ["//visibility:public"],
     deps = [":tensorflow_session_from_frozen_graph_generator_proto"],
 )
 
@@ -194,7 +194,7 @@ mediapipe_cc_proto_library(
         "//mediapipe/framework:calculator_cc_proto",
         "@org_tensorflow//tensorflow/core:protos_all_cc",
     ],
-    visibility = ["//mediapipe:__subpackages__"],
+    visibility = ["//visibility:public"],
     deps = [":tensorflow_session_from_frozen_graph_calculator_proto"],
 )
 
@@ -202,7 +202,7 @@ mediapipe_cc_proto_library(
     name = "tensorflow_session_from_saved_model_generator_cc_proto",
     srcs = ["tensorflow_session_from_saved_model_generator.proto"],
     cc_deps = ["//mediapipe/framework:packet_generator_cc_proto"],
-    visibility = ["//mediapipe:__subpackages__"],
+    visibility = ["//visibility:public"],
     deps = [":tensorflow_session_from_saved_model_generator_proto"],
 )
 
@@ -210,7 +210,7 @@ mediapipe_cc_proto_library(
     name = "tensorflow_session_from_saved_model_calculator_cc_proto",
     srcs = ["tensorflow_session_from_saved_model_calculator.proto"],
     cc_deps = ["//mediapipe/framework:calculator_cc_proto"],
-    visibility = ["//mediapipe:__subpackages__"],
+    visibility = ["//visibility:public"],
     deps = [":tensorflow_session_from_saved_model_calculator_proto"],
 )
 
@@ -218,7 +218,7 @@ mediapipe_cc_proto_library(
     name = "tensor_squeeze_dimensions_calculator_cc_proto",
     srcs = ["tensor_squeeze_dimensions_calculator.proto"],
     cc_deps = ["//mediapipe/framework:calculator_cc_proto"],
-    visibility = ["//mediapipe:__subpackages__"],
+    visibility = ["//visibility:public"],
     deps = [":tensor_squeeze_dimensions_calculator_proto"],
 )
 
@@ -226,7 +226,7 @@ mediapipe_cc_proto_library(
     name = "tensor_to_image_frame_calculator_cc_proto",
     srcs = ["tensor_to_image_frame_calculator.proto"],
     cc_deps = ["//mediapipe/framework:calculator_cc_proto"],
-    visibility = ["//mediapipe:__subpackages__"],
+    visibility = ["//visibility:public"],
     deps = [":tensor_to_image_frame_calculator_proto"],
 )
 
@@ -237,7 +237,7 @@ mediapipe_cc_proto_library(
         "//mediapipe/framework:calculator_cc_proto",
         "//mediapipe/framework/formats:time_series_header_cc_proto",
     ],
-    visibility = ["//mediapipe:__subpackages__"],
+    visibility = ["//visibility:public"],
     deps = [":tensor_to_matrix_calculator_proto"],
 )
 
@@ -245,7 +245,7 @@ mediapipe_cc_proto_library(
     name = "tensor_to_vector_float_calculator_options_cc_proto",
     srcs = ["tensor_to_vector_float_calculator_options.proto"],
     cc_deps = ["//mediapipe/framework:calculator_cc_proto"],
-    visibility = ["//mediapipe:__subpackages__"],
+    visibility = ["//visibility:public"],
     deps = [":tensor_to_vector_float_calculator_options_proto"],
 )
 
@@ -256,7 +256,7 @@ mediapipe_cc_proto_library(
         "//mediapipe/calculators/core:packet_resampler_calculator_cc_proto",
         "//mediapipe/framework:calculator_cc_proto",
     ],
-    visibility = ["//mediapipe:__subpackages__"],
+    visibility = ["//visibility:public"],
     deps = [":unpack_media_sequence_calculator_proto"],
 )
 
@@ -264,7 +264,7 @@ mediapipe_cc_proto_library(
     name = "vector_float_to_tensor_calculator_options_cc_proto",
     srcs = ["vector_float_to_tensor_calculator_options.proto"],
     cc_deps = ["//mediapipe/framework:calculator_cc_proto"],
-    visibility = ["//mediapipe:__subpackages__"],
+    visibility = ["//visibility:public"],
     deps = [":vector_float_to_tensor_calculator_options_proto"],
 )
 

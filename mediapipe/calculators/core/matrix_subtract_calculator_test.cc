@@ -112,7 +112,7 @@ TEST(MatrixSubtractCalculatorTest, SubtractFromInput) {
   runner.MutableInputs()->Tag("MINUEND").packets.push_back(
       Adopt(input_matrix).At(Timestamp(0)));
 
-  MEDIAPIPE_ASSERT_OK(runner.Run());
+  MP_ASSERT_OK(runner.Run());
   EXPECT_EQ(1, runner.Outputs().Index(0).packets.size());
 
   EXPECT_EQ(Timestamp(0), runner.Outputs().Index(0).packets[0].Timestamp());
@@ -142,7 +142,7 @@ TEST(MatrixSubtractCalculatorTest, SubtractFromSideMatrix) {
       ->Tag("SUBTRAHEND")
       .packets.push_back(Adopt(input_matrix).At(Timestamp(0)));
 
-  MEDIAPIPE_ASSERT_OK(runner.Run());
+  MP_ASSERT_OK(runner.Run());
   EXPECT_EQ(1, runner.Outputs().Index(0).packets.size());
 
   EXPECT_EQ(Timestamp(0), runner.Outputs().Index(0).packets[0].Timestamp());

@@ -87,7 +87,7 @@ TEST(PacketFrequencyCalculatorTest, MultiPacketTest) {
       Adopt(new int).At(Timestamp(9000000)));
 
   // Run the calculator.
-  MEDIAPIPE_ASSERT_OK(runner.Run()) << "Calculator execution failed.";
+  MP_ASSERT_OK(runner.Run()) << "Calculator execution failed.";
   const std::vector<Packet>& output_packets = runner.Outputs().Index(0).packets;
 
   // Very first packet. So frequency is zero.
@@ -153,7 +153,7 @@ TEST(PacketFrequencyCalculatorTest, MultiStreamTest) {
       Adopt(new std::string).At(Timestamp(3000000)));
 
   // Run the calculator.
-  MEDIAPIPE_ASSERT_OK(runner.Run()) << "Calculator execution failed.";
+  MP_ASSERT_OK(runner.Run()) << "Calculator execution failed.";
   const std::vector<Packet>& output_packets_stream_1 =
       runner.Outputs().Index(0).packets;
   const std::vector<Packet>& output_packets_stream_2 =

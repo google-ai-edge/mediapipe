@@ -32,7 +32,7 @@ class GateCalculatorTest : public ::testing::Test {
         ->Tag(control_tag)
         .packets.push_back(MakePacket<bool>(control).At(Timestamp(timestamp)));
 
-    MEDIAPIPE_ASSERT_OK(runner_->Run()) << "Calculator execution failed.";
+    MP_ASSERT_OK(runner_->Run()) << "Calculator execution failed.";
   }
 
   void SetRunner(const std::string& proto) {

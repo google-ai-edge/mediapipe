@@ -188,7 +188,7 @@ TEST(CalculatorGraphStoppingTest, CloseAllPacketSources) {
   )",
                                                     &graph_config));
   CalculatorGraph graph;
-  MEDIAPIPE_ASSERT_OK(graph.Initialize(graph_config, {}));
+  MP_ASSERT_OK(graph.Initialize(graph_config, {}));
 
   // Observe output packets, and call CloseAllPacketSources after kNumPackets.
   std::vector<Packet> out_packets;
@@ -196,37 +196,37 @@ TEST(CalculatorGraphStoppingTest, CloseAllPacketSources) {
   std::vector<int> event_packets;
   std::vector<int> event_out_packets;
   int kNumPackets = 8;
-  MEDIAPIPE_ASSERT_OK(graph.ObserveOutputStream(  //
+  MP_ASSERT_OK(graph.ObserveOutputStream(  //
       "input_out", [&](const Packet& packet) {
         out_packets.push_back(packet);
         if (out_packets.size() >= kNumPackets) {
-          MEDIAPIPE_EXPECT_OK(graph.CloseAllPacketSources());
+          MP_EXPECT_OK(graph.CloseAllPacketSources());
         }
         return ::mediapipe::OkStatus();
       }));
-  MEDIAPIPE_ASSERT_OK(graph.ObserveOutputStream(  //
+  MP_ASSERT_OK(graph.ObserveOutputStream(  //
       "count_out", [&](const Packet& packet) {
         count_packets.push_back(packet);
         return ::mediapipe::OkStatus();
       }));
-  MEDIAPIPE_ASSERT_OK(graph.ObserveOutputStream(  //
+  MP_ASSERT_OK(graph.ObserveOutputStream(  //
       "event", [&](const Packet& packet) {
         event_packets.push_back(packet.Get<int>());
         return ::mediapipe::OkStatus();
       }));
-  MEDIAPIPE_ASSERT_OK(graph.ObserveOutputStream(  //
+  MP_ASSERT_OK(graph.ObserveOutputStream(  //
       "event_out", [&](const Packet& packet) {
         event_out_packets.push_back(packet.Get<int>());
         return ::mediapipe::OkStatus();
       }));
-  MEDIAPIPE_ASSERT_OK(graph.StartRun({}));
+  MP_ASSERT_OK(graph.StartRun({}));
   for (int i = 0; i < kNumPackets; ++i) {
-    MEDIAPIPE_EXPECT_OK(graph.AddPacketToInputStream(
+    MP_EXPECT_OK(graph.AddPacketToInputStream(
         "input", MakePacket<int>(i).At(Timestamp(i))));
   }
 
   // The graph run should complete with no error status.
-  MEDIAPIPE_EXPECT_OK(graph.WaitUntilDone());
+  MP_EXPECT_OK(graph.WaitUntilDone());
   EXPECT_EQ(kNumPackets, out_packets.size());
   EXPECT_LE(kNumPackets, count_packets.size());
   std::vector<int> expected_events = {1, 2};
@@ -254,11 +254,11 @@ TEST(CalculatorGraphStoppingTest, DeadlockReporting) {
       )",
                                                     &config));
   CalculatorGraph graph;
-  MEDIAPIPE_ASSERT_OK(graph.Initialize(config));
+  MP_ASSERT_OK(graph.Initialize(config));
   graph.SetGraphInputStreamAddMode(
       CalculatorGraph::GraphInputStreamAddMode::WAIT_TILL_NOT_FULL);
   std::vector<Packet> out_packets;
-  MEDIAPIPE_ASSERT_OK(
+  MP_ASSERT_OK(
       graph.ObserveOutputStream("out_1", [&out_packets](const Packet& packet) {
         out_packets.push_back(packet);
         return ::mediapipe::OkStatus();
@@ -278,15 +278,15 @@ TEST(CalculatorGraphStoppingTest, DeadlockReporting) {
   };
 
   // Start the graph.
-  MEDIAPIPE_ASSERT_OK(graph.StartRun({
+  MP_ASSERT_OK(graph.StartRun({
       {"callback_1", AdoptAsUniquePtr(new auto(callback_1))},
   }));
 
   // Add 3 packets to "in_1" with no packets on "in_2".
   // This causes throttling and deadlock with max_queue_size 2.
   semaphore.Release(3);
-  MEDIAPIPE_EXPECT_OK(add_packet("in_1", 1));
-  MEDIAPIPE_EXPECT_OK(add_packet("in_1", 2));
+  MP_EXPECT_OK(add_packet("in_1", 1));
+  MP_EXPECT_OK(add_packet("in_1", 2));
   EXPECT_FALSE(add_packet("in_1", 3).ok());
 
   ::mediapipe::Status status = graph.WaitUntilIdle();
@@ -295,7 +295,7 @@ TEST(CalculatorGraphStoppingTest, DeadlockReporting) {
       status.message(),
       testing::HasSubstr("Detected a deadlock due to input throttling"));
 
-  MEDIAPIPE_ASSERT_OK(graph.CloseAllInputStreams());
+  MP_ASSERT_OK(graph.CloseAllInputStreams());
   EXPECT_FALSE(graph.WaitUntilDone().ok());
   ASSERT_EQ(0, out_packets.size());
 }
@@ -319,11 +319,11 @@ TEST(CalculatorGraphStoppingTest, DeadlockResolution) {
       )",
                                                     &config));
   CalculatorGraph graph;
-  MEDIAPIPE_ASSERT_OK(graph.Initialize(config));
+  MP_ASSERT_OK(graph.Initialize(config));
   graph.SetGraphInputStreamAddMode(
       CalculatorGraph::GraphInputStreamAddMode::WAIT_TILL_NOT_FULL);
   std::vector<Packet> out_packets;
-  MEDIAPIPE_ASSERT_OK(
+  MP_ASSERT_OK(
       graph.ObserveOutputStream("out_1", [&out_packets](const Packet& packet) {
         out_packets.push_back(packet);
         return ::mediapipe::OkStatus();
@@ -343,7 +343,7 @@ TEST(CalculatorGraphStoppingTest, DeadlockResolution) {
   };
 
   // Start the graph.
-  MEDIAPIPE_ASSERT_OK(graph.StartRun({
+  MP_ASSERT_OK(graph.StartRun({
       {"callback_1", AdoptAsUniquePtr(new auto(callback_1))},
   }));
 
@@ -351,19 +351,19 @@ TEST(CalculatorGraphStoppingTest, DeadlockResolution) {
   // This grows the input stream "in_1" to max-queue-size 10.
   semaphore.Release(9);
   for (int i = 1; i <= 9; ++i) {
-    MEDIAPIPE_EXPECT_OK(add_packet("in_1", i));
-    MEDIAPIPE_ASSERT_OK(graph.WaitUntilIdle());
+    MP_EXPECT_OK(add_packet("in_1", i));
+    MP_ASSERT_OK(graph.WaitUntilIdle());
   }
 
   // Advance the timestamp-bound and flush "in_1".
   semaphore.Release(1);
-  MEDIAPIPE_EXPECT_OK(add_packet("in_2", 30));
-  MEDIAPIPE_ASSERT_OK(graph.WaitUntilIdle());
+  MP_EXPECT_OK(add_packet("in_2", 30));
+  MP_ASSERT_OK(graph.WaitUntilIdle());
 
   // Fill up input stream "in_1", with the semaphore blocked and deadlock
   // resolution disabled.
   for (int i = 11; i < 23; ++i) {
-    MEDIAPIPE_EXPECT_OK(add_packet("in_1", i));
+    MP_EXPECT_OK(add_packet("in_1", i));
   }
 
   // Adding any more packets fails with error "Graph is throttled".
@@ -374,9 +374,9 @@ TEST(CalculatorGraphStoppingTest, DeadlockResolution) {
   // Allow the 12 blocked calls to "callback_1" to complete.
   semaphore.Release(12);
 
-  MEDIAPIPE_ASSERT_OK(graph.WaitUntilIdle());
-  MEDIAPIPE_ASSERT_OK(graph.CloseAllInputStreams());
-  MEDIAPIPE_ASSERT_OK(graph.WaitUntilDone());
+  MP_ASSERT_OK(graph.WaitUntilIdle());
+  MP_ASSERT_OK(graph.CloseAllInputStreams());
+  MP_ASSERT_OK(graph.WaitUntilDone());
   ASSERT_EQ(21, out_packets.size());
 }
 

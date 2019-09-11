@@ -79,10 +79,10 @@ TEST(StatusTest, CombinedStatus) {
   errors.clear();
   errors.emplace_back(::mediapipe::StatusCode::kOk, "error_with_this_string");
   errors.emplace_back(::mediapipe::StatusCode::kOk, "error_with_that_string");
-  MEDIAPIPE_EXPECT_OK(tool::CombinedStatus(prefix_error_message, errors));
+  MP_EXPECT_OK(tool::CombinedStatus(prefix_error_message, errors));
 
   errors.clear();
-  MEDIAPIPE_EXPECT_OK(tool::CombinedStatus(prefix_error_message, errors));
+  MP_EXPECT_OK(tool::CombinedStatus(prefix_error_message, errors));
 }
 
 // Verify tool::StatusInvalid() and tool::StatusFail() and the alternatives

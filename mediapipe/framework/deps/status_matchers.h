@@ -18,11 +18,7 @@
 #include "gtest/gtest.h"
 #include "mediapipe/framework/deps/status.h"
 
-// EXPECT_OK marco is already defined in our external dependency library
-// protobuf. To be consistent with MEDIAPIPE_EXPECT_OK, we also add prefix
-// MEDIAPIPE_ to ASSERT_OK. We prefer to use the marcos with MEDIAPIPE_ prefix
-// in mediapipe's codebase.
-#define MEDIAPIPE_EXPECT_OK(statement) EXPECT_TRUE((statement).ok())
-#define MEDIAPIPE_ASSERT_OK(statement) ASSERT_TRUE((statement).ok())
+#define MP_EXPECT_OK(statement) EXPECT_TRUE((statement).ok())
+#define MP_ASSERT_OK(statement) ASSERT_TRUE((statement).ok())
 
 #endif  // MEDIAPIPE_DEPS_STATUS_MATCHERS_H_

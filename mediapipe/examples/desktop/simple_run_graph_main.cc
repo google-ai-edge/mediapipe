@@ -33,7 +33,7 @@ DEFINE_string(input_side_packets, "",
 
 ::mediapipe::Status RunMPPGraph() {
   std::string calculator_graph_config_contents;
-  RETURN_IF_ERROR(mediapipe::file::GetContents(
+  MP_RETURN_IF_ERROR(mediapipe::file::GetContents(
       FLAGS_calculator_graph_config_file, &calculator_graph_config_contents));
   LOG(INFO) << "Get calculator graph config contents: "
             << calculator_graph_config_contents;
@@ -52,7 +52,7 @@ DEFINE_string(input_side_packets, "",
   }
   LOG(INFO) << "Initialize the calculator graph.";
   mediapipe::CalculatorGraph graph;
-  RETURN_IF_ERROR(graph.Initialize(config, input_side_packets));
+  MP_RETURN_IF_ERROR(graph.Initialize(config, input_side_packets));
   LOG(INFO) << "Start running the calculator graph.";
   return graph.Run();
 }

@@ -74,11 +74,11 @@ TEST(PreviousLoopbackCalculator, CorrectTimestamps) {
   tool::AddVectorSink("pair", &graph_config_, &in_prev);
 
   CalculatorGraph graph_;
-  MEDIAPIPE_ASSERT_OK(graph_.Initialize(graph_config_, {}));
-  MEDIAPIPE_ASSERT_OK(graph_.StartRun({}));
+  MP_ASSERT_OK(graph_.Initialize(graph_config_, {}));
+  MP_ASSERT_OK(graph_.StartRun({}));
 
   auto send_packet = [&graph_](const std::string& input_name, int n) {
-    MEDIAPIPE_EXPECT_OK(graph_.AddPacketToInputStream(
+    MP_EXPECT_OK(graph_.AddPacketToInputStream(
         input_name, MakePacket<int>(n).At(Timestamp(n))));
   };
   auto pair_values = [](const Packet& packet) {
@@ -89,22 +89,22 @@ TEST(PreviousLoopbackCalculator, CorrectTimestamps) {
   };
 
   send_packet("in", 1);
-  MEDIAPIPE_EXPECT_OK(graph_.WaitUntilIdle());
+  MP_EXPECT_OK(graph_.WaitUntilIdle());
   EXPECT_EQ(TimestampValues(in_prev), (std::vector<int64>{1}));
   EXPECT_EQ(pair_values(in_prev.back()), std::make_pair(1, -1));
 
   send_packet("in", 5);
-  MEDIAPIPE_EXPECT_OK(graph_.WaitUntilIdle());
+  MP_EXPECT_OK(graph_.WaitUntilIdle());
   EXPECT_EQ(TimestampValues(in_prev), (std::vector<int64>{1, 5}));
   EXPECT_EQ(pair_values(in_prev.back()), std::make_pair(5, 1));
 
   send_packet("in", 15);
-  MEDIAPIPE_EXPECT_OK(graph_.WaitUntilIdle());
+  MP_EXPECT_OK(graph_.WaitUntilIdle());
   EXPECT_EQ(TimestampValues(in_prev), (std::vector<int64>{1, 5, 15}));
   EXPECT_EQ(pair_values(in_prev.back()), std::make_pair(15, 5));
 
-  MEDIAPIPE_EXPECT_OK(graph_.CloseAllInputStreams());
-  MEDIAPIPE_EXPECT_OK(graph_.WaitUntilDone());
+  MP_EXPECT_OK(graph_.CloseAllInputStreams());
+  MP_EXPECT_OK(graph_.WaitUntilDone());
 }
 
 }  // anonymous namespace

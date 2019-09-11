@@ -287,9 +287,9 @@ TimestampDiff TimestampDiffFromSeconds(double seconds) {
     }
   }
   if (jitter_ != 0.0 && random_ != nullptr) {
-    RETURN_IF_ERROR(ProcessWithJitter(cc));
+    MP_RETURN_IF_ERROR(ProcessWithJitter(cc));
   } else {
-    RETURN_IF_ERROR(ProcessWithoutJitter(cc));
+    MP_RETURN_IF_ERROR(ProcessWithoutJitter(cc));
   }
   last_packet_ = cc->Inputs().Get(input_data_id_).Value();
   return ::mediapipe::OkStatus();

@@ -112,7 +112,7 @@ TEST_F(MfccCalculatorTest, AudioSampleRateFromInputHeader) {
   SetupGraphAndHeader();
   SetupRandomInputPackets();
 
-  MEDIAPIPE_EXPECT_OK(Run());
+  MP_EXPECT_OK(Run());
 
   CheckResults(options_.mfcc_count());
 }
@@ -134,7 +134,7 @@ TEST_F(MelSpectrumCalculatorTest, AudioSampleRateFromInputHeader) {
   SetupGraphAndHeader();
   SetupRandomInputPackets();
 
-  MEDIAPIPE_EXPECT_OK(Run());
+  MP_EXPECT_OK(Run());
 
   CheckResults(options_.channel_count());
 }

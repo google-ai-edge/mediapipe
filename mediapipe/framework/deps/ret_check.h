@@ -48,7 +48,8 @@ inline StatusBuilder RetCheckImpl(const ::mediapipe::Status& status,
   return ::mediapipe::RetCheckFailSlowPath(MEDIAPIPE_LOC, #cond)
 
 #define RET_CHECK_OK(status) \
-  RETURN_IF_ERROR(::mediapipe::RetCheckImpl((status), #status, MEDIAPIPE_LOC))
+  MP_RETURN_IF_ERROR(        \
+      ::mediapipe::RetCheckImpl((status), #status, MEDIAPIPE_LOC))
 
 #define RET_CHECK_FAIL() return ::mediapipe::RetCheckFailSlowPath(MEDIAPIPE_LOC)
 

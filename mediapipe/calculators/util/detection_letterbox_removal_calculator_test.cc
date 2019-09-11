@@ -86,7 +86,7 @@ TEST(DetectionLetterboxRemovalCalculatorTest, PaddingLeftRight) {
       ->Tag("LETTERBOX_PADDING")
       .packets.push_back(Adopt(padding.release()).At(Timestamp::PostStream()));
 
-  MEDIAPIPE_ASSERT_OK(runner.Run()) << "Calculator execution failed.";
+  MP_ASSERT_OK(runner.Run()) << "Calculator execution failed.";
   const std::vector<Packet>& output =
       runner.Outputs().Tag("DETECTIONS").packets;
   ASSERT_EQ(1, output.size());
@@ -134,7 +134,7 @@ TEST(DetectionLetterboxRemovalCalculatorTest, PaddingTopBottom) {
       ->Tag("LETTERBOX_PADDING")
       .packets.push_back(Adopt(padding.release()).At(Timestamp::PostStream()));
 
-  MEDIAPIPE_ASSERT_OK(runner.Run()) << "Calculator execution failed.";
+  MP_ASSERT_OK(runner.Run()) << "Calculator execution failed.";
   const std::vector<Packet>& output =
       runner.Outputs().Tag("DETECTIONS").packets;
   ASSERT_EQ(1, output.size());

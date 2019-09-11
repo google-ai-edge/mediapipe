@@ -62,7 +62,7 @@ TEST(PacketGeneratorTest, FillExpectationsOnConfig) {
   config.add_input_side_packet("of_inputs");
   config.add_output_side_packet("any_number_of");
   config.add_output_side_packet("output_side_packets");
-  MEDIAPIPE_EXPECT_OK(tool::RunGeneratorFillExpectations(config));
+  MP_EXPECT_OK(tool::RunGeneratorFillExpectations(config));
 }
 
 }  // namespace

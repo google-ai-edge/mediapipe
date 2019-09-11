@@ -89,9 +89,9 @@ class ImmediateInputStreamHandlerTest : public ::testing::Test {
             /*calculator_run_in_parallel=*/false);
     ASSERT_TRUE(status_or_handler.ok());
     input_stream_handler_ = std::move(status_or_handler.ValueOrDie());
-    MEDIAPIPE_ASSERT_OK(input_stream_handler_->InitializeInputStreamManagers(
+    MP_ASSERT_OK(input_stream_handler_->InitializeInputStreamManagers(
         input_stream_managers_.get()));
-    MEDIAPIPE_ASSERT_OK(cc_manager_.PrepareForRun(setup_shards_callback_));
+    MP_ASSERT_OK(cc_manager_.PrepareForRun(setup_shards_callback_));
     input_stream_handler_->PrepareForRun(headers_ready_callback_,
                                          notification_callback_,
                                          schedule_callback_, error_callback_);

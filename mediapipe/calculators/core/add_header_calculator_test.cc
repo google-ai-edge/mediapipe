@@ -42,7 +42,7 @@ TEST_F(AddHeaderCalculatorTest, Works) {
   }
 
   // Run calculator.
-  MEDIAPIPE_ASSERT_OK(runner.Run());
+  MP_ASSERT_OK(runner.Run());
 
   ASSERT_EQ(1, runner.Outputs().NumEntries());
 
@@ -69,7 +69,7 @@ TEST_F(AddHeaderCalculatorTest, HandlesEmptyHeaderStream) {
 
   // No header and no packets.
   // Run calculator.
-  MEDIAPIPE_ASSERT_OK(runner.Run());
+  MP_ASSERT_OK(runner.Run());
   EXPECT_TRUE(runner.Outputs().Index(0).header.IsEmpty());
 }
 

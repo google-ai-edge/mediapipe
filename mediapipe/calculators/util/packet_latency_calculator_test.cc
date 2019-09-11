@@ -34,7 +34,7 @@ class PacketLatencyCalculatorTest : public ::testing::Test {
   void SetupSimulationClock() {
     auto executor = std::make_shared<SimulationClockExecutor>(4);
     simulation_clock_ = executor->GetClock();
-    MEDIAPIPE_ASSERT_OK(graph_.SetExecutor("", executor));
+    MP_ASSERT_OK(graph_.SetExecutor("", executor));
   }
 
   void InitializeSingleStreamGraph() {
@@ -72,10 +72,10 @@ class PacketLatencyCalculatorTest : public ::testing::Test {
             simulation_clock_);
 
     // Start graph run.
-    MEDIAPIPE_ASSERT_OK(graph_.Initialize(graph_config_, {}));
-    MEDIAPIPE_ASSERT_OK(graph_.StartRun(side_packet));
+    MP_ASSERT_OK(graph_.Initialize(graph_config_, {}));
+    MP_ASSERT_OK(graph_.StartRun(side_packet));
     // Let Calculator::Open() calls finish before continuing.
-    MEDIAPIPE_ASSERT_OK(graph_.WaitUntilIdle());
+    MP_ASSERT_OK(graph_.WaitUntilIdle());
   }
 
   void InitializeMultipleStreamGraph() {
@@ -115,7 +115,7 @@ class PacketLatencyCalculatorTest : public ::testing::Test {
                                    &out_1_packets_);
     mediapipe::tool::AddVectorSink("packet_latency_2", &graph_config_,
                                    &out_2_packets_);
-    MEDIAPIPE_ASSERT_OK(graph_.Initialize(graph_config_, {}));
+    MP_ASSERT_OK(graph_.Initialize(graph_config_, {}));
 
     // Create the simulation clock side packet.
     simulation_clock_.reset(new SimulationClock());
@@ -125,9 +125,9 @@ class PacketLatencyCalculatorTest : public ::testing::Test {
             simulation_clock_);
 
     // Start graph run.
-    MEDIAPIPE_ASSERT_OK(graph_.StartRun(side_packet));
+    MP_ASSERT_OK(graph_.StartRun(side_packet));
     // Let Calculator::Open() calls finish before continuing.
-    MEDIAPIPE_ASSERT_OK(graph_.WaitUntilIdle());
+    MP_ASSERT_OK(graph_.WaitUntilIdle());
   }
 
   void InitializeSingleStreamGraphWithoutClock() {
@@ -163,10 +163,10 @@ class PacketLatencyCalculatorTest : public ::testing::Test {
             simulation_clock_);
 
     // Start graph run.
-    MEDIAPIPE_ASSERT_OK(graph_.Initialize(graph_config_, {}));
-    MEDIAPIPE_ASSERT_OK(graph_.StartRun(side_packet));
+    MP_ASSERT_OK(graph_.Initialize(graph_config_, {}));
+    MP_ASSERT_OK(graph_.StartRun(side_packet));
     // Let Calculator::Open() calls finish before continuing.
-    MEDIAPIPE_ASSERT_OK(graph_.WaitUntilIdle());
+    MP_ASSERT_OK(graph_.WaitUntilIdle());
   }
 
   PacketLatency CreatePacketLatency(const double latency_usec,
@@ -205,16 +205,16 @@ TEST_F(PacketLatencyCalculatorTest, DoesNotOutputUntilInputPacketReceived) {
   dynamic_cast<SimulationClock*>(&*simulation_clock_)->ThreadStart();
 
   // Send reference packets with timestamps 0, 6 and 10 usec.
-  MEDIAPIPE_ASSERT_OK(graph_.AddPacketToInputStream(
+  MP_ASSERT_OK(graph_.AddPacketToInputStream(
       "camera_frames", Adopt(new double()).At(Timestamp(0))));
-  MEDIAPIPE_ASSERT_OK(graph_.AddPacketToInputStream(
+  MP_ASSERT_OK(graph_.AddPacketToInputStream(
       "camera_frames", Adopt(new double()).At(Timestamp(6))));
-  MEDIAPIPE_ASSERT_OK(graph_.AddPacketToInputStream(
+  MP_ASSERT_OK(graph_.AddPacketToInputStream(
       "camera_frames", Adopt(new double()).At(Timestamp(10))));
 
   dynamic_cast<SimulationClock*>(&*simulation_clock_)->ThreadFinish();
-  MEDIAPIPE_ASSERT_OK(graph_.CloseAllInputStreams());
-  MEDIAPIPE_ASSERT_OK(graph_.WaitUntilDone());
+  MP_ASSERT_OK(graph_.CloseAllInputStreams());
+  MP_ASSERT_OK(graph_.WaitUntilDone());
 
   // Expect zero output packets.
   ASSERT_EQ(out_0_packets_.size(), 0);
@@ -228,20 +228,20 @@ TEST_F(PacketLatencyCalculatorTest, OutputsCorrectLatencyForSingleStream) {
 
   // Send a reference packet with timestamp 10 usec at time 12 usec.
   simulation_clock_->Sleep(absl::Microseconds(12));
-  MEDIAPIPE_ASSERT_OK(graph_.AddPacketToInputStream(
+  MP_ASSERT_OK(graph_.AddPacketToInputStream(
       "camera_frames", Adopt(new double()).At(Timestamp(10))));
 
   // Add two delayed packets with timestamp 1 and 8 resp.
   simulation_clock_->Sleep(absl::Microseconds(1));
-  MEDIAPIPE_ASSERT_OK(graph_.AddPacketToInputStream(
+  MP_ASSERT_OK(graph_.AddPacketToInputStream(
       "delayed_packet_0", Adopt(new double()).At(Timestamp(1))));
   simulation_clock_->Sleep(absl::Microseconds(1));
-  MEDIAPIPE_ASSERT_OK(graph_.AddPacketToInputStream(
+  MP_ASSERT_OK(graph_.AddPacketToInputStream(
       "delayed_packet_0", Adopt(new double()).At(Timestamp(8))));
 
   dynamic_cast<SimulationClock*>(&*simulation_clock_)->ThreadFinish();
-  MEDIAPIPE_ASSERT_OK(graph_.CloseAllInputStreams());
-  MEDIAPIPE_ASSERT_OK(graph_.WaitUntilDone());
+  MP_ASSERT_OK(graph_.CloseAllInputStreams());
+  MP_ASSERT_OK(graph_.WaitUntilDone());
 
   // Expect two latency packets with timestamp 1 and 8 resp.
   ASSERT_EQ(out_0_packets_.size(), 2);
@@ -270,26 +270,26 @@ TEST_F(PacketLatencyCalculatorTest, DoesNotOutputUntilReferencePacketReceived) {
   dynamic_cast<SimulationClock*>(&*simulation_clock_)->ThreadStart();
 
   // Add two packets with timestamp 1 and 2.
-  MEDIAPIPE_ASSERT_OK(graph_.AddPacketToInputStream(
+  MP_ASSERT_OK(graph_.AddPacketToInputStream(
       "delayed_packet_0", Adopt(new double()).At(Timestamp(1))));
-  MEDIAPIPE_ASSERT_OK(graph_.AddPacketToInputStream(
+  MP_ASSERT_OK(graph_.AddPacketToInputStream(
       "delayed_packet_0", Adopt(new double()).At(Timestamp(2))));
 
   // Send a reference packet with timestamp 10 usec.
-  MEDIAPIPE_ASSERT_OK(graph_.AddPacketToInputStream(
+  MP_ASSERT_OK(graph_.AddPacketToInputStream(
       "camera_frames", Adopt(new double()).At(Timestamp(10))));
   simulation_clock_->Sleep(absl::Microseconds(1));
 
   // Add two delayed packets with timestamp 7 and 9 resp.
-  MEDIAPIPE_ASSERT_OK(graph_.AddPacketToInputStream(
+  MP_ASSERT_OK(graph_.AddPacketToInputStream(
       "delayed_packet_0", Adopt(new double()).At(Timestamp(7))));
-  MEDIAPIPE_ASSERT_OK(graph_.AddPacketToInputStream(
+  MP_ASSERT_OK(graph_.AddPacketToInputStream(
       "delayed_packet_0", Adopt(new double()).At(Timestamp(9))));
   simulation_clock_->Sleep(absl::Microseconds(1));
 
   dynamic_cast<SimulationClock*>(&*simulation_clock_)->ThreadFinish();
-  MEDIAPIPE_ASSERT_OK(graph_.CloseAllInputStreams());
-  MEDIAPIPE_ASSERT_OK(graph_.WaitUntilDone());
+  MP_ASSERT_OK(graph_.CloseAllInputStreams());
+  MP_ASSERT_OK(graph_.WaitUntilDone());
 
   // Expect two latency packets with timestamp 7 and 9 resp. The packets with
   // timestamps 1 and 2 should not have any latency associated with them since
@@ -320,18 +320,18 @@ TEST_F(PacketLatencyCalculatorTest, OutputsCorrectLatencyWhenNoClock) {
   dynamic_cast<SimulationClock*>(&*simulation_clock_)->ThreadStart();
 
   // Send a reference packet with timestamp 10 usec.
-  MEDIAPIPE_ASSERT_OK(graph_.AddPacketToInputStream(
+  MP_ASSERT_OK(graph_.AddPacketToInputStream(
       "camera_frames", Adopt(new double()).At(Timestamp(10))));
 
   // Add two delayed packets with timestamp 5 and 10 resp.
-  MEDIAPIPE_ASSERT_OK(graph_.AddPacketToInputStream(
+  MP_ASSERT_OK(graph_.AddPacketToInputStream(
       "delayed_packet_0", Adopt(new double()).At(Timestamp(5))));
-  MEDIAPIPE_ASSERT_OK(graph_.AddPacketToInputStream(
+  MP_ASSERT_OK(graph_.AddPacketToInputStream(
       "delayed_packet_0", Adopt(new double()).At(Timestamp(10))));
 
   dynamic_cast<SimulationClock*>(&*simulation_clock_)->ThreadFinish();
-  MEDIAPIPE_ASSERT_OK(graph_.CloseAllInputStreams());
-  MEDIAPIPE_ASSERT_OK(graph_.WaitUntilDone());
+  MP_ASSERT_OK(graph_.CloseAllInputStreams());
+  MP_ASSERT_OK(graph_.WaitUntilDone());
 
   // Expect two latency packets with timestamp 5 and 10 resp.
   ASSERT_EQ(out_0_packets_.size(), 2);
@@ -347,18 +347,18 @@ TEST_F(PacketLatencyCalculatorTest,
   dynamic_cast<SimulationClock*>(&*simulation_clock_)->ThreadStart();
 
   // Send a reference packet with timestamp 20 usec.
-  MEDIAPIPE_ASSERT_OK(graph_.AddPacketToInputStream(
+  MP_ASSERT_OK(graph_.AddPacketToInputStream(
       "camera_frames", Adopt(new double()).At(Timestamp(20))));
 
   // Add two delayed packets with timestamp 0 and 20 resp.
-  MEDIAPIPE_ASSERT_OK(graph_.AddPacketToInputStream(
+  MP_ASSERT_OK(graph_.AddPacketToInputStream(
       "delayed_packet_0", Adopt(new double()).At(Timestamp(0))));
-  MEDIAPIPE_ASSERT_OK(graph_.AddPacketToInputStream(
+  MP_ASSERT_OK(graph_.AddPacketToInputStream(
       "delayed_packet_0", Adopt(new double()).At(Timestamp(20))));
 
   dynamic_cast<SimulationClock*>(&*simulation_clock_)->ThreadFinish();
-  MEDIAPIPE_ASSERT_OK(graph_.CloseAllInputStreams());
-  MEDIAPIPE_ASSERT_OK(graph_.WaitUntilDone());
+  MP_ASSERT_OK(graph_.CloseAllInputStreams());
+  MP_ASSERT_OK(graph_.WaitUntilDone());
 
   // Expect two latency packets with timestamp 0 and 20 resp.
   ASSERT_EQ(out_0_packets_.size(), 2);
@@ -387,24 +387,24 @@ TEST_F(PacketLatencyCalculatorTest, ResetsHistogramAndAverageCorrectly) {
   dynamic_cast<SimulationClock*>(&*simulation_clock_)->ThreadStart();
 
   // Send a reference packet with timestamp 0 usec.
-  MEDIAPIPE_ASSERT_OK(graph_.AddPacketToInputStream(
+  MP_ASSERT_OK(graph_.AddPacketToInputStream(
       "camera_frames", Adopt(new double()).At(Timestamp(0))));
 
   // Add a delayed packet with timestamp 0 usec at time 20 usec.
   simulation_clock_->Sleep(absl::Microseconds(20));
-  MEDIAPIPE_ASSERT_OK(graph_.AddPacketToInputStream(
+  MP_ASSERT_OK(graph_.AddPacketToInputStream(
       "delayed_packet_0", Adopt(new double()).At(Timestamp(0))));
 
   // Do a long sleep so that histogram and average are reset.
   simulation_clock_->Sleep(absl::Microseconds(100));
 
   // Add a delayed packet with timestamp 115 usec at time 120 usec.
-  MEDIAPIPE_ASSERT_OK(graph_.AddPacketToInputStream(
+  MP_ASSERT_OK(graph_.AddPacketToInputStream(
       "delayed_packet_0", Adopt(new double()).At(Timestamp(115))));
 
   dynamic_cast<SimulationClock*>(&*simulation_clock_)->ThreadFinish();
-  MEDIAPIPE_ASSERT_OK(graph_.CloseAllInputStreams());
-  MEDIAPIPE_ASSERT_OK(graph_.WaitUntilDone());
+  MP_ASSERT_OK(graph_.CloseAllInputStreams());
+  MP_ASSERT_OK(graph_.WaitUntilDone());
 
   // Expect two latency packets with timestamp 0 and 115 resp.
   ASSERT_EQ(out_0_packets_.size(), 2);
@@ -435,26 +435,26 @@ TEST_F(PacketLatencyCalculatorTest, OutputsCorrectLatencyForMultipleStreams) {
   dynamic_cast<SimulationClock*>(&*simulation_clock_)->ThreadStart();
 
   // Send a reference packet with timestamp 10 usec.
-  MEDIAPIPE_ASSERT_OK(graph_.AddPacketToInputStream(
+  MP_ASSERT_OK(graph_.AddPacketToInputStream(
       "camera_frames", Adopt(new double()).At(Timestamp(10))));
 
   // Add delayed packets on each input stream.
 
   // Fastest stream.
-  MEDIAPIPE_ASSERT_OK(graph_.AddPacketToInputStream(
+  MP_ASSERT_OK(graph_.AddPacketToInputStream(
       "delayed_packet_0", Adopt(new double()).At(Timestamp(10))));
 
   // Slow stream.
-  MEDIAPIPE_ASSERT_OK(graph_.AddPacketToInputStream(
+  MP_ASSERT_OK(graph_.AddPacketToInputStream(
       "delayed_packet_1", Adopt(new double()).At(Timestamp(5))));
 
   // Slowest stream.
-  MEDIAPIPE_ASSERT_OK(graph_.AddPacketToInputStream(
+  MP_ASSERT_OK(graph_.AddPacketToInputStream(
       "delayed_packet_2", Adopt(new double()).At(Timestamp(0))));
 
   dynamic_cast<SimulationClock*>(&*simulation_clock_)->ThreadFinish();
-  MEDIAPIPE_ASSERT_OK(graph_.CloseAllInputStreams());
-  MEDIAPIPE_ASSERT_OK(graph_.WaitUntilDone());
+  MP_ASSERT_OK(graph_.CloseAllInputStreams());
+  MP_ASSERT_OK(graph_.WaitUntilDone());
 
   // Expect one latency packet on each output stream.
   ASSERT_EQ(out_0_packets_.size(), 1);

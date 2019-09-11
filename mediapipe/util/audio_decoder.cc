@@ -250,7 +250,7 @@ mediapipe::Status BasePacketProcessor::Flush() {
     // ProcessPacket increments num_frames_processed_ if it is able to
     // decode a frame.  Not being able to decode a frame while being
     // flushed signals that the codec is completely done.
-    RETURN_IF_ERROR(ProcessPacket(av_packet.get()));
+    MP_RETURN_IF_ERROR(ProcessPacket(av_packet.get()));
   } while (last_num_frames_processed != num_frames_processed_);
 
   flushed_ = true;
@@ -275,17 +275,17 @@ void BasePacketProcessor::Close() {
 
 mediapipe::Status BasePacketProcessor::Decode(const AVPacket& packet,
                                               bool ignore_decode_failures) {
-  RETURN_IF_ERROR(LogStatus(SendPacket(packet, avcodec_ctx_), *avcodec_ctx_,
-                            packet, ignore_decode_failures));
+  MP_RETURN_IF_ERROR(LogStatus(SendPacket(packet, avcodec_ctx_), *avcodec_ctx_,
+                               packet, ignore_decode_failures));
   while (true) {
     bool received;
-    RETURN_IF_ERROR(
+    MP_RETURN_IF_ERROR(
         LogStatus(ReceiveFrame(avcodec_ctx_, decoded_frame_, &received),
                   *avcodec_ctx_, packet, ignore_decode_failures));
     if (received) {
       // Successfully decoded a frame (i.e., received it from the decoder). Now
       // further process it.
-      RETURN_IF_ERROR(ProcessDecodedFrame(packet));
+      MP_RETURN_IF_ERROR(ProcessDecodedFrame(packet));
     } else {
       break;
     }
@@ -359,7 +359,7 @@ mediapipe::Status AudioPacketProcessor::Open(int id,
   source_frame_rate_ = stream->r_frame_rate;
   last_frame_time_regression_detected_ = false;
 
-  RETURN_IF_ERROR(ValidateSampleFormat());
+  MP_RETURN_IF_ERROR(ValidateSampleFormat());
   bytes_per_sample_ = av_get_bytes_per_sample(avcodec_ctx_->sample_fmt);
   num_channels_ = avcodec_ctx_->channels;
   sample_rate_ = avcodec_ctx_->sample_rate;
@@ -468,7 +468,7 @@ mediapipe::Status AudioPacketProcessor::ProcessDecodedFrame(
     }
   }
 
-  RETURN_IF_ERROR(AddAudioDataToBuffer(
+  MP_RETURN_IF_ERROR(AddAudioDataToBuffer(
       Timestamp(av_rescale_q(expected_sample_number_, sample_time_base_,
                              output_time_base_)),
       data_ptr, buf_size_bytes));
@@ -653,7 +653,7 @@ AudioDecoder::~AudioDecoder() {
                        << audio_processor_[stream_id].get();
           }
 
-          RETURN_IF_ERROR(processor->Open(stream_id, stream));
+          MP_RETURN_IF_ERROR(processor->Open(stream_id, stream));
           audio_processor_.emplace(stream_id, std::move(processor));
           CHECK(InsertIfNotPresent(
               &stream_index_to_stream_id_,
@@ -732,10 +732,10 @@ AudioDecoder::~AudioDecoder() {
       }
     }
     if (flushed_) {
-      RETURN_IF_ERROR(Close());
+      MP_RETURN_IF_ERROR(Close());
       return tool::StatusStop();
     }
-    RETURN_IF_ERROR(ProcessPacket());
+    MP_RETURN_IF_ERROR(ProcessPacket());
   }
   return ::mediapipe::OkStatus();
 }
@@ -761,7 +761,7 @@ AudioDecoder::~AudioDecoder() {
       FindOrDie(stream_index_to_stream_id_, stream_option.stream_index()));
 
   RET_CHECK(processor_ptr_ && *processor_ptr_) << "audio stream is not open.";
-  RETURN_IF_ERROR((*processor_ptr_)->FillHeader(header));
+  MP_RETURN_IF_ERROR((*processor_ptr_)->FillHeader(header));
   return ::mediapipe::OkStatus();
 }
 
@@ -779,7 +779,8 @@ AudioDecoder::~AudioDecoder() {
     if (audio_iterator != audio_processor_.end()) {
       // This stream_id is belongs to an audio stream we care about.
       if (audio_iterator->second) {
-        RETURN_IF_ERROR(audio_iterator->second->ProcessPacket(av_packet.get()));
+        MP_RETURN_IF_ERROR(
+            audio_iterator->second->ProcessPacket(av_packet.get()));
       } else {
         VLOG(3) << "processor for stream " << stream_id << " is nullptr.";
       }

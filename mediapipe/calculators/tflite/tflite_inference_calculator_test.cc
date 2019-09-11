@@ -93,13 +93,13 @@ TEST_F(TfLiteInferenceCalculatorTest, SmokeTest) {
   std::vector<Packet> output_packets;
   tool::AddVectorSink("tensor_out", &graph_config, &output_packets);
   CalculatorGraph graph(graph_config);
-  MEDIAPIPE_ASSERT_OK(graph.StartRun({}));
+  MP_ASSERT_OK(graph.StartRun({}));
 
   // Push the tensor into the graph.
-  MEDIAPIPE_ASSERT_OK(graph.AddPacketToInputStream(
+  MP_ASSERT_OK(graph.AddPacketToInputStream(
       "tensor_in", Adopt(input_vec.release()).At(Timestamp(0))));
   // Wait until the calculator done processing.
-  MEDIAPIPE_ASSERT_OK(graph.WaitUntilIdle());
+  MP_ASSERT_OK(graph.WaitUntilIdle());
   ASSERT_EQ(1, output_packets.size());
 
   // Get and process results.
@@ -116,8 +116,8 @@ TEST_F(TfLiteInferenceCalculatorTest, SmokeTest) {
 
   // Fully close graph at end, otherwise calculator+tensors are destroyed
   // after calling WaitUntilDone().
-  MEDIAPIPE_ASSERT_OK(graph.CloseInputStream("tensor_in"));
-  MEDIAPIPE_ASSERT_OK(graph.WaitUntilDone());
+  MP_ASSERT_OK(graph.CloseInputStream("tensor_in"));
+  MP_ASSERT_OK(graph.WaitUntilDone());
 }
 
 }  // namespace mediapipe

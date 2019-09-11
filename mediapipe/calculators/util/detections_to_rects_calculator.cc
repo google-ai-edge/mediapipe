@@ -245,7 +245,7 @@ REGISTER_CALCULATOR(DetectionsToRectsCalculator);
 
   if (cc->Outputs().HasTag(kRectTag)) {
     auto output_rect = absl::make_unique<Rect>();
-    RETURN_IF_ERROR(DetectionToRect(detections[0], output_rect.get()));
+    MP_RETURN_IF_ERROR(DetectionToRect(detections[0], output_rect.get()));
     if (rotate_) {
       output_rect->set_rotation(ComputeRotation(detections[0], image_size));
     }
@@ -254,7 +254,7 @@ REGISTER_CALCULATOR(DetectionsToRectsCalculator);
   }
   if (cc->Outputs().HasTag(kNormRectTag)) {
     auto output_rect = absl::make_unique<NormalizedRect>();
-    RETURN_IF_ERROR(
+    MP_RETURN_IF_ERROR(
         DetectionToNormalizedRect(detections[0], output_rect.get()));
     if (rotate_) {
       output_rect->set_rotation(ComputeRotation(detections[0], image_size));
@@ -266,7 +266,8 @@ REGISTER_CALCULATOR(DetectionsToRectsCalculator);
   if (cc->Outputs().HasTag(kRectsTag)) {
     auto output_rects = absl::make_unique<std::vector<Rect>>(detections.size());
     for (int i = 0; i < detections.size(); ++i) {
-      RETURN_IF_ERROR(DetectionToRect(detections[i], &(output_rects->at(i))));
+      MP_RETURN_IF_ERROR(
+          DetectionToRect(detections[i], &(output_rects->at(i))));
       if (rotate_) {
         output_rects->at(i).set_rotation(
             ComputeRotation(detections[i], image_size));
@@ -279,7 +280,7 @@ REGISTER_CALCULATOR(DetectionsToRectsCalculator);
     auto output_rects =
         absl::make_unique<std::vector<NormalizedRect>>(detections.size());
     for (int i = 0; i < detections.size(); ++i) {
-      RETURN_IF_ERROR(
+      MP_RETURN_IF_ERROR(
           DetectionToNormalizedRect(detections[i], &(output_rects->at(i))));
       if (rotate_) {
         output_rects->at(i).set_rotation(

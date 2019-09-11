@@ -238,8 +238,8 @@ std::map<std::string, int64> CalculatorRunner::GetCountersValues() {
     std::string name;
     std::string tag;
     int index;
-    RETURN_IF_ERROR(tool::ParseTagIndexName(node_config_.input_stream(i), &tag,
-                                            &index, &name));
+    MP_RETURN_IF_ERROR(tool::ParseTagIndexName(node_config_.input_stream(i),
+                                               &tag, &index, &name));
     // Add a source for each input stream.
     auto* node = config.add_node();
     node->set_calculator("CalculatorRunnerSourceCalculator");
@@ -250,8 +250,8 @@ std::map<std::string, int64> CalculatorRunner::GetCountersValues() {
     std::string name;
     std::string tag;
     int index;
-    RETURN_IF_ERROR(tool::ParseTagIndexName(node_config_.output_stream(i), &tag,
-                                            &index, &name));
+    MP_RETURN_IF_ERROR(tool::ParseTagIndexName(node_config_.output_stream(i),
+                                               &tag, &index, &name));
     // Add a sink for each output stream.
     auto* node = config.add_node();
     node->set_calculator("CalculatorRunnerSinkCalculator");
@@ -276,12 +276,12 @@ std::map<std::string, int64> CalculatorRunner::GetCountersValues() {
   }
 
   graph_ = absl::make_unique<CalculatorGraph>();
-  RETURN_IF_ERROR(graph_->Initialize(config));
+  MP_RETURN_IF_ERROR(graph_->Initialize(config));
   return ::mediapipe::OkStatus();
 }
 
 ::mediapipe::Status CalculatorRunner::Run() {
-  RETURN_IF_ERROR(BuildGraph());
+  MP_RETURN_IF_ERROR(BuildGraph());
   // Set the input side packets for the sources.
   std::map<std::string, Packet> input_side_packets;
   int positional_index = -1;
@@ -289,8 +289,8 @@ std::map<std::string, int64> CalculatorRunner::GetCountersValues() {
     std::string name;
     std::string tag;
     int index;
-    RETURN_IF_ERROR(tool::ParseTagIndexName(node_config_.input_stream(i), &tag,
-                                            &index, &name));
+    MP_RETURN_IF_ERROR(tool::ParseTagIndexName(node_config_.input_stream(i),
+                                               &tag, &index, &name));
     const CalculatorRunner::StreamContents* contents;
     if (index == -1) {
       // positional_index considers the case when the tag is empty, which is
@@ -310,8 +310,8 @@ std::map<std::string, int64> CalculatorRunner::GetCountersValues() {
     std::string name;
     std::string tag;
     int index;
-    RETURN_IF_ERROR(tool::ParseTagIndexName(node_config_.input_side_packet(i),
-                                            &tag, &index, &name));
+    MP_RETURN_IF_ERROR(tool::ParseTagIndexName(
+        node_config_.input_side_packet(i), &tag, &index, &name));
     const Packet* packet;
     if (index == -1) {
       packet = &input_side_packets_->Get(tag, ++positional_index);
@@ -326,8 +326,8 @@ std::map<std::string, int64> CalculatorRunner::GetCountersValues() {
     std::string name;
     std::string tag;
     int index;
-    RETURN_IF_ERROR(tool::ParseTagIndexName(node_config_.output_stream(i), &tag,
-                                            &index, &name));
+    MP_RETURN_IF_ERROR(tool::ParseTagIndexName(node_config_.output_stream(i),
+                                               &tag, &index, &name));
     CalculatorRunner::StreamContents* contents;
     if (index == -1) {
       contents = &outputs_->Get(tag, ++positional_index);
@@ -339,15 +339,15 @@ std::map<std::string, int64> CalculatorRunner::GetCountersValues() {
     input_side_packets.emplace(absl::StrCat(kSinkPrefix, name),
                                Adopt(new auto(contents)));
   }
-  RETURN_IF_ERROR(graph_->Run(input_side_packets));
+  MP_RETURN_IF_ERROR(graph_->Run(input_side_packets));
 
   positional_index = -1;
   for (int i = 0; i < node_config_.output_side_packet_size(); ++i) {
     std::string name;
     std::string tag;
     int index;
-    RETURN_IF_ERROR(tool::ParseTagIndexName(node_config_.output_side_packet(i),
-                                            &tag, &index, &name));
+    MP_RETURN_IF_ERROR(tool::ParseTagIndexName(
+        node_config_.output_side_packet(i), &tag, &index, &name));
     Packet& contents = output_side_packets_->Get(
         tag, (index == -1) ? ++positional_index : index);
     ASSIGN_OR_RETURN(contents, graph_->GetOutputSidePacket(name));

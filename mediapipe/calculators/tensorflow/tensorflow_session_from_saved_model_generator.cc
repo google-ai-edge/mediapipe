@@ -14,10 +14,6 @@
 
 #include <algorithm>
 
-#if defined(MEDIAPIPE_TPU_SUPPORT)
-#include "learning/brain/google/xla/global_tpu_init.h"
-#include "tensorflow/core/protobuf/tpu/topology.pb.h"
-#endif
 #if !defined(__ANDROID__)
 #include "mediapipe/framework/port/file_helpers.h"
 #endif

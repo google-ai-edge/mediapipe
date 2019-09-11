@@ -190,9 +190,9 @@ REGISTER_CALCULATOR(TfLiteConverterCalculator);
 #endif
 
 #if defined(__ANDROID__)
-  RETURN_IF_ERROR(mediapipe::GlCalculatorHelper::UpdateContract(cc));
+  MP_RETURN_IF_ERROR(mediapipe::GlCalculatorHelper::UpdateContract(cc));
 #elif defined(__APPLE__) && !TARGET_OS_OSX  // iOS
-  RETURN_IF_ERROR([MPPMetalHelper updateContract:cc]);
+  MP_RETURN_IF_ERROR([MPPMetalHelper updateContract:cc]);
 #endif
 
   // Assign this calculator's default InputStreamHandler.
@@ -204,7 +204,7 @@ REGISTER_CALCULATOR(TfLiteConverterCalculator);
 ::mediapipe::Status TfLiteConverterCalculator::Open(CalculatorContext* cc) {
   cc->SetOffset(TimestampDiff(0));
 
-  RETURN_IF_ERROR(LoadOptions(cc));
+  MP_RETURN_IF_ERROR(LoadOptions(cc));
 
   if (cc->Inputs().HasTag("IMAGE_GPU") ||
       cc->Outputs().HasTag("IMAGE_OUT_GPU")) {
@@ -222,7 +222,7 @@ REGISTER_CALCULATOR(TfLiteConverterCalculator);
     // Cannot use quantization.
     use_quantized_tensors_ = false;
 #if defined(__ANDROID__)
-    RETURN_IF_ERROR(gpu_helper_.Open(cc));
+    MP_RETURN_IF_ERROR(gpu_helper_.Open(cc));
 #elif defined(__APPLE__) && !TARGET_OS_OSX  // iOS
     gpu_helper_ = [[MPPMetalHelper alloc] initWithCalculatorContext:cc];
     RET_CHECK(gpu_helper_);
@@ -239,14 +239,14 @@ REGISTER_CALCULATOR(TfLiteConverterCalculator);
 ::mediapipe::Status TfLiteConverterCalculator::Process(CalculatorContext* cc) {
   if (use_gpu_) {
     if (!initialized_) {
-      RETURN_IF_ERROR(InitGpu(cc));
+      MP_RETURN_IF_ERROR(InitGpu(cc));
       initialized_ = true;
     }
     // Convert to GPU tensors type.
-    RETURN_IF_ERROR(ProcessGPU(cc));
+    MP_RETURN_IF_ERROR(ProcessGPU(cc));
   } else {
     // Convert to CPU tensors or Matrix type.
-    RETURN_IF_ERROR(ProcessCPU(cc));
+    MP_RETURN_IF_ERROR(ProcessCPU(cc));
   }
 
   return ::mediapipe::OkStatus();
@@ -321,11 +321,11 @@ REGISTER_CALCULATOR(TfLiteConverterCalculator);
       float* tensor_buffer = tensor->data.f;
       RET_CHECK(tensor_buffer);
       if (image_frame.ByteDepth() == 1) {
-        RETURN_IF_ERROR(NormalizeImage<uint8>(image_frame, zero_center_,
-                                              flip_vertically_, tensor_buffer));
+        MP_RETURN_IF_ERROR(NormalizeImage<uint8>(
+            image_frame, zero_center_, flip_vertically_, tensor_buffer));
       } else if (image_frame.ByteDepth() == 4) {
-        RETURN_IF_ERROR(NormalizeImage<float>(image_frame, zero_center_,
-                                              flip_vertically_, tensor_buffer));
+        MP_RETURN_IF_ERROR(NormalizeImage<float>(
+            image_frame, zero_center_, flip_vertically_, tensor_buffer));
       } else {
         return ::mediapipe::InternalError(
             "Only byte-based (8 bit) and float (32 bit) images supported.");
@@ -359,7 +359,7 @@ REGISTER_CALCULATOR(TfLiteConverterCalculator);
     float* tensor_buffer = tensor->data.f;
     RET_CHECK(tensor_buffer);
 
-    RETURN_IF_ERROR(CopyMatrixToTensor(matrix, tensor_buffer));
+    MP_RETURN_IF_ERROR(CopyMatrixToTensor(matrix, tensor_buffer));
 
     auto output_tensors = absl::make_unique<std::vector<TfLiteTensor>>();
     output_tensors->emplace_back(*tensor);
@@ -375,7 +375,7 @@ REGISTER_CALCULATOR(TfLiteConverterCalculator);
 #if defined(__ANDROID__)
   // GpuBuffer to tflite::gpu::GlBuffer conversion.
   const auto& input = cc->Inputs().Tag("IMAGE_GPU").Get<mediapipe::GpuBuffer>();
-  RETURN_IF_ERROR(
+  MP_RETURN_IF_ERROR(
       gpu_helper_.RunInGlContext([this, &input]() -> ::mediapipe::Status {
         // Convert GL texture into TfLite GlBuffer (SSBO).
         auto src = gpu_helper_.CreateSourceTexture(input);

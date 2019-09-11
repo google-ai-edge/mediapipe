@@ -72,7 +72,7 @@ bool IsLengthDelimited(WireFormatLite::WireType wire_type) {
   uint32 fake_tag = WireFormatLite::MakeTag(1, wire_type);
   while (data_size > 0) {
     std::string number;
-    RETURN_IF_ERROR(ReadFieldValue(fake_tag, in, &number));
+    MP_RETURN_IF_ERROR(ReadFieldValue(fake_tag, in, &number));
     RET_CHECK_LE(number.size(), data_size);
     field_values->push_back(number);
     data_size -= number.size();
@@ -92,10 +92,10 @@ bool IsLengthDelimited(WireFormatLite::WireType wire_type) {
     if (field_number == field_id) {
       if (!IsLengthDelimited(wire_type) &&
           IsLengthDelimited(WireFormatLite::GetTagWireType(tag))) {
-        RETURN_IF_ERROR(ReadPackedValues(wire_type, in, field_values));
+        MP_RETURN_IF_ERROR(ReadPackedValues(wire_type, in, field_values));
       } else {
         std::string value;
-        RETURN_IF_ERROR(ReadFieldValue(tag, in, &value));
+        MP_RETURN_IF_ERROR(ReadFieldValue(tag, in, &value));
         field_values->push_back(value);
       }
     } else {
@@ -155,12 +155,12 @@ std::vector<FieldValue>* FieldAccess::mutable_field_values() {
   FieldAccess access(field_id, !proto_path.empty()
                                    ? WireFormatLite::TYPE_MESSAGE
                                    : field_type);
-  RETURN_IF_ERROR(access.SetMessage(*message));
+  MP_RETURN_IF_ERROR(access.SetMessage(*message));
   std::vector<std::string>& v = *access.mutable_field_values();
   if (!proto_path.empty()) {
     RET_CHECK(index >= 0 && index < v.size());
-    RETURN_IF_ERROR(ReplaceFieldRange(&v[index], proto_path, length, field_type,
-                                      field_values));
+    MP_RETURN_IF_ERROR(ReplaceFieldRange(&v[index], proto_path, length,
+                                         field_type, field_values));
   } else {
     RET_CHECK(index >= 0 && index <= v.size());
     RET_CHECK(index + length >= 0 && index + length <= v.size());
@@ -182,11 +182,11 @@ std::vector<FieldValue>* FieldAccess::mutable_field_values() {
   FieldAccess access(field_id, !proto_path.empty()
                                    ? WireFormatLite::TYPE_MESSAGE
                                    : field_type);
-  RETURN_IF_ERROR(access.SetMessage(message));
+  MP_RETURN_IF_ERROR(access.SetMessage(message));
   std::vector<std::string>& v = *access.mutable_field_values();
   if (!proto_path.empty()) {
     RET_CHECK(index >= 0 && index < v.size());
-    RETURN_IF_ERROR(
+    MP_RETURN_IF_ERROR(
         GetFieldRange(v[index], proto_path, length, field_type, field_values));
   } else {
     RET_CHECK(index >= 0 && index <= v.size());
@@ -243,7 +243,7 @@ template <typename T>
     void (*writer)(T, proto_ns::io::CodedOutputStream*),
     const std::string& text, CodedOutputStream* out) {
   T value;
-  RETURN_IF_ERROR(ParseValue<T>(text, &value));
+  MP_RETURN_IF_ERROR(ParseValue<T>(text, &value));
   (*writer)(value, out);
   return ::mediapipe::OkStatus();
 }
@@ -370,7 +370,7 @@ static ::mediapipe::Status DeserializeValue(const FieldValue& bytes,
   result->reserve(text_values.size());
   for (const std::string& text_value : text_values) {
     FieldValue field_value;
-    RETURN_IF_ERROR(SerializeValue(text_value, field_type, &field_value));
+    MP_RETURN_IF_ERROR(SerializeValue(text_value, field_type, &field_value));
     result->push_back(field_value);
   }
   return ::mediapipe::OkStatus();
@@ -383,7 +383,7 @@ static ::mediapipe::Status DeserializeValue(const FieldValue& bytes,
   result->reserve(field_values.size());
   for (const FieldValue& field_value : field_values) {
     std::string text_value;
-    RETURN_IF_ERROR(DeserializeValue(field_value, field_type, &text_value));
+    MP_RETURN_IF_ERROR(DeserializeValue(field_value, field_type, &text_value));
     result->push_back(text_value);
   }
   return ::mediapipe::OkStatus();

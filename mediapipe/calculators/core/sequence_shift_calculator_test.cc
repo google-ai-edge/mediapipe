@@ -38,7 +38,7 @@ TEST(SequenceShiftCalculatorTest, ZeroShift) {
       "[mediapipe.SequenceShiftCalculatorOptions.ext]: { packet_offset: 0 }", 1,
       1, 0);
   AddPackets(&runner);
-  MEDIAPIPE_ASSERT_OK(runner.Run());
+  MP_ASSERT_OK(runner.Run());
   const std::vector<Packet>& input_packets =
       runner.MutableInputs()->Index(0).packets;
   const std::vector<Packet>& output_packets = runner.Outputs().Index(0).packets;
@@ -59,7 +59,7 @@ TEST(SequenceShiftCalculatorTest, PositiveShift) {
       "[mediapipe.SequenceShiftCalculatorOptions.ext]: { packet_offset: 3 }", 1,
       1, 0);
   AddPackets(&runner);
-  MEDIAPIPE_ASSERT_OK(runner.Run());
+  MP_ASSERT_OK(runner.Run());
   const std::vector<Packet>& input_packets =
       runner.MutableInputs()->Index(0).packets;
   const std::vector<Packet>& output_packets = runner.Outputs().Index(0).packets;
@@ -83,7 +83,7 @@ TEST(SequenceShiftCalculatorTest, NegativeShift) {
       "[mediapipe.SequenceShiftCalculatorOptions.ext]: { packet_offset: -2 }",
       1, 1, 0);
   AddPackets(&runner);
-  MEDIAPIPE_ASSERT_OK(runner.Run());
+  MP_ASSERT_OK(runner.Run());
   const std::vector<Packet>& input_packets =
       runner.MutableInputs()->Index(0).packets;
   const std::vector<Packet>& output_packets = runner.Outputs().Index(0).packets;

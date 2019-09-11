@@ -39,17 +39,17 @@ namespace mediapipe {
   )");
 
   CalculatorGraph graph;
-  RETURN_IF_ERROR(graph.Initialize(config));
+  MP_RETURN_IF_ERROR(graph.Initialize(config));
   ASSIGN_OR_RETURN(OutputStreamPoller poller,
                    graph.AddOutputStreamPoller("out"));
-  RETURN_IF_ERROR(graph.StartRun({}));
+  MP_RETURN_IF_ERROR(graph.StartRun({}));
   // Give 10 input packets that contains the same std::string "Hello World!".
   for (int i = 0; i < 10; ++i) {
-    RETURN_IF_ERROR(graph.AddPacketToInputStream(
+    MP_RETURN_IF_ERROR(graph.AddPacketToInputStream(
         "in", MakePacket<std::string>("Hello World!").At(Timestamp(i))));
   }
   // Close the input stream "in".
-  RETURN_IF_ERROR(graph.CloseInputStream("in"));
+  MP_RETURN_IF_ERROR(graph.CloseInputStream("in"));
   mediapipe::Packet packet;
   // Get the output packets std::string.
   while (poller.Next(&packet)) {

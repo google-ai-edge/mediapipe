@@ -87,7 +87,7 @@ TEST_F(PackMediaSequenceCalculatorTest, PacksTwoImages) {
   runner_->MutableSidePackets()->Tag("SEQUENCE_EXAMPLE") =
       Adopt(input_sequence.release());
 
-  MEDIAPIPE_ASSERT_OK(runner_->Run());
+  MP_ASSERT_OK(runner_->Run());
 
   const std::vector<Packet>& output_packets =
       runner_->Outputs().Tag("SEQUENCE_EXAMPLE").packets;
@@ -131,7 +131,7 @@ TEST_F(PackMediaSequenceCalculatorTest, PacksTwoPrefixedImages) {
   runner_->MutableSidePackets()->Tag("SEQUENCE_EXAMPLE") =
       Adopt(input_sequence.release());
 
-  MEDIAPIPE_ASSERT_OK(runner_->Run());
+  MP_ASSERT_OK(runner_->Run());
 
   const std::vector<Packet>& output_packets =
       runner_->Outputs().Tag("SEQUENCE_EXAMPLE").packets;
@@ -169,7 +169,7 @@ TEST_F(PackMediaSequenceCalculatorTest, PacksTwoFloatLists) {
   runner_->MutableSidePackets()->Tag("SEQUENCE_EXAMPLE") =
       Adopt(input_sequence.release());
 
-  MEDIAPIPE_ASSERT_OK(runner_->Run());
+  MP_ASSERT_OK(runner_->Run());
 
   const std::vector<Packet>& output_packets =
       runner_->Outputs().Tag("SEQUENCE_EXAMPLE").packets;
@@ -214,7 +214,7 @@ TEST_F(PackMediaSequenceCalculatorTest, PacksAdditionalContext) {
   runner_->MutableInputs()->Tag("IMAGE").packets.push_back(
       Adopt(image_ptr.release()).At(Timestamp(0)));
 
-  MEDIAPIPE_ASSERT_OK(runner_->Run());
+  MP_ASSERT_OK(runner_->Run());
 
   const std::vector<Packet>& output_packets =
       runner_->Outputs().Tag("SEQUENCE_EXAMPLE").packets;
@@ -257,7 +257,7 @@ TEST_F(PackMediaSequenceCalculatorTest, PacksTwoForwardFlowEncodeds) {
   runner_->MutableSidePackets()->Tag("SEQUENCE_EXAMPLE") =
       Adopt(input_sequence.release());
 
-  MEDIAPIPE_ASSERT_OK(runner_->Run());
+  MP_ASSERT_OK(runner_->Run());
 
   const std::vector<Packet>& output_packets =
       runner_->Outputs().Tag("SEQUENCE_EXAMPLE").packets;
@@ -321,7 +321,7 @@ TEST_F(PackMediaSequenceCalculatorTest, PacksTwoBBoxDetections) {
   runner_->MutableSidePackets()->Tag("SEQUENCE_EXAMPLE") =
       Adopt(input_sequence.release());
 
-  MEDIAPIPE_ASSERT_OK(runner_->Run());
+  MP_ASSERT_OK(runner_->Run());
 
   const std::vector<Packet>& output_packets =
       runner_->Outputs().Tag("SEQUENCE_EXAMPLE").packets;
@@ -374,7 +374,7 @@ TEST_F(PackMediaSequenceCalculatorTest, PacksTwoKeypoints) {
   runner_->MutableSidePackets()->Tag("SEQUENCE_EXAMPLE") =
       Adopt(input_sequence.release());
 
-  MEDIAPIPE_ASSERT_OK(runner_->Run());
+  MP_ASSERT_OK(runner_->Run());
 
   const std::vector<Packet>& output_packets =
       runner_->Outputs().Tag("SEQUENCE_EXAMPLE").packets;
@@ -424,7 +424,7 @@ TEST_F(PackMediaSequenceCalculatorTest, PacksTwoMaskDetections) {
   runner_->MutableSidePackets()->Tag("SEQUENCE_EXAMPLE") =
       Adopt(input_sequence.release());
 
-  MEDIAPIPE_ASSERT_OK(runner_->Run());
+  MP_ASSERT_OK(runner_->Run());
 
   const std::vector<Packet>& output_packets =
       runner_->Outputs().Tag("SEQUENCE_EXAMPLE").packets;
@@ -473,7 +473,7 @@ TEST_F(PackMediaSequenceCalculatorTest, MissingStreamOK) {
   runner_->MutableSidePackets()->Tag("SEQUENCE_EXAMPLE") =
       Adopt(input_sequence.release());
 
-  MEDIAPIPE_ASSERT_OK(runner_->Run());
+  MP_ASSERT_OK(runner_->Run());
 
   const std::vector<Packet>& output_packets =
       runner_->Outputs().Tag("SEQUENCE_EXAMPLE").packets;
@@ -536,7 +536,7 @@ TEST_F(PackMediaSequenceCalculatorTest, TestReplacingImages) {
   runner_->MutableSidePackets()->Tag("SEQUENCE_EXAMPLE") =
       Adopt(input_sequence.release());
 
-  MEDIAPIPE_ASSERT_OK(runner_->Run());
+  MP_ASSERT_OK(runner_->Run());
 
   const std::vector<Packet>& output_packets =
       runner_->Outputs().Tag("SEQUENCE_EXAMPLE").packets;
@@ -562,7 +562,7 @@ TEST_F(PackMediaSequenceCalculatorTest, TestReplacingFlowImages) {
   runner_->MutableSidePackets()->Tag("SEQUENCE_EXAMPLE") =
       Adopt(input_sequence.release());
 
-  MEDIAPIPE_ASSERT_OK(runner_->Run());
+  MP_ASSERT_OK(runner_->Run());
 
   const std::vector<Packet>& output_packets =
       runner_->Outputs().Tag("SEQUENCE_EXAMPLE").packets;
@@ -599,7 +599,7 @@ TEST_F(PackMediaSequenceCalculatorTest, TestReplacingFloatVectors) {
   runner_->MutableSidePackets()->Tag("SEQUENCE_EXAMPLE") =
       Adopt(input_sequence.release());
 
-  MEDIAPIPE_ASSERT_OK(runner_->Run());
+  MP_ASSERT_OK(runner_->Run());
 
   const std::vector<Packet>& output_packets =
       runner_->Outputs().Tag("SEQUENCE_EXAMPLE").packets;
@@ -643,7 +643,7 @@ TEST_F(PackMediaSequenceCalculatorTest, TestReconcilingAnnotations) {
 
   runner_->MutableSidePackets()->Tag("SEQUENCE_EXAMPLE") =
       Adopt(input_sequence.release());
-  MEDIAPIPE_ASSERT_OK(runner_->Run());
+  MP_ASSERT_OK(runner_->Run());
   const std::vector<Packet>& output_packets =
       runner_->Outputs().Tag("SEQUENCE_EXAMPLE").packets;
   ASSERT_EQ(1, output_packets.size());

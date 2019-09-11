@@ -84,14 +84,14 @@ TEST(MuxInputStreamHandlerTest, AtomicAccessToControlAndDataStreams) {
           # MuxInputStreamHandler set in GetContract().
         })");
   CalculatorGraph graph;
-  MEDIAPIPE_ASSERT_OK(graph.Initialize(config));
-  MEDIAPIPE_ASSERT_OK(graph.StartRun({}));
+  MP_ASSERT_OK(graph.Initialize(config));
+  MP_ASSERT_OK(graph.StartRun({}));
   for (int i = 0; i < 2000; ++i) {
-    MEDIAPIPE_ASSERT_OK(graph.AddPacketToInputStream(
+    MP_ASSERT_OK(graph.AddPacketToInputStream(
         "input", Adopt(new int(i)).At(Timestamp(i))));
   }
-  MEDIAPIPE_ASSERT_OK(graph.CloseAllInputStreams());
-  MEDIAPIPE_ASSERT_OK(graph.WaitUntilDone());
+  MP_ASSERT_OK(graph.CloseAllInputStreams());
+  MP_ASSERT_OK(graph.WaitUntilDone());
 }
 
 // Copied from pass_through_calculator.cc, and modified to specify
@@ -218,8 +218,8 @@ TEST(FixedSizeInputStreamHandlerTest, ParallelWriteAndRead) {
                         &output_packets[i]);
   }
   CalculatorGraph graph;
-  MEDIAPIPE_ASSERT_OK(graph.Initialize(graph_config, {}));
-  MEDIAPIPE_ASSERT_OK(graph.StartRun({}));
+  MP_ASSERT_OK(graph.Initialize(graph_config, {}));
+  MP_ASSERT_OK(graph.StartRun({}));
 
   {
     ::mediapipe::ThreadPool pool(NUM_STREAMS);
@@ -231,15 +231,15 @@ TEST(FixedSizeInputStreamHandlerTest, ParallelWriteAndRead) {
         std::string stream_name = absl::StrCat("in_", w);
         for (int i = 0; i < 50; ++i) {
           Packet p = MakePacket<int>(i).At(Timestamp(i));
-          MEDIAPIPE_EXPECT_OK(graph.AddPacketToInputStream(stream_name, p));
+          MP_EXPECT_OK(graph.AddPacketToInputStream(stream_name, p));
           absl::SleepFor(absl::Microseconds(100));
         }
       });
     }
   }
 
-  MEDIAPIPE_ASSERT_OK(graph.CloseAllInputStreams());
-  MEDIAPIPE_ASSERT_OK(graph.WaitUntilDone());
+  MP_ASSERT_OK(graph.CloseAllInputStreams());
+  MP_ASSERT_OK(graph.WaitUntilDone());
   for (int i = 0; i < NUM_STREAMS; ++i) {
     EXPECT_EQ(output_packets[i].size(), output_packets[0].size());
     for (int j = 0; j < output_packets[i].size(); j++) {

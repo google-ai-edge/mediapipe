@@ -131,7 +131,7 @@ REGISTER_CALCULATOR(ImageCroppingCalculator);
   }
 
 #if defined(__ANDROID__) || (defined(__APPLE__) && !TARGET_OS_OSX)
-  RETURN_IF_ERROR(mediapipe::GlCalculatorHelper::UpdateContract(cc));
+  MP_RETURN_IF_ERROR(mediapipe::GlCalculatorHelper::UpdateContract(cc));
 #endif  // __ANDROID__ or iOS
 
   return ::mediapipe::OkStatus();
@@ -148,7 +148,7 @@ REGISTER_CALCULATOR(ImageCroppingCalculator);
 
   if (use_gpu_) {
 #if defined(__ANDROID__) || (defined(__APPLE__) && !TARGET_OS_OSX)
-    RETURN_IF_ERROR(gpu_helper_.Open(cc));
+    MP_RETURN_IF_ERROR(gpu_helper_.Open(cc));
 #else
     RET_CHECK_FAIL() << "GPU processing is for Android and iOS only.";
 #endif  // __ANDROID__ or iOS
@@ -160,18 +160,18 @@ REGISTER_CALCULATOR(ImageCroppingCalculator);
 ::mediapipe::Status ImageCroppingCalculator::Process(CalculatorContext* cc) {
   if (use_gpu_) {
 #if defined(__ANDROID__) || (defined(__APPLE__) && !TARGET_OS_OSX)
-    RETURN_IF_ERROR(
+    MP_RETURN_IF_ERROR(
         gpu_helper_.RunInGlContext([this, cc]() -> ::mediapipe::Status {
           if (!gpu_initialized_) {
-            RETURN_IF_ERROR(InitGpu(cc));
+            MP_RETURN_IF_ERROR(InitGpu(cc));
             gpu_initialized_ = true;
           }
-          RETURN_IF_ERROR(RenderGpu(cc));
+          MP_RETURN_IF_ERROR(RenderGpu(cc));
           return ::mediapipe::OkStatus();
         }));
 #endif  // __ANDROID__ or iOS
   } else {
-    RETURN_IF_ERROR(RenderCpu(cc));
+    MP_RETURN_IF_ERROR(RenderCpu(cc));
   }
   return ::mediapipe::OkStatus();
 }

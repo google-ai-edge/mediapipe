@@ -90,12 +90,12 @@ TEST(SsdAnchorCalculatorTest, FaceDetectionConfig) {
     }
   )"));
 
-  MEDIAPIPE_ASSERT_OK(runner.Run()) << "Calculator execution failed.";
+  MP_ASSERT_OK(runner.Run()) << "Calculator execution failed.";
 
   const auto& anchors =
       runner.OutputSidePackets().Index(0).Get<std::vector<Anchor>>();
   std::string anchors_string;
-  MEDIAPIPE_EXPECT_OK(mediapipe::file::GetContents(
+  MP_EXPECT_OK(mediapipe::file::GetContents(
       GetGoldenFilePath("anchor_golden_file_0.txt"), &anchors_string));
 
   std::vector<Anchor> anchors_golden;
@@ -133,12 +133,12 @@ TEST(SsdAnchorCalculatorTest, MobileSSDConfig) {
     }
   )"));
 
-  MEDIAPIPE_ASSERT_OK(runner.Run()) << "Calculator execution failed.";
+  MP_ASSERT_OK(runner.Run()) << "Calculator execution failed.";
   const auto& anchors =
       runner.OutputSidePackets().Index(0).Get<std::vector<Anchor>>();
 
   std::string anchors_string;
-  MEDIAPIPE_EXPECT_OK(mediapipe::file::GetContents(
+  MP_EXPECT_OK(mediapipe::file::GetContents(
       GetGoldenFilePath("anchor_golden_file_1.txt"), &anchors_string));
 
   std::vector<Anchor> anchors_golden;

@@ -111,9 +111,9 @@ TEST(CalculatorTest, SourceProcessOrder) {
   output0_type.SetAny();
   output1_type.SetAny();
 
-  MEDIAPIPE_ASSERT_OK(
+  MP_ASSERT_OK(
       output_stream_managers.Index(0).Initialize("output0", &output0_type));
-  MEDIAPIPE_ASSERT_OK(
+  MP_ASSERT_OK(
       output_stream_managers.Index(1).Initialize("output1", &output1_type));
 
   PacketSet input_side_packets(tool::CreateTagMap({}).ValueOrDie());
@@ -158,22 +158,22 @@ TEST(CalculatorTest, SourceProcessOrder) {
 // Tests registration of a calculator within a namespace.
 // DeadEndCalculator is registered in namespace "mediapipe::test_ns".
 TEST(CalculatorTest, CreateByName) {
-  MEDIAPIPE_EXPECT_OK(CalculatorBaseRegistry::CreateByName(  //
+  MP_EXPECT_OK(CalculatorBaseRegistry::CreateByName(  //
       "mediapipe.test_ns.DeadEndCalculator"));
 
-  MEDIAPIPE_EXPECT_OK(CalculatorBaseRegistry::CreateByName(  //
+  MP_EXPECT_OK(CalculatorBaseRegistry::CreateByName(  //
       ".mediapipe.test_ns.DeadEndCalculator"));
 
-  MEDIAPIPE_EXPECT_OK(CalculatorBaseRegistry::CreateByNameInNamespace(  //
+  MP_EXPECT_OK(CalculatorBaseRegistry::CreateByNameInNamespace(  //
       "alpha", ".mediapipe.test_ns.DeadEndCalculator"));
 
-  MEDIAPIPE_EXPECT_OK(CalculatorBaseRegistry::CreateByNameInNamespace(  //
+  MP_EXPECT_OK(CalculatorBaseRegistry::CreateByNameInNamespace(  //
       "alpha", "mediapipe.test_ns.DeadEndCalculator"));
 
-  MEDIAPIPE_EXPECT_OK(CalculatorBaseRegistry::CreateByNameInNamespace(  //
+  MP_EXPECT_OK(CalculatorBaseRegistry::CreateByNameInNamespace(  //
       "mediapipe", "mediapipe.test_ns.DeadEndCalculator"));
 
-  MEDIAPIPE_EXPECT_OK(CalculatorBaseRegistry::CreateByNameInNamespace(  //
+  MP_EXPECT_OK(CalculatorBaseRegistry::CreateByNameInNamespace(  //
       "mediapipe.test_ns.sub_ns", "DeadEndCalculator"));
 
   EXPECT_EQ(CalculatorBaseRegistry::CreateByNameInNamespace(  //
@@ -204,23 +204,23 @@ TEST(CalculatorTest, CreateByNameWhitelisted) {
       absl::make_unique< ::mediapipe::test_ns::whitelisted_ns::DeadCalculator>);
 
   // A whitelisted calculator can be found in its own namespace.
-  MEDIAPIPE_EXPECT_OK(CalculatorBaseRegistry::CreateByNameInNamespace(  //
+  MP_EXPECT_OK(CalculatorBaseRegistry::CreateByNameInNamespace(  //
       "", "mediapipe.test_ns.whitelisted_ns.DeadCalculator"));
-  MEDIAPIPE_EXPECT_OK(CalculatorBaseRegistry::CreateByNameInNamespace(  //
+  MP_EXPECT_OK(CalculatorBaseRegistry::CreateByNameInNamespace(  //
       "mediapipe.sub_ns", "test_ns.whitelisted_ns.DeadCalculator"));
-  MEDIAPIPE_EXPECT_OK(CalculatorBaseRegistry::CreateByNameInNamespace(  //
+  MP_EXPECT_OK(CalculatorBaseRegistry::CreateByNameInNamespace(  //
       "mediapipe.sub_ns", "mediapipe.EndCalculator"));
 
   // A whitelisted calculator can be found in the top-level namespace.
-  MEDIAPIPE_EXPECT_OK(CalculatorBaseRegistry::CreateByNameInNamespace(  //
+  MP_EXPECT_OK(CalculatorBaseRegistry::CreateByNameInNamespace(  //
       "", "DeadCalculator"));
-  MEDIAPIPE_EXPECT_OK(CalculatorBaseRegistry::CreateByNameInNamespace(  //
+  MP_EXPECT_OK(CalculatorBaseRegistry::CreateByNameInNamespace(  //
       "mediapipe", "DeadCalculator"));
-  MEDIAPIPE_EXPECT_OK(CalculatorBaseRegistry::CreateByNameInNamespace(  //
+  MP_EXPECT_OK(CalculatorBaseRegistry::CreateByNameInNamespace(  //
       "mediapipe.test_ns.sub_ns", "DeadCalculator"));
-  MEDIAPIPE_EXPECT_OK(CalculatorBaseRegistry::CreateByNameInNamespace(  //
+  MP_EXPECT_OK(CalculatorBaseRegistry::CreateByNameInNamespace(  //
       "", "EndCalculator"));
-  MEDIAPIPE_EXPECT_OK(CalculatorBaseRegistry::CreateByNameInNamespace(  //
+  MP_EXPECT_OK(CalculatorBaseRegistry::CreateByNameInNamespace(  //
       "mediapipe.test_ns.sub_ns", "EndCalculator"));
 }
 

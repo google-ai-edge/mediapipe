@@ -40,7 +40,7 @@ bool IsLegacyCalculator(const std::string& package_name,
       internal::StaticAccessToCalculatorBaseRegistry::CreateByNameInNamespace(
           package_name, node_class),
       _ << "Unable to find Calculator \"" << node_class << "\"");
-  RETURN_IF_ERROR(static_access_to_calculator_base->GetContract(contract))
+  MP_RETURN_IF_ERROR(static_access_to_calculator_base->GetContract(contract))
           .SetPrepend()
       << node_class << ": ";
   return ::mediapipe::OkStatus();

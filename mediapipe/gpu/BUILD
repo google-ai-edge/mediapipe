@@ -160,7 +160,6 @@ cc_library(
         "//conditions:default": [],
         "//mediapipe:apple": [
             "-x objective-c++",
-            "-std=c++11",
             "-fobjc-arc",
         ],
     }),
@@ -245,7 +244,6 @@ objc_library(
     srcs = ["pixel_buffer_pool_util.mm"],
     hdrs = ["pixel_buffer_pool_util.h"],
     copts = [
-        "-std=c++11",
         "-Wno-shorten-64-to-32",
     ],
     sdk_frameworks = [
@@ -263,7 +261,6 @@ objc_library(
     hdrs = ["MPPGraphGPUData.h"],
     copts = [
         "-x objective-c++",
-        "-std=c++11",
         "-Wno-shorten-64-to-32",
     ],
     sdk_frameworks = [
@@ -541,7 +538,6 @@ objc_library(
     srcs = HELPER_COMMON_SRCS + HELPER_IOS_SRCS,
     hdrs = HELPER_COMMON_HDRS,
     copts = [
-        "-std=c++11",
         "-Wno-shorten-64-to-32",
     ],
     sdk_frameworks = HELPER_IOS_FRAMEWORKS,
@@ -565,7 +561,6 @@ objc_library(
     srcs = ["MPPMetalHelper.mm"],
     hdrs = ["MPPMetalHelper.h"],
     copts = [
-        "-std=c++11",
         "-Wno-shorten-64-to-32",
     ],
     sdk_frameworks = [
@@ -779,7 +774,6 @@ mediapipe_cc_proto_library(
 objc_library(
     name = "metal_copy_calculator",
     srcs = ["MetalCopyCalculator.mm"],
-    copts = ["-std=c++11"],
     sdk_frameworks = [
         "CoreVideo",
         "Metal",
@@ -797,7 +791,6 @@ objc_library(
 objc_library(
     name = "metal_rgb_weight_calculator",
     srcs = ["MetalRgbWeightCalculator.mm"],
-    copts = ["-std=c++11"],
     sdk_frameworks = [
         "CoreVideo",
         "Metal",
@@ -814,7 +807,6 @@ objc_library(
 objc_library(
     name = "metal_sobel_calculator",
     srcs = ["MetalSobelCalculator.mm"],
-    copts = ["-std=c++11"],
     sdk_frameworks = [
         "CoreVideo",
         "Metal",
@@ -831,7 +823,6 @@ objc_library(
 objc_library(
     name = "metal_sobel_compute_calculator",
     srcs = ["MetalSobelComputeCalculator.mm"],
-    copts = ["-std=c++11"],
     sdk_frameworks = [
         "CoreVideo",
         "Metal",
@@ -848,7 +839,6 @@ objc_library(
 objc_library(
     name = "mps_sobel_calculator",
     srcs = ["MPSSobelCalculator.mm"],
-    copts = ["-std=c++11"],
     sdk_frameworks = [
         "CoreVideo",
         "Metal",
@@ -882,7 +872,6 @@ objc_library(
         "gl_ios_test.mm",
     ],
     copts = [
-        "-std=c++11",
         "-Wno-shorten-64-to-32",
     ],
     data = [

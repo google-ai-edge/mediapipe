@@ -52,7 +52,7 @@ proto_library(
 proto_library(
     name = "calculator_options_proto",
     srcs = ["calculator_options.proto"],
-    visibility = ["//mediapipe/framework:__subpackages__"],
+    visibility = ["//visibility:public"],
 )
 
 proto_library(
@@ -87,7 +87,6 @@ proto_library(
     srcs = ["packet_generator.proto"],
     visibility = [
         "//mediapipe:__subpackages__",
-        "//mediapipe/packet_generator:__pkg__",
     ],
 )
 
@@ -187,7 +186,9 @@ mediapipe_cc_proto_library(
 mediapipe_cc_proto_library(
     name = "packet_generator_cc_proto",
     srcs = ["packet_generator.proto"],
-    visibility = ["//mediapipe:__subpackages__"],
+    visibility = [
+        "//mediapipe:__subpackages__",
+    ],
     deps = [":packet_generator_proto"],
 )
 
@@ -220,7 +221,7 @@ mediapipe_cc_proto_library(
     testonly = 1,
     srcs = ["test_calculators.proto"],
     cc_deps = [":calculator_cc_proto"],
-    visibility = ["//mediapipe/framework:__subpackages__"],
+    visibility = ["//visibility:public"],
     deps = [":test_calculators_proto"],
 )
 
@@ -1086,7 +1087,6 @@ cc_library(
     copts = select({
         "//conditions:default": [],
         "//mediapipe:apple": [
-            "-std=c++11",
             "-ObjC++",
         ],
     }),

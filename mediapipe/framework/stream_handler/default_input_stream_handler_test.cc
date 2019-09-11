@@ -53,34 +53,34 @@ TEST(DefaultInputStreamHandlerTest, NoBatchingWorks) {
   tool::AddVectorSink("output1", &config, &sink_1);
 
   CalculatorGraph graph;
-  MEDIAPIPE_ASSERT_OK(graph.Initialize(config));
-  MEDIAPIPE_ASSERT_OK(graph.StartRun({}));
+  MP_ASSERT_OK(graph.Initialize(config));
+  MP_ASSERT_OK(graph.StartRun({}));
 
-  MEDIAPIPE_ASSERT_OK(graph.AddPacketToInputStream(
+  MP_ASSERT_OK(graph.AddPacketToInputStream(
       "input0", Adopt(new int(1)).At(Timestamp(1))));
-  MEDIAPIPE_ASSERT_OK(graph.WaitUntilIdle());
+  MP_ASSERT_OK(graph.WaitUntilIdle());
   // No packets expected as the second stream is not ready to be processed.
   EXPECT_EQ(0, sink_0.size());
   EXPECT_EQ(0, sink_1.size());
 
-  MEDIAPIPE_ASSERT_OK(graph.AddPacketToInputStream(
+  MP_ASSERT_OK(graph.AddPacketToInputStream(
       "input1", Adopt(new int(2)).At(Timestamp(2))));
-  MEDIAPIPE_ASSERT_OK(graph.WaitUntilIdle());
+  MP_ASSERT_OK(graph.WaitUntilIdle());
   // First stream can produce output because the timestamp bound of the second
   // stream is higher.
   EXPECT_EQ(1, sink_0.size());
   EXPECT_EQ(0, sink_1.size());
 
-  MEDIAPIPE_ASSERT_OK(graph.AddPacketToInputStream(
+  MP_ASSERT_OK(graph.AddPacketToInputStream(
       "input0", Adopt(new int(2)).At(Timestamp(2))));
-  MEDIAPIPE_ASSERT_OK(graph.WaitUntilIdle());
+  MP_ASSERT_OK(graph.WaitUntilIdle());
   // Both streams have packets at the same timestamp, therefore both can produce
   // packets.
   EXPECT_EQ(2, sink_0.size());
   EXPECT_EQ(1, sink_1.size());
 
-  MEDIAPIPE_ASSERT_OK(graph.CloseAllInputStreams());
-  MEDIAPIPE_ASSERT_OK(graph.WaitUntilDone());
+  MP_ASSERT_OK(graph.CloseAllInputStreams());
+  MP_ASSERT_OK(graph.WaitUntilDone());
 }
 
 // This test shows the effect of batching on the DefaultInputStreamHandler.
@@ -107,43 +107,43 @@ TEST(DefaultInputStreamHandlerTest, Batches) {
   tool::AddVectorSink("output0", &config, &sink);
 
   CalculatorGraph graph;
-  MEDIAPIPE_ASSERT_OK(graph.Initialize(config));
-  MEDIAPIPE_ASSERT_OK(graph.StartRun({}));
+  MP_ASSERT_OK(graph.Initialize(config));
+  MP_ASSERT_OK(graph.StartRun({}));
 
-  MEDIAPIPE_ASSERT_OK(graph.AddPacketToInputStream(
+  MP_ASSERT_OK(graph.AddPacketToInputStream(
       "input0", Adopt(new int(1)).At(Timestamp(1))));
 
-  MEDIAPIPE_ASSERT_OK(graph.WaitUntilIdle());
+  MP_ASSERT_OK(graph.WaitUntilIdle());
   // There shouldn't be any outputs until a set of two packets is batched.
   EXPECT_TRUE(sink.empty());
 
-  MEDIAPIPE_ASSERT_OK(graph.AddPacketToInputStream(
+  MP_ASSERT_OK(graph.AddPacketToInputStream(
       "input0", Adopt(new int(2)).At(Timestamp(2))));
 
-  MEDIAPIPE_ASSERT_OK(graph.WaitUntilIdle());
+  MP_ASSERT_OK(graph.WaitUntilIdle());
   // There should be two packets, processed during a single invocation.
   ASSERT_EQ(2, sink.size());
   EXPECT_THAT(std::vector<int>({sink[0].Get<int>(), sink[1].Get<int>()}),
               testing::ElementsAre(1, 2));
 
-  MEDIAPIPE_ASSERT_OK(graph.AddPacketToInputStream(
+  MP_ASSERT_OK(graph.AddPacketToInputStream(
       "input0", Adopt(new int(3)).At(Timestamp(3))));
 
-  MEDIAPIPE_ASSERT_OK(graph.WaitUntilIdle());
+  MP_ASSERT_OK(graph.WaitUntilIdle());
   // There shouldn't be any outputs until another set of two packets is batched.
   EXPECT_EQ(2, sink.size());
 
-  MEDIAPIPE_ASSERT_OK(graph.AddPacketToInputStream(
+  MP_ASSERT_OK(graph.AddPacketToInputStream(
       "input0", Adopt(new int(4)).At(Timestamp(4))));
-  MEDIAPIPE_ASSERT_OK(graph.WaitUntilIdle());
+  MP_ASSERT_OK(graph.WaitUntilIdle());
   // The new batch was complete. There should be two more output packets.
   ASSERT_EQ(4, sink.size());
   EXPECT_THAT(std::vector<int>({sink[0].Get<int>(), sink[1].Get<int>(),
                                 sink[2].Get<int>(), sink[3].Get<int>()}),
               testing::ElementsAre(1, 2, 3, 4));
 
-  MEDIAPIPE_ASSERT_OK(graph.CloseAllInputStreams());
-  MEDIAPIPE_ASSERT_OK(graph.WaitUntilDone());
+  MP_ASSERT_OK(graph.CloseAllInputStreams());
+  MP_ASSERT_OK(graph.WaitUntilDone());
 }
 
 // This test shows that any packets get flushed (outputted) when the input
@@ -171,32 +171,32 @@ TEST(DefaultInputStreamHandlerTest, BatchIsFlushedWhenClosing) {
   tool::AddVectorSink("output0", &config, &sink);
 
   CalculatorGraph graph;
-  MEDIAPIPE_ASSERT_OK(graph.Initialize(config));
-  MEDIAPIPE_ASSERT_OK(graph.StartRun({}));
+  MP_ASSERT_OK(graph.Initialize(config));
+  MP_ASSERT_OK(graph.StartRun({}));
 
-  MEDIAPIPE_ASSERT_OK(graph.AddPacketToInputStream(
+  MP_ASSERT_OK(graph.AddPacketToInputStream(
       "input0", Adopt(new int(1)).At(Timestamp(1))));
-  MEDIAPIPE_ASSERT_OK(graph.WaitUntilIdle());
+  MP_ASSERT_OK(graph.WaitUntilIdle());
   // There shouldn't be any outputs until a set of two packets is batched.
   EXPECT_TRUE(sink.empty());
 
-  MEDIAPIPE_ASSERT_OK(graph.AddPacketToInputStream(
+  MP_ASSERT_OK(graph.AddPacketToInputStream(
       "input0", Adopt(new int(2)).At(Timestamp(2))));
-  MEDIAPIPE_ASSERT_OK(graph.WaitUntilIdle());
+  MP_ASSERT_OK(graph.WaitUntilIdle());
   // There should be two packets, processed during a single invocation.
   ASSERT_EQ(2, sink.size());
   EXPECT_THAT(std::vector<int>({sink[0].Get<int>(), sink[1].Get<int>()}),
               testing::ElementsAre(1, 2));
 
-  MEDIAPIPE_ASSERT_OK(graph.AddPacketToInputStream(
+  MP_ASSERT_OK(graph.AddPacketToInputStream(
       "input0", Adopt(new int(3)).At(Timestamp(3))));
 
-  MEDIAPIPE_ASSERT_OK(graph.WaitUntilIdle());
+  MP_ASSERT_OK(graph.WaitUntilIdle());
   // There shouldn't be any outputs until another set of two packets is batched.
   EXPECT_EQ(2, sink.size());
 
-  MEDIAPIPE_ASSERT_OK(graph.CloseAllInputStreams());
-  MEDIAPIPE_ASSERT_OK(graph.WaitUntilDone());
+  MP_ASSERT_OK(graph.CloseAllInputStreams());
+  MP_ASSERT_OK(graph.WaitUntilDone());
 
   // When the streams are done, the packets currently being batched should be
   // flushed out.
@@ -237,45 +237,45 @@ TEST(DefaultInputStreamHandlerTest, DoesntPropagateTimestampWhenBatching) {
   std::vector<Packet> sink;
   tool::AddVectorSink("output", &config, &sink);
   CalculatorGraph graph;
-  MEDIAPIPE_ASSERT_OK(graph.Initialize(config));
-  MEDIAPIPE_ASSERT_OK(graph.StartRun({}));
-  MEDIAPIPE_ASSERT_OK(graph.AddPacketToInputStream(
+  MP_ASSERT_OK(graph.Initialize(config));
+  MP_ASSERT_OK(graph.StartRun({}));
+  MP_ASSERT_OK(graph.AddPacketToInputStream(
       "input0", Adopt(new int(0)).At(Timestamp(0))));
-  MEDIAPIPE_ASSERT_OK(graph.WaitUntilIdle());
+  MP_ASSERT_OK(graph.WaitUntilIdle());
   EXPECT_TRUE(sink.empty());
 
-  MEDIAPIPE_ASSERT_OK(graph.AddPacketToInputStream(
+  MP_ASSERT_OK(graph.AddPacketToInputStream(
       "input0", Adopt(new int(1)).At(Timestamp(1))));
-  MEDIAPIPE_ASSERT_OK(graph.AddPacketToInputStream(
+  MP_ASSERT_OK(graph.AddPacketToInputStream(
       "input1", Adopt(new int(1)).At(Timestamp(1))));
-  MEDIAPIPE_ASSERT_OK(graph.WaitUntilIdle());
+  MP_ASSERT_OK(graph.WaitUntilIdle());
   // Both calculators have packet 1. First node is currently batching and it
   // propagates the first input timestamp in the batch. Therefore, the
   // second node should produce output for the packet at 0.
   EXPECT_EQ(1, sink.size());
 
-  MEDIAPIPE_ASSERT_OK(graph.AddPacketToInputStream(
+  MP_ASSERT_OK(graph.AddPacketToInputStream(
       "input0", Adopt(new int(2)).At(Timestamp(2))));
-  MEDIAPIPE_ASSERT_OK(graph.AddPacketToInputStream(
+  MP_ASSERT_OK(graph.AddPacketToInputStream(
       "input1", Adopt(new int(2)).At(Timestamp(2))));
-  MEDIAPIPE_ASSERT_OK(graph.WaitUntilIdle());
+  MP_ASSERT_OK(graph.WaitUntilIdle());
   // Due to batching on the first node, timestamp is not propagated for the
   // packet at timestamp 2. Therefore, the second node cannot process the packet
   // at timestamp 1.
   EXPECT_EQ(1, sink.size());
 
-  MEDIAPIPE_ASSERT_OK(graph.AddPacketToInputStream(
+  MP_ASSERT_OK(graph.AddPacketToInputStream(
       "input0", Adopt(new int(3)).At(Timestamp(3))));
-  MEDIAPIPE_ASSERT_OK(graph.AddPacketToInputStream(
+  MP_ASSERT_OK(graph.AddPacketToInputStream(
       "input1", Adopt(new int(3)).At(Timestamp(3))));
-  MEDIAPIPE_ASSERT_OK(graph.WaitUntilIdle());
+  MP_ASSERT_OK(graph.WaitUntilIdle());
   // Batching is complete on the first node. It produced outputs at timestamp 1,
   // 2, and 3. The first node can now process the input packets at timestamps 1,
   // 2, and 3 as well.
   EXPECT_EQ(4, sink.size());
 
-  MEDIAPIPE_ASSERT_OK(graph.CloseAllInputStreams());
-  MEDIAPIPE_ASSERT_OK(graph.WaitUntilDone());
+  MP_ASSERT_OK(graph.CloseAllInputStreams());
+  MP_ASSERT_OK(graph.WaitUntilDone());
   EXPECT_EQ(4, sink.size());
 }
 

@@ -209,25 +209,25 @@ class RationalFactorResampleCalculatorTest
 
 TEST_F(RationalFactorResampleCalculatorTest, Upsample) {
   const double kUpsampleRate = input_sample_rate_ * 1.9;
-  MEDIAPIPE_ASSERT_OK(Run(kUpsampleRate));
+  MP_ASSERT_OK(Run(kUpsampleRate));
   CheckOutput(kUpsampleRate);
 }
 
 TEST_F(RationalFactorResampleCalculatorTest, Downsample) {
   const double kDownsampleRate = input_sample_rate_ / 1.9;
-  MEDIAPIPE_ASSERT_OK(Run(kDownsampleRate));
+  MP_ASSERT_OK(Run(kDownsampleRate));
   CheckOutput(kDownsampleRate);
 }
 
 TEST_F(RationalFactorResampleCalculatorTest, UsesRationalFactorResampler) {
   const double kUpsampleRate = input_sample_rate_ * 2;
-  MEDIAPIPE_ASSERT_OK(Run(kUpsampleRate));
+  MP_ASSERT_OK(Run(kUpsampleRate));
   CheckOutput(kUpsampleRate);
 }
 
 TEST_F(RationalFactorResampleCalculatorTest, PassthroughIfSampleRateUnchanged) {
   const double kUpsampleRate = input_sample_rate_;
-  MEDIAPIPE_ASSERT_OK(Run(kUpsampleRate));
+  MP_ASSERT_OK(Run(kUpsampleRate));
   CheckOutputUnchanged();
 }
 
@@ -239,7 +239,7 @@ TEST_F(RationalFactorResampleCalculatorTest, DoesNotDieOnEmptyInput) {
   options_.set_target_sample_rate(input_sample_rate_);
   InitializeGraph();
   FillInputHeader();
-  MEDIAPIPE_ASSERT_OK(RunGraph());
+  MP_ASSERT_OK(RunGraph());
   EXPECT_TRUE(output().packets.empty());
 }
 

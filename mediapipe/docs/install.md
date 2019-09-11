@@ -7,11 +7,11 @@ future.
 Note: If you plan to use TensorFlow calculators and example apps, there is a
 known issue with gcc and g++ version 6.3 and 7.3. Please use other versions.
 
-Note: While Mediapipe configuring TensorFlow with Python 2, if you see the
+Note: While Mediapipe configures TensorFlow, if you see the
 following error:
-'"/private/var/.../org_tensorflow/third_party/git/git_configure.bzl", line 14,
-in _fail fail(("%sGit Configuration Error:%s %...)))', please install the python
-future library by `$ pip install --user future`
+`"...git_configure.bzl", line 14, in _fail fail(("%sGit Configuration
+Error:%s %...)))`,
+please install the python future library using: `$ pip install --user future`.
 
 Choose your operating system:
 
@@ -41,7 +41,7 @@ To build and run iOS apps:
     $ cd mediapipe
     ```
 
-2.  Install Bazel (0.23 and above required).
+2.  Install Bazel (0.24.1 and above required).
 
     Option 1. Use package manager tool to install the latest version of Bazel.
 
@@ -139,7 +139,7 @@ To build and run iOS apps:
     $ cd mediapipe
     ```
 
-2.  Install Bazel (0.23 and above required).
+2.  Install Bazel (0.24.1 and above required).
 
     Follow Bazel's
     [documentation](https://docs.bazel.build/versions/master/install-redhat.html)
@@ -227,7 +227,7 @@ To build and run iOS apps:
     $ cd mediapipe
     ```
 
-3.  Install Bazel (0.23 and above required).
+3.  Install Bazel (0.24.1 and above required).
 
     Option 1. Use package manager tool to install the latest version of Bazel.
 
@@ -360,7 +360,7 @@ To build and run iOS apps:
     username@DESKTOP-TMVLBJ1:~$ sudo apt-get update && sudo apt-get install -y --no-install-recommends build-essential git python zip adb openjdk-8-jdk
     ```
 
-5.  Install Bazel (0.23 and above required).
+5.  Install Bazel (0.24.1 and above required).
 
     ```bash
     username@DESKTOP-TMVLBJ1:~$ curl -sLO --retry 5 --retry-max-time 10 \
@@ -571,9 +571,10 @@ Please verify all the necessary packages are installed.
 
 ### Setting up Android Studio with MediaPipe
 
-The steps below use Android Studio to build and install a MediaPipe example app.
+The steps below use Android Studio 3.5 to build and install a MediaPipe example
+app.
 
-1.  Install and launch Android Studio.
+1.  Install and launch Android Studio 3.5.
 
 2.  Select `Configure` | `SDK Manager` | `SDK Platforms`.
 
@@ -588,24 +589,31 @@ The steps below use Android Studio to build and install a MediaPipe example app.
     *   Verify that Android SDK Tools 26.1.1 is installed.
     *   Verify that Android NDK 17c or above is installed.
     *   Take note of the Android NDK Location, e.g.,
-        `/usr/local/home/Android/Sdk/ndk-bundle`.
+        `/usr/local/home/Android/Sdk/ndk-bundle` or
+        `/usr/local/home/Android/Sdk/ndk/20.0.5594570`.
 
 4.  Set environment variables `$ANDROID_HOME` and `$ANDROID_NDK_HOME` to point
     to the installed SDK and NDK.
 
     ```bash
     export ANDROID_HOME=/usr/local/home/Android/Sdk
+
+    # If the NDK libraries are installed by a previous version of Android Studio, do
     export ANDROID_NDK_HOME=/usr/local/home/Android/Sdk/ndk-bundle
+    # If the NDK libraries are installed by Android Studio 3.5, do
+    export ANDROID_NDK_HOME=/usr/local/home/Android/Sdk/ndk/<version number>
     ```
 
 5.  Select `Configure` | `Plugins` install `Bazel`.
 
-6.  Select `Android Studio` | `Preferences` | `Bazel settings` and modify `Bazel binary location` to be the same as the output of `$ which bazel`.
+6.  On Linux, select `File` | `Settings`| `Bazel settings`. On macos, select
+    `Android Studio` | `Preferences` | `Bazel settings`. Then, modify `Bazel
+    binary location` to be the same as the output of `$ which bazel`.
 
 7.  Select `Import Bazel Project`.
 
-    *   Select `Workspace`: `/path/to/mediapipe`.
-    *   Select `Generate from BUILD file`: `/path/to/mediapipe/BUILD`.
+    *   Select `Workspace`: `/path/to/mediapipe` and select `Next`.
+    *   Select `Generate from BUILD file`: `/path/to/mediapipe/BUILD` and select `Next`.
     *   Modify `Project View` to be the following and select `Finish`.
 
     ```
@@ -616,19 +624,43 @@ The steps below use Android Studio to build and install a MediaPipe example app.
       -mediapipe/examples/ios
 
     targets:
-      //mediapipe/...:all
+      //mediapipe/examples/android/...:all
+      //mediapipe/java/...:all
 
     android_sdk_platform: android-29
     ```
 
-8.  Connect an Android device to the workstation.
+8.  Select `Bazel` | `Sync` | `Sync project with Build files`.
 
-9.  Select `Run...` | `Edit Configurations...`.
+    Note: Even after doing step 4, if you still see the error:
+    `"no such package '@androidsdk//': Either the path
+    attribute of android_sdk_repository or the ANDROID_HOME environment variable
+    must be set."`, please modify the **WORKSPACE** file to point
+    to your SDK and NDK library locations, as below:
 
+    ```
+    android_sdk_repository(
+        name = "androidsdk",
+        path = "/path/to/android/sdk"
+    )
+
+    android_ndk_repository(
+        name = "androidndk",
+        path = "/path/to/android/ndk"
+    )
+    ```
+
+9.  Connect an Android device to the workstation.
+
+10. Select `Run...` | `Edit Configurations...`.
+
+    *   Select `Templates` | `Bazel Command`.
     *   Enter Target Expression:
         `//mediapipe/examples/android/src/java/com/google/mediapipe/apps/facedetectioncpu`
-    *   Enter Bazel command: `mobile-install`
-    *   Enter Bazel flags: `-c opt --config=android_arm64` select `Run`
+    *   Enter Bazel command: `mobile-install`.
+    *   Enter Bazel flags: `-c opt --config=android_arm64`.
+    *   Press the `[+]` button to add the new configuration.
+    *   Select `Run` to run the example app on the connected Android device.
 
 [`WORKSAPCE`]: https://github.com/google/mediapipe/tree/master/WORKSPACE
 [`opencv_linux.BUILD`]: https://github.com/google/mediapipe/tree/master/third_party/opencv_linux.BUILD

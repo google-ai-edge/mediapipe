@@ -105,7 +105,7 @@ class FramewiseTransformCalculatorBase : public CalculatorBase {
 ::mediapipe::Status FramewiseTransformCalculatorBase::Open(
     CalculatorContext* cc) {
   TimeSeriesHeader input_header;
-  RETURN_IF_ERROR(time_series_util::FillTimeSeriesHeaderIfValid(
+  MP_RETURN_IF_ERROR(time_series_util::FillTimeSeriesHeaderIfValid(
       cc->Inputs().Index(0).Header(), &input_header));
 
   ::mediapipe::Status status = ConfigureTransform(input_header, cc);

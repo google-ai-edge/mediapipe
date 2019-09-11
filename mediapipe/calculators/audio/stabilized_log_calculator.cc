@@ -65,7 +65,7 @@ class StabilizedLogCalculator : public CalculatorBase {
     // If the input packets have a header, propagate the header to the output.
     if (!cc->Inputs().Index(0).Header().IsEmpty()) {
       TimeSeriesHeader input_header;
-      RETURN_IF_ERROR(time_series_util::FillTimeSeriesHeaderIfValid(
+      MP_RETURN_IF_ERROR(time_series_util::FillTimeSeriesHeaderIfValid(
           cc->Inputs().Index(0).Header(), &input_header));
       cc->Outputs().Index(0).SetHeader(
           Adopt(new TimeSeriesHeader(input_header)));

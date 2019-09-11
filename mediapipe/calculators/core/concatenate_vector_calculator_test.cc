@@ -45,7 +45,7 @@ TEST(TestConcatenateIntVectorCalculatorTest, EmptyVectorInputs) {
 
   std::vector<std::vector<int>> inputs = {{}, {}, {}};
   AddInputVectors(inputs, /*timestamp=*/1, &runner);
-  MEDIAPIPE_ASSERT_OK(runner.Run());
+  MP_ASSERT_OK(runner.Run());
 
   const std::vector<Packet>& outputs = runner.Outputs().Index(0).packets;
   EXPECT_EQ(1, outputs.size());
@@ -60,7 +60,7 @@ TEST(TestConcatenateIntVectorCalculatorTest, OneTimestamp) {
 
   std::vector<std::vector<int>> inputs = {{1, 2, 3}, {4}, {5, 6}};
   AddInputVectors(inputs, /*timestamp=*/1, &runner);
-  MEDIAPIPE_ASSERT_OK(runner.Run());
+  MP_ASSERT_OK(runner.Run());
 
   const std::vector<Packet>& outputs = runner.Outputs().Index(0).packets;
   EXPECT_EQ(1, outputs.size());
@@ -81,7 +81,7 @@ TEST(TestConcatenateIntVectorCalculatorTest, TwoInputsAtTwoTimestamps) {
     std::vector<std::vector<int>> inputs = {{0, 2}, {1}, {3, 5}};
     AddInputVectors(inputs, /*timestamp=*/2, &runner);
   }
-  MEDIAPIPE_ASSERT_OK(runner.Run());
+  MP_ASSERT_OK(runner.Run());
 
   const std::vector<Packet>& outputs = runner.Outputs().Index(0).packets;
   EXPECT_EQ(2, outputs.size());
@@ -106,7 +106,7 @@ TEST(TestConcatenateIntVectorCalculatorTest, OneEmptyStreamStillOutput) {
 
   std::vector<std::vector<int>> inputs = {{1, 2, 3}};
   AddInputVectors(inputs, /*timestamp=*/1, &runner);
-  MEDIAPIPE_ASSERT_OK(runner.Run());
+  MP_ASSERT_OK(runner.Run());
 
   const std::vector<Packet>& outputs = runner.Outputs().Index(0).packets;
   EXPECT_EQ(1, outputs.size());
@@ -125,7 +125,7 @@ TEST(TestConcatenateIntVectorCalculatorTest, OneEmptyStreamNoOutput) {
 
   std::vector<std::vector<int>> inputs = {{1, 2, 3}};
   AddInputVectors(inputs, /*timestamp=*/1, &runner);
-  MEDIAPIPE_ASSERT_OK(runner.Run());
+  MP_ASSERT_OK(runner.Run());
 
   const std::vector<Packet>& outputs = runner.Outputs().Index(0).packets;
   EXPECT_EQ(0, outputs.size());
@@ -146,7 +146,7 @@ TEST(ConcatenateFloatVectorCalculatorTest, EmptyVectorInputs) {
 
   std::vector<std::vector<float>> inputs = {{}, {}, {}};
   AddInputVectors(inputs, /*timestamp=*/1, &runner);
-  MEDIAPIPE_ASSERT_OK(runner.Run());
+  MP_ASSERT_OK(runner.Run());
 
   const std::vector<Packet>& outputs = runner.Outputs().Index(0).packets;
   EXPECT_EQ(1, outputs.size());
@@ -162,7 +162,7 @@ TEST(ConcatenateFloatVectorCalculatorTest, OneTimestamp) {
   std::vector<std::vector<float>> inputs = {
       {1.0f, 2.0f, 3.0f}, {4.0f}, {5.0f, 6.0f}};
   AddInputVectors(inputs, /*timestamp=*/1, &runner);
-  MEDIAPIPE_ASSERT_OK(runner.Run());
+  MP_ASSERT_OK(runner.Run());
 
   const std::vector<Packet>& outputs = runner.Outputs().Index(0).packets;
   EXPECT_EQ(1, outputs.size());
@@ -185,7 +185,7 @@ TEST(ConcatenateFloatVectorCalculatorTest, TwoInputsAtTwoTimestamps) {
         {0.0f, 2.0f}, {1.0f}, {3.0f, 5.0f}};
     AddInputVectors(inputs, /*timestamp=*/2, &runner);
   }
-  MEDIAPIPE_ASSERT_OK(runner.Run());
+  MP_ASSERT_OK(runner.Run());
 
   const std::vector<Packet>& outputs = runner.Outputs().Index(0).packets;
   EXPECT_EQ(2, outputs.size());
@@ -210,7 +210,7 @@ TEST(ConcatenateFloatVectorCalculatorTest, OneEmptyStreamStillOutput) {
 
   std::vector<std::vector<float>> inputs = {{1.0f, 2.0f, 3.0f}};
   AddInputVectors(inputs, /*timestamp=*/1, &runner);
-  MEDIAPIPE_ASSERT_OK(runner.Run());
+  MP_ASSERT_OK(runner.Run());
 
   const std::vector<Packet>& outputs = runner.Outputs().Index(0).packets;
   EXPECT_EQ(1, outputs.size());
@@ -229,7 +229,7 @@ TEST(ConcatenateFloatVectorCalculatorTest, OneEmptyStreamNoOutput) {
 
   std::vector<std::vector<float>> inputs = {{1.0f, 2.0f, 3.0f}};
   AddInputVectors(inputs, /*timestamp=*/1, &runner);
-  MEDIAPIPE_ASSERT_OK(runner.Run());
+  MP_ASSERT_OK(runner.Run());
 
   const std::vector<Packet>& outputs = runner.Outputs().Index(0).packets;
   EXPECT_EQ(0, outputs.size());

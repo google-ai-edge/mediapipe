@@ -76,7 +76,7 @@ TEST(CollectionTest, MixedTagAndIndexUsage) {
   auto tags_statusor =
       tool::CreateTagMap({"TAG_A:a", "TAG_B:1:b", "TAG_A:2:c", "TAG_B:d",
                           "TAG_C:0:e", "TAG_A:1:f"});
-  MEDIAPIPE_ASSERT_OK(tags_statusor);
+  MP_ASSERT_OK(tags_statusor);
 
   internal::Collection<int> collection1(std::move(tags_statusor.ValueOrDie()));
   collection1.Get("TAG_A", 0) = 100;
@@ -452,9 +452,8 @@ template <typename T>
 }
 
 TEST(CollectionTest, TestCollectionWithPointersIntAndString) {
-  MEDIAPIPE_ASSERT_OK(
-      TestCollectionWithPointers<int>({3, 7, -2, 0, 4, -3}, 17, 10));
-  MEDIAPIPE_ASSERT_OK(TestCollectionWithPointers<std::string>(
+  MP_ASSERT_OK(TestCollectionWithPointers<int>({3, 7, -2, 0, 4, -3}, 17, 10));
+  MP_ASSERT_OK(TestCollectionWithPointers<std::string>(
       {"a0", "a1", "a2", "b0", "b1", "c0"}, "inject1", "inject2"));
 }
 

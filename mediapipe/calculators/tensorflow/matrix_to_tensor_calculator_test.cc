@@ -74,7 +74,7 @@ TEST_F(MatrixToTensorCalculatorTest, RandomMatrix) {
     runner_ = ::absl::make_unique<CalculatorRunner>("MatrixToTensorCalculator",
                                                     "", 1, 1, 0);
     AddRandomMatrix(num_rows, num_columns, kSeed);
-    MEDIAPIPE_ASSERT_OK(runner_->Run());
+    MP_ASSERT_OK(runner_->Run());
     const std::vector<Packet>& output_packets =
         runner_->Outputs().Index(0).packets;
     ASSERT_EQ(1, output_packets.size());
@@ -106,7 +106,7 @@ TEST_F(MatrixToTensorCalculatorTest, RandomMatrixTranspose) {
     runner_ = ::absl::make_unique<CalculatorRunner>(
         "MatrixToTensorCalculator", kTransposeOptionsString, 1, 1, 0);
     AddRandomMatrix(num_rows, num_columns, kSeed);
-    MEDIAPIPE_ASSERT_OK(runner_->Run());
+    MP_ASSERT_OK(runner_->Run());
     const std::vector<Packet>& output_packets =
         runner_->Outputs().Index(0).packets;
     ASSERT_EQ(1, output_packets.size());
@@ -138,7 +138,7 @@ TEST_F(MatrixToTensorCalculatorTest, RandomMatrixAddDimension) {
     runner_ = ::absl::make_unique<CalculatorRunner>(
         "MatrixToTensorCalculator", kAddDimensionOptionsString, 1, 1, 0);
     AddRandomMatrix(num_rows, num_columns, kSeed);
-    MEDIAPIPE_ASSERT_OK(runner_->Run());
+    MP_ASSERT_OK(runner_->Run());
     const std::vector<Packet>& output_packets =
         runner_->Outputs().Index(0).packets;
     ASSERT_EQ(1, output_packets.size());

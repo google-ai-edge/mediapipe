@@ -161,12 +161,12 @@ TEST_F(SplitTfLiteTensorVectorCalculatorTest, SmokeTest) {
 
   // Run the graph.
   CalculatorGraph graph;
-  MEDIAPIPE_ASSERT_OK(graph.Initialize(graph_config));
-  MEDIAPIPE_ASSERT_OK(graph.StartRun({}));
-  MEDIAPIPE_ASSERT_OK(graph.AddPacketToInputStream(
+  MP_ASSERT_OK(graph.Initialize(graph_config));
+  MP_ASSERT_OK(graph.StartRun({}));
+  MP_ASSERT_OK(graph.AddPacketToInputStream(
       "tensor_in", Adopt(input_vec_.release()).At(Timestamp(0))));
   // Wait until the calculator finishes processing.
-  MEDIAPIPE_ASSERT_OK(graph.WaitUntilIdle());
+  MP_ASSERT_OK(graph.WaitUntilIdle());
 
   ValidateVectorOutput(range_0_packets, /*expected_elements=*/1,
                        /*input_begin_index=*/0);
@@ -176,8 +176,8 @@ TEST_F(SplitTfLiteTensorVectorCalculatorTest, SmokeTest) {
                        /*input_begin_index=*/4);
 
   // Fully close the graph at the end.
-  MEDIAPIPE_ASSERT_OK(graph.CloseInputStream("tensor_in"));
-  MEDIAPIPE_ASSERT_OK(graph.WaitUntilDone());
+  MP_ASSERT_OK(graph.CloseInputStream("tensor_in"));
+  MP_ASSERT_OK(graph.WaitUntilDone());
 }
 
 TEST_F(SplitTfLiteTensorVectorCalculatorTest, InvalidRangeTest) {
@@ -270,12 +270,12 @@ TEST_F(SplitTfLiteTensorVectorCalculatorTest, SmokeTestElementOnly) {
 
   // Run the graph.
   CalculatorGraph graph;
-  MEDIAPIPE_ASSERT_OK(graph.Initialize(graph_config));
-  MEDIAPIPE_ASSERT_OK(graph.StartRun({}));
-  MEDIAPIPE_ASSERT_OK(graph.AddPacketToInputStream(
+  MP_ASSERT_OK(graph.Initialize(graph_config));
+  MP_ASSERT_OK(graph.StartRun({}));
+  MP_ASSERT_OK(graph.AddPacketToInputStream(
       "tensor_in", Adopt(input_vec_.release()).At(Timestamp(0))));
   // Wait until the calculator finishes processing.
-  MEDIAPIPE_ASSERT_OK(graph.WaitUntilIdle());
+  MP_ASSERT_OK(graph.WaitUntilIdle());
 
   ValidateElementOutput(range_0_packets,
                         /*input_begin_index=*/0);
@@ -285,8 +285,8 @@ TEST_F(SplitTfLiteTensorVectorCalculatorTest, SmokeTestElementOnly) {
                         /*input_begin_index=*/4);
 
   // Fully close the graph at the end.
-  MEDIAPIPE_ASSERT_OK(graph.CloseInputStream("tensor_in"));
-  MEDIAPIPE_ASSERT_OK(graph.WaitUntilDone());
+  MP_ASSERT_OK(graph.CloseInputStream("tensor_in"));
+  MP_ASSERT_OK(graph.WaitUntilDone());
 }
 
 TEST_F(SplitTfLiteTensorVectorCalculatorTest,

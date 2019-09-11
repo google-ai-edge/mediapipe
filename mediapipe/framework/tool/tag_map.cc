@@ -44,7 +44,7 @@ void TagMap::InitializeNames(
     std::string tag;
     int index;
     std::string name;
-    RETURN_IF_ERROR(ParseTagIndexName(tag_index_name, &tag, &index, &name));
+    MP_RETURN_IF_ERROR(ParseTagIndexName(tag_index_name, &tag, &index, &name));
 
     // Get a reference to the tag data (possibly creating it).
     TagData& tag_data = mapping_[tag];

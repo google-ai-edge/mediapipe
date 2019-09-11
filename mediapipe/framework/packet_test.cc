@@ -86,7 +86,7 @@ TEST(PacketTest, UsesLvalueAndRvalueReferencePacketAtFunctions) {
   // with the given timestamp.
   EXPECT_TRUE(packet1.IsEmpty());  // NOLINT used after std::move().
   ASSERT_FALSE(packet2.IsEmpty());
-  MEDIAPIPE_ASSERT_OK(packet2.ValidateAsType<int>());
+  MP_ASSERT_OK(packet2.ValidateAsType<int>());
   EXPECT_EQ(0, packet2.Get<int>());
   EXPECT_EQ(Timestamp(100), packet2.Timestamp());
 
@@ -97,8 +97,8 @@ TEST(PacketTest, UsesLvalueAndRvalueReferencePacketAtFunctions) {
   // has the given timestamp.
   ASSERT_FALSE(packet3.IsEmpty());
   ASSERT_FALSE(packet4.IsEmpty());
-  MEDIAPIPE_ASSERT_OK(packet3.ValidateAsType<int>());
-  MEDIAPIPE_ASSERT_OK(packet4.ValidateAsType<int>());
+  MP_ASSERT_OK(packet3.ValidateAsType<int>());
+  MP_ASSERT_OK(packet4.ValidateAsType<int>());
   EXPECT_EQ(1, packet3.Get<int>());
   EXPECT_EQ(1, packet4.Get<int>());
   EXPECT_EQ(Timestamp(), packet3.Timestamp());
@@ -111,7 +111,7 @@ TEST(PacketTest, HandlesUniquePtr) {
        {AdoptAsUniquePtr(static_cast<MyClassBase*>(new MyClass)),
         AdoptAsUniquePtr<MyClassBase>(new MyClass),
         Adopt(new std::unique_ptr<MyClassBase>(new MyClass))}) {
-    MEDIAPIPE_EXPECT_OK(packet.ValidateAsType<std::unique_ptr<MyClassBase>>());
+    MP_EXPECT_OK(packet.ValidateAsType<std::unique_ptr<MyClassBase>>());
   }
   bool exists = false;
   Packet packet = AdoptAsUniquePtr<MyClassBase>(new MyClass(&exists));
@@ -192,7 +192,7 @@ TEST(PacketTest, ValidateAsProtoMessageLite) {
   auto proto_ptr = absl::make_unique<::mediapipe::PacketTestProto>();
   proto_ptr->add_x(123);
   Packet packet = Adopt(proto_ptr.release());
-  MEDIAPIPE_EXPECT_OK(packet.ValidateAsProtoMessageLite());
+  MP_EXPECT_OK(packet.ValidateAsProtoMessageLite());
   Packet packet2 = MakePacket<int>(3);
   ::mediapipe::Status status = packet2.ValidateAsProtoMessageLite();
   EXPECT_EQ(status.code(), ::mediapipe::StatusCode::kInvalidArgument);

@@ -101,7 +101,7 @@ TEST(DetectionsToRenderDataCalculatorTest, OnlyDetecctionList) {
       .packets.push_back(
           Adopt(detections.release()).At(Timestamp::PostStream()));
 
-  MEDIAPIPE_ASSERT_OK(runner.Run()) << "Calculator execution failed.";
+  MP_ASSERT_OK(runner.Run()) << "Calculator execution failed.";
   const std::vector<Packet>& output =
       runner.Outputs().Tag("RENDER_DATA").packets;
   ASSERT_EQ(1, output.size());
@@ -135,7 +135,7 @@ TEST(DetectionsToRenderDataCalculatorTest, OnlyDetecctionVector) {
       .packets.push_back(
           Adopt(detections.release()).At(Timestamp::PostStream()));
 
-  MEDIAPIPE_ASSERT_OK(runner.Run()) << "Calculator execution failed.";
+  MP_ASSERT_OK(runner.Run()) << "Calculator execution failed.";
   const std::vector<Packet>& output =
       runner.Outputs().Tag("RENDER_DATA").packets;
   ASSERT_EQ(1, output.size());
@@ -178,7 +178,7 @@ TEST(DetectionsToRenderDataCalculatorTest, BothDetecctionListAndVector) {
       .packets.push_back(
           Adopt(detections.release()).At(Timestamp::PostStream()));
 
-  MEDIAPIPE_ASSERT_OK(runner.Run()) << "Calculator execution failed.";
+  MP_ASSERT_OK(runner.Run()) << "Calculator execution failed.";
   const std::vector<Packet>& actual =
       runner.Outputs().Tag("RENDER_DATA").packets;
   ASSERT_EQ(1, actual.size());
@@ -218,7 +218,7 @@ TEST(DetectionsToRenderDataCalculatorTest, ProduceEmptyPacket) {
       .packets.push_back(
           Adopt(detections1.release()).At(Timestamp::PostStream()));
 
-  MEDIAPIPE_ASSERT_OK(runner1.Run()) << "Calculator execution failed.";
+  MP_ASSERT_OK(runner1.Run()) << "Calculator execution failed.";
   const std::vector<Packet>& exact1 =
       runner1.Outputs().Tag("RENDER_DATA").packets;
   ASSERT_EQ(0, exact1.size());
@@ -248,7 +248,7 @@ TEST(DetectionsToRenderDataCalculatorTest, ProduceEmptyPacket) {
       .packets.push_back(
           Adopt(detections2.release()).At(Timestamp::PostStream()));
 
-  MEDIAPIPE_ASSERT_OK(runner2.Run()) << "Calculator execution failed.";
+  MP_ASSERT_OK(runner2.Run()) << "Calculator execution failed.";
   const std::vector<Packet>& exact2 =
       runner2.Outputs().Tag("RENDER_DATA").packets;
   ASSERT_EQ(1, exact2.size());

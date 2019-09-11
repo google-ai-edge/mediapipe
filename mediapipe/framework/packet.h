@@ -130,7 +130,7 @@ class Packet {
   //   // use an adaptor which returns void.
   //   ASSIGN_OR_RETURN(auto detection, p.ConsumeOrCopy<Detection>(),
   //                    _.With([](const ::mediapipe::Status& status) {
-  //                      EXPECT_OK(status);
+  //                      MP_EXPECT_OK(status);
   //                      // Use CHECK_OK to crash and report a usable line
   //                      // number (which the ValueOrDie alternative does not).
   //                      // Include a return statement if the return value is
@@ -495,7 +495,7 @@ inline Packet& Packet::operator=(const Packet& packet) {
 template <typename T>
 inline ::mediapipe::StatusOr<std::unique_ptr<T>> Packet::Consume() {
   // If type validation fails, returns error.
-  RETURN_IF_ERROR(ValidateAsType<T>());
+  MP_RETURN_IF_ERROR(ValidateAsType<T>());
   // Clients who use this function are responsible for ensuring that no
   // other thread is doing anything with this Packet.
   if (holder_.unique()) {
@@ -518,7 +518,7 @@ template <typename T>
 inline ::mediapipe::StatusOr<std::unique_ptr<T>> Packet::ConsumeOrCopy(
     bool* was_copied,
     typename std::enable_if<!std::is_array<T>::value>::type*) {
-  RETURN_IF_ERROR(ValidateAsType<T>());
+  MP_RETURN_IF_ERROR(ValidateAsType<T>());
   // If holder is the sole owner of the underlying data, consumes this packet.
   if (!holder_->HolderIsOfType<packet_internal::ForeignHolder<T>>() &&
       holder_.unique()) {
@@ -549,7 +549,7 @@ inline ::mediapipe::StatusOr<std::unique_ptr<T>> Packet::ConsumeOrCopy(
     bool* was_copied,
     typename std::enable_if<std::is_array<T>::value &&
                             std::extent<T>::value != 0>::type*) {
-  RETURN_IF_ERROR(ValidateAsType<T>());
+  MP_RETURN_IF_ERROR(ValidateAsType<T>());
   // If holder is the sole owner of the underlying data, consumes this packet.
   if (!holder_->HolderIsOfType<packet_internal::ForeignHolder<T>>() &&
       holder_.unique()) {

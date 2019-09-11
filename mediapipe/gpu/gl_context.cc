@@ -206,7 +206,7 @@ bool GlContext::ParseGlVersion(absl::string_view version_string, GLint* major,
 ::mediapipe::Status GlContext::FinishInitialization(bool create_thread) {
   if (create_thread) {
     thread_ = absl::make_unique<GlContext::DedicatedThread>();
-    RETURN_IF_ERROR(thread_->Run([this] { return EnterContext(nullptr); }));
+    MP_RETURN_IF_ERROR(thread_->Run([this] { return EnterContext(nullptr); }));
   }
 
   return Run([this]() -> ::mediapipe::Status {
@@ -294,7 +294,7 @@ void GlContext::SetProfilingContext(
     LogUncheckedGlErrors(had_gl_errors);
   } else {
     ContextBinding saved_context;
-    RETURN_IF_ERROR(EnterContext(&saved_context));
+    MP_RETURN_IF_ERROR(EnterContext(&saved_context));
     if (profiling_helper_) {
       profiling_helper_->MarkTimestamp(node_id, input_timestamp,
                                        /*is_finish=*/false);
@@ -305,7 +305,7 @@ void GlContext::SetProfilingContext(
                                        /*is_finish=*/true);
     }
     LogUncheckedGlErrors(CheckForGlErrors());
-    RETURN_IF_ERROR(ExitContext(&saved_context));
+    MP_RETURN_IF_ERROR(ExitContext(&saved_context));
   }
   return status;
 }
@@ -371,7 +371,7 @@ std::weak_ptr<GlContext>& GlContext::CurrentContext() {
     // old one (we may be deliberately trying to exit it).
     // 2. We need to unset the old context before we unlock the old mutex,
     // Therefore, we first unset the old one before setting the new one.
-    RETURN_IF_ERROR(SetCurrentContextBinding({}));
+    MP_RETURN_IF_ERROR(SetCurrentContextBinding({}));
     old_context_obj->context_use_mutex_.Unlock();
     CurrentContext().reset();
   }

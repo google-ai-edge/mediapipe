@@ -139,7 +139,7 @@ CalculatorGraph::~CalculatorGraph() {}
        ++index) {
     const EdgeInfo& edge_info =
         validated_graph_->OutputSidePacketInfos()[index];
-    RETURN_IF_ERROR(output_side_packets_[index].Initialize(
+    MP_RETURN_IF_ERROR(output_side_packets_[index].Initialize(
         edge_info.name, edge_info.packet_type));
   }
 
@@ -166,7 +166,7 @@ CalculatorGraph::~CalculatorGraph() {}
   for (int index = 0; index < validated_graph_->InputStreamInfos().size();
        ++index) {
     const EdgeInfo& edge_info = validated_graph_->InputStreamInfos()[index];
-    RETURN_IF_ERROR(input_stream_managers_[index].Initialize(
+    MP_RETURN_IF_ERROR(input_stream_managers_[index].Initialize(
         edge_info.name, edge_info.packet_type, edge_info.back_edge));
   }
 
@@ -176,7 +176,7 @@ CalculatorGraph::~CalculatorGraph() {}
   for (int index = 0; index < validated_graph_->OutputStreamInfos().size();
        ++index) {
     const EdgeInfo& edge_info = validated_graph_->OutputStreamInfos()[index];
-    RETURN_IF_ERROR(output_stream_managers_[index].Initialize(
+    MP_RETURN_IF_ERROR(output_stream_managers_[index].Initialize(
         edge_info.name, edge_info.packet_type));
   }
 
@@ -313,8 +313,8 @@ CalculatorGraph::~CalculatorGraph() {}
   }
 
   if (!::mediapipe::ContainsKey(executors_, "")) {
-    RETURN_IF_ERROR(InitializeDefaultExecutor(*default_executor_options,
-                                              use_application_thread));
+    MP_RETURN_IF_ERROR(InitializeDefaultExecutor(*default_executor_options,
+                                                 use_application_thread));
   }
 
   return ::mediapipe::OkStatus();
@@ -345,7 +345,7 @@ CalculatorGraph::~CalculatorGraph() {}
         std::max({validated_graph_->Config().node().size(),
                   validated_graph_->Config().packet_generator().size(), 1}));
   }
-  RETURN_IF_ERROR(
+  MP_RETURN_IF_ERROR(
       CreateDefaultThreadPool(default_executor_options, num_threads));
   return ::mediapipe::OkStatus();
 }
@@ -359,12 +359,12 @@ CalculatorGraph::~CalculatorGraph() {}
       << "validated_graph is not initialized.";
   validated_graph_ = std::move(validated_graph);
 
-  RETURN_IF_ERROR(InitializeExecutors());
-  RETURN_IF_ERROR(InitializePacketGeneratorGraph(side_packets));
-  RETURN_IF_ERROR(InitializeStreams());
-  RETURN_IF_ERROR(InitializeCalculatorNodes());
+  MP_RETURN_IF_ERROR(InitializeExecutors());
+  MP_RETURN_IF_ERROR(InitializePacketGeneratorGraph(side_packets));
+  MP_RETURN_IF_ERROR(InitializeStreams());
+  MP_RETURN_IF_ERROR(InitializeCalculatorNodes());
 #ifdef MEDIAPIPE_PROFILER_AVAILABLE
-  RETURN_IF_ERROR(InitializeProfiler());
+  MP_RETURN_IF_ERROR(InitializeProfiler());
 #endif
 
   initialized_ = true;
@@ -380,7 +380,7 @@ CalculatorGraph::~CalculatorGraph() {}
     const CalculatorGraphConfig& input_config,
     const std::map<std::string, Packet>& side_packets) {
   auto validated_graph = absl::make_unique<ValidatedGraphConfig>();
-  RETURN_IF_ERROR(validated_graph->Initialize(input_config));
+  MP_RETURN_IF_ERROR(validated_graph->Initialize(input_config));
   return Initialize(std::move(validated_graph), side_packets);
 }
 
@@ -390,8 +390,8 @@ CalculatorGraph::~CalculatorGraph() {}
     const std::map<std::string, Packet>& side_packets,
     const std::string& graph_type, const Subgraph::SubgraphOptions* options) {
   auto validated_graph = absl::make_unique<ValidatedGraphConfig>();
-  RETURN_IF_ERROR(validated_graph->Initialize(input_configs, input_templates,
-                                              graph_type, options));
+  MP_RETURN_IF_ERROR(validated_graph->Initialize(input_configs, input_templates,
+                                                 graph_type, options));
   return Initialize(std::move(validated_graph), side_packets);
 }
 
@@ -409,7 +409,7 @@ CalculatorGraph::~CalculatorGraph() {}
            << "\" because it doesn't exist.";
   }
   auto observer = absl::make_unique<internal::OutputStreamObserver>();
-  RETURN_IF_ERROR(observer->Initialize(
+  MP_RETURN_IF_ERROR(observer->Initialize(
       stream_name, &any_packet_type_, std::move(packet_callback),
       &output_stream_managers_[output_stream_index]));
   graph_output_streams_.push_back(std::move(observer));
@@ -427,7 +427,7 @@ CalculatorGraph::AddOutputStreamPoller(const std::string& stream_name) {
            << "\" because it doesn't exist.";
   }
   auto internal_poller = std::make_shared<internal::OutputStreamPollerImpl>();
-  RETURN_IF_ERROR(internal_poller->Initialize(
+  MP_RETURN_IF_ERROR(internal_poller->Initialize(
       stream_name, &any_packet_type_,
       std::bind(&CalculatorGraph::UpdateThrottledNodes, this,
                 std::placeholders::_1, std::placeholders::_2),
@@ -479,7 +479,7 @@ CalculatorGraph::AddOutputStreamPoller(const std::string& stream_name) {
   RET_CHECK(graph_input_streams_.empty()).SetNoLogging()
       << "When using graph input streams, call StartRun() instead of Run() so "
          "that AddPacketToInputStream() and CloseInputStream() can be called.";
-  RETURN_IF_ERROR(StartRun(extra_side_packets, {}));
+  MP_RETURN_IF_ERROR(StartRun(extra_side_packets, {}));
   return WaitUntilDone();
 }
 
@@ -488,8 +488,8 @@ CalculatorGraph::AddOutputStreamPoller(const std::string& stream_name) {
     const std::map<std::string, Packet>& stream_headers) {
   RET_CHECK(initialized_).SetNoLogging()
       << "CalculatorGraph is not initialized.";
-  RETURN_IF_ERROR(PrepareForRun(extra_side_packets, stream_headers));
-  RETURN_IF_ERROR(profiler_->Start(executors_[""].get()));
+  MP_RETURN_IF_ERROR(PrepareForRun(extra_side_packets, stream_headers));
+  MP_RETURN_IF_ERROR(profiler_->Start(executors_[""].get()));
   scheduler_.Start();
   return ::mediapipe::OkStatus();
 }
@@ -570,7 +570,7 @@ CalculatorGraph::PrepareGpu(const std::map<std::string, Packet>& side_packets) {
       }
     }
     for (const auto& name_executor : gpu_resources->GetGpuExecutors()) {
-      RETURN_IF_ERROR(
+      MP_RETURN_IF_ERROR(
           SetExecutorInternal(name_executor.first, name_executor.second));
     }
   }
@@ -755,7 +755,7 @@ CalculatorGraph::PrepareGpu(const std::map<std::string, Packet>& side_packets) {
     return ::mediapipe::InvalidArgumentErrorBuilder(MEDIAPIPE_LOC)
            << "WaitUntilIdle called on a graph with source nodes.";
   }
-  RETURN_IF_ERROR(scheduler_.WaitUntilIdle());
+  MP_RETURN_IF_ERROR(scheduler_.WaitUntilIdle());
   VLOG(2) << "Scheduler idle.";
   ::mediapipe::Status status = ::mediapipe::OkStatus();
   if (GetCombinedErrors(&status)) {
@@ -766,7 +766,7 @@ CalculatorGraph::PrepareGpu(const std::map<std::string, Packet>& side_packets) {
 
 ::mediapipe::Status CalculatorGraph::WaitUntilDone() {
   VLOG(2) << "Waiting for scheduler to terminate...";
-  RETURN_IF_ERROR(scheduler_.WaitUntilDone());
+  MP_RETURN_IF_ERROR(scheduler_.WaitUntilDone());
   VLOG(2) << "Scheduler terminated.";
 
   return FinishRun();
@@ -1186,7 +1186,7 @@ Packet CalculatorGraph::GetServicePacket(const GraphServiceBase& service) {
   if (name.empty()) {
     scheduler_.SetExecutor(executor.get());
   } else {
-    RETURN_IF_ERROR(scheduler_.SetNonDefaultExecutor(name, executor.get()));
+    MP_RETURN_IF_ERROR(scheduler_.SetNonDefaultExecutor(name, executor.get()));
   }
   return ::mediapipe::OkStatus();
 }
@@ -1225,7 +1225,7 @@ bool CalculatorGraph::IsReservedExecutorName(const std::string& name) {
 ::mediapipe::Status CalculatorGraph::FinishRun() {
   // Check for any errors that may have occurred.
   ::mediapipe::Status status = ::mediapipe::OkStatus();
-  RETURN_IF_ERROR(profiler_->Stop());
+  MP_RETURN_IF_ERROR(profiler_->Stop());
   GetCombinedErrors(&status);
   CleanupAfterRun(&status);
   return status;
