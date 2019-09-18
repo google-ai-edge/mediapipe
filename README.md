@@ -5,6 +5,8 @@
 
 ![Real-time Face Detection](mediapipe/docs/images/realtime_face_detection.gif)
 
+> "<em>MediaPipe has made it extremely easy to build our 3D person pose reconstruction demo app, facilitating accelerated neural network inference on device and synchronization of our result visualization with the video capture stream. Highly recommended!</em>" - George Papandreou, CTO, [Ariel AI](https://arielai.com)
+
 ## ML Solutions in MediaPipe
 
 * [Hand Tracking](mediapipe/docs/hand_tracking_mobile_gpu.md)
