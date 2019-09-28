@@ -934,10 +934,10 @@ void CalculatorGraph::RecordError(const ::mediapipe::Status& error) {
     for (const auto& stream : graph_output_streams_) {
       stream->NotifyError();
     }
+    for (const ::mediapipe::Status& error : errors_) {
+      LOG(ERROR) << error;
+    }
     if (errors_.size() > kMaxNumAccumulatedErrors) {
-      for (const ::mediapipe::Status& error : errors_) {
-        LOG(ERROR) << error;
-      }
       LOG(FATAL) << "Forcefully aborting to prevent the framework running out "
                     "of memory.";
     }
