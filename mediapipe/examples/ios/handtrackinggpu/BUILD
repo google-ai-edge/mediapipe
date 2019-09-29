@@ -42,7 +42,7 @@ genrule(
 
 ios_application(
     name = "HandTrackingGpuApp",
-    bundle_id = "com.google.mediapipe.HandTrackingGpu",
+    bundle_id = "touchless-ui",
     families = [
         "iphone",
         "ipad",
