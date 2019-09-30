@@ -73,7 +73,7 @@ class GlCalculatorHelperImpl {
 #endif  // !MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
 
   // Sets default texture filtering parameters.
-  void SetStandardTextureParams(GLenum target);
+  void SetStandardTextureParams(GLenum target, GLint internal_format);
 
   // Create the framebuffer for rendering.
   void CreateFramebuffer();

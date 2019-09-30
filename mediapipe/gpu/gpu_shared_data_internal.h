@@ -123,7 +123,7 @@ struct GpuSharedData {
       PlatformGlContext external_context) {
     auto status_or_resources = GpuResources::Create(external_context);
     MEDIAPIPE_CHECK_OK(status_or_resources.status())
-        << "could not create GpuResources";
+        << ": could not create GpuResources";
     return std::move(status_or_resources).ValueOrDie();
   }
 };

@@ -110,7 +110,13 @@ GlContext::StatusOrGlContext GlContext::Create(EGLContext share_context,
       eglChooseConfig(display_, config_attr, &config_, 1, &num_configs);
   if (!success) {
     return ::mediapipe::UnknownErrorBuilder(MEDIAPIPE_LOC)
-           << "eglChooseConfig() returned error " << eglGetError();
+           << "eglChooseConfig() returned error " << std::showbase << std::hex
+           << eglGetError();
+  }
+  if (!num_configs) {
+    return ::mediapipe::UnknownErrorBuilder(MEDIAPIPE_LOC)
+           << "eglChooseConfig() returned no matching EGL configuration for "
+           << "RGBA8888 D16 ES" << gl_version << " request. ";
   }
 
   const EGLint context_attr[] = {
@@ -125,7 +131,8 @@ GlContext::StatusOrGlContext GlContext::Create(EGLContext share_context,
   int error = eglGetError();
   RET_CHECK(context_ != EGL_NO_CONTEXT)
       << "Could not create GLES " << gl_version << " context; "
-      << "eglCreateContext() returned error " << error
+      << "eglCreateContext() returned error " << std::showbase << std::hex
+      << error
       << (error == EGL_BAD_CONTEXT
               ? ": external context uses a different version of OpenGL"
               : "");
@@ -143,7 +150,8 @@ GlContext::StatusOrGlContext GlContext::Create(EGLContext share_context,
 
   display_ = eglGetDisplay(EGL_DEFAULT_DISPLAY);
   RET_CHECK(display_ != EGL_NO_DISPLAY)
-      << "eglGetDisplay() returned error " << eglGetError();
+      << "eglGetDisplay() returned error " << std::showbase << std::hex
+      << eglGetError();
 
   EGLBoolean success = eglInitialize(display_, &major, &minor);
   RET_CHECK(success) << "Unable to initialize EGL";
@@ -162,7 +170,8 @@ GlContext::StatusOrGlContext GlContext::Create(EGLContext share_context,
 
   surface_ = eglCreatePbufferSurface(display_, config_, pbuffer_attr);
   RET_CHECK(surface_ != EGL_NO_SURFACE)
-      << "eglCreatePbufferSurface() returned error " << eglGetError();
+      << "eglCreatePbufferSurface() returned error " << std::showbase
+      << std::hex << eglGetError();
 
   return ::mediapipe::OkStatus();
 }
@@ -186,17 +195,21 @@ void GlContext::DestroyContext() {
   if (IsCurrent()) {
     if (!eglMakeCurrent(display_, EGL_NO_SURFACE, EGL_NO_SURFACE,
                         EGL_NO_CONTEXT)) {
-      LOG(ERROR) << "eglMakeCurrent() returned error " << eglGetError();
+      LOG(ERROR) << "eglMakeCurrent() returned error " << std::showbase
+                 << std::hex << eglGetError();
     }
   }
   if (surface_ != EGL_NO_SURFACE) {
     if (!eglDestroySurface(display_, surface_)) {
-      LOG(ERROR) << "eglDestroySurface() returned error " << eglGetError();
+      LOG(ERROR) << "eglDestroySurface() returned error " << std::showbase
+                 << std::hex << eglGetError();
     }
+    surface_ = EGL_NO_SURFACE;
   }
   if (context_ != EGL_NO_CONTEXT) {
     if (!eglDestroyContext(display_, context_)) {
-      LOG(ERROR) << "eglDestroyContext() returned error " << eglGetError();
+      LOG(ERROR) << "eglDestroyContext() returned error " << std::showbase
+                 << std::hex << eglGetError();
     }
     context_ = EGL_NO_CONTEXT;
   }
@@ -245,7 +258,8 @@ void GlContext::GetCurrentContextBinding(GlContext::ContextBinding* binding) {
   EGLBoolean success =
       eglMakeCurrent(display, new_binding.draw_surface,
                      new_binding.read_surface, new_binding.context);
-  RET_CHECK(success) << "eglMakeCurrent() returned error " << eglGetError();
+  RET_CHECK(success) << "eglMakeCurrent() returned error " << std::showbase
+                     << std::hex << eglGetError();
   return ::mediapipe::OkStatus();
 }
 

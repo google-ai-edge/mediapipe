@@ -357,6 +357,148 @@ TEST_F(PackMediaSequenceCalculatorTest, PacksTwoBBoxDetections) {
   }
 }
 
+TEST_F(PackMediaSequenceCalculatorTest, PacksBBoxWithoutImageDims) {
+  SetUpCalculator({"BBOX_PREDICTED:detections"}, {}, false, true);
+  auto input_sequence = ::absl::make_unique<tf::SequenceExample>();
+  std::string test_video_id = "test_video_id";
+  mpms::SetClipMediaId(test_video_id, input_sequence.get());
+  int height = 480;
+  int width = 640;
+  int num_vectors = 2;
+  for (int i = 0; i < num_vectors; ++i) {
+    auto detections = ::absl::make_unique<::std::vector<Detection>>();
+    Detection detection;
+    detection.add_label("absolute bbox");
+    detection.add_label_id(0);
+    detection.add_score(0.5);
+    Location::CreateBBoxLocation(0, height / 2, width / 2, height / 2)
+        .ConvertToProto(detection.mutable_location_data());
+    detections->push_back(detection);
+
+    detection = Detection();
+    detection.add_label("relative bbox");
+    detection.add_label_id(1);
+    detection.add_score(0.75);
+    Location::CreateRelativeBBoxLocation(0, 0.5, 0.5, 0.5)
+        .ConvertToProto(detection.mutable_location_data());
+    detections->push_back(detection);
+
+    // The mask detection should be ignored in the output.
+    detection = Detection();
+    detection.add_label("mask");
+    detection.add_score(1.0);
+    cv::Mat image(2, 3, CV_8UC1, cv::Scalar(0));
+    Location::CreateCvMaskLocation<uint8>(image).ConvertToProto(
+        detection.mutable_location_data());
+    detections->push_back(detection);
+
+    runner_->MutableInputs()
+        ->Tag("BBOX_PREDICTED")
+        .packets.push_back(Adopt(detections.release()).At(Timestamp(i)));
+  }
+
+  runner_->MutableSidePackets()->Tag("SEQUENCE_EXAMPLE") =
+      Adopt(input_sequence.release());
+
+  auto status = runner_->Run();
+  EXPECT_EQ(::mediapipe::StatusCode::kInvalidArgument, status.code());
+}
+
+TEST_F(PackMediaSequenceCalculatorTest, PacksBBoxWithImages) {
+  SetUpCalculator({"BBOX_PREDICTED:detections", "IMAGE:images"}, {}, false,
+                  true);
+  auto input_sequence = ::absl::make_unique<tf::SequenceExample>();
+  std::string test_video_id = "test_video_id";
+  mpms::SetClipMediaId(test_video_id, input_sequence.get());
+  int height = 480;
+  int width = 640;
+  int num_vectors = 2;
+  for (int i = 0; i < num_vectors; ++i) {
+    auto detections = ::absl::make_unique<::std::vector<Detection>>();
+    Detection detection;
+    detection.add_label("absolute bbox");
+    detection.add_label_id(0);
+    detection.add_score(0.5);
+    Location::CreateBBoxLocation(0, height / 2, width / 2, height / 2)
+        .ConvertToProto(detection.mutable_location_data());
+    detections->push_back(detection);
+
+    detection = Detection();
+    detection.add_label("relative bbox");
+    detection.add_label_id(1);
+    detection.add_score(0.75);
+    Location::CreateRelativeBBoxLocation(0, 0.5, 0.5, 0.5)
+        .ConvertToProto(detection.mutable_location_data());
+    detections->push_back(detection);
+
+    // The mask detection should be ignored in the output.
+    detection = Detection();
+    detection.add_label("mask");
+    detection.add_score(1.0);
+    cv::Mat image(2, 3, CV_8UC1, cv::Scalar(0));
+    Location::CreateCvMaskLocation<uint8>(image).ConvertToProto(
+        detection.mutable_location_data());
+    detections->push_back(detection);
+
+    runner_->MutableInputs()
+        ->Tag("BBOX_PREDICTED")
+        .packets.push_back(Adopt(detections.release()).At(Timestamp(i)));
+  }
+  cv::Mat image(height, width, CV_8UC3, cv::Scalar(0, 0, 255));
+  std::vector<uchar> bytes;
+  ASSERT_TRUE(cv::imencode(".jpg", image, bytes, {80}));
+  std::string test_image_string(bytes.begin(), bytes.end());
+  OpenCvImageEncoderCalculatorResults encoded_image;
+  encoded_image.set_encoded_image(test_image_string);
+  encoded_image.set_width(width);
+  encoded_image.set_height(height);
+
+  int num_images = 2;
+  for (int i = 0; i < num_images; ++i) {
+    auto image_ptr =
+        ::absl::make_unique<OpenCvImageEncoderCalculatorResults>(encoded_image);
+    runner_->MutableInputs()->Tag("IMAGE").packets.push_back(
+        Adopt(image_ptr.release()).At(Timestamp(i)));
+  }
+  runner_->MutableSidePackets()->Tag("SEQUENCE_EXAMPLE") =
+      Adopt(input_sequence.release());
+
+  MP_ASSERT_OK(runner_->Run());
+
+  const std::vector<Packet>& output_packets =
+      runner_->Outputs().Tag("SEQUENCE_EXAMPLE").packets;
+  ASSERT_EQ(1, output_packets.size());
+  const tf::SequenceExample& output_sequence =
+      output_packets[0].Get<tf::SequenceExample>();
+
+  ASSERT_EQ(test_video_id, mpms::GetClipMediaId(output_sequence));
+  ASSERT_EQ(height, mpms::GetImageHeight(output_sequence));
+  ASSERT_EQ(width, mpms::GetImageWidth(output_sequence));
+  ASSERT_EQ(num_vectors, mpms::GetPredictedBBoxSize(output_sequence));
+  ASSERT_EQ(num_vectors, mpms::GetPredictedBBoxTimestampSize(output_sequence));
+  ASSERT_EQ(0, mpms::GetClassSegmentationEncodedSize(output_sequence));
+  ASSERT_EQ(0, mpms::GetClassSegmentationTimestampSize(output_sequence));
+  for (int i = 0; i < num_vectors; ++i) {
+    ASSERT_EQ(i, mpms::GetPredictedBBoxTimestampAt(output_sequence, i));
+    auto bboxes = mpms::GetPredictedBBoxAt(output_sequence, i);
+    ASSERT_EQ(2, bboxes.size());
+    for (int j = 0; j < bboxes.size(); ++j) {
+      auto rect = bboxes[j].GetRelativeBBox();
+      ASSERT_NEAR(0, rect.xmin(), 0.001);
+      ASSERT_NEAR(0.5, rect.ymin(), 0.001);
+      ASSERT_NEAR(0.5, rect.xmax(), 0.001);
+      ASSERT_NEAR(1.0, rect.ymax(), 0.001);
+    }
+    auto class_strings =
+        mpms::GetPredictedBBoxLabelStringAt(output_sequence, i);
+    ASSERT_EQ("absolute bbox", class_strings[0]);
+    ASSERT_EQ("relative bbox", class_strings[1]);
+    auto class_indices = mpms::GetPredictedBBoxLabelIndexAt(output_sequence, i);
+    ASSERT_EQ(0, class_indices[0]);
+    ASSERT_EQ(1, class_indices[1]);
+  }
+}
+
 TEST_F(PackMediaSequenceCalculatorTest, PacksTwoKeypoints) {
   SetUpCalculator({"KEYPOINTS_TEST:keypoints"}, {}, false, true);
   auto input_sequence = ::absl::make_unique<tf::SequenceExample>();

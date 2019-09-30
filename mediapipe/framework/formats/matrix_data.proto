@@ -34,7 +34,7 @@ message MatrixData {
     ROW_MAJOR = 1;
   }
 
-  // Order in which the data are stored. Implicitly defaults to COLUMN_MAJOR,
-  // which matches the default for mediapipe::Matrix and Eigen::Matrix*.
-  optional Layout layout = 4;
+  // Order in which the data are stored. Defaults to COLUMN_MAJOR, which matches
+  // the default for mediapipe::Matrix and Eigen::Matrix*.
+  optional Layout layout = 4 [default = COLUMN_MAJOR];
 }

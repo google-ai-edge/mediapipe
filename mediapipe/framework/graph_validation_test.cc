@@ -154,11 +154,13 @@ TEST(ValidatedGraphConfigTest, InitializeTemplateFromProtos) {
     }
   )");
   auto options = ParseTextProtoOrDie<Subgraph::SubgraphOptions>(R"(
-    [mediapipe.TemplateSubgraphOptions.ext]: {
-      dict: {
-        arg: {
-          key: "in_name"
-          value: { str: "stream_9" }
+    options: {
+      [mediapipe.TemplateSubgraphOptions.ext]: {
+        dict: {
+          arg: {
+            key: "in_name"
+            value: { str: "stream_9" }
+          }
         }
       }
     })");

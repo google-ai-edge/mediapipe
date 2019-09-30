@@ -62,4 +62,11 @@ message TimeSeriesFramerCalculatorOptions {
     HANN = 2;
   }
   optional WindowFunction window_function = 4 [default = NONE];
+
+  // If use_local_timestamp is true, the output packet's timestamp is based on
+  // the last sample of the packet and it's inferred from the latest input
+  // packet's timestamp.  If false, the output packet's timestamp is based on
+  // the cumulative timestamping, which is inferred from the intial input
+  // timestamp and the cumulative number of samples.
+  optional bool use_local_timestamp = 6 [default = false];
 }

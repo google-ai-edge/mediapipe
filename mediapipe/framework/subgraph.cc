@@ -44,8 +44,8 @@ TemplateSubgraph::~TemplateSubgraph() {}
 
 ::mediapipe::StatusOr<CalculatorGraphConfig> TemplateSubgraph::GetConfig(
     const Subgraph::SubgraphOptions& options) {
-  const TemplateDict& arguments =
-      options.GetExtension(TemplateSubgraphOptions::ext).dict();
+  TemplateDict arguments =
+      Subgraph::GetOptions<mediapipe::TemplateSubgraphOptions>(options).dict();
   tool::TemplateExpander expander;
   CalculatorGraphConfig config;
   MP_RETURN_IF_ERROR(expander.ExpandTemplates(arguments, templ_, &config));

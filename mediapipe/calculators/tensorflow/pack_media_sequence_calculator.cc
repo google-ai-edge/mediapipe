@@ -285,6 +285,10 @@ class PackMediaSequenceCalculator : public CalculatorBase {
   }
 
   ::mediapipe::Status Process(CalculatorContext* cc) override {
+    int image_height = -1;
+    int image_width = -1;
+    // Because the tag order may vary, we need to loop through tags to get
+    // image information before processing other tag types.
     for (const auto& tag : cc->Inputs().GetTags()) {
       if (!cc->Inputs().Tag(tag).IsEmpty()) {
         features_present_[tag] = true;
@@ -306,14 +310,21 @@ class PackMediaSequenceCalculator : public CalculatorBase {
           return ::mediapipe::InvalidArgumentErrorBuilder(MEDIAPIPE_LOC)
                  << "No encoded image";
         }
+        image_height = image.height();
+        image_width = image.width();
         mpms::AddImageTimestamp(key, cc->InputTimestamp().Value(),
                                 sequence_.get());
         mpms::AddImageEncoded(key, image.encoded_image(), sequence_.get());
       }
+    }
+    for (const auto& tag : cc->Inputs().GetTags()) {
+      if (!cc->Inputs().Tag(tag).IsEmpty()) {
+        features_present_[tag] = true;
+      }
       if (absl::StartsWith(tag, kKeypointsTag) &&
           !cc->Inputs().Tag(tag).IsEmpty()) {
         std::string key = "";
-        if (tag != kImageTag) {
+        if (tag != kKeypointsTag) {
           int tag_length = sizeof(kKeypointsTag) / sizeof(*kKeypointsTag) - 1;
           if (tag[tag_length] == '_') {
             key = tag.substr(tag_length + 1);
@@ -363,11 +374,20 @@ class PackMediaSequenceCalculator : public CalculatorBase {
                   LocationData::BOUNDING_BOX ||
               detection.location_data().format() ==
                   LocationData::RELATIVE_BOUNDING_BOX) {
-            int height = mpms::GetImageHeight(*sequence_);
-            int width = mpms::GetImageWidth(*sequence_);
+            if (mpms::HasImageHeight(*sequence_) &&
+                mpms::HasImageWidth(*sequence_)) {
+              image_height = mpms::GetImageHeight(*sequence_);
+              image_width = mpms::GetImageWidth(*sequence_);
+            }
+            if (image_height == -1 || image_width == -1) {
+              return ::mediapipe::InvalidArgumentErrorBuilder(MEDIAPIPE_LOC)
+                     << "Images must be provided with bounding boxes or the "
+                        "image "
+                     << "height and width must already be in the example.";
+            }
             Location relative_bbox = Location::CreateRelativeBBoxLocation(
                 Location(detection.location_data())
-                    .ConvertToRelativeBBox(width, height));
+                    .ConvertToRelativeBBox(image_width, image_height));
             predicted_locations.push_back(relative_bbox);
             if (detection.label_size() > 0) {
               predicted_class_strings.push_back(detection.label(0));

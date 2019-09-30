@@ -191,7 +191,7 @@ class Graph {
   // CalculatorGraphTemplates for the calculator graph and subgraphs.
   std::vector<CalculatorGraphTemplate> graph_templates_;
   // Options such as template arguments for the top-level calculator graph.
-  CalculatorOptions graph_options_;
+  Subgraph::SubgraphOptions graph_options_;
   // The CalculatorGraphConfig::type of the top-level calculator graph.
   std::string graph_type_ = "<none>";
 

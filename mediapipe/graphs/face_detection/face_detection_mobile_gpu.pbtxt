@@ -62,10 +62,10 @@ node {
 node {
   calculator: "TfLiteInferenceCalculator"
   input_stream: "TENSORS_GPU:image_tensor"
-  output_stream: "TENSORS:detection_tensors"
+  output_stream: "TENSORS_GPU:detection_tensors"
   node_options: {
     [type.googleapis.com/mediapipe.TfLiteInferenceCalculatorOptions] {
-      model_path: "face_detection_front.tflite"
+      model_path: "mediapipe/models/face_detection_front.tflite"
     }
   }
 }
@@ -99,7 +99,7 @@ node {
 # detections. Each detection describes a detected object.
 node {
   calculator: "TfLiteTensorsToDetectionsCalculator"
-  input_stream: "TENSORS:detection_tensors"
+  input_stream: "TENSORS_GPU:detection_tensors"
   input_side_packet: "ANCHORS:anchors"
   output_stream: "DETECTIONS:detections"
   node_options: {
@@ -146,7 +146,7 @@ node {
   output_stream: "labeled_detections"
   node_options: {
     [type.googleapis.com/mediapipe.DetectionLabelIdToTextCalculatorOptions] {
-      label_map_path: "face_detection_front_labelmap.txt"
+      label_map_path: "mediapipe/models/face_detection_front_labelmap.txt"
     }
   }
 }
@@ -169,7 +169,7 @@ node {
   output_stream: "RENDER_DATA:render_data"
   node_options: {
     [type.googleapis.com/mediapipe.DetectionsToRenderDataCalculatorOptions] {
-      thickness: 10.0
+      thickness: 4.0
       color { r: 255 g: 0 b: 0 }
     }
   }

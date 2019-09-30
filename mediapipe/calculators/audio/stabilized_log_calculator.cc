@@ -75,8 +75,13 @@ class StabilizedLogCalculator : public CalculatorBase {
 
   ::mediapipe::Status Process(CalculatorContext* cc) override {
     auto input_matrix = cc->Inputs().Index(0).Get<Matrix>();
+    if (input_matrix.array().isNaN().any()) {
+      return ::mediapipe::InvalidArgumentError("NaN input to log operation.");
+    }
     if (check_nonnegativity_) {
-      CHECK_GE(input_matrix.minCoeff(), 0);
+      if (input_matrix.minCoeff() < 0.0) {
+        return ::mediapipe::OutOfRangeError("Negative input to log operation.");
+      }
     }
     std::unique_ptr<Matrix> output_frame(new Matrix(
         output_scale_ * (input_matrix.array() + stabilizer_).log().matrix()));

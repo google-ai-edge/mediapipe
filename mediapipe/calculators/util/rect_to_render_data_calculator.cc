@@ -23,9 +23,24 @@ namespace mediapipe {
 
 namespace {
 
-constexpr char kNormalizedRectTag[] = "NORM_RECT";
+constexpr char kNormRectTag[] = "NORM_RECT";
 constexpr char kRectTag[] = "RECT";
+constexpr char kNormRectsTag[] = "NORM_RECTS";
+constexpr char kRectsTag[] = "RECTS";
 constexpr char kRenderDataTag[] = "RENDER_DATA";
+
+RenderAnnotation::Rectangle* NewRect(
+    const RectToRenderDataCalculatorOptions& options, RenderData* render_data) {
+  auto* annotation = render_data->add_render_annotations();
+  annotation->mutable_color()->set_r(options.color().r());
+  annotation->mutable_color()->set_g(options.color().g());
+  annotation->mutable_color()->set_b(options.color().b());
+  annotation->set_thickness(options.thickness());
+
+  return options.filled()
+             ? annotation->mutable_filled_rectangle()->mutable_rectangle()
+             : annotation->mutable_rectangle();
+}
 
 void SetRect(bool normalized, double xmin, double ymin, double width,
              double height, double rotation,
@@ -51,6 +66,8 @@ void SetRect(bool normalized, double xmin, double ymin, double width,
 //   One of the following:
 //   NORM_RECT: A NormalizedRect
 //   RECT: A Rect
+//   NORM_RECTS: An std::vector<NormalizedRect>
+//   RECTS: An std::vector<Rect>
 //
 // Output:
 //   RENDER_DATA: A RenderData
@@ -83,15 +100,26 @@ REGISTER_CALCULATOR(RectToRenderDataCalculator);
 
 ::mediapipe::Status RectToRenderDataCalculator::GetContract(
     CalculatorContract* cc) {
-  RET_CHECK(cc->Inputs().HasTag(kNormalizedRectTag) ^
-            cc->Inputs().HasTag(kRectTag));
+  RET_CHECK_EQ((cc->Inputs().HasTag(kNormRectTag) ? 1 : 0) +
+                   (cc->Inputs().HasTag(kRectTag) ? 1 : 0) +
+                   (cc->Inputs().HasTag(kNormRectsTag) ? 1 : 0) +
+                   (cc->Inputs().HasTag(kRectsTag) ? 1 : 0),
+               1)
+      << "Exactly one of NORM_RECT, RECT, NORM_RECTS or RECTS input stream "
+         "should be provided.";
   RET_CHECK(cc->Outputs().HasTag(kRenderDataTag));
 
-  if (cc->Inputs().HasTag(kNormalizedRectTag)) {
-    cc->Inputs().Tag(kNormalizedRectTag).Set<NormalizedRect>();
+  if (cc->Inputs().HasTag(kNormRectTag)) {
+    cc->Inputs().Tag(kNormRectTag).Set<NormalizedRect>();
   }
   if (cc->Inputs().HasTag(kRectTag)) {
     cc->Inputs().Tag(kRectTag).Set<Rect>();
+  }
+  if (cc->Inputs().HasTag(kNormRectsTag)) {
+    cc->Inputs().Tag(kNormRectsTag).Set<std::vector<NormalizedRect>>();
+  }
+  if (cc->Inputs().HasTag(kRectsTag)) {
+    cc->Inputs().Tag(kRectsTag).Set<std::vector<Rect>>();
   }
   cc->Outputs().Tag(kRenderDataTag).Set<RenderData>();
 
@@ -108,30 +136,42 @@ REGISTER_CALCULATOR(RectToRenderDataCalculator);
 
 ::mediapipe::Status RectToRenderDataCalculator::Process(CalculatorContext* cc) {
   auto render_data = absl::make_unique<RenderData>();
-  auto* annotation = render_data->add_render_annotations();
-  annotation->mutable_color()->set_r(options_.color().r());
-  annotation->mutable_color()->set_g(options_.color().g());
-  annotation->mutable_color()->set_b(options_.color().b());
-  annotation->set_thickness(options_.thickness());
 
-  auto* rectangle =
-      options_.filled()
-          ? annotation->mutable_filled_rectangle()->mutable_rectangle()
-          : annotation->mutable_rectangle();
-
-  if (cc->Inputs().HasTag(kNormalizedRectTag) &&
-      !cc->Inputs().Tag(kNormalizedRectTag).IsEmpty()) {
-    const auto& rect =
-        cc->Inputs().Tag(kNormalizedRectTag).Get<NormalizedRect>();
+  if (cc->Inputs().HasTag(kNormRectTag) &&
+      !cc->Inputs().Tag(kNormRectTag).IsEmpty()) {
+    const auto& rect = cc->Inputs().Tag(kNormRectTag).Get<NormalizedRect>();
+    auto* rectangle = NewRect(options_, render_data.get());
     SetRect(/*normalized=*/true, rect.x_center() - rect.width() / 2.f,
             rect.y_center() - rect.height() / 2.f, rect.width(), rect.height(),
             rect.rotation(), rectangle);
   }
   if (cc->Inputs().HasTag(kRectTag) && !cc->Inputs().Tag(kRectTag).IsEmpty()) {
     const auto& rect = cc->Inputs().Tag(kRectTag).Get<Rect>();
+    auto* rectangle = NewRect(options_, render_data.get());
     SetRect(/*normalized=*/false, rect.x_center() - rect.width() / 2.f,
             rect.y_center() - rect.height() / 2.f, rect.width(), rect.height(),
             rect.rotation(), rectangle);
+  }
+  if (cc->Inputs().HasTag(kNormRectsTag) &&
+      !cc->Inputs().Tag(kNormRectsTag).IsEmpty()) {
+    const auto& rects =
+        cc->Inputs().Tag(kNormRectsTag).Get<std::vector<NormalizedRect>>();
+    for (auto& rect : rects) {
+      auto* rectangle = NewRect(options_, render_data.get());
+      SetRect(/*normalized=*/true, rect.x_center() - rect.width() / 2.f,
+              rect.y_center() - rect.height() / 2.f, rect.width(),
+              rect.height(), rect.rotation(), rectangle);
+    }
+  }
+  if (cc->Inputs().HasTag(kRectsTag) &&
+      !cc->Inputs().Tag(kRectsTag).IsEmpty()) {
+    const auto& rects = cc->Inputs().Tag(kRectsTag).Get<std::vector<Rect>>();
+    for (auto& rect : rects) {
+      auto* rectangle = NewRect(options_, render_data.get());
+      SetRect(/*normalized=*/false, rect.x_center() - rect.width() / 2.f,
+              rect.y_center() - rect.height() / 2.f, rect.width(),
+              rect.height(), rect.rotation(), rectangle);
+    }
   }
 
   cc->Outputs()

@@ -235,4 +235,167 @@ TEST(ConcatenateFloatVectorCalculatorTest, OneEmptyStreamNoOutput) {
   EXPECT_EQ(0, outputs.size());
 }
 
+typedef ConcatenateVectorCalculator<std::unique_ptr<int>>
+    TestConcatenateUniqueIntPtrCalculator;
+REGISTER_CALCULATOR(TestConcatenateUniqueIntPtrCalculator);
+
+TEST(TestConcatenateUniqueIntVectorCalculatorTest, ConsumeOneTimestamp) {
+  /* Note: We don't use CalculatorRunner for this test because it keeps copies
+   * of input packets, so packets sent to the graph don't have sole ownership.
+   * The test needs to send packets that own the data.
+   */
+  CalculatorGraphConfig graph_config =
+      ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+        input_stream: "in_1"
+        input_stream: "in_2"
+        input_stream: "in_3"
+        node {
+          calculator: "TestConcatenateUniqueIntPtrCalculator"
+          input_stream: "in_1"
+          input_stream: "in_2"
+          input_stream: "in_3"
+          output_stream: "out"
+        }
+      )");
+
+  std::vector<Packet> outputs;
+  tool::AddVectorSink("out", &graph_config, &outputs);
+
+  CalculatorGraph graph;
+  MP_EXPECT_OK(graph.Initialize(graph_config));
+  MP_EXPECT_OK(graph.StartRun({}));
+
+  // input1 : {0, 1, 2}
+  std::unique_ptr<std::vector<std::unique_ptr<int>>> input_1 =
+      absl::make_unique<std::vector<std::unique_ptr<int>>>(3);
+  for (int i = 0; i < 3; ++i) {
+    input_1->at(i) = absl::make_unique<int>(i);
+  }
+  // input2: {3}
+  std::unique_ptr<std::vector<std::unique_ptr<int>>> input_2 =
+      absl::make_unique<std::vector<std::unique_ptr<int>>>(1);
+  input_2->at(0) = absl::make_unique<int>(3);
+  // input3: {4, 5}
+  std::unique_ptr<std::vector<std::unique_ptr<int>>> input_3 =
+      absl::make_unique<std::vector<std::unique_ptr<int>>>(2);
+  input_3->at(0) = absl::make_unique<int>(4);
+  input_3->at(1) = absl::make_unique<int>(5);
+
+  MP_EXPECT_OK(graph.AddPacketToInputStream(
+      "in_1", Adopt(input_1.release()).At(Timestamp(1))));
+  MP_EXPECT_OK(graph.AddPacketToInputStream(
+      "in_2", Adopt(input_2.release()).At(Timestamp(1))));
+  MP_EXPECT_OK(graph.AddPacketToInputStream(
+      "in_3", Adopt(input_3.release()).At(Timestamp(1))));
+
+  MP_EXPECT_OK(graph.WaitUntilIdle());
+  MP_EXPECT_OK(graph.CloseAllPacketSources());
+  MP_EXPECT_OK(graph.WaitUntilDone());
+
+  EXPECT_EQ(1, outputs.size());
+  EXPECT_EQ(Timestamp(1), outputs[0].Timestamp());
+  const std::vector<std::unique_ptr<int>>& result =
+      outputs[0].Get<std::vector<std::unique_ptr<int>>>();
+  EXPECT_EQ(6, result.size());
+  for (int i = 0; i < 6; ++i) {
+    const std::unique_ptr<int>& v = result[i];
+    EXPECT_EQ(i, *v);
+  }
+}
+
+TEST(TestConcatenateUniqueIntVectorCalculatorTest, OneEmptyStreamStillOutput) {
+  /* Note: We don't use CalculatorRunner for this test because it keeps copies
+   * of input packets, so packets sent to the graph don't have sole ownership.
+   * The test needs to send packets that own the data.
+   */
+  CalculatorGraphConfig graph_config =
+      ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+        input_stream: "in_1"
+        input_stream: "in_2"
+        node {
+          calculator: "TestConcatenateUniqueIntPtrCalculator"
+          input_stream: "in_1"
+          input_stream: "in_2"
+          output_stream: "out"
+        }
+      )");
+
+  std::vector<Packet> outputs;
+  tool::AddVectorSink("out", &graph_config, &outputs);
+
+  CalculatorGraph graph;
+  MP_EXPECT_OK(graph.Initialize(graph_config));
+  MP_EXPECT_OK(graph.StartRun({}));
+
+  // input1 : {0, 1, 2}
+  std::unique_ptr<std::vector<std::unique_ptr<int>>> input_1 =
+      absl::make_unique<std::vector<std::unique_ptr<int>>>(3);
+  for (int i = 0; i < 3; ++i) {
+    input_1->at(i) = absl::make_unique<int>(i);
+  }
+
+  MP_EXPECT_OK(graph.AddPacketToInputStream(
+      "in_1", Adopt(input_1.release()).At(Timestamp(1))));
+
+  MP_EXPECT_OK(graph.WaitUntilIdle());
+  MP_EXPECT_OK(graph.CloseAllPacketSources());
+  MP_EXPECT_OK(graph.WaitUntilDone());
+
+  EXPECT_EQ(1, outputs.size());
+  EXPECT_EQ(Timestamp(1), outputs[0].Timestamp());
+  const std::vector<std::unique_ptr<int>>& result =
+      outputs[0].Get<std::vector<std::unique_ptr<int>>>();
+  EXPECT_EQ(3, result.size());
+  for (int i = 0; i < 3; ++i) {
+    const std::unique_ptr<int>& v = result[i];
+    EXPECT_EQ(i, *v);
+  }
+}
+
+TEST(TestConcatenateUniqueIntVectorCalculatorTest, OneEmptyStreamNoOutput) {
+  /* Note: We don't use CalculatorRunner for this test because it keeps copies
+   * of input packets, so packets sent to the graph don't have sole ownership.
+   * The test needs to send packets that own the data.
+   */
+  CalculatorGraphConfig graph_config =
+      ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+        input_stream: "in_1"
+        input_stream: "in_2"
+        node {
+          calculator: "TestConcatenateUniqueIntPtrCalculator"
+          input_stream: "in_1"
+          input_stream: "in_2"
+          output_stream: "out"
+          options {
+            [mediapipe.ConcatenateVectorCalculatorOptions.ext] {
+              only_emit_if_all_present: true
+            }
+          }
+        }
+      )");
+
+  std::vector<Packet> outputs;
+  tool::AddVectorSink("out", &graph_config, &outputs);
+
+  CalculatorGraph graph;
+  MP_EXPECT_OK(graph.Initialize(graph_config));
+  MP_EXPECT_OK(graph.StartRun({}));
+
+  // input1 : {0, 1, 2}
+  std::unique_ptr<std::vector<std::unique_ptr<int>>> input_1 =
+      absl::make_unique<std::vector<std::unique_ptr<int>>>(3);
+  for (int i = 0; i < 3; ++i) {
+    input_1->at(i) = absl::make_unique<int>(i);
+  }
+
+  MP_EXPECT_OK(graph.AddPacketToInputStream(
+      "in_1", Adopt(input_1.release()).At(Timestamp(1))));
+
+  MP_EXPECT_OK(graph.WaitUntilIdle());
+  MP_EXPECT_OK(graph.CloseAllPacketSources());
+  MP_EXPECT_OK(graph.WaitUntilDone());
+
+  EXPECT_EQ(0, outputs.size());
+}
+
 }  // namespace mediapipe

@@ -19,6 +19,10 @@
 #include "mediapipe/framework/formats/landmark.pb.h"
 #include "tensorflow/lite/interpreter.h"
 
+#if !defined(MEDIAPIPE_DISABLE_GPU) && !defined(__APPLE__)
+#include "tensorflow/lite/delegates/gpu/gl/gl_buffer.h"
+#endif  //  !MEDIAPIPE_DISABLE_GPU
+
 namespace mediapipe {
 
 // Example config:
@@ -45,4 +49,11 @@ REGISTER_CALCULATOR(ConcatenateTfLiteTensorVectorCalculator);
 typedef ConcatenateVectorCalculator<::mediapipe::NormalizedLandmark>
     ConcatenateLandmarkVectorCalculator;
 REGISTER_CALCULATOR(ConcatenateLandmarkVectorCalculator);
+
+#if !defined(MEDIAPIPE_DISABLE_GPU) && !defined(__APPLE__)
+typedef ConcatenateVectorCalculator<::tflite::gpu::gl::GlBuffer>
+    ConcatenateGlBufferVectorCalculator;
+REGISTER_CALCULATOR(ConcatenateGlBufferVectorCalculator);
+#endif
+
 }  // namespace mediapipe

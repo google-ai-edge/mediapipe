@@ -18,6 +18,7 @@
 #include "absl/strings/str_format.h"
 #include "absl/types/span.h"
 #include "mediapipe/calculators/tflite/tflite_tensors_to_detections_calculator.pb.h"
+#include "mediapipe/calculators/tflite/util.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/deps/file_path.h"
 #include "mediapipe/framework/formats/detection.pb.h"
@@ -26,27 +27,60 @@
 #include "mediapipe/framework/port/ret_check.h"
 #include "tensorflow/lite/interpreter.h"
 
-#if defined(__ANDROID__)
+#if !defined(MEDIAPIPE_DISABLE_GPU) && !defined(__APPLE__)
 #include "mediapipe/gpu/gl_calculator_helper.h"
 #include "tensorflow/lite/delegates/gpu/gl/gl_buffer.h"
 #include "tensorflow/lite/delegates/gpu/gl/gl_program.h"
 #include "tensorflow/lite/delegates/gpu/gl/gl_shader.h"
 #include "tensorflow/lite/delegates/gpu/gl_delegate.h"
-#endif  // ANDROID
+#endif  // !MEDIAPIPE_DISABLE_GPU
 
-#if defined(__ANDROID__)
-using ::tflite::gpu::gl::CreateReadWriteShaderStorageBuffer;
-using ::tflite::gpu::gl::GlBuffer;
-using ::tflite::gpu::gl::GlProgram;
-using ::tflite::gpu::gl::GlShader;
-#endif  // ANDROID
+#if defined(__APPLE__) && !TARGET_OS_OSX  // iOS
+#import <CoreVideo/CoreVideo.h>
+#import <Metal/Metal.h>
+#import <MetalKit/MetalKit.h>
 
-namespace mediapipe {
+#import "mediapipe/gpu/MPPMetalHelper.h"
+#include "mediapipe/gpu/MPPMetalUtil.h"
+#include "mediapipe/gpu/gpu_buffer.h"
+#include "tensorflow/lite/delegates/gpu/metal_delegate.h"
+#endif  // iOS
 
 namespace {
 
 constexpr int kNumInputTensorsWithAnchors = 3;
 constexpr int kNumCoordsPerBox = 4;
+
+}  // namespace
+
+namespace mediapipe {
+
+#if !defined(MEDIAPIPE_DISABLE_GPU) && !defined(__APPLE__)
+using ::tflite::gpu::gl::CreateReadWriteShaderStorageBuffer;
+using ::tflite::gpu::gl::GlShader;
+#endif
+
+#if !defined(MEDIAPIPE_DISABLE_GPU) && !defined(__APPLE__)
+typedef ::tflite::gpu::gl::GlBuffer GpuTensor;
+typedef ::tflite::gpu::gl::GlProgram GpuProgram;
+#elif defined(__APPLE__) && !TARGET_OS_OSX  // iOS
+typedef id<MTLBuffer> GpuTensor;
+typedef id<MTLComputePipelineState> GpuProgram;
+#endif
+
+namespace {
+
+#if !defined(MEDIAPIPE_DISABLE_GPU)
+struct GPUData {
+  GpuProgram decode_program;
+  GpuProgram score_program;
+  GpuTensor decoded_boxes_buffer;
+  GpuTensor raw_boxes_buffer;
+  GpuTensor raw_anchors_buffer;
+  GpuTensor scored_boxes_buffer;
+  GpuTensor raw_scores_buffer;
+};
+#endif
 
 void ConvertRawValuesToAnchors(const float* raw_anchors, int num_boxes,
                                std::vector<Anchor>* anchors) {
@@ -88,7 +122,7 @@ void ConvertAnchorsToRawValues(const std::vector<Anchor>& anchors,
 //               optional to pass in a third tensor for anchors (e.g. for SSD
 //               models) depend on the outputs of the detection model. The size
 //               of anchor tensor must be (num_boxes * 4).
-//  TENSORS_GPU - vector of GlBuffer.
+//  TENSORS_GPU - vector of GlBuffer of MTLBuffer.
 // Output:
 //  DETECTIONS - Result MediaPipe detections.
 //
@@ -126,7 +160,7 @@ class TfLiteTensorsToDetectionsCalculator : public CalculatorBase {
                                  std::vector<Detection>* output_detections);
 
   ::mediapipe::Status LoadOptions(CalculatorContext* cc);
-  ::mediapipe::Status GlSetup(CalculatorContext* cc);
+  ::mediapipe::Status GpuInit(CalculatorContext* cc);
   ::mediapipe::Status DecodeBoxes(const float* raw_boxes,
                                   const std::vector<Anchor>& anchors,
                                   std::vector<float>* boxes);
@@ -146,15 +180,12 @@ class TfLiteTensorsToDetectionsCalculator : public CalculatorBase {
   std::vector<Anchor> anchors_;
   bool side_packet_anchors_{};
 
-#if defined(__ANDROID__)
+#if !defined(MEDIAPIPE_DISABLE_GPU) && !defined(__APPLE__)
   mediapipe::GlCalculatorHelper gpu_helper_;
-  std::unique_ptr<GlProgram> decode_program_;
-  std::unique_ptr<GlProgram> score_program_;
-  std::unique_ptr<GlBuffer> decoded_boxes_buffer_;
-  std::unique_ptr<GlBuffer> raw_boxes_buffer_;
-  std::unique_ptr<GlBuffer> raw_anchors_buffer_;
-  std::unique_ptr<GlBuffer> scored_boxes_buffer_;
-  std::unique_ptr<GlBuffer> raw_scores_buffer_;
+  std::unique_ptr<GPUData> gpu_data_;
+#elif defined(__APPLE__) && !TARGET_OS_OSX  // iOS
+  MPPMetalHelper* gpu_helper_ = nullptr;
+  std::unique_ptr<GPUData> gpu_data_;
 #endif
 
   bool gpu_input_ = false;
@@ -167,15 +198,18 @@ REGISTER_CALCULATOR(TfLiteTensorsToDetectionsCalculator);
   RET_CHECK(!cc->Inputs().GetTags().empty());
   RET_CHECK(!cc->Outputs().GetTags().empty());
 
+  bool use_gpu = false;
+
   if (cc->Inputs().HasTag("TENSORS")) {
     cc->Inputs().Tag("TENSORS").Set<std::vector<TfLiteTensor>>();
   }
 
-#if defined(__ANDROID__)
+#if !defined(MEDIAPIPE_DISABLE_GPU)
   if (cc->Inputs().HasTag("TENSORS_GPU")) {
-    cc->Inputs().Tag("TENSORS_GPU").Set<std::vector<GlBuffer>>();
+    cc->Inputs().Tag("TENSORS_GPU").Set<std::vector<GpuTensor>>();
+    use_gpu |= true;
   }
-#endif
+#endif  //  !MEDIAPIPE_DISABLE_GPU
 
   if (cc->Outputs().HasTag("DETECTIONS")) {
     cc->Outputs().Tag("DETECTIONS").Set<std::vector<Detection>>();
@@ -187,9 +221,13 @@ REGISTER_CALCULATOR(TfLiteTensorsToDetectionsCalculator);
     }
   }
 
-#if defined(__ANDROID__)
-  MP_RETURN_IF_ERROR(mediapipe::GlCalculatorHelper::UpdateContract(cc));
+  if (use_gpu) {
+#if !defined(MEDIAPIPE_DISABLE_GPU) && !defined(__APPLE__)
+    MP_RETURN_IF_ERROR(mediapipe::GlCalculatorHelper::UpdateContract(cc));
+#elif defined(__APPLE__) && !TARGET_OS_OSX  // iOS
+    MP_RETURN_IF_ERROR([MPPMetalHelper updateContract:cc]);
 #endif
+  }
 
   return ::mediapipe::OkStatus();
 }
@@ -200,8 +238,11 @@ REGISTER_CALCULATOR(TfLiteTensorsToDetectionsCalculator);
 
   if (cc->Inputs().HasTag("TENSORS_GPU")) {
     gpu_input_ = true;
-#if defined(__ANDROID__)
+#if !defined(MEDIAPIPE_DISABLE_GPU) && !defined(__APPLE__)
     MP_RETURN_IF_ERROR(gpu_helper_.Open(cc));
+#elif defined(__APPLE__) && !TARGET_OS_OSX  // iOS
+    gpu_helper_ = [[MPPMetalHelper alloc] initWithCalculatorContext:cc];
+    RET_CHECK(gpu_helper_);
 #endif
   }
 
@@ -209,7 +250,7 @@ REGISTER_CALCULATOR(TfLiteTensorsToDetectionsCalculator);
   side_packet_anchors_ = cc->InputSidePackets().HasTag("ANCHORS");
 
   if (gpu_input_) {
-    MP_RETURN_IF_ERROR(GlSetup(cc));
+    MP_RETURN_IF_ERROR(GpuInit(cc));
   }
 
   return ::mediapipe::OkStatus();
@@ -228,7 +269,7 @@ REGISTER_CALCULATOR(TfLiteTensorsToDetectionsCalculator);
     MP_RETURN_IF_ERROR(ProcessGPU(cc, output_detections.get()));
   } else {
     MP_RETURN_IF_ERROR(ProcessCPU(cc, output_detections.get()));
-  }  // if gpu_input_
+  }
 
   // Output
   if (cc->Outputs().HasTag("DETECTIONS")) {
@@ -245,7 +286,8 @@ REGISTER_CALCULATOR(TfLiteTensorsToDetectionsCalculator);
   const auto& input_tensors =
       cc->Inputs().Tag("TENSORS").Get<std::vector<TfLiteTensor>>();
 
-  if (input_tensors.size() == 2) {
+  if (input_tensors.size() == 2 ||
+      input_tensors.size() == kNumInputTensorsWithAnchors) {
     // Postprocessing on CPU for model without postprocessing op. E.g. output
     // raw score tensor and box tensor. Anchor decoding will be handled below.
     const TfLiteTensor* raw_box_tensor = &input_tensors[0];
@@ -358,13 +400,84 @@ REGISTER_CALCULATOR(TfLiteTensorsToDetectionsCalculator);
 }
 ::mediapipe::Status TfLiteTensorsToDetectionsCalculator::ProcessGPU(
     CalculatorContext* cc, std::vector<Detection>* output_detections) {
-#if defined(__ANDROID__)
+#if !defined(MEDIAPIPE_DISABLE_GPU) && !defined(__APPLE__)
   const auto& input_tensors =
-      cc->Inputs().Tag("TENSORS_GPU").Get<std::vector<GlBuffer>>();
+      cc->Inputs().Tag("TENSORS_GPU").Get<std::vector<GpuTensor>>();
+  RET_CHECK_GE(input_tensors.size(), 2);
+
+  MP_RETURN_IF_ERROR(gpu_helper_.RunInGlContext([this, &input_tensors, &cc,
+                                                 &output_detections]()
+                                                    -> ::mediapipe::Status {
+    // Copy inputs.
+    RET_CHECK_CALL(CopyBuffer(input_tensors[0], gpu_data_->raw_boxes_buffer));
+    RET_CHECK_CALL(CopyBuffer(input_tensors[1], gpu_data_->raw_scores_buffer));
+    if (!anchors_init_) {
+      if (side_packet_anchors_) {
+        CHECK(!cc->InputSidePackets().Tag("ANCHORS").IsEmpty());
+        const auto& anchors =
+            cc->InputSidePackets().Tag("ANCHORS").Get<std::vector<Anchor>>();
+        std::vector<float> raw_anchors(num_boxes_ * kNumCoordsPerBox);
+        ConvertAnchorsToRawValues(anchors, num_boxes_, raw_anchors.data());
+        RET_CHECK_CALL(gpu_data_->raw_anchors_buffer.Write<float>(
+            absl::MakeSpan(raw_anchors)));
+      } else {
+        CHECK_EQ(input_tensors.size(), kNumInputTensorsWithAnchors);
+        RET_CHECK_CALL(
+            CopyBuffer(input_tensors[2], gpu_data_->raw_anchors_buffer));
+      }
+      anchors_init_ = true;
+    }
+
+    // Run shaders.
+    // Decode boxes.
+    RET_CHECK_CALL(gpu_data_->decoded_boxes_buffer.BindToIndex(0));
+    RET_CHECK_CALL(gpu_data_->raw_boxes_buffer.BindToIndex(1));
+    RET_CHECK_CALL(gpu_data_->raw_anchors_buffer.BindToIndex(2));
+    const tflite::gpu::uint3 decode_workgroups = {num_boxes_, 1, 1};
+    RET_CHECK_CALL(gpu_data_->decode_program.Dispatch(decode_workgroups));
+
+    // Score boxes.
+    RET_CHECK_CALL(gpu_data_->scored_boxes_buffer.BindToIndex(0));
+    RET_CHECK_CALL(gpu_data_->raw_scores_buffer.BindToIndex(1));
+    const tflite::gpu::uint3 score_workgroups = {num_boxes_, 1, 1};
+    RET_CHECK_CALL(gpu_data_->score_program.Dispatch(score_workgroups));
+
+    // Copy decoded boxes from GPU to CPU.
+    std::vector<float> boxes(num_boxes_ * num_coords_);
+    RET_CHECK_CALL(gpu_data_->decoded_boxes_buffer.Read(absl::MakeSpan(boxes)));
+    std::vector<float> score_class_id_pairs(num_boxes_ * 2);
+    RET_CHECK_CALL(gpu_data_->scored_boxes_buffer.Read(
+        absl::MakeSpan(score_class_id_pairs)));
+
+    // TODO: b/138851969. Is it possible to output a float vector
+    // for score and an int vector for class so that we can avoid copying twice?
+    std::vector<float> detection_scores(num_boxes_);
+    std::vector<int> detection_classes(num_boxes_);
+    for (int i = 0; i < num_boxes_; ++i) {
+      detection_scores[i] = score_class_id_pairs[i * 2];
+      detection_classes[i] = static_cast<int>(score_class_id_pairs[i * 2 + 1]);
+    }
+    MP_RETURN_IF_ERROR(
+        ConvertToDetections(boxes.data(), detection_scores.data(),
+                            detection_classes.data(), output_detections));
+
+    return ::mediapipe::OkStatus();
+  }));
+#elif defined(__APPLE__) && !TARGET_OS_OSX  // iOS
+
+  const auto& input_tensors =
+      cc->Inputs().Tag("TENSORS_GPU").Get<std::vector<GpuTensor>>();
+  RET_CHECK_GE(input_tensors.size(), 2);
 
   // Copy inputs.
-  tflite::gpu::gl::CopyBuffer(input_tensors[0], *raw_boxes_buffer_.get());
-  tflite::gpu::gl::CopyBuffer(input_tensors[1], *raw_scores_buffer_.get());
+  [MPPMetalUtil blitMetalBufferTo:gpu_data_->raw_boxes_buffer
+                             from:input_tensors[0]
+                         blocking:true
+                    commandBuffer:[gpu_helper_ commandBuffer]];
+  [MPPMetalUtil blitMetalBufferTo:gpu_data_->raw_scores_buffer
+                             from:input_tensors[1]
+                         blocking:true
+                    commandBuffer:[gpu_helper_ commandBuffer]];
   if (!anchors_init_) {
     if (side_packet_anchors_) {
       CHECK(!cc->InputSidePackets().Tag("ANCHORS").IsEmpty());
@@ -372,47 +485,65 @@ REGISTER_CALCULATOR(TfLiteTensorsToDetectionsCalculator);
           cc->InputSidePackets().Tag("ANCHORS").Get<std::vector<Anchor>>();
       std::vector<float> raw_anchors(num_boxes_ * kNumCoordsPerBox);
       ConvertAnchorsToRawValues(anchors, num_boxes_, raw_anchors.data());
-      raw_anchors_buffer_->Write<float>(absl::MakeSpan(raw_anchors));
+      memcpy([gpu_data_->raw_anchors_buffer contents], raw_anchors.data(),
+             raw_anchors.size() * sizeof(float));
     } else {
-      CHECK_EQ(input_tensors.size(), 3);
-      tflite::gpu::gl::CopyBuffer(input_tensors[2], *raw_anchors_buffer_.get());
+      RET_CHECK_EQ(input_tensors.size(), kNumInputTensorsWithAnchors);
+      [MPPMetalUtil blitMetalBufferTo:gpu_data_->raw_anchors_buffer
+                                 from:input_tensors[2]
+                             blocking:true
+                        commandBuffer:[gpu_helper_ commandBuffer]];
     }
     anchors_init_ = true;
   }
 
   // Run shaders.
-  MP_RETURN_IF_ERROR(gpu_helper_.RunInGlContext(
-      [this, &input_tensors]() -> ::mediapipe::Status {
-        // Decode boxes.
-        decoded_boxes_buffer_->BindToIndex(0);
-        raw_boxes_buffer_->BindToIndex(1);
-        raw_anchors_buffer_->BindToIndex(2);
-        const tflite::gpu::uint3 decode_workgroups = {num_boxes_, 1, 1};
-        decode_program_->Dispatch(decode_workgroups);
-
-        // Score boxes.
-        scored_boxes_buffer_->BindToIndex(0);
-        raw_scores_buffer_->BindToIndex(1);
-        const tflite::gpu::uint3 score_workgroups = {num_boxes_, 1, 1};
-        score_program_->Dispatch(score_workgroups);
-
-        return ::mediapipe::OkStatus();
-      }));
+  {
+    id<MTLCommandBuffer> command_buffer = [gpu_helper_ commandBuffer];
+    command_buffer.label = @"TfLiteDecodeBoxes";
+    id<MTLComputeCommandEncoder> decode_command =
+        [command_buffer computeCommandEncoder];
+    [decode_command setComputePipelineState:gpu_data_->decode_program];
+    [decode_command setBuffer:gpu_data_->decoded_boxes_buffer
+                       offset:0
+                      atIndex:0];
+    [decode_command setBuffer:gpu_data_->raw_boxes_buffer offset:0 atIndex:1];
+    [decode_command setBuffer:gpu_data_->raw_anchors_buffer offset:0 atIndex:2];
+    MTLSize decode_threads_per_group = MTLSizeMake(1, 1, 1);
+    MTLSize decode_threadgroups = MTLSizeMake(num_boxes_, 1, 1);
+    [decode_command dispatchThreadgroups:decode_threadgroups
+                   threadsPerThreadgroup:decode_threads_per_group];
+    [decode_command endEncoding];
+    [command_buffer commit];
+    [command_buffer waitUntilCompleted];
+  }
+  {
+    id<MTLCommandBuffer> command_buffer = [gpu_helper_ commandBuffer];
+    command_buffer.label = @"TfLiteScoreBoxes";
+    id<MTLComputeCommandEncoder> score_command =
+        [command_buffer computeCommandEncoder];
+    [score_command setComputePipelineState:gpu_data_->score_program];
+    [score_command setBuffer:gpu_data_->scored_boxes_buffer offset:0 atIndex:0];
+    [score_command setBuffer:gpu_data_->raw_scores_buffer offset:0 atIndex:1];
+    MTLSize score_threads_per_group = MTLSizeMake(1, num_classes_, 1);
+    MTLSize score_threadgroups = MTLSizeMake(num_boxes_, 1, 1);
+    [score_command dispatchThreadgroups:score_threadgroups
+                  threadsPerThreadgroup:score_threads_per_group];
+    [score_command endEncoding];
+    [command_buffer commit];
+    [command_buffer waitUntilCompleted];
+  }
 
   // Copy decoded boxes from GPU to CPU.
   std::vector<float> boxes(num_boxes_ * num_coords_);
-  auto status = decoded_boxes_buffer_->Read(absl::MakeSpan(boxes));
-  if (!status.ok()) {
-    return ::mediapipe::InternalError(status.error_message());
-  }
+  memcpy(boxes.data(), [gpu_data_->decoded_boxes_buffer contents],
+         num_boxes_ * num_coords_ * sizeof(float));
   std::vector<float> score_class_id_pairs(num_boxes_ * 2);
-  status = scored_boxes_buffer_->Read(absl::MakeSpan(score_class_id_pairs));
-  if (!status.ok()) {
-    return ::mediapipe::InternalError(status.error_message());
-  }
+  memcpy(score_class_id_pairs.data(), [gpu_data_->scored_boxes_buffer contents],
+         num_boxes_ * 2 * sizeof(float));
 
-  // TODO: b/138851969. Is it possible to output a float vector
-  // for score and an int vector for class so that we can avoid copying twice?
+  // Output detections.
+  // TODO Adjust shader to avoid copying shader output twice.
   std::vector<float> detection_scores(num_boxes_);
   std::vector<int> detection_classes(num_boxes_);
   for (int i = 0; i < num_boxes_; ++i) {
@@ -422,25 +553,20 @@ REGISTER_CALCULATOR(TfLiteTensorsToDetectionsCalculator);
   MP_RETURN_IF_ERROR(ConvertToDetections(boxes.data(), detection_scores.data(),
                                          detection_classes.data(),
                                          output_detections));
+
 #else
   LOG(ERROR) << "GPU input on non-Android not supported yet.";
-#endif  // defined(__ANDROID__)
+#endif
   return ::mediapipe::OkStatus();
 }
 
 ::mediapipe::Status TfLiteTensorsToDetectionsCalculator::Close(
     CalculatorContext* cc) {
-#if defined(__ANDROID__)
-  gpu_helper_.RunInGlContext([this] {
-    decode_program_.reset();
-    score_program_.reset();
-    decoded_boxes_buffer_.reset();
-    raw_boxes_buffer_.reset();
-    raw_anchors_buffer_.reset();
-    scored_boxes_buffer_.reset();
-    raw_scores_buffer_.reset();
-  });
-#endif  // __ANDROID__
+#if !defined(MEDIAPIPE_DISABLE_GPU) && !defined(__APPLE__)
+  gpu_helper_.RunInGlContext([this] { gpu_data_.reset(); });
+#elif defined(__APPLE__) && !TARGET_OS_OSX  // iOS
+  gpu_data_.reset();
+#endif                                      //  !MEDIAPIPE_DISABLE_GPU
 
   return ::mediapipe::OkStatus();
 }
@@ -530,6 +656,7 @@ REGISTER_CALCULATOR(TfLiteTensorsToDetectionsCalculator);
       }
     }
   }
+
   return ::mediapipe::OkStatus();
 }
 
@@ -586,12 +713,16 @@ Detection TfLiteTensorsToDetectionsCalculator::ConvertToDetection(
   return detection;
 }
 
-::mediapipe::Status TfLiteTensorsToDetectionsCalculator::GlSetup(
+::mediapipe::Status TfLiteTensorsToDetectionsCalculator::GpuInit(
     CalculatorContext* cc) {
-#if defined(__ANDROID__)
-  // A shader to decode detection boxes.
-  const std::string decode_src = absl::Substitute(
-      R"( #version 310 es
+#if !defined(MEDIAPIPE_DISABLE_GPU) && !defined(__APPLE__)
+  MP_RETURN_IF_ERROR(gpu_helper_.RunInGlContext([this]()
+                                                    -> ::mediapipe::Status {
+    gpu_data_ = absl::make_unique<GPUData>();
+
+    // A shader to decode detection boxes.
+    const std::string decode_src = absl::Substitute(
+        R"( #version 310 es
 
 layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
 
@@ -665,7 +796,7 @@ void main() {
   if (num_keypoints > int(0)){
     for (int k = 0; k < num_keypoints; ++k) {
       int kp_offset =
-          int(g_idx * num_coords) + keypt_coord_offset + k * num_values_per_keypt;
+        int(g_idx * num_coords) + keypt_coord_offset + k * num_values_per_keypt;
       float kp_y, kp_x;
       if (reverse_output_order == int(0)) {
         kp_y = raw_boxes.data[kp_offset + int(0)];
@@ -679,55 +810,37 @@ void main() {
     }
   }
 })",
-      options_.num_coords(),  // box xywh
-      options_.reverse_output_order() ? 1 : 0,
-      options_.apply_exponential_on_box_size() ? 1 : 0,
-      options_.box_coord_offset(), options_.num_keypoints(),
-      options_.keypoint_coord_offset(), options_.num_values_per_keypoint());
+        options_.num_coords(),  // box xywh
+        options_.reverse_output_order() ? 1 : 0,
+        options_.apply_exponential_on_box_size() ? 1 : 0,
+        options_.box_coord_offset(), options_.num_keypoints(),
+        options_.keypoint_coord_offset(), options_.num_values_per_keypoint());
 
-  // Shader program
-  GlShader decode_shader;
-  auto status =
-      GlShader::CompileShader(GL_COMPUTE_SHADER, decode_src, &decode_shader);
-  if (!status.ok()) {
-    return ::mediapipe::InternalError(status.error_message());
-  }
-  decode_program_ = absl::make_unique<GlProgram>();
-  status = GlProgram::CreateWithShader(decode_shader, decode_program_.get());
-  if (!status.ok()) {
-    return ::mediapipe::InternalError(status.error_message());
-  }
-  // Outputs
-  size_t decoded_boxes_length = num_boxes_ * num_coords_;
-  decoded_boxes_buffer_ = absl::make_unique<GlBuffer>();
-  status = CreateReadWriteShaderStorageBuffer<float>(
-      decoded_boxes_length, decoded_boxes_buffer_.get());
-  if (!status.ok()) {
-    return ::mediapipe::InternalError(status.error_message());
-  }
-  // Inputs
-  size_t raw_boxes_length = num_boxes_ * num_coords_;
-  raw_boxes_buffer_ = absl::make_unique<GlBuffer>();
-  status = CreateReadWriteShaderStorageBuffer<float>(raw_boxes_length,
-                                                     raw_boxes_buffer_.get());
-  if (!status.ok()) {
-    return ::mediapipe::InternalError(status.error_message());
-  }
-  size_t raw_anchors_length = num_boxes_ * kNumCoordsPerBox;
-  raw_anchors_buffer_ = absl::make_unique<GlBuffer>();
-  status = CreateReadWriteShaderStorageBuffer<float>(raw_anchors_length,
-                                                     raw_anchors_buffer_.get());
-  if (!status.ok()) {
-    return ::mediapipe::InternalError(status.error_message());
-  }
-  // Parameters
-  glUseProgram(decode_program_->id());
-  glUniform4f(0, options_.x_scale(), options_.y_scale(), options_.w_scale(),
-              options_.h_scale());
+    // Shader program
+    GlShader decode_shader;
+    RET_CHECK_CALL(
+        GlShader::CompileShader(GL_COMPUTE_SHADER, decode_src, &decode_shader));
+    RET_CHECK_CALL(GpuProgram::CreateWithShader(decode_shader,
+                                                &gpu_data_->decode_program));
+    // Outputs
+    size_t decoded_boxes_length = num_boxes_ * num_coords_;
+    RET_CHECK_CALL(CreateReadWriteShaderStorageBuffer<float>(
+        decoded_boxes_length, &gpu_data_->decoded_boxes_buffer));
+    // Inputs
+    size_t raw_boxes_length = num_boxes_ * num_coords_;
+    RET_CHECK_CALL(CreateReadWriteShaderStorageBuffer<float>(
+        raw_boxes_length, &gpu_data_->raw_boxes_buffer));
+    size_t raw_anchors_length = num_boxes_ * kNumCoordsPerBox;
+    RET_CHECK_CALL(CreateReadWriteShaderStorageBuffer<float>(
+        raw_anchors_length, &gpu_data_->raw_anchors_buffer));
+    // Parameters
+    glUseProgram(gpu_data_->decode_program.id());
+    glUniform4f(0, options_.x_scale(), options_.y_scale(), options_.w_scale(),
+                options_.h_scale());
 
-  // A shader to score detection boxes.
-  const std::string score_src = absl::Substitute(
-      R"( #version 310 es
+    // A shader to score detection boxes.
+    const std::string score_src = absl::Substitute(
+        R"( #version 310 es
 
 layout(local_size_x = 1, local_size_y = $0, local_size_z = 1) in;
 
@@ -782,48 +895,272 @@ void main() {
     scored_boxes.data[g_idx * uint(2) + uint(1)] = max_class;
   }
 })",
+        num_classes_, options_.sigmoid_score() ? 1 : 0,
+        options_.has_score_clipping_thresh() ? 1 : 0,
+        options_.has_score_clipping_thresh() ? options_.score_clipping_thresh()
+                                             : 0,
+        !ignore_classes_.empty() ? 1 : 0);
+
+    // # filter classes supported is hardware dependent.
+    int max_wg_size;  //  typically <= 1024
+    glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_SIZE, 1,
+                    &max_wg_size);  // y-dim
+    CHECK_LT(num_classes_, max_wg_size)
+        << "# classes must be < " << max_wg_size;
+    // TODO support better filtering.
+    CHECK_LE(ignore_classes_.size(), 1) << "Only ignore class 0 is allowed";
+
+    // Shader program
+    GlShader score_shader;
+    RET_CHECK_CALL(
+        GlShader::CompileShader(GL_COMPUTE_SHADER, score_src, &score_shader));
+    RET_CHECK_CALL(
+        GpuProgram::CreateWithShader(score_shader, &gpu_data_->score_program));
+    // Outputs
+    size_t scored_boxes_length = num_boxes_ * 2;  // score, class
+    RET_CHECK_CALL(CreateReadWriteShaderStorageBuffer<float>(
+        scored_boxes_length, &gpu_data_->scored_boxes_buffer));
+    // Inputs
+    size_t raw_scores_length = num_boxes_ * num_classes_;
+    RET_CHECK_CALL(CreateReadWriteShaderStorageBuffer<float>(
+        raw_scores_length, &gpu_data_->raw_scores_buffer));
+
+    return ::mediapipe::OkStatus();
+  }));
+
+#elif defined(__APPLE__) && !TARGET_OS_OSX  // iOS
+  // TODO consolidate Metal and OpenGL shaders via vulkan.
+
+  gpu_data_ = absl::make_unique<GPUData>();
+  id<MTLDevice> device = gpu_helper_.mtlDevice;
+
+  // A shader to decode detection boxes.
+  std::string decode_src = absl::Substitute(
+      R"(
+#include <metal_stdlib>
+
+using namespace metal;
+
+kernel void decodeKernel(
+    device float*                   boxes       [[ buffer(0) ]],
+    device float*                   raw_boxes   [[ buffer(1) ]],
+    device float*                   raw_anchors [[ buffer(2) ]],
+    uint2                           gid         [[ thread_position_in_grid ]]) {
+
+  uint num_coords = uint($0);
+  int reverse_output_order = int($1);
+  int apply_exponential = int($2);
+  int box_coord_offset = int($3);
+  int num_keypoints = int($4);
+  int keypt_coord_offset = int($5);
+  int num_values_per_keypt = int($6);
+)",
+      options_.num_coords(),  // box xywh
+      options_.reverse_output_order() ? 1 : 0,
+      options_.apply_exponential_on_box_size() ? 1 : 0,
+      options_.box_coord_offset(), options_.num_keypoints(),
+      options_.keypoint_coord_offset(), options_.num_values_per_keypoint());
+  decode_src += absl::Substitute(
+      R"(
+  float4 scale = float4(($0),($1),($2),($3));
+)",
+      options_.x_scale(), options_.y_scale(), options_.w_scale(),
+      options_.h_scale());
+  decode_src += R"(
+  uint g_idx = gid.x;
+  uint box_offset = g_idx * num_coords + uint(box_coord_offset);
+  uint anchor_offset = g_idx * uint(4);  // check kNumCoordsPerBox
+
+  float y_center, x_center, h, w;
+
+  if (reverse_output_order == int(0)) {
+    y_center = raw_boxes[box_offset + uint(0)];
+    x_center = raw_boxes[box_offset + uint(1)];
+    h = raw_boxes[box_offset + uint(2)];
+    w = raw_boxes[box_offset + uint(3)];
+  } else {
+    x_center = raw_boxes[box_offset + uint(0)];
+    y_center = raw_boxes[box_offset + uint(1)];
+    w = raw_boxes[box_offset + uint(2)];
+    h = raw_boxes[box_offset + uint(3)];
+  }
+
+  float anchor_yc = raw_anchors[anchor_offset + uint(0)];
+  float anchor_xc = raw_anchors[anchor_offset + uint(1)];
+  float anchor_h  = raw_anchors[anchor_offset + uint(2)];
+  float anchor_w  = raw_anchors[anchor_offset + uint(3)];
+
+  x_center = x_center / scale.x * anchor_w + anchor_xc;
+  y_center = y_center / scale.y * anchor_h + anchor_yc;
+
+  if (apply_exponential == int(1)) {
+    h = exp(h / scale.w) * anchor_h;
+    w = exp(w / scale.z) * anchor_w;
+  } else {
+    h = (h / scale.w) * anchor_h;
+    w = (w / scale.z) * anchor_w;
+  }
+
+  float ymin = y_center - h / 2.0;
+  float xmin = x_center - w / 2.0;
+  float ymax = y_center + h / 2.0;
+  float xmax = x_center + w / 2.0;
+
+  boxes[box_offset + uint(0)] = ymin;
+  boxes[box_offset + uint(1)] = xmin;
+  boxes[box_offset + uint(2)] = ymax;
+  boxes[box_offset + uint(3)] = xmax;
+
+  if (num_keypoints > int(0)){
+    for (int k = 0; k < num_keypoints; ++k) {
+      int kp_offset =
+        int(g_idx * num_coords) + keypt_coord_offset + k * num_values_per_keypt;
+      float kp_y, kp_x;
+      if (reverse_output_order == int(0)) {
+        kp_y = raw_boxes[kp_offset + int(0)];
+        kp_x = raw_boxes[kp_offset + int(1)];
+      } else {
+        kp_x = raw_boxes[kp_offset + int(0)];
+        kp_y = raw_boxes[kp_offset + int(1)];
+      }
+      boxes[kp_offset + int(0)] = kp_x / scale.x * anchor_w + anchor_xc;
+      boxes[kp_offset + int(1)] = kp_y / scale.y * anchor_h + anchor_yc;
+    }
+  }
+})";
+
+  {
+    // Shader program
+    NSString* library_source =
+        [NSString stringWithUTF8String:decode_src.c_str()];
+    NSError* error = nil;
+    id<MTLLibrary> library = [device newLibraryWithSource:library_source
+                                                  options:nullptr
+                                                    error:&error];
+    RET_CHECK(library != nil) << "Couldn't create shader library "
+                              << [[error localizedDescription] UTF8String];
+    id<MTLFunction> kernel_func = nil;
+    kernel_func = [library newFunctionWithName:@"decodeKernel"];
+    RET_CHECK(kernel_func != nil) << "Couldn't create kernel function.";
+    gpu_data_->decode_program =
+        [device newComputePipelineStateWithFunction:kernel_func error:&error];
+    RET_CHECK(gpu_data_->decode_program != nil)
+        << "Couldn't create pipeline state "
+        << [[error localizedDescription] UTF8String];
+    // Outputs
+    size_t decoded_boxes_length = num_boxes_ * num_coords_ * sizeof(float);
+    gpu_data_->decoded_boxes_buffer =
+        [device newBufferWithLength:decoded_boxes_length
+                            options:MTLResourceStorageModeShared];
+    // Inputs
+    size_t raw_boxes_length = num_boxes_ * num_coords_ * sizeof(float);
+    gpu_data_->raw_boxes_buffer =
+        [device newBufferWithLength:raw_boxes_length
+                            options:MTLResourceStorageModeShared];
+    size_t raw_anchors_length = num_boxes_ * kNumCoordsPerBox * sizeof(float);
+    gpu_data_->raw_anchors_buffer =
+        [device newBufferWithLength:raw_anchors_length
+                            options:MTLResourceStorageModeShared];
+  }
+
+  // A shader to score detection boxes.
+  const std::string score_src = absl::Substitute(
+      R"(
+#include <metal_stdlib>
+
+using namespace metal;
+
+float optional_sigmoid(float x) {
+  int apply_sigmoid = int($1);
+  int apply_clipping_thresh = int($2);
+  float clipping_thresh = float($3);
+  if (apply_sigmoid == int(0)) return x;
+  if (apply_clipping_thresh == int(1)) {
+    x = clamp(x, -clipping_thresh, clipping_thresh);
+  }
+  x = 1.0 / (1.0 + exp(-x));
+  return x;
+}
+
+kernel void scoreKernel(
+    device float*             scored_boxes [[ buffer(0) ]],
+    device float*             raw_scores   [[ buffer(1) ]],
+    uint2                     tid          [[ thread_position_in_threadgroup ]],
+    uint2                     gid          [[ thread_position_in_grid ]]) {
+
+  uint num_classes = uint($0);
+  int apply_sigmoid = int($1);
+  int apply_clipping_thresh = int($2);
+  float clipping_thresh = float($3);
+  int ignore_class_0 = int($4);
+
+  uint g_idx = gid.x;   // box idx
+  uint s_idx = tid.y;   // score/class idx
+
+  // load all scores into shared memory
+  threadgroup float local_scores[$0];
+  float score = raw_scores[g_idx * num_classes + s_idx];
+  local_scores[s_idx] = optional_sigmoid(score);
+  threadgroup_barrier(mem_flags::mem_threadgroup);
+
+  // find max score in shared memory
+  if (s_idx == uint(0)) {
+    float max_score = -FLT_MAX;
+    float max_class = -1.0;
+    for (int i=ignore_class_0; i<int(num_classes); ++i) {
+      if (local_scores[i] > max_score) {
+        max_score = local_scores[i];
+        max_class = float(i);
+      }
+    }
+    scored_boxes[g_idx * uint(2) + uint(0)] = max_score;
+    scored_boxes[g_idx * uint(2) + uint(1)] = max_class;
+  }
+})",
       num_classes_, options_.sigmoid_score() ? 1 : 0,
       options_.has_score_clipping_thresh() ? 1 : 0,
       options_.has_score_clipping_thresh() ? options_.score_clipping_thresh()
                                            : 0,
       ignore_classes_.size() ? 1 : 0);
 
-  // # filter classes supported is hardware dependent.
-  int max_wg_size;  //  typically <= 1024
-  glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_SIZE, 1, &max_wg_size);  // y-dim
-  CHECK_LT(num_classes_, max_wg_size) << "# classes must be < " << max_wg_size;
   // TODO support better filtering.
   CHECK_LE(ignore_classes_.size(), 1) << "Only ignore class 0 is allowed";
 
-  // Shader program
-  GlShader score_shader;
-  status = GlShader::CompileShader(GL_COMPUTE_SHADER, score_src, &score_shader);
-  if (!status.ok()) {
-    return ::mediapipe::InternalError(status.error_message());
-  }
-  score_program_ = absl::make_unique<GlProgram>();
-  status = GlProgram::CreateWithShader(score_shader, score_program_.get());
-  if (!status.ok()) {
-    return ::mediapipe::InternalError(status.error_message());
-  }
-  // Outputs
-  size_t scored_boxes_length = num_boxes_ * 2;  // score, class
-  scored_boxes_buffer_ = absl::make_unique<GlBuffer>();
-  status = CreateReadWriteShaderStorageBuffer<float>(
-      scored_boxes_length, scored_boxes_buffer_.get());
-  if (!status.ok()) {
-    return ::mediapipe::InternalError(status.error_message());
-  }
-  // Inputs
-  size_t raw_scores_length = num_boxes_ * num_classes_;
-  raw_scores_buffer_ = absl::make_unique<GlBuffer>();
-  status = CreateReadWriteShaderStorageBuffer<float>(raw_scores_length,
-                                                     raw_scores_buffer_.get());
-  if (!status.ok()) {
-    return ::mediapipe::InternalError(status.error_message());
+  {
+    // Shader program
+    NSString* library_source =
+        [NSString stringWithUTF8String:score_src.c_str()];
+    NSError* error = nil;
+    id<MTLLibrary> library = [device newLibraryWithSource:library_source
+                                                  options:nullptr
+                                                    error:&error];
+    RET_CHECK(library != nil) << "Couldn't create shader library "
+                              << [[error localizedDescription] UTF8String];
+    id<MTLFunction> kernel_func = nil;
+    kernel_func = [library newFunctionWithName:@"scoreKernel"];
+    RET_CHECK(kernel_func != nil) << "Couldn't create kernel function.";
+    gpu_data_->score_program =
+        [device newComputePipelineStateWithFunction:kernel_func error:&error];
+    RET_CHECK(gpu_data_->score_program != nil)
+        << "Couldn't create pipeline state "
+        << [[error localizedDescription] UTF8String];
+    // Outputs
+    size_t scored_boxes_length = num_boxes_ * 2 * sizeof(float);  // score,class
+    gpu_data_->scored_boxes_buffer =
+        [device newBufferWithLength:scored_boxes_length
+                            options:MTLResourceStorageModeShared];
+    // Inputs
+    size_t raw_scores_length = num_boxes_ * num_classes_ * sizeof(float);
+    gpu_data_->raw_scores_buffer =
+        [device newBufferWithLength:raw_scores_length
+                            options:MTLResourceStorageModeShared];
+    // # filter classes supported is hardware dependent.
+    int max_wg_size = gpu_data_->score_program.maxTotalThreadsPerThreadgroup;
+    CHECK_LT(num_classes_, max_wg_size) << "# classes must be <" << max_wg_size;
   }
 
-#endif  // defined(__ANDROID__)
+#endif  // __ANDROID__ or iOS
+
   return ::mediapipe::OkStatus();
 }
 

@@ -75,7 +75,7 @@ node {
   output_stream: "TENSORS:detection_tensors"
   node_options: {
     [type.googleapis.com/mediapipe.TfLiteInferenceCalculatorOptions] {
-      model_path: "ssdlite_object_detection.tflite"
+      model_path: "mediapipe/models/ssdlite_object_detection.tflite"
     }
   }
 }
@@ -158,7 +158,7 @@ node {
   output_stream: "output_detections"
   node_options: {
     [type.googleapis.com/mediapipe.DetectionLabelIdToTextCalculatorOptions] {
-      label_map_path: "ssdlite_object_detection_labelmap.txt"
+      label_map_path: "mediapipe/models/ssdlite_object_detection_labelmap.txt"
     }
   }
 }

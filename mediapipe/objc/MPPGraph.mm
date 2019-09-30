@@ -22,6 +22,7 @@
 #include "absl/memory/memory.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/image_frame.h"
+#include "mediapipe/framework/graph_service.h"
 #include "mediapipe/gpu/MPPGraphGPUData.h"
 #include "mediapipe/gpu/gl_base.h"
 #include "mediapipe/gpu/gpu_shared_data_internal.h"
@@ -38,6 +39,8 @@
   std::map<std::string, mediapipe::Packet> _inputSidePackets;
   /// Packet headers that will be added to the graph when it is started.
   std::map<std::string, mediapipe::Packet> _streamHeaders;
+  /// Service packets to be added to the graph when it is started.
+  std::map<const mediapipe::GraphServiceBase*, mediapipe::Packet> _servicePackets;
 
   /// Number of frames currently being processed by the graph.
   std::atomic<int32_t> _framesInFlight;
@@ -199,6 +202,13 @@ void CallFrameDelegate(void* wrapperVoid, const std::string& streamName,
   _inputSidePackets[name] = packet;
 }
 
+- (void)setServicePacket:(mediapipe::Packet&)packet
+              forService:(const mediapipe::GraphServiceBase&)service {
+  _GTMDevAssert(!_started, @"%@ must be called before the graph is started",
+                NSStringFromSelector(_cmd));
+  _servicePackets[&service] = std::move(packet);
+}
+
 - (void)addSidePackets:(const std::map<std::string, mediapipe::Packet>&)extraSidePackets {
   _GTMDevAssert(!_started, @"%@ must be called before the graph is started",
                 NSStringFromSelector(_cmd));
@@ -206,18 +216,33 @@ void CallFrameDelegate(void* wrapperVoid, const std::string& streamName,
 }
 
 - (BOOL)startWithError:(NSError**)error {
+  ::mediapipe::Status status = [self performStart];
+  if (!status.ok()) {
+    if (error) {
+      *error = [NSError gus_errorWithStatus:status];
+    }
+    return NO;
+  }
+  _started = YES;
+  return YES;
+}
+
+- (::mediapipe::Status)performStart {
   ::mediapipe::Status status = _graph->Initialize(_config);
-  if (status.ok()) {
-    status = _graph->StartRun(_inputSidePackets, _streamHeaders);
-    if (status.ok()) {
-      _started = YES;
-      return YES;
+  if (!status.ok()) {
+    return status;
+  }
+  for (const auto& service_packet : _servicePackets) {
+    status = _graph->SetServicePacket(*service_packet.first, service_packet.second);
+    if (!status.ok()) {
+      return status;
     }
   }
-  if (error) {
-    *error = [NSError gus_errorWithStatus:status];
+  status = _graph->StartRun(_inputSidePackets, _streamHeaders);
+  if (!status.ok()) {
+    return status;
   }
-  return NO;
+  return status;
 }
 
 - (void)cancel {

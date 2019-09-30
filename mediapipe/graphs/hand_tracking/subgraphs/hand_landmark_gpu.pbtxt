@@ -39,6 +39,11 @@ node {
   calculator: "TfLiteConverterCalculator"
   input_stream: "IMAGE_GPU:transformed_hand_image"
   output_stream: "TENSORS_GPU:image_tensor"
+  node_options: {
+    [type.googleapis.com/mediapipe.TfLiteConverterCalculatorOptions] {
+      zero_center: false
+    }
+  }
 }
 
 # Runs a TensorFlow Lite model on GPU that takes an image tensor and outputs a
@@ -50,7 +55,7 @@ node {
   output_stream: "TENSORS:output_tensors"
   node_options: {
     [type.googleapis.com/mediapipe.TfLiteInferenceCalculatorOptions] {
-      model_path: "hand_landmark.tflite"
+      model_path: "mediapipe/models/hand_landmark.tflite"
       use_gpu: true
     }
   }

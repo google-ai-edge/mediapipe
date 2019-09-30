@@ -19,6 +19,7 @@
 #include "mediapipe/framework/formats/location.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status.h"
+#include "mediapipe/util/audio_decoder.pb.h"
 #include "mediapipe/util/sequence/media_sequence.h"
 #include "tensorflow/core/example/example.pb.h"
 #include "tensorflow/core/example/feature.pb.h"
@@ -37,6 +38,7 @@ const char kDatasetRootDirTag[] = "DATASET_ROOT";
 const char kDataPath[] = "DATA_PATH";
 const char kPacketResamplerOptions[] = "RESAMPLER_OPTIONS";
 const char kImagesFrameRateTag[] = "IMAGE_FRAME_RATE";
+const char kAudioDecoderOptions[] = "AUDIO_DECODER_OPTIONS";
 
 namespace tf = ::tensorflow;
 namespace mpms = ::mediapipe::mediasequence;
@@ -126,6 +128,11 @@ class UnpackMediaSequenceCalculator : public CalculatorBase {
     if (cc->OutputSidePackets().HasTag(kDataPath)) {
       cc->OutputSidePackets().Tag(kDataPath).Set<std::string>();
     }
+    if (cc->OutputSidePackets().HasTag(kAudioDecoderOptions)) {
+      cc->OutputSidePackets()
+          .Tag(kAudioDecoderOptions)
+          .Set<AudioDecoderOptions>();
+    }
     if (cc->OutputSidePackets().HasTag(kImagesFrameRateTag)) {
       cc->OutputSidePackets().Tag(kImagesFrameRateTag).Set<double>();
     }
@@ -136,10 +143,11 @@ class UnpackMediaSequenceCalculator : public CalculatorBase {
     }
     if ((options.has_padding_before_label() ||
          options.has_padding_after_label()) &&
-        !(cc->OutputSidePackets().HasTag(kPacketResamplerOptions))) {
+        !(cc->OutputSidePackets().HasTag(kAudioDecoderOptions) ||
+          cc->OutputSidePackets().HasTag(kPacketResamplerOptions))) {
       return ::mediapipe::InvalidArgumentErrorBuilder(MEDIAPIPE_LOC)
-             << "If specifying padding, must output "
-             << kPacketResamplerOptions;
+             << "If specifying padding, must output " << kPacketResamplerOptions
+             << "or" << kAudioDecoderOptions;
     }
 
     // Optional streams.
@@ -260,7 +268,8 @@ class UnpackMediaSequenceCalculator : public CalculatorBase {
     // Set the start and end of the clip in the appropriate options protos.
     double start_time = 0;
     double end_time = 0;
-    if (cc->OutputSidePackets().HasTag(kPacketResamplerOptions)) {
+    if (cc->OutputSidePackets().HasTag(kAudioDecoderOptions) ||
+        cc->OutputSidePackets().HasTag(kPacketResamplerOptions)) {
       if (mpms::HasClipStartTimestamp(sequence)) {
         start_time =
             Timestamp(mpms::GetClipStartTimestamp(sequence)).Seconds() -
@@ -270,6 +279,27 @@ class UnpackMediaSequenceCalculator : public CalculatorBase {
         end_time = Timestamp(mpms::GetClipEndTimestamp(sequence)).Seconds() +
                    options.padding_after_label();
       }
+    }
+    if (cc->OutputSidePackets().HasTag(kAudioDecoderOptions)) {
+      auto audio_decoder_options = absl::make_unique<AudioDecoderOptions>(
+          options.base_audio_decoder_options());
+      if (mpms::HasClipStartTimestamp(sequence)) {
+        if (options.force_decoding_from_start_of_media()) {
+          audio_decoder_options->set_start_time(0);
+        } else {
+          audio_decoder_options->set_start_time(
+              start_time - options.extra_padding_from_media_decoder());
+        }
+      }
+      if (mpms::HasClipEndTimestamp(sequence)) {
+        audio_decoder_options->set_end_time(
+            end_time + options.extra_padding_from_media_decoder());
+      }
+      LOG(INFO) << "Created AudioDecoderOptions:\n"
+                << audio_decoder_options->DebugString();
+      cc->OutputSidePackets()
+          .Tag(kAudioDecoderOptions)
+          .Set(Adopt(audio_decoder_options.release()));
     }
     if (cc->OutputSidePackets().HasTag(kPacketResamplerOptions)) {
       auto resampler_options = absl::make_unique<CalculatorOptions>();

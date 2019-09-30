@@ -64,6 +64,12 @@ http_archive(
     sha256 = "267103f8a1e9578978aa1dc256001e6529ef593e5aea38193d31c2872ee025e8",
     strip_prefix = "glog-0.3.5",
     build_file = "@//third_party:glog.BUILD",
+    patches = [
+        "@//third_party:com_github_glog_glog_9779e5ea6ef59562b030248947f787d1256132ae.diff"
+    ],
+    patch_args = [
+        "-p1",
+    ],
 )
 
 # libyuv

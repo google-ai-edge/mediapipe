@@ -116,6 +116,13 @@ typedef NS_ENUM(int, MPPPacketType) {
 /// @param name The name of the input side packet.
 - (void)setSidePacket:(const mediapipe::Packet&)packet named:(const std::string&)name;
 
+/// Sets a service packet. If it was already set, it is overwritten.
+/// Must be called before the graph is started.
+/// @param packet The packet to be associated with the service.
+/// @param service.
+- (void)setServicePacket:(mediapipe::Packet&)packet
+              forService:(const mediapipe::GraphServiceBase&)service;
+
 /// Adds input side packets from a map. Any inputs that were already set are
 /// left unchanged.
 /// Must be called before the graph is started.

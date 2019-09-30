@@ -11,6 +11,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+#include <cmath>
 
 #include "Eigen/Core"
 #include "mediapipe/calculators/audio/stabilized_log_calculator.pb.h"
@@ -108,13 +109,22 @@ TEST_F(StabilizedLogCalculatorTest, ZerosAreStabilized) {
       runner_->Outputs().Index(0).packets[0].Get<Matrix>());
 }
 
-TEST_F(StabilizedLogCalculatorTest, NegativeValuesCheckFail) {
+TEST_F(StabilizedLogCalculatorTest, NanValuesReturnError) {
+  InitializeGraph();
+  FillInputHeader();
+  AppendInputPacket(
+      new Matrix(Matrix::Constant(kNumChannels, kNumSamples, std::nanf(""))),
+      0 /* timestamp */);
+  ASSERT_FALSE(RunGraph().ok());
+}
+
+TEST_F(StabilizedLogCalculatorTest, NegativeValuesReturnError) {
   InitializeGraph();
   FillInputHeader();
   AppendInputPacket(
       new Matrix(Matrix::Constant(kNumChannels, kNumSamples, -1.0)),
       0 /* timestamp */);
-  ASSERT_DEATH(RunGraphNoReturn(), "");
+  ASSERT_FALSE(RunGraph().ok());
 }
 
 TEST_F(StabilizedLogCalculatorTest, NegativeValuesDoNotCheckFailIfCheckIsOff) {

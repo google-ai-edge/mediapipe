@@ -19,7 +19,6 @@ package(default_visibility = ["//visibility:private"])
 exports_files(["LICENSE"])
 
 load("//mediapipe/framework/port:build_config.bzl", "mediapipe_cc_proto_library")
-load("@bazel_skylib//lib:selects.bzl", "selects")
 
 proto_library(
     name = "opencv_image_encoder_calculator_proto",
@@ -227,19 +226,13 @@ cc_library(
         "//mediapipe/framework/port:status",
         "//mediapipe/framework/port:vector",
     ] + select({
-        "//mediapipe:android": [
+        "//mediapipe/gpu:disable_gpu": [],
+        "//conditions:default": [
             "//mediapipe/gpu:gl_calculator_helper",
             "//mediapipe/gpu:gl_simple_shaders",
-            "//mediapipe/gpu:gpu_buffer",
+            "//mediapipe/gpu:gl_quad_renderer",
             "//mediapipe/gpu:shader_util",
         ],
-        "//mediapipe:ios": [
-            "//mediapipe/gpu:gl_calculator_helper",
-            "//mediapipe/gpu:gl_simple_shaders",
-            "//mediapipe/gpu:gpu_buffer",
-            "//mediapipe/gpu:shader_util",
-        ],
-        "//conditions:default": [],
     }),
     alwayslink = 1,
 )
@@ -263,13 +256,13 @@ cc_library(
         "//mediapipe/framework/port:status",
         "//mediapipe/framework/port:vector",
     ] + select({
-        "//mediapipe:android": [
+        "//mediapipe/gpu:disable_gpu": [],
+        "//conditions:default": [
             "//mediapipe/gpu:gl_calculator_helper",
             "//mediapipe/gpu:gl_simple_shaders",
-            "//mediapipe/gpu:gpu_buffer",
+            "//mediapipe/gpu:gl_quad_renderer",
             "//mediapipe/gpu:shader_util",
         ],
-        "//conditions:default": [],
     }),
     alwayslink = 1,
 )
@@ -322,14 +315,14 @@ cc_library(
         "//mediapipe/framework/port:opencv_imgproc",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
-    ] + selects.with_or({
-        ("//mediapipe:android", "//mediapipe:ios"): [
+    ] + select({
+        "//mediapipe/gpu:disable_gpu": [],
+        "//conditions:default": [
             "//mediapipe/gpu:gl_calculator_helper",
             "//mediapipe/gpu:gl_simple_shaders",
             "//mediapipe/gpu:gl_quad_renderer",
             "//mediapipe/gpu:shader_util",
         ],
-        "//conditions:default": [],
     }),
     alwayslink = 1,
 )
@@ -363,14 +356,15 @@ cc_library(
         "//mediapipe/framework/port:opencv_imgproc",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
-    ] + selects.with_or({
-        ("//mediapipe:android", "//mediapipe:ios"): [
+        "//mediapipe/gpu:gpu_buffer",
+    ] + select({
+        "//mediapipe/gpu:disable_gpu": [],
+        "//conditions:default": [
             "//mediapipe/gpu:gl_calculator_helper",
             "//mediapipe/gpu:gl_simple_shaders",
             "//mediapipe/gpu:gl_quad_renderer",
             "//mediapipe/gpu:shader_util",
         ],
-        "//conditions:default": [],
     }),
     alwayslink = 1,
 )
@@ -415,19 +409,13 @@ cc_library(
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/util:color_cc_proto",
     ] + select({
-        "//mediapipe:android": [
+        "//mediapipe/gpu:disable_gpu": [],
+        "//conditions:default": [
             "//mediapipe/gpu:gl_calculator_helper",
             "//mediapipe/gpu:gl_simple_shaders",
-            "//mediapipe/gpu:gpu_buffer",
+            "//mediapipe/gpu:gl_quad_renderer",
             "//mediapipe/gpu:shader_util",
         ],
-        "//mediapipe:ios": [
-            "//mediapipe/gpu:gl_calculator_helper",
-            "//mediapipe/gpu:gl_simple_shaders",
-            "//mediapipe/gpu:gpu_buffer",
-            "//mediapipe/gpu:shader_util",
-        ],
-        "//conditions:default": [],
     }),
     alwayslink = 1,
 )
@@ -486,11 +474,11 @@ cc_library(
         "//mediapipe/framework/formats:image_frame",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
-    ] + selects.with_or({
-        ("//mediapipe:android", "//mediapipe:ios"): [
+    ] + select({
+        "//mediapipe/gpu:disable_gpu": [],
+        "//conditions:default": [
             "//mediapipe/gpu:gpu_buffer",
         ],
-        "//conditions:default": [],
     }),
     alwayslink = 1,
 )

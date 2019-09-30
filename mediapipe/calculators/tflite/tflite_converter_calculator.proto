@@ -36,8 +36,7 @@ message TfLiteConverterCalculatorOptions {
   optional bool flip_vertically = 2 [default = false];
 
   // Controls how many channels of the input image get passed through to the
-  // tensor. Currently this only controls whether or not to ignore alpha
-  // channel, so it must be 3 or 4.
+  // tensor. Valid values are 1,3,4 only. Ignored for iOS GPU.
   optional int32 max_num_channels = 3 [default = 3];
 
   // The calculator expects Matrix inputs to be in column-major order. Set

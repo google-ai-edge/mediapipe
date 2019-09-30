@@ -27,12 +27,12 @@
 #include "mediapipe/util/annotation_renderer.h"
 #include "mediapipe/util/color.pb.h"
 
-#if defined(__ANDROID__) || (defined(__APPLE__) && !TARGET_OS_OSX)
+#if !defined(MEDIAPIPE_DISABLE_GPU)
 #include "mediapipe/gpu/gl_calculator_helper.h"
 #include "mediapipe/gpu/gl_simple_shaders.h"
 #include "mediapipe/gpu/gpu_buffer.h"
 #include "mediapipe/gpu/shader_util.h"
-#endif  // __ANDROID__ or iOS
+#endif  //  !MEDIAPIPE_DISABLE_GPU
 
 namespace mediapipe {
 
@@ -146,19 +146,21 @@ class AnnotationOverlayCalculator : public CalculatorBase {
 
   bool use_gpu_ = false;
   bool gpu_initialized_ = false;
-#if defined(__ANDROID__) || (defined(__APPLE__) && !TARGET_OS_OSX)
+#if !defined(MEDIAPIPE_DISABLE_GPU)
   mediapipe::GlCalculatorHelper gpu_helper_;
   GLuint program_ = 0;
   GLuint image_mat_tex_ = 0;  // Overlay drawing image for GPU.
   int width_ = 0;
   int height_ = 0;
-#endif  // __ANDROID__ or iOS
+#endif  //  MEDIAPIPE_DISABLE_GPU
 };
 REGISTER_CALCULATOR(AnnotationOverlayCalculator);
 
 ::mediapipe::Status AnnotationOverlayCalculator::GetContract(
     CalculatorContract* cc) {
   CHECK_GE(cc->Inputs().NumEntries(), 1);
+
+  bool use_gpu = false;
 
   if (cc->Inputs().HasTag(kInputFrameTag) &&
       cc->Inputs().HasTag(kInputFrameTagGpu)) {
@@ -173,12 +175,13 @@ REGISTER_CALCULATOR(AnnotationOverlayCalculator);
   int num_render_streams = cc->Inputs().NumEntries();
 
   // Input image to render onto copy of.
-#if defined(__ANDROID__) || (defined(__APPLE__) && !TARGET_OS_OSX)
+#if !defined(MEDIAPIPE_DISABLE_GPU)
   if (cc->Inputs().HasTag(kInputFrameTagGpu)) {
     cc->Inputs().Tag(kInputFrameTagGpu).Set<mediapipe::GpuBuffer>();
     num_render_streams = cc->Inputs().NumEntries() - 1;
+    use_gpu |= true;
   }
-#endif  // __ANDROID__ or iOS
+#endif  //  !MEDIAPIPE_DISABLE_GPU
   if (cc->Inputs().HasTag(kInputFrameTag)) {
     cc->Inputs().Tag(kInputFrameTag).Set<ImageFrame>();
     num_render_streams = cc->Inputs().NumEntries() - 1;
@@ -190,18 +193,21 @@ REGISTER_CALCULATOR(AnnotationOverlayCalculator);
   }
 
   // Rendered image.
-#if defined(__ANDROID__) || (defined(__APPLE__) && !TARGET_OS_OSX)
+#if !defined(MEDIAPIPE_DISABLE_GPU)
   if (cc->Outputs().HasTag(kOutputFrameTagGpu)) {
     cc->Outputs().Tag(kOutputFrameTagGpu).Set<mediapipe::GpuBuffer>();
+    use_gpu |= true;
   }
-#endif  // __ANDROID__ or iOS
+#endif  //  !MEDIAPIPE_DISABLE_GPU
   if (cc->Outputs().HasTag(kOutputFrameTag)) {
     cc->Outputs().Tag(kOutputFrameTag).Set<ImageFrame>();
   }
 
-#if defined(__ANDROID__) || (defined(__APPLE__) && !TARGET_OS_OSX)
-  MP_RETURN_IF_ERROR(mediapipe::GlCalculatorHelper::UpdateContract(cc));
-#endif  // __ANDROID__ or iOS
+  if (use_gpu) {
+#if !defined(MEDIAPIPE_DISABLE_GPU)
+    MP_RETURN_IF_ERROR(mediapipe::GlCalculatorHelper::UpdateContract(cc));
+#endif  //  !MEDIAPIPE_DISABLE_GPU
+  }
 
   return ::mediapipe::OkStatus();
 }
@@ -212,11 +218,11 @@ REGISTER_CALCULATOR(AnnotationOverlayCalculator);
   options_ = cc->Options<AnnotationOverlayCalculatorOptions>();
   if (cc->Inputs().HasTag(kInputFrameTagGpu) &&
       cc->Outputs().HasTag(kOutputFrameTagGpu)) {
-#if defined(__ANDROID__) || (defined(__APPLE__) && !TARGET_OS_OSX)
+#if !defined(MEDIAPIPE_DISABLE_GPU)
     use_gpu_ = true;
 #else
-    RET_CHECK_FAIL() << "GPU processing is for Android and iOS only.";
-#endif  // __ANDROID__ or iOS
+    RET_CHECK_FAIL() << "GPU processing not enabled.";
+#endif  //  !MEDIAPIPE_DISABLE_GPU
   }
 
   if (cc->Inputs().HasTag(kInputFrameTagGpu) ||
@@ -246,9 +252,9 @@ REGISTER_CALCULATOR(AnnotationOverlayCalculator);
   }
 
   if (use_gpu_) {
-#if defined(__ANDROID__) || (defined(__APPLE__) && !TARGET_OS_OSX)
+#if !defined(MEDIAPIPE_DISABLE_GPU)
     MP_RETURN_IF_ERROR(gpu_helper_.Open(cc));
-#endif  // __ANDROID__ or iOS
+#endif  //  !MEDIAPIPE_DISABLE_GPU
   }
 
   return ::mediapipe::OkStatus();
@@ -260,7 +266,7 @@ REGISTER_CALCULATOR(AnnotationOverlayCalculator);
   std::unique_ptr<cv::Mat> image_mat;
   ImageFormat::Format target_format;
   if (use_gpu_) {
-#if defined(__ANDROID__) || (defined(__APPLE__) && !TARGET_OS_OSX)
+#if !defined(MEDIAPIPE_DISABLE_GPU)
     if (!gpu_initialized_) {
       MP_RETURN_IF_ERROR(
           gpu_helper_.RunInGlContext([this, cc]() -> ::mediapipe::Status {
@@ -269,7 +275,7 @@ REGISTER_CALCULATOR(AnnotationOverlayCalculator);
           }));
       gpu_initialized_ = true;
     }
-#endif  // __ANDROID__ or iOS
+#endif  //  !MEDIAPIPE_DISABLE_GPU
     MP_RETURN_IF_ERROR(CreateRenderTargetGpu(cc, image_mat));
   } else {
     MP_RETURN_IF_ERROR(CreateRenderTargetCpu(cc, image_mat, &target_format));
@@ -288,7 +294,7 @@ REGISTER_CALCULATOR(AnnotationOverlayCalculator);
   }
 
   if (use_gpu_) {
-#if defined(__ANDROID__) || (defined(__APPLE__) && !TARGET_OS_OSX)
+#if !defined(MEDIAPIPE_DISABLE_GPU)
     // Overlay rendered image in OpenGL, onto a copy of input.
     uchar* image_mat_ptr = image_mat->data;
     MP_RETURN_IF_ERROR(gpu_helper_.RunInGlContext(
@@ -296,7 +302,7 @@ REGISTER_CALCULATOR(AnnotationOverlayCalculator);
           MP_RETURN_IF_ERROR(RenderToGpu(cc, image_mat_ptr));
           return ::mediapipe::OkStatus();
         }));
-#endif  // __ANDROID__ or iOS
+#endif  //  !MEDIAPIPE_DISABLE_GPU
   } else {
     // Copy the rendered image to output.
     uchar* image_mat_ptr = image_mat->data;
@@ -307,14 +313,14 @@ REGISTER_CALCULATOR(AnnotationOverlayCalculator);
 }
 
 ::mediapipe::Status AnnotationOverlayCalculator::Close(CalculatorContext* cc) {
-#if defined(__ANDROID__) || (defined(__APPLE__) && !TARGET_OS_OSX)
+#if !defined(MEDIAPIPE_DISABLE_GPU)
   gpu_helper_.RunInGlContext([this] {
     if (program_) glDeleteProgram(program_);
     program_ = 0;
     if (image_mat_tex_) glDeleteTextures(1, &image_mat_tex_);
     image_mat_tex_ = 0;
   });
-#endif  // __ANDROID__ or iOS
+#endif  //  !MEDIAPIPE_DISABLE_GPU
 
   return ::mediapipe::OkStatus();
 }
@@ -325,7 +331,7 @@ REGISTER_CALCULATOR(AnnotationOverlayCalculator);
   auto output_frame = absl::make_unique<ImageFrame>(
       target_format, renderer_->GetImageWidth(), renderer_->GetImageHeight());
 
-#if defined(__ANDROID__) || (defined(__APPLE__) && !TARGET_OS_OSX)
+#if !defined(MEDIAPIPE_DISABLE_GPU)
   output_frame->CopyPixelData(target_format, renderer_->GetImageWidth(),
                               renderer_->GetImageHeight(), data_image,
                               ImageFrame::kGlDefaultAlignmentBoundary);
@@ -333,7 +339,7 @@ REGISTER_CALCULATOR(AnnotationOverlayCalculator);
   output_frame->CopyPixelData(target_format, renderer_->GetImageWidth(),
                               renderer_->GetImageHeight(), data_image,
                               ImageFrame::kDefaultAlignmentBoundary);
-#endif  // __ANDROID__ or iOS
+#endif  //  !MEDIAPIPE_DISABLE_GPU
 
   cc->Outputs()
       .Tag(kOutputFrameTag)
@@ -344,7 +350,7 @@ REGISTER_CALCULATOR(AnnotationOverlayCalculator);
 
 ::mediapipe::Status AnnotationOverlayCalculator::RenderToGpu(
     CalculatorContext* cc, uchar* overlay_image) {
-#if defined(__ANDROID__) || (defined(__APPLE__) && !TARGET_OS_OSX)
+#if !defined(MEDIAPIPE_DISABLE_GPU)
   // Source and destination textures.
   const auto& input_frame =
       cc->Inputs().Tag(kInputFrameTagGpu).Get<mediapipe::GpuBuffer>();
@@ -390,7 +396,7 @@ REGISTER_CALCULATOR(AnnotationOverlayCalculator);
   // Cleanup
   input_texture.Release();
   output_texture.Release();
-#endif  // __ANDROID__ or iOS
+#endif  //  !MEDIAPIPE_DISABLE_GPU
 
   return ::mediapipe::OkStatus();
 }
@@ -451,15 +457,16 @@ REGISTER_CALCULATOR(AnnotationOverlayCalculator);
 
 ::mediapipe::Status AnnotationOverlayCalculator::CreateRenderTargetGpu(
     CalculatorContext* cc, std::unique_ptr<cv::Mat>& image_mat) {
-#if defined(__ANDROID__) || (defined(__APPLE__) && !TARGET_OS_OSX)
+#if !defined(MEDIAPIPE_DISABLE_GPU)
   if (image_frame_available_) {
     const auto& input_frame =
         cc->Inputs().Tag(kInputFrameTagGpu).Get<mediapipe::GpuBuffer>();
 
     const mediapipe::ImageFormat::Format format =
         mediapipe::ImageFormatForGpuBufferFormat(input_frame.format());
-    if (format != mediapipe::ImageFormat::SRGBA)
-      RET_CHECK_FAIL() << "Unsupported GPU input format.";
+    if (format != mediapipe::ImageFormat::SRGBA &&
+        format != mediapipe::ImageFormat::SRGB)
+      RET_CHECK_FAIL() << "Unsupported GPU input format: " << format;
 
     image_mat = absl::make_unique<cv::Mat>(
         height_, width_, CV_8UC3,
@@ -471,14 +478,14 @@ REGISTER_CALCULATOR(AnnotationOverlayCalculator);
         cv::Scalar(options_.canvas_color().r(), options_.canvas_color().g(),
                    options_.canvas_color().b()));
   }
-#endif  // __ANDROID__ or iOS
+#endif  //  !MEDIAPIPE_DISABLE_GPU
 
   return ::mediapipe::OkStatus();
 }
 
 ::mediapipe::Status AnnotationOverlayCalculator::GlRender(
     CalculatorContext* cc) {
-#if defined(__ANDROID__) || (defined(__APPLE__) && !TARGET_OS_OSX)
+#if !defined(MEDIAPIPE_DISABLE_GPU)
   static const GLfloat square_vertices[] = {
       -1.0f, -1.0f,  // bottom left
       1.0f,  -1.0f,  // bottom right
@@ -526,14 +533,14 @@ REGISTER_CALCULATOR(AnnotationOverlayCalculator);
   glBindVertexArray(0);
   glDeleteVertexArrays(1, &vao);
   glDeleteBuffers(2, vbo);
-#endif  // __ANDROID__ or iOS
+#endif  //  !MEDIAPIPE_DISABLE_GPU
 
   return ::mediapipe::OkStatus();
 }
 
 ::mediapipe::Status AnnotationOverlayCalculator::GlSetup(
     CalculatorContext* cc) {
-#if defined(__ANDROID__) || (defined(__APPLE__) && !TARGET_OS_OSX)
+#if !defined(MEDIAPIPE_DISABLE_GPU)
   const GLint attr_location[NUM_ATTRIBUTES] = {
       ATTRIB_VERTEX,
       ATTRIB_TEXTURE_POSITION,
@@ -609,7 +616,7 @@ REGISTER_CALCULATOR(AnnotationOverlayCalculator);
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glBindTexture(GL_TEXTURE_2D, 0);
   }
-#endif  // __ANDROID__ or iOS
+#endif  //  !MEDIAPIPE_DISABLE_GPU
 
   return ::mediapipe::OkStatus();
 }

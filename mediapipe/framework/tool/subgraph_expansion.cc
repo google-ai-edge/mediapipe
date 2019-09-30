@@ -237,9 +237,9 @@ static ::mediapipe::Status PrefixNames(int subgraph_index,
     for (auto it = subgraph_nodes_start; it != nodes->end(); ++it) {
       const auto& node = *it;
       MP_RETURN_IF_ERROR(ValidateSubgraphFields(node));
-      ASSIGN_OR_RETURN(auto subgraph, graph_registry->CreateByName(
-                                          config->package(), node.calculator(),
-                                          &node.options()));
+      ASSIGN_OR_RETURN(auto subgraph,
+                       graph_registry->CreateByName(config->package(),
+                                                    node.calculator(), &node));
       MP_RETURN_IF_ERROR(PrefixNames(subgraph_counter++, &subgraph));
       MP_RETURN_IF_ERROR(ConnectSubgraphStreams(node, &subgraph));
       subgraphs.push_back(subgraph);

@@ -15,6 +15,7 @@
 #ifndef MEDIAPIPE_CALCULATORS_CORE_CONCATENATE_VECTOR_CALCULATOR_H_
 #define MEDIAPIPE_CALCULATORS_CORE_CONCATENATE_VECTOR_CALCULATOR_H_
 
+#include <type_traits>
 #include <vector>
 
 #include "mediapipe/calculators/core/concatenate_vector_calculator.pb.h"
@@ -59,14 +60,56 @@ class ConcatenateVectorCalculator : public CalculatorBase {
         if (cc->Inputs().Index(i).IsEmpty()) return ::mediapipe::OkStatus();
       }
     }
-    auto output = absl::make_unique<std::vector<T>>();
+
+    return ConcatenateVectors<T>(std::is_copy_constructible<T>(), cc);
+  }
+
+  template <typename U>
+  ::mediapipe::Status ConcatenateVectors(std::true_type,
+                                         CalculatorContext* cc) {
+    auto output = absl::make_unique<std::vector<U>>();
     for (int i = 0; i < cc->Inputs().NumEntries(); ++i) {
       if (cc->Inputs().Index(i).IsEmpty()) continue;
-      const std::vector<T>& input = cc->Inputs().Index(i).Get<std::vector<T>>();
+      const std::vector<U>& input = cc->Inputs().Index(i).Get<std::vector<U>>();
       output->insert(output->end(), input.begin(), input.end());
     }
     cc->Outputs().Index(0).Add(output.release(), cc->InputTimestamp());
     return ::mediapipe::OkStatus();
+  }
+
+  template <typename U>
+  ::mediapipe::Status ConcatenateVectors(std::false_type,
+                                         CalculatorContext* cc) {
+    return ConsumeAndConcatenateVectors<T>(std::is_move_constructible<U>(), cc);
+  }
+
+  template <typename U>
+  ::mediapipe::Status ConsumeAndConcatenateVectors(std::true_type,
+                                                   CalculatorContext* cc) {
+    auto output = absl::make_unique<std::vector<U>>();
+    for (int i = 0; i < cc->Inputs().NumEntries(); ++i) {
+      if (cc->Inputs().Index(i).IsEmpty()) continue;
+      ::mediapipe::StatusOr<std::unique_ptr<std::vector<U>>> input_status =
+          cc->Inputs().Index(i).Value().Consume<std::vector<U>>();
+      if (input_status.ok()) {
+        std::unique_ptr<std::vector<U>> input_vector =
+            std::move(input_status).ValueOrDie();
+        output->insert(output->end(),
+                       std::make_move_iterator(input_vector->begin()),
+                       std::make_move_iterator(input_vector->end()));
+      } else {
+        return input_status.status();
+      }
+    }
+    cc->Outputs().Index(0).Add(output.release(), cc->InputTimestamp());
+    return ::mediapipe::OkStatus();
+  }
+
+  template <typename U>
+  ::mediapipe::Status ConsumeAndConcatenateVectors(std::false_type,
+                                                   CalculatorContext* cc) {
+    return ::mediapipe::InternalError(
+        "Cannot copy or move input vectors to concatenate them");
   }
 
  private:

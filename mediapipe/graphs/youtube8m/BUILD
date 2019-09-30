@@ -17,7 +17,7 @@ licenses(["notice"])  # Apache 2.0
 package(default_visibility = ["//visibility:public"])
 
 cc_library(
-    name = "yt8m_calculators_deps",
+    name = "yt8m_feature_extraction_calculators",
     deps = [
         "//mediapipe/calculators/audio:audio_decoder_calculator",
         "//mediapipe/calculators/audio:basic_time_series_calculators",

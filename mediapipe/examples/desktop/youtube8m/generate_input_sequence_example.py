@@ -37,20 +37,29 @@ def bytes23(string):
 
 
 def main(argv):
-  if len(argv) > 1:
+  if len(argv) > 3:
     raise app.UsageError('Too many command-line arguments.')
 
   if not flags.FLAGS.path_to_input_video:
     raise ValueError('You must specify the path to the input video.')
+  if not flags.FLAGS.clip_end_time_sec:
+    raise ValueError('You must specify the clip end timestamp in seconds.')
+  if flags.FLAGS.clip_start_time_sec >= flags.FLAGS.clip_end_time_sec:
+    raise ValueError(
+        'The clip start time must be greater than the clip end time.')
   metadata = tf.train.SequenceExample()
   ms.set_clip_data_path(bytes23(flags.FLAGS.path_to_input_video), metadata)
-  ms.set_clip_start_timestamp(0, metadata)
+  ms.set_clip_start_timestamp(
+      flags.FLAGS.clip_start_time_sec * SECONDS_TO_MICROSECONDS, metadata)
   ms.set_clip_end_timestamp(
-      int(float(300 * SECONDS_TO_MICROSECONDS)), metadata)
+      flags.FLAGS.clip_end_time_sec * SECONDS_TO_MICROSECONDS, metadata)
   with open('/tmp/mediapipe/metadata.tfrecord', 'wb') as writer:
     writer.write(metadata.SerializeToString())
 
 
 if __name__ == '__main__':
   flags.DEFINE_string('path_to_input_video', '', 'Path to the input video.')
+  flags.DEFINE_integer('clip_start_time_sec', 0,
+                       'Clip start timestamp in seconds')
+  flags.DEFINE_integer('clip_end_time_sec', 10, 'Clip end timestamp in seconds')
   app.run(main)

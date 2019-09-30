@@ -24,12 +24,12 @@
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status.h"
 
-#if defined(__ANDROID__) || (defined(__APPLE__) && !TARGET_OS_OSX)
+#if !defined(MEDIAPIPE_DISABLE_GPU)
 #include "mediapipe/gpu/gl_calculator_helper.h"
 #include "mediapipe/gpu/gl_simple_shaders.h"
 #include "mediapipe/gpu/gpu_buffer.h"
 #include "mediapipe/gpu/shader_util.h"
-#endif  // __ANDROID__ or iOS
+#endif  //  !MEDIAPIPE_DISABLE_GPU
 
 namespace {
 enum { ATTRIB_VERTEX, ATTRIB_TEXTURE_POSITION, NUM_ATTRIBUTES };
@@ -37,9 +37,20 @@ enum { ATTRIB_VERTEX, ATTRIB_TEXTURE_POSITION, NUM_ATTRIBUTES };
 
 namespace mediapipe {
 
-#if defined(__ANDROID__) || (defined(__APPLE__) && !TARGET_OS_OSX)
+namespace {
 
-#endif  // __ANDROID__ or iOS
+#if !defined(MEDIAPIPE_DISABLE_GPU)
+
+#endif  //  !MEDIAPIPE_DISABLE_GPU
+
+constexpr char kRectTag[] = "RECT";
+constexpr char kNormRectTag[] = "NORM_RECT";
+constexpr char kHeightTag[] = "HEIGHT";
+constexpr char kImageTag[] = "IMAGE";
+constexpr char kImageGpuTag[] = "IMAGE_GPU";
+constexpr char kWidthTag[] = "WIDTH";
+
+}  // namespace
 
 // Crops the input texture to the given rectangle region. The rectangle can
 // be at arbitrary location on the image with rotation. If there's rotation, the
@@ -91,48 +102,55 @@ class ImageCroppingCalculator : public CalculatorBase {
   bool use_gpu_ = false;
   // Output texture corners (4) after transoformation in normalized coordinates.
   float transformed_points_[8];
-#if defined(__ANDROID__) || (defined(__APPLE__) && !TARGET_OS_OSX)
+#if !defined(MEDIAPIPE_DISABLE_GPU)
   bool gpu_initialized_ = false;
   mediapipe::GlCalculatorHelper gpu_helper_;
   GLuint program_ = 0;
-#endif  // __ANDROID__ or iOS
+#endif  //  !MEDIAPIPE_DISABLE_GPU
 };
 REGISTER_CALCULATOR(ImageCroppingCalculator);
 
 ::mediapipe::Status ImageCroppingCalculator::GetContract(
     CalculatorContract* cc) {
-  RET_CHECK(cc->Inputs().HasTag("IMAGE") ^ cc->Inputs().HasTag("IMAGE_GPU"));
-  RET_CHECK(cc->Outputs().HasTag("IMAGE") ^ cc->Outputs().HasTag("IMAGE_GPU"));
+  RET_CHECK(cc->Inputs().HasTag(kImageTag) ^ cc->Inputs().HasTag(kImageGpuTag));
+  RET_CHECK(cc->Outputs().HasTag(kImageTag) ^
+            cc->Outputs().HasTag(kImageGpuTag));
 
-  if (cc->Inputs().HasTag("IMAGE")) {
-    RET_CHECK(cc->Outputs().HasTag("IMAGE"));
-    cc->Inputs().Tag("IMAGE").Set<ImageFrame>();
-    cc->Outputs().Tag("IMAGE").Set<ImageFrame>();
-  }
-#if defined(__ANDROID__) || (defined(__APPLE__) && !TARGET_OS_OSX)
-  if (cc->Inputs().HasTag("IMAGE_GPU")) {
-    RET_CHECK(cc->Outputs().HasTag("IMAGE_GPU"));
-    cc->Inputs().Tag("IMAGE_GPU").Set<GpuBuffer>();
-    cc->Outputs().Tag("IMAGE_GPU").Set<GpuBuffer>();
-  }
-#endif  // __ANDROID__ or iOS
+  bool use_gpu = false;
 
-  if (cc->Inputs().HasTag("RECT")) {
-    cc->Inputs().Tag("RECT").Set<Rect>();
+  if (cc->Inputs().HasTag(kImageTag)) {
+    RET_CHECK(cc->Outputs().HasTag(kImageTag));
+    cc->Inputs().Tag(kImageTag).Set<ImageFrame>();
+    cc->Outputs().Tag(kImageTag).Set<ImageFrame>();
   }
-  if (cc->Inputs().HasTag("NORM_RECT")) {
-    cc->Inputs().Tag("NORM_RECT").Set<NormalizedRect>();
+#if !defined(MEDIAPIPE_DISABLE_GPU)
+  if (cc->Inputs().HasTag(kImageGpuTag)) {
+    RET_CHECK(cc->Outputs().HasTag(kImageGpuTag));
+    cc->Inputs().Tag(kImageGpuTag).Set<GpuBuffer>();
+    cc->Outputs().Tag(kImageGpuTag).Set<GpuBuffer>();
+    use_gpu |= true;
   }
-  if (cc->Inputs().HasTag("WIDTH")) {
-    cc->Inputs().Tag("WIDTH").Set<int>();
+#endif  //  !MEDIAPIPE_DISABLE_GPU
+
+  RET_CHECK(cc->Inputs().HasTag(kRectTag) ^ cc->Inputs().HasTag(kNormRectTag));
+  if (cc->Inputs().HasTag(kRectTag)) {
+    cc->Inputs().Tag(kRectTag).Set<Rect>();
   }
-  if (cc->Inputs().HasTag("HEIGHT")) {
-    cc->Inputs().Tag("HEIGHT").Set<int>();
+  if (cc->Inputs().HasTag(kNormRectTag)) {
+    cc->Inputs().Tag(kNormRectTag).Set<NormalizedRect>();
+  }
+  if (cc->Inputs().HasTag(kWidthTag)) {
+    cc->Inputs().Tag(kWidthTag).Set<int>();
+  }
+  if (cc->Inputs().HasTag(kHeightTag)) {
+    cc->Inputs().Tag(kHeightTag).Set<int>();
   }
 
-#if defined(__ANDROID__) || (defined(__APPLE__) && !TARGET_OS_OSX)
-  MP_RETURN_IF_ERROR(mediapipe::GlCalculatorHelper::UpdateContract(cc));
-#endif  // __ANDROID__ or iOS
+  if (use_gpu) {
+#if !defined(MEDIAPIPE_DISABLE_GPU)
+    MP_RETURN_IF_ERROR(mediapipe::GlCalculatorHelper::UpdateContract(cc));
+#endif  //  !MEDIAPIPE_DISABLE_GPU
+  }
 
   return ::mediapipe::OkStatus();
 }
@@ -140,26 +158,35 @@ REGISTER_CALCULATOR(ImageCroppingCalculator);
 ::mediapipe::Status ImageCroppingCalculator::Open(CalculatorContext* cc) {
   cc->SetOffset(TimestampDiff(0));
 
-  if (cc->Inputs().HasTag("IMAGE_GPU")) {
+  if (cc->Inputs().HasTag(kImageGpuTag)) {
     use_gpu_ = true;
   }
 
   options_ = cc->Options<mediapipe::ImageCroppingCalculatorOptions>();
 
   if (use_gpu_) {
-#if defined(__ANDROID__) || (defined(__APPLE__) && !TARGET_OS_OSX)
+#if !defined(MEDIAPIPE_DISABLE_GPU)
     MP_RETURN_IF_ERROR(gpu_helper_.Open(cc));
 #else
     RET_CHECK_FAIL() << "GPU processing is for Android and iOS only.";
-#endif  // __ANDROID__ or iOS
+#endif  //  !MEDIAPIPE_DISABLE_GPU
   }
 
   return ::mediapipe::OkStatus();
 }
 
 ::mediapipe::Status ImageCroppingCalculator::Process(CalculatorContext* cc) {
+  if (cc->Inputs().HasTag(kRectTag) && cc->Inputs().Tag(kRectTag).IsEmpty()) {
+    VLOG(1) << "RECT is empty for timestamp: " << cc->InputTimestamp();
+    return ::mediapipe::OkStatus();
+  }
+  if (cc->Inputs().HasTag(kNormRectTag) &&
+      cc->Inputs().Tag(kNormRectTag).IsEmpty()) {
+    VLOG(1) << "NORM_RECT is empty for timestamp: " << cc->InputTimestamp();
+    return ::mediapipe::OkStatus();
+  }
   if (use_gpu_) {
-#if defined(__ANDROID__) || (defined(__APPLE__) && !TARGET_OS_OSX)
+#if !defined(MEDIAPIPE_DISABLE_GPU)
     MP_RETURN_IF_ERROR(
         gpu_helper_.RunInGlContext([this, cc]() -> ::mediapipe::Status {
           if (!gpu_initialized_) {
@@ -169,7 +196,7 @@ REGISTER_CALCULATOR(ImageCroppingCalculator);
           MP_RETURN_IF_ERROR(RenderGpu(cc));
           return ::mediapipe::OkStatus();
         }));
-#endif  // __ANDROID__ or iOS
+#endif  //  !MEDIAPIPE_DISABLE_GPU
   } else {
     MP_RETURN_IF_ERROR(RenderCpu(cc));
   }
@@ -177,19 +204,22 @@ REGISTER_CALCULATOR(ImageCroppingCalculator);
 }
 
 ::mediapipe::Status ImageCroppingCalculator::Close(CalculatorContext* cc) {
-#if defined(__ANDROID__) || (defined(__APPLE__) && !TARGET_OS_OSX)
+#if !defined(MEDIAPIPE_DISABLE_GPU)
   gpu_helper_.RunInGlContext([this] {
     if (program_) glDeleteProgram(program_);
     program_ = 0;
   });
   gpu_initialized_ = false;
-#endif  // __ANDROID__ or iOS
+#endif  //  !MEDIAPIPE_DISABLE_GPU
 
   return ::mediapipe::OkStatus();
 }
 
 ::mediapipe::Status ImageCroppingCalculator::RenderCpu(CalculatorContext* cc) {
-  const auto& input_img = cc->Inputs().Tag("IMAGE").Get<ImageFrame>();
+  if (cc->Inputs().Tag(kImageTag).IsEmpty()) {
+    return ::mediapipe::OkStatus();
+  }
+  const auto& input_img = cc->Inputs().Tag(kImageTag).Get<ImageFrame>();
   cv::Mat input_mat = formats::MatView(&input_img);
 
   float rect_center_x = input_img.Width() / 2.0f;
@@ -197,8 +227,8 @@ REGISTER_CALCULATOR(ImageCroppingCalculator);
   float rotation = 0.0f;
   int target_width = input_img.Width();
   int target_height = input_img.Height();
-  if (cc->Inputs().HasTag("RECT")) {
-    const auto& rect = cc->Inputs().Tag("RECT").Get<Rect>();
+  if (cc->Inputs().HasTag(kRectTag)) {
+    const auto& rect = cc->Inputs().Tag(kRectTag).Get<Rect>();
     if (rect.width() > 0 && rect.height() > 0 && rect.x_center() >= 0 &&
         rect.y_center() >= 0) {
       rect_center_x = rect.x_center();
@@ -207,8 +237,8 @@ REGISTER_CALCULATOR(ImageCroppingCalculator);
       target_height = rect.height();
       rotation = rect.rotation();
     }
-  } else if (cc->Inputs().HasTag("NORM_RECT")) {
-    const auto& rect = cc->Inputs().Tag("NORM_RECT").Get<NormalizedRect>();
+  } else if (cc->Inputs().HasTag(kNormRectTag)) {
+    const auto& rect = cc->Inputs().Tag(kNormRectTag).Get<NormalizedRect>();
     if (rect.width() > 0.0 && rect.height() > 0.0 && rect.x_center() >= 0.0 &&
         rect.y_center() >= 0.0) {
       rect_center_x = std::round(rect.x_center() * input_img.Width());
@@ -218,9 +248,9 @@ REGISTER_CALCULATOR(ImageCroppingCalculator);
       rotation = rect.rotation();
     }
   } else {
-    if (cc->Inputs().HasTag("WIDTH") && cc->Inputs().HasTag("HEIGHT")) {
-      target_width = cc->Inputs().Tag("WIDTH").Get<int>();
-      target_height = cc->Inputs().Tag("HEIGHT").Get<int>();
+    if (cc->Inputs().HasTag(kWidthTag) && cc->Inputs().HasTag(kHeightTag)) {
+      target_width = cc->Inputs().Tag(kWidthTag).Get<int>();
+      target_height = cc->Inputs().Tag(kHeightTag).Get<int>();
     } else if (options_.has_width() && options_.has_height()) {
       target_width = options_.width();
       target_height = options_.height();
@@ -253,16 +283,17 @@ REGISTER_CALCULATOR(ImageCroppingCalculator);
       input_img.Format(), cropped_image.cols, cropped_image.rows));
   cv::Mat output_mat = formats::MatView(output_frame.get());
   cropped_image.copyTo(output_mat);
-  cc->Outputs().Tag("IMAGE").Add(output_frame.release(), cc->InputTimestamp());
+  cc->Outputs().Tag(kImageTag).Add(output_frame.release(),
+                                   cc->InputTimestamp());
   return ::mediapipe::OkStatus();
 }
 
 ::mediapipe::Status ImageCroppingCalculator::RenderGpu(CalculatorContext* cc) {
-  if (cc->Inputs().Tag("IMAGE_GPU").IsEmpty()) {
+  if (cc->Inputs().Tag(kImageGpuTag).IsEmpty()) {
     return ::mediapipe::OkStatus();
   }
-#if defined(__ANDROID__) || (defined(__APPLE__) && !TARGET_OS_OSX)
-  const Packet& input_packet = cc->Inputs().Tag("IMAGE_GPU").Value();
+#if !defined(MEDIAPIPE_DISABLE_GPU)
+  const Packet& input_packet = cc->Inputs().Tag(kImageGpuTag).Value();
   const auto& input_buffer = input_packet.Get<mediapipe::GpuBuffer>();
   auto src_tex = gpu_helper_.CreateSourceTexture(input_buffer);
 
@@ -287,18 +318,18 @@ REGISTER_CALCULATOR(ImageCroppingCalculator);
 
   // Send result image in GPU packet.
   auto output = dst_tex.GetFrame<mediapipe::GpuBuffer>();
-  cc->Outputs().Tag("IMAGE_GPU").Add(output.release(), cc->InputTimestamp());
+  cc->Outputs().Tag(kImageGpuTag).Add(output.release(), cc->InputTimestamp());
 
   // Cleanup
   src_tex.Release();
   dst_tex.Release();
-#endif  // __ANDROID__ or iOS
+#endif  //  !MEDIAPIPE_DISABLE_GPU
 
   return ::mediapipe::OkStatus();
 }
 
 void ImageCroppingCalculator::GlRender() {
-#if defined(__ANDROID__) || (defined(__APPLE__) && !TARGET_OS_OSX)
+#if !defined(MEDIAPIPE_DISABLE_GPU)
   static const GLfloat square_vertices[] = {
       -1.0f, -1.0f,  // bottom left
       1.0f,  -1.0f,  // bottom right
@@ -342,11 +373,11 @@ void ImageCroppingCalculator::GlRender() {
   glDeleteVertexArrays(1, &vao);
   glDeleteBuffers(2, vbo);
 
-#endif  // __ANDROID__ or iOS
+#endif  //  !MEDIAPIPE_DISABLE_GPU
 }
 
 ::mediapipe::Status ImageCroppingCalculator::InitGpu(CalculatorContext* cc) {
-#if defined(__ANDROID__) || (defined(__APPLE__) && !TARGET_OS_OSX)
+#if !defined(MEDIAPIPE_DISABLE_GPU)
   const GLint attr_location[NUM_ATTRIBUTES] = {
       ATTRIB_VERTEX,
       ATTRIB_TEXTURE_POSITION,
@@ -392,7 +423,7 @@ void ImageCroppingCalculator::GlRender() {
   // Parameters
   glUseProgram(program_);
   glUniform1i(glGetUniformLocation(program_, "input_frame"), 1);
-#endif  // __ANDROID__ or iOS
+#endif  //  !MEDIAPIPE_DISABLE_GPU
 
   return ::mediapipe::OkStatus();
 }
@@ -410,8 +441,8 @@ void ImageCroppingCalculator::GetOutputDimensions(CalculatorContext* cc,
   int y_center = src_height / 2;
   // Get the rotation of the cropping box.
   float rotation = 0.0f;
-  if (cc->Inputs().HasTag("RECT")) {
-    const auto& rect = cc->Inputs().Tag("RECT").Get<Rect>();
+  if (cc->Inputs().HasTag(kRectTag)) {
+    const auto& rect = cc->Inputs().Tag(kRectTag).Get<Rect>();
     // Only use the rect if it is valid.
     if (rect.width() > 0 && rect.height() > 0 && rect.x_center() >= 0 &&
         rect.y_center() >= 0) {
@@ -421,8 +452,8 @@ void ImageCroppingCalculator::GetOutputDimensions(CalculatorContext* cc,
       crop_height = rect.height();
       rotation = rect.rotation();
     }
-  } else if (cc->Inputs().HasTag("NORM_RECT")) {
-    const auto& rect = cc->Inputs().Tag("NORM_RECT").Get<NormalizedRect>();
+  } else if (cc->Inputs().HasTag(kNormRectTag)) {
+    const auto& rect = cc->Inputs().Tag(kNormRectTag).Get<NormalizedRect>();
     // Only use the rect if it is valid.
     if (rect.width() > 0.0 && rect.height() > 0.0 && rect.x_center() >= 0.0 &&
         rect.y_center() >= 0.0) {
@@ -433,9 +464,9 @@ void ImageCroppingCalculator::GetOutputDimensions(CalculatorContext* cc,
       rotation = rect.rotation();
     }
   } else {
-    if (cc->Inputs().HasTag("WIDTH") && cc->Inputs().HasTag("HEIGHT")) {
-      crop_width = cc->Inputs().Tag("WIDTH").Get<int>();
-      crop_height = cc->Inputs().Tag("HEIGHT").Get<int>();
+    if (cc->Inputs().HasTag(kWidthTag) && cc->Inputs().HasTag(kHeightTag)) {
+      crop_width = cc->Inputs().Tag(kWidthTag).Get<int>();
+      crop_height = cc->Inputs().Tag(kHeightTag).Get<int>();
     } else if (options_.has_width() && options_.has_height()) {
       crop_width = options_.width();
       crop_height = options_.height();

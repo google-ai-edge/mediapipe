@@ -61,6 +61,9 @@
 /// Loads an image from the test bundle.
 - (UIImage*)testImageNamed:(NSString*)name extension:(NSString*)extension;
 
+/// Returns a URL for a file.extension in the test bundle.
+- (NSURL*)URLForTestFile:(NSString*)file extension:(NSString*)extension;
+
 /// Loads an image from the test bundle in subpath.
 - (UIImage*)testImageNamed:(NSString*)name
                  extension:(NSString*)extension

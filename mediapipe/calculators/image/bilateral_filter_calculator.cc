@@ -27,11 +27,11 @@
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/port/vector.h"
 
-#if defined(__ANDROID__) || defined(__EMSCRIPTEN__)
+#if !defined(MEDIAPIPE_DISABLE_GPU)
 #include "mediapipe/gpu/gl_calculator_helper.h"
 #include "mediapipe/gpu/gl_simple_shaders.h"
 #include "mediapipe/gpu/shader_util.h"
-#endif  // __ANDROID__ || __EMSCRIPTEN__
+#endif  //  !MEDIAPIPE_DISABLE_GPU
 
 namespace mediapipe {
 
@@ -101,11 +101,11 @@ class BilateralFilterCalculator : public CalculatorBase {
 
   bool use_gpu_ = false;
   bool gpu_initialized_ = false;
-#if defined(__ANDROID__) || defined(__EMSCRIPTEN__)
+#if !defined(MEDIAPIPE_DISABLE_GPU)
   mediapipe::GlCalculatorHelper gpu_helper_;
   GLuint program_ = 0;
   GLuint program_joint_ = 0;
-#endif  // __ANDROID__ || __EMSCRIPTEN__
+#endif  //  !MEDIAPIPE_DISABLE_GPU
 };
 REGISTER_CALCULATOR(BilateralFilterCalculator);
 
@@ -122,39 +122,46 @@ REGISTER_CALCULATOR(BilateralFilterCalculator);
     return ::mediapipe::InternalError("GPU output must have GPU input.");
   }
 
+  bool use_gpu = false;
+
   // Input image to filter.
-#if defined(__ANDROID__) || defined(__EMSCRIPTEN__)
+#if !defined(MEDIAPIPE_DISABLE_GPU)
   if (cc->Inputs().HasTag(kInputFrameTagGpu)) {
     cc->Inputs().Tag(kInputFrameTagGpu).Set<mediapipe::GpuBuffer>();
+    use_gpu |= true;
   }
-#endif  // __ANDROID__ || __EMSCRIPTEN__
+#endif  //  !MEDIAPIPE_DISABLE_GPU
   if (cc->Inputs().HasTag(kInputFrameTag)) {
     cc->Inputs().Tag(kInputFrameTag).Set<ImageFrame>();
   }
 
   // Input guide image mask (optional)
+#if !defined(MEDIAPIPE_DISABLE_GPU)
   if (cc->Inputs().HasTag(kInputGuideTagGpu)) {
-#if defined(__ANDROID__) || defined(__EMSCRIPTEN__)
     cc->Inputs().Tag(kInputGuideTagGpu).Set<mediapipe::GpuBuffer>();
-#endif  // __ANDROID__ || __EMSCRIPTEN__
+    use_gpu |= true;
   }
+#endif  //  !MEDIAPIPE_DISABLE_GPU
   if (cc->Inputs().HasTag(kInputGuideTag)) {
     cc->Inputs().Tag(kInputGuideTag).Set<ImageFrame>();
   }
 
   // Output image.
-#if defined(__ANDROID__) || defined(__EMSCRIPTEN__)
+#if !defined(MEDIAPIPE_DISABLE_GPU)
   if (cc->Outputs().HasTag(kOutputFrameTagGpu)) {
     cc->Outputs().Tag(kOutputFrameTagGpu).Set<mediapipe::GpuBuffer>();
+    use_gpu |= true;
   }
-#endif  // __ANDROID__ || __EMSCRIPTEN__
+#endif  //  !MEDIAPIPE_DISABLE_GPU
   if (cc->Outputs().HasTag(kOutputFrameTag)) {
     cc->Outputs().Tag(kOutputFrameTag).Set<ImageFrame>();
   }
 
-#if defined(__ANDROID__) || defined(__EMSCRIPTEN__)
-  MP_RETURN_IF_ERROR(mediapipe::GlCalculatorHelper::UpdateContract(cc));
-#endif  // __ANDROID__ || __EMSCRIPTEN__
+  if (use_gpu) {
+#if !defined(MEDIAPIPE_DISABLE_GPU)
+    MP_RETURN_IF_ERROR(mediapipe::GlCalculatorHelper::UpdateContract(cc));
+#endif  //  !MEDIAPIPE_DISABLE_GPU
+  }
 
   return ::mediapipe::OkStatus();
 }
@@ -166,11 +173,11 @@ REGISTER_CALCULATOR(BilateralFilterCalculator);
 
   if (cc->Inputs().HasTag(kInputFrameTagGpu) &&
       cc->Outputs().HasTag(kOutputFrameTagGpu)) {
-#if defined(__ANDROID__) || defined(__EMSCRIPTEN__)
+#if !defined(MEDIAPIPE_DISABLE_GPU)
     use_gpu_ = true;
 #else
-    RET_CHECK_FAIL() << "GPU processing on non-Android not supported yet.";
-#endif  // __ANDROID__ || __EMSCRIPTEN__
+    RET_CHECK_FAIL() << "GPU processing not enabled.";
+#endif
   }
 
   sigma_color_ = options_.sigma_color();
@@ -180,9 +187,9 @@ REGISTER_CALCULATOR(BilateralFilterCalculator);
   if (!use_gpu_) sigma_color_ *= 255.0;
 
   if (use_gpu_) {
-#if defined(__ANDROID__) || defined(__EMSCRIPTEN__)
+#if !defined(MEDIAPIPE_DISABLE_GPU)
     MP_RETURN_IF_ERROR(gpu_helper_.Open(cc));
-#endif
+#endif  //  !MEDIAPIPE_DISABLE_GPU
   }
 
   return ::mediapipe::OkStatus();
@@ -190,7 +197,7 @@ REGISTER_CALCULATOR(BilateralFilterCalculator);
 
 ::mediapipe::Status BilateralFilterCalculator::Process(CalculatorContext* cc) {
   if (use_gpu_) {
-#if defined(__ANDROID__) || defined(__EMSCRIPTEN__)
+#if !defined(MEDIAPIPE_DISABLE_GPU)
     MP_RETURN_IF_ERROR(
         gpu_helper_.RunInGlContext([this, cc]() -> ::mediapipe::Status {
           if (!gpu_initialized_) {
@@ -200,7 +207,7 @@ REGISTER_CALCULATOR(BilateralFilterCalculator);
           MP_RETURN_IF_ERROR(RenderGpu(cc));
           return ::mediapipe::OkStatus();
         }));
-#endif  // __ANDROID__ || __EMSCRIPTEN__
+#endif  //  !MEDIAPIPE_DISABLE_GPU
   } else {
     MP_RETURN_IF_ERROR(RenderCpu(cc));
   }
@@ -209,14 +216,14 @@ REGISTER_CALCULATOR(BilateralFilterCalculator);
 }
 
 ::mediapipe::Status BilateralFilterCalculator::Close(CalculatorContext* cc) {
-#if defined(__ANDROID__) || defined(__EMSCRIPTEN__)
+#if !defined(MEDIAPIPE_DISABLE_GPU)
   gpu_helper_.RunInGlContext([this] {
     if (program_) glDeleteProgram(program_);
     program_ = 0;
     if (program_joint_) glDeleteProgram(program_joint_);
     program_joint_ = 0;
   });
-#endif  // __ANDROID__ || __EMSCRIPTEN__
+#endif  //  !MEDIAPIPE_DISABLE_GPU
 
   return ::mediapipe::OkStatus();
 }
@@ -263,7 +270,7 @@ REGISTER_CALCULATOR(BilateralFilterCalculator);
   if (cc->Inputs().Tag(kInputFrameTagGpu).IsEmpty()) {
     return ::mediapipe::OkStatus();
   }
-#if defined(__ANDROID__) || defined(__EMSCRIPTEN__)
+#if !defined(MEDIAPIPE_DISABLE_GPU)
   const auto& input_frame =
       cc->Inputs().Tag(kInputFrameTagGpu).Get<mediapipe::GpuBuffer>();
   auto input_texture = gpu_helper_.CreateSourceTexture(input_frame);
@@ -321,13 +328,13 @@ REGISTER_CALCULATOR(BilateralFilterCalculator);
   // Cleanup
   input_texture.Release();
   output_texture.Release();
-#endif  // __ANDROID__ || __EMSCRIPTEN__
+#endif  //  !MEDIAPIPE_DISABLE_GPU
 
   return ::mediapipe::OkStatus();
 }
 
 void BilateralFilterCalculator::GlRender(CalculatorContext* cc) {
-#if defined(__ANDROID__) || defined(__EMSCRIPTEN__)
+#if !defined(MEDIAPIPE_DISABLE_GPU)
   static const GLfloat square_vertices[] = {
       -1.0f, -1.0f,  // bottom left
       1.0f,  -1.0f,  // bottom right
@@ -373,11 +380,11 @@ void BilateralFilterCalculator::GlRender(CalculatorContext* cc) {
   glDeleteVertexArrays(1, &vao);
   glDeleteBuffers(2, vbo);
 
-#endif  // __ANDROID__ || __EMSCRIPTEN__
+#endif  //  !MEDIAPIPE_DISABLE_GPU
 }
 
 ::mediapipe::Status BilateralFilterCalculator::GlSetup(CalculatorContext* cc) {
-#if defined(__ANDROID__) || defined(__EMSCRIPTEN__)
+#if !defined(MEDIAPIPE_DISABLE_GPU)
   const GLint attr_location[NUM_ATTRIBUTES] = {
       ATTRIB_VERTEX,
       ATTRIB_TEXTURE_POSITION,
@@ -545,7 +552,7 @@ void BilateralFilterCalculator::GlRender(CalculatorContext* cc) {
   glUniform1i(glGetUniformLocation(program_joint_, "input_frame"), 1);
   glUniform1i(glGetUniformLocation(program_joint_, "guide_frame"), 2);
 
-#endif  // __ANDROID__ || __EMSCRIPTEN__
+#endif  //  !MEDIAPIPE_DISABLE_GPU
 
   return ::mediapipe::OkStatus();
 }

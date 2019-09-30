@@ -17,6 +17,7 @@
 #include "absl/strings/str_format.h"
 #include "absl/types/span.h"
 #include "mediapipe/calculators/tflite/tflite_tensors_to_segmentation_calculator.pb.h"
+#include "mediapipe/calculators/tflite/util.h"
 #include "mediapipe/framework/calculator_context.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/image_frame.h"
@@ -27,7 +28,7 @@
 #include "mediapipe/util/resource_util.h"
 #include "tensorflow/lite/interpreter.h"
 
-#if defined(__ANDROID__)
+#if !defined(MEDIAPIPE_DISABLE_GPU) && !defined(__APPLE__)
 #include "mediapipe/gpu/gl_calculator_helper.h"
 #include "mediapipe/gpu/gl_simple_shaders.h"
 #include "mediapipe/gpu/shader_util.h"
@@ -36,7 +37,7 @@
 #include "tensorflow/lite/delegates/gpu/gl/gl_shader.h"
 #include "tensorflow/lite/delegates/gpu/gl/gl_texture.h"
 #include "tensorflow/lite/delegates/gpu/gl_delegate.h"
-#endif  // __ANDROID__
+#endif  //  !MEDIAPIPE_DISABLE_GPU
 
 namespace {
 constexpr int kWorkgroupSize = 8;  // Block size for GPU shader.
@@ -52,12 +53,14 @@ float Clamp(float val, float min, float max) {
 
 namespace mediapipe {
 
-#if defined(__ANDROID__)
+#if !defined(MEDIAPIPE_DISABLE_GPU) && !defined(__APPLE__)
+using ::tflite::gpu::gl::CopyBuffer;
+using ::tflite::gpu::gl::CreateReadWriteRgbaImageTexture;
 using ::tflite::gpu::gl::CreateReadWriteShaderStorageBuffer;
 using ::tflite::gpu::gl::GlBuffer;
 using ::tflite::gpu::gl::GlProgram;
 using ::tflite::gpu::gl::GlShader;
-#endif  // __ANDROID__
+#endif  //  !MEDIAPIPE_DISABLE_GPU
 
 // Converts TFLite tensors from a tflite segmentation model to an image mask.
 //
@@ -126,13 +129,13 @@ class TfLiteTensorsToSegmentationCalculator : public CalculatorBase {
   int tensor_channels_ = 0;
 
   bool use_gpu_ = false;
-#if defined(__ANDROID__)
+#if !defined(MEDIAPIPE_DISABLE_GPU) && !defined(__APPLE__)
   mediapipe::GlCalculatorHelper gpu_helper_;
   std::unique_ptr<GlProgram> mask_program_with_prev_;
   std::unique_ptr<GlProgram> mask_program_no_prev_;
   std::unique_ptr<GlBuffer> tensor_buffer_;
   GLuint upsample_program_;
-#endif  // __ANDROID__
+#endif  //  !MEDIAPIPE_DISABLE_GPU
 };
 REGISTER_CALCULATOR(TfLiteTensorsToSegmentationCalculator);
 
@@ -141,6 +144,8 @@ REGISTER_CALCULATOR(TfLiteTensorsToSegmentationCalculator);
     CalculatorContract* cc) {
   RET_CHECK(!cc->Inputs().GetTags().empty());
   RET_CHECK(!cc->Outputs().GetTags().empty());
+
+  bool use_gpu = false;
 
   // Inputs CPU.
   if (cc->Inputs().HasTag("TENSORS")) {
@@ -154,32 +159,37 @@ REGISTER_CALCULATOR(TfLiteTensorsToSegmentationCalculator);
   }
 
   // Inputs GPU.
-#if defined(__ANDROID__)
+#if !defined(MEDIAPIPE_DISABLE_GPU) && !defined(__APPLE__)
   if (cc->Inputs().HasTag("TENSORS_GPU")) {
     cc->Inputs().Tag("TENSORS_GPU").Set<std::vector<GlBuffer>>();
+    use_gpu |= true;
   }
   if (cc->Inputs().HasTag("PREV_MASK_GPU")) {
     cc->Inputs().Tag("PREV_MASK_GPU").Set<mediapipe::GpuBuffer>();
+    use_gpu |= true;
   }
   if (cc->Inputs().HasTag("REFERENCE_IMAGE_GPU")) {
     cc->Inputs().Tag("REFERENCE_IMAGE_GPU").Set<mediapipe::GpuBuffer>();
+    use_gpu |= true;
   }
-#endif  // __ANDROID__
+#endif  //  !MEDIAPIPE_DISABLE_GPU
 
   // Outputs.
   if (cc->Outputs().HasTag("MASK")) {
     cc->Outputs().Tag("MASK").Set<ImageFrame>();
   }
-#if defined(__ANDROID__)
+#if !defined(MEDIAPIPE_DISABLE_GPU) && !defined(__APPLE__)
   if (cc->Outputs().HasTag("MASK_GPU")) {
     cc->Outputs().Tag("MASK_GPU").Set<mediapipe::GpuBuffer>();
+    use_gpu |= true;
   }
-#endif  // __ANDROID__
+#endif  //  !MEDIAPIPE_DISABLE_GPU
 
-#if defined(__ANDROID__)
-  MP_RETURN_IF_ERROR(mediapipe::GlCalculatorHelper::UpdateContract(cc));
-#endif  // __ANDROID__
-
+  if (use_gpu) {
+#if !defined(MEDIAPIPE_DISABLE_GPU) && !defined(__APPLE__)
+    MP_RETURN_IF_ERROR(mediapipe::GlCalculatorHelper::UpdateContract(cc));
+#endif  //  !MEDIAPIPE_DISABLE_GPU
+  }
   return ::mediapipe::OkStatus();
 }
 
@@ -189,24 +199,23 @@ REGISTER_CALCULATOR(TfLiteTensorsToSegmentationCalculator);
 
   if (cc->Inputs().HasTag("TENSORS_GPU")) {
     use_gpu_ = true;
-#if defined(__ANDROID__)
+#if !defined(MEDIAPIPE_DISABLE_GPU) && !defined(__APPLE__)
     MP_RETURN_IF_ERROR(gpu_helper_.Open(cc));
-#endif  // __ANDROID__
+#endif  //  !MEDIAPIPE_DISABLE_GPU
   }
 
   MP_RETURN_IF_ERROR(LoadOptions(cc));
 
   if (use_gpu_) {
-#if defined(__ANDROID__)
+#if !defined(MEDIAPIPE_DISABLE_GPU) && !defined(__APPLE__)
     MP_RETURN_IF_ERROR(
         gpu_helper_.RunInGlContext([this, cc]() -> ::mediapipe::Status {
           MP_RETURN_IF_ERROR(InitGpu(cc));
           return ::mediapipe::OkStatus();
         }));
 #else
-    RET_CHECK_FAIL()
-        << "GPU processing on non-Android devices is not supported yet.";
-#endif  // __ANDROID__
+    RET_CHECK_FAIL() << "GPU processing not enabled.";
+#endif  //  !MEDIAPIPE_DISABLE_GPU
   }
 
   return ::mediapipe::OkStatus();
@@ -215,13 +224,13 @@ REGISTER_CALCULATOR(TfLiteTensorsToSegmentationCalculator);
 ::mediapipe::Status TfLiteTensorsToSegmentationCalculator::Process(
     CalculatorContext* cc) {
   if (use_gpu_) {
-#if defined(__ANDROID__)
+#if !defined(MEDIAPIPE_DISABLE_GPU) && !defined(__APPLE__)
     MP_RETURN_IF_ERROR(
         gpu_helper_.RunInGlContext([this, cc]() -> ::mediapipe::Status {
           MP_RETURN_IF_ERROR(ProcessGpu(cc));
           return ::mediapipe::OkStatus();
         }));
-#endif  // __ANDROID__
+#endif  //  !MEDIAPIPE_DISABLE_GPU
   } else {
     MP_RETURN_IF_ERROR(ProcessCpu(cc));
   }
@@ -231,7 +240,7 @@ REGISTER_CALCULATOR(TfLiteTensorsToSegmentationCalculator);
 
 ::mediapipe::Status TfLiteTensorsToSegmentationCalculator::Close(
     CalculatorContext* cc) {
-#if defined(__ANDROID__)
+#if !defined(MEDIAPIPE_DISABLE_GPU) && !defined(__APPLE__)
   gpu_helper_.RunInGlContext([this] {
     if (upsample_program_) glDeleteProgram(upsample_program_);
     upsample_program_ = 0;
@@ -239,7 +248,7 @@ REGISTER_CALCULATOR(TfLiteTensorsToSegmentationCalculator);
     mask_program_no_prev_.reset();
     tensor_buffer_.reset();
   });
-#endif  // __ANDROID__
+#endif  //  !MEDIAPIPE_DISABLE_GPU
 
   return ::mediapipe::OkStatus();
 }
@@ -358,7 +367,7 @@ REGISTER_CALCULATOR(TfLiteTensorsToSegmentationCalculator);
   if (cc->Inputs().Tag("TENSORS_GPU").IsEmpty()) {
     return ::mediapipe::OkStatus();
   }
-#if defined(__ANDROID__)
+#if !defined(MEDIAPIPE_DISABLE_GPU) && !defined(__APPLE__)
   // Get input streams.
   const auto& input_tensors =
       cc->Inputs().Tag("TENSORS_GPU").Get<std::vector<GlBuffer>>();
@@ -379,9 +388,9 @@ REGISTER_CALCULATOR(TfLiteTensorsToSegmentationCalculator);
 
   // Create initial working mask texture.
   ::tflite::gpu::gl::GlTexture small_mask_texture;
-  ::tflite::gpu::gl::CreateReadWriteRgbaImageTexture(
+  RET_CHECK_CALL(CreateReadWriteRgbaImageTexture(
       tflite::gpu::DataType::UINT8,  // GL_RGBA8
-      {tensor_width_, tensor_height_}, &small_mask_texture);
+      {tensor_width_, tensor_height_}, &small_mask_texture));
 
   // Get input previous mask.
   auto input_mask_texture = has_prev_mask
@@ -389,7 +398,7 @@ REGISTER_CALCULATOR(TfLiteTensorsToSegmentationCalculator);
                                 : mediapipe::GlTexture();
 
   // Copy input tensor.
-  tflite::gpu::gl::CopyBuffer(input_tensors[0], *tensor_buffer_);
+  RET_CHECK_CALL(CopyBuffer(input_tensors[0], *tensor_buffer_));
 
   // Run shader, process mask tensor.
   // Run softmax over tensor output and blend with previous mask.
@@ -397,18 +406,18 @@ REGISTER_CALCULATOR(TfLiteTensorsToSegmentationCalculator);
     const int output_index = 0;
     glBindImageTexture(output_index, small_mask_texture.id(), 0, GL_FALSE, 0,
                        GL_WRITE_ONLY, GL_RGBA8);
-    tensor_buffer_->BindToIndex(2);
+    RET_CHECK_CALL(tensor_buffer_->BindToIndex(2));
 
     const tflite::gpu::uint3 workgroups = {
         NumGroups(tensor_width_, kWorkgroupSize),
         NumGroups(tensor_height_, kWorkgroupSize), 1};
 
     if (!has_prev_mask) {
-      mask_program_no_prev_->Dispatch(workgroups);
+      RET_CHECK_CALL(mask_program_no_prev_->Dispatch(workgroups));
     } else {
       glActiveTexture(GL_TEXTURE1);
       glBindTexture(GL_TEXTURE_2D, input_mask_texture.name());
-      mask_program_with_prev_->Dispatch(workgroups);
+      RET_CHECK_CALL(mask_program_with_prev_->Dispatch(workgroups));
       glActiveTexture(GL_TEXTURE1);
       glBindTexture(GL_TEXTURE_2D, 0);
     }
@@ -438,13 +447,13 @@ REGISTER_CALCULATOR(TfLiteTensorsToSegmentationCalculator);
   // Cleanup
   input_mask_texture.Release();
   output_texture.Release();
-#endif  // __ANDROID__
+#endif  //  !MEDIAPIPE_DISABLE_GPU
 
   return ::mediapipe::OkStatus();
 }
 
 void TfLiteTensorsToSegmentationCalculator::GlRender() {
-#if defined(__ANDROID__)
+#if !defined(MEDIAPIPE_DISABLE_GPU) && !defined(__APPLE__)
   static const GLfloat square_vertices[] = {
       -1.0f, -1.0f,  // bottom left
       1.0f,  -1.0f,  // bottom right
@@ -492,7 +501,7 @@ void TfLiteTensorsToSegmentationCalculator::GlRender() {
   glBindVertexArray(0);
   glDeleteVertexArrays(1, &vao);
   glDeleteBuffers(2, vbo);
-#endif  // __ANDROID__
+#endif  //  !MEDIAPIPE_DISABLE_GPU
 }
 
 ::mediapipe::Status TfLiteTensorsToSegmentationCalculator::LoadOptions(
@@ -516,14 +525,15 @@ void TfLiteTensorsToSegmentationCalculator::GlRender() {
 
 ::mediapipe::Status TfLiteTensorsToSegmentationCalculator::InitGpu(
     CalculatorContext* cc) {
-#if defined(__ANDROID__)
-
-  // A shader to process a segmentation tensor into an output mask,
-  // and use an optional previous mask as input.
-  // Currently uses 4 channels for output,
-  // and sets both R and A channels as mask value.
-  const std::string shader_src_template =
-      R"( #version 310 es
+#if !defined(MEDIAPIPE_DISABLE_GPU) && !defined(__APPLE__)
+  MP_RETURN_IF_ERROR(gpu_helper_.RunInGlContext([this]()
+                                                    -> ::mediapipe::Status {
+    // A shader to process a segmentation tensor into an output mask,
+    // and use an optional previous mask as input.
+    // Currently uses 4 channels for output,
+    // and sets both R and A channels as mask value.
+    const std::string shader_src_template =
+        R"( #version 310 es
 
 layout(local_size_x = $0, local_size_y = $0, local_size_z = 1) in;
 
@@ -589,76 +599,60 @@ void main() {
   imageStore(output_texture, output_coordinate, out_value);
 })";
 
-  const std::string shader_src_no_previous = absl::Substitute(
-      shader_src_template, kWorkgroupSize, options_.output_layer_index(),
-      options_.combine_with_previous_ratio(), "",
-      options_.flip_vertically() ? "out_height - gid.y - 1" : "gid.y");
-  const std::string shader_src_with_previous = absl::Substitute(
-      shader_src_template, kWorkgroupSize, options_.output_layer_index(),
-      options_.combine_with_previous_ratio(), "#define READ_PREVIOUS",
-      options_.flip_vertically() ? "out_height - gid.y - 1" : "gid.y");
+    const std::string shader_src_no_previous = absl::Substitute(
+        shader_src_template, kWorkgroupSize, options_.output_layer_index(),
+        options_.combine_with_previous_ratio(), "",
+        options_.flip_vertically() ? "out_height - gid.y - 1" : "gid.y");
+    const std::string shader_src_with_previous = absl::Substitute(
+        shader_src_template, kWorkgroupSize, options_.output_layer_index(),
+        options_.combine_with_previous_ratio(), "#define READ_PREVIOUS",
+        options_.flip_vertically() ? "out_height - gid.y - 1" : "gid.y");
 
-  auto status = ::tflite::gpu::OkStatus();
+    // Shader programs.
+    GlShader shader_without_previous;
+    RET_CHECK_CALL(GlShader::CompileShader(
+        GL_COMPUTE_SHADER, shader_src_no_previous, &shader_without_previous));
+    mask_program_no_prev_ = absl::make_unique<GlProgram>();
+    RET_CHECK_CALL(GlProgram::CreateWithShader(shader_without_previous,
+                                               mask_program_no_prev_.get()));
+    GlShader shader_with_previous;
+    RET_CHECK_CALL(GlShader::CompileShader(
+        GL_COMPUTE_SHADER, shader_src_with_previous, &shader_with_previous));
+    mask_program_with_prev_ = absl::make_unique<GlProgram>();
+    RET_CHECK_CALL(GlProgram::CreateWithShader(shader_with_previous,
+                                               mask_program_with_prev_.get()));
 
-  // Shader programs.
-  GlShader shader_without_previous;
-  status = GlShader::CompileShader(GL_COMPUTE_SHADER, shader_src_no_previous,
-                                   &shader_without_previous);
-  if (!status.ok()) {
-    return ::mediapipe::InternalError(status.error_message());
-  }
-  mask_program_no_prev_ = absl::make_unique<GlProgram>();
-  status = GlProgram::CreateWithShader(shader_without_previous,
-                                       mask_program_no_prev_.get());
-  if (!status.ok()) {
-    return ::mediapipe::InternalError(status.error_message());
-  }
-  GlShader shader_with_previous;
-  status = GlShader::CompileShader(GL_COMPUTE_SHADER, shader_src_with_previous,
-                                   &shader_with_previous);
-  if (!status.ok()) {
-    return ::mediapipe::InternalError(status.error_message());
-  }
-  mask_program_with_prev_ = absl::make_unique<GlProgram>();
-  status = GlProgram::CreateWithShader(shader_with_previous,
-                                       mask_program_with_prev_.get());
-  if (!status.ok()) {
-    return ::mediapipe::InternalError(status.error_message());
-  }
+    // Buffer storage for input tensor.
+    size_t tensor_length = tensor_width_ * tensor_height_ * tensor_channels_;
+    tensor_buffer_ = absl::make_unique<GlBuffer>();
+    RET_CHECK_CALL(CreateReadWriteShaderStorageBuffer<float>(
+        tensor_length, tensor_buffer_.get()));
 
-  // Buffer storage for input tensor.
-  size_t tensor_length = tensor_width_ * tensor_height_ * tensor_channels_;
-  tensor_buffer_ = absl::make_unique<GlBuffer>();
-  status = CreateReadWriteShaderStorageBuffer<float>(tensor_length,
-                                                     tensor_buffer_.get());
-  if (!status.ok()) {
-    return ::mediapipe::InternalError(status.error_message());
-  }
+    // Parameters.
+    glUseProgram(mask_program_with_prev_->id());
+    glUniform2i(glGetUniformLocation(mask_program_with_prev_->id(), "out_size"),
+                tensor_width_, tensor_height_);
+    glUniform1i(
+        glGetUniformLocation(mask_program_with_prev_->id(), "input_texture"),
+        1);
+    glUseProgram(mask_program_no_prev_->id());
+    glUniform2i(glGetUniformLocation(mask_program_no_prev_->id(), "out_size"),
+                tensor_width_, tensor_height_);
+    glUniform1i(
+        glGetUniformLocation(mask_program_no_prev_->id(), "input_texture"), 1);
 
-  // Parameters.
-  glUseProgram(mask_program_with_prev_->id());
-  glUniform2i(glGetUniformLocation(mask_program_with_prev_->id(), "out_size"),
-              tensor_width_, tensor_height_);
-  glUniform1i(
-      glGetUniformLocation(mask_program_with_prev_->id(), "input_texture"), 1);
-  glUseProgram(mask_program_no_prev_->id());
-  glUniform2i(glGetUniformLocation(mask_program_no_prev_->id(), "out_size"),
-              tensor_width_, tensor_height_);
-  glUniform1i(
-      glGetUniformLocation(mask_program_no_prev_->id(), "input_texture"), 1);
+    // Vertex shader attributes.
+    const GLint attr_location[NUM_ATTRIBUTES] = {
+        ATTRIB_VERTEX,
+        ATTRIB_TEXTURE_POSITION,
+    };
+    const GLchar* attr_name[NUM_ATTRIBUTES] = {
+        "position",
+        "texture_coordinate",
+    };
 
-  // Vertex shader attributes.
-  const GLint attr_location[NUM_ATTRIBUTES] = {
-      ATTRIB_VERTEX,
-      ATTRIB_TEXTURE_POSITION,
-  };
-  const GLchar* attr_name[NUM_ATTRIBUTES] = {
-      "position",
-      "texture_coordinate",
-  };
-
-  // Simple pass-through shader, used for hardware upsampling.
-  std::string upsample_shader_base = R"(
+    // Simple pass-through shader, used for hardware upsampling.
+    std::string upsample_shader_base = R"(
   #if __VERSION__ < 130
     #define in varying
   #endif  // __VERSION__ < 130
@@ -683,16 +677,19 @@ void main() {
   }
 )";
 
-  // Program
-  mediapipe::GlhCreateProgram(mediapipe::kBasicVertexShader,
-                              upsample_shader_base.c_str(), NUM_ATTRIBUTES,
-                              &attr_name[0], attr_location, &upsample_program_);
-  RET_CHECK(upsample_program_) << "Problem initializing the program.";
+    // Program
+    mediapipe::GlhCreateProgram(
+        mediapipe::kBasicVertexShader, upsample_shader_base.c_str(),
+        NUM_ATTRIBUTES, &attr_name[0], attr_location, &upsample_program_);
+    RET_CHECK(upsample_program_) << "Problem initializing the program.";
 
-  // Parameters
-  glUseProgram(upsample_program_);
-  glUniform1i(glGetUniformLocation(upsample_program_, "input_data"), 1);
-#endif  // __ANDROID__
+    // Parameters
+    glUseProgram(upsample_program_);
+    glUniform1i(glGetUniformLocation(upsample_program_, "input_data"), 1);
+
+    return ::mediapipe::OkStatus();
+  }));
+#endif  //  !MEDIAPIPE_DISABLE_GPU
 
   return ::mediapipe::OkStatus();
 }

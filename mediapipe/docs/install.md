@@ -107,12 +107,32 @@ To build and run iOS apps:
     )
     ```
 
-4.  Run the [Hello World desktop example](./hello_world_desktop.md).
+4.  For running desktop examples on Linux only (not on OS X) with GPU
+    acceleration.
+
+    ```bash
+    # Requires a GPU with EGL driver support.
+    # Can use mesa GPU libraries for desktop, (or Nvidia/AMD equivalent).
+    sudo apt-get install mesa-common-dev libegl1-mesa-dev libgles2-mesa-dev
+
+    # To compile with GPU support, replace
+    --define MEDIAPIPE_DISABLE_GPU=1
+    # with
+    --copt -DMESA_EGL_NO_X11_HEADERS
+    # when building GPU examples.
+    ```
+
+5.  Run the [Hello World desktop example](./hello_world_desktop.md).
 
     ```bash
     $ export GLOG_logtostderr=1
-    # Need bazel flag 'MEDIAPIPE_DISABLE_GPU=1' as desktop GPU is currently not supported
+
+    # if you are running on Linux desktop with CPU only
     $ bazel run --define MEDIAPIPE_DISABLE_GPU=1 \
+        mediapipe/examples/desktop/hello_world:hello_world
+
+    # If you are running on Linux desktop with GPU support enabled (via mesa drivers)
+    $ bazel run --copt -DMESA_EGL_NO_X11_HEADERS \
         mediapipe/examples/desktop/hello_world:hello_world
 
     # Should print:
@@ -194,7 +214,7 @@ To build and run iOS apps:
 
     ```bash
     $ export GLOG_logtostderr=1
-    # Need bazel flag 'MEDIAPIPE_DISABLE_GPU=1' as desktop GPU is currently not supported
+    # Need bazel flag 'MEDIAPIPE_DISABLE_GPU=1' if you are running on Linux desktop with CPU only
     $ bazel run --define MEDIAPIPE_DISABLE_GPU=1 \
         mediapipe/examples/desktop/hello_world:hello_world
 

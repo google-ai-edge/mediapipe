@@ -185,16 +185,10 @@ public class FrameProcessor implements TextureFrameProcessor {
   public void close() {
     if (started.get()) {
       try {
-        mediapipeGraph.closeAllInputStreams();
-
-        // TODO Add a way to signal a source calculator to stop.
-        // Required for a graph containing a source calculator to shut down properly.
-        mediapipeGraph.cancelGraph();
-
+        mediapipeGraph.closeAllPacketSources();
         mediapipeGraph.waitUntilGraphDone();
       } catch (MediaPipeException e) {
-        // TODO: cancelGraph will cause an exception to be raised in waitUntilGraphDone.
-        // We should not cancel the graph here! Also, we should handle exceptions better.
+        Log.e(TAG, "Mediapipe error: ", e);
       }
       try {
         mediapipeGraph.tearDown();

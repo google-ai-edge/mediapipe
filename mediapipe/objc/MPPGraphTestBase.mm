@@ -43,9 +43,13 @@ static void EnsureOutputDirFor(NSString *outputFile) {
 
 @implementation MPPGraphTestBase
 
-- (NSData*)testDataNamed:(NSString*)name extension:(NSString*)extension {
+- (NSURL*)URLForTestFile:(NSString*)file extension:(NSString*)extension {
   NSBundle* testBundle = [NSBundle bundleForClass:[self class]];
-  NSURL* resourceURL = [testBundle URLForResource:name withExtension:extension];
+  return [testBundle URLForResource:file withExtension:extension];
+}
+
+- (NSData*)testDataNamed:(NSString*)name extension:(NSString*)extension {
+  NSURL* resourceURL = [self URLForTestFile:name extension:extension];
   XCTAssertNotNil(resourceURL,
       @"Unable to find data with name: %@.  Did you add it to your resources?", name);
   NSError* error;

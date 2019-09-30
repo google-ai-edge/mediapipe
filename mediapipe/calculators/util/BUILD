@@ -235,19 +235,13 @@ cc_library(
         "//mediapipe/framework/port:vector",
         "//mediapipe/util:annotation_renderer",
     ] + select({
-        "//mediapipe:android": [
+        "//mediapipe/gpu:disable_gpu": [],
+        "//conditions:default": [
             "//mediapipe/gpu:gl_calculator_helper",
             "//mediapipe/gpu:gl_simple_shaders",
             "//mediapipe/gpu:gpu_buffer",
             "//mediapipe/gpu:shader_util",
         ],
-        "//mediapipe:ios": [
-            "//mediapipe/gpu:gl_calculator_helper",
-            "//mediapipe/gpu:gl_simple_shaders",
-            "//mediapipe/gpu:gpu_buffer",
-            "//mediapipe/gpu:shader_util",
-        ],
-        "//conditions:default": [],
     }),
     alwayslink = 1,
 )
@@ -692,5 +686,67 @@ cc_test(
         "//mediapipe/framework/port:integral_types",
         "//mediapipe/framework/port:parse_text_proto",
         "//mediapipe/framework/tool:validate_type",
+    ],
+)
+
+proto_library(
+    name = "top_k_scores_calculator_proto",
+    srcs = ["top_k_scores_calculator.proto"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//mediapipe/framework:calculator_proto",
+    ],
+)
+
+mediapipe_cc_proto_library(
+    name = "top_k_scores_calculator_cc_proto",
+    srcs = ["top_k_scores_calculator.proto"],
+    cc_deps = [
+        "//mediapipe/framework:calculator_cc_proto",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [":top_k_scores_calculator_proto"],
+)
+
+cc_library(
+    name = "top_k_scores_calculator",
+    srcs = ["top_k_scores_calculator.cc"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":top_k_scores_calculator_cc_proto",
+        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:status",
+        "//mediapipe/framework/port:statusor",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/util:resource_util",
+    ] + select({
+        "//mediapipe:android": [
+            "//mediapipe/util/android/file/base",
+        ],
+        "//mediapipe:apple": [
+            "//mediapipe/util/android/file/base",
+        ],
+        "//mediapipe:macos": [
+            "//mediapipe/framework/port:file_helpers",
+        ],
+        "//conditions:default": [
+            "//mediapipe/framework/port:file_helpers",
+        ],
+    }),
+    alwayslink = 1,
+)
+
+cc_test(
+    name = "top_k_scores_calculator_test",
+    srcs = ["top_k_scores_calculator_test.cc"],
+    deps = [
+        ":top_k_scores_calculator",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:calculator_runner",
+        "//mediapipe/framework:packet",
+        "//mediapipe/framework/deps:message_matchers",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:parse_text_proto",
+        "//mediapipe/framework/port:status",
     ],
 )

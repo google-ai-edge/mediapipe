@@ -1,7 +1,7 @@
 # Hand Detection (GPU)
 
 This doc focuses on the
-[example graph](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/hand_tracking/hand_detection_gpu.pbtxt)
+[example graph](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/hand_tracking/hand_detection_mobile.pbtxt)
 that performs hand detection with TensorFlow Lite on GPU. It is related to the
 [hand tracking example](./hand_tracking_mobile_gpu.md).
 
@@ -147,7 +147,7 @@ node {
 
 ![hand_detection_gpu_subgraph](images/mobile/hand_detection_gpu_subgraph.png)
 
-[Source pbtxt file](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/hand_tracking/hand_detection_gpu.pbtxt)
+[Source pbtxt file](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/hand_tracking/subgraphs/hand_detection_gpu.pbtxt)
 
 ```bash
 # MediaPipe hand detection subgraph.

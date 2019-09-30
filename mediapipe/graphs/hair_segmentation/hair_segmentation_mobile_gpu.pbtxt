@@ -111,7 +111,7 @@ node {
   input_side_packet: "CUSTOM_OP_RESOLVER:op_resolver"
   node_options: {
     [type.googleapis.com/mediapipe.TfLiteInferenceCalculatorOptions] {
-      model_path: "hair_segmentation.tflite"
+      model_path: "mediapipe/models/hair_segmentation.tflite"
       use_gpu: true
     }
   }

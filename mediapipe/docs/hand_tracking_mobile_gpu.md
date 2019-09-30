@@ -227,7 +227,7 @@ node {
 
 ![hand_detection_gpu_subgraph](images/mobile/hand_detection_gpu_subgraph.png)
 
-[Source pbtxt file](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/hand_tracking/hand_detection_gpu.pbtxt)
+[Source pbtxt file](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/hand_tracking/subgraphs/hand_detection_gpu.pbtxt)
 
 ```bash
 # MediaPipe hand detection subgraph.
@@ -433,7 +433,7 @@ node {
 
 ![hand_landmark_gpu_subgraph.pbtxt](images/mobile/hand_landmark_gpu_subgraph.png)
 
-[Source pbtxt file](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/hand_tracking/hand_landmark_gpu.pbtxt)
+[Source pbtxt file](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/hand_tracking/subgraphs/hand_landmark_gpu.pbtxt)
 
 ```bash
 # MediaPipe hand landmark localization subgraph.
@@ -617,7 +617,7 @@ node {
 
 ![hand_renderer_gpu_subgraph.pbtxt](images/mobile/hand_renderer_gpu_subgraph.png)
 
-[Source pbtxt file](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/hand_tracking/renderer_gpu.pbtxt)
+[Source pbtxt file](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/hand_tracking/subgraphs/renderer_gpu.pbtxt)
 
 ```bash
 # MediaPipe hand tracking rendering subgraph.

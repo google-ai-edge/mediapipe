@@ -357,7 +357,8 @@ void AnnotationRenderer::DrawFilledOval(const RenderAnnotation& annotation) {
     bottom = static_cast<int>(enclosing_rectangle.bottom());
   }
   cv::Point center((left + right) / 2, (top + bottom) / 2);
-  cv::Size size((right - left) / 2, (bottom - top) / 2);
+  cv::Size size(std::max(0, (right - left) / 2),
+                std::max(0, (bottom - top) / 2));
   const cv::Scalar color = MediapipeColorToOpenCVColor(annotation.color());
   cv::ellipse(mat_image_, center, size, 0, 0, 360, color, -1);
 }

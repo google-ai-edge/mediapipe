@@ -35,6 +35,8 @@ namespace mediapipe {
 namespace {
 
 const int kInitialTimestampOffsetMicroseconds = 4;
+const int kGapBetweenPacketsInSeconds = 1;
+const int kUniversalInputPacketSize = 50;
 
 class TimeSeriesFramerCalculatorTest
     : public TimeSeriesCalculatorTest<TimeSeriesFramerCalculatorOptions> {
@@ -391,5 +393,93 @@ TEST_F(TimeSeriesFramerCalculatorWindowingSanityTest, HannWindowSanityCheck) {
   RunAndTestSinglePacketAverage(0.5f);
 }
 
-}  // anonymous namespace
+// A simple test class that checks the local packet time stamp. This class
+// generate a series of packets with and without gaps between packets and tests
+// the behavior with cumulative timestamping and local packet timestamping.
+class TimeSeriesFramerCalculatorTimestampingTest
+    : public TimeSeriesFramerCalculatorTest {
+ protected:
+  // Creates test input and saves a reference copy.
+  void InitializeInputForTimeStampingTest() {
+    concatenated_input_samples_.resize(0, num_input_channels_);
+    num_input_samples_ = 0;
+    for (int i = 0; i < 10; ++i) {
+      // This range of packet sizes was chosen such that some input
+      // packets will be smaller than the output packet size and other
+      // input packets will be larger.
+      int packet_size = kUniversalInputPacketSize;
+      double timestamp_seconds = kInitialTimestampOffsetMicroseconds * 1.0e-6 +
+                                 num_input_samples_ / input_sample_rate_;
+      if (options_.use_local_timestamp()) {
+        timestamp_seconds += kGapBetweenPacketsInSeconds * i;
+      }
+
+      Matrix* data_frame =
+          NewTestFrame(num_input_channels_, packet_size, timestamp_seconds);
+
+      AppendInputPacket(data_frame, round(timestamp_seconds *
+                                          Timestamp::kTimestampUnitsPerSecond));
+      num_input_samples_ += packet_size;
+    }
+  }
+
+  void CheckOutputTimestamps() {
+    int num_full_packets = output().packets.size();
+    if (options_.pad_final_packet()) {
+      num_full_packets -= 1;
+    }
+
+    int64 num_samples = 0;
+    for (int packet_num = 0; packet_num < num_full_packets; ++packet_num) {
+      const Packet& packet = output().packets[packet_num];
+      num_samples += FrameDurationSamples();
+      double expected_timestamp =
+          options_.use_local_timestamp()
+              ? GetExpectedLocalTimestampForSample(num_samples - 1)
+              : GetExpectedCumulativeTimestamp(num_samples - 1);
+      ASSERT_NEAR(packet.Timestamp().Seconds(), expected_timestamp, 1e-10);
+    }
+  }
+
+  ::mediapipe::Status RunTimestampTest() {
+    InitializeGraph();
+    InitializeInputForTimeStampingTest();
+    FillInputHeader();
+    return RunGraph();
+  }
+
+ private:
+  // Returns the timestamp in seconds based on local timestamping.
+  double GetExpectedLocalTimestampForSample(int sample_index) {
+    return kInitialTimestampOffsetMicroseconds * 1.0e-6 +
+           sample_index / input_sample_rate_ +
+           (sample_index / kUniversalInputPacketSize) *
+               kGapBetweenPacketsInSeconds;
+  }
+
+  // Returns the timestamp inseconds based on cumulative timestamping.
+  double GetExpectedCumulativeTimestamp(int sample_index) {
+    return kInitialTimestampOffsetMicroseconds * 1.0e-6 +
+           sample_index / FrameDurationSamples() * FrameDurationSamples() /
+               input_sample_rate_;
+  }
+};
+
+TEST_F(TimeSeriesFramerCalculatorTimestampingTest, UseLocalTimeStamp) {
+  options_.set_frame_duration_seconds(100.0 / input_sample_rate_);
+  options_.set_use_local_timestamp(true);
+
+  MP_ASSERT_OK(RunTimestampTest());
+  CheckOutputTimestamps();
+}
+
+TEST_F(TimeSeriesFramerCalculatorTimestampingTest, UseCumulativeTimeStamp) {
+  options_.set_frame_duration_seconds(100.0 / input_sample_rate_);
+  options_.set_use_local_timestamp(false);
+
+  MP_ASSERT_OK(RunTimestampTest());
+  CheckOutputTimestamps();
+}
+
+}  // namespace
 }  // namespace mediapipe

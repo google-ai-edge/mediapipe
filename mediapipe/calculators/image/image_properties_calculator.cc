@@ -15,9 +15,9 @@
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/image_frame.h"
 
-#if defined(__ANDROID__) || (defined(__APPLE__) && !TARGET_OS_OSX)
+#if !defined(MEDIAPIPE_DISABLE_GPU)
 #include "mediapipe/gpu/gpu_buffer.h"
-#endif  // __ANDROID__ or iOS
+#endif  //  !MEDIAPIPE_DISABLE_GPU
 
 namespace mediapipe {
 
@@ -44,11 +44,11 @@ class ImagePropertiesCalculator : public CalculatorBase {
     if (cc->Inputs().HasTag("IMAGE")) {
       cc->Inputs().Tag("IMAGE").Set<ImageFrame>();
     }
-#if defined(__ANDROID__) || (defined(__APPLE__) && !TARGET_OS_OSX)
+#if !defined(MEDIAPIPE_DISABLE_GPU)
     if (cc->Inputs().HasTag("IMAGE_GPU")) {
       cc->Inputs().Tag("IMAGE_GPU").Set<::mediapipe::GpuBuffer>();
     }
-#endif  // __ANDROID__ or iOS
+#endif  //  !MEDIAPIPE_DISABLE_GPU
 
     if (cc->Outputs().HasTag("SIZE")) {
       cc->Outputs().Tag("SIZE").Set<std::pair<int, int>>();
@@ -71,7 +71,7 @@ class ImagePropertiesCalculator : public CalculatorBase {
       width = image.Width();
       height = image.Height();
     }
-#if defined(__ANDROID__) || (defined(__APPLE__) && !TARGET_OS_OSX)
+#if !defined(MEDIAPIPE_DISABLE_GPU)
     if (cc->Inputs().HasTag("IMAGE_GPU") &&
         !cc->Inputs().Tag("IMAGE_GPU").IsEmpty()) {
       const auto& image =
@@ -79,7 +79,7 @@ class ImagePropertiesCalculator : public CalculatorBase {
       width = image.width();
       height = image.height();
     }
-#endif  // __ANDROID__ or iOS
+#endif  //  !MEDIAPIPE_DISABLE_GPU
 
     cc->Outputs().Tag("SIZE").AddPacket(
         MakePacket<std::pair<int, int>>(width, height)

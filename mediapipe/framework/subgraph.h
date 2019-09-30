@@ -24,6 +24,7 @@
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/port/statusor.h"
 #include "mediapipe/framework/tool/calculator_graph_template.pb.h"
+#include "mediapipe/framework/tool/options_util.h"
 
 namespace mediapipe {
 
@@ -32,7 +33,7 @@ namespace mediapipe {
 // the graph is running.
 class Subgraph {
  public:
-  using SubgraphOptions = CalculatorOptions;
+  using SubgraphOptions = CalculatorGraphConfig::Node;
   Subgraph();
   virtual ~Subgraph();
   // Returns the config to use for one instantiation of the subgraph. The
@@ -42,6 +43,12 @@ class Subgraph {
   // TODO: make this static?
   virtual ::mediapipe::StatusOr<CalculatorGraphConfig> GetConfig(
       const SubgraphOptions& options) = 0;
+
+  // Returns options of a specific type.
+  template <typename T>
+  static T GetOptions(Subgraph::SubgraphOptions supgraph_options) {
+    return tool::OptionsMap().Initialize(supgraph_options).Get<T>();
+  }
 };
 
 using SubgraphRegistry = GlobalFactoryRegistry<std::unique_ptr<Subgraph>>;

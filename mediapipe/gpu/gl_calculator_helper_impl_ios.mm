@@ -54,7 +54,7 @@ GlTexture GlCalculatorHelperImpl::CreateSourceTexture(
   glTexImage2D(GL_TEXTURE_2D, 0, info.gl_internal_format, texture.width_,
                texture.height_, 0, info.gl_format, info.gl_type,
                image_frame.PixelData());
-  SetStandardTextureParams(GL_TEXTURE_2D);
+  SetStandardTextureParams(GL_TEXTURE_2D, info.gl_internal_format);
   return texture;
 }
 
@@ -107,7 +107,7 @@ GlTexture GlCalculatorHelperImpl::MapGpuBuffer(
 #endif  // TARGET_OS_OSX
 
   glBindTexture(texture.target(), texture.name());
-  SetStandardTextureParams(texture.target());
+  SetStandardTextureParams(texture.target(), info.gl_internal_format);
 
   return texture;
 }

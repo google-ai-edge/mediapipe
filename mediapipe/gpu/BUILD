@@ -80,8 +80,7 @@ GL_BASE_LINK_OPTS_OSS = GL_BASE_LINK_OPTS + select({
         "-lEGL",
     ],
     "//mediapipe:android": [],
-    "//mediapipe:apple": [],
-    "//mediapipe:macos": [],
+    "//mediapipe:ios": [],
     ":disable_gpu": [],
 })
 
@@ -285,6 +284,25 @@ objc_library(
         "//mediapipe/framework:calculator_context",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/gpu:gl_context_options_cc_proto",
+        "@google_toolbox_for_mac//:GTM_Defines",
+    ],
+)
+
+objc_library(
+    name = "MPPMetalUtil",
+    srcs = ["MPPMetalUtil.mm"],
+    hdrs = ["MPPMetalUtil.h"],
+    copts = [
+        "-x objective-c++",
+        "-Wno-shorten-64-to-32",
+    ],
+    sdk_frameworks = [
+        "CoreVideo",
+        "Metal",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//mediapipe/objc:mediapipe_framework_ios",
         "@google_toolbox_for_mac//:GTM_Defines",
     ],
 )
@@ -499,6 +517,7 @@ cc_library(
         ":gl_base",
         ":gl_context",
         ":gpu_buffer",
+        ":gpu_buffer_format",
         ":gpu_buffer_multi_pool",
         ":gpu_shared_data_internal",
         ":gpu_service",

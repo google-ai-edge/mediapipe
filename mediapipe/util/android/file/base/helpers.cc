@@ -47,8 +47,9 @@ class FdCloser {
                                 const file::Options& /*options*/) {
   int fd = open(std::string(file_name).c_str(), O_RDONLY);
   if (fd < 0) {
-    return ::mediapipe::Status(mediapipe::StatusCode::kUnknown,
-                               "Failed to open file");
+    return ::mediapipe::Status(
+        mediapipe::StatusCode::kUnknown,
+        "Failed to open file: " + std::string(file_name));
   }
   FdCloser closer(fd);
 
@@ -92,8 +93,9 @@ class FdCloser {
   int fd =
       open(std::string(file_name).c_str(), O_WRONLY | O_CREAT | O_TRUNC, mode);
   if (fd < 0) {
-    return ::mediapipe::Status(mediapipe::StatusCode::kUnknown,
-                               "Failed to open file");
+    return ::mediapipe::Status(
+        mediapipe::StatusCode::kUnknown,
+        "Failed to open file: " + std::string(file_name));
   }
 
   int bytes_written = 0;

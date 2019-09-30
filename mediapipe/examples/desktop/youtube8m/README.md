@@ -37,7 +37,9 @@
 
     ```bash
     python -m mediapipe.examples.desktop.youtube8m.generate_input_sequence_example \
-      --path_to_input_video=/absolute/path/to/the/local/video/file
+      --path_to_input_video=/absolute/path/to/the/local/video/file \
+      --clip_start_time_sec=0 \
+      --clip_end_time_sec=10
     ```
 
 5.  Run the MediaPipe binary to extract the features

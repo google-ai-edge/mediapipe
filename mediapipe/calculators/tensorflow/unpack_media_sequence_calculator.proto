@@ -18,6 +18,7 @@ package mediapipe;
 
 import "mediapipe/calculators/core/packet_resampler_calculator.proto";
 import "mediapipe/framework/calculator.proto";
+import "mediapipe/util/audio_decoder.proto";
 
 message UnpackMediaSequenceCalculatorOptions {
   extend mediapipe.CalculatorOptions {
@@ -49,4 +50,10 @@ message UnpackMediaSequenceCalculatorOptions {
   // parameters for the MediaDecoderCalculator. End time parameters are still
   // respected.
   optional bool force_decoding_from_start_of_media = 7;
+
+  // Stores the audio decoder settings for the graph. (e.g. which audio
+  // stream to pull from the video.) The sequence's metadata overrides
+  // the clip start and end times and outputs these for the
+  // AudioDecoderCalculator to consume.
+  optional AudioDecoderOptions base_audio_decoder_options = 9;
 }

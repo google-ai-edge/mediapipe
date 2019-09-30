@@ -56,6 +56,14 @@ namespace mediapipe {
 // If pad_final_packet is true, all input samples will be emitted and the final
 // packet will be zero padded as necessary.  If pad_final_packet is false, some
 // samples may be dropped at the end of the stream.
+//
+// If use_local_timestamp is true, the output packet's timestamp is based on the
+// last sample of the packet. The timestamp of this sample is inferred by
+// input_packet_timesamp + local_sample_index / sampling_rate_. If false, the
+// output packet's timestamp is based on the cumulative timestamping, which is
+// done by adopting the timestamp of the first sample of the packet and this
+// sample's timestamp is inferred by initial_input_timestamp_ +
+// cumulative_completed_samples / sample_rate_.
 class TimeSeriesFramerCalculator : public CalculatorBase {
  public:
   static ::mediapipe::Status GetContract(CalculatorContract* cc) {
@@ -86,9 +94,24 @@ class TimeSeriesFramerCalculator : public CalculatorBase {
   void FrameOutput(CalculatorContext* cc);
 
   Timestamp CurrentOutputTimestamp() {
+    if (use_local_timestamp_) {
+      return current_timestamp_;
+    }
+    return CumulativeOutputTimestamp();
+  }
+
+  Timestamp CumulativeOutputTimestamp() {
     return initial_input_timestamp_ +
            round(cumulative_completed_samples_ / sample_rate_ *
                  Timestamp::kTimestampUnitsPerSecond);
+  }
+
+  // Returns the timestamp of a sample on a base, which is usually the time
+  // stamp of a packet.
+  Timestamp CurrentSampleTimestamp(const Timestamp& timestamp_base,
+                                   int64 number_of_samples) {
+    return timestamp_base + round(number_of_samples / sample_rate_ *
+                                  Timestamp::kTimestampUnitsPerSecond);
   }
 
   // The number of input samples to advance after the current output frame is
@@ -118,14 +141,18 @@ class TimeSeriesFramerCalculator : public CalculatorBase {
   // any overlap).
   int64 cumulative_completed_samples_;
   Timestamp initial_input_timestamp_;
+  // The current timestamp is updated along with the incoming packets.
+  Timestamp current_timestamp_;
   int num_channels_;
 
   // Each entry in this deque consists of a single sample, i.e. a
-  // single column vector.
-  std::deque<Matrix> sample_buffer_;
+  // single column vector, and its timestamp.
+  std::deque<std::pair<Matrix, Timestamp>> sample_buffer_;
 
   bool use_window_;
   Matrix window_;
+
+  bool use_local_timestamp_;
 };
 REGISTER_CALCULATOR(TimeSeriesFramerCalculator);
 
@@ -133,7 +160,8 @@ void TimeSeriesFramerCalculator::EnqueueInput(CalculatorContext* cc) {
   const Matrix& input_frame = cc->Inputs().Index(0).Get<Matrix>();
 
   for (int i = 0; i < input_frame.cols(); ++i) {
-    sample_buffer_.emplace_back(input_frame.col(i));
+    sample_buffer_.emplace_back(std::make_pair(
+        input_frame.col(i), CurrentSampleTimestamp(cc->InputTimestamp(), i)));
   }
 
   cumulative_input_samples_ += input_frame.cols();
@@ -151,14 +179,16 @@ void TimeSeriesFramerCalculator::FrameOutput(CalculatorContext* cc) {
         new Matrix(num_channels_, frame_duration_samples_));
     for (int i = 0; i < std::min(frame_step_samples, frame_duration_samples_);
          ++i) {
-      output_frame->col(i) = sample_buffer_.front();
+      output_frame->col(i) = sample_buffer_.front().first;
+      current_timestamp_ = sample_buffer_.front().second;
       sample_buffer_.pop_front();
     }
     const int frame_overlap_samples =
         frame_duration_samples_ - frame_step_samples;
     if (frame_overlap_samples > 0) {
       for (int i = 0; i < frame_overlap_samples; ++i) {
-        output_frame->col(i + frame_step_samples) = sample_buffer_[i];
+        output_frame->col(i + frame_step_samples) = sample_buffer_[i].first;
+        current_timestamp_ = sample_buffer_[i].second;
       }
     } else {
       samples_still_to_drop_ = -frame_overlap_samples;
@@ -178,6 +208,7 @@ void TimeSeriesFramerCalculator::FrameOutput(CalculatorContext* cc) {
 ::mediapipe::Status TimeSeriesFramerCalculator::Process(CalculatorContext* cc) {
   if (initial_input_timestamp_ == Timestamp::Unstarted()) {
     initial_input_timestamp_ = cc->InputTimestamp();
+    current_timestamp_ = initial_input_timestamp_;
   }
 
   EnqueueInput(cc);
@@ -195,7 +226,8 @@ void TimeSeriesFramerCalculator::FrameOutput(CalculatorContext* cc) {
     std::unique_ptr<Matrix> output_frame(new Matrix);
     output_frame->setZero(num_channels_, frame_duration_samples_);
     for (int i = 0; i < sample_buffer_.size(); ++i) {
-      output_frame->col(i) = sample_buffer_[i];
+      output_frame->col(i) = sample_buffer_[i].first;
+      current_timestamp_ = sample_buffer_[i].second;
     }
 
     cc->Outputs().Index(0).Add(output_frame.release(),
@@ -258,6 +290,7 @@ void TimeSeriesFramerCalculator::FrameOutput(CalculatorContext* cc) {
   cumulative_output_frames_ = 0;
   samples_still_to_drop_ = 0;
   initial_input_timestamp_ = Timestamp::Unstarted();
+  current_timestamp_ = Timestamp::Unstarted();
 
   std::vector<double> window_vector;
   use_window_ = false;
@@ -282,6 +315,7 @@ void TimeSeriesFramerCalculator::FrameOutput(CalculatorContext* cc) {
                                           frame_duration_samples_)
                   .cast<float>();
   }
+  use_local_timestamp_ = framer_options.use_local_timestamp();
 
   return ::mediapipe::OkStatus();
 }

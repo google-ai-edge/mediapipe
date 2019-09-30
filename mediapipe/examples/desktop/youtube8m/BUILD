@@ -27,7 +27,7 @@ cc_binary(
         "//mediapipe/framework/port:map_util",
         "//mediapipe/framework/port:parse_text_proto",
         "//mediapipe/framework/port:status",
-        "//mediapipe/graphs/youtube8m:yt8m_calculators_deps",
+        "//mediapipe/graphs/youtube8m:yt8m_feature_extraction_calculators",
         # TODO: Figure out the minimum set of the kernels needed by this example.
         "@org_tensorflow//tensorflow/core:all_kernels",
         "@org_tensorflow//tensorflow/core:direct_session",

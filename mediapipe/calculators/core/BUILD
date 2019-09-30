@@ -166,7 +166,13 @@ cc_library(
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
         "@org_tensorflow//tensorflow/lite:framework",
-    ],
+    ] + select({
+        "//mediapipe/gpu:disable_gpu": [],
+        "//mediapipe:ios": [],
+        "//conditions:default": [
+            "@org_tensorflow//tensorflow/lite/delegates/gpu/gl:gl_buffer",
+        ],
+    }),
     alwayslink = 1,
 )
 

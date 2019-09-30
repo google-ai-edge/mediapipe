@@ -23,6 +23,7 @@
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/framework/port/rectangle.h"
 #include "mediapipe/framework/port/status_matchers.h"
+#include "mediapipe/util/audio_decoder.pb.h"
 #include "mediapipe/util/sequence/media_sequence.h"
 #include "tensorflow/core/example/example.pb.h"
 
@@ -457,6 +458,62 @@ TEST_F(UnpackMediaSequenceCalculatorTest, GetDatasetFromExample) {
                    .ValidateAsType<std::string>());
   ASSERT_EQ(runner_->OutputSidePackets().Tag("DATA_PATH").Get<std::string>(),
             data_path_);
+}
+
+TEST_F(UnpackMediaSequenceCalculatorTest, GetAudioDecoderOptions) {
+  CalculatorOptions options;
+  options.MutableExtension(UnpackMediaSequenceCalculatorOptions::ext)
+      ->set_padding_before_label(1);
+  options.MutableExtension(UnpackMediaSequenceCalculatorOptions::ext)
+      ->set_padding_after_label(2);
+  SetUpCalculator({}, {"AUDIO_DECODER_OPTIONS:audio_decoder_options"}, {},
+                  &options);
+  runner_->MutableSidePackets()->Tag("SEQUENCE_EXAMPLE") =
+      Adopt(sequence_.release());
+  MP_ASSERT_OK(runner_->Run());
+
+  MP_EXPECT_OK(runner_->OutputSidePackets()
+                   .Tag("AUDIO_DECODER_OPTIONS")
+                   .ValidateAsType<AudioDecoderOptions>());
+  EXPECT_NEAR(runner_->OutputSidePackets()
+                  .Tag("AUDIO_DECODER_OPTIONS")
+                  .Get<AudioDecoderOptions>()
+                  .start_time(),
+              2.0, 1e-5);
+  EXPECT_NEAR(runner_->OutputSidePackets()
+                  .Tag("AUDIO_DECODER_OPTIONS")
+                  .Get<AudioDecoderOptions>()
+                  .end_time(),
+              7.0, 1e-5);
+}
+
+TEST_F(UnpackMediaSequenceCalculatorTest, GetAudioDecoderOptionsOverride) {
+  CalculatorOptions options;
+  options.MutableExtension(UnpackMediaSequenceCalculatorOptions::ext)
+      ->set_padding_before_label(1);
+  options.MutableExtension(UnpackMediaSequenceCalculatorOptions::ext)
+      ->set_padding_after_label(2);
+  options.MutableExtension(UnpackMediaSequenceCalculatorOptions::ext)
+      ->set_force_decoding_from_start_of_media(true);
+  SetUpCalculator({}, {"AUDIO_DECODER_OPTIONS:audio_decoder_options"}, {},
+                  &options);
+  runner_->MutableSidePackets()->Tag("SEQUENCE_EXAMPLE") =
+      Adopt(sequence_.release());
+  MP_ASSERT_OK(runner_->Run());
+
+  MP_EXPECT_OK(runner_->OutputSidePackets()
+                   .Tag("AUDIO_DECODER_OPTIONS")
+                   .ValidateAsType<AudioDecoderOptions>());
+  EXPECT_NEAR(runner_->OutputSidePackets()
+                  .Tag("AUDIO_DECODER_OPTIONS")
+                  .Get<AudioDecoderOptions>()
+                  .start_time(),
+              0.0, 1e-5);
+  EXPECT_NEAR(runner_->OutputSidePackets()
+                  .Tag("AUDIO_DECODER_OPTIONS")
+                  .Get<AudioDecoderOptions>()
+                  .end_time(),
+              7.0, 1e-5);
 }
 
 TEST_F(UnpackMediaSequenceCalculatorTest, GetPacketResamplingOptions) {

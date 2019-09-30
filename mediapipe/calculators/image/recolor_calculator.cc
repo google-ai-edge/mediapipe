@@ -21,12 +21,11 @@
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/util/color.pb.h"
 
-#if defined(__ANDROID__) || (defined(__APPLE__) && !TARGET_OS_OSX)
+#if !defined(MEDIAPIPE_DISABLE_GPU)
 #include "mediapipe/gpu/gl_calculator_helper.h"
 #include "mediapipe/gpu/gl_simple_shaders.h"
-#include "mediapipe/gpu/gpu_buffer.h"
 #include "mediapipe/gpu/shader_util.h"
-#endif  // __ANDROID__ or iOS
+#endif  //  !MEDIAPIPE_DISABLE_GPU
 
 namespace {
 enum { ATTRIB_VERTEX, ATTRIB_TEXTURE_POSITION, NUM_ATTRIBUTES };
@@ -95,10 +94,10 @@ class RecolorCalculator : public CalculatorBase {
   mediapipe::RecolorCalculatorOptions::MaskChannel mask_channel_;
 
   bool use_gpu_ = false;
-#if defined(__ANDROID__) || (defined(__APPLE__) && !TARGET_OS_OSX)
+#if !defined(MEDIAPIPE_DISABLE_GPU)
   mediapipe::GlCalculatorHelper gpu_helper_;
   GLuint program_ = 0;
-#endif  // __ANDROID__ or iOS
+#endif  //  !MEDIAPIPE_DISABLE_GPU
 };
 REGISTER_CALCULATOR(RecolorCalculator);
 
@@ -107,36 +106,43 @@ REGISTER_CALCULATOR(RecolorCalculator);
   RET_CHECK(!cc->Inputs().GetTags().empty());
   RET_CHECK(!cc->Outputs().GetTags().empty());
 
-#if defined(__ANDROID__) || (defined(__APPLE__) && !TARGET_OS_OSX)
+  bool use_gpu = false;
+
+#if !defined(MEDIAPIPE_DISABLE_GPU)
   if (cc->Inputs().HasTag("IMAGE_GPU")) {
     cc->Inputs().Tag("IMAGE_GPU").Set<mediapipe::GpuBuffer>();
+    use_gpu |= true;
   }
-#endif  // __ANDROID__ or iOS
+#endif  //  !MEDIAPIPE_DISABLE_GPU
   if (cc->Inputs().HasTag("IMAGE")) {
     cc->Inputs().Tag("IMAGE").Set<ImageFrame>();
   }
 
-#if defined(__ANDROID__) || (defined(__APPLE__) && !TARGET_OS_OSX)
+#if !defined(MEDIAPIPE_DISABLE_GPU)
   if (cc->Inputs().HasTag("MASK_GPU")) {
     cc->Inputs().Tag("MASK_GPU").Set<mediapipe::GpuBuffer>();
+    use_gpu |= true;
   }
-#endif  // __ANDROID__ or iOS
+#endif  //  !MEDIAPIPE_DISABLE_GPU
   if (cc->Inputs().HasTag("MASK")) {
     cc->Inputs().Tag("MASK").Set<ImageFrame>();
   }
 
-#if defined(__ANDROID__) || (defined(__APPLE__) && !TARGET_OS_OSX)
+#if !defined(MEDIAPIPE_DISABLE_GPU)
   if (cc->Outputs().HasTag("IMAGE_GPU")) {
     cc->Outputs().Tag("IMAGE_GPU").Set<mediapipe::GpuBuffer>();
+    use_gpu |= true;
   }
-#endif  // __ANDROID__ or iOS
+#endif  //  !MEDIAPIPE_DISABLE_GPU
   if (cc->Outputs().HasTag("IMAGE")) {
     cc->Outputs().Tag("IMAGE").Set<ImageFrame>();
   }
 
-#if defined(__ANDROID__) || (defined(__APPLE__) && !TARGET_OS_OSX)
-  MP_RETURN_IF_ERROR(mediapipe::GlCalculatorHelper::UpdateContract(cc));
-#endif  // __ANDROID__ or iOS
+  if (use_gpu) {
+#if !defined(MEDIAPIPE_DISABLE_GPU)
+    MP_RETURN_IF_ERROR(mediapipe::GlCalculatorHelper::UpdateContract(cc));
+#endif  //  !MEDIAPIPE_DISABLE_GPU
+  }
 
   return ::mediapipe::OkStatus();
 }
@@ -146,9 +152,9 @@ REGISTER_CALCULATOR(RecolorCalculator);
 
   if (cc->Inputs().HasTag("IMAGE_GPU")) {
     use_gpu_ = true;
-#if defined(__ANDROID__) || (defined(__APPLE__) && !TARGET_OS_OSX)
+#if !defined(MEDIAPIPE_DISABLE_GPU)
     MP_RETURN_IF_ERROR(gpu_helper_.Open(cc));
-#endif  // __ANDROID__ or iOS
+#endif  //  !MEDIAPIPE_DISABLE_GPU
   }
 
   MP_RETURN_IF_ERROR(LoadOptions(cc));
@@ -158,7 +164,7 @@ REGISTER_CALCULATOR(RecolorCalculator);
 
 ::mediapipe::Status RecolorCalculator::Process(CalculatorContext* cc) {
   if (use_gpu_) {
-#if defined(__ANDROID__) || (defined(__APPLE__) && !TARGET_OS_OSX)
+#if !defined(MEDIAPIPE_DISABLE_GPU)
     MP_RETURN_IF_ERROR(
         gpu_helper_.RunInGlContext([this, &cc]() -> ::mediapipe::Status {
           if (!initialized_) {
@@ -168,7 +174,7 @@ REGISTER_CALCULATOR(RecolorCalculator);
           MP_RETURN_IF_ERROR(RenderGpu(cc));
           return ::mediapipe::OkStatus();
         }));
-#endif  // __ANDROID__ or iOS
+#endif  //  !MEDIAPIPE_DISABLE_GPU
   } else {
     MP_RETURN_IF_ERROR(RenderCpu(cc));
   }
@@ -176,12 +182,12 @@ REGISTER_CALCULATOR(RecolorCalculator);
 }
 
 ::mediapipe::Status RecolorCalculator::Close(CalculatorContext* cc) {
-#if defined(__ANDROID__) || (defined(__APPLE__) && !TARGET_OS_OSX)
+#if !defined(MEDIAPIPE_DISABLE_GPU)
   gpu_helper_.RunInGlContext([this] {
     if (program_) glDeleteProgram(program_);
     program_ = 0;
   });
-#endif  // __ANDROID__ or iOS
+#endif  //  !MEDIAPIPE_DISABLE_GPU
 
   return ::mediapipe::OkStatus();
 }
@@ -194,7 +200,7 @@ REGISTER_CALCULATOR(RecolorCalculator);
   if (cc->Inputs().Tag("MASK_GPU").IsEmpty()) {
     return ::mediapipe::OkStatus();
   }
-#if defined(__ANDROID__) || (defined(__APPLE__) && !TARGET_OS_OSX)
+#if !defined(MEDIAPIPE_DISABLE_GPU)
   // Get inputs and setup output.
   const Packet& input_packet = cc->Inputs().Tag("IMAGE_GPU").Value();
   const Packet& mask_packet = cc->Inputs().Tag("MASK_GPU").Value();
@@ -233,13 +239,13 @@ REGISTER_CALCULATOR(RecolorCalculator);
   img_tex.Release();
   mask_tex.Release();
   dst_tex.Release();
-#endif  // __ANDROID__ or iOS
+#endif  //  !MEDIAPIPE_DISABLE_GPU
 
   return ::mediapipe::OkStatus();
 }
 
 void RecolorCalculator::GlRender() {
-#if defined(__ANDROID__) || (defined(__APPLE__) && !TARGET_OS_OSX)
+#if !defined(MEDIAPIPE_DISABLE_GPU)
   static const GLfloat square_vertices[] = {
       -1.0f, -1.0f,  // bottom left
       1.0f,  -1.0f,  // bottom right
@@ -287,7 +293,7 @@ void RecolorCalculator::GlRender() {
   glBindVertexArray(0);
   glDeleteVertexArrays(1, &vao);
   glDeleteBuffers(2, vbo);
-#endif  // __ANDROID__ or iOS
+#endif  //  !MEDIAPIPE_DISABLE_GPU
 }
 
 ::mediapipe::Status RecolorCalculator::LoadOptions(CalculatorContext* cc) {
@@ -305,7 +311,7 @@ void RecolorCalculator::GlRender() {
 }
 
 ::mediapipe::Status RecolorCalculator::InitGpu(CalculatorContext* cc) {
-#if defined(__ANDROID__) || (defined(__APPLE__) && !TARGET_OS_OSX)
+#if !defined(MEDIAPIPE_DISABLE_GPU)
   const GLint attr_location[NUM_ATTRIBUTES] = {
       ATTRIB_VERTEX,
       ATTRIB_TEXTURE_POSITION,
@@ -374,7 +380,7 @@ void RecolorCalculator::GlRender() {
   glUniform1i(glGetUniformLocation(program_, "mask"), 2);
   glUniform3f(glGetUniformLocation(program_, "recolor"), color_[0], color_[1],
               color_[2]);
-#endif  // __ANDROID__ or iOS
+#endif  //  !MEDIAPIPE_DISABLE_GPU
 
   return ::mediapipe::OkStatus();
 }

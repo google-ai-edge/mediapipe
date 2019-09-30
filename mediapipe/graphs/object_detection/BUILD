@@ -56,6 +56,10 @@ cc_library(
 cc_library(
     name = "desktop_tflite_calculators",
     deps = [
+        "//mediapipe/calculators/core:concatenate_vector_calculator",
+        "//mediapipe/calculators/core:flow_limiter_calculator",
+        "//mediapipe/calculators/core:previous_loopback_calculator",
+        "//mediapipe/calculators/core:split_vector_calculator",
         "//mediapipe/calculators/image:image_transformation_calculator",
         "//mediapipe/calculators/tflite:ssd_anchors_calculator",
         "//mediapipe/calculators/tflite:tflite_converter_calculator",

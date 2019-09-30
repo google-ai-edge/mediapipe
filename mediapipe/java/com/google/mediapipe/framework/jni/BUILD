@@ -73,9 +73,6 @@ cc_library(
         ],
         "//mediapipe/gpu:disable_gpu": [],
     }),
-    copts = [
-        "-DDISABLE_GOOGLE_GLOBAL_USING_DECLARATIONS",  # b/33667913
-    ],
     linkopts = select({
         "//conditions:default": [],
         "//mediapipe:android": [
@@ -123,7 +120,9 @@ cc_library(
             "//mediapipe/gpu:gpu_shared_data_internal",
             "//mediapipe/gpu:graph_support",
         ],
-        "//mediapipe/gpu:disable_gpu": [],
+        "//mediapipe/gpu:disable_gpu": [
+            "//mediapipe/gpu:gpu_shared_data_internal",
+        ],
     }),
     alwayslink = 1,
 )

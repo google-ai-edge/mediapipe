@@ -548,8 +548,12 @@ typedef std::function<::mediapipe::Status(const InputStreamShardSet&,
                                           OutputStreamShardSet*)>
     ProcessFunction;
 
+// A callback function for Calculator::Open, Process, or Close.
+typedef std::function<::mediapipe::Status(CalculatorContext* cc)>
+    CalculatorContextFunction;
+
 // A Calculator that runs a testing callback function in Process,
-// which is specified as an input side packet.
+// Open, or Close, which is specified as an input side packet.
 class LambdaCalculator : public CalculatorBase {
  public:
   static ::mediapipe::Status GetContract(CalculatorContract* cc) {
@@ -561,21 +565,49 @@ class LambdaCalculator : public CalculatorBase {
          id < cc->Outputs().EndId(); ++id) {
       cc->Outputs().Get(id).SetAny();
     }
-    cc->InputSidePackets().Index(0).Set<ProcessFunction>();
+    if (cc->InputSidePackets().HasTag("") > 0) {
+      cc->InputSidePackets().Tag("").Set<ProcessFunction>();
+    }
+    for (std::string tag : {"OPEN", "PROCESS", "CLOSE"}) {
+      if (cc->InputSidePackets().HasTag(tag)) {
+        cc->InputSidePackets().Tag(tag).Set<CalculatorContextFunction>();
+      }
+    }
     return ::mediapipe::OkStatus();
   }
 
   ::mediapipe::Status Open(CalculatorContext* cc) final {
-    callback_ = cc->InputSidePackets().Index(0).Get<ProcessFunction>();
+    if (cc->InputSidePackets().HasTag("OPEN")) {
+      return GetContextFn(cc, "OPEN")(cc);
+    }
     return ::mediapipe::OkStatus();
   }
 
   ::mediapipe::Status Process(CalculatorContext* cc) final {
-    return callback_(cc->Inputs(), &(cc->Outputs()));
+    if (cc->InputSidePackets().HasTag("PROCESS")) {
+      return GetContextFn(cc, "PROCESS")(cc);
+    }
+    if (cc->InputSidePackets().HasTag("") > 0) {
+      return GetProcessFn(cc, "")(cc->Inputs(), &cc->Outputs());
+    }
+    return ::mediapipe::OkStatus();
+  }
+
+  ::mediapipe::Status Close(CalculatorContext* cc) final {
+    if (cc->InputSidePackets().HasTag("CLOSE")) {
+      return GetContextFn(cc, "CLOSE")(cc);
+    }
+    return ::mediapipe::OkStatus();
   }
 
  private:
-  ProcessFunction callback_;
+  ProcessFunction GetProcessFn(CalculatorContext* cc, std::string tag) {
+    return cc->InputSidePackets().Tag(tag).Get<ProcessFunction>();
+  }
+  CalculatorContextFunction GetContextFn(CalculatorContext* cc,
+                                         std::string tag) {
+    return cc->InputSidePackets().Tag(tag).Get<CalculatorContextFunction>();
+  }
 };
 REGISTER_CALCULATOR(LambdaCalculator);
 

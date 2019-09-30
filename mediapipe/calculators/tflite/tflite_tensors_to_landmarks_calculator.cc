@@ -96,7 +96,8 @@ REGISTER_CALCULATOR(TfLiteTensorsToLandmarksCalculator);
               options_.has_input_image_width())
         << "Must provide input with/height for getting normalized landmarks.";
   }
-  if (cc->Outputs().HasTag("LANDMARKS") && options_.flip_vertically()) {
+  if (cc->Outputs().HasTag("LANDMARKS") &&
+      (options_.flip_vertically() || options_.flip_horizontally())) {
     RET_CHECK(options_.has_input_image_height() &&
               options_.has_input_image_width())
         << "Must provide input with/height for using flip_vertically option "
@@ -133,7 +134,12 @@ REGISTER_CALCULATOR(TfLiteTensorsToLandmarksCalculator);
   for (int ld = 0; ld < num_landmarks_; ++ld) {
     const int offset = ld * num_dimensions;
     Landmark landmark;
-    landmark.set_x(raw_landmarks[offset]);
+
+    if (options_.flip_horizontally()) {
+      landmark.set_x(options_.input_image_width() - raw_landmarks[offset]);
+    } else {
+      landmark.set_x(raw_landmarks[offset]);
+    }
     if (num_dimensions > 1) {
       if (options_.flip_vertically()) {
         landmark.set_y(options_.input_image_height() -

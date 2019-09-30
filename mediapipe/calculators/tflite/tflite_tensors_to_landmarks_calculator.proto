@@ -40,6 +40,12 @@ message TfLiteTensorsToLandmarksCalculatorOptions {
   // representation has a bottom-left origin (e.g., in OpenGL).
   optional bool flip_vertically = 4 [default = false];
 
+  // Whether the detection coordinates from the input tensors should be flipped
+  // horizontally (along the x-direction). This is useful, for example, when the
+  // input image is horizontally flipped in ImageTransformationCalculator
+  // beforehand.
+  optional bool flip_horizontally = 6 [default = false];
+
   // A value that z values should be divided by.
   optional float normalize_z = 5 [default = 1.0];
 }

@@ -128,8 +128,8 @@ class NodeChainSubgraph : public Subgraph {
  public:
   ::mediapipe::StatusOr<CalculatorGraphConfig> GetConfig(
       const SubgraphOptions& options) override {
-    const mediapipe::NodeChainSubgraphOptions& opts =
-        options.GetExtension(mediapipe::NodeChainSubgraphOptions::ext);
+    auto opts =
+        Subgraph::GetOptions<mediapipe::NodeChainSubgraphOptions>(options);
     const ProtoString& node_type = opts.node_type();
     int chain_length = opts.chain_length();
     RET_CHECK(!node_type.empty());

@@ -16,11 +16,15 @@ node {
   input_side_packet: "SEQUENCE_EXAMPLE:parsed_sequence_example"
   output_side_packet: "DATA_PATH:input_file"
   output_side_packet: "RESAMPLER_OPTIONS:packet_resampler_options"
+  output_side_packet: "AUDIO_DECODER_OPTIONS:audio_decoder_options"
   node_options: {
     [type.googleapis.com/mediapipe.UnpackMediaSequenceCalculatorOptions]: {
       base_packet_resampler_options {
         frame_rate: 1.0
         base_timestamp: 0
+      }
+      base_audio_decoder_options {
+        audio_stream { stream_index: 0 }
       }
     }
   }
@@ -121,13 +125,9 @@ node {
 node {
   calculator: "AudioDecoderCalculator"
   input_side_packet: "INPUT_FILE_PATH:input_file"
+  input_side_packet: "OPTIONS:audio_decoder_options"
   output_stream: "AUDIO:audio"
   output_stream: "AUDIO_HEADER:audio_header"
-  node_options: {
-    [type.googleapis.com/mediapipe.AudioDecoderOptions]: {
-      audio_stream { stream_index: 0 }
-    }
-  }
 }
 
 node {

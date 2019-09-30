@@ -16,7 +16,6 @@ package com.google.mediapipe.framework;
 
 import com.google.common.base.Preconditions;
 import com.google.common.flogger.FluentLogger;
-import com.google.mediapipe.proto.CalculatorOptionsProto.CalculatorOptions;
 import com.google.mediapipe.proto.CalculatorProto.CalculatorGraphConfig;
 import com.google.mediapipe.proto.GraphTemplateProto.CalculatorGraphTemplate;
 import com.google.protobuf.InvalidProtocolBufferException;
@@ -119,7 +118,7 @@ public class Graph {
   }
 
   /** Specifies options such as template arguments for the graph. */
-  public synchronized void setGraphOptions(CalculatorOptions options) {
+  public synchronized void setGraphOptions(CalculatorGraphConfig.Node options) {
     nativeSetGraphOptions(nativeGraphHandle, options.toByteArray());
   }
 

@@ -14,7 +14,9 @@
 
 licenses(["notice"])  # Apache 2.0
 
-package(default_visibility = ["//mediapipe/examples:__subpackages__"])
+package(default_visibility = [
+    "//visibility:public",
+])
 
 cc_library(
     name = "simple_run_graph_main",
@@ -27,5 +29,46 @@ cc_library(
         "//mediapipe/framework/port:parse_text_proto",
         "//mediapipe/framework/port:status",
         "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_library(
+    name = "demo_run_graph_main",
+    srcs = ["demo_run_graph_main.cc"],
+    deps = [
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/formats:image_frame",
+        "//mediapipe/framework/formats:image_frame_opencv",
+        "//mediapipe/framework/port:commandlineflags",
+        "//mediapipe/framework/port:file_helpers",
+        "//mediapipe/framework/port:opencv_highgui",
+        "//mediapipe/framework/port:opencv_imgproc",
+        "//mediapipe/framework/port:opencv_video",
+        "//mediapipe/framework/port:parse_text_proto",
+        "//mediapipe/framework/port:status",
+    ],
+)
+
+# Linux only.
+# Must have a GPU with EGL support:
+# ex: sudo aptitude install mesa-common-dev libegl1-mesa-dev libgles2-mesa-dev
+# (or similar nvidia/amd equivalent)
+cc_library(
+    name = "demo_run_graph_main_gpu",
+    srcs = ["demo_run_graph_main_gpu.cc"],
+    deps = [
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/formats:image_frame",
+        "//mediapipe/framework/formats:image_frame_opencv",
+        "//mediapipe/framework/port:commandlineflags",
+        "//mediapipe/framework/port:file_helpers",
+        "//mediapipe/framework/port:opencv_highgui",
+        "//mediapipe/framework/port:opencv_imgproc",
+        "//mediapipe/framework/port:opencv_video",
+        "//mediapipe/framework/port:parse_text_proto",
+        "//mediapipe/framework/port:status",
+        "//mediapipe/gpu:gl_calculator_helper",
+        "//mediapipe/gpu:gpu_buffer",
+        "//mediapipe/gpu:gpu_shared_data_internal",
     ],
 )
