@@ -23,7 +23,7 @@ load(
 
 ios_application(
     name = "FaceDetectionCpuApp",
-    bundle_id = "com.google.mediapipe.FaceDetectionCpu",
+    bundle_id = "touchless-ui",
     families = [
         "iphone",
         "ipad",

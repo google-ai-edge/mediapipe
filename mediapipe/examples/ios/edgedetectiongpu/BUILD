@@ -23,7 +23,7 @@ load(
 
 ios_application(
     name = "EdgeDetectionGpuApp",
-    bundle_id = "com.google.mediapipe.EdgeDetectionGpu",
+    bundle_id = "touchless-ui",
     families = [
         "iphone",
         "ipad",

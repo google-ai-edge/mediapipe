@@ -23,7 +23,7 @@ load(
 
 ios_application(
     name = "ObjectDetectionCpuApp",
-    bundle_id = "com.google.mediapipe.ObjectDetectionCpu",
+    bundle_id = "touchless-ui",
     families = [
         "iphone",
         "ipad",
