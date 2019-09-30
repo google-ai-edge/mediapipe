@@ -23,7 +23,7 @@ load(
 
 ios_application(
     name = "HandDetectionGpuApp",
-    bundle_id = "com.google.mediapipe.HandDetectionGpu",
+    bundle_id = "touchless_ui",
     families = [
         "iphone",
         "ipad",
