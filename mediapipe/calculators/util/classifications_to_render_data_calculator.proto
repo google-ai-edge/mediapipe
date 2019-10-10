@@ -1,0 +1,45 @@
+// Copyright 2019 The MediaPipe Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto2";
+
+package mediapipe;
+
+import "mediapipe/framework/calculator.proto";
+import "mediapipe/util/color.proto";
+import "mediapipe/util/render_data.proto";
+
+message ClassificationsToRenderDataCalculatorOptions {
+  extend CalculatorOptions {
+    optional ClassificationsToRenderDataCalculatorOptions ext = 299999999;
+  }
+
+  // The delimiter to separate score and label(_id).
+  optional string text_delimiter = 2 [default = " "];
+
+  // Rendering options for the label.
+  optional RenderAnnotation.Text text = 4;
+
+  // Thickness for drawing the score(s) and label(s).
+  optional double thickness = 5 [default = 1.0];
+
+  // Color for drawing the score(s) and label(s).
+  optional Color color = 6;
+
+  // An optional string that identifies this class of annotations
+  // for the render data output this calculator produces.  If multiple
+  // instances of this calculator are present in the graph, this value
+  // should be unique among them.
+  optional string scene_class = 7 [default = "CLASSIFICATION"];
+}

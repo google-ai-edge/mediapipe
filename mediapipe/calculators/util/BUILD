@@ -444,6 +444,17 @@ proto_library(
 )
 
 proto_library(
+    name = "classifications_to_render_data_calculator_proto",
+    srcs = ["classifications_to_render_data_calculator.proto"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//mediapipe/framework:calculator_proto",
+        "//mediapipe/util:color_proto",
+        "//mediapipe/util:render_data_proto",
+    ],
+)
+
+proto_library(
     name = "landmarks_to_render_data_calculator_proto",
     srcs = ["landmarks_to_render_data_calculator.proto"],
     visibility = ["//visibility:public"],
@@ -547,6 +558,36 @@ cc_library(
 )
 
 mediapipe_cc_proto_library(
+    name = "classifications_to_render_data_calculator_cc_proto",
+    srcs = ["classifications_to_render_data_calculator.proto"],
+    cc_deps = [
+        "//mediapipe/framework:calculator_cc_proto",
+        "//mediapipe/util:color_cc_proto",
+        "//mediapipe/util:render_data_cc_proto",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [":classifications_to_render_data_calculator_proto"],
+)
+
+cc_library(
+    name = "classifications_to_render_data_calculator",
+    srcs = ["classifications_to_render_data_calculator.cc"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":classifications_to_render_data_calculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:calculator_options_cc_proto",
+        "//mediapipe/framework/formats:classification_cc_proto",
+        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/util:color_cc_proto",
+        "//mediapipe/util:render_data_cc_proto",
+        "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/strings",
+    ],
+    alwayslink = 1,
+)
+
+mediapipe_cc_proto_library(
     name = "landmarks_to_render_data_calculator_cc_proto",
     srcs = ["landmarks_to_render_data_calculator.proto"],
     cc_deps = [
@@ -606,6 +647,28 @@ cc_test(
         "//mediapipe/framework/deps:message_matchers",
         "//mediapipe/framework/formats:detection_cc_proto",
         "//mediapipe/framework/formats:location_data_cc_proto",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:parse_text_proto",
+        "//mediapipe/framework/port:status",
+        "//mediapipe/util:color_cc_proto",
+        "//mediapipe/util:render_data_cc_proto",
+        "@com_google_absl//absl/memory",
+    ],
+)
+
+cc_test(
+    name = "classifications_to_render_data_calculator_test",
+    size = "small",
+    srcs = ["classifications_to_render_data_calculator_test.cc"],
+    deps = [
+        ":classifications_to_render_data_calculator",
+        ":classifications_to_render_data_calculator_cc_proto",
+        "//mediapipe/framework:calculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:calculator_runner",
+        "//mediapipe/framework:packet",
+        "//mediapipe/framework/deps:message_matchers",
+        "//mediapipe/framework/formats:classification_cc_proto",
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/framework/port:parse_text_proto",
         "//mediapipe/framework/port:status",
