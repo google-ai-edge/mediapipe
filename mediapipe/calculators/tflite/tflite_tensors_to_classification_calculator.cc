@@ -51,9 +51,9 @@ namespace mediapipe {
 //   input_stream: "TENSORS:tensors"
 //   output_stream: "CLASSIFICATIONS:classifications"
 //   options: {
-//     [mediapipe.TfLiteTensorsToClassificationCalculatorOptions.ext] {
-//       num_classes: 1024
+//     [type.googleapis.com/mediapipe.TfLiteTensorsToClassificationCalculatorOptions] {
 //       min_score_threshold: 0.1
+//       top_k: 5
 //       label_map_path: "labelmap.txt"
 //     }
 //   }
