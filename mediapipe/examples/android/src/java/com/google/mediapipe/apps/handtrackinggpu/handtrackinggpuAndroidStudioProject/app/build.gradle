@@ -36,11 +36,9 @@ dependencies {
     implementation "com.google.flogger:flogger:0.4"
     implementation 'com.google.protobuf:protobuf-java:3.5.1'
 
-    compileOnly 'org.glassfish:javax.annotation:10.0-b28'
     implementation 'androidx.annotation:annotation:1.1.0'
     implementation 'org.jetbrains:annotations:15.0'
 
-//    implementation 'com.intellij:annotations:+@jar'
 
     implementation "androidx.camera:camera-core:1.0.0-alpha06"
     // If you want to use Camera2 extensions
