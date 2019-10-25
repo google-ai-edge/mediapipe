@@ -28,7 +28,8 @@
 #include "mediapipe/util/resource_util.h"
 #include "tensorflow/lite/interpreter.h"
 
-#if !defined(MEDIAPIPE_DISABLE_GPU) && !defined(__APPLE__)
+#if !defined(MEDIAPIPE_DISABLE_GPU) && !defined(__EMSCRIPTEN__) && \
+    !defined(__APPLE__)
 #include "mediapipe/gpu/gl_calculator_helper.h"
 #include "mediapipe/gpu/gl_simple_shaders.h"
 #include "mediapipe/gpu/shader_util.h"
@@ -53,7 +54,8 @@ float Clamp(float val, float min, float max) {
 
 namespace mediapipe {
 
-#if !defined(MEDIAPIPE_DISABLE_GPU) && !defined(__APPLE__)
+#if !defined(MEDIAPIPE_DISABLE_GPU) && !defined(__EMSCRIPTEN__) && \
+    !defined(__APPLE__)
 using ::tflite::gpu::gl::CopyBuffer;
 using ::tflite::gpu::gl::CreateReadWriteRgbaImageTexture;
 using ::tflite::gpu::gl::CreateReadWriteShaderStorageBuffer;
@@ -129,7 +131,8 @@ class TfLiteTensorsToSegmentationCalculator : public CalculatorBase {
   int tensor_channels_ = 0;
 
   bool use_gpu_ = false;
-#if !defined(MEDIAPIPE_DISABLE_GPU) && !defined(__APPLE__)
+#if !defined(MEDIAPIPE_DISABLE_GPU) && !defined(__EMSCRIPTEN__) && \
+    !defined(__APPLE__)
   mediapipe::GlCalculatorHelper gpu_helper_;
   std::unique_ptr<GlProgram> mask_program_with_prev_;
   std::unique_ptr<GlProgram> mask_program_no_prev_;
@@ -159,7 +162,8 @@ REGISTER_CALCULATOR(TfLiteTensorsToSegmentationCalculator);
   }
 
   // Inputs GPU.
-#if !defined(MEDIAPIPE_DISABLE_GPU) && !defined(__APPLE__)
+#if !defined(MEDIAPIPE_DISABLE_GPU) && !defined(__EMSCRIPTEN__) && \
+    !defined(__APPLE__)
   if (cc->Inputs().HasTag("TENSORS_GPU")) {
     cc->Inputs().Tag("TENSORS_GPU").Set<std::vector<GlBuffer>>();
     use_gpu |= true;
@@ -178,7 +182,8 @@ REGISTER_CALCULATOR(TfLiteTensorsToSegmentationCalculator);
   if (cc->Outputs().HasTag("MASK")) {
     cc->Outputs().Tag("MASK").Set<ImageFrame>();
   }
-#if !defined(MEDIAPIPE_DISABLE_GPU) && !defined(__APPLE__)
+#if !defined(MEDIAPIPE_DISABLE_GPU) && !defined(__EMSCRIPTEN__) && \
+    !defined(__APPLE__)
   if (cc->Outputs().HasTag("MASK_GPU")) {
     cc->Outputs().Tag("MASK_GPU").Set<mediapipe::GpuBuffer>();
     use_gpu |= true;
@@ -186,7 +191,8 @@ REGISTER_CALCULATOR(TfLiteTensorsToSegmentationCalculator);
 #endif  //  !MEDIAPIPE_DISABLE_GPU
 
   if (use_gpu) {
-#if !defined(MEDIAPIPE_DISABLE_GPU) && !defined(__APPLE__)
+#if !defined(MEDIAPIPE_DISABLE_GPU) && !defined(__EMSCRIPTEN__) && \
+    !defined(__APPLE__)
     MP_RETURN_IF_ERROR(mediapipe::GlCalculatorHelper::UpdateContract(cc));
 #endif  //  !MEDIAPIPE_DISABLE_GPU
   }
@@ -199,7 +205,8 @@ REGISTER_CALCULATOR(TfLiteTensorsToSegmentationCalculator);
 
   if (cc->Inputs().HasTag("TENSORS_GPU")) {
     use_gpu_ = true;
-#if !defined(MEDIAPIPE_DISABLE_GPU) && !defined(__APPLE__)
+#if !defined(MEDIAPIPE_DISABLE_GPU) && !defined(__EMSCRIPTEN__) && \
+    !defined(__APPLE__)
     MP_RETURN_IF_ERROR(gpu_helper_.Open(cc));
 #endif  //  !MEDIAPIPE_DISABLE_GPU
   }
@@ -207,7 +214,8 @@ REGISTER_CALCULATOR(TfLiteTensorsToSegmentationCalculator);
   MP_RETURN_IF_ERROR(LoadOptions(cc));
 
   if (use_gpu_) {
-#if !defined(MEDIAPIPE_DISABLE_GPU) && !defined(__APPLE__)
+#if !defined(MEDIAPIPE_DISABLE_GPU) && !defined(__EMSCRIPTEN__) && \
+    !defined(__APPLE__)
     MP_RETURN_IF_ERROR(
         gpu_helper_.RunInGlContext([this, cc]() -> ::mediapipe::Status {
           MP_RETURN_IF_ERROR(InitGpu(cc));
@@ -224,7 +232,8 @@ REGISTER_CALCULATOR(TfLiteTensorsToSegmentationCalculator);
 ::mediapipe::Status TfLiteTensorsToSegmentationCalculator::Process(
     CalculatorContext* cc) {
   if (use_gpu_) {
-#if !defined(MEDIAPIPE_DISABLE_GPU) && !defined(__APPLE__)
+#if !defined(MEDIAPIPE_DISABLE_GPU) && !defined(__EMSCRIPTEN__) && \
+    !defined(__APPLE__)
     MP_RETURN_IF_ERROR(
         gpu_helper_.RunInGlContext([this, cc]() -> ::mediapipe::Status {
           MP_RETURN_IF_ERROR(ProcessGpu(cc));
@@ -240,7 +249,8 @@ REGISTER_CALCULATOR(TfLiteTensorsToSegmentationCalculator);
 
 ::mediapipe::Status TfLiteTensorsToSegmentationCalculator::Close(
     CalculatorContext* cc) {
-#if !defined(MEDIAPIPE_DISABLE_GPU) && !defined(__APPLE__)
+#if !defined(MEDIAPIPE_DISABLE_GPU) && !defined(__EMSCRIPTEN__) && \
+    !defined(__APPLE__)
   gpu_helper_.RunInGlContext([this] {
     if (upsample_program_) glDeleteProgram(upsample_program_);
     upsample_program_ = 0;
@@ -367,7 +377,8 @@ REGISTER_CALCULATOR(TfLiteTensorsToSegmentationCalculator);
   if (cc->Inputs().Tag("TENSORS_GPU").IsEmpty()) {
     return ::mediapipe::OkStatus();
   }
-#if !defined(MEDIAPIPE_DISABLE_GPU) && !defined(__APPLE__)
+#if !defined(MEDIAPIPE_DISABLE_GPU) && !defined(__EMSCRIPTEN__) && \
+    !defined(__APPLE__)
   // Get input streams.
   const auto& input_tensors =
       cc->Inputs().Tag("TENSORS_GPU").Get<std::vector<GlBuffer>>();
@@ -453,7 +464,8 @@ REGISTER_CALCULATOR(TfLiteTensorsToSegmentationCalculator);
 }
 
 void TfLiteTensorsToSegmentationCalculator::GlRender() {
-#if !defined(MEDIAPIPE_DISABLE_GPU) && !defined(__APPLE__)
+#if !defined(MEDIAPIPE_DISABLE_GPU) && !defined(__EMSCRIPTEN__) && \
+    !defined(__APPLE__)
   static const GLfloat square_vertices[] = {
       -1.0f, -1.0f,  // bottom left
       1.0f,  -1.0f,  // bottom right
@@ -525,7 +537,8 @@ void TfLiteTensorsToSegmentationCalculator::GlRender() {
 
 ::mediapipe::Status TfLiteTensorsToSegmentationCalculator::InitGpu(
     CalculatorContext* cc) {
-#if !defined(MEDIAPIPE_DISABLE_GPU) && !defined(__APPLE__)
+#if !defined(MEDIAPIPE_DISABLE_GPU) && !defined(__EMSCRIPTEN__) && \
+    !defined(__APPLE__)
   MP_RETURN_IF_ERROR(gpu_helper_.RunInGlContext([this]()
                                                     -> ::mediapipe::Status {
     // A shader to process a segmentation tensor into an output mask,

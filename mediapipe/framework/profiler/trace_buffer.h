@@ -39,9 +39,20 @@ inline const void* GetPacketDataId(const HolderBase* holder) {
 struct TraceEvent {
   using EventType = GraphTrace::EventType;
   // GraphTrace::EventType constants, repeated here to match GraphProfilerStub.
-  static const EventType UNKNOWN, OPEN, PROCESS, CLOSE, NOT_READY,
-      READY_FOR_PROCESS, READY_FOR_CLOSE, THROTTLED, UNTHROTTLED, CPU_TASK_USER,
-      CPU_TASK_SYSTEM, GPU_TASK, DSP_TASK, TPU_TASK;
+  static constexpr EventType UNKNOWN = GraphTrace::UNKNOWN;
+  static constexpr EventType OPEN = GraphTrace::OPEN;
+  static constexpr EventType PROCESS = GraphTrace::PROCESS;
+  static constexpr EventType CLOSE = GraphTrace::CLOSE;
+  static constexpr EventType NOT_READY = GraphTrace::NOT_READY;
+  static constexpr EventType READY_FOR_PROCESS = GraphTrace::READY_FOR_PROCESS;
+  static constexpr EventType READY_FOR_CLOSE = GraphTrace::READY_FOR_CLOSE;
+  static constexpr EventType THROTTLED = GraphTrace::THROTTLED;
+  static constexpr EventType UNTHROTTLED = GraphTrace::UNTHROTTLED;
+  static constexpr EventType CPU_TASK_USER = GraphTrace::CPU_TASK_USER;
+  static constexpr EventType CPU_TASK_SYSTEM = GraphTrace::CPU_TASK_SYSTEM;
+  static constexpr EventType GPU_TASK = GraphTrace::GPU_TASK;
+  static constexpr EventType DSP_TASK = GraphTrace::DSP_TASK;
+  static constexpr EventType TPU_TASK = GraphTrace::TPU_TASK;
   absl::Time event_time;
   EventType event_type = UNKNOWN;
   bool is_finish = false;

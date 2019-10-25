@@ -688,6 +688,12 @@ cc_library(
 cc_library(
     name = "demangle",
     hdrs = ["demangle.h"],
+    defines = select({
+        "//mediapipe/framework/profiler:android_release": [
+            "MEDIAPIPE_HAS_CXA_DEMANGLE=0",
+        ],
+        "//conditions:default": [],
+    }),
     visibility = ["//visibility:public"],
 )
 
@@ -1712,4 +1718,11 @@ cc_test(
         "//mediapipe/framework/tool:sink",
         "//mediapipe/framework/tool/testdata:dub_quad_test_subgraph",
     ],
+)
+
+# Expose the proto source files for building mediapipe AAR.
+filegroup(
+    name = "protos_src",
+    srcs = glob(["*.proto"]),
+    visibility = ["//mediapipe:__subpackages__"],
 )

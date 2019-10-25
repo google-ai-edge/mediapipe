@@ -24,7 +24,8 @@
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/util/resource_util.h"
 #include "tensorflow/lite/interpreter.h"
-#if defined(__ANDROID__) || (defined(__APPLE__) && !TARGET_OS_OSX)
+#if defined(__EMSCRIPTEN__) || defined(__ANDROID__) || \
+    (defined(__APPLE__) && !TARGET_OS_OSX)
 #include "mediapipe/util/android/file/base/file.h"
 #include "mediapipe/util/android/file/base/helpers.h"
 #else
@@ -66,8 +67,8 @@ class TfLiteTensorsToClassificationCalculator : public CalculatorBase {
   ::mediapipe::Status Close(CalculatorContext* cc) override;
 
  private:
+  ::mediapipe::TfLiteTensorsToClassificationCalculatorOptions options_;
   int top_k_ = 0;
-  double min_score_threshold_ = 0;
   std::unordered_map<int, std::string> label_map_;
   bool label_map_loaded_ = false;
 };
@@ -93,15 +94,14 @@ REGISTER_CALCULATOR(TfLiteTensorsToClassificationCalculator);
     CalculatorContext* cc) {
   cc->SetOffset(TimestampDiff(0));
 
-  auto options = cc->Options<
+  options_ = cc->Options<
       ::mediapipe::TfLiteTensorsToClassificationCalculatorOptions>();
 
-  top_k_ = options.top_k();
-  min_score_threshold_ = options.min_score_threshold();
-  if (options.has_label_map_path()) {
+  top_k_ = options_.top_k();
+  if (options_.has_label_map_path()) {
     std::string string_path;
     ASSIGN_OR_RETURN(string_path,
-                     PathToResourceAsFile(options.label_map_path()));
+                     PathToResourceAsFile(options_.label_map_path()));
     std::string label_map_string;
     MP_RETURN_IF_ERROR(file::GetContents(string_path, &label_map_string));
 
@@ -125,9 +125,11 @@ REGISTER_CALCULATOR(TfLiteTensorsToClassificationCalculator);
   RET_CHECK_EQ(input_tensors.size(), 1);
 
   const TfLiteTensor* raw_score_tensor = &input_tensors[0];
-  RET_CHECK_EQ(raw_score_tensor->dims->size, 2);
-  RET_CHECK_EQ(raw_score_tensor->dims->data[0], 1);
-  int num_classes = raw_score_tensor->dims->data[1];
+  int num_classes = 1;
+  for (int i = 0; i < raw_score_tensor->dims->size; ++i) {
+    num_classes *= raw_score_tensor->dims->data[i];
+  }
+
   if (label_map_loaded_) {
     RET_CHECK_EQ(num_classes, label_map_.size());
   }
@@ -135,7 +137,8 @@ REGISTER_CALCULATOR(TfLiteTensorsToClassificationCalculator);
 
   auto classification_list = absl::make_unique<ClassificationList>();
   for (int i = 0; i < num_classes; ++i) {
-    if (raw_scores[i] < min_score_threshold_) {
+    if (options_.has_min_score_threshold() &&
+        raw_scores[i] < options_.min_score_threshold()) {
       continue;
     }
     Classification* classification = classification_list->add_classification();
@@ -148,6 +151,7 @@ REGISTER_CALCULATOR(TfLiteTensorsToClassificationCalculator);
 
   // Note that partial_sort will raise error when top_k_ >
   // classification_list->classification_size().
+  CHECK_GE(classification_list->classification_size(), top_k_);
   auto raw_classification_list = classification_list->mutable_classification();
   if (top_k_ > 0 && classification_list->classification_size() >= top_k_) {
     std::partial_sort(raw_classification_list->begin(),

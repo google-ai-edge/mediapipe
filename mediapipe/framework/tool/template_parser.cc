@@ -1318,8 +1318,8 @@ bool IsInfixOperator(const std::string& token) {
 // A function-style operator, including a for or if expression.
 bool IsFunctionOperator(const std::string& token) {
   static auto kTokens = new std::set<std::string>{
-      "min",    "max",       "for",       "if",   "!",
-      "concat", "lowercase", "uppercase", "dict", "list",
+      "min",       "max",       "for",  "if",   "!",    "concat",
+      "lowercase", "uppercase", "size", "dict", "list",
   };
   return kTokens->count(token) > 0;
 }

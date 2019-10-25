@@ -127,6 +127,11 @@ class TagMap {
   std::vector<std::string> names_;
 };
 
+// Equal TagData structs define equal id ranges.
+inline bool operator==(const TagMap::TagData& d1, const TagMap::TagData& d2) {
+  return d1.id == d2.id && d1.count == d2.count;
+}
+
 }  // namespace tool
 }  // namespace mediapipe
 

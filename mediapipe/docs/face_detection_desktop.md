@@ -36,10 +36,9 @@ $ bazel build -c opt --define MEDIAPIPE_DISABLE_GPU=1 \
 # INFO: 711 processes: 710 linux-sandbox, 1 local.
 # INFO: Build completed successfully, 734 total actions
 
-$ export GLOG_logtostderr=1
 # This will open up your webcam as long as it is connected and on
 # Any errors is likely due to your webcam being not accessible
-$ bazel-bin/mediapipe/examples/desktop/face_detection/face_detection_cpu \
+$ GLOG_logtostderr=1 bazel-bin/mediapipe/examples/desktop/face_detection/face_detection_cpu \
     --calculator_graph_config_file=mediapipe/graphs/face_detection/face_detection_desktop_live.pbtxt
 ```
 
@@ -60,11 +59,10 @@ $ bazel build -c opt --copt -DMESA_EGL_NO_X11_HEADERS \
 # INFO: 711 processes: 710 linux-sandbox, 1 local.
 # INFO: Build completed successfully, 734 total actions
 
-$ export GLOG_logtostderr=1
 # This will open up your webcam as long as it is connected and on
 # Any errors is likely due to your webcam being not accessible,
 # or GPU drivers not setup properly.
-$ bazel-bin/mediapipe/examples/desktop/face_detection/face_detection_gpu \
+$ GLOG_logtostderr=1 bazel-bin/mediapipe/examples/desktop/face_detection/face_detection_gpu \
     --calculator_graph_config_file=mediapipe/graphs/face_detection/face_detection_mobile_gpu.pbtxt
 ```
 

@@ -21,7 +21,8 @@
 namespace mediapipe {
 
 // A calculator for converting TFLite tensors from regression models into
-// landmarks.
+// landmarks. Note that if the landmarks in the tensor has more than 3
+// dimensions, only the first 3 dimensions will be converted to x,y,z.
 //
 // Input:
 //  TENSORS - Vector of TfLiteTensor of type kTfLiteFloat32. Only the first
@@ -122,9 +123,6 @@ REGISTER_CALCULATOR(TfLiteTensorsToLandmarksCalculator);
     num_values *= raw_tensor->dims->data[i];
   }
   const int num_dimensions = num_values / num_landmarks_;
-  // Landmarks must have less than 3 dimensions. Otherwise please consider
-  // using matrix.
-  CHECK_LE(num_dimensions, 3);
   CHECK_GT(num_dimensions, 0);
 
   const float* raw_landmarks = raw_tensor->data.f;

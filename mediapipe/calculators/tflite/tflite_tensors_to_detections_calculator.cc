@@ -27,7 +27,8 @@
 #include "mediapipe/framework/port/ret_check.h"
 #include "tensorflow/lite/interpreter.h"
 
-#if !defined(MEDIAPIPE_DISABLE_GPU) && !defined(__APPLE__)
+#if !defined(MEDIAPIPE_DISABLE_GPU) && !defined(__EMSCRIPTEN__) && \
+    !defined(__APPLE__)
 #include "mediapipe/gpu/gl_calculator_helper.h"
 #include "tensorflow/lite/delegates/gpu/gl/gl_buffer.h"
 #include "tensorflow/lite/delegates/gpu/gl/gl_program.h"
@@ -55,12 +56,14 @@ constexpr int kNumCoordsPerBox = 4;
 
 namespace mediapipe {
 
-#if !defined(MEDIAPIPE_DISABLE_GPU) && !defined(__APPLE__)
+#if !defined(MEDIAPIPE_DISABLE_GPU) && !defined(__EMSCRIPTEN__) && \
+    !defined(__APPLE__)
 using ::tflite::gpu::gl::CreateReadWriteShaderStorageBuffer;
 using ::tflite::gpu::gl::GlShader;
 #endif
 
-#if !defined(MEDIAPIPE_DISABLE_GPU) && !defined(__APPLE__)
+#if !defined(MEDIAPIPE_DISABLE_GPU) && !defined(__EMSCRIPTEN__) && \
+    !defined(__APPLE__)
 typedef ::tflite::gpu::gl::GlBuffer GpuTensor;
 typedef ::tflite::gpu::gl::GlProgram GpuProgram;
 #elif defined(__APPLE__) && !TARGET_OS_OSX  // iOS
@@ -70,7 +73,7 @@ typedef id<MTLComputePipelineState> GpuProgram;
 
 namespace {
 
-#if !defined(MEDIAPIPE_DISABLE_GPU)
+#if !defined(MEDIAPIPE_DISABLE_GPU) && !defined(__EMSCRIPTEN__)
 struct GPUData {
   GpuProgram decode_program;
   GpuProgram score_program;
@@ -169,18 +172,21 @@ class TfLiteTensorsToDetectionsCalculator : public CalculatorBase {
       const int* detection_classes, std::vector<Detection>* output_detections);
   Detection ConvertToDetection(float box_ymin, float box_xmin, float box_ymax,
                                float box_xmax, float score, int class_id,
-                               bool flip_vertically);
+                               int detection_id, bool flip_vertically);
 
   int num_classes_ = 0;
   int num_boxes_ = 0;
   int num_coords_ = 0;
+  // Unique detection ID per new detection.
+  static int next_detection_id_;
   std::set<int> ignore_classes_;
 
   ::mediapipe::TfLiteTensorsToDetectionsCalculatorOptions options_;
   std::vector<Anchor> anchors_;
   bool side_packet_anchors_{};
 
-#if !defined(MEDIAPIPE_DISABLE_GPU) && !defined(__APPLE__)
+#if !defined(MEDIAPIPE_DISABLE_GPU) && !defined(__EMSCRIPTEN__) && \
+    !defined(__APPLE__)
   mediapipe::GlCalculatorHelper gpu_helper_;
   std::unique_ptr<GPUData> gpu_data_;
 #elif defined(__APPLE__) && !TARGET_OS_OSX  // iOS
@@ -193,6 +199,10 @@ class TfLiteTensorsToDetectionsCalculator : public CalculatorBase {
 };
 REGISTER_CALCULATOR(TfLiteTensorsToDetectionsCalculator);
 
+// Initialization of non-const static member should happen outside class
+// definition.
+int TfLiteTensorsToDetectionsCalculator::next_detection_id_ = 0;
+
 ::mediapipe::Status TfLiteTensorsToDetectionsCalculator::GetContract(
     CalculatorContract* cc) {
   RET_CHECK(!cc->Inputs().GetTags().empty());
@@ -204,7 +214,7 @@ REGISTER_CALCULATOR(TfLiteTensorsToDetectionsCalculator);
     cc->Inputs().Tag("TENSORS").Set<std::vector<TfLiteTensor>>();
   }
 
-#if !defined(MEDIAPIPE_DISABLE_GPU)
+#if !defined(MEDIAPIPE_DISABLE_GPU) && !defined(__EMSCRIPTEN__)
   if (cc->Inputs().HasTag("TENSORS_GPU")) {
     cc->Inputs().Tag("TENSORS_GPU").Set<std::vector<GpuTensor>>();
     use_gpu |= true;
@@ -222,7 +232,8 @@ REGISTER_CALCULATOR(TfLiteTensorsToDetectionsCalculator);
   }
 
   if (use_gpu) {
-#if !defined(MEDIAPIPE_DISABLE_GPU) && !defined(__APPLE__)
+#if !defined(MEDIAPIPE_DISABLE_GPU) && !defined(__EMSCRIPTEN__) && \
+    !defined(__APPLE__)
     MP_RETURN_IF_ERROR(mediapipe::GlCalculatorHelper::UpdateContract(cc));
 #elif defined(__APPLE__) && !TARGET_OS_OSX  // iOS
     MP_RETURN_IF_ERROR([MPPMetalHelper updateContract:cc]);
@@ -238,7 +249,8 @@ REGISTER_CALCULATOR(TfLiteTensorsToDetectionsCalculator);
 
   if (cc->Inputs().HasTag("TENSORS_GPU")) {
     gpu_input_ = true;
-#if !defined(MEDIAPIPE_DISABLE_GPU) && !defined(__APPLE__)
+#if !defined(MEDIAPIPE_DISABLE_GPU) && !defined(__EMSCRIPTEN__) && \
+    !defined(__APPLE__)
     MP_RETURN_IF_ERROR(gpu_helper_.Open(cc));
 #elif defined(__APPLE__) && !TARGET_OS_OSX  // iOS
     gpu_helper_ = [[MPPMetalHelper alloc] initWithCalculatorContext:cc];
@@ -400,7 +412,8 @@ REGISTER_CALCULATOR(TfLiteTensorsToDetectionsCalculator);
 }
 ::mediapipe::Status TfLiteTensorsToDetectionsCalculator::ProcessGPU(
     CalculatorContext* cc, std::vector<Detection>* output_detections) {
-#if !defined(MEDIAPIPE_DISABLE_GPU) && !defined(__APPLE__)
+#if !defined(MEDIAPIPE_DISABLE_GPU) && !defined(__EMSCRIPTEN__) && \
+    !defined(__APPLE__)
   const auto& input_tensors =
       cc->Inputs().Tag("TENSORS_GPU").Get<std::vector<GpuTensor>>();
   RET_CHECK_GE(input_tensors.size(), 2);
@@ -562,7 +575,8 @@ REGISTER_CALCULATOR(TfLiteTensorsToDetectionsCalculator);
 
 ::mediapipe::Status TfLiteTensorsToDetectionsCalculator::Close(
     CalculatorContext* cc) {
-#if !defined(MEDIAPIPE_DISABLE_GPU) && !defined(__APPLE__)
+#if !defined(MEDIAPIPE_DISABLE_GPU) && !defined(__EMSCRIPTEN__) && \
+    !defined(__APPLE__)
   gpu_helper_.RunInGlContext([this] { gpu_data_.reset(); });
 #elif defined(__APPLE__) && !TARGET_OS_OSX  // iOS
   gpu_data_.reset();
@@ -672,7 +686,10 @@ REGISTER_CALCULATOR(TfLiteTensorsToDetectionsCalculator);
     Detection detection = ConvertToDetection(
         detection_boxes[box_offset + 0], detection_boxes[box_offset + 1],
         detection_boxes[box_offset + 2], detection_boxes[box_offset + 3],
-        detection_scores[i], detection_classes[i], options_.flip_vertically());
+        detection_scores[i], detection_classes[i], next_detection_id_,
+        options_.flip_vertically());
+    // Increment to get next unique detection ID.
+    ++next_detection_id_;
     // Add keypoints.
     if (options_.num_keypoints() > 0) {
       auto* location_data = detection.mutable_location_data();
@@ -695,10 +712,11 @@ REGISTER_CALCULATOR(TfLiteTensorsToDetectionsCalculator);
 
 Detection TfLiteTensorsToDetectionsCalculator::ConvertToDetection(
     float box_ymin, float box_xmin, float box_ymax, float box_xmax, float score,
-    int class_id, bool flip_vertically) {
+    int class_id, int detection_id, bool flip_vertically) {
   Detection detection;
   detection.add_score(score);
   detection.add_label_id(class_id);
+  detection.set_detection_id(detection_id);
 
   LocationData* location_data = detection.mutable_location_data();
   location_data->set_format(LocationData::RELATIVE_BOUNDING_BOX);
@@ -715,7 +733,8 @@ Detection TfLiteTensorsToDetectionsCalculator::ConvertToDetection(
 
 ::mediapipe::Status TfLiteTensorsToDetectionsCalculator::GpuInit(
     CalculatorContext* cc) {
-#if !defined(MEDIAPIPE_DISABLE_GPU) && !defined(__APPLE__)
+#if !defined(MEDIAPIPE_DISABLE_GPU) && !defined(__EMSCRIPTEN__) && \
+    !defined(__APPLE__)
   MP_RETURN_IF_ERROR(gpu_helper_.RunInGlContext([this]()
                                                     -> ::mediapipe::Status {
     gpu_data_ = absl::make_unique<GPUData>();

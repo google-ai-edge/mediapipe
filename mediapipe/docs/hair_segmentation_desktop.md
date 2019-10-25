@@ -35,11 +35,10 @@ $ bazel build -c opt --copt -DMESA_EGL_NO_X11_HEADERS \
 #INFO: Streaming build results to: http://sponge2/37d5a184-293b-4e98-a43e-b22084db3142
 #INFO: Build completed successfully, 12210 total actions
 
-$ export GLOG_logtostderr=1
 # This will open up your webcam as long as it is connected and on
 # Any errors is likely due to your webcam being not accessible,
 # or GPU drivers not setup properly.
-$ bazel-bin/mediapipe/examples/desktop/hair_segmentation/hair_segmentation_gpu \
+$ GLOG_logtostderr=1 bazel-bin/mediapipe/examples/desktop/hair_segmentation/hair_segmentation_gpu \
     --calculator_graph_config_file=mediapipe/graphs/hair_segmentation/hair_segmentation_mobile_gpu.pbtxt
 ```
 

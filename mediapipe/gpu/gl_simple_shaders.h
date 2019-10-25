@@ -101,6 +101,10 @@ static const GLfloat kBasicTextureVertices[] = {
     1.0f, 1.0f,  // top right
 };
 
+// Places a texture on kBasicSquareVertices, flipped horizontally.
+static const GLfloat kBasicTextureVerticesFlipX[] = {
+    V4(kBasicTextureVertices, 1, 0, 3, 2)};
+
 // Places a texture on kBasicSquareVertices, flipped vertically.
 static const GLfloat kBasicTextureVerticesFlipY[] = {
     V4(kBasicTextureVertices, 2, 3, 0, 1)};

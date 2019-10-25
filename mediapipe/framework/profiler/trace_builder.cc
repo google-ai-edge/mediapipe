@@ -385,21 +385,21 @@ void TraceBuilder::CreateLog(const TraceBuffer& buffer, absl::Time begin_time,
 }
 void TraceBuilder::Clear() { impl_->Clear(); }
 
-// Defined here since inline constants fail to link in android builds.
-const TraceEvent::EventType  //
-    TraceEvent::UNKNOWN = GraphTrace::UNKNOWN,
-    TraceEvent::OPEN = GraphTrace::OPEN,
-    TraceEvent::PROCESS = GraphTrace::PROCESS,
-    TraceEvent::CLOSE = GraphTrace::CLOSE,
-    TraceEvent::NOT_READY = GraphTrace::NOT_READY,
-    TraceEvent::READY_FOR_PROCESS = GraphTrace::READY_FOR_PROCESS,
-    TraceEvent::READY_FOR_CLOSE = GraphTrace::READY_FOR_CLOSE,
-    TraceEvent::THROTTLED = GraphTrace::THROTTLED,
-    TraceEvent::UNTHROTTLED = GraphTrace::UNTHROTTLED,
-    TraceEvent::CPU_TASK_USER = GraphTrace::CPU_TASK_USER,
-    TraceEvent::CPU_TASK_SYSTEM = GraphTrace::CPU_TASK_SYSTEM,
-    TraceEvent::GPU_TASK = GraphTrace::GPU_TASK,
-    TraceEvent::DSP_TASK = GraphTrace::DSP_TASK,
-    TraceEvent::TPU_TASK = GraphTrace::TPU_TASK;
+// Defined here since constexpr requires out-of-class definition until C++17.
+const TraceEvent::EventType         //
+    TraceEvent::UNKNOWN,            //
+    TraceEvent::OPEN,               //
+    TraceEvent::PROCESS,            //
+    TraceEvent::CLOSE,              //
+    TraceEvent::NOT_READY,          //
+    TraceEvent::READY_FOR_PROCESS,  //
+    TraceEvent::READY_FOR_CLOSE,    //
+    TraceEvent::THROTTLED,          //
+    TraceEvent::UNTHROTTLED,        //
+    TraceEvent::CPU_TASK_USER,      //
+    TraceEvent::CPU_TASK_SYSTEM,    //
+    TraceEvent::GPU_TASK,           //
+    TraceEvent::DSP_TASK,           //
+    TraceEvent::TPU_TASK;
 
 }  // namespace mediapipe

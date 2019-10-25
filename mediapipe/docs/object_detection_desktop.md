@@ -35,10 +35,9 @@ $ bazel build -c opt \
 # INFO: 2675 processes: 2673 linux-sandbox, 2 local.
 # INFO: Build completed successfully, 2807 total actions
 
-$ export GLOG_logtostderr=1
 # Replace <input video path> and <output video path>.
 # You can find a test video in mediapipe/examples/desktop/object_detection.
-$ bazel-bin/mediapipe/examples/desktop/object_detection/object_detection_tensorflow \
+$ GLOG_logtostderr=1 bazel-bin/mediapipe/examples/desktop/object_detection/object_detection_tensorflow \
   --calculator_graph_config_file=mediapipe/graphs/object_detection/object_detection_desktop_tensorflow_graph.pbtxt \
   --input_side_packets=input_video_path=<input video path>,output_video_path=<output video path>
 ```
@@ -200,10 +199,9 @@ $ bazel build -c opt --define MEDIAPIPE_DISABLE_GPU=1 \
 # INFO: 711 processes: 710 linux-sandbox, 1 local.
 # INFO: Build completed successfully, 734 total actions
 
-$ export GLOG_logtostderr=1
 # Replace <input video path> and <output video path>.
 # You can find a test video in mediapipe/examples/desktop/object_detection.
-$ bazel-bin/mediapipe/examples/desktop/object_detection/object_detection_tflite \
+$ GLOG_logtostderr=1 bazel-bin/mediapipe/examples/desktop/object_detection/object_detection_tflite \
     --calculator_graph_config_file=mediapipe/graphs/object_detection/object_detection_desktop_tflite_graph.pbtxt \
     --input_side_packets=input_video_path=<input video path>,output_video_path=<output video path>
 ```
@@ -224,10 +222,9 @@ $ bazel build -c opt --define MEDIAPIPE_DISABLE_GPU=1 \
 #INFO: Streaming build results to: http://sponge2/1824d4cc-ba63-4350-bdc0-aacbd45b902b
 #INFO: Build completed successfully, 12154 total actions
 
-$ export GLOG_logtostderr=1
 # This will open up your webcam as long as it is connected and on
 # Any errors is likely due to your webcam being not accessible
-$ bazel-bin/mediapipe/examples/desktop/object_detection/object_detection_cpu \
+$ GLOG_logtostderr=1 bazel-bin/mediapipe/examples/desktop/object_detection/object_detection_cpu \
     --calculator_graph_config_file=mediapipe/graphs/object_detection/object_detection_desktop_live.pbtxt
 ```
 

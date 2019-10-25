@@ -33,3 +33,14 @@ cc_binary(
         "@org_tensorflow//tensorflow/core:direct_session",
     ],
 )
+
+cc_binary(
+    name = "model_inference",
+    deps = [
+        "//mediapipe/examples/desktop:simple_run_graph_main",
+        "//mediapipe/graphs/youtube8m:yt8m_inference_calculators_deps",
+        # TODO: Figure out the minimum set of the kernels needed by this example.
+        "@org_tensorflow//tensorflow/core:all_kernels",
+        "@org_tensorflow//tensorflow/core:direct_session",
+    ],
+)

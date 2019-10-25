@@ -37,10 +37,15 @@ A web-based visualizer is hosted on [viz.mediapipe.dev](https://viz.mediapipe.de
 *  [Discuss](https://groups.google.com/forum/#!forum/mediapipe) - General community discussion around MediaPipe
 
 ## Publications
+* [On-Device, Real-Time Hand Tracking with MediaPipe](https://ai.googleblog.com/2019/08/on-device-real-time-hand-tracking-with.html)
 * [MediaPipe: A Framework for Building Perception Pipelines](https://arxiv.org/abs/1906.08172)
 
 ## Events
-[Open sourced at CVPR 2019](https://sites.google.com/corp/view/perception-cv4arvr/mediapipe) on June 17~20 in Long Beach, CA
+* [ML Conference, Berlin 9-11 Dec 2019](https://mlconference.ai/machine-learning-advanced-development/mediapipe-building-real-time-cross-platform-mobile-web-edge-desktop-video-audio-ml-pipelines/)
+* [The 3rd Workshop on YouTube-8M Large Scale Video Understanding Workshop](https://research.google.com/youtube8m/workshop2019/index.html) Seoul, Korea ICCV 2019
+* [AI DevWorld 2019](https://aidevworld.com) on Oct 10 in San Jose, California
+* [Google Industry Workshop at ICIP 2019](http://2019.ieeeicip.org/?action=page4&id=14#Google) [Presentation](https://docs.google.com/presentation/d/e/2PACX-1vRIBBbO_LO9v2YmvbHHEt1cwyqH6EjDxiILjuT0foXy1E7g6uyh4CesB2DkkEwlRDO9_lWfuKMZx98T/pub?start=false&loop=false&delayms=3000&slide=id.g556cc1a659_0_5) on Sept 24 in Taipei, Taiwan
+* [Open sourced at CVPR 2019](https://sites.google.com/corp/view/perception-cv4arvr/mediapipe) on June 17~20 in Long Beach, CA
 
 ## Alpha Disclaimer
 MediaPipe is currently in alpha for v0.6. We are still making breaking API changes and expect to get to stable API by v1.0.

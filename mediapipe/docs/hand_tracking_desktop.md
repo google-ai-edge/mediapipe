@@ -35,10 +35,9 @@ $ bazel build -c opt --define MEDIAPIPE_DISABLE_GPU=1 \
 #INFO: Streaming build results to: http://sponge2/360196b9-33ab-44b1-84a7-1022b5043307
 #INFO: Build completed successfully, 12517 total actions
 
-$ export GLOG_logtostderr=1
 # This will open up your webcam as long as it is connected and on
 # Any errors is likely due to your webcam being not accessible
-$ bazel-bin/mediapipe/examples/desktop/hand_tracking/hand_tracking_cpu \
+$ GLOG_logtostderr=1 bazel-bin/mediapipe/examples/desktop/hand_tracking/hand_tracking_cpu \
     --calculator_graph_config_file=mediapipe/graphs/hand_tracking/hand_tracking_desktop_live.pbtxt
 ```
 
@@ -59,11 +58,10 @@ $ bazel build -c opt --copt -DMESA_EGL_NO_X11_HEADERS \
 #INFO: Streaming build results to: http://sponge2/00c7f95f-6fbc-432d-8978-f5d361efca3b
 #INFO: Build completed successfully, 22455 total actions
 
-$ export GLOG_logtostderr=1
 # This will open up your webcam as long as it is connected and on
 # Any errors is likely due to your webcam being not accessible,
 # or GPU drivers not setup properly.
-$ bazel-bin/mediapipe/examples/desktop/hand_tracking/hand_tracking_gpu \
+$ GLOG_logtostderr=1 bazel-bin/mediapipe/examples/desktop/hand_tracking/hand_tracking_gpu \
     --calculator_graph_config_file=mediapipe/graphs/hand_tracking/hand_tracking_mobile.pbtxt
 ```
 

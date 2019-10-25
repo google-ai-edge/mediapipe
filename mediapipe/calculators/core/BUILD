@@ -27,6 +27,13 @@ proto_library(
 )
 
 proto_library(
+    name = "dequantize_byte_array_calculator_proto",
+    srcs = ["dequantize_byte_array_calculator.proto"],
+    visibility = ["//visibility:public"],
+    deps = ["//mediapipe/framework:calculator_proto"],
+)
+
+proto_library(
     name = "packet_cloner_calculator_proto",
     srcs = ["packet_cloner_calculator.proto"],
     visibility = ["//visibility:public"],
@@ -102,6 +109,14 @@ mediapipe_cc_proto_library(
     cc_deps = ["//mediapipe/framework:calculator_cc_proto"],
     visibility = ["//visibility:public"],
     deps = [":concatenate_vector_calculator_proto"],
+)
+
+mediapipe_cc_proto_library(
+    name = "dequantize_byte_array_calculator_cc_proto",
+    srcs = ["dequantize_byte_array_calculator.proto"],
+    cc_deps = ["//mediapipe/framework:calculator_cc_proto"],
+    visibility = ["//visibility:public"],
+    deps = [":dequantize_byte_array_calculator_proto"],
 )
 
 mediapipe_cc_proto_library(
@@ -387,6 +402,32 @@ cc_library(
     alwayslink = 1,
 )
 
+cc_library(
+    name = "string_to_int_calculator",
+    srcs = ["string_to_int_calculator.cc"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/port:integral_types",
+        "//mediapipe/framework/port:status",
+        "@com_google_absl//absl/strings",
+    ],
+    alwayslink = 1,
+)
+
+cc_library(
+    name = "side_packet_to_stream_calculator",
+    srcs = ["side_packet_to_stream_calculator.cc"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/port:logging",
+        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:status",
+    ],
+    alwayslink = 1,
+)
+
 cc_test(
     name = "immediate_mux_calculator_test",
     srcs = ["immediate_mux_calculator_test.cc"],
@@ -555,6 +596,32 @@ cc_test(
         "//mediapipe/framework/tool:validate_type",
         "@org_tensorflow//tensorflow/lite:framework",
         "@org_tensorflow//tensorflow/lite/kernels:builtin_ops",
+    ],
+)
+
+cc_library(
+    name = "dequantize_byte_array_calculator",
+    srcs = ["dequantize_byte_array_calculator.cc"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":dequantize_byte_array_calculator_cc_proto",
+        "//mediapipe/framework:calculator_context",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/port:status",
+    ],
+    alwayslink = 1,
+)
+
+cc_test(
+    name = "dequantize_byte_array_calculator_test",
+    srcs = ["dequantize_byte_array_calculator_test.cc"],
+    deps = [
+        ":dequantize_byte_array_calculator",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:calculator_runner",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:parse_text_proto",
+        "//mediapipe/framework/port:status",
     ],
 )
 

@@ -96,8 +96,9 @@ using the MediaPipe C++ APIs.
 
 ### Feature Extration for YouTube-8M Challenge
 
-[Feature Extration for YouTube-8M Challenge](./youtube_8m.md) shows how to use
-MediaPipe to prepare training data for the YouTube-8M Challenge.
+[Feature Extration and Model Inference for YouTube-8M Challenge](./youtube_8m.md)
+shows how to use MediaPipe to prepare training data for the YouTube-8M Challenge
+and do the model inference with the baseline model.
 
 ### Preparing Data Sets with MediaSequence
 

@@ -27,7 +27,9 @@ cc_library(
         "//mediapipe/framework/port:file_helpers",
         "//mediapipe/framework/port:map_util",
         "//mediapipe/framework/port:parse_text_proto",
+        "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
+        "//mediapipe/framework/port:statusor",
         "@com_google_absl//absl/strings",
     ],
 )

@@ -1,0 +1,62 @@
+// Copyright 2019 The MediaPipe Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto2";
+
+package mediapipe;
+
+import "mediapipe/framework/calculator.proto";
+import "mediapipe/util/color.proto";
+
+message LabelsToRenderDataCalculatorOptions {
+  extend CalculatorOptions {
+    optional LabelsToRenderDataCalculatorOptions ext = 271660364;
+  }
+
+  // Colors for drawing the label(s).
+  repeated Color color = 1;
+
+  // Thickness for drawing the label(s).
+  optional double thickness = 2 [default = 2];
+
+  // The font height in absolute pixels.
+  optional int32 font_height_px = 3 [default = 50];
+
+  // The offset of the starting text in horizontal direction in absolute pixels.
+  optional int32 horizontal_offset_px = 7 [default = 0];
+  // The offset of the starting text in vertical direction in absolute pixels.
+  optional int32 vertical_offset_px = 8 [default = 0];
+
+  // The maximum number of labels to display.
+  optional int32 max_num_labels = 4 [default = 1];
+
+  // Specifies the font for the text. Font must be one of the following from
+  // OpenCV:
+  // cv::FONT_HERSHEY_SIMPLEX (0)
+  // cv::FONT_HERSHEY_PLAIN (1)
+  // cv::FONT_HERSHEY_DUPLEX (2)
+  // cv::FONT_HERSHEY_COMPLEX (3)
+  // cv::FONT_HERSHEY_TRIPLEX (4)
+  // cv::FONT_HERSHEY_COMPLEX_SMALL (5)
+  // cv::FONT_HERSHEY_SCRIPT_SIMPLEX (6)
+  // cv::FONT_HERSHEY_SCRIPT_COMPLEX (7)
+  optional int32 font_face = 5 [default = 0];
+
+  // Label location.
+  enum Location {
+    TOP_LEFT = 0;
+    BOTTOM_LEFT = 1;
+  }
+  optional Location location = 6 [default = TOP_LEFT];
+}

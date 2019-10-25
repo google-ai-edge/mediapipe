@@ -653,6 +653,14 @@ Packet PointToForeign(const T* ptr) {
   return packet_internal::Create(new packet_internal::ForeignHolder<T>(ptr));
 }
 
+// Equal Packets refer to the same memory contents, like equal pointers.
+inline bool operator==(const Packet& p1, const Packet& p2) {
+  return packet_internal::GetHolder(p1) == packet_internal::GetHolder(p2);
+}
+inline bool operator!=(const Packet& p1, const Packet& p2) {
+  return !(p1 == p2);
+}
+
 }  // namespace mediapipe
 
 #endif  // MEDIAPIPE_FRAMEWORK_PACKET_H_

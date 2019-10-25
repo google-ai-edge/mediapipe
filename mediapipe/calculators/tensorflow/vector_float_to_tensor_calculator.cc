@@ -23,10 +23,12 @@
 
 namespace mediapipe {
 
-namespace tf = ::tensorflow;
-
+namespace {
 auto& INPUT_1D = VectorFloatToTensorCalculatorOptions::INPUT_1D;
 auto& INPUT_2D = VectorFloatToTensorCalculatorOptions::INPUT_2D;
+}  // namespace
+
+namespace tf = ::tensorflow;
 
 // The calculator expects one input (a packet containing a vector<float> or
 // vector<vector<float>>) and generates one output (a packet containing a

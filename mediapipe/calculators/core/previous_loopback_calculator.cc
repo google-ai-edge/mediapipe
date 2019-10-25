@@ -102,6 +102,12 @@ class PreviousLoopbackCalculator : public CalculatorBase {
         cc->Outputs().Get(loop_out_id_).AddPacket(std::move(previous_loopback));
       }
     }
+    if (!main_ts_.empty()) {
+      cc->Outputs().Get(loop_out_id_).SetNextTimestampBound(main_ts_.front());
+    }
+    if (cc->Inputs().Get(main_id_).IsDone() && main_ts_.empty()) {
+      cc->Outputs().Get(loop_out_id_).Close();
+    }
     return ::mediapipe::OkStatus();
   }
 

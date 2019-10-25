@@ -150,6 +150,7 @@ public class ExternalTextureConverter implements TextureFrameProducer {
     private ExternalTextureRenderer renderer = null;
     private long timestampOffset = 0;
     private long previousTimestamp = 0;
+    private boolean previousTimestampValid = false;
 
     protected int destinationWidth = 0;
     protected int destinationHeight = 0;
@@ -335,11 +336,12 @@ public class ExternalTextureConverter implements TextureFrameProducer {
       // ensures that surface texture has the up-to-date timestamp. (Also adjust |timestampOffset|
       // to ensure that timestamps increase monotonically.)
       long textureTimestamp = surfaceTexture.getTimestamp() / NANOS_PER_MICRO;
-      if (textureTimestamp + timestampOffset <= previousTimestamp) {
+      if (previousTimestampValid && textureTimestamp + timestampOffset <= previousTimestamp) {
         timestampOffset = previousTimestamp + 1 - textureTimestamp;
       }
       outputFrame.setTimestamp(textureTimestamp + timestampOffset);
       previousTimestamp = outputFrame.getTimestamp();
+      previousTimestampValid = true;
     }
 
     private void waitUntilReleased(AppTextureFrame frame) {

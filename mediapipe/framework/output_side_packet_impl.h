@@ -80,6 +80,7 @@ class OutputSidePacketImpl : public OutputSidePacket {
   const PacketType* packet_type_;
   std::function<void(::mediapipe::Status)> error_callback_;
   Packet packet_;
+  bool initialized_ = false;
 
   std::vector<Mirror> mirrors_;
 };
