@@ -44,8 +44,8 @@ constexpr float kFontHeightScale = 1.25f;
 //   input_stream: "LABELS:labels"
 //   input_stream: "SCORES:scores"
 //   output_stream: "VIDEO_PRESTREAM:video_header"
-//   options {
-//     [LabelsToRenderDataCalculatorOptions.ext] {
+//   node_options: {
+//     [type.googleapis.com/mediapipe.LabelsToRenderDataCalculatorOptions] {
 //       color { r: 255 g: 0 b: 0 }
 //       color { r: 0 g: 255 b: 0 }
 //       color { r: 0 g: 0 b: 255 }
