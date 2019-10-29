@@ -53,7 +53,7 @@ def main(argv):
       flags.FLAGS.clip_start_time_sec * SECONDS_TO_MICROSECONDS, metadata)
   ms.set_clip_end_timestamp(
       flags.FLAGS.clip_end_time_sec * SECONDS_TO_MICROSECONDS, metadata)
-  with open('/tmp/mediapipe/metadata.tfrecord', 'wb') as writer:
+  with open('/tmp/mediapipe/metadata.pb', 'wb') as writer:
     writer.write(metadata.SerializeToString())
 
 

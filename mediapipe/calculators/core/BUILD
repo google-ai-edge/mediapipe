@@ -761,3 +761,29 @@ cc_test(
         "//mediapipe/framework/port:status",
     ],
 )
+
+cc_library(
+    name = "stream_to_side_packet_calculator",
+    srcs = ["stream_to_side_packet_calculator.cc"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:timestamp",
+        "//mediapipe/framework/port:status",
+    ],
+    alwayslink = 1,
+)
+
+cc_test(
+    name = "stream_to_side_packet_calculator_test",
+    srcs = ["stream_to_side_packet_calculator_test.cc"],
+    deps = [
+        ":stream_to_side_packet_calculator",
+        "//mediapipe/framework:calculator_runner",
+        "//mediapipe/framework:packet",
+        "//mediapipe/framework:timestamp",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:status",
+        "@com_google_absl//absl/memory",
+    ],
+)

@@ -113,8 +113,15 @@ class SpectrogramCalculator : public CalculatorBase {
   ::mediapipe::Status Close(CalculatorContext* cc) override;
 
  private:
-  Timestamp CurrentOutputTimestamp() {
-    // Current output timestamp is the *center* of the next frame to be
+  Timestamp CurrentOutputTimestamp(CalculatorContext* cc) {
+    if (use_local_timestamp_) {
+      return cc->InputTimestamp();
+    }
+    return CumulativeOutputTimestamp();
+  }
+
+  Timestamp CumulativeOutputTimestamp() {
+    // Cumulative output timestamp is the *center* of the next frame to be
     // emitted, hence delayed by half a window duration compared to relevant
     // input timestamp.
     return initial_input_timestamp_ +
@@ -141,6 +148,7 @@ class SpectrogramCalculator : public CalculatorBase {
       const OutputMatrixType postprocess_output_fn(const OutputMatrixType&),
       CalculatorContext* cc);
 
+  bool use_local_timestamp_;
   double input_sample_rate_;
   bool pad_final_packet_;
   int frame_duration_samples_;
@@ -172,6 +180,8 @@ const float SpectrogramCalculator::kLnPowerToDb = 4.342944819032518;
 ::mediapipe::Status SpectrogramCalculator::Open(CalculatorContext* cc) {
   SpectrogramCalculatorOptions spectrogram_options =
       cc->Options<SpectrogramCalculatorOptions>();
+
+  use_local_timestamp_ = spectrogram_options.use_local_timestamp();
 
   if (spectrogram_options.frame_duration_seconds() <= 0.0) {
     ::mediapipe::InvalidArgumentErrorBuilder(MEDIAPIPE_LOC)
@@ -351,11 +361,11 @@ template <class OutputMatrixType>
         << "Inconsistent number of spectrogram channels.";
     if (allow_multichannel_input_) {
       cc->Outputs().Index(0).Add(spectrogram_matrices.release(),
-                                 CurrentOutputTimestamp());
+                                 CurrentOutputTimestamp(cc));
     } else {
       cc->Outputs().Index(0).Add(
           new OutputMatrixType(spectrogram_matrices->at(0)),
-          CurrentOutputTimestamp());
+          CurrentOutputTimestamp(cc));
     }
     cumulative_completed_frames_ += output_vectors.size();
   }

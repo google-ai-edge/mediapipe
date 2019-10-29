@@ -579,6 +579,11 @@ export ANDROID_HOME=<path to the Android SDK>
 export ANDROID_NDK_HOME=<path to the Android NDK>
 ```
 
+In order to use MediaPipe on earlier Android versions, MediaPipe needs to switch
+to a lower Android API level. You can achieve this by specifying `api_level =
+<api level integer>` in android_ndk_repository() and/or android_sdk_repository()
+in the [`WORKSPACE`] file.
+
 Please verify all the necessary packages are installed.
 
 *   Android SDK Platform API Level 28 or 29

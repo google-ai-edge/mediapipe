@@ -117,6 +117,7 @@ project.
         implementation 'com.google.code.findbugs:jsr305:3.0.2'
         implementation 'com.google.guava:guava:27.0.1-android'
         implementation 'com.google.guava:guava:27.0.1-android'
+        implementation 'com.google.protobuf:protobuf-lite:3.0.0'
         // CameraX core library
         def camerax_version = "1.0.0-alpha06"
         implementation "androidx.camera:camera-core:$camerax_version"

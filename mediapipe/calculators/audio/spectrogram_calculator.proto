@@ -66,4 +66,11 @@ message SpectrogramCalculatorOptions {
   // uniformly regardless of output type (i.e., even dBs are multiplied, not
   // offset).
   optional double output_scale = 7 [default = 1.0];
+
+  // If use_local_timestamp is true, the output packet's timestamp is based on
+  // the last sample of the packet and it's inferred from the latest input
+  // packet's timestamp.  If false, the output packet's timestamp is based on
+  // the cumulative timestamping, which is inferred from the intial input
+  // timestamp and the cumulative number of samples.
+  optional bool use_local_timestamp = 8 [default = false];
 }

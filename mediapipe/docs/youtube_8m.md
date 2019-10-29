@@ -64,7 +64,7 @@ videos.
 
 4.  Generate a MediaSequence metadata from the input video.
 
-    Note: the output file is /tmp/mediapipe/metadata.tfrecord
+    Note: the output file is /tmp/mediapipe/metadata.pb
 
     ```bash
     # change clip_end_time_sec to match the length of your video.
@@ -82,8 +82,17 @@ videos.
 
     GLOG_logtostderr=1 bazel-bin/mediapipe/examples/desktop/youtube8m/extract_yt8m_features \
       --calculator_graph_config_file=mediapipe/graphs/youtube8m/feature_extraction.pbtxt \
-      --input_side_packets=input_sequence_example=/tmp/mediapipe/metadata.tfrecord  \
-      --output_side_packets=output_sequence_example=/tmp/mediapipe/output.tfrecord
+      --input_side_packets=input_sequence_example=/tmp/mediapipe/metadata.pb  \
+      --output_side_packets=output_sequence_example=/tmp/mediapipe/features.pb
+    ```
+
+6.  [Optional] Read the features.pb in Python.
+
+    ```
+    import tensorflow as tf
+
+    sequence_example = open('/tmp/mediapipe/features.pb', 'rb').read()
+    print(tf.train.SequenceExample.FromString(sequence_example))
     ```
 
 ## Model Inference for YouTube-8M Challenge
@@ -136,7 +145,7 @@ the inference for both local videos and the dataset
 
 ### Steps to run the YouTube-8M model inference graph with a local video
 
-1.  Make sure you have the output tfrecord from the feature extraction pipeline.
+1.  Make sure you have the features.pb from the feature extraction pipeline.
 
 2.  Copy the baseline model
     [(model card)](https://drive.google.com/file/d/1xTCi9-Nm9dt2KIk8WR0dDFrIssWawyXy/view)
@@ -158,7 +167,7 @@ the inference for both local videos and the dataset
     # overlap is the number of seconds adjacent segments share.
     GLOG_logtostderr=1 bazel-bin/mediapipe/examples/desktop/youtube8m/model_inference \
       --calculator_graph_config_file=mediapipe/graphs/youtube8m/local_video_model_inference.pbtxt \
-      --input_side_packets=input_sequence_example_path=/tmp/mediapipe/output.tfrecord,input_video_path=/absolute/path/to/the/local/video/file,output_video_path=/tmp/mediapipe/annotated_video.mp4,segment_size=5,overlap=4
+      --input_side_packets=input_sequence_example_path=/tmp/mediapipe/features.pb,input_video_path=/absolute/path/to/the/local/video/file,output_video_path=/tmp/mediapipe/annotated_video.mp4,segment_size=5,overlap=4
     ```
 
 4.  View the annotated video.
