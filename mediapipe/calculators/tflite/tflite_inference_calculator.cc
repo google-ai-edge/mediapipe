@@ -305,6 +305,10 @@ REGISTER_CALCULATOR(TfLiteInferenceCalculator);
 #endif
   } else {
     // Read CPU input into tensors.
+    interpreter_->SetAllowFp16PrecisionForFp32(1);
+    delegate_ = tflite::NnApiDelegate();
+    interpreter_->ModifyGraphWithDelegate(delegate_);
+
     const auto& input_tensors =
         cc->Inputs().Tag("TENSORS").Get<std::vector<TfLiteTensor>>();
     RET_CHECK_GT(input_tensors.size(), 0);
