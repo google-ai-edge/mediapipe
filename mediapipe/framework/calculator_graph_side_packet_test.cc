@@ -68,6 +68,7 @@ class CountAndOutputSummarySidePacketInCloseCalculator : public CalculatorBase {
   }
 
   ::mediapipe::Status Close(CalculatorContext* cc) final {
+    absl::SleepFor(absl::Milliseconds(300));  // For GetOutputSidePacket test.
     cc->OutputSidePackets().Index(0).Set(
         MakePacket<int>(count_).At(Timestamp::Unset()));
     return ::mediapipe::OkStatus();

@@ -85,7 +85,7 @@ class Packet {
   // given timestamp. Does not modify *this.
   Packet At(class Timestamp timestamp) const&;
 
-  // The rvalue reference overload of Packet's memeber function
+  // The rvalue reference overload of Packet's member function
   // Packet::At(class Timestamp). Moves *this to a new Packet and returns
   // the new Packet with the given timestamp.
   Packet At(class Timestamp timestamp) &&;

@@ -32,7 +32,7 @@ namespace mediapipe {
 namespace {
 
 // Shows validation success for a graph and a subgraph.
-TEST(ValidatedGraphConfigTest, InitializeGraphFromProtos) {
+TEST(GraphValidationTest, InitializeGraphFromProtos) {
   auto config_1 = ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
     type: "PassThroughGraph"
     input_stream: "INPUT:stream_1"
@@ -102,7 +102,7 @@ TEST(ValidatedGraphConfigTest, InitializeGraphFromProtos) {
 }
 
 // Shows validation failure due to an unregistered subgraph.
-TEST(ValidatedGraphConfigTest, InitializeGraphFromLinker) {
+TEST(GraphValidationTest, InitializeGraphFromLinker) {
   EXPECT_FALSE(SubgraphRegistry::IsRegistered("DubQuadTestSubgraph"));
   ValidatedGraphConfig builder_1;
   ::mediapipe::Status status_1 =
@@ -114,7 +114,7 @@ TEST(ValidatedGraphConfigTest, InitializeGraphFromLinker) {
 }
 
 // Shows validation success for a graph and a template subgraph.
-TEST(ValidatedGraphConfigTest, InitializeTemplateFromProtos) {
+TEST(GraphValidationTest, InitializeTemplateFromProtos) {
   mediapipe::tool::TemplateParser::Parser parser;
   CalculatorGraphTemplate config_1;
   CHECK(parser.ParseFromString(R"(
@@ -208,6 +208,110 @@ TEST(ValidatedGraphConfigTest, InitializeTemplateFromProtos) {
         }
         executor {}
       )")));
+}
+
+// Shows passing validation of optional subgraph inputs and output streams.
+TEST(GraphValidationTest, OptionalSubgraphStreams) {
+  // A subgraph defining two optional input streams
+  // and two optional output streams.
+  auto config_1 = ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+    type: "PassThroughGraph"
+    input_stream: "INPUT:input_0"
+    input_stream: "INPUT:1:input_1"
+    output_stream: "OUTPUT:output_0"
+    output_stream: "OUTPUT:1:output_1"
+    node {
+      calculator: "PassThroughCalculator"
+      input_stream: "input_0"    # Any Type.
+      input_stream: "input_1"    # Any Type.
+      output_stream: "output_0"  # Same as input.
+    }
+  )");
+
+  // An enclosing graph that specifies one of the two optional input streams
+  // and one of the two optional output streams.
+  auto config_2 = ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+    input_stream: "INPUT:foo_in"
+    output_stream: "OUTPUT:foo_out"
+    node {
+      calculator: "PassThroughCalculator"
+      input_stream: "foo_in"    # Any Type.
+      output_stream: "foo_bar"  # Same as input.
+    }
+    node {
+      calculator: "PassThroughGraph"
+      input_stream: "INPUT:foo_bar"    # Any Type.
+      output_stream: "OUTPUT:foo_out"  # Same as input.
+    }
+  )");
+
+  GraphValidation validation_1;
+  MP_EXPECT_OK(validation_1.Validate({config_1, config_2}, {}));
+  CalculatorGraph graph_1;
+  MP_EXPECT_OK(graph_1.Initialize({config_1, config_2}, {}));
+  EXPECT_THAT(
+      graph_1.Config(),
+
+      // The result includes only the requested input and output streams.
+      EqualsProto(::mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+        input_stream: "INPUT:foo_in"
+        output_stream: "OUTPUT:foo_out"
+        node {
+          calculator: "PassThroughCalculator"
+          input_stream: "foo_in"
+          output_stream: "foo_bar"
+        }
+        node {
+          calculator: "PassThroughCalculator"
+          input_stream: "foo_bar"
+          output_stream: "foo_out"
+        }
+        executor {}
+      )")));
+}
+
+// Shows failing validation of optional subgraph inputs and output streams.
+TEST(GraphValidationTest, OptionalSubgraphStreamsMismatched) {
+  // A subgraph defining two optional input streams
+  // and two optional output streams.
+  auto config_1 = ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+    type: "PassThroughGraph"
+    input_stream: "INPUT:input_0"
+    input_stream: "INPUT:1:input_1"
+    output_stream: "OUTPUT:output_0"
+    output_stream: "OUTPUT:1:output_1"
+    node {
+      calculator: "PassThroughCalculator"
+      input_stream: "input_0"    # Any Type.
+      input_stream: "input_1"    # Any Type.
+      output_stream: "output_0"  # Same as input.
+    }
+  )");
+
+  // An enclosing graph that specifies one of the two optional input streams
+  // and both of the two optional output streams.
+  auto config_2 = ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+    input_stream: "INPUT:foo_in"
+    output_stream: "OUTPUT:foo_out"
+    node {
+      calculator: "PassThroughCalculator"
+      input_stream: "foo_in"    # Any Type.
+      output_stream: "foo_bar"  # Same as input.
+    }
+    node {
+      calculator: "PassThroughGraph"
+      input_stream: "INPUT:foo_bar"    # Any Type.
+      input_stream: "INPUT:1:foo_bar"  # Any Type.
+      output_stream: "OUTPUT:foo_out"  # Same as input.
+    }
+  )");
+
+  GraphValidation validation_1;
+  mediapipe::Status status = validation_1.Validate({config_1, config_2}, {});
+  ASSERT_EQ(status.code(), ::mediapipe::StatusCode::kInvalidArgument);
+  ASSERT_THAT(status.ToString(),
+              testing::HasSubstr(
+                  "PassThroughCalculator must use matching tags and indexes"));
 }
 
 }  // namespace

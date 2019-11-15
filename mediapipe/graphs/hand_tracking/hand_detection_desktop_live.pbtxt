@@ -1,7 +1,7 @@
 # MediaPipe graph that performs hand detection on desktop with TensorFlow Lite
 # on CPU.
 # Used in the example in
-# mediapipie/examples/desktop/hand_tracking:hand_detection_cpu.
+# mediapipe/examples/desktop/hand_tracking:hand_detection_cpu.
 
 # Images coming into and out of the graph.
 input_stream: "input_video"

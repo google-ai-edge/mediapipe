@@ -13,6 +13,8 @@ cc_library(
     srcs = glob(
         [
             "local/opt/opencv@3/lib/libopencv_core.dylib",
+            "local/opt/opencv@3/lib/libopencv_calib3d.dylib",
+            "local/opt/opencv@3/lib/libopencv_features2d.dylib",
             "local/opt/opencv@3/lib/libopencv_highgui.dylib",
             "local/opt/opencv@3/lib/libopencv_imgcodecs.dylib",
             "local/opt/opencv@3/lib/libopencv_imgproc.dylib",

@@ -3,7 +3,7 @@
 # Basic build settings
 build --jobs 128
 build --define='absl=1'
-build --cxxopt='-std=c++11'
+build --cxxopt='-std=c++14'
 build --copt='-Wno-sign-compare'
 build --copt='-Wno-unused-function'
 build --copt='-Wno-uninitialized'

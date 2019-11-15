@@ -13,11 +13,15 @@
 # limitations under the License.
 #
 
+load("//mediapipe/framework/port:build_config.bzl", "mediapipe_cc_proto_library")
+load(
+    "//mediapipe/framework/tool:mediapipe_graph.bzl",
+    "mediapipe_binary_graph",
+)
+
 licenses(["notice"])  # Apache 2.0
 
 package(default_visibility = ["//visibility:private"])
-
-load("//mediapipe/framework/port:build_config.bzl", "mediapipe_cc_proto_library")
 
 proto_library(
     name = "flow_to_image_calculator_proto",
@@ -52,9 +56,7 @@ mediapipe_cc_proto_library(
 cc_library(
     name = "flow_to_image_calculator",
     srcs = ["flow_to_image_calculator.cc"],
-    visibility = [
-        "//visibility:public",
-    ],
+    visibility = ["//visibility:public"],
     deps = [
         "//mediapipe/calculators/video:flow_to_image_calculator_cc_proto",
         "//mediapipe/calculators/video/tool:flow_quantizer_model",
@@ -129,10 +131,20 @@ cc_library(
     alwayslink = 1,
 )
 
+filegroup(
+    name = "test_videos",
+    srcs = [
+        "testdata/format_FLV_H264_AAC.video",
+        "testdata/format_MKV_VP8_VORBIS.video",
+        "testdata/format_MP4_AVC720P_AAC.video",
+    ],
+    visibility = ["//visibility:public"],
+)
+
 cc_test(
     name = "opencv_video_decoder_calculator_test",
     srcs = ["opencv_video_decoder_calculator_test.cc"],
-    data = ["//mediapipe/calculators/video/testdata:test_videos"],
+    data = [":test_videos"],
     deps = [
         ":opencv_video_decoder_calculator",
         "//mediapipe/framework:calculator_runner",
@@ -151,7 +163,7 @@ cc_test(
 cc_test(
     name = "opencv_video_encoder_calculator_test",
     srcs = ["opencv_video_encoder_calculator_test.cc"],
-    data = ["//mediapipe/calculators/video/testdata:test_videos"],
+    data = [":test_videos"],
     deps = [
         ":opencv_video_decoder_calculator",
         ":opencv_video_encoder_calculator",
@@ -175,7 +187,6 @@ cc_test(
 cc_test(
     name = "tvl1_optical_flow_calculator_test",
     srcs = ["tvl1_optical_flow_calculator_test.cc"],
-    data = ["//mediapipe/calculators/image/testdata:test_images"],
     deps = [
         ":tvl1_optical_flow_calculator",
         "//mediapipe/framework:calculator_framework",

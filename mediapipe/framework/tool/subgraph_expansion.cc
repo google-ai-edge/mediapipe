@@ -52,6 +52,31 @@ namespace tool {
   return ::mediapipe::OkStatus();
 }
 
+// Returns subgraph streams not requested by a subgraph-node.
+::mediapipe::Status FindIgnoredStreams(
+    const proto_ns::RepeatedPtrField<ProtoString>& src_streams,
+    const proto_ns::RepeatedPtrField<ProtoString>& dst_streams,
+    std::set<std::string>* result) {
+  ASSIGN_OR_RETURN(auto src_map, tool::TagMap::Create(src_streams));
+  ASSIGN_OR_RETURN(auto dst_map, tool::TagMap::Create(dst_streams));
+  std::set_difference(src_map->Names().begin(), src_map->Names().end(),
+                      dst_map->Names().begin(), dst_map->Names().end(),
+                      std::inserter(*result, result->begin()));
+  return ::mediapipe::OkStatus();
+}
+
+// Removes subgraph streams not requested by a subgraph-node.
+::mediapipe::Status RemoveIgnoredStreams(
+    proto_ns::RepeatedPtrField<ProtoString>* streams,
+    const std::set<std::string>& missing_streams) {
+  for (int i = streams->size() - 1; i >= 0; --i) {
+    if (missing_streams.count(streams->Get(i)) > 0) {
+      streams->DeleteSubrange(i, 1);
+    }
+  }
+  return ::mediapipe::OkStatus();
+}
+
 ::mediapipe::Status TransformNames(
     CalculatorGraphConfig* config,
     const std::function<std::string(absl::string_view)>& transform) {
@@ -190,6 +215,14 @@ static ::mediapipe::Status PrefixNames(int subgraph_index,
           .SetPrepend()
       << "while processing the output side packets of subgraph node "
       << subgraph_node.calculator() << ": ";
+  std::set<std::string> ignored_input_streams;
+  MP_RETURN_IF_ERROR(FindIgnoredStreams(subgraph_config->input_stream(),
+                                        subgraph_node.input_stream(),
+                                        &ignored_input_streams));
+  std::set<std::string> ignored_input_side_packets;
+  MP_RETURN_IF_ERROR(FindIgnoredStreams(subgraph_config->input_side_packet(),
+                                        subgraph_node.input_side_packet(),
+                                        &ignored_input_side_packets));
   std::map<std::string, std::string>* name_map;
   auto replace_names = [&name_map](absl::string_view s) {
     std::string original(s);
@@ -207,6 +240,12 @@ static ::mediapipe::Status PrefixNames(int subgraph_index,
         TransformStreamNames(node.mutable_input_side_packet(), replace_names));
     MP_RETURN_IF_ERROR(
         TransformStreamNames(node.mutable_output_side_packet(), replace_names));
+
+    // Remove input streams and side packets ignored by the subgraph-node.
+    MP_RETURN_IF_ERROR(RemoveIgnoredStreams(node.mutable_input_stream(),
+                                            ignored_input_streams));
+    MP_RETURN_IF_ERROR(RemoveIgnoredStreams(node.mutable_input_side_packet(),
+                                            ignored_input_side_packets));
   }
   name_map = &side_packet_map;
   for (auto& generator : *subgraph_config->mutable_packet_generator()) {

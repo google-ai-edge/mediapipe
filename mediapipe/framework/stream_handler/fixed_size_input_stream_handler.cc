@@ -155,7 +155,7 @@ class FixedSizeInputStreamHandler : public DefaultInputStreamHandler {
     return (fixed_min_size_) ? EraseAllSurplus() : EraseAnySurplus(keep_one);
   }
 
-  NodeReadiness GetNodeReadiness(Timestamp* min_stream_timestamp) {
+  NodeReadiness GetNodeReadiness(Timestamp* min_stream_timestamp) override {
     DCHECK(min_stream_timestamp);
     absl::MutexLock lock(&erase_mutex_);
     // kReadyForProcess is returned only once until FillInputSet completes.

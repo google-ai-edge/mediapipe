@@ -54,7 +54,7 @@ below and paste it into
 # MediaPipe graph that performs object detection on desktop with TensorFlow
 # on CPU.
 # Used in the example in
-# mediapipie/examples/desktop/object_detection:object_detection_tensorflow.
+# mediapipe/examples/desktop/object_detection:object_detection_tensorflow.
 
 # Decodes an input video file into images and a video header.
 node {
@@ -218,8 +218,6 @@ $ bazel build -c opt --define MEDIAPIPE_DISABLE_GPU=1 \
 # It should print:
 #Target //mediapipe/examples/desktop/object_detection:object_detection_cpu up-to-date:
 #  bazel-bin/mediapipe/examples/desktop/object_detection/object_detection_cpu
-#INFO: Elapsed time: 16.020s, Forge stats: 13001/13003 actions cached, 2.1s CPU used, 0.0s queue time, 89.0 MB ObjFS output (novel bytes: 88.0 MB), 0.0 MB local output, Critical Path: 10.01s, Remote (41.42% of the time): [queue: 0.00%, setup: 4.21%, process: 12.48%]
-#INFO: Streaming build results to: http://sponge2/1824d4cc-ba63-4350-bdc0-aacbd45b902b
 #INFO: Build completed successfully, 12154 total actions
 
 # This will open up your webcam as long as it is connected and on
@@ -240,7 +238,7 @@ below and paste it into
 # MediaPipe graph that performs object detection on desktop with TensorFlow Lite
 # on CPU.
 # Used in the example in
-# mediapipie/examples/desktop/object_detection:object_detection_tflite.
+# mediapipe/examples/desktop/object_detection:object_detection_tflite.
 
 # max_queue_size limits the number of packets enqueued on any input stream
 # by throttling inputs to the graph. This makes the graph only process one

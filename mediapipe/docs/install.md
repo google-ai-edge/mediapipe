@@ -7,11 +7,8 @@ future.
 Note: If you plan to use TensorFlow calculators and example apps, there is a
 known issue with gcc and g++ version 6.3 and 7.3. Please use other versions.
 
-Note: While Mediapipe configures TensorFlow, if you see the
-following error:
-`"...git_configure.bzl", line 14, in _fail fail(("%sGit Configuration
-Error:%s %...)))`,
-please install the python future library using: `$ pip install --user future`.
+Note: To make Mediapipe work with TensorFlow, please install the python "future"
+library and the python "six" library using `pip install --user future six`.
 
 Choose your operating system:
 
@@ -42,11 +39,19 @@ To build and run iOS apps:
     $ cd mediapipe
     ```
 
-2.  Install Bazel (version between 0.24.1 and 0.29.1).
+2.  Install Bazel (0.24.1 and above required).
 
-    Follow the official
-    [documentation](https://docs.bazel.build/versions/master/install-ubuntu.html)
-    to install Bazel manually. Note that MediaPipe doesn't support Bazel 1.0.0+ yet.
+    Option 1. Use package manager tool to install the latest version of Bazel.
+
+    ```bash
+    $ sudo apt-get install bazel
+
+    # Run 'bazel version' to check version of bazel installed
+    ```
+
+    Option 2. Follow the official
+    [Bazel documentation](https://docs.bazel.build/versions/master/install-ubuntu.html)
+    to install any version of Bazel manually.
 
 3.  Install OpenCV and FFmpeg.
 
@@ -152,11 +157,11 @@ To build and run iOS apps:
     $ cd mediapipe
     ```
 
-2.  Install Bazel (version between 0.24.1 and 0.29.1).
+2.  Install Bazel (0.24.1 and above required).
 
     Follow the official
-    [documentation](https://docs.bazel.build/versions/master/install-redhat.html)
-    to install Bazel manually. Note that MediaPipe doesn't support Bazel 1.0.0+ yet.
+    [Bazel documentation](https://docs.bazel.build/versions/master/install-redhat.html)
+    to install Bazel manually.
 
 3.  Install OpenCV.
 
@@ -240,24 +245,19 @@ To build and run iOS apps:
     $ cd mediapipe
     ```
 
-3.  Install Bazel (version between 0.24.1 and 0.29.1).
+3.  Install Bazel (0.24.1 and above required).
 
-     Option 1. Use package manager tool to install Bazel 0.29.1
+    Option 1. Use package manager tool to install the latest version of Bazel.
 
     ```bash
-    # If Bazel 1.0.0+ was installed.
-    $ brew uninstall bazel
-
-    # Install Bazel 0.29.1
-    $ brew install https://raw.githubusercontent.com/bazelbuild/homebrew-tap/223ffb570c21c0a2af251afc6df9dec0214c6e74/Formula/bazel.rb
-    $ brew link bazel
+    $ brew install bazel
 
     # Run 'bazel version' to check version of bazel installed
     ```
 
     Option 2. Follow the official
-    [documentation](https://docs.bazel.build/versions/master/install-os-x.html#install-with-installer-mac-os-x)
-    to install Bazel manually. Note that MediaPipe doesn't support Bazel 1.0.0+ yet.
+    [Bazel documentation](https://docs.bazel.build/versions/master/install-os-x.html#install-with-installer-mac-os-x)
+    to install any version of Bazel manually.
 
 4.  Install OpenCV and FFmpeg.
 

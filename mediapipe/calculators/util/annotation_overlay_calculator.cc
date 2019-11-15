@@ -148,9 +148,6 @@ class AnnotationOverlayCalculator : public CalculatorBase {
   // Underlying helper renderer library.
   std::unique_ptr<AnnotationRenderer> renderer_;
 
-  // Number of input streams with render data.
-  int num_render_streams_;
-
   // Indicates if image frame is available as input.
   bool image_frame_available_ = false;
 
@@ -181,20 +178,15 @@ REGISTER_CALCULATOR(AnnotationOverlayCalculator);
     return ::mediapipe::InternalError("GPU output must have GPU input.");
   }
 
-  // Assume all inputs are render streams; adjust below.
-  int num_render_streams = cc->Inputs().NumEntries();
-
   // Input image to render onto copy of.
 #if !defined(MEDIAPIPE_DISABLE_GPU)
   if (cc->Inputs().HasTag(kInputFrameTagGpu)) {
     cc->Inputs().Tag(kInputFrameTagGpu).Set<mediapipe::GpuBuffer>();
-    num_render_streams = cc->Inputs().NumEntries() - 1;
     use_gpu |= true;
   }
 #endif  //  !MEDIAPIPE_DISABLE_GPU
   if (cc->Inputs().HasTag(kInputFrameTag)) {
     cc->Inputs().Tag(kInputFrameTag).Set<ImageFrame>();
-    num_render_streams = cc->Inputs().NumEntries() - 1;
   }
 
   // Data streams to render.
@@ -246,12 +238,10 @@ REGISTER_CALCULATOR(AnnotationOverlayCalculator);
   if (cc->Inputs().HasTag(kInputFrameTagGpu) ||
       cc->Inputs().HasTag(kInputFrameTag)) {
     image_frame_available_ = true;
-    num_render_streams_ = cc->Inputs().NumEntries() - 1;
   } else {
     image_frame_available_ = false;
     RET_CHECK(options_.has_canvas_width_px());
     RET_CHECK(options_.has_canvas_height_px());
-    num_render_streams_ = cc->Inputs().NumEntries();
   }
 
   // Initialize the helper renderer library.

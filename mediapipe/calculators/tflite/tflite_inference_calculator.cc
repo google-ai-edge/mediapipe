@@ -27,8 +27,7 @@
 #include "tensorflow/lite/kernels/register.h"
 #include "tensorflow/lite/model.h"
 
-#if !defined(MEDIAPIPE_DISABLE_GPU) && !defined(__EMSCRIPTEN__) && \
-    !defined(__APPLE__)
+#if !defined(MEDIAPIPE_DISABLE_GPU) && !defined(MEDIAPIPE_DISABLE_GL_COMPUTE)
 #include "mediapipe/gpu/gl_calculator_helper.h"
 #include "mediapipe/gpu/gpu_buffer.h"
 #include "tensorflow/lite/delegates/gpu/common/shape.h"
@@ -49,6 +48,7 @@
 #include "tensorflow/lite/delegates/gpu/common/shape.h"
 #include "tensorflow/lite/delegates/gpu/metal/buffer_convert.h"
 #include "tensorflow/lite/delegates/gpu/metal_delegate.h"
+#include "tensorflow/lite/delegates/gpu/metal_delegate_internal.h"
 #endif  // iOS
 
 namespace {
@@ -553,9 +553,9 @@ REGISTER_CALCULATOR(TfLiteInferenceCalculator);
 
 #if defined(__APPLE__) && !TARGET_OS_OSX  // iOS
   // Configure and create the delegate.
-  GpuDelegateOptions options;
+  TFLGpuDelegateOptions options;
   options.allow_precision_loss = false;  // Must match converter, F=float/T=half
-  options.wait_type = GpuDelegateOptions::WaitType::kPassive;
+  options.wait_type = TFLGpuDelegateWaitType::TFLGpuDelegateWaitTypePassive;
   if (!delegate_) delegate_ = TFLGpuDelegateCreate(&options);
   id<MTLDevice> device = gpu_helper_.mtlDevice;
 

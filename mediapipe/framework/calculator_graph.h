@@ -23,13 +23,13 @@
 #include <map>
 #include <memory>
 #include <string>
-#include <unordered_map>
-#include <unordered_set>
 #include <utility>
 #include <vector>
 
 #include "absl/base/macros.h"
 #include "absl/container/fixed_array.h"
+#include "absl/container/flat_hash_map.h"
+#include "absl/container/flat_hash_set.h"
 #include "absl/synchronization/mutex.h"
 #include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/framework/calculator_base.h"
@@ -579,18 +579,18 @@ class CalculatorGraph {
   // A node is scheduled only if this set is empty.  Similarly, a packet
   // is added to a graph input stream only if this set is empty.
   // Note that this vector contains an unused entry for each non-source node.
-  std::vector<std::unordered_set<InputStreamManager*>> full_input_streams_
+  std::vector<absl::flat_hash_set<InputStreamManager*>> full_input_streams_
       GUARDED_BY(full_input_streams_mutex_);
 
   // Maps stream names to graph input stream objects.
-  std::unordered_map<std::string, std::unique_ptr<GraphInputStream>>
+  absl::flat_hash_map<std::string, std::unique_ptr<GraphInputStream>>
       graph_input_streams_;
 
   // Maps graph input streams to their virtual node ids.
-  std::unordered_map<std::string, int> graph_input_stream_node_ids_;
+  absl::flat_hash_map<std::string, int> graph_input_stream_node_ids_;
 
   // Maps graph input streams to their max queue size.
-  std::unordered_map<std::string, int> graph_input_stream_max_queue_size_;
+  absl::flat_hash_map<std::string, int> graph_input_stream_max_queue_size_;
 
   // The factory for making counters associated with this graph.
   std::unique_ptr<CounterFactory> counter_factory_;

@@ -13,11 +13,11 @@
 # limitations under the License.
 #
 
+load("//mediapipe/framework/port:build_config.bzl", "mediapipe_cc_proto_library")
+
 licenses(["notice"])  # Apache 2.0
 
 package(default_visibility = ["//visibility:private"])
-
-load("//mediapipe/framework/port:build_config.bzl", "mediapipe_cc_proto_library")
 
 proto_library(
     name = "concatenate_vector_calculator_proto",
@@ -79,6 +79,13 @@ proto_library(
     ],
 )
 
+proto_library(
+    name = "clip_vector_size_calculator_proto",
+    srcs = ["clip_vector_size_calculator.proto"],
+    visibility = ["//visibility:public"],
+    deps = ["//mediapipe/framework:calculator_proto"],
+)
+
 mediapipe_cc_proto_library(
     name = "packet_cloner_calculator_cc_proto",
     srcs = ["packet_cloner_calculator.proto"],
@@ -109,6 +116,14 @@ mediapipe_cc_proto_library(
     cc_deps = ["//mediapipe/framework:calculator_cc_proto"],
     visibility = ["//visibility:public"],
     deps = [":concatenate_vector_calculator_proto"],
+)
+
+mediapipe_cc_proto_library(
+    name = "clip_vector_size_calculator_cc_proto",
+    srcs = ["clip_vector_size_calculator.proto"],
+    cc_deps = ["//mediapipe/framework:calculator_cc_proto"],
+    visibility = ["//visibility:public"],
+    deps = [":clip_vector_size_calculator_proto"],
 )
 
 mediapipe_cc_proto_library(
@@ -170,6 +185,66 @@ cc_test(
 )
 
 cc_library(
+    name = "begin_loop_calculator",
+    srcs = ["begin_loop_calculator.cc"],
+    hdrs = ["begin_loop_calculator.h"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//mediapipe/framework:calculator_context",
+        "//mediapipe/framework:calculator_contract",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:collection_item_id",
+        "//mediapipe/framework:packet",
+        "//mediapipe/framework/formats:landmark_cc_proto",
+        "//mediapipe/framework/formats:rect_cc_proto",
+        "//mediapipe/framework/port:integral_types",
+        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:status",
+        "@com_google_absl//absl/memory",
+    ],
+    alwayslink = 1,
+)
+
+cc_library(
+    name = "end_loop_calculator",
+    srcs = ["end_loop_calculator.cc"],
+    hdrs = ["end_loop_calculator.h"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//mediapipe/framework:calculator_context",
+        "//mediapipe/framework:calculator_contract",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:collection_item_id",
+        "//mediapipe/framework:packet",
+        "//mediapipe/framework/formats:landmark_cc_proto",
+        "//mediapipe/framework/formats:rect_cc_proto",
+        "//mediapipe/framework/port:integral_types",
+        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:status",
+        "//mediapipe/util:render_data_cc_proto",
+    ],
+    alwayslink = 1,
+)
+
+cc_test(
+    name = "begin_end_loop_calculator_graph_test",
+    srcs = ["begin_end_loop_calculator_graph_test.cc"],
+    deps = [
+        ":begin_loop_calculator",
+        ":end_loop_calculator",
+        "//mediapipe/calculators/core:packet_cloner_calculator",
+        "//mediapipe/framework:calculator_context",
+        "//mediapipe/framework:calculator_contract",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:integral_types",
+        "//mediapipe/framework/port:parse_text_proto",
+        "//mediapipe/framework/port:status",
+        "@com_google_absl//absl/memory",
+    ],
+)
+
+cc_library(
     name = "concatenate_vector_calculator",
     srcs = ["concatenate_vector_calculator.cc"],
     hdrs = ["concatenate_vector_calculator.h"],
@@ -208,6 +283,50 @@ cc_test(
     srcs = ["concatenate_vector_calculator_test.cc"],
     deps = [
         ":concatenate_vector_calculator",
+        "//mediapipe/calculators/core:packet_resampler_calculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:calculator_runner",
+        "//mediapipe/framework:timestamp",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:parse_text_proto",
+        "//mediapipe/framework/port:status",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_library(
+    name = "clip_vector_size_calculator",
+    srcs = ["clip_vector_size_calculator.cc"],
+    hdrs = ["clip_vector_size_calculator.h"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":clip_vector_size_calculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/formats:rect_cc_proto",
+        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:status",
+        "@org_tensorflow//tensorflow/lite:framework",
+    ],
+    alwayslink = 1,
+)
+
+cc_library(
+    name = "clip_detection_vector_size_calculator",
+    srcs = ["clip_detection_vector_size_calculator.cc"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":clip_vector_size_calculator",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/formats:detection_cc_proto",
+    ],
+    alwayslink = 1,
+)
+
+cc_test(
+    name = "clip_vector_size_calculator_test",
+    srcs = ["clip_vector_size_calculator_test.cc"],
+    deps = [
+        ":clip_vector_size_calculator",
         "//mediapipe/calculators/core:packet_resampler_calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework:calculator_runner",
@@ -300,7 +419,7 @@ cc_library(
         "//visibility:public",
     ],
     deps = [
-        "//mediapipe/calculators/core:packet_cloner_calculator_cc_proto",
+        ":packet_cloner_calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
         "@com_google_absl//absl/strings",
     ],

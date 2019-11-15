@@ -1,7 +1,7 @@
 # MediaPipe graph that performs object detection with TensorFlow Lite on GPU.
 # Used in the examples in
-# mediapipie/examples/android/src/java/com/mediapipe/apps/objectdetectiongpu and
-# mediapipie/examples/ios/objectdetectiongpu.
+# mediapipe/examples/android/src/java/com/mediapipe/apps/objectdetectiongpu and
+# mediapipe/examples/ios/objectdetectiongpu.
 
 # Images on GPU coming into and out of the graph.
 input_stream: "input_video"

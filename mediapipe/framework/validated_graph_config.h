@@ -16,9 +16,9 @@
 #define MEDIAPIPE_FRAMEWORK_VALIDATED_GRAPH_CONFIG_H_
 
 #include <map>
-#include <unordered_set>
 #include <vector>
 
+#include "absl/container/flat_hash_set.h"
 #include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/framework/calculator_contract.h"
 #include "mediapipe/framework/packet_generator.pb.h"
@@ -169,7 +169,7 @@ class NodeTypeInfo {
   // be a virtual node corresponding to a graph input stream (which are
   // listed by index contiguously after all calculators).
   // This function is only valid for a NodeTypeInfo of NodeType CALCULATOR.
-  const std::unordered_set<int>& AncestorSources() const {
+  const absl::flat_hash_set<int>& AncestorSources() const {
     return ancestor_sources_;
   }
   // Returns True if the source was not already there.
@@ -213,7 +213,7 @@ class NodeTypeInfo {
   NodeRef node_;
 
   // The set of sources which affect this node.
-  std::unordered_set<int> ancestor_sources_;
+  absl::flat_hash_set<int> ancestor_sources_;
 };
 
 // Information for either the input or output side of an edge.  An edge

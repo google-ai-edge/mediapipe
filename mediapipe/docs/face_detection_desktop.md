@@ -77,7 +77,7 @@ below and paste it into
 ```bash
 # MediaPipe graph that performs face detection with TensorFlow Lite on CPU & GPU.
 # Used in the examples in
-# mediapipie/examples/desktop/face_detection:face_detection_cpu.
+# mediapipe/examples/desktop/face_detection:face_detection_cpu.
 
 # Images on CPU coming into and out of the graph.
 input_stream: "input_video"

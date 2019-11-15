@@ -10,8 +10,7 @@ http_archive(
     sha256 = "2ef429f5d7ce7111263289644d233707dba35e39696377ebab8b0bc701f7818e",
 )
 load("@bazel_skylib//lib:versions.bzl", "versions")
-versions.check(minimum_bazel_version = "0.24.1",
-               maximum_bazel_version = "0.29.1")
+versions.check(minimum_bazel_version = "0.24.1")
 
 # ABSL cpp library.
 http_archive(
@@ -104,9 +103,9 @@ http_archive(
     ],
 )
 
-# 2019-08-15
-_TENSORFLOW_GIT_COMMIT = "67def62936e28f97c16182dfcc467d8d1cae02b4"
-_TENSORFLOW_SHA256= "ddd4e3c056e7c0ff2ef29133b30fa62781dfbf8a903e99efb91a02d292fa9562"
+# 2019-11-12
+_TENSORFLOW_GIT_COMMIT = "a5f9bcd64453ff3d1f64cb4da4786db3d2da7f82"
+_TENSORFLOW_SHA256= "f2b6f2ab2ffe63e86eccd3ce4bea6b7197383d726638dfeeebcdc1e7de73f075"
 http_archive(
     name = "org_tensorflow",
     urls = [
@@ -115,13 +114,6 @@ http_archive(
     ],
     strip_prefix = "tensorflow-%s" % _TENSORFLOW_GIT_COMMIT,
     sha256 = _TENSORFLOW_SHA256,
-    patches = [
-        "@//third_party:tensorflow_065c20bf79253257c87bd4614bb9a7fdef015cbb.diff",
-        "@//third_party:tensorflow_f67fcbefce906cd419e4657f0d41e21019b71abd.diff",
-    ],
-    patch_args = [
-        "-p1",
-    ],
 )
 
 load("@org_tensorflow//tensorflow:workspace.bzl", "tf_workspace")
@@ -255,18 +247,11 @@ android_sdk_repository(
 
 # iOS basic build deps.
 
-load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
-
-git_repository(
+http_archive(
     name = "build_bazel_rules_apple",
-    remote = "https://github.com/bazelbuild/rules_apple.git",
-    tag = "0.18.0",
-    patches = [
-        "@//third_party:rules_apple_c0863d0596ae6b769a29fa3fb72ff036444fd249.diff",
-    ],
-    patch_args = [
-        "-p1",
-    ],
+    sha256 = "bdc8e66e70b8a75da23b79f1f8c6207356df07d041d96d2189add7ee0780cf4e",
+    strip_prefix = "rules_apple-b869b0d3868d78a1d4ffd866ccb304fb68aa12c3",
+    url = "https://github.com/bazelbuild/rules_apple/archive/b869b0d3868d78a1d4ffd866ccb304fb68aa12c3.tar.gz",
 )
 
 load(

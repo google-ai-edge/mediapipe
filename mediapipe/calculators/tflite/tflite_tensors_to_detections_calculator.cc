@@ -172,13 +172,11 @@ class TfLiteTensorsToDetectionsCalculator : public CalculatorBase {
       const int* detection_classes, std::vector<Detection>* output_detections);
   Detection ConvertToDetection(float box_ymin, float box_xmin, float box_ymax,
                                float box_xmax, float score, int class_id,
-                               int detection_id, bool flip_vertically);
+                               bool flip_vertically);
 
   int num_classes_ = 0;
   int num_boxes_ = 0;
   int num_coords_ = 0;
-  // Unique detection ID per new detection.
-  static int next_detection_id_;
   std::set<int> ignore_classes_;
 
   ::mediapipe::TfLiteTensorsToDetectionsCalculatorOptions options_;
@@ -198,10 +196,6 @@ class TfLiteTensorsToDetectionsCalculator : public CalculatorBase {
   bool anchors_init_ = false;
 };
 REGISTER_CALCULATOR(TfLiteTensorsToDetectionsCalculator);
-
-// Initialization of non-const static member should happen outside class
-// definition.
-int TfLiteTensorsToDetectionsCalculator::next_detection_id_ = 0;
 
 ::mediapipe::Status TfLiteTensorsToDetectionsCalculator::GetContract(
     CalculatorContract* cc) {
@@ -686,10 +680,7 @@ int TfLiteTensorsToDetectionsCalculator::next_detection_id_ = 0;
     Detection detection = ConvertToDetection(
         detection_boxes[box_offset + 0], detection_boxes[box_offset + 1],
         detection_boxes[box_offset + 2], detection_boxes[box_offset + 3],
-        detection_scores[i], detection_classes[i], next_detection_id_,
-        options_.flip_vertically());
-    // Increment to get next unique detection ID.
-    ++next_detection_id_;
+        detection_scores[i], detection_classes[i], options_.flip_vertically());
     // Add keypoints.
     if (options_.num_keypoints() > 0) {
       auto* location_data = detection.mutable_location_data();
@@ -712,11 +703,10 @@ int TfLiteTensorsToDetectionsCalculator::next_detection_id_ = 0;
 
 Detection TfLiteTensorsToDetectionsCalculator::ConvertToDetection(
     float box_ymin, float box_xmin, float box_ymax, float box_xmax, float score,
-    int class_id, int detection_id, bool flip_vertically) {
+    int class_id, bool flip_vertically) {
   Detection detection;
   detection.add_score(score);
   detection.add_label_id(class_id);
-  detection.set_detection_id(detection_id);
 
   LocationData* location_data = detection.mutable_location_data();
   location_data->set_format(LocationData::RELATIVE_BOUNDING_BOX);
