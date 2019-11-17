@@ -11,6 +11,8 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+#include "mediapipe/calculators/util/detections_to_rects_calculator.h"
+
 #include <cmath>
 
 #include "mediapipe/calculators/util/detections_to_rects_calculator.pb.h"
@@ -24,8 +26,6 @@
 
 namespace mediapipe {
 
-using mediapipe::DetectionsToRectsCalculatorOptions;
-
 namespace {
 
 constexpr char kDetectionTag[] = "DETECTION";
@@ -36,7 +36,10 @@ constexpr char kNormRectTag[] = "NORM_RECT";
 constexpr char kRectsTag[] = "RECTS";
 constexpr char kNormRectsTag[] = "NORM_RECTS";
 
-::mediapipe::Status DetectionToRect(const Detection& detection, Rect* rect) {
+}  // namespace
+
+::mediapipe::Status DetectionsToRectsCalculator::DetectionToRect(
+    const Detection& detection, Rect* rect) {
   const LocationData location_data = detection.location_data();
   RET_CHECK(location_data.format() == LocationData::BOUNDING_BOX)
       << "Only Detection with formats of BOUNDING_BOX can be converted to Rect";
@@ -48,8 +51,8 @@ constexpr char kNormRectsTag[] = "NORM_RECTS";
   return ::mediapipe::OkStatus();
 }
 
-::mediapipe::Status DetectionToNormalizedRect(const Detection& detection,
-                                              NormalizedRect* rect) {
+::mediapipe::Status DetectionsToRectsCalculator::DetectionToNormalizedRect(
+    const Detection& detection, NormalizedRect* rect) {
   const LocationData location_data = detection.location_data();
   RET_CHECK(location_data.format() == LocationData::RELATIVE_BOUNDING_BOX)
       << "Only Detection with formats of RELATIVE_BOUNDING_BOX can be "
@@ -62,79 +65,6 @@ constexpr char kNormRectsTag[] = "NORM_RECTS";
   rect->set_height(bounding_box.height());
   return ::mediapipe::OkStatus();
 }
-
-// Wraps around an angle in radians to within -M_PI and M_PI.
-inline float NormalizeRadians(float angle) {
-  return angle - 2 * M_PI * std::floor((angle - (-M_PI)) / (2 * M_PI));
-}
-
-}  // namespace
-
-// A calculator that converts Detection proto to Rect proto.
-//
-// Detection is the format for encoding one or more detections in an image.
-// The input can be a single Detection or std::vector<Detection>. The output can
-// be either a single Rect or NormalizedRect, or std::vector<Rect> or
-// std::vector<NormalizedRect>. If Rect is used, the LocationData format is
-// expected to be BOUNDING_BOX, and if NormalizedRect is used it is expected to
-// be RELATIVE_BOUNDING_BOX.
-//
-// When the input is std::vector<Detection> and the output is a Rect or
-// NormalizedRect, only the first detection is converted. When the input is a
-// single Detection and the output is a std::vector<Rect> or
-// std::vector<NormalizedRect>, the output is a vector of size 1.
-//
-// Inputs:
-//
-// One of the following:
-// DETECTION: A Detection proto.
-// DETECTIONS: An std::vector<Detection>.
-//
-// IMAGE_SIZE (optional): A std::pair<int, int> represention image width and
-//   height. This is required only when rotation needs to be computed (see
-//   calculator options).
-//
-// Output:
-// One of the following:
-// RECT: A Rect proto.
-// NORM_RECT: A NormalizedRect proto.
-// RECTS: An std::vector<Rect>.
-// NORM_RECTS: An std::vector<NormalizedRect>.
-//
-// Example config:
-// node {
-//   calculator: "DetectionsToRectsCalculator"
-//   input_stream: "DETECTIONS:detections"
-//   input_stream: "IMAGE_SIZE:image_size"
-//   output_stream: "NORM_RECT:rect"
-//   options: {
-//     [mediapipe.DetectionsToRectCalculatorOptions.ext] {
-//       rotation_vector_start_keypoint_index: 0
-//       rotation_vector_end_keypoint_index: 2
-//       rotation_vector_target_angle_degrees: 90
-//       output_zero_rect_for_empty_detections: true
-//     }
-//   }
-// }
-class DetectionsToRectsCalculator : public CalculatorBase {
- public:
-  static ::mediapipe::Status GetContract(CalculatorContract* cc);
-
-  ::mediapipe::Status Open(CalculatorContext* cc) override;
-  ::mediapipe::Status Process(CalculatorContext* cc) override;
-
- private:
-  float ComputeRotation(const Detection& detection,
-                        const std::pair<int, int> image_size);
-
-  DetectionsToRectsCalculatorOptions options_;
-  int start_keypoint_index_;
-  int end_keypoint_index_;
-  float target_angle_;  // In radians.
-  bool rotate_;
-  bool output_zero_rect_for_empty_detections_;
-};
-REGISTER_CALCULATOR(DetectionsToRectsCalculator);
 
 ::mediapipe::Status DetectionsToRectsCalculator::GetContract(
     CalculatorContract* cc) {
@@ -232,6 +162,13 @@ REGISTER_CALCULATOR(DetectionsToRectsCalculator);
               .Tag(kNormRectTag)
               .AddPacket(MakePacket<NormalizedRect>().At(cc->InputTimestamp()));
         }
+        if (cc->Outputs().HasTag(kNormRectsTag)) {
+          auto rect_vector = absl::make_unique<std::vector<NormalizedRect>>();
+          rect_vector->emplace_back(NormalizedRect());
+          cc->Outputs()
+              .Tag(kNormRectsTag)
+              .Add(rect_vector.release(), cc->InputTimestamp());
+        }
       }
       return ::mediapipe::OkStatus();
     }
@@ -311,5 +248,7 @@ float DetectionsToRectsCalculator::ComputeRotation(
 
   return NormalizeRadians(rotation);
 }
+
+REGISTER_CALCULATOR(DetectionsToRectsCalculator);
 
 }  // namespace mediapipe

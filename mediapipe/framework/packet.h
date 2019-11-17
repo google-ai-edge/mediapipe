@@ -85,7 +85,7 @@ class Packet {
   // given timestamp. Does not modify *this.
   Packet At(class Timestamp timestamp) const&;
 
-  // The rvalue reference overload of Packet's memeber function
+  // The rvalue reference overload of Packet's member function
   // Packet::At(class Timestamp). Moves *this to a new Packet and returns
   // the new Packet with the given timestamp.
   Packet At(class Timestamp timestamp) &&;
@@ -651,6 +651,14 @@ template <typename T>
 Packet PointToForeign(const T* ptr) {
   CHECK(ptr != nullptr);
   return packet_internal::Create(new packet_internal::ForeignHolder<T>(ptr));
+}
+
+// Equal Packets refer to the same memory contents, like equal pointers.
+inline bool operator==(const Packet& p1, const Packet& p2) {
+  return packet_internal::GetHolder(p1) == packet_internal::GetHolder(p2);
+}
+inline bool operator!=(const Packet& p1, const Packet& p2) {
+  return !(p1 == p2);
 }
 
 }  // namespace mediapipe

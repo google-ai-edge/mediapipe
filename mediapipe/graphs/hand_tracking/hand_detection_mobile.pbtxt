@@ -1,7 +1,7 @@
 # MediaPipe graph that performs hand detection with TensorFlow Lite on GPU.
 # Used in the examples in
-# mediapipie/examples/android/src/java/com/mediapipe/apps/handdetectiongpu and
-# mediapipie/examples/ios/handdetectiongpu.
+# mediapipe/examples/android/src/java/com/mediapipe/apps/handdetectiongpu and
+# mediapipe/examples/ios/handdetectiongpu.
 
 # Images coming into and out of the graph.
 input_stream: "input_video"

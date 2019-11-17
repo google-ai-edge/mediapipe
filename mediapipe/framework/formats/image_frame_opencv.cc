@@ -59,6 +59,9 @@ int GetMatType(const mediapipe::ImageFormat::Format format) {
     case mediapipe::ImageFormat::LAB8:
       type = CV_8U;
       break;
+    case mediapipe::ImageFormat::SBGRA:
+      type = CV_8U;
+      break;
     default:
       // Invalid or unknown; Default to uchar.
       type = CV_8U;

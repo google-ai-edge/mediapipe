@@ -110,7 +110,7 @@ def mediapipe_simple_subgraph(
       testonly: pass 1 if the graph is to be used only for tests.
       **kwargs: Remaining keyword args, forwarded to cc_library.
     """
-    graph_base_name = graph.replace(":", "/").split("/")[-1].rsplit(".", 1)[0]
+    graph_base_name = name
     mediapipe_binary_graph(
         name = name + "_graph",
         graph = graph,

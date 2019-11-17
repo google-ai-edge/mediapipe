@@ -44,3 +44,30 @@ cc_library(
         "//mediapipe/calculators/video:opencv_video_decoder_calculator",
     ],
 )
+
+cc_library(
+    name = "yt8m_inference_calculators_deps",
+    deps = [
+        "//mediapipe/calculators/core:concatenate_vector_calculator",
+        "//mediapipe/calculators/core:dequantize_byte_array_calculator",
+        "//mediapipe/calculators/core:packet_cloner_calculator",
+        "//mediapipe/calculators/core:side_packet_to_stream_calculator",
+        "//mediapipe/calculators/core:string_to_int_calculator",
+        "//mediapipe/calculators/tensorflow:lapped_tensor_buffer_calculator",
+        "//mediapipe/calculators/tensorflow:string_to_sequence_example_calculator",
+        "//mediapipe/calculators/tensorflow:tensor_to_vector_float_calculator",
+        "//mediapipe/calculators/tensorflow:tensorflow_inference_calculator",
+        "//mediapipe/calculators/tensorflow:tensorflow_session_from_saved_model_calculator",
+        "//mediapipe/calculators/tensorflow:tfrecord_reader_calculator",
+        "//mediapipe/calculators/tensorflow:unpack_media_sequence_calculator",
+        "//mediapipe/calculators/tensorflow:unpack_yt8m_sequence_example_calculator",
+        "//mediapipe/calculators/tensorflow:vector_float_to_tensor_calculator",
+        "//mediapipe/calculators/tensorflow:vector_int_to_tensor_calculator",
+        "//mediapipe/calculators/util:annotation_overlay_calculator",
+        "//mediapipe/calculators/util:labels_to_render_data_calculator",
+        "//mediapipe/calculators/util:local_file_contents_calculator",
+        "//mediapipe/calculators/util:top_k_scores_calculator",
+        "//mediapipe/calculators/video:opencv_video_decoder_calculator",
+        "//mediapipe/calculators/video:opencv_video_encoder_calculator",
+    ],
+)

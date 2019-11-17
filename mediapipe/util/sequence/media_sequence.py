@@ -489,7 +489,9 @@ def _create_image_with_prefix(name, prefix):
                                    prefix=prefix, module_dict=globals())
   msu.create_int_feature_list(name + "_timestamp", IMAGE_TIMESTAMP_KEY,
                               prefix=prefix, module_dict=globals())
-
+  msu.create_bytes_list_feature_list(name + "_multi_encoded",
+                                     IMAGE_MULTI_ENCODED_KEY, prefix=prefix,
+                                     module_dict=globals())
 FORWARD_FLOW_PREFIX = "FORWARD_FLOW"
 CLASS_SEGMENTATION_PREFIX = "CLASS_SEGMENTATION"
 INSTANCE_SEGMENTATION_PREFIX = "INSTANCE_SEGMENTATION"

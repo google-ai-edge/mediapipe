@@ -29,6 +29,11 @@
 
 namespace mediapipe {
 
+const char kBufferSize[] = "BUFFER_SIZE";
+const char kOverlap[] = "OVERLAP";
+const char kTimestampOffset[] = "TIMESTAMP_OFFSET";
+const char kCalculatorOptions[] = "CALCULATOR_OPTIONS";
+
 namespace tf = tensorflow;
 
 // Given an input stream of tensors, concatenates the tensors over timesteps.
@@ -72,6 +77,9 @@ class LappedTensorBufferCalculator : public CalculatorBase {
   ::mediapipe::Status AddBatchDimension(tf::Tensor* input_tensor);
 
   int steps_until_output_;
+  int buffer_size_;
+  int overlap_;
+  int timestamp_offset_;
   std::unique_ptr<CircularBuffer<Timestamp>> timestamp_buffer_;
   std::unique_ptr<CircularBuffer<tf::Tensor>> buffer_;
   LappedTensorBufferCalculatorOptions options_;
@@ -87,6 +95,21 @@ REGISTER_CALCULATOR(LappedTensorBufferCalculator);
   );
   RET_CHECK_EQ(cc->Inputs().NumEntries(), 1)
       << "Only one output stream is supported.";
+
+  if (cc->InputSidePackets().HasTag(kBufferSize)) {
+    cc->InputSidePackets().Tag(kBufferSize).Set<int>();
+  }
+  if (cc->InputSidePackets().HasTag(kOverlap)) {
+    cc->InputSidePackets().Tag(kOverlap).Set<int>();
+  }
+  if (cc->InputSidePackets().HasTag(kTimestampOffset)) {
+    cc->InputSidePackets().Tag(kTimestampOffset).Set<int>();
+  }
+  if (cc->InputSidePackets().HasTag(kCalculatorOptions)) {
+    cc->InputSidePackets()
+        .Tag(kCalculatorOptions)
+        .Set<LappedTensorBufferCalculatorOptions>();
+  }
   cc->Outputs().Index(0).Set<tf::Tensor>(
       // Output tensorflow::Tensor stream with possibly overlapping steps.
   );
@@ -95,16 +118,33 @@ REGISTER_CALCULATOR(LappedTensorBufferCalculator);
 
 ::mediapipe::Status LappedTensorBufferCalculator::Open(CalculatorContext* cc) {
   options_ = cc->Options<LappedTensorBufferCalculatorOptions>();
-  RET_CHECK_LT(options_.overlap(), options_.buffer_size());
-  RET_CHECK_GE(options_.timestamp_offset(), 0)
+  if (cc->InputSidePackets().HasTag(kCalculatorOptions)) {
+    options_ = cc->InputSidePackets()
+                   .Tag(kCalculatorOptions)
+                   .Get<LappedTensorBufferCalculatorOptions>();
+  }
+  buffer_size_ = options_.buffer_size();
+  if (cc->InputSidePackets().HasTag(kBufferSize)) {
+    buffer_size_ = cc->InputSidePackets().Tag(kBufferSize).Get<int>();
+  }
+  overlap_ = options_.overlap();
+  if (cc->InputSidePackets().HasTag(kOverlap)) {
+    overlap_ = cc->InputSidePackets().Tag(kOverlap).Get<int>();
+  }
+  timestamp_offset_ = options_.timestamp_offset();
+  if (cc->InputSidePackets().HasTag(kTimestampOffset)) {
+    timestamp_offset_ = cc->InputSidePackets().Tag(kTimestampOffset).Get<int>();
+  }
+
+  RET_CHECK_LT(overlap_, buffer_size_);
+  RET_CHECK_GE(timestamp_offset_, 0)
       << "Negative timestamp_offset is not allowed.";
-  RET_CHECK_LT(options_.timestamp_offset(), options_.buffer_size())
+  RET_CHECK_LT(timestamp_offset_, buffer_size_)
       << "output_frame_num_offset has to be less than buffer_size.";
   timestamp_buffer_ =
-      absl::make_unique<CircularBuffer<Timestamp>>(options_.buffer_size());
-  buffer_ =
-      absl::make_unique<CircularBuffer<tf::Tensor>>(options_.buffer_size());
-  steps_until_output_ = options_.buffer_size();
+      absl::make_unique<CircularBuffer<Timestamp>>(buffer_size_);
+  buffer_ = absl::make_unique<CircularBuffer<tf::Tensor>>(buffer_size_);
+  steps_until_output_ = buffer_size_;
   return ::mediapipe::OkStatus();
 }
 
@@ -128,11 +168,10 @@ REGISTER_CALCULATOR(LappedTensorBufferCalculator);
         concatenated.get());
     RET_CHECK(concat_status.ok()) << concat_status.ToString();
 
-    cc->Outputs().Index(0).Add(
-        concatenated.release(),
-        timestamp_buffer_->Get(options_.timestamp_offset()));
+    cc->Outputs().Index(0).Add(concatenated.release(),
+                               timestamp_buffer_->Get(timestamp_offset_));
 
-    steps_until_output_ = options_.buffer_size() - options_.overlap();
+    steps_until_output_ = buffer_size_ - overlap_;
   }
   return ::mediapipe::OkStatus();
 }

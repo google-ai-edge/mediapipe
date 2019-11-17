@@ -247,25 +247,45 @@ TEST_F(GraphProfilerTestPeer, InitializeConfig) {
   // Checks histogram_interval_size_usec and num_histogram_intervals.
   CalculatorProfile actual =
       GetCalculatorProfilesMap()->find(kDummyTestCalculatorName)->second;
-  ASSERT_EQ(actual.name(), kDummyTestCalculatorName);
-  ASSERT_FALSE(actual.has_open_runtime());
-  ASSERT_FALSE(actual.has_close_runtime());
-
-  ASSERT_EQ(actual.process_runtime().interval_size_usec(), 1000);
-  ASSERT_EQ(actual.process_runtime().num_intervals(), 3);
-
-  ASSERT_EQ(actual.process_input_latency().interval_size_usec(), 1000);
-  ASSERT_EQ(actual.process_input_latency().num_intervals(), 3);
-
-  ASSERT_EQ(actual.process_output_latency().interval_size_usec(), 1000);
-  ASSERT_EQ(actual.process_output_latency().num_intervals(), 3);
-
-  ASSERT_EQ(actual.input_stream_profiles().size(), 1);
-  ASSERT_EQ(actual.input_stream_profiles(0).name(), "input_stream");
-  ASSERT_FALSE(actual.input_stream_profiles(0).back_edge());
-  ASSERT_EQ(actual.input_stream_profiles(0).latency().interval_size_usec(),
-            1000);
-  ASSERT_EQ(actual.input_stream_profiles(0).latency().num_intervals(), 3);
+  EXPECT_THAT(actual, EqualsProto(R"(
+                name: "DummyTestCalculator"
+                process_runtime {
+                  total: 0
+                  interval_size_usec: 1000
+                  num_intervals: 3
+                  count: 0
+                  count: 0
+                  count: 0
+                }
+                process_input_latency {
+                  total: 0
+                  interval_size_usec: 1000
+                  num_intervals: 3
+                  count: 0
+                  count: 0
+                  count: 0
+                }
+                process_output_latency {
+                  total: 0
+                  interval_size_usec: 1000
+                  num_intervals: 3
+                  count: 0
+                  count: 0
+                  count: 0
+                }
+                input_stream_profiles {
+                  name: "input_stream"
+                  back_edge: false
+                  latency {
+                    total: 0
+                    interval_size_usec: 1000
+                    num_intervals: 3
+                    count: 0
+                    count: 0
+                    count: 0
+                  }
+                }
+              )"));
 }
 
 // Tests that Initialize() uses the ProfilerConfig in the graph definition.
@@ -291,16 +311,17 @@ TEST_F(GraphProfilerTestPeer, InitializeConfigWithoutStreamLatency) {
   // Checks histogram_interval_size_usec and num_histogram_intervals.
   CalculatorProfile actual =
       GetCalculatorProfilesMap()->find(kDummyTestCalculatorName)->second;
-  ASSERT_EQ(actual.name(), kDummyTestCalculatorName);
-  ASSERT_FALSE(actual.has_open_runtime());
-  ASSERT_FALSE(actual.has_close_runtime());
-
-  ASSERT_EQ(actual.process_runtime().interval_size_usec(), 1000);
-  ASSERT_EQ(actual.process_runtime().num_intervals(), 3);
-
-  ASSERT_FALSE(actual.has_process_input_latency());
-  ASSERT_FALSE(actual.has_process_output_latency());
-  ASSERT_EQ(actual.input_stream_profiles().size(), 0);
+  EXPECT_THAT(actual, EqualsProto(R"(
+                name: "DummyTestCalculator"
+                process_runtime {
+                  total: 0
+                  interval_size_usec: 1000
+                  num_intervals: 3
+                  count: 0
+                  count: 0
+                  count: 0
+                }
+              )"));
 }
 
 // Tests that Initialize() reads all the configs defined in the graph
@@ -633,10 +654,11 @@ TEST_F(GraphProfilerTestPeer, SetOpenRuntime) {
   simulation_clock->ThreadFinish();
 
   ASSERT_EQ(profiles.size(), 1);
-  ASSERT_EQ(profiles[0].open_runtime(), 100);
-  ASSERT_FALSE(profiles[0].has_close_runtime());
-  ASSERT_THAT(profiles[0].process_runtime(),
-              Partially(EqualsProto(CreateTimeHistogram(/*total=*/0, {0}))));
+  EXPECT_THAT(profiles[0], Partially(EqualsProto(R"(
+                name: "DummyTestCalculator"
+                open_runtime: 100
+                process_runtime { total: 0 }
+              )")));
   // Checks packets_info_ map hasn't changed.
   ASSERT_EQ(GetPacketsInfoMap()->size(), 0);
 }
@@ -688,14 +710,29 @@ TEST_F(GraphProfilerTestPeer, SetOpenRuntimeWithStreamLatency) {
   ASSERT_EQ(profiles.size(), 2);
   CalculatorProfile source_profile =
       GetProfileWithName(profiles, "source_calc");
-  ASSERT_EQ(source_profile.open_runtime(), 150);
-  ASSERT_FALSE(source_profile.has_close_runtime());
-  ASSERT_THAT(source_profile.process_runtime(),
-              Partially(EqualsProto(CreateTimeHistogram(/*total=*/0, {0}))));
-  ASSERT_THAT(source_profile.process_input_latency(),
-              Partially(EqualsProto(CreateTimeHistogram(/*total=*/0, {0}))));
-  ASSERT_THAT(source_profile.process_output_latency(),
-              Partially(EqualsProto(CreateTimeHistogram(/*total=*/0, {0}))));
+
+  EXPECT_THAT(source_profile, EqualsProto(R"(
+                name: "source_calc"
+                open_runtime: 150
+                process_runtime {
+                  total: 0
+                  interval_size_usec: 1000000
+                  num_intervals: 1
+                  count: 0
+                }
+                process_input_latency {
+                  total: 0
+                  interval_size_usec: 1000000
+                  num_intervals: 1
+                  count: 0
+                }
+                process_output_latency {
+                  total: 0
+                  interval_size_usec: 1000000
+                  num_intervals: 1
+                  count: 0
+                }
+              )"));
 
   // Check packets_info_ map has been updated.
   ASSERT_EQ(GetPacketsInfoMap()->size(), 1);
@@ -736,11 +773,16 @@ TEST_F(GraphProfilerTestPeer, SetCloseRuntime) {
   std::vector<CalculatorProfile> profiles = Profiles();
   simulation_clock->ThreadFinish();
 
-  ASSERT_EQ(profiles.size(), 1);
-  ASSERT_FALSE(profiles[0].open_runtime());
-  ASSERT_EQ(profiles[0].close_runtime(), 100);
-  ASSERT_THAT(profiles[0].process_runtime(),
-              Partially(EqualsProto(CreateTimeHistogram(/*total=*/0, {0}))));
+  EXPECT_THAT(profiles[0], EqualsProto(R"(
+                name: "DummyTestCalculator"
+                close_runtime: 100
+                process_runtime {
+                  total: 0
+                  interval_size_usec: 1000000
+                  num_intervals: 1
+                  count: 0
+                }
+              )"));
 }
 
 // Tests that SetCloseRuntime() updates |close_runtime| and doesn't affect other
@@ -789,11 +831,39 @@ TEST_F(GraphProfilerTestPeer, SetCloseRuntimeWithStreamLatency) {
   ASSERT_EQ(profiles.size(), 2);
   CalculatorProfile source_profile =
       GetProfileWithName(profiles, "source_calc");
-  ASSERT_FALSE(source_profile.open_runtime());
-  ASSERT_EQ(source_profile.close_runtime(), 100);
-  ASSERT_THAT(source_profile.process_runtime(),
-              Partially(EqualsProto(CreateTimeHistogram(/*total=*/0, {0}))));
-  ASSERT_EQ(GetPacketsInfoMap()->size(), 1);
+
+  EXPECT_THAT(source_profile, EqualsProto(R"(
+                name: "source_calc"
+                close_runtime: 100
+                process_runtime {
+                  total: 0
+                  interval_size_usec: 1000000
+                  num_intervals: 1
+                  count: 0
+                }
+                process_input_latency {
+                  total: 0
+                  interval_size_usec: 1000000
+                  num_intervals: 1
+                  count: 0
+                }
+                process_output_latency {
+                  total: 0
+                  interval_size_usec: 1000000
+                  num_intervals: 1
+                  count: 0
+                }
+                input_stream_profiles {
+                  name: "input_stream"
+                  back_edge: false
+                  latency {
+                    total: 0
+                    interval_size_usec: 1000000
+                    num_intervals: 1
+                    count: 0
+                  }
+                }
+              )"));
   PacketInfo expected_packet_info = {0,
                                      /*production_time_usec=*/1000 + 100,
                                      /*source_process_start_usec=*/1000 + 0};
@@ -933,10 +1003,15 @@ TEST_F(GraphProfilerTestPeer, AddProcessSample) {
   simulation_clock->ThreadFinish();
 
   ASSERT_EQ(profiles.size(), 1);
-  ASSERT_THAT(profiles[0].process_runtime(),
-              Partially(EqualsProto(CreateTimeHistogram(/*total=*/150, {1}))));
-  ASSERT_FALSE(profiles[0].has_open_runtime());
-  ASSERT_FALSE(profiles[0].has_close_runtime());
+  EXPECT_THAT(profiles[0], EqualsProto(R"(
+                name: "DummyTestCalculator"
+                process_runtime {
+                  total: 150
+                  interval_size_usec: 1000000
+                  num_intervals: 1
+                  count: 1
+                }
+              )"));
   // Checks packets_info_ map hasn't changed.
   ASSERT_EQ(GetPacketsInfoMap()->size(), 0);
 }
@@ -985,12 +1060,27 @@ TEST_F(GraphProfilerTestPeer, AddProcessSampleWithStreamLatency) {
   ASSERT_EQ(profiles.size(), 2);
   CalculatorProfile source_profile =
       GetProfileWithName(profiles, "source_calc");
-  ASSERT_THAT(source_profile.process_runtime(),
-              Partially(EqualsProto(CreateTimeHistogram(/*total=*/150, {1}))));
-  ASSERT_THAT(source_profile.process_input_latency(),
-              Partially(EqualsProto(CreateTimeHistogram(/*total=*/0, {1}))));
-  ASSERT_THAT(source_profile.process_output_latency(),
-              Partially(EqualsProto(CreateTimeHistogram(/*total=*/150, {1}))));
+
+  EXPECT_THAT(profiles[0], Partially(EqualsProto(R"(
+                process_runtime {
+                  total: 150
+                  interval_size_usec: 1000000
+                  num_intervals: 1
+                  count: 1
+                }
+                process_input_latency {
+                  total: 0
+                  interval_size_usec: 1000000
+                  num_intervals: 1
+                  count: 1
+                }
+                process_output_latency {
+                  total: 150
+                  interval_size_usec: 1000000
+                  num_intervals: 1
+                  count: 1
+                }
+              )")));
 
   // Check packets_info_ map has been updated.
   ASSERT_EQ(GetPacketsInfoMap()->size(), 1);
@@ -1019,22 +1109,24 @@ TEST_F(GraphProfilerTestPeer, AddProcessSampleWithStreamLatency) {
 
   CalculatorProfile consumer_profile =
       GetProfileWithName(profiles, "consumer_calc");
-  ASSERT_THAT(consumer_profile.process_runtime(),
-              Partially(EqualsProto(CreateTimeHistogram(/*total=*/250, {1}))));
-  ASSERT_THAT(consumer_profile.process_input_latency(),
-              Partially(EqualsProto(CreateTimeHistogram(
-                  /*total=*/2000 - when_source_started, {1}))));
-  ASSERT_THAT(consumer_profile.process_output_latency(),
-              Partially(EqualsProto(CreateTimeHistogram(
-                  /*total=*/2000 + 250 - when_source_started, {1}))));
-  ASSERT_EQ(consumer_profile.input_stream_profiles().size(), 2);
-  // For "stream_0" should have not changed since it was empty.
-  ASSERT_THAT(consumer_profile.input_stream_profiles(0).latency(),
-              Partially(EqualsProto(CreateTimeHistogram(/*total=*/0, {0}))));
-  // For "stream_1"
-  ASSERT_THAT(consumer_profile.input_stream_profiles(1).latency(),
-              Partially(EqualsProto(CreateTimeHistogram(
-                  /*total=*/2000 - when_source_finished, {1}))));
+
+  // process input latency total = 2000 (end) - 1000 (when source started) =
+  // 1000 process output latency total = 2000 (end) + 250 - 1000 (when source
+  // started) = 1250 For "stream_0" should have not changed since it was empty.
+  // For "stream_1" = 2000 (end) - 1250 (when source finished) = 850
+  EXPECT_THAT(consumer_profile, Partially(EqualsProto(R"(
+                name: "consumer_calc"
+                process_input_latency { total: 1000 }
+                process_output_latency { total: 1250 }
+                input_stream_profiles {
+                  name: "stream_0"
+                  latency { total: 0 }
+                }
+                input_stream_profiles {
+                  name: "stream_1"
+                  latency { total: 850 }
+                }
+              )")));
 
   // Check packets_info_ map for PacketId({"stream_1", 100}) should not yet be
   // garbage collected.

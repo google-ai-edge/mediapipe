@@ -391,6 +391,38 @@ void CalculatorNode::SetMaxInputStreamQueueSize(int max_queue_size) {
   return ::mediapipe::OkStatus();
 }
 
+namespace {
+// Returns the Packet sent to an OutputSidePacket, or an empty packet
+// if none available.
+const Packet GetPacket(const OutputSidePacket& out) {
+  auto impl = dynamic_cast<const OutputSidePacketImpl*>(&out);
+  return (impl == nullptr) ? Packet() : impl->GetPacket();
+}
+
+// Resends the output-side-packets from the previous graph run.
+::mediapipe::Status ResendSidePackets(CalculatorContext* cc) {
+  auto& outs = cc->OutputSidePackets();
+  for (CollectionItemId id = outs.BeginId(); id < outs.EndId(); ++id) {
+    Packet packet = GetPacket(outs.Get(id));
+    if (!packet.IsEmpty()) {
+      // OutputSidePacket::Set re-announces the side-packet to its mirrors.
+      outs.Get(id).Set(packet);
+    }
+  }
+  return ::mediapipe::OkStatus();
+}
+}  // namespace
+
+bool CalculatorNode::OutputsAreConstant(CalculatorContext* cc) {
+  if (cc->Inputs().NumEntries() > 0 || cc->Outputs().NumEntries() > 0) {
+    return false;
+  }
+  if (input_side_packet_handler_.InputSidePacketsChanged()) {
+    return false;
+  }
+  return true;
+}
+
 ::mediapipe::Status CalculatorNode::OpenNode() {
   VLOG(2) << "CalculatorNode::OpenNode() for " << DebugName();
 
@@ -407,8 +439,9 @@ void CalculatorNode::SetMaxInputStreamQueueSize(int max_queue_size) {
       default_context, Timestamp::Unstarted());
 
   ::mediapipe::Status result;
-
-  {
+  if (OutputsAreConstant(default_context)) {
+    result = ResendSidePackets(default_context);
+  } else {
     MEDIAPIPE_PROFILING(OPEN, default_context);
     LegacyCalculatorSupport::Scoped<CalculatorContext> s(default_context);
     result = calculator_->Open(default_context);
@@ -494,7 +527,10 @@ void CalculatorNode::CloseOutputStreams(OutputStreamShardSet* outputs) {
 
   ::mediapipe::Status result;
 
-  {
+  if (OutputsAreConstant(default_context)) {
+    // Do nothing.
+    result = ::mediapipe::OkStatus();
+  } else {
     MEDIAPIPE_PROFILING(CLOSE, default_context);
     LegacyCalculatorSupport::Scoped<CalculatorContext> s(default_context);
     result = calculator_->Close(default_context);
@@ -770,7 +806,10 @@ std::string CalculatorNode::DebugName() const {
 
         VLOG(2) << "Calling Calculator::Process() for node: " << DebugName();
 
-        {
+        if (OutputsAreConstant(calculator_context)) {
+          // Do nothing.
+          result = ::mediapipe::OkStatus();
+        } else {
           MEDIAPIPE_PROFILING(PROCESS, calculator_context);
           LegacyCalculatorSupport::Scoped<CalculatorContext> s(
               calculator_context);

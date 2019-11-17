@@ -1,6 +1,6 @@
 # MediaPipe graph that performs object detection with TensorFlow Lite on CPU.
 # Used in the examples in
-# mediapipie/examples/desktop/object_detection:object_detection_cpu.
+# mediapipe/examples/desktop/object_detection:object_detection_cpu.
 
 # Images on CPU coming into and out of the graph.
 input_stream: "input_video"

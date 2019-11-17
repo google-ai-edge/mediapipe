@@ -23,13 +23,14 @@
 
 #include "mediapipe/calculators/util/top_k_scores_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
+#include "mediapipe/framework/formats/classification.pb.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/port/statusor.h"
 #include "mediapipe/util/resource_util.h"
 
-#if defined(MEDIAPIPE_LITE) || defined(__ANDROID__) || \
-    (defined(__APPLE__) && !TARGET_OS_OSX)
+#if defined(MEDIAPIPE_LITE) || defined(__EMSCRIPTEN__) || \
+    defined(__ANDROID__) || (defined(__APPLE__) && !TARGET_OS_OSX)
 #include "mediapipe/util/android/file/base/file.h"
 #include "mediapipe/util/android/file/base/helpers.h"
 #else
@@ -37,8 +38,10 @@
 #endif
 
 namespace mediapipe {
+
 // A calculator that takes a vector of scores and returns the indexes, scores,
-// labels of the top k elements.
+// labels of the top k elements, classification protos, and summary std::string
+// (in csv format).
 //
 // Usage example:
 // node {
@@ -47,6 +50,8 @@ namespace mediapipe {
 //   output_stream: "TOP_K_INDEXES:top_k_indexes"
 //   output_stream: "TOP_K_SCORES:top_k_scores"
 //   output_stream: "TOP_K_LABELS:top_k_labels"
+//   output_stream: "TOP_K_CLASSIFICATIONS:top_k_classes"
+//   output_stream: "SUMMARY:summary"
 //   options: {
 //     [mediapipe.TopKScoresCalculatorOptions.ext] {
 //       top_k: 5
@@ -69,6 +74,7 @@ class TopKScoresCalculator : public CalculatorBase {
   int top_k_ = -1;
   float threshold_ = 0.0;
   std::unordered_map<int, std::string> label_map_;
+  bool label_map_loaded_ = false;
 };
 REGISTER_CALCULATOR(TopKScoresCalculator);
 
@@ -83,6 +89,12 @@ REGISTER_CALCULATOR(TopKScoresCalculator);
   }
   if (cc->Outputs().HasTag("TOP_K_LABELS")) {
     cc->Outputs().Tag("TOP_K_LABELS").Set<std::vector<std::string>>();
+  }
+  if (cc->Outputs().HasTag("CLASSIFICATIONS")) {
+    cc->Outputs().Tag("CLASSIFICATIONS").Set<ClassificationList>();
+  }
+  if (cc->Outputs().HasTag("SUMMARY")) {
+    cc->Outputs().Tag("SUMMARY").Set<std::string>();
   }
   return ::mediapipe::OkStatus();
 }
@@ -149,7 +161,7 @@ REGISTER_CALCULATOR(TopKScoresCalculator);
   reverse(top_k_indexes.begin(), top_k_indexes.end());
   reverse(top_k_scores.begin(), top_k_scores.end());
 
-  if (cc->Outputs().HasTag("TOP_K_LABELS")) {
+  if (label_map_loaded_) {
     for (int index : top_k_indexes) {
       top_k_labels.push_back(label_map_[index]);
     }
@@ -172,6 +184,35 @@ REGISTER_CALCULATOR(TopKScoresCalculator);
         .AddPacket(MakePacket<std::vector<std::string>>(top_k_labels)
                        .At(cc->InputTimestamp()));
   }
+
+  if (cc->Outputs().HasTag("SUMMARY")) {
+    std::vector<std::string> results;
+    for (int index = 0; index < top_k_indexes.size(); ++index) {
+      if (label_map_loaded_) {
+        results.push_back(
+            absl::StrCat(top_k_labels[index], ":", top_k_scores[index]));
+      } else {
+        results.push_back(
+            absl::StrCat(top_k_indexes[index], ":", top_k_scores[index]));
+      }
+    }
+    cc->Outputs().Tag("SUMMARY").AddPacket(
+        MakePacket<std::string>(absl::StrJoin(results, ","))
+            .At(cc->InputTimestamp()));
+  }
+
+  if (cc->Outputs().HasTag("TOP_K_CLASSIFICATION")) {
+    auto classification_list = absl::make_unique<ClassificationList>();
+    for (int index = 0; index < top_k_indexes.size(); ++index) {
+      Classification* classification =
+          classification_list->add_classification();
+      classification->set_index(top_k_indexes[index]);
+      classification->set_score(top_k_scores[index]);
+      if (label_map_loaded_) {
+        classification->set_label(top_k_labels[index]);
+      }
+    }
+  }
   return ::mediapipe::OkStatus();
 }
 
@@ -188,6 +229,7 @@ REGISTER_CALCULATOR(TopKScoresCalculator);
   while (std::getline(stream, line)) {
     label_map_[i++] = line;
   }
+  label_map_loaded_ = true;
   return ::mediapipe::OkStatus();
 }
 

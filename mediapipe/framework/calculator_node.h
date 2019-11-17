@@ -280,6 +280,9 @@ class CalculatorNode {
   // Get a std::string describing the input streams.
   std::string DebugInputStreamNames() const;
 
+  // Returns true if all outputs will be identical to the previous graph run.
+  bool OutputsAreConstant(CalculatorContext* cc);
+
   // The calculator.
   std::unique_ptr<CalculatorBase> calculator_;
   // Keeps data which a Calculator subclass needs access to.

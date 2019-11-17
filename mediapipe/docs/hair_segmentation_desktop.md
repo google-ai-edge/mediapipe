@@ -31,15 +31,12 @@ $ bazel build -c opt --copt -DMESA_EGL_NO_X11_HEADERS \
 #INFO: Found 1 target...
 #Target //mediapipe/examples/desktop/hair_segmentation:hair_segmentation_gpu up-to-date:
 #  bazel-bin/mediapipe/examples/desktop/hair_segmentation/hair_segmentation_gpu
-#INFO: Elapsed time: 18.209s, Forge stats: 13026/13057 actions cached, 20.8s CPU used, 0.0s queue time, 89.3 MB ObjFS output (novel bytes: 87.4 MB), 0.0 MB local output, Critical Path: 11.88s, Remote (86.01% of the time): [queue: 0.00%, network: 16.83%, setup: 4.59%, process: 38.92%]
-#INFO: Streaming build results to: http://sponge2/37d5a184-293b-4e98-a43e-b22084db3142
 #INFO: Build completed successfully, 12210 total actions
 
-$ export GLOG_logtostderr=1
 # This will open up your webcam as long as it is connected and on
 # Any errors is likely due to your webcam being not accessible,
 # or GPU drivers not setup properly.
-$ bazel-bin/mediapipe/examples/desktop/hair_segmentation/hair_segmentation_gpu \
+$ GLOG_logtostderr=1 bazel-bin/mediapipe/examples/desktop/hair_segmentation/hair_segmentation_gpu \
     --calculator_graph_config_file=mediapipe/graphs/hair_segmentation/hair_segmentation_mobile_gpu.pbtxt
 ```
 
@@ -54,7 +51,7 @@ below and paste it into
 ```bash
 # MediaPipe graph that performs hair segmentation with TensorFlow Lite on GPU.
 # Used in the example in
-# mediapipie/examples/android/src/java/com/mediapipe/apps/hairsegmentationgpu.
+# mediapipe/examples/android/src/java/com/mediapipe/apps/hairsegmentationgpu.
 
 # Images on GPU coming into and out of the graph.
 input_stream: "input_video"

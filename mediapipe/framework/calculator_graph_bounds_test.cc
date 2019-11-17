@@ -756,7 +756,7 @@ TEST(CalculatorGraphBoundsTest, BoundWithoutInputPackets) {
   MP_ASSERT_OK(graph.WaitUntilDone());
 }
 
-// Shows that when fixed-size-input-stream-hanlder drops packets,
+// Shows that when fixed-size-input-stream-handler drops packets,
 // no timetamp bounds are announced.
 TEST(CalculatorGraphBoundsTest, FixedSizeHandlerBounds) {
   // LambdaCalculator with FixedSizeInputStreamHandler will drop packets
@@ -873,6 +873,94 @@ TEST(CalculatorGraphBoundsTest, FixedSizeHandlerBounds) {
   EXPECT_EQ(thinned_outputs[1].Timestamp(), Timestamp(kNumInputs - 1));
   EXPECT_EQ(outputs.size(), kNumInputs);
   MP_ASSERT_OK(graph.CloseAllPacketSources());
+  MP_ASSERT_OK(graph.WaitUntilDone());
+}
+
+// A Calculator that outputs only the last packet from its input stream.
+class LastPacketCalculator : public CalculatorBase {
+ public:
+  static ::mediapipe::Status GetContract(CalculatorContract* cc) {
+    cc->Inputs().Index(0).SetAny();
+    cc->Outputs().Index(0).SetAny();
+    return ::mediapipe::OkStatus();
+  }
+  ::mediapipe::Status Open(CalculatorContext* cc) final {
+    return ::mediapipe::OkStatus();
+  }
+  ::mediapipe::Status Process(CalculatorContext* cc) final {
+    cc->Outputs().Index(0).SetNextTimestampBound(cc->InputTimestamp());
+    last_packet_ = cc->Inputs().Index(0).Value();
+    return ::mediapipe::OkStatus();
+  }
+  ::mediapipe::Status Close(CalculatorContext* cc) final {
+    cc->Outputs().Index(0).AddPacket(last_packet_);
+    return ::mediapipe::OkStatus();
+  }
+
+ private:
+  Packet last_packet_;
+};
+REGISTER_CALCULATOR(LastPacketCalculator);
+
+// Shows that the last packet in an input stream can be detected.
+TEST(CalculatorGraphBoundsTest, LastPacketCheck) {
+  // LastPacketCalculator emits only the last input stream packet.
+  // It emits a timestamp bound after the arrival of a successor input stream
+  // packet or input stream close.  The output "last_output" shows the
+  // last packet, and "output" shows the timestamp bounds.
+  CalculatorGraphConfig config =
+      ::mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+        input_stream: 'input'
+        output_stream: 'output'
+        output_stream: 'last_output'
+        node {
+          calculator: 'PassThroughCalculator'
+          input_stream: 'input'
+          output_stream: 'input_2'
+        }
+        node {
+          calculator: 'LastPacketCalculator'
+          input_stream: 'input_2'
+          output_stream: 'last_packet'
+        }
+        node {
+          calculator: 'PassThroughCalculator'
+          input_stream: 'input'
+          input_stream: 'last_packet'
+          output_stream: 'output'
+          output_stream: 'last_output'
+        }
+      )");
+  CalculatorGraph graph;
+  std::vector<Packet> output_packets;
+  MP_ASSERT_OK(graph.Initialize(config));
+  MP_ASSERT_OK(graph.ObserveOutputStream("output", [&](const Packet& p) {
+    output_packets.push_back(p);
+    return ::mediapipe::OkStatus();
+  }));
+  std::vector<Packet> last_output_packets;
+  MP_ASSERT_OK(graph.ObserveOutputStream("last_output", [&](const Packet& p) {
+    last_output_packets.push_back(p);
+    return ::mediapipe::OkStatus();
+  }));
+  MP_ASSERT_OK(graph.StartRun({}));
+  MP_ASSERT_OK(graph.WaitUntilIdle());
+
+  // Add four packets into the graph.
+  constexpr int kNumInputs = 4;
+  for (int i = 0; i < kNumInputs; ++i) {
+    Packet p = MakePacket<int>(33).At(Timestamp(i));
+    MP_ASSERT_OK(graph.AddPacketToInputStream("input", p));
+    MP_ASSERT_OK(graph.WaitUntilIdle());
+    EXPECT_EQ(i, output_packets.size());
+    EXPECT_EQ(0, last_output_packets.size());
+  }
+
+  // Shutdown the graph.
+  MP_ASSERT_OK(graph.CloseAllPacketSources());
+  MP_ASSERT_OK(graph.WaitUntilIdle());
+  EXPECT_EQ(kNumInputs, output_packets.size());
+  EXPECT_EQ(1, last_output_packets.size());
   MP_ASSERT_OK(graph.WaitUntilDone());
 }
 

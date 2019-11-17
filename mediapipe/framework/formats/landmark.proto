@@ -32,3 +32,8 @@ message NormalizedLandmark {
   optional float y = 2;
   optional float z = 3;
 }
+
+// Group of NormalizedLandmark protos.
+message NormalizedLandmarkList {
+  repeated NormalizedLandmark landmark = 1;
+}

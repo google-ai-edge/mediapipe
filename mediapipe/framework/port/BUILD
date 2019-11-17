@@ -248,6 +248,26 @@ cc_library(
 )
 
 cc_library(
+    name = "opencv_features2d",
+    hdrs = ["opencv_features2d_inc.h"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":opencv_core",
+        "//third_party:opencv",
+    ],
+)
+
+cc_library(
+    name = "opencv_calib3d",
+    hdrs = ["opencv_calib3d_inc.h"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":opencv_core",
+        "//third_party:opencv",
+    ],
+)
+
+cc_library(
     name = "parse_text_proto",
     hdrs = [
         "parse_text_proto.h",

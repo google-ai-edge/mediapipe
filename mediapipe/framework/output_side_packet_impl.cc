@@ -30,7 +30,7 @@ namespace mediapipe {
 void OutputSidePacketImpl::PrepareForRun(
     std::function<void(::mediapipe::Status)> error_callback) {
   error_callback_ = std::move(error_callback);
-  packet_ = Packet();
+  initialized_ = false;
 }
 
 void OutputSidePacketImpl::Set(const Packet& packet) {
@@ -47,7 +47,7 @@ void OutputSidePacketImpl::AddMirror(
 }
 
 ::mediapipe::Status OutputSidePacketImpl::SetInternal(const Packet& packet) {
-  if (!packet_.IsEmpty()) {
+  if (initialized_) {
     return ::mediapipe::AlreadyExistsErrorBuilder(MEDIAPIPE_LOC)
            << "Output side packet \"" << name_ << "\" was already set.";
   }
@@ -72,6 +72,7 @@ void OutputSidePacketImpl::AddMirror(
   }
 
   packet_ = packet;
+  initialized_ = true;
   for (const auto& mirror : mirrors_) {
     mirror.input_side_packet_handler->Set(mirror.id, packet_);
   }

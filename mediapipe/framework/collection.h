@@ -240,6 +240,22 @@ class Collection {
     return tag_map_->EndId(tag);
   }
 
+  // Equal Collections contain equal mappings and equal elements.
+  bool operator==(const Collection<T>& other) const {
+    if (tag_map_->Mapping() != other.TagMap()->Mapping()) {
+      return false;
+    }
+    for (CollectionItemId id = BeginId(); id < EndId(); ++id) {
+      if (Get(id) != other.Get(id)) {
+        return false;
+      }
+    }
+    return true;
+  }
+  bool operator!=(const Collection<T>& other) const {
+    return !(*this == other);
+  }
+
  private:
   // An iterator which is identical to ItType** except that the
   // dereference operator (operator*) does a double dereference and

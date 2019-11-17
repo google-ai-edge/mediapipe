@@ -13,24 +13,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+load("//mediapipe/framework/port:build_config.bzl", "mediapipe_cc_proto_library")
+
 licenses(["notice"])  # Apache 2.0
 
 package(default_visibility = ["//mediapipe/calculators/video:__subpackages__"])
 
 exports_files(["LICENSE"])
 
-load("//mediapipe/framework/port:build_config.bzl", "mediapipe_cc_proto_library")
-
 proto_library(
     name = "flow_quantizer_model_proto",
     srcs = ["flow_quantizer_model.proto"],
-    visibility = ["//mediapipe:__subpackages__"],
+    visibility = ["//visibility:public"],
 )
 
 mediapipe_cc_proto_library(
     name = "flow_quantizer_model_cc_proto",
     srcs = ["flow_quantizer_model.proto"],
-    visibility = ["//mediapipe:__subpackages__"],
+    visibility = ["//visibility:public"],
     deps = [":flow_quantizer_model_proto"],
 )
 

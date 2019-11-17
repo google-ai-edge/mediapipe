@@ -24,6 +24,7 @@
 #include <vector>
 
 #include "absl/container/fixed_array.h"
+#include "absl/container/flat_hash_set.h"
 #include "absl/memory/memory.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
@@ -1017,8 +1018,8 @@ void CalculatorGraph::UpdateThrottledNodes(InputStreamManager* stream,
   // TODO Change the throttling code to use the index directly
   // rather than looking up a stream name.
   int node_index = validated_graph_->OutputStreamToNode(stream->Name());
-  std::unordered_set<int> owned_set;
-  const std::unordered_set<int>* upstream_nodes;
+  absl::flat_hash_set<int> owned_set;
+  const absl::flat_hash_set<int>* upstream_nodes;
   if (node_index >= validated_graph_->CalculatorInfos().size()) {
     // TODO just create a NodeTypeInfo object for each virtual node.
     owned_set.insert(node_index);
@@ -1100,10 +1101,10 @@ bool CalculatorGraph::UnthrottleSources() {
   // This is a sufficient because succesfully growing at least one full input
   // stream during each call to UnthrottleSources will eventually resolve
   // each deadlock.
-  std::unordered_set<InputStreamManager*> full_streams;
+  absl::flat_hash_set<InputStreamManager*> full_streams;
   {
     absl::MutexLock lock(&full_input_streams_mutex_);
-    for (std::unordered_set<InputStreamManager*>& s : full_input_streams_) {
+    for (absl::flat_hash_set<InputStreamManager*>& s : full_input_streams_) {
       if (!s.empty()) {
         full_streams.insert(s.begin(), s.end());
       }

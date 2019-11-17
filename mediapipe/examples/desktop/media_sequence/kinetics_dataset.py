@@ -68,13 +68,15 @@ import os
 import random
 import subprocess
 import sys
+import tarfile
 import tempfile
 import urllib
-import zipfile
+
 from absl import app
 from absl import flags
 from absl import logging
 import tensorflow as tf
+
 from mediapipe.util.sequence import media_sequence as ms
 
 CITATION = r"""@article{kay2017kinetics,
@@ -84,21 +86,28 @@ CITATION = r"""@article{kay2017kinetics,
   year={2017},
   url = {https://deepmind.com/research/open-source/kinetics},
 }"""
-ANNOTATION_URL = "https://storage.googleapis.com/deepmind-media/research/Kinetics_700.zip"
+ANNOTATION_URL = "https://storage.googleapis.com/deepmind-media/Datasets/kinetics700.tar.gz"
 SECONDS_TO_MICROSECONDS = 1000000
 GRAPHS = ["tvl1_flow_and_rgb_from_file.pbtxt"]
 FILEPATTERN = "kinetics_700_%s_25fps_rgb_flow"
 SPLITS = {
     "train": {
         "shards": 1000,
-        "examples": 545317},
-    "val": {"shards": 100,
-            "examples": 35000},
-    "test": {"shards": 100,
-             "examples": 70000},
-    "custom": {"csv": None,  # Add a CSV for your own data here.
-               "shards": 1,  # Change this number to increase sharding.
-               "examples": -1},  # Negative 1 allows any number of examples.
+        "examples": 541632
+    },
+    "validate": {
+        "shards": 100,
+        "examples": 34727
+    },
+    "test": {
+        "shards": 100,
+        "examples": 69347
+    },
+    "custom": {
+        "csv": None,  # Add a CSV for your own data here.
+        "shards": 1,  # Change this number to increase sharding.
+        "examples": -1
+    },  # Negative 1 allows any number of examples.
 }
 NUM_CLASSES = 700
 
@@ -312,18 +321,16 @@ class Kinetics(object):
     logging.info("Downloading annotations.")
     paths = {}
     if download_labels_for_map:
-      zip_path = os.path.join(self.path_to_data, ANNOTATION_URL.split("/")[-1])
-      if not tf.io.gfile.exists(zip_path):
-        urlretrieve(ANNOTATION_URL, zip_path)
-        with zipfile.ZipFile(zip_path) as annotations_zip:
-          annotations_zip.extractall(self.path_to_data)
-      for split in ["train", "test", "val"]:
-        zip_path = os.path.join(self.path_to_data,
-                                "kinetics_700_%s.zip" % split)
-        csv_path = zip_path.replace(".zip", ".csv")
+      tar_path = os.path.join(self.path_to_data, ANNOTATION_URL.split("/")[-1])
+      if not tf.io.gfile.exists(tar_path):
+        urlretrieve(ANNOTATION_URL, tar_path)
+        with tarfile.open(tar_path) as annotations_tar:
+          annotations_tar.extractall(self.path_to_data)
+      for split in ["train", "test", "validate"]:
+        csv_path = os.path.join(self.path_to_data, "kinetics700/%s.csv" % split)
         if not tf.io.gfile.exists(csv_path):
-          with zipfile.ZipFile(zip_path) as annotations_zip:
-            annotations_zip.extractall(self.path_to_data)
+          with tarfile.open(tar_path) as annotations_tar:
+            annotations_tar.extractall(self.path_to_data)
         paths[split] = csv_path
     for split, contents in SPLITS.items():
       if "csv" in contents and contents["csv"]:

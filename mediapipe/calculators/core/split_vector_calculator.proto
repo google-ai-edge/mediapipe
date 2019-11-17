@@ -37,4 +37,7 @@ message SplitVectorCalculatorOptions {
   // just element of type T. By default, if a range specifies only one element,
   // it is outputted as an std::vector<T>.
   optional bool element_only = 2 [default = false];
+
+  // Combines output elements to one vector.
+  optional bool combine_outputs = 3 [default = false];
 }

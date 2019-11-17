@@ -76,6 +76,15 @@ MediaPipe with a TFLite model for hand tracking in a GPU-accelerated pipeline.
 *   [Android](./hand_tracking_mobile_gpu.md)
 *   [iOS](./hand_tracking_mobile_gpu.md)
 
+### Multi-Hand Tracking with GPU
+
+[Multi-Hand Tracking with GPU](./multi_hand_tracking_mobile_gpu.md) illustrates
+how to use MediaPipe with a TFLite model for multi-hand tracking in a
+GPU-accelerated pipeline.
+
+*   [Android](./multi_hand_tracking_mobile_gpu.md)
+*   [iOS](./multi_hand_tracking_mobile_gpu.md)
+
 ### Hair Segmentation with GPU
 
 [Hair Segmentation on GPU](./hair_segmentation_mobile_gpu.md) illustrates how to
@@ -96,8 +105,9 @@ using the MediaPipe C++ APIs.
 
 ### Feature Extration for YouTube-8M Challenge
 
-[Feature Extration for YouTube-8M Challenge](./youtube_8m.md) shows how to use
-MediaPipe to prepare training data for the YouTube-8M Challenge.
+[Feature Extration and Model Inference for YouTube-8M Challenge](./youtube_8m.md)
+shows how to use MediaPipe to prepare training data for the YouTube-8M Challenge
+and do the model inference with the baseline model.
 
 ### Preparing Data Sets with MediaSequence
 
@@ -130,6 +140,15 @@ with live video from a webcam.
 
 *   [Desktop GPU](./hand_tracking_desktop.md)
 *   [Desktop CPU](./hand_tracking_desktop.md)
+
+### Multi-Hand Tracking on Desktop with Webcam
+
+[Multi-Hand Tracking on Desktop with Webcam](./multi_hand_tracking_desktop.md)
+shows how to use MediaPipe with a TFLite model for multi-hand tracking on
+desktop using CPU or GPU with live video from a webcam.
+
+*   [Desktop GPU](./multi_hand_tracking_desktop.md)
+*   [Desktop CPU](./multi_hand_tracking_desktop.md)
 
 ### Hair Segmentation on Desktop with Webcam
 

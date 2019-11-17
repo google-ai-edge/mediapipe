@@ -1,6 +1,6 @@
 # MediaPipe graph that performs face detection with TensorFlow Lite on CPU.
 # Used in the examples in
-# mediapipie/examples/desktop/face_detection:face_detection_cpu.
+# mediapipe/examples/desktop/face_detection:face_detection_cpu.
 
 # Images on GPU coming into and out of the graph.
 input_stream: "input_video"

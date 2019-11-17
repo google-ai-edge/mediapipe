@@ -23,7 +23,9 @@ namespace mediapipe {
 namespace {
 
 constexpr char kNormRectTag[] = "NORM_RECT";
+constexpr char kNormRectsTag[] = "NORM_RECTS";
 constexpr char kRectTag[] = "RECT";
+constexpr char kRectsTag[] = "RECTS";
 constexpr char kImageSizeTag[] = "IMAGE_SIZE";
 
 // Wraps around an angle in radians to within -M_PI and M_PI.
@@ -72,16 +74,30 @@ REGISTER_CALCULATOR(RectTransformationCalculator);
 
 ::mediapipe::Status RectTransformationCalculator::GetContract(
     CalculatorContract* cc) {
-  RET_CHECK(cc->Inputs().HasTag(kNormRectTag) ^ cc->Inputs().HasTag(kRectTag));
+  RET_CHECK_EQ((cc->Inputs().HasTag(kNormRectTag) ? 1 : 0) +
+                   (cc->Inputs().HasTag(kNormRectsTag) ? 1 : 0) +
+                   (cc->Inputs().HasTag(kRectTag) ? 1 : 0) +
+                   (cc->Inputs().HasTag(kRectsTag) ? 1 : 0),
+               1);
   if (cc->Inputs().HasTag(kRectTag)) {
     cc->Inputs().Tag(kRectTag).Set<Rect>();
     cc->Outputs().Index(0).Set<Rect>();
+  }
+  if (cc->Inputs().HasTag(kRectsTag)) {
+    cc->Inputs().Tag(kRectsTag).Set<std::vector<Rect>>();
+    cc->Outputs().Index(0).Set<std::vector<Rect>>();
   }
   if (cc->Inputs().HasTag(kNormRectTag)) {
     RET_CHECK(cc->Inputs().HasTag(kImageSizeTag));
     cc->Inputs().Tag(kNormRectTag).Set<NormalizedRect>();
     cc->Inputs().Tag(kImageSizeTag).Set<std::pair<int, int>>();
     cc->Outputs().Index(0).Set<NormalizedRect>();
+  }
+  if (cc->Inputs().HasTag(kNormRectsTag)) {
+    RET_CHECK(cc->Inputs().HasTag(kImageSizeTag));
+    cc->Inputs().Tag(kNormRectsTag).Set<std::vector<NormalizedRect>>();
+    cc->Inputs().Tag(kImageSizeTag).Set<std::pair<int, int>>();
+    cc->Outputs().Index(0).Set<std::vector<NormalizedRect>>();
   }
 
   return ::mediapipe::OkStatus();
@@ -105,7 +121,17 @@ REGISTER_CALCULATOR(RectTransformationCalculator);
     cc->Outputs().Index(0).AddPacket(
         MakePacket<Rect>(rect).At(cc->InputTimestamp()));
   }
-
+  if (cc->Inputs().HasTag(kRectsTag) &&
+      !cc->Inputs().Tag(kRectsTag).IsEmpty()) {
+    auto rects = cc->Inputs().Tag(kRectsTag).Get<std::vector<Rect>>();
+    auto output_rects = absl::make_unique<std::vector<Rect>>(rects.size());
+    for (int i = 0; i < rects.size(); ++i) {
+      output_rects->at(i) = rects[i];
+      auto it = output_rects->begin() + i;
+      TransformRect(&(*it));
+    }
+    cc->Outputs().Index(0).Add(output_rects.release(), cc->InputTimestamp());
+  }
   if (cc->Inputs().HasTag(kNormRectTag) &&
       !cc->Inputs().Tag(kNormRectTag).IsEmpty()) {
     auto rect = cc->Inputs().Tag(kNormRectTag).Get<NormalizedRect>();
@@ -114,6 +140,21 @@ REGISTER_CALCULATOR(RectTransformationCalculator);
     TransformNormalizedRect(&rect, image_size.first, image_size.second);
     cc->Outputs().Index(0).AddPacket(
         MakePacket<NormalizedRect>(rect).At(cc->InputTimestamp()));
+  }
+  if (cc->Inputs().HasTag(kNormRectsTag) &&
+      !cc->Inputs().Tag(kNormRectsTag).IsEmpty()) {
+    auto rects =
+        cc->Inputs().Tag(kNormRectsTag).Get<std::vector<NormalizedRect>>();
+    const auto& image_size =
+        cc->Inputs().Tag(kImageSizeTag).Get<std::pair<int, int>>();
+    auto output_rects =
+        absl::make_unique<std::vector<NormalizedRect>>(rects.size());
+    for (int i = 0; i < rects.size(); ++i) {
+      output_rects->at(i) = rects[i];
+      auto it = output_rects->begin() + i;
+      TransformNormalizedRect(&(*it), image_size.first, image_size.second);
+    }
+    cc->Outputs().Index(0).Add(output_rects.release(), cc->InputTimestamp());
   }
 
   return ::mediapipe::OkStatus();

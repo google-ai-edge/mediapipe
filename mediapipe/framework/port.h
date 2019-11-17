@@ -28,4 +28,22 @@
 #define MEDIAPIPE_MOBILE
 #endif
 
+#if !defined(MEDIAPIPE_ANDROID) && defined(__ANDROID__)
+#define MEDIAPIPE_ANDROID
+#endif
+
+#if defined(__APPLE__)
+#include "TargetConditionals.h"  // for TARGET_OS_*
+#if !defined(MEDIAPIPE_IOS) && !TARGET_OS_OSX
+#define MEDIAPIPE_IOS
+#endif
+#endif
+
+// These platforms do not support OpenGL ES Compute Shaders (v3.1 and up),
+// but can still run OpenGL ES 3.0 and below.
+#if !defined(MEDIAPIPE_DISABLE_GL_COMPUTE) && \
+    (defined(__APPLE__) || defined(__EMSCRIPTEN__))
+#define MEDIAPIPE_DISABLE_GL_COMPUTE
+#endif
+
 #endif  // MEDIAPIPE_FRAMEWORK_PORT_H_

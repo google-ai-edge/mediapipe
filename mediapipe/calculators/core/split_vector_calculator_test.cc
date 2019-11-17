@@ -105,6 +105,34 @@ class SplitTfLiteTensorVectorCalculatorTest : public ::testing::Test {
     }
   }
 
+  void ValidateCombinedVectorOutput(std::vector<Packet>& output_packets,
+                                    int expected_elements,
+                                    std::vector<int>& input_begin_indices,
+                                    std::vector<int>& input_end_indices) {
+    ASSERT_EQ(1, output_packets.size());
+    ASSERT_EQ(input_begin_indices.size(), input_end_indices.size());
+    const std::vector<TfLiteTensor>& output_vec =
+        output_packets[0].Get<std::vector<TfLiteTensor>>();
+    ASSERT_EQ(expected_elements, output_vec.size());
+    const int num_ranges = input_begin_indices.size();
+
+    int element_id = 0;
+    for (int range_id = 0; range_id < num_ranges; ++range_id) {
+      for (int i = input_begin_indices[range_id];
+           i < input_end_indices[range_id]; ++i) {
+        const int expected_value = i;
+        const TfLiteTensor* result = &output_vec[element_id];
+        float* result_buffer = result->data.f;
+        ASSERT_NE(result_buffer, nullptr);
+        ASSERT_EQ(result_buffer, input_buffers_[i]);
+        for (int j = 0; j < width * height * channels; ++j) {
+          ASSERT_EQ(expected_value, result_buffer[j]);
+        }
+        element_id++;
+      }
+    }
+  }
+
   void ValidateElementOutput(std::vector<Packet>& output_packets,
                              int input_begin_index) {
     ASSERT_EQ(1, output_packets.size());
@@ -234,6 +262,65 @@ TEST_F(SplitTfLiteTensorVectorCalculatorTest, InvalidOutputStreamCountTest) {
   ASSERT_FALSE(graph.Initialize(graph_config).ok());
 }
 
+TEST_F(SplitTfLiteTensorVectorCalculatorTest,
+       InvalidCombineOutputsMultipleOutputsTest) {
+  ASSERT_NE(interpreter_, nullptr);
+
+  // Prepare a graph to use the SplitTfLiteTensorVectorCalculator.
+  CalculatorGraphConfig graph_config =
+      ::mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(
+          R"(
+            input_stream: "tensor_in"
+            node {
+              calculator: "SplitTfLiteTensorVectorCalculator"
+              input_stream: "tensor_in"
+              output_stream: "range_0"
+              output_stream: "range_1"
+              options {
+                [mediapipe.SplitVectorCalculatorOptions.ext] {
+                  ranges: { begin: 0 end: 1 }
+                  ranges: { begin: 2 end: 3 }
+                  combine_outputs: true
+                }
+              }
+            }
+          )");
+
+  // Run the graph.
+  CalculatorGraph graph;
+  // The graph should fail running because the number of output streams does not
+  // match the number of range elements in the options.
+  ASSERT_FALSE(graph.Initialize(graph_config).ok());
+}
+
+TEST_F(SplitTfLiteTensorVectorCalculatorTest, InvalidOverlappingRangesTest) {
+  ASSERT_NE(interpreter_, nullptr);
+
+  // Prepare a graph to use the SplitTfLiteTensorVectorCalculator.
+  CalculatorGraphConfig graph_config =
+      ::mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(
+          R"(
+            input_stream: "tensor_in"
+            node {
+              calculator: "SplitTfLiteTensorVectorCalculator"
+              input_stream: "tensor_in"
+              output_stream: "range_0"
+              options {
+                [mediapipe.SplitVectorCalculatorOptions.ext] {
+                  ranges: { begin: 0 end: 3 }
+                  ranges: { begin: 1 end: 4 }
+                  combine_outputs: true
+                }
+              }
+            }
+          )");
+
+  // Run the graph.
+  CalculatorGraph graph;
+  // The graph should fail running because there are overlapping ranges.
+  ASSERT_FALSE(graph.Initialize(graph_config).ok());
+}
+
 TEST_F(SplitTfLiteTensorVectorCalculatorTest, SmokeTestElementOnly) {
   ASSERT_NE(interpreter_, nullptr);
 
@@ -283,6 +370,53 @@ TEST_F(SplitTfLiteTensorVectorCalculatorTest, SmokeTestElementOnly) {
                         /*input_begin_index=*/2);
   ValidateElementOutput(range_2_packets,
                         /*input_begin_index=*/4);
+
+  // Fully close the graph at the end.
+  MP_ASSERT_OK(graph.CloseInputStream("tensor_in"));
+  MP_ASSERT_OK(graph.WaitUntilDone());
+}
+
+TEST_F(SplitTfLiteTensorVectorCalculatorTest, SmokeTestCombiningOutputs) {
+  ASSERT_NE(interpreter_, nullptr);
+
+  PrepareTfLiteTensorVector(/*vector_size=*/5);
+  ASSERT_NE(input_vec_, nullptr);
+
+  // Prepare a graph to use the SplitTfLiteTensorVectorCalculator.
+  CalculatorGraphConfig graph_config =
+      ::mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(
+          R"(
+            input_stream: "tensor_in"
+            node {
+              calculator: "SplitTfLiteTensorVectorCalculator"
+              input_stream: "tensor_in"
+              output_stream: "range_0"
+              options {
+                [mediapipe.SplitVectorCalculatorOptions.ext] {
+                  ranges: { begin: 0 end: 1 }
+                  ranges: { begin: 2 end: 3 }
+                  ranges: { begin: 4 end: 5 }
+                  combine_outputs: true
+                }
+              }
+            }
+          )");
+  std::vector<Packet> range_0_packets;
+  tool::AddVectorSink("range_0", &graph_config, &range_0_packets);
+
+  // Run the graph.
+  CalculatorGraph graph;
+  MP_ASSERT_OK(graph.Initialize(graph_config));
+  MP_ASSERT_OK(graph.StartRun({}));
+  MP_ASSERT_OK(graph.AddPacketToInputStream(
+      "tensor_in", Adopt(input_vec_.release()).At(Timestamp(0))));
+  // Wait until the calculator finishes processing.
+  MP_ASSERT_OK(graph.WaitUntilIdle());
+
+  std::vector<int> input_begin_indices = {0, 2, 4};
+  std::vector<int> input_end_indices = {1, 3, 5};
+  ValidateCombinedVectorOutput(range_0_packets, /*expected_elements=*/3,
+                               input_begin_indices, input_end_indices);
 
   // Fully close the graph at the end.
   MP_ASSERT_OK(graph.CloseInputStream("tensor_in"));

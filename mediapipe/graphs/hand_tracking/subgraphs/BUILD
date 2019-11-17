@@ -12,14 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-licenses(["notice"])  # Apache 2.0
-
-package(default_visibility = ["//visibility:public"])
-
 load(
     "//mediapipe/framework/tool:mediapipe_graph.bzl",
     "mediapipe_simple_subgraph",
 )
+
+licenses(["notice"])  # Apache 2.0
+
+package(default_visibility = ["//visibility:public"])
 
 mediapipe_simple_subgraph(
     name = "hand_detection_cpu",
@@ -37,6 +37,29 @@ mediapipe_simple_subgraph(
         "//mediapipe/calculators/util:detection_letterbox_removal_calculator",
         "//mediapipe/calculators/util:detections_to_rects_calculator",
         "//mediapipe/calculators/util:detections_to_render_data_calculator",
+        "//mediapipe/calculators/util:non_max_suppression_calculator",
+        "//mediapipe/calculators/util:rect_transformation_calculator",
+    ],
+)
+
+mediapipe_simple_subgraph(
+    name = "multi_hand_detection_cpu",
+    graph = "multi_hand_detection_cpu.pbtxt",
+    register_as = "MultiHandDetectionSubgraph",
+    deps = [
+        "//mediapipe/calculators/core:begin_loop_calculator",
+        "//mediapipe/calculators/core:clip_vector_size_calculator",
+        "//mediapipe/calculators/core:end_loop_calculator",
+        "//mediapipe/calculators/image:image_properties_calculator",
+        "//mediapipe/calculators/image:image_transformation_calculator",
+        "//mediapipe/calculators/tflite:ssd_anchors_calculator",
+        "//mediapipe/calculators/tflite:tflite_converter_calculator",
+        "//mediapipe/calculators/tflite:tflite_custom_op_resolver_calculator",
+        "//mediapipe/calculators/tflite:tflite_inference_calculator",
+        "//mediapipe/calculators/tflite:tflite_tensors_to_detections_calculator",
+        "//mediapipe/calculators/util:detection_label_id_to_text_calculator",
+        "//mediapipe/calculators/util:detection_letterbox_removal_calculator",
+        "//mediapipe/calculators/util:detections_to_rects_calculator",
         "//mediapipe/calculators/util:non_max_suppression_calculator",
         "//mediapipe/calculators/util:rect_transformation_calculator",
     ],
@@ -66,6 +89,18 @@ mediapipe_simple_subgraph(
 )
 
 mediapipe_simple_subgraph(
+    name = "multi_hand_landmark_cpu",
+    graph = "multi_hand_landmark.pbtxt",
+    register_as = "MultiHandLandmarkSubgraph",
+    deps = [
+        ":hand_landmark_cpu",
+        "//mediapipe/calculators/core:begin_loop_calculator",
+        "//mediapipe/calculators/core:end_loop_calculator",
+        "//mediapipe/calculators/util:filter_collection_calculator",
+    ],
+)
+
+mediapipe_simple_subgraph(
     name = "renderer_cpu",
     graph = "renderer_cpu.pbtxt",
     register_as = "RendererSubgraph",
@@ -78,10 +113,47 @@ mediapipe_simple_subgraph(
 )
 
 mediapipe_simple_subgraph(
+    name = "multi_hand_renderer_cpu",
+    graph = "multi_hand_renderer_cpu.pbtxt",
+    register_as = "MultiHandRendererSubgraph",
+    deps = [
+        "//mediapipe/calculators/core:begin_loop_calculator",
+        "//mediapipe/calculators/core:end_loop_calculator",
+        "//mediapipe/calculators/util:annotation_overlay_calculator",
+        "//mediapipe/calculators/util:detections_to_render_data_calculator",
+        "//mediapipe/calculators/util:landmarks_to_render_data_calculator",
+        "//mediapipe/calculators/util:rect_to_render_data_calculator",
+    ],
+)
+
+mediapipe_simple_subgraph(
     name = "hand_detection_gpu",
     graph = "hand_detection_gpu.pbtxt",
     register_as = "HandDetectionSubgraph",
     deps = [
+        "//mediapipe/calculators/image:image_properties_calculator",
+        "//mediapipe/calculators/image:image_transformation_calculator",
+        "//mediapipe/calculators/tflite:ssd_anchors_calculator",
+        "//mediapipe/calculators/tflite:tflite_converter_calculator",
+        "//mediapipe/calculators/tflite:tflite_custom_op_resolver_calculator",
+        "//mediapipe/calculators/tflite:tflite_inference_calculator",
+        "//mediapipe/calculators/tflite:tflite_tensors_to_detections_calculator",
+        "//mediapipe/calculators/util:detection_label_id_to_text_calculator",
+        "//mediapipe/calculators/util:detection_letterbox_removal_calculator",
+        "//mediapipe/calculators/util:detections_to_rects_calculator",
+        "//mediapipe/calculators/util:non_max_suppression_calculator",
+        "//mediapipe/calculators/util:rect_transformation_calculator",
+    ],
+)
+
+mediapipe_simple_subgraph(
+    name = "multi_hand_detection_gpu",
+    graph = "multi_hand_detection_gpu.pbtxt",
+    register_as = "MultiHandDetectionSubgraph",
+    deps = [
+        "//mediapipe/calculators/core:begin_loop_calculator",
+        "//mediapipe/calculators/core:clip_vector_size_calculator",
+        "//mediapipe/calculators/core:end_loop_calculator",
         "//mediapipe/calculators/image:image_properties_calculator",
         "//mediapipe/calculators/image:image_transformation_calculator",
         "//mediapipe/calculators/tflite:ssd_anchors_calculator",
@@ -120,10 +192,36 @@ mediapipe_simple_subgraph(
 )
 
 mediapipe_simple_subgraph(
+    name = "multi_hand_landmark_gpu",
+    graph = "multi_hand_landmark.pbtxt",
+    register_as = "MultiHandLandmarkSubgraph",
+    deps = [
+        ":hand_landmark_gpu",
+        "//mediapipe/calculators/core:begin_loop_calculator",
+        "//mediapipe/calculators/core:end_loop_calculator",
+        "//mediapipe/calculators/util:filter_collection_calculator",
+    ],
+)
+
+mediapipe_simple_subgraph(
     name = "renderer_gpu",
     graph = "renderer_gpu.pbtxt",
     register_as = "RendererSubgraph",
     deps = [
+        "//mediapipe/calculators/util:annotation_overlay_calculator",
+        "//mediapipe/calculators/util:detections_to_render_data_calculator",
+        "//mediapipe/calculators/util:landmarks_to_render_data_calculator",
+        "//mediapipe/calculators/util:rect_to_render_data_calculator",
+    ],
+)
+
+mediapipe_simple_subgraph(
+    name = "multi_hand_renderer_gpu",
+    graph = "multi_hand_renderer_gpu.pbtxt",
+    register_as = "MultiHandRendererSubgraph",
+    deps = [
+        "//mediapipe/calculators/core:begin_loop_calculator",
+        "//mediapipe/calculators/core:end_loop_calculator",
         "//mediapipe/calculators/util:annotation_overlay_calculator",
         "//mediapipe/calculators/util:detections_to_render_data_calculator",
         "//mediapipe/calculators/util:landmarks_to_render_data_calculator",

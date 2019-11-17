@@ -68,6 +68,7 @@ class CountAndOutputSummarySidePacketInCloseCalculator : public CalculatorBase {
   }
 
   ::mediapipe::Status Close(CalculatorContext* cc) final {
+    absl::SleepFor(absl::Milliseconds(300));  // For GetOutputSidePacket test.
     cc->OutputSidePackets().Index(0).Set(
         MakePacket<int>(count_).At(Timestamp::Unset()));
     return ::mediapipe::OkStatus();
@@ -740,6 +741,67 @@ TEST(CalculatorGraph, GetOutputSidePacket) {
     status_or_packet = graph.GetOutputSidePacket("output_uint32_pair");
     MP_ASSERT_OK(status_or_packet);
     EXPECT_EQ(Timestamp::Unset(), status_or_packet.ValueOrDie().Timestamp());
+  }
+}
+
+typedef std::string HugeModel;
+
+// Generates an output-side-packet once for each calculator-graph.
+class OutputSidePacketCachedCalculator : public CalculatorBase {
+ public:
+  static ::mediapipe::Status GetContract(CalculatorContract* cc) {
+    cc->OutputSidePackets().Index(0).Set<HugeModel>();
+    return ::mediapipe::OkStatus();
+  }
+
+  ::mediapipe::Status Open(CalculatorContext* cc) final {
+    cc->OutputSidePackets().Index(0).Set(MakePacket<HugeModel>(
+        R"(An expensive side-packet created only once per graph)"));
+    return ::mediapipe::OkStatus();
+  }
+
+  ::mediapipe::Status Process(CalculatorContext* cc) final {
+    LOG(FATAL) << "Not reached.";
+    return ::mediapipe::OkStatus();
+  }
+};
+REGISTER_CALCULATOR(OutputSidePacketCachedCalculator);
+
+// Returns true if two packets hold the same data.
+bool Equals(Packet p1, Packet p2) {
+  return packet_internal::GetHolder(p1) == packet_internal::GetHolder(p2);
+}
+
+TEST(CalculatorGraph, OutputSidePacketCached) {
+  CalculatorGraphConfig config =
+      ::mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+        node {
+          calculator: "OutputSidePacketCachedCalculator"
+          output_side_packet: "model"
+        }
+        node {
+          calculator: "SidePacketToStreamPacketCalculator"
+          input_side_packet: "model"
+          output_stream: "output"
+        }
+      )");
+  CalculatorGraph graph;
+  MP_ASSERT_OK(graph.Initialize(config));
+  std::vector<Packet> output_packets;
+  MP_ASSERT_OK(graph.ObserveOutputStream(
+      "output", [&output_packets](const Packet& packet) {
+        output_packets.push_back(packet);
+        return ::mediapipe::OkStatus();
+      }));
+
+  // Run the graph three times.
+  for (int run = 0; run < 3; ++run) {
+    MP_ASSERT_OK(graph.StartRun({}));
+    MP_ASSERT_OK(graph.WaitUntilDone());
+  }
+  ASSERT_EQ(3, output_packets.size());
+  for (int run = 0; run < output_packets.size(); ++run) {
+    EXPECT_TRUE(Equals(output_packets[0], output_packets[run]));
   }
 }
 

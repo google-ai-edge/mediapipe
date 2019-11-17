@@ -52,6 +52,10 @@ class InputSidePacketHandler {
 
   const PacketSet& InputSidePackets() const { return *input_side_packets_; }
 
+  // Returns true if the set of input-side-packets has changed since the
+  // previous run.
+  bool InputSidePacketsChanged();
+
   // Returns the number of missing input side packets.
   int MissingInputSidePacketCount() const {
     return missing_input_side_packet_count_.load(std::memory_order_relaxed);
@@ -68,6 +72,7 @@ class InputSidePacketHandler {
   const PacketTypeSet* input_side_packet_types_;
 
   std::unique_ptr<PacketSet> input_side_packets_;
+  std::unique_ptr<PacketSet> prev_input_side_packets_;
 
   std::atomic<int> missing_input_side_packet_count_{0};
 

@@ -19,8 +19,8 @@
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/util/resource_util.h"
 
-#if defined(MEDIAPIPE_LITE) || defined(__ANDROID__) || \
-    (defined(__APPLE__) && !TARGET_OS_OSX)
+#if defined(MEDIAPIPE_LITE) || defined(__EMSCRIPTEN__) || \
+    defined(__ANDROID__) || (defined(__APPLE__) && !TARGET_OS_OSX)
 #include "mediapipe/util/android/file/base/file.h"
 #include "mediapipe/util/android/file/base/helpers.h"
 #else

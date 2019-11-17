@@ -26,6 +26,7 @@
 #include "mediapipe/framework/port/vector.h"
 #include "mediapipe/util/annotation_renderer.h"
 #include "mediapipe/util/color.pb.h"
+#include "mediapipe/util/render_data.pb.h"
 
 #if !defined(MEDIAPIPE_DISABLE_GPU)
 #include "mediapipe/gpu/gl_calculator_helper.h"
@@ -40,6 +41,8 @@ namespace {
 
 constexpr char kInputFrameTag[] = "INPUT_FRAME";
 constexpr char kOutputFrameTag[] = "OUTPUT_FRAME";
+
+constexpr char kInputVectorTag[] = "VECTOR";
 
 constexpr char kInputFrameTagGpu[] = "INPUT_FRAME_GPU";
 constexpr char kOutputFrameTagGpu[] = "OUTPUT_FRAME_GPU";
@@ -65,6 +68,9 @@ constexpr int kAnnotationBackgroundColor[] = {100, 101, 102};
 //  2. RenderData proto on variable number of input streams. All the RenderData
 //     at a particular timestamp is drawn on the image in the order of their
 //     input streams. No tags required.
+//  3. std::vector<RenderData> on variable number of input streams. RenderData
+//     objects at a particular timestamp are drawn on the image in order of the
+//     input vector items. These input streams are tagged with "VECTOR".
 //
 // Output:
 //  1. OUTPUT_FRAME or OUTPUT_FRAME_GPU: A rendered ImageFrame (or GpuBuffer).
@@ -85,6 +91,8 @@ constexpr int kAnnotationBackgroundColor[] = {100, 101, 102};
 //   input_stream: "render_data_1"
 //   input_stream: "render_data_2"
 //   input_stream: "render_data_3"
+//   input_stream: "VECTOR:0:render_data_vec_0"
+//   input_stream: "VECTOR:1:render_data_vec_1"
 //   output_stream: "OUTPUT_FRAME:decorated_frames"
 //   options {
 //     [mediapipe.AnnotationOverlayCalculatorOptions.ext] {
@@ -99,6 +107,8 @@ constexpr int kAnnotationBackgroundColor[] = {100, 101, 102};
 //   input_stream: "render_data_1"
 //   input_stream: "render_data_2"
 //   input_stream: "render_data_3"
+//   input_stream: "VECTOR:0:render_data_vec_0"
+//   input_stream: "VECTOR:1:render_data_vec_1"
 //   output_stream: "OUTPUT_FRAME_GPU:decorated_frames"
 //   options {
 //     [mediapipe.AnnotationOverlayCalculatorOptions.ext] {
@@ -138,9 +148,6 @@ class AnnotationOverlayCalculator : public CalculatorBase {
   // Underlying helper renderer library.
   std::unique_ptr<AnnotationRenderer> renderer_;
 
-  // Number of input streams with render data.
-  int num_render_streams_;
-
   // Indicates if image frame is available as input.
   bool image_frame_available_ = false;
 
@@ -171,25 +178,28 @@ REGISTER_CALCULATOR(AnnotationOverlayCalculator);
     return ::mediapipe::InternalError("GPU output must have GPU input.");
   }
 
-  // Assume all inputs are render streams; adjust below.
-  int num_render_streams = cc->Inputs().NumEntries();
-
   // Input image to render onto copy of.
 #if !defined(MEDIAPIPE_DISABLE_GPU)
   if (cc->Inputs().HasTag(kInputFrameTagGpu)) {
     cc->Inputs().Tag(kInputFrameTagGpu).Set<mediapipe::GpuBuffer>();
-    num_render_streams = cc->Inputs().NumEntries() - 1;
     use_gpu |= true;
   }
 #endif  //  !MEDIAPIPE_DISABLE_GPU
   if (cc->Inputs().HasTag(kInputFrameTag)) {
     cc->Inputs().Tag(kInputFrameTag).Set<ImageFrame>();
-    num_render_streams = cc->Inputs().NumEntries() - 1;
   }
 
   // Data streams to render.
-  for (int i = 0; i < num_render_streams; ++i) {
-    cc->Inputs().Index(i).Set<RenderData>();
+  for (CollectionItemId id = cc->Inputs().BeginId(); id < cc->Inputs().EndId();
+       ++id) {
+    auto tag_and_index = cc->Inputs().TagAndIndexFromId(id);
+    std::string tag = tag_and_index.first;
+    if (tag == kInputVectorTag) {
+      cc->Inputs().Get(id).Set<std::vector<RenderData>>();
+    } else if (tag.empty()) {
+      // Empty tag defaults to accepting a single object of RenderData type.
+      cc->Inputs().Get(id).Set<RenderData>();
+    }
   }
 
   // Rendered image.
@@ -228,12 +238,10 @@ REGISTER_CALCULATOR(AnnotationOverlayCalculator);
   if (cc->Inputs().HasTag(kInputFrameTagGpu) ||
       cc->Inputs().HasTag(kInputFrameTag)) {
     image_frame_available_ = true;
-    num_render_streams_ = cc->Inputs().NumEntries() - 1;
   } else {
     image_frame_available_ = false;
     RET_CHECK(options_.has_canvas_width_px());
     RET_CHECK(options_.has_canvas_height_px());
-    num_render_streams_ = cc->Inputs().NumEntries();
   }
 
   // Initialize the helper renderer library.
@@ -285,12 +293,28 @@ REGISTER_CALCULATOR(AnnotationOverlayCalculator);
   renderer_->AdoptImage(image_mat.get());
 
   // Render streams onto render target.
-  for (int i = 0; i < num_render_streams_; ++i) {
-    if (cc->Inputs().Index(i).IsEmpty()) {
+  for (CollectionItemId id = cc->Inputs().BeginId(); id < cc->Inputs().EndId();
+       ++id) {
+    auto tag_and_index = cc->Inputs().TagAndIndexFromId(id);
+    std::string tag = tag_and_index.first;
+    if (!tag.empty() && tag != kInputVectorTag) {
       continue;
     }
-    const RenderData& render_data = cc->Inputs().Index(i).Get<RenderData>();
-    renderer_->RenderDataOnImage(render_data);
+    if (cc->Inputs().Get(id).IsEmpty()) {
+      continue;
+    }
+    if (tag.empty()) {
+      // Empty tag defaults to accepting a single object of RenderData type.
+      const RenderData& render_data = cc->Inputs().Get(id).Get<RenderData>();
+      renderer_->RenderDataOnImage(render_data);
+    } else {
+      RET_CHECK_EQ(kInputVectorTag, tag);
+      const std::vector<RenderData>& render_data_vec =
+          cc->Inputs().Get(id).Get<std::vector<RenderData>>();
+      for (const RenderData& render_data : render_data_vec) {
+        renderer_->RenderDataOnImage(render_data);
+      }
+    }
   }
 
   if (use_gpu_) {
