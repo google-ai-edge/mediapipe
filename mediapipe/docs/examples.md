@@ -157,3 +157,20 @@ how to use MediaPipe with a TFLite model for hair segmentation on desktop using
 GPU with live video from a webcam.
 
 *   [Desktop GPU](./hair_segmentation_desktop.md)
+
+## Google Coral (machine learning acceleration with Google EdgeTPU)
+
+Below are code samples on how to run MediaPipe on Google Coral Dev Board.
+
+### Object Detection on Coral
+
+[Object Detection on Coral with Webcam](https://github.com/google/mediapipe/tree/master/mediapipe/examples/coral/README.md)
+shows how to run quantized object detection TFlite model accelerated with
+EdgeTPU on
+[Google Coral Dev Board](https://coral.withgoogle.com/products/dev-board).
+
+### Face Detection on Coral
+
+[Face Detection on Coral with Webcam](https://github.com/google/mediapipe/tree/master/mediapipe/examples/coral/README.md)
+shows how to use quantized face detection TFlite model accelerated with EdgeTPU
+on [Google Coral Dev Board](https://coral.withgoogle.com/products/dev-board).

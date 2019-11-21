@@ -115,9 +115,10 @@ void ImmediateInputStreamHandler::FillInputSet(Timestamp input_timestamp,
       AddPacketToShard(&input_set->Get(id), std::move(current_packet),
                        stream_is_done);
     } else {
-      bool empty = false;
-      bool is_done = stream->MinTimestampOrBound(&empty) == Timestamp::Done();
-      AddPacketToShard(&input_set->Get(id), Packet(), is_done);
+      Timestamp bound = stream->MinTimestampOrBound(nullptr);
+      AddPacketToShard(&input_set->Get(id),
+                       Packet().At(bound.PreviousAllowedInStream()),
+                       bound == Timestamp::Done());
     }
   }
 }

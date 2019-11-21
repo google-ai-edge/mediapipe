@@ -738,10 +738,11 @@ TEST(MediaSequenceTest,
   AddImageTimestamp(10, &sequence);
   AddImageTimestamp(20, &sequence);
   AddImageTimestamp(30, &sequence);
+  AddImageTimestamp(40, &sequence);
 
-  AddBBoxTimestamp(9, &sequence);
-  AddBBoxTimestamp(21, &sequence);
-  AddBBoxTimestamp(22, &sequence);  // Will be dropped in the output.
+  AddBBoxTimestamp(11, &sequence);
+  AddBBoxTimestamp(12, &sequence);  // Will be dropped in the output.
+  AddBBoxTimestamp(39, &sequence);
 
   std::vector<std::vector<Location>> bboxes = {
       {Location::CreateRelativeBBoxLocation(0.1, 0.2, 0.7, 0.7)},
@@ -753,32 +754,35 @@ TEST(MediaSequenceTest,
 
   MP_ASSERT_OK(ReconcileMetadata(true, false, &sequence));
 
-  ASSERT_EQ(GetBBoxTimestampSize(sequence), 3);
+  ASSERT_EQ(GetBBoxTimestampSize(sequence), 4);
   ASSERT_EQ(GetBBoxTimestampAt(sequence, 0), 10);
   ASSERT_EQ(GetBBoxTimestampAt(sequence, 1), 20);
   ASSERT_EQ(GetBBoxTimestampAt(sequence, 2), 30);
+  ASSERT_EQ(GetBBoxTimestampAt(sequence, 3), 40);
 
-  ASSERT_EQ(GetBBoxIsAnnotatedSize(sequence), 3);
+  ASSERT_EQ(GetBBoxIsAnnotatedSize(sequence), 4);
   ASSERT_EQ(GetBBoxIsAnnotatedAt(sequence, 0), true);
-  ASSERT_EQ(GetBBoxIsAnnotatedAt(sequence, 1), true);
+  ASSERT_EQ(GetBBoxIsAnnotatedAt(sequence, 1), false);
   ASSERT_EQ(GetBBoxIsAnnotatedAt(sequence, 2), false);
+  ASSERT_EQ(GetBBoxIsAnnotatedAt(sequence, 3), true);
 
   // Unmodified timestamp is only stored for is_annotated == true.
   ASSERT_EQ(GetUnmodifiedBBoxTimestampSize(sequence), 2);
-  ASSERT_EQ(GetUnmodifiedBBoxTimestampAt(sequence, 0), 9);
-  ASSERT_EQ(GetUnmodifiedBBoxTimestampAt(sequence, 1), 21);
+  ASSERT_EQ(GetUnmodifiedBBoxTimestampAt(sequence, 0), 11);
+  ASSERT_EQ(GetUnmodifiedBBoxTimestampAt(sequence, 1), 39);
 
   // A second reconciliation should not corrupt unmodified bbox timestamps.
   MP_ASSERT_OK(ReconcileMetadata(true, false, &sequence));
 
-  ASSERT_EQ(GetBBoxTimestampSize(sequence), 3);
+  ASSERT_EQ(GetBBoxTimestampSize(sequence), 4);
   ASSERT_EQ(GetBBoxTimestampAt(sequence, 0), 10);
   ASSERT_EQ(GetBBoxTimestampAt(sequence, 1), 20);
   ASSERT_EQ(GetBBoxTimestampAt(sequence, 2), 30);
+  ASSERT_EQ(GetBBoxTimestampAt(sequence, 3), 40);
 
   ASSERT_EQ(GetUnmodifiedBBoxTimestampSize(sequence), 2);
-  ASSERT_EQ(GetUnmodifiedBBoxTimestampAt(sequence, 0), 9);
-  ASSERT_EQ(GetUnmodifiedBBoxTimestampAt(sequence, 1), 21);
+  ASSERT_EQ(GetUnmodifiedBBoxTimestampAt(sequence, 0), 11);
+  ASSERT_EQ(GetUnmodifiedBBoxTimestampAt(sequence, 1), 39);
 }
 
 TEST(MediaSequenceTest, ReconcileMetadataBoxAnnotationsFillsMissing) {

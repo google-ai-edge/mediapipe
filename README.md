@@ -10,11 +10,13 @@
 ## ML Solutions in MediaPipe
 
 * [Hand Tracking](mediapipe/docs/hand_tracking_mobile_gpu.md)
+* [Multi-hand Tracking](mediapipe/docs/multi_hand_tracking_mobile_gpu.md)
 * [Face Detection](mediapipe/docs/face_detection_mobile_gpu.md)
 * [Hair Segmentation](mediapipe/docs/hair_segmentation_mobile_gpu.md)
 * [Object Detection](mediapipe/docs/object_detection_mobile_gpu.md)
 
 ![hand_tracking](mediapipe/docs/images/mobile/hand_tracking_3d_android_gpu_small.gif)
+![multi-hand_tracking](mediapipe/docs/images/mobile/multi_hand_tracking_android_gpu_small.gif)
 ![face_detection](mediapipe/docs/images/mobile/face_detection_android_gpu_small.gif)
 ![hair_segmentation](mediapipe/docs/images/mobile/hair_segmentation_android_gpu_small.gif)
 ![object_detection](mediapipe/docs/images/mobile/object_detection_android_gpu_small.gif)
@@ -23,7 +25,7 @@
 Follow these [instructions](mediapipe/docs/install.md).
 
 ## Getting started
-See mobile and desktop [examples](mediapipe/docs/examples.md).
+See mobile, desktop and Google Coral [examples](mediapipe/docs/examples.md).
 
 ## Documentation
 [MediaPipe Read-the-Docs](https://mediapipe.readthedocs.io/) or [docs.mediapipe.dev](https://docs.mediapipe.dev)
@@ -41,6 +43,7 @@ A web-based visualizer is hosted on [viz.mediapipe.dev](https://viz.mediapipe.de
 * [MediaPipe: A Framework for Building Perception Pipelines](https://arxiv.org/abs/1906.08172)
 
 ## Events
+* [AI Nextcon 2020, 12-16 Feb 2020, Seattle](http://aisea20.xnextcon.com/)
 * [MediaPipe Madrid Meetup, 16 Dec 2019](https://www.meetup.com/Madrid-AI-Developers-Group/events/266329088/)
 * [MediaPipe London Meetup, Google 123 Building, 12 Dec 2019](https://www.meetup.com/London-AI-Tech-Talk/events/266329038)
 * [ML Conference, Berlin, 11 Dec 2019](https://mlconference.ai/machine-learning-advanced-development/mediapipe-building-real-time-cross-platform-mobile-web-edge-desktop-video-audio-ml-pipelines/)

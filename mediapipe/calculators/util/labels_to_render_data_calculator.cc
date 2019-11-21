@@ -93,6 +93,7 @@ REGISTER_CALCULATOR(LabelsToRenderDataCalculator);
 }
 
 ::mediapipe::Status LabelsToRenderDataCalculator::Open(CalculatorContext* cc) {
+  cc->SetOffset(TimestampDiff(0));
   options_ = cc->Options<LabelsToRenderDataCalculatorOptions>();
   num_colors_ = options_.color_size();
   label_height_px_ = std::ceil(options_.font_height_px() * kFontHeightScale);

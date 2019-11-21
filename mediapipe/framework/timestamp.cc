@@ -123,13 +123,23 @@ std::string TimestampDiff::DebugString() const {
 
 Timestamp Timestamp::NextAllowedInStream() const {
   CHECK(IsAllowedInStream()) << "Timestamp is: " << DebugString();
-  if (IsRangeValue() && *this != Max()) {
-    return *this + 1;
-  } else {
-    // Returning this value effectively means no futher timestamps may
-    // occur (however, the stream is not yet closed).
+  if (*this >= Max() || *this == PreStream()) {
+    // Indicates that no further timestamps may occur.
     return OneOverPostStream();
+  } else if (*this < Min()) {
+    return Min();
   }
+  return *this + 1;
+}
+
+Timestamp Timestamp::PreviousAllowedInStream() const {
+  if (*this <= Min() || *this == PostStream()) {
+    // Indicates that no previous timestamps may occur.
+    return Unstarted();
+  } else if (*this > Max()) {
+    return Max();
+  }
+  return *this - 1;
 }
 
 std::ostream& operator<<(std::ostream& os, Timestamp arg) {

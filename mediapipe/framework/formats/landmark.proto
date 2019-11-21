@@ -25,6 +25,11 @@ message Landmark {
   optional float z = 3;
 }
 
+// Group of Landmark protos.
+message LandmarkList {
+  repeated Landmark landmark = 1;
+}
+
 // A normalized version of above Landmark proto. All coordiates should be within
 // [0, 1].
 message NormalizedLandmark {

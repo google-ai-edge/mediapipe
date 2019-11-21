@@ -48,7 +48,7 @@ public class MainActivity extends AppCompatActivity {
   static {
     // Load all native libraries needed by the app.
     System.loadLibrary("mediapipe_jni");
-    System.loadLibrary("opencv_java4");
+    System.loadLibrary("opencv_java3");
   }
 
   // {@link SurfaceTexture} where the camera-preview frames can be accessed.

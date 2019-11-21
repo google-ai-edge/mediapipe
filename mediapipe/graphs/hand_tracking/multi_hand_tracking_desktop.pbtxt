@@ -94,7 +94,7 @@ node {
   output_stream: "multi_hand_rects"
   node_options: {
     [type.googleapis.com/mediapipe.AssociationCalculatorOptions] {
-      min_similarity_threshold: 0.1
+      min_similarity_threshold: 0.5
     }
   }
 }

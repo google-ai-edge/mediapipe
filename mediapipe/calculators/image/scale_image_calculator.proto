@@ -36,7 +36,8 @@ message ScaleImageCalculatorOptions {
 
   // If ratio is positive, crop the image to this minimum and maximum
   // aspect ratio (preserving the center of the frame).  This is done
-  // before scaling.
+  // before scaling.  The string must contain "/", so to disable cropping,
+  // set both to "0/1".
   //   For example, for a min_aspect_ratio of "9/16" and max of "16/9" the
   //   following cropping will occur:
   //       1920x1080 (which is 16:9) is not cropped
