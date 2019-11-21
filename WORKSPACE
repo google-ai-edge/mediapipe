@@ -191,7 +191,7 @@ maven_install(
         "androidx.recyclerview:recyclerview:aar:1.1.0-beta02",
         "com.google.android.material:material:aar:1.0.0-rc01",
     ],
-   repositories = [
+    repositories = [
         "https://dl.google.com/dl/android/maven2",
         "https://repo1.maven.org/maven2",
     ],
@@ -210,10 +210,10 @@ maven_jar(
 )
 
 maven_jar(
-     name = "androidx_concurrent_futures",
-     artifact = "androidx.concurrent:concurrent-futures:1.0.0-alpha03",
-     sha1 = "b528df95c7e2fefa2210c0c742bf3e491c1818ae",
-     server = "google_server",
+    name = "androidx_concurrent_futures",
+    artifact = "androidx.concurrent:concurrent-futures:1.0.0-alpha03",
+    sha1 = "b528df95c7e2fefa2210c0c742bf3e491c1818ae",
+    server = "google_server",
 )
 
 maven_jar(

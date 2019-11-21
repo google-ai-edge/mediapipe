@@ -74,16 +74,29 @@ class PreviousLoopbackCalculator : public CalculatorBase {
   }
 
   ::mediapipe::Status Process(CalculatorContext* cc) final {
-    Packet& main_packet = cc->Inputs().Get(main_id_).Value();
-    if (!main_packet.IsEmpty()) {
-      main_ts_.push_back(main_packet.Timestamp());
-    }
     Packet& loopback_packet = cc->Inputs().Get(loop_id_).Value();
     if (!loopback_packet.IsEmpty()) {
       loopback_packets_.push_back(loopback_packet);
       while (!main_ts_.empty() &&
              main_ts_.front() <= loopback_packets_.front().Timestamp()) {
         main_ts_.pop_front();
+      }
+    }
+
+    Packet& main_packet = cc->Inputs().Get(main_id_).Value();
+    if (!main_packet.IsEmpty()) {
+      main_ts_.push_back(main_packet.Timestamp());
+
+      // In case of an empty "LOOP" input, truncate timestamp is set to the
+      // lowest possible timestamp for a successive non-empty "LOOP" input. This
+      // truncates main_ts_ as soon as possible, and produces the highest legal
+      // output timestamp bound.
+      if (loopback_packet.IsEmpty() &&
+          loopback_packet.Timestamp() != Timestamp::Unstarted()) {
+        while (!main_ts_.empty() &&
+               main_ts_.front() <= loopback_packet.Timestamp() + 1) {
+          main_ts_.pop_front();
+        }
       }
     }
 

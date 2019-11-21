@@ -198,5 +198,64 @@ TEST(PreviousLoopbackCalculator, ClosesCorrectly) {
   MP_EXPECT_OK(graph_.WaitUntilDone());
 }
 
+// Demonstrates that downstream calculators won't be blocked by
+// always-empty-LOOP-stream.
+TEST(PreviousLoopbackCalculator, EmptyLoopForever) {
+  std::vector<Packet> outputs;
+  CalculatorGraphConfig graph_config_ =
+      ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+        input_stream: 'in'
+        node {
+          calculator: 'PreviousLoopbackCalculator'
+          input_stream: 'MAIN:in'
+          input_stream: 'LOOP:previous'
+          input_stream_info: { tag_index: 'LOOP' back_edge: true }
+          output_stream: 'PREV_LOOP:previous'
+        }
+        # This calculator synchronizes its inputs as normal, so it is used
+        # to check that both "in" and "previous" are ready.
+        node {
+          calculator: 'PassThroughCalculator'
+          input_stream: 'in'
+          input_stream: 'previous'
+          output_stream: 'out'
+          output_stream: 'previous2'
+        }
+        node {
+          calculator: 'PacketOnCloseCalculator'
+          input_stream: 'out'
+          output_stream: 'close_out'
+        }
+      )");
+  tool::AddVectorSink("close_out", &graph_config_, &outputs);
+
+  CalculatorGraph graph_;
+  MP_ASSERT_OK(graph_.Initialize(graph_config_, {}));
+  MP_ASSERT_OK(graph_.StartRun({}));
+
+  auto send_packet = [&graph_](const std::string& input_name, int n) {
+    MP_EXPECT_OK(graph_.AddPacketToInputStream(
+        input_name, MakePacket<int>(n).At(Timestamp(n))));
+  };
+
+  send_packet("in", 0);
+  MP_EXPECT_OK(graph_.WaitUntilIdle());
+  EXPECT_EQ(TimestampValues(outputs), (std::vector<int64>{0}));
+
+  for (int main_ts = 1; main_ts < 50; ++main_ts) {
+    send_packet("in", main_ts);
+    MP_EXPECT_OK(graph_.WaitUntilIdle());
+    std::vector<int64> ts_values = TimestampValues(outputs);
+    EXPECT_EQ(ts_values.size(), main_ts);
+    for (int j = 0; j < main_ts; ++j) {
+      CHECK_EQ(ts_values[j], j);
+    }
+  }
+
+  MP_EXPECT_OK(graph_.CloseAllInputStreams());
+  MP_EXPECT_OK(graph_.WaitUntilIdle());
+  MP_EXPECT_OK(graph_.WaitUntilDone());
+}
+
 }  // anonymous namespace
 }  // namespace mediapipe
