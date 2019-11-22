@@ -103,9 +103,9 @@ http_archive(
     ],
 )
 
-# 2019-11-12
-_TENSORFLOW_GIT_COMMIT = "a5f9bcd64453ff3d1f64cb4da4786db3d2da7f82"
-_TENSORFLOW_SHA256= "f2b6f2ab2ffe63e86eccd3ce4bea6b7197383d726638dfeeebcdc1e7de73f075"
+# 2019-11-21
+_TENSORFLOW_GIT_COMMIT = "f482488b481a799ca07e7e2d153cf47b8e91a60c"
+_TENSORFLOW_SHA256= "8d9118c2ce186c7e1403f04b96982fe72c184060c7f7a93e30a28dca358694f0"
 http_archive(
     name = "org_tensorflow",
     urls = [
