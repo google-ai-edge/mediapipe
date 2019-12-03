@@ -69,25 +69,11 @@ mediapipe::Status AddStreamHeadersIntoGraph(
   return mediapipe::OkStatus();
 }
 
-// Creates a java MediaPipeException object for a mediapipe::Status.
-jthrowable CreateMediaPipeException(JNIEnv* env, mediapipe::Status status) {
-  jclass status_cls =
-      env->FindClass("com/google/mediapipe/framework/MediaPipeException");
-  jmethodID status_ctr = env->GetMethodID(status_cls, "<init>", "(I[B)V");
-  int length = status.message().length();
-  jbyteArray message_bytes = env->NewByteArray(length);
-  env->SetByteArrayRegion(message_bytes, 0, length,
-                          reinterpret_cast<jbyte*>(const_cast<char*>(
-                              std::string(status.message()).c_str())));
-  return reinterpret_cast<jthrowable>(
-      env->NewObject(status_cls, status_ctr, status.code(), message_bytes));
-}
-
 // Throws a MediaPipeException for any non-ok mediapipe::Status.
 // Note that the exception is thrown after execution returns to Java.
 bool ThrowIfError(JNIEnv* env, mediapipe::Status status) {
   if (!status.ok()) {
-    env->Throw(CreateMediaPipeException(env, status));
+    env->Throw(mediapipe::android::CreateMediaPipeException(env, status));
     return true;
   }
   return false;

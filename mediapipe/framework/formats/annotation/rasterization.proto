@@ -27,7 +27,7 @@ message Rasterization {
     required int32 right_x = 3;
   }
 
-  // Intervals are always sorted by y-corrdinate.
+  // Intervals are always sorted by y-coordinate.
   // Therefore, a region occupies a set of scanlines ranging
   // from interval(0).y() to interval(interval_size() - 1)).y().
   // Note: In video, at some scanlines no interval might be present.

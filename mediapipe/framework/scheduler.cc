@@ -158,9 +158,11 @@ void Scheduler::HandleIdle() {
     if (!active_sources_.empty() || throttled_graph_input_stream_count_ > 0) {
       VLOG(2) << "HandleIdle: unthrottling";
       state_mutex_.Unlock();
-      graph_->UnthrottleSources();
+      bool did_unthrottle = graph_->UnthrottleSources();
       state_mutex_.Lock();
-      continue;
+      if (did_unthrottle) {
+        continue;
+      }
     }
 
     // Nothing left to do.

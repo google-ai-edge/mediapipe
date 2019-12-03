@@ -28,8 +28,7 @@ namespace {
 constexpr char kDetectionTag[] = "DETECTION";
 constexpr char kNormalizedLandmarksTag[] = "NORM_LANDMARKS";
 
-Detection ConvertLandmarksToDetection(
-    const std::vector<NormalizedLandmark>& landmarks) {
+Detection ConvertLandmarksToDetection(const NormalizedLandmarkList& landmarks) {
   Detection detection;
   LocationData* location_data = detection.mutable_location_data();
 
@@ -37,7 +36,8 @@ Detection ConvertLandmarksToDetection(
   float x_max = std::numeric_limits<float>::min();
   float y_min = std::numeric_limits<float>::max();
   float y_max = std::numeric_limits<float>::min();
-  for (const auto& landmark : landmarks) {
+  for (int i = 0; i < landmarks.landmark_size(); ++i) {
+    const NormalizedLandmark& landmark = landmarks.landmark(i);
     x_min = std::min(x_min, landmark.x());
     x_max = std::max(x_max, landmark.x());
     y_min = std::min(y_min, landmark.y());
@@ -67,7 +67,7 @@ Detection ConvertLandmarksToDetection(
 // to specify a subset of landmarks for creating the detection.
 //
 // Input:
-//  NOMR_LANDMARKS: A vector of NormalizedLandmark.
+//  NOMR_LANDMARKS: A NormalizedLandmarkList proto.
 //
 // Output:
 //   DETECTION: A Detection proto.
@@ -95,9 +95,7 @@ REGISTER_CALCULATOR(LandmarksToDetectionCalculator);
   RET_CHECK(cc->Inputs().HasTag(kNormalizedLandmarksTag));
   RET_CHECK(cc->Outputs().HasTag(kDetectionTag));
   // TODO: Also support converting Landmark to Detection.
-  cc->Inputs()
-      .Tag(kNormalizedLandmarksTag)
-      .Set<std::vector<NormalizedLandmark>>();
+  cc->Inputs().Tag(kNormalizedLandmarksTag).Set<NormalizedLandmarkList>();
   cc->Outputs().Tag(kDetectionTag).Set<Detection>();
 
   return ::mediapipe::OkStatus();
@@ -113,19 +111,20 @@ REGISTER_CALCULATOR(LandmarksToDetectionCalculator);
 
 ::mediapipe::Status LandmarksToDetectionCalculator::Process(
     CalculatorContext* cc) {
-  const auto& landmarks = cc->Inputs()
-                              .Tag(kNormalizedLandmarksTag)
-                              .Get<std::vector<NormalizedLandmark>>();
-  RET_CHECK_GT(landmarks.size(), 0) << "Input landmark vector is empty.";
+  const auto& landmarks =
+      cc->Inputs().Tag(kNormalizedLandmarksTag).Get<NormalizedLandmarkList>();
+  RET_CHECK_GT(landmarks.landmark_size(), 0)
+      << "Input landmark vector is empty.";
 
   auto detection = absl::make_unique<Detection>();
   if (options_.selected_landmark_indices_size()) {
-    std::vector<NormalizedLandmark> subset_landmarks(
-        options_.selected_landmark_indices_size());
-    for (int i = 0; i < subset_landmarks.size(); ++i) {
-      RET_CHECK_LT(options_.selected_landmark_indices(i), landmarks.size())
+    NormalizedLandmarkList subset_landmarks;
+    for (int i = 0; i < options_.selected_landmark_indices_size(); ++i) {
+      RET_CHECK_LT(options_.selected_landmark_indices(i),
+                   landmarks.landmark_size())
           << "Index of landmark subset is out of range.";
-      subset_landmarks[i] = landmarks[options_.selected_landmark_indices(i)];
+      *subset_landmarks.add_landmark() =
+          landmarks.landmark(options_.selected_landmark_indices(i));
     }
     *detection = ConvertLandmarksToDetection(subset_landmarks);
   } else {

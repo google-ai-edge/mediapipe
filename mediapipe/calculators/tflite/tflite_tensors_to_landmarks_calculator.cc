@@ -76,11 +76,11 @@ REGISTER_CALCULATOR(TfLiteTensorsToLandmarksCalculator);
   }
 
   if (cc->Outputs().HasTag("LANDMARKS")) {
-    cc->Outputs().Tag("LANDMARKS").Set<std::vector<Landmark>>();
+    cc->Outputs().Tag("LANDMARKS").Set<LandmarkList>();
   }
 
   if (cc->Outputs().HasTag("NORM_LANDMARKS")) {
-    cc->Outputs().Tag("NORM_LANDMARKS").Set<std::vector<NormalizedLandmark>>();
+    cc->Outputs().Tag("NORM_LANDMARKS").Set<NormalizedLandmarkList>();
   }
 
   return ::mediapipe::OkStatus();
@@ -127,54 +127,55 @@ REGISTER_CALCULATOR(TfLiteTensorsToLandmarksCalculator);
 
   const float* raw_landmarks = raw_tensor->data.f;
 
-  auto output_landmarks = absl::make_unique<std::vector<Landmark>>();
+  LandmarkList output_landmarks;
 
   for (int ld = 0; ld < num_landmarks_; ++ld) {
     const int offset = ld * num_dimensions;
-    Landmark landmark;
+    Landmark* landmark = output_landmarks.add_landmark();
 
     if (options_.flip_horizontally()) {
-      landmark.set_x(options_.input_image_width() - raw_landmarks[offset]);
+      landmark->set_x(options_.input_image_width() - raw_landmarks[offset]);
     } else {
-      landmark.set_x(raw_landmarks[offset]);
+      landmark->set_x(raw_landmarks[offset]);
     }
     if (num_dimensions > 1) {
       if (options_.flip_vertically()) {
-        landmark.set_y(options_.input_image_height() -
-                       raw_landmarks[offset + 1]);
+        landmark->set_y(options_.input_image_height() -
+                        raw_landmarks[offset + 1]);
       } else {
-        landmark.set_y(raw_landmarks[offset + 1]);
+        landmark->set_y(raw_landmarks[offset + 1]);
       }
     }
     if (num_dimensions > 2) {
-      landmark.set_z(raw_landmarks[offset + 2]);
+      landmark->set_z(raw_landmarks[offset + 2]);
     }
-    output_landmarks->push_back(landmark);
   }
 
   // Output normalized landmarks if required.
   if (cc->Outputs().HasTag("NORM_LANDMARKS")) {
-    auto output_norm_landmarks =
-        absl::make_unique<std::vector<NormalizedLandmark>>();
-    for (const auto& landmark : *output_landmarks) {
-      NormalizedLandmark norm_landmark;
-      norm_landmark.set_x(static_cast<float>(landmark.x()) /
-                          options_.input_image_width());
-      norm_landmark.set_y(static_cast<float>(landmark.y()) /
-                          options_.input_image_height());
-      norm_landmark.set_z(landmark.z() / options_.normalize_z());
-
-      output_norm_landmarks->push_back(norm_landmark);
+    NormalizedLandmarkList output_norm_landmarks;
+    // for (const auto& landmark : output_landmarks) {
+    for (int i = 0; i < output_landmarks.landmark_size(); ++i) {
+      const Landmark& landmark = output_landmarks.landmark(i);
+      NormalizedLandmark* norm_landmark = output_norm_landmarks.add_landmark();
+      norm_landmark->set_x(static_cast<float>(landmark.x()) /
+                           options_.input_image_width());
+      norm_landmark->set_y(static_cast<float>(landmark.y()) /
+                           options_.input_image_height());
+      norm_landmark->set_z(landmark.z() / options_.normalize_z());
     }
     cc->Outputs()
         .Tag("NORM_LANDMARKS")
-        .Add(output_norm_landmarks.release(), cc->InputTimestamp());
+        .AddPacket(MakePacket<NormalizedLandmarkList>(output_norm_landmarks)
+                       .At(cc->InputTimestamp()));
   }
+
   // Output absolute landmarks.
   if (cc->Outputs().HasTag("LANDMARKS")) {
     cc->Outputs()
         .Tag("LANDMARKS")
-        .Add(output_landmarks.release(), cc->InputTimestamp());
+        .AddPacket(MakePacket<LandmarkList>(output_landmarks)
+                       .At(cc->InputTimestamp()));
   }
 
   return ::mediapipe::OkStatus();

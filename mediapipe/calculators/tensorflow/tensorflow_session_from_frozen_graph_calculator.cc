@@ -31,8 +31,7 @@
 #include "mediapipe/framework/tool/status_util.h"
 #include "tensorflow/core/public/session_options.h"
 
-#if defined(MEDIAPIPE_LITE) || defined(__ANDROID__) || \
-    defined(__APPLE__) && !TARGET_OS_OSX
+#if defined(MEDIAPIPE_MOBILE)
 #include "mediapipe/util/android/file/base/helpers.h"
 #else
 #include "mediapipe/framework/port/file_helpers.h"

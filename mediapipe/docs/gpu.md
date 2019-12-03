@@ -1,10 +1,10 @@
 ## Running on GPUs
 
 -   [Overview](#overview)
--   [OpenGL Support](#graphconfig)
+-   [OpenGL Support](#opengl-support)
 -   [Life of a GPU calculator](#life-of-a-gpu-calculator)
 -   [GpuBuffer to ImageFrame converters](#gpubuffer-to-imageframe-converters)
-
+-   [Disable GPU support](#disable-gpu-support)
 
 ### Overview
 MediaPipe supports calculator nodes for GPU compute and rendering, and allows combining multiple GPU nodes, as well as mixing them with CPU based calculator nodes. There exist several GPU APIs on mobile platforms (eg, OpenGL ES, Metal and Vulkan). MediaPipe does not attempt to offer a single cross-API GPU abstraction. Individual nodes can be written using different APIs, allowing them to take advantage of platform specific features when needed.
@@ -23,6 +23,7 @@ Below are the design principles for GPU support in MediaPipe
    * A calculator should be allowed maximum flexibility in using the GPU for all or part of its operation, combining it with the CPU if necessary.
 
 ### OpenGL support
+
 MediaPipe supports OpenGL ES up to version 3.2 on Android and up to ES 3.0 on iOS. In addition, MediaPipe also supports Metal on iOS.
 
    * MediaPipe allows graphs to run OpenGL in multiple GL contexts. For example, this can be very useful in graphs that combine a slower GPU inference path (eg, at 10 FPS) with a faster GPU rendering path (eg, at 30 FPS): since one GL context corresponds to one sequential command queue, using the same context for both tasks would reduce the rendering frame rate. One challenge MediaPipe's use of multiple contexts solves is the ability to communicate across them. An example scenario is one with an input video that is sent to both the rendering and inferences paths, and rendering needs to have access to the latest output from inference.
@@ -128,3 +129,26 @@ The below diagram shows the data flow in a mobile application that captures vide
 |:--:|
 | *Video frames from the camera are fed into the graph as `GpuBuffer` packets. The input stream is accessed by two calculators in parallel. `GpuBufferToImageFrameCalculator` converts the buffer into an `ImageFrame`, which is then sent through a grayscale converter and a canny filter (both based on OpenCV and running on the CPU), whose output is then converted into a `GpuBuffer` again. A multi-input GPU calculator, GlOverlayCalculator, takes as input both the original `GpuBuffer` and the one coming out of the edge detector, and overlays them using a shader. The output is then sent back to the application using a callback calculator, and the application renders the image to the screen using OpenGL.* |
 
+### Disable GPU Support
+
+By default, building MediaPipe (with no special bazel flags) attempts to compile
+and link against OpenGL/Metal libraries.
+
+There are some command line build flags available to disable/enable GPU support
+within the MediaPipe framework:
+
+```
+# To disable *all* gpu support
+bazel build --define MEDIAPIPE_DISABLE_GPU=1  <my-target>
+
+# to enable full GPU support (OpenGL ES 3.1+ & Metal)
+bazel build --copt -DMESA_EGL_NO_X11_HEADERS  <my-target>
+
+# to enable only OpenGL ES 3.0 and below (no GLES 3.1+ features)
+bazel build --copt -DMESA_EGL_NO_X11_HEADERS --copt -DMEDIAPIPE_DISABLE_GL_COMPUTE  <my-target>
+```
+
+Note *MEDIAPIPE_DISABLE_GL_COMPUTE* is automatically defined on all Apple
+systems (Apple doesn't support OpenGL ES 3.1+).
+
+Note on iOS and Android, it is assumed that GPU support will be enabled.

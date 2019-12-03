@@ -45,4 +45,9 @@ message TfLiteInferenceCalculatorOptions {
   // input tensors are on CPU. For input tensors on GPU, GPU backend is always
   // used.
   optional bool use_gpu = 2 [default = false];
+
+  // Android only. When true, an NNAPI delegate will be used for inference.
+  // If NNAPI is not available, then the default CPU delegate will be used
+  // automatically.
+  optional bool use_nnapi = 3 [default = false];
 }

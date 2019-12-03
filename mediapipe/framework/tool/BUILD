@@ -13,10 +13,6 @@
 # limitations under the License.
 #
 
-licenses(["notice"])  # Apache 2.0
-
-package(default_visibility = ["//visibility:private"])
-
 load(
     "//mediapipe/framework/port:build_config.bzl",
     "mediapipe_cc_proto_library",
@@ -26,6 +22,10 @@ load(
     "data_as_c_string",
     "mediapipe_binary_graph",
 )
+
+licenses(["notice"])  # Apache 2.0
+
+package(default_visibility = ["//visibility:private"])
 
 exports_files([
     "simple_subgraph_template.cc",

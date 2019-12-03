@@ -27,7 +27,7 @@
 #include "tensorflow/lite/kernels/register.h"
 #include "tensorflow/lite/model.h"
 
-#if !defined(MEDIAPIPE_DISABLE_GPU) && !defined(MEDIAPIPE_DISABLE_GL_COMPUTE)
+#if !defined(MEDIAPIPE_DISABLE_GL_COMPUTE)
 #include "mediapipe/gpu/gl_calculator_helper.h"
 #include "mediapipe/gpu/gpu_buffer.h"
 #include "tensorflow/lite/delegates/gpu/common/shape.h"
@@ -35,9 +35,9 @@
 #include "tensorflow/lite/delegates/gpu/gl/gl_program.h"
 #include "tensorflow/lite/delegates/gpu/gl/gl_shader.h"
 #include "tensorflow/lite/delegates/gpu/gl_delegate.h"
-#endif  //  !MEDIAPIPE_DISABLE_GPU
+#endif  //  !MEDIAPIPE_DISABLE_GL_COMPUTE
 
-#if defined(__APPLE__) && !TARGET_OS_OSX  // iOS
+#if defined(MEDIAPIPE_IOS)
 #import <CoreVideo/CoreVideo.h>
 #import <Metal/Metal.h>
 #import <MetalKit/MetalKit.h>
@@ -51,12 +51,15 @@
 #include "tensorflow/lite/delegates/gpu/metal_delegate_internal.h"
 #endif  // iOS
 
+#if defined(MEDIAPIPE_ANDROID)
+#include "tensorflow/lite/delegates/nnapi/nnapi_delegate.h"
+#endif  // ANDROID
+
 namespace {
 
-#if !defined(MEDIAPIPE_DISABLE_GPU) && !defined(__EMSCRIPTEN__) && \
-    !defined(__APPLE__)
+#if !defined(MEDIAPIPE_DISABLE_GL_COMPUTE)
 typedef ::tflite::gpu::gl::GlBuffer GpuTensor;
-#elif defined(__APPLE__) && !TARGET_OS_OSX  // iOS
+#elif defined(MEDIAPIPE_IOS)
 typedef id<MTLBuffer> GpuTensor;
 #endif
 
@@ -92,8 +95,7 @@ std::unique_ptr<tflite::Interpreter> BuildEdgeTpuInterpreter(
 //  * Aux
 namespace mediapipe {
 
-#if !defined(MEDIAPIPE_DISABLE_GPU) && !defined(__EMSCRIPTEN__) && \
-    !defined(__APPLE__)
+#if !defined(MEDIAPIPE_DISABLE_GL_COMPUTE)
 using ::tflite::gpu::gl::CopyBuffer;
 using ::tflite::gpu::gl::CreateReadWriteShaderStorageBuffer;
 using ::tflite::gpu::gl::GlBuffer;
@@ -172,12 +174,11 @@ class TfLiteInferenceCalculator : public CalculatorBase {
   std::unique_ptr<tflite::FlatBufferModel> model_;
   TfLiteDelegate* delegate_ = nullptr;
 
-#if !defined(MEDIAPIPE_DISABLE_GPU) && !defined(__EMSCRIPTEN__) && \
-    !defined(__APPLE__)
+#if !defined(MEDIAPIPE_DISABLE_GL_COMPUTE)
   mediapipe::GlCalculatorHelper gpu_helper_;
   std::unique_ptr<GPUData> gpu_data_in_;
   std::vector<std::unique_ptr<GPUData>> gpu_data_out_;
-#elif defined(__APPLE__) && !TARGET_OS_OSX  // iOS
+#elif defined(MEDIAPIPE_IOS)
   MPPMetalHelper* gpu_helper_ = nullptr;
   std::unique_ptr<GPUData> gpu_data_in_;
   std::vector<std::unique_ptr<GPUData>> gpu_data_out_;
@@ -237,10 +238,9 @@ REGISTER_CALCULATOR(TfLiteInferenceCalculator);
   use_gpu |= options.use_gpu();
 
   if (use_gpu) {
-#if !defined(MEDIAPIPE_DISABLE_GPU) && !defined(__EMSCRIPTEN__) && \
-    !defined(__APPLE__)
+#if !defined(MEDIAPIPE_DISABLE_GL_COMPUTE)
     MP_RETURN_IF_ERROR(mediapipe::GlCalculatorHelper::UpdateContract(cc));
-#elif defined(__APPLE__) && !TARGET_OS_OSX  // iOS
+#elif defined(MEDIAPIPE_IOS)
     MP_RETURN_IF_ERROR([MPPMetalHelper updateContract:cc]);
 #endif
   }
@@ -280,26 +280,24 @@ REGISTER_CALCULATOR(TfLiteInferenceCalculator);
   MP_RETURN_IF_ERROR(LoadModel(cc));
 
   if (gpu_inference_) {
-#if !defined(MEDIAPIPE_DISABLE_GPU) && !defined(__EMSCRIPTEN__) && \
-    !defined(__APPLE__)
+#if !defined(MEDIAPIPE_DISABLE_GL_COMPUTE)
     MP_RETURN_IF_ERROR(gpu_helper_.Open(cc));
-#elif defined(__APPLE__) && !TARGET_OS_OSX  // iOS
+#elif defined(MEDIAPIPE_IOS)
     gpu_helper_ = [[MPPMetalHelper alloc] initWithCalculatorContext:cc];
     RET_CHECK(gpu_helper_);
 #endif
-#if !defined(MEDIAPIPE_DISABLE_GPU) && !defined(__EMSCRIPTEN__) && \
-    !defined(__APPLE__)
+
+#if !defined(MEDIAPIPE_DISABLE_GL_COMPUTE)
     MP_RETURN_IF_ERROR(gpu_helper_.RunInGlContext(
         [this, &cc]() -> ::mediapipe::Status { return LoadDelegate(cc); }));
 #else
     MP_RETURN_IF_ERROR(LoadDelegate(cc));
 #endif
+  } else {
+#if defined(__EMSCRIPTEN__) || defined(MEDIAPIPE_ANDROID)
+    MP_RETURN_IF_ERROR(LoadDelegate(cc));
+#endif  // __EMSCRIPTEN__ || ANDROID
   }
-
-#if defined(__EMSCRIPTEN__)
-  MP_RETURN_IF_ERROR(LoadDelegate(cc));
-#endif  // __EMSCRIPTEN__
-
   return ::mediapipe::OkStatus();
 }
 
@@ -307,8 +305,7 @@ REGISTER_CALCULATOR(TfLiteInferenceCalculator);
   // 1. Receive pre-processed tensor inputs.
   if (gpu_input_) {
     // Read GPU input into SSBO.
-#if !defined(MEDIAPIPE_DISABLE_GPU) && !defined(__EMSCRIPTEN__) && \
-    !defined(__APPLE__)
+#if !defined(MEDIAPIPE_DISABLE_GL_COMPUTE)
     const auto& input_tensors =
         cc->Inputs().Tag("TENSORS_GPU").Get<std::vector<GpuTensor>>();
     RET_CHECK_EQ(input_tensors.size(), 1);
@@ -318,7 +315,7 @@ REGISTER_CALCULATOR(TfLiteInferenceCalculator);
           RET_CHECK_CALL(CopyBuffer(input_tensors[0], gpu_data_in_->buffer));
           return ::mediapipe::OkStatus();
         }));
-#elif defined(__APPLE__) && !TARGET_OS_OSX  // iOS
+#elif defined(MEDIAPIPE_IOS)
     const auto& input_tensors =
         cc->Inputs().Tag("TENSORS_GPU").Get<std::vector<GpuTensor>>();
     RET_CHECK_EQ(input_tensors.size(), 1);
@@ -354,14 +351,13 @@ REGISTER_CALCULATOR(TfLiteInferenceCalculator);
 
   // 2. Run inference.
   if (gpu_inference_) {
-#if !defined(MEDIAPIPE_DISABLE_GPU) && !defined(__EMSCRIPTEN__) && \
-    !defined(__APPLE__)
+#if !defined(MEDIAPIPE_DISABLE_GL_COMPUTE)
     MP_RETURN_IF_ERROR(
         gpu_helper_.RunInGlContext([this]() -> ::mediapipe::Status {
           RET_CHECK_EQ(interpreter_->Invoke(), kTfLiteOk);
           return ::mediapipe::OkStatus();
         }));
-#elif defined(__APPLE__) && !TARGET_OS_OSX  // iOS
+#elif defined(MEDIAPIPE_IOS)
     RET_CHECK_EQ(interpreter_->Invoke(), kTfLiteOk);
 #endif
   } else {
@@ -370,8 +366,7 @@ REGISTER_CALCULATOR(TfLiteInferenceCalculator);
 
   // 3. Output processed tensors.
   if (gpu_output_) {
-#if !defined(MEDIAPIPE_DISABLE_GPU) && !defined(__EMSCRIPTEN__) && \
-    !defined(__APPLE__)
+#if !defined(MEDIAPIPE_DISABLE_GL_COMPUTE)
     // Output result tensors (GPU).
     auto output_tensors = absl::make_unique<std::vector<GpuTensor>>();
     MP_RETURN_IF_ERROR(gpu_helper_.RunInGlContext(
@@ -388,7 +383,7 @@ REGISTER_CALCULATOR(TfLiteInferenceCalculator);
     cc->Outputs()
         .Tag("TENSORS_GPU")
         .Add(output_tensors.release(), cc->InputTimestamp());
-#elif defined(__APPLE__) && !TARGET_OS_OSX  // iOS
+#elif defined(MEDIAPIPE_IOS)
     // Output result tensors (GPU).
     auto output_tensors = absl::make_unique<std::vector<GpuTensor>>();
     output_tensors->resize(gpu_data_out_.size());
@@ -433,23 +428,24 @@ REGISTER_CALCULATOR(TfLiteInferenceCalculator);
 
 ::mediapipe::Status TfLiteInferenceCalculator::Close(CalculatorContext* cc) {
   if (delegate_) {
-#if !defined(MEDIAPIPE_DISABLE_GPU) && !defined(__EMSCRIPTEN__) && \
-    !defined(__APPLE__)
-    MP_RETURN_IF_ERROR(gpu_helper_.RunInGlContext([this]() -> Status {
-      TfLiteGpuDelegateDelete(delegate_);
+    if (gpu_inference_) {
+#if !defined(MEDIAPIPE_DISABLE_GL_COMPUTE)
+      MP_RETURN_IF_ERROR(gpu_helper_.RunInGlContext([this]() -> Status {
+        TfLiteGpuDelegateDelete(delegate_);
+        gpu_data_in_.reset();
+        for (int i = 0; i < gpu_data_out_.size(); ++i) {
+          gpu_data_out_[i].reset();
+        }
+        return ::mediapipe::OkStatus();
+      }));
+#elif defined(MEDIAPIPE_IOS)
+      TFLGpuDelegateDelete(delegate_);
       gpu_data_in_.reset();
       for (int i = 0; i < gpu_data_out_.size(); ++i) {
         gpu_data_out_[i].reset();
       }
-      return ::mediapipe::OkStatus();
-    }));
-#elif defined(__APPLE__) && !TARGET_OS_OSX  // iOS
-    TFLGpuDelegateDelete(delegate_);
-    gpu_data_in_.reset();
-    for (int i = 0; i < gpu_data_out_.size(); ++i) {
-      gpu_data_out_[i].reset();
-    }
 #endif
+    }
     delegate_ = nullptr;
   }
 #if defined(MEDIAPIPE_EDGE_TPU)
@@ -522,8 +518,22 @@ REGISTER_CALCULATOR(TfLiteInferenceCalculator);
 
 ::mediapipe::Status TfLiteInferenceCalculator::LoadDelegate(
     CalculatorContext* cc) {
-#if !defined(MEDIAPIPE_DISABLE_GPU) && !defined(__EMSCRIPTEN__) && \
-    !defined(__APPLE__)
+#if defined(MEDIAPIPE_ANDROID)
+  if (!gpu_inference_) {
+    if (cc->Options<mediapipe::TfLiteInferenceCalculatorOptions>()
+            .use_nnapi()) {
+      // Attempt to use NNAPI.
+      // If not supported, the default CPU delegate will be created and used.
+      interpreter_->SetAllowFp16PrecisionForFp32(1);
+      delegate_ = tflite::NnApiDelegate();
+      RET_CHECK_EQ(interpreter_->ModifyGraphWithDelegate(delegate_), kTfLiteOk);
+    }
+    // Return, no need for GPU delegate below.
+    return ::mediapipe::OkStatus();
+  }
+#endif  // ANDROID
+
+#if !defined(MEDIAPIPE_DISABLE_GL_COMPUTE)
   // Configure and create the delegate.
   TfLiteGpuDelegateOptions options = TfLiteGpuDelegateOptionsDefault();
   options.compile_options.precision_loss_allowed = 1;
@@ -583,7 +593,7 @@ REGISTER_CALCULATOR(TfLiteInferenceCalculator);
   RET_CHECK_EQ(interpreter_->ModifyGraphWithDelegate(delegate_), kTfLiteOk);
 #endif  // OpenGL
 
-#if defined(__APPLE__) && !TARGET_OS_OSX  // iOS
+#if defined(MEDIAPIPE_IOS)
   // Configure and create the delegate.
   TFLGpuDelegateOptions options;
   options.allow_precision_loss = false;  // Must match converter, F=float/T=half

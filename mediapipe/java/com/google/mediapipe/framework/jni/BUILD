@@ -134,6 +134,7 @@ cc_library(
     deps = [
         "@com_google_absl//absl/synchronization",
         "//mediapipe/framework/port:logging",
+        "//mediapipe/framework/port:status",
     ] + select({
         "//conditions:default": [
         ],

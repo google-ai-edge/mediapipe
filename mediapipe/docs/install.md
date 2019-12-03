@@ -245,19 +245,23 @@ To build and run iOS apps:
     $ cd mediapipe
     ```
 
-3.  Install Bazel (0.24.1 and above required).
+3.  Install Bazel (version between 0.24.1 and 1.1.0).
 
-    Option 1. Use package manager tool to install the latest version of Bazel.
+    Option 1. Use package manager tool to install Bazel 1.1.0
 
     ```bash
-    $ brew install bazel
-
-    # Run 'bazel version' to check version of bazel installed
+    # If Bazel 1.1.0+ was installed.
+    $ brew uninstall bazel
+    # Install Bazel 1.1.0
+    $ brew install https://raw.githubusercontent.com/bazelbuild/homebrew-tap/f8a0fa981bcb1784a0d0823e14867b844e94fb3d/Formula/bazel.rb
+    $ brew link bazel
+    # Run 'bazel version' to check version of bazel
     ```
 
     Option 2. Follow the official
     [Bazel documentation](https://docs.bazel.build/versions/master/install-os-x.html#install-with-installer-mac-os-x)
-    to install any version of Bazel manually.
+    to install any version of Bazel manually. Note that MediaPipe doesn't
+    support Bazel 1.1.0+ on macOS yet.
 
 4.  Install OpenCV and FFmpeg.
 
@@ -526,7 +530,7 @@ This will use a Docker image that will isolate mediapipe's installation from the
     ```bash
     $ docker run -it --name mediapipe mediapipe:latest
 
-    root@bca08b91ff63:/mediapipe# bash ./setup_android_sdk_and_ndk
+    root@bca08b91ff63:/mediapipe# bash ./setup_android_sdk_and_ndk.sh
 
     # Should print:
     # Android NDK is now installed. Consider setting $ANDROID_NDK_HOME environment variable to be /root/Android/Sdk/ndk-bundle/android-ndk-r18b

@@ -17,18 +17,23 @@ package com.google.mediapipe.apps.handtrackinggpu;
 import android.graphics.SurfaceTexture;
 import android.os.Bundle;
 import androidx.appcompat.app.AppCompatActivity;
+import android.util.Log;
 import android.util.Size;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.ViewGroup;
+import com.google.mediapipe.formats.proto.LandmarkProto.NormalizedLandmark;
+import com.google.mediapipe.formats.proto.LandmarkProto.NormalizedLandmarkList;
 import com.google.mediapipe.components.CameraHelper;
 import com.google.mediapipe.components.CameraXPreviewHelper;
 import com.google.mediapipe.components.ExternalTextureConverter;
 import com.google.mediapipe.components.FrameProcessor;
 import com.google.mediapipe.components.PermissionHelper;
 import com.google.mediapipe.framework.AndroidAssetUtil;
+import com.google.mediapipe.framework.PacketGetter;
 import com.google.mediapipe.glutil.EglManager;
+import com.google.protobuf.InvalidProtocolBufferException;
 
 /** Main activity of MediaPipe example apps. */
 public class MainActivity extends AppCompatActivity {
@@ -37,6 +42,8 @@ public class MainActivity extends AppCompatActivity {
   private static final String BINARY_GRAPH_NAME = "handtrackinggpu.binarypb";
   private static final String INPUT_VIDEO_STREAM_NAME = "input_video";
   private static final String OUTPUT_VIDEO_STREAM_NAME = "output_video";
+  private static final String OUTPUT_HAND_PRESENCE_STREAM_NAME = "hand_presence";
+  private static final String OUTPUT_LANDMARKS_STREAM_NAME = "hand_landmarks";
   private static final CameraHelper.CameraFacing CAMERA_FACING = CameraHelper.CameraFacing.FRONT;
 
   // Flips the camera-preview frames vertically before sending them into FrameProcessor to be
@@ -89,6 +96,41 @@ public class MainActivity extends AppCompatActivity {
             INPUT_VIDEO_STREAM_NAME,
             OUTPUT_VIDEO_STREAM_NAME);
     processor.getVideoSurfaceOutput().setFlipY(FLIP_FRAMES_VERTICALLY);
+
+    processor.addPacketCallback(
+        OUTPUT_HAND_PRESENCE_STREAM_NAME,
+        (packet) -> {
+          Boolean handPresence = PacketGetter.getBool(packet);
+          if (!handPresence) {
+            Log.d(
+                TAG,
+                "[TS:" + packet.getTimestamp() + "] Hand presence is false, no hands detected.");
+          }
+        });
+
+    processor.addPacketCallback(
+        OUTPUT_LANDMARKS_STREAM_NAME,
+        (packet) -> {
+          byte[] landmarksRaw = PacketGetter.getProtoBytes(packet);
+          try {
+            NormalizedLandmarkList landmarks = NormalizedLandmarkList.parseFrom(landmarksRaw);
+            if (landmarks == null) {
+              Log.d(TAG, "[TS:" + packet.getTimestamp() + "] No hand landmarks.");
+              return;
+            }
+            // Note: If hand_presence is false, these landmarks are useless.
+            Log.d(
+                TAG,
+                "[TS:"
+                    + packet.getTimestamp()
+                    + "] #Landmarks for hand: "
+                    + landmarks.getLandmarkCount());
+            Log.d(TAG, getLandmarksDebugString(landmarks));
+          } catch (InvalidProtocolBufferException e) {
+            Log.e(TAG, "Couldn't Exception received - " + e);
+            return;
+          }
+        });
 
     PermissionHelper.checkAndRequestCameraPermissions(this);
   }
@@ -163,5 +205,24 @@ public class MainActivity extends AppCompatActivity {
           previewDisplayView.setVisibility(View.VISIBLE);
         });
     cameraHelper.startCamera(this, CAMERA_FACING, /*surfaceTexture=*/ null);
+  }
+
+  private static String getLandmarksDebugString(NormalizedLandmarkList landmarks) {
+    int landmarkIndex = 0;
+    String landmarksString = "";
+    for (NormalizedLandmark landmark : landmarks.getLandmarkList()) {
+      landmarksString +=
+          "\t\tLandmark["
+              + landmarkIndex
+              + "]: ("
+              + landmark.getX()
+              + ", "
+              + landmark.getY()
+              + ", "
+              + landmark.getZ()
+              + ")\n";
+      ++landmarkIndex;
+    }
+    return landmarksString;
   }
 }

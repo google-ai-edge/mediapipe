@@ -17,18 +17,23 @@ package com.google.mediapipe.apps.multihandtrackinggpu;
 import android.graphics.SurfaceTexture;
 import android.os.Bundle;
 import androidx.appcompat.app.AppCompatActivity;
+import android.util.Log;
 import android.util.Size;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.ViewGroup;
+import com.google.mediapipe.formats.proto.LandmarkProto.NormalizedLandmark;
+import com.google.mediapipe.formats.proto.LandmarkProto.NormalizedLandmarkList;
 import com.google.mediapipe.components.CameraHelper;
 import com.google.mediapipe.components.CameraXPreviewHelper;
 import com.google.mediapipe.components.ExternalTextureConverter;
 import com.google.mediapipe.components.FrameProcessor;
 import com.google.mediapipe.components.PermissionHelper;
 import com.google.mediapipe.framework.AndroidAssetUtil;
+import com.google.mediapipe.framework.PacketGetter;
 import com.google.mediapipe.glutil.EglManager;
+import java.util.List;
 
 /** Main activity of MediaPipe example apps. */
 public class MainActivity extends AppCompatActivity {
@@ -37,6 +42,7 @@ public class MainActivity extends AppCompatActivity {
   private static final String BINARY_GRAPH_NAME = "multihandtrackinggpu.binarypb";
   private static final String INPUT_VIDEO_STREAM_NAME = "input_video";
   private static final String OUTPUT_VIDEO_STREAM_NAME = "output_video";
+  private static final String OUTPUT_LANDMARKS_STREAM_NAME = "multi_hand_landmarks";
   private static final CameraHelper.CameraFacing CAMERA_FACING = CameraHelper.CameraFacing.FRONT;
 
   // Flips the camera-preview frames vertically before sending them into FrameProcessor to be
@@ -89,6 +95,20 @@ public class MainActivity extends AppCompatActivity {
             INPUT_VIDEO_STREAM_NAME,
             OUTPUT_VIDEO_STREAM_NAME);
     processor.getVideoSurfaceOutput().setFlipY(FLIP_FRAMES_VERTICALLY);
+
+    processor.addPacketCallback(
+        OUTPUT_LANDMARKS_STREAM_NAME,
+        (packet) -> {
+          Log.d(TAG, "Received multi-hand landmarks packet.");
+          List<NormalizedLandmarkList> multiHandLandmarks =
+              PacketGetter.getProtoVector(packet, NormalizedLandmarkList.parser());
+          Log.d(
+              TAG,
+              "[TS:"
+                  + packet.getTimestamp()
+                  + "] "
+                  + getMultiHandLandmarksDebugString(multiHandLandmarks));
+        });
 
     PermissionHelper.checkAndRequestCameraPermissions(this);
   }
@@ -163,5 +183,33 @@ public class MainActivity extends AppCompatActivity {
           previewDisplayView.setVisibility(View.VISIBLE);
         });
     cameraHelper.startCamera(this, CAMERA_FACING, /*surfaceTexture=*/ null);
+  }
+
+  private String getMultiHandLandmarksDebugString(List<NormalizedLandmarkList> multiHandLandmarks) {
+    if (multiHandLandmarks.isEmpty()) {
+      return "No hand landmarks";
+    }
+    String multiHandLandmarksStr = "Number of hands detected: " + multiHandLandmarks.size() + "\n";
+    int handIndex = 0;
+    for (NormalizedLandmarkList landmarks : multiHandLandmarks) {
+      multiHandLandmarksStr +=
+          "\t#Hand landmarks for hand[" + handIndex + "]: " + landmarks.getLandmarkCount() + "\n";
+      int landmarkIndex = 0;
+      for (NormalizedLandmark landmark : landmarks.getLandmarkList()) {
+        multiHandLandmarksStr +=
+            "\t\tLandmark ["
+                + landmarkIndex
+                + "]: ("
+                + landmark.getX()
+                + ", "
+                + landmark.getY()
+                + ", "
+                + landmark.getZ()
+                + ")\n";
+        ++landmarkIndex;
+      }
+      ++handIndex;
+    }
+    return multiHandLandmarksStr;
   }
 }

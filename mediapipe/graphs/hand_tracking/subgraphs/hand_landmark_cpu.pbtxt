@@ -101,7 +101,7 @@ node {
   }
 }
 
-# Decodes the landmark tensors into a vector of lanmarks, where the landmark
+# Decodes the landmark tensors into a list of landmarks, where the landmark
 # coordinates are normalized by the size of the input image to the model.
 node {
   calculator: "TfLiteTensorsToLandmarksCalculator"

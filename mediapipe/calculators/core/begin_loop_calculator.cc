@@ -21,16 +21,10 @@
 
 namespace mediapipe {
 
-// A calculator to process std::vector<NormalizedLandmark>.
-typedef BeginLoopCalculator<std::vector<::mediapipe::NormalizedLandmark>>
-    BeginLoopNormalizedLandmarkCalculator;
-REGISTER_CALCULATOR(BeginLoopNormalizedLandmarkCalculator);
-
-// A calculator to process std::vector<std::vector<NormalizedLandmark>>.
-typedef BeginLoopCalculator<
-    std::vector<std::vector<::mediapipe::NormalizedLandmark>>>
-    BeginLoopNormalizedLandmarksVectorCalculator;
-REGISTER_CALCULATOR(BeginLoopNormalizedLandmarksVectorCalculator);
+// A calculator to process std::vector<NormalizedLandmarkList>.
+typedef BeginLoopCalculator<std::vector<::mediapipe::NormalizedLandmarkList>>
+    BeginLoopNormalizedLandmarkListVectorCalculator;
+REGISTER_CALCULATOR(BeginLoopNormalizedLandmarkListVectorCalculator);
 
 // A calculator to process std::vector<NormalizedRect>.
 typedef BeginLoopCalculator<std::vector<::mediapipe::NormalizedRect>>

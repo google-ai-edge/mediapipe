@@ -163,6 +163,13 @@ class Packet {
   // object type is protocol buffer, crashes otherwise.
   const proto_ns::MessageLite& GetProtoMessageLite() const;
 
+  // Returns a vector of pointers to MessageLite data, if the underlying
+  // object type is a vector of MessageLite data, returns an error otherwise.
+  // Note: This function is meant to be used internally within the MediaPipe
+  // framework only.
+  StatusOr<std::vector<const proto_ns::MessageLite*>>
+  GetVectorOfProtoMessageLitePtrs();
+
   // Returns an error if the packet does not contain data of type T.
   template <typename T>
   ::mediapipe::Status ValidateAsType() const;
@@ -347,6 +354,12 @@ class HolderBase {
   // underlying object is protocol buffer type, otherwise, nullptr is returned.
   virtual const proto_ns::MessageLite* GetProtoMessageLite() = 0;
 
+  // Returns a vector<MessageLite*> for the data in the holder, if the
+  // underlying object is a vector of protocol buffer objects, otherwise,
+  // returns an error.
+  virtual StatusOr<std::vector<const proto_ns::MessageLite*>>
+  GetVectorOfProtoMessageLite() = 0;
+
  private:
   size_t type_id_;
 };
@@ -362,6 +375,37 @@ template <typename T>
 const proto_ns::MessageLite* ConvertToProtoMessageLite(const T* data,
                                                        std::true_type) {
   return data;
+}
+
+// Helper structs for determining if a type is an std::vector<Proto>.
+template <typename Type>
+struct is_proto_vector : public std::false_type {};
+
+template <typename ItemT, typename Allocator>
+struct is_proto_vector<std::vector<ItemT, Allocator>>
+    : public std::is_base_of<proto_ns::MessageLite, ItemT>::type {};
+
+// Helper function to create and return a vector of pointers to proto message
+// elements of the vector passed into the function.
+template <typename T>
+StatusOr<std::vector<const proto_ns::MessageLite*>>
+ConvertToVectorOfProtoMessageLitePtrs(const T* data,
+                                      /*is_proto_vector=*/std::false_type) {
+  return ::mediapipe::InvalidArgumentError(absl::StrCat(
+      "The Packet stores \"", typeid(T).name(), "\"",
+      "which is not convertible to vector<proto_ns::MessageLite*>."));
+}
+
+template <typename T>
+StatusOr<std::vector<const proto_ns::MessageLite*>>
+ConvertToVectorOfProtoMessageLitePtrs(const T* data,
+                                      /*is_proto_vector=*/std::true_type) {
+  std::vector<const proto_ns::MessageLite*> result;
+  for (auto it = data->begin(); it != data->end(); ++it) {
+    const proto_ns::MessageLite* element = &(*it);
+    result.push_back(element);
+  }
+  return result;
 }
 
 template <typename T>
@@ -419,6 +463,14 @@ class Holder : public HolderBase {
   const proto_ns::MessageLite* GetProtoMessageLite() override {
     return ConvertToProtoMessageLite(
         ptr_, std::is_base_of<proto_ns::MessageLite, T>());
+  }
+
+  // Returns a vector<MessageLite*> for the data in the holder, if the
+  // underlying object is a vector of protocol buffer objects, otherwise,
+  // returns an error.
+  StatusOr<std::vector<const proto_ns::MessageLite*>>
+  GetVectorOfProtoMessageLite() override {
+    return ConvertToVectorOfProtoMessageLitePtrs(ptr_, is_proto_vector<T>());
   }
 
  private:

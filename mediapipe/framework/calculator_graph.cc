@@ -1094,6 +1094,19 @@ bool CalculatorGraph::IsNodeThrottled(int node_id) {
   return max_queue_size_ != -1 && !full_input_streams_[node_id].empty();
 }
 
+// Returns true if an input stream serves as a graph-output-stream.
+bool IsGraphOutputStream(
+    InputStreamManager* stream,
+    const std::vector<std::shared_ptr<internal::GraphOutputStream>>&
+        graph_output_streams) {
+  for (auto& graph_output_stream : graph_output_streams) {
+    if (stream == graph_output_stream->input_stream()) {
+      return true;
+    }
+  }
+  return false;
+}
+
 bool CalculatorGraph::UnthrottleSources() {
   // NOTE: We can be sure that this function will grow input streams enough
   // to unthrottle at least one source node.  The current stream queue sizes
@@ -1105,25 +1118,17 @@ bool CalculatorGraph::UnthrottleSources() {
   {
     absl::MutexLock lock(&full_input_streams_mutex_);
     for (absl::flat_hash_set<InputStreamManager*>& s : full_input_streams_) {
-      if (!s.empty()) {
-        full_streams.insert(s.begin(), s.end());
+      for (auto& stream : s) {
+        // The queue size of a graph output stream shouldn't change. Throttling
+        // should continue until the caller of the graph output stream consumes
+        // enough packets.
+        if (!IsGraphOutputStream(stream, graph_output_streams_)) {
+          full_streams.insert(stream);
+        }
       }
     }
   }
   for (InputStreamManager* stream : full_streams) {
-    // The queue size of a graph output stream shouldn't change. Throttling
-    // should continue until the caller of the graph output stream consumes
-    // enough packets.
-    bool is_graph_output_stream = false;
-    for (auto& graph_output_stream : graph_output_streams_) {
-      if (stream == graph_output_stream->input_stream()) {
-        is_graph_output_stream = true;
-        break;
-      }
-    }
-    if (is_graph_output_stream) {
-      continue;
-    }
     if (Config().report_deadlock()) {
       RecordError(::mediapipe::UnavailableError(absl::StrCat(
           "Detected a deadlock due to input throttling for: \"", stream->Name(),

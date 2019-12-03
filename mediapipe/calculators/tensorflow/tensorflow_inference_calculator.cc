@@ -34,7 +34,7 @@
 #include "tensorflow/core/framework/tensor_shape.h"
 #include "tensorflow/core/framework/tensor_util.h"
 
-#if !defined(__ANDROID__) && !defined(__APPLE__)
+#if !defined(MEDIAPIPE_MOBILE) && !defined(__APPLE__)
 #include "tensorflow/core/profiler/lib/traceme.h"
 #endif
 
@@ -441,7 +441,7 @@ class TensorFlowInferenceCalculator : public CalculatorBase {
     const int64 run_start_time = absl::ToUnixMicros(clock_->TimeNow());
     tf::Status tf_status;
     {
-#if !defined(__ANDROID__) && !defined(__APPLE__)
+#if !defined(MEDIAPIPE_MOBILE) && !defined(__APPLE__)
       tensorflow::profiler::TraceMe trace(absl::string_view(cc->NodeName()));
 #endif
       tf_status = session_->Run(input_tensors, output_tensor_names,

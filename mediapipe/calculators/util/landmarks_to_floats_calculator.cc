@@ -48,7 +48,7 @@ constexpr char kMatrixTag[] = "MATRIX";
 
 // Converts a vector of landmarks to a vector of floats or a matrix.
 // Input:
-//   NORM_LANDMARKS: An std::vector<NormalizedLandmark>.
+//   NORM_LANDMARKS: A NormalizedLandmarkList proto.
 //
 // Output:
 //   FLOATS(optional): A vector of floats from flattened landmarks.
@@ -63,7 +63,7 @@ constexpr char kMatrixTag[] = "MATRIX";
 class LandmarksToFloatsCalculator : public CalculatorBase {
  public:
   static ::mediapipe::Status GetContract(CalculatorContract* cc) {
-    cc->Inputs().Tag(kLandmarksTag).Set<std::vector<NormalizedLandmark>>();
+    cc->Inputs().Tag(kLandmarksTag).Set<NormalizedLandmarkList>();
     RET_CHECK(cc->Outputs().HasTag(kFloatsTag) ||
               cc->Outputs().HasTag(kMatrixTag));
     if (cc->Outputs().HasTag(kFloatsTag)) {
@@ -94,11 +94,12 @@ class LandmarksToFloatsCalculator : public CalculatorBase {
     }
 
     const auto& input_landmarks =
-        cc->Inputs().Tag(kLandmarksTag).Get<std::vector<NormalizedLandmark>>();
+        cc->Inputs().Tag(kLandmarksTag).Get<NormalizedLandmarkList>();
 
     if (cc->Outputs().HasTag(kFloatsTag)) {
       auto output_floats = absl::make_unique<std::vector<float>>();
-      for (const auto& landmark : input_landmarks) {
+      for (int i = 0; i < input_landmarks.landmark_size(); ++i) {
+        const NormalizedLandmark& landmark = input_landmarks.landmark(i);
         output_floats->emplace_back(landmark.x());
         if (num_dimensions_ > 1) {
           output_floats->emplace_back(landmark.y());
@@ -113,14 +114,14 @@ class LandmarksToFloatsCalculator : public CalculatorBase {
           .Add(output_floats.release(), cc->InputTimestamp());
     } else {
       auto output_matrix = absl::make_unique<Matrix>();
-      output_matrix->setZero(num_dimensions_, input_landmarks.size());
-      for (int i = 0; i < input_landmarks.size(); ++i) {
-        (*output_matrix)(0, i) = input_landmarks[i].x();
+      output_matrix->setZero(num_dimensions_, input_landmarks.landmark_size());
+      for (int i = 0; i < input_landmarks.landmark_size(); ++i) {
+        (*output_matrix)(0, i) = input_landmarks.landmark(i).x();
         if (num_dimensions_ > 1) {
-          (*output_matrix)(1, i) = input_landmarks[i].y();
+          (*output_matrix)(1, i) = input_landmarks.landmark(i).y();
         }
         if (num_dimensions_ > 2) {
-          (*output_matrix)(2, i) = input_landmarks[i].z();
+          (*output_matrix)(2, i) = input_landmarks.landmark(i).z();
         }
       }
       cc->Outputs()

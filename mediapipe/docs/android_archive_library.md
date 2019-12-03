@@ -126,6 +126,6 @@ project.
     ```
 
 6.  Follow our Android app examples to use MediaPipe in Android Studio for your
-    use case. If you are looking for an example, a working face detection
+    use case. If you are looking for an example, a face detection
     example can be found
-    [here](https://github.com/jiuqiant/mediapipe_aar_example).
+    [here](https://github.com/jiuqiant/mediapipe_face_detection_aar_example) and a multi-hand tracking example can be found [here](https://github.com/jiuqiant/mediapipe_multi_hands_tracking_aar_example).

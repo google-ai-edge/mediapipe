@@ -7,7 +7,8 @@
 
 2.  Install [Bazel](https://bazel.build/).
 
-    See their [instructions](https://docs.bazel.build/versions/master/install-os-x.html).
+    See their
+    [instructions](https://docs.bazel.build/versions/master/install-os-x.html).
     We recommend using [Homebrew](https://brew.sh/):
 
     ```bash
@@ -15,13 +16,23 @@
     brew install bazelbuild/tap/bazel
     ```
 
-3.  Clone the MediaPipe repository.
+3.  Install python "future" and "six".
+
+    To make Mediapipe work with TensorFlow, please install the python "future"
+    library and the python "six" library:
+
+    ```bash
+    pip install --user future six
+    ```
+
+4.  Clone the MediaPipe repository.
 
     ```bash
     git clone https://github.com/google/mediapipe.git
     ```
 
-4.  Symlink or copy your provisioning profile to `mediapipe/mediapipe/provisioning_profile.mobileprovision`.
+5.  Symlink or copy your provisioning profile to
+    `mediapipe/mediapipe/provisioning_profile.mobileprovision`.
 
     ```bash
     cd mediapipe

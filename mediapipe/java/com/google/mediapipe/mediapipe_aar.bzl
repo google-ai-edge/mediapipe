@@ -64,23 +64,18 @@ cat > $(OUTS) <<EOF
 """,
     )
 
-    native.genrule(
-        name = name + "_calculator_proto_java_src_generator",
-        srcs = [
-            "//mediapipe/framework:protos_src",
-            "@com_google_protobuf_javalite//:well_known_protos",
-        ],
-        outs = ["CalculatorProto.java"],
-        cmd = "$(location @com_google_protobuf_javalite//:protoc) " +
-              "--plugin=protoc-gen-javalite=$(location @com_google_protobuf_javalite//:protoc_gen_javalite) " +
-              "--proto_path=. --proto_path=$(GENDIR) " +
-              "--proto_path=$$(pwd)/external/com_google_protobuf_javalite/src " +
-              "--javalite_out=$$(dirname $(location CalculatorProto.java)) mediapipe/framework/calculator.proto && " +
-              "mv $$(dirname $(location CalculatorProto.java))/com/google/mediapipe/proto/CalculatorProto.java $$(dirname $(location CalculatorProto.java))",
-        tools = [
-            "@com_google_protobuf_javalite//:protoc",
-            "@com_google_protobuf_javalite//:protoc_gen_javalite",
-        ],
+    _proto_java_src_generator(
+        name = "calculator_proto",
+        proto_src = "mediapipe/framework/calculator.proto",
+        java_lite_out = "com/google/mediapipe/proto/CalculatorProto.java",
+        srcs = ["//mediapipe/framework:protos_src"],
+    )
+
+    _proto_java_src_generator(
+        name = "landmark_proto",
+        proto_src = "mediapipe/framework/formats/landmark.proto",
+        java_lite_out = "com/google/mediapipe/formats/proto/LandmarkProto.java",
+        srcs = ["//mediapipe/framework/formats:protos_src"],
     )
 
     android_library(
@@ -89,7 +84,8 @@ cat > $(OUTS) <<EOF
             "//mediapipe/java/com/google/mediapipe/components:java_src",
             "//mediapipe/java/com/google/mediapipe/framework:java_src",
             "//mediapipe/java/com/google/mediapipe/glutil:java_src",
-            "CalculatorProto.java",
+            "com/google/mediapipe/proto/CalculatorProto.java",
+            "com/google/mediapipe/formats/proto/LandmarkProto.java",
         ],
         manifest = "AndroidManifest.xml",
         proguard_specs = ["//mediapipe/java/com/google/mediapipe/framework:proguard.pgcfg"],
@@ -113,6 +109,25 @@ cat > $(OUTS) <<EOF
     )
 
     _aar_with_jni(name, name + "_android_lib")
+
+def _proto_java_src_generator(name, proto_src, java_lite_out, srcs = []):
+    native.genrule(
+        name = name + "_proto_java_src_generator",
+        srcs = srcs + [
+            "@com_google_protobuf_javalite//:well_known_protos",
+        ],
+        outs = [java_lite_out],
+        cmd = "$(location @com_google_protobuf_javalite//:protoc) " +
+              "--plugin=protoc-gen-javalite=$(location @com_google_protobuf_javalite//:protoc_gen_javalite) " +
+              "--proto_path=. --proto_path=$(GENDIR) " +
+              "--proto_path=$$(pwd)/external/com_google_protobuf_javalite/src " +
+              "--javalite_out=$(GENDIR) " + proto_src + " && " +
+              "mv $(GENDIR)/" + java_lite_out + " $$(dirname $(location " + java_lite_out + "))",
+        tools = [
+            "@com_google_protobuf_javalite//:protoc",
+            "@com_google_protobuf_javalite//:protoc_gen_javalite",
+        ],
+    )
 
 def _aar_with_jni(name, android_library):
     # Generate dummy AndroidManifest.xml for dummy apk usage

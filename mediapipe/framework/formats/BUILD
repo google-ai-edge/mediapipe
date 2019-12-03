@@ -13,16 +13,16 @@
 # limitations under the License.
 #
 
-licenses(["notice"])  # Apache 2.0
-
-exports_files(["LICENSE"])
-
 load("//mediapipe/framework/port:build_config.bzl", "mediapipe_cc_proto_library")
 
 package(
     default_visibility = ["//visibility:private"],
     features = ["-layering_check"],
 )
+
+licenses(["notice"])  # Apache 2.0
+
+exports_files(["LICENSE"])
 
 proto_library(
     name = "detection_proto",
@@ -264,4 +264,18 @@ mediapipe_cc_proto_library(
     srcs = ["landmark.proto"],
     visibility = ["//visibility:public"],
     deps = [":landmark_proto"],
+)
+
+java_lite_proto_library(
+    name = "landmark_java_proto_lite",
+    strict_deps = 0,
+    visibility = ["//mediapipe:__subpackages__"],
+    deps = [":landmark_proto"],
+)
+
+# Expose the proto source files for building mediapipe AAR.
+filegroup(
+    name = "protos_src",
+    srcs = glob(["*.proto"]),
+    visibility = ["//mediapipe:__subpackages__"],
 )

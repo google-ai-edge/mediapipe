@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <stdlib.h>
+
 #include <memory>
 #include <string>
 #include <vector>
@@ -39,8 +41,7 @@ namespace mediapipe {
 // packet. Currently, the calculator only supports one video stream (in
 // mediapipe::ImageFrame).
 //
-// Example config to generate the output video file:
-//
+// Example config:
 // node {
 //   calculator: "OpenCvVideoEncoderCalculator"
 //   input_stream: "VIDEO:video"
@@ -53,6 +54,26 @@ namespace mediapipe {
 //     }
 //   }
 // }
+//
+// OpenCV's VideoWriter doesn't encode audio. If an input side packet with tag
+// "AUDIO_FILE_PATH" is specified, the calculator will call FFmpeg binary to
+// attach the audio file to the video as the last step in Close().
+//
+// Example config:
+// node {
+//   calculator: "OpenCvVideoEncoderCalculator"
+//   input_stream: "VIDEO:video"
+//   input_stream: "VIDEO_PRESTREAM:video_header"
+//   input_side_packet: "OUTPUT_FILE_PATH:output_file_path"
+//   input_side_packet: "AUDIO_FILE_PATH:audio_path"
+//   node_options {
+//     [type.googleapis.com/mediapipe.OpenCvVideoEncoderCalculatorOptions]: {
+//        codec: "avc1"
+//        video_format: "mp4"
+//     }
+//   }
+// }
+//
 class OpenCvVideoEncoderCalculator : public CalculatorBase {
  public:
   static ::mediapipe::Status GetContract(CalculatorContract* cc);
@@ -77,6 +98,9 @@ class OpenCvVideoEncoderCalculator : public CalculatorBase {
   }
   RET_CHECK(cc->InputSidePackets().HasTag("OUTPUT_FILE_PATH"));
   cc->InputSidePackets().Tag("OUTPUT_FILE_PATH").Set<std::string>();
+  if (cc->InputSidePackets().HasTag("AUDIO_FILE_PATH")) {
+    cc->InputSidePackets().Tag("AUDIO_FILE_PATH").Set<std::string>();
+  }
   return ::mediapipe::OkStatus();
 }
 
@@ -154,6 +178,27 @@ class OpenCvVideoEncoderCalculator : public CalculatorBase {
 ::mediapipe::Status OpenCvVideoEncoderCalculator::Close(CalculatorContext* cc) {
   if (writer_ && writer_->isOpened()) {
     writer_->release();
+  }
+  if (cc->InputSidePackets().HasTag("AUDIO_FILE_PATH")) {
+#ifdef HAVE_FFMPEG
+    const std::string& audio_file_path =
+        cc->InputSidePackets().Tag("AUDIO_FILE_PATH").Get<std::string>();
+    // A temp output file is needed because FFmpeg can't do in-place editing.
+    const std::string temp_file_path = std::tmpnam(nullptr);
+    system(absl::StrCat("mv ", output_file_path_, " ", temp_file_path,
+                        "&& ffmpeg -nostats -loglevel 0 -i ", temp_file_path,
+                        " -i ", audio_file_path,
+                        "  -c copy -map 0:v:0 -map 1:a:0 ", output_file_path_,
+                        "&& rm ", temp_file_path)
+               .c_str());
+
+#else
+    return ::mediapipe::InvalidArgumentErrorBuilder(MEDIAPIPE_LOC)
+           << "OpenCVVideoEncoderCalculator can't attach the audio tracks to "
+              "the video because FFmpeg is not installed. Please remove "
+              "input_side_packet: \"AUDIO_FILE_PATH\" from the node "
+              "config.";
+#endif
   }
   return ::mediapipe::OkStatus();
 }
