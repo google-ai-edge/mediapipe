@@ -340,9 +340,7 @@ AudioPacketProcessor::AudioPacketProcessor(const AudioStreamOptions& options)
   DCHECK(absl::little_endian::IsLittleEndian());
 }
 
-mediapipe::Status AudioPacketProcessor::Open(int id,
-
-                                             AVStream* stream) {
+mediapipe::Status AudioPacketProcessor::Open(int id, AVStream* stream) {
   id_ = id;
   avcodec_ = avcodec_find_decoder(stream->codecpar->codec_id);
   if (!avcodec_) {

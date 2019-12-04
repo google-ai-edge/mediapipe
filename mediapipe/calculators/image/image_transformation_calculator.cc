@@ -400,7 +400,7 @@ REGISTER_CALCULATOR(ImageTransformationCalculator);
   QuadRenderer* renderer = nullptr;
   GlTexture src1;
 
-#if defined(__APPLE__) && !TARGET_OS_OSX
+#if defined(MEDIAPIPE_IOS)
   if (input.format() == GpuBufferFormat::kBiPlanar420YpCbCr8VideoRange ||
       input.format() == GpuBufferFormat::kBiPlanar420YpCbCr8FullRange) {
     if (!yuv_renderer_) {

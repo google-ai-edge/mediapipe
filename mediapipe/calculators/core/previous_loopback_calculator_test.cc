@@ -93,14 +93,19 @@ TEST(PreviousLoopbackCalculator, CorrectTimestamps) {
   EXPECT_EQ(TimestampValues(in_prev), (std::vector<int64>{1}));
   EXPECT_EQ(pair_values(in_prev.back()), std::make_pair(1, -1));
 
+  send_packet("in", 2);
+  MP_EXPECT_OK(graph_.WaitUntilIdle());
+  EXPECT_EQ(TimestampValues(in_prev), (std::vector<int64>{1, 2}));
+  EXPECT_EQ(pair_values(in_prev.back()), std::make_pair(2, 1));
+
   send_packet("in", 5);
   MP_EXPECT_OK(graph_.WaitUntilIdle());
-  EXPECT_EQ(TimestampValues(in_prev), (std::vector<int64>{1, 5}));
-  EXPECT_EQ(pair_values(in_prev.back()), std::make_pair(5, 1));
+  EXPECT_EQ(TimestampValues(in_prev), (std::vector<int64>{1, 2, 5}));
+  EXPECT_EQ(pair_values(in_prev.back()), std::make_pair(5, 2));
 
   send_packet("in", 15);
   MP_EXPECT_OK(graph_.WaitUntilIdle());
-  EXPECT_EQ(TimestampValues(in_prev), (std::vector<int64>{1, 5, 15}));
+  EXPECT_EQ(TimestampValues(in_prev), (std::vector<int64>{1, 2, 5, 15}));
   EXPECT_EQ(pair_values(in_prev.back()), std::make_pair(15, 5));
 
   MP_EXPECT_OK(graph_.CloseAllInputStreams());
@@ -182,18 +187,22 @@ TEST(PreviousLoopbackCalculator, ClosesCorrectly) {
   MP_EXPECT_OK(graph_.WaitUntilIdle());
   EXPECT_EQ(TimestampValues(outputs), (std::vector<int64>{1}));
 
+  send_packet("in", 2);
+  MP_EXPECT_OK(graph_.WaitUntilIdle());
+  EXPECT_EQ(TimestampValues(outputs), (std::vector<int64>{1, 2}));
+
   send_packet("in", 5);
   MP_EXPECT_OK(graph_.WaitUntilIdle());
-  EXPECT_EQ(TimestampValues(outputs), (std::vector<int64>{1, 5}));
+  EXPECT_EQ(TimestampValues(outputs), (std::vector<int64>{1, 2, 5}));
 
   send_packet("in", 15);
   MP_EXPECT_OK(graph_.WaitUntilIdle());
-  EXPECT_EQ(TimestampValues(outputs), (std::vector<int64>{1, 5, 15}));
+  EXPECT_EQ(TimestampValues(outputs), (std::vector<int64>{1, 2, 5, 15}));
 
   MP_EXPECT_OK(graph_.CloseAllInputStreams());
   MP_EXPECT_OK(graph_.WaitUntilIdle());
   EXPECT_EQ(TimestampValues(outputs),
-            (std::vector<int64>{1, 5, 15, Timestamp::Max().Value()}));
+            (std::vector<int64>{1, 2, 5, 15, Timestamp::Max().Value()}));
 
   MP_EXPECT_OK(graph_.WaitUntilDone());
 }

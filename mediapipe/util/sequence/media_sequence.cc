@@ -274,10 +274,11 @@ float TimestampsToRate(int64 first_timestamp, int64 second_timestamp) {
     // overwriting with modified values.
     if (!GetUnmodifiedBBoxTimestampSize(prefix, *sequence)) {
       for (int i = 0; i < num_frames; ++i) {
-        if (bbox_index_if_annotated[i] >= 0 &&
-            GetBBoxIsAnnotatedAt(prefix, *sequence, i)) {
-          AddUnmodifiedBBoxTimestamp(
-              prefix, box_timestamps[bbox_index_if_annotated[i]], sequence);
+        const int bbox_index = bbox_index_if_annotated[i];
+        if (bbox_index >= 0 &&
+            GetBBoxIsAnnotatedAt(prefix, *sequence, bbox_index)) {
+          AddUnmodifiedBBoxTimestamp(prefix, box_timestamps[bbox_index],
+                                     sequence);
         }
       }
     }

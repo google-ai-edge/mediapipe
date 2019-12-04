@@ -229,6 +229,11 @@ Timestamp InputStreamManager::MinTimestampOrBound(bool* is_empty) const {
   if (is_empty) {
     *is_empty = queue_.empty();
   }
+  return MinTimestampOrBoundHelper();
+}
+
+Timestamp InputStreamManager::MinTimestampOrBoundHelper() const
+    EXCLUSIVE_LOCKS_REQUIRED(stream_mutex_) {
   return queue_.empty() ? next_timestamp_bound_ : queue_.front().Timestamp();
 }
 
@@ -271,7 +276,9 @@ Packet InputStreamManager::PopPacketAtTimestamp(Timestamp timestamp,
     }
     // Clear value_ if it doesn't have exactly the right timestamp.
     if (current_timestamp != timestamp) {
-      packet = Packet();
+      // The timestamp bound reported when no packet is sent.
+      Timestamp bound = MinTimestampOrBoundHelper();
+      packet = Packet().At(bound.PreviousAllowedInStream());
       ++(*num_packets_dropped);
     }
 

@@ -25,26 +25,27 @@ package(default_visibility = ["//visibility:private"])
 proto_library(
     name = "locus_proto",
     srcs = ["locus.proto"],
+    visibility = ["//visibility:public"],
     deps = ["//mediapipe/framework/formats/annotation:rasterization_proto"],
 )
 
 proto_library(
     name = "rasterization_proto",
     srcs = ["rasterization.proto"],
-    visibility = ["//mediapipe:__subpackages__"],
+    visibility = ["//visibility:public"],
 )
 
 mediapipe_cc_proto_library(
     name = "locus_cc_proto",
     srcs = ["locus.proto"],
     cc_deps = [":rasterization_cc_proto"],
-    visibility = ["//mediapipe:__subpackages__"],
+    visibility = ["//visibility:public"],
     deps = [":locus_proto"],
 )
 
 mediapipe_cc_proto_library(
     name = "rasterization_cc_proto",
     srcs = ["rasterization.proto"],
-    visibility = ["//mediapipe:__subpackages__"],
+    visibility = ["//visibility:public"],
     deps = [":rasterization_proto"],
 )

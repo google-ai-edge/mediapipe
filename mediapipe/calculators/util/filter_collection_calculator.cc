@@ -27,8 +27,8 @@ typedef FilterCollectionCalculator<std::vector<::mediapipe::NormalizedRect>>
 REGISTER_CALCULATOR(FilterNormalizedRectCollectionCalculator);
 
 typedef FilterCollectionCalculator<
-    std::vector<std::vector<::mediapipe::NormalizedLandmark>>>
-    FilterLandmarksCollectionCalculator;
-REGISTER_CALCULATOR(FilterLandmarksCollectionCalculator);
+    std::vector<::mediapipe::NormalizedLandmarkList>>
+    FilterLandmarkListCollectionCalculator;
+REGISTER_CALCULATOR(FilterLandmarkListCollectionCalculator);
 
 }  // namespace mediapipe

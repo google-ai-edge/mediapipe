@@ -59,7 +59,7 @@ node {
 # timestamp for downstream calculators to inform them that all elements in the
 # vector have been processed.
 node {
-  calculator: "BeginLoopNormalizedLandmarksVectorCalculator"
+  calculator: "BeginLoopNormalizedLandmarkListVectorCalculator"
   input_stream: "ITERABLE:multi_hand_landmarks"
   output_stream: "ITEM:single_hand_landmarks"
   output_stream: "BATCH_END:landmark_timestamp"

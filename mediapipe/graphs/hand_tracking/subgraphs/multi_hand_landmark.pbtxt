@@ -47,7 +47,7 @@ node {
 # BATCH_END timestamp, outputs the vector of landmarks at the BATCH_END
 # timestamp.
 node {
-  calculator: "EndLoopNormalizedLandmarksVectorCalculator"
+  calculator: "EndLoopNormalizedLandmarkListVectorCalculator"
   input_stream: "ITEM:single_hand_landmarks"
   input_stream: "BATCH_END:single_hand_rect_timestamp"
   output_stream: "ITERABLE:multi_hand_landmarks"
@@ -67,7 +67,7 @@ node {
 # hand. If the hand presence for hand #i is false, the set of landmarks
 # corresponding to that hand are dropped from the vector.
 node {
-  calculator: "FilterLandmarksCollectionCalculator"
+  calculator: "FilterLandmarkListCollectionCalculator"
   input_stream: "ITERABLE:multi_hand_landmarks"
   input_stream: "CONDITION:multi_hand_presence"
   output_stream: "ITERABLE:filtered_multi_hand_landmarks"

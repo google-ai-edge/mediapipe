@@ -104,7 +104,7 @@ node {
       y_scale: 256.0
       h_scale: 256.0
       w_scale: 256.0
-      min_score_thresh: 0.5
+      min_score_thresh: 0.7
     }
   }
 }
@@ -117,7 +117,6 @@ node {
   node_options: {
     [type.googleapis.com/mediapipe.NonMaxSuppressionCalculatorOptions] {
       min_suppression_threshold: 0.3
-      min_score_threshold: 0.5
       overlap_type: INTERSECTION_OVER_UNION
       algorithm: WEIGHTED
       return_empty_detections: true

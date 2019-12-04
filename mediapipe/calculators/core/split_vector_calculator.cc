@@ -17,6 +17,7 @@
 #include <vector>
 
 #include "mediapipe/framework/formats/landmark.pb.h"
+#include "mediapipe/framework/formats/rect.pb.h"
 #include "tensorflow/lite/interpreter.h"
 
 namespace mediapipe {
@@ -41,4 +42,8 @@ REGISTER_CALCULATOR(SplitTfLiteTensorVectorCalculator);
 typedef SplitVectorCalculator<::mediapipe::NormalizedLandmark>
     SplitLandmarkVectorCalculator;
 REGISTER_CALCULATOR(SplitLandmarkVectorCalculator);
+
+typedef SplitVectorCalculator<::mediapipe::NormalizedRect>
+    SplitNormalizedRectVectorCalculator;
+REGISTER_CALCULATOR(SplitNormalizedRectVectorCalculator);
 }  // namespace mediapipe

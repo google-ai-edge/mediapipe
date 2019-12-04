@@ -1,9 +1,3 @@
-commit 9779e5ea6ef59562b030248947f787d1256132ae
-Author: jqtang <jqtang@google.com>
-Date:   Wed Sep 18 11:43:48 2019 -0700
-
-    Add glog Android support for MediaPipe.
-
 diff --git a/src/logging.cc b/src/logging.cc
 index 0b5e6ee..be5a506 100644
 --- a/src/logging.cc

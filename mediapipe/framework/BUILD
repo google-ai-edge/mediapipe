@@ -1524,7 +1524,9 @@ cc_test(
         "//mediapipe/framework/stream_handler:fixed_size_input_stream_handler",
         "//mediapipe/framework/stream_handler:immediate_input_stream_handler",
         "//mediapipe/framework/stream_handler:mux_input_stream_handler",
+        "//mediapipe/framework/stream_handler:sync_set_input_stream_handler",
         "//mediapipe/framework/tool:sink",
+        "@com_google_absl//absl/strings",
     ],
 )
 

@@ -132,7 +132,7 @@ def _metal_library_impl(ctx):
         ),
     )
 
-    # This ridiculous circumlocution is needed because new_objc_provider rejects
+    # This circumlocution is needed because new_objc_provider rejects
     # an empty depset, with the error:
     # "Value for key header must be a set of File, instead found set of unknown."
     # It also rejects an explicit "None".

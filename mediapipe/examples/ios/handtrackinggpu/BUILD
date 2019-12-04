@@ -12,14 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-licenses(["notice"])  # Apache 2.0
-
-MIN_IOS_VERSION = "10.0"
-
 load(
     "@build_bazel_rules_apple//apple:ios.bzl",
     "ios_application",
 )
+
+licenses(["notice"])  # Apache 2.0
+
+MIN_IOS_VERSION = "10.0"
 
 # To use the 3D model instead of the default 2D model, add "--define 3D=true" to the
 # bazel build command.
@@ -90,6 +90,7 @@ objc_library(
         "//mediapipe:ios_x86_64": [],
         "//conditions:default": [
             "//mediapipe/graphs/hand_tracking:mobile_calculators",
+            "//mediapipe/framework/formats:landmark_cc_proto",
         ],
     }),
 )

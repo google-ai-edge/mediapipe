@@ -43,10 +43,10 @@ CalculatorGraphConfig::Node GetDefaultNode() {
 TEST(LandmarkLetterboxRemovalCalculatorTest, PaddingLeftRight) {
   CalculatorRunner runner(GetDefaultNode());
 
-  auto landmarks = absl::make_unique<std::vector<NormalizedLandmark>>();
-  landmarks->push_back(CreateLandmark(0.5f, 0.5f));
-  landmarks->push_back(CreateLandmark(0.2f, 0.2f));
-  landmarks->push_back(CreateLandmark(0.7f, 0.7f));
+  auto landmarks = absl::make_unique<NormalizedLandmarkList>();
+  *landmarks->add_landmark() = CreateLandmark(0.5f, 0.5f);
+  *landmarks->add_landmark() = CreateLandmark(0.2f, 0.2f);
+  *landmarks->add_landmark() = CreateLandmark(0.7f, 0.7f);
   runner.MutableInputs()
       ->Tag("LANDMARKS")
       .packets.push_back(
@@ -61,26 +61,28 @@ TEST(LandmarkLetterboxRemovalCalculatorTest, PaddingLeftRight) {
   MP_ASSERT_OK(runner.Run()) << "Calculator execution failed.";
   const std::vector<Packet>& output = runner.Outputs().Tag("LANDMARKS").packets;
   ASSERT_EQ(1, output.size());
-  const auto& output_landmarks =
-      output[0].Get<std::vector<NormalizedLandmark>>();
+  const auto& output_landmarks = output[0].Get<NormalizedLandmarkList>();
 
-  EXPECT_EQ(output_landmarks.size(), 3);
+  EXPECT_EQ(output_landmarks.landmark_size(), 3);
 
-  EXPECT_THAT(output_landmarks[0].x(), testing::FloatNear(0.6f, 1e-5));
-  EXPECT_THAT(output_landmarks[0].y(), testing::FloatNear(0.5f, 1e-5));
-  EXPECT_THAT(output_landmarks[1].x(), testing::FloatNear(0.0f, 1e-5));
-  EXPECT_THAT(output_landmarks[1].y(), testing::FloatNear(0.2f, 1e-5));
-  EXPECT_THAT(output_landmarks[2].x(), testing::FloatNear(1.0f, 1e-5));
-  EXPECT_THAT(output_landmarks[2].y(), testing::FloatNear(0.7f, 1e-5));
+  EXPECT_THAT(output_landmarks.landmark(0).x(), testing::FloatNear(0.6f, 1e-5));
+  EXPECT_THAT(output_landmarks.landmark(0).y(), testing::FloatNear(0.5f, 1e-5));
+  EXPECT_THAT(output_landmarks.landmark(1).x(), testing::FloatNear(0.0f, 1e-5));
+  EXPECT_THAT(output_landmarks.landmark(1).y(), testing::FloatNear(0.2f, 1e-5));
+  EXPECT_THAT(output_landmarks.landmark(2).x(), testing::FloatNear(1.0f, 1e-5));
+  EXPECT_THAT(output_landmarks.landmark(2).y(), testing::FloatNear(0.7f, 1e-5));
 }
 
 TEST(LandmarkLetterboxRemovalCalculatorTest, PaddingTopBottom) {
   CalculatorRunner runner(GetDefaultNode());
 
-  auto landmarks = absl::make_unique<std::vector<NormalizedLandmark>>();
-  landmarks->push_back(CreateLandmark(0.5f, 0.5f));
-  landmarks->push_back(CreateLandmark(0.2f, 0.2f));
-  landmarks->push_back(CreateLandmark(0.7f, 0.7f));
+  auto landmarks = absl::make_unique<NormalizedLandmarkList>();
+  NormalizedLandmark* landmark = landmarks->add_landmark();
+  *landmark = CreateLandmark(0.5f, 0.5f);
+  landmark = landmarks->add_landmark();
+  *landmark = CreateLandmark(0.2f, 0.2f);
+  landmark = landmarks->add_landmark();
+  *landmark = CreateLandmark(0.7f, 0.7f);
   runner.MutableInputs()
       ->Tag("LANDMARKS")
       .packets.push_back(
@@ -95,17 +97,16 @@ TEST(LandmarkLetterboxRemovalCalculatorTest, PaddingTopBottom) {
   MP_ASSERT_OK(runner.Run()) << "Calculator execution failed.";
   const std::vector<Packet>& output = runner.Outputs().Tag("LANDMARKS").packets;
   ASSERT_EQ(1, output.size());
-  const auto& output_landmarks =
-      output[0].Get<std::vector<NormalizedLandmark>>();
+  const auto& output_landmarks = output[0].Get<NormalizedLandmarkList>();
 
-  EXPECT_EQ(output_landmarks.size(), 3);
+  EXPECT_EQ(output_landmarks.landmark_size(), 3);
 
-  EXPECT_THAT(output_landmarks[0].x(), testing::FloatNear(0.5f, 1e-5));
-  EXPECT_THAT(output_landmarks[0].y(), testing::FloatNear(0.6f, 1e-5));
-  EXPECT_THAT(output_landmarks[1].x(), testing::FloatNear(0.2f, 1e-5));
-  EXPECT_THAT(output_landmarks[1].y(), testing::FloatNear(0.0f, 1e-5));
-  EXPECT_THAT(output_landmarks[2].x(), testing::FloatNear(0.7f, 1e-5));
-  EXPECT_THAT(output_landmarks[2].y(), testing::FloatNear(1.0f, 1e-5));
+  EXPECT_THAT(output_landmarks.landmark(0).x(), testing::FloatNear(0.5f, 1e-5));
+  EXPECT_THAT(output_landmarks.landmark(0).y(), testing::FloatNear(0.6f, 1e-5));
+  EXPECT_THAT(output_landmarks.landmark(1).x(), testing::FloatNear(0.2f, 1e-5));
+  EXPECT_THAT(output_landmarks.landmark(1).y(), testing::FloatNear(0.0f, 1e-5));
+  EXPECT_THAT(output_landmarks.landmark(2).x(), testing::FloatNear(0.7f, 1e-5));
+  EXPECT_THAT(output_landmarks.landmark(2).y(), testing::FloatNear(1.0f, 1e-5));
 }
 
 }  // namespace mediapipe

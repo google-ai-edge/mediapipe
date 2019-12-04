@@ -13,11 +13,11 @@
 # limitations under the License.
 #
 
+load("//mediapipe/framework/port:build_config.bzl", "mediapipe_cc_proto_library")
+
 licenses(["notice"])  # Apache 2.0
 
 package(default_visibility = ["//visibility:private"])
-
-load("//mediapipe/framework/port:build_config.bzl", "mediapipe_cc_proto_library")
 
 proto_library(
     name = "ssd_anchors_calculator_proto",
@@ -248,6 +248,11 @@ cc_library(
             "@org_tensorflow//tensorflow/lite/delegates/gpu/gl:gl_buffer",
             "@org_tensorflow//tensorflow/lite/delegates/gpu/gl:gl_program",
             "@org_tensorflow//tensorflow/lite/delegates/gpu/gl:gl_shader",
+        ],
+    }) + select({
+        "//conditions:default": [],
+        "//mediapipe:android": [
+            "@org_tensorflow//tensorflow/lite/delegates/nnapi:nnapi_delegate",
         ],
     }),
     alwayslink = 1,

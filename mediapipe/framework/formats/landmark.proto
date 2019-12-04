@@ -16,6 +16,9 @@ syntax = "proto2";
 
 package mediapipe;
 
+option java_package = "com.google.mediapipe.formats.proto";
+option java_outer_classname = "LandmarkProto";
+
 // A landmark that can have 1 to 3 dimensions. Use x for 1D points, (x, y) for
 // 2D points and (x, y, z) for 3D points. For more dimensions, consider using
 // matrix_data.proto.
@@ -23,6 +26,11 @@ message Landmark {
   optional float x = 1;
   optional float y = 2;
   optional float z = 3;
+}
+
+// Group of Landmark protos.
+message LandmarkList {
+  repeated Landmark landmark = 1;
 }
 
 // A normalized version of above Landmark proto. All coordiates should be within

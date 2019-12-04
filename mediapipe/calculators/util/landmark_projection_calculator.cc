@@ -47,13 +47,13 @@ constexpr char kRectTag[] = "NORM_RECT";
 // Projects normalized landmarks in a rectangle to its original coordinates. The
 // rectangle must also be in normalized coordinates.
 // Input:
-//   NORM_LANDMARKS: An std::vector<NormalizedLandmark> representing landmarks
+//   NORM_LANDMARKS: A NormalizedLandmarkList representing landmarks
 //                   in a normalized rectangle.
 //   NORM_RECT: An NormalizedRect representing a normalized rectangle in image
 //              coordinates.
 //
 // Output:
-//   NORM_LANDMARKS: An std::vector<NormalizedLandmark> representing landmarks
+//   NORM_LANDMARKS: A NormalizedLandmarkList representing landmarks
 //                   with their locations adjusted to the image.
 //
 // Usage example:
@@ -70,10 +70,10 @@ class LandmarkProjectionCalculator : public CalculatorBase {
               cc->Inputs().HasTag(kRectTag))
         << "Missing one or more input streams.";
 
-    cc->Inputs().Tag(kLandmarksTag).Set<std::vector<NormalizedLandmark>>();
+    cc->Inputs().Tag(kLandmarksTag).Set<NormalizedLandmarkList>();
     cc->Inputs().Tag(kRectTag).Set<NormalizedRect>();
 
-    cc->Outputs().Tag(kLandmarksTag).Set<std::vector<NormalizedLandmark>>();
+    cc->Outputs().Tag(kLandmarksTag).Set<NormalizedLandmarkList>();
 
     return ::mediapipe::OkStatus();
   }
@@ -92,14 +92,14 @@ class LandmarkProjectionCalculator : public CalculatorBase {
       return ::mediapipe::OkStatus();
     }
 
-    const auto& input_landmarks =
-        cc->Inputs().Tag(kLandmarksTag).Get<std::vector<NormalizedLandmark>>();
+    const NormalizedLandmarkList& input_landmarks =
+        cc->Inputs().Tag(kLandmarksTag).Get<NormalizedLandmarkList>();
     const auto& input_rect = cc->Inputs().Tag(kRectTag).Get<NormalizedRect>();
 
-    auto output_landmarks =
-        absl::make_unique<std::vector<NormalizedLandmark>>();
-    for (const auto& landmark : input_landmarks) {
-      NormalizedLandmark new_landmark;
+    NormalizedLandmarkList output_landmarks;
+    for (int i = 0; i < input_landmarks.landmark_size(); ++i) {
+      const NormalizedLandmark& landmark = input_landmarks.landmark(i);
+      NormalizedLandmark* new_landmark = output_landmarks.add_landmark();
 
       const float x = landmark.x() - 0.5f;
       const float y = landmark.y() - 0.5f;
@@ -110,17 +110,16 @@ class LandmarkProjectionCalculator : public CalculatorBase {
       new_x = new_x * input_rect.width() + input_rect.x_center();
       new_y = new_y * input_rect.height() + input_rect.y_center();
 
-      new_landmark.set_x(new_x);
-      new_landmark.set_y(new_y);
+      new_landmark->set_x(new_x);
+      new_landmark->set_y(new_y);
       // Keep z-coord as is.
-      new_landmark.set_z(landmark.z());
-
-      output_landmarks->emplace_back(new_landmark);
+      new_landmark->set_z(landmark.z());
     }
 
     cc->Outputs()
         .Tag(kLandmarksTag)
-        .Add(output_landmarks.release(), cc->InputTimestamp());
+        .AddPacket(MakePacket<NormalizedLandmarkList>(output_landmarks)
+                       .At(cc->InputTimestamp()));
     return ::mediapipe::OkStatus();
   }
 };

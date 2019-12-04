@@ -19,11 +19,16 @@
 
 #include <string>
 
+#include "mediapipe/framework/port/status.h"
+
 namespace mediapipe {
 
 namespace android {
 
 std::string JStringToStdString(JNIEnv* env, jstring jstr);
+
+// Creates a java MediaPipeException object for a mediapipe::Status.
+jthrowable CreateMediaPipeException(JNIEnv* env, mediapipe::Status status);
 
 }  // namespace android
 

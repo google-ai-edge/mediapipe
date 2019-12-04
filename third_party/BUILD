@@ -118,13 +118,16 @@ android_library(
     ],
 )
 
-# TODO: Get the AARs from Google's Maven Repository.
-aar_import(
+android_library(
     name = "camerax_core",
-    aar = "camera-core-1.0.0-alpha01.aar",
+    exports = [
+        "@maven//:androidx_camera_camera_core",
+    ],
 )
 
-aar_import(
+android_library(
     name = "camera2",
-    aar = "camera-camera2-1.0.0-alpha01.aar",
+    exports = [
+        "@maven//:androidx_camera_camera_camera2",
+    ],
 )

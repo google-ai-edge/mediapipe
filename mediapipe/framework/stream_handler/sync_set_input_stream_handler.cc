@@ -56,8 +56,15 @@ class SyncSetInputStreamHandler : public InputStreamHandler {
   NodeReadiness GetNodeReadiness(Timestamp* min_stream_timestamp) override;
 
   // Only invoked when associated GetNodeReadiness() returned kReadyForProcess.
+  // Populates packets for the ready sync-set, and populates timestamp bounds
+  // for all sync-sets.
   void FillInputSet(Timestamp input_timestamp,
                     InputStreamShardSet* input_set) override;
+
+  // Populates timestamp bounds for streams outside the ready sync-set.
+  void FillInputBounds(Timestamp input_timestamp,
+                       InputStreamShardSet* input_set)
+      EXCLUSIVE_LOCKS_REQUIRED(mutex_);
 
  private:
   absl::Mutex mutex_;
@@ -181,6 +188,22 @@ NodeReadiness SyncSetInputStreamHandler::GetNodeReadiness(
   return NodeReadiness::kNotReady;
 }
 
+void SyncSetInputStreamHandler::FillInputBounds(
+    Timestamp input_timestamp, InputStreamShardSet* input_set) {
+  for (int i = 0; i < sync_sets_.size(); ++i) {
+    if (i != ready_sync_set_index_) {
+      // Set the input streams for the not-ready sync sets.
+      for (CollectionItemId id : sync_sets_[i]) {
+        const auto stream = input_stream_managers_.Get(id);
+        Timestamp bound = stream->MinTimestampOrBound(nullptr);
+        AddPacketToShard(&input_set->Get(id),
+                         Packet().At(bound.PreviousAllowedInStream()),
+                         bound == Timestamp::Done());
+      }
+    }
+  }
+}
+
 void SyncSetInputStreamHandler::FillInputSet(Timestamp input_timestamp,
                                              InputStreamShardSet* input_set) {
   // Assume that all current packets are already cleared.
@@ -202,6 +225,7 @@ void SyncSetInputStreamHandler::FillInputSet(Timestamp input_timestamp,
     AddPacketToShard(&input_set->Get(id), std::move(current_packet),
                      stream_is_done);
   }
+  FillInputBounds(input_timestamp, input_set);
   ready_sync_set_index_ = -1;
   ready_timestamp_ = Timestamp::Done();
 }

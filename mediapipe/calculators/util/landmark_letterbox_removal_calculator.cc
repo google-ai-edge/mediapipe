@@ -49,7 +49,7 @@ constexpr char kLetterboxPaddingTag[] = "LETTERBOX_PADDING";
 // corresponding input image before letterboxing.
 //
 // Input:
-//   LANDMARKS: An std::vector<NormalizedLandmark> representing landmarks on an
+//   LANDMARKS: A NormalizedLandmarkList representing landmarks on an
 //   letterboxed image.
 //
 //   LETTERBOX_PADDING: An std::array<float, 4> representing the letterbox
@@ -57,7 +57,7 @@ constexpr char kLetterboxPaddingTag[] = "LETTERBOX_PADDING";
 //   image, normalized to [0.f, 1.f] by the letterboxed image dimensions.
 //
 // Output:
-//   LANDMARKS: An std::vector<NormalizedLandmark> representing landmarks with
+//   LANDMARKS: An NormalizedLandmarkList proto representing landmarks with
 //   their locations adjusted to the letterbox-removed (non-padded) image.
 //
 // Usage example:
@@ -74,10 +74,10 @@ class LandmarkLetterboxRemovalCalculator : public CalculatorBase {
               cc->Inputs().HasTag(kLetterboxPaddingTag))
         << "Missing one or more input streams.";
 
-    cc->Inputs().Tag(kLandmarksTag).Set<std::vector<NormalizedLandmark>>();
+    cc->Inputs().Tag(kLandmarksTag).Set<NormalizedLandmarkList>();
     cc->Inputs().Tag(kLetterboxPaddingTag).Set<std::array<float, 4>>();
 
-    cc->Outputs().Tag(kLandmarksTag).Set<std::vector<NormalizedLandmark>>();
+    cc->Outputs().Tag(kLandmarksTag).Set<NormalizedLandmarkList>();
 
     return ::mediapipe::OkStatus();
   }
@@ -94,8 +94,8 @@ class LandmarkLetterboxRemovalCalculator : public CalculatorBase {
       return ::mediapipe::OkStatus();
     }
 
-    const auto& input_landmarks =
-        cc->Inputs().Tag(kLandmarksTag).Get<std::vector<NormalizedLandmark>>();
+    const NormalizedLandmarkList& input_landmarks =
+        cc->Inputs().Tag(kLandmarksTag).Get<NormalizedLandmarkList>();
     const auto& letterbox_padding =
         cc->Inputs().Tag(kLetterboxPaddingTag).Get<std::array<float, 4>>();
 
@@ -104,24 +104,23 @@ class LandmarkLetterboxRemovalCalculator : public CalculatorBase {
     const float left_and_right = letterbox_padding[0] + letterbox_padding[2];
     const float top_and_bottom = letterbox_padding[1] + letterbox_padding[3];
 
-    auto output_landmarks =
-        absl::make_unique<std::vector<NormalizedLandmark>>();
-    for (const auto& landmark : input_landmarks) {
-      NormalizedLandmark new_landmark;
+    NormalizedLandmarkList output_landmarks;
+    for (int i = 0; i < input_landmarks.landmark_size(); ++i) {
+      const NormalizedLandmark& landmark = input_landmarks.landmark(i);
+      NormalizedLandmark* new_landmark = output_landmarks.add_landmark();
       const float new_x = (landmark.x() - left) / (1.0f - left_and_right);
       const float new_y = (landmark.y() - top) / (1.0f - top_and_bottom);
 
-      new_landmark.set_x(new_x);
-      new_landmark.set_y(new_y);
+      new_landmark->set_x(new_x);
+      new_landmark->set_y(new_y);
       // Keep z-coord as is.
-      new_landmark.set_z(landmark.z());
-
-      output_landmarks->emplace_back(new_landmark);
+      new_landmark->set_z(landmark.z());
     }
 
     cc->Outputs()
         .Tag(kLandmarksTag)
-        .Add(output_landmarks.release(), cc->InputTimestamp());
+        .AddPacket(MakePacket<NormalizedLandmarkList>(output_landmarks)
+                       .At(cc->InputTimestamp()));
     return ::mediapipe::OkStatus();
   }
 };

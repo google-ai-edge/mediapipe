@@ -18,10 +18,13 @@
 #import "mediapipe/objc/MPPCameraInputSource.h"
 #import "mediapipe/objc/MPPLayerRenderer.h"
 
+#include "mediapipe/framework/formats/landmark.pb.h"
+
 static NSString* const kGraphName = @"multi_hand_tracking_mobile_gpu";
 
 static const char* kInputStream = "input_video";
 static const char* kOutputStream = "output_video";
+static const char* kLandmarksOutputStream = "multi_hand_landmarks";
 static const char* kVideoQueueLabel = "com.google.mediapipe.example.videoQueue";
 
 @interface ViewController () <MPPGraphDelegate, MPPInputSourceDelegate>
@@ -80,6 +83,7 @@ static const char* kVideoQueueLabel = "com.google.mediapipe.example.videoQueue";
   // Create MediaPipe graph with mediapipe::CalculatorGraphConfig proto object.
   MPPGraph* newGraph = [[MPPGraph alloc] initWithGraphConfig:config];
   [newGraph addFrameOutputStream:kOutputStream outputPacketType:MPPPacketTypePixelBuffer];
+  [newGraph addFrameOutputStream:kLandmarksOutputStream outputPacketType:MPPPacketTypeRaw];
   return newGraph;
 }
 
@@ -157,6 +161,29 @@ static const char* kVideoQueueLabel = "com.google.mediapipe.example.videoQueue";
       [_renderer renderPixelBuffer:pixelBuffer];
       CVPixelBufferRelease(pixelBuffer);
     });
+  }
+}
+
+// Receives a raw packet from the MediaPipe graph. Invoked on a MediaPipe worker thread.
+- (void)mediapipeGraph:(MPPGraph*)graph
+     didOutputPacket:(const ::mediapipe::Packet&)packet
+          fromStream:(const std::string&)streamName {
+  if (streamName == kLandmarksOutputStream) {
+    if (packet.IsEmpty()) {
+      NSLog(@"[TS:%lld] No hand landmarks", packet.Timestamp().Value());
+      return;
+    }
+    const auto& multi_hand_landmarks = packet.Get<std::vector<::mediapipe::NormalizedLandmarkList>>();
+    NSLog(@"[TS:%lld] Number of hand instances with landmarks: %lu", packet.Timestamp().Value(),
+          multi_hand_landmarks.size());
+    for (int hand_index = 0; hand_index < multi_hand_landmarks.size(); ++hand_index) {
+      const auto& landmarks = multi_hand_landmarks[hand_index];
+      NSLog(@"\tNumber of landmarks for hand[%d]: %d", hand_index, landmarks.landmark_size());
+      for (int i = 0; i < landmarks.landmark_size(); ++i) {
+        NSLog(@"\t\tLandmark[%d]: (%f, %f, %f)", i, landmarks.landmark(i).x(),
+              landmarks.landmark(i).y(), landmarks.landmark(i).z());
+      }
+    }
   }
 }
 

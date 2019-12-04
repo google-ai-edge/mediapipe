@@ -148,6 +148,11 @@ public class FrameProcessor implements TextureFrameProcessor {
     hybridPath = true;
   }
 
+  /** Adds a callback to the graph to process packets from the specified output stream. */
+  public void addPacketCallback(String outputStream, PacketCallback callback) {
+    mediapipeGraph.addPacketCallback(outputStream, callback);
+  }
+
   public void addConsumer(TextureFrameConsumer listener) {
     synchronized (this) {
       List<TextureFrameConsumer> newConsumers = new ArrayList<>(consumers);

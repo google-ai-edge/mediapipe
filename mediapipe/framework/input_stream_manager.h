@@ -189,6 +189,9 @@ class InputStreamManager {
   // Returns true if the next timestamp bound reaches Timestamp::Done().
   bool IsDone() const EXCLUSIVE_LOCKS_REQUIRED(stream_mutex_);
 
+  // Returns the smallest timestamp at which this stream might see an input.
+  Timestamp MinTimestampOrBoundHelper() const;
+
   mutable absl::Mutex stream_mutex_;
   std::deque<Packet> queue_ GUARDED_BY(stream_mutex_);
   // The number of packets added to queue_.  Used to verify a packet at

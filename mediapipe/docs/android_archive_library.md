@@ -92,7 +92,7 @@ project.
     MediaPipe depends on OpenCV, you will need to copy the precompiled OpenCV so
     files into app/src/main/jniLibs. You can download the official OpenCV
     Android SDK from
-    [here](https://github.com/opencv/opencv/releases/download/4.1.0/opencv-4.1.0-android-sdk.zip)
+    [here](https://github.com/opencv/opencv/releases/download/3.4.3/opencv-3.4.3-android-sdk.zip)
     and run:
 
     ```bash
@@ -126,6 +126,6 @@ project.
     ```
 
 6.  Follow our Android app examples to use MediaPipe in Android Studio for your
-    use case. If you are looking for an example, a working face detection
+    use case. If you are looking for an example, a face detection
     example can be found
-    [here](https://github.com/jiuqiant/mediapipe_aar_example).
+    [here](https://github.com/jiuqiant/mediapipe_face_detection_aar_example) and a multi-hand tracking example can be found [here](https://github.com/jiuqiant/mediapipe_multi_hands_tracking_aar_example).

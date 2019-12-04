@@ -110,6 +110,19 @@ std::string JStringToStdString(JNIEnv* env, jstring jstr) {
   return str;
 }
 
+jthrowable CreateMediaPipeException(JNIEnv* env, mediapipe::Status status) {
+  jclass status_cls =
+      env->FindClass("com/google/mediapipe/framework/MediaPipeException");
+  jmethodID status_ctr = env->GetMethodID(status_cls, "<init>", "(I[B)V");
+  int length = status.message().length();
+  jbyteArray message_bytes = env->NewByteArray(length);
+  env->SetByteArrayRegion(message_bytes, 0, length,
+                          reinterpret_cast<jbyte*>(const_cast<char*>(
+                              std::string(status.message()).c_str())));
+  return reinterpret_cast<jthrowable>(
+      env->NewObject(status_cls, status_ctr, status.code(), message_bytes));
+}
+
 }  // namespace android
 
 namespace java {

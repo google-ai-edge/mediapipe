@@ -12,17 +12,21 @@ http_archive(
 load("@bazel_skylib//lib:versions.bzl", "versions")
 versions.check(minimum_bazel_version = "0.24.1")
 
-# ABSL cpp library.
+# ABSL cpp library lts_2019_08_08.
 http_archive(
     name = "com_google_absl",
-    # Head commit on 2019-04-12.
-    # TODO: Switch to the latest absl version when the problem gets
-    # fixed.
     urls = [
-        "https://github.com/abseil/abseil-cpp/archive/a02f62f456f2c4a7ecf2be3104fe0c6e16fbad9a.tar.gz",
+        "https://github.com/abseil/abseil-cpp/archive/20190808.tar.gz",
     ],
-    sha256 = "d437920d1434c766d22e85773b899c77c672b8b4865d5dc2cd61a29fdff3cf03",
-    strip_prefix = "abseil-cpp-a02f62f456f2c4a7ecf2be3104fe0c6e16fbad9a",
+    # Remove after https://github.com/abseil/abseil-cpp/issues/326 is solved.
+    patches = [
+        "@//third_party:com_google_absl_f863b622fe13612433fdf43f76547d5edda0c93001.diff"
+    ],
+    patch_args = [
+        "-p1",
+    ],
+    strip_prefix = "abseil-cpp-20190808",
+    sha256 = "8100085dada279bf3ee00cd064d43b5f55e5d913be0dfe2906f06f8f28d5b37e"
 )
 
 http_archive(
@@ -103,9 +107,9 @@ http_archive(
     ],
 )
 
-# 2019-11-12
-_TENSORFLOW_GIT_COMMIT = "a5f9bcd64453ff3d1f64cb4da4786db3d2da7f82"
-_TENSORFLOW_SHA256= "f2b6f2ab2ffe63e86eccd3ce4bea6b7197383d726638dfeeebcdc1e7de73f075"
+# 2019-11-21
+_TENSORFLOW_GIT_COMMIT = "f482488b481a799ca07e7e2d153cf47b8e91a60c"
+_TENSORFLOW_SHA256= "8d9118c2ce186c7e1403f04b96982fe72c184060c7f7a93e30a28dca358694f0"
 http_archive(
     name = "org_tensorflow",
     urls = [
@@ -149,11 +153,10 @@ new_local_repository(
 
 http_archive(
     name = "android_opencv",
-    sha256 = "056b849842e4fa8751d09edbb64530cfa7a63c84ccd232d0ace330e27ba55d0b",
     build_file = "@//third_party:opencv_android.BUILD",
     strip_prefix = "OpenCV-android-sdk",
     type = "zip",
-    url = "https://github.com/opencv/opencv/releases/download/4.1.0/opencv-4.1.0-android-sdk.zip",
+    url = "https://github.com/opencv/opencv/releases/download/3.4.3/opencv-3.4.3-android-sdk.zip",
 )
 
 # After OpenCV 3.2.0, the pre-compiled opencv2.framework has google protobuf symbols, which will
@@ -184,13 +187,18 @@ maven_install(
     artifacts = [
         "androidx.annotation:annotation:aar:1.1.0",
         "androidx.appcompat:appcompat:aar:1.1.0-rc01",
+        "androidx.camera:camera-core:aar:1.0.0-alpha06",
+        "androidx.camera:camera-camera2:aar:1.0.0-alpha06",
         "androidx.constraintlayout:constraintlayout:aar:1.1.3",
         "androidx.core:core:aar:1.1.0-rc03",
         "androidx.legacy:legacy-support-v4:aar:1.0.0",
         "androidx.recyclerview:recyclerview:aar:1.1.0-beta02",
         "com.google.android.material:material:aar:1.0.0-rc01",
     ],
-    repositories = ["https://dl.google.com/dl/android/maven2"],
+    repositories = [
+        "https://dl.google.com/dl/android/maven2",
+        "https://repo1.maven.org/maven2",
+    ],
 )
 
 maven_server(
@@ -206,10 +214,10 @@ maven_jar(
 )
 
 maven_jar(
-     name = "androidx_concurrent_futures",
-     artifact = "androidx.concurrent:concurrent-futures:1.0.0-alpha03",
-     sha1 = "b528df95c7e2fefa2210c0c742bf3e491c1818ae",
-     server = "google_server",
+    name = "androidx_concurrent_futures",
+    artifact = "androidx.concurrent:concurrent-futures:1.0.0-alpha03",
+    sha1 = "b528df95c7e2fefa2210c0c742bf3e491c1818ae",
+    server = "google_server",
 )
 
 maven_jar(
