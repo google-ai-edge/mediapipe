@@ -39,6 +39,11 @@ pipeline.
 the same TFLite model in a CPU-based pipeline. This example highlights how
 graphs can be easily adapted to run on CPU v.s. GPU.
 
+### Object Detection and Tracking with GPU
+
+[Object Detection and Tracking with GPU](./object_tracking_mobile_gpu.md) illustrates how to
+use MediaPipe for object detection and tracking.
+
 ### Face Detection with GPU
 
 [Face Detection with GPU](./face_detection_mobile_gpu.md) illustrates how to use

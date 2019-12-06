@@ -63,6 +63,7 @@ To build and run iOS apps:
 
     ```bash
     $ sudo apt-get install libopencv-core-dev libopencv-highgui-dev \
+                           libopencv-calib3d-dev libopencv-features2d-dev \
                            libopencv-imgproc-dev libopencv-video-dev
     ```
 
@@ -411,6 +412,7 @@ To build and run iOS apps:
 
     ```bash
     username@DESKTOP-TMVLBJ1:~/mediapipe$ sudo apt-get install libopencv-core-dev libopencv-highgui-dev \
+                           libopencv-calib3d-dev libopencv-features2d-dev \
                            libopencv-imgproc-dev libopencv-video-dev
     ```
 

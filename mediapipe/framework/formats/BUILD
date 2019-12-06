@@ -241,7 +241,9 @@ cc_test(
 proto_library(
     name = "rect_proto",
     srcs = ["rect.proto"],
-    visibility = ["//visibility:public"],
+    visibility = [
+        "//visibility:public",
+    ],
 )
 
 mediapipe_cc_proto_library(
@@ -253,10 +255,21 @@ mediapipe_cc_proto_library(
     deps = [":rect_proto"],
 )
 
+java_lite_proto_library(
+    name = "rect_java_proto_lite",
+    strict_deps = 0,
+    visibility = [
+        "//mediapipe:__subpackages__",
+    ],
+    deps = [":landmark_proto"],
+)
+
 proto_library(
     name = "landmark_proto",
     srcs = ["landmark.proto"],
-    visibility = ["//visibility:public"],
+    visibility = [
+        "//visibility:public",
+    ],
 )
 
 mediapipe_cc_proto_library(
@@ -269,7 +282,9 @@ mediapipe_cc_proto_library(
 java_lite_proto_library(
     name = "landmark_java_proto_lite",
     strict_deps = 0,
-    visibility = ["//mediapipe:__subpackages__"],
+    visibility = [
+        "//mediapipe:__subpackages__",
+    ],
     deps = [":landmark_proto"],
 )
 

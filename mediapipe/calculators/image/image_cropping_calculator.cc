@@ -501,8 +501,11 @@ void ImageCroppingCalculator::GetOutputDimensions(CalculatorContext* cc,
     row_max = std::max(row_max, transformed_points_[i * 2 + 1]);
   }
 
-  *dst_width = std::round((col_max - col_min) * src_width);
-  *dst_height = std::round((row_max - row_min) * src_height);
+  int width = static_cast<int>(std::round((col_max - col_min) * src_width));
+  int height = static_cast<int>(std::round((row_max - row_min) * src_height));
+  // Minimum output dimension 1x1 prevents creation of textures with 0x0.
+  *dst_width = std::max(1, width);
+  *dst_height = std::max(1, height);
 }
 
 }  // namespace mediapipe

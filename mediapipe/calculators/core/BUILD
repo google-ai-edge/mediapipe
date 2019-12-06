@@ -165,6 +165,7 @@ cc_library(
     deps = [
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/port:logging",
+        "//mediapipe/framework/port:status",
     ],
     alwayslink = 1,
 )

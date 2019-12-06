@@ -50,4 +50,16 @@ public abstract class MediaPipeRunner extends Graph {
    * Stops the running graph and releases the resource. Call this in Activity onDestroy callback.
    */
   public abstract void release();
+  /**
+   * Stops the running graph and releases the resource. Call this in Activity onDestroy callback.
+   *
+   * <p>Like {@link #release()} but with a timeout. The default behavior is to call
+   * {@link #release()}. The implementation can override this method if it cares about timing out
+   * releasing resources.
+   *
+   * @param timeoutMillis the time it takes to force timeout from releasing mff context.
+   */
+  public void release(long timeoutMillis) {
+    release();
+  }
 }

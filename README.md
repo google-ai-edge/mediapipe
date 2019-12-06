@@ -14,12 +14,13 @@
 * [Face Detection](mediapipe/docs/face_detection_mobile_gpu.md)
 * [Hair Segmentation](mediapipe/docs/hair_segmentation_mobile_gpu.md)
 * [Object Detection](mediapipe/docs/object_detection_mobile_gpu.md)
+* [Object Detection and Tracking](mediapipe/docs/object_tracking_mobile_gpu.md)
 
 ![hand_tracking](mediapipe/docs/images/mobile/hand_tracking_3d_android_gpu_small.gif)
 ![multi-hand_tracking](mediapipe/docs/images/mobile/multi_hand_tracking_android_gpu_small.gif)
 ![face_detection](mediapipe/docs/images/mobile/face_detection_android_gpu_small.gif)
 ![hair_segmentation](mediapipe/docs/images/mobile/hair_segmentation_android_gpu_small.gif)
-![object_detection](mediapipe/docs/images/mobile/object_detection_android_gpu_small.gif)
+![object_tracking](mediapipe/docs/images/mobile/object_tracking_android_gpu_small.gif)
 
 ## Installation
 Follow these [instructions](mediapipe/docs/install.md).

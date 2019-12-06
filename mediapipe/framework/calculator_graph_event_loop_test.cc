@@ -541,5 +541,90 @@ TEST_F(CalculatorGraphEventLoopTest, WaitToAddPacketToInputStream) {
   ASSERT_EQ(kNumInputPackets, output_packets_.size());
 }
 
+// Captures log messages during testing.
+class TextMessageLogSink : public LogSink {
+ public:
+  std::vector<std::string> messages;
+  void Send(const LogEntry& entry) {
+    messages.push_back(std::string(entry.text_message()));
+  }
+};
+
+// Verifies that CalculatorGraph::UnthrottleSources does not run repeatedly
+// in a "busy-loop" while the graph is throttled due to a graph-output stream.
+TEST_F(CalculatorGraphEventLoopTest, UnthrottleSources) {
+  CalculatorGraphConfig graph_config;
+  ASSERT_TRUE(proto_ns::TextFormat::ParseFromString(
+      R"(
+          node {
+            calculator: "PassThroughCalculator"
+            input_stream: "input_numbers"
+            output_stream: "output_numbers"
+          }
+          input_stream: "input_numbers"
+          output_stream: "output_numbers"
+          num_threads: 2
+          max_queue_size: 5
+      )",
+      &graph_config));
+  constexpr int kQueueSize = 5;
+
+  // Initialize and start the mediapipe graph.
+  CalculatorGraph graph;
+  MP_ASSERT_OK(graph.Initialize(graph_config));
+  graph.SetGraphInputStreamAddMode(
+      CalculatorGraph::GraphInputStreamAddMode::ADD_IF_NOT_FULL);
+  auto poller_status = graph.AddOutputStreamPoller("output_numbers");
+  MP_ASSERT_OK(poller_status.status());
+  mediapipe::OutputStreamPoller& poller = poller_status.ValueOrDie();
+  poller.SetMaxQueueSize(kQueueSize);
+  MP_ASSERT_OK(graph.StartRun({}));
+
+  // Lambda that adds a packet to the calculator graph.
+  auto add_packet = [&graph](std::string s, int i) {
+    return graph.AddPacketToInputStream(s, MakePacket<int>(i).At(Timestamp(i)));
+  };
+
+  // Start capturing VLOG messages from the mediapipe::Scheduler.
+  TextMessageLogSink log_listener;
+  mediapipe::AddLogSink(&log_listener);
+  SetVLOGLevel("scheduler", 3);
+
+  // Add just enough packets to fill the output stream queue.
+  std::vector<Packet> out_packets;
+  for (int i = 0; i < kQueueSize; ++i) {
+    MP_EXPECT_OK(add_packet("input_numbers", i));
+    MP_EXPECT_OK(graph.WaitUntilIdle());
+  }
+
+  // The graph is throttled due to the full output stream.
+  EXPECT_FALSE(add_packet("input_numbers", kQueueSize).ok());
+
+  // CalculatorGraph::UnthrottleSources should be called just one time.
+  absl::SleepFor(absl::Milliseconds(100));
+
+  // Read all packets from the output stream queue and close the graph.
+  for (int i = 0; i < kQueueSize; ++i) {
+    Packet packet;
+    EXPECT_TRUE(poller.Next(&packet));
+    out_packets.push_back(packet);
+  }
+  MP_EXPECT_OK(graph.CloseAllInputStreams());
+  MP_EXPECT_OK(graph.WaitUntilDone());
+  EXPECT_EQ(kQueueSize, out_packets.size());
+
+  // Stop capturing VLOG messages.
+  SetVLOGLevel("scheduler", 0);
+  mediapipe::RemoveLogSink(&log_listener);
+
+  // Count and validate the calls to UnthrottleSources.
+  int loop_count = 0;
+  for (auto& message : log_listener.messages) {
+    loop_count += (message == "HandleIdle: unthrottling") ? 1 : 0;
+  }
+  EXPECT_GE(loop_count, 1);
+  EXPECT_LE(loop_count, 2);
+}
+
 }  // namespace
 }  // namespace mediapipe

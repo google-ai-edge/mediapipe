@@ -37,6 +37,67 @@ proto_library(
     deps = ["//mediapipe/framework:calculator_proto"],
 )
 
+proto_library(
+    name = "motion_analysis_calculator_proto",
+    srcs = ["motion_analysis_calculator.proto"],
+    deps = [
+        "//mediapipe/framework:calculator_proto",
+        "//mediapipe/util/tracking:motion_analysis_proto",
+    ],
+)
+
+proto_library(
+    name = "flow_packager_calculator_proto",
+    srcs = ["flow_packager_calculator.proto"],
+    deps = [
+        "//mediapipe/framework:calculator_proto",
+        "//mediapipe/util/tracking:flow_packager_proto",
+    ],
+)
+
+proto_library(
+    name = "box_tracker_calculator_proto",
+    srcs = ["box_tracker_calculator.proto"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//mediapipe/framework:calculator_proto",
+        "//mediapipe/util/tracking:box_tracker_proto",
+    ],
+)
+
+mediapipe_cc_proto_library(
+    name = "motion_analysis_calculator_cc_proto",
+    srcs = ["motion_analysis_calculator.proto"],
+    cc_deps = [
+        "//mediapipe/framework:calculator_cc_proto",
+        "//mediapipe/util/tracking:motion_analysis_cc_proto",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [":motion_analysis_calculator_proto"],
+)
+
+mediapipe_cc_proto_library(
+    name = "flow_packager_calculator_cc_proto",
+    srcs = ["flow_packager_calculator.proto"],
+    cc_deps = [
+        "//mediapipe/framework:calculator_cc_proto",
+        "//mediapipe/util/tracking:flow_packager_cc_proto",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [":flow_packager_calculator_proto"],
+)
+
+mediapipe_cc_proto_library(
+    name = "box_tracker_calculator_cc_proto",
+    srcs = ["box_tracker_calculator.proto"],
+    cc_deps = [
+        "//mediapipe/framework:calculator_cc_proto",
+        "//mediapipe/util/tracking:box_tracker_cc_proto",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [":box_tracker_calculator_proto"],
+)
+
 mediapipe_cc_proto_library(
     name = "flow_to_image_calculator_cc_proto",
     srcs = ["flow_to_image_calculator.proto"],
@@ -131,6 +192,94 @@ cc_library(
     alwayslink = 1,
 )
 
+cc_library(
+    name = "motion_analysis_calculator",
+    srcs = ["motion_analysis_calculator.cc"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":motion_analysis_calculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/formats:image_frame",
+        "//mediapipe/framework/formats:image_frame_opencv",
+        "//mediapipe/framework/formats:video_stream_header",
+        "//mediapipe/framework/port:integral_types",
+        "//mediapipe/framework/port:logging",
+        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:status",
+        "//mediapipe/util/tracking:camera_motion",
+        "//mediapipe/util/tracking:camera_motion_cc_proto",
+        "//mediapipe/util/tracking:frame_selection_cc_proto",
+        "//mediapipe/util/tracking:motion_analysis",
+        "//mediapipe/util/tracking:motion_estimation",
+        "//mediapipe/util/tracking:motion_models",
+        "//mediapipe/util/tracking:region_flow_cc_proto",
+        "@com_google_absl//absl/strings",
+    ],
+    alwayslink = 1,
+)
+
+cc_library(
+    name = "flow_packager_calculator",
+    srcs = ["flow_packager_calculator.cc"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":flow_packager_calculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/port:integral_types",
+        "//mediapipe/framework/port:logging",
+        "//mediapipe/util/tracking:camera_motion_cc_proto",
+        "//mediapipe/util/tracking:flow_packager",
+        "//mediapipe/util/tracking:region_flow_cc_proto",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:str_format",
+    ],
+    alwayslink = 1,
+)
+
+cc_library(
+    name = "box_tracker_calculator",
+    srcs = ["box_tracker_calculator.cc"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":box_tracker_calculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/formats:image_frame",
+        "//mediapipe/framework/formats:image_frame_opencv",
+        "//mediapipe/framework/formats:video_stream_header",  # fixdeps: keep -- required for exobazel build.
+        "//mediapipe/framework/port:integral_types",
+        "//mediapipe/framework/port:logging",
+        "//mediapipe/framework/port:parse_text_proto",
+        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:status",
+        "//mediapipe/framework/tool:options_util",
+        "//mediapipe/util/tracking",
+        "//mediapipe/util/tracking:box_tracker",
+        "//mediapipe/util/tracking:tracking_visualization_utilities",
+        "@com_google_absl//absl/strings",
+    ],
+    alwayslink = 1,
+)
+
+cc_library(
+    name = "tracked_detection_manager_calculator",
+    srcs = ["tracked_detection_manager_calculator.cc"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/formats:detection_cc_proto",
+        "//mediapipe/framework/formats:location_data_cc_proto",
+        "//mediapipe/framework/formats:rect_cc_proto",
+        "//mediapipe/framework/port:status",
+        "//mediapipe/util/tracking",
+        "//mediapipe/util/tracking:box_tracker",
+        "//mediapipe/util/tracking:tracked_detection",
+        "//mediapipe/util/tracking:tracked_detection_manager",
+        "//mediapipe/util/tracking:tracking_visualization_utilities",
+        "@com_google_absl//absl/container:node_hash_map",
+    ],
+    alwayslink = 1,
+)
+
 filegroup(
     name = "test_videos",
     srcs = [
@@ -199,5 +348,66 @@ cc_test(
         "//mediapipe/framework/port:opencv_imgcodecs",
         "//mediapipe/framework/port:opencv_imgproc",
         "//mediapipe/framework/port:parse_text_proto",
+    ],
+)
+
+MEDIAPIPE_DEPS = [
+    "//mediapipe/calculators/video:box_tracker_calculator",
+    "//mediapipe/calculators/video:flow_packager_calculator",
+    "//mediapipe/calculators/video:motion_analysis_calculator",
+    "//mediapipe/framework/stream_handler:fixed_size_input_stream_handler",
+    "//mediapipe/framework/stream_handler:sync_set_input_stream_handler",
+]
+
+mediapipe_binary_graph(
+    name = "parallel_tracker_binarypb",
+    graph = "testdata/parallel_tracker_graph.pbtxt",
+    output_name = "testdata/parallel_tracker.binarypb",
+    visibility = ["//visibility:public"],
+    deps = MEDIAPIPE_DEPS,
+)
+
+mediapipe_binary_graph(
+    name = "tracker_binarypb",
+    graph = "testdata/tracker_graph.pbtxt",
+    output_name = "testdata/tracker.binarypb",
+    visibility = ["//visibility:public"],
+    deps = MEDIAPIPE_DEPS,
+)
+
+cc_test(
+    name = "tracking_graph_test",
+    size = "small",
+    srcs = ["tracking_graph_test.cc"],
+    copts = ["-DPARALLEL_INVOKER_ACTIVE"] + select({
+        "//mediapipe:apple": [],
+        "//mediapipe:android": [],
+        "//conditions:default": [],
+    }),
+    data = [
+        ":testdata/lenna.png",
+        ":testdata/parallel_tracker.binarypb",
+        ":testdata/tracker.binarypb",
+    ],
+    deps = [
+        ":box_tracker_calculator",
+        ":box_tracker_calculator_cc_proto",
+        ":flow_packager_calculator",
+        ":motion_analysis_calculator",
+        "//mediapipe/framework:calculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:packet",
+        "//mediapipe/framework/deps:file_path",
+        "//mediapipe/framework/formats:image_frame",
+        "//mediapipe/framework/port:advanced_proto",
+        "//mediapipe/framework/port:core_proto",
+        "//mediapipe/framework/port:file_helpers",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:opencv_highgui",
+        "//mediapipe/framework/port:status",
+        "//mediapipe/framework/stream_handler:fixed_size_input_stream_handler",
+        "//mediapipe/framework/stream_handler:sync_set_input_stream_handler",
+        "//mediapipe/util/tracking:box_tracker_cc_proto",
+        "//mediapipe/util/tracking:tracking_cc_proto",
     ],
 )

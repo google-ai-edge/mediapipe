@@ -19,6 +19,9 @@ build --incompatible_depset_is_not_iterable=false
 # Sets the default Apple platform to macOS.
 build --apple_platform_type=macos
 
+# Allow debugging with XCODE
+build --apple_generate_dsym
+
 # Android configs.
 build:android --crosstool_top=//external:android/crosstool
 build:android --host_crosstool_top=@bazel_tools//tools/cpp:toolchain

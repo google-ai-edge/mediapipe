@@ -53,4 +53,7 @@ message DetectionsToRenderDataCalculatorOptions {
   // instances of this calculator are present in the graph, this value
   // should be unique among them.
   optional string scene_class = 7 [default = "DETECTION"];
+
+  // If true, renders the detection id in the first line before the labels.
+  optional bool render_detection_id = 8 [default = false];
 }

@@ -330,22 +330,27 @@ void PacketResamplerCalculator::UpdateNextOutputTimestampWithJitter() {
     return ::mediapipe::OkStatus();
   }
 
-  LOG_IF(WARNING, frame_time_usec_ <
-                      (cc->InputTimestamp() - last_packet_.Timestamp()).Value())
-      << "Adding jitter is meaningless when upsampling.";
-
-  const int64 curr_diff =
-      (next_output_timestamp_ - cc->InputTimestamp()).Value();
-  const int64 last_diff =
-      (next_output_timestamp_ - last_packet_.Timestamp()).Value();
-  if (curr_diff * last_diff > 0) {
-    return ::mediapipe::OkStatus();
+  if (frame_time_usec_ <
+      (cc->InputTimestamp() - last_packet_.Timestamp()).Value()) {
+    LOG_FIRST_N(WARNING, 2)
+        << "Adding jitter is not very useful when upsampling.";
   }
-  OutputWithinLimits(cc, (std::abs(curr_diff) > std::abs(last_diff)
-                              ? last_packet_
-                              : cc->Inputs().Get(input_data_id_).Value())
-                             .At(next_output_timestamp_));
-  UpdateNextOutputTimestampWithJitter();
+
+  while (true) {
+    const int64 last_diff =
+        (next_output_timestamp_ - last_packet_.Timestamp()).Value();
+    RET_CHECK_GT(last_diff, 0.0);
+    const int64 curr_diff =
+        (next_output_timestamp_ - cc->InputTimestamp()).Value();
+    if (curr_diff > 0.0) {
+      break;
+    }
+    OutputWithinLimits(cc, (std::abs(curr_diff) > last_diff
+                                ? last_packet_
+                                : cc->Inputs().Get(input_data_id_).Value())
+                               .At(next_output_timestamp_));
+    UpdateNextOutputTimestampWithJitter();
+  }
   return ::mediapipe::OkStatus();
 }
 

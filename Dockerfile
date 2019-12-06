@@ -35,6 +35,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         libopencv-highgui-dev \
         libopencv-imgproc-dev \
         libopencv-video-dev \
+        libopencv-calib3d-dev \
+        libopencv-features2d-dev \
         software-properties-common && \
     add-apt-repository -y ppa:openjdk-r/ppa && \
     apt-get update && apt-get install -y openjdk-8-jdk && \

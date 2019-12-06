@@ -983,3 +983,31 @@ cc_test(
         "//mediapipe/framework/port:parse_text_proto",
     ],
 )
+
+cc_library(
+    name = "detections_to_timed_box_list_calculator",
+    srcs = ["detections_to_timed_box_list_calculator.cc"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/formats:detection_cc_proto",
+        "//mediapipe/framework/formats:location_data_cc_proto",
+        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:status",
+        "//mediapipe/util/tracking:box_tracker",
+    ],
+    alwayslink = 1,
+)
+
+cc_library(
+    name = "detection_unique_id_calculator",
+    srcs = ["detection_unique_id_calculator.cc"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/formats:detection_cc_proto",
+        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:status",
+    ],
+    alwayslink = 1,
+)

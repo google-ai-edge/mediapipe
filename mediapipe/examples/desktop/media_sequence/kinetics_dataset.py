@@ -93,15 +93,15 @@ FILEPATTERN = "kinetics_700_%s_25fps_rgb_flow"
 SPLITS = {
     "train": {
         "shards": 1000,
-        "examples": 541490
+        "examples": 541279
     },
     "validate": {
         "shards": 100,
-        "examples": 34715
+        "examples": 34688
     },
     "test": {
         "shards": 100,
-        "examples": 69321
+        "examples": 69278
     },
     "custom": {
         "csv": None,  # Add a CSV for your own data here.

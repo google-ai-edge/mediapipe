@@ -116,6 +116,13 @@ http_archive(
       "https://mirror.bazel.build/github.com/tensorflow/tensorflow/archive/%s.tar.gz" % _TENSORFLOW_GIT_COMMIT,
       "https://github.com/tensorflow/tensorflow/archive/%s.tar.gz" % _TENSORFLOW_GIT_COMMIT,
     ],
+    # Patch https://github.com/tensorflow/tensorflow/commit/e3a7bdbebb99352351a19e2e403136166aa52934
+    patches = [
+        "@//third_party:org_tensorflow_e3a7bdbebb99352351a19e2e403136166aa52934.diff"
+    ],
+    patch_args = [
+        "-p1",
+    ],
     strip_prefix = "tensorflow-%s" % _TENSORFLOW_GIT_COMMIT,
     sha256 = _TENSORFLOW_SHA256,
 )
@@ -123,8 +130,22 @@ http_archive(
 load("@org_tensorflow//tensorflow:workspace.bzl", "tf_workspace")
 tf_workspace(tf_repo_name = "org_tensorflow")
 
+http_archive(
+    name = "ceres_solver",
+    url = "https://github.com/ceres-solver/ceres-solver/archive/1.14.0.zip",
+    patches = [
+        "@//third_party:ceres_solver_9bf9588988236279e1262f75d7f4d85711dfa172.diff"
+    ],
+    patch_args = [
+        "-p1",
+    ],
+    strip_prefix = "ceres-solver-1.14.0",
+    sha256 = "5ba6d0db4e784621fda44a50c58bb23b0892684692f0c623e2063f9c19f192f1"
+)
+
 # Please run
 # $ sudo apt-get install libopencv-core-dev libopencv-highgui-dev \
+#                        libopencv-calib3d-dev libopencv-features2d-dev \
 #                        libopencv-imgproc-dev libopencv-video-dev
 new_local_repository(
     name = "linux_opencv",
@@ -292,3 +313,4 @@ http_archive(
     strip_prefix = "google-toolbox-for-mac-2.2.1",
     build_file = "@//third_party:google_toolbox_for_mac.BUILD",
 )
+

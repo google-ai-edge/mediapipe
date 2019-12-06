@@ -39,6 +39,8 @@ constexpr char kKeypointLabel[] = "KEYPOINT";
 // The ratio of detection label font height to the height of detection bounding
 // box.
 constexpr double kLabelToBoundingBoxRatio = 0.1;
+// Perserve 2 decimal digits.
+constexpr float kNumScoreDecimalDigitsMultipler = 100;
 
 }  // namespace
 
@@ -235,18 +237,26 @@ void DetectionsToRenderDataCalculator::AddLabels(
     std::string label_str = detection.label().empty()
                                 ? absl::StrCat(detection.label_id(i))
                                 : detection.label(i);
+    const float rounded_score =
+        std::round(detection.score(i) * kNumScoreDecimalDigitsMultipler) /
+        kNumScoreDecimalDigitsMultipler;
     std::string label_and_score =
-        absl::StrCat(label_str, options.text_delimiter(), detection.score(i),
+        absl::StrCat(label_str, options.text_delimiter(), rounded_score,
                      options.text_delimiter());
     label_and_scores.push_back(label_and_score);
   }
   std::vector<std::string> labels;
+  if (options.render_detection_id()) {
+    const std::string detection_id_str =
+        absl::StrCat("Id: ", detection.detection_id());
+    labels.push_back(detection_id_str);
+  }
   if (options.one_label_per_line()) {
-    labels.swap(label_and_scores);
+    labels.insert(labels.end(), label_and_scores.begin(),
+                  label_and_scores.end());
   } else {
     labels.push_back(absl::StrJoin(label_and_scores, ""));
   }
-
   // Add the render annotations for "label(_id),score".
   for (int i = 0; i < labels.size(); ++i) {
     auto label = labels.at(i);

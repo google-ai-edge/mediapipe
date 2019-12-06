@@ -1,0 +1,36 @@
+// Copyright 2019 The MediaPipe Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto2";
+
+package mediapipe;
+
+import "mediapipe/framework/calculator.proto";
+import "mediapipe/util/tracking/flow_packager.proto";
+
+message FlowPackagerCalculatorOptions {
+  extend CalculatorOptions {
+    optional FlowPackagerCalculatorOptions ext = 271236147;
+  }
+
+  optional mediapipe.FlowPackagerOptions flow_packager_options = 1;
+
+  // Chunk size for caching files that are written to the externally specified
+  // caching directory. Specified in msec.
+  // Note that each chunk always contains at its end the first frame of the
+  // next chunk (to enable forward tracking across chunk boundaries).
+  optional int32 caching_chunk_size_msec = 2 [default = 2500];
+
+  optional string cache_file_format = 3 [default = "chunk_%04d"];
+}

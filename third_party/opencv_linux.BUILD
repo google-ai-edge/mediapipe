@@ -7,6 +7,7 @@ exports_files(["LICENSE"])
 
 # The following build rule assumes that OpenCV is installed by
 # 'apt-get install libopencv-core-dev libopencv-highgui-dev \'
+# '                libopencv-calib3d-dev libopencv-features2d-dev \'
 # '                libopencv-imgproc-dev libopencv-video-dev' on Debian/Ubuntu.
 # If you install OpenCV separately, please modify the build rule accordingly.
 cc_library(

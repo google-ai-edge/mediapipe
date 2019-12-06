@@ -176,6 +176,7 @@ cc_library(
     deps = [
         "//mediapipe/framework:port",
         "@com_github_glog_glog//:glog",
+        "@com_google_absl//absl/time",
     ],
 )
 
