@@ -49,7 +49,7 @@ cmake .. -DCMAKE_BUILD_TYPE=RELEASE -DCMAKE_INSTALL_PREFIX=/usr/local \
       -DBUILD_opencv_rgbd=OFF -DBUILD_opencv_saliency=OFF -DBUILD_opencv_shape=OFF \
       -DBUILD_opencv_structured_light=OFF -DBUILD_opencv_surface_matching=OFF \
       -DBUILD_opencv_world=OFF -DBUILD_opencv_xobjdetect=OFF -DBUILD_opencv_xphoto=OFF
-make -j
+make -j 16
 sudo make install
 rm -rf /tmp/build_opencv
 echo "OpenCV has been built. You can find the header files and libraries in /usr/local/include/opencv4/opencv2 and /usr/local/lib"

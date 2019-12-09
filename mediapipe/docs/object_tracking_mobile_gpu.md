@@ -5,7 +5,7 @@ This doc focuses on the
 that performs object detection and tracking.
 Note that object detection is using TensorFlow Lite on GPU while tracking is using CPU.
 
-For overall context on hand detection and hand tracking, please read this
+For overall context on object detection and tracking, please read this
 [Google Developer Blog](https://mediapipe.page.link/objecttrackingblog).
 
 ![object_tracking_android_gpu_gif](images/mobile/object_tracking_android_gpu.gif)
@@ -437,7 +437,7 @@ node: {
 
 ### Renderer Subgraph
 
-![hand_renderer_gpu_subgraph.pbtxt](images/mobile/object_tracking_renderer_gpu_subgraph.png)
+![object_tracking_renderer_gpu_subgraph.pbtxt](images/mobile/object_tracking_renderer_gpu_subgraph.png)
 
 [Source pbtxt file](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/tracking/subgraphs/renderer_gpu.pbtxt)
 

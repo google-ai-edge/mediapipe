@@ -380,7 +380,7 @@ To build and run iOS apps:
 4.  Install the needed packages.
 
     ```bash
-    username@DESKTOP-TMVLBJ1:~$ sudo apt-get update && sudo apt-get install -y --no-install-recommends build-essential git python zip adb openjdk-8-jdk
+    username@DESKTOP-TMVLBJ1:~$ sudo apt-get update && sudo apt-get install -y build-essential git python zip adb openjdk-8-jdk
     ```
 
 5.  Install Bazel (0.24.1 and above required).

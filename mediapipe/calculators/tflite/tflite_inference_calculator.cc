@@ -464,7 +464,7 @@ REGISTER_CALCULATOR(TfLiteInferenceCalculator);
 
   // Get model name.
   if (!options.model_path().empty()) {
-    auto model_path = options.model_path();
+    std::string model_path = options.model_path();
 
     ASSIGN_OR_RETURN(model_path_, mediapipe::PathToResourceAsFile(model_path));
   } else {
