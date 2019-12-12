@@ -80,10 +80,10 @@
 
     ```c++
     CalculatorGraph graph;
-    RETURN_IF_ERROR(graph.Initialize(config));
-    ASSIGN_OR_RETURN(OutputStreamPoller poller,
+    MP_RETURN_IF_ERROR(graph.Initialize(config));
+    MP_ASSIGN_OR_RETURN(OutputStreamPoller poller,
                      graph.AddOutputStreamPoller("out"));
-    RETURN_IF_ERROR(graph.StartRun({}));
+    MP_RETURN_IF_ERROR(graph.StartRun({}));
     ```
 
 5.  The example then creates 10 packets (each packet contains a string "Hello
@@ -93,9 +93,9 @@
 
     ```c++
     for (int i = 0; i < 10; ++i) {
-      RETURN_IF_ERROR(graph.AddPacketToInputStream("in", MakePacket<std::string>("Hello World!").At(Timestamp(i))));
+      MP_RETURN_IF_ERROR(graph.AddPacketToInputStream("in", MakePacket<std::string>("Hello World!").At(Timestamp(i))));
     }
-    RETURN_IF_ERROR(graph.CloseInputStream("in"));
+    MP_RETURN_IF_ERROR(graph.CloseInputStream("in"));
     ```
 
 6.  Through the `OutputStreamPoller` object the example then retrieves all 10
