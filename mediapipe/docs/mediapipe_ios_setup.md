@@ -2,7 +2,7 @@
 
 1.  Install [Xcode](https://developer.apple.com/xcode/).
 
-    Follow Apple's instructions to obtain the required developemnt certificates
+    Follow Apple's instructions to obtain the required development certificates
     and provisioning profiles for your iOS device.
 
 2.  Install [Bazel](https://bazel.build/).
