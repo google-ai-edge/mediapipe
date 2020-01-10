@@ -85,7 +85,7 @@ node {
   node_options: {
     [type.googleapis.com/mediapipe.PacketThinnerCalculatorOptions]: {
       thinner_type: ASYNC
-      period: 500000
+      period: 200000
     }
   }
 }
@@ -215,7 +215,7 @@ node {
         score_aggregation_type: CONSTANT
       }
       scene_camera_motion_analyzer_options: {
-        motion_stabilization_threshold_percent: 0.3
+        motion_stabilization_threshold_percent: 0.5
         salient_point_bound: 0.499
       }
       padding_parameters: {
@@ -278,7 +278,29 @@ the required features cannot be all covered (for example, when they are too
 spread out in the video), AutoFlip will apply a padding effect to cover as much
 salient content as possible. See an illustration below.
 
-![graph is_required](images/autoflip_is_required.gif)
+![graph is_required](images/autoflip_is_required.gif){width="600"}
+
+### Stable vs Tracking Camera Motion
+
+AutoFlip makes a decision on each scene whether to have the cropped viewpoint
+follow an object or if the crop should remain stable (centered on detected
+objects). The parameter `motion_stabilization_threshold_percent` value is used
+to make the decision to track action or keep the camera stable. If, over the
+duration of the scene, all detected focus objects remain within this ratio of
+the frame (e.g. 0.5 = 50% or 1920 * .5 = 960 pixels on 1080p video) then the
+camera is held steady. Otherwise the camera tracks activity within the frame.
+
+### Snap To Center
+
+For some scenes the camera viewpoint will remain stable at the center of
+activity (see `motion_stabilization_threshold_percent` setting). In this case,
+if the determined best stable viewpoint is within
+`snap_center_max_distance_percent` of the frame's center the camera will be
+shifted to be locked to the center of the frame. This setting is useful for
+videos where the camera operator did a good job already centering content or if
+titles and logos are expected to appear in the center of the frame. It may be
+less useful on raw content where objects are not already well positioned on
+screen.
 
 ### Visualization to Facilitate Debugging
 
@@ -307,7 +329,7 @@ node {
         score_aggregation_type: CONSTANT
       }
       scene_camera_motion_analyzer_options: {
-        motion_stabilization_threshold_percent: 0.3
+        motion_stabilization_threshold_percent: 0.5
         salient_point_bound: 0.499
       }
       padding_parameters: {
