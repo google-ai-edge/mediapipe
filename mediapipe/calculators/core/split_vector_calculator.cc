@@ -20,6 +20,10 @@
 #include "mediapipe/framework/formats/rect.pb.h"
 #include "tensorflow/lite/interpreter.h"
 
+#if !defined(MEDIAPIPE_DISABLE_GL_COMPUTE)
+#include "tensorflow/lite/delegates/gpu/gl/gl_buffer.h"
+#endif  //  !MEDIAPIPE_DISABLE_GPU
+
 namespace mediapipe {
 
 // Example config:
@@ -36,14 +40,21 @@ namespace mediapipe {
 //     }
 //   }
 // }
-typedef SplitVectorCalculator<TfLiteTensor> SplitTfLiteTensorVectorCalculator;
+typedef SplitVectorCalculator<TfLiteTensor, false>
+    SplitTfLiteTensorVectorCalculator;
 REGISTER_CALCULATOR(SplitTfLiteTensorVectorCalculator);
 
-typedef SplitVectorCalculator<::mediapipe::NormalizedLandmark>
+typedef SplitVectorCalculator<::mediapipe::NormalizedLandmark, false>
     SplitLandmarkVectorCalculator;
 REGISTER_CALCULATOR(SplitLandmarkVectorCalculator);
 
-typedef SplitVectorCalculator<::mediapipe::NormalizedRect>
+typedef SplitVectorCalculator<::mediapipe::NormalizedRect, false>
     SplitNormalizedRectVectorCalculator;
 REGISTER_CALCULATOR(SplitNormalizedRectVectorCalculator);
+
+#if !defined(MEDIAPIPE_DISABLE_GL_COMPUTE)
+typedef SplitVectorCalculator<::tflite::gpu::gl::GlBuffer, true>
+    MovableSplitGlBufferVectorCalculator;
+REGISTER_CALCULATOR(MovableSplitGlBufferVectorCalculator);
+#endif
 }  // namespace mediapipe

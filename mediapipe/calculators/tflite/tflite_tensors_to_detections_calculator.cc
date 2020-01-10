@@ -472,11 +472,11 @@ REGISTER_CALCULATOR(TfLiteTensorsToDetectionsCalculator);
   // Copy inputs.
   [MPPMetalUtil blitMetalBufferTo:gpu_data_->raw_boxes_buffer
                              from:input_tensors[0]
-                         blocking:true
+                         blocking:false
                     commandBuffer:[gpu_helper_ commandBuffer]];
   [MPPMetalUtil blitMetalBufferTo:gpu_data_->raw_scores_buffer
                              from:input_tensors[1]
-                         blocking:true
+                         blocking:false
                     commandBuffer:[gpu_helper_ commandBuffer]];
   if (!anchors_init_) {
     if (side_packet_anchors_) {
@@ -491,48 +491,37 @@ REGISTER_CALCULATOR(TfLiteTensorsToDetectionsCalculator);
       RET_CHECK_EQ(input_tensors.size(), kNumInputTensorsWithAnchors);
       [MPPMetalUtil blitMetalBufferTo:gpu_data_->raw_anchors_buffer
                                  from:input_tensors[2]
-                             blocking:true
+                             blocking:false
                         commandBuffer:[gpu_helper_ commandBuffer]];
     }
     anchors_init_ = true;
   }
 
   // Run shaders.
-  {
-    id<MTLCommandBuffer> command_buffer = [gpu_helper_ commandBuffer];
-    command_buffer.label = @"TfLiteDecodeBoxes";
-    id<MTLComputeCommandEncoder> decode_command =
-        [command_buffer computeCommandEncoder];
-    [decode_command setComputePipelineState:gpu_data_->decode_program];
-    [decode_command setBuffer:gpu_data_->decoded_boxes_buffer
-                       offset:0
-                      atIndex:0];
-    [decode_command setBuffer:gpu_data_->raw_boxes_buffer offset:0 atIndex:1];
-    [decode_command setBuffer:gpu_data_->raw_anchors_buffer offset:0 atIndex:2];
-    MTLSize decode_threads_per_group = MTLSizeMake(1, 1, 1);
-    MTLSize decode_threadgroups = MTLSizeMake(num_boxes_, 1, 1);
-    [decode_command dispatchThreadgroups:decode_threadgroups
-                   threadsPerThreadgroup:decode_threads_per_group];
-    [decode_command endEncoding];
-    [command_buffer commit];
-    [command_buffer waitUntilCompleted];
-  }
-  {
-    id<MTLCommandBuffer> command_buffer = [gpu_helper_ commandBuffer];
-    command_buffer.label = @"TfLiteScoreBoxes";
-    id<MTLComputeCommandEncoder> score_command =
-        [command_buffer computeCommandEncoder];
-    [score_command setComputePipelineState:gpu_data_->score_program];
-    [score_command setBuffer:gpu_data_->scored_boxes_buffer offset:0 atIndex:0];
-    [score_command setBuffer:gpu_data_->raw_scores_buffer offset:0 atIndex:1];
-    MTLSize score_threads_per_group = MTLSizeMake(1, num_classes_, 1);
-    MTLSize score_threadgroups = MTLSizeMake(num_boxes_, 1, 1);
-    [score_command dispatchThreadgroups:score_threadgroups
+  id<MTLCommandBuffer> command_buffer = [gpu_helper_ commandBuffer];
+  command_buffer.label = @"TfLiteDecodeAndScoreBoxes";
+  id<MTLComputeCommandEncoder> command_encoder =
+      [command_buffer computeCommandEncoder];
+  [command_encoder setComputePipelineState:gpu_data_->decode_program];
+  [command_encoder setBuffer:gpu_data_->decoded_boxes_buffer
+                      offset:0
+                     atIndex:0];
+  [command_encoder setBuffer:gpu_data_->raw_boxes_buffer offset:0 atIndex:1];
+  [command_encoder setBuffer:gpu_data_->raw_anchors_buffer offset:0 atIndex:2];
+  MTLSize decode_threads_per_group = MTLSizeMake(1, 1, 1);
+  MTLSize decode_threadgroups = MTLSizeMake(num_boxes_, 1, 1);
+  [command_encoder dispatchThreadgroups:decode_threadgroups
+                  threadsPerThreadgroup:decode_threads_per_group];
+
+  [command_encoder setComputePipelineState:gpu_data_->score_program];
+  [command_encoder setBuffer:gpu_data_->scored_boxes_buffer offset:0 atIndex:0];
+  [command_encoder setBuffer:gpu_data_->raw_scores_buffer offset:0 atIndex:1];
+  MTLSize score_threads_per_group = MTLSizeMake(1, num_classes_, 1);
+  MTLSize score_threadgroups = MTLSizeMake(num_boxes_, 1, 1);
+  [command_encoder dispatchThreadgroups:score_threadgroups
                   threadsPerThreadgroup:score_threads_per_group];
-    [score_command endEncoding];
-    [command_buffer commit];
-    [command_buffer waitUntilCompleted];
-  }
+  [command_encoder endEncoding];
+  [MPPMetalUtil commitCommandBufferAndWait:command_buffer];
 
   // Copy decoded boxes from GPU to CPU.
   std::vector<float> boxes(num_boxes_ * num_coords_);

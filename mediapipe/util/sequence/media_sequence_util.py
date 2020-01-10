@@ -23,7 +23,7 @@ from __future__ import division
 from __future__ import print_function
 
 
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 
 def add_functions_to_module(function_dict, module_dict=None):

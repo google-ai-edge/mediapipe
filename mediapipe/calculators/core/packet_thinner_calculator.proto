@@ -1,0 +1,66 @@
+// Copyright 2018 The MediaPipe Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto2";
+
+package mediapipe;
+
+import "mediapipe/framework/calculator.proto";
+
+message PacketThinnerCalculatorOptions {
+  extend CalculatorOptions {
+    optional PacketThinnerCalculatorOptions ext = 288533508;
+  }
+
+  enum ThinnerType {
+    ASYNC = 1;  // Asynchronous thinner, described below [default].
+    SYNC = 2;   // Synchronous thinner, also described below.
+  }
+  optional ThinnerType thinner_type = 1 [default = ASYNC];
+
+  // The period (in microsecond) specifies the temporal interval during which
+  // only a single packet is emitted in the output stream.  Has subtly different
+  // semantics depending on the thinner type, as follows.
+  //
+  // Async thinner: this option is a refractory period -- once a packet is
+  // emitted, we guarantee that no packets will be emitted for period ticks.
+  //
+  // Sync thinner: the period specifies a temporal interval during which
+  // only one packet is emitted.  The emitted packet is guaranteed to be
+  // the one closest to the center of the temporal interval (no guarantee on
+  // how ties are broken).  More specifically,
+  //   intervals are centered at start_time + i * period
+  //   (for non-negative integers i).
+  // Thus, each interval extends period/2 ticks before and after its center.
+  // Additionally, in the sync thinner any packets earlier than start_time
+  // are discarded and the thinner calls Close() once timestamp equals or
+  // exceeds end_time.
+  optional int64 period = 2 [default = 1];
+
+  // Packets before start_time and at/after end_time are discarded.
+  // Additionally, for a sync thinner, start time specifies the center of
+  // time invervals as described above and therefore should be set explicitly.
+  optional int64 start_time = 3;  // If not specified, set to 0 for SYNC type,
+                                  // and set to Timestamp::Min() for ASYNC type.
+  optional int64 end_time = 4;    // Set to Timestamp::Max() if not specified.
+
+  // Whether the timestamps of packets emitted by sync thinner should
+  // correspond to the center of their corresponding temporal interval.
+  // If false, packets emitted using original timestamp (as in async thinner).
+  optional bool sync_output_timestamps = 5 [default = true];
+
+  // If true, update the frame rate in the header, if it's available, to an
+  // estimated frame rate due to the sampling.
+  optional bool update_frame_rate = 6 [default = false];
+}

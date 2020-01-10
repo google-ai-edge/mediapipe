@@ -55,6 +55,7 @@ android_library(
     resource_files = glob(["res/**"]),
     deps = [
         ":mediapipe_jni_lib",
+        "//mediapipe/framework/formats:detection_java_proto_lite",
         "//mediapipe/java/com/google/mediapipe/components:android_camerax_helper",
         "//mediapipe/java/com/google/mediapipe/components:android_components",
         "//mediapipe/java/com/google/mediapipe/framework:android_framework",
@@ -62,7 +63,6 @@ android_library(
         "//third_party:androidx_appcompat",
         "//third_party:androidx_constraint_layout",
         "//third_party:androidx_legacy_support_v4",
-        "//third_party:androidx_material",
         "//third_party:androidx_recyclerview",
         "//third_party:opencv",
         "@androidx_concurrent_futures//jar",

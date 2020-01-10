@@ -108,9 +108,9 @@ and model details are described in the
 [Hello World for C++](./hello_world_desktop.md) shows how to run a simple graph
 using the MediaPipe C++ APIs.
 
-### Feature Extration for YouTube-8M Challenge
+### Feature Extraction and Model Inference for YouTube-8M Challenge
 
-[Feature Extration and Model Inference for YouTube-8M Challenge](./youtube_8m.md)
+[Feature Extraction and Model Inference for YouTube-8M Challenge](./youtube_8m.md)
 shows how to use MediaPipe to prepare training data for the YouTube-8M Challenge
 and do the model inference with the baseline model.
 
@@ -119,6 +119,11 @@ and do the model inference with the baseline model.
 [Preparing Data Sets with MediaSequence](./media_sequence.md) shows how to use
 MediaPipe for media processing to prepare video data sets for training a
 TensorFlow model.
+
+### Automatic video cropping
+
+[AutoFlip](./autoflip.md) shows how to use MediaPipe to build an automatic video
+cropping pipeline that can convert an input video to arbitrary aspect ratios.
 
 ### Object Detection on Desktop
 

@@ -1,6 +1,8 @@
 ### Steps to run the YouTube-8M feature extraction graph
 
-1.  Checkout the mediapipe repository.
+1.  Checkout the repository and follow
+    [the installation instructions](https://github.com/google/mediapipe/blob/master/mediapipe/docs/install.md)
+    to set up MediaPipe.
 
     ```bash
     git clone https://github.com/google/mediapipe.git

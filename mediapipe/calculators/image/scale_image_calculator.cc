@@ -474,13 +474,20 @@ ScaleImageCalculator::~ScaleImageCalculator() {}
           input_width_, "x", input_height_));
     }
     if (input_format_ != image_frame.Format()) {
+      std::string image_frame_format_desc, input_format_desc;
+#ifdef MEDIAPIPE_MOBILE
+      image_frame_format_desc = std::to_string(image_frame.Format());
+      input_format_desc = std::to_string(input_format_);
+#else
       const proto_ns::EnumDescriptor* desc = ImageFormat::Format_descriptor();
+      image_frame_format_desc =
+          desc->FindValueByNumber(image_frame.Format())->DebugString();
+      input_format_desc = desc->FindValueByNumber(input_format_)->DebugString();
+#endif  // MEDIAPIPE_MOBILE
       return tool::StatusFail(absl::StrCat(
           "If a header specifies a format, then image frames on "
           "the stream must have that format.  Actual format ",
-          desc->FindValueByNumber(image_frame.Format())->DebugString(),
-          " but expected ",
-          desc->FindValueByNumber(input_format_)->DebugString()));
+          image_frame_format_desc, " but expected ", input_format_desc));
     }
   }
   return ::mediapipe::OkStatus();

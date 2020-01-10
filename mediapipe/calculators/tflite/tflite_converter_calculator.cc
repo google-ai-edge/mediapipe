@@ -294,11 +294,15 @@ REGISTER_CALCULATOR(TfLiteConverterCalculator);
       if (use_quantized_tensors_) {
         RET_CHECK(image_frame.Format() != mediapipe::ImageFormat::VEC32F1)
             << "Only 8-bit input images are supported for quantization.";
+        quant.type = kTfLiteAffineQuantization;
+        quant.params = nullptr;
         // Optional: Set 'quant' quantization params here if needed.
         interpreter_->SetTensorParametersReadWrite(0, kTfLiteUInt8, "",
                                                    {channels_preserved}, quant);
       } else {
-        // Default TfLiteQuantization used for no quantization.
+        // Initialize structure for no quantization.
+        quant.type = kTfLiteNoQuantization;
+        quant.params = nullptr;
         interpreter_->SetTensorParametersReadWrite(0, kTfLiteFloat32, "",
                                                    {channels_preserved}, quant);
       }
@@ -422,40 +426,35 @@ REGISTER_CALCULATOR(TfLiteConverterCalculator);
 #elif defined(MEDIAPIPE_IOS)
   // GpuBuffer to id<MTLBuffer> conversion.
   const auto& input = cc->Inputs().Tag("IMAGE_GPU").Get<mediapipe::GpuBuffer>();
-  {
-    id<MTLTexture> src_texture = [gpu_helper_ metalTextureWithGpuBuffer:input];
-    id<MTLCommandBuffer> command_buffer = [gpu_helper_ commandBuffer];
-    command_buffer.label = @"TfLiteConverterCalculatorConvert";
-    id<MTLComputeCommandEncoder> compute_encoder =
-        [command_buffer computeCommandEncoder];
-    [compute_encoder setComputePipelineState:gpu_data_out_->pipeline_state];
-    [compute_encoder setTexture:src_texture atIndex:0];
-    [compute_encoder setBuffer:gpu_data_out_->buffer offset:0 atIndex:1];
-    MTLSize threads_per_group = MTLSizeMake(kWorkgroupSize, kWorkgroupSize, 1);
-    MTLSize threadgroups =
-        MTLSizeMake(NumGroups(input.width(), kWorkgroupSize),
-                    NumGroups(input.height(), kWorkgroupSize), 1);
-    [compute_encoder dispatchThreadgroups:threadgroups
-                    threadsPerThreadgroup:threads_per_group];
-    [compute_encoder endEncoding];
-    [command_buffer commit];
-    [command_buffer waitUntilCompleted];
-  }
+  id<MTLCommandBuffer> command_buffer = [gpu_helper_ commandBuffer];
+
+  id<MTLTexture> src_texture = [gpu_helper_ metalTextureWithGpuBuffer:input];
+  command_buffer.label = @"TfLiteConverterCalculatorConvertAndBlit";
+  id<MTLComputeCommandEncoder> compute_encoder =
+      [command_buffer computeCommandEncoder];
+  [compute_encoder setComputePipelineState:gpu_data_out_->pipeline_state];
+  [compute_encoder setTexture:src_texture atIndex:0];
+  [compute_encoder setBuffer:gpu_data_out_->buffer offset:0 atIndex:1];
+  MTLSize threads_per_group = MTLSizeMake(kWorkgroupSize, kWorkgroupSize, 1);
+  MTLSize threadgroups =
+      MTLSizeMake(NumGroups(input.width(), kWorkgroupSize),
+                  NumGroups(input.height(), kWorkgroupSize), 1);
+  [compute_encoder dispatchThreadgroups:threadgroups
+                  threadsPerThreadgroup:threads_per_group];
+  [compute_encoder endEncoding];
 
   // Copy into outputs.
   // TODO Avoid this copy.
   auto output_tensors = absl::make_unique<std::vector<GpuTensor>>();
   output_tensors->resize(1);
-  {
-    id<MTLDevice> device = gpu_helper_.mtlDevice;
-    output_tensors->at(0) =
-        [device newBufferWithLength:gpu_data_out_->elements * sizeof(float)
-                            options:MTLResourceStorageModeShared];
-    [MPPMetalUtil blitMetalBufferTo:output_tensors->at(0)
-                               from:gpu_data_out_->buffer
-                           blocking:true
-                      commandBuffer:[gpu_helper_ commandBuffer]];
-  }
+  id<MTLDevice> device = gpu_helper_.mtlDevice;
+  output_tensors->at(0) =
+      [device newBufferWithLength:gpu_data_out_->elements * sizeof(float)
+                          options:MTLResourceStorageModeShared];
+  [MPPMetalUtil blitMetalBufferTo:output_tensors->at(0)
+                             from:gpu_data_out_->buffer
+                         blocking:false
+                    commandBuffer:command_buffer];
 
   cc->Outputs()
       .Tag("TENSORS_GPU")

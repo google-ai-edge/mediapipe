@@ -14,6 +14,7 @@
 //
 // An example of sending OpenCV webcam frames into a MediaPipe graph.
 // This example requires a linux computer and a GPU with EGL support drivers.
+#include <cstdlib>
 
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/image_frame.h"
@@ -75,16 +76,7 @@ DEFINE_string(output_video_path, "",
 
   cv::VideoWriter writer;
   const bool save_video = !FLAGS_output_video_path.empty();
-  if (save_video) {
-    LOG(INFO) << "Prepare video writer.";
-    cv::Mat test_frame;
-    capture.read(test_frame);                    // Consume first frame.
-    capture.set(cv::CAP_PROP_POS_AVI_RATIO, 0);  // Rewind to beginning.
-    writer.open(FLAGS_output_video_path,
-                mediapipe::fourcc('a', 'v', 'c', '1'),  // .mp4
-                capture.get(cv::CAP_PROP_FPS), test_frame.size());
-    RET_CHECK(writer.isOpened());
-  } else {
+  if (!save_video) {
     cv::namedWindow(kWindowName, /*flags=WINDOW_AUTOSIZE*/ 1);
 #if (CV_MAJOR_VERSION >= 3) && (CV_MINOR_VERSION >= 2)
     capture.set(cv::CAP_PROP_FRAME_WIDTH, 640);
@@ -99,7 +91,6 @@ DEFINE_string(output_video_path, "",
   MP_RETURN_IF_ERROR(graph.StartRun({}));
 
   LOG(INFO) << "Start grabbing and processing frames.";
-  size_t frame_timestamp = 0;
   bool grab_frames = true;
   while (grab_frames) {
     // Capture opencv camera or video frame.
@@ -120,8 +111,10 @@ DEFINE_string(output_video_path, "",
     camera_frame.copyTo(input_frame_mat);
 
     // Prepare and add graph input packet.
+    size_t frame_timestamp_us =
+        (double)cv::getTickCount() / (double)cv::getTickFrequency() * 1e6;
     MP_RETURN_IF_ERROR(
-        gpu_helper.RunInGlContext([&input_frame, &frame_timestamp, &graph,
+        gpu_helper.RunInGlContext([&input_frame, &frame_timestamp_us, &graph,
                                    &gpu_helper]() -> ::mediapipe::Status {
           // Convert ImageFrame to GpuBuffer.
           auto texture = gpu_helper.CreateSourceTexture(*input_frame.get());
@@ -131,7 +124,7 @@ DEFINE_string(output_video_path, "",
           // Send GPU image packet into the graph.
           MP_RETURN_IF_ERROR(graph.AddPacketToInputStream(
               kInputStream, mediapipe::Adopt(gpu_frame.release())
-                                .At(mediapipe::Timestamp(frame_timestamp++))));
+                                .At(mediapipe::Timestamp(frame_timestamp_us))));
           return ::mediapipe::OkStatus();
         }));
 
@@ -163,6 +156,13 @@ DEFINE_string(output_video_path, "",
     cv::Mat output_frame_mat = mediapipe::formats::MatView(output_frame.get());
     cv::cvtColor(output_frame_mat, output_frame_mat, cv::COLOR_RGB2BGR);
     if (save_video) {
+      if (!writer.isOpened()) {
+        LOG(INFO) << "Prepare video writer.";
+        writer.open(FLAGS_output_video_path,
+                    mediapipe::fourcc('a', 'v', 'c', '1'),  // .mp4
+                    capture.get(cv::CAP_PROP_FPS), output_frame_mat.size());
+        RET_CHECK(writer.isOpened());
+      }
       writer.write(output_frame_mat);
     } else {
       cv::imshow(kWindowName, output_frame_mat);
@@ -184,8 +184,9 @@ int main(int argc, char** argv) {
   ::mediapipe::Status run_status = RunMPPGraph();
   if (!run_status.ok()) {
     LOG(ERROR) << "Failed to run the graph: " << run_status.message();
+    return EXIT_FAILURE;
   } else {
     LOG(INFO) << "Success!";
   }
-  return 0;
+  return EXIT_SUCCESS;
 }

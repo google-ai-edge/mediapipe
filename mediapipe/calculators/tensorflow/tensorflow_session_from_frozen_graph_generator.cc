@@ -109,7 +109,7 @@ class TensorFlowSessionFromFrozenGraphGenerator : public PacketGenerator {
 
     RET_CHECK(graph_def.ParseFromString(graph_def_serialized));
     const tf::Status tf_status = session->session->Create(graph_def);
-    RET_CHECK(tf_status.ok()) << "Create failed: " << tf_status.error_message();
+    RET_CHECK(tf_status.ok()) << "Create failed: " << tf_status.ToString();
 
     for (const auto& key_value : options.tag_to_tensor_names()) {
       session->tag_to_tensor_map[key_value.first] = key_value.second;
@@ -119,7 +119,7 @@ class TensorFlowSessionFromFrozenGraphGenerator : public PacketGenerator {
           session->session->Run({}, {}, initialization_op_names, {});
       // RET_CHECK on the tf::Status object itself in order to print an
       // informative error message.
-      RET_CHECK(tf_status.ok()) << "Run failed: " << tf_status.error_message();
+      RET_CHECK(tf_status.ok()) << "Run failed: " << tf_status.ToString();
     }
 
     output_side_packets->Tag("SESSION") = Adopt(session.release());

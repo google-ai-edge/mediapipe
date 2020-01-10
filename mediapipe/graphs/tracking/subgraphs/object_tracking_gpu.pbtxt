@@ -1,0 +1,56 @@
+# MediaPipe object tracking subgraph.
+
+type: "ObjectTrackingSubgraphGpu"
+
+input_stream: "VIDEO:input_video"
+input_stream: "DETECTIONS:new_detections"
+output_stream: "DETECTIONS:tracked_detections"
+
+# Assigns an unique id for each new detection.
+node {
+  calculator: "DetectionUniqueIdCalculator"
+  input_stream: "DETECTIONS:new_detections"
+  output_stream: "DETECTIONS:detections_with_id"
+}
+
+# Converts detections to TimedBox protos which are used as initial location
+# for tracking.
+node {
+  calculator: "DetectionsToTimedBoxListCalculator"
+  input_stream: "DETECTIONS:detections_with_id"
+  output_stream: "BOXES:start_pos"
+}
+
+# Subgraph that tracks boxes (see box_tracking_gpu.pbtxt).
+node {
+  calculator: "BoxTrackingSubgraphGpu"
+  input_stream: "VIDEO:input_video"
+  input_stream: "BOXES:start_pos"
+  input_stream: "CANCEL_ID:cancel_object_id"
+  output_stream: "BOXES:boxes"
+}
+
+# Managers new detected objects and objects that are being tracked.
+# It associates the duplicated detections and updates the locations of
+# detections from tracking.
+node: {
+  calculator: "TrackedDetectionManagerCalculator"
+  input_stream: "DETECTIONS:detections_with_id"
+  input_stream: "TRACKING_BOXES:boxes"
+  output_stream: "DETECTIONS:tracked_detections"
+  output_stream: "CANCEL_OBJECT_ID:cancel_object_id"
+
+  input_stream_handler {
+    input_stream_handler: "SyncSetInputStreamHandler"
+    options {
+      [mediapipe.SyncSetInputStreamHandlerOptions.ext] {
+        sync_set {
+          tag_index: "TRACKING_BOXES"
+        }
+        sync_set {
+          tag_index: "DETECTIONS"
+        }
+      }
+    }
+  }
+}

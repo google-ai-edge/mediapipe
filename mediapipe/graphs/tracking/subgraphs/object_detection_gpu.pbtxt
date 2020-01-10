@@ -1,6 +1,6 @@
 # MediaPipe object detection subgraph.
 
-type: "ObjectDetectionSubgraph"
+type: "ObjectDetectionSubgraphGpu"
 
 input_stream: "IMAGE:input_video"
 output_stream: "DETECTIONS:output_detections"

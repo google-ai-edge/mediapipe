@@ -27,8 +27,10 @@
   AVCaptureDepthDataOutput* _depthDataOutput;
   AVCaptureDevice *_currentDevice;
 
+  matrix_float3x3 _cameraIntrinsicMatrix;
   OSType _pixelFormatType;
   BOOL _autoRotateBuffers;
+  BOOL _didReadCameraIntrinsicMatrix;
   BOOL _setupDone;
   BOOL _useDepth;
   BOOL _useCustomOrientation;
@@ -229,9 +231,6 @@
       AVCaptureConnection* connection =
         [_depthDataOutput connectionWithMediaType:AVMediaTypeDepthData];
 
-      if (connection != nil)
-        connection.enabled = true;
-
       // Set this when we have a handler.
       if (self.delegateQueue) {
         [_depthDataOutput setDelegate:self callbackQueue:self.delegateQueue];
@@ -244,6 +243,13 @@
   if (_useCustomOrientation) {
     AVCaptureConnection* connection = [_videoDataOutput connectionWithMediaType:AVMediaTypeVideo];
     connection.videoOrientation = _orientation;
+  }
+
+  {
+    AVCaptureConnection* connection = [_videoDataOutput connectionWithMediaType:AVMediaTypeVideo];
+    if ([connection isCameraIntrinsicMatrixDeliverySupported]) {
+      [connection setCameraIntrinsicMatrixDeliveryEnabled:YES];
+    }
   }
 
   _setupDone = YES;
@@ -271,6 +277,19 @@ didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer
     [self.delegate processVideoFrame:imageBuffer timestamp:timestamp fromSource:self];
   } else if ([self.delegate respondsToSelector:@selector(processVideoFrame:fromSource:)]) {
     [self.delegate processVideoFrame:imageBuffer fromSource:self];
+  }
+  if (!_didReadCameraIntrinsicMatrix) {
+    // Get camera intrinsic matrix.
+    CFTypeRef cameraIntrinsicData =
+        CMGetAttachment(sampleBuffer, kCMSampleBufferAttachmentKey_CameraIntrinsicMatrix, nil);
+    if (cameraIntrinsicData != nil) {
+      CFDataRef cfdr = (CFDataRef)cameraIntrinsicData;
+      matrix_float3x3* intrinsicMatrix = (matrix_float3x3*)(CFDataGetBytePtr(cfdr));
+      if (intrinsicMatrix != nil) {
+        _cameraIntrinsicMatrix = *intrinsicMatrix;
+      }
+    }
+    _didReadCameraIntrinsicMatrix = YES;
   }
 }
 

@@ -303,6 +303,7 @@ objc_library(
     visibility = ["//visibility:public"],
     deps = [
         "//mediapipe/objc:mediapipe_framework_ios",
+        "@com_google_absl//absl/time",
         "@google_toolbox_for_mac//:GTM_Defines",
     ],
 )

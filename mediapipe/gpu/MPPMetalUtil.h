@@ -42,6 +42,12 @@ NS_ASSUME_NONNULL_BEGIN
                  blocking:(bool)blocking
             commandBuffer:(id<MTLCommandBuffer>)commandBuffer;
 
+/// Commits the command buffer and waits until execution completes. This is
+/// functionally equivalent to calling commit and waitUntilCompleted on the
+/// command buffer, but may use different synchronization strategies, such as
+/// active wait.
++ (void)commitCommandBufferAndWait:(id<MTLCommandBuffer>)commandBuffer;
+
 @end
 
 NS_ASSUME_NONNULL_END

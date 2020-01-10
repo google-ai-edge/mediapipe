@@ -80,7 +80,9 @@ mediapipe_cc_proto_library(
     name = "opencv_image_encoder_calculator_cc_proto",
     srcs = ["opencv_image_encoder_calculator.proto"],
     cc_deps = ["//mediapipe/framework:calculator_cc_proto"],
-    visibility = ["//visibility:public"],
+    visibility = [
+        "//visibility:public",
+    ],
     deps = [":opencv_image_encoder_calculator_proto"],
 )
 

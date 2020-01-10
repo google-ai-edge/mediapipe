@@ -17,6 +17,7 @@
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status.h"
+#include "mediapipe/framework/timestamp.h"
 
 namespace mediapipe {
 
@@ -86,6 +87,7 @@ class PreviousLoopbackCalculator : public CalculatorBase {
         main_ts_.pop_front();
       }
     }
+    auto& loop_out = cc->Outputs().Get(loop_out_id_);
 
     while (!main_ts_.empty() && !loopback_packets_.empty()) {
       Timestamp main_timestamp = main_ts_.front();
@@ -95,18 +97,31 @@ class PreviousLoopbackCalculator : public CalculatorBase {
 
       if (previous_loopback.IsEmpty()) {
         // TODO: SetCompleteTimestampBound would be more useful.
-        cc->Outputs()
-            .Get(loop_out_id_)
-            .SetNextTimestampBound(main_timestamp + 1);
+        loop_out.SetNextTimestampBound(main_timestamp + 1);
       } else {
-        cc->Outputs().Get(loop_out_id_).AddPacket(std::move(previous_loopback));
+        loop_out.AddPacket(std::move(previous_loopback));
+      }
+    }
+
+    // In case of an empty loopback input, the next timestamp bound for
+    // loopback input is the loopback timestamp + 1.  The next timestamp bound
+    // for output is set and the main_ts_ vector is truncated accordingly.
+    if (loopback_packet.IsEmpty() &&
+        loopback_packet.Timestamp() != Timestamp::Unstarted()) {
+      Timestamp loopback_bound =
+          loopback_packet.Timestamp().NextAllowedInStream();
+      while (!main_ts_.empty() && main_ts_.front() <= loopback_bound) {
+        main_ts_.pop_front();
+      }
+      if (main_ts_.empty()) {
+        loop_out.SetNextTimestampBound(loopback_bound.NextAllowedInStream());
       }
     }
     if (!main_ts_.empty()) {
-      cc->Outputs().Get(loop_out_id_).SetNextTimestampBound(main_ts_.front());
+      loop_out.SetNextTimestampBound(main_ts_.front());
     }
     if (cc->Inputs().Get(main_id_).IsDone() && main_ts_.empty()) {
-      cc->Outputs().Get(loop_out_id_).Close();
+      loop_out.Close();
     }
     return ::mediapipe::OkStatus();
   }

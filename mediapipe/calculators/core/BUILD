@@ -48,6 +48,13 @@ proto_library(
 )
 
 proto_library(
+    name = "packet_thinner_calculator_proto",
+    srcs = ["packet_thinner_calculator.proto"],
+    visibility = ["//visibility:public"],
+    deps = ["//mediapipe/framework:calculator_proto"],
+)
+
+proto_library(
     name = "split_vector_calculator_proto",
     srcs = ["split_vector_calculator.proto"],
     visibility = ["//visibility:public"],
@@ -100,6 +107,14 @@ mediapipe_cc_proto_library(
     cc_deps = ["//mediapipe/framework:calculator_cc_proto"],
     visibility = ["//visibility:public"],
     deps = [":packet_resampler_calculator_proto"],
+)
+
+mediapipe_cc_proto_library(
+    name = "packet_thinner_calculator_cc_proto",
+    srcs = ["packet_thinner_calculator.proto"],
+    cc_deps = ["//mediapipe/framework:calculator_cc_proto"],
+    visibility = ["//visibility:public"],
+    deps = [":packet_thinner_calculator_proto"],
 )
 
 mediapipe_cc_proto_library(
@@ -284,7 +299,6 @@ cc_test(
     srcs = ["concatenate_vector_calculator_test.cc"],
     deps = [
         ":concatenate_vector_calculator",
-        "//mediapipe/calculators/core:packet_resampler_calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework:calculator_runner",
         "//mediapipe/framework:timestamp",
@@ -452,6 +466,37 @@ cc_test(
 )
 
 cc_library(
+    name = "packet_thinner_calculator",
+    srcs = ["packet_thinner_calculator.cc"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//mediapipe/calculators/core:packet_thinner_calculator_cc_proto",
+        "//mediapipe/framework:calculator_context",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/formats:video_stream_header",
+        "//mediapipe/framework/port:integral_types",
+        "//mediapipe/framework/port:logging",
+        "//mediapipe/framework/port:status",
+    ],
+    alwayslink = 1,
+)
+
+cc_test(
+    name = "packet_thinner_calculator_test",
+    srcs = ["packet_thinner_calculator_test.cc"],
+    deps = [
+        ":packet_thinner_calculator",
+        "//mediapipe/calculators/core:packet_thinner_calculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:calculator_runner",
+        "//mediapipe/framework/formats:video_stream_header",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:integral_types",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_library(
     name = "pass_through_calculator",
     srcs = ["pass_through_calculator.cc"],
     visibility = [
@@ -572,6 +617,7 @@ cc_test(
 cc_library(
     name = "packet_resampler_calculator",
     srcs = ["packet_resampler_calculator.cc"],
+    hdrs = ["packet_resampler_calculator.h"],
     visibility = [
         "//visibility:public",
     ],
@@ -595,17 +641,17 @@ cc_library(
 cc_test(
     name = "packet_resampler_calculator_test",
     timeout = "short",
-    srcs = ["packet_resampler_calculator_test.cc"],
+    srcs = [
+        "packet_resampler_calculator_test.cc",
+    ],
     deps = [
         ":packet_resampler_calculator",
         "//mediapipe/calculators/core:packet_resampler_calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework:calculator_runner",
-        "//mediapipe/framework:timestamp",
         "//mediapipe/framework/formats:video_stream_header",
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/framework/port:parse_text_proto",
-        "//mediapipe/framework/port:status",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -698,7 +744,13 @@ cc_library(
         "//mediapipe/util:resource_util",
         "@org_tensorflow//tensorflow/lite:framework",
         "@org_tensorflow//tensorflow/lite/kernels:builtin_ops",
-    ],
+    ] + select({
+        "//mediapipe/gpu:disable_gpu": [],
+        "//mediapipe:ios": [],
+        "//conditions:default": [
+            "@org_tensorflow//tensorflow/lite/delegates/gpu/gl:gl_buffer",
+        ],
+    }),
     alwayslink = 1,
 )
 

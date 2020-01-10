@@ -65,6 +65,15 @@ proto_library(
     ],
 )
 
+proto_library(
+    name = "video_pre_stream_calculator_proto",
+    srcs = ["video_pre_stream_calculator.proto"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//mediapipe/framework:calculator_proto",
+    ],
+)
+
 mediapipe_cc_proto_library(
     name = "motion_analysis_calculator_cc_proto",
     srcs = ["motion_analysis_calculator.proto"],
@@ -96,6 +105,16 @@ mediapipe_cc_proto_library(
     ],
     visibility = ["//visibility:public"],
     deps = [":box_tracker_calculator_proto"],
+)
+
+mediapipe_cc_proto_library(
+    name = "video_pre_stream_calculator_cc_proto",
+    srcs = ["video_pre_stream_calculator.proto"],
+    cc_deps = [
+        "//mediapipe/framework:calculator_cc_proto",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [":video_pre_stream_calculator_proto"],
 )
 
 mediapipe_cc_proto_library(
@@ -280,6 +299,19 @@ cc_library(
     alwayslink = 1,
 )
 
+cc_library(
+    name = "video_pre_stream_calculator",
+    srcs = ["video_pre_stream_calculator.cc"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":video_pre_stream_calculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/formats:image_frame",
+        "//mediapipe/framework/formats:video_stream_header",
+    ],
+    alwayslink = 1,
+)
+
 filegroup(
     name = "test_videos",
     srcs = [
@@ -409,5 +441,19 @@ cc_test(
         "//mediapipe/framework/stream_handler:sync_set_input_stream_handler",
         "//mediapipe/util/tracking:box_tracker_cc_proto",
         "//mediapipe/util/tracking:tracking_cc_proto",
+    ],
+)
+
+cc_test(
+    name = "video_pre_stream_calculator_test",
+    srcs = ["video_pre_stream_calculator_test.cc"],
+    deps = [
+        ":video_pre_stream_calculator",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/formats:image_frame",
+        "//mediapipe/framework/formats:video_stream_header",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:parse_text_proto",
+        "//mediapipe/framework/port:status",
     ],
 )

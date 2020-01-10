@@ -24,7 +24,7 @@ import os
 import sys
 
 from absl import app
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 from tensorflow.python.tools import freeze_graph
 
 BASE_DIR = '/tmp/mediapipe/'

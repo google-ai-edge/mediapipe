@@ -56,10 +56,6 @@ class Graph {
   ::mediapipe::Status AddCallbackHandler(std::string output_stream_name,
                                          jobject java_callback);
 
-  // Adds a packet with header callback for a given stream name.
-  ::mediapipe::Status AddCallbackWithHeaderHandler(
-      std::string output_stream_name, jobject java_callback);
-
   // Loads a binary graph from a file.
   ::mediapipe::Status LoadBinaryGraph(std::string path_to_graph);
   // Loads a binary graph from a buffer.

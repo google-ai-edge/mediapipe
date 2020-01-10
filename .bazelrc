@@ -12,7 +12,7 @@ build --copt='-Wno-comment'
 build --copt='-Wno-return-type'
 build --copt='-Wno-unused-local-typedefs'
 build --copt='-Wno-ignored-attributes'
-# Temporarily set the incompatiblity flag for Bazel 0.27.0 and above
+# Temporarily set the incompatibility flag for Bazel 0.27.0 and above
 build --incompatible_disable_deprecated_attr_params=false
 build --incompatible_depset_is_not_iterable=false
 

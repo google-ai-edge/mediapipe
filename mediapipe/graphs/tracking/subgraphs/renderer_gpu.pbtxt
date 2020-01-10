@@ -1,6 +1,6 @@
 # MediaPipe object tracking rendering subgraph.
 
-type: "RendererSubgraph"
+type: "RendererSubgraphGpu"
 
 input_stream: "IMAGE:input_image"
 input_stream: "DETECTIONS:detections"

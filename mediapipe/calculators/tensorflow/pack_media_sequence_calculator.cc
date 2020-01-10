@@ -264,7 +264,7 @@ class PackMediaSequenceCalculator : public CalculatorBase {
     if (options.output_only_if_all_present()) {
       ::mediapipe::Status status = VerifySequence();
       if (!status.ok()) {
-        cc->GetCounter(status.error_message())->Increment();
+        cc->GetCounter(status.ToString())->Increment();
         return status;
       }
     }

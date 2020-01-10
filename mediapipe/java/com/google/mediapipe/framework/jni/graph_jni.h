@@ -62,10 +62,6 @@ JNIEXPORT void JNICALL GRAPH_METHOD(nativeAddPacketCallback)(
     JNIEnv* env, jobject thiz, jlong context, jstring stream_name,
     jobject callback);
 
-JNIEXPORT void JNICALL GRAPH_METHOD(nativeAddPacketWithHeaderCallback)(
-    JNIEnv* env, jobject thiz, jlong context, jstring stream_name,
-    jobject callback);
-
 JNIEXPORT jlong JNICALL GRAPH_METHOD(nativeAddSurfaceOutput)(
     JNIEnv* env, jobject thiz, jlong context, jstring stream_name);
 

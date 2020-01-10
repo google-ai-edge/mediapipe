@@ -268,6 +268,10 @@ TEST(GraphValidationTest, OptionalSubgraphStreams) {
         }
         executor {}
       )")));
+
+  MP_EXPECT_OK(graph_1.StartRun({}));
+  MP_EXPECT_OK(graph_1.CloseAllPacketSources());
+  MP_EXPECT_OK(graph_1.WaitUntilDone());
 }
 
 // Shows failing validation of optional subgraph inputs and output streams.
@@ -312,6 +316,79 @@ TEST(GraphValidationTest, OptionalSubgraphStreamsMismatched) {
   ASSERT_THAT(status.ToString(),
               testing::HasSubstr(
                   "PassThroughCalculator must use matching tags and indexes"));
+}
+
+// A calculator that optionally accepts an input-side-packet.
+class OptionalSideInputTestCalculator : public CalculatorBase {
+ public:
+  static ::mediapipe::Status GetContract(CalculatorContract* cc) {
+    cc->InputSidePackets().Tag("SIDEINPUT").Set<std::string>().Optional();
+    if (!cc->Outputs().HasTag("OUTPUT")) {
+      return ::mediapipe::InvalidArgumentError(
+          "Expected std::string as output.");
+    }
+    cc->Outputs().Tag("OUTPUT").Set<std::string>();
+    return ::mediapipe::OkStatus();
+  }
+
+  ::mediapipe::Status Process(CalculatorContext* cc) final {
+    std::string value("default");
+    if (cc->InputSidePackets().HasTag("SIDEINPUT")) {
+      value = cc->InputSidePackets().Tag("SIDEINPUT").Get<std::string>();
+    }
+    cc->Outputs().Tag("OUTPUT").Add(new std::string(value),
+                                    cc->InputTimestamp());
+    return ::mediapipe::OkStatus();
+  }
+};
+REGISTER_CALCULATOR(OptionalSideInputTestCalculator);
+
+TEST(GraphValidationTest, OptionalInputNotProvidedForSubgraphCalculator) {
+  // A subgraph defining one optional input-side-packet.
+  auto config_1 = ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+    type: "PassThroughGraph"
+    input_side_packet: "INPUT:input_0"
+    output_stream: "OUTPUT:output_0"
+    node {
+      calculator: "OptionalSideInputTestCalculator"
+      input_side_packet: "SIDEINPUT:input_0"  # std::string
+      output_stream: "OUTPUT:output_0"        # std::string
+    }
+  )");
+
+  // An enclosing graph that omits the optional input-side-packet.
+  auto config_2 = ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+    input_side_packet: "INPUT:foo_in"
+    output_stream: "OUTPUT:foo_out"
+    node {
+      calculator: "PassThroughGraph"
+      output_stream: "OUTPUT:foo_out"  # std::string
+    }
+  )");
+
+  GraphValidation validation_1;
+  MP_EXPECT_OK(validation_1.Validate({config_1, config_2}, {}));
+  CalculatorGraph graph_1;
+  MP_EXPECT_OK(graph_1.Initialize({config_1, config_2}, {}));
+  EXPECT_THAT(
+      graph_1.Config(),
+
+      // The expanded graph omits the optional input-side-packet.
+      EqualsProto(::mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+        input_side_packet: "INPUT:foo_in"
+        output_stream: "OUTPUT:foo_out"
+        node {
+          calculator: "OptionalSideInputTestCalculator"
+          output_stream: "OUTPUT:foo_out"
+        }
+        executor {}
+      )")));
+
+  std::map<std::string, Packet> side_packets;
+  side_packets.insert({"foo_in", mediapipe::Adopt(new std::string("input"))});
+  MP_EXPECT_OK(graph_1.StartRun(side_packets));
+  MP_EXPECT_OK(graph_1.CloseAllPacketSources());
+  MP_EXPECT_OK(graph_1.WaitUntilDone());
 }
 
 }  // namespace

@@ -10,7 +10,9 @@ http_archive(
     sha256 = "2ef429f5d7ce7111263289644d233707dba35e39696377ebab8b0bc701f7818e",
 )
 load("@bazel_skylib//lib:versions.bzl", "versions")
-versions.check(minimum_bazel_version = "0.24.1")
+versions.check(minimum_bazel_version = "0.24.1",
+               maximum_bazel_version = "1.2.1")
+
 
 # ABSL cpp library lts_2019_08_08.
 http_archive(

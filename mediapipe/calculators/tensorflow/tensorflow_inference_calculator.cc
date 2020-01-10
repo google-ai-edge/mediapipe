@@ -454,7 +454,7 @@ class TensorFlowInferenceCalculator : public CalculatorBase {
 
     // RET_CHECK on the tf::Status object itself in order to print an
     // informative error message.
-    RET_CHECK(tf_status.ok()) << "Run failed: " << tf_status.error_message();
+    RET_CHECK(tf_status.ok()) << "Run failed: " << tf_status.ToString();
 
     const int64 run_end_time = absl::ToUnixMicros(clock_->TimeNow());
     cc->GetCounter(kTotalSessionRunsTimeUsecsCounterSuffix)

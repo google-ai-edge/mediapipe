@@ -140,7 +140,7 @@ class TensorFlowSessionFromSavedModelCalculator : public CalculatorBase {
     if (!status.ok()) {
       return ::mediapipe::Status(
           static_cast<::mediapipe::StatusCode>(status.code()),
-          status.error_message());
+          status.ToString());
     }
 
     auto session = absl::make_unique<TensorFlowSession>();

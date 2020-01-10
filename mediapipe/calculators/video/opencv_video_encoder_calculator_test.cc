@@ -210,8 +210,8 @@ TEST(OpenCvVideoEncoderCalculatorTest, TestMkvVp8Video) {
   EXPECT_EQ(video_header.frame_rate,
             static_cast<double>(cap.get(cv::CAP_PROP_FPS)));
   EXPECT_EQ(video_header.duration,
-            static_cast<int>(cap.get(cv::CAP_PROP_FRAME_COUNT) /
-                             cap.get(cv::CAP_PROP_FPS)));
+            static_cast<int>(std::round(cap.get(cv::CAP_PROP_FRAME_COUNT) /
+                                        cap.get(cv::CAP_PROP_FPS))));
 }
 
 }  // namespace

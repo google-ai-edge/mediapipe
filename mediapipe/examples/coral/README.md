@@ -1,8 +1,12 @@
 # Coral Dev Board Setup (experimental)
 
-**Dislaimer**: Running MediaPipe on Coral is experimental, and this process may not be exact and is subject to change. These instructions have only been tested on the coral dev board with OS version _mendel day_, and may vary for different devices and workstations.
+**Dislaimer**: Running MediaPipe on Coral is experimental, and this process may
+not be exact and is subject to change. These instructions have only been tested
+on the [Coral Dev Board](https://coral.ai/products/dev-board/) with Mendel 4.0,
+and may vary for different devices and workstations.
 
-This file describes how to prepare a Google Coral Dev Board and setup a linux Docker container for building MediaPipe applications that run on Edge TPU.
+This file describes how to prepare a Coral Dev Board and setup a Linux
+Docker container for building MediaPipe applications that run on Edge TPU.
 
 ## Before creating the Docker
 

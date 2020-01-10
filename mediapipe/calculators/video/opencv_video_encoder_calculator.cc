@@ -183,14 +183,20 @@ class OpenCvVideoEncoderCalculator : public CalculatorBase {
 #ifdef HAVE_FFMPEG
     const std::string& audio_file_path =
         cc->InputSidePackets().Tag("AUDIO_FILE_PATH").Get<std::string>();
-    // A temp output file is needed because FFmpeg can't do in-place editing.
-    const std::string temp_file_path = std::tmpnam(nullptr);
-    system(absl::StrCat("mv ", output_file_path_, " ", temp_file_path,
-                        "&& ffmpeg -nostats -loglevel 0 -i ", temp_file_path,
-                        " -i ", audio_file_path,
-                        "  -c copy -map 0:v:0 -map 1:a:0 ", output_file_path_,
-                        "&& rm ", temp_file_path)
-               .c_str());
+    if (audio_file_path.empty()) {
+      LOG(WARNING) << "OpenCvVideoEncoderCalculator isn't able to attach the "
+                      "audio tracks to the generated video because the audio "
+                      "file path is not specified.";
+    } else {
+      // A temp output file is needed because FFmpeg can't do in-place editing.
+      const std::string temp_file_path = std::tmpnam(nullptr);
+      system(absl::StrCat("mv ", output_file_path_, " ", temp_file_path,
+                          "&& ffmpeg -nostats -loglevel 0 -i ", temp_file_path,
+                          " -i ", audio_file_path,
+                          "  -c copy -map 0:v:0 -map 1:a:0 ", output_file_path_,
+                          "&& rm ", temp_file_path)
+                 .c_str());
+    }
 
 #else
     return ::mediapipe::InvalidArgumentErrorBuilder(MEDIAPIPE_LOC)

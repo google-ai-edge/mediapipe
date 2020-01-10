@@ -56,6 +56,9 @@ with the following lines:
 This data is structured for per-clip action classification where images is
 the sequence of images and labels are a one-hot encoded value. See
 as_dataset() for more details.
+
+Note that the number of videos changes in the data set over time, so it will
+likely be necessary to change the expected number of examples.
 """
 
 from __future__ import absolute_import
@@ -93,15 +96,15 @@ FILEPATTERN = "kinetics_700_%s_25fps_rgb_flow"
 SPLITS = {
     "train": {
         "shards": 1000,
-        "examples": 541279
+        "examples": 540247
     },
     "validate": {
         "shards": 100,
-        "examples": 34688
+        "examples": 34610
     },
     "test": {
         "shards": 100,
-        "examples": 69278
+        "examples": 69103
     },
     "custom": {
         "csv": None,  # Add a CSV for your own data here.
@@ -121,7 +124,8 @@ class Kinetics(object):
     self.path_to_data = path_to_data
 
   def as_dataset(self, split, shuffle=False, repeat=False,
-                 serialized_prefetch_size=32, decoded_prefetch_size=32):
+                 serialized_prefetch_size=32, decoded_prefetch_size=32,
+                 parse_labels=True):
     """Returns Kinetics as a tf.data.Dataset.
 
     After running this function, calling padded_batch() on the Dataset object
@@ -135,20 +139,29 @@ class Kinetics(object):
       repeat: if true, repeats the data set forever.
       serialized_prefetch_size: the buffer size for reading from disk.
       decoded_prefetch_size: the buffer size after decoding.
+      parse_labels: if true, also returns the "labels" below. The only
+        case where this should be false is if the data set was not constructed
+        with a label map, resulting in this field being missing.
     Returns:
       A tf.data.Dataset object with the following structure: {
         "images": float tensor, shape [time, height, width, channels]
         "flow": float tensor, shape [time, height, width, 2]
-        "labels": float32 tensor, shape [num_classes], one hot encoded
         "num_frames": int32 tensor, shape [], number of frames in the sequence
+        "labels": float32 tensor, shape [num_classes], one hot encoded. Only
+          present if parse_labels is true.
     """
+    logging.info("If you see an error about labels, and you don't supply "
+                 "labels in your CSV, set parse_labels=False")
     def parse_fn(sequence_example):
       """Parses a Kinetics example."""
       context_features = {
           ms.get_example_id_key(): ms.get_example_id_default_parser(),
-          ms.get_clip_label_string_key(): tf.FixedLenFeature((), tf.string),
-          ms.get_clip_label_index_key(): tf.FixedLenFeature((), tf.int64),
       }
+      if parse_labels:
+        context_features[
+            ms.get_clip_label_string_key()] = tf.FixedLenFeature((), tf.string)
+        context_features[
+            ms.get_clip_label_index_key()] = tf.FixedLenFeature((), tf.int64)
 
       sequence_features = {
           ms.get_image_encoded_key(): ms.get_image_encoded_default_parser(),
@@ -157,8 +170,6 @@ class Kinetics(object):
       }
       parsed_context, parsed_sequence = tf.io.parse_single_sequence_example(
           sequence_example, context_features, sequence_features)
-
-      target = tf.one_hot(parsed_context[ms.get_clip_label_index_key()], 700)
 
       images = tf.image.convert_image_dtype(
           tf.map_fn(tf.image.decode_jpeg,
@@ -177,11 +188,13 @@ class Kinetics(object):
       flow = (flow[:, :, :, :2] - 0.5) * 2 * 20.
 
       output_dict = {
-          "labels": target,
           "images": images,
           "flow": flow,
           "num_frames": num_frames,
       }
+      if parse_labels:
+        target = tf.one_hot(parsed_context[ms.get_clip_label_index_key()], 700)
+        output_dict["labels"] = target
       return output_dict
 
     if split not in SPLITS:

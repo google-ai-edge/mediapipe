@@ -21,7 +21,7 @@ import sys
 
 from absl import app
 from absl import flags
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 from mediapipe.util.sequence import media_sequence as ms
 
 FLAGS = flags.FLAGS

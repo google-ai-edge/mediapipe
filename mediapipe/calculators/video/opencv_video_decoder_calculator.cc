@@ -72,6 +72,8 @@ ImageFormat::Format GetImageFormat(int num_channels) {
 // OpenCV's VideoCapture doesn't decode audio tracks. If the audio tracks need
 // to be saved, specify an output side packet with tag "SAVED_AUDIO_PATH".
 // The calculator will call FFmpeg binary to save audio tracks as an aac file.
+// If the audio tracks can't be extracted by FFmpeg, the output side packet
+// will contain an empty std::string.
 //
 // Example config:
 // node {
@@ -150,13 +152,23 @@ class OpenCvVideoDecoderCalculator : public CalculatorBase {
     if (cc->OutputSidePackets().HasTag("SAVED_AUDIO_PATH")) {
 #ifdef HAVE_FFMPEG
       std::string saved_audio_path = std::tmpnam(nullptr);
-      system(absl::StrCat("ffmpeg -nostats -loglevel 0 -i ", input_file_path,
-                          " -vn -f adts ", saved_audio_path)
-                 .c_str());
-      cc->OutputSidePackets()
-          .Tag("SAVED_AUDIO_PATH")
-          .Set(MakePacket<std::string>(saved_audio_path));
-
+      std::string ffmpeg_command =
+          absl::StrCat("ffmpeg -nostats -loglevel 0 -i ", input_file_path,
+                       " -vn -f adts ", saved_audio_path);
+      system(ffmpeg_command.c_str());
+      int status_code = system(absl::StrCat("ls ", saved_audio_path).c_str());
+      if (status_code == 0) {
+        cc->OutputSidePackets()
+            .Tag("SAVED_AUDIO_PATH")
+            .Set(MakePacket<std::string>(saved_audio_path));
+      } else {
+        LOG(WARNING) << "FFmpeg can't extract audio from " << input_file_path
+                     << " by executing the following command: "
+                     << ffmpeg_command;
+        cc->OutputSidePackets()
+            .Tag("SAVED_AUDIO_PATH")
+            .Set(MakePacket<std::string>(std::string()));
+      }
 #else
       return ::mediapipe::InvalidArgumentErrorBuilder(MEDIAPIPE_LOC)
              << "OpenCVVideoDecoderCalculator can't save the audio file "

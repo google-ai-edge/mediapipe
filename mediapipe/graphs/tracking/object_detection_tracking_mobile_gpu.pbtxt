@@ -23,14 +23,14 @@ node {
 
 # Subgraph that detections objects (see object_detection_gpu.pbtxt).
 node {
-  calculator: "ObjectDetectionSubgraph"
+  calculator: "ObjectDetectionSubgraphGpu"
   input_stream: "IMAGE:throttled_input_video"
   output_stream: "DETECTIONS:output_detections"
 }
 
-# Subgraph that tracks objects (see object_tracking.pbtxt).
+# Subgraph that tracks objects (see object_tracking_gpu.pbtxt).
 node {
-  calculator: "ObjectTrackingSubgraph"
+  calculator: "ObjectTrackingSubgraphGpu"
   input_stream: "VIDEO:input_video"
   input_stream: "DETECTIONS:output_detections"
   output_stream: "DETECTIONS:tracked_detections"
@@ -39,7 +39,7 @@ node {
 # Subgraph that renders annotations and overlays them on top of the input
 # images (see renderer_gpu.pbtxt).
 node {
-  calculator: "RendererSubgraph"
+  calculator: "RendererSubgraphGpu"
   input_stream: "IMAGE:input_video"
   input_stream: "DETECTIONS:tracked_detections"
   output_stream: "IMAGE:output_video"

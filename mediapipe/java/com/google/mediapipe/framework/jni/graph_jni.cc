@@ -194,25 +194,6 @@ GRAPH_METHOD(nativeAddPacketCallback)(JNIEnv* env, jobject thiz, jlong context,
                                                         global_callback_ref));
 }
 
-JNIEXPORT void JNICALL GRAPH_METHOD(nativeAddPacketWithHeaderCallback)(
-    JNIEnv* env, jobject thiz, jlong context, jstring stream_name,
-    jobject callback) {
-  mediapipe::android::Graph* mediapipe_graph =
-      reinterpret_cast<mediapipe::android::Graph*>(context);
-  std::string output_stream_name = JStringToStdString(env, stream_name);
-
-  // Create a global reference to the callback object, so that it can
-  // be accessed later.
-  jobject global_callback_ref = env->NewGlobalRef(callback);
-  if (!global_callback_ref) {
-    ThrowIfError(
-        env, ::mediapipe::InternalError("Failed to allocate packet callback"));
-    return;
-  }
-  ThrowIfError(env, mediapipe_graph->AddCallbackWithHeaderHandler(
-                        output_stream_name, global_callback_ref));
-}
-
 JNIEXPORT jlong JNICALL GRAPH_METHOD(nativeAddSurfaceOutput)(
     JNIEnv* env, jobject thiz, jlong context, jstring stream_name) {
   mediapipe::android::Graph* mediapipe_graph =

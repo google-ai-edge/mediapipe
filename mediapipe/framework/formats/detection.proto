@@ -24,6 +24,9 @@ package mediapipe;
 
 import "mediapipe/framework/formats/location_data.proto";
 
+option java_package = "com.google.mediapipe.formats.proto";
+option java_outer_classname = "DetectionProto";
+
 message Detection {
   // i-th label or label_id has a score encoded by the i-th element in score.
   // Either string or integer labels must be used but not both at the same time.

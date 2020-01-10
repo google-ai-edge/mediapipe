@@ -15,12 +15,14 @@
 #ifndef MEDIAPIPE_CALCULATORS_CORE_SPLIT_VECTOR_CALCULATOR_H_
 #define MEDIAPIPE_CALCULATORS_CORE_SPLIT_VECTOR_CALCULATOR_H_
 
+#include <type_traits>
 #include <vector>
 
 #include "mediapipe/calculators/core/split_vector_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/port/canonical_errors.h"
 #include "mediapipe/framework/port/ret_check.h"
+#include "mediapipe/framework/port/status.h"
 #include "mediapipe/util/resource_util.h"
 #include "tensorflow/lite/error_reporter.h"
 #include "tensorflow/lite/interpreter.h"
@@ -28,6 +30,20 @@
 #include "tensorflow/lite/model.h"
 
 namespace mediapipe {
+
+template <typename T>
+using IsCopyable = std::enable_if_t<std::is_copy_constructible<T>::value, bool>;
+
+template <typename T>
+using IsNotCopyable =
+    std::enable_if_t<!std::is_copy_constructible<T>::value, bool>;
+
+template <typename T>
+using IsMovable = std::enable_if_t<std::is_move_constructible<T>::value, bool>;
+
+template <typename T>
+using IsNotMovable =
+    std::enable_if_t<!std::is_move_constructible<T>::value, bool>;
 
 // Splits an input packet with std::vector<T> into multiple std::vector<T>
 // output packets using the [begin, end) ranges specified in
@@ -39,7 +55,7 @@ namespace mediapipe {
 // combined into one vector.
 // To use this class for a particular type T, register a calculator using
 // SplitVectorCalculator<T>.
-template <typename T>
+template <typename T, bool move_elements>
 class SplitVectorCalculator : public CalculatorBase {
  public:
   static ::mediapipe::Status GetContract(CalculatorContract* cc) {
@@ -51,23 +67,16 @@ class SplitVectorCalculator : public CalculatorBase {
     const auto& options =
         cc->Options<::mediapipe::SplitVectorCalculatorOptions>();
 
+    if (!std::is_copy_constructible<T>::value || move_elements) {
+      // Ranges of elements shouldn't overlap when the vector contains
+      // non-copyable elements.
+      RET_CHECK_OK(checkRangesDontOverlap(options));
+    }
+
     if (options.combine_outputs()) {
       RET_CHECK_EQ(cc->Outputs().NumEntries(), 1);
       cc->Outputs().Index(0).Set<std::vector<T>>();
-      for (int i = 0; i < options.ranges_size() - 1; ++i) {
-        for (int j = i + 1; j < options.ranges_size(); ++j) {
-          const auto& range_0 = options.ranges(i);
-          const auto& range_1 = options.ranges(j);
-          if ((range_0.begin() >= range_1.begin() &&
-               range_0.begin() < range_1.end()) ||
-              (range_1.begin() >= range_0.begin() &&
-               range_1.begin() < range_0.end())) {
-            return ::mediapipe::InvalidArgumentError(
-                "Ranges must be non-overlapping when using combine_outputs "
-                "option.");
-          }
-        }
-      }
+      RET_CHECK_OK(checkRangesDontOverlap(options));
     } else {
       if (cc->Outputs().NumEntries() != options.ranges_size()) {
         return ::mediapipe::InvalidArgumentError(
@@ -117,14 +126,26 @@ class SplitVectorCalculator : public CalculatorBase {
   }
 
   ::mediapipe::Status Process(CalculatorContext* cc) override {
-    const auto& input = cc->Inputs().Index(0).Get<std::vector<T>>();
-    RET_CHECK_GE(input.size(), max_range_end_);
+    if (cc->Inputs().Index(0).IsEmpty()) return ::mediapipe::OkStatus();
 
+    if (move_elements) {
+      return ProcessMovableElements<T>(cc);
+    } else {
+      return ProcessCopyableElements<T>(cc);
+    }
+  }
+
+  template <typename U, IsCopyable<U> = true>
+  ::mediapipe::Status ProcessCopyableElements(CalculatorContext* cc) {
+    // static_assert(std::is_copy_constructible<U>::value,
+    //              "Cannot copy non-copyable elements");
+    const auto& input = cc->Inputs().Index(0).Get<std::vector<U>>();
+    RET_CHECK_GE(input.size(), max_range_end_);
     if (combine_outputs_) {
-      auto output = absl::make_unique<std::vector<T>>();
+      auto output = absl::make_unique<std::vector<U>>();
       output->reserve(total_elements_);
       for (int i = 0; i < ranges_.size(); ++i) {
-        auto elements = absl::make_unique<std::vector<T>>(
+        auto elements = absl::make_unique<std::vector<U>>(
             input.begin() + ranges_[i].first,
             input.begin() + ranges_[i].second);
         output->insert(output->end(), elements->begin(), elements->end());
@@ -134,7 +155,7 @@ class SplitVectorCalculator : public CalculatorBase {
       if (element_only_) {
         for (int i = 0; i < ranges_.size(); ++i) {
           cc->Outputs().Index(i).AddPacket(
-              MakePacket<T>(input[ranges_[i].first]).At(cc->InputTimestamp()));
+              MakePacket<U>(input[ranges_[i].first]).At(cc->InputTimestamp()));
         }
       } else {
         for (int i = 0; i < ranges_.size(); ++i) {
@@ -149,7 +170,78 @@ class SplitVectorCalculator : public CalculatorBase {
     return ::mediapipe::OkStatus();
   }
 
+  template <typename U, IsNotCopyable<U> = true>
+  ::mediapipe::Status ProcessCopyableElements(CalculatorContext* cc) {
+    return ::mediapipe::InternalError("Cannot copy non-copyable elements.");
+  }
+
+  template <typename U, IsMovable<U> = true>
+  ::mediapipe::Status ProcessMovableElements(CalculatorContext* cc) {
+    ::mediapipe::StatusOr<std::unique_ptr<std::vector<U>>> input_status =
+        cc->Inputs().Index(0).Value().Consume<std::vector<U>>();
+    if (!input_status.ok()) return input_status.status();
+    std::unique_ptr<std::vector<U>> input_vector =
+        std::move(input_status).ValueOrDie();
+    RET_CHECK_GE(input_vector->size(), max_range_end_);
+
+    if (combine_outputs_) {
+      auto output = absl::make_unique<std::vector<U>>();
+      output->reserve(total_elements_);
+      for (int i = 0; i < ranges_.size(); ++i) {
+        output->insert(
+            output->end(),
+            std::make_move_iterator(input_vector->begin() + ranges_[i].first),
+            std::make_move_iterator(input_vector->begin() + ranges_[i].second));
+      }
+      cc->Outputs().Index(0).Add(output.release(), cc->InputTimestamp());
+    } else {
+      if (element_only_) {
+        for (int i = 0; i < ranges_.size(); ++i) {
+          cc->Outputs().Index(i).AddPacket(
+              MakePacket<U>(std::move(input_vector->at(ranges_[i].first)))
+                  .At(cc->InputTimestamp()));
+        }
+      } else {
+        for (int i = 0; i < ranges_.size(); ++i) {
+          auto output = absl::make_unique<std::vector<T>>();
+          output->insert(
+              output->end(),
+              std::make_move_iterator(input_vector->begin() + ranges_[i].first),
+              std::make_move_iterator(input_vector->begin() +
+                                      ranges_[i].second));
+          cc->Outputs().Index(i).Add(output.release(), cc->InputTimestamp());
+        }
+      }
+    }
+
+    return ::mediapipe::OkStatus();
+  }
+
+  template <typename U, IsNotMovable<U> = true>
+  ::mediapipe::Status ProcessMovableElements(CalculatorContext* cc) {
+    return ::mediapipe::InternalError("Cannot move non-movable elements.");
+  }
+
  private:
+  static ::mediapipe::Status checkRangesDontOverlap(
+      const ::mediapipe::SplitVectorCalculatorOptions& options) {
+    for (int i = 0; i < options.ranges_size() - 1; ++i) {
+      for (int j = i + 1; j < options.ranges_size(); ++j) {
+        const auto& range_0 = options.ranges(i);
+        const auto& range_1 = options.ranges(j);
+        if ((range_0.begin() >= range_1.begin() &&
+             range_0.begin() < range_1.end()) ||
+            (range_1.begin() >= range_0.begin() &&
+             range_1.begin() < range_0.end())) {
+          return ::mediapipe::InvalidArgumentError(
+              "Ranges must be non-overlapping when using combine_outputs "
+              "option.");
+        }
+      }
+    }
+    return ::mediapipe::OkStatus();
+  }
+
   std::vector<std::pair<int32, int32>> ranges_;
   int32 max_range_end_ = -1;
   int32 total_elements_ = 0;

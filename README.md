@@ -15,6 +15,7 @@
 * [Hair Segmentation](mediapipe/docs/hair_segmentation_mobile_gpu.md)
 * [Object Detection](mediapipe/docs/object_detection_mobile_gpu.md)
 * [Object Detection and Tracking](mediapipe/docs/object_tracking_mobile_gpu.md)
+* [AutoFlip](mediapipe/docs/autoflip.md)
 
 ![hand_tracking](mediapipe/docs/images/mobile/hand_tracking_3d_android_gpu_small.gif)
 ![multi-hand_tracking](mediapipe/docs/images/mobile/multi_hand_tracking_android_gpu_small.gif)

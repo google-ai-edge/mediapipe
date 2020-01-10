@@ -70,6 +70,13 @@ mediapipe_cc_proto_library(
     deps = [":detection_proto"],
 )
 
+java_lite_proto_library(
+    name = "detection_java_proto_lite",
+    strict_deps = 0,
+    visibility = ["//mediapipe:__subpackages__"],
+    deps = [":detection_proto"],
+)
+
 mediapipe_cc_proto_library(
     name = "classification_cc_proto",
     srcs = ["classification.proto"],

@@ -14,6 +14,9 @@
 
 #import "mediapipe/gpu/MPPMetalUtil.h"
 
+#include "absl/time/clock.h"
+#include "absl/time/time.h"
+
 @implementation MPPMetalUtil
 
 + (void)blitMetalBufferTo:(id<MTLBuffer>)destination
@@ -44,8 +47,41 @@
              destinationOffset:destinationOffset
                           size:bytes];
   [blit_command endEncoding];
+  if (blocking) {
+    [MPPMetalUtil commitCommandBufferAndWait:commandBuffer];
+  } else {
+    [commandBuffer commit];
+  }
+}
+
++ (void)commitCommandBufferAndWait:(id<MTLCommandBuffer>)commandBuffer {
+#if !defined(MEDIAPIPE_DISABLE_ACTIVE_WAIT)
+  // The bufferCompleted variable doesn't require atomic access.
+  // std::atomic<> can't be used here because the variable must be captured
+  // with the block. Also std::atomic<> orders changes of the variable but
+  // in this case any kind of out-of-order execution will be serialized.
+  __block volatile bool bufferCompleted = false;
+  [commandBuffer addCompletedHandler:^(id<MTLCommandBuffer>) {
+    bufferCompleted = true;
+  }];
   [commandBuffer commit];
-  if (blocking) [commandBuffer waitUntilCompleted];
+  absl::Time start_time = absl::Now();
+  while (!bufferCompleted) {
+    auto duration = absl::Now() - start_time;
+    // If the spin-lock takes more than 5 ms then go to blocking wait:
+    // - it frees the CPU core for another threads: increase the performance/decrease power
+    // consumption.
+    // - if a driver thread that notifies that the GPU buffer is completed has lower priority then
+    // the CPU core is allocated for the thread.
+    if (duration >= absl::Milliseconds(5)) {
+      [commandBuffer waitUntilCompleted];
+      break;
+    }
+  }
+#else
+  [commandBuffer commit];
+  [commandBuffer waitUntilCompleted];
+#endif
 }
 
 @end

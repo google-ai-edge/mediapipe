@@ -43,8 +43,12 @@ JNIEXPORT jlong JNICALL PACKET_CREATOR_METHOD(nativeCreateGrayscaleImage)(
     JNIEnv* env, jobject thiz, jlong context, jobject byte_buffer, jint width,
     jint height);
 
+JNIEXPORT jlong JNICALL PACKET_CREATOR_METHOD(nativeCreateAudioPacketDirect)(
+    JNIEnv* env, jobject thiz, jlong context, jobject data, jint num_channels,
+    jint num_samples);
+
 JNIEXPORT jlong JNICALL PACKET_CREATOR_METHOD(nativeCreateAudioPacket)(
-    JNIEnv* env, jobject thiz, jlong context, jbyteArray data,
+    JNIEnv* env, jobject thiz, jlong context, jbyteArray data, jint offset,
     jint num_channels, jint num_samples);
 
 JNIEXPORT jlong JNICALL PACKET_CREATOR_METHOD(nativeCreateInt16)(JNIEnv* env,

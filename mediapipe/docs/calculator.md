@@ -151,7 +151,6 @@ node {
    input_stream: "room_video_tick_signal"
    output_stream: "cloned_room_mic_signal"
    output_stream: "cloned_lighting_sensor"
-   output_stream: "cloned_video_tick_signal"
  }
 ```
 

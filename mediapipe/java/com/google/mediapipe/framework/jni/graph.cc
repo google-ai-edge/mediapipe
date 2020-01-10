@@ -190,26 +190,6 @@ void Graph::EnsureMinimumExecutorStackSizeForJava() {}
   return ::mediapipe::OkStatus();
 }
 
-::mediapipe::Status Graph::AddCallbackWithHeaderHandler(
-    std::string output_stream_name, jobject java_callback) {
-  if (!graph_config()) {
-    return ::mediapipe::InternalError("Graph is not loaded!");
-  }
-  std::unique_ptr<internal::CallbackHandler> handler(
-      new internal::CallbackHandler(this, java_callback));
-  std::string side_packet_name;
-  tool::AddCallbackWithHeaderCalculator(output_stream_name, output_stream_name,
-                                        graph_config(), &side_packet_name,
-                                        /* use_std_function = */ true);
-  EnsureMinimumExecutorStackSizeForJava();
-  side_packets_callbacks_.emplace(
-      side_packet_name,
-      MakePacket<std::function<void(const Packet&, const Packet&)>>(
-          handler->CreateCallbackWithHeader()));
-  callback_handlers_.emplace_back(std::move(handler));
-  return ::mediapipe::OkStatus();
-}
-
 int64_t Graph::AddSurfaceOutput(const std::string& output_stream_name) {
   if (!graph_config()) {
     LOG(ERROR) << "Graph is not loaded!";
