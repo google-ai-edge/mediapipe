@@ -17,9 +17,7 @@
 
     GLOG_logtostderr=1 bazel-bin/mediapipe/examples/desktop/autoflip/run_autoflip \
       --calculator_graph_config_file=mediapipe/examples/desktop/autoflip/autoflip_graph.pbtxt \
-      --input_side_packets=input_video_path=/absolute/path/to/the/local/video/file,\
-        output_video_path=/absolute/path/to/save/the/output/video/file,\
-        aspect_ratio=width:height
+      --input_side_packets=input_video_path=/absolute/path/to/the/local/video/file,output_video_path=/absolute/path/to/save/the/output/video/file,aspect_ratio=width:height
     ```
 
 3.  View the cropped video.

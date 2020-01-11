@@ -24,13 +24,11 @@ bazel build -c opt --define MEDIAPIPE_DISABLE_GPU=1 mediapipe/examples/desktop/a
 ```bash
 GLOG_logtostderr=1 bazel-bin/mediapipe/examples/desktop/autoflip/run_autoflip \
   --calculator_graph_config_file=mediapipe/examples/desktop/autoflip/autoflip_graph.pbtxt \
-  --input_side_packets=input_video_path=/absolute/path/to/the/local/video/file,\
-    output_video_path=/absolute/path/to/save/the/output/video/file,\
-    aspect_ratio=9:16
+  --input_side_packets=input_video_path=/absolute/path/to/the/local/video/file,output_video_path=/absolute/path/to/save/the/output/video/file,aspect_ratio=1:1
 ```
 
 Use the `aspect_ratio` flag to provide the output aspect ratio. The format
-should be `weight:height`, where the `weight` and `height` are two positive
+should be `width:height`, where the `width` and `height` are two positive
 integers. AutoFlip supports both landscape-to-portrait and portrait-to-landscape
 conversions. The pipeline internally compares the target aspect ratio against
 the original one, and determines the correct conversion automatically.
@@ -278,7 +276,7 @@ the required features cannot be all covered (for example, when they are too
 spread out in the video), AutoFlip will apply a padding effect to cover as much
 salient content as possible. See an illustration below.
 
-![graph is_required](images/autoflip_is_required.gif){width="600"}
+![graph is_required](images/autoflip_is_required.gif)
 
 ### Stable vs Tracking Camera Motion
 
