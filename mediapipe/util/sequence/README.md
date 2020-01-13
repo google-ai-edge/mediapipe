@@ -180,19 +180,19 @@ ms.set_clip_end_timestamp(6000000, sequence)
 # For an object tracking task with action labels:
 loctions_on_frame_1 = np.array([[0.1, 0.2, 0.3 0.4],
                                 [0.2, 0.3, 0.4, 0.5]])
-add_bbox(locations_on_frame_1, sequence)
-add_bbox_timestamp(3000000, sequence)
-add_bbox_label_index((4, 3), sequence)
-add_bbox_label_string((b"run", b"jump"), sequence)
-add_bbox_track_string((b"id_0", b"id_1"), sequence)
-# add_bbox_class_string(("cls_0", "cls_0"), sequence)  # if required
+ms.add_bbox(locations_on_frame_1, sequence)
+ms.add_bbox_timestamp(3000000, sequence)
+ms.add_bbox_label_index((4, 3), sequence)
+ms.add_bbox_label_string((b"run", b"jump"), sequence)
+ms.add_bbox_track_string((b"id_0", b"id_1"), sequence)
+# ms.add_bbox_class_string(("cls_0", "cls_0"), sequence)  # if required
 locations_on_frame_2 = locations_on_frame_1[0]
-add_bbox(locations_on_frame_2, sequence)
-add_bbox_timestamp(5000000, sequence)
-add_bbox_label_index((3), sequence)
-add_bbox_label_string((b"jump",), sequence)
-add_bbox_track_string((b"id_0",), sequence)
-# add_bbox_class_string(("cls_0",), sequence)  # if required
+ms.add_bbox(locations_on_frame_2, sequence)
+ms.add_bbox_timestamp(5000000, sequence)
+ms.add_bbox_label_index((3), sequence)
+ms.add_bbox_label_string((b"jump",), sequence)
+ms.add_bbox_track_string((b"id_0",), sequence)
+# ms.add_bbox_class_string(("cls_0",), sequence)  # if required
 ```
 
 ```c++

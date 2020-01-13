@@ -7,8 +7,9 @@ future.
 Note: If you plan to use TensorFlow calculators and example apps, there is a
 known issue with gcc and g++ version 6.3 and 7.3. Please use other versions.
 
-Note: To make Mediapipe work with TensorFlow, please install the python "future"
-library and the python "six" library using `pip install --user future six`.
+Note: To make Mediapipe work with TensorFlow, please set Python 3.7 as the
+default Python version and install the Python "six" library by running `pip3
+install --user six`.
 
 Choose your operating system:
 
@@ -265,12 +266,10 @@ To build and run iOS apps:
 
     ```bash
     $ brew install opencv@3
-    ```
 
-    Note: If you do `$brew install opencv`, there is a known issue caused by the
-    glog dependency of OpenCV 4.1.1 or above. The problem is solvable by
-    uninstalling the glog. You need to do `$ brew uninstall
-    --ignore-dependencies glog`
+    # There is a known issue caused by the glog dependency. Uninstall glog.
+    $ brew uninstall --ignore-dependencies glog
+    ```
 
     Option 2. Use MacPorts package manager tool to install the OpenCV libraries.
 
@@ -332,7 +331,17 @@ To build and run iOS apps:
 
     ```
 
-5.  Run the [Hello World desktop example](./hello_world_desktop.md).
+5.  Make sure that Python 3 and Python "six" library is installed.
+
+    ```
+    $ brew install python
+    $ sudo ln -s -f /usr/local/bin/python3.7 /usr/local/bin/python
+    $ python --version
+    Python 3.7.4
+    $ pip3 install --user six
+    ```
+
+6.  Run the [Hello World desktop example](./hello_world_desktop.md).
 
     ```bash
     $ export GLOG_logtostderr=1
