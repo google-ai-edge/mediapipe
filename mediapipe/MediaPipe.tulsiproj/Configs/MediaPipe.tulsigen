@@ -2,6 +2,7 @@
   "additionalFilePaths" : [
     "/BUILD",
     "mediapipe/BUILD",
+    "mediapipe/examples/facial_search/ios/BUILD",
     "mediapipe/examples/ios/common/BUILD",
     "mediapipe/examples/ios/facedetectioncpu/BUILD",
     "mediapipe/examples/ios/facedetectiongpu/BUILD",
@@ -23,6 +24,7 @@
     "mediapipe/objc/testing/app/BUILD"
   ],
   "buildTargets" : [
+    "//mediapipe/examples/facial_search/ios:FacialSearchGpuApp",
     "//mediapipe/examples/ios/facedetectioncpu:FaceDetectionCpuApp",
     "//mediapipe/examples/ios/facedetectiongpu:FaceDetectionGpuApp",
     "//mediapipe/examples/ios/faceeffect:FaceEffectApp",
