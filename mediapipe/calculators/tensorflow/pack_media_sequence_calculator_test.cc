@@ -194,6 +194,38 @@ TEST_F(PackMediaSequenceCalculatorTest, PacksTwoFloatLists) {
   }
 }
 
+TEST_F(PackMediaSequenceCalculatorTest, PacksTwoContextFloatLists) {
+  SetUpCalculator(
+      {"FLOAT_CONTEXT_FEATURE_TEST:test", "FLOAT_CONTEXT_FEATURE_OTHER:test2"},
+      {}, false, true);
+  auto input_sequence = absl::make_unique<tf::SequenceExample>();
+
+  auto vf_ptr = absl::make_unique<std::vector<float>>(2, 3);
+  runner_->MutableInputs()
+      ->Tag("FLOAT_CONTEXT_FEATURE_TEST")
+      .packets.push_back(Adopt(vf_ptr.release()).At(Timestamp::PostStream()));
+  vf_ptr = absl::make_unique<std::vector<float>>(2, 4);
+  runner_->MutableInputs()
+      ->Tag("FLOAT_CONTEXT_FEATURE_OTHER")
+      .packets.push_back(Adopt(vf_ptr.release()).At(Timestamp::PostStream()));
+
+  runner_->MutableSidePackets()->Tag("SEQUENCE_EXAMPLE") =
+      Adopt(input_sequence.release());
+
+  MP_ASSERT_OK(runner_->Run());
+
+  const std::vector<Packet>& output_packets =
+      runner_->Outputs().Tag("SEQUENCE_EXAMPLE").packets;
+  ASSERT_EQ(1, output_packets.size());
+  const tf::SequenceExample& output_sequence =
+      output_packets[0].Get<tf::SequenceExample>();
+
+  ASSERT_THAT(mpms::GetContextFeatureFloats("TEST", output_sequence),
+              testing::ElementsAre(3, 3));
+  ASSERT_THAT(mpms::GetContextFeatureFloats("OTHER", output_sequence),
+              testing::ElementsAre(4, 4));
+}
+
 TEST_F(PackMediaSequenceCalculatorTest, PacksAdditionalContext) {
   tf::Features context;
   (*context.mutable_feature())["TEST"].mutable_bytes_list()->add_value("YES");

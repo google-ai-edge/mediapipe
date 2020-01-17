@@ -203,14 +203,14 @@ SetClipStartTimestamp(1000000, &sequence);
 SetClipEndTimestamp(6000000, &sequence);
 
 // For an object tracking task with action labels:
-std::vector<mediapipe::Locations> locations_on_frame_1;
+std::vector<mediapipe::Location> locations_on_frame_1;
 AddBBox(locations_on_frame_1, &sequence);
 AddBBoxTimestamp(3000000, &sequence);
 AddBBoxLabelIndex({4, 3}, &sequence);
 AddBBoxLabelString({"run", "jump"}, &sequence);
 AddBBoxTrackString({"id_0", "id_1"}, &sequence);
 // AddBBoxClassString({"cls_0", "cls_0"}, &sequence); // if required
-std::vector<mediapipe::Locations> locations_on_frame_2;
+std::vector<mediapipe::Location> locations_on_frame_2;
 AddBBox(locations_on_frame_2, &sequence);
 AddBBoxTimestamp(5000000, &sequence);
 AddBBoxLabelIndex({3}, &sequence);
@@ -470,8 +470,8 @@ tasks and tracking (or class) fields for tracking information.
 |`CLASS_SEGMENTATION/image/format`|context bytes|`set_class_segmentation_format` / `SetClassSegmentationFormat`|The encoding format of the class label images.|
 |`CLASS_SEGMENTATION/image/height`|context int|`set_class_segmentation_height` / `SetClassSegmentationHeight`|The height of the image in pixels.|
 |`CLASS_SEGMENTATION/image/width`|context int|`set_class_segmentation_width` / `SetClassSegmentationWidth`|The width of the image in pixels.|
-|`CLASS_SEGMENTATION/image/class/ label/index`|context int list|`set_class_segmentation_label_index` / `SetClassSegmentationLabelIndex`|If necessary a mapping from values in the image to class labels.|
-|`CLASS_SEGMENTATION/image/class/ label/string`|context bytes list|`set_class_segmentation_label_string` / `SetClassSegmentationLabelString`|A mapping from values in the image to class labels.|
+|`CLASS_SEGMENTATION/image/class/ label/index`|context int list|`set_class_segmentation_class_label_index` / `SetClassSegmentationClassLabelIndex`|If necessary a mapping from values in the image to class labels.|
+|`CLASS_SEGMENTATION/image/class/ label/string`|context bytes list|`set_class_segmentation_class_label_string` / `SetClassSegmentationClassLabelString`|A mapping from values in the image to class labels.|
 
 ### Keys related to image instance segmentation
 | key | type | python call / c++ call | description |
@@ -482,8 +482,8 @@ tasks and tracking (or class) fields for tracking information.
 |`INSTANCE_SEGMENTATION/image/ format`|context bytes|`set_instance_segmentation_format` / `SetInstanceSegmentationFormat`|The encoding format of the object instance labels.|
 |`INSTANCE_SEGMENTATION/image/ height`|context int|`set_instance_segmentation_height` / `SetInstanceSegmentationHeight`|The height of the image in pixels.|
 |`INSTANCE_SEGMENTATION/image/ width`|context int|`set_instance_segmentation_width` / `SetInstanceSegmentationWidth`|The width of the image in pixels.|
-|`INSTANCE_SEGMENTATION/image/ class/label/index`|context int list|`set_instance_segmentation_label_index` / `SetInstanceSegmentationLabelIndex`|If necessary a mapping from values in the image to class labels.|
-|`INSTANCE_SEGMENTATION/image/ class/label/string`|context bytes list|`set_instance_segmentation_label_string` / `SetInstanceSegmentationLabelString`|A mapping from values in the image to class labels.|
+|`INSTANCE_SEGMENTATION/image/ class/label/index`|context int list|`set_instance_segmentation_class_label_index` / `SetInstanceSegmentationClassLabelIndex`|If necessary a mapping from values in the image to class labels.|
+|`INSTANCE_SEGMENTATION/image/ class/label/string`|context bytes list|`set_instance_segmentation_class_label_string` / `SetInstanceSegmentationClassLabelString`|A mapping from values in the image to class labels.|
 |`INSTANCE_SEGMENTATION/image/ object/class/index`|context int|`set_instance_segmentation_object_class_index` / `SetInstanceSegmentationObjectClassIndex`|If necessary a mapping from values in the image to class indices.|
 
 ### Keys related to optical flow

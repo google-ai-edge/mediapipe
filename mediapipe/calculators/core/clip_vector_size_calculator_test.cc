@@ -176,4 +176,31 @@ TEST(TestClipUniqueIntPtrVectorSizeCalculatorTest, ConsumeOneTimestamp) {
   }
 }
 
+TEST(TestClipIntVectorSizeCalculatorTest, SidePacket) {
+  CalculatorGraphConfig::Node node_config =
+      ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"(
+        calculator: "TestClipIntVectorSizeCalculator"
+        input_stream: "input_vector"
+        input_side_packet: "max_vec_size"
+        output_stream: "output_vector"
+        options {
+          [mediapipe.ClipVectorSizeCalculatorOptions.ext] { max_vec_size: 1 }
+        }
+      )");
+  CalculatorRunner runner(node_config);
+  // This should override the default of 1 set in the options.
+  runner.MutableSidePackets()->Index(0) = Adopt(new int(2));
+  std::vector<int> input = {0, 1, 2, 3};
+  AddInputVector(input, /*timestamp=*/1, &runner);
+  MP_ASSERT_OK(runner.Run());
+
+  const std::vector<Packet>& outputs = runner.Outputs().Index(0).packets;
+  EXPECT_EQ(1, outputs.size());
+  EXPECT_EQ(Timestamp(1), outputs[0].Timestamp());
+  const std::vector<int>& output = outputs[0].Get<std::vector<int>>();
+  EXPECT_EQ(2, output.size());
+  std::vector<int> expected_vector = {0, 1};
+  EXPECT_EQ(expected_vector, output);
+}
+
 }  // namespace mediapipe

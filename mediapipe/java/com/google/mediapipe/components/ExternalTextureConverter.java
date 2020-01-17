@@ -332,17 +332,10 @@ public class ExternalTextureConverter implements TextureFrameProducer {
       bindFramebuffer(outputFrame.getTextureName(), destinationWidth, destinationHeight);
       renderer.render(surfaceTexture);
 
-      // Populate frame timestamp with the System.nanoTime() timestamp after render() as renderer
+      // Populate frame timestamp with surface texture timestamp after render() as renderer
       // ensures that surface texture has the up-to-date timestamp. (Also adjust |timestampOffset|
       // to ensure that timestamps increase monotonically.)
-      // We assume that the camera timestamp is generated at the same time as this method is called
-      // and get the time via System.nanoTime(). This timestamp is aligned with the clock used by
-      // the microphone which returns timestamps aligned to the same time base as System.nanoTime().
-      // Data sent from camera and microphone should have timestamps aligned on the same clock and
-      // timebase so that the data can be processed by a MediaPipe graph simultaneously.
-      // Android's SurfaceTexture.getTimestamp() method is not aligned to the System.nanoTime()
-      // clock, so it cannot be used for texture timestamps in this method.
-      long textureTimestamp = System.nanoTime() / NANOS_PER_MICRO;
+      long textureTimestamp = surfaceTexture.getTimestamp() / NANOS_PER_MICRO;
       if (previousTimestampValid && textureTimestamp + timestampOffset <= previousTimestamp) {
         timestampOffset = previousTimestamp + 1 - textureTimestamp;
       }

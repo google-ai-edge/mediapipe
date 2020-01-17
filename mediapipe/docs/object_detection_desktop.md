@@ -214,7 +214,6 @@ To build and run the TensorFlow Lite example on desktop (CPU) with Webcam, run:
 # Video from webcam running on desktop CPU
 $ bazel build -c opt --define MEDIAPIPE_DISABLE_GPU=1 \
     mediapipe/examples/desktop/object_detection:object_detection_cpu
-
 # It should print:
 #Target //mediapipe/examples/desktop/object_detection:object_detection_cpu up-to-date:
 #  bazel-bin/mediapipe/examples/desktop/object_detection/object_detection_cpu

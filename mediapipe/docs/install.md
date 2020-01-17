@@ -231,7 +231,7 @@ To build and run iOS apps:
 
     *   Install [Homebrew](https://brew.sh).
     *   Install [Xcode](https://developer.apple.com/xcode/) and its Command Line
-        Tools by `xcode-select install`.
+        Tools by `xcode-select --install`.
 
 2.  Checkout MediaPipe repository.
 
@@ -331,7 +331,7 @@ To build and run iOS apps:
 
     ```
 
-5.  Make sure that Python 3 and Python "six" library is installed.
+5.  Make sure that Python 3 and the Python "six" library are installed.
 
     ```
     $ brew install python
@@ -574,6 +574,7 @@ This will use a Docker image that will isolate mediapipe's installation from the
 
 Requirements:
 
+*   Java Runtime.
 *   Android SDK release 28.0.3 and above.
 *   Android NDK r17c and above.
 

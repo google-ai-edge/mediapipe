@@ -16,7 +16,6 @@ package com.google.mediapipe.components;
 
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.media.AudioFormat;
 import android.util.Log;
 import com.google.common.base.Preconditions;
 import com.google.mediapipe.framework.AndroidAssetUtil;
@@ -39,15 +38,12 @@ import javax.annotation.Nullable;
 
 /**
  * A {@link com.google.mediapipe.components.TextureFrameProcessor} that sends video frames through a
- * MediaPipe graph and a {@link com.google.mediapipe.components.AudioDataProcessor} that sends audio
- * data samples through a MediaPipe graph.
+ * MediaPipe graph.
  */
-public class FrameProcessor implements TextureFrameProcessor, AudioDataProcessor {
+public class FrameProcessor implements TextureFrameProcessor {
   private static final String TAG = "FrameProcessor";
-  private static final int BYTES_PER_MONO_SAMPLE = 2; // 16 bit PCM encoding.
 
-  private List<TextureFrameConsumer> videoConsumers = new ArrayList<>();
-  private List<AudioDataConsumer> audioConsumers = new ArrayList<>();
+  private List<TextureFrameConsumer> consumers = new ArrayList<>();
   private Graph mediapipeGraph;
   private AndroidPacketCreator packetCreator;
   private OnWillAddFrameListener addFrameListener;
@@ -57,15 +53,6 @@ public class FrameProcessor implements TextureFrameProcessor, AudioDataProcessor
   private SurfaceOutput videoSurfaceOutput;
   private final AtomicBoolean started = new AtomicBoolean(false);
   private boolean hybridPath = false;
-  // Input stream of audio data. Can be null.
-  private String audioInputStream;
-  // Output stream of audio data. Can be null.
-  private String audioOutputStream;
-  // Number of channels of audio data read in the input stream. This can be only 1 or 2, as
-  // AudioRecord supports only AudioFormat.CHANNEL_IN_MONO and AudioFormat.CHANNEL_IN_STEREO.
-  private int numAudioChannels = 1;
-  // Sample rate of audio data sent to the MediaPipe graph.
-  private double audioSampleRate;
 
   /**
    * Constructor.
@@ -104,7 +91,7 @@ public class FrameProcessor implements TextureFrameProcessor, AudioDataProcessor
             public void process(Packet packet) {
               List<TextureFrameConsumer> currentConsumers;
               synchronized (this) {
-                currentConsumers = videoConsumers;
+                currentConsumers = consumers;
               }
               for (TextureFrameConsumer consumer : currentConsumers) {
                 TextureFrame frame = PacketGetter.getTextureFrame(packet);
@@ -129,54 +116,6 @@ public class FrameProcessor implements TextureFrameProcessor, AudioDataProcessor
   }
 
   /**
-   * Adds input streams to process audio data and output streams that output processed audio data.
-   *
-   * @param inputStream the graph input stream that will receive input audio samples.
-   * @param outputStream the output stream from which output audio samples will be produced.
-   * @param numChannels the number of audio channels in the input audio stream.
-   * @param audioSampleRateInHz the sample rate for audio samples in hertz (Hz).
-   */
-  public void addAudioStreams(
-      @Nullable String inputStream,
-      @Nullable String outputStream,
-      int numChannels,
-      double audioSampleRateInHz) {
-    audioInputStream = inputStream;
-    audioOutputStream = outputStream;
-    numAudioChannels = numChannels;
-    audioSampleRate = audioSampleRateInHz;
-
-    if (audioInputStream != null) {
-      Packet audioHeader =
-          packetCreator.createTimeSeriesHeader(numAudioChannels, audioSampleRateInHz);
-      mediapipeGraph.setStreamHeader(audioInputStream, audioHeader);
-    }
-
-    if (audioOutputStream != null) {
-      AudioFormat audioFormat =
-          new AudioFormat.Builder()
-              .setSampleRate((int) audioSampleRateInHz)
-              .setChannelMask(numAudioChannels)
-              .build();
-      mediapipeGraph.addPacketCallback(
-          audioOutputStream,
-          new PacketCallback() {
-            @Override
-            public void process(Packet packet) {
-              List<AudioDataConsumer> currentAudioConsumers;
-              synchronized (this) {
-                currentAudioConsumers = audioConsumers;
-              }
-              for (AudioDataConsumer consumer : currentAudioConsumers) {
-                byte[] audioData = PacketGetter.getAudioByteData(packet);
-                consumer.onNewAudioData(audioData, packet.getTimestamp(), audioFormat);
-              }
-            }
-          });
-    }
-  }
-
-  /**
    * Interface to be used so that this class can receive a callback when onNewFrame has determined
    * it will process an input frame. Can be used to feed packets to accessory streams.
    */
@@ -195,16 +134,9 @@ public class FrameProcessor implements TextureFrameProcessor, AudioDataProcessor
   }
 
   @Override
-  public void setConsumer(TextureFrameConsumer consumer) {
+  public void setConsumer(TextureFrameConsumer listener) {
     synchronized (this) {
-      videoConsumers = Arrays.asList(consumer);
-    }
-  }
-
-  @Override
-  public void setAudioConsumer(AudioDataConsumer consumer) {
-    synchronized (this) {
-      audioConsumers = Arrays.asList(consumer);
+      consumers = Arrays.asList(listener);
     }
   }
 
@@ -221,20 +153,20 @@ public class FrameProcessor implements TextureFrameProcessor, AudioDataProcessor
     mediapipeGraph.addPacketCallback(outputStream, callback);
   }
 
-  public void addConsumer(TextureFrameConsumer consumer) {
+  public void addConsumer(TextureFrameConsumer listener) {
     synchronized (this) {
-      List<TextureFrameConsumer> newConsumers = new ArrayList<>(videoConsumers);
-      newConsumers.add(consumer);
-      videoConsumers = newConsumers;
+      List<TextureFrameConsumer> newConsumers = new ArrayList<>(consumers);
+      newConsumers.add(listener);
+      consumers = newConsumers;
     }
   }
 
   public boolean removeConsumer(TextureFrameConsumer listener) {
     boolean existed;
     synchronized (this) {
-      List<TextureFrameConsumer> newConsumers = new ArrayList<>(videoConsumers);
+      List<TextureFrameConsumer> newConsumers = new ArrayList<>(consumers);
       existed = newConsumers.remove(listener);
-      videoConsumers = newConsumers;
+      consumers = newConsumers;
     }
     return existed;
   }
@@ -372,46 +304,5 @@ public class FrameProcessor implements TextureFrameProcessor, AudioDataProcessor
    */
   private void startGraph() {
     mediapipeGraph.startRunningGraph();
-  }
-
-  @Override
-  public void onNewAudioData(byte[] audioData, long timestampMicros, AudioFormat audioFormat) {
-    if (audioFormat.getChannelCount() != numAudioChannels
-        || audioFormat.getSampleRate() != audioSampleRate) {
-      Log.e(TAG, "Producer's AudioFormat doesn't match FrameProcessor's AudioFormat");
-      return;
-    }
-    Preconditions.checkNotNull(audioInputStream);
-
-    int numSamples = audioData.length / BYTES_PER_MONO_SAMPLE / numAudioChannels;
-    byte[] data = audioData;
-    Packet audioPacket = packetCreator.createAudioPacket(data, numAudioChannels, numSamples);
-    try {
-      // addConsumablePacketToInputStream allows the graph to take exclusive ownership of the
-      // packet, which may allow for more memory optimizations.
-      mediapipeGraph.addConsumablePacketToInputStream(
-          audioInputStream, audioPacket, timestampMicros);
-    } catch (MediaPipeException e) {
-      Log.e(TAG, "Mediapipe error: ", e);
-    }
-    audioPacket.release();
-  }
-
-  public void addAudioConsumer(AudioDataConsumer consumer) {
-    synchronized (this) {
-      List<AudioDataConsumer> newConsumers = new ArrayList<>(audioConsumers);
-      newConsumers.add(consumer);
-      audioConsumers = newConsumers;
-    }
-  }
-
-  public boolean removeAudioConsumer(AudioDataConsumer consumer) {
-    boolean existed;
-    synchronized (this) {
-      List<AudioDataConsumer> newConsumers = new ArrayList<>(audioConsumers);
-      existed = newConsumers.remove(consumer);
-      audioConsumers = newConsumers;
-    }
-    return existed;
   }
 }

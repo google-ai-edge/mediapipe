@@ -40,6 +40,8 @@ $ GLOG_logtostderr=1 bazel-bin/mediapipe/examples/desktop/hair_segmentation/hair
     --calculator_graph_config_file=mediapipe/graphs/hair_segmentation/hair_segmentation_mobile_gpu.pbtxt
 ```
 
+Issues running? Please first [check that your GPU is supported](gpu.md#desktop-gpu-linux).
+
 #### Graph
 
 ![hair_segmentation_mobile_gpu_graph](images/mobile/hair_segmentation_mobile_gpu.png)

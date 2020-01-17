@@ -138,8 +138,7 @@ mediapipe::ScaleMode_Mode ParseScaleMode(
 // Note: To enable horizontal or vertical flipping, specify them in the
 // calculator options. Flipping is applied after rotation.
 //
-// Note: Only scale mode STRETCH is currently supported on CPU,
-// and flipping is not yet supported either.
+// Note: Only scale mode STRETCH is currently supported on CPU.
 //
 class ImageTransformationCalculator : public CalculatorBase {
  public:
@@ -316,6 +315,11 @@ REGISTER_CALCULATOR(ImageTransformationCalculator);
   cv::Mat input_mat = formats::MatView(&input_img);
   cv::Mat scaled_mat;
 
+  if (!output_height_ || !output_width_) {
+    output_height_ = input_height;
+    output_width_ = input_width;
+  }
+
   if (scale_mode_ == mediapipe::ScaleMode_Mode_STRETCH) {
     cv::resize(input_mat, scaled_mat, cv::Size(output_width_, output_height_));
   } else {
@@ -367,10 +371,21 @@ REGISTER_CALCULATOR(ImageTransformationCalculator);
   cv::Mat rotation_mat = cv::getRotationMatrix2D(src_center, angle, 1.0);
   cv::warpAffine(scaled_mat, rotated_mat, rotation_mat, scaled_mat.size());
 
+  cv::Mat flipped_mat;
+  if (options_.flip_horizontally() || options_.flip_vertically()) {
+    const int flip_code =
+        options_.flip_horizontally() && options_.flip_vertically()
+            ? -1
+            : options_.flip_horizontally();
+    cv::flip(rotated_mat, flipped_mat, flip_code);
+  } else {
+    flipped_mat = rotated_mat;
+  }
+
   std::unique_ptr<ImageFrame> output_frame(
       new ImageFrame(input_img.Format(), output_width, output_height));
   cv::Mat output_mat = formats::MatView(output_frame.get());
-  rotated_mat.copyTo(output_mat);
+  flipped_mat.copyTo(output_mat);
   cc->Outputs().Tag("IMAGE").Add(output_frame.release(), cc->InputTimestamp());
 
   return ::mediapipe::OkStatus();
@@ -440,9 +455,8 @@ REGISTER_CALCULATOR(ImageTransformationCalculator);
         cc->InputSidePackets().Tag("ROTATION_DEGREES").Get<int>());
   }
 
-  static mediapipe::FrameScaleMode scale_mode =
-      mediapipe::FrameScaleModeFromProto(scale_mode_,
-                                         mediapipe::FrameScaleMode::kStretch);
+  mediapipe::FrameScaleMode scale_mode = mediapipe::FrameScaleModeFromProto(
+      scale_mode_, mediapipe::FrameScaleMode::kStretch);
   mediapipe::FrameRotation rotation =
       mediapipe::FrameRotationFromDegrees(RotationModeToDegrees(rotation_));
 

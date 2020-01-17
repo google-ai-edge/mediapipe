@@ -2,6 +2,7 @@
 
 -   [Overview](#overview)
 -   [OpenGL Support](#opengl-support)
+-   [Desktop GPUs](#desktop-gpu-linux)
 -   [Life of a GPU calculator](#life-of-a-gpu-calculator)
 -   [GpuBuffer to ImageFrame converters](#gpubuffer-to-imageframe-converters)
 -   [Disable GPU support](#disable-gpu-support)
@@ -22,13 +23,60 @@ Below are the design principles for GPU support in MediaPipe
    * Because different platforms may require different techniques for best performance, the API should allow flexibility in the way things are implemented behind the scenes.
    * A calculator should be allowed maximum flexibility in using the GPU for all or part of its operation, combining it with the CPU if necessary.
 
-### OpenGL support
+### OpenGL Support
 
-MediaPipe supports OpenGL ES up to version 3.2 on Android and up to ES 3.0 on iOS. In addition, MediaPipe also supports Metal on iOS.
+MediaPipe supports OpenGL ES up to version 3.2 on Android/Linux and up to ES 3.0
+on iOS. In addition, MediaPipe also supports Metal on iOS.
 
-   * MediaPipe allows graphs to run OpenGL in multiple GL contexts. For example, this can be very useful in graphs that combine a slower GPU inference path (eg, at 10 FPS) with a faster GPU rendering path (eg, at 30 FPS): since one GL context corresponds to one sequential command queue, using the same context for both tasks would reduce the rendering frame rate. One challenge MediaPipe's use of multiple contexts solves is the ability to communicate across them. An example scenario is one with an input video that is sent to both the rendering and inferences paths, and rendering needs to have access to the latest output from inference.
+OpenGL ES 3.1 or greater is required (on Android/Linux systems) for running
+machine learning inference calculators and graphs.
 
-   * An OpenGL context cannot be accessed by multiple threads at the same time. Furthermore, switching the active GL context on the same thread can be slow on some Android devices. Therefore, our approach is to have one dedicated thread per context. Each thread issues GL commands, building up a serial command queue on its context, which is then executed by the GPU asynchronously.
+MediaPipe allows graphs to run OpenGL in multiple GL contexts. For example, this
+can be very useful in graphs that combine a slower GPU inference path (eg, at 10
+FPS) with a faster GPU rendering path (eg, at 30 FPS): since one GL context
+corresponds to one sequential command queue, using the same context for both
+tasks would reduce the rendering frame rate.
+
+One challenge MediaPipe's use of multiple contexts solves is the ability to
+communicate across them. An example scenario is one with an input video that is
+sent to both the rendering and inferences paths, and rendering needs to have
+access to the latest output from inference.
+
+An OpenGL context cannot be accessed by multiple threads at the same time.
+Furthermore, switching the active GL context on the same thread can be slow on
+some Android devices. Therefore, our approach is to have one dedicated thread
+per context. Each thread issues GL commands, building up a serial command queue
+on its context, which is then executed by the GPU asynchronously.
+
+#### Desktop GPU (Linux)
+
+MediaPipe GPU can run on linux systems with video cards that support OpenGL ES
+3.1 and up.
+
+To check if your linux desktop GPU can run mediapipe:
+
+```bash
+$ sudo apt-get install mesa-common-dev libegl1-mesa-dev libgles2-mesa-dev
+$ sudo apt-get install mesa-utils
+$ glxinfo | grep -i opengl
+```
+
+My linux box prints:
+
+```bash
+$ glxinfo | grep -i opengl
+...
+OpenGL ES profile version string: OpenGL ES 3.2 NVIDIA 430.50
+OpenGL ES profile shading language version string: OpenGL ES GLSL ES 3.20
+OpenGL ES profile extensions:
+```
+
+*^notice the OpenGL ES 3.2 text^*
+
+To run MediaPipe GPU on desktop, you need to see ES 3.1 or greater printed.
+
+If OpenGL ES is not printed, or is below 3.1, then the GPU inference will not
+run.
 
 ### Life of a GPU calculator
 

@@ -38,6 +38,8 @@ namespace mediapipe {
 //     }
 //   }
 // }
+// Optionally, you can pass in a side packet that will override `max_vec_size`
+// that is specified in the options.
 template <typename T>
 class ClipVectorSizeCalculator : public CalculatorBase {
  public:
@@ -53,6 +55,10 @@ class ClipVectorSizeCalculator : public CalculatorBase {
 
     cc->Inputs().Index(0).Set<std::vector<T>>();
     cc->Outputs().Index(0).Set<std::vector<T>>();
+    // Optional input side packet that determines `max_vec_size`.
+    if (cc->InputSidePackets().NumEntries() > 0) {
+      cc->InputSidePackets().Index(0).Set<int>();
+    }
 
     return ::mediapipe::OkStatus();
   }
@@ -61,6 +67,11 @@ class ClipVectorSizeCalculator : public CalculatorBase {
     cc->SetOffset(TimestampDiff(0));
     max_vec_size_ = cc->Options<::mediapipe::ClipVectorSizeCalculatorOptions>()
                         .max_vec_size();
+    // Override `max_vec_size` if passed as side packet.
+    if (cc->InputSidePackets().NumEntries() > 0 &&
+        !cc->InputSidePackets().Index(0).IsEmpty()) {
+      max_vec_size_ = cc->InputSidePackets().Index(0).Get<int>();
+    }
     return ::mediapipe::OkStatus();
   }
 

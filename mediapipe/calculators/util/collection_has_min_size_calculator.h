@@ -37,6 +37,8 @@ namespace mediapipe {
 //    }
 //   }
 // }
+// Optionally, uses a side packet to override `min_size` specified in the
+// calculator options.
 template <typename IterableT>
 class CollectionHasMinSizeCalculator : public CalculatorBase {
  public:
@@ -54,6 +56,10 @@ class CollectionHasMinSizeCalculator : public CalculatorBase {
     cc->Inputs().Tag("ITERABLE").Set<IterableT>();
     cc->Outputs().Index(0).Set<bool>();
 
+    // Optional input side packet that determines `min_size_`.
+    if (cc->InputSidePackets().NumEntries() > 0) {
+      cc->InputSidePackets().Index(0).Set<int>();
+    }
     return ::mediapipe::OkStatus();
   }
 
@@ -62,6 +68,11 @@ class CollectionHasMinSizeCalculator : public CalculatorBase {
     min_size_ =
         cc->Options<::mediapipe::CollectionHasMinSizeCalculatorOptions>()
             .min_size();
+    // Override `min_size` if passed as side packet.
+    if (cc->InputSidePackets().NumEntries() > 0 &&
+        !cc->InputSidePackets().Index(0).IsEmpty()) {
+      min_size_ = cc->InputSidePackets().Index(0).Get<int>();
+    }
     return ::mediapipe::OkStatus();
   }
 

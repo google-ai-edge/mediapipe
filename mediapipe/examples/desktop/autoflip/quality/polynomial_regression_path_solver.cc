@@ -52,15 +52,24 @@ struct PolynomialResidual {
   const double out_;
 };
 
+// Computes the amount of delta position change along the fitted polynomial
+// curve, translates the delta from being relative to the origin of the original
+// dimension to being relative to the center of the original dimension, then
+// regulates the delta to avoid moving camera off the frame boundaries.
 float ComputeDelta(const float in, const int original_dimension,
                    const int output_dimension, const double a, const double b,
                    const double c, const double d, const double k) {
+  // The value `out` here represents a normalized distance between the center of
+  // the output window and the origin of the original window.
   float out =
       a * in + b * in * in + c * in * in * in + d * in * in * in * in + k;
-  float delta = (out - 0.5) * 2 * output_dimension;
-  const float max_delta = (original_dimension - output_dimension) / 2.0f;
+  // Translate `out` to a pixel distance between the center of the output window
+  // and the center of the original window. This value can be negative, 0, or
+  // positive.
+  float delta = (out - 0.5) * original_dimension;
 
   // Make sure delta doesn't move the camera off the frame boundary.
+  const float max_delta = (original_dimension - output_dimension) / 2.0f;
   if (delta > max_delta) {
     delta = max_delta;
   } else if (delta < -max_delta) {

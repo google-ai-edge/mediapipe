@@ -240,11 +240,11 @@ JNIEXPORT void JNICALL GRAPH_METHOD(nativeAddPacketToInputStream)(
   mediapipe::android::Graph* mediapipe_graph =
       reinterpret_cast<mediapipe::android::Graph*>(context);
   // We push in a copy of the current packet at the given timestamp.
-  ThrowIfError(env,
-               mediapipe_graph->AddPacketToInputStream(
-                   JStringToStdString(env, stream_name),
-                   mediapipe::android::Graph::GetPacketFromHandle(packet).At(
-                       mediapipe::Timestamp(timestamp))));
+  ThrowIfError(
+      env, mediapipe_graph->AddPacketToInputStream(
+               JStringToStdString(env, stream_name),
+               mediapipe::android::Graph::GetPacketFromHandle(packet).At(
+                   mediapipe::Timestamp::CreateNoErrorChecking(timestamp))));
 }
 
 JNIEXPORT void JNICALL GRAPH_METHOD(nativeMovePacketToInputStream)(

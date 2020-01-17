@@ -61,6 +61,8 @@ $ GLOG_logtostderr=1 bazel-bin/mediapipe/examples/desktop/hand_tracking/hand_tra
     --calculator_graph_config_file=mediapipe/graphs/hand_tracking/hand_tracking_mobile.pbtxt
 ```
 
+Issues running? Please first [check that your GPU is supported](gpu.md#desktop-gpu-linux).
+
 #### Graph
 
 ![graph visualization](images/hand_tracking_desktop.png)

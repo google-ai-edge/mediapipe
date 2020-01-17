@@ -57,6 +57,9 @@ public abstract class CameraHelper {
    */
   public abstract Size computeDisplaySizeFromViewSize(Size viewSize);
 
+  /** Returns a boolean which is true if the camera is in Portrait mode, false in Landscape mode. */
+  public abstract boolean isCameraRotated();
+
   public void setOnCameraStartedListener(@Nullable OnCameraStartedListener listener) {
     onCameraStartedListener = listener;
   }

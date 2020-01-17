@@ -34,6 +34,7 @@ namespace mediapipe {
 
 const char kSequenceExampleTag[] = "SEQUENCE_EXAMPLE";
 const char kImageTag[] = "IMAGE";
+const char kFloatContextFeaturePrefixTag[] = "FLOAT_CONTEXT_FEATURE_";
 const char kFloatFeaturePrefixTag[] = "FLOAT_FEATURE_";
 const char kForwardFlowEncodedTag[] = "FORWARD_FLOW_ENCODED";
 const char kBBoxTag[] = "BBOX";
@@ -144,6 +145,9 @@ class PackMediaSequenceCalculator : public CalculatorBase {
           }
         }
         cc->Inputs().Tag(tag).Set<std::vector<Detection>>();
+      }
+      if (absl::StartsWith(tag, kFloatContextFeaturePrefixTag)) {
+        cc->Inputs().Tag(tag).Set<std::vector<float>>();
       }
       if (absl::StartsWith(tag, kFloatFeaturePrefixTag)) {
         cc->Inputs().Tag(tag).Set<std::vector<float>>();
@@ -343,6 +347,17 @@ class PackMediaSequenceCalculator : public CalculatorBase {
           mpms::AddBBoxPoint(mpms::merge_prefix(key, pair.first), pair.second,
                              sequence_.get());
         }
+      }
+      if (absl::StartsWith(tag, kFloatContextFeaturePrefixTag) &&
+          !cc->Inputs().Tag(tag).IsEmpty()) {
+        std::string key =
+            tag.substr(sizeof(kFloatContextFeaturePrefixTag) /
+                           sizeof(*kFloatContextFeaturePrefixTag) -
+                       1);
+        RET_CHECK_EQ(cc->InputTimestamp(), Timestamp::PostStream());
+        mpms::SetContextFeatureFloats(
+            key, cc->Inputs().Tag(tag).Get<std::vector<float>>(),
+            sequence_.get());
       }
       if (absl::StartsWith(tag, kFloatFeaturePrefixTag) &&
           !cc->Inputs().Tag(tag).IsEmpty()) {

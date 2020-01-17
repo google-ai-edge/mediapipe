@@ -149,12 +149,15 @@ public class MainActivity extends AppCompatActivity {
                 // based on the size of the SurfaceView that contains the display.
                 Size viewSize = new Size(width, height);
                 Size displaySize = cameraHelper.computeDisplaySizeFromViewSize(viewSize);
+                boolean isCameraRotated = cameraHelper.isCameraRotated();
 
                 // Connect the converter to the camera-preview frames as its input (via
                 // previewFrameTexture), and configure the output width and height as the computed
                 // display size.
                 converter.setSurfaceTextureAndAttachToGLContext(
-                    previewFrameTexture, displaySize.getWidth(), displaySize.getHeight());
+                    previewFrameTexture,
+                    isCameraRotated ? displaySize.getHeight() : displaySize.getWidth(),
+                    isCameraRotated ? displaySize.getWidth() : displaySize.getHeight());
               }
 
               @Override

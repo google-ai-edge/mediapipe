@@ -371,11 +371,12 @@ void ImageFrame::CopyPixelData(ImageFormat::Format format, int width,
 void ImageFrame::CopyToBuffer(uint8* buffer, int buffer_size) const {
   CHECK(buffer);
   CHECK_EQ(1, ByteDepth());
-  int data_size = width_ * height_ * NumberOfChannels() * ByteDepth();
+  const int data_size = width_ * height_ * NumberOfChannels();
   CHECK_LE(data_size, buffer_size);
   if (IsContiguous()) {
     // The data is stored contiguously, we can just copy.
-    std::copy_n(pixel_data_.get(), data_size, buffer);
+    const uint8* src = reinterpret_cast<const uint8*>(pixel_data_.get());
+    std::copy_n(src, data_size, buffer);
   } else {
     InternalCopyToBuffer(0 /* contiguous storage */,
                          reinterpret_cast<char*>(buffer));

@@ -563,6 +563,8 @@ const char kFeatureNumSamplesKey[] = "feature/num_samples";
 const char kFeaturePacketRateKey[] = "feature/packet_rate";
 // For audio, the original audio sampling rate the feature is derived from.
 const char kFeatureAudioSampleRateKey[] = "feature/audio_sample_rate";
+// The feature as a list of floats.
+const char kContextFeatureFloatsKey[] = "context_feature/floats";
 
 // Feature list keys:
 // The feature as a list of floats.
@@ -593,6 +595,8 @@ void AddAudioAsFeature(const std::string& prefix,
 
 PREFIXED_VECTOR_INT64_CONTEXT_FEATURE(FeatureDimensions, kFeatureDimensionsKey);
 PREFIXED_FLOAT_CONTEXT_FEATURE(FeatureRate, kFeatureRateKey);
+PREFIXED_VECTOR_FLOAT_CONTEXT_FEATURE(ContextFeatureFloats,
+                                      kContextFeatureFloatsKey);
 PREFIXED_BYTES_CONTEXT_FEATURE(FeatureBytesFormat, kFeatureBytesFormatKey);
 PREFIXED_VECTOR_FLOAT_FEATURE_LIST(FeatureFloats, kFeatureFloatsKey);
 PREFIXED_VECTOR_BYTES_FEATURE_LIST(FeatureBytes, kFeatureBytesKey);

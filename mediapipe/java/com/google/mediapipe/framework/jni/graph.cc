@@ -411,7 +411,7 @@ void Graph::SetPacketJavaClass(JNIEnv* env) {
 
   // Set the timestamp of the packet in-place by calling the rvalue-reference
   // version of At here.
-  packet = std::move(packet).At(Timestamp(timestamp));
+  packet = std::move(packet).At(Timestamp::CreateNoErrorChecking(timestamp));
 
   // Then std::move it into the input stream.
   return AddPacketToInputStream(stream_name, std::move(packet));

@@ -37,6 +37,16 @@ REGISTER_CALCULATOR(ConcatenateFloatVectorCalculator);
 
 // Example config:
 // node {
+//   calculator: "ConcatenateInt32VectorCalculator"
+//   input_stream: "int32_vector_1"
+//   input_stream: "int32_vector_2"
+//   output_stream: "concatenated_int32_vector"
+// }
+typedef ConcatenateVectorCalculator<int32> ConcatenateInt32VectorCalculator;
+REGISTER_CALCULATOR(ConcatenateInt32VectorCalculator);
+
+// Example config:
+// node {
 //   calculator: "ConcatenateTfLiteTensorVectorCalculator"
 //   input_stream: "tflitetensor_vector_1"
 //   input_stream: "tflitetensor_vector_2"

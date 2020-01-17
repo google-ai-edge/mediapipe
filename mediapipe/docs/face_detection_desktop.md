@@ -66,6 +66,8 @@ $ GLOG_logtostderr=1 bazel-bin/mediapipe/examples/desktop/face_detection/face_de
     --calculator_graph_config_file=mediapipe/graphs/face_detection/face_detection_mobile_gpu.pbtxt
 ```
 
+Issues running? Please first [check that your GPU is supported](gpu.md#desktop-gpu-linux).
+
 #### Graph
 
 ![graph visualization](images/face_detection_desktop.png)

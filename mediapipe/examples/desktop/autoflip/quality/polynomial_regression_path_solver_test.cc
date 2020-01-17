@@ -140,7 +140,7 @@ constexpr double prediction[] = {
     -24.550379,  -24.06503,
 };
 
-void GenerateDataPoints(
+void GenerateDataPointsFromRealVideo(
     const int focus_point_frames_length,
     const int prior_focus_point_frames_length,
     std::vector<FocusPointFrame>* focus_point_frames,
@@ -163,14 +163,15 @@ void GenerateDataPoints(
   }
 }
 
-TEST(PolynomialRegressionPathSolverTest, Success) {
+TEST(PolynomialRegressionPathSolverTest, SuccessInTrackingCameraMode) {
   PolynomialRegressionPathSolver solver;
   std::vector<FocusPointFrame> focus_point_frames;
   std::vector<FocusPointFrame> prior_focus_point_frames;
   std::vector<cv::Mat> all_xforms;
-  GenerateDataPoints(/* focus_point_frames_length = */ 100,
-                     /* prior_focus_point_frames_length = */ 100,
-                     &focus_point_frames, &prior_focus_point_frames);
+  GenerateDataPointsFromRealVideo(/* focus_point_frames_length = */ 100,
+                                  /* prior_focus_point_frames_length = */ 100,
+                                  &focus_point_frames,
+                                  &prior_focus_point_frames);
   constexpr int kFrameWidth = 200;
   constexpr int kFrameHeight = 300;
   constexpr int kCropWidth = 100;
@@ -185,14 +186,86 @@ TEST(PolynomialRegressionPathSolverTest, Success) {
   }
 }
 
+TEST(PolynomialRegressionPathSolverTest, SuccessInStationaryCameraMode) {
+  PolynomialRegressionPathSolver solver;
+  std::vector<FocusPointFrame> focus_point_frames;
+  std::vector<FocusPointFrame> prior_focus_point_frames;
+  std::vector<cv::Mat> all_xforms;
+
+  constexpr int kFocusPointFramesLength = 100;
+  constexpr float kNormStationaryFocusPointX = 0.34f;
+
+  for (int i = 0; i < kFocusPointFramesLength; i++) {
+    FocusPoint sp;
+    // Add a fixed normalized focus point location.
+    sp.set_norm_point_x(kNormStationaryFocusPointX);
+    FocusPointFrame spf;
+    *spf.add_point() = sp;
+    focus_point_frames.push_back(spf);
+  }
+  constexpr int kFrameWidth = 300;
+  constexpr int kFrameHeight = 300;
+  constexpr int kCropWidth = 100;
+  constexpr int kCropHeight = 300;
+  MP_ASSERT_OK(solver.ComputeCameraPath(
+      focus_point_frames, prior_focus_point_frames, kFrameWidth, kFrameHeight,
+      kCropWidth, kCropHeight, &all_xforms));
+  ASSERT_EQ(all_xforms.size(), kFocusPointFramesLength);
+
+  constexpr int kExpectedShift = -48;
+  for (int i = 0; i < all_xforms.size(); i++) {
+    cv::Mat mat = all_xforms[i];
+    EXPECT_FLOAT_EQ(mat.at<float>(0, 2), kExpectedShift);
+  }
+}
+
+// Test the case where focus points are so close to boundaries that the amount
+// of shifts would have moved the camera to go outside frame boundaries. In this
+// case, the solver should regulate the camera position shift to keep it stay
+// inside the viewport.
+TEST(PolynomialRegressionPathSolverTest, SuccessWhenFocusPointCloseToBoundary) {
+  PolynomialRegressionPathSolver solver;
+  std::vector<FocusPointFrame> focus_point_frames;
+  std::vector<FocusPointFrame> prior_focus_point_frames;
+  std::vector<cv::Mat> all_xforms;
+
+  constexpr int kFocusPointFramesLength = 100;
+  constexpr float kNormStationaryFocusPointX = 0.99f;
+
+  for (int i = 0; i < kFocusPointFramesLength; i++) {
+    FocusPoint sp;
+    // Add a fixed normalized focus point location.
+    sp.set_norm_point_x(kNormStationaryFocusPointX);
+    FocusPointFrame spf;
+    *spf.add_point() = sp;
+    focus_point_frames.push_back(spf);
+  }
+  constexpr int kFrameWidth = 500;
+  constexpr int kFrameHeight = 300;
+  constexpr int kCropWidth = 100;
+  constexpr int kCropHeight = 300;
+  MP_ASSERT_OK(solver.ComputeCameraPath(
+      focus_point_frames, prior_focus_point_frames, kFrameWidth, kFrameHeight,
+      kCropWidth, kCropHeight, &all_xforms));
+  ASSERT_EQ(all_xforms.size(), kFocusPointFramesLength);
+
+  // Regulate max delta change = (500 - 100) / 2.
+  constexpr int kExpectedShift = 200;
+  for (int i = 0; i < all_xforms.size(); i++) {
+    cv::Mat mat = all_xforms[i];
+    EXPECT_FLOAT_EQ(mat.at<float>(0, 2), kExpectedShift);
+  }
+}
+
 TEST(PolynomialRegressionPathSolverTest, FewFramesShouldWork) {
   PolynomialRegressionPathSolver solver;
   std::vector<FocusPointFrame> focus_point_frames;
   std::vector<FocusPointFrame> prior_focus_point_frames;
   std::vector<cv::Mat> all_xforms;
-  GenerateDataPoints(/* focus_point_frames_length = */ 1,
-                     /* prior_focus_point_frames_length = */ 1,
-                     &focus_point_frames, &prior_focus_point_frames);
+  GenerateDataPointsFromRealVideo(/* focus_point_frames_length = */ 1,
+                                  /* prior_focus_point_frames_length = */ 1,
+                                  &focus_point_frames,
+                                  &prior_focus_point_frames);
   constexpr int kFrameWidth = 200;
   constexpr int kFrameHeight = 300;
   constexpr int kCropWidth = 100;
@@ -208,9 +281,10 @@ TEST(PolynomialRegressionPathSolverTest, OneCurrentFrameShouldWork) {
   std::vector<FocusPointFrame> focus_point_frames;
   std::vector<FocusPointFrame> prior_focus_point_frames;
   std::vector<cv::Mat> all_xforms;
-  GenerateDataPoints(/* focus_point_frames_length = */ 1,
-                     /* prior_focus_point_frames_length = */ 0,
-                     &focus_point_frames, &prior_focus_point_frames);
+  GenerateDataPointsFromRealVideo(/* focus_point_frames_length = */ 1,
+                                  /* prior_focus_point_frames_length = */ 0,
+                                  &focus_point_frames,
+                                  &prior_focus_point_frames);
   constexpr int kFrameWidth = 200;
   constexpr int kFrameHeight = 300;
   constexpr int kCropWidth = 100;
@@ -226,9 +300,10 @@ TEST(PolynomialRegressionPathSolverTest, ZeroFrameShouldFail) {
   std::vector<FocusPointFrame> focus_point_frames;
   std::vector<FocusPointFrame> prior_focus_point_frames;
   std::vector<cv::Mat> all_xforms;
-  GenerateDataPoints(/* focus_point_frames_length = */ 0,
-                     /* prior_focus_point_frames_length = */ 0,
-                     &focus_point_frames, &prior_focus_point_frames);
+  GenerateDataPointsFromRealVideo(/* focus_point_frames_length = */ 0,
+                                  /* prior_focus_point_frames_length = */ 0,
+                                  &focus_point_frames,
+                                  &prior_focus_point_frames);
   constexpr int kFrameWidth = 200;
   constexpr int kFrameHeight = 300;
   constexpr int kCropWidth = 100;

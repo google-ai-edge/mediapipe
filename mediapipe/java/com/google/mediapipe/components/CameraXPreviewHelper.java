@@ -16,13 +16,21 @@ package com.google.mediapipe.components;
 
 import android.app.Activity;
 import androidx.lifecycle.LifecycleOwner;
+import android.content.Context;
 import android.graphics.SurfaceTexture;
+import android.hardware.camera2.CameraAccessException;
+import android.hardware.camera2.CameraCharacteristics;
+import android.hardware.camera2.CameraManager;
+import android.hardware.camera2.CameraMetadata;
+import android.hardware.camera2.params.StreamConfigurationMap;
 import android.util.Log;
 import android.util.Size;
 import androidx.camera.core.CameraX;
 import androidx.camera.core.CameraX.LensFacing;
 import androidx.camera.core.Preview;
 import androidx.camera.core.PreviewConfig;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * Uses CameraX APIs for camera setup and access.
@@ -32,12 +40,19 @@ import androidx.camera.core.PreviewConfig;
 public class CameraXPreviewHelper extends CameraHelper {
   private static final String TAG = "CameraXPreviewHelper";
 
+  // Target frame and view resolution size in landscape.
+  private static final Size TARGET_SIZE = new Size(1280, 720);
+
   private Preview preview;
 
   // Size of the camera-preview frames from the camera.
   private Size frameSize;
   // Rotation of the camera-preview frames in degrees.
   private int frameRotation;
+
+  // Focal length resolved in pixels on the frame texture.
+  private float focalLengthPixels;
+  private CameraCharacteristics cameraCharacteristics = null;
 
   @Override
   @SuppressWarnings("RestrictTo") // See b/132705545.
@@ -46,7 +61,10 @@ public class CameraXPreviewHelper extends CameraHelper {
     LensFacing cameraLensFacing =
         cameraFacing == CameraHelper.CameraFacing.FRONT ? LensFacing.FRONT : LensFacing.BACK;
     PreviewConfig previewConfig =
-        new PreviewConfig.Builder().setLensFacing(cameraLensFacing).build();
+        new PreviewConfig.Builder()
+            .setLensFacing(cameraLensFacing)
+            .setTargetResolution(TARGET_SIZE)
+            .build();
     preview = new Preview(previewConfig);
 
     preview.setOnPreviewOutputUpdateListener(
@@ -60,11 +78,22 @@ public class CameraXPreviewHelper extends CameraHelper {
               return;
             }
           }
+          Integer selectedLensFacing =
+              cameraFacing == CameraHelper.CameraFacing.FRONT
+                  ? CameraMetadata.LENS_FACING_FRONT
+                  : CameraMetadata.LENS_FACING_BACK;
+          calculateFocalLength(context, selectedLensFacing);
           if (onCameraStartedListener != null) {
             onCameraStartedListener.onCameraStarted(previewOutput.getSurfaceTexture());
           }
         });
     CameraX.bindToLifecycle(/*lifecycleOwner=*/ (LifecycleOwner) context, preview);
+
+  }
+
+  @Override
+  public boolean isCameraRotated() {
+    return frameRotation % 180 == 90;
   }
 
   @Override
@@ -75,28 +104,79 @@ public class CameraXPreviewHelper extends CameraHelper {
       return null;
     }
 
-    // Valid rotation values are 0, 90, 180 and 270.
-    // Frames are rotated relative to the device's "natural" landscape orientation. When in portrait
-    // mode, valid rotation values are 90 or 270, and the width/height should be swapped to
-    // calculate aspect ratio.
-    float frameAspectRatio =
-        frameRotation == 90 || frameRotation == 270
-            ? frameSize.getHeight() / (float) frameSize.getWidth()
-            : frameSize.getWidth() / (float) frameSize.getHeight();
+    Size optimalSize = getOptimalViewSize(viewSize);
+    return optimalSize != null ? optimalSize : frameSize;
+  }
 
-    float viewAspectRatio = viewSize.getWidth() / (float) viewSize.getHeight();
+  private Size getOptimalViewSize(Size targetSize) {
+    if (cameraCharacteristics != null) {
+      StreamConfigurationMap map =
+          cameraCharacteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
+      Size[] outputSizes = map.getOutputSizes(SurfaceTexture.class);
 
-    // Match shortest sides together.
-    int scaledWidth;
-    int scaledHeight;
-    if (frameAspectRatio < viewAspectRatio) {
-      scaledWidth = viewSize.getWidth();
-      scaledHeight = Math.round(viewSize.getWidth() / frameAspectRatio);
-    } else {
-      scaledHeight = viewSize.getHeight();
-      scaledWidth = Math.round(viewSize.getHeight() * frameAspectRatio);
+      int selectedWidth = -1;
+      int selectedHeight = -1;
+      float selectedAspectRatioDifference = 1e3f;
+      float targetAspectRatio = targetSize.getWidth() / (float) targetSize.getHeight();
+
+      // Find the smallest size >= target size with the closest aspect ratio.
+      for (Size size : outputSizes) {
+        float aspectRatio = (float) size.getWidth() / size.getHeight();
+        float aspectRatioDifference = Math.abs(aspectRatio - targetAspectRatio);
+        if (aspectRatioDifference <= selectedAspectRatioDifference) {
+          if ((selectedWidth == -1 && selectedHeight == -1)
+              || (size.getWidth() <= selectedWidth
+                  && size.getWidth() >= frameSize.getWidth()
+                  && size.getHeight() <= selectedHeight
+                  && size.getHeight() >= frameSize.getHeight())) {
+            selectedWidth = size.getWidth();
+            selectedHeight = size.getHeight();
+            selectedAspectRatioDifference = aspectRatioDifference;
+          }
+        }
+      }
+      if (selectedWidth != -1 && selectedHeight != -1) {
+        return new Size(selectedWidth, selectedHeight);
+      }
     }
+    return null;
+  }
 
-    return new Size(scaledWidth, scaledHeight);
+  public float getFocalLengthPixels() {
+    return focalLengthPixels;
+  }
+
+  private void calculateFocalLength(Activity context, Integer lensFacing) {
+    CameraManager cameraManager = (CameraManager) context.getSystemService(Context.CAMERA_SERVICE);
+    try {
+      List<String> cameraList = Arrays.asList(cameraManager.getCameraIdList());
+      for (String availableCameraId : cameraList) {
+        CameraCharacteristics availableCameraCharacteristics =
+            cameraManager.getCameraCharacteristics(availableCameraId);
+        Integer availableLensFacing =
+            availableCameraCharacteristics.get(CameraCharacteristics.LENS_FACING);
+        if (availableLensFacing == null) {
+          continue;
+        }
+        if (availableLensFacing.equals(lensFacing)) {
+          cameraCharacteristics = availableCameraCharacteristics;
+          break;
+        }
+      }
+      // Focal length of the camera in millimeters.
+      // Note that CameraCharacteristics returns a list of focal lengths and there could be more
+      // than one focal length available if optical zoom is enabled or there are multiple physical
+      // cameras in the logical camera referenced here. A theoretically correct of doing this would
+      // be to use the focal length set explicitly via Camera2 API, as documented in
+      // https://developer.android.com/reference/android/hardware/camera2/CaptureRequest#LENS_FOCAL_LENGTH.
+      float focalLengthMm =
+          cameraCharacteristics.get(CameraCharacteristics.LENS_INFO_AVAILABLE_FOCAL_LENGTHS)[0];
+      // Sensor Width of the camera in millimeters.
+      float sensorWidthMm =
+          cameraCharacteristics.get(CameraCharacteristics.SENSOR_INFO_PHYSICAL_SIZE).getWidth();
+      focalLengthPixels = frameSize.getWidth() * focalLengthMm / sensorWidthMm;
+    } catch (CameraAccessException e) {
+      Log.e(TAG, "Accessing camera ID info got error: " + e);
+    }
   }
 }
