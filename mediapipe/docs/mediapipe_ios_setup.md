@@ -1,28 +1,32 @@
 ## Setting up MediaPipe for iOS
 
-1.  Install [Xcode](https://developer.apple.com/xcode/).
+1.  Install [Xcode](https://developer.apple.com/xcode/) and the Command Line
+    Tools.
 
-    Follow Apple's instructions to obtain the required developemnt certificates
-    and provisioning profiles for your iOS device.
+    Follow Apple's instructions to obtain the required development certificates
+    and provisioning profiles for your iOS device. Install the Command Line
+    Tools by
 
-2.  Install [Bazel](https://bazel.build/).
+    ```bash
+    xcode-select --install
+    ```
 
-    See their
-    [instructions](https://docs.bazel.build/versions/master/install-os-x.html).
+2.  Install [Bazel 1.1.0](https://bazel.build/).
+
     We recommend using [Homebrew](https://brew.sh/):
 
     ```bash
-    brew tap bazelbuild/tap
-    brew install bazelbuild/tap/bazel
+    $ brew install https://raw.githubusercontent.com/bazelbuild/homebrew-tap/f8a0fa981bcb1784a0d0823e14867b844e94fb3d/Formula/bazel.rb
     ```
 
-3.  Install python "future" and "six".
+3.  Set Python 3.7 as the default Python version and install the Python "six"
+    library.
 
-    To make Mediapipe work with TensorFlow, please install the python "future"
-    library and the python "six" library:
+    To make Mediapipe work with TensorFlow, please set Python 3.7 as the default
+    Python version and install the Python "six" library.
 
     ```bash
-    pip install --user future six
+    pip3 install --user six
     ```
 
 4.  Clone the MediaPipe repository.
