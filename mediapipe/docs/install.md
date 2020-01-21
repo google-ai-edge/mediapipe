@@ -70,8 +70,8 @@ To build and run iOS apps:
 
     Note: You may need to modify [`WORKSPACE`] and [`opencv_linux.BUILD`] to
     point MediaPipe to your own OpenCV libraries, e.g., if OpenCV 4 is installed
-    in "/usr/local/", you need to update the "linux_opencv" new_local_repository
-    rule in [`WORKSPACE`] and "opencv" cc_library rule in [`opencv_linux.BUILD`]
+    in "/usr/local/", you need to update the "linux_opencv" and "linux_ffmpeg" new_local_repository
+    rules in [`WORKSPACE`] and "opencv" cc_library rule in [`opencv_linux.BUILD`]
     like the following:
 
     ```bash
@@ -79,6 +79,12 @@ To build and run iOS apps:
         name = "linux_opencv",
         build_file = "@//third_party:opencv_linux.BUILD",
         path = "/usr/local",
+    )
+    
+    new_local_repository(
+        name = "linux_ffmpeg",
+        build_file = "@//third_party:ffmpeg_linux.BUILD",
+        path = "/usr/local"
     )
 
     cc_library(
