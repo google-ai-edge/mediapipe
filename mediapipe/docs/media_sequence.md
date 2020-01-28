@@ -89,11 +89,14 @@ process new data sets, in the documentation of
        dataset = d.as_dataset('test')
        # implement additional processing and batching here
        dataset_output = dataset.make_one_shot_iterator().get_next()
-       images = dataset_output=['images']
-       labels = dataset_output=['labels']
+       images = dataset_output['images']
+       labels = dataset_output['labels']
 
-       with tf.Session() as sess:
-         images_, labels_ = sess.run(images, labels)
+       print('The shape of images is %s' % str(images))
+       print('The shape of labels is %s' % str(labels))
+   
+       with tf.compat.v1.Session() as sess:
+         images_, labels_ = sess.run([images, labels])
        print('The shape of images_ is %s' % str(images_.shape))
        print('The shape of labels_ is %s' % str(labels_.shape))
     ```
