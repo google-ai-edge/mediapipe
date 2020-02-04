@@ -44,7 +44,7 @@ see the Visualizing Subgraphs section in the
 
 ![object_detection_mobile_gpu_graph](images/mobile/object_tracking_mobile_gpu.png)
 
-[Source pbtxt file](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/object_detection/object_detection_mobile_gpu.pbtxt)
+[Source pbtxt file](https://github.com/google/mediapipe/blob/master/mediapipe/graphs/tracking/object_detection_tracking_mobile_gpu.pbtxt)
 
 ```bash
 # MediaPipe graph that performs object detection and tracking.
