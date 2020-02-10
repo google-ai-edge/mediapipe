@@ -88,7 +88,8 @@ class Tvl1OpticalFlowCalculator : public CalculatorBase {
   // cv::DenseOpticalFlow is not thread-safe. Invoking multiple
   // DenseOpticalFlow::calc() in parallel may lead to memory corruption or
   // memory leak.
-  std::list<cv::Ptr<cv::DenseOpticalFlow>> tvl1_computers_ GUARDED_BY(mutex_);
+  std::list<cv::Ptr<cv::DenseOpticalFlow>> tvl1_computers_
+      ABSL_GUARDED_BY(mutex_);
   absl::Mutex mutex_;
 };
 

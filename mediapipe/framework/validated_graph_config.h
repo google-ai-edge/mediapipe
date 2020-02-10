@@ -33,48 +33,6 @@ namespace mediapipe {
 
 class ValidatedGraphConfig;
 
-// Returns a short unique name for a Node in a CalculatorGraphConfig.
-// This is the Node.name (if specified) or the Node.calculator.
-// If there are multiple calculators with similar name in the graph, the name
-// will be postfixed by "_<COUNT>". For example, in the following graph the node
-// names will be as mentiond.
-//
-// node { // Name will be "CalcA"
-//   calculator: "CalcA"
-// }
-// node { // Name will be "NameB"
-//   calculator: "CalcB"
-//   name: "NameB"
-// }
-// node { // Name will be "CalcC_1" due to duplicate "calculator" field.
-//   calculator: "CalcC"
-// }
-// node { // Name will be "CalcC_2" due to duplicate "calculator" field.
-//   calculator: "CalcC"
-// }
-// node { // Name will be "NameX".
-//   calculator: "CalcD"
-//   name: "NameX"
-// }
-// node { // Name will be "NameY".
-//   calculator: "CalcD"
-//   name: "NameY"
-// }
-// node { // Name will be "NameZ_1". due to "name" field duplicate.
-//   calculator: "CalcE"
-//   name: "NameZ"
-// }
-// node { // Name will be "NameZ_2". due to "name" field duplicate.
-//   calculator: "CalcF"
-//   name: "NameZ"
-// }
-//
-// TODO: Update GraphNode.UniqueName in MediaPipe Visualizer to match
-// this logic.
-// TODO: Fix the edge case mentioned in the bug.
-std::string CanonicalNodeName(const CalculatorGraphConfig& graph_config,
-                              int node_id);
-
 // Type information for a graph node (Calculator, Generator, etc).
 class NodeTypeInfo {
  public:

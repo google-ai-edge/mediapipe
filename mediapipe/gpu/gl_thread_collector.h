@@ -61,7 +61,7 @@ class GlThreadCollector {
   }
 
   absl::Mutex mutex_;
-  int active_threads_ GUARDED_BY(mutex_) = 0;
+  int active_threads_ ABSL_GUARDED_BY(mutex_) = 0;
   friend NoDestructor<GlThreadCollector>;
 };
 #else

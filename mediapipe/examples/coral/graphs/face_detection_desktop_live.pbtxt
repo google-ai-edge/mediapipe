@@ -1,6 +1,6 @@
-# MediaPipe graph that performs face detection with TensorFlow Lite on CPU.
+# MediaPipe graph that performs face detection with TensorFlow Lite on TPU.
 # Used in the examples in
-# mediapipe/examples/coral:face_detection_cpu.
+# mediapipe/examples/coral:face_detection_tpu.
 
 # Images on GPU coming into and out of the graph.
 input_stream: "input_video"
@@ -36,7 +36,7 @@ node {
 node: {
   calculator: "ImageTransformationCalculator"
   input_stream: "IMAGE:throttled_input_video"
-  output_stream: "IMAGE:transformed_input_video_cpu"
+  output_stream: "IMAGE:transformed_input_video"
   output_stream: "LETTERBOX_PADDING:letterbox_padding"
   options: {
     [mediapipe.ImageTransformationCalculatorOptions.ext] {
@@ -51,7 +51,7 @@ node: {
 # TfLiteTensor.
 node {
   calculator: "TfLiteConverterCalculator"
-  input_stream: "IMAGE:transformed_input_video_cpu"
+  input_stream: "IMAGE:transformed_input_video"
   output_stream: "TENSORS:image_tensor"
   options: {
     [mediapipe.TfLiteConverterCalculatorOptions.ext] {
@@ -60,7 +60,7 @@ node {
   }
 }
 
-# Runs a TensorFlow Lite model on CPU that takes an image tensor and outputs a
+# Runs a TensorFlow Lite model on TPU that takes an image tensor and outputs a
 # vector of tensors representing, for instance, detection boxes/keypoints and
 # scores.
 node {

@@ -39,7 +39,7 @@ namespace mediapipe {
 class SimulationClock : public mediapipe::Clock {
  public:
   SimulationClock() {}
-  ~SimulationClock() override {}
+  ~SimulationClock() override;
 
   // Returns the simulated time.
   absl::Time TimeNow() override;
@@ -59,9 +59,9 @@ class SimulationClock : public mediapipe::Clock {
  protected:
   // Queue up wake up waiter.
   void SleepInternal(absl::Time wakeup_time)
-      EXCLUSIVE_LOCKS_REQUIRED(time_mutex_);
+      ABSL_EXCLUSIVE_LOCKS_REQUIRED(time_mutex_);
   // Advances to the next wake up time if no related threads are running.
-  void TryAdvanceTime() EXCLUSIVE_LOCKS_REQUIRED(time_mutex_);
+  void TryAdvanceTime() ABSL_EXCLUSIVE_LOCKS_REQUIRED(time_mutex_);
 
   // Represents a thread blocked in SleepUntil.
   struct Waiter {
@@ -71,9 +71,9 @@ class SimulationClock : public mediapipe::Clock {
 
  protected:
   absl::Mutex time_mutex_;
-  absl::Time time_ GUARDED_BY(time_mutex_);
-  std::multimap<absl::Time, Waiter*> waiters_ GUARDED_BY(time_mutex_);
-  int num_running_ GUARDED_BY(time_mutex_) = 0;
+  absl::Time time_ ABSL_GUARDED_BY(time_mutex_);
+  std::multimap<absl::Time, Waiter*> waiters_ ABSL_GUARDED_BY(time_mutex_);
+  int num_running_ ABSL_GUARDED_BY(time_mutex_) = 0;
 };
 
 }  // namespace mediapipe

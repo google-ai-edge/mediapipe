@@ -79,7 +79,7 @@ class TimestampAlignInputStreamHandler : public InputStreamHandler {
   CollectionItemId timestamp_base_stream_id_;
 
   absl::Mutex mutex_;
-  bool offsets_initialized_ GUARDED_BY(mutex_) = false;
+  bool offsets_initialized_ ABSL_GUARDED_BY(mutex_) = false;
   std::vector<TimestampDiff> timestamp_offsets_;
 };
 REGISTER_INPUT_STREAM_HANDLER(TimestampAlignInputStreamHandler);

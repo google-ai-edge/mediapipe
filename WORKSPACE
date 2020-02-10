@@ -78,6 +78,14 @@ http_archive(
     ],
 )
 
+# easyexif
+http_archive(
+    name = "easyexif",
+    url = "https://github.com/mayanklahiri/easyexif/archive/master.zip",
+    strip_prefix = "easyexif-master",
+    build_file = "@//third_party:easyexif.BUILD",
+)
+
 # libyuv
 http_archive(
     name = "libyuv",

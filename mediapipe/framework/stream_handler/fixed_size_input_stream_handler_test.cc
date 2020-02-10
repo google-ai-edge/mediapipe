@@ -35,13 +35,13 @@ const int64 kSlowCalculatorRate = 10;
 
 // Rate limiter for TestSlowCalculator.
 ABSL_CONST_INIT absl::Mutex g_source_mutex(absl::kConstInit);
-int64 g_source_counter GUARDED_BY(g_source_mutex);
+int64 g_source_counter ABSL_GUARDED_BY(g_source_mutex);
 
 // Rate limiter for TestSourceCalculator.
-int64 g_slow_counter GUARDED_BY(g_source_mutex);
+int64 g_slow_counter ABSL_GUARDED_BY(g_source_mutex);
 
 // Flag that indicates that the source is done.
-bool g_source_done GUARDED_BY(g_source_mutex);
+bool g_source_done ABSL_GUARDED_BY(g_source_mutex);
 
 class TestSourceCalculator : public CalculatorBase {
  public:
@@ -74,7 +74,7 @@ class TestSourceCalculator : public CalculatorBase {
   }
 
  private:
-  bool CanProceed() const EXCLUSIVE_LOCKS_REQUIRED(g_source_mutex) {
+  bool CanProceed() const ABSL_EXCLUSIVE_LOCKS_REQUIRED(g_source_mutex) {
     return g_source_counter <= kSlowCalculatorRate * g_slow_counter ||
            g_source_counter <= 1;
   }
@@ -109,7 +109,7 @@ class TestSlowCalculator : public CalculatorBase {
   }
 
  private:
-  bool CanProceed() const EXCLUSIVE_LOCKS_REQUIRED(g_source_mutex) {
+  bool CanProceed() const ABSL_EXCLUSIVE_LOCKS_REQUIRED(g_source_mutex) {
     return g_source_counter > kSlowCalculatorRate * g_slow_counter ||
            g_source_done;
   }

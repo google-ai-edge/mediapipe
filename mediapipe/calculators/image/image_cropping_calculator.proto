@@ -30,4 +30,14 @@ message ImageCroppingCalculatorOptions {
 
   // Rotation angle is counter-clockwise in radian.
   optional float rotation = 3 [default = 0.0];
+
+  // Normalized width and height of the output rect. Value is within [0, 1].
+  optional float norm_width = 4;
+  optional float norm_height = 5;
+
+  // Normalized location of the center of the output
+  // rectangle in image coordinates. Value is within [0, 1].
+  // The (0, 0) point is at the (top, left) corner.
+  optional float norm_center_x = 6 [default = 0];
+  optional float norm_center_y = 7 [default = 0];
 }

@@ -27,6 +27,7 @@
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/profiler/profiler_resource_util.h"
+#include "mediapipe/framework/tool/name_util.h"
 #include "mediapipe/framework/tool/tag_map.h"
 #include "mediapipe/framework/tool/validate_name.h"
 
@@ -133,7 +134,7 @@ void GraphProfiler::Initialize(
   for (int node_id = 0;
        node_id < validated_graph_config.CalculatorInfos().size(); ++node_id) {
     std::string node_name =
-        CanonicalNodeName(validated_graph_config.Config(), node_id);
+        tool::CanonicalNodeName(validated_graph_config.Config(), node_id);
     CalculatorProfile profile;
     profile.set_name(node_name);
     InitializeTimeHistogram(interval_size_usec, num_intervals,

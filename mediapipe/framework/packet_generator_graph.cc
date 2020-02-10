@@ -135,15 +135,15 @@ class GeneratorScheduler {
   void GenerateAndScheduleNext(int generator_index,
                                std::map<std::string, Packet>* side_packets,
                                std::unique_ptr<PacketSet> input_side_packet_set)
-      LOCKS_EXCLUDED(mutex_);
+      ABSL_LOCKS_EXCLUDED(mutex_);
 
   // Iterate through all generators in the config, scheduling any that
   // are runnable (and haven't been scheduled yet).
   void ScheduleAllRunnableGenerators(
-      std::map<std::string, Packet>* side_packets) LOCKS_EXCLUDED(mutex_);
+      std::map<std::string, Packet>* side_packets) ABSL_LOCKS_EXCLUDED(mutex_);
 
   // Waits until there are no pending tasks.
-  void WaitUntilIdle() LOCKS_EXCLUDED(mutex_);
+  void WaitUntilIdle() ABSL_LOCKS_EXCLUDED(mutex_);
 
   // Stores the indexes of the packet generators that were not scheduled (or
   // rather, not executed) in non_scheduled_generators. Returns the combined
@@ -158,26 +158,26 @@ class GeneratorScheduler {
 
   // Run all the application thread tasks (which are kept track of in
   // app_thread_tasks_).
-  void RunApplicationThreadTasks() LOCKS_EXCLUDED(app_thread_mutex_);
+  void RunApplicationThreadTasks() ABSL_LOCKS_EXCLUDED(app_thread_mutex_);
 
   const ValidatedGraphConfig* const validated_graph_;
   ::mediapipe::Executor* executor_;
 
   mutable absl::Mutex mutex_;
   // The number of pending tasks.
-  int num_tasks_ GUARDED_BY(mutex_) = 0;
+  int num_tasks_ ABSL_GUARDED_BY(mutex_) = 0;
   // This condition variable is signaled when num_tasks_ becomes 0.
   absl::CondVar idle_condvar_;
   // Accumulates the error statuses while running the packet generators.
-  std::vector<::mediapipe::Status> statuses_ GUARDED_BY(mutex_);
+  std::vector<::mediapipe::Status> statuses_ ABSL_GUARDED_BY(mutex_);
   // scheduled_generators_[i] is true if the packet generator with index i was
   // scheduled (or rather, executed).
-  std::vector<bool> scheduled_generators_ GUARDED_BY(mutex_);
+  std::vector<bool> scheduled_generators_ ABSL_GUARDED_BY(mutex_);
 
   absl::Mutex app_thread_mutex_;
   // Tasks to be executed on the application thread.
   std::deque<std::function<void()>> app_thread_tasks_
-      GUARDED_BY(app_thread_mutex_);
+      ABSL_GUARDED_BY(app_thread_mutex_);
   std::unique_ptr<internal::DelegatingExecutor> delegating_executor_;
 };
 

@@ -332,6 +332,7 @@ cc_library(
 cc_library(
     name = "image_cropping_calculator",
     srcs = ["image_cropping_calculator.cc"],
+    hdrs = ["image_cropping_calculator.h"],
     copts = select({
         "//mediapipe:apple": [
             "-x objective-c++",
@@ -369,6 +370,22 @@ cc_library(
         ],
     }),
     alwayslink = 1,
+)
+
+cc_test(
+    name = "image_cropping_calculator_test",
+    srcs = ["image_cropping_calculator_test.cc"],
+    deps = [
+        ":image_cropping_calculator",
+        ":image_cropping_calculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/formats:rect_cc_proto",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:parse_text_proto",
+        "//mediapipe/framework/port:status",
+        "//mediapipe/framework/tool:tag_map",
+        "//mediapipe/framework/tool:tag_map_helper",
+    ],
 )
 
 cc_library(

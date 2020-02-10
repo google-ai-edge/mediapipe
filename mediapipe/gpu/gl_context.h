@@ -379,7 +379,7 @@ class GlContext : public std::enable_shared_from_this<GlContext> {
   // This mutex is used to guard a few different members and condition
   // variables. It should only be held for a short time.
   absl::Mutex mutex_;
-  absl::CondVar wait_for_gl_finish_cv_ GUARDED_BY(mutex_);
+  absl::CondVar wait_for_gl_finish_cv_ ABSL_GUARDED_BY(mutex_);
 
   std::unique_ptr<mediapipe::GlProfilingHelper> profiling_helper_ = nullptr;
 };

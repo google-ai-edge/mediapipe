@@ -47,7 +47,7 @@ class ShardedMap {
       : ShardedMap(capacity, capacity / 10 + 1) {}
 
   // Returns the iterator to the entry for a key.
-  inline iterator find(const Key& key) NO_THREAD_SAFETY_ANALYSIS {
+  inline iterator find(const Key& key) ABSL_NO_THREAD_SAFETY_ANALYSIS {
     size_t shard = Index(key);
     mutexes_[shard].Lock();
     typename Map::iterator iter = maps_[shard].find(key);
@@ -67,7 +67,7 @@ class ShardedMap {
 
   // Adds an entry to the map and returns the iterator to it.
   inline std::pair<iterator, bool> insert(const value_type& val)
-      NO_THREAD_SAFETY_ANALYSIS {
+      ABSL_NO_THREAD_SAFETY_ANALYSIS {
     size_t shard = Index(val.first);
     mutexes_[shard].Lock();
     std::pair<typename Map::iterator, bool> p = maps_[shard].insert(val);
@@ -91,7 +91,7 @@ class ShardedMap {
   inline size_t size() const { return size_; }
 
   // Returns the iterator to the first element.
-  inline iterator begin() NO_THREAD_SAFETY_ANALYSIS {
+  inline iterator begin() ABSL_NO_THREAD_SAFETY_ANALYSIS {
     mutexes_[0].Lock();
     iterator result{0, maps_[0].begin(), this};
     result.NextEntryShard();
@@ -153,14 +153,14 @@ class ShardedMap {
     Iterator(size_t shard, map_iterator iter, ShardedMapPtr map)
         : shard_(shard), iter_(iter), map_(map) {}
     // Releases all resources.
-    inline void Clear() NO_THREAD_SAFETY_ANALYSIS {
+    inline void Clear() ABSL_NO_THREAD_SAFETY_ANALYSIS {
       if (map_ && iter_ != map_->maps_.back().end()) {
         map_->mutexes_[shard_].Unlock();
       }
       map_ = nullptr;
     }
     // Moves to the shard of the next entry.
-    void NextEntryShard() NO_THREAD_SAFETY_ANALYSIS {
+    void NextEntryShard() ABSL_NO_THREAD_SAFETY_ANALYSIS {
       size_t last = map_->maps_.size() - 1;
       while (iter_ == map_->maps_[shard_].end() && shard_ < last) {
         map_->mutexes_[shard_].Unlock();

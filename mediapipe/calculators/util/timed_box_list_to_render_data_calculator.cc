@@ -46,6 +46,7 @@ void AddTimedBoxProtoToRenderData(
       line_annotation->mutable_color()->set_b(options.box_color().b());
       line_annotation->set_thickness(options.thickness());
       RenderAnnotation::Line* line = line_annotation->mutable_line();
+      line->set_normalized(true);
       line->set_x_start(box_proto.quad().vertices(i * 2));
       line->set_y_start(box_proto.quad().vertices(i * 2 + 1));
       line->set_x_end(box_proto.quad().vertices(next_corner * 2));

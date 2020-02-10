@@ -163,8 +163,8 @@ class OutputStreamPollerImpl : public GraphOutputStream {
 
  private:
   absl::Mutex mutex_;
-  absl::CondVar handler_condvar_ GUARDED_BY(mutex_);
-  bool graph_has_error_ GUARDED_BY(mutex_);
+  absl::CondVar handler_condvar_ ABSL_GUARDED_BY(mutex_);
+  bool graph_has_error_ ABSL_GUARDED_BY(mutex_);
 };
 
 }  // namespace internal

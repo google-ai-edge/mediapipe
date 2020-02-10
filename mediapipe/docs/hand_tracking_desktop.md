@@ -17,7 +17,9 @@ Note: Desktop GPU works only on Linux. Mesa drivers need to be installed. Please
 see
 [step 4 of "Installing on Debian and Ubuntu" in the installation guide](./install.md).
 
-Note: If MediaPipe depends on OpenCV 2, please see the [known issues with OpenCV 2](#known-issues-with-opencv-2) section.
+Note: If MediaPipe depends on OpenCV 2, please see the
+[known issues with OpenCV 2](./object_detection_desktop.md#known-issues-with-opencv-2)
+section.
 
 ### TensorFlow Lite Hand Tracking Demo with Webcam (CPU)
 
@@ -61,7 +63,8 @@ $ GLOG_logtostderr=1 bazel-bin/mediapipe/examples/desktop/hand_tracking/hand_tra
     --calculator_graph_config_file=mediapipe/graphs/hand_tracking/hand_tracking_mobile.pbtxt
 ```
 
-Issues running? Please first [check that your GPU is supported](gpu.md#desktop-gpu-linux).
+Issues running? Please first
+[check that your GPU is supported](./gpu.md#desktop-gpu-linux)
 
 #### Graph
 

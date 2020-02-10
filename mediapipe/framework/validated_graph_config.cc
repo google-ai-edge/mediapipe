@@ -39,6 +39,7 @@
 #include "mediapipe/framework/status_handler.h"
 #include "mediapipe/framework/stream_handler.pb.h"
 #include "mediapipe/framework/thread_pool_executor.pb.h"
+#include "mediapipe/framework/tool/name_util.h"
 #include "mediapipe/framework/tool/status_util.h"
 #include "mediapipe/framework/tool/subgraph_expansion.h"
 #include "mediapipe/framework/tool/validate.h"
@@ -168,31 +169,6 @@ std::string DebugName(const CalculatorGraphConfig& config,
 }
 
 }  // namespace
-
-std::string CanonicalNodeName(const CalculatorGraphConfig& graph_config,
-                              int node_id) {
-  const auto& node_config = graph_config.node(node_id);
-  std::string node_name = node_config.name().empty() ? node_config.calculator()
-                                                     : node_config.name();
-  int count = 0;
-  int sequence = 0;
-  for (int i = 0; i < graph_config.node_size(); i++) {
-    const auto& current_node_config = graph_config.node(i);
-    std::string current_node_name = current_node_config.name().empty()
-                                        ? current_node_config.calculator()
-                                        : current_node_config.name();
-    if (node_name == current_node_name) {
-      ++count;
-      if (i < node_id) {
-        ++sequence;
-      }
-    }
-  }
-  if (count <= 1) {
-    return node_name;
-  }
-  return absl::StrCat(node_name, "_", sequence + 1);
-}
 
 // static
 std::string NodeTypeInfo::NodeTypeToString(NodeType node_type) {

@@ -94,6 +94,7 @@ TEST(GraphValidationTest, InitializeGraphFromProtos) {
         }
         node {
           calculator: "PassThroughCalculator"
+          name: "passthroughgraph__PassThroughCalculator"
           input_stream: "stream_2"
           output_stream: "stream_3"
         }
@@ -201,7 +202,7 @@ TEST(GraphValidationTest, InitializeTemplateFromProtos) {
           output_stream: "stream_2"
         }
         node {
-          name: "__sg0_stream_8"
+          name: "passthroughgraph__stream_8"
           calculator: "PassThroughCalculator"
           input_stream: "stream_2"
           output_stream: "stream_3"
@@ -263,6 +264,7 @@ TEST(GraphValidationTest, OptionalSubgraphStreams) {
         }
         node {
           calculator: "PassThroughCalculator"
+          name: "passthroughgraph__PassThroughCalculator"
           input_stream: "foo_bar"
           output_stream: "foo_out"
         }
@@ -379,6 +381,7 @@ TEST(GraphValidationTest, OptionalInputNotProvidedForSubgraphCalculator) {
         output_stream: "OUTPUT:foo_out"
         node {
           calculator: "OptionalSideInputTestCalculator"
+          name: "passthroughgraph__OptionalSideInputTestCalculator"
           output_stream: "OUTPUT:foo_out"
         }
         executor {}

@@ -49,6 +49,38 @@ class PacketReservoir {
 // out of a stream. Given a desired frame rate, packets are going to be
 // removed or added to achieve it.
 //
+// If jitter_ is specified:
+//   - The first packet is chosen randomly (uniform distribution) among frames
+//     that correspond to timestamps [0, 1/frame_rate).  Let the chosen packet
+//     correspond to timestamp t.
+//   - The next packet is chosen randomly (uniform distribution) among frames
+//     that correspond to [t+(1-jitter)/frame_rate, t+(1+jitter)/frame_rate].
+//     - if jitter_with_reflection_ is true, the timestamp will be reflected
+//       against the boundaries of [t_0 + (k-1)/frame_rate, t_0 + k/frame_rate)
+//       so that its marginal distribution is uniform within this interval.
+//       In the formula, t_0 is the timestamp of the first sampled
+//       packet, and the k is the packet index.
+//       See paper (https://arxiv.org/abs/2002.01147) for details.
+//   - t is updated and the process is repeated.
+//   - Note that seed is specified as input side packet for reproducibility of
+//     the resampling.  For Cloud ML Video Intelligence API, the hash of the
+//     input video should serve this purpose.  For YouTube, either video ID or
+//     content hex ID of the input video should do.
+//
+// If jitter_ is not specified:
+//   - The first packet defines the first_timestamp of the output stream,
+//     so it is always emitted.
+//   - If more packets are emitted, they will have timestamp equal to
+//     round(first_timestamp + k * period) , where k is a positive
+//     integer and the period is defined by the frame rate.
+//     Example: first_timestamp=0, fps=30, then the output stream
+//              will have timestamps: 0, 33333, 66667, 100000, etc...
+//   - The packets selected for the output stream are the ones closer
+//     to the exact middle point (33333.33, 66666.67 in our previous
+//     example). In case of ties, later packets are chosen.
+//   - 'Empty' periods happen when there are no packets for a long time
+//     (greater than a period). In this case, we send a copy of the last
+//     packet received before the empty period.
 // The jitter feature is disabled by default. To enable it, you need to
 // implement CreateSecureRandom(const std::string&).
 //
@@ -139,7 +171,12 @@ class PacketResamplerCalculator : public CalculatorBase {
   // Jitter-related variables.
   std::unique_ptr<RandomBase> random_;
   double jitter_ = 0.0;
+  bool jitter_with_reflection_;
+  int64 jitter_usec_;
   Timestamp next_output_timestamp_;
+  // If jittering_with_reflection_ is true, next_output_timestamp_ will be
+  // kept within the interval
+  // [next_output_timestamp_min_, next_output_timestamp_min_ + frame_time_usec_)
   Timestamp next_output_timestamp_min_;
 
   // If specified, output timestamps are aligned with base_timestamp.

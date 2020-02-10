@@ -17,6 +17,12 @@
 #include <memory>
 
 namespace {
+// Reflect an integer against the lower and upper bound of an interval.
+int64 ReflectBetween(int64 ts, int64 ts_min, int64 ts_max) {
+  if (ts < ts_min) return 2 * ts_min - ts - 1;
+  if (ts >= ts_max) return 2 * ts_max - ts - 1;
+  return ts;
+}
 
 // Creates a secure random number generator for use in ProcessWithJitter.
 // If no secure random number generator can be constructed, the jitter
@@ -82,6 +88,7 @@ TimestampDiff TimestampDiffFromSeconds(double seconds) {
 
   flush_last_packet_ = resampler_options.flush_last_packet();
   jitter_ = resampler_options.jitter();
+  jitter_with_reflection_ = resampler_options.jitter_with_reflection();
 
   input_data_id_ = cc->Inputs().GetId("DATA", 0);
   if (!input_data_id_.IsValid()) {
@@ -112,6 +119,8 @@ TimestampDiff TimestampDiffFromSeconds(double seconds) {
       << Timestamp::kTimestampUnitsPerSecond;
 
   frame_time_usec_ = static_cast<int64>(1000000.0 / frame_rate_);
+  jitter_usec_ = static_cast<int64>(1000000.0 * jitter_ / frame_rate_);
+  RET_CHECK_LE(jitter_usec_, frame_time_usec_);
 
   video_header_.frame_rate = frame_rate_;
 
@@ -188,12 +197,32 @@ TimestampDiff TimestampDiffFromSeconds(double seconds) {
 
 void PacketResamplerCalculator::InitializeNextOutputTimestampWithJitter() {
   next_output_timestamp_min_ = first_timestamp_;
+  if (jitter_with_reflection_) {
+    next_output_timestamp_ =
+        first_timestamp_ + random_->UnbiasedUniform64(frame_time_usec_);
+    return;
+  }
   next_output_timestamp_ =
       first_timestamp_ + frame_time_usec_ * random_->RandFloat();
 }
 
 void PacketResamplerCalculator::UpdateNextOutputTimestampWithJitter() {
   packet_reservoir_->Clear();
+  if (jitter_with_reflection_) {
+    next_output_timestamp_min_ += frame_time_usec_;
+    Timestamp next_output_timestamp_max_ =
+        next_output_timestamp_min_ + frame_time_usec_;
+
+    next_output_timestamp_ += frame_time_usec_ +
+                              random_->UnbiasedUniform64(2 * jitter_usec_ + 1) -
+                              jitter_usec_;
+    next_output_timestamp_ = Timestamp(ReflectBetween(
+        next_output_timestamp_.Value(), next_output_timestamp_min_.Value(),
+        next_output_timestamp_max_.Value()));
+    CHECK_GE(next_output_timestamp_, next_output_timestamp_min_);
+    CHECK_LT(next_output_timestamp_, next_output_timestamp_max_);
+    return;
+  }
   packet_reservoir_->Disable();
   next_output_timestamp_ +=
       frame_time_usec_ *

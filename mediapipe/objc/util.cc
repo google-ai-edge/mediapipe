@@ -312,6 +312,10 @@ CVPixelBufferRef CreateCVPixelBufferForImageFramePacket(
       pixel_format = kCVPixelFormatType_OneComponent8;
       break;
 
+    case mediapipe::ImageFormat::VEC32F1:
+      pixel_format = kCVPixelFormatType_OneComponent32Float;
+      break;
+
     default:
       return ::mediapipe::UnknownErrorBuilder(MEDIAPIPE_LOC)
              << "unsupported ImageFrame format: " << image_format;

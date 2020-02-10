@@ -456,7 +456,7 @@ class ClockFrenzy {
 
   // Provide a lock to avoid race conditions in non-threadsafe ACMRandom.
   mutable absl::Mutex lock_;
-  std::unique_ptr<RandomEngine> random_ GUARDED_BY(lock_);
+  std::unique_ptr<RandomEngine> random_ ABSL_GUARDED_BY(lock_);
 
   // The stopping notification.
   bool running_;

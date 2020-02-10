@@ -60,7 +60,7 @@ class GlTextureBufferPool
 
   // If the total number of buffers is greater than keep_count, destroys any
   // surplus buffers that are no longer in use.
-  void TrimAvailable() EXCLUSIVE_LOCKS_REQUIRED(mutex_);
+  void TrimAvailable() ABSL_EXCLUSIVE_LOCKS_REQUIRED(mutex_);
 
   const int width_;
   const int height_;
@@ -68,8 +68,9 @@ class GlTextureBufferPool
   const int keep_count_;
 
   absl::Mutex mutex_;
-  int in_use_count_ GUARDED_BY(mutex_) = 0;
-  std::vector<std::unique_ptr<GlTextureBuffer>> available_ GUARDED_BY(mutex_);
+  int in_use_count_ ABSL_GUARDED_BY(mutex_) = 0;
+  std::vector<std::unique_ptr<GlTextureBuffer>> available_
+      ABSL_GUARDED_BY(mutex_);
 };
 
 }  // namespace mediapipe

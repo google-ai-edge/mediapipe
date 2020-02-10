@@ -42,6 +42,7 @@
 #include "mediapipe/framework/port/source_location.h"
 #include "mediapipe/framework/port/status_builder.h"
 #include "mediapipe/framework/timestamp.h"
+#include "mediapipe/framework/tool/name_util.h"
 #include "mediapipe/framework/tool/status_util.h"
 #include "mediapipe/framework/tool/tag_map.h"
 #include "mediapipe/framework/tool/validate_name.h"
@@ -85,7 +86,7 @@ Timestamp CalculatorNode::SourceProcessOrder(
 
   const CalculatorGraphConfig::Node& node_config =
       validated_graph_->Config().node(node_id_);
-  name_ = CanonicalNodeName(validated_graph_->Config(), node_id_);
+  name_ = tool::CanonicalNodeName(validated_graph_->Config(), node_id_);
 
   max_in_flight_ = node_config.max_in_flight();
   max_in_flight_ = max_in_flight_ ? max_in_flight_ : 1;

@@ -250,6 +250,7 @@ TEST(SubgraphExpansionTest, TransformNames) {
           output_stream: "__sg0_output_1"
         }
         node {
+          name: "__sg0_SomeRegularCalculator"
           calculator: "SomeRegularCalculator"
           input_stream: "__sg0_output_1"
           output_stream: "__sg0_output_2"
@@ -438,20 +439,20 @@ TEST(SubgraphExpansionTest, ExpandSubgraphs) {
           output_stream: "foo"
         }
         node {
-          name: "__sg0_regular_node"
+          name: "testsubgraph__regular_node"
           calculator: "SomeRegularCalculator"
           input_stream: "foo"
-          output_stream: "__sg0_stream_a"
-          input_side_packet: "__sg0_side"
+          output_stream: "testsubgraph__stream_a"
+          input_side_packet: "testsubgraph__side"
         }
         node {
-          name: "__sg0_simple_sink"
+          name: "testsubgraph__simple_sink"
           calculator: "SomeSinkCalculator"
-          input_stream: "__sg0_stream_a"
+          input_stream: "testsubgraph__stream_a"
         }
         packet_generator {
           packet_generator: "SomePacketGenerator"
-          output_side_packet: "__sg0_side"
+          output_side_packet: "testsubgraph__side"
         }
       )");
   MP_EXPECT_OK(tool::ExpandSubgraphs(&supergraph));
@@ -503,23 +504,24 @@ TEST(SubgraphExpansionTest, ExecutorFieldOfNodeInSubgraphPreserved) {
           output_stream: "OUT:output"
         }
       )");
-  CalculatorGraphConfig expected_graph =
-      ::mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
-        input_stream: "input"
-        executor {
-          name: "custom_thread_pool"
-          type: "ThreadPoolExecutor"
-          options {
-            [mediapipe.ThreadPoolExecutorOptions.ext] { num_threads: 4 }
-          }
-        }
-        node {
-          calculator: "PassThroughCalculator"
-          input_stream: "input"
-          output_stream: "output"
-          executor: "custom_thread_pool"
-        }
-      )");
+  CalculatorGraphConfig expected_graph = ::mediapipe::ParseTextProtoOrDie<
+      CalculatorGraphConfig>(R"(
+    input_stream: "input"
+    executor {
+      name: "custom_thread_pool"
+      type: "ThreadPoolExecutor"
+      options {
+        [mediapipe.ThreadPoolExecutorOptions.ext] { num_threads: 4 }
+      }
+    }
+    node {
+      calculator: "PassThroughCalculator"
+      name: "enclosingsubgraph__nodewithexecutorsubgraph__PassThroughCalculator"
+      input_stream: "input"
+      output_stream: "output"
+      executor: "custom_thread_pool"
+    }
+  )");
   MP_EXPECT_OK(tool::ExpandSubgraphs(&supergraph));
   EXPECT_THAT(supergraph, mediapipe::EqualsProto(expected_graph));
 }

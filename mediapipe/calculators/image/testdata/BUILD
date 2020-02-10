@@ -21,6 +21,7 @@ filegroup(
         "dino.jpg",
         "dino_quality_50.jpg",
         "dino_quality_80.jpg",
+        "front_camera_pixel2.jpg",
     ],
     visibility = ["//visibility:public"],
 )

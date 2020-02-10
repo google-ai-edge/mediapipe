@@ -15,10 +15,11 @@
 package com.google.mediapipe.components;
 
 import android.media.AudioFormat;
+import java.nio.ByteBuffer;
 
 /** Lightweight abstraction for an object that can receive audio data. */
 public interface AudioDataConsumer {
   /** Called when a new audio data buffer is available. */
   public abstract void onNewAudioData(
-      byte[] audioData, long timestampMicros, AudioFormat audioFormat);
+      ByteBuffer audioData, long timestampMicros, AudioFormat audioFormat);
 }

@@ -15,9 +15,15 @@
 #include "mediapipe/framework/tool/simulation_clock.h"
 
 #include "absl/synchronization/mutex.h"
+#include "absl/time/time.h"
 #include "mediapipe/framework/port/logging.h"
 
 namespace mediapipe {
+
+SimulationClock::~SimulationClock() {
+  ThreadStart();
+  ThreadFinish();
+}
 
 absl::Time SimulationClock::TimeNow() {
   absl::MutexLock l(&time_mutex_);

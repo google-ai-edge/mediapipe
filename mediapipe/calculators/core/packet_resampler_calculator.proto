@@ -66,6 +66,7 @@ message PacketResamplerCalculatorOptions {
   // pseudo-random number generator does its job and the number of frames is
   // sufficiently large, the average frame rate will be close to this value.
   optional double jitter = 4;
+  optional bool jitter_with_reflection = 9 [default = false];
 
   // If specified, output timestamps are aligned with base_timestamp.
   // Otherwise, they are aligned with the first input timestamp.

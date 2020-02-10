@@ -74,6 +74,15 @@ public class ExternalTextureConverter implements TextureFrameProducer {
     thread.setFlipY(flip);
   }
 
+  /**
+   * Sets an offset that can be used to adjust the timestamps on the camera frames, for example to
+   * conform to a preferred time-base or to account for a known device latency. The offset is added
+   * to each frame timetamp read by the ExternalTextureConverter.
+   */
+  public void setTimestampOffsetNanos(long offsetInNanos) {
+    thread.setTimestampOffsetNanos(offsetInNanos);
+  }
+
   public ExternalTextureConverter(EGLContext parentContext) {
     this(parentContext, DEFAULT_NUM_BUFFERS);
   }
@@ -148,7 +157,8 @@ public class ExternalTextureConverter implements TextureFrameProducer {
     private List<AppTextureFrame> outputFrames = null;
     private int outputFrameIndex = -1;
     private ExternalTextureRenderer renderer = null;
-    private long timestampOffset = 0;
+    private long nextFrameTimestampOffset = 0;
+    private long timestampOffsetNanos = 0;
     private long previousTimestamp = 0;
     private boolean previousTimestampValid = false;
 
@@ -227,6 +237,10 @@ public class ExternalTextureConverter implements TextureFrameProducer {
       }
       renderer.release();
       super.releaseGl(); // This releases the EGL context, so must do it after any GL calls.
+    }
+
+    public void setTimestampOffsetNanos(long offsetInNanos) {
+      timestampOffsetNanos = offsetInNanos;
     }
 
     protected void renderNext(SurfaceTexture fromTexture) {
@@ -333,13 +347,15 @@ public class ExternalTextureConverter implements TextureFrameProducer {
       renderer.render(surfaceTexture);
 
       // Populate frame timestamp with surface texture timestamp after render() as renderer
-      // ensures that surface texture has the up-to-date timestamp. (Also adjust |timestampOffset|
-      // to ensure that timestamps increase monotonically.)
-      long textureTimestamp = surfaceTexture.getTimestamp() / NANOS_PER_MICRO;
-      if (previousTimestampValid && textureTimestamp + timestampOffset <= previousTimestamp) {
-        timestampOffset = previousTimestamp + 1 - textureTimestamp;
+      // ensures that surface texture has the up-to-date timestamp. (Also adjust
+      // |nextFrameTimestampOffset| to ensure that timestamps increase monotonically.)
+      long textureTimestamp =
+          (surfaceTexture.getTimestamp() + timestampOffsetNanos) / NANOS_PER_MICRO;
+      if (previousTimestampValid
+          && textureTimestamp + nextFrameTimestampOffset <= previousTimestamp) {
+        nextFrameTimestampOffset = previousTimestamp + 1 - textureTimestamp;
       }
-      outputFrame.setTimestamp(textureTimestamp + timestampOffset);
+      outputFrame.setTimestamp(textureTimestamp + nextFrameTimestampOffset);
       previousTimestamp = outputFrame.getTimestamp();
       previousTimestampValid = true;
     }

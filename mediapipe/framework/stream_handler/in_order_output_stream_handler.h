@@ -40,15 +40,15 @@ class InOrderOutputStreamHandler : public OutputStreamHandler {
                             options, calculator_run_in_parallel) {}
 
  private:
-  void PropagationLoop() EXCLUSIVE_LOCKS_REQUIRED(timestamp_mutex_) final;
+  void PropagationLoop() ABSL_EXCLUSIVE_LOCKS_REQUIRED(timestamp_mutex_) final;
 
   void PropagatePackets(CalculatorContext** calculator_context,
                         Timestamp* context_timestamp)
-      EXCLUSIVE_LOCKS_REQUIRED(timestamp_mutex_);
+      ABSL_EXCLUSIVE_LOCKS_REQUIRED(timestamp_mutex_);
 
   void PropagationBound(CalculatorContext** calculator_context,
                         Timestamp* context_timestamp)
-      EXCLUSIVE_LOCKS_REQUIRED(timestamp_mutex_);
+      ABSL_EXCLUSIVE_LOCKS_REQUIRED(timestamp_mutex_);
 };
 }  // namespace mediapipe
 

@@ -22,7 +22,7 @@
 namespace {
 
 ABSL_CONST_INIT absl::Mutex g_jvm_mutex(absl::kConstInit);
-JavaVM* g_jvm GUARDED_BY(g_jvm_mutex);
+JavaVM* g_jvm ABSL_GUARDED_BY(g_jvm_mutex);
 
 class JvmThread {
  public:

@@ -29,9 +29,9 @@ struct EglSurfaceHolder {
   // GlCalculatorHelper::RunInGlContext while holding this mutex, but instead
   // grab this inside the callable passed to them.
   absl::Mutex mutex;
-  EGLSurface surface GUARDED_BY(mutex) = EGL_NO_SURFACE;
+  EGLSurface surface ABSL_GUARDED_BY(mutex) = EGL_NO_SURFACE;
   // True if MediaPipe created the surface and is responsible for destroying it.
-  bool owned GUARDED_BY(mutex) = false;
+  bool owned ABSL_GUARDED_BY(mutex) = false;
   // Vertical flip of the surface, useful for conversion between coordinate
   // systems with top-left v.s. bottom-left origins.
   bool flip_y = false;

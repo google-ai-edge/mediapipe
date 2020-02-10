@@ -332,7 +332,7 @@ void ParallelFor(size_t start, size_t end, size_t grain_size,
       struct {
         absl::Mutex mutex;
         absl::CondVar completed;
-        int iterations_remain GUARDED_BY(mutex);
+        int iterations_remain ABSL_GUARDED_BY(mutex);
       } loop;
       {
         absl::MutexLock lock(&loop.mutex);

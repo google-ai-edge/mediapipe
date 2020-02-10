@@ -93,8 +93,8 @@ class ThreadPool {
 
   absl::Mutex mutex_;
   absl::CondVar condition_;
-  bool stopped_ GUARDED_BY(mutex_) = false;
-  std::deque<std::function<void()>> tasks_ GUARDED_BY(mutex_);
+  bool stopped_ ABSL_GUARDED_BY(mutex_) = false;
+  std::deque<std::function<void()>> tasks_ ABSL_GUARDED_BY(mutex_);
 
   ThreadOptions thread_options_;
 };

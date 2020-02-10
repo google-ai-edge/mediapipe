@@ -33,7 +33,7 @@ struct MonotonicClock::State {
   Clock* raw_clock;
   absl::Mutex lock;
   // The largest time ever returned by Now().
-  absl::Time max_time GUARDED_BY(lock);
+  absl::Time max_time ABSL_GUARDED_BY(lock);
   explicit State(Clock* clock)
       : raw_clock(clock), max_time(absl::UnixEpoch()) {}
 };
@@ -171,13 +171,13 @@ class MonotonicClockImpl : public MonotonicClock {
   // last_raw_time_ remembers the last value obtained from raw_clock_.
   // It prevents spurious calls to ReportCorrection when time moves
   // forward by a smaller amount than a prior backward jump.
-  absl::Time last_raw_time_ GUARDED_BY(state_->lock);
+  absl::Time last_raw_time_ ABSL_GUARDED_BY(state_->lock);
 
   // Variables that keep track of time corrections made by this instance of
   // MonotonicClock.  (All such metrics are instance-local for reasons
   // described earlier.)
-  int correction_count_ GUARDED_BY(state_->lock);
-  absl::Duration max_correction_ GUARDED_BY(state_->lock);
+  int correction_count_ ABSL_GUARDED_BY(state_->lock);
+  absl::Duration max_correction_ ABSL_GUARDED_BY(state_->lock);
 };
 
 // Factory methods.

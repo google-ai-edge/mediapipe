@@ -34,6 +34,9 @@
 /// Whether to rotate video buffers with device rotation.
 @property(nonatomic) BOOL autoRotateBuffers;
 
+/// The camera intrinsic matrix.
+@property(nonatomic, readonly) matrix_float3x3 cameraIntrinsicMatrix;
+
 /// The capture session.
 @property(nonatomic, readonly) AVCaptureSession *session;
 

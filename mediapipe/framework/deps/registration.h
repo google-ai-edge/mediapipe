@@ -159,7 +159,7 @@ class FunctionRegistry {
   FunctionRegistry& operator=(const FunctionRegistry&) = delete;
 
   RegistrationToken Register(const std::string& name, Function func)
-      LOCKS_EXCLUDED(lock_) {
+      ABSL_LOCKS_EXCLUDED(lock_) {
     std::string normalized_name = GetNormalizedName(name);
     absl::WriterMutexLock lock(&lock_);
     std::string adjusted_name = GetAdjustedName(normalized_name);
@@ -189,7 +189,7 @@ class FunctionRegistry {
                                                   std::tuple<Args...>>::value,
                               int> = 0>
   ReturnType Invoke(const std::string& name, Args2&&... args)
-      LOCKS_EXCLUDED(lock_) {
+      ABSL_LOCKS_EXCLUDED(lock_) {
     Function function;
     {
       absl::ReaderMutexLock lock(&lock_);
@@ -207,14 +207,14 @@ class FunctionRegistry {
   // Namespaces in |name| and |ns| are separated by kNameSep.
   template <typename... Args2>
   ReturnType Invoke(const std::string& ns, const std::string& name,
-                    Args2&&... args) LOCKS_EXCLUDED(lock_) {
+                    Args2&&... args) ABSL_LOCKS_EXCLUDED(lock_) {
     return Invoke(GetQualifiedName(ns, name), args...);
   }
 
   // Note that it's possible for registered implementations to be subsequently
   // unregistered, though this will never happen with registrations made via
   // MEDIAPIPE_REGISTER_FACTORY_FUNCTION.
-  bool IsRegistered(const std::string& name) const LOCKS_EXCLUDED(lock_) {
+  bool IsRegistered(const std::string& name) const ABSL_LOCKS_EXCLUDED(lock_) {
     absl::ReaderMutexLock lock(&lock_);
     return functions_.count(name) != 0;
   }
@@ -222,7 +222,7 @@ class FunctionRegistry {
   // Returns true if the specified factory function is available.
   // Namespaces in |name| and |ns| are separated by kNameSep.
   bool IsRegistered(const std::string& ns, const std::string& name) const
-      LOCKS_EXCLUDED(lock_) {
+      ABSL_LOCKS_EXCLUDED(lock_) {
     return IsRegistered(GetQualifiedName(ns, name));
   }
 
@@ -231,7 +231,7 @@ class FunctionRegistry {
   // unregistered, though this will never happen with registrations made via
   // MEDIAPIPE_REGISTER_FACTORY_FUNCTION.
   std::unordered_set<std::string> GetRegisteredNames() const
-      LOCKS_EXCLUDED(lock_) {
+      ABSL_LOCKS_EXCLUDED(lock_) {
     absl::ReaderMutexLock lock(&lock_);
     std::unordered_set<std::string> names;
     std::for_each(functions_.cbegin(), functions_.cend(),
@@ -287,7 +287,7 @@ class FunctionRegistry {
 
  private:
   mutable absl::Mutex lock_;
-  std::unordered_map<std::string, Function> functions_ GUARDED_BY(lock_);
+  std::unordered_map<std::string, Function> functions_ ABSL_GUARDED_BY(lock_);
 
   // For names included in NamespaceWhitelist, strips the namespace.
   std::string GetAdjustedName(const std::string& name) {

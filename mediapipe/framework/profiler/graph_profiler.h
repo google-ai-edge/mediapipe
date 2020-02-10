@@ -122,15 +122,15 @@ class GraphProfiler : public std::enable_shared_from_this<ProfilingContext> {
   // the profiler disables itself and returns an empty stub if Initialize() is
   // called more than once.
   void Initialize(const ValidatedGraphConfig& validated_graph_config)
-      LOCKS_EXCLUDED(profiler_mutex_);
+      ABSL_LOCKS_EXCLUDED(profiler_mutex_);
 
   // Sets the profiler clock.
   void SetClock(const std::shared_ptr<mediapipe::Clock>& clock)
-      LOCKS_EXCLUDED(profiler_mutex_);
+      ABSL_LOCKS_EXCLUDED(profiler_mutex_);
 
   // Gets the profiler clock.
   const std::shared_ptr<mediapipe::Clock> GetClock() const
-      LOCKS_EXCLUDED(profiler_mutex_);
+      ABSL_LOCKS_EXCLUDED(profiler_mutex_);
 
   // Pauses profiling. No-op if already paused.
   void Pause();
@@ -138,7 +138,7 @@ class GraphProfiler : public std::enable_shared_from_this<ProfilingContext> {
   void Resume();
   // Resets cumulative profiling data. This only resets the information about
   // Process() and does NOT affect information for Open() and Close() methods.
-  void Reset() LOCKS_EXCLUDED(profiler_mutex_);
+  void Reset() ABSL_LOCKS_EXCLUDED(profiler_mutex_);
   // Begins profiling for a single graph run.
   ::mediapipe::Status Start(::mediapipe::Executor* executor);
   // Ends profiling for a single graph run.
@@ -150,8 +150,8 @@ class GraphProfiler : public std::enable_shared_from_this<ProfilingContext> {
   // Collects the runtime profile for Open(), Process(), and Close() of each
   // calculator in the graph. May be called at any time after the graph has been
   // initialized.
-  ::mediapipe::Status GetCalculatorProfiles(
-      std::vector<CalculatorProfile>*) const LOCKS_EXCLUDED(profiler_mutex_);
+  ::mediapipe::Status GetCalculatorProfiles(std::vector<CalculatorProfile>*)
+      const ABSL_LOCKS_EXCLUDED(profiler_mutex_);
 
   // Writes recent profiling and tracing data to a file specified in the
   // ProfilerConfig.  Includes events since the previous call to WriteProfile.
@@ -234,7 +234,7 @@ class GraphProfiler : public std::enable_shared_from_this<ProfilingContext> {
   // It is the responsibility of the caller to make sure the |timestamp_usec|
   // is valid for profiling.
   void AddPacketInfo(const TraceEvent& packet_info)
-      LOCKS_EXCLUDED(profiler_mutex_);
+      ABSL_LOCKS_EXCLUDED(profiler_mutex_);
   static void InitializeTimeHistogram(int64 interval_size_usec,
                                       int64 num_intervals,
                                       TimeHistogram* histogram);
@@ -273,10 +273,10 @@ class GraphProfiler : public std::enable_shared_from_this<ProfilingContext> {
 
   void SetOpenRuntime(const CalculatorContext& calculator_context,
                       int64 start_time_usec, int64 end_time_usec)
-      LOCKS_EXCLUDED(profiler_mutex_);
+      ABSL_LOCKS_EXCLUDED(profiler_mutex_);
   void SetCloseRuntime(const CalculatorContext& calculator_context,
                        int64 start_time_usec, int64 end_time_usec)
-      LOCKS_EXCLUDED(profiler_mutex_);
+      ABSL_LOCKS_EXCLUDED(profiler_mutex_);
 
   // Updates the input streams profiles for the calculator and returns the
   // minimum |source_process_start_usec| of all input packets, excluding empty
@@ -289,7 +289,7 @@ class GraphProfiler : public std::enable_shared_from_this<ProfilingContext> {
   // Requires ReaderLock for is_profiling_.
   void AddProcessSample(const CalculatorContext& calculator_context,
                         int64 start_time_usec, int64 end_time_usec)
-      LOCKS_EXCLUDED(profiler_mutex_);
+      ABSL_LOCKS_EXCLUDED(profiler_mutex_);
 
   // Helper method to get trace_log_path.  If the trace_log_path is empty and
   // tracing is enabled, this function returns a default platform dependent

@@ -244,6 +244,7 @@ cc_library(
     hdrs = ["subgraph_expansion.h"],
     visibility = ["//visibility:public"],
     deps = [
+        ":name_util",
         ":tag_map",
         "//mediapipe/framework:calculator_cc_proto",
         "//mediapipe/framework:packet_generator",

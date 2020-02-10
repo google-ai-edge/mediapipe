@@ -127,7 +127,13 @@ CalculatorGraph::CalculatorGraph(const CalculatorGraphConfig& config)
 // Defining the destructor here lets us use incomplete types in the header;
 // they only need to be fully visible here, where their destructor is
 // instantiated.
-CalculatorGraph::~CalculatorGraph() {}
+CalculatorGraph::~CalculatorGraph() {
+  // Stop periodic profiler output to ublock Executor destructors.
+  ::mediapipe::Status status = profiler()->Stop();
+  if (!status.ok()) {
+    LOG(ERROR) << "During graph destruction: " << status;
+  }
+}
 
 ::mediapipe::Status CalculatorGraph::InitializePacketGeneratorGraph(
     const std::map<std::string, Packet>& side_packets) {

@@ -298,7 +298,7 @@ class CalculatorGraph {
   // Callback when an error is encountered.
   // Adds the error to the vector of errors.
   void RecordError(const ::mediapipe::Status& error)
-      LOCKS_EXCLUDED(error_mutex_);
+      ABSL_LOCKS_EXCLUDED(error_mutex_);
 
   // Returns the maximum input stream queue size.
   int GetMaxInputStreamQueueSize();
@@ -339,13 +339,14 @@ class CalculatorGraph {
 
   // Returns true if this node or graph input stream is connected to
   // any input stream whose queue has hit maximum capacity.
-  bool IsNodeThrottled(int node_id) LOCKS_EXCLUDED(full_input_streams_mutex_);
+  bool IsNodeThrottled(int node_id)
+      ABSL_LOCKS_EXCLUDED(full_input_streams_mutex_);
 
   // If any active source node or graph input stream is throttled and not yet
   // closed, increases the max_queue_size for each full input stream in the
   // graph.
   // Returns true if at least one max_queue_size has been grown.
-  bool UnthrottleSources() LOCKS_EXCLUDED(full_input_streams_mutex_);
+  bool UnthrottleSources() ABSL_LOCKS_EXCLUDED(full_input_streams_mutex_);
 
   // Returns the scheduler's runtime measures for overhead measurement.
   // Only meant for test purposes.
@@ -498,7 +499,7 @@ class CalculatorGraph {
   // handler fails, it appends its error to errors_, and CleanupAfterRun sets
   // |*status| to the new combined errors on return.
   void CleanupAfterRun(::mediapipe::Status* status)
-      LOCKS_EXCLUDED(error_mutex_);
+      ABSL_LOCKS_EXCLUDED(error_mutex_);
 
   // Combines errors into a status. Returns true if the vector of errors is
   // non-empty.
@@ -571,7 +572,7 @@ class CalculatorGraph {
   // Mode for adding packets to a graph input stream. Set to block until all
   // affected input streams are not full by default.
   GraphInputStreamAddMode graph_input_stream_add_mode_
-      GUARDED_BY(full_input_streams_mutex_);
+      ABSL_GUARDED_BY(full_input_streams_mutex_);
 
   // For a source node or graph input stream (specified using id),
   // this stores the set of dependent input streams that have hit their
@@ -580,7 +581,7 @@ class CalculatorGraph {
   // is added to a graph input stream only if this set is empty.
   // Note that this vector contains an unused entry for each non-source node.
   std::vector<absl::flat_hash_set<InputStreamManager*>> full_input_streams_
-      GUARDED_BY(full_input_streams_mutex_);
+      ABSL_GUARDED_BY(full_input_streams_mutex_);
 
   // Maps stream names to graph input stream objects.
   absl::flat_hash_map<std::string, std::unique_ptr<GraphInputStream>>
@@ -606,7 +607,7 @@ class CalculatorGraph {
 
   // Vector of errors encountered while running graph. Always use RecordError()
   // to add an error to this vector.
-  std::vector<::mediapipe::Status> errors_ GUARDED_BY(error_mutex_);
+  std::vector<::mediapipe::Status> errors_ ABSL_GUARDED_BY(error_mutex_);
 
   // True if the default executor uses the application thread.
   bool use_application_thread_ = false;
@@ -614,7 +615,7 @@ class CalculatorGraph {
   // Condition variable that waits until all input streams that depend on a
   // graph input stream are below the maximum queue size.
   absl::CondVar wait_to_add_packet_cond_var_
-      GUARDED_BY(full_input_streams_mutex_);
+      ABSL_GUARDED_BY(full_input_streams_mutex_);
 
   // Mutex for the vector of errors.
   absl::Mutex error_mutex_;

@@ -118,8 +118,8 @@ class OutputStreamManager {
   std::vector<Mirror> mirrors_;
 
   mutable absl::Mutex stream_mutex_;
-  Timestamp next_timestamp_bound_ GUARDED_BY(stream_mutex_);
-  bool closed_ GUARDED_BY(stream_mutex_);
+  Timestamp next_timestamp_bound_ ABSL_GUARDED_BY(stream_mutex_);
+  bool closed_ ABSL_GUARDED_BY(stream_mutex_);
 };
 
 }  // namespace mediapipe

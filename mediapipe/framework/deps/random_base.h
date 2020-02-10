@@ -15,6 +15,8 @@
 #ifndef MEDIAPIPE_DEPS_RANDOM_BASE_H_
 #define MEDIAPIPE_DEPS_RANDOM_BASE_H_
 
+#include "mediapipe/framework/port/integral_types.h"
+
 class RandomBase {
  public:
   // constructors.  Don't do too much.
@@ -22,7 +24,8 @@ class RandomBase {
   virtual ~RandomBase();
 
   virtual float RandFloat() { return 0; }
-  virtual int UnbiasedUniform(int n) { return n - 1; }
+  virtual int UnbiasedUniform(int n) { return 0; }
+  virtual uint64 UnbiasedUniform64(uint64 n) { return 0; }
 };
 
 #endif  // MEDIAPIPE_DEPS_RANDOM_BASE_H_

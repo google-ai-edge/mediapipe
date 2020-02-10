@@ -64,18 +64,18 @@ class SyncSetInputStreamHandler : public InputStreamHandler {
   // Populates timestamp bounds for streams outside the ready sync-set.
   void FillInputBounds(Timestamp input_timestamp,
                        InputStreamShardSet* input_set)
-      EXCLUSIVE_LOCKS_REQUIRED(mutex_);
+      ABSL_EXCLUSIVE_LOCKS_REQUIRED(mutex_);
 
  private:
   absl::Mutex mutex_;
   // The ids of each set of inputs.
-  std::vector<std::vector<CollectionItemId>> sync_sets_ GUARDED_BY(mutex_);
+  std::vector<std::vector<CollectionItemId>> sync_sets_ ABSL_GUARDED_BY(mutex_);
   // The index of the ready sync set.  A value of -1 indicates that no
   // sync sets are ready.
-  int ready_sync_set_index_ GUARDED_BY(mutex_) = -1;
+  int ready_sync_set_index_ ABSL_GUARDED_BY(mutex_) = -1;
   // The timestamp at which the sync set is ready.  If no sync set is
   // ready then this variable should be Timestamp::Done() .
-  Timestamp ready_timestamp_ GUARDED_BY(mutex_);
+  Timestamp ready_timestamp_ ABSL_GUARDED_BY(mutex_);
 };
 
 REGISTER_INPUT_STREAM_HANDLER(SyncSetInputStreamHandler);

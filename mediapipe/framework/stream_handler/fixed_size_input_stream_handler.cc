@@ -67,7 +67,7 @@ class FixedSizeInputStreamHandler : public DefaultInputStreamHandler {
 
  private:
   // Drops packets if all input streams exceed trigger_queue_size.
-  void EraseAllSurplus() EXCLUSIVE_LOCKS_REQUIRED(erase_mutex_) {
+  void EraseAllSurplus() ABSL_EXCLUSIVE_LOCKS_REQUIRED(erase_mutex_) {
     Timestamp min_timestamp_all_streams = Timestamp::Max();
     for (const auto& stream : input_stream_managers_) {
       // Check whether every InputStreamImpl grew beyond trigger_queue_size.
@@ -127,7 +127,8 @@ class FixedSizeInputStreamHandler : public DefaultInputStreamHandler {
   // Keeps only the most recent target_queue_size packets in each stream
   // exceeding trigger_queue_size.  Also, discards all packets older than the
   // first kept timestamp on any stream.
-  void EraseAnySurplus(bool keep_one) EXCLUSIVE_LOCKS_REQUIRED(erase_mutex_) {
+  void EraseAnySurplus(bool keep_one)
+      ABSL_EXCLUSIVE_LOCKS_REQUIRED(erase_mutex_) {
     // Record the most recent first kept timestamp on any stream.
     for (const auto& stream : input_stream_managers_) {
       int32 queue_size = (stream->QueueSize() >= trigger_queue_size_)
@@ -151,7 +152,7 @@ class FixedSizeInputStreamHandler : public DefaultInputStreamHandler {
   }
 
   void EraseSurplusPackets(bool keep_one)
-      EXCLUSIVE_LOCKS_REQUIRED(erase_mutex_) {
+      ABSL_EXCLUSIVE_LOCKS_REQUIRED(erase_mutex_) {
     return (fixed_min_size_) ? EraseAllSurplus() : EraseAnySurplus(keep_one);
   }
 
@@ -218,9 +219,9 @@ class FixedSizeInputStreamHandler : public DefaultInputStreamHandler {
   bool fixed_min_size_;
   // Indicates that GetNodeReadiness has returned kReadyForProcess once, and
   // the corresponding call to FillInputSet has not yet completed.
-  bool pending_ GUARDED_BY(erase_mutex_);
+  bool pending_ ABSL_GUARDED_BY(erase_mutex_);
   // The timestamp used to truncate all input streams.
-  Timestamp kept_timestamp_ GUARDED_BY(erase_mutex_);
+  Timestamp kept_timestamp_ ABSL_GUARDED_BY(erase_mutex_);
   absl::Mutex erase_mutex_;
 };
 

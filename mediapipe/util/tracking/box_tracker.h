@@ -193,17 +193,17 @@ class BoxTracker {
   }
 
   // Returns true if any tracking is ongoing for the specified id.
-  bool IsTrackingOngoingForId(int id) LOCKS_EXCLUDED(status_mutex_);
+  bool IsTrackingOngoingForId(int id) ABSL_LOCKS_EXCLUDED(status_mutex_);
 
   // Returns true if any tracking is ongoing.
-  bool IsTrackingOngoing() LOCKS_EXCLUDED(status_mutex_);
+  bool IsTrackingOngoing() ABSL_LOCKS_EXCLUDED(status_mutex_);
 
   // Cancels all ongoing tracks. To avoid race conditions all NewBoxTrack's in
   // flight will also be canceled. Future NewBoxTrack's will be canceled.
   // NOTE: To resume execution, you have to call ResumeTracking() before
   //       issuing more NewBoxTrack calls.
-  void CancelAllOngoingTracks() LOCKS_EXCLUDED(status_mutex_);
-  void ResumeTracking() LOCKS_EXCLUDED(status_mutex_);
+  void CancelAllOngoingTracks() ABSL_LOCKS_EXCLUDED(status_mutex_);
+  void ResumeTracking() ABSL_LOCKS_EXCLUDED(status_mutex_);
 
   // Waits for all ongoing tracks to complete.
   // Optionally accepts a timeout in microseconds (== 0 for infinite wait).
@@ -212,7 +212,7 @@ class BoxTracker {
   // be called before destructing the BoxTracker object or dangeling running
   // threads might try to access invalid data.
   bool WaitForAllOngoingTracks(int timeout_us = 0)
-      LOCKS_EXCLUDED(status_mutex_);
+      ABSL_LOCKS_EXCLUDED(status_mutex_);
 
   // Debug function to obtain raw TrackingData closest to the specified
   // timestamp. This call will read from disk on every invocation so it is
@@ -247,7 +247,7 @@ class BoxTracker {
   // Waits with timeout for chunkfile to become available. Returns true on
   // success, false if waited till timeout or when canceled.
   bool WaitForChunkFile(int id, int checkpoint, const std::string& chunk_file)
-      LOCKS_EXCLUDED(status_mutex_);
+      ABSL_LOCKS_EXCLUDED(status_mutex_);
 
   // Determines closest index in passed TrackingDataChunk
   int ClosestFrameIndex(int64 msec, const TrackingDataChunk& chunk) const;
@@ -305,26 +305,27 @@ class BoxTracker {
   // Ids are scheduled exclusively, run this method to acquire lock.
   // Returns false if id could not be scheduled (e.g. id got canceled during
   // waiting).
-  bool WaitToScheduleId(int id) LOCKS_EXCLUDED(status_mutex_);
+  bool WaitToScheduleId(int id) ABSL_LOCKS_EXCLUDED(status_mutex_);
 
   // Signals end of scheduling phase. Requires status mutex to be held.
-  void DoneSchedulingId(int id) EXCLUSIVE_LOCKS_REQUIRED(status_mutex_);
+  void DoneSchedulingId(int id) ABSL_EXCLUSIVE_LOCKS_REQUIRED(status_mutex_);
 
   // Removes all checkpoints within vicinity of new checkpoint.
   void RemoveCloseCheckpoints(int id, int checkpoint)
-      EXCLUSIVE_LOCKS_REQUIRED(status_mutex_);
+      ABSL_EXCLUSIVE_LOCKS_REQUIRED(status_mutex_);
 
   // Removes specific checkpoint.
   void ClearCheckpoint(int id, int checkpoint)
-      EXCLUSIVE_LOCKS_REQUIRED(status_mutex_);
+      ABSL_EXCLUSIVE_LOCKS_REQUIRED(status_mutex_);
 
   // Terminates tracking for specific id and checkpoint.
   void CancelTracking(int id, int checkpoint)
-      EXCLUSIVE_LOCKS_REQUIRED(status_mutex_);
+      ABSL_EXCLUSIVE_LOCKS_REQUIRED(status_mutex_);
 
   // Implementation function for IsTrackingOngoing assuming mutex is already
   // held.
-  bool IsTrackingOngoingMutexHeld() EXCLUSIVE_LOCKS_REQUIRED(status_mutex_);
+  bool IsTrackingOngoingMutexHeld()
+      ABSL_EXCLUSIVE_LOCKS_REQUIRED(status_mutex_);
 
   // Captures tracking status for each checkpoint
   struct TrackStatus {
@@ -337,21 +338,21 @@ class BoxTracker {
 
  private:
   // Stores computed tracking paths_ for all boxes.
-  std::unordered_map<int, Path> paths_ GUARDED_BY(path_mutex_);
+  std::unordered_map<int, Path> paths_ ABSL_GUARDED_BY(path_mutex_);
   absl::Mutex path_mutex_;
 
   // For each id and each checkpoint stores current tracking status.
   std::unordered_map<int, std::map<int, TrackStatus>> track_status_
-      GUARDED_BY(status_mutex_);
+      ABSL_GUARDED_BY(status_mutex_);
 
   // Keeps track which ids are currently processing in NewBoxTrack.
-  std::unordered_map<int, bool> new_box_track_ GUARDED_BY(status_mutex_);
+  std::unordered_map<int, bool> new_box_track_ ABSL_GUARDED_BY(status_mutex_);
   absl::Mutex status_mutex_;
 
-  bool canceling_ GUARDED_BY(status_mutex_) = false;
+  bool canceling_ ABSL_GUARDED_BY(status_mutex_) = false;
 
   // Use to signal changes to status_condvar_;
-  absl::CondVar status_condvar_ GUARDED_BY(status_mutex_);
+  absl::CondVar status_condvar_ ABSL_GUARDED_BY(status_mutex_);
 
   BoxTrackerOptions options_;
 

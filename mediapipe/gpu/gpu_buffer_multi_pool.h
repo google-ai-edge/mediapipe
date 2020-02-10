@@ -107,7 +107,7 @@ class GpuBufferMultiPool {
 
   absl::Mutex mutex_;
   std::unordered_map<BufferSpec, SimplePool, BufferSpecHash> pools_
-      GUARDED_BY(mutex_);
+      ABSL_GUARDED_BY(mutex_);
   // A queue of BufferSpecs to keep track of the age of each BufferSpec added to
   // the pool.
   std::queue<BufferSpec> buffer_specs_;

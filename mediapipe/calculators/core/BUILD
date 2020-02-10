@@ -87,6 +87,15 @@ proto_library(
 )
 
 proto_library(
+    name = "constant_side_packet_calculator_proto",
+    srcs = ["constant_side_packet_calculator.proto"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//mediapipe/framework:calculator_proto",
+    ],
+)
+
+proto_library(
     name = "clip_vector_size_calculator_proto",
     srcs = ["clip_vector_size_calculator.proto"],
     visibility = ["//visibility:public"],
@@ -171,6 +180,14 @@ mediapipe_cc_proto_library(
     cc_deps = ["//mediapipe/framework:calculator_cc_proto"],
     visibility = ["//visibility:public"],
     deps = [":gate_calculator_proto"],
+)
+
+mediapipe_cc_proto_library(
+    name = "constant_side_packet_calculator_cc_proto",
+    srcs = ["constant_side_packet_calculator.proto"],
+    cc_deps = ["//mediapipe/framework:calculator_cc_proto"],
+    visibility = ["//visibility:public"],
+    deps = [":constant_side_packet_calculator_proto"],
 )
 
 cc_library(
@@ -958,5 +975,32 @@ cc_test(
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/framework/port:status",
         "@com_google_absl//absl/memory",
+    ],
+)
+
+cc_library(
+    name = "constant_side_packet_calculator",
+    srcs = ["constant_side_packet_calculator.cc"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":constant_side_packet_calculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:collection_item_id",
+        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:status",
+    ],
+    alwayslink = 1,
+)
+
+cc_test(
+    name = "constant_side_packet_calculator_test",
+    srcs = ["constant_side_packet_calculator_test.cc"],
+    deps = [
+        ":constant_side_packet_calculator",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:parse_text_proto",
+        "//mediapipe/framework/port:status",
+        "@com_google_absl//absl/strings",
     ],
 )

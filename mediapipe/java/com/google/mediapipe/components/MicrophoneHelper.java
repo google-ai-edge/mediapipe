@@ -21,6 +21,8 @@ import android.media.MediaRecorder.AudioSource;
 import android.os.Build.VERSION;
 import android.os.Build.VERSION_CODES;
 import android.util.Log;
+import com.google.common.base.Preconditions;
+import java.nio.ByteBuffer;
 
 /** Provides access to audio data from a microphone. */
 public class MicrophoneHelper implements AudioDataProducer {
@@ -42,10 +44,10 @@ public class MicrophoneHelper implements AudioDataProducer {
   // constant favor faster blocking calls to AudioRecord.read(...).
   private static final int MAX_READ_INTERVAL_SEC = 1;
 
-  // This class uses AudioFormat.ENCODING_PCM_16BIT, i.e. 16 bits per single channel sample.
-  private static final int BYTES_PER_MONO_SAMPLE = 2;
+  // This class uses AudioFormat.ENCODING_PCM_16BIT, i.e. 16 bits per sample.
+  private static final int BYTES_PER_SAMPLE = 2;
 
-  private static final long UNINITIALIZED_TIMESTAMP = -1;
+  private static final long UNINITIALIZED_TIMESTAMP = Long.MIN_VALUE;
   private static final long NANOS_PER_MICROS = 1000;
   private static final long MICROS_PER_SECOND = 1000000;
 
@@ -54,22 +56,16 @@ public class MicrophoneHelper implements AudioDataProducer {
   // Channel configuration of audio source, one of AudioRecord.CHANNEL_IN_MONO or
   // AudioRecord.CHANNEL_IN_STEREO.
   private final int channelConfig;
+  // Bytes per audio frame. A frame is defined as a multi-channel audio sample. Possible values are
+  // 2 bytes for 1 channel, or 4 bytes for 2 channel audio.
+  private final int bytesPerFrame;
   // Data storage allocated to record audio samples in a single function call to AudioRecord.read().
   private final int bufferSize;
-  // Bytes used per sample, accounts for number of channels of audio source. Possible values are 2
-  // bytes for a 1-channel sample and 4 bytes for a 2-channel sample.
-  private final int bytesPerSample;
 
-  private byte[] audioData;
-
-  // Timestamp provided by the AudioTimestamp object.
-  private AudioTimestamp audioTimestamp;
   // Initial timestamp base. Can be set by the client so that all timestamps calculated using the
-  // number of samples read per AudioRecord.read() function call start from this timestamp.
-  private long initialTimestamp = UNINITIALIZED_TIMESTAMP;
-  // The total number of samples read from multiple calls to AudioRecord.read(). This is reset to
-  // zero for every startMicrophone() call.
-  private long totalNumSamplesRead;
+  // number of samples read per AudioRecord.read() function call start from this timestamp. If it
+  // is not set by the client, then every startMicrophone(...) call marks a value for it.
+  private long initialTimestampMicros = UNINITIALIZED_TIMESTAMP;
 
   // AudioRecord is used to setup a way to record data from the audio source. See
   // https://developer.android.com/reference/android/media/AudioRecord.htm for details.
@@ -99,9 +95,9 @@ public class MicrophoneHelper implements AudioDataProducer {
     this.channelConfig = channelConfig;
 
     // Number of channels of audio source, depending on channelConfig.
-    final int channelCount = channelConfig == AudioFormat.CHANNEL_IN_STEREO ? 2 : 1;
+    final int numChannels = channelConfig == AudioFormat.CHANNEL_IN_STEREO ? 2 : 1;
 
-    bytesPerSample = BYTES_PER_MONO_SAMPLE * channelCount;
+    bytesPerFrame = BYTES_PER_SAMPLE * numChannels;
 
     // The minimum buffer size required by AudioRecord.
     final int minBufferSize =
@@ -115,14 +111,13 @@ public class MicrophoneHelper implements AudioDataProducer {
     // from the audio stream in each AudioRecord.read(...) call.
     if (minBufferSize == AudioRecord.ERROR || minBufferSize == AudioRecord.ERROR_BAD_VALUE) {
       Log.e(TAG, "AudioRecord minBufferSize unavailable.");
-      bufferSize = sampleRateInHz * MAX_READ_INTERVAL_SEC * bytesPerSample * BUFFER_SIZE_MULTIPLIER;
+      bufferSize = sampleRateInHz * MAX_READ_INTERVAL_SEC * bytesPerFrame * BUFFER_SIZE_MULTIPLIER;
     } else {
       bufferSize = minBufferSize * BUFFER_SIZE_MULTIPLIER;
     }
   }
 
   private void setupAudioRecord() {
-    audioData = new byte[bufferSize];
 
     Log.d(TAG, "AudioRecord(" + sampleRateInHz + ", " + bufferSize + ")");
     audioFormat =
@@ -148,24 +143,18 @@ public class MicrophoneHelper implements AudioDataProducer {
             () -> {
               android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_AUDIO);
 
-              // Initial timestamp in case the AudioRecord.getTimestamp() function is unavailable.
-              long startTimestamp =
-                  initialTimestamp != UNINITIALIZED_TIMESTAMP
-                      ? initialTimestamp
-                      : System.nanoTime() / NANOS_PER_MICROS;
-              long sampleBasedTimestamp;
+              // The total number of frames read from multiple calls to AudioRecord.read() in this
+              // recording thread.
+              int totalNumFramesRead = 0;
               while (recording) {
                 if (audioRecord == null) {
                   break;
                 }
-                final int numBytesRead =
-                    audioRecord.read(audioData, /*offsetInBytes=*/ 0, /*sizeInBytes=*/ bufferSize);
-                // If AudioRecord.getTimestamp() is unavailable, calculate the timestamp using the
-                // number of samples read in the call to AudioRecord.read().
-                long sampleBasedFallbackTimestamp =
-                    startTimestamp + totalNumSamplesRead * MICROS_PER_SECOND / sampleRateInHz;
-                sampleBasedTimestamp =
-                    getTimestamp(/*fallbackTimestamp=*/ sampleBasedFallbackTimestamp);
+                // TODO: Fix audio data cloning.
+                ByteBuffer audioData = ByteBuffer.allocateDirect(bufferSize);
+                final int numBytesRead = audioRecord.read(audioData, /*sizeInBytes=*/ bufferSize);
+                // Get the timestamp of the first audio frame in the latest read call.
+                long timestampMicros = getTimestampMicros(totalNumFramesRead);
                 if (numBytesRead <= 0) {
                   if (numBytesRead == AudioRecord.ERROR_INVALID_OPERATION) {
                     Log.e(TAG, "ERROR_INVALID_OPERATION");
@@ -179,37 +168,65 @@ public class MicrophoneHelper implements AudioDataProducer {
                 // stopMicrophone() wasn't called. If the consumer called stopMicrophone(), discard
                 // the data read in the latest AudioRecord.read(...) function call.
                 if (recording && consumer != null) {
-                  // TODO: Refactor audioData buffer cloning.
-                  consumer.onNewAudioData(audioData.clone(), sampleBasedTimestamp, audioFormat);
+                  consumer.onNewAudioData(audioData, timestampMicros, audioFormat);
                 }
 
-                // TODO: Replace byte[] with short[] audioData.
                 // It is expected that audioRecord.read() will read full samples and therefore
-                // numBytesRead is expected to be a multiple of bytesPerSample.
-                int numSamplesRead = numBytesRead / bytesPerSample;
-                totalNumSamplesRead += numSamplesRead;
+                // numBytesRead is expected to be a multiple of bytesPerFrame.
+                int numFramesRead = numBytesRead / bytesPerFrame;
+                totalNumFramesRead += numFramesRead;
               }
-            });
+            },
+            "microphoneHelperRecordingThread");
   }
 
   // If AudioRecord.getTimestamp() is available and returns without error, this function returns the
   // timestamp using AudioRecord.getTimestamp(). If the function is unavailable, it returns a
-  // fallbackTimestamp provided as an argument to this method.
-  private long getTimestamp(long fallbackTimestamp) {
+  // fallback timestamp calculated using number of samples read so far.
+  // Use numFramesRead to be the frame count before the latest AudioRecord.read(...) call to get
+  // the timestamp of the first audio frame in the latest AudioRecord.read(...) call.
+  private long getTimestampMicros(long numFramesRead) {
+    AudioTimestamp audioTimestamp = getAudioRecordTimestamp();
+    if (audioTimestamp == null) {
+      if (numFramesRead == 0) {
+        initialTimestampMicros = markInitialTimestamp();
+      }
+
+      // If AudioRecord.getTimestamp() is unavailable, calculate the timestamp using the
+      // number of frames read in the call to AudioRecord.read().
+      return initialTimestampMicros + numFramesRead * getMicrosPerSample();
+    }
+    // If audioTimestamp.framePosition is ahead of numFramesRead so far, then the offset is
+    // negative.
+    long frameOffset = numFramesRead - audioTimestamp.framePosition;
+    long audioTsMicros = audioTimestamp.nanoTime / NANOS_PER_MICROS;
+    return audioTsMicros + frameOffset * getMicrosPerSample();
+  }
+
+  private long markInitialTimestamp() {
+    return initialTimestampMicros != UNINITIALIZED_TIMESTAMP
+        ? initialTimestampMicros
+        : System.nanoTime() / NANOS_PER_MICROS;
+  }
+
+  private long getMicrosPerSample() {
+    return MICROS_PER_SECOND / sampleRateInHz;
+  }
+
+  private AudioTimestamp getAudioRecordTimestamp() {
+    Preconditions.checkNotNull(audioRecord);
     // AudioRecord.getTimestamp is only available at API Level 24 and above.
     // https://developer.android.com/reference/android/media/AudioRecord.html#getTimestamp(android.media.AudioTimestamp,%20int).
     if (VERSION.SDK_INT >= VERSION_CODES.N) {
-      if (audioTimestamp == null) {
-        audioTimestamp = new AudioTimestamp();
-      }
+      AudioTimestamp audioTimestamp = new AudioTimestamp();
       int status = audioRecord.getTimestamp(audioTimestamp, AudioTimestamp.TIMEBASE_MONOTONIC);
       if (status == AudioRecord.SUCCESS) {
-        return audioTimestamp.nanoTime / NANOS_PER_MICROS;
+        return audioTimestamp;
       } else {
         Log.e(TAG, "audioRecord.getTimestamp failed with status: " + status);
       }
     }
-    return fallbackTimestamp;
+    return null;
   }
 
   // Returns the buffer size read by this class per AudioRecord.read() call.
@@ -221,8 +238,8 @@ public class MicrophoneHelper implements AudioDataProducer {
    * Overrides the use of system time as the source of timestamps for audio packets. Not
    * recommended. Provided to maintain compatibility with existing usage by CameraRecorder.
    */
-  public void setInitialTimestamp(long initialTimestamp) {
-    this.initialTimestamp = initialTimestamp;
+  public void setInitialTimestampMicros(long initialTimestampMicros) {
+    this.initialTimestampMicros = initialTimestampMicros;
   }
 
   // This method sets up a new AudioRecord object for reading audio data from the microphone. It
@@ -241,7 +258,6 @@ public class MicrophoneHelper implements AudioDataProducer {
     }
 
     recording = true;
-    totalNumSamplesRead = 0;
     recordingThread.start();
 
     Log.d(TAG, "AudioRecord is recording audio.");
@@ -256,6 +272,7 @@ public class MicrophoneHelper implements AudioDataProducer {
 
   // Stops the AudioRecord object from reading data from the microphone.
   public void stopMicrophoneWithoutCleanup() {
+    Preconditions.checkNotNull(audioRecord);
     if (!recording) {
       return;
     }
@@ -277,6 +294,7 @@ public class MicrophoneHelper implements AudioDataProducer {
 
   // Releases the AudioRecord object when there is no ongoing recording.
   public void cleanup() {
+    Preconditions.checkNotNull(audioRecord);
     if (recording) {
       return;
     }

@@ -233,7 +233,7 @@ Timestamp InputStreamManager::MinTimestampOrBound(bool* is_empty) const {
 }
 
 Timestamp InputStreamManager::MinTimestampOrBoundHelper() const
-    EXCLUSIVE_LOCKS_REQUIRED(stream_mutex_) {
+    ABSL_EXCLUSIVE_LOCKS_REQUIRED(stream_mutex_) {
   return queue_.empty() ? next_timestamp_bound_ : queue_.front().Timestamp();
 }
 

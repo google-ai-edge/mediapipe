@@ -73,7 +73,7 @@ class InputStreamManager {
 
   // Reset the input stream for another run of the graph (i.e. another
   // image/video/audio).
-  void PrepareForRun() LOCKS_EXCLUDED(stream_mutex_);
+  void PrepareForRun() ABSL_LOCKS_EXCLUDED(stream_mutex_);
 
   // Adds a list of timestamped packets. Sets "notify" to true if the queue
   // becomes non-empty. Does nothing if the input stream is closed.
@@ -96,7 +96,7 @@ class InputStreamManager {
   ::mediapipe::Status MovePackets(std::list<Packet>* container, bool* notify);
 
   // Closes the input stream.  This function can be called multiple times.
-  void Close() LOCKS_EXCLUDED(stream_mutex_);
+  void Close() ABSL_LOCKS_EXCLUDED(stream_mutex_);
 
   // Sets the bound on the next timestamp to be added to the input stream.
   // Sets "notify" to true if the bound is advanced while the packet queue is
@@ -104,24 +104,24 @@ class InputStreamManager {
   // DisableTimestamps() is called. Does nothing if the input stream is
   // closed.
   ::mediapipe::Status SetNextTimestampBound(Timestamp bound, bool* notify)
-      LOCKS_EXCLUDED(stream_mutex_);
+      ABSL_LOCKS_EXCLUDED(stream_mutex_);
 
   // Returns the smallest timestamp at which we might see an input in
   // this input stream. This is the timestamp of the first item in the queue if
   // the queue is non-empty, or the next timestamp bound if it is empty.
   // Sets is_empty to queue_.empty() if it is not nullptr.
   Timestamp MinTimestampOrBound(bool* is_empty) const
-      LOCKS_EXCLUDED(stream_mutex_);
+      ABSL_LOCKS_EXCLUDED(stream_mutex_);
 
   // Turns off the use of packet timestamps.
   void DisableTimestamps();
 
   // Returns true iff the queue is empty.
-  bool IsEmpty() const LOCKS_EXCLUDED(stream_mutex_);
+  bool IsEmpty() const ABSL_LOCKS_EXCLUDED(stream_mutex_);
 
   // If the queue is not empty, returns the packet at the front of the queue.
   // Otherwise, returns an empty packet.
-  Packet QueueHead() const LOCKS_EXCLUDED(stream_mutex_);
+  Packet QueueHead() const ABSL_LOCKS_EXCLUDED(stream_mutex_);
 
   // Advances time to timestamp.  Pops and returns the packet in the queue
   // with a matching timestamp, if it exists.  Time can be advanced to any
@@ -134,26 +134,26 @@ class InputStreamManager {
   // Timestamp::Done() after the pop.
   Packet PopPacketAtTimestamp(Timestamp timestamp, int* num_packets_dropped,
                               bool* stream_is_done)
-      LOCKS_EXCLUDED(stream_mutex_);
+      ABSL_LOCKS_EXCLUDED(stream_mutex_);
 
   // Pops and returns the packet at the head of the queue if the queue is
   // non-empty. Sets "stream_is_done" if  the next timestamp bound reaches
   // Timestamp::Done() after the pop.
-  Packet PopQueueHead(bool* stream_is_done) LOCKS_EXCLUDED(stream_mutex_);
+  Packet PopQueueHead(bool* stream_is_done) ABSL_LOCKS_EXCLUDED(stream_mutex_);
 
   // Returns the number of packets in the queue.
-  int QueueSize() const LOCKS_EXCLUDED(stream_mutex_);
+  int QueueSize() const ABSL_LOCKS_EXCLUDED(stream_mutex_);
 
   // Returns true iff the queue is full.
-  bool IsFull() const LOCKS_EXCLUDED(stream_mutex_);
+  bool IsFull() const ABSL_LOCKS_EXCLUDED(stream_mutex_);
 
   // Returns the max queue size. -1 indicates that there is no maximum.
-  int MaxQueueSize() const LOCKS_EXCLUDED(stream_mutex_);
+  int MaxQueueSize() const ABSL_LOCKS_EXCLUDED(stream_mutex_);
 
   // Sets the maximum queue size for the stream. Used to determine when the
   // callbacks for becomes_full and becomes_not_full should be invoked. A value
   // of -1 means that there is no maximum queue size.
-  void SetMaxQueueSize(int max_queue_size) LOCKS_EXCLUDED(stream_mutex_);
+  void SetMaxQueueSize(int max_queue_size) ABSL_LOCKS_EXCLUDED(stream_mutex_);
 
   // If there are equal to or more than n packets in the queue, this function
   // returns the min timestamp of among the latest n packets of the queue.  If
@@ -161,12 +161,12 @@ class InputStreamManager {
   // Timestamp::Unset().
   // NOTE: This is a public API intended for FixedSizeInputStreamHandler only.
   Timestamp GetMinTimestampAmongNLatest(int n) const
-      LOCKS_EXCLUDED(stream_mutex_);
+      ABSL_LOCKS_EXCLUDED(stream_mutex_);
 
   // pop_front()s packets that are earlier than the given timestamp.
   // NOTE: This is a public API intended for FixedSizeInputStreamHandler only.
   void ErasePacketsEarlierThan(Timestamp timestamp)
-      LOCKS_EXCLUDED(stream_mutex_);
+      ABSL_LOCKS_EXCLUDED(stream_mutex_);
 
   // If a maximum queue size is specified (!= -1), these callbacks that are
   // invoked when the input queue becomes full (>= max_queue_size_) or when it
@@ -184,24 +184,24 @@ class InputStreamManager {
   template <typename Container>
   ::mediapipe::Status AddOrMovePacketsInternal(Container container,
                                                bool* notify)
-      LOCKS_EXCLUDED(stream_mutex_);
+      ABSL_LOCKS_EXCLUDED(stream_mutex_);
 
   // Returns true if the next timestamp bound reaches Timestamp::Done().
-  bool IsDone() const EXCLUSIVE_LOCKS_REQUIRED(stream_mutex_);
+  bool IsDone() const ABSL_EXCLUSIVE_LOCKS_REQUIRED(stream_mutex_);
 
   // Returns the smallest timestamp at which this stream might see an input.
   Timestamp MinTimestampOrBoundHelper() const;
 
   mutable absl::Mutex stream_mutex_;
-  std::deque<Packet> queue_ GUARDED_BY(stream_mutex_);
+  std::deque<Packet> queue_ ABSL_GUARDED_BY(stream_mutex_);
   // The number of packets added to queue_.  Used to verify a packet at
   // Timestamp::PostStream() is the only Packet in the stream.
-  int64 num_packets_added_ GUARDED_BY(stream_mutex_);
-  Timestamp next_timestamp_bound_ GUARDED_BY(stream_mutex_);
+  int64 num_packets_added_ ABSL_GUARDED_BY(stream_mutex_);
+  Timestamp next_timestamp_bound_ ABSL_GUARDED_BY(stream_mutex_);
   // The |timestamp| argument passed to the last SelectAtTimestamp() call.
   // Ignored if enable_timestamps_ is false.
-  Timestamp last_select_timestamp_ GUARDED_BY(stream_mutex_);
-  bool closed_ GUARDED_BY(stream_mutex_);
+  Timestamp last_select_timestamp_ ABSL_GUARDED_BY(stream_mutex_);
+  bool closed_ ABSL_GUARDED_BY(stream_mutex_);
   // True if packet timestamps are used.
   bool enable_timestamps_ = true;
   std::string name_;
@@ -211,7 +211,7 @@ class InputStreamManager {
   Packet header_;
 
   // The maximum queue size for this stream if set.
-  int max_queue_size_ GUARDED_BY(stream_mutex_) = -1;
+  int max_queue_size_ ABSL_GUARDED_BY(stream_mutex_) = -1;
 
   // Callback to notify the framework that we have hit the maximum queue size.
   QueueSizeCallback becomes_full_callback_;

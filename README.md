@@ -1,7 +1,7 @@
 ![MediaPipe](mediapipe/docs/images/mediapipe_small.png?raw=true "MediaPipe logo")
 =======================================================================
 
-[MediaPipe](http://mediapipe.dev) is a framework for building multimodal (eg. video, audio, any time series data) applied ML pipelines. With MediaPipe, a perception pipeline can be built as a graph of modular components, including, for instance, inference models (e.g., TensorFlow, TFLite) and media processing functions.
+[MediaPipe](http://mediapipe.dev) is a framework for building multimodal (eg. video, audio, any time series data), cross platform (i.e Android, iOS, web, edge devices) applied ML pipelines. With MediaPipe, a perception pipeline can be built as a graph of modular components, including, for instance, inference models (e.g., TensorFlow, TFLite) and media processing functions.
 
 ![Real-time Face Detection](mediapipe/docs/images/realtime_face_detection.gif)
 
@@ -9,17 +9,17 @@
 
 ## ML Solutions in MediaPipe
 
-* [Hand Tracking](mediapipe/docs/hand_tracking_mobile_gpu.md)
+* [Face Detection](mediapipe/docs/face_detection_mobile_gpu.md) [[Web Demo]](https://viz.mediapipe.dev/runner/demos/face_detection/face_detection.html)
 * [Multi-hand Tracking](mediapipe/docs/multi_hand_tracking_mobile_gpu.md)
-* [Face Detection](mediapipe/docs/face_detection_mobile_gpu.md)
-* [Hair Segmentation](mediapipe/docs/hair_segmentation_mobile_gpu.md)
+* [Hand Tracking](mediapipe/docs/hand_tracking_mobile_gpu.md) [[Web Demo]](https://viz.mediapipe.dev/runner/demos/hand_tracking/hand_tracking.html)
+* [Hair Segmentation](mediapipe/docs/hair_segmentation_mobile_gpu.md) [[Web Demo]](https://viz.mediapipe.dev/runner/demos/hair_segmentation/hair_segmentation.html)
 * [Object Detection](mediapipe/docs/object_detection_mobile_gpu.md)
 * [Object Detection and Tracking](mediapipe/docs/object_tracking_mobile_gpu.md)
 * [AutoFlip](mediapipe/docs/autoflip.md)
 
-![hand_tracking](mediapipe/docs/images/mobile/hand_tracking_3d_android_gpu_small.gif)
-![multi-hand_tracking](mediapipe/docs/images/mobile/multi_hand_tracking_android_gpu_small.gif)
 ![face_detection](mediapipe/docs/images/mobile/face_detection_android_gpu_small.gif)
+![multi-hand_tracking](mediapipe/docs/images/mobile/multi_hand_tracking_android_gpu_small.gif)
+![hand_tracking](mediapipe/docs/images/mobile/hand_tracking_3d_android_gpu_small.gif)
 ![hair_segmentation](mediapipe/docs/images/mobile/hair_segmentation_android_gpu_small.gif)
 ![object_tracking](mediapipe/docs/images/mobile/object_tracking_android_gpu_small.gif)
 
@@ -29,6 +29,8 @@ Follow these [instructions](mediapipe/docs/install.md).
 ## Getting started
 See mobile, desktop and Google Coral [examples](mediapipe/docs/examples.md).
 
+Check out some web demos [[Edge detection]](https://viz.mediapipe.dev/runner/demos/edge_detection/edge_detection.html) [[Face detection]](https://viz.mediapipe.dev/runner/demos/face_detection/face_detection.html) [[Hand Tracking]](https://viz.mediapipe.dev/runner/demos/hand_tracking/hand_tracking.html)
+
 ## Documentation
 [MediaPipe Read-the-Docs](https://mediapipe.readthedocs.io/) or [docs.mediapipe.dev](https://docs.mediapipe.dev)
 
@@ -37,10 +39,12 @@ Check out the [Examples page](https://mediapipe.readthedocs.io/en/latest/example
 ## Visualizing MediaPipe graphs
 A web-based visualizer is hosted on [viz.mediapipe.dev](https://viz.mediapipe.dev/). Please also see instructions [here](mediapipe/docs/visualizer.md).
 
-## Community forum
-*  [Discuss](https://groups.google.com/forum/#!forum/mediapipe) - General community discussion around MediaPipe
+## Videos
+*  [YouTube Channel](https://www.youtube.com/channel/UCObqmpuSMx-usADtL_qdMAw)
 
 ## Publications
+* [Google Developer Blog: MediaPipe on the Web](https://mediapipe.page.link/webdevblog)
+* [Google Developer Blog: Object Detection and Tracking using MediaPipe](https://mediapipe.page.link/objecttrackingblog)
 * [On-Device, Real-Time Hand Tracking with MediaPipe](https://ai.googleblog.com/2019/08/on-device-real-time-hand-tracking-with.html)
 * [MediaPipe: A Framework for Building Perception Pipelines](https://arxiv.org/abs/1906.08172)
 
@@ -54,6 +58,9 @@ A web-based visualizer is hosted on [viz.mediapipe.dev](https://viz.mediapipe.de
 * [AI DevWorld 2019](https://aidevworld.com) on Oct 10 in San Jose, California
 * [Google Industry Workshop at ICIP 2019](http://2019.ieeeicip.org/?action=page4&id=14#Google) [Presentation](https://docs.google.com/presentation/d/e/2PACX-1vRIBBbO_LO9v2YmvbHHEt1cwyqH6EjDxiILjuT0foXy1E7g6uyh4CesB2DkkEwlRDO9_lWfuKMZx98T/pub?start=false&loop=false&delayms=3000&slide=id.g556cc1a659_0_5) on Sept 24 in Taipei, Taiwan
 * [Open sourced at CVPR 2019](https://sites.google.com/corp/view/perception-cv4arvr/mediapipe) on June 17~20 in Long Beach, CA
+
+## Community forum
+*  [Discuss](https://groups.google.com/forum/#!forum/mediapipe) - General community discussion around MediaPipe
 
 ## Alpha Disclaimer
 MediaPipe is currently in alpha for v0.6. We are still making breaking API changes and expect to get to stable API by v1.0.

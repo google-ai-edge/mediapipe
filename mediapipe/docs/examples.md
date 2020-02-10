@@ -120,7 +120,7 @@ and do the model inference with the baseline model.
 MediaPipe for media processing to prepare video data sets for training a
 TensorFlow model.
 
-### Automatic video cropping
+### AutoFlip - Automatic video cropping
 
 [AutoFlip](./autoflip.md) shows how to use MediaPipe to build an automatic video
 cropping pipeline that can convert an input video to arbitrary aspect ratios.
@@ -141,6 +141,7 @@ GPU with live video from a webcam.
 
 *   [Desktop GPU](./face_detection_desktop.md)
 *   [Desktop CPU](./face_detection_desktop.md)
+
 
 ### Hand Tracking on Desktop with Webcam
 
@@ -184,3 +185,18 @@ EdgeTPU on
 [Face Detection on Coral with Webcam](./face_detection_coral_devboard.md) shows
 how to use quantized face detection TFlite model accelerated with EdgeTPU on
 [Google Coral Dev Board](https://coral.withgoogle.com/products/dev-board).
+
+
+## Web Browser
+
+Below are samples that can directly be run in your web browser.
+See more details in [MediaPipe on the Web](./web.md) and
+[Google Developer blog post](https://mediapipe.page.link/webdevblog)
+
+### [Face Detection In Browser](https://viz.mediapipe.dev/demo/face_detection)
+
+### [Hand Detection In Browser](https://viz.mediapipe.dev/demo/hand_detection)
+
+### [Hand Tracking In Browser](https://viz.mediapipe.dev/demo/hand_tracking)
+
+### [Hair Segmentation In Browser](https://viz.mediapipe.dev/demo/hair_segmentation)

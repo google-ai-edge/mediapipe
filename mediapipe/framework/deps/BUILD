@@ -175,6 +175,7 @@ cc_library(
     name = "random",
     hdrs = ["random_base.h"],
     visibility = ["//visibility:public"],
+    deps = ["//mediapipe/framework/port:integral_types"],
 )
 
 cc_library(

@@ -87,6 +87,7 @@ def _encode_binary_proto_impl(ctx):
                 ctx.executable._proto_compiler.path,
                 "--encode=" + ctx.attr.message_type,
                 "--proto_path=" + ctx.genfiles_dir.path,
+                "--proto_path=" + ctx.bin_dir.path,
                 "--proto_path=.",
             ] + path_list + file_list +
             ["<", textpb.path, ">", binarypb.path],
@@ -136,6 +137,7 @@ def _generate_proto_descriptor_set_impl(ctx):
         arguments = [
                         "--descriptor_set_out=%s" % descriptor.path,
                         "--proto_path=" + ctx.genfiles_dir.path,
+                        "--proto_path=" + ctx.bin_dir.path,
                         "--proto_path=.",
                     ] +
                     [s.path for s in all_protos.to_list()],

@@ -105,45 +105,45 @@ class SchedulerQueue : public TaskQueue {
   // NOTE: After calling SetRunning(true), the caller must call
   // SubmitWaitingTasksToExecutor since tasks may have been added while the
   // queue was not running.
-  void SetRunning(bool running) LOCKS_EXCLUDED(mutex_);
+  void SetRunning(bool running) ABSL_LOCKS_EXCLUDED(mutex_);
 
   // Gets the number of tasks that need to be submitted to the executor, and
   // updates num_pending_tasks_. If this method is called and returns a
   // non-zero value, the executor's AddTask method *must* be called for each
   // task returned, but it can be called without holding the lock.
-  int GetTasksToSubmitToExecutor() EXCLUSIVE_LOCKS_REQUIRED(mutex_);
+  int GetTasksToSubmitToExecutor() ABSL_EXCLUSIVE_LOCKS_REQUIRED(mutex_);
 
   // Submits tasks that are waiting (e.g. that were added while the queue was
   // not running) if the queue is running. The caller must not hold any mutex.
-  void SubmitWaitingTasksToExecutor() LOCKS_EXCLUDED(mutex_);
+  void SubmitWaitingTasksToExecutor() ABSL_LOCKS_EXCLUDED(mutex_);
 
   // Adds a node and a calculator context to the scheduler queue if the node is
   // not already running. Note that if the node was running, then it will be
   // rescheduled upon completion (after checking dependencies), so this call is
   // not lost.
   void AddNode(CalculatorNode* node, CalculatorContext* cc)
-      LOCKS_EXCLUDED(mutex_);
+      ABSL_LOCKS_EXCLUDED(mutex_);
 
   // Adds a node to the scheduler queue for an OpenNode() call.
-  void AddNodeForOpen(CalculatorNode* node) LOCKS_EXCLUDED(mutex_);
+  void AddNodeForOpen(CalculatorNode* node) ABSL_LOCKS_EXCLUDED(mutex_);
 
   // Adds an Item to queue_.
   void AddItemToQueue(Item&& item);
 
-  void CleanupAfterRun() LOCKS_EXCLUDED(mutex_);
+  void CleanupAfterRun() ABSL_LOCKS_EXCLUDED(mutex_);
 
  private:
   // Used internally by RunNextTask. Invokes ProcessNode or CloseNode, followed
   // by EndScheduling.
   void RunCalculatorNode(CalculatorNode* node, CalculatorContext* cc)
-      LOCKS_EXCLUDED(mutex_);
+      ABSL_LOCKS_EXCLUDED(mutex_);
 
   // Used internally by RunNextTask. Invokes OpenNode, followed by
   // CheckIfBecameReady.
-  void OpenCalculatorNode(CalculatorNode* node) LOCKS_EXCLUDED(mutex_);
+  void OpenCalculatorNode(CalculatorNode* node) ABSL_LOCKS_EXCLUDED(mutex_);
 
   // Checks whether the queue has no queued nodes or pending tasks.
-  bool IsIdle() EXCLUSIVE_LOCKS_REQUIRED(mutex_);
+  bool IsIdle() ABSL_EXCLUSIVE_LOCKS_REQUIRED(mutex_);
 
   Executor* executor_ = nullptr;
 
@@ -154,16 +154,16 @@ class SchedulerQueue : public TaskQueue {
   // decrements it. The queue is running if running_count_ > 0. A running
   // queue will submit tasks to the executor.
   // Invariant: running_count_ <= 1.
-  int running_count_ GUARDED_BY(mutex_) = 0;
+  int running_count_ ABSL_GUARDED_BY(mutex_) = 0;
 
   // Number of tasks added to the Executor and not yet complete.
-  int num_pending_tasks_ GUARDED_BY(mutex_);
+  int num_pending_tasks_ ABSL_GUARDED_BY(mutex_);
 
   // Number of tasks that need to be added to the Executor.
-  int num_tasks_to_add_ GUARDED_BY(mutex_);
+  int num_tasks_to_add_ ABSL_GUARDED_BY(mutex_);
 
   // Queue of nodes that need to be run.
-  std::priority_queue<Item> queue_ GUARDED_BY(mutex_);
+  std::priority_queue<Item> queue_ ABSL_GUARDED_BY(mutex_);
 
   SchedulerShared* const shared_;
 

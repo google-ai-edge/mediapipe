@@ -242,5 +242,59 @@ TEST_F(SimulationClockTest, InFlight) {
               ElementsAre(10000, 20000, 40000, 60000, 70000, 100000));
 }
 
+// Shows successful destruction of CalculatorGraph, SimulationClockExecutor,
+// and SimulationClock.  With tsan, this test reveals a race condition unless
+// the SimulationClock destructor calls ThreadFinish to waits for all threads.
+TEST_F(SimulationClockTest, DestroyClock) {
+  auto graph_config = ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+    node {
+      calculator: "LambdaCalculator"
+      input_side_packet: 'callback_0'
+      output_stream: "input_1"
+    }
+    node {
+      calculator: "LambdaCalculator"
+      input_side_packet: 'callback_1'
+      input_stream: "input_1"
+      output_stream: "output_1"
+    }
+  )");
+
+  int input_count = 0;
+  ProcessFunction wait_0 = [&](const InputStreamShardSet& inputs,
+                               OutputStreamShardSet* outputs) {
+    clock_->Sleep(absl::Microseconds(20000));
+    if (++input_count < 4) {
+      outputs->Index(0).AddPacket(
+          MakePacket<uint64>(input_count).At(Timestamp(input_count)));
+      return ::mediapipe::OkStatus();
+    } else {
+      return tool::StatusStop();
+    }
+  };
+  ProcessFunction wait_1 = [&](const InputStreamShardSet& inputs,
+                               OutputStreamShardSet* outputs) {
+    clock_->Sleep(absl::Microseconds(30000));
+    return PassThrough(inputs, outputs);
+  };
+
+  std::vector<Packet> out_packets;
+  ::mediapipe::Status status;
+  {
+    CalculatorGraph graph;
+    auto executor = std::make_shared<SimulationClockExecutor>(4);
+    clock_ = executor->GetClock().get();
+    MP_ASSERT_OK(graph.SetExecutor("", executor));
+    tool::AddVectorSink("output_1", &graph_config, &out_packets);
+    MP_ASSERT_OK(graph.Initialize(graph_config,
+                                  {
+                                      {"callback_0", Adopt(new auto(wait_0))},
+                                      {"callback_1", Adopt(new auto(wait_1))},
+                                  }));
+    MP_EXPECT_OK(graph.Run());
+  }
+  EXPECT_EQ(out_packets.size(), 3);
+}
+
 }  // namespace
 }  // namespace mediapipe

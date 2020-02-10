@@ -52,11 +52,11 @@ class GlContext::DedicatedThread {
 
   absl::Mutex mutex_;
   // Used to wait for a job's completion.
-  absl::CondVar gl_job_done_cv_ GUARDED_BY(mutex_);
+  absl::CondVar gl_job_done_cv_ ABSL_GUARDED_BY(mutex_);
   pthread_t gl_thread_id_;
 
-  std::deque<Job> jobs_ GUARDED_BY(mutex_);
-  absl::CondVar has_jobs_cv_ GUARDED_BY(mutex_);
+  std::deque<Job> jobs_ ABSL_GUARDED_BY(mutex_);
+  absl::CondVar has_jobs_cv_ ABSL_GUARDED_BY(mutex_);
 
   bool self_destruct_ = false;
 };

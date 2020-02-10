@@ -7,6 +7,8 @@ in the browser client-side. The official API is under construction, but the core
 technology has been proven effective, and we can already show interactive
 cross-platform demos using your live webcam.
 
+[For more details, read this Google Developer blog post](https://mediapipe.page.link/webdevblog)
+
 ![image](images/web_effect.gif) ![image](images/web_segmentation.gif)
 
 ### Hand Tracking (with and without SIMD support)
@@ -21,6 +23,3 @@ support.  Below are two different versions of the
   1. WebAssembly MVP [demo](https://mediapipe.page.link/cds-ht) running around 5-8 frames per second on Desktop Chrome
 
   2. WebAssembly SIMD [demo](https://mediapipe.page.link/cds-ht-simd) running around 15-18 frames per second on *Canary* Chrome for Desktop, which must additionally be launched with the option `--js-flags="--experimental-wasm-simd"`
-
-
-NOTE: This page is a work-in-progress. More to come soon!

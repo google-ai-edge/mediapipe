@@ -1,8 +1,8 @@
-# MediaPipe graph that performs object detection with TensorFlow Lite on CPU.
+# MediaPipe graph that performs object detection with TensorFlow Lite on TPU.
 # Used in the examples in
-# mediapipie/examples/coral:object_detection_cpu.
+# mediapipie/examples/coral:object_detection_tpu.
 
-# Images on CPU coming into and out of the graph.
+# Images on TPU coming into and out of the graph.
 input_stream: "input_video"
 output_stream: "output_video"
 
@@ -30,7 +30,7 @@ node {
   output_stream: "throttled_input_video"
 }
 
-# Transforms the input image on CPU to a 320x320 image. To scale the image, by
+# Transforms the input image on CPU to a 300x300 image. To scale the image, by
 # default it uses the STRETCH scale mode that maps the entire input image to the
 # entire transformed image. As a result, image aspect ratio may be changed and
 # objects in the image may be deformed (stretched or squeezed), but the object
@@ -60,7 +60,7 @@ node {
   }
 }
 
-# Runs a TensorFlow Lite model on CPU that takes an image tensor and outputs a
+# Runs a TensorFlow Lite model on TPU that takes an image tensor and outputs a
 # vector of tensors representing, for instance, detection boxes/keypoints and
 # scores.
 node {

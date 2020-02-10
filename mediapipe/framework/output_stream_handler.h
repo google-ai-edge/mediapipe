@@ -92,7 +92,7 @@ class OutputStreamHandler {
   // resets data memebers.
   void PrepareForRun(
       const std::function<void(::mediapipe::Status)>& error_callback)
-      LOCKS_EXCLUDED(timestamp_mutex_);
+      ABSL_LOCKS_EXCLUDED(timestamp_mutex_);
 
   // Marks the output streams as started and propagates any changes made in
   // Calculator::Open().
@@ -106,10 +106,11 @@ class OutputStreamHandler {
   // Propagates timestamp directly if there is no ongoing parallel invocation.
   // Otherwise, updates task_timestamp_bound_.
   void UpdateTaskTimestampBound(Timestamp timestamp)
-      LOCKS_EXCLUDED(timestamp_mutex_);
+      ABSL_LOCKS_EXCLUDED(timestamp_mutex_);
 
   // Invoked after a call to Calculator::Process() function.
-  void PostProcess(Timestamp input_timestamp) LOCKS_EXCLUDED(timestamp_mutex_);
+  void PostProcess(Timestamp input_timestamp)
+      ABSL_LOCKS_EXCLUDED(timestamp_mutex_);
 
   // Propagates the output shards and closes all managed output streams.
   void Close(OutputStreamShardSet* output_shards);
@@ -133,7 +134,8 @@ class OutputStreamHandler {
                               OutputStreamShardSet* output_shards);
 
   // The packets and timestamp propagation logic for parallel execution.
-  virtual void PropagationLoop() EXCLUSIVE_LOCKS_REQUIRED(timestamp_mutex_) = 0;
+  virtual void PropagationLoop()
+      ABSL_EXCLUSIVE_LOCKS_REQUIRED(timestamp_mutex_) = 0;
 
   // Collection of all OutputStreamManager objects.
   OutputStreamManagerSet output_stream_managers_;
@@ -144,10 +146,11 @@ class OutputStreamHandler {
 
   absl::Mutex timestamp_mutex_;
   // A set of the completed input timestamps in ascending order.
-  std::set<Timestamp> completed_input_timestamps_ GUARDED_BY(timestamp_mutex_);
+  std::set<Timestamp> completed_input_timestamps_
+      ABSL_GUARDED_BY(timestamp_mutex_);
   // The current minimum timestamp for which a new packet could possibly arrive.
   // TODO: Rename the variable to be more descriptive.
-  Timestamp task_timestamp_bound_ GUARDED_BY(timestamp_mutex_);
+  Timestamp task_timestamp_bound_ ABSL_GUARDED_BY(timestamp_mutex_);
 
   // PropagateionState indicates the current state of the propagation process.
   // There are eight possible transitions:
@@ -187,7 +190,7 @@ class OutputStreamHandler {
     kPropagatingBound = 2,    //
     kPropagationPending = 3
   };
-  PropagationState propagation_state_ GUARDED_BY(timestamp_mutex_) = kIdle;
+  PropagationState propagation_state_ ABSL_GUARDED_BY(timestamp_mutex_) = kIdle;
 };
 
 using OutputStreamHandlerRegistry = GlobalFactoryRegistry<

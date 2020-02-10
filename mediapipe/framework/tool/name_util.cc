@@ -68,5 +68,30 @@ std::string GetUnusedSidePacketName(
   return candidate;
 }
 
+std::string CanonicalNodeName(const CalculatorGraphConfig& graph_config,
+                              int node_id) {
+  const auto& node_config = graph_config.node(node_id);
+  std::string node_name = node_config.name().empty() ? node_config.calculator()
+                                                     : node_config.name();
+  int count = 0;
+  int sequence = 0;
+  for (int i = 0; i < graph_config.node_size(); i++) {
+    const auto& current_node_config = graph_config.node(i);
+    std::string current_node_name = current_node_config.name().empty()
+                                        ? current_node_config.calculator()
+                                        : current_node_config.name();
+    if (node_name == current_node_name) {
+      ++count;
+      if (i < node_id) {
+        ++sequence;
+      }
+    }
+  }
+  if (count <= 1) {
+    return node_name;
+  }
+  return absl::StrCat(node_name, "_", sequence + 1);
+}
+
 }  // namespace tool
 }  // namespace mediapipe

@@ -116,6 +116,7 @@ cc_library(
         "//mediapipe/framework/port:logging",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
+        "//mediapipe/framework/tool:name_util",
         "//mediapipe/framework/tool:tag_map",
         "//mediapipe/framework/tool:validate_name",
         "@com_google_absl//absl/memory",

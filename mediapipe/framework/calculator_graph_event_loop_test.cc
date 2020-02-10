@@ -44,7 +44,7 @@ class CalculatorGraphEventLoopTest : public testing::Test {
   }
 
  protected:
-  std::vector<Packet> output_packets_ GUARDED_BY(output_packets_mutex_);
+  std::vector<Packet> output_packets_ ABSL_GUARDED_BY(output_packets_mutex_);
   absl::Mutex output_packets_mutex_;
 };
 

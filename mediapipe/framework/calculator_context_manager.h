@@ -50,7 +50,7 @@ class CalculatorContextManager {
           setup_shards_callback);
 
   // Invoked by CalculatorNode::CleanupAfterRun().
-  void CleanupAfterRun() LOCKS_EXCLUDED(contexts_mutex_);
+  void CleanupAfterRun() ABSL_LOCKS_EXCLUDED(contexts_mutex_);
 
   // Returns true if the default calculator context has been initialized.
   bool HasDefaultCalculatorContext() const {
@@ -66,7 +66,7 @@ class CalculatorContextManager {
   // The input timestamp of the calculator context is returned in
   // *context_input_timestamp.
   CalculatorContext* GetFrontCalculatorContext(
-      Timestamp* context_input_timestamp) LOCKS_EXCLUDED(contexts_mutex_);
+      Timestamp* context_input_timestamp) ABSL_LOCKS_EXCLUDED(contexts_mutex_);
 
   // For sequential execution, returns a pointer to the default calculator
   // context. For parallel execution, creates or reuses a calculator context,
@@ -75,16 +75,16 @@ class CalculatorContextManager {
   // The ownership of the calculator context object isn't tranferred to the
   // caller.
   CalculatorContext* PrepareCalculatorContext(Timestamp input_timestamp)
-      LOCKS_EXCLUDED(contexts_mutex_);
+      ABSL_LOCKS_EXCLUDED(contexts_mutex_);
 
   // Removes the context with the smallest input timestamp from active_contexts_
   // and moves the calculator context to idle_contexts_. The caller must
   // guarantee that the output shards in the calculator context have been
   // propagated before calling this function.
-  void RecycleCalculatorContext() LOCKS_EXCLUDED(contexts_mutex_);
+  void RecycleCalculatorContext() ABSL_LOCKS_EXCLUDED(contexts_mutex_);
 
   // Returns true if active_contexts_ is non-empty.
-  bool HasActiveContexts() LOCKS_EXCLUDED(contexts_mutex_);
+  bool HasActiveContexts() ABSL_LOCKS_EXCLUDED(contexts_mutex_);
 
   int NumberOfContextTimestamps(
       const CalculatorContext& calculator_context) const {
@@ -135,10 +135,10 @@ class CalculatorContextManager {
   absl::Mutex contexts_mutex_;
   // A map from input timestamps to calculator contexts.
   std::map<Timestamp, std::unique_ptr<CalculatorContext>> active_contexts_
-      GUARDED_BY(contexts_mutex_);
+      ABSL_GUARDED_BY(contexts_mutex_);
   // Idle calculator contexts that are ready for reuse.
   std::deque<std::unique_ptr<CalculatorContext>> idle_contexts_
-      GUARDED_BY(contexts_mutex_);
+      ABSL_GUARDED_BY(contexts_mutex_);
 };
 
 }  // namespace mediapipe

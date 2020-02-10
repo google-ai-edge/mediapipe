@@ -346,7 +346,7 @@ std::weak_ptr<GlContext>& GlContext::CurrentContext() {
 
 ::mediapipe::Status GlContext::SwitchContext(ContextBinding* saved_context,
                                              const ContextBinding& new_context)
-    NO_THREAD_SAFETY_ANALYSIS {
+    ABSL_NO_THREAD_SAFETY_ANALYSIS {
   std::shared_ptr<GlContext> old_context_obj = CurrentContext().lock();
   std::shared_ptr<GlContext> new_context_obj =
       new_context.context_object.lock();
