@@ -437,6 +437,7 @@ cc_library(
         "//mediapipe/framework/formats:rect_cc_proto",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
+        "@com_google_absl//absl/types:optional",
     ],
     alwayslink = 1,
 )
@@ -918,6 +919,19 @@ mediapipe_cc_proto_library(
 cc_library(
     name = "local_file_contents_calculator",
     srcs = ["local_file_contents_calculator.cc"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/port:file_helpers",
+        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:status",
+    ],
+    alwayslink = 1,
+)
+
+cc_library(
+    name = "local_file_pattern_contents_calculator",
+    srcs = ["local_file_pattern_contents_calculator.cc"],
     visibility = ["//visibility:public"],
     deps = [
         "//mediapipe/framework:calculator_framework",

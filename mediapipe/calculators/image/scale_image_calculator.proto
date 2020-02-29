@@ -11,9 +11,10 @@ import "mediapipe/framework/formats/image_format.proto";
 // 2) Scale and convert the image to fit inside target_width x target_height
 //    using the specified scaling algorithm.  (maintaining the aspect
 //    ratio if preserve_aspect_ratio is true).
-// The output width and height will be divisible by 2. It is possible to output
-// width and height that are odd number when the output format is SRGB and not
-// perserving the aspect ratio. See scale_to_multiple_of_two option for details.
+// The output width and height will be divisible by 2, by default. It is
+// possible to output width and height that are odd numbers when the output
+// format is SRGB and the aspect ratio is left unpreserved. See
+// scale_to_multiple_of for details.
 message ScaleImageCalculatorOptions {
   extend CalculatorOptions {
     optional ScaleImageCalculatorOptions ext = 66237115;
@@ -23,7 +24,7 @@ message ScaleImageCalculatorOptions {
   // depending on the other options below.  If unset, use the same width
   // or height as the input.  If only one is set then determine the other
   // from the aspect ratio (after cropping).  The output width and height
-  // will be divisible by 2.
+  // will be divisible by 2, by default.
   optional int32 target_width = 1;
   optional int32 target_height = 2;
 
@@ -31,7 +32,8 @@ message ScaleImageCalculatorOptions {
   // fits inside the box represented by target_width and target_height.
   // Otherwise it is scaled to fit target_width and target_height
   // completely.  In any case, the aspect ratio that is preserved is
-  // that after cropping to the minimum/maximum aspect ratio.
+  // that after cropping to the minimum/maximum aspect ratio. Additionally, if
+  // true, the output width and height will be divisible by 2.
   optional bool preserve_aspect_ratio = 3 [default = true];
 
   // If ratio is positive, crop the image to this minimum and maximum
@@ -95,11 +97,13 @@ message ScaleImageCalculatorOptions {
   // SRGB or YCBCR420P.
   optional ImageFormat.Format input_format = 12;
 
-  // If true, the output width and height will be divisible by 2. Otherwise it
-  // will use the exact specified output width and height, which is only
-  // supported when the output format is SRGB and preserve_aspect_ratio option
-  // is set to false.
-  optional bool scale_to_multiple_of_two = 13 [default = true];
+  // If set to 2, the target width and height will be rounded-down
+  // to the nearest even number. If set to any positive value other than 2,
+  // preserve_aspect_ratio must be false and the target width and height will be
+  // rounded-down to multiples of the given value. If set to any value less than
+  // 1, it will be treated like 1.
+  // NOTE: If set to an odd number, the output format must be SRGB.
+  optional int32 scale_to_multiple_of = 13 [default = 2];
 
   // If true, assume the input YUV is BT.709 (this is the HDTV standard, so most
   // content is likely using it). If false use the previous assumption of BT.601

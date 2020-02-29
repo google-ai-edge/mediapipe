@@ -39,13 +39,13 @@ namespace mediapipe {
 
 namespace {
 
-constexpr char kInputFrameTag[] = "INPUT_FRAME";
-constexpr char kOutputFrameTag[] = "OUTPUT_FRAME";
+constexpr char kInputFrameTag[] = "IMAGE";
+constexpr char kOutputFrameTag[] = "IMAGE";
 
 constexpr char kInputVectorTag[] = "VECTOR";
 
-constexpr char kInputFrameTagGpu[] = "INPUT_FRAME_GPU";
-constexpr char kOutputFrameTagGpu[] = "OUTPUT_FRAME_GPU";
+constexpr char kInputFrameTagGpu[] = "IMAGE_GPU";
+constexpr char kOutputFrameTagGpu[] = "IMAGE_GPU";
 
 enum { ATTRIB_VERTEX, ATTRIB_TEXTURE_POSITION, NUM_ATTRIBUTES };
 
@@ -61,7 +61,7 @@ constexpr int kAnnotationBackgroundColor[] = {100, 101, 102};
 // A calculator for rendering data on images.
 //
 // Inputs:
-//  1. INPUT_FRAME or INPUT_FRAME_GPU (optional): An ImageFrame (or GpuBuffer)
+//  1. IMAGE or IMAGE_GPU (optional): An ImageFrame (or GpuBuffer)
 //     containing the input image.
 //     If output is CPU, and input isn't provided, the renderer creates a
 //     blank canvas with the width, height and color provided in the options.
@@ -73,7 +73,7 @@ constexpr int kAnnotationBackgroundColor[] = {100, 101, 102};
 //     input vector items. These input streams are tagged with "VECTOR".
 //
 // Output:
-//  1. OUTPUT_FRAME or OUTPUT_FRAME_GPU: A rendered ImageFrame (or GpuBuffer).
+//  1. IMAGE or IMAGE_GPU: A rendered ImageFrame (or GpuBuffer).
 //
 // For CPU input frames, only SRGBA, SRGB and GRAY8 format are supported. The
 // output format is the same as input except for GRAY8 where the output is in
@@ -87,13 +87,13 @@ constexpr int kAnnotationBackgroundColor[] = {100, 101, 102};
 // Example config (CPU):
 // node {
 //   calculator: "AnnotationOverlayCalculator"
-//   input_stream: "INPUT_FRAME:image_frames"
+//   input_stream: "IMAGE:image_frames"
 //   input_stream: "render_data_1"
 //   input_stream: "render_data_2"
 //   input_stream: "render_data_3"
 //   input_stream: "VECTOR:0:render_data_vec_0"
 //   input_stream: "VECTOR:1:render_data_vec_1"
-//   output_stream: "OUTPUT_FRAME:decorated_frames"
+//   output_stream: "IMAGE:decorated_frames"
 //   options {
 //     [mediapipe.AnnotationOverlayCalculatorOptions.ext] {
 //     }
@@ -103,13 +103,13 @@ constexpr int kAnnotationBackgroundColor[] = {100, 101, 102};
 // Example config (GPU):
 // node {
 //   calculator: "AnnotationOverlayCalculator"
-//   input_stream: "INPUT_FRAME_GPU:image_frames"
+//   input_stream: "IMAGE_GPU:image_frames"
 //   input_stream: "render_data_1"
 //   input_stream: "render_data_2"
 //   input_stream: "render_data_3"
 //   input_stream: "VECTOR:0:render_data_vec_0"
 //   input_stream: "VECTOR:1:render_data_vec_1"
-//   output_stream: "OUTPUT_FRAME_GPU:decorated_frames"
+//   output_stream: "IMAGE_GPU:decorated_frames"
 //   options {
 //     [mediapipe.AnnotationOverlayCalculatorOptions.ext] {
 //     }

@@ -138,7 +138,7 @@ mediapipe_cc_proto_library(
     srcs = ["image_frame_to_tensor_calculator.proto"],
     cc_deps = [
         "//mediapipe/framework:calculator_cc_proto",
-        "@org_tensorflow//tensorflow/core:protos_all",
+        "@org_tensorflow//tensorflow/core:protos_all_cc",
     ],
     visibility = ["//visibility:public"],
     deps = [":image_frame_to_tensor_calculator_proto"],
@@ -173,7 +173,7 @@ mediapipe_cc_proto_library(
     srcs = ["pack_media_sequence_calculator.proto"],
     cc_deps = [
         "//mediapipe/framework:calculator_cc_proto",
-        "@org_tensorflow//tensorflow/core:protos_all",
+        "@org_tensorflow//tensorflow/core:protos_all_cc",
     ],
     visibility = ["//visibility:public"],
     deps = [":pack_media_sequence_calculator_proto"],
@@ -192,7 +192,7 @@ mediapipe_cc_proto_library(
     srcs = ["tensorflow_session_from_frozen_graph_generator.proto"],
     cc_deps = [
         "//mediapipe/framework:packet_generator_cc_proto",
-        "@org_tensorflow//tensorflow/core:protos_all",
+        "@org_tensorflow//tensorflow/core:protos_all_cc",
     ],
     visibility = ["//visibility:public"],
     deps = [":tensorflow_session_from_frozen_graph_generator_proto"],
@@ -203,7 +203,7 @@ mediapipe_cc_proto_library(
     srcs = ["tensorflow_session_from_frozen_graph_calculator.proto"],
     cc_deps = [
         "//mediapipe/framework:calculator_cc_proto",
-        "@org_tensorflow//tensorflow/core:protos_all",
+        "@org_tensorflow//tensorflow/core:protos_all_cc",
     ],
     visibility = ["//visibility:public"],
     deps = [":tensorflow_session_from_frozen_graph_calculator_proto"],
@@ -277,7 +277,7 @@ mediapipe_cc_proto_library(
     srcs = ["vector_int_to_tensor_calculator_options.proto"],
     cc_deps = [
         "//mediapipe/framework:calculator_cc_proto",
-        "@org_tensorflow//tensorflow/core:protos_all",
+        "@org_tensorflow//tensorflow/core:protos_all_cc",
     ],
     visibility = ["//visibility:public"],
     deps = [":vector_int_to_tensor_calculator_options_proto"],
@@ -408,7 +408,7 @@ cc_library(
         "//mediapipe/util/sequence:media_sequence",
         "//mediapipe/util/sequence:media_sequence_util",
         "@com_google_absl//absl/strings",
-        "@org_tensorflow//tensorflow/core:protos_all",
+        "@org_tensorflow//tensorflow/core:protos_all_cc",
     ],
     alwayslink = 1,
 )
@@ -423,7 +423,7 @@ cc_library(
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
-        "@org_tensorflow//tensorflow/core:protos_all",
+        "@org_tensorflow//tensorflow/core:protos_all_cc",
     ],
     alwayslink = 1,
 )
@@ -654,7 +654,7 @@ cc_library(
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
         "@org_tensorflow//tensorflow/core:lib",
-        "@org_tensorflow//tensorflow/core:protos_all",
+        "@org_tensorflow//tensorflow/core:protos_all_cc",
     ],
     alwayslink = 1,
 )
@@ -695,7 +695,7 @@ cc_library(
         "//mediapipe/util:audio_decoder_cc_proto",
         "//mediapipe/util/sequence:media_sequence",
         "@com_google_absl//absl/strings",
-        "@org_tensorflow//tensorflow/core:protos_all",
+        "@org_tensorflow//tensorflow/core:protos_all_cc",
     ],
     alwayslink = 1,
 )
@@ -737,7 +737,7 @@ cc_library(
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework:packet",
         "//mediapipe/framework/port:status",
-        "@org_tensorflow//tensorflow/core:protos_all",
+        "@org_tensorflow//tensorflow/core:protos_all_cc",
     ],
     alwayslink = 1,
 )
@@ -745,6 +745,7 @@ cc_library(
 cc_test(
     name = "graph_tensors_packet_generator_test",
     srcs = ["graph_tensors_packet_generator_test.cc"],
+    linkstatic = 1,
     deps = [
         ":graph_tensors_packet_generator",
         ":graph_tensors_packet_generator_cc_proto",
@@ -761,6 +762,7 @@ cc_test(
     name = "image_frame_to_tensor_calculator_test",
     size = "small",
     srcs = ["image_frame_to_tensor_calculator_test.cc"],
+    linkstatic = 1,
     deps = [
         ":image_frame_to_tensor_calculator",
         "//mediapipe/framework:calculator_framework",
@@ -777,6 +779,7 @@ cc_test(
     name = "matrix_to_tensor_calculator_test",
     size = "small",
     srcs = ["matrix_to_tensor_calculator_test.cc"],
+    linkstatic = 1,
     deps = [
         ":matrix_to_tensor_calculator",
         ":matrix_to_tensor_calculator_options_cc_proto",
@@ -793,6 +796,7 @@ cc_test(
     name = "lapped_tensor_buffer_calculator_test",
     size = "small",
     srcs = ["lapped_tensor_buffer_calculator_test.cc"],
+    linkstatic = 1,
     deps = [
         ":lapped_tensor_buffer_calculator",
         ":lapped_tensor_buffer_calculator_cc_proto",
@@ -801,7 +805,7 @@ cc_test(
         "//mediapipe/framework/port:gtest_main",
         "@com_google_absl//absl/memory",
         "@org_tensorflow//tensorflow/core:framework",
-        "@org_tensorflow//tensorflow/core:protos_all",
+        "@org_tensorflow//tensorflow/core:protos_all_cc",
     ],
 )
 
@@ -840,7 +844,7 @@ cc_test(
         "//mediapipe/util/sequence:media_sequence",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
-        "@org_tensorflow//tensorflow/core:protos_all",
+        "@org_tensorflow//tensorflow/core:protos_all_cc",
     ],
 )
 
@@ -867,7 +871,7 @@ cc_test(
         "@com_google_absl//absl/strings",
         "@org_tensorflow//tensorflow/core:direct_session",
         "@org_tensorflow//tensorflow/core:framework",
-        "@org_tensorflow//tensorflow/core:protos_all",
+        "@org_tensorflow//tensorflow/core:protos_all_cc",
         "@org_tensorflow//tensorflow/core:testlib",
         "@org_tensorflow//tensorflow/core/kernels:conv_ops",
         "@org_tensorflow//tensorflow/core/kernels:math",
@@ -897,7 +901,7 @@ cc_test(
         "@com_google_absl//absl/strings",
         "@org_tensorflow//tensorflow/core:direct_session",
         "@org_tensorflow//tensorflow/core:framework",
-        "@org_tensorflow//tensorflow/core:protos_all",
+        "@org_tensorflow//tensorflow/core:protos_all_cc",
         "@org_tensorflow//tensorflow/core:testlib",
         "@org_tensorflow//tensorflow/core/kernels:conv_ops",
         "@org_tensorflow//tensorflow/core/kernels:math",
@@ -956,6 +960,7 @@ cc_test(
 cc_test(
     name = "tensor_squeeze_dimensions_calculator_test",
     srcs = ["tensor_squeeze_dimensions_calculator_test.cc"],
+    linkstatic = 1,
     deps = [
         ":tensor_squeeze_dimensions_calculator",
         ":tensor_squeeze_dimensions_calculator_cc_proto",
@@ -963,7 +968,7 @@ cc_test(
         "//mediapipe/framework:calculator_runner",
         "//mediapipe/framework/port:gtest_main",
         "@org_tensorflow//tensorflow/core:framework",
-        "@org_tensorflow//tensorflow/core:protos_all",
+        "@org_tensorflow//tensorflow/core:protos_all_cc",
     ],
 )
 
@@ -971,6 +976,7 @@ cc_test(
     name = "tensor_to_image_frame_calculator_test",
     size = "small",
     srcs = ["tensor_to_image_frame_calculator_test.cc"],
+    linkstatic = 1,
     deps = [
         ":tensor_to_image_frame_calculator",
         ":tensor_to_image_frame_calculator_cc_proto",
@@ -979,7 +985,7 @@ cc_test(
         "//mediapipe/framework/formats:image_frame",
         "//mediapipe/framework/port:gtest_main",
         "@org_tensorflow//tensorflow/core:framework",
-        "@org_tensorflow//tensorflow/core:protos_all",
+        "@org_tensorflow//tensorflow/core:protos_all_cc",
     ],
 )
 
@@ -987,6 +993,7 @@ cc_test(
     name = "tensor_to_matrix_calculator_test",
     size = "small",
     srcs = ["tensor_to_matrix_calculator_test.cc"],
+    linkstatic = 1,
     deps = [
         ":tensor_to_matrix_calculator",
         ":tensor_to_matrix_calculator_cc_proto",
@@ -996,13 +1003,14 @@ cc_test(
         "//mediapipe/framework/formats:time_series_header_cc_proto",
         "//mediapipe/framework/port:gtest_main",
         "@org_tensorflow//tensorflow/core:framework",
-        "@org_tensorflow//tensorflow/core:protos_all",
+        "@org_tensorflow//tensorflow/core:protos_all_cc",
     ],
 )
 
 cc_test(
     name = "tensor_to_vector_float_calculator_test",
     srcs = ["tensor_to_vector_float_calculator_test.cc"],
+    linkstatic = 1,
     deps = [
         ":tensor_to_vector_float_calculator",
         ":tensor_to_vector_float_calculator_options_cc_proto",
@@ -1010,7 +1018,7 @@ cc_test(
         "//mediapipe/framework:calculator_runner",
         "//mediapipe/framework/port:gtest_main",
         "@org_tensorflow//tensorflow/core:framework",
-        "@org_tensorflow//tensorflow/core:protos_all",
+        "@org_tensorflow//tensorflow/core:protos_all_cc",
     ],
 )
 
@@ -1030,13 +1038,14 @@ cc_test(
         "//mediapipe/util/sequence:media_sequence",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
-        "@org_tensorflow//tensorflow/core:protos_all",
+        "@org_tensorflow//tensorflow/core:protos_all_cc",
     ],
 )
 
 cc_test(
     name = "vector_int_to_tensor_calculator_test",
     srcs = ["vector_int_to_tensor_calculator_test.cc"],
+    linkstatic = 1,
     deps = [
         ":vector_int_to_tensor_calculator",
         ":vector_int_to_tensor_calculator_options_cc_proto",
@@ -1044,13 +1053,14 @@ cc_test(
         "//mediapipe/framework:calculator_runner",
         "//mediapipe/framework/port:gtest_main",
         "@org_tensorflow//tensorflow/core:framework",
-        "@org_tensorflow//tensorflow/core:protos_all",
+        "@org_tensorflow//tensorflow/core:protos_all_cc",
     ],
 )
 
 cc_test(
     name = "vector_float_to_tensor_calculator_test",
     srcs = ["vector_float_to_tensor_calculator_test.cc"],
+    linkstatic = 1,
     deps = [
         ":vector_float_to_tensor_calculator",
         ":vector_float_to_tensor_calculator_options_cc_proto",
@@ -1058,7 +1068,7 @@ cc_test(
         "//mediapipe/framework:calculator_runner",
         "//mediapipe/framework/port:gtest_main",
         "@org_tensorflow//tensorflow/core:framework",
-        "@org_tensorflow//tensorflow/core:protos_all",
+        "@org_tensorflow//tensorflow/core:protos_all_cc",
     ],
 )
 

@@ -14,6 +14,11 @@ node {
   input_stream: "IMAGE:input_video"
   input_stream: "NORM_RECT:hand_rect"
   output_stream: "IMAGE:hand_image"
+  node_options: {
+    [type.googleapis.com/mediapipe.ImageCroppingCalculatorOptions] {
+      border_mode: BORDER_REPLICATE
+    }
+  }
 }
 
 # Transforms the input image on CPU to a 256x256 image. To scale the input
@@ -33,13 +38,9 @@ node: {
   }
 }
 
-# Converts the transformed input image on GPU into an image tensor stored in
-# tflite::gpu::GlBuffer. The zero_center option is set to true to normalize the
-# pixel values to [-1.f, 1.f] as opposed to [0.f, 1.f]. The flip_vertically
-# option is set to true to account for the descrepancy between the
-# representation of the input image (origin at the bottom-left corner, the
-# OpenGL convention) and what the model used in this graph is expecting (origin
-# at the top-left corner).
+# Converts the transformed input image on CPU into an image tensor stored in
+# TfliteTensor. The zero_center option is set to false to normalize the
+# pixel values to [0.f, 1.f].
 node {
   calculator: "TfLiteConverterCalculator"
   input_stream: "IMAGE:transformed_input_video"

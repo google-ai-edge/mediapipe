@@ -1267,9 +1267,9 @@ TEST_F(GraphTracerE2ETest, GpuTracing) {
         output_stream: "annotated_buffer"
         node {
           calculator: "AnnotationOverlayCalculator"
-          input_stream: "INPUT_FRAME:input_buffer"
+          input_stream: "IMAGE:input_buffer"
           input_stream: "render_data"
-          output_stream: "OUTPUT_FRAME:annotated_buffer"
+          output_stream: "IMAGE:annotated_buffer"
         }
         profiler_config {
           trace_enabled: true

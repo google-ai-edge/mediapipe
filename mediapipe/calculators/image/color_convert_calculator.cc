@@ -75,6 +75,11 @@ class ColorConvertCalculator : public CalculatorBase {
   static ::mediapipe::Status GetContract(CalculatorContract* cc);
   ::mediapipe::Status Process(CalculatorContext* cc) override;
 
+  ::mediapipe::Status Open(CalculatorContext* cc) override {
+    cc->SetOffset(TimestampDiff(0));
+    return ::mediapipe::OkStatus();
+  }
+
  private:
   // Wrangles the appropriate inputs and outputs to perform the color
   // conversion. The ImageFrame on input_tag is converted using the

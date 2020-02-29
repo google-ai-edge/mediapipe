@@ -136,10 +136,10 @@ node {
 # Draws annotations and overlays them on top of the input images.
 node {
   calculator: "AnnotationOverlayCalculator"
-  input_stream: "INPUT_FRAME_GPU:throttled_input_video"
+  input_stream: "IMAGE_GPU:throttled_input_video"
   input_stream: "detection_render_data"
   input_stream: "rect_render_data"
-  output_stream: "OUTPUT_FRAME_GPU:output_video"
+  output_stream: "IMAGE_GPU:output_video"
 }
 ```
 

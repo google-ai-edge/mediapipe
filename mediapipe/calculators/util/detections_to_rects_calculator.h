@@ -16,6 +16,7 @@
 
 #include <cmath>
 
+#include "absl/types/optional.h"
 #include "mediapipe/calculators/util/detections_to_rects_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/calculator_options.pb.h"
@@ -26,6 +27,13 @@
 #include "mediapipe/framework/port/status.h"
 
 namespace mediapipe {
+
+// Dynamic options passed as calculator `input_stream` that can be used for
+// calculation of rectangle or rotation for given detection. Does not include
+// static calculator options which are available via private fields.
+struct DetectionSpec {
+  absl::optional<std::pair<int, int>> image_size;
+};
 
 // A calculator that converts Detection proto to Rect proto.
 //
@@ -81,13 +89,16 @@ class DetectionsToRectsCalculator : public CalculatorBase {
   ::mediapipe::Status Process(CalculatorContext* cc) override;
 
  protected:
-  virtual float ComputeRotation(const ::mediapipe::Detection& detection,
-                                const std::pair<int, int> image_size);
   virtual ::mediapipe::Status DetectionToRect(
-      const ::mediapipe::Detection& detection, ::mediapipe::Rect* rect);
+      const ::mediapipe::Detection& detection,
+      const DetectionSpec& detection_spec, ::mediapipe::Rect* rect);
   virtual ::mediapipe::Status DetectionToNormalizedRect(
       const ::mediapipe::Detection& detection,
-      ::mediapipe::NormalizedRect* rect);
+      const DetectionSpec& detection_spec, ::mediapipe::NormalizedRect* rect);
+  virtual ::mediapipe::Status ComputeRotation(
+      const ::mediapipe::Detection& detection,
+      const DetectionSpec& detection_spec, float* rotation);
+  virtual DetectionSpec GetDetectionSpec(const CalculatorContext* cc);
 
   static inline float NormalizeRadians(float angle) {
     return angle - 2 * M_PI * std::floor((angle - (-M_PI)) / (2 * M_PI));

@@ -27,7 +27,7 @@ TEST(StatusBuilder, AnnotateMode) {
       << "annotated message2";
   ASSERT_FALSE(status.ok());
   EXPECT_EQ(status.code(), ::mediapipe::StatusCode::kNotFound);
-  EXPECT_EQ(status.error_message(),
+  EXPECT_EQ(status.message(),
             "original message; annotated message1 annotated message2");
 }
 
@@ -42,7 +42,7 @@ TEST(StatusBuilder, PrependMode) {
       << "prepended message2 ";
   ASSERT_FALSE(status.ok());
   EXPECT_EQ(status.code(), ::mediapipe::StatusCode::kInvalidArgument);
-  EXPECT_EQ(status.error_message(),
+  EXPECT_EQ(status.message(),
             "prepended message1 prepended message2 original message");
 }
 
@@ -56,8 +56,7 @@ TEST(StatusBuilder, AppendMode) {
       << " extra message2";
   ASSERT_FALSE(status.ok());
   EXPECT_EQ(status.code(), ::mediapipe::StatusCode::kInternal);
-  EXPECT_EQ(status.error_message(),
-            "original message extra message1 extra message2");
+  EXPECT_EQ(status.message(), "original message extra message1 extra message2");
 }
 
 TEST(StatusBuilder, NoLoggingMode) {
@@ -69,7 +68,7 @@ TEST(StatusBuilder, NoLoggingMode) {
       << " extra message";
   ASSERT_FALSE(status.ok());
   EXPECT_EQ(status.code(), ::mediapipe::StatusCode::kUnavailable);
-  EXPECT_EQ(status.error_message(), "original message");
+  EXPECT_EQ(status.message(), "original message");
 }
 
 }  // namespace mediapipe

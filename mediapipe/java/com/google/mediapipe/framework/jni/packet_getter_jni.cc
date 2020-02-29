@@ -242,7 +242,6 @@ JNIEXPORT jboolean JNICALL PACKET_GETTER_METHOD(nativeGetImageData)(
     JNIEnv* env, jobject thiz, jlong packet, jobject byte_buffer) {
   const ::mediapipe::ImageFrame& image =
       GetFromNativeHandle<::mediapipe::ImageFrame>(packet);
-  uint8* data = static_cast<uint8*>(env->GetDirectBufferAddress(byte_buffer));
 
   int64_t buffer_size = env->GetDirectBufferCapacity(byte_buffer);
 
@@ -257,7 +256,29 @@ JNIEXPORT jboolean JNICALL PACKET_GETTER_METHOD(nativeGetImageData)(
     return false;
   }
 
-  image.CopyToBuffer(data, expected_buffer_size);
+  switch (image.ByteDepth()) {
+    case 1: {
+      uint8* data =
+          static_cast<uint8*>(env->GetDirectBufferAddress(byte_buffer));
+      image.CopyToBuffer(data, expected_buffer_size);
+      break;
+    }
+    case 2: {
+      uint16* data =
+          static_cast<uint16*>(env->GetDirectBufferAddress(byte_buffer));
+      image.CopyToBuffer(data, expected_buffer_size);
+      break;
+    }
+    case 4: {
+      float* data =
+          static_cast<float*>(env->GetDirectBufferAddress(byte_buffer));
+      image.CopyToBuffer(data, expected_buffer_size);
+      break;
+    }
+    default: {
+      return false;
+    }
+  }
   return true;
 }
 

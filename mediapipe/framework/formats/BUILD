@@ -268,7 +268,7 @@ java_lite_proto_library(
     visibility = [
         "//mediapipe:__subpackages__",
     ],
-    deps = [":landmark_proto"],
+    deps = [":rect_proto"],
 )
 
 proto_library(

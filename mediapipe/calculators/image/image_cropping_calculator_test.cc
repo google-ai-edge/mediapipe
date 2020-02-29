@@ -56,11 +56,11 @@ TEST(ImageCroppingCalculatorTest, GetCroppingDimensionsNormal) {
             }
           )");
 
-  auto calculator_state =
-      CalculatorState("Node", 0, "Calculator", calculator_node, nullptr);
-  auto cc =
-      CalculatorContext(&calculator_state, tool::CreateTagMap({}).ValueOrDie(),
-                        tool::CreateTagMap({}).ValueOrDie());
+  auto calculator_state = absl::make_unique<CalculatorState>(
+      "Node", 0, "Calculator", calculator_node, nullptr);
+  auto cc = absl::make_unique<CalculatorContext>(
+      calculator_state.get(), tool::CreateTagMap({}).ValueOrDie(),
+      tool::CreateTagMap({}).ValueOrDie());
 
   RectSpec expectRect = {
       .width = 60,
@@ -69,9 +69,9 @@ TEST(ImageCroppingCalculatorTest, GetCroppingDimensionsNormal) {
       .center_y = 50,
       .rotation = 0.3,
   };
-  EXPECT_EQ(
-      ImageCroppingCalculator::GetCropSpecs(&cc, input_width, input_height),
-      expectRect);
+  EXPECT_EQ(ImageCroppingCalculator::GetCropSpecs(cc.get(), input_width,
+                                                  input_height),
+            expectRect);
 }  // TEST
 
 // Test when (width height) + (norm_width norm_height) are set in options.
@@ -96,11 +96,11 @@ TEST(ImageCroppingCalculatorTest, RedundantSpecInOptions) {
             }
           )");
 
-  auto calculator_state =
-      CalculatorState("Node", 0, "Calculator", calculator_node, nullptr);
-  auto cc =
-      CalculatorContext(&calculator_state, tool::CreateTagMap({}).ValueOrDie(),
-                        tool::CreateTagMap({}).ValueOrDie());
+  auto calculator_state = absl::make_unique<CalculatorState>(
+      "Node", 0, "Calculator", calculator_node, nullptr);
+  auto cc = absl::make_unique<CalculatorContext>(
+      calculator_state.get(), tool::CreateTagMap({}).ValueOrDie(),
+      tool::CreateTagMap({}).ValueOrDie());
   RectSpec expectRect = {
       .width = 50,
       .height = 50,
@@ -108,9 +108,9 @@ TEST(ImageCroppingCalculatorTest, RedundantSpecInOptions) {
       .center_y = 50,
       .rotation = 0.3,
   };
-  EXPECT_EQ(
-      ImageCroppingCalculator::GetCropSpecs(&cc, input_width, input_height),
-      expectRect);
+  EXPECT_EQ(ImageCroppingCalculator::GetCropSpecs(cc.get(), input_width,
+                                                  input_height),
+            expectRect);
 }  // TEST
 
 // Test when WIDTH HEIGHT are set from input stream,
@@ -138,16 +138,16 @@ TEST(ImageCroppingCalculatorTest, RedundantSpectWithInputStream) {
             }
           )");
 
-  auto calculator_state =
-      CalculatorState("Node", 0, "Calculator", calculator_node, nullptr);
+  auto calculator_state = absl::make_unique<CalculatorState>(
+      "Node", 0, "Calculator", calculator_node, nullptr);
   auto inputTags = tool::CreateTagMap({
                                           "HEIGHT:0:crop_height",
                                           "WIDTH:0:crop_width",
                                       })
                        .ValueOrDie();
-  auto cc = CalculatorContext(&calculator_state, inputTags,
-                              tool::CreateTagMap({}).ValueOrDie());
-  auto& inputs = cc.Inputs();
+  auto cc = absl::make_unique<CalculatorContext>(
+      calculator_state.get(), inputTags, tool::CreateTagMap({}).ValueOrDie());
+  auto& inputs = cc->Inputs();
   inputs.Tag(kHeightTag).Value() = MakePacket<int>(1);
   inputs.Tag(kWidthTag).Value() = MakePacket<int>(1);
   RectSpec expectRect = {
@@ -157,9 +157,9 @@ TEST(ImageCroppingCalculatorTest, RedundantSpectWithInputStream) {
       .center_y = 50,
       .rotation = 0.3,
   };
-  EXPECT_EQ(
-      ImageCroppingCalculator::GetCropSpecs(&cc, input_width, input_height),
-      expectRect);
+  EXPECT_EQ(ImageCroppingCalculator::GetCropSpecs(cc.get(), input_width,
+                                                  input_height),
+            expectRect);
 }  // TEST
 
 // Test when RECT is set from input stream,
@@ -186,15 +186,15 @@ TEST(ImageCroppingCalculatorTest, RedundantSpecWithInputStream) {
             }
           )");
 
-  auto calculator_state =
-      CalculatorState("Node", 0, "Calculator", calculator_node, nullptr);
+  auto calculator_state = absl::make_unique<CalculatorState>(
+      "Node", 0, "Calculator", calculator_node, nullptr);
   auto inputTags = tool::CreateTagMap({
                                           "RECT:0:rect",
                                       })
                        .ValueOrDie();
-  auto cc = CalculatorContext(&calculator_state, inputTags,
-                              tool::CreateTagMap({}).ValueOrDie());
-  auto& inputs = cc.Inputs();
+  auto cc = absl::make_unique<CalculatorContext>(
+      calculator_state.get(), inputTags, tool::CreateTagMap({}).ValueOrDie());
+  auto& inputs = cc->Inputs();
   mediapipe::Rect rect = ParseTextProtoOrDie<mediapipe::Rect>(
       R"(
         width: 1 height: 1 x_center: 40 y_center: 40 rotation: 0.5
@@ -207,9 +207,9 @@ TEST(ImageCroppingCalculatorTest, RedundantSpecWithInputStream) {
       .center_y = 40,
       .rotation = 0.5,
   };
-  EXPECT_EQ(
-      ImageCroppingCalculator::GetCropSpecs(&cc, input_width, input_height),
-      expectRect);
+  EXPECT_EQ(ImageCroppingCalculator::GetCropSpecs(cc.get(), input_width,
+                                                  input_height),
+            expectRect);
 }  // TEST
 
 }  // namespace

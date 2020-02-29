@@ -135,10 +135,10 @@ node {
 # a vector of RenderData objects and draws each of them on the input frame.
 node {
   calculator: "AnnotationOverlayCalculator"
-  input_stream: "INPUT_FRAME:input_image"
+  input_stream: "IMAGE:input_image"
   input_stream: "detection_render_data"
   input_stream: "multi_hand_rects_render_data"
   input_stream: "multi_palm_rects_render_data"
   input_stream: "VECTOR:0:multi_hand_landmarks_render_data"
-  output_stream: "OUTPUT_FRAME:output_image"
+  output_stream: "IMAGE:output_image"
 }

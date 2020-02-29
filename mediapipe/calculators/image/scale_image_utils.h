@@ -35,17 +35,19 @@ namespace scale_image {
                                        int* col_start, int* row_start);
 
 // Given an input width and height, a target width and height, whether to
-// preserve the aspect ratio, and whether to round down to a multiple of 2,
-// determine the output width and height. If target_width or target_height is
-// non-positive, then they will be set to the input_width and input_height
-// respectively. The output_width and output_height will be reduced as necessary
-// to preserve_aspect_ratio and to scale_to_multipe_of_two if these options are
-// specified.
+// preserve the aspect ratio, and whether to round-down to the multiple of a
+// given number nearest to the targets, determine the output width and height.
+// If target_width or target_height is non-positive, then they will be set to
+// the input_width and input_height respectively. If scale_to_multiple_of is
+// less than 1, it will be treated like 1. The output_width and
+// output_height will be reduced as necessary to preserve_aspect_ratio if the
+// option is specified. If preserving the aspect ratio is desired, you must set
+// scale_to_multiple_of to 2.
 ::mediapipe::Status FindOutputDimensions(int input_width, int input_height,  //
                                          int target_width,
-                                         int target_height,              //
-                                         bool preserve_aspect_ratio,     //
-                                         bool scale_to_multiple_of_two,  //
+                                         int target_height,           //
+                                         bool preserve_aspect_ratio,  //
+                                         int scale_to_multiple_of,    //
                                          int* output_width, int* output_height);
 
 }  // namespace scale_image

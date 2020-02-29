@@ -1,0 +1,65 @@
+diff --git a/tensorflow/c/tf_tensor.cc b/tensorflow/c/tf_tensor.cc
+index 6bb2cafbbc..60250d6f92 100644
+--- a/tensorflow/c/tf_tensor.cc
++++ b/tensorflow/c/tf_tensor.cc
+@@ -114,7 +114,7 @@ TF_Tensor* TF_NewTensor(TF_DataType dtype, const int64_t* dims, int num_dims,
+   if (elem_size > 0 && len < (elem_size * ret.NumElements())) {
+     return nullptr;
+   }
+-  return new TF_Tensor{std::make_unique<tensorflow::TensorInterface>(ret)};
++  return new TF_Tensor{absl::make_unique<tensorflow::TensorInterface>(ret)};
+ }
+
+ TF_Tensor* TF_TensorMaybeMove(TF_Tensor* t) {
+@@ -317,7 +317,7 @@ TF_Tensor* TF_TensorFromTensor(const tensorflow::Tensor& src, Status* status) {
+     if (!tensor.CopyFrom(src, src.shape())) {
+       return nullptr;
+     }
+-    return new TF_Tensor{std::make_unique<tensorflow::TensorInterface>(tensor)};
++    return new TF_Tensor{absl::make_unique<tensorflow::TensorInterface>(tensor)};
+   }
+   // DT_STRING tensors require a copying since TF_Tensor.buffer expects a flatly
+   // encoded sequence of strings.
+diff --git a/tensorflow/core/lib/monitoring/percentile_sampler.cc b/tensorflow/core/lib/monitoring/percentile_sampler.cc
+index 988e50ded5..a8a412dc25 100644
+--- a/tensorflow/core/lib/monitoring/percentile_sampler.cc
++++ b/tensorflow/core/lib/monitoring/percentile_sampler.cc
+@@ -29,7 +29,8 @@ namespace monitoring {
+ void PercentileSamplerCell::Add(double sample) {
+   uint64 nstime = EnvTime::NowNanos();
+   mutex_lock l(mu_);
+-  samples_[next_position_] = {nstime, sample};
++  samples_[next_position_].nstime = nstime;
++  samples_[next_position_].value = sample;
+   ++next_position_;
+   if (TF_PREDICT_FALSE(next_position_ >= samples_.size())) {
+     next_position_ = 0;
+@@ -72,7 +73,9 @@ Percentiles PercentileSamplerCell::value() const {
+       size_t index = std::min<size_t>(
+           static_cast<size_t>(percentile * pct_samples.num_samples / 100.0),
+           pct_samples.num_samples - 1);
+-      PercentilePoint pct = {percentile, samples[index].value};
++      PercentilePoint pct;
++      pct.percentile = percentile;
++      pct.value = samples[index].value;
+       pct_samples.points.push_back(pct);
+     }
+   }
+diff --git a/tensorflow/workspace.bzl b/tensorflow/workspace.bzl
+index 8947038da8..75a1259b88 100755
+--- a/tensorflow/workspace.bzl
++++ b/tensorflow/workspace.bzl
+@@ -927,9 +927,10 @@ def tf_repositories(path_prefix = "", tf_repo_name = ""):
+     # https://github.com/bazelbuild/rules_apple/releases
+     tf_http_archive(
+         name = "build_bazel_rules_apple",
+-        sha256 = "a045a436b642c70fb0c10ca84ff0fd2dcbd59cc89100d597a61e8374afafb366",
++        sha256 = "bdc8e66e70b8a75da23b79f1f8c6207356df07d041d96d2189add7ee0780cf4e",
++        strip_prefix = "rules_apple-b869b0d3868d78a1d4ffd866ccb304fb68aa12c3",
+         urls = [
+-            "https://storage.googleapis.com/mirror.tensorflow.org/github.com/bazelbuild/rules_apple/releases/download/0.18.0/rules_apple.0.18.0.tar.gz",
+-            "https://github.com/bazelbuild/rules_apple/releases/download/0.18.0/rules_apple.0.18.0.tar.gz",
++            "https://github.com/bazelbuild/rules_apple/archive/b869b0d3868d78a1d4ffd866ccb304fb68aa12c3.tar.gz",
++            "https://storage.googleapis.com/mirror.tensorflow.org/github.com/bazelbuild/rules_apple/archive/b869b0d3868d78a1d4ffd866ccb304fb68aa12c3.tar.gz",
+         ],
+     )

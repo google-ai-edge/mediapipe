@@ -611,6 +611,22 @@ cc_library(
 )
 
 cc_test(
+    name = "side_packet_to_stream_calculator_test",
+    srcs = ["side_packet_to_stream_calculator_test.cc"],
+    deps = [
+        ":side_packet_to_stream_calculator",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:integral_types",
+        "//mediapipe/framework/port:parse_text_proto",
+        "//mediapipe/framework/port:status",
+        "//mediapipe/framework/tool:options_util",
+        "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_test(
     name = "immediate_mux_calculator_test",
     srcs = ["immediate_mux_calculator_test.cc"],
     deps = [

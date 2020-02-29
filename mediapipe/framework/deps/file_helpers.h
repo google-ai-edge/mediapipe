@@ -30,6 +30,10 @@ namespace file {
     const std::string& parent_directory, const std::string& file_name,
     std::vector<std::string>* results);
 
+::mediapipe::Status MatchFileTypeInDirectory(const std::string& directory,
+                                             const std::string& file_suffix,
+                                             std::vector<std::string>* results);
+
 ::mediapipe::Status Exists(absl::string_view file_name);
 
 }  // namespace file

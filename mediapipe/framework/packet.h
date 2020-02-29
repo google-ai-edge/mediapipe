@@ -48,7 +48,9 @@ class HolderBase;
 
 Packet Create(HolderBase* holder);
 Packet Create(HolderBase* holder, Timestamp timestamp);
+Packet Create(std::shared_ptr<HolderBase> holder, Timestamp timestamp);
 const HolderBase* GetHolder(const Packet& packet);
+const std::shared_ptr<HolderBase>& GetHolderShared(const Packet& packet);
 }  // namespace packet_internal
 
 // A generic container class which can hold data of any type.  The type of
@@ -201,8 +203,14 @@ class Packet {
   friend Packet packet_internal::Create(packet_internal::HolderBase* holder);
   friend Packet packet_internal::Create(packet_internal::HolderBase* holder,
                                         class Timestamp timestamp);
+  friend Packet packet_internal::Create(
+      std::shared_ptr<packet_internal::HolderBase> holder,
+      class Timestamp timestamp);
   friend const packet_internal::HolderBase* packet_internal::GetHolder(
       const Packet& packet);
+  friend const std::shared_ptr<packet_internal::HolderBase>&
+  packet_internal::GetHolderShared(const Packet& packet);
+
   std::shared_ptr<packet_internal::HolderBase> holder_;
   class Timestamp timestamp_;
 };
@@ -712,6 +720,15 @@ inline bool operator==(const Packet& p1, const Packet& p2) {
 inline bool operator!=(const Packet& p1, const Packet& p2) {
   return !(p1 == p2);
 }
+
+namespace packet_internal {
+
+inline const std::shared_ptr<HolderBase>& GetHolderShared(
+    const Packet& packet) {
+  return packet.holder_;
+}
+
+}  // namespace packet_internal
 
 }  // namespace mediapipe
 

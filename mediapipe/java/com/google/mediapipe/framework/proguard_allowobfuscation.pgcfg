@@ -1,0 +1,29 @@
+# Additional flags to pass to Proguard when processing a binary that uses
+# MediaPipe wherein classes and methods invoked from native are kept but
+# they are allowed to be obfuscated. In such cases, you must use the
+# go/proguard-jni system to feed the proguard obfuscation map using the
+# generate_obfuscation_mapping genrule.
+
+# Keep public members of our public interfaces. This also prevents the
+# obfuscation of the corresponding methods in classes implementing them,
+# such as implementations of PacketCallback#process.
+-keep,allowobfuscation public interface com.google.mediapipe.framework.* {
+  public *;
+}
+
+# This method is invoked by native code.
+-keep,allowobfuscation public class com.google.mediapipe.framework.Packet {
+  public static *** create(***);
+  public long getNativeHandle();
+  public void release();
+}
+
+# This method is invoked by native code.
+-keep,allowobfuscation public class com.google.mediapipe.framework.PacketCreator {
+  *** releaseWithSyncToken(...);
+}
+
+# This method is invoked by native code.
+-keep,allowobfuscation public class com.google.mediapipe.framework.MediaPipeException {
+  <init>(int, byte[]);
+}

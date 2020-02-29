@@ -12,20 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Copyright 2019 The MediaPipe Authors.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//      http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
 #include <cmath>
 #include <vector>
 
@@ -67,6 +53,15 @@ constexpr char kLetterboxPaddingTag[] = "LETTERBOX_PADDING";
 //   input_stream: "LETTERBOX_PADDING:letterbox_padding"
 //   output_stream: "LANDMARKS:adjusted_landmarks"
 // }
+//
+// node {
+//   calculator: "LandmarkLetterboxRemovalCalculator"
+//   input_stream: "LANDMARKS:0:landmarks_0"
+//   input_stream: "LANDMARKS:1:landmarks_1"
+//   input_stream: "LETTERBOX_PADDING:letterbox_padding"
+//   output_stream: "LANDMARKS:0:adjusted_landmarks_0"
+//   output_stream: "LANDMARKS:1:adjusted_landmarks_1"
+// }
 class LandmarkLetterboxRemovalCalculator : public CalculatorBase {
  public:
   static ::mediapipe::Status GetContract(CalculatorContract* cc) {
@@ -74,10 +69,20 @@ class LandmarkLetterboxRemovalCalculator : public CalculatorBase {
               cc->Inputs().HasTag(kLetterboxPaddingTag))
         << "Missing one or more input streams.";
 
-    cc->Inputs().Tag(kLandmarksTag).Set<NormalizedLandmarkList>();
+    RET_CHECK_EQ(cc->Inputs().NumEntries(kLandmarksTag),
+                 cc->Outputs().NumEntries(kLandmarksTag))
+        << "Same number of input and output landmarks is required.";
+
+    for (CollectionItemId id = cc->Inputs().BeginId(kLandmarksTag);
+         id != cc->Inputs().EndId(kLandmarksTag); ++id) {
+      cc->Inputs().Get(id).Set<NormalizedLandmarkList>();
+    }
     cc->Inputs().Tag(kLetterboxPaddingTag).Set<std::array<float, 4>>();
 
-    cc->Outputs().Tag(kLandmarksTag).Set<NormalizedLandmarkList>();
+    for (CollectionItemId id = cc->Outputs().BeginId(kLandmarksTag);
+         id != cc->Outputs().EndId(kLandmarksTag); ++id) {
+      cc->Outputs().Get(id).Set<NormalizedLandmarkList>();
+    }
 
     return ::mediapipe::OkStatus();
   }
@@ -89,38 +94,45 @@ class LandmarkLetterboxRemovalCalculator : public CalculatorBase {
   }
 
   ::mediapipe::Status Process(CalculatorContext* cc) override {
-    // Only process if there's input landmarks.
-    if (cc->Inputs().Tag(kLandmarksTag).IsEmpty()) {
+    if (cc->Inputs().Tag(kLetterboxPaddingTag).IsEmpty()) {
       return ::mediapipe::OkStatus();
     }
-
-    const NormalizedLandmarkList& input_landmarks =
-        cc->Inputs().Tag(kLandmarksTag).Get<NormalizedLandmarkList>();
     const auto& letterbox_padding =
         cc->Inputs().Tag(kLetterboxPaddingTag).Get<std::array<float, 4>>();
-
     const float left = letterbox_padding[0];
     const float top = letterbox_padding[1];
     const float left_and_right = letterbox_padding[0] + letterbox_padding[2];
     const float top_and_bottom = letterbox_padding[1] + letterbox_padding[3];
 
-    NormalizedLandmarkList output_landmarks;
-    for (int i = 0; i < input_landmarks.landmark_size(); ++i) {
-      const NormalizedLandmark& landmark = input_landmarks.landmark(i);
-      NormalizedLandmark* new_landmark = output_landmarks.add_landmark();
-      const float new_x = (landmark.x() - left) / (1.0f - left_and_right);
-      const float new_y = (landmark.y() - top) / (1.0f - top_and_bottom);
+    CollectionItemId input_id = cc->Inputs().BeginId(kLandmarksTag);
+    CollectionItemId output_id = cc->Outputs().BeginId(kLandmarksTag);
+    // Number of inputs and outpus is the same according to the contract.
+    for (; input_id != cc->Inputs().EndId(kLandmarksTag);
+         ++input_id, ++output_id) {
+      const auto& input_packet = cc->Inputs().Get(input_id);
+      if (input_packet.IsEmpty()) {
+        continue;
+      }
 
-      new_landmark->set_x(new_x);
-      new_landmark->set_y(new_y);
-      // Keep z-coord as is.
-      new_landmark->set_z(landmark.z());
+      const NormalizedLandmarkList& input_landmarks =
+          input_packet.Get<NormalizedLandmarkList>();
+      NormalizedLandmarkList output_landmarks;
+      for (int i = 0; i < input_landmarks.landmark_size(); ++i) {
+        const NormalizedLandmark& landmark = input_landmarks.landmark(i);
+        NormalizedLandmark* new_landmark = output_landmarks.add_landmark();
+        const float new_x = (landmark.x() - left) / (1.0f - left_and_right);
+        const float new_y = (landmark.y() - top) / (1.0f - top_and_bottom);
+
+        new_landmark->set_x(new_x);
+        new_landmark->set_y(new_y);
+        // Keep z-coord as is.
+        new_landmark->set_z(landmark.z());
+      }
+
+      cc->Outputs().Get(output_id).AddPacket(
+          MakePacket<NormalizedLandmarkList>(output_landmarks)
+              .At(cc->InputTimestamp()));
     }
-
-    cc->Outputs()
-        .Tag(kLandmarksTag)
-        .AddPacket(MakePacket<NormalizedLandmarkList>(output_landmarks)
-                       .At(cc->InputTimestamp()));
     return ::mediapipe::OkStatus();
   }
 };

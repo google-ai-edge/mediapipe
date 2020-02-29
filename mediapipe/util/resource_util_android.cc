@@ -61,6 +61,19 @@ namespace {
     return file::GetContents(path, output, file::Defaults());
   }
 
+  if (absl::StartsWith(path, "content://")) {
+    auto fd_status = Singleton<AssetManager>::get()->OpenContentUri(path);
+    if (!fd_status.ok()) {
+      return ::mediapipe::Status(mediapipe::StatusCode::kUnknown,
+                                 "Failed to open file: " + std::string(path));
+    }
+    int fd = fd_status.ValueOrDie();
+    auto status = file::GetContents(fd, output);
+
+    close(fd);
+    return status;
+  }
+
   std::vector<uint8_t> data;
   RET_CHECK(Singleton<AssetManager>::get()->ReadFile(path, &data))
       << "could not read asset: " << path;

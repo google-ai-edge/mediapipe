@@ -28,7 +28,7 @@ StatusOr<std::string> GetDefaultTraceLogDirectory() {
 
   // Note: "createDirectoryAtURL:..." method doesn't successfully create
   // the directory, hence this code uses "createDirectoryAtPath:..".
-  NSString* ns_documents_directory = [documents_directory_url absoluteString];
+  NSString* ns_documents_directory = [documents_directory_url path];
   NSError* error;
   BOOL success = [[NSFileManager defaultManager]
             createDirectoryAtPath:ns_documents_directory

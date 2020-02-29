@@ -467,9 +467,9 @@ node {
 # Draws annotations and overlays them on top of the input images.
 node {
   calculator: "AnnotationOverlayCalculator"
-  input_stream: "INPUT_FRAME_GPU:input_image"
+  input_stream: "IMAGE_GPU:input_image"
   input_stream: "detections_render_data"
-  output_stream: "OUTPUT_FRAME_GPU:output_image"
+  output_stream: "IMAGE_GPU:output_image"
 }
 
 ```
@@ -484,7 +484,8 @@ CPU.
 To build and run the app:
 
 ```bash
-bazel build -c opt mediapipe/examples/desktop/object_tracking:object_tracking_cpu
+bazel build -c opt mediapipe/examples/desktop/object_tracking:object_tracking_cpu \
+  --define MEDIAPIPE_DISABLE_GPU=1
 
 bazel-bin/mediapipe/examples/desktop/object_tracking/object_tracking_cpu \
   --calculator_graph_config_file=mediapipe/graphs/tracking/object_detection_tracking_desktop_live.pbtxt

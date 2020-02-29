@@ -30,6 +30,14 @@ public class TextureRenderer {
           1.0f, 1.0f // top right
           );
 
+  private static final FloatBuffer FLIPPED_TEXTURE_VERTICES =
+      ShaderUtil.floatBuffer(
+          0.0f, 1.0f, // top left
+          1.0f, 1.0f, // top right
+          0.0f, 0.0f, // bottom left
+          1.0f, 0.0f // bottom right
+          );
+
   private static final String TAG = "TextureRenderer";
   private static final int ATTRIB_POSITION = 1;
   private static final int ATTRIB_TEXTURE_COORDINATE = 2;
@@ -38,6 +46,7 @@ public class TextureRenderer {
   private int frameUniform;
   private int textureTransformUniform;
   private float[] textureTransformMatrix = new float[16];
+  private boolean flipY;
 
   /** Call this to setup the shader program before rendering. */
   public void setup() {
@@ -51,6 +60,14 @@ public class TextureRenderer {
     textureTransformUniform = GLES20.glGetUniformLocation(program, "texture_transform");
     ShaderUtil.checkGlError("glGetUniformLocation");
     Matrix.setIdentityM(textureTransformMatrix, 0 /* offset */);
+  }
+
+  /**
+   * Flips rendering output vertically, useful for conversion between coordinate systems with
+   * top-left v.s. bottom-left origins. Effective in subsequent {@link #render(int)} calls.
+   */
+  public void setFlipY(boolean flip) {
+    flipY = flip;
   }
 
   /**
@@ -83,7 +100,12 @@ public class TextureRenderer {
 
     GLES20.glEnableVertexAttribArray(ATTRIB_TEXTURE_COORDINATE);
     GLES20.glVertexAttribPointer(
-        ATTRIB_TEXTURE_COORDINATE, 2, GLES20.GL_FLOAT, false, 0, TEXTURE_VERTICES);
+        ATTRIB_TEXTURE_COORDINATE,
+        2,
+        GLES20.GL_FLOAT,
+        false,
+        0,
+        flipY ? FLIPPED_TEXTURE_VERTICES : TEXTURE_VERTICES);
     ShaderUtil.checkGlError("program setup");
 
     GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);

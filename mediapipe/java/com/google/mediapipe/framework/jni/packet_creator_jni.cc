@@ -136,6 +136,27 @@ JNIEXPORT jlong JNICALL PACKET_CREATOR_METHOD(nativeCreateGrayscaleImage)(
   return CreatePacketWithContext(context, packet);
 }
 
+JNIEXPORT jlong JNICALL PACKET_CREATOR_METHOD(nativeCreateFloatImageFrame)(
+    JNIEnv* env, jobject thiz, jlong context, jobject byte_buffer, jint width,
+    jint height) {
+  const void* data = env->GetDirectBufferAddress(byte_buffer);
+  auto image_frame = absl::make_unique<::mediapipe::ImageFrame>(
+      mediapipe::ImageFormat::VEC32F1, width, height,
+      ::mediapipe::ImageFrame::kGlDefaultAlignmentBoundary);
+  int64_t buffer_size = env->GetDirectBufferCapacity(byte_buffer);
+  if (buffer_size != image_frame->PixelDataSize()) {
+    LOG(ERROR) << "Please check the input buffer size.";
+    LOG(ERROR) << "Buffer size: " << buffer_size
+               << ", Buffer size needed: " << image_frame->PixelDataSize()
+               << ", Image width: " << width;
+    return 0L;
+  }
+  std::memcpy(image_frame->MutablePixelData(), data,
+              image_frame->PixelDataSize());
+  mediapipe::Packet packet = mediapipe::Adopt(image_frame.release());
+  return CreatePacketWithContext(context, packet);
+}
+
 JNIEXPORT jlong JNICALL PACKET_CREATOR_METHOD(nativeCreateRgbaImageFrame)(
     JNIEnv* env, jobject thiz, jlong context, jobject byte_buffer, jint width,
     jint height) {

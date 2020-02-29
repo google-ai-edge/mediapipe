@@ -43,10 +43,6 @@ class PacketWithContext;
 // so that we can clean up or query later.
 class Graph {
  public:
-  // The Packet java class name.
-  static constexpr char const* kJavaPacketClassName =
-      "com/google/mediapipe/framework/Packet";
-
   Graph();
   Graph(const Graph&) = delete;
   Graph& operator=(const Graph&) = delete;

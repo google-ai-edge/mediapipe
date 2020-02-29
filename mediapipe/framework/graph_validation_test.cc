@@ -325,10 +325,8 @@ class OptionalSideInputTestCalculator : public CalculatorBase {
  public:
   static ::mediapipe::Status GetContract(CalculatorContract* cc) {
     cc->InputSidePackets().Tag("SIDEINPUT").Set<std::string>().Optional();
-    if (!cc->Outputs().HasTag("OUTPUT")) {
-      return ::mediapipe::InvalidArgumentError(
-          "Expected std::string as output.");
-    }
+    cc->Inputs().Tag("SELECT").Set<int>().Optional();
+    cc->Inputs().Tag("ENABLE").Set<bool>().Optional();
     cc->Outputs().Tag("OUTPUT").Set<std::string>();
     return ::mediapipe::OkStatus();
   }
@@ -382,6 +380,65 @@ TEST(GraphValidationTest, OptionalInputNotProvidedForSubgraphCalculator) {
         node {
           calculator: "OptionalSideInputTestCalculator"
           name: "passthroughgraph__OptionalSideInputTestCalculator"
+          output_stream: "OUTPUT:foo_out"
+        }
+        executor {}
+      )")));
+
+  std::map<std::string, Packet> side_packets;
+  side_packets.insert({"foo_in", mediapipe::Adopt(new std::string("input"))});
+  MP_EXPECT_OK(graph_1.StartRun(side_packets));
+  MP_EXPECT_OK(graph_1.CloseAllPacketSources());
+  MP_EXPECT_OK(graph_1.WaitUntilDone());
+}
+
+TEST(GraphValidationTest, MultipleOptionalInputsForSubgraph) {
+  // A subgraph defining one optional side-packet and two optional inputs.
+  auto config_1 = ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+    type: "PassThroughGraph"
+    input_side_packet: "INPUT:input_0"
+    input_stream: "SELECT:select"
+    input_stream: "ENABLE:enable"
+    output_stream: "OUTPUT:output_0"
+    node {
+      calculator: "OptionalSideInputTestCalculator"
+      input_side_packet: "SIDEINPUT:input_0"  # std::string
+      input_stream: "SELECT:select"
+      input_stream: "ENABLE:enable"
+      output_stream: "OUTPUT:output_0"  # std::string
+    }
+  )");
+
+  // An enclosing graph that specifies just one optional input.
+  auto config_2 = ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+    input_side_packet: "INPUT:foo_in"
+    input_stream: "SELECT:foo_select"
+    output_stream: "OUTPUT:foo_out"
+    node {
+      calculator: "PassThroughGraph"
+      input_stream: "SELECT:foo_select"
+      output_stream: "OUTPUT:foo_out"  # std::string
+    }
+  )");
+
+  GraphValidation validation_1;
+  MP_ASSERT_OK(validation_1.Validate({config_1, config_2}, {}));
+  CalculatorGraph graph_1;
+  MP_ASSERT_OK(graph_1.Initialize({config_1, config_2}, {}));
+  EXPECT_THAT(
+      graph_1.Config(),
+
+      // The expanded graph includes only the specified input, "SELECT".
+      // Without the fix to RemoveIgnoredStreams(), the expanded graph
+      // includes the wrong input.
+      EqualsProto(::mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+        input_side_packet: "INPUT:foo_in"
+        input_stream: "SELECT:foo_select"
+        output_stream: "OUTPUT:foo_out"
+        node {
+          calculator: "OptionalSideInputTestCalculator"
+          name: "passthroughgraph__OptionalSideInputTestCalculator"
+          input_stream: "SELECT:foo_select"
           output_stream: "OUTPUT:foo_out"
         }
         executor {}

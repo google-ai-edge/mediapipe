@@ -53,7 +53,7 @@ cc_library(
 
 # Linux only.
 # Must have a GPU with EGL support:
-# ex: sudo aptitude install mesa-common-dev libegl1-mesa-dev libgles2-mesa-dev
+# ex: sudo apt-get install mesa-common-dev libegl1-mesa-dev libgles2-mesa-dev
 # (or similar nvidia/amd equivalent)
 cc_library(
     name = "demo_run_graph_main_gpu",

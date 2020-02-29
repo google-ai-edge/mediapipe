@@ -16,6 +16,7 @@ package com.google.mediapipe.framework;
 
 import com.google.protobuf.MessageLite;
 import java.nio.ByteBuffer;
+import java.nio.FloatBuffer;
 
 // TODO: use Preconditions in this file.
 /**
@@ -150,6 +151,19 @@ public class PacketCreator {
     }
     return Packet.create(
         nativeCreateRgbaImageFrame(mediapipeGraph.getNativeHandle(), buffer, width, height));
+  }
+
+  /**
+   * Creates a 1 channel float ImageFrame packet.
+   *
+   * <p>Use {@link ByteBuffer#allocateDirect} when allocating the buffer.
+   */
+  public Packet createFloatImageFrame(FloatBuffer buffer, int width, int height) {
+    if (buffer.capacity() != width * height * 4) {
+      throw new RuntimeException("buffer doesn't have the correct size.");
+    }
+    return Packet.create(
+        nativeCreateFloatImageFrame(mediapipeGraph.getNativeHandle(), buffer, width, height));
   }
 
   public Packet createInt16(short value) {
@@ -327,6 +341,8 @@ public class PacketCreator {
 
   private native long nativeCreateRgbaImageFrame(
       long context, ByteBuffer buffer, int width, int height);
+  private native long nativeCreateFloatImageFrame(
+      long context, FloatBuffer buffer, int width, int height);
   private native long nativeCreateInt16(long context, short value);
   private native long nativeCreateInt32(long context, int value);
   private native long nativeCreateInt64(long context, long value);

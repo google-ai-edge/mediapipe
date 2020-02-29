@@ -42,17 +42,7 @@ class FdCloser {
 }  // namespace
 
 // Read contents of a file to a std::string.
-::mediapipe::Status GetContents(absl::string_view file_name,
-                                std::string* output,
-                                const file::Options& /*options*/) {
-  int fd = open(std::string(file_name).c_str(), O_RDONLY);
-  if (fd < 0) {
-    return ::mediapipe::Status(
-        mediapipe::StatusCode::kUnknown,
-        "Failed to open file: " + std::string(file_name));
-  }
-  FdCloser closer(fd);
-
+::mediapipe::Status GetContents(int fd, std::string* output) {
   // Determine the length of the file.
   struct stat buf;
   if (fstat(fd, &buf) != 0) {
@@ -78,6 +68,21 @@ class FdCloser {
     length -= nread;
   }
   return ::mediapipe::OkStatus();
+}
+
+// Read contents of a file to a std::string.
+::mediapipe::Status GetContents(absl::string_view file_name,
+                                std::string* output,
+                                const file::Options& /*options*/) {
+  int fd = open(std::string(file_name).c_str(), O_RDONLY);
+  if (fd < 0) {
+    return ::mediapipe::Status(
+        mediapipe::StatusCode::kUnknown,
+        "Failed to open file: " + std::string(file_name));
+  }
+
+  FdCloser closer(fd);
+  return GetContents(fd, output);
 }
 
 ::mediapipe::Status GetContents(absl::string_view file_name,
@@ -110,6 +115,11 @@ class FdCloser {
     return ::mediapipe::Status(mediapipe::StatusCode::kUnknown,
                                "Failed to write file");
   }
+}
+
+::mediapipe::Status SetContents(absl::string_view file_name,
+                                absl::string_view content) {
+  return SetContents(file_name, content, file::Defaults());
 }
 
 }  // namespace file

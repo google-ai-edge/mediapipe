@@ -79,49 +79,49 @@ TEST(ScaleImageUtilsTest, FindOutputDimensionsPreserveRatio) {
   int output_width;
   int output_height;
   // Not scale.
-  MP_ASSERT_OK(FindOutputDimensions(200, 100, -1, -1, true, true, &output_width,
+  MP_ASSERT_OK(FindOutputDimensions(200, 100, -1, -1, true, 2, &output_width,
                                     &output_height));
   EXPECT_EQ(200, output_width);
   EXPECT_EQ(100, output_height);
   // Not scale with odd input size.
-  MP_ASSERT_OK(FindOutputDimensions(201, 101, -1, -1, false, false,
-                                    &output_width, &output_height));
+  MP_ASSERT_OK(FindOutputDimensions(201, 101, -1, -1, false, 1, &output_width,
+                                    &output_height));
   EXPECT_EQ(201, output_width);
   EXPECT_EQ(101, output_height);
   // Scale down by 1/2.
-  MP_ASSERT_OK(FindOutputDimensions(200, 100, 100, -1, true, true,
-                                    &output_width, &output_height));
+  MP_ASSERT_OK(FindOutputDimensions(200, 100, 100, -1, true, 2, &output_width,
+                                    &output_height));
   EXPECT_EQ(100, output_width);
   EXPECT_EQ(50, output_height);
   // Scale up, doubling dimensions.
-  MP_ASSERT_OK(FindOutputDimensions(200, 100, -1, 200, true, true,
-                                    &output_width, &output_height));
+  MP_ASSERT_OK(FindOutputDimensions(200, 100, -1, 200, true, 2, &output_width,
+                                    &output_height));
   EXPECT_EQ(400, output_width);
   EXPECT_EQ(200, output_height);
   // Fits a 2:1 image into a 150 x 150 box. Output dimensions are always
   // visible by 2.
-  MP_ASSERT_OK(FindOutputDimensions(200, 100, 150, 150, true, true,
-                                    &output_width, &output_height));
+  MP_ASSERT_OK(FindOutputDimensions(200, 100, 150, 150, true, 2, &output_width,
+                                    &output_height));
   EXPECT_EQ(150, output_width);
   EXPECT_EQ(74, output_height);
   // Fits a 2:1 image into a 400 x 50 box.
-  MP_ASSERT_OK(FindOutputDimensions(200, 100, 400, 50, true, true,
-                                    &output_width, &output_height));
+  MP_ASSERT_OK(FindOutputDimensions(200, 100, 400, 50, true, 2, &output_width,
+                                    &output_height));
   EXPECT_EQ(100, output_width);
   EXPECT_EQ(50, output_height);
   // Scale to multiple number with odd targe size.
-  MP_ASSERT_OK(FindOutputDimensions(200, 100, 101, -1, true, true,
-                                    &output_width, &output_height));
+  MP_ASSERT_OK(FindOutputDimensions(200, 100, 101, -1, true, 2, &output_width,
+                                    &output_height));
   EXPECT_EQ(100, output_width);
   EXPECT_EQ(50, output_height);
   // Scale to multiple number with odd targe size.
-  MP_ASSERT_OK(FindOutputDimensions(200, 100, 101, -1, true, false,
-                                    &output_width, &output_height));
+  MP_ASSERT_OK(FindOutputDimensions(200, 100, 101, -1, true, 2, &output_width,
+                                    &output_height));
   EXPECT_EQ(100, output_width);
   EXPECT_EQ(50, output_height);
   // Scale to odd size.
-  MP_ASSERT_OK(FindOutputDimensions(200, 100, 151, 101, false, false,
-                                    &output_width, &output_height));
+  MP_ASSERT_OK(FindOutputDimensions(200, 100, 151, 101, false, 1, &output_width,
+                                    &output_height));
   EXPECT_EQ(151, output_width);
   EXPECT_EQ(101, output_height);
 }
@@ -131,20 +131,60 @@ TEST(ScaleImageUtilsTest, FindOutputDimensionsNoAspectRatio) {
   int output_width;
   int output_height;
   // Scale width only.
-  MP_ASSERT_OK(FindOutputDimensions(200, 100, 100, -1, false, true,
-                                    &output_width, &output_height));
+  MP_ASSERT_OK(FindOutputDimensions(200, 100, 100, -1, false, 2, &output_width,
+                                    &output_height));
   EXPECT_EQ(100, output_width);
   EXPECT_EQ(100, output_height);
   // Scale height only.
-  MP_ASSERT_OK(FindOutputDimensions(200, 100, -1, 200, false, true,
-                                    &output_width, &output_height));
+  MP_ASSERT_OK(FindOutputDimensions(200, 100, -1, 200, false, 2, &output_width,
+                                    &output_height));
   EXPECT_EQ(200, output_width);
   EXPECT_EQ(200, output_height);
   // Scale both dimensions.
-  MP_ASSERT_OK(FindOutputDimensions(200, 100, 150, 200, false, true,
-                                    &output_width, &output_height));
+  MP_ASSERT_OK(FindOutputDimensions(200, 100, 150, 200, false, 2, &output_width,
+                                    &output_height));
   EXPECT_EQ(150, output_width);
   EXPECT_EQ(200, output_height);
+}
+
+// Tests scale_to_multiple_of.
+TEST(ScaleImageUtilsTest, FindOutputDimensionsDownScaleToMultipleOf) {
+  int output_width;
+  int output_height;
+  // Set no targets, downscale to a multiple of 8.
+  MP_ASSERT_OK(FindOutputDimensions(100, 100, -1, -1, false, 8, &output_width,
+                                    &output_height));
+  EXPECT_EQ(96, output_width);
+  EXPECT_EQ(96, output_height);
+  // Set width target, downscale to a multiple of 8.
+  MP_ASSERT_OK(FindOutputDimensions(200, 100, 100, -1, false, 8, &output_width,
+                                    &output_height));
+  EXPECT_EQ(96, output_width);
+  EXPECT_EQ(96, output_height);
+  // Set height target, downscale to a multiple of 8.
+  MP_ASSERT_OK(FindOutputDimensions(201, 101, -1, 201, false, 8, &output_width,
+                                    &output_height));
+  EXPECT_EQ(200, output_width);
+  EXPECT_EQ(200, output_height);
+  // Set both targets, downscale to a multiple of 8.
+  MP_ASSERT_OK(FindOutputDimensions(200, 100, 150, 200, false, 8, &output_width,
+                                    &output_height));
+  EXPECT_EQ(144, output_width);
+  EXPECT_EQ(200, output_height);
+  // Doesn't throw error if keep aspect is true and downscale multiple is 2.
+  MP_ASSERT_OK(FindOutputDimensions(200, 100, 400, 200, true, 2, &output_width,
+                                    &output_height));
+  EXPECT_EQ(400, output_width);
+  EXPECT_EQ(200, output_height);
+  // Throws error if keep aspect is true, but downscale multiple is not 2.
+  ASSERT_THAT(FindOutputDimensions(200, 100, 400, 200, true, 4, &output_width,
+                                   &output_height),
+              testing::Not(testing::status::IsOk()));
+  // Downscaling to multiple ignored if multiple is less than 2.
+  MP_ASSERT_OK(FindOutputDimensions(200, 100, 401, 201, false, 1, &output_width,
+                                    &output_height));
+  EXPECT_EQ(401, output_width);
+  EXPECT_EQ(201, output_height);
 }
 
 }  // namespace

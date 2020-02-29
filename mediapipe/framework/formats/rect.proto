@@ -16,6 +16,9 @@ syntax = "proto2";
 
 package mediapipe;
 
+option java_package = "com.google.mediapipe.formats.proto";
+option java_outer_classname = "RectProto";
+
 // A rectangle with rotation in image coordinates.
 message Rect {
   // Location of the center of the rectangle in image coordinates.
@@ -27,7 +30,7 @@ message Rect {
   required int32 height = 3;
   required int32 width = 4;
 
-  // Rotation angle is counter-clockwise in radian.
+  // Rotation angle is clockwise in radians.
   optional float rotation = 5 [default = 0.0];
 
   // Optional unique id to help associate different Rects to each other.
@@ -46,7 +49,7 @@ message NormalizedRect {
   required float height = 3;
   required float width = 4;
 
-  // Rotation angle is counter-clockwise in radian.
+  // Rotation angle is clockwise in radians.
   optional float rotation = 5 [default = 0.0];
 
   // Optional unique id to help associate different NormalizedRects to each

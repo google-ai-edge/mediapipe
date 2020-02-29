@@ -20,126 +20,16 @@
 #include <memory>
 #include <string>
 
+#include "absl/status/status.h"
 #include "absl/strings/string_view.h"
 #include "mediapipe/framework/port/logging.h"
 
 namespace mediapipe {
 
-enum class StatusCode {
-  kOk = 0,
-  kCancelled = 1,
-  kUnknown = 2,
-  kInvalidArgument = 3,
-  kDeadlineExceeded = 4,
-  kNotFound = 5,
-  kAlreadyExists = 6,
-  kPermissionDenied = 7,
-  kResourceExhausted = 8,
-  kFailedPrecondition = 9,
-  kAborted = 10,
-  kOutOfRange = 11,
-  kUnimplemented = 12,
-  kInternal = 13,
-  kUnavailable = 14,
-  kDataLoss = 15,
-  kUnauthenticated = 16,
-  kDoNotUseReservedForFutureExpansionUseDefaultInSwitchInstead_ = 20
-};
+using Status = absl::Status;
+using StatusCode = absl::StatusCode;
 
-#if defined(__clang__)
-// Only clang supports warn_unused_result as a type annotation.
-class ABSL_MUST_USE_RESULT Status;
-#endif
-
-// Denotes success or failure of a call in MediaPipe.
-class Status {
- public:
-  // Creates a success status.
-  Status() {}
-
-  // Creates a status with the specified error code and msg as a
-  // human-readable std::string containing more detailed information.
-  Status(::mediapipe::StatusCode code, absl::string_view msg);
-
-  // Copies the specified status.
-  Status(const Status& s);
-  void operator=(const Status& s);
-
-  // Returns true iff the status indicates success.
-  bool ok() const {
-    return (state_ == NULL) || (state_->code == ::mediapipe::StatusCode::kOk);
-  }
-
-  ::mediapipe::StatusCode code() const {
-    return ok() ? ::mediapipe::StatusCode::kOk : state_->code;
-  }
-
-  const std::string& error_message() const {
-    return ok() ? empty_string() : state_->msg;
-  }
-
-  absl::string_view message() const {
-    return absl::string_view(error_message());
-  }
-
-  bool operator==(const Status& x) const;
-  bool operator!=(const Status& x) const;
-
-  // If `ok()`, stores `new_status` into `*this`.  If `!ok()`,
-  // preserves the current status, but may augment with additional
-  // information about `new_status`.
-  //
-  // Convenient way of keeping track of the first error encountered.
-  // Instead of:
-  //   `if (overall_status.ok()) overall_status = new_status`
-  // Use:
-  //   `overall_status.Update(new_status);`
-  void Update(const Status& new_status);
-
-  // Returns a std::string representation of this status suitable for
-  // printing. Returns the std::string `"OK"` for success.
-  std::string ToString() const;
-
-  // Ignores any errors. This method does nothing except potentially suppress
-  // complaints from any tools that are checking that errors are not dropped on
-  // the floor.
-  void IgnoreError() const;
-
- private:
-  static const std::string& empty_string();
-  struct State {
-    ::mediapipe::StatusCode code;
-    std::string msg;
-  };
-  // OK status has a `NULL` state_.  Otherwise, `state_` points to
-  // a `State` structure containing the error code and message(s)
-  std::unique_ptr<State> state_;
-
-  void SlowCopyFrom(const State* src);
-};
-
-inline Status::Status(const Status& s)
-    : state_((s.state_ == NULL) ? NULL : new State(*s.state_)) {}
-
-inline void Status::operator=(const Status& s) {
-  // The following condition catches both aliasing (when this == &s),
-  // and the common case where both s and *this are ok.
-  if (state_ != s.state_) {
-    SlowCopyFrom(s.state_.get());
-  }
-}
-
-inline bool Status::operator==(const Status& x) const {
-  return (this->state_ == x.state_) || (ToString() == x.ToString());
-}
-
-inline bool Status::operator!=(const Status& x) const { return !(*this == x); }
-
-inline Status OkStatus() { return Status(); }
-
-std::ostream& operator<<(std::ostream& os, const Status& x);
-
-typedef std::function<void(const Status&)> StatusCallback;
+inline ::mediapipe::Status OkStatus() { return absl::OkStatus(); }
 
 extern std::string* MediaPipeCheckOpHelperOutOfLine(
     const ::mediapipe::Status& v, const char* msg);

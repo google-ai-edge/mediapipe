@@ -245,9 +245,9 @@ REGISTER_CALCULATOR(ErrorCalculator);
   [self waitForExpectationsWithTimeout:3.0 handler:NULL];
   XCTAssertNotNil(error);
   status = error.gus_status;
-  XCTAssertNotEqual(status.error_message().find(kExpectedError), std::string::npos,
+  XCTAssertNotEqual(status.message().find(kExpectedError), std::string::npos,
                     @"Missing expected std::string '%s' from error messge '%s'", kExpectedError,
-                    status.error_message().c_str());
+                    status.message().data());
 }
 
 - (void)testSetStreamHeader {

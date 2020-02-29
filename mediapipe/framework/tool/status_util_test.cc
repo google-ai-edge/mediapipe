@@ -52,8 +52,10 @@ TEST(StatusTest, CombinedStatus) {
   errors.emplace_back(::mediapipe::StatusCode::kInvalidArgument,
                       "error_with_that_string");
   status = tool::CombinedStatus(prefix_error_message, errors);
-  EXPECT_THAT(status.ToString(), testing::HasSubstr(errors[0].error_message()));
-  EXPECT_THAT(status.ToString(), testing::HasSubstr(errors[1].error_message()));
+  EXPECT_THAT(status.ToString(),
+              testing::HasSubstr(std::string(errors[0].message())));
+  EXPECT_THAT(status.ToString(),
+              testing::HasSubstr(std::string(errors[1].message())));
   EXPECT_THAT(status.ToString(), testing::HasSubstr(prefix_error_message));
   EXPECT_EQ(::mediapipe::StatusCode::kInvalidArgument, status.code());
 
@@ -63,8 +65,10 @@ TEST(StatusTest, CombinedStatus) {
   errors.emplace_back(::mediapipe::StatusCode::kInvalidArgument,
                       "error_with_that_string");
   status = tool::CombinedStatus(prefix_error_message, errors);
-  EXPECT_THAT(status.ToString(), testing::HasSubstr(errors[0].error_message()));
-  EXPECT_THAT(status.ToString(), testing::HasSubstr(errors[1].error_message()));
+  EXPECT_THAT(status.ToString(),
+              testing::HasSubstr(std::string(errors[0].message())));
+  EXPECT_THAT(status.ToString(),
+              testing::HasSubstr(std::string(errors[1].message())));
   EXPECT_THAT(status.ToString(), testing::HasSubstr(prefix_error_message));
   EXPECT_EQ(::mediapipe::StatusCode::kUnknown, status.code());
   errors.clear();
@@ -72,7 +76,8 @@ TEST(StatusTest, CombinedStatus) {
   errors.emplace_back(::mediapipe::StatusCode::kInvalidArgument,
                       "error_with_that_string");
   status = tool::CombinedStatus(prefix_error_message, errors);
-  EXPECT_THAT(status.ToString(), testing::HasSubstr(errors[1].error_message()));
+  EXPECT_THAT(status.ToString(),
+              testing::HasSubstr(std::string(errors[1].message())));
   EXPECT_THAT(status.ToString(), testing::HasSubstr(prefix_error_message));
   EXPECT_EQ(::mediapipe::StatusCode::kInvalidArgument, status.code());
 

@@ -88,16 +88,26 @@ double ParseRational(const std::string& rational) {
   return ::mediapipe::OkStatus();
 }
 
-::mediapipe::Status FindOutputDimensions(int input_width,                //
-                                         int input_height,               //
-                                         int target_width,               //
-                                         int target_height,              //
-                                         bool preserve_aspect_ratio,     //
-                                         bool scale_to_multiple_of_two,  //
+::mediapipe::Status FindOutputDimensions(int input_width,             //
+                                         int input_height,            //
+                                         int target_width,            //
+                                         int target_height,           //
+                                         bool preserve_aspect_ratio,  //
+                                         int scale_to_multiple_of,    //
                                          int* output_width,
                                          int* output_height) {
   CHECK(output_width);
   CHECK(output_height);
+
+  if (preserve_aspect_ratio) {
+    RET_CHECK(scale_to_multiple_of == 2)
+        << "FindOutputDimensions always outputs width and height that are "
+           "divisible by 2 when preserving aspect ratio. If you'd like to "
+           "set scale_to_multiple_of to something other than 2, please "
+           "set preserve_aspect_ratio to false.";
+  }
+
+  if (scale_to_multiple_of < 1) scale_to_multiple_of = 1;
 
   if (!preserve_aspect_ratio || (target_width <= 0 && target_height <= 0)) {
     if (target_width <= 0) {
@@ -106,13 +116,13 @@ double ParseRational(const std::string& rational) {
     if (target_height <= 0) {
       target_height = input_height;
     }
-    if (scale_to_multiple_of_two) {
-      *output_width = (target_width / 2) * 2;
-      *output_height = (target_height / 2) * 2;
-    } else {
-      *output_width = target_width;
-      *output_height = target_height;
-    }
+
+    target_width -= target_width % scale_to_multiple_of;
+    target_height -= target_height % scale_to_multiple_of;
+
+    *output_width = target_width;
+    *output_height = target_height;
+
     return ::mediapipe::OkStatus();
   }
 

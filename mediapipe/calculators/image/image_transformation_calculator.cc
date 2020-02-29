@@ -104,6 +104,14 @@ mediapipe::ScaleMode_Mode ParseScaleMode(
 //   to be a multiple of 90 degrees. If provided, it overrides the
 //   ROTATION_DEGREES input side packet.
 //
+//   FLIP_HORIZONTALLY (optional): Whether to flip image horizontally or not. If
+//   provided, it overrides the FLIP_HORIZONTALLY input side packet and/or
+//   corresponding field in the calculator options.
+//
+//   FLIP_VERTICALLY (optional): Whether to flip image vertically or not. If
+//   provided, it overrides the FLIP_VERTICALLY input side packet and/or
+//   corresponding field in the calculator options.
+//
 // Output:
 //   One of the following two tags:
 //   IMAGE - ImageFrame representing the output image.
@@ -128,6 +136,12 @@ mediapipe::ScaleMode_Mode ParseScaleMode(
 //   ROTATION_DEGREES (optional): The counterclockwise rotation angle in
 //   degrees. It has to be a multiple of 90 degrees. It overrides the
 //   corresponding field in the calculator options.
+//
+//   FLIP_HORIZONTALLY (optional): Whether to flip image horizontally or not.
+//   It overrides the corresponding field in the calculator options.
+//
+//   FLIP_VERTICALLY (optional): Whether to flip image vertically or not.
+//   It overrides the corresponding field in the calculator options.
 //
 // Calculator options (see image_transformation_calculator.proto):
 //   output_width, output_height - (optional) Desired scaled image size.
@@ -167,6 +181,8 @@ class ImageTransformationCalculator : public CalculatorBase {
   int output_height_ = 0;
   mediapipe::RotationMode_Mode rotation_;
   mediapipe::ScaleMode_Mode scale_mode_;
+  bool flip_horizontally_ = false;
+  bool flip_vertically_ = false;
 
   bool use_gpu_ = false;
 #if !defined(MEDIAPIPE_DISABLE_GPU)
@@ -203,12 +219,24 @@ REGISTER_CALCULATOR(ImageTransformationCalculator);
   if (cc->Inputs().HasTag("ROTATION_DEGREES")) {
     cc->Inputs().Tag("ROTATION_DEGREES").Set<int>();
   }
+  if (cc->Inputs().HasTag("FLIP_HORIZONTALLY")) {
+    cc->Inputs().Tag("FLIP_HORIZONTALLY").Set<bool>();
+  }
+  if (cc->Inputs().HasTag("FLIP_VERTICALLY")) {
+    cc->Inputs().Tag("FLIP_VERTICALLY").Set<bool>();
+  }
 
   if (cc->InputSidePackets().HasTag("OUTPUT_DIMENSIONS")) {
     cc->InputSidePackets().Tag("OUTPUT_DIMENSIONS").Set<DimensionsPacketType>();
   }
   if (cc->InputSidePackets().HasTag("ROTATION_DEGREES")) {
     cc->InputSidePackets().Tag("ROTATION_DEGREES").Set<int>();
+  }
+  if (cc->InputSidePackets().HasTag("FLIP_HORIZONTALLY")) {
+    cc->InputSidePackets().Tag("FLIP_HORIZONTALLY").Set<bool>();
+  }
+  if (cc->InputSidePackets().HasTag("FLIP_VERTICALLY")) {
+    cc->InputSidePackets().Tag("FLIP_VERTICALLY").Set<bool>();
   }
 
   if (cc->Outputs().HasTag("LETTERBOX_PADDING")) {
@@ -245,11 +273,26 @@ REGISTER_CALCULATOR(ImageTransformationCalculator);
     output_width_ = options_.output_width();
     output_height_ = options_.output_height();
   }
+
   if (cc->InputSidePackets().HasTag("ROTATION_DEGREES")) {
     rotation_ = DegreesToRotationMode(
         cc->InputSidePackets().Tag("ROTATION_DEGREES").Get<int>());
   } else {
     rotation_ = options_.rotation_mode();
+  }
+
+  if (cc->InputSidePackets().HasTag("FLIP_HORIZONTALLY")) {
+    flip_horizontally_ =
+        cc->InputSidePackets().Tag("FLIP_HORIZONTALLY").Get<bool>();
+  } else {
+    flip_horizontally_ = options_.flip_horizontally();
+  }
+
+  if (cc->InputSidePackets().HasTag("FLIP_VERTICALLY")) {
+    flip_vertically_ =
+        cc->InputSidePackets().Tag("FLIP_VERTICALLY").Get<bool>();
+  } else {
+    flip_vertically_ = options_.flip_vertically();
   }
 
   scale_mode_ = ParseScaleMode(options_.scale_mode(), DEFAULT_SCALE_MODE);
@@ -268,12 +311,37 @@ REGISTER_CALCULATOR(ImageTransformationCalculator);
 
 ::mediapipe::Status ImageTransformationCalculator::Process(
     CalculatorContext* cc) {
+  // Override values if specified so.
+  if (cc->Inputs().HasTag("ROTATION_DEGREES") &&
+      !cc->Inputs().Tag("ROTATION_DEGREES").IsEmpty()) {
+    rotation_ =
+        DegreesToRotationMode(cc->Inputs().Tag("ROTATION_DEGREES").Get<int>());
+  }
+  if (cc->Inputs().HasTag("FLIP_HORIZONTALLY") &&
+      !cc->Inputs().Tag("FLIP_HORIZONTALLY").IsEmpty()) {
+    flip_horizontally_ = cc->Inputs().Tag("FLIP_HORIZONTALLY").Get<bool>();
+  }
+  if (cc->Inputs().HasTag("FLIP_VERTICALLY") &&
+      !cc->Inputs().Tag("FLIP_VERTICALLY").IsEmpty()) {
+    flip_vertically_ = cc->Inputs().Tag("FLIP_VERTICALLY").Get<bool>();
+  }
+
   if (use_gpu_) {
 #if !defined(MEDIAPIPE_DISABLE_GPU)
+    if (cc->Inputs().Tag("IMAGE_GPU").IsEmpty()) {
+      // Image is missing, hence no way to produce output image. (Timestamp
+      // bound will be updated automatically.)
+      return ::mediapipe::OkStatus();
+    }
     return helper_.RunInGlContext(
         [this, cc]() -> ::mediapipe::Status { return RenderGpu(cc); });
 #endif  //  !MEDIAPIPE_DISABLE_GPU
   } else {
+    if (cc->Inputs().Tag("IMAGE").IsEmpty()) {
+      // Image is missing, hence no way to produce output image. (Timestamp
+      // bound will be updated automatically.)
+      return ::mediapipe::OkStatus();
+    }
     return RenderCpu(cc);
   }
   return ::mediapipe::OkStatus();
@@ -360,11 +428,6 @@ REGISTER_CALCULATOR(ImageTransformationCalculator);
         .Add(padding.release(), cc->InputTimestamp());
   }
 
-  if (cc->InputSidePackets().HasTag("ROTATION_DEGREES")) {
-    rotation_ = DegreesToRotationMode(
-        cc->InputSidePackets().Tag("ROTATION_DEGREES").Get<int>());
-  }
-
   cv::Mat rotated_mat;
   const int angle = RotationModeToDegrees(rotation_);
   cv::Point2f src_center(scaled_mat.cols / 2.0, scaled_mat.rows / 2.0);
@@ -372,11 +435,9 @@ REGISTER_CALCULATOR(ImageTransformationCalculator);
   cv::warpAffine(scaled_mat, rotated_mat, rotation_mat, scaled_mat.size());
 
   cv::Mat flipped_mat;
-  if (options_.flip_horizontally() || options_.flip_vertically()) {
+  if (flip_horizontally_ || flip_vertically_) {
     const int flip_code =
-        options_.flip_horizontally() && options_.flip_vertically()
-            ? -1
-            : options_.flip_horizontally();
+        flip_horizontally_ && flip_vertically_ ? -1 : flip_horizontally_;
     cv::flip(rotated_mat, flipped_mat, flip_code);
   } else {
     flipped_mat = rotated_mat;
@@ -450,11 +511,6 @@ REGISTER_CALCULATOR(ImageTransformationCalculator);
   }
   RET_CHECK(renderer) << "Unsupported input texture type";
 
-  if (cc->InputSidePackets().HasTag("ROTATION_DEGREES")) {
-    rotation_ = DegreesToRotationMode(
-        cc->InputSidePackets().Tag("ROTATION_DEGREES").Get<int>());
-  }
-
   mediapipe::FrameScaleMode scale_mode = mediapipe::FrameScaleModeFromProto(
       scale_mode_, mediapipe::FrameScaleMode::kStretch);
   mediapipe::FrameRotation rotation =
@@ -469,7 +525,7 @@ REGISTER_CALCULATOR(ImageTransformationCalculator);
 
   MP_RETURN_IF_ERROR(renderer->GlRender(
       src1.width(), src1.height(), dst.width(), dst.height(), scale_mode,
-      rotation, options_.flip_horizontally(), options_.flip_vertically(),
+      rotation, flip_horizontally_, flip_vertically_,
       /*flip_texture=*/false));
 
   glActiveTexture(GL_TEXTURE1);

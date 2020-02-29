@@ -105,6 +105,30 @@ namespace file {
   return ::mediapipe::OkStatus();
 }
 
+::mediapipe::Status MatchFileTypeInDirectory(
+    const std::string& directory, const std::string& file_suffix,
+    std::vector<std::string>* results) {
+  DIR* dir = opendir(directory.c_str());
+  CHECK(dir);
+  // Iterates through the direcotry.
+  while (true) {
+    struct dirent* dir_ent = readdir(dir);
+    if (dir_ent == nullptr) {
+      break;
+    }
+    if (std::string(dir_ent->d_name) == "." ||
+        std::string(dir_ent->d_name) == "..") {
+      continue;
+    }
+
+    if (absl::EndsWith(std::string(dir_ent->d_name), file_suffix)) {
+      results->push_back(JoinPath(directory, std::string(dir_ent->d_name)));
+    }
+  }
+  closedir(dir);
+  return ::mediapipe::OkStatus();
+}
+
 ::mediapipe::Status Exists(absl::string_view file_name) {
   struct stat buffer;
   int status;

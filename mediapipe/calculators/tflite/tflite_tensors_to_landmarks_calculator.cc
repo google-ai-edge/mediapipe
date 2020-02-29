@@ -28,6 +28,21 @@ namespace mediapipe {
 //  TENSORS - Vector of TfLiteTensor of type kTfLiteFloat32. Only the first
 //            tensor will be used. The size of the values must be
 //            (num_dimension x num_landmarks).
+//
+//  FLIP_HORIZONTALLY (optional): Whether to flip landmarks horizontally or
+//  not. Overrides corresponding side packet and/or field in the calculator
+//  options.
+//
+//  FLIP_VERTICALLY (optional): Whether to flip landmarks vertically or not.
+//  Overrides corresponding side packet and/or field in the calculator options.
+//
+// Input side packet:
+//   FLIP_HORIZONTALLY (optional): Whether to flip landmarks horizontally or
+//   not. Overrides the corresponding field in the calculator options.
+//
+//   FLIP_VERTICALLY (optional): Whether to flip landmarks vertically or not.
+//   Overrides the corresponding field in the calculator options.
+//
 // Output:
 //  LANDMARKS(optional) - Result MediaPipe landmarks.
 //  NORM_LANDMARKS(optional) - Result MediaPipe normalized landmarks.
@@ -61,6 +76,8 @@ class TfLiteTensorsToLandmarksCalculator : public CalculatorBase {
  private:
   ::mediapipe::Status LoadOptions(CalculatorContext* cc);
   int num_landmarks_ = 0;
+  bool flip_vertically_ = false;
+  bool flip_horizontally_ = false;
 
   ::mediapipe::TfLiteTensorsToLandmarksCalculatorOptions options_;
 };
@@ -73,6 +90,22 @@ REGISTER_CALCULATOR(TfLiteTensorsToLandmarksCalculator);
 
   if (cc->Inputs().HasTag("TENSORS")) {
     cc->Inputs().Tag("TENSORS").Set<std::vector<TfLiteTensor>>();
+  }
+
+  if (cc->Inputs().HasTag("FLIP_HORIZONTALLY")) {
+    cc->Inputs().Tag("FLIP_HORIZONTALLY").Set<bool>();
+  }
+
+  if (cc->Inputs().HasTag("FLIP_VERTICALLY")) {
+    cc->Inputs().Tag("FLIP_VERTICALLY").Set<bool>();
+  }
+
+  if (cc->InputSidePackets().HasTag("FLIP_HORIZONTALLY")) {
+    cc->InputSidePackets().Tag("FLIP_HORIZONTALLY").Set<bool>();
+  }
+
+  if (cc->InputSidePackets().HasTag("FLIP_VERTICALLY")) {
+    cc->InputSidePackets().Tag("FLIP_VERTICALLY").Set<bool>();
   }
 
   if (cc->Outputs().HasTag("LANDMARKS")) {
@@ -98,17 +131,40 @@ REGISTER_CALCULATOR(TfLiteTensorsToLandmarksCalculator);
         << "Must provide input with/height for getting normalized landmarks.";
   }
   if (cc->Outputs().HasTag("LANDMARKS") &&
-      (options_.flip_vertically() || options_.flip_horizontally())) {
+      (options_.flip_vertically() || options_.flip_horizontally() ||
+       cc->InputSidePackets().HasTag("FLIP_HORIZONTALLY") ||
+       cc->InputSidePackets().HasTag("FLIP_VERTICALLY"))) {
     RET_CHECK(options_.has_input_image_height() &&
               options_.has_input_image_width())
         << "Must provide input with/height for using flip_vertically option "
            "when outputing landmarks in absolute coordinates.";
   }
+
+  flip_horizontally_ =
+      cc->InputSidePackets().HasTag("FLIP_HORIZONTALLY")
+          ? cc->InputSidePackets().Tag("FLIP_HORIZONTALLY").Get<bool>()
+          : options_.flip_horizontally();
+
+  flip_horizontally_ =
+      cc->InputSidePackets().HasTag("FLIP_VERTICALLY")
+          ? cc->InputSidePackets().Tag("FLIP_VERTICALLY").Get<bool>()
+          : options_.flip_vertically();
+
   return ::mediapipe::OkStatus();
 }
 
 ::mediapipe::Status TfLiteTensorsToLandmarksCalculator::Process(
     CalculatorContext* cc) {
+  // Override values if specified so.
+  if (cc->Inputs().HasTag("FLIP_HORIZONTALLY") &&
+      !cc->Inputs().Tag("FLIP_HORIZONTALLY").IsEmpty()) {
+    flip_horizontally_ = cc->Inputs().Tag("FLIP_HORIZONTALLY").Get<bool>();
+  }
+  if (cc->Inputs().HasTag("FLIP_VERTICALLY") &&
+      !cc->Inputs().Tag("FLIP_VERTICALLY").IsEmpty()) {
+    flip_vertically_ = cc->Inputs().Tag("FLIP_VERTICALLY").Get<bool>();
+  }
+
   if (cc->Inputs().Tag("TENSORS").IsEmpty()) {
     return ::mediapipe::OkStatus();
   }
@@ -133,13 +189,13 @@ REGISTER_CALCULATOR(TfLiteTensorsToLandmarksCalculator);
     const int offset = ld * num_dimensions;
     Landmark* landmark = output_landmarks.add_landmark();
 
-    if (options_.flip_horizontally()) {
+    if (flip_horizontally_) {
       landmark->set_x(options_.input_image_width() - raw_landmarks[offset]);
     } else {
       landmark->set_x(raw_landmarks[offset]);
     }
     if (num_dimensions > 1) {
-      if (options_.flip_vertically()) {
+      if (flip_vertically_) {
         landmark->set_y(options_.input_image_height() -
                         raw_landmarks[offset + 1]);
       } else {

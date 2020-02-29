@@ -23,7 +23,7 @@ android_library(
     srcs = glob(["**/*.java"]),
     visibility = ["//visibility:public"],
     deps = [
-        "//mediapipe/java/com/google/mediapipe/framework:android_framework",
+        "//mediapipe/java/com/google/mediapipe/framework:android_framework_no_proguard",
         "@com_google_code_findbugs//jar",
         "@com_google_common_flogger//jar",
         "@com_google_common_flogger_system_backend//jar",

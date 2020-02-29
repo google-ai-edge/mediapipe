@@ -251,6 +251,7 @@ cc_library(
         "//mediapipe/framework/port:logging",
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
     ],
 )

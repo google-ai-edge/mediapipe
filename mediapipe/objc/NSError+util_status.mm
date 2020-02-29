@@ -30,7 +30,7 @@
 
 - (NSString *)description {
   return [NSString stringWithFormat:@"<%@: %p; status = %s>",
-          [self class], self, _status.error_message().c_str()];
+          [self class], self, _status.message().data()];
 }
 
 @end
@@ -42,7 +42,7 @@ NSString *const kGUSGoogleUtilStatusErrorKey = @"GUSGoogleUtilStatusErrorKey";
 
 + (NSError *)gus_errorWithStatus:(const ::mediapipe::Status &)status {
   NSDictionary *userInfo = @{
-    NSLocalizedDescriptionKey : @(status.error_message().c_str()),
+    NSLocalizedDescriptionKey : @(status.message().data()),
     kGUSGoogleUtilStatusErrorKey : [GUSUtilStatusWrapper wrapStatus:status],
   };
   NSError *error = [NSError errorWithDomain:kGUSGoogleUtilStatusErrorDomain

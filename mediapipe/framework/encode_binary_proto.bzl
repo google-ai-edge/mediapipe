@@ -36,6 +36,11 @@ def _canonicalize_proto_path_oss(all_protos, genfile_path):
     for s in all_protos.to_list():
         if s.path.startswith(genfile_path):
             repo_name, _, file_name = s.path[len(genfile_path + "/external/"):].partition("/")
+
+            # handle virtual imports
+            if file_name.startswith("_virtual_imports"):
+                repo_name = repo_name + "/" + "/".join(file_name.split("/", 2)[:2])
+                file_name = file_name.split("/", 2)[-1]
             proto_paths.append(genfile_path + "/external/" + repo_name)
             proto_file_names.append(file_name)
         else:

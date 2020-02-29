@@ -20,6 +20,7 @@
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/util/android/file/base/file.h"
 #include "mediapipe/util/android/file/base/filesystem.h"
+#include "mediapipe/util/android/jni_helper.h"
 
 namespace mediapipe {
 
@@ -46,20 +47,41 @@ bool AssetManager::InitializeFromAssetManager(
   return false;
 }
 
-bool AssetManager::InitializeFromActivity(JNIEnv* env, jobject activity,
-                                          const std::string& cache_dir_path) {
+bool AssetManager::InitializeFromContext(JNIEnv* env, jobject context,
+                                         const std::string& cache_dir_path) {
+  jni_common::JniHelper jni_helper(env, __LINE__, true);
+
+  int status = env->GetJavaVM(&jvm_);
+  if (status != 0) {
+    return false;
+  }
+
+  if (context_ != nullptr) {
+    env->DeleteGlobalRef(context_);
+  }
+  context_ = env->NewGlobalRef(context);
+
   // Get the class of the Java activity that calls this JNI method.
-  jclass activity_class = env->GetObjectClass(activity);
-
+  jclass context_class = env->GetObjectClass(context_);
   // Get the id of the getAssets method for the activity.
-  jmethodID activity_class_getAssets = env->GetMethodID(
-      activity_class, "getAssets", "()Landroid/content/res/AssetManager;");
-
+  jmethodID context_class_get_assets = env->GetMethodID(
+      context_class, "getAssets", "()Landroid/content/res/AssetManager;");
   // Call activity.getAssets();
   jobject local_asset_manager =
-      env->CallObjectMethod(activity, activity_class_getAssets);
+      env->CallObjectMethod(context_, context_class_get_assets);
+
+  if (env->ExceptionCheck()) {
+    env->ExceptionDescribe();
+    env->ExceptionClear();
+    return false;
+  }
 
   return InitializeFromAssetManager(env, local_asset_manager, cache_dir_path);
+}
+
+bool AssetManager::InitializeFromActivity(JNIEnv* env, jobject activity,
+                                          const std::string& cache_dir_path) {
+  return InitializeFromContext(env, activity, cache_dir_path);
 }
 
 bool AssetManager::FileExists(const std::string& filename) {
@@ -138,6 +160,56 @@ bool AssetManager::ReadFile(const std::string& filename,
   RET_CHECK(output_file.good()) << "could not write cache file: " << file_path;
 
   return file_path;
+}
+
+::mediapipe::StatusOr<int> AssetManager::OpenContentUri(
+    const std::string& content_uri) {
+  jni_common::JniHelper jni_helper(jvm_, JNI_VERSION_1_6, __LINE__);
+  JNIEnv* env = jni_helper.GetEnv();
+  if (env == nullptr) {
+    return ::mediapipe::UnavailableError("Couldn't get JNI env.");
+  }
+
+  // ContentResolver contentResolver = context.getContentResolver();
+  jclass context_class = env->FindClass("android/content/Context");
+  jmethodID context_get_content_resolver =
+      env->GetMethodID(context_class, "getContentResolver",
+                       "()Landroid/content/ContentResolver;");
+  jclass content_resolver_class =
+      env->FindClass("android/content/ContentResolver");
+  jobject content_resolver =
+      env->CallObjectMethod(context_, context_get_content_resolver);
+
+  // Uri uri = Uri.parse(content_uri)
+  jclass uri_class = env->FindClass("android/net/Uri");
+  jmethodID uri_parse = env->GetStaticMethodID(
+      uri_class, "parse", "(Ljava/lang/String;)Landroid/net/Uri;");
+  jobject uri = env->CallStaticObjectMethod(
+      uri_class, uri_parse, env->NewStringUTF(content_uri.c_str()));
+
+  // ParcelFileDescriptor descriptor =
+  //          contentResolver.openAssetFileDescriptor(uri, "r");
+  jmethodID content_resolver_open_file_descriptor = env->GetMethodID(
+      content_resolver_class, "openFileDescriptor",
+      "(Landroid/net/Uri;Ljava/lang/String;)Landroid/os/ParcelFileDescriptor;");
+  jobject parcel_file_descriptor = env->CallObjectMethod(
+      content_resolver, content_resolver_open_file_descriptor, uri,
+      env->NewStringUTF("r"));
+
+  // int fd = parcelDescriptor.detachFd();
+  jclass parcel_descriptor_class =
+      env->FindClass("android/os/ParcelFileDescriptor");
+  jmethodID parcel_class_detach_fd =
+      env->GetMethodID(parcel_descriptor_class, "detachFd", "()I");
+  jint fd = env->CallIntMethod(parcel_file_descriptor, parcel_class_detach_fd);
+
+  if (env->ExceptionCheck()) {
+    env->ExceptionDescribe();
+    env->ExceptionClear();
+    return ::mediapipe::NotFoundError("Content URI not found");
+  }
+
+  return static_cast<int>(fd);
 }
 
 }  // namespace mediapipe

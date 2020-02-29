@@ -158,9 +158,9 @@ node {
 
 node {
   calculator: "AnnotationOverlayCalculator"
-  input_stream: "INPUT_FRAME:input_video"
+  input_stream: "IMAGE:input_video"
   input_stream: "synchronized_render_data"
-  output_stream: "OUTPUT_FRAME:output_video"
+  output_stream: "IMAGE:output_video"
 }
 
 node {

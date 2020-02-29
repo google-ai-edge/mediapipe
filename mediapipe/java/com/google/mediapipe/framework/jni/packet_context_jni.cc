@@ -15,6 +15,7 @@
 #include "mediapipe/java/com/google/mediapipe/framework/jni/packet_context_jni.h"
 
 #include "absl/strings/str_format.h"
+#include "mediapipe/java/com/google/mediapipe/framework/jni/class_registry.h"
 #include "mediapipe/java/com/google/mediapipe/framework/jni/graph.h"
 
 // Releases a native mediapipe packet.
@@ -44,11 +45,15 @@ JNIEXPORT jlong JNICALL PACKET_METHOD(nativeCopyPacket)(JNIEnv* env,
 }
 
 jobject CreateJavaPacket(JNIEnv* env, jclass packet_cls, jlong packet) {
+  auto& class_registry = mediapipe::android::ClassRegistry::GetInstance();
+
+  std::string packet_class_name = class_registry.GetClassName(
+      mediapipe::android::ClassRegistry::kPacketClassName);
+  std::string create_method_name = class_registry.GetMethodName(
+      mediapipe::android::ClassRegistry::kPacketClassName, "create");
+
+  std::string signature = absl::StrFormat("(J)L%s;", packet_class_name);
   jmethodID createMethod = env->GetStaticMethodID(
-      packet_cls, "create",
-      absl::StrFormat(
-          "(J)L%s;",
-          std::string(mediapipe::android::Graph::kJavaPacketClassName))
-          .c_str());
+      packet_cls, create_method_name.c_str(), signature.c_str());
   return env->CallStaticObjectMethod(packet_cls, createMethod, packet);
 }

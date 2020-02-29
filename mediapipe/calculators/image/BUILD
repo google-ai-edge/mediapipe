@@ -346,9 +346,7 @@ cc_library(
         ],
         "//conditions:default": [],
     }),
-    visibility = [
-        "//visibility:public",
-    ],
+    visibility = ["//visibility:public"],
     deps = [
         ":image_cropping_calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",

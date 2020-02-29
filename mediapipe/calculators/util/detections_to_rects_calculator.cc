@@ -39,7 +39,8 @@ constexpr char kNormRectsTag[] = "NORM_RECTS";
 }  // namespace
 
 ::mediapipe::Status DetectionsToRectsCalculator::DetectionToRect(
-    const Detection& detection, Rect* rect) {
+    const Detection& detection, const DetectionSpec& detection_spec,
+    Rect* rect) {
   const LocationData location_data = detection.location_data();
   RET_CHECK(location_data.format() == LocationData::BOUNDING_BOX)
       << "Only Detection with formats of BOUNDING_BOX can be converted to Rect";
@@ -52,7 +53,8 @@ constexpr char kNormRectsTag[] = "NORM_RECTS";
 }
 
 ::mediapipe::Status DetectionsToRectsCalculator::DetectionToNormalizedRect(
-    const Detection& detection, NormalizedRect* rect) {
+    const Detection& detection, const DetectionSpec& detection_spec,
+    NormalizedRect* rect) {
   const LocationData location_data = detection.location_data();
   RET_CHECK(location_data.format() == LocationData::RELATIVE_BOUNDING_BOX)
       << "Only Detection with formats of RELATIVE_BOUNDING_BOX can be "
@@ -174,27 +176,31 @@ constexpr char kNormRectsTag[] = "NORM_RECTS";
     }
   }
 
-  std::pair<int, int> image_size;
-  if (rotate_) {
-    RET_CHECK(!cc->Inputs().Tag(kImageSizeTag).IsEmpty());
-    image_size = cc->Inputs().Tag(kImageSizeTag).Get<std::pair<int, int>>();
-  }
+  // Get dynamic calculator options (e.g. `image_size`).
+  const DetectionSpec detection_spec = GetDetectionSpec(cc);
 
   if (cc->Outputs().HasTag(kRectTag)) {
     auto output_rect = absl::make_unique<Rect>();
-    MP_RETURN_IF_ERROR(DetectionToRect(detections[0], output_rect.get()));
+    MP_RETURN_IF_ERROR(
+        DetectionToRect(detections[0], detection_spec, output_rect.get()));
     if (rotate_) {
-      output_rect->set_rotation(ComputeRotation(detections[0], image_size));
+      float rotation;
+      MP_RETURN_IF_ERROR(
+          ComputeRotation(detections[0], detection_spec, &rotation));
+      output_rect->set_rotation(rotation);
     }
     cc->Outputs().Tag(kRectTag).Add(output_rect.release(),
                                     cc->InputTimestamp());
   }
   if (cc->Outputs().HasTag(kNormRectTag)) {
     auto output_rect = absl::make_unique<NormalizedRect>();
-    MP_RETURN_IF_ERROR(
-        DetectionToNormalizedRect(detections[0], output_rect.get()));
+    MP_RETURN_IF_ERROR(DetectionToNormalizedRect(detections[0], detection_spec,
+                                                 output_rect.get()));
     if (rotate_) {
-      output_rect->set_rotation(ComputeRotation(detections[0], image_size));
+      float rotation;
+      MP_RETURN_IF_ERROR(
+          ComputeRotation(detections[0], detection_spec, &rotation));
+      output_rect->set_rotation(rotation);
     }
     cc->Outputs()
         .Tag(kNormRectTag)
@@ -203,11 +209,13 @@ constexpr char kNormRectsTag[] = "NORM_RECTS";
   if (cc->Outputs().HasTag(kRectsTag)) {
     auto output_rects = absl::make_unique<std::vector<Rect>>(detections.size());
     for (int i = 0; i < detections.size(); ++i) {
-      MP_RETURN_IF_ERROR(
-          DetectionToRect(detections[i], &(output_rects->at(i))));
+      MP_RETURN_IF_ERROR(DetectionToRect(detections[i], detection_spec,
+                                         &(output_rects->at(i))));
       if (rotate_) {
-        output_rects->at(i).set_rotation(
-            ComputeRotation(detections[i], image_size));
+        float rotation;
+        MP_RETURN_IF_ERROR(
+            ComputeRotation(detections[i], detection_spec, &rotation));
+        output_rects->at(i).set_rotation(rotation);
       }
     }
     cc->Outputs().Tag(kRectsTag).Add(output_rects.release(),
@@ -217,11 +225,13 @@ constexpr char kNormRectsTag[] = "NORM_RECTS";
     auto output_rects =
         absl::make_unique<std::vector<NormalizedRect>>(detections.size());
     for (int i = 0; i < detections.size(); ++i) {
-      MP_RETURN_IF_ERROR(
-          DetectionToNormalizedRect(detections[i], &(output_rects->at(i))));
+      MP_RETURN_IF_ERROR(DetectionToNormalizedRect(
+          detections[i], detection_spec, &(output_rects->at(i))));
       if (rotate_) {
-        output_rects->at(i).set_rotation(
-            ComputeRotation(detections[i], image_size));
+        float rotation;
+        MP_RETURN_IF_ERROR(
+            ComputeRotation(detections[i], detection_spec, &rotation));
+        output_rects->at(i).set_rotation(rotation);
       }
     }
     cc->Outputs()
@@ -232,21 +242,35 @@ constexpr char kNormRectsTag[] = "NORM_RECTS";
   return ::mediapipe::OkStatus();
 }
 
-float DetectionsToRectsCalculator::ComputeRotation(
-    const Detection& detection, const std::pair<int, int> image_size) {
+::mediapipe::Status DetectionsToRectsCalculator::ComputeRotation(
+    const Detection& detection, const DetectionSpec& detection_spec,
+    float* rotation) {
   const auto& location_data = detection.location_data();
+  const auto& image_size = detection_spec.image_size;
+  RET_CHECK(image_size) << "Image size is required to calculate rotation";
+
   const float x0 = location_data.relative_keypoints(start_keypoint_index_).x() *
-                   image_size.first;
+                   image_size->first;
   const float y0 = location_data.relative_keypoints(start_keypoint_index_).y() *
-                   image_size.second;
+                   image_size->second;
   const float x1 = location_data.relative_keypoints(end_keypoint_index_).x() *
-                   image_size.first;
+                   image_size->first;
   const float y1 = location_data.relative_keypoints(end_keypoint_index_).y() *
-                   image_size.second;
+                   image_size->second;
 
-  float rotation = target_angle_ - std::atan2(-(y1 - y0), x1 - x0);
+  *rotation = NormalizeRadians(target_angle_ - std::atan2(-(y1 - y0), x1 - x0));
 
-  return NormalizeRadians(rotation);
+  return ::mediapipe::OkStatus();
+}
+
+DetectionSpec DetectionsToRectsCalculator::GetDetectionSpec(
+    const CalculatorContext* cc) {
+  absl::optional<std::pair<int, int>> image_size;
+  if (cc->Inputs().HasTag(kImageSizeTag)) {
+    image_size = cc->Inputs().Tag(kImageSizeTag).Get<std::pair<int, int>>();
+  }
+
+  return {image_size};
 }
 
 REGISTER_CALCULATOR(DetectionsToRectsCalculator);

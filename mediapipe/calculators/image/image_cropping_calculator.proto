@@ -40,4 +40,15 @@ message ImageCroppingCalculatorOptions {
   // The (0, 0) point is at the (top, left) corner.
   optional float norm_center_x = 6 [default = 0];
   optional float norm_center_y = 7 [default = 0];
+
+  enum BorderMode {
+    // First unspecified value is required by the guideline. See details here:
+    // https://developers.google.com/protocol-buffers/docs/style#enums
+    BORDER_UNSPECIFIED = 0;
+    BORDER_ZERO = 1;
+    BORDER_REPLICATE = 2;
+  }
+
+  // Specifies behaviour for crops that go beyond image borders.
+  optional BorderMode border_mode = 8 [default = BORDER_ZERO];
 }

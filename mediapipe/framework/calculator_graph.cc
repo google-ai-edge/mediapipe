@@ -1301,7 +1301,7 @@ void PrintTimingToInfo(const std::string& label, int64 timer_value) {
                    "%02lld days, %02lld:%02lld:%02lld.%03lld (total seconds: "
                    "%lld.%06lld)",
                    days, hours, minutes, seconds, milliseconds, total_seconds,
-                   timer_value % 1000000ll);
+                   timer_value % int64{1000000});
 }
 
 bool MetricElementComparator(const std::pair<std::string, int64>& e1,

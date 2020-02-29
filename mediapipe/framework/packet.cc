@@ -40,6 +40,13 @@ Packet Create(HolderBase* holder, Timestamp timestamp) {
   return result;
 }
 
+Packet Create(std::shared_ptr<HolderBase> holder, Timestamp timestamp) {
+  Packet result;
+  result.holder_ = std::move(holder);
+  result.timestamp_ = timestamp;
+  return result;
+}
+
 const HolderBase* GetHolder(const Packet& packet) {
   return packet.holder_.get();
 }

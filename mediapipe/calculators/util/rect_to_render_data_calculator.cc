@@ -45,15 +45,17 @@ RenderAnnotation::Rectangle* NewRect(
 void SetRect(bool normalized, double xmin, double ymin, double width,
              double height, double rotation,
              RenderAnnotation::Rectangle* rect) {
-  if (xmin + width < 0.0 || ymin + height < 0.0) return;
-  if (normalized) {
-    if (xmin > 1.0 || ymin > 1.0) return;
+  if (rotation == 0.0) {
+    if (xmin + width < 0.0 || ymin + height < 0.0) return;
+    if (normalized) {
+      if (xmin > 1.0 || ymin > 1.0) return;
+    }
   }
   rect->set_normalized(normalized);
-  rect->set_left(normalized ? std::max(xmin, 0.0) : xmin);
-  rect->set_top(normalized ? std::max(ymin, 0.0) : ymin);
-  rect->set_right(normalized ? std::min(xmin + width, 1.0) : xmin + width);
-  rect->set_bottom(normalized ? std::min(ymin + height, 1.0) : ymin + height);
+  rect->set_left(xmin);
+  rect->set_top(ymin);
+  rect->set_right(xmin + width);
+  rect->set_bottom(ymin + height);
   rect->set_rotation(rotation);
 }
 

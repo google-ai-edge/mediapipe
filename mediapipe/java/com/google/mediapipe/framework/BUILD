@@ -16,13 +16,14 @@ licenses(["notice"])  # Apache 2.0
 
 # MediaPipe Android framework.
 
-exports_files(["proguard.pgcfg"])
+exports_files([
+    "proguard.pgcfg",
+    "proguard_allowobfuscation.pgcfg",
+])
 
 android_library(
     name = "android_framework",
-    proguard_specs = [
-        ":proguard.pgcfg",
-    ],
+    proguard_specs = [":proguard.pgcfg"],
     visibility = ["//visibility:public"],
     exports = [
         ":android_core",
@@ -33,6 +34,14 @@ android_library(
 # TODO: Rename android_framework_no_mff.
 android_library(
     name = "android_framework_no_mff",
+    proguard_specs = [":proguard.pgcfg"],
+    exports = [
+        ":android_framework_no_proguard",
+    ],
+)
+
+android_library(
+    name = "android_framework_no_proguard",
     srcs = glob(
         ["Android*.java"],
     ) + [
@@ -40,8 +49,8 @@ android_library(
         "AssetCacheDbHelper.java",
         "MediaPipeRunner.java",
     ],
-    proguard_specs = [
-        ":proguard.pgcfg",
+    visibility = [
+        "//mediapipe/java/com/google/mediapipe:__subpackages__",
     ],
     exports = [
         ":android_core",

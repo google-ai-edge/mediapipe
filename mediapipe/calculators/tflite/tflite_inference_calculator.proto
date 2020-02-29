@@ -27,7 +27,7 @@ import "mediapipe/framework/calculator.proto";
 //   options {
 //     [mediapipe.TfLiteInferenceCalculatorOptions.ext] {
 //       model_path: "model.tflite"
-//       use_gpu: true
+//       delegate { gpu {} }
 //     }
 //   }
 // }
@@ -37,6 +37,22 @@ message TfLiteInferenceCalculatorOptions {
     optional TfLiteInferenceCalculatorOptions ext = 233867213;
   }
 
+  message Delegate {
+    // Default inference provided by tflite.
+    message TfLite {}
+    // Delegate to run GPU inference depending on the device.
+    // (Can use OpenGl, OpenCl, Metal depending on the device.)
+    message Gpu {}
+    // Android only.
+    message Nnapi {}
+
+    oneof delegate {
+      TfLite tflite = 1;
+      Gpu gpu = 2;
+      Nnapi nnapi = 3;
+    }
+  }
+
   // Path to the TF Lite model (ex: /path/to/modelname.tflite).
   // On mobile, this is generally just modelname.tflite.
   optional string model_path = 1;
@@ -44,10 +60,22 @@ message TfLiteInferenceCalculatorOptions {
   // Whether the TF Lite GPU or CPU backend should be used. Effective only when
   // input tensors are on CPU. For input tensors on GPU, GPU backend is always
   // used.
-  optional bool use_gpu = 2 [default = false];
+  // DEPRECATED: configure "delegate" instead.
+  optional bool use_gpu = 2 [deprecated = true, default = false];
 
   // Android only. When true, an NNAPI delegate will be used for inference.
   // If NNAPI is not available, then the default CPU delegate will be used
   // automatically.
-  optional bool use_nnapi = 3 [default = false];
+  // DEPRECATED: configure "delegate" instead.
+  optional bool use_nnapi = 3 [deprecated = true, default = false];
+
+  // The number of threads available to the interpreter. Effective only when
+  // input tensors are on CPU and 'use_gpu' is false.
+  optional int32 cpu_num_thread = 4 [default = -1];
+
+  // TfLite delegate to run inference.
+  // NOTE: calculator is free to choose delegate if not specified explicitly.
+  // NOTE: use_gpu/use_nnapi are ignored if specified. (Delegate takes
+  // precedence over use_* deprecated options.)
+  optional Delegate delegate = 5;
 }

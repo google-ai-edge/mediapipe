@@ -14,6 +14,11 @@ node {
   input_stream: "IMAGE_GPU:input_video"
   input_stream: "NORM_RECT:hand_rect"
   output_stream: "IMAGE_GPU:hand_image"
+  node_options: {
+    [type.googleapis.com/mediapipe.ImageCroppingCalculatorOptions] {
+      border_mode: BORDER_REPLICATE
+    }
+  }
 }
 
 # Transforms the input image on GPU to a 256x256 image. To scale the input

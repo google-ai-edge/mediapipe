@@ -368,6 +368,7 @@ cc_test(
 cc_test(
     name = "tvl1_optical_flow_calculator_test",
     srcs = ["tvl1_optical_flow_calculator_test.cc"],
+    linkstatic = 1,
     deps = [
         ":tvl1_optical_flow_calculator",
         "//mediapipe/framework:calculator_framework",

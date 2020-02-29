@@ -10,15 +10,15 @@ http_archive(
     sha256 = "2ef429f5d7ce7111263289644d233707dba35e39696377ebab8b0bc701f7818e",
 )
 load("@bazel_skylib//lib:versions.bzl", "versions")
-versions.check(minimum_bazel_version = "0.24.1",
+versions.check(minimum_bazel_version = "1.0.0",
                maximum_bazel_version = "1.2.1")
 
 
-# ABSL cpp library lts_2019_08_08.
+# ABSL cpp library lts_2020_02_25
 http_archive(
     name = "com_google_absl",
     urls = [
-        "https://github.com/abseil/abseil-cpp/archive/20190808.tar.gz",
+        "https://github.com/abseil/abseil-cpp/archive/20200225.tar.gz",
     ],
     # Remove after https://github.com/abseil/abseil-cpp/issues/326 is solved.
     patches = [
@@ -27,8 +27,8 @@ http_archive(
     patch_args = [
         "-p1",
     ],
-    strip_prefix = "abseil-cpp-20190808",
-    sha256 = "8100085dada279bf3ee00cd064d43b5f55e5d913be0dfe2906f06f8f28d5b37e"
+    strip_prefix = "abseil-cpp-20200225",
+    sha256 = "728a813291bdec2aa46eab8356ace9f75ac2ed9dfe2df5ab603c4e6c09f1c353"
 )
 
 http_archive(
@@ -117,18 +117,19 @@ http_archive(
     ],
 )
 
-# 2019-11-21
-_TENSORFLOW_GIT_COMMIT = "f482488b481a799ca07e7e2d153cf47b8e91a60c"
-_TENSORFLOW_SHA256= "8d9118c2ce186c7e1403f04b96982fe72c184060c7f7a93e30a28dca358694f0"
+# 2020-02-12
+# The last commit before TensorFlow switched to Bazel 2.0
+_TENSORFLOW_GIT_COMMIT = "77e9ffb9b2bfb1a4f7056e62d84039626923e328"
+_TENSORFLOW_SHA256= "176ccd82f7dd17c5e117b50d353603b129c7a6ccbfebd522ca47cc2a40f33f13"
 http_archive(
     name = "org_tensorflow",
     urls = [
       "https://mirror.bazel.build/github.com/tensorflow/tensorflow/archive/%s.tar.gz" % _TENSORFLOW_GIT_COMMIT,
       "https://github.com/tensorflow/tensorflow/archive/%s.tar.gz" % _TENSORFLOW_GIT_COMMIT,
     ],
-    # Patch https://github.com/tensorflow/tensorflow/commit/e3a7bdbebb99352351a19e2e403136166aa52934
+    # A compatibility patch
     patches = [
-        "@//third_party:org_tensorflow_e3a7bdbebb99352351a19e2e403136166aa52934.diff"
+        "@//third_party:org_tensorflow_528e22eae8bf3206189a066032c66e9e5c9b4a61.diff"
     ],
     patch_args = [
         "-p1",

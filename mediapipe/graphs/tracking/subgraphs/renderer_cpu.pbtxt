@@ -23,7 +23,7 @@ node {
 # Draws annotations and overlays them on top of the input images.
 node {
   calculator: "AnnotationOverlayCalculator"
-  input_stream: "INPUT_FRAME:input_image"
+  input_stream: "IMAGE:input_image"
   input_stream: "detections_render_data"
-  output_stream: "OUTPUT_FRAME:output_image"
+  output_stream: "IMAGE:output_image"
 }

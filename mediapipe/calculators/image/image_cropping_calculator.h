@@ -36,6 +36,7 @@
 // Note: input_stream values take precedence over options defined in the graph.
 //
 namespace mediapipe {
+
 struct RectSpec {
   int width;
   int height;
@@ -63,12 +64,16 @@ class ImageCroppingCalculator : public CalculatorBase {
                                int src_height);
 
  private:
+  ::mediapipe::Status ValidateBorderModeForCPU(CalculatorContext* cc);
+  ::mediapipe::Status ValidateBorderModeForGPU(CalculatorContext* cc);
   ::mediapipe::Status RenderCpu(CalculatorContext* cc);
   ::mediapipe::Status RenderGpu(CalculatorContext* cc);
   ::mediapipe::Status InitGpu(CalculatorContext* cc);
   void GlRender();
   void GetOutputDimensions(CalculatorContext* cc, int src_width, int src_height,
                            int* dst_width, int* dst_height);
+  ::mediapipe::Status GetBorderModeForOpenCV(CalculatorContext* cc,
+                                             int* border_mode);
 
   mediapipe::ImageCroppingCalculatorOptions options_;
 
