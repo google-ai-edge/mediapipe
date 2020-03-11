@@ -1,0 +1,92 @@
+// Copyright 2020 The MediaPipe Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package mediapipe;
+
+import "mediapipe/graphs/object_detection_3d/calculators/a_r_capture_metadata.proto";
+import "mediapipe/graphs/object_detection_3d/calculators/object.proto";
+
+// Projection of a 3D point on an image, and its metric depth.
+message NormalizedPoint2D {
+  // x-y position of the 2d keypoint in the image coordinate system.
+  // u,v \in [0, 1], where top left corner is (0, 0) and the bottom-right corner
+  // is (1, 1).
+  float x = 1;
+  float y = 2;
+
+  // The depth of the point in the camera coordinate system (in meters).
+  float depth = 3;
+}
+
+// The 3D point in the camera coordinate system, the scales are in meters.
+message Point3D {
+  float x = 1;
+  float y = 2;
+  float z = 3;
+}
+
+message AnnotatedKeyPoint {
+  int32 id = 1;
+  Point3D point_3d = 2;
+  NormalizedPoint2D point_2d = 3;
+}
+
+message ObjectAnnotation {
+  // Reference to the object identifier in ObjectInstance.
+  int32 object_id = 1;
+
+  // For each objects, list all the annotated keypoints here.
+  // E.g. for bounding-boxes, we have 8 keypoints, hands = 21 keypoints, etc.
+  // These normalized points are the projection of the Object's 3D keypoint
+  // on the current frame's camera poses.
+  repeated AnnotatedKeyPoint keypoints = 2;
+
+  // Visibiity of this annotation in a frame.
+  float visibility = 3;
+}
+
+message FrameAnnotation {
+  // Unique frame id, corresponds to images.
+  int32 frame_id = 1;
+
+  // List of the annotated objects in this frame. Depending on how many object
+  // are observable in this frame, we might have non or as much as
+  // sequence.objects_size() annotations.
+  repeated ObjectAnnotation annotations = 2;
+
+  // Information about the camera transformation (in the world coordinate) and
+  // imaging characteristics for a captured video frame.
+  ARCamera camera = 3;
+
+  // The timestamp for the frame.
+  double timestamp = 4;
+
+  // Plane center and normal in camera frame.
+  repeated float plane_center = 5;
+  repeated float plane_normal = 6;
+}
+
+// The sequence protocol contains the annotation data for the entire video clip.
+message Sequence {
+  // List of all the annotated 3D objects in this sequence in the world
+  // Coordinate system. Given the camera poses of each frame (also in the
+  // world-coordinate) these objects bounding boxes can be projected to each
+  // frame to get the per-frame annotation (i.e. image_annotation below).
+  repeated Object objects = 1;
+
+  // List of annotated data per each frame in sequence + frame information.
+  repeated FrameAnnotation frame_annotations = 2;
+}

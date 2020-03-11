@@ -73,11 +73,13 @@ import subprocess
 import sys
 import tarfile
 import tempfile
-import urllib
 
 from absl import app
 from absl import flags
 from absl import logging
+from six.moves import range
+from six.moves import urllib
+from six.moves import zip
 import tensorflow.compat.v1 as tf
 
 from mediapipe.util.sequence import media_sequence as ms
@@ -96,15 +98,15 @@ FILEPATTERN = "kinetics_700_%s_25fps_rgb_flow"
 SPLITS = {
     "train": {
         "shards": 1000,
-        "examples": 540247
+        "examples": 538779
     },
     "validate": {
         "shards": 100,
-        "examples": 34610
+        "examples": 34499
     },
     "test": {
         "shards": 100,
-        "examples": 69103
+        "examples": 68847
     },
     "custom": {
         "csv": None,  # Add a CSV for your own data here.
@@ -198,7 +200,7 @@ class Kinetics(object):
       return output_dict
 
     if split not in SPLITS:
-      raise ValueError("Split %s not in %s" % split, str(SPLITS.keys()))
+      raise ValueError("Split %s not in %s" % split, str(list(SPLITS.keys())))
     all_shards = tf.io.gfile.glob(
         os.path.join(self.path_to_data, FILEPATTERN % split + "-*-of-*"))
     random.shuffle(all_shards)
@@ -302,11 +304,12 @@ class Kinetics(object):
           continue
         # rename the row with a constitent set of names.
         if len(csv_row) == 5:
-          row = dict(zip(["label_name", "video", "start", "end", "split"],
-                         csv_row))
+          row = dict(
+              list(
+                  zip(["label_name", "video", "start", "end", "split"],
+                      csv_row)))
         else:
-          row = dict(zip(["video", "start", "end", "split"],
-                         csv_row))
+          row = dict(list(zip(["video", "start", "end", "split"], csv_row)))
         metadata = tf.train.SequenceExample()
         ms.set_example_id(bytes23(row["video"] + "_" + row["start"]),
                           metadata)
@@ -328,7 +331,7 @@ class Kinetics(object):
     if sys.version_info >= (3, 0):
       urlretrieve = urllib.request.urlretrieve
     else:
-      urlretrieve = urllib.urlretrieve
+      urlretrieve = urllib.request.urlretrieve
     logging.info("Creating data directory.")
     tf.io.gfile.makedirs(self.path_to_data)
     logging.info("Downloading annotations.")
@@ -404,7 +407,7 @@ class Kinetics(object):
         assert NUM_CLASSES == num_keys, (
             "Found %d labels for split: %s, should be %d" % (
                 num_keys, name, NUM_CLASSES))
-        label_map = dict(zip(classes, range(len(classes))))
+        label_map = dict(list(zip(classes, list(range(len(classes))))))
       if SPLITS[name]["examples"] > 0:
         assert SPLITS[name]["examples"] == num_examples, (
             "Found %d examples for split: %s, should be %d" % (

@@ -73,13 +73,15 @@ def _metal_compiler_args(ctx, src, obj, minimum_os_version, copts, diagnostics, 
 
 def _metal_compiler_inputs(srcs, hdrs, deps = []):
     """Determines the list of inputs required for a compile action."""
-    objc_providers = [x.objc for x in deps if hasattr(x, "objc")]
 
-    objc_files = depset()
-    for objc in objc_providers:
-        objc_files += objc.header
+    cc_infos = [dep[CcInfo] for dep in deps if CcInfo in dep]
 
-    return srcs + hdrs + objc_files.to_list()
+    dep_headers = depset(transitive = [
+        cc_info.compilation_context.headers
+        for cc_info in cc_infos
+    ])
+
+    return depset(srcs + hdrs, transitive = [dep_headers])
 
 def _metal_library_impl(ctx):
     """Implementation for metal_library Skylark rule."""
@@ -144,11 +146,22 @@ def _metal_library_impl(ctx):
         **additional_params
     )
 
+    cc_infos = [dep[CcInfo] for dep in ctx.attr.deps if CcInfo in dep]
+    if ctx.files.hdrs:
+        cc_infos.append(
+            CcInfo(
+                compilation_context = cc_common.create_compilation_context(
+                    headers = depset([f for f in ctx.files.hdrs]),
+                ),
+            ),
+        )
+
     return [
         DefaultInfo(
             files = depset([output_lib]),
         ),
         objc_provider,
+        cc_common.merge_cc_infos(cc_infos = cc_infos),
         # Return the provider for the new bundling logic of rules_apple.
         resources.bucketize_typed([output_lib], "unprocessed"),
     ]
@@ -156,7 +169,7 @@ def _metal_library_impl(ctx):
 METAL_LIBRARY_ATTRS = dicts.add(apple_support.action_required_attrs(), {
     "srcs": attr.label_list(allow_files = [".metal"], allow_empty = False),
     "hdrs": attr.label_list(allow_files = [".h"]),
-    "deps": attr.label_list(providers = [["objc"]]),
+    "deps": attr.label_list(providers = [["objc", CcInfo]]),
     "copts": attr.string_list(),
     "minimum_os_version": attr.string(),
 })

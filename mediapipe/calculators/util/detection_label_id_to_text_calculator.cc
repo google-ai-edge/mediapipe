@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "mediapipe//framework/packet.h"
 #include "mediapipe/calculators/util/detection_label_id_to_text_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/detection.pb.h"
+#include "mediapipe/framework/packet.h"
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/util/resource_util.h"
 

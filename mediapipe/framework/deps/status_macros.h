@@ -134,17 +134,21 @@
 // Example: Logging the error on failure.
 //   ASSIGN_OR_RETURN(ValueType value, MaybeGetValue(query), _.LogError());
 //
-#define ASSIGN_OR_RETURN(...)                                              \
-  STATUS_MACROS_IMPL_GET_VARIADIC_(__VA_ARGS__,                            \
-                                   STATUS_MACROS_IMPL_ASSIGN_OR_RETURN_3_, \
-                                   STATUS_MACROS_IMPL_ASSIGN_OR_RETURN_2_) \
+#define ASSIGN_OR_RETURN(...)                                                \
+  STATUS_MACROS_IMPL_GET_VARIADIC_((__VA_ARGS__,                             \
+                                    STATUS_MACROS_IMPL_ASSIGN_OR_RETURN_3_,  \
+                                    STATUS_MACROS_IMPL_ASSIGN_OR_RETURN_2_)) \
   (__VA_ARGS__)
 
 // =================================================================
 // == Implementation details, do not rely on anything below here. ==
 // =================================================================
 
-#define STATUS_MACROS_IMPL_GET_VARIADIC_(_1, _2, _3, NAME, ...) NAME
+// MSVC incorrectly expands variadic macros, splice together a macro call to
+// work around the bug.
+#define STATUS_MACROS_IMPL_GET_VARIADIC_HELPER_(_1, _2, _3, NAME, ...) NAME
+#define STATUS_MACROS_IMPL_GET_VARIADIC_(args) \
+  STATUS_MACROS_IMPL_GET_VARIADIC_HELPER_ args
 
 #define STATUS_MACROS_IMPL_ASSIGN_OR_RETURN_2_(lhs, rexpr) \
   STATUS_MACROS_IMPL_ASSIGN_OR_RETURN_3_(lhs, rexpr, std::move(_))

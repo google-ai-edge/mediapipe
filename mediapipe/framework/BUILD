@@ -1078,10 +1078,16 @@ cc_library(
 cc_library(
     name = "port",
     hdrs = ["port.h"],
+    defines = select({
+        "//conditions:default": [],
+    }) + select({
+        "//conditions:default": [],
+        "//mediapipe/gpu:disable_gpu": ["MEDIAPIPE_DISABLE_GPU"],
+    }),
     visibility = [
         "//mediapipe/framework:__subpackages__",
         "//mediapipe/framework/port:__pkg__",
-        "//mediapipe/util:__pkg__",
+        "//mediapipe/util:__subpackages__",
     ],
 )
 

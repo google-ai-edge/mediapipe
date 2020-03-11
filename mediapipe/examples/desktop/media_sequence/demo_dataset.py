@@ -57,11 +57,12 @@ import random
 import subprocess
 import sys
 import tempfile
-import urllib
 
 from absl import app
 from absl import flags
 from absl import logging
+from six.moves import range
+from six.moves import urllib
 import tensorflow.compat.v1 as tf
 
 from mediapipe.util.sequence import media_sequence as ms
@@ -198,7 +199,7 @@ class DemoDataset(object):
     if sys.version_info >= (3, 0):
       urlretrieve = urllib.request.urlretrieve
     else:
-      urlretrieve = urllib.urlretrieve
+      urlretrieve = urllib.request.urlretrieve
     for split in SPLITS:
       reader = csv.DictReader(SPLITS[split].split("\n"))
       all_metadata = []

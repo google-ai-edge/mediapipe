@@ -100,7 +100,6 @@ class Timestamp {
   }
 
   // Special values.
-
   static Timestamp Unset();
   static Timestamp Unstarted();
   static Timestamp PreStream();

@@ -63,12 +63,15 @@ import random
 import subprocess
 import sys
 import tempfile
-import urllib
 import zipfile
+
 from absl import app
 from absl import flags
 from absl import logging
+from six.moves import range
+from six.moves import urllib
 import tensorflow.compat.v1 as tf
+
 from mediapipe.util.sequence import media_sequence as ms
 
 
@@ -218,7 +221,7 @@ class Charades(object):
       return output_dict
 
     if split not in SPLITS:
-      raise ValueError("Split %s not in %s" % split, str(SPLITS.keys()))
+      raise ValueError("Split %s not in %s" % split, str(list(SPLITS.keys())))
     all_shards = tf.io.gfile.glob(
         os.path.join(self.path_to_data, SPLITS[split][0] + "-*-of-*"))
     random.shuffle(all_shards)
@@ -329,7 +332,7 @@ class Charades(object):
     if sys.version_info >= (3, 0):
       urlretrieve = urllib.request.urlretrieve
     else:
-      urlretrieve = urllib.urlretrieve
+      urlretrieve = urllib.request.urlretrieve
     logging.info("Creating data directory.")
     tf.io.gfile.makedirs(self.path_to_data)
     logging.info("Downloading license.")

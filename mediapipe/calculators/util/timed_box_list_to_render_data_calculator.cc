@@ -66,6 +66,25 @@ void AddTimedBoxProtoToRenderData(
     rect->set_bottom(box_proto.bottom());
     rect->set_rotation(box_proto.rotation());
   }
+
+  if (box_proto.has_label()) {
+    auto* label_annotation = render_data->add_render_annotations();
+    label_annotation->mutable_color()->set_r(options.box_color().r());
+    label_annotation->mutable_color()->set_g(options.box_color().g());
+    label_annotation->mutable_color()->set_b(options.box_color().b());
+    label_annotation->set_thickness(options.thickness());
+    RenderAnnotation::Text* text = label_annotation->mutable_text();
+    text->set_display_text(box_proto.label());
+    text->set_normalized(true);
+    constexpr float text_left_start = 0.3f;
+    text->set_left((1.0f - text_left_start) * box_proto.left() +
+                   text_left_start * box_proto.right());
+    constexpr float text_baseline = 0.6f;
+    text->set_baseline(text_baseline * box_proto.bottom() +
+                       (1.0f - text_baseline) * box_proto.top());
+    constexpr float text_height = 0.2f;
+    text->set_font_height((box_proto.bottom() - box_proto.top()) * text_height);
+  }
 }
 
 }  // namespace

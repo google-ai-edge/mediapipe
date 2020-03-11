@@ -43,7 +43,7 @@ message BoxTrackerOptions {
   optional TrackStepOptions track_step_options = 6;
 }
 
-// Next tag: 13
+// Next tag: 14
 // Proto equivalent of struct TimedBox.
 message TimedBoxProto {
   // Normalized coords - in [0, 1]
@@ -58,6 +58,9 @@ message TimedBoxProto {
 
   // Unique per object id to disambiguate boxes.
   optional int32 id = 6 [default = -1];
+
+  // Box lable name.
+  optional string label = 13;
 
   // Confidence of box tracked in the range [0, 1], with 0 being least
   // confident, and 1 being most confident. A reasonable threshold is 0.5

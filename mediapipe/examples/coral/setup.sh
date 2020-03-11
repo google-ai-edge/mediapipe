@@ -8,7 +8,7 @@ echo '  sh mediapipe/examples/coral/setup.sh  '
 
 sleep 3
 
-mkdir opencv32_arm64_libs
+mkdir -p opencv32_arm64_libs
 
 cp mediapipe/examples/coral/update_sources.sh update_sources.sh
 chmod +x update_sources.sh

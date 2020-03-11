@@ -40,6 +40,15 @@ proto_library(
 )
 
 proto_library(
+    name = "timed_box_list_id_to_label_calculator_proto",
+    srcs = ["timed_box_list_id_to_label_calculator.proto"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//mediapipe/framework:calculator_proto",
+    ],
+)
+
+proto_library(
     name = "latency_proto",
     srcs = ["latency.proto"],
 )
@@ -110,6 +119,18 @@ mediapipe_cc_proto_library(
     visibility = ["//visibility:public"],
     deps = [
         ":detection_label_id_to_text_calculator_proto",
+    ],
+)
+
+mediapipe_cc_proto_library(
+    name = "timed_box_list_id_to_label_calculator_cc_proto",
+    srcs = ["timed_box_list_id_to_label_calculator.proto"],
+    cc_deps = [
+        "//mediapipe/framework:calculator_cc_proto",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":timed_box_list_id_to_label_calculator_proto",
     ],
 )
 
@@ -295,6 +316,34 @@ cc_library(
         "//mediapipe/framework/port:status",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework:packet",
+        "//mediapipe/util:resource_util",
+    ] + select({
+        "//mediapipe:android": [
+            "//mediapipe/util/android/file/base",
+        ],
+        "//mediapipe:apple": [
+            "//mediapipe/util/android/file/base",
+        ],
+        "//mediapipe:macos": [
+            "//mediapipe/framework/port:file_helpers",
+        ],
+        "//conditions:default": [
+            "//mediapipe/framework/port:file_helpers",
+        ],
+    }),
+    alwayslink = 1,
+)
+
+cc_library(
+    name = "timed_box_list_id_to_label_calculator",
+    srcs = ["timed_box_list_id_to_label_calculator.cc"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":timed_box_list_id_to_label_calculator_cc_proto",
+        "//mediapipe/framework/port:status",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:packet",
+        "//mediapipe/util/tracking:box_tracker_cc_proto",
         "//mediapipe/util:resource_util",
     ] + select({
         "//mediapipe:android": [

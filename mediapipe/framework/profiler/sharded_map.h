@@ -131,7 +131,7 @@ class ShardedMap {
       return *this;
     }
     inline bool operator==(const Iterator& other) const {
-      return iter_ == other.iter_;
+      return shard_ == other.shard_ && iter_ == other.iter_;
     }
     inline bool operator!=(const Iterator& other) const {
       return !operator==(other);
@@ -154,7 +154,10 @@ class ShardedMap {
         : shard_(shard), iter_(iter), map_(map) {}
     // Releases all resources.
     inline void Clear() ABSL_NO_THREAD_SAFETY_ANALYSIS {
-      if (map_ && iter_ != map_->maps_.back().end()) {
+      if (!map_) return;
+      bool is_end = (shard_ == map_->maps_.size() - 1 &&
+                     iter_ == map_->maps_[shard_].end());
+      if (!is_end) {
         map_->mutexes_[shard_].Unlock();
       }
       map_ = nullptr;

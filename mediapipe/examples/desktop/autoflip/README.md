@@ -11,6 +11,8 @@
 
 2.  Build and run the run_autoflip binary to process a local video.
 
+Note: AutoFlip currently only works with OpenCV 3 . Please verify your OpenCV version beforehand.
+
     ```bash
     bazel build -c opt --define MEDIAPIPE_DISABLE_GPU=1 \
       mediapipe/examples/desktop/autoflip:run_autoflip

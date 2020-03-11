@@ -15,6 +15,7 @@
 * [Hair Segmentation](mediapipe/docs/hair_segmentation_mobile_gpu.md) [[Web Demo]](https://viz.mediapipe.dev/runner/demos/hair_segmentation/hair_segmentation.html)
 * [Object Detection](mediapipe/docs/object_detection_mobile_gpu.md)
 * [Object Detection and Tracking](mediapipe/docs/object_tracking_mobile_gpu.md)
+* [Objectron: 3D Object Detection and Tracking](mediapipe/docs/objectron_mobile_gpu.md)
 * [AutoFlip](mediapipe/docs/autoflip.md)
 
 ![face_detection](mediapipe/docs/images/mobile/face_detection_android_gpu_small.gif)
@@ -43,6 +44,8 @@ A web-based visualizer is hosted on [viz.mediapipe.dev](https://viz.mediapipe.de
 *  [YouTube Channel](https://www.youtube.com/channel/UCObqmpuSMx-usADtL_qdMAw)
 
 ## Publications
+* [MediaPipe Objectron: Real-time 3D Object Detection on Mobile Devices](https://mediapipe.page.link/objectron-aiblog)
+* [AutoFlip: An Open Source Framework for Intelligent Video Reframing](https://mediapipe.page.link/autoflip)
 * [Google Developer Blog: MediaPipe on the Web](https://mediapipe.page.link/webdevblog)
 * [Google Developer Blog: Object Detection and Tracking using MediaPipe](https://mediapipe.page.link/objecttrackingblog)
 * [On-Device, Real-Time Hand Tracking with MediaPipe](https://ai.googleblog.com/2019/08/on-device-real-time-hand-tracking-with.html)
@@ -63,7 +66,7 @@ A web-based visualizer is hosted on [viz.mediapipe.dev](https://viz.mediapipe.de
 *  [Discuss](https://groups.google.com/forum/#!forum/mediapipe) - General community discussion around MediaPipe
 
 ## Alpha Disclaimer
-MediaPipe is currently in alpha for v0.6. We are still making breaking API changes and expect to get to stable API by v1.0.
+MediaPipe is currently in alpha for v0.7. We are still making breaking API changes and expect to get to stable API by v1.0.
 
 ## Contributing
 We welcome contributions. Please follow these [guidelines](./CONTRIBUTING.md).

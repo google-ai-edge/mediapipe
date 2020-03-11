@@ -26,6 +26,7 @@ To build and run the TensorFlow example on desktop, run:
 $ bazel build -c opt \
     --define MEDIAPIPE_DISABLE_GPU=1 \
     --define no_aws_support=true \
+    --linkopt=-s \
     mediapipe/examples/desktop/object_detection:object_detection_tensorflow
 
 # It should print:

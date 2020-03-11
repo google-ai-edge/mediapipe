@@ -67,15 +67,19 @@ public class CameraXPreviewHelper extends CameraHelper {
   private int cameraTimestampSource = CameraCharacteristics.SENSOR_INFO_TIMESTAMP_SOURCE_UNKNOWN;
 
   @Override
-  @SuppressWarnings("RestrictTo") // See b/132705545.
   public void startCamera(
       Activity context, CameraFacing cameraFacing, SurfaceTexture surfaceTexture) {
+    startCamera(context, cameraFacing, surfaceTexture, TARGET_SIZE);
+  }
+
+  public void startCamera(
+      Activity context, CameraFacing cameraFacing, SurfaceTexture surfaceTexture, Size targetSize) {
     LensFacing cameraLensFacing =
         cameraFacing == CameraHelper.CameraFacing.FRONT ? LensFacing.FRONT : LensFacing.BACK;
     PreviewConfig previewConfig =
         new PreviewConfig.Builder()
             .setLensFacing(cameraLensFacing)
-            .setTargetResolution(TARGET_SIZE)
+            .setTargetResolution(targetSize)
             .build();
     preview = new Preview(previewConfig);
 
@@ -110,7 +114,6 @@ public class CameraXPreviewHelper extends CameraHelper {
           }
         });
     CameraX.bindToLifecycle(/*lifecycleOwner=*/ (LifecycleOwner) context, preview);
-
   }
 
   @Override
@@ -208,6 +211,10 @@ public class CameraXPreviewHelper extends CameraHelper {
 
   public float getFocalLengthPixels() {
     return focalLengthPixels;
+  }
+
+  public Size getFrameSize() {
+    return frameSize;
   }
 
   // Computes the focal length of the camera in pixels based on lens and sensor properties.

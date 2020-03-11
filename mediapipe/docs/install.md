@@ -364,8 +364,10 @@ To build and run iOS apps:
 
 ### Installing on Windows Subsystem for Linux (WSL)
 
-Note: WSL has historically not provided access to USB cameras. Mediapipe can use
-a video file as input.
+Note: The pre-built OpenCV packages don't support cameras in WSL. Unless you
+[compile](https://funvision.blogspot.com/2019/12/opencv-web-camera-and-video-streams-in.html)
+OpenCV with FFMPEG and GStreamer in WSL, the live demos won't work with any
+cameras. Alternatively, you use a video file as input.
 
 1.  Follow the
     [instruction](https://docs.microsoft.com/en-us/windows/wsl/install-win10) to
@@ -373,7 +375,7 @@ a video file as input.
 
 2.  Install Windows ADB and start the ADB server in Windows.
 
-    Note: Window’s and WSL’s adb versions must be the same version, e.g., if WSL
+    Note: Windows' and WSL’s adb versions must be the same version, e.g., if WSL
     has ADB 1.0.39, you need to download the corresponding Windows ADB from
     [here](https://dl.google.com/android/repository/platform-tools_r26.0.1-windows.zip).
 

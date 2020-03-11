@@ -1,0 +1,124 @@
+// Copyright 2020 The MediaPipe Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package mediapipe;
+
+message KeyPoint {
+  // The position of the keypoint in the local coordinate system of the rigid
+  // object.
+  float x = 1;
+  float y = 2;
+  float z = 3;
+
+  // Sphere around the keypoint, indiciating annotator's confidence of the
+  // position in meters.
+  float confidence_radius = 4;
+
+  // The name of the keypoint (e.g. legs, head, etc.).
+  // Does not have to be unique.
+  string name = 5;
+
+  // Indicates whether the keypoint is hidden or not.
+  bool hidden = 6;
+}
+
+message Object {
+  // Unique object id through a sequence. There might be multiple objects of
+  // the same label in this sequence.
+  int32 id = 1;
+
+  // Describes what category an object is. E.g. object class, attribute,
+  // instance or person identity. This provides additional context for the
+  // object type.
+  string category = 2;
+
+  enum Type {
+    UNDEFINED_TYPE = 0;
+    BOUNDING_BOX = 1;
+    SKELETON = 2;
+  }
+
+  Type type = 3;
+
+  // 3x3 row-major rotation matrix describing the orientation of the rigid
+  // object's frame of reference in the world-coordinate system.
+  repeated float rotation = 4;
+
+  // 3x1 vector describing the translation of the rigid object's frame of
+  // reference in the world-coordinate system in meters.
+  repeated float translation = 5;
+
+  // 3x1 vector describing the scale of the rigid object's frame of reference in
+  // the world-coordinate system in meters.
+  repeated float scale = 6;
+
+  // List of all the key points associated with this object in the object
+  // coordinate system.
+  // The first keypoint is always the object's frame of reference,
+  // e.g. the centroid of the box.
+  // E.g. bounding box with its center as frame of reference, the 9 keypoints :
+  // {0., 0., 0.},
+  // {-.5, -.5, -.5}, {-.5, -.5, +.5}, {-.5, +.5, -.5}, {-.5, +.5, +.5},
+  // {+.5, -.5, -.5}, {+.5, -.5, +.5}, {+.5, +.5, -.5}, {+.5, +.5, +.5}
+  // To get the bounding box in the world-coordinate system, we first scale the
+  // box then transform the scaled box.
+  // For example, bounding box in the world coordinate system is
+  // rotation * scale * keypoints + translation
+  repeated KeyPoint keypoints = 7;
+
+  // Enum to reflect how this object is created.
+  enum Method {
+    UNKNOWN_METHOD = 0;
+    ANNOTATION = 1;    // Created by data annotation.
+    AUGMENTATION = 2;  // Created by data augmentation.
+  }
+  Method method = 8;
+}
+
+// The edge connecting two keypoints together
+message Edge {
+  // keypoint id of the edge's source
+  int32 source = 1;
+
+  // keypoint id of the edge's sink
+  int32 sink = 2;
+}
+
+// The skeleton template for different objects (e.g. humans, chairs, hands, etc)
+// The annotation tool reads the skeleton template dictionary.
+message Skeleton {
+  // The origin keypoint in the object coordinate system. (i.e. Point 0, 0, 0)
+  int32 reference_keypoint = 1;
+
+  // The skeleton's category (e.g. human, chair, hand.). Should be unique in the
+  // dictionary.
+  string category = 2;
+
+  // Initialization value for all the keypoints in the skeleton in the object's
+  // local coordinate system. Pursuit will transform these points using object's
+  // transformation to get the keypoint in the world-cooridnate.
+  repeated KeyPoint keypoints = 3;
+
+  // List of edges connecting keypoints
+  repeated Edge edges = 4;
+}
+
+// The list of all the modeled skeletons in our library. These models can be
+// objects (chairs, desks, etc), humans (full pose, hands, faces, etc), or box.
+// We can have multiple skeletons in the same file.
+message Skeletons {
+  repeated Skeleton object = 1;
+}

@@ -264,6 +264,10 @@ static ::mediapipe::Status PrefixNames(std::string prefix,
         generator.mutable_input_side_packet(), replace_names));
     MP_RETURN_IF_ERROR(TransformStreamNames(
         generator.mutable_output_side_packet(), replace_names));
+
+    // Remove input side packets ignored by the subgraph-node.
+    MP_RETURN_IF_ERROR(RemoveIgnoredStreams(
+        generator.mutable_input_side_packet(), ignored_input_side_packets));
   }
   return ::mediapipe::OkStatus();
 }

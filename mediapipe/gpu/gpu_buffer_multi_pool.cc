@@ -105,17 +105,27 @@ GpuBuffer GpuBufferMultiPool::GetBuffer(int width, int height,
   BufferSpec key(width, height, format);
   auto pool_it = pools_.find(key);
   if (pool_it == pools_.end()) {
-    // Discard the oldest pool in order of creation.
-    // TODO: implement a better policy.
+    // Discard the least recently used pool in LRU cache.
     if (pools_.size() >= kMaxPoolCount) {
-      auto old_spec = buffer_specs_.front();
-      buffer_specs_.pop();
+      auto old_spec = buffer_specs_.front();  // Front has LRU.
+      buffer_specs_.pop_front();
       pools_.erase(old_spec);
     }
-    buffer_specs_.push(key);
+    buffer_specs_.push_back(key);  // Push new spec to back.
     std::tie(pool_it, std::ignore) =
         pools_.emplace(std::piecewise_construct, std::forward_as_tuple(key),
                        std::forward_as_tuple(MakeSimplePool(key)));
+  } else {
+    // Find and move current 'key' spec to back, keeping others in same order.
+    auto specs_it = buffer_specs_.begin();
+    while (specs_it != buffer_specs_.end()) {
+      if (*specs_it == key) {
+        buffer_specs_.erase(specs_it);
+        break;
+      }
+      ++specs_it;
+    }
+    buffer_specs_.push_back(key);
   }
   return GetBufferFromSimplePool(pool_it->first, pool_it->second);
 }

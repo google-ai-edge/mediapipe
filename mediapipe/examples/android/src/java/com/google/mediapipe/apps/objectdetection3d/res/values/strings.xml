@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name" translatable="false">Object Detection 3D</string>
+    <string name="no_camera_access" translatable="false">Please grant camera permissions.</string>
+</resources>

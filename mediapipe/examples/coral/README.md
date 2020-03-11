@@ -1,9 +1,11 @@
 # Coral Dev Board Setup (experimental)
 
-**Dislaimer**: Running MediaPipe on Coral is experimental, and this process may
+**Disclaimer**: Running MediaPipe on Coral is experimental, and this process may
 not be exact and is subject to change. These instructions have only been tested
-on the [Coral Dev Board](https://coral.ai/products/dev-board/) with Mendel 4.0,
-and may vary for different devices and workstations.
+on the [Coral Dev Board](https://coral.ai/products/dev-board/)
+running [Mendel Enterprise Day 13](https://coral.ai/software/) OS and
+using [Diploria2](https://github.com/google-coral/edgetpu/tree/diploria2)
+edgetpu libs, and may vary for different devices and workstations.
 
 This file describes how to prepare a Coral Dev Board and setup a Linux
 Docker container for building MediaPipe applications that run on Edge TPU.
@@ -16,10 +18,12 @@ Docker container for building MediaPipe applications that run on Edge TPU.
 
 * Setup the coral device via [here](https://coral.withgoogle.com/docs/dev-board/get-started/), and ensure the _mdt_ command works
 
+        Note:   alias mdt="python3 -m mdt.main"    may be needed on some systems
+
 * (on coral device) prepare MediaPipe
 
         cd ~
-        sudo apt-get install -y git
+        sudo apt-get update && sudo apt-get install -y git
         git clone https://github.com/google/mediapipe.git
         mkdir mediapipe/bazel-bin
 

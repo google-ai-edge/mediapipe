@@ -75,11 +75,28 @@ REGISTER_CALCULATOR(ImageCroppingCalculator);
   }
 #endif  //  !MEDIAPIPE_DISABLE_GPU
 
-  RET_CHECK(cc->Inputs().HasTag(kRectTag) ^ cc->Inputs().HasTag(kNormRectTag) ^
-            (cc->Options<mediapipe::ImageCroppingCalculatorOptions>()
-                 .has_norm_width() &&
-             cc->Options<mediapipe::ImageCroppingCalculatorOptions>()
-                 .has_norm_height()));
+  int flags = 0;
+  if (cc->Inputs().HasTag(kRectTag)) {
+    ++flags;
+  }
+  if (cc->Inputs().HasTag(kWidthTag) && cc->Inputs().HasTag(kHeightTag)) {
+    ++flags;
+  }
+  if (cc->Inputs().HasTag(kNormRectTag)) {
+    ++flags;
+  }
+  if (cc->Options<mediapipe::ImageCroppingCalculatorOptions>()
+          .has_norm_width() &&
+      cc->Options<mediapipe::ImageCroppingCalculatorOptions>()
+          .has_norm_height()) {
+    ++flags;
+  }
+  if (cc->Options<mediapipe::ImageCroppingCalculatorOptions>().has_width() &&
+      cc->Options<mediapipe::ImageCroppingCalculatorOptions>().has_height()) {
+    ++flags;
+  }
+  RET_CHECK(flags == 1) << "Illegal combination of input streams/options.";
+
   if (cc->Inputs().HasTag(kRectTag)) {
     cc->Inputs().Tag(kRectTag).Set<Rect>();
   }

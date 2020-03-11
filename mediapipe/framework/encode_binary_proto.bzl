@@ -99,7 +99,12 @@ def _encode_binary_proto_impl(ctx):
         ),
         mnemonic = "EncodeProto",
     )
-    return struct(files = depset([binarypb]))
+
+    output_depset = depset([binarypb])
+    return [DefaultInfo(
+        files = output_depset,
+        data_runfiles = ctx.runfiles(transitive_files = output_depset),
+    )]
 
 encode_binary_proto = rule(
     implementation = _encode_binary_proto_impl,

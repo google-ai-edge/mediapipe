@@ -670,6 +670,7 @@ cc_test(
     copts = PARALLEL_COPTS,
     data = ["testdata/stabilize_test.png"],
     linkopts = PARALLEL_LINKOPTS,
+    linkstatic = 1,
     deps = [
         ":region_flow",
         ":region_flow_cc_proto",
