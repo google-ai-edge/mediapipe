@@ -16,6 +16,7 @@
 
 #include <vector>
 
+#include "mediapipe/framework/formats/detection.pb.h"
 #include "mediapipe/framework/formats/landmark.pb.h"
 #include "mediapipe/framework/formats/rect.pb.h"
 
@@ -30,5 +31,10 @@ REGISTER_CALCULATOR(BeginLoopNormalizedLandmarkListVectorCalculator);
 typedef BeginLoopCalculator<std::vector<::mediapipe::NormalizedRect>>
     BeginLoopNormalizedRectCalculator;
 REGISTER_CALCULATOR(BeginLoopNormalizedRectCalculator);
+
+// A calculator to process std::vector<Detection>.
+typedef BeginLoopCalculator<std::vector<::mediapipe::Detection>>
+    BeginLoopDetectionCalculator;
+REGISTER_CALCULATOR(BeginLoopDetectionCalculator);
 
 }  // namespace mediapipe

@@ -237,6 +237,10 @@ class GlContext : public std::enable_shared_from_this<GlContext> {
   static bool ParseGlVersion(absl::string_view version_string, GLint* major,
                              GLint* minor);
 
+  // Simple query for GL extension support; only valid after GlContext has
+  // finished its initialization successfully.
+  bool HasGlExtension(absl::string_view extension) const;
+
   int64_t gl_finish_count() { return gl_finish_count_; }
 
   // Used by GlFinishSyncPoint. The count_to_pass cannot exceed the current
@@ -346,6 +350,8 @@ class GlContext : public std::enable_shared_from_this<GlContext> {
   bool HasContext() const;
   bool CheckForGlErrors();
   void LogUncheckedGlErrors(bool had_gl_errors);
+  ::mediapipe::Status GetGlExtensions();
+  ::mediapipe::Status GetGlExtensionsCompat();
 
   // The following ContextBinding functions have platform-specific
   // implementations.
@@ -365,6 +371,10 @@ class GlContext : public std::enable_shared_from_this<GlContext> {
 
   GLint gl_major_version_ = 0;
   GLint gl_minor_version_ = 0;
+
+  // glGetString and glGetStringi both return pointers to static strings,
+  // so we should be fine storing the extension pieces as string_view's.
+  std::set<absl::string_view> gl_extensions_;
 
   // Number of glFinish calls completed on the GL thread.
   // Changes should be guarded by mutex_. However, we use simple atomic

@@ -129,22 +129,43 @@ REGISTER_CALCULATOR(TfLiteTensorsToClassificationCalculator);
     num_classes *= raw_score_tensor->dims->data[i];
   }
 
+  if (options_.binary_classification()) {
+    RET_CHECK_EQ(num_classes, 1);
+    // Number of classes for binary classification.
+    num_classes = 2;
+  }
   if (label_map_loaded_) {
     RET_CHECK_EQ(num_classes, label_map_.size());
   }
   const float* raw_scores = raw_score_tensor->data.f;
 
   auto classification_list = absl::make_unique<ClassificationList>();
-  for (int i = 0; i < num_classes; ++i) {
-    if (options_.has_min_score_threshold() &&
-        raw_scores[i] < options_.min_score_threshold()) {
-      continue;
-    }
-    Classification* classification = classification_list->add_classification();
-    classification->set_index(i);
-    classification->set_score(raw_scores[i]);
+  if (options_.binary_classification()) {
+    Classification* class_first = classification_list->add_classification();
+    Classification* class_second = classification_list->add_classification();
+    class_first->set_index(0);
+    class_second->set_index(1);
+    class_first->set_score(raw_scores[0]);
+    class_second->set_score(1. - raw_scores[0]);
+
     if (label_map_loaded_) {
-      classification->set_label(label_map_[i]);
+      class_first->set_label(label_map_[0]);
+      class_second->set_label(label_map_[1]);
+    }
+  } else {
+    for (int i = 0; i < num_classes; ++i) {
+      if (options_.has_min_score_threshold() &&
+          raw_scores[i] < options_.min_score_threshold()) {
+        continue;
+      }
+      Classification* classification =
+          classification_list->add_classification();
+      classification->set_index(i);
+      classification->set_score(raw_scores[i]);
+
+      if (label_map_loaded_) {
+        classification->set_label(label_map_[i]);
+      }
     }
   }
 

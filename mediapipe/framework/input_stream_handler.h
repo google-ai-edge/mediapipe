@@ -74,9 +74,7 @@ class InputStreamHandler {
       : input_stream_managers_(std::move(tag_map)),
         calculator_context_manager_(calculator_context_manager),
         options_(options),
-        calculator_run_in_parallel_(calculator_run_in_parallel),
-        late_preparation_(false),
-        batch_size_(1) {}
+        calculator_run_in_parallel_(calculator_run_in_parallel) {}
 
   virtual ~InputStreamHandler() = default;
 
@@ -174,6 +172,57 @@ class InputStreamHandler {
     return unset_header_count_.load(std::memory_order_relaxed);
   }
 
+  // When true, Calculator::Process is called for any increase in the
+  // timestamp bound, whether or not any packets are available.
+  // Calculator::Process is called when the minimum timestamp bound
+  // increases for any synchronized set of input streams.
+  // DefaultInputStreamHandler groups all input streams into a single set.
+  // ImmediateInputStreamHandler treats each input stream as a separate set.
+  void SetProcessTimestampBounds(bool process_ts) {
+    process_timestamps_ = process_ts;
+  }
+
+  // When true, Calculator::Process is called for every input timestamp bound.
+  bool ProcessTimestampBounds() { return process_timestamps_; }
+
+  // A helper class to build input packet sets for a certain set of streams.
+  //
+  // ReadyForProcess requires all of the streams to be fully determined
+  // at the same input-timestamp.
+  // This is the readiness policy for all streams in DefaultInputStreamHandler.
+  // It is also the policy for each sync-set in SyncSetInputStreamHandler.
+  // It is also the policy for each input-stream in ImmediateInputStreamHandler.
+  //
+  // If ProcessTimestampBounds() is set, then a fully determined input timestamp
+  // with only empty input packets will qualify as ReadyForProcess.
+  class SyncSet {
+   public:
+    // Creates a SyncSet for a certain set of streams, |stream_ids|.
+    SyncSet(InputStreamHandler* input_stream_handler,
+            std::vector<CollectionItemId> stream_ids);
+
+    // Answers whether this stream is ready for Process or Close.
+    NodeReadiness GetReadiness(Timestamp* min_stream_timestamp);
+
+    // Returns the latest timestamp returned for processing.
+    Timestamp LastProcessed() const;
+
+    // The earliest available packet timestamp, or Timestamp::Done.
+    Timestamp MinPacketTimestamp() const;
+
+    // Moves packets from all input streams to the input_set.
+    void FillInputSet(Timestamp input_timestamp,
+                      InputStreamShardSet* input_set);
+
+    // Copies timestamp bounds from all input streams to the input_set.
+    void FillInputBounds(InputStreamShardSet* input_set);
+
+   private:
+    InputStreamHandler* input_stream_handler_;
+    std::vector<CollectionItemId> stream_ids_;
+    Timestamp last_processed_ts_ = Timestamp::Unset();
+  };
+
  protected:
   typedef internal::Collection<InputStreamManager*> InputStreamManagerSet;
 
@@ -240,11 +289,14 @@ class InputStreamHandler {
   // The variable is set to false by default. A subclass should set it to true
   // with SetLatePreparation(true) in the constructor if the input sets need to
   // be filled in ProcessNode().
-  bool late_preparation_;
+  bool late_preparation_ = false;
 
   // Determines how many sets of input packets are collected before a
   // CalculatorNode is scheduled.
-  int batch_size_;
+  int batch_size_ = 1;
+
+  // When true, any increase in timestamp bound invokes Calculator::Process.
+  bool process_timestamps_ = false;
 
   // A callback to notify the observer when all the input stream headers
   // (excluding headers of back edges) become available.

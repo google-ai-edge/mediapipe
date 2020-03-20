@@ -247,6 +247,12 @@ class TimestampDiff {
   TimestampDiff operator-(const TimestampDiff other) const;
   Timestamp operator+(const Timestamp other) const;
 
+  // Special values.
+
+  static TimestampDiff Unset() {
+    return TimestampDiff(Timestamp::Unset().Value());
+  }
+
  private:
   TimestampBaseType timestamp_;
 };

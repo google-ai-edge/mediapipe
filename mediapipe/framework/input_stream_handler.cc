@@ -22,6 +22,8 @@
 
 namespace mediapipe {
 
+using SyncSet = InputStreamHandler::SyncSet;
+
 ::mediapipe::Status InputStreamHandler::InitializeInputStreamManagers(
     InputStreamManager* flat_input_stream_managers) {
   for (CollectionItemId id = input_stream_managers_.BeginId();
@@ -298,6 +300,94 @@ void InputStreamHandler::SetLatePreparation(bool late_preparation) {
   CHECK(batch_size_ == 1 || !late_preparation_)
       << "Batching cannot be combined with late preparation.";
   late_preparation_ = late_preparation;
+}
+
+SyncSet::SyncSet(InputStreamHandler* input_stream_handler,
+                 std::vector<CollectionItemId> stream_ids)
+    : input_stream_handler_(input_stream_handler),
+      stream_ids_(std::move(stream_ids)) {}
+
+NodeReadiness SyncSet::GetReadiness(Timestamp* min_stream_timestamp) {
+  Timestamp min_bound = Timestamp::Done();
+  Timestamp min_packet = Timestamp::Done();
+  for (CollectionItemId id : stream_ids_) {
+    const auto& stream = input_stream_handler_->input_stream_managers_.Get(id);
+    bool empty;
+    Timestamp stream_timestamp = stream->MinTimestampOrBound(&empty);
+    if (empty) {
+      min_bound = std::min(min_bound, stream_timestamp);
+    } else {
+      min_packet = std::min(min_packet, stream_timestamp);
+    }
+  }
+  *min_stream_timestamp = std::min(min_packet, min_bound);
+  if (*min_stream_timestamp == Timestamp::Done()) {
+    last_processed_ts_ = Timestamp::Done().PreviousAllowedInStream();
+    return NodeReadiness::kReadyForClose;
+  }
+  if (!input_stream_handler_->process_timestamps_) {
+    // Only an input_ts with packets can be processed.
+    // Note that (min_bound - 1) is the highest fully settled timestamp.
+    if (min_bound > min_packet) {
+      last_processed_ts_ = *min_stream_timestamp;
+      return NodeReadiness::kReadyForProcess;
+    }
+  } else {
+    // Any unprocessed input_ts can be processed.
+    // Note that (min_bound - 1) is the highest fully settled timestamp.
+    Timestamp input_timestamp =
+        std::min(min_packet, min_bound.PreviousAllowedInStream());
+    if (input_timestamp >
+        std::max(last_processed_ts_, Timestamp::Unstarted())) {
+      *min_stream_timestamp = input_timestamp;
+      last_processed_ts_ = input_timestamp;
+      return NodeReadiness::kReadyForProcess;
+    }
+  }
+  return NodeReadiness::kNotReady;
+}
+
+Timestamp SyncSet::LastProcessed() const { return last_processed_ts_; }
+
+Timestamp SyncSet::MinPacketTimestamp() const {
+  Timestamp result = Timestamp::Done();
+  for (CollectionItemId id : stream_ids_) {
+    const auto& stream = input_stream_handler_->input_stream_managers_.Get(id);
+    bool empty;
+    Timestamp stream_timestamp = stream->MinTimestampOrBound(&empty);
+    if (!empty) {
+      result = std::min(result, stream_timestamp);
+    }
+  }
+  return result;
+}
+
+void SyncSet::FillInputSet(Timestamp input_timestamp,
+                           InputStreamShardSet* input_set) {
+  CHECK(input_timestamp.IsAllowedInStream());
+  CHECK(input_set);
+  for (CollectionItemId id : stream_ids_) {
+    const auto& stream = input_stream_handler_->input_stream_managers_.Get(id);
+    int num_packets_dropped = 0;
+    bool stream_is_done = false;
+    Packet current_packet = stream->PopPacketAtTimestamp(
+        input_timestamp, &num_packets_dropped, &stream_is_done);
+    CHECK_EQ(num_packets_dropped, 0)
+        << absl::Substitute("Dropped $0 packet(s) on input stream \"$1\".",
+                            num_packets_dropped, stream->Name());
+    input_stream_handler_->AddPacketToShard(
+        &input_set->Get(id), std::move(current_packet), stream_is_done);
+  }
+}
+
+void SyncSet::FillInputBounds(InputStreamShardSet* input_set) {
+  for (CollectionItemId id : stream_ids_) {
+    const auto* stream = input_stream_handler_->input_stream_managers_.Get(id);
+    Timestamp bound = stream->MinTimestampOrBound(nullptr);
+    input_stream_handler_->AddPacketToShard(
+        &input_set->Get(id), Packet().At(bound.PreviousAllowedInStream()),
+        bound == Timestamp::Done());
+  }
 }
 
 }  // namespace mediapipe

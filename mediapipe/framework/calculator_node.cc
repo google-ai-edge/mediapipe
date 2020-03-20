@@ -97,6 +97,7 @@ Timestamp CalculatorNode::SourceProcessOrder(
 
   const NodeTypeInfo& node_type_info =
       validated_graph_->CalculatorInfos()[node_id_];
+  const CalculatorContract& contract = node_type_info.Contract();
 
   uses_gpu_ =
       node_type_info.InputSidePacketTypes().HasTag(kGpuSharedTagName) ||
@@ -146,6 +147,14 @@ Timestamp CalculatorNode::SourceProcessOrder(
   MP_RETURN_IF_ERROR(InitializeInputStreamHandler(
       use_calc_specified ? handler_config : node_config.input_stream_handler(),
       node_type_info.InputStreamTypes()));
+
+  for (auto& stream : output_stream_handler_->OutputStreams()) {
+    stream->Spec()->offset_enabled =
+        (contract.GetTimestampOffset() != TimestampDiff::Unset());
+    stream->Spec()->offset = contract.GetTimestampOffset();
+  }
+  input_stream_handler_->SetProcessTimestampBounds(
+      contract.GetProcessTimestampBounds());
 
   return InitializeInputStreams(input_stream_managers, output_stream_managers);
 }

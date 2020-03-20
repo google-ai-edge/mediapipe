@@ -17,6 +17,7 @@
 // TODO: Move protos in another CL after the C++ code migration.
 #include "absl/strings/substitute.h"
 #include "absl/synchronization/mutex.h"
+#include "mediapipe/framework/collection_item_id.h"
 #include "mediapipe/framework/input_stream_handler.h"
 #include "mediapipe/framework/mediapipe_options.pb.h"
 #include "mediapipe/framework/packet_set.h"
@@ -69,7 +70,7 @@ class SyncSetInputStreamHandler : public InputStreamHandler {
  private:
   absl::Mutex mutex_;
   // The ids of each set of inputs.
-  std::vector<std::vector<CollectionItemId>> sync_sets_ ABSL_GUARDED_BY(mutex_);
+  std::vector<SyncSet> sync_sets_ ABSL_GUARDED_BY(mutex_);
   // The index of the ready sync set.  A value of -1 indicates that no
   // sync sets are ready.
   int ready_sync_set_index_ ABSL_GUARDED_BY(mutex_) = -1;
@@ -98,7 +99,7 @@ void SyncSetInputStreamHandler::PrepareForRun(
     sync_sets_.clear();
     std::set<CollectionItemId> used_ids;
     for (const auto& sync_set : handler_options.sync_set()) {
-      sync_sets_.emplace_back();
+      std::vector<CollectionItemId> stream_ids;
       CHECK_LT(0, sync_set.tag_index_size());
       for (const auto& tag_index : sync_set.tag_index()) {
         std::string tag;
@@ -109,8 +110,9 @@ void SyncSetInputStreamHandler::PrepareForRun(
         CHECK(!::mediapipe::ContainsKey(used_ids, id))
             << "stream \"" << tag_index << "\" is in more than one sync set.";
         used_ids.insert(id);
-        sync_sets_.back().push_back(id);
+        stream_ids.push_back(id);
       }
+      sync_sets_.emplace_back(this, std::move(stream_ids));
     }
     std::vector<CollectionItemId> remaining_ids;
     for (CollectionItemId id = input_stream_managers_.BeginId();
@@ -120,7 +122,7 @@ void SyncSetInputStreamHandler::PrepareForRun(
       }
     }
     if (!remaining_ids.empty()) {
-      sync_sets_.push_back(std::move(remaining_ids));
+      sync_sets_.emplace_back(this, std::move(remaining_ids));
     }
     ready_sync_set_index_ = -1;
     ready_timestamp_ = Timestamp::Done();
@@ -137,24 +139,14 @@ NodeReadiness SyncSetInputStreamHandler::GetNodeReadiness(
   absl::MutexLock lock(&mutex_);
   if (ready_sync_set_index_ >= 0) {
     *min_stream_timestamp = ready_timestamp_;
+    // TODO: Return kNotReady unless a new ready syncset is found.
     return NodeReadiness::kReadyForProcess;
   }
   for (int sync_set_index = 0; sync_set_index < sync_sets_.size();
        ++sync_set_index) {
-    const std::vector<CollectionItemId>& sync_set = sync_sets_[sync_set_index];
-    *min_stream_timestamp = Timestamp::Done();
-    Timestamp min_bound = Timestamp::Done();
-    for (CollectionItemId id : sync_set) {
-      const auto& stream = input_stream_managers_.Get(id);
-      bool empty;
-      Timestamp stream_timestamp = stream->MinTimestampOrBound(&empty);
-      if (empty) {
-        min_bound = std::min(min_bound, stream_timestamp);
-      }
-      *min_stream_timestamp = std::min(*min_stream_timestamp, stream_timestamp);
-    }
-
-    if (*min_stream_timestamp == Timestamp::Done()) {
+    NodeReadiness readiness =
+        sync_sets_[sync_set_index].GetReadiness(min_stream_timestamp);
+    if (readiness == NodeReadiness::kReadyForClose) {
       // This sync set is done, remove it.  Note that this invalidates
       // sync set indexes higher than sync_set_index.  However, we are
       // guaranteed that we were not ready before entering the outer
@@ -165,15 +157,14 @@ NodeReadiness SyncSetInputStreamHandler::GetNodeReadiness(
       continue;
     }
 
-    if (min_bound > *min_stream_timestamp) {
+    if (readiness == NodeReadiness::kReadyForProcess) {
+      // TODO: Prioritize sync-sets to avoid starvation.
       if (*min_stream_timestamp < ready_timestamp_) {
         // Store the timestamp and corresponding sync set index for the
         // sync set with the earliest arrival timestamp.
         ready_timestamp_ = *min_stream_timestamp;
         ready_sync_set_index_ = sync_set_index;
       }
-    } else {
-      CHECK_EQ(min_bound, *min_stream_timestamp);
     }
   }
   if (ready_sync_set_index_ >= 0) {
@@ -188,44 +179,17 @@ NodeReadiness SyncSetInputStreamHandler::GetNodeReadiness(
   return NodeReadiness::kNotReady;
 }
 
-void SyncSetInputStreamHandler::FillInputBounds(
-    Timestamp input_timestamp, InputStreamShardSet* input_set) {
-  for (int i = 0; i < sync_sets_.size(); ++i) {
-    if (i != ready_sync_set_index_) {
-      // Set the input streams for the not-ready sync sets.
-      for (CollectionItemId id : sync_sets_[i]) {
-        const auto stream = input_stream_managers_.Get(id);
-        Timestamp bound = stream->MinTimestampOrBound(nullptr);
-        AddPacketToShard(&input_set->Get(id),
-                         Packet().At(bound.PreviousAllowedInStream()),
-                         bound == Timestamp::Done());
-      }
-    }
-  }
-}
-
 void SyncSetInputStreamHandler::FillInputSet(Timestamp input_timestamp,
                                              InputStreamShardSet* input_set) {
   // Assume that all current packets are already cleared.
-  CHECK(input_timestamp.IsAllowedInStream());
-  CHECK(input_set);
   absl::MutexLock lock(&mutex_);
   CHECK_LE(0, ready_sync_set_index_);
-  CHECK_EQ(input_timestamp, ready_timestamp_);
-  // Set the input streams for the ready sync set.
-  for (CollectionItemId id : sync_sets_[ready_sync_set_index_]) {
-    const auto& stream = input_stream_managers_.Get(id);
-    int num_packets_dropped = 0;
-    bool stream_is_done = false;
-    Packet current_packet = stream->PopPacketAtTimestamp(
-        input_timestamp, &num_packets_dropped, &stream_is_done);
-    CHECK_EQ(num_packets_dropped, 0)
-        << absl::Substitute("Dropped $0 packet(s) on input stream \"$1\".",
-                            num_packets_dropped, stream->Name());
-    AddPacketToShard(&input_set->Get(id), std::move(current_packet),
-                     stream_is_done);
+  sync_sets_[ready_sync_set_index_].FillInputSet(input_timestamp, input_set);
+  for (int i = 0; i < sync_sets_.size(); ++i) {
+    if (i != ready_sync_set_index_) {
+      sync_sets_[i].FillInputBounds(input_set);
+    }
   }
-  FillInputBounds(input_timestamp, input_set);
   ready_sync_set_index_ = -1;
   ready_timestamp_ = Timestamp::Done();
 }

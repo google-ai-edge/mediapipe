@@ -46,6 +46,7 @@ class OutputStreamHandler {
   // ids of upstream sources that affect it.
   typedef std::unordered_map<std::string, std::unordered_set<int>>
       OutputStreamToSourcesMap;
+  typedef internal::Collection<OutputStreamManager*> OutputStreamManagerSet;
 
   // The constructor of the OutputStreamHandler takes four arguments.
   // The tag_map argument holds the information needed for tag/index retrieval
@@ -119,9 +120,11 @@ class OutputStreamHandler {
   // collection for debugging purpose.
   std::string FirstStreamName() const;
 
- protected:
-  typedef internal::Collection<OutputStreamManager*> OutputStreamManagerSet;
+  const OutputStreamManagerSet& OutputStreams() {
+    return output_stream_managers_;
+  }
 
+ protected:
   // Checks if the given input bound should be propagated or not. If any output
   // streams with OffsetEnabled() need to have the timestamp bounds updated,
   // then propagates the timestamp bounds of all output streams with

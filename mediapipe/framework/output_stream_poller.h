@@ -27,6 +27,9 @@ class OutputStreamPoller {
   OutputStreamPoller(const OutputStreamPoller&) = delete;
   OutputStreamPoller& operator=(const OutputStreamPoller&) = delete;
   OutputStreamPoller(OutputStreamPoller&&) = default;
+  // Move assignment needs to be explicitly defaulted to allow ASSIGN_OR_RETURN
+  // on `StatusOr<OutputStreamPoller>`.
+  OutputStreamPoller& operator=(OutputStreamPoller&&) = default;
 
   // Resets OutputStramPollerImpl and cleans the internal packet queue.
   void Reset() {

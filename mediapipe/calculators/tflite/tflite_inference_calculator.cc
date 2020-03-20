@@ -17,10 +17,16 @@
 #include <string>
 #include <vector>
 
+#include "absl/memory/memory.h"
 #include "mediapipe/calculators/tflite/tflite_inference_calculator.pb.h"
 #include "mediapipe/calculators/tflite/util.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/port/ret_check.h"
+
+#if !defined(__EMSCRIPTEN__)
+#include "mediapipe/util/cpu_util.h"
+#endif  // !__EMSCRIPTEN__
+
 #include "mediapipe/util/resource_util.h"
 #include "tensorflow/lite/error_reporter.h"
 #include "tensorflow/lite/interpreter.h"
@@ -50,7 +56,7 @@
 #include "tensorflow/lite/delegates/gpu/metal_delegate.h"
 #include "tensorflow/lite/delegates/gpu/metal_delegate_internal.h"
 #endif  // iOS
-
+#include "tensorflow/lite/delegates/xnnpack/xnnpack_delegate.h"
 #if defined(MEDIAPIPE_ANDROID)
 #include "tensorflow/lite/delegates/nnapi/nnapi_delegate.h"
 #endif  // ANDROID
@@ -113,6 +119,23 @@ struct GPUData {
 };
 #endif
 
+// Returns number of threads to configure XNNPACK delegate with.
+// (Equal to user provided value if specified.  Otherwise, it returns number of
+// high cores (hard-coded to 1 for __EMSCRIPTEN__))
+int GetXnnpackNumThreads(
+    const mediapipe::TfLiteInferenceCalculatorOptions& opts) {
+  static constexpr int kDefaultNumThreads = -1;
+  if (opts.has_delegate() && opts.delegate().has_xnnpack() &&
+      opts.delegate().xnnpack().num_threads() != kDefaultNumThreads) {
+    return opts.delegate().xnnpack().num_threads();
+  }
+#if !defined(__EMSCRIPTEN__)
+  return InferHigherCoreIds().size();
+#else
+  return 1;
+#endif  // !__EMSCRIPTEN__
+}
+
 // Calculator Header Section
 
 // Runs inference on the provided input TFLite tensors and TFLite model.
@@ -139,6 +162,9 @@ struct GPUData {
 // Input side packet:
 //  CUSTOM_OP_RESOLVER (optional) - Use a custom op resolver,
 //                                  instead of the builtin one.
+//  MODEL (optional) - Use to specify TfLite model
+//                     (std::unique_ptr<tflite::FlatBufferModel,
+//                       std::function<void(tflite::FlatBufferModel*)>>)
 //
 // Example use:
 // node {
@@ -148,6 +174,20 @@ struct GPUData {
 //   options: {
 //     [mediapipe.TfLiteInferenceCalculatorOptions.ext] {
 //       model_path: "modelname.tflite"
+//       delegate { gpu {} }
+//     }
+//   }
+// }
+//
+// or
+//
+// node {
+//   calculator: "TfLiteInferenceCalculator"
+//   input_stream: "TENSORS:tensor_image"
+//   input_side_packet: "MODEL:model"
+//   output_stream: "TENSORS:tensors"
+//   options: {
+//     [mediapipe.TfLiteInferenceCalculatorOptions.ext] {
 //       delegate { gpu {} }
 //     }
 //   }
@@ -165,6 +205,9 @@ class TfLiteInferenceCalculator : public CalculatorBase {
  public:
   using TfLiteDelegatePtr =
       std::unique_ptr<TfLiteDelegate, std::function<void(TfLiteDelegate*)>>;
+  using TfLiteModelPtr =
+      std::unique_ptr<tflite::FlatBufferModel,
+                      std::function<void(tflite::FlatBufferModel*)>>;
 
   static ::mediapipe::Status GetContract(CalculatorContract* cc);
 
@@ -173,12 +216,12 @@ class TfLiteInferenceCalculator : public CalculatorBase {
   ::mediapipe::Status Close(CalculatorContext* cc) override;
 
  private:
-  ::mediapipe::Status LoadOptions(CalculatorContext* cc);
   ::mediapipe::Status LoadModel(CalculatorContext* cc);
+  ::mediapipe::StatusOr<Packet> GetModelAsPacket(const CalculatorContext& cc);
   ::mediapipe::Status LoadDelegate(CalculatorContext* cc);
 
+  Packet model_packet_;
   std::unique_ptr<tflite::Interpreter> interpreter_;
-  std::unique_ptr<tflite::FlatBufferModel> model_;
   TfLiteDelegatePtr delegate_;
 
 #if !defined(MEDIAPIPE_DISABLE_GL_COMPUTE)
@@ -198,7 +241,6 @@ class TfLiteInferenceCalculator : public CalculatorBase {
       edgetpu::EdgeTpuManager::GetSingleton()->OpenDevice();
 #endif
 
-  std::string model_path_ = "";
   bool gpu_inference_ = false;
   bool gpu_input_ = false;
   bool gpu_output_ = false;
@@ -217,6 +259,10 @@ REGISTER_CALCULATOR(TfLiteInferenceCalculator);
 
   const auto& options =
       cc->Options<::mediapipe::TfLiteInferenceCalculatorOptions>();
+  RET_CHECK(!options.model_path().empty() ^
+            cc->InputSidePackets().HasTag("MODEL"))
+      << "Either model as side packet or model path in options is required.";
+
   bool use_gpu =
       options.has_delegate() ? options.delegate().has_gpu() : options.use_gpu();
 
@@ -249,6 +295,9 @@ REGISTER_CALCULATOR(TfLiteInferenceCalculator);
         .Tag("CUSTOM_OP_RESOLVER")
         .Set<tflite::ops::builtin::BuiltinOpResolver>();
   }
+  if (cc->InputSidePackets().HasTag("MODEL")) {
+    cc->InputSidePackets().Tag("MODEL").Set<TfLiteModelPtr>();
+  }
 
   if (use_gpu) {
 #if !defined(MEDIAPIPE_DISABLE_GL_COMPUTE)
@@ -267,7 +316,9 @@ REGISTER_CALCULATOR(TfLiteInferenceCalculator);
 ::mediapipe::Status TfLiteInferenceCalculator::Open(CalculatorContext* cc) {
   cc->SetOffset(TimestampDiff(0));
 
-  MP_RETURN_IF_ERROR(LoadOptions(cc));
+  const auto& options =
+      cc->Options<::mediapipe::TfLiteInferenceCalculatorOptions>();
+  gpu_inference_ = options.use_gpu();
 
   if (cc->Inputs().HasTag("TENSORS_GPU")) {
 #if !defined(MEDIAPIPE_DISABLE_GPU) && !defined(__EMSCRIPTEN__)
@@ -492,34 +543,10 @@ REGISTER_CALCULATOR(TfLiteInferenceCalculator);
 
 // Calculator Auxiliary Section
 
-::mediapipe::Status TfLiteInferenceCalculator::LoadOptions(
-    CalculatorContext* cc) {
-  // Get calculator options specified in the graph.
-  const auto& options =
-      cc->Options<::mediapipe::TfLiteInferenceCalculatorOptions>();
-
-  // Get model name.
-  if (!options.model_path().empty()) {
-    std::string model_path = options.model_path();
-
-    ASSIGN_OR_RETURN(model_path_, mediapipe::PathToResourceAsFile(model_path));
-  } else {
-    LOG(ERROR) << "Must specify path to TFLite model.";
-    return ::mediapipe::Status(::mediapipe::StatusCode::kNotFound,
-                               "Must specify path to TFLite model.");
-  }
-
-  // Get execution modes.
-  gpu_inference_ =
-      options.has_delegate() ? options.delegate().has_gpu() : options.use_gpu();
-
-  return ::mediapipe::OkStatus();
-}
-
 ::mediapipe::Status TfLiteInferenceCalculator::LoadModel(
     CalculatorContext* cc) {
-  model_ = tflite::FlatBufferModel::BuildFromFile(model_path_.c_str());
-  RET_CHECK(model_);
+  ASSIGN_OR_RETURN(model_packet_, GetModelAsPacket(*cc));
+  const auto& model = *model_packet_.Get<TfLiteModelPtr>();
 
   tflite::ops::builtin::BuiltinOpResolver op_resolver;
   if (cc->InputSidePackets().HasTag("CUSTOM_OP_RESOLVER")) {
@@ -529,9 +556,9 @@ REGISTER_CALCULATOR(TfLiteInferenceCalculator);
   }
 #if defined(MEDIAPIPE_EDGE_TPU)
   interpreter_ =
-      BuildEdgeTpuInterpreter(*model_, &op_resolver, edgetpu_context_.get());
+      BuildEdgeTpuInterpreter(model, &op_resolver, edgetpu_context_.get());
 #else
-  tflite::InterpreterBuilder(*model_, op_resolver)(&interpreter_);
+  tflite::InterpreterBuilder(model, op_resolver)(&interpreter_);
 #endif  // MEDIAPIPE_EDGE_TPU
 
   RET_CHECK(interpreter_);
@@ -555,6 +582,28 @@ REGISTER_CALCULATOR(TfLiteInferenceCalculator);
   }
 
   return ::mediapipe::OkStatus();
+}
+
+::mediapipe::StatusOr<Packet> TfLiteInferenceCalculator::GetModelAsPacket(
+    const CalculatorContext& cc) {
+  const auto& options =
+      cc.Options<mediapipe::TfLiteInferenceCalculatorOptions>();
+  if (!options.model_path().empty()) {
+    std::string model_path = options.model_path();
+
+    ASSIGN_OR_RETURN(model_path, mediapipe::PathToResourceAsFile(model_path));
+
+    auto model = tflite::FlatBufferModel::BuildFromFile(model_path.c_str());
+    RET_CHECK(model) << "Failed to load model from path.";
+    return MakePacket<TfLiteModelPtr>(TfLiteModelPtr(
+        model.release(), [](tflite::FlatBufferModel* model) { delete model; }));
+  }
+  if (cc.InputSidePackets().HasTag("MODEL")) {
+    return cc.InputSidePackets().Tag("MODEL");
+  }
+  return ::mediapipe::Status(
+      ::mediapipe::StatusCode::kNotFound,
+      "Must specify TFLite model as path or loaded model.");
 }
 
 ::mediapipe::Status TfLiteInferenceCalculator::LoadDelegate(
@@ -586,6 +635,22 @@ REGISTER_CALCULATOR(TfLiteInferenceCalculator);
       return ::mediapipe::OkStatus();
     }
 #endif  // MEDIAPIPE_ANDROID
+
+#if defined(__EMSCRIPTEN__)
+    const bool xnnpack_requested = true;
+#else
+    const bool xnnpack_requested = calculator_opts.has_delegate() &&
+                                   calculator_opts.delegate().has_xnnpack();
+#endif  // __EMSCRIPTEN__
+
+    if (xnnpack_requested) {
+      TfLiteXNNPackDelegateOptions xnnpack_opts{};
+      xnnpack_opts.num_threads = GetXnnpackNumThreads(calculator_opts);
+      delegate_ = TfLiteDelegatePtr(TfLiteXNNPackDelegateCreate(&xnnpack_opts),
+                                    &TfLiteXNNPackDelegateDelete);
+      RET_CHECK_EQ(interpreter_->ModifyGraphWithDelegate(delegate_.get()),
+                   kTfLiteOk);
+    }
 
     // Return, no need for GPU delegate below.
     return ::mediapipe::OkStatus();

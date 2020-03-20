@@ -203,6 +203,69 @@ bool GlContext::ParseGlVersion(absl::string_view version_string, GLint* major,
   return true;
 }
 
+bool GlContext::HasGlExtension(absl::string_view extension) const {
+  return gl_extensions_.find(extension) != gl_extensions_.end();
+}
+
+// Function for GL3.0+ to query for and store all of our available GL extensions
+// in an easily-accessible set.  The glGetString call is actually *not* required
+// to work with GL_EXTENSIONS for newer GL versions, so we must maintain both
+// variations of this function.
+::mediapipe::Status GlContext::GetGlExtensions() {
+  gl_extensions_.clear();
+  // glGetStringi only introduced in GL 3.0+; so we exit out this function if
+  // we don't have that function defined, regardless of version number reported.
+  // The function itself is also fully stubbed out if we're linking against an
+  // API version without a glGetStringi declaration. Although Emscripten
+  // sometimes provides this function, its default library implementation
+  // appears to only provide glGetString, so we skip this for Emscripten
+  // platforms to avoid possible undefined symbol or runtime errors.
+#if (GL_VERSION_3_0 || GL_ES_VERSION_3_0) && !defined(__EMSCRIPTEN__)
+  if (!SymbolAvailable(&glGetStringi)) {
+    LOG(ERROR) << "GL major version > 3.0 indicated, but glGetStringi not "
+               << "defined. Falling back to deprecated GL extensions querying "
+               << "method.";
+    return ::mediapipe::InternalError("glGetStringi not defined, but queried");
+  }
+  int num_extensions = 0;
+  glGetIntegerv(GL_NUM_EXTENSIONS, &num_extensions);
+  if (glGetError() != 0) {
+    return ::mediapipe::InternalError(
+        "Error querying for number of extensions");
+  }
+
+  for (int i = 0; i < num_extensions; ++i) {
+    const GLubyte* res = glGetStringi(GL_EXTENSIONS, i);
+    if (glGetError() != 0 || res == nullptr) {
+      return ::mediapipe::InternalError(
+          "Error querying for an extension by index");
+    }
+    const char* signed_res = reinterpret_cast<const char*>(res);
+    gl_extensions_.insert(signed_res);
+  }
+
+  return ::mediapipe::OkStatus();
+#else
+  return ::mediapipe::InternalError("GL version mismatch in GlGetExtensions");
+#endif  // (GL_VERSION_3_0 || GL_ES_VERSION_3_0) && !defined(__EMSCRIPTEN__)
+}
+
+// Same as GetGlExtensions() above, but for pre-GL3.0, where glGetStringi did
+// not exist.
+::mediapipe::Status GlContext::GetGlExtensionsCompat() {
+  gl_extensions_.clear();
+
+  const GLubyte* res = glGetString(GL_EXTENSIONS);
+  if (glGetError() != 0 || res == nullptr) {
+    LOG(ERROR) << "Error querying for GL extensions";
+    return ::mediapipe::InternalError("Error querying for GL extensions");
+  }
+  const char* signed_res = reinterpret_cast<const char*>(res);
+  gl_extensions_ = absl::StrSplit(signed_res, ' ');
+
+  return ::mediapipe::OkStatus();
+}
+
 ::mediapipe::Status GlContext::FinishInitialization(bool create_thread) {
   if (create_thread) {
     thread_ = absl::make_unique<GlContext::DedicatedThread>();
@@ -232,8 +295,13 @@ bool GlContext::ParseGlVersion(absl::string_view version_string, GLint* major,
 
     LOG(INFO) << "GL version: " << gl_major_version_ << "." << gl_minor_version_
               << " (" << glGetString(GL_VERSION) << ")";
-
-    return ::mediapipe::OkStatus();
+    if (gl_major_version_ >= 3) {
+      auto status = GetGlExtensions();
+      if (status.ok()) {
+        return ::mediapipe::OkStatus();
+      }
+    }
+    return GetGlExtensionsCompat();
   });
 }
 

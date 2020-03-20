@@ -361,6 +361,7 @@ cc_library(
         "//mediapipe/framework:mediapipe_options_cc_proto",
         "//mediapipe/framework:packet_generator_cc_proto",
         "//mediapipe/framework:status_handler_cc_proto",
+        "//mediapipe/framework:stream_handler_cc_proto",
         "//mediapipe/framework/port:any_proto",
         "//mediapipe/framework/port:status",
         "//mediapipe/framework/tool:options_util",

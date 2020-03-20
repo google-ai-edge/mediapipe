@@ -32,4 +32,10 @@ message TfLiteTensorsToClassificationCalculatorOptions {
   optional int32 top_k = 2;
   // Path to a label map file for getting the actual name of class ids.
   optional string label_map_path = 3;
+  // Whether the input is a single float for binary classification.
+  // When true, only a single float is expected in the input tensor and the
+  // label map, if provided, is expected to have exactly two labels.
+  // The single score(float) represent the probability of first label, and
+  // 1 - score is the probabilility of the second label.
+  optional bool binary_classification = 4;
 }

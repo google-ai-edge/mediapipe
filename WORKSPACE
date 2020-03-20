@@ -129,7 +129,11 @@ http_archive(
     ],
     # A compatibility patch
     patches = [
-        "@//third_party:org_tensorflow_528e22eae8bf3206189a066032c66e9e5c9b4a61.diff"
+        "@//third_party:org_tensorflow_528e22eae8bf3206189a066032c66e9e5c9b4a61.diff",
+        # Updates for XNNPACK: https://github.com/tensorflow/tensorflow/commit/cfc31e324c8de6b52f752a39cb161d99d853ca99
+        "@//third_party:org_tensorflow_cfc31e324c8de6b52f752a39cb161d99d853ca99.diff",
+        # CpuInfo's build rule fixes.
+        "@//third_party:org_tensorflow_9696366bcadab23a25c773b3ed405bac8ded4d0d.diff",
     ],
     patch_args = [
         "-p1",

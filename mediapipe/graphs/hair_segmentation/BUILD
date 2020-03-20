@@ -12,6 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+load(
+    "//mediapipe/framework/tool:mediapipe_graph.bzl",
+    "mediapipe_binary_graph",
+)
+
 licenses(["notice"])  # Apache 2.0
 
 package(default_visibility = ["//visibility:public"])
@@ -33,9 +38,19 @@ cc_library(
     ],
 )
 
-load(
-    "//mediapipe/framework/tool:mediapipe_graph.bzl",
-    "mediapipe_binary_graph",
+cc_library(
+    name = "desktop_calculators",
+    deps = [
+        "//mediapipe/calculators/core:flow_limiter_calculator",
+        "//mediapipe/calculators/core:previous_loopback_calculator",
+        "//mediapipe/calculators/image:image_transformation_calculator",
+        "//mediapipe/calculators/image:recolor_calculator",
+        "//mediapipe/calculators/image:set_alpha_calculator",
+        "//mediapipe/calculators/tflite:tflite_converter_calculator",
+        "//mediapipe/calculators/tflite:tflite_custom_op_resolver_calculator",
+        "//mediapipe/calculators/tflite:tflite_inference_calculator",
+        "//mediapipe/calculators/tflite:tflite_tensors_to_segmentation_calculator",
+    ],
 )
 
 mediapipe_binary_graph(

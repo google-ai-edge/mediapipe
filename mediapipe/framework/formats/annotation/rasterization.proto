@@ -16,6 +16,9 @@ syntax = "proto2";
 
 package mediapipe;
 
+option java_package = "com.google.mediapipe.formats.annotation.proto";
+option java_outer_classname = "RasterizationProto";
+
 // A Region can be represented in each frame as a set of scanlines
 // (compressed RLE, similar to rasterization of polygons).
 // For each scanline with y-coordinate y, we save (possibly multiple) intervals

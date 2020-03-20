@@ -24,6 +24,19 @@ namespace mediapipe {
 #define _STRINGIFY(_x) __STRINGIFY(_x)
 #endif
 
+// Our fragment shaders use DEFAULT_PRECISION to define the default precision
+// for a type. The macro strips out the precision declaration on desktop GL,
+// where it's not supported.
+//
+// Note: this does not use a raw std::string because some compilers don't handle
+// raw strings inside macros correctly. It uses a macro because we want to be
+// able to concatenate strings by juxtaposition. We want to concatenate strings
+// by juxtaposition so we can export const char* static data containing the
+// pre-expanded strings.
+//
+// TODO: this was written before we could rely on C++11 support.
+// Consider replacing it with constexpr std::string concatenation, or replacing
+// the static variables with functions.
 #define PRECISION_COMPAT                              \
   GLES_VERSION_COMPAT                                 \
   "#ifdef GL_ES \n"                                   \
@@ -42,10 +55,15 @@ namespace mediapipe {
   "#define out varying\n"   \
   "#endif  // __VERSION__ < 130\n"
 
-#define FRAGMENT_PREAMBLE   \
-  PRECISION_COMPAT          \
-  "#if __VERSION__ < 130\n" \
-  "#define in varying\n"    \
+// Note: on systems where highp precision for floats is not supported (look up
+// GL_FRAGMENT_PRECISION_HIGH), we replace it with mediump.
+#define FRAGMENT_PREAMBLE                             \
+  PRECISION_COMPAT                                    \
+  "#if __VERSION__ < 130\n"                           \
+  "#define in varying\n"                              \
+  "#if GL_ES && !GL_FRAGMENT_PRECISION_HIGH\n"        \
+  "#define highp mediump\n"                           \
+  "#endif  // GL_ES && !GL_FRAGMENT_PRECISION_HIGH\n" \
   "#endif  // __VERSION__ < 130\n"
 
 const GLchar* const kMediaPipeVertexShaderPreamble = VERTEX_PREAMBLE;

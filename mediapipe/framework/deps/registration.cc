@@ -18,6 +18,10 @@ namespace mediapipe {
 
 namespace {
 
+// List of namespaces that can register calculators inside the namespace
+// and still refer to them using an unqualified name.  This whitelist
+// is meant to facilitate migration from unqualified to fully qualified
+// calculator names.
 constexpr char const* kTopNamespaces[] = {
     "mediapipe",
 };

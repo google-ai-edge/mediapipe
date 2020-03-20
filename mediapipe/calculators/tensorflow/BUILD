@@ -1110,6 +1110,7 @@ cc_test(
         ],
         "//mediapipe:android": [
             "@org_tensorflow//tensorflow/core:android_tensorflow_lib_with_ops_lite_proto_no_rtti_lib",
+            "@org_tensorflow//tensorflow/core:android_tensorflow_test_lib",
         ],
         "//mediapipe:ios": [
             "@org_tensorflow//tensorflow/core:ios_tensorflow_test_lib",

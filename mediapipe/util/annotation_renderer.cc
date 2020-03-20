@@ -426,7 +426,7 @@ void AnnotationRenderer::DrawPoint(const RenderAnnotation& annotation) {
   cv::Point point_to_draw(x, y);
   const cv::Scalar color = MediapipeColorToOpenCVColor(annotation.color());
   const int thickness = annotation.thickness();
-  cv::circle(mat_image_, point_to_draw, thickness, color, thickness);
+  cv::circle(mat_image_, point_to_draw, thickness, color, -1);
 }
 
 void AnnotationRenderer::DrawLine(const RenderAnnotation& annotation) {

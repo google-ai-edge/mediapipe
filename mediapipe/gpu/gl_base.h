@@ -57,15 +57,14 @@
 #include <EGL/egl.h>
 #include <GLES2/gl2.h>
 #include <GLES2/gl2ext.h>
-
-#ifdef __ANDROID__
+#if defined(__ANDROID__)
 // Weak-link all GL APIs included from this point on.
 // TODO: Annotate these with availability attributes for the
 // appropriate versions of Android, by including gl{3,31,31}.h and resetting
 // GL_APICALL for each.
 #undef GL_APICALL
 #define GL_APICALL __attribute__((weak_import)) KHRONOS_APICALL
-#endif  // __ANDROID__
+#endif  // defined(__ANDROID__)
 
 #include <GLES3/gl32.h>
 

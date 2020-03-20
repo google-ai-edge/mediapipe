@@ -31,6 +31,17 @@ namespace {
 typedef std::function<::mediapipe::Status(CalculatorContext* cc)>
     CalculatorContextFunction;
 
+// Returns the contents of a set of Packets.
+// The contents must be copyable.
+template <typename T>
+std::vector<T> GetContents(const std::vector<Packet>& packets) {
+  std::vector<T> result;
+  for (Packet p : packets) {
+    result.push_back(p.Get<T>());
+  }
+  return result;
+}
+
 // A simple Semaphore for synchronizing test threads.
 class AtomicSemaphore {
  public:
@@ -671,9 +682,9 @@ REGISTER_CALCULATOR(BoundToPacketCalculator);
 
 // A Calculator that produces packets at timestamps beyond the input timestamp.
 class FuturePacketCalculator : public CalculatorBase {
+ public:
   static constexpr int64 kOutputFutureMicros = 3;
 
- public:
   static ::mediapipe::Status GetContract(CalculatorContract* cc) {
     cc->Inputs().Index(0).Set<int>();
     cc->Outputs().Index(0).Set<int>();
@@ -742,9 +753,8 @@ TEST(CalculatorGraphBoundsTest, OffsetBoundPropagation) {
   MP_ASSERT_OK(graph.WaitUntilDone());
 }
 
-// Shows that bounds changes alone do not invoke Process.
-// Note: Bounds changes alone will invoke Process eventually
-// when SetOffset is cleared, see: go/mediapipe-realtime-graph.
+// Shows that timestamp bounds changes alone do not invoke Process,
+// without SetProcessTimestampBounds(true).
 TEST(CalculatorGraphBoundsTest, BoundWithoutInputPackets) {
   // OffsetBoundCalculator produces only timestamp bounds.
   // The BoundToPacketCalculator delivers an output packet whenever the
@@ -753,8 +763,13 @@ TEST(CalculatorGraphBoundsTest, BoundWithoutInputPackets) {
       ::mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
         input_stream: 'input'
         node {
-          calculator: 'OffsetBoundCalculator'
+          calculator: 'FuturePacketCalculator'
           input_stream: 'input'
+          output_stream: 'input_2'
+        }
+        node {
+          calculator: 'OffsetBoundCalculator'
+          input_stream: 'input_2'
           output_stream: 'bounds'
         }
         node {
@@ -778,6 +793,7 @@ TEST(CalculatorGraphBoundsTest, BoundWithoutInputPackets) {
   for (int i = 0; i < kNumInputs; ++i) {
     Packet p = MakePacket<int>(33).At(Timestamp(i));
     MP_ASSERT_OK(graph.AddPacketToInputStream("input", p));
+    MP_ASSERT_OK(graph.WaitUntilIdle());
   }
 
   // No packets arrive, because updated timestamp bounds do not invoke
@@ -1102,6 +1118,255 @@ TEST(CalculatorGraphBoundsTest, BoundsForEmptyInputs_SyncSets) {
         }
       }
     )");
+}
+
+// A Calculator that produces a packet for each timestamp bounds update.
+class ProcessBoundToPacketCalculator : public CalculatorBase {
+ public:
+  static ::mediapipe::Status GetContract(CalculatorContract* cc) {
+    for (int i = 0; i < cc->Inputs().NumEntries(); ++i) {
+      cc->Inputs().Index(i).SetAny();
+    }
+    for (int i = 0; i < cc->Outputs().NumEntries(); ++i) {
+      cc->Outputs().Index(i).Set<Timestamp>();
+    }
+    cc->SetInputStreamHandler("ImmediateInputStreamHandler");
+    cc->SetProcessTimestampBounds(true);
+    return ::mediapipe::OkStatus();
+  }
+
+  ::mediapipe::Status Process(CalculatorContext* cc) final {
+    for (int i = 0; i < cc->Outputs().NumEntries(); ++i) {
+      Timestamp t = cc->Inputs().Index(i).Value().Timestamp();
+      if (t == cc->InputTimestamp() &&
+          t >= cc->Outputs().Index(i).NextTimestampBound()) {
+        cc->Outputs().Index(i).Add(new auto(t), t);
+      }
+    }
+    return ::mediapipe::OkStatus();
+  }
+};
+REGISTER_CALCULATOR(ProcessBoundToPacketCalculator);
+
+// A Calculator that passes through each packet and timestamp immediately.
+class ImmediatePassthroughCalculator : public CalculatorBase {
+ public:
+  static ::mediapipe::Status GetContract(CalculatorContract* cc) {
+    for (int i = 0; i < cc->Inputs().NumEntries(); ++i) {
+      cc->Inputs().Index(i).SetAny();
+    }
+    for (int i = 0; i < cc->Outputs().NumEntries(); ++i) {
+      cc->Outputs().Index(i).SetSameAs(&cc->Inputs().Index(i));
+    }
+    cc->SetInputStreamHandler("ImmediateInputStreamHandler");
+    cc->SetProcessTimestampBounds(true);
+    return ::mediapipe::OkStatus();
+  }
+
+  ::mediapipe::Status Process(CalculatorContext* cc) final {
+    for (int i = 0; i < cc->Outputs().NumEntries(); ++i) {
+      if (!cc->Inputs().Index(i).IsEmpty()) {
+        cc->Outputs().Index(i).AddPacket(cc->Inputs().Index(i).Value());
+      } else {
+        Timestamp input_bound =
+            cc->Inputs().Index(i).Value().Timestamp().NextAllowedInStream();
+        if (cc->Outputs().Index(i).NextTimestampBound() < input_bound) {
+          cc->Outputs().Index(i).SetNextTimestampBound(input_bound);
+        }
+      }
+    }
+    return ::mediapipe::OkStatus();
+  }
+};
+REGISTER_CALCULATOR(ImmediatePassthroughCalculator);
+
+// Shows that Process is called for input-sets without input packets.
+void TestProcessForEmptyInputs(const std::string& input_stream_handler) {
+  // FuturePacketCalculator and OffsetBoundCalculator produce only ts bounds,
+  // The ProcessBoundToPacketCalculator has SetProcessTimestampBounds(true),
+  // and produces an output packet for every timestamp bound update.
+  std::string config_str = R"(
+            input_stream: 'input'
+            node {
+              calculator: 'FuturePacketCalculator'
+              input_stream: 'input'
+              output_stream: 'futures'
+            }
+            node {
+              calculator: 'OffsetBoundCalculator'
+              input_stream: 'futures'
+              output_stream: 'bounds'
+            }
+            node {
+              calculator: 'ProcessBoundToPacketCalculator'
+              input_stream: 'bounds'
+              output_stream: 'bounds_ts'
+              input_stream_handler { $input_stream_handler }
+            }
+          )";
+  absl::StrReplaceAll({{"$input_stream_handler", input_stream_handler}},
+                      &config_str);
+  CalculatorGraphConfig config =
+      ::mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(config_str);
+  CalculatorGraph graph;
+  std::vector<Packet> input_ts_packets;
+  std::vector<Packet> bounds_ts_packets;
+  MP_ASSERT_OK(graph.Initialize(config));
+  MP_ASSERT_OK(graph.ObserveOutputStream("bounds_ts", [&](const Packet& p) {
+    bounds_ts_packets.push_back(p);
+    return ::mediapipe::OkStatus();
+  }));
+  MP_ASSERT_OK(graph.StartRun({}));
+  MP_ASSERT_OK(graph.WaitUntilIdle());
+
+  // Add four packets into the graph.
+  constexpr int kFutureMicros = FuturePacketCalculator::kOutputFutureMicros;
+  Packet p;
+  p = MakePacket<int>(33).At(Timestamp(0));
+  MP_ASSERT_OK(graph.AddPacketToInputStream("input", p));
+  MP_ASSERT_OK(graph.WaitUntilIdle());
+
+  p = MakePacket<int>(33).At(Timestamp(10));
+  MP_ASSERT_OK(graph.AddPacketToInputStream("input", p));
+  MP_ASSERT_OK(graph.WaitUntilIdle());
+
+  p = MakePacket<int>(33).At(Timestamp(20));
+  MP_ASSERT_OK(graph.AddPacketToInputStream("input", p));
+  MP_ASSERT_OK(graph.WaitUntilIdle());
+
+  p = MakePacket<int>(33).At(Timestamp(30));
+  MP_ASSERT_OK(graph.AddPacketToInputStream("input", p));
+  MP_ASSERT_OK(graph.WaitUntilIdle());
+
+  // Packets arrive.
+  MP_ASSERT_OK(graph.WaitUntilIdle());
+  EXPECT_EQ(bounds_ts_packets.size(), 4);
+
+  std::vector<Timestamp> expected = {
+      Timestamp(0 + kFutureMicros), Timestamp(10 + kFutureMicros),
+      Timestamp(20 + kFutureMicros), Timestamp(30 + kFutureMicros)};
+  EXPECT_EQ(GetContents<Timestamp>(bounds_ts_packets), expected);
+
+  // Shutdown the graph.
+  MP_ASSERT_OK(graph.CloseAllPacketSources());
+  MP_ASSERT_OK(graph.WaitUntilDone());
+}
+
+// Shows that Process is called for input-sets without input packets
+// using an DefaultInputStreamHandler.
+TEST(CalculatorGraphBoundsTest, ProcessTimestampBounds_Default) {
+  TestProcessForEmptyInputs(R"(
+      input_stream_handler: "DefaultInputStreamHandler")");
+}
+
+// Shows that Process is called for input-sets without input packets
+// using an ImmediateInputStreamHandler.
+TEST(CalculatorGraphBoundsTest, ProcessTimestampBounds_Immediate) {
+  TestProcessForEmptyInputs(R"(
+      input_stream_handler: "ImmediateInputStreamHandler")");
+}
+
+// Shows that Process is called for input-sets without input packets
+// using a SyncSetInputStreamHandler with a single sync-set.
+TEST(CalculatorGraphBoundsTest, ProcessTimestampBounds_SyncSet) {
+  TestProcessForEmptyInputs(R"(
+      input_stream_handler: "SyncSetInputStreamHandler")");
+}
+
+// Shows that Process is called for input-sets without input packets
+// using a SyncSetInputStreamHandler with multiple sync-sets.
+TEST(CalculatorGraphBoundsTest, ProcessTimestampBounds_SyncSets) {
+  TestProcessForEmptyInputs(R"(
+      input_stream_handler: "SyncSetInputStreamHandler"
+      options {
+        [mediapipe.SyncSetInputStreamHandlerOptions.ext] {
+          sync_set { tag_index: ":0" }
+        }
+      }
+    )");
+}
+
+// Demonstrates the functionality of an "ImmediatePassthroughCalculator".
+// The ImmediatePassthroughCalculator simply relays each input packet to
+// the corresponding output stream.  ProcessTimestampBounds is needed to
+// relay timestamp bounds as well as packets.
+TEST(CalculatorGraphBoundsTest, ProcessTimestampBounds_Passthrough) {
+  // OffsetBoundCalculator produces timestamp bounds.
+  // ImmediatePassthroughCalculator relays packets and bounds.
+  // ProcessBoundToPacketCalculator reports packets and bounds as packets.
+  std::string config_str = R"(
+            input_stream: "input_0"
+            input_stream: "input_1"
+            node {
+              calculator: "OffsetBoundCalculator"
+              input_stream: "input_1"
+              output_stream: "bound_1"
+            }
+            node {
+              calculator: "ImmediatePassthroughCalculator"
+              input_stream: "input_0"
+              input_stream: "bound_1"
+              output_stream: "same_0"
+              output_stream: "same_1"
+            }
+            node {
+              calculator: "ProcessBoundToPacketCalculator"
+              input_stream: "same_0"
+              input_stream: "same_1"
+              output_stream: "output_0"
+              output_stream: "output_1"
+            }
+          )";
+  CalculatorGraphConfig config =
+      ::mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(config_str);
+  CalculatorGraph graph;
+  std::vector<Packet> output_0_packets;
+  std::vector<Packet> output_1_packets;
+  MP_ASSERT_OK(graph.Initialize(config));
+  MP_ASSERT_OK(graph.ObserveOutputStream("output_0", [&](const Packet& p) {
+    output_0_packets.push_back(p);
+    return ::mediapipe::OkStatus();
+  }));
+  MP_ASSERT_OK(graph.ObserveOutputStream("output_1", [&](const Packet& p) {
+    output_1_packets.push_back(p);
+    return ::mediapipe::OkStatus();
+  }));
+  MP_ASSERT_OK(graph.StartRun({}));
+  MP_ASSERT_OK(graph.WaitUntilIdle());
+
+  // Add four packets to input_0.
+  for (int i = 0; i < 4; ++i) {
+    Packet p = MakePacket<int>(33).At(Timestamp(i * 10));
+    MP_ASSERT_OK(graph.AddPacketToInputStream("input_0", p));
+    MP_ASSERT_OK(graph.WaitUntilIdle());
+  }
+
+  // Packets arrive.
+  MP_ASSERT_OK(graph.WaitUntilIdle());
+  EXPECT_EQ(output_0_packets.size(), 4);
+  EXPECT_EQ(output_1_packets.size(), 0);
+  std::vector<Timestamp> expected =  //
+      {Timestamp(0), Timestamp(10), Timestamp(20), Timestamp(30)};
+  EXPECT_EQ(GetContents<Timestamp>(output_0_packets), expected);
+
+  // Add two timestamp bounds to bound_1.
+  for (int i = 0; i < 2; ++i) {
+    Packet p = MakePacket<int>(33).At(Timestamp(10 + i * 10));
+    MP_ASSERT_OK(graph.AddPacketToInputStream("input_1", p));
+    MP_ASSERT_OK(graph.WaitUntilIdle());
+  }
+
+  // Bounds arrive.
+  MP_ASSERT_OK(graph.WaitUntilIdle());
+  EXPECT_EQ(output_0_packets.size(), 4);
+  EXPECT_EQ(output_1_packets.size(), 2);
+  expected =  //
+      {Timestamp(10), Timestamp(20)};
+  EXPECT_EQ(GetContents<Timestamp>(output_1_packets), expected);
+
+  // Shutdown the graph.
+  MP_ASSERT_OK(graph.CloseAllPacketSources());
+  MP_ASSERT_OK(graph.WaitUntilDone());
 }
 
 }  // namespace

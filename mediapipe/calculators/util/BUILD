@@ -998,6 +998,7 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/formats:classification_cc_proto",
         "//mediapipe/framework/formats:landmark_cc_proto",
         "//mediapipe/framework/formats:rect_cc_proto",
         "//mediapipe/framework/port:ret_check",
@@ -1015,11 +1016,24 @@ cc_library(
     deps = [
         ":collection_has_min_size_calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/formats:landmark_cc_proto",
         "//mediapipe/framework/formats:rect_cc_proto",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
     ],
     alwayslink = 1,
+)
+
+cc_test(
+    name = "collection_has_min_size_calculator_test",
+    srcs = ["collection_has_min_size_calculator_test.cc"],
+    deps = [
+        ":collection_has_min_size_calculator",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:calculator_runner",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:parse_text_proto",
+    ],
 )
 
 cc_library(

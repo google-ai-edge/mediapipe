@@ -43,31 +43,6 @@ MEDIAPIPE_IOS_HDRS = [
     "NSError+util_status.h",
 ]
 
-MEDIAPIPE_IOS_CC_DEPS = [
-    ":CFHolder",
-    ":util",
-    "//mediapipe/framework/port:map_util",
-    "//mediapipe/framework/port:ret_check",
-    "//mediapipe/framework/port:source_location",
-    "//mediapipe/framework/port:status",
-    "//mediapipe/framework/port:statusor",
-    "//mediapipe/framework/port:threadpool",
-    "//mediapipe/framework:calculator_framework",
-    "//mediapipe/framework:mediapipe_profiling",
-    "//mediapipe/gpu:MPPGraphGPUData",
-    "//mediapipe/gpu:pixel_buffer_pool_util",
-    "//mediapipe/gpu:gpu_buffer",
-    "//mediapipe/gpu:gl_base",
-    "//mediapipe/gpu:gpu_shared_data_internal",
-    "//mediapipe/gpu:graph_support",
-    # Other deps
-    "//mediapipe/util:cpu_util",
-    "@com_google_absl//absl/base:core_headers",
-    "@com_google_absl//absl/memory",
-    "@com_google_absl//absl/strings",
-    "@com_google_absl//absl/synchronization",
-]
-
 objc_library(
     name = "mediapipe_framework_ios",
     srcs = MEDIAPIPE_IOS_SRCS,
@@ -80,8 +55,28 @@ objc_library(
         "Accelerate",
     ],
     visibility = ["//mediapipe/framework:mediapipe_internal"],
-    deps = MEDIAPIPE_IOS_CC_DEPS + [
-        # These are objc_library deps.
+    deps = [
+        ":CFHolder",
+        ":util",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:mediapipe_profiling",
+        "//mediapipe/framework/port:map_util",
+        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:source_location",
+        "//mediapipe/framework/port:status",
+        "//mediapipe/framework/port:statusor",
+        "//mediapipe/framework/port:threadpool",
+        "//mediapipe/gpu:MPPGraphGPUData",
+        "//mediapipe/gpu:gl_base",
+        "//mediapipe/gpu:gpu_buffer",
+        "//mediapipe/gpu:gpu_shared_data_internal",
+        "//mediapipe/gpu:graph_support",
+        "//mediapipe/gpu:pixel_buffer_pool_util",
+        "//mediapipe/util:cpu_util",
+        "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/synchronization",
         "@google_toolbox_for_mac//:GTM_Defines",
     ],
 )

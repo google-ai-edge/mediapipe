@@ -40,14 +40,14 @@ class PolynomialRegressionPathSolver {
   // Given a series of focus points on frames, uses polynomial regression to
   // compute a best guess of a 1D camera movement trajectory along x-axis and
   // y-axis, such that focus points can be preserved as much as possible. The
-  // returned |all_xforms| hold the camera location at each timestamp
+  // returned |all_transforms| hold the camera location at each timestamp
   // corresponding to each input frame.
   ::mediapipe::Status ComputeCameraPath(
       const std::vector<FocusPointFrame>& focus_point_frames,
       const std::vector<FocusPointFrame>& prior_focus_point_frames,
       const int original_width, const int original_height,
       const int output_width, const int output_height,
-      std::vector<cv::Mat>* all_xforms);
+      std::vector<cv::Mat>* all_transforms);
 
  private:
   // Adds a new cost function, constructed using |in| and |out|, into |problem|.

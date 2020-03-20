@@ -16,6 +16,7 @@
 
 #include <vector>
 
+#include "mediapipe/framework/formats/classification.pb.h"
 #include "mediapipe/framework/formats/landmark.pb.h"
 #include "mediapipe/framework/formats/rect.pb.h"
 #include "mediapipe/util/render_data.pb.h"
@@ -36,5 +37,9 @@ REGISTER_CALCULATOR(EndLoopBooleanCalculator);
 typedef EndLoopCalculator<std::vector<::mediapipe::RenderData>>
     EndLoopRenderDataCalculator;
 REGISTER_CALCULATOR(EndLoopRenderDataCalculator);
+
+typedef EndLoopCalculator<std::vector<::mediapipe::ClassificationList>>
+    EndLoopClassificationListCalculator;
+REGISTER_CALCULATOR(EndLoopClassificationListCalculator);
 
 }  // namespace mediapipe

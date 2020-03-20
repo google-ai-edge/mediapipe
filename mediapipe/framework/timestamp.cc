@@ -122,7 +122,6 @@ std::string TimestampDiff::DebugString() const {
 }
 
 Timestamp Timestamp::NextAllowedInStream() const {
-  CHECK(IsAllowedInStream()) << "Timestamp is: " << DebugString();
   if (*this >= Max() || *this == PreStream()) {
     // Indicates that no further timestamps may occur.
     return OneOverPostStream();

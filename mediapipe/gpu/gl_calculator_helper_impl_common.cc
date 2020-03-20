@@ -22,6 +22,17 @@ GlCalculatorHelperImpl::GlCalculatorHelperImpl(CalculatorContext* cc,
                                                GpuResources* gpu_resources)
     : gpu_resources_(*gpu_resources) {
   gl_context_ = gpu_resources_.gl_context(cc);
+// GL_ES_VERSION_2_0 and up (at least through ES 3.2) may contain the extension.
+// Checking against one also checks against higher ES versions. So this checks
+// against GLES >= 2.0.
+#if GL_ES_VERSION_2_0
+  // No linear float filtering by default, check extensions.
+  can_linear_filter_float_textures_ =
+      gl_context_->HasGlExtension("OES_texture_float_linear");
+#else
+  // Any float32 texture we create should automatically have linear filtering.
+  can_linear_filter_float_textures_ = true;
+#endif  // GL_ES_VERSION_2_0
 }
 
 GlCalculatorHelperImpl::~GlCalculatorHelperImpl() {
@@ -89,13 +100,15 @@ void GlCalculatorHelperImpl::BindFramebuffer(const GlTexture& dst) {
 
 void GlCalculatorHelperImpl::SetStandardTextureParams(GLenum target,
                                                       GLint internal_format) {
+  // Default to using linear filter everywhere. For float32 textures, fall back
+  // to GL_NEAREST if linear filtering unsupported.
   GLint filter;
   switch (internal_format) {
     case GL_R32F:
     case GL_RGBA32F:
-      // 32F (unlike 16f) textures do not support texture filtering
+      // 32F (unlike 16f) textures do not always support texture filtering
       // (According to OpenGL ES specification [TEXTURE IMAGE SPECIFICATION])
-      filter = GL_NEAREST;
+      filter = can_linear_filter_float_textures_ ? GL_LINEAR : GL_NEAREST;
       break;
     default:
       filter = GL_LINEAR;

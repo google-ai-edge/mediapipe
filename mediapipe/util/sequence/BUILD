@@ -22,7 +22,6 @@ cc_library(
     hdrs = ["media_sequence_util.h"],
     visibility = [
         "//mediapipe:__subpackages__",
-        "//research/action_recognition/sequence:__subpackages__",
     ],
     deps = [
         "//mediapipe/framework/port:core_proto",
@@ -38,7 +37,6 @@ cc_library(
     hdrs = ["media_sequence.h"],
     visibility = [
         "//mediapipe:__subpackages__",
-        "//research/action_recognition/sequence:__subpackages__",
     ],
     deps = [
         ":media_sequence_util",

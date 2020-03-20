@@ -143,7 +143,7 @@ class CalculatorGraph {
       const std::string& graph_type = "",
       const Subgraph::SubgraphOptions* options = nullptr);
 
-  // Resturns the canonicalized CalculatorGraphConfig for this graph.
+  // Returns the canonicalized CalculatorGraphConfig for this graph.
   const CalculatorGraphConfig& Config() const {
     return validated_graph_->Config();
   }

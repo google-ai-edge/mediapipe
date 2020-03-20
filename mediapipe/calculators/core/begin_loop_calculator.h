@@ -52,19 +52,27 @@ namespace mediapipe {
 //   output_stream: "OUTPUT:aggregated_result"     # IterableU @ext_ts
 // }
 //
-// BeginLoopCalculator accepts an optional input stream tagged with "TICK"
-// which if non-empty, wakes up the calculator and calls
-// BeginLoopCalculator::Process(). Input streams tagged with "CLONE" are cloned
-// to the corresponding output streams at loop timestamps. This ensures that a
-// MediaPipe graph or sub-graph can run multiple times, once per element in the
-// "ITERABLE" for each pakcet clone of the packets in the "CLONE" input streams.
+// Input streams tagged with "CLONE" are cloned to the corresponding output
+// streams at loop timestamps. This ensures that a MediaPipe graph or sub-graph
+// can run multiple times, once per element in the "ITERABLE" for each pakcet
+// clone of the packets in the "CLONE" input streams.
 template <typename IterableT>
 class BeginLoopCalculator : public CalculatorBase {
   using ItemT = typename IterableT::value_type;
 
  public:
   static ::mediapipe::Status GetContract(CalculatorContract* cc) {
+    // The below enables processing of timestamp bound updates, and that enables
+    // correct timestamp propagation by the companion EndLoopCalculator.
+    //
+    // For instance, Process() function will be still invoked even if upstream
+    // calculator has updated timestamp bound for ITERABLE input instead of
+    // providing actual value.
+    cc->SetProcessTimestampBounds(true);
+
     // A non-empty packet in the optional "TICK" input stream wakes up the
+    // calculator.
+    // DEPRECATED as timestamp bound updates are processed by default in this
     // calculator.
     if (cc->Inputs().HasTag("TICK")) {
       cc->Inputs().Tag("TICK").SetAny();

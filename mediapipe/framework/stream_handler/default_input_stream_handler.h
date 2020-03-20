@@ -45,6 +45,9 @@ class DefaultInputStreamHandler : public InputStreamHandler {
   // Only invoked when associated GetNodeReadiness() returned kReadyForProcess.
   void FillInputSet(Timestamp input_timestamp,
                     InputStreamShardSet* input_set) override;
+
+  // The packet-set builder.
+  SyncSet sync_set_;
 };
 
 }  // namespace mediapipe

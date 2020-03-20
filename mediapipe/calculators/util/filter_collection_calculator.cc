@@ -17,6 +17,7 @@
 
 #include <vector>
 
+#include "mediapipe/framework/formats/classification.pb.h"
 #include "mediapipe/framework/formats/landmark.pb.h"
 #include "mediapipe/framework/formats/rect.pb.h"
 
@@ -30,5 +31,9 @@ typedef FilterCollectionCalculator<
     std::vector<::mediapipe::NormalizedLandmarkList>>
     FilterLandmarkListCollectionCalculator;
 REGISTER_CALCULATOR(FilterLandmarkListCollectionCalculator);
+
+typedef FilterCollectionCalculator<std::vector<::mediapipe::ClassificationList>>
+    FilterClassificationListCollectionCalculator;
+REGISTER_CALCULATOR(FilterClassificationListCollectionCalculator);
 
 }  // namespace mediapipe

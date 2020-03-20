@@ -276,6 +276,7 @@ TEST_F(PacketLatencyCalculatorTest, DoesNotOutputUntilReferencePacketReceived) {
       "delayed_packet_0", Adopt(new double()).At(Timestamp(2))));
 
   // Send a reference packet with timestamp 10 usec.
+  simulation_clock_->Sleep(absl::Microseconds(1));
   MP_ASSERT_OK(graph_.AddPacketToInputStream(
       "camera_frames", Adopt(new double()).At(Timestamp(10))));
   simulation_clock_->Sleep(absl::Microseconds(1));

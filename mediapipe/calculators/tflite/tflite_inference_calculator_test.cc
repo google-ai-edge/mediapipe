@@ -41,7 +41,7 @@ namespace mediapipe {
 
 using ::tflite::Interpreter;
 
-void DoSmokeTest(absl::string_view delegate) {
+void DoSmokeTest(const std::string& graph_proto) {
   const int width = 8;
   const int height = 8;
   const int channels = 3;
@@ -69,24 +69,9 @@ void DoSmokeTest(absl::string_view delegate) {
   auto input_vec = absl::make_unique<std::vector<TfLiteTensor>>();
   input_vec->emplace_back(*tensor);
 
-  std::string graph_proto = R"(
-    input_stream: "tensor_in"
-    node {
-      calculator: "TfLiteInferenceCalculator"
-      input_stream: "TENSORS:tensor_in"
-      output_stream: "TENSORS:tensor_out"
-      options {
-        [mediapipe.TfLiteInferenceCalculatorOptions.ext] {
-          model_path: "mediapipe/calculators/tflite/testdata/add.bin"
-          $delegate
-        }
-      }
-    }
-  )";
-  ASSERT_EQ(absl::StrReplaceAll({{"$delegate", delegate}}, &graph_proto), 1);
   // Prepare single calculator graph to and wait for packets.
   CalculatorGraphConfig graph_config =
-      ::mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(graph_proto);
+      ParseTextProtoOrDie<CalculatorGraphConfig>(graph_proto);
   std::vector<Packet> output_packets;
   tool::AddVectorSink("tensor_out", &graph_config, &output_packets);
   CalculatorGraph graph(graph_config);
@@ -119,8 +104,70 @@ void DoSmokeTest(absl::string_view delegate) {
 
 // Tests a simple add model that adds an input tensor to itself.
 TEST(TfLiteInferenceCalculatorTest, SmokeTest) {
-  DoSmokeTest(/*delegate=*/"");
-  DoSmokeTest(/*delegate=*/"delegate { tflite {} }");
+  std::string graph_proto = R"(
+    input_stream: "tensor_in"
+    node {
+      calculator: "TfLiteInferenceCalculator"
+      input_stream: "TENSORS:tensor_in"
+      output_stream: "TENSORS:tensor_out"
+      options {
+        [mediapipe.TfLiteInferenceCalculatorOptions.ext] {
+          model_path: "mediapipe/calculators/tflite/testdata/add.bin"
+          $delegate
+        }
+      }
+    }
+  )";
+  DoSmokeTest(
+      /*graph_proto=*/absl::StrReplaceAll(graph_proto, {{"$delegate", ""}}));
+  DoSmokeTest(/*graph_proto=*/absl::StrReplaceAll(
+      graph_proto, {{"$delegate", "delegate { tflite {} }"}}));
+  DoSmokeTest(/*graph_proto=*/absl::StrReplaceAll(
+      graph_proto, {{"$delegate", "delegate { xnnpack {} }"}}));
+  DoSmokeTest(/*graph_proto=*/absl::StrReplaceAll(
+      graph_proto,
+      {{"$delegate", "delegate { xnnpack { num_threads: 10 } }"}}));
+}
+
+TEST(TfLiteInferenceCalculatorTest, SmokeTest_ModelAsInputSidePacket) {
+  std::string graph_proto = R"(
+    input_stream: "tensor_in"
+
+    node {
+      calculator: "ConstantSidePacketCalculator"
+      output_side_packet: "PACKET:model_path"
+      options: {
+        [mediapipe.ConstantSidePacketCalculatorOptions.ext]: {
+          packet { string_value: "mediapipe/calculators/tflite/testdata/add.bin" }
+        }
+      }
+    }
+
+    node {
+      calculator: "LocalFileContentsCalculator"
+      input_side_packet: "FILE_PATH:model_path"
+      output_side_packet: "CONTENTS:model_blob"
+    }
+
+    node {
+      calculator: "TfLiteModelCalculator"
+      input_side_packet: "MODEL_BLOB:model_blob"
+      output_side_packet: "MODEL:model"
+    }
+
+    node {
+      calculator: "TfLiteInferenceCalculator"
+      input_stream: "TENSORS:tensor_in"
+      output_stream: "TENSORS:tensor_out"
+      input_side_packet: "MODEL:model"
+      options {
+        [mediapipe.TfLiteInferenceCalculatorOptions.ext] {
+          use_gpu: false
+        }
+      }
+    }
+  )";
+  DoSmokeTest(graph_proto);
 }
 
 }  // namespace mediapipe

@@ -36,7 +36,11 @@ cd /tmp/build_opencv
 git clone https://github.com/opencv/opencv_contrib.git
 git clone https://github.com/opencv/opencv.git
 mkdir opencv/release
-cd opencv/release
+cd opencv_contrib
+git checkout 3.4
+cd ../opencv
+git checkout 3.4
+cd release
 cmake .. -DCMAKE_BUILD_TYPE=RELEASE -DCMAKE_INSTALL_PREFIX=/usr/local \
       -DBUILD_TESTS=OFF -DBUILD_PERF_TESTS=OFF -DBUILD_opencv_ts=OFF \
       -DOPENCV_EXTRA_MODULES_PATH=/tmp/build_opencv/opencv_contrib/modules \

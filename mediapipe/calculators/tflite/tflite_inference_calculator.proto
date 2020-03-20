@@ -45,11 +45,17 @@ message TfLiteInferenceCalculatorOptions {
     message Gpu {}
     // Android only.
     message Nnapi {}
+    message Xnnpack {
+      // Number of threads for XNNPACK delegate. (By default, calculator tries
+      // to choose optimal number of threads depending on the device.)
+      optional int32 num_threads = 1 [default = -1];
+    }
 
     oneof delegate {
       TfLite tflite = 1;
       Gpu gpu = 2;
       Nnapi nnapi = 3;
+      Xnnpack xnnpack = 4;
     }
   }
 

@@ -222,9 +222,11 @@ cc_library(
     deps = [
         ":util",
         ":tflite_inference_calculator_cc_proto",
+        "@com_google_absl//absl/memory",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/util:resource_util",
         "@org_tensorflow//tensorflow/lite:framework",
+        "@org_tensorflow//tensorflow/lite/delegates/xnnpack:xnnpack_delegate",
         "@org_tensorflow//tensorflow/lite/kernels:builtin_ops",
         "//mediapipe/framework/stream_handler:fixed_size_input_stream_handler",
         "//mediapipe/framework/port:ret_check",
@@ -253,6 +255,10 @@ cc_library(
         "//conditions:default": [],
         "//mediapipe:android": [
             "@org_tensorflow//tensorflow/lite/delegates/nnapi:nnapi_delegate",
+        ],
+    }) + select({
+        "//conditions:default": [
+            "//mediapipe/util:cpu_util",
         ],
     }),
     alwayslink = 1,
@@ -305,6 +311,20 @@ cc_library(
             "@org_tensorflow//tensorflow/lite/delegates/gpu/gl:gl_shader",
         ],
     }),
+    alwayslink = 1,
+)
+
+cc_library(
+    name = "tflite_model_calculator",
+    srcs = ["tflite_model_calculator.cc"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":util",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:packet",
+        "//mediapipe/framework/port:ret_check",
+        "@org_tensorflow//tensorflow/lite:framework",
+    ],
     alwayslink = 1,
 )
 
@@ -478,6 +498,9 @@ cc_test(
     deps = [
         ":tflite_inference_calculator",
         ":tflite_inference_calculator_cc_proto",
+        ":tflite_model_calculator",
+        "//mediapipe/calculators/core:constant_side_packet_calculator",
+        "//mediapipe/calculators/util:local_file_contents_calculator",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework:calculator_runner",
         "//mediapipe/framework/deps:file_path",
@@ -485,7 +508,9 @@ cc_test(
         "//mediapipe/framework/port:integral_types",
         "//mediapipe/framework/port:parse_text_proto",
         "//mediapipe/framework/tool:validate_type",
+        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/types:optional",
         "@org_tensorflow//tensorflow/lite:framework",
         "@org_tensorflow//tensorflow/lite/kernels:builtin_ops",
     ],
@@ -509,5 +534,21 @@ cc_test(
         "@com_google_absl//absl/memory",
         "@org_tensorflow//tensorflow/lite:framework",
         "@org_tensorflow//tensorflow/lite/kernels:builtin_ops",
+    ],
+)
+
+cc_test(
+    name = "tflite_model_calculator_test",
+    srcs = ["tflite_model_calculator_test.cc"],
+    data = ["testdata/add.bin"],
+    deps = [
+        ":tflite_model_calculator",
+        "//mediapipe/calculators/core:constant_side_packet_calculator",
+        "//mediapipe/calculators/util:local_file_contents_calculator",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:calculator_runner",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:parse_text_proto",
+        "@org_tensorflow//tensorflow/lite:framework",
     ],
 )

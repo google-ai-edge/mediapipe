@@ -49,3 +49,10 @@ mediapipe_cc_proto_library(
     visibility = ["//visibility:public"],
     deps = [":rasterization_proto"],
 )
+
+# Expose the proto source files for building mediapipe AAR.
+filegroup(
+    name = "protos_src",
+    srcs = glob(["*.proto"]),
+    visibility = ["//mediapipe:__subpackages__"],
+)

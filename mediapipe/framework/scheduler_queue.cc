@@ -25,7 +25,11 @@
 #include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/status.h"
 
+#ifdef __APPLE__
+#define AUTORELEASEPOOL @autoreleasepool
+#else
 #define AUTORELEASEPOOL
+#endif  // __APPLE__
 
 namespace mediapipe {
 namespace internal {

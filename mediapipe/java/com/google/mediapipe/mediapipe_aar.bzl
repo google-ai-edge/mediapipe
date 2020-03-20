@@ -78,6 +78,33 @@ cat > $(OUTS) <<EOF
         srcs = ["//mediapipe/framework/formats:protos_src"],
     )
 
+    _proto_java_src_generator(
+        name = "rasterization_proto",
+        proto_src = "mediapipe/framework/formats/annotation/rasterization.proto",
+        java_lite_out = "com/google/mediapipe/formats/annotation/proto/RasterizationProto.java",
+        srcs = ["//mediapipe/framework/formats/annotation:protos_src"],
+    )
+
+    _proto_java_src_generator(
+        name = "location_data_proto",
+        proto_src = "mediapipe/framework/formats/location_data.proto",
+        java_lite_out = "com/google/mediapipe/formats/proto/LocationDataProto.java",
+        srcs = [
+            "//mediapipe/framework/formats:protos_src",
+            "//mediapipe/framework/formats/annotation:protos_src",
+        ],
+    )
+
+    _proto_java_src_generator(
+        name = "detection_proto",
+        proto_src = "mediapipe/framework/formats/detection.proto",
+        java_lite_out = "com/google/mediapipe/formats/proto/DetectionProto.java",
+        srcs = [
+            "//mediapipe/framework/formats:protos_src",
+            "//mediapipe/framework/formats/annotation:protos_src",
+        ],
+    )
+
     android_library(
         name = name + "_android_lib",
         srcs = [
@@ -86,6 +113,9 @@ cat > $(OUTS) <<EOF
             "//mediapipe/java/com/google/mediapipe/glutil:java_src",
             "com/google/mediapipe/proto/CalculatorProto.java",
             "com/google/mediapipe/formats/proto/LandmarkProto.java",
+            "com/google/mediapipe/formats/proto/DetectionProto.java",
+            "com/google/mediapipe/formats/proto/LocationDataProto.java",
+            "com/google/mediapipe/formats/annotation/proto/RasterizationProto.java",
         ],
         manifest = "AndroidManifest.xml",
         proguard_specs = ["//mediapipe/java/com/google/mediapipe/framework:proguard.pgcfg"],

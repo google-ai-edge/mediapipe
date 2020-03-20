@@ -107,6 +107,9 @@ CalculatorContext* LegacyCalculatorSupport::Scoped<CalculatorContext>::current_;
 template <>
 CalculatorContract*
     LegacyCalculatorSupport::Scoped<CalculatorContract>::current_;
+#elif _MSC_VER
+// MSVC interprets these declarations as definitions and during linking it
+// generates an error about multiple definitions of current_.
 #else
 template <>
 thread_local CalculatorContext*

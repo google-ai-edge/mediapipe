@@ -17,6 +17,9 @@
 #include "mediapipe/calculators/image/recolor_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/image_frame.h"
+#include "mediapipe/framework/formats/image_frame_opencv.h"
+#include "mediapipe/framework/port/opencv_core_inc.h"
+#include "mediapipe/framework/port/opencv_imgproc_inc.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/util/color.pb.h"
@@ -38,8 +41,6 @@ namespace mediapipe {
 // A mask image is used to specify where to overlay a user defined color.
 // The luminance of the input image is used to adjust the blending weight,
 // to help preserve image textures.
-//
-// TODO implement cpu support.
 //
 // Inputs:
 //   One of the following IMAGE tags:
@@ -71,6 +72,8 @@ namespace mediapipe {
 //    }
 //  }
 //
+// Note: Cannot mix-match CPU & GPU inputs/outputs.
+//       CPU-in & CPU-out <or> GPU-in & GPU-out
 class RecolorCalculator : public CalculatorBase {
  public:
   RecolorCalculator() = default;
@@ -138,6 +141,11 @@ REGISTER_CALCULATOR(RecolorCalculator);
     cc->Outputs().Tag("IMAGE").Set<ImageFrame>();
   }
 
+  // Confirm only one of the input streams is present.
+  RET_CHECK(cc->Inputs().HasTag("IMAGE") ^ cc->Inputs().HasTag("IMAGE_GPU"));
+  // Confirm only one of the output streams is present.
+  RET_CHECK(cc->Outputs().HasTag("IMAGE") ^ cc->Outputs().HasTag("IMAGE_GPU"));
+
   if (use_gpu) {
 #if !defined(MEDIAPIPE_DISABLE_GPU)
     MP_RETURN_IF_ERROR(mediapipe::GlCalculatorHelper::UpdateContract(cc));
@@ -193,7 +201,62 @@ REGISTER_CALCULATOR(RecolorCalculator);
 }
 
 ::mediapipe::Status RecolorCalculator::RenderCpu(CalculatorContext* cc) {
-  return ::mediapipe::UnimplementedError("CPU support is not implemented yet.");
+  if (cc->Inputs().Tag("MASK").IsEmpty()) {
+    return ::mediapipe::OkStatus();
+  }
+  // Get inputs and setup output.
+  const auto& input_img = cc->Inputs().Tag("IMAGE").Get<ImageFrame>();
+  const auto& mask_img = cc->Inputs().Tag("MASK").Get<ImageFrame>();
+
+  cv::Mat input_mat = formats::MatView(&input_img);
+  cv::Mat mask_mat = formats::MatView(&mask_img);
+
+  RET_CHECK(input_mat.channels() == 3);  // RGB only.
+
+  if (mask_mat.channels() > 1) {
+    std::vector<cv::Mat> channels;
+    cv::split(mask_mat, channels);
+    if (mask_channel_ == mediapipe::RecolorCalculatorOptions_MaskChannel_ALPHA)
+      mask_mat = channels[3];
+    else
+      mask_mat = channels[0];
+  }
+  cv::Mat mask_full;
+  cv::resize(mask_mat, mask_full, input_mat.size());
+
+  auto output_img = absl::make_unique<ImageFrame>(
+      input_img.Format(), input_mat.cols, input_mat.rows);
+  cv::Mat output_mat = mediapipe::formats::MatView(output_img.get());
+
+  // From GPU shader:
+  /*
+      vec4 weight = texture2D(mask, sample_coordinate);
+      vec4 color1 = texture2D(frame, sample_coordinate);
+      vec4 color2 = vec4(recolor, 1.0);
+
+      float luminance = dot(color1.rgb, vec3(0.299, 0.587, 0.114));
+      float mix_value = weight.MASK_COMPONENT * luminance;
+
+      fragColor = mix(color1, color2, mix_value);
+  */
+  for (int i = 0; i < output_mat.rows; ++i) {
+    for (int j = 0; j < output_mat.cols; ++j) {
+      float weight = mask_full.at<uchar>(i, j) * (1.0 / 255.0);
+      cv::Vec3f color1 = input_mat.at<cv::Vec3b>(i, j);
+      cv::Vec3f color2 = {color_[0], color_[1], color_[2]};
+
+      float luminance =
+          (color1[0] * 0.299 + color1[1] * 0.587 + color1[2] * 0.114) / 255;
+      float mix_value = weight * luminance;
+
+      cv::Vec3b mix_color = color1 * (1.0 - mix_value) + color2 * mix_value;
+      output_mat.at<cv::Vec3b>(i, j) = mix_color;
+    }
+  }
+
+  cc->Outputs().Tag("IMAGE").Add(output_img.release(), cc->InputTimestamp());
+
+  return ::mediapipe::OkStatus();
 }
 
 ::mediapipe::Status RecolorCalculator::RenderGpu(CalculatorContext* cc) {
@@ -303,9 +366,9 @@ void RecolorCalculator::GlRender() {
 
   if (!options.has_color()) RET_CHECK_FAIL() << "Missing color option.";
 
-  color_.push_back(options.color().r() / 255.0);
-  color_.push_back(options.color().g() / 255.0);
-  color_.push_back(options.color().b() / 255.0);
+  color_.push_back(options.color().r());
+  color_.push_back(options.color().g());
+  color_.push_back(options.color().b());
 
   return ::mediapipe::OkStatus();
 }
@@ -378,8 +441,8 @@ void RecolorCalculator::GlRender() {
   glUseProgram(program_);
   glUniform1i(glGetUniformLocation(program_, "frame"), 1);
   glUniform1i(glGetUniformLocation(program_, "mask"), 2);
-  glUniform3f(glGetUniformLocation(program_, "recolor"), color_[0], color_[1],
-              color_[2]);
+  glUniform3f(glGetUniformLocation(program_, "recolor"), color_[0] / 255.0,
+              color_[1] / 255.0, color_[2] / 255.0);
 #endif  //  !MEDIAPIPE_DISABLE_GPU
 
   return ::mediapipe::OkStatus();
