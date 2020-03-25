@@ -709,6 +709,7 @@ and install a MediaPipe example app.
     *   Enter Bazel flags: `-c opt --config=android_arm64`.
     *   Press the `[+]` button to add the new configuration.
     *   Select `Run` to run the example app on the connected Android device.
+        > `JDK` was required for building android app: `apt install default-jdk`.
 
 [`WORKSPACE`]: https://github.com/google/mediapipe/tree/master/WORKSPACE
 [`opencv_linux.BUILD`]: https://github.com/google/mediapipe/tree/master/third_party/opencv_linux.BUILD
