@@ -159,6 +159,6 @@ packets based on its series of input packets.
 
 | ![Graph using PacketClonerCalculator](images/packet_cloner_calculator.png) |
 |:--:|
-| *Each time it receives a packet on its TICK input stream, the PacketClonerCalculator outputs the most recent packet from each of its input streams.  The sequence of output packets is determined by the sequene of input packets and their timestamps. The timestamps are shows along the right side of the diagram.* |
+| *Each time it receives a packet on its TICK input stream, the PacketClonerCalculator outputs the most recent packet from each of its input streams.  The sequence of output packets is determined by the sequence of input packets and their timestamps. The timestamps are shows along the right side of the diagram.* |
 
 
