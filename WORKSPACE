@@ -275,7 +275,7 @@ maven_install(
         "androidx.test.espresso:espresso-core:3.1.1",
         "org.hamcrest:hamcrest-library:1.3",
         "androidx.concurrent:concurrent-futures:1.0.0-alpha03",
-        "androidx.lifecycle:lifecycle-common:2.0.0",
+        "androidx.lifecycle:lifecycle-common:2.2.0",
         "androidx.annotation:annotation:aar:1.1.0",
         "androidx.appcompat:appcompat:aar:1.1.0-rc01",
         "androidx.camera:camera-core:aar:1.0.0-alpha06",
