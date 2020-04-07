@@ -165,7 +165,7 @@ void RenderInternalState(const MotionBoxInternalState& internal,
                             255 * alpha + (1.0f - alpha) * 0,
                             0 * alpha + (1.0f - alpha) * 0);
 
-    cv::line(*frame, p1, p2, color_scaled, 1, CV_AA);
+    cv::line(*frame, p1, p2, color_scaled, 1, cv::LINE_AA);
     cv::circle(*frame, p1, 2.0, color_scaled, 1);
   }
 #else
@@ -196,7 +196,7 @@ void RenderTrackingData(const TrackingData& data, cv::Mat* mat,
     // iOS cannot display a width 1 antialiased line, so we provide
     // an option for 8-connected drawing instead.
     cv::line(*mat, p1, p2, cv::Scalar(0, 255, 0, 255), 1,
-             antialiasing ? CV_AA : 8);
+             antialiasing ? cv::LINE_AA : 8);
   }
 #else
   LOG(FATAL) << "Code stripped out because of NO_RENDERING";

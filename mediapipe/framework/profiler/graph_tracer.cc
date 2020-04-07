@@ -26,6 +26,7 @@
 namespace mediapipe {
 
 namespace {
+using EventType = GraphTrace::EventType;
 
 const absl::Duration kDefaultTraceLogInterval = absl::Milliseconds(500);
 
@@ -52,14 +53,18 @@ int64 GraphTracer::GetTraceLogCapacity() {
 
 GraphTracer::GraphTracer(const ProfilerConfig& profiler_config)
     : profiler_config_(profiler_config), trace_buffer_(GetTraceLogCapacity()) {
-  event_types_disabled_.resize(static_cast<int>(GraphTrace::EventType_MAX + 1));
-  for (int32 event_type : profiler_config_.trace_event_types_disabled()) {
-    event_types_disabled_[event_type] = true;
+  for (int disabled : profiler_config_.trace_event_types_disabled()) {
+    EventType event_type = static_cast<EventType>(disabled);
+    (*trace_event_registry())[event_type].set_enabled(false);
   }
 }
 
+TraceEventRegistry* GraphTracer::trace_event_registry() {
+  return trace_builder_.trace_event_registry();
+}
+
 void GraphTracer::LogEvent(TraceEvent event) {
-  if (event_types_disabled_[static_cast<int>(event.event_type)]) {
+  if (!(*trace_event_registry())[event.event_type].enabled()) {
     return;
   }
   event.set_thread_id(GetCurrentThreadId());

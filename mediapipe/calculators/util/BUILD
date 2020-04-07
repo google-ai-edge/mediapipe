@@ -321,7 +321,7 @@ cc_library(
         "//mediapipe:android": [
             "//mediapipe/util/android/file/base",
         ],
-        "//mediapipe:apple": [
+        "//mediapipe:ios": [
             "//mediapipe/util/android/file/base",
         ],
         "//mediapipe:macos": [
@@ -349,7 +349,7 @@ cc_library(
         "//mediapipe:android": [
             "//mediapipe/util/android/file/base",
         ],
-        "//mediapipe:apple": [
+        "//mediapipe:ios": [
             "//mediapipe/util/android/file/base",
         ],
         "//mediapipe:macos": [
@@ -926,7 +926,7 @@ cc_library(
         "//mediapipe:android": [
             "//mediapipe/util/android/file/base",
         ],
-        "//mediapipe:apple": [
+        "//mediapipe:ios": [
             "//mediapipe/util/android/file/base",
         ],
         "//mediapipe:macos": [
@@ -971,9 +971,9 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         "//mediapipe/framework:calculator_framework",
-        "//mediapipe/framework/port:file_helpers",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
+        "//mediapipe/util:resource_util",
     ],
     alwayslink = 1,
 )

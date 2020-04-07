@@ -28,6 +28,9 @@ class TraceBuilder {
   TraceBuilder();
   ~TraceBuilder();
 
+  // Returns the registry of trace event types.
+  TraceEventRegistry* trace_event_registry();
+
   // Returns the earliest packet timestamp appearing only after begin_time.
   static Timestamp TimestampAfter(const TraceBuffer& buffer,
                                   absl::Time begin_time);

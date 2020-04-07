@@ -59,10 +59,10 @@ android_library(
         ":android_core",
         "//third_party:androidx_annotation",
         "//third_party:androidx_legacy_support_v4",
-        "@com_google_code_findbugs//jar",
-        "@com_google_common_flogger//jar",
-        "@com_google_common_flogger_system_backend//jar",
-        "@com_google_guava_android//jar",
+        "@maven//:com_google_code_findbugs_jsr305",
+        "@maven//:com_google_flogger_flogger",
+        "@maven//:com_google_flogger_flogger_system_backend",
+        "@maven//:com_google_guava_guava",
     ],
 )
 
@@ -85,10 +85,10 @@ android_library(
         "//mediapipe/framework:calculator_java_proto_lite",
         "//mediapipe/framework:calculator_profile_java_proto_lite",
         "//mediapipe/framework/tool:calculator_graph_template_java_proto_lite",
-        "@com_google_code_findbugs//jar",
-        "@com_google_common_flogger//jar",
-        "@com_google_common_flogger_system_backend//jar",
-        "@com_google_guava_android//jar",
+        "@maven//:com_google_code_findbugs_jsr305",
+        "@maven//:com_google_flogger_flogger",
+        "@maven//:com_google_flogger_flogger_system_backend",
+        "@maven//:com_google_guava_guava",
     ],
 )
 

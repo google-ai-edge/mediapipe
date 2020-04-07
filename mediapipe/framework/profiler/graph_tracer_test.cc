@@ -161,7 +161,7 @@ TEST_F(GraphTracerTest, CalculatorTrace) {
                     finish_time: 0
                     packet_timestamp: 0
                     stream_id: 1
-                    packet_id: 1
+                    event_data: 1
                   }
                   output_trace { packet_timestamp: 0 stream_id: 2 }
                 }
@@ -236,7 +236,7 @@ TEST_F(GraphTracerTest, GraphTrace) {
                     finish_time: 0
                     packet_timestamp: 0
                     stream_id: 1
-                    packet_id: 1
+                    event_data: 1
                   }
                   output_trace { packet_timestamp: 0 stream_id: 2 }
                   output_trace { packet_timestamp: 0 stream_id: 3 }
@@ -254,7 +254,7 @@ TEST_F(GraphTracerTest, GraphTrace) {
                     finish_time: 11000
                     packet_timestamp: 0
                     stream_id: 2
-                    packet_id: 2
+                    event_data: 2
                   }
                   output_trace { packet_timestamp: 0 stream_id: 4 }
                 }
@@ -270,7 +270,7 @@ TEST_F(GraphTracerTest, GraphTrace) {
                     finish_time: 16000
                     packet_timestamp: 0
                     stream_id: 3
-                    packet_id: 3
+                    event_data: 3
                   }
                   output_trace { packet_timestamp: 0 stream_id: 5 }
                 }
@@ -286,7 +286,7 @@ TEST_F(GraphTracerTest, GraphTrace) {
                     finish_time: 38000
                     packet_timestamp: 5
                     stream_id: 3
-                    packet_id: 4
+                    event_data: 4
                   }
                   output_trace { packet_timestamp: 5 stream_id: 5 }
                 }
@@ -452,12 +452,15 @@ class GraphTracerE2ETest : public ::testing::Test {
     }
   }
   void StripDataIds(GraphTrace* trace) {
+    TraceBuilder builder;
     for (auto& ct : *trace->mutable_calculator_trace()) {
-      for (auto& st : *ct.mutable_input_trace()) {
-        st.clear_packet_id();
-      }
-      for (auto& st : *ct.mutable_output_trace()) {
-        st.clear_packet_id();
+      if ((*builder.trace_event_registry())[ct.event_type()].id_event_data()) {
+        for (auto& st : *ct.mutable_input_trace()) {
+          st.clear_event_data();
+        }
+        for (auto& st : *ct.mutable_output_trace()) {
+          st.clear_event_data();
+        }
       }
     }
   }
@@ -656,63 +659,81 @@ TEST_F(GraphTracerE2ETest, DemuxGraphLog) {
                 calculator_trace { node_id: 1 input_timestamp: 10000 }
                 calculator_trace { node_id: 1 input_timestamp: 10000 }
                 calculator_trace { node_id: 1 input_timestamp: 10000 }
+                calculator_trace { node_id: 1 input_timestamp: 10000 }
+                calculator_trace { node_id: 2 input_timestamp: 10000 }
                 calculator_trace { node_id: 2 input_timestamp: 10000 }
                 calculator_trace { node_id: 1 input_timestamp: 10000 }
                 calculator_trace { node_id: 2 input_timestamp: 10000 }
                 calculator_trace { node_id: 2 input_timestamp: 10000 }
+                calculator_trace { node_id: 3 input_timestamp: 10000 }
                 calculator_trace { node_id: 3 input_timestamp: 10000 }
                 calculator_trace { node_id: 2 input_timestamp: 10000 }
                 calculator_trace { node_id: 3 input_timestamp: 10000 }
                 calculator_trace { node_id: 0 input_timestamp: 20000 }
+                calculator_trace { node_id: 1 input_timestamp: 20000 }
                 calculator_trace { node_id: 1 input_timestamp: 10000 }
                 calculator_trace { node_id: 1 input_timestamp: 20000 }
                 calculator_trace { node_id: 1 input_timestamp: 20000 }
+                calculator_trace { node_id: 2 input_timestamp: 20000 }
                 calculator_trace { node_id: 2 input_timestamp: 10000 }
                 calculator_trace { node_id: 1 input_timestamp: 10000 }
                 calculator_trace { node_id: 2 input_timestamp: 20000 }
                 calculator_trace { node_id: 2 input_timestamp: 20000 }
+                calculator_trace { node_id: 4 input_timestamp: 20000 }
                 calculator_trace { node_id: 4 input_timestamp: 10000 }
                 calculator_trace { node_id: 2 input_timestamp: 10000 }
                 calculator_trace { node_id: 4 input_timestamp: 20000 }
                 calculator_trace { node_id: 0 input_timestamp: 30000 }
+                calculator_trace { node_id: 1 input_timestamp: 30000 }
                 calculator_trace { node_id: 1 input_timestamp: 10000 }
                 calculator_trace { node_id: 1 input_timestamp: 30000 }
                 calculator_trace { node_id: 1 input_timestamp: 30000 }
+                calculator_trace { node_id: 2 input_timestamp: 30000 }
                 calculator_trace { node_id: 2 input_timestamp: 10000 }
                 calculator_trace { node_id: 1 input_timestamp: 10000 }
                 calculator_trace { node_id: 2 input_timestamp: 30000 }
                 calculator_trace { node_id: 2 input_timestamp: 30000 }
+                calculator_trace { node_id: 3 input_timestamp: 30000 }
                 calculator_trace { node_id: 2 input_timestamp: 10000 }
                 calculator_trace { node_id: 0 input_timestamp: 40000 }
+                calculator_trace { node_id: 1 input_timestamp: 40000 }
                 calculator_trace { node_id: 1 input_timestamp: 10000 }
                 calculator_trace { node_id: 1 input_timestamp: 40000 }
                 calculator_trace { node_id: 1 input_timestamp: 40000 }
+                calculator_trace { node_id: 2 input_timestamp: 40000 }
                 calculator_trace { node_id: 2 input_timestamp: 10000 }
                 calculator_trace { node_id: 1 input_timestamp: 10000 }
                 calculator_trace { node_id: 2 input_timestamp: 40000 }
                 calculator_trace { node_id: 2 input_timestamp: 40000 }
+                calculator_trace { node_id: 4 input_timestamp: 40000 }
                 calculator_trace { node_id: 2 input_timestamp: 10000 }
                 calculator_trace { node_id: 3 input_timestamp: 10000 }
                 calculator_trace { node_id: 5 input_timestamp: 10000 }
+                calculator_trace { node_id: 5 input_timestamp: 10000 }
                 calculator_trace { node_id: 3 input_timestamp: 10000 }
                 calculator_trace { node_id: 5 input_timestamp: 10000 }
                 calculator_trace { node_id: 5 input_timestamp: 10000 }
                 calculator_trace { node_id: 5 input_timestamp: 10000 }
+                calculator_trace { node_id: 1 input_timestamp: 10000 }
                 calculator_trace { node_id: 1 input_timestamp: 10000 }
                 calculator_trace { node_id: 5 input_timestamp: 10000 }
                 calculator_trace { node_id: 3 input_timestamp: 30000 }
                 calculator_trace { node_id: 1 input_timestamp: 10000 }
                 calculator_trace { node_id: 1 input_timestamp: 10000 }
                 calculator_trace { node_id: 0 input_timestamp: 50000 }
+                calculator_trace { node_id: 1 input_timestamp: 50000 }
                 calculator_trace { node_id: 1 input_timestamp: 10000 }
                 calculator_trace { node_id: 1 input_timestamp: 50000 }
                 calculator_trace { node_id: 1 input_timestamp: 50000 }
+                calculator_trace { node_id: 2 input_timestamp: 50000 }
                 calculator_trace { node_id: 2 input_timestamp: 10000 }
                 calculator_trace { node_id: 1 input_timestamp: 10000 }
                 calculator_trace { node_id: 2 input_timestamp: 50000 }
                 calculator_trace { node_id: 2 input_timestamp: 50000 }
+                calculator_trace { node_id: 3 input_timestamp: 50000 }
                 calculator_trace { node_id: 2 input_timestamp: 10000 }
                 calculator_trace { node_id: 0 input_timestamp: 60000 }
+                calculator_trace { node_id: 1 input_timestamp: 60000 }
                 calculator_trace { node_id: 1 input_timestamp: 10000 }
                 calculator_trace { node_id: 1 input_timestamp: 60000 }
                 calculator_trace { node_id: 2 input_timestamp: 10000 }
@@ -721,33 +742,39 @@ TEST_F(GraphTracerE2ETest, DemuxGraphLog) {
                 calculator_trace { node_id: 2 input_timestamp: 10000 }
                 calculator_trace { node_id: 1 input_timestamp: 10000 }
                 calculator_trace { node_id: 4 input_timestamp: 20000 }
+                calculator_trace { node_id: 5 input_timestamp: 20000 }
                 calculator_trace { node_id: 5 input_timestamp: 10000 }
                 calculator_trace { node_id: 4 input_timestamp: 10000 }
                 calculator_trace { node_id: 5 input_timestamp: 20000 }
                 calculator_trace { node_id: 5 input_timestamp: 20000 }
                 calculator_trace { node_id: 5 input_timestamp: 20000 }
+                calculator_trace { node_id: 1 input_timestamp: 20000 }
                 calculator_trace { node_id: 1 input_timestamp: 10000 }
                 calculator_trace { node_id: 5 input_timestamp: 10000 }
                 calculator_trace { node_id: 4 input_timestamp: 40000 }
                 calculator_trace { node_id: 1 input_timestamp: 20000 }
                 calculator_trace { node_id: 1 input_timestamp: 10000 }
                 calculator_trace { node_id: 3 input_timestamp: 30000 }
+                calculator_trace { node_id: 5 input_timestamp: 30000 }
                 calculator_trace { node_id: 5 input_timestamp: 10000 }
                 calculator_trace { node_id: 3 input_timestamp: 10000 }
                 calculator_trace { node_id: 5 input_timestamp: 30000 }
                 calculator_trace { node_id: 5 input_timestamp: 30000 }
                 calculator_trace { node_id: 5 input_timestamp: 30000 }
+                calculator_trace { node_id: 1 input_timestamp: 30000 }
                 calculator_trace { node_id: 1 input_timestamp: 10000 }
                 calculator_trace { node_id: 5 input_timestamp: 10000 }
                 calculator_trace { node_id: 3 input_timestamp: 50000 }
                 calculator_trace { node_id: 1 input_timestamp: 30000 }
                 calculator_trace { node_id: 1 input_timestamp: 10000 }
                 calculator_trace { node_id: 3 input_timestamp: 50000 }
+                calculator_trace { node_id: 5 input_timestamp: 50000 }
                 calculator_trace { node_id: 5 input_timestamp: 10000 }
                 calculator_trace { node_id: 3 input_timestamp: 10000 }
                 calculator_trace { node_id: 5 input_timestamp: 50000 }
                 calculator_trace { node_id: 5 input_timestamp: 50000 }
                 calculator_trace { node_id: 5 input_timestamp: 50000 }
+                calculator_trace { node_id: 1 input_timestamp: 50000 }
                 calculator_trace { node_id: 1 input_timestamp: 10000 }
                 calculator_trace { node_id: 5 input_timestamp: 10000 }
                 calculator_trace { node_id: 5 input_timestamp: 10000 }
@@ -755,16 +782,17 @@ TEST_F(GraphTracerE2ETest, DemuxGraphLog) {
                 calculator_trace { node_id: 1 input_timestamp: 50000 }
                 calculator_trace { node_id: 1 input_timestamp: 10000 }
                 calculator_trace { node_id: 4 input_timestamp: 40000 }
+                calculator_trace { node_id: 5 input_timestamp: 40000 }
                 calculator_trace { node_id: 5 input_timestamp: 10000 }
                 calculator_trace { node_id: 4 input_timestamp: 10000 }
                 calculator_trace { node_id: 5 input_timestamp: 40000 }
                 calculator_trace { node_id: 5 input_timestamp: 40000 }
+                calculator_trace { node_id: 1 input_timestamp: 50001 }
                 calculator_trace { node_id: 1 input_timestamp: 10000 }
                 calculator_trace { node_id: 5 input_timestamp: 10000 }
                 calculator_trace { node_id: 5 input_timestamp: 10000 }
                 calculator_trace { node_id: 1 input_timestamp: 50001 }
-                calculator_trace { node_id: 1 input_timestamp: 10000 }
-              )")));
+                calculator_trace { node_id: 1 input_timestamp: 10000 })")));
 
   // Validate a one-timestamp slice of the event trace.
   GraphTrace trace_2;
@@ -773,142 +801,179 @@ TEST_F(GraphTracerE2ETest, DemuxGraphLog) {
                                       &trace_2);
   StripThreadIds(&trace_2);
   StripDataIds(&trace_2);
-  EXPECT_THAT(trace_2,
-              EqualsProto(::mediapipe::ParseTextProtoOrDie<GraphTrace>(
-                  R"(
-                    base_time: 1544086800000000
-                    base_timestamp: 10000
-                    stream_name: ""
-                    stream_name: "input_packets_0"
-                    stream_name: "input_0_sampled"
-                    stream_name: "input_0"
-                    stream_name: "input_1"
-                    stream_name: "output_0"
-                    stream_name: "output_packets_0"
-                    stream_name: "finish_indicator"
-                    stream_name: "output_1"
-                    calculator_trace {
-                      node_id: 3
-                      input_timestamp: 0
-                      event_type: PROCESS
-                      finish_time: 25002
-                      output_trace { packet_timestamp: 0 stream_id: 5 }
-                    }
-                    calculator_trace {
-                      node_id: 5
-                      event_type: READY_FOR_PROCESS
-                      start_time: 25002
-                    }
-                    calculator_trace {
-                      node_id: 3
-                      event_type: READY_FOR_PROCESS
-                      start_time: 25002
-                    }
-                    calculator_trace {
-                      node_id: 5
-                      input_timestamp: 0
-                      event_type: PROCESS
-                      start_time: 25002
-                      input_trace { packet_timestamp: 0 stream_id: 5 }
-                    }
-                    calculator_trace {
-                      node_id: 5
-                      input_timestamp: 0
-                      event_type: PROCESS
-                      finish_time: 25002
-                      output_trace { packet_timestamp: 0 stream_id: 6 }
-                    }
-                    calculator_trace {
-                      node_id: 5
-                      input_timestamp: 0
-                      event_type: PROCESS
-                      finish_time: 25002
-                      output_trace { packet_timestamp: 0 stream_id: 7 }
-                    }
-                    calculator_trace {
-                      node_id: 1
-                      event_type: READY_FOR_PROCESS
-                      start_time: 25002
-                    }
-                    calculator_trace {
-                      node_id: 5
-                      event_type: NOT_READY
-                      start_time: 25002
-                    }
-                    calculator_trace {
-                      node_id: 3
-                      input_timestamp: 20000
-                      event_type: PROCESS
-                      start_time: 25002
-                      input_trace { packet_timestamp: 20000 stream_id: 3 }
-                    }
-                    calculator_trace {
-                      node_id: 1
-                      input_timestamp: 0
-                      event_type: PROCESS
-                      start_time: 25002
-                      input_trace { packet_timestamp: 0 stream_id: 7 }
-                    }
-                    calculator_trace {
-                      node_id: 1
-                      event_type: NOT_READY
-                      start_time: 25002
-                    }
-                    calculator_trace {
-                      node_id: 0
-                      input_timestamp: 40000
-                      event_type: PROCESS
-                      finish_time: 25005
-                      output_trace { packet_timestamp: 40000 stream_id: 1 }
-                    }
-                    calculator_trace {
-                      node_id: 1
-                      event_type: READY_FOR_PROCESS
-                      start_time: 25005
-                    }
-                    calculator_trace {
-                      node_id: 1
-                      input_timestamp: 40000
-                      event_type: PROCESS
-                      start_time: 25005
-                      input_trace { packet_timestamp: 40000 stream_id: 1 }
-                    }
-                    calculator_trace {
-                      node_id: 1
-                      input_timestamp: 40000
-                      event_type: PROCESS
-                      finish_time: 25005
-                      output_trace { packet_timestamp: 40000 stream_id: 2 }
-                    }
-                    calculator_trace {
-                      node_id: 2
-                      event_type: READY_FOR_PROCESS
-                      start_time: 25005
-                    }
-                    calculator_trace {
-                      node_id: 1
-                      event_type: NOT_READY
-                      start_time: 25005
-                    }
-                    calculator_trace {
-                      node_id: 2
-                      input_timestamp: 40000
-                      event_type: PROCESS
-                      start_time: 25005
-                      input_trace { packet_timestamp: 40000 stream_id: 2 }
-                    }
-                    calculator_trace {
-                      node_id: 2
-                      input_timestamp: 40000
-                      event_type: PROCESS
-                      finish_time: 25005
-                      output_trace { packet_timestamp: 40000 stream_id: 3 }
-                    }
-                    calculator_trace {
-                      node_id: 2
-                      event_type: NOT_READY
-                      start_time: 25005
-                    })")));
+  EXPECT_THAT(
+      trace_2,
+      EqualsProto(::mediapipe::ParseTextProtoOrDie<GraphTrace>(
+          R"(
+            base_time: 1544086800000000
+            base_timestamp: 10000
+            stream_name: ""
+            stream_name: "input_packets_0"
+            stream_name: "input_0_sampled"
+            stream_name: "input_0"
+            stream_name: "input_1"
+            stream_name: "output_0"
+            stream_name: "output_packets_0"
+            stream_name: "finish_indicator"
+            stream_name: "output_1"
+            calculator_trace {
+              node_id: 3
+              input_timestamp: 0
+              event_type: PROCESS
+              finish_time: 25002
+              output_trace { packet_timestamp: 0 stream_id: 5 }
+            }
+            calculator_trace {
+              node_id: 5
+              input_timestamp: 0
+              event_type: PACKET_QUEUED
+              start_time: 25002
+              input_trace { packet_timestamp: 0 stream_id: 5 event_data: 1 }
+            }
+            calculator_trace {
+              node_id: 5
+              event_type: READY_FOR_PROCESS
+              start_time: 25002
+            }
+            calculator_trace {
+              node_id: 3
+              event_type: READY_FOR_PROCESS
+              start_time: 25002
+            }
+            calculator_trace {
+              node_id: 5
+              input_timestamp: 0
+              event_type: PROCESS
+              start_time: 25002
+              input_trace { packet_timestamp: 0 stream_id: 5 }
+            }
+            calculator_trace {
+              node_id: 5
+              input_timestamp: 0
+              event_type: PROCESS
+              finish_time: 25002
+              output_trace { packet_timestamp: 0 stream_id: 6 }
+            }
+            calculator_trace {
+              node_id: 5
+              input_timestamp: 0
+              event_type: PROCESS
+              finish_time: 25002
+              output_trace { packet_timestamp: 0 stream_id: 7 }
+            }
+            calculator_trace {
+              node_id: 1
+              input_timestamp: 0
+              event_type: PACKET_QUEUED
+              start_time: 25002
+              input_trace { packet_timestamp: 0 stream_id: 7 event_data: 1 }
+            }
+            calculator_trace {
+              node_id: 1
+              event_type: READY_FOR_PROCESS
+              start_time: 25002
+            }
+            calculator_trace {
+              node_id: 5
+              event_type: NOT_READY
+              start_time: 25002
+            }
+            calculator_trace {
+              node_id: 3
+              input_timestamp: 20000
+              event_type: PROCESS
+              start_time: 25002
+              input_trace { packet_timestamp: 20000 stream_id: 3 }
+            }
+            calculator_trace {
+              node_id: 1
+              input_timestamp: 0
+              event_type: PROCESS
+              start_time: 25002
+              input_trace { packet_timestamp: 0 stream_id: 7 }
+            }
+            calculator_trace {
+              node_id: 1
+              event_type: NOT_READY
+              start_time: 25002
+            }
+            calculator_trace {
+              node_id: 0
+              input_timestamp: 40000
+              event_type: PROCESS
+              finish_time: 25005
+              output_trace { packet_timestamp: 40000 stream_id: 1 }
+            }
+            calculator_trace {
+              node_id: 1
+              input_timestamp: 40000
+              event_type: PACKET_QUEUED
+              start_time: 25005
+              input_trace { packet_timestamp: 40000 stream_id: 1 event_data: 1 }
+            }
+            calculator_trace {
+              node_id: 1
+              event_type: READY_FOR_PROCESS
+              start_time: 25005
+            }
+            calculator_trace {
+              node_id: 1
+              input_timestamp: 40000
+              event_type: PROCESS
+              start_time: 25005
+              input_trace { packet_timestamp: 40000 stream_id: 1 }
+            }
+            calculator_trace {
+              node_id: 1
+              input_timestamp: 40000
+              event_type: PROCESS
+              finish_time: 25005
+              output_trace { packet_timestamp: 40000 stream_id: 2 }
+            }
+            calculator_trace {
+              node_id: 2
+              input_timestamp: 40000
+              event_type: PACKET_QUEUED
+              start_time: 25005
+              input_trace { packet_timestamp: 40000 stream_id: 2 event_data: 1 }
+            }
+            calculator_trace {
+              node_id: 2
+              event_type: READY_FOR_PROCESS
+              start_time: 25005
+            }
+            calculator_trace {
+              node_id: 1
+              event_type: NOT_READY
+              start_time: 25005
+            }
+            calculator_trace {
+              node_id: 2
+              input_timestamp: 40000
+              event_type: PROCESS
+              start_time: 25005
+              input_trace { packet_timestamp: 40000 stream_id: 2 }
+            }
+            calculator_trace {
+              node_id: 2
+              input_timestamp: 40000
+              event_type: PROCESS
+              finish_time: 25005
+              output_trace { packet_timestamp: 40000 stream_id: 3 }
+            }
+            calculator_trace {
+              node_id: 3
+              input_timestamp: 40000
+              event_type: PACKET_QUEUED
+              start_time: 25005
+              input_trace { packet_timestamp: 40000 stream_id: 3 event_data: 1 }
+            }
+            calculator_trace {
+              node_id: 2
+              event_type: NOT_READY
+              start_time: 25005
+            }
+          )")));
 }
 
 // Read a GraphProfile from a file path.
@@ -931,7 +996,7 @@ TEST_F(GraphTracerE2ETest, DemuxGraphLogFile) {
   GraphProfile profile;
   MP_EXPECT_OK(
       ReadGraphProfile(absl::StrCat(log_path, 0, ".binarypb"), &profile));
-  EXPECT_EQ(89, profile.graph_trace(0).calculator_trace().size());
+  EXPECT_EQ(111, profile.graph_trace(0).calculator_trace().size());
 }
 
 TEST_F(GraphTracerE2ETest, DemuxGraphLogFiles) {
@@ -956,7 +1021,11 @@ TEST_F(GraphTracerE2ETest, DemuxGraphLogFiles) {
       graph_profiles.push_back(profile);
     }
   }
-  std::vector<int> expected = {37, 52, 9};
+
+  // The expected counts of calculator_trace records in each of the log files.
+  // The processing spans three 12.5ms log files, because
+  // RunDemuxInFlightGraph adds packets over 30ms.
+  std::vector<int> expected = {49, 64, 11};
   EXPECT_EQ(event_counts, expected);
   GraphProfile& profile_2 = graph_profiles[2];
   profile_2.clear_calculator_profiles();
@@ -994,6 +1063,18 @@ TEST_F(GraphTracerE2ETest, DemuxGraphLogFiles) {
                   }
                   calculator_trace {
                     node_id: 5
+                    input_timestamp: 40000
+                    event_type: PACKET_QUEUED
+                    start_time: 70004
+                    input_trace {
+                      finish_time: 70004
+                      packet_timestamp: 40000
+                      stream_id: 8
+                      event_data: 1
+                    }
+                  }
+                  calculator_trace {
+                    node_id: 5
                     event_type: READY_FOR_PROCESS
                     start_time: 70004
                   }
@@ -1015,6 +1096,18 @@ TEST_F(GraphTracerE2ETest, DemuxGraphLogFiles) {
                       stream_id: 8
                     }
                     output_trace { packet_timestamp: 50001 stream_id: 7 }
+                  }
+                  calculator_trace {
+                    node_id: 1
+                    input_timestamp: 50001
+                    event_type: PACKET_QUEUED
+                    start_time: 70004
+                    input_trace {
+                      finish_time: 70004
+                      packet_timestamp: 50001
+                      stream_id: 7
+                      event_data: 1
+                    }
                   }
                   calculator_trace {
                     node_id: 1
@@ -1199,7 +1292,7 @@ TEST_F(GraphTracerE2ETest, GpuTaskTrace) {
                                  finish_time: 0
                                  packet_timestamp: 0
                                  stream_id: 1
-                                 packet_id: 0
+                                 event_data: 0
                                }
                                output_trace { packet_timestamp: 0 stream_id: 2 }
                                thread_id: 0
@@ -1231,7 +1324,7 @@ TEST_F(GraphTracerE2ETest, GpuTaskTrace) {
               input_timestamp: 0
               event_type: PROCESS
               start_time: 0
-              input_trace { packet_timestamp: 0 stream_id: 1 packet_id: 0 }
+              input_trace { packet_timestamp: 0 stream_id: 1 event_data: 0 }
               thread_id: 0
             }
             calculator_trace {
@@ -1253,7 +1346,7 @@ TEST_F(GraphTracerE2ETest, GpuTaskTrace) {
               input_timestamp: 0
               event_type: PROCESS
               finish_time: 1000
-              output_trace { packet_timestamp: 0 stream_id: 2 packet_id: 0 }
+              output_trace { packet_timestamp: 0 stream_id: 2 event_data: 0 }
               thread_id: 0
             }
           )")));

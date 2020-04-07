@@ -40,12 +40,11 @@ To build and run iOS apps:
     $ cd mediapipe
     ```
 
-2.  Install Bazel (version between 1.0.0 and 1.2.1).
+2.  Install Bazel.
 
     Follow the official
     [Bazel documentation](https://docs.bazel.build/versions/master/install-ubuntu.html)
-    to install Bazel manually. Note that MediaPipe doesn't support Bazel 2.0.0+
-    yet.
+    to install Bazel 2.0 or higher.
 
 3.  Install OpenCV and FFmpeg.
 
@@ -111,7 +110,7 @@ To build and run iOS apps:
     # To compile with GPU support, replace
     --define MEDIAPIPE_DISABLE_GPU=1
     # with
-    --copt -DMESA_EGL_NO_X11_HEADERS
+    --copt -DMESA_EGL_NO_X11_HEADERS --copt -DEGL_NO_X11
     # when building GPU examples.
     ```
 
@@ -125,7 +124,7 @@ To build and run iOS apps:
         mediapipe/examples/desktop/hello_world:hello_world
 
     # If you are running on Linux desktop with GPU support enabled (via mesa drivers)
-    $ bazel run --copt -DMESA_EGL_NO_X11_HEADERS \
+    $ bazel run --copt -DMESA_EGL_NO_X11_HEADERS --copt -DEGL_NO_X11 \
         mediapipe/examples/desktop/hello_world:hello_world
 
     # Should print:
@@ -152,12 +151,11 @@ To build and run iOS apps:
     $ cd mediapipe
     ```
 
-2.  Install Bazel (version between 1.0.0 and 1.2.1).
+2.  Install Bazel.
 
     Follow the official
     [Bazel documentation](https://docs.bazel.build/versions/master/install-redhat.html)
-    to install Bazel manually. Note that MediaPipe doesn't support Bazel 2.0.0+
-    yet.
+    to install Bazel 2.0 or higher.
 
 3.  Install OpenCV.
 
@@ -241,23 +239,18 @@ To build and run iOS apps:
     $ cd mediapipe
     ```
 
-3.  Install Bazel (version between 1.0.0 and 1.1.0).
+3.  Install Bazel.
 
-    Option 1. Use package manager tool to install Bazel 1.1.0
+    Option 1. Use package manager tool to install Bazel
 
     ```bash
-    # If Bazel 1.1.0+ was installed.
-    $ brew uninstall bazel
-    # Install Bazel 1.1.0
-    $ brew install https://raw.githubusercontent.com/bazelbuild/homebrew-tap/f8a0fa981bcb1784a0d0823e14867b844e94fb3d/Formula/bazel.rb
-    $ brew link bazel
+    $ brew install bazel
     # Run 'bazel version' to check version of bazel
     ```
 
     Option 2. Follow the official
     [Bazel documentation](https://docs.bazel.build/versions/master/install-os-x.html#install-with-installer-mac-os-x)
-    to install any version of Bazel manually. Note that MediaPipe doesn't
-    support Bazel 1.1.0+ on macOS yet.
+    to install Bazel 2.0 or higher.
 
 4.  Install OpenCV and FFmpeg.
 
@@ -391,18 +384,18 @@ cameras. Alternatively, you use a video file as input.
     username@DESKTOP-TMVLBJ1:~$ sudo apt-get update && sudo apt-get install -y build-essential git python zip adb openjdk-8-jdk
     ```
 
-5.  Install Bazel (version between 1.0.0 and 1.2.1).
+5.  Install Bazel.
 
     ```bash
     username@DESKTOP-TMVLBJ1:~$ curl -sLO --retry 5 --retry-max-time 10 \
-    https://storage.googleapis.com/bazel/1.0.0/release/bazel-1.0.0-installer-linux-x86_64.sh && \
-    sudo mkdir -p /usr/local/bazel/1.0.0 && \
-    chmod 755 bazel-1.0.0-installer-linux-x86_64.sh && \
-    sudo ./bazel-1.0.0-installer-linux-x86_64.sh --prefix=/usr/local/bazel/1.0.0 && \
-    source /usr/local/bazel/1.0.0/lib/bazel/bin/bazel-complete.bash
+    https://storage.googleapis.com/bazel/2.0.0/release/bazel-2.0.0-installer-linux-x86_64.sh && \
+    sudo mkdir -p /usr/local/bazel/2.0.0 && \
+    chmod 755 bazel-2.0.0-installer-linux-x86_64.sh && \
+    sudo ./bazel-2.0.0-installer-linux-x86_64.sh --prefix=/usr/local/bazel/2.0.0 && \
+    source /usr/local/bazel/2.0.0/lib/bazel/bin/bazel-complete.bash
 
-    username@DESKTOP-TMVLBJ1:~$ /usr/local/bazel/1.0.0/lib/bazel/bin/bazel version && \
-    alias bazel='/usr/local/bazel/1.0.0/lib/bazel/bin/bazel'
+    username@DESKTOP-TMVLBJ1:~$ /usr/local/bazel/2.0.0/lib/bazel/bin/bazel version && \
+    alias bazel='/usr/local/bazel/2.0.0/lib/bazel/bin/bazel'
     ```
 
 6.  Checkout MediaPipe repository.

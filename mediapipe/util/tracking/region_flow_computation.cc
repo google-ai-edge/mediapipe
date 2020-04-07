@@ -962,7 +962,7 @@ bool RegionFlowComputation::InitFrame(const cv::Mat& source,
         LOG(ERROR) << "Expecting 3 channel input for RGB.";
         return false;
       }
-      cv::cvtColor(*source_ptr, dest_frame, CV_RGB2GRAY);
+      cv::cvtColor(*source_ptr, dest_frame, cv::COLOR_RGB2GRAY);
       break;
 
     case RegionFlowComputationOptions::FORMAT_BGR:
@@ -970,7 +970,7 @@ bool RegionFlowComputation::InitFrame(const cv::Mat& source,
         LOG(ERROR) << "Expecting 3 channel input for BGR.";
         return false;
       }
-      cv::cvtColor(*source_ptr, dest_frame, CV_BGR2GRAY);
+      cv::cvtColor(*source_ptr, dest_frame, cv::COLOR_BGR2GRAY);
       break;
 
     case RegionFlowComputationOptions::FORMAT_RGBA:
@@ -978,7 +978,7 @@ bool RegionFlowComputation::InitFrame(const cv::Mat& source,
         LOG(ERROR) << "Expecting 4 channel input for RGBA.";
         return false;
       }
-      cv::cvtColor(*source_ptr, dest_frame, CV_RGBA2GRAY);
+      cv::cvtColor(*source_ptr, dest_frame, cv::COLOR_RGBA2GRAY);
       break;
 
     case RegionFlowComputationOptions::FORMAT_BGRA:
@@ -986,7 +986,7 @@ bool RegionFlowComputation::InitFrame(const cv::Mat& source,
         LOG(ERROR) << "Expecting 4 channel input for BGRA.";
         return false;
       }
-      cv::cvtColor(*source_ptr, dest_frame, CV_BGRA2GRAY);
+      cv::cvtColor(*source_ptr, dest_frame, cv::COLOR_BGRA2GRAY);
       break;
 
     case RegionFlowComputationOptions::FORMAT_GRAYSCALE:

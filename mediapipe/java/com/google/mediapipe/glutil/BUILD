@@ -24,10 +24,10 @@ android_library(
     visibility = ["//visibility:public"],
     deps = [
         "//mediapipe/java/com/google/mediapipe/framework:android_framework_no_proguard",
-        "@com_google_code_findbugs//jar",
-        "@com_google_common_flogger//jar",
-        "@com_google_common_flogger_system_backend//jar",
-        "@com_google_guava_android//jar",
+        "@maven//:com_google_code_findbugs_jsr305",
+        "@maven//:com_google_flogger_flogger",
+        "@maven//:com_google_flogger_flogger_system_backend",
+        "@maven//:com_google_guava_guava",
     ],
 )
 

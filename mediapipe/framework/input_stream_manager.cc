@@ -152,7 +152,7 @@ template <typename Container>
       // If the caller is MovePackets(), packet's underlying holder should be
       // transferred into queue_. Otherwise, queue_ keeps a copy of the packet.
       ++num_packets_added_;
-      VLOG(2) << "Input stream:" << name_
+      VLOG(3) << "Input stream:" << name_
               << " has added packet at time: " << packet.Timestamp();
       if (std::is_const<
               typename std::remove_reference<Container>::type>::value) {
@@ -163,15 +163,15 @@ template <typename Container>
     }
     queue_became_full = (!was_queue_full && max_queue_size_ != -1 &&
                          queue_.size() >= max_queue_size_);
-    VLOG_IF(2, queue_.size() > 1)
+    VLOG_IF(3, queue_.size() > 1)
         << "Queue size greater than 1: stream name: " << name_
         << " queue_size: " << queue_.size();
-    VLOG(2) << "Input stream:" << name_
+    VLOG(3) << "Input stream:" << name_
             << " becomes non-empty status:" << queue_became_non_empty
             << " Size: " << queue_.size();
   }
   if (queue_became_full) {
-    VLOG(2) << "Queue became full: " << Name();
+    VLOG(3) << "Queue became full: " << Name();
     becomes_full_callback_(this, &last_reported_stream_full_);
   }
   *notify = queue_became_non_empty;
@@ -257,7 +257,7 @@ Packet InputStreamManager::PopPacketAtTimestamp(Timestamp timestamp,
       next_timestamp_bound_ = timestamp.NextAllowedInStream();
     }
 
-    VLOG(2) << "Input stream " << name_
+    VLOG(3) << "Input stream " << name_
             << " selecting at timestamp:" << timestamp.Value()
             << " next timestamp bound: " << next_timestamp_bound_;
 
@@ -282,13 +282,13 @@ Packet InputStreamManager::PopPacketAtTimestamp(Timestamp timestamp,
       ++(*num_packets_dropped);
     }
 
-    VLOG(2) << "Input stream removed packets:" << name_
+    VLOG(3) << "Input stream removed packets:" << name_
             << " Size:" << queue_.size();
     queue_became_non_full = (was_queue_full && queue_.size() < max_queue_size_);
     *stream_is_done = IsDone();
   }
   if (queue_became_non_full) {
-    VLOG(2) << "Queue became non-full: " << Name();
+    VLOG(3) << "Queue became non-full: " << Name();
     becomes_not_full_callback_(this, &last_reported_stream_full_);
   }
   return packet;
@@ -302,7 +302,7 @@ Packet InputStreamManager::PopQueueHead(bool* stream_is_done) {
   {
     absl::MutexLock stream_lock(&stream_mutex_);
 
-    VLOG(2) << "Input stream " << name_ << " selecting at queue head";
+    VLOG(3) << "Input stream " << name_ << " selecting at queue head";
 
     // Check if queue is full.
     bool was_queue_full =
@@ -315,13 +315,13 @@ Packet InputStreamManager::PopQueueHead(bool* stream_is_done) {
       packet = Packet();
     }
 
-    VLOG(2) << "Input stream removed a packet:" << name_
+    VLOG(3) << "Input stream removed a packet:" << name_
             << " Size:" << queue_.size();
     queue_became_non_full = (was_queue_full && queue_.size() < max_queue_size_);
     *stream_is_done = IsDone();
   }
   if (queue_became_non_full) {
-    VLOG(2) << "Queue became non-full: " << Name();
+    VLOG(3) << "Queue became non-full: " << Name();
     becomes_not_full_callback_(this, &last_reported_stream_full_);
   }
   return packet;
@@ -349,10 +349,10 @@ void InputStreamManager::SetMaxQueueSize(int max_queue_size) {
 
   // QueueSizeCallback is called with no mutexes held.
   if (!was_full && is_full) {
-    VLOG(2) << "Queue became full: " << Name();
+    VLOG(3) << "Queue became full: " << Name();
     becomes_full_callback_(this, &last_reported_stream_full_);
   } else if (was_full && !is_full) {
-    VLOG(2) << "Queue became non-full: " << Name();
+    VLOG(3) << "Queue became non-full: " << Name();
     becomes_not_full_callback_(this, &last_reported_stream_full_);
   }
 }
@@ -382,12 +382,12 @@ void InputStreamManager::ErasePacketsEarlierThan(Timestamp timestamp) {
       queue_.pop_front();
     }
 
-    VLOG(2) << "Input stream removed packets:" << name_
+    VLOG(3) << "Input stream removed packets:" << name_
             << " Size:" << queue_.size();
     queue_became_non_full = (was_queue_full && queue_.size() < max_queue_size_);
   }
   if (queue_became_non_full) {
-    VLOG(2) << "Queue became non-full: " << Name();
+    VLOG(3) << "Queue became non-full: " << Name();
     becomes_not_full_callback_(this, &last_reported_stream_full_);
   }
 }

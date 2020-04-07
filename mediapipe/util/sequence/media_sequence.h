@@ -404,6 +404,15 @@ void ClearPoint(const std::string& prefix,
                                          kRegionClassIndexKey, prefix)         \
   FIXED_PREFIX_VECTOR_INT64_FEATURE_LIST(CONCAT_STR2(identifier, TrackIndex),  \
                                          kRegionTrackIndexKey, prefix)         \
+  FIXED_PREFIX_VECTOR_FLOAT_FEATURE_LIST(                                      \
+      CONCAT_STR2(identifier, LabelConfidence), kRegionLabelConfidenceKey,     \
+      prefix)                                                                  \
+  FIXED_PREFIX_VECTOR_FLOAT_FEATURE_LIST(                                      \
+      CONCAT_STR2(identifier, ClassConfidence), kRegionClassConfidenceKey,     \
+      prefix)                                                                  \
+  FIXED_PREFIX_VECTOR_FLOAT_FEATURE_LIST(                                      \
+      CONCAT_STR2(identifier, TrackConfidence), kRegionTrackConfidenceKey,     \
+      prefix)                                                                  \
   FIXED_PREFIX_VECTOR_INT64_FEATURE_LIST(CONCAT_STR2(identifier, IsGenerated), \
                                          kRegionIsGeneratedKey, prefix)        \
   FIXED_PREFIX_VECTOR_INT64_FEATURE_LIST(CONCAT_STR2(identifier, IsOccluded),  \

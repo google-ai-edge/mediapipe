@@ -18,6 +18,7 @@
 
 #include "mediapipe/framework/formats/detection.pb.h"
 #include "mediapipe/framework/formats/landmark.pb.h"
+#include "mediapipe/framework/formats/matrix.h"
 #include "mediapipe/framework/formats/rect.pb.h"
 
 namespace mediapipe {
@@ -36,5 +37,9 @@ REGISTER_CALCULATOR(BeginLoopNormalizedRectCalculator);
 typedef BeginLoopCalculator<std::vector<::mediapipe::Detection>>
     BeginLoopDetectionCalculator;
 REGISTER_CALCULATOR(BeginLoopDetectionCalculator);
+
+// A calculator to process std::vector<Matrix>.
+typedef BeginLoopCalculator<std::vector<Matrix>> BeginLoopMatrixCalculator;
+REGISTER_CALCULATOR(BeginLoopMatrixCalculator);
 
 }  // namespace mediapipe

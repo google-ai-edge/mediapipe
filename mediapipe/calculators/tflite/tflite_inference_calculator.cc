@@ -673,7 +673,7 @@ REGISTER_CALCULATOR(TfLiteInferenceCalculator);
     const auto& input_indices = interpreter_->inputs();
     gpu_data_in_.resize(input_indices.size());
     for (int i = 0; i < input_indices.size(); ++i) {
-      const TfLiteTensor* tensor = interpreter_->tensor(input_indices[0]);
+      const TfLiteTensor* tensor = interpreter_->tensor(input_indices[i]);
       gpu_data_in_[i] = absl::make_unique<GPUData>();
       gpu_data_in_[i]->elements = 1;
       for (int d = 0; d < tensor->dims->size; ++d) {

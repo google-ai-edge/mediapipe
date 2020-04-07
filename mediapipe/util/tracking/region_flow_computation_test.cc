@@ -152,19 +152,19 @@ void RegionFlowComputationTest::MakeMovie(
       break;
 
     case RegionFlowComputationOptions::FORMAT_BGR:
-      convert(CV_8UC3, CV_RGB2BGR);
+      convert(CV_8UC3, cv::COLOR_RGB2BGR);
       break;
 
     case RegionFlowComputationOptions::FORMAT_GRAYSCALE:
-      convert(CV_8UC1, CV_RGB2GRAY);
+      convert(CV_8UC1, cv::COLOR_RGB2GRAY);
       break;
 
     case RegionFlowComputationOptions::FORMAT_RGBA:
-      convert(CV_8UC4, CV_RGB2RGBA);
+      convert(CV_8UC4, cv::COLOR_RGB2RGBA);
       break;
 
     case RegionFlowComputationOptions::FORMAT_BGRA:
-      convert(CV_8UC4, CV_RGB2BGRA);
+      convert(CV_8UC4, cv::COLOR_RGB2BGRA);
       break;
   }
   for (int f = 0; f < num_frames; ++f) {

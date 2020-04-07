@@ -60,7 +60,8 @@ class GlTextureBufferPool
 
   // If the total number of buffers is greater than keep_count, destroys any
   // surplus buffers that are no longer in use.
-  void TrimAvailable() ABSL_EXCLUSIVE_LOCKS_REQUIRED(mutex_);
+  void TrimAvailable(std::vector<std::unique_ptr<GlTextureBuffer>>* trimmed)
+      ABSL_EXCLUSIVE_LOCKS_REQUIRED(mutex_);
 
   const int width_;
   const int height_;

@@ -18,6 +18,7 @@
 #include "absl/container/node_hash_map.h"
 #include "mediapipe/framework/formats/rect.pb.h"
 #include "mediapipe/util/tracking/tracked_detection.h"
+#include "mediapipe/util/tracking/tracked_detection_manager_config.pb.h"
 
 namespace mediapipe {
 
@@ -68,6 +69,10 @@ class TrackedDetectionManager {
     return detections_;
   }
 
+  void SetConfig(const mediapipe::TrackedDetectionManagerConfig& config) {
+    config_ = config;
+  }
+
  private:
   // Finds all detections that are duplicated with the one of |id| and remove
   // all detections except the one that is added most recently. Returns the IDs
@@ -75,6 +80,8 @@ class TrackedDetectionManager {
   std::vector<int> RemoveDuplicatedDetections(int id);
 
   absl::node_hash_map<int, std::unique_ptr<TrackedDetection>> detections_;
+
+  mediapipe::TrackedDetectionManagerConfig config_;
 };
 
 }  // namespace mediapipe

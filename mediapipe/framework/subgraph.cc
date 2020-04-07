@@ -61,6 +61,13 @@ GraphRegistry::GraphRegistry(
     FunctionRegistry<std::unique_ptr<Subgraph>>* factories)
     : global_factories_(factories) {}
 
+void GraphRegistry::Register(
+    const std::string& type_name,
+    std::function<std::unique_ptr<Subgraph>()> factory) {
+  local_factories_.Register(type_name, factory);
+}
+
+// TODO: Remove this convenience function.
 void GraphRegistry::Register(const std::string& type_name,
                              const CalculatorGraphConfig& config) {
   local_factories_.Register(type_name, [config] {
@@ -69,6 +76,7 @@ void GraphRegistry::Register(const std::string& type_name,
   });
 }
 
+// TODO: Remove this convenience function.
 void GraphRegistry::Register(const std::string& type_name,
                              const CalculatorGraphTemplate& templ) {
   local_factories_.Register(type_name, [templ] {

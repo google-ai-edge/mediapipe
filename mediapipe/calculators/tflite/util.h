@@ -15,11 +15,11 @@
 #ifndef MEDIAPIPE_CALCULATORS_TFLITE_UTIL_H_
 #define MEDIAPIPE_CALCULATORS_TFLITE_UTIL_H_
 
-#define RET_CHECK_CALL(call)                                     \
-  do {                                                           \
-    const auto status = (call);                                  \
-    if (ABSL_PREDICT_FALSE(!status.ok()))                        \
-      return ::mediapipe::InternalError(status.error_message()); \
+#define RET_CHECK_CALL(call)                               \
+  do {                                                     \
+    const auto status = (call);                            \
+    if (ABSL_PREDICT_FALSE(!status.ok()))                  \
+      return ::mediapipe::InternalError(status.message()); \
   } while (0);
 
 #endif  // MEDIAPIPE_CALCULATORS_TFLITE_UTIL_H_

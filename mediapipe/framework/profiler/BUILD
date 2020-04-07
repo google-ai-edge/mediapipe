@@ -270,17 +270,15 @@ cc_library(
     srcs = select({
         "//conditions:default": ["profiler_resource_util.cc"],
         "//mediapipe:android": ["profiler_resource_util_android.cc"],
-        "//mediapipe:apple": ["profiler_resource_util_apple.cc"],
-        "//mediapipe:macos": ["profiler_resource_util.cc"],
+        "//mediapipe:ios": ["profiler_resource_util_ios.cc"],
     }),
     hdrs = ["profiler_resource_util.h"],
     # We use Objective-C++ on iOS.
     copts = select({
         "//conditions:default": [],
-        "//mediapipe:apple": [
+        "//mediapipe:ios": [
             "-ObjC++",
         ],
-        "//mediapipe:macos": [],
     }),
     visibility = [
         "//mediapipe/framework:mediapipe_internal",

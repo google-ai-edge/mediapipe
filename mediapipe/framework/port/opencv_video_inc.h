@@ -17,6 +17,7 @@
 
 #include <opencv2/core/version.hpp>
 
+#include "mediapipe/framework/port.h"
 #include "mediapipe/framework/port/opencv_core_inc.h"
 
 #ifdef CV_VERSION_EPOCH  // for OpenCV 2.x
@@ -83,7 +84,7 @@ inline int fourcc(char c1, char c2, char c3, char c4) {
 #include <opencv2/video.hpp>
 #include <opencv2/videoio.hpp>
 
-#if CV_VERSION_MAJOR == 4
+#if CV_VERSION_MAJOR == 4 && !defined(MEDIAPIPE_MOBILE)
 #include <opencv2/optflow.hpp>
 
 namespace cv {

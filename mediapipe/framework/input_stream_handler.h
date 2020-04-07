@@ -201,6 +201,9 @@ class InputStreamHandler {
     SyncSet(InputStreamHandler* input_stream_handler,
             std::vector<CollectionItemId> stream_ids);
 
+    // Reinitializes this SyncSet before each CalculatorGraph run.
+    void PrepareForRun();
+
     // Answers whether this stream is ready for Process or Close.
     NodeReadiness GetReadiness(Timestamp* min_stream_timestamp);
 

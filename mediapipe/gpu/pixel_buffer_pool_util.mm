@@ -16,6 +16,8 @@
 
 #import <Foundation/Foundation.h>
 
+#include "mediapipe/objc/util.h"
+
 #if !defined(ENABLE_MEDIAPIPE_GPU_BUFFER_THRESHOLD_CHECK) && !defined(NDEBUG)
 #define ENABLE_MEDIAPIPE_GPU_BUFFER_THRESHOLD_CHECK 1
 #endif  // defined(ENABLE_MEDIAPIPE_GPU_BUFFER_THRESHOLD_CHECK)
@@ -27,17 +29,13 @@ CVPixelBufferPoolRef CreateCVPixelBufferPool(
     CFTimeInterval maxAge) {
   CVPixelBufferPoolRef pool = NULL;
 
-  NSDictionary *sourcePixelBufferOptions = @{
-      (id)kCVPixelBufferPixelFormatTypeKey : @(pixelFormat),
-      (id)kCVPixelBufferWidthKey : @(width),
-      (id)kCVPixelBufferHeightKey : @(height),
-#if TARGET_OS_OSX
-      (id)kCVPixelFormatOpenGLCompatibility : @(YES),
-#else
-      (id)kCVPixelFormatOpenGLESCompatibility : @(YES),
-#endif  // TARGET_OS_OSX
-      (id)kCVPixelBufferIOSurfacePropertiesKey : @{ /*empty dictionary*/ }
-  };
+  NSMutableDictionary *sourcePixelBufferOptions =
+      [(__bridge NSDictionary*)GetCVPixelBufferAttributesForGlCompatibility() mutableCopy];
+  [sourcePixelBufferOptions addEntriesFromDictionary:@{
+    (id)kCVPixelBufferPixelFormatTypeKey : @(pixelFormat),
+    (id)kCVPixelBufferWidthKey : @(width),
+    (id)kCVPixelBufferHeightKey : @(height),
+  }];
 
   NSMutableDictionary *pixelBufferPoolOptions = [[NSMutableDictionary alloc] init];
   pixelBufferPoolOptions[(id)kCVPixelBufferPoolMinimumBufferCountKey] = @(keepCount);
@@ -131,14 +129,6 @@ static void FreeRefConReleaseCallback(void* refCon, const void* baseAddress) {
 
 CVReturn CreateCVPixelBufferWithoutPool(
     int width, int height, OSType pixelFormat, CVPixelBufferRef* outBuffer) {
-  NSDictionary *attributes = @{
-#if TARGET_OS_OSX
-      (id)kCVPixelFormatOpenGLCompatibility : @(YES),
-#else
-      (id)kCVPixelFormatOpenGLESCompatibility : @(YES),
-#endif  // TARGET_OS_OSX
-      (id)kCVPixelBufferIOSurfacePropertiesKey : @{ /*empty dictionary*/ }
-  };
 #if TARGET_IPHONE_SIMULATOR
   // On the simulator, syncing the texture with the pixelbuffer does not work,
   // and we have to use glReadPixels. Since GL_UNPACK_ROW_LENGTH is not
@@ -151,12 +141,12 @@ CVReturn CreateCVPixelBufferWithoutPool(
   void* data = malloc(bytes_per_row * height);
   return CVPixelBufferCreateWithBytes(
       kCFAllocatorDefault, width, height, pixelFormat, data, bytes_per_row,
-      FreeRefConReleaseCallback, data, (__bridge CFDictionaryRef)attributes,
+      FreeRefConReleaseCallback, data, GetCVPixelBufferAttributesForGlCompatibility(),
       outBuffer);
 #else
   return CVPixelBufferCreate(
       kCFAllocatorDefault, width, height, pixelFormat,
-      (__bridge CFDictionaryRef)attributes, outBuffer);
+      GetCVPixelBufferAttributesForGlCompatibility(), outBuffer);
 #endif
 }
 

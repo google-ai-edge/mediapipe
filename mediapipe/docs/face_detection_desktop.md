@@ -51,7 +51,7 @@ To build and run the TensorFlow Lite example on desktop (GPU) with Webcam, run:
 ```bash
 # Video from webcam running on desktop GPU
 # This works only for linux currently
-$ bazel build -c opt --copt -DMESA_EGL_NO_X11_HEADERS \
+$ bazel build -c opt --copt -DMESA_EGL_NO_X11_HEADERS --copt -DEGL_NO_X11 \
     mediapipe/examples/desktop/face_detection:face_detection_gpu
 
 # It should print:

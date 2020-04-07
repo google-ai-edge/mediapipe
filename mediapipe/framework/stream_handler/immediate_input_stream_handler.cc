@@ -40,6 +40,13 @@ class ImmediateInputStreamHandler : public InputStreamHandler {
       const MediaPipeOptions& options, bool calculator_run_in_parallel);
 
  protected:
+  // Reinitializes this InputStreamHandler before each CalculatorGraph run.
+  void PrepareForRun(
+      std::function<void()> headers_ready_callback,
+      std::function<void()> notification_callback,
+      std::function<void(CalculatorContext*)> schedule_callback,
+      std::function<void(::mediapipe::Status)> error_callback) override;
+
   // Returns kReadyForProcess whenever a Packet is available at any of
   // the input streams, or any input stream becomes done.
   NodeReadiness GetNodeReadiness(Timestamp* min_stream_timestamp) override;
@@ -67,6 +74,23 @@ ImmediateInputStreamHandler::ImmediateInputStreamHandler(
     sync_sets_.emplace_back(this, std::vector<CollectionItemId>{id});
     ready_timestamps_.push_back(Timestamp::Unset());
   }
+}
+
+void ImmediateInputStreamHandler::PrepareForRun(
+    std::function<void()> headers_ready_callback,
+    std::function<void()> notification_callback,
+    std::function<void(CalculatorContext*)> schedule_callback,
+    std::function<void(::mediapipe::Status)> error_callback) {
+  {
+    absl::MutexLock lock(&mutex_);
+    for (int i = 0; i < sync_sets_.size(); ++i) {
+      sync_sets_[i].PrepareForRun();
+      ready_timestamps_[i] = Timestamp::Unset();
+    }
+  }
+  InputStreamHandler::PrepareForRun(
+      std::move(headers_ready_callback), std::move(notification_callback),
+      std::move(schedule_callback), std::move(error_callback));
 }
 
 NodeReadiness ImmediateInputStreamHandler::GetNodeReadiness(

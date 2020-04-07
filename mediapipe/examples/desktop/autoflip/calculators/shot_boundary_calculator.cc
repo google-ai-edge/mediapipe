@@ -85,7 +85,7 @@ REGISTER_CALCULATOR(ShotBoundaryCalculator);
 void ShotBoundaryCalculator::ComputeHistogram(const cv::Mat& image,
                                               cv::Mat* image_histogram) {
   cv::Mat equalized_image;
-  cv::cvtColor(image.clone(), equalized_image, CV_RGB2GRAY);
+  cv::cvtColor(image.clone(), equalized_image, cv::COLOR_RGB2GRAY);
 
   double min, max;
   cv::minMaxLoc(equalized_image, &min, &max);

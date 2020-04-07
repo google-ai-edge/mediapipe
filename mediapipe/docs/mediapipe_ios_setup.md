@@ -76,6 +76,10 @@ in the next section.
 
 2.  Open `mediapipe/Mediapipe.tulsiproj` using the Tulsi app.
 
+    Important: If Tulsi displays an error saying "Bazel could not be found",
+    press the "Bazel..." button in the Packages tab and select the `bazel`
+    executable in your homebrew `/bin/` directory.
+
 3.  Select the MediaPipe config in the Configs tab, then press the Generate
     button below. You will be asked for a location to save the Xcode project.
     Once the project is generated, it will be opened in Xcode.

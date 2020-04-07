@@ -451,7 +451,7 @@ cc_library(
         "//mediapipe:android": [
             "//mediapipe/util/android/file/base",
         ],
-        "//mediapipe:apple": [
+        "//mediapipe:ios": [
             "//mediapipe/util/android/file/base",
         ],
         "//mediapipe:macos": [

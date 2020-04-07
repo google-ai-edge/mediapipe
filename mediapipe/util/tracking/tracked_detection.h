@@ -54,7 +54,8 @@ class TrackedDetection {
   // Checks if two detections are in fact the same object.
   // TODO: This is just the first step. It will be expand to a family
   // of functionalities that do reconciliation.
-  bool IsSameAs(const TrackedDetection& other) const;
+  bool IsSameAs(const TrackedDetection& other, float max_area_ratio = 3.0f,
+                float min_overlap_ratio = 0.5f) const;
 
   // Merges labels and score from another TrackedDetection.
   void MergeLabelScore(const TrackedDetection& other);

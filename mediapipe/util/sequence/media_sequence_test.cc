@@ -352,6 +352,19 @@ TEST(MediaSequenceTest, RoundTripBBoxTrackString) {
   }
 }
 
+TEST(MediaSequenceTest, RoundTripBBoxTrackConfidence) {
+  tensorflow::SequenceExample sequence;
+  std::vector<std::vector<float>> confidences = {{0.5, 0.3}, {0.1, 0.2}};
+  for (int i = 0; i < confidences.size(); ++i) {
+    AddBBoxTrackConfidence(confidences[i], &sequence);
+    ASSERT_EQ(GetBBoxTrackConfidenceSize(sequence), i + 1);
+    const auto& sequence_confidences = GetBBoxTrackConfidenceAt(sequence, i);
+    for (int j = 0; j < sequence_confidences.size(); ++j) {
+      ASSERT_EQ(sequence_confidences[j], confidences[i][j]);
+    }
+  }
+}
+
 TEST(MediaSequenceTest, RoundTripBBoxTimestamp) {
   tensorflow::SequenceExample sequence;
   std::vector<int> timestamps = {5, 3};
@@ -403,6 +416,20 @@ TEST(MediaSequenceTest, RoundTripBBoxPoint) {
     AddBBoxPoint(points[i], &sequence);
     ASSERT_EQ(GetBBoxPointSize(sequence), i + 1);
     const auto& sequence_points = GetBBoxPointAt(sequence, i);
+    for (int j = 0; j < sequence_points.size(); ++j) {
+      EXPECT_EQ(sequence_points[j], points[i][j]);
+    }
+  }
+}
+
+TEST(MediaSequenceTest, RoundTripBBoxPointPrefixed) {
+  tensorflow::SequenceExample sequence;
+  std::vector<std::vector<std::pair<float, float>>> points = {
+      {{0.3, 0.5}, {0.4, 0.7}}, {{0.7, 0.5}, {0.3, 0.4}}};
+  for (int i = 0; i < points.size(); ++i) {
+    AddBBoxPoint("TEST", points[i], &sequence);
+    ASSERT_EQ(GetBBoxPointSize("TEST", sequence), i + 1);
+    const auto& sequence_points = GetBBoxPointAt("TEST", sequence, i);
     for (int j = 0; j < sequence_points.size(); ++j) {
       EXPECT_EQ(sequence_points[j], points[i][j]);
     }

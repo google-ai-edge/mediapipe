@@ -26,6 +26,7 @@
 #include "mediapipe/gpu/MPPGraphGPUData.h"
 #include "mediapipe/gpu/gl_base.h"
 #include "mediapipe/gpu/gpu_shared_data_internal.h"
+#include "mediapipe/objc/util.h"
 
 #import "mediapipe/objc/NSError+util_status.h"
 #import "GTMDefines.h"
@@ -116,14 +117,10 @@ void CallFrameDelegate(void* wrapperVoid, const std::string& streamName,
       if (format == mediapipe::ImageFormat::SRGBA ||
           format == mediapipe::ImageFormat::GRAY8) {
         CVPixelBufferRef pixelBuffer;
-        // To ensure compatibility with CVOpenGLESTextureCache, this attribute should be present.
-        NSDictionary* attributes = @{
-          (id)kCVPixelBufferIOSurfacePropertiesKey : @{},
-        };
         // If kCVPixelFormatType_32RGBA does not work, it returns kCVReturnInvalidPixelFormat.
         CVReturn error = CVPixelBufferCreate(
             NULL, frame.Width(), frame.Height(), kCVPixelFormatType_32BGRA,
-            (__bridge CFDictionaryRef)attributes, &pixelBuffer);
+            GetCVPixelBufferAttributesForGlCompatibility(), &pixelBuffer);
         _GTMDevAssert(error == kCVReturnSuccess, @"CVPixelBufferCreate failed: %d", error);
         error = CVPixelBufferLockBaseAddress(pixelBuffer, 0);
         _GTMDevAssert(error == kCVReturnSuccess, @"CVPixelBufferLockBaseAddress failed: %d", error);

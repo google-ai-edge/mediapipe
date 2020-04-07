@@ -55,7 +55,7 @@ size_t RoundUp(size_t n, size_t m) { return ((n + m - 1) / m) * m; }  // NOLINT
 // When using GPU, this color will become transparent when the calculator
 // merges the annotation overlay with the image frame. As a result, drawing in
 // this color is not supported and it should be set to something unlikely used.
-constexpr int kAnnotationBackgroundColor[] = {100, 101, 102};
+constexpr uchar kAnnotationBackgroundColor = 2;  // Grayscale value.
 }  // namespace
 
 // A calculator for rendering data on images.
@@ -491,11 +491,9 @@ REGISTER_CALCULATOR(AnnotationOverlayCalculator);
     if (format != mediapipe::ImageFormat::SRGBA &&
         format != mediapipe::ImageFormat::SRGB)
       RET_CHECK_FAIL() << "Unsupported GPU input format: " << format;
-
-    image_mat = absl::make_unique<cv::Mat>(
-        height_, width_, CV_8UC3,
-        cv::Scalar(kAnnotationBackgroundColor[0], kAnnotationBackgroundColor[1],
-                   kAnnotationBackgroundColor[2]));
+    image_mat = absl::make_unique<cv::Mat>(height_, width_, CV_8UC3);
+    memset(image_mat->data, kAnnotationBackgroundColor,
+           height_ * width_ * image_mat->elemSize());
   } else {
     image_mat = absl::make_unique<cv::Mat>(
         options_.canvas_height_px(), options_.canvas_width_px(), CV_8UC3,
@@ -617,9 +615,9 @@ REGISTER_CALCULATOR(AnnotationOverlayCalculator);
   glUniform1i(glGetUniformLocation(program_, "input_frame"), 1);
   glUniform1i(glGetUniformLocation(program_, "overlay"), 2);
   glUniform3f(glGetUniformLocation(program_, "transparent_color"),
-              kAnnotationBackgroundColor[0] / 255.0,
-              kAnnotationBackgroundColor[1] / 255.0,
-              kAnnotationBackgroundColor[2] / 255.0);
+              kAnnotationBackgroundColor / 255.0,
+              kAnnotationBackgroundColor / 255.0,
+              kAnnotationBackgroundColor / 255.0);
 
   // Init texture for opencv rendered frame.
   const auto& input_frame =

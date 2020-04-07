@@ -14,40 +14,26 @@
 # limitations under the License.
 #
 
+load("//mediapipe/framework/port:build_config.bzl", "mediapipe_proto_library")
+
+package(default_visibility = ["//visibility:private"])
+
 licenses(["notice"])  # Apache 2.0
 
 exports_files(["LICENSE"])
 
-load("//mediapipe/framework/port:build_config.bzl", "mediapipe_cc_proto_library")
-
-package(default_visibility = ["//visibility:private"])
-
-proto_library(
+mediapipe_proto_library(
     name = "locus_proto",
     srcs = ["locus.proto"],
+    portable_deps = ["//mediapipe/framework/formats/annotation:rasterization_cc_proto"],
     visibility = ["//visibility:public"],
     deps = ["//mediapipe/framework/formats/annotation:rasterization_proto"],
 )
 
-proto_library(
+mediapipe_proto_library(
     name = "rasterization_proto",
     srcs = ["rasterization.proto"],
     visibility = ["//visibility:public"],
-)
-
-mediapipe_cc_proto_library(
-    name = "locus_cc_proto",
-    srcs = ["locus.proto"],
-    cc_deps = [":rasterization_cc_proto"],
-    visibility = ["//visibility:public"],
-    deps = [":locus_proto"],
-)
-
-mediapipe_cc_proto_library(
-    name = "rasterization_cc_proto",
-    srcs = ["rasterization.proto"],
-    visibility = ["//visibility:public"],
-    deps = [":rasterization_proto"],
 )
 
 # Expose the proto source files for building mediapipe AAR.

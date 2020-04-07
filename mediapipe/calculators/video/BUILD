@@ -66,6 +66,26 @@ proto_library(
 )
 
 proto_library(
+    name = "tracked_detection_manager_calculator_proto",
+    srcs = ["tracked_detection_manager_calculator.proto"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//mediapipe/framework:calculator_proto",
+        "//mediapipe/util/tracking:tracked_detection_manager_config_proto",
+    ],
+)
+
+proto_library(
+    name = "box_detector_calculator_proto",
+    srcs = ["box_detector_calculator.proto"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//mediapipe/framework:calculator_proto",
+        "//mediapipe/util/tracking:box_detector_proto",
+    ],
+)
+
+proto_library(
     name = "video_pre_stream_calculator_proto",
     srcs = ["video_pre_stream_calculator.proto"],
     visibility = ["//visibility:public"],
@@ -105,6 +125,28 @@ mediapipe_cc_proto_library(
     ],
     visibility = ["//visibility:public"],
     deps = [":box_tracker_calculator_proto"],
+)
+
+mediapipe_cc_proto_library(
+    name = "tracked_detection_manager_calculator_cc_proto",
+    srcs = ["tracked_detection_manager_calculator.proto"],
+    cc_deps = [
+        "//mediapipe/framework:calculator_cc_proto",
+        "//mediapipe/util/tracking:tracked_detection_manager_config_cc_proto",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [":tracked_detection_manager_calculator_proto"],
+)
+
+mediapipe_cc_proto_library(
+    name = "box_detector_calculator_cc_proto",
+    srcs = ["box_detector_calculator.proto"],
+    cc_deps = [
+        "//mediapipe/framework:calculator_cc_proto",
+        "//mediapipe/util/tracking:box_detector_cc_proto",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [":box_detector_calculator_proto"],
 )
 
 mediapipe_cc_proto_library(
@@ -280,10 +322,53 @@ cc_library(
 )
 
 cc_library(
+    name = "box_detector_calculator",
+    srcs = ["box_detector_calculator.cc"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":box_detector_calculator_cc_proto",
+        "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/strings",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/formats:image_frame",
+        "//mediapipe/framework/formats:image_frame_opencv",
+        "//mediapipe/framework/formats:video_stream_header",  # fixdeps: keep -- required for exobazel build.
+        "//mediapipe/framework/port:integral_types",
+        "//mediapipe/framework/port:logging",
+        "//mediapipe/framework/port:opencv_core",
+        "//mediapipe/framework/port:opencv_features2d",
+        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:status",
+        "//mediapipe/util:resource_util",
+        "//mediapipe/util/tracking",
+        "//mediapipe/util/tracking:box_detector",
+        "//mediapipe/util/tracking:box_tracker",
+        "//mediapipe/util/tracking:box_tracker_cc_proto",
+        "//mediapipe/util/tracking:flow_packager_cc_proto",
+        "//mediapipe/util/tracking:tracking_visualization_utilities",
+    ] + select({
+        "//mediapipe:android": [
+            "//mediapipe/util/android/file/base",
+        ],
+        "//mediapipe:ios": [
+            "//mediapipe/util/android/file/base",
+        ],
+        "//mediapipe:macos": [
+            "//mediapipe/framework/port:file_helpers",
+        ],
+        "//conditions:default": [
+            "//mediapipe/framework/port:file_helpers",
+        ],
+    }),
+    alwayslink = 1,
+)
+
+cc_library(
     name = "tracked_detection_manager_calculator",
     srcs = ["tracked_detection_manager_calculator.cc"],
     visibility = ["//visibility:public"],
     deps = [
+        ":tracked_detection_manager_calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/formats:detection_cc_proto",
         "//mediapipe/framework/formats:location_data_cc_proto",

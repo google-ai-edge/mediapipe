@@ -59,7 +59,7 @@ GL_BASE_LINK_OPTS = select({
         # runtime. Weak GLESv3 symbols will still be resolved if we
         # load it early enough.
     ],
-    "//mediapipe:apple": [
+    "//mediapipe:ios": [
         "-framework OpenGLES",
         "-framework CoreVideo",
     ],
@@ -111,7 +111,7 @@ cc_library(
     # Note: need the frameworks on Apple platforms to get the headers.
     linkopts = select({
         "//conditions:default": [],
-        "//mediapipe:apple": [
+        "//mediapipe:ios": [
             "-framework OpenGLES",
             "-framework CoreVideo",
         ],
@@ -147,7 +147,7 @@ cc_library(
         "//conditions:default": [
             "gl_context_egl.cc",
         ],
-        "//mediapipe:apple": [
+        "//mediapipe:ios": [
             "gl_context_eagl.cc",
         ],
         "//mediapipe:macos": [
@@ -214,7 +214,7 @@ cc_library(
         "//conditions:default": [
             ":gl_texture_buffer",
         ],
-        "//mediapipe:apple": [
+        "//mediapipe:ios": [
             "//mediapipe/objc:CFHolder",
         ],
         "//mediapipe:macos": [
@@ -246,9 +246,14 @@ objc_library(
         "-Wno-shorten-64-to-32",
     ],
     sdk_frameworks = [
+        "Accelerate",
+        "CoreGraphics",
         "CoreVideo",
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        "//mediapipe/objc:util",
+    ],
 )
 
 objc_library(
@@ -408,7 +413,7 @@ cc_library(
         "//conditions:default": [
             "gl_texture_buffer_pool.cc",
         ],
-        "//mediapipe:apple": [],
+        "//mediapipe:ios": [],
         "//mediapipe:macos": [
             "gl_texture_buffer_pool.cc",
         ],
@@ -417,7 +422,7 @@ cc_library(
         "//conditions:default": [
             "gl_texture_buffer_pool.h",
         ],
-        "//mediapipe:apple": [
+        "//mediapipe:ios": [
             # The inclusions check does not see that this is provided by
             # pixel_buffer_pool_util, so we include it here too. This is
             # b/28066691.
@@ -441,7 +446,7 @@ cc_library(
         "//conditions:default": [
             ":gl_texture_buffer",
         ],
-        "//mediapipe:apple": [
+        "//mediapipe:ios": [
             ":pixel_buffer_pool_util",
             "//mediapipe/objc:CFHolder",
         ],

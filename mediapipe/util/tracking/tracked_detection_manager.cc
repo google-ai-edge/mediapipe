@@ -53,7 +53,9 @@ std::vector<int> TrackedDetectionManager::AddDetection(
   // same if the timestamp are the same.
   for (auto& existing_detection_ptr : detections_) {
     const auto& existing_detection = *existing_detection_ptr.second;
-    if (detection->IsSameAs(existing_detection)) {
+    if (detection->IsSameAs(existing_detection,
+                            config_.is_same_detection_max_area_ratio(),
+                            config_.is_same_detection_min_overlap_ratio())) {
       // Merge previous labels to the new detection. Because new detections
       // usually have better bounding box than the one from tracking.
       // TODO: This might cause unstable change of the bounding box.
@@ -148,7 +150,9 @@ std::vector<int> TrackedDetectionManager::RemoveDuplicatedDetections(int id) {
       // locations of detections at different timestamp is not correct.
       if (detection.last_updated_timestamp() ==
           other.last_updated_timestamp()) {
-        if (detection.IsSameAs(other)) {
+        if (detection.IsSameAs(other,
+                               config_.is_same_detection_max_area_ratio(),
+                               config_.is_same_detection_min_overlap_ratio())) {
           const TrackedDetection* detection_to_remove = nullptr;
           if (latest_detection->initial_timestamp() >=
               other.initial_timestamp()) {

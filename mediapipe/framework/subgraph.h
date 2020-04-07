@@ -94,6 +94,10 @@ class GraphRegistry {
   // Ownership of the specified FunctionRegistry is not transferred.
   GraphRegistry(FunctionRegistry<std::unique_ptr<Subgraph>>* factories);
 
+  // Registers a graph config builder type, using a factory function.
+  void Register(const std::string& type_name,
+                std::function<std::unique_ptr<Subgraph>()> factory);
+
   // Registers a graph config by name.
   void Register(const std::string& type_name,
                 const CalculatorGraphConfig& config);

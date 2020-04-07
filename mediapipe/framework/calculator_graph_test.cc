@@ -29,6 +29,7 @@
 #include "absl/memory/memory.h"
 #include "absl/strings/escaping.h"
 #include "absl/strings/str_cat.h"
+#include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
 #include "absl/strings/substitute.h"
 #include "absl/time/clock.h"
@@ -4556,6 +4557,69 @@ TEST(CalculatorGraph, SimpleMuxCalculatorWithCustomInputStreamHandler) {
               "timestamps that are not strictly monotonically increasing"),
           // Link to the possible solution.
           testing::HasSubstr("ImmediateInputStreamHandler class comment")));
+}
+
+void DoTestMultipleGraphRuns(absl::string_view input_stream_handler,
+                             bool select_packet) {
+  std::string graph_proto = absl::StrFormat(R"(
+    input_stream: 'input'
+    input_stream: 'select'
+    node {
+      calculator: 'PassThroughCalculator'
+      input_stream: 'input'
+      input_stream: 'select'
+      input_stream_handler {
+        input_stream_handler: "%s"
+      }
+      output_stream: 'output'
+      output_stream: 'select_out'
+    }
+  )",
+                                            input_stream_handler.data());
+  CalculatorGraphConfig config =
+      ::mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(graph_proto);
+  std::vector<Packet> packet_dump;
+  tool::AddVectorSink("output", &config, &packet_dump);
+
+  CalculatorGraph graph;
+  MP_ASSERT_OK(graph.Initialize(config));
+
+  struct Run {
+    Timestamp timestamp;
+    int value;
+  };
+  std::vector<Run> runs = {{.timestamp = Timestamp(2000), .value = 2},
+                           {.timestamp = Timestamp(1000), .value = 1}};
+  for (const Run& run : runs) {
+    MP_ASSERT_OK(graph.StartRun({}));
+
+    if (select_packet) {
+      MP_EXPECT_OK(graph.AddPacketToInputStream(
+          "select", MakePacket<int>(0).At(run.timestamp)));
+    }
+    MP_EXPECT_OK(graph.AddPacketToInputStream(
+        "input", MakePacket<int>(run.value).At(run.timestamp)));
+    MP_ASSERT_OK(graph.WaitUntilIdle());
+    ASSERT_EQ(1, packet_dump.size());
+    EXPECT_EQ(run.value, packet_dump[0].Get<int>());
+    EXPECT_EQ(run.timestamp, packet_dump[0].Timestamp());
+
+    MP_ASSERT_OK(graph.CloseAllPacketSources());
+    MP_ASSERT_OK(graph.WaitUntilDone());
+
+    packet_dump.clear();
+  }
+}
+
+TEST(CalculatorGraph, MultipleRunsWithDifferentInputStreamHandlers) {
+  DoTestMultipleGraphRuns("BarrierInputStreamHandler", true);
+  DoTestMultipleGraphRuns("DefaultInputStreamHandler", true);
+  DoTestMultipleGraphRuns("EarlyCloseInputStreamHandler", true);
+  DoTestMultipleGraphRuns("FixedSizeInputStreamHandler", true);
+  DoTestMultipleGraphRuns("ImmediateInputStreamHandler", false);
+  DoTestMultipleGraphRuns("MuxInputStreamHandler", true);
+  DoTestMultipleGraphRuns("SyncSetInputStreamHandler", true);
+  DoTestMultipleGraphRuns("TimestampAlignInputStreamHandler", true);
 }
 
 }  // namespace

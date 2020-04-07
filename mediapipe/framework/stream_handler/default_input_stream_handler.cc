@@ -45,6 +45,17 @@ DefaultInputStreamHandler::DefaultInputStreamHandler(
   }
 }
 
+void DefaultInputStreamHandler::PrepareForRun(
+    std::function<void()> headers_ready_callback,
+    std::function<void()> notification_callback,
+    std::function<void(CalculatorContext*)> schedule_callback,
+    std::function<void(::mediapipe::Status)> error_callback) {
+  sync_set_.PrepareForRun();
+  InputStreamHandler::PrepareForRun(
+      std::move(headers_ready_callback), std::move(notification_callback),
+      std::move(schedule_callback), std::move(error_callback));
+}
+
 NodeReadiness DefaultInputStreamHandler::GetNodeReadiness(
     Timestamp* min_stream_timestamp) {
   return sync_set_.GetReadiness(min_stream_timestamp);

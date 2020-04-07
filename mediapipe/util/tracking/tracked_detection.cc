@@ -90,7 +90,9 @@ void TrackedDetection::AddLabel(const std::string& label, float score) {
   }
 }
 
-bool TrackedDetection::IsSameAs(const TrackedDetection& other) const {
+bool TrackedDetection::IsSameAs(const TrackedDetection& other,
+                                float max_area_ratio,
+                                float min_overlap_ratio) const {
   const auto box0 = bounding_box_;
   const auto box1 = other.bounding_box_;
   const double box0_area = BoxArea(box0);
@@ -104,14 +106,12 @@ bool TrackedDetection::IsSameAs(const TrackedDetection& other) const {
   // long water bottle) vertically and then change the camera to horizontal
   // quickly, then it will get another detection which will have a diamond shape
   // that is much larger than the previous rectangle one.
-  const double kMaxAreaRatio = 3.0;
-  if (box0_area / box1_area > kMaxAreaRatio ||
-      box1_area / box0_area > kMaxAreaRatio)
+  if (box0_area / box1_area > max_area_ratio ||
+      box1_area / box0_area > max_area_ratio)
     return false;
 
-  const double kMaxOverlapRatio = 0.5;
-  if (overlap_area / box0_area > kMaxOverlapRatio ||
-      overlap_area / box1_area > kMaxOverlapRatio) {
+  if (overlap_area / box0_area > min_overlap_ratio ||
+      overlap_area / box1_area > min_overlap_ratio) {
     return true;
   }
 

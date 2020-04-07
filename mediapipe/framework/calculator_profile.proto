@@ -113,7 +113,10 @@ message GraphTrace {
     optional int32 stream_id = 4;
 
     // The address of the packet contents.
-    optional int64 packet_id = 5;
+    optional int64 packet_id = 5 [deprecated = true];
+
+    // Data describing the event, such as the packet contents.
+    optional int64 event_data = 6;
   }
 
   // The kind of event recorded.
@@ -133,6 +136,7 @@ message GraphTrace {
     DSP_TASK = 12;
     TPU_TASK = 13;
     GPU_CALIBRATION = 14;
+    PACKET_QUEUED = 15;
   }
 
   // The timing for one packet set being processed at one caclulator node.

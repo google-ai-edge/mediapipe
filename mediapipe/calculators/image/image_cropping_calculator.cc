@@ -219,8 +219,10 @@ REGISTER_CALCULATOR(ImageCroppingCalculator);
   const auto& input_img = cc->Inputs().Tag(kImageTag).Get<ImageFrame>();
   cv::Mat input_mat = formats::MatView(&input_img);
 
-  auto [target_width, target_height, rect_center_x, rect_center_y, rotation] =
-      GetCropSpecs(cc, input_img.Width(), input_img.Height());
+  RectSpec specs = GetCropSpecs(cc, input_img.Width(), input_img.Height());
+  int target_width = specs.width, target_height = specs.height,
+      rect_center_x = specs.center_x, rect_center_y = specs.center_y;
+  float rotation = specs.rotation;
 
   // Get border mode and value for OpenCV.
   int border_mode;
@@ -403,8 +405,10 @@ void ImageCroppingCalculator::GetOutputDimensions(CalculatorContext* cc,
                                                   int src_width, int src_height,
                                                   int* dst_width,
                                                   int* dst_height) {
-  auto [crop_width, crop_height, x_center, y_center, rotation] =
-      GetCropSpecs(cc, src_width, src_height);
+  RectSpec specs = GetCropSpecs(cc, src_width, src_height);
+  int crop_width = specs.width, crop_height = specs.height,
+      x_center = specs.center_x, y_center = specs.center_y;
+  float rotation = specs.rotation;
 
   const float half_width = crop_width / 2.0f;
   const float half_height = crop_height / 2.0f;

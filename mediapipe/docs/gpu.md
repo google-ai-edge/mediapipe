@@ -190,10 +190,10 @@ within the MediaPipe framework:
 bazel build --define MEDIAPIPE_DISABLE_GPU=1  <my-target>
 
 # to enable full GPU support (OpenGL ES 3.1+ & Metal)
-bazel build --copt -DMESA_EGL_NO_X11_HEADERS  <my-target>
+bazel build --copt -DMESA_EGL_NO_X11_HEADERS --copt -DEGL_NO_X11 <my-target>
 
 # to enable only OpenGL ES 3.0 and below (no GLES 3.1+ features)
-bazel build --copt -DMESA_EGL_NO_X11_HEADERS --copt -DMEDIAPIPE_DISABLE_GL_COMPUTE  <my-target>
+bazel build --copt -DMESA_EGL_NO_X11_HEADERS --copt -DEGL_NO_X11 --copt -DMEDIAPIPE_DISABLE_GL_COMPUTE  <my-target>
 ```
 
 Note *MEDIAPIPE_DISABLE_GL_COMPUTE* is automatically defined on all Apple

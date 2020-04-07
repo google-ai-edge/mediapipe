@@ -23,45 +23,29 @@
 
 namespace mediapipe {
 
-// Packet content identifier.
-using PacketDataId = const void*;
-
 namespace packet_internal {
-// Returns the packet data address for a packet data holder.
-inline const void* GetPacketDataId(const HolderBase* holder) {
-  return (holder == nullptr)
-             ? nullptr
-             : &(static_cast<const Holder<int>*>(holder)->data());
+// Returns a hash of the packet data address from a packet data holder.
+inline const int64 GetPacketDataId(const HolderBase* holder) {
+  if (holder == nullptr) {
+    return 0;
+  }
+  const void* address = &(static_cast<const Holder<int>*>(holder)->data());
+  return reinterpret_cast<int64>(address);
 }
 }  // namespace packet_internal
 
 // Packet trace log event.
 struct TraceEvent {
   using EventType = GraphTrace::EventType;
-  // GraphTrace::EventType constants, repeated here to match GraphProfilerStub.
-  static constexpr EventType UNKNOWN = GraphTrace::UNKNOWN;
-  static constexpr EventType OPEN = GraphTrace::OPEN;
-  static constexpr EventType PROCESS = GraphTrace::PROCESS;
-  static constexpr EventType CLOSE = GraphTrace::CLOSE;
-  static constexpr EventType NOT_READY = GraphTrace::NOT_READY;
-  static constexpr EventType READY_FOR_PROCESS = GraphTrace::READY_FOR_PROCESS;
-  static constexpr EventType READY_FOR_CLOSE = GraphTrace::READY_FOR_CLOSE;
-  static constexpr EventType THROTTLED = GraphTrace::THROTTLED;
-  static constexpr EventType UNTHROTTLED = GraphTrace::UNTHROTTLED;
-  static constexpr EventType CPU_TASK_USER = GraphTrace::CPU_TASK_USER;
-  static constexpr EventType CPU_TASK_SYSTEM = GraphTrace::CPU_TASK_SYSTEM;
-  static constexpr EventType GPU_TASK = GraphTrace::GPU_TASK;
-  static constexpr EventType DSP_TASK = GraphTrace::DSP_TASK;
-  static constexpr EventType TPU_TASK = GraphTrace::TPU_TASK;
   absl::Time event_time;
   EventType event_type = UNKNOWN;
   bool is_finish = false;
   Timestamp input_ts = Timestamp::Unset();
   Timestamp packet_ts = Timestamp::Unset();
-  int node_id = -1;
+  int32 node_id = -1;
   const std::string* stream_id = nullptr;
-  PacketDataId packet_data_id = 0;
-  int thread_id = 0;
+  int32 thread_id = 0;
+  int64 event_data = 0;
 
   TraceEvent(const EventType& event_type) : event_type(event_type) {}
   TraceEvent() {}
@@ -91,7 +75,7 @@ struct TraceEvent {
     return *this;
   }
   inline TraceEvent& set_packet_data_id(const Packet* packet) {
-    this->packet_data_id =
+    this->event_data =
         packet_internal::GetPacketDataId(packet_internal::GetHolder(*packet));
     return *this;
   }
@@ -103,10 +87,83 @@ struct TraceEvent {
     this->is_finish = is_finish;
     return *this;
   }
+  inline TraceEvent& set_event_data(int data) {
+    this->event_data = data;
+    return *this;
+  }
+
+  // GraphTrace::EventType constants, repeated here to match GraphProfilerStub.
+  static constexpr EventType UNKNOWN = GraphTrace::UNKNOWN;
+  static constexpr EventType OPEN = GraphTrace::OPEN;
+  static constexpr EventType PROCESS = GraphTrace::PROCESS;
+  static constexpr EventType CLOSE = GraphTrace::CLOSE;
+  static constexpr EventType NOT_READY = GraphTrace::NOT_READY;
+  static constexpr EventType READY_FOR_PROCESS = GraphTrace::READY_FOR_PROCESS;
+  static constexpr EventType READY_FOR_CLOSE = GraphTrace::READY_FOR_CLOSE;
+  static constexpr EventType THROTTLED = GraphTrace::THROTTLED;
+  static constexpr EventType UNTHROTTLED = GraphTrace::UNTHROTTLED;
+  static constexpr EventType CPU_TASK_USER = GraphTrace::CPU_TASK_USER;
+  static constexpr EventType CPU_TASK_SYSTEM = GraphTrace::CPU_TASK_SYSTEM;
+  static constexpr EventType GPU_TASK = GraphTrace::GPU_TASK;
+  static constexpr EventType DSP_TASK = GraphTrace::DSP_TASK;
+  static constexpr EventType TPU_TASK = GraphTrace::TPU_TASK;
+  static constexpr EventType GPU_CALIBRATION = GraphTrace::GPU_CALIBRATION;
+  static constexpr EventType PACKET_QUEUED = GraphTrace::PACKET_QUEUED;
 };
 
 // Packet trace log buffer.
 using TraceBuffer = CircularBuffer<TraceEvent>;
+
+// TraceEvent type traits.
+class TraceEventType {
+  using EventType = TraceEvent::EventType;
+
+ public:
+  TraceEventType() {}
+  TraceEventType(EventType event_type, std::string description,
+                 bool is_packet_event = false, bool is_stream_event = false,
+                 bool id_event_data = true)
+      : event_type_(event_type),
+        description_(description),
+        is_packet_event_(is_packet_event),
+        is_stream_event_(is_stream_event),
+        id_event_data_(id_event_data) {}
+
+  // The type of event to log.
+  inline EventType event_type() const { return event_type_; }
+
+  // True if this type of event is logged.
+  inline bool enabled() const { return event_type_; }
+  inline void set_enabled(bool enabled) { enabled_ = enabled; }
+
+  // True if packet details are logged with this type of event.
+  inline bool is_packet_event() const { return is_packet_event_; }
+
+  // True if stream details are logged with this type of event.
+  inline bool is_stream_event() const { return is_stream_event_; }
+
+  // True if event_data values are assigned compact id's.
+  inline bool id_event_data() const { return id_event_data_; }
+
+ private:
+  EventType event_type_ = TraceEvent::UNKNOWN;
+  std::string description_ = "";
+  bool enabled_ = true;
+  bool is_packet_event_ = false;
+  bool is_stream_event_ = false;
+  bool id_event_data_ = true;
+};
+
+// A hash function for TraceEvent::EventType.
+struct EventTypeHash {
+  size_t operator()(const TraceEvent::EventType e) const {
+    return static_cast<size_t>(e);
+  }
+};
+
+// The registry of trace event types.
+using TraceEventRegistry =
+    std::unordered_map<TraceEvent::EventType, TraceEventType, EventTypeHash>;
 
 }  // namespace mediapipe
 

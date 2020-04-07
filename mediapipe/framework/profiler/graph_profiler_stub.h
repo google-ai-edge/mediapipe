@@ -53,6 +53,8 @@ class TraceEvent {
     GPU_TASK,
     DSP_TASK,
     TPU_TASK,
+    GPU_CALIBRATION,
+    PACKET_QUEUED,
   };
   TraceEvent(const EventType& event_type) {}
   TraceEvent() {}
@@ -69,6 +71,7 @@ class TraceEvent {
   inline TraceEvent& set_packet_data_id(const Packet* packet) { return *this; }
   inline TraceEvent& set_thread_id(int thread_id) { return *this; }
   inline TraceEvent& set_is_finish(bool is_finish) { return *this; }
+  inline TraceEvent& set_event_data(int64 data) { return *this; }
 };
 
 // Empty implementation of ProfilingContext to be used in place of the

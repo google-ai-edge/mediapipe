@@ -14,6 +14,9 @@
 
 licenses(["notice"])  # Apache 2.0
 
+# Note: yes, these need to use "//external:android/crosstool", not
+# @androidndk//:default_crosstool.
+
 config_setting(
     name = "android",
     values = {"crosstool_top": "//external:android/crosstool"},

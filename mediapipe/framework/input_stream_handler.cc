@@ -230,8 +230,36 @@ void InputStreamHandler::FinalizeInputSet(Timestamp timestamp,
   }
 }
 
+// Returns the default CalculatorContext.
+CalculatorContext* GetCalculatorContext(CalculatorContextManager* manager) {
+  return (manager && manager->HasDefaultCalculatorContext())
+             ? manager->GetDefaultCalculatorContext()
+             : nullptr;
+}
+
+// Logs the current queue size of an input stream.
+void LogQueuedPackets(CalculatorContext* context, InputStreamManager* stream,
+                      Packet queue_tail) {
+  if (context) {
+    TraceEvent event = TraceEvent(TraceEvent::PACKET_QUEUED)
+                           .set_node_id(context->NodeId())
+                           .set_input_ts(queue_tail.Timestamp())
+                           .set_stream_id(&stream->Name())
+                           .set_event_data(stream->QueueSize() + 1);
+    ::mediapipe::LogEvent(context->GetProfilingContext(),
+                          event.set_packet_ts(queue_tail.Timestamp()));
+    Packet queue_head = stream->QueueHead();
+    if (!queue_head.IsEmpty()) {
+      ::mediapipe::LogEvent(context->GetProfilingContext(),
+                            event.set_packet_ts(queue_head.Timestamp()));
+    }
+  }
+}
+
 void InputStreamHandler::AddPackets(CollectionItemId id,
                                     const std::list<Packet>& packets) {
+  LogQueuedPackets(GetCalculatorContext(calculator_context_manager_),
+                   input_stream_managers_.Get(id), packets.back());
   bool notify = false;
   ::mediapipe::Status result =
       input_stream_managers_.Get(id)->AddPackets(packets, &notify);
@@ -245,6 +273,8 @@ void InputStreamHandler::AddPackets(CollectionItemId id,
 
 void InputStreamHandler::MovePackets(CollectionItemId id,
                                      std::list<Packet>* packets) {
+  LogQueuedPackets(GetCalculatorContext(calculator_context_manager_),
+                   input_stream_managers_.Get(id), packets->back());
   bool notify = false;
   ::mediapipe::Status result =
       input_stream_managers_.Get(id)->MovePackets(packets, &notify);
@@ -306,6 +336,8 @@ SyncSet::SyncSet(InputStreamHandler* input_stream_handler,
                  std::vector<CollectionItemId> stream_ids)
     : input_stream_handler_(input_stream_handler),
       stream_ids_(std::move(stream_ids)) {}
+
+void SyncSet::PrepareForRun() { last_processed_ts_ = Timestamp::Unset(); }
 
 NodeReadiness SyncSet::GetReadiness(Timestamp* min_stream_timestamp) {
   Timestamp min_bound = Timestamp::Done();

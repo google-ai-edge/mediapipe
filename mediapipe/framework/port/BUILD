@@ -246,6 +246,7 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         ":opencv_core",
+        "//mediapipe/framework:port",
         "//third_party:opencv",
     ],
 )

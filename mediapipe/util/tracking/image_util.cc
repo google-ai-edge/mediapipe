@@ -106,7 +106,7 @@ void RenderSaliency(const SalientPointFrame& salient_points,
 
         for (int k = 0; k < 4; ++k) {
           cv::line(*image, corners[k], corners[(k + 1) % 4], line_color,
-                   line_thickness, CV_AA);
+                   line_thickness, cv::LINE_AA);
         }
       }
     }

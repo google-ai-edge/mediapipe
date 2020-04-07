@@ -149,7 +149,7 @@ void ToneEstimation::IntensityPercentiles(const cv::Mat& frame,
                                           bool log_domain,
                                           ToneChange* tone_change) const {
   cv::Mat intensity(frame.rows, frame.cols, CV_8UC1);
-  cv::cvtColor(frame, intensity, CV_RGB2GRAY);
+  cv::cvtColor(frame, intensity, cv::COLOR_RGB2GRAY);
 
   std::vector<float> histogram(256, 0.0f);
 

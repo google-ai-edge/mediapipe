@@ -117,6 +117,7 @@ void* GlContext::DedicatedThread::ThreadBody(void* instance) {
 
 void GlContext::DedicatedThread::ThreadBody() {
   SetThreadName("mediapipe_gl_runner");
+
 #ifndef __EMSCRIPTEN__
   GlThreadCollector::ThreadStarting();
 #endif
@@ -276,6 +277,11 @@ bool GlContext::HasGlExtension(absl::string_view extension) const {
     absl::string_view version_string(
         reinterpret_cast<const char*>(glGetString(GL_VERSION)));
 
+    // We will decide later whether we want to use the version numbers we query
+    // for, or instead derive that information from the context creation result,
+    // which we cache here.
+    GLint gl_major_version_from_context_creation = gl_major_version_;
+
     // Let's try getting the numeric version if possible.
     glGetIntegerv(GL_MAJOR_VERSION, &gl_major_version_);
     GLenum err = glGetError();
@@ -291,6 +297,23 @@ bool GlContext::HasGlExtension(absl::string_view extension) const {
         gl_major_version_ = 2;
         gl_minor_version_ = 0;
       }
+    }
+
+    // If our platform-specific CreateContext already set a major GL version,
+    // then we use that.  Otherwise, we use the queried-for result. We do this
+    // as a workaround for a Swiftshader on Android bug where the ES2 context
+    // can report major version 3 instead of 2 when queried. Therefore we trust
+    // the result from context creation more than from query. See b/152519932
+    // for more details.
+    if (gl_major_version_from_context_creation > 0 &&
+        gl_major_version_ != gl_major_version_from_context_creation) {
+      LOG(WARNING) << "Requested a context with major GL version "
+                   << gl_major_version_from_context_creation
+                   << " but context reports major version " << gl_major_version_
+                   << ". Setting to " << gl_major_version_from_context_creation
+                   << ".0";
+      gl_major_version_ = gl_major_version_from_context_creation;
+      gl_minor_version_ = 0;
     }
 
     LOG(INFO) << "GL version: " << gl_major_version_ << "." << gl_minor_version_
@@ -613,7 +636,17 @@ std::shared_ptr<GlSyncPoint> GlContext::CreateSyncToken() {
 #if MEDIAPIPE_DISABLE_GL_SYNC_FOR_DEBUG
   token.reset(new GlNopSyncPoint(shared_from_this()));
 #else
-  if (SymbolAvailable(&glWaitSync)) {
+
+#ifdef __EMSCRIPTEN__
+  // In Emscripten the glWaitSync function is non-null depending on linkopts,
+  // but only works in a WebGL2 context, so fall back to use Finish if it is a
+  // WebGL1/ES2 context.
+  // TODO: apply this more generally once b/152794517 is fixed.
+  bool useFenceSync = gl_major_version() > 2;
+#else
+  bool useFenceSync = SymbolAvailable(&glWaitSync);
+#endif  // __EMSCRIPTEN__
+  if (useFenceSync) {
     token.reset(new GlFenceSyncPoint(shared_from_this()));
   } else {
     token.reset(new GlFinishSyncPoint(shared_from_this()));
@@ -633,8 +666,30 @@ std::shared_ptr<GlSyncPoint> GlContext::TestOnly_CreateSpecificSyncToken(
   return nullptr;
 }
 
+// Atomically set var to the greater of its current value or target.
+template <typename T>
+static void assign_larger_value(std::atomic<T>* var, T target) {
+  T current = var->load();
+  while (current < target && !var->compare_exchange_weak(current, target)) {
+  }
+}
+
+// Note: this can get called from an arbitrary thread which is dealing with a
+// GlFinishSyncPoint originating from this context.
 void GlContext::WaitForGlFinishCountPast(int64_t count_to_pass) {
   if (gl_finish_count_ > count_to_pass) return;
+
+  // If we've been asked to do a glFinish, note the count we need to reach and
+  // signal the context our thread may currently be blocked on.
+  {
+    absl::MutexLock lock(&mutex_);
+    assign_larger_value(&gl_finish_count_target_, count_to_pass + 1);
+    wait_for_gl_finish_cv_.SignalAll();
+    if (context_waiting_on_) {
+      context_waiting_on_->wait_for_gl_finish_cv_.SignalAll();
+    }
+  }
+
   auto finish_task = [this, count_to_pass]() {
     // When a GlFinishSyncToken is created it takes the current finish count
     // from the GlContext, and we must wait for gl_finish_count_ to pass it.
@@ -646,6 +701,7 @@ void GlContext::WaitForGlFinishCountPast(int64_t count_to_pass) {
       GlFinishCalled();
     }
   };
+
   if (IsCurrent()) {
     // If we are already on the current context, we cannot call
     // RunWithoutWaiting, since that task will not run until this function
@@ -653,13 +709,53 @@ void GlContext::WaitForGlFinishCountPast(int64_t count_to_pass) {
     finish_task();
     return;
   }
+
+  std::shared_ptr<GlContext> other = GetCurrent();
+  if (other) {
+    // If another context is current, make a note that it is blocked on us, so
+    // it can signal the right condition variable if it is asked to do a
+    // glFinish.
+    absl::MutexLock other_lock(&other->mutex_);
+    DCHECK(!other->context_waiting_on_);
+    other->context_waiting_on_ = this;
+  }
   // We do not schedule this action using Run because we don't necessarily
   // want to wait for it to complete. If another job calls GlFinishCalled
   // sooner, we are done.
   RunWithoutWaiting(std::move(finish_task));
-  absl::MutexLock lock(&mutex_);
-  while (gl_finish_count_ <= count_to_pass) {
-    wait_for_gl_finish_cv_.Wait(&mutex_);
+  {
+    absl::MutexLock lock(&mutex_);
+    while (gl_finish_count_ <= count_to_pass) {
+      if (other && other->gl_finish_count_ < other->gl_finish_count_target_) {
+        // If another context's dedicated thread is current, it is blocked
+        // waiting for this context to issue a glFinish call. But this context
+        // may also block waiting for the other context to do the same: this can
+        // happen when two contexts are handling each other's GlFinishSyncPoints
+        // (e.g. a producer and a consumer). To avoid a deadlock a context that
+        // is waiting on another context must still service Wait calls it may
+        // receive from its own GlFinishSyncPoints.
+        //
+        // We unlock this context's mutex to avoid holding both at the same
+        // time.
+        mutex_.Unlock();
+        {
+          glFinish();
+          other->GlFinishCalled();
+        }
+        mutex_.Lock();
+        // Because we temporarily unlocked mutex_, we cannot wait on the
+        // condition variable wait away; we need to go back to re-checking the
+        // condition. Otherwise we might miss a signal.
+        continue;
+      }
+      wait_for_gl_finish_cv_.Wait(&mutex_);
+    }
+  }
+
+  if (other) {
+    // The other context is no longer waiting on us.
+    absl::MutexLock other_lock(&other->mutex_);
+    other->context_waiting_on_ = nullptr;
   }
 }
 

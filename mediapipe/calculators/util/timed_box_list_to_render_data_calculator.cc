@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <algorithm>
+
 #include "absl/memory/memory.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
@@ -76,14 +78,16 @@ void AddTimedBoxProtoToRenderData(
     RenderAnnotation::Text* text = label_annotation->mutable_text();
     text->set_display_text(box_proto.label());
     text->set_normalized(true);
-    constexpr float text_left_start = 0.3f;
+    constexpr float text_left_start = 0.2f;
     text->set_left((1.0f - text_left_start) * box_proto.left() +
                    text_left_start * box_proto.right());
     constexpr float text_baseline = 0.6f;
     text->set_baseline(text_baseline * box_proto.bottom() +
                        (1.0f - text_baseline) * box_proto.top());
-    constexpr float text_height = 0.2f;
-    text->set_font_height((box_proto.bottom() - box_proto.top()) * text_height);
+    constexpr float text_height = 0.1f;
+    text->set_font_height(std::min(box_proto.bottom() - box_proto.top(),
+                                   box_proto.right() - box_proto.left()) *
+                          text_height);
   }
 }
 

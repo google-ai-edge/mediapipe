@@ -18,6 +18,7 @@
 #include <vector>
 
 #include "absl/container/node_hash_map.h"
+#include "mediapipe/calculators/video/tracked_detection_manager_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/detection.pb.h"
 #include "mediapipe/framework/formats/location_data.pb.h"
@@ -139,6 +140,7 @@ Detection GetAxisAlignedDetectionFromTrackedDetection(
 class TrackedDetectionManagerCalculator : public CalculatorBase {
  public:
   static ::mediapipe::Status GetContract(CalculatorContract* cc);
+  ::mediapipe::Status Open(CalculatorContext* cc) override;
 
   ::mediapipe::Status Process(CalculatorContext* cc) override;
 
@@ -181,6 +183,15 @@ REGISTER_CALCULATOR(TrackedDetectionManagerCalculator);
     cc->Outputs().Tag(kDetectionBoxesTag).Set<std::vector<NormalizedRect>>();
   }
 
+  return ::mediapipe::OkStatus();
+}
+
+::mediapipe::Status TrackedDetectionManagerCalculator::Open(
+    CalculatorContext* cc) {
+  mediapipe::TrackedDetectionManagerCalculatorOptions options =
+      cc->Options<mediapipe::TrackedDetectionManagerCalculatorOptions>();
+  tracked_detection_manager_.SetConfig(
+      options.tracked_detection_manager_options());
   return ::mediapipe::OkStatus();
 }
 

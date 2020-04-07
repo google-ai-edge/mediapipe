@@ -145,7 +145,7 @@ REGISTER_CALCULATOR(TfLiteTensorsToLandmarksCalculator);
           ? cc->InputSidePackets().Tag("FLIP_HORIZONTALLY").Get<bool>()
           : options_.flip_horizontally();
 
-  flip_horizontally_ =
+  flip_vertically_ =
       cc->InputSidePackets().HasTag("FLIP_VERTICALLY")
           ? cc->InputSidePackets().Tag("FLIP_VERTICALLY").Get<bool>()
           : options_.flip_vertically();

@@ -380,6 +380,9 @@ class GlContext : public std::enable_shared_from_this<GlContext> {
   // Changes should be guarded by mutex_. However, we use simple atomic
   // loads for efficiency on the fast path.
   std::atomic<int64_t> gl_finish_count_ = ATOMIC_VAR_INIT(0);
+  std::atomic<int64_t> gl_finish_count_target_ = ATOMIC_VAR_INIT(0);
+
+  GlContext* context_waiting_on_ ABSL_GUARDED_BY(mutex_) = nullptr;
 
   // This mutex is held by a thread while this GL context is current on that
   // thread. Since it may be held for extended periods of time, it should not

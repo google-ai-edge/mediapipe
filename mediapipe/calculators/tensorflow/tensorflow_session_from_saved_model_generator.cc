@@ -53,10 +53,11 @@ static constexpr char kStringSavedModelPath[] = "STRING_SAVED_MODEL_PATH";
 #endif
 }
 
-// If options.convert_signature_to_tags() will convert letters to uppercase
-// and replace /'s with _'s. If set, this enables the standard SavedModel
-// classification, regression, and prediction signatures to be used as
-// uppercase INPUTS and OUTPUTS tags for streams.
+// If options.convert_signature_to_tags() is set, will convert letters to
+// uppercase and replace /'s and -'s with _'s. This enables the standard
+// SavedModel classification, regression, and prediction signatures to be used
+// as uppercase INPUTS and OUTPUTS tags for streams and supports other common
+// patterns.
 const std::string MaybeConvertSignatureToTag(
     const std::string& name,
     const TensorFlowSessionFromSavedModelGeneratorOptions& options) {
@@ -66,6 +67,7 @@ const std::string MaybeConvertSignatureToTag(
     std::transform(name.begin(), name.end(), output.begin(),
                    [](unsigned char c) { return std::toupper(c); });
     output = absl::StrReplaceAll(output, {{"/", "_"}});
+    output = absl::StrReplaceAll(output, {{"-", "_"}});
     return output;
   } else {
     return name;

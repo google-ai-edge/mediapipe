@@ -117,6 +117,20 @@ proto_library(
     deps = [":tracking_proto"],
 )
 
+proto_library(
+    name = "tracked_detection_manager_config_proto",
+    srcs = ["tracked_detection_manager_config.proto"],
+)
+
+proto_library(
+    name = "box_detector_proto",
+    srcs = ["box_detector.proto"],
+    deps = [
+        ":box_tracker_proto",
+        ":region_flow_proto",
+    ],
+)
+
 mediapipe_cc_proto_library(
     name = "tone_models_cc_proto",
     srcs = ["tone_models.proto"],
@@ -243,6 +257,24 @@ mediapipe_cc_proto_library(
     cc_deps = [":tracking_cc_proto"],
     visibility = ["//visibility:public"],
     deps = [":box_tracker_proto"],
+)
+
+mediapipe_cc_proto_library(
+    name = "tracked_detection_manager_config_cc_proto",
+    srcs = ["tracked_detection_manager_config.proto"],
+    visibility = ["//visibility:public"],
+    deps = [":tracked_detection_manager_config_proto"],
+)
+
+mediapipe_cc_proto_library(
+    name = "box_detector_cc_proto",
+    srcs = ["box_detector.proto"],
+    cc_deps = [
+        ":box_tracker_cc_proto",
+        ":region_flow_cc_proto",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [":box_detector_proto"],
 )
 
 cc_library(
@@ -613,6 +645,28 @@ cc_library(
 )
 
 cc_library(
+    name = "box_detector",
+    srcs = ["box_detector.cc"],
+    hdrs = ["box_detector.h"],
+    deps = [
+        ":box_detector_cc_proto",
+        ":box_tracker",
+        ":box_tracker_cc_proto",
+        ":flow_packager_cc_proto",
+        ":measure_time",
+        ":tracking",
+        "//mediapipe/framework/port:opencv_calib3d",
+        "//mediapipe/framework/port:opencv_core",
+        "//mediapipe/framework/port:opencv_features2d",
+        "//mediapipe/framework/port:opencv_imgproc",
+        "//mediapipe/framework/port:opencv_video",
+        "@com_google_absl//absl/container:flat_hash_map",
+        "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/synchronization",
+    ],
+)
+
+cc_library(
     name = "tracking_visualization_utilities",
     srcs = ["tracking_visualization_utilities.cc"],
     hdrs = ["tracking_visualization_utilities.h"],
@@ -737,6 +791,7 @@ cc_library(
     ],
     deps = [
         ":tracked_detection",
+        ":tracked_detection_manager_config_cc_proto",
         "//mediapipe/framework/formats:rect_cc_proto",
         "@com_google_absl//absl/container:node_hash_map",
     ],

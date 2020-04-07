@@ -164,9 +164,9 @@ void OutputStreamManager::PropagateUpdatesToMirrors(
     next_timestamp_bound_ = next_timestamp_bound;
   }
   std::list<Packet>* packets_to_propagate = output_stream_shard->OutputQueue();
-  VLOG(2) << "Output stream: " << Name()
+  VLOG(3) << "Output stream: " << Name()
           << " queue size: " << packets_to_propagate->size();
-  VLOG(2) << "Output stream: " << Name()
+  VLOG(3) << "Output stream: " << Name()
           << " next timestamp: " << next_timestamp_bound;
   bool add_packets = !packets_to_propagate->empty();
   bool set_bound =

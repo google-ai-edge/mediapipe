@@ -540,11 +540,11 @@ const Holder<T>* HolderBase::As() const {
 
 inline Packet::Packet(const Packet& packet)
     : holder_(packet.holder_), timestamp_(packet.timestamp_) {
-  VLOG(2) << "Using copy constructor of " << packet.DebugString();
+  VLOG(4) << "Using copy constructor of " << packet.DebugString();
 }
 
 inline Packet& Packet::operator=(const Packet& packet) {
-  VLOG(2) << "Using copy assignment operator of " << packet.DebugString();
+  VLOG(4) << "Using copy assignment operator of " << packet.DebugString();
   if (this != &packet) {
     holder_ = packet.holder_;
     timestamp_ = packet.timestamp_;
@@ -559,11 +559,11 @@ inline ::mediapipe::StatusOr<std::unique_ptr<T>> Packet::Consume() {
   // Clients who use this function are responsible for ensuring that no
   // other thread is doing anything with this Packet.
   if (holder_.unique()) {
-    VLOG(1) << "Consuming the data of " << DebugString();
+    VLOG(2) << "Consuming the data of " << DebugString();
     ::mediapipe::StatusOr<std::unique_ptr<T>> release_result =
         holder_->As<T>()->Release();
     if (release_result.ok()) {
-      VLOG(1) << "Setting " << DebugString() << " to empty.";
+      VLOG(2) << "Setting " << DebugString() << " to empty.";
       holder_.reset();
     }
     return release_result;
@@ -582,11 +582,11 @@ inline ::mediapipe::StatusOr<std::unique_ptr<T>> Packet::ConsumeOrCopy(
   // If holder is the sole owner of the underlying data, consumes this packet.
   if (!holder_->HolderIsOfType<packet_internal::ForeignHolder<T>>() &&
       holder_.unique()) {
-    VLOG(1) << "Consuming the data of " << DebugString();
+    VLOG(2) << "Consuming the data of " << DebugString();
     ::mediapipe::StatusOr<std::unique_ptr<T>> release_result =
         holder_->As<T>()->Release();
     if (release_result.ok()) {
-      VLOG(1) << "Setting " << DebugString() << " to empty.";
+      VLOG(2) << "Setting " << DebugString() << " to empty.";
       holder_.reset();
     }
     if (was_copied) {
@@ -594,9 +594,9 @@ inline ::mediapipe::StatusOr<std::unique_ptr<T>> Packet::ConsumeOrCopy(
     }
     return release_result;
   }
-  VLOG(1) << "Copying the data of " << DebugString();
+  VLOG(2) << "Copying the data of " << DebugString();
   std::unique_ptr<T> data_ptr = absl::make_unique<T>(Get<T>());
-  VLOG(1) << "Setting " << DebugString() << " to empty.";
+  VLOG(2) << "Setting " << DebugString() << " to empty.";
   holder_.reset();
   if (was_copied) {
     *was_copied = true;
@@ -613,11 +613,11 @@ inline ::mediapipe::StatusOr<std::unique_ptr<T>> Packet::ConsumeOrCopy(
   // If holder is the sole owner of the underlying data, consumes this packet.
   if (!holder_->HolderIsOfType<packet_internal::ForeignHolder<T>>() &&
       holder_.unique()) {
-    VLOG(1) << "Consuming the data of " << DebugString();
+    VLOG(2) << "Consuming the data of " << DebugString();
     ::mediapipe::StatusOr<std::unique_ptr<T>> release_result =
         holder_->As<T>()->Release();
     if (release_result.ok()) {
-      VLOG(1) << "Setting " << DebugString() << " to empty.";
+      VLOG(2) << "Setting " << DebugString() << " to empty.";
       holder_.reset();
     }
     if (was_copied) {
@@ -625,7 +625,7 @@ inline ::mediapipe::StatusOr<std::unique_ptr<T>> Packet::ConsumeOrCopy(
     }
     return release_result;
   }
-  VLOG(1) << "Copying the data of " << DebugString();
+  VLOG(2) << "Copying the data of " << DebugString();
   const auto& original_array = Get<T>();
   // Type T is bounded array type, such as int[N] and float[M].
   // The new operator creates a new bounded array.
@@ -633,7 +633,7 @@ inline ::mediapipe::StatusOr<std::unique_ptr<T>> Packet::ConsumeOrCopy(
   // Copies bounded array data into data_ptr.
   std::copy(std::begin(original_array), std::end(original_array),
             std::begin(*data_ptr));
-  VLOG(1) << "Setting " << DebugString() << " to empty.";
+  VLOG(2) << "Setting " << DebugString() << " to empty.";
   holder_.reset();
   if (was_copied) {
     *was_copied = true;
@@ -650,14 +650,14 @@ inline ::mediapipe::StatusOr<std::unique_ptr<T>> Packet::ConsumeOrCopy(
 }
 
 inline Packet::Packet(Packet&& packet) {
-  VLOG(2) << "Using move constructor of " << packet.DebugString();
+  VLOG(4) << "Using move constructor of " << packet.DebugString();
   holder_ = std::move(packet.holder_);
   timestamp_ = packet.timestamp_;
   packet.timestamp_ = Timestamp::Unset();
 }
 
 inline Packet& Packet::operator=(Packet&& packet) {
-  VLOG(2) << "Using move assignment operator of " << packet.DebugString();
+  VLOG(4) << "Using move assignment operator of " << packet.DebugString();
   if (this != &packet) {
     holder_ = std::move(packet.holder_);
     timestamp_ = packet.timestamp_;

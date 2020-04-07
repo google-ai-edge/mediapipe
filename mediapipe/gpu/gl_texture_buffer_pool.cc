@@ -26,19 +26,28 @@ GlTextureBufferPool::GlTextureBufferPool(int width, int height,
       keep_count_(keep_count) {}
 
 GlTextureBufferSharedPtr GlTextureBufferPool::GetBuffer() {
-  absl::MutexLock lock(&mutex_);
-
   std::unique_ptr<GlTextureBuffer> buffer;
-  if (available_.empty()) {
-    buffer = GlTextureBuffer::Create(width_, height_, format_);
-    if (!buffer) return nullptr;
-  } else {
-    buffer = std::move(available_.back());
-    available_.pop_back();
-    buffer->Reuse();
+  bool reuse = false;
+
+  {
+    absl::MutexLock lock(&mutex_);
+    if (available_.empty()) {
+      buffer = GlTextureBuffer::Create(width_, height_, format_);
+      if (!buffer) return nullptr;
+    } else {
+      buffer = std::move(available_.back());
+      available_.pop_back();
+      reuse = true;
+    }
+
+    ++in_use_count_;
   }
 
-  ++in_use_count_;
+  // This needs to wait on consumer sync points, therefore it should not be
+  // done while holding the mutex.
+  if (reuse) {
+    buffer->Reuse();
+  }
 
   // Return a shared_ptr with a custom deleter that adds the buffer back
   // to our available list.
@@ -60,15 +69,24 @@ std::pair<int, int> GlTextureBufferPool::GetInUseAndAvailableCounts() {
 }
 
 void GlTextureBufferPool::Return(GlTextureBuffer* buf) {
-  absl::MutexLock lock(&mutex_);
-  --in_use_count_;
-  available_.emplace_back(buf);
-  TrimAvailable();
+  std::vector<std::unique_ptr<GlTextureBuffer>> trimmed;
+  {
+    absl::MutexLock lock(&mutex_);
+    --in_use_count_;
+    available_.emplace_back(buf);
+    TrimAvailable(&trimmed);
+  }
+  // The trimmed buffers will be released without holding the lock.
 }
 
-void GlTextureBufferPool::TrimAvailable() {
+void GlTextureBufferPool::TrimAvailable(
+    std::vector<std::unique_ptr<GlTextureBuffer>>* trimmed) {
   int keep = std::max(keep_count_ - in_use_count_, 0);
   if (available_.size() > keep) {
+    auto trim_it = std::next(available_.begin(), keep);
+    if (trimmed) {
+      std::move(available_.begin(), trim_it, std::back_inserter(*trimmed));
+    }
     available_.resize(keep);
   }
 }

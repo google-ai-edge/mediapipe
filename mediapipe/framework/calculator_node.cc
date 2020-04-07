@@ -814,7 +814,8 @@ std::string CalculatorNode::DebugName() const {
         input_stream_handler_->FinalizeInputSet(input_timestamp, inputs);
         output_stream_handler_->PrepareOutputs(input_timestamp, outputs);
 
-        VLOG(2) << "Calling Calculator::Process() for node: " << DebugName();
+        VLOG(2) << "Calling Calculator::Process() for node: " << DebugName()
+                << " timestamp: " << input_timestamp;
 
         if (OutputsAreConstant(calculator_context)) {
           // Do nothing.
@@ -825,6 +826,9 @@ std::string CalculatorNode::DebugName() const {
               calculator_context);
           result = calculator_->Process(calculator_context);
         }
+
+        VLOG(2) << "Called Calculator::Process() for node: " << DebugName()
+                << " timestamp: " << input_timestamp;
 
         // Removes one packet from each shard and progresses to the next input
         // timestamp.

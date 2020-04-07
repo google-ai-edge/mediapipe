@@ -102,13 +102,13 @@ void VisualizeRegionFlowFeaturesImpl(const RegionFlowFeatureList& feature_list,
 #else
     cv::Scalar color_scaled(color * alpha + outlier * (1.0f - alpha));
 #endif
-    cv::line(*output, p1, p2, color_scaled, line_size, CV_AA);
+    cv::line(*output, p1, p2, color_scaled, line_size, cv::LINE_AA);
     cv::circle(*output, p1, 2.0 * line_size, color_scaled, line_size);
 
     if (feature.has_label()) {
       cv::putText(*output, absl::StrCat(" ", feature.label()), p1,
                   cv::FONT_HERSHEY_SIMPLEX, text_scale, color_scaled,
-                  3.0 * text_scale, CV_AA);
+                  3.0 * text_scale, cv::LINE_AA);
     }
   }
 }
@@ -165,7 +165,7 @@ void VisualizeLongFeatureStreamImpl(const LongFeatureStream& stream,
       if (k < pts.size() - 1) {
         // Draw line connecting points.
         cv::Point p2(pts[k + 1].x() * scale_x, pts[k + 1].y() * scale_y);
-        cv::line(*output, p1, p2, color_scaled, 1.0, CV_AA);
+        cv::line(*output, p1, p2, color_scaled, 1.0, cv::LINE_AA);
       }
       if (k + 1 == pts.size()) {  // Last iteration.
         cv::circle(*output, p1, 2.0, color_scaled, 1.0);
@@ -174,7 +174,7 @@ void VisualizeLongFeatureStreamImpl(const LongFeatureStream& stream,
         if (latest_feature.has_label()) {
           cv::putText(*output, absl::StrCat(" ", latest_feature.label()), p1,
                       cv::FONT_HERSHEY_SIMPLEX, text_scale, color_scaled,
-                      3 * text_scale, CV_AA);
+                      3 * text_scale, cv::LINE_AA);
         }
       }
     }

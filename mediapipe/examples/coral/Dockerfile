@@ -35,10 +35,8 @@ RUN dpkg --add-architecture arm64
 RUN apt-get update && apt-get install -y \
   build-essential \
   crossbuild-essential-arm64 \
-  libusb-1.0-0-dev \
   libusb-1.0-0-dev:arm64 \
-  zlib1g-dev \
-  zlib1g-dev:arm64 \
+  zlibc:arm64 \
   pkg-config \
   zip \
   unzip \
@@ -62,8 +60,8 @@ RUN pip3 install six
 COPY . /mediapipe/
 
 # Install bazel
-
-ARG BAZEL_VERSION=1.1.0
+# Please match the current MediaPipe Bazel requirements according to docs.
+ARG BAZEL_VERSION=2.0.0
 RUN mkdir /bazel && \
     wget --no-check-certificate -O /bazel/installer.sh "https://github.com/bazelbuild/bazel/releases/download/${BAZEL_VERSION}/bazel-${BAZEL_VERSION}-installer-linux-x86_64.sh" && \
     wget --no-check-certificate -O  /bazel/LICENSE.txt "https://raw.githubusercontent.com/bazelbuild/bazel/master/LICENSE" && \
