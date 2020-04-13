@@ -2,6 +2,42 @@ workspace(name = "mediapipe")
 
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
+# System libs files
+new_local_repository(
+    name = "system_libs",
+    # pkg-config --variable=libdir x11
+    path = "/usr/lib/x86_64-linux-gnu", 
+    build_file_content = """
+cc_library(
+    name = "libncurses",
+    srcs = ["libncurses.so"],
+    visibility = ["//visibility:public"],
+)
+cc_library(
+    name = "libmosquittopp-dev",
+    srcs = ["libmosquittopp.so"],
+    visibility = ["//visibility:public"],
+)
+""",
+)
+
+
+# System header files
+new_local_repository(
+    name = "system_headers",
+    # pkg-config --variable=libdir x11
+    path = "/usr/include",
+    build_file_content = """
+cc_library(
+    name = "headers",
+    hdrs = glob([
+        "*.h", "*.hpp",
+    ]),
+    visibility = ["//visibility:public"],
+)
+""",
+)
+
 skylib_version = "0.9.0"
 http_archive(
     name = "bazel_skylib",
