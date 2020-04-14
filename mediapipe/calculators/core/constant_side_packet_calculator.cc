@@ -51,8 +51,8 @@ namespace mediapipe {
 class ConstantSidePacketCalculator : public CalculatorBase {
  public:
   static ::mediapipe::Status GetContract(CalculatorContract* cc) {
-    const auto& options = cc->Options().GetExtension(
-        ::mediapipe::ConstantSidePacketCalculatorOptions::ext);
+    const auto& options =
+        cc->Options<::mediapipe::ConstantSidePacketCalculatorOptions>();
     RET_CHECK_EQ(cc->OutputSidePackets().NumEntries(kPacketTag),
                  options.packet_size())
         << "Number of output side packets has to be same as number of packets "
@@ -80,8 +80,8 @@ class ConstantSidePacketCalculator : public CalculatorBase {
   }
 
   ::mediapipe::Status Open(CalculatorContext* cc) override {
-    const auto& options = cc->Options().GetExtension(
-        ::mediapipe::ConstantSidePacketCalculatorOptions::ext);
+    const auto& options =
+        cc->Options<::mediapipe::ConstantSidePacketCalculatorOptions>();
     int index = 0;
     for (CollectionItemId id = cc->OutputSidePackets().BeginId(kPacketTag);
          id != cc->OutputSidePackets().EndId(kPacketTag); ++id, ++index) {

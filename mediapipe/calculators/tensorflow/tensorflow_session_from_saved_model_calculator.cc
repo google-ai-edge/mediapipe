@@ -126,7 +126,7 @@ class TensorFlowSessionFromSavedModelCalculator : public CalculatorBase {
     // Set user specified tags properly.
     // If no tags specified will use tensorflow::kSavedModelTagServe by default.
     std::unordered_set<std::string> tags_set;
-    for (std::string tag : options.saved_model_tag()) {
+    for (const std::string& tag : options.saved_model_tag()) {
       tags_set.insert(tag);
     }
     if (tags_set.empty()) {

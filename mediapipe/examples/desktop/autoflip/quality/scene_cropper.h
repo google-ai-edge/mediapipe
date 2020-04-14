@@ -48,14 +48,19 @@ class SceneCropper {
   SceneCropper() {}
   ~SceneCropper() {}
 
-  // Crops scene frames given SceneKeyFrameCropSummary, FocusPointFrames, and
-  // any prior FocusPointFrames (to ensure smoothness when there was no actual
-  // scene change).
+  // Computes transformation matrix given SceneKeyFrameCropSummary,
+  // FocusPointFrames, and any prior FocusPointFrames (to ensure smoothness when
+  // there was no actual scene change). Optionally crops the input frames based
+  // on the transform matrix if |cropped_frames| is not nullptr and
+  // |scene_frames_or_empty| isn't empty.
+  // TODO: split this function into two separate functions.
   ::mediapipe::Status CropFrames(
-      const SceneKeyFrameCropSummary& scene_summary,
-      const std::vector<cv::Mat>& scene_frames,
+      const SceneKeyFrameCropSummary& scene_summary, const int num_scene_frames,
+      const std::vector<cv::Mat>& scene_frames_or_empty,
       const std::vector<FocusPointFrame>& focus_point_frames,
       const std::vector<FocusPointFrame>& prior_focus_point_frames,
+      int top_static_border_size, int bottom_static_border_size,
+      std::vector<cv::Rect>* all_scene_frame_xforms,
       std::vector<cv::Mat>* cropped_frames) const;
 };
 

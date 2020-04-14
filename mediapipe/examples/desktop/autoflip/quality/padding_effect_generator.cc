@@ -173,5 +173,28 @@ PaddingEffectGenerator::PaddingEffectGenerator(const int input_width,
   return ::mediapipe::OkStatus();
 }
 
+cv::Rect PaddingEffectGenerator::ComputeOutputLocation() {
+  const int effective_input_width =
+      is_vertical_padding_ ? input_width_ : input_height_;
+  const int effective_input_height =
+      is_vertical_padding_ ? input_height_ : input_width_;
+  const int effective_output_width =
+      is_vertical_padding_ ? output_width_ : output_height_;
+  const int effective_output_height =
+      is_vertical_padding_ ? output_height_ : output_width_;
+
+  // Step 3 from "process" call above, compute foreground location.
+  const int foreground_height =
+      effective_input_height * effective_output_width / effective_input_width;
+  const int x = 0;
+  const int y = (effective_output_height - foreground_height) / 2;
+  const int width = effective_output_width;
+  const int height = foreground_height;
+
+  cv::Rect region_to_embed_foreground(x, y, width, height);
+
+  return region_to_embed_foreground;
+}
+
 }  // namespace autoflip
 }  // namespace mediapipe

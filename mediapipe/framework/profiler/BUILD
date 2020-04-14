@@ -186,6 +186,7 @@ cc_library(
         "//mediapipe/framework:packet",
         "//mediapipe/framework:timestamp",
         "//mediapipe/framework/port:integral_types",
+        "@com_google_absl//absl/container:node_hash_map",
         "@com_google_absl//absl/time",
     ],
 )

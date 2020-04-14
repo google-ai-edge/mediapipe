@@ -1,0 +1,350 @@
+# MediaPipe face mesh rendering subgraph.
+
+type: "FaceRendererCpu"
+
+# CPU image. (ImageFrame)
+input_stream: "IMAGE:input_image"
+# Collection of detected/predicted faces, each represented as a list of
+# landmarks. (std::vector<NormalizedLandmarkList>)
+input_stream: "LANDMARKS:multi_face_landmarks"
+# Regions of interest calculated based on palm detections.
+# (std::vector<NormalizedRect>)
+input_stream: "NORM_RECTS:rects"
+# Detected palms. (std::vector<Detection>)
+input_stream: "DETECTIONS:detections"
+
+# CPU image with rendered data. (ImageFrame)
+output_stream: "IMAGE:output_image"
+
+node {
+  calculator: "ImagePropertiesCalculator"
+  input_stream: "IMAGE:input_image"
+  output_stream: "SIZE:image_size"
+}
+
+# Converts detections to drawing primitives for annotation overlay.
+node {
+  calculator: "DetectionsToRenderDataCalculator"
+  input_stream: "DETECTIONS:detections"
+  output_stream: "RENDER_DATA:detections_render_data"
+  node_options: {
+    [type.googleapis.com/mediapipe.DetectionsToRenderDataCalculatorOptions] {
+      thickness: 4.0
+      color { r: 0 g: 255 b: 0 }
+    }
+  }
+}
+
+# Outputs each element of multi_face_landmarks at a fake timestamp for the rest
+# of the graph to process. At the end of the loop, outputs the BATCH_END
+# timestamp for downstream calculators to inform them that all elements in the
+# vector have been processed.
+node {
+  calculator: "BeginLoopNormalizedLandmarkListVectorCalculator"
+  input_stream: "ITERABLE:multi_face_landmarks"
+  output_stream: "ITEM:face_landmarks"
+  output_stream: "BATCH_END:landmark_timestamp"
+}
+
+# Converts landmarks to drawing primitives for annotation overlay.
+node {
+  calculator: "LandmarksToRenderDataCalculator"
+  input_stream: "NORM_LANDMARKS:face_landmarks"
+  output_stream: "RENDER_DATA:landmark_render_data"
+  node_options: {
+    [type.googleapis.com/mediapipe.LandmarksToRenderDataCalculatorOptions] {
+      # Lips.
+      landmark_connections: 61
+      landmark_connections: 146
+      landmark_connections: 146
+      landmark_connections: 91
+      landmark_connections: 91
+      landmark_connections: 181
+      landmark_connections: 181
+      landmark_connections: 84
+      landmark_connections: 84
+      landmark_connections: 17
+      landmark_connections: 17
+      landmark_connections: 314
+      landmark_connections: 314
+      landmark_connections: 405
+      landmark_connections: 405
+      landmark_connections: 321
+      landmark_connections: 321
+      landmark_connections: 375
+      landmark_connections: 375
+      landmark_connections: 291
+      landmark_connections: 61
+      landmark_connections: 185
+      landmark_connections: 185
+      landmark_connections: 40
+      landmark_connections: 40
+      landmark_connections: 39
+      landmark_connections: 39
+      landmark_connections: 37
+      landmark_connections: 37
+      landmark_connections: 0
+      landmark_connections: 0
+      landmark_connections: 267
+      landmark_connections: 267
+      landmark_connections: 269
+      landmark_connections: 269
+      landmark_connections: 270
+      landmark_connections: 270
+      landmark_connections: 409
+      landmark_connections: 409
+      landmark_connections: 291
+      landmark_connections: 78
+      landmark_connections: 95
+      landmark_connections: 95
+      landmark_connections: 88
+      landmark_connections: 88
+      landmark_connections: 178
+      landmark_connections: 178
+      landmark_connections: 87
+      landmark_connections: 87
+      landmark_connections: 14
+      landmark_connections: 14
+      landmark_connections: 317
+      landmark_connections: 317
+      landmark_connections: 402
+      landmark_connections: 402
+      landmark_connections: 318
+      landmark_connections: 318
+      landmark_connections: 324
+      landmark_connections: 324
+      landmark_connections: 308
+      landmark_connections: 78
+      landmark_connections: 191
+      landmark_connections: 191
+      landmark_connections: 80
+      landmark_connections: 80
+      landmark_connections: 81
+      landmark_connections: 81
+      landmark_connections: 82
+      landmark_connections: 82
+      landmark_connections: 13
+      landmark_connections: 13
+      landmark_connections: 312
+      landmark_connections: 312
+      landmark_connections: 311
+      landmark_connections: 311
+      landmark_connections: 310
+      landmark_connections: 310
+      landmark_connections: 415
+      landmark_connections: 415
+      landmark_connections: 308
+      # Left eye.
+      landmark_connections: 33
+      landmark_connections: 7
+      landmark_connections: 7
+      landmark_connections: 163
+      landmark_connections: 163
+      landmark_connections: 144
+      landmark_connections: 144
+      landmark_connections: 145
+      landmark_connections: 145
+      landmark_connections: 153
+      landmark_connections: 153
+      landmark_connections: 154
+      landmark_connections: 154
+      landmark_connections: 155
+      landmark_connections: 155
+      landmark_connections: 133
+      landmark_connections: 33
+      landmark_connections: 246
+      landmark_connections: 246
+      landmark_connections: 161
+      landmark_connections: 161
+      landmark_connections: 160
+      landmark_connections: 160
+      landmark_connections: 159
+      landmark_connections: 159
+      landmark_connections: 158
+      landmark_connections: 158
+      landmark_connections: 157
+      landmark_connections: 157
+      landmark_connections: 173
+      landmark_connections: 173
+      landmark_connections: 133
+      # Left eyebrow.
+      landmark_connections: 46
+      landmark_connections: 53
+      landmark_connections: 53
+      landmark_connections: 52
+      landmark_connections: 52
+      landmark_connections: 65
+      landmark_connections: 65
+      landmark_connections: 55
+      landmark_connections: 70
+      landmark_connections: 63
+      landmark_connections: 63
+      landmark_connections: 105
+      landmark_connections: 105
+      landmark_connections: 66
+      landmark_connections: 66
+      landmark_connections: 107
+      # Right eye.
+      landmark_connections: 263
+      landmark_connections: 249
+      landmark_connections: 249
+      landmark_connections: 390
+      landmark_connections: 390
+      landmark_connections: 373
+      landmark_connections: 373
+      landmark_connections: 374
+      landmark_connections: 374
+      landmark_connections: 380
+      landmark_connections: 380
+      landmark_connections: 381
+      landmark_connections: 381
+      landmark_connections: 382
+      landmark_connections: 382
+      landmark_connections: 362
+      landmark_connections: 263
+      landmark_connections: 466
+      landmark_connections: 466
+      landmark_connections: 388
+      landmark_connections: 388
+      landmark_connections: 387
+      landmark_connections: 387
+      landmark_connections: 386
+      landmark_connections: 386
+      landmark_connections: 385
+      landmark_connections: 385
+      landmark_connections: 384
+      landmark_connections: 384
+      landmark_connections: 398
+      landmark_connections: 398
+      landmark_connections: 362
+      # Right eyebrow.
+      landmark_connections: 276
+      landmark_connections: 283
+      landmark_connections: 283
+      landmark_connections: 282
+      landmark_connections: 282
+      landmark_connections: 295
+      landmark_connections: 295
+      landmark_connections: 285
+      landmark_connections: 300
+      landmark_connections: 293
+      landmark_connections: 293
+      landmark_connections: 334
+      landmark_connections: 334
+      landmark_connections: 296
+      landmark_connections: 296
+      landmark_connections: 336
+      # Face oval.
+      landmark_connections: 10
+      landmark_connections: 338
+      landmark_connections: 338
+      landmark_connections: 297
+      landmark_connections: 297
+      landmark_connections: 332
+      landmark_connections: 332
+      landmark_connections: 284
+      landmark_connections: 284
+      landmark_connections: 251
+      landmark_connections: 251
+      landmark_connections: 389
+      landmark_connections: 389
+      landmark_connections: 356
+      landmark_connections: 356
+      landmark_connections: 454
+      landmark_connections: 454
+      landmark_connections: 323
+      landmark_connections: 323
+      landmark_connections: 361
+      landmark_connections: 361
+      landmark_connections: 288
+      landmark_connections: 288
+      landmark_connections: 397
+      landmark_connections: 397
+      landmark_connections: 365
+      landmark_connections: 365
+      landmark_connections: 379
+      landmark_connections: 379
+      landmark_connections: 378
+      landmark_connections: 378
+      landmark_connections: 400
+      landmark_connections: 400
+      landmark_connections: 377
+      landmark_connections: 377
+      landmark_connections: 152
+      landmark_connections: 152
+      landmark_connections: 148
+      landmark_connections: 148
+      landmark_connections: 176
+      landmark_connections: 176
+      landmark_connections: 149
+      landmark_connections: 149
+      landmark_connections: 150
+      landmark_connections: 150
+      landmark_connections: 136
+      landmark_connections: 136
+      landmark_connections: 172
+      landmark_connections: 172
+      landmark_connections: 58
+      landmark_connections: 58
+      landmark_connections: 132
+      landmark_connections: 132
+      landmark_connections: 93
+      landmark_connections: 93
+      landmark_connections: 234
+      landmark_connections: 234
+      landmark_connections: 127
+      landmark_connections: 127
+      landmark_connections: 162
+      landmark_connections: 162
+      landmark_connections: 21
+      landmark_connections: 21
+      landmark_connections: 54
+      landmark_connections: 54
+      landmark_connections: 103
+      landmark_connections: 103
+      landmark_connections: 67
+      landmark_connections: 67
+      landmark_connections: 109
+      landmark_connections: 109
+      landmark_connections: 10
+      landmark_color { r: 255 g: 0 b: 0 }
+      connection_color { r: 0 g: 255 b: 0 }
+      thickness: 1.5
+      visualize_landmark_depth: false
+    }
+  }
+}
+
+# Collects a RenderData object for each hand into a vector. Upon receiving the
+# BATCH_END timestamp, outputs the vector of RenderData at the BATCH_END
+# timestamp.
+node {
+  calculator: "EndLoopRenderDataCalculator"
+  input_stream: "ITEM:landmark_render_data"
+  input_stream: "BATCH_END:landmark_timestamp"
+  output_stream: "ITERABLE:multi_face_landmarks_render_data"
+}
+
+# Converts normalized rects to drawing primitives for annotation overlay.
+node {
+  calculator: "RectToRenderDataCalculator"
+  input_stream: "NORM_RECTS:rects"
+  output_stream: "RENDER_DATA:rects_render_data"
+  node_options: {
+    [type.googleapis.com/mediapipe.RectToRenderDataCalculatorOptions] {
+      filled: false
+      color { r: 255 g: 0 b: 0 }
+      thickness: 4.0
+    }
+  }
+}
+
+# Draws annotations and overlays them on top of the input images.
+node {
+  calculator: "AnnotationOverlayCalculator"
+  input_stream: "IMAGE:input_image"
+  input_stream: "detections_render_data"
+  input_stream: "VECTOR:0:multi_face_landmarks_render_data"
+  input_stream: "rects_render_data"
+  output_stream: "IMAGE:output_image"
+}

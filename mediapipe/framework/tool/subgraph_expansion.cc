@@ -150,7 +150,7 @@ static ::mediapipe::Status PrefixNames(std::string prefix,
     const proto_ns::RepeatedPtrField<ProtoString>& dst_streams) {
   ASSIGN_OR_RETURN(auto src_map, tool::TagMap::Create(src_streams));
   ASSIGN_OR_RETURN(auto dst_map, tool::TagMap::Create(dst_streams));
-  for (auto it : dst_map->Mapping()) {
+  for (const auto& it : dst_map->Mapping()) {
     const std::string& tag = it.first;
     const TagMap::TagData* src_tag_data =
         ::mediapipe::FindOrNull(src_map->Mapping(), tag);

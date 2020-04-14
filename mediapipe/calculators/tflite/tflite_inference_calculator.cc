@@ -513,6 +513,7 @@ REGISTER_CALCULATOR(TfLiteInferenceCalculator);
     if (gpu_inference_) {
 #if !defined(MEDIAPIPE_DISABLE_GL_COMPUTE)
       MP_RETURN_IF_ERROR(gpu_helper_.RunInGlContext([this]() -> Status {
+        interpreter_ = nullptr;
         delegate_ = nullptr;
         for (int i = 0; i < gpu_data_in_.size(); ++i) {
           gpu_data_in_[i].reset();
@@ -523,6 +524,7 @@ REGISTER_CALCULATOR(TfLiteInferenceCalculator);
         return ::mediapipe::OkStatus();
       }));
 #elif defined(MEDIAPIPE_IOS)
+      interpreter_ = nullptr;
       delegate_ = nullptr;
       for (int i = 0; i < gpu_data_in_.size(); ++i) {
         gpu_data_in_[i].reset();
@@ -532,6 +534,7 @@ REGISTER_CALCULATOR(TfLiteInferenceCalculator);
       }
 #endif
     } else {
+      interpreter_ = nullptr;
       delegate_ = nullptr;
     }
   }

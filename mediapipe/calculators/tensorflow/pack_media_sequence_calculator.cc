@@ -244,7 +244,7 @@ class PackMediaSequenceCalculator : public CalculatorBase {
   ::mediapipe::Status VerifySequence() {
     std::string error_msg = "Missing features - ";
     bool all_present = true;
-    for (auto iter : features_present_) {
+    for (const auto& iter : features_present_) {
       if (!iter.second) {
         all_present = false;
         absl::StrAppend(&error_msg, iter.first, ", ");

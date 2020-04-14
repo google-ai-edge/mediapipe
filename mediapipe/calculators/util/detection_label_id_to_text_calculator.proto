@@ -25,4 +25,10 @@ message DetectionLabelIdToTextCalculatorOptions {
 
   // Path to a label map file for getting the actual name of detected classes.
   optional string label_map_path = 1;
+
+  // Alternative way to specify label map
+  // label: "label for id 0"
+  // label: "label for id 1"
+  // ...
+  repeated string label = 2;
 }

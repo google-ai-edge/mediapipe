@@ -1,0 +1,48 @@
+# MediaPipe graph to calculate face region of interest (ROI) from the very
+# first face detection in the vector of detections provided by
+# "FaceDetectionFrontCpu" or "FaceDetectionFrontGpu"
+#
+# NOTE: this graph is subject to change and should not be used directly.
+
+type: "FaceDetectionFrontDetectionToRoi"
+
+# Face detection. (Detection)
+input_stream: "DETECTION:detection"
+# Frame size (width and height). (std::pair<int, int>)
+input_stream: "IMAGE_SIZE:image_size"
+# ROI according to the first detection of input detections. (NormalizedRect)
+output_stream: "ROI:roi"
+
+# Converts results of face detection into a rectangle (normalized by image size)
+# that encloses the face and is rotated such that the line connecting left eye
+# and right eye is aligned with the X-axis of the rectangle.
+node {
+  calculator: "DetectionsToRectsCalculator"
+  input_stream: "DETECTION:detection"
+  input_stream: "IMAGE_SIZE:image_size"
+  output_stream: "NORM_RECT:initial_roi"
+  options: {
+    [mediapipe.DetectionsToRectsCalculatorOptions.ext] {
+      rotation_vector_start_keypoint_index: 0  # Left eye.
+      rotation_vector_end_keypoint_index: 1  # Right eye.
+      rotation_vector_target_angle_degrees: 0
+      output_zero_rect_for_empty_detections: true
+    }
+  }
+}
+
+# Expands and shifts the rectangle that contains the face so that it's likely
+# to cover the entire face.
+node {
+  calculator: "RectTransformationCalculator"
+  input_stream: "NORM_RECT:initial_roi"
+  input_stream: "IMAGE_SIZE:image_size"
+  output_stream: "roi"
+  options: {
+    [mediapipe.RectTransformationCalculatorOptions.ext] {
+      scale_x: 1.5
+      scale_y: 1.5
+      square_long: true
+    }
+  }
+}

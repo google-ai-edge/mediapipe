@@ -182,6 +182,16 @@ TEST(PaddingEffectGeneratorTest, ScaleToMultipleOfTwo) {
   EXPECT_EQ(result_frame.Width(), expect_width);
   EXPECT_EQ(result_frame.Height(), expect_height);
 }
+
+TEST(PaddingEffectGeneratorTest, ComputeOutputLocation) {
+  PaddingEffectGenerator generator(1920, 1080, 1.0);
+
+  auto result_rect = generator.ComputeOutputLocation();
+  EXPECT_EQ(result_rect.x, 0);
+  EXPECT_EQ(result_rect.y, 236);
+  EXPECT_EQ(result_rect.width, 1080);
+  EXPECT_EQ(result_rect.height, 607);
+}
 }  // namespace
 }  // namespace autoflip
 }  // namespace mediapipe

@@ -55,6 +55,10 @@ class PaddingEffectGenerator {
       ImageFrame* output_frame,
       const cv::Scalar* background_color_in_rgb = nullptr);
 
+  // Compute the "render location" on the output frame where the "crop from"
+  // location is to be placed.  For use with external rendering soutions.
+  cv::Rect ComputeOutputLocation();
+
  private:
   double target_aspect_ratio_;
   int input_width_ = -1;

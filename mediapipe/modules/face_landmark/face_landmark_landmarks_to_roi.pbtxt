@@ -1,0 +1,54 @@
+# MediaPipe graph to calculate face region of interest (ROI) from landmarks
+# detected by "FaceLandmarkCpu" or "FaceLandmarkGpu".
+#
+# NOTE: this graph is subject to change and should not be used directly.
+
+type: "FaceLandmarkLandmarksToRoi"
+
+# Normalized landmarks. (NormalizedLandmarkList)
+input_stream: "LANDMARKS:landmarks"
+# Frame size (width & height). (std::pair<int, int>)
+input_stream: "IMAGE_SIZE:image_size"
+# ROI according to landmarks. (NormalizedRect)
+output_stream: "ROI:roi"
+
+# Converts face landmarks to a detection that tightly encloses all landmarks.
+node {
+  calculator: "LandmarksToDetectionCalculator"
+  input_stream: "NORM_LANDMARKS:landmarks"
+  output_stream: "DETECTION:face_detection"
+}
+
+# Converts the face detection into a rectangle (normalized by image size)
+# that encloses the face and is rotated such that the line connecting left side
+# of the left eye and right side of the right eye is aligned with the X-axis of
+# the rectangle.
+node {
+  calculator: "DetectionsToRectsCalculator"
+  input_stream: "DETECTION:face_detection"
+  input_stream: "IMAGE_SIZE:image_size"
+  output_stream: "NORM_RECT:face_rect_from_landmarks"
+  options: {
+    [mediapipe.DetectionsToRectsCalculatorOptions.ext] {
+      rotation_vector_start_keypoint_index: 33  # Left side of left eye.
+      rotation_vector_end_keypoint_index: 133  # Right side of right eye.
+      rotation_vector_target_angle_degrees: 0
+    }
+  }
+}
+
+# Expands the face rectangle so that in the next video image it's likely to
+# still contain the face even with some motion.
+node {
+  calculator: "RectTransformationCalculator"
+  input_stream: "NORM_RECT:face_rect_from_landmarks"
+  input_stream: "IMAGE_SIZE:image_size"
+  output_stream: "roi"
+  options: {
+    [mediapipe.RectTransformationCalculatorOptions.ext] {
+      scale_x: 1.5
+      scale_y: 1.5
+      square_long: true
+    }
+  }
+}

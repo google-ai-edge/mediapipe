@@ -24,6 +24,7 @@
 #include <utility>
 #include <vector>
 
+#include "absl/container/node_hash_map.h"
 #include "mediapipe/framework/calculator_profile.pb.h"
 #include "mediapipe/framework/packet.h"
 #include "mediapipe/framework/port/integral_types.h"
@@ -130,10 +131,10 @@ class AddressIdMap {
     return pointer_id_map_[id] = next_id++;
   }
   void clear() { pointer_id_map_.clear(); }
-  const std::unordered_map<int64, int32>& map() { return pointer_id_map_; }
+  const absl::node_hash_map<int64, int32>& map() { return pointer_id_map_; }
 
  private:
-  std::unordered_map<int64, int32> pointer_id_map_;
+  absl::node_hash_map<int64, int32> pointer_id_map_;
   int32 next_id = 0;
 };
 

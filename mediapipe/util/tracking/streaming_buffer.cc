@@ -105,7 +105,7 @@ bool StreamingBuffer::TruncateBuffer(bool flush) {
   first_frame_index_ += elems_to_clear;
 
   const int remaining_elems = flush ? 0 : overlap_;
-  for (auto item : data_) {
+  for (const auto& item : data_) {
     const auto& buffer = item.second;
     if (buffer.size() != remaining_elems) {
       LOG(WARNING) << "After trunctation, for tag " << item.first << "got "

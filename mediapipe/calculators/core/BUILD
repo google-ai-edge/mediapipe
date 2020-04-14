@@ -816,6 +816,38 @@ cc_test(
 )
 
 cc_library(
+    name = "split_normalized_landmark_list_calculator",
+    srcs = ["split_normalized_landmark_list_calculator.cc"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":split_vector_calculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/formats:landmark_cc_proto",
+        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:status",
+        "//mediapipe/util:resource_util",
+    ],
+    alwayslink = 1,
+)
+
+cc_test(
+    name = "split_normalized_landmark_list_calculator_test",
+    srcs = ["split_normalized_landmark_list_calculator_test.cc"],
+    deps = [
+        ":split_normalized_landmark_list_calculator",
+        ":split_vector_calculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:calculator_runner",
+        "//mediapipe/framework/deps:file_path",
+        "//mediapipe/framework/formats:landmark_cc_proto",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:integral_types",
+        "//mediapipe/framework/port:parse_text_proto",
+        "//mediapipe/framework/tool:validate_type",
+    ],
+)
+
+cc_library(
     name = "dequantize_byte_array_calculator",
     srcs = ["dequantize_byte_array_calculator.cc"],
     visibility = ["//visibility:public"],

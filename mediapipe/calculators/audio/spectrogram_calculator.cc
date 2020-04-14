@@ -184,23 +184,14 @@ const float SpectrogramCalculator::kLnPowerToDb = 4.342944819032518;
   use_local_timestamp_ = spectrogram_options.use_local_timestamp();
 
   if (spectrogram_options.frame_duration_seconds() <= 0.0) {
-    ::mediapipe::InvalidArgumentErrorBuilder(MEDIAPIPE_LOC)
-        << "Invalid or missing frame_duration_seconds.\n"
-           "frame_duration_seconds: "
-        << spectrogram_options.frame_overlap_seconds();
+    // TODO: return an error.
   }
   if (spectrogram_options.frame_overlap_seconds() >=
       spectrogram_options.frame_duration_seconds()) {
-    ::mediapipe::InvalidArgumentErrorBuilder(MEDIAPIPE_LOC)
-        << "Invalid frame_overlap_seconds.\nframe_overlap_seconds: "
-        << spectrogram_options.frame_overlap_seconds()
-        << "\nframe_duration_seconds: "
-        << spectrogram_options.frame_duration_seconds();
+    // TODO: return an error.
   }
   if (spectrogram_options.frame_overlap_seconds() < 0.0) {
-    ::mediapipe::InvalidArgumentErrorBuilder(MEDIAPIPE_LOC)
-        << "Frame_overlap_seconds is < 0.0.\nframe_overlap_seconds: "
-        << spectrogram_options.frame_overlap_seconds();
+    // TODO: return an error.
   }
 
   TimeSeriesHeader input_header;
@@ -212,9 +203,7 @@ const float SpectrogramCalculator::kLnPowerToDb = 4.342944819032518;
 
   if (!spectrogram_options.allow_multichannel_input() &&
       num_input_channels_ != 1) {
-    ::mediapipe::InvalidArgumentErrorBuilder(MEDIAPIPE_LOC)
-        << "The current setting only supports single-channel input. Please set "
-           "allow_multichannel_input.\n";
+    // TODO: return an error.
   }
 
   frame_duration_samples_ =
@@ -293,10 +282,7 @@ const float SpectrogramCalculator::kLnPowerToDb = 4.342944819032518;
 
   const Matrix& input_stream = cc->Inputs().Index(0).Get<Matrix>();
   if (input_stream.rows() != num_input_channels_) {
-    ::mediapipe::InvalidArgumentErrorBuilder(MEDIAPIPE_LOC)
-        << "Number of input channels do not correspond to the number of rows "
-        << "in the input matrix: " << num_input_channels_ << "channels vs "
-        << input_stream.rows() << " rows";
+    // TODO: return an error.
   }
 
   cumulative_input_samples_ += input_stream.cols();

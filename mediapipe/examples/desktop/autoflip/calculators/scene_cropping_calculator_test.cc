@@ -68,6 +68,22 @@ constexpr char kNoKeyFrameConfig[] = R"(
     }
   })";
 
+constexpr char kDebugConfigNoCroppedFrame[] = R"(
+  calculator: "SceneCroppingCalculator"
+  input_stream: "VIDEO_FRAMES:camera_frames_org"
+  input_stream: "KEY_FRAMES:down_sampled_frames"
+  input_stream: "DETECTION_FEATURES:salient_regions"
+  input_stream: "STATIC_FEATURES:border_features"
+  input_stream: "SHOT_BOUNDARIES:shot_boundary_frames"
+  output_stream: "KEY_FRAME_CROP_REGION_VIZ_FRAMES:key_frame_crop_viz_frames"
+  output_stream: "SALIENT_POINT_FRAME_VIZ_FRAMES:salient_point_viz_frames"
+  options: {
+    [mediapipe.autoflip.SceneCroppingCalculatorOptions.ext]: {
+      target_width: $0
+      target_height: $1
+    }
+  })";
+
 constexpr char kDebugConfig[] = R"(
   calculator: "SceneCroppingCalculator"
   input_stream: "VIDEO_FRAMES:camera_frames_org"
@@ -79,6 +95,8 @@ constexpr char kDebugConfig[] = R"(
   output_stream: "KEY_FRAME_CROP_REGION_VIZ_FRAMES:key_frame_crop_viz_frames"
   output_stream: "SALIENT_POINT_FRAME_VIZ_FRAMES:salient_point_viz_frames"
   output_stream: "CROPPING_SUMMARY:cropping_summaries"
+  output_stream: "EXTERNAL_RENDERING_PER_FRAME:external_rendering_per_frame"
+  output_stream: "EXTERNAL_RENDERING_FULL_VID:external_rendering_full_vid"
   options: {
     [mediapipe.autoflip.SceneCroppingCalculatorOptions.ext]: {
       target_width: $0
@@ -257,6 +275,17 @@ TEST(SceneCroppingCalculatorTest, ChecksPriorFrameBufferSize) {
               HasSubstr("Prior frame buffer size is negative."));
 }
 
+TEST(SceneCroppingCalculatorTest, ChecksDebugConfigWithoutCroppedFrame) {
+  const CalculatorGraphConfig::Node config =
+      ParseTextProtoOrDie<CalculatorGraphConfig::Node>(absl::Substitute(
+          kDebugConfigNoCroppedFrame, kTargetWidth, kTargetHeight,
+          kTargetSizeType, 0, kPriorFrameBufferSize));
+  auto runner = absl::make_unique<CalculatorRunner>(config);
+  const auto status = runner->Run();
+  EXPECT_FALSE(status.ok());
+  EXPECT_THAT(status.ToString(), HasSubstr("can only be used when"));
+}
+
 // Checks that the calculator crops scene frames when there is no input key
 // frames stream.
 TEST(SceneCroppingCalculatorTest, HandlesNoKeyFrames) {
@@ -299,14 +328,34 @@ TEST(SceneCroppingCalculatorTest, OutputsDebugStreams) {
   EXPECT_TRUE(outputs.HasTag("KEY_FRAME_CROP_REGION_VIZ_FRAMES"));
   EXPECT_TRUE(outputs.HasTag("SALIENT_POINT_FRAME_VIZ_FRAMES"));
   EXPECT_TRUE(outputs.HasTag("CROPPING_SUMMARY"));
+  EXPECT_TRUE(outputs.HasTag("EXTERNAL_RENDERING_PER_FRAME"));
+  EXPECT_TRUE(outputs.HasTag("EXTERNAL_RENDERING_FULL_VID"));
   const auto& crop_region_viz_frames_outputs =
       outputs.Tag("KEY_FRAME_CROP_REGION_VIZ_FRAMES").packets;
   const auto& salient_point_viz_frames_outputs =
       outputs.Tag("SALIENT_POINT_FRAME_VIZ_FRAMES").packets;
   const auto& summary_output = outputs.Tag("CROPPING_SUMMARY").packets;
+  const auto& ext_render_per_frame =
+      outputs.Tag("EXTERNAL_RENDERING_PER_FRAME").packets;
+  const auto& ext_render_full_vid =
+      outputs.Tag("EXTERNAL_RENDERING_FULL_VID").packets;
   EXPECT_EQ(crop_region_viz_frames_outputs.size(), num_frames);
   EXPECT_EQ(salient_point_viz_frames_outputs.size(), num_frames);
   EXPECT_EQ(summary_output.size(), 1);
+  EXPECT_EQ(ext_render_per_frame.size(), num_frames);
+  EXPECT_EQ(ext_render_full_vid.size(), 1);
+  EXPECT_EQ(ext_render_per_frame[0].Get<ExternalRenderFrame>().timestamp_us(),
+            0);
+  EXPECT_EQ(ext_render_full_vid[0]
+                .Get<std::vector<ExternalRenderFrame>>()[0]
+                .timestamp_us(),
+            0);
+  EXPECT_EQ(ext_render_per_frame[1].Get<ExternalRenderFrame>().timestamp_us(),
+            20000);
+  EXPECT_EQ(ext_render_full_vid[0]
+                .Get<std::vector<ExternalRenderFrame>>()[1]
+                .timestamp_us(),
+            20000);
 
   for (int i = 0; i < num_frames; ++i) {
     const auto& crop_region_viz_frame =

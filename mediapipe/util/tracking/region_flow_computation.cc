@@ -2999,7 +2999,7 @@ void RegionFlowComputation::ComputeBlockBasedFlow(
   if (!feature_list->empty() && options_.median_magnitude_bounds() > 0) {
     std::vector<float> motion_magnitudes;
     motion_magnitudes.reserve(feature_list->size());
-    for (auto feature : *feature_list) {
+    for (const auto& feature : *feature_list) {
       motion_magnitudes.push_back(feature.flow.Norm2());
     }
     auto median_iter = motion_magnitudes.begin() + motion_magnitudes.size() / 2;
@@ -3279,7 +3279,7 @@ void RegionFlowComputation::RegionFlowFeatureListToRegionFlow(
   }
 
   // Add feature according smallest block width and height to regions.
-  for (auto feature : feature_list.feature()) {
+  for (const auto& feature : feature_list.feature()) {
     const int x = static_cast<int>(feature.x());
     const int y = static_cast<int>(feature.y());
     // Guard, in case equation is wrong.

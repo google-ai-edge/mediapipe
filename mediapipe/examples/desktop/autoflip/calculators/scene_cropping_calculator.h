@@ -79,8 +79,10 @@ namespace autoflip {
 //     Indicators for shot boundaries (output of shot boundary detection).
 // - optional tag KEY_FRAMES (type ImageFrame):
 //     Key frames on which features are detected. This is only used to set the
-//     detection features frame size, and when it is omitted, the features frame
-//     size is assumed to be the original scene frame size.
+//     detection features frame size.  Alternatively, set
+//     video_feature_width/video_features_height within the options proto to
+//     define this value.  When neither is set, the features frame size is
+//     assumed to be the original scene frame size.
 //
 // Output streams:
 // - required tag CROPPED_FRAMES (type ImageFrame):
@@ -95,6 +97,12 @@ namespace autoflip {
 // - optional tag CROPPING_SUMMARY (type VideoCroppingSummary):
 //     Debug summary information for the video. Only generates one packet when
 //     calculator closes.
+// - optional tag EXTERNAL_RENDERING_PER_FRAME (type ExternalRenderFrame)
+//     Provides a per-frame message that can be used to render autoflip using an
+//     external renderer.
+// - optional tag EXTERNAL_RENDERING_FULL_VID (type Vector<ExternalRenderFrame>)
+//     Provides an end-stream message that can be used to render autoflip using
+//     an external renderer.
 //
 // Example config:
 // node {
@@ -134,8 +142,11 @@ class SceneCroppingCalculator : public CalculatorBase {
   ::mediapipe::Status Close(::mediapipe::CalculatorContext* cc) override;
 
  private:
-  // Removes any static borders from the scene frames before cropping.
-  ::mediapipe::Status RemoveStaticBorders();
+  // Removes any static borders from the scene frames before cropping. The
+  // arguments |top_border_size| and |bottom_border_size| report the size of the
+  // removed borders.
+  ::mediapipe::Status RemoveStaticBorders(int* top_border_size,
+                                          int* bottom_border_size);
 
   // Initializes a FrameCropRegionComputer given input and target frame sizes.
   ::mediapipe::Status InitializeFrameCropRegionComputer();
@@ -158,8 +169,10 @@ class SceneCroppingCalculator : public CalculatorBase {
   // solid background from static features if possible, otherwise uses blurred
   // background. Sets apply_padding to true if the scene is padded.
   ::mediapipe::Status FormatAndOutputCroppedFrames(
-      const std::vector<cv::Mat>& cropped_frames, bool* apply_padding,
-      float* vertical_fill_precent, CalculatorContext* cc);
+      const std::vector<cv::Mat>& cropped_frames,
+      std::vector<cv::Rect>* render_to_locations, bool* apply_padding,
+      cv::Scalar* padding_color, float* vertical_fill_precent,
+      CalculatorContext* cc);
 
   // Draws and outputs visualization frames if those streams are present.
   ::mediapipe::Status OutputVizFrames(
@@ -193,7 +206,11 @@ class SceneCroppingCalculator : public CalculatorBase {
 
   // Buffered frames, timestamps, and indicators for key frames in the current
   // scene (size = number of input video frames).
-  std::vector<cv::Mat> scene_frames_;
+  // Note: scene_frames_or_empty_ may be empty if the actual cropping operation
+  // of frames is turned off, e.g. when |should_perform_frame_cropping_| is
+  // false, so rely on scene_frame_timestamps_.size() to query the number of
+  // accumulated timestamps rather than scene_frames_or_empty_.size().
+  std::vector<cv::Mat> scene_frames_or_empty_;
   std::vector<int64> scene_frame_timestamps_;
   std::vector<bool> is_key_frames_;
 
@@ -242,6 +259,17 @@ class SceneCroppingCalculator : public CalculatorBase {
 
   // Optional diagnostic summary output emitted in Close().
   std::unique_ptr<VideoCroppingSummary> summary_ = nullptr;
+
+  // Optional list of external rendering messages for each processed frame.
+  std::unique_ptr<std::vector<ExternalRenderFrame>> external_render_list_;
+
+  // Determines whether to perform real cropping on input frames. This flag is
+  // useful when the user only needs to compute cropping windows, in which case
+  // setting this flag to false can avoid buffering as well as cropping frames.
+  // This can significantly reduce memory usage and speed up processing. Some
+  // debugging visualization inevitably will be disabled because of this flag
+  // too.
+  bool should_perform_frame_cropping_ = false;
 };
 }  // namespace autoflip
 }  // namespace mediapipe

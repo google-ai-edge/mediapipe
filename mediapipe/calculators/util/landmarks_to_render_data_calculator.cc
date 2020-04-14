@@ -186,6 +186,7 @@ class LandmarksToRenderDataCalculator : public CalculatorBase {
 
  private:
   LandmarksToRenderDataCalculatorOptions options_;
+  std::vector<int> landmark_connections_;
 };
 REGISTER_CALCULATOR(LandmarksToRenderDataCalculator);
 
@@ -217,6 +218,14 @@ REGISTER_CALCULATOR(LandmarksToRenderDataCalculator);
   cc->SetOffset(TimestampDiff(0));
   options_ = cc->Options<LandmarksToRenderDataCalculatorOptions>();
 
+  // Parse landmarks connections to a vector.
+  RET_CHECK_EQ(options_.landmark_connections_size() % 2, 0)
+      << "Number of entries in landmark connections must be a multiple of 2";
+
+  for (int i = 0; i < options_.landmark_connections_size(); ++i) {
+    landmark_connections_.push_back(options_.landmark_connections(i));
+  }
+
   return ::mediapipe::OkStatus();
 }
 
@@ -236,14 +245,6 @@ REGISTER_CALCULATOR(LandmarksToRenderDataCalculator);
     thickness *= render_scale;
   }
 
-  // Parse landmarks connections to a vector.
-  RET_CHECK_EQ(options_.landmark_connections_size() % 2, 0)
-      << "Number of entries in landmark connections must be a multiple of 2";
-  std::vector<int> landmark_connections;
-  for (int i = 0; i < options_.landmark_connections_size(); i += 1) {
-    landmark_connections.push_back(options_.landmark_connections(i));
-  }
-
   if (cc->Inputs().HasTag(kLandmarksTag)) {
     const LandmarkList& landmarks =
         cc->Inputs().Tag(kLandmarksTag).Get<LandmarkList>();
@@ -252,6 +253,15 @@ REGISTER_CALCULATOR(LandmarksToRenderDataCalculator);
     }
     // Only change rendering if there are actually z values other than 0.
     visualize_depth &= ((z_max - z_min) > 1e-3);
+    if (visualize_depth) {
+      AddConnectionsWithDepth<LandmarkList, Landmark>(
+          landmarks, landmark_connections_, thickness, /*normalized=*/false,
+          z_min, z_max, render_data.get());
+    } else {
+      AddConnections<LandmarkList, Landmark>(
+          landmarks, landmark_connections_, options_.connection_color(),
+          thickness, /*normalized=*/false, render_data.get());
+    }
     for (int i = 0; i < landmarks.landmark_size(); ++i) {
       const Landmark& landmark = landmarks.landmark(i);
       auto* landmark_data_render = AddPointRenderData(
@@ -265,15 +275,6 @@ REGISTER_CALCULATOR(LandmarksToRenderDataCalculator);
       landmark_data->set_x(landmark.x());
       landmark_data->set_y(landmark.y());
     }
-    if (visualize_depth) {
-      AddConnectionsWithDepth<LandmarkList, Landmark>(
-          landmarks, landmark_connections, thickness, /*normalized=*/false,
-          z_min, z_max, render_data.get());
-    } else {
-      AddConnections<LandmarkList, Landmark>(
-          landmarks, landmark_connections, options_.connection_color(),
-          thickness, /*normalized=*/false, render_data.get());
-    }
   }
 
   if (cc->Inputs().HasTag(kNormLandmarksTag)) {
@@ -285,6 +286,15 @@ REGISTER_CALCULATOR(LandmarksToRenderDataCalculator);
     }
     // Only change rendering if there are actually z values other than 0.
     visualize_depth &= ((z_max - z_min) > 1e-3);
+    if (visualize_depth) {
+      AddConnectionsWithDepth<NormalizedLandmarkList, NormalizedLandmark>(
+          landmarks, landmark_connections_, thickness, /*normalized=*/true,
+          z_min, z_max, render_data.get());
+    } else {
+      AddConnections<NormalizedLandmarkList, NormalizedLandmark>(
+          landmarks, landmark_connections_, options_.connection_color(),
+          thickness, /*normalized=*/true, render_data.get());
+    }
     for (int i = 0; i < landmarks.landmark_size(); ++i) {
       const NormalizedLandmark& landmark = landmarks.landmark(i);
       auto* landmark_data_render = AddPointRenderData(
@@ -297,15 +307,6 @@ REGISTER_CALCULATOR(LandmarksToRenderDataCalculator);
       landmark_data->set_normalized(true);
       landmark_data->set_x(landmark.x());
       landmark_data->set_y(landmark.y());
-    }
-    if (visualize_depth) {
-      AddConnectionsWithDepth<NormalizedLandmarkList, NormalizedLandmark>(
-          landmarks, landmark_connections, thickness, /*normalized=*/true,
-          z_min, z_max, render_data.get());
-    } else {
-      AddConnections<NormalizedLandmarkList, NormalizedLandmark>(
-          landmarks, landmark_connections, options_.connection_color(),
-          thickness, /*normalized=*/true, render_data.get());
     }
   }
 

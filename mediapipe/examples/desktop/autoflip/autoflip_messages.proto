@@ -150,4 +150,34 @@ message ConversionOptions {
   optional int32 target_height = 2;
 }
 
-// TODO: Move other autoflip messages into this area.
+// Self-contained message that provides all needed information to render
+// autoflip with an external renderer.  One of these messages is required for
+// each frame of the video.
+message ExternalRenderFrame {
+  // Rectangle using opencv standard.
+  message Rect {
+    optional float x = 1;
+    optional float y = 2;
+    optional float width = 3;
+    optional float height = 4;
+  }
+  // RGB color [0...255]
+  message Color {
+    optional int32 r = 1;
+    optional int32 g = 2;
+    optional int32 b = 3;
+  }
+  // Rect that must be cropped out of the input frame.  It is in the
+  // original dimensions of the input video.  The first step to render this
+  // frame is to crop this rect from the input frame.
+  optional Rect crop_from_location = 1;
+  // The placement location where the above rect is placed on the output frame.
+  // This will always have the same aspect ratio as the above rect but scaling
+  // may be required.
+  optional Rect render_to_location = 2;
+  // If render_to_location is smaller than the output dimensions of the frame,
+  // fill the rest of the frame with this color.
+  optional Color padding_color = 3;
+  // Timestamp in microseconds of this frame.
+  optional uint64 timestamp_us = 4;
+}

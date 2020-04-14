@@ -12,7 +12,7 @@ We show the object detection demo with both TensorFlow model and TensorFlow Lite
 
 -   [TensorFlow Object Detection Demo](#tensorflow-object-detection-demo)
 -   [TensorFlow Lite Object Detection Demo](#tensorflow-lite-object-detection-demo)
--   [TensorFlow Lite Object Detection Demo with Webcam (CPU)](#tensorflow-lite-object-detection-demo)
+-   [TensorFlow Lite Object Detection Demo with Webcam (CPU)](#tensorflow-lite-object-detection-demo-with-webcam-cpu)
 
 Note: If MediaPipe depends on OpenCV 2, please see the [known issues with OpenCV 2](#known-issues-with-opencv-2) section.
 

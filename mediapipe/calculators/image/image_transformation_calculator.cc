@@ -376,13 +376,12 @@ REGISTER_CALCULATOR(ImageTransformationCalculator);
 
 ::mediapipe::Status ImageTransformationCalculator::RenderCpu(
     CalculatorContext* cc) {
-  int input_width = cc->Inputs().Tag("IMAGE").Get<ImageFrame>().Width();
-  int input_height = cc->Inputs().Tag("IMAGE").Get<ImageFrame>().Height();
-
   const auto& input_img = cc->Inputs().Tag("IMAGE").Get<ImageFrame>();
   cv::Mat input_mat = formats::MatView(&input_img);
   cv::Mat scaled_mat;
 
+  const int input_width = input_img.Width();
+  const int input_height = input_img.Height();
   if (!output_height_ || !output_width_) {
     output_height_ = input_height;
     output_width_ = input_width;
@@ -455,8 +454,9 @@ REGISTER_CALCULATOR(ImageTransformationCalculator);
 ::mediapipe::Status ImageTransformationCalculator::RenderGpu(
     CalculatorContext* cc) {
 #if !defined(MEDIAPIPE_DISABLE_GPU)
-  int input_width = cc->Inputs().Tag("IMAGE_GPU").Get<GpuBuffer>().width();
-  int input_height = cc->Inputs().Tag("IMAGE_GPU").Get<GpuBuffer>().height();
+  const auto& input = cc->Inputs().Tag("IMAGE_GPU").Get<GpuBuffer>();
+  const int input_width = input.width();
+  const int input_height = input.height();
 
   int output_width;
   int output_height;
@@ -472,7 +472,6 @@ REGISTER_CALCULATOR(ImageTransformationCalculator);
         .Add(padding.release(), cc->InputTimestamp());
   }
 
-  const auto& input = cc->Inputs().Tag("IMAGE_GPU").Get<GpuBuffer>();
   QuadRenderer* renderer = nullptr;
   GlTexture src1;
 

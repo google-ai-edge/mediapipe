@@ -568,7 +568,7 @@ class LambdaCalculator : public CalculatorBase {
     if (cc->InputSidePackets().HasTag("") > 0) {
       cc->InputSidePackets().Tag("").Set<ProcessFunction>();
     }
-    for (std::string tag : {"OPEN", "PROCESS", "CLOSE"}) {
+    for (const std::string& tag : {"OPEN", "PROCESS", "CLOSE"}) {
       if (cc->InputSidePackets().HasTag(tag)) {
         cc->InputSidePackets().Tag(tag).Set<CalculatorContextFunction>();
       }

@@ -9,26 +9,32 @@
 
 ## ML Solutions in MediaPipe
 
-* [Face Detection](mediapipe/docs/face_detection_mobile_gpu.md) [[Web Demo]](https://viz.mediapipe.dev/runner/demos/face_detection/face_detection.html)
+* [Face Detection](mediapipe/docs/face_detection_mobile_gpu.md) [(web demo)](https://viz.mediapipe.dev/runner/demos/face_detection/face_detection.html)
+* [Face Mesh](mediapipe/docs/face_mesh_mobile_gpu.md)
+* [Hand Detection](mediapipe/docs/hand_detection_mobile_gpu.md)
+* [Hand Tracking](mediapipe/docs/hand_tracking_mobile_gpu.md) [(web demo)](https://viz.mediapipe.dev/runner/demos/hand_tracking/hand_tracking.html)
 * [Multi-hand Tracking](mediapipe/docs/multi_hand_tracking_mobile_gpu.md)
-* [Hand Tracking](mediapipe/docs/hand_tracking_mobile_gpu.md) [[Web Demo]](https://viz.mediapipe.dev/runner/demos/hand_tracking/hand_tracking.html)
-* [Hair Segmentation](mediapipe/docs/hair_segmentation_mobile_gpu.md) [[Web Demo]](https://viz.mediapipe.dev/runner/demos/hair_segmentation/hair_segmentation.html)
+* [Hair Segmentation](mediapipe/docs/hair_segmentation_mobile_gpu.md) [(web demo)](https://viz.mediapipe.dev/runner/demos/hair_segmentation/hair_segmentation.html)
 * [Object Detection](mediapipe/docs/object_detection_mobile_gpu.md)
 * [Object Detection and Tracking](mediapipe/docs/object_tracking_mobile_gpu.md)
 * [Objectron: 3D Object Detection and Tracking](mediapipe/docs/objectron_mobile_gpu.md)
-* [AutoFlip](mediapipe/docs/autoflip.md)
+* [AutoFlip: Intelligent Video Reframing](mediapipe/docs/autoflip.md)
 
 ![face_detection](mediapipe/docs/images/mobile/face_detection_android_gpu_small.gif)
-![multi-hand_tracking](mediapipe/docs/images/mobile/multi_hand_tracking_android_gpu_small.gif)
-![hand_tracking](mediapipe/docs/images/mobile/hand_tracking_3d_android_gpu_small.gif)
+![face_mesh](mediapipe/docs/images/mobile/face_mesh_android_gpu_small.gif)
+![hand_tracking](mediapipe/docs/images/mobile/hand_tracking_android_gpu_small.gif)
+![multi-hand_tracking](mediapipe/docs/images/mobile/multi_hand_tracking_3d_android_gpu_small.gif)
 ![hair_segmentation](mediapipe/docs/images/mobile/hair_segmentation_android_gpu_small.gif)
+![object_detection](mediapipe/docs/images/mobile/object_detection_android_gpu_small.gif)
 ![object_tracking](mediapipe/docs/images/mobile/object_tracking_android_gpu_small.gif)
+![objectron_shoes](mediapipe/docs/images/mobile/objectron_shoe_android_gpu_small.gif)
+![objectron_chair](mediapipe/docs/images/mobile/objectron_chair_android_gpu_small.gif)
 
 ## Installation
 Follow these [instructions](mediapipe/docs/install.md).
 
 ## Getting started
-See mobile, desktop and Google Coral [examples](mediapipe/docs/examples.md).
+See mobile, desktop, web and Google Coral [examples](mediapipe/docs/examples.md).
 
 Check out some web demos [[Edge detection]](https://viz.mediapipe.dev/runner/demos/edge_detection/edge_detection.html) [[Face detection]](https://viz.mediapipe.dev/runner/demos/face_detection/face_detection.html) [[Hand Tracking]](https://viz.mediapipe.dev/runner/demos/hand_tracking/hand_tracking.html)
 
@@ -40,10 +46,14 @@ Check out the [Examples page](https://mediapipe.readthedocs.io/en/latest/example
 ## Visualizing MediaPipe graphs
 A web-based visualizer is hosted on [viz.mediapipe.dev](https://viz.mediapipe.dev/). Please also see instructions [here](mediapipe/docs/visualizer.md).
 
+## Google Open Source Code search
+Search MediaPipe Github repository using [Google Open Source code search](https://t.co/LSZnbMUUnT?amp=1)
+
 ## Videos
 *  [YouTube Channel](https://www.youtube.com/channel/UCObqmpuSMx-usADtL_qdMAw)
 
 ## Publications
+* [Alfred Camera: Smart camera features using MediaPipe](https://developers.googleblog.com/2020/03/alfred-camera-smart-camera-features-using-mediapipe.html)
 * [MediaPipe Objectron: Real-time 3D Object Detection on Mobile Devices](https://mediapipe.page.link/objectron-aiblog)
 * [AutoFlip: An Open Source Framework for Intelligent Video Reframing](https://mediapipe.page.link/autoflip)
 * [Google Developer Blog: MediaPipe on the Web](https://mediapipe.page.link/webdevblog)
@@ -52,6 +62,7 @@ A web-based visualizer is hosted on [viz.mediapipe.dev](https://viz.mediapipe.de
 * [MediaPipe: A Framework for Building Perception Pipelines](https://arxiv.org/abs/1906.08172)
 
 ## Events
+* [MediaPipe Seattle Meetup, Google Building Waterside, 13 Feb 2020](https://mediapipe.page.link/seattle2020)
 * [AI Nextcon 2020, 12-16 Feb 2020, Seattle](http://aisea20.xnextcon.com/)
 * [MediaPipe Madrid Meetup, 16 Dec 2019](https://www.meetup.com/Madrid-AI-Developers-Group/events/266329088/)
 * [MediaPipe London Meetup, Google 123 Building, 12 Dec 2019](https://www.meetup.com/London-AI-Tech-Talk/events/266329038)
