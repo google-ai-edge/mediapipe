@@ -23,9 +23,9 @@
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/port/ret_check.h"
 
-#if !defined(__EMSCRIPTEN__)
+#if !defined(__EMSCRIPTEN__) || defined(__EMSCRIPTEN_PTHREADS__)
 #include "mediapipe/util/cpu_util.h"
-#endif  // !__EMSCRIPTEN__
+#endif  // !__EMSCRIPTEN__ || __EMSCRIPTEN_PTHREADS__
 
 #include "mediapipe/util/resource_util.h"
 #include "tensorflow/lite/error_reporter.h"
@@ -121,7 +121,7 @@ struct GPUData {
 
 // Returns number of threads to configure XNNPACK delegate with.
 // (Equal to user provided value if specified.  Otherwise, it returns number of
-// high cores (hard-coded to 1 for __EMSCRIPTEN__))
+// high cores (hard-coded to 1 for Emscripten without Threads extension))
 int GetXnnpackNumThreads(
     const mediapipe::TfLiteInferenceCalculatorOptions& opts) {
   static constexpr int kDefaultNumThreads = -1;
@@ -129,11 +129,11 @@ int GetXnnpackNumThreads(
       opts.delegate().xnnpack().num_threads() != kDefaultNumThreads) {
     return opts.delegate().xnnpack().num_threads();
   }
-#if !defined(__EMSCRIPTEN__)
+#if !defined(__EMSCRIPTEN__) || defined(__EMSCRIPTEN_PTHREADS__)
   return InferHigherCoreIds().size();
 #else
   return 1;
-#endif  // !__EMSCRIPTEN__
+#endif  // !__EMSCRIPTEN__ || __EMSCRIPTEN_PTHREADS__
 }
 
 // Calculator Header Section

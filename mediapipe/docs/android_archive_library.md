@@ -32,13 +32,14 @@ project.
 2.  Run the Bazel build command to generate the AAR.
 
     ```bash
-    bazel build -c opt --fat_apk_cpu=arm64-v8a,armeabi-v7a //path/to/the/aar/build/file:aar_name
+    bazel build -c opt --host_crosstool_top=@bazel_tools//tools/cpp:toolchain --fat_apk_cpu=arm64-v8a,armeabi-v7a \
+        //path/to/the/aar/build/file:aar_name
     ```
 
     For the face detection AAR target we made in the step 1, run:
 
     ```bash
-    bazel build -c opt --fat_apk_cpu=arm64-v8a,armeabi-v7a \
+    bazel build -c opt --host_crosstool_top=@bazel_tools//tools/cpp:toolchain --fat_apk_cpu=arm64-v8a,armeabi-v7a \
         //mediapipe/examples/android/src/java/com/google/mediapipe/apps/aar_example:mp_face_detection_aar
 
     # It should print:

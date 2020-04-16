@@ -527,7 +527,7 @@ REGISTER_CALCULATOR(Modulo3SourceCalculator);
 // calculator.
 class OutputAllSourceCalculator : public CalculatorBase {
  public:
-  static const int kNumOutputPackets = 100;
+  static constexpr int kNumOutputPackets = 100;
 
   static ::mediapipe::Status GetContract(CalculatorContract* cc) {
     cc->Outputs().Index(0).Set<int>();
@@ -550,7 +550,7 @@ REGISTER_CALCULATOR(OutputAllSourceCalculator);
 // progress.
 class OutputOneAtATimeSourceCalculator : public CalculatorBase {
  public:
-  static const int kNumOutputPackets = 1000;
+  static constexpr int kNumOutputPackets = 1000;
 
   static ::mediapipe::Status GetContract(CalculatorContract* cc) {
     cc->Outputs().Index(0).Set<int>();
@@ -577,7 +577,7 @@ REGISTER_CALCULATOR(OutputOneAtATimeSourceCalculator);
 // input stream connected to this calculator can become full.
 class DecimatorCalculator : public CalculatorBase {
  public:
-  static const int kDecimationRatio = 101;
+  static constexpr int kDecimationRatio = 101;
 
   static ::mediapipe::Status GetContract(CalculatorContract* cc) {
     cc->Inputs().Index(0).SetAny();

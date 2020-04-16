@@ -56,6 +56,19 @@ void AddJNINativeMethod(std::vector<JNINativeMethodStrings> *methods,
 
 void RegisterNativesVector(JNIEnv *env, jclass cls,
                            const std::vector<JNINativeMethodStrings> &methods) {
+  // A client Java project may not use some methods and classes that we attempt
+  // to register and could be removed by Proguard. In that case, we want to
+  // avoid triggering a crash due to ClassNotFoundException, so we are trading
+  // safety check here in exchange for flexibility to list out all registrations
+  // without worrying about usage subset by client Java projects.
+  if (!cls || methods.empty()) {
+    LOG(INFO) << "Skipping registration and clearing exception. Class or "
+                 "native methods not found, may be unused and/or trimmed by "
+                 "Proguard.";
+    env->ExceptionClear();
+    return;
+  }
+
   JNINativeMethod *methods_array = new JNINativeMethod[methods.size()];
   for (int i = 0; i < methods.size(); i++) {
     JNINativeMethod jniNativeMethod{
@@ -97,6 +110,13 @@ void RegisterGraphNatives(JNIEnv *env) {
                      (void *)&GRAPH_METHOD(nativeStartRunningGraph));
   AddJNINativeMethod(&graph_methods, graph, "nativeSetParentGlContext", "(JJ)V",
                      (void *)&GRAPH_METHOD(nativeSetParentGlContext));
+  AddJNINativeMethod(&graph_methods, graph, "nativeCloseAllPacketSources",
+                     "(J)V",
+                     (void *)&GRAPH_METHOD(nativeCloseAllPacketSources));
+  AddJNINativeMethod(&graph_methods, graph, "nativeWaitUntilGraphDone", "(J)V",
+                     (void *)&GRAPH_METHOD(nativeWaitUntilGraphDone));
+  AddJNINativeMethod(&graph_methods, graph, "nativeReleaseGraph", "(J)V",
+                     (void *)&GRAPH_METHOD(nativeReleaseGraph));
   RegisterNativesVector(env, graph_class, graph_methods);
 }
 

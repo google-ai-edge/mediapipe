@@ -130,11 +130,11 @@ cat > $(OUTS) <<EOF
             "//third_party:androidx_legacy_support_v4",
             "//third_party:camerax_core",
             "//third_party:camera2",
-            "@com_google_code_findbugs//jar",
-            "@com_google_common_flogger//jar",
-            "@com_google_common_flogger_system_backend//jar",
-            "@com_google_guava_android//jar",
-            "@androidx_lifecycle//jar",
+            "@maven//:com_google_code_findbugs_jsr305",
+            "@maven//:com_google_flogger_flogger",
+            "@maven//:com_google_flogger_flogger_system_backend",
+            "@maven//:com_google_guava_guava",
+            "@maven//:androidx_lifecycle_lifecycle_common",
         ],
     )
 
@@ -144,18 +144,16 @@ def _proto_java_src_generator(name, proto_src, java_lite_out, srcs = []):
     native.genrule(
         name = name + "_proto_java_src_generator",
         srcs = srcs + [
-            "@com_google_protobuf_javalite//:well_known_protos",
+            "@com_google_protobuf//:well_known_protos",
         ],
         outs = [java_lite_out],
-        cmd = "$(location @com_google_protobuf_javalite//:protoc) " +
-              "--plugin=protoc-gen-javalite=$(location @com_google_protobuf_javalite//:protoc_gen_javalite) " +
+        cmd = "$(location @com_google_protobuf//:protoc) " +
               "--proto_path=. --proto_path=$(GENDIR) " +
-              "--proto_path=$$(pwd)/external/com_google_protobuf_javalite/src " +
-              "--javalite_out=$(GENDIR) " + proto_src + " && " +
+              "--proto_path=$$(pwd)/external/com_google_protobuf/src " +
+              "--java_out=lite:$(GENDIR) " + proto_src + " && " +
               "mv $(GENDIR)/" + java_lite_out + " $$(dirname $(location " + java_lite_out + "))",
         tools = [
-            "@com_google_protobuf_javalite//:protoc",
-            "@com_google_protobuf_javalite//:protoc_gen_javalite",
+            "@com_google_protobuf//:protoc",
         ],
     )
 
