@@ -70,7 +70,7 @@ DEFINE_string(output_video_path, "",
   if (load_video) {
     capture.open(FLAGS_input_video_path);
   } else {
-    capture.open(0);
+    capture.open(4);
   }
   RET_CHECK(capture.isOpened());
 

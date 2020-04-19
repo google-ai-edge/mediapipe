@@ -6,6 +6,11 @@
 input_stream: "input_video"
 output_stream: "output_video"
 
+# Collection of detected/processed faces, each represented as a list of
+# landmarks. (std::vector<NormalizedLandmarkList>)
+output_stream: "multi_face_landmarks"
+
+
 # Throttles the images flowing downstream for flow control. It passes through
 # the very first incoming image unaltered, and waits for downstream nodes
 # (calculators and subgraphs) in the graph to finish their tasks before it
@@ -20,6 +25,7 @@ node {
   calculator: "FlowLimiterCalculator"
   input_stream: "input_video"
   input_stream: "FINISHED:multi_hand_rects"
+  # input_stream: "FINISHED:output_video_1"
   input_stream_info: {
     tag_index: "FINISHED"
     back_edge: true
@@ -110,17 +116,50 @@ node {
   }
 }
 
+
+# Defines side packets for further use in the graph.
 node {
-  calculator: "ZmqCalculator"
-  input_stream: "LANDMARKS:multi_hand_landmarks"
-  input_stream: "NORM_RECTS:multi_hand_rects"
+  calculator: "ConstantSidePacketCalculator"
+  output_side_packet: "PACKET:num_faces"
+  node_options: {
+    [type.googleapis.com/mediapipe.ConstantSidePacketCalculatorOptions]: {
+      packet { int_value: 1 }
+    }
+  }
+}
+
+# Subgraph that detects faces and corresponding landmarks.
+node {
+  calculator: "FaceLandmarkFrontGpu"
+  input_stream: "IMAGE:throttled_input_video"
+  input_side_packet: "NUM_FACES:num_faces"
+  output_stream: "LANDMARKS:multi_face_landmarks"
+  output_stream: "ROIS_FROM_LANDMARKS:face_rects_from_landmarks"
+  output_stream: "DETECTIONS:face_detections"
+  output_stream: "ROIS_FROM_DETECTIONS:face_rects_from_detections"
+}
+
+# node {
+#  calculator: "ZmqCalculator"
+#
+#  input_stream: "LANDMARKS:multi_face_landmarks"
+# }
+
+# Subgraph that renders face-landmark annotation onto the input image.
+node {
+   calculator: "FaceRendererGpu"
+   input_stream: "IMAGE:throttled_input_video"
+   input_stream: "LANDMARKS:multi_face_landmarks"
+   input_stream: "NORM_RECTS:face_rects_from_landmarks"
+   input_stream: "DETECTIONS:face_detections"
+   output_stream: "IMAGE:output_video_1"
 }
 
 # Subgraph that renders annotations and overlays them on top of the input
 # images (see multi_hand_renderer_gpu.pbtxt).
 node {
   calculator: "MultiHandRendererSubgraph"
-  input_stream: "IMAGE:throttled_input_video"
+  input_stream: "IMAGE:output_video_1"
   input_stream: "DETECTIONS:multi_palm_detections"
   input_stream: "LANDMARKS:multi_hand_landmarks"
   input_stream: "NORM_RECTS:0:multi_palm_rects"
