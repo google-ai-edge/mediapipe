@@ -31,8 +31,8 @@ We will be using the following graph, [`edge_detection_mobile_gpu.pbtxt`]:
 
 ```
 # MediaPipe graph that performs GPU Sobel edge detection on a live video stream.
-# Used in the examples
-# mediapipe/examples/android/src/java/com/mediapipe/apps/edgedetectiongpu.
+# Used in the examples in
+# mediapipe/examples/android/src/java/com/mediapipe/apps/edgedetectiongpu and
 # mediapipe/examples/ios/edgedetectiongpu.
 
 # Images coming into and out of the graph.
@@ -720,7 +720,7 @@ If you ran into any issues, please see the full code of the tutorial
 [CameraX]:https://developer.android.com/training/camerax
 [`CameraXPreviewHelper`]:https://github.com/google/mediapipe/tree/master/mediapipe/java/com/google/mediapipe/components/CameraXPreviewHelper.java
 [developer options]:https://developer.android.com/studio/debug/dev-options
-[`edge_detection_mobile_gpu.pbtxt`]:https://github.com/google/mediapipe/tree/master/mediapipe/graphs/object_detection/object_detection_mobile_gpu.pbtxt
+[`edge_detection_mobile_gpu.pbtxt`]:https://github.com/google/mediapipe/tree/master/mediapipe/graphs/edge_detection/edge_detection_mobile_gpu.pbtxt
 [`EdgeDetectionGPU` example]:https://github.com/google/mediapipe/tree/master/mediapipe/examples/android/src/java/com/google/mediapipe/apps/edgedetectiongpu/
 [`EglManager`]:https://github.com/google/mediapipe/tree/master/mediapipe/java/com/google/mediapipe/glutil/EglManager.java
 [`ExternalTextureConverter`]:https://github.com/google/mediapipe/tree/master/mediapipe/java/com/google/mediapipe/components/ExternalTextureConverter.java
