@@ -32,6 +32,11 @@
 
 namespace {
 enum { ATTRIB_VERTEX, ATTRIB_TEXTURE_POSITION, NUM_ATTRIBUTES };
+
+constexpr char kImageFrameTag[] = "IMAGE";
+constexpr char kMaskCpuTag[] = "MASK";
+constexpr char kGpuBufferTag[] = "IMAGE_GPU";
+constexpr char kMaskGpuTag[] = "MASK_GPU";
 }  // namespace
 
 namespace mediapipe {
@@ -112,39 +117,41 @@ REGISTER_CALCULATOR(RecolorCalculator);
   bool use_gpu = false;
 
 #if !defined(MEDIAPIPE_DISABLE_GPU)
-  if (cc->Inputs().HasTag("IMAGE_GPU")) {
-    cc->Inputs().Tag("IMAGE_GPU").Set<mediapipe::GpuBuffer>();
+  if (cc->Inputs().HasTag(kGpuBufferTag)) {
+    cc->Inputs().Tag(kGpuBufferTag).Set<mediapipe::GpuBuffer>();
     use_gpu |= true;
   }
 #endif  //  !MEDIAPIPE_DISABLE_GPU
-  if (cc->Inputs().HasTag("IMAGE")) {
-    cc->Inputs().Tag("IMAGE").Set<ImageFrame>();
+  if (cc->Inputs().HasTag(kImageFrameTag)) {
+    cc->Inputs().Tag(kImageFrameTag).Set<ImageFrame>();
   }
 
 #if !defined(MEDIAPIPE_DISABLE_GPU)
-  if (cc->Inputs().HasTag("MASK_GPU")) {
-    cc->Inputs().Tag("MASK_GPU").Set<mediapipe::GpuBuffer>();
+  if (cc->Inputs().HasTag(kMaskGpuTag)) {
+    cc->Inputs().Tag(kMaskGpuTag).Set<mediapipe::GpuBuffer>();
     use_gpu |= true;
   }
 #endif  //  !MEDIAPIPE_DISABLE_GPU
-  if (cc->Inputs().HasTag("MASK")) {
-    cc->Inputs().Tag("MASK").Set<ImageFrame>();
+  if (cc->Inputs().HasTag(kMaskCpuTag)) {
+    cc->Inputs().Tag(kMaskCpuTag).Set<ImageFrame>();
   }
 
 #if !defined(MEDIAPIPE_DISABLE_GPU)
-  if (cc->Outputs().HasTag("IMAGE_GPU")) {
-    cc->Outputs().Tag("IMAGE_GPU").Set<mediapipe::GpuBuffer>();
+  if (cc->Outputs().HasTag(kGpuBufferTag)) {
+    cc->Outputs().Tag(kGpuBufferTag).Set<mediapipe::GpuBuffer>();
     use_gpu |= true;
   }
 #endif  //  !MEDIAPIPE_DISABLE_GPU
-  if (cc->Outputs().HasTag("IMAGE")) {
-    cc->Outputs().Tag("IMAGE").Set<ImageFrame>();
+  if (cc->Outputs().HasTag(kImageFrameTag)) {
+    cc->Outputs().Tag(kImageFrameTag).Set<ImageFrame>();
   }
 
   // Confirm only one of the input streams is present.
-  RET_CHECK(cc->Inputs().HasTag("IMAGE") ^ cc->Inputs().HasTag("IMAGE_GPU"));
+  RET_CHECK(cc->Inputs().HasTag(kImageFrameTag) ^
+            cc->Inputs().HasTag(kGpuBufferTag));
   // Confirm only one of the output streams is present.
-  RET_CHECK(cc->Outputs().HasTag("IMAGE") ^ cc->Outputs().HasTag("IMAGE_GPU"));
+  RET_CHECK(cc->Outputs().HasTag(kImageFrameTag) ^
+            cc->Outputs().HasTag(kGpuBufferTag));
 
   if (use_gpu) {
 #if !defined(MEDIAPIPE_DISABLE_GPU)
@@ -158,7 +165,7 @@ REGISTER_CALCULATOR(RecolorCalculator);
 ::mediapipe::Status RecolorCalculator::Open(CalculatorContext* cc) {
   cc->SetOffset(TimestampDiff(0));
 
-  if (cc->Inputs().HasTag("IMAGE_GPU")) {
+  if (cc->Inputs().HasTag(kGpuBufferTag)) {
     use_gpu_ = true;
 #if !defined(MEDIAPIPE_DISABLE_GPU)
     MP_RETURN_IF_ERROR(gpu_helper_.Open(cc));
@@ -201,12 +208,12 @@ REGISTER_CALCULATOR(RecolorCalculator);
 }
 
 ::mediapipe::Status RecolorCalculator::RenderCpu(CalculatorContext* cc) {
-  if (cc->Inputs().Tag("MASK").IsEmpty()) {
+  if (cc->Inputs().Tag(kMaskCpuTag).IsEmpty()) {
     return ::mediapipe::OkStatus();
   }
   // Get inputs and setup output.
-  const auto& input_img = cc->Inputs().Tag("IMAGE").Get<ImageFrame>();
-  const auto& mask_img = cc->Inputs().Tag("MASK").Get<ImageFrame>();
+  const auto& input_img = cc->Inputs().Tag(kImageFrameTag).Get<ImageFrame>();
+  const auto& mask_img = cc->Inputs().Tag(kMaskCpuTag).Get<ImageFrame>();
 
   cv::Mat input_mat = formats::MatView(&input_img);
   cv::Mat mask_mat = formats::MatView(&mask_img);
@@ -254,19 +261,21 @@ REGISTER_CALCULATOR(RecolorCalculator);
     }
   }
 
-  cc->Outputs().Tag("IMAGE").Add(output_img.release(), cc->InputTimestamp());
+  cc->Outputs()
+      .Tag(kImageFrameTag)
+      .Add(output_img.release(), cc->InputTimestamp());
 
   return ::mediapipe::OkStatus();
 }
 
 ::mediapipe::Status RecolorCalculator::RenderGpu(CalculatorContext* cc) {
-  if (cc->Inputs().Tag("MASK_GPU").IsEmpty()) {
+  if (cc->Inputs().Tag(kMaskGpuTag).IsEmpty()) {
     return ::mediapipe::OkStatus();
   }
 #if !defined(MEDIAPIPE_DISABLE_GPU)
   // Get inputs and setup output.
-  const Packet& input_packet = cc->Inputs().Tag("IMAGE_GPU").Value();
-  const Packet& mask_packet = cc->Inputs().Tag("MASK_GPU").Value();
+  const Packet& input_packet = cc->Inputs().Tag(kGpuBufferTag).Value();
+  const Packet& mask_packet = cc->Inputs().Tag(kMaskGpuTag).Value();
 
   const auto& input_buffer = input_packet.Get<mediapipe::GpuBuffer>();
   const auto& mask_buffer = mask_packet.Get<mediapipe::GpuBuffer>();
@@ -296,7 +305,7 @@ REGISTER_CALCULATOR(RecolorCalculator);
 
   // Send result image in GPU packet.
   auto output = dst_tex.GetFrame<mediapipe::GpuBuffer>();
-  cc->Outputs().Tag("IMAGE_GPU").Add(output.release(), cc->InputTimestamp());
+  cc->Outputs().Tag(kGpuBufferTag).Add(output.release(), cc->InputTimestamp());
 
   // Cleanup
   img_tex.Release();

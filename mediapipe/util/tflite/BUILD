@@ -75,3 +75,31 @@ cc_test(
         "//conditions:default": [],
     }),
 )
+
+cc_library(
+    name = "tflite_gpu_runner",
+    srcs = select({
+        "//mediapipe:ios": [],
+        "//mediapipe:macos": [],
+        "//conditions:default": ["tflite_gpu_runner.cc"],
+    }),
+    hdrs = select({
+        "//mediapipe:ios": [],
+        "//mediapipe:macos": [],
+        "//conditions:default": ["tflite_gpu_runner.h"],
+    }),
+    deps = select({
+        "//mediapipe:ios": [],
+        "//mediapipe:macos": [],
+        "//conditions:default": [
+            "@com_google_absl//absl/strings",
+            "//mediapipe/framework/port:ret_check",
+            "//mediapipe/framework/port:status",
+            "//mediapipe/framework/port:statusor",
+            "@org_tensorflow//tensorflow/lite:framework",
+            "@org_tensorflow//tensorflow/lite/delegates/gpu:api",
+            "@org_tensorflow//tensorflow/lite/delegates/gpu/common:model",
+            "@org_tensorflow//tensorflow/lite/delegates/gpu/gl:api2",
+        ],
+    }),
+)

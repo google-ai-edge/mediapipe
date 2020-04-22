@@ -47,10 +47,11 @@
 #endif  // iOS
 
 namespace {
-
 constexpr int kNumInputTensorsWithAnchors = 3;
 constexpr int kNumCoordsPerBox = 4;
 
+constexpr char kTensorsTag[] = "TENSORS";
+constexpr char kTensorsGpuTag[] = "TENSORS_GPU";
 }  // namespace
 
 namespace mediapipe {
@@ -200,13 +201,13 @@ REGISTER_CALCULATOR(TfLiteTensorsToDetectionsCalculator);
 
   bool use_gpu = false;
 
-  if (cc->Inputs().HasTag("TENSORS")) {
-    cc->Inputs().Tag("TENSORS").Set<std::vector<TfLiteTensor>>();
+  if (cc->Inputs().HasTag(kTensorsTag)) {
+    cc->Inputs().Tag(kTensorsTag).Set<std::vector<TfLiteTensor>>();
   }
 
 #if !defined(MEDIAPIPE_DISABLE_GPU) && !defined(__EMSCRIPTEN__)
-  if (cc->Inputs().HasTag("TENSORS_GPU")) {
-    cc->Inputs().Tag("TENSORS_GPU").Set<std::vector<GpuTensor>>();
+  if (cc->Inputs().HasTag(kTensorsGpuTag)) {
+    cc->Inputs().Tag(kTensorsGpuTag).Set<std::vector<GpuTensor>>();
     use_gpu |= true;
   }
 #endif  //  !MEDIAPIPE_DISABLE_GPU
@@ -236,7 +237,7 @@ REGISTER_CALCULATOR(TfLiteTensorsToDetectionsCalculator);
     CalculatorContext* cc) {
   cc->SetOffset(TimestampDiff(0));
 
-  if (cc->Inputs().HasTag("TENSORS_GPU")) {
+  if (cc->Inputs().HasTag(kTensorsGpuTag)) {
     gpu_input_ = true;
 #if !defined(MEDIAPIPE_DISABLE_GL_COMPUTE)
     MP_RETURN_IF_ERROR(gpu_helper_.Open(cc));
@@ -258,8 +259,8 @@ REGISTER_CALCULATOR(TfLiteTensorsToDetectionsCalculator);
 
 ::mediapipe::Status TfLiteTensorsToDetectionsCalculator::Process(
     CalculatorContext* cc) {
-  if ((!gpu_input_ && cc->Inputs().Tag("TENSORS").IsEmpty()) ||
-      (gpu_input_ && cc->Inputs().Tag("TENSORS_GPU").IsEmpty())) {
+  if ((!gpu_input_ && cc->Inputs().Tag(kTensorsTag).IsEmpty()) ||
+      (gpu_input_ && cc->Inputs().Tag(kTensorsGpuTag).IsEmpty())) {
     return ::mediapipe::OkStatus();
   }
 
@@ -284,7 +285,7 @@ REGISTER_CALCULATOR(TfLiteTensorsToDetectionsCalculator);
 ::mediapipe::Status TfLiteTensorsToDetectionsCalculator::ProcessCPU(
     CalculatorContext* cc, std::vector<Detection>* output_detections) {
   const auto& input_tensors =
-      cc->Inputs().Tag("TENSORS").Get<std::vector<TfLiteTensor>>();
+      cc->Inputs().Tag(kTensorsTag).Get<std::vector<TfLiteTensor>>();
 
   if (input_tensors.size() == 2 ||
       input_tensors.size() == kNumInputTensorsWithAnchors) {
@@ -402,7 +403,7 @@ REGISTER_CALCULATOR(TfLiteTensorsToDetectionsCalculator);
     CalculatorContext* cc, std::vector<Detection>* output_detections) {
 #if !defined(MEDIAPIPE_DISABLE_GL_COMPUTE)
   const auto& input_tensors =
-      cc->Inputs().Tag("TENSORS_GPU").Get<std::vector<GpuTensor>>();
+      cc->Inputs().Tag(kTensorsGpuTag).Get<std::vector<GpuTensor>>();
   RET_CHECK_GE(input_tensors.size(), 2);
 
   MP_RETURN_IF_ERROR(gpu_helper_.RunInGlContext([this, &input_tensors, &cc,
@@ -466,7 +467,7 @@ REGISTER_CALCULATOR(TfLiteTensorsToDetectionsCalculator);
 #elif defined(MEDIAPIPE_IOS)
 
   const auto& input_tensors =
-      cc->Inputs().Tag("TENSORS_GPU").Get<std::vector<GpuTensor>>();
+      cc->Inputs().Tag(kTensorsGpuTag).Get<std::vector<GpuTensor>>();
   RET_CHECK_GE(input_tensors.size(), 2);
 
   // Copy inputs.

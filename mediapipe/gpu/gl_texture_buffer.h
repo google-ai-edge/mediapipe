@@ -121,15 +121,16 @@ class GlTextureBuffer {
   friend class GlCalculatorHelperImpl;
 
   GLuint name_ = 0;
-  int width_ = 0;
-  int height_ = 0;
-  GpuBufferFormat format_ = GpuBufferFormat::kUnknown;
-  GLenum target_ = GL_TEXTURE_2D;
+  const int width_ = 0;
+  const int height_ = 0;
+  const GpuBufferFormat format_ = GpuBufferFormat::kUnknown;
+  const GLenum target_ = GL_TEXTURE_2D;
   // Token tracking changes to this texture. Used by WaitUntilComplete.
   std::shared_ptr<GlSyncPoint> producer_sync_;
+  absl::Mutex consumer_sync_mutex_;
   // Tokens tracking the point when consumers finished using this texture.
-  std::unique_ptr<GlMultiSyncPoint> consumer_multi_sync_ =
-      absl::make_unique<GlMultiSyncPoint>();
+  std::unique_ptr<GlMultiSyncPoint> consumer_multi_sync_ ABSL_GUARDED_BY(
+      consumer_sync_mutex_) = absl::make_unique<GlMultiSyncPoint>();
   DeletionCallback deletion_callback_;
 };
 

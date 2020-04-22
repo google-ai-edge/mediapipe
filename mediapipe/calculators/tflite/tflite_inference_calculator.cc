@@ -36,6 +36,7 @@
 #if !defined(MEDIAPIPE_DISABLE_GL_COMPUTE)
 #include "mediapipe/gpu/gl_calculator_helper.h"
 #include "mediapipe/gpu/gpu_buffer.h"
+#include "mediapipe/util/tflite/tflite_gpu_runner.h"
 #include "tensorflow/lite/delegates/gpu/common/shape.h"
 #include "tensorflow/lite/delegates/gpu/gl/gl_buffer.h"
 #include "tensorflow/lite/delegates/gpu/gl/gl_program.h"
@@ -75,6 +76,9 @@ typedef id<MTLBuffer> GpuTensor;
 
 // Round up n to next multiple of m.
 size_t RoundUp(size_t n, size_t m) { return ((n + m - 1) / m) * m; }  // NOLINT
+
+constexpr char kTensorsTag[] = "TENSORS";
+constexpr char kTensorsGpuTag[] = "TENSORS_GPU";
 }  // namespace
 
 #if defined(MEDIAPIPE_EDGE_TPU)
@@ -219,6 +223,7 @@ class TfLiteInferenceCalculator : public CalculatorBase {
   ::mediapipe::Status LoadModel(CalculatorContext* cc);
   ::mediapipe::StatusOr<Packet> GetModelAsPacket(const CalculatorContext& cc);
   ::mediapipe::Status LoadDelegate(CalculatorContext* cc);
+  ::mediapipe::Status InitTFLiteGPURunner();
 
   Packet model_packet_;
   std::unique_ptr<tflite::Interpreter> interpreter_;
@@ -228,6 +233,7 @@ class TfLiteInferenceCalculator : public CalculatorBase {
   mediapipe::GlCalculatorHelper gpu_helper_;
   std::vector<std::unique_ptr<GPUData>> gpu_data_in_;
   std::vector<std::unique_ptr<GPUData>> gpu_data_out_;
+  std::unique_ptr<tflite::gpu::TFLiteGPURunner> tflite_gpu_runner_;
 #elif defined(MEDIAPIPE_IOS)
   MPPMetalHelper* gpu_helper_ = nullptr;
   std::vector<std::unique_ptr<GPUData>> gpu_data_in_;
@@ -245,6 +251,8 @@ class TfLiteInferenceCalculator : public CalculatorBase {
   bool gpu_input_ = false;
   bool gpu_output_ = false;
   bool use_quantized_tensors_ = false;
+
+  bool use_advanced_gpu_api_ = false;
 };
 REGISTER_CALCULATOR(TfLiteInferenceCalculator);
 
@@ -252,10 +260,10 @@ REGISTER_CALCULATOR(TfLiteInferenceCalculator);
 
 ::mediapipe::Status TfLiteInferenceCalculator::GetContract(
     CalculatorContract* cc) {
-  RET_CHECK(cc->Inputs().HasTag("TENSORS") ^
-            cc->Inputs().HasTag("TENSORS_GPU"));
-  RET_CHECK(cc->Outputs().HasTag("TENSORS") ^
-            cc->Outputs().HasTag("TENSORS_GPU"));
+  RET_CHECK(cc->Inputs().HasTag(kTensorsTag) ^
+            cc->Inputs().HasTag(kTensorsGpuTag));
+  RET_CHECK(cc->Outputs().HasTag(kTensorsTag) ^
+            cc->Outputs().HasTag(kTensorsGpuTag));
 
   const auto& options =
       cc->Options<::mediapipe::TfLiteInferenceCalculatorOptions>();
@@ -266,26 +274,26 @@ REGISTER_CALCULATOR(TfLiteInferenceCalculator);
   bool use_gpu =
       options.has_delegate() ? options.delegate().has_gpu() : options.use_gpu();
 
-  if (cc->Inputs().HasTag("TENSORS"))
-    cc->Inputs().Tag("TENSORS").Set<std::vector<TfLiteTensor>>();
+  if (cc->Inputs().HasTag(kTensorsTag))
+    cc->Inputs().Tag(kTensorsTag).Set<std::vector<TfLiteTensor>>();
 #if !defined(MEDIAPIPE_DISABLE_GPU) && !defined(__EMSCRIPTEN__)
-  if (cc->Inputs().HasTag("TENSORS_GPU")) {
+  if (cc->Inputs().HasTag(kTensorsGpuTag)) {
     RET_CHECK(!options.has_delegate() || options.delegate().has_gpu())
         << "GPU input is compatible with GPU delegate only.";
 
-    cc->Inputs().Tag("TENSORS_GPU").Set<std::vector<GpuTensor>>();
+    cc->Inputs().Tag(kTensorsGpuTag).Set<std::vector<GpuTensor>>();
     use_gpu |= true;
   }
 #endif  //  !MEDIAPIPE_DISABLE_GPU
 
-  if (cc->Outputs().HasTag("TENSORS"))
-    cc->Outputs().Tag("TENSORS").Set<std::vector<TfLiteTensor>>();
+  if (cc->Outputs().HasTag(kTensorsTag))
+    cc->Outputs().Tag(kTensorsTag).Set<std::vector<TfLiteTensor>>();
 #if !defined(MEDIAPIPE_DISABLE_GPU) && !defined(__EMSCRIPTEN__)
-  if (cc->Outputs().HasTag("TENSORS_GPU")) {
+  if (cc->Outputs().HasTag(kTensorsGpuTag)) {
     RET_CHECK(!options.has_delegate() || options.delegate().has_gpu())
         << "GPU output is compatible with GPU delegate only.";
 
-    cc->Outputs().Tag("TENSORS_GPU").Set<std::vector<GpuTensor>>();
+    cc->Outputs().Tag(kTensorsGpuTag).Set<std::vector<GpuTensor>>();
     use_gpu |= true;
   }
 #endif  //  !MEDIAPIPE_DISABLE_GPU
@@ -320,26 +328,30 @@ REGISTER_CALCULATOR(TfLiteInferenceCalculator);
       cc->Options<::mediapipe::TfLiteInferenceCalculatorOptions>();
   gpu_inference_ = options.use_gpu();
 
-  if (cc->Inputs().HasTag("TENSORS_GPU")) {
+  if (cc->Inputs().HasTag(kTensorsGpuTag)) {
 #if !defined(MEDIAPIPE_DISABLE_GPU) && !defined(__EMSCRIPTEN__)
     gpu_input_ = true;
     gpu_inference_ = true;  // Inference must be on GPU also.
 #else
-    RET_CHECK(!cc->Inputs().HasTag("TENSORS_GPU"))
+    RET_CHECK(!cc->Inputs().HasTag(kTensorsGpuTag))
         << "GPU processing not enabled.";
 #endif  //  !MEDIAPIPE_DISABLE_GPU
   }
 
-  if (cc->Outputs().HasTag("TENSORS_GPU")) {
+  if (cc->Outputs().HasTag(kTensorsGpuTag)) {
 #if !defined(MEDIAPIPE_DISABLE_GPU) && !defined(__EMSCRIPTEN__)
     gpu_output_ = true;
-    RET_CHECK(cc->Inputs().HasTag("TENSORS_GPU"))
+    RET_CHECK(cc->Inputs().HasTag(kTensorsGpuTag))
         << "GPU output must also have GPU Input.";
 #else
-    RET_CHECK(!cc->Inputs().HasTag("TENSORS_GPU"))
+    RET_CHECK(!cc->Inputs().HasTag(kTensorsGpuTag))
         << "GPU processing not enabled.";
 #endif  //  !MEDIAPIPE_DISABLE_GPU
   }
+
+  const auto& calculator_opts =
+      cc->Options<mediapipe::TfLiteInferenceCalculatorOptions>();
+  use_advanced_gpu_api_ = false;
 
   MP_RETURN_IF_ERROR(LoadModel(cc));
 
@@ -352,8 +364,12 @@ REGISTER_CALCULATOR(TfLiteInferenceCalculator);
 #endif
 
 #if !defined(MEDIAPIPE_DISABLE_GL_COMPUTE)
-    MP_RETURN_IF_ERROR(gpu_helper_.RunInGlContext(
-        [this, &cc]() -> ::mediapipe::Status { return LoadDelegate(cc); }));
+    MP_RETURN_IF_ERROR(
+        gpu_helper_.RunInGlContext([this, &cc]() -> ::mediapipe::Status {
+          return use_advanced_gpu_api_ ? InitTFLiteGPURunner()
+                                       : LoadDelegate(cc);
+        }));
+    if (use_advanced_gpu_api_) return ::mediapipe::OkStatus();
 #else
     MP_RETURN_IF_ERROR(LoadDelegate(cc));
 #endif
@@ -365,13 +381,51 @@ REGISTER_CALCULATOR(TfLiteInferenceCalculator);
   return ::mediapipe::OkStatus();
 }
 
+::mediapipe::Status TfLiteInferenceCalculator::InitTFLiteGPURunner() {
+#if !defined(MEDIAPIPE_DISABLE_GL_COMPUTE)
+  // Create and bind OpenGL buffers for outputs.
+  // These buffers are created onve and later their ids are jut passed to the
+  // calculator outputs.
+
+  gpu_data_out_.resize(tflite_gpu_runner_->outputs_size());
+  for (int i = 0; i < tflite_gpu_runner_->outputs_size(); ++i) {
+    gpu_data_out_[i] = absl::make_unique<GPUData>();
+    ASSIGN_OR_RETURN(gpu_data_out_[i]->elements,
+                     tflite_gpu_runner_->GetOutputElements(i));
+    // Create and bind input buffer.
+    RET_CHECK_CALL(::tflite::gpu::gl::CreateReadWriteShaderStorageBuffer<float>(
+        gpu_data_out_[i]->elements, &gpu_data_out_[i]->buffer));
+  }
+  RET_CHECK_CALL(tflite_gpu_runner_->Build());
+#endif
+  return ::mediapipe::OkStatus();
+}
+
 ::mediapipe::Status TfLiteInferenceCalculator::Process(CalculatorContext* cc) {
   // 1. Receive pre-processed tensor inputs.
-  if (gpu_input_) {
-    // Read GPU input into SSBO.
+  if (use_advanced_gpu_api_) {
 #if !defined(MEDIAPIPE_DISABLE_GL_COMPUTE)
     const auto& input_tensors =
         cc->Inputs().Tag("TENSORS_GPU").Get<std::vector<GpuTensor>>();
+    RET_CHECK(input_tensors.empty());
+    MP_RETURN_IF_ERROR(gpu_helper_.RunInGlContext(
+        [this, &input_tensors]() -> ::mediapipe::Status {
+          for (int i = 0; i < input_tensors.size(); ++i) {
+            MP_RETURN_IF_ERROR(tflite_gpu_runner_->BindSSBOToInputTensor(
+                input_tensors[i].id(), i));
+          }
+          for (int i = 0; i < gpu_data_out_.size(); ++i) {
+            MP_RETURN_IF_ERROR(tflite_gpu_runner_->BindSSBOToOutputTensor(
+                gpu_data_out_[i]->buffer.id(), i));
+          }
+          return ::mediapipe::OkStatus();
+        }));
+#endif
+  } else if (gpu_input_) {
+    // Read GPU input into SSBO.
+#if !defined(MEDIAPIPE_DISABLE_GL_COMPUTE)
+    const auto& input_tensors =
+        cc->Inputs().Tag(kTensorsGpuTag).Get<std::vector<GpuTensor>>();
     RET_CHECK_GT(input_tensors.size(), 0);
     MP_RETURN_IF_ERROR(gpu_helper_.RunInGlContext(
         [this, &input_tensors]() -> ::mediapipe::Status {
@@ -386,7 +440,7 @@ REGISTER_CALCULATOR(TfLiteInferenceCalculator);
         }));
 #elif defined(MEDIAPIPE_IOS)
     const auto& input_tensors =
-        cc->Inputs().Tag("TENSORS_GPU").Get<std::vector<GpuTensor>>();
+        cc->Inputs().Tag(kTensorsGpuTag).Get<std::vector<GpuTensor>>();
     RET_CHECK_GT(input_tensors.size(), 0);
     // Explicit copy input with conversion float 32 bits to 16 bits.
     gpu_data_in_.resize(input_tensors.size());
@@ -413,7 +467,7 @@ REGISTER_CALCULATOR(TfLiteInferenceCalculator);
   } else {
     // Read CPU input into tensors.
     const auto& input_tensors =
-        cc->Inputs().Tag("TENSORS").Get<std::vector<TfLiteTensor>>();
+        cc->Inputs().Tag(kTensorsTag).Get<std::vector<TfLiteTensor>>();
     RET_CHECK_GT(input_tensors.size(), 0);
     for (int i = 0; i < input_tensors.size(); ++i) {
       const TfLiteTensor* input_tensor = &input_tensors[i];
@@ -437,7 +491,11 @@ REGISTER_CALCULATOR(TfLiteInferenceCalculator);
 #if !defined(MEDIAPIPE_DISABLE_GL_COMPUTE)
     MP_RETURN_IF_ERROR(
         gpu_helper_.RunInGlContext([this]() -> ::mediapipe::Status {
-          RET_CHECK_EQ(interpreter_->Invoke(), kTfLiteOk);
+          if (use_advanced_gpu_api_) {
+            RET_CHECK(tflite_gpu_runner_->Invoke().ok());
+          } else {
+            RET_CHECK_EQ(interpreter_->Invoke(), kTfLiteOk);
+          }
           return ::mediapipe::OkStatus();
         }));
 #elif defined(MEDIAPIPE_IOS)
@@ -448,7 +506,18 @@ REGISTER_CALCULATOR(TfLiteInferenceCalculator);
   }
 
   // 3. Output processed tensors.
-  if (gpu_output_) {
+  if (use_advanced_gpu_api_) {
+#if !defined(MEDIAPIPE_DISABLE_GL_COMPUTE)
+    auto output_tensors = absl::make_unique<std::vector<GpuTensor>>();
+    output_tensors->resize(gpu_data_out_.size());
+    for (int i = 0; i < gpu_data_out_.size(); ++i) {
+      output_tensors->at(i) = gpu_data_out_[0]->buffer.MakeRef();
+    }
+    cc->Outputs()
+        .Tag("TENSORS_GPU")
+        .Add(output_tensors.release(), cc->InputTimestamp());
+#endif
+  } else if (gpu_output_) {
 #if !defined(MEDIAPIPE_DISABLE_GL_COMPUTE)
     // Output result tensors (GPU).
     auto output_tensors = absl::make_unique<std::vector<GpuTensor>>();
@@ -464,7 +533,7 @@ REGISTER_CALCULATOR(TfLiteInferenceCalculator);
           return ::mediapipe::OkStatus();
         }));
     cc->Outputs()
-        .Tag("TENSORS_GPU")
+        .Tag(kTensorsGpuTag)
         .Add(output_tensors.release(), cc->InputTimestamp());
 #elif defined(MEDIAPIPE_IOS)
     // Output result tensors (GPU).
@@ -488,7 +557,7 @@ REGISTER_CALCULATOR(TfLiteInferenceCalculator);
     [convert_command endEncoding];
     [command_buffer commit];
     cc->Outputs()
-        .Tag("TENSORS_GPU")
+        .Tag(kTensorsGpuTag)
         .Add(output_tensors.release(), cc->InputTimestamp());
 #else
     RET_CHECK_FAIL() << "GPU processing not enabled.";
@@ -501,8 +570,9 @@ REGISTER_CALCULATOR(TfLiteInferenceCalculator);
       TfLiteTensor* tensor = interpreter_->tensor(tensor_indexes[i]);
       output_tensors->emplace_back(*tensor);
     }
-    cc->Outputs().Tag("TENSORS").Add(output_tensors.release(),
-                                     cc->InputTimestamp());
+    cc->Outputs()
+        .Tag(kTensorsTag)
+        .Add(output_tensors.release(), cc->InputTimestamp());
   }
 
   return ::mediapipe::OkStatus();
@@ -557,6 +627,20 @@ REGISTER_CALCULATOR(TfLiteInferenceCalculator);
                       .Tag("CUSTOM_OP_RESOLVER")
                       .Get<tflite::ops::builtin::BuiltinOpResolver>();
   }
+
+#if !defined(MEDIAPIPE_DISABLE_GL_COMPUTE)
+  if (use_advanced_gpu_api_) {
+    tflite::gpu::InferenceOptions options;
+    options.priority1 = tflite::gpu::InferencePriority::MIN_LATENCY;
+    options.priority2 = tflite::gpu::InferencePriority::AUTO;
+    options.priority3 = tflite::gpu::InferencePriority::AUTO;
+    options.usage = tflite::gpu::InferenceUsage::SUSTAINED_SPEED;
+    tflite_gpu_runner_ =
+        std::make_unique<tflite::gpu::TFLiteGPURunner>(options);
+    return tflite_gpu_runner_->InitializeWithModel(model);
+  }
+#endif
+
 #if defined(MEDIAPIPE_EDGE_TPU)
   interpreter_ =
       BuildEdgeTpuInterpreter(model, &op_resolver, edgetpu_context_.get());

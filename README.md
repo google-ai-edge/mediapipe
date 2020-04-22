@@ -19,6 +19,7 @@
 * [Object Detection and Tracking](mediapipe/docs/object_tracking_mobile_gpu.md)
 * [Objectron: 3D Object Detection and Tracking](mediapipe/docs/objectron_mobile_gpu.md)
 * [AutoFlip: Intelligent Video Reframing](mediapipe/docs/autoflip.md)
+* [KNIFT: Template Matching with Neural Image Features](mediapipe/docs/template_matching_mobile_cpu.md)
 
 ![face_detection](mediapipe/docs/images/mobile/face_detection_android_gpu_small.gif)
 ![face_mesh](mediapipe/docs/images/mobile/face_mesh_android_gpu_small.gif)
@@ -29,6 +30,7 @@
 ![object_tracking](mediapipe/docs/images/mobile/object_tracking_android_gpu_small.gif)
 ![objectron_shoes](mediapipe/docs/images/mobile/objectron_shoe_android_gpu_small.gif)
 ![objectron_chair](mediapipe/docs/images/mobile/objectron_chair_android_gpu_small.gif)
+![template_matching](mediapipe/docs/images/mobile/template_matching_android_cpu_small.gif)
 
 ## Installation
 Follow these [instructions](mediapipe/docs/install.md).
@@ -53,6 +55,7 @@ Search MediaPipe Github repository using [Google Open Source code search](https:
 *  [YouTube Channel](https://www.youtube.com/channel/UCObqmpuSMx-usADtL_qdMAw)
 
 ## Publications
+* [MediaPipe KNIFT: Template-based Feature Matching](https://mediapipe.page.link/knift-blog)
 * [Alfred Camera: Smart camera features using MediaPipe](https://developers.googleblog.com/2020/03/alfred-camera-smart-camera-features-using-mediapipe.html)
 * [MediaPipe Objectron: Real-time 3D Object Detection on Mobile Devices](https://mediapipe.page.link/objectron-aiblog)
 * [AutoFlip: An Open Source Framework for Intelligent Video Reframing](https://mediapipe.page.link/autoflip)

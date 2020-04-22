@@ -47,6 +47,9 @@ namespace mediapipe {
 #endif  //  !MEDIAPIPE_DISABLE_GPU
 
 namespace {
+constexpr char kImageFrameTag[] = "IMAGE";
+constexpr char kGpuBufferTag[] = "IMAGE_GPU";
+
 int RotationModeToDegrees(mediapipe::RotationMode_Mode rotation) {
   switch (rotation) {
     case mediapipe::RotationMode_Mode_UNKNOWN:
@@ -95,7 +98,7 @@ mediapipe::ScaleMode_Mode ParseScaleMode(
 // Scales, rotates, and flips images horizontally or vertically.
 //
 // Input:
-//   One of the following two tags:
+//   One of the following tags:
 //   IMAGE: ImageFrame representing the input image.
 //   IMAGE_GPU: GpuBuffer representing the input image.
 //
@@ -113,7 +116,7 @@ mediapipe::ScaleMode_Mode ParseScaleMode(
 //   corresponding field in the calculator options.
 //
 // Output:
-//   One of the following two tags:
+//   One of the following tags:
 //   IMAGE - ImageFrame representing the output image.
 //   IMAGE_GPU - GpuBuffer representing the output image.
 //
@@ -152,7 +155,8 @@ mediapipe::ScaleMode_Mode ParseScaleMode(
 // Note: To enable horizontal or vertical flipping, specify them in the
 // calculator options. Flipping is applied after rotation.
 //
-// Note: Only scale mode STRETCH is currently supported on CPU.
+// Note: Input defines output, so only matchig types supported:
+// IMAGE -> IMAGE  or  IMAGE_GPU -> IMAGE_GPU
 //
 class ImageTransformationCalculator : public CalculatorBase {
  public:
@@ -186,7 +190,7 @@ class ImageTransformationCalculator : public CalculatorBase {
 
   bool use_gpu_ = false;
 #if !defined(MEDIAPIPE_DISABLE_GPU)
-  GlCalculatorHelper helper_;
+  GlCalculatorHelper gpu_helper_;
   std::unique_ptr<QuadRenderer> rgb_renderer_;
   std::unique_ptr<QuadRenderer> yuv_renderer_;
   std::unique_ptr<QuadRenderer> ext_rgb_renderer_;
@@ -197,21 +201,22 @@ REGISTER_CALCULATOR(ImageTransformationCalculator);
 // static
 ::mediapipe::Status ImageTransformationCalculator::GetContract(
     CalculatorContract* cc) {
-  RET_CHECK(cc->Inputs().HasTag("IMAGE") ^ cc->Inputs().HasTag("IMAGE_GPU"));
-  RET_CHECK(cc->Outputs().HasTag("IMAGE") ^ cc->Outputs().HasTag("IMAGE_GPU"));
+  // Only one input can be set, and the output type must match.
+  RET_CHECK(cc->Inputs().HasTag(kImageFrameTag) ^
+            cc->Inputs().HasTag(kGpuBufferTag));
 
   bool use_gpu = false;
 
-  if (cc->Inputs().HasTag("IMAGE")) {
-    RET_CHECK(cc->Outputs().HasTag("IMAGE"));
-    cc->Inputs().Tag("IMAGE").Set<ImageFrame>();
-    cc->Outputs().Tag("IMAGE").Set<ImageFrame>();
+  if (cc->Inputs().HasTag(kImageFrameTag)) {
+    RET_CHECK(cc->Outputs().HasTag(kImageFrameTag));
+    cc->Inputs().Tag(kImageFrameTag).Set<ImageFrame>();
+    cc->Outputs().Tag(kImageFrameTag).Set<ImageFrame>();
   }
 #if !defined(MEDIAPIPE_DISABLE_GPU)
-  if (cc->Inputs().HasTag("IMAGE_GPU")) {
-    RET_CHECK(cc->Outputs().HasTag("IMAGE_GPU"));
-    cc->Inputs().Tag("IMAGE_GPU").Set<GpuBuffer>();
-    cc->Outputs().Tag("IMAGE_GPU").Set<GpuBuffer>();
+  if (cc->Inputs().HasTag(kGpuBufferTag)) {
+    RET_CHECK(cc->Outputs().HasTag(kGpuBufferTag));
+    cc->Inputs().Tag(kGpuBufferTag).Set<GpuBuffer>();
+    cc->Outputs().Tag(kGpuBufferTag).Set<GpuBuffer>();
     use_gpu |= true;
   }
 #endif  //  !MEDIAPIPE_DISABLE_GPU
@@ -259,7 +264,7 @@ REGISTER_CALCULATOR(ImageTransformationCalculator);
 
   options_ = cc->Options<ImageTransformationCalculatorOptions>();
 
-  if (cc->Inputs().HasTag("IMAGE_GPU")) {
+  if (cc->Inputs().HasTag(kGpuBufferTag)) {
     use_gpu_ = true;
   }
 
@@ -300,7 +305,7 @@ REGISTER_CALCULATOR(ImageTransformationCalculator);
   if (use_gpu_) {
 #if !defined(MEDIAPIPE_DISABLE_GPU)
     // Let the helper access the GL context information.
-    MP_RETURN_IF_ERROR(helper_.Open(cc));
+    MP_RETURN_IF_ERROR(gpu_helper_.Open(cc));
 #else
     RET_CHECK_FAIL() << "GPU processing not enabled.";
 #endif  //  !MEDIAPIPE_DISABLE_GPU
@@ -328,18 +333,14 @@ REGISTER_CALCULATOR(ImageTransformationCalculator);
 
   if (use_gpu_) {
 #if !defined(MEDIAPIPE_DISABLE_GPU)
-    if (cc->Inputs().Tag("IMAGE_GPU").IsEmpty()) {
-      // Image is missing, hence no way to produce output image. (Timestamp
-      // bound will be updated automatically.)
+    if (cc->Inputs().Tag(kGpuBufferTag).IsEmpty()) {
       return ::mediapipe::OkStatus();
     }
-    return helper_.RunInGlContext(
+    return gpu_helper_.RunInGlContext(
         [this, cc]() -> ::mediapipe::Status { return RenderGpu(cc); });
 #endif  //  !MEDIAPIPE_DISABLE_GPU
   } else {
-    if (cc->Inputs().Tag("IMAGE").IsEmpty()) {
-      // Image is missing, hence no way to produce output image. (Timestamp
-      // bound will be updated automatically.)
+    if (cc->Inputs().Tag(kImageFrameTag).IsEmpty()) {
       return ::mediapipe::OkStatus();
     }
     return RenderCpu(cc);
@@ -354,7 +355,7 @@ REGISTER_CALCULATOR(ImageTransformationCalculator);
     QuadRenderer* rgb_renderer = rgb_renderer_.release();
     QuadRenderer* yuv_renderer = yuv_renderer_.release();
     QuadRenderer* ext_rgb_renderer = ext_rgb_renderer_.release();
-    helper_.RunInGlContext([rgb_renderer, yuv_renderer, ext_rgb_renderer] {
+    gpu_helper_.RunInGlContext([rgb_renderer, yuv_renderer, ext_rgb_renderer] {
       if (rgb_renderer) {
         rgb_renderer->GlTeardown();
         delete rgb_renderer;
@@ -376,17 +377,21 @@ REGISTER_CALCULATOR(ImageTransformationCalculator);
 
 ::mediapipe::Status ImageTransformationCalculator::RenderCpu(
     CalculatorContext* cc) {
-  const auto& input_img = cc->Inputs().Tag("IMAGE").Get<ImageFrame>();
-  cv::Mat input_mat = formats::MatView(&input_img);
-  cv::Mat scaled_mat;
+  cv::Mat input_mat;
+  mediapipe::ImageFormat::Format format;
 
-  const int input_width = input_img.Width();
-  const int input_height = input_img.Height();
+  const auto& input = cc->Inputs().Tag(kImageFrameTag).Get<ImageFrame>();
+  input_mat = formats::MatView(&input);
+  format = input.Format();
+
+  const int input_width = input_mat.cols;
+  const int input_height = input_mat.rows;
   if (!output_height_ || !output_width_) {
     output_height_ = input_height;
     output_width_ = input_width;
   }
 
+  cv::Mat scaled_mat;
   if (scale_mode_ == mediapipe::ScaleMode_Mode_STRETCH) {
     cv::resize(input_mat, scaled_mat, cv::Size(output_width_, output_height_));
   } else {
@@ -443,10 +448,12 @@ REGISTER_CALCULATOR(ImageTransformationCalculator);
   }
 
   std::unique_ptr<ImageFrame> output_frame(
-      new ImageFrame(input_img.Format(), output_width, output_height));
+      new ImageFrame(format, output_width, output_height));
   cv::Mat output_mat = formats::MatView(output_frame.get());
   flipped_mat.copyTo(output_mat);
-  cc->Outputs().Tag("IMAGE").Add(output_frame.release(), cc->InputTimestamp());
+  cc->Outputs()
+      .Tag(kImageFrameTag)
+      .Add(output_frame.release(), cc->InputTimestamp());
 
   return ::mediapipe::OkStatus();
 }
@@ -454,7 +461,7 @@ REGISTER_CALCULATOR(ImageTransformationCalculator);
 ::mediapipe::Status ImageTransformationCalculator::RenderGpu(
     CalculatorContext* cc) {
 #if !defined(MEDIAPIPE_DISABLE_GPU)
-  const auto& input = cc->Inputs().Tag("IMAGE_GPU").Get<GpuBuffer>();
+  const auto& input = cc->Inputs().Tag(kGpuBufferTag).Get<GpuBuffer>();
   const int input_width = input.width();
   const int input_height = input.height();
 
@@ -485,11 +492,11 @@ REGISTER_CALCULATOR(ImageTransformationCalculator);
                                  {"video_frame_y", "video_frame_uv"}));
     }
     renderer = yuv_renderer_.get();
-    src1 = helper_.CreateSourceTexture(input, 0);
+    src1 = gpu_helper_.CreateSourceTexture(input, 0);
   } else  // NOLINT(readability/braces)
 #endif    // iOS
   {
-    src1 = helper_.CreateSourceTexture(input);
+    src1 = gpu_helper_.CreateSourceTexture(input);
 #if defined(TEXTURE_EXTERNAL_OES)
     if (src1.target() == GL_TEXTURE_EXTERNAL_OES) {
       if (!ext_rgb_renderer_) {
@@ -515,10 +522,10 @@ REGISTER_CALCULATOR(ImageTransformationCalculator);
   mediapipe::FrameRotation rotation =
       mediapipe::FrameRotationFromDegrees(RotationModeToDegrees(rotation_));
 
-  auto dst = helper_.CreateDestinationTexture(output_width, output_height,
-                                              input.format());
+  auto dst = gpu_helper_.CreateDestinationTexture(output_width, output_height,
+                                                  input.format());
 
-  helper_.BindFramebuffer(dst);  // GL_TEXTURE0
+  gpu_helper_.BindFramebuffer(dst);  // GL_TEXTURE0
   glActiveTexture(GL_TEXTURE1);
   glBindTexture(src1.target(), src1.name());
 
@@ -533,8 +540,8 @@ REGISTER_CALCULATOR(ImageTransformationCalculator);
   // Execute GL commands, before getting result.
   glFlush();
 
-  auto output = dst.GetFrame<GpuBuffer>();
-  cc->Outputs().Tag("IMAGE_GPU").Add(output.release(), cc->InputTimestamp());
+  auto output = dst.template GetFrame<GpuBuffer>();
+  cc->Outputs().Tag(kGpuBufferTag).Add(output.release(), cc->InputTimestamp());
 
 #endif  //  !MEDIAPIPE_DISABLE_GPU
 

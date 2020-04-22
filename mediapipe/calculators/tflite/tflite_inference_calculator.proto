@@ -42,7 +42,11 @@ message TfLiteInferenceCalculatorOptions {
     message TfLite {}
     // Delegate to run GPU inference depending on the device.
     // (Can use OpenGl, OpenCl, Metal depending on the device.)
-    message Gpu {}
+    message Gpu {
+      // Experimental, Android/Linux only. Use TFLite GPU delegate API2 for
+      // the NN inference.
+      optional bool use_advanced_gpu_api = 1 [default = false];
+    }
     // Android only.
     message Nnapi {}
     message Xnnpack {

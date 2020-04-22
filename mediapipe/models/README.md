@@ -34,3 +34,10 @@ Here are the descriptions of the models used in the [example applications](../do
   * [Model page](https://sites.google.com/corp/view/perception-cv4arvr/hair-segmentation)
   * Paper: ["Real-time Hair segmentation and recoloring on Mobile GPUs"](https://arxiv.org/abs/1907.06740)
   * [Model card](https://drive.google.com/file/d/1lPwJ8BD_-3UUor4LayQ0xpa_RIC_hoRh/view)
+
+### KNIFT (Keypoint Neural Invariant Feature Transform)
+  * Up to 200 keypoints: [TFLite model](https://github.com/google/mediapipe/tree/master/mediapipe/models/knift_float.tflite)
+  * Up to 400 keypoints: [TFLite model](https://github.com/google/mediapipe/tree/master/mediapipe/models/knift_float_400.tflite)
+  * [Google Developers Blog post](https://mediapipe.page.link/knift)
+  * [Model card](https://mediapipe.page.link/knift-mc)
+

@@ -121,6 +121,14 @@ and model details are described in the
 
 *   [Android](./hair_segmentation_mobile_gpu.md)
 
+### Template Matching using KNIFT with CPU
+
+[Template Matching using KNIFT on Mobile](./template_matching_mobile_cpu.md)
+shows how to use MediaPipe with TFLite model for template matching using Knift
+on mobile using CPU.
+
+*   [Android](./template_matching_mobile_cpu.md)
+
 ## Desktop
 
 ### Hello World for C++
@@ -171,7 +179,6 @@ on desktop with webcam input.
 *   [Desktop GPU](./face_mesh_desktop.md)
 *   [Desktop CPU](./face_mesh_desktop.md)
 
-
 ### Hand Tracking on Desktop with Webcam
 
 [Hand Tracking on Desktop with Webcam](./hand_tracking_desktop.md) shows how to
@@ -198,7 +205,7 @@ GPU with live video from a webcam.
 
 *   [Desktop GPU](./hair_segmentation_desktop.md)
 
-## Google Coral (machine learning acceleration with Google EdgeTPU)
+## Google Coral (ML acceleration with Google EdgeTPU)
 
 Below are code samples on how to run MediaPipe on Google Coral Dev Board.
 

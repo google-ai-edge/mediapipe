@@ -87,11 +87,10 @@ bool GlTextureBuffer::CreateInternal(const void* data) {
 }
 
 void GlTextureBuffer::Reuse() {
-  WaitForConsumersOnGpu();
-  // TODO: should we just do this inside WaitForConsumersOnGpu?
-  // if we do that, WaitForConsumersOnGpu can be called only once.
+  absl::MutexLock lock(&consumer_sync_mutex_);
+  consumer_multi_sync_->WaitOnGpu();
+  // Reset the sync points.
   consumer_multi_sync_ = absl::make_unique<GlMultiSyncPoint>();
-  // Reset the token.
   producer_sync_ = nullptr;
 }
 
@@ -102,11 +101,15 @@ void GlTextureBuffer::Updated(std::shared_ptr<GlSyncPoint> prod_token) {
 }
 
 void GlTextureBuffer::DidRead(std::shared_ptr<GlSyncPoint> cons_token) {
+  absl::MutexLock lock(&consumer_sync_mutex_);
   consumer_multi_sync_->Add(std::move(cons_token));
 }
 
 GlTextureBuffer::~GlTextureBuffer() {
   if (deletion_callback_) {
+    // Note: at this point there are no more consumers that could be added
+    // to the consumer_multi_sync_, so it no longer needs to be protected
+    // by out mutex when we hand it to the deletion callback.
     deletion_callback_(std::move(consumer_multi_sync_));
   }
 }
@@ -129,10 +132,17 @@ void GlTextureBuffer::WaitOnGpu() {
   }
 }
 
-void GlTextureBuffer::WaitForConsumers() { consumer_multi_sync_->Wait(); }
+void GlTextureBuffer::WaitForConsumers() {
+  absl::MutexLock lock(&consumer_sync_mutex_);
+  consumer_multi_sync_->Wait();
+}
 
 void GlTextureBuffer::WaitForConsumersOnGpu() {
+  absl::MutexLock lock(&consumer_sync_mutex_);
   consumer_multi_sync_->WaitOnGpu();
+  // TODO: should we clear the consumer_multi_sync_ here?
+  // It would mean that WaitForConsumersOnGpu can be called only once, or more
+  // precisely, on only one GL context.
 }
 
 }  // namespace mediapipe

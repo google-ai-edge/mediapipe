@@ -68,10 +68,10 @@ message BoxDetectorOptions {
   optional int32 min_num_correspondence = 6 [default = 5];
 
   // Reprojection threshold for RANSAC to find inliers.
-  optional float ransac_reprojection_threshold = 7 [default = 0.02];
+  optional float ransac_reprojection_threshold = 7 [default = 0.005];
 
   // Max distance to match 2 NIMBY features.
-  optional float max_match_distance = 8 [default = 0.8];
+  optional float max_match_distance = 8 [default = 0.9];
 
   // Max persepective change factor.
   optional float max_perspective_factor = 9 [default = 0.1];

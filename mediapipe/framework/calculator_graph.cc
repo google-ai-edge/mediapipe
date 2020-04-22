@@ -320,7 +320,7 @@ CalculatorGraph::~CalculatorGraph() {
   }
 
   if (!::mediapipe::ContainsKey(executors_, "")) {
-    MP_RETURN_IF_ERROR(InitializeDefaultExecutor(*default_executor_options,
+    MP_RETURN_IF_ERROR(InitializeDefaultExecutor(default_executor_options,
                                                  use_application_thread));
   }
 
@@ -328,7 +328,7 @@ CalculatorGraph::~CalculatorGraph() {
 }
 
 ::mediapipe::Status CalculatorGraph::InitializeDefaultExecutor(
-    const ThreadPoolExecutorOptions& default_executor_options,
+    const ThreadPoolExecutorOptions* default_executor_options,
     bool use_application_thread) {
   // If specified, run synchronously on the calling thread.
   if (use_application_thread) {
@@ -341,7 +341,9 @@ CalculatorGraph::~CalculatorGraph() {
   }
 
   // Check the number of threads specified in the proto.
-  int num_threads = default_executor_options.num_threads();
+  int num_threads = default_executor_options == nullptr
+                        ? 0
+                        : default_executor_options->num_threads();
 
   // If the default (0 or -1) was specified, pick a suitable number of threads
   // depending on the number of processors in this system and the number of
@@ -1215,12 +1217,14 @@ Packet CalculatorGraph::GetServicePacket(const GraphServiceBase& service) {
 }
 
 ::mediapipe::Status CalculatorGraph::CreateDefaultThreadPool(
-    const ThreadPoolExecutorOptions& default_executor_options,
+    const ThreadPoolExecutorOptions* default_executor_options,
     int num_threads) {
   MediaPipeOptions extendable_options;
   ThreadPoolExecutorOptions* options =
       extendable_options.MutableExtension(ThreadPoolExecutorOptions::ext);
-  *options = default_executor_options;
+  if (default_executor_options != nullptr) {
+    options->CopyFrom(*default_executor_options);
+  }
   options->set_num_threads(num_threads);
   // clang-format off
   ASSIGN_OR_RETURN(Executor* executor,

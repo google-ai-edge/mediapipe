@@ -63,6 +63,10 @@ typedef Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
 typedef Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor>
     ColMajorMatrixXf;
 
+constexpr char kImageFrameTag[] = "IMAGE";
+constexpr char kGpuBufferTag[] = "IMAGE_GPU";
+constexpr char kTensorsTag[] = "TENSORS";
+constexpr char kTensorsGpuTag[] = "TENSORS_GPU";
 }  // namespace
 
 namespace mediapipe {
@@ -124,6 +128,9 @@ struct GPUData {
 //  GPU tensors are currently only supported on mobile platforms.
 //  This calculator uses FixedSizeInputStreamHandler by default.
 //
+// Note: Input defines output, so only these type sets are supported:
+// IMAGE -> TENSORS | IMAGE_GPU -> TENSORS_GPU | MATRIX -> TENSORS
+//
 class TfLiteConverterCalculator : public CalculatorBase {
  public:
   static ::mediapipe::Status GetContract(CalculatorContract* cc);
@@ -138,9 +145,9 @@ class TfLiteConverterCalculator : public CalculatorBase {
   template <class T>
   ::mediapipe::Status NormalizeImage(const ImageFrame& image_frame,
                                      bool zero_center, bool flip_vertically,
-                                     float* tensor_buffer);
+                                     float* tensor_ptr);
   ::mediapipe::Status CopyMatrixToTensor(const Matrix& matrix,
-                                         float* tensor_buffer);
+                                         float* tensor_ptr);
   ::mediapipe::Status ProcessCPU(CalculatorContext* cc);
   ::mediapipe::Status ProcessGPU(CalculatorContext* cc);
 
@@ -166,33 +173,35 @@ REGISTER_CALCULATOR(TfLiteConverterCalculator);
 
 ::mediapipe::Status TfLiteConverterCalculator::GetContract(
     CalculatorContract* cc) {
-  const bool has_image_tag = cc->Inputs().HasTag("IMAGE");
-  const bool has_image_gpu_tag = cc->Inputs().HasTag("IMAGE_GPU");
-  const bool has_matrix_tag = cc->Inputs().HasTag("MATRIX");
   // Confirm only one of the input streams is present.
-  RET_CHECK(has_image_tag ^ has_image_gpu_tag ^ has_matrix_tag &&
-            !(has_image_tag && has_image_gpu_tag && has_matrix_tag));
+  RET_CHECK(cc->Inputs().HasTag(kImageFrameTag) ^
+            cc->Inputs().HasTag(kGpuBufferTag) ^ cc->Inputs().HasTag("MATRIX"));
 
   // Confirm only one of the output streams is present.
-  RET_CHECK(cc->Outputs().HasTag("TENSORS") ^
-            cc->Outputs().HasTag("TENSORS_GPU"));
+  RET_CHECK(cc->Outputs().HasTag(kTensorsTag) ^
+            cc->Outputs().HasTag(kTensorsGpuTag));
 
   bool use_gpu = false;
 
-  if (cc->Inputs().HasTag("IMAGE")) cc->Inputs().Tag("IMAGE").Set<ImageFrame>();
-  if (cc->Inputs().HasTag("MATRIX")) cc->Inputs().Tag("MATRIX").Set<Matrix>();
+  if (cc->Inputs().HasTag(kImageFrameTag)) {
+    cc->Inputs().Tag(kImageFrameTag).Set<ImageFrame>();
+  }
+  if (cc->Inputs().HasTag("MATRIX")) {
+    cc->Inputs().Tag("MATRIX").Set<Matrix>();
+  }
 #if !defined(MEDIAPIPE_DISABLE_GPU) && !defined(__EMSCRIPTEN__)
-  if (cc->Inputs().HasTag("IMAGE_GPU")) {
-    cc->Inputs().Tag("IMAGE_GPU").Set<mediapipe::GpuBuffer>();
+  if (cc->Inputs().HasTag(kGpuBufferTag)) {
+    cc->Inputs().Tag(kGpuBufferTag).Set<mediapipe::GpuBuffer>();
     use_gpu |= true;
   }
 #endif  //  !MEDIAPIPE_DISABLE_GPU
 
-  if (cc->Outputs().HasTag("TENSORS"))
-    cc->Outputs().Tag("TENSORS").Set<std::vector<TfLiteTensor>>();
+  if (cc->Outputs().HasTag(kTensorsTag)) {
+    cc->Outputs().Tag(kTensorsTag).Set<std::vector<TfLiteTensor>>();
+  }
 #if !defined(MEDIAPIPE_DISABLE_GPU) && !defined(__EMSCRIPTEN__)
-  if (cc->Outputs().HasTag("TENSORS_GPU")) {
-    cc->Outputs().Tag("TENSORS_GPU").Set<std::vector<GpuTensor>>();
+  if (cc->Outputs().HasTag(kTensorsGpuTag)) {
+    cc->Outputs().Tag(kTensorsGpuTag).Set<std::vector<GpuTensor>>();
     use_gpu |= true;
   }
 #endif  //  !MEDIAPIPE_DISABLE_GPU
@@ -216,8 +225,8 @@ REGISTER_CALCULATOR(TfLiteConverterCalculator);
 
   MP_RETURN_IF_ERROR(LoadOptions(cc));
 
-  if (cc->Inputs().HasTag("IMAGE_GPU") ||
-      cc->Outputs().HasTag("IMAGE_OUT_GPU")) {
+  if (cc->Inputs().HasTag(kGpuBufferTag) ||
+      cc->Outputs().HasTag(kGpuBufferTag)) {
 #if !defined(MEDIAPIPE_DISABLE_GPU) && !defined(__EMSCRIPTEN__)
     use_gpu_ = true;
 #else
@@ -227,8 +236,8 @@ REGISTER_CALCULATOR(TfLiteConverterCalculator);
 
   if (use_gpu_) {
     // Cannot mix CPU/GPU streams.
-    RET_CHECK(cc->Inputs().HasTag("IMAGE_GPU") &&
-              cc->Outputs().HasTag("TENSORS_GPU"));
+    RET_CHECK(cc->Inputs().HasTag(kGpuBufferTag) &&
+              cc->Outputs().HasTag(kTensorsGpuTag));
     // Cannot use quantization.
     use_quantized_tensors_ = false;
 #if !defined(MEDIAPIPE_DISABLE_GL_COMPUTE)
@@ -248,7 +257,6 @@ REGISTER_CALCULATOR(TfLiteConverterCalculator);
 
 ::mediapipe::Status TfLiteConverterCalculator::Process(CalculatorContext* cc) {
   if (use_gpu_) {
-    // GpuBuffer to tflite::gpu::GlBuffer conversion.
     if (!initialized_) {
       MP_RETURN_IF_ERROR(InitGpu(cc));
       initialized_ = true;
@@ -259,7 +267,6 @@ REGISTER_CALCULATOR(TfLiteConverterCalculator);
     // Convert to CPU tensors or Matrix type.
     MP_RETURN_IF_ERROR(ProcessCPU(cc));
   }
-
   return ::mediapipe::OkStatus();
 }
 
@@ -275,24 +282,26 @@ REGISTER_CALCULATOR(TfLiteConverterCalculator);
 
 ::mediapipe::Status TfLiteConverterCalculator::ProcessCPU(
     CalculatorContext* cc) {
-  if (cc->Inputs().HasTag("IMAGE")) {
+  if (cc->Inputs().HasTag(kImageFrameTag)) {
     // CPU ImageFrame to TfLiteTensor conversion.
 
-    const auto& image_frame = cc->Inputs().Tag("IMAGE").Get<ImageFrame>();
+    const auto& image_frame =
+        cc->Inputs().Tag(kImageFrameTag).Get<ImageFrame>();
     const int height = image_frame.Height();
     const int width = image_frame.Width();
     const int channels = image_frame.NumberOfChannels();
     const int channels_preserved = std::min(channels, max_num_channels_);
+    const mediapipe::ImageFormat::Format format = image_frame.Format();
 
     if (!initialized_) {
-      if (!(image_frame.Format() == mediapipe::ImageFormat::SRGBA ||
-            image_frame.Format() == mediapipe::ImageFormat::SRGB ||
-            image_frame.Format() == mediapipe::ImageFormat::GRAY8 ||
-            image_frame.Format() == mediapipe::ImageFormat::VEC32F1))
+      if (!(format == mediapipe::ImageFormat::SRGBA ||
+            format == mediapipe::ImageFormat::SRGB ||
+            format == mediapipe::ImageFormat::GRAY8 ||
+            format == mediapipe::ImageFormat::VEC32F1))
         RET_CHECK_FAIL() << "Unsupported CPU input format.";
       TfLiteQuantization quant;
       if (use_quantized_tensors_) {
-        RET_CHECK(image_frame.Format() != mediapipe::ImageFormat::VEC32F1)
+        RET_CHECK(format != mediapipe::ImageFormat::VEC32F1)
             << "Only 8-bit input images are supported for quantization.";
         quant.type = kTfLiteAffineQuantization;
         quant.params = nullptr;
@@ -349,8 +358,9 @@ REGISTER_CALCULATOR(TfLiteConverterCalculator);
 
     auto output_tensors = absl::make_unique<std::vector<TfLiteTensor>>();
     output_tensors->emplace_back(*tensor);
-    cc->Outputs().Tag("TENSORS").Add(output_tensors.release(),
-                                     cc->InputTimestamp());
+    cc->Outputs()
+        .Tag(kTensorsTag)
+        .Add(output_tensors.release(), cc->InputTimestamp());
   } else if (cc->Inputs().HasTag("MATRIX")) {
     // CPU Matrix to TfLiteTensor conversion.
 
@@ -371,15 +381,16 @@ REGISTER_CALCULATOR(TfLiteConverterCalculator);
     interpreter_->ResizeInputTensor(tensor_idx, {height, width, channels});
     interpreter_->AllocateTensors();
 
-    float* tensor_buffer = tensor->data.f;
-    RET_CHECK(tensor_buffer);
+    float* tensor_ptr = tensor->data.f;
+    RET_CHECK(tensor_ptr);
 
-    MP_RETURN_IF_ERROR(CopyMatrixToTensor(matrix, tensor_buffer));
+    MP_RETURN_IF_ERROR(CopyMatrixToTensor(matrix, tensor_ptr));
 
     auto output_tensors = absl::make_unique<std::vector<TfLiteTensor>>();
     output_tensors->emplace_back(*tensor);
-    cc->Outputs().Tag("TENSORS").Add(output_tensors.release(),
-                                     cc->InputTimestamp());
+    cc->Outputs()
+        .Tag(kTensorsTag)
+        .Add(output_tensors.release(), cc->InputTimestamp());
   }
 
   return ::mediapipe::OkStatus();
@@ -389,7 +400,8 @@ REGISTER_CALCULATOR(TfLiteConverterCalculator);
     CalculatorContext* cc) {
 #if !defined(MEDIAPIPE_DISABLE_GL_COMPUTE)
   // GpuBuffer to tflite::gpu::GlBuffer conversion.
-  const auto& input = cc->Inputs().Tag("IMAGE_GPU").Get<mediapipe::GpuBuffer>();
+  const auto& input =
+      cc->Inputs().Tag(kGpuBufferTag).Get<mediapipe::GpuBuffer>();
   MP_RETURN_IF_ERROR(
       gpu_helper_.RunInGlContext([this, &input]() -> ::mediapipe::Status {
         // Convert GL texture into TfLite GlBuffer (SSBO).
@@ -421,11 +433,12 @@ REGISTER_CALCULATOR(TfLiteConverterCalculator);
         return ::mediapipe::OkStatus();
       }));
   cc->Outputs()
-      .Tag("TENSORS_GPU")
+      .Tag(kTensorsGpuTag)
       .Add(output_tensors.release(), cc->InputTimestamp());
 #elif defined(MEDIAPIPE_IOS)
   // GpuBuffer to id<MTLBuffer> conversion.
-  const auto& input = cc->Inputs().Tag("IMAGE_GPU").Get<mediapipe::GpuBuffer>();
+  const auto& input =
+      cc->Inputs().Tag(kGpuBufferTag).Get<mediapipe::GpuBuffer>();
   id<MTLCommandBuffer> command_buffer = [gpu_helper_ commandBuffer];
 
   id<MTLTexture> src_texture = [gpu_helper_ metalTextureWithGpuBuffer:input];
@@ -457,7 +470,7 @@ REGISTER_CALCULATOR(TfLiteConverterCalculator);
                     commandBuffer:command_buffer];
 
   cc->Outputs()
-      .Tag("TENSORS_GPU")
+      .Tag(kTensorsGpuTag)
       .Add(output_tensors.release(), cc->InputTimestamp());
 #else
   RET_CHECK_FAIL() << "GPU processing is not enabled.";
@@ -469,7 +482,8 @@ REGISTER_CALCULATOR(TfLiteConverterCalculator);
 ::mediapipe::Status TfLiteConverterCalculator::InitGpu(CalculatorContext* cc) {
 #if !defined(MEDIAPIPE_DISABLE_GPU) && !defined(__EMSCRIPTEN__)
   // Get input image sizes.
-  const auto& input = cc->Inputs().Tag("IMAGE_GPU").Get<mediapipe::GpuBuffer>();
+  const auto& input =
+      cc->Inputs().Tag(kGpuBufferTag).Get<mediapipe::GpuBuffer>();
   mediapipe::ImageFormat::Format format =
       mediapipe::ImageFormatForGpuBufferFormat(input.format());
   gpu_data_out_ = absl::make_unique<GPUData>();
@@ -612,7 +626,7 @@ REGISTER_CALCULATOR(TfLiteConverterCalculator);
   CHECK_LE(max_num_channels_, 4);
   CHECK_NE(max_num_channels_, 2);
 #if defined(MEDIAPIPE_IOS)
-  if (cc->Inputs().HasTag("IMAGE_GPU"))
+  if (cc->Inputs().HasTag(kGpuBufferTag))
     // Currently on iOS, tflite gpu input tensor must be 4 channels,
     // so input image must be 4 channels also (checked in InitGpu).
     max_num_channels_ = 4;
@@ -627,7 +641,7 @@ REGISTER_CALCULATOR(TfLiteConverterCalculator);
 template <class T>
 ::mediapipe::Status TfLiteConverterCalculator::NormalizeImage(
     const ImageFrame& image_frame, bool zero_center, bool flip_vertically,
-    float* tensor_buffer) {
+    float* tensor_ptr) {
   const int height = image_frame.Height();
   const int width = image_frame.Width();
   const int channels = image_frame.NumberOfChannels();
@@ -651,7 +665,7 @@ template <class T>
         (flip_vertically ? height - 1 - i : i) * image_frame.WidthStep());
     for (int j = 0; j < width; ++j) {
       for (int c = 0; c < channels_preserved; ++c) {
-        *tensor_buffer++ = *image_ptr++ / div - sub;
+        *tensor_ptr++ = *image_ptr++ / div - sub;
       }
       image_ptr += channels_ignored;
     }
@@ -661,14 +675,14 @@ template <class T>
 }
 
 ::mediapipe::Status TfLiteConverterCalculator::CopyMatrixToTensor(
-    const Matrix& matrix, float* tensor_buffer) {
+    const Matrix& matrix, float* tensor_ptr) {
   if (row_major_matrix_) {
-    auto matrix_map = Eigen::Map<RowMajorMatrixXf>(tensor_buffer, matrix.rows(),
-                                                   matrix.cols());
+    auto matrix_map =
+        Eigen::Map<RowMajorMatrixXf>(tensor_ptr, matrix.rows(), matrix.cols());
     matrix_map = matrix;
   } else {
-    auto matrix_map = Eigen::Map<ColMajorMatrixXf>(tensor_buffer, matrix.rows(),
-                                                   matrix.cols());
+    auto matrix_map =
+        Eigen::Map<ColMajorMatrixXf>(tensor_ptr, matrix.rows(), matrix.cols());
     matrix_map = matrix;
   }
 

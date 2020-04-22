@@ -461,13 +461,13 @@ class CalculatorGraph {
   //
   // Only called by InitializeExecutors().
   ::mediapipe::Status InitializeDefaultExecutor(
-      const ThreadPoolExecutorOptions& default_executor_options,
+      const ThreadPoolExecutorOptions* default_executor_options,
       bool use_application_thread);
 
   // Creates a thread pool as the default executor. The num_threads argument
   // overrides the num_threads field in default_executor_options.
   ::mediapipe::Status CreateDefaultThreadPool(
-      const ThreadPoolExecutorOptions& default_executor_options,
+      const ThreadPoolExecutorOptions* default_executor_options,
       int num_threads);
 
   // Returns true if |name| is a reserved executor name.

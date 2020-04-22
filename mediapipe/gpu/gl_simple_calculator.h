@@ -36,9 +36,9 @@ namespace mediapipe {
 // - GlRender(), which is called for each frame.
 // - A destructor, to destroy the objects created in GlSetup.
 // Note that when GlSetup and GlRender are called, the GL context has already
-// been set, but in the destructor it has not. The destructor should have a
-// local variable set to ContextAutoSetter() to make sure it is doing the
-// destruction in the right GL context.
+// been set, but in the destructor it has not. The destructor should use the
+// RunInGlContext() helper to make sure it is doing the destruction in the right
+// GL context.
 //
 // Additionally, you can define a GlBind() method, which will be called to
 // enable shader programs, bind any additional textures you may need, etc.

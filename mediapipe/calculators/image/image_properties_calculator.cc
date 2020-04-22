@@ -19,6 +19,11 @@
 #include "mediapipe/gpu/gpu_buffer.h"
 #endif  //  !MEDIAPIPE_DISABLE_GPU
 
+namespace {
+constexpr char kImageFrameTag[] = "IMAGE";
+constexpr char kGpuBufferTag[] = "IMAGE_GPU";
+}  // namespace
+
 namespace mediapipe {
 
 // Extracts image properties from the input image and outputs the properties.
@@ -40,13 +45,14 @@ namespace mediapipe {
 class ImagePropertiesCalculator : public CalculatorBase {
  public:
   static ::mediapipe::Status GetContract(CalculatorContract* cc) {
-    RET_CHECK(cc->Inputs().HasTag("IMAGE") ^ cc->Inputs().HasTag("IMAGE_GPU"));
-    if (cc->Inputs().HasTag("IMAGE")) {
-      cc->Inputs().Tag("IMAGE").Set<ImageFrame>();
+    RET_CHECK(cc->Inputs().HasTag(kImageFrameTag) ^
+              cc->Inputs().HasTag(kGpuBufferTag));
+    if (cc->Inputs().HasTag(kImageFrameTag)) {
+      cc->Inputs().Tag(kImageFrameTag).Set<ImageFrame>();
     }
 #if !defined(MEDIAPIPE_DISABLE_GPU)
-    if (cc->Inputs().HasTag("IMAGE_GPU")) {
-      cc->Inputs().Tag("IMAGE_GPU").Set<::mediapipe::GpuBuffer>();
+    if (cc->Inputs().HasTag(kGpuBufferTag)) {
+      cc->Inputs().Tag(kGpuBufferTag).Set<::mediapipe::GpuBuffer>();
     }
 #endif  //  !MEDIAPIPE_DISABLE_GPU
 
@@ -66,16 +72,17 @@ class ImagePropertiesCalculator : public CalculatorBase {
     int width;
     int height;
 
-    if (cc->Inputs().HasTag("IMAGE") && !cc->Inputs().Tag("IMAGE").IsEmpty()) {
-      const auto& image = cc->Inputs().Tag("IMAGE").Get<ImageFrame>();
+    if (cc->Inputs().HasTag(kImageFrameTag) &&
+        !cc->Inputs().Tag(kImageFrameTag).IsEmpty()) {
+      const auto& image = cc->Inputs().Tag(kImageFrameTag).Get<ImageFrame>();
       width = image.Width();
       height = image.Height();
     }
 #if !defined(MEDIAPIPE_DISABLE_GPU)
-    if (cc->Inputs().HasTag("IMAGE_GPU") &&
-        !cc->Inputs().Tag("IMAGE_GPU").IsEmpty()) {
+    if (cc->Inputs().HasTag(kGpuBufferTag) &&
+        !cc->Inputs().Tag(kGpuBufferTag).IsEmpty()) {
       const auto& image =
-          cc->Inputs().Tag("IMAGE_GPU").Get<mediapipe::GpuBuffer>();
+          cc->Inputs().Tag(kGpuBufferTag).Get<mediapipe::GpuBuffer>();
       width = image.width();
       height = image.height();
     }

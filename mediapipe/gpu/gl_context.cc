@@ -274,6 +274,11 @@ bool GlContext::HasGlExtension(absl::string_view extension) const {
   }
 
   return Run([this]() -> ::mediapipe::Status {
+    // Clear any GL errors at this point: as this is a fresh context
+    // there shouldn't be any, but if we adopted an existing context (e.g. in
+    // some Emscripten cases), there might be some existing tripped error.
+    ForceClearExistingGlErrors();
+
     absl::string_view version_string(
         reinterpret_cast<const char*>(glGetString(GL_VERSION)));
 
@@ -769,10 +774,18 @@ bool GlContext::SyncTokenIsReady(const std::shared_ptr<GlSyncPoint>& token) {
   return token->IsReady();
 }
 
-bool GlContext::CheckForGlErrors() {
+void GlContext::ForceClearExistingGlErrors() {
+  LogUncheckedGlErrors(CheckForGlErrors(/*force=*/true));
+}
+
+bool GlContext::CheckForGlErrors() { return CheckForGlErrors(false); }
+
+bool GlContext::CheckForGlErrors(bool force) {
 #if UNSAFE_EMSCRIPTEN_SKIP_GL_ERROR_HANDLING
-  LOG_FIRST_N(WARNING, 1) << "MediaPipe OpenGL error checking is disabled";
-  return false;
+  if (!force) {
+    LOG_FIRST_N(WARNING, 1) << "MediaPipe OpenGL error checking is disabled";
+    return false;
+  }
 #endif
 
   if (!HasContext()) return false;
