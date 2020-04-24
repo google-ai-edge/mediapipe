@@ -14,10 +14,6 @@ We show the face detection demos with TensorFlow Lite model using the Webcam:
 
 -   [TensorFlow Lite Face Detection Demo with Webcam (GPU)](#tensorflow-lite-face-detection-demo-with-webcam-gpu)
 
-Note: Desktop GPU works only on Linux. Mesa drivers need to be installed. Please
-see
-[step 4 of "Installing on Debian and Ubuntu" in the installation guide](./install.md).
-
 Note: If MediaPipe depends on OpenCV 2, please see the
 [known issues with OpenCV 2](./object_detection_desktop.md#known-issues-with-opencv-2)
 section.
@@ -46,11 +42,14 @@ $ GLOG_logtostderr=1 bazel-bin/mediapipe/examples/desktop/face_detection/face_de
 
 ### TensorFlow Lite Face Detection Demo with Webcam (GPU)
 
+Note: This currently works only on Linux, and please first follow
+[OpenGL ES Setup on Linux Desktop](./gpu.md#opengl-es-setup-on-linux-desktop).
+
 To build and run the TensorFlow Lite example on desktop (GPU) with Webcam, run:
 
 ```bash
 # Video from webcam running on desktop GPU
-# This works only for linux currently
+# This works only for Linux currently
 $ bazel build -c opt --copt -DMESA_EGL_NO_X11_HEADERS --copt -DEGL_NO_X11 \
     mediapipe/examples/desktop/face_detection:face_detection_gpu
 
@@ -67,9 +66,6 @@ $ bazel build -c opt --copt -DMESA_EGL_NO_X11_HEADERS --copt -DEGL_NO_X11 \
 $ GLOG_logtostderr=1 bazel-bin/mediapipe/examples/desktop/face_detection/face_detection_gpu \
     --calculator_graph_config_file=mediapipe/graphs/face_detection/face_detection_mobile_gpu.pbtxt
 ```
-
-Issues running? Please first
-[check that your GPU is supported](./gpu.md#desktop-gpu-linux)
 
 #### Graph
 

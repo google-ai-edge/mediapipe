@@ -18,7 +18,12 @@ Note: If MediaPipe depends on OpenCV 2, please see the [known issues with OpenCV
 
 ### TensorFlow Object Detection Demo
 
-To build and run the TensorFlow example on desktop, run:
+Note: If you would like to run TensorFlow inference on GPU on Linux, please
+follow
+[TensorFlow CUDA Support and Setup on Linux Desktop](gpu.md#tensorflow-cuda-support-and-setup-on-linux-desktop)
+instead.
+
+To build and run the TensorFlow inference example on CPU on desktop, run:
 
 ```bash
 # Note that this command also builds TensorFlow targets from scratch, it may

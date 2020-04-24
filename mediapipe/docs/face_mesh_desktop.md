@@ -12,10 +12,6 @@ please see [Face Mesh on Android/iOS](face_mesh_mobile_gpu.md).
 
 -   [Face Mesh on Desktop with Webcam (GPU)](#face-mesh-on-desktop-with-webcam-gpu)
 
-Note: Desktop GPU works only on Linux. Mesa drivers need to be installed. Please
-see
-[step 4 of "Installing on Debian and Ubuntu" in the installation guide](./install.md).
-
 Note: If MediaPipe depends on OpenCV 2, please see the [known issues with OpenCV 2](#known-issues-with-opencv-2) section.
 
 ### Face Mesh on Desktop with Webcam (CPU)
@@ -38,12 +34,13 @@ $ GLOG_logtostderr=1 bazel-bin/mediapipe/examples/desktop/face_mesh/face_mesh_cp
 
 ### Face Mesh on Desktop with Webcam (GPU)
 
-Note: please first [check that your GPU is supported](gpu.md#desktop-gpu-linux).
+Note: This currently works only on Linux, and please first follow
+[OpenGL ES Setup on Linux Desktop](./gpu.md#opengl-es-setup-on-linux-desktop).
 
 To build and run Face Mesh on desktop with webcam (GPU), run:
 
 ```bash
-# This works only for linux currently
+# This works only for Linux currently
 $ bazel build -c opt --copt -DMESA_EGL_NO_X11_HEADERS --copt -DEGL_NO_X11 \
     mediapipe/examples/desktop/face_mesh:face_mesh_gpu
 

@@ -18,6 +18,7 @@ Example:
 load("//mediapipe/framework:encode_binary_proto.bzl", "encode_binary_proto", "generate_proto_descriptor_set")
 load("//mediapipe/framework:transitive_protos.bzl", "transitive_protos")
 load("//mediapipe/framework/deps:expand_template.bzl", "expand_template")
+load("//mediapipe/framework/tool:build_defs.bzl", "clean_dep")
 
 def mediapipe_binary_graph(name, graph = None, output_name = None, deps = [], testonly = False, **kwargs):
     """Converts a graph from text format to binary format."""
@@ -39,7 +40,7 @@ def mediapipe_binary_graph(name, graph = None, output_name = None, deps = [], te
         name = name + "_text_to_binary_graph",
         visibility = ["//visibility:private"],
         deps = [
-            "//mediapipe/framework/tool:text_to_binary_graph",
+            clean_dep("//mediapipe/framework/tool:text_to_binary_graph"),
             name + "_gather_cc_protos",
         ],
         tags = ["manual"],
@@ -81,12 +82,13 @@ def data_as_c_string(
         fail("srcs must be a single-element list")
     if outs == None:
         outs = [name]
+    encode_as_c_string = clean_dep("//mediapipe/framework/tool:encode_as_c_string")
     native.genrule(
         name = name,
         srcs = srcs,
         outs = outs,
-        cmd = "$(location //mediapipe/framework/tool:encode_as_c_string) \"$<\" > \"$@\"",
-        tools = ["//mediapipe/framework/tool:encode_as_c_string"],
+        cmd = "$(location %s) \"$<\" > \"$@\"" % encode_as_c_string,
+        tools = [encode_as_c_string],
         testonly = testonly,
     )
 
@@ -127,7 +129,7 @@ def mediapipe_simple_subgraph(
     # cc_library for a linked mediapipe graph.
     expand_template(
         name = name + "_linked_cc",
-        template = "//mediapipe/framework/tool:simple_subgraph_template.cc",
+        template = clean_dep("//mediapipe/framework/tool:simple_subgraph_template.cc"),
         out = name + "_linked.cc",
         substitutions = {
             "{{SUBGRAPH_CLASS_NAME}}": register_as,
@@ -142,8 +144,8 @@ def mediapipe_simple_subgraph(
             graph_base_name + ".inc",
         ],
         deps = [
-            "//mediapipe/framework:calculator_framework",
-            "//mediapipe/framework:subgraph",
+            clean_dep("//mediapipe/framework:calculator_framework"),
+            clean_dep("//mediapipe/framework:subgraph"),
         ] + deps,
         alwayslink = 1,
         visibility = visibility,

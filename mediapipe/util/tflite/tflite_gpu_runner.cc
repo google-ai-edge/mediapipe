@@ -81,18 +81,10 @@ mediapipe::Status TFLiteGPURunner::Build() {
 
   // 2. Describe output/input objects for created builder.
   for (int flow_index = 0; flow_index < input_shapes_.size(); ++flow_index) {
-    if (input_ssbo_ids_.find(flow_index) == input_ssbo_ids_.end()) {
-      return absl::AlreadyExistsError(absl::Substitute(
-          "Couldn't find a OpenGL ssbo for input $0.", flow_index));
-    }
     MP_RETURN_IF_ERROR(builder->SetInputObjectDef(
         flow_index, GetSSBOObjectDef(input_shapes_[flow_index].c)));
   }
   for (int flow_index = 0; flow_index < output_shapes_.size(); ++flow_index) {
-    if (output_ssbo_ids_.find(flow_index) == output_ssbo_ids_.end()) {
-      return absl::AlreadyExistsError(absl::Substitute(
-          "Couldn't find a OpenGL ssbo for output $0.", flow_index));
-    }
     MP_RETURN_IF_ERROR(builder->SetOutputObjectDef(
         flow_index, GetSSBOObjectDef(output_shapes_[flow_index].c)));
   }

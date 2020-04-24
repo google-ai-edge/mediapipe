@@ -654,7 +654,8 @@ and install a MediaPipe example app.
 7.  Select `Import Bazel Project`.
 
     *   Select `Workspace`: `/path/to/mediapipe` and select `Next`.
-    *   Select `Generate from BUILD file`: `/path/to/mediapipe/BUILD` and select `Next`.
+    *   Select `Generate from BUILD file`: `/path/to/mediapipe/BUILD` and select
+        `Next`.
     *   Modify `Project View` to be the following and select `Finish`.
 
     ```
@@ -669,15 +670,17 @@ and install a MediaPipe example app.
       //mediapipe/java/...:all
 
     android_sdk_platform: android-29
+
+    sync_flags:
+      --host_crosstool_top=@bazel_tools//tools/cpp:toolchain
     ```
 
 8.  Select `Bazel` | `Sync` | `Sync project with Build files`.
 
-    Note: Even after doing step 4, if you still see the error:
-    `"no such package '@androidsdk//': Either the path
-    attribute of android_sdk_repository or the ANDROID_HOME environment variable
-    must be set."`, please modify the **WORKSPACE** file to point
-    to your SDK and NDK library locations, as below:
+    Note: Even after doing step 4, if you still see the error: `"no such package
+    '@androidsdk//': Either the path attribute of android_sdk_repository or the
+    ANDROID_HOME environment variable must be set."`, please modify the
+    **WORKSPACE** file to point to your SDK and NDK library locations, as below:
 
     ```
     android_sdk_repository(

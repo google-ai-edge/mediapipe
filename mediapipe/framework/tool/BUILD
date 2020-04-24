@@ -600,3 +600,8 @@ cc_test(
         "@com_google_absl//absl/strings",
     ],
 )
+
+exports_files(
+    ["build_defs.bzl"],
+    visibility = ["//mediapipe/framework:__subpackages__"],
+)

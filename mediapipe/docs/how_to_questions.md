@@ -16,7 +16,7 @@ type [`ImageFrame`] and [`GpuBuffer`]. [`ImageFrame`] refers to image data in
 CPU memory in any of a number of bitmap image formats. [`GpuBuffer`] refers to
 image data in GPU memory. You can find more detail in the Framework Concepts
 section
-[GpuBuffer to ImageFrame converters](./gpu.md).
+[GpuBuffer to ImageFrame Converters](./gpu.md#gpubuffer-to-imageframe-converters).
 You can see an example in:
 
 *   [`object_detection_mobile_cpu.pbtxt`]

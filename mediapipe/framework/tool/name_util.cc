@@ -14,6 +14,7 @@
 
 #include "mediapipe/framework/tool/name_util.h"
 
+#include <set>
 #include <unordered_map>
 
 #include "absl/strings/str_cat.h"

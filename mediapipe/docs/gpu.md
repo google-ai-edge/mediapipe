@@ -1,13 +1,15 @@
 ## Running on GPUs
 
 -   [Overview](#overview)
--   [OpenGL Support](#opengl-support)
--   [Desktop GPUs](#desktop-gpu-linux)
--   [Life of a GPU calculator](#life-of-a-gpu-calculator)
--   [GpuBuffer to ImageFrame converters](#gpubuffer-to-imageframe-converters)
--   [Disable GPU support](#disable-gpu-support)
+-   [OpenGL ES Support](#opengl-es-support)
+-   [Disable OpenGL ES Support](#disable-opengl-es-support)
+-   [OpenGL ES Setup on Linux Desktop](#opengl-es-setup-on-linux-desktop)
+-   [TensorFlow CUDA Support and Setup on Linux Desktop](#tensorflow-cuda-support-and-setup-on-linux-desktop)
+-   [Life of a GPU Calculator](#life-of-a-gpu-calculator)
+-   [GpuBuffer to ImageFrame Converters](#gpubuffer-to-imageframe-converters)
 
 ### Overview
+
 MediaPipe supports calculator nodes for GPU compute and rendering, and allows combining multiple GPU nodes, as well as mixing them with CPU based calculator nodes. There exist several GPU APIs on mobile platforms (eg, OpenGL ES, Metal and Vulkan). MediaPipe does not attempt to offer a single cross-API GPU abstraction. Individual nodes can be written using different APIs, allowing them to take advantage of platform specific features when needed.
 
 GPU support is essential for good performance on mobile platforms, especially for real-time video. MediaPipe enables developers to write GPU compatible calculators that support the use of GPU for:
@@ -23,7 +25,7 @@ Below are the design principles for GPU support in MediaPipe
    * Because different platforms may require different techniques for best performance, the API should allow flexibility in the way things are implemented behind the scenes.
    * A calculator should be allowed maximum flexibility in using the GPU for all or part of its operation, combining it with the CPU if necessary.
 
-### OpenGL Support
+### OpenGL ES Support
 
 MediaPipe supports OpenGL ES up to version 3.2 on Android/Linux and up to ES 3.0
 on iOS. In addition, MediaPipe also supports Metal on iOS.
@@ -48,12 +50,28 @@ some Android devices. Therefore, our approach is to have one dedicated thread
 per context. Each thread issues GL commands, building up a serial command queue
 on its context, which is then executed by the GPU asynchronously.
 
-#### Desktop GPU (Linux)
+### Disable OpenGL ES Support
 
-MediaPipe GPU can run on linux systems with video cards that support OpenGL ES
-3.1 and up.
+By default, building MediaPipe (with no special bazel flags) attempts to compile
+and link against OpenGL ES (and for iOS also Metal) libraries.
 
-To check if your linux desktop GPU can run mediapipe:
+On platforms where OpenGL ES is not available (see also
+[OpenGL ES Setup on Linux Desktop](#opengl-es-setup-on-linux-desktop)), you
+should disable OpenGL ES support with:
+
+```
+$ bazel build --define MEDIAPIPE_DISABLE_GPU=1 <my-target>
+```
+
+Note: On Android and iOS, OpenGL ES is required by MediaPipe framework and the
+support should never be disabled.
+
+### OpenGL ES Setup on Linux Desktop
+
+On Linux desktop with video cards that support OpenGL ES 3.1+, MediaPipe can run
+GPU compute and rendering and perform TFLite inference on GPU.
+
+To check if your Linux desktop GPU can run MediaPipe with OpenGL ES:
 
 ```bash
 $ sudo apt-get install mesa-common-dev libegl1-mesa-dev libgles2-mesa-dev
@@ -61,7 +79,7 @@ $ sudo apt-get install mesa-utils
 $ glxinfo | grep -i opengl
 ```
 
-My linux box prints:
+For example, it may print:
 
 ```bash
 $ glxinfo | grep -i opengl
@@ -71,14 +89,133 @@ OpenGL ES profile shading language version string: OpenGL ES GLSL ES 3.20
 OpenGL ES profile extensions:
 ```
 
-*^notice the OpenGL ES 3.2 text^*
+*Notice the ES 3.20 text above.*
 
-To run MediaPipe GPU on desktop, you need to see ES 3.1 or greater printed.
+You need to see ES 3.1 or greater printed in order to perform TFLite inference
+on GPU in MediaPipe. With this setup, build with:
 
-If OpenGL ES is not printed, or is below 3.1, then the GPU inference will not
-run.
+```
+$ bazel build --copt -DMESA_EGL_NO_X11_HEADERS --copt -DEGL_NO_X11 <my-target>
+```
 
-### Life of a GPU calculator
+If only ES 3.0 or below is supported, you can still build MediaPipe targets that
+don't require TFLite inference on GPU with:
+
+```
+$ bazel build --copt -DMESA_EGL_NO_X11_HEADERS --copt -DEGL_NO_X11 --copt -DMEDIAPIPE_DISABLE_GL_COMPUTE <my-target>
+```
+
+Note: MEDIAPIPE_DISABLE_GL_COMPUTE is already defined automatically on all Apple
+systems (Apple doesn't support OpenGL ES 3.1+).
+
+### TensorFlow CUDA Support and Setup on Linux Desktop
+
+MediaPipe framework doesn't require CUDA for GPU compute and rendering. However,
+MediaPipe can work with TensorFlow to perform GPU inference on video cards that
+support CUDA.
+
+To enable TensorFlow GPU inference with MediaPipe, the first step is to follow
+the
+[TensorFlow GPU documentation](https://www.tensorflow.org/install/gpu#software_requirements)
+to install the required NVIDIA software on your Linux desktop.
+
+After installation, update `$PATH` and `$LD_LIBRARY_PATH` and run `ldconfig`
+with:
+
+```
+$ export PATH=/usr/local/cuda-10.1/bin${PATH:+:${PATH}}
+$ export LD_LIBRARY_PATH=/usr/local/cuda/extras/CUPTI/lib64,/usr/local/cuda-10.1/lib64${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}
+$ sudo ldconfig
+```
+
+It's recommended to verify the installation of CUPTI, CUDA, CuDNN, and NVCC:
+
+```
+$ ls /usr/local/cuda/extras/CUPTI
+/lib64
+libcupti.so       libcupti.so.10.1.208  libnvperf_host.so        libnvperf_target.so
+libcupti.so.10.1  libcupti_static.a     libnvperf_host_static.a
+
+$ ls /usr/local/cuda-10.1
+LICENSE  bin  extras   lib64      libnvvp           nvml  samples  src      tools
+README   doc  include  libnsight  nsightee_plugins  nvvm  share    targets  version.txt
+
+$ nvcc -V
+nvcc: NVIDIA (R) Cuda compiler driver
+Copyright (c) 2005-2019 NVIDIA Corporation
+Built on Sun_Jul_28_19:07:16_PDT_2019
+Cuda compilation tools, release 10.1, V10.1.243
+
+$ ls /usr/lib/x86_64-linux-gnu/ | grep libcudnn.so
+libcudnn.so
+libcudnn.so.7
+libcudnn.so.7.6.4
+```
+
+Setting `$TF_CUDA_PATHS` is the way to declare where the CUDA library is. Note
+that the following code snippet also adds `/usr/lib/x86_64-linux-gnu` and
+`/usr/include` into `$TF_CUDA_PATHS` for cudablas and libcudnn.
+
+```
+$ export TF_CUDA_PATHS=/usr/local/cuda-10.1,/usr/lib/x86_64-linux-gnu,/usr/include
+```
+
+To make MediaPipe get TensorFlow's CUDA settings, find TensorFlow's
+[.bazelrc](https://github.com/tensorflow/tensorflow/blob/master/.bazelrc) and
+copy the `build:using_cuda` and `build:cuda` section into MediaPipe's .bazelrc
+file. For example, as of April 23, 2020, TensorFlow's CUDA setting is the
+following:
+
+```
+# This config refers to building with CUDA available. It does not necessarily
+# mean that we build CUDA op kernels.
+build:using_cuda --define=using_cuda=true
+build:using_cuda --action_env TF_NEED_CUDA=1
+build:using_cuda --crosstool_top=@local_config_cuda//crosstool:toolchain
+
+# This config refers to building CUDA op kernels with nvcc.
+build:cuda --config=using_cuda
+build:cuda --define=using_cuda_nvcc=true
+```
+
+Finally, build MediaPipe with TensorFlow GPU with two more flags `--config=cuda`
+and `--spawn_strategy=local`. For example:
+
+```
+$ bazel build -c opt --config=cuda --spawn_strategy=local \
+    --define no_aws_support=true --copt -DMESA_EGL_NO_X11_HEADERS \
+    mediapipe/examples/desktop/object_detection:object_detection_tensorflow
+```
+
+While the binary is running, it prints out the GPU device info:
+
+```
+I external/org_tensorflow/tensorflow/stream_executor/platform/default/dso_loader.cc:44] Successfully opened dynamic library libcuda.so.1
+I external/org_tensorflow/tensorflow/core/common_runtime/gpu/gpu_device.cc:1544] Found device 0 with properties: pciBusID: 0000:00:04.0 name: Tesla T4 computeCapability: 7.5 coreClock: 1.59GHz coreCount: 40 deviceMemorySize: 14.75GiB deviceMemoryBandwidth: 298.08GiB/s
+I external/org_tensorflow/tensorflow/core/common_runtime/gpu/gpu_device.cc:1686] Adding visible gpu devices: 0
+```
+
+You can monitor the GPU usage to verify whether the GPU is used for model
+inference.
+
+```
+$ nvidia-smi --query-gpu=utilization.gpu --format=csv --loop=1
+
+0 %
+0 %
+4 %
+5 %
+83 %
+21 %
+22 %
+27 %
+29 %
+100 %
+0 %
+0%
+```
+
+### Life of a GPU Calculator
 
 This section presents the basic structure of the Process method of a GPU
 calculator derived from base class GlSimpleCalculator. The GPU calculator
@@ -165,7 +302,7 @@ choices for MediaPipe GPU support:
    * Data that needs to be shared between all GPU-based calculators is provided as a external input that is implemented as a graph service and is managed by the `GlCalculatorHelper` class.
    * The combination of calculator-specific helpers and a shared graph service allows us great flexibility in managing the GPU resource: we can have a separate context per calculator, share a single context, share a lock or other synchronization primitives, etc. -- and all of this is managed by the helper and hidden from the individual calculators.
 
-### GpuBuffer to ImageFrame converters
+### GpuBuffer to ImageFrame Converters
 
 We provide two calculators called `GpuBufferToImageFrameCalculator` and `ImageFrameToGpuBufferCalculator`. These calculators convert between `ImageFrame` and `GpuBuffer`, allowing the construction of graphs that combine GPU and CPU calculators. They are supported on both iOS and Android
 
@@ -176,27 +313,3 @@ The below diagram shows the data flow in a mobile application that captures vide
 | ![How GPU calculators interact](images/gpu_example_graph.png) |
 |:--:|
 | *Video frames from the camera are fed into the graph as `GpuBuffer` packets. The input stream is accessed by two calculators in parallel. `GpuBufferToImageFrameCalculator` converts the buffer into an `ImageFrame`, which is then sent through a grayscale converter and a canny filter (both based on OpenCV and running on the CPU), whose output is then converted into a `GpuBuffer` again. A multi-input GPU calculator, GlOverlayCalculator, takes as input both the original `GpuBuffer` and the one coming out of the edge detector, and overlays them using a shader. The output is then sent back to the application using a callback calculator, and the application renders the image to the screen using OpenGL.* |
-
-### Disable GPU Support
-
-By default, building MediaPipe (with no special bazel flags) attempts to compile
-and link against OpenGL/Metal libraries.
-
-There are some command line build flags available to disable/enable GPU support
-within the MediaPipe framework:
-
-```
-# To disable *all* gpu support
-bazel build --define MEDIAPIPE_DISABLE_GPU=1  <my-target>
-
-# to enable full GPU support (OpenGL ES 3.1+ & Metal)
-bazel build --copt -DMESA_EGL_NO_X11_HEADERS --copt -DEGL_NO_X11 <my-target>
-
-# to enable only OpenGL ES 3.0 and below (no GLES 3.1+ features)
-bazel build --copt -DMESA_EGL_NO_X11_HEADERS --copt -DEGL_NO_X11 --copt -DMEDIAPIPE_DISABLE_GL_COMPUTE  <my-target>
-```
-
-Note *MEDIAPIPE_DISABLE_GL_COMPUTE* is automatically defined on all Apple
-systems (Apple doesn't support OpenGL ES 3.1+).
-
-Note on iOS and Android, it is assumed that GPU support will be enabled.

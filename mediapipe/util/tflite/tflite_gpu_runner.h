@@ -73,11 +73,6 @@ class TFLiteGPURunner {
   std::unique_ptr<GraphFloat32> graph_;
   std::unique_ptr<InferenceRunner> runner_;
 
-  // Store registered OpenGL ssbo ids for the corresponding input/output tensor.
-  // key: io tensor position, value: OpenGL ssbo id.
-  std::unordered_map<int, GLuint> input_ssbo_ids_;
-  std::unordered_map<int, GLuint> output_ssbo_ids_;
-
   // We keep information about input/output shapes, because they are needed
   // after graph_ becomes "converted" into runner_.
   std::vector<BHWC> input_shapes_;

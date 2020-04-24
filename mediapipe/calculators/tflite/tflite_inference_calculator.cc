@@ -407,7 +407,7 @@ REGISTER_CALCULATOR(TfLiteInferenceCalculator);
 #if !defined(MEDIAPIPE_DISABLE_GL_COMPUTE)
     const auto& input_tensors =
         cc->Inputs().Tag("TENSORS_GPU").Get<std::vector<GpuTensor>>();
-    RET_CHECK(input_tensors.empty());
+    RET_CHECK(!input_tensors.empty());
     MP_RETURN_IF_ERROR(gpu_helper_.RunInGlContext(
         [this, &input_tensors]() -> ::mediapipe::Status {
           for (int i = 0; i < input_tensors.size(); ++i) {
