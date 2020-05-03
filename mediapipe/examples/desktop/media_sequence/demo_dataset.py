@@ -157,7 +157,7 @@ class DemoDataset(object):
     all_shards_dataset = tf.data.Dataset.from_tensor_slices(all_shards)
     cycle_length = min(16, len(all_shards))
     dataset = all_shards_dataset.apply(
-        tf.contrib.data.parallel_interleave(
+        tf.data.experimental.parallel_interleave(
             tf.data.TFRecordDataset,
             cycle_length=cycle_length,
             block_length=1,
