@@ -60,7 +60,8 @@ node {
   output_stream: "TENSORS:output_tensors"
   node_options: {
     [type.googleapis.com/mediapipe.TfLiteInferenceCalculatorOptions] {
-      model_path: "mediapipe/models/hand_landmark.tflite"
+      # model_path: "mediapipe/models/hand_landmark.tflite"
+      model_path: "mediapipe/models/hand_landmark_3d.tflite"
       use_gpu: true
     }
   }
