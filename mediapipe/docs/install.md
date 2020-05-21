@@ -430,8 +430,14 @@ next section.
 
 9.  Run the [Hello World desktop example](./hello_world_desktop.md).
 
+    Note: For building MediaPipe on Windows, please add `--action_env
+    PYTHON_BIN_PATH="C:/path/to/python.exe"` to the build command.
+    Alternatively, you can follow
+    [issue 724](https://github.com/google/mediapipe/issues/724) to fix the
+    python configuration manually.
+
     ```
-    C:\Users\Username\mediapipe_repo>bazel build -c opt --define MEDIAPIPE_DISABLE_GPU=1 mediapipe/examples/desktop/hello_world
+    C:\Users\Username\mediapipe_repo>bazel build -c opt --define MEDIAPIPE_DISABLE_GPU=1 --action_env PYTHON_BIN_PATH="C:/python_36/python.exe" mediapipe/examples/desktop/hello_world
 
     C:\Users\Username\mediapipe_repo>set GLOG_logtostderr=1
 
