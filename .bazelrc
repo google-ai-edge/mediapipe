@@ -1,20 +1,30 @@
 # The bazelrc file for MediaPipe OSS.
 
+# Tensorflow needs remote repo
+common --experimental_repo_remote_exec
+
 # Basic build settings
 build --jobs 128
 build --define='absl=1'
-build --cxxopt='-std=c++14'
-build --copt='-Wno-sign-compare'
-build --copt='-Wno-unused-function'
-build --copt='-Wno-uninitialized'
-build --copt='-Wno-unused-result'
-build --copt='-Wno-comment'
-build --copt='-Wno-return-type'
-build --copt='-Wno-unused-local-typedefs'
-build --copt='-Wno-ignored-attributes'
+build --enable_platform_specific_config
 
-# Tensorflow needs remote repo
-build --experimental_repo_remote_exec
+# Linux
+build:linux --cxxopt=-std=c++14
+build:linux --host_cxxopt=-std=c++14
+build:linux --copt=-w
+
+# windows
+build:windows --cxxopt=/std:c++14
+build:windows --host_cxxopt=/std:c++14
+build:windows --copt=/w
+# For using M_* math constants on Windows with MSVC.
+build:windows --copt=/D_USE_MATH_DEFINES
+build:windows --host_copt=/D_USE_MATH_DEFINES
+
+# macOS
+build:macos --cxxopt=-std=c++14
+build:macos --host_cxxopt=-std=c++14
+build:macos --copt=-w
 
 # Sets the default Apple platform to macOS.
 build --apple_platform_type=macos

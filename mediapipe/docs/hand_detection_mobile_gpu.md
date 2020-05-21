@@ -41,7 +41,7 @@ adb install bazel-bin/mediapipe/examples/android/src/java/com/google/mediapipe/a
 
 [Source](https://github.com/google/mediapipe/tree/master/mediapipe/examples/ios/handdetectiongpu).
 
-See the general [instructions](./mediapipe_ios_setup.md) for building iOS
+See the general [instructions](./building_examples.md#ios) for building iOS
 examples and generating an Xcode project. This will be the HandDetectionGpuApp
 target.
 

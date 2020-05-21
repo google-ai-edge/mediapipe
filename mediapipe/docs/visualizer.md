@@ -1,7 +1,8 @@
-## Visualizing MediaPipe Graphs
+## Visualizing & Tracing MediaPipe Graphs
 
 -   [Working within the Editor](#working-within-the-editor)
 -   [Understanding the Graph](#understanding-the-graph)
+-   [Tracing the Graph](#tracing-the-graph)
 -   [Visualizing Subgraphs](#visualizing-subgraphs)
 
 To help users understand the structure of their calculator graphs and to
@@ -64,6 +65,19 @@ The visualizer graph shows the connections between calculator nodes.
 
     ![Special nodes](./images/special_nodes_code.png)
 
+
+### Tracing the Graph
+
+The MediaPipe visualizer can display either a calculator graph definition or a
+calculator graph execution trace. In a MediaPipe graph, execution tracing can be
+activated using a setting in the CalculatorGraphConfig,
+`profiler_config.tracing_enabled`. When activated the tracer writes trace log
+files on either Linux, Android, or iOS.
+
+For more details on activating execution tracing, see
+[Tracing MediaPipe Graphs](./tracer.md)
+
+
 ### Visualizing Subgraphs
 
 The MediaPipe visualizer can display multiple graphs in separate tabs. If a
@@ -75,9 +89,9 @@ the subgraph's definition.
 
 For instance, there are two graphs involved in the
 [hand detection example](./hand_detection_mobile_gpu.md): the main graph
-([source pbtxt file](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/hand_tracking/hand_detection_mobile.pbtxt))
+([source pbtxt file](https://github.com/google/mediapipe/blob/master/mediapipe/graphs/hand_tracking/hand_detection_mobile.pbtxt))
 and its associated subgraph
-([source pbtxt file](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/hand_tracking/subgraphs/hand_detection_gpu.pbtxt)).
+([source pbtxt file](https://github.com/google/mediapipe/blob/master/mediapipe/graphs/hand_tracking/subgraphs/hand_detection_gpu.pbtxt)).
 To visualize them:
 
 *   In the MediaPipe visualizer, click on the upload graph button and select the

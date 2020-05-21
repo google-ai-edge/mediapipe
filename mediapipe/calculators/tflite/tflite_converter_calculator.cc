@@ -67,10 +67,12 @@ constexpr char kImageFrameTag[] = "IMAGE";
 constexpr char kGpuBufferTag[] = "IMAGE_GPU";
 constexpr char kTensorsTag[] = "TENSORS";
 constexpr char kTensorsGpuTag[] = "TENSORS_GPU";
+constexpr char kMatrixTag[] = "MATRIX";
 }  // namespace
 
 namespace mediapipe {
 
+namespace {
 #if !defined(MEDIAPIPE_DISABLE_GL_COMPUTE)
 using ::tflite::gpu::gl::CreateReadWriteShaderStorageBuffer;
 using ::tflite::gpu::gl::GlProgram;
@@ -88,6 +90,8 @@ struct GPUData {
   id<MTLComputePipelineState> pipeline_state;
 };
 #endif
+
+}  // namespace
 
 // Calculator for normalizing and converting an ImageFrame or Matrix
 // into a TfLiteTensor (float 32) or a GpuBuffer to a tflite::gpu::GlBuffer
@@ -164,6 +168,9 @@ class TfLiteConverterCalculator : public CalculatorBase {
   bool initialized_ = false;
   bool use_gpu_ = false;
   bool zero_center_ = true;  // normalize range to [-1,1] | otherwise [0,1]
+  bool use_custom_normalization_ = false;
+  float custom_div_ = -1.0f;
+  float custom_sub_ = -1.0f;
   bool flip_vertically_ = false;
   bool row_major_matrix_ = false;
   bool use_quantized_tensors_ = false;
@@ -175,7 +182,8 @@ REGISTER_CALCULATOR(TfLiteConverterCalculator);
     CalculatorContract* cc) {
   // Confirm only one of the input streams is present.
   RET_CHECK(cc->Inputs().HasTag(kImageFrameTag) ^
-            cc->Inputs().HasTag(kGpuBufferTag) ^ cc->Inputs().HasTag("MATRIX"));
+            cc->Inputs().HasTag(kGpuBufferTag) ^
+            cc->Inputs().HasTag(kMatrixTag));
 
   // Confirm only one of the output streams is present.
   RET_CHECK(cc->Outputs().HasTag(kTensorsTag) ^
@@ -186,8 +194,8 @@ REGISTER_CALCULATOR(TfLiteConverterCalculator);
   if (cc->Inputs().HasTag(kImageFrameTag)) {
     cc->Inputs().Tag(kImageFrameTag).Set<ImageFrame>();
   }
-  if (cc->Inputs().HasTag("MATRIX")) {
-    cc->Inputs().Tag("MATRIX").Set<Matrix>();
+  if (cc->Inputs().HasTag(kMatrixTag)) {
+    cc->Inputs().Tag(kMatrixTag).Set<Matrix>();
   }
 #if !defined(MEDIAPIPE_DISABLE_GPU) && !defined(__EMSCRIPTEN__)
   if (cc->Inputs().HasTag(kGpuBufferTag)) {
@@ -257,6 +265,9 @@ REGISTER_CALCULATOR(TfLiteConverterCalculator);
 
 ::mediapipe::Status TfLiteConverterCalculator::Process(CalculatorContext* cc) {
   if (use_gpu_) {
+    if (cc->Inputs().Tag(kGpuBufferTag).IsEmpty()) {
+      return ::mediapipe::OkStatus();
+    }
     if (!initialized_) {
       MP_RETURN_IF_ERROR(InitGpu(cc));
       initialized_ = true;
@@ -283,6 +294,9 @@ REGISTER_CALCULATOR(TfLiteConverterCalculator);
 ::mediapipe::Status TfLiteConverterCalculator::ProcessCPU(
     CalculatorContext* cc) {
   if (cc->Inputs().HasTag(kImageFrameTag)) {
+    if (cc->Inputs().Tag(kImageFrameTag).IsEmpty()) {
+      return ::mediapipe::OkStatus();
+    }
     // CPU ImageFrame to TfLiteTensor conversion.
 
     const auto& image_frame =
@@ -361,10 +375,12 @@ REGISTER_CALCULATOR(TfLiteConverterCalculator);
     cc->Outputs()
         .Tag(kTensorsTag)
         .Add(output_tensors.release(), cc->InputTimestamp());
-  } else if (cc->Inputs().HasTag("MATRIX")) {
+  } else if (cc->Inputs().HasTag(kMatrixTag)) {
+    if (cc->Inputs().Tag(kMatrixTag).IsEmpty()) {
+      return ::mediapipe::OkStatus();
+    }
     // CPU Matrix to TfLiteTensor conversion.
-
-    const auto& matrix = cc->Inputs().Tag("MATRIX").Get<Matrix>();
+    const auto& matrix = cc->Inputs().Tag(kMatrixTag).Get<Matrix>();
     const int height = matrix.rows();
     const int width = matrix.cols();
     const int channels = 1;
@@ -614,6 +630,11 @@ REGISTER_CALCULATOR(TfLiteConverterCalculator);
   // Get data normalization mode.
   zero_center_ = options.zero_center();
 
+  // Custom div and sub values.
+  use_custom_normalization_ = options.use_custom_normalization();
+  custom_div_ = options.custom_div();
+  custom_sub_ = options.custom_sub();
+
   // Get y-flip mode.
   flip_vertically_ = options.flip_vertically();
 
@@ -649,7 +670,13 @@ template <class T>
   const int channels_ignored = channels - channels_preserved;
 
   float div, sub;
-  if (zero_center) {
+
+  if (use_custom_normalization_) {
+    RET_CHECK_GT(custom_div_, 0.0f);
+    RET_CHECK_GE(custom_sub_, 0.0f);
+    div = custom_div_;
+    sub = custom_sub_;
+  } else if (zero_center) {
     // [-1,1]
     div = 127.5f;
     sub = 1.0f;

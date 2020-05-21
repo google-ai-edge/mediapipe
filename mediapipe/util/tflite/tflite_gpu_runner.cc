@@ -24,6 +24,7 @@
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/port/status_macros.h"
 #include "mediapipe/framework/port/statusor.h"
+#include "tensorflow/lite/core/api/op_resolver.h"
 #include "tensorflow/lite/delegates/gpu/api.h"
 #include "tensorflow/lite/delegates/gpu/common/model.h"
 #include "tensorflow/lite/delegates/gpu/gl/api2.h"
@@ -48,7 +49,8 @@ ObjectDef GetSSBOObjectDef(int channels) {
 }  // namespace
 
 mediapipe::Status TFLiteGPURunner::InitializeWithModel(
-    const tflite::FlatBufferModel& flatbuffer) {
+    const tflite::FlatBufferModel& flatbuffer,
+    const tflite::OpResolver& op_resolver) {
   for (const auto& input : graph_->inputs()) {
     input_shapes_.push_back(input->tensor.shape);
   }

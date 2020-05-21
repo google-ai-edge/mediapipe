@@ -118,6 +118,10 @@ const GlTextureInfo& GlTextureInfoForGpuBufferFormat(GpuBufferFormat format,
                // TODO: use GL_HALF_FLOAT_OES on GLES2?
                {GL_RG16F, GL_RG, GL_HALF_FLOAT, 1},
            }},
+          {GpuBufferFormat::kTwoComponentFloat32,
+           {
+               {GL_RG32F, GL_RG, GL_FLOAT, 1},
+           }},
           {GpuBufferFormat::kGrayHalf16,
            {
                {GL_R16F, GL_RED, GL_HALF_FLOAT, 1},
@@ -191,6 +195,8 @@ ImageFormat::Format ImageFormatForGpuBufferFormat(GpuBufferFormat format) {
       return ImageFormat::YCBCR420P;
     case GpuBufferFormat::kRGB24:
       return ImageFormat::SRGB;
+    case GpuBufferFormat::kTwoComponentFloat32:
+      return ImageFormat::VEC32F2;
     case GpuBufferFormat::kGrayHalf16:
     case GpuBufferFormat::kTwoComponentHalf16:
     case GpuBufferFormat::kRGBAHalf64:
@@ -209,6 +215,8 @@ GpuBufferFormat GpuBufferFormatForImageFormat(ImageFormat::Format format) {
       return GpuBufferFormat::kBGRA32;
     case ImageFormat::VEC32F1:
       return GpuBufferFormat::kGrayFloat32;
+    case ImageFormat::VEC32F2:
+      return GpuBufferFormat::kTwoComponentFloat32;
     case ImageFormat::GRAY8:
       return GpuBufferFormat::kOneComponent8;
     case ImageFormat::YCBCR420P:

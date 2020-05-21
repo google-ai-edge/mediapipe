@@ -1,0 +1,140 @@
+diff --git a/BUILD b/BUILD
+index 79871d621..51b3a063f 100644
+--- a/BUILD
++++ b/BUILD
+@@ -26,7 +26,7 @@ config_setting(
+ # ZLIB configuration
+ ################################################################################
+
+-ZLIB_DEPS = ["@zlib//:zlib"]
++ZLIB_DEPS = ["@zlib"]
+
+ ################################################################################
+ # Protobuf Runtime Library
+@@ -157,6 +157,7 @@ cc_library(
+     includes = ["src/"],
+     linkopts = LINK_OPTS,
+     visibility = ["//visibility:public"],
++    alwayslink = 1,
+ )
+
+ PROTOBUF_DEPS = select({
+@@ -230,6 +231,7 @@ cc_library(
+     linkopts = LINK_OPTS,
+     visibility = ["//visibility:public"],
+     deps = [":protobuf_lite"] + PROTOBUF_DEPS,
++    alwayslink = 1,
+ )
+
+ # This provides just the header files for use in projects that need to build
+@@ -318,13 +320,13 @@ cc_proto_library(
+
+ [native_cc_proto_library(
+     name = proto + "_cc_proto",
+-    deps = [proto + "_proto"],
+     visibility = ["//visibility:private"],
++    deps = [proto + "_proto"],
+ ) for proto in WELL_KNOWN_PROTO_MAP.keys()]
+
+ cc_proto_blacklist_test(
+     name = "cc_proto_blacklist_test",
+-    deps = [proto + "_cc_proto" for proto in WELL_KNOWN_PROTO_MAP.keys()]
++    deps = [proto + "_cc_proto" for proto in WELL_KNOWN_PROTO_MAP.keys()],
+ )
+
+ ################################################################################
+@@ -900,7 +902,6 @@ py_proto_library(
+     py_extra_srcs = glob(["python/**/__init__.py"]),
+     py_libs = [
+         ":python_srcs",
+-        "@six//:six",
+     ],
+     srcs_version = "PY2AND3",
+     visibility = ["//visibility:public"],
+@@ -1002,7 +1003,9 @@ cc_library(
+ # Note: We use `native_proto_common` here because we depend on an implementation-detail of
+ # `proto_lang_toolchain`, which may not be available on `proto_common`.
+ reject_blacklisted_files = hasattr(native_proto_common, "proto_lang_toolchain_rejects_files_do_not_use_or_we_will_break_you_without_mercy")
++
+ cc_toolchain_blacklisted_protos = [proto + "_proto" for proto in WELL_KNOWN_PROTO_MAP.keys()] if reject_blacklisted_files else [":well_known_protos"]
++
+ proto_lang_toolchain(
+     name = "cc_toolchain",
+     blacklisted_protos = cc_toolchain_blacklisted_protos,
+diff --git a/protobuf.bzl b/protobuf.bzl
+index 829464d44..4ac23594b 100644
+--- a/protobuf.bzl
++++ b/protobuf.bzl
+@@ -87,6 +87,8 @@ def _proto_gen_impl(ctx):
+     for dep in ctx.attr.deps:
+         import_flags += dep.proto.import_flags
+         deps += dep.proto.deps
++    import_flags = depset(import_flags).to_list()
++    deps = depset(deps).to_list()
+
+     if not ctx.attr.gen_cc and not ctx.attr.gen_py and not ctx.executable.plugin:
+         return struct(
+diff --git a/src/google/protobuf/io/gzip_stream.h b/src/google/protobuf/io/gzip_stream.h
+index b1ce1d36c..d5d560ea7 100644
+--- a/src/google/protobuf/io/gzip_stream.h
++++ b/src/google/protobuf/io/gzip_stream.h
+@@ -47,10 +47,12 @@
+ #include <google/protobuf/stubs/common.h>
+ #include <google/protobuf/io/zero_copy_stream.h>
+ #include <google/protobuf/port.h>
+-#include <zlib.h>
+-
+ #include <google/protobuf/port_def.inc>
+
++#if HAVE_ZLIB
++#include <zlib.h>
++#endif  // HAVE_ZLIB
++
+ namespace google {
+ namespace protobuf {
+ namespace io {
+@@ -76,8 +78,10 @@ class PROTOBUF_EXPORT GzipInputStream : public ZeroCopyInputStream {
+   virtual ~GzipInputStream();
+
+   // Return last error message or NULL if no error.
++#if HAVE_ZLIB
+   inline const char* ZlibErrorMessage() const { return zcontext_.msg; }
+   inline int ZlibErrorCode() const { return zerror_; }
++#endif  // HAVE_ZLIB
+
+   // implements ZeroCopyInputStream ----------------------------------
+   bool Next(const void** data, int* size);
+@@ -90,8 +94,10 @@ class PROTOBUF_EXPORT GzipInputStream : public ZeroCopyInputStream {
+
+   ZeroCopyInputStream* sub_stream_;
+
++ #if HAVE_ZLIB
+   z_stream zcontext_;
+   int zerror_;
++ #endif // HAVE_ZLIB
+
+   void* output_buffer_;
+   void* output_position_;
+@@ -142,9 +148,11 @@ class PROTOBUF_EXPORT GzipOutputStream : public ZeroCopyOutputStream {
+
+   virtual ~GzipOutputStream();
+
++#if HAVE_ZLIB
+   // Return last error message or NULL if no error.
+   inline const char* ZlibErrorMessage() const { return zcontext_.msg; }
+   inline int ZlibErrorCode() const { return zerror_; }
++#endif  // HAVE_ZLIB
+
+   // Flushes data written so far to zipped data in the underlying stream.
+   // It is the caller's responsibility to flush the underlying stream if
+@@ -177,8 +185,10 @@ class PROTOBUF_EXPORT GzipOutputStream : public ZeroCopyOutputStream {
+   void* sub_data_;
+   int sub_data_size_;
+
++#if HAVE_ZLIB
+   z_stream zcontext_;
+   int zerror_;
++#endif  //HAVE_ZLIB
+   void* input_buffer_;
+   size_t input_buffer_length_;
+

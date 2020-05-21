@@ -81,19 +81,22 @@ TEST(ImageFrameOpencvTest, ImageFormats) {
   const int i_width = 123, i_height = 45;
   ImageFrame frame_g8(ImageFormat::GRAY8, i_width, i_height);
   ImageFrame frame_g16(ImageFormat::GRAY16, i_width, i_height);
-  ImageFrame frame_f32(ImageFormat::VEC32F1, i_width, i_height);
+  ImageFrame frame_v32f1(ImageFormat::VEC32F1, i_width, i_height);
+  ImageFrame frame_v32f2(ImageFormat::VEC32F2, i_width, i_height);
   ImageFrame frame_c3(ImageFormat::SRGB, i_width, i_height);
   ImageFrame frame_c4(ImageFormat::SRGBA, i_width, i_height);
 
   cv::Mat mat_g8 = formats::MatView(&frame_g8);
   cv::Mat mat_g16 = formats::MatView(&frame_g16);
-  cv::Mat mat_f32 = formats::MatView(&frame_f32);
+  cv::Mat mat_v32f1 = formats::MatView(&frame_v32f1);
+  cv::Mat mat_v32f2 = formats::MatView(&frame_v32f2);
   cv::Mat mat_c3 = formats::MatView(&frame_c3);
   cv::Mat mat_c4 = formats::MatView(&frame_c4);
 
   EXPECT_EQ(mat_g8.type(), CV_8UC1);
   EXPECT_EQ(mat_g16.type(), CV_16UC1);
-  EXPECT_EQ(mat_f32.type(), CV_32FC1);
+  EXPECT_EQ(mat_v32f1.type(), CV_32FC1);
+  EXPECT_EQ(mat_v32f2.type(), CV_32FC2);
   EXPECT_EQ(mat_c3.type(), CV_8UC3);
   EXPECT_EQ(mat_c4.type(), CV_8UC4);
 }

@@ -32,50 +32,27 @@ cc_library(
     alwayslink = 1,
 )
 
-# Maps the binary graph to an alias (e.g., the app name) for convenience so that the alias can be
-# easily incorporated into the app via, for example,
-# MainActivity.BINARY_GRAPH_NAME = "appname.binarypb".
-genrule(
-    name = "binary_graph",
-    srcs = ["//mediapipe/graphs/hair_segmentation:mobile_gpu_binary_graph"],
-    outs = ["hairsegmentationgpu.binarypb"],
-    cmd = "cp $< $@",
-)
-
-android_library(
-    name = "mediapipe_lib",
+android_binary(
+    name = "hairsegmentationgpu",
     srcs = glob(["*.java"]),
     assets = [
-        ":binary_graph",
+        "//mediapipe/graphs/hair_segmentation:mobile_gpu.binarypb",
         "//mediapipe/models:hair_segmentation.tflite",
     ],
     assets_dir = "",
-    manifest = "AndroidManifest.xml",
-    resource_files = glob(["res/**"]),
-    deps = [
-        ":mediapipe_jni_lib",
-        "//mediapipe/java/com/google/mediapipe/components:android_camerax_helper",
-        "//mediapipe/java/com/google/mediapipe/components:android_components",
-        "//mediapipe/java/com/google/mediapipe/framework:android_framework",
-        "//mediapipe/java/com/google/mediapipe/glutil",
-        "//third_party:androidx_appcompat",
-        "//third_party:androidx_constraint_layout",
-        "//third_party:androidx_legacy_support_v4",
-        "//third_party:androidx_recyclerview",
-        "//third_party:opencv",
-        "@maven//:androidx_concurrent_concurrent_futures",
-        "@maven//:androidx_lifecycle_lifecycle_common",
-        "@maven//:com_google_code_findbugs_jsr305",
-        "@maven//:com_google_guava_guava",
-    ],
-)
-
-android_binary(
-    name = "hairsegmentationgpu",
-    manifest = "AndroidManifest.xml",
-    manifest_values = {"applicationId": "com.google.mediapipe.apps.hairsegmentationgpu"},
+    manifest = "//mediapipe/examples/android/src/java/com/google/mediapipe/apps/basic:AndroidManifest.xml",
+    manifest_values = {
+        "applicationId": "com.google.mediapipe.apps.hairsegmentationgpu",
+        "appName": "Hair Segmentation",
+        "mainActivity": "com.google.mediapipe.apps.basic.MainActivity",
+        "cameraFacingFront": "True",
+        "binaryGraphName": "mobile_gpu.binarypb",
+        "inputVideoStreamName": "input_video",
+        "outputVideoStreamName": "output_video",
+    },
     multidex = "native",
     deps = [
-        ":mediapipe_lib",
+        ":mediapipe_jni_lib",
+        "//mediapipe/examples/android/src/java/com/google/mediapipe/apps/basic:basic_lib",
     ],
 )

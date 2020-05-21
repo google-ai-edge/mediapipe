@@ -2,12 +2,12 @@
 
 ***Experimental Only***
 
-The MediaPipe Android archive library is a convenient way to use MediaPipe with
-Android Studio and Gradle. MediaPipe doesn't publish a general AAR that can be
-used by all projects. Instead, developers need to add a mediapipe_aar() target
-to generate a custom AAR file for their own projects. This is necessary in order
-to include specific resources such as MediaPipe calculators needed for each
-project.
+The MediaPipe Android Archive (AAR) library is a convenient way to use MediaPipe
+with Android Studio and Gradle. MediaPipe doesn't publish a general AAR that can
+be used by all projects. Instead, developers need to add a mediapipe_aar()
+target to generate a custom AAR file for their own projects. This is necessary
+in order to include specific resources such as MediaPipe calculators needed for
+each project.
 
 ### Steps to build a MediaPipe AAR
 

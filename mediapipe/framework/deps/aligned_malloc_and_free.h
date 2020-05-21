@@ -17,14 +17,16 @@
 
 #include <stdlib.h>  // for free(), aligned_alloc(),
 
-#if defined(__ANDROID__)
-#include <malloc.h>  // for memalign()
+#if defined(__ANDROID__) || defined(_WIN32)
+#include <malloc.h>  // for memalign() on Android, _aligned_alloc() on Windows
 #endif
 
 inline void *aligned_malloc(size_t size, int minimum_alignment) {
 #if defined(__ANDROID__) || defined(OS_ANDROID)
   return memalign(minimum_alignment, size);
-#else  // !__ANDROID__ && !OS_ANDROID
+#elif _WIN32
+  return _aligned_malloc(size, minimum_alignment);
+#else  // !__ANDROID__ && !OS_ANDROID && !_WIN32
   void *ptr = nullptr;
   // posix_memalign requires that the requested alignment be at least
   // sizeof(void*). In this case, fall back on malloc which should return memory
@@ -38,6 +40,12 @@ inline void *aligned_malloc(size_t size, int minimum_alignment) {
 #endif
 }
 
-inline void aligned_free(void *aligned_memory) { free(aligned_memory); }
+inline void aligned_free(void *aligned_memory) {
+#ifdef _WIN32
+  _aligned_free(aligned_memory);
+#else
+  free(aligned_memory);
+#endif  // _WIN32
+}
 
 #endif  // MEDIAPIPE_DEPS_ALIGNED_MALLOC_AND_FREE_H_

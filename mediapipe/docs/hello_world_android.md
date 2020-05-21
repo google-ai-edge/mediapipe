@@ -32,7 +32,7 @@ We will be using the following graph, [`edge_detection_mobile_gpu.pbtxt`]:
 ```
 # MediaPipe graph that performs GPU Sobel edge detection on a live video stream.
 # Used in the examples
-# mediapipe/examples/android/src/java/com/mediapipe/apps/edgedetectiongpu.
+# mediapipe/examples/android/src/java/com/mediapipe/apps/basic.
 # mediapipe/examples/ios/edgedetectiongpu.
 
 # Images coming into and out of the graph.
@@ -80,15 +80,15 @@ applications using `bazel`.
 
 Create a new directory where you will create your Android application. For
 example, the complete code of this tutorial can be found at
-`mediapipe/examples/android/src/java/com/google/mediapipe/apps/edgedetectiongpu`.
-We will refer to this path as `$APPLICATION_PATH` throughout the codelab.
+`mediapipe/examples/android/src/java/com/google/mediapipe/apps/basic`. We
+will refer to this path as `$APPLICATION_PATH` throughout the codelab.
 
 Note that in the path to the application:
 
-*   The application is named `edgedetectiongpu`.
+*   The application is named `helloworld`.
 *   The `$PACKAGE_PATH` of the application is
-    `com.google.mediapipe.apps.edgdetectiongpu`. This is used in code snippets in
-    this tutorial, so please remember to use your own `$PACKAGE_PATH` when you
+    `com.google.mediapipe.apps.basic`. This is used in code snippets in this
+    tutorial, so please remember to use your own `$PACKAGE_PATH` when you
     copy/use the code snippets.
 
 Add a file `activity_main.xml` to `$APPLICATION_PATH/res/layout`. This displays
@@ -119,7 +119,7 @@ Add a simple `MainActivity.java` to `$APPLICATION_PATH` which loads the content
 of the `activity_main.xml` layout as shown below:
 
 ```
-package com.google.mediapipe.apps.edgedetectiongpu;
+package com.google.mediapipe.apps.basic;
 
 import android.os.Bundle;
 import androidx.appcompat.app.AppCompatActivity;
@@ -141,7 +141,7 @@ launches `MainActivity` on application start:
 ```
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.google.mediapipe.apps.edgedetectiongpu">
+    package="com.google.mediapipe.apps.basic">
 
   <uses-sdk
       android:minSdkVersion="19"
@@ -149,11 +149,11 @@ launches `MainActivity` on application start:
 
   <application
       android:allowBackup="true"
-      android:label="@string/app_name"
+      android:label="${appName}"
       android:supportsRtl="true"
       android:theme="@style/AppTheme">
       <activity
-          android:name=".MainActivity"
+          android:name="${mainActivity}"
           android:exported="true"
           android:screenOrientation="portrait">
           <intent-filter>
@@ -166,17 +166,8 @@ launches `MainActivity` on application start:
 </manifest>
 ```
 
-To get `@string/app_name`, we need to add a file `strings.xml` to
-`$APPLICATION_PATH/res/values/`:
-
-```
-<resources>
-    <string name="app_name" translatable="false">Edge Detection GPU</string>
-</resources>
-```
-
-Also, in our application we are using a `Theme.AppCompat` theme in the app, so
-we need appropriate theme references. Add `colors.xml` to
+In our application we are using a `Theme.AppCompat` theme in the app, so we need
+appropriate theme references. Add `colors.xml` to
 `$APPLICATION_PATH/res/values/`:
 
 ```
@@ -204,11 +195,13 @@ Add `styles.xml` to `$APPLICATION_PATH/res/values/`:
 </resources>
 ```
 
-To build the application, add a `BUILD` file to `$APPLICATION_PATH`:
+To build the application, add a `BUILD` file to `$APPLICATION_PATH`, and
+`${appName}` and `${mainActivity}` in the manifest will be replaced by strings
+specified in `BUILD` as shown below.
 
 ```
 android_library(
-    name = "mediapipe_lib",
+    name = "basic_lib",
     srcs = glob(["*.java"]),
     manifest = "AndroidManifest.xml",
     resource_files = glob(["res/**"]),
@@ -219,34 +212,36 @@ android_library(
 )
 
 android_binary(
-    name = "edgedetectiongpu",
-    aapt_version = "aapt2",
+    name = "helloworld",
     manifest = "AndroidManifest.xml",
-    manifest_values = {"applicationId": "com.google.mediapipe.apps.edgedetectiongpu"},
+    manifest_values = {
+        "applicationId": "com.google.mediapipe.apps.basic",
+        "appName": "Hello World",
+        "mainActivity": ".MainActivity",
+    },
     multidex = "native",
     deps = [
-        ":mediapipe_lib",
+        ":basic_lib",
     ],
 )
-
 ```
 
 The `android_library` rule adds dependencies for `MainActivity`, resource files
 and `AndroidManifest.xml`.
 
-The `android_binary` rule, uses the `mediapipe_lib` Android library generated to
+The `android_binary` rule, uses the `basic_lib` Android library generated to
 build a binary APK for installation on your Android device.
 
 To build the app, use the following command:
 
 ```
-bazel build -c opt --config=android_arm64 $APPLICATION_PATH
+bazel build -c opt --config=android_arm64 $APPLICATION_PATH:helloworld
 ```
 
 Install the generated APK file using `adb install`. For example:
 
 ```
-adb install bazel-bin/$APPLICATION_PATH/edgedetectiongpu.apk
+adb install bazel-bin/$APPLICATION_PATH/helloworld.apk
 ```
 
 Open the application on your device. It should display a screen with the text
@@ -438,22 +433,58 @@ visible so that we can start seeing frames from the `previewFrameTexture`.
 
 However, before starting the camera, we need to decide which camera we want to
 use. [`CameraXPreviewHelper`] inherits from [`CameraHelper`] which provides two
-options, `FRONT` and `BACK`. We will use `BACK` camera for this application to
-perform edge detection on a live scene that we view from the camera.
+options, `FRONT` and `BACK`. We can pass in the decision from the `BUILD` file
+as metadata such that no code change is required to build a another version of
+the app using a different camera.
 
-Add the following line to define `CAMERA_FACING` for our application,
+Assuming we want to use `BACK` camera to perform edge detection on a live scene
+that we view from the camera, add the metadata into `AndroidManifest.xml`:
 
 ```
-private static final CameraHelper.CameraFacing CAMERA_FACING = CameraHelper.CameraFacing.BACK;
+      ...
+      <meta-data android:name="cameraFacingFront" android:value="${cameraFacingFront}"/>
+  </application>
+</manifest>
 ```
 
-`CAMERA_FACING` is a static variable as we will use the same camera throughout
-the application from start to finish.
+and specify the selection in `BUILD` in the `helloworld` android binary rule
+with a new entry in `manifest_values`:
+
+```
+manifest_values = {
+    "applicationId": "com.google.mediapipe.apps.basic",
+    "appName": "Hello World",
+    "mainActivity": ".MainActivity",
+    "cameraFacingFront": "False",
+},
+```
+
+Now, in `MainActivity` to retrieve the metadata specified in `manifest_values`,
+add an [`ApplicationInfo`] object:
+
+```
+private ApplicationInfo applicationInfo;
+```
+
+In the `onCreate()` function, add:
+
+```
+try {
+  applicationInfo =
+      getPackageManager().getApplicationInfo(getPackageName(), PackageManager.GET_META_DATA);
+} catch (NameNotFoundException e) {
+  Log.e(TAG, "Cannot find application info: " + e);
+}
+```
 
 Now add the following line at the end of the `startCamera()` function:
 
 ```
-cameraHelper.startCamera(this, CAMERA_FACING, /*surfaceTexture=*/ null);
+CameraHelper.CameraFacing cameraFacing =
+    applicationInfo.metaData.getBoolean("cameraFacingFront", false)
+        ? CameraHelper.CameraFacing.FRONT
+        : CameraHelper.CameraFacing.BACK;
+cameraHelper.startCamera(this, cameraFacing, /*surfaceTexture=*/ null);
 ```
 
 At this point, the application should build successfully. However, when you run
@@ -595,30 +626,39 @@ build rule:
 
 MediaPipe graphs are `.pbtxt` files, but to use them in the application, we need
 to use the `mediapipe_binary_graph` build rule to generate a `.binarypb` file.
-We can then use an application specific alias for the graph via the `genrule`
-build rule. Add the following `genrule` to use an alias for the edge detection
-graph:
 
-```
-genrule(
-    name = "binary_graph",
-    srcs = ["//mediapipe/graphs/edge_detection:mobile_gpu_binary_graph"],
-    outs = ["edgedetectiongpu.binarypb"],
-    cmd = "cp $< $@",
-)
-```
-
-Then in the `mediapipe_lib` build rule, add assets:
+In the `helloworld` android binary build rule, add the `mediapipe_binary_graph`
+target specific to the graph as an asset:
 
 ```
 assets = [
-  ":binary_graph",
+  "//mediapipe/graphs/edge_detection:mobile_gpu_binary_graph",
 ],
 assets_dir = "",
 ```
 
 In the `assets` build rule, you can also add other assets such as TensorFlowLite
 models used in your graph.
+
+In addition, add additional `manifest_values` for properties specific to the
+graph, to be later retrieved in `MainActivity`:
+
+```
+manifest_values = {
+    "applicationId": "com.google.mediapipe.apps.basic",
+    "appName": "Hello World",
+    "mainActivity": ".MainActivity",
+    "cameraFacingFront": "False",
+    "binaryGraphName": "mobile_gpu.binarypb",
+    "inputVideoStreamName": "input_video",
+    "outputVideoStreamName": "output_video",
+},
+```
+
+Note that `binaryGraphName` indicates the filename of the binary graph,
+determined by the `output_name` field in the `mediapipe_binary_graph` target.
+`inputVideoStreamName` and `outputVideoStreamName` are the input and output
+video stream name specified in the graph respectively.
 
 Now, the `MainActivity` needs to load the MediaPipe framework. Also, the
 framework uses OpenCV, so `MainActvity` should also load `OpenCV`. Use the
@@ -648,15 +688,6 @@ Initialize the asset manager in `onCreate(Bundle)` before initializing
 AndroidAssetUtil.initializeNativeAssetManager(this);
 ```
 
-Declare a static variable with the graph name, the name of the input stream and
-the name of the output stream:
-
-```
-private static final String BINARY_GRAPH_NAME = "edgedetectiongpu.binarypb";
-private static final String INPUT_VIDEO_STREAM_NAME = "input_video";
-private static final String OUTPUT_VIDEO_STREAM_NAME = "output_video";
-```
-
 Now, we need to setup a [`FrameProcessor`] object that sends camera frames
 prepared by the `converter` to the MediaPipe graph and runs the graph, prepares
 the output and then updates the `previewDisplayView` to display the output. Add
@@ -673,9 +704,9 @@ processor =
     new FrameProcessor(
         this,
         eglManager.getNativeContext(),
-        BINARY_GRAPH_NAME,
-        INPUT_VIDEO_STREAM_NAME,
-        OUTPUT_VIDEO_STREAM_NAME);
+        applicationInfo.metaData.getString("binaryGraphName"),
+        applicationInfo.metaData.getString("inputVideoStreamName"),
+        applicationInfo.metaData.getString("outputVideoStreamName"));
 ```
 
 The `processor` needs to consume the converted frames from the `converter` for
@@ -712,8 +743,9 @@ feed! Congrats!
 ![edge_detection_android_gpu_gif](images/mobile/edge_detection_android_gpu.gif)
 
 If you ran into any issues, please see the full code of the tutorial
-[here](https://github.com/google/mediapipe/tree/master/mediapipe/examples/android/src/java/com/google/mediapipe/apps/edgedetectiongpu).
+[here](https://github.com/google/mediapipe/tree/master/mediapipe/examples/android/src/java/com/google/mediapipe/apps/basic).
 
+[`ApplicationInfo`]:https://developer.android.com/reference/android/content/pm/ApplicationInfo
 [`AndroidAssetUtil`]:https://github.com/google/mediapipe/tree/master/mediapipe/java/com/google/mediapipe/framework/AndroidAssetUtil.java
 [Bazel]:https://bazel.build/
 [`CameraHelper`]:https://github.com/google/mediapipe/tree/master/mediapipe/java/com/google/mediapipe/components/CameraHelper.java
@@ -721,7 +753,6 @@ If you ran into any issues, please see the full code of the tutorial
 [`CameraXPreviewHelper`]:https://github.com/google/mediapipe/tree/master/mediapipe/java/com/google/mediapipe/components/CameraXPreviewHelper.java
 [developer options]:https://developer.android.com/studio/debug/dev-options
 [`edge_detection_mobile_gpu.pbtxt`]:https://github.com/google/mediapipe/tree/master/mediapipe/graphs/object_detection/object_detection_mobile_gpu.pbtxt
-[`EdgeDetectionGPU` example]:https://github.com/google/mediapipe/tree/master/mediapipe/examples/android/src/java/com/google/mediapipe/apps/edgedetectiongpu/
 [`EglManager`]:https://github.com/google/mediapipe/tree/master/mediapipe/java/com/google/mediapipe/glutil/EglManager.java
 [`ExternalTextureConverter`]:https://github.com/google/mediapipe/tree/master/mediapipe/java/com/google/mediapipe/components/ExternalTextureConverter.java
 [`FrameLayout`]:https://developer.android.com/reference/android/widget/FrameLayout

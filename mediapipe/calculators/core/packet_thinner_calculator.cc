@@ -24,11 +24,13 @@
 #include "mediapipe/framework/port/integral_types.h"
 #include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/status.h"
+#include "mediapipe/framework/tool/options_util.h"
 
 namespace mediapipe {
 
 namespace {
 const double kTimebaseUs = 1000000;  // Microseconds.
+const char* const kOptionsTag = "OPTIONS";
 const char* const kPeriodTag = "PERIOD";
 }  // namespace
 
@@ -63,9 +65,15 @@ const char* const kPeriodTag = "PERIOD";
 // Thinning period can be provided in the calculator options or via a
 // side packet with the tag "PERIOD".
 //
+// Calculator options provided optionally with the "OPTIONS" input
+// sidepacket tag will be merged with this calculator's node options, i.e.,
+// singular fields of the side packet will overwrite the options defined in the
+// node, and repeated fields will concatenate.
+//
 // Example config:
 // node {
 //   calculator: "PacketThinnerCalculator"
+//   input_side_packet: "OPTIONS:calculator_options"
 //   input_stream: "signal"
 //   output_stream: "output"
 //   options {
@@ -83,6 +91,9 @@ class PacketThinnerCalculator : public CalculatorBase {
   ~PacketThinnerCalculator() override {}
 
   static ::mediapipe::Status GetContract(CalculatorContract* cc) {
+    if (cc->InputSidePackets().HasTag(kOptionsTag)) {
+      cc->InputSidePackets().Tag(kOptionsTag).Set<CalculatorOptions>();
+    }
     cc->Inputs().Index(0).SetAny();
     cc->Outputs().Index(0).SetSameAs(&cc->Inputs().Index(0));
     if (cc->InputSidePackets().HasTag(kPeriodTag)) {
@@ -143,7 +154,9 @@ TimestampDiff abs(TimestampDiff t) { return t < 0 ? -t : t; }
 }  // namespace
 
 ::mediapipe::Status PacketThinnerCalculator::Open(CalculatorContext* cc) {
-  auto& options = cc->Options<PacketThinnerCalculatorOptions>();
+  PacketThinnerCalculatorOptions options = mediapipe::tool::RetrieveOptions(
+      cc->Options<PacketThinnerCalculatorOptions>(), cc->InputSidePackets(),
+      kOptionsTag);
 
   thinner_type_ = options.thinner_type();
   // This check enables us to assume only two thinner types exist in Process()

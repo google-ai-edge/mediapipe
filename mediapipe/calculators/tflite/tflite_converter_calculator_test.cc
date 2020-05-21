@@ -19,6 +19,9 @@
 #include "mediapipe/calculators/tflite/tflite_converter_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/calculator_runner.h"
+#include "mediapipe/framework/formats/image_format.pb.h"
+#include "mediapipe/framework/formats/image_frame.h"
+#include "mediapipe/framework/formats/image_frame_opencv.h"
 #include "mediapipe/framework/formats/matrix.h"
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/framework/port/integral_types.h"
@@ -28,7 +31,6 @@
 #include "tensorflow/lite/interpreter.h"
 
 namespace mediapipe {
-
 namespace {
 
 constexpr char kTransposeOptionsString[] =
@@ -194,6 +196,57 @@ TEST_F(TfLiteConverterCalculatorTest, RandomMatrixRowMajor) {
 
     graph_.reset();
   }
+}
+
+TEST_F(TfLiteConverterCalculatorTest, CustomDivAndSub) {
+  CalculatorGraph graph;
+  // Run the calculator and verify that one output is generated.
+  CalculatorGraphConfig graph_config =
+      ::mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+        input_stream: "input_image"
+        node {
+          calculator: "TfLiteConverterCalculator"
+          input_stream: "IMAGE:input_image"
+          output_stream: "TENSORS:tensor"
+          options {
+            [mediapipe.TfLiteConverterCalculatorOptions.ext] {
+              row_major_matrix: true
+              use_custom_normalization: true
+              custom_div: 2.0
+              custom_sub: 33.0
+            }
+          }
+        }
+      )");
+  std::vector<Packet> output_packets;
+  tool::AddVectorSink("tensor", &graph_config, &output_packets);
+
+  // Run the graph.
+  MP_ASSERT_OK(graph.Initialize(graph_config));
+  MP_ASSERT_OK(graph.StartRun({}));
+  auto input_image = absl::make_unique<ImageFrame>(ImageFormat::GRAY8, 1, 1);
+  cv::Mat mat = ::mediapipe::formats::MatView(input_image.get());
+  mat.at<uint8>(0, 0) = 200;
+  MP_ASSERT_OK(graph.AddPacketToInputStream(
+      "input_image", Adopt(input_image.release()).At(Timestamp(0))));
+
+  // Wait until the calculator done processing.
+  MP_ASSERT_OK(graph.WaitUntilIdle());
+  EXPECT_EQ(1, output_packets.size());
+
+  // Get and process results.
+  const std::vector<TfLiteTensor>& tensor_vec =
+      output_packets[0].Get<std::vector<TfLiteTensor>>();
+  EXPECT_EQ(1, tensor_vec.size());
+
+  const TfLiteTensor* tensor = &tensor_vec[0];
+  EXPECT_EQ(kTfLiteFloat32, tensor->type);
+  EXPECT_FLOAT_EQ(67.0f, *tensor->data.f);
+
+  // Fully close graph at end, otherwise calculator+tensors are destroyed
+  // after calling WaitUntilDone().
+  MP_ASSERT_OK(graph.CloseInputStream("input_image"));
+  MP_ASSERT_OK(graph.WaitUntilDone());
 }
 
 }  // namespace mediapipe

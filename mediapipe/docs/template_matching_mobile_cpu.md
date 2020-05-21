@@ -36,7 +36,7 @@ $ bazel build -c opt --define MEDIAPIPE_DISABLE_GPU=1 \
     mediapipe/examples/desktop/template_matching:template_matching_tflite
 $ bazel-bin/mediapipe/examples/desktop/template_matching/template_matching_tflite \
     --calculator_graph_config_file=mediapipe/graphs/template_matching/index_building.pbtxt \
-    --input_side_packets="file_directory=<template image directory>,file_suffix='png',output_index_filename=<output index filename>"
+    --input_side_packets="file_directory=<template image directory>,file_suffix=png,output_index_filename=<output index filename>"
 ```
 
 The output index file includes the extracted KNIFT features.

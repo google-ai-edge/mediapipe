@@ -63,6 +63,9 @@ message ImageFormat {
     // One float per pixel.
     VEC32F1 = 9;
 
+    // Two floats per pixel.
+    VEC32F2 = 12;
+
     // LAB, interleaved: one byte for L, then one byte for a, then one
     // byte for b for each pixel.
     LAB8 = 10;

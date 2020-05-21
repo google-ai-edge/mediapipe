@@ -39,6 +39,7 @@ public class ExternalTextureConverter implements TextureFrameProducer {
   private static final String THREAD_NAME = "ExternalTextureConverter";
 
   private RenderThread thread;
+  private Throwable startupException = null;
 
   /**
    * Creates the ExternalTextureConverter to create a working copy of each camera frame.
@@ -46,11 +47,38 @@ public class ExternalTextureConverter implements TextureFrameProducer {
    * @param numBuffers the number of camera frames that can enter processing simultaneously.
    */
   public ExternalTextureConverter(EGLContext parentContext, int numBuffers) {
-    thread = new RenderThread(parentContext, numBuffers);
+    thread = makeRenderThread(parentContext, numBuffers);
     thread.setName(THREAD_NAME);
+
+    // Catch exceptions raised during initialization. The user has not had a chance
+    // to set an exception handler yet.
+    // Note: exception handling is messier than we'd like because of the way GlThread works.
+    // Users of that class _should_ call waitUntilReady before using it (in particular,
+    // before calling getHandler), and most do, but it's not strictly enforced. So we cannot
+    // have GlThread capture exceptions and rethrow them from waitUntilReady, because that
+    // method may not be called, and we don't want to hide exceptions in that case.
+    // Therefore, we handle that in ExternalTextureConverter.
+    final Object threadExceptionLock = new Object();
+    thread.setUncaughtExceptionHandler(
+        (Thread t, Throwable e) -> {
+          synchronized (threadExceptionLock) {
+            startupException = e;
+            threadExceptionLock.notify();
+          }
+        });
+
     thread.start();
     try {
-      thread.waitUntilReady();
+      boolean success = thread.waitUntilReady();
+      if (!success) {
+        // If startup failed, there must have been an exception, but our handler
+        // will be called _after_ waitUntilReady returns, so wait for it.
+        synchronized (threadExceptionLock) {
+          while (startupException == null) {
+            threadExceptionLock.wait();
+          }
+        }
+      }
     } catch (InterruptedException ie) {
       // Someone interrupted our thread. This is not supposed to happen: we own
       // the thread, and we are not going to interrupt it. Therefore, it is not
@@ -61,6 +89,13 @@ public class ExternalTextureConverter implements TextureFrameProducer {
       Thread.currentThread().interrupt();
       Log.e(TAG, "thread was unexpectedly interrupted: " + ie.getMessage());
       throw new RuntimeException(ie);
+    }
+
+    // Rethrow initialization exception.
+    thread.setUncaughtExceptionHandler(null);
+    if (startupException != null) {
+      thread.quitSafely();
+      throw new RuntimeException(startupException);
     }
   }
 
@@ -91,6 +126,17 @@ public class ExternalTextureConverter implements TextureFrameProducer {
       EGLContext parentContext, SurfaceTexture texture, int targetWidth, int targetHeight) {
     this(parentContext);
     thread.setSurfaceTexture(texture, targetWidth, targetHeight);
+  }
+
+  /**
+   * Sets a callbacks to catch exceptions from our GlThread.
+   *
+   * <p>This can be used to catch exceptions originating from the rendering thread after
+   * construction. If this is used, it is best to call it before the surface texture starts serving
+   * frames, e.g. by calling it before setSurfaceTexture.
+   */
+  public void setUncaughtExceptionHandler(Thread.UncaughtExceptionHandler handler) {
+    thread.setUncaughtExceptionHandler(handler);
   }
 
   /**
@@ -137,7 +183,6 @@ public class ExternalTextureConverter implements TextureFrameProducer {
     if (thread == null) {
       return;
     }
-    thread.getHandler().post(() -> thread.setSurfaceTexture(null, 0, 0));
     thread.quitSafely();
     try {
       thread.join();
@@ -149,7 +194,12 @@ public class ExternalTextureConverter implements TextureFrameProducer {
     }
   }
 
-  private static class RenderThread extends GlThread
+  protected RenderThread makeRenderThread(EGLContext parentContext, int numBuffers) {
+    return new RenderThread(parentContext, numBuffers);
+  }
+
+  /** The thread used to do rendering. This is only protected for testing purposes. */
+  protected static class RenderThread extends GlThread
       implements SurfaceTexture.OnFrameAvailableListener {
     private static final long NANOS_PER_MICRO = 1000; // Nanoseconds in one microsecond.
     private volatile SurfaceTexture surfaceTexture = null;
@@ -232,6 +282,7 @@ public class ExternalTextureConverter implements TextureFrameProducer {
 
     @Override
     public void releaseGl() {
+      setSurfaceTexture(null, 0, 0);
       for (int i = 0; i < outputFrames.size(); ++i) {
         teardownDestination(i);
       }

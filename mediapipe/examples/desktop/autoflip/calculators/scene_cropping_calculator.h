@@ -171,7 +171,7 @@ class SceneCroppingCalculator : public CalculatorBase {
   ::mediapipe::Status FormatAndOutputCroppedFrames(
       const std::vector<cv::Mat>& cropped_frames,
       std::vector<cv::Rect>* render_to_locations, bool* apply_padding,
-      cv::Scalar* padding_color, float* vertical_fill_precent,
+      std::vector<cv::Scalar>* padding_colors, float* vertical_fill_percent,
       CalculatorContext* cc);
 
   // Draws and outputs visualization frames if those streams are present.

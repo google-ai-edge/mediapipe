@@ -105,6 +105,7 @@ void GlCalculatorHelperImpl::SetStandardTextureParams(GLenum target,
   GLint filter;
   switch (internal_format) {
     case GL_R32F:
+    case GL_RG32F:
     case GL_RGBA32F:
       // 32F (unlike 16f) textures do not always support texture filtering
       // (According to OpenGL ES specification [TEXTURE IMAGE SPECIFICATION])

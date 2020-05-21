@@ -32,51 +32,28 @@ cc_library(
     alwayslink = 1,
 )
 
-# Maps the binary graph to an alias (e.g., the app name) for convenience so that the alias can be
-# easily incorporated into the app via, for example,
-# MainActivity.BINARY_GRAPH_NAME = "appname.binarypb".
-genrule(
-    name = "binary_graph",
-    srcs = ["//mediapipe/graphs/object_detection:mobile_cpu_binary_graph"],
-    outs = ["objectdetectioncpu.binarypb"],
-    cmd = "cp $< $@",
-)
-
-android_library(
-    name = "mediapipe_lib",
+android_binary(
+    name = "objectdetectioncpu",
     srcs = glob(["*.java"]),
     assets = [
-        ":binary_graph",
+        "//mediapipe/graphs/object_detection:mobile_cpu.binarypb",
         "//mediapipe/models:ssdlite_object_detection.tflite",
         "//mediapipe/models:ssdlite_object_detection_labelmap.txt",
     ],
     assets_dir = "",
-    manifest = "AndroidManifest.xml",
-    resource_files = glob(["res/**"]),
-    deps = [
-        ":mediapipe_jni_lib",
-        "//mediapipe/java/com/google/mediapipe/components:android_camerax_helper",
-        "//mediapipe/java/com/google/mediapipe/components:android_components",
-        "//mediapipe/java/com/google/mediapipe/framework:android_framework",
-        "//mediapipe/java/com/google/mediapipe/glutil",
-        "//third_party:androidx_appcompat",
-        "//third_party:androidx_constraint_layout",
-        "//third_party:androidx_legacy_support_v4",
-        "//third_party:androidx_recyclerview",
-        "//third_party:opencv",
-        "@maven//:androidx_concurrent_concurrent_futures",
-        "@maven//:androidx_lifecycle_lifecycle_common",
-        "@maven//:com_google_code_findbugs_jsr305",
-        "@maven//:com_google_guava_guava",
-    ],
-)
-
-android_binary(
-    name = "objectdetectioncpu",
-    manifest = "AndroidManifest.xml",
-    manifest_values = {"applicationId": "com.google.mediapipe.apps.objectdetectioncpu"},
+    manifest = "//mediapipe/examples/android/src/java/com/google/mediapipe/apps/basic:AndroidManifest.xml",
+    manifest_values = {
+        "applicationId": "com.google.mediapipe.apps.objectdetectioncpu",
+        "appName": "Object Detection (CPU)",
+        "mainActivity": "com.google.mediapipe.apps.basic.MainActivity",
+        "cameraFacingFront": "False",
+        "binaryGraphName": "mobile_cpu.binarypb",
+        "inputVideoStreamName": "input_video",
+        "outputVideoStreamName": "output_video",
+    },
     multidex = "native",
     deps = [
-        ":mediapipe_lib",
+        ":mediapipe_jni_lib",
+        "//mediapipe/examples/android/src/java/com/google/mediapipe/apps/basic:basic_lib",
     ],
 )

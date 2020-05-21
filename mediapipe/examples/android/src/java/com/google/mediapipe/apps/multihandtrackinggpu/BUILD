@@ -32,72 +32,32 @@ cc_library(
     alwayslink = 1,
 )
 
-# Maps the binary graph to an alias (e.g., the app name) for convenience so that the alias can be
-# easily incorporated into the app via, for example,
-# MainActivity.BINARY_GRAPH_NAME = "appname.binarypb".
-genrule(
-    name = "binary_graph",
-    srcs = ["//mediapipe/graphs/hand_tracking:multi_hand_tracking_mobile_gpu_binary_graph"],
-    outs = ["multihandtrackinggpu.binarypb"],
-    cmd = "cp $< $@",
-)
-
-# To use the 3D model instead of the default 2D model, add "--define 3D=true" to the
-# bazel build command.
-config_setting(
-    name = "use_3d_model",
-    define_values = {
-        "3D": "true",
-    },
-)
-
-genrule(
-    name = "model",
-    srcs = select({
-        "//conditions:default": ["//mediapipe/models:hand_landmark.tflite"],
-        ":use_3d_model": ["//mediapipe/models:hand_landmark_3d.tflite"],
-    }),
-    outs = ["hand_landmark.tflite"],
-    cmd = "cp $< $@",
-)
-
-android_library(
-    name = "mediapipe_lib",
+android_binary(
+    name = "multihandtrackinggpu",
     srcs = glob(["*.java"]),
     assets = [
-        ":binary_graph",
-        ":model",
+        "//mediapipe/graphs/hand_tracking:multi_hand_tracking_mobile_gpu.binarypb",
+        "//mediapipe/models:handedness.txt",
+        "//mediapipe/models:hand_landmark.tflite",
         "//mediapipe/models:palm_detection.tflite",
         "//mediapipe/models:palm_detection_labelmap.txt",
     ],
     assets_dir = "",
-    manifest = "AndroidManifest.xml",
-    resource_files = glob(["res/**"]),
-    deps = [
-        ":mediapipe_jni_lib",
-        "//mediapipe/framework/formats:landmark_java_proto_lite",
-        "//mediapipe/java/com/google/mediapipe/components:android_camerax_helper",
-        "//mediapipe/java/com/google/mediapipe/components:android_components",
-        "//mediapipe/java/com/google/mediapipe/framework:android_framework",
-        "//mediapipe/java/com/google/mediapipe/glutil",
-        "//third_party:androidx_appcompat",
-        "//third_party:androidx_constraint_layout",
-        "//third_party:androidx_legacy_support_v4",
-        "//third_party:androidx_recyclerview",
-        "//third_party:opencv",
-        "@maven//:androidx_concurrent_concurrent_futures",
-        "@maven//:androidx_lifecycle_lifecycle_common",
-        "@maven//:com_google_code_findbugs_jsr305",
-        "@maven//:com_google_guava_guava",
-    ],
-)
-
-android_binary(
-    name = "multihandtrackinggpu",
-    manifest = "AndroidManifest.xml",
-    manifest_values = {"applicationId": "com.google.mediapipe.apps.multihandtrackinggpu"},
+    manifest = "//mediapipe/examples/android/src/java/com/google/mediapipe/apps/basic:AndroidManifest.xml",
+    manifest_values = {
+        "applicationId": "com.google.mediapipe.apps.multihandtrackinggpu",
+        "appName": "Multi-hand Tracking",
+        "mainActivity": ".MainActivity",
+        "cameraFacingFront": "True",
+        "binaryGraphName": "multi_hand_tracking_mobile_gpu.binarypb",
+        "inputVideoStreamName": "input_video",
+        "outputVideoStreamName": "output_video",
+    },
     multidex = "native",
     deps = [
-        ":mediapipe_lib",
+        ":mediapipe_jni_lib",
+        "//mediapipe/examples/android/src/java/com/google/mediapipe/apps/basic:basic_lib",
+        "//mediapipe/framework/formats:landmark_java_proto_lite",
+        "//mediapipe/java/com/google/mediapipe/framework:android_framework",
     ],
 )

@@ -20,6 +20,7 @@
 #include <memory>
 #include <numeric>
 
+#include "absl/container/node_hash_map.h"
 #include "absl/strings/str_cat.h"
 #include "mediapipe/framework/port/integral_types.h"
 #include "mediapipe/util/tracking/measure_time.h"
@@ -527,7 +528,7 @@ void IntersectRegionFlowFeatureList(
   CHECK(to.long_tracks()) << "Intersection only works for long features";
 
   // Hash features in to, based on track_id.
-  std::unordered_map<int, const RegionFlowFeature*> track_map;
+  absl::node_hash_map<int, const RegionFlowFeature*> track_map;
   for (const auto& feature : to.feature()) {
     track_map[feature.track_id()] = &feature;
   }

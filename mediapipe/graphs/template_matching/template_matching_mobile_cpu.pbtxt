@@ -32,8 +32,9 @@ node: {
   output_stream: "IMAGE:transformed_input_video_cpu"
   node_options: {
     [type.googleapis.com/mediapipe.ImageTransformationCalculatorOptions] {
-      output_width: 480
+      output_width: 640
       output_height: 640
+      scale_mode: FILL_AND_CROP
     }
   }
 }

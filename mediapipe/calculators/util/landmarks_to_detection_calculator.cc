@@ -76,7 +76,7 @@ Detection ConvertLandmarksToDetection(const NormalizedLandmarkList& landmarks) {
 // node {
 //   calculator: "LandmarksToDetectionCalculator"
 //   input_stream: "NORM_LANDMARKS:landmarks"
-//   output_stream: "DETECTIONS:detections"
+//   output_stream: "DETECTION:detections"
 // }
 class LandmarksToDetectionCalculator : public CalculatorBase {
  public:

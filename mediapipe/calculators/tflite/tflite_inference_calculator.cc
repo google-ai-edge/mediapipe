@@ -57,7 +57,10 @@
 #include "tensorflow/lite/delegates/gpu/metal_delegate.h"
 #include "tensorflow/lite/delegates/gpu/metal_delegate_internal.h"
 #endif  // iOS
+
+#if !defined(MEDIAPIPE_EDGE_TPU)
 #include "tensorflow/lite/delegates/xnnpack/xnnpack_delegate.h"
+#endif  // !EDGETPU
 #if defined(MEDIAPIPE_ANDROID)
 #include "tensorflow/lite/delegates/nnapi/nnapi_delegate.h"
 #endif  // ANDROID
@@ -116,11 +119,13 @@ using ::tflite::gpu::gl::GlBuffer;
 #endif
 
 #if !defined(MEDIAPIPE_DISABLE_GPU) && !defined(__EMSCRIPTEN__)
+namespace {
 struct GPUData {
   int elements = 1;
   GpuTensor buffer;
   ::tflite::gpu::BHWC shape;
 };
+}  // namespace
 #endif
 
 // Returns number of threads to configure XNNPACK delegate with.
@@ -405,8 +410,11 @@ REGISTER_CALCULATOR(TfLiteInferenceCalculator);
   // 1. Receive pre-processed tensor inputs.
   if (use_advanced_gpu_api_) {
 #if !defined(MEDIAPIPE_DISABLE_GL_COMPUTE)
+    if (cc->Inputs().Tag(kTensorsGpuTag).IsEmpty()) {
+      return ::mediapipe::OkStatus();
+    }
     const auto& input_tensors =
-        cc->Inputs().Tag("TENSORS_GPU").Get<std::vector<GpuTensor>>();
+        cc->Inputs().Tag(kTensorsGpuTag).Get<std::vector<GpuTensor>>();
     RET_CHECK(!input_tensors.empty());
     MP_RETURN_IF_ERROR(gpu_helper_.RunInGlContext(
         [this, &input_tensors]() -> ::mediapipe::Status {
@@ -424,6 +432,9 @@ REGISTER_CALCULATOR(TfLiteInferenceCalculator);
   } else if (gpu_input_) {
     // Read GPU input into SSBO.
 #if !defined(MEDIAPIPE_DISABLE_GL_COMPUTE)
+    if (cc->Inputs().Tag(kTensorsGpuTag).IsEmpty()) {
+      return ::mediapipe::OkStatus();
+    }
     const auto& input_tensors =
         cc->Inputs().Tag(kTensorsGpuTag).Get<std::vector<GpuTensor>>();
     RET_CHECK_GT(input_tensors.size(), 0);
@@ -439,6 +450,9 @@ REGISTER_CALCULATOR(TfLiteInferenceCalculator);
           return ::mediapipe::OkStatus();
         }));
 #elif defined(MEDIAPIPE_IOS)
+    if (cc->Inputs().Tag(kTensorsGpuTag).IsEmpty()) {
+      return ::mediapipe::OkStatus();
+    }
     const auto& input_tensors =
         cc->Inputs().Tag(kTensorsGpuTag).Get<std::vector<GpuTensor>>();
     RET_CHECK_GT(input_tensors.size(), 0);
@@ -465,6 +479,9 @@ REGISTER_CALCULATOR(TfLiteInferenceCalculator);
     RET_CHECK_FAIL() << "GPU processing not enabled.";
 #endif
   } else {
+    if (cc->Inputs().Tag(kTensorsTag).IsEmpty()) {
+      return ::mediapipe::OkStatus();
+    }
     // Read CPU input into tensors.
     const auto& input_tensors =
         cc->Inputs().Tag(kTensorsTag).Get<std::vector<TfLiteTensor>>();
@@ -511,10 +528,10 @@ REGISTER_CALCULATOR(TfLiteInferenceCalculator);
     auto output_tensors = absl::make_unique<std::vector<GpuTensor>>();
     output_tensors->resize(gpu_data_out_.size());
     for (int i = 0; i < gpu_data_out_.size(); ++i) {
-      output_tensors->at(i) = gpu_data_out_[0]->buffer.MakeRef();
+      output_tensors->at(i) = gpu_data_out_[i]->buffer.MakeRef();
     }
     cc->Outputs()
-        .Tag("TENSORS_GPU")
+        .Tag(kTensorsGpuTag)
         .Add(output_tensors.release(), cc->InputTimestamp());
 #endif
   } else if (gpu_output_) {
@@ -637,7 +654,7 @@ REGISTER_CALCULATOR(TfLiteInferenceCalculator);
     options.usage = tflite::gpu::InferenceUsage::SUSTAINED_SPEED;
     tflite_gpu_runner_ =
         std::make_unique<tflite::gpu::TFLiteGPURunner>(options);
-    return tflite_gpu_runner_->InitializeWithModel(model);
+    return tflite_gpu_runner_->InitializeWithModel(model, op_resolver);
   }
 #endif
 
@@ -730,6 +747,7 @@ REGISTER_CALCULATOR(TfLiteInferenceCalculator);
                                    calculator_opts.delegate().has_xnnpack();
 #endif  // __EMSCRIPTEN__
 
+#if !defined(MEDIAPIPE_EDGE_TPU)
     if (xnnpack_requested) {
       TfLiteXNNPackDelegateOptions xnnpack_opts{};
       xnnpack_opts.num_threads = GetXnnpackNumThreads(calculator_opts);
@@ -738,6 +756,7 @@ REGISTER_CALCULATOR(TfLiteInferenceCalculator);
       RET_CHECK_EQ(interpreter_->ModifyGraphWithDelegate(delegate_.get()),
                    kTfLiteOk);
     }
+#endif  // !EDGETPU
 
     // Return, no need for GPU delegate below.
     return ::mediapipe::OkStatus();

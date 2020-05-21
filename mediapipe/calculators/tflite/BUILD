@@ -198,6 +198,7 @@ cc_test(
 cc_library(
     name = "util",
     hdrs = ["util.h"],
+    visibility = ["//visibility:public"],
     alwayslink = 1,
 )
 
@@ -525,16 +526,16 @@ cc_test(
         ":tflite_converter_calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework:calculator_runner",
-        "//mediapipe/framework/deps:file_path",
+        "//mediapipe/framework/formats:image_format_cc_proto",
+        "//mediapipe/framework/formats:image_frame",
+        "//mediapipe/framework/formats:image_frame_opencv",
         "//mediapipe/framework/formats:matrix",
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/framework/port:integral_types",
         "//mediapipe/framework/port:parse_text_proto",
-        "//mediapipe/framework/port:status",
         "//mediapipe/framework/tool:validate_type",
         "@com_google_absl//absl/memory",
         "@org_tensorflow//tensorflow/lite:framework",
-        "@org_tensorflow//tensorflow/lite/kernels:builtin_ops",
     ],
 )
 

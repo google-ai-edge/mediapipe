@@ -85,9 +85,9 @@ void GlTextureBufferPool::TrimAvailable(
   if (available_.size() > keep) {
     auto trim_it = std::next(available_.begin(), keep);
     if (trimmed) {
-      std::move(available_.begin(), trim_it, std::back_inserter(*trimmed));
+      std::move(trim_it, available_.end(), std::back_inserter(*trimmed));
     }
-    available_.resize(keep);
+    available_.erase(trim_it, available_.end());
   }
 }
 

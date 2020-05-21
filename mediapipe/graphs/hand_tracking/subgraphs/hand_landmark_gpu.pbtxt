@@ -7,6 +7,8 @@ input_stream: "NORM_RECT:hand_rect"
 output_stream: "LANDMARKS:hand_landmarks"
 output_stream: "NORM_RECT:hand_rect_for_next_frame"
 output_stream: "PRESENCE:hand_presence"
+output_stream: "PRESENCE_SCORE:hand_presence_score"
+output_stream: "HANDEDNESS:handedness"
 
 # Crops the rectangle that contains a hand from the input image.
 node {
@@ -38,6 +40,18 @@ node: {
   }
 }
 
+# Generates a single side packet containing a TensorFlow Lite op resolver that
+# supports custom ops needed by the model used in this graph.
+node {
+  calculator: "TfLiteCustomOpResolverCalculator"
+  output_side_packet: "op_resolver"
+  node_options: {
+    [type.googleapis.com/mediapipe.TfLiteCustomOpResolverCalculatorOptions] {
+      use_gpu: true
+    }
+  }
+}
+
 # Converts the transformed input image on GPU into an image tensor stored as a
 # TfLiteTensor.
 node {
@@ -58,6 +72,7 @@ node {
   calculator: "TfLiteInferenceCalculator"
   input_stream: "TENSORS_GPU:image_tensor"
   output_stream: "TENSORS:output_tensors"
+  input_side_packet: "CUSTOM_OP_RESOLVER:op_resolver"
   node_options: {
     [type.googleapis.com/mediapipe.TfLiteInferenceCalculatorOptions] {
       model_path: "mediapipe/models/hand_landmark.tflite"
@@ -72,10 +87,12 @@ node {
   input_stream: "output_tensors"
   output_stream: "landmark_tensors"
   output_stream: "hand_flag_tensor"
+  output_stream: "handedness_tensor"
   node_options: {
     [type.googleapis.com/mediapipe.SplitVectorCalculatorOptions] {
       ranges: { begin: 0 end: 1 }
       ranges: { begin: 1 end: 2 }
+      ranges: { begin: 2 end: 3 }
     }
   }
 }
@@ -86,6 +103,21 @@ node {
   calculator: "TfLiteTensorsToFloatsCalculator"
   input_stream: "TENSORS:hand_flag_tensor"
   output_stream: "FLOAT:hand_presence_score"
+}
+
+# Converts the handedness tensor into a float as the score of the handedness
+# binary classifciation.
+node {
+  calculator: "TfLiteTensorsToClassificationCalculator"
+  input_stream: "TENSORS:handedness_tensor"
+  output_stream: "CLASSIFICATIONS:handedness"
+  node_options: {
+    [type.googleapis.com/mediapipe.TfLiteTensorsToClassificationCalculatorOptions] {
+      top_k: 1
+      label_map_path: "mediapipe/models/handedness.txt"
+      binary_classification: true
+    }
+  }
 }
 
 # Applies a threshold to the confidence score to determine whether a hand is
@@ -143,33 +175,46 @@ node {
   output_stream: "SIZE:image_size"
 }
 
-# Converts hand landmarks to a detection that tightly encloses all landmarks.
+# Extracts a subset of the hand landmarks that are relatively more stable across
+# frames (e.g. comparing to finger tips) for computing the bounding box. The box
+# will later be expanded to contain the entire hand. In this approach, it is
+# more robust to drastically changing hand size.
+# The landmarks extracted are: wrist, MCP/PIP of five fingers.
 node {
-  calculator: "LandmarksToDetectionCalculator"
-  input_stream: "NORM_LANDMARKS:hand_landmarks"
-  output_stream: "DETECTION:hand_detection"
-}
-
-# Converts the hand detection into a rectangle (normalized by image size)
-# that encloses the hand and is rotated such that the line connecting center of
-# the wrist and MCP of the middle finger is aligned with the Y-axis of the
-# rectangle.
-node {
-  calculator: "DetectionsToRectsCalculator"
-  input_stream: "DETECTION:hand_detection"
-  input_stream: "IMAGE_SIZE:image_size"
-  output_stream: "NORM_RECT:hand_rect_from_landmarks"
+  calculator: "SplitNormalizedLandmarkListCalculator"
+  input_stream: "hand_landmarks"
+  output_stream: "partial_landmarks"
   node_options: {
-    [type.googleapis.com/mediapipe.DetectionsToRectsCalculatorOptions] {
-      rotation_vector_start_keypoint_index: 0  # Center of wrist.
-      rotation_vector_end_keypoint_index: 9  # MCP of middle finger.
-      rotation_vector_target_angle_degrees: 90
+    [type.googleapis.com/mediapipe.SplitVectorCalculatorOptions] {
+      ranges: { begin: 0 end: 4 }
+      ranges: { begin: 5 end: 7 }
+      ranges: { begin: 9 end: 11 }
+      ranges: { begin: 13 end: 15 }
+      ranges: { begin: 17 end: 19 }
+      combine_outputs: true
     }
   }
 }
 
-# Expands the hand rectangle so that in the next video frame it's likely to
-# still contain the hand even with some motion.
+# Converts hand landmarks to a detection that tightly encloses all landmarks.
+node {
+  calculator: "LandmarksToDetectionCalculator"
+  input_stream: "NORM_LANDMARKS:partial_landmarks"
+  output_stream: "DETECTION:hand_detection"
+}
+
+# Converts the hand detection into a rectangle (normalized by image size)
+# that encloses the hand.
+node {
+  calculator: "HandDetectionsToRectsCalculator"
+  input_stream: "DETECTION:hand_detection"
+  input_stream: "IMAGE_SIZE:image_size"
+  output_stream: "NORM_RECT:hand_rect_from_landmarks"
+}
+
+# Expands the hand rectangle so that the box contains the entire hand and it's
+# big enough so that it's likely to still contain the hand even with some motion
+# in the next video frame .
 node {
   calculator: "RectTransformationCalculator"
   input_stream: "NORM_RECT:hand_rect_from_landmarks"
@@ -177,8 +222,9 @@ node {
   output_stream: "hand_rect_for_next_frame"
   node_options: {
     [type.googleapis.com/mediapipe.RectTransformationCalculatorOptions] {
-      scale_x: 1.6
-      scale_y: 1.6
+      scale_x: 2.1
+      scale_y: 2.1
+      shift_y: -0.1
       square_long: true
     }
   }

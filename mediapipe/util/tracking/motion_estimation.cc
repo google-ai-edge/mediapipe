@@ -1811,7 +1811,7 @@ class TrackFilterInvoker {
 void MotionEstimation::MinFilterIrlsWeightByTrack(
     SingleTrackClipData* clip_data) const {
   // Gather irls weights for each track.
-  std::unordered_map<int, std::vector<float>> track_weights;
+  absl::node_hash_map<int, std::vector<float>> track_weights;
 
   const int num_frames = clip_data->feature_lists->size();
   for (int f = 0; f < num_frames; ++f) {

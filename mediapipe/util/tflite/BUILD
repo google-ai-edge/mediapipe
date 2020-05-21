@@ -101,5 +101,5 @@ cc_library(
             "@org_tensorflow//tensorflow/lite/delegates/gpu/common:model",
             "@org_tensorflow//tensorflow/lite/delegates/gpu/gl:api2",
         ],
-    }),
+    }) + ["@org_tensorflow//tensorflow/lite/core/api"],
 )

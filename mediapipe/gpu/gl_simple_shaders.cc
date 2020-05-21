@@ -57,13 +57,17 @@ namespace mediapipe {
 
 // Note: on systems where highp precision for floats is not supported (look up
 // GL_FRAGMENT_PRECISION_HIGH), we replace it with mediump.
-#define FRAGMENT_PREAMBLE                             \
-  PRECISION_COMPAT                                    \
-  "#if __VERSION__ < 130\n"                           \
-  "#define in varying\n"                              \
-  "#if GL_ES && !GL_FRAGMENT_PRECISION_HIGH\n"        \
-  "#define highp mediump\n"                           \
-  "#endif  // GL_ES && !GL_FRAGMENT_PRECISION_HIGH\n" \
+// gl_FragColor is re-defined to 'frag_out' when using 3.20 Core (GLSL 330+).
+#define FRAGMENT_PREAMBLE                                        \
+  PRECISION_COMPAT                                               \
+  "#if __VERSION__ < 130\n"                                      \
+  "#define in varying\n"                                         \
+  "#if defined(GL_ES) && !defined(GL_FRAGMENT_PRECISION_HIGH)\n" \
+  "#define highp mediump\n"                                      \
+  "#endif  // GL_ES && !GL_FRAGMENT_PRECISION_HIGH\n"            \
+  "#elif __VERSION__ > 320 && !defined(GL_ES)\n"                 \
+  "out vec4 frag_out; \n"                                        \
+  "#define gl_FragColor frag_out\n"                              \
   "#endif  // __VERSION__ < 130\n"
 
 const GLchar* const kMediaPipeVertexShaderPreamble = VERTEX_PREAMBLE;

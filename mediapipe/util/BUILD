@@ -141,6 +141,7 @@ cc_library(
         "//mediapipe/framework/formats:image_frame_opencv",
         "//mediapipe/framework/formats:yuv_image",
         "//mediapipe/framework/port",
+        "//mediapipe/framework/port:aligned_malloc_and_free",
         "//mediapipe/framework/port:integral_types",
         "//mediapipe/framework/port:logging",
         "//mediapipe/framework/port:opencv_imgproc",
@@ -231,7 +232,7 @@ cc_library(
             "@org_tensorflow//tensorflow/core:framework",
         ],
         "//mediapipe:android": [
-            "@org_tensorflow//tensorflow/core:android_tensorflow_lib_lite",
+            "@org_tensorflow//tensorflow/core:portable_tensorflow_lib_lite",
         ],
     }),
 )

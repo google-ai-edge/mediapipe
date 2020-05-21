@@ -1,6 +1,6 @@
 # MediaPipe graph that performs GPU Sobel edge detection on a live video stream.
 # Used in the examples in
-# mediapipe/examples/android/src/java/com/mediapipe/apps/edgedetectiongpu and
+# mediapipe/examples/android/src/java/com/mediapipe/apps/skeleton and
 # mediapipe/examples/ios/edgedetectiongpu.
 
 # Images coming into and out of the graph.

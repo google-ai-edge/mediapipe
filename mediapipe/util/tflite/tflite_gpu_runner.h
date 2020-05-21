@@ -21,6 +21,7 @@
 
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/port/statusor.h"
+#include "tensorflow/lite/core/api/op_resolver.h"
 #include "tensorflow/lite/delegates/gpu/api.h"
 #include "tensorflow/lite/delegates/gpu/common/model.h"
 #include "tensorflow/lite/delegates/gpu/gl/api2.h"
@@ -49,7 +50,8 @@ class TFLiteGPURunner {
       : options_(options) {}
 
   mediapipe::Status InitializeWithModel(
-      const tflite::FlatBufferModel& flatbuffer);
+      const tflite::FlatBufferModel& flatbuffer,
+      const tflite::OpResolver& op_resolver);
   mediapipe::Status BindSSBOToInputTensor(GLuint ssbo_id, int input_id);
   mediapipe::Status BindSSBOToOutputTensor(GLuint ssbo_id, int output_id);
 

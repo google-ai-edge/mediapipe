@@ -51,11 +51,13 @@
     _videoPlayer = [AVPlayer playerWithPlayerItem:_videoItem];
     _videoPlayer.actionAtItemEnd = AVPlayerActionAtItemEndNone;
     NSNotificationCenter* center = [NSNotificationCenter defaultCenter];
+
+    __weak typeof(self) weakSelf = self;
     _videoEndObserver = [center addObserverForName:AVPlayerItemDidPlayToEndTimeNotification
                                             object:_videoItem
                                              queue:nil
                                         usingBlock:^(NSNotification* note) {
-                                          [self playerItemDidPlayToEnd:note];
+                                          [weakSelf playerItemDidPlayToEnd:note];
                                         }];
   }
   return self;

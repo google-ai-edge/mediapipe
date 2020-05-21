@@ -26,8 +26,12 @@ namespace {
 
 float CalculateScale(float min_scale, float max_scale, int stride_index,
                      int num_strides) {
-  return min_scale +
-         (max_scale - min_scale) * 1.0 * stride_index / (num_strides - 1.0f);
+  if (num_strides == 1) {
+    return (min_scale + max_scale) * 0.5f;
+  } else {
+    return min_scale +
+           (max_scale - min_scale) * 1.0 * stride_index / (num_strides - 1.0f);
+  }
 }
 
 }  // namespace
@@ -114,7 +118,7 @@ REGISTER_CALCULATOR(SsdAnchorsCalculator);
   }
 
   int layer_id = 0;
-  while (layer_id < options.strides_size()) {
+  while (layer_id < options.num_layers()) {
     std::vector<float> anchor_height;
     std::vector<float> anchor_width;
     std::vector<float> aspect_ratios;

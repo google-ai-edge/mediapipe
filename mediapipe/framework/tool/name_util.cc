@@ -94,5 +94,30 @@ std::string CanonicalNodeName(const CalculatorGraphConfig& graph_config,
   return absl::StrCat(node_name, "_", sequence + 1);
 }
 
+std::string ParseNameFromStream(const std::string& stream) {
+  std::string tag, name;
+  int index;
+  MEDIAPIPE_CHECK_OK(tool::ParseTagIndexName(stream, &tag, &index, &name));
+  return name;
+}
+
+std::pair<std::string, int> ParseTagIndexFromStream(const std::string& stream) {
+  std::string tag, name;
+  int index;
+  MEDIAPIPE_CHECK_OK(tool::ParseTagIndexName(stream, &tag, &index, &name));
+  return {tag, index};
+}
+
+std::string CatTag(const std::string& tag, int index) {
+  return absl::StrCat(tag, index <= 0 ? "" : absl::StrCat(":", index));
+}
+
+std::string CatStream(const std::pair<std::string, int>& tag_index,
+                      const std::string& name) {
+  std::string tag = CatTag(tag_index.first, tag_index.second);
+  tag = tag.empty() ? tag : absl::StrCat(tag, ":");
+  return absl::StrCat(tag, name);
+}
+
 }  // namespace tool
 }  // namespace mediapipe

@@ -392,19 +392,26 @@ REGISTER_CALCULATOR(ImageTransformationCalculator);
   }
 
   cv::Mat scaled_mat;
+  int output_width = output_width_;
+  int output_height = output_height_;
   if (scale_mode_ == mediapipe::ScaleMode_Mode_STRETCH) {
-    cv::resize(input_mat, scaled_mat, cv::Size(output_width_, output_height_));
+    int scale_flag =
+        input_mat.cols > output_width_ && input_mat.rows > output_height_
+            ? cv::INTER_AREA
+            : cv::INTER_LINEAR;
+    cv::resize(input_mat, scaled_mat, cv::Size(output_width_, output_height_),
+               0, 0, scale_flag);
   } else {
     const float scale =
         std::min(static_cast<float>(output_width_) / input_width,
                  static_cast<float>(output_height_) / input_height);
     const int target_width = std::round(input_width * scale);
     const int target_height = std::round(input_height * scale);
-
+    int scale_flag = scale < 1.0f ? cv::INTER_AREA : cv::INTER_LINEAR;
     if (scale_mode_ == mediapipe::ScaleMode_Mode_FIT) {
       cv::Mat intermediate_mat;
       cv::resize(input_mat, intermediate_mat,
-                 cv::Size(target_width, target_height));
+                 cv::Size(target_width, target_height), 0, 0, scale_flag);
       const int top = (output_height_ - target_height) / 2;
       const int bottom = output_height_ - target_height - top;
       const int left = (output_width_ - target_width) / 2;
@@ -413,16 +420,13 @@ REGISTER_CALCULATOR(ImageTransformationCalculator);
                          options_.constant_padding() ? cv::BORDER_CONSTANT
                                                      : cv::BORDER_REPLICATE);
     } else {
-      cv::resize(input_mat, scaled_mat, cv::Size(target_width, target_height));
-      output_width_ = target_width;
-      output_height_ = target_height;
+      cv::resize(input_mat, scaled_mat, cv::Size(target_width, target_height),
+                 0, 0, scale_flag);
+      output_width = target_width;
+      output_height = target_height;
     }
   }
 
-  int output_width;
-  int output_height;
-  ComputeOutputDimensions(input_width, input_height, &output_width,
-                          &output_height);
   if (cc->Outputs().HasTag("LETTERBOX_PADDING")) {
     auto padding = absl::make_unique<std::array<float, 4>>();
     ComputeOutputLetterboxPadding(input_width, input_height, output_width,

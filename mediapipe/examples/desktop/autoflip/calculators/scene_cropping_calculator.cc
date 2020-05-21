@@ -491,13 +491,13 @@ void SceneCroppingCalculator::FilterKeyFrameInfo() {
 
   // Formats and outputs cropped frames.
   bool apply_padding = false;
-  float vertical_fill_precent;
+  float vertical_fill_percent;
   std::vector<cv::Rect> render_to_locations;
-  cv::Scalar padding_color;
+  std::vector<cv::Scalar> padding_colors;
   if (should_perform_frame_cropping_) {
     MP_RETURN_IF_ERROR(FormatAndOutputCroppedFrames(
-        cropped_frames, &render_to_locations, &apply_padding, &padding_color,
-        &vertical_fill_precent, cc));
+        cropped_frames, &render_to_locations, &apply_padding, &padding_colors,
+        &vertical_fill_percent, cc));
   }
   // Caches prior FocusPointFrames if this was not the end of a scene.
   prior_focus_point_frames_.clear();
@@ -534,7 +534,7 @@ void SceneCroppingCalculator::FilterKeyFrameInfo() {
     for (int i = 0; i < scene_frame_timestamps_.size(); i++) {
       auto external_render_message = absl::make_unique<ExternalRenderFrame>();
       ConstructExternalRenderMessage(
-          crop_from_locations[i], render_to_locations[i], padding_color,
+          crop_from_locations[i], render_to_locations[i], padding_colors[i],
           scene_frame_timestamps_[i], external_render_message.get());
       cc->Outputs()
           .Tag(kExternalRenderingPerFrame)
@@ -547,7 +547,7 @@ void SceneCroppingCalculator::FilterKeyFrameInfo() {
     for (int i = 0; i < scene_frame_timestamps_.size(); i++) {
       ExternalRenderFrame render_frame;
       ConstructExternalRenderMessage(crop_from_locations[i],
-                                     render_to_locations[i], padding_color,
+                                     render_to_locations[i], padding_colors[i],
                                      scene_frame_timestamps_[i], &render_frame);
       external_render_list_->push_back(render_frame);
     }
@@ -565,7 +565,7 @@ void SceneCroppingCalculator::FilterKeyFrameInfo() {
 ::mediapipe::Status SceneCroppingCalculator::FormatAndOutputCroppedFrames(
     const std::vector<cv::Mat>& cropped_frames,
     std::vector<cv::Rect>* render_to_locations, bool* apply_padding,
-    cv::Scalar* padding_color, float* vertical_fill_precent,
+    std::vector<cv::Scalar>* padding_colors, float* vertical_fill_percent,
     CalculatorContext* cc) {
   RET_CHECK(apply_padding) << "Has padding boolean is null.";
   if (cropped_frames.empty()) {
@@ -589,7 +589,7 @@ void SceneCroppingCalculator::FilterKeyFrameInfo() {
   if (scaled_height - target_height_ <= 1) scaled_height = target_height_;
   *apply_padding =
       scaled_width != target_width_ || scaled_height != target_height_;
-  *vertical_fill_precent = scaled_height / static_cast<float>(target_height_);
+  *vertical_fill_percent = scaled_height / static_cast<float>(target_height_);
   if (*apply_padding) {
     padder_ = absl::make_unique<PaddingEffectGenerator>(
         scaled_width, scaled_height, target_aspect_ratio_);
@@ -616,6 +616,8 @@ void SceneCroppingCalculator::FilterKeyFrameInfo() {
   cv::Scalar* background_color = nullptr;
   cv::Scalar interpolated_color;
   for (int i = 0; i < num_frames; ++i) {
+    // Set default padding color to white.
+    cv::Scalar padding_color_to_add = cv::Scalar(255, 255, 255);
     const int64 time_ms = scene_frame_timestamps_[i];
     const Timestamp timestamp(time_ms);
     auto scaled_frame = absl::make_unique<ImageFrame>(
@@ -649,6 +651,7 @@ void SceneCroppingCalculator::FilterKeyFrameInfo() {
         interpolated_color =
             cv::Scalar(std::round(k[0]), std::round(k[1]), std::round(k[2]));
         background_color = &interpolated_color;
+        padding_color_to_add = interpolated_color;
       }
       auto padded_frame = absl::make_unique<ImageFrame>();
       MP_RETURN_IF_ERROR(padder_->Process(
@@ -667,6 +670,7 @@ void SceneCroppingCalculator::FilterKeyFrameInfo() {
           .Tag(kOutputCroppedFrames)
           .Add(scaled_frame.release(), timestamp);
     }
+    padding_colors->push_back(padding_color_to_add);
   }
   return ::mediapipe::OkStatus();
 }

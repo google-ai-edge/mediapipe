@@ -24,7 +24,7 @@
   AVCaptureSession* _session;
   AVCaptureDeviceInput* _videoDeviceInput;
   AVCaptureVideoDataOutput* _videoDataOutput;
-  AVCaptureDepthDataOutput* _depthDataOutput;
+  AVCaptureDepthDataOutput* _depthDataOutput API_AVAILABLE(ios(11.0));
   AVCaptureDevice* _currentDevice;
 
   matrix_float3x3 _cameraIntrinsicMatrix;
@@ -177,11 +177,14 @@
     [_session removeInput:_videoDeviceInput];
   }
 
+  AVCaptureDeviceType deviceType = AVCaptureDeviceTypeBuiltInWideAngleCamera;
+  if (@available(iOS 11.1, *)) {
+    if (_cameraPosition == AVCaptureDevicePositionFront && _useDepth) {
+      deviceType = AVCaptureDeviceTypeBuiltInTrueDepthCamera;
+    }
+  }
   AVCaptureDeviceDiscoverySession* deviceDiscoverySession = [AVCaptureDeviceDiscoverySession
-      discoverySessionWithDeviceTypes:@[ _cameraPosition == AVCaptureDevicePositionFront &&
-                                                 _useDepth
-                                             ? AVCaptureDeviceTypeBuiltInTrueDepthCamera
-                                             : AVCaptureDeviceTypeBuiltInWideAngleCamera ]
+      discoverySessionWithDeviceTypes:@[ deviceType ]
                             mediaType:AVMediaTypeVideo
                              position:_cameraPosition];
   AVCaptureDevice* videoDevice =
@@ -216,22 +219,25 @@
     [_session removeOutput:_depthDataOutput];
   }
 
-  if (_useDepth) {
-    // Add Depth Output
-    _depthDataOutput = [[AVCaptureDepthDataOutput alloc] init];
-    _depthDataOutput.alwaysDiscardsLateDepthData = YES;
-    if ([_session canAddOutput:_depthDataOutput]) {
-      [_session addOutput:_depthDataOutput];
+  if (@available(iOS 11.1, *)) {
+    if (_useDepth) {
+      // Add Depth Output
+      _depthDataOutput = [[AVCaptureDepthDataOutput alloc] init];
+      _depthDataOutput.alwaysDiscardsLateDepthData = YES;
+      if ([_session canAddOutput:_depthDataOutput]) {
+        [_session addOutput:_depthDataOutput];
 
-      AVCaptureConnection* connection =
-          [_depthDataOutput connectionWithMediaType:AVMediaTypeDepthData];
+        AVCaptureConnection* connection =
+            [_depthDataOutput connectionWithMediaType:AVMediaTypeDepthData];
 
-      // Set this when we have a handler.
-      if (self.delegateQueue) {
-        [_depthDataOutput setDelegate:self callbackQueue:self.delegateQueue];
+        // Set this when we have a handler.
+        if (self.delegateQueue) {
+          [_depthDataOutput setDelegate:self callbackQueue:self.delegateQueue];
+        }
+      } else {
+        _depthDataOutput = nil;
       }
-    } else
-      _depthDataOutput = nil;
+    }
   }
 
   if (_useCustomOrientation) {
@@ -239,7 +245,7 @@
     connection.videoOrientation = _orientation;
   }
 
-  {
+  if (@available(iOS 11.0, *)) {
     AVCaptureConnection* connection = [_videoDataOutput connectionWithMediaType:AVMediaTypeVideo];
     if ([connection isCameraIntrinsicMatrixDeliverySupported]) {
       [connection setCameraIntrinsicMatrixDeliveryEnabled:YES];
@@ -265,18 +271,20 @@
 - (void)captureOutput:(AVCaptureOutput*)captureOutput
     didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer
            fromConnection:(AVCaptureConnection*)connection {
-  if (!_didReadCameraIntrinsicMatrix) {
-    // Get camera intrinsic matrix.
-    CFTypeRef cameraIntrinsicData =
-        CMGetAttachment(sampleBuffer, kCMSampleBufferAttachmentKey_CameraIntrinsicMatrix, nil);
-    if (cameraIntrinsicData != nil) {
-      CFDataRef cfdr = (CFDataRef)cameraIntrinsicData;
-      matrix_float3x3* intrinsicMatrix = (matrix_float3x3*)(CFDataGetBytePtr(cfdr));
-      if (intrinsicMatrix != nil) {
-        _cameraIntrinsicMatrix = *intrinsicMatrix;
+  if (@available(iOS 11.0, *)) {
+    if (!_didReadCameraIntrinsicMatrix) {
+      // Get camera intrinsic matrix.
+      CFTypeRef cameraIntrinsicData =
+          CMGetAttachment(sampleBuffer, kCMSampleBufferAttachmentKey_CameraIntrinsicMatrix, nil);
+      if (cameraIntrinsicData != nil) {
+        CFDataRef cfdr = (CFDataRef)cameraIntrinsicData;
+        matrix_float3x3* intrinsicMatrix = (matrix_float3x3*)(CFDataGetBytePtr(cfdr));
+        if (intrinsicMatrix != nil) {
+          _cameraIntrinsicMatrix = *intrinsicMatrix;
+        }
       }
+      _didReadCameraIntrinsicMatrix = YES;
     }
-    _didReadCameraIntrinsicMatrix = YES;
   }
   CVPixelBufferRef imageBuffer = CMSampleBufferGetImageBuffer(sampleBuffer);
   CMTime timestamp = CMSampleBufferGetPresentationTimeStamp(sampleBuffer);
@@ -293,7 +301,7 @@
 - (void)depthDataOutput:(AVCaptureDepthDataOutput*)output
      didOutputDepthData:(AVDepthData*)depthData
               timestamp:(CMTime)timestamp
-             connection:(AVCaptureConnection*)connection {
+             connection:(AVCaptureConnection*)connection API_AVAILABLE(ios(11.0)) {
   if (depthData.depthDataType != kCVPixelFormatType_DepthFloat32) {
     depthData = [depthData depthDataByConvertingToDepthDataType:kCVPixelFormatType_DepthFloat32];
   }

@@ -70,12 +70,15 @@ mediapipe_simple_subgraph(
     graph = "hand_landmark_cpu.pbtxt",
     register_as = "HandLandmarkSubgraph",
     deps = [
+        "//mediapipe/calculators/core:split_normalized_landmark_list_calculator",
         "//mediapipe/calculators/core:split_vector_calculator",
         "//mediapipe/calculators/image:image_cropping_calculator",
         "//mediapipe/calculators/image:image_properties_calculator",
         "//mediapipe/calculators/image:image_transformation_calculator",
         "//mediapipe/calculators/tflite:tflite_converter_calculator",
+        "//mediapipe/calculators/tflite:tflite_custom_op_resolver_calculator",
         "//mediapipe/calculators/tflite:tflite_inference_calculator",
+        "//mediapipe/calculators/tflite:tflite_tensors_to_classification_calculator",
         "//mediapipe/calculators/tflite:tflite_tensors_to_floats_calculator",
         "//mediapipe/calculators/tflite:tflite_tensors_to_landmarks_calculator",
         "//mediapipe/calculators/util:detections_to_rects_calculator",
@@ -85,6 +88,7 @@ mediapipe_simple_subgraph(
         "//mediapipe/calculators/util:landmarks_to_render_data_calculator",
         "//mediapipe/calculators/util:rect_transformation_calculator",
         "//mediapipe/calculators/util:thresholding_calculator",
+        "//mediapipe/graphs/hand_tracking/calculators:hand_detections_to_rects_calculator",
     ],
 )
 
@@ -107,6 +111,7 @@ mediapipe_simple_subgraph(
     deps = [
         "//mediapipe/calculators/util:annotation_overlay_calculator",
         "//mediapipe/calculators/util:detections_to_render_data_calculator",
+        "//mediapipe/calculators/util:labels_to_render_data_calculator",
         "//mediapipe/calculators/util:landmarks_to_render_data_calculator",
         "//mediapipe/calculators/util:rect_to_render_data_calculator",
     ],
@@ -174,12 +179,15 @@ mediapipe_simple_subgraph(
     graph = "hand_landmark_gpu.pbtxt",
     register_as = "HandLandmarkSubgraph",
     deps = [
+        "//mediapipe/calculators/core:split_normalized_landmark_list_calculator",
         "//mediapipe/calculators/core:split_vector_calculator",
         "//mediapipe/calculators/image:image_cropping_calculator",
         "//mediapipe/calculators/image:image_properties_calculator",
         "//mediapipe/calculators/image:image_transformation_calculator",
         "//mediapipe/calculators/tflite:tflite_converter_calculator",
+        "//mediapipe/calculators/tflite:tflite_custom_op_resolver_calculator",
         "//mediapipe/calculators/tflite:tflite_inference_calculator",
+        "//mediapipe/calculators/tflite:tflite_tensors_to_classification_calculator",
         "//mediapipe/calculators/tflite:tflite_tensors_to_floats_calculator",
         "//mediapipe/calculators/tflite:tflite_tensors_to_landmarks_calculator",
         "//mediapipe/calculators/util:detections_to_rects_calculator",
@@ -188,6 +196,7 @@ mediapipe_simple_subgraph(
         "//mediapipe/calculators/util:landmarks_to_detection_calculator",
         "//mediapipe/calculators/util:rect_transformation_calculator",
         "//mediapipe/calculators/util:thresholding_calculator",
+        "//mediapipe/graphs/hand_tracking/calculators:hand_detections_to_rects_calculator",
     ],
 )
 
@@ -210,6 +219,7 @@ mediapipe_simple_subgraph(
     deps = [
         "//mediapipe/calculators/util:annotation_overlay_calculator",
         "//mediapipe/calculators/util:detections_to_render_data_calculator",
+        "//mediapipe/calculators/util:labels_to_render_data_calculator",
         "//mediapipe/calculators/util:landmarks_to_render_data_calculator",
         "//mediapipe/calculators/util:rect_to_render_data_calculator",
     ],

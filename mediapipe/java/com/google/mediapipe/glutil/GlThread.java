@@ -34,7 +34,8 @@ public class GlThread extends Thread {
   private static final String TAG = "GlThread";
   private static final String THREAD_NAME = "mediapipe.glutil.GlThread";
 
-  private boolean ready;
+  private boolean doneStarting;
+  private boolean startedSuccessfully;
   private final Object startLock = new Object();
 
   protected volatile EglManager eglManager;
@@ -118,30 +119,33 @@ public class GlThread extends Thread {
 
   @Override
   public void run() {
-    Looper.prepare();
-    handler = createHandler();
-    looper = Looper.myLooper();
+    try {
+      Looper.prepare();
+      handler = createHandler();
+      looper = Looper.myLooper();
 
-    Log.d(TAG, String.format("Starting GL thread %s", getName()));
+      Log.d(TAG, String.format("Starting GL thread %s", getName()));
 
-    prepareGl();
-
-    synchronized (startLock) {
-      ready = true;
-      startLock.notify();  // signal waitUntilReady()
+      prepareGl();
+      startedSuccessfully = true;
+    } finally {
+      // Always stop waitUntilReady here, even if we got an exception.
+      // Otherwise the main thread may be stuck waiting.
+      synchronized (startLock) {
+        doneStarting = true;
+        startLock.notify(); // signal waitUntilReady()
+      }
     }
 
-    Looper.loop();
+    try {
+      Looper.loop();
+    } finally {
+      looper = null;
 
-    looper = null;
+      releaseGl();
+      eglManager.release();
 
-    releaseGl();
-    eglManager.release();
-
-    Log.d(TAG, String.format("Stopping GL thread %s", getName()));
-
-    synchronized (startLock) {
-      ready = false;
+      Log.d(TAG, String.format("Stopping GL thread %s", getName()));
     }
   }
 
@@ -156,8 +160,9 @@ public class GlThread extends Thread {
 
   /**
    * Waits until the thread has finished setting up the handler and invoking {@link prepareGl}.
+   * Returns true if no exceptions were raised during the process.
    */
-  public void waitUntilReady() throws InterruptedException {
+  public boolean waitUntilReady() throws InterruptedException {
     // We wait in a loop to deal with spurious wakeups. However, we do not
     // catch the InterruptedException, because we have no way of knowing what
     // the application expects. On one hand, the called expects the thread to
@@ -166,10 +171,11 @@ public class GlThread extends Thread {
     // not want it to continue execution. We have no choice but to propagate
     // the exception and let the caller make the decision.
     synchronized (startLock) {
-      while (!ready) {
+      while (!doneStarting) {
         startLock.wait();
       }
     }
+    return startedSuccessfully;
   }
 
   /** Sets up the OpenGL context. Can be overridden to set up additional resources. */

@@ -159,6 +159,8 @@ import functools
 import numpy as np
 from mediapipe.util.sequence import media_sequence_util as msu
 
+_HAS_DYNAMIC_ATTRIBUTES = True
+
 ##################################  METADATA  #################################
 # A unique identifier for each example.
 EXAMPLE_ID_KEY = "example/id"

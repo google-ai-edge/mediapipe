@@ -76,7 +76,9 @@ Search MediaPipe Github repository using [Google Open Source code search](https:
 * [Google Industry Workshop at ICIP 2019](http://2019.ieeeicip.org/?action=page4&id=14#Google) [Presentation](https://docs.google.com/presentation/d/e/2PACX-1vRIBBbO_LO9v2YmvbHHEt1cwyqH6EjDxiILjuT0foXy1E7g6uyh4CesB2DkkEwlRDO9_lWfuKMZx98T/pub?start=false&loop=false&delayms=3000&slide=id.g556cc1a659_0_5) on Sept 24 in Taipei, Taiwan
 * [Open sourced at CVPR 2019](https://sites.google.com/corp/view/perception-cv4arvr/mediapipe) on June 17~20 in Long Beach, CA
 
-## Community forum
+## Community
+*  [Awesome MediaPipe: curation of code related to MediaPipe](https://mediapipe.org)
+*  [Slack community for MediaPipe users](https://mediapipe.slack.com)
 *  [Discuss](https://groups.google.com/forum/#!forum/mediapipe) - General community discussion around MediaPipe
 
 ## Alpha Disclaimer

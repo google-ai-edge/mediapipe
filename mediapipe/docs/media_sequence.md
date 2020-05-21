@@ -78,25 +78,8 @@ process new data sets, in the documentation of
     PYTHONPATH="${PYTHONPATH};"+`pwd`
     ```
 
-    and then you can import the data set in Python.
-
-    ```python
-    import tensorflow as tf
-    from mediapipe.examples.desktop.media_sequence.demo_dataset import DemoDataset
-    demo_data_path = '/tmp/demo_data/'
-    with tf.Graph().as_default():
-       d = DemoDataset(demo_data_path)
-       dataset = d.as_dataset('test')
-       # implement additional processing and batching here
-       dataset_output = dataset.make_one_shot_iterator().get_next()
-       images = dataset_output['images']
-       labels = dataset_output['labels']
-
-       with tf.Session() as sess:
-         images_, labels_ = sess.run([images, labels])
-       print('The shape of images_ is %s' % str(images_.shape))
-       print('The shape of labels_ is %s' % str(labels_.shape))
-    ```
+    and then you can import the data set in Python using
+    [read_demo_dataset.py](mediapipe/examples/desktop/media_sequence/read_demo_dataset.py)
 
 ### Preparing a practical data set
 As an example of processing a practical data set, a similar set of commands will

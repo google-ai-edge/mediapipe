@@ -14,7 +14,11 @@
 
 #include "mediapipe/framework/deps/file_helpers.h"
 
+#ifdef _WIN32
+#include <Windows.h>
+#else
 #include <dirent.h>
+#endif  // _WIN32
 #include <stdio.h>
 #include <string.h>
 #include <sys/stat.h>
@@ -27,6 +31,110 @@
 
 namespace mediapipe {
 namespace file {
+namespace {
+
+// Helper class that returns all entries (files, directories) in a directory,
+// except "." and "..". Example usage:
+//
+// DirectoryListing listing("/tmp");
+// while (listing.HasNextEntry()) {
+//   std::cout << listing.NextEntry() << std::endl;
+// }
+#ifndef _WIN32
+class DirectoryListing {
+ public:
+  explicit DirectoryListing(const std::string& directory) {
+    dir_ = opendir(directory.c_str());
+    if (dir_) {
+      ReadNextEntry();
+    }
+  }
+  ~DirectoryListing() {
+    if (dir_) {
+      closedir(dir_);
+    }
+  }
+
+  // Returns true if another entry in this directory listing is available.
+  bool HasNextEntry() { return dir_ != nullptr && next_entry_ != nullptr; }
+
+  // Returns the next entry in this directory listing and advances to the entry
+  // after the one that is returned, if it exists.
+  std::string NextEntry() {
+    if (HasNextEntry()) {
+      std::string result = std::string(next_entry_->d_name);
+      ReadNextEntry();
+      return result;
+    } else {
+      return std::string();
+    }
+  }
+
+ private:
+  void ReadNextEntry() {
+    next_entry_ = readdir(dir_);
+    while (next_entry_ && (std::string(next_entry_->d_name) == "." ||
+                           std::string(next_entry_->d_name) == "..")) {
+      next_entry_ = readdir(dir_);
+    }
+  }
+
+  DIR* dir_ = nullptr;
+  struct dirent* next_entry_ = nullptr;
+};
+#else
+class DirectoryListing {
+ public:
+  explicit DirectoryListing(const std::string& directory) {
+    directory_ = directory;
+    std::string search_string = directory + "\\*.*";
+    find_handle_ = FindFirstFile(search_string.c_str(), &find_data_);
+  }
+
+  ~DirectoryListing() {
+    if (find_handle_ != INVALID_HANDLE_VALUE) {
+      FindClose(find_handle_);
+    }
+  }
+
+  // Returns true if another entry in this directory listing is available.
+  bool HasNextEntry() { return find_handle_ != INVALID_HANDLE_VALUE; }
+
+  // Returns the next entry in this directory listing and advances to the entry
+  // after the one that is returned, if it exists.
+  std::string NextEntry() {
+    if (HasNextEntry()) {
+      std::string result =
+          std::string(directory_ + "\\" + find_data_.cFileName);
+      ReadNextEntry();
+      return result;
+    } else {
+      return std::string();
+    }
+  }
+
+ private:
+  void ReadNextEntry() {
+    int find_result = FindNextFile(find_handle_, &find_data_);
+    while (find_result != 0 && (std::string(find_data_.cFileName) == "." ||
+                                std::string(find_data_.cFileName) == "..")) {
+      find_result = FindNextFile(find_handle_, &find_data_);
+    }
+
+    if (find_result == 0) {
+      FindClose(find_handle_);
+      find_handle_ = INVALID_HANDLE_VALUE;
+    }
+  }
+
+  std::string directory_;
+  HANDLE find_handle_ = INVALID_HANDLE_VALUE;
+  WIN32_FIND_DATA find_data_;
+};
+#endif  // _WIN32
+
+}  // namespace
+
 ::mediapipe::Status GetContents(absl::string_view file_name,
                                 std::string* output) {
   FILE* fp = fopen(file_name.data(), "r");
@@ -70,62 +178,34 @@ namespace file {
 ::mediapipe::Status MatchInTopSubdirectories(
     const std::string& parent_directory, const std::string& file_name,
     std::vector<std::string>* results) {
-  DIR* dir = opendir(parent_directory.c_str());
-  CHECK(dir);
-  // Iterates through the parent direcotry.
-  while (true) {
-    struct dirent* dir_ent = readdir(dir);
-    if (dir_ent == nullptr) {
-      break;
-    }
-    if (std::string(dir_ent->d_name) == "." ||
-        std::string(dir_ent->d_name) == "..") {
-      continue;
-    }
-    std::string subpath =
-        JoinPath(parent_directory, std::string(dir_ent->d_name));
-    DIR* sub_dir = opendir(subpath.c_str());
-    // Iterates through the subdirecotry to find file matches.
-    while (true) {
-      struct dirent* dir_ent_2 = readdir(sub_dir);
-      if (dir_ent_2 == nullptr) {
-        break;
-      }
-      if (std::string(dir_ent_2->d_name) == "." ||
-          std::string(dir_ent_2->d_name) == "..") {
-        continue;
-      }
-      if (absl::EndsWith(std::string(dir_ent_2->d_name), file_name)) {
-        results->push_back(JoinPath(subpath, std::string(dir_ent_2->d_name)));
+  DirectoryListing parent_listing(parent_directory);
+
+  while (parent_listing.HasNextEntry()) {
+    std::string subdirectory =
+        JoinPath(parent_directory, parent_listing.NextEntry());
+    DirectoryListing subdirectory_listing(subdirectory);
+    while (subdirectory_listing.HasNextEntry()) {
+      std::string next_entry = subdirectory_listing.NextEntry();
+      if (absl::EndsWith(next_entry, file_name)) {
+        results->push_back(JoinPath(subdirectory, next_entry));
       }
     }
-    closedir(sub_dir);
   }
-  closedir(dir);
   return ::mediapipe::OkStatus();
 }
 
 ::mediapipe::Status MatchFileTypeInDirectory(
     const std::string& directory, const std::string& file_suffix,
     std::vector<std::string>* results) {
-  DIR* dir = opendir(directory.c_str());
-  CHECK(dir);
-  // Iterates through the direcotry.
-  while (true) {
-    struct dirent* dir_ent = readdir(dir);
-    if (dir_ent == nullptr) {
-      break;
-    }
-    if (std::string(dir_ent->d_name) == "." ||
-        std::string(dir_ent->d_name) == "..") {
-      continue;
-    }
+  DirectoryListing directory_listing(directory);
 
-    if (absl::EndsWith(std::string(dir_ent->d_name), file_suffix)) {
-      results->push_back(JoinPath(directory, std::string(dir_ent->d_name)));
+  while (directory_listing.HasNextEntry()) {
+    std::string next_entry = directory_listing.NextEntry();
+    if (absl::EndsWith(next_entry, file_suffix)) {
+      results->push_back(JoinPath(directory, next_entry));
     }
   }
-  closedir(dir);
+
   return ::mediapipe::OkStatus();
 }
 

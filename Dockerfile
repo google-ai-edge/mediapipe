@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM ubuntu:latest
+FROM ubuntu:18.04
 
 MAINTAINER <mediapipe@google.com>
 
@@ -25,11 +25,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         build-essential \
         ca-certificates \
         curl \
+        ffmpeg \
         git \
         wget \
         unzip \
-        python \
-        python-pip \
+        python3-dev \
+        python3-opencv \
         python3-pip \
         libopencv-core-dev \
         libopencv-highgui-dev \
@@ -43,9 +44,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-RUN pip install --upgrade setuptools
-RUN pip install future
-RUN pip3 install six
+RUN pip3 install --upgrade setuptools
+RUN pip3 install wheel
+RUN pip3 install future
+RUN pip3 install six==1.14.0
+RUN pip3 install tensorflow==1.14.0
+RUN pip3 install tf_slim
+
+RUN ln -s /usr/bin/python3 /usr/bin/python
 
 # Install bazel
 ARG BAZEL_VERSION=2.0.0

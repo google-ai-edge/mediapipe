@@ -26,7 +26,7 @@ cc_library(
         ],
     ),
     hdrs = glob(["include/opencv2/**/*.h*"]),
-    includes = ["include"],
+    includes = ["include/"],
     linkstatic = 1,
     visibility = ["//visibility:public"],
 )

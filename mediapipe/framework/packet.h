@@ -327,6 +327,8 @@ namespace packet_internal {
 
 template <typename T>
 class Holder;
+template <typename T>
+class ForeignHolder;
 
 class HolderBase {
  public:
@@ -353,10 +355,112 @@ class HolderBase {
   // Downcasts this to Holder<T>.  Returns nullptr if deserialization
   // failed or if the requested type is not what is stored.
   template <typename T>
-  Holder<T>* As();
+  inline Holder<T>* As(
+      typename std::enable_if<
+          (!std::is_base_of<proto_ns::MessageLite, T>::value &&
+           !std::is_base_of<proto_ns::Message, T>::value) ||
+          (std::is_same<proto_ns::MessageLite, T>::value ||
+           std::is_same<proto_ns::Message, T>::value)>::type* = 0) {
+    if (HolderIsOfType<Holder<T>>() || HolderIsOfType<ForeignHolder<T>>()) {
+      return static_cast<Holder<T>*>(this);
+    }
+    // Does not hold a T.
+    return nullptr;
+  }
+
+  // For proto Message/MessageLite subclasses.
+  // When holder data is a concrete proto, the method downcasts this to
+  // Holder<T> if the requested type is what is stored.
+  // When holder data is a generic proto Message/MessageLite and a concrete
+  // proto type T is requested, the method will downcast the HolderBase to
+  // Holder<T> if the proto data is an instance of T.
+  template <typename T>
+  inline Holder<T>* As(
+      typename std::enable_if<
+          (std::is_base_of<proto_ns::MessageLite, T>::value ||
+           std::is_base_of<proto_ns::Message, T>::value) &&
+          (!std::is_same<proto_ns::MessageLite, T>::value &&
+           !std::is_same<proto_ns::Message, T>::value)>::type* = 0) {
+    // Holder data is an instance of subclass type T.
+    if (HolderIsOfType<Holder<T>>() || HolderIsOfType<ForeignHolder<T>>()) {
+      return static_cast<Holder<T>*>(this);
+    }
+
+    // Holder data is a generic proto Message/MessageLite and a subclass type T
+    // is requested.
+    if (HolderIsOfType<Holder<proto_ns::Message>>() ||
+        HolderIsOfType<ForeignHolder<proto_ns::Message>>() ||
+        HolderIsOfType<Holder<proto_ns::MessageLite>>() ||
+        HolderIsOfType<ForeignHolder<proto_ns::MessageLite>>()) {
+      // TODO: Holder<proto_ns::Message/MessageLite> cannot be
+      // legally downcast to Holder<T>, even though that downcast works in
+      // practice. Need to propose a better way to do the downcast.
+      Holder<T>* holder = static_cast<Holder<T>*>(this);
+      T tmp;
+      VLOG(2) << "Holder proto data type: " << holder->data().GetTypeName()
+              << " vs requested proto type: " << tmp.GetTypeName();
+      if (tmp.GetTypeName() == holder->data().GetTypeName()) {
+        return holder;
+      }
+    }
+
+    // Does not hold a T.
+    return nullptr;
+  }
+
   // Same as non-const As() function.
   template <typename T>
-  const Holder<T>* As() const;
+  inline const Holder<T>* As(
+      typename std::enable_if<
+          (!std::is_base_of<proto_ns::MessageLite, T>::value &&
+           !std::is_base_of<proto_ns::Message, T>::value) ||
+          (std::is_same<proto_ns::MessageLite, T>::value ||
+           std::is_same<proto_ns::Message, T>::value)>::type* = 0) const {
+    if (HolderIsOfType<Holder<T>>() || HolderIsOfType<ForeignHolder<T>>()) {
+      return static_cast<const Holder<T>*>(this);
+    }
+    // Does not hold a T.
+    return nullptr;
+  }
+
+  // For proto Message/MessageLite subclasses.
+  // When holder data is a concrete proto, the method downcasts this to
+  // Holder<T> if the requested type is what is stored.
+  // When holder data is a generic proto Message/MessageLite and a concrete
+  // proto type T is requested, the method will downcast the HolderBase to
+  // Holder<T> if the proto data is an instance of T.
+  template <typename T>
+  inline const Holder<T>* As(
+      typename std::enable_if<
+          (std::is_base_of<proto_ns::MessageLite, T>::value ||
+           std::is_base_of<proto_ns::Message, T>::value) &&
+          (!std::is_same<proto_ns::MessageLite, T>::value &&
+           !std::is_same<proto_ns::Message, T>::value)>::type* = 0) const {
+    if (HolderIsOfType<Holder<T>>() || HolderIsOfType<ForeignHolder<T>>()) {
+      return static_cast<const Holder<T>*>(this);
+    }
+
+    // Holder data is a generic proto Message/MessageLite and a subclass type T
+    // is requested.
+    if (HolderIsOfType<Holder<proto_ns::Message>>() ||
+        HolderIsOfType<ForeignHolder<proto_ns::Message>>() ||
+        HolderIsOfType<Holder<proto_ns::MessageLite>>() ||
+        HolderIsOfType<ForeignHolder<proto_ns::MessageLite>>()) {
+      // TODO: Holder<proto_ns::Message/MessageLite> cannot be
+      // legally downcast to Holder<T>, even though that downcast works in
+      // practice. Need to propose a better way to do the downcast.
+      Holder<T>* holder = static_cast<const Holder<T>*>(this);
+      T tmp;
+      VLOG(2) << "Holder proto data type: " << holder->data().GetTypeName()
+              << " vs requested proto type: " << tmp.GetTypeName();
+      if (tmp.GetTypeName() == holder->data().GetTypeName()) {
+        return holder;
+      }
+    }
+
+    // Does not hold a T.
+    return nullptr;
+  }
 
   // Returns the pointer to MessageLite type for the data in holder, if
   // underlying object is protocol buffer type, otherwise, nullptr is returned.
@@ -517,24 +621,6 @@ class ForeignHolder : public Holder<T> {
         "Foreign holder can't release data ptr without ownership.");
   }
 };
-
-template <typename T>
-Holder<T>* HolderBase::As() {
-  if (HolderIsOfType<Holder<T>>() || HolderIsOfType<ForeignHolder<T>>()) {
-    return static_cast<Holder<T>*>(this);
-  }
-  // Does not hold a T.
-  return nullptr;
-}
-
-template <typename T>
-const Holder<T>* HolderBase::As() const {
-  if (HolderIsOfType<Holder<T>>() || HolderIsOfType<ForeignHolder<T>>()) {
-    return static_cast<const Holder<T>*>(this);
-  }
-  // Does not hold a T.
-  return nullptr;
-}
 
 }  // namespace packet_internal
 

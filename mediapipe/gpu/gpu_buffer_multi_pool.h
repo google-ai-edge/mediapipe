@@ -102,7 +102,8 @@ class GpuBufferMultiPool {
   typedef std::shared_ptr<GlTextureBufferPool> SimplePool;
 #endif  // MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
 
-  SimplePool MakeSimplePool(BufferSpec spec);
+  SimplePool MakeSimplePool(const BufferSpec& spec);
+  SimplePool GetSimplePool(const BufferSpec& key);
   GpuBuffer GetBufferFromSimplePool(BufferSpec spec, const SimplePool& pool);
 
   absl::Mutex mutex_;

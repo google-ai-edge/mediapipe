@@ -304,7 +304,10 @@ cc_library(
 
 cc_library(
     name = "threadpool",
-    srcs = ["threadpool.cc"],
+    srcs = select({
+        "//mediapipe:windows": ["threadpool_std_thread_impl.cc"],
+        "//conditions:default": ["threadpool_pthread_impl.cc"],
+    }),
     hdrs = ["threadpool.h"],
     # Use this library through "mediapipe/framework/port:threadpool".
     visibility = ["//mediapipe/framework/port:__pkg__"],

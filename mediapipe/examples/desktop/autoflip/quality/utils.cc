@@ -125,10 +125,13 @@ void RectUnion(const Rect& rect_to_add, Rect* rect) {
       LOG(ERROR) << "Detection missing a bounding box, skipped.";
     }
     if (has_valid_location) {
+      if (!ClampRect(original_frame_width, original_frame_height, &location)
+               .ok()) {
+        LOG(ERROR) << "Invalid detection bounding box, skipped.";
+        continue;
+      }
       auto* detection = processed_detections->add_detections();
       *detection = original_detection;
-      RET_CHECK_OK(
-          ClampRect(original_frame_width, original_frame_height, &location));
       *(detection->mutable_location()) = location;
     }
   }
