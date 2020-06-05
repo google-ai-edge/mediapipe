@@ -26,6 +26,11 @@ message Landmark {
   optional float x = 1;
   optional float y = 2;
   optional float z = 3;
+
+  // Landmark visibility. Float score of whether landmark is visible or occluded
+  // by other obects. Depending on the model, visibility value is either a
+  // sigmoid or an argument of sigmoid.
+  optional float visibility = 4;
 }
 
 // Group of Landmark protos.
@@ -39,6 +44,7 @@ message NormalizedLandmark {
   optional float x = 1;
   optional float y = 2;
   optional float z = 3;
+  optional float visibility = 4;
 }
 
 // Group of NormalizedLandmark protos.

@@ -51,10 +51,10 @@ ObjectDef GetSSBOObjectDef(int channels) {
 mediapipe::Status TFLiteGPURunner::InitializeWithModel(
     const tflite::FlatBufferModel& flatbuffer,
     const tflite::OpResolver& op_resolver) {
-  for (const auto& input : graph_->inputs()) {
+  for (const auto& input : graph_gl_->inputs()) {
     input_shapes_.push_back(input->tensor.shape);
   }
-  for (const auto& output : graph_->outputs()) {
+  for (const auto& output : graph_gl_->outputs()) {
     output_shapes_.push_back(output->tensor.shape);
   }
   return absl::OkStatus();
@@ -79,7 +79,18 @@ mediapipe::StatusOr<int64_t> TFLiteGPURunner::GetOutputElements(int id) {
 mediapipe::Status TFLiteGPURunner::Build() {
   // 1. Prepare inference builder.
   std::unique_ptr<InferenceBuilder> builder;
-  MP_RETURN_IF_ERROR(InitializeOpenGL(&builder));
+  // By default, we try CL first & fall back to GL if that fails.
+  absl::Status status = InitializeOpenCL(&builder);
+  if (status.ok()) {
+    LOG(INFO) << "OpenCL backend is used.";
+  } else {
+    LOG(ERROR) << "Falling back to OpenGL: " << status.message();
+    MP_RETURN_IF_ERROR(InitializeOpenGL(&builder));
+  }
+
+  // Both graphs are not needed anymore. Make sure they are deleted.
+  graph_gl_.reset(nullptr);
+  graph_cl_.reset(nullptr);
 
   // 2. Describe output/input objects for created builder.
   for (int flow_index = 0; flow_index < input_shapes_.size(); ++flow_index) {
@@ -122,9 +133,13 @@ mediapipe::Status TFLiteGPURunner::InitializeOpenGL(
   gl_options.usage = options_.usage;
   MP_RETURN_IF_ERROR(
       NewInferenceEnvironment(env_options, &gl_environment_, &properties));
-  MP_RETURN_IF_ERROR(gl_environment_->NewInferenceBuilder(std::move(*graph_),
+  MP_RETURN_IF_ERROR(gl_environment_->NewInferenceBuilder(std::move(*graph_gl_),
                                                           gl_options, builder));
-  graph_.release();
+  return absl::OkStatus();
+}
+
+absl::Status TFLiteGPURunner::InitializeOpenCL(
+    std::unique_ptr<InferenceBuilder>* builder) {
   return absl::OkStatus();
 }
 

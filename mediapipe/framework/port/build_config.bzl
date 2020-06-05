@@ -120,7 +120,7 @@ def mediapipe_proto_library(
 def mediapipe_py_proto_library(
         name,
         srcs,
-        visibility,
+        visibility = None,
         py_proto_deps = [],
         proto_deps = None,
         api_version = None,
@@ -147,7 +147,7 @@ def mediapipe_py_proto_library(
         testonly = testonly,
     ))
 
-def mediapipe_cc_proto_library(name, srcs, visibility, deps = [], cc_deps = [], testonly = 0):
+def mediapipe_cc_proto_library(name, srcs, visibility = None, deps = [], cc_deps = [], testonly = 0):
     """Generate cc_proto_library for mediapipe open source version.
 
       Args:

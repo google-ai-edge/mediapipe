@@ -171,6 +171,9 @@ void FrameCropRegionComputer::UpdateCropRegionScore(
     const KeyFrameInfo& frame_info, KeyFrameCropResult* crop_result) const {
   RET_CHECK(crop_result != nullptr) << "KeyFrameCropResult is null.";
 
+  // Set timestamp of KeyFrameCropResult
+  crop_result->set_timestamp_ms(frame_info.timestamp_ms());
+
   // Sorts required and non-required regions.
   std::vector<SalientRegion> required_regions, non_required_regions;
   const auto sort_status = SortDetections(
@@ -180,7 +183,6 @@ void FrameCropRegionComputer::UpdateCropRegionScore(
   int target_width = options_.target_width();
   int target_height = options_.target_height();
   auto* region = crop_result->mutable_region();
-  RET_CHECK(region != nullptr) << "Crop region is null.";
 
   bool crop_region_is_empty = true;
   float crop_region_score = 0.0;

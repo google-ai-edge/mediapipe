@@ -44,6 +44,8 @@ message SceneCroppingCalculatorOptions {
     // Used on conjuntion with external_aspect_ratio, create the largest sized
     // output without upscaling the video.
     MAXIMIZE_TARGET_DIMENSION = 4;
+    // Uses original dimensions to calculate aspect ratio.
+    KEEP_ORIGINAL_DIMENSION = 5;
   }
   optional TargetSizeType target_size_type = 3 [default = USE_TARGET_DIMENSION];
 
@@ -53,7 +55,10 @@ message SceneCroppingCalculatorOptions {
 
   // Number of frames from prior buffer to be used to smooth out camera
   // trajectory when it was a forced flush.
-  optional int32 prior_frame_buffer_size = 5 [default = 30];
+  optional int32 prior_frame_buffer_size = 5 [default = 30, deprecated = true];
+  // Set camera motion type along with parameters.  Must select between the two
+  // provided options.
+  optional CameraMotionOptions camera_motion_options = 14;
 
   // Options for computing key frame crop regions using the
   // FrameCropRegionComputer.

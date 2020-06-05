@@ -40,6 +40,12 @@ const char kConfig[] = R"(
     output_stream: "REGIONS:regions"
     )";
 
+const char kConfigNoVideo[] = R"(
+    calculator: "FaceToRegionCalculator"
+    input_stream: "FACES:faces"
+    output_stream: "REGIONS:regions"
+    )";
+
 const char kFace1[] = R"(location_data {
            format: RELATIVE_BOUNDING_BOX
            relative_bounding_box {
@@ -88,13 +94,15 @@ const char kFace3[] = R"(location_data {
            relative_keypoints { x: 0 y: 0 }
          })";
 
-void SetInputs(CalculatorRunner* runner,
-               const std::vector<std::string>& faces) {
+void SetInputs(const std::vector<std::string>& faces, const bool include_video,
+               CalculatorRunner* runner) {
   // Setup an input video frame.
-  auto input_frame =
-      ::absl::make_unique<ImageFrame>(ImageFormat::SRGB, 800, 600);
-  runner->MutableInputs()->Tag("VIDEO").packets.push_back(
-      Adopt(input_frame.release()).At(Timestamp::PostStream()));
+  if (include_video) {
+    auto input_frame =
+        ::absl::make_unique<ImageFrame>(ImageFormat::SRGB, 800, 600);
+    runner->MutableInputs()->Tag("VIDEO").packets.push_back(
+        Adopt(input_frame.release()).At(Timestamp::PostStream()));
+  }
   // Setup two faces as input.
   auto input_faces = ::absl::make_unique<std::vector<Detection>>();
   // A face with landmarks.
@@ -105,30 +113,31 @@ void SetInputs(CalculatorRunner* runner,
       Adopt(input_faces.release()).At(Timestamp::PostStream()));
 }
 
-CalculatorGraphConfig::Node MakeConfig(bool whole_face, bool landmarks,
-                                       bool bb_from_landmarks) {
-  auto config = ParseTextProtoOrDie<CalculatorGraphConfig::Node>(kConfig);
-
+CalculatorGraphConfig::Node MakeConfig(std::string base_config, bool whole_face,
+                                       bool landmarks, bool bb_from_landmarks,
+                                       bool visual_scoring) {
+  auto config = ParseTextProtoOrDie<CalculatorGraphConfig::Node>(base_config);
   config.mutable_options()
       ->MutableExtension(FaceToRegionCalculatorOptions::ext)
       ->set_export_whole_face(whole_face);
-
   config.mutable_options()
       ->MutableExtension(FaceToRegionCalculatorOptions::ext)
       ->set_export_individual_face_landmarks(landmarks);
-
   config.mutable_options()
       ->MutableExtension(FaceToRegionCalculatorOptions::ext)
       ->set_export_bbox_from_landmarks(bb_from_landmarks);
+  config.mutable_options()
+      ->MutableExtension(FaceToRegionCalculatorOptions::ext)
+      ->set_use_visual_scorer(visual_scoring);
 
   return config;
 }
 
 TEST(FaceToRegionCalculatorTest, FaceFullTypeSize) {
   // Setup test
-  auto runner =
-      ::absl::make_unique<CalculatorRunner>(MakeConfig(true, false, false));
-  SetInputs(runner.get(), {kFace1, kFace2});
+  auto runner = ::absl::make_unique<CalculatorRunner>(
+      MakeConfig(kConfig, true, false, false, true));
+  SetInputs({kFace1, kFace2}, true, runner.get());
 
   // Run the calculator.
   MP_ASSERT_OK(runner->Run());
@@ -159,9 +168,9 @@ TEST(FaceToRegionCalculatorTest, FaceFullTypeSize) {
 
 TEST(FaceToRegionCalculatorTest, FaceLandmarksTypeSize) {
   // Setup test
-  auto runner =
-      ::absl::make_unique<CalculatorRunner>(MakeConfig(false, true, false));
-  SetInputs(runner.get(), {kFace1});
+  auto runner = ::absl::make_unique<CalculatorRunner>(
+      MakeConfig(kConfig, false, true, false, true));
+  SetInputs({kFace1}, true, runner.get());
 
   // Run the calculator.
   MP_ASSERT_OK(runner->Run());
@@ -190,9 +199,9 @@ TEST(FaceToRegionCalculatorTest, FaceLandmarksTypeSize) {
 
 TEST(FaceToRegionCalculatorTest, FaceLandmarksBox) {
   // Setup test
-  auto runner =
-      ::absl::make_unique<CalculatorRunner>(MakeConfig(false, false, true));
-  SetInputs(runner.get(), {kFace1});
+  auto runner = ::absl::make_unique<CalculatorRunner>(
+      MakeConfig(kConfig, false, false, true, true));
+  SetInputs({kFace1}, true, runner.get());
 
   // Run the calculator.
   MP_ASSERT_OK(runner->Run());
@@ -225,9 +234,9 @@ TEST(FaceToRegionCalculatorTest, FaceLandmarksBox) {
 
 TEST(FaceToRegionCalculatorTest, FaceScore) {
   // Setup test
-  auto runner =
-      ::absl::make_unique<CalculatorRunner>(MakeConfig(true, false, false));
-  SetInputs(runner.get(), {kFace3});
+  auto runner = ::absl::make_unique<CalculatorRunner>(
+      MakeConfig(kConfig, true, false, false, true));
+  SetInputs({kFace3}, true, runner.get());
 
   // Run the calculator.
   MP_ASSERT_OK(runner->Run());
@@ -240,6 +249,69 @@ TEST(FaceToRegionCalculatorTest, FaceScore) {
   ASSERT_EQ(1, regions.detections().size());
   auto landmark_1 = regions.detections(0);
   EXPECT_FLOAT_EQ(landmark_1.score(), 0.25);
+}
+
+TEST(FaceToRegionCalculatorTest, FaceNoVideoVisualScoreFail) {
+  // Setup test
+  auto runner = ::absl::make_unique<CalculatorRunner>(
+      MakeConfig(kConfigNoVideo, true, false, false, true));
+  SetInputs({kFace3}, false, runner.get());
+
+  // Run the calculator.
+  ASSERT_FALSE(runner->Run().ok());
+}
+
+TEST(FaceToRegionCalculatorTest, FaceNoVideoLandmarksFail) {
+  // Setup test
+  auto runner = ::absl::make_unique<CalculatorRunner>(
+      MakeConfig(kConfigNoVideo, false, true, false, false));
+  SetInputs({kFace3}, false, runner.get());
+
+  // Run the calculator.
+  ASSERT_FALSE(runner->Run().ok());
+}
+
+TEST(FaceToRegionCalculatorTest, FaceNoVideoBBLandmarksFail) {
+  // Setup test
+  auto runner = ::absl::make_unique<CalculatorRunner>(
+      MakeConfig(kConfigNoVideo, false, false, true, false));
+  SetInputs({kFace3}, false, runner.get());
+
+  // Run the calculator.
+  ASSERT_FALSE(runner->Run().ok());
+}
+
+TEST(FaceToRegionCalculatorTest, FaceNoVideoPass) {
+  // Setup test
+  auto runner = ::absl::make_unique<CalculatorRunner>(
+      MakeConfig(kConfigNoVideo, true, false, false, false));
+  SetInputs({kFace1, kFace2}, false, runner.get());
+
+  // Run the calculator.
+  MP_ASSERT_OK(runner->Run());
+
+  // Check the output regions.
+  const std::vector<Packet>& output_packets =
+      runner->Outputs().Tag("REGIONS").packets;
+  ASSERT_EQ(1, output_packets.size());
+
+  const auto& regions = output_packets[0].Get<DetectionSet>();
+  ASSERT_EQ(2, regions.detections().size());
+  auto face_1 = regions.detections(0);
+  EXPECT_EQ(face_1.signal_type().standard(), SignalType::FACE_FULL);
+  EXPECT_FLOAT_EQ(face_1.location_normalized().x(), 0);
+  EXPECT_FLOAT_EQ(face_1.location_normalized().y(), 0.003333);
+  EXPECT_FLOAT_EQ(face_1.location_normalized().width(), 0.12125);
+  EXPECT_FLOAT_EQ(face_1.location_normalized().height(), 0.33333);
+  EXPECT_FLOAT_EQ(face_1.score(), 1);
+
+  auto face_2 = regions.detections(1);
+  EXPECT_EQ(face_2.signal_type().standard(), SignalType::FACE_FULL);
+  EXPECT_FLOAT_EQ(face_2.location_normalized().x(), 0.0025);
+  EXPECT_FLOAT_EQ(face_2.location_normalized().y(), 0.005);
+  EXPECT_FLOAT_EQ(face_2.location_normalized().width(), 0.25);
+  EXPECT_FLOAT_EQ(face_2.location_normalized().height(), 0.5);
+  EXPECT_FLOAT_EQ(face_2.score(), 1);
 }
 
 }  // namespace

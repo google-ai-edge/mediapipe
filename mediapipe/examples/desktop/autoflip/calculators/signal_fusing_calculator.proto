@@ -31,7 +31,7 @@ message SignalFusingCalculatorOptions {
   optional int32 max_scene_size = 2 [default = 600];
 }
 
-// Next tag: 5
+// Next tag: 6
 message SignalSettings {
   // The type of signal these settings pertain to.
   optional SignalType type = 1;
@@ -51,4 +51,14 @@ message SignalSettings {
   // Is this signal required within the output cropped video?  If it is it will
   // be included or the video will be marked as failed to convert.
   optional bool is_required = 4 [default = false];
+
+  // When used with ContentZoomingCalculator, this flag can be set indicating
+  // that areas outside of these salient regions can be cropped from the frame.
+  // When no salient regions have this flag set true, no zooming is performed.
+  // When one or more salient regions have this flag set true, the max zoom
+  // value will be used that keeps all “only_required” detections within view.
+  // The ContentZoomingCalculator currently supports zooming by finding the size
+  // of non-salient top/bottom borders regions and provides this information to
+  // the SceneCroppingCalculator for reframing.
+  optional bool only_required = 5 [default = false];
 }

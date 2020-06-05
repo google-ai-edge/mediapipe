@@ -32,6 +32,9 @@ if [ "$1" ] && [ "$1" != "config_only" ]
     exit 0
 fi
 
+opencv_build_file="$( cd "$(dirname "$0")" ; pwd -P )"/third_party/opencv_linux.BUILD
+workspace_file="$( cd "$(dirname "$0")" ; pwd -P )"/WORKSPACE
+
 if [ -z "$1" ]
   then
     echo "Installing OpenCV from source"
@@ -75,9 +78,6 @@ fi
 
 # Modify the build file.
 echo "Modifying MediaPipe opencv config"
-
-opencv_build_file="$( cd "$(dirname "$0")" ; pwd -P )"/third_party/opencv_linux.BUILD
-workspace_file="$( cd "$(dirname "$0")" ; pwd -P )"/WORKSPACE
 
 sed -i "s/lib\/x86_64-linux-gnu/lib/g" $opencv_build_file
 linux_opencv_config=$(grep -n 'linux_opencv' $workspace_file | awk -F  ":" '{print $1}')

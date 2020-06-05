@@ -31,5 +31,6 @@
       <meta-data android:name="binaryGraphName" android:value="${binaryGraphName}"/>
       <meta-data android:name="inputVideoStreamName" android:value="${inputVideoStreamName}"/>
       <meta-data android:name="outputVideoStreamName" android:value="${outputVideoStreamName}"/>
+      <meta-data android:name="flipFramesVertically" android:value="${flipFramesVertically}"/>
   </application>
 </manifest>

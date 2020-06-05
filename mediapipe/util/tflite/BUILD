@@ -101,5 +101,15 @@ cc_library(
             "@org_tensorflow//tensorflow/lite/delegates/gpu/common:model",
             "@org_tensorflow//tensorflow/lite/delegates/gpu/gl:api2",
         ],
+        "//mediapipe:android": [
+            "@com_google_absl//absl/strings",
+            "//mediapipe/framework/port:ret_check",
+            "//mediapipe/framework/port:status",
+            "//mediapipe/framework/port:statusor",
+            "@org_tensorflow//tensorflow/lite:framework",
+            "@org_tensorflow//tensorflow/lite/delegates/gpu:api",
+            "@org_tensorflow//tensorflow/lite/delegates/gpu/common:model",
+            "@org_tensorflow//tensorflow/lite/delegates/gpu/gl:api2",
+        ],
     }) + ["@org_tensorflow//tensorflow/lite/core/api"],
 )

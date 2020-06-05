@@ -154,6 +154,33 @@ cc_library(
 )
 
 cc_library(
+    name = "re2",
+    hdrs = [
+        "re2.h",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//mediapipe/framework/deps:re2",
+    ],
+)
+
+cc_library(
+    name = "gtest",
+    testonly = 1,
+    hdrs = [
+        "gmock.h",
+        "gtest.h",
+        "status_matchers.h",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":status_matchers",
+        "//mediapipe/framework:port",
+        "@com_google_googletest//:gtest",
+    ],
+)
+
+cc_library(
     name = "gtest_main",
     testonly = 1,
     hdrs = [
@@ -163,6 +190,7 @@ cc_library(
     ],
     visibility = ["//visibility:public"],
     deps = [
+        ":status_matchers",
         "//mediapipe/framework:port",
         "//mediapipe/framework/deps:status_matchers",
         "@com_google_googletest//:gtest_main",
@@ -366,6 +394,18 @@ cc_library(
     deps = [
         "//mediapipe/framework:port",
         "//mediapipe/framework/deps:statusor",
+    ],
+)
+
+cc_library(
+    name = "status_matchers",
+    testonly = 1,
+    hdrs = ["status_matchers.h"],
+    # Use this library through "mediapipe/framework/port:gtest_main".
+    visibility = ["//mediapipe/framework/port:__pkg__"],
+    deps = [
+        ":status",
+        "//mediapipe/framework/deps:status_matchers",
     ],
 )
 

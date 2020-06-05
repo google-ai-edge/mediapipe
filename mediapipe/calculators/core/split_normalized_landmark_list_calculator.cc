@@ -112,7 +112,9 @@ class SplitNormalizedLandmarkListCalculator : public CalculatorBase {
   ::mediapipe::Status Process(CalculatorContext* cc) override {
     const NormalizedLandmarkList& input =
         cc->Inputs().Index(0).Get<NormalizedLandmarkList>();
-    RET_CHECK_GE(input.landmark_size(), max_range_end_);
+    RET_CHECK_GE(input.landmark_size(), max_range_end_)
+        << "Max range end " << max_range_end_ << " exceeds landmarks size "
+        << input.landmark_size();
 
     if (combine_outputs_) {
       NormalizedLandmarkList output;

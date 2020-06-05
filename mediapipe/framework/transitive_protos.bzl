@@ -5,20 +5,21 @@ ProtoLibsInfo = provider(fields = ["targets", "out"])
 def _get_proto_rules(deps, proto_rules = None):
     useful_deps = [dep for dep in deps if hasattr(dep, "proto_rules")]
     if proto_rules == None:
-        proto_rules = []
-    for dep in useful_deps:
-        proto_rules = proto_rules + dep.proto_rules
+        proto_rules = depset()
+    proto_rules = depset(
+        transitive = [proto_rules] + [dep.proto_rules for dep in useful_deps],
+    )
     return proto_rules
 
 def _proto_rules_aspect_impl(target, ctx):
     # Make sure the rule has a srcs attribute.
-    proto_rules = []
+    proto_rules = depset()
     found_cc_proto = False
     if hasattr(ctx.rule.attr, "srcs") and len(ctx.rule.attr.srcs) == 1:
         for f in ctx.rule.attr.srcs[0].files.to_list():
             if f.basename.endswith(".pb.cc"):
-                proto_rules = [target[CcInfo]]
-                found = True
+                proto_rules = depset([target[CcInfo]])
+                found_cc_proto = True
                 break
 
     if not found_cc_proto:
@@ -43,10 +44,10 @@ def _transitive_protos_impl(ctx):
       A proto provider (with transitive_sources and transitive_descriptor_sets filled in),
       and marks all transitive sources as default output.
     """
-    cc_infos = []
+    cc_info_sets = []
     for dep in ctx.attr.deps:
-        for dep_proto_rule in dep.proto_rules:
-            cc_infos.append(dep_proto_rule)
+        cc_info_sets.append(dep.proto_rules)
+    cc_infos = depset(transitive = cc_info_sets).to_list()
     return [cc_common.merge_cc_infos(cc_infos = cc_infos)]
 
 transitive_protos = rule(

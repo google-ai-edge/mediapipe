@@ -760,10 +760,6 @@ CalculatorGraph::PrepareGpu(const std::map<std::string, Packet>& side_packets) {
 }
 
 ::mediapipe::Status CalculatorGraph::WaitUntilIdle() {
-  if (has_sources_) {
-    return ::mediapipe::InvalidArgumentErrorBuilder(MEDIAPIPE_LOC)
-           << "WaitUntilIdle called on a graph with source nodes.";
-  }
   MP_RETURN_IF_ERROR(scheduler_.WaitUntilIdle());
   VLOG(2) << "Scheduler idle.";
   ::mediapipe::Status status = ::mediapipe::OkStatus();

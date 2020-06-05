@@ -67,12 +67,15 @@ class TFLiteGPURunner {
  private:
   mediapipe::Status InitializeOpenGL(
       std::unique_ptr<InferenceBuilder>* builder);
+  mediapipe::Status InitializeOpenCL(
+      std::unique_ptr<InferenceBuilder>* builder);
 
   InferenceOptions options_;
   std::unique_ptr<gl::InferenceEnvironment> gl_environment_;
 
   // graph_ is maintained temporarily and becomes invalid after runner_ is ready
-  std::unique_ptr<GraphFloat32> graph_;
+  std::unique_ptr<GraphFloat32> graph_gl_;
+  std::unique_ptr<GraphFloat32> graph_cl_;
   std::unique_ptr<InferenceRunner> runner_;
 
   // We keep information about input/output shapes, because they are needed

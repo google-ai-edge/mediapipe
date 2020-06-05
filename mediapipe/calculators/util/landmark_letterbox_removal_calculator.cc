@@ -127,6 +127,8 @@ class LandmarkLetterboxRemovalCalculator : public CalculatorBase {
         new_landmark->set_y(new_y);
         // Keep z-coord as is.
         new_landmark->set_z(landmark.z());
+        // Keep visibility as is.
+        new_landmark->set_visibility(landmark.visibility());
       }
 
       cc->Outputs().Get(output_id).AddPacket(

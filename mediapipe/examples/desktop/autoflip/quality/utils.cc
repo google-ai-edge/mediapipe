@@ -203,7 +203,6 @@ void RectUnion(const Rect& rect_to_add, Rect* rect) {
 }
 
 ::mediapipe::Status AggregateKeyFrameResults(
-    const std::vector<KeyFrameInfo>& key_frame_infos,
     const KeyFrameCropOptions& key_frame_crop_options,
     const std::vector<KeyFrameCropResult>& key_frame_crop_results,
     const int scene_frame_width, const int scene_frame_height,
@@ -211,11 +210,7 @@ void RectUnion(const Rect& rect_to_add, Rect* rect) {
   RET_CHECK_NE(scene_summary, nullptr)
       << "Output SceneKeyFrameCropSummary is null.";
 
-  const int num_key_frames = key_frame_infos.size();
-  RET_CHECK_EQ(num_key_frames, key_frame_crop_results.size())
-      << "Inconsistent number of key frames:"
-      << " num_key_frames = " << num_key_frames
-      << " key_frame_crop_results.size() = " << key_frame_crop_results.size();
+  const int num_key_frames = key_frame_crop_results.size();
 
   RET_CHECK_GT(scene_frame_width, 0) << "Non-positive frame width.";
   RET_CHECK_GT(scene_frame_height, 0) << "Non-positive frame height.";
@@ -255,8 +250,8 @@ void RectUnion(const Rect& rect_to_add, Rect* rect) {
   std::unique_ptr<Rect> required_crop_region_union = nullptr;
   for (int i = 0; i < num_key_frames; ++i) {
     auto* key_frame_compact_info = scene_summary->add_key_frame_compact_infos();
-    key_frame_compact_info->set_timestamp_ms(key_frame_infos[i].timestamp_ms());
     const auto& result = key_frame_crop_results[i];
+    key_frame_compact_info->set_timestamp_ms(result.timestamp_ms());
     if (result.are_required_regions_covered_in_target_size()) {
       num_success_frames++;
     }

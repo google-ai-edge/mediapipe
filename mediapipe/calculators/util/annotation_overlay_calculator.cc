@@ -14,6 +14,7 @@
 
 #include <memory>
 
+#include "absl/strings/str_cat.h"
 #include "mediapipe/calculators/util/annotation_overlay_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/calculator_options.pb.h"
@@ -573,31 +574,33 @@ REGISTER_CALCULATOR(AnnotationOverlayCalculator);
   };
 
   // Shader to overlay a texture onto another when overlay is non-zero.
-  const GLchar* frag_src = GLES_VERSION_COMPAT
-      R"(
-  #if __VERSION__ < 130
-    #define in varying
-  #endif  // __VERSION__ < 130
-
+  constexpr char kFragSrcBody[] = R"(
+  DEFAULT_PRECISION(mediump, float)
   #ifdef GL_ES
     #define fragColor gl_FragColor
-    precision highp float;
   #else
-    #define lowp
-    #define mediump
-    #define highp
-    #define texture2D texture
     out vec4 fragColor;
-  #endif  // defined(GL_ES)
+  #endif  // GL_ES
 
     in vec2 sample_coordinate;
     uniform sampler2D input_frame;
+    // "overlay" texture has top-left origin (OpenCV mat with annotations has
+    // been uploaded to GPU without vertical flip)
     uniform sampler2D overlay;
     uniform vec3 transparent_color;
 
     void main() {
       vec3 image_pix = texture2D(input_frame, sample_coordinate).rgb;
+  #ifdef INPUT_FRAME_HAS_TOP_LEFT_ORIGIN
+      // "input_frame" has top-left origin same as "overlay", hence overlaying
+      // as is.
       vec3 overlay_pix = texture2D(overlay, sample_coordinate).rgb;
+  #else
+      // "input_frame" has bottom-left origin, hence flipping "overlay" texture
+      // coordinates.
+      vec3 overlay_pix = texture2D(overlay, vec2(sample_coordinate.x, 1.0 - sample_coordinate.y)).rgb;
+  #endif  // INPUT_FRAME_HAS_TOP_LEFT_ORIGIN
+
       vec3 out_pix = image_pix;
       float dist = distance(overlay_pix.rgb, transparent_color);
       if (dist > 0.001) out_pix = overlay_pix;
@@ -606,8 +609,18 @@ REGISTER_CALCULATOR(AnnotationOverlayCalculator);
     }
   )";
 
+  std::string defines;
+  if (options_.gpu_uses_top_left_origin()) {
+    defines = R"(
+      #define INPUT_FRAME_HAS_TOP_LEFT_ORIGIN;
+    )";
+  }
+
+  const std::string frag_src = absl::StrCat(
+      mediapipe::kMediaPipeFragmentShaderPreamble, defines, kFragSrcBody);
+
   // Create shader program and set parameters
-  mediapipe::GlhCreateProgram(mediapipe::kBasicVertexShader, frag_src,
+  mediapipe::GlhCreateProgram(mediapipe::kBasicVertexShader, frag_src.c_str(),
                               NUM_ATTRIBUTES, (const GLchar**)&attr_name[0],
                               attr_location, &program_);
   RET_CHECK(program_) << "Problem initializing the program.";

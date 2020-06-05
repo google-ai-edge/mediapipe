@@ -570,6 +570,7 @@ void ImageTransformationCalculator::ComputeOutputDimensions(
 void ImageTransformationCalculator::ComputeOutputLetterboxPadding(
     int input_width, int input_height, int output_width, int output_height,
     std::array<float, 4>* padding) {
+  padding->fill(0.f);
   if (scale_mode_ == mediapipe::ScaleMode_Mode_FIT) {
     if (rotation_ == mediapipe::RotationMode_Mode_ROTATION_90 ||
         rotation_ == mediapipe::RotationMode_Mode_ROTATION_270) {

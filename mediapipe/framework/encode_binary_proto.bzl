@@ -141,7 +141,8 @@ def _generate_proto_descriptor_set_impl(ctx):
     # order of gendir before ., is needed for the proto compiler to resolve
     # import statements that reference proto files produced by a genrule.
     ctx.actions.run(
-        inputs = all_protos.to_list() + [ctx.executable._proto_compiler],
+        inputs = all_protos,
+        tools = [ctx.executable._proto_compiler],
         outputs = [descriptor],
         executable = ctx.executable._proto_compiler,
         arguments = [

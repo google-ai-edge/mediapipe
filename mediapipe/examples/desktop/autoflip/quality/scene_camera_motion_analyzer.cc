@@ -32,17 +32,19 @@ namespace autoflip {
 
 ::mediapipe::Status
 SceneCameraMotionAnalyzer::AnalyzeSceneAndPopulateFocusPointFrames(
-    const std::vector<KeyFrameInfo>& key_frame_infos,
     const KeyFrameCropOptions& key_frame_crop_options,
     const std::vector<KeyFrameCropResult>& key_frame_crop_results,
     const int scene_frame_width, const int scene_frame_height,
     const std::vector<int64>& scene_frame_timestamps,
+    const bool has_solid_color_background,
     SceneKeyFrameCropSummary* scene_summary,
     std::vector<FocusPointFrame>* focus_point_frames,
-    SceneCameraMotion* scene_camera_motion) const {
+    SceneCameraMotion* scene_camera_motion) {
+  has_solid_color_background_ = has_solid_color_background;
+  total_scene_frames_ = scene_frame_timestamps.size();
   MP_RETURN_IF_ERROR(AggregateKeyFrameResults(
-      key_frame_infos, key_frame_crop_options, key_frame_crop_results,
-      scene_frame_width, scene_frame_height, scene_summary));
+      key_frame_crop_options, key_frame_crop_results, scene_frame_width,
+      scene_frame_height, scene_summary));
 
   const int64 scene_span_ms =
       scene_frame_timestamps.empty()
@@ -51,7 +53,12 @@ SceneCameraMotionAnalyzer::AnalyzeSceneAndPopulateFocusPointFrames(
   const double scene_span_sec = TimestampDiff(scene_span_ms).Seconds();
   SceneCameraMotion camera_motion;
   MP_RETURN_IF_ERROR(DecideCameraMotionType(
-      key_frame_crop_options, scene_span_sec, scene_summary, &camera_motion));
+      key_frame_crop_options, scene_span_sec, scene_frame_timestamps.back(),
+      scene_summary, &camera_motion));
+  if (scene_summary->has_salient_region()) {
+    last_scene_with_salient_region_ = camera_motion;
+    time_since_last_salient_region_us_ = scene_frame_timestamps.back();
+  }
   if (scene_camera_motion != nullptr) {
     *scene_camera_motion = camera_motion;
   }
@@ -97,7 +104,8 @@ SceneCameraMotionAnalyzer::AnalyzeSceneAndPopulateFocusPointFrames(
 
 ::mediapipe::Status SceneCameraMotionAnalyzer::DecideCameraMotionType(
     const KeyFrameCropOptions& key_frame_crop_options,
-    const double scene_span_sec, SceneKeyFrameCropSummary* scene_summary,
+    const double scene_span_sec, const int64 end_time_us,
+    SceneKeyFrameCropSummary* scene_summary,
     SceneCameraMotion* scene_camera_motion) const {
   RET_CHECK_GE(scene_span_sec, 0.0) << "Scene time span is negative.";
   RET_CHECK_NE(scene_summary, nullptr) << "Scene summary is null.";
@@ -109,8 +117,18 @@ SceneCameraMotionAnalyzer::AnalyzeSceneAndPopulateFocusPointFrames(
   // regions, then default to look at the center.
   if (!scene_summary->has_salient_region()) {
     VLOG(1) << "No focus regions - camera is set to be steady on center.";
+    float no_salient_position_x = scene_frame_center_x;
+    float no_salient_position_y = scene_frame_center_y;
+    if (end_time_us - time_since_last_salient_region_us_ <
+            options_.duration_before_centering_us() &&
+        last_scene_with_salient_region_.has_steady_motion()) {
+      no_salient_position_x = last_scene_with_salient_region_.steady_motion()
+                                  .steady_look_at_center_x();
+      no_salient_position_y = last_scene_with_salient_region_.steady_motion()
+                                  .steady_look_at_center_y();
+    }
     MP_RETURN_IF_ERROR(ToUseSteadyMotion(
-        scene_frame_center_x, scene_frame_center_y,
+        no_salient_position_x, no_salient_position_y,
         scene_summary->crop_window_width(), scene_summary->crop_window_height(),
         scene_summary, scene_camera_motion));
     return ::mediapipe::OkStatus();
@@ -118,7 +136,7 @@ SceneCameraMotionAnalyzer::AnalyzeSceneAndPopulateFocusPointFrames(
 
   // Sweep across the scene when 1) success rate is too low, AND 2) the current
   // scene is long enough.
-  if (options_.allow_sweeping() &&
+  if (options_.allow_sweeping() && !has_solid_color_background_ &&
       scene_summary->frame_success_rate() <
           options_.minimum_success_rate_for_sweeping() &&
       scene_span_sec >= options_.minimum_scene_span_sec_for_sweeping()) {
@@ -150,10 +168,11 @@ SceneCameraMotionAnalyzer::AnalyzeSceneAndPopulateFocusPointFrames(
   }
 
   // If scene motion is small, then look at a steady point in the scene.
-  if (scene_summary->horizontal_motion_amount() <
-          options_.motion_stabilization_threshold_percent() &&
-      scene_summary->vertical_motion_amount() <
-          options_.motion_stabilization_threshold_percent()) {
+  if ((scene_summary->horizontal_motion_amount() <
+           options_.motion_stabilization_threshold_percent() &&
+       scene_summary->vertical_motion_amount() <
+           options_.motion_stabilization_threshold_percent()) ||
+      total_scene_frames_ == 1) {
     return DecideSteadyLookAtRegion(key_frame_crop_options, scene_summary,
                                     scene_camera_motion);
   }

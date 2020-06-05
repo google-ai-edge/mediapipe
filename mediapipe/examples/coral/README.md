@@ -116,6 +116,8 @@ Docker container for building MediaPipe applications that run on Edge TPU.
 
 * Object detection demo
 
+![Object Detection running on Coral](./images/object_detection_demo_coral.jpg)
+
         bazel build -c opt --crosstool_top=@crosstool//:toolchains --compiler=gcc --cpu=aarch64 --define MEDIAPIPE_DISABLE_GPU=1 --copt -DMEDIAPIPE_EDGE_TPU --copt=-flax-vector-conversions mediapipe/examples/coral:object_detection_tpu
 
  Copy object_detection_tpu binary to the MediaPipe checkout on the coral device
@@ -126,6 +128,8 @@ Docker container for building MediaPipe applications that run on Edge TPU.
         mdt push /tmp/object_detection_tpu /home/mendel/mediapipe/bazel-bin/.
 
 * Face detection demo
+
+![Face Detection running on Coral](./images/face_detection_demo_coral.gif)
 
         bazel build -c opt --crosstool_top=@crosstool//:toolchains --compiler=gcc --cpu=aarch64 --define MEDIAPIPE_DISABLE_GPU=1 --copt -DMEDIAPIPE_EDGE_TPU --copt=-flax-vector-conversions mediapipe/examples/coral:face_detection_tpu
 

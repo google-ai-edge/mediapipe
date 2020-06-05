@@ -20,6 +20,7 @@
 
 #include "mediapipe/examples/desktop/autoflip/quality/cropping.pb.h"
 #include "mediapipe/examples/desktop/autoflip/quality/focus_point.pb.h"
+#include "mediapipe/examples/desktop/autoflip/quality/kinematic_path_solver.h"
 #include "mediapipe/framework/port/opencv_core_inc.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status.h"
@@ -45,7 +46,12 @@ namespace autoflip {
 //       prior_focus_point_frames, &cropped_frames));
 class SceneCropper {
  public:
-  SceneCropper() {}
+  SceneCropper(const CameraMotionOptions& camera_motion_options,
+               const int frame_width, const int frame_height)
+      : path_solver_initalized_(false),
+        camera_motion_options_(camera_motion_options),
+        frame_width_(frame_width),
+        frame_height_(frame_height) {}
   ~SceneCropper() {}
 
   // Computes transformation matrix given SceneKeyFrameCropSummary,
@@ -55,13 +61,29 @@ class SceneCropper {
   // |scene_frames_or_empty| isn't empty.
   // TODO: split this function into two separate functions.
   ::mediapipe::Status CropFrames(
-      const SceneKeyFrameCropSummary& scene_summary, const int num_scene_frames,
+      const SceneKeyFrameCropSummary& scene_summary,
+      const std::vector<int64>& scene_timestamps,
+      const std::vector<bool>& is_key_frames,
       const std::vector<cv::Mat>& scene_frames_or_empty,
       const std::vector<FocusPointFrame>& focus_point_frames,
       const std::vector<FocusPointFrame>& prior_focus_point_frames,
       int top_static_border_size, int bottom_static_border_size,
-      std::vector<cv::Rect>* all_scene_frame_xforms,
-      std::vector<cv::Mat>* cropped_frames) const;
+      const bool continue_last_scene, std::vector<cv::Rect>* crop_from_location,
+      std::vector<cv::Mat>* cropped_frames);
+
+  ::mediapipe::Status ProcessKinematicPathSolver(
+      const SceneKeyFrameCropSummary& scene_summary,
+      const std::vector<int64>& scene_timestamps,
+      const std::vector<bool>& is_key_frames,
+      const std::vector<FocusPointFrame>& focus_point_frames,
+      const bool continue_last_scene, std::vector<cv::Mat>* all_xforms);
+
+ private:
+  bool path_solver_initalized_;
+  std::unique_ptr<KinematicPathSolver> kinematic_path_solver_;
+  CameraMotionOptions camera_motion_options_;
+  int frame_width_;
+  int frame_height_;
 };
 
 }  // namespace autoflip

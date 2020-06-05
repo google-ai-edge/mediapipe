@@ -1,0 +1,29 @@
+# Configuration for GitHub Pages
+
+remote_theme: pmarsceill/just-the-docs
+
+# Set a path/url to a logo that will be displayed instead of the title
+logo: "images/logo_horizontal_color.png"
+
+# Enable or disable the site search
+search_enabled: true
+
+# Set the search token separator for hyphenated-word search:
+search_tokenizer_separator: /[\s/]+/
+
+# Enable or disable heading anchors
+heading_anchors: true
+
+# Aux links for the upper right navigation
+aux_links:
+  "MediaPipe on GitHub":
+    - "//github.com/google/mediapipe"
+
+# Footer content appears at the bottom of every page's main content
+footer_content: "&copy; 2020 GOOGLE LLC | <a href=\"https://policies.google.com/privacy\">PRIVACY POLICY</a> | <a href=\"https://policies.google.com/terms\">TERMS OF SERVICE</a>"
+
+# Color scheme currently only supports "dark" or nil (default)
+color_scheme: nil
+
+# Google Analytics Tracking (optional)
+ga_tracking: UA-140696581-2

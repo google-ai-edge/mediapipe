@@ -358,6 +358,13 @@ REGISTER_CALCULATOR(TfLiteInferenceCalculator);
       cc->Options<mediapipe::TfLiteInferenceCalculatorOptions>();
   use_advanced_gpu_api_ = false;
 
+  if (use_advanced_gpu_api_ && !(gpu_input_ && gpu_output_)) {
+    LOG(WARNING)
+        << "Cannot use advanced GPU APIs, both inputs and outputs must "
+           "be GPU buffers. Falling back to the default TFLite API.";
+    use_advanced_gpu_api_ = false;
+  }
+
   MP_RETURN_IF_ERROR(LoadModel(cc));
 
   if (gpu_inference_) {

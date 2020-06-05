@@ -97,11 +97,17 @@ void AddConnectionToRenderData(const LandmarkType& start,
 template <class LandmarkListType, class LandmarkType>
 void AddConnectionsWithDepth(const LandmarkListType& landmarks,
                              const std::vector<int>& landmark_connections,
-                             float thickness, bool normalized, float min_z,
-                             float max_z, RenderData* render_data) {
+                             bool utilize_visibility,
+                             float visibility_threshold, float thickness,
+                             bool normalized, float min_z, float max_z,
+                             RenderData* render_data) {
   for (int i = 0; i < landmark_connections.size(); i += 2) {
     const auto& ld0 = landmarks.landmark(landmark_connections[i]);
     const auto& ld1 = landmarks.landmark(landmark_connections[i + 1]);
+    if (visibility_threshold && (ld0.visibility() < visibility_threshold ||
+                                 ld1.visibility() < visibility_threshold)) {
+      continue;
+    }
     const int gray_val1 =
         255 - static_cast<int>(Remap(ld0.z(), min_z, max_z, 255));
     const int gray_val2 =
@@ -130,11 +136,16 @@ void AddConnectionToRenderData(const LandmarkType& start,
 template <class LandmarkListType, class LandmarkType>
 void AddConnections(const LandmarkListType& landmarks,
                     const std::vector<int>& landmark_connections,
+                    bool utilize_visibility, float visibility_threshold,
                     const Color& connection_color, float thickness,
                     bool normalized, RenderData* render_data) {
   for (int i = 0; i < landmark_connections.size(); i += 2) {
     const auto& ld0 = landmarks.landmark(landmark_connections[i]);
     const auto& ld1 = landmarks.landmark(landmark_connections[i + 1]);
+    if (visibility_threshold && (ld0.visibility() < visibility_threshold ||
+                                 ld1.visibility() < visibility_threshold)) {
+      continue;
+    }
     AddConnectionToRenderData<LandmarkType>(ld0, ld1, connection_color,
                                             thickness, normalized, render_data);
   }
@@ -231,6 +242,17 @@ REGISTER_CALCULATOR(LandmarksToRenderDataCalculator);
 
 ::mediapipe::Status LandmarksToRenderDataCalculator::Process(
     CalculatorContext* cc) {
+  // Check that landmarks are not empty and skip rendering if so.
+  // Don't emit an empty packet for this timestamp.
+  if (cc->Inputs().HasTag(kLandmarksTag) &&
+      cc->Inputs().Tag(kLandmarksTag).IsEmpty()) {
+    return ::mediapipe::OkStatus();
+  }
+  if (cc->Inputs().HasTag(kNormLandmarksTag) &&
+      cc->Inputs().Tag(kNormLandmarksTag).IsEmpty()) {
+    return ::mediapipe::OkStatus();
+  }
+
   auto render_data = absl::make_unique<RenderData>();
   bool visualize_depth = options_.visualize_landmark_depth();
   float z_min = 0.f;
@@ -255,15 +277,23 @@ REGISTER_CALCULATOR(LandmarksToRenderDataCalculator);
     visualize_depth &= ((z_max - z_min) > 1e-3);
     if (visualize_depth) {
       AddConnectionsWithDepth<LandmarkList, Landmark>(
-          landmarks, landmark_connections_, thickness, /*normalized=*/false,
+          landmarks, landmark_connections_, options_.utilize_visibility(),
+          options_.visibility_threshold(), thickness, /*normalized=*/false,
           z_min, z_max, render_data.get());
     } else {
       AddConnections<LandmarkList, Landmark>(
-          landmarks, landmark_connections_, options_.connection_color(),
+          landmarks, landmark_connections_, options_.utilize_visibility(),
+          options_.visibility_threshold(), options_.connection_color(),
           thickness, /*normalized=*/false, render_data.get());
     }
     for (int i = 0; i < landmarks.landmark_size(); ++i) {
       const Landmark& landmark = landmarks.landmark(i);
+
+      if (options_.utilize_visibility() &&
+          landmark.visibility() < options_.visibility_threshold()) {
+        continue;
+      }
+
       auto* landmark_data_render = AddPointRenderData(
           options_.landmark_color(), thickness, render_data.get());
       if (visualize_depth) {
@@ -288,15 +318,23 @@ REGISTER_CALCULATOR(LandmarksToRenderDataCalculator);
     visualize_depth &= ((z_max - z_min) > 1e-3);
     if (visualize_depth) {
       AddConnectionsWithDepth<NormalizedLandmarkList, NormalizedLandmark>(
-          landmarks, landmark_connections_, thickness, /*normalized=*/true,
+          landmarks, landmark_connections_, options_.utilize_visibility(),
+          options_.visibility_threshold(), thickness, /*normalized=*/true,
           z_min, z_max, render_data.get());
     } else {
       AddConnections<NormalizedLandmarkList, NormalizedLandmark>(
-          landmarks, landmark_connections_, options_.connection_color(),
+          landmarks, landmark_connections_, options_.utilize_visibility(),
+          options_.visibility_threshold(), options_.connection_color(),
           thickness, /*normalized=*/true, render_data.get());
     }
     for (int i = 0; i < landmarks.landmark_size(); ++i) {
       const NormalizedLandmark& landmark = landmarks.landmark(i);
+
+      if (options_.utilize_visibility() &&
+          landmark.visibility() < options_.visibility_threshold()) {
+        continue;
+      }
+
       auto* landmark_data_render = AddPointRenderData(
           options_.landmark_color(), thickness, render_data.get());
       if (visualize_depth) {

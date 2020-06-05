@@ -46,9 +46,9 @@ ABSL_DEPRECATED("Use ::mediapipe::UnknownError(error_message) instead.")
 ::mediapipe::Status AddStatusPrefix(const std::string& prefix,
                                     const ::mediapipe::Status& status);
 
-// Combine a vector of ::mediapipe::Status into a single status.  If statuses
-// is empty or all statuses are OK then ::mediapipe::OkStatus() will be
-// returned.
+// Combine a vector of ::mediapipe::Status into a single composite status.
+// If statuses is empty or all statuses are OK then ::mediapipe::OkStatus()
+// will be returned.
 // This function should be considered internal to the framework.
 // TODO Move this function to somewhere with less visibility.
 ::mediapipe::Status CombinedStatus(

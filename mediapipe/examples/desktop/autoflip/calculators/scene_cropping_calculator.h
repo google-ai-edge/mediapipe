@@ -145,9 +145,13 @@ class SceneCroppingCalculator : public CalculatorBase {
   // Removes any static borders from the scene frames before cropping. The
   // arguments |top_border_size| and |bottom_border_size| report the size of the
   // removed borders.
-  ::mediapipe::Status RemoveStaticBorders(int* top_border_size,
+  ::mediapipe::Status RemoveStaticBorders(CalculatorContext* cc,
+                                          int* top_border_size,
                                           int* bottom_border_size);
 
+  // Sets up autoflip after first frame is received and input size is known.
+  ::mediapipe::Status InitializeSceneCroppingCalculator(
+      ::mediapipe::CalculatorContext* cc);
   // Initializes a FrameCropRegionComputer given input and target frame sizes.
   ::mediapipe::Status InitializeFrameCropRegionComputer();
 
@@ -164,20 +168,26 @@ class SceneCroppingCalculator : public CalculatorBase {
   ::mediapipe::Status ProcessScene(const bool is_end_of_scene,
                                    CalculatorContext* cc);
 
-  // Formats and outputs the cropped frames. Scales them to be at least as big
-  // as the target size. If the aspect ratio is different, applies padding. Uses
-  // solid background from static features if possible, otherwise uses blurred
-  // background. Sets apply_padding to true if the scene is padded.
+  // Formats and outputs the cropped frames passed in through
+  // |cropped_frames_ptr|. Scales them to be at least as big as the target
+  // size. If the aspect ratio is different, applies padding. Uses solid
+  // background from static features if possible, otherwise uses blurred
+  // background. Sets |apply_padding| to true if the scene is padded. Set
+  // |cropped_frames_ptr| to nullptr, to bypass the actual output of the
+  // cropped frames. This is useful when the calculator is only used for
+  // computing the cropping metadata rather than doing the actual cropping
+  // operation.
   ::mediapipe::Status FormatAndOutputCroppedFrames(
-      const std::vector<cv::Mat>& cropped_frames,
+      const int crop_width, const int crop_height, const int num_frames,
       std::vector<cv::Rect>* render_to_locations, bool* apply_padding,
       std::vector<cv::Scalar>* padding_colors, float* vertical_fill_percent,
-      CalculatorContext* cc);
+      const std::vector<cv::Mat>* cropped_frames_ptr, CalculatorContext* cc);
 
   // Draws and outputs visualization frames if those streams are present.
   ::mediapipe::Status OutputVizFrames(
       const std::vector<KeyFrameCropResult>& key_frame_crop_results,
       const std::vector<FocusPointFrame>& focus_point_frames,
+      const std::vector<cv::Rect>& crop_from_locations,
       const int crop_window_width, const int crop_window_height,
       CalculatorContext* cc) const;
 
@@ -201,16 +211,21 @@ class SceneCroppingCalculator : public CalculatorBase {
   // Calculator options.
   SceneCroppingCalculatorOptions options_;
 
-  // Buffered KeyFrameInfos for the current scene (size = number of key frames).
+  // Buffered KeyFrameInfos for the current scene (size = number of key
+  // frames).
   std::vector<KeyFrameInfo> key_frame_infos_;
 
   // Buffered frames, timestamps, and indicators for key frames in the current
   // scene (size = number of input video frames).
-  // Note: scene_frames_or_empty_ may be empty if the actual cropping operation
-  // of frames is turned off, e.g. when |should_perform_frame_cropping_| is
-  // false, so rely on scene_frame_timestamps_.size() to query the number of
-  // accumulated timestamps rather than scene_frames_or_empty_.size().
+  // Note: scene_frames_or_empty_ may be empty if the actual cropping
+  // operation of frames is turned off, e.g. when
+  // |should_perform_frame_cropping_| is false, so rely on
+  // scene_frame_timestamps_.size() to query the number of accumulated
+  // timestamps rather than scene_frames_or_empty_.size().
+  // TODO: all of the following vectors are expected to be the same
+  // size. Add to struct and store together in one vector.
   std::vector<cv::Mat> scene_frames_or_empty_;
+  std::vector<cv::Mat> raw_scene_frames_or_empty_;
   std::vector<int64> scene_frame_timestamps_;
   std::vector<bool> is_key_frames_;
 
@@ -221,6 +236,9 @@ class SceneCroppingCalculator : public CalculatorBase {
   // Stored FocusPointFrames from prior scene when there was no actual scene
   // change (due to forced flush when buffer is full).
   std::vector<FocusPointFrame> prior_focus_point_frames_;
+  // Indicates if this scene is a continuation of the last scene (due to
+  // forced flush when buffer is full).
+  bool continue_last_scene_ = false;
 
   // KeyFrameCropOptions used by the FrameCropRegionComputer.
   KeyFrameCropOptions key_frame_crop_options_;
@@ -242,8 +260,8 @@ class SceneCroppingCalculator : public CalculatorBase {
   std::vector<StaticFeatures> static_features_;
   std::vector<int64> static_features_timestamps_;
   bool has_solid_background_ = false;
-  // CIELAB yields more natural color transitions than RGB and HSV: RGB tends to
-  // produce darker in-between colors and HSV can introduce new hues. See
+  // CIELAB yields more natural color transitions than RGB and HSV: RGB tends
+  // to produce darker in-between colors and HSV can introduce new hues. See
   // https://howaboutanorange.com/blog/2011/08/10/color_interpolation/ for
   // visual comparisons of color transition in different spaces.
   PiecewiseLinearFunction background_color_l_function_;  // CIELAB - l
@@ -264,11 +282,11 @@ class SceneCroppingCalculator : public CalculatorBase {
   std::unique_ptr<std::vector<ExternalRenderFrame>> external_render_list_;
 
   // Determines whether to perform real cropping on input frames. This flag is
-  // useful when the user only needs to compute cropping windows, in which case
-  // setting this flag to false can avoid buffering as well as cropping frames.
-  // This can significantly reduce memory usage and speed up processing. Some
-  // debugging visualization inevitably will be disabled because of this flag
-  // too.
+  // useful when the user only needs to compute cropping windows, in which
+  // case setting this flag to false can avoid buffering as well as cropping
+  // frames. This can significantly reduce memory usage and speed up
+  // processing. Some debugging visualization inevitably will be disabled
+  // because of this flag too.
   bool should_perform_frame_cropping_ = false;
 };
 }  // namespace autoflip

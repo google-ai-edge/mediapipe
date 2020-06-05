@@ -94,6 +94,7 @@ constexpr char kDebugConfig[] = R"(
   output_stream: "CROPPED_FRAMES:cropped_frames"
   output_stream: "KEY_FRAME_CROP_REGION_VIZ_FRAMES:key_frame_crop_viz_frames"
   output_stream: "SALIENT_POINT_FRAME_VIZ_FRAMES:salient_point_viz_frames"
+  output_stream: "FRAMING_DETECTIONS_VIZ_FRAMES:framing_viz_frames"
   output_stream: "CROPPING_SUMMARY:cropping_summaries"
   output_stream: "EXTERNAL_RENDERING_PER_FRAME:external_rendering_per_frame"
   output_stream: "EXTERNAL_RENDERING_FULL_VID:external_rendering_full_vid"
@@ -101,6 +102,39 @@ constexpr char kDebugConfig[] = R"(
     [mediapipe.autoflip.SceneCroppingCalculatorOptions.ext]: {
       target_width: $0
       target_height: $1
+    }
+  })";
+
+constexpr char kExternalRenderConfig[] = R"(
+  calculator: "SceneCroppingCalculator"
+  input_stream: "VIDEO_FRAMES:camera_frames_org"
+  input_stream: "KEY_FRAMES:down_sampled_frames"
+  input_stream: "DETECTION_FEATURES:salient_regions"
+  input_stream: "STATIC_FEATURES:border_features"
+  input_stream: "SHOT_BOUNDARIES:shot_boundary_frames"
+  output_stream: "EXTERNAL_RENDERING_PER_FRAME:external_rendering_per_frame"
+  output_stream: "EXTERNAL_RENDERING_FULL_VID:external_rendering_full_vid"
+  options: {
+    [mediapipe.autoflip.SceneCroppingCalculatorOptions.ext]: {
+      target_width: $0
+      target_height: $1
+    }
+  })";
+
+constexpr char kExternalRenderConfigNoVideo[] = R"(
+  calculator: "SceneCroppingCalculator"
+  input_stream: "VIDEO_SIZE:camera_size"
+  input_stream: "DETECTION_FEATURES:salient_regions"
+  input_stream: "STATIC_FEATURES:border_features"
+  input_stream: "SHOT_BOUNDARIES:shot_boundary_frames"
+  output_stream: "EXTERNAL_RENDERING_PER_FRAME:external_rendering_per_frame"
+  output_stream: "EXTERNAL_RENDERING_FULL_VID:external_rendering_full_vid"
+  options: {
+    [mediapipe.autoflip.SceneCroppingCalculatorOptions.ext]: {
+      target_width: $0
+      target_height: $1
+      video_features_width: $2
+      video_features_height: $3
     }
   })";
 
@@ -172,6 +206,22 @@ std::unique_ptr<DetectionSet> MakeDetections(const int num_detections,
   return detections;
 }
 
+// Makes a detection set given number of detections. Each detection has randomly
+// generated regions within given width and height with random score in [0, 1],
+// and is randomly set to be required or non-required.
+std::unique_ptr<DetectionSet> MakeCenterDetection(const int width,
+                                                  const int height) {
+  auto detections = absl::make_unique<DetectionSet>();
+  auto* region = detections->add_detections();
+  auto* location = region->mutable_location();
+  location->set_x(width / 2 - 5);
+  location->set_width(width / 2 + 10);
+  location->set_y(height / 2 - 5);
+  location->set_height(height);
+  region->set_score(1);
+  return detections;
+}
+
 // Makes an image frame of solid color given color, width, and height.
 std::unique_ptr<ImageFrame> MakeImageFrameFromColor(const cv::Scalar& color,
                                                     const int width,
@@ -188,7 +238,7 @@ std::unique_ptr<ImageFrame> MakeImageFrameFromColor(const cv::Scalar& color,
 // and kMaxNumDetections. Optionally add a key image frame of random solid color
 // and given size.
 void AddKeyFrameFeatures(const int64 time_ms, const int key_frame_width,
-                         const int key_frame_height,
+                         const int key_frame_height, bool randomize,
                          CalculatorRunner::StreamContentsSet* inputs) {
   Timestamp timestamp(time_ms);
   if (inputs->HasTag("KEY_FRAMES")) {
@@ -197,13 +247,18 @@ void AddKeyFrameFeatures(const int64 time_ms, const int key_frame_width,
     inputs->Tag("KEY_FRAMES")
         .packets.push_back(Adopt(key_frame.release()).At(timestamp));
   }
-
-  const int num_detections = std::uniform_int_distribution<int>(
-      kMinNumDetections, kMaxNumDetections)(GetGen());
-  auto detections =
-      MakeDetections(num_detections, key_frame_width, key_frame_height);
-  inputs->Tag("DETECTION_FEATURES")
-      .packets.push_back(Adopt(detections.release()).At(timestamp));
+  if (randomize) {
+    const int num_detections = std::uniform_int_distribution<int>(
+        kMinNumDetections, kMaxNumDetections)(GetGen());
+    auto detections =
+        MakeDetections(num_detections, key_frame_width, key_frame_height);
+    inputs->Tag("DETECTION_FEATURES")
+        .packets.push_back(Adopt(detections.release()).At(timestamp));
+  } else {
+    auto detections = MakeCenterDetection(key_frame_width, key_frame_height);
+    inputs->Tag("DETECTION_FEATURES")
+        .packets.push_back(Adopt(detections.release()).At(timestamp));
+  }
 }
 
 // Adds a scene given number of frames to the input stream. Spaces frame at the
@@ -212,19 +267,31 @@ void AddKeyFrameFeatures(const int64 time_ms, const int key_frame_width,
 void AddScene(const int start_frame_index, const int num_scene_frames,
               const int frame_width, const int frame_height,
               const int key_frame_width, const int key_frame_height,
+              const int DownSampleRate,
               CalculatorRunner::StreamContentsSet* inputs) {
   int64 time_ms = start_frame_index * kTimestampDiff;
   for (int i = 0; i < num_scene_frames; ++i) {
     Timestamp timestamp(time_ms);
-    auto frame =
-        MakeImageFrameFromColor(GetRandomColor(), frame_width, frame_height);
-    inputs->Tag("VIDEO_FRAMES")
-        .packets.push_back(Adopt(frame.release()).At(timestamp));
+    if (inputs->HasTag("VIDEO_FRAMES")) {
+      auto frame =
+          MakeImageFrameFromColor(GetRandomColor(), frame_width, frame_height);
+      inputs->Tag("VIDEO_FRAMES")
+          .packets.push_back(Adopt(frame.release()).At(timestamp));
+    } else {
+      auto input_size =
+          ::absl::make_unique<std::pair<int, int>>(frame_width, frame_height);
+      inputs->Tag("VIDEO_SIZE")
+          .packets.push_back(Adopt(input_size.release()).At(timestamp));
+    }
     auto static_features = absl::make_unique<StaticFeatures>();
     inputs->Tag("STATIC_FEATURES")
         .packets.push_back(Adopt(static_features.release()).At(timestamp));
-    if (i % kDownSampleRate == 0) {  // is a key frame
-      AddKeyFrameFeatures(time_ms, key_frame_width, key_frame_height, inputs);
+    if (DownSampleRate == 1) {
+      AddKeyFrameFeatures(time_ms, key_frame_width, key_frame_height, false,
+                          inputs);
+    } else if (i % DownSampleRate == 0) {  // is a key frame
+      AddKeyFrameFeatures(time_ms, key_frame_width, key_frame_height, true,
+                          inputs);
     }
     if (i == num_scene_frames - 1) {  // adds shot boundary
       inputs->Tag("SHOT_BOUNDARIES")
@@ -294,7 +361,7 @@ TEST(SceneCroppingCalculatorTest, HandlesNoKeyFrames) {
           absl::Substitute(kNoKeyFrameConfig, kTargetWidth, kTargetHeight));
   auto runner = absl::make_unique<CalculatorRunner>(config);
   AddScene(0, kSceneSize, kInputFrameWidth, kInputFrameHeight, kKeyFrameWidth,
-           kKeyFrameHeight, runner->MutableInputs());
+           kKeyFrameHeight, kDownSampleRate, runner->MutableInputs());
   MP_EXPECT_OK(runner->Run());
   CheckCroppedFrames(*runner, kSceneSize, kTargetWidth, kTargetHeight);
 }
@@ -308,7 +375,8 @@ TEST(SceneCroppingCalculatorTest, HandlesLongScene) {
           kPriorFrameBufferSize));
   auto runner = absl::make_unique<CalculatorRunner>(config);
   AddScene(0, 2 * kMaxSceneSize, kInputFrameWidth, kInputFrameHeight,
-           kKeyFrameWidth, kKeyFrameHeight, runner->MutableInputs());
+           kKeyFrameWidth, kKeyFrameHeight, kDownSampleRate,
+           runner->MutableInputs());
   MP_EXPECT_OK(runner->Run());
   CheckCroppedFrames(*runner, 2 * kMaxSceneSize, kTargetWidth, kTargetHeight);
 }
@@ -321,7 +389,7 @@ TEST(SceneCroppingCalculatorTest, OutputsDebugStreams) {
   auto runner = absl::make_unique<CalculatorRunner>(config);
   const int num_frames = kSceneSize;
   AddScene(0, num_frames, kInputFrameWidth, kInputFrameHeight, kKeyFrameWidth,
-           kKeyFrameHeight, runner->MutableInputs());
+           kKeyFrameHeight, kDownSampleRate, runner->MutableInputs());
 
   MP_EXPECT_OK(runner->Run());
   const auto& outputs = runner->Outputs();
@@ -330,6 +398,7 @@ TEST(SceneCroppingCalculatorTest, OutputsDebugStreams) {
   EXPECT_TRUE(outputs.HasTag("CROPPING_SUMMARY"));
   EXPECT_TRUE(outputs.HasTag("EXTERNAL_RENDERING_PER_FRAME"));
   EXPECT_TRUE(outputs.HasTag("EXTERNAL_RENDERING_FULL_VID"));
+  EXPECT_TRUE(outputs.HasTag("FRAMING_DETECTIONS_VIZ_FRAMES"));
   const auto& crop_region_viz_frames_outputs =
       outputs.Tag("KEY_FRAME_CROP_REGION_VIZ_FRAMES").packets;
   const auto& salient_point_viz_frames_outputs =
@@ -339,8 +408,11 @@ TEST(SceneCroppingCalculatorTest, OutputsDebugStreams) {
       outputs.Tag("EXTERNAL_RENDERING_PER_FRAME").packets;
   const auto& ext_render_full_vid =
       outputs.Tag("EXTERNAL_RENDERING_FULL_VID").packets;
+  const auto& framing_viz_frames_output =
+      outputs.Tag("FRAMING_DETECTIONS_VIZ_FRAMES").packets;
   EXPECT_EQ(crop_region_viz_frames_outputs.size(), num_frames);
   EXPECT_EQ(salient_point_viz_frames_outputs.size(), num_frames);
+  EXPECT_EQ(framing_viz_frames_output.size(), num_frames);
   EXPECT_EQ(summary_output.size(), 1);
   EXPECT_EQ(ext_render_per_frame.size(), num_frames);
   EXPECT_EQ(ext_render_full_vid.size(), 1);
@@ -387,7 +459,8 @@ TEST(SceneCroppingCalculatorTest, HandlesLandscapeTarget) {
   auto runner = absl::make_unique<CalculatorRunner>(config);
   for (int i = 0; i < kNumScenes; ++i) {
     AddScene(i * kSceneSize, kSceneSize, input_width, input_height,
-             kKeyFrameWidth, kKeyFrameHeight, runner->MutableInputs());
+             kKeyFrameWidth, kKeyFrameHeight, kDownSampleRate,
+             runner->MutableInputs());
   }
   const int num_frames = kSceneSize * kNumScenes;
   MP_EXPECT_OK(runner->Run());
@@ -404,11 +477,32 @@ TEST(SceneCroppingCalculatorTest, CropsToTargetSize) {
   auto runner = absl::make_unique<CalculatorRunner>(config);
   for (int i = 0; i < kNumScenes; ++i) {
     AddScene(i * kSceneSize, kSceneSize, kInputFrameWidth, kInputFrameHeight,
-             kKeyFrameWidth, kKeyFrameHeight, runner->MutableInputs());
+             kKeyFrameWidth, kKeyFrameHeight, kDownSampleRate,
+             runner->MutableInputs());
   }
   const int num_frames = kSceneSize * kNumScenes;
   MP_EXPECT_OK(runner->Run());
   CheckCroppedFrames(*runner, num_frames, kTargetWidth, kTargetHeight);
+}
+
+// Checks that the calculator crops scene frames to input size when the target
+// size type is KEEP_ORIGINAL_DIMENSION.
+TEST(SceneCroppingCalculatorTest, CropsToOriginalDimension) {
+  // target_width and target_height are ignored
+  const CalculatorGraphConfig::Node config =
+      ParseTextProtoOrDie<CalculatorGraphConfig::Node>(absl::Substitute(
+          kConfig, /*target_width*/ 2, /*target_height*/ 2,
+          SceneCroppingCalculatorOptions::KEEP_ORIGINAL_DIMENSION,
+          kMaxSceneSize, kPriorFrameBufferSize));
+  auto runner = absl::make_unique<CalculatorRunner>(config);
+  for (int i = 0; i < kNumScenes; ++i) {
+    AddScene(i * kSceneSize, kSceneSize, kInputFrameWidth, kInputFrameHeight,
+             kKeyFrameWidth, kKeyFrameHeight, kDownSampleRate,
+             runner->MutableInputs());
+  }
+  const int num_frames = kSceneSize * kNumScenes;
+  MP_EXPECT_OK(runner->Run());
+  CheckCroppedFrames(*runner, num_frames, kInputFrameWidth, kInputFrameHeight);
 }
 
 // Checks that the calculator keeps original height if the target size type is
@@ -427,7 +521,8 @@ TEST(SceneCroppingCalculatorTest, KeepsOriginalHeight) {
           kPriorFrameBufferSize));
   auto runner = absl::make_unique<CalculatorRunner>(config);
   AddScene(0, kMaxSceneSize, kInputFrameWidth, kInputFrameHeight,
-           kKeyFrameWidth, kKeyFrameHeight, runner->MutableInputs());
+           kKeyFrameWidth, kKeyFrameHeight, kDownSampleRate,
+           runner->MutableInputs());
   MP_EXPECT_OK(runner->Run());
   CheckCroppedFrames(*runner, kMaxSceneSize, target_width, target_height);
 }
@@ -448,7 +543,8 @@ TEST(SceneCroppingCalculatorTest, KeepsOriginalWidth) {
           kPriorFrameBufferSize));
   auto runner = absl::make_unique<CalculatorRunner>(config);
   AddScene(0, kMaxSceneSize, kInputFrameWidth, kInputFrameHeight,
-           kKeyFrameWidth, kKeyFrameHeight, runner->MutableInputs());
+           kKeyFrameWidth, kKeyFrameHeight, kDownSampleRate,
+           runner->MutableInputs());
   MP_EXPECT_OK(runner->Run());
   CheckCroppedFrames(*runner, kMaxSceneSize, target_width, target_height);
 }
@@ -461,7 +557,8 @@ TEST(SceneCroppingCalculatorTest, RejectsOddTargetSize) {
           kMaxSceneSize, kPriorFrameBufferSize));
   auto runner = absl::make_unique<CalculatorRunner>(config);
   AddScene(0, kMaxSceneSize, kInputFrameWidth, kInputFrameHeight,
-           kKeyFrameWidth, kKeyFrameHeight, runner->MutableInputs());
+           kKeyFrameWidth, kKeyFrameHeight, kDownSampleRate,
+           runner->MutableInputs());
   const auto status = runner->Run();
   EXPECT_FALSE(status.ok());
   EXPECT_THAT(status.ToString(), HasSubstr("Target width cannot be odd"));
@@ -498,7 +595,7 @@ TEST(SceneCroppingCalculatorTest, ProducesEvenFrameSize) {
                 kMaxSceneSize, kPriorFrameBufferSize));
         auto runner = absl::make_unique<CalculatorRunner>(config);
         AddScene(0, 1, frame_width, frame_height, kKeyFrameWidth,
-                 kKeyFrameHeight, runner->MutableInputs());
+                 kKeyFrameHeight, kDownSampleRate, runner->MutableInputs());
         MP_EXPECT_OK(runner->Run());
         const auto& output_frame = runner->Outputs()
                                        .Tag("CROPPED_FRAMES")
@@ -663,6 +760,146 @@ TEST(SceneCroppingCalculatorTest, RemovesStaticBorders) {
       EXPECT_EQ(cropped_mat.at<cv::Vec3b>(y, x)[1], frame_color[1]);
       EXPECT_EQ(cropped_mat.at<cv::Vec3b>(y, x)[2], frame_color[2]);
     }
+  }
+}
+
+// Checks external render message with default poly path solver.
+TEST(SceneCroppingCalculatorTest, OutputsCropMessagePolyPath) {
+  const CalculatorGraphConfig::Node config =
+      ParseTextProtoOrDie<CalculatorGraphConfig::Node>(
+          absl::Substitute(kExternalRenderConfig, kTargetWidth, kTargetHeight));
+  auto runner = absl::make_unique<CalculatorRunner>(config);
+  const int num_frames = kSceneSize;
+  AddScene(0, num_frames, kInputFrameWidth, kInputFrameHeight, kKeyFrameWidth,
+           kKeyFrameHeight, 1, runner->MutableInputs());
+
+  MP_EXPECT_OK(runner->Run());
+  const auto& outputs = runner->Outputs();
+  const auto& ext_render_per_frame =
+      outputs.Tag("EXTERNAL_RENDERING_PER_FRAME").packets;
+  EXPECT_EQ(ext_render_per_frame.size(), num_frames);
+
+  for (int i = 0; i < num_frames - 1; ++i) {
+    const auto& ext_render_message =
+        ext_render_per_frame[i].Get<ExternalRenderFrame>();
+    EXPECT_EQ(ext_render_message.timestamp_us(), i * 20000);
+    EXPECT_EQ(ext_render_message.crop_from_location().x(), 725);
+    EXPECT_EQ(ext_render_message.crop_from_location().y(), 0);
+    EXPECT_EQ(ext_render_message.crop_from_location().width(), 461);
+    EXPECT_EQ(ext_render_message.crop_from_location().height(), 720);
+    EXPECT_EQ(ext_render_message.render_to_location().x(), 0);
+    EXPECT_EQ(ext_render_message.render_to_location().y(), 0);
+    EXPECT_EQ(ext_render_message.render_to_location().width(), 720);
+    EXPECT_EQ(ext_render_message.render_to_location().height(), 1124);
+  }
+}
+
+// Checks external render message with kinematic path solver.
+TEST(SceneCroppingCalculatorTest, OutputsCropMessageKinematicPath) {
+  CalculatorGraphConfig::Node config =
+      ParseTextProtoOrDie<CalculatorGraphConfig::Node>(
+          absl::Substitute(kDebugConfig, kTargetWidth, kTargetHeight));
+  auto* options = config.mutable_options()->MutableExtension(
+      SceneCroppingCalculatorOptions::ext);
+  auto* kinematic_options =
+      options->mutable_camera_motion_options()->mutable_kinematic_options();
+  kinematic_options->set_max_velocity(200);
+
+  auto runner = absl::make_unique<CalculatorRunner>(config);
+  const int num_frames = kSceneSize;
+  AddScene(0, num_frames, kInputFrameWidth, kInputFrameHeight, kKeyFrameWidth,
+           kKeyFrameHeight, 1, runner->MutableInputs());
+
+  MP_EXPECT_OK(runner->Run());
+  const auto& outputs = runner->Outputs();
+  const auto& ext_render_per_frame =
+      outputs.Tag("EXTERNAL_RENDERING_PER_FRAME").packets;
+  EXPECT_EQ(ext_render_per_frame.size(), num_frames);
+
+  for (int i = 0; i < num_frames - 1; ++i) {
+    const auto& ext_render_message =
+        ext_render_per_frame[i].Get<ExternalRenderFrame>();
+    EXPECT_EQ(ext_render_message.timestamp_us(), i * 20000);
+    EXPECT_EQ(ext_render_message.crop_from_location().x(), 725);
+    EXPECT_EQ(ext_render_message.crop_from_location().y(), 0);
+    EXPECT_EQ(ext_render_message.crop_from_location().width(), 461);
+    EXPECT_EQ(ext_render_message.crop_from_location().height(), 720);
+    EXPECT_EQ(ext_render_message.render_to_location().x(), 0);
+    EXPECT_EQ(ext_render_message.render_to_location().y(), 0);
+    EXPECT_EQ(ext_render_message.render_to_location().width(), 720);
+    EXPECT_EQ(ext_render_message.render_to_location().height(), 1124);
+  }
+}
+
+// Checks external render message with default poly path solver without video
+// input.
+TEST(SceneCroppingCalculatorTest, OutputsCropMessagePolyPathNoVideo) {
+  const CalculatorGraphConfig::Node config =
+      ParseTextProtoOrDie<CalculatorGraphConfig::Node>(
+          absl::Substitute(kExternalRenderConfigNoVideo, kTargetWidth,
+                           kTargetHeight, kKeyFrameWidth, kKeyFrameHeight));
+  auto runner = absl::make_unique<CalculatorRunner>(config);
+  const int num_frames = kSceneSize;
+  AddScene(0, num_frames, kInputFrameWidth, kInputFrameHeight, kKeyFrameWidth,
+           kKeyFrameHeight, 1, runner->MutableInputs());
+
+  MP_EXPECT_OK(runner->Run());
+  const auto& outputs = runner->Outputs();
+  const auto& ext_render_per_frame =
+      outputs.Tag("EXTERNAL_RENDERING_PER_FRAME").packets;
+  EXPECT_EQ(ext_render_per_frame.size(), num_frames);
+
+  for (int i = 0; i < num_frames - 1; ++i) {
+    const auto& ext_render_message =
+        ext_render_per_frame[i].Get<ExternalRenderFrame>();
+    EXPECT_EQ(ext_render_message.timestamp_us(), i * 20000);
+    EXPECT_EQ(ext_render_message.crop_from_location().x(), 725);
+    EXPECT_EQ(ext_render_message.crop_from_location().y(), 0);
+    EXPECT_EQ(ext_render_message.crop_from_location().width(), 461);
+    EXPECT_EQ(ext_render_message.crop_from_location().height(), 720);
+    EXPECT_EQ(ext_render_message.render_to_location().x(), 0);
+    EXPECT_EQ(ext_render_message.render_to_location().y(), 0);
+    EXPECT_EQ(ext_render_message.render_to_location().width(), 720);
+    EXPECT_EQ(ext_render_message.render_to_location().height(), 1124);
+  }
+}
+
+// Checks external render message with kinematic path solver without video
+// input.
+TEST(SceneCroppingCalculatorTest, OutputsCropMessageKinematicPathNoVideo) {
+  CalculatorGraphConfig::Node config =
+      ParseTextProtoOrDie<CalculatorGraphConfig::Node>(
+          absl::Substitute(kExternalRenderConfigNoVideo, kTargetWidth,
+                           kTargetHeight, kKeyFrameWidth, kKeyFrameHeight));
+  auto* options = config.mutable_options()->MutableExtension(
+      SceneCroppingCalculatorOptions::ext);
+  auto* kinematic_options =
+      options->mutable_camera_motion_options()->mutable_kinematic_options();
+  kinematic_options->set_max_velocity(2.0);
+
+  auto runner = absl::make_unique<CalculatorRunner>(config);
+  const int num_frames = kSceneSize;
+  AddScene(0, num_frames, kInputFrameWidth, kInputFrameHeight, kKeyFrameWidth,
+           kKeyFrameHeight, 1, runner->MutableInputs());
+
+  MP_EXPECT_OK(runner->Run());
+  const auto& outputs = runner->Outputs();
+  const auto& ext_render_per_frame =
+      outputs.Tag("EXTERNAL_RENDERING_PER_FRAME").packets;
+  EXPECT_EQ(ext_render_per_frame.size(), num_frames);
+
+  for (int i = 0; i < num_frames - 1; ++i) {
+    const auto& ext_render_message =
+        ext_render_per_frame[i].Get<ExternalRenderFrame>();
+    EXPECT_EQ(ext_render_message.timestamp_us(), i * 20000);
+    EXPECT_EQ(ext_render_message.crop_from_location().x(), 725);
+    EXPECT_EQ(ext_render_message.crop_from_location().y(), 0);
+    EXPECT_EQ(ext_render_message.crop_from_location().width(), 461);
+    EXPECT_EQ(ext_render_message.crop_from_location().height(), 720);
+    EXPECT_EQ(ext_render_message.render_to_location().x(), 0);
+    EXPECT_EQ(ext_render_message.render_to_location().y(), 0);
+    EXPECT_EQ(ext_render_message.render_to_location().width(), 720);
+    EXPECT_EQ(ext_render_message.render_to_location().height(), 1124);
   }
 }
 }  // namespace

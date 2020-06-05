@@ -61,9 +61,11 @@ namespace tool {
       }
     }
   }
-  return ::mediapipe::Status(
+  if (error_code == StatusCode::kOk) return OkStatus();
+  Status combined = ::mediapipe::Status(
       error_code,
       absl::StrCat(general_comment, "\n", absl::StrJoin(errors, "\n")));
+  return combined;
 }
 
 }  // namespace tool

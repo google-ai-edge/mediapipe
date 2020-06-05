@@ -23,15 +23,31 @@ proto_library(
     srcs = ["cropping.proto"],
     deps = [
         "//mediapipe/examples/desktop/autoflip:autoflip_messages_proto",
+        "//mediapipe/examples/desktop/autoflip/quality:kinematic_path_solver_proto",
     ],
 )
 
 mediapipe_cc_proto_library(
     name = "cropping_cc_proto",
     srcs = ["cropping.proto"],
-    cc_deps = ["//mediapipe/examples/desktop/autoflip:autoflip_messages_cc_proto"],
+    cc_deps = [
+        ":kinematic_path_solver_cc_proto",
+        "//mediapipe/examples/desktop/autoflip:autoflip_messages_cc_proto",
+    ],
     visibility = ["//mediapipe/examples:__subpackages__"],
     deps = [":cropping_proto"],
+)
+
+proto_library(
+    name = "kinematic_path_solver_proto",
+    srcs = ["kinematic_path_solver.proto"],
+)
+
+mediapipe_cc_proto_library(
+    name = "kinematic_path_solver_cc_proto",
+    srcs = ["kinematic_path_solver.proto"],
+    visibility = ["//mediapipe/examples:__subpackages__"],
+    deps = [":kinematic_path_solver_proto"],
 )
 
 proto_library(
@@ -143,12 +159,36 @@ cc_library(
 )
 
 cc_library(
+    name = "kinematic_path_solver",
+    srcs = ["kinematic_path_solver.cc"],
+    hdrs = ["kinematic_path_solver.h"],
+    deps = [
+        ":kinematic_path_solver_cc_proto",
+        "//mediapipe/framework/port:integral_types",
+        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:status",
+    ],
+)
+
+cc_test(
+    name = "kinematic_path_solver_test",
+    srcs = ["kinematic_path_solver_test.cc"],
+    deps = [
+        ":kinematic_path_solver",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:integral_types",
+        "//mediapipe/framework/port:status",
+    ],
+)
+
+cc_library(
     name = "scene_cropper",
     srcs = ["scene_cropper.cc"],
     hdrs = ["scene_cropper.h"],
     deps = [
         ":cropping_cc_proto",
         ":focus_point_cc_proto",
+        ":kinematic_path_solver",
         ":polynomial_regression_path_solver",
         ":utils",
         "//mediapipe/framework/port:opencv_core",

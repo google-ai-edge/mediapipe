@@ -55,6 +55,14 @@ namespace autoflip {
     const mediapipe::ImageFormat::Format image_format,
     std::vector<std::unique_ptr<ImageFrame>>* viz_frames);
 
+// Draws the final smoothed path of the camera retargeter by darkening the
+// removed areas.
+::mediapipe::Status DrawDetectionAndFramingWindow(
+    const std::vector<cv::Mat>& org_scene_frames,
+    const std::vector<cv::Rect>& crop_from_locations,
+    const ImageFormat::Format image_format, const float overlay_opacity,
+    std::vector<std::unique_ptr<ImageFrame>>* viz_frames);
+
 }  // namespace autoflip
 }  // namespace mediapipe
 
