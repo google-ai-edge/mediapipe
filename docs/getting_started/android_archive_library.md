@@ -91,8 +91,8 @@ each project.
     [the label map](https://github.com/google/mediapipe/blob/master/mediapipe/models/face_detection_front_labelmap.txt).
 
     ```bash
-    bazel build -c opt mediapipe/examples/android/src/java/com/google/mediapipe/apps/facedetectiongpu:binary_graph
-    cp bazel-bin/mediapipe/examples/android/src/java/com/google/mediapipe/apps/facedetectiongpu/facedetectiongpu.binarypb /path/to/your/app/src/main/assets/
+    bazel build -c opt mediapipe/mediapipe/graphs/face_detection:mobile_gpu_binary_graph
+    cp bazel-bin/mediapipe/graphs/face_detection/mobile_gpu.binarypb /path/to/your/app/src/main/assets/
     cp mediapipe/models/face_detection_front.tflite /path/to/your/app/src/main/assets/
     cp mediapipe/models/face_detection_front_labelmap.txt /path/to/your/app/src/main/assets/
     ```
@@ -130,7 +130,7 @@ each project.
         implementation 'com.google.code.findbugs:jsr305:3.0.2'
         implementation 'com.google.guava:guava:27.0.1-android'
         implementation 'com.google.guava:guava:27.0.1-android'
-        implementation 'com.google.protobuf:protobuf-java:3.11.4''
+        implementation 'com.google.protobuf:protobuf-java:3.11.4'
         // CameraX core library
         def camerax_version = "1.0.0-alpha06"
         implementation "androidx.camera:camera-core:$camerax_version"

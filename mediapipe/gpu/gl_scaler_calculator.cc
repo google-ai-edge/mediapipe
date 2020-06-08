@@ -83,6 +83,7 @@ class GlScalerCalculator : public CalculatorBase {
   GlCalculatorHelper helper_;
   int dst_width_ = 0;
   int dst_height_ = 0;
+  float dst_scale_ = -1.f;
   FrameRotation rotation_;
   std::unique_ptr<QuadRenderer> rgb_renderer_;
   std::unique_ptr<QuadRenderer> yuv_renderer_;
@@ -141,6 +142,9 @@ REGISTER_CALCULATOR(GlScalerCalculator);
   }
   if (options.has_output_height()) {
     dst_height_ = options.output_height();
+  }
+  if (options.has_output_scale()) {
+    dst_scale_ = options.output_scale();
   }
   if (options.has_rotation()) {
     rotation_ccw = options.rotation();
@@ -283,8 +287,18 @@ void GlScalerCalculator::GetOutputDimensions(int src_width, int src_height,
   if (dst_width_ > 0 && dst_height_ > 0) {
     *dst_width = dst_width_;
     *dst_height = dst_height_;
-  } else if (rotation_ == FrameRotation::k90 ||
-             rotation_ == FrameRotation::k270) {
+    return;
+  }
+  if (dst_scale_ > 0) {
+    // Scales the destination size, but just uses src size as a temporary for
+    // calculations.
+    src_width = static_cast<int>(src_width * dst_scale_);
+    src_height = static_cast<int>(src_height * dst_scale_);
+    // Round to nearest multiply of 4 for better memory alignment.
+    src_width = ((src_width + 2) >> 2) << 2;
+    src_height = ((src_height + 2) >> 2) << 2;
+  }
+  if (rotation_ == FrameRotation::k90 || rotation_ == FrameRotation::k270) {
     *dst_width = src_height;
     *dst_height = src_width;
   } else {

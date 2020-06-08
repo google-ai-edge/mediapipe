@@ -48,6 +48,7 @@ constexpr char kNormReferenceRectTag[] = "NORM_REFERENCE_RECT";
 class RectProjectionCalculator : public CalculatorBase {
  public:
   static ::mediapipe::Status GetContract(CalculatorContract* cc);
+  ::mediapipe::Status Open(CalculatorContext* cc) override;
   ::mediapipe::Status Process(CalculatorContext* cc) override;
 };
 REGISTER_CALCULATOR(RectProjectionCalculator);
@@ -57,6 +58,12 @@ REGISTER_CALCULATOR(RectProjectionCalculator);
   cc->Inputs().Tag(kNormRectTag).Set<NormalizedRect>();
   cc->Inputs().Tag(kNormReferenceRectTag).Set<NormalizedRect>();
   cc->Outputs().Tag(kNormRectTag).Set<NormalizedRect>();
+  return ::mediapipe::OkStatus();
+}
+
+::mediapipe::Status RectProjectionCalculator::Open(CalculatorContext* cc) {
+  cc->SetOffset(TimestampDiff(0));
+
   return ::mediapipe::OkStatus();
 }
 
