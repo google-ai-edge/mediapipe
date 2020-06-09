@@ -127,7 +127,7 @@ run code search using
 *   [Discuss](https://groups.google.com/forum/#!forum/mediapipe) - General
     community discussion around MediaPipe
 
-## Alpha Disclaimer
+## Alpha disclaimer
 
 MediaPipe is currently in alpha at v0.7. We may be still making breaking API
 changes and expect to get to stable APIs by v1.0.

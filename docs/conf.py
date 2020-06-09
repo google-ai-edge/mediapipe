@@ -19,7 +19,7 @@ project = 'MediaPipe'
 author = 'Google LLC'
 
 # The full version, including alpha/beta/rc tags
-release = 'v0.5'
+release = 'v0.7.5'
 
 
 # -- General configuration ---------------------------------------------------

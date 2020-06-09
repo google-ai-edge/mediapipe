@@ -144,6 +144,10 @@ public class MainActivity extends AppCompatActivity {
     previewDisplayView.setVisibility(View.VISIBLE);
   }
 
+  protected Size cameraTargetResolution() {
+    return null; // No preference and let the camera (helper) decide.
+  }
+
   public void startCamera() {
     cameraHelper = new CameraXPreviewHelper();
     cameraHelper.setOnCameraStartedListener(
@@ -154,7 +158,30 @@ public class MainActivity extends AppCompatActivity {
         applicationInfo.metaData.getBoolean("cameraFacingFront", false)
             ? CameraHelper.CameraFacing.FRONT
             : CameraHelper.CameraFacing.BACK;
-    cameraHelper.startCamera(this, cameraFacing, /*surfaceTexture=*/ null);
+    cameraHelper.startCamera(
+        this, cameraFacing, /*surfaceTexture=*/ null, cameraTargetResolution());
+  }
+
+  protected Size computeViewSize(int width, int height) {
+    return new Size(width, height);
+  }
+
+  protected void onPreviewDisplaySurfaceChanged(
+      SurfaceHolder holder, int format, int width, int height) {
+    // (Re-)Compute the ideal size of the camera-preview display (the area that the
+    // camera-preview frames get rendered onto, potentially with scaling and rotation)
+    // based on the size of the SurfaceView that contains the display.
+    Size viewSize = computeViewSize(width, height);
+    Size displaySize = cameraHelper.computeDisplaySizeFromViewSize(viewSize);
+    boolean isCameraRotated = cameraHelper.isCameraRotated();
+
+    // Connect the converter to the camera-preview frames as its input (via
+    // previewFrameTexture), and configure the output width and height as the computed
+    // display size.
+    converter.setSurfaceTextureAndAttachToGLContext(
+        previewFrameTexture,
+        isCameraRotated ? displaySize.getHeight() : displaySize.getWidth(),
+        isCameraRotated ? displaySize.getWidth() : displaySize.getHeight());
   }
 
   private void setupPreviewDisplayView() {
@@ -173,20 +200,7 @@ public class MainActivity extends AppCompatActivity {
 
               @Override
               public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
-                // (Re-)Compute the ideal size of the camera-preview display (the area that the
-                // camera-preview frames get rendered onto, potentially with scaling and rotation)
-                // based on the size of the SurfaceView that contains the display.
-                Size viewSize = new Size(width, height);
-                Size displaySize = cameraHelper.computeDisplaySizeFromViewSize(viewSize);
-                boolean isCameraRotated = cameraHelper.isCameraRotated();
-
-                // Connect the converter to the camera-preview frames as its input (via
-                // previewFrameTexture), and configure the output width and height as the computed
-                // display size.
-                converter.setSurfaceTextureAndAttachToGLContext(
-                    previewFrameTexture,
-                    isCameraRotated ? displaySize.getHeight() : displaySize.getWidth(),
-                    isCameraRotated ? displaySize.getWidth() : displaySize.getHeight());
+                onPreviewDisplaySurfaceChanged(holder, format, width, height);
               }
 
               @Override

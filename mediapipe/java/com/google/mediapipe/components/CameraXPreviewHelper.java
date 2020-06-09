@@ -74,6 +74,10 @@ public class CameraXPreviewHelper extends CameraHelper {
 
   public void startCamera(
       Activity context, CameraFacing cameraFacing, SurfaceTexture surfaceTexture, Size targetSize) {
+    if (targetSize == null) {
+      targetSize = TARGET_SIZE;
+    }
+
     LensFacing cameraLensFacing =
         cameraFacing == CameraHelper.CameraFacing.FRONT ? LensFacing.FRONT : LensFacing.BACK;
     PreviewConfig previewConfig =
