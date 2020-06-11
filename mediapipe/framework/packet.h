@@ -92,7 +92,7 @@ class Packet {
   // the new Packet with the given timestamp.
   Packet At(class Timestamp timestamp) &&;
 
-  // Returns true iff the Packet has been created using the default
+  // Returns true if the Packet has been created using the default
   // constructor Packet(), or is a copy of such a Packet.
   bool IsEmpty() const;
 
