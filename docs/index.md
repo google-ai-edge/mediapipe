@@ -22,9 +22,9 @@ desktop/cloud, web and IoT devices.
 
 ## ML solutions in MediaPipe
 
-Face Detection                                                                                                                 | Face Mesh                                                                                                       | Hand                                                                                                      | Hair Segmentation
-:----------------------------------------------------------------------------------------------------------------------------: | :-------------------------------------------------------------------------------------------------------------: | :-------------------------------------------------------------------------------------------------------: | :---------------:
-[![face_detection](images/mobile/face_detection_android_gpu_small.gif)](https://google.github.io/mediapipe/solutions/face_detection) | [![face_mesh](images/mobile/face_mesh_android_gpu_small.gif)](https://google.github.io/mediapipe/solutions/face_mesh) | [![hand](images/mobile/hand_tracking_android_gpu_small.gif)](https://google.github.io/mediapipe/solutions/hand) | [![hair_segmentation](images/mobile/hair_segmentation_android_gpu_small.gif)](https://google.github.io/mediapipe/solutions/hair_segmentation)
+Face Detection                                                                                                                 | Face Mesh                                                                                                       | Hands                                                                                                      | Hair Segmentation
+:----------------------------------------------------------------------------------------------------------------------------: | :-------------------------------------------------------------------------------------------------------------: | :--------------------------------------------------------------------------------------------------------: | :---------------:
+[![face_detection](images/mobile/face_detection_android_gpu_small.gif)](https://google.github.io/mediapipe/solutions/face_detection) | [![face_mesh](images/mobile/face_mesh_android_gpu_small.gif)](https://google.github.io/mediapipe/solutions/face_mesh) | [![hand](images/mobile/hand_tracking_android_gpu_small.gif)](https://google.github.io/mediapipe/solutions/hands) | [![hair_segmentation](images/mobile/hair_segmentation_android_gpu_small.gif)](https://google.github.io/mediapipe/solutions/hair_segmentation)
 
 Object Detection                                                                                                                     | Box Tracking                                                                                                                | Objectron                                                                                                             | KNIFT
 :----------------------------------------------------------------------------------------------------------------------------------: | :-------------------------------------------------------------------------------------------------------------------------: | :-------------------------------------------------------------------------------------------------------------------: | :---:
@@ -37,7 +37,7 @@ Object Detection                                                                
 :---------------------------------------------------------------------------- | :-----: | :-: | :-----: | :-: | :---:
 [Face Detection](https://google.github.io/mediapipe/solutions/face_detection)       | ✅       | ✅   | ✅       | ✅   | ✅
 [Face Mesh](https://google.github.io/mediapipe/solutions/face_mesh)                 | ✅       | ✅   | ✅       |     |
-[Hand](https://google.github.io/mediapipe/solutions/hand)                           | ✅       | ✅   | ✅       | ✅   |
+[Hands](https://google.github.io/mediapipe/solutions/hands)                         | ✅       | ✅   | ✅       | ✅   |
 [Hair Segmentation](https://google.github.io/mediapipe/solutions/hair_segmentation) | ✅       |     | ✅       | ✅   |
 [Object Detection](https://google.github.io/mediapipe/solutions/object_detection)   | ✅       | ✅   | ✅       |     | ✅
 [Box Tracking](https://google.github.io/mediapipe/solutions/box_tracking)           | ✅       | ✅   | ✅       |     |
@@ -63,8 +63,8 @@ never leaves your device.
 ![visualizer_runner](images/visualizer_runner.png)
 
 *   [MediaPipe Face Detection](https://viz.mediapipe.dev/demo/face_detection)
-*   [MediaPipe Hand](https://viz.mediapipe.dev/demo/hand_tracking)
-*   [MediaPipe Hand (palm/hand detection only)](https://viz.mediapipe.dev/demo/hand_detection)
+*   [MediaPipe Hands](https://viz.mediapipe.dev/demo/hand_tracking)
+*   [MediaPipe Hands (palm/hand detection only)](https://viz.mediapipe.dev/demo/hand_detection)
 *   [MediaPipe Hair Segmentation](https://viz.mediapipe.dev/demo/hair_segmentation)
 
 ## Getting started

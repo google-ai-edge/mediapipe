@@ -140,6 +140,8 @@ apps, see these [instructions](./building_examples.md#ios).
 
 ## Installing on CentOS
 
+**Disclaimer**: Running MediaPipe on CentOS is experimental.
+
 1.  Checkout MediaPipe repository.
 
     ```bash
@@ -668,8 +670,8 @@ This will use a Docker image that will isolate mediapipe's installation from the
     docker run -i -t mediapipe:latest
     ``` -->
 
-[`WORKSPACE`]: https://github.com/google/mediapipe/tree/master/WORKSPACE
+[`WORKSPACE`]: https://github.com/google/mediapipe/blob/master/WORKSPACE
 [`opencv_linux.BUILD`]: https://github.com/google/mediapipe/tree/master/third_party/opencv_linux.BUILD
 [`opencv_macos.BUILD`]: https://github.com/google/mediapipe/tree/master/third_party/opencv_macos.BUILD
 [`ffmpeg_macos.BUILD`]:https://github.com/google/mediapipe/tree/master/third_party/ffmpeg_macos.BUILD
-[`setup_opencv.sh`]: https://github.com/google/mediapipe/tree/master/setup_opencv.sh
+[`setup_opencv.sh`]: https://github.com/google/mediapipe/blob/master/setup_opencv.sh

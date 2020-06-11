@@ -169,7 +169,7 @@ void QuadRenderer::GlTeardown() {
   glEnableVertexAttribArray(ATTRIB_VERTEX);
   glBindBuffer(GL_ARRAY_BUFFER, vbo_[0]);
   glBufferData(GL_ARRAY_BUFFER, sizeof(mediapipe::kBasicSquareVertices),
-               mediapipe::kBasicSquareVertices, GL_STATIC_DRAW);
+               vertices, GL_STATIC_DRAW);
   glVertexAttribPointer(ATTRIB_VERTEX, 2, GL_FLOAT, 0, 0, nullptr);
 
   glEnableVertexAttribArray(ATTRIB_TEXTURE_POSITION);

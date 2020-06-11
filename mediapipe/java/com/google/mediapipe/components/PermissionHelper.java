@@ -18,8 +18,8 @@ import android.Manifest;
 import android.app.Activity;
 import android.content.pm.PackageManager;
 import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
 import android.util.Log;
+import androidx.core.content.ContextCompat;
 
 /** Manages camera permission request and handling. */
 public class PermissionHelper {

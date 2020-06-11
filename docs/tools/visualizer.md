@@ -82,7 +82,7 @@ used. Clicking on a subgraph will navigate to the corresponding tab which holds
 the subgraph's definition.
 
 For instance, there are two graphs involved in
-[MediaPipe Hand](../solutions/hand.md): the main graph
+[MediaPipe Hands](../solutions/hands.md): the main graph
 ([source pbtxt file](https://github.com/google/mediapipe/blob/master/mediapipe/graphs/hand_tracking/hand_detection_mobile.pbtxt))
 and its associated subgraph
 ([source pbtxt file](https://github.com/google/mediapipe/blob/master/mediapipe/graphs/hand_tracking/subgraphs/hand_detection_gpu.pbtxt)).

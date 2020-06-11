@@ -5,7 +5,7 @@ parent: Solutions
 nav_order: 3
 ---
 
-# MediaPipe Hand
+# MediaPipe Hands
 {: .no_toc }
 
 1. TOC
@@ -23,7 +23,7 @@ naturally to people, robust real-time hand perception is a decidedly challenging
 computer vision task, as hands often occlude themselves or each other (e.g.
 finger/palm occlusions and hand shakes) and lack high contrast patterns.
 
-MediaPipe Hand is a high-fidelity hand and finger tracking solution. It employs
+MediaPipe Hands is a high-fidelity hand and finger tracking solution. It employs
 machine learning (ML) to infer 21 3D landmarks of a hand from just a single
 frame. Whereas current state-of-the-art approaches rely primarily on powerful
 desktop environments for inference, our method achieves real-time performance on
@@ -38,7 +38,7 @@ and new research avenues.
 
 ## ML Pipeline
 
-MediaPipe Hand utilizes an ML pipeline consisting of multiple models working
+MediaPipe Hands utilizes an ML pipeline consisting of multiple models working
 together: A palm detection model that operates on the full image and returns an
 oriented hand bounding box. A hand landmark model that operates on the cropped
 image region defined by the palm detector and returns high-fidelity 3D hand

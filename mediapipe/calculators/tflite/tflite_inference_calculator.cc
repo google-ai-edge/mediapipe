@@ -354,10 +354,7 @@ REGISTER_CALCULATOR(TfLiteInferenceCalculator);
 #endif  //  !MEDIAPIPE_DISABLE_GPU
   }
 
-  const auto& calculator_opts =
-      cc->Options<mediapipe::TfLiteInferenceCalculatorOptions>();
   use_advanced_gpu_api_ = false;
-
   if (use_advanced_gpu_api_ && !(gpu_input_ && gpu_output_)) {
     LOG(WARNING)
         << "Cannot use advanced GPU APIs, both inputs and outputs must "
@@ -393,29 +390,15 @@ REGISTER_CALCULATOR(TfLiteInferenceCalculator);
   return ::mediapipe::OkStatus();
 }
 
-::mediapipe::Status TfLiteInferenceCalculator::InitTFLiteGPURunner() {
-#if !defined(MEDIAPIPE_DISABLE_GL_COMPUTE)
-  // Create and bind OpenGL buffers for outputs.
-  // These buffers are created onve and later their ids are jut passed to the
-  // calculator outputs.
-
-  gpu_data_out_.resize(tflite_gpu_runner_->outputs_size());
-  for (int i = 0; i < tflite_gpu_runner_->outputs_size(); ++i) {
-    gpu_data_out_[i] = absl::make_unique<GPUData>();
-    ASSIGN_OR_RETURN(gpu_data_out_[i]->elements,
-                     tflite_gpu_runner_->GetOutputElements(i));
-    // Create and bind input buffer.
-    RET_CHECK_CALL(::tflite::gpu::gl::CreateReadWriteShaderStorageBuffer<float>(
-        gpu_data_out_[i]->elements, &gpu_data_out_[i]->buffer));
-  }
-  RET_CHECK_CALL(tflite_gpu_runner_->Build());
-#endif
-  return ::mediapipe::OkStatus();
-}
-
 ::mediapipe::Status TfLiteInferenceCalculator::Process(CalculatorContext* cc) {
+  // 0. Declare outputs
+#if !defined(MEDIAPIPE_DISABLE_GL_COMPUTE) || defined(MEDIAPIPE_IOS)
+  auto output_tensors_gpu = absl::make_unique<std::vector<GpuTensor>>();
+#endif
+  auto output_tensors_cpu = absl::make_unique<std::vector<TfLiteTensor>>();
+
   // 1. Receive pre-processed tensor inputs.
-  if (use_advanced_gpu_api_) {
+  if (use_advanced_gpu_api_ && gpu_output_) {
 #if !defined(MEDIAPIPE_DISABLE_GL_COMPUTE)
     if (cc->Inputs().Tag(kTensorsGpuTag).IsEmpty()) {
       return ::mediapipe::OkStatus();
@@ -424,14 +407,19 @@ REGISTER_CALCULATOR(TfLiteInferenceCalculator);
         cc->Inputs().Tag(kTensorsGpuTag).Get<std::vector<GpuTensor>>();
     RET_CHECK(!input_tensors.empty());
     MP_RETURN_IF_ERROR(gpu_helper_.RunInGlContext(
-        [this, &input_tensors]() -> ::mediapipe::Status {
+        [this, &input_tensors, &output_tensors_gpu]() -> ::mediapipe::Status {
           for (int i = 0; i < input_tensors.size(); ++i) {
             MP_RETURN_IF_ERROR(tflite_gpu_runner_->BindSSBOToInputTensor(
                 input_tensors[i].id(), i));
           }
+          // Allocate output tensor.
+          output_tensors_gpu->resize(gpu_data_out_.size());
           for (int i = 0; i < gpu_data_out_.size(); ++i) {
-            MP_RETURN_IF_ERROR(tflite_gpu_runner_->BindSSBOToOutputTensor(
-                gpu_data_out_[i]->buffer.id(), i));
+            GpuTensor& tensor = output_tensors_gpu->at(i);
+            RET_CHECK_CALL(CreateReadWriteShaderStorageBuffer<float>(
+                gpu_data_out_[i]->elements, &tensor));
+            MP_RETURN_IF_ERROR(
+                tflite_gpu_runner_->BindSSBOToOutputTensor(tensor.id(), i));
           }
           return ::mediapipe::OkStatus();
         }));
@@ -532,24 +520,19 @@ REGISTER_CALCULATOR(TfLiteInferenceCalculator);
   // 3. Output processed tensors.
   if (use_advanced_gpu_api_) {
 #if !defined(MEDIAPIPE_DISABLE_GL_COMPUTE)
-    auto output_tensors = absl::make_unique<std::vector<GpuTensor>>();
-    output_tensors->resize(gpu_data_out_.size());
-    for (int i = 0; i < gpu_data_out_.size(); ++i) {
-      output_tensors->at(i) = gpu_data_out_[i]->buffer.MakeRef();
-    }
     cc->Outputs()
         .Tag(kTensorsGpuTag)
-        .Add(output_tensors.release(), cc->InputTimestamp());
+        .Add(output_tensors_gpu.release(), cc->InputTimestamp());
 #endif
   } else if (gpu_output_) {
 #if !defined(MEDIAPIPE_DISABLE_GL_COMPUTE)
     // Output result tensors (GPU).
-    auto output_tensors = absl::make_unique<std::vector<GpuTensor>>();
     MP_RETURN_IF_ERROR(gpu_helper_.RunInGlContext(
-        [this, &output_tensors]() -> ::mediapipe::Status {
-          output_tensors->resize(gpu_data_out_.size());
+        [this, &output_tensors_gpu]() -> ::mediapipe::Status {
+          output_tensors_gpu->resize(gpu_data_out_.size());
           for (int i = 0; i < gpu_data_out_.size(); ++i) {
-            GpuTensor& tensor = output_tensors->at(i);
+            GpuTensor& tensor = output_tensors_gpu->at(i);
+            // Allocate output tensor.
             RET_CHECK_CALL(CreateReadWriteShaderStorageBuffer<float>(
                 gpu_data_out_[i]->elements, &tensor));
             RET_CHECK_CALL(CopyBuffer(gpu_data_out_[i]->buffer, tensor));
@@ -558,45 +541,44 @@ REGISTER_CALCULATOR(TfLiteInferenceCalculator);
         }));
     cc->Outputs()
         .Tag(kTensorsGpuTag)
-        .Add(output_tensors.release(), cc->InputTimestamp());
+        .Add(output_tensors_gpu.release(), cc->InputTimestamp());
 #elif defined(MEDIAPIPE_IOS)
     // Output result tensors (GPU).
-    auto output_tensors = absl::make_unique<std::vector<GpuTensor>>();
-    output_tensors->resize(gpu_data_out_.size());
+    output_tensors_gpu->resize(gpu_data_out_.size());
     id<MTLDevice> device = gpu_helper_.mtlDevice;
     id<MTLCommandBuffer> command_buffer = [gpu_helper_ commandBuffer];
     command_buffer.label = @"TfLiteInferenceBPHWC4Convert";
     id<MTLComputeCommandEncoder> convert_command =
         [command_buffer computeCommandEncoder];
     for (int i = 0; i < gpu_data_out_.size(); ++i) {
-      output_tensors->at(i) =
+      // Allocate output tensor.
+      output_tensors_gpu->at(i) =
           [device newBufferWithLength:gpu_data_out_[i]->elements * sizeof(float)
                               options:MTLResourceStorageModeShared];
       // Reshape tensor.
       [converter_from_BPHWC4_ convertWithEncoder:convert_command
                                            shape:gpu_data_out_[i]->shape
                                     sourceBuffer:gpu_data_out_[i]->buffer
-                                 convertedBuffer:output_tensors->at(i)];
+                                 convertedBuffer:output_tensors_gpu->at(i)];
     }
     [convert_command endEncoding];
     [command_buffer commit];
     cc->Outputs()
         .Tag(kTensorsGpuTag)
-        .Add(output_tensors.release(), cc->InputTimestamp());
+        .Add(output_tensors_gpu.release(), cc->InputTimestamp());
 #else
     RET_CHECK_FAIL() << "GPU processing not enabled.";
 #endif  //  !MEDIAPIPE_DISABLE_GPU
   } else {
     // Output result tensors (CPU).
     const auto& tensor_indexes = interpreter_->outputs();
-    auto output_tensors = absl::make_unique<std::vector<TfLiteTensor>>();
     for (int i = 0; i < tensor_indexes.size(); ++i) {
       TfLiteTensor* tensor = interpreter_->tensor(tensor_indexes[i]);
-      output_tensors->emplace_back(*tensor);
+      output_tensors_cpu->emplace_back(*tensor);
     }
     cc->Outputs()
         .Tag(kTensorsTag)
-        .Add(output_tensors.release(), cc->InputTimestamp());
+        .Add(output_tensors_cpu.release(), cc->InputTimestamp());
   }
 
   return ::mediapipe::OkStatus();
@@ -639,6 +621,26 @@ REGISTER_CALCULATOR(TfLiteInferenceCalculator);
 }
 
 // Calculator Auxiliary Section
+
+::mediapipe::Status TfLiteInferenceCalculator::InitTFLiteGPURunner() {
+#if !defined(MEDIAPIPE_DISABLE_GL_COMPUTE)
+  // Create and bind OpenGL buffers for outputs.
+  // These buffers are created onve and later their ids are jut passed to the
+  // calculator outputs.
+
+  gpu_data_out_.resize(tflite_gpu_runner_->outputs_size());
+  for (int i = 0; i < tflite_gpu_runner_->outputs_size(); ++i) {
+    gpu_data_out_[i] = absl::make_unique<GPUData>();
+    ASSIGN_OR_RETURN(gpu_data_out_[i]->elements,
+                     tflite_gpu_runner_->GetOutputElements(i));
+    // Create and bind input buffer.
+    RET_CHECK_CALL(::tflite::gpu::gl::CreateReadWriteShaderStorageBuffer<float>(
+        gpu_data_out_[i]->elements, &gpu_data_out_[i]->buffer));
+  }
+  RET_CHECK_CALL(tflite_gpu_runner_->Build());
+#endif
+  return ::mediapipe::OkStatus();
+}
 
 ::mediapipe::Status TfLiteInferenceCalculator::LoadModel(
     CalculatorContext* cc) {

@@ -158,11 +158,11 @@ TEST(CalculatorTest, SourceProcessOrder) {
 // Tests registration of a calculator within a namespace.
 // DeadEndCalculator is registered in namespace "mediapipe::test_ns".
 TEST(CalculatorTest, CreateByName) {
-  MP_EXPECT_OK(CalculatorBaseRegistry::CreateByName(  //
-      "mediapipe.test_ns.DeadEndCalculator"));
+  MP_EXPECT_OK(CalculatorBaseRegistry::CreateByNameInNamespace(  //
+      "", "mediapipe.test_ns.DeadEndCalculator"));
 
-  MP_EXPECT_OK(CalculatorBaseRegistry::CreateByName(  //
-      ".mediapipe.test_ns.DeadEndCalculator"));
+  MP_EXPECT_OK(CalculatorBaseRegistry::CreateByNameInNamespace(  //
+      "", ".mediapipe.test_ns.DeadEndCalculator"));
 
   MP_EXPECT_OK(CalculatorBaseRegistry::CreateByNameInNamespace(  //
       "alpha", ".mediapipe.test_ns.DeadEndCalculator"));

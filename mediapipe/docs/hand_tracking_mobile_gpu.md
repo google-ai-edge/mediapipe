@@ -1,1 +1,1 @@
-Content moved to [MediapPipe Hand](https://google.github.io/mediapipe/solutions/hand)
+Content moved to [MediaPipe Hands](https://google.github.io/mediapipe/solutions/hands)

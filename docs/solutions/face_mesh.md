@@ -44,7 +44,7 @@ prediction accuracy. In addition, in our pipeline the crops can also be
 generated based on the face landmarks identified in the previous frame, and only
 when the landmark model could no longer identify face presence is the face
 detector invoked to relocalize the face. This strategy is similar to that
-employed in our [MediaPipe Hand](./hand.md) solution, which uses a palm detector
+employed in our [MediaPipe Hands](./hands.md) solution, which uses a palm detector
 together with a hand landmark model.
 
 The pipeline is implemented as a MediaPipe

@@ -23,7 +23,7 @@ nav_order: 2
 MediaPipe recommends setting up Android SDK and NDK via Android Studio (and see
 below for Android Studio setup). However, if you prefer using MediaPipe without
 Android Studio, please run
-[`setup_android_sdk_and_ndk.sh`](https://github.com/google/mediapipe/tree/master/setup_android_sdk_and_ndk.sh)
+[`setup_android_sdk_and_ndk.sh`](https://github.com/google/mediapipe/blob/master/setup_android_sdk_and_ndk.sh)
 to download and setup Android SDK and NDK before building any Android example
 apps.
 
@@ -39,7 +39,7 @@ In order to use MediaPipe on earlier Android versions, MediaPipe needs to switch
 to a lower Android API level. You can achieve this by specifying `api_level =
 $YOUR_INTENDED_API_LEVEL` in android_ndk_repository() and/or
 android_sdk_repository() in the
-[`WORKSPACE`](https://github.com/google/mediapipe/tree/master/WORKSPACE) file.
+[`WORKSPACE`](https://github.com/google/mediapipe/blob/master/WORKSPACE) file.
 
 Please verify all the necessary packages are installed.
 
@@ -51,9 +51,13 @@ Please verify all the necessary packages are installed.
 
 ### Option 1: Build with Bazel in Command Line
 
+Tip: You can run this
+[script](https://github.com/google/mediapipe/blob/master/build_android_examples.sh)
+to build (and install) all MediaPipe Android example apps.
+
 1.  To build an Android example app, build against the corresponding
     `android_binary` build target. For instance, for
-    [MediaPipe Hand](../solutions/hand.md) the target is `handtrackinggpu` in
+    [MediaPipe Hands](../solutions/hands.md) the target is `handtrackinggpu` in
     the
     [BUILD](https://github.com/google/mediapipe/tree/master/mediapipe/examples/android/src/java/com/google/mediapipe/apps/handtrackinggpu/BUILD)
     file:
@@ -65,7 +69,7 @@ Please verify all the necessary packages are installed.
     bazel build -c opt --config=android_arm64 mediapipe/examples/android/src/java/com/google/mediapipe/apps/handtrackinggpu:handtrackinggpu
     ```
 
-1.  Install it on a device with:
+2.  Install it on a device with:
 
     ```bash
     adb install bazel-bin/mediapipe/examples/android/src/java/com/google/mediapipe/apps/handtrackinggpu/handtrackinggpu.apk
@@ -149,8 +153,8 @@ app:
     Note: Even after doing step 4, if you still see the error: `"no such package
     '@androidsdk//': Either the path attribute of android_sdk_repository or the
     ANDROID_HOME environment variable must be set."`, please modify the
-    [`WORKSPACE`](https://github.com/google/mediapipe/tree/master/WORKSPACE) file to point to your
-    SDK and NDK library locations, as below:
+    [`WORKSPACE`](https://github.com/google/mediapipe/blob/master/WORKSPACE)
+    file to point to your SDK and NDK library locations, as below:
 
     ```
     android_sdk_repository(
@@ -229,12 +233,12 @@ app:
 
 1.  Modify the `bundle_id` field of the app's `ios_application` build target to
     use your own identifier. For instance, for
-    [MediaPipe Hand](../solutions/hand.md), the `bundle_id` is in the
+    [MediaPipe Hands](../solutions/hands.md), the `bundle_id` is in the
     `HandTrackingGpuApp` target in the
     [BUILD](https://github.com/google/mediapipe/tree/master/mediapipe/examples/ios/handtrackinggpu/BUILD)
     file.
 
-2.  Again using [MediaPipe Hand](../solutions/hand.md) for example, run:
+2.  Again using [MediaPipe Hands](../solutions/hands.md) for example, run:
 
     ```bash
     bazel build -c opt --config=ios_arm64 mediapipe/examples/ios/handtrackinggpu:HandTrackingGpuApp
@@ -298,7 +302,7 @@ the previous section.
 
 ### Option 1: Running on CPU
 
-1.  To build, for example, [MediaPipe Hand](../solutions/hand.md), run:
+1.  To build, for example, [MediaPipe Hands](../solutions/hands.md), run:
 
     ```bash
     bazel build -c opt --define MEDIAPIPE_DISABLE_GPU=1 mediapipe/examples/desktop/hand_tracking:hand_tracking_cpu
@@ -319,7 +323,7 @@ the previous section.
 Note: This currently works only on Linux, and please first follow
 [OpenGL ES Setup on Linux Desktop](./gpu_support.md#opengl-es-setup-on-linux-desktop).
 
-1.  To build, for example, [MediaPipe Hand](../solutions/hand.md), run:
+1.  To build, for example, [MediaPipe Hands](../solutions/hands.md), run:
 
     ```bash
     bazel build -c opt --copt -DMESA_EGL_NO_X11_HEADERS --copt -DEGL_NO_X11 \
