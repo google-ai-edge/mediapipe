@@ -76,3 +76,17 @@ cc_library(
         "//mediapipe/calculators/core:packet_cloner_calculator"
     ],
 )
+
+cc_binary(
+    name = "cameravtuber.so",
+    linkshared = 1,
+    srcs = [
+        "cameravtuber.cc"
+    ],
+    deps = [
+        ":demo_run_graph_main_gpu",
+        "@python_dev//:headers"
+    ],
+    copts = ["-Iexternal/python_dev", "-DPIC", "-shared", "-fPIC"],
+    linkopts = ["-lboost_python3"]
+)

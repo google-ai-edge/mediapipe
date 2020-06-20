@@ -299,3 +299,15 @@ maven_install(
     fetch_sources = True,
     version_conflict_policy = "pinned",
 )
+
+new_local_repository(
+    name = "python_dev",
+    path = "/home/yusuke/miniconda3/envs/py37_ubuntu_vtuber/include/python3.7m",
+    build_file_content = """
+package(default_visibility = ["//visibility:public"])
+cc_library(
+    name = "headers",
+    hdrs = glob(["**/*.h"])
+)
+"""
+)
