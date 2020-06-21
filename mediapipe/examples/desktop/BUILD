@@ -90,3 +90,12 @@ cc_binary(
     copts = ["-Iexternal/python_dev", "-DPIC", "-shared", "-fPIC"],
     linkopts = ["-lboost_python3"]
 )
+
+load("@pybind11_bazel//:build_defs.bzl", "pybind_extension")
+
+pybind_extension(
+    name = "cameravtuber2",
+    srcs = [
+        "cameravtuber_pybind.cc"
+    ]
+)
