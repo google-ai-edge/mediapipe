@@ -97,5 +97,13 @@ pybind_extension(
     name = "cameravtuber2",
     srcs = [
         "cameravtuber_pybind.cc"
-    ]
+    ],
+    deps = [
+        ":demo_run_graph_main_gpu",
+        "//mediapipe/calculators/ipc:zmq_calculator",
+        "//mediapipe/calculators/image:sobel_edges_calculator",
+        "//mediapipe/graphs/hand_tracking:multi_hand_mobile_calculators",
+        "//mediapipe/graphs/face_mesh:desktop_live_gpu_calculators",
+        "//mediapipe/calculators/video:opencv_video_encoder_calculator",
+    ],
 )
