@@ -1832,10 +1832,11 @@ TEST(CalculatorGraph, StatusHandlerInputVerification) {
                              // The problematic input side packet.
                              testing::HasSubstr("generated_by_generator"),
                              // Actual type.
-                             testing::HasSubstr("string"),
-                             // Expected type.
                              testing::HasSubstr(
-                                 MediaPipeTypeStringOrDemangled<uint32>())));
+                                 MediaPipeTypeStringOrDemangled<uint32>()),
+                             // Expected type.
+                             testing::HasSubstr("string")
+));
 }
 
 TEST(CalculatorGraph, GenerateInInitialize) {
