@@ -75,6 +75,7 @@ mediapipe_simple_subgraph(
         "//mediapipe/calculators/util:association_norm_rect_calculator",
         "//mediapipe/calculators/util:collection_has_min_size_calculator",
         "//mediapipe/modules/face_detection:face_detection_front_cpu",
+        "//mediapipe/calculators/util:counting_vector_size_calculator",
     ],
 )
 

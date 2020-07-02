@@ -312,6 +312,20 @@ cc_library(
 )
 
 cc_library(
+    name = "counting_vector_size_calculator",
+    srcs = ["counting_vector_size_calculator.cc"],
+    hdrs = ["counting_vector_size_calculator.h"],
+    visibility = [
+        "//visibility:public",
+    ],
+    deps = [
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/formats:landmark_cc_proto",
+    ],
+    alwayslink = 1,
+)
+
+cc_library(
     name = "annotation_overlay_calculator",
     srcs = ["annotation_overlay_calculator.cc"],
     visibility = ["//visibility:public"],
