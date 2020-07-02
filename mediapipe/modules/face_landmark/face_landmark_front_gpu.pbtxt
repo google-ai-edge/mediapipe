@@ -191,6 +191,8 @@ node {
   output_stream: "ITERABLE:multi_face_landmarks"
 }
 
+# Counting a multi_faceLandmarks vector size. The image stream is only used to 
+# make the calculator work even when there is no input vector.
 node {
   calculator: "CountingNormalizedLandmarkListVectorSizeCalculator"
   input_stream: "CLOCK:image"

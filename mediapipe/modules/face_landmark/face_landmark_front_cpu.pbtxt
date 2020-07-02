@@ -191,13 +191,14 @@ node {
   output_stream: "ITERABLE:multi_face_landmarks"
 }
 
+# Counting a multi_faceLandmarks vector size. The image stream is only used to 
+# make the calculator work even when there is no input vector.
 node {
   calculator: "CountingNormalizedLandmarkListVectorSizeCalculator"
   input_stream: "CLOCK:image"
   input_stream: "VECTOR:multi_face_landmarks"
   output_stream: "COUNT:face_count"
 }
-
 
 # Collects a NormalizedRect for each face into a vector. Upon receiving the
 # BATCH_END timestamp, outputs the vector of NormalizedRect at the BATCH_END

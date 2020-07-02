@@ -27,7 +27,6 @@
 #include "mediapipe/framework/port/parse_text_proto.h"
 #include "mediapipe/framework/port/status.h"
 
-
 constexpr char kInputStream[] = "input_video";
 constexpr char kOutputImageStream[] = "output_video";
 constexpr char kOutputFaceCountStream[] = "face_count";

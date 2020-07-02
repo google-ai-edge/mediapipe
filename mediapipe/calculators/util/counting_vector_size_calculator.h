@@ -20,19 +20,28 @@
 
 namespace mediapipe {
 
-// A calculator that count input landmarksList size.
+// A calculator that counts the size of the input vector. It was created to 
+// aid in polling packets in the output stream synchronously. If there is 
+// a clock stream, it will output a value of 0 even if the input vector stream
+// is empty. If not, it will output some value only if there is an input vector.
+// The clock stream has the same time stamp as the input time stamp, and 
+// it must be a stream where packets must be transmitted during graph operation.
+// (e.g. Any input stream of graph)
 //
-// Count input landmark(std::vector<NormalizedLandmarkList>) and return this 
-// value to ouput_stream. Input IMAGE has no effect on calculation, but is used to
-// ensure that the calculator works even when the landmark is empty. And if the 
-// input landmark is empty, the number of faces found is zero.
+// It is designed to be used like:
 //
 // Example config:
 // node {
-//   calculator: "CountingVectorSizeCalculator"
-//   input_stream: "IMAGE:input_image"
-//   input_stream: "LANDMARKS:multi_face_landmarks"
-//   output_stream: "COUNT:face_count"
+//   calculator: "CountingWithVectorSizeCalculator"
+//   input_stream: "CLOCK:triger_signal"
+//   input_stream: "VECTOR:input_vector"
+//   output_stream: "COUNT:vector_count"
+// }
+//
+// node {
+//   calculator: "CountingWithVectorSizeCalculator"
+//   input_stream: "VECTOR:input_vector"
+//   output_stream: "COUNT:vector_count"
 // }
 
 template <typename VectorT>
