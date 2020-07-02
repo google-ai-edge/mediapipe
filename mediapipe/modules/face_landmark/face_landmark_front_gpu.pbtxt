@@ -43,6 +43,8 @@ output_stream: "ROIS_FROM_LANDMARKS:face_rects_from_landmarks"
 # Regions of interest calculated based on face detections.
 # (std::vector<NormalizedRect>)
 output_stream: "ROIS_FROM_DETECTIONS:face_rects_from_detections"
+# (int)
+output_stream: "FACE_COUNT_FROM_LANDMARKS:face_count"
 
 # Determines if an input vector of NormalizedRect has a size greater than or
 # equal to the provided num_faces.
@@ -187,6 +189,13 @@ node {
   input_stream: "ITEM:face_landmarks"
   input_stream: "BATCH_END:landmarks_loop_end_timestamp"
   output_stream: "ITERABLE:multi_face_landmarks"
+}
+
+node {
+  calculator: "CountingNormalizedLandmarkListVectorSizeCalculator"
+  input_stream: "CLOCK:image"
+  input_stream: "VECTOR:multi_face_landmarks"
+  output_stream: "COUNT:face_count"
 }
 
 # Collects a NormalizedRect for each face into a vector. Upon receiving the

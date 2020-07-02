@@ -39,9 +39,10 @@ template <typename VectorT>
 class CountingVectorSizeCalculator : public CalculatorBase { 
   public:
     static ::mediapipe::Status GetContract(CalculatorContract* cc) {
-        // Check tag.
-        RET_CHECK(cc->Inputs().HasTag("CLOCK"));
-        cc->Inputs().Tag("CLOCK").SetAny();
+        if (cc->Inputs().HasTag("CLOCK")) {
+            cc->Inputs().Tag("CLOCK").SetAny();
+        }
+        
         RET_CHECK(cc->Inputs().HasTag("VECTOR"));
         cc->Inputs().Tag("VECTOR").Set<VectorT>();
         RET_CHECK(cc->Outputs().HasTag("COUNT"));
