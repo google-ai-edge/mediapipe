@@ -24,8 +24,8 @@ namespace mediapipe {
 // aid in polling packets in the output stream synchronously. If there is 
 // a clock stream, it will output a value of 0 even if the input vector stream
 // is empty. If not, it will output some value only if there is an input vector.
-// The clock stream has the same time stamp as the input time stamp, and 
-// it must be a stream where packets must be transmitted during graph operation.
+// The clock stream must have the same time stamp as the vector stream, and 
+// it must be the stream where packets are transmitted while the graph is running.
 // (e.g. Any input stream of graph)
 //
 // It is designed to be used like:
