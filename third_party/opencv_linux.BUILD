@@ -1,6 +1,8 @@
 # Description:
 #   OpenCV libraries for video/image processing on Linux
 
+load("@rules_cc//cc:defs.bzl", "cc_library")
+
 licenses(["notice"])  # BSD license
 
 exports_files(["LICENSE"])
@@ -25,8 +27,18 @@ cc_library(
             "lib/x86_64-linux-gnu/libopencv_videoio.so",
         ],
     ),
-    hdrs = glob(["include/opencv2/**/*.h*"]),
-    includes = ["include/"],
+    hdrs = glob([
+        # For Ubuntu 18.04:
+        "include/opencv2/**/*.h*",
+        # For Ubuntu 20.04:
+        "include/opencv4/opencv2/**/*.h*",
+    ]),
+    includes = [
+        # For Ubuntu 18.04:
+        "include/",
+        # For Ubuntu 20.04:
+        "include/opencv4/",
+    ],
     linkstatic = 1,
     visibility = ["//visibility:public"],
 )
