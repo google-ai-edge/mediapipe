@@ -101,7 +101,7 @@ run code search using
 
 ## Videos
 
-*   [YouTube Channel](https://www.youtube.com/channel/UCObqmpuSMx-usADtL_qdMAw)
+*   [YouTube Channel](https://www.youtube.com/c/MediaPipe)
 
 ## Events
 
@@ -123,7 +123,7 @@ run code search using
 
 *   [Awesome MediaPipe](https://mediapipe.org) - A curated list of awesome
     MediaPipe related frameworks, libraries and software
-*   [Slack community](https://mediapipe.slack.com) for MediaPipe users
+*   [Slack community](https://https://mediapipe.page.link/joinslack) for MediaPipe users
 *   [Discuss](https://groups.google.com/forum/#!forum/mediapipe) - General
     community discussion around MediaPipe
 

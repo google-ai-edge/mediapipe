@@ -13,14 +13,14 @@
 # limitations under the License.
 #
 
-licenses(["notice"])  # Apache 2.0
-
-package(default_visibility = ["//mediapipe:__subpackages__"])
-
 load(
     "//mediapipe/framework/tool:mediapipe_graph.bzl",
     "mediapipe_simple_subgraph",
 )
+
+licenses(["notice"])  # Apache 2.0
+
+package(default_visibility = ["//mediapipe:__subpackages__"])
 
 filegroup(
     name = "test_graph",
@@ -31,6 +31,8 @@ exports_files([
     "test.pbtxt",
     "dub_quad_test_subgraph.pbtxt",
     "nested_test_subgraph.pbtxt",
+    "single_flow_container_test.pbtxt",
+    "dual_flow_container_test.pbtxt",
 ])
 
 mediapipe_simple_subgraph(

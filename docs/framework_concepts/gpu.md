@@ -149,15 +149,15 @@ When possible, these calculators use platform-specific functionality to share da
 
 The below diagram shows the data flow in a mobile application that captures video from the camera, runs it through a MediaPipe graph, and renders the output on the screen in real time. The dashed line indicates which parts are inside the MediaPipe graph proper. This application runs a Canny edge-detection filter on the CPU using OpenCV, and overlays it on top of the original video using the GPU.
 
-| ![How GPU calculators interact](../images/gpu_example_graph.png)             |
-| :--------------------------------------------------------------------------: |
-| *Video frames from the camera are fed into the graph as `GpuBuffer` packets. |
-: The input stream is accessed by two calculators in parallel.                 :
-: `GpuBufferToImageFrameCalculator` converts the buffer into an `ImageFrame`,  :
-: which is then sent through a grayscale converter and a canny filter (both    :
-: based on OpenCV and running on the CPU), whose output is then converted into :
-: a `GpuBuffer` again. A multi-input GPU calculator, GlOverlayCalculator,      :
-: takes as input both the original `GpuBuffer` and the one coming out of the   :
-: edge detector, and overlays them using a shader. The output is then sent     :
-: back to the application using a callback calculator, and the application     :
-: renders the image to the screen using OpenGL.*                               :
+![How GPU calculators interact](../images/gpu_example_graph.png)
+
+Video frames from the camera are fed into the graph as `GpuBuffer` packets. The
+input stream is accessed by two calculators in parallel.
+`GpuBufferToImageFrameCalculator` converts the buffer into an `ImageFrame`,
+which is then sent through a grayscale converter and a canny filter (both based
+on OpenCV and running on the CPU), whose output is then converted into a
+`GpuBuffer` again. A multi-input GPU calculator, GlOverlayCalculator, takes as
+input both the original `GpuBuffer` and the one coming out of the edge detector,
+and overlays them using a shader. The output is then sent back to the
+application using a callback calculator, and the application renders the image
+to the screen using OpenGL.

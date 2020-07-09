@@ -30,6 +30,13 @@
 #include "tensorflow/lite/delegates/gpu/gl/api2.h"
 #include "tensorflow/lite/model.h"
 
+// This code should be enabled as soon as TensorFlow version, which mediapipe
+// uses, will include this module.
+#ifdef __ANDROID__
+#include "tensorflow/lite/delegates/gpu/cl/api.h"
+#endif
+#include "tensorflow/lite/delegates/gpu/common/testing/tflite_model_reader.h"
+
 namespace tflite {
 namespace gpu {
 namespace {
@@ -51,6 +58,19 @@ ObjectDef GetSSBOObjectDef(int channels) {
 mediapipe::Status TFLiteGPURunner::InitializeWithModel(
     const tflite::FlatBufferModel& flatbuffer,
     const tflite::OpResolver& op_resolver) {
+  // GraphFloat32 is created twice because, when OpenCL and OpenGL backends are
+  // initialized, different backend-specific graph transformations happen
+  // in-place. As GraphFloat32 is not copyable by design, we keep two copies of
+  // the graph until inference is built. This decision doesn't affect the amount
+  // of run time memory used, because both graph_gl_ and graph_cl_ are deleted
+  // in the end of the initialization stage.
+  graph_gl_ = std::make_unique<GraphFloat32>();
+  graph_cl_ = std::make_unique<GraphFloat32>();
+  MP_RETURN_IF_ERROR(
+      BuildFromFlatBuffer(flatbuffer, op_resolver, graph_gl_.get()));
+  MP_RETURN_IF_ERROR(
+      BuildFromFlatBuffer(flatbuffer, op_resolver, graph_cl_.get()));
+
   for (const auto& input : graph_gl_->inputs()) {
     input_shapes_.push_back(input->tensor.shape);
   }
@@ -140,6 +160,19 @@ mediapipe::Status TFLiteGPURunner::InitializeOpenGL(
 
 absl::Status TFLiteGPURunner::InitializeOpenCL(
     std::unique_ptr<InferenceBuilder>* builder) {
+#ifdef __ANDROID__
+  cl::InferenceEnvironmentOptions env_options;
+  cl::InferenceEnvironmentProperties properties;
+  cl::InferenceOptions cl_options;
+  cl_options.priority1 = options_.priority1;
+  cl_options.priority2 = options_.priority2;
+  cl_options.priority3 = options_.priority3;
+  cl_options.usage = options_.usage;
+  MP_RETURN_IF_ERROR(
+      cl::NewInferenceEnvironment(env_options, &cl_environment_, &properties));
+  MP_RETURN_IF_ERROR(cl_environment_->NewInferenceBuilder(
+      cl_options, std::move(*graph_cl_), builder));
+#endif
   return absl::OkStatus();
 }
 

@@ -76,6 +76,9 @@ std::string CanonicalNodeName(const CalculatorGraphConfig& graph_config,
 // Parses the name from a "tag:index:name".
 std::string ParseNameFromStream(const std::string& stream);
 
+// Parses the TagIndex from a "tag:index".
+std::pair<std::string, int> ParseTagIndex(const std::string& tag_index);
+
 // Parses the TagIndex from a "tag:index:name".
 std::pair<std::string, int> ParseTagIndexFromStream(const std::string& stream);
 

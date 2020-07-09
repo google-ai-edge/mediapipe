@@ -130,11 +130,10 @@ TfLiteStatus Prepare(TfLiteContext* context, TfLiteNode* node) {
   auto padding = params->padding;
   auto compute_out_size = [padding](int image_size, int filter_size,
                                     int stride) -> int {
-    return padding == kTfLitePaddingSame
-               ? (image_size + stride - 1) / stride
-               : padding == kTfLitePaddingValid
-                     ? (image_size - filter_size + stride) / stride
-                     : 0;
+    return padding == kTfLitePaddingSame ? (image_size + stride - 1) / stride
+           : padding == kTfLitePaddingValid
+               ? (image_size - filter_size + stride) / stride
+               : 0;
   };
 
   int out_width =

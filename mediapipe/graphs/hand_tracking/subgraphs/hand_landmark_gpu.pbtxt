@@ -144,6 +144,9 @@ node {
       num_landmarks: 21
       input_image_width: 256
       input_image_height: 256
+      # The additional scaling factor is used to account for the Z coordinate
+      # distribution in the training data.
+      normalize_z: 0.4
     }
   }
 }

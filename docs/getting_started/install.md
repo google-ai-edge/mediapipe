@@ -44,6 +44,18 @@ apps, see these [instructions](./building_examples.md#ios).
     [Bazel documentation](https://docs.bazel.build/versions/master/install-ubuntu.html)
     to install Bazel 2.0 or higher.
 
+    For Nvidia Jetson and Raspberry Pi devices with ARM Ubuntu, Bazel needs to
+    be built from source.
+
+    ```bash
+    # For Bazel 3.0.0
+    wget https://github.com/bazelbuild/bazel/releases/download/3.0.0/bazel-3.0.0-dist.zip
+    sudo apt-get install build-essential openjdk-8-jdk python zip unzip
+    unzip bazel-3.0.0-dist.zip
+    env EXTRA_BAZEL_ARGS="--host_javabase=@local_jdk//:jdk" bash ./compile.sh
+    sudo cp output/bazel /usr/local/bin/
+    ```
+
 3.  Install OpenCV and FFmpeg.
 
     Option 1. Use package manager tool to install the pre-compiled OpenCV
@@ -56,6 +68,14 @@ apps, see these [instructions](./building_examples.md#ios).
     $ sudo apt-get install libopencv-core-dev libopencv-highgui-dev \
                            libopencv-calib3d-dev libopencv-features2d-dev \
                            libopencv-imgproc-dev libopencv-video-dev
+    ```
+
+    [`opencv_linux.BUILD`] is configured for x86_64 by default. For Nvidia
+    Jetson and Raspberry Pi devices with ARM Ubuntu, the lib paths need to be
+    modified.
+
+    ```bash
+    sed -i "s/x86_64-linux-gnu/aarch64-linux-gnu/g" third_party/opencv_linux.BUILD
     ```
 
     Option 2. Run [`setup_opencv.sh`] to automatically build OpenCV from source
@@ -493,14 +513,14 @@ cameras. Alternatively, you use a video file as input.
 
     ```bash
     username@DESKTOP-TMVLBJ1:~$ curl -sLO --retry 5 --retry-max-time 10 \
-    https://storage.googleapis.com/bazel/2.0.0/release/bazel-2.0.0-installer-linux-x86_64.sh && \
-    sudo mkdir -p /usr/local/bazel/2.0.0 && \
-    chmod 755 bazel-2.0.0-installer-linux-x86_64.sh && \
-    sudo ./bazel-2.0.0-installer-linux-x86_64.sh --prefix=/usr/local/bazel/2.0.0 && \
-    source /usr/local/bazel/2.0.0/lib/bazel/bin/bazel-complete.bash
+    https://storage.googleapis.com/bazel/3.0.0/release/bazel-3.0.0-installer-linux-x86_64.sh && \
+    sudo mkdir -p /usr/local/bazel/3.0.0 && \
+    chmod 755 bazel-3.0.0-installer-linux-x86_64.sh && \
+    sudo ./bazel-3.0.0-installer-linux-x86_64.sh --prefix=/usr/local/bazel/3.0.0 && \
+    source /usr/local/bazel/3.0.0/lib/bazel/bin/bazel-complete.bash
 
-    username@DESKTOP-TMVLBJ1:~$ /usr/local/bazel/2.0.0/lib/bazel/bin/bazel version && \
-    alias bazel='/usr/local/bazel/2.0.0/lib/bazel/bin/bazel'
+    username@DESKTOP-TMVLBJ1:~$ /usr/local/bazel/3.0.0/lib/bazel/bin/bazel version && \
+    alias bazel='/usr/local/bazel/3.0.0/lib/bazel/bin/bazel'
     ```
 
 6.  Checkout MediaPipe repository.

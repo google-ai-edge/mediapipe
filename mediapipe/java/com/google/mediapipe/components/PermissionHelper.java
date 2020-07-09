@@ -17,8 +17,8 @@ package com.google.mediapipe.components;
 import android.Manifest;
 import android.app.Activity;
 import android.content.pm.PackageManager;
-import androidx.core.app.ActivityCompat;
 import android.util.Log;
+import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 /** Manages camera permission request and handling. */

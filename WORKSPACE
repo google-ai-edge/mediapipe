@@ -37,10 +37,19 @@ http_archive(
 )
 
 # GoogleTest/GoogleMock framework. Used by most unit-tests.
+# Last updated 2020-06-30.
 http_archive(
-     name = "com_google_googletest",
-     urls = ["https://github.com/google/googletest/archive/master.zip"],
-     strip_prefix = "googletest-master",
+    name = "com_google_googletest",
+    urls = ["https://github.com/google/googletest/archive/aee0f9d9b5b87796ee8a0ab26b7587ec30e8858e.zip"],
+    patches = [
+        # fix for https://github.com/google/googletest/issues/2817
+        "@//third_party:com_google_googletest_9d580ea80592189e6d44fa35bcf9cdea8bf620d6.diff"
+    ],
+    patch_args = [
+        "-p1",
+    ],
+    strip_prefix = "googletest-aee0f9d9b5b87796ee8a0ab26b7587ec30e8858e",
+    sha256 = "04a1751f94244307cebe695a69cc945f9387a80b0ef1af21394a490697c5c895",
 )
 
 # Google Benchmark library.

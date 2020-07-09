@@ -21,6 +21,11 @@ licenses(["notice"])  # Apache 2.0
 
 MIN_IOS_VERSION = "10.0"
 
+alias(
+    name = "facemeshgpu",
+    actual = "FaceMeshGpuApp",
+)
+
 ios_application(
     name = "FaceMeshGpuApp",
     bundle_id = "com.google.mediapipe.FaceMeshGpu",

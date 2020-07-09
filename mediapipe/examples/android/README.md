@@ -1,4 +1,1 @@
-MediaPipe Examples
-==================
-
-This directory contains MediaPipe Android example applications. Please see [src/java/com/google/mediapipe/apps/README.md](src/java/com/google/mediapipe/apps/README.md) for details.
+This directory contains MediaPipe example applications for Android. Please see [Solutions](https://solutions.mediapipe.dev)for details.

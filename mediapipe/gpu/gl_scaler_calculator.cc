@@ -39,6 +39,7 @@ namespace mediapipe {
 //   ROTATION: the counterclockwise rotation angle in degrees. This allows
 //   user to specify different rotation angles for different frames. If this
 //   stream is provided, it will override the ROTATION input side packet.
+//   OUTPUT_DIMENSIONS: the output width and height in pixels.
 // Additional output streams:
 //   TOP_BOTTOM_PADDING: If use FIT scale mode, this stream outputs the padding
 //   size of the input image in normalized value [0, 1] for top and bottom
@@ -102,6 +103,9 @@ REGISTER_CALCULATOR(GlScalerCalculator);
   TagOrIndex(&cc->Outputs(), "VIDEO", 0).Set<GpuBuffer>();
   if (cc->Inputs().HasTag("ROTATION")) {
     cc->Inputs().Tag("ROTATION").Set<int>();
+  }
+  if (cc->Inputs().HasTag("OUTPUT_DIMENSIONS")) {
+    cc->Inputs().Tag("OUTPUT_DIMENSIONS").Set<DimensionsPacketType>();
   }
   MP_RETURN_IF_ERROR(GlCalculatorHelper::UpdateContract(cc));
 
@@ -181,6 +185,18 @@ REGISTER_CALCULATOR(GlScalerCalculator);
 }
 
 ::mediapipe::Status GlScalerCalculator::Process(CalculatorContext* cc) {
+  if (cc->Inputs().HasTag("OUTPUT_DIMENSIONS")) {
+    if (cc->Inputs().Tag("OUTPUT_DIMENSIONS").IsEmpty()) {
+      // OUTPUT_DIMENSIONS input stream is specified, but value is missing.
+      return ::mediapipe::OkStatus();
+    }
+
+    const auto& dimensions =
+        cc->Inputs().Tag("OUTPUT_DIMENSIONS").Get<DimensionsPacketType>();
+    dst_width_ = dimensions[0];
+    dst_height_ = dimensions[1];
+  }
+
   return helper_.RunInGlContext([this, cc]() -> ::mediapipe::Status {
     const auto& input = TagOrIndex(cc->Inputs(), "VIDEO", 0).Get<GpuBuffer>();
     QuadRenderer* renderer = nullptr;
@@ -199,7 +215,7 @@ REGISTER_CALCULATOR(GlScalerCalculator);
       src1 = helper_.CreateSourceTexture(input, 0);
       src2 = helper_.CreateSourceTexture(input, 1);
     } else  // NOLINT(readability/braces)
-#endif      // __APPLE__
+#endif  // __APPLE__
     {
       src1 = helper_.CreateSourceTexture(input);
 #ifdef __ANDROID__
@@ -211,7 +227,7 @@ REGISTER_CALCULATOR(GlScalerCalculator);
         }
         renderer = ext_rgb_renderer_.get();
       } else  // NOLINT(readability/braces)
-#endif        // __ANDROID__
+#endif  // __ANDROID__
       {
         if (!rgb_renderer_) {
           rgb_renderer_ = absl::make_unique<QuadRenderer>();

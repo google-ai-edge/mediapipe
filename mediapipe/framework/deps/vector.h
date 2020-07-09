@@ -458,8 +458,9 @@ class Vector3
   // return the index of the largest component (fabs)
   int LargestAbsComponent() const {
     Vector3 temp = Abs();
-    return temp[0] > temp[1] ? temp[0] > temp[2] ? 0 : 2
-                             : temp[1] > temp[2] ? 1 : 2;
+    return temp[0] > temp[1]   ? temp[0] > temp[2] ? 0 : 2
+           : temp[1] > temp[2] ? 1
+                               : 2;
   }
 
   // return the index of the smallest, median ,largest component of the vector

@@ -27,6 +27,8 @@
 #include "absl/memory/memory.h"
 #include "absl/strings/str_cat.h"
 #include "absl/synchronization/mutex.h"
+#include "mediapipe/framework/deps/no_destructor.h"
+#include "mediapipe/framework/deps/registration.h"
 #include "mediapipe/framework/port.h"
 #include "mediapipe/framework/port/canonical_errors.h"
 #include "mediapipe/framework/port/logging.h"
@@ -51,6 +53,8 @@ Packet Create(HolderBase* holder, Timestamp timestamp);
 Packet Create(std::shared_ptr<HolderBase> holder, Timestamp timestamp);
 const HolderBase* GetHolder(const Packet& packet);
 const std::shared_ptr<HolderBase>& GetHolderShared(const Packet& packet);
+::mediapipe::StatusOr<Packet> PacketFromDynamicProto(
+    const std::string& type_name, const std::string& serialized);
 }  // namespace packet_internal
 
 // A generic container class which can hold data of any type.  The type of
@@ -355,112 +359,11 @@ class HolderBase {
   // Downcasts this to Holder<T>.  Returns nullptr if deserialization
   // failed or if the requested type is not what is stored.
   template <typename T>
-  inline Holder<T>* As(
-      typename std::enable_if<
-          (!std::is_base_of<proto_ns::MessageLite, T>::value &&
-           !std::is_base_of<proto_ns::Message, T>::value) ||
-          (std::is_same<proto_ns::MessageLite, T>::value ||
-           std::is_same<proto_ns::Message, T>::value)>::type* = 0) {
-    if (HolderIsOfType<Holder<T>>() || HolderIsOfType<ForeignHolder<T>>()) {
-      return static_cast<Holder<T>*>(this);
-    }
-    // Does not hold a T.
-    return nullptr;
-  }
-
-  // For proto Message/MessageLite subclasses.
-  // When holder data is a concrete proto, the method downcasts this to
-  // Holder<T> if the requested type is what is stored.
-  // When holder data is a generic proto Message/MessageLite and a concrete
-  // proto type T is requested, the method will downcast the HolderBase to
-  // Holder<T> if the proto data is an instance of T.
-  template <typename T>
-  inline Holder<T>* As(
-      typename std::enable_if<
-          (std::is_base_of<proto_ns::MessageLite, T>::value ||
-           std::is_base_of<proto_ns::Message, T>::value) &&
-          (!std::is_same<proto_ns::MessageLite, T>::value &&
-           !std::is_same<proto_ns::Message, T>::value)>::type* = 0) {
-    // Holder data is an instance of subclass type T.
-    if (HolderIsOfType<Holder<T>>() || HolderIsOfType<ForeignHolder<T>>()) {
-      return static_cast<Holder<T>*>(this);
-    }
-
-    // Holder data is a generic proto Message/MessageLite and a subclass type T
-    // is requested.
-    if (HolderIsOfType<Holder<proto_ns::Message>>() ||
-        HolderIsOfType<ForeignHolder<proto_ns::Message>>() ||
-        HolderIsOfType<Holder<proto_ns::MessageLite>>() ||
-        HolderIsOfType<ForeignHolder<proto_ns::MessageLite>>()) {
-      // TODO: Holder<proto_ns::Message/MessageLite> cannot be
-      // legally downcast to Holder<T>, even though that downcast works in
-      // practice. Need to propose a better way to do the downcast.
-      Holder<T>* holder = static_cast<Holder<T>*>(this);
-      T tmp;
-      VLOG(2) << "Holder proto data type: " << holder->data().GetTypeName()
-              << " vs requested proto type: " << tmp.GetTypeName();
-      if (tmp.GetTypeName() == holder->data().GetTypeName()) {
-        return holder;
-      }
-    }
-
-    // Does not hold a T.
-    return nullptr;
-  }
+  Holder<T>* As();
 
   // Same as non-const As() function.
   template <typename T>
-  inline const Holder<T>* As(
-      typename std::enable_if<
-          (!std::is_base_of<proto_ns::MessageLite, T>::value &&
-           !std::is_base_of<proto_ns::Message, T>::value) ||
-          (std::is_same<proto_ns::MessageLite, T>::value ||
-           std::is_same<proto_ns::Message, T>::value)>::type* = 0) const {
-    if (HolderIsOfType<Holder<T>>() || HolderIsOfType<ForeignHolder<T>>()) {
-      return static_cast<const Holder<T>*>(this);
-    }
-    // Does not hold a T.
-    return nullptr;
-  }
-
-  // For proto Message/MessageLite subclasses.
-  // When holder data is a concrete proto, the method downcasts this to
-  // Holder<T> if the requested type is what is stored.
-  // When holder data is a generic proto Message/MessageLite and a concrete
-  // proto type T is requested, the method will downcast the HolderBase to
-  // Holder<T> if the proto data is an instance of T.
-  template <typename T>
-  inline const Holder<T>* As(
-      typename std::enable_if<
-          (std::is_base_of<proto_ns::MessageLite, T>::value ||
-           std::is_base_of<proto_ns::Message, T>::value) &&
-          (!std::is_same<proto_ns::MessageLite, T>::value &&
-           !std::is_same<proto_ns::Message, T>::value)>::type* = 0) const {
-    if (HolderIsOfType<Holder<T>>() || HolderIsOfType<ForeignHolder<T>>()) {
-      return static_cast<const Holder<T>*>(this);
-    }
-
-    // Holder data is a generic proto Message/MessageLite and a subclass type T
-    // is requested.
-    if (HolderIsOfType<Holder<proto_ns::Message>>() ||
-        HolderIsOfType<ForeignHolder<proto_ns::Message>>() ||
-        HolderIsOfType<Holder<proto_ns::MessageLite>>() ||
-        HolderIsOfType<ForeignHolder<proto_ns::MessageLite>>()) {
-      // TODO: Holder<proto_ns::Message/MessageLite> cannot be
-      // legally downcast to Holder<T>, even though that downcast works in
-      // practice. Need to propose a better way to do the downcast.
-      Holder<T>* holder = static_cast<const Holder<T>*>(this);
-      T tmp;
-      VLOG(2) << "Holder proto data type: " << holder->data().GetTypeName()
-              << " vs requested proto type: " << tmp.GetTypeName();
-      if (tmp.GetTypeName() == holder->data().GetTypeName()) {
-        return holder;
-      }
-    }
-
-    // Does not hold a T.
-    return nullptr;
-  }
+  const Holder<T>* As() const;
 
   // Returns the pointer to MessageLite type for the data in holder, if
   // underlying object is protocol buffer type, otherwise, nullptr is returned.
@@ -520,12 +423,68 @@ ConvertToVectorOfProtoMessageLitePtrs(const T* data,
   return result;
 }
 
+// This registry is used to create Holders of the right concrete C++ type given
+// a proto type std::string (which is used as the registration key).
+class MessageHolderRegistry
+    : public GlobalFactoryRegistry<std::unique_ptr<HolderBase>> {};
+
+template <typename T>
+struct is_concrete_proto_t
+    : public std::integral_constant<
+          bool, std::is_base_of<proto_ns::MessageLite, T>{} &&
+                    !std::is_same<proto_ns::MessageLite, T>{} &&
+                    !std::is_same<proto_ns::Message, T>{}> {};
+
+// Registers a message type. T must be a non-cv-qualified concrete proto type.
+template <typename T>
+struct MessageRegistrationImpl {
+  static NoDestructor<mediapipe::RegistrationToken> registration;
+};
+
+// Static members of template classes can be defined in the header.
+template <typename T>
+NoDestructor<mediapipe::RegistrationToken>
+    MessageRegistrationImpl<T>::registration(MessageHolderRegistry::Register(
+        T{}.GetTypeName(), [] { return absl::make_unique<Holder<T>>(new T); }));
+
+// For non-Message payloads, this does nothing.
+template <typename T, typename Enable = void>
+struct HolderSupport {
+  static void EnsureStaticInit() {}
+};
+
+// This template ensures that, for each concrete MessageLite subclass that is
+// stored in a Packet, we register a function that allows us to create a
+// Holder with the correct payload type from the proto's type name.
+template <typename T>
+struct HolderSupport<T,
+                     typename std::enable_if<is_concrete_proto_t<T>{}>::type> {
+  // We must use std::remove_cv to ensure we don't try to register Foo twice if
+  // there are Holder<Foo> and Holder<const Foo>. TODO: lift this
+  // up to Holder?
+  using R = MessageRegistrationImpl<typename std::remove_cv<T>::type>;
+  // For the registration static member to be instantiated, it needs to be
+  // referenced in a context that requires the definition to exist (see ISO/IEC
+  // C++ 2003 standard, 14.7.1). Calling this ensures that's the case.
+  // We need two different call-sites to cover proto types for which packets
+  // are only ever created (i.e. the protos are only produced by calculators)
+  // and proto types for which packets are only ever consumed (i.e. the protos
+  // are only consumed by calculators).
+  static void EnsureStaticInit() { CHECK(R::registration.get() != nullptr); }
+};
+
 template <typename T>
 class Holder : public HolderBase {
  public:
-  explicit Holder(const T* ptr) : ptr_(ptr) { SetHolderTypeId<Holder>(); }
+  explicit Holder(const T* ptr) : ptr_(ptr) {
+    HolderSupport<T>::EnsureStaticInit();
+    SetHolderTypeId<Holder>();
+  }
   ~Holder() override { delete_helper(); }
-  const T& data() const { return *ptr_; }
+  const T& data() const {
+    HolderSupport<T>::EnsureStaticInit();
+    return *ptr_;
+  }
   size_t GetTypeId() const final { return tool::GetTypeHash<T>(); }
   // Releases the underlying data pointer and transfers the ownership to a
   // unique pointer.
@@ -621,6 +580,24 @@ class ForeignHolder : public Holder<T> {
         "Foreign holder can't release data ptr without ownership.");
   }
 };
+
+template <typename T>
+Holder<T>* HolderBase::As() {
+  if (HolderIsOfType<Holder<T>>() || HolderIsOfType<ForeignHolder<T>>()) {
+    return static_cast<Holder<T>*>(this);
+  }
+  // Does not hold a T.
+  return nullptr;
+}
+
+template <typename T>
+const Holder<T>* HolderBase::As() const {
+  if (HolderIsOfType<Holder<T>>() || HolderIsOfType<ForeignHolder<T>>()) {
+    return static_cast<const Holder<T>*>(this);
+  }
+  // Does not hold a T.
+  return nullptr;
+}
 
 }  // namespace packet_internal
 

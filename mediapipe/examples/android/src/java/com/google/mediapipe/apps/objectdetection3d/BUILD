@@ -83,7 +83,7 @@ android_binary(
     manifest = "//mediapipe/examples/android/src/java/com/google/mediapipe/apps/basic:AndroidManifest.xml",
     manifest_values = {
         "applicationId": "com.google.mediapipe.apps.objectdetection3d",
-        "appName": "Object Detection 3D",
+        "appName": "Objectron",
         "mainActivity": ".MainActivity",
         "cameraFacingFront": "False",
         "binaryGraphName": "object_detection_3d.binarypb",

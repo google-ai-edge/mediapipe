@@ -107,7 +107,7 @@ class BilateralFilterCalculator : public CalculatorBase {
   GLuint program_ = 0;
   GLuint vao_;
   GLuint vbo_[2];  // vertex storage
-#endif             // !MEDIAPIPE_DISABLE_GPU
+#endif  // !MEDIAPIPE_DISABLE_GPU
 };
 REGISTER_CALCULATOR(BilateralFilterCalculator);
 

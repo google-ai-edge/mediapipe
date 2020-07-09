@@ -436,6 +436,21 @@ TEST(MediaSequenceTest, RoundTripBBoxPointPrefixed) {
   }
 }
 
+TEST(MediaSequenceTest, RoundTripBBox3dPoint) {
+  tensorflow::SequenceExample sequence;
+  std::vector<std::vector<std::tuple<float, float, float>>> points = {
+      {std::make_tuple(0.3, 0.5, 0.1), std::make_tuple(0.4, 0.7, 0.2)},
+      {std::make_tuple(0.7, 0.5, 0.3), std::make_tuple(0.3, 0.4, 0.4)}};
+  for (int i = 0; i < points.size(); ++i) {
+    AddBBox3dPoint(points[i], &sequence);
+    ASSERT_EQ(GetBBox3dPointSize(sequence), i + 1);
+    const auto& sequence_points = GetBBox3dPointAt(sequence, i);
+    for (int j = 0; j < sequence_points.size(); ++j) {
+      EXPECT_EQ(sequence_points[j], points[i][j]);
+    }
+  }
+}
+
 TEST(MediaSequenceTest, RoundTripRegionParts) {
   tensorflow::SequenceExample sequence;
   std::vector<std::string> parts = {"HEAD", "FEET"};

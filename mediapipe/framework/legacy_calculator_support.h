@@ -61,10 +61,24 @@ class LegacyCalculatorSupport {
     // platforms.
 #ifndef __APPLE__
     ABSL_CONST_INIT
-#endif                                // !__APPLE__
+#endif  // !__APPLE__
     static thread_local C* current_;  // NOLINT
   };
 };
+
+// We only declare this variable for two specializations of the template because
+// it is only meant to be used for these two types.
+// Note that, since these variables are members of specific template
+// _specializations_, they are not themselves templates, and therefore their
+// definitions must be in the .cc file. However, a declaration still needs to be
+// included in the header, or some compilers will assume they have no
+// definition.
+template <>
+thread_local CalculatorContext*
+    LegacyCalculatorSupport::Scoped<CalculatorContext>::current_;
+template <>
+thread_local CalculatorContract*
+    LegacyCalculatorSupport::Scoped<CalculatorContract>::current_;
 
 }  // namespace mediapipe
 

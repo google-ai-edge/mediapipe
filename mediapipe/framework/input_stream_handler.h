@@ -155,7 +155,7 @@ class InputStreamHandler {
   // max number of invocations that are allowed to be scheduled is reached.
   // Returns true if at least one invocation has been scheduled.
   // The latest minimum timestamp bound of the input streams is returned in
-  // *input_bound iff the latest readiness of the node is kNotReady when the
+  // *input_bound if the latest readiness of the node is kNotReady when the
   // function returns. During batching, this value will be equal to the
   // timestamp of the first set of inputs in the batch. In other cases,
   // Timestamp::Unset() is returned.

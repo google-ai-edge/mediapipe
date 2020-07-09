@@ -36,7 +36,7 @@ exports_files([
 mediapipe_proto_library(
     name = "calculator_proto",
     srcs = ["calculator.proto"],
-    visibility = [":mediapipe_internal"],
+    visibility = ["//visibility:public"],
     deps = [
         "//mediapipe/framework:calculator_options_proto",
         "//mediapipe/framework:mediapipe_options_proto",
@@ -68,7 +68,7 @@ mediapipe_proto_library(
 mediapipe_proto_library(
     name = "calculator_profile_proto",
     srcs = ["calculator_profile.proto"],
-    visibility = [":mediapipe_internal"],
+    visibility = ["//visibility:public"],
     deps = [
         "//mediapipe/framework:calculator_options_proto",
         "//mediapipe/framework:calculator_proto",
@@ -830,6 +830,8 @@ cc_library(
         ":port",
         ":timestamp",
         ":type_map",
+        "//mediapipe/framework/deps:no_destructor",
+        "//mediapipe/framework/deps:registration",
         "//mediapipe/framework/port:core_proto",
         "//mediapipe/framework/port:integral_types",
         "//mediapipe/framework/port:logging",
@@ -1515,6 +1517,21 @@ cc_test(
     srcs = ["packet_test.cc"],
     linkstatic = 1,
     deps = [
+        ":packet",
+        ":packet_test_cc_proto",
+        ":type_map",
+        "//mediapipe/framework/port:core_proto",
+        "//mediapipe/framework/port:gtest_main",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_test(
+    name = "packet_registration_test",
+    size = "small",
+    srcs = ["packet_registration_test.cc"],
+    deps = [
+        ":calculator_framework",
         ":packet",
         ":packet_test_cc_proto",
         ":type_map",

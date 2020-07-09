@@ -217,11 +217,11 @@ REGISTER_CALCULATOR(TfLiteTensorsToLandmarksCalculator);
     for (int i = 0; i < output_landmarks.landmark_size(); ++i) {
       const Landmark& landmark = output_landmarks.landmark(i);
       NormalizedLandmark* norm_landmark = output_norm_landmarks.add_landmark();
-      norm_landmark->set_x(static_cast<float>(landmark.x()) /
-                           options_.input_image_width());
-      norm_landmark->set_y(static_cast<float>(landmark.y()) /
-                           options_.input_image_height());
-      norm_landmark->set_z(landmark.z() / options_.normalize_z());
+      norm_landmark->set_x(landmark.x() / options_.input_image_width());
+      norm_landmark->set_y(landmark.y() / options_.input_image_height());
+      // Scale Z coordinate as X + allow additional uniform normalization.
+      norm_landmark->set_z(landmark.z() / options_.input_image_width() /
+                           options_.normalize_z());
       norm_landmark->set_visibility(landmark.visibility());
     }
     cc->Outputs()

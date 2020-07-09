@@ -376,6 +376,7 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         ":timed_box_list_id_to_label_calculator_cc_proto",
+        "@com_google_absl//absl/container:node_hash_map",
         "//mediapipe/framework/port:status",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework:packet",

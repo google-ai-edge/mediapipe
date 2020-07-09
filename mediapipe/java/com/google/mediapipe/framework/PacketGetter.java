@@ -272,6 +272,10 @@ public final class PacketGetter {
    * <p>Note: in order for the application to be able to use the texture, its GL context must be
    * linked with MediaPipe's. This is ensured by calling {@link Graph#createGlRunner(String,long)}
    * with the native handle to the application's GL context as the second argument.
+   *
+   * <p>The returned GraphTextureFrame must be released by the caller. If this method is called
+   * multiple times, each returned GraphTextureFrame is an independent reference to the underlying
+   * texture data, and must be released individually.
    */
   public static GraphTextureFrame getTextureFrame(final Packet packet) {
     return new GraphTextureFrame(

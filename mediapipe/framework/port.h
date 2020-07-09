@@ -46,7 +46,7 @@
 // but may or may not still be able to run other OpenGL code.
 #if !defined(MEDIAPIPE_DISABLE_GL_COMPUTE) &&         \
     (defined(__APPLE__) || defined(__EMSCRIPTEN__) || \
-     defined(MEDIAPIPE_DISABLE_GPU))
+     defined(MEDIAPIPE_DISABLE_GPU) || MEDIAPIPE_USING_SWIFTSHADER)
 #define MEDIAPIPE_DISABLE_GL_COMPUTE
 #endif
 

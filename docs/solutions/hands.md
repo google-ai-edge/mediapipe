@@ -1,6 +1,6 @@
 ---
 layout: default
-title: Hand
+title: Hands
 parent: Solutions
 nav_order: 3
 ---
@@ -219,9 +219,13 @@ Please refer to [these instructions](../index.md#mediapipe-on-the-web).
 
 ## Resources
 
-*   Google AI Blog: [On-Device, Real-Time Hand Tracking with MediaPipe](https://ai.googleblog.com/2019/08/on-device-real-time-hand-tracking-with.html)
-*   TensorFlow Blog: [Face and hand tracking in the browser with MediaPipe and
-    TensorFlow.js](https://blog.tensorflow.org/2020/03/face-and-hand-tracking-in-browser-with-mediapipe-and-tensorflowjs.html)
+*   Google AI Blog:
+    [On-Device, Real-Time Hand Tracking with MediaPipe](https://ai.googleblog.com/2019/08/on-device-real-time-hand-tracking-with.html)
+*   TensorFlow Blog:
+    [Face and hand tracking in the browser with MediaPipe and TensorFlow.js](https://blog.tensorflow.org/2020/03/face-and-hand-tracking-in-browser-with-mediapipe-and-tensorflowjs.html)
+*   Paper:
+    [MediaPipe Hands: On-device Real-time Hand Tracking](https://arxiv.org/abs/2006.10214)
+    ([presentation](https://www.youtube.com/watch?v=I-UOrvxxXEk))
 *   Palm detection model:
     [TFLite model](https://github.com/google/mediapipe/tree/master/mediapipe/models/palm_detection.tflite),
     [TF.js model](https://tfhub.dev/mediapipe/handdetector/1)

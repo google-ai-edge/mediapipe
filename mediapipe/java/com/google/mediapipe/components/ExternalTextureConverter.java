@@ -14,17 +14,21 @@
 
 package com.google.mediapipe.components;
 
+import static java.lang.Math.max;
+
 import android.graphics.SurfaceTexture;
 import android.opengl.GLES11Ext;
 import android.opengl.GLES20;
 import android.util.Log;
 import com.google.mediapipe.framework.AppTextureFrame;
+import com.google.mediapipe.framework.GlSyncToken;
 import com.google.mediapipe.glutil.ExternalTextureRenderer;
 import com.google.mediapipe.glutil.GlThread;
 import com.google.mediapipe.glutil.ShaderUtil;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
+import java.util.Queue;
 import javax.microedition.khronos.egl.EGLContext;
 
 /**
@@ -204,8 +208,11 @@ public class ExternalTextureConverter implements TextureFrameProducer {
     private static final long NANOS_PER_MICRO = 1000; // Nanoseconds in one microsecond.
     private volatile SurfaceTexture surfaceTexture = null;
     private final List<TextureFrameConsumer> consumers;
-    private List<AppTextureFrame> outputFrames = null;
-    private int outputFrameIndex = -1;
+
+    private final Queue<PoolTextureFrame> framesAvailable = new ArrayDeque<>();
+    private int framesInUse = 0;
+    private final int framesToKeep;
+
     private ExternalTextureRenderer renderer = null;
     private long nextFrameTimestampOffset = 0;
     private long timestampOffsetNanos = 0;
@@ -215,10 +222,27 @@ public class ExternalTextureConverter implements TextureFrameProducer {
     protected int destinationWidth = 0;
     protected int destinationHeight = 0;
 
+    private class PoolTextureFrame extends AppTextureFrame {
+      public PoolTextureFrame(int textureName, int width, int height) {
+        super(textureName, width, height);
+      }
+
+      @Override
+      public void release(GlSyncToken syncToken) {
+        super.release(syncToken);
+        poolFrameReleased(this);
+      }
+
+      @Override
+      public void release() {
+        super.release();
+        poolFrameReleased(this);
+      }
+    }
+
     public RenderThread(EGLContext parentContext, int numBuffers) {
       super(parentContext);
-      outputFrames = new ArrayList<>();
-      outputFrames.addAll(Collections.nCopies(numBuffers, null));
+      framesToKeep = numBuffers;
       renderer = new ExternalTextureRenderer();
       consumers = new ArrayList<>();
     }
@@ -283,8 +307,8 @@ public class ExternalTextureConverter implements TextureFrameProducer {
     @Override
     public void releaseGl() {
       setSurfaceTexture(null, 0, 0);
-      for (int i = 0; i < outputFrames.size(); ++i) {
-        teardownDestination(i);
+      while (!framesAvailable.isEmpty()) {
+        teardownFrame(framesAvailable.remove());
       }
       renderer.release();
       super.releaseGl(); // This releases the EGL context, so must do it after any GL calls.
@@ -337,16 +361,11 @@ public class ExternalTextureConverter implements TextureFrameProducer {
       }
     }
 
-    private void teardownDestination(int index) {
-      if (outputFrames.get(index) != null) {
-        waitUntilReleased(outputFrames.get(index));
-        GLES20.glDeleteTextures(1, new int[] {outputFrames.get(index).getTextureName()}, 0);
-        outputFrames.set(index, null);
-      }
+    private static void teardownFrame(AppTextureFrame frame) {
+      GLES20.glDeleteTextures(1, new int[] {frame.getTextureName()}, 0);
     }
 
-    private void setupDestination(int index) {
-      teardownDestination(index);
+    private PoolTextureFrame createFrame() {
       int destinationTextureId = ShaderUtil.createRgbaTexture(destinationWidth, destinationHeight);
       Log.d(
           TAG,
@@ -354,10 +373,8 @@ public class ExternalTextureConverter implements TextureFrameProducer {
               "Created output texture: %d width: %d height: %d",
               destinationTextureId, destinationWidth, destinationHeight));
       bindFramebuffer(destinationTextureId, destinationWidth, destinationHeight);
-      outputFrames.set(
-          index, new AppTextureFrame(destinationTextureId, destinationWidth, destinationHeight));
+      return new PoolTextureFrame(destinationTextureId, destinationWidth, destinationHeight);
     }
-
 
     /**
      * Gets next available frame or creates new one if next frame is not initialized
@@ -371,18 +388,36 @@ public class ExternalTextureConverter implements TextureFrameProducer {
      * NOTE: must be invoked on GL thread
      */
     private AppTextureFrame nextOutputFrame() {
-      outputFrameIndex = (outputFrameIndex + 1) % outputFrames.size();
-      AppTextureFrame outputFrame = outputFrames.get(outputFrameIndex);
-      // Check if the size has changed.
-      if (outputFrame == null
-          || outputFrame.getWidth() != destinationWidth
-          || outputFrame.getHeight() != destinationHeight) {
-        // setupDestination will wait for the frame to be released before reallocating it.
-        setupDestination(outputFrameIndex);
-        outputFrame = outputFrames.get(outputFrameIndex);
+      PoolTextureFrame outputFrame;
+      synchronized (this) {
+        outputFrame = framesAvailable.poll();
+        framesInUse++;
       }
-      waitUntilReleased(outputFrame);
+      if (outputFrame == null) {
+        outputFrame = createFrame();
+      } else if (outputFrame.getWidth() != destinationWidth
+          || outputFrame.getHeight() != destinationHeight) {
+        // Create anew if size has changed.
+        // TODO: waiting for the consumer sync here may not be necessary.
+        waitUntilReleased(outputFrame);
+        teardownFrame(outputFrame);
+        outputFrame = createFrame();
+      } else {
+        // Note: waitUntilReleased does two things: waits for the frame to be released by the CPU,
+        // and syncs with the GPU sync token provided by the consumer. The first part is redundant
+        // here (and completes immediately), but the second part is still needed.
+        waitUntilReleased(outputFrame);
+      }
       return outputFrame;
+    }
+
+    protected synchronized void poolFrameReleased(PoolTextureFrame frame) {
+      framesAvailable.offer(frame);
+      framesInUse--;
+      int keep = max(framesToKeep - framesInUse, 0);
+      while (framesAvailable.size() > keep) {
+        teardownFrame(framesAvailable.remove());
+      }
     }
 
     /**
@@ -417,16 +452,22 @@ public class ExternalTextureConverter implements TextureFrameProducer {
           Log.v(
               TAG,
               String.format(
-                  "Waiting for tex: %d width: %d height: %d",
-                  frame.getTextureName(), frame.getWidth(), frame.getHeight()));
+                  "Waiting for tex: %d width: %d height: %d timestamp: %d",
+                  frame.getTextureName(),
+                  frame.getWidth(),
+                  frame.getHeight(),
+                  frame.getTimestamp()));
         }
         frame.waitUntilReleased();
         if (Log.isLoggable(TAG, Log.VERBOSE)) {
           Log.v(
               TAG,
               String.format(
-                  "Finished waiting for tex: %d width: %d height: %d",
-                  frame.getTextureName(), frame.getWidth(), frame.getHeight()));
+                  "Finished waiting for tex: %d width: %d height: %d timestamp: %d",
+                  frame.getTextureName(),
+                  frame.getWidth(),
+                  frame.getHeight(),
+                  frame.getTimestamp()));
         }
       } catch (InterruptedException ie) {
         // Someone interrupted our thread. This is not supposed to happen: we own

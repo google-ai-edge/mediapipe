@@ -386,45 +386,47 @@ REGISTER_CALCULATOR(ImageTransformationCalculator);
 
   const int input_width = input_mat.cols;
   const int input_height = input_mat.rows;
-  if (!output_height_ || !output_width_) {
-    output_height_ = input_height;
-    output_width_ = input_width;
-  }
+  int output_width;
+  int output_height;
+  ComputeOutputDimensions(input_width, input_height, &output_width,
+                          &output_height);
 
-  cv::Mat scaled_mat;
-  int output_width = output_width_;
-  int output_height = output_height_;
-  if (scale_mode_ == mediapipe::ScaleMode_Mode_STRETCH) {
-    int scale_flag =
-        input_mat.cols > output_width_ && input_mat.rows > output_height_
-            ? cv::INTER_AREA
-            : cv::INTER_LINEAR;
-    cv::resize(input_mat, scaled_mat, cv::Size(output_width_, output_height_),
-               0, 0, scale_flag);
-  } else {
-    const float scale =
-        std::min(static_cast<float>(output_width_) / input_width,
-                 static_cast<float>(output_height_) / input_height);
-    const int target_width = std::round(input_width * scale);
-    const int target_height = std::round(input_height * scale);
-    int scale_flag = scale < 1.0f ? cv::INTER_AREA : cv::INTER_LINEAR;
-    if (scale_mode_ == mediapipe::ScaleMode_Mode_FIT) {
-      cv::Mat intermediate_mat;
-      cv::resize(input_mat, intermediate_mat,
-                 cv::Size(target_width, target_height), 0, 0, scale_flag);
-      const int top = (output_height_ - target_height) / 2;
-      const int bottom = output_height_ - target_height - top;
-      const int left = (output_width_ - target_width) / 2;
-      const int right = output_width_ - target_width - left;
-      cv::copyMakeBorder(intermediate_mat, scaled_mat, top, bottom, left, right,
-                         options_.constant_padding() ? cv::BORDER_CONSTANT
-                                                     : cv::BORDER_REPLICATE);
-    } else {
-      cv::resize(input_mat, scaled_mat, cv::Size(target_width, target_height),
+  if (output_width_ > 0 && output_height_ > 0) {
+    cv::Mat scaled_mat;
+    if (scale_mode_ == mediapipe::ScaleMode_Mode_STRETCH) {
+      int scale_flag =
+          input_mat.cols > output_width_ && input_mat.rows > output_height_
+              ? cv::INTER_AREA
+              : cv::INTER_LINEAR;
+      cv::resize(input_mat, scaled_mat, cv::Size(output_width_, output_height_),
                  0, 0, scale_flag);
-      output_width = target_width;
-      output_height = target_height;
+    } else {
+      const float scale =
+          std::min(static_cast<float>(output_width_) / input_width,
+                   static_cast<float>(output_height_) / input_height);
+      const int target_width = std::round(input_width * scale);
+      const int target_height = std::round(input_height * scale);
+      int scale_flag = scale < 1.0f ? cv::INTER_AREA : cv::INTER_LINEAR;
+      if (scale_mode_ == mediapipe::ScaleMode_Mode_FIT) {
+        cv::Mat intermediate_mat;
+        cv::resize(input_mat, intermediate_mat,
+                   cv::Size(target_width, target_height), 0, 0, scale_flag);
+        const int top = (output_height_ - target_height) / 2;
+        const int bottom = output_height_ - target_height - top;
+        const int left = (output_width_ - target_width) / 2;
+        const int right = output_width_ - target_width - left;
+        cv::copyMakeBorder(intermediate_mat, scaled_mat, top, bottom, left,
+                           right,
+                           options_.constant_padding() ? cv::BORDER_CONSTANT
+                                                       : cv::BORDER_REPLICATE);
+      } else {
+        cv::resize(input_mat, scaled_mat, cv::Size(target_width, target_height),
+                   0, 0, scale_flag);
+        output_width = target_width;
+        output_height = target_height;
+      }
     }
+    input_mat = scaled_mat;
   }
 
   if (cc->Outputs().HasTag("LETTERBOX_PADDING")) {
@@ -437,10 +439,33 @@ REGISTER_CALCULATOR(ImageTransformationCalculator);
   }
 
   cv::Mat rotated_mat;
-  const int angle = RotationModeToDegrees(rotation_);
-  cv::Point2f src_center(scaled_mat.cols / 2.0, scaled_mat.rows / 2.0);
-  cv::Mat rotation_mat = cv::getRotationMatrix2D(src_center, angle, 1.0);
-  cv::warpAffine(scaled_mat, rotated_mat, rotation_mat, scaled_mat.size());
+  cv::Size rotated_size(output_width, output_height);
+  if (input_mat.size() == rotated_size) {
+    const int angle = RotationModeToDegrees(rotation_);
+    cv::Point2f src_center(input_mat.cols / 2.0, input_mat.rows / 2.0);
+    cv::Mat rotation_mat = cv::getRotationMatrix2D(src_center, angle, 1.0);
+    cv::warpAffine(input_mat, rotated_mat, rotation_mat, rotated_size);
+  } else {
+    switch (rotation_) {
+      case mediapipe::RotationMode_Mode_UNKNOWN:
+      case mediapipe::RotationMode_Mode_ROTATION_0:
+        LOG(ERROR) << "Not rotating image.";
+        rotated_mat = input_mat;
+        break;
+      case mediapipe::RotationMode_Mode_ROTATION_90:
+        LOG(ERROR) << "Rotating image by 90 degrees ccw.";
+        cv::rotate(input_mat, rotated_mat, cv::ROTATE_90_COUNTERCLOCKWISE);
+        break;
+      case mediapipe::RotationMode_Mode_ROTATION_180:
+        LOG(ERROR) << "Rotating image by 180 degrees.";
+        cv::rotate(input_mat, rotated_mat, cv::ROTATE_180);
+        break;
+      case mediapipe::RotationMode_Mode_ROTATION_270:
+        LOG(ERROR) << "Rotating image by 90 degrees cw.";
+        cv::rotate(input_mat, rotated_mat, cv::ROTATE_90_CLOCKWISE);
+        break;
+    }
+  }
 
   cv::Mat flipped_mat;
   if (flip_horizontally_ || flip_vertically_) {
@@ -498,7 +523,7 @@ REGISTER_CALCULATOR(ImageTransformationCalculator);
     renderer = yuv_renderer_.get();
     src1 = gpu_helper_.CreateSourceTexture(input, 0);
   } else  // NOLINT(readability/braces)
-#endif    // iOS
+#endif  // iOS
   {
     src1 = gpu_helper_.CreateSourceTexture(input);
 #if defined(TEXTURE_EXTERNAL_OES)
@@ -510,7 +535,7 @@ REGISTER_CALCULATOR(ImageTransformationCalculator);
       }
       renderer = ext_rgb_renderer_.get();
     } else  // NOLINT(readability/braces)
-#endif      // TEXTURE_EXTERNAL_OES
+#endif  // TEXTURE_EXTERNAL_OES
     {
       if (!rgb_renderer_) {
         rgb_renderer_ = absl::make_unique<QuadRenderer>();

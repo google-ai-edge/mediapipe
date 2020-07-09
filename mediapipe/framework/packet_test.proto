@@ -39,3 +39,9 @@ message SerializationProxyProto {
   repeated float float_value = 2;
   repeated string string_value = 3;
 }
+
+// This proto should be used only as an input to a calculator, to verify that
+// that case is covered.
+message InputOnlyProto {
+  optional int32 x = 1;
+}

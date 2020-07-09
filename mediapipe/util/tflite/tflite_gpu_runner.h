@@ -27,6 +27,10 @@
 #include "tensorflow/lite/delegates/gpu/gl/api2.h"
 #include "tensorflow/lite/model.h"
 
+#ifdef __ANDROID__
+#include "tensorflow/lite/delegates/gpu/cl/api.h"
+#endif
+
 namespace tflite {
 namespace gpu {
 
@@ -64,6 +68,9 @@ class TFLiteGPURunner {
   mediapipe::Status Build();
   mediapipe::Status Invoke();
 
+  std::vector<BHWC> GetInputShapes() { return input_shapes_; }
+  std::vector<BHWC> GetOutputShapes() { return output_shapes_; }
+
  private:
   mediapipe::Status InitializeOpenGL(
       std::unique_ptr<InferenceBuilder>* builder);
@@ -72,6 +79,10 @@ class TFLiteGPURunner {
 
   InferenceOptions options_;
   std::unique_ptr<gl::InferenceEnvironment> gl_environment_;
+
+#ifdef __ANDROID__
+  std::unique_ptr<cl::InferenceEnvironment> cl_environment_;
+#endif
 
   // graph_ is maintained temporarily and becomes invalid after runner_ is ready
   std::unique_ptr<GraphFloat32> graph_gl_;

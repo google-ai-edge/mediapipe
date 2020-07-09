@@ -32,6 +32,8 @@ message ContentZoomingCalculatorOptions {
   optional KinematicOptions kinematic_options_zoom = 6;
   // Kinematic options for tilt (y-axis reframing.)
   optional KinematicOptions kinematic_options_tilt = 7;
+  // Kinematic options for pan (x-axis reframing.)
+  optional KinematicOptions kinematic_options_pan = 10;
   // Duration (in MicroSeconds) before returning to fully zoomed out position
   // when no "only_required" frames are received.
   optional int64 us_before_zoomout = 9 [default = 1000000];

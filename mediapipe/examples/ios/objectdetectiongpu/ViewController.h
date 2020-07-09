@@ -14,6 +14,11 @@
 
 #import <UIKit/UIKit.h>
 
-@interface ViewController : UIViewController
+typedef NS_ENUM(NSInteger, MediaPipeDemoSourceMode) {
+  MediaPipeDemoSourceBackCamera,
+  MediaPipeDemoSourceVideo
+};
 
+@interface ViewController : UIViewController
+- (void)setSourceMode:(MediaPipeDemoSourceMode)mode;
 @end

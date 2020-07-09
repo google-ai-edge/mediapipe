@@ -330,13 +330,12 @@ class TraceBuilder::Impl {
       if (trace_event_registry_[event->event_type].is_stream_event()) {
         auto stream_trace = event->is_finish ? result->add_output_trace()
                                              : result->add_input_trace();
-        if (event->is_finish) {
-          // Log only the packet id for each output event.
-          stream_trace->set_stream_id(stream_id_map_[event->stream_id]);
-          stream_trace->set_packet_timestamp(LogTimestamp(event->packet_ts));
-        } else {
-          // Log the full stream trace for each input event.
-          BuildStreamTrace(*event, stream_trace);
+        BuildStreamTrace(*event, stream_trace);
+        if (!event->is_finish) {
+          // Note: is_finish is true for output events, false for input events.
+          // For input events, we log some additional timing information. The
+          // finish_time is the start_time of this Process call, the start_time
+          // is the finish_time of the Process call that output the packet.
           stream_trace->set_finish_time(LogTime(event->event_time));
           const TraceEvent* output_event = FindOutputEvent(*event);
           if (output_event) {

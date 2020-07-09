@@ -184,12 +184,8 @@ app:
 
 ### Prerequisite
 
-1.  Install [Xcode](https://developer.apple.com/xcode/) and the Command Line
-    Tools.
-
-    Follow Apple's instructions to obtain the required development certificates
-    and provisioning profiles for your iOS device. Install the Command Line
-    Tools by
+1.  Install [Xcode](https://developer.apple.com/xcode/), and additionally
+    install the Command Line Tools by:
 
     ```bash
     xcode-select --install
@@ -209,25 +205,30 @@ app:
     pip3 install --user six
     ```
 
-4.  Clone the MediaPipe repository.
+4.  Follow
+    [Apple's instructions](https://developer.apple.com/support/certificates/) to
+    obtain the required development certificates and provisioning profiles for
+    your iOS device.
+
+    Tip: You can the following command to see the provisioning profiles you have
+    previously downloaded using Xcode: `open
+    ~/Library/MobileDevice/"Provisioning Profiles"`. If there are none, generate
+    and download a profile on
+    [Apple's developer site](https://developer.apple.com/account/resources/).
+
+5.  Clone the MediaPipe repository.
 
     ```bash
     git clone https://github.com/google/mediapipe.git
     ```
 
-5.  Symlink or copy your provisioning profile to
-    `mediapipe/mediapipe/provisioning_profile.mobileprovision`.
+6.  In the cloned MediaPipe repository, symlink or copy your provisioning profile
+    to `mediapipe/provisioning_profile.mobileprovision`, e.g.,
 
     ```bash
     cd mediapipe
     ln -s ~/Downloads/MyProvisioningProfile.mobileprovision mediapipe/provisioning_profile.mobileprovision
     ```
-
-    Tip: You can use this command to see the provisioning profiles you have
-    previously downloaded using Xcode: `open
-    ~/Library/MobileDevice/"Provisioning Profiles"`. If there are none, generate
-    and download a profile on
-    [Apple's developer site](https://developer.apple.com/account/resources/).
 
 ### Option 1: Build with Bazel in Command Line
 
@@ -245,6 +246,10 @@ app:
     ```
 
     You may see a permission request from `codesign` in order to sign the app.
+
+    Tip: You can run this
+    [script](https://github.com/google/mediapipe/blob/master/build_ios_examples.sh)
+    to build all MediaPipe iOS example apps.
 
 3.  In Xcode, open the `Devices and Simulators` window (command-shift-2).
 
