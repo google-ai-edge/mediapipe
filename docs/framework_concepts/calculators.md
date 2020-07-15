@@ -207,8 +207,8 @@ class SomeAudioVideoCalculator : public CalculatorBase {
     // particular type.  SetAny() has the same effect as explicitly
     // setting the type to be the stream's type.
     cc->Outputs().Tag("VIDEO").Set<ImageFrame>();
-    cc->Outputs().Get("AUDIO", 0).Set<Matrix>;
-    cc->Outputs().Get("AUDIO", 1).Set<Matrix>;
+    cc->Outputs().Get("AUDIO", 0).Set<Matrix>();
+    cc->Outputs().Get("AUDIO", 1).Set<Matrix>();
     return ::mediapipe::OkStatus();
   }
 ```
