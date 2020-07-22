@@ -133,6 +133,42 @@ const cv::Scalar kWhite = cv::Scalar(255.0, 255.0, 255.0);  // others
   return ::mediapipe::OkStatus();
 }
 
+namespace {
+cv::Rect LimitBounds(const cv::Rect& rect, const int max_width,
+                     const int max_height) {
+  cv::Rect result;
+  result.x = fmax(rect.x, 0);
+  result.y = fmax(rect.y, 0);
+  result.width =
+      result.x + rect.width >= max_width ? max_width - result.x : rect.width;
+  result.height = result.y + rect.height >= max_height ? max_height - result.y
+                                                       : rect.height;
+  return result;
+}
+}  // namespace
+
+::mediapipe::Status DrawDetectionAndFramingWindow(
+    const std::vector<cv::Mat>& org_scene_frames,
+    const std::vector<cv::Rect>& crop_from_locations,
+    const ImageFormat::Format image_format, const float overlay_opacity,
+    std::vector<std::unique_ptr<ImageFrame>>* viz_frames) {
+  for (int i = 0; i < org_scene_frames.size(); i++) {
+    const auto& scene_frame = org_scene_frames[i];
+    auto viz_frame = absl::make_unique<ImageFrame>(
+        image_format, scene_frame.cols, scene_frame.rows);
+    cv::Mat darkened = formats::MatView(viz_frame.get());
+    scene_frame.copyTo(darkened);
+    cv::Mat overlay = cv::Mat::zeros(darkened.size(), darkened.type());
+    cv::addWeighted(overlay, overlay_opacity, darkened, 1 - overlay_opacity, 0,
+                    darkened);
+    const auto& crop_from_bounded =
+        LimitBounds(crop_from_locations[i], scene_frame.cols, scene_frame.rows);
+    scene_frame(crop_from_bounded).copyTo(darkened(crop_from_bounded));
+    viz_frames->push_back(std::move(viz_frame));
+  }
+  return ::mediapipe::OkStatus();
+}
+
 ::mediapipe::Status DrawFocusPointAndCropWindow(
     const std::vector<cv::Mat>& scene_frames,
     const std::vector<FocusPointFrame>& focus_point_frames,

@@ -53,7 +53,9 @@ class SceneCameraMotionAnalyzer {
 
   explicit SceneCameraMotionAnalyzer(const SceneCameraMotionAnalyzerOptions&
                                          scene_camera_motion_analyzer_options)
-      : options_(scene_camera_motion_analyzer_options) {}
+      : options_(scene_camera_motion_analyzer_options),
+        time_since_last_salient_region_us_(0),
+        has_solid_color_background_(false) {}
 
   ~SceneCameraMotionAnalyzer() {}
 
@@ -61,21 +63,22 @@ class SceneCameraMotionAnalyzer {
   // SceneKeyFrameCropSummary, and populates FocusPointFrames given scene
   // frame timestamps. Optionally returns SceneCameraMotion.
   ::mediapipe::Status AnalyzeSceneAndPopulateFocusPointFrames(
-      const std::vector<KeyFrameInfo>& key_frame_infos,
       const KeyFrameCropOptions& key_frame_crop_options,
       const std::vector<KeyFrameCropResult>& key_frame_crop_results,
       const int scene_frame_width, const int scene_frame_height,
       const std::vector<int64>& scene_frame_timestamps,
+      const bool has_solid_color_background,
       SceneKeyFrameCropSummary* scene_summary,
       std::vector<FocusPointFrame>* focus_point_frames,
-      SceneCameraMotion* scene_camera_motion = nullptr) const;
+      SceneCameraMotion* scene_camera_motion = nullptr);
 
  protected:
   // Decides SceneCameraMotion based on SceneKeyFrameCropSummary. Updates the
   // crop window in SceneKeyFrameCropSummary in the case of steady motion.
   ::mediapipe::Status DecideCameraMotionType(
       const KeyFrameCropOptions& key_frame_crop_options,
-      const double scene_span_sec, SceneKeyFrameCropSummary* scene_summary,
+      const double scene_span_sec, const int64 end_time_us,
+      SceneKeyFrameCropSummary* scene_summary,
       SceneCameraMotion* scene_camera_motion) const;
 
   // Populates the FocusPointFrames for each scene frame based on
@@ -134,6 +137,16 @@ class SceneCameraMotionAnalyzer {
 
   // Scene camera motion analyzer options.
   SceneCameraMotionAnalyzerOptions options_;
+
+  // Last position
+  SceneCameraMotion last_scene_with_salient_region_;
+  int64 time_since_last_salient_region_us_;
+
+  // Scene has solid color background.
+  bool has_solid_color_background_;
+
+  // Total number of frames for this scene.
+  int total_scene_frames_;
 };
 
 }  // namespace autoflip

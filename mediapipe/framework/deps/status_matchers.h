@@ -15,10 +15,44 @@
 #ifndef MEDIAPIPE_DEPS_STATUS_MATCHERS_H_
 #define MEDIAPIPE_DEPS_STATUS_MATCHERS_H_
 
+#include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "mediapipe/framework/deps/status.h"
 
-#define MP_EXPECT_OK(statement) EXPECT_TRUE((statement).ok())
-#define MP_ASSERT_OK(statement) ASSERT_TRUE((statement).ok())
+namespace mediapipe {
+
+// Monomorphic implementation of matcher IsOk() for a given type T.
+// T can be Status, StatusOr<>, or a reference to either of them.
+template <typename T>
+class MonoIsOkMatcherImpl : public testing::MatcherInterface<T> {
+ public:
+  void DescribeTo(std::ostream* os) const override { *os << "is OK"; }
+  void DescribeNegationTo(std::ostream* os) const override {
+    *os << "is not OK";
+  }
+  bool MatchAndExplain(T actual_value,
+                       testing::MatchResultListener*) const override {
+    return actual_value.ok();
+  }
+};
+
+// Implements IsOk() as a polymorphic matcher.
+class IsOkMatcher {
+ public:
+  template <typename T>
+  operator testing::Matcher<T>() const {  // NOLINT
+    return testing::Matcher<T>(new MonoIsOkMatcherImpl<T>());
+  }
+};
+
+// Returns a gMock matcher that matches a Status or StatusOr<> which is OK.
+inline IsOkMatcher IsOk() { return IsOkMatcher(); }
+
+}  // namespace mediapipe
+
+// Macros for testing the results of functions that return mediapipe::Status or
+// mediapipe::StatusOr<T> (for any type T).
+#define MP_EXPECT_OK(expression) EXPECT_THAT(expression, mediapipe::IsOk())
+#define MP_ASSERT_OK(expression) ASSERT_THAT(expression, mediapipe::IsOk())
 
 #endif  // MEDIAPIPE_DEPS_STATUS_MATCHERS_H_

@@ -34,6 +34,9 @@
 /// Whether to rotate video buffers with device rotation.
 @property(nonatomic) BOOL autoRotateBuffers;
 
+/// Whether to mirror the video or not.
+@property(nonatomic) BOOL videoMirrored;
+
 /// The camera intrinsic matrix.
 @property(nonatomic, readonly) matrix_float3x3 cameraIntrinsicMatrix;
 

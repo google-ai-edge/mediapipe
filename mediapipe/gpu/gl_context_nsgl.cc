@@ -46,16 +46,40 @@ GlContext::StatusOrGlContext GlContext::Create(NSOpenGLContext* share_context,
 
 ::mediapipe::Status GlContext::CreateContext(NSOpenGLContext* share_context) {
   // TODO: choose a better list?
-  NSOpenGLPixelFormatAttribute attrs[] = {NSOpenGLPFAAccelerated,
-                                          NSOpenGLPFAColorSize,
-                                          24,
-                                          NSOpenGLPFAAlphaSize,
-                                          8,
-                                          NSOpenGLPFADepthSize,
-                                          16,
-                                          0};
+  NSOpenGLPixelFormatAttribute attrs[] = {
+  // This is required to get any OpenGL version 3.2 or higher. Note that
+  // once this is enabled up to version 4.1 can be supported (depending on
+  // hardware).
+  // TODO: Remove the need for the OSX_ENABLE_3_2_CORE if this
+  // proves to be safe in general.
+#if defined(TARGET_OS_OSX) && defined(OSX_ENABLE_3_2_CORE)
+    NSOpenGLPFAOpenGLProfile,
+    NSOpenGLProfileVersion3_2Core,
+#endif
+    NSOpenGLPFAAccelerated,
+    NSOpenGLPFAColorSize,
+    24,
+    NSOpenGLPFAAlphaSize,
+    8,
+    NSOpenGLPFADepthSize,
+    16,
+    0
+  };
 
   pixel_format_ = [[NSOpenGLPixelFormat alloc] initWithAttributes:attrs];
+  // If OpenGL 3.2 Core does not work, try again without it.
+  if (!pixel_format_) {
+    NSOpenGLPixelFormatAttribute attrs_2_1[] = {NSOpenGLPFAAccelerated,
+                                                NSOpenGLPFAColorSize,
+                                                24,
+                                                NSOpenGLPFAAlphaSize,
+                                                8,
+                                                NSOpenGLPFADepthSize,
+                                                16,
+                                                0};
+
+    pixel_format_ = [[NSOpenGLPixelFormat alloc] initWithAttributes:attrs];
+  }
   if (!pixel_format_) {
     // On several Forge machines, the default config fails. For now let's do
     // this.

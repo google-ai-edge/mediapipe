@@ -229,6 +229,18 @@ float TimestampsToRate(int64 first_timestamp, int64 second_timestamp) {
             sequence);
       }
     }
+    if (Get3dPointSize(prefix, *sequence) > 0) {
+      std::string x_key = merge_prefix(prefix, kRegion3dPointXKey);
+      auto* region_feature_list = MutableFeatureList(x_key, sequence);
+      RET_CHECK_EQ(num_bboxes, region_feature_list->feature_size())
+          << "Expected number of BBox timestamps and boxes to match.";
+      ClearBBoxNumRegions(prefix, sequence);
+      for (int i = 0; i < num_bboxes; ++i) {
+        AddBBoxNumRegions(
+            prefix, region_feature_list->feature(i).float_list().value_size(),
+            sequence);
+      }
+    }
     // Collect which timestamps currently match to which indices in timestamps.
     // skip empty timestamps.
     // Requires sorted indices.
@@ -451,6 +463,47 @@ void ClearPoint(const std::string& prefix,
                 tensorflow::SequenceExample* sequence) {
   ClearBBoxPointY(prefix, sequence);
   ClearBBoxPointX(prefix, sequence);
+}
+
+int Get3dPointSize(const std::string& prefix,
+                   const tensorflow::SequenceExample& sequence) {
+  return GetBBox3dPointXSize(prefix, sequence);
+}
+
+std::vector<::std::tuple<float, float, float>> Get3dPointAt(
+    const std::string& prefix, const tensorflow::SequenceExample& sequence,
+    int index) {
+  const auto& xs = GetBBox3dPointXAt(prefix, sequence, index);
+  const auto& ys = GetBBox3dPointYAt(prefix, sequence, index);
+  const auto& zs = GetBBox3dPointZAt(prefix, sequence, index);
+  std::vector<::std::tuple<float, float, float>> points(ys.size());
+  for (int i = 0; i < xs.size(); ++i) {
+    points[i] = std::make_tuple(xs[i], ys[i], zs[i]);
+  }
+  return points;
+}
+
+void Add3dPoint(const std::string& prefix,
+                const std::vector<::std::tuple<float, float, float>>& points,
+                tensorflow::SequenceExample* sequence) {
+  ::std::vector<float> xs;
+  ::std::vector<float> ys;
+  ::std::vector<float> zs;
+  for (auto& point : points) {
+    xs.push_back(std::get<0>(point));
+    ys.push_back(std::get<1>(point));
+    zs.push_back(std::get<2>(point));
+  }
+  AddBBox3dPointX(prefix, xs, sequence);
+  AddBBox3dPointY(prefix, ys, sequence);
+  AddBBox3dPointZ(prefix, zs, sequence);
+}
+
+void Clear3dPoint(const std::string& prefix,
+                  tensorflow::SequenceExample* sequence) {
+  ClearBBox3dPointX(prefix, sequence);
+  ClearBBox3dPointY(prefix, sequence);
+  ClearBBox3dPointZ(prefix, sequence);
 }
 
 std::unique_ptr<mediapipe::Matrix> GetAudioFromFeatureAt(

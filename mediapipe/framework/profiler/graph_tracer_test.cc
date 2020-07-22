@@ -143,29 +143,29 @@ TEST_F(GraphTracerTest, CalculatorTrace) {
                    {{MakePacket<std::string>("goodbye").At(start_timestamp_)}});
 
   // Validate the GraphTrace data.
-  EXPECT_THAT(GetTrace(),
-              EqualsProto(::mediapipe::ParseTextProtoOrDie<GraphTrace>(R"(
-                base_time: 1608911100000000
-                base_timestamp: 1608911100000000
-                stream_name: ""
-                stream_name: "input_stream"
-                stream_name: "output_stream"
-                calculator_trace {
-                  node_id: 0
-                  input_timestamp: 0
-                  event_type: PROCESS
-                  start_time: 0
-                  finish_time: 10000
-                  thread_id: 0
-                  input_trace {
-                    finish_time: 0
-                    packet_timestamp: 0
-                    stream_id: 1
-                    event_data: 1
-                  }
-                  output_trace { packet_timestamp: 0 stream_id: 2 }
-                }
-              )")));
+  EXPECT_THAT(
+      GetTrace(), EqualsProto(::mediapipe::ParseTextProtoOrDie<GraphTrace>(R"(
+        base_time: 1608911100000000
+        base_timestamp: 1608911100000000
+        stream_name: ""
+        stream_name: "input_stream"
+        stream_name: "output_stream"
+        calculator_trace {
+          node_id: 0
+          input_timestamp: 0
+          event_type: PROCESS
+          start_time: 0
+          finish_time: 10000
+          thread_id: 0
+          input_trace {
+            finish_time: 0
+            packet_timestamp: 0
+            stream_id: 1
+            event_data: 1
+          }
+          output_trace { packet_timestamp: 0 stream_id: 2 event_data: 2 }
+        }
+      )")));
 }
 
 TEST_F(GraphTracerTest, GraphTrace) {
@@ -205,92 +205,101 @@ TEST_F(GraphTracerTest, GraphTrace) {
   LogOutputPackets("PCalculator_3", GraphTrace::PROCESS, curr_time,
                    {{MakePacket<std::string>("out").At(start_timestamp_)}});
   curr_time += absl::Microseconds(2000);
-  ClearCalculatorContext("PCalculator_3");
-  LogInputPackets("PCalculator_3", GraphTrace::PROCESS, curr_time,
+
+  // Note: the packet data ID is based on the packet's payload address, which
+  // means the same ID can be reused if data is allocated in the same location
+  // as a previously expired packet (b/160212191). This means the generated
+  // trace can change depending on the allocator. To keep results stable, we
+  // must keep the packets used in this test alive until the end. Each
+  // TestContextBuilder happens to keep a reference to all packets for the last
+  // context, so for now we just create a separate TestContextBuilder instead of
+  // clearing it. TODO: revise this test.
+  SetUpCalculatorContext("PCalculator_3a", /*node_id=*/2, {"up_2"}, {"down_2"});
+  LogInputPackets("PCalculator_3a", GraphTrace::PROCESS, curr_time,
                   {MakePacket<std::string>("pup").At(start_timestamp_ + 5)});
   curr_time += absl::Microseconds(20000);
   LogOutputPackets(
-      "PCalculator_3", GraphTrace::PROCESS, curr_time,
+      "PCalculator_3a", GraphTrace::PROCESS, curr_time,
       {{MakePacket<std::string>("pout").At(start_timestamp_ + 5)}});
   curr_time += absl::Microseconds(1000);
 
   // Validate the GraphTrace data.
-  EXPECT_THAT(GetTrace(),
-              EqualsProto(::mediapipe::ParseTextProtoOrDie<GraphTrace>(R"(
-                base_time: 1608911100000000
-                base_timestamp: 1608911100000000
-                stream_name: ""
-                stream_name: "input_stream"
-                stream_name: "up_1"
-                stream_name: "up_2"
-                stream_name: "down_1"
-                stream_name: "down_2"
-                calculator_trace {
-                  node_id: 0
-                  input_timestamp: 0
-                  event_type: PROCESS
-                  start_time: 0
-                  finish_time: 10000
-                  thread_id: 0
-                  input_trace {
-                    finish_time: 0
-                    packet_timestamp: 0
-                    stream_id: 1
-                    event_data: 1
-                  }
-                  output_trace { packet_timestamp: 0 stream_id: 2 }
-                  output_trace { packet_timestamp: 0 stream_id: 3 }
-                  output_trace { packet_timestamp: 5 stream_id: 3 }
-                }
-                calculator_trace {
-                  node_id: 1
-                  input_timestamp: 0
-                  event_type: PROCESS
-                  start_time: 11000
-                  finish_time: 21000
-                  thread_id: 0
-                  input_trace {
-                    start_time: 10000
-                    finish_time: 11000
-                    packet_timestamp: 0
-                    stream_id: 2
-                    event_data: 2
-                  }
-                  output_trace { packet_timestamp: 0 stream_id: 4 }
-                }
-                calculator_trace {
-                  node_id: 2
-                  input_timestamp: 0
-                  event_type: PROCESS
-                  start_time: 16000
-                  finish_time: 36000
-                  thread_id: 0
-                  input_trace {
-                    start_time: 10000
-                    finish_time: 16000
-                    packet_timestamp: 0
-                    stream_id: 3
-                    event_data: 3
-                  }
-                  output_trace { packet_timestamp: 0 stream_id: 5 }
-                }
-                calculator_trace {
-                  node_id: 2
-                  input_timestamp: 5
-                  event_type: PROCESS
-                  start_time: 38000
-                  finish_time: 58000
-                  thread_id: 0
-                  input_trace {
-                    start_time: 10000
-                    finish_time: 38000
-                    packet_timestamp: 5
-                    stream_id: 3
-                    event_data: 4
-                  }
-                  output_trace { packet_timestamp: 5 stream_id: 5 }
-                }
-              )")));
+  EXPECT_THAT(
+      GetTrace(), EqualsProto(::mediapipe::ParseTextProtoOrDie<GraphTrace>(R"(
+        base_time: 1608911100000000
+        base_timestamp: 1608911100000000
+        stream_name: ""
+        stream_name: "input_stream"
+        stream_name: "up_1"
+        stream_name: "up_2"
+        stream_name: "down_1"
+        stream_name: "down_2"
+        calculator_trace {
+          node_id: 0
+          input_timestamp: 0
+          event_type: PROCESS
+          start_time: 0
+          finish_time: 10000
+          thread_id: 0
+          input_trace {
+            finish_time: 0
+            packet_timestamp: 0
+            stream_id: 1
+            event_data: 1
+          }
+          output_trace { packet_timestamp: 0 stream_id: 2 event_data: 2 }
+          output_trace { packet_timestamp: 0 stream_id: 3 event_data: 3 }
+          output_trace { packet_timestamp: 5 stream_id: 3 event_data: 4 }
+        }
+        calculator_trace {
+          node_id: 1
+          input_timestamp: 0
+          event_type: PROCESS
+          start_time: 11000
+          finish_time: 21000
+          thread_id: 0
+          input_trace {
+            start_time: 10000
+            finish_time: 11000
+            packet_timestamp: 0
+            stream_id: 2
+            event_data: 5
+          }
+          output_trace { packet_timestamp: 0 stream_id: 4 event_data: 6 }
+        }
+        calculator_trace {
+          node_id: 2
+          input_timestamp: 0
+          event_type: PROCESS
+          start_time: 16000
+          finish_time: 36000
+          thread_id: 0
+          input_trace {
+            start_time: 10000
+            finish_time: 16000
+            packet_timestamp: 0
+            stream_id: 3
+            event_data: 7
+          }
+          output_trace { packet_timestamp: 0 stream_id: 5 event_data: 8 }
+        }
+        calculator_trace {
+          node_id: 2
+          input_timestamp: 5
+          event_type: PROCESS
+          start_time: 38000
+          finish_time: 58000
+          thread_id: 0
+          input_trace {
+            start_time: 10000
+            finish_time: 38000
+            packet_timestamp: 5
+            stream_id: 3
+            event_data: 9
+          }
+          output_trace { packet_timestamp: 5 stream_id: 5 event_data: 10 }
+        }
+      )")));
 
   // No timestamps are completed before start_time_.
   // One timestamp is completed before start_time_ + 10ms.
@@ -1275,37 +1284,39 @@ TEST_F(GraphTracerE2ETest, GpuTaskTrace) {
   GraphTrace trace_1;
   builder.CreateTrace(buffer, absl::InfinitePast(), absl::InfiniteFuture(),
                       &trace_1);
-  EXPECT_THAT(trace_1, EqualsProto(::mediapipe::ParseTextProtoOrDie<GraphTrace>(
-                           R"(
-                             base_time: 1100
-                             base_timestamp: 1000
-                             stream_name: ""
-                             stream_name: "stream_1"
-                             stream_name: "stream_2"
-                             calculator_trace {
-                               node_id: 333
-                               input_timestamp: 0
-                               event_type: PROCESS
-                               start_time: 0
-                               finish_time: 1000
-                               input_trace {
-                                 finish_time: 0
-                                 packet_timestamp: 0
-                                 stream_id: 1
-                                 event_data: 0
-                               }
-                               output_trace { packet_timestamp: 0 stream_id: 2 }
-                               thread_id: 0
-                             }
-                             calculator_trace {
-                               node_id: 333
-                               input_timestamp: 0
-                               event_type: GPU_TASK
-                               start_time: 100
-                               finish_time: 2100
-                               thread_id: 0
-                             }
-                           )")));
+  EXPECT_THAT(
+      trace_1,
+      EqualsProto(::mediapipe::ParseTextProtoOrDie<GraphTrace>(
+          R"(
+            base_time: 1100
+            base_timestamp: 1000
+            stream_name: ""
+            stream_name: "stream_1"
+            stream_name: "stream_2"
+            calculator_trace {
+              node_id: 333
+              input_timestamp: 0
+              event_type: PROCESS
+              start_time: 0
+              finish_time: 1000
+              input_trace {
+                finish_time: 0
+                packet_timestamp: 0
+                stream_id: 1
+                event_data: 0
+              }
+              output_trace { packet_timestamp: 0 stream_id: 2 event_data: 0 }
+              thread_id: 0
+            }
+            calculator_trace {
+              node_id: 333
+              input_timestamp: 0
+              event_type: GPU_TASK
+              start_time: 100
+              finish_time: 2100
+              thread_id: 0
+            }
+          )")));
 
   GraphTrace trace_2;
   builder.CreateLog(buffer, absl::InfinitePast(), absl::InfiniteFuture(),

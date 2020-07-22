@@ -21,6 +21,11 @@ load(
     "ios_application",
 )
 
+alias(
+    name = "edgedetectiongpu",
+    actual = "EdgeDetectionGpuApp",
+)
+
 ios_application(
     name = "EdgeDetectionGpuApp",
     bundle_id = "com.google.mediapipe.EdgeDetectionGpu",

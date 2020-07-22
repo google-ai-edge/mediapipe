@@ -54,7 +54,6 @@ namespace autoflip {
 // Aggregates information from KeyFrameInfos and KeyFrameCropResults into
 // SceneKeyFrameCropSummary.
 ::mediapipe::Status AggregateKeyFrameResults(
-    const std::vector<KeyFrameInfo>& key_frame_infos,
     const KeyFrameCropOptions& key_frame_crop_options,
     const std::vector<KeyFrameCropResult>& key_frame_crop_results,
     const int scene_frame_width, const int scene_frame_height,

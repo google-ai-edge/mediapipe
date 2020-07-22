@@ -77,7 +77,10 @@ using ::tflite::gpu::gl::GlShader;
 // Performs optional upscale to REFERENCE_IMAGE dimensions if provided,
 // otherwise the mask is the same size as input tensor.
 //
-// Produces result as an RGBA image, with the mask in both R & A channels.
+// Produces result as an RGBA image, with the mask in both R & A channels. The
+// value of each pixel is the probability of the specified class after softmax,
+// scaled to 255 on CPU. The class can be specified through the
+// |output_layer_index| option.
 //
 // Inputs:
 //   One of the following TENSORS tags:

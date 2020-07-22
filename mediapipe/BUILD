@@ -134,6 +134,11 @@ config_setting(
     ]
 ]
 
+config_setting(
+    name = "windows",
+    values = {"cpu": "x64_windows"},
+)
+
 exports_files(
     ["provisioning_profile.mobileprovision"],
     visibility = ["//visibility:public"],

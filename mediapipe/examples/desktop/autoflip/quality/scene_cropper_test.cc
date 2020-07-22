@@ -71,30 +71,53 @@ std::vector<FocusPointFrame> GetDefaultFocusPointFrames() {
   return GetFocusPointFrames(kNumSceneFrames);
 }
 
+std::vector<int64> GetTimestamps(const int num_frames) {
+  std::vector<int64> timestamps;
+  for (int i = 0; i < num_frames; ++i) {
+    timestamps.push_back(i * 100000);
+  }
+  return timestamps;
+}
+
+std::vector<bool> GetIsKeyframe(const int num_frames) {
+  std::vector<bool> is_keyframe;
+  for (int i = 0; i < num_frames; ++i) {
+    is_keyframe.push_back(false);
+  }
+  return is_keyframe;
+}
+
 // Checks that CropFrames checks that scene frames size is positive.
 TEST(SceneCropperTest, CropFramesChecksSceneFramesSize) {
-  SceneCropper scene_cropper;
+  CameraMotionOptions options;
+  options.mutable_polynomial_path_solver()->set_prior_frame_buffer_size(30);
+  SceneCropper scene_cropper(options, kSceneWidth, kSceneHeight);
   std::vector<cv::Mat> scene_frames(0);
   std::vector<cv::Mat> cropped_frames;
   std::vector<cv::Rect> crop_from_locations;
   const auto status = scene_cropper.CropFrames(
-      GetDefaultSceneKeyFrameCropSummary(), scene_frames.size(), scene_frames,
-      GetDefaultFocusPointFrames(), GetFocusPointFrames(0), 0, 0,
+      GetDefaultSceneKeyFrameCropSummary(), GetTimestamps(scene_frames.size()),
+      GetIsKeyframe(scene_frames.size()), scene_frames,
+      GetDefaultFocusPointFrames(), GetFocusPointFrames(0), 0, 0, false,
       &crop_from_locations, &cropped_frames);
   EXPECT_FALSE(status.ok());
   EXPECT_THAT(status.ToString(), HasSubstr("No scene frames."));
 }
 
 // Checks that CropFrames checks that FocusPointFrames has the right size.
+
 TEST(SceneCropperTest, CropFramesChecksFocusPointFramesSize) {
-  SceneCropper scene_cropper;
+  CameraMotionOptions options;
+  options.mutable_polynomial_path_solver()->set_prior_frame_buffer_size(30);
+  SceneCropper scene_cropper(options, kSceneWidth, kSceneHeight);
   std::vector<cv::Mat> cropped_frames;
   std::vector<cv::Rect> crop_from_locations;
   const auto& scene_frames = GetDefaultSceneFrames();
   const auto status = scene_cropper.CropFrames(
-      GetDefaultSceneKeyFrameCropSummary(), scene_frames.size(), scene_frames,
+      GetDefaultSceneKeyFrameCropSummary(), GetTimestamps(kNumSceneFrames),
+      GetIsKeyframe(kNumSceneFrames), scene_frames,
       GetFocusPointFrames(kNumSceneFrames - 1), GetFocusPointFrames(0), 0, 0,
-      &crop_from_locations, &cropped_frames);
+      false, &crop_from_locations, &cropped_frames);
   EXPECT_FALSE(status.ok());
   EXPECT_THAT(status.ToString(), HasSubstr("Wrong size of FocusPointFrames"));
 }
@@ -103,13 +126,16 @@ TEST(SceneCropperTest, CropFramesChecksFocusPointFramesSize) {
 TEST(SceneCropperTest, CropFramesChecksCropSizePositive) {
   auto scene_summary = GetDefaultSceneKeyFrameCropSummary();
   scene_summary.set_crop_window_width(-1);
-  SceneCropper scene_cropper;
+  CameraMotionOptions options;
+  options.mutable_polynomial_path_solver()->set_prior_frame_buffer_size(30);
+  SceneCropper scene_cropper(options, kSceneWidth, kSceneHeight);
   std::vector<cv::Mat> cropped_frames;
   std::vector<cv::Rect> crop_from_locations;
   const auto& scene_frames = GetDefaultSceneFrames();
   const auto status = scene_cropper.CropFrames(
-      scene_summary, scene_frames.size(), scene_frames,
-      GetDefaultFocusPointFrames(), GetFocusPointFrames(0), 0, 0,
+      scene_summary, GetTimestamps(kNumSceneFrames),
+      GetIsKeyframe(kNumSceneFrames), scene_frames,
+      GetDefaultFocusPointFrames(), GetFocusPointFrames(0), 0, 0, false,
       &crop_from_locations, &cropped_frames);
   EXPECT_FALSE(status.ok());
   EXPECT_THAT(status.ToString(), HasSubstr("Crop width is non-positive."));
@@ -119,13 +145,16 @@ TEST(SceneCropperTest, CropFramesChecksCropSizePositive) {
 TEST(SceneCropperTest, InitializesRetargeterChecksCropSizeNotExceedFrameSize) {
   auto scene_summary = GetDefaultSceneKeyFrameCropSummary();
   scene_summary.set_crop_window_height(kSceneHeight + 1);
-  SceneCropper scene_cropper;
+  CameraMotionOptions options;
+  options.mutable_polynomial_path_solver()->set_prior_frame_buffer_size(30);
+  SceneCropper scene_cropper(options, kSceneWidth, kSceneHeight);
   std::vector<cv::Mat> cropped_frames;
   std::vector<cv::Rect> crop_from_locations;
   const auto& scene_frames = GetDefaultSceneFrames();
   const auto status = scene_cropper.CropFrames(
-      scene_summary, scene_frames.size(), scene_frames,
-      GetDefaultFocusPointFrames(), GetFocusPointFrames(0), 0, 0,
+      scene_summary, GetTimestamps(kNumSceneFrames),
+      GetIsKeyframe(kNumSceneFrames), scene_frames,
+      GetDefaultFocusPointFrames(), GetFocusPointFrames(0), 0, 0, false,
       &crop_from_locations, &cropped_frames);
   EXPECT_FALSE(status.ok());
   EXPECT_THAT(status.ToString(),
@@ -134,13 +163,16 @@ TEST(SceneCropperTest, InitializesRetargeterChecksCropSizeNotExceedFrameSize) {
 
 // Checks that CropFrames works when there are not any prior FocusPointFrames.
 TEST(SceneCropperTest, CropFramesWorksWithoutPriorFocusPointFrames) {
-  SceneCropper scene_cropper;
+  CameraMotionOptions options;
+  options.mutable_polynomial_path_solver()->set_prior_frame_buffer_size(30);
+  SceneCropper scene_cropper(options, kSceneWidth, kSceneHeight);
   std::vector<cv::Mat> cropped_frames;
   std::vector<cv::Rect> crop_from_locations;
   const auto& scene_frames = GetDefaultSceneFrames();
   MP_ASSERT_OK(scene_cropper.CropFrames(
-      GetDefaultSceneKeyFrameCropSummary(), scene_frames.size(), scene_frames,
-      GetDefaultFocusPointFrames(), GetFocusPointFrames(0), 0, 0,
+      GetDefaultSceneKeyFrameCropSummary(), GetTimestamps(kNumSceneFrames),
+      GetIsKeyframe(kNumSceneFrames), scene_frames,
+      GetDefaultFocusPointFrames(), GetFocusPointFrames(0), 0, 0, false,
       &crop_from_locations, &cropped_frames));
   ASSERT_EQ(cropped_frames.size(), kNumSceneFrames);
   for (int i = 0; i < kNumSceneFrames; ++i) {
@@ -151,13 +183,16 @@ TEST(SceneCropperTest, CropFramesWorksWithoutPriorFocusPointFrames) {
 
 // Checks that CropFrames works when there are prior FocusPointFrames.
 TEST(SceneCropperTest, CropFramesWorksWithPriorFocusPointFrames) {
-  SceneCropper scene_cropper;
+  CameraMotionOptions options;
+  options.mutable_polynomial_path_solver()->set_prior_frame_buffer_size(30);
+  SceneCropper scene_cropper(options, kSceneWidth, kSceneHeight);
   std::vector<cv::Mat> cropped_frames;
   std::vector<cv::Rect> crop_from_locations;
   const auto& scene_frames = GetDefaultSceneFrames();
   MP_EXPECT_OK(scene_cropper.CropFrames(
-      GetDefaultSceneKeyFrameCropSummary(), scene_frames.size(), scene_frames,
-      GetDefaultFocusPointFrames(), GetFocusPointFrames(3), 0, 0,
+      GetDefaultSceneKeyFrameCropSummary(), GetTimestamps(scene_frames.size()),
+      GetIsKeyframe(scene_frames.size()), scene_frames,
+      GetDefaultFocusPointFrames(), GetFocusPointFrames(3), 0, 0, false,
       &crop_from_locations, &cropped_frames));
   EXPECT_EQ(cropped_frames.size(), kNumSceneFrames);
   for (int i = 0; i < kNumSceneFrames; ++i) {

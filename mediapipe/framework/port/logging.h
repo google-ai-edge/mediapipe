@@ -16,6 +16,10 @@
 #define MEDIAPIPE_PORT_LOGGING_H_
 
 #include "absl/time/time.h"
+
+#ifdef _WIN32
+#define GLOG_NO_ABBREVIATED_SEVERITIES
+#endif
 #include "glog/logging.h"
 
 namespace mediapipe {

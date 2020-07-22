@@ -236,7 +236,7 @@ inline void CheckAndSetInvokerOptions() {
     LOG(WARNING) << "Unsupported invoker mode selected on Android. "
                  << "OpenMP linkage detected, so falling back to OpenMP";
     flags_parallel_invoker_mode = PARALLEL_INVOKER_OPENMP;
-#else   // _OPENMP
+#else  // _OPENMP
     // Fallback mode for active parallel invoker without OpenMP is ThreadPool.
     LOG(WARNING) << "Unsupported invoker mode selected on Android. "
                  << "Falling back to ThreadPool";
@@ -273,7 +273,7 @@ inline void CheckAndSetInvokerOptions() {
 #endif  // _OPENMP
   }
 
-#else   // PARALLEL_INVOKER_ACTIVE
+#else  // PARALLEL_INVOKER_ACTIVE
   if (flags_parallel_invoker_mode != PARALLEL_INVOKER_NONE) {
     LOG(ERROR) << "Parallel execution requested but PARALLEL_INVOKER_ACTIVE "
                << "compile flag is not set. Falling back to single threaded "

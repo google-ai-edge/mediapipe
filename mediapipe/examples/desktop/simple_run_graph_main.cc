@@ -109,14 +109,17 @@ DEFINE_string(output_side_packets_file, "",
       ::mediapipe::ParseTextProtoOrDie<::mediapipe::CalculatorGraphConfig>(
           calculator_graph_config_contents);
   std::map<std::string, ::mediapipe::Packet> input_side_packets;
-  std::vector<std::string> kv_pairs =
-      absl::StrSplit(FLAGS_input_side_packets, ',');
-  for (const std::string& kv_pair : kv_pairs) {
-    std::vector<std::string> name_and_value = absl::StrSplit(kv_pair, '=');
-    RET_CHECK(name_and_value.size() == 2);
-    RET_CHECK(!::mediapipe::ContainsKey(input_side_packets, name_and_value[0]));
-    input_side_packets[name_and_value[0]] =
-        ::mediapipe::MakePacket<std::string>(name_and_value[1]);
+  if (!FLAGS_input_side_packets.empty()) {
+    std::vector<std::string> kv_pairs =
+        absl::StrSplit(FLAGS_input_side_packets, ',');
+    for (const std::string& kv_pair : kv_pairs) {
+      std::vector<std::string> name_and_value = absl::StrSplit(kv_pair, '=');
+      RET_CHECK(name_and_value.size() == 2);
+      RET_CHECK(
+          !::mediapipe::ContainsKey(input_side_packets, name_and_value[0]));
+      input_side_packets[name_and_value[0]] =
+          ::mediapipe::MakePacket<std::string>(name_and_value[1]);
+    }
   }
   LOG(INFO) << "Initialize the calculator graph.";
   ::mediapipe::CalculatorGraph graph;

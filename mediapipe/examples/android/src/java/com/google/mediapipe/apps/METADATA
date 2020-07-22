@@ -1,7 +1,0 @@
-tricorder: {
-  options: {
-    builder: {
-      config: "android_arm64"
-    }
-  }
-}

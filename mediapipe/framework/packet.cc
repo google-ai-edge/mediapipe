@@ -51,6 +51,18 @@ const HolderBase* GetHolder(const Packet& packet) {
   return packet.holder_.get();
 }
 
+::mediapipe::StatusOr<Packet> PacketFromDynamicProto(
+    const std::string& type_name, const std::string& serialized) {
+  ASSIGN_OR_RETURN(
+      auto message_holder,
+      packet_internal::MessageHolderRegistry::CreateByName(type_name));
+  auto* message =
+      const_cast<proto_ns::MessageLite*>(message_holder->GetProtoMessageLite());
+  RET_CHECK_NE(message, nullptr);
+  RET_CHECK(message->ParseFromString(serialized));
+  return packet_internal::Create(message_holder.release());
+}
+
 }  // namespace packet_internal
 
 Packet Packet::At(class Timestamp timestamp) const& {

@@ -273,6 +273,14 @@ cc_library(
 )
 
 cc_library(
+    name = "re2",
+    hdrs = [
+        "re2.h",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+cc_library(
     name = "status_matchers",
     testonly = 1,
     hdrs = ["status_matchers.h"],
@@ -280,7 +288,7 @@ cc_library(
     visibility = ["//mediapipe/framework/port:__pkg__"],
     deps = [
         ":status",
-        "@com_google_googletest//:gtest_main",
+        "@com_google_googletest//:gtest",
     ],
 )
 
@@ -304,7 +312,10 @@ cc_library(
 
 cc_library(
     name = "threadpool",
-    srcs = ["threadpool.cc"],
+    srcs = select({
+        "//mediapipe:windows": ["threadpool_std_thread_impl.cc"],
+        "//conditions:default": ["threadpool_pthread_impl.cc"],
+    }),
     hdrs = ["threadpool.h"],
     # Use this library through "mediapipe/framework/port:threadpool".
     visibility = ["//mediapipe/framework/port:__pkg__"],

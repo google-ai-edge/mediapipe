@@ -25,17 +25,18 @@
 #include "mediapipe/framework/formats/location.h"
 #include "mediapipe/framework/formats/object_detection/anchor.pb.h"
 #include "mediapipe/framework/port/ret_check.h"
+#include "mediapipe/util/tflite/config.h"
 #include "tensorflow/lite/interpreter.h"
 
-#if !defined(MEDIAPIPE_DISABLE_GL_COMPUTE)
+#if MEDIAPIPE_TFLITE_GL_INFERENCE
 #include "mediapipe/gpu/gl_calculator_helper.h"
 #include "tensorflow/lite/delegates/gpu/gl/gl_buffer.h"
 #include "tensorflow/lite/delegates/gpu/gl/gl_program.h"
 #include "tensorflow/lite/delegates/gpu/gl/gl_shader.h"
 #include "tensorflow/lite/delegates/gpu/gl_delegate.h"
-#endif  // !MEDIAPIPE_DISABLE_GPU
+#endif  // MEDIAPIPE_TFLITE_GL_INFERENCE
 
-#if defined(MEDIAPIPE_IOS)
+#if MEDIAPIPE_TFLITE_METAL_INFERENCE
 #import <CoreVideo/CoreVideo.h>
 #import <Metal/Metal.h>
 #import <MetalKit/MetalKit.h>
@@ -44,7 +45,7 @@
 #include "mediapipe/gpu/MPPMetalUtil.h"
 #include "mediapipe/gpu/gpu_buffer.h"
 #include "tensorflow/lite/delegates/gpu/metal_delegate.h"
-#endif  // iOS
+#endif  // MEDIAPIPE_TFLITE_METAL_INFERENCE
 
 namespace {
 constexpr int kNumInputTensorsWithAnchors = 3;
@@ -56,22 +57,17 @@ constexpr char kTensorsGpuTag[] = "TENSORS_GPU";
 
 namespace mediapipe {
 
-#if !defined(MEDIAPIPE_DISABLE_GL_COMPUTE)
+#if MEDIAPIPE_TFLITE_GL_INFERENCE
 using ::tflite::gpu::gl::CreateReadWriteShaderStorageBuffer;
 using ::tflite::gpu::gl::GlShader;
-#endif
-
-#if !defined(MEDIAPIPE_DISABLE_GL_COMPUTE)
-typedef ::tflite::gpu::gl::GlBuffer GpuTensor;
 typedef ::tflite::gpu::gl::GlProgram GpuProgram;
-#elif defined(MEDIAPIPE_IOS)
-typedef id<MTLBuffer> GpuTensor;
+#elif MEDIAPIPE_TFLITE_METAL_INFERENCE
 typedef id<MTLComputePipelineState> GpuProgram;
-#endif
+#endif  // MEDIAPIPE_TFLITE_GL_INFERENCE
 
 namespace {
 
-#if !defined(MEDIAPIPE_DISABLE_GPU) && !defined(__EMSCRIPTEN__)
+#if MEDIAPIPE_TFLITE_GPU_SUPPORTED
 struct GPUData {
   GpuProgram decode_program;
   GpuProgram score_program;
@@ -81,7 +77,7 @@ struct GPUData {
   GpuTensor scored_boxes_buffer;
   GpuTensor raw_scores_buffer;
 };
-#endif
+#endif  // MEDIAPIPE_TFLITE_GPU_SUPPORTED
 
 void ConvertRawValuesToAnchors(const float* raw_anchors, int num_boxes,
                                std::vector<Anchor>* anchors) {
@@ -181,13 +177,13 @@ class TfLiteTensorsToDetectionsCalculator : public CalculatorBase {
   std::vector<Anchor> anchors_;
   bool side_packet_anchors_{};
 
-#if !defined(MEDIAPIPE_DISABLE_GL_COMPUTE)
+#if MEDIAPIPE_TFLITE_GL_INFERENCE
   mediapipe::GlCalculatorHelper gpu_helper_;
   std::unique_ptr<GPUData> gpu_data_;
-#elif defined(MEDIAPIPE_IOS)
+#elif MEDIAPIPE_TFLITE_METAL_INFERENCE
   MPPMetalHelper* gpu_helper_ = nullptr;
   std::unique_ptr<GPUData> gpu_data_;
-#endif
+#endif  // MEDIAPIPE_TFLITE_GL_INFERENCE
 
   bool gpu_input_ = false;
   bool anchors_init_ = false;
@@ -205,12 +201,10 @@ REGISTER_CALCULATOR(TfLiteTensorsToDetectionsCalculator);
     cc->Inputs().Tag(kTensorsTag).Set<std::vector<TfLiteTensor>>();
   }
 
-#if !defined(MEDIAPIPE_DISABLE_GPU) && !defined(__EMSCRIPTEN__)
   if (cc->Inputs().HasTag(kTensorsGpuTag)) {
     cc->Inputs().Tag(kTensorsGpuTag).Set<std::vector<GpuTensor>>();
     use_gpu |= true;
   }
-#endif  //  !MEDIAPIPE_DISABLE_GPU
 
   if (cc->Outputs().HasTag("DETECTIONS")) {
     cc->Outputs().Tag("DETECTIONS").Set<std::vector<Detection>>();
@@ -223,11 +217,11 @@ REGISTER_CALCULATOR(TfLiteTensorsToDetectionsCalculator);
   }
 
   if (use_gpu) {
-#if !defined(MEDIAPIPE_DISABLE_GL_COMPUTE)
+#if MEDIAPIPE_TFLITE_GL_INFERENCE
     MP_RETURN_IF_ERROR(mediapipe::GlCalculatorHelper::UpdateContract(cc));
-#elif defined(MEDIAPIPE_IOS)
+#elif MEDIAPIPE_TFLITE_METAL_INFERENCE
     MP_RETURN_IF_ERROR([MPPMetalHelper updateContract:cc]);
-#endif
+#endif  // MEDIAPIPE_TFLITE_GL_INFERENCE
   }
 
   return ::mediapipe::OkStatus();
@@ -239,12 +233,12 @@ REGISTER_CALCULATOR(TfLiteTensorsToDetectionsCalculator);
 
   if (cc->Inputs().HasTag(kTensorsGpuTag)) {
     gpu_input_ = true;
-#if !defined(MEDIAPIPE_DISABLE_GL_COMPUTE)
+#if MEDIAPIPE_TFLITE_GL_INFERENCE
     MP_RETURN_IF_ERROR(gpu_helper_.Open(cc));
-#elif defined(MEDIAPIPE_IOS)
+#elif MEDIAPIPE_TFLITE_METAL_INFERENCE
     gpu_helper_ = [[MPPMetalHelper alloc] initWithCalculatorContext:cc];
     RET_CHECK(gpu_helper_);
-#endif
+#endif  // MEDIAPIPE_TFLITE_GL_INFERENCE
   }
 
   MP_RETURN_IF_ERROR(LoadOptions(cc));
@@ -401,7 +395,7 @@ REGISTER_CALCULATOR(TfLiteTensorsToDetectionsCalculator);
 }
 ::mediapipe::Status TfLiteTensorsToDetectionsCalculator::ProcessGPU(
     CalculatorContext* cc, std::vector<Detection>* output_detections) {
-#if !defined(MEDIAPIPE_DISABLE_GL_COMPUTE)
+#if MEDIAPIPE_TFLITE_GL_INFERENCE
   const auto& input_tensors =
       cc->Inputs().Tag(kTensorsGpuTag).Get<std::vector<GpuTensor>>();
   RET_CHECK_GE(input_tensors.size(), 2);
@@ -464,7 +458,7 @@ REGISTER_CALCULATOR(TfLiteTensorsToDetectionsCalculator);
 
     return ::mediapipe::OkStatus();
   }));
-#elif defined(MEDIAPIPE_IOS)
+#elif MEDIAPIPE_TFLITE_METAL_INFERENCE
 
   const auto& input_tensors =
       cc->Inputs().Tag(kTensorsGpuTag).Get<std::vector<GpuTensor>>();
@@ -546,17 +540,17 @@ REGISTER_CALCULATOR(TfLiteTensorsToDetectionsCalculator);
 
 #else
   LOG(ERROR) << "GPU input on non-Android not supported yet.";
-#endif
+#endif  // MEDIAPIPE_TFLITE_GL_INFERENCE
   return ::mediapipe::OkStatus();
 }
 
 ::mediapipe::Status TfLiteTensorsToDetectionsCalculator::Close(
     CalculatorContext* cc) {
-#if !defined(MEDIAPIPE_DISABLE_GL_COMPUTE)
+#if MEDIAPIPE_TFLITE_GL_INFERENCE
   gpu_helper_.RunInGlContext([this] { gpu_data_.reset(); });
-#elif defined(MEDIAPIPE_IOS)
+#elif MEDIAPIPE_TFLITE_METAL_INFERENCE
   gpu_data_.reset();
-#endif
+#endif  // MEDIAPIPE_TFLITE_GL_INFERENCE
 
   return ::mediapipe::OkStatus();
 }
@@ -705,7 +699,7 @@ Detection TfLiteTensorsToDetectionsCalculator::ConvertToDetection(
 
 ::mediapipe::Status TfLiteTensorsToDetectionsCalculator::GpuInit(
     CalculatorContext* cc) {
-#if !defined(MEDIAPIPE_DISABLE_GL_COMPUTE)
+#if MEDIAPIPE_TFLITE_GL_INFERENCE
   MP_RETURN_IF_ERROR(gpu_helper_.RunInGlContext([this]()
                                                     -> ::mediapipe::Status {
     gpu_data_ = absl::make_unique<GPUData>();
@@ -918,7 +912,7 @@ void main() {
     return ::mediapipe::OkStatus();
   }));
 
-#elif defined(MEDIAPIPE_IOS)
+#elif MEDIAPIPE_TFLITE_METAL_INFERENCE
 
   gpu_data_ = absl::make_unique<GPUData>();
   id<MTLDevice> device = gpu_helper_.mtlDevice;
@@ -1148,7 +1142,7 @@ kernel void scoreKernel(
     CHECK_LT(num_classes_, max_wg_size) << "# classes must be <" << max_wg_size;
   }
 
-#endif  // !defined(MEDIAPIPE_DISABLE_GL_COMPUTE)
+#endif  // MEDIAPIPE_TFLITE_GL_INFERENCE
 
   return ::mediapipe::OkStatus();
 }

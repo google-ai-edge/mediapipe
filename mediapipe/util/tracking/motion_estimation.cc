@@ -30,6 +30,7 @@
 #include "Eigen/QR"
 #include "Eigen/SVD"
 #include "absl/container/node_hash_map.h"
+#include "absl/container/node_hash_set.h"
 #include "absl/strings/str_cat.h"
 #include "mediapipe/framework/port/logging.h"
 #include "mediapipe/util/tracking/camera_motion.h"
@@ -1811,7 +1812,7 @@ class TrackFilterInvoker {
 void MotionEstimation::MinFilterIrlsWeightByTrack(
     SingleTrackClipData* clip_data) const {
   // Gather irls weights for each track.
-  std::unordered_map<int, std::vector<float>> track_weights;
+  absl::node_hash_map<int, std::vector<float>> track_weights;
 
   const int num_frames = clip_data->feature_lists->size();
   for (int f = 0; f < num_frames; ++f) {
@@ -2132,7 +2133,7 @@ void MotionEstimation::UpdateLongFeatureBias(
   }
 
   // Tracks current ids in this frame.
-  std::unordered_set<int> curr_track_ids;
+  absl::node_hash_set<int> curr_track_ids;
 
   // Scale applied to irls weight for linear interpolation between inlier and
   // outlier bias.

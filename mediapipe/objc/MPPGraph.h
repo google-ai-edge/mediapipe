@@ -33,22 +33,22 @@ struct GpuSharedData;
 
 /// Provides the delegate with a new video frame.
 @optional
-- (void)mediapipeGraph:(MPPGraph*)graph
+- (void)mediapipeGraph:(MPPGraph *)graph
     didOutputPixelBuffer:(CVPixelBufferRef)pixelBuffer
-              fromStream:(const std::string&)streamName;
+              fromStream:(const std::string &)streamName;
 
 /// Provides the delegate with a new video frame and time stamp.
 @optional
-- (void)mediapipeGraph:(MPPGraph*)graph
+- (void)mediapipeGraph:(MPPGraph *)graph
     didOutputPixelBuffer:(CVPixelBufferRef)pixelBuffer
-              fromStream:(const std::string&)streamName
-               timestamp:(const mediapipe::Timestamp&)timestamp;
+              fromStream:(const std::string &)streamName
+               timestamp:(const mediapipe::Timestamp &)timestamp;
 
 /// Provides the delegate with a raw packet.
 @optional
-- (void)mediapipeGraph:(MPPGraph*)graph
-       didOutputPacket:(const mediapipe::Packet&)packet
-            fromStream:(const std::string&)streamName;
+- (void)mediapipeGraph:(MPPGraph *)graph
+       didOutputPacket:(const mediapipe::Packet &)packet
+            fromStream:(const std::string &)streamName;
 
 @end
 
@@ -100,34 +100,34 @@ typedef NS_ENUM(int, MPPPacketType) {
 
 /// Copies the config and initializes the graph.
 /// @param config The configuration describing the graph.
-- (instancetype)initWithGraphConfig:(const mediapipe::CalculatorGraphConfig&)config
+- (instancetype)initWithGraphConfig:(const mediapipe::CalculatorGraphConfig &)config
     NS_DESIGNATED_INITIALIZER;
 
-- (mediapipe::ProfilingContext*)getProfiler;
+- (mediapipe::ProfilingContext *)getProfiler;
 
 /// Sets a stream header. If the header was already set, it is overwritten.
 /// @param packet The header.
 /// @param streamName The name of the stream.
-- (void)setHeaderPacket:(const mediapipe::Packet&)packet forStream:(const std::string&)streamName;
+- (void)setHeaderPacket:(const mediapipe::Packet &)packet forStream:(const std::string &)streamName;
 
 /// Sets a side packet. If it was already set, it is overwritten.
 /// Must be called before the graph is started.
 /// @param packet The packet to be associated with the input side packet.
 /// @param name The name of the input side packet.
-- (void)setSidePacket:(const mediapipe::Packet&)packet named:(const std::string&)name;
+- (void)setSidePacket:(const mediapipe::Packet &)packet named:(const std::string &)name;
 
 /// Sets a service packet. If it was already set, it is overwritten.
 /// Must be called before the graph is started.
 /// @param packet The packet to be associated with the service.
 /// @param service.
-- (void)setServicePacket:(mediapipe::Packet&)packet
-              forService:(const mediapipe::GraphServiceBase&)service;
+- (void)setServicePacket:(mediapipe::Packet &)packet
+              forService:(const mediapipe::GraphServiceBase &)service;
 
 /// Adds input side packets from a map. Any inputs that were already set are
 /// left unchanged.
 /// Must be called before the graph is started.
 /// @param extraInputSidePackets The input side packets to be added.
-- (void)addSidePackets:(const std::map<std::string, mediapipe::Packet>&)extraSidePackets;
+- (void)addSidePackets:(const std::map<std::string, mediapipe::Packet> &)extraSidePackets;
 
 // TODO: rename to addDelegateOutputStream:packetType:
 /// Add an output stream in the graph from which the delegate wants to receive
@@ -135,30 +135,30 @@ typedef NS_ENUM(int, MPPPacketType) {
 /// @param outputStreamName The name of the output stream from which
 ///                         the delegate will receive frames.
 /// @param packetType The type of packet provided by the output streams.
-- (void)addFrameOutputStream:(const std::string&)outputStreamName
+- (void)addFrameOutputStream:(const std::string &)outputStreamName
             outputPacketType:(MPPPacketType)packetType;
 
 /// Starts running the graph.
 /// @return YES if successful.
-- (BOOL)startWithError:(NSError**)error;
+- (BOOL)startWithError:(NSError **)error;
 
 /// Sends a generic packet into a graph input stream.
 /// The graph must have been started before calling this.
 /// Returns YES if the packet was successfully sent.
-- (BOOL)sendPacket:(const mediapipe::Packet&)packet
-        intoStream:(const std::string&)streamName
-             error:(NSError**)error;
+- (BOOL)sendPacket:(const mediapipe::Packet &)packet
+        intoStream:(const std::string &)streamName
+             error:(NSError **)error;
 
-- (BOOL)movePacket:(mediapipe::Packet&&)packet
-        intoStream:(const std::string&)streamName
-             error:(NSError**)error;
+- (BOOL)movePacket:(mediapipe::Packet &&)packet
+        intoStream:(const std::string &)streamName
+             error:(NSError **)error;
 
 /// Sets the maximum queue size for a stream. Experimental feature, currently
 /// only supported for graph input streams. Should be called before starting the
 /// graph.
 - (BOOL)setMaxQueueSize:(int)maxQueueSize
-              forStream:(const std::string&)streamName
-                  error:(NSError**)error;
+              forStream:(const std::string &)streamName
+                  error:(NSError **)error;
 
 /// Creates a MediaPipe packet wrapping the given pixelBuffer;
 - (mediapipe::Packet)packetWithPixelBuffer:(CVPixelBufferRef)pixelBuffer
@@ -170,9 +170,9 @@ typedef NS_ENUM(int, MPPPacketType) {
 /// allows MediaPipe to overwrite the packet contents on successful sending for
 /// possibly increased efficiency. Returns YES if the packet was successfully sent.
 - (BOOL)sendPixelBuffer:(CVPixelBufferRef)imageBuffer
-             intoStream:(const std::string&)inputName
+             intoStream:(const std::string &)inputName
              packetType:(MPPPacketType)packetType
-              timestamp:(const mediapipe::Timestamp&)timestamp
+              timestamp:(const mediapipe::Timestamp &)timestamp
          allowOverwrite:(BOOL)allowOverwrite;
 
 /// Sends a pixel buffer into a graph input stream, using the specified packet
@@ -180,9 +180,23 @@ typedef NS_ENUM(int, MPPPacketType) {
 /// returns NO if maxFramesInFlight is exceeded. Returns YES if the packet was
 /// successfully sent.
 - (BOOL)sendPixelBuffer:(CVPixelBufferRef)pixelBuffer
-             intoStream:(const std::string&)inputName
+             intoStream:(const std::string &)inputName
              packetType:(MPPPacketType)packetType
-              timestamp:(const mediapipe::Timestamp&)timestamp;
+              timestamp:(const mediapipe::Timestamp &)timestamp;
+
+/// Sends a pixel buffer into a graph input stream, using the specified packet
+/// type. The graph must have been started before calling this. Drops frames and
+/// returns NO if maxFramesInFlight is exceeded. If allowOverwrite is set to YES,
+/// allows MediaPipe to overwrite the packet contents on successful sending for
+/// possibly increased efficiency. Returns YES if the packet was successfully sent.
+/// Sets error to a non-nil value if an error occurs in the graph when sending the
+/// packet.
+- (BOOL)sendPixelBuffer:(CVPixelBufferRef)imageBuffer
+             intoStream:(const std::string &)inputName
+             packetType:(MPPPacketType)packetType
+              timestamp:(const mediapipe::Timestamp &)timestamp
+         allowOverwrite:(BOOL)allowOverwrite
+                  error:(NSError **)error;
 
 /// Sends a pixel buffer into a graph input stream, using the specified packet
 /// type. The graph must have been started before calling this. The timestamp is
@@ -190,32 +204,32 @@ typedef NS_ENUM(int, MPPPacketType) {
 /// frames and returns NO if maxFramesInFlight is exceeded. Returns YES if the
 /// packet was successfully sent.
 - (BOOL)sendPixelBuffer:(CVPixelBufferRef)pixelBuffer
-             intoStream:(const std::string&)inputName
+             intoStream:(const std::string &)inputName
              packetType:(MPPPacketType)packetType;
 
 /// Cancels a graph run. You must still call waitUntilDoneWithError: after this.
 - (void)cancel;
 
 /// Check if the graph contains this input stream
-- (BOOL)hasInputStream:(const std::string&)inputName;
+- (BOOL)hasInputStream:(const std::string &)inputName;
 
 /// Closes an input stream.
 /// You must close all graph input streams before stopping the graph.
 /// @return YES if successful.
-- (BOOL)closeInputStream:(const std::string&)inputName error:(NSError**)error;
+- (BOOL)closeInputStream:(const std::string &)inputName error:(NSError **)error;
 
 /// Closes all graph input streams.
 /// @return YES if successful.
-- (BOOL)closeAllInputStreamsWithError:(NSError**)error;
+- (BOOL)closeAllInputStreamsWithError:(NSError **)error;
 
 /// Stops running the graph.
 /// Call this before releasing this object. All input streams must have been
 /// closed. This call does not time out, so you should not call it from the main
 /// thread.
 /// @return YES if successful.
-- (BOOL)waitUntilDoneWithError:(NSError**)error;
+- (BOOL)waitUntilDoneWithError:(NSError **)error;
 
 /// Waits for the graph to become idle.
-- (BOOL)waitUntilIdleWithError:(NSError**)error;
+- (BOOL)waitUntilIdleWithError:(NSError **)error;
 
 @end

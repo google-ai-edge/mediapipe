@@ -15,6 +15,7 @@
 #include "mediapipe/java/com/google/mediapipe/framework/jni/register_natives.h"
 
 #include "absl/strings/str_format.h"
+#include "mediapipe/framework/port/logging.h"
 #include "mediapipe/java/com/google/mediapipe/framework/jni/class_registry.h"
 
 #if defined(__ANDROID__)

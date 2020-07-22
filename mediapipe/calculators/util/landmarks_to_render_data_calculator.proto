@@ -40,4 +40,13 @@ message LandmarksToRenderDataCalculatorOptions {
 
   // Change color and size of rendered landmarks based on its z value.
   optional bool visualize_landmark_depth = 5 [default = true];
+
+  // Use landmarks visibility while rendering landmarks and connections. If
+  // landmark is not visible, neither it nor adjacent connections will be
+  // rendered.
+  optional bool utilize_visibility = 6 [default = false];
+
+  // Threshold to determine visibility of the landmark. Landmark with visibility
+  // greater or equal than threshold is considered visible.
+  optional double visibility_threshold = 7 [default = 0.0];
 }

@@ -6,7 +6,27 @@ input_stream: "IMAGE:input_image"
 input_stream: "DETECTIONS:detections"
 input_stream: "LANDMARKS:landmarks"
 input_stream: "NORM_RECT:rect"
+input_stream: "HANDEDNESS:handedness"
 output_stream: "IMAGE:output_image"
+
+# Converts classification to drawing primitives for annotation overlay.
+node {
+  calculator: "LabelsToRenderDataCalculator"
+  input_stream: "CLASSIFICATIONS:handedness"
+  output_stream: "RENDER_DATA:handedness_render_data"
+  node_options: {
+    [type.googleapis.com/mediapipe.LabelsToRenderDataCalculatorOptions]: {
+      color { r: 255 g: 0 b: 0 }
+      thickness: 10.0
+      font_height_px: 50
+      horizontal_offset_px: 100
+      vertical_offset_px: 100
+
+      max_num_labels: 1
+      location: TOP_LEFT
+    }
+  }
+}
 
 # Converts detections to drawing primitives for annotation overlay.
 node {
@@ -97,6 +117,7 @@ node {
   input_stream: "IMAGE:input_image"
   input_stream: "detection_render_data"
   input_stream: "landmark_render_data"
+  input_stream: "handedness_render_data"
   input_stream: "rect_render_data"
   output_stream: "IMAGE:output_image"
 }

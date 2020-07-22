@@ -19,15 +19,28 @@ node {
   output_stream: "image_frame"
 }
 
+node: {
+  calculator: "ImageTransformationCalculator"
+  input_stream: "IMAGE:image_frame"
+  output_stream: "IMAGE:scaled_image_frame"
+  node_options: {
+    [type.googleapis.com/mediapipe.ImageTransformationCalculatorOptions] {
+      output_width: 320
+      output_height: 320
+      scale_mode: FILL_AND_CROP
+    }
+  }
+}
+
 node {
   calculator: "ImagePropertiesCalculator"
-  input_stream: "IMAGE:image_frame"
+  input_stream: "IMAGE:scaled_image_frame"
   output_stream: "SIZE:input_video_size"
 }
 
 node {
   calculator: "FeatureDetectorCalculator"
-  input_stream: "IMAGE:image_frame"
+  input_stream: "IMAGE:scaled_image_frame"
   output_stream: "FEATURES:features"
   output_stream: "LANDMARKS:landmarks"
   output_stream: "PATCHES:patches"

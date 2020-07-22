@@ -72,27 +72,30 @@ Docker container for building MediaPipe applications that run on Edge TPU.
 
         bazel build -c opt --define MEDIAPIPE_DISABLE_GPU=1 mediapipe/examples/desktop/hello_world:hello_world
 
-* Edit  /mediapipe/bazel-mediapipe/external/com_github_glog_glog/src/signalhandler.cc
-
-      on line 78, replace
-
-        return (void*)context->PC_FROM_UCONTEXT;
-
-      with
-
-        return NULL;
-
 * Edit /edgetpu/libedgetpu/BUILD
 
-      to add this build target
+     to add this build target
 
          cc_library(
-           name = "lib",
-           srcs = [
-               "libedgetpu.so",
-           ],
-           visibility = ["//visibility:public"],
+             name = "lib",
+             srcs = [
+                 "libedgetpu.so",
+             ],
+             visibility = ["//visibility:public"],
          )
+
+* Edit /edgetpu/WORKSPACE
+
+     update /mediapipe/WORKSPACE TENSORFLOW_* variables to match what /edgetpu/WORKSPACE has:
+
+        grep TENSORFLOW_ /mediapipe/WORKSPACE
+        grep TENSORFLOW_ /edgetpu/WORKSPACE
+
+        # Make sure the /mediapipe/WORKSPACE  _TENSORFLOW_GIT_COMMIT  and  _TENSORFLOW_SHA256
+        #   match the /edgetpu/WORKSPACE  TENSORFLOW_COMMIT  and  TENSORFLOW_SHA256  respectively.
+
+        # If they do not match, modify /mediapipe/WORKSPACE to match what /edgetpu/WORKSPACE has.
+        # Also comment out the MediaPipe org_tensorflow patch section.
 
 * Edit /mediapipe/mediapipe/calculators/tflite/BUILD to change rules for *tflite_inference_calculator.cc*
 
@@ -105,9 +108,15 @@ Docker container for building MediaPipe applications that run on Edge TPU.
 
       to the _deps_ of tflite_inference_calculator.cc
 
+      Now also remove XNNPACK deps:
+
+        sed -i 's/\"@org_tensorflow\/\/tensorflow\/lite\/delegates\/xnnpack/#\"@org_tensorflow\/\/tensorflow\/lite\/delegates\/xnnpack/g' /mediapipe/mediapipe/calculators/tflite/BUILD
+
 #### Now try cross-compiling for device
 
 * Object detection demo
+
+![Object Detection running on Coral](./images/object_detection_demo_coral.jpg)
 
         bazel build -c opt --crosstool_top=@crosstool//:toolchains --compiler=gcc --cpu=aarch64 --define MEDIAPIPE_DISABLE_GPU=1 --copt -DMEDIAPIPE_EDGE_TPU --copt=-flax-vector-conversions mediapipe/examples/coral:object_detection_tpu
 
@@ -119,6 +128,8 @@ Docker container for building MediaPipe applications that run on Edge TPU.
         mdt push /tmp/object_detection_tpu /home/mendel/mediapipe/bazel-bin/.
 
 * Face detection demo
+
+![Face Detection running on Coral](./images/face_detection_demo_coral.gif)
 
         bazel build -c opt --crosstool_top=@crosstool//:toolchains --compiler=gcc --cpu=aarch64 --define MEDIAPIPE_DISABLE_GPU=1 --copt -DMEDIAPIPE_EDGE_TPU --copt=-flax-vector-conversions mediapipe/examples/coral:face_detection_tpu
 

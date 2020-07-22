@@ -2082,8 +2082,8 @@ void RegionFlowComputation::WideBaselineMatchFeatures(
     !defined(CV_WRAPPER_3X)
   LOG(FATAL) << "Supported on only with OpenCV 3.0. "
              << "Use bazel build flag : --define CV_WRAPPER=3X";
-#else   // (defined(__ANDROID__) || defined(__APPLE__) ||
-        // defined(__EMSCRIPTEN__)) && !defined(CV_WRAPPER_3X)
+#else  // (defined(__ANDROID__) || defined(__APPLE__) ||
+       // defined(__EMSCRIPTEN__)) && !defined(CV_WRAPPER_3X)
   results->clear();
 
   const auto& frame1 = from_data_ptr->frame;

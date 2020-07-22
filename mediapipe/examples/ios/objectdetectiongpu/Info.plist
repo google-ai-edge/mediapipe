@@ -38,5 +38,18 @@
   <array>
     <string>UIInterfaceOrientationPortrait</string>
   </array>
+  <key>CFBundleURLTypes</key>
+  <array>
+    <dict>
+      <key>CFBundleURLName</key>
+      <string>com.google.firebase</string>
+      <key>CFBundleTypeRole</key>
+      <string>Editor</string>
+      <key>CFBundleURLSchemes</key>
+      <array>
+        <string>firebase-game-loop</string>
+      </array>
+    </dict>
+  </array>
 </dict>
 </plist>

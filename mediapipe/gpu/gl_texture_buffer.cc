@@ -87,11 +87,19 @@ bool GlTextureBuffer::CreateInternal(const void* data) {
 }
 
 void GlTextureBuffer::Reuse() {
-  absl::MutexLock lock(&consumer_sync_mutex_);
-  consumer_multi_sync_->WaitOnGpu();
-  // Reset the sync points.
-  consumer_multi_sync_ = absl::make_unique<GlMultiSyncPoint>();
-  producer_sync_ = nullptr;
+  // The old consumer sync destructor may call other contexts to delete their
+  // sync fences; with a single-threaded executor, that means switching to
+  // each of those contexts, grabbing its mutex. Let's do that after releasing
+  // our own mutex.
+  std::unique_ptr<GlMultiSyncPoint> old_consumer_sync;
+  {
+    absl::MutexLock lock(&consumer_sync_mutex_);
+    consumer_multi_sync_->WaitOnGpu();
+    // Reset the sync points.
+    old_consumer_sync = std::move(consumer_multi_sync_);
+    consumer_multi_sync_ = absl::make_unique<GlMultiSyncPoint>();
+    producer_sync_ = nullptr;
+  }
 }
 
 void GlTextureBuffer::Updated(std::shared_ptr<GlSyncPoint> prod_token) {

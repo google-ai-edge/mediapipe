@@ -18,6 +18,8 @@
 
 #ifdef __ANDROID__
 #include "ndk/sources/android/cpufeatures/cpu-features.h"
+#elif _WIN32
+#include <windows.h>
 #else
 #include <unistd.h>
 #endif
@@ -106,6 +108,10 @@ std::set<int> InferLowerOrHigherCoreIds(bool lower) {
 int NumCPUCores() {
 #ifdef __ANDROID__
   return android_getCpuCount();
+#elif _WIN32
+  SYSTEM_INFO sysinfo;
+  GetSystemInfo(&sysinfo);
+  return sysinfo.dwNumberOfProcessors;
 #else
   return sysconf(_SC_NPROCESSORS_ONLN);
 #endif

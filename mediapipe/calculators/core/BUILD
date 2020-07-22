@@ -500,6 +500,7 @@ cc_library(
         "//mediapipe/framework/port:integral_types",
         "//mediapipe/framework/port:logging",
         "//mediapipe/framework/port:status",
+        "//mediapipe/framework/tool:options_util",
     ],
     alwayslink = 1,
 )

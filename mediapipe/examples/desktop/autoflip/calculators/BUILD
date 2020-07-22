@@ -16,7 +16,10 @@ load("//mediapipe/framework/port:build_config.bzl", "mediapipe_cc_proto_library"
 
 licenses(["notice"])  # Apache 2.0
 
-package(default_visibility = ["//mediapipe/examples:__subpackages__"])
+package(default_visibility = [
+    "//mediapipe/examples:__subpackages__",
+    "//mediapipe/viz:__subpackages__",
+])
 
 cc_library(
     name = "border_detection_calculator",
@@ -51,6 +54,46 @@ mediapipe_cc_proto_library(
     deps = [":border_detection_calculator_proto"],
 )
 
+cc_library(
+    name = "content_zooming_calculator",
+    srcs = ["content_zooming_calculator.cc"],
+    deps = [
+        ":content_zooming_calculator_cc_proto",
+        "//mediapipe/examples/desktop/autoflip:autoflip_messages_cc_proto",
+        "//mediapipe/examples/desktop/autoflip/quality:kinematic_path_solver",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/formats:detection_cc_proto",
+        "//mediapipe/framework/formats:image_frame",
+        "//mediapipe/framework/formats:location_data_cc_proto",
+        "//mediapipe/framework/formats:rect_cc_proto",
+        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:status",
+    ],
+    alwayslink = 1,
+)
+
+proto_library(
+    name = "content_zooming_calculator_proto",
+    srcs = ["content_zooming_calculator.proto"],
+    deps = [
+        "//mediapipe/examples/desktop/autoflip/quality:kinematic_path_solver_proto",
+        "//mediapipe/framework:calculator_proto",
+    ],
+)
+
+mediapipe_cc_proto_library(
+    name = "content_zooming_calculator_cc_proto",
+    srcs = ["content_zooming_calculator.proto"],
+    cc_deps = [
+        "//mediapipe/examples/desktop/autoflip/quality:kinematic_path_solver_cc_proto",
+        "//mediapipe/framework:calculator_cc_proto",
+    ],
+    visibility = ["//mediapipe/examples:__subpackages__"],
+    deps = [
+        ":content_zooming_calculator_proto",
+    ],
+)
+
 cc_test(
     name = "border_detection_calculator_test",
     srcs = [
@@ -72,6 +115,33 @@ cc_test(
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
         "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_test(
+    name = "content_zooming_calculator_test",
+    srcs = [
+        "content_zooming_calculator_test.cc",
+    ],
+    linkstatic = 1,
+    deps = [
+        ":content_zooming_calculator",
+        ":content_zooming_calculator_cc_proto",
+        "//mediapipe/examples/desktop/autoflip:autoflip_messages_cc_proto",
+        "//mediapipe/examples/desktop/autoflip/quality:kinematic_path_solver",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:calculator_runner",
+        "//mediapipe/framework/formats:detection_cc_proto",
+        "//mediapipe/framework/formats:image_frame",
+        "//mediapipe/framework/formats:image_frame_opencv",
+        "//mediapipe/framework/formats:location_data_cc_proto",
+        "//mediapipe/framework/formats:rect_cc_proto",
+        "//mediapipe/framework/port:benchmark",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:opencv_core",
+        "//mediapipe/framework/port:parse_text_proto",
+        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:status",
     ],
 )
 

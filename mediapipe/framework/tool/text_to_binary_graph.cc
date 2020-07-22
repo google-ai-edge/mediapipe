@@ -79,7 +79,11 @@ mediapipe::Status ReadFile(const std::string& proto_source, bool read_text,
 // Write a proto to a text or a binary file.
 mediapipe::Status WriteFile(const std::string& proto_output, bool write_text,
                             const proto_ns::Message& message) {
-  std::ofstream ofs(proto_output, std::ofstream::out | std::ofstream::trunc);
+  std::ios_base::openmode mode = std::ios_base::out | std::ios_base::trunc;
+  if (!write_text) {
+    mode |= std::ios_base::binary;
+  }
+  std::ofstream ofs(proto_output, mode);
   proto_ns::io::OstreamOutputStream out(&ofs);
   MP_RETURN_IF_ERROR(WriteProto(message, write_text, proto_output, &out));
   return mediapipe::OkStatus();

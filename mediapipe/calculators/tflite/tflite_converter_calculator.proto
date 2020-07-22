@@ -28,6 +28,16 @@ message TfLiteConverterCalculatorOptions {
   // Ignored if using quantization.
   optional bool zero_center = 1 [default = true];
 
+  // Custom settings to override the internal scaling factors `div` and `sub`.
+  // Both values must be set to non-negative values. Will only take effect on
+  // CPU AND when |use_custom_normalization| is set to true. When these custom
+  // values take effect, the |zero_center| setting above will be overriden, and
+  // the normalized_value will be calculated as:
+  // normalized_value = input / custom_div - custom_sub.
+  optional bool use_custom_normalization = 6 [default = false];
+  optional float custom_div = 7 [default = -1.0];
+  optional float custom_sub = 8 [default = -1.0];
+
   // Whether the input image should be flipped vertically (along the
   // y-direction). This is useful, for example, when the input image is defined
   // with a coordinate system where the origin is at the bottom-left corner

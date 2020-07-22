@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.google.mediapipe.apps.basic">
+
+  <uses-sdk
+      android:minSdkVersion="21"
+      android:targetSdkVersion="27" />
+
+  <!-- For using the camera -->
+  <uses-permission android:name="android.permission.CAMERA" />
+  <uses-feature android:name="android.hardware.camera" />
+
+  <application
+      android:allowBackup="true"
+      android:icon="@mipmap/ic_launcher"
+      android:label="${appName}"
+      android:roundIcon="@mipmap/ic_launcher_round"
+      android:supportsRtl="true"
+      android:theme="@style/AppTheme">
+      <activity
+          android:name="${mainActivity}"
+          android:exported="true"
+          android:screenOrientation="portrait">
+          <intent-filter>
+              <action android:name="android.intent.action.MAIN" />
+              <category android:name="android.intent.category.LAUNCHER" />
+          </intent-filter>
+      </activity>
+
+      <meta-data android:name="cameraFacingFront" android:value="${cameraFacingFront}"/>
+      <meta-data android:name="binaryGraphName" android:value="${binaryGraphName}"/>
+      <meta-data android:name="inputVideoStreamName" android:value="${inputVideoStreamName}"/>
+      <meta-data android:name="outputVideoStreamName" android:value="${outputVideoStreamName}"/>
+      <meta-data android:name="flipFramesVertically" android:value="${flipFramesVertically}"/>
+  </application>
+</manifest>

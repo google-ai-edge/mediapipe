@@ -17,6 +17,7 @@
 #import "mediapipe/objc/MPPGraph.h"
 #import "mediapipe/objc/MPPCameraInputSource.h"
 #import "mediapipe/objc/MPPLayerRenderer.h"
+#import "mediapipe/objc/MPPPlayerInputSource.h"
 
 static NSString* const kGraphName = @"mobile_gpu";
 
@@ -35,6 +36,8 @@ static const char* kVideoQueueLabel = "com.google.mediapipe.example.videoQueue";
 @implementation ViewController {
   /// Handles camera access via AVCaptureSession library.
   MPPCameraInputSource* _cameraSource;
+  MPPPlayerInputSource* _videoSource;
+  MediaPipeDemoSourceMode _sourceMode;
 
   /// Inform the user when camera is unavailable.
   IBOutlet UILabel* _noCameraLabel;
@@ -45,6 +48,10 @@ static const char* kVideoQueueLabel = "com.google.mediapipe.example.videoQueue";
 
   /// Process camera frames on this queue.
   dispatch_queue_t _videoQueue;
+}
+
+- (void)setSourceMode:(MediaPipeDemoSourceMode)mode {
+  _sourceMode = mode;
 }
 
 #pragma mark - Cleanup methods
@@ -97,13 +104,6 @@ static const char* kVideoQueueLabel = "com.google.mediapipe.example.videoQueue";
       DISPATCH_QUEUE_SERIAL, QOS_CLASS_USER_INTERACTIVE, /*relative_priority=*/0);
   _videoQueue = dispatch_queue_create(kVideoQueueLabel, qosAttribute);
 
-  _cameraSource = [[MPPCameraInputSource alloc] init];
-  [_cameraSource setDelegate:self queue:_videoQueue];
-  _cameraSource.sessionPreset = AVCaptureSessionPresetHigh;
-  _cameraSource.cameraPosition = AVCaptureDevicePositionBack;
-  // The frame's native format is rotated with respect to the portrait orientation.
-  _cameraSource.orientation = AVCaptureVideoOrientationPortrait;
-
   self.mediapipeGraph = [[self class] loadGraphFromResource:kGraphName];
   self.mediapipeGraph.delegate = self;
   // Set maxFramesInFlight to a small value to avoid memory contention for real-time processing.
@@ -119,27 +119,43 @@ static const char* kVideoQueueLabel = "com.google.mediapipe.example.videoQueue";
 - (void)viewWillAppear:(BOOL)animated {
   [super viewWillAppear:animated];
 
-  [_cameraSource requestCameraAccessWithCompletionHandler:^void(BOOL granted) {
-    if (granted) {
-      [self startGraphAndCamera];
-      dispatch_async(dispatch_get_main_queue(), ^{
-        _noCameraLabel.hidden = YES;
-      });
-    }
-  }];
-}
-
-- (void)startGraphAndCamera {
   // Start running self.mediapipeGraph.
   NSError* error;
   if (![self.mediapipeGraph startWithError:&error]) {
     NSLog(@"Failed to start graph: %@", error);
   }
 
-  // Start fetching frames from the camera.
-  dispatch_async(_videoQueue, ^{
-    [_cameraSource start];
-  });
+  switch (_sourceMode) {
+    case MediaPipeDemoSourceVideo: {
+      AVAsset* video =
+          [AVAsset assetWithURL:[[NSBundle mainBundle] URLForResource:@"object_detection"
+                                                        withExtension:@"mov"]];
+      _videoSource = [[MPPPlayerInputSource alloc] initWithAVAsset:video];
+      [_videoSource setDelegate:self queue:_videoQueue];
+      dispatch_async(_videoQueue, ^{
+        [_videoSource start];
+      });
+      break;
+    }
+    case MediaPipeDemoSourceBackCamera:
+      _cameraSource = [[MPPCameraInputSource alloc] init];
+      [_cameraSource setDelegate:self queue:_videoQueue];
+      _cameraSource.sessionPreset = AVCaptureSessionPresetHigh;
+      _cameraSource.cameraPosition = AVCaptureDevicePositionBack;
+      // The frame's native format is rotated with respect to the portrait orientation.
+      _cameraSource.orientation = AVCaptureVideoOrientationPortrait;
+      [_cameraSource requestCameraAccessWithCompletionHandler:^void(BOOL granted) {
+        if (granted) {
+          dispatch_async(_videoQueue, ^{
+            [_cameraSource start];
+          });
+          dispatch_async(dispatch_get_main_queue(), ^{
+            _noCameraLabel.hidden = YES;
+          });
+        }
+      }];
+      break;
+  }
 }
 
 #pragma mark - MPPGraphDelegate methods
@@ -164,7 +180,7 @@ static const char* kVideoQueueLabel = "com.google.mediapipe.example.videoQueue";
 - (void)processVideoFrame:(CVPixelBufferRef)imageBuffer
                 timestamp:(CMTime)timestamp
                fromSource:(MPPInputSource*)source {
-  if (source != _cameraSource) {
+  if (source != _cameraSource && source != _videoSource) {
     NSLog(@"Unknown source: %@", source);
     return;
   }

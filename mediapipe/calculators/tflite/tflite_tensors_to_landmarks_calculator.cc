@@ -21,8 +21,9 @@
 namespace mediapipe {
 
 // A calculator for converting TFLite tensors from regression models into
-// landmarks. Note that if the landmarks in the tensor has more than 3
-// dimensions, only the first 3 dimensions will be converted to x,y,z.
+// landmarks. Note that if the landmarks in the tensor has more than 4
+// dimensions, only the first 4 dimensions will be converted to
+// [x,y,z, visibility].
 //
 // Input:
 //  TENSORS - Vector of TfLiteTensor of type kTfLiteFloat32. Only the first
@@ -205,20 +206,23 @@ REGISTER_CALCULATOR(TfLiteTensorsToLandmarksCalculator);
     if (num_dimensions > 2) {
       landmark->set_z(raw_landmarks[offset + 2]);
     }
+    if (num_dimensions > 3) {
+      landmark->set_visibility(raw_landmarks[offset + 3]);
+    }
   }
 
   // Output normalized landmarks if required.
   if (cc->Outputs().HasTag("NORM_LANDMARKS")) {
     NormalizedLandmarkList output_norm_landmarks;
-    // for (const auto& landmark : output_landmarks) {
     for (int i = 0; i < output_landmarks.landmark_size(); ++i) {
       const Landmark& landmark = output_landmarks.landmark(i);
       NormalizedLandmark* norm_landmark = output_norm_landmarks.add_landmark();
-      norm_landmark->set_x(static_cast<float>(landmark.x()) /
-                           options_.input_image_width());
-      norm_landmark->set_y(static_cast<float>(landmark.y()) /
-                           options_.input_image_height());
-      norm_landmark->set_z(landmark.z() / options_.normalize_z());
+      norm_landmark->set_x(landmark.x() / options_.input_image_width());
+      norm_landmark->set_y(landmark.y() / options_.input_image_height());
+      // Scale Z coordinate as X + allow additional uniform normalization.
+      norm_landmark->set_z(landmark.z() / options_.input_image_width() /
+                           options_.normalize_z());
+      norm_landmark->set_visibility(landmark.visibility());
     }
     cc->Outputs()
         .Tag("NORM_LANDMARKS")

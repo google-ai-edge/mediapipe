@@ -21,6 +21,11 @@ load(
     "ios_application",
 )
 
+alias(
+    name = "objectdetectiongpu",
+    actual = "ObjectDetectionGpuApp",
+)
+
 ios_application(
     name = "ObjectDetectionGpuApp",
     bundle_id = "com.google.mediapipe.ObjectDetectionGpu",

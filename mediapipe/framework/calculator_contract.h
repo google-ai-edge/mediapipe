@@ -113,8 +113,11 @@ class CalculatorContract {
   // calculations should use SetProcessTimestampBounds.
 
   // When true, Process is called for every new timestamp bound, with or without
-  // new packets.  A call to Process with only an input timestamp bound is
+  // new packets. A call to Process with only an input timestamp bound is
   // normally used to compute a new output timestamp bound.
+  // NOTE: Also, when true, Process is called when input streams become done,
+  // which means, Process needs to handle input streams in "done" state.
+  // (Usually, by closing calculators' outputs where and when appropriate.)
   void SetProcessTimestampBounds(bool process_timestamps) {
     process_timestamps_ = process_timestamps;
   }

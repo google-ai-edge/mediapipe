@@ -514,13 +514,7 @@ RectSpec ImageCroppingCalculator::GetCropSpecs(const CalculatorContext* cc,
     }
   }
 
-  return {
-      .width = crop_width,
-      .height = crop_height,
-      .center_x = x_center,
-      .center_y = y_center,
-      .rotation = rotation,
-  };
+  return {crop_width, crop_height, x_center, y_center, rotation};
 }
 
 ::mediapipe::Status ImageCroppingCalculator::GetBorderModeForOpenCV(

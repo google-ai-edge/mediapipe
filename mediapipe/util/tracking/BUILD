@@ -318,6 +318,7 @@ cc_library(
         "//mediapipe/framework/port:integral_types",
         "//mediapipe/framework/port:logging",
         "//mediapipe/framework/port:vector",
+        "@com_google_absl//absl/container:node_hash_map",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -425,6 +426,7 @@ cc_library(
         "//mediapipe/framework/port:logging",
         "//mediapipe/framework/port:vector",
         "@com_google_absl//absl/container:node_hash_map",
+        "@com_google_absl//absl/container:node_hash_set",
         "@com_google_absl//absl/strings",
         "@eigen_archive//:eigen",
     ],

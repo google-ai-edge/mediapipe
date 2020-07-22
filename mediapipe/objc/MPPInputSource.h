@@ -35,7 +35,7 @@
 @optional
 - (void)processDepthData:(AVDepthData*)depthData
                timestamp:(CMTime)timestamp
-              fromSource:(MPPInputSource*)source;
+              fromSource:(MPPInputSource*)source API_AVAILABLE(ios(11.0));
 
 @optional
 - (void)videoDidPlayToEnd:(CMTime)timestamp;

@@ -14,6 +14,7 @@
     "mediapipe/examples/ios/edgedetectiongpu",
     "mediapipe/examples/ios/facedetectioncpu",
     "mediapipe/examples/ios/facedetectiongpu",
+    "mediapipe/examples/ios/facemeshgpu",
     "mediapipe/examples/ios/handdetectiongpu",
     "mediapipe/examples/ios/handtrackinggpu",
     "mediapipe/examples/ios/multihandtrackinggpu",

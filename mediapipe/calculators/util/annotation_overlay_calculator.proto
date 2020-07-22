@@ -40,4 +40,9 @@ message AnnotationOverlayCalculatorOptions {
   // top-left corner. Therefore, for images with the origin at the bottom-left
   // corner this should be set to true.
   optional bool flip_text_vertically = 5 [default = false];
+
+  // Whether input stream IMAGE_GPU (OpenGL texture) has bottom-left or top-left
+  // origin. (Historically, OpenGL uses bottom left origin, but most MediaPipe
+  // examples expect textures to have top-left origin.)
+  optional bool gpu_uses_top_left_origin = 6 [default = true];
 }

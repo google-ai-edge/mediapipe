@@ -46,7 +46,7 @@ class Subgraph {
 
   // Returns options of a specific type.
   template <typename T>
-  static T GetOptions(Subgraph::SubgraphOptions supgraph_options) {
+  static T GetOptions(const Subgraph::SubgraphOptions& supgraph_options) {
     return tool::OptionsMap().Initialize(supgraph_options).Get<T>();
   }
 };

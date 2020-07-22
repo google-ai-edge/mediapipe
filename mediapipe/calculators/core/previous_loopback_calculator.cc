@@ -93,8 +93,7 @@ class PreviousLoopbackCalculator : public CalculatorBase {
         // MAIN packet, hence not caring about corresponding loop packet.
         loop_timestamp = Timestamp::Unset();
       }
-      main_packet_specs_.push_back({.timestamp = main_packet.Timestamp(),
-                                    .loop_timestamp = loop_timestamp});
+      main_packet_specs_.push_back({main_packet.Timestamp(), loop_timestamp});
       prev_main_ts_ = main_packet.Timestamp();
     }
 

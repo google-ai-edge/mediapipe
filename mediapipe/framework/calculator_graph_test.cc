@@ -65,6 +65,9 @@ namespace mediapipe {
 
 namespace {
 
+using testing::ElementsAre;
+using testing::HasSubstr;
+
 // Pass packets through. Note that it calls SetOffset() in Process()
 // instead of Open().
 class SetOffsetInProcessCalculator : public CalculatorBase {

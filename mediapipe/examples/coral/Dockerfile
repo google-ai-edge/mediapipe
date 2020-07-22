@@ -46,6 +46,7 @@ RUN apt-get update && apt-get install -y \
   python \
   python-pip \
   python3-pip \
+  python-numpy \
   vim-common \
   ca-certificates \
   emacs \

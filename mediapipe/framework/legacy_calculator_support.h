@@ -18,29 +18,6 @@
 #include "mediapipe/framework/calculator_context.h"
 #include "mediapipe/framework/calculator_contract.h"
 
-// In Emscripten builds without threading support, some member variables
-// declared "static thread_local" will not be linked correctly. To workaround
-// this we declare them only "static".
-// TODO: remove this macro and use thread_local unconditionally
-#if defined(__EMSCRIPTEN__) && !defined(__EMSCRIPTEN_PTHREADS__)
-#define EMSCRIPTEN_WORKAROUND_FOR_B121216479 1
-#endif
-
-namespace mediapipe {
-class GlCalculatorHelper;
-class MetalHelperLegacySupport;
-namespace aimatter {
-template <class T>
-class CachableAsyncLoadableObject;
-}
-}  // namespace mediapipe
-
-namespace xeno {
-namespace effect {
-class AssetRegistryServiceHelper;
-}  // namespace effect
-}  // namespace xeno
-
 namespace mediapipe {
 
 class LegacyCalculatorSupport {
@@ -55,12 +32,9 @@ class LegacyCalculatorSupport {
   // from that point, and the previous value is restored when execution leaves
   // that scope, as one would expect.
   //
-  // The current value is only accessible via this mechanism by a limited set
-  // of classes (listed as friends below). This is only meant to be used where
-  // backwards compatibility reasons prevent passing the CC directly.
-  //
-  // Only two specializations are allowed: Scoped<CalculatorContext> and
-  // Scoped<CalculatorContract>.
+  // This is only meant to be used where backwards compatibility reasons prevent
+  // passing the CC directly. Specifically, it can be used to access
+  // CalculatorContext and CalculatorContract from legacy calculator code.
   template <class C>
   class Scoped {
    public:
@@ -72,52 +46,39 @@ class LegacyCalculatorSupport {
     }
     ~Scoped() { current_ = saved_; }
 
+    // The current C* for this thread.
+    static C* current() { return current_; }
+
    private:
     // The value to restore after exiting this scope.
     C* saved_;
 
-    // The current C* for this thread.
-    //
     // This needs NOLINT because, when included in Objective-C++ files,
     // clang-tidy suggests using an Objective-C naming convention, which is
     // inappropriate. (b/116015736) No category specifier because of b/71698089.
-#if EMSCRIPTEN_WORKAROUND_FOR_B121216479
-    ABSL_CONST_INIT static C* current_;  // NOLINT
-#else
-    ABSL_CONST_INIT static thread_local C* current_;  // NOLINT
-#endif
-
-    static C* current() { return current_; }
-
-    // Only these classes are allowed to access the current CC via this
-    // mechanism.
-    friend class ::mediapipe::GlCalculatorHelper;
-    friend class ::mediapipe::MetalHelperLegacySupport;
-    template <class T>
-    friend class ::mediapipe::aimatter::CachableAsyncLoadableObject;
-    friend class ::xeno::effect::AssetRegistryServiceHelper;
+    //
+    // ABSL_CONST_INIT triggers b/155992786 with some versions of Clang on Apple
+    // platforms.
+#ifndef __APPLE__
+    ABSL_CONST_INIT
+#endif  // !__APPLE__
+    static thread_local C* current_;  // NOLINT
   };
 };
 
 // We only declare this variable for two specializations of the template because
 // it is only meant to be used for these two types.
-#if EMSCRIPTEN_WORKAROUND_FOR_B121216479
-template <>
-CalculatorContext* LegacyCalculatorSupport::Scoped<CalculatorContext>::current_;
-template <>
-CalculatorContract*
-    LegacyCalculatorSupport::Scoped<CalculatorContract>::current_;
-#elif _MSC_VER
-// MSVC interprets these declarations as definitions and during linking it
-// generates an error about multiple definitions of current_.
-#else
+// Note that, since these variables are members of specific template
+// _specializations_, they are not themselves templates, and therefore their
+// definitions must be in the .cc file. However, a declaration still needs to be
+// included in the header, or some compilers will assume they have no
+// definition.
 template <>
 thread_local CalculatorContext*
     LegacyCalculatorSupport::Scoped<CalculatorContext>::current_;
 template <>
 thread_local CalculatorContract*
     LegacyCalculatorSupport::Scoped<CalculatorContract>::current_;
-#endif  // EMSCRIPTEN_WORKAROUND_FOR_B121216479
 
 }  // namespace mediapipe
 

@@ -21,10 +21,15 @@
 
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/port/statusor.h"
+#include "tensorflow/lite/core/api/op_resolver.h"
 #include "tensorflow/lite/delegates/gpu/api.h"
 #include "tensorflow/lite/delegates/gpu/common/model.h"
 #include "tensorflow/lite/delegates/gpu/gl/api2.h"
 #include "tensorflow/lite/model.h"
+
+#ifdef __ANDROID__
+#include "tensorflow/lite/delegates/gpu/cl/api.h"
+#endif
 
 namespace tflite {
 namespace gpu {
@@ -49,7 +54,8 @@ class TFLiteGPURunner {
       : options_(options) {}
 
   mediapipe::Status InitializeWithModel(
-      const tflite::FlatBufferModel& flatbuffer);
+      const tflite::FlatBufferModel& flatbuffer,
+      const tflite::OpResolver& op_resolver);
   mediapipe::Status BindSSBOToInputTensor(GLuint ssbo_id, int input_id);
   mediapipe::Status BindSSBOToOutputTensor(GLuint ssbo_id, int output_id);
 
@@ -62,15 +68,25 @@ class TFLiteGPURunner {
   mediapipe::Status Build();
   mediapipe::Status Invoke();
 
+  std::vector<BHWC> GetInputShapes() { return input_shapes_; }
+  std::vector<BHWC> GetOutputShapes() { return output_shapes_; }
+
  private:
   mediapipe::Status InitializeOpenGL(
+      std::unique_ptr<InferenceBuilder>* builder);
+  mediapipe::Status InitializeOpenCL(
       std::unique_ptr<InferenceBuilder>* builder);
 
   InferenceOptions options_;
   std::unique_ptr<gl::InferenceEnvironment> gl_environment_;
 
+#ifdef __ANDROID__
+  std::unique_ptr<cl::InferenceEnvironment> cl_environment_;
+#endif
+
   // graph_ is maintained temporarily and becomes invalid after runner_ is ready
-  std::unique_ptr<GraphFloat32> graph_;
+  std::unique_ptr<GraphFloat32> graph_gl_;
+  std::unique_ptr<GraphFloat32> graph_cl_;
   std::unique_ptr<InferenceRunner> runner_;
 
   // We keep information about input/output shapes, because they are needed

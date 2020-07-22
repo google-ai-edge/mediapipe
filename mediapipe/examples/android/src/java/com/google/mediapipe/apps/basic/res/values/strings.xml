@@ -1,0 +1,3 @@
+<resources>
+    <string name="no_camera_access" translatable="false">Please grant camera permissions.</string>
+</resources>

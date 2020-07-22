@@ -21,6 +21,7 @@
 #include <utility>
 #include <vector>
 
+#include "absl/container/node_hash_map.h"
 #include "mediapipe/calculators/util/top_k_scores_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/classification.pb.h"
@@ -72,7 +73,7 @@ class TopKScoresCalculator : public CalculatorBase {
 
   int top_k_ = -1;
   float threshold_ = 0.0;
-  std::unordered_map<int, std::string> label_map_;
+  absl::node_hash_map<int, std::string> label_map_;
   bool label_map_loaded_ = false;
 };
 REGISTER_CALCULATOR(TopKScoresCalculator);

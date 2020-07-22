@@ -36,7 +36,7 @@ static constexpr int kMaxPoolCount = 20;
 #if MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
 
 GpuBufferMultiPool::SimplePool GpuBufferMultiPool::MakeSimplePool(
-    BufferSpec spec) {
+    const BufferSpec& spec) {
   OSType cv_format = CVPixelFormatForGpuBufferFormat(spec.format);
   CHECK_NE(cv_format, -1) << "unsupported pixel format";
   return MakeCFHolderAdopting(
@@ -87,7 +87,7 @@ GpuBuffer GpuBufferMultiPool::GetBufferFromSimplePool(
 #else
 
 GpuBufferMultiPool::SimplePool GpuBufferMultiPool::MakeSimplePool(
-    BufferSpec spec) {
+    const BufferSpec& spec) {
   return GlTextureBufferPool::Create(spec.width, spec.height, spec.format,
                                      kKeepCount);
 }
@@ -99,10 +99,9 @@ GpuBuffer GpuBufferMultiPool::GetBufferFromSimplePool(
 
 #endif  // MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
 
-GpuBuffer GpuBufferMultiPool::GetBuffer(int width, int height,
-                                        GpuBufferFormat format) {
+GpuBufferMultiPool::SimplePool GpuBufferMultiPool::GetSimplePool(
+    const BufferSpec& key) {
   absl::MutexLock lock(&mutex_);
-  BufferSpec key(width, height, format);
   auto pool_it = pools_.find(key);
   if (pool_it == pools_.end()) {
     // Discard the least recently used pool in LRU cache.
@@ -127,7 +126,15 @@ GpuBuffer GpuBufferMultiPool::GetBuffer(int width, int height,
     }
     buffer_specs_.push_back(key);
   }
-  return GetBufferFromSimplePool(pool_it->first, pool_it->second);
+  return pool_it->second;
+}
+
+GpuBuffer GpuBufferMultiPool::GetBuffer(int width, int height,
+                                        GpuBufferFormat format) {
+  BufferSpec key(width, height, format);
+  SimplePool pool = GetSimplePool(key);
+  // Note: we release our multipool lock before accessing the simple pool.
+  return GetBufferFromSimplePool(key, pool);
 }
 
 GpuBufferMultiPool::~GpuBufferMultiPool() {

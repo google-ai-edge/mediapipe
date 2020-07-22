@@ -40,13 +40,13 @@ template <typename T>
 struct IsExtension {
  private:
   template <typename U>
-  static decltype(U::ext, std::true_type()) test(int);
+  static char test(decltype(&U::ext));
 
   template <typename>
-  static std::false_type test(...);
+  static int test(...);
 
  public:
-  static constexpr bool value = decltype(test<T>(0))();
+  static constexpr bool value = (sizeof(test<T>(0)) == sizeof(char));
 };
 
 // A map from object type to object.

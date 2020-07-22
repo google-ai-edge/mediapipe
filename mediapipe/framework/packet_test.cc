@@ -164,7 +164,7 @@ TEST(PacketTest, TypeRegistrationDebugString) {
             "mediapipe::(anonymous namespace)::UnregisteredPairStruct");
 }
 
-TEST(PacketTest, CanContainProtobufMessage) {
+TEST(PacketTest, ReturnGenericProtobufMessage) {
   std::unique_ptr<::mediapipe::PacketTestProto> proto_ptr(
       new ::mediapipe::PacketTestProto);
   proto_ptr->add_x(123);
@@ -172,6 +172,15 @@ TEST(PacketTest, CanContainProtobufMessage) {
   EXPECT_EQ(123, dynamic_cast<const ::mediapipe::PacketTestProto&>(
                      packet.Get<proto_ns::Message>())
                      .x(0));
+}
+
+TEST(PacketTest, TryWrongProtobufMessageSubType) {
+  std::unique_ptr<::mediapipe::PacketTestProto> proto_ptr(
+      new ::mediapipe::PacketTestProto);
+  proto_ptr->add_x(123);
+  Packet packet = Adopt(proto_ptr.release());
+  EXPECT_FALSE(packet.ValidateAsType<::mediapipe::SimpleProto>().ok());
+  EXPECT_TRUE(packet.ValidateAsType<::mediapipe::PacketTestProto>().ok());
 }
 
 TEST(PacketTest, GetProtoBase) {
@@ -453,6 +462,27 @@ TEST(PacketTest, TestConsumeOrCopyBoundedArray) {
   EXPECT_EQ(50, (*value3)[1]);
   EXPECT_EQ(60, (*value3)[2]);
   EXPECT_TRUE(packet2.IsEmpty());
+}
+
+TEST(PacketTest, MessageHolderRegistration) {
+  using testing::Contains;
+  Packet packet = MakePacket<mediapipe::SimpleProto>();
+  ASSERT_EQ(mediapipe::SimpleProto{}.GetTypeName(), "mediapipe.SimpleProto");
+  EXPECT_THAT(packet_internal::MessageHolderRegistry::GetRegisteredNames(),
+              Contains("mediapipe.SimpleProto"));
+}
+
+TEST(PacketTest, PacketFromSerializedProto) {
+  mediapipe::SimpleProto original;
+  original.add_value("foo");
+  std::string serialized = original.SerializeAsString();
+
+  StatusOr<Packet> maybe_packet = packet_internal::PacketFromDynamicProto(
+      "mediapipe.SimpleProto", serialized);
+  MP_ASSERT_OK(maybe_packet);
+  Packet packet = maybe_packet.ValueOrDie();
+  MP_EXPECT_OK(packet.ValidateAsType<::mediapipe::SimpleProto>());
+  EXPECT_FALSE(packet.ValidateAsType<::mediapipe::PacketTestProto>().ok());
 }
 
 }  // namespace

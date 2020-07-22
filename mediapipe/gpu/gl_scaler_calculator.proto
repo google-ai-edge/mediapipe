@@ -19,6 +19,7 @@ package mediapipe;
 import "mediapipe/framework/calculator.proto";
 import "mediapipe/gpu/scale_mode.proto";
 
+// Next id: 8.
 message GlScalerCalculatorOptions {
   extend CalculatorOptions {
     optional GlScalerCalculatorOptions ext = 166373014;
@@ -27,6 +28,10 @@ message GlScalerCalculatorOptions {
   // Output dimensions.
   optional int32 output_width = 1;
   optional int32 output_height = 2;
+  // A scale factor for output size, while keeping aspect ratio. It has lower
+  // priority than the above two fields. That is, it is effective only when the
+  // above two fields are unset.
+  optional float output_scale = 7 [default = 1.0];
   // Counterclockwise rotation in degrees. Must be a multiple of 90.
   optional int32 rotation = 3;
   // Flip the output texture vertically. This is applied after rotation.

@@ -1,0 +1,13 @@
+syntax = "proto2";
+
+package mediapipe.autoflip;
+
+message KinematicOptions {
+  // Weighted update of new camera velocity (measurement) vs current state
+  // (prediction).
+  optional double update_rate = 1 [default = 0.5];
+  // Max velocity (degrees per second) that the camera can move.
+  optional double max_velocity = 2 [default = 18];
+  // Min motion (in degrees) to react in pixels.
+  optional float min_motion_to_reframe = 3 [default = 1.8];
+}

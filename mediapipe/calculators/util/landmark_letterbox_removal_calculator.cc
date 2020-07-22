@@ -122,11 +122,15 @@ class LandmarkLetterboxRemovalCalculator : public CalculatorBase {
         NormalizedLandmark* new_landmark = output_landmarks.add_landmark();
         const float new_x = (landmark.x() - left) / (1.0f - left_and_right);
         const float new_y = (landmark.y() - top) / (1.0f - top_and_bottom);
+        const float new_z =
+            landmark.z() / (1.0f - left_and_right);  // Scale Z coordinate as X.
 
         new_landmark->set_x(new_x);
         new_landmark->set_y(new_y);
         // Keep z-coord as is.
-        new_landmark->set_z(landmark.z());
+        new_landmark->set_z(new_z);
+        // Keep visibility as is.
+        new_landmark->set_visibility(landmark.visibility());
       }
 
       cc->Outputs().Get(output_id).AddPacket(

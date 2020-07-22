@@ -80,6 +80,27 @@ const char kConfigB[] = R"(
     }
     })";
 
+const char kConfigC[] = R"(
+    calculator: "SignalFusingCalculator"
+    input_stream: "IS_SHOT_BOUNDARY:scene_change"
+    input_stream: "SIGNAL:0:detection_set_a"
+    input_stream: "SIGNAL:1:detection_set_b"
+    output_stream: "OUTPUT:salient_region"
+    options:{
+    [mediapipe.autoflip.SignalFusingCalculatorOptions.ext]:{
+      signal_settings{
+        type: {standard: FACE_FULL}
+        min_score: 0.5
+        max_score: 0.6
+      }
+      signal_settings{
+        type: {standard: TEXT}
+        min_score: 0.9
+        max_score: 1.0
+      }
+    }
+    })";
+
 TEST(SignalFusingCalculatorTest, TwoInputNoTracking) {
   auto runner = absl::make_unique<CalculatorRunner>(
       ParseTextProtoOrDie<CalculatorGraphConfig::Node>(kConfigA));
@@ -124,6 +145,113 @@ TEST(SignalFusingCalculatorTest, TwoInputNoTracking) {
 
   const std::vector<Packet>& output_packets =
       runner->Outputs().Index(0).packets;
+  const auto& detection_set = output_packets[0].Get<DetectionSet>();
+
+  ASSERT_EQ(detection_set.detections().size(), 4);
+  EXPECT_FLOAT_EQ(detection_set.detections(0).score(), .55);
+  EXPECT_FLOAT_EQ(detection_set.detections(1).score(), .53);
+  EXPECT_FLOAT_EQ(detection_set.detections(2).score(), .93);
+  EXPECT_FLOAT_EQ(detection_set.detections(3).score(), .99);
+}
+
+TEST(SignalFusingCalculatorTest, TwoInputShotLabeledTags) {
+  auto runner = absl::make_unique<CalculatorRunner>(
+      ParseTextProtoOrDie<CalculatorGraphConfig::Node>(kConfigC));
+
+  auto input_shot = absl::make_unique<bool>(false);
+  runner->MutableInputs()
+      ->Tag("IS_SHOT_BOUNDARY")
+      .packets.push_back(Adopt(input_shot.release()).At(Timestamp(0)));
+
+  auto input_face =
+      absl::make_unique<DetectionSet>(ParseTextProtoOrDie<DetectionSet>(
+          R"(
+            detections {
+              score: 0.5
+              signal_type: { standard: FACE_FULL }
+            }
+            detections {
+              score: 0.3
+              signal_type: { standard: FACE_FULL }
+            }
+          )"));
+
+  runner->MutableInputs()
+      ->Get("SIGNAL", 0)
+      .packets.push_back(Adopt(input_face.release()).At(Timestamp(0)));
+
+  auto input_ocr =
+      absl::make_unique<DetectionSet>(ParseTextProtoOrDie<DetectionSet>(
+          R"(
+            detections {
+              score: 0.3
+              signal_type: { standard: TEXT }
+            }
+            detections {
+              score: 0.9
+              signal_type: { standard: TEXT }
+            }
+          )"));
+
+  runner->MutableInputs()
+      ->Get("SIGNAL", 1)
+      .packets.push_back(Adopt(input_ocr.release()).At(Timestamp(0)));
+
+  MP_ASSERT_OK(runner->Run());
+
+  const std::vector<Packet>& output_packets =
+      runner->Outputs().Tag("OUTPUT").packets;
+  const auto& detection_set = output_packets[0].Get<DetectionSet>();
+
+  ASSERT_EQ(detection_set.detections().size(), 4);
+  EXPECT_FLOAT_EQ(detection_set.detections(0).score(), .55);
+  EXPECT_FLOAT_EQ(detection_set.detections(1).score(), .53);
+  EXPECT_FLOAT_EQ(detection_set.detections(2).score(), .93);
+  EXPECT_FLOAT_EQ(detection_set.detections(3).score(), .99);
+}
+
+TEST(SignalFusingCalculatorTest, TwoInputNoShotLabeledTags) {
+  auto runner = absl::make_unique<CalculatorRunner>(
+      ParseTextProtoOrDie<CalculatorGraphConfig::Node>(kConfigC));
+
+  auto input_face =
+      absl::make_unique<DetectionSet>(ParseTextProtoOrDie<DetectionSet>(
+          R"(
+            detections {
+              score: 0.5
+              signal_type: { standard: FACE_FULL }
+            }
+            detections {
+              score: 0.3
+              signal_type: { standard: FACE_FULL }
+            }
+          )"));
+
+  runner->MutableInputs()
+      ->Get("SIGNAL", 0)
+      .packets.push_back(Adopt(input_face.release()).At(Timestamp(0)));
+
+  auto input_ocr =
+      absl::make_unique<DetectionSet>(ParseTextProtoOrDie<DetectionSet>(
+          R"(
+            detections {
+              score: 0.3
+              signal_type: { standard: TEXT }
+            }
+            detections {
+              score: 0.9
+              signal_type: { standard: TEXT }
+            }
+          )"));
+
+  runner->MutableInputs()
+      ->Get("SIGNAL", 1)
+      .packets.push_back(Adopt(input_ocr.release()).At(Timestamp(0)));
+
+  MP_ASSERT_OK(runner->Run());
+
+  const std::vector<Packet>& output_packets =
+      runner->Outputs().Tag("OUTPUT").packets;
   const auto& detection_set = output_packets[0].Get<DetectionSet>();
 
   ASSERT_EQ(detection_set.detections().size(), 4);

@@ -20,6 +20,14 @@ package(default_visibility = [
 ])
 
 cc_library(
+    name = "config",
+    hdrs = ["config.h"],
+    deps = [
+        "//mediapipe/framework:calculator_framework",
+    ],
+)
+
+cc_library(
     name = "cpu_op_resolver",
     srcs = ["cpu_op_resolver.cc"],
     hdrs = ["cpu_op_resolver.h"],
@@ -69,6 +77,7 @@ cc_test(
     srcs = ["tensor_buffer_test.cc"],
     deps = [
         ":tensor_buffer",
+        ":config",
         "//mediapipe/framework/port:gtest_main",
     ] + select({
         "//mediapipe/gpu:disable_gpu": [],
@@ -99,7 +108,20 @@ cc_library(
             "@org_tensorflow//tensorflow/lite:framework",
             "@org_tensorflow//tensorflow/lite/delegates/gpu:api",
             "@org_tensorflow//tensorflow/lite/delegates/gpu/common:model",
+            "@org_tensorflow//tensorflow/lite/delegates/gpu/common/testing:tflite_model_reader",
             "@org_tensorflow//tensorflow/lite/delegates/gpu/gl:api2",
         ],
-    }),
+        "//mediapipe:android": [
+            "@com_google_absl//absl/strings",
+            "//mediapipe/framework/port:ret_check",
+            "//mediapipe/framework/port:status",
+            "//mediapipe/framework/port:statusor",
+            "@org_tensorflow//tensorflow/lite:framework",
+            "@org_tensorflow//tensorflow/lite/delegates/gpu:api",
+            "@org_tensorflow//tensorflow/lite/delegates/gpu/cl:api",
+            "@org_tensorflow//tensorflow/lite/delegates/gpu/common:model",
+            "@org_tensorflow//tensorflow/lite/delegates/gpu/common/testing:tflite_model_reader",
+            "@org_tensorflow//tensorflow/lite/delegates/gpu/gl:api2",
+        ],
+    }) + ["@org_tensorflow//tensorflow/lite/core/api"],
 )

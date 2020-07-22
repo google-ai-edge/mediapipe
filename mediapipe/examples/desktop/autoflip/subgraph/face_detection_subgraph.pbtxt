@@ -14,8 +14,8 @@ node: {
   output_stream: "LETTERBOX_PADDING:letterbox_padding"
   options: {
     [mediapipe.ImageTransformationCalculatorOptions.ext] {
-      output_width: 128
-      output_height: 128
+      output_width: 256
+      output_height: 256
       scale_mode: FIT
     }
   }
@@ -38,7 +38,7 @@ node {
   output_stream: "TENSORS:detection_tensors"
   options: {
     [mediapipe.TfLiteInferenceCalculatorOptions.ext] {
-      model_path: "mediapipe/models/face_detection_front.tflite"
+      model_path: "mediapipe/models/face_detection_back.tflite"
     }
   }
 }
@@ -51,16 +51,16 @@ node {
   options: {
     [mediapipe.SsdAnchorsCalculatorOptions.ext] {
       num_layers: 4
-      min_scale: 0.1484375
+      min_scale: 0.15625
       max_scale: 0.75
-      input_size_height: 128
-      input_size_width: 128
+      input_size_height: 256
+      input_size_width: 256
       anchor_offset_x: 0.5
       anchor_offset_y: 0.5
-      strides: 8
       strides: 16
-      strides: 16
-      strides: 16
+      strides: 32
+      strides: 32
+      strides: 32
       aspect_ratios: 1.0
       fixed_anchor_size: true
     }
@@ -87,11 +87,11 @@ node {
       sigmoid_score: true
       score_clipping_thresh: 100.0
       reverse_output_order: true
-      x_scale: 128.0
-      y_scale: 128.0
-      h_scale: 128.0
-      w_scale: 128.0
-      min_score_thresh: 0.6
+      x_scale: 256.0
+      y_scale: 256.0
+      h_scale: 256.0
+      w_scale: 256.0
+      min_score_thresh: 0.65
     }
   }
 }
@@ -119,7 +119,7 @@ node {
   output_stream: "labeled_detections"
   options: {
     [mediapipe.DetectionLabelIdToTextCalculatorOptions.ext] {
-      label_map_path: "mediapipe/models/face_detection_front_labelmap.txt"
+      label_map_path: "mediapipe/models/face_detection_back_labelmap.txt"
     }
   }
 }
