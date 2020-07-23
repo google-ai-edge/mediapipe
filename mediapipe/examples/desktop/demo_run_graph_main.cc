@@ -18,7 +18,6 @@
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/image_frame.h"
 #include "mediapipe/framework/formats/image_frame_opencv.h"
-#include "mediapipe/framework/formats/landmark.pb.h"
 #include "mediapipe/framework/port/commandlineflags.h"
 #include "mediapipe/framework/port/file_helpers.h"
 #include "mediapipe/framework/port/opencv_highgui_inc.h"
@@ -28,9 +27,7 @@
 #include "mediapipe/framework/port/status.h"
 
 constexpr char kInputStream[] = "input_video";
-constexpr char kOutputImageStream[] = "output_video";
-constexpr char kOutputFaceCountStream[] = "face_count";
-constexpr char kOutputLandmarksStream[] = "multi_face_landmarks";
+constexpr char kOutputStream[] = "output_video";
 constexpr char kWindowName[] = "MediaPipe";
 
 DEFINE_string(
@@ -79,17 +76,12 @@ DEFINE_string(output_video_path, "",
   }
 
   LOG(INFO) << "Start running the calculator graph.";
-  ASSIGN_OR_RETURN(mediapipe::OutputStreamPoller image_poller,
-                   graph.AddOutputStreamPoller(kOutputImageStream));
-  ASSIGN_OR_RETURN(mediapipe::OutputStreamPoller face_count_poller,
-                   graph.AddOutputStreamPoller(kOutputFaceCountStream));
-  ASSIGN_OR_RETURN(mediapipe::OutputStreamPoller landmarks_poller,
-                   graph.AddOutputStreamPoller(kOutputLandmarksStream));
+  ASSIGN_OR_RETURN(mediapipe::OutputStreamPoller poller,
+                   graph.AddOutputStreamPoller(kOutputStream));
   MP_RETURN_IF_ERROR(graph.StartRun({}));
 
   LOG(INFO) << "Start grabbing and processing frames.";
   bool grab_frames = true;
-  int prev_face_count = -1;
   while (grab_frames) {
     // Capture opencv camera or video frame.
     cv::Mat camera_frame_raw;
@@ -116,29 +108,9 @@ DEFINE_string(output_video_path, "",
                           .At(mediapipe::Timestamp(frame_timestamp_us))));
 
     // Get the graph result packet, or stop if that fails.
-    mediapipe::Packet image_packet;
-    if (!image_poller.Next(&image_packet)) break;
-    auto& output_frame = image_packet.Get<mediapipe::ImageFrame>();
-
-    mediapipe::Packet face_count_packet;
-    if (!face_count_poller.Next(&face_count_packet)) break;
-    auto& face_count = face_count_packet.Get<int>();
-
-    if (face_count != prev_face_count) {
-      LOG(INFO) << "Found face count : " << face_count;
-      prev_face_count = face_count;
-
-      if (face_count != 0) {
-        mediapipe::Packet landmarks_packet;
-        if (!landmarks_poller.Next(&landmarks_packet)) break;
-        auto& landmarks = landmarks_packet.Get<std::vector<::mediapipe::NormalizedLandmarkList>>();
-
-        LOG(INFO) << "Landmarks size : " << landmarks[0].landmark_size();
-
-        // Do something with landmarks
-      }
-    }
-    
+    mediapipe::Packet packet;
+    if (!poller.Next(&packet)) break;
+    auto& output_frame = packet.Get<mediapipe::ImageFrame>();
 
     // Convert back to opencv for display or saving.
     cv::Mat output_frame_mat = mediapipe::formats::MatView(&output_frame);
