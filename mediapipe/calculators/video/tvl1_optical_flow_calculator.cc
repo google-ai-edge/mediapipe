@@ -88,7 +88,7 @@ class Tvl1OpticalFlowCalculator : public CalculatorBase {
   // cv::DenseOpticalFlow is not thread-safe. Invoking multiple
   // DenseOpticalFlow::calc() in parallel may lead to memory corruption or
   // memory leak.
-  std::list<cv::Ptr<cv::DenseOpticalFlow>> tvl1_computers_
+  std::list<cv::Ptr<DenseOpticalFlow>> tvl1_computers_
       ABSL_GUARDED_BY(mutex_);
   absl::Mutex mutex_;
 };
@@ -163,7 +163,7 @@ class Tvl1OpticalFlowCalculator : public CalculatorBase {
 
   // Tries getting an idle DenseOpticalFlow object from the cache. If not,
   // creates a new DenseOpticalFlow.
-  cv::Ptr<cv::DenseOpticalFlow> tvl1_computer;
+  cv::Ptr<DenseOpticalFlow> tvl1_computer;
   {
     absl::MutexLock lock(&mutex_);
     if (!tvl1_computers_.empty()) {
@@ -177,7 +177,18 @@ class Tvl1OpticalFlowCalculator : public CalculatorBase {
 
   flow->Allocate(first.cols, first.rows);
   cv::Mat cv_flow(flow->mutable_flow_data());
+#if defined(CV_CUDA)
+  cv::cuda::GpuMat gpu_first, gpu_second, gpu_flow;
+  gpu_first.upload(first);
+  gpu_second.upload(second);
+  gpu_flow.upload(cv_flow);
+  tvl1_computer->calc(gpu_first, gpu_second, gpu_flow);
+  gpu_first.download(first);
+  gpu_second.download(second);
+  gpu_flow.download(cv_flow);
+#else
   tvl1_computer->calc(first, second, cv_flow);
+#endif
   CHECK_EQ(flow->mutable_flow_data().data, cv_flow.data);
   // Inserts the idle DenseOpticalFlow object back to the cache for reuse.
   {

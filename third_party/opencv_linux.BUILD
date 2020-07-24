@@ -23,6 +23,8 @@ cc_library(
             "lib/x86_64-linux-gnu/libopencv_imgproc.so",
             "lib/x86_64-linux-gnu/libopencv_video.so",
             "lib/x86_64-linux-gnu/libopencv_videoio.so",
+            "lib/x86_64-linux-gnu/libopencv_optflow.so",
+            "lib/x86_64-linux-gnu/libopencv_cudaoptflow.so",
         ],
     ),
     hdrs = glob(["include/opencv2/**/*.h*"]),
