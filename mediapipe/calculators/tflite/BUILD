@@ -196,13 +196,6 @@ cc_test(
     ],
 )
 
-cc_library(
-    name = "util",
-    hdrs = ["util.h"],
-    visibility = ["//visibility:public"],
-    alwayslink = 1,
-)
-
 selects.config_setting_group(
     name = "gpu_inference_disabled",
     match_any = [
@@ -229,7 +222,6 @@ cc_library(
     }),
     visibility = ["//visibility:public"],
     deps = [
-        ":util",
         ":tflite_inference_calculator_cc_proto",
         "@com_google_absl//absl/memory",
         "//mediapipe/framework:calculator_framework",
@@ -295,7 +287,6 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         "//mediapipe/util/tflite:config",
-        ":util",
         ":tflite_converter_calculator_cc_proto",
         "//mediapipe/util:resource_util",
         "//mediapipe/framework:calculator_framework",
@@ -334,7 +325,6 @@ cc_library(
     srcs = ["tflite_model_calculator.cc"],
     visibility = ["//visibility:public"],
     deps = [
-        ":util",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework:packet",
         "//mediapipe/framework/port:ret_check",
@@ -348,7 +338,6 @@ cc_library(
     srcs = ["tflite_tensors_to_segmentation_calculator.cc"],
     visibility = ["//visibility:public"],
     deps = [
-        ":util",
         ":tflite_tensors_to_segmentation_calculator_cc_proto",
         "@com_google_absl//absl/strings:str_format",
         "@com_google_absl//absl/types:span",
@@ -418,7 +407,6 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         "//mediapipe/util/tflite:config",
-        ":util",
         ":tflite_tensors_to_detections_calculator_cc_proto",
         "//mediapipe/framework/formats:detection_cc_proto",
         "@com_google_absl//absl/strings:str_format",
@@ -551,6 +539,7 @@ cc_test(
         "//mediapipe/framework/port:parse_text_proto",
         "//mediapipe/framework/tool:validate_type",
         "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/strings",
         "@org_tensorflow//tensorflow/lite:framework",
     ],
 )

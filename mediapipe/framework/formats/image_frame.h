@@ -42,6 +42,9 @@
 #include "mediapipe/framework/formats/image_format.pb.h"
 #include "mediapipe/framework/port.h"
 #include "mediapipe/framework/port/integral_types.h"
+#include "mediapipe/framework/tool/type_util.h"
+
+#define IMAGE_FRAME_RAW_IMAGE MEDIAPIPE_HAS_RTTI
 
 namespace mediapipe {
 

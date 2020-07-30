@@ -56,4 +56,14 @@ message TfLiteConverterCalculatorOptions {
   // Quantization option (CPU only).
   // When true, output kTfLiteUInt8 tensor instead of kTfLiteFloat32.
   optional bool use_quantized_tensors = 5 [default = false];
+
+  // Normalization option.
+  // Setting normalization_range results in the values normalized to
+  // the range [output_tensor_float_range.min, output_tensor_float_range.max].
+  optional TensorFloatRange output_tensor_float_range = 9;
+
+  message TensorFloatRange {
+    optional float min = 1;
+    optional float max = 2;
+  }
 }

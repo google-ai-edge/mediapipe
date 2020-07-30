@@ -1,7 +1,5 @@
 ## MediaPipe Models
 
-Here are the descriptions of the models used in the [example applications](../docs/examples.md).
-
 ### Face Detection
   * For front-facing/selfie cameras: [TFLite model](https://github.com/google/mediapipe/tree/master/mediapipe/models/face_detection_front.tflite)
   * For back-facing cameras: [TFLite model](https://github.com/google/mediapipe/tree/master/mediapipe/models/face_detection_back.tflite)

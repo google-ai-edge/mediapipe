@@ -72,7 +72,7 @@ Please first see general instructions for
 Note: To visualize a graph, copy the graph and paste it into
 [MediaPipe Visualizer](https://viz.mediapipe.dev/). For more information on how
 to visualize its associated subgraphs, please see
-[visualizer documentation](../visualizer.md).
+[visualizer documentation](../tools/visualizer.md).
 
 *   Graph:
     [`mediapipe/graphs/template_matching/template_matching_mobile_cpu.pbtxt`](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/template_matching/template_matching_mobile_cpu.pbtxt)

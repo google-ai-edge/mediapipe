@@ -15,6 +15,7 @@
 #include "mediapipe/framework/calculator_base.h"
 
 // TODO: Move protos in another CL after the C++ code migration.
+#include "absl/container/flat_hash_set.h"
 #include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/framework/calculator_context.h"
 #include "mediapipe/framework/calculator_context_manager.h"
@@ -192,8 +193,8 @@ TEST(CalculatorTest, CreateByName) {
 // Tests registration of a calculator within a whitelisted namespace.
 TEST(CalculatorTest, CreateByNameWhitelisted) {
   // Reset the registration namespace whitelist.
-  *const_cast<std::unordered_set<std::string>*>(
-      &NamespaceWhitelist::TopNamespaces()) = std::unordered_set<std::string>{
+  *const_cast<absl::flat_hash_set<std::string>*>(
+      &NamespaceWhitelist::TopNamespaces()) = absl::flat_hash_set<std::string>{
       "mediapipe::test_ns::whitelisted_ns",
       "mediapipe",
   };

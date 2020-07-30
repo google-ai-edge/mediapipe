@@ -26,12 +26,14 @@ Finally, import the AAR into Android Studio.
 
 load("@build_bazel_rules_android//android:rules.bzl", "android_binary", "android_library")
 
-def mediapipe_aar(name, calculators = []):
+def mediapipe_aar(name, calculators = [], assets = [], assets_dir = ""):
     """Generate MediaPipe AAR.
 
     Args:
       name: the name of the AAR.
       calculators: the calculator libraries to be compiled into the .so.
+      assets: additional assets to be included into the archive.
+      assets_dir: path where the assets will the packaged.
     """
     native.cc_binary(
         name = "libmediapipe_jni.so",
@@ -136,6 +138,8 @@ cat > $(OUTS) <<EOF
             "@maven//:com_google_guava_guava",
             "@maven//:androidx_lifecycle_lifecycle_common",
         ],
+        assets = assets,
+        assets_dir = assets_dir,
     )
 
     _aar_with_jni(name, name + "_android_lib")

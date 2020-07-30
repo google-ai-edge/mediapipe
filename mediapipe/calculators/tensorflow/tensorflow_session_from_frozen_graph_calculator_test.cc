@@ -66,6 +66,7 @@ class TensorFlowSessionFromFrozenGraphCalculatorTest : public ::testing::Test {
     (*calculator_options_->mutable_tag_to_tensor_names())["B"] = "b:0";
     calculator_options_->mutable_config()->set_intra_op_parallelism_threads(1);
     calculator_options_->mutable_config()->set_inter_op_parallelism_threads(2);
+    calculator_options_->set_preferred_device_id("/device:CPU:0");
   }
 
   void VerifySignatureMap(const TensorFlowSession& session) {

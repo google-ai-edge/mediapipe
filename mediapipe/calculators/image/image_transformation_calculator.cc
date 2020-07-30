@@ -449,19 +449,15 @@ REGISTER_CALCULATOR(ImageTransformationCalculator);
     switch (rotation_) {
       case mediapipe::RotationMode_Mode_UNKNOWN:
       case mediapipe::RotationMode_Mode_ROTATION_0:
-        LOG(ERROR) << "Not rotating image.";
         rotated_mat = input_mat;
         break;
       case mediapipe::RotationMode_Mode_ROTATION_90:
-        LOG(ERROR) << "Rotating image by 90 degrees ccw.";
         cv::rotate(input_mat, rotated_mat, cv::ROTATE_90_COUNTERCLOCKWISE);
         break;
       case mediapipe::RotationMode_Mode_ROTATION_180:
-        LOG(ERROR) << "Rotating image by 180 degrees.";
         cv::rotate(input_mat, rotated_mat, cv::ROTATE_180);
         break;
       case mediapipe::RotationMode_Mode_ROTATION_270:
-        LOG(ERROR) << "Rotating image by 90 degrees cw.";
         cv::rotate(input_mat, rotated_mat, cv::ROTATE_90_CLOCKWISE);
         break;
     }

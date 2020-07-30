@@ -18,6 +18,7 @@
 #include <unordered_map>
 #include <unordered_set>
 
+#include "absl/container/node_hash_set.h"
 #include "absl/strings/numbers.h"
 #include "mediapipe/calculators/video/box_tracker_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
@@ -193,12 +194,12 @@ class BoxTrackerCalculator : public CalculatorBase {
   TimedBoxProtoList initial_pos_;
 
   // Keeps tracks boxes that have already been initialized.
-  std::unordered_set<int> initialized_ids_;
+  absl::node_hash_set<int> initialized_ids_;
 
   // Non empty for batch mode tracking.
   std::string cache_dir_;
   // Ids to be tracked in batch_mode.
-  std::unordered_set<int> batch_track_ids_;
+  absl::node_hash_set<int> batch_track_ids_;
 
   int frame_num_ = 0;
 

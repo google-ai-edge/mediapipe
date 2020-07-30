@@ -18,7 +18,6 @@
 #include "absl/strings/str_format.h"
 #include "absl/types/span.h"
 #include "mediapipe/calculators/tflite/tflite_tensors_to_detections_calculator.pb.h"
-#include "mediapipe/calculators/tflite/util.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/deps/file_path.h"
 #include "mediapipe/framework/formats/detection.pb.h"
@@ -404,8 +403,10 @@ REGISTER_CALCULATOR(TfLiteTensorsToDetectionsCalculator);
                                                  &output_detections]()
                                                     -> ::mediapipe::Status {
     // Copy inputs.
-    RET_CHECK_CALL(CopyBuffer(input_tensors[0], gpu_data_->raw_boxes_buffer));
-    RET_CHECK_CALL(CopyBuffer(input_tensors[1], gpu_data_->raw_scores_buffer));
+    MP_RETURN_IF_ERROR(
+        CopyBuffer(input_tensors[0], gpu_data_->raw_boxes_buffer));
+    MP_RETURN_IF_ERROR(
+        CopyBuffer(input_tensors[1], gpu_data_->raw_scores_buffer));
     if (!anchors_init_) {
       if (side_packet_anchors_) {
         CHECK(!cc->InputSidePackets().Tag("ANCHORS").IsEmpty());
@@ -413,11 +414,11 @@ REGISTER_CALCULATOR(TfLiteTensorsToDetectionsCalculator);
             cc->InputSidePackets().Tag("ANCHORS").Get<std::vector<Anchor>>();
         std::vector<float> raw_anchors(num_boxes_ * kNumCoordsPerBox);
         ConvertAnchorsToRawValues(anchors, num_boxes_, raw_anchors.data());
-        RET_CHECK_CALL(gpu_data_->raw_anchors_buffer.Write<float>(
+        MP_RETURN_IF_ERROR(gpu_data_->raw_anchors_buffer.Write<float>(
             absl::MakeSpan(raw_anchors)));
       } else {
         CHECK_EQ(input_tensors.size(), kNumInputTensorsWithAnchors);
-        RET_CHECK_CALL(
+        MP_RETURN_IF_ERROR(
             CopyBuffer(input_tensors[2], gpu_data_->raw_anchors_buffer));
       }
       anchors_init_ = true;
@@ -425,23 +426,24 @@ REGISTER_CALCULATOR(TfLiteTensorsToDetectionsCalculator);
 
     // Run shaders.
     // Decode boxes.
-    RET_CHECK_CALL(gpu_data_->decoded_boxes_buffer.BindToIndex(0));
-    RET_CHECK_CALL(gpu_data_->raw_boxes_buffer.BindToIndex(1));
-    RET_CHECK_CALL(gpu_data_->raw_anchors_buffer.BindToIndex(2));
+    MP_RETURN_IF_ERROR(gpu_data_->decoded_boxes_buffer.BindToIndex(0));
+    MP_RETURN_IF_ERROR(gpu_data_->raw_boxes_buffer.BindToIndex(1));
+    MP_RETURN_IF_ERROR(gpu_data_->raw_anchors_buffer.BindToIndex(2));
     const tflite::gpu::uint3 decode_workgroups = {num_boxes_, 1, 1};
-    RET_CHECK_CALL(gpu_data_->decode_program.Dispatch(decode_workgroups));
+    MP_RETURN_IF_ERROR(gpu_data_->decode_program.Dispatch(decode_workgroups));
 
     // Score boxes.
-    RET_CHECK_CALL(gpu_data_->scored_boxes_buffer.BindToIndex(0));
-    RET_CHECK_CALL(gpu_data_->raw_scores_buffer.BindToIndex(1));
+    MP_RETURN_IF_ERROR(gpu_data_->scored_boxes_buffer.BindToIndex(0));
+    MP_RETURN_IF_ERROR(gpu_data_->raw_scores_buffer.BindToIndex(1));
     const tflite::gpu::uint3 score_workgroups = {num_boxes_, 1, 1};
-    RET_CHECK_CALL(gpu_data_->score_program.Dispatch(score_workgroups));
+    MP_RETURN_IF_ERROR(gpu_data_->score_program.Dispatch(score_workgroups));
 
     // Copy decoded boxes from GPU to CPU.
     std::vector<float> boxes(num_boxes_ * num_coords_);
-    RET_CHECK_CALL(gpu_data_->decoded_boxes_buffer.Read(absl::MakeSpan(boxes)));
+    MP_RETURN_IF_ERROR(
+        gpu_data_->decoded_boxes_buffer.Read(absl::MakeSpan(boxes)));
     std::vector<float> score_class_id_pairs(num_boxes_ * 2);
-    RET_CHECK_CALL(gpu_data_->scored_boxes_buffer.Read(
+    MP_RETURN_IF_ERROR(gpu_data_->scored_boxes_buffer.Read(
         absl::MakeSpan(score_class_id_pairs)));
 
     // TODO: b/138851969. Is it possible to output a float vector
@@ -802,20 +804,20 @@ void main() {
 
     // Shader program
     GlShader decode_shader;
-    RET_CHECK_CALL(
+    MP_RETURN_IF_ERROR(
         GlShader::CompileShader(GL_COMPUTE_SHADER, decode_src, &decode_shader));
-    RET_CHECK_CALL(GpuProgram::CreateWithShader(decode_shader,
-                                                &gpu_data_->decode_program));
+    MP_RETURN_IF_ERROR(GpuProgram::CreateWithShader(
+        decode_shader, &gpu_data_->decode_program));
     // Outputs
     size_t decoded_boxes_length = num_boxes_ * num_coords_;
-    RET_CHECK_CALL(CreateReadWriteShaderStorageBuffer<float>(
+    MP_RETURN_IF_ERROR(CreateReadWriteShaderStorageBuffer<float>(
         decoded_boxes_length, &gpu_data_->decoded_boxes_buffer));
     // Inputs
     size_t raw_boxes_length = num_boxes_ * num_coords_;
-    RET_CHECK_CALL(CreateReadWriteShaderStorageBuffer<float>(
+    MP_RETURN_IF_ERROR(CreateReadWriteShaderStorageBuffer<float>(
         raw_boxes_length, &gpu_data_->raw_boxes_buffer));
     size_t raw_anchors_length = num_boxes_ * kNumCoordsPerBox;
-    RET_CHECK_CALL(CreateReadWriteShaderStorageBuffer<float>(
+    MP_RETURN_IF_ERROR(CreateReadWriteShaderStorageBuffer<float>(
         raw_anchors_length, &gpu_data_->raw_anchors_buffer));
     // Parameters
     glUseProgram(gpu_data_->decode_program.id());
@@ -896,17 +898,17 @@ void main() {
 
     // Shader program
     GlShader score_shader;
-    RET_CHECK_CALL(
+    MP_RETURN_IF_ERROR(
         GlShader::CompileShader(GL_COMPUTE_SHADER, score_src, &score_shader));
-    RET_CHECK_CALL(
+    MP_RETURN_IF_ERROR(
         GpuProgram::CreateWithShader(score_shader, &gpu_data_->score_program));
     // Outputs
     size_t scored_boxes_length = num_boxes_ * 2;  // score, class
-    RET_CHECK_CALL(CreateReadWriteShaderStorageBuffer<float>(
+    MP_RETURN_IF_ERROR(CreateReadWriteShaderStorageBuffer<float>(
         scored_boxes_length, &gpu_data_->scored_boxes_buffer));
     // Inputs
     size_t raw_scores_length = num_boxes_ * num_classes_;
-    RET_CHECK_CALL(CreateReadWriteShaderStorageBuffer<float>(
+    MP_RETURN_IF_ERROR(CreateReadWriteShaderStorageBuffer<float>(
         raw_scores_length, &gpu_data_->raw_scores_buffer));
 
     return ::mediapipe::OkStatus();

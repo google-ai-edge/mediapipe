@@ -15,13 +15,12 @@
 #ifndef MEDIAPIPE_FRAMEWORK_TOOL_OPTIONS_UTIL_H_
 #define MEDIAPIPE_FRAMEWORK_TOOL_OPTIONS_UTIL_H_
 
-#include <typeindex>
-
 #include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/framework/packet.h"
 #include "mediapipe/framework/packet_generator.pb.h"
 #include "mediapipe/framework/packet_set.h"
 #include "mediapipe/framework/port/any_proto.h"
+#include "mediapipe/framework/tool/type_util.h"
 
 namespace mediapipe {
 
@@ -54,18 +53,18 @@ class TypeMap {
  public:
   template <class T>
   bool Has() const {
-    return content_.count(typeid(T)) > 0;
+    return content_.count(TypeId<T>()) > 0;
   }
   template <class T>
   T* Get() const {
     if (!Has<T>()) {
-      content_[typeid(T)] = std::make_shared<T>();
+      content_[TypeId<T>()] = std::make_shared<T>();
     }
-    return static_cast<T*>(content_[typeid(T)].get());
+    return static_cast<T*>(content_[TypeId<T>()].get());
   }
 
  private:
-  mutable std::map<std::type_index, std::shared_ptr<void>> content_;
+  mutable std::map<TypeIndex, std::shared_ptr<void>> content_;
 };
 
 template <class T,

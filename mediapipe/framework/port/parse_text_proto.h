@@ -15,16 +15,21 @@
 #ifndef MEDIAPIPE_PORT_PARSE_TEXT_PROTO_H_
 #define MEDIAPIPE_PORT_PARSE_TEXT_PROTO_H_
 
-#include "google/protobuf/text_format.h"
+#include "mediapipe/framework/port/core_proto_inc.h"
 #include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/proto_ns.h"
 
 namespace mediapipe {
 
 template <typename T>
+bool ParseTextProto(const std::string& input, T* proto) {
+  return proto_ns::TextFormat::ParseFromString(input, proto);
+}
+
+template <typename T>
 T ParseTextProtoOrDie(const std::string& input) {
   T result;
-  CHECK(google::protobuf::TextFormat::ParseFromString(input, &result));
+  CHECK(ParseTextProto(input, &result));
   return result;
 }
 

@@ -25,6 +25,7 @@
 #include "mediapipe/framework/port/status_matchers.h"
 #include "mediapipe/framework/tool/tag_map_helper.h"
 #include "mediapipe/framework/tool/validate_type.h"
+#include "tensorflow/core/framework/device_attributes.pb.h"
 
 namespace mediapipe {
 
@@ -194,6 +195,30 @@ TEST_F(TensorFlowSessionFromSavedModelGeneratorTest,
       output_side_packets.Tag("SESSION").Get<TensorFlowSession>();
   // Session must be set.
   ASSERT_NE(session.session, nullptr);
+}
+
+TEST_F(TensorFlowSessionFromSavedModelGeneratorTest,
+       ConfiguresSessionGivenConfig) {
+  generator_options_->set_saved_model_path(
+      std::string(file::SplitPath(GetSavedModelDir()).first));
+  generator_options_->set_load_latest_model(true);
+  generator_options_->mutable_session_config()->mutable_device_count()->insert(
+      {"CPU", 10});
+
+  PacketSet input_side_packets(tool::CreateTagMap({}).ValueOrDie());
+  PacketSet output_side_packets(
+      tool::CreateTagMap({"SESSION:session"}).ValueOrDie());
+  ::mediapipe::Status run_status = tool::RunGenerateAndValidateTypes(
+      "TensorFlowSessionFromSavedModelGenerator", extendable_options_,
+      input_side_packets, &output_side_packets);
+  MP_EXPECT_OK(run_status) << run_status.message();
+  const TensorFlowSession& session =
+      output_side_packets.Tag("SESSION").Get<TensorFlowSession>();
+  // Session must be set.
+  ASSERT_NE(session.session, nullptr);
+  std::vector<tensorflow::DeviceAttributes> devices;
+  ASSERT_EQ(session.session->ListDevices(&devices), tensorflow::Status::OK());
+  EXPECT_THAT(devices.size(), 10);
 }
 
 }  // namespace

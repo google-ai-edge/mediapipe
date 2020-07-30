@@ -12,14 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-licenses(["notice"])  # Apache 2.0
-
-MIN_IOS_VERSION = "10.0"
-
 load(
     "@build_bazel_rules_apple//apple:ios.bzl",
     "ios_application",
 )
+load(
+    "//mediapipe/examples/ios:bundle_id.bzl",
+    "BUNDLE_ID_PREFIX",
+    "example_provisioning",
+)
+
+licenses(["notice"])  # Apache 2.0
+
+MIN_IOS_VERSION = "10.0"
 
 alias(
     name = "handdetectiongpu",
@@ -28,14 +33,14 @@ alias(
 
 ios_application(
     name = "HandDetectionGpuApp",
-    bundle_id = "com.google.mediapipe.HandDetectionGpu",
+    bundle_id = BUNDLE_ID_PREFIX + ".HandDetectionGpu",
     families = [
         "iphone",
         "ipad",
     ],
     infoplists = ["Info.plist"],
     minimum_os_version = MIN_IOS_VERSION,
-    provisioning_profile = "//mediapipe/examples/ios:provisioning_profile",
+    provisioning_profile = example_provisioning(),
     deps = [
         ":HandDetectionGpuAppLibrary",
         "@ios_opencv//:OpencvFramework",

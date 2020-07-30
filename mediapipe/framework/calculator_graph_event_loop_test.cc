@@ -375,7 +375,7 @@ TEST_F(CalculatorGraphEventLoopTest, TryToAddPacketToInputStream) {
                         this, std::placeholders::_1))},
        {"blocking_mutex", mutex_side_packet}}));
 
-  constexpr int kNumInputPackets = 2;
+  constexpr int kNumInputPackets = 20;
   constexpr int kMaxQueueSize = 1;
 
   // Lock the mutex so that the BlockingPassThroughCalculator cannot read any of

@@ -167,6 +167,7 @@ cc_library(
         "//mediapipe/framework:packet_generator_cc_proto",
         "//mediapipe/framework:packet_set",
         "//mediapipe/framework/port:any_proto",
+        "//mediapipe/framework/tool:type_util",
     ],
 )
 
@@ -371,6 +372,9 @@ cc_library(
     name = "type_util",
     hdrs = ["type_util.h"],
     visibility = ["//mediapipe/framework:mediapipe_internal"],
+    deps = [
+        "//mediapipe/framework:port",
+    ],
 )
 
 cc_library(

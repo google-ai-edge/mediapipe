@@ -324,6 +324,19 @@ void MakeStaticFeatures(const int top_border, const int bottom_border,
   int path_offset_y;
   MP_RETURN_IF_ERROR(path_solver_offset_->GetState(&path_offset_y));
 
+  // Prevent box from extending beyond the image after camera smoothing.
+  if (path_offset_y - ceil(path_height / 2.0) < 0) {
+    path_offset_y = ceil(path_height / 2.0);
+  } else if (path_offset_y + ceil(path_height / 2.0) > frame_height_) {
+    path_offset_y = frame_height_ - ceil(path_height / 2.0);
+  }
+  int path_width = path_height * target_aspect_;
+  if (path_offset_x - ceil(path_width / 2.0) < 0) {
+    path_offset_x = ceil(path_width / 2.0);
+  } else if (path_offset_x + ceil(path_width / 2.0) > frame_width_) {
+    path_offset_x = frame_width_ - ceil(path_width / 2.0);
+  }
+
   // Convert to top/bottom borders to remove.
   int path_top = path_offset_y - path_height / 2;
   int path_bottom = frame_height_ - (path_offset_y + path_height / 2);

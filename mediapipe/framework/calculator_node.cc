@@ -405,7 +405,7 @@ namespace {
 // Returns the Packet sent to an OutputSidePacket, or an empty packet
 // if none available.
 const Packet GetPacket(const OutputSidePacket& out) {
-  auto impl = dynamic_cast<const OutputSidePacketImpl*>(&out);
+  auto impl = static_cast<const OutputSidePacketImpl*>(&out);
   return (impl == nullptr) ? Packet() : impl->GetPacket();
 }
 

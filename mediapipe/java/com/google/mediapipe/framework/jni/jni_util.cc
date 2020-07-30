@@ -131,6 +131,21 @@ jthrowable CreateMediaPipeException(JNIEnv* env, mediapipe::Status status) {
       env->NewObject(status_cls, status_ctr, status.code(), message_bytes));
 }
 
+bool ThrowIfError(JNIEnv* env, mediapipe::Status status) {
+  if (!status.ok()) {
+    env->Throw(mediapipe::android::CreateMediaPipeException(env, status));
+    return true;
+  }
+  return false;
+}
+
+SerializedMessageIds::SerializedMessageIds(JNIEnv* env, jobject data) {
+  jclass j_class = reinterpret_cast<jclass>(env->NewGlobalRef(env->FindClass(
+      "com/google/mediapipe/framework/PacketUtil$SerializedMessage")));
+  type_name_id = env->GetFieldID(j_class, "typeName", "Ljava/lang/String;");
+  value_id = env->GetFieldID(j_class, "value", "[B");
+}
+
 }  // namespace android
 
 namespace java {

@@ -6,6 +6,9 @@
 # Images coming into and out of the graph.
 input_stream: "input_video"
 output_stream: "output_video"
+# Hand landmarks and palm detection info.
+output_stream: "palm_detections"
+output_stream: "hand_landmarks"
 
 # Caches a hand-presence decision fed back from HandLandmarkSubgraph, and upon
 # the arrival of the next input image sends out the cached decision with the

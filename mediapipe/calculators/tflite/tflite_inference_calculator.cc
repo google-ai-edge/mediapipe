@@ -19,7 +19,6 @@
 
 #include "absl/memory/memory.h"
 #include "mediapipe/calculators/tflite/tflite_inference_calculator.pb.h"
-#include "mediapipe/calculators/tflite/util.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/util/tflite/config.h"
@@ -496,7 +495,7 @@ bool ShouldUseGpu(CC* cc) {
       output_tensors_gpu->resize(gpu_data_out_.size());
       for (int i = 0; i < gpu_data_out_.size(); ++i) {
         GpuTensor& tensor = output_tensors_gpu->at(i);
-        RET_CHECK_CALL(CreateReadWriteShaderStorageBuffer<float>(
+        MP_RETURN_IF_ERROR(CreateReadWriteShaderStorageBuffer<float>(
             gpu_data_out_[i]->elements, &tensor));
         MP_RETURN_IF_ERROR(
             tflite_gpu_runner_->BindSSBOToOutputTensor(tensor.id(), i));
@@ -518,7 +517,7 @@ bool ShouldUseGpu(CC* cc) {
     // Explicit copy input.
     gpu_data_in_.resize(input_tensors.size());
     for (int i = 0; i < input_tensors.size(); ++i) {
-      RET_CHECK_CALL(CopyBuffer(input_tensors[i], gpu_data_in_[i]->buffer));
+      MP_RETURN_IF_ERROR(CopyBuffer(input_tensors[i], gpu_data_in_[i]->buffer));
     }
 #elif MEDIAPIPE_TFLITE_METAL_INFERENCE
     const auto& input_tensors =
@@ -582,7 +581,7 @@ bool ShouldUseGpu(CC* cc) {
       for (int i = 0; i < tensor_indexes.size(); ++i) {
         TfLiteTensor* tensor = interpreter_->tensor(tensor_indexes[i]);
         std::vector<float> gpu_data(tensor->bytes / sizeof(float));
-        RET_CHECK_CALL(gpu_data_out_[i]->buffer.Read(
+        MP_RETURN_IF_ERROR(gpu_data_out_[i]->buffer.Read(
             absl::MakeSpan(tensor->data.f, tensor->bytes)));
         output_tensors_cpu->emplace_back(*tensor);
       }
@@ -599,9 +598,9 @@ bool ShouldUseGpu(CC* cc) {
     for (int i = 0; i < gpu_data_out_.size(); ++i) {
       GpuTensor& tensor = output_tensors_gpu->at(i);
       // Allocate output tensor.
-      RET_CHECK_CALL(CreateReadWriteShaderStorageBuffer<float>(
+      MP_RETURN_IF_ERROR(CreateReadWriteShaderStorageBuffer<float>(
           gpu_data_out_[i]->elements, &tensor));
-      RET_CHECK_CALL(CopyBuffer(gpu_data_out_[i]->buffer, tensor));
+      MP_RETURN_IF_ERROR(CopyBuffer(gpu_data_out_[i]->buffer, tensor));
     }
     cc->Outputs()
         .Tag(kTensorsGpuTag)
@@ -655,7 +654,8 @@ bool ShouldUseGpu(CC* cc) {
   options.priority3 = tflite::gpu::InferencePriority::AUTO;
   options.usage = tflite::gpu::InferenceUsage::SUSTAINED_SPEED;
   tflite_gpu_runner_ = std::make_unique<tflite::gpu::TFLiteGPURunner>(options);
-  RET_CHECK_CALL(tflite_gpu_runner_->InitializeWithModel(model, op_resolver));
+  MP_RETURN_IF_ERROR(
+      tflite_gpu_runner_->InitializeWithModel(model, op_resolver));
 
   // Allocate interpreter memory for cpu output.
   if (!gpu_output_) {
@@ -688,10 +688,11 @@ bool ShouldUseGpu(CC* cc) {
     ASSIGN_OR_RETURN(gpu_data_out_[i]->elements,
                      tflite_gpu_runner_->GetOutputElements(i));
     // Create and bind input buffer.
-    RET_CHECK_CALL(::tflite::gpu::gl::CreateReadWriteShaderStorageBuffer<float>(
-        gpu_data_out_[i]->elements, &gpu_data_out_[i]->buffer));
+    MP_RETURN_IF_ERROR(
+        ::tflite::gpu::gl::CreateReadWriteShaderStorageBuffer<float>(
+            gpu_data_out_[i]->elements, &gpu_data_out_[i]->buffer));
   }
-  RET_CHECK_CALL(tflite_gpu_runner_->Build());
+  MP_RETURN_IF_ERROR(tflite_gpu_runner_->Build());
 #endif  // MEDIAPIPE_TFLITE_GL_INFERENCE
 
   return ::mediapipe::OkStatus();
@@ -841,7 +842,7 @@ bool ShouldUseGpu(CC* cc) {
         gpu_data_in_[i]->elements *= tensor->dims->data[d];
       }
       // Create and bind input buffer.
-      RET_CHECK_CALL(
+      MP_RETURN_IF_ERROR(
           ::tflite::gpu::gl::CreateReadWriteShaderStorageBuffer<float>(
               gpu_data_in_[i]->elements, &gpu_data_in_[i]->buffer));
       RET_CHECK_EQ(TfLiteGpuDelegateBindBufferToTensor(
@@ -866,7 +867,7 @@ bool ShouldUseGpu(CC* cc) {
     // Create and bind output buffers.
     interpreter_->SetAllowBufferHandleOutput(true);
     for (int i = 0; i < gpu_data_out_.size(); ++i) {
-      RET_CHECK_CALL(CreateReadWriteShaderStorageBuffer<float>(
+      MP_RETURN_IF_ERROR(CreateReadWriteShaderStorageBuffer<float>(
           gpu_data_out_[i]->elements, &gpu_data_out_[i]->buffer));
       RET_CHECK_EQ(TfLiteGpuDelegateBindBufferToTensor(
                        delegate_.get(), gpu_data_out_[i]->buffer.id(),

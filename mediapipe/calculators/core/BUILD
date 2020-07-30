@@ -450,6 +450,21 @@ cc_library(
     alwayslink = 1,
 )
 
+cc_test(
+    name = "mux_calculator_test",
+    srcs = ["mux_calculator_test.cc"],
+    deps = [
+        ":mux_calculator",
+        ":round_robin_demux_calculator",
+        ":split_vector_calculator",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:calculator_runner",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:parse_text_proto",
+        "//mediapipe/framework/port:status",
+    ],
+)
+
 cc_library(
     name = "packet_cloner_calculator",
     srcs = ["packet_cloner_calculator.cc"],
@@ -947,7 +962,6 @@ cc_test(
         "//mediapipe/framework:calculator_runner",
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/framework/port:parse_text_proto",
-        "//mediapipe/framework/port:status",
     ],
 )
 

@@ -43,29 +43,33 @@ public class MainActivity extends com.google.mediapipe.apps.basic.MainActivity {
           }
         });
 
-    processor.addPacketCallback(
+    // To show verbose logging, run:
+    // adb shell setprop log.tag.MainActivity VERBOSE
+    if (Log.isLoggable(TAG, Log.VERBOSE)) {
+      processor.addPacketCallback(
         OUTPUT_LANDMARKS_STREAM_NAME,
         (packet) -> {
           byte[] landmarksRaw = PacketGetter.getProtoBytes(packet);
           try {
             NormalizedLandmarkList landmarks = NormalizedLandmarkList.parseFrom(landmarksRaw);
             if (landmarks == null) {
-              Log.d(TAG, "[TS:" + packet.getTimestamp() + "] No hand landmarks.");
+              Log.v(TAG, "[TS:" + packet.getTimestamp() + "] No hand landmarks.");
               return;
             }
             // Note: If hand_presence is false, these landmarks are useless.
-            Log.d(
+            Log.v(
                 TAG,
                 "[TS:"
                     + packet.getTimestamp()
                     + "] #Landmarks for hand: "
                     + landmarks.getLandmarkCount());
-            Log.d(TAG, getLandmarksDebugString(landmarks));
+            Log.v(TAG, getLandmarksDebugString(landmarks));
           } catch (InvalidProtocolBufferException e) {
             Log.e(TAG, "Couldn't Exception received - " + e);
             return;
           }
         });
+    }
   }
 
   private static String getLandmarksDebugString(NormalizedLandmarkList landmarks) {

@@ -344,6 +344,28 @@ TEST(ContentZoomingCalculatorTest, ZoomTestPairSize) {
   CheckBorder(static_features, 1000, 1000, 495, 395);
 }
 
+TEST(ContentZoomingCalculatorTest, ZoomTestNearOutsideBorder) {
+  auto runner = ::absl::make_unique<CalculatorRunner>(
+      ParseTextProtoOrDie<CalculatorGraphConfig::Node>(kConfigD));
+  AddDetection(cv::Rect_<float>(.95, .95, .05, .05), 0, runner.get());
+  AddDetection(cv::Rect_<float>(.9, .9, .1, .1), 1000000, runner.get());
+  MP_ASSERT_OK(runner->Run());
+  CheckCropRect(972, 972, 55, 55, 0,
+                runner->Outputs().Tag("CROP_RECT").packets);
+  CheckCropRect(958, 958, 83, 83, 1,
+                runner->Outputs().Tag("CROP_RECT").packets);
+}
+
+TEST(ContentZoomingCalculatorTest, ZoomTestNearInsideBorder) {
+  auto runner = ::absl::make_unique<CalculatorRunner>(
+      ParseTextProtoOrDie<CalculatorGraphConfig::Node>(kConfigD));
+  AddDetection(cv::Rect_<float>(0, 0, .05, .05), 0, runner.get());
+  AddDetection(cv::Rect_<float>(0, 0, .1, .1), 1000000, runner.get());
+  MP_ASSERT_OK(runner->Run());
+  CheckCropRect(28, 28, 55, 55, 0, runner->Outputs().Tag("CROP_RECT").packets);
+  CheckCropRect(42, 42, 83, 83, 1, runner->Outputs().Tag("CROP_RECT").packets);
+}
+
 }  // namespace
 }  // namespace autoflip
 

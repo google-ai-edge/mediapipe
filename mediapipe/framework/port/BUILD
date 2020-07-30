@@ -307,11 +307,10 @@ cc_library(
     ],
     visibility = ["//visibility:public"],
     deps = [
+        ":core_proto",
         ":logging",
         "//mediapipe/framework:port",
-    ] + select({
-        "//conditions:default": ["@com_google_protobuf//:protobuf"],
-    }),
+    ],
 )
 
 cc_library(

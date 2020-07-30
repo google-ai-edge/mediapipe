@@ -95,18 +95,23 @@ cc_library(
     hdrs = ["image_frame.h"],
     visibility = ["//visibility:public"],
     deps = [
-        "//mediapipe/framework:port",
         "//mediapipe/framework/formats:image_format_cc_proto",
-        "//mediapipe/framework/port:aligned_malloc_and_free",
-        "//mediapipe/framework/port:core_proto",
-        "//mediapipe/framework/port:integral_types",
-        "//mediapipe/framework/port:logging",
-        "//mediapipe/framework/port:source_location",
         "@com_google_absl//absl/base",
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
-    ],
+        "//mediapipe/framework:port",
+        "//mediapipe/framework/port:aligned_malloc_and_free",
+        "//mediapipe/framework/port:core_proto",
+        "//mediapipe/framework/port:integral_types",
+        "//mediapipe/framework/port:source_location",
+        "//mediapipe/framework/port:logging",
+        "//mediapipe/framework/tool:type_util",
+    ] + select({
+        "//conditions:default": [
+        ],
+        "//mediapipe/framework:disable_rtti_and_exceptions": [],
+    }),
 )
 
 cc_library(
