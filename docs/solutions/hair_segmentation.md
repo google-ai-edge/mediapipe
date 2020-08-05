@@ -2,7 +2,7 @@
 layout: default
 title: Hair Segmentation
 parent: Solutions
-nav_order: 4
+nav_order: 5
 ---
 
 # MediaPipe Hair Segmentation

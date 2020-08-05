@@ -280,16 +280,16 @@ are two options:
 2.  In the project navigator in the left sidebar, select the "Mediapipe"
     project.
 
-3.  Select the "Signing & Capabilities" tab.
+3.  Select one of the application targets, e.g. HandTrackingGpuApp.
 
-4.  Select one of the application targets, e.g. HandTrackingGpuApp.
+4.  Select the "Signing & Capabilities" tab.
 
 5.  Check "Automatically manage signing", and confirm the dialog box.
 
 6.  Select "_Your Name_ (Personal Team)" in the Team pop-up menu.
 
 7.  This set-up needs to be done once for each application you want to install.
-    Repeat steps 4-6 as needed.
+    Repeat steps 3-6 as needed.
 
 This generates provisioning profiles for each app you have selected. Now we need
 to tell Bazel to use them. We have provided a script to make this easier.
@@ -390,15 +390,15 @@ developer (yourself) is trusted.
     bazel build -c opt --define MEDIAPIPE_DISABLE_GPU=1 mediapipe/examples/desktop/hand_tracking:hand_tracking_cpu
     ```
 
-    This will open up your webcam as long as it is connected and on. Any errors
-    is likely due to your webcam being not accessible.
-
 2.  To run the application:
 
     ```bash
     GLOG_logtostderr=1 bazel-bin/mediapipe/examples/desktop/hand_tracking/hand_tracking_cpu \
       --calculator_graph_config_file=mediapipe/graphs/hand_tracking/hand_tracking_desktop_live.pbtxt
     ```
+
+    This will open up your webcam as long as it is connected and on. Any errors
+    is likely due to your webcam being not accessible.
 
 ### Option 2: Running on GPU
 
@@ -412,13 +412,13 @@ Note: This currently works only on Linux, and please first follow
       mediapipe/examples/desktop/hand_tracking:hand_tracking_gpu
     ```
 
-    This will open up your webcam as long as it is connected and on. Any errors
-    is likely due to your webcam being not accessible, or GPU drivers not setup
-    properly.
-
 2.  To run the application:
 
     ```bash
     GLOG_logtostderr=1 bazel-bin/mediapipe/examples/desktop/hand_tracking/hand_tracking_gpu \
       --calculator_graph_config_file=mediapipe/graphs/hand_tracking/hand_tracking_mobile.pbtxt
     ```
+
+    This will open up your webcam as long as it is connected and on. Any errors
+    is likely due to your webcam being not accessible, or GPU drivers not setup
+    properly.

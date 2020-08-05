@@ -404,7 +404,7 @@ cc_library(
     visibility = ["//mediapipe/framework/port:__pkg__"],
     deps = [
         ":status",
-        "//mediapipe/framework/deps:status_matchers",
+        "@com_google_googletest//:gtest",
     ],
 )
 

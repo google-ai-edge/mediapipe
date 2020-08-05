@@ -56,6 +56,9 @@ class ImmediateInputStreamHandler : public InputStreamHandler {
   void FillInputSet(Timestamp input_timestamp,
                     InputStreamShardSet* input_set) override;
 
+  // Returns the number of sync-sets maintained by this input-handler.
+  int SyncSetCount() override;
+
   absl::Mutex mutex_;
   // The packet-set builder for each input stream.
   std::vector<SyncSet> sync_sets_ ABSL_GUARDED_BY(mutex_);
@@ -167,6 +170,11 @@ void ImmediateInputStreamHandler::FillInputSet(Timestamp input_timestamp,
       sync_sets_[i].FillInputBounds(input_set);
     }
   }
+}
+
+int ImmediateInputStreamHandler::SyncSetCount() {
+  absl::MutexLock lock(&mutex_);
+  return sync_sets_.size();
 }
 
 }  // namespace mediapipe

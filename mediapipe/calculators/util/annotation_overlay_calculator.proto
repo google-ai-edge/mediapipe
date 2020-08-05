@@ -50,7 +50,5 @@ message AnnotationOverlayCalculatorOptions {
   // This can be used to speed up annotation by drawing the annotation on an
   // intermediate image with a reduced scale, e.g. 0.5 (of the input image width
   // and height), before resizing and overlaying it on top of the input image.
-  // Should only be used if *all* render data uses normalized coordinates
-  // (or absolute coordinates are updated to scale accordingly).
   optional float gpu_scale_factor = 7 [default = 1.0];
 }

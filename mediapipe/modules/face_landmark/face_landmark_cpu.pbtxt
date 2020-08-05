@@ -74,6 +74,7 @@ node {
   options: {
     [mediapipe.TfLiteInferenceCalculatorOptions.ext] {
       model_path: "mediapipe/modules/face_landmark/face_landmark.tflite"
+      delegate { xnnpack {} }
     }
   }
 }

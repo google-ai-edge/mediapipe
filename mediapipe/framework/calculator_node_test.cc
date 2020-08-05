@@ -259,9 +259,7 @@ class CalculatorNodeTest : public ::testing::Test {
 TEST_F(CalculatorNodeTest, Initialize) {
   InitializeEnvironment(/*use_tags=*/false);
   EXPECT_EQ(2, node_->Id());
-  EXPECT_THAT(node_->DebugName(),
-              ::testing::AllOf(::testing::HasSubstr("CountCalculator"),
-                               ::testing::HasSubstr("stream_b")));
+  EXPECT_THAT(node_->DebugName(), ::testing::HasSubstr("CountCalculator"));
 
   EXPECT_FALSE(node_->Prepared());
   EXPECT_FALSE(node_->Opened());

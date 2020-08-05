@@ -153,8 +153,8 @@ it, in the graph file modify the option of `ConstantSidePacketCalculator`.
     [Real-time Facial Surface Geometry from Monocular Video on Mobile GPUs](https://arxiv.org/abs/1907.06724)
     ([poster](https://docs.google.com/presentation/d/1-LWwOMO9TzEVdrZ1CS1ndJzciRHfYDJfbSxH_ke_JRg/present?slide=id.g5986dd4b4c_4_212))
 *   Face detection model:
-    [TFLite model](https://github.com/google/mediapipe/tree/master/mediapipe/models/face_detection_front.tflite)
-*   Face landmark mode:
-    [TFLite model](https://github.com/google/mediapipe/tree/master/mediapipe/models/face_landmark.tflite),
+    [TFLite model](https://github.com/google/mediapipe/tree/master/mediapipe/modules/face_detection/face_detection_front.tflite)
+*   Face landmark model:
+    [TFLite model](https://github.com/google/mediapipe/tree/master/mediapipe/modules/face_landmark/face_landmark.tflite),
     [TF.js model](https://tfhub.dev/mediapipe/facemesh/1)
 *   [Model card](https://drive.google.com/file/d/1VFC_wIpw4O7xBOiTgUldl79d9LA-LsnA/view)

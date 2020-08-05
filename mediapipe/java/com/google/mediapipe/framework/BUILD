@@ -136,6 +136,9 @@ android_library(
 # Expose the java source files for building mediapipe AAR.
 filegroup(
     name = "java_src",
-    srcs = glob(["*.java"]),
+    srcs = glob(
+        ["*.java"],
+        exclude = ["TypeNameRegistryFull.java"],
+    ),
     visibility = ["//mediapipe:__subpackages__"],
 )

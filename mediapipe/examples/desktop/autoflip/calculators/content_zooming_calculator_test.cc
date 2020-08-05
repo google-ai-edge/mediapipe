@@ -366,6 +366,45 @@ TEST(ContentZoomingCalculatorTest, ZoomTestNearInsideBorder) {
   CheckCropRect(42, 42, 83, 83, 1, runner->Outputs().Tag("CROP_RECT").packets);
 }
 
+TEST(ContentZoomingCalculatorTest, VerticalShift) {
+  auto config = ParseTextProtoOrDie<CalculatorGraphConfig::Node>(kConfigD);
+  auto* options = config.mutable_options()->MutableExtension(
+      ContentZoomingCalculatorOptions::ext);
+  options->set_detection_shift_vertical(0.2);
+  auto runner = ::absl::make_unique<CalculatorRunner>(config);
+  AddDetection(cv::Rect_<float>(.1, .1, .1, .1), 0, runner.get());
+  MP_ASSERT_OK(runner->Run());
+  // 1000px * .1 offset + 1000*.1*.1 shift = 170
+  CheckCropRect(150, 170, 111, 111, 0,
+                runner->Outputs().Tag("CROP_RECT").packets);
+}
+
+TEST(ContentZoomingCalculatorTest, HorizontalShift) {
+  auto config = ParseTextProtoOrDie<CalculatorGraphConfig::Node>(kConfigD);
+  auto* options = config.mutable_options()->MutableExtension(
+      ContentZoomingCalculatorOptions::ext);
+  options->set_detection_shift_horizontal(0.2);
+  auto runner = ::absl::make_unique<CalculatorRunner>(config);
+  AddDetection(cv::Rect_<float>(.1, .1, .1, .1), 0, runner.get());
+  MP_ASSERT_OK(runner->Run());
+  // 1000px * .1 offset + 1000*.1*.1 shift = 170
+  CheckCropRect(170, 150, 111, 111, 0,
+                runner->Outputs().Tag("CROP_RECT").packets);
+}
+
+TEST(ContentZoomingCalculatorTest, ShiftOutsideBounds) {
+  auto config = ParseTextProtoOrDie<CalculatorGraphConfig::Node>(kConfigD);
+  auto* options = config.mutable_options()->MutableExtension(
+      ContentZoomingCalculatorOptions::ext);
+  options->set_detection_shift_vertical(-0.2);
+  options->set_detection_shift_horizontal(0.2);
+  auto runner = ::absl::make_unique<CalculatorRunner>(config);
+  AddDetection(cv::Rect_<float>(.9, 0, .1, .1), 0, runner.get());
+  MP_ASSERT_OK(runner->Run());
+  CheckCropRect(944, 56, 111, 111, 0,
+                runner->Outputs().Tag("CROP_RECT").packets);
+}
+
 }  // namespace
 }  // namespace autoflip
 

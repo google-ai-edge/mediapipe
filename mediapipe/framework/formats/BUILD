@@ -63,6 +63,12 @@ mediapipe_proto_library(
     visibility = ["//visibility:public"],
 )
 
+mediapipe_proto_library(
+    name = "image_file_properties_proto",
+    srcs = ["image_file_properties.proto"],
+    visibility = ["//visibility:public"],
+)
+
 cc_library(
     name = "deleting_file",
     srcs = ["deleting_file.cc"],

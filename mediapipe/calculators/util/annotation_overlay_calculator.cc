@@ -160,8 +160,8 @@ class AnnotationOverlayCalculator : public CalculatorBase {
   GLuint image_mat_tex_ = 0;  // Overlay drawing image for GPU.
   int width_ = 0;
   int height_ = 0;
-  int width_gpu_ = 0;  // Size of overlay drawing texture.
-  int height_gpu_ = 0;
+  int width_canvas_ = 0;  // Size of overlay drawing texture canvas.
+  int height_canvas_ = 0;
 #endif  //  MEDIAPIPE_DISABLE_GPU
 };
 REGISTER_CALCULATOR(AnnotationOverlayCalculator);
@@ -250,6 +250,7 @@ REGISTER_CALCULATOR(AnnotationOverlayCalculator);
   // Initialize the helper renderer library.
   renderer_ = absl::make_unique<AnnotationRenderer>();
   renderer_->SetFlipTextVertically(options_.flip_text_vertically());
+  if (use_gpu_) renderer_->SetScaleFactor(options_.gpu_scale_factor());
 
   // Set the output header based on the input header (if present).
   const char* input_tag = use_gpu_ ? kInputFrameTagGpu : kInputFrameTag;
@@ -391,8 +392,8 @@ REGISTER_CALCULATOR(AnnotationOverlayCalculator);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     glBindTexture(GL_TEXTURE_2D, image_mat_tex_);
-    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width_gpu_, height_gpu_, GL_RGB,
-                    GL_UNSIGNED_BYTE, overlay_image);
+    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width_canvas_, height_canvas_,
+                    GL_RGB, GL_UNSIGNED_BYTE, overlay_image);
     glBindTexture(GL_TEXTURE_2D, 0);
   }
 
@@ -494,12 +495,13 @@ REGISTER_CALCULATOR(AnnotationOverlayCalculator);
     if (format != mediapipe::ImageFormat::SRGBA &&
         format != mediapipe::ImageFormat::SRGB)
       RET_CHECK_FAIL() << "Unsupported GPU input format: " << format;
-    image_mat = absl::make_unique<cv::Mat>(height_gpu_, width_gpu_, CV_8UC3);
+    image_mat =
+        absl::make_unique<cv::Mat>(height_canvas_, width_canvas_, CV_8UC3);
     memset(image_mat->data, kAnnotationBackgroundColor,
-           height_gpu_ * width_gpu_ * image_mat->elemSize());
+           height_canvas_ * width_canvas_ * image_mat->elemSize());
   } else {
     image_mat = absl::make_unique<cv::Mat>(
-        height_gpu_, width_gpu_, CV_8UC3,
+        height_canvas_, width_canvas_, CV_8UC3,
         cv::Scalar(options_.canvas_color().r(), options_.canvas_color().g(),
                    options_.canvas_color().b()));
   }
@@ -646,8 +648,8 @@ REGISTER_CALCULATOR(AnnotationOverlayCalculator);
     width_ = RoundUp(options_.canvas_width_px(), alignment);
     height_ = RoundUp(options_.canvas_height_px(), alignment);
   }
-  width_gpu_ = RoundUp(width_ * scale_factor, alignment);
-  height_gpu_ = RoundUp(height_ * scale_factor, alignment);
+  width_canvas_ = RoundUp(width_ * scale_factor, alignment);
+  height_canvas_ = RoundUp(height_ * scale_factor, alignment);
 
   // Init texture for opencv rendered frame.
   {
@@ -655,8 +657,8 @@ REGISTER_CALCULATOR(AnnotationOverlayCalculator);
     glBindTexture(GL_TEXTURE_2D, image_mat_tex_);
     // TODO
     // OpenCV only renders to RGB images, not RGBA. Ideally this should be RGBA.
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, width_gpu_, height_gpu_, 0, GL_RGB,
-                 GL_UNSIGNED_BYTE, nullptr);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, width_canvas_, height_canvas_, 0,
+                 GL_RGB, GL_UNSIGNED_BYTE, nullptr);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);

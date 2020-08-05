@@ -1,0 +1,50 @@
+# MediaPipe subgraph to calculate region of interest (ROI) which is then can
+# be used to calculate iris landmarks and eye contour landmarks.
+#
+# NOTE: this graph is subject to change and should not be used directly.
+
+type: "IrisLandmarkLandmarksToRoi"
+
+# List of two normalized landmarks: left and right corners of an eye.
+# (NormalizedLandmarkList)
+input_stream: "LANDMARKS:landmarks"
+# Image size. (std::pair<int, int>)
+input_stream: "IMAGE_SIZE:image_size"
+
+# ROI (region of interest) within the given image where an eye is located.
+# (NormalizedRect)
+output_stream: "ROI:roi"
+
+node {
+  calculator: "LandmarksToDetectionCalculator"
+  input_stream: "NORM_LANDMARKS:landmarks"
+  output_stream: "DETECTION:detection"
+}
+
+node {
+  calculator: "DetectionsToRectsCalculator"
+  input_stream: "DETECTION:detection"
+  input_stream: "IMAGE_SIZE:image_size"
+  output_stream: "NORM_RECT:raw_roi"
+  options: {
+    [mediapipe.DetectionsToRectsCalculatorOptions.ext] {
+      rotation_vector_start_keypoint_index: 0
+      rotation_vector_end_keypoint_index: 1
+      rotation_vector_target_angle_degrees: 0
+    }
+  }
+}
+
+node {
+  calculator: "RectTransformationCalculator"
+  input_stream: "NORM_RECT:raw_roi"
+  input_stream: "IMAGE_SIZE:image_size"
+  output_stream: "roi"
+  options: {
+    [mediapipe.RectTransformationCalculatorOptions.ext] {
+      scale_x: 2.3
+      scale_y: 2.3
+      square_long: true
+    }
+  }
+}

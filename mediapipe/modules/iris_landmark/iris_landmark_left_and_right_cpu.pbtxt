@@ -1,0 +1,120 @@
+# MediaPipe subgraph to calculate iris landmarks and eye contour landmarks for
+# two eyes: left and right. (CPU input, and inference is executed on CPU.)
+#
+# It is required that "iris_landmark.tflite" is available at
+# "mediapipe/modules/iris_landmark/iris_landmark.tflite"
+# path during execution.
+#
+# EXAMPLE:
+#   node {
+#     calculator: "IrisLandmarkLeftAndRightCpu"
+#     input_stream: "IMAGE:image"
+#     input_stream: "LEFT_EYE_BOUNDARY_LANDMARKS:left_eye_boundary_landmarks"
+#     input_stream: "RIGHT_EYE_BOUNDARY_LANDMARKS:right_eye_boundary_landmarks"
+#     output_stream: "LEFT_EYE_CONTOUR_LANDMARKS:left_eye_contour_landmarks"
+#     output_stream: "LEFT_EYE_IRIS_LANDMARKS:left_iris_landmarks"
+#     output_stream: "RIGHT_EYE_CONTOUR_LANDMARKS:right_eye_contour_landmarks"
+#     output_stream: "RIGHT_EYE_IRIS_LANDMARKS:right_iris_landmarks"
+#   }
+
+type: "IrisLandmarkLeftAndRightCpu"
+
+# CPU image. (ImageFrame)
+input_stream: "IMAGE:image"
+# List of two landmarks defining LEFT eye boundaries - left and right corners.
+# (NormalizedLandmarkList)
+input_stream: "LEFT_EYE_BOUNDARY_LANDMARKS:left_eye_boundary_landmarks"
+# List of two landmarks defining RIGHT eye boundaries - left and right corners.
+# (NormalizedLandmarkList)
+input_stream: "RIGHT_EYE_BOUNDARY_LANDMARKS:right_eye_boundary_landmarks"
+
+# 71 normalized eye contour landmarks. (NormalizedLandmarkList)
+output_stream: "LEFT_EYE_CONTOUR_LANDMARKS:left_eye_contour_landmarks"
+# 5 normalized iris landmarks. (NormalizedLandmarkList)
+output_stream: "LEFT_EYE_IRIS_LANDMARKS:left_iris_landmarks"
+# Region of interest used to do calculations for the left eye. (NormalizedRect)
+output_stream: "LEFT_EYE_ROI:left_eye_roi"
+
+# 71 normalized eye contour landmarks. (NormalizedLandmarkList)
+output_stream: "RIGHT_EYE_CONTOUR_LANDMARKS:right_eye_contour_landmarks"
+# 5 normalized iris landmarks. (NormalizedLandmarkList)
+output_stream: "RIGHT_EYE_IRIS_LANDMARKS:right_iris_landmarks"
+# Region of interest used to do calculations for the right eye. (NormalizedRect)
+output_stream: "RIGHT_EYE_ROI:right_eye_roi"
+
+node {
+  calculator: "ImagePropertiesCalculator"
+  input_stream: "IMAGE:image"
+  output_stream: "SIZE:image_size"
+}
+
+### Processing left eye ###
+
+node {
+  calculator: "IrisLandmarkLandmarksToRoi"
+  input_stream: "LANDMARKS:left_eye_boundary_landmarks"
+  input_stream: "IMAGE_SIZE:image_size"
+  output_stream: "ROI:left_eye_roi"
+}
+
+node {
+  calculator: "ConstantSidePacketCalculator"
+  output_side_packet: "PACKET:left_eye_flag_side_packet"
+  options {
+    [mediapipe.ConstantSidePacketCalculatorOptions.ext] {
+      packet { bool_value: false }
+    }
+  }
+}
+
+node {
+  calculator: "SidePacketToStreamCalculator"
+  input_stream: "TICK:image"
+  input_side_packet: "left_eye_flag_side_packet"
+  output_stream: "AT_TICK:left_eye_flag"
+}
+
+node {
+  calculator: "IrisLandmarkCpu"
+  input_stream: "IMAGE:image"
+  input_stream: "ROI:left_eye_roi"
+  input_stream: "IS_RIGHT_EYE:left_eye_flag"
+  output_stream: "EYE_CONTOUR_LANDMARKS:left_eye_contour_landmarks"
+  output_stream: "IRIS_LANDMARKS:left_iris_landmarks"
+}
+
+### Processing right eye ###
+
+node {
+  calculator: "IrisLandmarkLandmarksToRoi"
+  input_stream: "LANDMARKS:right_eye_boundary_landmarks"
+  input_stream: "IMAGE_SIZE:image_size"
+  output_stream: "ROI:right_eye_roi"
+}
+
+node {
+  calculator: "ConstantSidePacketCalculator"
+  output_side_packet: "PACKET:right_eye_flag_side_packet"
+  options {
+    [mediapipe.ConstantSidePacketCalculatorOptions.ext] {
+      packet { bool_value: true }
+    }
+  }
+}
+
+node {
+  calculator: "SidePacketToStreamCalculator"
+  input_stream: "TICK:image"
+  input_side_packet: "right_eye_flag_side_packet"
+  output_stream: "AT_TICK:right_eye_flag"
+}
+
+node {
+  calculator: "IrisLandmarkCpu"
+  input_stream: "IMAGE:image"
+  input_stream: "ROI:right_eye_roi"
+  input_stream: "IS_RIGHT_EYE:right_eye_flag"
+  output_stream: "EYE_CONTOUR_LANDMARKS:right_eye_contour_landmarks"
+  output_stream: "IRIS_LANDMARKS:right_iris_landmarks"
+}
+

@@ -2,7 +2,7 @@
 layout: default
 title: Object Detection
 parent: Solutions
-nav_order: 5
+nav_order: 6
 ---
 
 # MediaPipe Object Detection
@@ -95,8 +95,8 @@ Please first see general instructions for
 
     ```
     GLOG_logtostderr=1 bazel-bin/mediapipe/examples/desktop/object_detection/object_detection_tflite \
-    --calculator_graph_config_file=mediapipe/graphs/object_detection/object_detection_desktop_tflite_graph.pbtxt \
-    --input_side_packets=input_video_path=<input video path>,output_video_path=<output video path>
+      --calculator_graph_config_file=mediapipe/graphs/object_detection/object_detection_desktop_tflite_graph.pbtxt \
+      --input_side_packets=input_video_path=<input video path>,output_video_path=<output video path>
     ```
 
 *   With a TensorFlow Model
@@ -131,8 +131,8 @@ Please first see general instructions for
 
     ```bash
     GLOG_logtostderr=1 bazel-bin/mediapipe/examples/desktop/object_detection/object_detection_tflite \
-    --calculator_graph_config_file=mediapipe/graphs/object_detection/object_detection_desktop_tensorflow_graph.pbtxt \
-    --input_side_packets=input_video_path=<input video path>,output_video_path=<output video path>
+      --calculator_graph_config_file=mediapipe/graphs/object_detection/object_detection_desktop_tensorflow_graph.pbtxt \
+      --input_side_packets=input_video_path=<input video path>,output_video_path=<output video path>
     ```
 
 ### Coral
