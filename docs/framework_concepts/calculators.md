@@ -402,7 +402,6 @@ node {
 The diagram below shows how the `PacketClonerCalculator` defines its output
 packets (bottom) based on its series of input packets (top).
 
-| ![Graph using                                                                |
-: PacketClonerCalculator](../images/packet_cloner_calculator.png)              :
-| :--------------------------------------------------------------------------: |
+| ![Graph using PacketClonerCalculator](../images/packet_cloner_calculator.png) |
+| :---------------------------------------------------------------------------: |
 | *Each time it receives a packet on its TICK input stream, the PacketClonerCalculator outputs the most recent packet from each of its input streams. The sequence of output packets (bottom) is determined by the sequence of input packets (top) and their timestamps. The timestamps are shown along the right side of the diagram.* |

@@ -201,5 +201,29 @@ TEST(SceneCropperTest, CropFramesWorksWithPriorFocusPointFrames) {
   }
 }
 
+// Checks that crop_from_locations gets the correct results.
+TEST(SceneCropperTest, CropFromLocation) {
+  CameraMotionOptions options;
+  options.mutable_polynomial_path_solver()->set_prior_frame_buffer_size(30);
+  SceneCropper scene_cropper(options, kSceneWidth, kSceneHeight);
+  std::vector<cv::Mat> cropped_frames;
+  std::vector<cv::Rect> crop_from_locations;
+  const auto& scene_frames = GetDefaultSceneFrames();
+  MP_EXPECT_OK(scene_cropper.CropFrames(
+      GetDefaultSceneKeyFrameCropSummary(), GetTimestamps(scene_frames.size()),
+      GetIsKeyframe(scene_frames.size()), scene_frames,
+      GetDefaultFocusPointFrames(), GetFocusPointFrames(3), 0, 0, false,
+      &crop_from_locations, &cropped_frames));
+  EXPECT_EQ(cropped_frames.size(), kNumSceneFrames);
+  for (int i = 0; i < kNumSceneFrames; ++i) {
+    EXPECT_EQ(cropped_frames[i].rows, kCropHeight);
+    EXPECT_EQ(cropped_frames[i].cols, kCropWidth);
+  }
+  for (int i = 0; i < kNumSceneFrames; ++i) {
+    EXPECT_EQ(crop_from_locations[i].height, kCropHeight);
+    EXPECT_EQ(crop_from_locations[i].width, kCropWidth);
+  }
+}
+
 }  // namespace autoflip
 }  // namespace mediapipe

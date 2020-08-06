@@ -144,11 +144,9 @@ namespace autoflip {
   // renderer.
   for (int i = 0; i < num_scene_frames; i++) {
     const int left = -(scene_frame_xforms[i].at<float>(0, 2));
-    const int right = left + crop_width;
-    const int top = top_static_border_size;
-    const int bottom = frame_height_ - bottom_static_border_size;
-    crop_from_location->push_back(
-        cv::Rect(left, top, right - left, bottom - top));
+    const int top =
+        top_static_border_size - (scene_frame_xforms[i].at<float>(1, 2));
+    crop_from_location->push_back(cv::Rect(left, top, crop_width, crop_height));
   }
 
   // If no cropped_frames is passed in, return directly.

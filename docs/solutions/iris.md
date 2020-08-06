@@ -76,7 +76,7 @@ to visualize its associated subgraphs, please see
 
 ### Face Detection Model
 
-The face detector is the same [bazelFace](https://arxiv.org/abs/1907.05047)
+The face detector is the same [BlazeFace](https://arxiv.org/abs/1907.05047)
 model used in [MediaPipe Face Detection](./face_detection.md).
 
 ### Face Landmark Model
