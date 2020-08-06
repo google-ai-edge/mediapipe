@@ -43,19 +43,23 @@ public class MainActivity extends com.google.mediapipe.apps.basic.MainActivity {
     inputSidePackets.put(INPUT_NUM_FACES_SIDE_PACKET_NAME, packetCreator.createInt32(NUM_FACES));
     processor.setInputSidePackets(inputSidePackets);
 
-    processor.addPacketCallback(
+    // To show verbose logging, run:
+    // adb shell setprop log.tag.MainActivity VERBOSE
+    if (Log.isLoggable(TAG, Log.VERBOSE)) {
+      processor.addPacketCallback(
         OUTPUT_LANDMARKS_STREAM_NAME,
         (packet) -> {
-          Log.d(TAG, "Received multi face landmarks packet.");
+          Log.v(TAG, "Received multi face landmarks packet.");
           List<NormalizedLandmarkList> multiFaceLandmarks =
               PacketGetter.getProtoVector(packet, NormalizedLandmarkList.parser());
-          Log.d(
+          Log.v(
               TAG,
               "[TS:"
                   + packet.getTimestamp()
                   + "] "
                   + getMultiFaceLandmarksDebugString(multiFaceLandmarks));
         });
+    }
   }
 
   private static String getMultiFaceLandmarksDebugString(

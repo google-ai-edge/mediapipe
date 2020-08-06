@@ -14,6 +14,7 @@
 
 package com.google.mediapipe.framework;
 
+import com.google.mediapipe.framework.PacketUtil.SerializedMessage;
 import com.google.protobuf.MessageLite;
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
@@ -263,6 +264,13 @@ public class PacketCreator {
         nativeCreateCalculatorOptions(mediapipeGraph.getNativeHandle(), message.toByteArray()));
   }
 
+  /** Creates a {@link Packet} containing a protobuf MessageLite. */
+  public Packet createProto(MessageLite message) {
+    SerializedMessage serialized = PacketUtil.pack(message);
+    return Packet.create(
+        nativeCreateProto(mediapipeGraph.getNativeHandle(), serialized));
+  }
+
   /** Creates a {@link Packet} containing the given camera intrinsics. */
   public Packet createCameraIntrinsics(
       float fx, float fy, float cx, float cy, float width, float height) {
@@ -359,6 +367,7 @@ public class PacketCreator {
   private native long nativeCreateInt32Array(long context, int[] data);
   private native long nativeCreateFloat32Array(long context, float[] data);
   private native long nativeCreateStringFromByteArray(long context, byte[] data);
+  private native long nativeCreateProto(long context, SerializedMessage data);
 
   private native long nativeCreateCalculatorOptions(long context, byte[] data);
 

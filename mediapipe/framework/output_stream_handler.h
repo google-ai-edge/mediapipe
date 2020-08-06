@@ -155,7 +155,7 @@ class OutputStreamHandler {
   // TODO: Rename the variable to be more descriptive.
   Timestamp task_timestamp_bound_ ABSL_GUARDED_BY(timestamp_mutex_);
 
-  // PropagateionState indicates the current state of the propagation process.
+  // PropagationState indicates the current state of the propagation process.
   // There are eight possible transitions:
   // (a) From kIdle to kPropagatingPackets.
   // Any thread that makes this transition becomes the propagation thread, and

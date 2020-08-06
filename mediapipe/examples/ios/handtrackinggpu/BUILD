@@ -16,6 +16,11 @@ load(
     "@build_bazel_rules_apple//apple:ios.bzl",
     "ios_application",
 )
+load(
+    "//mediapipe/examples/ios:bundle_id.bzl",
+    "BUNDLE_ID_PREFIX",
+    "example_provisioning",
+)
 
 licenses(["notice"])  # Apache 2.0
 
@@ -28,14 +33,14 @@ alias(
 
 ios_application(
     name = "HandTrackingGpuApp",
-    bundle_id = "com.google.mediapipe.HandTrackingGpu",
+    bundle_id = BUNDLE_ID_PREFIX + ".HandTrackingGpu",
     families = [
         "iphone",
         "ipad",
     ],
     infoplists = ["Info.plist"],
     minimum_os_version = MIN_IOS_VERSION,
-    provisioning_profile = "//mediapipe/examples/ios:provisioning_profile",
+    provisioning_profile = example_provisioning(),
     deps = [
         ":HandTrackingGpuAppLibrary",
         "@ios_opencv//:OpencvFramework",

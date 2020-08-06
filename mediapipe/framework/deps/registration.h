@@ -26,6 +26,7 @@
 
 #include "absl/base/macros.h"
 #include "absl/base/thread_annotations.h"
+#include "absl/container/flat_hash_set.h"
 #include "absl/meta/type_traits.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
@@ -145,7 +146,7 @@ struct WrapStatusOr<::mediapipe::StatusOr<T>> {
 
 class NamespaceWhitelist {
  public:
-  static const std::unordered_set<std::string>& TopNamespaces();
+  static const absl::flat_hash_set<std::string>& TopNamespaces();
 };
 
 template <typename R, typename... Args>

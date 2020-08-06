@@ -58,22 +58,6 @@ proto_library(
 )
 
 proto_library(
-    name = "tensorflow_session_from_saved_model_generator_proto",
-    srcs = ["tensorflow_session_from_saved_model_generator.proto"],
-    visibility = ["//visibility:public"],
-    deps = ["//mediapipe/framework:packet_generator_proto"],
-)
-
-proto_library(
-    name = "tensorflow_session_from_saved_model_calculator_proto",
-    srcs = ["tensorflow_session_from_saved_model_calculator.proto"],
-    visibility = ["//visibility:public"],
-    deps = [
-        "//mediapipe/framework:calculator_proto",
-    ],
-)
-
-proto_library(
     name = "tensor_squeeze_dimensions_calculator_proto",
     srcs = ["tensor_squeeze_dimensions_calculator.proto"],
     visibility = ["//visibility:public"],
@@ -212,7 +196,10 @@ mediapipe_cc_proto_library(
 mediapipe_cc_proto_library(
     name = "tensorflow_session_from_saved_model_generator_cc_proto",
     srcs = ["tensorflow_session_from_saved_model_generator.proto"],
-    cc_deps = ["//mediapipe/framework:packet_generator_cc_proto"],
+    cc_deps = [
+        "//mediapipe/framework:packet_generator_cc_proto",
+        "@org_tensorflow//tensorflow/core:protos_all_cc",
+    ],
     visibility = ["//visibility:public"],
     deps = [":tensorflow_session_from_saved_model_generator_proto"],
 )
@@ -220,7 +207,10 @@ mediapipe_cc_proto_library(
 mediapipe_cc_proto_library(
     name = "tensorflow_session_from_saved_model_calculator_cc_proto",
     srcs = ["tensorflow_session_from_saved_model_calculator.proto"],
-    cc_deps = ["//mediapipe/framework:calculator_cc_proto"],
+    cc_deps = [
+        "//mediapipe/framework:calculator_cc_proto",
+        "@org_tensorflow//tensorflow/core:protos_all_cc",
+    ],
     visibility = ["//visibility:public"],
     deps = [":tensorflow_session_from_saved_model_calculator_proto"],
 )
@@ -488,6 +478,8 @@ cc_library(
         "//mediapipe/calculators/tensorflow:tensorflow_session_from_frozen_graph_calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/tool:status_util",
+        "//mediapipe/framework/deps:clock",
+        "//mediapipe/framework/port:logging",
         "//mediapipe/framework/port:status",
         "//mediapipe/framework/port:ret_check",
     ] + select({
@@ -518,6 +510,8 @@ cc_library(
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/tool:status_util",
         "//mediapipe/framework/port:status",
+        "//mediapipe/framework/deps:clock",
+        "//mediapipe/framework/port:logging",
         "//mediapipe/framework/port:ret_check",
     ] + select({
         "//conditions:default": [
@@ -929,6 +923,7 @@ cc_test(
         "@com_google_absl//absl/strings",
         "@org_tensorflow//tensorflow/core:all_kernels",
         "@org_tensorflow//tensorflow/core:direct_session",
+        "@org_tensorflow//tensorflow/core:protos_all_cc",
     ],
 )
 
@@ -954,6 +949,7 @@ cc_test(
         "@com_google_absl//absl/strings",
         "@org_tensorflow//tensorflow/core:all_kernels",
         "@org_tensorflow//tensorflow/core:direct_session",
+        "@org_tensorflow//tensorflow/core:protos_all_cc",
     ],
 )
 

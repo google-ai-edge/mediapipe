@@ -332,6 +332,15 @@ struct RegionFlowComputation::FrameTrackingData {
   // use -1 if no such track id exists. Only used for long feature tracks.
   std::vector<int> track_ids;
 
+  // Stores all the tracked ids that has been discarded actively in this frame.
+  // This information will be popluated via RegionFlowFeatureList, so that the
+  // downstreaming modules can receive it and use it to avoid misjudgement on
+  // tracking continuity.
+  // Discard reason:
+  // (1) A tracked feature has too long track, which might create drift.
+  // (2) A tracked feature in a highly densed area, which provides littel value.
+  std::vector<int> actively_discarded_tracked_ids;
+
   // 1:1 mapping w.r.t. features. Stores the original patch neighborhood when
   // the feature was extracted for the first time, that is for features with
   // assigned track_id (>= 0) the data refers to a neighborhood in an earlier
@@ -1447,6 +1456,12 @@ void RegionFlowComputation::ComputeRegionFlow(
       feature_list->set_timestamp_usec(data1->timestamp_usec);
     }
   }
+  if (data1 != nullptr) {
+    *feature_list->mutable_actively_discarded_tracked_ids() = {
+        data1->actively_discarded_tracked_ids.begin(),
+        data1->actively_discarded_tracked_ids.end()};
+    data1->actively_discarded_tracked_ids.clear();
+  }
 
   feature_list->set_match_frame((to - from) * (invert_flow ? -1 : 1));
 }
@@ -2374,6 +2389,7 @@ void RegionFlowComputation::ExtractFeatures(
 
       if (data->frame_num - start_frame >= lower_max_track_length &&
           distribution(rand_gen) <= drop_permil) {
+        data->actively_discarded_tracked_ids.push_back(track_id);
         continue;
       }
 
@@ -2385,6 +2401,7 @@ void RegionFlowComputation::ExtractFeatures(
       // Value of 2 improves number of connected features.
       constexpr int kMaxFeaturesPerBin = 1;
       if (mask.at<uint8>(mask_y, mask_x) >= kMaxFeaturesPerBin) {
+        data->actively_discarded_tracked_ids.push_back(track_id);
         continue;
       }
 

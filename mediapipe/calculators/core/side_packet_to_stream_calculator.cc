@@ -34,6 +34,8 @@ constexpr char kTagAtPostStream[] = "AT_POSTSTREAM";
 constexpr char kTagAtZero[] = "AT_ZERO";
 constexpr char kTagAtTick[] = "AT_TICK";
 constexpr char kTagTick[] = "TICK";
+constexpr char kTagAtTimestamp[] = "AT_TIMESTAMP";
+constexpr char kTagSideInputTimestamp[] = "TIMESTAMP";
 
 static std::map<std::string, Timestamp>* kTimestampMap = []() {
   auto* res = new std::map<std::string, Timestamp>();
@@ -41,6 +43,7 @@ static std::map<std::string, Timestamp>* kTimestampMap = []() {
   res->emplace(kTagAtPostStream, Timestamp::PostStream());
   res->emplace(kTagAtZero, Timestamp(0));
   res->emplace(kTagAtTick, Timestamp::Unset());
+  res->emplace(kTagAtTimestamp, Timestamp::Unset());
   return res;
 }();
 
@@ -56,9 +59,10 @@ std::string GetOutputTag(const CC& cc) {
 // timestamp, depending on the tag used to define output stream(s). (One tag can
 // be used only.)
 //
-// Valid tags are AT_PRESTREAM, AT_POSTSTREAM, AT_ZERO and AT_TICK and
-// corresponding timestamps are Timestamp::PreStream(), Timestamp::PostStream(),
-// Timestamp(0) and timestamp of a packet received in TICK input.
+// Valid tags are AT_PRESTREAM, AT_POSTSTREAM, AT_ZERO, AT_TICK, AT_TIMESTAMP
+// and corresponding timestamps are Timestamp::PreStream(),
+// Timestamp::PostStream(), Timestamp(0), timestamp of a packet received in TICK
+// input, and timestamp received from a side input.
 //
 // Examples:
 // node {
@@ -72,6 +76,13 @@ std::string GetOutputTag(const CC& cc) {
 //   input_stream: "TICK:tick"
 //   input_side_packet: "side_packet"
 //   output_stream: "AT_TICK:packet"
+// }
+//
+// node {
+//   calculator: "SidePacketToStreamCalculator"
+//   input_side_packet: "TIMESTAMP:timestamp"
+//   input_side_packet: "side_packet"
+//   output_stream: "AT_TIMESTAMP:packet"
 // }
 class SidePacketToStreamCalculator : public CalculatorBase {
  public:
@@ -93,16 +104,29 @@ REGISTER_CALCULATOR(SidePacketToStreamCalculator);
     CalculatorContract* cc) {
   const auto& tags = cc->Outputs().GetTags();
   RET_CHECK(tags.size() == 1 && kTimestampMap->count(*tags.begin()) == 1)
-      << "Only one of AT_PRESTREAM, AT_POSTSTREAM, AT_ZERO and AT_TICK tags is "
-         "allowed and required to specify output stream(s).";
+      << "Only one of AT_PRESTREAM, AT_POSTSTREAM, AT_ZERO, AT_TICK and "
+         "AT_TIMESTAMP tags is allowed and required to specify output "
+         "stream(s).";
   RET_CHECK(
       (cc->Outputs().HasTag(kTagAtTick) && cc->Inputs().HasTag(kTagTick)) ||
       (!cc->Outputs().HasTag(kTagAtTick) && !cc->Inputs().HasTag(kTagTick)))
       << "Either both of TICK and AT_TICK should be used or none of them.";
+  RET_CHECK((cc->Outputs().HasTag(kTagAtTimestamp) &&
+             cc->InputSidePackets().HasTag(kTagSideInputTimestamp)) ||
+            (!cc->Outputs().HasTag(kTagAtTimestamp) &&
+             !cc->InputSidePackets().HasTag(kTagSideInputTimestamp)))
+      << "Either both TIMESTAMP and AT_TIMESTAMP should be used or none of "
+         "them.";
   const std::string output_tag = GetOutputTag(*cc);
   const int num_entries = cc->Outputs().NumEntries(output_tag);
-  RET_CHECK_EQ(num_entries, cc->InputSidePackets().NumEntries())
-      << "Same number of input side packets and output streams is required.";
+  if (cc->Outputs().HasTag(kTagAtTimestamp)) {
+    RET_CHECK_EQ(num_entries + 1, cc->InputSidePackets().NumEntries())
+        << "For AT_TIMESTAMP tag, 2 input side packets are required.";
+    cc->InputSidePackets().Tag(kTagSideInputTimestamp).Set<int64>();
+  } else {
+    RET_CHECK_EQ(num_entries, cc->InputSidePackets().NumEntries())
+        << "Same number of input side packets and output streams is required.";
+  }
   for (int i = 0; i < num_entries; ++i) {
     cc->InputSidePackets().Index(i).SetAny();
     cc->Outputs()
@@ -147,12 +171,21 @@ REGISTER_CALCULATOR(SidePacketToStreamCalculator);
 }
 
 ::mediapipe::Status SidePacketToStreamCalculator::Close(CalculatorContext* cc) {
-  if (!cc->Outputs().HasTag(kTagAtTick)) {
+  if (!cc->Outputs().HasTag(kTagAtTick) &&
+      !cc->Outputs().HasTag(kTagAtTimestamp)) {
     const auto& timestamp = kTimestampMap->at(output_tag_);
     for (int i = 0; i < cc->Outputs().NumEntries(output_tag_); ++i) {
       cc->Outputs()
           .Get(output_tag_, i)
           .AddPacket(cc->InputSidePackets().Index(i).At(timestamp));
+    }
+  } else if (cc->Outputs().HasTag(kTagAtTimestamp)) {
+    int64 timestamp =
+        cc->InputSidePackets().Tag(kTagSideInputTimestamp).Get<int64>();
+    for (int i = 0; i < cc->Outputs().NumEntries(output_tag_); ++i) {
+      cc->Outputs()
+          .Get(output_tag_, i)
+          .AddPacket(cc->InputSidePackets().Index(i).At(Timestamp(timestamp)));
     }
   }
   return ::mediapipe::OkStatus();

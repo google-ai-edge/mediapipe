@@ -700,6 +700,8 @@ mediapipe_cc_proto_library(
     deps = [":rect_to_render_data_calculator_proto"],
 )
 
+# TODO: What is that one for?
+
 mediapipe_cc_proto_library(
     name = "detections_to_render_data_calculator_cc_proto",
     srcs = ["detections_to_render_data_calculator.proto"],

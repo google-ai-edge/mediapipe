@@ -235,9 +235,10 @@ void DetectionsToRenderDataCalculator::AddLabels(
     const Detection& detection,
     const DetectionsToRenderDataCalculatorOptions& options,
     float text_line_height, RenderData* render_data) {
-  CHECK(detection.label().empty() || detection.label_id().empty())
-      << "Either std::string or integer labels must be used for detection "
-         "but not both at the same time.";
+  CHECK(detection.label().empty() || detection.label_id().empty() ||
+        detection.label_size() == detection.label_id_size())
+      << "String or integer labels should be of same size. Or only one of them "
+         "is present.";
   const auto num_labels =
       std::max(detection.label_size(), detection.label_id_size());
   CHECK_EQ(detection.score_size(), num_labels)

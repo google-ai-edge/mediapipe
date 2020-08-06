@@ -16,6 +16,7 @@
 #include <vector>
 
 #include "absl/memory/memory.h"
+#include "absl/strings/substitute.h"
 #include "mediapipe/calculators/tflite/tflite_converter_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/calculator_runner.h"
@@ -40,6 +41,7 @@ constexpr char kTransposeOptionsString[] =
 }  // namespace
 
 using RandomEngine = std::mt19937_64;
+using testing::Eq;
 const uint32 kSeed = 1234;
 const int kNumSizes = 8;
 const int sizes[kNumSizes][2] = {{1, 1}, {12, 1}, {1, 9},   {2, 2},
@@ -232,7 +234,6 @@ TEST_F(TfLiteConverterCalculatorTest, CustomDivAndSub) {
 
   // Wait until the calculator done processing.
   MP_ASSERT_OK(graph.WaitUntilIdle());
-  EXPECT_EQ(1, output_packets.size());
 
   // Get and process results.
   const std::vector<TfLiteTensor>& tensor_vec =
@@ -247,6 +248,72 @@ TEST_F(TfLiteConverterCalculatorTest, CustomDivAndSub) {
   // after calling WaitUntilDone().
   MP_ASSERT_OK(graph.CloseInputStream("input_image"));
   MP_ASSERT_OK(graph.WaitUntilDone());
+}
+
+TEST_F(TfLiteConverterCalculatorTest, SetOutputRange) {
+  std::vector<std::pair<float, float>> range_values = {
+      std::make_pair(0.0, 1.0), std::make_pair(-1.0, 1.0),
+      std::make_pair(-0.5, 0.5)};
+  for (std::pair<float, float> range : range_values) {
+    CalculatorGraph graph;
+    CalculatorGraphConfig graph_config =
+        ::mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(
+            absl::Substitute(R"(
+        input_stream: "input_image"
+        node {
+          calculator: "TfLiteConverterCalculator"
+          input_stream: "IMAGE:input_image"
+          output_stream: "TENSORS:tensor"
+          options {
+            [mediapipe.TfLiteConverterCalculatorOptions.ext] {
+              output_tensor_float_range {
+                min: $0
+                max: $1
+              }
+            }
+          }
+        }
+        )",
+                             /*$0=*/range.first,
+                             /*$1=*/range.second));
+    std::vector<Packet> output_packets;
+    tool::AddVectorSink("tensor", &graph_config, &output_packets);
+
+    // Run the graph.
+    MP_ASSERT_OK(graph.Initialize(graph_config));
+    MP_ASSERT_OK(graph.StartRun({}));
+    auto input_image = absl::make_unique<ImageFrame>(ImageFormat::GRAY8, 1, 1);
+    cv::Mat mat = ::mediapipe::formats::MatView(input_image.get());
+    mat.at<uint8>(0, 0) = 200;
+    MP_ASSERT_OK(graph.AddPacketToInputStream(
+        "input_image", Adopt(input_image.release()).At(Timestamp(0))));
+
+    // Wait until the calculator finishes processing.
+    MP_ASSERT_OK(graph.WaitUntilIdle());
+    EXPECT_THAT(output_packets.size(), Eq(1));
+
+    // Get and process results.
+    const std::vector<TfLiteTensor>& tensor_vec =
+        output_packets[0].Get<std::vector<TfLiteTensor>>();
+    EXPECT_THAT(tensor_vec.size(), Eq(1));
+
+    const TfLiteTensor* tensor = &tensor_vec[0];
+
+    // Calculate the expected normalized value:
+    float normalized_value =
+        range.first + (200 * (range.second - range.first)) / 255.0;
+
+    EXPECT_THAT(tensor->type, Eq(kTfLiteFloat32));
+    EXPECT_THAT(normalized_value,
+                testing::FloatNear(*tensor->data.f,
+                                   2.0f * std::abs(*tensor->data.f) *
+                                       std::numeric_limits<float>::epsilon()));
+
+    // Fully close graph at end, otherwise calculator+tensors are destroyed
+    // after calling WaitUntilDone().
+    MP_ASSERT_OK(graph.CloseInputStream("input_image"));
+    MP_ASSERT_OK(graph.WaitUntilDone());
+  }
 }
 
 }  // namespace mediapipe

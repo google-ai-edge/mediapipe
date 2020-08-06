@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <vector>
+
 #include "absl/strings/match.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/singleton.h"
@@ -62,22 +64,13 @@ namespace {
   }
 
   if (absl::StartsWith(path, "content://")) {
-    auto fd_status = Singleton<AssetManager>::get()->OpenContentUri(path);
-    if (!fd_status.ok()) {
-      return ::mediapipe::Status(mediapipe::StatusCode::kUnknown,
-                                 "Failed to open file: " + std::string(path));
-    }
-    int fd = fd_status.ValueOrDie();
-    auto status = file::GetContents(fd, output);
-
-    close(fd);
-    return status;
+    MP_RETURN_IF_ERROR(
+        Singleton<AssetManager>::get()->ReadContentUri(path, output));
+    return ::mediapipe::OkStatus();
   }
 
-  std::vector<uint8_t> data;
-  RET_CHECK(Singleton<AssetManager>::get()->ReadFile(path, &data))
+  RET_CHECK(Singleton<AssetManager>::get()->ReadFile(path, output))
       << "could not read asset: " << path;
-  output->assign(reinterpret_cast<char*>(data.data()), data.size());
   return ::mediapipe::OkStatus();
 }
 

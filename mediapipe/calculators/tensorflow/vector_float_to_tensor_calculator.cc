@@ -91,11 +91,11 @@ REGISTER_CALCULATOR(VectorFloatToTensorCalculator);
         cc->Inputs().Index(0).Value().Get<std::vector<std::vector<float>>>();
 
     const int32 rows = input.size();
-    CHECK_GE(rows, 1);
+    RET_CHECK_GE(rows, 1);
     const int32 cols = input[0].size();
-    CHECK_GE(cols, 1);
+    RET_CHECK_GE(cols, 1);
     for (int i = 1; i < rows; ++i) {
-      CHECK_EQ(input[i].size(), cols);
+      RET_CHECK_EQ(input[i].size(), cols);
     }
     if (options_.transpose()) {
       tensor_shape = tf::TensorShape({cols, rows});
@@ -116,7 +116,7 @@ REGISTER_CALCULATOR(VectorFloatToTensorCalculator);
   } else if (options_.input_size() == INPUT_1D) {
     const std::vector<float>& input =
         cc->Inputs().Index(0).Value().Get<std::vector<float>>();
-    CHECK_GE(input.size(), 1);
+    RET_CHECK_GE(input.size(), 1);
     const int32 length = input.size();
     tensor_shape = tf::TensorShape({length});
     auto output = ::absl::make_unique<tf::Tensor>(tf::DT_FLOAT, tensor_shape);

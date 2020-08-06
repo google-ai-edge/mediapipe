@@ -407,7 +407,7 @@ StatusOr<std::vector<const proto_ns::MessageLite*>>
 ConvertToVectorOfProtoMessageLitePtrs(const T* data,
                                       /*is_proto_vector=*/std::false_type) {
   return ::mediapipe::InvalidArgumentError(absl::StrCat(
-      "The Packet stores \"", typeid(T).name(), "\"",
+      "The Packet stores \"", tool::TypeId<T>().name(), "\"",
       "which is not convertible to vector<proto_ns::MessageLite*>."));
 }
 

@@ -307,11 +307,10 @@ cc_library(
     ],
     visibility = ["//visibility:public"],
     deps = [
+        ":core_proto",
         ":logging",
         "//mediapipe/framework:port",
-    ] + select({
-        "//conditions:default": ["@com_google_protobuf//:protobuf"],
-    }),
+    ],
 )
 
 cc_library(
@@ -405,7 +404,7 @@ cc_library(
     visibility = ["//mediapipe/framework/port:__pkg__"],
     deps = [
         ":status",
-        "//mediapipe/framework/deps:status_matchers",
+        "@com_google_googletest//:gtest",
     ],
 )
 

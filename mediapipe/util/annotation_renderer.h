@@ -71,6 +71,12 @@ class AnnotationRenderer {
   // corner.
   void SetFlipTextVertically(bool flip);
 
+  // For GPU rendering optimization in AnnotationOverlayCalculator.
+  // Scale all incoming coordinates,sizes,thickness,etc. by this amount.
+  // Should be in the range (0-1].
+  // See 'gpu_scale_factor' in annotation_overlay_calculator.proto
+  void SetScaleFactor(float scale_factor);
+
  private:
   // Draws a rectangle on the image as described in the annotation.
   void DrawRectangle(const RenderAnnotation& annotation);
@@ -127,6 +133,9 @@ class AnnotationRenderer {
 
   // See SetFlipTextVertically(bool).
   bool flip_text_vertically_ = false;
+
+  // See SetScaleFactor(float)
+  float scale_factor_ = 1.0;
 };
 }  // namespace mediapipe
 

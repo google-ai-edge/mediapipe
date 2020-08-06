@@ -10,4 +10,9 @@ message KinematicOptions {
   optional double max_velocity = 2 [default = 18];
   // Min motion (in degrees) to react in pixels.
   optional float min_motion_to_reframe = 3 [default = 1.8];
+  // When motion exceeds min_motion_to_reframe, move within this distance of the
+  // camera from the starting direction.  Setting this value non-zero reduces
+  // total reframe distance on average.  Value cannot exceed
+  // min_motion_to_reframe value.
+  optional float reframe_window = 4 [default = 0];
 }

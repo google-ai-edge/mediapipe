@@ -69,4 +69,12 @@ message TensorFlowSessionFromFrozenGraphCalculatorOptions {
   // Graph nodes to run to initialize the model. Any output of these ops is
   // ignored.
   repeated string initialization_op_names = 4;
+
+  // The id of the device you would prefer to execute the graph nodes on.
+  // If set, all graph nodes without a previously specified device, will be set
+  // to run on preferred_device_id. Example values include:
+  // ["/device:GPU:0","/device:CPU:0", ...]
+  // NOTE: If config.allow_soft_placement = false, and the device is not found,
+  // an error will be thrown.
+  optional string preferred_device_id = 5;
 }

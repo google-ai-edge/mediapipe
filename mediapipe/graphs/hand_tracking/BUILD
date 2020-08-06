@@ -49,6 +49,13 @@ cc_library(
     ],
 )
 
+mediapipe_binary_graph(
+    name = "hand_tracking_desktop_live_binary_graph",
+    graph = "hand_tracking_desktop_live.pbtxt",
+    output_name = "hand_tracking_desktop_live.binarypb",
+    deps = [":desktop_tflite_calculators"],
+)
+
 cc_library(
     name = "mobile_calculators",
     deps = [

@@ -14,14 +14,23 @@
 
 #include "mediapipe/util/resource_util.h"
 
+#include "absl/flags/flag.h"
+#include "absl/strings/str_split.h"
+#include "mediapipe/framework/deps/file_path.h"
 #include "mediapipe/framework/port/file_helpers.h"
+#include "mediapipe/framework/port/ret_check.h"
+
+ABSL_FLAG(
+    std::string, resource_root_dir, "",
+    "The absolute path to the resource directory."
+    "If specified, resource_root_dir will be prepended to the original path.");
 
 namespace mediapipe {
 
-// Trivial implementation for Linux. For now just returns the path.
 ::mediapipe::StatusOr<std::string> PathToResourceAsFile(
     const std::string& path) {
-  return path;
+  return ::mediapipe::file::JoinPath(FLAGS_resource_root_dir.CurrentValue(),
+                                     path);
 }
 
 ::mediapipe::Status GetResourceContents(const std::string& path,

@@ -17,12 +17,14 @@
 #include <cstring>
 #include <memory>
 
+#include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/framework/camera_intrinsics.h"
 #include "mediapipe/framework/formats/image_format.pb.h"
 #include "mediapipe/framework/formats/image_frame.h"
 #include "mediapipe/framework/formats/matrix.h"
 #include "mediapipe/framework/formats/time_series_header.pb.h"
 #include "mediapipe/framework/formats/video_stream_header.h"
+#include "mediapipe/framework/port/core_proto_inc.h"
 #include "mediapipe/framework/port/logging.h"
 #include "mediapipe/java/com/google/mediapipe/framework/jni/colorspace.h"
 #include "mediapipe/java/com/google/mediapipe/framework/jni/graph.h"
@@ -32,6 +34,8 @@
 #endif  // !defined(MEDIAPIPE_DISABLE_GPU)
 
 namespace {
+using mediapipe::android::SerializedMessageIds;
+using mediapipe::android::ThrowIfError;
 
 template <class T>
 int64_t CreatePacketScalar(jlong context, const T& value) {
@@ -49,7 +53,6 @@ int64_t CreatePacketWithContext(jlong context,
       reinterpret_cast<mediapipe::android::Graph*>(context);
   return mediapipe_graph->WrapPacketIntoContext(packet);
 }
-
 }  // namespace
 
 JNIEXPORT jlong JNICALL PACKET_CREATOR_METHOD(nativeCreateReferencePacket)(
@@ -409,6 +412,30 @@ JNIEXPORT jlong JNICALL PACKET_CREATOR_METHOD(nativeCreateCalculatorOptions)(
   }
   mediapipe::Packet packet = mediapipe::Adopt(options.release());
   env->ReleaseByteArrayElements(data, data_ref, JNI_ABORT);
+  return CreatePacketWithContext(context, packet);
+}
+
+JNIEXPORT jlong JNICALL PACKET_CREATOR_METHOD(nativeCreateProto)(JNIEnv* env,
+                                                                 jobject thiz,
+                                                                 jlong context,
+                                                                 jobject data) {
+  // Convert type_name and value from Java data.
+  static SerializedMessageIds ids(env, data);
+  jstring j_type_name = (jstring)env->GetObjectField(data, ids.type_name_id);
+  std::string type_name =
+      mediapipe::android::JStringToStdString(env, j_type_name);
+  jbyteArray value_array = (jbyteArray)env->GetObjectField(data, ids.value_id);
+  jsize value_len = env->GetArrayLength(value_array);
+  jbyte* value_ref = env->GetByteArrayElements(value_array, nullptr);
+
+  // Create the C++ MessageLite and Packet.
+  mediapipe::Packet packet;
+  auto packet_or = mediapipe::packet_internal::PacketFromDynamicProto(
+      type_name, std::string((char*)value_ref, value_len));
+  if (!ThrowIfError(env, packet_or.status())) {
+    packet = packet_or.ValueOrDie();
+  }
+  env->ReleaseByteArrayElements(value_array, value_ref, JNI_ABORT);
   return CreatePacketWithContext(context, packet);
 }
 

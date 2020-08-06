@@ -181,6 +181,9 @@ void RegisterPacketCreatorNatives(JNIEnv *env) {
       &packet_creator_methods, packet_creator, "nativeCreateFloatImageFrame",
       "(JLjava/nio/ByteBuffer;II)J",
       (void *)&PACKET_CREATOR_METHOD(nativeCreateFloatImageFrame));
+  AddJNINativeMethod(&packet_creator_methods, packet_creator,
+                     "nativeCreateInt32", "(JI)J",
+                     (void *)&PACKET_CREATOR_METHOD(nativeCreateInt32));
   RegisterNativesVector(env, packet_creator_class, packet_creator_methods);
 }
 

@@ -63,6 +63,12 @@ mediapipe_proto_library(
     visibility = ["//visibility:public"],
 )
 
+mediapipe_proto_library(
+    name = "image_file_properties_proto",
+    srcs = ["image_file_properties.proto"],
+    visibility = ["//visibility:public"],
+)
+
 cc_library(
     name = "deleting_file",
     srcs = ["deleting_file.cc"],
@@ -95,18 +101,23 @@ cc_library(
     hdrs = ["image_frame.h"],
     visibility = ["//visibility:public"],
     deps = [
-        "//mediapipe/framework:port",
         "//mediapipe/framework/formats:image_format_cc_proto",
-        "//mediapipe/framework/port:aligned_malloc_and_free",
-        "//mediapipe/framework/port:core_proto",
-        "//mediapipe/framework/port:integral_types",
-        "//mediapipe/framework/port:logging",
-        "//mediapipe/framework/port:source_location",
         "@com_google_absl//absl/base",
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
-    ],
+        "//mediapipe/framework:port",
+        "//mediapipe/framework/port:aligned_malloc_and_free",
+        "//mediapipe/framework/port:core_proto",
+        "//mediapipe/framework/port:integral_types",
+        "//mediapipe/framework/port:source_location",
+        "//mediapipe/framework/port:logging",
+        "//mediapipe/framework/tool:type_util",
+    ] + select({
+        "//conditions:default": [
+        ],
+        "//mediapipe/framework:disable_rtti_and_exceptions": [],
+    }),
 )
 
 cc_library(

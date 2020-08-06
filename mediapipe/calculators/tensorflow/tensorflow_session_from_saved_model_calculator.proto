@@ -17,6 +17,7 @@ syntax = "proto2";
 package mediapipe;
 
 import "mediapipe/framework/calculator.proto";
+import "tensorflow/core/protobuf/config.proto";
 
 message TensorFlowSessionFromSavedModelCalculatorOptions {
   extend mediapipe.CalculatorOptions {
@@ -55,4 +56,7 @@ message TensorFlowSessionFromSavedModelCalculatorOptions {
   // If no tag is specified, then use "serve" as the default. Note that in order
   // to use TPU accelerator hardware, the tag "tpu" needs to be specified.
   repeated string saved_model_tag = 6;
+
+  // Tensorflow session config options.
+  optional tensorflow.ConfigProto session_config = 7;
 }

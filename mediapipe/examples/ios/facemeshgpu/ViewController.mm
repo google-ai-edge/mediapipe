@@ -101,8 +101,6 @@ static const int kNumFaces = 1;
   _renderer.layer.frame = _liveView.layer.bounds;
   [_liveView.layer addSublayer:_renderer.layer];
   _renderer.frameScaleMode = MPPFrameScaleModeFillAndCrop;
-  // When using the front camera, mirror the input for a more natural look.
-  _renderer.mirrored = YES;
 
   dispatch_queue_attr_t qosAttribute = dispatch_queue_attr_make_with_qos_class(
       DISPATCH_QUEUE_SERIAL, QOS_CLASS_USER_INTERACTIVE, /*relative_priority=*/0);
@@ -114,6 +112,8 @@ static const int kNumFaces = 1;
   _cameraSource.cameraPosition = AVCaptureDevicePositionFront;
   // The frame's native format is rotated with respect to the portrait orientation.
   _cameraSource.orientation = AVCaptureVideoOrientationPortrait;
+  // When using the front camera, mirror the input for a more natural look.
+  _cameraSource.videoMirrored = YES;
 
   self.mediapipeGraph = [[self class] loadGraphFromResource:kGraphName];
   self.mediapipeGraph.delegate = self;
