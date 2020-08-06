@@ -24,6 +24,7 @@
 #include "mediapipe/java/com/google/mediapipe/framework/jni/jni_util.h"
 
 using mediapipe::android::JStringToStdString;
+using mediapipe::android::ThrowIfError;
 
 namespace {
 mediapipe::Status AddSidePacketsIntoGraph(
@@ -70,15 +71,6 @@ mediapipe::Status AddStreamHeadersIntoGraph(
   return mediapipe::OkStatus();
 }
 
-// Throws a MediaPipeException for any non-ok mediapipe::Status.
-// Note that the exception is thrown after execution returns to Java.
-bool ThrowIfError(JNIEnv* env, mediapipe::Status status) {
-  if (!status.ok()) {
-    env->Throw(mediapipe::android::CreateMediaPipeException(env, status));
-    return true;
-  }
-  return false;
-}
 }  // namespace
 
 JNIEXPORT jlong JNICALL GRAPH_METHOD(nativeCreateGraph)(JNIEnv* env,

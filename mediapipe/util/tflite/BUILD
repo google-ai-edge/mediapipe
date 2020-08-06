@@ -22,6 +22,7 @@ package(default_visibility = [
 cc_library(
     name = "config",
     hdrs = ["config.h"],
+    features = ["-parse_headers"],
     deps = [
         "//mediapipe/framework:calculator_framework",
     ],

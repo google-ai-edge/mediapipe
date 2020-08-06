@@ -207,8 +207,8 @@ class SomeAudioVideoCalculator : public CalculatorBase {
     // particular type.  SetAny() has the same effect as explicitly
     // setting the type to be the stream's type.
     cc->Outputs().Tag("VIDEO").Set<ImageFrame>();
-    cc->Outputs().Get("AUDIO", 0).Set<Matrix>;
-    cc->Outputs().Get("AUDIO", 1).Set<Matrix>;
+    cc->Outputs().Get("AUDIO", 0).Set<Matrix>();
+    cc->Outputs().Get("AUDIO", 1).Set<Matrix>();
     return ::mediapipe::OkStatus();
   }
 ```
@@ -400,13 +400,8 @@ node {
 ```
 
 The diagram below shows how the `PacketClonerCalculator` defines its output
-packets based on its series of input packets.
+packets (bottom) based on its series of input packets (top).
 
-| ![Graph using                                                                |
-: PacketClonerCalculator](../images/packet_cloner_calculator.png)              :
-| :--------------------------------------------------------------------------: |
-| *Each time it receives a packet on its TICK input stream, the                |
-: PacketClonerCalculator outputs the most recent packet from each of its input :
-: streams. The sequence of output packets is determined by the sequene of      :
-: input packets and their timestamps. The timestamps are shows along the right :
-: side of the diagram.*                                                        :
+| ![Graph using PacketClonerCalculator](../images/packet_cloner_calculator.png) |
+| :---------------------------------------------------------------------------: |
+| *Each time it receives a packet on its TICK input stream, the PacketClonerCalculator outputs the most recent packet from each of its input streams. The sequence of output packets (bottom) is determined by the sequence of input packets (top) and their timestamps. The timestamps are shown along the right side of the diagram.* |

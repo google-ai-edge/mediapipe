@@ -45,4 +45,10 @@ message AnnotationOverlayCalculatorOptions {
   // origin. (Historically, OpenGL uses bottom left origin, but most MediaPipe
   // examples expect textures to have top-left origin.)
   optional bool gpu_uses_top_left_origin = 6 [default = true];
+
+  // Scale factor for intermediate image for GPU rendering.
+  // This can be used to speed up annotation by drawing the annotation on an
+  // intermediate image with a reduced scale, e.g. 0.5 (of the input image width
+  // and height), before resizing and overlaying it on top of the input image.
+  optional float gpu_scale_factor = 7 [default = 1.0];
 }

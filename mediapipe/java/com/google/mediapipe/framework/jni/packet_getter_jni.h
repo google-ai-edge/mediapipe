@@ -69,6 +69,11 @@ JNIEXPORT jbyteArray JNICALL PACKET_GETTER_METHOD(nativeGetBytes)(JNIEnv* env,
 JNIEXPORT jbyteArray JNICALL PACKET_GETTER_METHOD(nativeGetProtoBytes)(
     JNIEnv* env, jobject thiz, jlong packet);
 
+JNIEXPORT void JNICALL PACKET_GETTER_METHOD(nativeGetProto)(JNIEnv* env,
+                                                            jobject thiz,
+                                                            jlong packet,
+                                                            jobject result);
+
 JNIEXPORT jobjectArray JNICALL PACKET_GETTER_METHOD(nativeGetProtoVector)(
     JNIEnv* env, jobject thiz, jlong packet);
 

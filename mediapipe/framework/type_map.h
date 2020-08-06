@@ -383,7 +383,7 @@ const std::string MediaPipeTypeStringOrDemangled() {
   if (type_string) {
     return *type_string;
   } else {
-    return ::mediapipe::Demangle(typeid(T).name());
+    return ::mediapipe::Demangle(tool::TypeId<T>().name());
   }
 }
 

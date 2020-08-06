@@ -19,6 +19,7 @@ package mediapipe.autoflip;
 import "mediapipe/examples/desktop/autoflip/quality/kinematic_path_solver.proto";
 import "mediapipe/framework/calculator.proto";
 
+// NextTag: 13
 message ContentZoomingCalculatorOptions {
   extend mediapipe.CalculatorOptions {
     optional ContentZoomingCalculatorOptions ext = 313091992;
@@ -44,6 +45,12 @@ message ContentZoomingCalculatorOptions {
     optional int64 height = 2;
   }
   optional Size target_size = 8;
+  // Amount to shift an input detection as a ratio of the size (positive:
+  // down/right, negative: up/left).  Use a negative value to increase padding
+  // above/left of an object, positive to increase padding below/right of an
+  // object.
+  optional float detection_shift_vertical = 11 [default = 0.0];
+  optional float detection_shift_horizontal = 12 [default = 0.0];
 
   // Deprecated parameters
   optional KinematicOptions kinematic_options = 2 [deprecated = true];

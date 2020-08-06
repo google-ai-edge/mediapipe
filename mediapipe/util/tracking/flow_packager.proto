@@ -104,6 +104,11 @@ message TrackingData {
 
     // Feature descriptors for num_elements feature points.
     repeated BinaryFeatureDescriptor feature_descriptors = 6;
+
+    // Stores all the tracked ids that have been discarded actively. This
+    // information will be used by downstreaming to avoid misjudgement on
+    // tracking continuity.
+    repeated int32 actively_discarded_tracked_ids = 7;
   }
 
   optional MotionData motion_data = 5;

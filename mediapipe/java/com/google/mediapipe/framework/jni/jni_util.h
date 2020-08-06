@@ -30,6 +30,19 @@ std::string JStringToStdString(JNIEnv* env, jstring jstr);
 // Creates a java MediaPipeException object for a mediapipe::Status.
 jthrowable CreateMediaPipeException(JNIEnv* env, mediapipe::Status status);
 
+// Throws a MediaPipeException for any non-ok mediapipe::Status.
+// Note that the exception is thrown after execution returns to Java.
+bool ThrowIfError(JNIEnv* env, mediapipe::Status status);
+
+// The Jni ids for Java class SerializedMessage.
+class SerializedMessageIds {
+ public:
+  SerializedMessageIds(JNIEnv* env, jobject data);
+  jclass j_class;
+  jfieldID type_name_id;
+  jfieldID value_id;
+};
+
 }  // namespace android
 
 namespace java {

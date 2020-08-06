@@ -37,6 +37,10 @@ namespace mediapipe {
 // the RoundRobinDemuxCalculator.  Therefore, packets from different
 // input streams are normally not expected to have the same timestamp.
 //
+// NOTE: this calculator can drop packets non-deterministically, depending on
+// how fast the input streams are fed. In most cases, MuxCalculator should be
+// preferred. In particular, dropping packets can interfere with rate limiting
+// mechanisms.
 class ImmediateMuxCalculator : public CalculatorBase {
  public:
   // This calculator combines any set of input streams into a single
@@ -76,6 +80,9 @@ REGISTER_CALCULATOR(ImmediateMuxCalculator);
     if (!packet.IsEmpty()) {
       if (packet.Timestamp() >= cc->Outputs().Index(0).NextTimestampBound()) {
         cc->Outputs().Index(0).AddPacket(packet);
+      } else {
+        LOG_FIRST_N(WARNING, 5)
+            << "Dropping a packet with timestamp " << packet.Timestamp();
       }
       if (cc->Outputs().NumEntries() >= 2) {
         Timestamp output_timestamp = std::max(

@@ -112,7 +112,7 @@ mediapipe_proto_library(
 mediapipe_proto_library(
     name = "stream_handler_proto",
     srcs = ["stream_handler.proto"],
-    visibility = ["//mediapipe/framework:__subpackages__"],
+    visibility = [":mediapipe_internal"],
     deps = ["//mediapipe/framework:mediapipe_options_proto"],
 )
 
@@ -130,7 +130,7 @@ mediapipe_proto_library(
 mediapipe_proto_library(
     name = "thread_pool_executor_proto",
     srcs = ["thread_pool_executor.proto"],
-    visibility = ["//mediapipe/framework:__subpackages__"],
+    visibility = [":mediapipe_internal"],
     deps = ["//mediapipe/framework:mediapipe_options_proto"],
 )
 
@@ -923,6 +923,15 @@ cc_library(
     ],
 )
 
+# When --copt=-fno-rtti is set, MEDIAPIPE_HAS_RTTI is cleared in port.h.
+# To explicitly clear MEDIAPIPE_HAS_RTTI, compile with:
+#   bazel build --define=disable_rtti_and_exceptions=true
+config_setting(
+    name = "disable_rtti_and_exceptions",
+    define_values = {"disable_rtti_and_exceptions": "true"},
+    visibility = ["//visibility:public"],
+)
+
 cc_library(
     name = "port",
     hdrs = ["port.h"],
@@ -931,6 +940,11 @@ cc_library(
     }) + select({
         "//conditions:default": [],
         "//mediapipe/gpu:disable_gpu": ["MEDIAPIPE_DISABLE_GPU"],
+    }) + select({
+        "//conditions:default": [],
+        "//mediapipe/framework:disable_rtti_and_exceptions": [
+            "MEDIAPIPE_HAS_RTTI=0",
+        ],
     }),
     visibility = [
         "//mediapipe/framework:__subpackages__",
@@ -1167,6 +1181,7 @@ cc_test(
         "//mediapipe/framework/port:status",
         "//mediapipe/framework/tool:status_util",
         "//mediapipe/framework/tool:tag_map_helper",
+        "@com_google_absl//absl/container:flat_hash_set",
     ],
 )
 

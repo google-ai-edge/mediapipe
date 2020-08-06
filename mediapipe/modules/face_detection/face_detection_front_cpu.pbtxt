@@ -60,6 +60,7 @@ node {
   options: {
     [mediapipe.TfLiteInferenceCalculatorOptions.ext] {
       model_path: "mediapipe/modules/face_detection/face_detection_front.tflite"
+      delegate { xnnpack {} }
     }
   }
 }

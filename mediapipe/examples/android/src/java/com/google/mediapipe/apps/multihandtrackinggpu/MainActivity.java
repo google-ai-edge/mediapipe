@@ -31,19 +31,23 @@ public class MainActivity extends com.google.mediapipe.apps.basic.MainActivity {
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
 
-    processor.addPacketCallback(
+    // To show verbose logging, run:
+    // adb shell setprop log.tag.MainActivity VERBOSE
+    if (Log.isLoggable(TAG, Log.VERBOSE)) {
+      processor.addPacketCallback(
         OUTPUT_LANDMARKS_STREAM_NAME,
         (packet) -> {
-          Log.d(TAG, "Received multi-hand landmarks packet.");
+          Log.v(TAG, "Received multi-hand landmarks packet.");
           List<NormalizedLandmarkList> multiHandLandmarks =
               PacketGetter.getProtoVector(packet, NormalizedLandmarkList.parser());
-          Log.d(
+          Log.v(
               TAG,
               "[TS:"
                   + packet.getTimestamp()
                   + "] "
                   + getMultiHandLandmarksDebugString(multiHandLandmarks));
         });
+    }
   }
 
   private String getMultiHandLandmarksDebugString(List<NormalizedLandmarkList> multiHandLandmarks) {

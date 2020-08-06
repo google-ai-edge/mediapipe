@@ -575,7 +575,7 @@ CalculatorGraph::PrepareGpu(const std::map<std::string, Packet>& side_packets) {
     // Set up executors.
     for (auto& node : *nodes_) {
       if (node.UsesGpu()) {
-        gpu_resources->PrepareGpuNode(&node);
+        MP_RETURN_IF_ERROR(gpu_resources->PrepareGpuNode(&node));
       }
     }
     for (const auto& name_executor : gpu_resources->GetGpuExecutors()) {

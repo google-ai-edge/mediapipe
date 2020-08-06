@@ -185,6 +185,9 @@ class InputStreamHandler {
   // When true, Calculator::Process is called for every input timestamp bound.
   bool ProcessTimestampBounds() { return process_timestamps_; }
 
+  // Returns the number of sync-sets populated by this input stream handler.
+  virtual int SyncSetCount() { return 1; }
+
   // A helper class to build input packet sets for a certain set of streams.
   //
   // ReadyForProcess requires all of the streams to be fully determined

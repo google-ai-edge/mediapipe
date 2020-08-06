@@ -17,7 +17,6 @@
 #include "absl/strings/str_format.h"
 #include "absl/types/span.h"
 #include "mediapipe/calculators/tflite/tflite_tensors_to_segmentation_calculator.pb.h"
-#include "mediapipe/calculators/tflite/util.h"
 #include "mediapipe/framework/calculator_context.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/image_frame.h"
@@ -400,7 +399,7 @@ REGISTER_CALCULATOR(TfLiteTensorsToSegmentationCalculator);
 
   // Create initial working mask texture.
   ::tflite::gpu::gl::GlTexture small_mask_texture;
-  RET_CHECK_CALL(CreateReadWriteRgbaImageTexture(
+  MP_RETURN_IF_ERROR(CreateReadWriteRgbaImageTexture(
       tflite::gpu::DataType::UINT8,  // GL_RGBA8
       {tensor_width_, tensor_height_}, &small_mask_texture));
 
@@ -410,7 +409,7 @@ REGISTER_CALCULATOR(TfLiteTensorsToSegmentationCalculator);
                                 : mediapipe::GlTexture();
 
   // Copy input tensor.
-  RET_CHECK_CALL(CopyBuffer(input_tensors[0], *tensor_buffer_));
+  MP_RETURN_IF_ERROR(CopyBuffer(input_tensors[0], *tensor_buffer_));
 
   // Run shader, process mask tensor.
   // Run softmax over tensor output and blend with previous mask.
@@ -418,18 +417,18 @@ REGISTER_CALCULATOR(TfLiteTensorsToSegmentationCalculator);
     const int output_index = 0;
     glBindImageTexture(output_index, small_mask_texture.id(), 0, GL_FALSE, 0,
                        GL_WRITE_ONLY, GL_RGBA8);
-    RET_CHECK_CALL(tensor_buffer_->BindToIndex(2));
+    MP_RETURN_IF_ERROR(tensor_buffer_->BindToIndex(2));
 
     const tflite::gpu::uint3 workgroups = {
         NumGroups(tensor_width_, kWorkgroupSize),
         NumGroups(tensor_height_, kWorkgroupSize), 1};
 
     if (!has_prev_mask) {
-      RET_CHECK_CALL(mask_program_no_prev_->Dispatch(workgroups));
+      MP_RETURN_IF_ERROR(mask_program_no_prev_->Dispatch(workgroups));
     } else {
       glActiveTexture(GL_TEXTURE1);
       glBindTexture(GL_TEXTURE_2D, input_mask_texture.name());
-      RET_CHECK_CALL(mask_program_with_prev_->Dispatch(workgroups));
+      MP_RETURN_IF_ERROR(mask_program_with_prev_->Dispatch(workgroups));
       glActiveTexture(GL_TEXTURE1);
       glBindTexture(GL_TEXTURE_2D, 0);
     }
@@ -622,22 +621,22 @@ void main() {
 
     // Shader programs.
     GlShader shader_without_previous;
-    RET_CHECK_CALL(GlShader::CompileShader(
+    MP_RETURN_IF_ERROR(GlShader::CompileShader(
         GL_COMPUTE_SHADER, shader_src_no_previous, &shader_without_previous));
     mask_program_no_prev_ = absl::make_unique<GlProgram>();
-    RET_CHECK_CALL(GlProgram::CreateWithShader(shader_without_previous,
-                                               mask_program_no_prev_.get()));
+    MP_RETURN_IF_ERROR(GlProgram::CreateWithShader(
+        shader_without_previous, mask_program_no_prev_.get()));
     GlShader shader_with_previous;
-    RET_CHECK_CALL(GlShader::CompileShader(
+    MP_RETURN_IF_ERROR(GlShader::CompileShader(
         GL_COMPUTE_SHADER, shader_src_with_previous, &shader_with_previous));
     mask_program_with_prev_ = absl::make_unique<GlProgram>();
-    RET_CHECK_CALL(GlProgram::CreateWithShader(shader_with_previous,
-                                               mask_program_with_prev_.get()));
+    MP_RETURN_IF_ERROR(GlProgram::CreateWithShader(
+        shader_with_previous, mask_program_with_prev_.get()));
 
     // Buffer storage for input tensor.
     size_t tensor_length = tensor_width_ * tensor_height_ * tensor_channels_;
     tensor_buffer_ = absl::make_unique<GlBuffer>();
-    RET_CHECK_CALL(CreateReadWriteShaderStorageBuffer<float>(
+    MP_RETURN_IF_ERROR(CreateReadWriteShaderStorageBuffer<float>(
         tensor_length, tensor_buffer_.get()));
 
     // Parameters.

@@ -33,13 +33,12 @@ command line option: `--define MEDIAPIPE_PROFILING=0`.
 To enable tracing and profiling, the `CalculatorGraphConfig` (in
 [calculator.proto](https://github.com/google/mediapipe/tree/master/mediapipe/framework/calculator.proto))
 representing the graph must have a `profiler_config` message at its root. Here
-is a simple setup that turns on a few extra options:
+is a simple setup that turns on tracing and keeps 100 seconds of timing events:
 
 ```
 profiler_config {
-  enable_profiler: true
   trace_enabled: true
-  trace_log_count: 5
+  trace_log_interval_count: 200
 }
 ```
 

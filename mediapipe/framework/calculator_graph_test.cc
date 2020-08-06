@@ -1828,14 +1828,14 @@ TEST(CalculatorGraph, StatusHandlerInputVerification) {
 
   status = graph->Initialize(config);
   EXPECT_THAT(status.message(),
-              testing::AllOf(testing::HasSubstr("StringStatusHandler"),
-                             // The problematic input side packet.
-                             testing::HasSubstr("generated_by_generator"),
-                             // Actual type.
-                             testing::HasSubstr("string"),
-                             // Expected type.
-                             testing::HasSubstr(
-                                 MediaPipeTypeStringOrDemangled<uint32>())));
+              testing::AllOf(
+                  testing::HasSubstr("StringStatusHandler"),
+                  // The problematic input side packet.
+                  testing::HasSubstr("generated_by_generator"),
+                  // Actual type.
+                  testing::HasSubstr(MediaPipeTypeStringOrDemangled<uint32>()),
+                  // Expected type.
+                  testing::HasSubstr("string")));
 }
 
 TEST(CalculatorGraph, GenerateInInitialize) {

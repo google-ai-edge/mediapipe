@@ -165,28 +165,53 @@ REGISTER_CALCULATOR(ContentZoomingCalculator);
 }
 
 namespace {
-::mediapipe::Status UpdateRanges(const SalientRegion& region, float* xmin,
+mediapipe::LocationData::RelativeBoundingBox ShiftDetection(
+    const mediapipe::LocationData::RelativeBoundingBox& relative_bounding_box,
+    const float y_offset_percent, const float x_offset_percent) {
+  auto shifted_bb = relative_bounding_box;
+  shifted_bb.set_ymin(relative_bounding_box.ymin() +
+                      relative_bounding_box.height() * y_offset_percent);
+  shifted_bb.set_xmin(relative_bounding_box.xmin() +
+                      relative_bounding_box.width() * x_offset_percent);
+  return shifted_bb;
+}
+mediapipe::autoflip::RectF ShiftDetection(
+    const mediapipe::autoflip::RectF& relative_bounding_box,
+    const float y_offset_percent, const float x_offset_percent) {
+  auto shifted_bb = relative_bounding_box;
+  shifted_bb.set_y(relative_bounding_box.y() +
+                   relative_bounding_box.height() * y_offset_percent);
+  shifted_bb.set_x(relative_bounding_box.x() +
+                   relative_bounding_box.width() * x_offset_percent);
+  return shifted_bb;
+}
+::mediapipe::Status UpdateRanges(const SalientRegion& region,
+                                 const float shift_vertical,
+                                 const float shift_horizontal, float* xmin,
                                  float* xmax, float* ymin, float* ymax) {
   if (!region.has_location_normalized()) {
     return ::mediapipe::UnknownErrorBuilder(MEDIAPIPE_LOC)
            << "SalientRegion did not have location normalized set.";
   }
-  *xmin = fmin(*xmin, region.location_normalized().x());
-  *xmax = fmax(*xmax, region.location_normalized().x() +
-                          region.location_normalized().width());
-  *ymin = fmin(*ymin, region.location_normalized().y());
-  *ymax = fmax(*ymax, region.location_normalized().y() +
-                          region.location_normalized().height());
+  auto location = ShiftDetection(region.location_normalized(), shift_vertical,
+                                 shift_horizontal);
+  *xmin = fmin(*xmin, location.x());
+  *xmax = fmax(*xmax, location.x() + location.width());
+  *ymin = fmin(*ymin, location.y());
+  *ymax = fmax(*ymax, location.y() + location.height());
 
   return ::mediapipe::OkStatus();
 }
 ::mediapipe::Status UpdateRanges(const mediapipe::Detection& detection,
-                                 float* xmin, float* xmax, float* ymin,
-                                 float* ymax) {
+                                 const float shift_vertical,
+                                 const float shift_horizontal, float* xmin,
+                                 float* xmax, float* ymin, float* ymax) {
   RET_CHECK(detection.location_data().format() ==
             mediapipe::LocationData::RELATIVE_BOUNDING_BOX)
       << "Face detection input is lacking required relative_bounding_box()";
-  const auto& location = detection.location_data().relative_bounding_box();
+  const auto& location =
+      ShiftDetection(detection.location_data().relative_bounding_box(),
+                     shift_vertical, shift_horizontal);
   *xmin = fmin(*xmin, location.xmin());
   *xmax = fmax(*xmax, location.xmin() + location.width());
   *ymin = fmin(*ymin, location.ymin());
@@ -270,7 +295,9 @@ void MakeStaticFeatures(const int top_border, const int bottom_border,
         continue;
       }
       only_required_found = true;
-      MP_RETURN_IF_ERROR(UpdateRanges(region, &xmin, &xmax, &ymin, &ymax));
+      MP_RETURN_IF_ERROR(UpdateRanges(
+          region, options_.detection_shift_vertical(),
+          options_.detection_shift_horizontal(), &xmin, &xmax, &ymin, &ymax));
     }
   }
 
@@ -279,7 +306,9 @@ void MakeStaticFeatures(const int top_border, const int bottom_border,
         cc->Inputs().Tag(kDetections).Get<std::vector<mediapipe::Detection>>();
     for (const auto& detection : raw_detections) {
       only_required_found = true;
-      MP_RETURN_IF_ERROR(UpdateRanges(detection, &xmin, &xmax, &ymin, &ymax));
+      MP_RETURN_IF_ERROR(UpdateRanges(
+          detection, options_.detection_shift_vertical(),
+          options_.detection_shift_horizontal(), &xmin, &xmax, &ymin, &ymax));
     }
   }
 
@@ -323,6 +352,19 @@ void MakeStaticFeatures(const int top_border, const int bottom_border,
   MP_RETURN_IF_ERROR(path_solver_width_->GetState(&path_offset_x));
   int path_offset_y;
   MP_RETURN_IF_ERROR(path_solver_offset_->GetState(&path_offset_y));
+
+  // Prevent box from extending beyond the image after camera smoothing.
+  if (path_offset_y - ceil(path_height / 2.0) < 0) {
+    path_offset_y = ceil(path_height / 2.0);
+  } else if (path_offset_y + ceil(path_height / 2.0) > frame_height_) {
+    path_offset_y = frame_height_ - ceil(path_height / 2.0);
+  }
+  int path_width = path_height * target_aspect_;
+  if (path_offset_x - ceil(path_width / 2.0) < 0) {
+    path_offset_x = ceil(path_width / 2.0);
+  } else if (path_offset_x + ceil(path_width / 2.0) > frame_width_) {
+    path_offset_x = frame_width_ - ceil(path_width / 2.0);
+  }
 
   // Convert to top/bottom borders to remove.
   int path_top = path_offset_y - path_height / 2;

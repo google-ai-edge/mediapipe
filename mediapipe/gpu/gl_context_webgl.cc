@@ -141,8 +141,8 @@ GlContext::StatusOrGlContext GlContext::Create(
   }
   MP_RETURN_IF_ERROR(status);
 
-  LOG(INFO) << "Successfully created a WebGL Context with major version "
-            << gl_major_version_ << " and context " << context_;
+  LOG(INFO) << "Successfully created a WebGL context with major version "
+            << gl_major_version_ << " and handle " << context_;
 
   return ::mediapipe::OkStatus();
 }
@@ -158,6 +158,9 @@ void GlContext::DestroyContext() {
     EMSCRIPTEN_RESULT res = emscripten_webgl_destroy_context(context_);
     if (res != EMSCRIPTEN_RESULT_SUCCESS) {
       LOG(ERROR) << "emscripten_webgl_destroy_context() returned error " << res;
+    } else {
+      LOG(INFO) << "Successfully destroyed WebGL context with handle "
+                << context_;
     }
     context_ = 0;
   }

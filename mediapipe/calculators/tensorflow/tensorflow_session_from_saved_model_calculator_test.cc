@@ -26,6 +26,7 @@
 #include "mediapipe/framework/port/status_matchers.h"
 #include "mediapipe/framework/tool/tag_map_helper.h"
 #include "mediapipe/framework/tool/validate_type.h"
+#include "tensorflow/core/framework/device_attributes.pb.h"
 
 namespace mediapipe {
 
@@ -202,6 +203,32 @@ TEST_F(TensorFlowSessionFromSavedModelCalculatorTest,
       runner.OutputSidePackets().Tag("SESSION").Get<TensorFlowSession>();
   // Session must be set.
   ASSERT_NE(session.session, nullptr);
+}
+
+TEST_F(TensorFlowSessionFromSavedModelCalculatorTest,
+       ConfiguresSessionGivenConfig) {
+  options_->set_saved_model_path(
+      std::string(file::SplitPath(GetSavedModelDir()).first));
+  options_->set_load_latest_model(true);
+  options_->mutable_session_config()->mutable_device_count()->insert(
+      {"CPU", 10});
+  CalculatorRunner runner(absl::Substitute(R"(
+        calculator: "TensorFlowSessionFromSavedModelCalculator"
+        output_side_packet: "SESSION:tf_model"
+        options {
+          [mediapipe.TensorFlowSessionFromSavedModelCalculatorOptions.ext]: {
+            $0
+          }
+        })",
+                                           options_->DebugString()));
+  MP_ASSERT_OK(runner.Run());
+  const TensorFlowSession& session =
+      runner.OutputSidePackets().Tag("SESSION").Get<TensorFlowSession>();
+  // Session must be set.
+  ASSERT_NE(session.session, nullptr);
+  std::vector<tensorflow::DeviceAttributes> devices;
+  ASSERT_EQ(session.session->ListDevices(&devices), tensorflow::Status::OK());
+  EXPECT_THAT(devices.size(), 10);
 }
 
 }  // namespace

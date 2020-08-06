@@ -27,15 +27,31 @@
 #include "mediapipe/calculators/tensorflow/tensorflow_session.h"
 #include "mediapipe/calculators/tensorflow/tensorflow_session_from_frozen_graph_generator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
+#include "mediapipe/framework/deps/clock.h"
+#include "mediapipe/framework/deps/monotonic_clock.h"
 #include "mediapipe/framework/port/file_helpers.h"
+#include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/tool/status_util.h"
+#include "tensorflow/core/framework/graph.pb.h"
+#include "tensorflow/core/framework/node_def.pb.h"
 #include "tensorflow/core/public/session_options.h"
 
 namespace mediapipe {
 
 namespace tf = ::tensorflow;
+
+namespace {
+// Updates the graph nodes to use the device as specified by device_id.
+void SetPreferredDevice(tf::GraphDef* graph_def, absl::string_view device_id) {
+  for (auto& node : *graph_def->mutable_node()) {
+    if (node.device().empty()) {
+      node.set_device(device_id);
+    }
+  }
+}
+}  // namespace
 
 class TensorFlowSessionFromFrozenGraphGenerator : public PacketGenerator {
  public:
@@ -77,6 +93,9 @@ class TensorFlowSessionFromFrozenGraphGenerator : public PacketGenerator {
   static ::mediapipe::Status Generate(
       const PacketGeneratorOptions& packet_generator_options,
       const PacketSet& input_side_packets, PacketSet* output_side_packets) {
+    auto clock = std::unique_ptr<mediapipe::Clock>(
+        mediapipe::MonotonicClock::CreateSynchronizedMonotonicClock());
+    const uint64 start_time = absl::ToUnixMicros(clock->TimeNow());
     const TensorFlowSessionFromFrozenGraphGeneratorOptions& options =
         packet_generator_options.GetExtension(
             TensorFlowSessionFromFrozenGraphGeneratorOptions::ext);
@@ -108,6 +127,12 @@ class TensorFlowSessionFromFrozenGraphGenerator : public PacketGenerator {
     tensorflow::GraphDef graph_def;
 
     RET_CHECK(graph_def.ParseFromString(graph_def_serialized));
+
+    // Update the graph nodes to use the preferred device, if set.
+    if (!options.preferred_device_id().empty()) {
+      SetPreferredDevice(&graph_def, options.preferred_device_id());
+    }
+
     const tf::Status tf_status = session->session->Create(graph_def);
     RET_CHECK(tf_status.ok()) << "Create failed: " << tf_status.ToString();
 
@@ -123,6 +148,9 @@ class TensorFlowSessionFromFrozenGraphGenerator : public PacketGenerator {
     }
 
     output_side_packets->Tag("SESSION") = Adopt(session.release());
+    const uint64 end_time = absl::ToUnixMicros(clock->TimeNow());
+    LOG(INFO) << "Loaded frozen model in: " << end_time - start_time
+              << " microseconds.";
     return ::mediapipe::OkStatus();
   }
 };

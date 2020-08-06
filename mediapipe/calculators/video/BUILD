@@ -316,6 +316,8 @@ cc_library(
         "//mediapipe/util/tracking",
         "//mediapipe/util/tracking:box_tracker",
         "//mediapipe/util/tracking:tracking_visualization_utilities",
+        "@com_google_absl//absl/container:flat_hash_set",
+        "@com_google_absl//absl/container:node_hash_set",
         "@com_google_absl//absl/strings",
     ],
     alwayslink = 1,

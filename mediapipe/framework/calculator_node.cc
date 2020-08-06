@@ -405,7 +405,7 @@ namespace {
 // Returns the Packet sent to an OutputSidePacket, or an empty packet
 // if none available.
 const Packet GetPacket(const OutputSidePacket& out) {
-  auto impl = dynamic_cast<const OutputSidePacketImpl*>(&out);
+  auto impl = static_cast<const OutputSidePacketImpl*>(&out);
   return (impl == nullptr) ? Packet() : impl->GetPacket();
 }
 
@@ -472,6 +472,19 @@ bool CalculatorNode::OutputsAreConstant(CalculatorContext* cc) {
   MP_RETURN_IF_ERROR(result).SetPrepend() << absl::Substitute(
       "Calculator::Open() for node \"$0\" failed: ", DebugName());
   needs_to_close_ = true;
+
+  bool offset_enabled = false;
+  for (auto& stream : output_stream_handler_->OutputStreams()) {
+    offset_enabled = offset_enabled || stream->Spec()->offset_enabled;
+  }
+  if (offset_enabled && input_stream_handler_->SyncSetCount() > 1) {
+    LOG(WARNING) << absl::Substitute(
+        "Calculator node \"$0\" is configured with multiple input sync-sets "
+        "and an output timestamp-offset, which will often conflict due to "
+        "the order of packet arrival.  With multiple input sync-sets, use "
+        "SetProcessTimestampBounds in place of SetTimestampOffset.",
+        DebugName());
+  }
 
   output_stream_handler_->Open(outputs);
 
@@ -737,21 +750,7 @@ std::string CalculatorNode::DebugInputStreamNames() const {
 
 std::string CalculatorNode::DebugName() const {
   DCHECK(calculator_state_);
-
-  const std::string first_output_stream_name =
-      output_stream_handler_->FirstStreamName();
-  if (!first_output_stream_name.empty()) {
-    // A calculator is unique by its output streams (one of them is
-    // sufficient) unless it is a sink.  For readability, its type name is
-    // included.
-    return absl::Substitute(
-        "[$0, $1 with output stream: $2]", calculator_state_->NodeName(),
-        calculator_state_->CalculatorType(), first_output_stream_name);
-  }
-  // If it is a sink, its full node spec is returned.
-  return absl::Substitute(
-      "[$0, $1 with node ID: $2 and $3]", calculator_state_->NodeName(),
-      calculator_state_->CalculatorType(), node_id_, DebugInputStreamNames());
+  return calculator_state_->NodeName();
 }
 
 // TODO: Split this function.

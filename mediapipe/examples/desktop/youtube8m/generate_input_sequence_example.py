@@ -30,7 +30,7 @@ SECONDS_TO_MICROSECONDS = 1000000
 
 
 def bytes23(string):
-  """Creates a bytes string in either Python 2 or  3."""
+  """Creates a bytes string in either Python 2 or 3."""
   if sys.version_info >= (3, 0):
     return bytes(string, 'utf8')
   else:

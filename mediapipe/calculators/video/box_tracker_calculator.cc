@@ -18,6 +18,8 @@
 #include <unordered_map>
 #include <unordered_set>
 
+#include "absl/container/flat_hash_set.h"
+#include "absl/container/node_hash_set.h"
 #include "absl/strings/numbers.h"
 #include "mediapipe/calculators/video/box_tracker_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
@@ -193,12 +195,12 @@ class BoxTrackerCalculator : public CalculatorBase {
   TimedBoxProtoList initial_pos_;
 
   // Keeps tracks boxes that have already been initialized.
-  std::unordered_set<int> initialized_ids_;
+  absl::node_hash_set<int> initialized_ids_;
 
   // Non empty for batch mode tracking.
   std::string cache_dir_;
   // Ids to be tracked in batch_mode.
-  std::unordered_set<int> batch_track_ids_;
+  absl::node_hash_set<int> batch_track_ids_;
 
   int frame_num_ = 0;
 
@@ -236,6 +238,11 @@ class BoxTrackerCalculator : public CalculatorBase {
 
   // Queued track time requests.
   std::vector<Timestamp> queued_track_requests_;
+
+  // Stores the tracked ids that have been discarded actively, from continuous
+  // tracking data. It may accumulate across multiple frames. Once consumed, it
+  // should be cleared immediately.
+  absl::flat_hash_set<int> actively_discarded_tracked_ids_;
 
   // Add smooth transition between re-acquisition and previous tracked boxes.
   // `result_box` is the tracking result of one specific timestamp. The smoothed
@@ -1143,9 +1150,16 @@ void BoxTrackerCalculator::StreamTrack(const TrackingData& data,
   CHECK(box_map);
   CHECK(failed_ids);
 
+  // Cache the actively discarded tracked ids from the new tracking data.
+  for (const int discarded_id :
+       data.motion_data().actively_discarded_tracked_ids()) {
+    actively_discarded_tracked_ids_.insert(discarded_id);
+  }
+
   // Track all existing boxes by one frame.
   MotionVectorFrame mvf;  // Holds motion from current to previous frame.
   MotionVectorFrameFromTrackingData(data, &mvf);
+  mvf.actively_discarded_tracked_ids = &actively_discarded_tracked_ids_;
 
   if (forward) {
     MotionVectorFrame mvf_inverted;

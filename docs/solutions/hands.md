@@ -2,7 +2,7 @@
 layout: default
 title: Hands
 parent: Solutions
-nav_order: 3
+nav_order: 4
 ---
 
 # MediaPipe Hands
@@ -66,7 +66,7 @@ and a
 Note: To visualize a graph, copy the graph and paste it into
 [MediaPipe Visualizer](https://viz.mediapipe.dev/). For more information on how
 to visualize its associated subgraphs, please see
-[visualizer documentation](../visualizer.md).
+[visualizer documentation](../tools/visualizer.md).
 
 ## Models
 
@@ -132,7 +132,7 @@ examples.
 Note: To visualize a graph, copy the graph and paste it into
 [MediaPipe Visualizer](https://viz.mediapipe.dev/). For more information on how
 to visualize its associated subgraphs, please see
-[visualizer documentation](../visualizer.md).
+[visualizer documentation](../tools/visualizer.md).
 
 ### Mobile
 

@@ -266,6 +266,9 @@ void FlowPackager::PackFlow(const RegionFlowFeatureList& feature_list,
   }
 
   CHECK_EQ(data->vector_data_size(), 2 * data->row_indices_size());
+
+  *data->mutable_actively_discarded_tracked_ids() =
+      feature_list.actively_discarded_tracked_ids();
 }
 
 void FlowPackager::EncodeTrackingData(const TrackingData& tracking_data,

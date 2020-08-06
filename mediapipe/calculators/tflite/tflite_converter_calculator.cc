@@ -16,7 +16,6 @@
 #include <vector>
 
 #include "mediapipe/calculators/tflite/tflite_converter_calculator.pb.h"
-#include "mediapipe/calculators/tflite/util.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/image_frame.h"
 #include "mediapipe/framework/formats/matrix.h"
@@ -146,8 +145,7 @@ class TfLiteConverterCalculator : public CalculatorBase {
   ::mediapipe::Status LoadOptions(CalculatorContext* cc);
   template <class T>
   ::mediapipe::Status NormalizeImage(const ImageFrame& image_frame,
-                                     bool zero_center, bool flip_vertically,
-                                     float* tensor_ptr);
+                                     bool flip_vertically, float* tensor_ptr);
   ::mediapipe::Status CopyMatrixToTensor(const Matrix& matrix,
                                          float* tensor_ptr);
   ::mediapipe::Status ProcessCPU(CalculatorContext* cc);
@@ -165,10 +163,7 @@ class TfLiteConverterCalculator : public CalculatorBase {
 
   bool initialized_ = false;
   bool use_gpu_ = false;
-  bool zero_center_ = true;  // normalize range to [-1,1] | otherwise [0,1]
-  bool use_custom_normalization_ = false;
-  float custom_div_ = -1.0f;
-  float custom_sub_ = -1.0f;
+  absl::optional<std::pair<float, float>> output_range_;
   bool flip_vertically_ = false;
   bool row_major_matrix_ = false;
   bool use_quantized_tensors_ = false;
@@ -362,11 +357,11 @@ bool ShouldUseGpu(CC* cc) {
       float* tensor_buffer = tensor->data.f;
       RET_CHECK(tensor_buffer);
       if (image_frame.ByteDepth() == 1) {
-        MP_RETURN_IF_ERROR(NormalizeImage<uint8>(
-            image_frame, zero_center_, flip_vertically_, tensor_buffer));
+        MP_RETURN_IF_ERROR(NormalizeImage<uint8>(image_frame, flip_vertically_,
+                                                 tensor_buffer));
       } else if (image_frame.ByteDepth() == 4) {
-        MP_RETURN_IF_ERROR(NormalizeImage<float>(
-            image_frame, zero_center_, flip_vertically_, tensor_buffer));
+        MP_RETURN_IF_ERROR(NormalizeImage<float>(image_frame, flip_vertically_,
+                                                 tensor_buffer));
       } else {
         return ::mediapipe::InternalError(
             "Only byte-based (8 bit) and float (32 bit) images supported.");
@@ -427,11 +422,11 @@ bool ShouldUseGpu(CC* cc) {
         auto src = gpu_helper_.CreateSourceTexture(input);
         glActiveTexture(GL_TEXTURE0 + 0);
         glBindTexture(GL_TEXTURE_2D, src.name());
-        RET_CHECK_CALL(gpu_data_out_->buffer.BindToIndex(1));
+        MP_RETURN_IF_ERROR(gpu_data_out_->buffer.BindToIndex(1));
         const tflite::gpu::uint3 workgroups = {
             NumGroups(input.width(), kWorkgroupSize),
             NumGroups(input.height(), kWorkgroupSize), 1};
-        RET_CHECK_CALL(gpu_data_out_->program.Dispatch(workgroups));
+        MP_RETURN_IF_ERROR(gpu_data_out_->program.Dispatch(workgroups));
         glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
         glBindTexture(GL_TEXTURE_2D, 0);
         src.Release();
@@ -445,9 +440,9 @@ bool ShouldUseGpu(CC* cc) {
         output_tensors->resize(1);
         {
           GpuTensor& tensor = output_tensors->at(0);
-          RET_CHECK_CALL(CreateReadWriteShaderStorageBuffer<float>(
+          MP_RETURN_IF_ERROR(CreateReadWriteShaderStorageBuffer<float>(
               gpu_data_out_->elements, &tensor));
-          RET_CHECK_CALL(CopyBuffer(gpu_data_out_->buffer, tensor));
+          MP_RETURN_IF_ERROR(CopyBuffer(gpu_data_out_->buffer, tensor));
         }
         return ::mediapipe::OkStatus();
       }));
@@ -521,7 +516,7 @@ bool ShouldUseGpu(CC* cc) {
   MP_RETURN_IF_ERROR(gpu_helper_.RunInGlContext(
       [this, &include_alpha, &input, &single_channel]() -> ::mediapipe::Status {
         // Device memory.
-        RET_CHECK_CALL(
+        MP_RETURN_IF_ERROR(
             ::tflite::gpu::gl::CreateReadWriteShaderStorageBuffer<float>(
                 gpu_data_out_->elements, &gpu_data_out_->buffer));
 
@@ -544,7 +539,13 @@ bool ShouldUseGpu(CC* cc) {
             $6  // alpha channel
           })",
             /*$0=*/kWorkgroupSize, /*$1=*/input.width(), /*$2=*/input.height(),
-            /*$3=*/zero_center_ ? "pixel = (pixel - 0.5) * 2.0;" : "",
+            /*$3=*/
+            output_range_.has_value()
+                ? absl::Substitute(
+                      "pixel = pixel * float($0) + float($1);",
+                      (output_range_->second - output_range_->first),
+                      output_range_->first)
+                : "",
             /*$4=*/flip_vertically_ ? "(width_height.y - 1 - gid.y)" : "gid.y",
             /*$5=*/
             single_channel
@@ -555,10 +556,10 @@ bool ShouldUseGpu(CC* cc) {
             include_alpha ? "output_data.elements[linear_index + 3] = pixel.w;"
                           : "",
             /*$7=*/max_num_channels_);
-        RET_CHECK_CALL(GlShader::CompileShader(GL_COMPUTE_SHADER, shader_source,
-                                               &gpu_data_out_->shader));
-        RET_CHECK_CALL(GlProgram::CreateWithShader(gpu_data_out_->shader,
-                                                   &gpu_data_out_->program));
+        MP_RETURN_IF_ERROR(GlShader::CompileShader(
+            GL_COMPUTE_SHADER, shader_source, &gpu_data_out_->shader));
+        MP_RETURN_IF_ERROR(GlProgram::CreateWithShader(
+            gpu_data_out_->shader, &gpu_data_out_->program));
         return ::mediapipe::OkStatus();
       }));
 
@@ -599,7 +600,12 @@ bool ShouldUseGpu(CC* cc) {
       )",
       /*$0=*/include_alpha ? "float4" : "float3",
       /*$1=*/include_alpha ? "rgba" : "rgb",
-      /*$2=*/zero_center_ ? "pixel = (pixel - 0.5) * 2.0;" : "",
+      /*$2=*/
+      output_range_.has_value()
+          ? absl::Substitute("pixel = pixel * float($0) + float($1);",
+                             (output_range_->second - output_range_->first),
+                             output_range_->first)
+          : "",
       /*$3=*/flip_vertically_ ? "(in_tex.get_height() - 1 - gid.y)" : "gid.y",
       /*$4=*/include_alpha ? 4 : 3,
       /*$5=*/include_alpha ? "out_buf[linear_index + 3] = pixel.w;" : "");
@@ -630,13 +636,27 @@ bool ShouldUseGpu(CC* cc) {
   const auto& options =
       cc->Options<::mediapipe::TfLiteConverterCalculatorOptions>();
 
-  // Get data normalization mode.
-  zero_center_ = options.zero_center();
+  // if zero_center, set output float range to match [-1, 1] as specified in
+  // calculator proto.
+  if (options.zero_center()) {
+    output_range_.emplace(std::pair<float, float>(-1.0, 1.0));
+  }
+
+  // Custom output_tensor_float_range values.
+  // If the float range is specified in pb text, use the specified values
+  // instead.
+  if (options.has_output_tensor_float_range()) {
+    output_range_.emplace(options.output_tensor_float_range().min(),
+                          options.output_tensor_float_range().max());
+    CHECK_GT(output_range_->second, output_range_->first);
+  }
 
   // Custom div and sub values.
-  use_custom_normalization_ = options.use_custom_normalization();
-  custom_div_ = options.custom_div();
-  custom_sub_ = options.custom_sub();
+  if (options.use_custom_normalization()) {
+    output_range_.emplace(std::pair<float, float>(
+        -options.custom_sub(),
+        -options.custom_sub() + 255.0 / options.custom_div()));
+  }
 
   // Get y-flip mode.
   flip_vertically_ = options.flip_vertically();
@@ -664,40 +684,46 @@ bool ShouldUseGpu(CC* cc) {
 
 template <class T>
 ::mediapipe::Status TfLiteConverterCalculator::NormalizeImage(
-    const ImageFrame& image_frame, bool zero_center, bool flip_vertically,
-    float* tensor_ptr) {
+    const ImageFrame& image_frame, bool flip_vertically, float* tensor_ptr) {
   const int height = image_frame.Height();
   const int width = image_frame.Width();
   const int channels = image_frame.NumberOfChannels();
   const int channels_preserved = std::min(channels, max_num_channels_);
   const int channels_ignored = channels - channels_preserved;
 
-  float div, sub;
+  if (output_range_.has_value()) {
+    // If the output float range is set and we are not using custom
+    // normalization, normalize the pixel values from [0, 255] to the specified
+    // output range.
+    RET_CHECK_NE(output_range_->first, output_range_->second);
+    const float scale = (output_range_->second - output_range_->first) / 255.0f;
+    const float bias = output_range_->first;
 
-  if (use_custom_normalization_) {
-    RET_CHECK_GT(custom_div_, 0.0f);
-    RET_CHECK_GE(custom_sub_, 0.0f);
-    div = custom_div_;
-    sub = custom_sub_;
-  } else if (zero_center) {
-    // [-1,1]
-    div = 127.5f;
-    sub = 1.0f;
-  } else {
-    // [0,1]
-    div = 255.0f;
-    sub = 0.0f;
-  }
-
-  for (int i = 0; i < height; ++i) {
-    const T* image_ptr = reinterpret_cast<const T*>(
-        image_frame.PixelData() +
-        (flip_vertically ? height - 1 - i : i) * image_frame.WidthStep());
-    for (int j = 0; j < width; ++j) {
-      for (int c = 0; c < channels_preserved; ++c) {
-        *tensor_ptr++ = *image_ptr++ / div - sub;
+    for (int i = 0; i < height; ++i) {
+      const T* image_ptr = reinterpret_cast<const T*>(
+          image_frame.PixelData() +
+          (flip_vertically ? height - 1 - i : i) * image_frame.WidthStep());
+      for (int j = 0; j < width; ++j) {
+        for (int c = 0; c < channels_preserved; ++c) {
+          *tensor_ptr++ = *image_ptr++ * scale + bias;
+        }
+        image_ptr += channels_ignored;
       }
-      image_ptr += channels_ignored;
+    }
+  } else {
+    // [0,1], scale only (bias == 0)
+    // Verified that there are no precision issues with 1.0f / 255.0f expression
+    const float scale = 1.0f / 255.0f;
+    for (int i = 0; i < height; ++i) {
+      const T* image_ptr = reinterpret_cast<const T*>(
+          image_frame.PixelData() +
+          (flip_vertically ? height - 1 - i : i) * image_frame.WidthStep());
+      for (int j = 0; j < width; ++j) {
+        for (int c = 0; c < channels_preserved; ++c) {
+          *tensor_ptr++ = *image_ptr++ * scale;
+        }
+        image_ptr += channels_ignored;
+      }
     }
   }
 

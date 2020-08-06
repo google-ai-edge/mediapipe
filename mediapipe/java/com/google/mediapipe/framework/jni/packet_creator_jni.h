@@ -113,6 +113,11 @@ JNIEXPORT jlong JNICALL PACKET_CREATOR_METHOD(nativeCreateStringFromByteArray)(
 JNIEXPORT jlong JNICALL PACKET_CREATOR_METHOD(nativeCreateCalculatorOptions)(
     JNIEnv* env, jobject thiz, jlong context, jbyteArray data);
 
+JNIEXPORT jlong JNICALL PACKET_CREATOR_METHOD(nativeCreateProto)(JNIEnv* env,
+                                                                 jobject thiz,
+                                                                 jlong context,
+                                                                 jobject data);
+
 JNIEXPORT jlong JNICALL PACKET_CREATOR_METHOD(nativeCreateCameraIntrinsics)(
     JNIEnv* env, jobject thiz, jlong context, jfloat fx, jfloat fy, jfloat cx,
     jfloat cy, jfloat width, jfloat height);

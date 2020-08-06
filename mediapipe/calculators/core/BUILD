@@ -316,6 +316,37 @@ cc_library(
     alwayslink = 1,
 )
 
+cc_library(
+    name = "concatenate_normalized_landmark_list_calculator",
+    srcs = ["concatenate_normalized_landmark_list_calculator.cc"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":concatenate_vector_calculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/formats:landmark_cc_proto",
+        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:status",
+    ],
+    alwayslink = 1,
+)
+
+cc_test(
+    name = "concatenate_normalized_landmark_list_calculator_test",
+    srcs = ["concatenate_normalized_landmark_list_calculator_test.cc"],
+    deps = [
+        ":concatenate_normalized_landmark_list_calculator",
+        ":concatenate_vector_calculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:calculator_runner",
+        "//mediapipe/framework:timestamp",
+        "//mediapipe/framework/formats:landmark_cc_proto",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:parse_text_proto",
+        "//mediapipe/framework/port:status",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
 cc_test(
     name = "concatenate_vector_calculator_test",
     srcs = ["concatenate_vector_calculator_test.cc"],
@@ -448,6 +479,21 @@ cc_library(
         "//mediapipe/framework/stream_handler:mux_input_stream_handler",
     ],
     alwayslink = 1,
+)
+
+cc_test(
+    name = "mux_calculator_test",
+    srcs = ["mux_calculator_test.cc"],
+    deps = [
+        ":mux_calculator",
+        ":round_robin_demux_calculator",
+        ":split_vector_calculator",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:calculator_runner",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:parse_text_proto",
+        "//mediapipe/framework/port:status",
+    ],
 )
 
 cc_library(
@@ -947,7 +993,6 @@ cc_test(
         "//mediapipe/framework:calculator_runner",
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/framework/port:parse_text_proto",
-        "//mediapipe/framework/port:status",
     ],
 )
 

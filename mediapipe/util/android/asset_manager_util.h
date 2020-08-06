@@ -15,6 +15,9 @@
 #ifndef MEDIAPIPE_ANDROID_UTIL_ASSET_MANAGER_UTIL_H_
 #define MEDIAPIPE_ANDROID_UTIL_ASSET_MANAGER_UTIL_H_
 
+#include <string>
+#include <vector>
+
 #ifdef __ANDROID__
 #include <android/asset_manager.h>
 #include <android/asset_manager_jni.h>
@@ -65,12 +68,13 @@ class AssetManager {
   // Checks if a file exists. Returns true on success, false otherwise.
   bool FileExists(const std::string& filename);
 
-  // Reads a file into raw_bytes. Returns true on success, false otherwise.
-  bool ReadFile(const std::string& filename, std::vector<uint8_t>* raw_bytes);
+  // Reads a file into output. Returns true on success, false otherwise.
+  bool ReadFile(const std::string& filename, std::string* output);
 
-  // Returns the open file descriptor from an Android content URI, the caller
-  // is responsible to close the file descriptor.
-  ::mediapipe::StatusOr<int> OpenContentUri(const std::string& content_uri);
+  // Reads the raw bytes referred to by the supplied content URI. Returns true
+  // on success, false otherwise.
+  mediapipe::Status ReadContentUri(const std::string& content_uri,
+                                   std::string* output);
 
   // Returns the path to the Android cache directory. Will be empty if
   // InitializeFromActivity has not been called.
@@ -91,9 +95,6 @@ class AssetManager {
 
   // The context from which assets should be loaded.
   jobject context_;
-
-  // Pointer to the JVM, used to get the JNIEnv on background threads.
-  JavaVM* jvm_;
 
   // Path to the Android cache directory for our context.
   std::string cache_dir_path_;

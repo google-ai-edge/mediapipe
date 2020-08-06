@@ -169,7 +169,7 @@ message RegionFlowFrame {
 // Can be extracted from RegionFlow via GetRegionFlowFeatureList
 // declared in region_flow.h. This is the essential (additional) information
 // required by Cropper using wobble_suppression with displacements.
-// Next tag: 13
+// Next tag: 14
 message RegionFlowFeatureList {
   repeated RegionFlowFeature feature = 1;
   optional int32 frame_width = 2;
@@ -218,6 +218,15 @@ message RegionFlowFeatureList {
 
   // Set, if frame is estimated to be an exact duplicate of the previous frame.
   optional bool is_duplicated = 12 [default = false];
+
+  // Stores all the tracked ids that have been discarded actively in this frame.
+  // This information will be popluated via RegionFlowFeatureList, so that the
+  // downstreaming modules can receive it and use it to avoid misjudgement on
+  // tracking continuity.
+  // Discard reason:
+  // (1) A tracked feature has too long track, which might create drift.
+  // (2) A tracked feature in a highly densed area, which provides little value.
+  repeated int32 actively_discarded_tracked_ids = 13;
 }
 
 // Salient point location (normalized w.r.t. frame_width and frame_height, i.e.

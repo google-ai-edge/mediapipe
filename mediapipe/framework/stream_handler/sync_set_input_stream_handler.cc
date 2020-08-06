@@ -67,6 +67,9 @@ class SyncSetInputStreamHandler : public InputStreamHandler {
                        InputStreamShardSet* input_set)
       ABSL_EXCLUSIVE_LOCKS_REQUIRED(mutex_);
 
+  // Returns the number of sync-sets maintained by this input-handler.
+  int SyncSetCount() override;
+
  private:
   absl::Mutex mutex_;
   // The ids of each set of inputs.
@@ -192,6 +195,11 @@ void SyncSetInputStreamHandler::FillInputSet(Timestamp input_timestamp,
   }
   ready_sync_set_index_ = -1;
   ready_timestamp_ = Timestamp::Done();
+}
+
+int SyncSetInputStreamHandler::SyncSetCount() {
+  absl::MutexLock lock(&mutex_);
+  return sync_sets_.size();
 }
 
 }  // namespace mediapipe

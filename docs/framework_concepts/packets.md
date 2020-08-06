@@ -20,7 +20,7 @@ Packets are generally created with `MediaPipe::Adopt()` (from packet.h).
 
 ```c++
 // Create some data.
-auto data = gtl::MakeUnique<MyDataClass>("constructor_argument");
+auto data = absl::make_unique<MyDataClass>("constructor_argument");
 // Create a packet to own the data.
 Packet p = Adopt(data.release());
 // Make a new packet with the same data and a different timestamp.

@@ -16,6 +16,7 @@
 
 #include <functional>
 
+#include "absl/container/node_hash_map.h"
 #include "absl/synchronization/mutex.h"
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
@@ -122,7 +123,7 @@ absl::Duration time(const std::function<void()>& f) {
 // With bazel build -c opt, the ShardedMap reduces CPU time by 60%.
 TEST(ShardedMapTest, TestParallelAccess) {
   absl::Duration simple_time = time([] {
-    std::unordered_map<int64, int64> simple_map;
+    absl::node_hash_map<int64, int64> simple_map;
     TestParallelAccess(simple_map, 1);
   });
   absl::Duration safe_time = time([] {
