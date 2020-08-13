@@ -5,7 +5,7 @@ parent: Solutions
 nav_order: 5
 ---
 
-# MediaPipe Pose
+# MediaPipe BlazePose
 {: .no_toc }
 
 1. TOC
@@ -22,12 +22,13 @@ on top of the physical world in augmented reality.
 
 MediaPipe Pose is a ML solution for high-fidelity upper-body pose tracking,
 inferring 25 2D upper-body landmarks from RGB video frames utilizing our
-[BlazePose](https://mediapipe.page.link/blazepose-blog) research. Current
-state-of-the-art approaches rely primarily on powerful desktop environments for
-inference, whereas our method achieves real-time performance on most modern
-[mobile phones](#mobile), [desktops/laptops](#desktop), in [python](#python) and
-even on the [web](#web). A variant of MediaPipe Pose that performs full-body
-pose tracking on mobile phones will be included in an upcoming release of
+[BlazePose](https://ai.googleblog.com/2020/08/on-device-real-time-body-pose-tracking.html)
+research. Current state-of-the-art approaches rely primarily on powerful desktop
+environments for inference, whereas our method achieves real-time performance on
+most modern [mobile phones](#mobile), [desktops/laptops](#desktop), in
+[python](#python) and even on the [web](#web). A variant of MediaPipe Pose that
+performs full-body pose tracking on mobile phones will be included in an
+upcoming release of
 [ML Kit](https://developers.google.com/ml-kit/early-access/pose-detection).
 
 ![pose_tracking_upper_body_example.gif](../images/mobile/pose_tracking_upper_body_example.gif) |
@@ -91,8 +92,8 @@ The landmark model currently included in MediaPipe Pose predicts the location of
 (x, y location and visibility), plus two virtual alignment keypoints. It shares
 the same architecture as the full-body version that predicts 33 landmarks,
 described in more detail in the
-[BlazePose Google AI Blog](https://mediapipe.page.link/blazepose-blog) and in
-this [paper](https://arxiv.org/abs/2006.10204).
+[BlazePose Google AI Blog](https://ai.googleblog.com/2020/08/on-device-real-time-body-pose-tracking.html)
+and in this [paper](https://arxiv.org/abs/2006.10204).
 
 ![pose_tracking_upper_body_landmarks.png](../images/mobile/pose_tracking_upper_body_landmarks.png) |
 :------------------------------------------------------------------------------------------------: |
@@ -168,7 +169,7 @@ Please refer to [these instructions](../index.md#mediapipe-on-the-web).
 ## Resources
 
 *   Google AI Blog:
-    [BlazePose - On-device Real-time Body Pose Tracking](https://mediapipe.page.link/blazepose-blog)
+    [BlazePose - On-device Real-time Body Pose Tracking](https://ai.googleblog.com/2020/08/on-device-real-time-body-pose-tracking.html)
 *   Paper:
     [BlazePose: On-device Real-time Body Pose Tracking](https://arxiv.org/abs/2006.10204)
     ([presentation](https://youtu.be/YPpUOTRn5tA))

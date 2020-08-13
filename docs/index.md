@@ -88,7 +88,7 @@ run code search using
 
 ## Publications
 
-*   [BlazePose - On-device Real-time Body Pose Tracking](https://mediapipe.page.link/blazepose-blog)
+*   [BlazePose - On-device Real-time Body Pose Tracking](https://ai.googleblog.com/2020/08/on-device-real-time-body-pose-tracking.html)
     in Google AI Blog
 *   [MediaPipe Iris: Real-time Eye Tracking and Depth Estimation](https://ai.googleblog.com/2020/08/mediapipe-iris-real-time-iris-tracking.html)
     in Google AI Blog
