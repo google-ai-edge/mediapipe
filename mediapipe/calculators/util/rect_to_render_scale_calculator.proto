@@ -1,0 +1,18 @@
+syntax = "proto2";
+
+package mediapipe;
+
+import "mediapipe/framework/calculator.proto";
+
+message RectToRenderScaleCalculatorOptions {
+  extend CalculatorOptions {
+    optional RectToRenderScaleCalculatorOptions ext = 299463409;
+  }
+
+  // Multiplier to apply to the rect size.
+  // If one defined `thickness` for RenderData primitives for object (e.g. pose,
+  // hand or face) of size `A` then multiplier should be `1/A`. It means that
+  // when actual object size on the image will be `B`, than all RenderData
+  // primitives will be scaled with factor `B/A`.
+  optional float multiplier = 1 [default = 0.01];
+}

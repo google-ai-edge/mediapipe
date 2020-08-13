@@ -607,6 +607,35 @@ cc_library(
 )
 
 cc_library(
+    name = "packet_presence_calculator",
+    srcs = ["packet_presence_calculator.cc"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:packet",
+        "//mediapipe/framework:timestamp",
+        "//mediapipe/framework/port:status",
+    ],
+    alwayslink = 1,
+)
+
+cc_test(
+    name = "packet_presence_calculator_test",
+    srcs = ["packet_presence_calculator_test.cc"],
+    deps = [
+        ":gate_calculator",
+        ":packet_presence_calculator",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:calculator_runner",
+        "//mediapipe/framework:timestamp",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:parse_text_proto",
+        "//mediapipe/framework/port:status",
+        "//mediapipe/framework/tool:sink",
+    ],
+)
+
+cc_library(
     name = "previous_loopback_calculator",
     srcs = ["previous_loopback_calculator.cc"],
     visibility = ["//visibility:public"],

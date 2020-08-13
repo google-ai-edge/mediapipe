@@ -294,7 +294,7 @@ trace_log_margin_usec
     in trace log output. This margin allows time for events to be appended to
     the TraceBuffer.
 
-trace_log_duration_events
+trace_log_instant_events
 :   False specifies an event for each calculator invocation. True specifies a
     separate event for each start and finish time.
 

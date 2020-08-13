@@ -70,10 +70,13 @@ TfLiteStatus Prepare(TfLiteContext* context, TfLiteNode* node) {
   TF_LITE_ENSURE_EQ(context, ::tflite::NumInputs(node), 2);
   TF_LITE_ENSURE_EQ(context, ::tflite::NumOutputs(node), 1);
   TfLiteTensor* output = ::tflite::GetOutput(context, node, kOutputTensor);
+  TF_LITE_ENSURE(context, output != nullptr);
   const TfLiteTensor* input =
       ::tflite::GetInput(context, node, kDataInputTensor);
+  TF_LITE_ENSURE(context, input != nullptr);
   const TfLiteTensor* indices =
       ::tflite::GetInput(context, node, kIndicesTensor);
+  TF_LITE_ENSURE(context, indices != nullptr);
   TF_LITE_ENSURE_EQ(context, ::tflite::NumDimensions(indices), 4);
   TF_LITE_ENSURE_EQ(context, ::tflite::NumDimensions(input), 4);
   TF_LITE_ENSURE_EQ(context, input->type, kTfLiteFloat32);
@@ -107,10 +110,13 @@ TfLiteStatus Eval(TfLiteContext* context, TfLiteNode* node) {
       reinterpret_cast<TfLitePaddingValues*>(node->user_data);
 
   TfLiteTensor* output = ::tflite::GetOutput(context, node, kOutputTensor);
+  TF_LITE_ENSURE(context, output != nullptr);
   const TfLiteTensor* input =
       ::tflite::GetInput(context, node, kDataInputTensor);
+  TF_LITE_ENSURE(context, input != nullptr);
   const TfLiteTensor* indices =
       ::tflite::GetInput(context, node, kIndicesTensor);
+  TF_LITE_ENSURE(context, indices != nullptr);
 
   float activation_min, activation_max;
   ::tflite::CalculateActivationRange(params->activation, &activation_min,

@@ -1,0 +1,254 @@
+# MediaPipe pose landmarks rendering subgraph.
+
+type: "UpperBodyPoseRendererGpu"
+
+# GPU image. (GpuBuffer)
+input_stream: "IMAGE:input_image"
+# Pose landmarks. (NormalizedLandmarkList)
+input_stream: "LANDMARKS:pose_landmarks"
+# Region of interest calculated based on landmarks. (NormalizedRect)
+input_stream: "ROI:roi"
+# Detected pose. (Detection)
+input_stream: "DETECTION:detection"
+
+# GPU image with rendered data. (GpuBuffer)
+output_stream: "IMAGE:output_image"
+
+node {
+  calculator: "ImagePropertiesCalculator"
+  input_stream: "IMAGE_GPU:input_image"
+  output_stream: "SIZE:image_size"
+}
+
+# Calculates rendering scale based on the pose roi.
+node {
+  calculator: "RectToRenderScaleCalculator"
+  input_stream: "NORM_RECT:roi"
+  input_stream: "IMAGE_SIZE:image_size"
+  output_stream: "RENDER_SCALE:render_scale"
+  node_options: {
+    [type.googleapis.com/mediapipe.RectToRenderScaleCalculatorOptions] {
+      multiplier: 0.0012
+    }
+  }
+}
+
+# Converts detections to drawing primitives for annotation overlay.
+node {
+  calculator: "DetectionsToRenderDataCalculator"
+  input_stream: "DETECTION:detection"
+  output_stream: "RENDER_DATA:detection_render_data"
+  node_options: {
+    [type.googleapis.com/mediapipe.DetectionsToRenderDataCalculatorOptions] {
+      thickness: 4.0
+      color { r: 0 g: 255 b: 0 }
+    }
+  }
+}
+
+node {
+  calculator: "SplitNormalizedLandmarkListCalculator"
+  input_stream: "pose_landmarks"
+  output_stream: "visible_pose_landmarks"
+  node_options: {
+    [type.googleapis.com/mediapipe.SplitVectorCalculatorOptions] {
+      ranges: { begin: 0 end: 25 }
+    }
+  }
+}
+
+# Converts landmarks to drawing primitives for annotation overlay.
+node {
+  calculator: "LandmarksToRenderDataCalculator"
+  input_stream: "NORM_LANDMARKS:pose_landmarks"
+  input_stream: "RENDER_SCALE:render_scale"
+  output_stream: "RENDER_DATA:landmarks_render_data"
+  node_options: {
+    [type.googleapis.com/mediapipe.LandmarksToRenderDataCalculatorOptions] {
+      landmark_connections: 0
+      landmark_connections: 1
+      landmark_connections: 1
+      landmark_connections: 2
+      landmark_connections: 2
+      landmark_connections: 3
+      landmark_connections: 3
+      landmark_connections: 7
+      landmark_connections: 0
+      landmark_connections: 4
+      landmark_connections: 4
+      landmark_connections: 5
+      landmark_connections: 5
+      landmark_connections: 6
+      landmark_connections: 6
+      landmark_connections: 8
+      landmark_connections: 9
+      landmark_connections: 10
+      landmark_connections: 11
+      landmark_connections: 12
+      landmark_connections: 11
+      landmark_connections: 13
+      landmark_connections: 13
+      landmark_connections: 15
+      landmark_connections: 15
+      landmark_connections: 17
+      landmark_connections: 15
+      landmark_connections: 19
+      landmark_connections: 15
+      landmark_connections: 21
+      landmark_connections: 17
+      landmark_connections: 19
+      landmark_connections: 12
+      landmark_connections: 14
+      landmark_connections: 14
+      landmark_connections: 16
+      landmark_connections: 16
+      landmark_connections: 18
+      landmark_connections: 16
+      landmark_connections: 20
+      landmark_connections: 16
+      landmark_connections: 22
+      landmark_connections: 18
+      landmark_connections: 20
+      landmark_connections: 11
+      landmark_connections: 23
+      landmark_connections: 12
+      landmark_connections: 24
+      landmark_connections: 23
+      landmark_connections: 24
+
+      landmark_color { r: 255 g: 255 b: 255 }
+      connection_color { r: 255 g: 255 b: 255 }
+      thickness: 3.0
+      visualize_landmark_depth: false
+      utilize_visibility: true
+      visibility_threshold: 0.1
+    }
+  }
+}
+
+# Take left pose landmarks.
+node {
+  calculator: "SplitNormalizedLandmarkListCalculator"
+  input_stream: "pose_landmarks"
+  output_stream: "landmarks_left_side"
+  node_options: {
+    [type.googleapis.com/mediapipe.SplitVectorCalculatorOptions] {
+      ranges: { begin: 1 end: 4 }
+      ranges: { begin: 7 end: 8 }
+      ranges: { begin: 9 end: 10 }
+      ranges: { begin: 11 end: 12 }
+      ranges: { begin: 13 end: 14 }
+      ranges: { begin: 15 end: 16 }
+      ranges: { begin: 17 end: 18 }
+      ranges: { begin: 19 end: 20 }
+      ranges: { begin: 21 end: 22 }
+      ranges: { begin: 23 end: 24 }
+
+      combine_outputs: true
+    }
+  }
+}
+
+# Take right pose landmarks.
+node {
+  calculator: "SplitNormalizedLandmarkListCalculator"
+  input_stream: "pose_landmarks"
+  output_stream: "landmarks_right_side"
+  node_options: {
+    [type.googleapis.com/mediapipe.SplitVectorCalculatorOptions] {
+      ranges: { begin: 4 end: 7 }
+      ranges: { begin: 8 end: 9 }
+      ranges: { begin: 10 end: 11 }
+      ranges: { begin: 12 end: 13 }
+      ranges: { begin: 14 end: 15 }
+      ranges: { begin: 16 end: 17 }
+      ranges: { begin: 18 end: 19 }
+      ranges: { begin: 20 end: 21 }
+      ranges: { begin: 22 end: 23 }
+      ranges: { begin: 24 end: 25 }
+
+      combine_outputs: true
+    }
+  }
+}
+
+# Render pose joints as big white circles.
+node {
+  calculator: "LandmarksToRenderDataCalculator"
+  input_stream: "NORM_LANDMARKS:visible_pose_landmarks"
+  input_stream: "RENDER_SCALE:render_scale"
+  output_stream: "RENDER_DATA:landmarks_background_joints_render_data"
+  node_options: {
+    [type.googleapis.com/mediapipe.LandmarksToRenderDataCalculatorOptions] {
+      landmark_color { r: 255 g: 255 b: 255 }
+      connection_color { r: 255 g: 255 b: 255 }
+      thickness: 5.0
+      visualize_landmark_depth: false
+      utilize_visibility: true
+      visibility_threshold: 0.1
+    }
+  }
+}
+
+# Render pose left side joints as orange circles (inside white ones).
+node {
+  calculator: "LandmarksToRenderDataCalculator"
+  input_stream: "NORM_LANDMARKS:landmarks_left_side"
+  input_stream: "RENDER_SCALE:render_scale"
+  output_stream: "RENDER_DATA:landmarks_left_joints_render_data"
+  node_options: {
+    [type.googleapis.com/mediapipe.LandmarksToRenderDataCalculatorOptions] {
+      landmark_color { r: 255 g: 138 b: 0 }
+      connection_color { r: 255 g: 138 b: 0 }
+      thickness: 3.0
+      visualize_landmark_depth: false
+      utilize_visibility: true
+      visibility_threshold: 0.1
+    }
+  }
+}
+
+# Render pose right side joints as cyan circles (inside white ones).
+node {
+  calculator: "LandmarksToRenderDataCalculator"
+  input_stream: "NORM_LANDMARKS:landmarks_right_side"
+  input_stream: "RENDER_SCALE:render_scale"
+  output_stream: "RENDER_DATA:landmarks_right_joints_render_data"
+  node_options: {
+    [type.googleapis.com/mediapipe.LandmarksToRenderDataCalculatorOptions] {
+      landmark_color { r: 0 g: 217 b: 231 }
+      connection_color { r: 0 g: 217 b: 231 }
+      thickness: 3.0
+      visualize_landmark_depth: false
+      utilize_visibility: true
+      visibility_threshold: 0.1
+    }
+  }
+}
+
+# Converts normalized rects to drawing primitives for annotation overlay.
+node {
+  calculator: "RectToRenderDataCalculator"
+  input_stream: "NORM_RECT:roi"
+  output_stream: "RENDER_DATA:roi_render_data"
+  node_options: {
+    [type.googleapis.com/mediapipe.RectToRenderDataCalculatorOptions] {
+      filled: false
+      color { r: 255 g: 0 b: 0 }
+      thickness: 4.0
+    }
+  }
+}
+
+# Draws annotations and overlays them on top of the input images.
+node {
+  calculator: "AnnotationOverlayCalculator"
+  input_stream: "IMAGE_GPU:input_image"
+  input_stream: "detection_render_data"
+  input_stream: "landmarks_render_data"
+  input_stream: "landmarks_background_joints_render_data"
+  input_stream: "landmarks_left_joints_render_data"
+  input_stream: "landmarks_right_joints_render_data"
+  input_stream: "roi_render_data"
+  output_stream: "IMAGE_GPU:output_image"
+}

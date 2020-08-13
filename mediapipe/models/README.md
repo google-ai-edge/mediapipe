@@ -23,6 +23,28 @@
   * [TensorFlow Blog post](https://blog.tensorflow.org/2020/03/face-and-hand-tracking-in-browser-with-mediapipe-and-tensorflowjs.html)
   * [Model card](https://mediapipe.page.link/handmc)
 
+### Iris
+  * Iris landmarks:
+    [TFLite model](https://github.com/google/mediapipe/tree/master/mediapipe/models/iris_landmark.tflite)
+  * Paper:
+    [Real-time Pupil Tracking from Monocular Video for Digital Puppetry](https://arxiv.org/abs/2006.11341)
+    ([presentation](https://youtu.be/cIhXkiiapQI))
+  * Google AI Blog:
+    [MediaPipe Iris: Real-time Eye Tracking and Depth Estimation](https://ai.googleblog.com/2020/08/mediapipe-iris-real-time-iris-tracking.html)
+  * [Model card](https://mediapipe.page.link/iris-mc)
+
+### Pose
+  * Pose detection:
+    [TFLite model](https://github.com/google/mediapipe/tree/master/mediapipe/modules/pose_detection/pose_detection.tflite)
+  * Upper-body pose landmarks:
+    [TFLite model](https://github.com/google/mediapipe/tree/master/mediapipe/modules/pose_landmark/pose_landmark_upper_body.tflite)
+  * Paper:
+    [BlazePose: On-device Real-time Body Pose Tracking](https://arxiv.org/abs/2006.10204)
+    ([presentation](https://youtu.be/YPpUOTRn5tA))
+  * Google AI Blog:
+    [BlazePose - On-device Real-time Body Pose Tracking](https://mediapipe.page.link/blazepose-blog)
+  * [Model card](https://mediapipe.page.link/blazepose-mc)
+
 ### Hair Segmentation
   * [TFLite model](https://github.com/google/mediapipe/tree/master/mediapipe/models/hair_segmentation.tflite)
   * [Model page](https://sites.google.com/corp/view/perception-cv4arvr/hair-segmentation)

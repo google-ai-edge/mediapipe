@@ -1,0 +1,72 @@
+# MediaPipe graph that performs upper-body pose tracking with TensorFlow Lite on CPU.
+
+# CPU buffer. (ImageFrame)
+input_stream: "input_video"
+
+# Output image with rendered results. (ImageFrame)
+output_stream: "output_video"
+# Pose landmarks. (NormalizedLandmarkList)
+output_stream: "pose_landmarks"
+
+# Throttles the images flowing downstream for flow control. It passes through
+# the very first incoming image unaltered, and waits for downstream nodes
+# (calculators and subgraphs) in the graph to finish their tasks before it
+# passes through another image. All images that come in while waiting are
+# dropped, limiting the number of in-flight images in most part of the graph to
+# 1. This prevents the downstream nodes from queuing up incoming images and data
+# excessively, which leads to increased latency and memory usage, unwanted in
+# real-time mobile applications. It also eliminates unnecessarily computation,
+# e.g., the output produced by a node may get dropped downstream if the
+# subsequent nodes are still busy processing previous inputs.
+node {
+  calculator: "FlowLimiterCalculator"
+  input_stream: "input_video"
+  input_stream: "FINISHED:output_video"
+  input_stream_info: {
+    tag_index: "FINISHED"
+    back_edge: true
+  }
+  output_stream: "throttled_input_video"
+}
+
+# Subgraph that detects poses and corresponding landmarks.
+node {
+  calculator: "PoseLandmarkUpperBodyCpu"
+  input_stream: "IMAGE:throttled_input_video"
+  output_stream: "LANDMARKS:pose_landmarks"
+  output_stream: "DETECTION:pose_detection"
+  output_stream: "ROI_FROM_LANDMARKS:roi_from_landmarks"
+}
+
+# Calculates size of the image.
+node {
+  calculator: "ImagePropertiesCalculator"
+  input_stream: "IMAGE:throttled_input_video"
+  output_stream: "SIZE:image_size"
+}
+
+# Smoothes pose landmarks in order to reduce jitter.
+node {
+  calculator: "LandmarksSmoothingCalculator"
+  input_stream: "NORM_LANDMARKS:pose_landmarks"
+  input_stream: "IMAGE_SIZE:image_size"
+  output_stream: "NORM_FILTERED_LANDMARKS:pose_landmarks_smoothed"
+  node_options: {
+    [type.googleapis.com/mediapipe.LandmarksSmoothingCalculatorOptions] {
+      velocity_filter: {
+        window_size: 5
+        velocity_scale: 10.0
+      }
+    }
+  }
+}
+
+# Subgraph that renders pose-landmark annotation onto the input image.
+node {
+  calculator: "UpperBodyPoseRendererCpu"
+  input_stream: "IMAGE:throttled_input_video"
+  input_stream: "LANDMARKS:pose_landmarks_smoothed"
+  input_stream: "ROI:roi_from_landmarks"
+  input_stream: "DETECTION:pose_detection"
+  output_stream: "IMAGE:output_video"
+}

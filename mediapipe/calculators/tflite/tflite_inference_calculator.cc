@@ -201,7 +201,7 @@ int GetXnnpackNumThreads(
 //  Input tensors are assumed to be of the correct size and already normalized.
 //  All output TfLiteTensors will be destroyed when the graph closes,
 //  (i.e. after calling graph.WaitUntilDone()).
-//  GPU tensors are currently only supported on Android and iOS.
+//  GPU tensor support rquires OpenGL ES 3.1+.
 //  This calculator uses FixedSizeInputStreamHandler by default.
 //
 class TfLiteInferenceCalculator : public CalculatorBase {

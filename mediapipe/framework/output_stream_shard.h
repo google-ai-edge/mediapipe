@@ -117,6 +117,11 @@ class OutputStreamShard : public OutputStream {
   std::list<Packet> output_queue_;
   bool closed_;
   Timestamp next_timestamp_bound_;
+  // Equal to next_timestamp_bound_ only if the bound has been explicitly set
+  // by the calculator.  This is needed for parallel Process() calls,
+  // in order to avoid propagating the initial next_timestamp_bound_, which
+  // does not reflect the output of Process() for preceding timestamps.
+  Timestamp updated_next_timestamp_bound_;
 
   // Accesses OutputStreamShard for profiling.
   friend class GraphProfiler;

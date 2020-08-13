@@ -9,4 +9,5 @@ Each module (represented as a subfolder) provides subgraphs and corresponding re
 | [`face_detection`](face_detection/README.md) | Subgraphs to detect faces. |
 | [`face_landmark`](face_landmark/README.md) | Subgraphs to detect and track face landmarks. |
 | [`iris_landmark`](iris_landmark/README.md) | Subgraphs to detect iris landmarks. |
-
+| [`pose_detection`](pose_detection/README.md) | Subgraphs to detect poses. |
+| [`pose_landmark`](pose_landmark/README.md) | Subgraphs to detect and track pose landmarks. |

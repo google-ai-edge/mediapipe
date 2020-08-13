@@ -40,11 +40,13 @@ void OutputStreamShard::SetNextTimestampBound(Timestamp bound) {
     return;
   }
   next_timestamp_bound_ = bound;
+  updated_next_timestamp_bound_ = next_timestamp_bound_;
 }
 
 void OutputStreamShard::Close() {
   closed_ = true;
   next_timestamp_bound_ = Timestamp::Done();
+  updated_next_timestamp_bound_ = next_timestamp_bound_;
 }
 
 bool OutputStreamShard::IsClosed() const { return closed_; }
@@ -122,6 +124,7 @@ Status OutputStreamShard::AddPacketInternal(T&& packet) {
   // Otherwise, moves the packet into output_queue_.
   output_queue_.push_back(std::forward<T>(packet));
   next_timestamp_bound_ = timestamp.NextAllowedInStream();
+  updated_next_timestamp_bound_ = next_timestamp_bound_;
 
   // TODO debug log?
 
@@ -152,6 +155,7 @@ Timestamp OutputStreamShard::LastAddedPacketTimestamp() const {
 void OutputStreamShard::Reset(Timestamp next_timestamp_bound, bool close) {
   output_queue_.clear();
   next_timestamp_bound_ = next_timestamp_bound;
+  updated_next_timestamp_bound_ = Timestamp::Unset();
   closed_ = close;
 }
 

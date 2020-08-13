@@ -102,7 +102,7 @@ camera with less than 10% error, without requiring any specialized hardware.
 This is done by relying on the fact that the horizontal iris diameter of the
 human eye remains roughly constant at 11.7±0.5 mm across a wide population,
 along with some simple geometric arguments. For more details please refer to our
-[Google AI Blog post](https://mediapipe.page.link/iris-blog).
+[Google AI Blog post](https://ai.googleblog.com/2020/08/mediapipe-iris-real-time-iris-tracking.html).
 
 ![iris_tracking_depth_from_iris.gif](../images/mobile/iris_tracking_depth_from_iris.gif) |
 :--------------------------------------------------------------------------------------------: |
@@ -189,8 +189,8 @@ Please refer to [these instructions](../index.md#mediapipe-on-the-web).
 
 ## Resources
 
-*   Google AI Blog: [MediaPipe Iris: Real-time Eye Tracking and Depth Estimation
-    from a Single Image](https://mediapipe.page.link/iris-blog)
+*   Google AI Blog:
+    [MediaPipe Iris: Real-time Eye Tracking and Depth Estimation](https://ai.googleblog.com/2020/08/mediapipe-iris-real-time-iris-tracking.html)
 *   Paper:
     [Real-time Pupil Tracking from Monocular Video for Digital Puppetry](https://arxiv.org/abs/2006.11341)
     ([presentation](https://youtu.be/cIhXkiiapQI))

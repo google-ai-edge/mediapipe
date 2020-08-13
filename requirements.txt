@@ -1,0 +1,6 @@
+absl-py==0.9.0
+numpy==1.19.1
+opencv-python==3.4.10.35
+protobuf>=3.11.4
+six==1.15.0
+wheel>=0.34.0

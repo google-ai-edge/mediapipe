@@ -118,10 +118,9 @@ Timestamp OutputStreamManager::ComputeOutputTimestampBound(
   // Note that "MaxOutputTimestamp()" must consider both output packet
   // timetstamp and SetNextTimestampBound values.
   // See the timestamp mapping section in go/mediapipe-bounds for details.
-  Timestamp new_bound = output_stream_shard.NextTimestampBound();
+  Timestamp input_bound;
   if (output_stream_spec_.offset_enabled &&
       input_timestamp != Timestamp::Unstarted()) {
-    Timestamp input_bound;
     if (input_timestamp == Timestamp::PreStream()) {
       // Timestamp::PreStream() is a special value that we shouldn't apply any
       // offset.
@@ -144,9 +143,16 @@ Timestamp OutputStreamManager::ComputeOutputTimestampBound(
       input_bound =
           input_timestamp.NextAllowedInStream() + output_stream_spec_.offset;
     }
+  }
+  Timestamp new_bound;
+  // The input_bound if it is greater than the shard bound.
+  if (input_bound > output_stream_shard.NextTimestampBound()) {
     new_bound = std::max(new_bound, input_bound);
   }
-
+  // The bound defined by SetNextTimestampBound.
+  new_bound =
+      std::max(new_bound, output_stream_shard.updated_next_timestamp_bound_);
+  // The bound defined by added packets.
   if (!output_stream_shard.IsEmpty()) {
     new_bound = std::max(
         new_bound,
@@ -160,8 +166,10 @@ void OutputStreamManager::PropagateUpdatesToMirrors(
     Timestamp next_timestamp_bound, OutputStreamShard* output_stream_shard) {
   CHECK(output_stream_shard);
   {
-    absl::MutexLock lock(&stream_mutex_);
-    next_timestamp_bound_ = next_timestamp_bound;
+    if (next_timestamp_bound != Timestamp::Unset()) {
+      absl::MutexLock lock(&stream_mutex_);
+      next_timestamp_bound_ = next_timestamp_bound;
+    }
   }
   std::list<Packet>* packets_to_propagate = output_stream_shard->OutputQueue();
   VLOG(3) << "Output stream: " << Name()
@@ -170,9 +178,10 @@ void OutputStreamManager::PropagateUpdatesToMirrors(
           << " next timestamp: " << next_timestamp_bound;
   bool add_packets = !packets_to_propagate->empty();
   bool set_bound =
-      !add_packets ||
-      packets_to_propagate->back().Timestamp().NextAllowedInStream() !=
-          next_timestamp_bound;
+      (next_timestamp_bound != Timestamp::Unset()) &&
+      (!add_packets ||
+       packets_to_propagate->back().Timestamp().NextAllowedInStream() !=
+           next_timestamp_bound);
   int mirror_count = mirrors_.size();
   for (int idx = 0; idx < mirror_count; ++idx) {
     const Mirror& mirror = mirrors_[idx];

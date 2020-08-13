@@ -74,6 +74,23 @@ struct BufferSpecHash {
   }
 };
 
+#if MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
+class CvPixelBufferPoolWrapper {
+ public:
+  CvPixelBufferPoolWrapper(const BufferSpec& spec, CFTimeInterval maxAge);
+  GpuBuffer GetBuffer(std::function<void(void)> flush);
+
+  int GetBufferCount() const { return count_; }
+  std::string GetDebugString() const;
+
+  void Flush();
+
+ private:
+  CFHolder<CVPixelBufferPoolRef> pool_;
+  int count_ = 0;
+};
+#endif  // MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
+
 class GpuBufferMultiPool {
  public:
   GpuBufferMultiPool() {}
@@ -93,25 +110,63 @@ class GpuBufferMultiPool {
 
   // Remove a texture cache from the list of caches to be flushed.
   void UnregisterTextureCache(CVTextureCacheType cache);
+
+  void FlushTextureCaches();
 #endif  // defined(__APPLE__)
 
  private:
 #if MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
-  typedef CFHolder<CVPixelBufferPoolRef> SimplePool;
+  using SimplePool = std::shared_ptr<CvPixelBufferPoolWrapper>;
 #else
-  typedef std::shared_ptr<GlTextureBufferPool> SimplePool;
+  using SimplePool = std::shared_ptr<GlTextureBufferPool>;
 #endif  // MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
 
+  struct Entry {
+    Entry(const BufferSpec& spec) : spec(spec) {}
+    Entry* prev = nullptr;
+    Entry* next = nullptr;
+    BufferSpec spec;
+    int request_count = 0;
+    SimplePool pool;
+  };
+
+  // Unlike std::list, this is an intrusive list, meaning that the prev and next
+  // pointers live inside the element. Apart from not requiring an extra
+  // allocation, this means that once we look up an entry by key in the pools_
+  // map we do not need to look it up separately in the list.
+  //
+  class EntryList {
+   public:
+    void Prepend(Entry* entry);
+    void Append(Entry* entry);
+    void Remove(Entry* entry);
+    void InsertAfter(Entry* entry, Entry* after);
+
+    Entry* head() { return head_; }
+    Entry* tail() { return tail_; }
+    size_t size() { return size_; }
+
+   private:
+    Entry* head_ = nullptr;
+    Entry* tail_ = nullptr;
+    size_t size_ = 0;
+  };
+
   SimplePool MakeSimplePool(const BufferSpec& spec);
-  SimplePool GetSimplePool(const BufferSpec& key);
+  // Requests a simple buffer pool for the given spec. This may return nullptr
+  // if we have not yet reached a sufficient number of requests to allocate a
+  // pool, in which case the caller should invoke GetBufferWithoutPool instead
+  // of GetBufferFromSimplePool.
+  SimplePool RequestPool(const BufferSpec& key);
   GpuBuffer GetBufferFromSimplePool(BufferSpec spec, const SimplePool& pool);
+  GpuBuffer GetBufferWithoutPool(const BufferSpec& spec);
+  void Evict() ABSL_EXCLUSIVE_LOCKS_REQUIRED(mutex_);
 
   absl::Mutex mutex_;
-  std::unordered_map<BufferSpec, SimplePool, BufferSpecHash> pools_
+  std::unordered_map<BufferSpec, Entry, BufferSpecHash> pools_
       ABSL_GUARDED_BY(mutex_);
-  // A queue of BufferSpecs to keep track of the age of each BufferSpec added to
-  // the pool.
-  std::deque<BufferSpec> buffer_specs_;
+  EntryList entry_list_ ABSL_GUARDED_BY(mutex_);
+  int total_request_count_ = 0;
 
 #ifdef __APPLE__
   // Texture caches used with this pool.

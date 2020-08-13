@@ -432,6 +432,13 @@ cc_library(
             "gl_texture_buffer_pool.h",
         ],
     }),
+    copts = select({
+        "//conditions:default": [],
+        "//mediapipe:apple": [
+            "-x objective-c++",
+            "-fobjc-arc",
+        ],
+    }),
     visibility = ["//visibility:public"],
     deps = [
         ":gl_base",

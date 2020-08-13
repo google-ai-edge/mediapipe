@@ -107,4 +107,4 @@ to cross-compile and run MediaPipe examples on the
     [TFLite model quantized for EdgeTPU/Coral](https://github.com/google/mediapipe/tree/master/mediapipe/examples/coral/models/face-detector-quantized_edgetpu.tflite)
 *   For back-facing camera:
     [TFLite model ](https://github.com/google/mediapipe/tree/master/mediapipe/models/face_detection_back.tflite)
-*   [Model card](https://drive.google.com/file/d/1f39lSzU5Oq-j_OXgS67KfN5wNsoeAZ4V/view)
+*   [Model card](https://mediapipe.page.link/blazeface-mc)

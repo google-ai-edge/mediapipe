@@ -1,0 +1,6 @@
+global-exclude .git*
+global-exclude *_test.py
+
+recursive-include mediapipe/models *.tflite *.txt
+recursive-include mediapipe/modules *.tflite *.txt
+recursive-include mediapipe/graphs *.binarypb

@@ -33,12 +33,16 @@ alias(
 
 ios_application(
     name = "IrisTrackingGpuApp",
+    app_icons = ["//mediapipe/examples/ios/common:AppIcon"],
     bundle_id = BUNDLE_ID_PREFIX + ".IrisTrackingGpu",
     families = [
         "iphone",
         "ipad",
     ],
-    infoplists = ["Info.plist"],
+    infoplists = [
+        "//mediapipe/examples/ios/common:Info.plist",
+        "Info.plist",
+    ],
     minimum_os_version = MIN_IOS_VERSION,
     provisioning_profile = example_provisioning(),
     deps = [
@@ -50,32 +54,19 @@ ios_application(
 objc_library(
     name = "IrisTrackingGpuAppLibrary",
     srcs = [
-        "AppDelegate.m",
-        "ViewController.mm",
-        "main.m",
+        "IrisTrackingViewController.mm",
     ],
     hdrs = [
-        "AppDelegate.h",
-        "ViewController.h",
+        "IrisTrackingViewController.h",
     ],
     data = [
-        "Base.lproj/LaunchScreen.storyboard",
-        "Base.lproj/Main.storyboard",
         "//mediapipe/graphs/iris_tracking:iris_tracking_gpu.binarypb",
         "//mediapipe/modules/face_detection:face_detection_front.tflite",
         "//mediapipe/modules/face_landmark:face_landmark.tflite",
         "//mediapipe/modules/iris_landmark:iris_landmark.tflite",
     ],
-    sdk_frameworks = [
-        "AVFoundation",
-        "CoreGraphics",
-        "CoreMedia",
-        "UIKit",
-    ],
     deps = [
-        "//mediapipe/objc:mediapipe_framework_ios",
-        "//mediapipe/objc:mediapipe_input_sources_ios",
-        "//mediapipe/objc:mediapipe_layer_renderer",
+        "//mediapipe/examples/ios/common:CommonMediaPipeAppLibrary",
     ] + select({
         "//mediapipe:ios_i386": [],
         "//mediapipe:ios_x86_64": [],

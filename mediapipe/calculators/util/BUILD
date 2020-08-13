@@ -20,6 +20,24 @@ package(default_visibility = ["//visibility:public"])
 
 exports_files(["LICENSE"])
 
+cc_library(
+    name = "alignment_points_to_rects_calculator",
+    srcs = ["alignment_points_to_rects_calculator.cc"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//mediapipe/calculators/util:detections_to_rects_calculator",
+        "//mediapipe/calculators/util:detections_to_rects_calculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:calculator_options_cc_proto",
+        "//mediapipe/framework/formats:detection_cc_proto",
+        "//mediapipe/framework/formats:location_data_cc_proto",
+        "//mediapipe/framework/formats:rect_cc_proto",
+        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:status",
+    ],
+    alwayslink = 1,
+)
+
 proto_library(
     name = "annotation_overlay_calculator_proto",
     srcs = ["annotation_overlay_calculator.proto"],
@@ -587,6 +605,15 @@ proto_library(
 )
 
 proto_library(
+    name = "rect_to_render_scale_calculator_proto",
+    srcs = ["rect_to_render_scale_calculator.proto"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//mediapipe/framework:calculator_proto",
+    ],
+)
+
+proto_library(
     name = "detections_to_render_data_calculator_proto",
     srcs = ["detections_to_render_data_calculator.proto"],
     visibility = ["//visibility:public"],
@@ -700,7 +727,15 @@ mediapipe_cc_proto_library(
     deps = [":rect_to_render_data_calculator_proto"],
 )
 
-# TODO: What is that one for?
+mediapipe_cc_proto_library(
+    name = "rect_to_render_scale_calculator_cc_proto",
+    srcs = ["rect_to_render_scale_calculator.proto"],
+    cc_deps = [
+        "//mediapipe/framework:calculator_cc_proto",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [":rect_to_render_scale_calculator_proto"],
+)
 
 mediapipe_cc_proto_library(
     name = "detections_to_render_data_calculator_cc_proto",
@@ -826,6 +861,19 @@ cc_library(
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/util:color_cc_proto",
         "//mediapipe/util:render_data_cc_proto",
+    ],
+    alwayslink = 1,
+)
+
+cc_library(
+    name = "rect_to_render_scale_calculator",
+    srcs = ["rect_to_render_scale_calculator.cc"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":rect_to_render_scale_calculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/formats:rect_cc_proto",
+        "//mediapipe/framework/port:ret_check",
     ],
     alwayslink = 1,
 )

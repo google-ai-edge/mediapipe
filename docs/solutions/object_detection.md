@@ -2,7 +2,7 @@
 layout: default
 title: Object Detection
 parent: Solutions
-nav_order: 6
+nav_order: 7
 ---
 
 # MediaPipe Object Detection

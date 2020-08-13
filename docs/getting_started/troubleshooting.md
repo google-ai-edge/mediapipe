@@ -27,13 +27,14 @@ Repository command failed
 
 usually indicates that Bazel fails to find the local Python binary. To solve
 this issue, please first find where the python binary is and then add
-`--action_env PYTHON_BIN_PATH=<path to python binary>` to the Bazel command like
-the following:
+`--action_env PYTHON_BIN_PATH=<path to python binary>` to the Bazel command. For
+example, you can switch to use the system default python3 binary by the
+following command:
 
 ```
 bazel build -c opt \
   --define MEDIAPIPE_DISABLE_GPU=1 \
-  --action_env PYTHON_BIN_PATH="/path/to/python" \
+  --action_env PYTHON_BIN_PATH=$(which python3) \
   mediapipe/examples/desktop/hello_world
 ```
 

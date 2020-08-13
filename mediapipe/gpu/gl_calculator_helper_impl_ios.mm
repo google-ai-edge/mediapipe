@@ -153,14 +153,28 @@ std::unique_ptr<GpuBuffer> GlTexture::GetFrame<GpuBuffer>() const {
   CVReturn err = CVPixelBufferLockBaseAddress(pixel_buffer, 0);
   NSCAssert(err == kCVReturnSuccess, @"CVPixelBufferLockBaseAddress failed: %d", err);
   OSType pixel_format = CVPixelBufferGetPixelFormatType(pixel_buffer);
+  size_t bytes_per_row = CVPixelBufferGetBytesPerRow(pixel_buffer);
+  uint8_t* pixel_ptr = static_cast<uint8_t*>(CVPixelBufferGetBaseAddress(pixel_buffer));
   if (pixel_format == kCVPixelFormatType_32BGRA) {
     // TODO: restore previous framebuffer? Move this to helper so we can
     // use BindFramebuffer?
     glViewport(0, 0, width_, height_);
     glFramebufferTexture2D(
         GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, target_, name_, 0);
-    glReadPixels(0, 0, width_, height_, GL_BGRA, GL_UNSIGNED_BYTE,
-                 CVPixelBufferGetBaseAddress(pixel_buffer));
+
+    size_t contiguous_bytes_per_row = width_ * 4;
+    if (bytes_per_row == contiguous_bytes_per_row) {
+      glReadPixels(0, 0, width_, height_, GL_BGRA, GL_UNSIGNED_BYTE, pixel_ptr);
+    } else {
+      std::vector<uint8_t> contiguous_buffer(contiguous_bytes_per_row * height_);
+      uint8_t* temp_ptr = contiguous_buffer.data();
+      glReadPixels(0, 0, width_, height_, GL_BGRA, GL_UNSIGNED_BYTE, temp_ptr);
+      for (int i = 0; i < height_; ++i) {
+        memcpy(pixel_ptr, temp_ptr, contiguous_bytes_per_row);
+        temp_ptr += contiguous_bytes_per_row;
+        pixel_ptr += bytes_per_row;
+      }
+    }
   } else {
     uint32_t format_big = CFSwapInt32HostToBig(pixel_format);
     NSLog(@"unsupported pixel format: %.4s", (char*)&format_big);

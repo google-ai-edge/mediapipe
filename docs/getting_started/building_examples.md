@@ -422,3 +422,73 @@ Note: This currently works only on Linux, and please first follow
     This will open up your webcam as long as it is connected and on. Any errors
     is likely due to your webcam being not accessible, or GPU drivers not setup
     properly.
+
+## Python
+
+### Prerequisite
+
+1.  Make sure that Bazel and OpenCV are correctly installed and configured for
+    MediaPipe. Please see [Installation](./install.md) for how to setup Bazel
+    and OpenCV for MediaPipe on Linux and macOS.
+
+2.  Install the following dependencies.
+
+    ```bash
+    # Debian or Ubuntu
+    $ sudo apt install python3-dev
+    $ sudo apt install python3-venv
+    $ sudo apt install -y protobuf-compiler
+    ```
+
+    ```bash
+    # macOS
+    $ brew install protobuf
+    ```
+
+### Set up Python virtual environment.
+
+1.  Activate a Python virtual environment.
+
+    ```bash
+    $ python3 -m venv mp_env && source mp_env/bin/activate
+    ```
+
+2.  In the virtual environment, go to the MediaPipe repo directory.
+
+3.  Install the required Python packages.
+
+    ```bash
+    (mp_env)mediapipe$ pip3 install -r requirements.txt
+    ```
+
+4.  Generate and install MediaPipe package.
+
+    ```bash
+    (mp_env)mediapipe$ python3 setup.py gen_protos
+    (mp_env)mediapipe$ python3 setup.py install
+    ```
+
+### Run in Python interpreter
+
+Make sure you are not in the MediaPipe repo directory.
+
+Using [MediaPipe Pose](../solutions/pose.md) as an example:
+
+```bash
+(mp_env)$ python3
+>>> import mediapipe as mp
+>>> pose_tracker = mp.examples.UpperBodyPoseTracker()
+
+# For image input
+>>> pose_landmarks, _ = pose_tracker.run(input_file='/path/to/input/file', output_file='/path/to/output/file')
+>>> pose_landmarks, annotated_image = pose_tracker.run(input_file='/path/to/file')
+
+# For live camera input
+# (Press Esc within the output image window to stop the run or let it self terminate after 30 seconds.)
+>>> pose_tracker.run_live()
+
+# Close the tracker.
+>>> pose_tracker.close()
+```
+
+Tip: Use command `deactivate` to exit the Python virtual environment.

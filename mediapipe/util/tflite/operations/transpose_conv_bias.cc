@@ -121,10 +121,14 @@ TfLiteStatus Prepare(TfLiteContext* context, TfLiteNode* node) {
 
   const TfLiteTensor* weights =
       ::tflite::GetInput(context, node, kWeightsTensor);
+  TF_LITE_ENSURE(context, weights != nullptr);
   const TfLiteTensor* bias = ::tflite::GetInput(context, node, kBiasTensor);
+  TF_LITE_ENSURE(context, bias != nullptr);
   const TfLiteTensor* input =
       ::tflite::GetInput(context, node, kDataInputTensor);
+  TF_LITE_ENSURE(context, input != nullptr);
   TfLiteTensor* output = ::tflite::GetOutput(context, node, kOutputTensor);
+  TF_LITE_ENSURE(context, output != nullptr);
 
   TF_LITE_ENSURE_EQ(context, ::tflite::NumDimensions(input), 4);
   TF_LITE_ENSURE_EQ(context, ::tflite::NumDimensions(weights), 4);
@@ -184,10 +188,14 @@ TfLiteStatus Prepare(TfLiteContext* context, TfLiteNode* node) {
 TfLiteStatus Eval(TfLiteContext* context, TfLiteNode* node) {
   const TfLiteTensor* weights =
       ::tflite::GetInput(context, node, kWeightsTensor);
+  TF_LITE_ENSURE(context, weights != nullptr);
   const TfLiteTensor* bias = ::tflite::GetInput(context, node, kBiasTensor);
+  TF_LITE_ENSURE(context, bias != nullptr);
   const TfLiteTensor* input =
       ::tflite::GetInput(context, node, kDataInputTensor);
+  TF_LITE_ENSURE(context, input != nullptr);
   TfLiteTensor* output = ::tflite::GetOutput(context, node, kOutputTensor);
+  TF_LITE_ENSURE(context, output != nullptr);
 
   const auto* params = reinterpret_cast<const TfLiteTransposeConvParams*>(
       node->custom_initial_data);

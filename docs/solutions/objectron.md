@@ -2,7 +2,7 @@
 layout: default
 title: Objectron (3D Object Detection)
 parent: Solutions
-nav_order: 8
+nav_order: 9
 ---
 
 # MediaPipe Objectron

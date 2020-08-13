@@ -125,7 +125,7 @@ Tip: Maximum number of faces to detect/process is set to 1 by default. To change
 it, for Android modify `NUM_FACES` in
 [MainActivity.java](https://github.com/google/mediapipe/tree/master/mediapipe/examples/android/src/java/com/google/mediapipe/apps/facemeshgpu/MainActivity.java),
 and for iOS modify `kNumFaces` in
-[ViewController.mm](https://github.com/google/mediapipe/tree/master/mediapipe/examples/ios/facemeshgpu/ViewController.mm).
+[FaceMeshGpuViewController.mm](https://github.com/google/mediapipe/tree/master/mediapipe/examples/ios/facemeshgpu/FaceMeshGpuViewController.mm).
 
 ### Desktop
 
@@ -157,4 +157,4 @@ it, in the graph file modify the option of `ConstantSidePacketCalculator`.
 *   Face landmark model:
     [TFLite model](https://github.com/google/mediapipe/tree/master/mediapipe/modules/face_landmark/face_landmark.tflite),
     [TF.js model](https://tfhub.dev/mediapipe/facemesh/1)
-*   [Model card](https://drive.google.com/file/d/1VFC_wIpw4O7xBOiTgUldl79d9LA-LsnA/view)
+*   [Model card](https://mediapipe.page.link/facemesh-mc)

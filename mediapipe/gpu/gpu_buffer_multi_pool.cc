@@ -22,6 +22,7 @@
 #include "mediapipe/gpu/gpu_shared_data_internal.h"
 
 #ifdef __APPLE__
+#include "CoreFoundation/CFBase.h"
 #include "mediapipe/objc/CFHolder.h"
 #endif  // __APPLE__
 
@@ -31,29 +32,70 @@ namespace mediapipe {
 static constexpr int kKeepCount = 2;
 // The maximum size of the GpuBufferMultiPool. When the limit is reached, the
 // oldest BufferSpec will be dropped.
-static constexpr int kMaxPoolCount = 20;
+static constexpr int kMaxPoolCount = 10;
+// Time in seconds after which an inactive buffer can be dropped from the pool.
+// Currently only used with CVPixelBufferPool.
+static constexpr float kMaxInactiveBufferAge = 0.25;
+// Skip allocating a buffer pool until at least this many requests have been
+// made for a given BufferSpec.
+static constexpr int kMinRequestsBeforePool = 2;
+// Do a deeper flush every this many requests.
+static constexpr int kRequestCountScrubInterval = 50;
 
 #if MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
 
-GpuBufferMultiPool::SimplePool GpuBufferMultiPool::MakeSimplePool(
-    const BufferSpec& spec) {
+CvPixelBufferPoolWrapper::CvPixelBufferPoolWrapper(const BufferSpec& spec,
+                                                   CFTimeInterval maxAge) {
   OSType cv_format = CVPixelFormatForGpuBufferFormat(spec.format);
   CHECK_NE(cv_format, -1) << "unsupported pixel format";
-  return MakeCFHolderAdopting(
-      CreateCVPixelBufferPool(spec.width, spec.height, cv_format, kKeepCount,
-                              0.1 /* max age in seconds */));
+  pool_ = MakeCFHolderAdopting(
+      /* keep count is 0 because the age param keeps buffers around anyway */
+      CreateCVPixelBufferPool(spec.width, spec.height, cv_format, 0, maxAge));
 }
 
-GpuBuffer GpuBufferMultiPool::GetBufferFromSimplePool(
-    BufferSpec spec, const GpuBufferMultiPool::SimplePool& pool) {
-#if TARGET_IPHONE_SIMULATOR
-  // On the simulator, syncing the texture with the pixelbuffer does not work,
-  // and we have to use glReadPixels. Since GL_UNPACK_ROW_LENGTH is not
-  // available in OpenGL ES 2, we should create the buffer so the pixels are
-  // contiguous.
-  //
-  // TODO: verify if we can use kIOSurfaceBytesPerRow to force the
-  // pool to give us contiguous data.
+GpuBuffer CvPixelBufferPoolWrapper::GetBuffer(std::function<void(void)> flush) {
+  CVPixelBufferRef buffer;
+  int threshold = 1;
+  NSMutableDictionary* auxAttributes =
+      [NSMutableDictionary dictionaryWithCapacity:1];
+  CVReturn err;
+  bool tried_flushing = false;
+  while (1) {
+    auxAttributes[(id)kCVPixelBufferPoolAllocationThresholdKey] = @(threshold);
+    err = CVPixelBufferPoolCreatePixelBufferWithAuxAttributes(
+        kCFAllocatorDefault, *pool_, (__bridge CFDictionaryRef)auxAttributes,
+        &buffer);
+    if (err != kCVReturnWouldExceedAllocationThreshold) break;
+    if (flush && !tried_flushing) {
+      // Call the flush function to potentially release old holds on buffers
+      // and try again to create a pixel buffer.
+      // This is used to flush CV texture caches, which may retain buffers until
+      // flushed.
+      flush();
+      tried_flushing = true;
+    } else {
+      ++threshold;
+    }
+  }
+  CHECK(!err) << "Error creating pixel buffer: " << err;
+  count_ = threshold;
+  return GpuBuffer(MakeCFHolderAdopting(buffer));
+}
+
+std::string CvPixelBufferPoolWrapper::GetDebugString() const {
+  auto description = MakeCFHolderAdopting(CFCopyDescription(*pool_));
+  return [(__bridge NSString*)*description UTF8String];
+}
+
+void CvPixelBufferPoolWrapper::Flush() { CVPixelBufferPoolFlush(*pool_, 0); }
+
+GpuBufferMultiPool::SimplePool GpuBufferMultiPool::MakeSimplePool(
+    const BufferSpec& spec) {
+  return std::make_shared<CvPixelBufferPoolWrapper>(spec,
+                                                    kMaxInactiveBufferAge);
+}
+
+GpuBuffer GpuBufferMultiPool::GetBufferWithoutPool(const BufferSpec& spec) {
   OSType cv_format = CVPixelFormatForGpuBufferFormat(spec.format);
   CHECK_NE(cv_format, -1) << "unsupported pixel format";
   CVPixelBufferRef buffer;
@@ -61,26 +103,37 @@ GpuBuffer GpuBufferMultiPool::GetBufferFromSimplePool(
                                                 cv_format, &buffer);
   CHECK(!err) << "Error creating pixel buffer: " << err;
   return GpuBuffer(MakeCFHolderAdopting(buffer));
-#else
-  CVPixelBufferRef buffer;
-  // TODO: allow the keepCount and the allocation threshold to be set
-  // by the application, and to be set independently.
-  static CFDictionaryRef auxAttributes =
-      CreateCVPixelBufferPoolAuxiliaryAttributesForThreshold(kKeepCount);
-  CVReturn err = CreateCVPixelBufferWithPool(
-      *pool, auxAttributes,
-      [this]() {
-        for (const auto& cache : texture_caches_) {
+}
+
+void GpuBufferMultiPool::FlushTextureCaches() {
+  absl::MutexLock lock(&mutex_);
+  for (const auto& cache : texture_caches_) {
 #if TARGET_OS_OSX
-          CVOpenGLTextureCacheFlush(*cache, 0);
+    CVOpenGLTextureCacheFlush(*cache, 0);
 #else
-          CVOpenGLESTextureCacheFlush(*cache, 0);
+    CVOpenGLESTextureCacheFlush(*cache, 0);
 #endif  // TARGET_OS_OSX
-        }
-      },
-      &buffer);
-  CHECK(!err) << "Error creating pixel buffer: " << err;
-  return GpuBuffer(MakeCFHolderAdopting(buffer));
+  }
+}
+
+// Turning this on disables the pixel buffer pools when using the simulator.
+// It is no longer necessary, since the helper code now supports non-contiguous
+// buffers. We leave the code in for now for the sake of documentation.
+#define FORCE_CONTIGUOUS_PIXEL_BUFFER_ON_IPHONE_SIMULATOR 0
+
+GpuBuffer GpuBufferMultiPool::GetBufferFromSimplePool(
+    BufferSpec spec, const GpuBufferMultiPool::SimplePool& pool) {
+#if TARGET_IPHONE_SIMULATOR && FORCE_CONTIGUOUS_PIXEL_BUFFER_ON_IPHONE_SIMULATOR
+  // On the simulator, syncing the texture with the pixelbuffer does not work,
+  // and we have to use glReadPixels. Since GL_UNPACK_ROW_LENGTH is not
+  // available in OpenGL ES 2, we should create the buffer so the pixels are
+  // contiguous.
+  //
+  // TODO: verify if we can use kIOSurfaceBytesPerRow to force the
+  // pool to give us contiguous data.
+  return GetBufferWithoutPool(spec);
+#else
+  return pool->GetBuffer([this]() { FlushTextureCaches(); });
 #endif  // TARGET_IPHONE_SIMULATOR
 }
 
@@ -92,6 +145,11 @@ GpuBufferMultiPool::SimplePool GpuBufferMultiPool::MakeSimplePool(
                                      kKeepCount);
 }
 
+GpuBuffer GpuBufferMultiPool::GetBufferWithoutPool(const BufferSpec& spec) {
+  return GpuBuffer(
+      GlTextureBuffer::Create(spec.width, spec.height, spec.format));
+}
+
 GpuBuffer GpuBufferMultiPool::GetBufferFromSimplePool(
     BufferSpec spec, const GpuBufferMultiPool::SimplePool& pool) {
   return GpuBuffer(pool->GetBuffer());
@@ -99,42 +157,132 @@ GpuBuffer GpuBufferMultiPool::GetBufferFromSimplePool(
 
 #endif  // MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
 
-GpuBufferMultiPool::SimplePool GpuBufferMultiPool::GetSimplePool(
+void GpuBufferMultiPool::EntryList::Prepend(Entry* entry) {
+  if (head_ == nullptr) {
+    head_ = tail_ = entry;
+  } else {
+    entry->next = head_;
+    head_->prev = entry;
+    head_ = entry;
+  }
+  ++size_;
+}
+
+void GpuBufferMultiPool::EntryList::Append(Entry* entry) {
+  if (tail_ == nullptr) {
+    head_ = tail_ = entry;
+  } else {
+    tail_->next = entry;
+    entry->prev = tail_;
+    tail_ = entry;
+  }
+  ++size_;
+}
+
+void GpuBufferMultiPool::EntryList::Remove(Entry* entry) {
+  if (entry == head_) {
+    head_ = entry->next;
+  } else {
+    entry->prev->next = entry->next;
+  }
+  if (entry == tail_) {
+    tail_ = entry->prev;
+  } else {
+    entry->next->prev = entry->prev;
+  }
+  entry->prev = nullptr;
+  entry->next = nullptr;
+  --size_;
+}
+
+void GpuBufferMultiPool::EntryList::InsertAfter(Entry* entry, Entry* after) {
+  if (after != nullptr) {
+    entry->next = after->next;
+    if (entry->next) entry->next->prev = entry;
+    entry->prev = after;
+    after->next = entry;
+    ++size_;
+  } else
+    Prepend(entry);
+}
+
+void GpuBufferMultiPool::Evict() {
+  // Remove excess entries.
+  while (entry_list_.size() > kMaxPoolCount) {
+    Entry* victim = entry_list_.tail();
+    entry_list_.Remove(victim);
+    pools_.erase(victim->spec);
+  }
+  // Every kRequestCountScrubInterval requests, halve the request counts, and
+  // remove entries which have fallen to 0.
+  // This keeps sporadic requests from accumulating and eventually exceeding
+  // the minimum request threshold for allocating a pool. Also, it means that
+  // if the request regimen changes (e.g. a graph was always requesting a large
+  // size, but then switches to a small size to save memory or CPU), the pool
+  // can quickly adapt to it.
+  if (total_request_count_ >= kRequestCountScrubInterval) {
+    total_request_count_ = 0;
+    VLOG(2) << "begin pool scrub";
+    for (Entry* entry = entry_list_.head(); entry != nullptr;) {
+      VLOG(2) << "entry for: " << entry->spec.width << "x" << entry->spec.height
+              << " request_count: " << entry->request_count
+              << " has pool: " << (entry->pool != nullptr);
+      entry->request_count /= 2;
+      Entry* next = entry->next;
+      if (entry->request_count == 0) {
+        entry_list_.Remove(entry);
+        pools_.erase(entry->spec);
+      }
+      entry = next;
+    }
+  }
+}
+
+GpuBufferMultiPool::SimplePool GpuBufferMultiPool::RequestPool(
     const BufferSpec& key) {
   absl::MutexLock lock(&mutex_);
   auto pool_it = pools_.find(key);
+  Entry* entry;
   if (pool_it == pools_.end()) {
-    // Discard the least recently used pool in LRU cache.
-    if (pools_.size() >= kMaxPoolCount) {
-      auto old_spec = buffer_specs_.front();  // Front has LRU.
-      buffer_specs_.pop_front();
-      pools_.erase(old_spec);
-    }
-    buffer_specs_.push_back(key);  // Push new spec to back.
     std::tie(pool_it, std::ignore) =
         pools_.emplace(std::piecewise_construct, std::forward_as_tuple(key),
-                       std::forward_as_tuple(MakeSimplePool(key)));
+                       std::forward_as_tuple(key));
+    entry = &pool_it->second;
+    CHECK_EQ(entry->request_count, 0);
+    entry->request_count = 1;
+    entry_list_.Append(entry);
+    if (entry->prev != nullptr) CHECK_GE(entry->prev->request_count, 1);
   } else {
-    // Find and move current 'key' spec to back, keeping others in same order.
-    auto specs_it = buffer_specs_.begin();
-    while (specs_it != buffer_specs_.end()) {
-      if (*specs_it == key) {
-        buffer_specs_.erase(specs_it);
-        break;
-      }
-      ++specs_it;
+    entry = &pool_it->second;
+    ++entry->request_count;
+    Entry* larger = entry->prev;
+    while (larger != nullptr && larger->request_count < entry->request_count) {
+      larger = larger->prev;
     }
-    buffer_specs_.push_back(key);
+    if (larger != entry->prev) {
+      entry_list_.Remove(entry);
+      entry_list_.InsertAfter(entry, larger);
+    }
   }
-  return pool_it->second;
+  if (!entry->pool && entry->request_count >= kMinRequestsBeforePool) {
+    entry->pool = MakeSimplePool(key);
+  }
+  SimplePool pool = entry->pool;
+  ++total_request_count_;
+  Evict();
+  return pool;
 }
 
 GpuBuffer GpuBufferMultiPool::GetBuffer(int width, int height,
                                         GpuBufferFormat format) {
   BufferSpec key(width, height, format);
-  SimplePool pool = GetSimplePool(key);
-  // Note: we release our multipool lock before accessing the simple pool.
-  return GetBufferFromSimplePool(key, pool);
+  SimplePool pool = RequestPool(key);
+  if (pool) {
+    // Note: we release our multipool lock before accessing the simple pool.
+    return GetBufferFromSimplePool(key, pool);
+  } else {
+    return GetBufferWithoutPool(key);
+  }
 }
 
 GpuBufferMultiPool::~GpuBufferMultiPool() {

@@ -596,7 +596,7 @@ void AssignNodeNames(GraphProfile* profile) {
       absl::Microseconds(profiler_config_.trace_log_margin_usec());
   GraphProfile profile;
   GraphTrace* trace = profile.add_graph_trace();
-  if (!profiler_config_.trace_log_duration_events()) {
+  if (!profiler_config_.trace_log_instant_events()) {
     tracer()->GetTrace(previous_log_end_time_, end_time, trace);
   } else {
     tracer()->GetLog(previous_log_end_time_, end_time, trace);

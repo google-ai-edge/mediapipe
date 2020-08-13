@@ -58,6 +58,9 @@ apps="${app_dir}/*"
 for app in ${apps}; do
   if [[ -d "${app}" ]]; then
     target_name=${app##*/}
+    if [[ "${target_name}" == "common" ]]; then
+      continue
+    fi
     target="${app}:${target_name}"
 
     echo "=== Target: ${target}"

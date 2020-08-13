@@ -1,0 +1,64 @@
+# MediaPipe graph to calculate pose region of interest (ROI) from landmarks
+# detected by "PoseLandmarkUpperBodyByRoiCpu" or
+# "PoseLandmarkUpperBodyByRoiGpu".
+#
+# NOTE: this graph is subject to change and should not be used directly.
+
+type: "PoseLandmarkUpperBodyLandmarksToRoi"
+
+# Normalized landmarks. (NormalizedLandmarkList)
+input_stream: "LANDMARKS:landmarks"
+# Frame size (width & height). (std::pair<int, int>)
+input_stream: "IMAGE_SIZE:image_size"
+# ROI according to landmarks. (NormalizedRect)
+output_stream: "ROI:roi"
+
+node {
+  calculator: "SplitNormalizedLandmarkListCalculator"
+  input_stream: "landmarks"
+  output_stream: "alignment_landmarks"
+  options: {
+    [mediapipe.SplitVectorCalculatorOptions.ext] {
+      ranges: { begin: 25 end: 27 }
+    }
+  }
+}
+
+# Converts landmarks to a detection that tightly encloses all landmarks.
+node {
+  calculator: "LandmarksToDetectionCalculator"
+  input_stream: "NORM_LANDMARKS:alignment_landmarks"
+  output_stream: "DETECTION:detection"
+}
+
+# Converts detection into a rectangle based on center and scale alignment
+# points.
+node {
+  calculator: "AlignmentPointsRectsCalculator"
+  input_stream: "DETECTION:detection"
+  input_stream: "IMAGE_SIZE:image_size"
+  output_stream: "NORM_RECT:raw_roi"
+  options: {
+    [mediapipe.DetectionsToRectsCalculatorOptions.ext] {
+      rotation_vector_start_keypoint_index: 0
+      rotation_vector_end_keypoint_index: 1
+      rotation_vector_target_angle_degrees: 90
+      output_zero_rect_for_empty_detections: true
+    }
+  }
+}
+
+# Expands pose rect with marging used during training.
+node {
+  calculator: "RectTransformationCalculator"
+  input_stream: "NORM_RECT:raw_roi"
+  input_stream: "IMAGE_SIZE:image_size"
+  output_stream: "roi"
+  options: {
+    [mediapipe.RectTransformationCalculatorOptions.ext] {
+      scale_x: 1.5
+      scale_y: 1.5
+      square_long: true
+    }
+  }
+}

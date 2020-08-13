@@ -2,7 +2,7 @@
 layout: default
 title: KNIFT (Template-based Feature Matching)
 parent: Solutions
-nav_order: 9
+nav_order: 10
 ---
 
 # MediaPipe KNIFT

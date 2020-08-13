@@ -2,7 +2,7 @@
 layout: default
 title: Hair Segmentation
 parent: Solutions
-nav_order: 5
+nav_order: 6
 ---
 
 # MediaPipe Hair Segmentation
@@ -55,4 +55,4 @@ Please refer to [these instructions](../index.md#mediapipe-on-the-web).
     ([presentation](https://drive.google.com/file/d/1C8WYlWdDRNtU1_pYBvkkG5Z5wqYqf0yj/view))
     ([supplementary video](https://drive.google.com/file/d/1LPtM99Ch2ogyXYbDNpEqnUfhFq0TfLuf/view))
 *   [TFLite model](https://github.com/google/mediapipe/tree/master/mediapipe/models/hair_segmentation.tflite)
-*   [Model card](https://drive.google.com/file/d/1lPwJ8BD_-3UUor4LayQ0xpa_RIC_hoRh/view)
+*   [Model card](https://mediapipe.page.link/hairsegmentation-mc)

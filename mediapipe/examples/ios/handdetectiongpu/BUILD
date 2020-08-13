@@ -33,12 +33,16 @@ alias(
 
 ios_application(
     name = "HandDetectionGpuApp",
+    app_icons = ["//mediapipe/examples/ios/common:AppIcon"],
     bundle_id = BUNDLE_ID_PREFIX + ".HandDetectionGpu",
     families = [
         "iphone",
         "ipad",
     ],
-    infoplists = ["Info.plist"],
+    infoplists = [
+        "//mediapipe/examples/ios/common:Info.plist",
+        "Info.plist",
+    ],
     minimum_os_version = MIN_IOS_VERSION,
     provisioning_profile = example_provisioning(),
     deps = [
@@ -49,32 +53,13 @@ ios_application(
 
 objc_library(
     name = "HandDetectionGpuAppLibrary",
-    srcs = [
-        "AppDelegate.m",
-        "ViewController.mm",
-        "main.m",
-    ],
-    hdrs = [
-        "AppDelegate.h",
-        "ViewController.h",
-    ],
     data = [
-        "Base.lproj/LaunchScreen.storyboard",
-        "Base.lproj/Main.storyboard",
         "//mediapipe/graphs/hand_tracking:hand_detection_mobile_gpu_binary_graph",
         "//mediapipe/models:palm_detection.tflite",
         "//mediapipe/models:palm_detection_labelmap.txt",
     ],
-    sdk_frameworks = [
-        "AVFoundation",
-        "CoreGraphics",
-        "CoreMedia",
-        "UIKit",
-    ],
     deps = [
-        "//mediapipe/objc:mediapipe_framework_ios",
-        "//mediapipe/objc:mediapipe_input_sources_ios",
-        "//mediapipe/objc:mediapipe_layer_renderer",
+        "//mediapipe/examples/ios/common:CommonMediaPipeAppLibrary",
     ] + select({
         "//mediapipe:ios_i386": [],
         "//mediapipe:ios_x86_64": [],
