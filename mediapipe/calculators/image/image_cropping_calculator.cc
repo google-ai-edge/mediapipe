@@ -127,6 +127,10 @@ REGISTER_CALCULATOR(ImageCroppingCalculator);
   }
 
   options_ = cc->Options<mediapipe::ImageCroppingCalculatorOptions>();
+  output_max_width_ =
+      options_.has_output_max_width() ? options_.output_max_width() : FLT_MAX;
+  output_max_height_ =
+      options_.has_output_max_height() ? options_.output_max_height() : FLT_MAX;
 
   if (use_gpu_) {
 #if !defined(MEDIAPIPE_DISABLE_GPU)
@@ -234,20 +238,27 @@ REGISTER_CALCULATOR(ImageCroppingCalculator);
   cv::Mat src_points;
   cv::boxPoints(min_rect, src_points);
 
+  float output_width = min_rect.size.width;
+  float output_height = min_rect.size.height;
+  float scale = std::min({1.0f, output_max_width_ / output_width,
+                          output_max_height_ / output_height});
+  output_width *= scale;
+  output_height *= scale;
+
   float dst_corners[8] = {0,
-                          min_rect.size.height - 1,
+                          output_height - 1,
                           0,
                           0,
-                          min_rect.size.width - 1,
+                          output_width - 1,
                           0,
-                          min_rect.size.width - 1,
-                          min_rect.size.height - 1};
+                          output_width - 1,
+                          output_height - 1};
   cv::Mat dst_points = cv::Mat(4, 2, CV_32F, dst_corners);
   cv::Mat projection_matrix =
       cv::getPerspectiveTransform(src_points, dst_points);
   cv::Mat cropped_image;
   cv::warpPerspective(input_mat, cropped_image, projection_matrix,
-                      cv::Size(min_rect.size.width, min_rect.size.height),
+                      cv::Size(output_width, output_height),
                       /* flags = */ 0,
                       /* borderMode = */ border_mode);
 
@@ -439,6 +450,12 @@ void ImageCroppingCalculator::GetOutputDimensions(CalculatorContext* cc,
 
   int width = static_cast<int>(std::round((col_max - col_min) * src_width));
   int height = static_cast<int>(std::round((row_max - row_min) * src_height));
+
+  float scale =
+      std::min({1.0f, output_max_width_ / width, output_max_height_ / height});
+  width *= scale;
+  height *= scale;
+
   // Minimum output dimension 1x1 prevents creation of textures with 0x0.
   *dst_width = std::max(1, width);
   *dst_height = std::max(1, height);

@@ -51,4 +51,10 @@ message ImageCroppingCalculatorOptions {
 
   // Specifies behaviour for crops that go beyond image borders.
   optional BorderMode border_mode = 8 [default = BORDER_ZERO];
+
+  // Specifies limits for the size of the output image. It will be scaled down,
+  // preserving ratio, to fit within. These do not change which area of the
+  // input is selected for cropping.
+  optional int32 output_max_width = 9;
+  optional int32 output_max_height = 10;
 }

@@ -66,6 +66,8 @@ node {
   options: {
     [mediapipe.ImageCroppingCalculatorOptions.ext] {
       border_mode: BORDER_REPLICATE
+      output_max_width: 256
+      output_max_height: 256
     }
   }
 }

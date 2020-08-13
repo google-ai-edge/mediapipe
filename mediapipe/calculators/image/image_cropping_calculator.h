@@ -1,6 +1,8 @@
 #ifndef MEDIAPIPE_CALCULATORS_IMAGE_IMAGE_CROPPING_CALCULATOR_H_
 #define MEDIAPIPE_CALCULATORS_IMAGE_IMAGE_CROPPING_CALCULATOR_H_
 
+#include <float.h>
+
 #include "mediapipe/calculators/image/image_cropping_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
 
@@ -80,6 +82,8 @@ class ImageCroppingCalculator : public CalculatorBase {
   bool use_gpu_ = false;
   // Output texture corners (4) after transoformation in normalized coordinates.
   float transformed_points_[8];
+  float output_max_width_ = FLT_MAX;
+  float output_max_height_ = FLT_MAX;
 #if !defined(MEDIAPIPE_DISABLE_GPU)
   bool gpu_initialized_ = false;
   mediapipe::GlCalculatorHelper gpu_helper_;
