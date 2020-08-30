@@ -18,7 +18,7 @@
 # Dependency imports
 
 from absl.testing import absltest
-import mediapipe.python as mp
+import mediapipe as mp
 from google.protobuf import text_format
 from mediapipe.framework import calculator_pb2
 

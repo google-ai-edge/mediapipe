@@ -15,6 +15,7 @@
 #ifndef MEDIAPIPE_CALCULATORS_CORE_CONCATENATE_VECTOR_CALCULATOR_H_
 #define MEDIAPIPE_CALCULATORS_CORE_CONCATENATE_VECTOR_CALCULATOR_H_
 
+#include <string>
 #include <type_traits>
 #include <vector>
 
@@ -26,10 +27,10 @@
 
 namespace mediapipe {
 
-// Concatenates several std::vector<T> following stream index order. This class
-// assumes that every input stream contains the vector<T> type. To use this
-// class for a particular type T, regisiter a calculator using
-// ConcatenateVectorCalculator<T>.
+// Concatenates several objects of type T or std::vector<T> following stream
+// index order. This class assumes that every input stream contains either T or
+// vector<T> type. To use this class for a particular type T, regisiter a
+// calculator using ConcatenateVectorCalculator<T>.
 template <typename T>
 class ConcatenateVectorCalculator : public CalculatorBase {
  public:
@@ -38,7 +39,8 @@ class ConcatenateVectorCalculator : public CalculatorBase {
     RET_CHECK(cc->Outputs().NumEntries() == 1);
 
     for (int i = 0; i < cc->Inputs().NumEntries(); ++i) {
-      cc->Inputs().Index(i).Set<std::vector<T>>();
+      // Actual type T or vector<T> will be validated in Process().
+      cc->Inputs().Index(i).SetAny();
     }
 
     cc->Outputs().Index(0).Set<std::vector<T>>();
@@ -69,9 +71,19 @@ class ConcatenateVectorCalculator : public CalculatorBase {
                                          CalculatorContext* cc) {
     auto output = absl::make_unique<std::vector<U>>();
     for (int i = 0; i < cc->Inputs().NumEntries(); ++i) {
-      if (cc->Inputs().Index(i).IsEmpty()) continue;
-      const std::vector<U>& input = cc->Inputs().Index(i).Get<std::vector<U>>();
-      output->insert(output->end(), input.begin(), input.end());
+      auto& input = cc->Inputs().Index(i);
+
+      if (input.IsEmpty()) continue;
+
+      if (input.Value().ValidateAsType<U>().ok()) {
+        const U& value = input.Get<U>();
+        output->push_back(value);
+      } else if (input.Value().ValidateAsType<std::vector<U>>().ok()) {
+        const std::vector<U>& value = input.Get<std::vector<U>>();
+        output->insert(output->end(), value.begin(), value.end());
+      } else {
+        return ::mediapipe::InvalidArgumentError("Invalid input stream type.");
+      }
     }
     cc->Outputs().Index(0).Add(output.release(), cc->InputTimestamp());
     return ::mediapipe::OkStatus();
@@ -88,17 +100,32 @@ class ConcatenateVectorCalculator : public CalculatorBase {
                                                    CalculatorContext* cc) {
     auto output = absl::make_unique<std::vector<U>>();
     for (int i = 0; i < cc->Inputs().NumEntries(); ++i) {
-      if (cc->Inputs().Index(i).IsEmpty()) continue;
-      ::mediapipe::StatusOr<std::unique_ptr<std::vector<U>>> input_status =
-          cc->Inputs().Index(i).Value().Consume<std::vector<U>>();
-      if (input_status.ok()) {
-        std::unique_ptr<std::vector<U>> input_vector =
-            std::move(input_status).ValueOrDie();
-        output->insert(output->end(),
-                       std::make_move_iterator(input_vector->begin()),
-                       std::make_move_iterator(input_vector->end()));
+      auto& input = cc->Inputs().Index(i);
+
+      if (input.IsEmpty()) continue;
+
+      if (input.Value().ValidateAsType<U>().ok()) {
+        ::mediapipe::StatusOr<std::unique_ptr<U>> value_status =
+            input.Value().Consume<U>();
+        if (value_status.ok()) {
+          std::unique_ptr<U> value = std::move(value_status).ValueOrDie();
+          output->push_back(std::move(*value));
+        } else {
+          return value_status.status();
+        }
+      } else if (input.Value().ValidateAsType<std::vector<U>>().ok()) {
+        ::mediapipe::StatusOr<std::unique_ptr<std::vector<U>>> value_status =
+            input.Value().Consume<std::vector<U>>();
+        if (value_status.ok()) {
+          std::unique_ptr<std::vector<U>> value =
+              std::move(value_status).ValueOrDie();
+          output->insert(output->end(), std::make_move_iterator(value->begin()),
+                         std::make_move_iterator(value->end()));
+        } else {
+          return value_status.status();
+        }
       } else {
-        return input_status.status();
+        return ::mediapipe::InvalidArgumentError("Invalid input stream type.");
       }
     }
     cc->Outputs().Index(0).Add(output.release(), cc->InputTimestamp());
@@ -109,7 +136,7 @@ class ConcatenateVectorCalculator : public CalculatorBase {
   ::mediapipe::Status ConsumeAndConcatenateVectors(std::false_type,
                                                    CalculatorContext* cc) {
     return ::mediapipe::InternalError(
-        "Cannot copy or move input vectors to concatenate them");
+        "Cannot copy or move inputs to concatenate them");
   }
 
  private:

@@ -17,9 +17,9 @@
 import random
 from absl.testing import absltest
 import cv2
+import mediapipe as mp
 import numpy as np
 import PIL.Image
-import mediapipe.python as mp
 
 
 # TODO: Add unit tests specifically for memory management.

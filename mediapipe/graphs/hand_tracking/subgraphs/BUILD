@@ -17,7 +17,7 @@ load(
     "mediapipe_simple_subgraph",
 )
 
-licenses(["notice"])  # Apache 2.0
+licenses(["notice"])
 
 package(default_visibility = ["//visibility:public"])
 
@@ -88,7 +88,7 @@ mediapipe_simple_subgraph(
         "//mediapipe/calculators/util:landmarks_to_render_data_calculator",
         "//mediapipe/calculators/util:rect_transformation_calculator",
         "//mediapipe/calculators/util:thresholding_calculator",
-        "//mediapipe/graphs/hand_tracking/calculators:hand_detections_to_rects_calculator",
+        "//mediapipe/graphs/hand_tracking/calculators:hand_landmarks_to_rect_calculator",
     ],
 )
 
@@ -196,7 +196,7 @@ mediapipe_simple_subgraph(
         "//mediapipe/calculators/util:landmarks_to_detection_calculator",
         "//mediapipe/calculators/util:rect_transformation_calculator",
         "//mediapipe/calculators/util:thresholding_calculator",
-        "//mediapipe/graphs/hand_tracking/calculators:hand_detections_to_rects_calculator",
+        "//mediapipe/graphs/hand_tracking/calculators:hand_landmarks_to_rect_calculator",
     ],
 )
 

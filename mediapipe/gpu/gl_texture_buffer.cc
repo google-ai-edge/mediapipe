@@ -23,6 +23,13 @@ std::unique_ptr<GlTextureBuffer> GlTextureBuffer::Wrap(
                                             deletion_callback);
 }
 
+std::unique_ptr<GlTextureBuffer> GlTextureBuffer::Wrap(
+    GLenum target, GLuint name, int width, int height, GpuBufferFormat format,
+    std::shared_ptr<GlContext> context, DeletionCallback deletion_callback) {
+  return absl::make_unique<GlTextureBuffer>(target, name, width, height, format,
+                                            deletion_callback, context);
+}
+
 std::unique_ptr<GlTextureBuffer> GlTextureBuffer::Create(int width, int height,
                                                          GpuBufferFormat format,
                                                          const void* data) {
@@ -36,17 +43,21 @@ std::unique_ptr<GlTextureBuffer> GlTextureBuffer::Create(int width, int height,
 
 GlTextureBuffer::GlTextureBuffer(GLenum target, GLuint name, int width,
                                  int height, GpuBufferFormat format,
-                                 DeletionCallback deletion_callback)
+                                 DeletionCallback deletion_callback,
+                                 std::shared_ptr<GlContext> producer_context)
     : name_(name),
       width_(width),
       height_(height),
       format_(format),
       target_(target),
-      deletion_callback_(deletion_callback) {}
+      deletion_callback_(deletion_callback),
+      producer_context_(producer_context) {}
 
 bool GlTextureBuffer::CreateInternal(const void* data) {
   auto context = GlContext::GetCurrent();
   if (!context) return false;
+
+  producer_context_ = context;  // Save creation GL context.
 
   glGenTextures(1, &name_);
   if (!name_) return false;
@@ -106,6 +117,7 @@ void GlTextureBuffer::Updated(std::shared_ptr<GlSyncPoint> prod_token) {
   CHECK(!producer_sync_)
       << "Updated existing texture which had not been marked for reuse!";
   producer_sync_ = std::move(prod_token);
+  producer_context_ = producer_sync_->GetContext();
 }
 
 void GlTextureBuffer::DidRead(std::shared_ptr<GlSyncPoint> cons_token) {

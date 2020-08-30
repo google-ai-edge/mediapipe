@@ -17,7 +17,7 @@
 import time
 
 from absl.testing import absltest
-import mediapipe.python as mp
+import mediapipe as mp
 
 
 class TimestampTest(absltest.TestCase):

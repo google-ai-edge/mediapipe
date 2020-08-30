@@ -89,17 +89,31 @@ class TensorflowInferenceCalculatorTest : public ::testing::Test {
         output_side_packets.Tag("SESSION");
   }
 
-  // Create tensor from Vector and add as a Packet to the provided tag as input.
-  void AddVectorToInputsAsTensor(const std::vector<int32>& input,
-                                 const std::string& tag, int64 time) {
+  Packet CreateTensorPacket(const std::vector<int32>& input, int64 time) {
     tf::TensorShape tensor_shape;
     tensor_shape.AddDim(input.size());
     auto tensor = absl::make_unique<tf::Tensor>(tf::DT_INT32, tensor_shape);
     for (int i = 0; i < input.size(); ++i) {
       tensor->vec<int32>()(i) = input[i];
     }
+    return Adopt(tensor.release()).At(Timestamp(time));
+  }
+
+  // Create tensor from Vector and add as a Packet to the provided tag as input.
+  void AddVectorToInputsAsTensor(const std::vector<int32>& input,
+                                 const std::string& tag, int64 time) {
     runner_->MutableInputs()->Tag(tag).packets.push_back(
-        Adopt(tensor.release()).At(Timestamp(time)));
+        CreateTensorPacket(input, time));
+  }
+
+  // Create tensor from Vector and add as a Packet to the provided tag as input.
+  void AddVectorToInputsAsPacket(const std::vector<Packet>& packets,
+                                 const std::string& tag) {
+    CHECK(!packets.empty())
+        << "Please specify at least some data in the packet";
+    auto packets_ptr = absl::make_unique<std::vector<Packet>>(packets);
+    runner_->MutableInputs()->Tag(tag).packets.push_back(
+        Adopt(packets_ptr.release()).At(packets.begin()->Timestamp()));
   }
 
   std::unique_ptr<CalculatorRunner> runner_;
@@ -183,6 +197,45 @@ TEST_F(TensorflowInferenceCalculatorTest, GetComputed) {
   EXPECT_THAT(run_status.ToString(), testing::HasSubstr("Tag B"));
 }
 
+TEST_F(TensorflowInferenceCalculatorTest, GetComputed_MaxInFlight) {
+  CalculatorGraphConfig::Node config;
+  config.set_calculator("TensorFlowInferenceCalculator");
+  config.add_input_stream("A:tensor_a");
+  config.add_input_stream("B:tensor_b");
+  config.add_output_stream("MULTIPLIED:tensor_o1");
+  config.add_input_side_packet("SESSION:session");
+  config.set_max_in_flight(2);
+  CalculatorOptions options;
+  options.MutableExtension(TensorFlowInferenceCalculatorOptions::ext)
+      ->set_batch_size(1);
+  options.MutableExtension(TensorFlowInferenceCalculatorOptions::ext)
+      ->set_add_batch_dim_to_tensors(false);
+  *config.mutable_options() = options;
+
+  runner_ = absl::make_unique<CalculatorRunner>(config);
+  AddSessionInputSidePacket();
+  AddVectorToInputsAsTensor({2, 2, 2}, "A", 0);
+  AddVectorToInputsAsTensor({3, 4, 5}, "B", 0);
+  MP_ASSERT_OK(runner_->Run());
+
+  const std::vector<Packet>& output_packets_mult =
+      runner_->Outputs().Tag("MULTIPLIED").packets;
+  ASSERT_EQ(1, output_packets_mult.size());
+  const tf::Tensor& tensor_mult = output_packets_mult[0].Get<tf::Tensor>();
+  tf::TensorShape expected_shape({3});
+  auto expected_tensor = tf::test::AsTensor<int32>({6, 8, 10}, expected_shape);
+  tf::test::ExpectTensorEqual<int32>(expected_tensor, tensor_mult);
+
+  // Add only one of the two expected tensors at the next timestamp, expect
+  // useful failure message.
+  AddVectorToInputsAsTensor({1, 2, 3}, "A", 1);
+  auto run_status = runner_->Run();
+  ASSERT_FALSE(run_status.ok());
+  EXPECT_THAT(run_status.ToString(),
+              testing::HasSubstr("TensorFlowInferenceCalculator"));
+  EXPECT_THAT(run_status.ToString(), testing::HasSubstr("Tag B"));
+}
+
 TEST_F(TensorflowInferenceCalculatorTest, BadTag) {
   CalculatorGraphConfig::Node config;
   config.set_calculator("TensorFlowInferenceCalculator");
@@ -230,6 +283,86 @@ TEST_F(TensorflowInferenceCalculatorTest, GetMultiBatchComputed) {
   tf::test::ExpectTensorEqual<int32>(tensor_mult1, expected_tensor1);
 
   EXPECT_EQ(2, runner_
+                   ->GetCounter(
+                       "TensorFlowInferenceCalculator-TotalProcessedTimestamps")
+                   ->Get());
+}
+
+TEST_F(TensorflowInferenceCalculatorTest, GetMultiBatchComputed_MaxInFlight) {
+  CalculatorGraphConfig::Node config;
+  config.set_calculator("TensorFlowInferenceCalculator");
+  config.add_input_stream("A:tensor_a");
+  config.add_input_stream("B:tensor_b");
+  config.add_output_stream("MULTIPLIED:tensor_o1");
+  config.add_input_side_packet("SESSION:session");
+  config.set_max_in_flight(2);
+  CalculatorOptions options;
+  options.MutableExtension(TensorFlowInferenceCalculatorOptions::ext)
+      ->set_batch_size(1);
+  *config.mutable_options() = options;
+
+  runner_ = absl::make_unique<CalculatorRunner>(config);
+  AddSessionInputSidePacket();
+  AddVectorToInputsAsTensor({2, 2, 2}, "A", 0);
+  AddVectorToInputsAsTensor({3, 4, 5}, "B", 0);
+  AddVectorToInputsAsTensor({3, 3, 3}, "A", 1);
+  AddVectorToInputsAsTensor({3, 4, 5}, "B", 1);
+  MP_ASSERT_OK(runner_->Run());
+
+  const std::vector<Packet>& output_packets_mult =
+      runner_->Outputs().Tag("MULTIPLIED").packets;
+  ASSERT_EQ(2, output_packets_mult.size());
+  const tf::Tensor& tensor_mult = output_packets_mult[0].Get<tf::Tensor>();
+  auto expected_tensor = tf::test::AsTensor<int32>({6, 8, 10});
+  tf::test::ExpectTensorEqual<int32>(tensor_mult, expected_tensor);
+  const tf::Tensor& tensor_mult1 = output_packets_mult[1].Get<tf::Tensor>();
+  auto expected_tensor1 = tf::test::AsTensor<int32>({9, 12, 15});
+  tf::test::ExpectTensorEqual<int32>(tensor_mult1, expected_tensor1);
+
+  EXPECT_EQ(2, runner_
+                   ->GetCounter(
+                       "TensorFlowInferenceCalculator-TotalProcessedTimestamps")
+                   ->Get());
+}
+
+TEST_F(TensorflowInferenceCalculatorTest,
+       GetMultiBatchComputed_MoreThanMaxInFlight) {
+  CalculatorGraphConfig::Node config;
+  config.set_calculator("TensorFlowInferenceCalculator");
+  config.add_input_stream("A:tensor_a");
+  config.add_input_stream("B:tensor_b");
+  config.add_output_stream("MULTIPLIED:tensor_o1");
+  config.add_input_side_packet("SESSION:session");
+  config.set_max_in_flight(2);
+  CalculatorOptions options;
+  options.MutableExtension(TensorFlowInferenceCalculatorOptions::ext)
+      ->set_batch_size(1);
+  *config.mutable_options() = options;
+
+  runner_ = absl::make_unique<CalculatorRunner>(config);
+  AddSessionInputSidePacket();
+  AddVectorToInputsAsTensor({2, 2, 2}, "A", 0);
+  AddVectorToInputsAsTensor({3, 4, 5}, "B", 0);
+  AddVectorToInputsAsTensor({3, 3, 3}, "A", 1);
+  AddVectorToInputsAsTensor({3, 4, 5}, "B", 1);
+  AddVectorToInputsAsTensor({4, 4, 4}, "A", 2);
+  AddVectorToInputsAsTensor({3, 4, 5}, "B", 2);
+  MP_ASSERT_OK(runner_->Run());
+
+  const std::vector<Packet>& output_packets_mult =
+      runner_->Outputs().Tag("MULTIPLIED").packets;
+  ASSERT_EQ(3, output_packets_mult.size());
+  const tf::Tensor& tensor_mult = output_packets_mult[0].Get<tf::Tensor>();
+  auto expected_tensor = tf::test::AsTensor<int32>({6, 8, 10});
+  tf::test::ExpectTensorEqual<int32>(tensor_mult, expected_tensor);
+  const tf::Tensor& tensor_mult1 = output_packets_mult[1].Get<tf::Tensor>();
+  auto expected_tensor1 = tf::test::AsTensor<int32>({9, 12, 15});
+  tf::test::ExpectTensorEqual<int32>(tensor_mult1, expected_tensor1);
+  const tf::Tensor& tensor_mult2 = output_packets_mult[2].Get<tf::Tensor>();
+  auto expected_tensor2 = tf::test::AsTensor<int32>({12, 16, 20});
+  tf::test::ExpectTensorEqual<int32>(tensor_mult2, expected_tensor2);
+
+  EXPECT_EQ(3, runner_
                    ->GetCounter(
                        "TensorFlowInferenceCalculator-TotalProcessedTimestamps")
                    ->Get());
@@ -306,6 +439,66 @@ TEST_F(TensorflowInferenceCalculatorTest, GetCloseBatchComputed) {
   tf::test::ExpectTensorEqual<int32>(tensor_mult1, expected_tensor1);
 
   EXPECT_EQ(2, runner_
+                   ->GetCounter(
+                       "TensorFlowInferenceCalculator-TotalProcessedTimestamps")
+                   ->Get());
+}
+
+TEST_F(TensorflowInferenceCalculatorTest, GetBatchComputed_MaxInFlight) {
+  CalculatorGraphConfig::Node config;
+  config.set_calculator("TensorFlowInferenceCalculator");
+  config.add_input_stream("A:tensor_a");
+  config.add_input_stream("B:tensor_b");
+  config.add_output_stream("MULTIPLIED:tensor_o1");
+  config.add_input_side_packet("SESSION:session");
+  config.set_max_in_flight(2);
+  CalculatorOptions options;
+  options.MutableExtension(TensorFlowInferenceCalculatorOptions::ext)
+      ->set_batch_size(2);
+  options.MutableExtension(TensorFlowInferenceCalculatorOptions::ext)
+      ->set_add_batch_dim_to_tensors(true);
+  options.MutableExtension(TensorFlowInferenceCalculatorOptions::ext)
+      ->set_batched_input(true);
+  *config.mutable_options() = options;
+
+  runner_ = absl::make_unique<CalculatorRunner>(config);
+  AddSessionInputSidePacket();
+  AddVectorToInputsAsPacket(
+      {CreateTensorPacket({2, 2, 2}, 0), CreateTensorPacket({3, 3, 3}, 1)},
+      "A");
+  AddVectorToInputsAsPacket(
+      {CreateTensorPacket({3, 4, 5}, 0), CreateTensorPacket({3, 4, 5}, 1)},
+      "B");
+  AddVectorToInputsAsPacket(
+      {CreateTensorPacket({4, 4, 4}, 2), CreateTensorPacket({5, 5, 5}, 3)},
+      "A");
+  AddVectorToInputsAsPacket(
+      {CreateTensorPacket({3, 4, 5}, 2), CreateTensorPacket({3, 4, 5}, 3)},
+      "B");
+  AddVectorToInputsAsPacket({CreateTensorPacket({6, 6, 6}, 4)}, "A");
+  AddVectorToInputsAsPacket({CreateTensorPacket({3, 4, 5}, 4)}, "B");
+  MP_ASSERT_OK(runner_->Run());
+
+  const std::vector<Packet>& output_packets_mult =
+      runner_->Outputs().Tag("MULTIPLIED").packets;
+  ASSERT_EQ(5, output_packets_mult.size());
+  const tf::Tensor& tensor_mult = output_packets_mult[0].Get<tf::Tensor>();
+  auto expected_tensor = tf::test::AsTensor<int32>({6, 8, 10});
+  tf::test::ExpectTensorEqual<int32>(tensor_mult, expected_tensor);
+  const tf::Tensor& tensor_mult1 = output_packets_mult[1].Get<tf::Tensor>();
+  auto expected_tensor1 = tf::test::AsTensor<int32>({9, 12, 15});
+  tf::test::ExpectTensorEqual<int32>(tensor_mult1, expected_tensor1);
+  const tf::Tensor& tensor_mult2 = output_packets_mult[2].Get<tf::Tensor>();
+  auto expected_tensor2 = tf::test::AsTensor<int32>({12, 16, 20});
+  tf::test::ExpectTensorEqual<int32>(tensor_mult2, expected_tensor2);
+  const tf::Tensor& tensor_mult3 = output_packets_mult[3].Get<tf::Tensor>();
+  auto expected_tensor3 = tf::test::AsTensor<int32>({15, 20, 25});
+  tf::test::ExpectTensorEqual<int32>(tensor_mult3, expected_tensor3);
+  const tf::Tensor& tensor_mult4 = output_packets_mult[4].Get<tf::Tensor>();
+  auto expected_tensor4 = tf::test::AsTensor<int32>({18, 24, 30});
+  tf::test::ExpectTensorEqual<int32>(tensor_mult4, expected_tensor4);
+
+  EXPECT_EQ(5, runner_
                    ->GetCounter(
                        "TensorFlowInferenceCalculator-TotalProcessedTimestamps")
                    ->Get());
@@ -507,6 +700,42 @@ TEST_F(TensorflowInferenceCalculatorTest,
                    ->GetCounter(
                        "TensorFlowInferenceCalculator-TotalProcessedTimestamps")
                    ->Get());
+}
+
+TEST_F(TensorflowInferenceCalculatorTest, BatchedInputTooBigBatch) {
+  CalculatorGraphConfig::Node config;
+  config.set_calculator("TensorFlowInferenceCalculator");
+  config.add_input_stream("A:tensor_a");
+  config.add_input_stream("B:tensor_b");
+  config.add_output_stream("MULTIPLIED:tensor_o1");
+  config.add_input_side_packet("SESSION:session");
+  config.set_max_in_flight(2);
+  CalculatorOptions options;
+  options.MutableExtension(TensorFlowInferenceCalculatorOptions::ext)
+      ->set_batch_size(2);
+  options.MutableExtension(TensorFlowInferenceCalculatorOptions::ext)
+      ->set_add_batch_dim_to_tensors(true);
+  options.MutableExtension(TensorFlowInferenceCalculatorOptions::ext)
+      ->set_batched_input(true);
+  *config.mutable_options() = options;
+
+  runner_ = absl::make_unique<CalculatorRunner>(config);
+  AddSessionInputSidePacket();
+  AddVectorToInputsAsPacket(
+      {CreateTensorPacket({2, 2, 2}, 0), CreateTensorPacket({3, 3, 3}, 1),
+       CreateTensorPacket({4, 4, 4}, 2)},
+      "A");
+  AddVectorToInputsAsPacket(
+      {CreateTensorPacket({3, 4, 5}, 0), CreateTensorPacket({3, 4, 5}, 1),
+       CreateTensorPacket({3, 4, 5}, 2)},
+      "B");
+
+  auto status = runner_->Run();
+  ASSERT_FALSE(status.ok());
+  EXPECT_THAT(
+      status.message(),
+      ::testing::HasSubstr(
+          "has more packets than batch capacity. batch_size: 2 packets: 3"));
 }
 
 }  // namespace mediapipe

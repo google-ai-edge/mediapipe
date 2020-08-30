@@ -106,11 +106,25 @@ node {
   output_stream: "RIGHT_EYE_ROI:right_eye_rect_from_landmarks"
 }
 
+node {
+  calculator: "ConcatenateNormalizedLandmarkListCalculator"
+  input_stream: "left_eye_contour_landmarks"
+  input_stream: "right_eye_contour_landmarks"
+  output_stream: "refined_eye_landmarks"
+}
+
+node {
+  calculator: "UpdateFaceLandmarksCalculator"
+  input_stream: "NEW_EYE_LANDMARKS:refined_eye_landmarks"
+  input_stream: "FACE_LANDMARKS:face_landmarks"
+  output_stream: "UPDATED_FACE_LANDMARKS:updated_face_landmarks"
+}
+
 # Renders annotations and overlays them on top of the input images.
 node {
   calculator: "IrisRendererCpu"
   input_stream: "IMAGE:input_video"
-  input_stream: "FACE_LANDMARKS:face_landmarks"
+  input_stream: "FACE_LANDMARKS:updated_face_landmarks"
   input_stream: "EYE_LANDMARKS_LEFT:left_eye_contour_landmarks"
   input_stream: "EYE_LANDMARKS_RIGHT:right_eye_contour_landmarks"
   input_stream: "IRIS_LANDMARKS_LEFT:left_iris_landmarks"
@@ -119,6 +133,7 @@ node {
   input_stream: "LEFT_EYE_RECT:left_eye_rect_from_landmarks"
   input_stream: "RIGHT_EYE_RECT:right_eye_rect_from_landmarks"
   input_stream: "DETECTIONS:face_detections"
+  output_stream: "IRIS_LANDMARKS:iris_landmarks"
   output_stream: "IMAGE:output_video"
 }
 

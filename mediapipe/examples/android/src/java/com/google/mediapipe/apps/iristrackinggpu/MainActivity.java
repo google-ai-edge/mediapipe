@@ -15,7 +15,13 @@
 package com.google.mediapipe.apps.iristrackinggpu;
 
 import android.graphics.SurfaceTexture;
+import android.os.Bundle;
+import android.util.Log;
+import com.google.mediapipe.formats.proto.LandmarkProto.NormalizedLandmark;
+import com.google.mediapipe.formats.proto.LandmarkProto.NormalizedLandmarkList;
 import com.google.mediapipe.framework.Packet;
+import com.google.mediapipe.framework.PacketGetter;
+import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -24,6 +30,7 @@ public class MainActivity extends com.google.mediapipe.apps.basic.MainActivity {
   private static final String TAG = "MainActivity";
 
   private static final String FOCAL_LENGTH_STREAM_NAME = "focal_length_pixel";
+  private static final String OUTPUT_LANDMARKS_STREAM_NAME = "face_landmarks_with_iris";
 
   @Override
   protected void onCameraStarted(SurfaceTexture surfaceTexture) {
@@ -36,5 +43,56 @@ public class MainActivity extends com.google.mediapipe.apps.basic.MainActivity {
       inputSidePackets.put(FOCAL_LENGTH_STREAM_NAME, focalLengthSidePacket);
       processor.setInputSidePackets(inputSidePackets);
     }
+  }
+
+  @Override
+  protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+
+    // To show verbose logging, run:
+    // adb shell setprop log.tag.MainActivity VERBOSE
+    if (Log.isLoggable(TAG, Log.VERBOSE)) {
+      processor.addPacketCallback(
+          OUTPUT_LANDMARKS_STREAM_NAME,
+          (packet) -> {
+            byte[] landmarksRaw = PacketGetter.getProtoBytes(packet);
+            try {
+              NormalizedLandmarkList landmarks = NormalizedLandmarkList.parseFrom(landmarksRaw);
+              if (landmarks == null) {
+                Log.v(TAG, "[TS:" + packet.getTimestamp() + "] No landmarks.");
+                return;
+              }
+              Log.v(
+                  TAG,
+                  "[TS:"
+                      + packet.getTimestamp()
+                      + "] #Landmarks for face (including iris): "
+                      + landmarks.getLandmarkCount());
+              Log.v(TAG, getLandmarksDebugString(landmarks));
+            } catch (InvalidProtocolBufferException e) {
+              Log.e(TAG, "Couldn't Exception received - " + e);
+              return;
+            }
+          });
+    }
+  }
+
+  private static String getLandmarksDebugString(NormalizedLandmarkList landmarks) {
+    int landmarkIndex = 0;
+    String landmarksString = "";
+    for (NormalizedLandmark landmark : landmarks.getLandmarkList()) {
+      landmarksString +=
+          "\t\tLandmark["
+              + landmarkIndex
+              + "]: ("
+              + landmark.getX()
+              + ", "
+              + landmark.getY()
+              + ", "
+              + landmark.getZ()
+              + ")\n";
+      ++landmarkIndex;
+    }
+    return landmarksString;
   }
 }

@@ -91,7 +91,7 @@ class GlSyncPoint {
   // Returns whether the sync point has been reached. Does not block.
   virtual bool IsReady() = 0;
 
-  const GlContext& GetContext() { return *gl_context_; }
+  const std::shared_ptr<GlContext>& GetContext() { return gl_context_; }
 
  protected:
   std::shared_ptr<GlContext> gl_context_;
@@ -365,6 +365,11 @@ class GlContext : public std::enable_shared_from_this<GlContext> {
   void LogUncheckedGlErrors(bool had_gl_errors);
   ::mediapipe::Status GetGlExtensions();
   ::mediapipe::Status GetGlExtensionsCompat();
+
+  // Make the context current, run gl_func, and restore the previous context.
+  // Internal helper only; callers should use Run or RunWithoutWaiting instead,
+  // which delegates to the dedicated thread if required.
+  ::mediapipe::Status SwitchContextAndRun(GlStatusFunction gl_func);
 
   // The following ContextBinding functions have platform-specific
   // implementations.

@@ -2,7 +2,7 @@
 layout: default
 title: AutoFlip (Saliency-aware Video Cropping)
 parent: Solutions
-nav_order: 11
+nav_order: 12
 ---
 
 # AutoFlip: Saliency-aware Video Cropping

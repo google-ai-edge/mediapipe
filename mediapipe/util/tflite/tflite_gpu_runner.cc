@@ -162,6 +162,9 @@ absl::Status TFLiteGPURunner::InitializeOpenCL(
     std::unique_ptr<InferenceBuilder>* builder) {
 #ifdef __ANDROID__
   cl::InferenceEnvironmentOptions env_options;
+  if (!serialized_binary_cache_.empty()) {
+    env_options.serialized_binary_cache = serialized_binary_cache_;
+  }
   cl::InferenceEnvironmentProperties properties;
   cl::InferenceOptions cl_options;
   cl_options.priority1 = options_.priority1;

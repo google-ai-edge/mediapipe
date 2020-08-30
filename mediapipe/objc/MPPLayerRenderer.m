@@ -54,7 +54,9 @@
   glGenRenderbuffers(1, &renderbuffer_);
   glBindRenderbuffer(GL_RENDERBUFFER, renderbuffer_);
   glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, renderbuffer_);
-  [_glRenderer.glContext renderbufferStorage:GL_RENDERBUFFER fromDrawable:_layer];
+  BOOL success = [_glRenderer.glContext renderbufferStorage:GL_RENDERBUFFER fromDrawable:_layer];
+  NSAssert(success, @"could not create renderbuffer storage for layer with bounds %@",
+           NSStringFromCGRect(_layer.bounds));
   GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
   NSAssert(status == GL_FRAMEBUFFER_COMPLETE,
           @"failed to make complete framebuffer object %x", status);

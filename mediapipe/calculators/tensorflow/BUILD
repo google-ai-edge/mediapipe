@@ -15,7 +15,7 @@
 
 load("//mediapipe/framework/port:build_config.bzl", "mediapipe_cc_proto_library")
 
-licenses(["notice"])  # Apache 2.0
+licenses(["notice"])
 
 package(default_visibility = ["//visibility:private"])
 
@@ -427,6 +427,10 @@ cc_library(
     deps = [
         ":tensorflow_session",
         ":tensorflow_inference_calculator_cc_proto",
+        "//mediapipe/framework:timestamp",
+        "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/memory",
+        "//mediapipe/framework:calculator_context",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/tool:status_util",
         "@com_google_absl//absl/strings",
@@ -434,6 +438,8 @@ cc_library(
         "//mediapipe/framework/deps:clock",
         "//mediapipe/framework/port:status",
         "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:map_util",
+        "//mediapipe/framework:packet",
     ] + select({
         "//conditions:default": [
             "@org_tensorflow//tensorflow/core:framework",

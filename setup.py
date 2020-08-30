@@ -21,6 +21,7 @@ import distutils.command.clean as clean
 import glob
 import os
 import posixpath
+import re
 import shutil
 import subprocess
 import sys
@@ -29,9 +30,15 @@ import setuptools
 import setuptools.command.build_ext as build_ext
 import setuptools.command.install as install
 
-__version__ = '0.79'
+__version__ = '0.7'
 MP_ROOT_PATH = os.path.dirname(os.path.abspath(__file__))
 ROOT_INIT_PY = os.path.join(MP_ROOT_PATH, '__init__.py')
+MP_DIR_INIT_PY = os.path.join(MP_ROOT_PATH, 'mediapipe/__init__.py')
+MP_DIR_INIT_PY_BACKUP = os.path.join(MP_ROOT_PATH,
+                                     'mediapipe/__init__.py.backup')
+MP_THIRD_PARTY_BUILD = os.path.join(MP_ROOT_PATH, 'third_party/BUILD')
+MP_THIRD_PARTY_BUILD_BACKUP = os.path.join(MP_ROOT_PATH,
+                                           'third_party/BUILD.backup')
 if not os.path.exists(ROOT_INIT_PY):
   open(ROOT_INIT_PY, 'w').close()
 
@@ -43,6 +50,14 @@ def _parse_requirements(path):
         for line in f
         if not (line.isspace() or line.startswith('#'))
     ]
+
+
+def _get_long_description():
+  # fix the image urls.
+  return re.sub(
+      r'(docs/images/|docs/images/mobile/)([A-Za-z0-9_]*\.(png|gif))',
+      r'https://github.com/google/mediapipe/blob/master/\g<1>\g<2>?raw=true',
+      open(os.path.join(MP_ROOT_PATH, 'README.md')).read())
 
 
 def _check_bazel():
@@ -73,8 +88,38 @@ def _check_bazel():
     )
 
 
-class GeneratePyProtos(build.build):
+class ModifyInitFiles(setuptools.Command):
+  """Modify the init files for building MediaPipe Python package."""
+
+  user_options = []
+
+  def initialize_options(self):
+    pass
+
+  def finalize_options(self):
+    pass
+
+  def run(self):
+    # Save the original init file.
+    shutil.copyfile(MP_DIR_INIT_PY, MP_DIR_INIT_PY_BACKUP)
+    mp_dir_init_file = open(MP_DIR_INIT_PY, 'a')
+    mp_dir_init_file.writelines([
+        '\n', 'import mediapipe.examples.python as examples\n',
+        'from mediapipe.python import *\n', '\n'
+    ])
+    mp_dir_init_file.close()
+
+
+class GeneratePyProtos(setuptools.Command):
   """Generate MediaPipe Python protobuf files by Protocol Compiler."""
+
+  user_options = []
+
+  def initialize_options(self):
+    pass
+
+  def finalize_options(self):
+    pass
 
   def run(self):
     if 'PROTOC' in os.environ and os.path.exists(os.environ['PROTOC']):
@@ -138,6 +183,7 @@ class BuildBinaryGraphs(build.build):
         'build',
         '--compilation_mode=opt',
         '--define=MEDIAPIPE_DISABLE_GPU=1',
+        '--action_env=PYTHON_BIN_PATH=' + sys.executable,
         os.path.join('mediapipe/graphs/', graph_path),
     ]
     if subprocess.call(bazel_command) != 0:
@@ -165,6 +211,18 @@ class BazelExtension(setuptools.Extension):
 class BuildBazelExtension(build_ext.build_ext):
   """A command that runs Bazel to build a C/C++ extension."""
 
+  user_options = build_ext.build_ext.user_options + [
+      ('link-opencv', None, 'if true, build opencv from source.'),
+  ]
+  boolean_options = build_ext.build_ext.boolean_options + ['link-opencv']
+
+  def initialize_options(self):
+    self.link_opencv = False
+    build_ext.build_ext.initialize_options(self)
+
+  def finalize_options(self):
+    build_ext.build_ext.finalize_options(self)
+
   def run(self):
     _check_bazel()
     for ext in self.extensions:
@@ -182,6 +240,18 @@ class BuildBazelExtension(build_ext.build_ext):
         '--action_env=PYTHON_BIN_PATH=' + sys.executable,
         str(ext.bazel_target + '.so'),
     ]
+    if not self.link_opencv:
+      # Ask the opencv_cmake rule to build the static opencv libraries for
+      # mediapipe python package. By doing this, we can avoid copying the opencv
+      # .so file into the package.
+      content = open(MP_THIRD_PARTY_BUILD,
+                     'r').read().replace('OPENCV_SHARED_LIBS = True',
+                                         'OPENCV_SHARED_LIBS = False')
+      shutil.move(MP_THIRD_PARTY_BUILD, MP_THIRD_PARTY_BUILD_BACKUP)
+      build_file = open(MP_THIRD_PARTY_BUILD, 'w')
+      build_file.write(content)
+      build_file.close()
+      bazel_argv.append('--define=OPENCV=source')
     self.spawn(bazel_argv)
     ext_bazel_bin_path = os.path.join('bazel-bin', ext.relpath,
                                       ext.target_name + '.so')
@@ -195,9 +265,24 @@ class BuildBazelExtension(build_ext.build_ext):
 class Build(build.build):
   """Build command that builds binary graphs and extension and does a cleanup afterwards."""
 
+  user_options = build.build.user_options + [
+      ('link-opencv', None, 'if true, use the installed opencv library.'),
+  ]
+  boolean_options = build.build.boolean_options + ['link-opencv']
+
+  def initialize_options(self):
+    self.link_opencv = False
+    build.build.initialize_options(self)
+
+  def finalize_options(self):
+    build.build.finalize_options(self)
+
   def run(self):
+    build_ext_obj = self.distribution.get_command_obj('build_ext')
+    build_ext_obj.link_opencv = self.link_opencv
     self.run_command('build_binary_graphs')
     self.run_command('build_ext')
+    self.run_command('modify_inits')
     build.build.run(self)
     self.run_command('remove_generated')
 
@@ -205,9 +290,24 @@ class Build(build.build):
 class Install(install.install):
   """Install command that builds binary graphs and extension and does a cleanup afterwards."""
 
+  user_options = install.install.user_options + [
+      ('link-opencv', None, 'if true, use the installed opencv library.'),
+  ]
+  boolean_options = install.install.boolean_options + ['link-opencv']
+
+  def initialize_options(self):
+    self.link_opencv = False
+    install.install.initialize_options(self)
+
+  def finalize_options(self):
+    install.install.finalize_options(self)
+
   def run(self):
+    build_ext_obj = self.distribution.get_command_obj('build_ext')
+    build_ext_obj.link_opencv = self.link_opencv
     self.run_command('build_binary_graphs')
     self.run_command('build_ext')
+    self.run_command('modify_inits')
     install.install.run(self)
     self.run_command('remove_generated')
 
@@ -223,6 +323,14 @@ class RemoveGenerated(clean.clean):
         'mediapipe/graphs/**/*.binarypb', recursive=True):
       sys.stderr.write('removing generated binary graphs: %s\n' % binarypb_file)
       os.remove(binarypb_file)
+    # Restore the original init file from the backup.
+    if os.path.exists(MP_DIR_INIT_PY_BACKUP):
+      os.remove(MP_DIR_INIT_PY)
+      shutil.move(MP_DIR_INIT_PY_BACKUP, MP_DIR_INIT_PY)
+    # Restore the original BUILD file from the backup.
+    if os.path.exists(MP_THIRD_PARTY_BUILD_BACKUP):
+      os.remove(MP_THIRD_PARTY_BUILD)
+      shutil.move(MP_THIRD_PARTY_BUILD_BACKUP, MP_THIRD_PARTY_BUILD)
     clean.clean.run(self)
 
 
@@ -231,15 +339,16 @@ setuptools.setup(
     version=__version__,
     url='https://github.com/google/mediapipe',
     description='MediaPipe is the simplest way for researchers and developers to build world-class ML solutions and applications for mobile, edge, cloud and the web.',
-    author='Mediapipe Authors',
+    author='MediaPipe Authors',
     author_email='mediapipe@google.com',
-    long_description=open(os.path.join(MP_ROOT_PATH, 'README.md')).read(),
+    long_description=_get_long_description(),
     long_description_content_type='text/markdown',
     packages=setuptools.find_packages(exclude=['mediapipe.examples.desktop.*']),
     install_requires=_parse_requirements('requirements.txt'),
     cmdclass={
         'build': Build,
         'gen_protos': GeneratePyProtos,
+        'modify_inits': ModifyInitFiles,
         'build_binary_graphs': BuildBinaryGraphs,
         'build_ext': BuildBazelExtension,
         'install': Install,

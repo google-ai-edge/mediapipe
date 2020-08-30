@@ -1,0 +1,47 @@
+# Copyright 2020 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# MediaPipe graph that performs region tracking on initial anchor positions
+# provided by the application
+
+# Images in/out of graph with tracked and scaled normalized anchor data
+type: "RegionTrackingSubgraph"
+input_stream: "VIDEO:input_video"
+input_stream: "SENTINEL:sticker_sentinel"
+input_stream: "ANCHORS:initial_anchor_data"
+output_stream: "ANCHORS:tracked_scaled_anchor_data"
+
+# Manages the anchors and tracking if user changes/adds/deletes anchors
+node {
+ calculator: "TrackedAnchorManagerCalculator"
+ input_stream: "SENTINEL:sticker_sentinel"
+ input_stream: "ANCHORS:initial_anchor_data"
+ input_stream: "BOXES:boxes"
+ input_stream_info: {
+   tag_index: 'BOXES'
+   back_edge: true
+ }
+ output_stream: "START_POS:start_pos"
+ output_stream: "CANCEL_ID:cancel_object_id"
+ output_stream: "ANCHORS:tracked_scaled_anchor_data"
+}
+
+# Subgraph performs anchor placement and tracking
+node {
+  calculator: "BoxTrackingSubgraphGpu"
+  input_stream: "VIDEO:input_video"
+  input_stream: "BOXES:start_pos"
+  input_stream: "CANCEL_ID:cancel_object_id"
+  output_stream: "BOXES:boxes"
+}

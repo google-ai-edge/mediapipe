@@ -206,10 +206,11 @@ void GpuBufferMultiPool::EntryList::InsertAfter(Entry* entry, Entry* after) {
     Prepend(entry);
 }
 
-void GpuBufferMultiPool::Evict() {
+void GpuBufferMultiPool::Evict(std::vector<SimplePool>* evicted) {
   // Remove excess entries.
   while (entry_list_.size() > kMaxPoolCount) {
     Entry* victim = entry_list_.tail();
+    evicted->emplace_back(std::move(victim->pool));
     entry_list_.Remove(victim);
     pools_.erase(victim->spec);
   }
@@ -230,6 +231,7 @@ void GpuBufferMultiPool::Evict() {
       entry->request_count /= 2;
       Entry* next = entry->next;
       if (entry->request_count == 0) {
+        evicted->emplace_back(std::move(entry->pool));
         entry_list_.Remove(entry);
         pools_.erase(entry->spec);
       }
@@ -240,36 +242,43 @@ void GpuBufferMultiPool::Evict() {
 
 GpuBufferMultiPool::SimplePool GpuBufferMultiPool::RequestPool(
     const BufferSpec& key) {
-  absl::MutexLock lock(&mutex_);
-  auto pool_it = pools_.find(key);
-  Entry* entry;
-  if (pool_it == pools_.end()) {
-    std::tie(pool_it, std::ignore) =
-        pools_.emplace(std::piecewise_construct, std::forward_as_tuple(key),
-                       std::forward_as_tuple(key));
-    entry = &pool_it->second;
-    CHECK_EQ(entry->request_count, 0);
-    entry->request_count = 1;
-    entry_list_.Append(entry);
-    if (entry->prev != nullptr) CHECK_GE(entry->prev->request_count, 1);
-  } else {
-    entry = &pool_it->second;
-    ++entry->request_count;
-    Entry* larger = entry->prev;
-    while (larger != nullptr && larger->request_count < entry->request_count) {
-      larger = larger->prev;
+  SimplePool pool;
+  std::vector<SimplePool> evicted;
+  {
+    absl::MutexLock lock(&mutex_);
+    auto pool_it = pools_.find(key);
+    Entry* entry;
+    if (pool_it == pools_.end()) {
+      std::tie(pool_it, std::ignore) =
+          pools_.emplace(std::piecewise_construct, std::forward_as_tuple(key),
+                         std::forward_as_tuple(key));
+      entry = &pool_it->second;
+      CHECK_EQ(entry->request_count, 0);
+      entry->request_count = 1;
+      entry_list_.Append(entry);
+      if (entry->prev != nullptr) CHECK_GE(entry->prev->request_count, 1);
+    } else {
+      entry = &pool_it->second;
+      ++entry->request_count;
+      Entry* larger = entry->prev;
+      while (larger != nullptr &&
+             larger->request_count < entry->request_count) {
+        larger = larger->prev;
+      }
+      if (larger != entry->prev) {
+        entry_list_.Remove(entry);
+        entry_list_.InsertAfter(entry, larger);
+      }
     }
-    if (larger != entry->prev) {
-      entry_list_.Remove(entry);
-      entry_list_.InsertAfter(entry, larger);
+    if (!entry->pool && entry->request_count >= kMinRequestsBeforePool) {
+      entry->pool = MakeSimplePool(key);
     }
+    pool = entry->pool;
+    ++total_request_count_;
+    Evict(&evicted);
   }
-  if (!entry->pool && entry->request_count >= kMinRequestsBeforePool) {
-    entry->pool = MakeSimplePool(key);
-  }
-  SimplePool pool = entry->pool;
-  ++total_request_count_;
-  Evict();
+  // Evicted pools, and their buffers, will be released without holding the
+  // lock.
   return pool;
 }
 

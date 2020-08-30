@@ -27,15 +27,18 @@ cc_library(
 pybind_extension(
     name = "_framework_bindings",
     srcs = ["framework_bindings.cc"],
-    linkopts = [
-        "-lopencv_core",
-        "-lopencv_imgproc",
-        "-lopencv_highgui",
-        "-lopencv_video",
-        "-lopencv_features2d",
-        "-lopencv_calib3d",
-        "-lopencv_imgcodecs",
-    ],
+    linkopts = select({
+        "//third_party:opencv_source_build": [],
+        "//conditions:default": [
+            "-lopencv_core",
+            "-lopencv_imgproc",
+            "-lopencv_highgui",
+            "-lopencv_video",
+            "-lopencv_features2d",
+            "-lopencv_calib3d",
+            "-lopencv_imgcodecs",
+        ],
+    }),
     deps = [
         ":builtin_calculators",
         "//mediapipe/python/pybind:calculator_graph",

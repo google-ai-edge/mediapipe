@@ -14,7 +14,7 @@
 
 load("//mediapipe/framework/port:build_config.bzl", "mediapipe_cc_proto_library")
 
-licenses(["notice"])  # Apache 2.0
+licenses(["notice"])
 
 proto_library(
     name = "iris_to_render_data_calculator_proto",
@@ -81,6 +81,21 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         ":iris_to_depth_calculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/formats:image_file_properties_cc_proto",
+        "//mediapipe/framework/formats:landmark_cc_proto",
+        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:status",
+        "@com_google_absl//absl/strings",
+    ],
+    alwayslink = 1,
+)
+
+cc_library(
+    name = "update_face_landmarks_calculator",
+    srcs = ["update_face_landmarks_calculator.cc"],
+    visibility = ["//visibility:public"],
+    deps = [
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/formats:image_file_properties_cc_proto",
         "//mediapipe/framework/formats:landmark_cc_proto",

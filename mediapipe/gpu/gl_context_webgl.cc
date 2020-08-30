@@ -72,23 +72,23 @@ GlContext::StatusOrGlContext GlContext::Create(
   //   multithreading options, like the special-case combination of USE_PTHREADS
   //   and OFFSCREEN_FRAMEBUFFER)
   EM_ASM(let init_once = true; if (init_once) {
-    const __cachedFindCanvasEventTarget = __findCanvasEventTarget;
+    const cachedFindCanvasEventTarget = findCanvasEventTarget;
 
-    if (typeof __cachedFindCanvasEventTarget != = 'function') {
+    if (typeof cachedFindCanvasEventTarget != = 'function') {
       if (typeof console != = 'undefined') {
         console.error(
             'Expected Emscripten global function ' +
-            '"__findCanvasEventTarget" not found. WebGL context creation ' +
+            '"findCanvasEventTarget" not found. WebGL context creation ' +
             'may fail.');
       }
       return;
     }
 
-    __findCanvasEventTarget = function(target) {
+    findCanvasEventTarget = function(target) {
       if (Module && Module.canvas) {
         return Module.canvas;
       } else if (Module && Module.canvasCssSelector) {
-        return __cachedFindCanvasEventTarget(Module.canvasCssSelector);
+        return cachedFindCanvasEventTarget(Module.canvasCssSelector);
       } else {
         if (typeof console != = 'undefined') {
           console.warn('Module properties canvas and canvasCssSelector not ' +
@@ -97,7 +97,7 @@ GlContext::StatusOrGlContext GlContext::Create(
         // We still go through with the find attempt, although for most use
         // cases it will not succeed, just in case the user does want to fall-
         // back.
-        return __cachedFindCanvasEventTarget(target);
+        return cachedFindCanvasEventTarget(target);
       }
     };  // NOLINT: Necessary semicolon.
     init_once = false;

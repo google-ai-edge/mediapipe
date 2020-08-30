@@ -36,6 +36,19 @@ http_archive(
     urls = ["https://github.com/bazelbuild/rules_cc/archive/master.zip"],
 )
 
+http_archive(
+   name = "rules_foreign_cc",
+   strip_prefix = "rules_foreign_cc-master",
+   url = "https://github.com/bazelbuild/rules_foreign_cc/archive/master.zip",
+)
+
+load("@rules_foreign_cc//:workspace_definitions.bzl", "rules_foreign_cc_dependencies")
+
+rules_foreign_cc_dependencies()
+
+# This is used to select all contents of the archives for CMake-based packages to give CMake access to them.
+all_content = """filegroup(name = "all", srcs = glob(["**"]), visibility = ["//visibility:public"])"""
+
 # GoogleTest/GoogleMock framework. Used by most unit-tests.
 # Last updated 2020-06-30.
 http_archive(
@@ -68,29 +81,28 @@ http_archive(
     url = "https://github.com/gflags/gflags/archive/v2.2.2.zip",
 )
 
-# glog v0.3.5
-# TODO: Migrate MediaPipe to use com_github_glog_glog on all platforms.
+# 2020-08-21
 http_archive(
-    name = "com_github_glog_glog_v_0_3_5",
-    url = "https://github.com/google/glog/archive/v0.3.5.zip",
-    sha256 = "267103f8a1e9578978aa1dc256001e6529ef593e5aea38193d31c2872ee025e8",
-    strip_prefix = "glog-0.3.5",
-    build_file = "@//third_party:glog.BUILD",
+    name = "com_github_glog_glog",
+    strip_prefix = "glog-0a2e5931bd5ff22fd3bf8999eb8ce776f159cda6",
+    sha256 = "58c9b3b6aaa4dd8b836c0fd8f65d0f941441fb95e27212c5eeb9979cfd3592ab",
+    urls = [
+        "https://github.com/google/glog/archive/0a2e5931bd5ff22fd3bf8999eb8ce776f159cda6.zip",
+    ],
+)
+http_archive(
+    name = "com_github_glog_glog_no_gflags",
+    strip_prefix = "glog-0a2e5931bd5ff22fd3bf8999eb8ce776f159cda6",
+    sha256 = "58c9b3b6aaa4dd8b836c0fd8f65d0f941441fb95e27212c5eeb9979cfd3592ab",
+    build_file = "@//third_party:glog_no_gflags.BUILD",
+    urls = [
+        "https://github.com/google/glog/archive/0a2e5931bd5ff22fd3bf8999eb8ce776f159cda6.zip",
+    ],
     patches = [
         "@//third_party:com_github_glog_glog_9779e5ea6ef59562b030248947f787d1256132ae.diff"
     ],
     patch_args = [
         "-p1",
-    ],
-)
-
-# 2020-02-16
-http_archive(
-    name = "com_github_glog_glog",
-    strip_prefix = "glog-3ba8976592274bc1f907c402ce22558011d6fc5e",
-    sha256 = "feca3c7e29a693cab7887409756d89d342d4a992d54d7c5599bebeae8f7b50be",
-    urls = [
-        "https://github.com/google/glog/archive/3ba8976592274bc1f907c402ce22558011d6fc5e.zip",
     ],
 )
 
@@ -169,6 +181,13 @@ http_archive(
     sha256 = "5ba6d0db4e784621fda44a50c58bb23b0892684692f0c623e2063f9c19f192f1"
 )
 
+http_archive(
+    name = "opencv",
+    build_file_content = all_content,
+    strip_prefix = "opencv-3.4.10",
+    urls = ["https://github.com/opencv/opencv/archive/3.4.10.tar.gz"],
+)
+
 new_local_repository(
     name = "linux_opencv",
     build_file = "@//third_party:opencv_linux.BUILD",
@@ -184,13 +203,13 @@ new_local_repository(
 new_local_repository(
     name = "macos_opencv",
     build_file = "@//third_party:opencv_macos.BUILD",
-    path = "/usr",
+    path = "/usr/local/opt/opencv@3",
 )
 
 new_local_repository(
     name = "macos_ffmpeg",
     build_file = "@//third_party:ffmpeg_macos.BUILD",
-    path = "/usr",
+    path = "/usr/local/opt/ffmpeg",
 )
 
 new_local_repository(
@@ -301,9 +320,6 @@ load("@rules_jvm_external//:defs.bzl", "maven_install")
 maven_install(
     name = "maven",
     artifacts = [
-        "junit:junit:4.12",
-        "androidx.test.espresso:espresso-core:3.1.1",
-        "org.hamcrest:hamcrest-library:1.3",
         "androidx.concurrent:concurrent-futures:1.0.0-alpha03",
         "androidx.lifecycle:lifecycle-common:2.2.0",
         "androidx.annotation:annotation:aar:1.1.0",
@@ -314,11 +330,15 @@ maven_install(
         "androidx.core:core:aar:1.1.0-rc03",
         "androidx.legacy:legacy-support-v4:aar:1.0.0",
         "androidx.recyclerview:recyclerview:aar:1.1.0-beta02",
+        "androidx.test.espresso:espresso-core:3.1.1",
+        "com.github.bumptech.glide:glide:4.11.0",
         "com.google.android.material:material:aar:1.0.0-rc01",
         "com.google.code.findbugs:jsr305:3.0.2",
         "com.google.flogger:flogger-system-backend:0.3.1",
         "com.google.flogger:flogger:0.3.1",
         "com.google.guava:guava:27.0.1-android",
+        "junit:junit:4.12",
+        "org.hamcrest:hamcrest-library:1.3",
     ],
     repositories = [
         "https://jcenter.bintray.com",

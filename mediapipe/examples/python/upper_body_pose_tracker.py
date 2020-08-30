@@ -38,8 +38,8 @@ import time
 from typing import Tuple, Union
 
 import cv2
-import numpy as np
 import mediapipe.python as mp
+import numpy as np
 # resources dependency
 from mediapipe.framework.formats import landmark_pb2
 
@@ -107,7 +107,7 @@ class UpperBodyPoseTracker:
           output_file='/tmp/output.png')
 
       # Read an image and convert the BGR image to RGB.
-      input_image = cv2.imread('/tmp/input.png')[:, :, ::-1]
+      input_image = cv2.cvtColor(cv2.imread('/tmp/input.png'), COLOR_BGR2RGB)
       pose_landmarks, annotated_image = pose_tracker.run(input_image)
       pose_tracker.close()
     """
@@ -150,8 +150,11 @@ class UpperBodyPoseTracker:
       success, input_frame = cap.read()
       if not success:
         break
-      _, output_frame = self._run_graph(input_frame[:, :, ::-1])
-      cv2.imshow('MediaPipe upper body pose tracker', output_frame[:, :, ::-1])
+      input_frame = cv2.cvtColor(input_frame, cv2.COLOR_BGR2RGB)
+      input_frame.flags.writeable = False
+      _, output_frame = self._run_graph(input_frame)
+      cv2.imshow('MediaPipe upper body pose tracker',
+                 cv2.cvtColor(output_frame, cv2.COLOR_RGB2BGR))
       if cv2.waitKey(5) & 0xFF == 27:
         break
     cap.release()

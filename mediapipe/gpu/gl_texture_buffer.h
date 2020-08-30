@@ -50,6 +50,11 @@ class GlTextureBuffer {
       GLenum target, GLuint name, int width, int height, GpuBufferFormat format,
       DeletionCallback deletion_callback);
 
+  // Same as Wrap above, but saves the given context for future use.
+  static std::unique_ptr<GlTextureBuffer> Wrap(
+      GLenum target, GLuint name, int width, int height, GpuBufferFormat format,
+      std::shared_ptr<GlContext> context, DeletionCallback deletion_callback);
+
   // Creates a texture of dimensions width x height and allocates space for it.
   // If data is provided, it is uploaded to the texture; otherwise, it can be
   // provided later via glTexSubImage2D.
@@ -63,7 +68,8 @@ class GlTextureBuffer {
   // The commands producing the texture are assumed to be completed at the
   // time of this call. If not, call Updated on the result.
   GlTextureBuffer(GLenum target, GLuint name, int width, int height,
-                  GpuBufferFormat format, DeletionCallback deletion_callback);
+                  GpuBufferFormat format, DeletionCallback deletion_callback,
+                  std::shared_ptr<GlContext> producer_context = nullptr);
   ~GlTextureBuffer();
 
   // Included to support nativeGetGpuBuffer* in Java.
@@ -111,6 +117,11 @@ class GlTextureBuffer {
   void WaitForConsumers();
   void WaitForConsumersOnGpu();
 
+  // Returns the GL context this buffer was created with.
+  const std::shared_ptr<GlContext>& GetProducerContext() {
+    return producer_context_;
+  }
+
  private:
   // Creates a texture of dimensions width x height and allocates space for it.
   // If data is provided, it is uploaded to the texture; otherwise, it can be
@@ -132,6 +143,7 @@ class GlTextureBuffer {
   std::unique_ptr<GlMultiSyncPoint> consumer_multi_sync_ ABSL_GUARDED_BY(
       consumer_sync_mutex_) = absl::make_unique<GlMultiSyncPoint>();
   DeletionCallback deletion_callback_;
+  std::shared_ptr<GlContext> producer_context_;
 };
 
 using GlTextureBufferSharedPtr = std::shared_ptr<GlTextureBuffer>;

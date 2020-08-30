@@ -17,7 +17,7 @@ load(
     "mediapipe_simple_subgraph",
 )
 
-licenses(["notice"])  # Apache 2.0
+licenses(["notice"])
 
 package(default_visibility = ["//visibility:public"])
 
@@ -32,6 +32,8 @@ cc_library(
         "//mediapipe/calculators/util:detections_to_render_data_calculator",
         "//mediapipe/calculators/util:landmarks_to_render_data_calculator",
         "//mediapipe/calculators/util:rect_to_render_data_calculator",
+        "//mediapipe/graphs/face_mesh/calculators:face_landmarks_to_render_data_calculator",
+        "//mediapipe/graphs/iris_tracking/calculators:iris_to_render_data_calculator",
     ],
 )
 
@@ -42,7 +44,6 @@ mediapipe_simple_subgraph(
     deps = [
         ":renderer_calculators",
         "//mediapipe/graphs/iris_tracking/calculators:iris_to_depth_calculator",
-        "//mediapipe/graphs/iris_tracking/calculators:iris_to_render_data_calculator",
     ],
 )
 
@@ -52,7 +53,6 @@ mediapipe_simple_subgraph(
     register_as = "IrisRendererCpu",
     deps = [
         ":renderer_calculators",
-        "//mediapipe/graphs/iris_tracking/calculators:iris_to_render_data_calculator",
     ],
 )
 
@@ -63,6 +63,5 @@ mediapipe_simple_subgraph(
     deps = [
         ":renderer_calculators",
         "//mediapipe/graphs/iris_tracking/calculators:iris_to_depth_calculator",
-        "//mediapipe/graphs/iris_tracking/calculators:iris_to_render_data_calculator",
     ],
 )

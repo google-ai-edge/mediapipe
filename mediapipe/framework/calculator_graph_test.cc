@@ -100,11 +100,11 @@ class SquareIntCalculator : public CalculatorBase {
   static ::mediapipe::Status GetContract(CalculatorContract* cc) {
     cc->Inputs().Index(0).Set<int>();
     cc->Outputs().Index(0).SetSameAs(&cc->Inputs().Index(0));
+    cc->SetTimestampOffset(TimestampDiff(0));
     return ::mediapipe::OkStatus();
   }
 
   ::mediapipe::Status Open(CalculatorContext* cc) final {
-    cc->SetOffset(TimestampDiff(0));
     return ::mediapipe::OkStatus();
   }
 
@@ -134,6 +134,7 @@ class DemuxTimedCalculator : public CalculatorBase {
          id < cc->Outputs().EndId("OUTPUT"); ++id) {
       cc->Outputs().Get(id).SetSameAs(data_input);
     }
+    cc->SetTimestampOffset(TimestampDiff(0));
     return ::mediapipe::OkStatus();
   }
 
@@ -142,7 +143,6 @@ class DemuxTimedCalculator : public CalculatorBase {
     data_input_ = cc->Inputs().GetId("INPUT", 0);
     output_base_ = cc->Outputs().GetId("OUTPUT", 0);
     num_outputs_ = cc->Outputs().NumEntries("OUTPUT");
-    cc->SetOffset(TimestampDiff(0));
     return ::mediapipe::OkStatus();
   }
 
@@ -194,6 +194,7 @@ class MuxTimedCalculator : public CalculatorBase {
     }
     RET_CHECK_EQ(cc->Outputs().NumEntries(), 1);
     cc->Outputs().Tag("OUTPUT").SetSameAs(data_input0);
+    cc->SetTimestampOffset(TimestampDiff(0));
     return ::mediapipe::OkStatus();
   }
 
@@ -202,7 +203,6 @@ class MuxTimedCalculator : public CalculatorBase {
     data_input_base_ = cc->Inputs().GetId("INPUT", 0);
     num_data_inputs_ = cc->Inputs().NumEntries("INPUT");
     output_ = cc->Outputs().GetId("OUTPUT", 0);
-    cc->SetOffset(TimestampDiff(0));
     return ::mediapipe::OkStatus();
   }
 
@@ -232,11 +232,11 @@ class IntAdderCalculator : public CalculatorBase {
       cc->Inputs().Index(i).Set<int>();
     }
     cc->Outputs().Index(0).Set<int>();
+    cc->SetTimestampOffset(TimestampDiff(0));
     return ::mediapipe::OkStatus();
   }
 
   ::mediapipe::Status Open(CalculatorContext* cc) final {
-    cc->SetOffset(TimestampDiff(0));
     return ::mediapipe::OkStatus();
   }
 
@@ -260,11 +260,11 @@ class FloatAdderCalculator : public CalculatorBase {
       cc->Inputs().Index(i).Set<float>();
     }
     cc->Outputs().Index(0).Set<float>();
+    cc->SetTimestampOffset(TimestampDiff(0));
     return ::mediapipe::OkStatus();
   }
 
   ::mediapipe::Status Open(CalculatorContext* cc) final {
-    cc->SetOffset(TimestampDiff(0));
     return ::mediapipe::OkStatus();
   }
 
@@ -288,11 +288,11 @@ class IntMultiplierCalculator : public CalculatorBase {
       cc->Inputs().Index(i).Set<int>();
     }
     cc->Outputs().Index(0).Set<int>();
+    cc->SetTimestampOffset(TimestampDiff(0));
     return ::mediapipe::OkStatus();
   }
 
   ::mediapipe::Status Open(CalculatorContext* cc) final {
-    cc->SetOffset(TimestampDiff(0));
     return ::mediapipe::OkStatus();
   }
 
@@ -316,12 +316,12 @@ class FloatScalarMultiplierCalculator : public CalculatorBase {
     cc->Inputs().Index(0).Set<float>();
     cc->Outputs().Index(0).Set<float>();
     cc->InputSidePackets().Index(0).Set<float>();
+    cc->SetTimestampOffset(TimestampDiff(0));
     return ::mediapipe::OkStatus();
   }
 
   ::mediapipe::Status Open(CalculatorContext* cc) final {
     scalar_ = cc->InputSidePackets().Index(0).Get<float>();
-    cc->SetOffset(TimestampDiff(0));
     return ::mediapipe::OkStatus();
   }
 
@@ -343,11 +343,11 @@ class IntToFloatCalculator : public CalculatorBase {
   static ::mediapipe::Status GetContract(CalculatorContract* cc) {
     cc->Inputs().Index(0).Set<int>();
     cc->Outputs().Index(0).Set<float>();
+    cc->SetTimestampOffset(TimestampDiff(0));
     return ::mediapipe::OkStatus();
   }
 
   ::mediapipe::Status Open(CalculatorContext* cc) final {
-    cc->SetOffset(TimestampDiff(0));
     return ::mediapipe::OkStatus();
   }
 
@@ -937,11 +937,11 @@ class SemaphoreCalculator : public CalculatorBase {
     cc->Outputs().Index(0).SetSameAs(&cc->Inputs().Index(0));
     cc->InputSidePackets().Tag("POST_SEM").Set<Semaphore*>();
     cc->InputSidePackets().Tag("WAIT_SEM").Set<Semaphore*>();
+    cc->SetTimestampOffset(TimestampDiff(0));
     return ::mediapipe::OkStatus();
   }
 
   ::mediapipe::Status Open(CalculatorContext* cc) override {
-    cc->SetOffset(TimestampDiff(0));
     return ::mediapipe::OkStatus();
   }
 

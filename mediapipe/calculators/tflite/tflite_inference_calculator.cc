@@ -33,6 +33,12 @@
 #include "tensorflow/lite/kernels/register.h"
 #include "tensorflow/lite/model.h"
 
+#if defined(MEDIAPIPE_ANDROID)
+#include "mediapipe/util/android/file/base/file.h"
+#include "mediapipe/util/android/file/base/filesystem.h"
+#include "mediapipe/util/android/file/base/helpers.h"
+#endif  // ANDROID
+
 #if MEDIAPIPE_TFLITE_GL_INFERENCE
 #include "mediapipe/gpu/gl_calculator_helper.h"
 #include "mediapipe/gpu/gpu_buffer.h"
@@ -219,6 +225,8 @@ class TfLiteInferenceCalculator : public CalculatorBase {
   ::mediapipe::Status Close(CalculatorContext* cc) override;
 
  private:
+  ::mediapipe::Status ReadKernelsFromFile();
+  ::mediapipe::Status WriteKernelsToFile();
   ::mediapipe::Status LoadModel(CalculatorContext* cc);
   ::mediapipe::StatusOr<Packet> GetModelAsPacket(const CalculatorContext& cc);
   ::mediapipe::Status LoadDelegate(CalculatorContext* cc);
@@ -273,6 +281,9 @@ class TfLiteInferenceCalculator : public CalculatorBase {
   bool use_quantized_tensors_ = false;
 
   bool use_advanced_gpu_api_ = false;
+
+  bool use_kernel_caching_ = false;
+  std::string cached_kernel_filename_;
 };
 REGISTER_CALCULATOR(TfLiteInferenceCalculator);
 
@@ -354,6 +365,17 @@ bool ShouldUseGpu(CC* cc) {
                           options.has_delegate() &&
                           options.delegate().has_gpu() &&
                           options.delegate().gpu().use_advanced_gpu_api();
+
+  use_kernel_caching_ =
+      use_advanced_gpu_api_ && options.delegate().gpu().use_kernel_caching();
+
+  if (use_kernel_caching_) {
+#if MEDIAPIPE_TFLITE_GL_INFERENCE && defined(MEDIAPIPE_ANDROID)
+    cached_kernel_filename_ =
+        "/sdcard/" + mediapipe::File::Basename(options.model_path()) + ".ker";
+#endif  // MEDIAPIPE_TFLITE_GL_INFERENCE && MEDIAPIPE_ANDROID
+  }
+
   if (use_advanced_gpu_api_ && !gpu_input_) {
     LOG(WARNING) << "Cannot use advanced GPU APIs, input must be GPU buffers."
                     "Falling back to the default TFLite API.";
@@ -423,7 +445,23 @@ bool ShouldUseGpu(CC* cc) {
   });
 }
 
+::mediapipe::Status TfLiteInferenceCalculator::WriteKernelsToFile() {
+#if MEDIAPIPE_TFLITE_GL_INFERENCE && defined(MEDIAPIPE_ANDROID)
+  if (use_kernel_caching_) {
+    // Save kernel file.
+    auto kernel_cache = absl::make_unique<std::vector<uint8_t>>(
+        tflite_gpu_runner_->GetSerializedBinaryCache());
+    std::string cache_str(kernel_cache->begin(), kernel_cache->end());
+    MP_RETURN_IF_ERROR(
+        mediapipe::file::SetContents(cached_kernel_filename_, cache_str));
+  }
+#endif  // MEDIAPIPE_TFLITE_GL_INFERENCE && MEDIAPIPE_ANDROID
+  return ::mediapipe::OkStatus();
+}
+
 ::mediapipe::Status TfLiteInferenceCalculator::Close(CalculatorContext* cc) {
+  MP_RETURN_IF_ERROR(WriteKernelsToFile());
+
   return RunInContextIfNeeded([this]() -> ::mediapipe::Status {
     if (delegate_) {
       interpreter_ = nullptr;
@@ -635,6 +673,22 @@ bool ShouldUseGpu(CC* cc) {
   return ::mediapipe::OkStatus();
 }
 
+::mediapipe::Status TfLiteInferenceCalculator::ReadKernelsFromFile() {
+#if MEDIAPIPE_TFLITE_GL_INFERENCE && defined(MEDIAPIPE_ANDROID)
+  if (use_kernel_caching_) {
+    // Load pre-compiled kernel file.
+    if (mediapipe::File::Exists(cached_kernel_filename_)) {
+      std::string cache_str;
+      MP_RETURN_IF_ERROR(
+          mediapipe::file::GetContents(cached_kernel_filename_, &cache_str));
+      std::vector<uint8_t> cache_vec(cache_str.begin(), cache_str.end());
+      tflite_gpu_runner_->SetSerializedBinaryCache(std::move(cache_vec));
+    }
+  }
+#endif  // MEDIAPIPE_TFLITE_GL_INFERENCE && MEDIAPIPE_ANDROID
+  return ::mediapipe::OkStatus();
+}
+
 ::mediapipe::Status TfLiteInferenceCalculator::InitTFLiteGPURunner(
     CalculatorContext* cc) {
 #if MEDIAPIPE_TFLITE_GL_INFERENCE
@@ -692,6 +746,9 @@ bool ShouldUseGpu(CC* cc) {
         ::tflite::gpu::gl::CreateReadWriteShaderStorageBuffer<float>(
             gpu_data_out_[i]->elements, &gpu_data_out_[i]->buffer));
   }
+
+  MP_RETURN_IF_ERROR(ReadKernelsFromFile());
+
   MP_RETURN_IF_ERROR(tflite_gpu_runner_->Build());
 #endif  // MEDIAPIPE_TFLITE_GL_INFERENCE
 

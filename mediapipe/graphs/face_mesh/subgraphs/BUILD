@@ -17,7 +17,7 @@ load(
     "mediapipe_simple_subgraph",
 )
 
-licenses(["notice"])  # Apache 2.0
+licenses(["notice"])
 
 package(default_visibility = ["//visibility:public"])
 
@@ -29,6 +29,7 @@ cc_library(
         "//mediapipe/calculators/util:detections_to_render_data_calculator",
         "//mediapipe/calculators/util:landmarks_to_render_data_calculator",
         "//mediapipe/calculators/util:rect_to_render_data_calculator",
+        "//mediapipe/graphs/face_mesh/calculators:face_landmarks_to_render_data_calculator",
     ],
 )
 

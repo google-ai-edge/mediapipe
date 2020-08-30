@@ -48,6 +48,10 @@ message TfLiteInferenceCalculatorOptions {
       // example:
       //   delegate: { gpu { use_advanced_gpu_api: true } }
       optional bool use_advanced_gpu_api = 1 [default = false];
+
+      // Load pre-compiled serialized binary cache to accelerate init process.
+      // Only available for OpenCL delegate on Android.
+      optional bool use_kernel_caching = 2 [default = false];
     }
     // Android only.
     message Nnapi {}

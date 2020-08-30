@@ -425,7 +425,47 @@ Note: This currently works only on Linux, and please first follow
 
 ## Python
 
-### Prerequisite
+MediaPipe Python package is available on
+[PyPI](https://pypi.org/project/mediapipe/), and can be installed simply by `pip
+install mediapipe` on Linux and macOS, as described below in
+[Run in python interpreter](#run-in-python-interpreter) and in this
+[colab](https://mediapipe.page.link/mp-py-colab).
+
+### Run in Python interpreter
+
+Using [MediaPipe Pose](../solutions/pose.md) as an example:
+
+```bash
+# Activate a Python virtual environment.
+$ python3 -m venv mp_env && source mp_env/bin/activate
+
+# Install MediaPipe Python package
+(mp_env)$ pip install mediapipe
+
+# Run in Python interpreter
+(mp_env)$ python3
+>>> import mediapipe as mp
+>>> pose_tracker = mp.examples.UpperBodyPoseTracker()
+
+# For image input
+>>> pose_landmarks, _ = pose_tracker.run(input_file='/path/to/input/file', output_file='/path/to/output/file')
+>>> pose_landmarks, annotated_image = pose_tracker.run(input_file='/path/to/file')
+
+# For live camera input
+# (Press Esc within the output image window to stop the run or let it self terminate after 30 seconds.)
+>>> pose_tracker.run_live()
+
+# Close the tracker.
+>>> pose_tracker.close()
+```
+
+Tip: Use command `deactivate` to exit the Python virtual environment.
+
+### Building Python package from source
+
+Follow these steps only if you have local changes and need to build the Python
+package from source. Otherwise, we strongly encourage our users to simply run
+`pip install mediapipe`, more convenient and much faster.
 
 1.  Make sure that Bazel and OpenCV are correctly installed and configured for
     MediaPipe. Please see [Installation](./install.md) for how to setup Bazel
@@ -445,50 +485,23 @@ Note: This currently works only on Linux, and please first follow
     $ brew install protobuf
     ```
 
-### Set up Python virtual environment.
-
-1.  Activate a Python virtual environment.
+3.  Activate a Python virtual environment.
 
     ```bash
     $ python3 -m venv mp_env && source mp_env/bin/activate
     ```
 
-2.  In the virtual environment, go to the MediaPipe repo directory.
+4.  In the virtual environment, go to the MediaPipe repo directory.
 
-3.  Install the required Python packages.
+5.  Install the required Python packages.
 
     ```bash
     (mp_env)mediapipe$ pip3 install -r requirements.txt
     ```
 
-4.  Generate and install MediaPipe package.
+6.  Generate and install MediaPipe package.
 
     ```bash
     (mp_env)mediapipe$ python3 setup.py gen_protos
-    (mp_env)mediapipe$ python3 setup.py install
+    (mp_env)mediapipe$ python3 setup.py install --link-opencv
     ```
-
-### Run in Python interpreter
-
-Make sure you are not in the MediaPipe repo directory.
-
-Using [MediaPipe Pose](../solutions/pose.md) as an example:
-
-```bash
-(mp_env)$ python3
->>> import mediapipe as mp
->>> pose_tracker = mp.examples.UpperBodyPoseTracker()
-
-# For image input
->>> pose_landmarks, _ = pose_tracker.run(input_file='/path/to/input/file', output_file='/path/to/output/file')
->>> pose_landmarks, annotated_image = pose_tracker.run(input_file='/path/to/file')
-
-# For live camera input
-# (Press Esc within the output image window to stop the run or let it self terminate after 30 seconds.)
->>> pose_tracker.run_live()
-
-# Close the tracker.
->>> pose_tracker.close()
-```
-
-Tip: Use command `deactivate` to exit the Python virtual environment.

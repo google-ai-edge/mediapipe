@@ -13,6 +13,7 @@ input_stream: "NORM_RECT:rect"
 input_stream: "LEFT_EYE_RECT:left_eye_rect_from_landmarks"
 input_stream: "RIGHT_EYE_RECT:right_eye_rect_from_landmarks"
 input_side_packet: "IMAGE_FILE_PROPERTIES:image_file_properties"
+output_stream: "IRIS_LANDMARKS:iris_landmarks"
 output_stream: "IMAGE:output_image"
 output_stream: "LEFT_IRIS_DEPTH_MM:left_iris_depth_mm"
 output_stream: "RIGHT_IRIS_DEPTH_MM:right_iris_depth_mm"
@@ -47,13 +48,19 @@ node {
   output_stream: "iris_landmarks"
 }
 
-# Concatenate iris landmarks from both eyes and face landmarks.
+# Converts landmarks to drawing primitives for annotation overlay.
 node {
-  calculator: "ConcatenateNormalizedLandmarkListCalculator"
-  input_stream: "left_iris_landmarks"
-  input_stream: "right_iris_landmarks"
-  input_stream: "face_landmarks"
-  output_stream: "face_iris_landmarks"
+  calculator: "FaceLandmarksToRenderDataCalculator"
+  input_stream: "NORM_LANDMARKS:face_landmarks"
+  output_stream: "RENDER_DATA:face_landmarks_render_data"
+  node_options: {
+    [type.googleapis.com/mediapipe.LandmarksToRenderDataCalculatorOptions] {
+      landmark_color { r: 150 g: 0 b: 0 }
+      connection_color { r: 0 g: 150 b: 0 }
+      thickness: 2
+      visualize_landmark_depth: false
+    }
+  }
 }
 
 node {
@@ -252,6 +259,7 @@ node {
   calculator: "AnnotationOverlayCalculator"
   input_stream: "IMAGE:input_image"
   input_stream: "detection_render_data"
+  input_stream: "face_landmarks_render_data"
   input_stream: "right_eye_contour_landmarks_render_data"
   input_stream: "left_eye_contour_landmarks_render_data"
   input_stream: "iris_render_data"

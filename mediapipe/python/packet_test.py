@@ -18,8 +18,8 @@ import gc
 import random
 import sys
 from absl.testing import absltest
+import mediapipe as mp
 import numpy as np
-import mediapipe.python as mp
 from google.protobuf import text_format
 from mediapipe.framework.formats import detection_pb2
 
@@ -294,7 +294,51 @@ class PacketTest(absltest.TestCase):
     # copy mode.
     self.assertEqual(sys.getrefcount(rgb_data), initial_ref_count)
 
-  def testImageFramePacketCopyConstuctionWithCropping(self):
+  def testImageFramePacketCreationReferenceMode(self):
+    w, h, channels = random.randrange(3, 100), random.randrange(3, 100), 3
+    rgb_data = np.random.randint(255, size=(h, w, channels), dtype=np.uint8)
+    rgb_data.flags.writeable = False
+    initial_ref_count = sys.getrefcount(rgb_data)
+    image_frame_packet = mp.packet_creator.create_image_frame(
+        image_format=mp.ImageFormat.SRGB, data=rgb_data)
+    # Reference mode increase the ref count of the rgb_data by 1.
+    self.assertEqual(sys.getrefcount(rgb_data), initial_ref_count + 1)
+    del image_frame_packet
+    gc.collect()
+    # Deleting image_frame_packet should decrese the ref count of rgb_data by 1.
+    self.assertEqual(sys.getrefcount(rgb_data), initial_ref_count)
+    rgb_data_copy = np.copy(rgb_data)
+    # rgb_data_copy is a copy of rgb_data and should not increase the ref count.
+    self.assertEqual(sys.getrefcount(rgb_data), initial_ref_count)
+    text_config = """
+      node {
+        calculator: 'PassThroughCalculator'
+        input_side_packet: "in"
+        output_side_packet: "out"
+      }
+    """
+    graph = mp.CalculatorGraph(graph_config=text_config)
+    graph.start_run(
+        input_side_packets={
+            'in':
+                mp.packet_creator.create_image_frame(
+                    image_format=mp.ImageFormat.SRGB, data=rgb_data)
+        })
+    # reference mode increase the ref count of the rgb_data by 1.
+    self.assertEqual(sys.getrefcount(rgb_data), initial_ref_count + 1)
+    graph.wait_until_done()
+    output_packet = graph.get_output_side_packet('out')
+    del rgb_data
+    del graph
+    gc.collect()
+    # The pixel data of the output image frame packet should still be valid
+    # after the graph and the original rgb_data data are deleted.
+    self.assertTrue(
+        np.array_equal(
+            mp.packet_getter.get_image_frame(output_packet).numpy_view(),
+            rgb_data_copy))
+
+  def testImageFramePacketCopyCreationWithCropping(self):
     w, h, channels = random.randrange(40, 100), random.randrange(40, 100), 3
     channels, offset = 3, 10
     rgb_data = np.random.randint(255, size=(h, w, channels), dtype=np.uint8)

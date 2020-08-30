@@ -92,11 +92,11 @@ class IntAdderCalculator : public CalculatorBase {
       cc->Inputs().Index(i).Set<int>();
     }
     cc->Outputs().Index(0).Set<int>();
+    cc->SetTimestampOffset(TimestampDiff(0));
     return ::mediapipe::OkStatus();
   }
 
   ::mediapipe::Status Open(CalculatorContext* cc) final {
-    cc->SetOffset(TimestampDiff(0));
     return ::mediapipe::OkStatus();
   }
 
@@ -269,11 +269,11 @@ class Delay20Calculator : public CalculatorBase {
   static ::mediapipe::Status GetContract(CalculatorContract* cc) {
     cc->Inputs().Index(0).Set<int>();
     cc->Outputs().Index(0).Set<int>();
+    cc->SetTimestampOffset(TimestampDiff(20));
     return ::mediapipe::OkStatus();
   }
 
   ::mediapipe::Status Open(CalculatorContext* cc) final {
-    cc->SetOffset(TimestampDiff(20));
     cc->Outputs().Index(0).AddPacket(MakePacket<int>(0).At(Timestamp(0)));
     return ::mediapipe::OkStatus();
   }
@@ -641,11 +641,11 @@ class OffsetBoundCalculator : public CalculatorBase {
   static ::mediapipe::Status GetContract(CalculatorContract* cc) {
     cc->Inputs().Index(0).Set<int>();
     cc->Outputs().Index(0).Set<int>();
+    cc->SetTimestampOffset(TimestampDiff(0));
     return ::mediapipe::OkStatus();
   }
 
   ::mediapipe::Status Open(CalculatorContext* cc) final {
-    cc->SetOffset(0);
     return ::mediapipe::OkStatus();
   }
 
@@ -1446,10 +1446,10 @@ class OffsetAndBoundCalculator : public CalculatorBase {
   static ::mediapipe::Status GetContract(CalculatorContract* cc) {
     cc->Inputs().Index(0).Set<int>();
     cc->Outputs().Index(0).SetSameAs(&cc->Inputs().Index(0));
+    cc->SetTimestampOffset(TimestampDiff(0));
     return ::mediapipe::OkStatus();
   }
   ::mediapipe::Status Open(CalculatorContext* cc) final {
-    cc->SetOffset(0);
     return ::mediapipe::OkStatus();
   }
   ::mediapipe::Status Process(CalculatorContext* cc) final {

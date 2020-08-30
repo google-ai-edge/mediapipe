@@ -31,18 +31,18 @@ namespace python {
 namespace {
 
 Packet CreateImageFramePacket(mediapipe::ImageFormat::Format format,
-                              const py::array& data) {
+                              const py::array& data, bool copy) {
   if (format == mediapipe::ImageFormat::SRGB ||
       format == mediapipe::ImageFormat::SRGBA ||
       format == mediapipe::ImageFormat::GRAY8) {
-    return Adopt(CreateImageFrame<uint8>(format, data).release());
+    return Adopt(CreateImageFrame<uint8>(format, data, copy).release());
   } else if (format == mediapipe::ImageFormat::GRAY16 ||
              format == mediapipe::ImageFormat::SRGB48 ||
              format == mediapipe::ImageFormat::SRGBA64) {
-    return Adopt(CreateImageFrame<uint16>(format, data).release());
+    return Adopt(CreateImageFrame<uint16>(format, data, copy).release());
   } else if (format == mediapipe::ImageFormat::VEC32F1 ||
              format == mediapipe::ImageFormat::VEC32F2) {
-    return Adopt(CreateImageFrame<float>(format, data).release());
+    return Adopt(CreateImageFrame<float>(format, data, copy).release());
   }
   throw RaisePyError(PyExc_RuntimeError,
                      absl::StrCat("Unsupported ImageFormat: ", format).c_str());
@@ -560,26 +560,12 @@ void PublicPacketCreators(pybind11::module* m) {
 }
 
 void InternalPacketCreators(pybind11::module* m) {
-  m->def(
-      "_create_image_frame_with_copy",
-      [](mediapipe::ImageFormat::Format format, const py::array& data) {
-        return CreateImageFramePacket(format, data);
-      },
-      py::arg("format"), py::arg("data").noconvert(),
-      py::return_value_policy::move);
+  m->def("_create_image_frame_from_pixel_data", &CreateImageFramePacket,
+         py::arg("format"), py::arg("data").noconvert(), py::arg("copy"),
+         py::return_value_policy::move);
 
   m->def(
-      "_create_image_frame_with_reference",
-      [](mediapipe::ImageFormat::Format format, const py::array& data) {
-        throw RaisePyError(
-            PyExc_NotImplementedError,
-            "Creating image frame packet with reference is not supproted yet.");
-      },
-      py::arg("format"), py::arg("data").noconvert(),
-      py::return_value_policy::move);
-
-  m->def(
-      "_create_image_frame_with_copy",
+      "_create_image_frame_from_image_frame",
       [](ImageFrame& image_frame) {
         auto image_frame_copy = absl::make_unique<ImageFrame>();
         // Set alignment_boundary to kGlDefaultAlignmentBoundary so that
@@ -587,15 +573,6 @@ void InternalPacketCreators(pybind11::module* m) {
         image_frame_copy->CopyFrom(image_frame,
                                    ImageFrame::kGlDefaultAlignmentBoundary);
         return Adopt(image_frame_copy.release());
-      },
-      py::arg("image_frame").noconvert(), py::return_value_policy::move);
-
-  m->def(
-      "_create_image_frame_with_reference",
-      [](ImageFrame& image_frame) {
-        throw RaisePyError(
-            PyExc_NotImplementedError,
-            "Creating image frame packet with reference is not supproted yet.");
       },
       py::arg("image_frame").noconvert(), py::return_value_policy::move);
 
@@ -616,7 +593,7 @@ void InternalPacketCreators(pybind11::module* m) {
             std::move(maybe_holder).ValueOrDie();
         auto* copy = const_cast<proto_ns::MessageLite*>(
             message_holder->GetProtoMessageLite());
-        copy->ParseFromString(serialized_proto);
+        copy->ParseFromString(std::string(serialized_proto));
         return packet_internal::Create(message_holder.release());
       },
       py::return_value_policy::move);

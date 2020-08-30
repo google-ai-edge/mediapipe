@@ -24,6 +24,7 @@ namespace mediapipe {
     const std::string& name, const PacketType* packet_type) {
   output_stream_spec_.name = name;
   output_stream_spec_.packet_type = packet_type;
+  output_stream_spec_.offset_enabled = false;
   PrepareForRun(nullptr);
   return ::mediapipe::OkStatus();
 }
@@ -33,7 +34,6 @@ void OutputStreamManager::PrepareForRun(
   output_stream_spec_.error_callback = std::move(error_callback);
 
   output_stream_spec_.locked_intro_data = false;
-  output_stream_spec_.offset_enabled = false;
   output_stream_spec_.header = Packet();
   {
     absl::MutexLock lock(&stream_mutex_);

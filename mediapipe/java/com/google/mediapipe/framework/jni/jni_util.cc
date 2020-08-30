@@ -141,7 +141,7 @@ bool ThrowIfError(JNIEnv* env, mediapipe::Status status) {
 
 SerializedMessageIds::SerializedMessageIds(JNIEnv* env, jobject data) {
   jclass j_class = reinterpret_cast<jclass>(env->NewGlobalRef(env->FindClass(
-      "com/google/mediapipe/framework/PacketUtil$SerializedMessage")));
+      "com/google/mediapipe/framework/ProtoUtil$SerializedMessage")));
   type_name_id = env->GetFieldID(j_class, "typeName", "Ljava/lang/String;");
   value_id = env->GetFieldID(j_class, "value", "[B");
 }

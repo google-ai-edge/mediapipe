@@ -29,6 +29,7 @@ namespace mediapipe {
 // Streams:
 const char kBBoxTag[] = "BBOX";
 const char kImageTag[] = "IMAGE";
+const char kKeypointsTag[] = "KEYPOINTS";
 const char kFloatFeaturePrefixTag[] = "FLOAT_FEATURE_";
 const char kForwardFlowImageTag[] = "FORWARD_FLOW_ENCODED";
 
@@ -150,7 +151,6 @@ class UnpackMediaSequenceCalculator : public CalculatorBase {
              << "or" << kAudioDecoderOptions;
     }
 
-    // Optional streams.
     if (cc->Outputs().HasTag(kForwardFlowImageTag)) {
       cc->Outputs().Tag(kForwardFlowImageTag).Set<std::string>();
     }
@@ -244,6 +244,10 @@ class UnpackMediaSequenceCalculator : public CalculatorBase {
     const auto& sequence = cc->InputSidePackets()
                                .Tag(kSequenceExampleTag)
                                .Get<tensorflow::SequenceExample>();
+    if (cc->Outputs().HasTag(kKeypointsTag)) {
+      keypoint_names_ = absl::StrSplit(options.keypoint_names(), ',');
+      default_keypoint_location_ = options.default_keypoint_location();
+    }
     if (cc->OutputSidePackets().HasTag(kDataPath)) {
       std::string root_directory = "";
       if (cc->InputSidePackets().HasTag(kDatasetRootDirTag)) {
@@ -357,7 +361,6 @@ class UnpackMediaSequenceCalculator : public CalculatorBase {
       end_timestamp =
           timestamps_[last_timestamp_key_][current_timestamp_index_ + 1];
     }
-
     for (const auto& map_kv : timestamps_) {
       for (int i = 0; i < map_kv.second.size(); ++i) {
         if (map_kv.second[i] >= start_timestamp &&
@@ -454,6 +457,10 @@ class UnpackMediaSequenceCalculator : public CalculatorBase {
   int current_timestamp_index_;
   // Store the very first timestamp, so we output everything on the first frame.
   int64 first_timestamp_seen_;
+  // List of keypoint names.
+  std::vector<std::string> keypoint_names_;
+  // Default keypoint location when missing.
+  float default_keypoint_location_;
 };
 REGISTER_CALCULATOR(UnpackMediaSequenceCalculator);
 }  // namespace mediapipe

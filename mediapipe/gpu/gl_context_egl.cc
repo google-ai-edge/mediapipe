@@ -191,6 +191,18 @@ void GlContext::DestroyContext() {
         .IgnoreError();
   }
 
+#ifdef __ANDROID__
+  if (HasContext()) {
+    // Detach the current program to work around b/166322604.
+    if (eglMakeCurrent(display_, surface_, surface_, context_)) {
+      glUseProgram(0);
+    } else {
+      LOG(ERROR) << "eglMakeCurrent() returned error " << std::showbase
+                 << std::hex << eglGetError();
+    }
+  }
+#endif  // __ANDROID__
+
   // Destroy the context and surface.
   if (IsCurrent()) {
     if (!eglMakeCurrent(display_, EGL_NO_SURFACE, EGL_NO_SURFACE,

@@ -71,6 +71,16 @@ class TFLiteGPURunner {
   std::vector<BHWC> GetInputShapes() { return input_shapes_; }
   std::vector<BHWC> GetOutputShapes() { return output_shapes_; }
 
+#ifdef __ANDROID__
+  void SetSerializedBinaryCache(std::vector<uint8_t>&& cache) {
+    serialized_binary_cache_ = std::move(cache);
+  }
+
+  std::vector<uint8_t> GetSerializedBinaryCache() {
+    return cl_environment_->GetSerializedBinaryCache();
+  }
+#endif
+
  private:
   mediapipe::Status InitializeOpenGL(
       std::unique_ptr<InferenceBuilder>* builder);
@@ -82,6 +92,8 @@ class TFLiteGPURunner {
 
 #ifdef __ANDROID__
   std::unique_ptr<cl::InferenceEnvironment> cl_environment_;
+
+  std::vector<uint8_t> serialized_binary_cache_;
 #endif
 
   // graph_ is maintained temporarily and becomes invalid after runner_ is ready

@@ -93,7 +93,7 @@ REGISTER_CALCULATOR(LappedTensorBufferCalculator);
   cc->Inputs().Index(0).Set<tf::Tensor>(
       // tensorflow::Tensor stream.
   );
-  RET_CHECK_EQ(cc->Inputs().NumEntries(), 1)
+  RET_CHECK_EQ(cc->Outputs().NumEntries(), 1)
       << "Only one output stream is supported.";
 
   if (cc->InputSidePackets().HasTag(kBufferSize)) {

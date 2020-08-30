@@ -16,7 +16,9 @@
 
 #include <vector>
 
+#include "mediapipe/framework/formats/classification.pb.h"
 #include "mediapipe/framework/formats/landmark.pb.h"
+#include "mediapipe/framework/port/integral_types.h"
 #include "tensorflow/lite/interpreter.h"
 
 #if !defined(MEDIAPIPE_DISABLE_GL_COMPUTE)
@@ -45,6 +47,9 @@ REGISTER_CALCULATOR(ConcatenateFloatVectorCalculator);
 typedef ConcatenateVectorCalculator<int32> ConcatenateInt32VectorCalculator;
 REGISTER_CALCULATOR(ConcatenateInt32VectorCalculator);
 
+typedef ConcatenateVectorCalculator<uint64> ConcatenateUInt64VectorCalculator;
+REGISTER_CALCULATOR(ConcatenateUInt64VectorCalculator);
+
 // Example config:
 // node {
 //   calculator: "ConcatenateTfLiteTensorVectorCalculator"
@@ -59,6 +64,14 @@ REGISTER_CALCULATOR(ConcatenateTfLiteTensorVectorCalculator);
 typedef ConcatenateVectorCalculator<::mediapipe::NormalizedLandmark>
     ConcatenateLandmarkVectorCalculator;
 REGISTER_CALCULATOR(ConcatenateLandmarkVectorCalculator);
+
+typedef ConcatenateVectorCalculator<::mediapipe::NormalizedLandmarkList>
+    ConcatenateLandmarListVectorCalculator;
+REGISTER_CALCULATOR(ConcatenateLandmarListVectorCalculator);
+
+typedef ConcatenateVectorCalculator<mediapipe::ClassificationList>
+    ConcatenateClassificationListVectorCalculator;
+REGISTER_CALCULATOR(ConcatenateClassificationListVectorCalculator);
 
 #if !defined(MEDIAPIPE_DISABLE_GL_COMPUTE)
 typedef ConcatenateVectorCalculator<::tflite::gpu::gl::GlBuffer>

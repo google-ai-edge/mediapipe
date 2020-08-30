@@ -29,6 +29,7 @@ message ConstantSidePacketCalculatorOptions {
       float float_value = 2;
       bool bool_value = 3;
       string string_value = 4;
+      uint64 uint64_value = 5;
     }
   }
 

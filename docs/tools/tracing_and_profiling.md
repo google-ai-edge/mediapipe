@@ -144,9 +144,12 @@ we record ten intervals of half a second each. This can be overridden by adding
     ```bash
     profiler_config {
       trace_enabled: true
-      trace_log_path: "/sdcard/profiles"
+      trace_log_path: "/sdcard/profiles/"
     }
     ```
+
+    Note: The forward slash at the end of the `trace_log_path` is necessary for
+    indicating that `profiles` is a directory (that *should* exist).
 
 *   Download the trace files from the device.
 

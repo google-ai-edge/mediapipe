@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-licenses(["notice"])  # Apache 2.0
+licenses(["notice"])
 
 # MediaPipe Android framework.
 
@@ -79,7 +79,7 @@ android_library(
             "AssetCache.java",
             "AssetCacheDbHelper.java",
             "MediaPipeRunner.java",
-            "PacketUtil.java",
+            "ProtoUtil.java",
             "TypeNameRegistry.java",
             "TypeNameRegistryLite.java",
             "TypeNameRegistryFull.java",
@@ -103,7 +103,7 @@ android_library(
 android_library(
     name = "framework_proto_lite",
     srcs = [
-        "PacketUtil.java",
+        "ProtoUtil.java",
         "TypeNameRegistry.java",
         "TypeNameRegistryLite.java",
     ],

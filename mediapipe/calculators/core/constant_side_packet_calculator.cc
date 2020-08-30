@@ -18,6 +18,7 @@
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/collection_item_id.h"
 #include "mediapipe/framework/port/canonical_errors.h"
+#include "mediapipe/framework/port/integral_types.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status.h"
 
@@ -71,6 +72,8 @@ class ConstantSidePacketCalculator : public CalculatorBase {
         packet.Set<bool>();
       } else if (packet_options.has_string_value()) {
         packet.Set<std::string>();
+      } else if (packet_options.has_uint64_value()) {
+        packet.Set<uint64>();
       } else {
         return ::mediapipe::InvalidArgumentError(
             "None of supported values were specified in options.");
@@ -95,6 +98,8 @@ class ConstantSidePacketCalculator : public CalculatorBase {
         packet.Set(MakePacket<bool>(packet_options.bool_value()));
       } else if (packet_options.has_string_value()) {
         packet.Set(MakePacket<std::string>(packet_options.string_value()));
+      } else if (packet_options.has_uint64_value()) {
+        packet.Set(MakePacket<uint64>(packet_options.uint64_value()));
       } else {
         return ::mediapipe::InvalidArgumentError(
             "None of supported values were specified in options.");

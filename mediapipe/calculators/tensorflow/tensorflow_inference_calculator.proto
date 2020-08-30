@@ -76,4 +76,13 @@ message TensorFlowInferenceCalculatorOptions {
   // only works in the local process, not "globally" across multiple processes
   // or replicas (if any). Default to 0, i.e. no limit.
   optional int32 max_concurrent_session_runs = 6 [default = 0];
+
+  // If turned on, the Calculator expects a vector of batched packages as input.
+  // This will make sure that you can turn on max_in_flight for batch_size
+  // greater than 1. Otherwise it results in problems of none-monotonically
+  // increasing timestamps.
+  // Use BatchSequentialCalculator to create the batches. The batch_size
+  // should agree for both calculators. All the data in a batch is processed
+  // together. The BatchSequentialCalculator can't run with max_in_flight.
+  optional bool batched_input = 7;
 }

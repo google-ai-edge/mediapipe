@@ -128,7 +128,7 @@ node {
   output_stream: "FLAG:hand_presence"
   node_options: {
     [type.googleapis.com/mediapipe.ThresholdingCalculatorOptions] {
-      threshold: 0.1
+      threshold: 0.5
     }
   }
 }
@@ -199,18 +199,14 @@ node {
   }
 }
 
-# Converts hand landmarks to a detection that tightly encloses all landmarks.
+# Converts the hand landmarks into a rectangle (normalized by image size)
+# that encloses the hand. The calculator uses a subset of all hand landmarks
+# extracted from SplitNormalizedLandmarkListCalculator above to
+# calculate the bounding box and the rotation of the output rectangle. Please
+# see the comments in the calculator for more detail.
 node {
-  calculator: "LandmarksToDetectionCalculator"
+  calculator: "HandLandmarksToRectCalculator"
   input_stream: "NORM_LANDMARKS:partial_landmarks"
-  output_stream: "DETECTION:hand_detection"
-}
-
-# Converts the hand detection into a rectangle (normalized by image size)
-# that encloses the hand.
-node {
-  calculator: "HandDetectionsToRectsCalculator"
-  input_stream: "DETECTION:hand_detection"
   input_stream: "IMAGE_SIZE:image_size"
   output_stream: "NORM_RECT:hand_rect_from_landmarks"
 }
@@ -225,8 +221,8 @@ node {
   output_stream: "hand_rect_for_next_frame"
   node_options: {
     [type.googleapis.com/mediapipe.RectTransformationCalculatorOptions] {
-      scale_x: 2.1
-      scale_y: 2.1
+      scale_x: 2.0
+      scale_y: 2.0
       shift_y: -0.1
       square_long: true
     }

@@ -80,7 +80,7 @@ public class MainActivity extends AppCompatActivity {
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    setContentView(R.layout.activity_main);
+    setContentView(getContentViewLayoutResId());
 
     try {
       applicationInfo =
@@ -110,6 +110,12 @@ public class MainActivity extends AppCompatActivity {
             applicationInfo.metaData.getBoolean("flipFramesVertically", FLIP_FRAMES_VERTICALLY));
 
     PermissionHelper.checkAndRequestCameraPermissions(this);
+  }
+
+  // Used to obtain the content view for this application. If you are extending this class, and
+  // have a custom layout, override this method and return the custom layout.
+  protected int getContentViewLayoutResId() {
+    return R.layout.activity_main;
   }
 
   @Override

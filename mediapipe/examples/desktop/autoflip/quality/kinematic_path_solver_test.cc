@@ -85,7 +85,8 @@ TEST(KinematicPathSolverTest, PassEnoughMotionLargeImg) {
   KinematicOptions options;
   // Set min motion to 1deg
   options.set_min_motion_to_reframe(1.0);
-  options.set_update_rate(1);
+  options.set_update_rate_seconds(.0000001);
+  options.set_max_update_rate(1.0);
   options.set_max_velocity(1000);
   // Set degrees / pixel to 16.6
   KinematicPathSolver solver(options, 0, 1000, 1000.0 / kWidthFieldOfView);
@@ -102,7 +103,8 @@ TEST(KinematicPathSolverTest, PassEnoughMotionSmallImg) {
   KinematicOptions options;
   // Set min motion to 2deg
   options.set_min_motion_to_reframe(1.0);
-  options.set_update_rate(1);
+  options.set_update_rate_seconds(.0000001);
+  options.set_max_update_rate(1.0);
   options.set_max_velocity(18);
   // Set degrees / pixel to 8.3
   KinematicPathSolver solver(options, 0, 500, 500.0 / kWidthFieldOfView);
@@ -132,7 +134,8 @@ TEST(KinematicPathSolverTest, PassReframeWindow) {
   KinematicOptions options;
   // Set min motion to 1deg
   options.set_min_motion_to_reframe(1.0);
-  options.set_update_rate(1);
+  options.set_update_rate_seconds(.0000001);
+  options.set_max_update_rate(1.0);
   options.set_max_velocity(1000);
   // Set reframe window size to .75 for test.
   options.set_reframe_window(0.75);
@@ -147,10 +150,41 @@ TEST(KinematicPathSolverTest, PassReframeWindow) {
   EXPECT_EQ(state, 507);
 }
 
+TEST(KinematicPathSolverTest, PassUpdateRate30FPS) {
+  KinematicOptions options;
+  options.set_min_motion_to_reframe(1.0);
+  options.set_update_rate_seconds(.25);
+  options.set_max_update_rate(0.8);
+  options.set_max_velocity(18);
+  KinematicPathSolver solver(options, 0, 1000, 1000.0 / kWidthFieldOfView);
+  int state;
+  MP_ASSERT_OK(solver.AddObservation(500, kMicroSecInSec * 0));
+  MP_ASSERT_OK(solver.AddObservation(520, kMicroSecInSec * 1 / 30));
+  MP_ASSERT_OK(solver.GetState(&state));
+  // (0.033 / .25) * 20 =
+  EXPECT_EQ(state, 503);
+}
+
+TEST(KinematicPathSolverTest, PassUpdateRate10FPS) {
+  KinematicOptions options;
+  options.set_min_motion_to_reframe(1.0);
+  options.set_update_rate_seconds(.25);
+  options.set_max_update_rate(0.8);
+  options.set_max_velocity(18);
+  KinematicPathSolver solver(options, 0, 1000, 1000.0 / kWidthFieldOfView);
+  int state;
+  MP_ASSERT_OK(solver.AddObservation(500, kMicroSecInSec * 0));
+  MP_ASSERT_OK(solver.AddObservation(520, kMicroSecInSec * 1 / 10));
+  MP_ASSERT_OK(solver.GetState(&state));
+  // (0.1 / .25) * 20 =
+  EXPECT_EQ(state, 508);
+}
+
 TEST(KinematicPathSolverTest, PassUpdateRate) {
   KinematicOptions options;
   options.set_min_motion_to_reframe(1.0);
-  options.set_update_rate(0.25);
+  options.set_update_rate_seconds(4);
+  options.set_max_update_rate(1.0);
   options.set_max_velocity(18);
   KinematicPathSolver solver(options, 0, 1000, 1000.0 / kWidthFieldOfView);
   int state;

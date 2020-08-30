@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-licenses(["notice"])  # Apache 2.0
+licenses(["notice"])
 
 package(
     default_visibility = ["//visibility:public"],
@@ -131,8 +131,8 @@ cc_library(
 
 cc_library(
     name = "jni_util",
-    srcs = (["jni_util.cc"]),
-    hdrs = (["jni_util.h"]),
+    srcs = ["jni_util.cc"],
+    hdrs = ["jni_util.h"],
     deps = [
         ":class_registry",
         "@com_google_absl//absl/synchronization",
@@ -148,8 +148,8 @@ cc_library(
 
 cc_library(
     name = "class_registry",
-    srcs = (["class_registry.cc"]),
-    hdrs = (["class_registry.h"]),
+    srcs = ["class_registry.cc"],
+    hdrs = ["class_registry.h"],
     deps = [
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
@@ -164,8 +164,8 @@ cc_library(
 
 cc_library(
     name = "register_natives",
-    srcs = (["register_natives.cc"]),
-    hdrs = (["register_natives.h"]),
+    srcs = ["register_natives.cc"],
+    hdrs = ["register_natives.h"],
     deps = [
         ":class_registry",
         ":mediapipe_framework_jni",

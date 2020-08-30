@@ -343,6 +343,7 @@ GlContext::~GlContext() {
 #error This file must be built with ARC.
 #endif
 #endif  // __OBJC__
+
   if (thread_) {
     auto status = thread_->Run([this] {
       if (profiling_helper_) {
@@ -350,9 +351,8 @@ GlContext::~GlContext() {
       }
       return ExitContext(nullptr);
     });
-    if (!status.ok()) {
-      LOG(ERROR) << "Failed to deactivate context on thread: " << status;
-    }
+    LOG_IF(ERROR, !status.ok())
+        << "Failed to deactivate context on thread: " << status;
     if (thread_->IsCurrentThread()) {
       thread_.release()->SelfDestruct();
     }
@@ -368,40 +368,38 @@ void GlContext::SetProfilingContext(
   }
 }
 
+::mediapipe::Status GlContext::SwitchContextAndRun(GlStatusFunction gl_func) {
+  ContextBinding saved_context;
+  MP_RETURN_IF_ERROR(EnterContext(&saved_context)) << " (entering GL context)";
+  auto status = gl_func();
+  LogUncheckedGlErrors(CheckForGlErrors());
+  MP_RETURN_IF_ERROR(ExitContext(&saved_context)) << " (exiting GL context)";
+  return status;
+}
+
 ::mediapipe::Status GlContext::Run(GlStatusFunction gl_func, int node_id,
                                    Timestamp input_timestamp) {
   ::mediapipe::Status status;
-  if (thread_) {
-    bool had_gl_errors = false;
-    status = thread_->Run(
-        [this, gl_func, node_id, &input_timestamp, &had_gl_errors] {
-          if (profiling_helper_) {
-            profiling_helper_->MarkTimestamp(node_id, input_timestamp,
-                                             /*is_finish=*/false);
-          }
-          auto status = gl_func();
-          if (profiling_helper_) {
-            profiling_helper_->MarkTimestamp(node_id, input_timestamp,
-                                             /*is_finish=*/true);
-          }
-          had_gl_errors = CheckForGlErrors();
-          return status;
-        });
-    LogUncheckedGlErrors(had_gl_errors);
-  } else {
-    ContextBinding saved_context;
-    MP_RETURN_IF_ERROR(EnterContext(&saved_context));
-    if (profiling_helper_) {
+  if (profiling_helper_) {
+    gl_func = [=] {
       profiling_helper_->MarkTimestamp(node_id, input_timestamp,
                                        /*is_finish=*/false);
-    }
-    status = gl_func();
-    if (profiling_helper_) {
+      auto status = gl_func();
       profiling_helper_->MarkTimestamp(node_id, input_timestamp,
                                        /*is_finish=*/true);
-    }
-    LogUncheckedGlErrors(CheckForGlErrors());
-    MP_RETURN_IF_ERROR(ExitContext(&saved_context));
+      return status;
+    };
+  }
+  if (thread_) {
+    bool had_gl_errors = false;
+    status = thread_->Run([this, gl_func, &had_gl_errors] {
+      auto status = gl_func();
+      had_gl_errors = CheckForGlErrors();
+      return status;
+    });
+    LogUncheckedGlErrors(had_gl_errors);
+  } else {
+    status = SwitchContextAndRun(gl_func);
   }
   return status;
 }
@@ -416,17 +414,12 @@ void GlContext::RunWithoutWaiting(GlVoidFunction gl_func) {
     });
   } else {
     // TODO: queue up task instead.
-    ContextBinding saved_context;
-    auto status = EnterContext(&saved_context);
+    auto status = SwitchContextAndRun([gl_func] {
+      gl_func();
+      return ::mediapipe::OkStatus();
+    });
     if (!status.ok()) {
-      LOG(ERROR) << "Failed to enter context: " << status;
-      return;
-    }
-    gl_func();
-    LogUncheckedGlErrors(CheckForGlErrors());
-    status = ExitContext(&saved_context);
-    if (!status.ok()) {
-      LOG(ERROR) << "Failed to exit context: " << status;
+      LOG(ERROR) << "Error in RunWithoutWaiting: " << status;
     }
   }
 }
@@ -589,7 +582,7 @@ class GlFenceSyncPoint : public GlSyncPoint {
 
 void GlMultiSyncPoint::Add(std::shared_ptr<GlSyncPoint> new_sync) {
   for (auto& sync : syncs_) {
-    if (&sync->GetContext() == &new_sync->GetContext()) {
+    if (sync->GetContext() == new_sync->GetContext()) {
       sync = std::move(new_sync);
       return;
     }

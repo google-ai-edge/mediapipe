@@ -11,6 +11,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+#include "mediapipe/calculators/util/landmarks_to_render_data_calculator.h"
 
 #include "absl/memory/memory.h"
 #include "absl/strings/str_cat.h"
@@ -33,8 +34,6 @@ constexpr char kRenderScaleTag[] = "RENDER_SCALE";
 constexpr char kRenderDataTag[] = "RENDER_DATA";
 constexpr char kLandmarkLabel[] = "KEYPOINT";
 constexpr int kMaxLandmarkThickness = 18;
-
-using ::mediapipe::RenderAnnotation_Point;
 
 inline void SetColor(RenderAnnotation* annotation, const Color& color) {
   annotation->mutable_color()->set_r(color.r());
@@ -161,45 +160,6 @@ RenderAnnotation* AddPointRenderData(const Color& landmark_color,
 }
 
 }  // namespace
-
-// A calculator that converts Landmark proto to RenderData proto for
-// visualization. The input should be LandmarkList proto. It is also possible
-// to specify the connections between landmarks.
-//
-// Example config:
-// node {
-//   calculator: "LandmarksToRenderDataCalculator"
-//   input_stream: "NORM_LANDMARKS:landmarks"
-//   output_stream: "RENDER_DATA:render_data"
-//   options {
-//     [LandmarksToRenderDataCalculatorOptions.ext] {
-//       landmark_connections: [0, 1, 1, 2]
-//       landmark_color { r: 0 g: 255 b: 0 }
-//       connection_color { r: 0 g: 255 b: 0 }
-//       thickness: 4.0
-//     }
-//   }
-// }
-class LandmarksToRenderDataCalculator : public CalculatorBase {
- public:
-  LandmarksToRenderDataCalculator() {}
-  ~LandmarksToRenderDataCalculator() override {}
-  LandmarksToRenderDataCalculator(const LandmarksToRenderDataCalculator&) =
-      delete;
-  LandmarksToRenderDataCalculator& operator=(
-      const LandmarksToRenderDataCalculator&) = delete;
-
-  static ::mediapipe::Status GetContract(CalculatorContract* cc);
-
-  ::mediapipe::Status Open(CalculatorContext* cc) override;
-
-  ::mediapipe::Status Process(CalculatorContext* cc) override;
-
- private:
-  LandmarksToRenderDataCalculatorOptions options_;
-  std::vector<int> landmark_connections_;
-};
-REGISTER_CALCULATOR(LandmarksToRenderDataCalculator);
 
 ::mediapipe::Status LandmarksToRenderDataCalculator::GetContract(
     CalculatorContract* cc) {
@@ -354,4 +314,5 @@ REGISTER_CALCULATOR(LandmarksToRenderDataCalculator);
   return ::mediapipe::OkStatus();
 }
 
+REGISTER_CALCULATOR(LandmarksToRenderDataCalculator);
 }  // namespace mediapipe

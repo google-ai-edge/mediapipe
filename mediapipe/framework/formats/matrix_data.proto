@@ -21,6 +21,9 @@ syntax = "proto2";
 
 package mediapipe;
 
+option java_package = "com.google.mediapipe.formats.proto";
+option java_outer_classname = "MatrixDataProto";
+
 // Proto for serializing Matrix data.
 // Data are stored in column-major order by default.
 message MatrixData {

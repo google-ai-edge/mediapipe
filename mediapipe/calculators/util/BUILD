@@ -14,7 +14,7 @@
 
 load("//mediapipe/framework/port:build_config.bzl", "mediapipe_cc_proto_library")
 
-licenses(["notice"])  # Apache 2.0
+licenses(["notice"])
 
 package(default_visibility = ["//visibility:public"])
 
@@ -783,6 +783,7 @@ mediapipe_cc_proto_library(
 cc_library(
     name = "landmarks_to_render_data_calculator",
     srcs = ["landmarks_to_render_data_calculator.cc"],
+    hdrs = ["landmarks_to_render_data_calculator.h"],
     visibility = ["//visibility:public"],
     deps = [
         ":landmarks_to_render_data_calculator_cc_proto",

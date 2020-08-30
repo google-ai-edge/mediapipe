@@ -5,7 +5,7 @@ package mediapipe.autoflip;
 message KinematicOptions {
   // Weighted update of new camera velocity (measurement) vs current state
   // (prediction).
-  optional double update_rate = 1 [default = 0.5];
+  optional double update_rate = 1 [default = 0.5, deprecated = true];
   // Max velocity (degrees per second) that the camera can move.
   optional double max_velocity = 2 [default = 18];
   // Min motion (in degrees) to react in pixels.
@@ -15,4 +15,9 @@ message KinematicOptions {
   // total reframe distance on average.  Value cannot exceed
   // min_motion_to_reframe value.
   optional float reframe_window = 4 [default = 0];
+  // Calculation of internal velocity state is:
+  // min((delta_time_s / update_rate_seconds), max_update_rate)
+  // where delta_time_s is the time since the last frame.
+  optional double update_rate_seconds = 5 [default = 0.20];
+  optional double max_update_rate = 6 [default = 0.8];
 }

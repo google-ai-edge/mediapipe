@@ -28,31 +28,33 @@ namespace python {
 
 namespace py = pybind11;
 
-// TODO: Implement the reference mode of image frame creation, which
-// takes a reference to the external data rather than copying it over.
-// A possible solution is to have a custom PixelDataDeleter:
-// The refcount of the numpy array will be increased when the image frame is
-// created by taking a reference to the external numpy array data. Then, the
-// custom PixelDataDeleter will decrease the refcount when the image frame gets
-// destroyed and let Python GC does its job.
 template <typename T>
 std::unique_ptr<ImageFrame> CreateImageFrame(
     mediapipe::ImageFormat::Format format,
-    const py::array_t<T, py::array::c_style>& data) {
+    const py::array_t<T, py::array::c_style>& data, bool copy = true) {
   int rows = data.shape()[0];
   int cols = data.shape()[1];
   int width_step = ImageFrame::NumberOfChannelsForFormat(format) *
                    ImageFrame::ByteDepthForFormat(format) * cols;
+  if (copy) {
+    auto image_frame = absl::make_unique<ImageFrame>(
+        format, /*width=*/cols, /*height=*/rows, width_step,
+        static_cast<uint8*>(data.request().ptr),
+        ImageFrame::PixelDataDeleter::kNone);
+    auto image_frame_copy = absl::make_unique<ImageFrame>();
+    // Set alignment_boundary to kGlDefaultAlignmentBoundary so that both
+    // GPU and CPU can process it.
+    image_frame_copy->CopyFrom(*image_frame,
+                               ImageFrame::kGlDefaultAlignmentBoundary);
+    return image_frame_copy;
+  }
+  PyObject* data_pyobject = data.ptr();
   auto image_frame = absl::make_unique<ImageFrame>(
       format, /*width=*/cols, /*height=*/rows, width_step,
       static_cast<uint8*>(data.request().ptr),
-      ImageFrame::PixelDataDeleter::kNone);
-  auto image_frame_copy = absl::make_unique<ImageFrame>();
-  // Set alignment_boundary to kGlDefaultAlignmentBoundary so that both
-  // GPU and CPU can process it.
-  image_frame_copy->CopyFrom(*image_frame,
-                             ImageFrame::kGlDefaultAlignmentBoundary);
-  return image_frame_copy;
+      /*deleter=*/[data_pyobject](uint8*) { Py_XDECREF(data_pyobject); });
+  Py_XINCREF(data_pyobject);
+  return image_frame;
 }
 
 }  // namespace python

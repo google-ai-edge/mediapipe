@@ -31,7 +31,7 @@ import java.util.Map;
 public class MainActivity extends com.google.mediapipe.apps.basic.MainActivity {
   private static final String TAG = "MainActivity";
 
-  private static final String OBJ_TEXTURE = "texture.bmp";
+  private static final String OBJ_TEXTURE = "texture.jpg";
   private static final String OBJ_FILE = "model.obj.uuu";
   private static final String BOX_TEXTURE = "classic_colors.png";
   private static final String BOX_FILE = "box.obj.uuu";

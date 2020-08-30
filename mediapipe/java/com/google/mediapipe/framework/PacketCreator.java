@@ -14,7 +14,7 @@
 
 package com.google.mediapipe.framework;
 
-import com.google.mediapipe.framework.PacketUtil.SerializedMessage;
+import com.google.mediapipe.framework.ProtoUtil.SerializedMessage;
 import com.google.protobuf.MessageLite;
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
@@ -208,7 +208,7 @@ public class PacketCreator {
   }
 
   public Packet createFloat32Vector(float[] data) {
-    throw new UnsupportedOperationException("Not implemented yet");
+    return Packet.create(nativeCreateFloat32Vector(mediapipeGraph.getNativeHandle(), data));
   }
 
   public Packet createFloat64Vector(double[] data) {
@@ -266,7 +266,7 @@ public class PacketCreator {
 
   /** Creates a {@link Packet} containing a protobuf MessageLite. */
   public Packet createProto(MessageLite message) {
-    SerializedMessage serialized = PacketUtil.pack(message);
+    SerializedMessage serialized = ProtoUtil.pack(message);
     return Packet.create(
         nativeCreateProto(mediapipeGraph.getNativeHandle(), serialized));
   }
@@ -366,6 +366,9 @@ public class PacketCreator {
       long context, int name, int width, int height, TextureReleaseCallback releaseCallback);
   private native long nativeCreateInt32Array(long context, int[] data);
   private native long nativeCreateFloat32Array(long context, float[] data);
+
+  private native long nativeCreateFloat32Vector(long context, float[] data);
+
   private native long nativeCreateStringFromByteArray(long context, byte[] data);
   private native long nativeCreateProto(long context, SerializedMessage data);
 

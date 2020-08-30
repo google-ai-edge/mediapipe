@@ -15,7 +15,7 @@
 # Description:
 #  Port of various libraries and utilities.
 
-licenses(["notice"])  # Apache 2.0
+licenses(["notice"])
 
 package(
     default_visibility = ["//visibility:private"],
@@ -44,7 +44,10 @@ cc_library(
     name = "aligned_malloc_and_free",
     hdrs = ["aligned_malloc_and_free.h"],
     visibility = ["//visibility:public"],
-    deps = ["//mediapipe/framework/deps:aligned_malloc_and_free"],
+    deps = [
+        "//mediapipe/framework/deps:aligned_malloc_and_free",
+        "@com_google_absl//absl/base:core_headers",
+    ],
 )
 
 # This proto lib is used by any code that needs to do proto I/O and proto template parsing.

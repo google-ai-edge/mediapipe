@@ -16,7 +16,7 @@ package com.google.mediapipe.framework;
 
 import com.google.common.base.Preconditions;
 import com.google.common.flogger.FluentLogger;
-import com.google.mediapipe.framework.PacketUtil.SerializedMessage;
+import com.google.mediapipe.framework.ProtoUtil.SerializedMessage;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.MessageLite;
 import com.google.protobuf.Parser;
@@ -123,7 +123,7 @@ public final class PacketGetter {
       throws InvalidProtocolBufferException {
     SerializedMessage result = new SerializedMessage();
     nativeGetProto(packet.getNativeHandle(), result);
-    return PacketUtil.unpack(result, clazz);
+    return ProtoUtil.unpack(result, clazz);
   }
 
   public static short[] getInt16Vector(final Packet packet) {

@@ -16,7 +16,7 @@
 load("//mediapipe/framework/port:build_config.bzl", "mediapipe_cc_proto_library")
 load("@bazel_skylib//lib:selects.bzl", "selects")
 
-licenses(["notice"])  # Apache 2.0
+licenses(["notice"])
 
 package(default_visibility = ["//visibility:private"])
 
@@ -257,6 +257,7 @@ cc_library(
     }) + select({
         "//conditions:default": [],
         "//mediapipe:android": [
+            "//mediapipe/util/android/file/base",
             "@org_tensorflow//tensorflow/lite/delegates/nnapi:nnapi_delegate",
         ],
     }) + select({

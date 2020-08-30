@@ -30,11 +30,29 @@ namespace mediapipe {
 typedef ConcatenateVectorCalculator<int> TestConcatenateIntVectorCalculator;
 REGISTER_CALCULATOR(TestConcatenateIntVectorCalculator);
 
+void AddInputVector(int index, const std::vector<int>& input, int64 timestamp,
+                    CalculatorRunner* runner) {
+  runner->MutableInputs()->Index(index).packets.push_back(
+      MakePacket<std::vector<int>>(input).At(Timestamp(timestamp)));
+}
+
 void AddInputVectors(const std::vector<std::vector<int>>& inputs,
                      int64 timestamp, CalculatorRunner* runner) {
   for (int i = 0; i < inputs.size(); ++i) {
-    runner->MutableInputs()->Index(i).packets.push_back(
-        MakePacket<std::vector<int>>(inputs[i]).At(Timestamp(timestamp)));
+    AddInputVector(i, inputs[i], timestamp, runner);
+  }
+}
+
+void AddInputItem(int index, int input, int64 timestamp,
+                  CalculatorRunner* runner) {
+  runner->MutableInputs()->Index(index).packets.push_back(
+      MakePacket<int>(input).At(Timestamp(timestamp)));
+}
+
+void AddInputItems(const std::vector<int>& inputs, int64 timestamp,
+                   CalculatorRunner* runner) {
+  for (int i = 0; i < inputs.size(); ++i) {
+    AddInputItem(i, inputs[i], timestamp, runner);
   }
 }
 
@@ -129,6 +147,135 @@ TEST(TestConcatenateIntVectorCalculatorTest, OneEmptyStreamNoOutput) {
 
   const std::vector<Packet>& outputs = runner.Outputs().Index(0).packets;
   EXPECT_EQ(0, outputs.size());
+}
+
+TEST(TestConcatenateIntVectorCalculatorTest, ItemsOneTimestamp) {
+  CalculatorRunner runner("TestConcatenateIntVectorCalculator",
+                          /*options_string=*/"", /*num_inputs=*/3,
+                          /*num_outputs=*/1, /*num_side_packets=*/0);
+
+  std::vector<int> inputs = {1, 2, 3};
+  AddInputItems(inputs, /*timestamp=*/1, &runner);
+  MP_ASSERT_OK(runner.Run());
+
+  const std::vector<Packet>& outputs = runner.Outputs().Index(0).packets;
+  EXPECT_EQ(1, outputs.size());
+  EXPECT_EQ(Timestamp(1), outputs[0].Timestamp());
+  std::vector<int> expected_vector = {1, 2, 3};
+  EXPECT_EQ(expected_vector, outputs[0].Get<std::vector<int>>());
+}
+
+TEST(TestConcatenateIntVectorCalculatorTest, ItemsTwoInputsAtTwoTimestamps) {
+  CalculatorRunner runner("TestConcatenateIntVectorCalculator",
+                          /*options_string=*/"", /*num_inputs=*/3,
+                          /*num_outputs=*/1, /*num_side_packets=*/0);
+
+  {
+    std::vector<int> inputs = {1, 2, 3};
+    AddInputItems(inputs, /*timestamp=*/1, &runner);
+  }
+  {
+    std::vector<int> inputs = {4, 5, 6};
+    AddInputItems(inputs, /*timestamp=*/2, &runner);
+  }
+  MP_ASSERT_OK(runner.Run());
+
+  const std::vector<Packet>& outputs = runner.Outputs().Index(0).packets;
+  EXPECT_EQ(2, outputs.size());
+  {
+    EXPECT_EQ(3, outputs[0].Get<std::vector<int>>().size());
+    EXPECT_EQ(Timestamp(1), outputs[0].Timestamp());
+    std::vector<int> expected_vector = {1, 2, 3};
+    EXPECT_EQ(expected_vector, outputs[0].Get<std::vector<int>>());
+  }
+  {
+    EXPECT_EQ(3, outputs[1].Get<std::vector<int>>().size());
+    EXPECT_EQ(Timestamp(2), outputs[1].Timestamp());
+    std::vector<int> expected_vector = {4, 5, 6};
+    EXPECT_EQ(expected_vector, outputs[1].Get<std::vector<int>>());
+  }
+}
+
+TEST(TestConcatenateIntVectorCalculatorTest, ItemsOneEmptyStreamStillOutput) {
+  CalculatorRunner runner("TestConcatenateIntVectorCalculator",
+                          /*options_string=*/"", /*num_inputs=*/3,
+                          /*num_outputs=*/1, /*num_side_packets=*/0);
+
+  // No third input item.
+  std::vector<int> inputs = {1, 2};
+  AddInputItems(inputs, /*timestamp=*/1, &runner);
+  MP_ASSERT_OK(runner.Run());
+
+  const std::vector<Packet>& outputs = runner.Outputs().Index(0).packets;
+  EXPECT_EQ(1, outputs.size());
+  EXPECT_EQ(Timestamp(1), outputs[0].Timestamp());
+  std::vector<int> expected_vector = {1, 2};
+  EXPECT_EQ(expected_vector, outputs[0].Get<std::vector<int>>());
+}
+
+TEST(TestConcatenateIntVectorCalculatorTest, ItemsOneEmptyStreamNoOutput) {
+  CalculatorRunner runner("TestConcatenateIntVectorCalculator",
+                          /*options_string=*/
+                          "[mediapipe.ConcatenateVectorCalculatorOptions.ext]: "
+                          "{only_emit_if_all_present: true}",
+                          /*num_inputs=*/3,
+                          /*num_outputs=*/1, /*num_side_packets=*/0);
+
+  // No third input item.
+  std::vector<int> inputs = {1, 2};
+  AddInputItems(inputs, /*timestamp=*/1, &runner);
+  MP_ASSERT_OK(runner.Run());
+
+  const std::vector<Packet>& outputs = runner.Outputs().Index(0).packets;
+  EXPECT_EQ(0, outputs.size());
+}
+
+TEST(TestConcatenateIntVectorCalculatorTest, MixedVectorsAndItems) {
+  CalculatorRunner runner("TestConcatenateIntVectorCalculator",
+                          /*options_string=*/"", /*num_inputs=*/4,
+                          /*num_outputs=*/1, /*num_side_packets=*/0);
+
+  std::vector<int> vector_0 = {1, 2};
+  std::vector<int> vector_1 = {3, 4, 5};
+  int item_0 = 6;
+  int item_1 = 7;
+
+  AddInputVector(/*index*/ 0, vector_0, /*timestamp=*/1, &runner);
+  AddInputVector(/*index*/ 1, vector_1, /*timestamp=*/1, &runner);
+  AddInputItem(/*index*/ 2, item_0, /*timestamp=*/1, &runner);
+  AddInputItem(/*index*/ 3, item_1, /*timestamp=*/1, &runner);
+
+  MP_ASSERT_OK(runner.Run());
+
+  const std::vector<Packet>& outputs = runner.Outputs().Index(0).packets;
+  EXPECT_EQ(1, outputs.size());
+  EXPECT_EQ(Timestamp(1), outputs[0].Timestamp());
+  std::vector<int> expected_vector = {1, 2, 3, 4, 5, 6, 7};
+  EXPECT_EQ(expected_vector, outputs[0].Get<std::vector<int>>());
+}
+
+TEST(TestConcatenateIntVectorCalculatorTest, MixedVectorsAndItemsAnother) {
+  CalculatorRunner runner("TestConcatenateIntVectorCalculator",
+                          /*options_string=*/"", /*num_inputs=*/4,
+                          /*num_outputs=*/1, /*num_side_packets=*/0);
+
+  int item_0 = 1;
+  std::vector<int> vector_0 = {2, 3};
+  std::vector<int> vector_1 = {4, 5, 6};
+  int item_1 = 7;
+
+  AddInputItem(/*index*/ 0, item_0, /*timestamp=*/1, &runner);
+  AddInputVector(/*index*/ 1, vector_0, /*timestamp=*/1, &runner);
+  AddInputVector(/*index*/ 2, vector_1, /*timestamp=*/1, &runner);
+  AddInputItem(/*index*/ 3, item_1, /*timestamp=*/1, &runner);
+
+  MP_ASSERT_OK(runner.Run());
+
+  const std::vector<Packet>& outputs = runner.Outputs().Index(0).packets;
+  EXPECT_EQ(1, outputs.size());
+  EXPECT_EQ(Timestamp(1), outputs[0].Timestamp());
+  std::vector<int> expected_vector = {1, 2, 3, 4, 5, 6, 7};
+  EXPECT_EQ(expected_vector, outputs[0].Get<std::vector<int>>());
 }
 
 void AddInputVectors(const std::vector<std::vector<float>>& inputs,

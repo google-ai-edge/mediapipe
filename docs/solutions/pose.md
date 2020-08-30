@@ -142,10 +142,21 @@ MediaPipe examples.
 
 ### Python
 
-Please first see general instructions for
-[Python](../getting_started/building_examples.md#python) examples.
+MediaPipe Python package is available on
+[PyPI](https://pypi.org/project/mediapipe/), and can be installed simply by `pip
+install mediapipe` on Linux and macOS, as described below and in this
+[colab](https://mediapipe.page.link/mp-py-colab). If you do need to build the
+Python package from source, see
+[additional instructions](../getting_started/building_examples.md#python).
 
 ```bash
+# Activate a Python virtual environment.
+$ python3 -m venv mp_env && source mp_env/bin/activate
+
+# Install MediaPipe Python package
+(mp_env)$ pip install mediapipe
+
+# Run in Python interpreter
 (mp_env)$ python3
 >>> import mediapipe as mp
 >>> pose_tracker = mp.examples.UpperBodyPoseTracker()
@@ -153,6 +164,9 @@ Please first see general instructions for
 # For image input
 >>> pose_landmarks, _ = pose_tracker.run(input_file='/path/to/input/file', output_file='/path/to/output/file')
 >>> pose_landmarks, annotated_image = pose_tracker.run(input_file='/path/to/file')
+# To print out the pose landmarks, you can simply do "print(pose_landmarks)".
+# However, the data points can be more accessible with the following approach.
+>>> [print('x is', data_point.x, 'y is', data_point.y, 'z is', data_point.z, 'visibility is', data_point.visibility) for data_point in pose_landmarks.landmark]
 
 # For live camera input
 # (Press Esc within the output image window to stop the run or let it self terminate after 30 seconds.)
@@ -161,6 +175,8 @@ Please first see general instructions for
 # Close the tracker.
 >>> pose_tracker.close()
 ```
+
+Tip: Use command `deactivate` to exit the Python virtual environment.
 
 ### Web
 

@@ -12,6 +12,8 @@ namespace autoflip {
     current_velocity_deg_per_s_ = 0;
     RET_CHECK_GT(pixels_per_degree_, 0)
         << "pixels_per_degree must be larger than 0.";
+    RET_CHECK_GE(options_.update_rate_seconds(), 0)
+        << "update_rate_seconds must be greater than 0.";
     RET_CHECK_GE(options_.min_motion_to_reframe(), options_.reframe_window())
         << "Reframe window cannot exceed min_motion_to_reframe.";
     return ::mediapipe::OkStatus();
@@ -41,9 +43,10 @@ namespace autoflip {
 
   // Observed velocity and then weighted update of this velocity.
   double observed_velocity = delta_degs / delta_t;
-  double updated_velocity =
-      current_velocity_deg_per_s_ * (1 - options_.update_rate()) +
-      observed_velocity * options_.update_rate();
+  double update_rate = std::min(delta_t / options_.update_rate_seconds(),
+                                options_.max_update_rate());
+  double updated_velocity = current_velocity_deg_per_s_ * (1 - update_rate) +
+                            observed_velocity * update_rate;
   // Limited current velocity.
   current_velocity_deg_per_s_ =
       updated_velocity > 0 ? fmin(updated_velocity, options_.max_velocity())

@@ -17,7 +17,7 @@ load(
     "mediapipe_binary_graph",
 )
 
-licenses(["notice"])  # Apache 2.0
+licenses(["notice"])
 
 package(default_visibility = ["//visibility:public"])
 
@@ -30,6 +30,7 @@ cc_library(
         "//mediapipe/calculators/image:image_file_properties_calculator",
         "//mediapipe/calculators/image:opencv_encoded_image_to_image_frame_calculator",
         "//mediapipe/calculators/image:opencv_image_encoder_calculator",
+        "//mediapipe/graphs/iris_tracking/calculators:update_face_landmarks_calculator",
         "//mediapipe/graphs/iris_tracking/subgraphs:iris_and_depth_renderer_cpu",
         "//mediapipe/modules/face_landmark:face_landmark_front_cpu",
         "//mediapipe/modules/iris_landmark:iris_landmark_left_and_right_cpu",
@@ -42,6 +43,7 @@ cc_library(
         "//mediapipe/calculators/core:constant_side_packet_calculator",
         "//mediapipe/calculators/core:flow_limiter_calculator",
         "//mediapipe/calculators/core:split_vector_calculator",
+        "//mediapipe/graphs/iris_tracking/calculators:update_face_landmarks_calculator",
         "//mediapipe/graphs/iris_tracking/subgraphs:iris_renderer_cpu",
         "//mediapipe/modules/face_landmark:face_landmark_front_cpu",
         "//mediapipe/modules/iris_landmark:iris_landmark_left_and_right_cpu",
@@ -56,6 +58,7 @@ cc_library(
         "//mediapipe/calculators/core:split_vector_calculator",
         "//mediapipe/calculators/video:opencv_video_decoder_calculator",
         "//mediapipe/calculators/video:opencv_video_encoder_calculator",
+        "//mediapipe/graphs/iris_tracking/calculators:update_face_landmarks_calculator",
         "//mediapipe/graphs/iris_tracking/subgraphs:iris_renderer_cpu",
         "//mediapipe/modules/face_landmark:face_landmark_front_cpu",
         "//mediapipe/modules/iris_landmark:iris_landmark_left_and_right_cpu",
@@ -68,6 +71,7 @@ cc_library(
         "//mediapipe/calculators/core:constant_side_packet_calculator",
         "//mediapipe/calculators/core:flow_limiter_calculator",
         "//mediapipe/calculators/core:split_vector_calculator",
+        "//mediapipe/graphs/iris_tracking/calculators:update_face_landmarks_calculator",
         "//mediapipe/graphs/iris_tracking/subgraphs:iris_and_depth_renderer_gpu",
         "//mediapipe/modules/face_landmark:face_landmark_front_gpu",
         "//mediapipe/modules/iris_landmark:iris_landmark_left_and_right_gpu",

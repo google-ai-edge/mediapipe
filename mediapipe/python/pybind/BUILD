@@ -14,7 +14,7 @@
 
 load("@pybind11_bazel//:build_defs.bzl", "pybind_library")
 
-licenses(["notice"])  # Apache 2.0
+licenses(["notice"])
 
 package(default_visibility = ["//mediapipe/python:__subpackages__"])
 

@@ -19,16 +19,22 @@
 #include <unordered_set>
 #include <vector>
 
+#include "absl/base/thread_annotations.h"
+#include "absl/memory/memory.h"
 #include "absl/strings/str_split.h"
 #include "absl/synchronization/mutex.h"
 #include "mediapipe/calculators/tensorflow/tensorflow_inference_calculator.pb.h"
 #include "mediapipe/calculators/tensorflow/tensorflow_session.h"
+#include "mediapipe/framework/calculator_context.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/deps/clock.h"
 #include "mediapipe/framework/deps/monotonic_clock.h"
+#include "mediapipe/framework/packet.h"
+#include "mediapipe/framework/port/map_util.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/port/status_macros.h"
+#include "mediapipe/framework/timestamp.h"
 #include "mediapipe/framework/tool/status_util.h"
 #include "tensorflow/core/framework/tensor.h"
 #include "tensorflow/core/framework/tensor_shape.h"
@@ -77,6 +83,17 @@ class SimpleSemaphore {
   absl::Mutex mutex_;
   absl::CondVar cond_;
 };
+
+class InferenceState {
+ public:
+  InferenceState() : input_tensor_batches_(), batch_timestamps_() {}
+  // A mapping between stream tags and the tensors we are collecting as a
+  // batch.
+  std::map<std::string, std::vector<tf::Tensor>> input_tensor_batches_;
+  // The timestamps that go into a batch.
+  std::vector<Timestamp> batch_timestamps_;
+};
+
 }  // namespace
 
 // This calculator performs inference on a trained TensorFlow model.
@@ -218,11 +235,16 @@ class TensorFlowInferenceCalculator : public CalculatorBase {
   }
 
   static ::mediapipe::Status GetContract(CalculatorContract* cc) {
+    const auto& options = cc->Options<TensorFlowInferenceCalculatorOptions>();
     RET_CHECK(!cc->Inputs().GetTags().empty());
     for (const std::string& tag : cc->Inputs().GetTags()) {
       // The tensorflow::Tensor with the tag equal to the graph node. May
       // have a TimeSeriesHeader if all present TimeSeriesHeaders match.
-      cc->Inputs().Tag(tag).Set<tf::Tensor>();
+      if (!options.batched_input()) {
+        cc->Inputs().Tag(tag).Set<tf::Tensor>();
+      } else {
+        cc->Inputs().Tag(tag).Set<std::vector<mediapipe::Packet>>();
+      }
     }
     RET_CHECK(!cc->Outputs().GetTags().empty());
     for (const std::string& tag : cc->Outputs().GetTags()) {
@@ -240,6 +262,22 @@ class TensorFlowInferenceCalculator : public CalculatorBase {
           .Set<std::unique_ptr<std::map<std::string, tf::Tensor>>>();
     }
     return ::mediapipe::OkStatus();
+  }
+
+  std::unique_ptr<InferenceState> CreateInferenceState(CalculatorContext* cc)
+      ABSL_EXCLUSIVE_LOCKS_REQUIRED(mutex_) {
+    std::unique_ptr<InferenceState> inference_state =
+        absl::make_unique<InferenceState>();
+    if (cc->InputSidePackets().HasTag("RECURRENT_INIT_TENSORS") &&
+        !cc->InputSidePackets().Tag("RECURRENT_INIT_TENSORS").IsEmpty()) {
+      std::map<std::string, tf::Tensor>* init_tensor_map;
+      init_tensor_map = GetFromUniquePtr<std::map<std::string, tf::Tensor>>(
+          cc->InputSidePackets().Tag("RECURRENT_INIT_TENSORS"));
+      for (const auto& p : *init_tensor_map) {
+        inference_state->input_tensor_batches_[p.first].emplace_back(p.second);
+      }
+    }
+    return inference_state;
   }
 
   ::mediapipe::Status Open(CalculatorContext* cc) override {
@@ -275,15 +313,6 @@ class TensorFlowInferenceCalculator : public CalculatorBase {
       recurrent_feed_tags_.insert(tags[0]);
       recurrent_fetch_tags_to_feed_tags_[tags[1]] = tags[0];
     }
-    if (cc->InputSidePackets().HasTag("RECURRENT_INIT_TENSORS") &&
-        !cc->InputSidePackets().Tag("RECURRENT_INIT_TENSORS").IsEmpty()) {
-      std::map<std::string, tf::Tensor>* init_tensor_map;
-      init_tensor_map = GetFromUniquePtr<std::map<std::string, tf::Tensor>>(
-          cc->InputSidePackets().Tag("RECURRENT_INIT_TENSORS"));
-      for (const auto& p : *init_tensor_map) {
-        input_tensor_batches_[p.first].emplace_back(p.second);
-      }
-    }
 
     // Check that all tags are present in this signature bound to tensors.
     for (const std::string& tag : cc->Inputs().GetTags()) {
@@ -297,9 +326,15 @@ class TensorFlowInferenceCalculator : public CalculatorBase {
           << options_.signature_name();
     }
 
-    if (options_.batch_size() == 1) {
+    {
+      absl::WriterMutexLock l(&mutex_);
+      inference_state_ = std::unique_ptr<InferenceState>();
+    }
+
+    if (options_.batch_size() == 1 || options_.batched_input()) {
       cc->SetOffset(0);
     }
+
     return ::mediapipe::OkStatus();
   }
 
@@ -313,6 +348,24 @@ class TensorFlowInferenceCalculator : public CalculatorBase {
           << "Could not add 0th dimension to tensor without changing its shape."
           << " Current shape: " << input_tensor->shape().DebugString();
     }
+    return ::mediapipe::OkStatus();
+  }
+
+  ::mediapipe::Status AggregateTensorPacket(
+      const std::string& tag_name, const Packet& packet,
+      std::map<Timestamp, std::map<std::string, tf::Tensor>>*
+          input_tensors_by_tag_by_timestamp,
+      InferenceState* inference_state) ABSL_EXCLUSIVE_LOCKS_REQUIRED(mutex_) {
+    tf::Tensor input_tensor(packet.Get<tf::Tensor>());
+    RET_CHECK_OK(AddBatchDimension(&input_tensor));
+    if (::mediapipe::ContainsKey(recurrent_feed_tags_, tag_name)) {
+      // If we receive an input on a recurrent tag, override the state.
+      // It's OK to override the global state because there is just one
+      // input stream allowed for recurrent tensors.
+      inference_state_->input_tensor_batches_[tag_name].clear();
+    }
+    (*input_tensors_by_tag_by_timestamp)[packet.Timestamp()].insert(
+        std::make_pair(tag_name, input_tensor));
     return ::mediapipe::OkStatus();
   }
 
@@ -331,48 +384,85 @@ class TensorFlowInferenceCalculator : public CalculatorBase {
   }
 
   ::mediapipe::Status Process(CalculatorContext* cc) override {
-    std::map<std::string, tf::Tensor> input_tensors_by_tag;
-    for (const std::string& tag_as_node_name : cc->Inputs().GetTags()) {
-      if (cc->Inputs().Tag(tag_as_node_name).IsEmpty()) {
-        // Recurrent tensors can be empty.
-        if (!::mediapipe::ContainsKey(recurrent_feed_tags_, tag_as_node_name)) {
-          if (options_.skip_on_missing_features()) {
-            return ::mediapipe::OkStatus();
-          } else {
-            return ::mediapipe::InvalidArgumentError(absl::StrCat(
-                "Tag ", tag_as_node_name,
-                " not present at timestamp: ", cc->InputTimestamp().Value()));
+    std::unique_ptr<InferenceState> inference_state_to_process;
+    {
+      absl::WriterMutexLock l(&mutex_);
+      if (inference_state_ == nullptr) {
+        inference_state_ = CreateInferenceState(cc);
+      }
+      std::map<Timestamp, std::map<std::string, tf::Tensor>>
+          input_tensors_by_tag_by_timestamp;
+      for (const std::string& tag_as_node_name : cc->Inputs().GetTags()) {
+        if (cc->Inputs().Tag(tag_as_node_name).IsEmpty()) {
+          // Recurrent tensors can be empty.
+          if (!::mediapipe::ContainsKey(recurrent_feed_tags_,
+                                        tag_as_node_name)) {
+            if (options_.skip_on_missing_features()) {
+              return ::mediapipe::OkStatus();
+            } else {
+              return ::mediapipe::InvalidArgumentError(absl::StrCat(
+                  "Tag ", tag_as_node_name,
+                  " not present at timestamp: ", cc->InputTimestamp().Value()));
+            }
           }
+        } else if (options_.batched_input()) {
+          const auto& tensor_packets =
+              cc->Inputs().Tag(tag_as_node_name).Get<std::vector<Packet>>();
+          if (tensor_packets.size() > options_.batch_size()) {
+            return ::mediapipe::InvalidArgumentError(absl::StrCat(
+                "Batch for tag ", tag_as_node_name,
+                " has more packets than batch capacity. batch_size: ",
+                options_.batch_size(), " packets: ", tensor_packets.size()));
+          }
+          for (const auto& packet : tensor_packets) {
+            RET_CHECK_OK(AggregateTensorPacket(
+                tag_as_node_name, packet, &input_tensors_by_tag_by_timestamp,
+                inference_state_.get()));
+          }
+        } else {
+          RET_CHECK_OK(AggregateTensorPacket(
+              tag_as_node_name, cc->Inputs().Tag(tag_as_node_name).Value(),
+              &input_tensors_by_tag_by_timestamp, inference_state_.get()));
         }
-      } else {
-        tf::Tensor input_tensor(
-            cc->Inputs().Tag(tag_as_node_name).Get<tf::Tensor>());
-        RET_CHECK_OK(AddBatchDimension(&input_tensor));
-        if (::mediapipe::ContainsKey(recurrent_feed_tags_, tag_as_node_name)) {
-          // If we receive an input on a recurrent tag, override the state.
-          // It's OK to override the global state because there is just one
-          // input stream allowed for recurrent tensors.
-          input_tensor_batches_[tag_as_node_name].clear();
+      }
+      for (const auto& timestamp_and_input_tensors_by_tag :
+           input_tensors_by_tag_by_timestamp) {
+        inference_state_->batch_timestamps_.emplace_back(
+            timestamp_and_input_tensors_by_tag.first);
+        for (const auto& input_tensor_and_tag :
+             timestamp_and_input_tensors_by_tag.second) {
+          inference_state_->input_tensor_batches_[input_tensor_and_tag.first]
+              .emplace_back(input_tensor_and_tag.second);
         }
-        input_tensors_by_tag.insert(
-            std::make_pair(tag_as_node_name, input_tensor));
+      }
+      if (inference_state_->batch_timestamps_.size() == options_.batch_size() ||
+          options_.batched_input()) {
+        inference_state_to_process = std::move(inference_state_);
+        inference_state_ = std::unique_ptr<InferenceState>();
       }
     }
-    batch_timestamps_.emplace_back(cc->InputTimestamp());
-    for (const auto& input_tensor_and_tag : input_tensors_by_tag) {
-      input_tensor_batches_[input_tensor_and_tag.first].emplace_back(
-          input_tensor_and_tag.second);
+
+    if (inference_state_to_process) {
+      MP_RETURN_IF_ERROR(
+          OutputBatch(cc, std::move(inference_state_to_process)));
     }
 
-    if (batch_timestamps_.size() == options_.batch_size()) {
-      MP_RETURN_IF_ERROR(OutputBatch(cc));
-    }
     return ::mediapipe::OkStatus();
   }
 
   ::mediapipe::Status Close(CalculatorContext* cc) override {
-    if (!batch_timestamps_.empty()) {
-      MP_RETURN_IF_ERROR(OutputBatch(cc));
+    std::unique_ptr<InferenceState> inference_state_to_process = nullptr;
+    {
+      absl::WriterMutexLock l(&mutex_);
+      if (cc->GraphStatus().ok() && inference_state_ != nullptr &&
+          !inference_state_->batch_timestamps_.empty()) {
+        inference_state_to_process = std::move(inference_state_);
+        inference_state_ = std::unique_ptr<InferenceState>();
+      }
+    }
+    if (inference_state_to_process) {
+      MP_RETURN_IF_ERROR(
+          OutputBatch(cc, std::move(inference_state_to_process)));
     }
     return ::mediapipe::OkStatus();
   }
@@ -385,10 +475,12 @@ class TensorFlowInferenceCalculator : public CalculatorBase {
   // memory buffer. Therefore, copies are cheap and should not cause the memory
   // buffer to fall out of scope. In contrast, concat is only used where
   // necessary.
-  ::mediapipe::Status OutputBatch(CalculatorContext* cc) {
+  ::mediapipe::Status OutputBatch(
+      CalculatorContext* cc, std::unique_ptr<InferenceState> inference_state) {
     const int64 start_time = absl::ToUnixMicros(clock_->TimeNow());
     std::vector<std::pair<mediapipe::ProtoString, tf::Tensor>> input_tensors;
-    for (auto& keyed_tensors : input_tensor_batches_) {
+
+    for (auto& keyed_tensors : inference_state->input_tensor_batches_) {
       if (options_.batch_size() == 1) {
         // Short circuit to avoid the cost of deep copying tensors in concat.
         if (!keyed_tensors.second.empty()) {
@@ -404,7 +496,8 @@ class TensorFlowInferenceCalculator : public CalculatorBase {
       } else {
         // Pad by replicating the first tens  or, then ignore the values.
         keyed_tensors.second.resize(options_.batch_size());
-        std::fill(keyed_tensors.second.begin() + batch_timestamps_.size(),
+        std::fill(keyed_tensors.second.begin() +
+                      inference_state->batch_timestamps_.size(),
                   keyed_tensors.second.end(), keyed_tensors.second[0]);
         tf::Tensor concated;
         const tf::Status concat_status =
@@ -414,7 +507,7 @@ class TensorFlowInferenceCalculator : public CalculatorBase {
                                    concated);
       }
     }
-    input_tensor_batches_.clear();
+    inference_state->input_tensor_batches_.clear();
     std::vector<mediapipe::ProtoString> output_tensor_names;
     std::vector<std::string> output_name_in_signature;
     for (const std::string& tag : cc->Outputs().GetTags()) {
@@ -466,9 +559,11 @@ class TensorFlowInferenceCalculator : public CalculatorBase {
       int pos = std::find(output_name_in_signature.begin(),
                           output_name_in_signature.end(), tag_pair.first) -
                 output_name_in_signature.begin();
-      input_tensor_batches_[tag_pair.second].emplace_back(outputs[pos]);
+      inference_state->input_tensor_batches_[tag_pair.second].emplace_back(
+          outputs[pos]);
     }
 
+    absl::WriterMutexLock l(&mutex_);
     // Set that we want to split on each index of the 0th dimension.
     std::vector<tf::int64> split_vector(options_.batch_size(), 1);
     for (int i = 0; i < output_tensor_names.size(); ++i) {
@@ -478,7 +573,8 @@ class TensorFlowInferenceCalculator : public CalculatorBase {
           RET_CHECK_OK(RemoveBatchDimension(&output_tensor));
           cc->Outputs()
               .Tag(output_name_in_signature[i])
-              .Add(new tf::Tensor(output_tensor), batch_timestamps_[0]);
+              .Add(new tf::Tensor(output_tensor),
+                   inference_state->batch_timestamps_[0]);
         }
       } else {
         std::vector<tf::Tensor> split_tensors;
@@ -486,22 +582,30 @@ class TensorFlowInferenceCalculator : public CalculatorBase {
             tf::tensor::Split(outputs[i], split_vector, &split_tensors);
         CHECK(split_status.ok()) << split_status.ToString();
         // Loop over timestamps so that we don't copy the padding.
-        for (int j = 0; j < batch_timestamps_.size(); ++j) {
+        for (int j = 0; j < inference_state->batch_timestamps_.size(); ++j) {
           tf::Tensor output_tensor(split_tensors[j]);
           RET_CHECK_OK(RemoveBatchDimension(&output_tensor));
           cc->Outputs()
               .Tag(output_name_in_signature[i])
-              .Add(new tf::Tensor(output_tensor), batch_timestamps_[j]);
+              .Add(new tf::Tensor(output_tensor),
+                   inference_state->batch_timestamps_[j]);
         }
       }
     }
+
     // Get end time and report.
     const int64 end_time = absl::ToUnixMicros(clock_->TimeNow());
     cc->GetCounter(kTotalUsecsCounterSuffix)
         ->IncrementBy(end_time - start_time);
     cc->GetCounter(kTotalProcessedTimestampsCounterSuffix)
-        ->IncrementBy(batch_timestamps_.size());
-    batch_timestamps_.clear();
+        ->IncrementBy(inference_state->batch_timestamps_.size());
+
+    // Make sure we hold on to the recursive state.
+    if (!options_.recurrent_tag_pair().empty()) {
+      inference_state_ = std::move(inference_state);
+      inference_state_->batch_timestamps_.clear();
+    }
+
     return ::mediapipe::OkStatus();
   }
 
@@ -514,11 +618,8 @@ class TensorFlowInferenceCalculator : public CalculatorBase {
   // A mapping between stream tags and the tensor names they are bound to.
   std::map<std::string, std::string> tag_to_tensor_map_;
 
-  // A mapping between stream tags and the tensors we are collecting as a batch.
-  std::map<std::string, std::vector<tf::Tensor>> input_tensor_batches_;
-
-  // The timestamps that go into a batch.
-  std::vector<Timestamp> batch_timestamps_;
+  absl::Mutex mutex_;
+  std::unique_ptr<InferenceState> inference_state_ ABSL_GUARDED_BY(mutex_);
 
   // The options for the calculator.
   TensorFlowInferenceCalculatorOptions options_;

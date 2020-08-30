@@ -347,6 +347,7 @@ JNIEXPORT jlong JNICALL PACKET_CREATOR_METHOD(nativeCreateGpuBuffer)(
   mediapipe::Packet packet = mediapipe::MakePacket<mediapipe::GpuBuffer>(
       mediapipe::GlTextureBuffer::Wrap(GL_TEXTURE_2D, name, width, height,
                                        mediapipe::GpuBufferFormat::kBGRA32,
+                                       gpu_resources->gl_context(),
                                        cc_callback));
   return CreatePacketWithContext(context, packet);
 }
@@ -372,6 +373,23 @@ JNIEXPORT jlong JNICALL PACKET_CREATOR_METHOD(nativeCreateFloat32Array)(
   // that this is an array - this way Holder will call delete[].
   mediapipe::Packet packet =
       mediapipe::Adopt(reinterpret_cast<float(*)[]>(floats));
+  return CreatePacketWithContext(context, packet);
+}
+
+JNIEXPORT jlong JNICALL PACKET_CREATOR_METHOD(nativeCreateFloat32Vector)(
+    JNIEnv* env, jobject thiz, jlong context, jfloatArray data) {
+  jsize count = env->GetArrayLength(data);
+  jfloat* data_ref = env->GetFloatArrayElements(data, nullptr);
+  // jfloat is a "machine-dependent native type" which represents a 32-bit
+  // float. C++ makes no guarantees about the size of floating point types, and
+  // some exotic architectures don't even have 32-bit floats (or even binary
+  // floats), but on all architectures we care about this is a float.
+  static_assert(std::is_same<float, jfloat>::value, "jfloat must be float");
+  std::unique_ptr<std::vector<float>> floats =
+      absl::make_unique<std::vector<float>>(data_ref, data_ref + count);
+
+  env->ReleaseFloatArrayElements(data, data_ref, JNI_ABORT);
+  mediapipe::Packet packet = mediapipe::Adopt(floats.release());
   return CreatePacketWithContext(context, packet);
 }
 

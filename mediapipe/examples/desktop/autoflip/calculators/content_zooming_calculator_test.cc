@@ -173,6 +173,7 @@ TEST(ContentZoomingCalculatorTest, PanConfig) {
   auto* options = config.mutable_options()->MutableExtension(
       ContentZoomingCalculatorOptions::ext);
   options->mutable_kinematic_options_pan()->set_min_motion_to_reframe(0.0);
+  options->mutable_kinematic_options_pan()->set_update_rate_seconds(2);
   options->mutable_kinematic_options_tilt()->set_min_motion_to_reframe(5.0);
   options->mutable_kinematic_options_zoom()->set_min_motion_to_reframe(5.0);
   auto runner = ::absl::make_unique<CalculatorRunner>(config);
@@ -191,6 +192,7 @@ TEST(ContentZoomingCalculatorTest, TiltConfig) {
       ContentZoomingCalculatorOptions::ext);
   options->mutable_kinematic_options_pan()->set_min_motion_to_reframe(5.0);
   options->mutable_kinematic_options_tilt()->set_min_motion_to_reframe(0.0);
+  options->mutable_kinematic_options_tilt()->set_update_rate_seconds(2);
   options->mutable_kinematic_options_zoom()->set_min_motion_to_reframe(5.0);
   auto runner = ::absl::make_unique<CalculatorRunner>(config);
   AddDetection(cv::Rect_<float>(.4, .5, .1, .1), 0, runner.get());
@@ -209,6 +211,7 @@ TEST(ContentZoomingCalculatorTest, ZoomConfig) {
   options->mutable_kinematic_options_pan()->set_min_motion_to_reframe(5.0);
   options->mutable_kinematic_options_tilt()->set_min_motion_to_reframe(5.0);
   options->mutable_kinematic_options_zoom()->set_min_motion_to_reframe(0.0);
+  options->mutable_kinematic_options_zoom()->set_update_rate_seconds(2);
   auto runner = ::absl::make_unique<CalculatorRunner>(config);
   AddDetection(cv::Rect_<float>(.4, .5, .1, .1), 0, runner.get());
   AddDetection(cv::Rect_<float>(.45, .55, .15, .15), 1000000, runner.get());
@@ -345,8 +348,13 @@ TEST(ContentZoomingCalculatorTest, ZoomTestPairSize) {
 }
 
 TEST(ContentZoomingCalculatorTest, ZoomTestNearOutsideBorder) {
-  auto runner = ::absl::make_unique<CalculatorRunner>(
-      ParseTextProtoOrDie<CalculatorGraphConfig::Node>(kConfigD));
+  auto config = ParseTextProtoOrDie<CalculatorGraphConfig::Node>(kConfigD);
+  auto* options = config.mutable_options()->MutableExtension(
+      ContentZoomingCalculatorOptions::ext);
+  options->mutable_kinematic_options_pan()->set_update_rate_seconds(2);
+  options->mutable_kinematic_options_tilt()->set_update_rate_seconds(2);
+  options->mutable_kinematic_options_zoom()->set_update_rate_seconds(2);
+  auto runner = ::absl::make_unique<CalculatorRunner>(config);
   AddDetection(cv::Rect_<float>(.95, .95, .05, .05), 0, runner.get());
   AddDetection(cv::Rect_<float>(.9, .9, .1, .1), 1000000, runner.get());
   MP_ASSERT_OK(runner->Run());
@@ -357,8 +365,13 @@ TEST(ContentZoomingCalculatorTest, ZoomTestNearOutsideBorder) {
 }
 
 TEST(ContentZoomingCalculatorTest, ZoomTestNearInsideBorder) {
-  auto runner = ::absl::make_unique<CalculatorRunner>(
-      ParseTextProtoOrDie<CalculatorGraphConfig::Node>(kConfigD));
+  auto config = ParseTextProtoOrDie<CalculatorGraphConfig::Node>(kConfigD);
+  auto* options = config.mutable_options()->MutableExtension(
+      ContentZoomingCalculatorOptions::ext);
+  options->mutable_kinematic_options_pan()->set_update_rate_seconds(2);
+  options->mutable_kinematic_options_tilt()->set_update_rate_seconds(2);
+  options->mutable_kinematic_options_zoom()->set_update_rate_seconds(2);
+  auto runner = ::absl::make_unique<CalculatorRunner>(config);
   AddDetection(cv::Rect_<float>(0, 0, .05, .05), 0, runner.get());
   AddDetection(cv::Rect_<float>(0, 0, .1, .1), 1000000, runner.get());
   MP_ASSERT_OK(runner->Run());

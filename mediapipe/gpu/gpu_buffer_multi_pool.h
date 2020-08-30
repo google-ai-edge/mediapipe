@@ -160,7 +160,8 @@ class GpuBufferMultiPool {
   SimplePool RequestPool(const BufferSpec& key);
   GpuBuffer GetBufferFromSimplePool(BufferSpec spec, const SimplePool& pool);
   GpuBuffer GetBufferWithoutPool(const BufferSpec& spec);
-  void Evict() ABSL_EXCLUSIVE_LOCKS_REQUIRED(mutex_);
+  void Evict(std::vector<SimplePool>* evicted)
+      ABSL_EXCLUSIVE_LOCKS_REQUIRED(mutex_);
 
   absl::Mutex mutex_;
   std::unordered_map<BufferSpec, Entry, BufferSpecHash> pools_
