@@ -56,4 +56,11 @@ message UnpackMediaSequenceCalculatorOptions {
   // the clip start and end times and outputs these for the
   // AudioDecoderCalculator to consume.
   optional AudioDecoderOptions base_audio_decoder_options = 9;
+
+  optional string keypoint_names = 10 [
+    default =
+        "NOSE,LEFT_EAR,RIGHT_EAR,LEFT_SHOULDER,RIGHT_SHOULDER,LEFT_FORE_PAW,RIGHT_FORE_PAW,LEFT_HIP,RIGHT_HIP,LEFT_HIND_PAW,RIGHT_HIND_PAW,ROOT_TAIL"
+  ];
+  // When the keypoint doesn't exists, output this default value.
+  optional float default_keypoint_location = 11 [default = -1.0];
 }

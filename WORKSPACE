@@ -362,13 +362,12 @@ http_archive(
 )
 
 #Tensorflow repo should always go after the other external dependencies.
-# 2020-05-11
-_TENSORFLOW_GIT_COMMIT = "7c09d15f9fcc14343343c247ebf5b8e0afe3e4aa"
-_TENSORFLOW_SHA256= "673d00cbd2676ae43df1993e0d28c10b5ffbe96d9e2ab29f88a77b43c0211299"
+# 2020-08-30
+_TENSORFLOW_GIT_COMMIT = "57b009e31e59bd1a7ae85ef8c0232ed86c9b71db"
+_TENSORFLOW_SHA256= "de7f5f06204e057383028c7e53f3b352cdf85b3a40981b1a770c9a415a792c0e"
 http_archive(
     name = "org_tensorflow",
     urls = [
-      "https://mirror.bazel.build/github.com/tensorflow/tensorflow/archive/%s.tar.gz" % _TENSORFLOW_GIT_COMMIT,
       "https://github.com/tensorflow/tensorflow/archive/%s.tar.gz" % _TENSORFLOW_GIT_COMMIT,
     ],
     patches = [

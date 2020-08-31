@@ -23,62 +23,15 @@ index b7c22ae77b..d0ba7b48b4 100644
        pct_samples.points.push_back(pct);
      }
    }
-diff --git a/tensorflow/lite/delegates/gpu/cl/api.cc b/tensorflow/lite/delegates/gpu/cl/api.cc
-index 09c82307a5..0318c1a447 100644
---- a/tensorflow/lite/delegates/gpu/cl/api.cc
-+++ b/tensorflow/lite/delegates/gpu/cl/api.cc
-@@ -352,10 +352,10 @@ class GlBufferHolder : public TensorTie {
- };
- 
- TensorObject TensorToObj(const Tensor& tensor) {
--  if (tensor.StorageType() == TensorStorageType::BUFFER) {
-+  if (tensor.GetStorageType() == TensorStorageType::BUFFER) {
-     return OpenClBuffer{tensor.GetMemoryPtr()};
-   }
--  if (tensor.StorageType() == TensorStorageType::IMAGE_BUFFER) {
-+  if (tensor.GetStorageType() == TensorStorageType::IMAGE_BUFFER) {
-     return OpenClBuffer{tensor.GetMemoryPtrForWriting()};
-   }
-   return OpenClTexture{tensor.GetMemoryPtr()};
-@@ -516,9 +516,9 @@ TensorObjectDef TensorToDef(const Tensor& tensor) {
-   def.dimensions.h = tensor.Height();
-   def.dimensions.w = tensor.Width();
-   def.dimensions.c = tensor.Channels();
--  def.object_def.data_layout = ToDataLayout(tensor.StorageType());
--  def.object_def.data_type = tensor.DataType();
--  def.object_def.object_type = ToObjectType(tensor.StorageType());
-+  def.object_def.data_layout = ToDataLayout(tensor.GetStorageType());
-+  def.object_def.data_type = tensor.GetDataType();
-+  def.object_def.object_type = ToObjectType(tensor.GetStorageType());
-   def.object_def.user_provided = false;
-   return def;
- }
-diff --git a/tensorflow/lite/delegates/gpu/cl/tensor.cc b/tensorflow/lite/delegates/gpu/cl/tensor.cc
-index 308e1b6920..9b613c63f7 100644
---- a/tensorflow/lite/delegates/gpu/cl/tensor.cc
-+++ b/tensorflow/lite/delegates/gpu/cl/tensor.cc
-@@ -29,7 +29,7 @@ namespace cl {
- namespace {
- 
- absl::Status CreateImageBufferFromBuffer(const CLContext& context,
--                                         cl_mem memory, enum DataType data_type,
-+                                         cl_mem memory, DataType data_type,
-                                          int width, cl_mem* result) {
-   cl_image_format format;
-   cl_image_desc desc;
-diff --git a/tensorflow/lite/delegates/gpu/cl/tensor.h b/tensorflow/lite/delegates/gpu/cl/tensor.h
-index a27c54a74e..39d3a04a47 100644
---- a/tensorflow/lite/delegates/gpu/cl/tensor.h
-+++ b/tensorflow/lite/delegates/gpu/cl/tensor.h
-@@ -75,8 +75,8 @@ class Tensor {
-   int4 GetWHSB() const { return int4(shape_.w, shape_.h, Slices(), shape_.b); }
-   int4 GetWHDS() const { return int4(shape_.w, shape_.h, shape_.d, Slices()); }
- 
--  enum DataType DataType() const { return descriptor_.data_type; }
--  TensorStorageType StorageType() const { return descriptor_.storage_type; }
-+  DataType GetDataType() const { return descriptor_.data_type; }
-+  TensorStorageType GetStorageType() const { return descriptor_.storage_type; }
- 
-   // for profiling and memory statistics
-   uint64_t GetMemorySizeInBytes() const;
-
+diff --git a/tensorflow/core/platform/test.h b/tensorflow/core/platform/test.h
+index ba50783765..5de5ea01f0 100644
+--- a/tensorflow/core/platform/test.h
++++ b/tensorflow/core/platform/test.h
+@@ -42,7 +42,6 @@ limitations under the License.
+ #if defined(PLATFORM_GOOGLE) || defined(PLATFORM_GOOGLE_ANDROID)
+ #include "testing/base/public/gmock.h"
+ #else
+-#include <gmock/gmock-generated-matchers.h>
+ #include <gmock/gmock-matchers.h>
+ #include <gmock/gmock-more-matchers.h>
+ #endif

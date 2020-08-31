@@ -51,7 +51,7 @@ namespace {
 void SetPreferredDevice(tf::GraphDef* graph_def, absl::string_view device_id) {
   for (auto& node : *graph_def->mutable_node()) {
     if (node.device().empty()) {
-      node.set_device(device_id);
+      node.set_device(std::string(device_id));
     }
   }
 }
