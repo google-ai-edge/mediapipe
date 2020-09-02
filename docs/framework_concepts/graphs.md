@@ -83,12 +83,12 @@ Below is an example of how to create a subgraph named `TwoPassThroughSubgraph`.
     output_stream: "out3"
 
     node {
-        calculator: "PassThroughculator"
+        calculator: "PassThroughCalculator"
         input_stream: "out1"
         output_stream: "out2"
     }
     node {
-        calculator: "PassThroughculator"
+        calculator: "PassThroughCalculator"
         input_stream: "out2"
         output_stream: "out3"
     }
