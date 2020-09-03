@@ -30,6 +30,7 @@
 #include "mediapipe/framework/port/status_matchers.h"  // NOLINT
 #include "mediapipe/framework/tool/validate_type.h"
 #include "tensorflow/lite/interpreter.h"
+#include "mediapipe/calculators/tflite/util.h"
 
 namespace mediapipe {
 namespace {
@@ -114,11 +115,11 @@ TEST_F(TfLiteConverterCalculatorTest, RandomMatrixColMajor) {
     EXPECT_EQ(1, output_packets.size());
 
     // Get and process results.
-    const std::vector<TfLiteTensor>& tensor_vec =
-        output_packets[0].Get<std::vector<TfLiteTensor>>();
+    const std::vector<TfLiteTensorContainer>& tensor_vec =
+        output_packets[0].Get<std::vector<TfLiteTensorContainer>>();
     EXPECT_EQ(1, tensor_vec.size());
 
-    const TfLiteTensor* tensor = &tensor_vec[0];
+    const TfLiteTensorr* tensor = &(tensor_vec[0].getTensor());
     EXPECT_EQ(kTfLiteFloat32, tensor->type);
 
     // Verify that the data is correct.
@@ -175,11 +176,11 @@ TEST_F(TfLiteConverterCalculatorTest, RandomMatrixRowMajor) {
     EXPECT_EQ(1, output_packets.size());
 
     // Get and process results.
-    const std::vector<TfLiteTensor>& tensor_vec =
-        output_packets[0].Get<std::vector<TfLiteTensor>>();
+    const std::vector<TfLiteTensorContainer>& tensor_vec =
+        output_packets[0].Get<std::vector<TfLiteTensorContainer>>();
     EXPECT_EQ(1, tensor_vec.size());
 
-    const TfLiteTensor* tensor = &tensor_vec[0];
+    const TfLiteTensor* tensor = &(tensor_vec[0].getTensor());
     EXPECT_EQ(kTfLiteFloat32, tensor->type);
 
     // Verify that the data is correct.

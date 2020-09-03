@@ -196,6 +196,12 @@ cc_test(
     ],
 )
 
+cc_library(
+    name = "util",
+    hdrs = ["util.h"],
+    alwayslink = 1,
+)
+
 selects.config_setting_group(
     name = "gpu_inference_disabled",
     match_any = [
@@ -222,6 +228,7 @@ cc_library(
     }),
     visibility = ["//visibility:public"],
     deps = [
+        ":util",
         ":tflite_inference_calculator_cc_proto",
         "@com_google_absl//absl/memory",
         "//mediapipe/framework:calculator_framework",
@@ -288,6 +295,7 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         "//mediapipe/util/tflite:config",
+        ":util",
         ":tflite_converter_calculator_cc_proto",
         "//mediapipe/util:resource_util",
         "//mediapipe/framework:calculator_framework",
@@ -407,6 +415,7 @@ cc_library(
     }),
     visibility = ["//visibility:public"],
     deps = [
+        ":util",
         "//mediapipe/util/tflite:config",
         ":tflite_tensors_to_detections_calculator_cc_proto",
         "//mediapipe/framework/formats:detection_cc_proto",

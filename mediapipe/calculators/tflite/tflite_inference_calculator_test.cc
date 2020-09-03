@@ -85,11 +85,11 @@ void DoSmokeTest(const std::string& graph_proto) {
   ASSERT_EQ(1, output_packets.size());
 
   // Get and process results.
-  const std::vector<TfLiteTensor>& result_vec =
-      output_packets[0].Get<std::vector<TfLiteTensor>>();
+  const std::vector<TfLiteTensorContainer>  & result_vec =
+      output_packets[0].Get<std::vector<TfLiteTensorContainer>>();
   ASSERT_EQ(1, result_vec.size());
 
-  const TfLiteTensor* result = &result_vec[0];
+  const TfLiteTensor* result = &(result_vec[0].getTensor());
   float* result_buffer = result->data.f;
   ASSERT_NE(result_buffer, nullptr);
   for (int i = 0; i < width * height * channels - 1; i++) {

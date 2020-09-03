@@ -18,6 +18,7 @@
 #include "absl/strings/str_format.h"
 #include "absl/types/span.h"
 #include "mediapipe/calculators/tflite/tflite_tensors_to_detections_calculator.pb.h"
+#include "mediapipe/calculators/tflite/util.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/deps/file_path.h"
 #include "mediapipe/framework/formats/detection.pb.h"
@@ -46,6 +47,9 @@
 #include "tensorflow/lite/delegates/gpu/metal_delegate.h"
 #endif  // MEDIAPIPE_TFLITE_METAL_INFERENCE
 
+
+// Thuan (2020-04-14: Fix bug output video not stable)
+//TODO: If the detection has mask and other data is array or pointer, then we consider not share reference as output it
 namespace {
 constexpr int kNumInputTensorsWithAnchors = 3;
 constexpr int kNumCoordsPerBox = 4;
@@ -197,7 +201,7 @@ REGISTER_CALCULATOR(TfLiteTensorsToDetectionsCalculator);
   bool use_gpu = false;
 
   if (cc->Inputs().HasTag(kTensorsTag)) {
-    cc->Inputs().Tag(kTensorsTag).Set<std::vector<TfLiteTensor>>();
+    cc->Inputs().Tag(kTensorsTag).Set<std::vector<TfLiteTensorContainer>>();
   }
 
   if (cc->Inputs().HasTag(kTensorsGpuTag)) {
@@ -278,14 +282,15 @@ REGISTER_CALCULATOR(TfLiteTensorsToDetectionsCalculator);
 ::mediapipe::Status TfLiteTensorsToDetectionsCalculator::ProcessCPU(
     CalculatorContext* cc, std::vector<Detection>* output_detections) {
   const auto& input_tensors =
-      cc->Inputs().Tag(kTensorsTag).Get<std::vector<TfLiteTensor>>();
+      cc->Inputs().Tag(kTensorsTag).Get<std::vector<TfLiteTensorContainer>>();
 
   if (input_tensors.size() == 2 ||
       input_tensors.size() == kNumInputTensorsWithAnchors) {
     // Postprocessing on CPU for model without postprocessing op. E.g. output
     // raw score tensor and box tensor. Anchor decoding will be handled below.
-    const TfLiteTensor* raw_box_tensor = &input_tensors[0];
-    const TfLiteTensor* raw_score_tensor = &input_tensors[1];
+      // Thuan (2020-04-14: Fix bug output video not stable)
+    const TfLiteTensor* raw_box_tensor = &(input_tensors[0].getTensor());
+    const TfLiteTensor* raw_score_tensor = &(input_tensors[1].getTensor());
 
     // TODO: Add flexible input tensor size handling.
     CHECK_EQ(raw_box_tensor->dims->size, 3);
@@ -299,10 +304,16 @@ REGISTER_CALCULATOR(TfLiteTensorsToDetectionsCalculator);
     const float* raw_boxes = raw_box_tensor->data.f;
     const float* raw_scores = raw_score_tensor->data.f;
 
+    VLOG(2) << "TENSOR TO DETECTION;InputTimestamp=" << cc->InputTimestamp() << "num_boxes_=" << num_boxes_
+              << " has input tensor boxes data address=" << raw_boxes << "; input tensor scores data address=" << raw_scores ;
+
+
     // TODO: Support other options to load anchors.
     if (!anchors_init_) {
       if (input_tensors.size() == kNumInputTensorsWithAnchors) {
-        const TfLiteTensor* anchor_tensor = &input_tensors[2];
+        VLOG(1) << "Execute the anchor TENSOR";
+
+        const TfLiteTensor* anchor_tensor = &(input_tensors[2].getTensor());
         CHECK_EQ(anchor_tensor->dims->size, 2);
         CHECK_EQ(anchor_tensor->dims->data[0], num_boxes_);
         CHECK_EQ(anchor_tensor->dims->data[1], kNumCoordsPerBox);
@@ -360,10 +371,10 @@ REGISTER_CALCULATOR(TfLiteTensorsToDetectionsCalculator);
     // non-maximum suppression) within the model.
     RET_CHECK_EQ(input_tensors.size(), 4);
 
-    const TfLiteTensor* detection_boxes_tensor = &input_tensors[0];
-    const TfLiteTensor* detection_classes_tensor = &input_tensors[1];
-    const TfLiteTensor* detection_scores_tensor = &input_tensors[2];
-    const TfLiteTensor* num_boxes_tensor = &input_tensors[3];
+    const TfLiteTensor* detection_boxes_tensor = &(input_tensors[0].getTensor());
+    const TfLiteTensor* detection_classes_tensor = &(input_tensors[1].getTensor());
+    const TfLiteTensor* detection_scores_tensor = &(input_tensors[2].getTensor());
+    const TfLiteTensor* num_boxes_tensor = &(input_tensors[3].getTensor());
     RET_CHECK_EQ(num_boxes_tensor->dims->size, 1);
     RET_CHECK_EQ(num_boxes_tensor->dims->data[0], 1);
     const float* num_boxes = num_boxes_tensor->data.f;
