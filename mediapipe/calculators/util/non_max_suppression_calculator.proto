@@ -58,6 +58,9 @@ message NonMaxSuppressionCalculatorOptions {
   // Whether to put empty detection vector in output stream.
   optional bool return_empty_detections = 5;
 
+  // Whether to throw an error on an empty input detection vector
+  optional bool error_on_empty_detections = 8;
+
   // Algorithms that can be used to apply non-maximum suppression.
   enum NmsAlgorithm {
     DEFAULT = 0;
