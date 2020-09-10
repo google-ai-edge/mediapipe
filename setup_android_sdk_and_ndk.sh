@@ -32,6 +32,10 @@ then
   echo "Found existing \$ANDROID_HOME="$ANDROID_HOME" and \$ANDROID_NDK_HOME="$ANDROID_NDK_HOME
   echo "Bazel will locate Android SDK and NDK automatically."
   exit 0
+else
+  echo "You can specify ANDROID_HOME and ANDROID_NDK_HOME, currently I've these variables:"
+  echo ANDROID_HOME=$ANDROID_HOME
+  echo ANDROID_NDK_HOME=$ANDROID_NDK_HOME
 fi
 
 android_sdk_path=$1
