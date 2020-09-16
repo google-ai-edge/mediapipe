@@ -21,19 +21,16 @@ namespace python {
 namespace {
 
 template <typename T>
-py::array GenerateContiguousDataArray(const ImageFrame& image_frame,
-                                      const py::object& py_object) {
+py::array GenerateContiguousDataArrayHelper(const ImageFrame& image_frame,
+                                            const py::object& py_object) {
   std::vector<int> shape{image_frame.Height(), image_frame.Width()};
   if (image_frame.NumberOfChannels() > 1) {
     shape.push_back(image_frame.NumberOfChannels());
   }
   py::array_t<T, py::array::c_style> contiguous_data;
   if (image_frame.IsContiguous()) {
-    // TODO: Create contiguous_data without copying ata.
-    // It's possible to achieve this with the help of py::capsule.
-    // Reference: https://github.com/pybind/pybind11/issues/1042,
     contiguous_data = py::array_t<T, py::array::c_style>(
-        shape, reinterpret_cast<const T*>(image_frame.PixelData()));
+        shape, reinterpret_cast<const T*>(image_frame.PixelData()), py_object);
   } else {
     auto contiguous_data_copy =
         absl::make_unique<T[]>(image_frame.Width() * image_frame.Height() *
@@ -55,34 +52,64 @@ py::array GenerateContiguousDataArray(const ImageFrame& image_frame,
   return contiguous_data;
 }
 
-py::array GetContiguousDataAttr(const ImageFrame& image_frame,
-                                const py::object& py_object) {
-  py::object get_data_attr =
-      py::getattr(py_object, "__contiguous_data", py::none());
-  if (image_frame.IsEmpty()) {
-    throw RaisePyError(PyExc_RuntimeError, "ImageFrame is unallocated.");
-  }
-  // If __contiguous_data attr already stores data, return the cached results.
-  if (!get_data_attr.is_none()) {
-    return get_data_attr.cast<py::array>();
-  }
+py::array GenerateContiguousDataArray(const ImageFrame& image_frame,
+                                      const py::object& py_object) {
   switch (image_frame.ChannelSize()) {
     case sizeof(uint8):
-      py_object.attr("__contiguous_data") =
-          GenerateContiguousDataArray<uint8>(image_frame, py_object);
-      break;
+      return GenerateContiguousDataArrayHelper<uint8>(image_frame, py_object)
+          .cast<py::array>();
     case sizeof(uint16):
-      py_object.attr("__contiguous_data") =
-          GenerateContiguousDataArray<uint16>(image_frame, py_object);
-      break;
+      return GenerateContiguousDataArrayHelper<uint16>(image_frame, py_object)
+          .cast<py::array>();
     case sizeof(float):
-      py_object.attr("__contiguous_data") =
-          GenerateContiguousDataArray<float>(image_frame, py_object);
+      return GenerateContiguousDataArrayHelper<float>(image_frame, py_object)
+          .cast<py::array>();
       break;
     default:
       throw RaisePyError(PyExc_RuntimeError,
                          "Unsupported image frame channel size. Data is not "
                          "uint8, uint16, or float?");
+  }
+}
+
+// Generates a contiguous data pyarray object on demand.
+// This function only accepts an image frame object that already stores
+// contiguous data. The output py::array points to the raw pixel data array of
+// the image frame object directly.
+py::array GenerateDataPyArrayOnDemand(const ImageFrame& image_frame,
+                                      const py::object& py_object) {
+  if (!image_frame.IsContiguous()) {
+    throw RaisePyError(PyExc_RuntimeError,
+                       "GenerateDataPyArrayOnDemand must take an ImageFrame "
+                       "object that stores contiguous data.");
+  }
+  return GenerateContiguousDataArray(image_frame, py_object);
+}
+
+// Gets the cached contiguous data array from the "__contiguous_data" attribute.
+// If the attribute doesn't exist, the function calls
+// GenerateContiguousDataArray() to generate the contiguous data pyarray object,
+// which realigns and copies the data from the original image frame object.
+// Then, the data array object is cached in the "__contiguous_data" attribute.
+// This function only accepts an image frame object that stores non-contiguous
+// data.
+py::array GetCachedContiguousDataAttr(const ImageFrame& image_frame,
+                                      const py::object& py_object) {
+  if (image_frame.IsContiguous()) {
+    throw RaisePyError(PyExc_RuntimeError,
+                       "GetCachedContiguousDataAttr must take an ImageFrame "
+                       "object that stores non-contiguous data.");
+  }
+  py::object get_data_attr =
+      py::getattr(py_object, "__contiguous_data", py::none());
+  if (image_frame.IsEmpty()) {
+    throw RaisePyError(PyExc_RuntimeError, "ImageFrame is unallocated.");
+  }
+  // If __contiguous_data attr doesn't store data yet, generates the contiguous
+  // data array object and caches the result.
+  if (get_data_attr.is_none()) {
+    py_object.attr("__contiguous_data") =
+        GenerateContiguousDataArray(image_frame, py_object);
   }
   return py_object.attr("__contiguous_data").cast<py::array>();
 }
@@ -91,7 +118,9 @@ template <typename T>
 py::object GetValue(const ImageFrame& image_frame, const std::vector<int>& pos,
                     const py::object& py_object) {
   py::array_t<T, py::array::c_style> output_array =
-      GetContiguousDataAttr(image_frame, py_object);
+      image_frame.IsContiguous()
+          ? GenerateDataPyArrayOnDemand(image_frame, py_object)
+          : GetCachedContiguousDataAttr(image_frame, py_object);
   if (pos.size() == 2) {
     return py::cast(static_cast<T>(output_array.at(pos[0], pos[1])));
   } else if (pos.size() == 3) {
@@ -243,7 +272,19 @@ void ImageFrameSubmodule(pybind11::module* module) {
       [](ImageFrame& self) {
         py::object py_object =
             py::cast(self, py::return_value_policy::reference);
-        return GetContiguousDataAttr(self, py_object);
+        // If the image frame data is contiguous, generates the data pyarray
+        // object on demand because 1) making a pyarray by referring to the
+        // existing image frame pixel data is relatively cheap and 2) caching
+        // the pyarray object in an attribute of the image frame is problematic:
+        // the image frame object and the data pyarray object refer to each
+        // other, which causes gc fails to free the pyarray after use.
+        // For the non-contiguous cases, gets a cached data pyarray object from
+        // the image frame pyobject attribute. This optimization is to avoid the
+        // expensive data realignment and copy operations happening more than
+        // once.
+        return self.IsContiguous()
+                   ? GenerateDataPyArrayOnDemand(self, py_object)
+                   : GetCachedContiguousDataAttr(self, py_object);
       },
       R"doc(Return the image frame pixel data as an unwritable numpy ndarray.
 

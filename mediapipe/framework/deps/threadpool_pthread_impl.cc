@@ -47,7 +47,8 @@ class ThreadPool::WorkerThread {
 ThreadPool::WorkerThread::WorkerThread(ThreadPool* pool,
                                        const std::string& name_prefix)
     : pool_(pool), name_prefix_(name_prefix) {
-  pthread_create(&thread_, nullptr, ThreadBody, this);
+  int res = pthread_create(&thread_, nullptr, ThreadBody, this);
+  CHECK_EQ(res, 0) << "pthread_create failed";
 }
 
 ThreadPool::WorkerThread::~WorkerThread() {}
@@ -59,9 +60,9 @@ void* ThreadPool::WorkerThread::ThreadBody(void* arg) {
   int nice_priority_level =
       thread->pool_->thread_options().nice_priority_level();
   const std::set<int> selected_cpus = thread->pool_->thread_options().cpu_set();
+#if defined(__linux__)
   const std::string name =
       internal::CreateThreadName(thread->name_prefix_, syscall(SYS_gettid));
-#if defined(__linux__)
   if (nice_priority_level != 0) {
     if (nice(nice_priority_level) != -1 || errno == 0) {
       VLOG(1) << "Changed the nice priority level by " << nice_priority_level;
@@ -94,16 +95,19 @@ void* ThreadPool::WorkerThread::ThreadBody(void* arg) {
                << "Failed to set name for thread: " << name;
   }
 #else
+  const std::string name = internal::CreateThreadName(thread->name_prefix_, 0);
   if (nice_priority_level != 0 || !selected_cpus.empty()) {
     LOG(ERROR) << "Thread priority and processor affinity feature aren't "
                   "supported on the current platform.";
   }
+#if __APPLE__
   int error = pthread_setname_np(name.c_str());
   if (error != 0) {
     LOG(ERROR) << "Error : " << strerror(error) << std::endl
                << "Failed to set name for thread: " << name;
   }
-#endif
+#endif  // __APPLE__
+#endif  // __linux__
   thread->pool_->RunWorker();
   return nullptr;
 }
@@ -178,6 +182,12 @@ const ThreadOptions& ThreadPool::thread_options() const {
 
 namespace internal {
 
+// TODO: revise this:
+// - thread_id is not portable
+// - the 16-byte limit is Linux-specific
+// - the std::thread implementation has a copy of this but doesn't use it
+// - why do we even need the thread id in the name? any thread list should show
+//   the id too.
 std::string CreateThreadName(const std::string& prefix, int thread_id) {
   std::string name = absl::StrCat(prefix, "/", thread_id);
   // 16 is the limit allowed by `pthread_setname_np`, including

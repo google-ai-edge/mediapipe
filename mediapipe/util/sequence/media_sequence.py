@@ -157,7 +157,8 @@ from __future__ import division
 from __future__ import print_function
 import functools
 import numpy as np
-from mediapipe.util.sequence import media_sequence_util as msu
+from mediapipe.util.sequence import media_sequence_util
+msu = media_sequence_util
 
 _HAS_DYNAMIC_ATTRIBUTES = True
 

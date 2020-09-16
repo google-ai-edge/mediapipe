@@ -71,6 +71,9 @@ MediaPipe will emit data into a pre-specified directory:
 
     You can open the Download Container. Logs will be located in `application
     container/.xcappdata/AppData/Documents/`
+    If XCode shows empty content for the downloaded container file, you can
+    right click and select 'Show Package Contents' in Finder. Logs
+    will be located in 'AppData/Documents/'
 
     ![Windows Download Container](../images/visualizer/ios_download_container.png)
 

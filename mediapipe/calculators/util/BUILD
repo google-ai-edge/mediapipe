@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load("//mediapipe/framework/port:build_config.bzl", "mediapipe_cc_proto_library")
+load("//mediapipe/framework/port:build_config.bzl", "mediapipe_cc_proto_library", "mediapipe_proto_library")
 
 licenses(["notice"])
 
@@ -945,6 +945,31 @@ cc_library(
     alwayslink = 1,
 )
 
+mediapipe_proto_library(
+    name = "landmarks_smoothing_calculator_proto",
+    srcs = ["landmarks_smoothing_calculator.proto"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//mediapipe/framework:calculator_options_proto",
+    ],
+)
+
+cc_library(
+    name = "landmarks_smoothing_calculator",
+    srcs = ["landmarks_smoothing_calculator.cc"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":landmarks_smoothing_calculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:timestamp",
+        "//mediapipe/framework/formats:landmark_cc_proto",
+        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/util/filtering:relative_velocity_filter",
+        "@com_google_absl//absl/algorithm:container",
+    ],
+    alwayslink = 1,
+)
+
 cc_library(
     name = "landmarks_to_floats_calculator",
     srcs = ["landmarks_to_floats_calculator.cc"],
@@ -1103,6 +1128,7 @@ cc_library(
         "//mediapipe/framework/formats:classification_cc_proto",
         "//mediapipe/framework/formats:landmark_cc_proto",
         "//mediapipe/framework/formats:rect_cc_proto",
+        "//mediapipe/framework/port:integral_types",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
         "@com_google_absl//absl/strings",

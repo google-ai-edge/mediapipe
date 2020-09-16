@@ -139,7 +139,4 @@ to run regular TFLite inference.
 
 *   Google Developers Blog:
     [MediaPipe KNIFT: Template-based feature matching](https://developers.googleblog.com/2020/04/mediapipe-knift-template-based-feature-matching.html)
-*   [TFLite model for up to 200 keypoints](https://github.com/google/mediapipe/tree/master/mediapipe/models/knift_float.tflite)
-*   [TFLite model for up to 400 keypoints](https://github.com/google/mediapipe/tree/master/mediapipe/models/knift_float_400.tflite)
-*   [TFLite model for up to 1000 keypoints](https://github.com/google/mediapipe/tree/master/mediapipe/models/knift_float_1k.tflite)
-*   [Model card](https://mediapipe.page.link/knift-mc)
+*   [Models and model cards](./models.md#knift)

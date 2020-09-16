@@ -27,7 +27,9 @@
 
 #include "mediapipe/framework/deps/canonical_errors.h"
 #include "mediapipe/framework/deps/file_path.h"
+#include "mediapipe/framework/deps/status.h"
 #include "mediapipe/framework/deps/status_builder.h"
+#include "mediapipe/framework/deps/status_macros.h"
 
 namespace mediapipe {
 namespace file {
@@ -212,7 +214,7 @@ class DirectoryListing {
 ::mediapipe::Status Exists(absl::string_view file_name) {
   struct stat buffer;
   int status;
-  status = stat(file_name.data(), &buffer);
+  status = stat(std::string(file_name).c_str(), &buffer);
   if (status == 0) {
     return ::mediapipe::OkStatus();
   }
@@ -222,6 +224,31 @@ class DirectoryListing {
     default:
       return ::mediapipe::NotFoundError("The path does not exist.");
   }
+}
+
+#ifndef _WIN32
+int mkdir(std::string path) {
+  return ::mkdir(path.c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
+}
+#else
+int mkdir(std::string path) { return _mkdir(path.c_str()); }
+#endif
+
+::mediapipe::Status RecursivelyCreateDir(absl::string_view path) {
+  if (path.empty() || Exists(path).ok()) {
+    return mediapipe::OkStatus();
+  }
+  auto split_path = file::SplitPath(path);
+  MP_RETURN_IF_ERROR(RecursivelyCreateDir(split_path.first));
+  if (mkdir(std::string(path)) != 0) {
+    switch (errno) {
+      case EACCES:
+        return ::mediapipe::PermissionDeniedError("Insufficient permissions.");
+      default:
+        return ::mediapipe::UnavailableError("Failed to create directory.");
+    }
+  }
+  return mediapipe::OkStatus();
 }
 
 }  // namespace file

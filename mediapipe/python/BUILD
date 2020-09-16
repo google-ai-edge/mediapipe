@@ -49,5 +49,6 @@ pybind_extension(
         "//mediapipe/python/pybind:packet_getter",
         "//mediapipe/python/pybind:resource_util",
         "//mediapipe/python/pybind:timestamp",
+        "//mediapipe/python/pybind:validated_graph_config",
     ],
 )

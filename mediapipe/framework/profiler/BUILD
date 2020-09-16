@@ -269,7 +269,7 @@ cc_test(
 
 cc_library(
     name = "profiler_resource_util",
-    srcs = select({
+    srcs = ["profiler_resource_util_common.cc"] + select({
         "//conditions:default": ["profiler_resource_util.cc"],
         "//mediapipe:android": ["profiler_resource_util_android.cc"],
         "//mediapipe:ios": ["profiler_resource_util_ios.cc"],
@@ -288,15 +288,22 @@ cc_library(
     deps = [
         "@com_google_absl//absl/strings",
         "//mediapipe/framework/port:logging",
+        "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:statusor",
         "//mediapipe/framework/port:status",
+        "@com_google_absl//absl/flags:flag",
+        "//mediapipe/framework/deps:file_path",
     ] + select({
         "//conditions:default": [
+            "//mediapipe/framework/port:file_helpers",
         ],
         "//mediapipe:android": [
             "//mediapipe/java/com/google/mediapipe/framework/jni:jni_util",
+            "//mediapipe/util/android/file/base",
         ],
-        "//mediapipe:apple": [],
+        "//mediapipe:apple": [
+            "//mediapipe/framework/port:file_helpers",
+        ],
     }),
 )
 

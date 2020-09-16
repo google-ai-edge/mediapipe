@@ -22,6 +22,7 @@
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/framework/port/status_matchers.h"
+#include "mediapipe/framework/port/statusor.h"
 #include "mediapipe/framework/profiler/test_context_builder.h"
 #include "mediapipe/framework/tool/simulation_clock.h"
 #include "mediapipe/framework/tool/tag_map_helper.h"

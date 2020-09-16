@@ -103,8 +103,8 @@ void AddConnectionsWithDepth(const LandmarkListType& landmarks,
   for (int i = 0; i < landmark_connections.size(); i += 2) {
     const auto& ld0 = landmarks.landmark(landmark_connections[i]);
     const auto& ld1 = landmarks.landmark(landmark_connections[i + 1]);
-    if (visibility_threshold && (ld0.visibility() < visibility_threshold ||
-                                 ld1.visibility() < visibility_threshold)) {
+    if (utilize_visibility && (ld0.visibility() < visibility_threshold ||
+                               ld1.visibility() < visibility_threshold)) {
       continue;
     }
     const int gray_val1 =
@@ -141,8 +141,8 @@ void AddConnections(const LandmarkListType& landmarks,
   for (int i = 0; i < landmark_connections.size(); i += 2) {
     const auto& ld0 = landmarks.landmark(landmark_connections[i]);
     const auto& ld1 = landmarks.landmark(landmark_connections[i + 1]);
-    if (visibility_threshold && (ld0.visibility() < visibility_threshold ||
-                                 ld1.visibility() < visibility_threshold)) {
+    if (utilize_visibility && (ld0.visibility() < visibility_threshold ||
+                               ld1.visibility() < visibility_threshold)) {
       continue;
     }
     AddConnectionToRenderData<LandmarkType>(ld0, ld1, connection_color,

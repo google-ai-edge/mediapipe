@@ -36,6 +36,8 @@ namespace file {
 
 ::mediapipe::Status Exists(absl::string_view file_name);
 
+::mediapipe::Status RecursivelyCreateDir(absl::string_view path);
+
 }  // namespace file
 }  // namespace mediapipe
 

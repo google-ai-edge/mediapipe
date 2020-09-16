@@ -1,0 +1,52 @@
+# MediaPipe graph to extract face geometry from landmarks for multiple faces.
+#
+# It is required that "geometry_pipeline_metadata.binarypb" is available at
+# "mediapipe/modules/face_geometry/data/geometry_pipeline_metadata.binarypb"
+# path during execution.
+#
+# EXAMPLE:
+#   node {
+#     calculator: "FaceGeometry"
+#     input_stream: "IMAGE_SIZE:image_size"
+#     input_stream: "MULTI_FACE_LANDMARKS:multi_face_landmarks"
+#     input_side_packet: "ENVIRONMENT:environment"
+#     output_stream: "MULTI_FACE_GEOMETRY:multi_face_geometry"
+#   }
+
+type: "FaceGeometry"
+
+# The size of the input frame. The first element of the pair is the frame width;
+# the other one is the frame height.
+#
+# The face landmarks should have been detected on a frame with the same
+# ratio. If used as-is, the resulting face geometry visualization should be
+# happening on a frame with the same ratio as well.
+#
+# (std::pair<int, int>)
+input_stream: "IMAGE_SIZE:image_size"
+
+# Collection of detected/predicted faces, each represented as a list of face
+# landmarks. (std::vector<NormalizedLandmarkList>)
+input_stream: "MULTI_FACE_LANDMARKS:multi_face_landmarks"
+
+# Environment that describes the current virtual scene.
+# (face_geometry::Environment)
+input_side_packet: "ENVIRONMENT:environment"
+
+# A list of geometry data for each detected face.
+# (std::vector<face_geometry::FaceGeometry>)
+output_stream: "MULTI_FACE_GEOMETRY:multi_face_geometry"
+
+# Extracts face geometry for multiple faces from a vector of landmark lists.
+node {
+  calculator: "FaceGeometryPipelineCalculator"
+  input_side_packet: "ENVIRONMENT:environment"
+  input_stream: "IMAGE_SIZE:image_size"
+  input_stream: "MULTI_FACE_LANDMARKS:multi_face_landmarks"
+  output_stream: "MULTI_FACE_GEOMETRY:multi_face_geometry"
+  options: {
+    [mediapipe.FaceGeometryPipelineCalculatorOptions.ext] {
+      metadata_path: "mediapipe/modules/face_geometry/data/geometry_pipeline_metadata.binarypb"
+    }
+  }
+}

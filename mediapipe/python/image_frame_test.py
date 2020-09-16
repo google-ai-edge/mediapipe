@@ -14,7 +14,9 @@
 
 """Tests for mediapipe.python._framework_bindings.image_frame."""
 
+import gc
 import random
+import sys
 from absl.testing import absltest
 import cv2
 import mediapipe as mp
@@ -139,6 +141,45 @@ class ImageFrameTest(absltest.TestCase):
     self.assertTrue(
         np.array_equal(mat[offset:-offset, offset:-offset, :],
                        image_frame.numpy_view()))
+
+  # For image frames that store contiguous data, the output of numpy_view()
+  # points to the pixel data of the original image frame object. The life cycle
+  # of the data array should tie to the image frame object.
+  def testImageFrameNumpyViewWithContiguousData(self):
+    w, h = 640, 480
+    mat = np.random.randint(2**8 - 1, size=(h, w, 3), dtype=np.uint8)
+    image_frame = mp.ImageFrame(image_format=mp.ImageFormat.SRGB, data=mat)
+    self.assertTrue(image_frame.is_contiguous())
+    initial_ref_count = sys.getrefcount(image_frame)
+    self.assertTrue(np.array_equal(mat, image_frame.numpy_view()))
+    # Get 2 data array objects and verify that the image frame's ref count is
+    # increased by 2.
+    np_view = image_frame.numpy_view()
+    self.assertEqual(sys.getrefcount(image_frame), initial_ref_count + 1)
+    np_view2 = image_frame.numpy_view()
+    self.assertEqual(sys.getrefcount(image_frame), initial_ref_count + 2)
+    del np_view
+    del np_view2
+    gc.collect()
+    # After the two data array objects getting destroyed, the current ref count
+    # should euqal to the initial ref count.
+    self.assertEqual(sys.getrefcount(image_frame), initial_ref_count)
+
+  # For image frames that store non contiguous data, the output of numpy_view()
+  # stores a copy of the pixel data of the image frame object. The life cycle of
+  # the data array doesn't tie to the image frame object.
+  def testImageFrameNumpyViewWithNonContiguousData(self):
+    w, h = 641, 481
+    mat = np.random.randint(2**8 - 1, size=(h, w, 3), dtype=np.uint8)
+    image_frame = mp.ImageFrame(image_format=mp.ImageFormat.SRGB, data=mat)
+    self.assertFalse(image_frame.is_contiguous())
+    initial_ref_count = sys.getrefcount(image_frame)
+    self.assertTrue(np.array_equal(mat, image_frame.numpy_view()))
+    np_view = image_frame.numpy_view()
+    self.assertEqual(sys.getrefcount(image_frame), initial_ref_count)
+    del np_view
+    gc.collect()
+    self.assertEqual(sys.getrefcount(image_frame), initial_ref_count)
 
 
 if __name__ == '__main__':

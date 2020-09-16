@@ -54,5 +54,4 @@ Please refer to [these instructions](../index.md#mediapipe-on-the-web).
     [Real-time Hair segmentation and recoloring on Mobile GPUs](https://arxiv.org/abs/1907.06740)
     ([presentation](https://drive.google.com/file/d/1C8WYlWdDRNtU1_pYBvkkG5Z5wqYqf0yj/view))
     ([supplementary video](https://drive.google.com/file/d/1LPtM99Ch2ogyXYbDNpEqnUfhFq0TfLuf/view))
-*   [TFLite model](https://github.com/google/mediapipe/tree/master/mediapipe/models/hair_segmentation.tflite)
-*   [Model card](https://mediapipe.page.link/hairsegmentation-mc)
+*   [Models and model cards](./models.md#hair_segmentation)

@@ -40,56 +40,7 @@
 namespace mediapipe {
 
 struct GpuSharedData;
-
-struct BufferSpec {
-  BufferSpec(int w, int h, GpuBufferFormat f)
-      : width(w), height(h), format(f) {}
-  int width;
-  int height;
-  GpuBufferFormat format;
-};
-
-inline bool operator==(const BufferSpec& lhs, const BufferSpec& rhs) {
-  return lhs.width == rhs.width && lhs.height == rhs.height &&
-         lhs.format == rhs.format;
-}
-inline bool operator!=(const BufferSpec& lhs, const BufferSpec& rhs) {
-  return !operator==(lhs, rhs);
-}
-
-// This generates a "rol" instruction with both Clang and GCC.
-static inline std::size_t RotateLeft(std::size_t x, int n) {
-  return (x << n) | (x >> (std::numeric_limits<size_t>::digits - n));
-}
-
-struct BufferSpecHash {
-  std::size_t operator()(const mediapipe::BufferSpec& spec) const {
-    // Width and height are expected to be smaller than half the width of
-    // size_t. We can combine them into a single integer, and then use
-    // std::hash, which is what go/hashing recommends for hashing numbers.
-    constexpr int kWidth = std::numeric_limits<size_t>::digits;
-    return std::hash<std::size_t>{}(
-        spec.width ^ RotateLeft(spec.height, kWidth / 2) ^
-        RotateLeft(static_cast<uint32_t>(spec.format), kWidth / 4));
-  }
-};
-
-#if MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
-class CvPixelBufferPoolWrapper {
- public:
-  CvPixelBufferPoolWrapper(const BufferSpec& spec, CFTimeInterval maxAge);
-  GpuBuffer GetBuffer(std::function<void(void)> flush);
-
-  int GetBufferCount() const { return count_; }
-  std::string GetDebugString() const;
-
-  void Flush();
-
- private:
-  CFHolder<CVPixelBufferPoolRef> pool_;
-  int count_ = 0;
-};
-#endif  // MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
+class CvPixelBufferPoolWrapper;
 
 class GpuBufferMultiPool {
  public:
@@ -113,6 +64,31 @@ class GpuBufferMultiPool {
 
   void FlushTextureCaches();
 #endif  // defined(__APPLE__)
+
+  // This generates a "rol" instruction with both Clang and GCC.
+  inline static std::size_t RotateLeft(std::size_t x, int n) {
+    return (x << n) | (x >> (std::numeric_limits<size_t>::digits - n));
+  }
+
+  struct BufferSpec {
+    BufferSpec(int w, int h, mediapipe::GpuBufferFormat f)
+        : width(w), height(h), format(f) {}
+    int width;
+    int height;
+    mediapipe::GpuBufferFormat format;
+  };
+
+  struct BufferSpecHash {
+    std::size_t operator()(const BufferSpec& spec) const {
+      // Width and height are expected to be smaller than half the width of
+      // size_t. We can combine them into a single integer, and then use
+      // std::hash, which is what go/hashing recommends for hashing numbers.
+      constexpr int kWidth = std::numeric_limits<size_t>::digits;
+      return std::hash<std::size_t>{}(
+          spec.width ^ RotateLeft(spec.height, kWidth / 2) ^
+          RotateLeft(static_cast<uint32_t>(spec.format), kWidth / 4));
+    }
+  };
 
  private:
 #if MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
@@ -174,6 +150,35 @@ class GpuBufferMultiPool {
   std::vector<CFHolder<CVTextureCacheType>> texture_caches_ GUARDED_BY(mutex_);
 #endif  // defined(__APPLE__)
 };
+
+#if MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
+class CvPixelBufferPoolWrapper {
+ public:
+  CvPixelBufferPoolWrapper(const GpuBufferMultiPool::BufferSpec& spec,
+                           CFTimeInterval maxAge);
+  GpuBuffer GetBuffer(std::function<void(void)> flush);
+
+  int GetBufferCount() const { return count_; }
+  std::string GetDebugString() const;
+
+  void Flush();
+
+ private:
+  CFHolder<CVPixelBufferPoolRef> pool_;
+  int count_ = 0;
+};
+#endif  // MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
+
+// BufferSpec equality operators
+inline bool operator==(const GpuBufferMultiPool::BufferSpec& lhs,
+                       const GpuBufferMultiPool::BufferSpec& rhs) {
+  return lhs.width == rhs.width && lhs.height == rhs.height &&
+         lhs.format == rhs.format;
+}
+inline bool operator!=(const GpuBufferMultiPool::BufferSpec& lhs,
+                       const GpuBufferMultiPool::BufferSpec& rhs) {
+  return !operator==(lhs, rhs);
+}
 
 }  // namespace mediapipe
 

@@ -114,9 +114,9 @@ MediaPipe examples.
 
 ## Resources
 
-* Google Developers Blog:
-  [Instant Motion Tracking With MediaPipe](https://mediapipe.page.link/instant-motion-tracking-blog)
-* Google AI Blog:
-  [The Instant Motion Tracking Behind Motion Stills AR](https://ai.googleblog.com/2018/02/the-instant-motion-tracking-behind.html)
-* Paper:
-  [Instant Motion Tracking and Its Applications to Augmented Reality](https://arxiv.org/abs/1907.06796)
+*   Google Developers Blog:
+    [Instant Motion Tracking With MediaPipe](https://developers.googleblog.com/2020/08/instant-motion-tracking-with-mediapipe.html)
+*   Google AI Blog:
+    [The Instant Motion Tracking Behind Motion Stills AR](https://ai.googleblog.com/2018/02/the-instant-motion-tracking-behind.html)
+*   Paper:
+    [Instant Motion Tracking and Its Applications to Augmented Reality](https://arxiv.org/abs/1907.06796)

@@ -23,7 +23,7 @@ namespace mediapipe {
 // Simulation clock multithreaded executor. This is intended to be used with
 // graphs that are using SimulationClock class to emulate various parts of the
 // graph taking specific time to process the incoming packets.
-class SimulationClockExecutor : public ThreadPoolExecutor {
+class SimulationClockExecutor : public Executor {
  public:
   explicit SimulationClockExecutor(int num_threads);
   void Schedule(std::function<void()> task) override;
@@ -36,6 +36,9 @@ class SimulationClockExecutor : public ThreadPoolExecutor {
  private:
   // SimulationClock instance used by this executor.
   std::shared_ptr<SimulationClock> clock_;
+  // The delegate ThreadPoolExecutor.  This is declared after clock_
+  // so that it is destroyed before clock_.
+  ThreadPoolExecutor executor_;
 };
 
 }  // namespace mediapipe

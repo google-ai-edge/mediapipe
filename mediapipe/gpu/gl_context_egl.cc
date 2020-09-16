@@ -177,6 +177,27 @@ GlContext::StatusOrGlContext GlContext::Create(EGLContext share_context,
 }
 
 void GlContext::DestroyContext() {
+#ifdef __ANDROID__
+  if (HasContext()) {
+    // Detach the current program to work around b/166322604.
+    auto detach_program = [this] {
+      GlContext::ContextBinding saved_context;
+      GetCurrentContextBinding(&saved_context);
+      // Note: cannot use ThisContextBinding because it calls shared_from_this,
+      // which is not available during destruction.
+      if (eglMakeCurrent(display_, surface_, surface_, context_)) {
+        glUseProgram(0);
+      } else {
+        LOG(ERROR) << "eglMakeCurrent() returned error " << std::showbase
+                   << std::hex << eglGetError();
+      }
+      return SetCurrentContextBinding(saved_context);
+    };
+    auto status = thread_ ? thread_->Run(detach_program) : detach_program();
+    LOG_IF(ERROR, !status.ok()) << status;
+  }
+#endif  // __ANDROID__
+
   if (thread_) {
     // Delete thread-local storage.
     // TODO: in theory our EglThreadExitCallback should suffice for
@@ -190,18 +211,6 @@ void GlContext::DestroyContext() {
         })
         .IgnoreError();
   }
-
-#ifdef __ANDROID__
-  if (HasContext()) {
-    // Detach the current program to work around b/166322604.
-    if (eglMakeCurrent(display_, surface_, surface_, context_)) {
-      glUseProgram(0);
-    } else {
-      LOG(ERROR) << "eglMakeCurrent() returned error " << std::showbase
-                 << std::hex << eglGetError();
-    }
-  }
-#endif  // __ANDROID__
 
   // Destroy the context and surface.
   if (IsCurrent()) {

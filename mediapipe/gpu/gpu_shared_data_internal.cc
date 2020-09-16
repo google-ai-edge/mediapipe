@@ -110,6 +110,7 @@ GpuResources::~GpuResources() {
   std::string node_type = node->GetCalculatorState().CalculatorType();
   std::string context_key;
 
+#ifndef __EMSCRIPTEN__
   // TODO Allow calculators to request a separate context.
   // For now, white-list a few calculators to run in their own context.
   bool gets_own_context = (node_type == "ImageFrameToGpuBufferCalculator") ||
@@ -126,6 +127,10 @@ GpuResources::~GpuResources() {
   } else {
     context_key = absl::StrCat("auto:", node_id);
   }
+#else
+  // On Emscripten we currently do not support multiple contexts.
+  context_key = SharedContextKey();
+#endif  // !__EMSCRIPTEN__
   node_key_[node_id] = context_key;
 
   ASSIGN_OR_RETURN(std::shared_ptr<GlContext> context,

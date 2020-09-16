@@ -46,6 +46,8 @@ class KinematicPathSolver {
   ::mediapipe::Status UpdatePrediction(const int64 time_us);
   // Get the state at a time.
   ::mediapipe::Status GetState(int* position);
+  // Update PixelPerDegree value.
+  ::mediapipe::Status UpdatePixelsPerDegree(const float pixels_per_degree);
 
  private:
   // Tuning options.

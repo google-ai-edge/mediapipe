@@ -72,7 +72,6 @@ class GpuBuffer {
 
   int width() const;
   int height() const;
-
   GpuBufferFormat format() const;
 
   // Converts to true iff valid.

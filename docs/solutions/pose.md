@@ -88,10 +88,12 @@ hip midpoints.
 ### Pose Landmark Model (BlazePose Tracker)
 
 The landmark model currently included in MediaPipe Pose predicts the location of
-25 upper-body landmarks (see figure below), with three degrees of freedom each
-(x, y location and visibility), plus two virtual alignment keypoints. It shares
-the same architecture as the full-body version that predicts 33 landmarks,
-described in more detail in the
+25 upper-body landmarks (see figure below), each with `(x, y, z, visibility)`,
+plus two virtual alignment keypoints. Note that the `z` value should be
+discarded as the model is currently not fully trained to predict depth, but this
+is something we have on the roadmap. The model shares the same architecture as
+the full-body version that predicts 33 landmarks, described in more detail in
+the
 [BlazePose Google AI Blog](https://ai.googleblog.com/2020/08/on-device-real-time-body-pose-tracking.html)
 and in this [paper](https://arxiv.org/abs/2006.10204).
 
@@ -189,8 +191,4 @@ Please refer to [these instructions](../index.md#mediapipe-on-the-web).
 *   Paper:
     [BlazePose: On-device Real-time Body Pose Tracking](https://arxiv.org/abs/2006.10204)
     ([presentation](https://youtu.be/YPpUOTRn5tA))
-*   Pose detection model:
-    [TFLite model](https://github.com/google/mediapipe/tree/master/mediapipe/modules/pose_detection/pose_detection.tflite)
-*   Upper-body pose landmark model:
-    [TFLite model](https://github.com/google/mediapipe/tree/master/mediapipe/modules/pose_landmark/pose_landmark_upper_body.tflite)
-*   [Model card](https://mediapipe.page.link/blazepose-mc)
+*   [Models and model cards](./models.md#pose)

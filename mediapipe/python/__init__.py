@@ -22,5 +22,6 @@ from mediapipe.python._framework_bindings.image_frame import ImageFrame
 from mediapipe.python._framework_bindings.matrix import Matrix
 from mediapipe.python._framework_bindings.packet import Packet
 from mediapipe.python._framework_bindings.timestamp import Timestamp
+from mediapipe.python._framework_bindings.validated_graph_config import ValidatedGraphConfig
 import mediapipe.python.packet_creator
 import mediapipe.python.packet_getter

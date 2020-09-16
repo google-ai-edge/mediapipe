@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <memory>
+
 #include "mediapipe/calculators/core/split_vector_calculator.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/calculator_runner.h"
@@ -233,5 +235,71 @@ TEST(MuxCalculatorTest, InputStreamSelector_MuxInputStreamHandler) {
            kOutputName, output_fn);
   EXPECT_EQ(output, input_packets);
 }
+
+constexpr char kDualInputGraphConfig[] = R"proto(
+  input_stream: "input_0"
+  input_stream: "input_1"
+  input_stream: "input_select"
+  output_stream: "test_output"
+  node {
+    calculator: "MuxCalculator"
+    input_stream: "INPUT:0:input_0"
+    input_stream: "INPUT:1:input_1"
+    input_stream: "SELECT:input_select"
+    output_stream: "OUTPUT:test_output"
+  }
+)proto";
+
+TEST(MuxCalculatorTest, DiscardSkippedInputs_MuxInputStreamHandler) {
+  CalculatorGraphConfig config =
+      ::mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(
+          kDualInputGraphConfig);
+  CalculatorGraph graph;
+  MP_ASSERT_OK(graph.Initialize(config));
+
+  std::shared_ptr<int> output;
+  MP_ASSERT_OK(
+      graph.ObserveOutputStream("test_output", [&output](const Packet& p) {
+        output = p.Get<std::shared_ptr<int>>();
+        return ::mediapipe::OkStatus();
+      }));
+
+  MP_ASSERT_OK(graph.StartRun({}));
+
+  auto one = std::make_shared<int>(1);
+  auto two = std::make_shared<int>(2);
+  auto three = std::make_shared<int>(3);
+  std::weak_ptr<int> one_weak = one;
+  std::weak_ptr<int> two_weak = two;
+
+  MP_ASSERT_OK(graph.AddPacketToInputStream(
+      "input_0",
+      MakePacket<std::shared_ptr<int>>(std::move(one)).At(Timestamp(0))));
+  MP_ASSERT_OK(graph.AddPacketToInputStream(
+      "input_1",
+      MakePacket<std::shared_ptr<int>>(std::move(two)).At(Timestamp(0))));
+  MP_ASSERT_OK(graph.AddPacketToInputStream(
+      "input_1",
+      MakePacket<std::shared_ptr<int>>(std::move(three)).At(Timestamp(1))));
+  EXPECT_EQ(one, nullptr);
+  EXPECT_EQ(two, nullptr);
+  EXPECT_EQ(three, nullptr);
+
+  MP_ASSERT_OK(graph.AddPacketToInputStream(
+      "input_select", MakePacket<int>(0).At(Timestamp(0))));
+  MP_ASSERT_OK(graph.WaitUntilIdle());
+  EXPECT_EQ(*output, 1);
+  EXPECT_NE(one_weak.lock(), nullptr);
+  EXPECT_EQ(two_weak.lock(), nullptr);
+
+  MP_ASSERT_OK(graph.AddPacketToInputStream(
+      "input_select", MakePacket<int>(1).At(Timestamp(1))));
+  MP_ASSERT_OK(graph.WaitUntilIdle());
+  EXPECT_EQ(*output, 3);
+
+  MP_ASSERT_OK(graph.CloseAllInputStreams());
+  MP_ASSERT_OK(graph.WaitUntilDone());
+}
+
 }  // namespace
 }  // namespace mediapipe

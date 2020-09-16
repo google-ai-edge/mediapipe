@@ -19,7 +19,6 @@
 #include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/framework/calculator_graph.h"
 #include "mediapipe/framework/packet.h"
-#include "mediapipe/framework/port/file_helpers.h"
 #include "mediapipe/framework/port/map_util.h"
 #include "mediapipe/framework/port/parse_text_proto.h"
 #include "mediapipe/framework/port/status.h"
@@ -70,39 +69,25 @@ void CalculatorGraphSubmodule(pybind11::module* module) {
   // TODO: Support graph initialization with graph templates and
   // subgraph.
   calculator_graph.def(
-      py::init([](py::args args, py::kwargs kwargs) {
-        if (!args.empty()) {
-          throw RaisePyError(PyExc_RuntimeError,
-                             "Invalid position input arguments.");
-        }
+      py::init([](py::kwargs kwargs) {
         bool init_with_binary_graph = false;
         bool init_with_graph_proto = false;
+        bool init_with_validated_graph_config = false;
         CalculatorGraphConfig graph_config_proto;
         for (const auto& kw : kwargs) {
           const std::string& key = kw.first.cast<std::string>();
           if (key == "binary_graph_path") {
             init_with_binary_graph = true;
             std::string file_name(kw.second.cast<py::object>().str());
-            auto status = file::Exists(file_name);
-            if (!status.ok()) {
-              throw RaisePyError(PyExc_FileNotFoundError,
-                                 status.message().data());
-            }
-            std::string graph_config_string;
-            RaisePyErrorIfNotOk(
-                file::GetContents(file_name, &graph_config_string));
-            if (!graph_config_proto.ParseFromArray(
-                    graph_config_string.c_str(),
-                    graph_config_string.length())) {
-              throw RaisePyError(
-                  PyExc_RuntimeError,
-                  absl::StrCat("Failed to parse the binary graph: ", file_name)
-                      .c_str());
-            }
+            graph_config_proto = ReadCalculatorGraphConfigFromFile(file_name);
           } else if (key == "graph_config") {
             init_with_graph_proto = true;
             graph_config_proto =
                 ParseProto<CalculatorGraphConfig>(kw.second.cast<py::object>());
+          } else if (key == "validated_graph_config") {
+            init_with_validated_graph_config = true;
+            graph_config_proto =
+                py::cast<ValidatedGraphConfig*>(kw.second)->Config();
           } else {
             throw RaisePyError(
                 PyExc_RuntimeError,
@@ -110,12 +95,15 @@ void CalculatorGraphSubmodule(pybind11::module* module) {
           }
         }
 
-        if (!(init_with_binary_graph ^ init_with_graph_proto)) {
+        if ((init_with_binary_graph ? 1 : 0) + (init_with_graph_proto ? 1 : 0) +
+                (init_with_validated_graph_config ? 1 : 0) !=
+            1) {
           throw RaisePyError(
               PyExc_ValueError,
               "Please provide \'binary_graph\' to initialize the graph with"
               " binary graph or provide \'graph_config\' to initialize the "
-              " with graph config proto.");
+              " with graph config proto or provide \'validated_graph_config\' "
+              " to initialize the with ValidatedGraphConfig object.");
         }
         auto calculator_graph = absl::make_unique<CalculatorGraph>();
         RaisePyErrorIfNotOk(calculator_graph->Initialize(graph_config_proto));
@@ -127,6 +115,7 @@ void CalculatorGraphSubmodule(pybind11::module* module) {
     binary_graph_path: The path to a binary mediapipe graph file (.binarypb).
     graph_config: A single CalculatorGraphConfig proto message or its text proto
       format.
+    validated_graph_config: A ValidatedGraphConfig object.
 
   Raises:
     FileNotFoundError: If the binary graph file can't be found.
@@ -136,11 +125,11 @@ void CalculatorGraphSubmodule(pybind11::module* module) {
 
   // TODO: Return a Python CalculatorGraphConfig instead.
   calculator_graph.def_property_readonly(
-      "config",
+      "text_config",
       [](const CalculatorGraph& self) { return self.Config().DebugString(); });
 
   calculator_graph.def_property_readonly(
-      "serialized_config", [](const CalculatorGraph& self) {
+      "binary_config", [](const CalculatorGraph& self) {
         return py::bytes(self.Config().SerializeAsString());
       });
 

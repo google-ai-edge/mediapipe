@@ -150,7 +150,7 @@ class UpperBodyPoseTracker:
       success, input_frame = cap.read()
       if not success:
         break
-      input_frame = cv2.cvtColor(input_frame, cv2.COLOR_BGR2RGB)
+      input_frame = cv2.cvtColor(cv2.flip(input_frame, 1), cv2.COLOR_BGR2RGB)
       input_frame.flags.writeable = False
       _, output_frame = self._run_graph(input_frame)
       cv2.imshow('MediaPipe upper body pose tracker',

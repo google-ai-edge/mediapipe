@@ -14,13 +14,18 @@
 
 #include "mediapipe/gpu/gl_calculator_helper.h"
 
-#include "absl/memory/memory.h"
+#include "mediapipe/framework/formats/image_frame.h"
 #include "mediapipe/framework/legacy_calculator_support.h"
 #include "mediapipe/framework/port/canonical_errors.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/gpu/gl_calculator_helper_impl.h"
+#include "mediapipe/gpu/gpu_buffer.h"
 #include "mediapipe/gpu/gpu_service.h"
+
+#ifdef __APPLE__
+#include "mediapipe/objc/util.h"
+#endif
 
 namespace mediapipe {
 

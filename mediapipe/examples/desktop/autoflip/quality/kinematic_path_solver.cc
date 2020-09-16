@@ -87,5 +87,13 @@ namespace autoflip {
   return ::mediapipe::OkStatus();
 }
 
+::mediapipe::Status KinematicPathSolver::UpdatePixelsPerDegree(
+    const float pixels_per_degree) {
+  RET_CHECK_GT(pixels_per_degree_, 0)
+      << "pixels_per_degree must be larger than 0.";
+  pixels_per_degree_ = pixels_per_degree;
+  return ::mediapipe::OkStatus();
+}
+
 }  // namespace autoflip
 }  // namespace mediapipe

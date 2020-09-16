@@ -226,10 +226,4 @@ Please refer to [these instructions](../index.md#mediapipe-on-the-web).
 *   Paper:
     [MediaPipe Hands: On-device Real-time Hand Tracking](https://arxiv.org/abs/2006.10214)
     ([presentation](https://www.youtube.com/watch?v=I-UOrvxxXEk))
-*   Palm detection model:
-    [TFLite model](https://github.com/google/mediapipe/tree/master/mediapipe/models/palm_detection.tflite),
-    [TF.js model](https://tfhub.dev/mediapipe/handdetector/1)
-*   Hand landmark model:
-    [TFLite model](https://github.com/google/mediapipe/tree/master/mediapipe/models/hand_landmark.tflite),
-    [TF.js model](https://tfhub.dev/mediapipe/handskeleton/1)
-*   [Model card](https://mediapipe.page.link/handmc)
+*   [Models and model cards](./models.md#hands)

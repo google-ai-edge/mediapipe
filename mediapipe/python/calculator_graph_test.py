@@ -127,6 +127,43 @@ class GraphTest(absltest.TestCase):
     self.assertEqual(mp.packet_getter.get_str(out[0]), 'hello world')
     self.assertEqual(mp.packet_getter.get_str(out[1]), 'hello world')
 
+  def testGraphValidationAndInitialization(self):
+    text_config = """
+      max_queue_size: 1
+      input_stream: 'in'
+      output_stream: 'out'
+      node {
+        calculator: 'PassThroughCalculator'
+        input_stream: 'in'
+        output_stream: 'out'
+      }
+    """
+
+    hello_world_packet = mp.packet_creator.create_string('hello world')
+    out = []
+    validated_graph_config = mp.ValidatedGraphConfig()
+    self.assertFalse(validated_graph_config.initialized())
+    validated_graph_config.initialize(graph_config=text_config)
+    self.assertTrue(validated_graph_config.initialized())
+
+    graph = mp.CalculatorGraph(validated_graph_config=validated_graph_config)
+    graph.observe_output_stream('out', lambda _, packet: out.append(packet))
+    graph.start_run()
+    graph.add_packet_to_input_stream(
+        stream='in', packet=hello_world_packet.at(0))
+    graph.add_packet_to_input_stream(
+        stream='in', packet=hello_world_packet, timestamp=1)
+    graph.close()
+    self.assertEqual(graph.graph_input_stream_add_mode,
+                     mp.GraphInputStreamAddMode.WAIT_TILL_NOT_FULL)
+    self.assertEqual(graph.max_queue_size, 1)
+    self.assertFalse(graph.has_error())
+    self.assertLen(out, 2)
+    self.assertEqual(out[0].timestamp, 0)
+    self.assertEqual(out[1].timestamp, 1)
+    self.assertEqual(mp.packet_getter.get_str(out[0]), 'hello world')
+    self.assertEqual(mp.packet_getter.get_str(out[1]), 'hello world')
+
   def testInsertPacketsWithSameTimestamp(self):
     text_config = """
       max_queue_size: 1

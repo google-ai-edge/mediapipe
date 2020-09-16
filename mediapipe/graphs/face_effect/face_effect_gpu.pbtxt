@@ -1,0 +1,145 @@
+# MediaPipe graph that applies a face effect to the input video stream.
+
+# GPU buffer. (GpuBuffer)
+input_stream: "input_video"
+
+# Boolean flag, which indicates whether the Facepaint effect is selected. (bool)
+#
+# If `true`, the Facepaint effect will be rendered.
+# If `false`, the Glasses effect will be rendered.
+input_stream: "is_facepaint_effect_selected"
+
+# Output image with rendered results. (GpuBuffer)
+output_stream: "output_video"
+
+# A list of geometry data for a single detected face.
+#
+# NOTE: there will not be an output packet in this stream for this particular
+# timestamp if none of faces detected.
+#
+# (std::vector<face_geometry::FaceGeometry>)
+output_stream: "multi_face_geometry"
+
+# Throttles the images flowing downstream for flow control. It passes through
+# the very first incoming image unaltered, and waits for downstream nodes
+# (calculators and subgraphs) in the graph to finish their tasks before it
+# passes through another image. All images that come in while waiting are
+# dropped, limiting the number of in-flight images in most part of the graph to
+# 1. This prevents the downstream nodes from queuing up incoming images and data
+# excessively, which leads to increased latency and memory usage, unwanted in
+# real-time mobile applications. It also eliminates unnecessarily computation,
+# e.g., the output produced by a node may get dropped downstream if the
+# subsequent nodes are still busy processing previous inputs.
+node {
+  calculator: "FlowLimiterCalculator"
+  input_stream: "input_video"
+  input_stream: "FINISHED:output_video"
+  input_stream_info: {
+    tag_index: "FINISHED"
+    back_edge: true
+  }
+  output_stream: "throttled_input_video"
+}
+
+# Generates an environment that describes the current virtual scene.
+node {
+  calculator: "FaceGeometryEnvGeneratorCalculator"
+  output_side_packet: "ENVIRONMENT:environment"
+  node_options: {
+    [type.googleapis.com/mediapipe.FaceGeometryEnvGeneratorCalculatorOptions] {
+      environment: {
+        origin_point_location: TOP_LEFT_CORNER
+        perspective_camera: {
+          vertical_fov_degrees: 63.0  # 63 degrees
+          near: 1.0  # 1cm
+          far: 10000.0  # 100m
+        }
+      }
+    }
+  }
+}
+
+# Subgraph that detects a single face and corresponding landmarks. The landmarks
+# are also "smoothed" to achieve better visual results.
+node {
+  calculator: "SingleFaceSmoothLandmarkGpu"
+  input_stream: "IMAGE:throttled_input_video"
+  output_stream: "LANDMARKS:multi_face_landmarks"
+}
+
+# Extracts the throttled input video frame dimensions as a separate packet.
+node {
+  calculator: "ImagePropertiesCalculator"
+  input_stream: "IMAGE_GPU:throttled_input_video"
+  output_stream: "SIZE:input_video_size"
+}
+
+# Subgraph that computes face geometry from landmarks for a single face.
+node {
+  calculator: "FaceGeometry"
+  input_stream: "MULTI_FACE_LANDMARKS:multi_face_landmarks"
+  input_stream: "IMAGE_SIZE:input_video_size"
+  input_side_packet: "ENVIRONMENT:environment"
+  output_stream: "MULTI_FACE_GEOMETRY:multi_face_geometry"
+}
+
+# Decides whether to render the Facepaint effect based on the
+# `is_facepaint_effect_selected` flag value.
+node {
+  calculator: "GateCalculator"
+  input_stream: "throttled_input_video"
+  input_stream: "multi_face_geometry"
+  input_stream: "ALLOW:is_facepaint_effect_selected"
+  output_stream: "facepaint_effect_throttled_input_video"
+  output_stream: "facepaint_effect_multi_face_geometry"
+}
+
+# Renders the Facepaint effect.
+node {
+  calculator: "FaceGeometryEffectRendererCalculator"
+  input_side_packet: "ENVIRONMENT:environment"
+  input_stream: "IMAGE_GPU:facepaint_effect_throttled_input_video"
+  input_stream: "MULTI_FACE_GEOMETRY:facepaint_effect_multi_face_geometry"
+  output_stream: "IMAGE_GPU:facepaint_effect_output_video"
+  node_options: {
+    [type.googleapis.com/mediapipe.FaceGeometryEffectRendererCalculatorOptions] {
+      effect_texture_path: "mediapipe/graphs/face_effect/data/facepaint.pngblob"
+    }
+  }
+}
+
+# Decides whether to render the Glasses effect based on the
+# `is_facepaint_effect_selected` flag value.
+node {
+  calculator: "GateCalculator"
+  input_stream: "throttled_input_video"
+  input_stream: "multi_face_geometry"
+  input_stream: "DISALLOW:is_facepaint_effect_selected"
+  output_stream: "glasses_effect_throttled_input_video"
+  output_stream: "glasses_effect_multi_face_geometry"
+}
+
+# Renders the Glasses effect.
+node {
+  calculator: "FaceGeometryEffectRendererCalculator"
+  input_side_packet: "ENVIRONMENT:environment"
+  input_stream: "IMAGE_GPU:glasses_effect_throttled_input_video"
+  input_stream: "MULTI_FACE_GEOMETRY:glasses_effect_multi_face_geometry"
+  output_stream: "IMAGE_GPU:glasses_effect_output_video"
+  node_options: {
+    [type.googleapis.com/mediapipe.FaceGeometryEffectRendererCalculatorOptions] {
+      effect_texture_path: "mediapipe/graphs/face_effect/data/glasses.pngblob"
+      effect_mesh_3d_path: "mediapipe/graphs/face_effect/data/glasses.binarypb"
+    }
+  }
+}
+
+# Decides which of the Facepaint or the Glasses rendered results should be sent
+# as the output GPU frame.
+node {
+  calculator: "ImmediateMuxCalculator"
+  input_stream: "facepaint_effect_output_video"
+  input_stream: "glasses_effect_output_video"
+  output_stream: "output_video"
+}
+

@@ -15,6 +15,8 @@
 #ifndef MEDIAPIPE_PYTHON_PYBIND_UTIL_H_
 #define MEDIAPIPE_PYTHON_PYBIND_UTIL_H_
 
+#include "mediapipe/framework/calculator.pb.h"
+#include "mediapipe/framework/port/file_helpers.h"
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/timestamp.h"
 #include "pybind11/pybind11.h"
@@ -84,6 +86,25 @@ inline std::string TimestampValueString(const Timestamp& timestamp) {
   } else {
     return timestamp.DebugString();
   }
+}
+
+// Reads a CalculatorGraphConfig from a file. If failed, raises a PyError.
+inline ::mediapipe::CalculatorGraphConfig ReadCalculatorGraphConfigFromFile(
+    const std::string& file_name) {
+  ::mediapipe::CalculatorGraphConfig graph_config_proto;
+  auto status = file::Exists(file_name);
+  if (!status.ok()) {
+    throw RaisePyError(PyExc_FileNotFoundError, status.message().data());
+  }
+  std::string graph_config_string;
+  RaisePyErrorIfNotOk(file::GetContents(file_name, &graph_config_string));
+  if (!graph_config_proto.ParseFromArray(graph_config_string.c_str(),
+                                         graph_config_string.length())) {
+    throw RaisePyError(
+        PyExc_RuntimeError,
+        absl::StrCat("Failed to parse the binary graph: ", file_name).c_str());
+  }
+  return graph_config_proto;
 }
 
 }  // namespace python

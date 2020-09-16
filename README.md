@@ -89,7 +89,8 @@ run code search using
 
 ## Publications
 
-*   [Instant Motion Tracking With MediaPipe](https://mediapipe.page.link/instant-motion-tracking-blog)
+*   [Face AR with MediaPipe Face Mesh](https://mediapipe.page.link/face-geometry-blog) in Google Developers Blog
+*   [Instant Motion Tracking With MediaPipe](https://developers.googleblog.com/2020/08/instant-motion-tracking-with-mediapipe.html)
     in Google Developers Blog
 *   [BlazePose - On-device Real-time Body Pose Tracking](https://ai.googleblog.com/2020/08/on-device-real-time-body-pose-tracking.html)
     in Google AI Blog
