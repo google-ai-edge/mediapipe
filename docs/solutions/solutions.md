@@ -32,3 +32,7 @@ has_toc: false
 [AutoFlip](https://google.github.io/mediapipe/solutions/autoflip)                               |         |     | ✅       |        |     |
 [MediaSequence](https://google.github.io/mediapipe/solutions/media_sequence)                    |         |     | ✅       |        |     |
 [YouTube 8M](https://google.github.io/mediapipe/solutions/youtube_8m)                           |         |     | ✅       |        |     |
+
+See also
+[MediaPipe Models and Model Cards](https://google.github.io/mediapipe/solutions/models)
+for ML models released in MediaPipe.

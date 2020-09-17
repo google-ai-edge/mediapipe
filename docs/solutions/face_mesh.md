@@ -277,7 +277,7 @@ only works for a single face. For visual reference, please refer to *Fig. 4*.
 *   TensorFlow Blog:
     [Face and hand tracking in the browser with MediaPipe and TensorFlow.js](https://blog.tensorflow.org/2020/03/face-and-hand-tracking-in-browser-with-mediapipe-and-tensorflowjs.html)
 *   Google Developers Blog:
-    [Face AR with MediaPipe Face Mesh](https://mediapipe.page.link/face-geometry-blog)
+    [MediaPipe 3D Face Transform](https://mediapipe.page.link/face-geometry-blog)
 *   Paper:
     [Real-time Facial Surface Geometry from Monocular Video on Mobile GPUs](https://arxiv.org/abs/1907.06724)
     ([poster](https://docs.google.com/presentation/d/1-LWwOMO9TzEVdrZ1CS1ndJzciRHfYDJfbSxH_ke_JRg/present?slide=id.g5986dd4b4c_4_212))

@@ -5,7 +5,7 @@ parent: Solutions
 nav_order: 30
 ---
 
-# Models and Model Cards
+# MediaPipe Models and Model Cards
 {: .no_toc }
 
 1. TOC

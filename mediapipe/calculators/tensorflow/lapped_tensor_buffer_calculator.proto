@@ -45,4 +45,8 @@ message LappedTensorBufferCalculatorOptions {
   // This is useful for aligning the timestamp to be centered on the input
   // range.
   optional int32 timestamp_offset = 4 [default = 0];
+
+  // Amount of padding (repeating of first/last value) to add to the beginning
+  // and end of the input stream.
+  optional int32 padding = 5;
 }

@@ -31,11 +31,15 @@ namespace tf = ::tensorflow;
 class LappedTensorBufferCalculatorTest : public ::testing::Test {
  protected:
   void SetUpCalculator(int buffer_size, int overlap, bool add_dim,
-                       int timestamp_offset) {
+                       int timestamp_offset, int padding,
+                       bool timestamp_output) {
     CalculatorGraphConfig::Node config;
     config.set_calculator("LappedTensorBufferCalculator");
     config.add_input_stream("input_tensor");
     config.add_output_stream("output_tensor");
+    if (timestamp_output) {
+      config.add_output_stream("output_timestamp");
+    }
     auto options = config.mutable_options()->MutableExtension(
         LappedTensorBufferCalculatorOptions::ext);
     options->set_buffer_size(buffer_size);
@@ -44,13 +48,14 @@ class LappedTensorBufferCalculatorTest : public ::testing::Test {
       options->set_add_batch_dim_to_tensors(true);
     }
     options->set_timestamp_offset(timestamp_offset);
+    options->set_padding(padding);
     runner_ = ::absl::make_unique<CalculatorRunner>(config);
   }
   std::unique_ptr<CalculatorRunner> runner_;
 };
 
 TEST_F(LappedTensorBufferCalculatorTest, OneToOne) {
-  SetUpCalculator(1, 0, false, 0);
+  SetUpCalculator(1, 0, false, 0, 0, false);
   int num_timesteps = 3;
   for (int i = 0; i < num_timesteps; ++i) {
     auto input = ::absl::make_unique<tensorflow::Tensor>(
@@ -74,7 +79,7 @@ TEST_F(LappedTensorBufferCalculatorTest, OneToTwo) {
   int buffer_size = 2;
   int overlap = 1;
   bool add_dim = false;
-  SetUpCalculator(buffer_size, overlap, add_dim, 0);
+  SetUpCalculator(buffer_size, overlap, add_dim, 0, 0, false);
   int num_timesteps = 3;
   for (int i = 0; i < num_timesteps; ++i) {
     auto input = ::absl::make_unique<tensorflow::Tensor>(
@@ -100,7 +105,7 @@ TEST_F(LappedTensorBufferCalculatorTest, OneToThree) {
   int buffer_size = 3;
   int overlap = 2;
   bool add_dim = false;
-  SetUpCalculator(buffer_size, overlap, add_dim, 0);
+  SetUpCalculator(buffer_size, overlap, add_dim, 0, 0, false);
   int num_timesteps = 3;
   for (int i = 0; i < num_timesteps; ++i) {
     auto input = ::absl::make_unique<tensorflow::Tensor>(
@@ -126,7 +131,7 @@ TEST_F(LappedTensorBufferCalculatorTest, OneToThreeSkip) {
   int buffer_size = 3;
   int overlap = 1;
   bool add_dim = false;
-  SetUpCalculator(buffer_size, overlap, add_dim, 0);
+  SetUpCalculator(buffer_size, overlap, add_dim, 0, 0, false);
   int num_timesteps = 3;
   for (int i = 0; i < num_timesteps; ++i) {
     auto input = ::absl::make_unique<tensorflow::Tensor>(
@@ -152,7 +157,7 @@ TEST_F(LappedTensorBufferCalculatorTest, OneToThreeBatch) {
   int buffer_size = 3;
   int overlap = 2;
   bool add_dim = true;
-  SetUpCalculator(buffer_size, overlap, add_dim, 0);
+  SetUpCalculator(buffer_size, overlap, add_dim, 0, 0, false);
   int num_timesteps = 3;
   for (int i = 0; i < num_timesteps; ++i) {
     auto input = ::absl::make_unique<tensorflow::Tensor>(
@@ -180,7 +185,7 @@ TEST_F(LappedTensorBufferCalculatorTest, NegativeTimestampOffsetFails) {
   int overlap = 15;
   bool add_dim = true;
   int timestamp_offset = -7;
-  SetUpCalculator(buffer_size, overlap, add_dim, timestamp_offset);
+  SetUpCalculator(buffer_size, overlap, add_dim, timestamp_offset, 0, false);
   int num_timesteps = 20;
   for (int i = 0; i < num_timesteps; ++i) {
     auto input = ::absl::make_unique<tensorflow::Tensor>(
@@ -197,7 +202,7 @@ TEST_F(LappedTensorBufferCalculatorTest, OutOfRangeTimestampOffsetFails) {
   int overlap = 15;
   bool add_dim = true;
   int timestamp_offset = buffer_size;
-  SetUpCalculator(buffer_size, overlap, add_dim, timestamp_offset);
+  SetUpCalculator(buffer_size, overlap, add_dim, timestamp_offset, 0, false);
   int num_timesteps = 20;
   for (int i = 0; i < num_timesteps; ++i) {
     auto input = ::absl::make_unique<tensorflow::Tensor>(
@@ -214,7 +219,7 @@ TEST_F(LappedTensorBufferCalculatorTest, OneToThreeBatchTimestampOffset) {
   int overlap = 15;
   bool add_dim = true;
   int timestamp_offset = 7;
-  SetUpCalculator(buffer_size, overlap, add_dim, timestamp_offset);
+  SetUpCalculator(buffer_size, overlap, add_dim, timestamp_offset, 0, false);
   int num_timesteps = 20;
   for (int i = 0; i < num_timesteps; ++i) {
     auto input = ::absl::make_unique<tensorflow::Tensor>(
@@ -234,6 +239,38 @@ TEST_F(LappedTensorBufferCalculatorTest, OneToThreeBatchTimestampOffset) {
       ASSERT_EQ(i + timestamp_offset, value);
     }
   }
+}
+
+TEST_F(LappedTensorBufferCalculatorTest,
+       OneToThreeBatchTimestampOffsetPadding) {
+  int buffer_size = 12;
+  int overlap = 6;
+  bool add_dim = true;
+  int timestamp_offset = 3;
+  int padding = 0;
+  SetUpCalculator(buffer_size, overlap, add_dim, timestamp_offset, padding,
+                  true);
+  int num_timesteps = 20;
+  for (int i = 0; i < num_timesteps; ++i) {
+    auto input = ::absl::make_unique<tensorflow::Tensor>(
+        tensorflow::DT_FLOAT, tensorflow::TensorShape({1}));
+    input->tensor<float, 1>()(0) = i;
+    runner_->MutableInputs()->Index(0).packets.push_back(
+        Adopt(input.release()).At(Timestamp(i)));
+  }
+  ASSERT_TRUE(runner_->Run().ok());
+
+  const int output_size = num_timesteps / buffer_size + 1;
+  const std::vector<Packet>& output_packets =
+      runner_->Outputs().Index(0).packets;
+  ASSERT_EQ(output_size, output_packets.size());
+  for (int i = 0; i < output_size; ++i) {
+    int64 value = output_packets[i].Timestamp().Value();
+    ASSERT_EQ(i * overlap + timestamp_offset, value);
+  }
+  const std::vector<Packet>& output_timestamps =
+      runner_->Outputs().Index(1).packets;
+  ASSERT_EQ(output_size, output_timestamps.size());
 }
 
 }  // namespace

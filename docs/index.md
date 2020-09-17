@@ -50,6 +50,10 @@ Object Detection                                                                
 [MediaSequence](https://google.github.io/mediapipe/solutions/media_sequence)                    |         |     | ✅       |        |     |
 [YouTube 8M](https://google.github.io/mediapipe/solutions/youtube_8m)                           |         |     | ✅       |        |     |
 
+See also
+[MediaPipe Models and Model Cards](https://google.github.io/mediapipe/solutions/models)
+for ML models released in MediaPipe.
+
 ## MediaPipe on the Web
 
 MediaPipe on the Web is an effort to run the same ML solutions built for mobile
@@ -89,7 +93,8 @@ run code search using
 
 ## Publications
 
-*   [Face AR with MediaPipe Face Mesh](https://mediapipe.page.link/face-geometry-blog) in Google Developers Blog
+*   [MediaPipe 3D Face Transform](https://mediapipe.page.link/face-geometry-blog)
+    in Google Developers Blog
 *   [Instant Motion Tracking With MediaPipe](https://developers.googleblog.com/2020/08/instant-motion-tracking-with-mediapipe.html)
     in Google Developers Blog
 *   [BlazePose - On-device Real-time Body Pose Tracking](https://ai.googleblog.com/2020/08/on-device-real-time-body-pose-tracking.html)
