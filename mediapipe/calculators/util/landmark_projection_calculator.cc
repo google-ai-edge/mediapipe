@@ -131,6 +131,8 @@ class LandmarkProjectionCalculator : public CalculatorBase {
         new_landmark->set_z(new_z);
         // Keep visibility as is.
         new_landmark->set_visibility(landmark.visibility());
+        // Keep presence as is.
+        new_landmark->set_presence(landmark.presence());
       }
 
       cc->Outputs().Get(output_id).AddPacket(

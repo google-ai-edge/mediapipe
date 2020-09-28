@@ -513,6 +513,17 @@ void AnnotationRenderer::DrawText(const RenderAnnotation& annotation) {
   const int font_face = text.font_face();
 
   const double font_scale = ComputeFontScale(font_face, font_size, thickness);
+  int text_baseline = 0;
+  cv::Size text_size = cv::getTextSize(text.display_text(), font_face,
+                                       font_scale, thickness, &text_baseline);
+
+  if (text.center_horizontally()) {
+    origin.x -= text_size.width / 2;
+  }
+  if (text.center_vertically()) {
+    origin.y += text_size.height / 2;
+  }
+
   cv::putText(mat_image_, text.display_text(), origin, font_face, font_scale,
               color, thickness, /*lineType=*/8,
               /*bottomLeftOrigin=*/flip_text_vertically_);

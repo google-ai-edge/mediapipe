@@ -14,6 +14,7 @@
 #
 
 load("//mediapipe/framework/port:build_config.bzl", "mediapipe_proto_library")
+load("//mediapipe/framework:mediapipe_register_type.bzl", "mediapipe_register_type")
 
 package(
     default_visibility = ["//visibility:private"],
@@ -219,6 +220,19 @@ mediapipe_proto_library(
     visibility = [
         "//visibility:public",
     ],
+)
+
+mediapipe_register_type(
+    base_name = "landmark",
+    include_headers = ["mediapipe/framework/formats/landmark.pb.h"],
+    types = [
+        "::mediapipe::Landmark",
+        "::mediapipe::NormalizedLandmark",
+        "::mediapipe::NormalizedLandmarkList",
+        "::std::vector<::mediapipe::Landmark>",
+        "::std::vector<::mediapipe::NormalizedLandmark>",
+    ],
+    deps = [":landmark_cc_proto"],
 )
 
 # Expose the proto source files for building mediapipe AAR.

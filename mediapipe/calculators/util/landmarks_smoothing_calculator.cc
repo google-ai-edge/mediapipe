@@ -137,6 +137,8 @@ class VelocityFilter : public LandmarksFilter {
                           image_width);
       // Keep visibility as is.
       out_landmark->set_visibility(in_landmark.visibility());
+      // Keep presence as is.
+      out_landmark->set_presence(in_landmark.presence());
     }
 
     return ::mediapipe::OkStatus();

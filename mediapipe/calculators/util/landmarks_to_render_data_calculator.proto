@@ -49,4 +49,19 @@ message LandmarksToRenderDataCalculatorOptions {
   // Threshold to determine visibility of the landmark. Landmark with visibility
   // greater or equal than threshold is considered visible.
   optional double visibility_threshold = 7 [default = 0.0];
+
+  // Use landmarks presence while rendering landmarks and connections. If
+  // landmark is not present, neither it nor adjacent connections will be
+  // rendered.
+  optional bool utilize_presence = 8 [default = false];
+
+  // Threshold to determine presence of the landmark. Landmark with presence
+  // greater or equal than threshold is considered present.
+  optional double presence_threshold = 9 [default = 0.0];
+
+  // Min thickness of the drawing for landmark circle.
+  optional double min_depth_circle_thickness = 10 [default = 0.0];
+
+  // Max thickness of the drawing for landmark circle.
+  optional double max_depth_circle_thickness = 11 [default = 18.0];
 }

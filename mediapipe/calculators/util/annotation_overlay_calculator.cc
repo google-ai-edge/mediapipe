@@ -476,6 +476,7 @@ REGISTER_CALCULATOR(AnnotationOverlayCalculator);
         options_.canvas_height_px(), options_.canvas_width_px(), CV_8UC3,
         cv::Scalar(options_.canvas_color().r(), options_.canvas_color().g(),
                    options_.canvas_color().b()));
+    *target_format = ImageFormat::SRGB;
   }
 
   return ::mediapipe::OkStatus();

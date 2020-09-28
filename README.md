@@ -8,15 +8,14 @@ nav_order: 1
 
 --------------------------------------------------------------------------------
 
-## Cross-platform ML solutions made simple
+## Live ML anywhere
 
-[MediaPipe](https://google.github.io/mediapipe/) is the simplest way for researchers
-and developers to build world-class ML solutions and applications for mobile,
-desktop/cloud, web and IoT devices.
+[MediaPipe](https://google.github.io/mediapipe/) offers cross-platform, customizable
+ML solutions for live and streaming media.
 
 ![accelerated.png](docs/images/accelerated_small.png)                                                               | ![cross_platform.png](docs/images/cross_platform_small.png)
 :------------------------------------------------------------------------------------------------------------: | :----------------------------------------------------:
-***End-to-End acceleration***: *built-in fast ML inference and processing accelerated even on common hardware* | ***Build one, deploy anywhere***: *Unified solution works across Android, iOS, desktop/cloud, web and IoT*
+***End-to-End acceleration***: *Built-in fast ML inference and processing accelerated even on common hardware* | ***Build once, deploy anywhere***: *Unified solution works across Android, iOS, desktop/cloud, web and IoT*
 ![ready_to_use.png](docs/images/ready_to_use_small.png)                                                             | ![open_source.png](docs/images/open_source_small.png)
 ***Ready-to-use solutions***: *Cutting-edge ML solutions demonstrating full power of the framework*            | ***Free and open source***: *Framework and solutions both under Apache 2.0, fully extensible and customizable*
 
@@ -93,7 +92,7 @@ run code search using
 
 ## Publications
 
-*   [MediaPipe 3D Face Transform](https://mediapipe.page.link/face-geometry-blog)
+*   [MediaPipe 3D Face Transform](https://developers.googleblog.com/2020/09/mediapipe-3d-face-transform.html)
     in Google Developers Blog
 *   [Instant Motion Tracking With MediaPipe](https://developers.googleblog.com/2020/08/instant-motion-tracking-with-mediapipe.html)
     in Google Developers Blog

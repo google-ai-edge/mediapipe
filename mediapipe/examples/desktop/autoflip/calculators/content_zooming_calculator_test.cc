@@ -418,6 +418,25 @@ TEST(ContentZoomingCalculatorTest, ShiftOutsideBounds) {
                 runner->Outputs().Tag("CROP_RECT").packets);
 }
 
+TEST(ContentZoomingCalculatorTest, EmptySize) {
+  auto config = ParseTextProtoOrDie<CalculatorGraphConfig::Node>(kConfigD);
+  auto runner = ::absl::make_unique<CalculatorRunner>(config);
+  MP_ASSERT_OK(runner->Run());
+  ASSERT_EQ(runner->Outputs().Tag("CROP_RECT").packets.size(), 0);
+}
+
+TEST(ContentZoomingCalculatorTest, EmptyDetections) {
+  auto config = ParseTextProtoOrDie<CalculatorGraphConfig::Node>(kConfigD);
+  auto runner = ::absl::make_unique<CalculatorRunner>(config);
+  auto input_size = ::absl::make_unique<std::pair<int, int>>(1000, 1000);
+  runner->MutableInputs()
+      ->Tag("VIDEO_SIZE")
+      .packets.push_back(Adopt(input_size.release()).At(Timestamp(0)));
+  MP_ASSERT_OK(runner->Run());
+  CheckCropRect(0, 0, 1000, 1000, 0,
+                runner->Outputs().Tag("CROP_RECT").packets);
+}
+
 }  // namespace
 }  // namespace autoflip
 

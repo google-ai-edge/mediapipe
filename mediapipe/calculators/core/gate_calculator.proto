@@ -1,4 +1,4 @@
-// Copyright 2019 The MediaPipe Authors.
+// Copyright 2019-2020 The MediaPipe Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -27,4 +27,12 @@ message GateCalculatorOptions {
   // disallowing the corresponding packets in the data input streams. Setting
   // this option to true inverts that, allowing the data packets to go through.
   optional bool empty_packets_as_allow = 1;
+
+  // Input side packet and input stream are allowed to coexist only if this
+  // field is set. When it's set to true, the input side packet has higher
+  // precedence and the input stream signal will be ignored. When it's set to
+  // false, the input stream signal always overrides the input side packet
+  // signal.
+  //
+  optional bool side_input_has_precedence = 2;
 }

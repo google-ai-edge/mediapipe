@@ -124,7 +124,7 @@ class ImageFrameTest(absltest.TestCase):
         cv2.COLOR_RGB2GRAY)
     image_frame = mp.ImageFrame(
         image_format=mp.ImageFormat.GRAY8,
-        data=mat[offset:-offset, offset:-offset])
+        data=np.ascontiguousarray(mat[offset:-offset, offset:-offset]))
     self.assertTrue(
         np.array_equal(mat[offset:-offset, offset:-offset],
                        image_frame.numpy_view()))
@@ -137,7 +137,7 @@ class ImageFrameTest(absltest.TestCase):
         cv2.COLOR_RGB2BGR)
     image_frame = mp.ImageFrame(
         image_format=mp.ImageFormat.SRGB,
-        data=mat[offset:-offset, offset:-offset, :])
+        data=np.ascontiguousarray(mat[offset:-offset, offset:-offset, :]))
     self.assertTrue(
         np.array_equal(mat[offset:-offset, offset:-offset, :],
                        image_frame.numpy_view()))

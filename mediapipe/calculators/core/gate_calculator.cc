@@ -1,4 +1,4 @@
-// Copyright 2019 The MediaPipe Authors.
+// Copyright 2019-2020 The MediaPipe Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -59,16 +59,30 @@ std::string ToString(GateState state) {
 // ALLOW or DISALLOW can also be specified as an input side packet. The rules
 // for evaluation remain the same as above.
 //
+// If side_input_has_precedence isn't set in the calculator option,
 // ALLOW/DISALLOW inputs must be specified either using input stream or
-// via input side packet but not both.
+// via input side packet but not both. Otherwise, both input stream and input
+// side packet can be specified and the calculator will take one signal over the
+// other based on the value of the side_input_has_precedence field.
 //
 // Intended to be used with the default input stream handler, which synchronizes
 // all data input streams with the ALLOW/DISALLOW control input stream.
 //
-// Example config:
+// Example configs:
 // node {
 //   calculator: "GateCalculator"
+//   input_stream: "input_stream0"
+//   input_stream: "input_stream1"
+//   input_stream: "input_streamN"
 //   input_side_packet: "ALLOW:allow" or "DISALLOW:disallow"
+//   output_stream: "STATE_CHANGE:state_change"
+//   output_stream: "output_stream0"
+//   output_stream: "output_stream1"
+//   output_stream: "output_streamN"
+// }
+//
+// node {
+//   calculator: "GateCalculator"
 //   input_stream: "input_stream0"
 //   input_stream: "input_stream1"
 //   input_stream: "input_streamN"
@@ -77,6 +91,25 @@ std::string ToString(GateState state) {
 //   output_stream: "output_stream0"
 //   output_stream: "output_stream1"
 //   output_stream: "output_streamN"
+// }
+//
+// With side_input_has_precedence:
+// node {
+//   calculator: "GateCalculator"
+//   input_stream: "input_stream0"
+//   input_stream: "input_stream1"
+//   input_stream: "input_streamN"
+//   input_stream: "ALLOW:allow_stream" or "DISALLOW:disallow_stream"
+//   input_side_packet: "ALLOW:allow_packet" or "DISALLOW:disallow_packet"
+//   output_stream: "STATE_CHANGE:state_change"
+//   output_stream: "output_stream0"
+//   output_stream: "output_stream1"
+//   output_stream: "output_streamN"
+//   options: {
+//     [mediapipe.GateCalculatorOptions.ext] {
+//       side_input_has_precedence: true or false
+//     }
+//   }
 // }
 class GateCalculator : public CalculatorBase {
  public:
@@ -88,9 +121,15 @@ class GateCalculator : public CalculatorBase {
                                  cc->InputSidePackets().HasTag("DISALLOW");
     bool input_via_stream =
         cc->Inputs().HasTag("ALLOW") || cc->Inputs().HasTag("DISALLOW");
-    // Only one of input_side_packet or input_stream may specify ALLOW/DISALLOW
-    // input.
-    RET_CHECK(input_via_side_packet ^ input_via_stream);
+    const auto& options = cc->Options<::mediapipe::GateCalculatorOptions>();
+    if (options.has_side_input_has_precedence()) {
+      RET_CHECK(input_via_side_packet && input_via_stream);
+    } else {
+      // Only one of input_side_packet or input_stream may specify
+      // ALLOW/DISALLOW input when side_input_has_precedence is not set
+      // in the options.
+      RET_CHECK(input_via_side_packet ^ input_via_stream);
+    }
 
     if (input_via_side_packet) {
       RET_CHECK(cc->InputSidePackets().HasTag("ALLOW") ^
@@ -101,7 +140,8 @@ class GateCalculator : public CalculatorBase {
       } else {
         cc->InputSidePackets().Tag("DISALLOW").Set<bool>();
       }
-    } else {
+    }
+    if (input_via_stream) {
       RET_CHECK(cc->Inputs().HasTag("ALLOW") ^ cc->Inputs().HasTag("DISALLOW"));
 
       if (cc->Inputs().HasTag("ALLOW")) {
@@ -134,13 +174,13 @@ class GateCalculator : public CalculatorBase {
   }
 
   ::mediapipe::Status Open(CalculatorContext* cc) final {
-    use_side_packet_for_allow_disallow_ = false;
+    bool use_side_packet_for_allow_disallow = false;
     if (cc->InputSidePackets().HasTag("ALLOW")) {
-      use_side_packet_for_allow_disallow_ = true;
+      use_side_packet_for_allow_disallow = true;
       allow_by_side_packet_decision_ =
           cc->InputSidePackets().Tag("ALLOW").Get<bool>();
     } else if (cc->InputSidePackets().HasTag("DISALLOW")) {
-      use_side_packet_for_allow_disallow_ = true;
+      use_side_packet_for_allow_disallow = true;
       allow_by_side_packet_decision_ =
           !cc->InputSidePackets().Tag("DISALLOW").Get<bool>();
     }
@@ -152,23 +192,31 @@ class GateCalculator : public CalculatorBase {
 
     const auto& options = cc->Options<::mediapipe::GateCalculatorOptions>();
     empty_packets_as_allow_ = options.empty_packets_as_allow();
+    if (!options.has_side_input_has_precedence()) {
+      side_input_has_precedence_ = use_side_packet_for_allow_disallow;
+    } else {
+      side_input_has_precedence_ = options.side_input_has_precedence();
+    }
 
     return ::mediapipe::OkStatus();
   }
 
   ::mediapipe::Status Process(CalculatorContext* cc) final {
-    bool allow = empty_packets_as_allow_;
-    if (use_side_packet_for_allow_disallow_) {
-      allow = allow_by_side_packet_decision_;
+    bool allow_by_stream = empty_packets_as_allow_;
+    if (cc->Inputs().HasTag("ALLOW") && !cc->Inputs().Tag("ALLOW").IsEmpty()) {
+      allow_by_stream = cc->Inputs().Tag("ALLOW").Get<bool>();
+    }
+    if (cc->Inputs().HasTag("DISALLOW") &&
+        !cc->Inputs().Tag("DISALLOW").IsEmpty()) {
+      allow_by_stream = !cc->Inputs().Tag("DISALLOW").Get<bool>();
+    }
+    const bool allow_by_side_packet =
+        allow_by_side_packet_decision_ || empty_packets_as_allow_;
+    bool allow = false;
+    if (side_input_has_precedence_) {
+      allow = allow_by_side_packet;
     } else {
-      if (cc->Inputs().HasTag("ALLOW") &&
-          !cc->Inputs().Tag("ALLOW").IsEmpty()) {
-        allow = cc->Inputs().Tag("ALLOW").Get<bool>();
-      }
-      if (cc->Inputs().HasTag("DISALLOW") &&
-          !cc->Inputs().Tag("DISALLOW").IsEmpty()) {
-        allow = !cc->Inputs().Tag("DISALLOW").Get<bool>();
-      }
+      allow = allow_by_stream;
     }
     const GateState new_gate_state = allow ? GATE_ALLOW : GATE_DISALLOW;
 
@@ -203,9 +251,9 @@ class GateCalculator : public CalculatorBase {
  private:
   GateState last_gate_state_ = GATE_UNINITIALIZED;
   int num_data_streams_;
+  bool allow_by_side_packet_decision_ = false;
   bool empty_packets_as_allow_;
-  bool use_side_packet_for_allow_disallow_;
-  bool allow_by_side_packet_decision_;
+  bool side_input_has_precedence_;
 };
 REGISTER_CALCULATOR(GateCalculator);
 

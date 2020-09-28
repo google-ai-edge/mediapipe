@@ -244,6 +244,9 @@ void MakeStaticFeatures(const int top_border, const int bottom_border,
     frame_width_ = cc->Inputs().Tag(kVideoFrame).Get<ImageFrame>().Width();
     frame_height_ = cc->Inputs().Tag(kVideoFrame).Get<ImageFrame>().Height();
   } else if (cc->Inputs().HasTag(kVideoSize)) {
+    if (cc->Inputs().Tag(kVideoSize).IsEmpty()) {
+      return ::mediapipe::OkStatus();
+    }
     frame_width_ =
         cc->Inputs().Tag(kVideoSize).Get<std::pair<int, int>>().first;
     frame_height_ =
@@ -302,6 +305,14 @@ void MakeStaticFeatures(const int top_border, const int bottom_border,
   }
 
   if (cc->Inputs().HasTag(kDetections)) {
+    if (cc->Inputs().Tag(kDetections).IsEmpty()) {
+      auto default_rect = absl::make_unique<mediapipe::Rect>();
+      default_rect->set_width(frame_width_);
+      default_rect->set_height(frame_height_);
+      cc->Outputs().Tag(kCropRect).Add(default_rect.release(),
+                                       Timestamp(cc->InputTimestamp()));
+      return ::mediapipe::OkStatus();
+    }
     auto raw_detections =
         cc->Inputs().Tag(kDetections).Get<std::vector<mediapipe::Detection>>();
     for (const auto& detection : raw_detections) {
