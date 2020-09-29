@@ -97,7 +97,7 @@ class ScreenToMetricSpaceConverter {
   //
   // (3) Use the canonical-to-runtime scale from (2) to unproject the screen
   //     landmarks. The result is referenced as "intermediate landmarks" because
-  //     they are the first estimation of the resuling metric landmarks, but are
+  //     they are the first estimation of the resulting metric landmarks, but are
   //     not quite there yet.
   //
   // (4) Estimate a canonical-to-runtime landmark set scale by running the
