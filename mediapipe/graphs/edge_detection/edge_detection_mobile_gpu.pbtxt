@@ -14,7 +14,7 @@ node: {
   output_stream: "luma_video"
 }
 
-# Applies the Sobel filter to luminance images sotred in RGB format.
+# Applies the Sobel filter to luminance images stored in RGB format.
 node: {
   calculator: "SobelEdgesCalculator"
   input_stream: "luma_video"
