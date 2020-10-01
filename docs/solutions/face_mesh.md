@@ -254,6 +254,45 @@ and for iOS modify `kNumFaces` in
 Tip: Maximum number of faces to detect/process is set to 1 by default. To change
 it, in the graph file modify the option of `ConstantSidePacketCalculator`.
 
+
+#### Python
+Although not having oficial support for Python, you can easily run Face Landmark TFlite model at Python, with TFlite Interpreter.
+
+```python
+import tensorflow as tf
+from tensorflow import keras
+import numpy as np
+from PIL import Image
+import time
+
+def doLabel(pil_img):
+    interpreter = tf.lite.Interpreter(model_path='face_landmark.tflite')
+
+    interpreter.allocate_tensors()
+
+    input_details = interpreter.get_input_details()
+    output_details = interpreter.get_output_details()
+
+    floating_model = input_details[0]['dtype'] == np.float32
+    height = input_details[0]['shape'][1]
+    width = input_details[0]['shape'][2]
+    img = pil_img.resize((width, height))
+    input_data = np.expand_dims(img, axis=0)
+
+    if floating_model:
+        input_data = (np.float32(input_data) - 127.5) /127.5
+
+    interpreter.set_tensor(input_details[0]['index'], input_data)
+    interpreter.invoke()
+    output_data = interpreter.get_tensor(output_details[0]['index'])
+    results = np.squeeze(output_data)
+    results.shape = (468,3)
+    return results
+
+```
+The output is an array with the 468 annotations. X and Y values are between 0 and 192.
+
+
 ### Face Effect Example
 
 Face effect example showcases real-time mobile face effect application use case
