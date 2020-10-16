@@ -82,7 +82,7 @@ def _check_bazel():
       sys.stderr.write('invalid bazel version number: %s\n' % version_segments)
       sys.exit(-1)
   bazel_version = int(''.join(['%03d' % int(seg) for seg in version_segments]))
-  if bazel_version < 2000000:
+  if bazel_version < 3400000:
     sys.stderr.write(
         'the current bazel version is older than the minimum version that MediaPipe can support. Please upgrade bazel.'
     )

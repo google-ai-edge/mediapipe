@@ -1945,9 +1945,10 @@ void MotionBox::EstimateObjectMotion(
 
   // For any additional degrees of freedom, require a good set of inliers.
   if (num_continued_inliers < options_.object_similarity_min_contd_inliers()) {
-    VLOG_IF(2, options_.tracking_degrees() !=
-                   TrackStepOptions::TRACKING_DEGREE_TRANSLATION)
-        << "Falling back to translation!!!";
+    if (options_.tracking_degrees() !=
+        TrackStepOptions::TRACKING_DEGREE_TRANSLATION) {
+      VLOG(2) << "Falling back to translation!!!";
+    }
     VLOG(1) << "num_continued_inliers: " << num_continued_inliers << " < "
             << options_.object_similarity_min_contd_inliers()
             << ", fall back to translation";

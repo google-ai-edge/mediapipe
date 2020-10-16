@@ -446,8 +446,8 @@ visible so that we can start seeing frames from the `previewFrameTexture`.
 However, before starting the camera, we need to decide which camera we want to
 use. [`CameraXPreviewHelper`] inherits from [`CameraHelper`] which provides two
 options, `FRONT` and `BACK`. We can pass in the decision from the `BUILD` file
-as metadata such that no code change is required to build a another version of
-the app using a different camera.
+as metadata such that no code change is required to build another version of the
+app using a different camera.
 
 Assuming we want to use `BACK` camera to perform edge detection on a live scene
 that we view from the camera, add the metadata into `AndroidManifest.xml`:

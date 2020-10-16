@@ -218,10 +218,11 @@ template <typename T>
     EXPECT_EQ(values[5], collection_ptr->Get("TAG_C", 0));
 
     // Test const-ness.
-    EXPECT_EQ(false, std::is_const<typename std::remove_reference<decltype(
-                         collection.Get("TAG_A", 0))>::type>::value);
-    EXPECT_EQ(true, std::is_const<typename std::remove_reference<decltype(
-                        collection_ptr->Get("TAG_A", 0))>::type>::value);
+    EXPECT_EQ(false, std::is_const<typename std::remove_reference<
+                         decltype(collection.Get("TAG_A", 0))>::type>::value);
+    EXPECT_EQ(true,
+              std::is_const<typename std::remove_reference<
+                  decltype(collection_ptr->Get("TAG_A", 0))>::type>::value);
 
     // Test access using a range based for.
     int i = 0;
@@ -278,10 +279,11 @@ template <typename T>
     EXPECT_EQ(values[5], collection_ptr->Get("TAG_C", 0));
 
     // Test const-ness.
-    EXPECT_EQ(false, std::is_const<typename std::remove_reference<decltype(
-                         collection.Get("TAG_A", 0))>::type>::value);
-    EXPECT_EQ(true, std::is_const<typename std::remove_reference<decltype(
-                        collection_ptr->Get("TAG_A", 0))>::type>::value);
+    EXPECT_EQ(false, std::is_const<typename std::remove_reference<
+                         decltype(collection.Get("TAG_A", 0))>::type>::value);
+    EXPECT_EQ(true,
+              std::is_const<typename std::remove_reference<
+                  decltype(collection_ptr->Get("TAG_A", 0))>::type>::value);
 
     // Test access using a range based for.
     int i = 0;
@@ -309,10 +311,10 @@ template <typename T>
       // storage == kStoreValue.
       EXPECT_EQ(&values[i], collection_ptr->GetPtr(id));
       EXPECT_EQ(values[i], *collection_ptr->GetPtr(id));
-      EXPECT_EQ(false, std::is_const<typename std::remove_reference<decltype(
-                           *collection.GetPtr(id))>::type>::value);
-      EXPECT_EQ(true, std::is_const<typename std::remove_reference<decltype(
-                          *collection_ptr->GetPtr(id))>::type>::value);
+      EXPECT_EQ(false, std::is_const<typename std::remove_reference<
+                           decltype(*collection.GetPtr(id))>::type>::value);
+      EXPECT_EQ(true, std::is_const<typename std::remove_reference<
+                          decltype(*collection_ptr->GetPtr(id))>::type>::value);
       ++i;
     }
 
@@ -386,10 +388,11 @@ template <typename T>
     EXPECT_EQ(&values[5], collection_ptr->Get("TAG_C", 0));
 
     // Test const-ness.
-    EXPECT_EQ(false, std::is_const<typename std::remove_reference<decltype(
-                         collection.Get("TAG_A", 0))>::type>::value);
-    EXPECT_EQ(true, std::is_const<typename std::remove_reference<decltype(
-                        collection_ptr->Get("TAG_A", 0))>::type>::value);
+    EXPECT_EQ(false, std::is_const<typename std::remove_reference<
+                         decltype(collection.Get("TAG_A", 0))>::type>::value);
+    EXPECT_EQ(true,
+              std::is_const<typename std::remove_reference<
+                  decltype(collection_ptr->Get("TAG_A", 0))>::type>::value);
 
     // Test access using a range based for.
     int i = 0;
@@ -473,8 +476,8 @@ TEST(CollectionTest, TestIteratorFunctions) {
   collection.GetPtr(collection.GetId("TAG_B", 1)) = &values[4];
   collection.GetPtr(collection.GetId("TAG_C", 0)) = &values[5];
 
-  EXPECT_EQ(false, std::is_const<typename std::remove_reference<decltype(
-                       collection.begin())>::type>::value);
+  EXPECT_EQ(false, std::is_const<typename std::remove_reference<
+                       decltype(collection.begin())>::type>::value);
   EXPECT_EQ(values[0], *collection.begin());
   EXPECT_EQ(false, collection.begin()->empty());
   EXPECT_EQ(false, (*collection.begin()).empty());
@@ -483,8 +486,8 @@ TEST(CollectionTest, TestIteratorFunctions) {
 
   const auto* collection_ptr = &collection;
 
-  EXPECT_EQ(true, std::is_const<typename std::remove_reference<decltype(
-                      *collection_ptr->begin())>::type>::value);
+  EXPECT_EQ(true, std::is_const<typename std::remove_reference<
+                      decltype(*collection_ptr->begin())>::type>::value);
   EXPECT_EQ(values[0], *collection_ptr->begin());
   EXPECT_EQ(false, collection_ptr->begin()->empty());
   EXPECT_EQ(false, (*collection_ptr->begin()).empty());

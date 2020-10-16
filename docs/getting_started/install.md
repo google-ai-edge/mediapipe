@@ -42,16 +42,16 @@ apps, see these [instructions](./building_examples.md#ios).
 
     Follow the official
     [Bazel documentation](https://docs.bazel.build/versions/master/install-ubuntu.html)
-    to install Bazel 2.0 or higher.
+    to install Bazel 3.4 or higher.
 
     For Nvidia Jetson and Raspberry Pi devices with ARM Ubuntu, Bazel needs to
     be built from source.
 
     ```bash
-    # For Bazel 3.0.0
-    wget https://github.com/bazelbuild/bazel/releases/download/3.0.0/bazel-3.0.0-dist.zip
+    # For Bazel 3.4.0
+    wget https://github.com/bazelbuild/bazel/releases/download/3.4.0/bazel-3.4.0-dist.zip
     sudo apt-get install build-essential openjdk-8-jdk python zip unzip
-    unzip bazel-3.0.0-dist.zip
+    unzip bazel-3.4.0-dist.zip
     env EXTRA_BAZEL_ARGS="--host_javabase=@local_jdk//:jdk" bash ./compile.sh
     sudo cp output/bazel /usr/local/bin/
     ```
@@ -221,7 +221,7 @@ build issues.
 
     Follow the official
     [Bazel documentation](https://docs.bazel.build/versions/master/install-redhat.html)
-    to install Bazel 2.0 or higher.
+    to install Bazel 3.4 or higher.
 
 3.  Install OpenCV.
 
@@ -356,7 +356,7 @@ build issues.
 
     Option 2. Follow the official
     [Bazel documentation](https://docs.bazel.build/versions/master/install-os-x.html#install-with-installer-mac-os-x)
-    to install Bazel 2.0 or higher.
+    to install Bazel 3.4 or higher.
 
 4.  Install OpenCV and FFmpeg.
 
@@ -427,7 +427,6 @@ build issues.
         linkstatic = 1,
         visibility = ["//visibility:public"],
     )
-
     ```
 
 5.  Make sure that Python 3 and the Python "six" library are installed.
@@ -506,7 +505,7 @@ next section.
 
     Follow the official
     [Bazel documentation](https://docs.bazel.build/versions/master/install-windows.html)
-    to install Bazel 2.0 or higher.
+    to install Bazel 3.4 or higher.
 
 6.  Set Bazel variables.
 
@@ -567,7 +566,6 @@ next section.
     # I20200514 20:43:12.279618  1200 hello_world.cc:56] Hello World!
     # I20200514 20:43:12.279618  1200 hello_world.cc:56] Hello World!
     # I20200514 20:43:12.280613  1200 hello_world.cc:56] Hello World!
-
     ```
 
 If you run into a build error, please read
@@ -607,14 +605,14 @@ cameras. Alternatively, you use a video file as input.
 
     ```bash
     username@DESKTOP-TMVLBJ1:~$ curl -sLO --retry 5 --retry-max-time 10 \
-    https://storage.googleapis.com/bazel/3.0.0/release/bazel-3.0.0-installer-linux-x86_64.sh && \
-    sudo mkdir -p /usr/local/bazel/3.0.0 && \
-    chmod 755 bazel-3.0.0-installer-linux-x86_64.sh && \
-    sudo ./bazel-3.0.0-installer-linux-x86_64.sh --prefix=/usr/local/bazel/3.0.0 && \
-    source /usr/local/bazel/3.0.0/lib/bazel/bin/bazel-complete.bash
+    https://storage.googleapis.com/bazel/3.4.0/release/bazel-3.4.0-installer-linux-x86_64.sh && \
+    sudo mkdir -p /usr/local/bazel/3.4.0 && \
+    chmod 755 bazel-3.4.0-installer-linux-x86_64.sh && \
+    sudo ./bazel-3.4.0-installer-linux-x86_64.sh --prefix=/usr/local/bazel/3.4.0 && \
+    source /usr/local/bazel/3.4.0/lib/bazel/bin/bazel-complete.bash
 
-    username@DESKTOP-TMVLBJ1:~$ /usr/local/bazel/3.0.0/lib/bazel/bin/bazel version && \
-    alias bazel='/usr/local/bazel/3.0.0/lib/bazel/bin/bazel'
+    username@DESKTOP-TMVLBJ1:~$ /usr/local/bazel/3.4.0/lib/bazel/bin/bazel version && \
+    alias bazel='/usr/local/bazel/3.4.0/lib/bazel/bin/bazel'
     ```
 
 6.  Checkout MediaPipe repository.

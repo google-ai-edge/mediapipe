@@ -365,3 +365,7 @@ void ImageFrameSubmodule(pybind11::module* module) {
 
 }  // namespace python
 }  // namespace mediapipe
+
+#include "mediapipe/framework/type_map.h"
+MEDIAPIPE_REGISTER_TYPE(::mediapipe::ImageFrame, "::mediapipe::ImageFrame",
+                        nullptr, nullptr);

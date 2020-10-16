@@ -1,0 +1,22 @@
+syntax = "proto2";
+
+package mediapipe;
+
+import "mediapipe/framework/calculator.proto";
+
+option java_package = "com.google.mediapipe.proto";
+option java_outer_classname = "GateSubgraphProto";
+
+// Options for a gate-subgraph directing traffic to one of several contained
+// CalculatorGraphConfig's.
+message GateSubgraphOptions {
+  extend mediapipe.CalculatorOptions {
+    optional GateSubgraphOptions ext = 297196839;
+  }
+
+  // The contained literal subgraph configuration(s).
+  repeated CalculatorGraphConfig contained_graph = 1;
+
+  // The contained registered subgraphs or calculators.
+  repeated CalculatorGraphConfig.Node contained_node = 2;
+}

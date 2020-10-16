@@ -20,9 +20,11 @@
 #include "mediapipe/framework/calculator_options.pb.h"
 #include "mediapipe/framework/formats/image_format.pb.h"
 #include "mediapipe/framework/formats/image_frame.h"
+#include "mediapipe/framework/formats/image_frame_opencv.h"
 #include "mediapipe/framework/formats/video_stream_header.h"
 #include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/opencv_core_inc.h"
+#include "mediapipe/framework/port/opencv_imgproc_inc.h"
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/port/vector.h"
 #include "mediapipe/util/annotation_renderer.h"
@@ -40,13 +42,9 @@ namespace mediapipe {
 
 namespace {
 
-constexpr char kInputFrameTag[] = "IMAGE";
-constexpr char kOutputFrameTag[] = "IMAGE";
-
-constexpr char kInputVectorTag[] = "VECTOR";
-
-constexpr char kInputFrameTagGpu[] = "IMAGE_GPU";
-constexpr char kOutputFrameTagGpu[] = "IMAGE_GPU";
+constexpr char kVectorTag[] = "VECTOR";
+constexpr char kGpuBufferTag[] = "IMAGE_GPU";
+constexpr char kImageFrameTag[] = "IMAGE";
 
 enum { ATTRIB_VERTEX, ATTRIB_TEXTURE_POSITION, NUM_ATTRIBUTES };
 
@@ -57,12 +55,15 @@ size_t RoundUp(size_t n, size_t m) { return ((n + m - 1) / m) * m; }  // NOLINT
 // merges the annotation overlay with the image frame. As a result, drawing in
 // this color is not supported and it should be set to something unlikely used.
 constexpr uchar kAnnotationBackgroundColor = 2;  // Grayscale value.
+
+// Future Image type.
+inline bool HasImageTag(mediapipe::CalculatorContext* cc) { return false; }
 }  // namespace
 
 // A calculator for rendering data on images.
 //
 // Inputs:
-//  1. IMAGE or IMAGE_GPU (optional): An ImageFrame (or GpuBuffer)
+//  1. IMAGE or IMAGE_GPU (optional): An ImageFrame (or GpuBuffer),
 //     containing the input image.
 //     If output is CPU, and input isn't provided, the renderer creates a
 //     blank canvas with the width, height and color provided in the options.
@@ -74,7 +75,8 @@ constexpr uchar kAnnotationBackgroundColor = 2;  // Grayscale value.
 //     input vector items. These input streams are tagged with "VECTOR".
 //
 // Output:
-//  1. IMAGE or IMAGE_GPU: A rendered ImageFrame (or GpuBuffer).
+//  1. IMAGE or IMAGE_GPU: A rendered ImageFrame (or GpuBuffer),
+//  Note: Output types should match their corresponding input stream type.
 //
 // For CPU input frames, only SRGBA, SRGB and GRAY8 format are supported. The
 // output format is the same as input except for GRAY8 where the output is in
@@ -133,14 +135,17 @@ class AnnotationOverlayCalculator : public CalculatorBase {
   ::mediapipe::Status CreateRenderTargetCpu(CalculatorContext* cc,
                                             std::unique_ptr<cv::Mat>& image_mat,
                                             ImageFormat::Format* target_format);
+  template <typename Type, const char* Tag>
   ::mediapipe::Status CreateRenderTargetGpu(
       CalculatorContext* cc, std::unique_ptr<cv::Mat>& image_mat);
+  template <typename Type, const char* Tag>
   ::mediapipe::Status RenderToGpu(CalculatorContext* cc, uchar* overlay_image);
   ::mediapipe::Status RenderToCpu(CalculatorContext* cc,
                                   const ImageFormat::Format& target_format,
                                   uchar* data_image);
 
   ::mediapipe::Status GlRender(CalculatorContext* cc);
+  template <typename Type, const char* Tag>
   ::mediapipe::Status GlSetup(CalculatorContext* cc);
 
   // Options for the calculator.
@@ -172,24 +177,26 @@ REGISTER_CALCULATOR(AnnotationOverlayCalculator);
 
   bool use_gpu = false;
 
-  if (cc->Inputs().HasTag(kInputFrameTag) &&
-      cc->Inputs().HasTag(kInputFrameTagGpu)) {
+  if (cc->Inputs().HasTag(kImageFrameTag) &&
+      cc->Inputs().HasTag(kGpuBufferTag)) {
     return ::mediapipe::InternalError("Cannot have multiple input images.");
   }
-  if (cc->Inputs().HasTag(kInputFrameTagGpu) !=
-      cc->Outputs().HasTag(kOutputFrameTagGpu)) {
+  if (cc->Inputs().HasTag(kGpuBufferTag) !=
+      cc->Outputs().HasTag(kGpuBufferTag)) {
     return ::mediapipe::InternalError("GPU output must have GPU input.");
   }
 
-  // Input image to render onto copy of.
+  // Input image to render onto copy of. Should be same type as output.
 #if !defined(MEDIAPIPE_DISABLE_GPU)
-  if (cc->Inputs().HasTag(kInputFrameTagGpu)) {
-    cc->Inputs().Tag(kInputFrameTagGpu).Set<mediapipe::GpuBuffer>();
-    use_gpu |= true;
+  if (cc->Inputs().HasTag(kGpuBufferTag)) {
+    cc->Inputs().Tag(kGpuBufferTag).Set<mediapipe::GpuBuffer>();
+    CHECK(cc->Outputs().HasTag(kGpuBufferTag));
+    use_gpu = true;
   }
 #endif  //  !MEDIAPIPE_DISABLE_GPU
-  if (cc->Inputs().HasTag(kInputFrameTag)) {
-    cc->Inputs().Tag(kInputFrameTag).Set<ImageFrame>();
+  if (cc->Inputs().HasTag(kImageFrameTag)) {
+    cc->Inputs().Tag(kImageFrameTag).Set<ImageFrame>();
+    CHECK(cc->Outputs().HasTag(kImageFrameTag));
   }
 
   // Data streams to render.
@@ -197,7 +204,7 @@ REGISTER_CALCULATOR(AnnotationOverlayCalculator);
        ++id) {
     auto tag_and_index = cc->Inputs().TagAndIndexFromId(id);
     std::string tag = tag_and_index.first;
-    if (tag == kInputVectorTag) {
+    if (tag == kVectorTag) {
       cc->Inputs().Get(id).Set<std::vector<RenderData>>();
     } else if (tag.empty()) {
       // Empty tag defaults to accepting a single object of RenderData type.
@@ -205,15 +212,14 @@ REGISTER_CALCULATOR(AnnotationOverlayCalculator);
     }
   }
 
-  // Rendered image.
+  // Rendered image. Should be same type as input.
 #if !defined(MEDIAPIPE_DISABLE_GPU)
-  if (cc->Outputs().HasTag(kOutputFrameTagGpu)) {
-    cc->Outputs().Tag(kOutputFrameTagGpu).Set<mediapipe::GpuBuffer>();
-    use_gpu |= true;
+  if (cc->Outputs().HasTag(kGpuBufferTag)) {
+    cc->Outputs().Tag(kGpuBufferTag).Set<mediapipe::GpuBuffer>();
   }
 #endif  //  !MEDIAPIPE_DISABLE_GPU
-  if (cc->Outputs().HasTag(kOutputFrameTag)) {
-    cc->Outputs().Tag(kOutputFrameTag).Set<ImageFrame>();
+  if (cc->Outputs().HasTag(kImageFrameTag)) {
+    cc->Outputs().Tag(kImageFrameTag).Set<ImageFrame>();
   }
 
   if (use_gpu) {
@@ -229,20 +235,16 @@ REGISTER_CALCULATOR(AnnotationOverlayCalculator);
   cc->SetOffset(TimestampDiff(0));
 
   options_ = cc->Options<AnnotationOverlayCalculatorOptions>();
-  if (cc->Inputs().HasTag(kInputFrameTagGpu) &&
-      cc->Outputs().HasTag(kOutputFrameTagGpu)) {
+  if (cc->Inputs().HasTag(kGpuBufferTag) || HasImageTag(cc)) {
 #if !defined(MEDIAPIPE_DISABLE_GPU)
     use_gpu_ = true;
-#else
-    RET_CHECK_FAIL() << "GPU processing not enabled.";
 #endif  //  !MEDIAPIPE_DISABLE_GPU
   }
 
-  if (cc->Inputs().HasTag(kInputFrameTagGpu) ||
-      cc->Inputs().HasTag(kInputFrameTag)) {
+  if (cc->Inputs().HasTag(kGpuBufferTag) ||
+      cc->Inputs().HasTag(kImageFrameTag) || HasImageTag(cc)) {
     image_frame_available_ = true;
   } else {
-    image_frame_available_ = false;
     RET_CHECK(options_.has_canvas_width_px());
     RET_CHECK(options_.has_canvas_height_px());
   }
@@ -253,14 +255,12 @@ REGISTER_CALCULATOR(AnnotationOverlayCalculator);
   if (use_gpu_) renderer_->SetScaleFactor(options_.gpu_scale_factor());
 
   // Set the output header based on the input header (if present).
-  const char* input_tag = use_gpu_ ? kInputFrameTagGpu : kInputFrameTag;
-  const char* output_tag = use_gpu_ ? kOutputFrameTagGpu : kOutputFrameTag;
-  if (image_frame_available_ &&
-      !cc->Inputs().Tag(input_tag).Header().IsEmpty()) {
+  const char* tag = use_gpu_ ? kGpuBufferTag : kImageFrameTag;
+  if (image_frame_available_ && !cc->Inputs().Tag(tag).Header().IsEmpty()) {
     const auto& input_header =
-        cc->Inputs().Tag(input_tag).Header().Get<VideoHeader>();
+        cc->Inputs().Tag(tag).Header().Get<VideoHeader>();
     auto* output_video_header = new VideoHeader(input_header);
-    cc->Outputs().Tag(output_tag).SetHeader(Adopt(output_video_header));
+    cc->Outputs().Tag(tag).SetHeader(Adopt(output_video_header));
   }
 
   if (use_gpu_) {
@@ -282,15 +282,20 @@ REGISTER_CALCULATOR(AnnotationOverlayCalculator);
     if (!gpu_initialized_) {
       MP_RETURN_IF_ERROR(
           gpu_helper_.RunInGlContext([this, cc]() -> ::mediapipe::Status {
-            MP_RETURN_IF_ERROR(GlSetup(cc));
-            return ::mediapipe::OkStatus();
+            return GlSetup<mediapipe::GpuBuffer, kGpuBufferTag>(cc);
           }));
       gpu_initialized_ = true;
     }
+    if (cc->Inputs().HasTag(kGpuBufferTag)) {
+      MP_RETURN_IF_ERROR(
+          (CreateRenderTargetGpu<mediapipe::GpuBuffer, kGpuBufferTag>(
+              cc, image_mat)));
+    }
 #endif  //  !MEDIAPIPE_DISABLE_GPU
-    MP_RETURN_IF_ERROR(CreateRenderTargetGpu(cc, image_mat));
   } else {
-    MP_RETURN_IF_ERROR(CreateRenderTargetCpu(cc, image_mat, &target_format));
+    if (cc->Inputs().HasTag(kImageFrameTag)) {
+      MP_RETURN_IF_ERROR(CreateRenderTargetCpu(cc, image_mat, &target_format));
+    }
   }
 
   // Reset the renderer with the image_mat. No copy here.
@@ -301,7 +306,7 @@ REGISTER_CALCULATOR(AnnotationOverlayCalculator);
        ++id) {
     auto tag_and_index = cc->Inputs().TagAndIndexFromId(id);
     std::string tag = tag_and_index.first;
-    if (!tag.empty() && tag != kInputVectorTag) {
+    if (!tag.empty() && tag != kVectorTag) {
       continue;
     }
     if (cc->Inputs().Get(id).IsEmpty()) {
@@ -312,7 +317,7 @@ REGISTER_CALCULATOR(AnnotationOverlayCalculator);
       const RenderData& render_data = cc->Inputs().Get(id).Get<RenderData>();
       renderer_->RenderDataOnImage(render_data);
     } else {
-      RET_CHECK_EQ(kInputVectorTag, tag);
+      RET_CHECK_EQ(kVectorTag, tag);
       const std::vector<RenderData>& render_data_vec =
           cc->Inputs().Get(id).Get<std::vector<RenderData>>();
       for (const RenderData& render_data : render_data_vec) {
@@ -327,8 +332,8 @@ REGISTER_CALCULATOR(AnnotationOverlayCalculator);
     uchar* image_mat_ptr = image_mat->data;
     MP_RETURN_IF_ERROR(gpu_helper_.RunInGlContext(
         [this, cc, image_mat_ptr]() -> ::mediapipe::Status {
-          MP_RETURN_IF_ERROR(RenderToGpu(cc, image_mat_ptr));
-          return ::mediapipe::OkStatus();
+          return RenderToGpu<mediapipe::GpuBuffer, kGpuBufferTag>(
+              cc, image_mat_ptr);
         }));
 #endif  //  !MEDIAPIPE_DISABLE_GPU
   } else {
@@ -369,19 +374,21 @@ REGISTER_CALCULATOR(AnnotationOverlayCalculator);
                               ImageFrame::kDefaultAlignmentBoundary);
 #endif  //  !MEDIAPIPE_DISABLE_GPU
 
-  cc->Outputs()
-      .Tag(kOutputFrameTag)
-      .Add(output_frame.release(), cc->InputTimestamp());
+  if (cc->Outputs().HasTag(kImageFrameTag)) {
+    cc->Outputs()
+        .Tag(kImageFrameTag)
+        .Add(output_frame.release(), cc->InputTimestamp());
+  }
 
   return ::mediapipe::OkStatus();
 }
 
+template <typename Type, const char* Tag>
 ::mediapipe::Status AnnotationOverlayCalculator::RenderToGpu(
     CalculatorContext* cc, uchar* overlay_image) {
 #if !defined(MEDIAPIPE_DISABLE_GPU)
   // Source and destination textures.
-  const auto& input_frame =
-      cc->Inputs().Tag(kInputFrameTagGpu).Get<mediapipe::GpuBuffer>();
+  const auto& input_frame = cc->Inputs().Tag(Tag).Get<Type>();
   auto input_texture = gpu_helper_.CreateSourceTexture(input_frame);
 
   auto output_texture = gpu_helper_.CreateDestinationTexture(
@@ -414,10 +421,8 @@ REGISTER_CALCULATOR(AnnotationOverlayCalculator);
   }
 
   // Send out blended image as GPU packet.
-  auto output_frame = output_texture.GetFrame<mediapipe::GpuBuffer>();
-  cc->Outputs()
-      .Tag(kOutputFrameTagGpu)
-      .Add(output_frame.release(), cc->InputTimestamp());
+  auto output_frame = output_texture.GetFrame<Type>();
+  cc->Outputs().Tag(Tag).Add(output_frame.release(), cc->InputTimestamp());
 
   // Cleanup
   input_texture.Release();
@@ -432,7 +437,7 @@ REGISTER_CALCULATOR(AnnotationOverlayCalculator);
     ImageFormat::Format* target_format) {
   if (image_frame_available_) {
     const auto& input_frame =
-        cc->Inputs().Tag(kInputFrameTag).Get<ImageFrame>();
+        cc->Inputs().Tag(kImageFrameTag).Get<ImageFrame>();
 
     int target_mat_type;
     switch (input_frame.Format()) {
@@ -455,21 +460,14 @@ REGISTER_CALCULATOR(AnnotationOverlayCalculator);
 
     image_mat = absl::make_unique<cv::Mat>(
         input_frame.Height(), input_frame.Width(), target_mat_type);
+
+    auto input_mat = formats::MatView(&input_frame);
     if (input_frame.Format() == ImageFormat::GRAY8) {
-      const int target_num_channels =
-          ImageFrame::NumberOfChannelsForFormat(*target_format);
-      for (int i = 0; i < input_frame.PixelDataSize(); i++) {
-        const auto& pix = input_frame.PixelData()[i];
-        for (int c = 0; c < target_num_channels; c++) {
-          image_mat->data[i * target_num_channels + c] = pix;
-        }
-      }
+      cv::Mat rgb_mat;
+      cv::cvtColor(input_mat, rgb_mat, CV_GRAY2RGB);
+      rgb_mat.copyTo(*image_mat);
     } else {
-      // Make of a copy since the input frame may be consumed by other nodes.
-      const int buffer_size =
-          input_frame.Height() * input_frame.Width() *
-          ImageFrame::NumberOfChannelsForFormat(*target_format);
-      input_frame.CopyToBuffer(image_mat->data, buffer_size);
+      input_mat.copyTo(*image_mat);
     }
   } else {
     image_mat = absl::make_unique<cv::Mat>(
@@ -482,13 +480,12 @@ REGISTER_CALCULATOR(AnnotationOverlayCalculator);
   return ::mediapipe::OkStatus();
 }
 
+template <typename Type, const char* Tag>
 ::mediapipe::Status AnnotationOverlayCalculator::CreateRenderTargetGpu(
     CalculatorContext* cc, std::unique_ptr<cv::Mat>& image_mat) {
 #if !defined(MEDIAPIPE_DISABLE_GPU)
   if (image_frame_available_) {
-    const auto& input_frame =
-        cc->Inputs().Tag(kInputFrameTagGpu).Get<mediapipe::GpuBuffer>();
-
+    const auto& input_frame = cc->Inputs().Tag(Tag).Get<Type>();
     const mediapipe::ImageFormat::Format format =
         mediapipe::ImageFormatForGpuBufferFormat(input_frame.format());
     if (format != mediapipe::ImageFormat::SRGBA &&
@@ -564,6 +561,7 @@ REGISTER_CALCULATOR(AnnotationOverlayCalculator);
   return ::mediapipe::OkStatus();
 }
 
+template <typename Type, const char* Tag>
 ::mediapipe::Status AnnotationOverlayCalculator::GlSetup(
     CalculatorContext* cc) {
 #if !defined(MEDIAPIPE_DISABLE_GPU)
@@ -639,8 +637,7 @@ REGISTER_CALCULATOR(AnnotationOverlayCalculator);
   const float alignment = ImageFrame::kGlDefaultAlignmentBoundary;
   const float scale_factor = options_.gpu_scale_factor();
   if (image_frame_available_) {
-    const auto& input_frame =
-        cc->Inputs().Tag(kInputFrameTagGpu).Get<mediapipe::GpuBuffer>();
+    const auto& input_frame = cc->Inputs().Tag(Tag).Get<Type>();
     width_ = RoundUp(input_frame.width(), alignment);
     height_ = RoundUp(input_frame.height(), alignment);
   } else {

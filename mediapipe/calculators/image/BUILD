@@ -12,146 +12,76 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load("//mediapipe/framework/port:build_config.bzl", "mediapipe_cc_proto_library", "mediapipe_proto_library")
+load("//mediapipe/framework/port:build_config.bzl", "mediapipe_proto_library")
 
 licenses(["notice"])
 
 package(default_visibility = ["//visibility:private"])
 
-exports_files(["LICENSE"])
-
-proto_library(
+mediapipe_proto_library(
     name = "opencv_image_encoder_calculator_proto",
     srcs = ["opencv_image_encoder_calculator.proto"],
-    visibility = ["//visibility:public"],
-    deps = ["//mediapipe/framework:calculator_proto"],
+    visibility = [
+        "//visibility:public",
+    ],
+    deps = [
+        "//mediapipe/framework:calculator_options_proto",
+        "//mediapipe/framework:calculator_proto",
+    ],
 )
 
-proto_library(
+mediapipe_proto_library(
     name = "scale_image_calculator_proto",
     srcs = ["scale_image_calculator.proto"],
     visibility = ["//visibility:public"],
     deps = [
+        "//mediapipe/framework:calculator_options_proto",
         "//mediapipe/framework:calculator_proto",
         "//mediapipe/framework/formats:image_format_proto",
     ],
 )
 
-proto_library(
+mediapipe_proto_library(
     name = "set_alpha_calculator_proto",
     srcs = ["set_alpha_calculator.proto"],
     visibility = ["//visibility:public"],
     deps = [
+        "//mediapipe/framework:calculator_options_proto",
         "//mediapipe/framework:calculator_proto",
     ],
 )
 
-proto_library(
+mediapipe_proto_library(
     name = "image_cropping_calculator_proto",
     srcs = ["image_cropping_calculator.proto"],
     visibility = ["//visibility:public"],
     deps = [
+        "//mediapipe/framework:calculator_options_proto",
         "//mediapipe/framework:calculator_proto",
     ],
 )
 
-proto_library(
+mediapipe_proto_library(
     name = "bilateral_filter_calculator_proto",
     srcs = ["bilateral_filter_calculator.proto"],
     visibility = [
         "//visibility:public",
     ],
     deps = [
+        "//mediapipe/framework:calculator_options_proto",
         "//mediapipe/framework:calculator_proto",
     ],
 )
 
-proto_library(
+mediapipe_proto_library(
     name = "recolor_calculator_proto",
     srcs = ["recolor_calculator.proto"],
     visibility = ["//visibility:public"],
     deps = [
+        "//mediapipe/framework:calculator_options_proto",
         "//mediapipe/framework:calculator_proto",
         "//mediapipe/util:color_proto",
     ],
-)
-
-mediapipe_cc_proto_library(
-    name = "opencv_image_encoder_calculator_cc_proto",
-    srcs = ["opencv_image_encoder_calculator.proto"],
-    cc_deps = ["//mediapipe/framework:calculator_cc_proto"],
-    visibility = [
-        "//visibility:public",
-    ],
-    deps = [":opencv_image_encoder_calculator_proto"],
-)
-
-mediapipe_cc_proto_library(
-    name = "opencv_encoded_image_to_image_frame_calculator_cc_proto",
-    srcs = ["opencv_encoded_image_to_image_frame_calculator.proto"],
-    cc_deps = ["//mediapipe/framework:calculator_cc_proto"],
-    visibility = ["//visibility:public"],
-    deps = [":opencv_encoded_image_to_image_frame_calculator_proto"],
-)
-
-mediapipe_cc_proto_library(
-    name = "mask_overlay_calculator_cc_proto",
-    srcs = ["mask_overlay_calculator.proto"],
-    cc_deps = ["//mediapipe/framework:calculator_cc_proto"],
-    visibility = ["//visibility:public"],
-    deps = [":mask_overlay_calculator_proto"],
-)
-
-mediapipe_cc_proto_library(
-    name = "scale_image_calculator_cc_proto",
-    srcs = ["scale_image_calculator.proto"],
-    cc_deps = [
-        "//mediapipe/framework:calculator_cc_proto",
-        "//mediapipe/framework/formats:image_format_cc_proto",
-    ],
-    visibility = ["//visibility:public"],
-    deps = [":scale_image_calculator_proto"],
-)
-
-mediapipe_cc_proto_library(
-    name = "set_alpha_calculator_cc_proto",
-    srcs = ["set_alpha_calculator.proto"],
-    cc_deps = [
-        "//mediapipe/framework:calculator_cc_proto",
-    ],
-    visibility = ["//visibility:public"],
-    deps = [":set_alpha_calculator_proto"],
-)
-
-mediapipe_cc_proto_library(
-    name = "image_cropping_calculator_cc_proto",
-    srcs = ["image_cropping_calculator.proto"],
-    cc_deps = [
-        "//mediapipe/framework:calculator_cc_proto",
-    ],
-    visibility = ["//visibility:public"],
-    deps = [":image_cropping_calculator_proto"],
-)
-
-mediapipe_cc_proto_library(
-    name = "bilateral_filter_calculator_cc_proto",
-    srcs = ["bilateral_filter_calculator.proto"],
-    cc_deps = ["//mediapipe/framework:calculator_cc_proto"],
-    visibility = [
-        "//visibility:public",
-    ],
-    deps = [":bilateral_filter_calculator_proto"],
-)
-
-mediapipe_cc_proto_library(
-    name = "recolor_calculator_cc_proto",
-    srcs = ["recolor_calculator.proto"],
-    cc_deps = [
-        "//mediapipe/framework:calculator_cc_proto",
-        "//mediapipe/util:color_cc_proto",
-    ],
-    visibility = ["//visibility:public"],
-    deps = [":recolor_calculator_proto"],
 )
 
 cc_library(
@@ -550,32 +480,33 @@ cc_test(
     ],
 )
 
-proto_library(
+mediapipe_proto_library(
     name = "mask_overlay_calculator_proto",
     srcs = ["mask_overlay_calculator.proto"],
     visibility = ["//visibility:public"],
-    deps = ["//mediapipe/framework:calculator_proto"],
+    deps = [
+        "//mediapipe/framework:calculator_options_proto",
+        "//mediapipe/framework:calculator_proto",
+    ],
 )
 
-proto_library(
+mediapipe_proto_library(
     name = "opencv_encoded_image_to_image_frame_calculator_proto",
     srcs = ["opencv_encoded_image_to_image_frame_calculator.proto"],
     visibility = ["//visibility:public"],
-    deps = ["//mediapipe/framework:calculator_proto"],
+    deps = [
+        "//mediapipe/framework:calculator_options_proto",
+        "//mediapipe/framework:calculator_proto",
+    ],
 )
 
-proto_library(
+mediapipe_proto_library(
     name = "feature_detector_calculator_proto",
     srcs = ["feature_detector_calculator.proto"],
-    deps = ["//mediapipe/framework:calculator_proto"],
-)
-
-mediapipe_cc_proto_library(
-    name = "feature_detector_calculator_cc_proto",
-    srcs = ["feature_detector_calculator.proto"],
-    cc_deps = ["//mediapipe/framework:calculator_cc_proto"],
-    visibility = ["//visibility:public"],
-    deps = [":feature_detector_calculator_proto"],
+    deps = [
+        "//mediapipe/framework:calculator_options_proto",
+        "//mediapipe/framework:calculator_proto",
+    ],
 )
 
 cc_library(

@@ -128,8 +128,9 @@ class MediaSequenceTest(tf.test.TestCase):
     example = tf.train.SequenceExample()
     boxes = np.array([[0.1, 0.2, 0.3, 0.4],
                       [0.5, 0.6, 0.7, 0.8]])
+    empty_boxes = np.array([])
     ms.add_bbox(boxes, example)
-    ms.add_bbox(boxes, example)
+    ms.add_bbox(empty_boxes, example)
     self.assertEqual(2, ms.get_bbox_size(example))
     self.assertAllClose(boxes, ms.get_bbox_at(0, example))
     self.assertTrue(ms.has_bbox(example))

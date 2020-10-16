@@ -43,6 +43,7 @@ pybind_library(
     deps = [
         ":image_frame_util",
         ":util",
+        "//mediapipe/framework:type_map",
     ],
 )
 

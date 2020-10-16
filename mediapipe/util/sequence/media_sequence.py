@@ -407,10 +407,17 @@ def _create_region_with_prefix(name, prefix):
         get_bbox_xmax_at(index, sequence_example, prefix=prefix)),
                     1)
   def add_prefixed_bbox(values, sequence_example, prefix):
-    add_bbox_ymin(values[:, 0], sequence_example, prefix=prefix)
-    add_bbox_xmin(values[:, 1], sequence_example, prefix=prefix)
-    add_bbox_ymax(values[:, 2], sequence_example, prefix=prefix)
-    add_bbox_xmax(values[:, 3], sequence_example, prefix=prefix)
+    values = np.array(values)
+    if values.size == 0:
+      add_bbox_ymin([], sequence_example, prefix=prefix)
+      add_bbox_xmin([], sequence_example, prefix=prefix)
+      add_bbox_ymax([], sequence_example, prefix=prefix)
+      add_bbox_xmax([], sequence_example, prefix=prefix)
+    else:
+      add_bbox_ymin(values[:, 0], sequence_example, prefix=prefix)
+      add_bbox_xmin(values[:, 1], sequence_example, prefix=prefix)
+      add_bbox_ymax(values[:, 2], sequence_example, prefix=prefix)
+      add_bbox_xmax(values[:, 3], sequence_example, prefix=prefix)
   def get_prefixed_bbox_size(sequence_example, prefix):
     return get_bbox_ymin_size(sequence_example, prefix=prefix)
   def has_prefixed_bbox(sequence_example, prefix):

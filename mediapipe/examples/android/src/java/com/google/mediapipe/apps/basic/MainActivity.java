@@ -134,6 +134,9 @@ public class MainActivity extends AppCompatActivity {
   protected void onPause() {
     super.onPause();
     converter.close();
+
+    // Hide preview display until we re-open the camera again.
+    previewDisplayView.setVisibility(View.GONE);
   }
 
   @Override

@@ -23,13 +23,23 @@ package(
 
 licenses(["notice"])
 
-exports_files(["LICENSE"])
-
 mediapipe_proto_library(
     name = "detection_proto",
     srcs = ["detection.proto"],
     visibility = ["//visibility:public"],
     deps = ["//mediapipe/framework/formats:location_data_proto"],
+)
+
+mediapipe_register_type(
+    base_name = "detection",
+    include_headers = ["mediapipe/framework/formats/detection.pb.h"],
+    types = [
+        "::mediapipe::Detection",
+        "::mediapipe::DetectionList",
+        "::std::vector<::mediapipe::Detection>",
+        "::std::vector<::mediapipe::DetectionList>",
+    ],
+    deps = ["//mediapipe/framework/formats:detection_cc_proto"],
 )
 
 mediapipe_proto_library(
@@ -214,6 +224,18 @@ mediapipe_proto_library(
     deps = ["//mediapipe/framework/formats:location_data_proto"],
 )
 
+mediapipe_register_type(
+    base_name = "rect",
+    include_headers = ["mediapipe/framework/formats/rect.pb.h"],
+    types = [
+        "::mediapipe::Rect",
+        "::mediapipe::NormalizedRect",
+        "::std::vector<::mediapipe::Rect>",
+        "::std::vector<::mediapipe::NormalizedRect>",
+    ],
+    deps = [":rect_cc_proto"],
+)
+
 mediapipe_proto_library(
     name = "landmark_proto",
     srcs = ["landmark.proto"],
@@ -231,6 +253,7 @@ mediapipe_register_type(
         "::mediapipe::NormalizedLandmarkList",
         "::std::vector<::mediapipe::Landmark>",
         "::std::vector<::mediapipe::NormalizedLandmark>",
+        "::std::vector<::mediapipe::NormalizedLandmarkList>",
     ],
     deps = [":landmark_cc_proto"],
 )

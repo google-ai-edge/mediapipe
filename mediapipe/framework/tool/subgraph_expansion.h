@@ -72,6 +72,11 @@ namespace tool {
     CalculatorGraphConfig* config,
     const GraphRegistry* graph_registry = nullptr);
 
+// Creates a graph wrapping the provided node and exposing all of its
+// connections
+CalculatorGraphConfig MakeSingleNodeGraph(
+    CalculatorGraphConfig::Node subgraph_node);
+
 }  // namespace tool
 }  // namespace mediapipe
 

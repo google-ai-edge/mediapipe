@@ -1108,6 +1108,19 @@ cc_library(
 )
 
 cc_library(
+    name = "basic_types_registration",
+    srcs = ["basic_types_registration.cc"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":type_map",
+        "//mediapipe/framework/port:integral_types",
+        "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/strings",
+    ],
+    alwayslink = 1,
+)
+
+cc_library(
     name = "validated_graph_config",
     srcs = ["validated_graph_config.cc"],
     hdrs = ["validated_graph_config.h"],

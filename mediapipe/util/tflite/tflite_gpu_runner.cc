@@ -100,12 +100,19 @@ mediapipe::Status TFLiteGPURunner::Build() {
   // 1. Prepare inference builder.
   std::unique_ptr<InferenceBuilder> builder;
   // By default, we try CL first & fall back to GL if that fails.
-  absl::Status status = InitializeOpenCL(&builder);
-  if (status.ok()) {
-    LOG(INFO) << "OpenCL backend is used.";
-  } else {
-    LOG(ERROR) << "Falling back to OpenGL: " << status.message();
+  if (opencl_is_forced_) {
+    MP_RETURN_IF_ERROR(InitializeOpenCL(&builder));
+  } else if (opengl_is_forced_) {
     MP_RETURN_IF_ERROR(InitializeOpenGL(&builder));
+  } else {
+    // try to build OpenCL first. If something goes wrong, fall back to OpenGL.
+    absl::Status status = InitializeOpenCL(&builder);
+    if (status.ok()) {
+      LOG(INFO) << "OpenCL backend is used.";
+    } else {
+      LOG(ERROR) << "Falling back to OpenGL: " << status.message();
+      MP_RETURN_IF_ERROR(InitializeOpenGL(&builder));
+    }
   }
 
   // Both graphs are not needed anymore. Make sure they are deleted.

@@ -163,9 +163,10 @@ template <typename Container>
     }
     queue_became_full = (!was_queue_full && max_queue_size_ != -1 &&
                          queue_.size() >= max_queue_size_);
-    VLOG_IF(3, queue_.size() > 1)
-        << "Queue size greater than 1: stream name: " << name_
-        << " queue_size: " << queue_.size();
+    if (queue_.size() > 1) {
+      VLOG(3) << "Queue size greater than 1: stream name: " << name_
+              << " queue_size: " << queue_.size();
+    }
     VLOG(3) << "Input stream:" << name_
             << " becomes non-empty status:" << queue_became_non_empty
             << " Size: " << queue_.size();

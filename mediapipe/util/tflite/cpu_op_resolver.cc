@@ -14,19 +14,23 @@
 
 #include "mediapipe/util/tflite/cpu_op_resolver.h"
 
+#include "mediapipe/framework/port/logging.h"
 #include "mediapipe/util/tflite/operations/max_pool_argmax.h"
 #include "mediapipe/util/tflite/operations/max_unpooling.h"
 #include "mediapipe/util/tflite/operations/transpose_conv_bias.h"
 #include "tensorflow/lite/builtin_op_data.h"
+#include "tensorflow/lite/mutable_op_resolver.h"
 
 namespace mediapipe {
 
-CpuOpResolver::CpuOpResolver() {
-  AddCustom("MaxPoolingWithArgmax2D",
-            tflite_operations::RegisterMaxPoolingWithArgmax2D());
-  AddCustom("MaxUnpooling2D", tflite_operations::RegisterMaxUnpooling2D());
-  AddCustom("Convolution2DTransposeBias",
-            tflite_operations::RegisterConvolution2DTransposeBias());
+void MediaPipe_RegisterTfLiteOpResolver(tflite::MutableOpResolver *resolver) {
+  CHECK(resolver != nullptr);
+  resolver->AddCustom("MaxPoolingWithArgmax2D",
+                      tflite_operations::RegisterMaxPoolingWithArgmax2D());
+  resolver->AddCustom("MaxUnpooling2D",
+                      tflite_operations::RegisterMaxUnpooling2D());
+  resolver->AddCustom("Convolution2DTransposeBias",
+                      tflite_operations::RegisterConvolution2DTransposeBias());
 }
 
 }  // namespace mediapipe

@@ -32,13 +32,20 @@ cc_library(
     name = "cpu_op_resolver",
     srcs = ["cpu_op_resolver.cc"],
     hdrs = ["cpu_op_resolver.h"],
+    visibility = ["//visibility:public"],
     deps = [
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/port:logging",
         "//mediapipe/util/tflite/operations:max_pool_argmax",
         "//mediapipe/util/tflite/operations:max_unpooling",
         "//mediapipe/util/tflite/operations:transpose_conv_bias",
         "@org_tensorflow//tensorflow/lite:builtin_op_data",
+        "@org_tensorflow//tensorflow/lite:framework",
         "@org_tensorflow//tensorflow/lite/kernels:builtin_ops",
     ],
+    # For using the symbol `MediaPipe_RegisterTfLiteOpResolver` in Python
+    # with `tensorflow.lite.python.interpreter.InterpreterWithCustomOps`.
+    alwayslink = 1,
 )
 
 cc_library(

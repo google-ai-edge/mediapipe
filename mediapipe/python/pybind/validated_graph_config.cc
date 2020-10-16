@@ -65,6 +65,14 @@ void ValidatedGraphConfigSubmodule(pybind11::module* module) {
                         .c_str());
               }
             }
+            if (!(init_with_binary_graph ^ init_with_graph_proto)) {
+              throw RaisePyError(
+                  PyExc_ValueError,
+                  "Please either provide \'binary_graph_path\' to initialize "
+                  "a ValidatedGraphConfig object with a binary graph file or "
+                  "\'graph_config\' to initialize a ValidatedGraphConfig "
+                  "object with a graph config proto.");
+            }
             RaisePyErrorIfNotOk(self->Initialize(graph_config_proto));
           },
           R"doc(Initialize ValidatedGraphConfig with a CalculatorGraphConfig.

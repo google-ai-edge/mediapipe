@@ -49,6 +49,14 @@ class Subgraph {
   static T GetOptions(const Subgraph::SubgraphOptions& supgraph_options) {
     return tool::OptionsMap().Initialize(supgraph_options).Get<T>();
   }
+
+  // Returns the CalculatorGraphConfig::Node specifying the subgraph.
+  // This provides to Subgraphs the same graph information that GetContract
+  // provides to Calculators.
+  static CalculatorGraphConfig::Node GetNode(
+      const Subgraph::SubgraphOptions& supgraph_options) {
+    return supgraph_options;
+  }
 };
 
 using SubgraphRegistry = GlobalFactoryRegistry<std::unique_ptr<Subgraph>>;

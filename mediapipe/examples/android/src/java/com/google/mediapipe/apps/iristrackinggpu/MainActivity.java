@@ -32,16 +32,22 @@ public class MainActivity extends com.google.mediapipe.apps.basic.MainActivity {
   private static final String FOCAL_LENGTH_STREAM_NAME = "focal_length_pixel";
   private static final String OUTPUT_LANDMARKS_STREAM_NAME = "face_landmarks_with_iris";
 
+  private boolean haveAddedSidePackets = false;
+
   @Override
   protected void onCameraStarted(SurfaceTexture surfaceTexture) {
     super.onCameraStarted(surfaceTexture);
 
-    float focalLength = cameraHelper.getFocalLengthPixels();
-    if (focalLength != Float.MIN_VALUE) {
-      Packet focalLengthSidePacket = processor.getPacketCreator().createFloat32(focalLength);
-      Map<String, Packet> inputSidePackets = new HashMap<>();
-      inputSidePackets.put(FOCAL_LENGTH_STREAM_NAME, focalLengthSidePacket);
-      processor.setInputSidePackets(inputSidePackets);
+    // onCameraStarted gets called each time the activity resumes, but we only want to do this once.
+    if (!haveAddedSidePackets) {
+      float focalLength = cameraHelper.getFocalLengthPixels();
+      if (focalLength != Float.MIN_VALUE) {
+        Packet focalLengthSidePacket = processor.getPacketCreator().createFloat32(focalLength);
+        Map<String, Packet> inputSidePackets = new HashMap<>();
+        inputSidePackets.put(FOCAL_LENGTH_STREAM_NAME, focalLengthSidePacket);
+        processor.setInputSidePackets(inputSidePackets);
+      }
+      haveAddedSidePackets = true;
     }
   }
 

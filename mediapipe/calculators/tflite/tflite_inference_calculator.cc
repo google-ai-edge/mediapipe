@@ -281,6 +281,9 @@ class TfLiteInferenceCalculator : public CalculatorBase {
   bool use_quantized_tensors_ = false;
 
   bool use_advanced_gpu_api_ = false;
+  bool allow_precision_loss_ = false;
+  ::mediapipe::TfLiteInferenceCalculatorOptions_Delegate_Gpu_API
+      tflite_gpu_runner_api_;
 
   bool use_kernel_caching_ = false;
   std::string cached_kernel_filename_;
@@ -365,6 +368,8 @@ bool ShouldUseGpu(CC* cc) {
                           options.has_delegate() &&
                           options.delegate().has_gpu() &&
                           options.delegate().gpu().use_advanced_gpu_api();
+  allow_precision_loss_ = options.delegate().gpu().allow_precision_loss();
+  tflite_gpu_runner_api_ = options.delegate().gpu().api();
 
   use_kernel_caching_ =
       use_advanced_gpu_api_ && options.delegate().gpu().use_kernel_caching();
@@ -703,11 +708,23 @@ bool ShouldUseGpu(CC* cc) {
 
   // Create runner
   tflite::gpu::InferenceOptions options;
-  options.priority1 = tflite::gpu::InferencePriority::MIN_LATENCY;
+  options.priority1 = allow_precision_loss_
+                          ? tflite::gpu::InferencePriority::MIN_LATENCY
+                          : tflite::gpu::InferencePriority::MAX_PRECISION;
   options.priority2 = tflite::gpu::InferencePriority::AUTO;
   options.priority3 = tflite::gpu::InferencePriority::AUTO;
   options.usage = tflite::gpu::InferenceUsage::SUSTAINED_SPEED;
   tflite_gpu_runner_ = std::make_unique<tflite::gpu::TFLiteGPURunner>(options);
+  if (tflite_gpu_runner_api_ ==
+      ::mediapipe::TfLiteInferenceCalculatorOptions_Delegate_Gpu_API::
+          TfLiteInferenceCalculatorOptions_Delegate_Gpu_API_OPENGL) {
+    tflite_gpu_runner_->ForceOpenGL();
+  }
+  if (tflite_gpu_runner_api_ ==
+      ::mediapipe::TfLiteInferenceCalculatorOptions_Delegate_Gpu_API::
+          TfLiteInferenceCalculatorOptions_Delegate_Gpu_API_OPENCL) {
+    tflite_gpu_runner_->ForceOpenCL();
+  }
   MP_RETURN_IF_ERROR(
       tflite_gpu_runner_->InitializeWithModel(model, op_resolver));
 

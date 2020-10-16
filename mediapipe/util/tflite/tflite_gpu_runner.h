@@ -56,6 +56,10 @@ class TFLiteGPURunner {
   mediapipe::Status InitializeWithModel(
       const tflite::FlatBufferModel& flatbuffer,
       const tflite::OpResolver& op_resolver);
+
+  void ForceOpenGL() { opengl_is_forced_ = true; }
+  void ForceOpenCL() { opencl_is_forced_ = true; }
+
   mediapipe::Status BindSSBOToInputTensor(GLuint ssbo_id, int input_id);
   mediapipe::Status BindSSBOToOutputTensor(GLuint ssbo_id, int output_id);
 
@@ -105,6 +109,9 @@ class TFLiteGPURunner {
   // after graph_ becomes "converted" into runner_.
   std::vector<BHWC> input_shapes_;
   std::vector<BHWC> output_shapes_;
+
+  bool opencl_is_forced_ = false;
+  bool opengl_is_forced_ = false;
 };
 
 }  // namespace gpu

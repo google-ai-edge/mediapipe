@@ -20,8 +20,6 @@ package(default_visibility = ["//visibility:private"])
 
 licenses(["notice"])
 
-exports_files(["LICENSE"])
-
 mediapipe_proto_library(
     name = "locus_proto",
     srcs = ["locus.proto"],

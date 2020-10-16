@@ -311,7 +311,6 @@ cc_library(
             "@org_tensorflow//tensorflow/core:framework",
         ],
         "//mediapipe:android": [
-            "@org_tensorflow//tensorflow/core:portable_tensorflow_lib_lite",
         ],
     }),
     alwayslink = 1,

@@ -942,7 +942,7 @@ objc_library(
 ios_unit_test(
     name = "gl_ios_test",
     minimum_os_version = MIN_IOS_VERSION,
-    runner = "//googlemac/iPhone/Shared/Testing/EarlGrey/Runner:IOS_LATEST",
+    runner = "//testing/utp/ios:IOS_LATEST",
     tags = [
         "ios",
     ],

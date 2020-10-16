@@ -103,6 +103,13 @@ cc_library(
 )
 
 mediapipe_binary_graph(
+    name = "multi_hand_tracking_desktop_live_binary_graph",
+    graph = "multi_hand_tracking_desktop_live.pbtxt",
+    output_name = "multi_hand_tracking_desktop_live.binarypb",
+    deps = [":multi_hand_desktop_tflite_calculators"],
+)
+
+mediapipe_binary_graph(
     name = "multi_hand_tracking_mobile_gpu_binary_graph",
     graph = "multi_hand_tracking_mobile.pbtxt",
     output_name = "multi_hand_tracking_mobile_gpu.binarypb",

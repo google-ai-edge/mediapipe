@@ -62,6 +62,7 @@ namespace mediapipe {
   PRECISION_COMPAT                                               \
   "#if __VERSION__ < 130\n"                                      \
   "#define in varying\n"                                         \
+  "#define texture texture2D\n"                                  \
   "#if defined(GL_ES) && !defined(GL_FRAGMENT_PRECISION_HIGH)\n" \
   "#define highp mediump\n"                                      \
   "#endif  // GL_ES && !GL_FRAGMENT_PRECISION_HIGH\n"            \

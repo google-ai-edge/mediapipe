@@ -19,8 +19,6 @@ licenses(["notice"])
 
 package(default_visibility = ["//mediapipe/calculators/video:__subpackages__"])
 
-exports_files(["LICENSE"])
-
 proto_library(
     name = "flow_quantizer_model_proto",
     srcs = ["flow_quantizer_model.proto"],

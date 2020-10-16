@@ -225,6 +225,15 @@ cc_library(
     name = "concatenate_vector_calculator",
     srcs = ["concatenate_vector_calculator.cc"],
     hdrs = ["concatenate_vector_calculator.h"],
+    copts = select({
+        # Needed for "//mediapipe/framework/formats:tensor" compatibility on Apple
+        # platforms for Metal pulled in via the tensor.h header.
+        "//mediapipe:apple": [
+            "-x objective-c++",
+            "-fobjc-arc",  # enable reference-counting
+        ],
+        "//conditions:default": [],
+    }),
     visibility = ["//visibility:public"],
     deps = [
         ":concatenate_vector_calculator_cc_proto",

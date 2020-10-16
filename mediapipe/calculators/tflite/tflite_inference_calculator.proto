@@ -49,6 +49,20 @@ message TfLiteInferenceCalculatorOptions {
       //   delegate: { gpu { use_advanced_gpu_api: true } }
       optional bool use_advanced_gpu_api = 1 [default = false];
 
+      // This option is valid for TFLite GPU delegate API2 only,
+      // Choose any of available APIs to force running inference using it.
+      enum API {
+        ANY = 0;
+        OPENGL = 1;
+        OPENCL = 2;
+      }
+      optional API api = 4 [default = ANY];
+
+      // This option is valid for TFLite GPU delegate API2 only,
+      // Set to true to use 16-bit float precision. If max precision is needed,
+      // set to false for 32-bit float calculations only.
+      optional bool allow_precision_loss = 3 [default = true];
+
       // Load pre-compiled serialized binary cache to accelerate init process.
       // Only available for OpenCL delegate on Android.
       optional bool use_kernel_caching = 2 [default = false];

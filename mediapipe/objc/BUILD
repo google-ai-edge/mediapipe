@@ -90,16 +90,27 @@ objc_library(
 objc_library(
     name = "mediapipe_input_sources_ios",
     srcs = [
-        "MPPCameraInputSource.m",
-        "MPPDisplayLinkWeakTarget.m",
         "MPPInputSource.m",
         "MPPPlayerInputSource.m",
-    ],
+    ] + select({
+        "//mediapipe:ios": [
+            "MPPCameraInputSource.m",
+            "MPPDisplayLinkWeakTarget.m",
+        ],
+        "//conditions:default": [],
+    }),
     hdrs = [
-        "MPPCameraInputSource.h",
-        "MPPDisplayLinkWeakTarget.h",
         "MPPInputSource.h",
         "MPPPlayerInputSource.h",
+    ] + select({
+        "//mediapipe:ios": [
+            "MPPCameraInputSource.h",
+            "MPPDisplayLinkWeakTarget.h",
+        ],
+        "//conditions:default": [],
+    }),
+    sdk_frameworks = [
+        "CoreVideo",
     ],
     visibility = ["//mediapipe/framework:mediapipe_internal"],
 )

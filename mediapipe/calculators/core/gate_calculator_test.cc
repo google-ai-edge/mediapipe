@@ -330,45 +330,48 @@ TEST_F(GateCalculatorTest, AllowInitialNoStateTransition) {
   ASSERT_EQ(0, output.size());
 }
 
-TEST_F(GateCalculatorTest, TestOverrideDecisionBySidePacketSignal) {
+TEST_F(GateCalculatorTest,
+       TestCalculatorOptionDecisionOverrideOverStreamSingal) {
   SetRunner(R"(
         calculator: "GateCalculator"
         input_stream: "test_input"
         input_stream: "ALLOW:gating_stream"
-        input_side_packet: "ALLOW:gating_packet"
         output_stream: "test_output"
         options: {
           [mediapipe.GateCalculatorOptions.ext] {
-            side_input_has_precedence: true
+            allowance_override: false
           }
         }
   )");
 
   constexpr int64 kTimestampValue0 = 42;
-  runner()->MutableSidePackets()->Tag("ALLOW") = Adopt(new bool(false));
+  // The CalculatorOptions says disallow and the stream says allow. Should
+  // follow the CalculatorOptions' decision to disallow outputting anything.
   RunTimeStep(kTimestampValue0, "ALLOW", true);
 
   const std::vector<Packet>& output = runner()->Outputs().Get("", 0).packets;
   ASSERT_EQ(0, output.size());
 }
 
-TEST_F(GateCalculatorTest, TestOverrideDecisionByStreamSignal) {
+TEST_F(GateCalculatorTest,
+       TestCalculatorOptionDecisionOverrideOverSidePacketSingal) {
   SetRunner(R"(
         calculator: "GateCalculator"
         input_stream: "test_input"
-        input_stream: "ALLOW:gating_stream"
         input_side_packet: "ALLOW:gating_packet"
         output_stream: "test_output"
         options: {
           [mediapipe.GateCalculatorOptions.ext] {
-            side_input_has_precedence: false
+            allowance_override: true
           }
         }
   )");
 
   constexpr int64 kTimestampValue0 = 42;
+  // The CalculatorOptions says allow and the side packet says disallow. Should
+  // follow the CalculatorOptions' decision to allow outputting a packet.
   runner()->MutableSidePackets()->Tag("ALLOW") = Adopt(new bool(false));
-  RunTimeStep(kTimestampValue0, "ALLOW", true);
+  RunTimeStep(kTimestampValue0, true);
 
   const std::vector<Packet>& output = runner()->Outputs().Get("", 0).packets;
   ASSERT_EQ(1, output.size());

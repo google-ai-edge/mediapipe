@@ -19,6 +19,7 @@
 #include <unordered_set>
 
 #include "absl/container/flat_hash_set.h"
+#include "absl/container/node_hash_map.h"
 #include "absl/container/node_hash_set.h"
 #include "absl/strings/numbers.h"
 #include "mediapipe/calculators/video/box_tracker_calculator.pb.h"
@@ -207,7 +208,7 @@ class BoxTrackerCalculator : public CalculatorBase {
   // Boxes that are tracked in streaming mode.
   MotionBoxMap streaming_motion_boxes_;
 
-  std::unordered_map<int, std::pair<TimedBox, TimedBox>> last_tracked_boxes_;
+  absl::node_hash_map<int, std::pair<TimedBox, TimedBox>> last_tracked_boxes_;
   int frame_num_since_reset_ = 0;
 
   // Cache used during streaming mode for fast forward tracking.

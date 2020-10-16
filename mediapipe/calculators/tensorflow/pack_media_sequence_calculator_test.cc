@@ -839,5 +839,59 @@ TEST_F(PackMediaSequenceCalculatorTest, TestReconcilingAnnotations) {
   ASSERT_EQ(mpms::GetBBoxTimestampAt("PREFIX", output_sequence, 4), 50);
 }
 
+TEST_F(PackMediaSequenceCalculatorTest, TestOverwritingAndReconciling) {
+  SetUpCalculator({"IMAGE:images", "BBOX:bbox"}, {}, false, true);
+  auto input_sequence = ::absl::make_unique<tf::SequenceExample>();
+  cv::Mat image(2, 3, CV_8UC3, cv::Scalar(0, 0, 255));
+  std::vector<uchar> bytes;
+  ASSERT_TRUE(cv::imencode(".jpg", image, bytes, {80}));
+  std::string test_image_string(bytes.begin(), bytes.end());
+  OpenCvImageEncoderCalculatorResults encoded_image;
+  encoded_image.set_encoded_image(test_image_string);
+  int height = 2;
+  int width = 2;
+  encoded_image.set_width(width);
+  encoded_image.set_height(height);
+
+  int num_images = 5;  // Timestamps: 10, 20, 30, 40, 50
+  for (int i = 0; i < num_images; ++i) {
+    auto image_ptr =
+        ::absl::make_unique<OpenCvImageEncoderCalculatorResults>(encoded_image);
+    runner_->MutableInputs()->Tag("IMAGE").packets.push_back(
+        Adopt(image_ptr.release()).At(Timestamp(i)));
+  }
+
+  for (int i = 0; i < num_images; ++i) {
+    auto detections = ::absl::make_unique<::std::vector<Detection>>();
+    Detection detection;
+    detection = Detection();
+    detection.add_label("relative bbox");
+    detection.add_label_id(1);
+    detection.add_score(0.75);
+    Location::CreateRelativeBBoxLocation(0, 0.5, 0.5, 0.5)
+        .ConvertToProto(detection.mutable_location_data());
+    detections->push_back(detection);
+    runner_->MutableInputs()->Tag("BBOX").packets.push_back(
+        Adopt(detections.release()).At(Timestamp(i)));
+  }
+
+  for (int i = 0; i < 10; ++i) {
+    mpms::AddBBoxTimestamp(-1, input_sequence.get());
+    mpms::AddBBoxIsAnnotated(-1, input_sequence.get());
+    mpms::AddBBoxNumRegions(-1, input_sequence.get());
+    mpms::AddBBoxLabelString({"anything"}, input_sequence.get());
+    mpms::AddBBoxLabelIndex({-1}, input_sequence.get());
+    mpms::AddBBoxClassString({"anything"}, input_sequence.get());
+    mpms::AddBBoxClassIndex({-1}, input_sequence.get());
+    mpms::AddBBoxTrackString({"anything"}, input_sequence.get());
+    mpms::AddBBoxTrackIndex({-1}, input_sequence.get());
+  }
+
+  runner_->MutableSidePackets()->Tag("SEQUENCE_EXAMPLE") =
+      Adopt(input_sequence.release());
+  // If the all the previous values aren't cleared, this assert will fail.
+  MP_ASSERT_OK(runner_->Run());
+}
+
 }  // namespace
 }  // namespace mediapipe

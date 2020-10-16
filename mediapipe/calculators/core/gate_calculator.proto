@@ -28,11 +28,8 @@ message GateCalculatorOptions {
   // this option to true inverts that, allowing the data packets to go through.
   optional bool empty_packets_as_allow = 1;
 
-  // Input side packet and input stream are allowed to coexist only if this
-  // field is set. When it's set to true, the input side packet has higher
-  // precedence and the input stream signal will be ignored. When it's set to
-  // false, the input stream signal always overrides the input side packet
-  // signal.
-  //
-  optional bool side_input_has_precedence = 2;
+  // If set, the calculator will always allow (if set to yes) or disallow (if
+  // set to no) the input streams to pass through, and ignore the ALLOW or
+  // DISALLOW input stream or side input packets.
+  optional bool allowance_override = 2;
 }
