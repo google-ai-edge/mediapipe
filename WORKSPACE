@@ -361,6 +361,19 @@ http_archive(
     ],
 )
 
+# PyTorch archives
+
+# 2020-03-12
+# On https://pytorch.org: Stable > Linux > LibTorch > C++ > (CUDA) None > cxx11 ABI
+http_archive(
+    name = "linux_libtorch_cpu",
+    build_file = "@//third_party:libtorch_linux.BUILD",
+    sha256 = "33a9dd142d0497375db42b055bd90780f9d92047a19edc8891e6232e2b5bdba7",
+    strip_prefix = "libtorch",
+    type = "zip",
+    url = "https://download.pytorch.org/libtorch/cpu/libtorch-cxx11-abi-shared-with-deps-1.4.0%2Bcpu.zip",
+)
+
 #Tensorflow repo should always go after the other external dependencies.
 # 2020-08-30
 _TENSORFLOW_GIT_COMMIT = "57b009e31e59bd1a7ae85ef8c0232ed86c9b71db"
