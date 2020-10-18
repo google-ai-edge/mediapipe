@@ -13,10 +13,19 @@
 # limitations under the License.
 
 load("@rules_cc//cc:defs.bzl", "cc_library")
+load(
+    "//mediapipe/framework/tool:mediapipe_graph.bzl",
+    "mediapipe_binary_graph",
+)
 
 licenses(["notice"])
 
 package(default_visibility = ["//visibility:public"])
+
+cc_library(
+    name = "mobile_calculators",
+    deps = [":desktop_pytorch_calculators"],
+)
 
 cc_library(
     name = "desktop_pytorch_calculators",
@@ -29,4 +38,11 @@ cc_library(
         "//mediapipe/calculators/util:annotation_overlay_calculator",
         "//mediapipe/calculators/util:labels_to_render_data_calculator",
     ],
+)
+
+mediapipe_binary_graph(
+    name = "mobile_gpu_binary_graph",
+    graph = "object_detection_mobile_gpu.pbtxt",
+    output_name = "mobile_gpu.binarypb",
+    deps = [":mobile_calculators"],
 )
