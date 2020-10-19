@@ -45,7 +45,8 @@ constexpr char kImageTag[] = "IMAGE";
 constexpr char kImageGpuTag[] = "IMAGE_GPU";
 constexpr char kTensorsTag[] = "TENSORS";
 
-using Outputs = std::vector<torch::jit::IValue>;
+using Output = torch::jit::IValue;
+using Outputs = std::vector<Output>;
 }  // namespace
 
 // Calculator for normalizing and converting an ImageFrame
@@ -183,7 +184,6 @@ REGISTER_CALCULATOR(PyTorchConverterCalculator);
   cv::Mat img_float;
   // Normalize to [0;1]
   image.convertTo(img_float, CV_32F, 1.0 / 255);
-  // FIXME: try NCWH directly here
   auto img_tensor = torch::from_blob(img_float.data, {1, width, height, 3});
   // Permute from NWHC to NCWH
   img_tensor = img_tensor.permute({0, 3, 1, 2});
@@ -199,10 +199,10 @@ REGISTER_CALCULATOR(PyTorchConverterCalculator);
   }
 
   if (has_tensors_tag_) {
-    // FIXME: move to ctor
-    auto output_tensors = absl::make_unique<Outputs>();
-    output_tensors->reserve(1);
-    output_tensors->emplace_back(img_tensor.cpu());
+    auto output_tensors =
+        absl::make_unique<Outputs, std::initializer_list<Output>>({
+            img_tensor.cpu(),
+        });
     cc->Outputs()
         .Tag(kTensorsTag)
         .Add(output_tensors.release(), cc->InputTimestamp());
