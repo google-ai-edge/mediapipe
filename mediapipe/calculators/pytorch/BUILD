@@ -128,13 +128,9 @@ cc_test(
         ":pytorch_converter_calculator",
         ":pytorch_converter_calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
-        # "//mediapipe/framework:calculator_runner",
-        # "//mediapipe/framework/formats:image_format_cc_proto",
         "//mediapipe/framework/formats:image_frame",
         "//mediapipe/framework/formats:image_frame_opencv",
         "//mediapipe/framework/port:gtest_main",
-        # "//mediapipe/framework/port:integral_types",
         "//mediapipe/framework/port:parse_text_proto",
-        # "//mediapipe/framework/tool:validate_type",
     ],
 )

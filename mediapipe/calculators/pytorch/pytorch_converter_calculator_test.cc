@@ -14,19 +14,13 @@
 
 #include <vector>
 
-// #include "absl/memory/memory.h"
-// #include "absl/strings/substitute.h"
 #include "mediapipe/calculators/pytorch/pytorch_converter_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
-// #include "mediapipe/framework/calculator_runner.h"
-// #include "mediapipe/framework/formats/image_format.pb.h"
 #include "mediapipe/framework/formats/image_frame.h"
 #include "mediapipe/framework/formats/image_frame_opencv.h"
 #include "mediapipe/framework/port/gtest.h"
-// #include "mediapipe/framework/port/integral_types.h"
 #include "mediapipe/framework/port/parse_text_proto.h"
 #include "mediapipe/framework/port/status_matchers.h"  // NOLINT
-// #include "mediapipe/framework/tool/validate_type.h"
 #include "torch/torch.h"
 
 namespace mediapipe {
