@@ -64,10 +64,7 @@ TEST_F(PyTorchConverterCalculatorTest, CustomDivAndSub) {
   MP_ASSERT_OK(graph.StartRun({}));
   auto input_image = absl::make_unique<ImageFrame>(ImageFormat::SRGB, 1, 1);
   cv::Mat mat = ::mediapipe::formats::MatView(input_image.get());
-  // mat.at<uint8>(0, 0) = 200;
-  mat.at<float>(0, 0, 0) = 200;
-  // mat.at<uint8>(0, 0, 1) = 200;
-  // mat.at<uint8>(0, 0, 2) = 200;
+  mat = cv::Scalar(200, 201, 202);
   MP_ASSERT_OK(graph.AddPacketToInputStream(
       "input_image", Adopt(input_image.release()).At(Timestamp(0))));
 
@@ -79,18 +76,10 @@ TEST_F(PyTorchConverterCalculatorTest, CustomDivAndSub) {
   EXPECT_EQ(1, tensor_vec.size());
   const torch::Tensor& tensor = tensor_vec[0].toTensor();
   EXPECT_EQ(4, tensor.dim());
-
-  // std::tuple<torch::Tensor, torch::Tensor> result =
-  //     tensor.sort(/*dim*/ -1, /*descending*/ true);
-  // const torch::Tensor result_tensor = std::get<0>(result)[0];
-  // auto results = result_tensor.accessor<float, 1>();
-  // EXPECT_EQ(1, results.size(0));
-  //   const float r0 = results[0];
-  // EXPECT_FLOAT_EQ(67.0f, r0);
-  //   const float r1 = results[1];
-  // EXPECT_FLOAT_EQ(67.0f, r1);
-  //   const float r2 = results[2];
-  // EXPECT_FLOAT_EQ(67.0f, r2);
+  const float* tensor_data = tensor.data<float>();
+  EXPECT_FLOAT_EQ(1.3412966f, tensor_data[0]);
+  EXPECT_FLOAT_EQ(1.4831932f, tensor_data[1]);
+  EXPECT_FLOAT_EQ(1.6813947f, tensor_data[2]);
 
   // Fully close graph at end, otherwise calculator+tensors are destroyed
   // after calling WaitUntilDone().
