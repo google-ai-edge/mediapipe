@@ -28,11 +28,19 @@
 #if defined(MEDIAPIPE_IOS)
 #include "mediapipe/gpu/gpu_buffer.h"
 #include "mediapipe/objc/util.h"
-#endif  // iOS
+#endif  // MEDIAPIPE_IOS
 
 namespace mediapipe {
 
 namespace {
+::mediapipe::Status EnsureFormat(const ImageFrame& image_frame) {
+  const ImageFormat::Format format = image_frame.Format();
+  if (!(format == ImageFormat::SRGB)) {
+    RET_CHECK_FAIL() << "Unsupported input format.";
+  }
+  return ::mediapipe::OkStatus();
+}
+
 constexpr char kImageTag[] = "IMAGE";
 constexpr char kImageGpuTag[] = "IMAGE_GPU";
 constexpr char kTensorsTag[] = "TENSORS";
@@ -46,16 +54,16 @@ using Outputs = std::vector<torch::jit::IValue>;
 // This calculator is designed to be used with the PyTorchInferenceCalculator,
 // as a pre-processing step for calculator inputs.
 //
-// IMAGE inputs are normalized to [-1,1] (default) or [0,1],
-// specified by options (unless outputting a quantized tensor).
+// IMAGE and IMAGE_GPU inputs are normalized to [0;1].
 //
 // Input:
 //  One of the following tags:
-//  IMAGE - ImageFrame (assumed to be 8-bit or 32-bit data).
+//  IMAGE - ImageFrame.
+//  IMAGE_GPU - GpuBuffer.
 //
 // Output:
 //  One of the following tags:
-//  TENSORS - Vector of TfLiteTensor of type kTfLiteFloat32, or kTfLiteUint8.
+//  TENSORS - Vector of torch::jit::IValue residing on CPU.
 //
 // Example use:
 // node {
@@ -64,12 +72,15 @@ using Outputs = std::vector<torch::jit::IValue>;
 //   output_stream: "TENSORS:image_tensor"
 //   options: {
 //     [mediapipe.PyTorchConverterCalculatorOptions.ext] {
-//       zero_center: true
+//       per_channel_normalizations: {sub:0.485 div:0.229}
+//       per_channel_normalizations: {sub:0.456 div:0.224}
+//       per_channel_normalizations: {sub:0.406 div:0.225}
 //     }
 //   }
 // }
 //
 // IMPORTANT Notes:
+//  If given an IMAGE_GPU, PyTorch will convert TENSORS to CPU.
 //  This calculator uses FixedSizeInputStreamHandler by default.
 //
 class PyTorchConverterCalculator : public CalculatorBase {
@@ -84,6 +95,7 @@ class PyTorchConverterCalculator : public CalculatorBase {
   ::mediapipe::PyTorchConverterCalculatorOptions options_;
   bool has_image_tag_;
   bool has_image_gpu_tag_;
+  bool has_tensors_tag_;
 };
 REGISTER_CALCULATOR(PyTorchConverterCalculator);
 
@@ -97,7 +109,9 @@ REGISTER_CALCULATOR(PyTorchConverterCalculator);
   const bool has_tensors_tag = cc->Outputs().HasTag(kTensorsTag);
   RET_CHECK(has_tensors_tag);
 
-  if (has_image_tag) cc->Inputs().Tag(kImageTag).Set<ImageFrame>();
+  if (has_image_tag) {
+    cc->Inputs().Tag(kImageTag).Set<ImageFrame>();
+  }
   if (has_image_gpu_tag) {
 #if defined(MEDIAPIPE_IOS)
     cc->Inputs().Tag(kImageGpuTag).Set<GpuBuffer>();
@@ -106,7 +120,7 @@ REGISTER_CALCULATOR(PyTorchConverterCalculator);
 #endif
   }
 
-  if (has_tensors_tag) cc->Outputs().Tag(kTensorsTag).Set<Outputs>();
+  cc->Outputs().Tag(kTensorsTag).Set<Outputs>();
 
   // Assign this calculator's default InputStreamHandler.
   cc->SetInputStreamHandler("FixedSizeInputStreamHandler");
@@ -121,11 +135,12 @@ REGISTER_CALCULATOR(PyTorchConverterCalculator);
 
   has_image_tag_ = cc->Inputs().HasTag(kImageTag);
   has_image_gpu_tag_ = cc->Inputs().HasTag(kImageGpuTag);
+  has_tensors_tag_ = cc->Outputs().HasTag(kTensorsTag);
 
   if (has_image_gpu_tag_) {
 #if !defined(MEDIAPIPE_IOS)
     RET_CHECK_FAIL() << "GPU processing not enabled.";
-#endif
+#endif  // MEDIAPIPE_IOS
   }
 
   return ::mediapipe::OkStatus();
@@ -133,43 +148,68 @@ REGISTER_CALCULATOR(PyTorchConverterCalculator);
 
 ::mediapipe::Status PyTorchConverterCalculator::Process(CalculatorContext* cc) {
   cv::Mat image;
+  // Acquire input packet as ImageFrame image, if packet is not empty,
   if (has_image_gpu_tag_) {
 #if defined(MEDIAPIPE_IOS) && MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
+    if (cc->Inputs().Tag(kImageGpuTag).IsEmpty()) {
+      return ::mediapipe::OkStatus();
+    }
     const auto& input = cc->Inputs().Tag(kImageGpuTag).Get<GpuBuffer>();
     std::unique_ptr<ImageFrame> frame =
         CreateImageFrameForCVPixelBuffer(input.GetCVPixelBufferRef());
-    image = mediapipe::formats::MatView(frame.release());
+    ImageFrame image_frame = frame.release();
+    MP_RETURN_IF_ERROR(EnsureFormat(image_frame));
+    image = mediapipe::formats::MatView(image_frame);
 #else
     RET_CHECK_FAIL() << "GPU processing is not enabled.";
 #endif
   }
   if (has_image_tag_) {
-    auto& output_frame =
-        cc->Inputs().Tag(kImageTag).Get<mediapipe::ImageFrame>();
-    image = mediapipe::formats::MatView(&output_frame);
+    if (cc->Inputs().Tag(kImageTag).IsEmpty()) {
+      return ::mediapipe::OkStatus();
+    }
+    const ImageFrame& image_frame =
+        cc->Inputs().Tag(kImageTag).Get<ImageFrame>();
+    MP_RETURN_IF_ERROR(EnsureFormat(image_frame));
+    image = mediapipe::formats::MatView(&image_frame);
   }
+
+  const int num_channels = image.channels();
+  RET_CHECK_EQ(num_channels, 3) << "Only RGB images are supported";
+  const int width = image.cols;
+  const int height = image.rows;
   cv::cvtColor(image, image, cv::COLOR_BGR2RGB);
-  const auto width = image.cols, height = image.rows,
-             num_channels = image.channels();
-  RET_CHECK_EQ(num_channels, 3) << "Only RGB images are supported for now";
 
   cv::Mat img_float;
+  // Normalize to [0;1]
   image.convertTo(img_float, CV_32F, 1.0 / 255);
+  // FIXME: try NCWH directly here
   auto img_tensor = torch::from_blob(img_float.data, {1, width, height, 3});
-  img_tensor = img_tensor.permute({0, 3, 1, 2});  // To NCWH
-  if (options_.per_channel_normalizations().size() > 0)
+  // Permute from NWHC to NCWH
+  img_tensor = img_tensor.permute({0, 3, 1, 2});
+
+  if (options_.per_channel_normalizations().size() > 0) {
+    // Further normalize each channel of input image
     for (int i = 0; i < num_channels; ++i) {
       const auto& subdiv = options_.per_channel_normalizations(i);
-      img_tensor[0][i] = img_tensor[0][i].sub_(subdiv.sub()).div_(subdiv.div());
+      const float sub = subdiv.sub();
+      const float div = subdiv.div();
+      img_tensor[0][i] = img_tensor[0][i].sub_(sub).div_(div);
     }
+  }
 
-  auto output_tensors = absl::make_unique<Outputs>();
-  output_tensors->reserve(1);
-  output_tensors->emplace_back(img_tensor.cpu());
-  cc->Outputs()
-      .Tag(kTensorsTag)
-      .Add(output_tensors.release(), cc->InputTimestamp());
-  return ::mediapipe::OkStatus();
+  if (has_tensors_tag_) {
+    // FIXME: move to ctor
+    auto output_tensors = absl::make_unique<Outputs>();
+    output_tensors->reserve(1);
+    output_tensors->emplace_back(img_tensor.cpu());
+    cc->Outputs()
+        .Tag(kTensorsTag)
+        .Add(output_tensors.release(), cc->InputTimestamp());
+    return ::mediapipe::OkStatus();
+  } else {
+    RET_CHECK_FAIL() << "Unsupported output kind.";
+  }
 }
 
 ::mediapipe::Status PyTorchConverterCalculator::Close(CalculatorContext* cc) {

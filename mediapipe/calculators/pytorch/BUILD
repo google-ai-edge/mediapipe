@@ -12,57 +12,41 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load("@rules_proto//proto:defs.bzl", "proto_library")
-load("@rules_cc//cc:defs.bzl", "cc_library")
-load("//mediapipe/framework/port:build_config.bzl", "mediapipe_cc_proto_library")
+load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
+load("//mediapipe/framework/port:build_config.bzl", "mediapipe_proto_library")
 
 licenses(["notice"])  # Apache 2.0
 
 package(default_visibility = ["//visibility:private"])
 
-proto_library(
+mediapipe_proto_library(
     name = "pytorch_converter_calculator_proto",
     srcs = ["pytorch_converter_calculator.proto"],
     visibility = ["//visibility:public"],
-    deps = ["//mediapipe/framework:calculator_proto"],
+    deps = [
+        "//mediapipe/framework:calculator_options_proto",
+        "//mediapipe/framework:calculator_proto",
+    ],
 )
 
-proto_library(
+mediapipe_proto_library(
     name = "pytorch_inference_calculator_proto",
     srcs = ["pytorch_inference_calculator.proto"],
     visibility = ["//visibility:public"],
-    deps = ["//mediapipe/framework:calculator_proto"],
+    deps = [
+        "//mediapipe/framework:calculator_options_proto",
+        "//mediapipe/framework:calculator_proto",
+    ],
 )
 
-proto_library(
+mediapipe_proto_library(
     name = "pytorch_tensors_to_classification_calculator_proto",
     srcs = ["pytorch_tensors_to_classification_calculator.proto"],
     visibility = ["//visibility:public"],
-    deps = ["//mediapipe/framework:calculator_proto"],
-)
-
-mediapipe_cc_proto_library(
-    name = "pytorch_converter_calculator_cc_proto",
-    srcs = ["pytorch_converter_calculator.proto"],
-    cc_deps = ["//mediapipe/framework:calculator_cc_proto"],
-    visibility = ["//visibility:public"],
-    deps = [":pytorch_converter_calculator_proto"],
-)
-
-mediapipe_cc_proto_library(
-    name = "pytorch_inference_calculator_cc_proto",
-    srcs = ["pytorch_inference_calculator.proto"],
-    cc_deps = ["//mediapipe/framework:calculator_cc_proto"],
-    visibility = ["//visibility:public"],
-    deps = [":pytorch_inference_calculator_proto"],
-)
-
-mediapipe_cc_proto_library(
-    name = "pytorch_tensors_to_classification_calculator_cc_proto",
-    srcs = ["pytorch_tensors_to_classification_calculator.proto"],
-    cc_deps = ["//mediapipe/framework:calculator_cc_proto"],
-    visibility = ["//visibility:public"],
-    deps = [":pytorch_tensors_to_classification_calculator_proto"],
+    deps = [
+        "//mediapipe/framework:calculator_options_proto",
+        "//mediapipe/framework:calculator_proto",
+    ],
 )
 
 cc_library(
@@ -135,4 +119,22 @@ cc_library(
         ],
     }),
     alwayslink = 1,
+)
+
+cc_test(
+    name = "pytorch_converter_calculator_test",
+    srcs = ["pytorch_converter_calculator_test.cc"],
+    deps = [
+        ":pytorch_converter_calculator",
+        ":pytorch_converter_calculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        # "//mediapipe/framework:calculator_runner",
+        # "//mediapipe/framework/formats:image_format_cc_proto",
+        "//mediapipe/framework/formats:image_frame",
+        "//mediapipe/framework/formats:image_frame_opencv",
+        "//mediapipe/framework/port:gtest_main",
+        # "//mediapipe/framework/port:integral_types",
+        "//mediapipe/framework/port:parse_text_proto",
+        # "//mediapipe/framework/tool:validate_type",
+    ],
 )

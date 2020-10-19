@@ -27,7 +27,7 @@ message PyTorchConverterCalculatorOptions {
     optional float sub = 1 [default = 0];
     optional float div = 2 [default = 1];
   }
-  // Normalizations to apply per input image channel.
+  // Normalizations to apply per channel of input image.
   // There must be exactly as many items in this list as there are channels
   // or none.
   repeated SubDiv per_channel_normalizations = 1;
