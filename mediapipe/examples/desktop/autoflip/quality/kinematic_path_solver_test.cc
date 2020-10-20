@@ -81,6 +81,46 @@ TEST(KinematicPathSolverTest, PassNotEnoughMotionSmallImg) {
   EXPECT_EQ(state, 400);
 }
 
+TEST(KinematicPathSolverTest, PassEnoughMotionFiltered) {
+  KinematicOptions options;
+  // Set min motion to 2deg
+  options.set_min_motion_to_reframe(1.0);
+  options.set_update_rate(1);
+  options.set_max_velocity(1000);
+  options.set_filtering_time_window_us(3000000);
+  // Set degrees / pixel to 16.6
+  KinematicPathSolver solver(options, 0, 1000, 1000.0 / kWidthFieldOfView);
+  int state;
+  MP_ASSERT_OK(solver.AddObservation(500, kMicroSecInSec * 0));
+  // Move target by 20px / 16.6 = 1.2deg
+  MP_ASSERT_OK(solver.AddObservation(500, kMicroSecInSec * 1));
+  MP_ASSERT_OK(solver.AddObservation(520, kMicroSecInSec * 2));
+  MP_ASSERT_OK(solver.AddObservation(500, kMicroSecInSec * 3));
+  MP_ASSERT_OK(solver.GetState(&state));
+  // Expect cam to not move.
+  EXPECT_EQ(state, 500);
+}
+
+TEST(KinematicPathSolverTest, PassEnoughMotionNotFiltered) {
+  KinematicOptions options;
+  // Set min motion to 2deg
+  options.set_min_motion_to_reframe(1.0);
+  options.set_update_rate(1);
+  options.set_max_velocity(1000);
+  options.set_filtering_time_window_us(0);
+  // Set degrees / pixel to 16.6
+  KinematicPathSolver solver(options, 0, 1000, 1000.0 / kWidthFieldOfView);
+  int state;
+  MP_ASSERT_OK(solver.AddObservation(500, kMicroSecInSec * 0));
+  // Move target by 20px / 16.6 = 1.2deg
+  MP_ASSERT_OK(solver.AddObservation(500, kMicroSecInSec * 1));
+  MP_ASSERT_OK(solver.AddObservation(520, kMicroSecInSec * 2));
+  MP_ASSERT_OK(solver.AddObservation(500, kMicroSecInSec * 3));
+  MP_ASSERT_OK(solver.GetState(&state));
+  // Expect cam to not move.
+  EXPECT_EQ(state, 519);
+}
+
 TEST(KinematicPathSolverTest, PassEnoughMotionLargeImg) {
   KinematicOptions options;
   // Set min motion to 1deg

@@ -15,6 +15,8 @@
 #ifndef MEDIAPIPE_EXAMPLES_DESKTOP_AUTOFLIP_QUALITY_UNIFORM_ACCELERATION_PATH_SOLVER_H_
 #define MEDIAPIPE_EXAMPLES_DESKTOP_AUTOFLIP_QUALITY_UNIFORM_ACCELERATION_PATH_SOLVER_H_
 
+#include <deque>
+
 #include "mediapipe/examples/desktop/autoflip/quality/kinematic_path_solver.pb.h"
 #include "mediapipe/framework/port/integral_types.h"
 #include "mediapipe/framework/port/ret_check.h"
@@ -61,6 +63,8 @@ class KinematicPathSolver {
   double current_position_px_;
   double current_velocity_deg_per_s_;
   uint64 current_time_;
+  // History of observations (second) and their time (first).
+  std::deque<std::pair<uint64, int>> raw_positions_at_time_;
 };
 
 }  // namespace autoflip

@@ -134,13 +134,7 @@ class GateCalculator : public CalculatorBase {
   }
 
   ::mediapipe::Status Open(CalculatorContext* cc) final {
-    const auto& options = cc->Options<::mediapipe::GateCalculatorOptions>();
-    use_calculator_option_for_allow_disallow_ =
-        options.has_allowance_override();
-    if (use_calculator_option_for_allow_disallow_) {
-      allow_by_calculator_option_ = options.allowance_override();
-    }
-
+    use_side_packet_for_allow_disallow_ = false;
     if (cc->InputSidePackets().HasTag("ALLOW")) {
       use_side_packet_for_allow_disallow_ = true;
       allow_by_side_packet_decision_ =
@@ -156,27 +150,24 @@ class GateCalculator : public CalculatorBase {
     last_gate_state_ = GATE_UNINITIALIZED;
     RET_CHECK_OK(CopyInputHeadersToOutputs(cc->Inputs(), &cc->Outputs()));
 
+    const auto& options = cc->Options<::mediapipe::GateCalculatorOptions>();
     empty_packets_as_allow_ = options.empty_packets_as_allow();
+
     return ::mediapipe::OkStatus();
   }
 
   ::mediapipe::Status Process(CalculatorContext* cc) final {
-    // The allow/disallow signal in the calculator option has the highest
-    // priority. If it's not set, use the stream/side packet signal.
-    bool allow = allow_by_calculator_option_;
-    if (!use_calculator_option_for_allow_disallow_) {
-      allow = empty_packets_as_allow_;
-      if (use_side_packet_for_allow_disallow_) {
-        allow = allow_by_side_packet_decision_;
-      } else {
-        if (cc->Inputs().HasTag("ALLOW") &&
-            !cc->Inputs().Tag("ALLOW").IsEmpty()) {
-          allow = cc->Inputs().Tag("ALLOW").Get<bool>();
-        }
-        if (cc->Inputs().HasTag("DISALLOW") &&
-            !cc->Inputs().Tag("DISALLOW").IsEmpty()) {
-          allow = !cc->Inputs().Tag("DISALLOW").Get<bool>();
-        }
+    bool allow = empty_packets_as_allow_;
+    if (use_side_packet_for_allow_disallow_) {
+      allow = allow_by_side_packet_decision_;
+    } else {
+      if (cc->Inputs().HasTag("ALLOW") &&
+          !cc->Inputs().Tag("ALLOW").IsEmpty()) {
+        allow = cc->Inputs().Tag("ALLOW").Get<bool>();
+      }
+      if (cc->Inputs().HasTag("DISALLOW") &&
+          !cc->Inputs().Tag("DISALLOW").IsEmpty()) {
+        allow = !cc->Inputs().Tag("DISALLOW").Get<bool>();
       }
     }
     const GateState new_gate_state = allow ? GATE_ALLOW : GATE_DISALLOW;
@@ -196,6 +187,14 @@ class GateCalculator : public CalculatorBase {
     last_gate_state_ = new_gate_state;
 
     if (!allow) {
+      // Close the output streams if the gate will be permanently closed.
+      // Prevents buffering in calculators whose parents do no use SetOffset.
+      for (int i = 0; i < num_data_streams_; ++i) {
+        if (!cc->Outputs().Get("", i).IsClosed() &&
+            use_side_packet_for_allow_disallow_) {
+          cc->Outputs().Get("", i).Close();
+        }
+      }
       return ::mediapipe::OkStatus();
     }
 
@@ -212,11 +211,9 @@ class GateCalculator : public CalculatorBase {
  private:
   GateState last_gate_state_ = GATE_UNINITIALIZED;
   int num_data_streams_;
-  bool empty_packets_as_allow_ = false;
-  bool use_side_packet_for_allow_disallow_ = false;
-  bool allow_by_side_packet_decision_ = false;
-  bool use_calculator_option_for_allow_disallow_ = false;
-  bool allow_by_calculator_option_ = false;
+  bool empty_packets_as_allow_;
+  bool use_side_packet_for_allow_disallow_;
+  bool allow_by_side_packet_decision_;
 };
 REGISTER_CALCULATOR(GateCalculator);
 

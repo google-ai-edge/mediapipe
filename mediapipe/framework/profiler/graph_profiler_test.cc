@@ -14,6 +14,7 @@
 
 #include "mediapipe/framework/profiler/graph_profiler.h"
 
+#include "absl/status/statusor.h"
 #include "absl/synchronization/mutex.h"
 #include "absl/time/time.h"
 #include "mediapipe/framework/calculator_framework.h"
