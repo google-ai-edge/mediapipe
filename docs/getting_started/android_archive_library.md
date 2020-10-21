@@ -132,7 +132,7 @@ each project.
         implementation 'com.google.guava:guava:27.0.1-android'
         implementation 'com.google.protobuf:protobuf-java:3.11.4'
         // CameraX core library
-        def camerax_version = "1.0.0-alpha06"
+        def camerax_version = "1.0.0-beta10"
         implementation "androidx.camera:camera-core:$camerax_version"
         implementation "androidx.camera:camera-camera2:$camerax_version"
     }
