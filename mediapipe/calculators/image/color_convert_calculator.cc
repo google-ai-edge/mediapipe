@@ -57,6 +57,8 @@ constexpr char kGrayOutTag[] = "GRAY_OUT";
 //   RGB  -> RGBA
 //   RGBA -> BGRA
 //   BGRA -> RGBA
+//   RGBA -> GRAY
+
 //
 // This calculator only supports a single input stream and output stream at a
 // time. If more than one input stream or output stream is present, the
@@ -194,6 +196,12 @@ REGISTER_CALCULATOR(ColorConvertCalculator);
   if (cc->Inputs().HasTag(kRgbaInTag) && cc->Outputs().HasTag(kBgraOutTag)) {
     return ConvertAndOutput(kRgbaInTag, kBgraOutTag, ImageFormat::SBGRA,
                             cv::COLOR_RGBA2BGRA, cc);
+  }
+
+  // RGBA -> GRAY
+  if (cc->Inputs().HasTag(kRgbaInTag) && cc->Outputs().HasTag(kGrayOutTag)) {
+      return ConvertAndOutput(kRgbaInTag, kGrayOutTag, ImageFormat::GRAY8,
+                              cv::COLOR_RGBA2GRAY, cc);
   }
 
   return ::mediapipe::InvalidArgumentErrorBuilder(MEDIAPIPE_LOC)
