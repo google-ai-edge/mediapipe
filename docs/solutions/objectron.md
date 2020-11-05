@@ -20,7 +20,7 @@ through a machine learning (ML) model, trained on a newly created 3D dataset.
 
 ![objectron_shoe_android_gpu.gif](../images/mobile/objectron_shoe_android_gpu.gif) | ![objectron_chair_android_gpu.gif](../images/mobile/objectron_chair_android_gpu.gif) | ![objectron_camera_android_gpu.gif](../images/mobile/objectron_camera_android_gpu.gif) | ![objectron_cup_android_gpu.gif](../images/mobile/objectron_cup_android_gpu.gif)
 :--------------------------------------------------------------------------------: | :----------------------------------------------------------------------------------: | :------------------------------------------------------------------------------------: | :------------------------------------------------------------------------------:
-*Fig 1(a). Objectron for Shoes.*                                                   | *Fig 1(b). Objectron for Chairs.*                                                    | *Fig 1(c). Objectron for Cameras.*                                                     | *Fig 1(d). Objectron for Cups.*
+*Fig 1a. Shoe Objectron*                                                           | *Fig 1b. Camera Objectron*                                                           | *Fig 1c. Camera Objectron*                                                             | *Fig 1d. Cup Objectron*
 
 Object detection is an extensively studied computer vision problem, but most of
 the research has focused on

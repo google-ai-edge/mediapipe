@@ -59,12 +59,12 @@ MediaPipe Python package is available on
 [PyPI](https://pypi.org/project/mediapipe/), and can be installed simply by `pip
 install mediapipe` on Linux and macOS, as described in:
 
-*   [MediaPipe Face Mesh](../solutions/pose.md#python) and
-    [colab](https://mediapipe.page.link/face_mesh_py_colab)
-*   [MediaPipe Hands](../solutions/pose.md#python) and
-    [colab](https://mediapipe.page.link/hands_py_colab)
-*   [MediaPipe Pose](../solutions/pose.md#python) and
-    [colab](https://mediapipe.page.link/pose_py_colab)
+*   [MediaPipe Face Mesh](https://google.github.io/mediapipe/solutions/face_mesh#python)
+    ([colab](https://mediapipe.page.link/face_mesh_py_colab))
+*   [MediaPipe Hands](https://google.github.io/mediapipe/solutions/hands#python)
+    ([colab](https://mediapipe.page.link/hands_py_colab))
+*   [MediaPipe Pose](https://google.github.io/mediapipe/solutions/pose#python)
+    ([colab](https://mediapipe.page.link/pose_py_colab))
 
 ## MediaPipe on the Web
 
