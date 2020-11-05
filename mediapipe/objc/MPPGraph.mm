@@ -45,7 +45,6 @@
 
   /// Number of frames currently being processed by the graph.
   std::atomic<int32_t> _framesInFlight;
-  /// Used as a sequential timestamp for MediaPipe.
   int64 _frameNumber;
 
   // Graph config modified to expose requested output streams.
