@@ -33,8 +33,8 @@ inline int GetNextDetectionId() { return ++detection_id; }
 }  // namespace
 
 // Assign a unique id to detections.
-// Note that the calculator will consume the input vector of Detection or
-// DetectionList. So the input stream can not be connected to other calculators.
+// Note that the calculator will consume or copy the input vector of Detection or
+// DetectionList. 
 //
 // Example config:
 // node {
@@ -76,7 +76,7 @@ REGISTER_CALCULATOR(DetectionUniqueIdCalculator);
   if (cc->Inputs().HasTag(kDetectionListTag) &&
       !cc->Inputs().Tag(kDetectionListTag).IsEmpty()) {
     auto result =
-        cc->Inputs().Tag(kDetectionListTag).Value().Consume<DetectionList>();
+        cc->Inputs().Tag(kDetectionListTag).Value().ConsumeOrCopy<DetectionList>();
     if (result.ok()) {
       auto detection_list = std::move(result).ValueOrDie();
       for (Detection& detection : *detection_list->mutable_detection()) {
@@ -93,7 +93,7 @@ REGISTER_CALCULATOR(DetectionUniqueIdCalculator);
     auto result = cc->Inputs()
                       .Tag(kDetectionsTag)
                       .Value()
-                      .Consume<std::vector<Detection>>();
+                      .ConsumeOrCopy<std::vector<Detection>>();
     if (result.ok()) {
       auto detections = std::move(result).ValueOrDie();
       for (Detection& detection : *detections) {
