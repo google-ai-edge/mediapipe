@@ -434,8 +434,9 @@ ScaleImageCalculator::~ScaleImageCalculator() {}
   // TODO Remove these conditions.
   RET_CHECK(output_format_ == ImageFormat::SRGB ||
             (input_format_ == output_format_ &&
-             output_format_ == ImageFormat::YCBCR420P))
+             output_format_ == ImageFormat::YCBCR420P) || output_format_ == ImageFormat::SRGBA || output_format_ == ImageFormat::SBGRA || output_format_ == ImageFormat::GRAY8)
       << "Outputting YCbCr420P images from SRGB input is not yet supported";
+
   RET_CHECK(input_format_ == output_format_ ||
             input_format_ == ImageFormat::YCBCR420P)
       << "Conversion of the color space (except from "
@@ -681,11 +682,20 @@ ScaleImageCalculator::~ScaleImageCalculator() {}
   } else {
     // Upscale. If upscaling is disallowed, output_width_ and output_height_ are
     // the same as the input/crop width and height.
-    image_frame_util::RescaleImageFrame(
-        *image_frame, output_width_, output_height_, alignment_boundary_,
-        interpolation_algorithm_, output_frame.get());
+    if(output_format_ == ImageFormat::SRGB || output_format_ == ImageFormat::YCBCR420P) {
+      image_frame_util::RescaleImageFrame(
+          *image_frame, output_width_, output_height_, alignment_boundary_,
+          interpolation_algorithm_, output_frame.get());
+
+    } else {
+         cv::Mat input_mat = ::upipe::formats::MatView(image_frame);
+         output_frame->Reset(image_frame->Format(), output_width_, output_height_,
+                             alignment_boundary_);
+         cv::Mat output_mat = ::upipe::formats::MatView(output_frame.get());
+         cv::resize(input_mat, output_mat, cv::Size(output_width_, output_height_), 0.0, 0.0, interpolation_algorithm_);
+    }
     if (interpolation_algorithm_ != -1) {
-      cc->GetCounter("Upscales")->Increment();
+         cc->GetCounter("Upscales")->Increment();
     }
   }
 
