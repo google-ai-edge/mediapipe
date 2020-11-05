@@ -1,4 +1,4 @@
-# Copyright 2019 The MediaPipe Authors.
+# Copyright 2020 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -29,6 +29,23 @@ cc_library(
     name = "mobile_calculators",
     visibility = ["//visibility:public"],
     deps = [
+        "//mediapipe/calculators/core:constant_side_packet_calculator",
+        "//mediapipe/calculators/core:flow_limiter_calculator",
+        "//mediapipe/calculators/core:gate_calculator",
+        "//mediapipe/calculators/core:merge_calculator",
+        "//mediapipe/calculators/core:previous_loopback_calculator",
+        "//mediapipe/calculators/image:image_cropping_calculator",
+        "//mediapipe/graphs/object_detection_3d/calculators:annotations_to_model_matrices_calculator",
+        "//mediapipe/graphs/object_detection_3d/calculators:gl_animation_overlay_calculator",
+        "//mediapipe/graphs/object_detection_3d/subgraphs:box_landmark_gpu",
+        "//mediapipe/graphs/object_detection_3d/subgraphs:object_detection_oid_v4_gpu",
+    ],
+)
+
+cc_library(
+    name = "mobile_calculators_1stage",
+    visibility = ["//visibility:public"],
+    deps = [
         "//mediapipe/calculators/core:packet_resampler_calculator",
         "//mediapipe/calculators/image:image_cropping_calculator",
         "//mediapipe/gpu:gl_scaler_calculator",
@@ -40,17 +57,17 @@ cc_library(
 )
 
 mediapipe_binary_graph(
-    name = "mobile_gpu_binary_graph_shoe",
-    graph = "shoe_classic_occlusion_tracking.pbtxt",
-    output_name = "mobile_gpu_shoe.binarypb",
+    name = "mobile_gpu_binary_graph",
+    graph = "object_occlusion_tracking.pbtxt",
+    output_name = "mobile_gpu_binary_graph.binarypb",
     visibility = ["//visibility:public"],
     deps = [":mobile_calculators"],
 )
 
 mediapipe_binary_graph(
-    name = "mobile_gpu_binary_graph_chair",
-    graph = "chair_classic_occlusion_tracking.pbtxt",
-    output_name = "mobile_gpu_chair.binarypb",
+    name = "mobile_gpu_1stage_binary_graph",
+    graph = "object_occlusion_tracking_1stage.pbtxt",
+    output_name = "mobile_gpu_1stage_binary_graph.binarypb",
     visibility = ["//visibility:public"],
-    deps = [":mobile_calculators"],
+    deps = [":mobile_calculators_1stage"],
 )

@@ -17,12 +17,15 @@
 #include "mediapipe/calculators/core/constant_side_packet_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/collection_item_id.h"
+#include "mediapipe/framework/formats/classification.pb.h"
 #include "mediapipe/framework/port/canonical_errors.h"
 #include "mediapipe/framework/port/integral_types.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status.h"
 
 namespace mediapipe {
+
+namespace {}  // namespace
 
 // Generates an output side packet or multiple output side packets according to
 // the specified options.
@@ -74,6 +77,8 @@ class ConstantSidePacketCalculator : public CalculatorBase {
         packet.Set<std::string>();
       } else if (packet_options.has_uint64_value()) {
         packet.Set<uint64>();
+      } else if (packet_options.has_classification_list_value()) {
+        packet.Set<ClassificationList>();
       } else {
         return ::mediapipe::InvalidArgumentError(
             "None of supported values were specified in options.");
@@ -100,6 +105,9 @@ class ConstantSidePacketCalculator : public CalculatorBase {
         packet.Set(MakePacket<std::string>(packet_options.string_value()));
       } else if (packet_options.has_uint64_value()) {
         packet.Set(MakePacket<uint64>(packet_options.uint64_value()));
+      } else if (packet_options.has_classification_list_value()) {
+        packet.Set(MakePacket<ClassificationList>(
+            packet_options.classification_list_value()));
       } else {
         return ::mediapipe::InvalidArgumentError(
             "None of supported values were specified in options.");

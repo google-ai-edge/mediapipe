@@ -55,8 +55,7 @@ objc_library(
     name = "HandDetectionGpuAppLibrary",
     data = [
         "//mediapipe/graphs/hand_tracking:hand_detection_mobile_gpu_binary_graph",
-        "//mediapipe/models:palm_detection.tflite",
-        "//mediapipe/models:palm_detection_labelmap.txt",
+        "//mediapipe/modules/palm_detection:palm_detection.tflite",
     ],
     deps = [
         "//mediapipe/examples/ios/common:CommonMediaPipeAppLibrary",

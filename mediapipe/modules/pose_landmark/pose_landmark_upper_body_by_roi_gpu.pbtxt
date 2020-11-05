@@ -22,9 +22,7 @@ input_stream: "IMAGE:image"
 input_stream: "ROI:roi"
 
 # Pose landmarks within the given ROI. (NormalizedLandmarkList)
-# We have 25 (upper-body) landmarks
-# (see pose_landmark_upper_body_topology.svg), and there are other auxiliary key
-# points.
+# We have 25 (upper-body) landmarks (see pose_landmark_upper_body_topology.svg).
 # 0 - nose
 # 1 - right eye (inner)
 # 2 - right eye
@@ -56,58 +54,40 @@ input_stream: "ROI:roi"
 # the MediaPipe framework will internally inform the downstream calculators of
 # the absence of this packet so that they don't wait for it unnecessarily.
 output_stream: "LANDMARKS:landmarks"
+# Auxiliary landmarks for deriving the ROI in the subsequent image.
+# (NormalizedLandmarkList)
+output_stream: "AUXILIARY_LANDMARKS:auxiliary_landmarks"
 
-# Crops the rectangle that contains a pose from the input image.
-node {
-  calculator: "ImageCroppingCalculator"
+# Transforms the input image into a 256x256 tensor while keeping the aspect
+# ratio (what is expected by the corresponding model), resulting in potential
+# letterboxing in the transformed image.
+node: {
+  calculator: "ImageToTensorCalculator"
   input_stream: "IMAGE_GPU:image"
   input_stream: "NORM_RECT:roi"
-  output_stream: "IMAGE_GPU:pose_region"
-  options: {
-    [mediapipe.ImageCroppingCalculatorOptions.ext] {
-      border_mode: BORDER_REPLICATE
-      output_max_width: 256
-      output_max_height: 256
-    }
-  }
-}
-
-# Transforms the input image on GPU to a 256x256 image. To scale the input
-# image, the scale_mode option is set to FIT to preserve the aspect ratio,
-# resulting in potential letterboxing in the transformed image.
-node: {
-  calculator: "ImageTransformationCalculator"
-  input_stream: "IMAGE_GPU:pose_region"
-  output_stream: "IMAGE_GPU:transformed_pose_region"
+  output_stream: "TENSORS:input_tensors"
   output_stream: "LETTERBOX_PADDING:letterbox_padding"
   options: {
-    [mediapipe.ImageTransformationCalculatorOptions.ext] {
-      output_width: 256
-      output_height: 256
-      scale_mode: FIT
-    }
-  }
-}
-
-# Converts the transformed input image on GPU into a tensor.
-node {
-  calculator: "TfLiteConverterCalculator"
-  input_stream: "IMAGE_GPU:transformed_pose_region"
-  output_stream: "TENSORS_GPU:input_tensors"
-  options: {
-    [mediapipe.TfLiteConverterCalculatorOptions.ext] {
-      zero_center: false
+    [mediapipe.ImageToTensorCalculatorOptions.ext] {
+      output_tensor_width: 256
+      output_tensor_height: 256
+      keep_aspect_ratio: true
+      output_tensor_float_range {
+        min: 0.0
+        max: 1.0
+      }
+      gpu_origin: TOP_LEFT
     }
   }
 }
 
 # Runs a TensorFlow Lite model inference on GPU.
 node {
-  calculator: "TfLiteInferenceCalculator"
-  input_stream: "TENSORS_GPU:input_tensors"
+  calculator: "InferenceCalculator"
+  input_stream: "TENSORS:input_tensors"
   output_stream: "TENSORS:output_tensors"
   options: {
-    [mediapipe.TfLiteInferenceCalculatorOptions.ext] {
+    [mediapipe.InferenceCalculatorOptions.ext] {
       model_path: "mediapipe/modules/pose_landmark/pose_landmark_upper_body.tflite"
     }
   }
@@ -116,7 +96,7 @@ node {
 # Splits a vector of TFLite tensors to multiple vectors according to the ranges
 # specified in option.
 node {
-  calculator: "SplitTfLiteTensorVectorCalculator"
+  calculator: "SplitTensorVectorCalculator"
   input_stream: "output_tensors"
   output_stream: "landmark_tensors"
   output_stream: "pose_flag_tensor"
@@ -131,7 +111,7 @@ node {
 # Converts the pose-flag tensor into a float that represents the confidence
 # score of pose presence.
 node {
-  calculator: "TfLiteTensorsToFloatsCalculator"
+  calculator: "TensorsToFloatsCalculator"
   input_stream: "TENSORS:pose_flag_tensor"
   output_stream: "FLOAT:pose_presence_score"
 }
@@ -149,7 +129,7 @@ node {
   }
 }
 
-# Drop landmarks tensors if pose is not present.
+# Drops landmark tensors if pose is not present.
 node {
   calculator: "GateCalculator"
   input_stream: "landmark_tensors"
@@ -157,15 +137,15 @@ node {
   output_stream: "ensured_landmark_tensors"
 }
 
-# Decodes the landmark tensors into a vector of lanmarks, where the landmark
+# Decodes the landmark tensors into a vector of landmarks, where the landmark
 # coordinates are normalized by the size of the input image to the model.
 node {
-  calculator: "TfLiteTensorsToLandmarksCalculator"
+  calculator: "TensorsToLandmarksCalculator"
   input_stream: "TENSORS:ensured_landmark_tensors"
   output_stream: "NORM_LANDMARKS:raw_landmarks"
   options: {
-    [mediapipe.TfLiteTensorsToLandmarksCalculatorOptions.ext] {
-      num_landmarks: 31
+    [mediapipe.TensorsToLandmarksCalculatorOptions.ext] {
+      num_landmarks: 27
       input_image_width: 256
       input_image_height: 256
     }
@@ -189,5 +169,20 @@ node {
   calculator: "LandmarkProjectionCalculator"
   input_stream: "NORM_LANDMARKS:adjusted_landmarks"
   input_stream: "NORM_RECT:roi"
-  output_stream: "NORM_LANDMARKS:landmarks"
+  output_stream: "NORM_LANDMARKS:all_landmarks"
+}
+
+# Splits the landmarks into two sets: the actual pose landmarks and the
+# auxiliary landmarks.
+node {
+  calculator: "SplitNormalizedLandmarkListCalculator"
+  input_stream: "all_landmarks"
+  output_stream: "landmarks"
+  output_stream: "auxiliary_landmarks"
+  options: {
+    [mediapipe.SplitVectorCalculatorOptions.ext] {
+      ranges: { begin: 0 end: 25 }
+      ranges: { begin: 25 end: 27 }
+    }
+  }
 }

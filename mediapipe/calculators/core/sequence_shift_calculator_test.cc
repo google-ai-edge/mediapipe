@@ -99,6 +99,35 @@ TEST(SequenceShiftCalculatorTest, NegativeShift) {
   }
 }
 
+// Tests using a side packet to specify the offset.  Shifting by -2, i.e.,
+// output input[i] with timestamp[i - 2]. The first two packets should be
+// dropped.
+TEST(SequenceShiftCalculatorTest, SidePacketOffset) {
+  CalculatorGraphConfig::Node node;
+  node.set_calculator("SequenceShiftCalculator");
+  node.add_input_stream("input");
+  node.add_output_stream("output");
+  node.add_input_side_packet("PACKET_OFFSET:packet_offset");
+
+  CalculatorRunner runner(node);
+  AddPackets(&runner);
+  runner.MutableSidePackets()->Tag("PACKET_OFFSET") = Adopt(new int(-2));
+  MP_ASSERT_OK(runner.Run());
+  const std::vector<Packet>& input_packets =
+      runner.MutableInputs()->Index(0).packets;
+  const std::vector<Packet>& output_packets = runner.Outputs().Index(0).packets;
+  ASSERT_EQ(10, input_packets.size());
+  // Input packet[i] should be output with the timestamp of input packet[i - 2].
+  // The first two packets are dropped. This means timestamps match between
+  // input and output packets, but the data in the output packets come from
+  // input_packets[i + 2].
+  ASSERT_EQ(8, output_packets.size());
+  for (int i = 0; i < output_packets.size(); ++i) {
+    EXPECT_EQ(input_packets[i].Timestamp(), output_packets[i].Timestamp());
+    EXPECT_EQ(input_packets[i + 2].Get<int>(), output_packets[i].Get<int>());
+  }
+}
+
 }  // namespace
 
 }  // namespace mediapipe

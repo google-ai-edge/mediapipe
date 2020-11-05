@@ -69,6 +69,7 @@ namespace mediapipe {
   "#elif __VERSION__ > 320 && !defined(GL_ES)\n"                 \
   "out vec4 frag_out; \n"                                        \
   "#define gl_FragColor frag_out\n"                              \
+  "#define texture2D texture\n"                                  \
   "#endif  // __VERSION__ < 130\n"
 
 const GLchar* const kMediaPipeVertexShaderPreamble = VERTEX_PREAMBLE;
@@ -104,7 +105,7 @@ const GLchar* const kBasicTexturedFragmentShader = FRAGMENT_PREAMBLE _STRINGIFY(
         in mediump vec2 sample_coordinate;  // texture coordinate (0..1)
     uniform sampler2D video_frame;
 
-    void main() { gl_FragColor = texture2D(video_frame, sample_coordinate); });
+    void main() { gl_FragColor = texture(video_frame, sample_coordinate); });
 
 const GLchar* const kBasicTexturedFragmentShaderOES = FRAGMENT_PREAMBLE
     "#extension GL_OES_EGL_image_external : require\n" _STRINGIFY(
@@ -114,7 +115,7 @@ const GLchar* const kBasicTexturedFragmentShaderOES = FRAGMENT_PREAMBLE
         uniform samplerExternalOES video_frame;
 
         void main() {
-          gl_FragColor = texture2D(video_frame, sample_coordinate);
+          gl_FragColor = texture(video_frame, sample_coordinate);
         });
 
 const GLchar* const kFlatColorFragmentShader = FRAGMENT_PREAMBLE _STRINGIFY(
@@ -131,7 +132,7 @@ const GLchar* const kRgbWeightFragmentShader = FRAGMENT_PREAMBLE _STRINGIFY(
     uniform sampler2D video_frame; uniform vec3 weights;  // r,g,b weights
 
     void main() {
-      vec4 color = texture2D(video_frame, sample_coordinate);
+      vec4 color = texture(video_frame, sample_coordinate);
       gl_FragColor.bgra = vec4(weights.z * color.b, weights.y * color.g,
                                weights.x * color.r, color.a);
     });
@@ -145,10 +146,10 @@ const GLchar* const kYUV2TexToRGBFragmentShader = FRAGMENT_PREAMBLE _STRINGIFY(
     void main() {
       mediump vec3 yuv;
       lowp vec3 rgb;
-      yuv.r = texture2D(video_frame_y, sample_coordinate).r;
+      yuv.r = texture(video_frame_y, sample_coordinate).r;
       // Subtract (0.5, 0.5) because conversion is done assuming UV color
       // midpoint of (128, 128).
-      yuv.gb = texture2D(video_frame_uv, sample_coordinate).rg - vec2(0.5, 0.5);
+      yuv.gb = texture(video_frame_uv, sample_coordinate).rg - vec2(0.5, 0.5);
       // Using BT.709 which is the standard for HDTV.
       rgb = mat3(1, 1, 1, 0, -0.18732, 1.8556, 1.57481, -0.46813, 0) * yuv;
       gl_FragColor = vec4(rgb, 1);

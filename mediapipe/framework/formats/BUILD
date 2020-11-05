@@ -48,6 +48,18 @@ mediapipe_proto_library(
     visibility = ["//visibility:public"],
 )
 
+mediapipe_register_type(
+    base_name = "classification",
+    include_headers = ["mediapipe/framework/formats/classification.pb.h"],
+    types = [
+        "::mediapipe::Classification",
+        "::mediapipe::ClassificationList",
+        "::std::vector<::mediapipe::Classification>",
+        "::std::vector<::mediapipe::ClassificationList>",
+    ],
+    deps = [":classification_cc_proto"],
+)
+
 mediapipe_proto_library(
     name = "image_format_proto",
     srcs = ["image_format.proto"],
@@ -288,4 +300,52 @@ cc_test(
         "//mediapipe/framework/port:status",
         "@com_google_absl//absl/memory",
     ],
+)
+
+cc_library(
+    name = "tensor",
+    srcs = ["tensor.cc"],
+    hdrs = ["tensor.h"],
+    copts = select({
+        "//mediapipe:apple": [
+            "-x objective-c++",
+            "-fobjc-arc",  # enable reference-counting
+        ],
+        "//conditions:default": [],
+    }),
+    linkopts = select({
+        "//mediapipe:ios": [
+            "-framework CoreVideo",
+            "-framework MetalKit",
+        ],
+        "//conditions:default": [],
+    }),
+    visibility = ["//visibility:public"],
+    deps = [
+        "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/synchronization",
+        "//mediapipe/framework:port",
+        "//mediapipe/framework/port:logging",
+    ] + select({
+        "//mediapipe/gpu:disable_gpu": [],
+        "//conditions:default": [
+            "//mediapipe/gpu:gl_base",
+            "//mediapipe/gpu:gl_context",
+        ],
+    }),
+)
+
+cc_test(
+    name = "tensor_test",
+    srcs = ["tensor_test.cc"],
+    deps = [
+        ":tensor",
+        "//mediapipe/framework/port:gtest_main",
+    ] + select({
+        "//conditions:default": [
+            "//mediapipe/gpu:gl_calculator_helper",
+            "//mediapipe/gpu:gpu_buffer_format",
+        ],
+        "//mediapipe/gpu:disable_gpu": [],
+    }),
 )

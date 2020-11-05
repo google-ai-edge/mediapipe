@@ -519,7 +519,7 @@ REGISTER_CALCULATOR(ImageTransformationCalculator);
     renderer = yuv_renderer_.get();
     src1 = gpu_helper_.CreateSourceTexture(input, 0);
   } else  // NOLINT(readability/braces)
-#endif  // iOS
+#endif    // iOS
   {
     src1 = gpu_helper_.CreateSourceTexture(input);
 #if defined(TEXTURE_EXTERNAL_OES)
@@ -531,7 +531,7 @@ REGISTER_CALCULATOR(ImageTransformationCalculator);
       }
       renderer = ext_rgb_renderer_.get();
     } else  // NOLINT(readability/braces)
-#endif  // TEXTURE_EXTERNAL_OES
+#endif      // TEXTURE_EXTERNAL_OES
     {
       if (!rgb_renderer_) {
         rgb_renderer_ = absl::make_unique<QuadRenderer>();

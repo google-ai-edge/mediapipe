@@ -86,9 +86,7 @@ for app in ${apps}; do
       cp -f "${bin_dir}/${app}/"*"_cpu" "${out_dir}"
     fi
     if [[ $build_only == false ]]; then
-      if  [[ ${target_name} == "multi_hand_tracking" ]]; then
-        graph_name="hand_tracking/multi_hand_tracking"
-      elif  [[ ${target_name} == "object_tracking" ]]; then
+      if  [[ ${target_name} == "object_tracking" ]]; then
         graph_name="tracking/object_detection_tracking"
       elif [[ ${target_name} == "upper_body_pose_tracking" ]]; then
         graph_name="pose_tracking/upper_body_pose_tracking"

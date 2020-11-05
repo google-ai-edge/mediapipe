@@ -60,7 +60,7 @@ objc_library(
         "FaceMeshGpuViewController.h",
     ],
     data = [
-        "//mediapipe/graphs/face_mesh:face_mesh_mobile_gpu_binary_graph",
+        "//mediapipe/graphs/face_mesh:face_mesh_mobile_gpu.binarypb",
         "//mediapipe/modules/face_detection:face_detection_front.tflite",
         "//mediapipe/modules/face_landmark:face_landmark.tflite",
     ],

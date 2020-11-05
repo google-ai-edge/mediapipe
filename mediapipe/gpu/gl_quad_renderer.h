@@ -83,6 +83,7 @@ class QuadRenderer {
   GLuint program_ = 0;
   GLint scale_unif_ = -1;
   std::vector<GLint> frame_unifs_;
+  GLuint vao_;              // vertex array object
   GLuint vbo_[2] = {0, 0};  // for vertex buffer storage
 };
 

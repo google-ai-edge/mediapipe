@@ -27,13 +27,12 @@ mediapipe_simple_subgraph(
     register_as = "PoseLandmarkUpperBodyByRoiGpu",
     deps = [
         "//mediapipe/calculators/core:gate_calculator",
+        "//mediapipe/calculators/core:split_normalized_landmark_list_calculator",
         "//mediapipe/calculators/core:split_vector_calculator",
-        "//mediapipe/calculators/image:image_cropping_calculator",
-        "//mediapipe/calculators/image:image_transformation_calculator",
-        "//mediapipe/calculators/tflite:tflite_converter_calculator",
-        "//mediapipe/calculators/tflite:tflite_inference_calculator",
-        "//mediapipe/calculators/tflite:tflite_tensors_to_floats_calculator",
-        "//mediapipe/calculators/tflite:tflite_tensors_to_landmarks_calculator",
+        "//mediapipe/calculators/tensor:image_to_tensor_calculator",
+        "//mediapipe/calculators/tensor:inference_calculator",
+        "//mediapipe/calculators/tensor:tensors_to_floats_calculator",
+        "//mediapipe/calculators/tensor:tensors_to_landmarks_calculator",
         "//mediapipe/calculators/util:landmark_letterbox_removal_calculator",
         "//mediapipe/calculators/util:landmark_projection_calculator",
         "//mediapipe/calculators/util:thresholding_calculator",
@@ -46,13 +45,12 @@ mediapipe_simple_subgraph(
     register_as = "PoseLandmarkUpperBodyByRoiCpu",
     deps = [
         "//mediapipe/calculators/core:gate_calculator",
+        "//mediapipe/calculators/core:split_normalized_landmark_list_calculator",
         "//mediapipe/calculators/core:split_vector_calculator",
-        "//mediapipe/calculators/image:image_cropping_calculator",
-        "//mediapipe/calculators/image:image_transformation_calculator",
-        "//mediapipe/calculators/tflite:tflite_converter_calculator",
-        "//mediapipe/calculators/tflite:tflite_inference_calculator",
-        "//mediapipe/calculators/tflite:tflite_tensors_to_floats_calculator",
-        "//mediapipe/calculators/tflite:tflite_tensors_to_landmarks_calculator",
+        "//mediapipe/calculators/tensor:image_to_tensor_calculator",
+        "//mediapipe/calculators/tensor:inference_calculator",
+        "//mediapipe/calculators/tensor:tensors_to_floats_calculator",
+        "//mediapipe/calculators/tensor:tensors_to_landmarks_calculator",
         "//mediapipe/calculators/util:landmark_letterbox_removal_calculator",
         "//mediapipe/calculators/util:landmark_projection_calculator",
         "//mediapipe/calculators/util:thresholding_calculator",
@@ -73,6 +71,7 @@ mediapipe_simple_subgraph(
         "//mediapipe/calculators/core:previous_loopback_calculator",
         "//mediapipe/calculators/core:split_vector_calculator",
         "//mediapipe/calculators/image:image_properties_calculator",
+        "//mediapipe/calculators/util:logic_calculator",
         "//mediapipe/modules/pose_detection:pose_detection_gpu",
     ],
 )
@@ -91,7 +90,30 @@ mediapipe_simple_subgraph(
         "//mediapipe/calculators/core:previous_loopback_calculator",
         "//mediapipe/calculators/core:split_vector_calculator",
         "//mediapipe/calculators/image:image_properties_calculator",
+        "//mediapipe/calculators/util:logic_calculator",
         "//mediapipe/modules/pose_detection:pose_detection_cpu",
+    ],
+)
+
+mediapipe_simple_subgraph(
+    name = "pose_landmark_upper_body_smoothed_cpu",
+    graph = "pose_landmark_upper_body_smoothed_cpu.pbtxt",
+    register_as = "PoseLandmarkUpperBodySmoothedCpu",
+    deps = [
+        ":pose_landmark_upper_body_cpu",
+        "//mediapipe/calculators/image:image_properties_calculator",
+        "//mediapipe/calculators/util:landmarks_smoothing_calculator",
+    ],
+)
+
+mediapipe_simple_subgraph(
+    name = "pose_landmark_upper_body_smoothed_gpu",
+    graph = "pose_landmark_upper_body_smoothed_gpu.pbtxt",
+    register_as = "PoseLandmarkUpperBodySmoothedGpu",
+    deps = [
+        ":pose_landmark_upper_body_gpu",
+        "//mediapipe/calculators/image:image_properties_calculator",
+        "//mediapipe/calculators/util:landmarks_smoothing_calculator",
     ],
 )
 
@@ -116,7 +138,6 @@ mediapipe_simple_subgraph(
     graph = "pose_landmark_upper_body_landmarks_to_roi.pbtxt",
     register_as = "PoseLandmarkUpperBodyLandmarksToRoi",
     deps = [
-        "//mediapipe/calculators/core:split_vector_calculator",
         "//mediapipe/calculators/util:alignment_points_to_rects_calculator",
         "//mediapipe/calculators/util:landmarks_to_detection_calculator",
         "//mediapipe/calculators/util:rect_transformation_calculator",

@@ -5,7 +5,7 @@ parent: Solutions
 nav_order: 5
 ---
 
-# MediaPipe BlazePose
+# MediaPipe Pose
 {: .no_toc }
 
 1. TOC
@@ -88,12 +88,11 @@ hip midpoints.
 ### Pose Landmark Model (BlazePose Tracker)
 
 The landmark model currently included in MediaPipe Pose predicts the location of
-25 upper-body landmarks (see figure below), each with `(x, y, z, visibility)`,
-plus two virtual alignment keypoints. Note that the `z` value should be
-discarded as the model is currently not fully trained to predict depth, but this
-is something we have on the roadmap. The model shares the same architecture as
-the full-body version that predicts 33 landmarks, described in more detail in
-the
+25 upper-body landmarks (see figure below), each with `(x, y, z, visibility)`.
+Note that the `z` value should be discarded as the model is currently not fully
+trained to predict depth, but this is something we have on the roadmap. The
+model shares the same architecture as the full-body version that predicts 33
+landmarks, described in more detail in the
 [BlazePose Google AI Blog](https://ai.googleblog.com/2020/08/on-device-real-time-body-pose-tracking.html)
 and in this [paper](https://arxiv.org/abs/2006.10204).
 
@@ -147,35 +146,77 @@ MediaPipe examples.
 MediaPipe Python package is available on
 [PyPI](https://pypi.org/project/mediapipe/), and can be installed simply by `pip
 install mediapipe` on Linux and macOS, as described below and in this
-[colab](https://mediapipe.page.link/mp-py-colab). If you do need to build the
+[colab](https://mediapipe.page.link/pose_py_colab). If you do need to build the
 Python package from source, see
 [additional instructions](../getting_started/building_examples.md#python).
 
+Activate a Python virtual environment:
+
 ```bash
-# Activate a Python virtual environment.
 $ python3 -m venv mp_env && source mp_env/bin/activate
+```
 
-# Install MediaPipe Python package
+Install MediaPipe Python package:
+
+```bash
 (mp_env)$ pip install mediapipe
+```
 
-# Run in Python interpreter
-(mp_env)$ python3
->>> import mediapipe as mp
->>> pose_tracker = mp.examples.UpperBodyPoseTracker()
+Run the following Python code:
 
-# For image input
->>> pose_landmarks, _ = pose_tracker.run(input_file='/path/to/input/file', output_file='/path/to/output/file')
->>> pose_landmarks, annotated_image = pose_tracker.run(input_file='/path/to/file')
-# To print out the pose landmarks, you can simply do "print(pose_landmarks)".
-# However, the data points can be more accessible with the following approach.
->>> [print('x is', data_point.x, 'y is', data_point.y, 'z is', data_point.z, 'visibility is', data_point.visibility) for data_point in pose_landmarks.landmark]
+<!-- Do not change the example code below directly. Change the corresponding example in mediapipe/python/solutions/pose.py and copy it over. -->
 
-# For live camera input
-# (Press Esc within the output image window to stop the run or let it self terminate after 30 seconds.)
->>> pose_tracker.run_live()
+```python
+import cv2
+import mediapipe as mp
+mp_drawing = mp.solutions.drawing_utils
+mp_pose = mp.solutions.pose
 
-# Close the tracker.
->>> pose_tracker.close()
+# For static images:
+pose = mp_pose.Pose(
+    static_image_mode=True, min_detection_confidence=0.5)
+for idx, file in enumerate(file_list):
+  image = cv2.imread(file)
+  # Convert the BGR image to RGB before processing.
+  results = pose.process(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
+
+  # Print and draw pose landmarks on the image.
+  print(
+      'nose landmark:',
+       results.pose_landmarks.landmark[mp_pose.PoseLandmark.NOSE])
+  annotated_image = image.copy()
+  mp_drawing.draw_landmarks(
+      annotated_image, results.pose_landmarks, mp_pose.POSE_CONNECTIONS)
+  cv2.imwrite('/tmp/annotated_image' + str(idx) + '.png', image)
+pose.close()
+
+# For webcam input:
+pose = mp_pose.Pose(
+    min_detection_confidence=0.5, min_tracking_confidence=0.5)
+cap = cv2.VideoCapture(0)
+while cap.isOpened():
+  success, image = cap.read()
+  if not success:
+    break
+
+  # Flip the image horizontally for a later selfie-view display, and convert
+  # the BGR image to RGB.
+  image = cv2.cvtColor(cv2.flip(image, 1), cv2.COLOR_BGR2RGB)
+  # To improve performance, optionally mark the image as not writeable to
+  # pass by reference.
+  image.flags.writeable = False
+  results = pose.process(image)
+
+  # Draw the pose annotation on the image.
+  image.flags.writeable = True
+  image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+  mp_drawing.draw_landmarks(
+      image, results.pose_landmarks, mp_pose.POSE_CONNECTIONS)
+  cv2.imshow('MediaPipe Pose', image)
+  if cv2.waitKey(5) & 0xFF == 27:
+    break
+pose.close()
+cap.release()
 ```
 
 Tip: Use command `deactivate` to exit the Python virtual environment.

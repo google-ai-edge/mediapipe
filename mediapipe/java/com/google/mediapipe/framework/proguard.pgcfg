@@ -24,3 +24,6 @@
 -keep public class com.google.mediapipe.framework.MediaPipeException {
   <init>(int, byte[]);
 }
+
+# Required to use PacketCreator#createProto
+-keep class com.google.mediapipe.framework.ProtoUtil$SerializedMessage { *; }

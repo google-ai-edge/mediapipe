@@ -34,7 +34,7 @@ alias(
 ios_application(
     name = "FaceEffectApp",
     app_icons = ["//mediapipe/examples/ios/common:AppIcon"],
-    bundle_id = BUNDLE_ID_PREFIX + ".FaceMeshGpu",
+    bundle_id = BUNDLE_ID_PREFIX + ".FaceEffectGpu",
     families = [
         "iphone",
         "ipad",

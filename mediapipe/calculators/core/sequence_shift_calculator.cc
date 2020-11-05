@@ -32,6 +32,9 @@ class SequenceShiftCalculator : public CalculatorBase {
  public:
   static ::mediapipe::Status GetContract(CalculatorContract* cc) {
     cc->Inputs().Index(0).SetAny();
+    if (cc->InputSidePackets().HasTag(kPacketOffsetTag)) {
+      cc->InputSidePackets().Tag(kPacketOffsetTag).Set<int>();
+    }
     cc->Outputs().Index(0).SetSameAs(&cc->Inputs().Index(0));
     return ::mediapipe::OkStatus();
   }
@@ -41,6 +44,8 @@ class SequenceShiftCalculator : public CalculatorBase {
   ::mediapipe::Status Process(CalculatorContext* cc) override;
 
  private:
+  static constexpr const char* kPacketOffsetTag = "PACKET_OFFSET";
+
   // A positive offset means we want a packet to be output with the timestamp of
   // a later packet. Stores packets waiting for their output timestamps and
   // outputs a single packet when the cache fills.
@@ -70,6 +75,9 @@ REGISTER_CALCULATOR(SequenceShiftCalculator);
 ::mediapipe::Status SequenceShiftCalculator::Open(CalculatorContext* cc) {
   packet_offset_ =
       cc->Options<mediapipe::SequenceShiftCalculatorOptions>().packet_offset();
+  if (cc->InputSidePackets().HasTag(kPacketOffsetTag)) {
+    packet_offset_ = cc->InputSidePackets().Tag(kPacketOffsetTag).Get<int>();
+  }
   cache_size_ = abs(packet_offset_);
   // An offset of zero is a no-op, but someone might still request it.
   if (packet_offset_ == 0) {

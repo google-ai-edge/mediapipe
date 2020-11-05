@@ -13,21 +13,10 @@ input_stream: "IMAGE_SIZE:image_size"
 # ROI according to landmarks. (NormalizedRect)
 output_stream: "ROI:roi"
 
-node {
-  calculator: "SplitNormalizedLandmarkListCalculator"
-  input_stream: "landmarks"
-  output_stream: "alignment_landmarks"
-  options: {
-    [mediapipe.SplitVectorCalculatorOptions.ext] {
-      ranges: { begin: 25 end: 27 }
-    }
-  }
-}
-
 # Converts landmarks to a detection that tightly encloses all landmarks.
 node {
   calculator: "LandmarksToDetectionCalculator"
-  input_stream: "NORM_LANDMARKS:alignment_landmarks"
+  input_stream: "NORM_LANDMARKS:landmarks"
   output_stream: "DETECTION:detection"
 }
 

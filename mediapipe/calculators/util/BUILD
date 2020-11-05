@@ -929,6 +929,7 @@ cc_library(
     deps = [
         ":collection_has_min_size_calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/formats:classification_cc_proto",
         "//mediapipe/framework/formats:landmark_cc_proto",
         "//mediapipe/framework/formats:rect_cc_proto",
         "//mediapipe/framework/port:ret_check",
@@ -1038,6 +1039,29 @@ cc_library(
     deps = [
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/formats:detection_cc_proto",
+        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:status",
+    ],
+    alwayslink = 1,
+)
+
+mediapipe_proto_library(
+    name = "logic_calculator_proto",
+    srcs = ["logic_calculator.proto"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//mediapipe/framework:calculator_options_proto",
+        "//mediapipe/framework:calculator_proto",
+    ],
+)
+
+cc_library(
+    name = "logic_calculator",
+    srcs = ["logic_calculator.cc"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":logic_calculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
     ],

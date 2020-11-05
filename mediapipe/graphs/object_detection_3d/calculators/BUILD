@@ -12,67 +12,65 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load("//mediapipe/framework/port:build_config.bzl", "mediapipe_cc_proto_library")
+load("//mediapipe/framework/port:build_config.bzl", "mediapipe_proto_library")
 
 licenses(["notice"])
 
 package(default_visibility = ["//visibility:public"])
 
-proto_library(
+mediapipe_proto_library(
     name = "object_proto",
-    srcs = [
-        "object.proto",
-    ],
+    srcs = ["object.proto"],
+    visibility = ["//visibility:public"],
 )
 
-proto_library(
+mediapipe_proto_library(
     name = "a_r_capture_metadata_proto",
-    srcs = [
-        "a_r_capture_metadata.proto",
-    ],
+    srcs = ["a_r_capture_metadata.proto"],
+    visibility = ["//visibility:public"],
 )
 
-proto_library(
+mediapipe_proto_library(
     name = "annotation_proto",
-    srcs = [
-        "annotation_data.proto",
-    ],
+    srcs = ["annotation_data.proto"],
+    visibility = ["//visibility:public"],
     deps = [
         ":a_r_capture_metadata_proto",
         ":object_proto",
     ],
 )
 
-proto_library(
-    name = "belief_decoder_config_proto",
-    srcs = [
-        "belief_decoder_config.proto",
-    ],
-)
-
-proto_library(
+mediapipe_proto_library(
     name = "camera_parameters_proto",
-    srcs = [
-        "camera_parameters.proto",
-    ],
+    srcs = ["camera_parameters.proto"],
+    visibility = ["//visibility:public"],
 )
 
-proto_library(
+mediapipe_proto_library(
     name = "frame_annotation_tracker_calculator_proto",
     srcs = ["frame_annotation_tracker_calculator.proto"],
+    visibility = ["//visibility:public"],
     deps = [
         "//mediapipe/framework:calculator_proto",
     ],
 )
 
-proto_library(
+mediapipe_proto_library(
     name = "gl_animation_overlay_calculator_proto",
     srcs = ["gl_animation_overlay_calculator.proto"],
     visibility = ["//visibility:public"],
-    deps = ["//mediapipe/framework:calculator_proto"],
+    deps = [
+        "//mediapipe/framework:calculator_proto",
+    ],
 )
 
-proto_library(
+mediapipe_proto_library(
+    name = "belief_decoder_config_proto",
+    srcs = ["belief_decoder_config.proto"],
+    visibility = ["//visibility:public"],
+)
+
+mediapipe_proto_library(
     name = "tflite_tensors_to_objects_calculator_proto",
     srcs = ["tflite_tensors_to_objects_calculator.proto"],
     visibility = ["//visibility:public"],
@@ -82,7 +80,7 @@ proto_library(
     ],
 )
 
-proto_library(
+mediapipe_proto_library(
     name = "lift_2d_frame_annotation_to_3d_calculator_proto",
     srcs = ["lift_2d_frame_annotation_to_3d_calculator.proto"],
     visibility = ["//visibility:public"],
@@ -92,7 +90,7 @@ proto_library(
     ],
 )
 
-proto_library(
+mediapipe_proto_library(
     name = "annotations_to_model_matrices_calculator_proto",
     srcs = ["annotations_to_model_matrices_calculator.proto"],
     visibility = ["//visibility:public"],
@@ -101,7 +99,7 @@ proto_library(
     ],
 )
 
-proto_library(
+mediapipe_proto_library(
     name = "model_matrix_proto",
     srcs = ["model_matrix.proto"],
     visibility = ["//visibility:public"],
@@ -110,7 +108,7 @@ proto_library(
     ],
 )
 
-proto_library(
+mediapipe_proto_library(
     name = "annotations_to_render_data_calculator_proto",
     srcs = ["annotations_to_render_data_calculator.proto"],
     visibility = ["//visibility:public"],
@@ -120,112 +118,22 @@ proto_library(
     ],
 )
 
-mediapipe_cc_proto_library(
-    name = "object_cc_proto",
-    srcs = ["object.proto"],
+mediapipe_proto_library(
+    name = "frame_annotation_to_rect_calculator_proto",
+    srcs = ["frame_annotation_to_rect_calculator.proto"],
     visibility = ["//visibility:public"],
-    deps = [":object_proto"],
-)
-
-mediapipe_cc_proto_library(
-    name = "a_r_capture_metadata_cc_proto",
-    srcs = ["a_r_capture_metadata.proto"],
-    visibility = ["//visibility:public"],
-    deps = [":a_r_capture_metadata_proto"],
-)
-
-mediapipe_cc_proto_library(
-    name = "annotation_cc_proto",
-    srcs = ["annotation_data.proto"],
-    cc_deps = [
-        ":a_r_capture_metadata_cc_proto",
-        ":object_cc_proto",
+    deps = [
+        "//mediapipe/framework:calculator_proto",
     ],
-    visibility = ["//visibility:public"],
-    deps = [":annotation_proto"],
 )
 
-mediapipe_cc_proto_library(
-    name = "camera_parameters_cc_proto",
-    srcs = ["camera_parameters.proto"],
+mediapipe_proto_library(
+    name = "filter_detection_calculator_proto",
+    srcs = ["filter_detection_calculator.proto"],
     visibility = ["//visibility:public"],
-    deps = [":camera_parameters_proto"],
-)
-
-mediapipe_cc_proto_library(
-    name = "frame_annotation_tracker_calculator_cc_proto",
-    srcs = ["frame_annotation_tracker_calculator.proto"],
-    cc_deps = [
-        "//mediapipe/framework:calculator_cc_proto",
+    deps = [
+        "//mediapipe/framework:calculator_proto",
     ],
-    visibility = ["//visibility:public"],
-    deps = [":frame_annotation_tracker_calculator_proto"],
-)
-
-mediapipe_cc_proto_library(
-    name = "gl_animation_overlay_calculator_cc_proto",
-    srcs = ["gl_animation_overlay_calculator.proto"],
-    cc_deps = [
-        "//mediapipe/framework:calculator_cc_proto",
-    ],
-    visibility = ["//visibility:public"],
-    deps = [":gl_animation_overlay_calculator_proto"],
-)
-
-mediapipe_cc_proto_library(
-    name = "belief_decoder_config_cc_proto",
-    srcs = ["belief_decoder_config.proto"],
-    visibility = ["//visibility:public"],
-    deps = [":belief_decoder_config_proto"],
-)
-
-mediapipe_cc_proto_library(
-    name = "tflite_tensors_to_objects_calculator_cc_proto",
-    srcs = ["tflite_tensors_to_objects_calculator.proto"],
-    cc_deps = [
-        ":belief_decoder_config_cc_proto",
-        "//mediapipe/framework:calculator_cc_proto",
-    ],
-    visibility = ["//visibility:public"],
-    deps = [":tflite_tensors_to_objects_calculator_proto"],
-)
-
-mediapipe_cc_proto_library(
-    name = "lift_2d_frame_annotation_to_3d_calculator_cc_proto",
-    srcs = ["lift_2d_frame_annotation_to_3d_calculator.proto"],
-    cc_deps = [
-        ":belief_decoder_config_cc_proto",
-        "//mediapipe/framework:calculator_cc_proto",
-    ],
-    visibility = ["//visibility:public"],
-    deps = [":lift_2d_frame_annotation_to_3d_calculator_proto"],
-)
-
-mediapipe_cc_proto_library(
-    name = "annotations_to_model_matrices_calculator_cc_proto",
-    srcs = ["annotations_to_model_matrices_calculator.proto"],
-    cc_deps = ["//mediapipe/framework:calculator_cc_proto"],
-    visibility = ["//visibility:public"],
-    deps = [":annotations_to_model_matrices_calculator_proto"],
-)
-
-mediapipe_cc_proto_library(
-    name = "model_matrix_cc_proto",
-    srcs = ["model_matrix.proto"],
-    cc_deps = ["//mediapipe/framework:calculator_cc_proto"],
-    visibility = ["//visibility:public"],
-    deps = [":model_matrix_proto"],
-)
-
-mediapipe_cc_proto_library(
-    name = "annotations_to_render_data_calculator_cc_proto",
-    srcs = ["annotations_to_render_data_calculator.proto"],
-    cc_deps = [
-        "//mediapipe/framework:calculator_cc_proto",
-        "//mediapipe/util:color_cc_proto",
-    ],
-    visibility = ["//visibility:public"],
-    deps = [":annotations_to_render_data_calculator_proto"],
 )
 
 cc_library(
@@ -447,6 +355,55 @@ cc_library(
         "//mediapipe/util:color_cc_proto",
         "//mediapipe/util:render_data_cc_proto",
         "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/strings",
+    ],
+    alwayslink = 1,
+)
+
+cc_library(
+    name = "frame_annotation_to_rect_calculator",
+    srcs = ["frame_annotation_to_rect_calculator.cc"],
+    deps = [
+        ":annotation_cc_proto",
+        ":box",
+        ":frame_annotation_to_rect_calculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/formats:rect_cc_proto",
+        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:status",
+        "@com_google_absl//absl/memory",
+        "@eigen_archive//:eigen",
+    ],
+    alwayslink = 1,
+)
+
+cc_library(
+    name = "landmarks_to_frame_annotation_calculator",
+    srcs = ["landmarks_to_frame_annotation_calculator.cc"],
+    deps = [
+        ":annotation_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/formats:landmark_cc_proto",
+        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:status",
+        "@com_google_absl//absl/memory",
+    ],
+    alwayslink = 1,
+)
+
+cc_library(
+    name = "filter_detection_calculator",
+    srcs = ["filter_detection_calculator.cc"],
+    deps = [
+        ":filter_detection_calculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/formats:detection_cc_proto",
+        "//mediapipe/framework/formats:location_data_cc_proto",
+        "//mediapipe/framework/port:logging",
+        "//mediapipe/framework/port:map_util",
+        "//mediapipe/framework/port:re2",
+        "//mediapipe/framework/port:status",
+        "@com_google_absl//absl/container:node_hash_set",
         "@com_google_absl//absl/strings",
     ],
     alwayslink = 1,

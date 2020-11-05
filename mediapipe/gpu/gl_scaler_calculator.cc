@@ -215,7 +215,7 @@ REGISTER_CALCULATOR(GlScalerCalculator);
       src1 = helper_.CreateSourceTexture(input, 0);
       src2 = helper_.CreateSourceTexture(input, 1);
     } else  // NOLINT(readability/braces)
-#endif  // __APPLE__
+#endif      // __APPLE__
     {
       src1 = helper_.CreateSourceTexture(input);
 #ifdef __ANDROID__
@@ -227,7 +227,7 @@ REGISTER_CALCULATOR(GlScalerCalculator);
         }
         renderer = ext_rgb_renderer_.get();
       } else  // NOLINT(readability/braces)
-#endif  // __ANDROID__
+#endif        // __ANDROID__
       {
         if (!rgb_renderer_) {
           rgb_renderer_ = absl::make_unique<QuadRenderer>();

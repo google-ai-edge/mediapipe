@@ -7,5 +7,4 @@ include MANIFEST.in
 include README.md
 include requirements.txt
 
-recursive-include mediapipe/modules *.tflite *.txt
-recursive-include mediapipe/graphs *.binarypb
+recursive-include mediapipe/modules *.tflite *.txt *.binarypb

@@ -16,11 +16,10 @@ node {
   output_stream: "VIDEO_PRESTREAM:input_video_header"
 }
 
-# Performs hand detection model on the input frames. See
-# hand_detection_cpu.pbtxt for the detail of the sub-graph.
+# Detects palms.
 node {
-  calculator: "HandDetectionSubgraph"
-  input_stream: "input_video"
+  calculator: "PalmDetectionCpu"
+  input_stream: "IMAGE:input_video"
   output_stream: "DETECTIONS:output_detections"
 }
 

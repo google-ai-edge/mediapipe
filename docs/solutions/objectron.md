@@ -15,13 +15,12 @@ nav_order: 10
 ## Overview
 
 MediaPipe Objectron is a mobile real-time 3D object detection solution for
-everyday objects. It detects objects in 2D images, and estimates their poses and
-sizes through a machine learning (ML) model, trained on a newly created 3D
-dataset.
+everyday objects. It detects objects in 2D images, and estimates their poses
+through a machine learning (ML) model, trained on a newly created 3D dataset.
 
-![objectron_shoe_android_gpu.gif](../images/mobile/objectron_shoe_android_gpu.gif) | ![objectron_chair_android_gpu.gif](../images/mobile/objectron_chair_android_gpu.gif)
-:--------------------------------------------------------------------------------: | :----------------------------------------------------------------------------------:
-*Fig 1(a). Objectron for Shoes.*                                                   | *Fig 1(b). Objectron for Chairs.*
+![objectron_shoe_android_gpu.gif](../images/mobile/objectron_shoe_android_gpu.gif) | ![objectron_chair_android_gpu.gif](../images/mobile/objectron_chair_android_gpu.gif) | ![objectron_camera_android_gpu.gif](../images/mobile/objectron_camera_android_gpu.gif) | ![objectron_cup_android_gpu.gif](../images/mobile/objectron_cup_android_gpu.gif)
+:--------------------------------------------------------------------------------: | :----------------------------------------------------------------------------------: | :------------------------------------------------------------------------------------: | :------------------------------------------------------------------------------:
+*Fig 1(a). Objectron for Shoes.*                                                   | *Fig 1(b). Objectron for Chairs.*                                                    | *Fig 1(c). Objectron for Cameras.*                                                     | *Fig 1(d). Objectron for Cups.*
 
 Object detection is an extensively studied computer vision problem, but most of
 the research has focused on
@@ -85,15 +84,41 @@ able to increase the accuracy by about 10%.
 :-------------------------------------------------------------------------------------------: |
 *Fig 4. An example of AR synthetic data generation. The virtual white-brown cereal box is rendered into the real scene, next to the real blue book.* |
 
-## ML Model for 3D Object Detection
+## ML Pipelines for 3D Object Detection
+
+We built two ML pipelines to predict the 3D bounding box of an object from a
+single RGB image: one is a two-stage pipeline and the other is a single-stage
+pipeline. The two-stage pipeline is 3x faster than the single-stage pipeline
+with similar or better accuracy. The single stage pipeline is good at detecting
+multiple objects, whereas the two stage pipeline is good for a single dominant
+object.
+
+### Two-stage Pipeline
+
+Our two-stage pipeline is illustrated by the diagram in Fig 5. The first stage
+uses an object detector to find the 2D crop of the object. The second stage
+takes the image crop and estimates the 3D bounding box. At the same time, it
+also computes the 2D crop of the object for the next frame, such that the object
+detector does not need to run every frame.
+
+![objectron_network_architecture.png](../images/objectron_2stage_network_architecture.png) |
+:----------------------------------------------------------------------------------------: |
+*Fig 5. Network architecture and post-processing for two-stage 3D object detection.*       |
+
+We can use any 2D object detector for the first stage. In this solution, we use
+[TensorFlow Object Detection](https://github.com/tensorflow/models/tree/master/research/object_detection).
+The second stage 3D bounding box predictor we released runs 83FPS on Adreno 650
+mobile GPU.
+
+### Single-stage Pipeline
 
 ![objectron_network_architecture.png](../images/objectron_network_architecture.png) |
 :---------------------------------------------------------------------------------: |
-*Fig 5. Network architecture and post-processing for 3D object detection.*          |
+*Fig 6. Network architecture and post-processing for single-stage 3D object detection.* |
 
-We [built a single-stage model](https://arxiv.org/abs/2003.03522) to predict the
-pose and physical size of an object from a single RGB image. The model backbone
-has an encoder-decoder architecture, built upon
+Our [single-stage pipeline](https://arxiv.org/abs/2003.03522) is illustrated by
+the diagram in Fig 6, the model backbone has an encoder-decoder architecture,
+built upon
 [MobileNetv2](https://ai.googleblog.com/2018/04/mobilenetv2-next-generation-of-on.html).
 We employ a multi-task learning approach, jointly predicting an object's shape
 with detection and regression. The shape task predicts the object's shape
@@ -114,9 +139,9 @@ size of the object. The model is light enough to run real-time on mobile devices
 
 ![objectron_sample_network_results.png](../images/objectron_sample_network_results.png) |
 :-------------------------------------------------------------------------------------: |
-*Fig 6. Sample results of our network — (Left) original 2D image with estimated bounding boxes, (Middle) object detection by Gaussian distribution, (Right) predicted segmentation mask.* |
+*Fig 7. Sample results of our network — (Left) original 2D image with estimated bounding boxes, (Middle) object detection by Gaussian distribution, (Right) predicted segmentation mask.* |
 
-## Detection and Tracking Pipeline
+#### Detection and Tracking
 
 When the model is applied to every frame captured by the mobile device, it can
 suffer from jitter due to the ambiguity of the 3D bounding box estimated in each
@@ -130,7 +155,7 @@ temporally consistent, reducing the jitter.
 
 The Objectron 3D object detection and tracking pipeline is implemented as a
 MediaPipe
-[graph](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/object_detection_3d/shoe_classic_occlusion_tracking.pbtxt),
+[graph](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/object_detection_3d/object_occlusion_tracking_1stage.pbtxt),
 which internally uses a
 [detection subgraph](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/object_detection_3d/subgraphs/objectron_detection_gpu.pbtxt)
 and a
@@ -147,6 +172,12 @@ new detection becomes available from the detection subgraph, the tracking
 subgraph is also responsible for consolidation between the detection and
 tracking results, based on the area of overlap.
 
+## Objectron Dataset
+
+We also released our [Objectron dataset](http://objectron.dev), with which we
+trained our 3D object detection models. The technical details of the Objectron
+dataset, including usage and tutorials, are available on the dataset website.
+
 ## Example Apps
 
 Please first see general instructions for
@@ -158,32 +189,72 @@ Note: To visualize a graph, copy the graph and paste it into
 to visualize its associated subgraphs, please see
 [visualizer documentation](../tools/visualizer.md).
 
-### Objectron for Shoes
+### Two-stage Objectron
 
 *   Graph:
-    [`mediapipe/graphs/object_detection_3d/shoe_classic_occlusion_tracking.pbtxt`](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/object_detection_3d/shoe_classic_occlusion_tracking.pbtxt)
-*   Android target:
-    [(or download prebuilt ARM64 APK)](https://drive.google.com/open?id=1S0K4hbWt3o31FfQ4QU3Rz7IHrvOUMx1d)
-    [`mediapipe/examples/android/src/java/com/google/mediapipe/apps/objectdetection3d:objectdetection3d`](https://github.com/google/mediapipe/tree/master/mediapipe/examples/android/src/java/com/google/mediapipe/apps/objectdetection3d/BUILD)
-*   iOS target: Not available
+    [`mediapipe/graphs/object_detection_3d/object_occlusion_tracking.pbtxt`](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/object_detection_3d/object_occlusion_tracking.pbtxt)
 
-### Objectron for Chairs
-
-*   Graph:
-    [`mediapipe/graphs/hair_segmentation/hair_segmentation_mobile_gpu.pbtxt`](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/object_detection_3d/chair_classic_occlusion_tracking.pbtxt)
 *   Android target:
-    [(or download prebuilt ARM64 APK)](https://drive.google.com/open?id=1MM8K-13bXLCVS1EHQ-KgkVyEahEPrKej)
-    [`mediapipe/examples/android/src/java/com/google/mediapipe/apps/objectdetection3d:objectdetection3d`](https://github.com/google/mediapipe/tree/master/mediapipe/examples/android/src/java/com/google/mediapipe/apps/objectdetection3d/BUILD)
-    and add `--define chair=true` to the build command, i.e.,
+    [`mediapipe/examples/android/src/java/com/google/mediapipe/apps/objectdetection3d:objectdetection3d`](https://github.com/google/mediapipe/tree/master/mediapipe/examples/android/src/java/com/google/mediapipe/apps/objectdetection3d/BUILD).
+
+    Build for **shoes** (default) with:
+    [(or download prebuilt ARM64 APK)](https://drive.google.com/file/d/1ANW9WDOCb8QO1r8gDC03A4UgrPkICdPP/view?usp=sharing)
+
+    ```bash
+    bazel build -c opt --config android_arm64 mediapipe/examples/android/src/java/com/google/mediapipe/apps/objectdetection3d:objectdetection3d
+    ```
+
+    Build for **chairs** with:
+    [(or download prebuilt ARM64 APK)](https://drive.google.com/file/d/1lcUv1TBnv_SxnKSQwdOqbdLa9mkaTJHy/view?usp=sharing)
 
     ```bash
     bazel build -c opt --config android_arm64 --define chair=true mediapipe/examples/android/src/java/com/google/mediapipe/apps/objectdetection3d:objectdetection3d
+    ```
+
+    Build for **cups** with:
+    [(or download prebuilt ARM64 APK)](https://drive.google.com/file/d/1bf77KDkowwrduleiC9B1M1XnEhjnOQbX/view?usp=sharing)
+
+    ```bash
+    bazel build -c opt --config android_arm64 --define cup=true mediapipe/examples/android/src/java/com/google/mediapipe/apps/objectdetection3d:objectdetection3d
+    ```
+
+    Build for **cameras** with:
+    [(or download prebuilt ARM64 APK)](https://drive.google.com/file/d/1GM7lPO-s5URVxIzQur1bLsionEJs3yIl/view?usp=sharing)
+
+    ```bash
+    bazel build -c opt --config android_arm64 --define camera=true mediapipe/examples/android/src/java/com/google/mediapipe/apps/objectdetection3d:objectdetection3d
+    ```
+
+*   iOS target: Not available
+
+### Single-stage Objectron
+
+*   Graph:
+    [`mediapipe/graphs/object_detection_3d/object_occlusion_tracking_1stage.pbtxt`](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/object_detection_3d/object_occlusion_tracking.pbtxt)
+
+*   Android target:
+    [`mediapipe/examples/android/src/java/com/google/mediapipe/apps/objectdetection3d:objectdetection3d`](https://github.com/google/mediapipe/tree/master/mediapipe/examples/android/src/java/com/google/mediapipe/apps/objectdetection3d/BUILD).
+
+    Build with **single-stage** model for **shoes** with:
+    [(or download prebuilt ARM64 APK)](https://drive.google.com/file/d/1MvaEg4dkvKN8jAU1Z2GtudyXi1rQHYsE/view?usp=sharing)
+
+    ```bash
+    bazel build -c opt --config android_arm64 --define shoe_1stage=true mediapipe/examples/android/src/java/com/google/mediapipe/apps/objectdetection3d:objectdetection3d
+    ```
+
+    Build with **single-stage** model for **chairs** with:
+    [(or download prebuilt ARM64 APK)](https://drive.google.com/file/d/1GJL4z3jr-wD1jMHGd4NBfOG-Yoq5t167/view?usp=sharing)
+
+    ```bash
+    bazel build -c opt --config android_arm64 --define chair_1stage=true mediapipe/examples/android/src/java/com/google/mediapipe/apps/objectdetection3d:objectdetection3d
     ```
 
 *   iOS target: Not available
 
 ## Resources
 
+*   Google AI Blog:
+    [Announcing the Objectron Dataset](https://mediapipe.page.link/objectron_dataset_ai_blog)
 *   Google AI Blog:
     [Real-Time 3D Object Detection on Mobile Devices with MediaPipe](https://ai.googleblog.com/2020/03/real-time-3d-object-detection-on-mobile.html)
 *   Paper: [MobilePose: Real-Time Pose Estimation for Unseen Objects with Weak

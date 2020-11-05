@@ -29,7 +29,7 @@ index ba50783765..5de5ea01f0 100644
 +++ b/tensorflow/core/platform/test.h
 @@ -42,7 +42,6 @@ limitations under the License.
  #if defined(PLATFORM_GOOGLE) || defined(PLATFORM_GOOGLE_ANDROID)
- #include "testing/base/public/gmock.h"
+ #include "testing/base/public/gmock.h"  // IWYU pragma: export
  #else
 -#include <gmock/gmock-generated-matchers.h>
  #include <gmock/gmock-matchers.h>

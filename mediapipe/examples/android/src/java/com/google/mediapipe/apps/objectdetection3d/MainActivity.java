@@ -1,4 +1,4 @@
-// Copyright 2019 The MediaPipe Authors.
+// Copyright 2020 The MediaPipe Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,6 +14,9 @@
 
 package com.google.mediapipe.apps.objectdetection3d;
 
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
+import android.content.pm.PackageManager.NameNotFoundException;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
@@ -40,10 +43,25 @@ public class MainActivity extends com.google.mediapipe.apps.basic.MainActivity {
   private Bitmap objTexture = null;
   private Bitmap boxTexture = null;
 
+  // ApplicationInfo for retrieving metadata defined in the manifest.
+  private ApplicationInfo applicationInfo;
+
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
 
+    try {
+      applicationInfo =
+          getPackageManager().getApplicationInfo(getPackageName(), PackageManager.GET_META_DATA);
+    } catch (NameNotFoundException e) {
+      Log.e(TAG, "Cannot find application info: " + e);
+    }
+
+    String categoryName = applicationInfo.metaData.getString("categoryName");
+    float[] modelScale = parseFloatArrayFromString(
+        applicationInfo.metaData.getString("modelScale"));
+    float[] modelTransform = parseFloatArrayFromString(
+        applicationInfo.metaData.getString("modelTransformation"));
     prepareDemoAssets();
     AndroidPacketCreator packetCreator = processor.getPacketCreator();
     Map<String, Packet> inputSidePackets = new HashMap<>();
@@ -51,6 +69,9 @@ public class MainActivity extends com.google.mediapipe.apps.basic.MainActivity {
     inputSidePackets.put("box_asset_name", packetCreator.createString(BOX_FILE));
     inputSidePackets.put("obj_texture", packetCreator.createRgbaImageFrame(objTexture));
     inputSidePackets.put("box_texture", packetCreator.createRgbaImageFrame(boxTexture));
+    inputSidePackets.put("allowed_labels", packetCreator.createString(categoryName));
+    inputSidePackets.put("model_scale", packetCreator.createFloat32Array(modelScale));
+    inputSidePackets.put("model_transformation", packetCreator.createFloat32Array(modelTransform));
     processor.setInputSidePackets(inputSidePackets);
   }
 
@@ -133,5 +154,14 @@ public class MainActivity extends com.google.mediapipe.apps.basic.MainActivity {
       Log.e(TAG, "Error parsing box texture; error: " + e);
       throw new RuntimeException(e);
     }
+  }
+
+  private static float[] parseFloatArrayFromString(String string) {
+    String[] elements = string.split(",", -1);
+    float[] array = new float[elements.length];
+    for (int i = 0; i < elements.length; ++i) {
+      array[i] = Float.parseFloat(elements[i]);
+    }
+    return array;
   }
 }

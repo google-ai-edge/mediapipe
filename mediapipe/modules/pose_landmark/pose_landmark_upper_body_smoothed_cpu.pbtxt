@@ -1,0 +1,108 @@
+# Experimental: Adds additional temporal filtering of the landmarks as a post
+# processing step to reduce jitter.
+#
+# MediaPipe graph to detect/predict pose landmarks. (CPU input, and inference is
+# executed on CPU.) This graph tries to skip pose detection as much as possible
+# by using previously detected/predicted landmarks for new images.
+#
+# It is required that "pose_detection.tflite" is available at
+# "mediapipe/modules/pose_detection/pose_detection.tflite"
+# path during execution.
+#
+# It is required that "pose_landmark_upper_body.tflite" is available at
+# "mediapipe/modules/pose_landmark/pose_landmark_upper_body.tflite"
+# path during execution.
+#
+# EXAMPLE:
+#   node {
+#     calculator: "PoseLandmarkUpperBodySmoothedCpu"
+#     input_stream: "IMAGE:image"
+#     output_stream: "LANDMARKS:pose_landmarks"
+#   }
+
+type: "PoseLandmarkUpperBodySmoothedCpu"
+
+# CPU image. (ImageFrame)
+input_stream: "IMAGE:image"
+
+# Whether pose detection can be skipped when pose regions can already be
+# approximated from pose landmarks on the previous frame.
+input_side_packet: "CAN_SKIP_DETECTION:can_skip_detection"
+
+# The pose landmarks within the given ROI. (NormalizedLandmarkList)
+# We have 25 (upper-body) landmarks
+# (see pose_landmark_upper_body_topology.svg), and there are other auxiliary key
+# points.
+# 0 - nose
+# 1 - right eye (inner)
+# 2 - right eye
+# 3 - right eye (outer)
+# 4 - left eye (inner)
+# 5 - left eye
+# 6 - left eye (outer)
+# 7 - right ear
+# 8 - left ear
+# 9 - mouth (right)
+# 10 - mouth (left)
+# 11 - right shoulder
+# 12 - left shoulder
+# 13 - right elbow
+# 14 - left elbow
+# 15 - right wrist
+# 16 - left wrist
+# 17 - right pinky
+# 18 - left pinky
+# 19 - right index
+# 20 - left index
+# 21 - right thumb
+# 22 - left thumb
+# 23 - right hip
+# 24 - left hip
+#
+# NOTE: if a pose is not present within the given ROI, for this particular
+# timestamp there will not be an output packet in the LANDMARKS stream. However,
+# the MediaPipe framework will internally inform the downstream calculators of
+# the absence of this packet so that they don't wait for it unnecessarily.
+output_stream: "LANDMARKS:pose_landmarks"
+
+# Extra outputs (for debugging, for instance).
+# Detected poses. (Detection)
+output_stream: "DETECTION:pose_detection"
+# Regions of interest calculated based on landmarks. (NormalizedRect)
+output_stream: "ROI_FROM_LANDMARKS:pose_rect_from_landmarks"
+# Regions of interest calculated based on pose detections. (NormalizedRect)
+output_stream: "ROI_FROM_DETECTION:pose_rect_from_detection"
+
+# Subgraph that detects poses and corresponding landmarks.
+node {
+  calculator: "PoseLandmarkUpperBodyCpu"
+  input_stream: "IMAGE:image"
+  output_stream: "LANDMARKS:unsmoothed_pose_landmarks"
+  output_stream: "DETECTION:pose_detection"
+  output_stream: "ROI_FROM_LANDMARKS:pose_rect_from_landmarks"
+  output_stream: "ROI_FROM_DETECTION:pose_rect_from_detection"
+  input_side_packet: "CAN_SKIP_DETECTION:can_skip_detection"
+}
+
+# Calculates size of the image.
+node {
+  calculator: "ImagePropertiesCalculator"
+  input_stream: "IMAGE:image"
+  output_stream: "SIZE:image_size"
+}
+
+# Smoothes pose landmarks in order to reduce jitter.
+node {
+  calculator: "LandmarksSmoothingCalculator"
+  input_stream: "NORM_LANDMARKS:unsmoothed_pose_landmarks"
+  input_stream: "IMAGE_SIZE:image_size"
+  output_stream: "NORM_FILTERED_LANDMARKS:pose_landmarks"
+  options: {
+    [mediapipe.LandmarksSmoothingCalculatorOptions.ext] {
+      velocity_filter: {
+        window_size: 5
+        velocity_scale: 10.0
+      }
+    }
+  }
+}

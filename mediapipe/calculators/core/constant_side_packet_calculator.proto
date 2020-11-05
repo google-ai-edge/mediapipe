@@ -17,6 +17,9 @@ syntax = "proto2";
 package mediapipe;
 
 import "mediapipe/framework/calculator.proto";
+import "mediapipe/framework/formats/classification.proto";
+
+option objc_class_prefix = "MediaPipe";
 
 message ConstantSidePacketCalculatorOptions {
   extend CalculatorOptions {
@@ -30,6 +33,7 @@ message ConstantSidePacketCalculatorOptions {
       bool bool_value = 3;
       string string_value = 4;
       uint64 uint64_value = 5;
+      ClassificationList classification_list_value = 6;
     }
   }
 

@@ -15,7 +15,6 @@
     "mediapipe/examples/ios/handdetectiongpu/BUILD",
     "mediapipe/examples/ios/handtrackinggpu/BUILD",
     "mediapipe/examples/ios/iristrackinggpu/BUILD",
-    "mediapipe/examples/ios/multihandtrackinggpu/BUILD",
     "mediapipe/examples/ios/objectdetectioncpu/BUILD",
     "mediapipe/examples/ios/objectdetectiongpu/BUILD",
     "mediapipe/examples/ios/upperbodyposetrackinggpu/BUILD"
@@ -29,7 +28,6 @@
     "//mediapipe/examples/ios/handdetectiongpu:HandDetectionGpuApp",
     "//mediapipe/examples/ios/handtrackinggpu:HandTrackingGpuApp",
     "//mediapipe/examples/ios/iristrackinggpu:IrisTrackingGpuApp",
-    "//mediapipe/examples/ios/multihandtrackinggpu:MultiHandTrackingGpuApp",
     "//mediapipe/examples/ios/objectdetectioncpu:ObjectDetectionCpuApp",
     "//mediapipe/examples/ios/objectdetectiongpu:ObjectDetectionGpuApp",
     "//mediapipe/examples/ios/upperbodyposetrackinggpu:UpperBodyPoseTrackingGpuApp",
@@ -97,7 +95,6 @@
     "mediapipe/examples/ios/handdetectiongpu",
     "mediapipe/examples/ios/handtrackinggpu",
     "mediapipe/examples/ios/iristrackinggpu",
-    "mediapipe/examples/ios/multihandtrackinggpu",
     "mediapipe/examples/ios/objectdetectioncpu",
     "mediapipe/examples/ios/objectdetectiongpu",
     "mediapipe/examples/ios/upperbodyposetrackinggpu",

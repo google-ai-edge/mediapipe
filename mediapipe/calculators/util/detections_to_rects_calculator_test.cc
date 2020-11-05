@@ -12,6 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <algorithm>
+#include <memory>
+#include <vector>
+
 #include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/calculator_runner.h"
@@ -26,6 +30,21 @@
 #include "mediapipe/framework/port/status_matchers.h"
 
 namespace mediapipe {
+namespace {
+
+MATCHER_P4(RectEq, x_center, y_center, width, height, "") {
+  return testing::Value(arg.x_center(), testing::Eq(x_center)) &&
+         testing::Value(arg.y_center(), testing::Eq(y_center)) &&
+         testing::Value(arg.width(), testing::Eq(width)) &&
+         testing::Value(arg.height(), testing::Eq(height));
+}
+
+MATCHER_P4(NormRectEq, x_center, y_center, width, height, "") {
+  return testing::Value(arg.x_center(), testing::FloatEq(x_center)) &&
+         testing::Value(arg.y_center(), testing::FloatEq(y_center)) &&
+         testing::Value(arg.width(), testing::FloatEq(width)) &&
+         testing::Value(arg.height(), testing::FloatEq(height));
+}
 
 Detection DetectionWithLocationData(int32 xmin, int32 ymin, int32 width,
                                     int32 height) {
@@ -36,6 +55,19 @@ Detection DetectionWithLocationData(int32 xmin, int32 ymin, int32 width,
   location_data->mutable_bounding_box()->set_ymin(ymin);
   location_data->mutable_bounding_box()->set_width(width);
   location_data->mutable_bounding_box()->set_height(height);
+  return detection;
+}
+
+Detection DetectionWithKeyPoints(
+    const std::vector<std::pair<float, float>>& key_points) {
+  Detection detection;
+  LocationData* location_data = detection.mutable_location_data();
+  std::for_each(key_points.begin(), key_points.end(),
+                [location_data](std::pair<float, float> kp) {
+                  auto* new_kp = location_data->add_relative_keypoints();
+                  new_kp->set_x(kp.first);
+                  new_kp->set_y(kp.second);
+                });
   return detection;
 }
 
@@ -70,10 +102,61 @@ TEST(DetectionsToRectsCalculatorTest, DetectionToRect) {
   const std::vector<Packet>& output = runner.Outputs().Tag("RECT").packets;
   ASSERT_EQ(1, output.size());
   const auto& rect = output[0].Get<Rect>();
-  EXPECT_EQ(rect.width(), 300);
-  EXPECT_EQ(rect.height(), 400);
-  EXPECT_EQ(rect.x_center(), 250);
-  EXPECT_EQ(rect.y_center(), 400);
+  EXPECT_THAT(rect, RectEq(250, 400, 300, 400));
+}
+
+::mediapipe::StatusOr<Rect> RunDetectionKeyPointsToRectCalculation(
+    Detection detection, std::pair<int, int> image_size) {
+  CalculatorRunner runner(ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"(
+    calculator: "DetectionsToRectsCalculator"
+    input_stream: "DETECTION:detection"
+    input_stream: "IMAGE_SIZE:image_size"
+    output_stream: "RECT:rect"
+    options: {
+      [mediapipe.DetectionsToRectsCalculatorOptions.ext] {
+        conversion_mode: USE_KEYPOINTS
+      }
+    }
+  )"));
+
+  runner.MutableInputs()
+      ->Tag("DETECTION")
+      .packets.push_back(MakePacket<Detection>(std::move(detection))
+                             .At(Timestamp::PostStream()));
+  runner.MutableInputs()
+      ->Tag("IMAGE_SIZE")
+      .packets.push_back(MakePacket<std::pair<int, int>>(image_size)
+                             .At(Timestamp::PostStream()));
+
+  MP_RETURN_IF_ERROR(runner.Run());
+  const std::vector<Packet>& output = runner.Outputs().Tag("RECT").packets;
+  RET_CHECK_EQ(output.size(), 1);
+  return output[0].Get<Rect>();
+}
+
+TEST(DetectionsToRectsCalculatorTest, DetectionKeyPointsToRect) {
+  auto status_or_value = RunDetectionKeyPointsToRectCalculation(
+      /*detection=*/DetectionWithKeyPoints({{0.0f, 0.0f}, {1.0f, 1.0f}}),
+      /*image_size=*/{640, 480});
+  EXPECT_THAT(status_or_value.ValueOrDie(), RectEq(320, 240, 640, 480));
+
+  status_or_value = RunDetectionKeyPointsToRectCalculation(
+      /*detection=*/DetectionWithKeyPoints({{0.25f, 0.25f}, {0.75f, 0.75f}}),
+      /*image_size=*/{640, 480});
+  MP_ASSERT_OK(status_or_value);
+  EXPECT_THAT(status_or_value.ValueOrDie(), RectEq(320, 240, 320, 240));
+
+  status_or_value = RunDetectionKeyPointsToRectCalculation(
+      /*detection=*/DetectionWithKeyPoints({{0.0f, 0.0f}, {0.5f, 0.5f}}),
+      /*image_size=*/{640, 480});
+  MP_ASSERT_OK(status_or_value);
+  EXPECT_THAT(status_or_value.ValueOrDie(), RectEq(160, 120, 320, 240));
+
+  status_or_value = RunDetectionKeyPointsToRectCalculation(
+      /*detection=*/DetectionWithKeyPoints({{0.5f, 0.5f}, {1.0f, 1.0f}}),
+      /*image_size=*/{640, 480});
+  MP_ASSERT_OK(status_or_value);
+  EXPECT_THAT(status_or_value.ValueOrDie(), RectEq(480, 360, 320, 240));
 }
 
 TEST(DetectionsToRectsCalculatorTest, DetectionToNormalizedRect) {
@@ -95,10 +178,56 @@ TEST(DetectionsToRectsCalculatorTest, DetectionToNormalizedRect) {
   const std::vector<Packet>& output = runner.Outputs().Tag("NORM_RECT").packets;
   ASSERT_EQ(1, output.size());
   const auto& rect = output[0].Get<NormalizedRect>();
-  EXPECT_FLOAT_EQ(rect.width(), 0.3);
-  EXPECT_FLOAT_EQ(rect.height(), 0.4);
-  EXPECT_FLOAT_EQ(rect.x_center(), 0.25);
-  EXPECT_FLOAT_EQ(rect.y_center(), 0.4);
+  EXPECT_THAT(rect, NormRectEq(0.25f, 0.4f, 0.3f, 0.4f));
+}
+
+::mediapipe::StatusOr<NormalizedRect>
+RunDetectionKeyPointsToNormRectCalculation(Detection detection) {
+  CalculatorRunner runner(ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"(
+    calculator: "DetectionsToRectsCalculator"
+    input_stream: "DETECTION:detection"
+    output_stream: "NORM_RECT:rect"
+    options: {
+      [mediapipe.DetectionsToRectsCalculatorOptions.ext] {
+        conversion_mode: USE_KEYPOINTS
+      }
+    }
+  )"));
+
+  runner.MutableInputs()
+      ->Tag("DETECTION")
+      .packets.push_back(MakePacket<Detection>(std::move(detection))
+                             .At(Timestamp::PostStream()));
+
+  MP_RETURN_IF_ERROR(runner.Run());
+  const std::vector<Packet>& output = runner.Outputs().Tag("NORM_RECT").packets;
+  RET_CHECK_EQ(output.size(), 1);
+  return output[0].Get<NormalizedRect>();
+}
+
+TEST(DetectionsToRectsCalculatorTest, DetectionKeyPointsToNormalizedRect) {
+  NormalizedRect rect;
+
+  auto status_or_value = RunDetectionKeyPointsToNormRectCalculation(
+      /*detection=*/DetectionWithKeyPoints(
+          {{0.0f, 0.0f}, {0.5f, 0.5f}, {1.0f, 1.0f}}));
+  MP_ASSERT_OK(status_or_value);
+  EXPECT_THAT(status_or_value.ValueOrDie(), RectEq(0.5f, 0.5f, 1.0f, 1.0f));
+
+  status_or_value = RunDetectionKeyPointsToNormRectCalculation(
+      /*detection=*/DetectionWithKeyPoints(
+          {{0.25f, 0.25f}, {0.75f, 0.25f}, {0.75f, 0.75f}}));
+  EXPECT_THAT(status_or_value.ValueOrDie(), RectEq(0.5f, 0.5f, 0.5f, 0.5f));
+
+  status_or_value = RunDetectionKeyPointsToNormRectCalculation(
+      /*detection=*/DetectionWithKeyPoints({{0.0f, 0.0f}, {0.5f, 0.5f}}));
+  MP_ASSERT_OK(status_or_value);
+  EXPECT_THAT(status_or_value.ValueOrDie(), RectEq(0.25f, 0.25f, 0.5f, 0.5f));
+
+  status_or_value = RunDetectionKeyPointsToNormRectCalculation(
+      /*detection=*/DetectionWithKeyPoints({{0.5f, 0.5f}, {1.0f, 1.0f}}));
+  MP_ASSERT_OK(status_or_value);
+  EXPECT_THAT(status_or_value.ValueOrDie(), RectEq(0.75f, 0.75f, 0.5f, 0.5f));
 }
 
 TEST(DetectionsToRectsCalculatorTest, DetectionsToRect) {
@@ -121,10 +250,7 @@ TEST(DetectionsToRectsCalculatorTest, DetectionsToRect) {
   const std::vector<Packet>& output = runner.Outputs().Tag("RECT").packets;
   ASSERT_EQ(1, output.size());
   const auto& rect = output[0].Get<Rect>();
-  EXPECT_EQ(rect.width(), 300);
-  EXPECT_EQ(rect.height(), 400);
-  EXPECT_EQ(rect.x_center(), 250);
-  EXPECT_EQ(rect.y_center(), 400);
+  EXPECT_THAT(rect, RectEq(250, 400, 300, 400));
 }
 
 TEST(DetectionsToRectsCalculatorTest, DetectionsToNormalizedRect) {
@@ -147,10 +273,7 @@ TEST(DetectionsToRectsCalculatorTest, DetectionsToNormalizedRect) {
   const std::vector<Packet>& output = runner.Outputs().Tag("NORM_RECT").packets;
   ASSERT_EQ(1, output.size());
   const auto& rect = output[0].Get<NormalizedRect>();
-  EXPECT_FLOAT_EQ(rect.width(), 0.3);
-  EXPECT_FLOAT_EQ(rect.height(), 0.4);
-  EXPECT_FLOAT_EQ(rect.x_center(), 0.25);
-  EXPECT_FLOAT_EQ(rect.y_center(), 0.4);
+  EXPECT_THAT(rect, NormRectEq(0.25f, 0.4f, 0.3f, 0.4f));
 }
 
 TEST(DetectionsToRectsCalculatorTest, DetectionsToRects) {
@@ -173,15 +296,9 @@ TEST(DetectionsToRectsCalculatorTest, DetectionsToRects) {
   const std::vector<Packet>& output = runner.Outputs().Tag("RECTS").packets;
   ASSERT_EQ(1, output.size());
   const auto& rects = output[0].Get<std::vector<Rect>>();
-  EXPECT_EQ(rects.size(), 2);
-  EXPECT_EQ(rects[0].width(), 300);
-  EXPECT_EQ(rects[0].height(), 400);
-  EXPECT_EQ(rects[0].x_center(), 250);
-  EXPECT_EQ(rects[0].y_center(), 400);
-  EXPECT_EQ(rects[1].width(), 400);
-  EXPECT_EQ(rects[1].height(), 500);
-  EXPECT_EQ(rects[1].x_center(), 400);
-  EXPECT_EQ(rects[1].y_center(), 550);
+  ASSERT_EQ(rects.size(), 2);
+  EXPECT_THAT(rects[0], RectEq(250, 400, 300, 400));
+  EXPECT_THAT(rects[1], RectEq(400, 550, 400, 500));
 }
 
 TEST(DetectionsToRectsCalculatorTest, DetectionsToNormalizedRects) {
@@ -205,15 +322,9 @@ TEST(DetectionsToRectsCalculatorTest, DetectionsToNormalizedRects) {
       runner.Outputs().Tag("NORM_RECTS").packets;
   ASSERT_EQ(1, output.size());
   const auto& rects = output[0].Get<std::vector<NormalizedRect>>();
-  EXPECT_EQ(rects.size(), 2);
-  EXPECT_FLOAT_EQ(rects[0].width(), 0.3);
-  EXPECT_FLOAT_EQ(rects[0].height(), 0.4);
-  EXPECT_FLOAT_EQ(rects[0].x_center(), 0.25);
-  EXPECT_FLOAT_EQ(rects[0].y_center(), 0.4);
-  EXPECT_FLOAT_EQ(rects[1].width(), 0.4);
-  EXPECT_FLOAT_EQ(rects[1].height(), 0.5);
-  EXPECT_FLOAT_EQ(rects[1].x_center(), 0.4);
-  EXPECT_FLOAT_EQ(rects[1].y_center(), 0.55);
+  ASSERT_EQ(rects.size(), 2);
+  EXPECT_THAT(rects[0], NormRectEq(0.25f, 0.4f, 0.3f, 0.4f));
+  EXPECT_THAT(rects[1], NormRectEq(0.4f, 0.55f, 0.4f, 0.5f));
 }
 
 TEST(DetectionsToRectsCalculatorTest, DetectionToRects) {
@@ -236,10 +347,7 @@ TEST(DetectionsToRectsCalculatorTest, DetectionToRects) {
   ASSERT_EQ(1, output.size());
   const auto& rects = output[0].Get<std::vector<Rect>>();
   EXPECT_EQ(rects.size(), 1);
-  EXPECT_EQ(rects[0].width(), 300);
-  EXPECT_EQ(rects[0].height(), 400);
-  EXPECT_EQ(rects[0].x_center(), 250);
-  EXPECT_EQ(rects[0].y_center(), 400);
+  EXPECT_THAT(rects[0], RectEq(250, 400, 300, 400));
 }
 
 TEST(DetectionsToRectsCalculatorTest, DetectionToNormalizedRects) {
@@ -262,11 +370,8 @@ TEST(DetectionsToRectsCalculatorTest, DetectionToNormalizedRects) {
       runner.Outputs().Tag("NORM_RECTS").packets;
   ASSERT_EQ(1, output.size());
   const auto& rects = output[0].Get<std::vector<NormalizedRect>>();
-  EXPECT_EQ(rects.size(), 1);
-  EXPECT_FLOAT_EQ(rects[0].width(), 0.3);
-  EXPECT_FLOAT_EQ(rects[0].height(), 0.4);
-  EXPECT_FLOAT_EQ(rects[0].x_center(), 0.25);
-  EXPECT_FLOAT_EQ(rects[0].y_center(), 0.4);
+  ASSERT_EQ(rects.size(), 1);
+  EXPECT_THAT(rects[0], NormRectEq(0.25f, 0.4f, 0.3f, 0.4f));
 }
 
 TEST(DetectionsToRectsCalculatorTest, WrongInputToRect) {
@@ -309,4 +414,5 @@ TEST(DetectionsToRectsCalculatorTest, WrongInputToNormalizedRect) {
                   "Only Detection with formats of RELATIVE_BOUNDING_BOX"));
 }
 
+}  // namespace
 }  // namespace mediapipe

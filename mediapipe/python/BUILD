@@ -16,14 +16,6 @@ load("@pybind11_bazel//:build_defs.bzl", "pybind_extension")
 
 licenses(["notice"])  # Apache 2.0
 
-cc_library(
-    name = "builtin_calculators",
-    deps = [
-        "//mediapipe/calculators/core:pass_through_calculator",
-        "//mediapipe/graphs/pose_tracking:upper_body_pose_tracking_cpu_deps",
-    ],
-)
-
 pybind_extension(
     name = "_framework_bindings",
     srcs = ["framework_bindings.cc"],
@@ -50,5 +42,25 @@ pybind_extension(
         "//mediapipe/python/pybind:resource_util",
         "//mediapipe/python/pybind:timestamp",
         "//mediapipe/python/pybind:validated_graph_config",
+        # Type registration.
+        "//mediapipe/framework:basic_types_registration",
+        "//mediapipe/framework/formats:classification_registration",
+        "//mediapipe/framework/formats:detection_registration",
+        "//mediapipe/framework/formats:landmark_registration",
+    ],
+)
+
+cc_library(
+    name = "builtin_calculators",
+    deps = [
+        "//mediapipe/calculators/core:pass_through_calculator",
+        "//mediapipe/calculators/core:split_normalized_landmark_list_calculator",
+        "//mediapipe/modules/face_detection:face_detection_front_cpu",
+        "//mediapipe/modules/face_landmark:face_landmark_front_cpu",
+        "//mediapipe/modules/hand_landmark:hand_landmark_tracking_cpu",
+        "//mediapipe/modules/palm_detection:palm_detection_cpu",
+        "//mediapipe/modules/pose_detection:pose_detection_cpu",
+        "//mediapipe/modules/pose_landmark:pose_landmark_upper_body_by_roi_cpu",
+        "//mediapipe/modules/pose_landmark:pose_landmark_upper_body_smoothed_cpu",
     ],
 )

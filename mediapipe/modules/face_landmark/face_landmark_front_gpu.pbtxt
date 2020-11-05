@@ -26,6 +26,10 @@ input_stream: "IMAGE:image"
 # Max number of faces to detect/track. (int)
 input_side_packet: "NUM_FACES:num_faces"
 
+# Whether face detection can be skipped when face regions can already be
+# approximated from face landmarks on the previous frame.
+input_side_packet: "CAN_SKIP_DETECTION:can_skip_detection"
+
 # Collection of detected/predicted faces, each represented as a list of 468 face
 # landmarks. (std::vector<NormalizedLandmarkList>)
 # NOTE: there will not be an output packet in the LANDMARKS stream for this
@@ -54,18 +58,34 @@ node {
 }
 
 # Drops the incoming image if FaceLandmarkGpu was able to identify face presence
-# in the previous image. Otherwise, passes the incoming image through to trigger
-# a new round of face detection in FaceDetectionFrontGpu.
+# in the previous image and skipping face detection is enabled. Otherwise,
+# passes the incoming image through to trigger a new round of face detection
+# in FaceDetectionFrontGpu.
+node {
+  calculator: "LogicCalculator"
+  options: {
+    [mediapipe.LogicCalculatorOptions.ext] { op: AND }
+  }
+  input_side_packet: "can_skip_detection"
+  input_stream: "prev_has_enough_faces"
+  output_stream: "skip_detection"
+}
 node {
   calculator: "GateCalculator"
   input_stream: "image"
-  input_stream: "DISALLOW:prev_has_enough_faces"
+  input_stream: "DISALLOW:skip_detection"
   output_stream: "gated_image"
   options: {
     [mediapipe.GateCalculatorOptions.ext] {
       empty_packets_as_allow: true
     }
   }
+}
+node {
+  calculator: "GateCalculator"
+  input_stream: "prev_face_rects_from_landmarks"
+  input_stream: "ALLOW:skip_detection"
+  output_stream: "gated_prev_face_rects_from_landmarks"
 }
 
 # Detects faces.
@@ -129,7 +149,7 @@ node {
 # overlapping regions based on the specified min_similarity_threshold.
 node {
   calculator: "AssociationNormRectCalculator"
-  input_stream: "prev_face_rects_from_landmarks"
+  input_stream: "gated_prev_face_rects_from_landmarks"
   input_stream: "face_rects_from_detections"
   output_stream: "face_rects"
   options: {

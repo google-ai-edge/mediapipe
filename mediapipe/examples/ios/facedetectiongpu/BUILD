@@ -54,9 +54,8 @@ ios_application(
 objc_library(
     name = "FaceDetectionGpuAppLibrary",
     data = [
-        "//mediapipe/graphs/face_detection:mobile_gpu_binary_graph",
-        "//mediapipe/models:face_detection_front.tflite",
-        "//mediapipe/models:face_detection_front_labelmap.txt",
+        "//mediapipe/graphs/face_detection:face_detection_mobile_gpu.binarypb",
+        "//mediapipe/modules/face_detection:face_detection_front.tflite",
     ],
     deps = [
         "//mediapipe/examples/ios/common:CommonMediaPipeAppLibrary",

@@ -84,6 +84,7 @@ FrameRotation FrameRotationFromDegrees(int degrees_ccw) {
   scale_unif_ = glGetUniformLocation(program_, "scale");
   RET_CHECK(scale_unif_ != -1) << "could not find uniform 'scale'";
 
+  glGenVertexArrays(1, &vao_);
   glGenBuffers(2, vbo_);
 
   return ::mediapipe::OkStatus();
@@ -93,6 +94,10 @@ void QuadRenderer::GlTeardown() {
   if (program_) {
     glDeleteProgram(program_);
     program_ = 0;
+  }
+  if (vao_) {
+    glDeleteVertexArrays(1, &vao_);
+    vao_ = 0;
   }
   if (vbo_[0]) {
     glDeleteBuffers(2, vbo_);
@@ -166,6 +171,7 @@ void QuadRenderer::GlTeardown() {
   // TODO: In practice, our vertex attributes almost never change, so
   // convert this to being actually static, with initialization done in the
   // GLSetup.
+  glBindVertexArray(vao_);
   glEnableVertexAttribArray(ATTRIB_VERTEX);
   glBindBuffer(GL_ARRAY_BUFFER, vbo_[0]);
   glBufferData(GL_ARRAY_BUFFER, sizeof(mediapipe::kBasicSquareVertices),
@@ -187,6 +193,7 @@ void QuadRenderer::GlTeardown() {
   glDisableVertexAttribArray(ATTRIB_VERTEX);
   glDisableVertexAttribArray(ATTRIB_TEXTURE_POSITION);
   glBindBuffer(GL_ARRAY_BUFFER, 0);
+  glBindVertexArray(0);
 
   return ::mediapipe::OkStatus();
 }

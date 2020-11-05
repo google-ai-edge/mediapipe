@@ -84,7 +84,7 @@ namespace mpms = ::mediapipe::mediasequence;
 // node {
 //   calculator: "UnpackMediaSequenceCalculator"
 //   input_side_packet: "SEQUENCE_EXAMPLE:example_input_side_packet"
-//   input_side_packet: "ROOT_DIRECTORY:path_to_dataset_root_directory"
+//   input_side_packet: "DATASET_ROOT:path_to_dataset_root_directory"
 //   output_side_packet: "DATA_PATH:full_path_to_data_element"
 //   output_side_packet: "RESAMPLER_OPTIONS:packet_resampler_options"
 //   options {

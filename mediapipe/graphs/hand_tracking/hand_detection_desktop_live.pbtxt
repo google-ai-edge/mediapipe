@@ -3,15 +3,16 @@
 # Used in the example in
 # mediapipe/examples/desktop/hand_tracking:hand_detection_cpu.
 
-# Images coming into and out of the graph.
+# CPU image. (ImageFrame)
 input_stream: "input_video"
+
+# CPU image. (ImageFrame)
 output_stream: "output_video"
 
-# Performs hand detection model on the input frames. See
-# hand_detection_cpu.pbtxt for the detail of the sub-graph.
+# Detects palms.
 node {
-  calculator: "HandDetectionSubgraph"
-  input_stream: "input_video"
+  calculator: "PalmDetectionCpu"
+  input_stream: "IMAGE:input_video"
   output_stream: "DETECTIONS:output_detections"
 }
 

@@ -93,6 +93,14 @@ REGISTER_CALCULATOR(AnnotationsToModelMatricesCalculator);
   if (cc->Outputs().HasTag(kModelMatricesTag)) {
     cc->Outputs().Tag(kModelMatricesTag).Set<TimedModelMatrixProtoList>();
   }
+
+  if (cc->InputSidePackets().HasTag("MODEL_SCALE")) {
+    cc->InputSidePackets().Tag("MODEL_SCALE").Set<float[]>();
+  }
+
+  if (cc->InputSidePackets().HasTag("MODEL_TRANSFORMATION")) {
+    cc->InputSidePackets().Tag("MODEL_TRANSFORMATION").Set<float[]>();
+  }
   return ::mediapipe::OkStatus();
 }
 
@@ -103,14 +111,20 @@ REGISTER_CALCULATOR(AnnotationsToModelMatricesCalculator);
   cc->SetOffset(TimestampDiff(0));
   options_ = cc->Options<AnnotationsToModelMatricesCalculatorOptions>();
 
-  if (options_.model_scale_size() == 3) {
+  if (cc->InputSidePackets().HasTag("MODEL_SCALE")) {
+    model_scale_ = Eigen::Map<const Eigen::Vector3f>(
+        cc->InputSidePackets().Tag("MODEL_SCALE").Get<float[]>());
+  } else if (options_.model_scale_size() == 3) {
     model_scale_ =
         Eigen::Map<const Eigen::Vector3f>(options_.model_scale().data());
   } else {
     model_scale_.setOnes();
   }
 
-  if (options_.model_transformation_size() == 16) {
+  if (cc->InputSidePackets().HasTag("MODEL_TRANSFORMATION")) {
+    model_transformation_ = Eigen::Map<const Matrix4fRM>(
+        cc->InputSidePackets().Tag("MODEL_TRANSFORMATION").Get<float[]>());
+  } else if (options_.model_transformation_size() == 16) {
     model_transformation_ =
         Eigen::Map<const Matrix4fRM>(options_.model_transformation().data());
   } else {

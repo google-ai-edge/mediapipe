@@ -17,6 +17,10 @@
 #include "mediapipe/framework/formats/landmark.pb.h"
 
 static const char* kLandmarksOutputStream = "hand_landmarks";
+static const char* kNumHandsInputSidePacket = "num_hands";
+
+// Max number of hands to detect/process.
+static const int kNumHands = 2;
 
 @implementation HandTrackingViewController
 
@@ -25,6 +29,8 @@ static const char* kLandmarksOutputStream = "hand_landmarks";
 - (void)viewDidLoad {
   [super viewDidLoad];
 
+  [self.mediapipeGraph setSidePacket:(mediapipe::MakePacket<int>(kNumHands))
+                               named:kNumHandsInputSidePacket];
   [self.mediapipeGraph addFrameOutputStream:kLandmarksOutputStream
                            outputPacketType:MPPPacketTypeRaw];
 }
@@ -40,12 +46,16 @@ static const char* kLandmarksOutputStream = "hand_landmarks";
       NSLog(@"[TS:%lld] No hand landmarks", packet.Timestamp().Value());
       return;
     }
-    const auto& landmarks = packet.Get<::mediapipe::NormalizedLandmarkList>();
-    NSLog(@"[TS:%lld] Number of landmarks on hand: %d", packet.Timestamp().Value(),
-          landmarks.landmark_size());
-    for (int i = 0; i < landmarks.landmark_size(); ++i) {
-      NSLog(@"\tLandmark[%d]: (%f, %f, %f)", i, landmarks.landmark(i).x(),
-            landmarks.landmark(i).y(), landmarks.landmark(i).z());
+    const auto& multiHandLandmarks = packet.Get<std::vector<::mediapipe::NormalizedLandmarkList>>();
+    NSLog(@"[TS:%lld] Number of hand instances with landmarks: %lu", packet.Timestamp().Value(),
+          multiHandLandmarks.size());
+    for (int handIndex = 0; handIndex < multiHandLandmarks.size(); ++handIndex) {
+      const auto& landmarks = multiHandLandmarks[handIndex];
+      NSLog(@"\tNumber of landmarks for hand[%d]: %d", handIndex, landmarks.landmark_size());
+      for (int i = 0; i < landmarks.landmark_size(); ++i) {
+        NSLog(@"\t\tLandmark[%d]: (%f, %f, %f)", i, landmarks.landmark(i).x(),
+              landmarks.landmark(i).y(), landmarks.landmark(i).z());
+      }
     }
   }
 }

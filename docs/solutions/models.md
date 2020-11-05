@@ -37,10 +37,10 @@ nav_order: 30
 ### [Hands](https://google.github.io/mediapipe/solutions/hands)
 
 *   Palm detection model:
-    [TFLite model](https://github.com/google/mediapipe/tree/master/mediapipe/models/palm_detection.tflite),
+    [TFLite model](https://github.com/google/mediapipe/tree/master/mediapipe/modules/palm_detection/palm_detection.tflite),
     [TF.js model](https://tfhub.dev/mediapipe/handdetector/1)
 *   Hand landmark model:
-    [TFLite model](https://github.com/google/mediapipe/tree/master/mediapipe/models/hand_landmark.tflite),
+    [TFLite model](https://github.com/google/mediapipe/tree/master/mediapipe/modules/hand_landmark/hand_landmark.tflite),
     [TF.js model](https://tfhub.dev/mediapipe/handskeleton/1)
 *   [Model card](https://mediapipe.page.link/handmc)
 
@@ -68,6 +68,11 @@ nav_order: 30
 
 *   [TFLite model for shoes](https://github.com/google/mediapipe/tree/master/mediapipe/models/object_detection_3d_sneakers.tflite)
 *   [TFLite model for chairs](https://github.com/google/mediapipe/tree/master/mediapipe/models/object_detection_3d_chair.tflite)
+*   [TFLite model for cameras](https://github.com/google/mediapipe/tree/master/mediapipe/models/object_detection_3d_camera.tflite)
+*   [TFLite model for cups](https://github.com/google/mediapipe/tree/master/mediapipe/models/object_detection_3d_cup.tflite)
+*   [Single-stage TFLite model for shoes](https://github.com/google/mediapipe/tree/master/mediapipe/models/object_detection_3d_sneakers_1stage.tflite)
+*   [Single-stage TFLite model for chairs](https://github.com/google/mediapipe/tree/master/mediapipe/models/object_detection_3d_chair_1stage.tflite)
+*   [Model card](https://mediapipe.page.link/objectron-mc)
 
 ### [KNIFT](https://google.github.io/mediapipe/solutions/knift)
 

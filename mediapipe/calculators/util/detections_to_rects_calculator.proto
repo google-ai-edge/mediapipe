@@ -35,4 +35,12 @@ message DetectionsToRectsCalculatorOptions {
   // Whether to output a zero-rect (with origin and size both zero) when the
   // input detection vector is empty.
   optional bool output_zero_rect_for_empty_detections = 5;
+
+  enum ConversionMode {
+    DEFAULT = 0;
+    USE_BOUNDING_BOX = 1;
+    USE_KEYPOINTS = 2;
+  }
+
+  optional ConversionMode conversion_mode = 6;
 }

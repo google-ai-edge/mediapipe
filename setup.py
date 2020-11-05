@@ -15,9 +15,6 @@ limitations under the License.
 Setup for MediaPipe package with setuptools.
 """
 
-from distutils import spawn
-import distutils.command.build as build
-import distutils.command.clean as clean
 import glob
 import os
 import posixpath
@@ -29,6 +26,11 @@ import sys
 import setuptools
 import setuptools.command.build_ext as build_ext
 import setuptools.command.install as install
+# It is recommended to import setuptools prior to importing distutils to avoid
+# using legacy behavior from distutils.
+from distutils import spawn
+import distutils.command.build as build
+import distutils.command.clean as clean
 
 __version__ = '0.7'
 MP_ROOT_PATH = os.path.dirname(os.path.abspath(__file__))
@@ -39,6 +41,8 @@ MP_DIR_INIT_PY_BACKUP = os.path.join(MP_ROOT_PATH,
 MP_THIRD_PARTY_BUILD = os.path.join(MP_ROOT_PATH, 'third_party/BUILD')
 MP_THIRD_PARTY_BUILD_BACKUP = os.path.join(MP_ROOT_PATH,
                                            'third_party/BUILD.backup')
+MP_CALCULATORS_DIR_INIT_PY = os.path.join(MP_ROOT_PATH,
+                                          'mediapipe/calculators/__init__.py')
 if not os.path.exists(ROOT_INIT_PY):
   open(ROOT_INIT_PY, 'w').close()
 
@@ -53,7 +57,7 @@ def _parse_requirements(path):
 
 
 def _get_long_description():
-  # fix the image urls.
+  # Fix the image urls.
   return re.sub(
       r'(docs/images/|docs/images/mobile/)([A-Za-z0-9_]*\.(png|gif))',
       r'https://github.com/google/mediapipe/blob/master/\g<1>\g<2>?raw=true',
@@ -82,10 +86,11 @@ def _check_bazel():
       sys.stderr.write('invalid bazel version number: %s\n' % version_segments)
       sys.exit(-1)
   bazel_version = int(''.join(['%03d' % int(seg) for seg in version_segments]))
-  if bazel_version < 3400000:
+  if bazel_version < 3004000:
     sys.stderr.write(
         'the current bazel version is older than the minimum version that MediaPipe can support. Please upgrade bazel.'
     )
+    sys.exit(-1)
 
 
 class ModifyInitFiles(setuptools.Command):
@@ -103,10 +108,10 @@ class ModifyInitFiles(setuptools.Command):
     # Save the original init file.
     shutil.copyfile(MP_DIR_INIT_PY, MP_DIR_INIT_PY_BACKUP)
     mp_dir_init_file = open(MP_DIR_INIT_PY, 'a')
-    mp_dir_init_file.writelines([
-        '\n', 'import mediapipe.examples.python as examples\n',
-        'from mediapipe.python import *\n', '\n'
-    ])
+    mp_dir_init_file.writelines(
+        ['\n', 'from mediapipe.python import *\n',
+         'import mediapipe.python.solutions as solutions',
+         '\n'])
     mp_dir_init_file.close()
 
 
@@ -132,19 +137,31 @@ class GeneratePyProtos(setuptools.Command):
           '-compiler\' (linux) or \'brew install protobuf\'(macos) to install '
           'protobuf compiler binary.')
       sys.exit(-1)
-    # Build framework protos.
-    for proto_file in glob.glob(
-        'mediapipe/framework/**/*.proto', recursive=True):
-      if proto_file.endswith('test.proto'):
-        continue
-      proto_dir = os.path.dirname(os.path.abspath(proto_file))
-      if proto_dir.endswith('testdata'):
-        continue
-      init_py = os.path.join(proto_dir, '__init__.py')
-      if not os.path.exists(init_py):
-        sys.stderr.write('adding necessary __init__ file: %s\n' % init_py)
-        open(init_py, 'w').close()
-      self._generate_proto(proto_file)
+    # Build framework and calculator protos.
+    if not os.path.exists(MP_CALCULATORS_DIR_INIT_PY):
+      sys.stderr.write('adding __init__ file: %s\n' %
+                       MP_CALCULATORS_DIR_INIT_PY)
+      open(MP_CALCULATORS_DIR_INIT_PY, 'w').close()
+    for pattern in [
+        'mediapipe/framework/**/*.proto', 'mediapipe/calculators/**/*.proto',
+        'mediapipe/gpu/**/*.proto', 'mediapipe/util/**/*.proto'
+    ]:
+      for proto_file in glob.glob(pattern, recursive=True):
+        # Ignore test protos.
+        if proto_file.endswith('test.proto'):
+          continue
+        # Ignore tensorflow protos.
+        if 'mediapipe/calculators/tensorflow' in proto_file:
+          continue
+        proto_dir = os.path.dirname(os.path.abspath(proto_file))
+        # Ignore testdata dir.
+        if proto_dir.endswith('testdata'):
+          continue
+        init_py = os.path.join(proto_dir, '__init__.py')
+        if not os.path.exists(init_py):
+          sys.stderr.write('adding __init__ file: %s\n' % init_py)
+          open(init_py, 'w').close()
+        self._generate_proto(proto_file)
 
   def _generate_proto(self, source):
     """Invokes the Protocol Compiler to generate a _pb2.py."""
@@ -169,10 +186,14 @@ class BuildBinaryGraphs(build.build):
 
   def run(self):
     _check_bazel()
-    binary_graphs = ['pose_tracking/upper_body_pose_tracking_cpu_binary_graph']
+    binary_graphs = [
+        'face_landmark/face_landmark_front_cpu',
+        'hand_landmark/hand_landmark_tracking_cpu',
+        'pose_landmark/pose_landmark_upper_body_smoothed_cpu'
+    ]
     for binary_graph in binary_graphs:
       sys.stderr.write('generating binarypb: %s\n' %
-                       os.path.join('mediapipe/graphs/', binary_graph))
+                       os.path.join('mediapipe/modules/', binary_graph))
       self._generate_binary_graph(binary_graph)
 
   def _generate_binary_graph(self, graph_path):
@@ -184,14 +205,14 @@ class BuildBinaryGraphs(build.build):
         '--compilation_mode=opt',
         '--define=MEDIAPIPE_DISABLE_GPU=1',
         '--action_env=PYTHON_BIN_PATH=' + sys.executable,
-        os.path.join('mediapipe/graphs/', graph_path),
+        os.path.join('mediapipe/modules/', graph_path),
     ]
     if subprocess.call(bazel_command) != 0:
       sys.exit(-1)
-    output_name = graph_path.replace('_binary_graph', '.binarypb')
-    output_file = os.path.join('mediapipe/graphs', output_name)
+    output_name = graph_path + '.binarypb'
+    output_file = os.path.join('mediapipe/modules', output_name)
     shutil.copyfile(
-        os.path.join('bazel-bin/mediapipe/graphs/', output_name), output_file)
+        os.path.join('bazel-bin/mediapipe/modules/', output_name), output_file)
 
 
 class BazelExtension(setuptools.Extension):
@@ -320,7 +341,7 @@ class RemoveGenerated(clean.clean):
       sys.stderr.write('removing generated files: %s\n' % py_file)
       os.remove(py_file)
     for binarypb_file in glob.glob(
-        'mediapipe/graphs/**/*.binarypb', recursive=True):
+        'mediapipe/modules/**/*.binarypb', recursive=True):
       sys.stderr.write('removing generated binary graphs: %s\n' % binarypb_file)
       os.remove(binarypb_file)
     # Restore the original init file from the backup.

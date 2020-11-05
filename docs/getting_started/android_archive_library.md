@@ -135,6 +135,7 @@ each project.
         def camerax_version = "1.0.0-beta10"
         implementation "androidx.camera:camera-core:$camerax_version"
         implementation "androidx.camera:camera-camera2:$camerax_version"
+        implementation "androidx.camera:camera-lifecycle:$camerax_version"
     }
     ```
 

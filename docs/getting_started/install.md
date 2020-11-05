@@ -12,7 +12,7 @@ nav_order: 1
 {:toc}
 ---
 
-Note: To interoperate with OpenCV, OpenCV 3.x and above are preferred. OpenCV
+Note: To interoperate with OpenCV, OpenCV 3.x to 4.1 are preferred. OpenCV
 2.x currently works but interoperability support may be deprecated in the
 future.
 

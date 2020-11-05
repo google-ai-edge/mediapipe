@@ -51,6 +51,6 @@ cc_binary(
     name = "face_detection_tpu",
     deps = [
         "//mediapipe/examples/coral:demo_run_graph_main",
-        "//mediapipe/graphs/face_detection:desktop_tflite_calculators",
+        "//mediapipe/graphs/face_detection:desktop_live_calculators",
     ],
 )

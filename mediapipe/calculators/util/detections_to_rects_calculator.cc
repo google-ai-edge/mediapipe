@@ -14,6 +14,7 @@
 #include "mediapipe/calculators/util/detections_to_rects_calculator.h"
 
 #include <cmath>
+#include <limits>
 
 #include "mediapipe/calculators/util/detections_to_rects_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
@@ -36,19 +37,70 @@ constexpr char kNormRectTag[] = "NORM_RECT";
 constexpr char kRectsTag[] = "RECTS";
 constexpr char kNormRectsTag[] = "NORM_RECTS";
 
+constexpr float kMinFloat = std::numeric_limits<float>::lowest();
+constexpr float kMaxFloat = std::numeric_limits<float>::max();
+
+::mediapipe::Status NormRectFromKeyPoints(const LocationData& location_data,
+                                          NormalizedRect* rect) {
+  RET_CHECK_GT(location_data.relative_keypoints_size(), 1)
+      << "2 or more key points required to calculate a rect.";
+  float xmin = kMaxFloat;
+  float ymin = kMaxFloat;
+  float xmax = kMinFloat;
+  float ymax = kMinFloat;
+  for (int i = 0; i < location_data.relative_keypoints_size(); ++i) {
+    const auto& kp = location_data.relative_keypoints(i);
+    xmin = std::min(xmin, kp.x());
+    ymin = std::min(ymin, kp.y());
+    xmax = std::max(xmax, kp.x());
+    ymax = std::max(ymax, kp.y());
+  }
+  rect->set_x_center((xmin + xmax) / 2);
+  rect->set_y_center((ymin + ymax) / 2);
+  rect->set_width(xmax - xmin);
+  rect->set_height(ymax - ymin);
+  return ::mediapipe::OkStatus();
+}
+
+template <class B, class R>
+void RectFromBox(B box, R* rect) {
+  rect->set_x_center(box.xmin() + box.width() / 2);
+  rect->set_y_center(box.ymin() + box.height() / 2);
+  rect->set_width(box.width());
+  rect->set_height(box.height());
+}
+
 }  // namespace
 
 ::mediapipe::Status DetectionsToRectsCalculator::DetectionToRect(
     const Detection& detection, const DetectionSpec& detection_spec,
     Rect* rect) {
   const LocationData location_data = detection.location_data();
-  RET_CHECK(location_data.format() == LocationData::BOUNDING_BOX)
-      << "Only Detection with formats of BOUNDING_BOX can be converted to Rect";
-  const LocationData::BoundingBox bounding_box = location_data.bounding_box();
-  rect->set_x_center(bounding_box.xmin() + bounding_box.width() / 2);
-  rect->set_y_center(bounding_box.ymin() + bounding_box.height() / 2);
-  rect->set_width(bounding_box.width());
-  rect->set_height(bounding_box.height());
+  switch (options_.conversion_mode()) {
+    case mediapipe::DetectionsToRectsCalculatorOptions_ConversionMode_DEFAULT:
+    case mediapipe::
+        DetectionsToRectsCalculatorOptions_ConversionMode_USE_BOUNDING_BOX: {
+      RET_CHECK(location_data.format() == LocationData::BOUNDING_BOX)
+          << "Only Detection with formats of BOUNDING_BOX can be converted to "
+             "Rect";
+      RectFromBox(location_data.bounding_box(), rect);
+      break;
+    }
+    case mediapipe::
+        DetectionsToRectsCalculatorOptions_ConversionMode_USE_KEYPOINTS: {
+      RET_CHECK(detection_spec.image_size.has_value())
+          << "Rect with absolute coordinates calculation requires image size.";
+      const int width = detection_spec.image_size->first;
+      const int height = detection_spec.image_size->second;
+      NormalizedRect norm_rect;
+      MP_RETURN_IF_ERROR(NormRectFromKeyPoints(location_data, &norm_rect));
+      rect->set_x_center(std::round(norm_rect.x_center() * width));
+      rect->set_y_center(std::round(norm_rect.y_center() * height));
+      rect->set_width(std::round(norm_rect.width() * width));
+      rect->set_height(std::round(norm_rect.height() * height));
+      break;
+    }
+  }
   return ::mediapipe::OkStatus();
 }
 
@@ -56,15 +108,22 @@ constexpr char kNormRectsTag[] = "NORM_RECTS";
     const Detection& detection, const DetectionSpec& detection_spec,
     NormalizedRect* rect) {
   const LocationData location_data = detection.location_data();
-  RET_CHECK(location_data.format() == LocationData::RELATIVE_BOUNDING_BOX)
-      << "Only Detection with formats of RELATIVE_BOUNDING_BOX can be "
-         "converted to NormalizedRect";
-  const LocationData::RelativeBoundingBox bounding_box =
-      location_data.relative_bounding_box();
-  rect->set_x_center(bounding_box.xmin() + bounding_box.width() / 2);
-  rect->set_y_center(bounding_box.ymin() + bounding_box.height() / 2);
-  rect->set_width(bounding_box.width());
-  rect->set_height(bounding_box.height());
+  switch (options_.conversion_mode()) {
+    case mediapipe::DetectionsToRectsCalculatorOptions_ConversionMode_DEFAULT:
+    case mediapipe::
+        DetectionsToRectsCalculatorOptions_ConversionMode_USE_BOUNDING_BOX: {
+      RET_CHECK(location_data.format() == LocationData::RELATIVE_BOUNDING_BOX)
+          << "Only Detection with formats of RELATIVE_BOUNDING_BOX can be "
+             "converted to NormalizedRect";
+      RectFromBox(location_data.relative_bounding_box(), rect);
+      break;
+    }
+    case mediapipe::
+        DetectionsToRectsCalculatorOptions_ConversionMode_USE_KEYPOINTS: {
+      MP_RETURN_IF_ERROR(NormRectFromKeyPoints(location_data, rect));
+      break;
+    }
+  }
   return ::mediapipe::OkStatus();
 }
 

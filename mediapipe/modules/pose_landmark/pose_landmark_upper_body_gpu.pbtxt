@@ -22,10 +22,12 @@ type: "PoseLandmarkUpperBodyGpu"
 # GPU image. (GpuBuffer)
 input_stream: "IMAGE:image"
 
+# Whether pose detection can be skipped when pose regions can already be
+# approximated from pose landmarks on the previous frame.
+input_side_packet: "CAN_SKIP_DETECTION:can_skip_detection"
+
 # Pose landmarks within the given ROI. (NormalizedLandmarkList)
-# We have 25 (upper-body) landmarks
-# (see pose_landmark_upper_body_topology.svg), and there are other auxiliary key
-# points.
+# We have 25 (upper-body) landmarks (see pose_landmark_upper_body_topology.svg).
 # 0 - nose
 # 1 - right eye (inner)
 # 2 - right eye
@@ -97,13 +99,23 @@ node {
 }
 
 # Drops the incoming image if PoseLandmarkUpperBodyByRoiGpu was able to identify
-# pose presence in the previous image. Otherwise, passes the incoming image
-# through to trigger a new round of pose detection in PoseDetectionGpu.
+# pose presence in the previous image and skipping pose detection is enabled.
+# Otherwise, passes the incoming image through to trigger a new round of pose
+# detection in PoseDetectionGpu.
+node {
+  calculator: "LogicCalculator"
+  options: {
+    [mediapipe.LogicCalculatorOptions.ext] { op: AND }
+  }
+  input_side_packet: "can_skip_detection"
+  input_stream: "prev_pose_rect_from_landmarks_is_present"
+  output_stream: "skip_detection"
+}
 node {
   calculator: "GateCalculator"
   input_stream: "image"
   input_stream: "image_size"
-  input_stream: "DISALLOW:prev_pose_rect_from_landmarks_is_present"
+  input_stream: "DISALLOW:skip_detection"
   output_stream: "image_for_pose_detection"
   output_stream: "image_size_for_pose_detection"
   options: {
@@ -158,13 +170,14 @@ node {
   input_stream: "IMAGE:image"
   input_stream: "ROI:pose_rect"
   output_stream: "LANDMARKS:pose_landmarks"
+  output_stream: "AUXILIARY_LANDMARKS:auxiliary_landmarks"
 }
 
-# Calculates region of interest based on pose landmarks, so that can be reused
-# for subsequent image.
+# Calculates region of interest based on the auxiliary landmarks, to be used in
+# the subsequent image.
 node {
   calculator: "PoseLandmarkUpperBodyLandmarksToRoi"
-  input_stream: "LANDMARKS:pose_landmarks"
+  input_stream: "LANDMARKS:auxiliary_landmarks"
   input_stream: "IMAGE_SIZE:image_size"
   output_stream: "ROI:pose_rect_from_landmarks"
 }

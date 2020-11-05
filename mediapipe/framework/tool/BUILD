@@ -132,6 +132,7 @@ cc_library(
     visibility = ["//mediapipe/framework:mediapipe_internal"],
     deps = [
         "//mediapipe/framework:calculator_cc_proto",
+        "//mediapipe/framework:input_stream_shard",
         "//mediapipe/framework:packet",
         "//mediapipe/framework:packet_generator_cc_proto",
         "//mediapipe/framework:packet_set",

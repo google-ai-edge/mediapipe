@@ -35,9 +35,9 @@ Object Detection                                                                
 []()                                                                                      | Android | iOS | Desktop | Python | Web | Coral
 :---------------------------------------------------------------------------------------- | :-----: | :-: | :-----: | :----: | :-: | :---:
 [Face Detection](https://google.github.io/mediapipe/solutions/face_detection)                   | ✅       | ✅   | ✅       |        | ✅   | ✅
-[Face Mesh](https://google.github.io/mediapipe/solutions/face_mesh)                             | ✅       | ✅   | ✅       |        |     |
+[Face Mesh](https://google.github.io/mediapipe/solutions/face_mesh)                             | ✅       | ✅   | ✅       | ✅      |     |
 [Iris](https://google.github.io/mediapipe/solutions/iris)                                       | ✅       | ✅   | ✅       |        | ✅   |
-[Hands](https://google.github.io/mediapipe/solutions/hands)                                     | ✅       | ✅   | ✅       |        | ✅   |
+[Hands](https://google.github.io/mediapipe/solutions/hands)                                     | ✅       | ✅   | ✅       | ✅      | ✅   |
 [Pose](https://google.github.io/mediapipe/solutions/pose)                                       | ✅       | ✅   | ✅       | ✅      | ✅   |
 [Hair Segmentation](https://google.github.io/mediapipe/solutions/hair_segmentation)             | ✅       |     | ✅       |        | ✅   |
 [Object Detection](https://google.github.io/mediapipe/solutions/object_detection)               | ✅       | ✅   | ✅       |        |     | ✅
@@ -52,6 +52,19 @@ Object Detection                                                                
 See also
 [MediaPipe Models and Model Cards](https://google.github.io/mediapipe/solutions/models)
 for ML models released in MediaPipe.
+
+## MediaPipe in Python
+
+MediaPipe Python package is available on
+[PyPI](https://pypi.org/project/mediapipe/), and can be installed simply by `pip
+install mediapipe` on Linux and macOS, as described in:
+
+*   [MediaPipe Face Mesh](../solutions/pose.md#python) and
+    [colab](https://mediapipe.page.link/face_mesh_py_colab)
+*   [MediaPipe Hands](../solutions/pose.md#python) and
+    [colab](https://mediapipe.page.link/hands_py_colab)
+*   [MediaPipe Pose](../solutions/pose.md#python) and
+    [colab](https://mediapipe.page.link/pose_py_colab)
 
 ## MediaPipe on the Web
 

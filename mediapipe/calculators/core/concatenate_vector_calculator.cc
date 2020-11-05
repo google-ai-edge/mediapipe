@@ -18,6 +18,7 @@
 
 #include "mediapipe/framework/formats/classification.pb.h"
 #include "mediapipe/framework/formats/landmark.pb.h"
+#include "mediapipe/framework/formats/tensor.h"
 #include "mediapipe/framework/port/integral_types.h"
 #include "tensorflow/lite/interpreter.h"
 
@@ -63,6 +64,9 @@ REGISTER_CALCULATOR(ConcatenateBoolVectorCalculator);
 typedef ConcatenateVectorCalculator<TfLiteTensor>
     ConcatenateTfLiteTensorVectorCalculator;
 REGISTER_CALCULATOR(ConcatenateTfLiteTensorVectorCalculator);
+
+typedef ConcatenateVectorCalculator<Tensor> ConcatenateTensorVectorCalculator;
+REGISTER_CALCULATOR(ConcatenateTensorVectorCalculator);
 
 typedef ConcatenateVectorCalculator<::mediapipe::NormalizedLandmark>
     ConcatenateLandmarkVectorCalculator;

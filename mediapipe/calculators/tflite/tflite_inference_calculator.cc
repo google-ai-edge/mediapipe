@@ -404,12 +404,7 @@ bool ShouldUseGpu(CC* cc) {
     MP_RETURN_IF_ERROR(LoadDelegate(cc));
 #endif
   } else {
-    // TODO: why only on these platforms?
-    // It seems that the XNNPACK delegate fails to load on Linux.
-#if defined(__EMSCRIPTEN__) || defined(MEDIAPIPE_ANDROID) || \
-    defined(MEDIAPIPE_IOS)
     MP_RETURN_IF_ERROR(LoadDelegate(cc));
-#endif  // __EMSCRIPTEN__ || MEDIAPIPE_ANDROID || MEDIAPIPE_IOS
   }
   return ::mediapipe::OkStatus();
 }

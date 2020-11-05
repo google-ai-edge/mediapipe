@@ -55,13 +55,21 @@ frame, and only when the landmark model could no longer identify hand presence
 is palm detection invoked to relocalize the hand.
 
 The pipeline is implemented as a MediaPipe
-[graph](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/hand_tracking/hand_tracking_mobile.pbtxt),
-which internally utilizes a
-[palm/hand detection subgraph](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/hand_tracking/subgraphs/hand_detection_gpu.pbtxt),
-a
-[hand landmark subgraph](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/hand_tracking/subgraphs/hand_landmark_gpu.pbtxt)
-and a
-[renderer subgraph](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/hand_tracking/subgraphs/renderer_gpu.pbtxt).
+[graph](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/hand_tracking/hand_tracking_mobile.pbtxt)
+that uses a
+[hand landmark tracking subgraph](https://github.com/google/mediapipe/tree/master/mediapipe/modules/hand_landmark/hand_landmark_tracking_gpu.pbtxt)
+from the
+[hand landmark module](https://github.com/google/mediapipe/tree/master/mediapipe/modules/hand_landmark),
+and renders using a dedicated
+[hand renderer subgraph](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/hand_tracking/subgraphs/hand_renderer_gpu.pbtxt).
+The
+[hand landmark tracking subgraph](https://github.com/google/mediapipe/tree/master/mediapipe/modules/hand_landmark/hand_landmark_tracking_gpu.pbtxt)
+internally uses a
+[hand landmark subgraph](https://github.com/google/mediapipe/tree/master/mediapipe/modules/hand_landmark/hand_landmark_gpu.pbtxt)
+from the same module and a
+[palm detection subgraph](https://github.com/google/mediapipe/tree/master/mediapipe/modules/palm_detection/palm_detection_gpu.pbtxt)
+from the
+[palm detection module](https://github.com/google/mediapipe/tree/master/mediapipe/modules/palm_detection).
 
 Note: To visualize a graph, copy the graph and paste it into
 [MediaPipe Visualizer](https://viz.mediapipe.dev/). For more information on how
@@ -146,34 +154,11 @@ to visualize its associated subgraphs, please see
 *   iOS target:
     [`mediapipe/examples/ios/handtrackinggpu:HandTrackingGpuApp`](https://github.com/google/mediapipe/tree/master/mediapipe/examples/ios/handtrackinggpu/BUILD)
 
-#### With Multi-hand Support
-
-*   Graph:
-    [`mediapipe/graphs/hand_tracking/multi_hand_tracking_mobile.pbtxt`](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/hand_tracking/multi_hand_tracking_mobile.pbtxt)
-*   Android target:
-    [(or download prebuilt ARM64 APK)](https://drive.google.com/open?id=1Wk6V9EVaz1ks_MInPqqVGvvJD01SGXDc)
-    [`mediapipe/examples/android/src/java/com/google/mediapipe/apps/multihandtrackinggpu:multihandtrackinggpu`](https://github.com/google/mediapipe/tree/master/mediapipe/examples/android/src/java/com/google/mediapipe/apps/multihandtrackinggpu/BUILD)
-*   iOS target:
-    [`mediapipe/examples/ios/multihandtrackinggpu:MultiHandTrackingGpuApp`](https://github.com/google/mediapipe/tree/master/mediapipe/examples/ios/multihandtrackinggpu/BUILD)
-
-There are two key differences between this graph and that in the
-[main example](#main-example) (which handles only one hand):
-
-1.  There is a `NormalizedRectVectorHasMinSize` calculator, that checks if in
-    input vector of `NormalizedRect` objects has a minimum size equal to `N`. In
-    this graph, if the vector contains fewer than `N` objects,
-    `MultiHandDetection` subgraph runs. Otherwise, the `GateCalculator` doesn't
-    send any image packets to the `MultiHandDetection` subgraph. This way, the
-    main graph is efficient in that it avoids running the costly hand detection
-    step when there are already `N` hands in the frame.
-2.  The `MergeCalculator` has been replaced by the `AssociationNormRect`
-    calculator. This `AssociationNormRect` takes as input a vector of
-    `NormalizedRect` objects from the `MultiHandDetection` subgraph on the
-    current frame, and a vector of `NormalizedRect` objects from the
-    `MultiHandLandmark` subgraph from the previous frame, and performs an
-    association operation between these objects. This calculator ensures that
-    the output vector doesn't contain overlapping regions based on the specified
-    `min_similarity_threshold`.
+Tip: Maximum number of hands to detect/process is set to 2 by default. To change
+it, for Android modify `NUM_HANDS` in
+[MainActivity.java](https://github.com/google/mediapipe/tree/master/mediapipe/examples/android/src/java/com/google/mediapipe/apps/handtrackinggpu/MainActivity.java),
+and for iOS modify `kNumHands` in
+[HandTrackingViewController.mm](https://github.com/google/mediapipe/tree/master/mediapipe/examples/ios/handtrackinggpu/HandTrackingViewController.mm).
 
 #### Palm/Hand Detection Only (no landmarks)
 
@@ -187,8 +172,6 @@ There are two key differences between this graph and that in the
 
 ### Desktop
 
-#### Main Example
-
 *   Running on CPU
     *   Graph:
         [`mediapipe/graphs/hand_tracking/hand_tracking_desktop_live.pbtxt`](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/hand_tracking/hand_tracking_desktop_live.pbtxt)
@@ -196,22 +179,101 @@ There are two key differences between this graph and that in the
         [`mediapipe/examples/desktop/hand_tracking:hand_tracking_cpu`](https://github.com/google/mediapipe/tree/master/mediapipe/examples/desktop/hand_tracking/BUILD)
 *   Running on GPU
     *   Graph:
-        [`mediapipe/graphs/hand_tracking/hand_tracking_mobile.pbtxt`](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/hand_tracking/hand_tracking_mobile.pbtxt)
+        [`mediapipe/graphs/hand_tracking/hand_tracking_desktop_live_gpu.pbtxt`](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/hand_tracking/hand_tracking_desktop_gpu.pbtxt)
     *   Target:
         [`mediapipe/examples/desktop/hand_tracking:hand_tracking_gpu`](https://github.com/google/mediapipe/tree/master/mediapipe/examples/desktop/hand_tracking/BUILD)
 
-#### With Multi-hand Support
+Tip: Maximum number of hands to detect/process is set to 2 by default. To change
+it, in the graph file modify the option of `ConstantSidePacketCalculator`.
 
-*   Running on CPU
-    *   Graph:
-        [`mediapipe/graphs/hand_tracking/multi_hand_tracking_desktop_live.pbtxt`](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/hand_tracking/multi_hand_tracking_desktop_live)
-    *   Target:
-        [`mediapipe/examples/desktop/multi_hand_tracking:multi_hand_tracking_cpu`](https://github.com/google/mediapipe/tree/master/mediapipe/examples/desktop/multi_hand_tracking/BUILD)
-*   Running on GPU
-    *   Graph:
-        [`mediapipe/graphs/hand_tracking/multi_hand_tracking_mobile.pbtxt`](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/hand_tracking/multi_hand_tracking_mobile.pbtxt)
-    *   Target:
-        [`mediapipe/examples/desktop/multi_hand_tracking:multi_hand_tracking_gpu`](https://github.com/google/mediapipe/tree/master/mediapipe/examples/desktop/multi_hand_tracking/BUILD)
+### Python
+
+MediaPipe Python package is available on
+[PyPI](https://pypi.org/project/mediapipe/), and can be installed simply by `pip
+install mediapipe` on Linux and macOS, as described below and in this
+[colab](https://mediapipe.page.link/hands_py_colab). If you do need to build the
+Python package from source, see
+[additional instructions](../getting_started/building_examples.md#python).
+
+Activate a Python virtual environment:
+
+```bash
+$ python3 -m venv mp_env && source mp_env/bin/activate
+```
+
+Install MediaPipe Python package:
+
+```bash
+(mp_env)$ pip install mediapipe
+```
+
+Run the following Python code:
+
+<!-- Do not change the example code below directly. Change the corresponding example in mediapipe/python/solutions/hands.py and copy it over. -->
+
+```python
+import cv2
+import mediapipe as mp
+mp_drawing = mp.solutions.drawing_utils
+mp_hands = mp.solutions.hands
+
+# For static images:
+hands = mp_hands.Hands(
+    static_image_mode=True,
+    max_num_hands=2,
+    min_detection_confidence=0.7)
+for idx, file in enumerate(file_list):
+  # Read an image, flip it around y-axis for correct handedness output (see
+  # above).
+  image = cv2.flip(cv2.imread(file), 1)
+  # Convert the BGR image to RGB before processing.
+  results = hands.process(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
+
+  # Print handedness and draw hand landmarks on the image.
+  print('handedness:', results.multi_handedness)
+  if not results.multi_hand_landmarks:
+    continue
+  annotated_image = image.copy()
+  for hand_landmarks in results.multi_hand_landmarks:
+    print('hand_landmarks:', hand_landmarks)
+    mp_drawing.draw_landmarks(
+        annotated_image, hand_landmarks, mp_hands.HAND_CONNECTIONS)
+  cv2.imwrite(
+      '/tmp/annotated_image' + str(idx) + '.png', cv2.flip(image, 1))
+hands.close()
+
+# For webcam input:
+hands = mp_hands.Hands(
+    min_detection_confidence=0.7, min_tracking_confidence=0.5)
+cap = cv2.VideoCapture(0)
+while cap.isOpened():
+  success, image = cap.read()
+  if not success:
+    break
+
+  # Flip the image horizontally for a later selfie-view display, and convert
+  # the BGR image to RGB.
+  image = cv2.cvtColor(cv2.flip(image, 1), cv2.COLOR_BGR2RGB)
+  # To improve performance, optionally mark the image as not writeable to
+  # pass by reference.
+  image.flags.writeable = False
+  results = hands.process(image)
+
+  # Draw the hand annotations on the image.
+  image.flags.writeable = True
+  image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+  if results.multi_hand_landmarks:
+    for hand_landmarks in results.multi_hand_landmarks:
+      mp_drawing.draw_landmarks(
+          image, hand_landmarks, mp_hands.HAND_CONNECTIONS)
+  cv2.imshow('MediaPipe Hands', image)
+  if cv2.waitKey(5) & 0xFF == 27:
+    break
+hands.close()
+cap.release()
+```
+
+Tip: Use command `deactivate` to exit the Python virtual environment.
 
 ### Web
 

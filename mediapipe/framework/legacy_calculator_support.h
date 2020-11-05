@@ -61,7 +61,7 @@ class LegacyCalculatorSupport {
     // platforms.
 #ifndef __APPLE__
     ABSL_CONST_INIT
-#endif  // !__APPLE__
+#endif                                // !__APPLE__
     static thread_local C* current_;  // NOLINT
   };
 };
