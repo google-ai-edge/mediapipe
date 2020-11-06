@@ -18,6 +18,7 @@
 #import "mediapipe/objc/MPPGraph.h"
 #import "mediapipe/objc/MPPLayerRenderer.h"
 #import "mediapipe/objc/MPPPlayerInputSource.h"
+#import "mediapipe/objc/MPPTimestampConverter.h"
 
 typedef NS_ENUM(NSInteger, MediaPipeDemoSourceMode) {
   MediaPipeDemoSourceCamera,
@@ -59,5 +60,8 @@ typedef NS_ENUM(NSInteger, MediaPipeDemoSourceMode) {
 
 // Graph output stream.
 @property(nonatomic) const char* graphOutputStream;
+
+// Convert video time to mediapipe internal Timestamp
+@property(nonatomic) MPPTimestampConverter* timestampConverter;
 
 @end
