@@ -187,7 +187,7 @@ for idx, file in enumerate(file_list):
   annotated_image = image.copy()
   mp_drawing.draw_landmarks(
       annotated_image, results.pose_landmarks, mp_pose.POSE_CONNECTIONS)
-  cv2.imwrite('/tmp/annotated_image' + str(idx) + '.png', image)
+  cv2.imwrite('/tmp/annotated_image' + str(idx) + '.png', annotated_image)
 pose.close()
 
 # For webcam input:
