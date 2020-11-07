@@ -446,6 +446,8 @@ run `pip install mediapipe`, more convenient and much faster.
     $ sudo apt install python3-dev
     $ sudo apt install python3-venv
     $ sudo apt install -y protobuf-compiler
+    $ sudo apt install libprotobuf-dev
+    $ sudo apt install libgtk2.0-dev
     ```
 
     ```bash
