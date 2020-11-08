@@ -199,6 +199,9 @@ class NonMaxSuppressionCalculator : public CalculatorBase {
       if (options_.return_empty_detections()) {
         cc->Outputs().Index(0).Add(new Detections(), cc->InputTimestamp());
       }
+      if (options_.error_on_empty_detections()) {
+        return ::mediapipe::InternalError("NonMaxSuppression received empty detections, but detections are required for this pipeline.");
+       }
       return ::mediapipe::OkStatus();
     }
 

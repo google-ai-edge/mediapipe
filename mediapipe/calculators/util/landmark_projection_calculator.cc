@@ -100,7 +100,7 @@ class LandmarkProjectionCalculator : public CalculatorBase {
 
     CollectionItemId input_id = cc->Inputs().BeginId(kLandmarksTag);
     CollectionItemId output_id = cc->Outputs().BeginId(kLandmarksTag);
-    // Number of inputs and outpus is the same according to the contract.
+    // Number of inputs and outputs is the same according to the contract.
     for (; input_id != cc->Inputs().EndId(kLandmarksTag);
          ++input_id, ++output_id) {
       const auto& input_packet = cc->Inputs().Get(input_id);
