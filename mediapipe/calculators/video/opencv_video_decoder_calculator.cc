@@ -106,15 +106,17 @@ class OpenCvVideoDecoderCalculator : public CalculatorBase {
       return ::mediapipe::InvalidArgumentErrorBuilder(MEDIAPIPE_LOC)
              << "Fail to open video file at " << input_file_path;
     }
-    width_ = static_cast<int>(cap_->get(cv::CAP_PROP_FRAME_WIDTH));
-    height_ = static_cast<int>(cap_->get(cv::CAP_PROP_FRAME_HEIGHT));
-    double fps = static_cast<double>(cap_->get(cv::CAP_PROP_FPS));
-    frame_count_ = static_cast<int>(cap_->get(cv::CAP_PROP_FRAME_COUNT));
+
     // Unfortunately, cap_->get(cv::CAP_PROP_FORMAT) always returns CV_8UC1
     // back. To get correct image format, we read the first frame from the video
     // and get the number of channels.
     cv::Mat frame;
     cap_->read(frame);
+    width_ = static_cast<int>(cap_->get(cv::CAP_PROP_FRAME_WIDTH));
+    height_ = static_cast<int>(cap_->get(cv::CAP_PROP_FRAME_HEIGHT));
+    double fps = static_cast<double>(cap_->get(cv::CAP_PROP_FPS));
+    frame_count_ = static_cast<int>(cap_->get(cv::CAP_PROP_FRAME_COUNT));
+    
     if (frame.empty()) {
       return ::mediapipe::InvalidArgumentErrorBuilder(MEDIAPIPE_LOC)
              << "Fail to read any frames from the video file at "
@@ -127,11 +129,16 @@ class OpenCvVideoDecoderCalculator : public CalculatorBase {
              << input_file_path;
     }
 
-    if (fps <= 0 || frame_count_ <= 0 || width_ <= 0 || height_ <= 0) {
+    if (fps <= 0 || frame_count_ == 0 || width_ <= 0 || height_ <= 0) {
       return ::mediapipe::InvalidArgumentErrorBuilder(MEDIAPIPE_LOC)
              << "Fail to make video header due to the incorrect metadata from "
                 "the video file at "
-             << input_file_path;
+             << input_file_path
+             << ", format:" << format_
+             << ", fps:" << fps
+             << ", frame count:" << frame_count_
+             << ", width:" << width_
+             << ", height:" << height_;
     }
     auto header = absl::make_unique<VideoHeader>();
     header->format = format_;

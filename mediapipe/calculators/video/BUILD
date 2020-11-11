@@ -238,6 +238,29 @@ cc_library(
 )
 
 cc_library(
+    name = "opencv_video_imshow_calculator",
+    srcs = ["opencv_video_imshow_calculator.cc"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":opencv_video_encoder_calculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/formats:image_frame",
+        "//mediapipe/framework/formats:image_frame_opencv",
+        "//mediapipe/framework/formats:video_stream_header",
+        "//mediapipe/framework/port:file_helpers",
+        "//mediapipe/framework/port:opencv_highgui",
+        "//mediapipe/framework/port:opencv_imgproc",
+        "//mediapipe/framework/port:opencv_video",
+        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:source_location",
+        "//mediapipe/framework/port:status",
+        "//mediapipe/framework/tool:status_util",
+        "@com_google_absl//absl/strings",
+    ],
+    alwayslink = 1,
+)
+
+cc_library(
     name = "tvl1_optical_flow_calculator",
     srcs = ["tvl1_optical_flow_calculator.cc"],
     visibility = ["//visibility:public"],
