@@ -1,4 +1,4 @@
-# Installation
+# Kazakh-Russian Sign Language Recognition using Mediapipe and Tensorflow
 
 ## Installing on Debian and Ubuntu
 
