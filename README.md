@@ -143,10 +143,10 @@ Note: This currently works only on Linux, and please first follow
 
 ## Running the pretrained model for sign language recognition
 
-Insert your data to any folder and pass it as a ```--output_data_path``` variable. The result will appear in the same folder and will be called `result.txt`.
+Insert your data to any folder and pass it as a ```--processed_data_path``` variable. The result will appear in the same folder and will be stored in the `result.txt`.
 
 ```bash
-cd RNN/
+cd sign_prediction/
 
-python3 predict.py --input_data_path='./test_video/' --output_data_path='./test_video_output/'
+python3 predict.py --processed_data_path='./test_video_output/'
 ```
