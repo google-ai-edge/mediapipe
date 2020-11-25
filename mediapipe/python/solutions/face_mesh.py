@@ -15,7 +15,7 @@
 # Lint as: python3
 """MediaPipe FaceMesh."""
 
-from typing import NamedTuple
+from typing import NamedTuple, Optional, Tuple
 
 import numpy as np
 
@@ -249,7 +249,8 @@ class FaceMesh(SolutionBase):
                static_image_mode=False,
                max_num_faces=2,
                min_detection_confidence=0.5,
-               min_tracking_confidence=0.5):
+               min_tracking_confidence=0.5,
+               outputs: Optional[Tuple[str]] = ('multi_face_landmarks',)):
     """Initializes a MediaPipe FaceMesh object.
 
     Args:
@@ -274,6 +275,9 @@ class FaceMesh(SolutionBase):
         robustness of the solution, at the expense of a higher latency. Ignored
         if "static_image_mode" is True, where face detection simply runs on
         every image. Default to 0.5.
+      outputs: A list of the graph output stream names to observe. If the list
+        is empty, all the output streams listed in the graph config will be
+        automatically observed by default.
     """
     super().__init__(
         binary_graph_path=BINARYPB_FILE_PATH,
@@ -287,7 +291,7 @@ class FaceMesh(SolutionBase):
             'facelandmarkcpu__ThresholdingCalculator.threshold':
                 min_tracking_confidence,
         },
-        outputs=['multi_face_landmarks'])
+        outputs=list(outputs) if outputs else [])
 
   def process(self, image: np.ndarray) -> NamedTuple:
     """Processes an RGB image and returns the face landmarks on each detected face.
@@ -300,8 +304,12 @@ class FaceMesh(SolutionBase):
       ValueError: If the input image is not three channel RGB.
 
     Returns:
-      A NamedTuple object with a "multi_face_landmarks" field that contains the
-      face landmarks on each detected face.
+      A NamedTuple object with fields corresponding to the set of outputs passed to the
+      constructor. Fields may include:
+        "multi_hand_landmarks" The face landmarks on each detected face
+        "face_detections" The detected faces
+        "face_rects_from_landmarks" Regions of interest calculated based on landmarks
+        "face_rects_from_detections" Regions of interest calculated based on face detections
     """
 
     return super().process(input_data={'image': image})

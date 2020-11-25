@@ -16,7 +16,7 @@
 """MediaPipe Pose."""
 
 import enum
-from typing import NamedTuple
+from typing import NamedTuple, Optional, Tuple
 
 import numpy as np
 
@@ -159,7 +159,8 @@ class Pose(SolutionBase):
   def __init__(self,
                static_image_mode=False,
                min_detection_confidence=0.5,
-               min_tracking_confidence=0.5):
+               min_tracking_confidence=0.5,
+               outputs: Optional[Tuple[str]] = ('pose_landmarks',)):
     """Initializes a MediaPipe Pose object.
 
     Args:
@@ -181,6 +182,9 @@ class Pose(SolutionBase):
         increase robustness of the solution, at the expense of a higher latency.
         Ignored if "static_image_mode" is True, where person detection simply
         runs on every image. Default to 0.5.
+      outputs: A list of the graph output stream names to observe. If the list
+        is empty, all the output streams listed in the graph config will be
+        automatically observed by default.
     """
     super().__init__(
         binary_graph_path=BINARYPB_FILE_PATH,
@@ -193,7 +197,7 @@ class Pose(SolutionBase):
             'poselandmarkupperbodycpu__poselandmarkupperbodybyroicpu__ThresholdingCalculator.threshold':
                 min_tracking_confidence,
         },
-        outputs=['pose_landmarks'])
+        outputs=list(outputs) if outputs else [])
 
   def process(self, image: np.ndarray) -> NamedTuple:
     """Processes an RGB image and returns the pose landmarks on the most prominent person detected.
@@ -206,8 +210,12 @@ class Pose(SolutionBase):
       ValueError: If the input image is not three channel RGB.
 
     Returns:
-      A NamedTuple object with a "pose_landmarks" field that contains the pose
-      landmarks on the most prominent person detected.
+      A NamedTuple object with fields corresponding to the set of outputs passed to the
+      constructor. Fields may include:
+        "pose_landmarks" The pose landmarks on the most prominent person detected
+        "pose_detection" The detected pose
+        "pose_rect_from_landmarks" Region of interest calculated based on landmarks
+        "pose_rect_from_detection" Region of interest calculated based on pose detection
     """
 
     return super().process(input_data={'image': image})

@@ -16,7 +16,7 @@
 """MediaPipe Hands."""
 
 import enum
-from typing import NamedTuple
+from typing import NamedTuple, Optional, Tuple
 
 import numpy as np
 
@@ -168,7 +168,8 @@ class Hands(SolutionBase):
                static_image_mode=False,
                max_num_hands=2,
                min_detection_confidence=0.7,
-               min_tracking_confidence=0.5):
+               min_tracking_confidence=0.5,
+               outputs: Optional[Tuple[str]] = ('multi_hand_landmarks', 'multi_handedness')):
     """Initializes a MediaPipe Hand object.
 
     Args:
@@ -193,6 +194,9 @@ class Hands(SolutionBase):
         robustness of the solution, at the expense of a higher latency. Ignored
         if "static_image_mode" is True, where hand detection simply runs on
         every image. Default to 0.5.
+      outputs: A tuple of the graph output stream names to observe. If the tuple
+        is empty, all the output streams listed in the graph config will be
+        automatically observed by default.
     """
     super().__init__(
         binary_graph_path=BINARYPB_FILE_PATH,
@@ -206,7 +210,7 @@ class Hands(SolutionBase):
             'handlandmarkcpu__ThresholdingCalculator.threshold':
                 min_tracking_confidence,
         },
-        outputs=['multi_hand_landmarks', 'multi_handedness'])
+        outputs=list(outputs) if outputs else [])
 
   def process(self, image: np.ndarray) -> NamedTuple:
     """Processes an RGB image and returns the hand landmarks and handedness of each detected hand.
@@ -219,10 +223,13 @@ class Hands(SolutionBase):
       ValueError: If the input image is not three channel RGB.
 
     Returns:
-      A NamedTuple object with two fields: a "multi_hand_landmarks" field that
-      contains the hand landmarks on each detected hand and a "multi_handedness"
-      field that contains the handedness (left v.s. right hand) of the detected
-      hand.
+      A NamedTuple object with fields corresponding to the set of outputs passed to the
+      constructor. Fields may include:
+        "multi_hand_landmarks" The hand landmarks on each detected hand
+        "multi_handedness" The handedness (left v.s. right hand) of the detected hand
+        "palm_detections" The detected palms
+        "hand_rects" Regions of interest calculated based on landmarks
+        "hand_rects_from_palm_detections" Regions of interest calculated based on palm detections
     """
 
     return super().process(input_data={'image': image})
