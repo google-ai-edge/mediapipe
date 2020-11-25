@@ -47,6 +47,7 @@ pybind_extension(
         "//mediapipe/framework/formats:classification_registration",
         "//mediapipe/framework/formats:detection_registration",
         "//mediapipe/framework/formats:landmark_registration",
+        "//mediapipe/framework/formats:rect_registration",
     ],
 )
 
