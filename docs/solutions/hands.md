@@ -91,7 +91,7 @@ To detect initial hand locations, we designed a
 mobile real-time uses in a manner similar to the face detection model in
 [MediaPipe Face Mesh](./face_mesh.md). Detecting hands is a decidedly complex
 task: our
-[model](https://github.com/google/mediapipe/tree/master/mediapipe/models/palm_detection.tflite) has
+[model](https://github.com/google/mediapipe/blob/master/mediapipe/modules/hand_landmark/hand_landmark.tflite) has
 to work across a variety of hand sizes with a large scale span (~20x) relative
 to the image frame and be able to detect occluded and self-occluded hands.
 Whereas faces have high contrast patterns, e.g., in the eye and mouth region,
