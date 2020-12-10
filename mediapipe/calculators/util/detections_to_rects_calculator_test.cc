@@ -105,7 +105,7 @@ TEST(DetectionsToRectsCalculatorTest, DetectionToRect) {
   EXPECT_THAT(rect, RectEq(250, 400, 300, 400));
 }
 
-::mediapipe::StatusOr<Rect> RunDetectionKeyPointsToRectCalculation(
+mediapipe::StatusOr<Rect> RunDetectionKeyPointsToRectCalculation(
     Detection detection, std::pair<int, int> image_size) {
   CalculatorRunner runner(ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"(
     calculator: "DetectionsToRectsCalculator"
@@ -181,8 +181,8 @@ TEST(DetectionsToRectsCalculatorTest, DetectionToNormalizedRect) {
   EXPECT_THAT(rect, NormRectEq(0.25f, 0.4f, 0.3f, 0.4f));
 }
 
-::mediapipe::StatusOr<NormalizedRect>
-RunDetectionKeyPointsToNormRectCalculation(Detection detection) {
+mediapipe::StatusOr<NormalizedRect> RunDetectionKeyPointsToNormRectCalculation(
+    Detection detection) {
   CalculatorRunner runner(ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"(
     calculator: "DetectionsToRectsCalculator"
     input_stream: "DETECTION:detection"

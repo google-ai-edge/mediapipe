@@ -48,7 +48,7 @@ public final class AndroidAssetUtil {
    * <p>Note: When possible, using {@link AssetCache} is preferred for portability, since it does
    * not require any special handling for Android assets on the native code side.
    */
-  public static boolean initializeNativeAssetManager(Context androidContext) {
+  public static synchronized boolean initializeNativeAssetManager(Context androidContext) {
     return nativeInitializeAssetManager(
         androidContext, androidContext.getCacheDir().getAbsolutePath());
   }

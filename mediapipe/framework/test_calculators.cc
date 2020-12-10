@@ -39,21 +39,21 @@ using RandomEngine = std::mt19937_64;
 // A Calculator that outputs twice the value of its input packet (an int).
 class DoubleIntCalculator : public CalculatorBase {
  public:
-  static ::mediapipe::Status GetContract(CalculatorContract* cc) {
+  static mediapipe::Status GetContract(CalculatorContract* cc) {
     cc->Inputs().Index(0).Set<int>();
     cc->Outputs().Index(0).SetSameAs(&cc->Inputs().Index(0));
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Open(CalculatorContext* cc) final {
+  mediapipe::Status Open(CalculatorContext* cc) final {
     cc->SetOffset(TimestampDiff(0));
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Process(CalculatorContext* cc) final {
+  mediapipe::Status Process(CalculatorContext* cc) final {
     int value = cc->Inputs().Index(0).Value().Get<int>();
     cc->Outputs().Index(0).Add(new int(2 * value), cc->InputTimestamp());
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 };
 REGISTER_CALCULATOR(DoubleIntCalculator);
@@ -62,16 +62,16 @@ REGISTER_CALCULATOR(DoubleIntCalculator);
 // holds the high order bits and the second the low order ones.
 class IntSplitterPacketGenerator : public PacketGenerator {
  public:
-  static ::mediapipe::Status FillExpectations(
+  static mediapipe::Status FillExpectations(
       const PacketGeneratorOptions& extendable_options,  //
       PacketTypeSet* input_side_packets,                 //
       PacketTypeSet* output_side_packets) {
     input_side_packets->Index(0).Set<uint64>();
     output_side_packets->Index(0).Set<std::pair<uint32, uint32>>();
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  static ::mediapipe::Status Generate(
+  static mediapipe::Status Generate(
       const PacketGeneratorOptions& extendable_options,  //
       const PacketSet& input_side_packets,               //
       PacketSet* output_side_packets) {
@@ -80,7 +80,7 @@ class IntSplitterPacketGenerator : public PacketGenerator {
     uint32 low = value & 0xFFFFFFFF;
     output_side_packets->Index(0) =
         Adopt(new std::pair<uint32, uint32>(high, low));
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 };
 REGISTER_PACKET_GENERATOR(IntSplitterPacketGenerator);
@@ -90,7 +90,7 @@ REGISTER_PACKET_GENERATOR(IntSplitterPacketGenerator);
 // with both the high and low order bits.
 class TaggedIntSplitterPacketGenerator : public PacketGenerator {
  public:
-  static ::mediapipe::Status FillExpectations(
+  static mediapipe::Status FillExpectations(
       const PacketGeneratorOptions& extendable_options,  //
       PacketTypeSet* input_side_packets,                 //
       PacketTypeSet* output_side_packets) {
@@ -98,10 +98,10 @@ class TaggedIntSplitterPacketGenerator : public PacketGenerator {
     output_side_packets->Tag("HIGH").Set<uint32>();
     output_side_packets->Tag("LOW").Set<uint32>();
     output_side_packets->Tag("PAIR").Set<std::pair<uint32, uint32>>();
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  static ::mediapipe::Status Generate(
+  static mediapipe::Status Generate(
       const PacketGeneratorOptions& extendable_options,  //
       const PacketSet& input_side_packets,               //
       PacketSet* output_side_packets) {
@@ -112,7 +112,7 @@ class TaggedIntSplitterPacketGenerator : public PacketGenerator {
     output_side_packets->Tag("LOW") = Adopt(new uint32(low));
     output_side_packets->Tag("PAIR") =
         Adopt(new std::pair<uint32, uint32>(high, low));
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 };
 REGISTER_PACKET_GENERATOR(TaggedIntSplitterPacketGenerator);
@@ -129,23 +129,22 @@ class RangeCalculator : public CalculatorBase {
  public:
   RangeCalculator() : initialized_(false) {}
 
-  static ::mediapipe::Status GetContract(CalculatorContract* cc) {
+  static mediapipe::Status GetContract(CalculatorContract* cc) {
     cc->Outputs().Index(0).Set<int>();
     cc->Outputs().Index(1).Set<int>();
     cc->Outputs().Index(2).Set<double>();
     cc->InputSidePackets().Index(0).Set<std::pair<uint32, uint32>>();
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Open(CalculatorContext* cc) final {
+  mediapipe::Status Open(CalculatorContext* cc) final {
     Initialize(cc);
 
     // Fail if requested, without setting any stream headers. This tests that
     // the downstream Calculators will not try to access the headers in case
     // this one failed.
     if (k_ == 0) {
-      return ::mediapipe::Status(::mediapipe::StatusCode::kCancelled,
-                                 "k_ == 0");
+      return mediapipe::Status(mediapipe::StatusCode::kCancelled, "k_ == 0");
     }
     cc->Outputs().Index(0).SetHeader(
         Adopt(new std::string(absl::StrCat(cc->CalculatorType(), k_))));
@@ -155,21 +154,21 @@ class RangeCalculator : public CalculatorBase {
     cc->Outputs().Index(1).SetNextTimestampBound(Timestamp::PostStream());
     cc->Outputs().Index(2).SetNextTimestampBound(Timestamp::PreStream());
 
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Process(CalculatorContext* cc) final {
+  mediapipe::Status Process(CalculatorContext* cc) final {
     // Output at timestamps 1:N-1 that are divisible by K.
     index_ += k_;
     if (index_ < n_) {
       cc->Outputs().Index(0).AddPacket(GetNextPacket().At(Timestamp(index_)));
-      return ::mediapipe::OkStatus();
+      return mediapipe::OkStatus();
     } else {
       return tool::StatusStop();
     }
   }
 
-  ::mediapipe::Status Close(CalculatorContext* cc) final {
+  mediapipe::Status Close(CalculatorContext* cc) final {
     // Output at timestamp N.
     cc->Outputs().Index(0).AddPacket(GetNextPacket().At(Timestamp(n_)));
     // Output: ints from a range specified in the input side packet.
@@ -178,7 +177,7 @@ class RangeCalculator : public CalculatorBase {
         new double(static_cast<double>(total_) / static_cast<double>(count_)),
         Timestamp::PreStream());
 
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
  private:
@@ -221,19 +220,19 @@ class StdDevCalculator : public CalculatorBase {
  public:
   StdDevCalculator() {}
 
-  static ::mediapipe::Status GetContract(CalculatorContract* cc) {
+  static mediapipe::Status GetContract(CalculatorContract* cc) {
     cc->Inputs().Tag("DATA").Set<int>();
     cc->Inputs().Tag("MEAN").Set<double>();
     cc->Outputs().Index(0).Set<int>();
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Open(CalculatorContext* cc) final {
+  mediapipe::Status Open(CalculatorContext* cc) final {
     cc->Outputs().Index(0).SetNextTimestampBound(Timestamp::PostStream());
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Process(CalculatorContext* cc) final {
+  mediapipe::Status Process(CalculatorContext* cc) final {
     if (cc->InputTimestamp() == Timestamp::PreStream()) {
       RET_CHECK(cc->Inputs().Tag("DATA").Value().IsEmpty());
       RET_CHECK(!cc->Inputs().Tag("MEAN").Value().IsEmpty());
@@ -247,15 +246,15 @@ class StdDevCalculator : public CalculatorBase {
       cummulative_variance_ += diff * diff;
       ++count_;
     }
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Close(CalculatorContext* cc) final {
+  mediapipe::Status Close(CalculatorContext* cc) final {
     cc->Outputs().Index(0).Add(
-        new int(::mediapipe::MathUtil::SafeRound<int, double>(
+        new int(mediapipe::MathUtil::SafeRound<int, double>(
             sqrt(cummulative_variance_ / count_) * 100.0)),
         Timestamp::PostStream());
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
  private:
@@ -273,15 +272,15 @@ REGISTER_CALCULATOR(StdDevCalculator);
 // concatenation of the input stream headers.
 class MergeCalculator : public CalculatorBase {
  public:
-  static ::mediapipe::Status GetContract(CalculatorContract* cc) {
+  static mediapipe::Status GetContract(CalculatorContract* cc) {
     for (int i = 0; i < cc->Inputs().NumEntries(); ++i) {
       cc->Inputs().Index(i).Set<int>();
     }
     cc->Outputs().Index(0).Set<std::string>();
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Open(CalculatorContext* cc) final {
+  mediapipe::Status Open(CalculatorContext* cc) final {
     auto header = absl::make_unique<std::string>();
     for (auto& input : cc->Inputs()) {
       if (!input.Header().IsEmpty()) {
@@ -292,10 +291,10 @@ class MergeCalculator : public CalculatorBase {
       }
     }
     cc->Outputs().Index(0).SetHeader(Adopt(header.release()));
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Process(CalculatorContext* cc) final {
+  mediapipe::Status Process(CalculatorContext* cc) final {
     std::string result;
     if (cc->InputTimestamp().IsSpecialValue()) {
       absl::StrAppend(&result, cc->InputTimestamp().DebugString());
@@ -313,7 +312,7 @@ class MergeCalculator : public CalculatorBase {
       }
     }
     cc->Outputs().Index(0).Add(new std::string(result), cc->InputTimestamp());
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 };
 REGISTER_CALCULATOR(MergeCalculator);
@@ -325,28 +324,28 @@ class SaverCalculator : public CalculatorBase {
  public:
   SaverCalculator() : result_(new std::string) {}
 
-  static ::mediapipe::Status GetContract(CalculatorContract* cc) {
+  static mediapipe::Status GetContract(CalculatorContract* cc) {
     cc->Inputs().Index(0).Set<std::string>();
     cc->Outputs().Index(0).Set<std::string>();
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Open(CalculatorContext* cc) final {
+  mediapipe::Status Open(CalculatorContext* cc) final {
     cc->Outputs().Index(0).SetNextTimestampBound(Timestamp::PostStream());
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Process(CalculatorContext* cc) final {
+  mediapipe::Status Process(CalculatorContext* cc) final {
     if (!result_->empty()) {
       result_->append("/");
     }
     result_->append(cc->Inputs().Index(0).Get<std::string>());
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Close(CalculatorContext* cc) final {
+  mediapipe::Status Close(CalculatorContext* cc) final {
     cc->Outputs().Index(0).Add(result_.release(), Timestamp::PostStream());
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
  private:
@@ -360,13 +359,13 @@ REGISTER_CALCULATOR(SaverCalculator);
 // as an input side packet.
 class RandomMatrixCalculator : public CalculatorBase {
  public:
-  static ::mediapipe::Status GetContract(CalculatorContract* cc) {
+  static mediapipe::Status GetContract(CalculatorContract* cc) {
     cc->Outputs().Index(0).Set<Matrix>();
     cc->InputSidePackets().Index(0).Set<std::string>();
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Open(CalculatorContext* cc) override {
+  mediapipe::Status Open(CalculatorContext* cc) override {
     auto& options = cc->Options<RandomMatrixCalculatorOptions>();
     CHECK_LT(0, options.timestamp_step());
     CHECK_LT(0, options.rows());
@@ -381,10 +380,10 @@ class RandomMatrixCalculator : public CalculatorBase {
     std::vector<std::uint32_t> seed(1);
     seq.generate(seed.begin(), seed.end());
     random_ = absl::make_unique<RandomEngine>(seed[0]);
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Process(CalculatorContext* cc) override {
+  mediapipe::Status Process(CalculatorContext* cc) override {
     auto& options = cc->Options<RandomMatrixCalculatorOptions>();
 
     Matrix* matrix = new Matrix(options.rows(), options.cols());
@@ -399,7 +398,7 @@ class RandomMatrixCalculator : public CalculatorBase {
     if (current_timestamp_ >= Timestamp(options.limit_timestamp())) {
       return tool::StatusStop();
     } else {
-      return ::mediapipe::OkStatus();
+      return mediapipe::OkStatus();
     }
   }
 
@@ -418,21 +417,21 @@ REGISTER_CALCULATOR(RandomMatrixCalculator);
 // effect of round off error).
 class MeanAndCovarianceCalculator : public CalculatorBase {
  public:
-  static ::mediapipe::Status GetContract(CalculatorContract* cc) {
+  static mediapipe::Status GetContract(CalculatorContract* cc) {
     cc->Inputs().Index(0).Set<Matrix>();
     cc->Outputs().Index(0).Set<std::pair<Matrix, Matrix>>();
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Open(CalculatorContext* cc) override {
+  mediapipe::Status Open(CalculatorContext* cc) override {
     cc->Outputs().Index(0).SetNextTimestampBound(Timestamp::PostStream());
 
     rows_ = -1;
     num_samples_ = 0;
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Process(CalculatorContext* cc) override {
+  mediapipe::Status Process(CalculatorContext* cc) override {
     const Eigen::MatrixXd sample =
         cc->Inputs().Index(0).Get<Matrix>().cast<double>();
     CHECK_EQ(1, sample.cols());
@@ -447,10 +446,10 @@ class MeanAndCovarianceCalculator : public CalculatorBase {
     outer_product_sum_ += sample * sample.transpose();
 
     ++num_samples_;
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Close(CalculatorContext* cc) override {
+  mediapipe::Status Close(CalculatorContext* cc) override {
     Eigen::VectorXd mean_vector = sum_vector_ / num_samples_;
     Eigen::MatrixXd covariance_matrix(rows_, rows_);
 
@@ -470,7 +469,7 @@ class MeanAndCovarianceCalculator : public CalculatorBase {
         new std::pair<Eigen::MatrixXf, Eigen::MatrixXf>(
             mean_vector.cast<float>(), covariance_matrix.cast<float>()),
         Timestamp::PostStream());
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
  private:
@@ -486,27 +485,27 @@ REGISTER_CALCULATOR(MeanAndCovarianceCalculator);
 // increases by 1 for each packet.
 class SidePacketToOutputPacketCalculator : public CalculatorBase {
  public:
-  static ::mediapipe::Status GetContract(CalculatorContract* cc) {
+  static mediapipe::Status GetContract(CalculatorContract* cc) {
     cc->InputSidePackets().Index(0).SetAny();
     for (int i = 1; i < cc->InputSidePackets().NumEntries(); ++i) {
       cc->InputSidePackets().Index(i).SetSameAs(
           &cc->InputSidePackets().Index(0));
     }
     cc->Outputs().Index(0).SetSameAs(&cc->InputSidePackets().Index(0));
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Open(CalculatorContext* cc) override {
+  mediapipe::Status Open(CalculatorContext* cc) override {
     int current_timestamp = 0;
     for (const Packet& packet : cc->InputSidePackets()) {
       cc->Outputs().Index(0).AddPacket(packet.At(Timestamp(current_timestamp)));
       ++current_timestamp;
     }
     cc->Outputs().Index(0).Close();
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Process(CalculatorContext* cc) override {
+  mediapipe::Status Process(CalculatorContext* cc) override {
     return tool::StatusStop();
   }
 };
@@ -517,46 +516,46 @@ REGISTER_CALCULATOR(SidePacketToOutputPacketCalculator);
 class ABSL_DEPRECATED("Use SidePacketToOutputPacketCalculator instead")
     ExternalInputToOutputPacketCalculator : public CalculatorBase {
  public:
-  static ::mediapipe::Status GetContract(CalculatorContract* cc) {
+  static mediapipe::Status GetContract(CalculatorContract* cc) {
     cc->InputSidePackets().Index(0).SetAny();
     for (int i = 1; i < cc->InputSidePackets().NumEntries(); ++i) {
       cc->InputSidePackets().Index(i).SetSameAs(
           &cc->InputSidePackets().Index(0));
     }
     cc->Outputs().Index(0).SetSameAs(&cc->InputSidePackets().Index(0));
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Open(CalculatorContext* cc) override {
+  mediapipe::Status Open(CalculatorContext* cc) override {
     int current_timestamp = 0;
     for (const Packet& packet : cc->InputSidePackets()) {
       cc->Outputs().Index(0).AddPacket(packet.At(Timestamp(current_timestamp)));
       ++current_timestamp;
     }
     cc->Outputs().Index(0).Close();
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Process(CalculatorContext* cc) override {
+  mediapipe::Status Process(CalculatorContext* cc) override {
     return tool::StatusStop();
   }
 };
 REGISTER_CALCULATOR(ExternalInputToOutputPacketCalculator);
 
 // A Calculator::Process callback function.
-typedef std::function<::mediapipe::Status(const InputStreamShardSet&,
-                                          OutputStreamShardSet*)>
+typedef std::function<mediapipe::Status(const InputStreamShardSet&,
+                                        OutputStreamShardSet*)>
     ProcessFunction;
 
 // A callback function for Calculator::Open, Process, or Close.
-typedef std::function<::mediapipe::Status(CalculatorContext* cc)>
+typedef std::function<mediapipe::Status(CalculatorContext* cc)>
     CalculatorContextFunction;
 
 // A Calculator that runs a testing callback function in Process,
 // Open, or Close, which is specified as an input side packet.
 class LambdaCalculator : public CalculatorBase {
  public:
-  static ::mediapipe::Status GetContract(CalculatorContract* cc) {
+  static mediapipe::Status GetContract(CalculatorContract* cc) {
     for (CollectionItemId id = cc->Inputs().BeginId();
          id < cc->Inputs().EndId(); ++id) {
       cc->Inputs().Get(id).SetAny();
@@ -573,31 +572,31 @@ class LambdaCalculator : public CalculatorBase {
         cc->InputSidePackets().Tag(tag).Set<CalculatorContextFunction>();
       }
     }
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Open(CalculatorContext* cc) final {
+  mediapipe::Status Open(CalculatorContext* cc) final {
     if (cc->InputSidePackets().HasTag("OPEN")) {
       return GetContextFn(cc, "OPEN")(cc);
     }
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Process(CalculatorContext* cc) final {
+  mediapipe::Status Process(CalculatorContext* cc) final {
     if (cc->InputSidePackets().HasTag("PROCESS")) {
       return GetContextFn(cc, "PROCESS")(cc);
     }
     if (cc->InputSidePackets().HasTag("") > 0) {
       return GetProcessFn(cc, "")(cc->Inputs(), &cc->Outputs());
     }
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Close(CalculatorContext* cc) final {
+  mediapipe::Status Close(CalculatorContext* cc) final {
     if (cc->InputSidePackets().HasTag("CLOSE")) {
       return GetContextFn(cc, "CLOSE")(cc);
     }
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
  private:
@@ -619,7 +618,7 @@ REGISTER_CALCULATOR(LambdaCalculator);
 // stream connections.
 class DummyTestCalculator : public CalculatorBase {
  public:
-  static ::mediapipe::Status GetContract(CalculatorContract* cc) {
+  static mediapipe::Status GetContract(CalculatorContract* cc) {
     for (CollectionItemId id = cc->Inputs().BeginId();
          id < cc->Inputs().EndId(); ++id) {
       cc->Inputs().Get(id).SetAny();
@@ -632,11 +631,11 @@ class DummyTestCalculator : public CalculatorBase {
          id < cc->InputSidePackets().EndId(); ++id) {
       cc->InputSidePackets().Get(id).SetAny();
     }
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Process(CalculatorContext* cc) final {
-    return ::mediapipe::OkStatus();
+  mediapipe::Status Process(CalculatorContext* cc) final {
+    return mediapipe::OkStatus();
   }
 };
 REGISTER_CALCULATOR(DummyTestCalculator);
@@ -645,27 +644,27 @@ REGISTER_CALCULATOR(DummyTestCalculator);
 // a set number of microseconds.
 class PassThroughWithSleepCalculator : public CalculatorBase {
  public:
-  static ::mediapipe::Status GetContract(CalculatorContract* cc) {
+  static mediapipe::Status GetContract(CalculatorContract* cc) {
     cc->Inputs().Index(0).Set<int>();
     cc->Outputs().Index(0).SetSameAs(&cc->Inputs().Index(0));
     cc->InputSidePackets().Tag("SLEEP_MICROS").Set<int>();
     cc->InputSidePackets().Tag("CLOCK").Set<std::shared_ptr<Clock>>();
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
-  ::mediapipe::Status Open(CalculatorContext* cc) final {
+  mediapipe::Status Open(CalculatorContext* cc) final {
     cc->SetOffset(TimestampDiff(0));
     sleep_micros_ = cc->InputSidePackets().Tag("SLEEP_MICROS").Get<int>();
     if (sleep_micros_ < 0) {
-      return ::mediapipe::InternalError("SLEEP_MICROS should be >= 0");
+      return mediapipe::InternalError("SLEEP_MICROS should be >= 0");
     }
     clock_ = cc->InputSidePackets().Tag("CLOCK").Get<std::shared_ptr<Clock>>();
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
-  ::mediapipe::Status Process(CalculatorContext* cc) final {
+  mediapipe::Status Process(CalculatorContext* cc) final {
     clock_->Sleep(absl::Microseconds(sleep_micros_));
     int value = cc->Inputs().Index(0).Value().Get<int>();
     cc->Outputs().Index(0).Add(new int(value), cc->InputTimestamp());
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
  private:
@@ -677,23 +676,23 @@ REGISTER_CALCULATOR(PassThroughWithSleepCalculator);
 // A Calculator that multiples two input values.
 class MultiplyIntCalculator : public CalculatorBase {
  public:
-  static ::mediapipe::Status GetContract(CalculatorContract* cc) {
+  static mediapipe::Status GetContract(CalculatorContract* cc) {
     cc->Inputs().Index(0).Set<int>();
     cc->Inputs().Index(1).SetSameAs(&cc->Inputs().Index(0));
     // cc->Outputs().Index(0).SetSameAs(&cc->Inputs().Index(0));
     RET_CHECK(cc->Outputs().HasTag("OUT"));
     cc->Outputs().Tag("OUT").SetSameAs(&cc->Inputs().Index(0));
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
-  ::mediapipe::Status Open(CalculatorContext* cc) final {
+  mediapipe::Status Open(CalculatorContext* cc) final {
     cc->SetOffset(TimestampDiff(0));
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
-  ::mediapipe::Status Process(CalculatorContext* cc) final {
+  mediapipe::Status Process(CalculatorContext* cc) final {
     int x = cc->Inputs().Index(0).Value().Get<int>();
     int y = cc->Inputs().Index(1).Value().Get<int>();
     cc->Outputs().Tag("OUT").Add(new int(x * y), cc->InputTimestamp());
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 };
 REGISTER_CALCULATOR(MultiplyIntCalculator);

@@ -13,7 +13,6 @@
 // limitations under the License.
 
 #ifndef MEDIAPIPE_CALCULATORS_TENSOR_IMAGE_TO_TENSOR_CONVERTER_GL_TEXTURE_H_
-
 #define MEDIAPIPE_CALCULATORS_TENSOR_IMAGE_TO_TENSOR_CONVERTER_GL_TEXTURE_H_
 
 #include "mediapipe/framework/port.h"
@@ -31,9 +30,10 @@ namespace mediapipe {
 // Creates image to tensor (represented as OpenGL texture) converter.
 // NOTE: mediapipe::GlCalculatorHelper::UpdateContract invocation must precede
 // converter creation.
-::mediapipe::StatusOr<std::unique_ptr<ImageToTensorConverter>>
+mediapipe::StatusOr<std::unique_ptr<ImageToTensorConverter>>
 CreateImageToGlTextureTensorConverter(CalculatorContext* cc,
-                                      bool input_starts_at_bottom);
+                                      bool input_starts_at_bottom,
+                                      BorderMode border_mode);
 
 }  // namespace mediapipe
 

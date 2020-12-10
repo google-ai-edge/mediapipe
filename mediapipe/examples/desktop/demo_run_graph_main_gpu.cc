@@ -44,7 +44,7 @@ DEFINE_string(output_video_path, "",
               "Full path of where to save result (.mp4 only). "
               "If not provided, show result in a window.");
 
-::mediapipe::Status RunMPPGraph() {
+mediapipe::Status RunMPPGraph() {
   std::string calculator_graph_config_contents;
   MP_RETURN_IF_ERROR(mediapipe::file::GetContents(
       FLAGS_calculator_graph_config_file, &calculator_graph_config_contents));
@@ -96,16 +96,23 @@ DEFINE_string(output_video_path, "",
     // Capture opencv camera or video frame.
     cv::Mat camera_frame_raw;
     capture >> camera_frame_raw;
-    if (camera_frame_raw.empty()) break;  // End of video.
+    if (camera_frame_raw.empty()) {
+      if (!load_video) {
+        LOG(INFO) << "Ignore empty frames from camera.";
+        continue;
+      }
+      LOG(INFO) << "Empty frame, end of video reached.";
+      break;
+    }
     cv::Mat camera_frame;
-    cv::cvtColor(camera_frame_raw, camera_frame, cv::COLOR_BGR2RGB);
+    cv::cvtColor(camera_frame_raw, camera_frame, cv::COLOR_BGR2RGBA);
     if (!load_video) {
       cv::flip(camera_frame, camera_frame, /*flipcode=HORIZONTAL*/ 1);
     }
 
     // Wrap Mat into an ImageFrame.
     auto input_frame = absl::make_unique<mediapipe::ImageFrame>(
-        mediapipe::ImageFormat::SRGB, camera_frame.cols, camera_frame.rows,
+        mediapipe::ImageFormat::SRGBA, camera_frame.cols, camera_frame.rows,
         mediapipe::ImageFrame::kGlDefaultAlignmentBoundary);
     cv::Mat input_frame_mat = mediapipe::formats::MatView(input_frame.get());
     camera_frame.copyTo(input_frame_mat);
@@ -125,7 +132,7 @@ DEFINE_string(output_video_path, "",
           MP_RETURN_IF_ERROR(graph.AddPacketToInputStream(
               kInputStream, mediapipe::Adopt(gpu_frame.release())
                                 .At(mediapipe::Timestamp(frame_timestamp_us))));
-          return ::mediapipe::OkStatus();
+          return mediapipe::OkStatus();
         }));
 
     // Get the graph result packet, or stop if that fails.
@@ -149,12 +156,15 @@ DEFINE_string(output_video_path, "",
                        info.gl_type, output_frame->MutablePixelData());
           glFlush();
           texture.Release();
-          return ::mediapipe::OkStatus();
+          return mediapipe::OkStatus();
         }));
 
     // Convert back to opencv for display or saving.
     cv::Mat output_frame_mat = mediapipe::formats::MatView(output_frame.get());
-    cv::cvtColor(output_frame_mat, output_frame_mat, cv::COLOR_RGB2BGR);
+    if (output_frame_mat.channels() == 4)
+      cv::cvtColor(output_frame_mat, output_frame_mat, cv::COLOR_RGBA2BGR);
+    else
+      cv::cvtColor(output_frame_mat, output_frame_mat, cv::COLOR_RGB2BGR);
     if (save_video) {
       if (!writer.isOpened()) {
         LOG(INFO) << "Prepare video writer.";
@@ -181,7 +191,7 @@ DEFINE_string(output_video_path, "",
 int main(int argc, char** argv) {
   google::InitGoogleLogging(argv[0]);
   gflags::ParseCommandLineFlags(&argc, &argv, true);
-  ::mediapipe::Status run_status = RunMPPGraph();
+  mediapipe::Status run_status = RunMPPGraph();
   if (!run_status.ok()) {
     LOG(ERROR) << "Failed to run the graph: " << run_status.message();
     return EXIT_FAILURE;

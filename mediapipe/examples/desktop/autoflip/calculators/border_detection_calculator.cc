@@ -97,12 +97,12 @@ class BorderDetectionCalculator : public CalculatorBase {
 };
 REGISTER_CALCULATOR(BorderDetectionCalculator);
 
-::mediapipe::Status BorderDetectionCalculator::Open(
+mediapipe::Status BorderDetectionCalculator::Open(
     mediapipe::CalculatorContext* cc) {
   options_ = cc->Options<BorderDetectionCalculatorOptions>();
   RET_CHECK_LT(options_.vertical_search_distance(), 0.5)
       << "Search distance must be less than half the full image.";
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
 mediapipe::Status BorderDetectionCalculator::SetAndCheckInputs(
@@ -118,14 +118,14 @@ mediapipe::Status BorderDetectionCalculator::SetAndCheckInputs(
   RET_CHECK_EQ(frame.rows, frame_height_)
       << "Input frame dimensions must remain constant throughout the video.";
   RET_CHECK_EQ(frame.channels(), 3) << "Input video type must be 3-channel";
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
 mediapipe::Status BorderDetectionCalculator::Process(
     mediapipe::CalculatorContext* cc) {
   if (!cc->Inputs().HasTag(kVideoInputTag) ||
       cc->Inputs().Tag(kVideoInputTag).Value().IsEmpty()) {
-    return ::mediapipe::InvalidArgumentErrorBuilder(MEDIAPIPE_LOC)
+    return mediapipe::InvalidArgumentErrorBuilder(MEDIAPIPE_LOC)
            << "Input tag VIDEO not set or empty at timestamp: "
            << cc->InputTimestamp().Value();
   }
@@ -173,7 +173,7 @@ mediapipe::Status BorderDetectionCalculator::Process(
       .Tag(kDetectedBorders)
       .AddPacket(Adopt(features.release()).At(cc->InputTimestamp()));
 
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
 //  Find the dominant color within an image.
@@ -291,11 +291,11 @@ void BorderDetectionCalculator::DetectBorder(
   }
 }
 
-::mediapipe::Status BorderDetectionCalculator::GetContract(
+mediapipe::Status BorderDetectionCalculator::GetContract(
     mediapipe::CalculatorContract* cc) {
   cc->Inputs().Tag(kVideoInputTag).Set<ImageFrame>();
   cc->Outputs().Tag(kDetectedBorders).Set<StaticFeatures>();
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
 }  // namespace autoflip

@@ -30,18 +30,18 @@ namespace mediapipe {
 // second, and so on.
 class SequenceShiftCalculator : public CalculatorBase {
  public:
-  static ::mediapipe::Status GetContract(CalculatorContract* cc) {
+  static mediapipe::Status GetContract(CalculatorContract* cc) {
     cc->Inputs().Index(0).SetAny();
     if (cc->InputSidePackets().HasTag(kPacketOffsetTag)) {
       cc->InputSidePackets().Tag(kPacketOffsetTag).Set<int>();
     }
     cc->Outputs().Index(0).SetSameAs(&cc->Inputs().Index(0));
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
   // Reads from options to set cache_size_ and packet_offset_.
-  ::mediapipe::Status Open(CalculatorContext* cc) override;
-  ::mediapipe::Status Process(CalculatorContext* cc) override;
+  mediapipe::Status Open(CalculatorContext* cc) override;
+  mediapipe::Status Process(CalculatorContext* cc) override;
 
  private:
   static constexpr const char* kPacketOffsetTag = "PACKET_OFFSET";
@@ -72,7 +72,7 @@ class SequenceShiftCalculator : public CalculatorBase {
 };
 REGISTER_CALCULATOR(SequenceShiftCalculator);
 
-::mediapipe::Status SequenceShiftCalculator::Open(CalculatorContext* cc) {
+mediapipe::Status SequenceShiftCalculator::Open(CalculatorContext* cc) {
   packet_offset_ =
       cc->Options<mediapipe::SequenceShiftCalculatorOptions>().packet_offset();
   if (cc->InputSidePackets().HasTag(kPacketOffsetTag)) {
@@ -83,10 +83,10 @@ REGISTER_CALCULATOR(SequenceShiftCalculator);
   if (packet_offset_ == 0) {
     cc->Outputs().Index(0).SetOffset(0);
   }
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status SequenceShiftCalculator::Process(CalculatorContext* cc) {
+mediapipe::Status SequenceShiftCalculator::Process(CalculatorContext* cc) {
   if (packet_offset_ > 0) {
     ProcessPositiveOffset(cc);
   } else if (packet_offset_ < 0) {
@@ -94,7 +94,7 @@ REGISTER_CALCULATOR(SequenceShiftCalculator);
   } else {
     cc->Outputs().Index(0).AddPacket(cc->Inputs().Index(0).Value());
   }
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
 void SequenceShiftCalculator::ProcessPositiveOffset(CalculatorContext* cc) {

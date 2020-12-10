@@ -2,14 +2,20 @@
 layout: default
 title: Instant Motion Tracking
 parent: Solutions
-nav_order: 9
+nav_order: 10
 ---
 
 # MediaPipe Instant Motion Tracking
 {: .no_toc }
 
+<details close markdown="block">
+  <summary>
+    Table of contents
+  </summary>
+  {: .text-delta }
 1. TOC
 {:toc}
+</details>
 ---
 
 ## Overview
@@ -104,8 +110,7 @@ and connected camera.
 ## Example Apps
 
 Please first see general instructions for
-[Android](../getting_started/building_examples.md#android) on how to build
-MediaPipe examples.
+[Android](../getting_started/android.md) on how to build MediaPipe examples.
 
 * Graph: [mediapipe/graphs/instant_motion_tracking/instant_motion_tracking.pbtxt](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/instant_motion_tracking/instant_motion_tracking.pbtxt)
 

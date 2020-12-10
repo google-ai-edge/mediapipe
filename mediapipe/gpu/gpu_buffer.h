@@ -24,9 +24,6 @@
 #include <CoreVideo/CoreVideo.h>
 
 #include "mediapipe/objc/CFHolder.h"
-#if !TARGET_OS_OSX
-#define MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER 1
-#endif  // TARGET_OS_OSX
 #endif  // defined(__APPLE__)
 
 #if !MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER

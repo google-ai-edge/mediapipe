@@ -72,11 +72,11 @@ void TestWithAspectRatio(const double aspect_ratio,
       cv::cvtColor(decoded_mat, output_mat, cv::COLOR_BGR2RGB);
       break;
     case 4:
-      MP_ASSERT_OK(::mediapipe::UnimplementedErrorBuilder(MEDIAPIPE_LOC)
+      MP_ASSERT_OK(mediapipe::UnimplementedErrorBuilder(MEDIAPIPE_LOC)
                    << "4-channel image isn't supported yet");
       break;
     default:
-      MP_ASSERT_OK(::mediapipe::FailedPreconditionErrorBuilder(MEDIAPIPE_LOC)
+      MP_ASSERT_OK(mediapipe::FailedPreconditionErrorBuilder(MEDIAPIPE_LOC)
                    << "Unsupported number of channels: "
                    << decoded_mat.channels());
   }
@@ -101,11 +101,11 @@ void TestWithAspectRatio(const double aspect_ratio,
       cv::cvtColor(original_mat, input_mat, cv::COLOR_RGB2BGR);
       break;
     case 4:
-      MP_ASSERT_OK(::mediapipe::UnimplementedErrorBuilder(MEDIAPIPE_LOC)
+      MP_ASSERT_OK(mediapipe::UnimplementedErrorBuilder(MEDIAPIPE_LOC)
                    << "4-channel image isn't supported yet");
       break;
     default:
-      MP_ASSERT_OK(::mediapipe::FailedPreconditionErrorBuilder(MEDIAPIPE_LOC)
+      MP_ASSERT_OK(mediapipe::FailedPreconditionErrorBuilder(MEDIAPIPE_LOC)
                    << "Unsupported number of channels: "
                    << original_mat.channels());
   }
@@ -120,7 +120,7 @@ void TestWithAspectRatio(const double aspect_ratio,
   // Check its JpegEncoder::write() in "imgcodecs/src/grfmt_jpeg.cpp" for more
   // info.
   if (!cv::imencode(".jpg", input_mat, encode_buffer, parameters)) {
-    MP_ASSERT_OK(::mediapipe::InternalErrorBuilder(MEDIAPIPE_LOC)
+    MP_ASSERT_OK(mediapipe::InternalErrorBuilder(MEDIAPIPE_LOC)
                  << "Fail to encode the image to be jpeg format.");
   }
 

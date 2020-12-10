@@ -2,14 +2,20 @@
 layout: default
 title: Object Detection
 parent: Solutions
-nav_order: 7
+nav_order: 8
 ---
 
 # MediaPipe Object Detection
 {: .no_toc }
 
+<details close markdown="block">
+  <summary>
+    Table of contents
+  </summary>
+  {: .text-delta }
 1. TOC
 {:toc}
+</details>
 ---
 
 ![object_detection_android_gpu.gif](../images/mobile/object_detection_android_gpu.gif)
@@ -24,8 +30,8 @@ to visualize its associated subgraphs, please see
 ### Mobile
 
 Please first see general instructions for
-[Android](../getting_started/building_examples.md#android) and
-[iOS](../getting_started/building_examples.md#ios) on how to build MediaPipe examples.
+[Android](../getting_started/android.md) and [iOS](../getting_started/ios.md) on
+how to build MediaPipe examples.
 
 #### GPU Pipeline
 
@@ -56,8 +62,8 @@ same configuration as the GPU pipeline, runs entirely on CPU.
 
 #### Live Camera Input
 
-Please first see general instructions for
-[desktop](../getting_started/building_examples.md#desktop) on how to build MediaPipe examples.
+Please first see general instructions for [desktop](../getting_started/cpp.md)
+on how to build MediaPipe examples.
 
 *   Graph:
     [`mediapipe/graphs/object_detection/object_detection_desktop_live.pbtxt`](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/object_detection/object_detection_desktop_live.pbtxt)

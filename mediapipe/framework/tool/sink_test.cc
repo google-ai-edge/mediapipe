@@ -31,21 +31,21 @@ namespace mediapipe {
 namespace {
 class CountAndOutputSummarySidePacketInCloseCalculator : public CalculatorBase {
  public:
-  static ::mediapipe::Status GetContract(CalculatorContract* cc) {
+  static mediapipe::Status GetContract(CalculatorContract* cc) {
     cc->Inputs().Index(0).SetAny();
     cc->OutputSidePackets().Index(0).Set<int>();
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Process(CalculatorContext* cc) final {
+  mediapipe::Status Process(CalculatorContext* cc) final {
     ++count_;
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Close(CalculatorContext* cc) final {
+  mediapipe::Status Close(CalculatorContext* cc) final {
     cc->OutputSidePackets().Index(0).Set(
         MakePacket<int>(count_).At(Timestamp::Unset()));
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
   int count_ = 0;
@@ -75,7 +75,7 @@ TEST(CallbackFromGeneratorTest, TestAddVectorSink) {
 
 TEST(CalculatorGraph, OutputSummarySidePacketInClose) {
   CalculatorGraphConfig config =
-      ::mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
         input_stream: "input_packets"
         node {
           calculator: "CountAndOutputSummarySidePacketInCloseCalculator"

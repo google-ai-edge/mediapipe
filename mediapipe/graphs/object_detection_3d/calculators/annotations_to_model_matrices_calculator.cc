@@ -24,10 +24,10 @@
 #include "mediapipe/framework/calculator_options.pb.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status.h"
-#include "mediapipe/graphs/object_detection_3d/calculators/annotation_data.pb.h"
 #include "mediapipe/graphs/object_detection_3d/calculators/annotations_to_model_matrices_calculator.pb.h"
-#include "mediapipe/graphs/object_detection_3d/calculators/box.h"
 #include "mediapipe/graphs/object_detection_3d/calculators/model_matrix.pb.h"
+#include "mediapipe/modules/objectron/calculators/annotation_data.pb.h"
+#include "mediapipe/modules/objectron/calculators/box.h"
 #include "mediapipe/util/color.pb.h"
 
 namespace mediapipe {
@@ -66,14 +66,14 @@ class AnnotationsToModelMatricesCalculator : public CalculatorBase {
   AnnotationsToModelMatricesCalculator& operator=(
       const AnnotationsToModelMatricesCalculator&) = delete;
 
-  static ::mediapipe::Status GetContract(CalculatorContract* cc);
+  static mediapipe::Status GetContract(CalculatorContract* cc);
 
-  ::mediapipe::Status Open(CalculatorContext* cc) override;
+  mediapipe::Status Open(CalculatorContext* cc) override;
 
-  ::mediapipe::Status Process(CalculatorContext* cc) override;
+  mediapipe::Status Process(CalculatorContext* cc) override;
 
  private:
-  ::mediapipe::Status GetModelMatricesForAnnotations(
+  mediapipe::Status GetModelMatricesForAnnotations(
       const FrameAnnotation& annotations,
       TimedModelMatrixProtoList* model_matrix_list);
 
@@ -83,7 +83,7 @@ class AnnotationsToModelMatricesCalculator : public CalculatorBase {
 };
 REGISTER_CALCULATOR(AnnotationsToModelMatricesCalculator);
 
-::mediapipe::Status AnnotationsToModelMatricesCalculator::GetContract(
+mediapipe::Status AnnotationsToModelMatricesCalculator::GetContract(
     CalculatorContract* cc) {
   RET_CHECK(cc->Inputs().HasTag(kAnnotationTag)) << "No input stream found.";
   if (cc->Inputs().HasTag(kAnnotationTag)) {
@@ -101,10 +101,10 @@ REGISTER_CALCULATOR(AnnotationsToModelMatricesCalculator);
   if (cc->InputSidePackets().HasTag("MODEL_TRANSFORMATION")) {
     cc->InputSidePackets().Tag("MODEL_TRANSFORMATION").Set<float[]>();
   }
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status AnnotationsToModelMatricesCalculator::Open(
+mediapipe::Status AnnotationsToModelMatricesCalculator::Open(
     CalculatorContext* cc) {
   RET_CHECK(cc->Inputs().HasTag(kAnnotationTag));
 
@@ -131,10 +131,10 @@ REGISTER_CALCULATOR(AnnotationsToModelMatricesCalculator);
     model_transformation_.setIdentity();
   }
 
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status AnnotationsToModelMatricesCalculator::Process(
+mediapipe::Status AnnotationsToModelMatricesCalculator::Process(
     CalculatorContext* cc) {
   auto model_matrices = std::make_unique<TimedModelMatrixProtoList>();
 
@@ -142,22 +142,21 @@ REGISTER_CALCULATOR(AnnotationsToModelMatricesCalculator);
       cc->Inputs().Tag(kAnnotationTag).Get<FrameAnnotation>();
 
   if (!GetModelMatricesForAnnotations(annotations, model_matrices.get()).ok()) {
-    return ::mediapipe::InvalidArgumentError(
-        "Error in GetModelMatricesForBoxes");
+    return mediapipe::InvalidArgumentError("Error in GetModelMatricesForBoxes");
   }
   cc->Outputs()
       .Tag(kModelMatricesTag)
       .Add(model_matrices.release(), cc->InputTimestamp());
 
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status
+mediapipe::Status
 AnnotationsToModelMatricesCalculator::GetModelMatricesForAnnotations(
     const FrameAnnotation& annotations,
     TimedModelMatrixProtoList* model_matrix_list) {
   if (model_matrix_list == nullptr) {
-    return ::mediapipe::InvalidArgumentError("model_matrix_list is nullptr");
+    return mediapipe::InvalidArgumentError("model_matrix_list is nullptr");
   }
   model_matrix_list->clear_model_matrix();
 
@@ -217,7 +216,7 @@ AnnotationsToModelMatricesCalculator::GetModelMatricesForAnnotations(
       }
     }
   }
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
 }  // namespace mediapipe

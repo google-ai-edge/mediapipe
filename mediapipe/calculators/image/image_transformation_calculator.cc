@@ -163,16 +163,16 @@ class ImageTransformationCalculator : public CalculatorBase {
   ImageTransformationCalculator() = default;
   ~ImageTransformationCalculator() override = default;
 
-  static ::mediapipe::Status GetContract(CalculatorContract* cc);
+  static mediapipe::Status GetContract(CalculatorContract* cc);
 
-  ::mediapipe::Status Open(CalculatorContext* cc) override;
-  ::mediapipe::Status Process(CalculatorContext* cc) override;
-  ::mediapipe::Status Close(CalculatorContext* cc) override;
+  mediapipe::Status Open(CalculatorContext* cc) override;
+  mediapipe::Status Process(CalculatorContext* cc) override;
+  mediapipe::Status Close(CalculatorContext* cc) override;
 
  private:
-  ::mediapipe::Status RenderCpu(CalculatorContext* cc);
-  ::mediapipe::Status RenderGpu(CalculatorContext* cc);
-  ::mediapipe::Status GlSetup();
+  mediapipe::Status RenderCpu(CalculatorContext* cc);
+  mediapipe::Status RenderGpu(CalculatorContext* cc);
+  mediapipe::Status GlSetup();
 
   void ComputeOutputDimensions(int input_width, int input_height,
                                int* output_width, int* output_height);
@@ -199,7 +199,7 @@ class ImageTransformationCalculator : public CalculatorBase {
 REGISTER_CALCULATOR(ImageTransformationCalculator);
 
 // static
-::mediapipe::Status ImageTransformationCalculator::GetContract(
+mediapipe::Status ImageTransformationCalculator::GetContract(
     CalculatorContract* cc) {
   // Only one input can be set, and the output type must match.
   RET_CHECK(cc->Inputs().HasTag(kImageFrameTag) ^
@@ -254,10 +254,10 @@ REGISTER_CALCULATOR(ImageTransformationCalculator);
 #endif  //  !MEDIAPIPE_DISABLE_GPU
   }
 
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status ImageTransformationCalculator::Open(CalculatorContext* cc) {
+mediapipe::Status ImageTransformationCalculator::Open(CalculatorContext* cc) {
   // Inform the framework that we always output at the same timestamp
   // as we receive a packet at.
   cc->SetOffset(TimestampDiff(0));
@@ -311,10 +311,10 @@ REGISTER_CALCULATOR(ImageTransformationCalculator);
 #endif  //  !MEDIAPIPE_DISABLE_GPU
   }
 
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status ImageTransformationCalculator::Process(
+mediapipe::Status ImageTransformationCalculator::Process(
     CalculatorContext* cc) {
   // Override values if specified so.
   if (cc->Inputs().HasTag("ROTATION_DEGREES") &&
@@ -334,22 +334,21 @@ REGISTER_CALCULATOR(ImageTransformationCalculator);
   if (use_gpu_) {
 #if !defined(MEDIAPIPE_DISABLE_GPU)
     if (cc->Inputs().Tag(kGpuBufferTag).IsEmpty()) {
-      return ::mediapipe::OkStatus();
+      return mediapipe::OkStatus();
     }
     return gpu_helper_.RunInGlContext(
-        [this, cc]() -> ::mediapipe::Status { return RenderGpu(cc); });
+        [this, cc]() -> mediapipe::Status { return RenderGpu(cc); });
 #endif  //  !MEDIAPIPE_DISABLE_GPU
   } else {
     if (cc->Inputs().Tag(kImageFrameTag).IsEmpty()) {
-      return ::mediapipe::OkStatus();
+      return mediapipe::OkStatus();
     }
     return RenderCpu(cc);
   }
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status ImageTransformationCalculator::Close(
-    CalculatorContext* cc) {
+mediapipe::Status ImageTransformationCalculator::Close(CalculatorContext* cc) {
   if (use_gpu_) {
 #if !defined(MEDIAPIPE_DISABLE_GPU)
     QuadRenderer* rgb_renderer = rgb_renderer_.release();
@@ -372,10 +371,10 @@ REGISTER_CALCULATOR(ImageTransformationCalculator);
 #endif  //  !MEDIAPIPE_DISABLE_GPU
   }
 
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status ImageTransformationCalculator::RenderCpu(
+mediapipe::Status ImageTransformationCalculator::RenderCpu(
     CalculatorContext* cc) {
   cv::Mat input_mat;
   mediapipe::ImageFormat::Format format;
@@ -480,10 +479,10 @@ REGISTER_CALCULATOR(ImageTransformationCalculator);
       .Tag(kImageFrameTag)
       .Add(output_frame.release(), cc->InputTimestamp());
 
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status ImageTransformationCalculator::RenderGpu(
+mediapipe::Status ImageTransformationCalculator::RenderGpu(
     CalculatorContext* cc) {
 #if !defined(MEDIAPIPE_DISABLE_GPU)
   const auto& input = cc->Inputs().Tag(kGpuBufferTag).Get<GpuBuffer>();
@@ -570,7 +569,7 @@ REGISTER_CALCULATOR(ImageTransformationCalculator);
 
 #endif  //  !MEDIAPIPE_DISABLE_GPU
 
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
 void ImageTransformationCalculator::ComputeOutputDimensions(

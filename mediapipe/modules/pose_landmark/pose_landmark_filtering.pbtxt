@@ -1,0 +1,94 @@
+# MediaPipe graph to filter landmarks temporally (across packets with
+# incremental timestamps) to reduce jitter.
+#
+# EXAMPLE:
+#   node {
+#     calculator: "PoseLandmarkFiltering"
+#     input_side_packet: "ENABLE:enable"
+#     input_stream: "IMAGE_SIZE:image_size"
+#     input_stream: "NORM_LANDMARKS:landmarks"
+#     input_stream: "AUX_NORM_LANDMARKS:aux_landmarks"
+#     output_stream: "FILTERED_NORM_LANDMARKS:filtered_landmarks"
+#     output_stream: "FILTERED_AUX_NORM_LANDMARKS:filtered_aux_landmarks"
+#   }
+
+type: "PoseLandmarkFiltering"
+
+# Whether to enable filtering. If unspecified, functions as not enabled. (bool)
+input_side_packet: "ENABLE:enable"
+
+# Size of the image (width & height) where the landmarks are estimated from.
+# (std::pair<int, int>)
+input_stream: "IMAGE_SIZE:image_size"
+# Normalized landmarks. (NormalizedRect)
+input_stream: "NORM_LANDMARKS:landmarks"
+# Auxiliary set of normalized landmarks. (NormalizedRect)
+input_stream: "AUX_NORM_LANDMARKS:aux_landmarks"
+# Filtered normalized landmarks. (NormalizedRect)
+output_stream: "FILTERED_NORM_LANDMARKS:filtered_landmarks"
+# Filtered auxiliary set of normalized landmarks. (NormalizedRect)
+output_stream: "FILTERED_AUX_NORM_LANDMARKS:filtered_aux_landmarks"
+
+# Smoothes pose landmarks to reduce jitter.
+node {
+  calculator: "SwitchContainer"
+  input_side_packet: "ENABLE:enable"
+  input_stream: "NORM_LANDMARKS:landmarks"
+  input_stream: "IMAGE_SIZE:image_size"
+  output_stream: "NORM_FILTERED_LANDMARKS:filtered_landmarks"
+  options: {
+    [mediapipe.SwitchContainerOptions.ext] {
+      contained_node: {
+        calculator: "LandmarksSmoothingCalculator"
+        options: {
+          [mediapipe.LandmarksSmoothingCalculatorOptions.ext] {
+            no_filter: {}
+          }
+        }
+      }
+      contained_node: {
+        calculator: "LandmarksSmoothingCalculator"
+        options: {
+          [mediapipe.LandmarksSmoothingCalculatorOptions.ext] {
+            velocity_filter: {
+              window_size: 5
+              velocity_scale: 10.0
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+# Smoothes auxiliary landmarks to reduce jitter.
+node {
+  calculator: "SwitchContainer"
+  input_side_packet: "ENABLE:enable"
+  input_stream: "NORM_LANDMARKS:aux_landmarks"
+  input_stream: "IMAGE_SIZE:image_size"
+  output_stream: "NORM_FILTERED_LANDMARKS:filtered_aux_landmarks"
+  options: {
+    [mediapipe.SwitchContainerOptions.ext] {
+      contained_node: {
+        calculator: "LandmarksSmoothingCalculator"
+        options: {
+          [mediapipe.LandmarksSmoothingCalculatorOptions.ext] {
+            no_filter: {}
+          }
+        }
+      }
+      contained_node: {
+        calculator: "LandmarksSmoothingCalculator"
+        options: {
+          [mediapipe.LandmarksSmoothingCalculatorOptions.ext] {
+            velocity_filter: {
+              window_size: 5
+              velocity_scale: 10.0
+            }
+          }
+        }
+      }
+    }
+  }
+}

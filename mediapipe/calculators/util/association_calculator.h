@@ -56,7 +56,7 @@ inline float OverlapSimilarity(const Rectangle_f& rect1,
 template <typename T>
 class AssociationCalculator : public CalculatorBase {
  public:
-  static ::mediapipe::Status GetContract(CalculatorContract* cc) {
+  static mediapipe::Status GetContract(CalculatorContract* cc) {
     // Atmost one input stream can be tagged with "PREV".
     RET_CHECK_LE(cc->Inputs().NumEntries("PREV"), 1);
 
@@ -71,10 +71,10 @@ class AssociationCalculator : public CalculatorBase {
 
     cc->Outputs().Index(0).Set<std::vector<T>>();
 
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Open(CalculatorContext* cc) override {
+  mediapipe::Status Open(CalculatorContext* cc) override {
     cc->SetOffset(TimestampDiff(0));
 
     has_prev_input_stream_ = cc->Inputs().HasTag("PREV");
@@ -84,10 +84,10 @@ class AssociationCalculator : public CalculatorBase {
     options_ = cc->Options<::mediapipe::AssociationCalculatorOptions>();
     CHECK_GE(options_.min_similarity_threshold(), 0);
 
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Process(CalculatorContext* cc) override {
+  mediapipe::Status Process(CalculatorContext* cc) override {
     auto get_non_overlapping_elements = GetNonOverlappingElements(cc);
     if (!get_non_overlapping_elements.ok()) {
       return get_non_overlapping_elements.status();
@@ -114,7 +114,7 @@ class AssociationCalculator : public CalculatorBase {
     }
     cc->Outputs().Index(0).Add(output.release(), cc->InputTimestamp());
 
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
  protected:
@@ -123,8 +123,8 @@ class AssociationCalculator : public CalculatorBase {
   bool has_prev_input_stream_;
   CollectionItemId prev_input_stream_id_;
 
-  virtual ::mediapipe::StatusOr<Rectangle_f> GetRectangle(const T& input) {
-    return ::mediapipe::OkStatus();
+  virtual mediapipe::StatusOr<Rectangle_f> GetRectangle(const T& input) {
+    return mediapipe::OkStatus();
   }
 
   virtual std::pair<bool, int> GetId(const T& input) { return {false, -1}; }
@@ -176,7 +176,7 @@ class AssociationCalculator : public CalculatorBase {
     return result;
   }
 
-  ::mediapipe::Status AddElementToList(T element, std::list<T>* current) {
+  mediapipe::Status AddElementToList(T element, std::list<T>* current) {
     // Compare this element with elements of the input collection. If this
     // element has high overlap with elements of the collection, remove
     // those elements from the collection and add this element.
@@ -207,13 +207,13 @@ class AssociationCalculator : public CalculatorBase {
     }
     current->push_back(element);
 
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
   // Compare elements of the current list with elements in from the collection
   // of elements from the previous input stream, and propagate IDs from the
   // previous input stream as appropriate.
-  ::mediapipe::Status PropagateIdsFromPreviousToCurrent(
+  mediapipe::Status PropagateIdsFromPreviousToCurrent(
       const std::vector<T>& prev_input_vec, std::list<T>* current) {
     for (auto vit = current->begin(); vit != current->end(); ++vit) {
       auto get_cur_rectangle = GetRectangle(*vit);
@@ -250,7 +250,7 @@ class AssociationCalculator : public CalculatorBase {
         *vit = element;
       }
     }
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 };
 

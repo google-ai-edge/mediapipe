@@ -118,7 +118,7 @@ TEST(KinematicPathSolverTest, PassEnoughMotionNotFiltered) {
   MP_ASSERT_OK(solver.AddObservation(500, kMicroSecInSec * 3));
   MP_ASSERT_OK(solver.GetState(&state));
   // Expect cam to not move.
-  EXPECT_EQ(state, 519);
+  EXPECT_EQ(state, 506);
 }
 
 TEST(KinematicPathSolverTest, PassEnoughMotionLargeImg) {
@@ -187,7 +187,7 @@ TEST(KinematicPathSolverTest, PassReframeWindow) {
   MP_ASSERT_OK(solver.AddObservation(520, kMicroSecInSec * 1));
   MP_ASSERT_OK(solver.GetState(&state));
   // Expect cam to move 1.2-.75 deg, * 16.6 = 7.47px + 500 =
-  EXPECT_EQ(state, 507);
+  EXPECT_EQ(state, 508);
 }
 
 TEST(KinematicPathSolverTest, PassUpdateRate30FPS) {
@@ -227,9 +227,13 @@ TEST(KinematicPathSolverTest, PassUpdateRate) {
   options.set_max_update_rate(1.0);
   options.set_max_velocity(18);
   KinematicPathSolver solver(options, 0, 1000, 1000.0 / kWidthFieldOfView);
-  int state;
+  int state, target_position;
   MP_ASSERT_OK(solver.AddObservation(500, kMicroSecInSec * 0));
+  MP_ASSERT_OK(solver.GetTargetPosition(&target_position));
+  EXPECT_EQ(target_position, 500);
   MP_ASSERT_OK(solver.AddObservation(520, kMicroSecInSec * 1));
+  MP_ASSERT_OK(solver.GetTargetPosition(&target_position));
+  EXPECT_EQ(target_position, 520);
   MP_ASSERT_OK(solver.GetState(&state));
   EXPECT_EQ(state, 505);
 }

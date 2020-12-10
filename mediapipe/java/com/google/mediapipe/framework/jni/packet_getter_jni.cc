@@ -255,22 +255,22 @@ JNIEXPORT jdoubleArray JNICALL PACKET_GETTER_METHOD(nativeGetFloat64Vector)(
 JNIEXPORT jint JNICALL PACKET_GETTER_METHOD(nativeGetImageWidth)(JNIEnv* env,
                                                                  jobject thiz,
                                                                  jlong packet) {
-  const ::mediapipe::ImageFrame& image =
-      GetFromNativeHandle<::mediapipe::ImageFrame>(packet);
+  const mediapipe::ImageFrame& image =
+      GetFromNativeHandle<mediapipe::ImageFrame>(packet);
   return image.Width();
 }
 
 JNIEXPORT jint JNICALL PACKET_GETTER_METHOD(nativeGetImageHeight)(
     JNIEnv* env, jobject thiz, jlong packet) {
-  const ::mediapipe::ImageFrame& image =
-      GetFromNativeHandle<::mediapipe::ImageFrame>(packet);
+  const mediapipe::ImageFrame& image =
+      GetFromNativeHandle<mediapipe::ImageFrame>(packet);
   return image.Height();
 }
 
 JNIEXPORT jboolean JNICALL PACKET_GETTER_METHOD(nativeGetImageData)(
     JNIEnv* env, jobject thiz, jlong packet, jobject byte_buffer) {
-  const ::mediapipe::ImageFrame& image =
-      GetFromNativeHandle<::mediapipe::ImageFrame>(packet);
+  const mediapipe::ImageFrame& image =
+      GetFromNativeHandle<mediapipe::ImageFrame>(packet);
 
   int64_t buffer_size = env->GetDirectBufferCapacity(byte_buffer);
 
@@ -313,8 +313,8 @@ JNIEXPORT jboolean JNICALL PACKET_GETTER_METHOD(nativeGetImageData)(
 
 JNIEXPORT jboolean JNICALL PACKET_GETTER_METHOD(nativeGetRgbaFromRgb)(
     JNIEnv* env, jobject thiz, jlong packet, jobject byte_buffer) {
-  const ::mediapipe::ImageFrame& image =
-      GetFromNativeHandle<::mediapipe::ImageFrame>(packet);
+  const mediapipe::ImageFrame& image =
+      GetFromNativeHandle<mediapipe::ImageFrame>(packet);
   uint8_t* rgba_data =
       static_cast<uint8_t*>(env->GetDirectBufferAddress(byte_buffer));
   int64_t buffer_size = env->GetDirectBufferCapacity(byte_buffer);
@@ -357,8 +357,8 @@ JNIEXPORT jdouble JNICALL PACKET_GETTER_METHOD(
 
 JNIEXPORT jbyteArray JNICALL PACKET_GETTER_METHOD(nativeGetAudioData)(
     JNIEnv* env, jobject thiz, jlong packet) {
-  const ::mediapipe::Matrix& audio_mat =
-      GetFromNativeHandle<::mediapipe::Matrix>(packet);
+  const mediapipe::Matrix& audio_mat =
+      GetFromNativeHandle<mediapipe::Matrix>(packet);
   int num_channels = audio_mat.rows();
   int num_samples = audio_mat.cols();
   int data_size = num_channels * num_samples * 2;
@@ -381,8 +381,8 @@ JNIEXPORT jbyteArray JNICALL PACKET_GETTER_METHOD(nativeGetAudioData)(
 
 JNIEXPORT jfloatArray JNICALL PACKET_GETTER_METHOD(nativeGetMatrixData)(
     JNIEnv* env, jobject thiz, jlong packet) {
-  const ::mediapipe::Matrix& audio_mat =
-      GetFromNativeHandle<::mediapipe::Matrix>(packet);
+  const mediapipe::Matrix& audio_mat =
+      GetFromNativeHandle<mediapipe::Matrix>(packet);
   int rows = audio_mat.rows();
   int cols = audio_mat.cols();
   jfloatArray float_data = env->NewFloatArray(rows * cols);
@@ -394,13 +394,13 @@ JNIEXPORT jfloatArray JNICALL PACKET_GETTER_METHOD(nativeGetMatrixData)(
 JNIEXPORT jint JNICALL PACKET_GETTER_METHOD(nativeGetMatrixRows)(JNIEnv* env,
                                                                  jobject thiz,
                                                                  jlong packet) {
-  return GetFromNativeHandle<::mediapipe::Matrix>(packet).rows();
+  return GetFromNativeHandle<mediapipe::Matrix>(packet).rows();
 }
 
 JNIEXPORT jint JNICALL PACKET_GETTER_METHOD(nativeGetMatrixCols)(JNIEnv* env,
                                                                  jobject thiz,
                                                                  jlong packet) {
-  return GetFromNativeHandle<::mediapipe::Matrix>(packet).cols();
+  return GetFromNativeHandle<mediapipe::Matrix>(packet).cols();
 }
 
 #ifndef MEDIAPIPE_DISABLE_GPU

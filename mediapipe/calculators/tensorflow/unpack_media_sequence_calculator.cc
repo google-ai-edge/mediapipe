@@ -42,7 +42,7 @@ const char kImagesFrameRateTag[] = "IMAGE_FRAME_RATE";
 const char kAudioDecoderOptions[] = "AUDIO_DECODER_OPTIONS";
 
 namespace tf = ::tensorflow;
-namespace mpms = ::mediapipe::mediasequence;
+namespace mpms = mediapipe::mediasequence;
 
 // Source calculator to unpack side_packets and streams from tf.SequenceExamples
 //

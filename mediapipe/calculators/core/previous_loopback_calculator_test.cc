@@ -136,27 +136,27 @@ TEST(PreviousLoopbackCalculator, CorrectTimestamps) {
 // A Calculator that outputs a summary packet in CalculatorBase::Close().
 class PacketOnCloseCalculator : public CalculatorBase {
  public:
-  static ::mediapipe::Status GetContract(CalculatorContract* cc) {
+  static mediapipe::Status GetContract(CalculatorContract* cc) {
     cc->Inputs().Index(0).Set<int>();
     cc->Outputs().Index(0).Set<int>();
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Open(CalculatorContext* cc) final {
+  mediapipe::Status Open(CalculatorContext* cc) final {
     cc->SetOffset(TimestampDiff(0));
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Process(CalculatorContext* cc) final {
+  mediapipe::Status Process(CalculatorContext* cc) final {
     sum_ += cc->Inputs().Index(0).Value().Get<int>();
     cc->Outputs().Index(0).AddPacket(cc->Inputs().Index(0).Value());
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Close(CalculatorContext* cc) final {
+  mediapipe::Status Close(CalculatorContext* cc) final {
     cc->Outputs().Index(0).AddPacket(
         MakePacket<int>(sum_).At(Timestamp::Max()));
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
  private:
@@ -700,19 +700,19 @@ TEST_F(PreviousLoopbackCalculatorProcessingTimestampsTest,
 // Similar to GateCalculator, but it doesn't propagate timestamp bound updates.
 class DroppingGateCalculator : public CalculatorBase {
  public:
-  static ::mediapipe::Status GetContract(CalculatorContract* cc) {
+  static mediapipe::Status GetContract(CalculatorContract* cc) {
     cc->Inputs().Index(0).SetAny();
     cc->Inputs().Tag("DISALLOW").Set<bool>();
     cc->Outputs().Index(0).SetSameAs(&cc->Inputs().Index(0));
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Process(CalculatorContext* cc) final {
+  mediapipe::Status Process(CalculatorContext* cc) final {
     if (!cc->Inputs().Index(0).IsEmpty() &&
         !cc->Inputs().Tag("DISALLOW").Get<bool>()) {
       cc->Outputs().Index(0).AddPacket(cc->Inputs().Index(0).Value());
     }
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 };
 REGISTER_CALCULATOR(DroppingGateCalculator);

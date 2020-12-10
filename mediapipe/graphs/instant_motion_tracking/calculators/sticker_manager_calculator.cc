@@ -53,7 +53,7 @@ constexpr char kRenderDescriptorsTag[] = "RENDER_DATA";
 
 class StickerManagerCalculator : public CalculatorBase {
  public:
-  static ::mediapipe::Status GetContract(CalculatorContract* cc) {
+  static mediapipe::Status GetContract(CalculatorContract* cc) {
     RET_CHECK(cc->Inputs().HasTag(kProtoDataString));
     RET_CHECK(cc->Outputs().HasTag(kAnchorsTag) &&
               cc->Outputs().HasTag(kUserRotationsTag) &&
@@ -66,15 +66,15 @@ class StickerManagerCalculator : public CalculatorBase {
     cc->Outputs().Tag(kUserScalingsTag).Set<std::vector<UserScaling>>();
     cc->Outputs().Tag(kRenderDescriptorsTag).Set<std::vector<int>>();
 
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Open(CalculatorContext* cc) override {
+  mediapipe::Status Open(CalculatorContext* cc) override {
     cc->SetOffset(TimestampDiff(0));
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Process(CalculatorContext* cc) override {
+  mediapipe::Status Process(CalculatorContext* cc) override {
     std::string sticker_proto_string =
         cc->Inputs().Tag(kProtoDataString).Get<std::string>();
 
@@ -138,11 +138,11 @@ class StickerManagerCalculator : public CalculatorBase {
                          .At(cc->InputTimestamp()));
     }
 
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Close(CalculatorContext* cc) override {
-    return ::mediapipe::OkStatus();
+  mediapipe::Status Close(CalculatorContext* cc) override {
+    return mediapipe::OkStatus();
   }
 };
 

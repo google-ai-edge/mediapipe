@@ -59,6 +59,7 @@ objc_library(
     hdrs = [
         "FaceMeshGpuViewController.h",
     ],
+    copts = ["-std=c++17"],
     data = [
         "//mediapipe/graphs/face_mesh:face_mesh_mobile_gpu.binarypb",
         "//mediapipe/modules/face_detection:face_detection_front.tflite",

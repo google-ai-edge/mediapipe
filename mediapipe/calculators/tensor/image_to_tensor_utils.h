@@ -37,10 +37,10 @@ RotatedRect GetRoi(int input_width, int input_height,
 
 // Pads ROI, so extraction happens correctly if aspect ratio is to be kept.
 // Returns letterbox padding applied.
-::mediapipe::StatusOr<std::array<float, 4>> PadRoi(int input_tensor_width,
-                                                   int input_tensor_height,
-                                                   bool keep_aspect_ratio,
-                                                   RotatedRect* roi);
+mediapipe::StatusOr<std::array<float, 4>> PadRoi(int input_tensor_width,
+                                                 int input_tensor_height,
+                                                 bool keep_aspect_ratio,
+                                                 RotatedRect* roi);
 
 // Represents a transformation of value which involves scaling and offsetting.
 // To apply transformation:
@@ -55,7 +55,7 @@ struct ValueTransformation {
 // [from_range_min, from_range_max] into [to_range_min, to_range_max] range.
 // from_range_min must be less than from_range_max
 // to_range_min must be less than to_range_max
-::mediapipe::StatusOr<ValueTransformation> GetValueRangeTransformation(
+mediapipe::StatusOr<ValueTransformation> GetValueRangeTransformation(
     float from_range_min, float from_range_max, float to_range_min,
     float to_range_max);
 

@@ -166,8 +166,8 @@ TEST(VerticalFrameRemovalCalculatorTest, OutputError) {
   runner->MutableInputs()
       ->Tag("INPUT_FRAMES")
       .packets.push_back(Adopt(input_frame.release()).At(Timestamp(1000)));
-  ::mediapipe::Status status = runner->Run();
-  EXPECT_EQ(status.code(), ::mediapipe::StatusCode::kUnknown);
+  mediapipe::Status status = runner->Run();
+  EXPECT_EQ(status.code(), mediapipe::StatusCode::kUnknown);
   EXPECT_THAT(status.ToString(),
               ::testing::HasSubstr("Failing due to aspect ratio"));
 }

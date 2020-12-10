@@ -48,7 +48,7 @@ class Executor {
   // A registered Executor subclass must implement the static factory method
   // Create.  The Executor subclass cannot be registered without it.
   //
-  // static ::mediapipe::StatusOr<Executor*> Create(
+  // static mediapipe::StatusOr<Executor*> Create(
   //     const MediaPipeOptions& extendable_options);
   //
   // Create validates extendable_options, then calls the constructor, and
@@ -65,14 +65,13 @@ class Executor {
   virtual void Schedule(std::function<void()> task) = 0;
 };
 
-using ExecutorRegistry = GlobalFactoryRegistry<::mediapipe::StatusOr<Executor*>,
+using ExecutorRegistry = GlobalFactoryRegistry<mediapipe::StatusOr<Executor*>,
                                                const MediaPipeOptions&>;
 
 // Macro for registering the executor.
-#define REGISTER_EXECUTOR(name)                                      \
-  REGISTER_FACTORY_FUNCTION_QUALIFIED(::mediapipe::ExecutorRegistry, \
-                                      executor_registration, name,   \
-                                      name::Create)
+#define REGISTER_EXECUTOR(name)        \
+  REGISTER_FACTORY_FUNCTION_QUALIFIED( \
+      mediapipe::ExecutorRegistry, executor_registration, name, name::Create)
 
 }  // namespace mediapipe
 

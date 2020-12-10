@@ -21,7 +21,7 @@
 //   void func() {}
 //     FILE* fp = fopen("data.txt", "r");
 //     if (fp == nullptr) return;
-//     auto fp_cleaner = ::mediapipe::MakeCleanup([fp] { fclose(fp); });
+//     auto fp_cleaner = mediapipe::MakeCleanup([fp] { fclose(fp); });
 //     // No matter what, fclose(fp) will happen.
 //     DataObject d;
 //     while (ReadDataObject(fp, &d)) {

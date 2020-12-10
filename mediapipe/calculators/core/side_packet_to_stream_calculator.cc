@@ -89,10 +89,10 @@ class SidePacketToStreamCalculator : public CalculatorBase {
   SidePacketToStreamCalculator() = default;
   ~SidePacketToStreamCalculator() override = default;
 
-  static ::mediapipe::Status GetContract(CalculatorContract* cc);
-  ::mediapipe::Status Open(CalculatorContext* cc) override;
-  ::mediapipe::Status Process(CalculatorContext* cc) override;
-  ::mediapipe::Status Close(CalculatorContext* cc) override;
+  static mediapipe::Status GetContract(CalculatorContract* cc);
+  mediapipe::Status Open(CalculatorContext* cc) override;
+  mediapipe::Status Process(CalculatorContext* cc) override;
+  mediapipe::Status Close(CalculatorContext* cc) override;
 
  private:
   bool is_tick_processing_ = false;
@@ -100,7 +100,7 @@ class SidePacketToStreamCalculator : public CalculatorBase {
 };
 REGISTER_CALCULATOR(SidePacketToStreamCalculator);
 
-::mediapipe::Status SidePacketToStreamCalculator::GetContract(
+mediapipe::Status SidePacketToStreamCalculator::GetContract(
     CalculatorContract* cc) {
   const auto& tags = cc->Outputs().GetTags();
   RET_CHECK(tags.size() == 1 && kTimestampMap->count(*tags.begin()) == 1)
@@ -138,10 +138,10 @@ REGISTER_CALCULATOR(SidePacketToStreamCalculator);
     cc->Inputs().Tag(kTagTick).SetAny();
   }
 
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status SidePacketToStreamCalculator::Open(CalculatorContext* cc) {
+mediapipe::Status SidePacketToStreamCalculator::Open(CalculatorContext* cc) {
   output_tag_ = GetOutputTag(*cc);
   if (cc->Inputs().HasTag(kTagTick)) {
     is_tick_processing_ = true;
@@ -149,11 +149,10 @@ REGISTER_CALCULATOR(SidePacketToStreamCalculator);
     // timestamp bound update.
     cc->SetOffset(TimestampDiff(0));
   }
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status SidePacketToStreamCalculator::Process(
-    CalculatorContext* cc) {
+mediapipe::Status SidePacketToStreamCalculator::Process(CalculatorContext* cc) {
   if (is_tick_processing_) {
     // TICK input is guaranteed to be non-empty, as it's the only input stream
     // for this calculator.
@@ -164,13 +163,13 @@ REGISTER_CALCULATOR(SidePacketToStreamCalculator);
           .AddPacket(cc->InputSidePackets().Index(i).At(timestamp));
     }
 
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  return ::mediapipe::tool::StatusStop();
+  return mediapipe::tool::StatusStop();
 }
 
-::mediapipe::Status SidePacketToStreamCalculator::Close(CalculatorContext* cc) {
+mediapipe::Status SidePacketToStreamCalculator::Close(CalculatorContext* cc) {
   if (!cc->Outputs().HasTag(kTagAtTick) &&
       !cc->Outputs().HasTag(kTagAtTimestamp)) {
     const auto& timestamp = kTimestampMap->at(output_tag_);
@@ -188,7 +187,7 @@ REGISTER_CALCULATOR(SidePacketToStreamCalculator);
           .AddPacket(cc->InputSidePackets().Index(i).At(Timestamp(timestamp)));
     }
   }
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
 }  // namespace mediapipe

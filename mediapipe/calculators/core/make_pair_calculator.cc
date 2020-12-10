@@ -35,24 +35,24 @@ class MakePairCalculator : public CalculatorBase {
   MakePairCalculator() {}
   ~MakePairCalculator() override {}
 
-  static ::mediapipe::Status GetContract(CalculatorContract* cc) {
+  static mediapipe::Status GetContract(CalculatorContract* cc) {
     cc->Inputs().Index(0).SetAny();
     cc->Inputs().Index(1).SetAny();
     cc->Outputs().Index(0).Set<std::pair<Packet, Packet>>();
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Open(CalculatorContext* cc) override {
+  mediapipe::Status Open(CalculatorContext* cc) override {
     cc->SetOffset(TimestampDiff(0));
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Process(CalculatorContext* cc) override {
+  mediapipe::Status Process(CalculatorContext* cc) override {
     cc->Outputs().Index(0).Add(
         new std::pair<Packet, Packet>(cc->Inputs().Index(0).Value(),
                                       cc->Inputs().Index(1).Value()),
         cc->InputTimestamp());
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 };
 

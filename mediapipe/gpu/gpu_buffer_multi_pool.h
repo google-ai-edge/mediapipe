@@ -147,7 +147,8 @@ class GpuBufferMultiPool {
 
 #ifdef __APPLE__
   // Texture caches used with this pool.
-  std::vector<CFHolder<CVTextureCacheType>> texture_caches_ GUARDED_BY(mutex_);
+  std::vector<CFHolder<CVTextureCacheType>> texture_caches_
+      ABSL_GUARDED_BY(mutex_);
 #endif  // defined(__APPLE__)
 };
 

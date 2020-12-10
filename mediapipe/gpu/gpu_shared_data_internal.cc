@@ -104,7 +104,7 @@ GpuResources::~GpuResources() {
 #endif
 }
 
-::mediapipe::Status GpuResources::PrepareGpuNode(CalculatorNode* node) {
+mediapipe::Status GpuResources::PrepareGpuNode(CalculatorNode* node) {
   CHECK(node->UsesGpu());
   std::string node_id = node->GetCalculatorState().NodeName();
   std::string node_type = node->GetCalculatorState().CalculatorType();

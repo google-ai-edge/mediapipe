@@ -172,10 +172,10 @@ bool Graph::RemovePacket(int64_t packet_handle) {
 
 void Graph::EnsureMinimumExecutorStackSizeForJava() {}
 
-::mediapipe::Status Graph::AddCallbackHandler(std::string output_stream_name,
-                                              jobject java_callback) {
+mediapipe::Status Graph::AddCallbackHandler(std::string output_stream_name,
+                                            jobject java_callback) {
   if (!graph_config()) {
-    return ::mediapipe::InternalError("Graph is not loaded!");
+    return mediapipe::InternalError("Graph is not loaded!");
   }
   std::unique_ptr<internal::CallbackHandler> handler(
       new internal::CallbackHandler(this, java_callback));
@@ -188,7 +188,7 @@ void Graph::EnsureMinimumExecutorStackSizeForJava() {}
       side_packet_name, MakePacket<std::function<void(const Packet&)>>(
                             handler->CreateCallback()));
   callback_handlers_.emplace_back(std::move(handler));
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
 int64_t Graph::AddSurfaceOutput(const std::string& output_stream_name) {
@@ -201,7 +201,7 @@ int64_t Graph::AddSurfaceOutput(const std::string& output_stream_name) {
   LOG(FATAL) << "GPU support has been disabled in this build!";
 #else
   CalculatorGraphConfig::Node* sink_node = graph_config()->add_node();
-  sink_node->set_name(::mediapipe::tool::GetUnusedNodeName(
+  sink_node->set_name(mediapipe::tool::GetUnusedNodeName(
       *graph_config(), absl::StrCat("egl_surface_sink_", output_stream_name)));
   sink_node->set_calculator("GlSurfaceSinkCalculator");
   sink_node->add_input_stream(output_stream_name);
@@ -209,7 +209,7 @@ int64_t Graph::AddSurfaceOutput(const std::string& output_stream_name) {
       absl::StrCat(kGpuSharedTagName, ":", kGpuSharedSidePacketName));
 
   const std::string input_side_packet_name =
-      ::mediapipe::tool::GetUnusedSidePacketName(
+      mediapipe::tool::GetUnusedSidePacketName(
           *graph_config(), absl::StrCat(output_stream_name, "_surface"));
   sink_node->add_input_side_packet(
       absl::StrCat("SURFACE:", input_side_packet_name));
@@ -222,9 +222,9 @@ int64_t Graph::AddSurfaceOutput(const std::string& output_stream_name) {
 #endif  // defined(MEDIAPIPE_DISABLE_GPU)
 }
 
-::mediapipe::Status Graph::LoadBinaryGraph(std::string path_to_graph) {
+mediapipe::Status Graph::LoadBinaryGraph(std::string path_to_graph) {
   std::string graph_config_string;
-  ::mediapipe::Status status =
+  mediapipe::Status status =
       mediapipe::file::GetContents(path_to_graph, &graph_config_string);
   if (!status.ok()) {
     return status;
@@ -233,39 +233,39 @@ int64_t Graph::AddSurfaceOutput(const std::string& output_stream_name) {
                          graph_config_string.length());
 }
 
-::mediapipe::Status Graph::LoadBinaryGraph(const char* data, int size) {
+mediapipe::Status Graph::LoadBinaryGraph(const char* data, int size) {
   CalculatorGraphConfig graph_config;
   if (!graph_config.ParseFromArray(data, size)) {
-    return ::mediapipe::InvalidArgumentError("Failed to parse the graph");
+    return mediapipe::InvalidArgumentError("Failed to parse the graph");
   }
   graph_configs_.push_back(graph_config);
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status Graph::LoadBinaryGraphTemplate(const char* data, int size) {
+mediapipe::Status Graph::LoadBinaryGraphTemplate(const char* data, int size) {
   CalculatorGraphTemplate graph_template;
   if (!graph_template.ParseFromArray(data, size)) {
-    return ::mediapipe::InvalidArgumentError("Failed to parse the graph");
+    return mediapipe::InvalidArgumentError("Failed to parse the graph");
   }
   graph_templates_.push_back(graph_template);
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status Graph::SetGraphType(std::string graph_type) {
+mediapipe::Status Graph::SetGraphType(std::string graph_type) {
   graph_type_ = graph_type;
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status Graph::SetGraphOptions(const char* data, int size) {
+mediapipe::Status Graph::SetGraphOptions(const char* data, int size) {
   if (!graph_options_.ParseFromArray(data, size)) {
-    return ::mediapipe::InvalidArgumentError("Failed to parse the graph");
+    return mediapipe::InvalidArgumentError("Failed to parse the graph");
   }
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
 CalculatorGraphConfig Graph::GetCalculatorGraphConfig() {
   CalculatorGraph temp_graph;
-  ::mediapipe::Status status = InitializeGraph(&temp_graph);
+  mediapipe::Status status = InitializeGraph(&temp_graph);
   if (!status.ok()) {
     LOG(ERROR) << "GetCalculatorGraphConfig failed:\n" << status.message();
   }
@@ -344,14 +344,14 @@ void Graph::SetPacketJavaClass(JNIEnv* env) {
   }
 }
 
-::mediapipe::Status Graph::RunGraphUntilClose(JNIEnv* env) {
+mediapipe::Status Graph::RunGraphUntilClose(JNIEnv* env) {
   // Get a global reference to the packet class, so it can be used in other
   // native thread for call back.
   SetPacketJavaClass(env);
   // Running as a synchronized mode, the same Java thread is available through
   // out the run.
   CalculatorGraph calculator_graph;
-  ::mediapipe::Status status = InitializeGraph(&calculator_graph);
+  mediapipe::Status status = InitializeGraph(&calculator_graph);
   if (!status.ok()) {
     LOG(ERROR) << status.message();
     running_graph_.reset(nullptr);
@@ -364,9 +364,9 @@ void Graph::SetPacketJavaClass(JNIEnv* env) {
   return status;
 }
 
-::mediapipe::Status Graph::StartRunningGraph(JNIEnv* env) {
+mediapipe::Status Graph::StartRunningGraph(JNIEnv* env) {
   if (running_graph_) {
-    return ::mediapipe::InternalError("Graph is already running.");
+    return mediapipe::InternalError("Graph is already running.");
   }
   // Get a global reference to the packet class, so it can be used in other
   // native thread for call back.
@@ -382,7 +382,7 @@ void Graph::SetPacketJavaClass(JNIEnv* env) {
       LOG(INFO) << name;
     }
   }
-  ::mediapipe::Status status;
+  mediapipe::Status status;
 #ifndef MEDIAPIPE_DISABLE_GPU
   status = running_graph_->SetGpuResources(gpu_resources_);
   if (!status.ok()) {
@@ -419,7 +419,7 @@ void Graph::SetPacketJavaClass(JNIEnv* env) {
   return mediapipe::OkStatus();
 }
 
-::mediapipe::Status Graph::SetTimestampAndMovePacketToInputStream(
+mediapipe::Status Graph::SetTimestampAndMovePacketToInputStream(
     const std::string& stream_name, int64_t packet_handle, int64_t timestamp) {
   internal::PacketWithContext* packet_with_context =
       reinterpret_cast<internal::PacketWithContext*>(packet_handle);
@@ -433,60 +433,60 @@ void Graph::SetPacketJavaClass(JNIEnv* env) {
   return AddPacketToInputStream(stream_name, std::move(packet));
 }
 
-::mediapipe::Status Graph::AddPacketToInputStream(
-    const std::string& stream_name, const Packet& packet) {
+mediapipe::Status Graph::AddPacketToInputStream(const std::string& stream_name,
+                                                const Packet& packet) {
   if (!running_graph_) {
-    return ::mediapipe::FailedPreconditionError("Graph must be running.");
+    return mediapipe::FailedPreconditionError("Graph must be running.");
   }
 
   return running_graph_->AddPacketToInputStream(stream_name, packet);
 }
 
-::mediapipe::Status Graph::AddPacketToInputStream(
-    const std::string& stream_name, Packet&& packet) {
+mediapipe::Status Graph::AddPacketToInputStream(const std::string& stream_name,
+                                                Packet&& packet) {
   if (!running_graph_) {
-    return ::mediapipe::FailedPreconditionError("Graph must be running.");
+    return mediapipe::FailedPreconditionError("Graph must be running.");
   }
 
   return running_graph_->AddPacketToInputStream(stream_name, std::move(packet));
 }
 
-::mediapipe::Status Graph::CloseInputStream(std::string stream_name) {
+mediapipe::Status Graph::CloseInputStream(std::string stream_name) {
   if (!running_graph_) {
-    return ::mediapipe::FailedPreconditionError("Graph must be running.");
+    return mediapipe::FailedPreconditionError("Graph must be running.");
   }
   LOG(INFO) << "Close input stream: " << stream_name;
   return running_graph_->CloseInputStream(stream_name);
 }
 
-::mediapipe::Status Graph::CloseAllInputStreams() {
+mediapipe::Status Graph::CloseAllInputStreams() {
   LOG(INFO) << "Close all input streams.";
   if (!running_graph_) {
-    return ::mediapipe::FailedPreconditionError("Graph must be running.");
+    return mediapipe::FailedPreconditionError("Graph must be running.");
   }
   return running_graph_->CloseAllInputStreams();
 }
 
-::mediapipe::Status Graph::CloseAllPacketSources() {
+mediapipe::Status Graph::CloseAllPacketSources() {
   LOG(INFO) << "Close all input streams.";
   if (!running_graph_) {
-    return ::mediapipe::FailedPreconditionError("Graph must be running.");
+    return mediapipe::FailedPreconditionError("Graph must be running.");
   }
   return running_graph_->CloseAllPacketSources();
 }
 
-::mediapipe::Status Graph::WaitUntilDone(JNIEnv* env) {
+mediapipe::Status Graph::WaitUntilDone(JNIEnv* env) {
   if (!running_graph_) {
-    return ::mediapipe::FailedPreconditionError("Graph must be running.");
+    return mediapipe::FailedPreconditionError("Graph must be running.");
   }
-  ::mediapipe::Status status = running_graph_->WaitUntilDone();
+  mediapipe::Status status = running_graph_->WaitUntilDone();
   running_graph_.reset(nullptr);
   return status;
 }
 
-::mediapipe::Status Graph::WaitUntilIdle(JNIEnv* env) {
+mediapipe::Status Graph::WaitUntilIdle(JNIEnv* env) {
   if (!running_graph_) {
-    return ::mediapipe::FailedPreconditionError("Graph must be running.");
+    return mediapipe::FailedPreconditionError("Graph must be running.");
   }
   return running_graph_->WaitUntilIdle();
 }
@@ -511,9 +511,9 @@ mediapipe::GpuResources* Graph::GetGpuResources() const {
   return gpu_resources_.get();
 }
 
-::mediapipe::Status Graph::SetParentGlContext(int64 java_gl_context) {
+mediapipe::Status Graph::SetParentGlContext(int64 java_gl_context) {
   if (gpu_resources_) {
-    return ::mediapipe::AlreadyExistsError(
+    return mediapipe::AlreadyExistsError(
         "trying to set the parent GL context, but the gpu shared "
         "data has already been set up.");
   }
@@ -524,7 +524,7 @@ mediapipe::GpuResources* Graph::GetGpuResources() const {
                        reinterpret_cast<EGLContext>(java_gl_context))
                        .ValueOrDie();
 #endif  // defined(MEDIAPIPE_DISABLE_GPU)
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
 void Graph::SetServicePacket(const GraphServiceBase& service, Packet packet) {
@@ -583,7 +583,7 @@ std::string Graph::graph_type() {
   return "";
 }
 
-::mediapipe::Status Graph::InitializeGraph(CalculatorGraph* graph) {
+mediapipe::Status Graph::InitializeGraph(CalculatorGraph* graph) {
   if (graph_configs_.size() == 1 && graph_templates_.empty()) {
     return graph->Initialize(*graph_config());
   } else {

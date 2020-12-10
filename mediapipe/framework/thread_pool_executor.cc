@@ -25,16 +25,16 @@
 namespace mediapipe {
 
 // static
-::mediapipe::StatusOr<Executor*> ThreadPoolExecutor::Create(
+mediapipe::StatusOr<Executor*> ThreadPoolExecutor::Create(
     const MediaPipeOptions& extendable_options) {
   auto& options =
       extendable_options.GetExtension(ThreadPoolExecutorOptions::ext);
   if (!options.has_num_threads()) {
-    return ::mediapipe::InvalidArgumentError(
+    return mediapipe::InvalidArgumentError(
         "num_threads is not specified in ThreadPoolExecutorOptions.");
   }
   if (options.num_threads() <= 0) {
-    return ::mediapipe::InvalidArgumentErrorBuilder(MEDIAPIPE_LOC)
+    return mediapipe::InvalidArgumentErrorBuilder(MEDIAPIPE_LOC)
            << "The num_threads field in ThreadPoolExecutorOptions should be "
               "positive but is "
            << options.num_threads();
@@ -46,7 +46,7 @@ namespace mediapipe {
     // pass a negative value. 0 has a special meaning (the default thread
     // stack size for the system), so we also avoid that.
     if (options.stack_size() <= 0) {
-      return ::mediapipe::InvalidArgumentErrorBuilder(MEDIAPIPE_LOC)
+      return mediapipe::InvalidArgumentErrorBuilder(MEDIAPIPE_LOC)
              << "The stack_size field in ThreadPoolExecutorOptions should be "
                 "positive but is "
              << options.stack_size();

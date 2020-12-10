@@ -32,7 +32,7 @@ ProtoSubgraph::ProtoSubgraph(const CalculatorGraphConfig& config)
 
 ProtoSubgraph::~ProtoSubgraph() {}
 
-::mediapipe::StatusOr<CalculatorGraphConfig> ProtoSubgraph::GetConfig(
+mediapipe::StatusOr<CalculatorGraphConfig> ProtoSubgraph::GetConfig(
     const Subgraph::SubgraphOptions& options) {
   return config_;
 }
@@ -42,7 +42,7 @@ TemplateSubgraph::TemplateSubgraph(const CalculatorGraphTemplate& templ)
 
 TemplateSubgraph::~TemplateSubgraph() {}
 
-::mediapipe::StatusOr<CalculatorGraphConfig> TemplateSubgraph::GetConfig(
+mediapipe::StatusOr<CalculatorGraphConfig> TemplateSubgraph::GetConfig(
     const Subgraph::SubgraphOptions& options) {
   TemplateDict arguments =
       Subgraph::GetOptions<mediapipe::TemplateSubgraphOptions>(options).dict();
@@ -91,14 +91,14 @@ bool GraphRegistry::IsRegistered(const std::string& ns,
          global_factories_->IsRegistered(ns, type_name);
 }
 
-::mediapipe::StatusOr<CalculatorGraphConfig> GraphRegistry::CreateByName(
+mediapipe::StatusOr<CalculatorGraphConfig> GraphRegistry::CreateByName(
     const std::string& ns, const std::string& type_name,
     const Subgraph::SubgraphOptions* options) const {
   Subgraph::SubgraphOptions graph_options;
   if (options) {
     graph_options = *options;
   }
-  ::mediapipe::StatusOr<std::unique_ptr<Subgraph>> maker =
+  mediapipe::StatusOr<std::unique_ptr<Subgraph>> maker =
       local_factories_.IsRegistered(ns, type_name)
           ? local_factories_.Invoke(ns, type_name)
           : global_factories_->Invoke(ns, type_name);

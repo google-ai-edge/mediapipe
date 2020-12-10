@@ -38,7 +38,7 @@ DEFINE_string(output_side_packets, "",
               "side packets and paths to write to disk for the "
               "CalculatorGraph.");
 
-::mediapipe::Status RunMPPGraph() {
+mediapipe::Status RunMPPGraph() {
   std::string calculator_graph_config_contents;
   MP_RETURN_IF_ERROR(mediapipe::file::GetContents(
       FLAGS_calculator_graph_config_file, &calculator_graph_config_contents));
@@ -47,18 +47,18 @@ DEFINE_string(output_side_packets, "",
   mediapipe::CalculatorGraphConfig config =
       mediapipe::ParseTextProtoOrDie<mediapipe::CalculatorGraphConfig>(
           calculator_graph_config_contents);
-  std::map<std::string, ::mediapipe::Packet> input_side_packets;
+  std::map<std::string, mediapipe::Packet> input_side_packets;
   std::vector<std::string> kv_pairs =
       absl::StrSplit(FLAGS_input_side_packets, ',');
   for (const std::string& kv_pair : kv_pairs) {
     std::vector<std::string> name_and_value = absl::StrSplit(kv_pair, '=');
     RET_CHECK(name_and_value.size() == 2);
-    RET_CHECK(!::mediapipe::ContainsKey(input_side_packets, name_and_value[0]));
+    RET_CHECK(!mediapipe::ContainsKey(input_side_packets, name_and_value[0]));
     std::string input_side_packet_contents;
     MP_RETURN_IF_ERROR(mediapipe::file::GetContents(
         name_and_value[1], &input_side_packet_contents));
     input_side_packets[name_and_value[0]] =
-        ::mediapipe::MakePacket<std::string>(input_side_packet_contents);
+        mediapipe::MakePacket<std::string>(input_side_packet_contents);
   }
   LOG(INFO) << "Initialize the calculator graph.";
   mediapipe::CalculatorGraph graph;
@@ -70,7 +70,7 @@ DEFINE_string(output_side_packets, "",
   for (const std::string& kv_pair : kv_pairs) {
     std::vector<std::string> name_and_value = absl::StrSplit(kv_pair, '=');
     RET_CHECK(name_and_value.size() == 2);
-    ::mediapipe::StatusOr<::mediapipe::Packet> output_packet =
+    mediapipe::StatusOr<mediapipe::Packet> output_packet =
         graph.GetOutputSidePacket(name_and_value[0]);
     RET_CHECK(output_packet.ok())
         << "Packet " << name_and_value[0] << " was not available.";
@@ -79,13 +79,13 @@ DEFINE_string(output_side_packets, "",
     MP_RETURN_IF_ERROR(
         mediapipe::file::SetContents(name_and_value[1], serialized_string));
   }
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
 int main(int argc, char** argv) {
   google::InitGoogleLogging(argv[0]);
   gflags::ParseCommandLineFlags(&argc, &argv, true);
-  ::mediapipe::Status run_status = RunMPPGraph();
+  mediapipe::Status run_status = RunMPPGraph();
   if (!run_status.ok()) {
     LOG(ERROR) << "Failed to run the graph: " << run_status.message();
     return EXIT_FAILURE;

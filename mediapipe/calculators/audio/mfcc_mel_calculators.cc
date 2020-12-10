@@ -66,7 +66,7 @@ std::string PortableDebugString(const TimeSeriesHeader& header) {
 // rows corresponding to the new feature space).
 class FramewiseTransformCalculatorBase : public CalculatorBase {
  public:
-  static ::mediapipe::Status GetContract(CalculatorContract* cc) {
+  static mediapipe::Status GetContract(CalculatorContract* cc) {
     cc->Inputs().Index(0).Set<Matrix>(
         // Sequence of Matrices, each column describing a particular time frame,
         // each row a feature dimension, with TimeSeriesHeader.
@@ -75,11 +75,11 @@ class FramewiseTransformCalculatorBase : public CalculatorBase {
         // Sequence of Matrices, each column describing a particular time frame,
         // each row a feature dimension, with TimeSeriesHeader.
     );
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Open(CalculatorContext* cc) override;
-  ::mediapipe::Status Process(CalculatorContext* cc) override;
+  mediapipe::Status Open(CalculatorContext* cc) override;
+  mediapipe::Status Process(CalculatorContext* cc) override;
 
   int num_output_channels(void) { return num_output_channels_; }
 
@@ -90,8 +90,8 @@ class FramewiseTransformCalculatorBase : public CalculatorBase {
  private:
   // Takes header and options, and sets up state including calling
   // set_num_output_channels() on the base object.
-  virtual ::mediapipe::Status ConfigureTransform(const TimeSeriesHeader& header,
-                                                 CalculatorContext* cc) = 0;
+  virtual mediapipe::Status ConfigureTransform(const TimeSeriesHeader& header,
+                                               CalculatorContext* cc) = 0;
 
   // Takes a vector<double> corresponding to an input frame, and
   // perform the specific transformation to produce an output frame.
@@ -102,13 +102,13 @@ class FramewiseTransformCalculatorBase : public CalculatorBase {
   int num_output_channels_;
 };
 
-::mediapipe::Status FramewiseTransformCalculatorBase::Open(
+mediapipe::Status FramewiseTransformCalculatorBase::Open(
     CalculatorContext* cc) {
   TimeSeriesHeader input_header;
   MP_RETURN_IF_ERROR(time_series_util::FillTimeSeriesHeaderIfValid(
       cc->Inputs().Index(0).Header(), &input_header));
 
-  ::mediapipe::Status status = ConfigureTransform(input_header, cc);
+  mediapipe::Status status = ConfigureTransform(input_header, cc);
 
   auto output_header = new TimeSeriesHeader(input_header);
   output_header->set_num_channels(num_output_channels_);
@@ -117,7 +117,7 @@ class FramewiseTransformCalculatorBase : public CalculatorBase {
   return status;
 }
 
-::mediapipe::Status FramewiseTransformCalculatorBase::Process(
+mediapipe::Status FramewiseTransformCalculatorBase::Process(
     CalculatorContext* cc) {
   const Matrix& input = cc->Inputs().Index(0).Get<Matrix>();
   const int num_frames = input.cols();
@@ -145,7 +145,7 @@ class FramewiseTransformCalculatorBase : public CalculatorBase {
   }
   cc->Outputs().Index(0).Add(output.release(), cc->InputTimestamp());
 
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
 // Calculator wrapper around the dsp/mfcc/mfcc.cc routine.
@@ -170,13 +170,13 @@ class FramewiseTransformCalculatorBase : public CalculatorBase {
 // }
 class MfccCalculator : public FramewiseTransformCalculatorBase {
  public:
-  static ::mediapipe::Status GetContract(CalculatorContract* cc) {
+  static mediapipe::Status GetContract(CalculatorContract* cc) {
     return FramewiseTransformCalculatorBase::GetContract(cc);
   }
 
  private:
-  ::mediapipe::Status ConfigureTransform(const TimeSeriesHeader& header,
-                                         CalculatorContext* cc) override {
+  mediapipe::Status ConfigureTransform(const TimeSeriesHeader& header,
+                                       CalculatorContext* cc) override {
     MfccCalculatorOptions mfcc_options = cc->Options<MfccCalculatorOptions>();
     mfcc_.reset(new audio_dsp::Mfcc());
     int input_length = header.num_channels();
@@ -194,7 +194,7 @@ class MfccCalculator : public FramewiseTransformCalculatorBase {
     // audio_dsp::MelFilterBank needs to know this to
     // correctly interpret the spectrogram bins.
     if (!header.has_audio_sample_rate()) {
-      return ::mediapipe::InvalidArgumentError(
+      return mediapipe::InvalidArgumentError(
           absl::StrCat("No audio_sample_rate in input TimeSeriesHeader ",
                        PortableDebugString(header)));
     }
@@ -203,10 +203,10 @@ class MfccCalculator : public FramewiseTransformCalculatorBase {
         mfcc_->Initialize(input_length, header.audio_sample_rate());
 
     if (initialized) {
-      return ::mediapipe::OkStatus();
+      return mediapipe::OkStatus();
     } else {
-      return ::mediapipe::Status(mediapipe::StatusCode::kInternal,
-                                 "Mfcc::Initialize returned uninitialized");
+      return mediapipe::Status(mediapipe::StatusCode::kInternal,
+                               "Mfcc::Initialize returned uninitialized");
     }
   }
 
@@ -228,13 +228,13 @@ REGISTER_CALCULATOR(MfccCalculator);
 // if you ask for too many channels.
 class MelSpectrumCalculator : public FramewiseTransformCalculatorBase {
  public:
-  static ::mediapipe::Status GetContract(CalculatorContract* cc) {
+  static mediapipe::Status GetContract(CalculatorContract* cc) {
     return FramewiseTransformCalculatorBase::GetContract(cc);
   }
 
  private:
-  ::mediapipe::Status ConfigureTransform(const TimeSeriesHeader& header,
-                                         CalculatorContext* cc) override {
+  mediapipe::Status ConfigureTransform(const TimeSeriesHeader& header,
+                                       CalculatorContext* cc) override {
     MelSpectrumCalculatorOptions mel_spectrum_options =
         cc->Options<MelSpectrumCalculatorOptions>();
     mel_filterbank_.reset(new audio_dsp::MelFilterbank());
@@ -245,7 +245,7 @@ class MelSpectrumCalculator : public FramewiseTransformCalculatorBase {
     // audio_dsp::MelFilterBank needs to know this to
     // correctly interpret the spectrogram bins.
     if (!header.has_audio_sample_rate()) {
-      return ::mediapipe::InvalidArgumentError(
+      return mediapipe::InvalidArgumentError(
           absl::StrCat("No audio_sample_rate in input TimeSeriesHeader ",
                        PortableDebugString(header)));
     }
@@ -255,10 +255,10 @@ class MelSpectrumCalculator : public FramewiseTransformCalculatorBase {
         mel_spectrum_options.max_frequency_hertz());
 
     if (initialized) {
-      return ::mediapipe::OkStatus();
+      return mediapipe::OkStatus();
     } else {
-      return ::mediapipe::Status(mediapipe::StatusCode::kInternal,
-                                 "mfcc::Initialize returned uninitialized");
+      return mediapipe::Status(mediapipe::StatusCode::kInternal,
+                               "mfcc::Initialize returned uninitialized");
     }
   }
 

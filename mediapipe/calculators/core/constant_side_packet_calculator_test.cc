@@ -40,7 +40,7 @@ void DoTestSingleSidePacket(absl::string_view packet_spec,
         }
       )";
   CalculatorGraphConfig graph_config =
-      ::mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(
           absl::Substitute(graph_config_template, packet_spec));
   CalculatorGraph graph;
   MP_ASSERT_OK(graph.Initialize(graph_config));
@@ -62,7 +62,7 @@ TEST(ConstantSidePacketCalculatorTest, EveryPossibleType) {
 
 TEST(ConstantSidePacketCalculatorTest, MultiplePackets) {
   CalculatorGraphConfig graph_config =
-      ::mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
         node {
           calculator: "ConstantSidePacketCalculator"
           output_side_packet: "PACKET:0:int_packet"
@@ -115,7 +115,7 @@ TEST(ConstantSidePacketCalculatorTest, MultiplePackets) {
 
 TEST(ConstantSidePacketCalculatorTest, ProcessingPacketsWithCorrectTagOnly) {
   CalculatorGraphConfig graph_config =
-      ::mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
         node {
           calculator: "ConstantSidePacketCalculator"
           output_side_packet: "PACKET:0:int_packet"
@@ -159,7 +159,7 @@ TEST(ConstantSidePacketCalculatorTest, ProcessingPacketsWithCorrectTagOnly) {
 
 TEST(ConstantSidePacketCalculatorTest, IncorrectConfig_MoreOptionsThanPackets) {
   CalculatorGraphConfig graph_config =
-      ::mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
         node {
           calculator: "ConstantSidePacketCalculator"
           output_side_packet: "PACKET:int_packet"
@@ -177,7 +177,7 @@ TEST(ConstantSidePacketCalculatorTest, IncorrectConfig_MoreOptionsThanPackets) {
 
 TEST(ConstantSidePacketCalculatorTest, IncorrectConfig_MorePacketsThanOptions) {
   CalculatorGraphConfig graph_config =
-      ::mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
         node {
           calculator: "ConstantSidePacketCalculator"
           output_side_packet: "PACKET:0:int_packet"

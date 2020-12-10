@@ -85,7 +85,7 @@ class PacketType {
   bool IsConsistentWith(const PacketType& other) const;
 
   // Returns OK if the packet contains an object of the appropriate type.
-  ::mediapipe::Status Validate(const Packet& packet) const;
+  mediapipe::Status Validate(const Packet& packet) const;
 
   // Returns a pointer to the Registered type name, or nullptr if the type
   // is not registered.  Do not use this for validation, use Validate()
@@ -98,7 +98,7 @@ class PacketType {
  private:
   // Typedef for the ValidateAsType() method in Packet that is used for
   // type validation and identification.
-  typedef ::mediapipe::Status (Packet::*ValidateMethodType)() const;
+  typedef mediapipe::Status (Packet::*ValidateMethodType)() const;
 
   // Records whether the packet type was set in any way.
   bool initialized_;
@@ -213,15 +213,15 @@ using PacketTypeSet =
 // Returns OK if the packets in the PacketSet are of the appropriate type.
 // packet_type_set must be valid before this is called (but packet_set
 // may be in any state).
-::mediapipe::Status ValidatePacketSet(const PacketTypeSet& packet_type_set,
-                                      const PacketSet& packet_set);
+mediapipe::Status ValidatePacketSet(const PacketTypeSet& packet_type_set,
+                                    const PacketSet& packet_set);
 
 // Validates that the PacketTypeSet was initialized properly.
 // An error is returned if
 // 1) Tag() or Index() is called with an invalid argument (however,
 //    a valid PacketType is still returned by the function).
 // 2) Any PacketType is not initialized.
-::mediapipe::Status ValidatePacketTypeSet(const PacketTypeSet& packet_type_set);
+mediapipe::Status ValidatePacketTypeSet(const PacketTypeSet& packet_type_set);
 
 // Templated function definitions.
 

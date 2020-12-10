@@ -30,9 +30,10 @@ namespace mediapipe {
 // Creates image to tensor (represented as OpenGL buffer) converter.
 // NOTE: mediapipe::GlCalculatorHelper::UpdateContract invocation must precede
 // converter creation.
-::mediapipe::StatusOr<std::unique_ptr<ImageToTensorConverter>>
+mediapipe::StatusOr<std::unique_ptr<ImageToTensorConverter>>
 CreateImageToGlBufferTensorConverter(CalculatorContext* cc,
-                                     bool input_starts_at_bottom);
+                                     bool input_starts_at_bottom,
+                                     BorderMode border_mode);
 
 }  // namespace mediapipe
 

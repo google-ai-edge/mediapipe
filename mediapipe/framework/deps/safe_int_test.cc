@@ -21,21 +21,21 @@
 #include "mediapipe/framework/port/gtest.h"
 
 MEDIAPIPE_DEFINE_SAFE_INT_TYPE(SafeInt8, int8,
-                               ::mediapipe::intops::LogFatalOnError);
+                               mediapipe::intops::LogFatalOnError);
 MEDIAPIPE_DEFINE_SAFE_INT_TYPE(SafeUInt8, uint8,
-                               ::mediapipe::intops::LogFatalOnError);
+                               mediapipe::intops::LogFatalOnError);
 MEDIAPIPE_DEFINE_SAFE_INT_TYPE(SafeInt16, int16,
-                               ::mediapipe::intops::LogFatalOnError);
+                               mediapipe::intops::LogFatalOnError);
 MEDIAPIPE_DEFINE_SAFE_INT_TYPE(SafeUInt16, uint16,
-                               ::mediapipe::intops::LogFatalOnError);
+                               mediapipe::intops::LogFatalOnError);
 MEDIAPIPE_DEFINE_SAFE_INT_TYPE(SafeInt32, int32,
-                               ::mediapipe::intops::LogFatalOnError);
+                               mediapipe::intops::LogFatalOnError);
 MEDIAPIPE_DEFINE_SAFE_INT_TYPE(SafeInt64, int64,
-                               ::mediapipe::intops::LogFatalOnError);
+                               mediapipe::intops::LogFatalOnError);
 MEDIAPIPE_DEFINE_SAFE_INT_TYPE(SafeUInt32, uint32,
-                               ::mediapipe::intops::LogFatalOnError);
+                               mediapipe::intops::LogFatalOnError);
 MEDIAPIPE_DEFINE_SAFE_INT_TYPE(SafeUInt64, uint64,
-                               ::mediapipe::intops::LogFatalOnError);
+                               mediapipe::intops::LogFatalOnError);
 
 namespace mediapipe {
 namespace intops {

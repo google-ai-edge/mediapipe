@@ -42,7 +42,7 @@ class PolynomialRegressionPathSolver {
   // y-axis, such that focus points can be preserved as much as possible. The
   // returned |all_transforms| hold the camera location at each timestamp
   // corresponding to each input frame.
-  ::mediapipe::Status ComputeCameraPath(
+  mediapipe::Status ComputeCameraPath(
       const std::vector<FocusPointFrame>& focus_point_frames,
       const std::vector<FocusPointFrame>& prior_focus_point_frames,
       const int original_width, const int original_height,

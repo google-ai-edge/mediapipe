@@ -61,7 +61,7 @@ cc_library(
         "@com_google_absl//absl/memory",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/formats:tensor",
-        "//mediapipe/util:resource_util",
+        "//mediapipe/util/tflite:tflite_model_loader",
         "//mediapipe/util/tflite:config",
         "@org_tensorflow//tensorflow/lite:framework",
         "@org_tensorflow//tensorflow/lite/delegates/xnnpack:xnnpack_delegate",
@@ -293,6 +293,16 @@ cc_library(
     alwayslink = 1,
 )
 
+mediapipe_proto_library(
+    name = "tensors_to_floats_calculator_proto",
+    srcs = ["tensors_to_floats_calculator.proto"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//mediapipe/framework:calculator_options_proto",
+        "//mediapipe/framework:calculator_proto",
+    ],
+)
+
 cc_library(
     name = "tensors_to_floats_calculator",
     srcs = ["tensors_to_floats_calculator.cc"],
@@ -305,11 +315,29 @@ cc_library(
     }),
     visibility = ["//visibility:public"],
     deps = [
+        ":tensors_to_floats_calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/formats:tensor",
         "//mediapipe/framework/port:ret_check",
     ],
     alwayslink = 1,
+)
+
+cc_test(
+    name = "tensors_to_floats_calculator_test",
+    srcs = ["tensors_to_floats_calculator_test.cc"],
+    deps = [
+        ":tensors_to_floats_calculator",
+        ":tensors_to_floats_calculator_cc_proto",
+        "//mediapipe/framework:calculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:calculator_runner",
+        "//mediapipe/framework/formats:tensor",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:parse_text_proto",
+        "@com_google_absl//absl/memory",
+        "@com_google_googletest//:gtest_main",
+    ],
 )
 
 cc_library(
@@ -445,15 +473,22 @@ cc_test(
     data = [
         "testdata/image_to_tensor/input.jpg",
         "testdata/image_to_tensor/large_sub_rect.png",
+        "testdata/image_to_tensor/large_sub_rect_border_zero.png",
         "testdata/image_to_tensor/large_sub_rect_keep_aspect.png",
+        "testdata/image_to_tensor/large_sub_rect_keep_aspect_border_zero.png",
         "testdata/image_to_tensor/large_sub_rect_keep_aspect_with_rotation.png",
+        "testdata/image_to_tensor/large_sub_rect_keep_aspect_with_rotation_border_zero.png",
         "testdata/image_to_tensor/medium_sub_rect_keep_aspect.png",
+        "testdata/image_to_tensor/medium_sub_rect_keep_aspect_border_zero.png",
         "testdata/image_to_tensor/medium_sub_rect_keep_aspect_with_rotation.png",
+        "testdata/image_to_tensor/medium_sub_rect_keep_aspect_with_rotation_border_zero.png",
         "testdata/image_to_tensor/medium_sub_rect_with_rotation.png",
+        "testdata/image_to_tensor/medium_sub_rect_with_rotation_border_zero.png",
         "testdata/image_to_tensor/noop_except_range.png",
     ],
     deps = [
         ":image_to_tensor_calculator",
+        ":image_to_tensor_converter",
         ":image_to_tensor_utils",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework:calculator_runner",
@@ -479,6 +514,13 @@ cc_test(
 cc_library(
     name = "image_to_tensor_converter",
     hdrs = ["image_to_tensor_converter.h"],
+    copts = select({
+        "//mediapipe:apple": [
+            "-x objective-c++",
+            "-fobjc-arc",  # enable reference-counting
+        ],
+        "//conditions:default": [],
+    }),
     deps = [
         ":image_to_tensor_utils",
         "//mediapipe/framework:packet",
@@ -521,6 +563,7 @@ cc_library(
         "//mediapipe:apple": [],
         "//conditions:default": [
             ":image_to_tensor_converter",
+            ":image_to_tensor_converter_gl_utils",
             ":image_to_tensor_utils",
             "@com_google_absl//absl/strings",
             "//mediapipe/framework:calculator_framework",
@@ -553,6 +596,7 @@ cc_library(
         "//mediapipe/gpu:disable_gpu": [],
         "//conditions:default": [
             ":image_to_tensor_converter",
+            ":image_to_tensor_converter_gl_utils",
             ":image_to_tensor_utils",
             "@com_google_absl//absl/strings",
             "//mediapipe/framework:calculator_framework",
@@ -564,6 +608,21 @@ cc_library(
             "//mediapipe/gpu:gl_simple_shaders",
             "//mediapipe/gpu:gpu_buffer",
             "//mediapipe/gpu:shader_util",
+        ],
+    }),
+)
+
+cc_library(
+    name = "image_to_tensor_converter_gl_utils",
+    srcs = ["image_to_tensor_converter_gl_utils.cc"],
+    hdrs = ["image_to_tensor_converter_gl_utils.h"],
+    deps = ["//mediapipe/framework:port"] + select({
+        "//mediapipe/gpu:disable_gpu": [],
+        "//conditions:default": [
+            "//mediapipe/gpu:gl_base",
+            "//mediapipe/gpu:gl_context",
+            "//mediapipe/framework/port:status",
+            "//mediapipe/framework/port:statusor",
         ],
     }),
 )

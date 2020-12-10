@@ -120,35 +120,35 @@ class TimedBoxListToRenderDataCalculator : public CalculatorBase {
   TimedBoxListToRenderDataCalculator& operator=(
       const TimedBoxListToRenderDataCalculator&) = delete;
 
-  static ::mediapipe::Status GetContract(CalculatorContract* cc);
+  static mediapipe::Status GetContract(CalculatorContract* cc);
 
-  ::mediapipe::Status Open(CalculatorContext* cc) override;
+  mediapipe::Status Open(CalculatorContext* cc) override;
 
-  ::mediapipe::Status Process(CalculatorContext* cc) override;
+  mediapipe::Status Process(CalculatorContext* cc) override;
 
  private:
   TimedBoxListToRenderDataCalculatorOptions options_;
 };
 REGISTER_CALCULATOR(TimedBoxListToRenderDataCalculator);
 
-::mediapipe::Status TimedBoxListToRenderDataCalculator::GetContract(
+mediapipe::Status TimedBoxListToRenderDataCalculator::GetContract(
     CalculatorContract* cc) {
   if (cc->Inputs().HasTag(kTimedBoxListTag)) {
     cc->Inputs().Tag(kTimedBoxListTag).Set<TimedBoxProtoList>();
   }
   cc->Outputs().Tag(kRenderDataTag).Set<RenderData>();
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status TimedBoxListToRenderDataCalculator::Open(
+mediapipe::Status TimedBoxListToRenderDataCalculator::Open(
     CalculatorContext* cc) {
   cc->SetOffset(TimestampDiff(0));
   options_ = cc->Options<TimedBoxListToRenderDataCalculatorOptions>();
 
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status TimedBoxListToRenderDataCalculator::Process(
+mediapipe::Status TimedBoxListToRenderDataCalculator::Process(
     CalculatorContext* cc) {
   auto render_data = absl::make_unique<RenderData>();
 
@@ -164,7 +164,7 @@ REGISTER_CALCULATOR(TimedBoxListToRenderDataCalculator);
   cc->Outputs()
       .Tag(kRenderDataTag)
       .Add(render_data.release(), cc->InputTimestamp());
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
 }  // namespace mediapipe

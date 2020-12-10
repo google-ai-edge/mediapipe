@@ -50,15 +50,15 @@ class FeatureDetectorCalculator : public CalculatorBase {
  public:
   ~FeatureDetectorCalculator() override = default;
 
-  static ::mediapipe::Status GetContract(CalculatorContract* cc);
+  static mediapipe::Status GetContract(CalculatorContract* cc);
 
-  ::mediapipe::Status Open(CalculatorContext* cc) override;
-  ::mediapipe::Status Process(CalculatorContext* cc) override;
+  mediapipe::Status Open(CalculatorContext* cc) override;
+  mediapipe::Status Process(CalculatorContext* cc) override;
 
  private:
   FeatureDetectorCalculatorOptions options_;
   cv::Ptr<cv::Feature2D> feature_detector_;
-  std::unique_ptr<::mediapipe::ThreadPool> pool_;
+  std::unique_ptr<mediapipe::ThreadPool> pool_;
 
   // Create image pyramid based on input image.
   void ComputeImagePyramid(const cv::Mat& input_image,
@@ -71,7 +71,7 @@ class FeatureDetectorCalculator : public CalculatorBase {
 
 REGISTER_CALCULATOR(FeatureDetectorCalculator);
 
-::mediapipe::Status FeatureDetectorCalculator::GetContract(
+mediapipe::Status FeatureDetectorCalculator::GetContract(
     CalculatorContract* cc) {
   if (cc->Inputs().HasTag("IMAGE")) {
     cc->Inputs().Tag("IMAGE").Set<ImageFrame>();
@@ -85,26 +85,26 @@ REGISTER_CALCULATOR(FeatureDetectorCalculator);
   if (cc->Outputs().HasTag("PATCHES")) {
     cc->Outputs().Tag("PATCHES").Set<std::vector<TfLiteTensor>>();
   }
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status FeatureDetectorCalculator::Open(CalculatorContext* cc) {
+mediapipe::Status FeatureDetectorCalculator::Open(CalculatorContext* cc) {
   options_ =
       tool::RetrieveOptions(cc->Options(), cc->InputSidePackets(), kOptionsTag)
           .GetExtension(FeatureDetectorCalculatorOptions::ext);
   feature_detector_ = cv::ORB::create(
       options_.max_features(), options_.scale_factor(),
       options_.pyramid_level(), kPatchSize - 1, 0, 2, cv::ORB::FAST_SCORE);
-  pool_ = absl::make_unique<::mediapipe::ThreadPool>("ThreadPool", kNumThreads);
+  pool_ = absl::make_unique<mediapipe::ThreadPool>("ThreadPool", kNumThreads);
   pool_->StartWorkers();
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status FeatureDetectorCalculator::Process(CalculatorContext* cc) {
+mediapipe::Status FeatureDetectorCalculator::Process(CalculatorContext* cc) {
   const Timestamp& timestamp = cc->InputTimestamp();
   if (timestamp == Timestamp::PreStream()) {
     // Indicator packet.
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
   InputStream* input_frame = &(cc->Inputs().Tag("IMAGE"));
   cv::Mat input_view = formats::MatView(&input_frame->Get<ImageFrame>());
@@ -176,7 +176,7 @@ REGISTER_CALCULATOR(FeatureDetectorCalculator);
     cc->Outputs().Tag("PATCHES").Add(patches.release(), timestamp);
   }
 
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
 void FeatureDetectorCalculator::ComputeImagePyramid(

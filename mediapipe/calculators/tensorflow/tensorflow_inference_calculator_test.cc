@@ -47,15 +47,15 @@ std::string GetGraphDefPath() {
   CFURLGetFileSystemRepresentation(
       bundle_url, true, reinterpret_cast<UInt8*>(path), sizeof(path));
   CFRelease(bundle_url);
-  return ::mediapipe::file::JoinPath(path, "testdata/frozen_graph_def.pb");
+  return mediapipe::file::JoinPath(path, "testdata/frozen_graph_def.pb");
 #elif defined(__ANDROID__)
   char path[1024];
   getcwd(path, sizeof(path));
-  return ::mediapipe::file::JoinPath(path,
-                                     "mediapipe/calculators/tensorflow/"
-                                     "testdata/frozen_graph_def.pb");
+  return mediapipe::file::JoinPath(path,
+                                   "mediapipe/calculators/tensorflow/"
+                                   "testdata/frozen_graph_def.pb");
 #else
-  return ::mediapipe::file::JoinPath(
+  return mediapipe::file::JoinPath(
       "./",
       // This should match the path of the output files
       // of the genrule() that generates test model files.

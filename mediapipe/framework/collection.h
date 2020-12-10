@@ -448,7 +448,7 @@ template <typename T, CollectionStorage storage, typename ErrorHandler>
 typename Collection<T, storage, ErrorHandler>::value_type*&
 Collection<T, storage, ErrorHandler>::GetPtr(CollectionItemId id) {
   static_assert(storage == CollectionStorage::kStorePointer,
-                "::mediapipe::internal::Collection<T>::GetPtr() is only "
+                "mediapipe::internal::Collection<T>::GetPtr() is only "
                 "available for collections that were defined with template "
                 "argument storage == CollectionStorage::kStorePointer.");
   CHECK_LE(BeginId(), id);
@@ -460,7 +460,7 @@ template <typename T, CollectionStorage storage, typename ErrorHandler>
 const typename Collection<T, storage, ErrorHandler>::value_type*
 Collection<T, storage, ErrorHandler>::GetPtr(CollectionItemId id) const {
   static_assert(storage == CollectionStorage::kStorePointer,
-                "::mediapipe::internal::Collection<T>::GetPtr() is only "
+                "mediapipe::internal::Collection<T>::GetPtr() is only "
                 "available for collections that were defined with template "
                 "argument storage == CollectionStorage::kStorePointer.");
   CHECK_LE(BeginId(), id);

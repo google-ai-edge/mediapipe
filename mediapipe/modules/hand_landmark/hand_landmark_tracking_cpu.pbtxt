@@ -14,10 +14,6 @@ input_stream: "IMAGE:image"
 # Max number of hands to detect/track. (int)
 input_side_packet: "NUM_HANDS:num_hands"
 
-# Whether palm detection can be skipped when hand regions can already be
-# approximated from hand landmarks on the previous frame.
-input_side_packet: "CAN_SKIP_DETECTION:can_skip_detection"
-
 # Collection of detected/predicted hands, each represented as a list of
 # landmarks. (std::vector<NormalizedLandmarkList>)
 # NOTE: there will not be an output packet in the LANDMARKS stream for this
@@ -42,45 +38,47 @@ output_stream: "HAND_ROIS_FROM_LANDMARKS:hand_rects"
 # (std::vector<NormalizedRect>)
 output_stream: "HAND_ROIS_FROM_PALM_DETECTIONS:hand_rects_from_palm_detections"
 
+# Defines whether landmarks on the previous image should be used to help
+# localize landmarks on the current image.
+node {
+  name: "ConstantSidePacketCalculator"
+  calculator: "ConstantSidePacketCalculator"
+  output_side_packet: "PACKET:use_prev_landmarks"
+  options: {
+    [mediapipe.ConstantSidePacketCalculatorOptions.ext]: {
+      packet { bool_value: true }
+    }
+  }
+}
+node {
+  calculator: "GateCalculator"
+  input_side_packet: "ALLOW:use_prev_landmarks"
+  input_stream: "prev_hand_rects_from_landmarks"
+  output_stream: "gated_prev_hand_rects_from_landmarks"
+}
+
 # Determines if an input vector of NormalizedRect has a size greater than or
 # equal to the provided num_hands.
 node {
   calculator: "NormalizedRectVectorHasMinSizeCalculator"
-  input_stream: "ITERABLE:prev_hand_rects_from_landmarks"
+  input_stream: "ITERABLE:gated_prev_hand_rects_from_landmarks"
   input_side_packet: "num_hands"
   output_stream: "prev_has_enough_hands"
 }
 
-# Drops the incoming image if the previous image had at least N hands.
-# and skipping palm detection is enabled.
-# Otherwise, passes the incoming image through to trigger a new round of palm
-# detection.
-node {
-  calculator: "LogicCalculator"
-  options: {
-    [mediapipe.LogicCalculatorOptions.ext] { op: AND }
-  }
-  input_side_packet: "can_skip_detection"
-  input_stream: "prev_has_enough_hands"
-  output_stream: "skip_detection"
-}
-
+# Drops the incoming image if enough hands have already been identified from the
+# previous image. Otherwise, passes the incoming image through to trigger a new
+# round of palm detection.
 node {
   calculator: "GateCalculator"
   input_stream: "image"
-  input_stream: "DISALLOW:skip_detection"
+  input_stream: "DISALLOW:prev_has_enough_hands"
   output_stream: "palm_detection_image"
   options: {
     [mediapipe.GateCalculatorOptions.ext] {
       empty_packets_as_allow: true
     }
   }
-}
-node {
-  calculator: "GateCalculator"
-  input_stream: "prev_hand_rects_from_landmarks"
-  input_stream: "ALLOW:skip_detection"
-  output_stream: "gated_prev_hand_rects_from_landmarks"
 }
 
 # Detects palms.
@@ -143,8 +141,8 @@ node {
 # overlapping regions based on the specified min_similarity_threshold.
 node {
   calculator: "AssociationNormRectCalculator"
-  input_stream: "gated_prev_hand_rects_from_landmarks"
   input_stream: "hand_rects_from_palm_detections"
+  input_stream: "gated_prev_hand_rects_from_landmarks"
   output_stream: "hand_rects"
   options: {
     [mediapipe.AssociationCalculatorOptions.ext] {

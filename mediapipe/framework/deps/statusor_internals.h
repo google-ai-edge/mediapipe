@@ -24,8 +24,8 @@ namespace internal_statusor {
 class Helper {
  public:
   // Move type-agnostic error handling to the .cc.
-  static void HandleInvalidStatusCtorArg(::mediapipe::Status*);
-  ABSL_ATTRIBUTE_NORETURN static void Crash(const ::mediapipe::Status& status);
+  static void HandleInvalidStatusCtorArg(mediapipe::Status*);
+  ABSL_ATTRIBUTE_NORETURN static void Crash(const mediapipe::Status& status);
 };
 
 // Construct an instance of T in `p` through placement new, passing Args... to
@@ -92,10 +92,10 @@ class StatusOrData {
   explicit StatusOrData(const T& value) : data_(value) { MakeStatus(); }
   explicit StatusOrData(T&& value) : data_(std::move(value)) { MakeStatus(); }
 
-  explicit StatusOrData(const ::mediapipe::Status& status) : status_(status) {
+  explicit StatusOrData(const mediapipe::Status& status) : status_(status) {
     EnsureNotOk();
   }
-  explicit StatusOrData(::mediapipe::Status&& status)
+  explicit StatusOrData(mediapipe::Status&& status)
       : status_(std::move(status)) {
     EnsureNotOk();
   }
@@ -133,7 +133,7 @@ class StatusOrData {
       MakeValue(value);
     } else {
       MakeValue(value);
-      status_ = ::mediapipe::OkStatus();
+      status_ = mediapipe::OkStatus();
     }
   }
 
@@ -143,17 +143,17 @@ class StatusOrData {
       MakeValue(std::move(value));
     } else {
       MakeValue(std::move(value));
-      status_ = ::mediapipe::OkStatus();
+      status_ = mediapipe::OkStatus();
     }
   }
 
-  void Assign(const ::mediapipe::Status& status) {
+  void Assign(const mediapipe::Status& status) {
     Clear();
     status_ = status;
     EnsureNotOk();
   }
 
-  void Assign(::mediapipe::Status&& status) {
+  void Assign(mediapipe::Status&& status) {
     Clear();
     status_ = std::move(status);
     EnsureNotOk();
@@ -168,7 +168,7 @@ class StatusOrData {
   // Eg. in the copy constructor we use the default constructor of Status in
   // the ok() path to avoid an extra Ref call.
   union {
-    ::mediapipe::Status status_;
+    mediapipe::Status status_;
   };
 
   // data_ is active iff status_.ok()==true
@@ -203,7 +203,7 @@ class StatusOrData {
   // argument.
   template <typename... Args>
   void MakeStatus(Args&&... args) {
-    internal_statusor::PlacementNew<::mediapipe::Status>(
+    internal_statusor::PlacementNew<mediapipe::Status>(
         &status_, std::forward<Args>(args)...);
   }
 };

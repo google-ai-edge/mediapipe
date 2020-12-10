@@ -44,7 +44,7 @@ namespace mediapipe {
 //
 class AddHeaderCalculator : public CalculatorBase {
  public:
-  static ::mediapipe::Status GetContract(CalculatorContract* cc) {
+  static mediapipe::Status GetContract(CalculatorContract* cc) {
     bool has_side_input = false;
     bool has_header_stream = false;
     if (cc->InputSidePackets().HasTag("HEADER")) {
@@ -62,10 +62,10 @@ class AddHeaderCalculator : public CalculatorBase {
     }
     cc->Inputs().Tag("DATA").SetAny();
     cc->Outputs().Index(0).SetSameAs(&cc->Inputs().Tag("DATA"));
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Open(CalculatorContext* cc) override {
+  mediapipe::Status Open(CalculatorContext* cc) override {
     Packet header;
     if (cc->InputSidePackets().HasTag("HEADER")) {
       header = cc->InputSidePackets().Tag("HEADER");
@@ -77,12 +77,12 @@ class AddHeaderCalculator : public CalculatorBase {
       cc->Outputs().Index(0).SetHeader(header);
     }
     cc->SetOffset(TimestampDiff(0));
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Process(CalculatorContext* cc) override {
+  mediapipe::Status Process(CalculatorContext* cc) override {
     cc->Outputs().Index(0).AddPacket(cc->Inputs().Tag("DATA").Value());
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 };
 

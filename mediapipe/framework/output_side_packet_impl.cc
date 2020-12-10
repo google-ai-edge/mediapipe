@@ -20,21 +20,21 @@
 
 namespace mediapipe {
 
-::mediapipe::Status OutputSidePacketImpl::Initialize(
+mediapipe::Status OutputSidePacketImpl::Initialize(
     const std::string& name, const PacketType* packet_type) {
   name_ = name;
   packet_type_ = packet_type;
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
 void OutputSidePacketImpl::PrepareForRun(
-    std::function<void(::mediapipe::Status)> error_callback) {
+    std::function<void(mediapipe::Status)> error_callback) {
   error_callback_ = std::move(error_callback);
   initialized_ = false;
 }
 
 void OutputSidePacketImpl::Set(const Packet& packet) {
-  ::mediapipe::Status status = SetInternal(packet);
+  mediapipe::Status status = SetInternal(packet);
   if (!status.ok()) {
     TriggerErrorCallback(status);
   }
@@ -46,26 +46,26 @@ void OutputSidePacketImpl::AddMirror(
   mirrors_.emplace_back(input_side_packet_handler, id);
 }
 
-::mediapipe::Status OutputSidePacketImpl::SetInternal(const Packet& packet) {
+mediapipe::Status OutputSidePacketImpl::SetInternal(const Packet& packet) {
   if (initialized_) {
-    return ::mediapipe::AlreadyExistsErrorBuilder(MEDIAPIPE_LOC)
+    return mediapipe::AlreadyExistsErrorBuilder(MEDIAPIPE_LOC)
            << "Output side packet \"" << name_ << "\" was already set.";
   }
 
   if (packet.IsEmpty()) {
-    return ::mediapipe::InvalidArgumentErrorBuilder(MEDIAPIPE_LOC)
+    return mediapipe::InvalidArgumentErrorBuilder(MEDIAPIPE_LOC)
            << "Empty packet set on output side packet \"" << name_ << "\".";
   }
 
   if (packet.Timestamp() != Timestamp::Unset()) {
-    return ::mediapipe::InvalidArgumentErrorBuilder(MEDIAPIPE_LOC)
+    return mediapipe::InvalidArgumentErrorBuilder(MEDIAPIPE_LOC)
            << "Output side packet \"" << name_ << "\" has a timestamp "
            << packet.Timestamp().DebugString() << ".";
   }
 
-  ::mediapipe::Status result = packet_type_->Validate(packet);
+  mediapipe::Status result = packet_type_->Validate(packet);
   if (!result.ok()) {
-    return ::mediapipe::StatusBuilder(result, MEDIAPIPE_LOC).SetPrepend()
+    return mediapipe::StatusBuilder(result, MEDIAPIPE_LOC).SetPrepend()
            << absl::StrCat(
                   "Packet type mismatch on calculator output side packet \"",
                   name_, "\": ");
@@ -76,11 +76,11 @@ void OutputSidePacketImpl::AddMirror(
   for (const auto& mirror : mirrors_) {
     mirror.input_side_packet_handler->Set(mirror.id, packet_);
   }
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
 void OutputSidePacketImpl::TriggerErrorCallback(
-    const ::mediapipe::Status& status) const {
+    const mediapipe::Status& status) const {
   CHECK(error_callback_);
   error_callback_(status);
 }

@@ -308,7 +308,7 @@ class TimeSeriesCalculatorTest : public ::testing::Test {
     AppendInputPacket(payload, Timestamp(timestamp), input_tag);
   }
 
-  ::mediapipe::Status RunGraph() { return runner_->Run(); }
+  mediapipe::Status RunGraph() { return runner_->Run(); }
 
   bool HasInputHeader(const size_t input_index = 0) const {
     return input(input_index)

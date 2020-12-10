@@ -27,17 +27,18 @@ message Landmark {
   optional float y = 2;
   optional float z = 3;
 
-  // Landmark visibility. Float score of whether landmark is visible or occluded
-  // by other objects. Landmark considered as invisible also if it is
-  // not present on the screen (out of scene bounds).
-  // Depending on the model, visibility value is either a
+  // Landmark visibility. Should stay unset if not supported.
+  // Float score of whether landmark is visible or occluded by other objects.
+  // Landmark considered as invisible also if it is not present on the screen
+  // (out of scene bounds). Depending on the model, visibility value is either a
   // sigmoid or an argument of sigmoid.
   optional float visibility = 4;
 
-  // Landmark presence. Float score of whether landmark is present on the scene
-  // (located within scene bounds).
-  // Depending on the model, presence value is either a result of sigmoid
-  // or an argument of sigmoid function to get landmark presence probability.
+  // Landmark presence. Should stay unset if not supported.
+  // Float score of whether landmark is present on the scene (located within
+  // scene bounds). Depending on the model, presence value is either a result of
+  // sigmoid or an argument of sigmoid function to get landmark presence
+  // probability.
   optional float presence = 5;
 }
 

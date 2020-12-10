@@ -48,9 +48,16 @@ nav_order: 30
 
 *   Pose detection model:
     [TFLite model](https://github.com/google/mediapipe/tree/master/mediapipe/modules/pose_detection/pose_detection.tflite)
+*   Full-body pose landmark model:
+    [TFLite model](https://github.com/google/mediapipe/tree/master/mediapipe/modules/pose_landmark/pose_landmark_full_body.tflite)
 *   Upper-body pose landmark model:
     [TFLite model](https://github.com/google/mediapipe/tree/master/mediapipe/modules/pose_landmark/pose_landmark_upper_body.tflite)
 *   [Model card](https://mediapipe.page.link/blazepose-mc)
+
+### [Holistic](https://google.github.io/mediapipe/solutions/holistic)
+
+*   Hand recrop model:
+    [TFLite model](https://github.com/google/mediapipe/tree/master/mediapipe/modules/holistic_landmark/hand_recrop.tflite)
 
 ### [Hair Segmentation](https://google.github.io/mediapipe/solutions/hair_segmentation)
 

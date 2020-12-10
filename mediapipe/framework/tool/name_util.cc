@@ -61,7 +61,7 @@ std::string GetUnusedSidePacketName(
   }
   std::string candidate = input_side_packet_name_base;
   int iter = 2;
-  while (::mediapipe::ContainsKey(input_side_packets, candidate)) {
+  while (mediapipe::ContainsKey(input_side_packets, candidate)) {
     candidate = absl::StrCat(input_side_packet_name_base, "_",
                              absl::StrFormat("%02d", iter));
     ++iter;
@@ -116,7 +116,9 @@ std::pair<std::string, int> ParseTagIndexFromStream(const std::string& stream) {
 }
 
 std::string CatTag(const std::string& tag, int index) {
-  return absl::StrCat(tag, index <= 0 ? "" : absl::StrCat(":", index));
+  std::string colon_index =
+      (index <= 0 || tag.empty()) ? "" : absl::StrCat(":", index);
+  return absl::StrCat(tag, colon_index);
 }
 
 std::string CatStream(const std::pair<std::string, int>& tag_index,

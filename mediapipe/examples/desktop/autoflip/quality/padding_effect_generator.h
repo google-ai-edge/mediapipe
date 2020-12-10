@@ -49,7 +49,7 @@ class PaddingEffectGenerator {
   //   the opacity of the black layer.
   // - background_color_in_rgb: If not null, uses this solid color as background
   //   instead of blurring the image, and does not adjust contrast or opacity.
-  ::mediapipe::Status Process(
+  mediapipe::Status Process(
       const ImageFrame& input_frame, const float background_contrast,
       const int blur_cv_size, const float overlay_opacity,
       ImageFrame* output_frame,

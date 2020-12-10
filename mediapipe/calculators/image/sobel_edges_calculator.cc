@@ -27,10 +27,10 @@ namespace mediapipe {
 // See GlSimpleCalculatorBase for inputs, outputs and input side packets.
 class SobelEdgesCalculator : public GlSimpleCalculator {
  public:
-  ::mediapipe::Status GlSetup() override;
-  ::mediapipe::Status GlRender(const GlTexture& src,
-                               const GlTexture& dst) override;
-  ::mediapipe::Status GlTeardown() override;
+  mediapipe::Status GlSetup() override;
+  mediapipe::Status GlRender(const GlTexture& src,
+                             const GlTexture& dst) override;
+  mediapipe::Status GlTeardown() override;
 
  private:
   GLuint program_ = 0;
@@ -40,7 +40,7 @@ class SobelEdgesCalculator : public GlSimpleCalculator {
 };
 REGISTER_CALCULATOR(SobelEdgesCalculator);
 
-::mediapipe::Status SobelEdgesCalculator::GlSetup() {
+mediapipe::Status SobelEdgesCalculator::GlSetup() {
   // Load vertex and fragment shaders
   const GLint attr_location[NUM_ATTRIBUTES] = {
       ATTRIB_VERTEX,
@@ -166,11 +166,11 @@ REGISTER_CALCULATOR(SobelEdgesCalculator);
   frame_ = glGetUniformLocation(program_, "inputImage");
   pixel_w_ = glGetUniformLocation(program_, "pixelW");
   pixel_h_ = glGetUniformLocation(program_, "pixelH");
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status SobelEdgesCalculator::GlRender(const GlTexture& src,
-                                                   const GlTexture& dst) {
+mediapipe::Status SobelEdgesCalculator::GlRender(const GlTexture& src,
+                                                 const GlTexture& dst) {
   static const GLfloat square_vertices[] = {
       -1.0f, -1.0f,  // bottom left
       1.0f,  -1.0f,  // bottom right
@@ -225,15 +225,15 @@ REGISTER_CALCULATOR(SobelEdgesCalculator);
   glDeleteVertexArrays(1, &vao);
   glDeleteBuffers(2, vbo);
 
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status SobelEdgesCalculator::GlTeardown() {
+mediapipe::Status SobelEdgesCalculator::GlTeardown() {
   if (program_) {
     glDeleteProgram(program_);
     program_ = 0;
   }
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
 }  // namespace mediapipe

@@ -20,9 +20,29 @@
 
 namespace mediapipe {
 
+namespace {
+
+inline float Sigmoid(float value) { return 1.0f / (1.0f + std::exp(-value)); }
+
+float ApplyActivation(
+    ::mediapipe::TensorsToLandmarksCalculatorOptions::Activation activation,
+    float value) {
+  switch (activation) {
+    case ::mediapipe::TensorsToLandmarksCalculatorOptions::SIGMOID:
+      return Sigmoid(value);
+      break;
+    default:
+      return value;
+  }
+}
+
+}  // namespace
+
 // A calculator for converting Tensors from regression models into landmarks.
 // Note that if the landmarks in the tensor has more than 5 dimensions, only the
-// first 5 dimensions will be converted to [x,y,z, visibility, presence].
+// first 5 dimensions will be converted to [x,y,z, visibility, presence]. The
+// latter two fields may also stay unset if such attributes are not supported in
+// the model.
 //
 // Input:
 //  TENSORS - Vector of Tensors of type kFloat32. Only the first tensor will be
@@ -67,13 +87,13 @@ namespace mediapipe {
 // }
 class TensorsToLandmarksCalculator : public CalculatorBase {
  public:
-  static ::mediapipe::Status GetContract(CalculatorContract* cc);
+  static mediapipe::Status GetContract(CalculatorContract* cc);
 
-  ::mediapipe::Status Open(CalculatorContext* cc) override;
-  ::mediapipe::Status Process(CalculatorContext* cc) override;
+  mediapipe::Status Open(CalculatorContext* cc) override;
+  mediapipe::Status Process(CalculatorContext* cc) override;
 
  private:
-  ::mediapipe::Status LoadOptions(CalculatorContext* cc);
+  mediapipe::Status LoadOptions(CalculatorContext* cc);
   int num_landmarks_ = 0;
   bool flip_vertically_ = false;
   bool flip_horizontally_ = false;
@@ -82,7 +102,7 @@ class TensorsToLandmarksCalculator : public CalculatorBase {
 };
 REGISTER_CALCULATOR(TensorsToLandmarksCalculator);
 
-::mediapipe::Status TensorsToLandmarksCalculator::GetContract(
+mediapipe::Status TensorsToLandmarksCalculator::GetContract(
     CalculatorContract* cc) {
   RET_CHECK(!cc->Inputs().GetTags().empty());
   RET_CHECK(!cc->Outputs().GetTags().empty());
@@ -115,10 +135,10 @@ REGISTER_CALCULATOR(TensorsToLandmarksCalculator);
     cc->Outputs().Tag("NORM_LANDMARKS").Set<NormalizedLandmarkList>();
   }
 
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status TensorsToLandmarksCalculator::Open(CalculatorContext* cc) {
+mediapipe::Status TensorsToLandmarksCalculator::Open(CalculatorContext* cc) {
   cc->SetOffset(TimestampDiff(0));
 
   MP_RETURN_IF_ERROR(LoadOptions(cc));
@@ -148,11 +168,10 @@ REGISTER_CALCULATOR(TensorsToLandmarksCalculator);
           ? cc->InputSidePackets().Tag("FLIP_VERTICALLY").Get<bool>()
           : options_.flip_vertically();
 
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status TensorsToLandmarksCalculator::Process(
-    CalculatorContext* cc) {
+mediapipe::Status TensorsToLandmarksCalculator::Process(CalculatorContext* cc) {
   // Override values if specified so.
   if (cc->Inputs().HasTag("FLIP_HORIZONTALLY") &&
       !cc->Inputs().Tag("FLIP_HORIZONTALLY").IsEmpty()) {
@@ -164,7 +183,7 @@ REGISTER_CALCULATOR(TensorsToLandmarksCalculator);
   }
 
   if (cc->Inputs().Tag("TENSORS").IsEmpty()) {
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
   const auto& input_tensors =
@@ -200,10 +219,12 @@ REGISTER_CALCULATOR(TensorsToLandmarksCalculator);
       landmark->set_z(raw_landmarks[offset + 2]);
     }
     if (num_dimensions > 3) {
-      landmark->set_visibility(raw_landmarks[offset + 3]);
+      landmark->set_visibility(ApplyActivation(options_.visibility_activation(),
+                                               raw_landmarks[offset + 3]));
     }
     if (num_dimensions > 4) {
-      landmark->set_presence(raw_landmarks[offset + 4]);
+      landmark->set_presence(ApplyActivation(options_.presence_activation(),
+                                             raw_landmarks[offset + 4]));
     }
   }
 
@@ -218,8 +239,12 @@ REGISTER_CALCULATOR(TensorsToLandmarksCalculator);
       // Scale Z coordinate as X + allow additional uniform normalization.
       norm_landmark->set_z(landmark.z() / options_.input_image_width() /
                            options_.normalize_z());
-      norm_landmark->set_visibility(landmark.visibility());
-      norm_landmark->set_presence(landmark.presence());
+      if (landmark.has_visibility()) {  // Set only if supported in the model.
+        norm_landmark->set_visibility(landmark.visibility());
+      }
+      if (landmark.has_presence()) {  // Set only if supported in the model.
+        norm_landmark->set_presence(landmark.presence());
+      }
     }
     cc->Outputs()
         .Tag("NORM_LANDMARKS")
@@ -235,16 +260,16 @@ REGISTER_CALCULATOR(TensorsToLandmarksCalculator);
                        .At(cc->InputTimestamp()));
   }
 
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status TensorsToLandmarksCalculator::LoadOptions(
+mediapipe::Status TensorsToLandmarksCalculator::LoadOptions(
     CalculatorContext* cc) {
   // Get calculator options specified in the graph.
   options_ = cc->Options<::mediapipe::TensorsToLandmarksCalculatorOptions>();
   RET_CHECK(options_.has_num_landmarks());
   num_landmarks_ = options_.num_landmarks();
 
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 }  // namespace mediapipe

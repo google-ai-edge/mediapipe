@@ -24,9 +24,9 @@
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/gpu/gl_calculator_helper.h"
 #include "mediapipe/gpu/shader_util.h"
-#include "mediapipe/graphs/object_detection_3d/calculators/camera_parameters.pb.h"
 #include "mediapipe/graphs/object_detection_3d/calculators/gl_animation_overlay_calculator.pb.h"
 #include "mediapipe/graphs/object_detection_3d/calculators/model_matrix.pb.h"
+#include "mediapipe/modules/objectron/calculators/camera_parameters.pb.h"
 
 namespace mediapipe {
 
@@ -626,7 +626,7 @@ void GlAnimationOverlayCalculator::LoadModelMatrices(
 
 ::mediapipe::Status GlAnimationOverlayCalculator::Process(
     CalculatorContext *cc) {
-  return helper_.RunInGlContext([this, &cc]() -> ::mediapipe::Status {
+  return helper_.RunInGlContext([this, &cc]() -> mediapipe::Status {
     if (!initialized_) {
       MP_RETURN_IF_ERROR(GlSetup());
       initialized_ = true;

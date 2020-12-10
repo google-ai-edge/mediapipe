@@ -25,7 +25,7 @@
 //
 // Example client usage for a StatusOr<T>, where T is not a pointer:
 //
-//  ::mediapipe::StatusOr<float> result = DoBigCalculationThatCouldFail();
+//  mediapipe::StatusOr<float> result = DoBigCalculationThatCouldFail();
 //  if (result.ok()) {
 //    float answer = result.ValueOrDie();
 //    printf("Big calculation yielded: %f", answer);
@@ -35,7 +35,7 @@
 //
 // Example client usage for a StatusOr<T*>:
 //
-//  ::mediapipe::StatusOr<Foo*> result = FooFactory::MakeNewFoo(arg);
+//  mediapipe::StatusOr<Foo*> result = FooFactory::MakeNewFoo(arg);
 //  if (result.ok()) {
 //    std::unique_ptr<Foo> foo(result.ValueOrDie());
 //    foo->DoSomethingCool();
@@ -45,7 +45,7 @@
 //
 // Example client usage for a StatusOr<std::unique_ptr<T>>:
 //
-//  ::mediapipe::StatusOr<std::unique_ptr<Foo>> result =
+//  mediapipe::StatusOr<std::unique_ptr<Foo>> result =
 //    FooFactory::MakeNewFoo(arg);
 //  if (result.ok()) {
 //    std::unique_ptr<Foo> foo = std::move(result.ValueOrDie());
@@ -56,9 +56,9 @@
 //
 // Example factory implementation returning StatusOr<T*>:
 //
-//  ::mediapipe::StatusOr<Foo*> FooFactory::MakeNewFoo(int arg) {
+//  mediapipe::StatusOr<Foo*> FooFactory::MakeNewFoo(int arg) {
 //    if (arg <= 0) {
-//      return ::mediapipe::InvalidArgumentError("Arg must be positive");
+//      return mediapipe::InvalidArgumentError("Arg must be positive");
 //    } else {
 //      return new Foo(arg);
 //    }
@@ -148,11 +148,11 @@ class StatusOr : private internal_statusor::StatusOrData<T>,
   //
   // REQUIRES: !status.ok(). This requirement is DCHECKed.
   // In optimized builds, passing Status::OK() here will have the effect
-  // of passing ::mediapipe::StatusCode::kInternal as a fallback.
-  StatusOr(const ::mediapipe::Status& status);
-  StatusOr& operator=(const ::mediapipe::Status& status);
-  StatusOr(const ::mediapipe::StatusBuilder& builder);
-  StatusOr& operator=(const ::mediapipe::StatusBuilder& builder);
+  // of passing mediapipe::StatusCode::kInternal as a fallback.
+  StatusOr(const mediapipe::Status& status);
+  StatusOr& operator=(const mediapipe::Status& status);
+  StatusOr(const mediapipe::StatusBuilder& builder);
+  StatusOr& operator=(const mediapipe::StatusBuilder& builder);
 
   // TODO: Add operator=(T) overloads.
 
@@ -162,18 +162,18 @@ class StatusOr : private internal_statusor::StatusOrData<T>,
   StatusOr(T&& value);
 
   // RValue versions of the operations declared above.
-  StatusOr(::mediapipe::Status&& status);
-  StatusOr& operator=(::mediapipe::Status&& status);
-  StatusOr(::mediapipe::StatusBuilder&& builder);
-  StatusOr& operator=(::mediapipe::StatusBuilder&& builder);
+  StatusOr(mediapipe::Status&& status);
+  StatusOr& operator=(mediapipe::Status&& status);
+  StatusOr(mediapipe::StatusBuilder&& builder);
+  StatusOr& operator=(mediapipe::StatusBuilder&& builder);
 
   // Returns this->status().ok()
   bool ok() const { return this->status_.ok(); }
 
   // Returns a reference to mediapipe status. If this contains a T, then
   // returns Status::OK().
-  const ::mediapipe::Status& status() const&;
-  ::mediapipe::Status status() &&;
+  const mediapipe::Status& status() const&;
+  mediapipe::Status status() &&;
 
   // Returns a reference to our current value, or CHECK-fails if !this->ok().
   //
@@ -213,48 +213,48 @@ class StatusOr : private internal_statusor::StatusOrData<T>,
 
 template <typename T>
 StatusOr<T>::StatusOr()
-    : Base(::mediapipe::Status(::mediapipe::StatusCode::kUnknown, "")) {}
+    : Base(mediapipe::Status(mediapipe::StatusCode::kUnknown, "")) {}
 
 template <typename T>
 StatusOr<T>::StatusOr(const T& value) : Base(value) {}
 
 template <typename T>
-StatusOr<T>::StatusOr(const ::mediapipe::Status& status) : Base(status) {}
+StatusOr<T>::StatusOr(const mediapipe::Status& status) : Base(status) {}
 
 template <typename T>
-StatusOr<T>::StatusOr(const ::mediapipe::StatusBuilder& builder)
+StatusOr<T>::StatusOr(const mediapipe::StatusBuilder& builder)
     : Base(builder) {}
 
 template <typename T>
-StatusOr<T>& StatusOr<T>::operator=(const ::mediapipe::Status& status) {
+StatusOr<T>& StatusOr<T>::operator=(const mediapipe::Status& status) {
   this->Assign(status);
   return *this;
 }
 
 template <typename T>
-StatusOr<T>& StatusOr<T>::operator=(const ::mediapipe::StatusBuilder& builder) {
-  return *this = static_cast<::mediapipe::Status>(builder);
+StatusOr<T>& StatusOr<T>::operator=(const mediapipe::StatusBuilder& builder) {
+  return *this = static_cast<mediapipe::Status>(builder);
 }
 
 template <typename T>
 StatusOr<T>::StatusOr(T&& value) : Base(std::move(value)) {}
 
 template <typename T>
-StatusOr<T>::StatusOr(::mediapipe::Status&& status) : Base(std::move(status)) {}
+StatusOr<T>::StatusOr(mediapipe::Status&& status) : Base(std::move(status)) {}
 
 template <typename T>
-StatusOr<T>::StatusOr(::mediapipe::StatusBuilder&& builder)
+StatusOr<T>::StatusOr(mediapipe::StatusBuilder&& builder)
     : Base(std::move(builder)) {}
 
 template <typename T>
-StatusOr<T>& StatusOr<T>::operator=(::mediapipe::Status&& status) {
+StatusOr<T>& StatusOr<T>::operator=(mediapipe::Status&& status) {
   this->Assign(std::move(status));
   return *this;
 }
 
 template <typename T>
-StatusOr<T>& StatusOr<T>::operator=(::mediapipe::StatusBuilder&& builder) {
-  return *this = static_cast<::mediapipe::Status>(std::move(builder));
+StatusOr<T>& StatusOr<T>::operator=(mediapipe::StatusBuilder&& builder) {
+  return *this = static_cast<mediapipe::Status>(std::move(builder));
 }
 
 template <typename T>
@@ -289,12 +289,12 @@ inline StatusOr<T>& StatusOr<T>::operator=(StatusOr<U>&& other) {
 }
 
 template <typename T>
-const ::mediapipe::Status& StatusOr<T>::status() const& {
+const mediapipe::Status& StatusOr<T>::status() const& {
   return this->status_;
 }
 template <typename T>
-::mediapipe::Status StatusOr<T>::status() && {
-  return ok() ? ::mediapipe::OkStatus() : std::move(this->status_);
+mediapipe::Status StatusOr<T>::status() && {
+  return ok() ? mediapipe::OkStatus() : std::move(this->status_);
 }
 
 template <typename T>

@@ -37,7 +37,7 @@ ABSL_FLAG(std::vector<std::string>, cols, {"*"},
 ABSL_FLAG(bool, compact, false,
           "if true, then don't print unnecessary whitespace.");
 
-using ::mediapipe::reporter::Reporter;
+using mediapipe::reporter::Reporter;
 
 // The command line utility to mine trace files of useful statistics to
 // determine bottlenecks and performance of a graph.

@@ -120,7 +120,7 @@ TEST_F(TensorFlowSessionFromFrozenGraphCalculatorTest,
 TEST_F(TensorFlowSessionFromFrozenGraphCalculatorTest,
        ProducesPacketUsableByTensorFlowInferenceCalculator) {
   CalculatorGraphConfig config =
-      ::mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(
           absl::Substitute(R"(
       node {
         calculator: "TensorFlowInferenceCalculator"

@@ -81,17 +81,17 @@ class GraphProfilerStub {
   inline void Initialize(const ValidatedGraphConfig& validated_graph_config) {}
   inline void SetClock(const std::shared_ptr<mediapipe::Clock>& clock) {}
   inline void LogEvent(const TraceEvent& event) {}
-  inline ::mediapipe::Status GetCalculatorProfiles(
+  inline mediapipe::Status GetCalculatorProfiles(
       std::vector<CalculatorProfile>*) const {
     return mediapipe::OkStatus();
   }
   inline void Pause() {}
   inline void Resume() {}
   inline void Reset() {}
-  inline ::mediapipe::Status Start(::mediapipe::Executor* executor) {
+  inline mediapipe::Status Start(mediapipe::Executor* executor) {
     return mediapipe::OkStatus();
   }
-  inline ::mediapipe::Status Stop() { return mediapipe::OkStatus(); }
+  inline mediapipe::Status Stop() { return mediapipe::OkStatus(); }
   inline GraphTracer* tracer() { return nullptr; }
   inline std::unique_ptr<GlProfilingHelper> CreateGlProfilingHelper() {
     return nullptr;

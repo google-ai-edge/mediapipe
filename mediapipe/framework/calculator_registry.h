@@ -19,14 +19,14 @@
 
 #include "mediapipe/framework/calculator_base.h"
 
-#define REGISTER_CALCULATOR(name)                                          \
-  REGISTER_FACTORY_FUNCTION_QUALIFIED(::mediapipe::CalculatorBaseRegistry, \
-                                      calculator_registration, name,       \
-                                      absl::make_unique<name>);            \
-  REGISTER_FACTORY_FUNCTION_QUALIFIED(                                     \
-      ::mediapipe::internal::StaticAccessToCalculatorBaseRegistry,         \
-      access_registration, name,                                           \
-      absl::make_unique<                                                   \
-          ::mediapipe::internal::StaticAccessToCalculatorBaseTyped<name>>)
+#define REGISTER_CALCULATOR(name)                                        \
+  REGISTER_FACTORY_FUNCTION_QUALIFIED(mediapipe::CalculatorBaseRegistry, \
+                                      calculator_registration, name,     \
+                                      absl::make_unique<name>);          \
+  REGISTER_FACTORY_FUNCTION_QUALIFIED(                                   \
+      mediapipe::internal::StaticAccessToCalculatorBaseRegistry,         \
+      access_registration, name,                                         \
+      absl::make_unique<                                                 \
+          mediapipe::internal::StaticAccessToCalculatorBaseTyped<name>>)
 
 #endif  // MEDIAPIPE_FRAMEWORK_CALCULATOR_REGISTRY_H_

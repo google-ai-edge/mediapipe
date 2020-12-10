@@ -29,7 +29,7 @@ namespace mediapipe {
 // NormalizedLandmarkList proto object.
 class ConcatenateNormalizedLandmarkListCalculator : public CalculatorBase {
  public:
-  static ::mediapipe::Status GetContract(CalculatorContract* cc) {
+  static mediapipe::Status GetContract(CalculatorContract* cc) {
     RET_CHECK(cc->Inputs().NumEntries() != 0);
     RET_CHECK(cc->Outputs().NumEntries() == 1);
 
@@ -39,21 +39,21 @@ class ConcatenateNormalizedLandmarkListCalculator : public CalculatorBase {
 
     cc->Outputs().Index(0).Set<NormalizedLandmarkList>();
 
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Open(CalculatorContext* cc) override {
+  mediapipe::Status Open(CalculatorContext* cc) override {
     cc->SetOffset(TimestampDiff(0));
     only_emit_if_all_present_ =
         cc->Options<::mediapipe::ConcatenateVectorCalculatorOptions>()
             .only_emit_if_all_present();
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Process(CalculatorContext* cc) override {
+  mediapipe::Status Process(CalculatorContext* cc) override {
     if (only_emit_if_all_present_) {
       for (int i = 0; i < cc->Inputs().NumEntries(); ++i) {
-        if (cc->Inputs().Index(i).IsEmpty()) return ::mediapipe::OkStatus();
+        if (cc->Inputs().Index(i).IsEmpty()) return mediapipe::OkStatus();
       }
     }
 
@@ -69,7 +69,7 @@ class ConcatenateNormalizedLandmarkListCalculator : public CalculatorBase {
     }
     cc->Outputs().Index(0).AddPacket(
         MakePacket<NormalizedLandmarkList>(output).At(cc->InputTimestamp()));
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
  private:

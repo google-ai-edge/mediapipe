@@ -121,7 +121,7 @@ TEST_F(GraphTracerTest, EmptyTrace) {
 
   // Validate the GraphTrace data.
   EXPECT_THAT(GetTrace(),
-              EqualsProto(::mediapipe::ParseTextProtoOrDie<GraphTrace>(R"(
+              EqualsProto(mediapipe::ParseTextProtoOrDie<GraphTrace>(R"(
                 base_time: 0
                 base_timestamp: 0
                 stream_name: ""
@@ -144,7 +144,7 @@ TEST_F(GraphTracerTest, CalculatorTrace) {
 
   // Validate the GraphTrace data.
   EXPECT_THAT(
-      GetTrace(), EqualsProto(::mediapipe::ParseTextProtoOrDie<GraphTrace>(R"(
+      GetTrace(), EqualsProto(mediapipe::ParseTextProtoOrDie<GraphTrace>(R"(
         base_time: 1608911100000000
         base_timestamp: 1608911100000000
         stream_name: ""
@@ -225,7 +225,7 @@ TEST_F(GraphTracerTest, GraphTrace) {
 
   // Validate the GraphTrace data.
   EXPECT_THAT(
-      GetTrace(), EqualsProto(::mediapipe::ParseTextProtoOrDie<GraphTrace>(R"(
+      GetTrace(), EqualsProto(mediapipe::ParseTextProtoOrDie<GraphTrace>(R"(
         base_time: 1608911100000000
         base_timestamp: 1608911100000000
         stream_name: ""
@@ -425,7 +425,7 @@ class GraphTracerE2ETest : public ::testing::Test {
     MP_ASSERT_OK(graph_.SetExecutor("", executor));
   }
 
-  void SetUpRealClock() { clock_ = ::mediapipe::Clock::RealClock(); }
+  void SetUpRealClock() { clock_ = mediapipe::Clock::RealClock(); }
 
   static Packet PacketAt(int64 ts) {
     return Adopt(new int64(999)).At(Timestamp(ts));
@@ -475,19 +475,19 @@ class GraphTracerE2ETest : public ::testing::Test {
   }
 
   // A Calculator::Process callback function.
-  typedef std::function<::mediapipe::Status(const InputStreamShardSet&,
-                                            OutputStreamShardSet*)>
+  typedef std::function<mediapipe::Status(const InputStreamShardSet&,
+                                          OutputStreamShardSet*)>
       ProcessFunction;
 
   // A testing callback function that passes through all packets.
-  ::mediapipe::Status PassThrough(const InputStreamShardSet& inputs,
-                                  OutputStreamShardSet* outputs) {
+  mediapipe::Status PassThrough(const InputStreamShardSet& inputs,
+                                OutputStreamShardSet* outputs) {
     for (int i = 0; i < inputs.NumEntries(); ++i) {
       if (!inputs.Index(i).Value().IsEmpty()) {
         outputs->Index(i).AddPacket(inputs.Index(i).Value());
       }
     }
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
   void RunPassThroughGraph() {
@@ -511,7 +511,7 @@ class GraphTracerE2ETest : public ::testing::Test {
     MP_ASSERT_OK(
         graph_.ObserveOutputStream("output_0", [&](const Packet& packet) {
           out_packets.push_back(packet);
-          return ::mediapipe::OkStatus();
+          return mediapipe::OkStatus();
         }));
     simulation_clock_->ThreadStart();
     MP_ASSERT_OK(graph_.StartRun({}));
@@ -557,7 +557,7 @@ class GraphTracerE2ETest : public ::testing::Test {
         clock_->Sleep(absl::Microseconds(packets.front().first));
         outputs->Index(0).AddPacket(packets.front().second);
         packets.erase(packets.begin());
-        return ::mediapipe::OkStatus();
+        return mediapipe::OkStatus();
       }
       return tool::StatusStop();
     };
@@ -580,7 +580,7 @@ class GraphTracerE2ETest : public ::testing::Test {
     MP_ASSERT_OK(graph_.ObserveOutputStream("output_packets_0",
                                             [&](const Packet& packet) {
                                               out_packets.push_back(packet);
-                                              return ::mediapipe::OkStatus();
+                                              return mediapipe::OkStatus();
                                             }));
     simulation_clock_->ThreadStart();
     MP_ASSERT_OK(graph_.StartRun({}));
@@ -597,7 +597,7 @@ class GraphTracerE2ETest : public ::testing::Test {
 
   CalculatorGraphConfig graph_config_;
   CalculatorGraph graph_;
-  ::mediapipe::Clock* clock_;
+  mediapipe::Clock* clock_;
   std::shared_ptr<SimulationClock> simulation_clock_;
 };
 
@@ -628,7 +628,7 @@ TEST_F(GraphTracerE2ETest, PassThroughGraphProfile) {
   MP_EXPECT_OK(graph_.profiler()->GetCalculatorProfiles(&profiles));
   EXPECT_EQ(1, profiles.size());
   CalculatorProfile expected =
-      ::mediapipe::ParseTextProtoOrDie<CalculatorProfile>(R"(
+      mediapipe::ParseTextProtoOrDie<CalculatorProfile>(R"(
         name: "LambdaCalculator"
         open_runtime: 0
         close_runtime: 0
@@ -658,7 +658,7 @@ TEST_F(GraphTracerE2ETest, DemuxGraphLog) {
                                       absl::InfiniteFuture(), &trace);
   GraphTrace node_timestamps = NodeTimestamps(trace);
   EXPECT_THAT(node_timestamps,
-              EqualsProto(::mediapipe::ParseTextProtoOrDie<GraphTrace>(R"(
+              EqualsProto(mediapipe::ParseTextProtoOrDie<GraphTrace>(R"(
                 calculator_trace { node_id: 1 input_timestamp: 10000 }
                 calculator_trace { node_id: 2 input_timestamp: 10000 }
                 calculator_trace { node_id: 3 input_timestamp: 10000 }
@@ -801,7 +801,9 @@ TEST_F(GraphTracerE2ETest, DemuxGraphLog) {
                 calculator_trace { node_id: 5 input_timestamp: 10000 }
                 calculator_trace { node_id: 5 input_timestamp: 10000 }
                 calculator_trace { node_id: 1 input_timestamp: 50001 }
-                calculator_trace { node_id: 1 input_timestamp: 10000 })")));
+                calculator_trace { node_id: 1 input_timestamp: 10000 }
+                calculator_trace { node_id: 1 input_timestamp: 10000 }
+              )")));
 
   // Validate a one-timestamp slice of the event trace.
   GraphTrace trace_2;
@@ -812,7 +814,7 @@ TEST_F(GraphTracerE2ETest, DemuxGraphLog) {
   StripDataIds(&trace_2);
   EXPECT_THAT(
       trace_2,
-      EqualsProto(::mediapipe::ParseTextProtoOrDie<GraphTrace>(
+      EqualsProto(mediapipe::ParseTextProtoOrDie<GraphTrace>(
           R"(
             base_time: 1544086800000000
             base_timestamp: 10000
@@ -986,14 +988,14 @@ TEST_F(GraphTracerE2ETest, DemuxGraphLog) {
 }
 
 // Read a GraphProfile from a file path.
-::mediapipe::Status ReadGraphProfile(const std::string& path,
-                                     GraphProfile* profile) {
+mediapipe::Status ReadGraphProfile(const std::string& path,
+                                   GraphProfile* profile) {
   std::ifstream ifs;
   ifs.open(path);
   proto_ns::io::IstreamInputStream in_stream(&ifs);
   profile->ParseFromZeroCopyStream(&in_stream);
-  return ifs.is_open() ? ::mediapipe::OkStatus()
-                       : ::mediapipe::UnavailableError("Cannot open");
+  return ifs.is_open() ? mediapipe::OkStatus()
+                       : mediapipe::UnavailableError("Cannot open");
 }
 
 TEST_F(GraphTracerE2ETest, DemuxGraphLogFile) {
@@ -1005,7 +1007,7 @@ TEST_F(GraphTracerE2ETest, DemuxGraphLogFile) {
   GraphProfile profile;
   MP_EXPECT_OK(
       ReadGraphProfile(absl::StrCat(log_path, 0, ".binarypb"), &profile));
-  EXPECT_EQ(111, profile.graph_trace(0).calculator_trace().size());
+  EXPECT_EQ(112, profile.graph_trace(0).calculator_trace().size());
 }
 
 TEST_F(GraphTracerE2ETest, DemuxGraphLogFiles) {
@@ -1034,7 +1036,7 @@ TEST_F(GraphTracerE2ETest, DemuxGraphLogFiles) {
   // The expected counts of calculator_trace records in each of the log files.
   // The processing spans three 12.5ms log files, because
   // RunDemuxInFlightGraph adds packets over 30ms.
-  std::vector<int> expected = {49, 64, 11};
+  std::vector<int> expected = {49, 64, 12};
   EXPECT_EQ(event_counts, expected);
   GraphProfile& profile_2 = graph_profiles[2];
   profile_2.clear_calculator_profiles();
@@ -1044,7 +1046,7 @@ TEST_F(GraphTracerE2ETest, DemuxGraphLogFiles) {
     StripDataIds(&trace);
   }
   EXPECT_THAT(profile_2,
-              EqualsProto(::mediapipe::ParseTextProtoOrDie<GraphProfile>(R"(
+              EqualsProto(mediapipe::ParseTextProtoOrDie<GraphProfile>(R"(
                 graph_trace {
                   base_time: 1544086800000000
                   base_timestamp: 0
@@ -1144,6 +1146,11 @@ TEST_F(GraphTracerE2ETest, DemuxGraphLogFiles) {
                       packet_timestamp: 50001
                       stream_id: 7
                     }
+                  }
+                  calculator_trace {
+                    node_id: 1
+                    event_type: READY_FOR_PROCESS
+                    start_time: 70004
                   }
                   calculator_trace {
                     node_id: 1
@@ -1286,7 +1293,7 @@ TEST_F(GraphTracerE2ETest, GpuTaskTrace) {
                       &trace_1);
   EXPECT_THAT(
       trace_1,
-      EqualsProto(::mediapipe::ParseTextProtoOrDie<GraphTrace>(
+      EqualsProto(mediapipe::ParseTextProtoOrDie<GraphTrace>(
           R"(
             base_time: 1100
             base_timestamp: 1000
@@ -1323,7 +1330,7 @@ TEST_F(GraphTracerE2ETest, GpuTaskTrace) {
                     &trace_2);
   EXPECT_THAT(
       trace_2,
-      EqualsProto(::mediapipe::ParseTextProtoOrDie<GraphTrace>(
+      EqualsProto(mediapipe::ParseTextProtoOrDie<GraphTrace>(
           R"(
             base_time: 1100
             base_timestamp: 1000

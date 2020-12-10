@@ -42,30 +42,30 @@ namespace mediapipe {
 // }
 class MatrixToVectorCalculator : public CalculatorBase {
  public:
-  static ::mediapipe::Status GetContract(CalculatorContract* cc) {
+  static mediapipe::Status GetContract(CalculatorContract* cc) {
     cc->Inputs().Index(0).Set<Matrix>(
         // Input Packet containing a Matrix.
     );
     cc->Outputs().Index(0).Set<std::vector<float>>(
         // Output Packet containing a vector, one for each input Packet.
     );
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Open(CalculatorContext* cc) override;
+  mediapipe::Status Open(CalculatorContext* cc) override;
 
   // Outputs a packet containing a vector for each input packet.
-  ::mediapipe::Status Process(CalculatorContext* cc) override;
+  mediapipe::Status Process(CalculatorContext* cc) override;
 };
 REGISTER_CALCULATOR(MatrixToVectorCalculator);
 
-::mediapipe::Status MatrixToVectorCalculator::Open(CalculatorContext* cc) {
+mediapipe::Status MatrixToVectorCalculator::Open(CalculatorContext* cc) {
   // Inform the framework that we don't alter timestamps.
   cc->SetOffset(mediapipe::TimestampDiff(0));
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status MatrixToVectorCalculator::Process(CalculatorContext* cc) {
+mediapipe::Status MatrixToVectorCalculator::Process(CalculatorContext* cc) {
   const Matrix& input = cc->Inputs().Index(0).Get<Matrix>();
   auto output = absl::make_unique<std::vector<float>>();
 
@@ -77,7 +77,7 @@ REGISTER_CALCULATOR(MatrixToVectorCalculator);
   output_as_matrix = input;
 
   cc->Outputs().Index(0).Add(output.release(), cc->InputTimestamp());
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
 }  // namespace mediapipe

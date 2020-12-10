@@ -23,7 +23,7 @@ std::ostream& operator<<(std::ostream& os, const Status& x) {
   return os;
 }
 
-std::string* MediaPipeCheckOpHelperOutOfLine(const ::mediapipe::Status& v,
+std::string* MediaPipeCheckOpHelperOutOfLine(const mediapipe::Status& v,
                                              const char* msg) {
   std::string r("Non-OK-status: ");
   r += msg;

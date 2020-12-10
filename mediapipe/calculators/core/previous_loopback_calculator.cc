@@ -53,7 +53,7 @@ namespace mediapipe {
 // }
 class PreviousLoopbackCalculator : public CalculatorBase {
  public:
-  static ::mediapipe::Status GetContract(CalculatorContract* cc) {
+  static mediapipe::Status GetContract(CalculatorContract* cc) {
     cc->Inputs().Get("MAIN", 0).SetAny();
     cc->Inputs().Get("LOOP", 0).SetAny();
     cc->Outputs().Get("PREV_LOOP", 0).SetSameAs(&(cc->Inputs().Get("LOOP", 0)));
@@ -63,20 +63,20 @@ class PreviousLoopbackCalculator : public CalculatorBase {
     // Process() function is invoked in response to MAIN/LOOP stream timestamp
     // bound updates.
     cc->SetProcessTimestampBounds(true);
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Open(CalculatorContext* cc) final {
+  mediapipe::Status Open(CalculatorContext* cc) final {
     main_id_ = cc->Inputs().GetId("MAIN", 0);
     loop_id_ = cc->Inputs().GetId("LOOP", 0);
     prev_loop_id_ = cc->Outputs().GetId("PREV_LOOP", 0);
     cc->Outputs()
         .Get(prev_loop_id_)
         .SetHeader(cc->Inputs().Get(loop_id_).Header());
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Process(CalculatorContext* cc) final {
+  mediapipe::Status Process(CalculatorContext* cc) final {
     // Non-empty packets and empty packets indicating timestamp bound updates
     // are guaranteed to have timestamps greater than timestamps of previous
     // packets within the same stream. Calculator tracks and operates on such
@@ -139,7 +139,7 @@ class PreviousLoopbackCalculator : public CalculatorBase {
       }
     }
 
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
  private:

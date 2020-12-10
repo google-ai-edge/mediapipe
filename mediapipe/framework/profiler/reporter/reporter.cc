@@ -297,7 +297,7 @@ void Reporter::Accumulate(const mediapipe::GraphProfile& profile) {
   }
 }
 
-::mediapipe::Status Reporter::set_columns(
+mediapipe::Status Reporter::set_columns(
     const std::vector<std::string>& columns) {
   bool error = false;
   std::stringstream warnings;
@@ -337,9 +337,9 @@ void Reporter::Accumulate(const mediapipe::GraphProfile& profile) {
     columns_.swap(new_columns);
   }
   if (!error) {
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
-  return ::mediapipe::InvalidArgumentError(warnings.str());
+  return mediapipe::InvalidArgumentError(warnings.str());
 }
 
 class ReportImpl : public Report {

@@ -284,7 +284,7 @@ void CalculatorGraphSubmodule(pybind11::module* module) {
     graph.close()
 
 )doc",
-      py::arg("input_side_packets") = (py::dict){});
+      py::arg("input_side_packets") = py::dict());
 
   calculator_graph.def(
       "wait_until_done",
@@ -376,7 +376,7 @@ void CalculatorGraphSubmodule(pybind11::module* module) {
   calculator_graph.def(
       "get_combined_error_message",
       [](CalculatorGraph* self) {
-        ::mediapipe::Status error_status;
+        mediapipe::Status error_status;
         if (self->GetCombinedErrors(&error_status) && !error_status.ok()) {
           return error_status.ToString();
         }

@@ -24,13 +24,13 @@ namespace mediapipe {
 
 using SyncSet = InputStreamHandler::SyncSet;
 
-::mediapipe::Status InputStreamHandler::InitializeInputStreamManagers(
+mediapipe::Status InputStreamHandler::InitializeInputStreamManagers(
     InputStreamManager* flat_input_stream_managers) {
   for (CollectionItemId id = input_stream_managers_.BeginId();
        id < input_stream_managers_.EndId(); ++id) {
     input_stream_managers_.Get(id) = &flat_input_stream_managers[id.value()];
   }
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
 InputStreamManager* InputStreamHandler::GetInputStreamManager(
@@ -38,7 +38,7 @@ InputStreamManager* InputStreamHandler::GetInputStreamManager(
   return input_stream_managers_.Get(id);
 }
 
-::mediapipe::Status InputStreamHandler::SetupInputShards(
+mediapipe::Status InputStreamHandler::SetupInputShards(
     InputStreamShardSet* input_shards) {
   RET_CHECK(input_shards);
   for (CollectionItemId id = input_stream_managers_.BeginId();
@@ -48,7 +48,7 @@ InputStreamManager* InputStreamHandler::GetInputStreamManager(
     input_shards->Get(id).SetName(&manager->Name());
     input_shards->Get(id).SetHeader(manager->Header());
   }
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
 std::vector<std::pair<std::string, int>>
@@ -68,7 +68,7 @@ void InputStreamHandler::PrepareForRun(
     std::function<void()> headers_ready_callback,
     std::function<void()> notification_callback,
     std::function<void(CalculatorContext*)> schedule_callback,
-    std::function<void(::mediapipe::Status)> error_callback) {
+    std::function<void(mediapipe::Status)> error_callback) {
   headers_ready_callback_ = std::move(headers_ready_callback);
   notification_ = std::move(notification_callback);
   schedule_callback_ = std::move(schedule_callback);
@@ -94,8 +94,7 @@ void InputStreamHandler::SetQueueSizeCallbacks(
 }
 
 void InputStreamHandler::SetHeader(CollectionItemId id, const Packet& header) {
-  ::mediapipe::Status result =
-      input_stream_managers_.Get(id)->SetHeader(header);
+  mediapipe::Status result = input_stream_managers_.Get(id)->SetHeader(header);
   if (!result.ok()) {
     error_callback_(result);
     return;
@@ -175,9 +174,9 @@ bool InputStreamHandler::ScheduleInvocations(int max_allowance,
       }
       CalculatorContext* default_context =
           calculator_context_manager_->GetDefaultCalculatorContext();
-      ::mediapipe::LogEvent(default_context->GetProfilingContext(),
-                            TraceEvent(TraceEvent::NOT_READY)
-                                .set_node_id(default_context->NodeId()));
+      mediapipe::LogEvent(default_context->GetProfilingContext(),
+                          TraceEvent(TraceEvent::NOT_READY)
+                              .set_node_id(default_context->NodeId()));
       break;
     } else if (node_readiness == NodeReadiness::kReadyForProcess) {
       CalculatorContext* calculator_context =
@@ -193,9 +192,9 @@ bool InputStreamHandler::ScheduleInvocations(int max_allowance,
         schedule_callback_(calculator_context);
         ++invocations_scheduled;
       }
-      ::mediapipe::LogEvent(calculator_context->GetProfilingContext(),
-                            TraceEvent(TraceEvent::READY_FOR_PROCESS)
-                                .set_node_id(calculator_context->NodeId()));
+      mediapipe::LogEvent(calculator_context->GetProfilingContext(),
+                          TraceEvent(TraceEvent::READY_FOR_PROCESS)
+                              .set_node_id(calculator_context->NodeId()));
     } else {
       CHECK(node_readiness == NodeReadiness::kReadyForClose);
       // If any parallel invocations are in progress or a calculator context has
@@ -214,9 +213,9 @@ bool InputStreamHandler::ScheduleInvocations(int max_allowance,
       schedule_callback_(default_context);
       ++invocations_scheduled;
       prepared_context_for_close_ = true;
-      ::mediapipe::LogEvent(default_context->GetProfilingContext(),
-                            TraceEvent(TraceEvent::READY_FOR_CLOSE)
-                                .set_node_id(default_context->NodeId()));
+      mediapipe::LogEvent(default_context->GetProfilingContext(),
+                          TraceEvent(TraceEvent::READY_FOR_CLOSE)
+                              .set_node_id(default_context->NodeId()));
       break;
     }
   }
@@ -246,12 +245,12 @@ void LogQueuedPackets(CalculatorContext* context, InputStreamManager* stream,
                            .set_input_ts(queue_tail.Timestamp())
                            .set_stream_id(&stream->Name())
                            .set_event_data(stream->QueueSize() + 1);
-    ::mediapipe::LogEvent(context->GetProfilingContext(),
-                          event.set_packet_ts(queue_tail.Timestamp()));
+    mediapipe::LogEvent(context->GetProfilingContext(),
+                        event.set_packet_ts(queue_tail.Timestamp()));
     Packet queue_head = stream->QueueHead();
     if (!queue_head.IsEmpty()) {
-      ::mediapipe::LogEvent(context->GetProfilingContext(),
-                            event.set_packet_ts(queue_head.Timestamp()));
+      mediapipe::LogEvent(context->GetProfilingContext(),
+                          event.set_packet_ts(queue_head.Timestamp()));
     }
   }
 }
@@ -261,7 +260,7 @@ void InputStreamHandler::AddPackets(CollectionItemId id,
   LogQueuedPackets(GetCalculatorContext(calculator_context_manager_),
                    input_stream_managers_.Get(id), packets.back());
   bool notify = false;
-  ::mediapipe::Status result =
+  mediapipe::Status result =
       input_stream_managers_.Get(id)->AddPackets(packets, &notify);
   if (!result.ok()) {
     error_callback_(result);
@@ -276,7 +275,7 @@ void InputStreamHandler::MovePackets(CollectionItemId id,
   LogQueuedPackets(GetCalculatorContext(calculator_context_manager_),
                    input_stream_managers_.Get(id), packets->back());
   bool notify = false;
-  ::mediapipe::Status result =
+  mediapipe::Status result =
       input_stream_managers_.Get(id)->MovePackets(packets, &notify);
   if (!result.ok()) {
     error_callback_(result);
@@ -289,7 +288,7 @@ void InputStreamHandler::MovePackets(CollectionItemId id,
 void InputStreamHandler::SetNextTimestampBound(CollectionItemId id,
                                                Timestamp bound) {
   bool notify = false;
-  ::mediapipe::Status result =
+  mediapipe::Status result =
       input_stream_managers_.Get(id)->SetNextTimestampBound(bound, &notify);
   if (!result.ok()) {
     error_callback_(result);

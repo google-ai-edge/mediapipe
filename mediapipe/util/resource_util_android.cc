@@ -24,14 +24,13 @@
 namespace mediapipe {
 
 namespace {
-::mediapipe::StatusOr<std::string> PathToResourceAsFileInternal(
+mediapipe::StatusOr<std::string> PathToResourceAsFileInternal(
     const std::string& path) {
   return Singleton<AssetManager>::get()->CachedFileFromAsset(path);
 }
 }  // namespace
 
-::mediapipe::StatusOr<std::string> PathToResourceAsFile(
-    const std::string& path) {
+mediapipe::StatusOr<std::string> PathToResourceAsFile(const std::string& path) {
   // Return full path.
   if (absl::StartsWith(path, "/")) {
     return path;
@@ -57,8 +56,8 @@ namespace {
   }
 }
 
-::mediapipe::Status GetResourceContents(const std::string& path,
-                                        std::string* output) {
+mediapipe::Status GetResourceContents(const std::string& path,
+                                      std::string* output) {
   if (absl::StartsWith(path, "/")) {
     return file::GetContents(path, output, file::Defaults());
   }
@@ -66,12 +65,12 @@ namespace {
   if (absl::StartsWith(path, "content://")) {
     MP_RETURN_IF_ERROR(
         Singleton<AssetManager>::get()->ReadContentUri(path, output));
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
   RET_CHECK(Singleton<AssetManager>::get()->ReadFile(path, output))
       << "could not read asset: " << path;
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
 }  // namespace mediapipe

@@ -27,7 +27,7 @@ namespace mediapipe {
 namespace {
 class DoNothingGenerator : public PacketGenerator {
  public:
-  static ::mediapipe::Status FillExpectations(
+  static mediapipe::Status FillExpectations(
       const PacketGeneratorOptions& extendable_options,
       PacketTypeSet* input_side_packets, PacketTypeSet* output_side_packets) {
     for (CollectionItemId id = input_side_packets->BeginId();
@@ -38,17 +38,17 @@ class DoNothingGenerator : public PacketGenerator {
          id < output_side_packets->EndId(); ++id) {
       output_side_packets->Get(id).Set<bool>();
     }
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  static ::mediapipe::Status Generate(
+  static mediapipe::Status Generate(
       const PacketGeneratorOptions& extendable_options,
       const PacketSet& input_side_packets, PacketSet* output_side_packets) {
     for (CollectionItemId id = output_side_packets->BeginId();
          id < output_side_packets->EndId(); ++id) {
       output_side_packets->Get(id) = MakePacket<bool>(true);
     }
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 };
 

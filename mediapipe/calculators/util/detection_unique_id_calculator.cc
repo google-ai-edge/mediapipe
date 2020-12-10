@@ -44,7 +44,7 @@ inline int GetNextDetectionId() { return ++detection_id; }
 // }
 class DetectionUniqueIdCalculator : public CalculatorBase {
  public:
-  static ::mediapipe::Status GetContract(CalculatorContract* cc) {
+  static mediapipe::Status GetContract(CalculatorContract* cc) {
     RET_CHECK(cc->Inputs().HasTag(kDetectionListTag) ||
               cc->Inputs().HasTag(kDetectionsTag))
         << "None of the input streams are provided.";
@@ -60,19 +60,18 @@ class DetectionUniqueIdCalculator : public CalculatorBase {
       cc->Outputs().Tag(kDetectionsTag).Set<std::vector<Detection>>();
     }
 
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Open(CalculatorContext* cc) override {
-    cc->SetOffset(::mediapipe::TimestampDiff(0));
-    return ::mediapipe::OkStatus();
+  mediapipe::Status Open(CalculatorContext* cc) override {
+    cc->SetOffset(mediapipe::TimestampDiff(0));
+    return mediapipe::OkStatus();
   }
-  ::mediapipe::Status Process(CalculatorContext* cc) override;
+  mediapipe::Status Process(CalculatorContext* cc) override;
 };
 REGISTER_CALCULATOR(DetectionUniqueIdCalculator);
 
-::mediapipe::Status DetectionUniqueIdCalculator::Process(
-    CalculatorContext* cc) {
+mediapipe::Status DetectionUniqueIdCalculator::Process(CalculatorContext* cc) {
   if (cc->Inputs().HasTag(kDetectionListTag) &&
       !cc->Inputs().Tag(kDetectionListTag).IsEmpty()) {
     auto result =
@@ -104,7 +103,7 @@ REGISTER_CALCULATOR(DetectionUniqueIdCalculator);
           .Add(detections.release(), cc->InputTimestamp());
     }
   }
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
 }  // namespace mediapipe

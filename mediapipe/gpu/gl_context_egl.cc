@@ -94,7 +94,12 @@ GlContext::StatusOrGlContext GlContext::Create(EGLContext share_context,
       EGL_RENDERABLE_TYPE, gl_version == 3 ? EGL_OPENGL_ES3_BIT_KHR
                                            : EGL_OPENGL_ES2_BIT,
       // Allow rendering to pixel buffers or directly to windows.
-      EGL_SURFACE_TYPE, EGL_PBUFFER_BIT | EGL_WINDOW_BIT,
+      EGL_SURFACE_TYPE,
+#ifdef MEDIAPIPE_OMIT_EGL_WINDOW_BIT
+      EGL_PBUFFER_BIT,
+#else
+      EGL_PBUFFER_BIT | EGL_WINDOW_BIT,
+#endif
       EGL_RED_SIZE, 8,
       EGL_GREEN_SIZE, 8,
       EGL_BLUE_SIZE, 8,
@@ -114,7 +119,7 @@ GlContext::StatusOrGlContext GlContext::Create(EGLContext share_context,
            << eglGetError();
   }
   if (!num_configs) {
-    return ::mediapipe::UnknownErrorBuilder(MEDIAPIPE_LOC)
+    return mediapipe::UnknownErrorBuilder(MEDIAPIPE_LOC)
            << "eglChooseConfig() returned no matching EGL configuration for "
            << "RGBA8888 D16 ES" << gl_version << " request. ";
   }

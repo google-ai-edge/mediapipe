@@ -36,7 +36,7 @@ namespace autoflip {
 // magenta, logos are red, ocrs are yellow (foreground) and light yellow
 // (background), brain objects are cyan, ica objects are orange, and the rest
 // are white.
-::mediapipe::Status DrawDetectionsAndCropRegions(
+mediapipe::Status DrawDetectionsAndCropRegions(
     const std::vector<cv::Mat>& scene_frames,
     const std::vector<bool>& is_key_frames,
     const std::vector<KeyFrameInfo>& key_frame_infos,
@@ -47,7 +47,7 @@ namespace autoflip {
 // Draws the focus point from the given FocusPointFrame and the crop window
 // centered around it on the scene frame in red. This helps visualize the input
 // to the retargeter.
-::mediapipe::Status DrawFocusPointAndCropWindow(
+mediapipe::Status DrawFocusPointAndCropWindow(
     const std::vector<cv::Mat>& scene_frames,
     const std::vector<FocusPointFrame>& focus_point_frames,
     const float overlay_opacity, const int crop_window_width,
@@ -57,7 +57,7 @@ namespace autoflip {
 
 // Draws the final smoothed path of the camera retargeter by darkening the
 // removed areas.
-::mediapipe::Status DrawDetectionAndFramingWindow(
+mediapipe::Status DrawDetectionAndFramingWindow(
     const std::vector<cv::Mat>& org_scene_frames,
     const std::vector<cv::Rect>& crop_from_locations,
     const ImageFormat::Format image_format, const float overlay_opacity,

@@ -48,18 +48,17 @@ namespace mediapipe {
 // TODO: support decoding multiple streams.
 class AudioDecoderCalculator : public CalculatorBase {
  public:
-  static ::mediapipe::Status GetContract(CalculatorContract* cc);
+  static mediapipe::Status GetContract(CalculatorContract* cc);
 
-  ::mediapipe::Status Open(CalculatorContext* cc) override;
-  ::mediapipe::Status Process(CalculatorContext* cc) override;
-  ::mediapipe::Status Close(CalculatorContext* cc) override;
+  mediapipe::Status Open(CalculatorContext* cc) override;
+  mediapipe::Status Process(CalculatorContext* cc) override;
+  mediapipe::Status Close(CalculatorContext* cc) override;
 
  private:
   std::unique_ptr<AudioDecoder> decoder_;
 };
 
-::mediapipe::Status AudioDecoderCalculator::GetContract(
-    CalculatorContract* cc) {
+mediapipe::Status AudioDecoderCalculator::GetContract(CalculatorContract* cc) {
   cc->InputSidePackets().Tag("INPUT_FILE_PATH").Set<std::string>();
   if (cc->InputSidePackets().HasTag("OPTIONS")) {
     cc->InputSidePackets().Tag("OPTIONS").Set<mediapipe::AudioDecoderOptions>();
@@ -68,10 +67,10 @@ class AudioDecoderCalculator : public CalculatorBase {
   if (cc->Outputs().HasTag("AUDIO_HEADER")) {
     cc->Outputs().Tag("AUDIO_HEADER").SetNone();
   }
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status AudioDecoderCalculator::Open(CalculatorContext* cc) {
+mediapipe::Status AudioDecoderCalculator::Open(CalculatorContext* cc) {
   const std::string& input_file_path =
       cc->InputSidePackets().Tag("INPUT_FILE_PATH").Get<std::string>();
   const auto& decoder_options =
@@ -88,10 +87,10 @@ class AudioDecoderCalculator : public CalculatorBase {
     cc->Outputs().Tag("AUDIO_HEADER").SetHeader(Adopt(header.release()));
   }
   cc->Outputs().Tag("AUDIO_HEADER").Close();
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status AudioDecoderCalculator::Process(CalculatorContext* cc) {
+mediapipe::Status AudioDecoderCalculator::Process(CalculatorContext* cc) {
   Packet data;
   int options_index = -1;
   auto status = decoder_->GetData(&options_index, &data);
@@ -101,7 +100,7 @@ class AudioDecoderCalculator : public CalculatorBase {
   return status;
 }
 
-::mediapipe::Status AudioDecoderCalculator::Close(CalculatorContext* cc) {
+mediapipe::Status AudioDecoderCalculator::Close(CalculatorContext* cc) {
   return decoder_->Close();
 }
 

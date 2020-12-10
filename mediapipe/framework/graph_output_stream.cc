@@ -18,7 +18,7 @@ namespace mediapipe {
 
 namespace internal {
 
-::mediapipe::Status GraphOutputStream::Initialize(
+mediapipe::Status GraphOutputStream::Initialize(
     const std::string& stream_name, const PacketType* packet_type,
     OutputStreamManager* output_stream_manager) {
   RET_CHECK(output_stream_manager);
@@ -38,20 +38,20 @@ namespace internal {
   MP_RETURN_IF_ERROR(input_stream_handler_->InitializeInputStreamManagers(
       input_stream_.get()));
   output_stream_manager->AddMirror(input_stream_handler_.get(), id);
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
 void GraphOutputStream::PrepareForRun(
     std::function<void()> notification_callback,
-    std::function<void(::mediapipe::Status)> error_callback) {
+    std::function<void(mediapipe::Status)> error_callback) {
   input_stream_handler_->PrepareForRun(
       /*headers_ready_callback=*/[] {}, std::move(notification_callback),
       /*schedule_callback=*/nullptr, std::move(error_callback));
 }
 
-::mediapipe::Status OutputStreamObserver::Initialize(
+mediapipe::Status OutputStreamObserver::Initialize(
     const std::string& stream_name, const PacketType* packet_type,
-    std::function<::mediapipe::Status(const Packet&)> packet_callback,
+    std::function<mediapipe::Status(const Packet&)> packet_callback,
     OutputStreamManager* output_stream_manager) {
   RET_CHECK(output_stream_manager);
 
@@ -60,7 +60,7 @@ void GraphOutputStream::PrepareForRun(
                                        output_stream_manager);
 }
 
-::mediapipe::Status OutputStreamObserver::Notify() {
+mediapipe::Status OutputStreamObserver::Notify() {
   while (true) {
     bool empty;
     Timestamp min_timestamp = input_stream_->MinTimestampOrBound(&empty);
@@ -76,10 +76,10 @@ void GraphOutputStream::PrepareForRun(
                             num_packets_dropped, input_stream_->Name());
     MP_RETURN_IF_ERROR(packet_callback_(packet));
   }
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status OutputStreamPollerImpl::Initialize(
+mediapipe::Status OutputStreamPollerImpl::Initialize(
     const std::string& stream_name, const PacketType* packet_type,
     std::function<void(InputStreamManager*, bool*)> queue_size_callback,
     OutputStreamManager* output_stream_manager) {
@@ -87,12 +87,12 @@ void GraphOutputStream::PrepareForRun(
                                                    output_stream_manager));
   input_stream_handler_->SetQueueSizeCallbacks(queue_size_callback,
                                                queue_size_callback);
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
 void OutputStreamPollerImpl::PrepareForRun(
     std::function<void()> notification_callback,
-    std::function<void(::mediapipe::Status)> error_callback) {
+    std::function<void(mediapipe::Status)> error_callback) {
   input_stream_handler_->PrepareForRun(
       /*headers_ready_callback=*/[] {}, std::move(notification_callback),
       /*schedule_callback=*/nullptr, std::move(error_callback));
@@ -116,11 +116,11 @@ void OutputStreamPollerImpl::SetMaxQueueSize(int queue_size) {
 
 int OutputStreamPollerImpl::QueueSize() { return input_stream_->QueueSize(); }
 
-::mediapipe::Status OutputStreamPollerImpl::Notify() {
+mediapipe::Status OutputStreamPollerImpl::Notify() {
   mutex_.Lock();
   handler_condvar_.Signal();
   mutex_.Unlock();
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
 void OutputStreamPollerImpl::NotifyError() {

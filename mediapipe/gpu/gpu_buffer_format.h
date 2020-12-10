@@ -17,6 +17,9 @@
 
 #ifdef __APPLE__
 #include <CoreVideo/CoreVideo.h>
+#if !TARGET_OS_OSX
+#define MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER 1
+#endif  // TARGET_OS_OSX
 #endif  // defined(__APPLE__)
 
 #include "mediapipe/framework/formats/image_format.pb.h"

@@ -59,6 +59,6 @@ class source_location {
 
 // If a function takes a source_location parameter, pass this as the argument.
 #define MEDIAPIPE_LOC \
-  ::mediapipe::source_location::DoNotInvokeDirectly(__LINE__, __FILE__)
+  mediapipe::source_location::DoNotInvokeDirectly(__LINE__, __FILE__)
 
 #endif  // MEDIAPIPE_DEPS_SOURCE_LOCATION_H_

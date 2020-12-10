@@ -99,11 +99,11 @@ int main(int argc, char** argv) {
   mediapipe::Status status;
   if (FLAGS_proto_source.empty()) {
     status.Update(
-        ::mediapipe::InvalidArgumentError("--proto_source must be specified"));
+        mediapipe::InvalidArgumentError("--proto_source must be specified"));
   }
   if (FLAGS_proto_output.empty()) {
     status.Update(
-        ::mediapipe::InvalidArgumentError("--proto_output must be specified"));
+        mediapipe::InvalidArgumentError("--proto_output must be specified"));
   }
   if (!status.ok()) {
     return EXIT_FAILURE;

@@ -92,7 +92,7 @@ class MonotonicClockAccess {
   // Create a monotonic clock based on the given state.  Caller owns state
   // so that multiple such clocks can be created from the same state.
   static MonotonicClock* CreateMonotonicClock(State* state);
-  friend class ::mediapipe::MonotonicClockTest;
+  friend class mediapipe::MonotonicClockTest;
 };
 
 }  // namespace mediapipe

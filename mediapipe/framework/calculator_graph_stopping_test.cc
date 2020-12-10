@@ -34,39 +34,39 @@
 namespace mediapipe {}
 
 namespace testing_ns {
-using ::mediapipe::CalculatorBase;
-using ::mediapipe::CalculatorContext;
-using ::mediapipe::CalculatorContract;
-using ::mediapipe::CalculatorGraphConfig;
-using ::mediapipe::GetFromUniquePtr;
-using ::mediapipe::InputStreamShardSet;
-using ::mediapipe::MakePacket;
-using ::mediapipe::OutputStreamShardSet;
-using ::mediapipe::Timestamp;
-namespace proto_ns = ::mediapipe::proto_ns;
-using ::mediapipe::CalculatorGraph;
-using ::mediapipe::Packet;
+using mediapipe::CalculatorBase;
+using mediapipe::CalculatorContext;
+using mediapipe::CalculatorContract;
+using mediapipe::CalculatorGraphConfig;
+using mediapipe::GetFromUniquePtr;
+using mediapipe::InputStreamShardSet;
+using mediapipe::MakePacket;
+using mediapipe::OutputStreamShardSet;
+using mediapipe::Timestamp;
+namespace proto_ns = mediapipe::proto_ns;
+using mediapipe::CalculatorGraph;
+using mediapipe::Packet;
 
 class InfiniteSequenceCalculator : public mediapipe::CalculatorBase {
  public:
-  static ::mediapipe::Status GetContract(mediapipe::CalculatorContract* cc) {
+  static mediapipe::Status GetContract(mediapipe::CalculatorContract* cc) {
     cc->Outputs().Tag("OUT").Set<int>();
     cc->Outputs().Tag("EVENT").Set<int>();
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
-  ::mediapipe::Status Open(CalculatorContext* cc) override {
+  mediapipe::Status Open(CalculatorContext* cc) override {
     cc->Outputs().Tag("EVENT").AddPacket(MakePacket<int>(1).At(Timestamp(1)));
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
-  ::mediapipe::Status Process(CalculatorContext* cc) override {
+  mediapipe::Status Process(CalculatorContext* cc) override {
     cc->Outputs().Tag("OUT").AddPacket(
         MakePacket<int>(count_).At(Timestamp(count_)));
     count_++;
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
-  ::mediapipe::Status Close(CalculatorContext* cc) override {
+  mediapipe::Status Close(CalculatorContext* cc) override {
     cc->Outputs().Tag("EVENT").AddPacket(MakePacket<int>(2).At(Timestamp(2)));
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
  private:
@@ -76,30 +76,30 @@ REGISTER_CALCULATOR(::testing_ns::InfiniteSequenceCalculator);
 
 class StoppingPassThroughCalculator : public mediapipe::CalculatorBase {
  public:
-  static ::mediapipe::Status GetContract(CalculatorContract* cc) {
+  static mediapipe::Status GetContract(CalculatorContract* cc) {
     for (int i = 0; i < cc->Inputs().NumEntries(""); ++i) {
       cc->Inputs().Get("", i).SetAny();
       cc->Outputs().Get("", i).SetSameAs(&cc->Inputs().Get("", i));
     }
     cc->Outputs().Tag("EVENT").Set<int>();
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
-  ::mediapipe::Status Open(CalculatorContext* cc) override {
+  mediapipe::Status Open(CalculatorContext* cc) override {
     cc->Outputs().Tag("EVENT").AddPacket(MakePacket<int>(1).At(Timestamp(1)));
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
-  ::mediapipe::Status Process(CalculatorContext* cc) override {
+  mediapipe::Status Process(CalculatorContext* cc) override {
     for (int i = 0; i < cc->Inputs().NumEntries(""); ++i) {
       if (!cc->Inputs().Get("", i).IsEmpty()) {
         cc->Outputs().Get("", i).AddPacket(cc->Inputs().Get("", i).Value());
       }
     }
-    return (++count_ <= max_count_) ? ::mediapipe::OkStatus()
-                                    : ::mediapipe::tool::StatusStop();
+    return (++count_ <= max_count_) ? mediapipe::OkStatus()
+                                    : mediapipe::tool::StatusStop();
   }
-  ::mediapipe::Status Close(CalculatorContext* cc) override {
+  mediapipe::Status Close(CalculatorContext* cc) override {
     cc->Outputs().Tag("EVENT").AddPacket(MakePacket<int>(2).At(Timestamp(2)));
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
  private:
@@ -124,39 +124,39 @@ class AtomicSemaphore {
 };
 
 // A ProcessFunction that passes through all packets.
-::mediapipe::Status DoProcess(const InputStreamShardSet& inputs,
-                              OutputStreamShardSet* outputs) {
+mediapipe::Status DoProcess(const InputStreamShardSet& inputs,
+                            OutputStreamShardSet* outputs) {
   for (int i = 0; i < inputs.NumEntries(); ++i) {
     if (!inputs.Index(i).Value().IsEmpty()) {
       outputs->Index(i).AddPacket(inputs.Index(i).Value());
     }
   }
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-typedef std::function<::mediapipe::Status(const InputStreamShardSet&,
-                                          OutputStreamShardSet*)>
+typedef std::function<mediapipe::Status(const InputStreamShardSet&,
+                                        OutputStreamShardSet*)>
     ProcessFunction;
 
 // A Calculator that delegates its Process function to a callback function.
 class ProcessCallbackCalculator : public CalculatorBase {
  public:
-  static ::mediapipe::Status GetContract(CalculatorContract* cc) {
+  static mediapipe::Status GetContract(CalculatorContract* cc) {
     for (int i = 0; i < cc->Inputs().NumEntries(); ++i) {
       cc->Inputs().Index(i).SetAny();
       cc->Outputs().Index(i).SetSameAs(&cc->Inputs().Index(0));
     }
     cc->InputSidePackets().Index(0).Set<std::unique_ptr<ProcessFunction>>();
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Open(CalculatorContext* cc) final {
+  mediapipe::Status Open(CalculatorContext* cc) final {
     callback_ =
         *GetFromUniquePtr<ProcessFunction>(cc->InputSidePackets().Index(0));
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Process(CalculatorContext* cc) final {
+  mediapipe::Status Process(CalculatorContext* cc) final {
     return callback_(cc->Inputs(), &(cc->Outputs()));
   }
 
@@ -202,22 +202,22 @@ TEST(CalculatorGraphStoppingTest, CloseAllPacketSources) {
         if (out_packets.size() >= kNumPackets) {
           MP_EXPECT_OK(graph.CloseAllPacketSources());
         }
-        return ::mediapipe::OkStatus();
+        return mediapipe::OkStatus();
       }));
   MP_ASSERT_OK(graph.ObserveOutputStream(  //
       "count_out", [&](const Packet& packet) {
         count_packets.push_back(packet);
-        return ::mediapipe::OkStatus();
+        return mediapipe::OkStatus();
       }));
   MP_ASSERT_OK(graph.ObserveOutputStream(  //
       "event", [&](const Packet& packet) {
         event_packets.push_back(packet.Get<int>());
-        return ::mediapipe::OkStatus();
+        return mediapipe::OkStatus();
       }));
   MP_ASSERT_OK(graph.ObserveOutputStream(  //
       "event_out", [&](const Packet& packet) {
         event_out_packets.push_back(packet.Get<int>());
-        return ::mediapipe::OkStatus();
+        return mediapipe::OkStatus();
       }));
   MP_ASSERT_OK(graph.StartRun({}));
   for (int i = 0; i < kNumPackets; ++i) {
@@ -261,7 +261,7 @@ TEST(CalculatorGraphStoppingTest, DeadlockReporting) {
   MP_ASSERT_OK(
       graph.ObserveOutputStream("out_1", [&out_packets](const Packet& packet) {
         out_packets.push_back(packet);
-        return ::mediapipe::OkStatus();
+        return mediapipe::OkStatus();
       }));
 
   // Lambda that waits for a local semaphore.
@@ -289,8 +289,8 @@ TEST(CalculatorGraphStoppingTest, DeadlockReporting) {
   MP_EXPECT_OK(add_packet("in_1", 2));
   EXPECT_FALSE(add_packet("in_1", 3).ok());
 
-  ::mediapipe::Status status = graph.WaitUntilIdle();
-  EXPECT_EQ(status.code(), ::mediapipe::StatusCode::kUnavailable);
+  mediapipe::Status status = graph.WaitUntilIdle();
+  EXPECT_EQ(status.code(), mediapipe::StatusCode::kUnavailable);
   EXPECT_THAT(
       status.message(),
       testing::HasSubstr("Detected a deadlock due to input throttling"));
@@ -326,7 +326,7 @@ TEST(CalculatorGraphStoppingTest, DeadlockResolution) {
   MP_ASSERT_OK(
       graph.ObserveOutputStream("out_1", [&out_packets](const Packet& packet) {
         out_packets.push_back(packet);
-        return ::mediapipe::OkStatus();
+        return mediapipe::OkStatus();
       }));
 
   // Lambda that waits for a local semaphore.

@@ -24,7 +24,7 @@
 namespace mediapipe {
 
 namespace {
-::mediapipe::StatusOr<std::string> PathToResourceAsFileInternal(
+mediapipe::StatusOr<std::string> PathToResourceAsFileInternal(
     const std::string& path) {
   NSString* ns_path = [NSString stringWithUTF8String:path.c_str()];
   Class mediapipeGraphClass = NSClassFromString(@"MPPGraph");
@@ -39,8 +39,7 @@ namespace {
 }
 }  // namespace
 
-::mediapipe::StatusOr<std::string> PathToResourceAsFile(
-    const std::string& path) {
+mediapipe::StatusOr<std::string> PathToResourceAsFile(const std::string& path) {
   // Return full path.
   if (absl::StartsWith(path, "/")) {
     return path;
@@ -66,15 +65,15 @@ namespace {
   }
 }
 
-::mediapipe::Status GetResourceContents(const std::string& path,
-                                        std::string* output) {
+mediapipe::Status GetResourceContents(const std::string& path,
+                                      std::string* output) {
   ASSIGN_OR_RETURN(std::string full_path, PathToResourceAsFile(path));
 
   std::ifstream input_file(full_path);
   std::stringstream buffer;
   buffer << input_file.rdbuf();
   buffer.str().swap(*output);
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
 }  // namespace mediapipe

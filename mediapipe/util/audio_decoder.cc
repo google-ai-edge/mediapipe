@@ -344,7 +344,7 @@ mediapipe::Status AudioPacketProcessor::Open(int id, AVStream* stream) {
   id_ = id;
   avcodec_ = avcodec_find_decoder(stream->codecpar->codec_id);
   if (!avcodec_) {
-    return ::mediapipe::InvalidArgumentError("Failed to find codec");
+    return mediapipe::InvalidArgumentError("Failed to find codec");
   }
   avcodec_ctx_ = avcodec_alloc_context3(avcodec_);
   avcodec_parameters_to_context(avcodec_ctx_, stream->codecpar);
@@ -588,18 +588,18 @@ int64 AudioPacketProcessor::MaybeCorrectPtsForRollover(int64 media_pts) {
 AudioDecoder::AudioDecoder() { av_register_all(); }
 
 AudioDecoder::~AudioDecoder() {
-  ::mediapipe::Status status = Close();
+  mediapipe::Status status = Close();
   if (!status.ok()) {
     LOG(ERROR) << "Encountered error while closing media file: "
                << status.message();
   }
 }
 
-::mediapipe::Status AudioDecoder::Initialize(
+mediapipe::Status AudioDecoder::Initialize(
     const std::string& input_file,
     const mediapipe::AudioDecoderOptions options) {
   if (options.audio_stream().empty()) {
-    return ::mediapipe::InvalidArgumentError(
+    return mediapipe::InvalidArgumentError(
         "At least one audio_stream must be defined in AudioDecoderOptions");
   }
   std::map<int, int> stream_index_to_audio_options_index;
@@ -611,7 +611,7 @@ AudioDecoder::~AudioDecoder() {
   }
 
   Cleanup<std::function<void()>> decoder_closer([this]() {
-    ::mediapipe::Status status = Close();
+    mediapipe::Status status = Close();
     if (!status.ok()) {
       LOG(ERROR) << "Encountered error while closing media file: "
                  << status.message();
@@ -620,12 +620,12 @@ AudioDecoder::~AudioDecoder() {
 
   avformat_ctx_ = avformat_alloc_context();
   if (avformat_open_input(&avformat_ctx_, input_file.c_str(), NULL, NULL) < 0) {
-    return ::mediapipe::InvalidArgumentError(
+    return mediapipe::InvalidArgumentError(
         absl::StrCat("Could not open file: ", input_file));
   }
 
   if (avformat_find_stream_info(avformat_ctx_, NULL) < 0) {
-    return ::mediapipe::InvalidArgumentError(absl::StrCat(
+    return mediapipe::InvalidArgumentError(absl::StrCat(
         "Could not find stream information of file: ", input_file));
   }
 
@@ -686,10 +686,10 @@ AudioDecoder::~AudioDecoder() {
   is_first_packet_.resize(avformat_ctx_->nb_streams, true);
 
   decoder_closer.release();
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status AudioDecoder::GetData(int* options_index, Packet* data) {
+mediapipe::Status AudioDecoder::GetData(int* options_index, Packet* data) {
   while (true) {
     for (auto& item : audio_processor_) {
       while (item.second && item.second->HasData()) {
@@ -697,7 +697,7 @@ AudioDecoder::~AudioDecoder() {
         is_first_packet_[item.first] = false;
         *options_index =
             FindOrDie(stream_id_to_audio_options_index_, item.first);
-        ::mediapipe::Status status = item.second->GetData(data);
+        mediapipe::Status status = item.second->GetData(data);
         // Ignore packets which are out of the requested timestamp range.
         if (start_time_ != Timestamp::Unset()) {
           if (is_first_packet && data->Timestamp() > start_time_) {
@@ -735,10 +735,10 @@ AudioDecoder::~AudioDecoder() {
     }
     MP_RETURN_IF_ERROR(ProcessPacket());
   }
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status AudioDecoder::Close() {
+mediapipe::Status AudioDecoder::Close() {
   for (auto& item : audio_processor_) {
     if (item.second) {
       item.second->Close();
@@ -749,10 +749,10 @@ AudioDecoder::~AudioDecoder() {
   if (avformat_ctx_) {
     avformat_close_input(&avformat_ctx_);
   }
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status AudioDecoder::FillAudioHeader(
+mediapipe::Status AudioDecoder::FillAudioHeader(
     const AudioStreamOptions& stream_option, TimeSeriesHeader* header) const {
   const std::unique_ptr<AudioPacketProcessor>* processor_ptr_ = FindOrNull(
       audio_processor_,
@@ -760,10 +760,10 @@ AudioDecoder::~AudioDecoder() {
 
   RET_CHECK(processor_ptr_ && *processor_ptr_) << "audio stream is not open.";
   MP_RETURN_IF_ERROR((*processor_ptr_)->FillHeader(header));
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status AudioDecoder::ProcessPacket() {
+mediapipe::Status AudioDecoder::ProcessPacket() {
   std::unique_ptr<AVPacket, AVPacketDeleter> av_packet(new AVPacket());
   av_init_packet(av_packet.get());
   av_packet->size = 0;
@@ -785,14 +785,14 @@ AudioDecoder::~AudioDecoder() {
     } else {
       VLOG(3) << "Ignoring packet for stream " << stream_id;
     }
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
   VLOG(1) << "Demuxing returned error (or EOF): " << AvErrorToString(ret);
   if (ret == AVERROR(EAGAIN)) {
     // EAGAIN is used to signify that the av_packet should be skipped
     // (maybe the demuxer is trying to re-sync).  This definitely
     // occurs in the FLV and MpegT demuxers.
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
   // Unrecoverable demuxing error with details in avformat_ctx_->pb->error.
@@ -819,8 +819,8 @@ AudioDecoder::~AudioDecoder() {
       "Failed to read a frame: retval = $0 ($1)", ret, AvErrorToString(ret));
 }
 
-::mediapipe::Status AudioDecoder::Flush() {
-  std::vector<::mediapipe::Status> statuses;
+mediapipe::Status AudioDecoder::Flush() {
+  std::vector<mediapipe::Status> statuses;
   for (auto& item : audio_processor_) {
     if (item.second) {
       statuses.push_back(item.second->Flush());

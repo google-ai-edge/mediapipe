@@ -40,7 +40,7 @@ DEFINE_string(output_video_path, "",
               "Full path of where to save result (.mp4 only). "
               "If not provided, show result in a window.");
 
-::mediapipe::Status RunMPPGraph() {
+mediapipe::Status RunMPPGraph() {
   std::string calculator_graph_config_contents;
   MP_RETURN_IF_ERROR(mediapipe::file::GetContents(
       FLAGS_calculator_graph_config_file, &calculator_graph_config_contents));
@@ -143,7 +143,7 @@ DEFINE_string(output_video_path, "",
 int main(int argc, char** argv) {
   google::InitGoogleLogging(argv[0]);
   gflags::ParseCommandLineFlags(&argc, &argv, true);
-  ::mediapipe::Status run_status = RunMPPGraph();
+  mediapipe::Status run_status = RunMPPGraph();
   if (!run_status.ok()) {
     LOG(ERROR) << "Failed to run the graph: " << run_status.message();
     return EXIT_FAILURE;

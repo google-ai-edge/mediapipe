@@ -244,6 +244,7 @@ objc_library(
     hdrs = ["pixel_buffer_pool_util.h"],
     copts = [
         "-Wno-shorten-64-to-32",
+        "-std=c++17",
     ],
     sdk_frameworks = [
         "Accelerate",
@@ -266,6 +267,7 @@ objc_library(
     copts = [
         "-x objective-c++",
         "-Wno-shorten-64-to-32",
+        "-std=c++17",
     ],
     sdk_frameworks = [
         "CoreVideo",
@@ -300,6 +302,7 @@ objc_library(
     copts = [
         "-x objective-c++",
         "-Wno-shorten-64-to-32",
+        "-std=c++17",
     ],
     sdk_frameworks = [
         "CoreVideo",
@@ -581,6 +584,7 @@ objc_library(
     hdrs = HELPER_COMMON_HDRS,
     copts = [
         "-Wno-shorten-64-to-32",
+        "-std=c++17",
     ],
     sdk_frameworks = HELPER_IOS_FRAMEWORKS,
     visibility = ["//visibility:public"],
@@ -604,6 +608,7 @@ objc_library(
     hdrs = ["MPPMetalHelper.h"],
     copts = [
         "-Wno-shorten-64-to-32",
+        "-std=c++17",
     ],
     sdk_frameworks = [
         "CoreVideo",
@@ -816,6 +821,7 @@ mediapipe_cc_proto_library(
 objc_library(
     name = "metal_copy_calculator",
     srcs = ["MetalCopyCalculator.mm"],
+    copts = ["-std=c++17"],
     sdk_frameworks = [
         "CoreVideo",
         "Metal",
@@ -833,6 +839,7 @@ objc_library(
 objc_library(
     name = "metal_rgb_weight_calculator",
     srcs = ["MetalRgbWeightCalculator.mm"],
+    copts = ["-std=c++17"],
     sdk_frameworks = [
         "CoreVideo",
         "Metal",
@@ -849,6 +856,7 @@ objc_library(
 objc_library(
     name = "metal_sobel_calculator",
     srcs = ["MetalSobelCalculator.mm"],
+    copts = ["-std=c++17"],
     sdk_frameworks = [
         "CoreVideo",
         "Metal",
@@ -865,6 +873,7 @@ objc_library(
 objc_library(
     name = "metal_sobel_compute_calculator",
     srcs = ["MetalSobelComputeCalculator.mm"],
+    copts = ["-std=c++17"],
     sdk_frameworks = [
         "CoreVideo",
         "Metal",
@@ -881,6 +890,7 @@ objc_library(
 objc_library(
     name = "mps_sobel_calculator",
     srcs = ["MPSSobelCalculator.mm"],
+    copts = ["-std=c++17"],
     sdk_frameworks = [
         "CoreVideo",
         "Metal",
@@ -915,6 +925,7 @@ objc_library(
     ],
     copts = [
         "-Wno-shorten-64-to-32",
+        "-std=c++17",
     ],
     data = [
         "//mediapipe/objc:testdata/googlelogo_color_272x92dp.png",

@@ -34,6 +34,7 @@ cc_test(
     deps = [
         ":low_pass_filter",
         "//mediapipe/framework/port:gtest_main",
+        "@com_google_absl//absl/memory",
     ],
 )
 
@@ -56,6 +57,7 @@ cc_test(
         ":relative_velocity_filter",
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/framework/port:logging",
+        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/time",
     ],
 )

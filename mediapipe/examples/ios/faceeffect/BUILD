@@ -49,27 +49,14 @@ ios_application(
 )
 
 objc_library(
-    name = "FaceEffectAppLibrary",
+    name = "FaceEffectViewController",
     srcs = [
-        "AppDelegate.m",
         "FaceEffectViewController.mm",
-        "main.m",
     ],
     hdrs = [
-        "AppDelegate.h",
         "FaceEffectViewController.h",
     ],
-    data = [
-        "Base.lproj/LaunchScreen.storyboard",
-        "Base.lproj/Main.storyboard",
-        "//mediapipe/graphs/face_effect:face_effect_gpu.binarypb",
-        "//mediapipe/graphs/face_effect/data:facepaint.pngblob",
-        "//mediapipe/graphs/face_effect/data:glasses.binarypb",
-        "//mediapipe/graphs/face_effect/data:glasses.pngblob",
-        "//mediapipe/modules/face_detection:face_detection_front.tflite",
-        "//mediapipe/modules/face_geometry/data:geometry_pipeline_metadata.binarypb",
-        "//mediapipe/modules/face_landmark:face_landmark.tflite",
-    ],
+    copts = ["-std=c++17"],
     sdk_frameworks = [
         "AVFoundation",
         "CoreGraphics",
@@ -89,4 +76,29 @@ objc_library(
             "//mediapipe/modules/face_geometry/protos:face_geometry_cc_proto",
         ],
     }),
+)
+
+objc_library(
+    name = "FaceEffectAppLibrary",
+    srcs = [
+        "AppDelegate.m",
+        "main.m",
+    ],
+    hdrs = [
+        "AppDelegate.h",
+    ],
+    data = [
+        "Base.lproj/LaunchScreen.storyboard",
+        "Base.lproj/Main.storyboard",
+        "//mediapipe/graphs/face_effect:face_effect_gpu.binarypb",
+        "//mediapipe/graphs/face_effect/data:facepaint.pngblob",
+        "//mediapipe/graphs/face_effect/data:glasses.binarypb",
+        "//mediapipe/graphs/face_effect/data:glasses.pngblob",
+        "//mediapipe/modules/face_detection:face_detection_front.tflite",
+        "//mediapipe/modules/face_geometry/data:geometry_pipeline_metadata.binarypb",
+        "//mediapipe/modules/face_landmark:face_landmark.tflite",
+    ],
+    deps = [
+        ":FaceEffectViewController",
+    ],
 )

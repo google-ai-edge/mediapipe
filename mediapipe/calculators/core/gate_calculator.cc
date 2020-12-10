@@ -82,7 +82,7 @@ class GateCalculator : public CalculatorBase {
  public:
   GateCalculator() {}
 
-  static ::mediapipe::Status CheckAndInitAllowDisallowInputs(
+  static mediapipe::Status CheckAndInitAllowDisallowInputs(
       CalculatorContract* cc) {
     bool input_via_side_packet = cc->InputSidePackets().HasTag("ALLOW") ||
                                  cc->InputSidePackets().HasTag("DISALLOW");
@@ -110,10 +110,10 @@ class GateCalculator : public CalculatorBase {
         cc->Inputs().Tag("DISALLOW").Set<bool>();
       }
     }
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  static ::mediapipe::Status GetContract(CalculatorContract* cc) {
+  static mediapipe::Status GetContract(CalculatorContract* cc) {
     RET_CHECK_OK(CheckAndInitAllowDisallowInputs(cc));
 
     const int num_data_streams = cc->Inputs().NumEntries("");
@@ -130,10 +130,10 @@ class GateCalculator : public CalculatorBase {
       cc->Outputs().Tag("STATE_CHANGE").Set<bool>();
     }
 
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Open(CalculatorContext* cc) final {
+  mediapipe::Status Open(CalculatorContext* cc) final {
     use_side_packet_for_allow_disallow_ = false;
     if (cc->InputSidePackets().HasTag("ALLOW")) {
       use_side_packet_for_allow_disallow_ = true;
@@ -153,10 +153,10 @@ class GateCalculator : public CalculatorBase {
     const auto& options = cc->Options<::mediapipe::GateCalculatorOptions>();
     empty_packets_as_allow_ = options.empty_packets_as_allow();
 
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Process(CalculatorContext* cc) final {
+  mediapipe::Status Process(CalculatorContext* cc) final {
     bool allow = empty_packets_as_allow_;
     if (use_side_packet_for_allow_disallow_) {
       allow = allow_by_side_packet_decision_;
@@ -195,7 +195,7 @@ class GateCalculator : public CalculatorBase {
           cc->Outputs().Get("", i).Close();
         }
       }
-      return ::mediapipe::OkStatus();
+      return mediapipe::OkStatus();
     }
 
     // Process data streams.
@@ -205,7 +205,7 @@ class GateCalculator : public CalculatorBase {
       }
     }
 
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
  private:

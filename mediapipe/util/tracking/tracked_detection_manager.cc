@@ -21,7 +21,7 @@
 
 namespace {
 
-using ::mediapipe::TrackedDetection;
+using mediapipe::TrackedDetection;
 
 // Checks if a point is out of view.
 // x and y should both be in [0, 1] to be considered in view.

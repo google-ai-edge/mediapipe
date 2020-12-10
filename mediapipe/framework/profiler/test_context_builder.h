@@ -91,7 +91,7 @@ class TestContextBuilder {
       OutputStreamSpec spec;
       spec.name = output_map_->Names()[id.value()];
       spec.packet_type = packet_type;
-      spec.error_callback = [](const ::mediapipe::Status& status) {
+      spec.error_callback = [](const mediapipe::Status& status) {
         LOG(ERROR) << status;
       };
       output_specs_[spec.name] = spec;

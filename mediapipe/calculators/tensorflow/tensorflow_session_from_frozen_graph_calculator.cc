@@ -59,7 +59,7 @@ void SetPreferredDevice(tf::GraphDef* graph_def, absl::string_view device_id) {
 
 class TensorFlowSessionFromFrozenGraphCalculator : public CalculatorBase {
  public:
-  static ::mediapipe::Status GetContract(CalculatorContract* cc) {
+  static mediapipe::Status GetContract(CalculatorContract* cc) {
     const auto& options =
         cc->Options<TensorFlowSessionFromFrozenGraphCalculatorOptions>();
     bool has_exactly_one_model =
@@ -89,10 +89,10 @@ class TensorFlowSessionFromFrozenGraphCalculator : public CalculatorBase {
         // a map from tags to tensor names.
     );
     RET_CHECK_GT(options.tag_to_tensor_names().size(), 0);
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Open(CalculatorContext* cc) override {
+  mediapipe::Status Open(CalculatorContext* cc) override {
     auto clock = std::unique_ptr<mediapipe::Clock>(
         mediapipe::MonotonicClock::CreateSynchronizedMonotonicClock());
     const uint64 start_time = absl::ToUnixMicros(clock->TimeNow());
@@ -151,11 +151,11 @@ class TensorFlowSessionFromFrozenGraphCalculator : public CalculatorBase {
     const uint64 end_time = absl::ToUnixMicros(clock->TimeNow());
     LOG(INFO) << "Loaded frozen model in: " << end_time - start_time
               << " microseconds.";
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Process(CalculatorContext* cc) override {
-    return ::mediapipe::OkStatus();
+  mediapipe::Status Process(CalculatorContext* cc) override {
+    return mediapipe::OkStatus();
   }
 };
 REGISTER_CALCULATOR(TensorFlowSessionFromFrozenGraphCalculator);

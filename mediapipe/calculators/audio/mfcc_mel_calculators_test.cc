@@ -84,7 +84,7 @@ class FramewiseTransformCalculatorTest
     num_samples_per_packet_ = GenerateRandomNonnegInputStream(kNumPackets);
   }
 
-  ::mediapipe::Status Run() { return this->RunGraph(); }
+  mediapipe::Status Run() { return this->RunGraph(); }
 
   void CheckResults(int expected_num_channels) {
     const auto& output_header =

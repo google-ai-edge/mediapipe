@@ -57,10 +57,10 @@ inline float NormalizeRadians(float angle) {
 // }
 class RectTransformationCalculator : public CalculatorBase {
  public:
-  static ::mediapipe::Status GetContract(CalculatorContract* cc);
+  static mediapipe::Status GetContract(CalculatorContract* cc);
 
-  ::mediapipe::Status Open(CalculatorContext* cc) override;
-  ::mediapipe::Status Process(CalculatorContext* cc) override;
+  mediapipe::Status Open(CalculatorContext* cc) override;
+  mediapipe::Status Process(CalculatorContext* cc) override;
 
  private:
   RectTransformationCalculatorOptions options_;
@@ -72,7 +72,7 @@ class RectTransformationCalculator : public CalculatorBase {
 };
 REGISTER_CALCULATOR(RectTransformationCalculator);
 
-::mediapipe::Status RectTransformationCalculator::GetContract(
+mediapipe::Status RectTransformationCalculator::GetContract(
     CalculatorContract* cc) {
   RET_CHECK_EQ((cc->Inputs().HasTag(kNormRectTag) ? 1 : 0) +
                    (cc->Inputs().HasTag(kNormRectsTag) ? 1 : 0) +
@@ -100,21 +100,20 @@ REGISTER_CALCULATOR(RectTransformationCalculator);
     cc->Outputs().Index(0).Set<std::vector<NormalizedRect>>();
   }
 
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status RectTransformationCalculator::Open(CalculatorContext* cc) {
+mediapipe::Status RectTransformationCalculator::Open(CalculatorContext* cc) {
   cc->SetOffset(TimestampDiff(0));
 
   options_ = cc->Options<RectTransformationCalculatorOptions>();
   RET_CHECK(!(options_.has_rotation() && options_.has_rotation_degrees()));
   RET_CHECK(!(options_.has_square_long() && options_.has_square_short()));
 
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status RectTransformationCalculator::Process(
-    CalculatorContext* cc) {
+mediapipe::Status RectTransformationCalculator::Process(CalculatorContext* cc) {
   if (cc->Inputs().HasTag(kRectTag) && !cc->Inputs().Tag(kRectTag).IsEmpty()) {
     auto rect = cc->Inputs().Tag(kRectTag).Get<Rect>();
     TransformRect(&rect);
@@ -157,7 +156,7 @@ REGISTER_CALCULATOR(RectTransformationCalculator);
     cc->Outputs().Index(0).Add(output_rects.release(), cc->InputTimestamp());
   }
 
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
 float RectTransformationCalculator::ComputeNewRotation(float rotation) {

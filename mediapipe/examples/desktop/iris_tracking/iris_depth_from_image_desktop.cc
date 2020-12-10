@@ -47,25 +47,25 @@ DEFINE_string(output_image_path, "",
 
 namespace {
 
-::mediapipe::StatusOr<std::string> ReadFileToString(
+mediapipe::StatusOr<std::string> ReadFileToString(
     const std::string& file_path) {
   std::string contents;
-  MP_RETURN_IF_ERROR(::mediapipe::file::GetContents(file_path, &contents));
+  MP_RETURN_IF_ERROR(mediapipe::file::GetContents(file_path, &contents));
   return contents;
 }
 
-::mediapipe::Status ProcessImage(
-    std::unique_ptr<::mediapipe::CalculatorGraph> graph) {
+mediapipe::Status ProcessImage(
+    std::unique_ptr<mediapipe::CalculatorGraph> graph) {
   LOG(INFO) << "Load the image.";
   ASSIGN_OR_RETURN(const std::string raw_image,
                    ReadFileToString(FLAGS_input_image_path));
 
   LOG(INFO) << "Start running the calculator graph.";
-  ASSIGN_OR_RETURN(::mediapipe::OutputStreamPoller output_image_poller,
+  ASSIGN_OR_RETURN(mediapipe::OutputStreamPoller output_image_poller,
                    graph->AddOutputStreamPoller(kOutputImageStream));
-  ASSIGN_OR_RETURN(::mediapipe::OutputStreamPoller left_iris_depth_poller,
+  ASSIGN_OR_RETURN(mediapipe::OutputStreamPoller left_iris_depth_poller,
                    graph->AddOutputStreamPoller(kLeftIrisDepthMmStream));
-  ASSIGN_OR_RETURN(::mediapipe::OutputStreamPoller right_iris_depth_poller,
+  ASSIGN_OR_RETURN(mediapipe::OutputStreamPoller right_iris_depth_poller,
                    graph->AddOutputStreamPoller(kRightIrisDepthMmStream));
   MP_RETURN_IF_ERROR(graph->StartRun({}));
 
@@ -74,22 +74,22 @@ namespace {
                                    (double)cv::getTickFrequency() *
                                    kMicrosPerSecond;
   MP_RETURN_IF_ERROR(graph->AddPacketToInputStream(
-      kInputStream, ::mediapipe::MakePacket<std::string>(raw_image).At(
-                        ::mediapipe::Timestamp(fake_timestamp_us))));
+      kInputStream, mediapipe::MakePacket<std::string>(raw_image).At(
+                        mediapipe::Timestamp(fake_timestamp_us))));
 
   // Get the graph result packets, or stop if that fails.
-  ::mediapipe::Packet left_iris_depth_packet;
+  mediapipe::Packet left_iris_depth_packet;
   if (!left_iris_depth_poller.Next(&left_iris_depth_packet)) {
-    return ::mediapipe::UnknownError(
+    return mediapipe::UnknownError(
         "Failed to get packet from output stream 'left_iris_depth_mm'.");
   }
   const auto& left_iris_depth_mm = left_iris_depth_packet.Get<float>();
   const int left_iris_depth_cm = std::round(left_iris_depth_mm / 10);
   std::cout << "Left Iris Depth: " << left_iris_depth_cm << " cm." << std::endl;
 
-  ::mediapipe::Packet right_iris_depth_packet;
+  mediapipe::Packet right_iris_depth_packet;
   if (!right_iris_depth_poller.Next(&right_iris_depth_packet)) {
-    return ::mediapipe::UnknownError(
+    return mediapipe::UnknownError(
         "Failed to get packet from output stream 'right_iris_depth_mm'.");
   }
   const auto& right_iris_depth_mm = right_iris_depth_packet.Get<float>();
@@ -97,15 +97,15 @@ namespace {
   std::cout << "Right Iris Depth: " << right_iris_depth_cm << " cm."
             << std::endl;
 
-  ::mediapipe::Packet output_image_packet;
+  mediapipe::Packet output_image_packet;
   if (!output_image_poller.Next(&output_image_packet)) {
-    return ::mediapipe::UnknownError(
+    return mediapipe::UnknownError(
         "Failed to get packet from output stream 'output_image'.");
   }
-  auto& output_frame = output_image_packet.Get<::mediapipe::ImageFrame>();
+  auto& output_frame = output_image_packet.Get<mediapipe::ImageFrame>();
 
   // Convert back to opencv for display or saving.
-  cv::Mat output_frame_mat = ::mediapipe::formats::MatView(&output_frame);
+  cv::Mat output_frame_mat = mediapipe::formats::MatView(&output_frame);
   cv::cvtColor(output_frame_mat, output_frame_mat, cv::COLOR_RGB2BGR);
   const bool save_image = !FLAGS_output_image_path.empty();
   if (save_image) {
@@ -123,26 +123,26 @@ namespace {
   return graph->WaitUntilDone();
 }
 
-::mediapipe::Status RunMPPGraph() {
+mediapipe::Status RunMPPGraph() {
   std::string calculator_graph_config_contents;
-  MP_RETURN_IF_ERROR(::mediapipe::file::GetContents(
+  MP_RETURN_IF_ERROR(mediapipe::file::GetContents(
       kCalculatorGraphConfigFile, &calculator_graph_config_contents));
   LOG(INFO) << "Get calculator graph config contents: "
             << calculator_graph_config_contents;
-  ::mediapipe::CalculatorGraphConfig config =
-      ::mediapipe::ParseTextProtoOrDie<::mediapipe::CalculatorGraphConfig>(
+  mediapipe::CalculatorGraphConfig config =
+      mediapipe::ParseTextProtoOrDie<mediapipe::CalculatorGraphConfig>(
           calculator_graph_config_contents);
 
   LOG(INFO) << "Initialize the calculator graph.";
-  std::unique_ptr<::mediapipe::CalculatorGraph> graph =
-      absl::make_unique<::mediapipe::CalculatorGraph>();
+  std::unique_ptr<mediapipe::CalculatorGraph> graph =
+      absl::make_unique<mediapipe::CalculatorGraph>();
   MP_RETURN_IF_ERROR(graph->Initialize(config));
 
   const bool load_image = !FLAGS_input_image_path.empty();
   if (load_image) {
     return ProcessImage(std::move(graph));
   } else {
-    return ::mediapipe::InvalidArgumentError("Missing image file.");
+    return mediapipe::InvalidArgumentError("Missing image file.");
   }
 }
 
@@ -151,7 +151,7 @@ namespace {
 int main(int argc, char** argv) {
   google::InitGoogleLogging(argv[0]);
   gflags::ParseCommandLineFlags(&argc, &argv, true);
-  ::mediapipe::Status run_status = RunMPPGraph();
+  mediapipe::Status run_status = RunMPPGraph();
   if (!run_status.ok()) {
     LOG(ERROR) << "Failed to run the graph: " << run_status.message();
     return EXIT_FAILURE;

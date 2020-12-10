@@ -38,12 +38,12 @@ namespace {
 
 constexpr uint32 kBufferLength = 64;
 
-::mediapipe::StatusOr<std::string> GetFilePath(int cpu) {
+mediapipe::StatusOr<std::string> GetFilePath(int cpu) {
   return absl::Substitute(
       "/sys/devices/system/cpu/cpu$0/cpufreq/cpuinfo_max_freq", cpu);
 }
 
-::mediapipe::StatusOr<uint64> GetCpuMaxFrequency(int cpu) {
+mediapipe::StatusOr<uint64> GetCpuMaxFrequency(int cpu) {
   auto path_or_status = GetFilePath(cpu);
   if (!path_or_status.ok()) {
     return path_or_status.status();

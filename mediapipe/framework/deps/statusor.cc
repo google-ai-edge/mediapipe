@@ -22,14 +22,14 @@
 namespace mediapipe {
 namespace internal_statusor {
 
-void Helper::HandleInvalidStatusCtorArg(::mediapipe::Status* status) {
+void Helper::HandleInvalidStatusCtorArg(mediapipe::Status* status) {
   const char* kMessage =
       "An OK status is not a valid constructor argument to StatusOr<T>";
   LOG(ERROR) << kMessage;
-  *status = ::mediapipe::InternalError(kMessage);
+  *status = mediapipe::InternalError(kMessage);
 }
 
-void Helper::Crash(const ::mediapipe::Status& status) {
+void Helper::Crash(const mediapipe::Status& status) {
   LOG(FATAL) << "Attempting to fetch value instead of handling error "
              << status;
 }

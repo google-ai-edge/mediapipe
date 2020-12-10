@@ -58,7 +58,7 @@ using IsNotMovable =
 template <typename T, bool move_elements>
 class SplitVectorCalculator : public CalculatorBase {
  public:
-  static ::mediapipe::Status GetContract(CalculatorContract* cc) {
+  static mediapipe::Status GetContract(CalculatorContract* cc) {
     RET_CHECK(cc->Inputs().NumEntries() == 1);
     RET_CHECK(cc->Outputs().NumEntries() != 0);
 
@@ -79,7 +79,7 @@ class SplitVectorCalculator : public CalculatorBase {
       RET_CHECK_OK(checkRangesDontOverlap(options));
     } else {
       if (cc->Outputs().NumEntries() != options.ranges_size()) {
-        return ::mediapipe::InvalidArgumentError(
+        return mediapipe::InvalidArgumentError(
             "The number of output streams should match the number of ranges "
             "specified in the CalculatorOptions.");
       }
@@ -88,13 +88,13 @@ class SplitVectorCalculator : public CalculatorBase {
       for (int i = 0; i < cc->Outputs().NumEntries(); ++i) {
         if (options.ranges(i).begin() < 0 || options.ranges(i).end() < 0 ||
             options.ranges(i).begin() >= options.ranges(i).end()) {
-          return ::mediapipe::InvalidArgumentError(
+          return mediapipe::InvalidArgumentError(
               "Indices should be non-negative and begin index should be less "
               "than the end index.");
         }
         if (options.element_only()) {
           if (options.ranges(i).end() - options.ranges(i).begin() != 1) {
-            return ::mediapipe::InvalidArgumentError(
+            return mediapipe::InvalidArgumentError(
                 "Since element_only is true, all ranges should be of size 1.");
           }
           cc->Outputs().Index(i).Set<T>();
@@ -104,10 +104,10 @@ class SplitVectorCalculator : public CalculatorBase {
       }
     }
 
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Open(CalculatorContext* cc) override {
+  mediapipe::Status Open(CalculatorContext* cc) override {
     cc->SetOffset(TimestampDiff(0));
 
     const auto& options =
@@ -122,11 +122,11 @@ class SplitVectorCalculator : public CalculatorBase {
       total_elements_ += range.end() - range.begin();
     }
 
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Process(CalculatorContext* cc) override {
-    if (cc->Inputs().Index(0).IsEmpty()) return ::mediapipe::OkStatus();
+  mediapipe::Status Process(CalculatorContext* cc) override {
+    if (cc->Inputs().Index(0).IsEmpty()) return mediapipe::OkStatus();
 
     if (move_elements) {
       return ProcessMovableElements<T>(cc);
@@ -136,7 +136,7 @@ class SplitVectorCalculator : public CalculatorBase {
   }
 
   template <typename U, IsCopyable<U> = true>
-  ::mediapipe::Status ProcessCopyableElements(CalculatorContext* cc) {
+  mediapipe::Status ProcessCopyableElements(CalculatorContext* cc) {
     // static_assert(std::is_copy_constructible<U>::value,
     //              "Cannot copy non-copyable elements");
     const auto& input = cc->Inputs().Index(0).Get<std::vector<U>>();
@@ -167,17 +167,17 @@ class SplitVectorCalculator : public CalculatorBase {
       }
     }
 
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
   template <typename U, IsNotCopyable<U> = true>
-  ::mediapipe::Status ProcessCopyableElements(CalculatorContext* cc) {
-    return ::mediapipe::InternalError("Cannot copy non-copyable elements.");
+  mediapipe::Status ProcessCopyableElements(CalculatorContext* cc) {
+    return mediapipe::InternalError("Cannot copy non-copyable elements.");
   }
 
   template <typename U, IsMovable<U> = true>
-  ::mediapipe::Status ProcessMovableElements(CalculatorContext* cc) {
-    ::mediapipe::StatusOr<std::unique_ptr<std::vector<U>>> input_status =
+  mediapipe::Status ProcessMovableElements(CalculatorContext* cc) {
+    mediapipe::StatusOr<std::unique_ptr<std::vector<U>>> input_status =
         cc->Inputs().Index(0).Value().Consume<std::vector<U>>();
     if (!input_status.ok()) return input_status.status();
     std::unique_ptr<std::vector<U>> input_vector =
@@ -214,16 +214,16 @@ class SplitVectorCalculator : public CalculatorBase {
       }
     }
 
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
   template <typename U, IsNotMovable<U> = true>
-  ::mediapipe::Status ProcessMovableElements(CalculatorContext* cc) {
-    return ::mediapipe::InternalError("Cannot move non-movable elements.");
+  mediapipe::Status ProcessMovableElements(CalculatorContext* cc) {
+    return mediapipe::InternalError("Cannot move non-movable elements.");
   }
 
  private:
-  static ::mediapipe::Status checkRangesDontOverlap(
+  static mediapipe::Status checkRangesDontOverlap(
       const ::mediapipe::SplitVectorCalculatorOptions& options) {
     for (int i = 0; i < options.ranges_size() - 1; ++i) {
       for (int j = i + 1; j < options.ranges_size(); ++j) {
@@ -233,13 +233,13 @@ class SplitVectorCalculator : public CalculatorBase {
              range_0.begin() < range_1.end()) ||
             (range_1.begin() >= range_0.begin() &&
              range_1.begin() < range_0.end())) {
-          return ::mediapipe::InvalidArgumentError(
+          return mediapipe::InvalidArgumentError(
               "Ranges must be non-overlapping when using combine_outputs "
               "option.");
         }
       }
     }
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
   std::vector<std::pair<int32, int32>> ranges_;

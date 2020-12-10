@@ -98,3 +98,17 @@ cc_library(
         ],
     }) + ["@org_tensorflow//tensorflow/lite/core/api"],
 )
+
+cc_library(
+    name = "tflite_model_loader",
+    srcs = ["tflite_model_loader.cc"],
+    hdrs = ["tflite_model_loader.h"],
+    deps = [
+        "//mediapipe/framework:packet",
+        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:status",
+        "//mediapipe/framework/port:statusor",
+        "//mediapipe/util:resource_util",
+        "@org_tensorflow//tensorflow/lite:framework",
+    ],
+)

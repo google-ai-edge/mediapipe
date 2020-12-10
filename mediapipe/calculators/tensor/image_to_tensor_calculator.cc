@@ -14,6 +14,7 @@
 
 #include <array>
 #include <memory>
+#include <vector>
 
 #include "mediapipe/calculators/tensor/image_to_tensor_calculator.pb.h"
 #include "mediapipe/calculators/tensor/image_to_tensor_converter.h"
@@ -111,7 +112,7 @@ namespace mediapipe {
 // }
 class ImageToTensorCalculator : public CalculatorBase {
  public:
-  static ::mediapipe::Status GetContract(CalculatorContract* cc) {
+  static mediapipe::Status GetContract(CalculatorContract* cc) {
     const auto& options =
         cc->Options<mediapipe::ImageToTensorCalculatorOptions>();
 
@@ -157,10 +158,10 @@ class ImageToTensorCalculator : public CalculatorBase {
 #endif  // MEDIAPIPE_DISABLE_GPU
     }
     cc->Outputs().Tag(kOutput).Set<std::vector<Tensor>>();
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Open(CalculatorContext* cc) {
+  mediapipe::Status Open(CalculatorContext* cc) {
     // Makes sure outputs' next timestamp bound update is handled automatically
     // by the framework.
     cc->SetOffset(TimestampDiff(0));
@@ -171,40 +172,42 @@ class ImageToTensorCalculator : public CalculatorBase {
     range_max_ = options_.output_tensor_float_range().max();
 
     if (cc->Inputs().HasTag(kInputCpu)) {
-      ASSIGN_OR_RETURN(converter_, CreateOpenCvConverter(cc));
+      ASSIGN_OR_RETURN(converter_, CreateOpenCvConverter(cc, GetBorderMode()));
     } else {
 #if MEDIAPIPE_DISABLE_GPU
       return mediapipe::UnimplementedError("GPU processing is disabled");
 #else
 
 #if MEDIAPIPE_METAL_ENABLED
-      ASSIGN_OR_RETURN(converter_, CreateMetalConverter(cc));
+      ASSIGN_OR_RETURN(converter_, CreateMetalConverter(cc, GetBorderMode()));
 #elif MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31
-      ASSIGN_OR_RETURN(converter_, CreateImageToGlBufferTensorConverter(
-                                       cc, DoesInputStartAtBottom()));
+      ASSIGN_OR_RETURN(converter_,
+                       CreateImageToGlBufferTensorConverter(
+                           cc, DoesInputStartAtBottom(), GetBorderMode()));
 #else
-      ASSIGN_OR_RETURN(converter_, CreateImageToGlTextureTensorConverter(
-                                       cc, DoesInputStartAtBottom()));
+      ASSIGN_OR_RETURN(converter_,
+                       CreateImageToGlTextureTensorConverter(
+                           cc, DoesInputStartAtBottom(), GetBorderMode()));
 #endif  // MEDIAPIPE_METAL_ENABLED
 
 #endif  // MEDIAPIPE_DISABLE_GPU
     }
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Process(CalculatorContext* cc) {
+  mediapipe::Status Process(CalculatorContext* cc) {
     const InputStreamShard& input = cc->Inputs().Tag(
         cc->Inputs().HasTag(kInputCpu) ? kInputCpu : kInputGpu);
     if (input.IsEmpty()) {
       // Timestamp bound update happens automatically. (See Open().)
-      return ::mediapipe::OkStatus();
+      return mediapipe::OkStatus();
     }
 
     absl::optional<mediapipe::NormalizedRect> norm_rect;
     if (cc->Inputs().HasTag(kInputNormRect)) {
       if (cc->Inputs().Tag(kInputNormRect).IsEmpty()) {
         // Timestamp bound update happens automatically. (See Open().)
-        return ::mediapipe::OkStatus();
+        return mediapipe::OkStatus();
       }
       norm_rect =
           cc->Inputs().Tag(kInputNormRect).Get<mediapipe::NormalizedRect>();
@@ -216,7 +219,7 @@ class ImageToTensorCalculator : public CalculatorBase {
         // NOTE: usage of sentinel rects should be avoided.
         DLOG(WARNING)
             << "Updating timestamp bound in response to a sentinel rect";
-        return ::mediapipe::OkStatus();
+        return mediapipe::OkStatus();
       }
     }
 
@@ -254,12 +257,25 @@ class ImageToTensorCalculator : public CalculatorBase {
         MakePacket<std::vector<Tensor>>(std::move(result))
             .At(cc->InputTimestamp()));
 
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
  private:
   bool DoesInputStartAtBottom() {
     return options_.gpu_origin() != mediapipe::GpuOrigin_Mode_TOP_LEFT;
+  }
+
+  BorderMode GetBorderMode() {
+    switch (options_.border_mode()) {
+      case mediapipe::
+          ImageToTensorCalculatorOptions_BorderMode_BORDER_UNSPECIFIED:
+        return BorderMode::kReplicate;
+      case mediapipe::ImageToTensorCalculatorOptions_BorderMode_BORDER_ZERO:
+        return BorderMode::kZero;
+      case mediapipe::
+          ImageToTensorCalculatorOptions_BorderMode_BORDER_REPLICATE:
+        return BorderMode::kReplicate;
+    }
   }
 
   std::unique_ptr<ImageToTensorConverter> converter_;

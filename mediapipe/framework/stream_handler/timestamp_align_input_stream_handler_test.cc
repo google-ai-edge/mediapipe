@@ -26,7 +26,7 @@ namespace {
 
 TEST(TimestampAlignInputStreamHandlerTest, Initialization) {
   CalculatorGraphConfig config =
-      ::mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
         input_stream: "input_video"
         input_stream: "input_camera"
         node {
@@ -121,7 +121,7 @@ TEST(TimestampAlignInputStreamHandlerTest, Initialization) {
 
 TEST(TimestampAlignInputStreamHandlerTest, TickRate) {
   CalculatorGraphConfig config =
-      ::mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
         input_stream: "input_video"
         input_stream: "input_camera"
         node {

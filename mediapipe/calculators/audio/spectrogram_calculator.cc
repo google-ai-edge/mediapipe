@@ -66,7 +66,7 @@ namespace mediapipe {
 // analysis frame will advance from its predecessor by the same time step.
 class SpectrogramCalculator : public CalculatorBase {
  public:
-  static ::mediapipe::Status GetContract(CalculatorContract* cc) {
+  static mediapipe::Status GetContract(CalculatorContract* cc) {
     cc->Inputs().Index(0).Set<Matrix>(
         // Input stream with TimeSeriesHeader.
     );
@@ -96,21 +96,21 @@ class SpectrogramCalculator : public CalculatorBase {
         );
       }
     }
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
   // Returns FAIL if the input stream header is invalid.
-  ::mediapipe::Status Open(CalculatorContext* cc) override;
+  mediapipe::Status Open(CalculatorContext* cc) override;
 
   // Outputs at most one packet consisting of a single Matrix with one or
   // more columns containing the spectral values from as many input frames
   // as are completed by the input samples.  Always returns OK.
-  ::mediapipe::Status Process(CalculatorContext* cc) override;
+  mediapipe::Status Process(CalculatorContext* cc) override;
 
   // Performs zero-padding and processing of any remaining samples
   // if pad_final_packet is set.
   // Returns OK.
-  ::mediapipe::Status Close(CalculatorContext* cc) override;
+  mediapipe::Status Close(CalculatorContext* cc) override;
 
  private:
   Timestamp CurrentOutputTimestamp(CalculatorContext* cc) {
@@ -138,12 +138,12 @@ class SpectrogramCalculator : public CalculatorBase {
   // Convert the output of the spectrogram object into a Matrix (or an
   // Eigen::MatrixXcf if complex-valued output is requested) and pass to
   // MediaPipe output.
-  ::mediapipe::Status ProcessVector(const Matrix& input_stream,
-                                    CalculatorContext* cc);
+  mediapipe::Status ProcessVector(const Matrix& input_stream,
+                                  CalculatorContext* cc);
 
   // Templated function to process either real- or complex-output spectrogram.
   template <class OutputMatrixType>
-  ::mediapipe::Status ProcessVectorToOutput(
+  mediapipe::Status ProcessVectorToOutput(
       const Matrix& input_stream,
       const OutputMatrixType postprocess_output_fn(const OutputMatrixType&),
       CalculatorContext* cc);
@@ -177,7 +177,7 @@ REGISTER_CALCULATOR(SpectrogramCalculator);
 // Factor to convert ln(magnitude_squared) to deciBels = 10.0/ln(10.0).
 const float SpectrogramCalculator::kLnPowerToDb = 4.342944819032518;
 
-::mediapipe::Status SpectrogramCalculator::Open(CalculatorContext* cc) {
+mediapipe::Status SpectrogramCalculator::Open(CalculatorContext* cc) {
   SpectrogramCalculatorOptions spectrogram_options =
       cc->Options<SpectrogramCalculatorOptions>();
 
@@ -272,10 +272,10 @@ const float SpectrogramCalculator::kLnPowerToDb = 4.342944819032518;
   }
   cumulative_completed_frames_ = 0;
   initial_input_timestamp_ = Timestamp::Unstarted();
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status SpectrogramCalculator::Process(CalculatorContext* cc) {
+mediapipe::Status SpectrogramCalculator::Process(CalculatorContext* cc) {
   if (initial_input_timestamp_ == Timestamp::Unstarted()) {
     initial_input_timestamp_ = cc->InputTimestamp();
   }
@@ -291,7 +291,7 @@ const float SpectrogramCalculator::kLnPowerToDb = 4.342944819032518;
 }
 
 template <class OutputMatrixType>
-::mediapipe::Status SpectrogramCalculator::ProcessVectorToOutput(
+mediapipe::Status SpectrogramCalculator::ProcessVectorToOutput(
     const Matrix& input_stream,
     const OutputMatrixType postprocess_output_fn(const OutputMatrixType&),
     CalculatorContext* cc) {
@@ -311,8 +311,8 @@ template <class OutputMatrixType>
 
     if (!spectrogram_generators_[channel]->ComputeSpectrogram(
             input_vector, &output_vectors)) {
-      return ::mediapipe::Status(mediapipe::StatusCode::kInternal,
-                                 "Spectrogram returned failure");
+      return mediapipe::Status(mediapipe::StatusCode::kInternal,
+                               "Spectrogram returned failure");
     }
     if (channel == 0) {
       // Record the number of time frames we expect from each channel.
@@ -355,10 +355,10 @@ template <class OutputMatrixType>
     }
     cumulative_completed_frames_ += output_vectors.size();
   }
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status SpectrogramCalculator::ProcessVector(
+mediapipe::Status SpectrogramCalculator::ProcessVector(
     const Matrix& input_stream, CalculatorContext* cc) {
   switch (output_type_) {
     // These blocks deliberately ignore clang-format to preserve the
@@ -394,13 +394,13 @@ template <class OutputMatrixType>
     }
     // clang-format on
     default: {
-      return ::mediapipe::Status(mediapipe::StatusCode::kInvalidArgument,
-                                 "Unrecognized spectrogram output type.");
+      return mediapipe::Status(mediapipe::StatusCode::kInvalidArgument,
+                               "Unrecognized spectrogram output type.");
     }
   }
 }
 
-::mediapipe::Status SpectrogramCalculator::Close(CalculatorContext* cc) {
+mediapipe::Status SpectrogramCalculator::Close(CalculatorContext* cc) {
   if (cumulative_input_samples_ > 0 && pad_final_packet_) {
     // We can flush any remaining samples by sending frame_step_samples - 1
     // zeros to the Process method, and letting it do its thing,
@@ -416,7 +416,7 @@ template <class OutputMatrixType>
         Matrix::Zero(num_input_channels_, required_padding_samples), cc);
   }
 
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
 }  // namespace mediapipe

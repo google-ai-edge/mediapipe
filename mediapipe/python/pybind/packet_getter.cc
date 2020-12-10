@@ -206,6 +206,24 @@ void PublicPacketGetters(pybind11::module* m) {
 )doc");
 
   m->def(
+      "get_bool_list", &GetContent<std::vector<bool>>,
+      R"doc(Get the content of a MediaPipe bool vector Packet as a boolean list.
+
+  Args:
+    packet: A MediaPipe Packet that holds std:vector<bool>.
+
+  Returns:
+    An boolean list.
+
+  Raises:
+    ValueError: If the Packet doesn't contain std:vector<bool>.
+
+  Examples:
+    packet = mp.packet_creator.create_bool_vector([True, True, False])
+    data = mp.packet_getter.get_bool_list(packet)
+)doc");
+
+  m->def(
       "get_float_list", &GetContent<std::vector<float>>,
       R"doc(Get the content of a MediaPipe float vector Packet as a float list.
 

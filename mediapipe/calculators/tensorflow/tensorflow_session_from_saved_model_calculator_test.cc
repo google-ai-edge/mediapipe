@@ -132,7 +132,7 @@ TEST_F(TensorFlowSessionFromSavedModelCalculatorTest,
 TEST_F(TensorFlowSessionFromSavedModelCalculatorTest,
        ProducesPacketUsableByTensorFlowInferenceCalculator) {
   CalculatorGraphConfig graph_config =
-      ::mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(
           absl::Substitute(R"(
       node {
         calculator: "TensorFlowInferenceCalculator"

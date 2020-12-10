@@ -2,14 +2,20 @@
 layout: default
 title: KNIFT (Template-based Feature Matching)
 parent: Solutions
-nav_order: 11
+nav_order: 12
 ---
 
 # MediaPipe KNIFT
 {: .no_toc }
 
+<details close markdown="block">
+  <summary>
+    Table of contents
+  </summary>
+  {: .text-delta }
 1. TOC
 {:toc}
+</details>
 ---
 
 ## Overview
@@ -67,7 +73,7 @@ you'd like to use your own template images, see
 ![template_matching_mobile_template.jpg](../images/mobile/template_matching_mobile_template.jpg)
 
 Please first see general instructions for
-[Android](../getting_started/building_examples.md#android) on how to build MediaPipe examples.
+[Android](../getting_started/android.md) on how to build MediaPipe examples.
 
 Note: To visualize a graph, copy the graph and paste it into
 [MediaPipe Visualizer](https://viz.mediapipe.dev/). For more information on how

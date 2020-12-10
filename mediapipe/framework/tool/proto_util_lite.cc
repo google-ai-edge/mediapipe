@@ -42,8 +42,8 @@ bool IsLengthDelimited(WireFormatLite::WireType wire_type) {
 }
 
 // Reads a single data value for a wire type.
-::mediapipe::Status ReadFieldValue(uint32 tag, CodedInputStream* in,
-                                   std::string* result) {
+mediapipe::Status ReadFieldValue(uint32 tag, CodedInputStream* in,
+                                 std::string* result) {
   WireFormatLite::WireType wire_type = WireFormatLite::GetTagWireType(tag);
   if (IsLengthDelimited(wire_type)) {
     uint32 length;
@@ -59,13 +59,13 @@ bool IsLengthDelimited(WireFormatLite::WireType wire_type) {
     cos.Trim();
     result->assign(field_data, tag_size, std::string::npos);
   }
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
 // Reads the packed sequence of data values for a wire type.
-::mediapipe::Status ReadPackedValues(WireFormatLite::WireType wire_type,
-                                     CodedInputStream* in,
-                                     std::vector<std::string>* field_values) {
+mediapipe::Status ReadPackedValues(WireFormatLite::WireType wire_type,
+                                   CodedInputStream* in,
+                                   std::vector<std::string>* field_values) {
   uint32 data_size;
   RET_CHECK(in->ReadVarint32(&data_size));
   // fake_tag encodes the wire-type for calls to WireFormatLite::SkipField.
@@ -77,15 +77,15 @@ bool IsLengthDelimited(WireFormatLite::WireType wire_type) {
     field_values->push_back(number);
     data_size -= number.size();
   }
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
 // Extracts the data value(s) for one field from a serialized message.
 // The message with these field values removed is written to |out|.
-::mediapipe::Status GetFieldValues(uint32 field_id,
-                                   WireFormatLite::WireType wire_type,
-                                   CodedInputStream* in, CodedOutputStream* out,
-                                   std::vector<std::string>* field_values) {
+mediapipe::Status GetFieldValues(uint32 field_id,
+                                 WireFormatLite::WireType wire_type,
+                                 CodedInputStream* in, CodedOutputStream* out,
+                                 std::vector<std::string>* field_values) {
   uint32 tag;
   while ((tag = in->ReadTag()) != 0) {
     int field_number = WireFormatLite::GetTagFieldNumber(tag);
@@ -102,7 +102,7 @@ bool IsLengthDelimited(WireFormatLite::WireType wire_type) {
       RET_CHECK(WireFormatLite::SkipField(in, tag, out));
     }
   }
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
 // Injects the data value(s) for one field into a serialized message.
@@ -122,7 +122,7 @@ void SetFieldValues(uint32 field_id, WireFormatLite::WireType wire_type,
 FieldAccess::FieldAccess(uint32 field_id, FieldType field_type)
     : field_id_(field_id), field_type_(field_type) {}
 
-::mediapipe::Status FieldAccess::SetMessage(const std::string& message) {
+mediapipe::Status FieldAccess::SetMessage(const std::string& message) {
   ArrayInputStream ais(message.data(), message.size());
   CodedInputStream in(&ais);
   StringOutputStream sos(&message_);
@@ -146,7 +146,7 @@ std::vector<FieldValue>* FieldAccess::mutable_field_values() {
 }
 
 // Replaces a range of field values for one field nested within a protobuf.
-::mediapipe::Status ProtoUtilLite::ReplaceFieldRange(
+mediapipe::Status ProtoUtilLite::ReplaceFieldRange(
     FieldValue* message, ProtoPath proto_path, int length, FieldType field_type,
     const std::vector<FieldValue>& field_values) {
   int field_id, index;
@@ -169,11 +169,11 @@ std::vector<FieldValue>* FieldAccess::mutable_field_values() {
   }
   message->clear();
   access.GetMessage(message);
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
 // Returns a range of field values from one field nested within a protobuf.
-::mediapipe::Status ProtoUtilLite::GetFieldRange(
+mediapipe::Status ProtoUtilLite::GetFieldRange(
     const FieldValue& message, ProtoPath proto_path, int length,
     FieldType field_type, std::vector<FieldValue>* field_values) {
   int field_id, index;
@@ -194,41 +194,40 @@ std::vector<FieldValue>* FieldAccess::mutable_field_values() {
     field_values->insert(field_values->begin(), v.begin() + index,
                          v.begin() + index + length);
   }
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
 // If ok, returns OkStatus, otherwise returns InvalidArgumentError.
 template <typename T>
-::mediapipe::Status SyntaxStatus(bool ok, const std::string& text, T* result) {
-  return ok ? ::mediapipe::OkStatus()
-            : ::mediapipe::InvalidArgumentError(absl::StrCat(
+mediapipe::Status SyntaxStatus(bool ok, const std::string& text, T* result) {
+  return ok ? mediapipe::OkStatus()
+            : mediapipe::InvalidArgumentError(absl::StrCat(
                   "Syntax error: \"", text, "\"",
                   " for type: ", MediaPipeTypeStringOrDemangled<T>(), "."));
 }
 
 // Templated parsing of a std::string value.
 template <typename T>
-::mediapipe::Status ParseValue(const std::string& text, T* result) {
+mediapipe::Status ParseValue(const std::string& text, T* result) {
   return SyntaxStatus(absl::SimpleAtoi(text, result), text, result);
 }
 template <>
-::mediapipe::Status ParseValue<double>(const std::string& text,
-                                       double* result) {
+mediapipe::Status ParseValue<double>(const std::string& text, double* result) {
   return SyntaxStatus(absl::SimpleAtod(text, result), text, result);
 }
 template <>
-::mediapipe::Status ParseValue<float>(const std::string& text, float* result) {
+mediapipe::Status ParseValue<float>(const std::string& text, float* result) {
   return SyntaxStatus(absl::SimpleAtof(text, result), text, result);
 }
 template <>
-::mediapipe::Status ParseValue<bool>(const std::string& text, bool* result) {
+mediapipe::Status ParseValue<bool>(const std::string& text, bool* result) {
   return SyntaxStatus(absl::SimpleAtob(text, result), text, result);
 }
 template <>
-::mediapipe::Status ParseValue<std::string>(const std::string& text,
-                                            std::string* result) {
+mediapipe::Status ParseValue<std::string>(const std::string& text,
+                                          std::string* result) {
   *result = text;
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
 // Templated formatting of a primitive value.
@@ -239,20 +238,20 @@ std::string FormatValue(T v) {
 
 // A helper function to parse and serialize one primtive value.
 template <typename T>
-::mediapipe::Status WritePrimitive(
+mediapipe::Status WritePrimitive(
     void (*writer)(T, proto_ns::io::CodedOutputStream*),
     const std::string& text, CodedOutputStream* out) {
   T value;
   MP_RETURN_IF_ERROR(ParseValue<T>(text, &value));
   (*writer)(value, out);
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
 // Serializes a protobuf FieldValue.
-static ::mediapipe::Status SerializeValue(const std::string& text,
-                                          FieldType field_type,
-                                          FieldValue* field_value) {
-  ::mediapipe::Status status;
+static mediapipe::Status SerializeValue(const std::string& text,
+                                        FieldType field_type,
+                                        FieldValue* field_value) {
+  mediapipe::Status status;
   StringOutputStream sos(field_value);
   CodedOutputStream out(&sos);
 
@@ -278,11 +277,11 @@ static ::mediapipe::Status SerializeValue(const std::string& text,
     case W::TYPE_BYTES:
     case W::TYPE_STRING: {
       out.WriteRaw(text.data(), text.size());
-      return ::mediapipe::OkStatus();
+      return mediapipe::OkStatus();
     }
     case W::TYPE_GROUP:
     case W::TYPE_MESSAGE:
-      return ::mediapipe::UnimplementedError(
+      return mediapipe::UnimplementedError(
           "SerializeValue cannot serialize a Message.");
     case W::TYPE_UINT32:
       return WritePrimitive(W::WriteUInt32NoTag, text, &out);
@@ -297,27 +296,27 @@ static ::mediapipe::Status SerializeValue(const std::string& text,
     case W::TYPE_SINT64:
       return WritePrimitive(W::WriteSInt64NoTag, text, &out);
   }
-  return ::mediapipe::UnimplementedError("SerializeValue unimplemented type.");
+  return mediapipe::UnimplementedError("SerializeValue unimplemented type.");
 }
 
 // A helper function for deserializing one text value.
 template <typename CType, FieldType DeclaredType>
-static ::mediapipe::Status ReadPrimitive(CodedInputStream* input,
-                                         std::string* result) {
+static mediapipe::Status ReadPrimitive(CodedInputStream* input,
+                                       std::string* result) {
   CType value;
   if (!WireFormatLite::ReadPrimitive<CType, DeclaredType>(input, &value)) {
-    return ::mediapipe::InvalidArgumentError(absl::StrCat(
+    return mediapipe::InvalidArgumentError(absl::StrCat(
         "Bad serialized value: ", MediaPipeTypeStringOrDemangled<CType>(),
         "."));
   }
   *result = FormatValue(value);
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
 // Deserializes a protobuf FieldValue.
-static ::mediapipe::Status DeserializeValue(const FieldValue& bytes,
-                                            FieldType field_type,
-                                            std::string* result) {
+static mediapipe::Status DeserializeValue(const FieldValue& bytes,
+                                          FieldType field_type,
+                                          std::string* result) {
   ArrayInputStream ais(bytes.data(), bytes.size());
   CodedInputStream input(&ais);
   typedef WireFormatLite W;
@@ -341,7 +340,7 @@ static ::mediapipe::Status DeserializeValue(const FieldValue& bytes,
     case W::TYPE_BYTES:
     case W::TYPE_STRING: {
       *result = bytes;
-      return ::mediapipe::OkStatus();
+      return mediapipe::OkStatus();
     }
     case W::TYPE_GROUP:
     case W::TYPE_MESSAGE:
@@ -359,11 +358,10 @@ static ::mediapipe::Status DeserializeValue(const FieldValue& bytes,
     case W::TYPE_SINT64:
       return ReadPrimitive<proto_int64, W::TYPE_SINT64>(&input, result);
   }
-  return ::mediapipe::UnimplementedError(
-      "DeserializeValue unimplemented type.");
+  return mediapipe::UnimplementedError("DeserializeValue unimplemented type.");
 }
 
-::mediapipe::Status ProtoUtilLite::Serialize(
+mediapipe::Status ProtoUtilLite::Serialize(
     const std::vector<std::string>& text_values, FieldType field_type,
     std::vector<FieldValue>* result) {
   result->clear();
@@ -373,10 +371,10 @@ static ::mediapipe::Status DeserializeValue(const FieldValue& bytes,
     MP_RETURN_IF_ERROR(SerializeValue(text_value, field_type, &field_value));
     result->push_back(field_value);
   }
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status ProtoUtilLite::Deserialize(
+mediapipe::Status ProtoUtilLite::Deserialize(
     const std::vector<FieldValue>& field_values, FieldType field_type,
     std::vector<std::string>* result) {
   result->clear();
@@ -386,7 +384,7 @@ static ::mediapipe::Status DeserializeValue(const FieldValue& bytes,
     MP_RETURN_IF_ERROR(DeserializeValue(field_value, field_type, &text_value));
     result->push_back(text_value);
   }
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
 }  // namespace tool

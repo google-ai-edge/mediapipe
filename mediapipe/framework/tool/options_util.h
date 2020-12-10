@@ -85,7 +85,7 @@ void GetNodeOptions(const CalculatorGraphConfig::Node& node_config, T* result) {
 #if defined(MEDIAPIPE_PROTO_LITE) && defined(MEDIAPIPE_PROTO_THIRD_PARTY)
   // protobuf::Any is unavailable with third_party/protobuf:protobuf-lite.
 #else
-  for (const ::mediapipe::protobuf::Any& options : node_config.node_options()) {
+  for (const mediapipe::protobuf::Any& options : node_config.node_options()) {
     if (options.Is<T>()) {
       options.UnpackTo(result);
     }

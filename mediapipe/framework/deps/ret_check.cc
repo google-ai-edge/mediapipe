@@ -16,23 +16,23 @@
 
 namespace mediapipe {
 
-::mediapipe::StatusBuilder RetCheckFailSlowPath(
-    ::mediapipe::source_location location) {
+mediapipe::StatusBuilder RetCheckFailSlowPath(
+    mediapipe::source_location location) {
   // TODO Implement LogWithStackTrace().
-  return ::mediapipe::InternalErrorBuilder(location)
+  return mediapipe::InternalErrorBuilder(location)
          << "RET_CHECK failure (" << location.file_name() << ":"
          << location.line() << ") ";
 }
 
-::mediapipe::StatusBuilder RetCheckFailSlowPath(
-    ::mediapipe::source_location location, const char* condition) {
-  return ::mediapipe::RetCheckFailSlowPath(location) << condition;
+mediapipe::StatusBuilder RetCheckFailSlowPath(
+    mediapipe::source_location location, const char* condition) {
+  return mediapipe::RetCheckFailSlowPath(location) << condition;
 }
 
-::mediapipe::StatusBuilder RetCheckFailSlowPath(
-    ::mediapipe::source_location location, const char* condition,
-    const ::mediapipe::Status& status) {
-  return ::mediapipe::RetCheckFailSlowPath(location)
+mediapipe::StatusBuilder RetCheckFailSlowPath(
+    mediapipe::source_location location, const char* condition,
+    const mediapipe::Status& status) {
+  return mediapipe::RetCheckFailSlowPath(location)
          << condition << " returned " << status << " ";
 }
 

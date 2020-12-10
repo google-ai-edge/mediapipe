@@ -81,7 +81,7 @@ class CalculatorBase {
   // this function is static the registration macro provides access to
   // each subclass' GetContract function.
   //
-  // static ::mediapipe::Status GetContract(CalculatorContract* cc);
+  // static mediapipe::Status GetContract(CalculatorContract* cc);
   //
   // GetContract fills in the calculator's contract with the framework, such
   // as its expectations of what packets it will receive.  When this function
@@ -115,23 +115,23 @@ class CalculatorBase {
   // Open is called before any Process() calls, on a freshly constructed
   // calculator.  Subclasses may override this method to perform necessary
   // setup, and possibly output Packets and/or set output streams' headers.
-  // Must return ::mediapipe::OkStatus() to indicate success. On failure any
+  // Must return mediapipe::OkStatus() to indicate success. On failure any
   // other status code can be returned. If failure is returned then the
   // framework will call neither Process() nor Close() on the calculator (so any
   // necessary cleanup should be done before returning failure or in the
   // destructor).
-  virtual ::mediapipe::Status Open(CalculatorContext* cc) {
-    return ::mediapipe::OkStatus();
+  virtual mediapipe::Status Open(CalculatorContext* cc) {
+    return mediapipe::OkStatus();
   }
 
   // Processes the incoming inputs. May call the methods on cc to access
   // inputs and produce outputs.
   //
   // Process() called on a non-source node must return
-  // ::mediapipe::OkStatus() to indicate that all went well, or any other
+  // mediapipe::OkStatus() to indicate that all went well, or any other
   // status code to signal an error.
   // For example:
-  //     ::mediapipe::UnknownError("Failure Message");
+  //     mediapipe::UnknownError("Failure Message");
   // Notice the convenience functions in util/task/canonical_errors.h .
   // If a non-source Calculator returns tool::StatusStop(), then this
   // signals the graph is being cancelled early.  In this case, all
@@ -139,22 +139,22 @@ class CalculatorBase {
   // remaining Packets will propagate through the graph).
   //
   // A source node will continue to have Process() called on it as long
-  // as it returns ::mediapipe::OkStatus().  To indicate that there is
+  // as it returns mediapipe::OkStatus().  To indicate that there is
   // no more data to be generated return tool::StatusStop().  Any other
   // status indicates an error has occurred.
-  virtual ::mediapipe::Status Process(CalculatorContext* cc) = 0;
+  virtual mediapipe::Status Process(CalculatorContext* cc) = 0;
 
   // Is called if Open() was called and succeeded.  Is called either
   // immediately after processing is complete or after a graph run has ended
-  // (if an error occurred in the graph).  Must return ::mediapipe::OkStatus()
+  // (if an error occurred in the graph).  Must return mediapipe::OkStatus()
   // to indicate success.  On failure any other status code can be returned.
   // Packets may be output during a call to Close().  However, output packets
   // are silently discarded if Close() is called after a graph run has ended.
   //
   // NOTE: If Close() needs to perform an action only when processing is
   // complete, Close() must check if cc->GraphStatus() is OK.
-  virtual ::mediapipe::Status Close(CalculatorContext* cc) {
-    return ::mediapipe::OkStatus();
+  virtual mediapipe::Status Close(CalculatorContext* cc) {
+    return mediapipe::OkStatus();
   }
 
   // Returns a value according to which the framework selects
@@ -178,7 +178,7 @@ namespace internal {
 class StaticAccessToCalculatorBase {
  public:
   virtual ~StaticAccessToCalculatorBase() {}
-  virtual ::mediapipe::Status GetContract(CalculatorContract* cc) = 0;
+  virtual mediapipe::Status GetContract(CalculatorContract* cc) = 0;
 };
 
 using StaticAccessToCalculatorBaseRegistry =
@@ -187,7 +187,7 @@ using StaticAccessToCalculatorBaseRegistry =
 // Functions for checking that the calculator has the required GetContract.
 template <class T>
 constexpr bool CalculatorHasGetContract(decltype(&T::GetContract) /*unused*/) {
-  typedef ::mediapipe::Status (*GetContractType)(CalculatorContract * cc);
+  typedef mediapipe::Status (*GetContractType)(CalculatorContract * cc);
   return std::is_same<decltype(&T::GetContract), GetContractType>::value;
 }
 template <class T>
@@ -200,17 +200,17 @@ constexpr bool CalculatorHasGetContract(...) {
 template <typename CalculatorBaseSubclass>
 class StaticAccessToCalculatorBaseTyped : public StaticAccessToCalculatorBase {
  public:
-  static_assert(std::is_base_of<::mediapipe::CalculatorBase,
-                                CalculatorBaseSubclass>::value,
-                "Classes registered with REGISTER_CALCULATOR must be "
-                "subclasses of ::mediapipe::CalculatorBase.");
+  static_assert(
+      std::is_base_of<mediapipe::CalculatorBase, CalculatorBaseSubclass>::value,
+      "Classes registered with REGISTER_CALCULATOR must be "
+      "subclasses of mediapipe::CalculatorBase.");
   static_assert(CalculatorHasGetContract<CalculatorBaseSubclass>(nullptr),
                 "GetContract() must be defined with the correct signature in "
                 "every calculator.");
 
   // Provides access to the static function GetContract within a specific
   // subclass of CalculatorBase.
-  ::mediapipe::Status GetContract(CalculatorContract* cc) final {
+  mediapipe::Status GetContract(CalculatorContract* cc) final {
     // CalculatorBaseSubclass must implement this function, since it is not
     // implemented in the parent class.
     return CalculatorBaseSubclass::GetContract(cc);

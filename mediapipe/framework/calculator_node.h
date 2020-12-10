@@ -95,7 +95,7 @@ class CalculatorNode {
   void SetExecutor(const std::string& executor);
 
   // Calls Process() on the Calculator corresponding to this node.
-  ::mediapipe::Status ProcessNode(CalculatorContext* calculator_context);
+  mediapipe::Status ProcessNode(CalculatorContext* calculator_context);
 
   // Initializes the node.  The buffer_size_hint argument is
   // set to the value specified in the graph proto for this field.
@@ -105,7 +105,7 @@ class CalculatorNode {
   // output_side_packets is expected to point to a contiguous flat array with
   // OutputSidePacketImpls corresponding to the output side packet indexes in
   // validated_graph.
-  ::mediapipe::Status Initialize(
+  mediapipe::Status Initialize(
       const ValidatedGraphConfig* validated_graph, int node_id,
       InputStreamManager* input_stream_managers,
       OutputStreamManager* output_stream_managers,
@@ -121,22 +121,22 @@ class CalculatorNode {
   // can be scheduled. source_node_opened_callback is called when a source
   // node is opened. schedule_callback is passed to the InputStreamHandler
   // and is called each time a new invocation can be scheduled.
-  ::mediapipe::Status PrepareForRun(
+  mediapipe::Status PrepareForRun(
       const std::map<std::string, Packet>& all_side_packets,
       const std::map<std::string, Packet>& service_packets,
       std::function<void()> ready_for_open_callback,
       std::function<void()> source_node_opened_callback,
       std::function<void(CalculatorContext*)> schedule_callback,
-      std::function<void(::mediapipe::Status)> error_callback,
+      std::function<void(mediapipe::Status)> error_callback,
       CounterFactory* counter_factory) ABSL_LOCKS_EXCLUDED(status_mutex_);
   // Opens the node.
-  ::mediapipe::Status OpenNode() ABSL_LOCKS_EXCLUDED(status_mutex_);
+  mediapipe::Status OpenNode() ABSL_LOCKS_EXCLUDED(status_mutex_);
   // Called when a source node's layer becomes active.
   void ActivateNode() ABSL_LOCKS_EXCLUDED(status_mutex_);
   // Cleans up the node after the CalculatorGraph has been run. Deletes
   // the Calculator managed by this node. graph_status is the status of
   // the graph run.
-  void CleanupAfterRun(const ::mediapipe::Status& graph_status)
+  void CleanupAfterRun(const mediapipe::Status& graph_status)
       ABSL_LOCKS_EXCLUDED(status_mutex_);
 
   // Returns true iff PrepareForRun() has been called (and types verified).
@@ -218,8 +218,8 @@ class CalculatorNode {
   // Closes the node's calculator and input and output streams.
   // graph_status is the current status of the graph run. graph_run_ended
   // indicates whether the graph run has ended.
-  ::mediapipe::Status CloseNode(const ::mediapipe::Status& graph_status,
-                                bool graph_run_ended)
+  mediapipe::Status CloseNode(const mediapipe::Status& graph_status,
+                              bool graph_run_ended)
       ABSL_LOCKS_EXCLUDED(status_mutex_);
 
   // Returns a pointer to the default calculator context that is used for
@@ -235,34 +235,34 @@ class CalculatorNode {
 
  private:
   // Sets up the output side packets from the master flat array.
-  ::mediapipe::Status InitializeOutputSidePackets(
+  mediapipe::Status InitializeOutputSidePackets(
       const PacketTypeSet& output_side_packet_types,
       OutputSidePacketImpl* output_side_packets);
   // Connects the input side packets as mirrors on the output side packets.
   // Output side packets are looked up in the master flat array which is
   // provided.
-  ::mediapipe::Status InitializeInputSidePackets(
+  mediapipe::Status InitializeInputSidePackets(
       OutputSidePacketImpl* output_side_packets);
   // Sets up the output streams from the master flat array.
-  ::mediapipe::Status InitializeOutputStreams(
+  mediapipe::Status InitializeOutputStreams(
       OutputStreamManager* output_stream_managers);
   // Sets up the input streams and connects them as mirrors on the
   // output streams.  Both input streams and output streams are looked
   // up in the master flat arrays which are provided.
-  ::mediapipe::Status InitializeInputStreams(
+  mediapipe::Status InitializeInputStreams(
       InputStreamManager* input_stream_managers,
       OutputStreamManager* output_stream_managers);
 
-  ::mediapipe::Status InitializeInputStreamHandler(
+  mediapipe::Status InitializeInputStreamHandler(
       const InputStreamHandlerConfig& handler_config,
       const PacketTypeSet& input_stream_types);
-  ::mediapipe::Status InitializeOutputStreamHandler(
+  mediapipe::Status InitializeOutputStreamHandler(
       const OutputStreamHandlerConfig& handler_config,
       const PacketTypeSet& output_stream_types);
 
   // Connects the input/output stream shards in the given calculator context to
   // the input/output streams of the node.
-  ::mediapipe::Status ConnectShardsToStreams(
+  mediapipe::Status ConnectShardsToStreams(
       CalculatorContext* calculator_context);
 
   // The general scheduling logic shared by EndScheduling() and

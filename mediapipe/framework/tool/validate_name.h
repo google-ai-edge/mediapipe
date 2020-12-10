@@ -52,7 +52,7 @@ ABSL_DEPRECATED(
     "support the TAG:INDEX:name notation. You can use Create() to create the "
     "tag map, and then Names(), Mapping(), and other methods to access the "
     "tag, index and name information.")
-::mediapipe::Status GetTagAndNameInfo(
+mediapipe::Status GetTagAndNameInfo(
     const proto_ns::RepeatedPtrField<ProtoString>& tags_and_names,
     TagAndNameInfo* info);
 
@@ -62,7 +62,7 @@ ABSL_DEPRECATED(
     "Prefer using mediapipe::tool::TagMap instead, since this method does not "
     "support the TAG:INDEX:name notation. You can use CanonicalEntries() to "
     "translate a tag map to a RepeatedPtrField of tag and names.")
-::mediapipe::Status SetFromTagAndNameInfo(
+mediapipe::Status SetFromTagAndNameInfo(
     const TagAndNameInfo& info,
     proto_ns::RepeatedPtrField<ProtoString>* tags_and_names);
 
@@ -76,17 +76,17 @@ ABSL_DEPRECATED(
 //         trainer/calculator names.
 //     (3) Because input side packet names end up in model directory names,
 //         where lower case naming is the norm.
-::mediapipe::Status ValidateName(const std::string& name);
+mediapipe::Status ValidateName(const std::string& name);
 // The std::string is a valid tag name.  Tags use only upper case letters,
 // numbers, and underscores.
-::mediapipe::Status ValidateTag(const std::string& tag);
+mediapipe::Status ValidateTag(const std::string& tag);
 
 // Parse a "Tag and Name" std::string into a tag and a name.
 // The format is an optional tag and colon, followed by a name.
 // Example 1: "VIDEO:frames2" -> tag: "VIDEO", name: "frames2"
 // Example 2: "video_frames_1" -> tag: "", name: "video_frames_1"
-::mediapipe::Status ParseTagAndName(const std::string& tag_and_name,
-                                    std::string* tag, std::string* name);
+mediapipe::Status ParseTagAndName(const std::string& tag_and_name,
+                                  std::string* tag, std::string* name);
 
 // Parse a generic TAG:index:name std::string.  The format is a tag, then an
 // index, then a name.  The tag and index are optional.  If the index
@@ -96,9 +96,9 @@ ABSL_DEPRECATED(
 //   "VIDEO:frames2"  -> tag: "VIDEO", index: 0,  name: "frames2"
 //   "VIDEO:1:frames" -> tag: "VIDEO", index: 1,  name: "frames"
 //   "raw_frames"     -> tag: "",      index: -1, name: "raw_frames"
-::mediapipe::Status ParseTagIndexName(const std::string& tag_and_name,
-                                      std::string* tag, int* index,
-                                      std::string* name);
+mediapipe::Status ParseTagIndexName(const std::string& tag_and_name,
+                                    std::string* tag, int* index,
+                                    std::string* name);
 
 // Parse a generic TAG:index std::string.  The format is a tag, then an index
 // with both being optional.  If the tag is missing it is assumed to be
@@ -109,8 +109,8 @@ ABSL_DEPRECATED(
 //   "VIDEO:1" -> tag: "VIDEO", index: 1
 //   ":2"      -> tag: "",      index: 2
 //   ""        -> tag: "",      index: 0
-::mediapipe::Status ParseTagIndex(const std::string& tag_and_index,
-                                  std::string* tag, int* index);
+mediapipe::Status ParseTagIndex(const std::string& tag_and_index,
+                                std::string* tag, int* index);
 
 }  // namespace tool
 }  // namespace mediapipe

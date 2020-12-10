@@ -253,6 +253,7 @@ class Tensor {
 #if MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30
   mutable std::shared_ptr<mediapipe::GlContext> gl_context_;
   mutable GLuint opengl_texture2d_ = GL_INVALID_INDEX;
+  mutable GLuint frame_buffer_ = GL_INVALID_INDEX;
   void AllocateOpenGlTexture2d() const;
 #if MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31
   mutable GLuint opengl_buffer_ = GL_INVALID_INDEX;

@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Lint as: python3
 """Tests for mediapipe.python._framework_bindings.calculator_graph."""
 
 # Dependency imports
@@ -25,11 +24,13 @@ from mediapipe.framework import calculator_pb2
 
 class GraphTest(absltest.TestCase):
 
-  def testInvalidBinaryGraphFile(self):
-    with self.assertRaisesRegex(FileNotFoundError, 'No such file or directory'):
+  def test_invalid_binary_graph_file(self):
+    with self.assertRaisesRegex(
+        FileNotFoundError,
+        '(No such file or directory|The path does not exist)'):
       mp.CalculatorGraph(binary_graph_path='/tmp/abc.binarypb')
 
-  def testInvalidNodeConfig(self):
+  def test_invalid_node_config(self):
     text_config = """
       node {
         calculator: 'PassThroughCalculator'
@@ -46,7 +47,7 @@ class GraphTest(absltest.TestCase):
     ):
       mp.CalculatorGraph(graph_config=config_proto)
 
-  def testInvalidCalculatorType(self):
+  def test_invalid_calculator_type(self):
     text_config = """
       node {
         calculator: 'SomeUnknownCalculator'
@@ -60,7 +61,7 @@ class GraphTest(absltest.TestCase):
         RuntimeError, 'Unable to find Calculator \"SomeUnknownCalculator\"'):
       mp.CalculatorGraph(graph_config=config_proto)
 
-  def testGraphInitializedWithProtoConfig(self):
+  def test_graph_initialized_with_proto_config(self):
     text_config = """
       max_queue_size: 1
       input_stream: 'in'
@@ -95,7 +96,7 @@ class GraphTest(absltest.TestCase):
     self.assertEqual(mp.packet_getter.get_str(out[0]), 'hello world')
     self.assertEqual(mp.packet_getter.get_str(out[1]), 'hello world')
 
-  def testGraphInitializedWithTextConfig(self):
+  def test_graph_initialized_with_text_config(self):
     text_config = """
       max_queue_size: 1
       input_stream: 'in'
@@ -127,7 +128,7 @@ class GraphTest(absltest.TestCase):
     self.assertEqual(mp.packet_getter.get_str(out[0]), 'hello world')
     self.assertEqual(mp.packet_getter.get_str(out[1]), 'hello world')
 
-  def testGraphValidationAndInitialization(self):
+  def test_graph_validation_and_initialization(self):
     text_config = """
       max_queue_size: 1
       input_stream: 'in'
@@ -164,7 +165,7 @@ class GraphTest(absltest.TestCase):
     self.assertEqual(mp.packet_getter.get_str(out[0]), 'hello world')
     self.assertEqual(mp.packet_getter.get_str(out[1]), 'hello world')
 
-  def testInsertPacketsWithSameTimestamp(self):
+  def test_insert_packets_with_same_timestamp(self):
     text_config = """
       max_queue_size: 1
       input_stream: 'in'
@@ -192,7 +193,7 @@ class GraphTest(absltest.TestCase):
         ValueError, 'Current minimum expected timestamp is 1 but received 0.'):
       graph.wait_until_idle()
 
-  def testSidePacketGraph(self):
+  def test_side_packet_graph(self):
     text_config = """
       node {
         calculator: 'StringToUint64Calculator'

@@ -45,7 +45,7 @@ PaddingEffectGenerator::PaddingEffectGenerator(const int input_width,
   }
 }
 
-::mediapipe::Status PaddingEffectGenerator::Process(
+mediapipe::Status PaddingEffectGenerator::Process(
     const ImageFrame& input_frame, const float background_contrast,
     const int blur_cv_size, const float overlay_opacity,
     ImageFrame* output_frame, const cv::Scalar* background_color_in_rgb) {
@@ -170,7 +170,7 @@ PaddingEffectGenerator::PaddingEffectGenerator(const int input_width,
   output_frame->CopyPixelData(input_frame.Format(), canvas.cols, canvas.rows,
                               canvas.data,
                               ImageFrame::kDefaultAlignmentBoundary);
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
 cv::Rect PaddingEffectGenerator::ComputeOutputLocation() {

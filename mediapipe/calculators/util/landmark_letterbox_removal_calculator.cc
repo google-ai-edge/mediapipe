@@ -64,7 +64,7 @@ constexpr char kLetterboxPaddingTag[] = "LETTERBOX_PADDING";
 // }
 class LandmarkLetterboxRemovalCalculator : public CalculatorBase {
  public:
-  static ::mediapipe::Status GetContract(CalculatorContract* cc) {
+  static mediapipe::Status GetContract(CalculatorContract* cc) {
     RET_CHECK(cc->Inputs().HasTag(kLandmarksTag) &&
               cc->Inputs().HasTag(kLetterboxPaddingTag))
         << "Missing one or more input streams.";
@@ -84,18 +84,18 @@ class LandmarkLetterboxRemovalCalculator : public CalculatorBase {
       cc->Outputs().Get(id).Set<NormalizedLandmarkList>();
     }
 
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Open(CalculatorContext* cc) override {
+  mediapipe::Status Open(CalculatorContext* cc) override {
     cc->SetOffset(TimestampDiff(0));
 
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Process(CalculatorContext* cc) override {
+  mediapipe::Status Process(CalculatorContext* cc) override {
     if (cc->Inputs().Tag(kLetterboxPaddingTag).IsEmpty()) {
-      return ::mediapipe::OkStatus();
+      return mediapipe::OkStatus();
     }
     const auto& letterbox_padding =
         cc->Inputs().Tag(kLetterboxPaddingTag).Get<std::array<float, 4>>();
@@ -124,22 +124,17 @@ class LandmarkLetterboxRemovalCalculator : public CalculatorBase {
         const float new_y = (landmark.y() - top) / (1.0f - top_and_bottom);
         const float new_z =
             landmark.z() / (1.0f - left_and_right);  // Scale Z coordinate as X.
-
+        *new_landmark = landmark;
         new_landmark->set_x(new_x);
         new_landmark->set_y(new_y);
-        // Keep z-coord as is.
         new_landmark->set_z(new_z);
-        // Keep visibility as is.
-        new_landmark->set_visibility(landmark.visibility());
-        // Keep presence as is.
-        new_landmark->set_presence(landmark.presence());
       }
 
       cc->Outputs().Get(output_id).AddPacket(
           MakePacket<NormalizedLandmarkList>(output_landmarks)
               .At(cc->InputTimestamp()));
     }
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 };
 REGISTER_CALCULATOR(LandmarkLetterboxRemovalCalculator);

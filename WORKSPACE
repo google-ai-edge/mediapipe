@@ -13,11 +13,11 @@ load("@bazel_skylib//lib:versions.bzl", "versions")
 versions.check(minimum_bazel_version = "3.4.0")
 
 
-# ABSL cpp library lts_2020_02_25
+# ABSL cpp library lts_2020_09_23
 http_archive(
     name = "com_google_absl",
     urls = [
-        "https://github.com/abseil/abseil-cpp/archive/20200225.tar.gz",
+        "https://github.com/abseil/abseil-cpp/archive/20200923.tar.gz",
     ],
     # Remove after https://github.com/abseil/abseil-cpp/issues/326 is solved.
     patches = [
@@ -26,8 +26,8 @@ http_archive(
     patch_args = [
         "-p1",
     ],
-    strip_prefix = "abseil-cpp-20200225",
-    sha256 = "728a813291bdec2aa46eab8356ace9f75ac2ed9dfe2df5ab603c4e6c09f1c353"
+    strip_prefix = "abseil-cpp-20200923",
+    sha256 = "b3744a4f7a249d5eaf2309daad597631ce77ea62e0fc6abffbab4b4c3dc0fc08"
 )
 
 http_archive(
@@ -99,7 +99,7 @@ http_archive(
         "https://github.com/google/glog/archive/0a2e5931bd5ff22fd3bf8999eb8ce776f159cda6.zip",
     ],
     patches = [
-        "@//third_party:com_github_glog_glog_9779e5ea6ef59562b030248947f787d1256132ae.diff"
+        "@//third_party:com_github_glog_glog_9779e5ea6ef59562b030248947f787d1256132ae.diff",
     ],
     patch_args = [
         "-p1",
@@ -170,15 +170,15 @@ http_archive(
 
 http_archive(
     name = "ceres_solver",
-    url = "https://github.com/ceres-solver/ceres-solver/archive/1.14.0.zip",
+    url = "https://github.com/ceres-solver/ceres-solver/archive/2.0.0.zip",
     patches = [
         "@//third_party:ceres_solver_compatibility_fixes.diff"
     ],
     patch_args = [
         "-p1",
     ],
-    strip_prefix = "ceres-solver-1.14.0",
-    sha256 = "5ba6d0db4e784621fda44a50c58bb23b0892684692f0c623e2063f9c19f192f1"
+    strip_prefix = "ceres-solver-2.0.0",
+    sha256 = "db12d37b4cebb26353ae5b7746c7985e00877baa8e7b12dc4d3a1512252fff3b"
 )
 
 http_archive(
@@ -364,9 +364,9 @@ http_archive(
 )
 
 #Tensorflow repo should always go after the other external dependencies.
-# 2020-10-30
-_TENSORFLOW_GIT_COMMIT = "84384703c0d8b502e33ff6fd7eefd219dca5ff8e"
-_TENSORFLOW_SHA256= "23fb322fc15a20f7a7838d9a31f8b16f60700a494ea654311a0aa8621769df98"
+# 2020-12-07
+_TENSORFLOW_GIT_COMMIT = "f556709f4df005ad57fd24d5eaa0d9380128d3ba"
+_TENSORFLOW_SHA256= "9e157d4723921b48a974f645f70d07c8fd3c363569a0ac6ee85fec114d6459ea"
 http_archive(
     name = "org_tensorflow",
     urls = [
@@ -374,6 +374,7 @@ http_archive(
     ],
     patches = [
         "@//third_party:org_tensorflow_compatibility_fixes.diff",
+        "@//third_party:org_tensorflow_objc_cxx17.diff",
     ],
     patch_args = [
         "-p1",

@@ -34,8 +34,8 @@ void CalculatorContextManager::Initialize(
   calculator_run_in_parallel_ = calculator_run_in_parallel;
 }
 
-::mediapipe::Status CalculatorContextManager::PrepareForRun(
-    std::function<::mediapipe::Status(CalculatorContext*)>
+mediapipe::Status CalculatorContextManager::PrepareForRun(
+    std::function<mediapipe::Status(CalculatorContext*)>
         setup_shards_callback) {
   setup_shards_callback_ = std::move(setup_shards_callback);
   default_context_ = absl::make_unique<CalculatorContext>(
@@ -71,7 +71,7 @@ CalculatorContext* CalculatorContextManager::PrepareCalculatorContext(
     return GetDefaultCalculatorContext();
   }
   absl::MutexLock lock(&contexts_mutex_);
-  CHECK(!::mediapipe::ContainsKey(active_contexts_, input_timestamp))
+  CHECK(!mediapipe::ContainsKey(active_contexts_, input_timestamp))
       << "Multiple invocations with the same timestamps are not allowed with "
          "parallel execution, input_timestamp = "
       << input_timestamp;

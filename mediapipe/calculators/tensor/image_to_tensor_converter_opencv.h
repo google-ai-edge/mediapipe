@@ -24,8 +24,8 @@
 namespace mediapipe {
 
 // Creates OpenCV image-to-tensor converter.
-::mediapipe::StatusOr<std::unique_ptr<ImageToTensorConverter>>
-CreateOpenCvConverter(CalculatorContext* cc);
+mediapipe::StatusOr<std::unique_ptr<ImageToTensorConverter>>
+CreateOpenCvConverter(CalculatorContext* cc, BorderMode border_mode);
 
 }  // namespace mediapipe
 

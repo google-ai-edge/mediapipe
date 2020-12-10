@@ -70,9 +70,9 @@ JNIEXPORT jlong JNICALL PACKET_CREATOR_METHOD(nativeCreateRgbImage)(
     JNIEnv* env, jobject thiz, jlong context, jobject byte_buffer, jint width,
     jint height) {
   const void* data = env->GetDirectBufferAddress(byte_buffer);
-  auto image_frame = absl::make_unique<::mediapipe::ImageFrame>(
+  auto image_frame = absl::make_unique<mediapipe::ImageFrame>(
       mediapipe::ImageFormat::SRGB, width, height,
-      ::mediapipe::ImageFrame::kGlDefaultAlignmentBoundary);
+      mediapipe::ImageFrame::kGlDefaultAlignmentBoundary);
   int64_t buffer_size = env->GetDirectBufferCapacity(byte_buffer);
   if (buffer_size != image_frame->PixelDataSize()) {
     LOG(ERROR) << "The input image buffer should have 4 bytes alignment.";
@@ -92,9 +92,9 @@ JNIEXPORT jlong JNICALL PACKET_CREATOR_METHOD(nativeCreateRgbImageFromRgba)(
     jint height) {
   const uint8_t* rgba_data =
       static_cast<uint8_t*>(env->GetDirectBufferAddress(byte_buffer));
-  auto image_frame = absl::make_unique<::mediapipe::ImageFrame>(
+  auto image_frame = absl::make_unique<mediapipe::ImageFrame>(
       mediapipe::ImageFormat::SRGB, width, height,
-      ::mediapipe::ImageFrame::kGlDefaultAlignmentBoundary);
+      mediapipe::ImageFrame::kGlDefaultAlignmentBoundary);
   int64_t buffer_size = env->GetDirectBufferCapacity(byte_buffer);
   if (buffer_size != width * height * 4) {
     LOG(ERROR) << "Please check the input buffer size.";
@@ -113,9 +113,9 @@ JNIEXPORT jlong JNICALL PACKET_CREATOR_METHOD(nativeCreateRgbImageFromRgba)(
 JNIEXPORT jlong JNICALL PACKET_CREATOR_METHOD(nativeCreateGrayscaleImage)(
     JNIEnv* env, jobject thiz, jlong context, jobject byte_buffer, jint width,
     jint height) {
-  auto image_frame = absl::make_unique<::mediapipe::ImageFrame>(
+  auto image_frame = absl::make_unique<mediapipe::ImageFrame>(
       mediapipe::ImageFormat::GRAY8, width, height,
-      ::mediapipe::ImageFrame::kGlDefaultAlignmentBoundary);
+      mediapipe::ImageFrame::kGlDefaultAlignmentBoundary);
   int64_t buffer_size = env->GetDirectBufferCapacity(byte_buffer);
   if (buffer_size != width * height) {
     LOG(ERROR) << "Please check the input buffer size.";
@@ -143,9 +143,9 @@ JNIEXPORT jlong JNICALL PACKET_CREATOR_METHOD(nativeCreateFloatImageFrame)(
     JNIEnv* env, jobject thiz, jlong context, jobject byte_buffer, jint width,
     jint height) {
   const void* data = env->GetDirectBufferAddress(byte_buffer);
-  auto image_frame = absl::make_unique<::mediapipe::ImageFrame>(
+  auto image_frame = absl::make_unique<mediapipe::ImageFrame>(
       mediapipe::ImageFormat::VEC32F1, width, height,
-      ::mediapipe::ImageFrame::kGlDefaultAlignmentBoundary);
+      mediapipe::ImageFrame::kGlDefaultAlignmentBoundary);
   int64_t buffer_size = env->GetDirectBufferCapacity(byte_buffer);
   if (buffer_size != image_frame->PixelDataSize()) {
     LOG(ERROR) << "Please check the input buffer size.";
@@ -164,9 +164,9 @@ JNIEXPORT jlong JNICALL PACKET_CREATOR_METHOD(nativeCreateRgbaImageFrame)(
     JNIEnv* env, jobject thiz, jlong context, jobject byte_buffer, jint width,
     jint height) {
   const void* rgba_data = env->GetDirectBufferAddress(byte_buffer);
-  auto image_frame = absl::make_unique<::mediapipe::ImageFrame>(
+  auto image_frame = absl::make_unique<mediapipe::ImageFrame>(
       mediapipe::ImageFormat::SRGBA, width, height,
-      ::mediapipe::ImageFrame::kGlDefaultAlignmentBoundary);
+      mediapipe::ImageFrame::kGlDefaultAlignmentBoundary);
   int64_t buffer_size = env->GetDirectBufferCapacity(byte_buffer);
   if (buffer_size != image_frame->PixelDataSize()) {
     LOG(ERROR) << "Please check the input buffer size.";
@@ -183,8 +183,8 @@ JNIEXPORT jlong JNICALL PACKET_CREATOR_METHOD(nativeCreateRgbaImageFrame)(
 
 static mediapipe::Packet createAudioPacket(const uint8_t* audio_sample,
                                            int num_samples, int num_channels) {
-  std::unique_ptr<::mediapipe::Matrix> matrix(
-      new ::mediapipe::Matrix(num_channels, num_samples));
+  std::unique_ptr<mediapipe::Matrix> matrix(
+      new mediapipe::Matrix(num_channels, num_samples));
   // Preparing and normalize the audio data.
   // kMultiplier is same as what used in av_sync_media_decoder.cc.
   static const float kMultiplier = 1.f / (1 << 15);
@@ -292,8 +292,7 @@ JNIEXPORT jlong JNICALL PACKET_CREATOR_METHOD(nativeCreateMatrix)(
                << rows * cols;
     return 0L;
   }
-  std::unique_ptr<::mediapipe::Matrix> matrix(
-      new ::mediapipe::Matrix(rows, cols));
+  std::unique_ptr<mediapipe::Matrix> matrix(new mediapipe::Matrix(rows, cols));
   // The java and native has the same byte order, by default is little Endian,
   // we can safely copy data directly, we have tests to cover this.
   env->GetFloatArrayRegion(data, 0, rows * cols, matrix->data());

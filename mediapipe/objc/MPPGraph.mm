@@ -111,6 +111,7 @@ void CallFrameDelegate(void* wrapperVoid, const std::string& streamName,
                      didOutputPacket:packet
                           fromStream:streamName];
     } else if (packetType == MPPPacketTypeImageFrame) {
+      wrapper->_framesInFlight--;
       const auto& frame = packet.Get<mediapipe::ImageFrame>();
       mediapipe::ImageFormat::Format format = frame.Format();
 
@@ -163,6 +164,7 @@ void CallFrameDelegate(void* wrapperVoid, const std::string& streamName,
       }
 #if MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
     } else if (packetType == MPPPacketTypePixelBuffer) {
+      wrapper->_framesInFlight--;
       CVPixelBufferRef pixelBuffer = packet.Get<mediapipe::GpuBuffer>().GetCVPixelBufferRef();
       if ([wrapper.delegate
               respondsToSelector:@selector
@@ -182,8 +184,6 @@ void CallFrameDelegate(void* wrapperVoid, const std::string& streamName,
     } else {
       _GTMDevLog(@"unsupported packet type");
     }
-
-    wrapper->_framesInFlight--;
   }
 }
 

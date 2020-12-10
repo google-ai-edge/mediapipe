@@ -23,8 +23,10 @@ set -e
 
 if [ "$(uname)" == "Darwin" ]; then
   platform="darwin"
+  platform_android_sdk="mac"
 elif [ "$(expr substr $(uname -s) 1 5)" == "Linux" ]; then
   platform="linux"
+  platform_android_sdk="linux"
 fi
 
 if [[ $ANDROID_HOME ]] && [[ $ANDROID_NDK_HOME ]]
@@ -62,7 +64,7 @@ then
 else
   rm -rf /tmp/android_sdk/
   mkdir  /tmp/android_sdk/
-  curl https://dl.google.com/android/repository/commandlinetools-${platform}-6609375_latest.zip -o /tmp/android_sdk/commandline_tools.zip
+  curl https://dl.google.com/android/repository/commandlinetools-${platform_android_sdk}-6609375_latest.zip -o /tmp/android_sdk/commandline_tools.zip
   unzip /tmp/android_sdk/commandline_tools.zip -d /tmp/android_sdk/
   mkdir -p $android_sdk_path
   /tmp/android_sdk/tools/bin/sdkmanager --update --sdk_root=${android_sdk_path}

@@ -20,6 +20,8 @@ syntax = "proto2";
 
 package mediapipe;
 
+option objc_class_prefix = "MediaPipe";
+
 message Classification {
   // The index of the class in the corresponding label map.
   optional int32 index = 1;

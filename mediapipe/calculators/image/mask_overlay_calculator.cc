@@ -52,14 +52,14 @@ class MaskOverlayCalculator : public CalculatorBase {
   MaskOverlayCalculator() {}
   ~MaskOverlayCalculator();
 
-  static ::mediapipe::Status GetContract(CalculatorContract* cc);
+  static mediapipe::Status GetContract(CalculatorContract* cc);
 
-  ::mediapipe::Status Open(CalculatorContext* cc) override;
-  ::mediapipe::Status Process(CalculatorContext* cc) override;
+  mediapipe::Status Open(CalculatorContext* cc) override;
+  mediapipe::Status Process(CalculatorContext* cc) override;
 
-  ::mediapipe::Status GlSetup(
+  mediapipe::Status GlSetup(
       const MaskOverlayCalculatorOptions::MaskChannel mask_channel);
-  ::mediapipe::Status GlRender(const float mask_const);
+  mediapipe::Status GlRender(const float mask_const);
 
  private:
   GlCalculatorHelper helper_;
@@ -73,7 +73,7 @@ class MaskOverlayCalculator : public CalculatorBase {
 REGISTER_CALCULATOR(MaskOverlayCalculator);
 
 // static
-::mediapipe::Status MaskOverlayCalculator::GetContract(CalculatorContract* cc) {
+mediapipe::Status MaskOverlayCalculator::GetContract(CalculatorContract* cc) {
   MP_RETURN_IF_ERROR(GlCalculatorHelper::UpdateContract(cc));
   cc->Inputs().Get("VIDEO", 0).Set<GpuBuffer>();
   cc->Inputs().Get("VIDEO", 1).Set<GpuBuffer>();
@@ -82,14 +82,13 @@ REGISTER_CALCULATOR(MaskOverlayCalculator);
   else if (cc->Inputs().HasTag("CONST_MASK"))
     cc->Inputs().Tag("CONST_MASK").Set<float>();
   else
-    return ::mediapipe::Status(
-        ::mediapipe::StatusCode::kNotFound,
-        "At least one mask input stream must be present.");
+    return mediapipe::Status(mediapipe::StatusCode::kNotFound,
+                             "At least one mask input stream must be present.");
   cc->Outputs().Tag("OUTPUT").Set<GpuBuffer>();
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status MaskOverlayCalculator::Open(CalculatorContext* cc) {
+mediapipe::Status MaskOverlayCalculator::Open(CalculatorContext* cc) {
   cc->SetOffset(TimestampDiff(0));
   if (cc->Inputs().HasTag("MASK")) {
     use_mask_tex_ = true;
@@ -97,8 +96,8 @@ REGISTER_CALCULATOR(MaskOverlayCalculator);
   return helper_.Open(cc);
 }
 
-::mediapipe::Status MaskOverlayCalculator::Process(CalculatorContext* cc) {
-  return helper_.RunInGlContext([this, &cc]() -> ::mediapipe::Status {
+mediapipe::Status MaskOverlayCalculator::Process(CalculatorContext* cc) {
+  return helper_.RunInGlContext([this, &cc]() -> mediapipe::Status {
     if (!initialized_) {
       const auto& options = cc->Options<MaskOverlayCalculatorOptions>();
       const auto mask_channel = options.mask_channel();
@@ -116,7 +115,7 @@ REGISTER_CALCULATOR(MaskOverlayCalculator);
 
     if (mask_packet.IsEmpty()) {
       cc->Outputs().Tag("OUTPUT").AddPacket(input1_packet);
-      return ::mediapipe::OkStatus();
+      return mediapipe::OkStatus();
     }
 
     const auto& input0_buffer = cc->Inputs().Get("VIDEO", 0).Get<GpuBuffer>();
@@ -173,11 +172,11 @@ REGISTER_CALCULATOR(MaskOverlayCalculator);
     dst.Release();
 
     cc->Outputs().Tag("OUTPUT").Add(output.release(), cc->InputTimestamp());
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   });
 }
 
-::mediapipe::Status MaskOverlayCalculator::GlSetup(
+mediapipe::Status MaskOverlayCalculator::GlSetup(
     const MaskOverlayCalculatorOptions::MaskChannel mask_channel) {
   // Load vertex and fragment shaders
   const GLint attr_location[NUM_ATTRIBUTES] = {
@@ -248,10 +247,10 @@ REGISTER_CALCULATOR(MaskOverlayCalculator);
   unif_frame1_ = glGetUniformLocation(program_, "frame1");
   unif_frame2_ = glGetUniformLocation(program_, "frame2");
   unif_mask_ = glGetUniformLocation(program_, "mask");
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status MaskOverlayCalculator::GlRender(const float mask_const) {
+mediapipe::Status MaskOverlayCalculator::GlRender(const float mask_const) {
   glUseProgram(program_);
   glVertexAttribPointer(ATTRIB_VERTEX, 2, GL_FLOAT, 0, 0, kBasicSquareVertices);
   glEnableVertexAttribArray(ATTRIB_VERTEX);
@@ -267,7 +266,7 @@ REGISTER_CALCULATOR(MaskOverlayCalculator);
     glUniform1f(unif_mask_, mask_const);
 
   glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
 MaskOverlayCalculator::~MaskOverlayCalculator() {

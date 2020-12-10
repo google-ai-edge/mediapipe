@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 // Helper macros and methods to return and propagate errors with
-// `::mediapipe::Status`.
+// `mediapipe::Status`.
 //
 // The owners of mediapipe do not endorse use of these macros as a good
 // programming practice, and would prefer that you write the equivalent C++
@@ -26,29 +26,29 @@
 #include "mediapipe/framework/deps/status.h"
 #include "mediapipe/framework/deps/status_builder.h"
 
-// Evaluates an expression that produces a `::mediapipe::Status`. If the status
+// Evaluates an expression that produces a `mediapipe::Status`. If the status
 // is not ok, returns it from the current function.
 //
 // For example:
-//   ::mediapipe::Status MultiStepFunction() {
+//   mediapipe::Status MultiStepFunction() {
 //     MP_RETURN_IF_ERROR(Function(args...));
 //     MP_RETURN_IF_ERROR(foo.Method(args...));
-//     return ::mediapipe::OkStatus();
+//     return mediapipe::OkStatus();
 //   }
 //
-// The macro ends with a `::mediapipe::StatusBuilder` which allows the returned
+// The macro ends with a `mediapipe::StatusBuilder` which allows the returned
 // status to be extended with more details.  Any chained expressions after the
 // macro will not be evaluated unless there is an error.
 //
 // For example:
-//   ::mediapipe::Status MultiStepFunction() {
+//   mediapipe::Status MultiStepFunction() {
 //     MP_RETURN_IF_ERROR(Function(args...)) << "in MultiStepFunction";
 //     MP_RETURN_IF_ERROR(foo.Method(args...)).Log(base_logging::ERROR)
 //         << "while processing query: " << query.DebugString();
-//     return ::mediapipe::OkStatus();
+//     return mediapipe::OkStatus();
 //   }
 //
-// `::mediapipe::StatusBuilder` supports adapting the builder chain using a
+// `mediapipe::StatusBuilder` supports adapting the builder chain using a
 // `With` method and a functor.  This allows for powerful extensions to the
 // macro.
 //
@@ -62,10 +62,10 @@
 //   MP_RETURN_IF_ERROR(bar()).With(TeamPolicy);
 //
 // Changing the return type allows the macro to be used with Task and Rpc
-// interfaces.  See `::mediapipe::TaskReturn` and `rpc::RpcSetStatus` for
+// interfaces.  See `mediapipe::TaskReturn` and `rpc::RpcSetStatus` for
 // details.
 //
-//   void Read(StringPiece name, ::mediapipe::Task* task) {
+//   void Read(StringPiece name, mediapipe::Task* task) {
 //     int64 id;
 //     MP_RETURN_IF_ERROR(GetIdForName(name, &id)).With(TaskReturn(task));
 //     MP_RETURN_IF_ERROR(ReadForId(id)).With(TaskReturn(task));
@@ -73,22 +73,22 @@
 //   }
 //
 // If using this macro inside a lambda, you need to annotate the return type
-// to avoid confusion between a `::mediapipe::StatusBuilder` and a
-// `::mediapipe::Status` type. E.g.
+// to avoid confusion between a `mediapipe::StatusBuilder` and a
+// `mediapipe::Status` type. E.g.
 //
-//   []() -> ::mediapipe::Status {
+//   []() -> mediapipe::Status {
 //     MP_RETURN_IF_ERROR(Function(args...));
 //     MP_RETURN_IF_ERROR(foo.Method(args...));
-//     return ::mediapipe::OkStatus();
+//     return mediapipe::OkStatus();
 //   }
 #define MP_RETURN_IF_ERROR(expr)                                          \
   STATUS_MACROS_IMPL_ELSE_BLOCKER_                                        \
-  if (::mediapipe::status_macro_internal::StatusAdaptorForMacros          \
+  if (mediapipe::status_macro_internal::StatusAdaptorForMacros            \
           status_macro_internal_adaptor = {(expr), __FILE__, __LINE__}) { \
   } else /* NOLINT */                                                     \
     return status_macro_internal_adaptor.Consume()
 
-// Executes an expression `rexpr` that returns a `::mediapipe::StatusOr<T>`. On
+// Executes an expression `rexpr` that returns a `mediapipe::StatusOr<T>`. On
 // OK, extracts its value into the variable defined by `lhs`, otherwise returns
 // from the current function. By default the error status is returned
 // unchanged, but it may be modified by an `error_expression`. If there is an
@@ -121,7 +121,7 @@
 //
 // If passed, the `error_expression` is evaluated to produce the return
 // value. The expression may reference any variable visible in scope, as
-// well as a `::mediapipe::StatusBuilder` object populated with the error and
+// well as a `mediapipe::StatusBuilder` object populated with the error and
 // named by a single underscore `_`. The expression typically uses the
 // builder to modify the status and is returned directly in manner similar
 // to MP_RETURN_IF_ERROR. The expression may, however, evaluate to any type
@@ -156,15 +156,15 @@
   STATUS_MACROS_IMPL_ASSIGN_OR_RETURN_(                                      \
       STATUS_MACROS_IMPL_CONCAT_(_status_or_value, __LINE__), lhs, rexpr,    \
       error_expression)
-#define STATUS_MACROS_IMPL_ASSIGN_OR_RETURN_(statusor, lhs, rexpr,       \
-                                             error_expression)           \
-  auto statusor = (rexpr);                                               \
-  if (ABSL_PREDICT_FALSE(!statusor.ok())) {                              \
-    ::mediapipe::StatusBuilder _(std::move(statusor).status(), __FILE__, \
-                                 __LINE__);                              \
-    (void)_; /* error_expression is allowed to not use this variable */  \
-    return (error_expression);                                           \
-  }                                                                      \
+#define STATUS_MACROS_IMPL_ASSIGN_OR_RETURN_(statusor, lhs, rexpr,      \
+                                             error_expression)          \
+  auto statusor = (rexpr);                                              \
+  if (ABSL_PREDICT_FALSE(!statusor.ok())) {                             \
+    mediapipe::StatusBuilder _(std::move(statusor).status(), __FILE__,  \
+                               __LINE__);                               \
+    (void)_; /* error_expression is allowed to not use this variable */ \
+    return (error_expression);                                          \
+  }                                                                     \
   lhs = std::move(statusor).ValueOrDie()
 
 // Internal helper for concatenating macro values.

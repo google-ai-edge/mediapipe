@@ -42,7 +42,7 @@ const char kKeypointsTag[] = "KEYPOINTS";
 const char kSegmentationMaskTag[] = "CLASS_SEGMENTATION";
 
 namespace tf = ::tensorflow;
-namespace mpms = ::mediapipe::mediasequence;
+namespace mpms = mediapipe::mediasequence;
 
 // Sink calculator to package streams into tf.SequenceExamples.
 //

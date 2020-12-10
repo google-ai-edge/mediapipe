@@ -427,6 +427,28 @@ void PublicPacketCreators(pybind11::module* m) {
       py::arg().noconvert(), py::return_value_policy::move);
 
   m->def(
+      "create_bool_vector",
+      [](const std::vector<bool>& data) {
+        return MakePacket<std::vector<bool>>(data);
+      },
+      R"doc(Create a MediaPipe bool vector Packet from a list of booleans.
+
+  Args:
+    data: A list of booleans.
+
+  Returns:
+    A MediaPipe bool vector Packet.
+
+  Raises:
+    TypeError: If the input is not a list of booleans.
+
+  Examples:
+    packet = mp.packet_creator.create_bool_vector([True, True, False])
+    data = mp.packet_getter.get_bool_vector(packet)
+)doc",
+      py::arg().noconvert(), py::return_value_policy::move);
+
+  m->def(
       "create_float_vector",
       [](const std::vector<float>& data) {
         return MakePacket<std::vector<float>>(data);

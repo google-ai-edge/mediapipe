@@ -25,25 +25,23 @@ namespace mediapipe {
 namespace file {
 
 // Read contents of a file to a std::string.
-::mediapipe::Status GetContents(absl::string_view file_name,
-                                std::string* output,
-                                const file::Options& options);
+mediapipe::Status GetContents(absl::string_view file_name, std::string* output,
+                              const file::Options& options);
 
 // Read contents of a file to a std::string with default file options.
-::mediapipe::Status GetContents(absl::string_view file_name,
-                                std::string* output);
+mediapipe::Status GetContents(absl::string_view file_name, std::string* output);
 
 // Read contents of a file to a std::string from an open file descriptor.
-::mediapipe::Status GetContents(int fd, std::string* output);
+mediapipe::Status GetContents(int fd, std::string* output);
 
 // Write std::string to file.
-::mediapipe::Status SetContents(absl::string_view file_name,
-                                absl::string_view content,
-                                const file::Options& options);
+mediapipe::Status SetContents(absl::string_view file_name,
+                              absl::string_view content,
+                              const file::Options& options);
 
 // Write std::string to file with default file options.
-::mediapipe::Status SetContents(absl::string_view file_name,
-                                absl::string_view content);
+mediapipe::Status SetContents(absl::string_view file_name,
+                              absl::string_view content);
 
 }  // namespace file
 }  // namespace mediapipe

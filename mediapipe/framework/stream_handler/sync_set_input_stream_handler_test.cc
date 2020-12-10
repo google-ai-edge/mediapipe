@@ -36,8 +36,8 @@ namespace mediapipe {
 namespace {
 
 // The type LambdaCalculator takes.
-typedef std::function<::mediapipe::Status(const InputStreamShardSet&,
-                                          OutputStreamShardSet*)>
+typedef std::function<mediapipe::Status(const InputStreamShardSet&,
+                                        OutputStreamShardSet*)>
     ProcessFunction;
 
 // Helper function to create a tuple (inside an initializer list).
@@ -50,8 +50,8 @@ std::tuple<std::string, Timestamp, std::vector<std::string>> CommandTuple(
 // Function to take the inputs and produce a diagnostic output std::string
 // and output a packet with a diagnostic output std::string which includes
 // the input timestamp and the ids of each input which is present.
-::mediapipe::Status InputsToDebugString(const InputStreamShardSet& inputs,
-                                        OutputStreamShardSet* outputs) {
+mediapipe::Status InputsToDebugString(const InputStreamShardSet& inputs,
+                                      OutputStreamShardSet* outputs) {
   std::string output;
   Timestamp output_timestamp;
   for (CollectionItemId id = inputs.BeginId(); id < inputs.EndId(); ++id) {
@@ -79,7 +79,7 @@ std::tuple<std::string, Timestamp, std::vector<std::string>> CommandTuple(
   // TODO Output at output_timestamp once unordered output stream
   // handlers are allowed.
   outputs->Index(0).AddPacket(output_packet);
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
 TEST(SyncSetInputStreamHandlerTest, OrdinaryOperation) {
@@ -273,7 +273,7 @@ TEST(SyncSetInputStreamHandlerTest, OrdinaryOperation) {
     MP_ASSERT_OK(
         graph.ObserveOutputStream("output", [&outputs](const Packet& packet) {
           outputs.push_back(packet);
-          return ::mediapipe::OkStatus();
+          return mediapipe::OkStatus();
         }));
     MP_ASSERT_OK(graph.StartRun({}));
     for (int command_index = 0; command_index < shuffled_commands.size();

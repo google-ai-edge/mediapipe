@@ -83,8 +83,8 @@ void Scheduler::SetExecutor(Executor* executor) {
 }
 
 // TODO: Consider renaming this method CreateNonDefaultQueue.
-::mediapipe::Status Scheduler::SetNonDefaultExecutor(const std::string& name,
-                                                     Executor* executor) {
+mediapipe::Status Scheduler::SetNonDefaultExecutor(const std::string& name,
+                                                   Executor* executor) {
   RET_CHECK_EQ(state_, STATE_NOT_STARTED) << "SetNonDefaultExecutor must not "
                                              "be called after the scheduler "
                                              "has started";
@@ -99,7 +99,7 @@ void Scheduler::SetExecutor(Executor* executor) {
                                    std::placeholders::_1));
   queue->SetExecutor(executor);
   scheduler_queues_.push_back(queue);
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
 void Scheduler::SetQueuesRunning(bool running) {
@@ -252,7 +252,7 @@ void Scheduler::EmittedObservedOutput() {
   }
 }
 
-::mediapipe::Status Scheduler::WaitForObservedOutput() {
+mediapipe::Status Scheduler::WaitForObservedOutput() {
   bool observed = false;
   ApplicationThreadAwait(
       [this, &observed]() ABSL_EXCLUSIVE_LOCKS_REQUIRED(state_mutex_) {
@@ -262,8 +262,8 @@ void Scheduler::EmittedObservedOutput() {
         // Wait until the member waiting_for_observed_output_ becomes false.
         return !waiting_for_observed_output_;
       });
-  return observed ? ::mediapipe::OkStatus()
-                  : ::mediapipe::OutOfRangeError("Graph is done.");
+  return observed ? mediapipe::OkStatus()
+                  : mediapipe::OutOfRangeError("Graph is done.");
 }
 
 // Idleness requires:
@@ -273,18 +273,18 @@ void Scheduler::EmittedObservedOutput() {
 // no source nodes. (This is enforced by CalculatorGraph::WaitUntilIdle().)
 // The application must ensure no other threads are adding packets to graph
 // input streams while a WaitUntilIdle() call is in progress.
-::mediapipe::Status Scheduler::WaitUntilIdle() {
+mediapipe::Status Scheduler::WaitUntilIdle() {
   RET_CHECK_NE(state_, STATE_NOT_STARTED);
   ApplicationThreadAwait(std::bind(&Scheduler::IsIdle, this));
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status Scheduler::WaitUntilDone() {
+mediapipe::Status Scheduler::WaitUntilDone() {
   RET_CHECK_NE(state_, STATE_NOT_STARTED);
   ApplicationThreadAwait([this]() ABSL_EXCLUSIVE_LOCKS_REQUIRED(state_mutex_) {
     return state_ == STATE_TERMINATED;
   });
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
 void Scheduler::ApplicationThreadAwait(
@@ -379,7 +379,7 @@ bool Scheduler::TryToScheduleNextSourceLayer() {
     // If no graph input streams are open, then there are no packet sources in
     // the graph. It's a deadlock.
     if (graph_input_streams_closed_) {
-      graph_->RecordError(::mediapipe::UnknownError(
+      graph_->RecordError(mediapipe::UnknownError(
           "Detected a deadlock because source nodes cannot be activated when a "
           "source node at a lower layer is still not opened."));
     }
@@ -496,7 +496,7 @@ void Scheduler::Cancel() {
     if (state_ != STATE_RUNNING && state_ != STATE_PAUSED) {
       return;
     }
-    graph_->RecordError(::mediapipe::CancelledError());
+    graph_->RecordError(mediapipe::CancelledError());
     if (state_ == STATE_PAUSED) {
       // Keep the scheduler queue running, since we need to exhaust it.
       SetQueuesRunning(true);

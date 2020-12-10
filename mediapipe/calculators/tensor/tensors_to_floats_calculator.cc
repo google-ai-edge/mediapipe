@@ -12,11 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "mediapipe/calculators/tensor/tensors_to_floats_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/tensor.h"
 #include "mediapipe/framework/port/ret_check.h"
 
 namespace mediapipe {
+
+namespace {
+
+inline float Sigmoid(float value) { return 1.0f / (1.0f + std::exp(-value)); }
+
+}  // namespace
 
 // A calculator for converting Tensors to to a float or a float vector.
 //
@@ -38,15 +45,18 @@ namespace mediapipe {
 // }
 class TensorsToFloatsCalculator : public CalculatorBase {
  public:
-  static ::mediapipe::Status GetContract(CalculatorContract* cc);
+  static mediapipe::Status GetContract(CalculatorContract* cc);
 
-  ::mediapipe::Status Open(CalculatorContext* cc) override;
+  mediapipe::Status Open(CalculatorContext* cc) override;
 
-  ::mediapipe::Status Process(CalculatorContext* cc) override;
+  mediapipe::Status Process(CalculatorContext* cc) override;
+
+ private:
+  ::mediapipe::TensorsToFloatsCalculatorOptions options_;
 };
 REGISTER_CALCULATOR(TensorsToFloatsCalculator);
 
-::mediapipe::Status TensorsToFloatsCalculator::GetContract(
+mediapipe::Status TensorsToFloatsCalculator::GetContract(
     CalculatorContract* cc) {
   RET_CHECK(cc->Inputs().HasTag("TENSORS"));
   RET_CHECK(cc->Outputs().HasTag("FLOATS") || cc->Outputs().HasTag("FLOAT"));
@@ -59,16 +69,17 @@ REGISTER_CALCULATOR(TensorsToFloatsCalculator);
     cc->Outputs().Tag("FLOAT").Set<float>();
   }
 
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status TensorsToFloatsCalculator::Open(CalculatorContext* cc) {
+mediapipe::Status TensorsToFloatsCalculator::Open(CalculatorContext* cc) {
   cc->SetOffset(TimestampDiff(0));
+  options_ = cc->Options<::mediapipe::TensorsToFloatsCalculatorOptions>();
 
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status TensorsToFloatsCalculator::Process(CalculatorContext* cc) {
+mediapipe::Status TensorsToFloatsCalculator::Process(CalculatorContext* cc) {
   RET_CHECK(!cc->Inputs().Tag("TENSORS").IsEmpty());
 
   const auto& input_tensors =
@@ -77,21 +88,30 @@ REGISTER_CALCULATOR(TensorsToFloatsCalculator);
   auto view = input_tensors[0].GetCpuReadView();
   auto raw_floats = view.buffer<float>();
   int num_values = input_tensors[0].shape().num_elements();
+  auto output_floats = absl::make_unique<std::vector<float>>(
+      raw_floats, raw_floats + num_values);
+
+  switch (options_.activation()) {
+    case TensorsToFloatsCalculatorOptions::SIGMOID:
+      std::transform(output_floats->begin(), output_floats->end(),
+                     output_floats->begin(), Sigmoid);
+      break;
+    case TensorsToFloatsCalculatorOptions::NONE:
+      break;
+  }
 
   if (cc->Outputs().HasTag("FLOAT")) {
     // TODO: Could add an index in the option to specifiy returning one
     // value of a float array.
     RET_CHECK_EQ(num_values, 1);
     cc->Outputs().Tag("FLOAT").AddPacket(
-        MakePacket<float>(raw_floats[0]).At(cc->InputTimestamp()));
+        MakePacket<float>(output_floats->at(0)).At(cc->InputTimestamp()));
   }
   if (cc->Outputs().HasTag("FLOATS")) {
-    auto output_floats = absl::make_unique<std::vector<float>>(
-        raw_floats, raw_floats + num_values);
     cc->Outputs().Tag("FLOATS").Add(output_floats.release(),
                                     cc->InputTimestamp());
   }
 
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 }  // namespace mediapipe

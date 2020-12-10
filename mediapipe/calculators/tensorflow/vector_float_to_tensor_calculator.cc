@@ -44,17 +44,17 @@ namespace tf = ::tensorflow;
 // }
 class VectorFloatToTensorCalculator : public CalculatorBase {
  public:
-  static ::mediapipe::Status GetContract(CalculatorContract* cc);
+  static mediapipe::Status GetContract(CalculatorContract* cc);
 
-  ::mediapipe::Status Open(CalculatorContext* cc) override;
-  ::mediapipe::Status Process(CalculatorContext* cc) override;
+  mediapipe::Status Open(CalculatorContext* cc) override;
+  mediapipe::Status Process(CalculatorContext* cc) override;
 
  private:
   VectorFloatToTensorCalculatorOptions options_;
 };
 REGISTER_CALCULATOR(VectorFloatToTensorCalculator);
 
-::mediapipe::Status VectorFloatToTensorCalculator::GetContract(
+mediapipe::Status VectorFloatToTensorCalculator::GetContract(
     CalculatorContract* cc) {
   const auto& options = cc->Options<VectorFloatToTensorCalculatorOptions>();
   // Start with only one input packet.
@@ -75,15 +75,15 @@ REGISTER_CALCULATOR(VectorFloatToTensorCalculator);
   cc->Outputs().Index(0).Set<tf::Tensor>(
       // Output stream with data as tf::Tensor and the same TimeSeriesHeader.
   );
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status VectorFloatToTensorCalculator::Open(CalculatorContext* cc) {
+mediapipe::Status VectorFloatToTensorCalculator::Open(CalculatorContext* cc) {
   options_ = cc->Options<VectorFloatToTensorCalculatorOptions>();
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status VectorFloatToTensorCalculator::Process(
+mediapipe::Status VectorFloatToTensorCalculator::Process(
     CalculatorContext* cc) {
   tf::TensorShape tensor_shape;
   if (options_.input_size() == INPUT_2D) {
@@ -127,7 +127,7 @@ REGISTER_CALCULATOR(VectorFloatToTensorCalculator);
   } else {
     LOG(FATAL) << "input size not supported";
   }
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
 }  // namespace mediapipe

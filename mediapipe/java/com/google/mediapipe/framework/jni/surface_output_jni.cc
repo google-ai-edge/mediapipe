@@ -62,7 +62,7 @@ JNIEXPORT void JNICALL MEDIAPIPE_SURFACE_OUTPUT_METHOD(nativeSetSurface)(
   }
 
   auto status = gl_context->Run(
-      [gl_context, surface_holder, surface, window]() -> ::mediapipe::Status {
+      [gl_context, surface_holder, surface, window]() -> mediapipe::Status {
         absl::MutexLock lock(&surface_holder->mutex);
         // Must destroy old surface first in case we are assigning the same
         // surface.
@@ -90,7 +90,7 @@ JNIEXPORT void JNICALL MEDIAPIPE_SURFACE_OUTPUT_METHOD(nativeSetSurface)(
         }
         surface_holder->surface = egl_surface;
         surface_holder->owned = egl_surface != EGL_NO_SURFACE;
-        return ::mediapipe::OkStatus();
+        return mediapipe::OkStatus();
       });
   MEDIAPIPE_CHECK_OK(status);
 
@@ -122,10 +122,10 @@ JNIEXPORT void JNICALL MEDIAPIPE_SURFACE_OUTPUT_METHOD(nativeSetEglSurface)(
 
   if (old_surface != EGL_NO_SURFACE) {
     MEDIAPIPE_CHECK_OK(
-        gl_context->Run([gl_context, old_surface]() -> ::mediapipe::Status {
+        gl_context->Run([gl_context, old_surface]() -> mediapipe::Status {
           RET_CHECK(eglDestroySurface(gl_context->egl_display(), old_surface))
               << "eglDestroySurface failed:" << eglGetError();
-          return ::mediapipe::OkStatus();
+          return mediapipe::OkStatus();
         }));
   }
 }

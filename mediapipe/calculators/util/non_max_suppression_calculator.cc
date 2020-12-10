@@ -154,7 +154,7 @@ class NonMaxSuppressionCalculator : public CalculatorBase {
   NonMaxSuppressionCalculator() = default;
   ~NonMaxSuppressionCalculator() override = default;
 
-  static ::mediapipe::Status GetContract(CalculatorContract* cc) {
+  static mediapipe::Status GetContract(CalculatorContract* cc) {
     const auto& options = cc->Options<NonMaxSuppressionCalculatorOptions>();
     if (cc->Inputs().HasTag(kImageTag)) {
       cc->Inputs().Tag(kImageTag).Set<ImageFrame>();
@@ -163,10 +163,10 @@ class NonMaxSuppressionCalculator : public CalculatorBase {
       cc->Inputs().Index(k).Set<Detections>();
     }
     cc->Outputs().Index(0).Set<Detections>();
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Open(CalculatorContext* cc) override {
+  mediapipe::Status Open(CalculatorContext* cc) override {
     cc->SetOffset(TimestampDiff(0));
 
     options_ = cc->Options<NonMaxSuppressionCalculatorOptions>();
@@ -176,10 +176,10 @@ class NonMaxSuppressionCalculator : public CalculatorBase {
         << "max_num_detections=0 is not a valid value. Please choose a "
         << "positive number of you want to limit the number of output "
         << "detections, or set -1 if you do not want any limit.";
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Process(CalculatorContext* cc) override {
+  mediapipe::Status Process(CalculatorContext* cc) override {
     // Add all input detections to the same vector.
     Detections input_detections;
     for (int i = 0; i < options_.num_detection_streams(); ++i) {
@@ -199,7 +199,7 @@ class NonMaxSuppressionCalculator : public CalculatorBase {
       if (options_.return_empty_detections()) {
         cc->Outputs().Index(0).Add(new Detections(), cc->InputTimestamp());
       }
-      return ::mediapipe::OkStatus();
+      return mediapipe::OkStatus();
     }
 
     // Remove all but the maximum scoring label from each input detection. This
@@ -244,7 +244,7 @@ class NonMaxSuppressionCalculator : public CalculatorBase {
 
     cc->Outputs().Index(0).Add(retained_detections, cc->InputTimestamp());
 
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
  private:

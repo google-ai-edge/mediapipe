@@ -59,11 +59,11 @@ namespace mediapipe {
 // }
 class TensorsToClassificationCalculator : public CalculatorBase {
  public:
-  static ::mediapipe::Status GetContract(CalculatorContract* cc);
+  static mediapipe::Status GetContract(CalculatorContract* cc);
 
-  ::mediapipe::Status Open(CalculatorContext* cc) override;
-  ::mediapipe::Status Process(CalculatorContext* cc) override;
-  ::mediapipe::Status Close(CalculatorContext* cc) override;
+  mediapipe::Status Open(CalculatorContext* cc) override;
+  mediapipe::Status Process(CalculatorContext* cc) override;
+  mediapipe::Status Close(CalculatorContext* cc) override;
 
  private:
   ::mediapipe::TensorsToClassificationCalculatorOptions options_;
@@ -73,7 +73,7 @@ class TensorsToClassificationCalculator : public CalculatorBase {
 };
 REGISTER_CALCULATOR(TensorsToClassificationCalculator);
 
-::mediapipe::Status TensorsToClassificationCalculator::GetContract(
+mediapipe::Status TensorsToClassificationCalculator::GetContract(
     CalculatorContract* cc) {
   RET_CHECK(!cc->Inputs().GetTags().empty());
   RET_CHECK(!cc->Outputs().GetTags().empty());
@@ -86,10 +86,10 @@ REGISTER_CALCULATOR(TensorsToClassificationCalculator);
     cc->Outputs().Tag("CLASSIFICATIONS").Set<ClassificationList>();
   }
 
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status TensorsToClassificationCalculator::Open(
+mediapipe::Status TensorsToClassificationCalculator::Open(
     CalculatorContext* cc) {
   cc->SetOffset(TimestampDiff(0));
 
@@ -113,10 +113,10 @@ REGISTER_CALCULATOR(TensorsToClassificationCalculator);
     label_map_loaded_ = true;
   }
 
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status TensorsToClassificationCalculator::Process(
+mediapipe::Status TensorsToClassificationCalculator::Process(
     CalculatorContext* cc) {
   const auto& input_tensors =
       cc->Inputs().Tag("TENSORS").Get<std::vector<Tensor>>();
@@ -186,12 +186,12 @@ REGISTER_CALCULATOR(TensorsToClassificationCalculator);
       .Tag("CLASSIFICATIONS")
       .Add(classification_list.release(), cc->InputTimestamp());
 
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status TensorsToClassificationCalculator::Close(
+mediapipe::Status TensorsToClassificationCalculator::Close(
     CalculatorContext* cc) {
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
 }  // namespace mediapipe

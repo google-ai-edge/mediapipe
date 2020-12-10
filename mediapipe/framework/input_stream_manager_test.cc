@@ -133,7 +133,7 @@ TEST_F(InputStreamManagerTest, AddPacketUnset) {
   packets.push_back(MakePacket<std::string>("packet 1").At(Timestamp::Unset()));
   EXPECT_TRUE(input_stream_manager_->IsEmpty());
 
-  ::mediapipe::Status result =
+  mediapipe::Status result =
       input_stream_manager_->AddPackets(packets, &notify_);  // No notification
   ASSERT_THAT(result.message(), testing::HasSubstr("Timestamp::Unset()"));
   EXPECT_FALSE(notify_);
@@ -145,7 +145,7 @@ TEST_F(InputStreamManagerTest, AddPacketUnstarted) {
       MakePacket<std::string>("packet 1").At(Timestamp::Unstarted()));
   EXPECT_TRUE(input_stream_manager_->IsEmpty());
 
-  ::mediapipe::Status result =
+  mediapipe::Status result =
       input_stream_manager_->AddPackets(packets, &notify_);  // No notification
   ASSERT_THAT(result.message(), testing::HasSubstr("Timestamp::Unstarted()"));
   EXPECT_FALSE(notify_);
@@ -157,7 +157,7 @@ TEST_F(InputStreamManagerTest, AddPacketOneOverPostStream) {
       MakePacket<std::string>("packet 1").At(Timestamp::OneOverPostStream()));
   EXPECT_TRUE(input_stream_manager_->IsEmpty());
 
-  ::mediapipe::Status result =
+  mediapipe::Status result =
       input_stream_manager_->AddPackets(packets, &notify_);  // No notification
   ASSERT_THAT(result.message(),
               testing::HasSubstr("Timestamp::OneOverPostStream()"));
@@ -169,7 +169,7 @@ TEST_F(InputStreamManagerTest, AddPacketDone) {
   packets.push_back(MakePacket<std::string>("packet 1").At(Timestamp::Done()));
   EXPECT_TRUE(input_stream_manager_->IsEmpty());
 
-  ::mediapipe::Status result =
+  mediapipe::Status result =
       input_stream_manager_->AddPackets(packets, &notify_);  // No notification
   ASSERT_THAT(result.message(), testing::HasSubstr("Timestamp::Done()"));
   EXPECT_FALSE(notify_);
@@ -196,7 +196,7 @@ TEST_F(InputStreamManagerTest, AddPacketsAfterPreStream) {
   packets.push_back(MakePacket<std::string>("packet 2").At(Timestamp(10)));
   EXPECT_TRUE(input_stream_manager_->IsEmpty());
 
-  ::mediapipe::Status result =
+  mediapipe::Status result =
       input_stream_manager_->AddPackets(packets, &notify_);  // No notification
   ASSERT_THAT(result.message(),
               testing::HasSubstr("Timestamp::OneOverPostStream()"));
@@ -224,7 +224,7 @@ TEST_F(InputStreamManagerTest, AddPacketsBeforePostStream) {
       MakePacket<std::string>("packet 2").At(Timestamp::PostStream()));
   EXPECT_TRUE(input_stream_manager_->IsEmpty());
 
-  ::mediapipe::Status result =
+  mediapipe::Status result =
       input_stream_manager_->AddPackets(packets, &notify_);  // No notification
   ASSERT_THAT(result.message(), testing::HasSubstr("Timestamp::PostStream()"));
   EXPECT_FALSE(notify_);
@@ -237,7 +237,7 @@ TEST_F(InputStreamManagerTest, AddPacketsReverseTimestamps) {
   packets.push_back(MakePacket<std::string>("packet 3").At(Timestamp(30)));
   EXPECT_TRUE(input_stream_manager_->IsEmpty());
 
-  ::mediapipe::Status result =
+  mediapipe::Status result =
       input_stream_manager_->AddPackets(packets, &notify_);  // No notification
   ASSERT_THAT(result.message(),
               testing::HasSubstr(
@@ -398,7 +398,7 @@ TEST_F(InputStreamManagerTest, BadPacketType) {
   packets.push_back(MakePacket<int>(10).At(Timestamp(10)));
   EXPECT_TRUE(input_stream_manager_->IsEmpty());
 
-  ::mediapipe::Status result =
+  mediapipe::Status result =
       input_stream_manager_->AddPackets(packets, &notify_);  // No notification
   ASSERT_THAT(result.message(), testing::HasSubstr("Packet type mismatch"));
   EXPECT_FALSE(notify_);
@@ -543,7 +543,7 @@ TEST_F(InputStreamManagerTest, BackwardsInTime) {
   EXPECT_FALSE(notify_);
 
   notify_ = false;
-  ::mediapipe::Status result = input_stream_manager_->SetNextTimestampBound(
+  mediapipe::Status result = input_stream_manager_->SetNextTimestampBound(
       Timestamp(40), &notify_);  // Set Timestamp bound backwards in time.
   ASSERT_THAT(result.message(), testing::HasSubstr("40"));
   ASSERT_THAT(result.message(), testing::HasSubstr("50"));
@@ -554,7 +554,7 @@ TEST_F(InputStreamManagerTest, BackwardsInTime) {
   packets.clear();
   packets.push_back(MakePacket<std::string>("packet 3")
                         .At(Timestamp(30)));  // Backwards in time
-  ::mediapipe::Status result2 =
+  mediapipe::Status result2 =
       input_stream_manager_->AddPackets(packets, &notify_);  // No notification
   ASSERT_THAT(result2.message(), testing::HasSubstr("50"));
   ASSERT_THAT(result2.message(), testing::HasSubstr("30"));
@@ -585,7 +585,7 @@ TEST_F(InputStreamManagerTest, BackwardsInTime) {
   packets.clear();
   packets.push_back(MakePacket<std::string>("packet 5")
                         .At(Timestamp(130)));  // Backwards in time.
-  ::mediapipe::Status result3 =
+  mediapipe::Status result3 =
       input_stream_manager_->AddPackets(packets, &notify_);  // No notification
   ASSERT_THAT(result3.message(), testing::HasSubstr("151"));
   ASSERT_THAT(result3.message(), testing::HasSubstr("130"));

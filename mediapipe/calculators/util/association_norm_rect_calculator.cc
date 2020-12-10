@@ -36,29 +36,28 @@ namespace mediapipe {
 class AssociationNormRectCalculator
     : public AssociationCalculator<::mediapipe::NormalizedRect> {
  public:
-  static ::mediapipe::Status GetContract(CalculatorContract* cc) {
+  static mediapipe::Status GetContract(CalculatorContract* cc) {
     return AssociationCalculator<::mediapipe::NormalizedRect>::GetContract(cc);
   }
 
-  ::mediapipe::Status Open(CalculatorContext* cc) override {
+  mediapipe::Status Open(CalculatorContext* cc) override {
     return AssociationCalculator<::mediapipe::NormalizedRect>::Open(cc);
   }
 
-  ::mediapipe::Status Process(CalculatorContext* cc) override {
+  mediapipe::Status Process(CalculatorContext* cc) override {
     return AssociationCalculator<::mediapipe::NormalizedRect>::Process(cc);
   }
 
-  ::mediapipe::Status Close(CalculatorContext* cc) override {
+  mediapipe::Status Close(CalculatorContext* cc) override {
     return AssociationCalculator<::mediapipe::NormalizedRect>::Close(cc);
   }
 
  protected:
-  ::mediapipe::StatusOr<Rectangle_f> GetRectangle(
+  mediapipe::StatusOr<Rectangle_f> GetRectangle(
       const ::mediapipe::NormalizedRect& input) override {
     if (!input.has_x_center() || !input.has_y_center() || !input.has_width() ||
         !input.has_height()) {
-      return ::mediapipe::InternalError(
-          "Missing dimensions in NormalizedRect.");
+      return mediapipe::InternalError("Missing dimensions in NormalizedRect.");
     }
     const float xmin = input.x_center() - input.width() / 2.0;
     const float ymin = input.y_center() - input.height() / 2.0;

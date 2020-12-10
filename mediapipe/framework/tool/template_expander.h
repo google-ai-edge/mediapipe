@@ -33,13 +33,13 @@ class TemplateExpander {
   // Applies the rules specified in a CalculatorGraphTemplate to a
   // CalculatorGraphConfig.  Each rule references a nested field-value or
   // message and defines zero or more replacement values for it.
-  ::mediapipe::Status ExpandTemplates(const TemplateDict& args,
-                                      const CalculatorGraphTemplate& templ,
-                                      CalculatorGraphConfig* output);
+  mediapipe::Status ExpandTemplates(const TemplateDict& args,
+                                    const CalculatorGraphTemplate& templ,
+                                    CalculatorGraphConfig* output);
 
  private:
   // List of errors found in template parameters.
-  std::vector<::mediapipe::Status> errors_;
+  std::vector<mediapipe::Status> errors_;
 };
 
 }  // namespace tool

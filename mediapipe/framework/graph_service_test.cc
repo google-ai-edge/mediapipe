@@ -48,7 +48,7 @@ class GraphServiceTest : public ::testing::Test {
  protected:
   void SetUp() override {
     CalculatorGraphConfig config =
-        ::mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+        mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
           input_stream: "in"
           node {
             calculator: "TestServiceCalculator"
@@ -60,7 +60,7 @@ class GraphServiceTest : public ::testing::Test {
     MP_ASSERT_OK(
         graph_.ObserveOutputStream("out", [this](const Packet& packet) {
           output_packets_.push_back(packet);
-          return ::mediapipe::OkStatus();
+          return mediapipe::OkStatus();
         }));
   }
 
@@ -98,7 +98,7 @@ TEST_F(GraphServiceTest, UseInCalculator) {
 
 TEST_F(GraphServiceTest, Contract) {
   const CalculatorGraphConfig::Node node =
-      ::mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"(
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"(
         calculator: "TestServiceCalculator"
         input_stream: "in"
         output_stream: "out"

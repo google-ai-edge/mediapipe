@@ -19,8 +19,8 @@
 
 namespace mediapipe {
 
-::mediapipe::Status CopyInputHeadersToOutputs(const InputStreamSet& inputs,
-                                              const OutputStreamSet& outputs) {
+mediapipe::Status CopyInputHeadersToOutputs(const InputStreamSet& inputs,
+                                            const OutputStreamSet& outputs) {
   for (auto id = inputs.BeginId(); id < inputs.EndId(); ++id) {
     std::pair<std::string, int> tag_index = inputs.TagAndIndexFromId(id);
     auto output_id = outputs.GetId(tag_index.first, tag_index.second);
@@ -29,11 +29,11 @@ namespace mediapipe {
     }
   }
 
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status CopyInputHeadersToOutputs(const InputStreamShardSet& inputs,
-                                              OutputStreamShardSet* outputs) {
+mediapipe::Status CopyInputHeadersToOutputs(const InputStreamShardSet& inputs,
+                                            OutputStreamShardSet* outputs) {
   for (auto id = inputs.BeginId(); id < inputs.EndId(); ++id) {
     std::pair<std::string, int> tag_index = inputs.TagAndIndexFromId(id);
     auto output_id = outputs->GetId(tag_index.first, tag_index.second);
@@ -42,7 +42,7 @@ namespace mediapipe {
     }
   }
 
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
 }  // namespace mediapipe

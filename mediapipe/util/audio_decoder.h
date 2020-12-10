@@ -194,19 +194,19 @@ class AudioDecoder {
   AudioDecoder();
   ~AudioDecoder();
 
-  ::mediapipe::Status Initialize(const std::string& input_file,
-                                 const mediapipe::AudioDecoderOptions options);
+  mediapipe::Status Initialize(const std::string& input_file,
+                               const mediapipe::AudioDecoderOptions options);
 
-  ::mediapipe::Status GetData(int* options_index, Packet* data);
+  mediapipe::Status GetData(int* options_index, Packet* data);
 
-  ::mediapipe::Status Close();
+  mediapipe::Status Close();
 
-  ::mediapipe::Status FillAudioHeader(const AudioStreamOptions& stream_option,
-                                      TimeSeriesHeader* header) const;
+  mediapipe::Status FillAudioHeader(const AudioStreamOptions& stream_option,
+                                    TimeSeriesHeader* header) const;
 
  private:
-  ::mediapipe::Status ProcessPacket();
-  ::mediapipe::Status Flush();
+  mediapipe::Status ProcessPacket();
+  mediapipe::Status Flush();
 
   std::map<int, int> stream_id_to_audio_options_index_;
   std::map<int, int> stream_index_to_stream_id_;

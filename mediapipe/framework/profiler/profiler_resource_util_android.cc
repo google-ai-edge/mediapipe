@@ -27,13 +27,13 @@ StatusOr<std::string> GetDefaultTraceLogDirectory() {
     StatusOr<std::string>* result = new StatusOr<std::string>();
     bool has_jvm = java::HasJavaVM();
     if (!has_jvm) {
-      *result = ::mediapipe::InternalError("JavaVM not available.");
+      *result = mediapipe::InternalError("JavaVM not available.");
       return result;
     }
 
     JNIEnv* env = java::GetJNIEnv();
     if (!env) {
-      *result = ::mediapipe::InternalError("JNIEnv not available.");
+      *result = mediapipe::InternalError("JNIEnv not available.");
       return result;
     }
 

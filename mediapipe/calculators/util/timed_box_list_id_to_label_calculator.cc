@@ -48,26 +48,25 @@ using mediapipe::TimedBoxProtoList;
 // }
 class TimedBoxListIdToLabelCalculator : public CalculatorBase {
  public:
-  static ::mediapipe::Status GetContract(CalculatorContract* cc);
+  static mediapipe::Status GetContract(CalculatorContract* cc);
 
-  ::mediapipe::Status Open(CalculatorContext* cc) override;
-  ::mediapipe::Status Process(CalculatorContext* cc) override;
+  mediapipe::Status Open(CalculatorContext* cc) override;
+  mediapipe::Status Process(CalculatorContext* cc) override;
 
  private:
   absl::node_hash_map<int, std::string> label_map_;
 };
 REGISTER_CALCULATOR(TimedBoxListIdToLabelCalculator);
 
-::mediapipe::Status TimedBoxListIdToLabelCalculator::GetContract(
+mediapipe::Status TimedBoxListIdToLabelCalculator::GetContract(
     CalculatorContract* cc) {
   cc->Inputs().Index(0).Set<TimedBoxProtoList>();
   cc->Outputs().Index(0).Set<TimedBoxProtoList>();
 
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status TimedBoxListIdToLabelCalculator::Open(
-    CalculatorContext* cc) {
+mediapipe::Status TimedBoxListIdToLabelCalculator::Open(CalculatorContext* cc) {
   cc->SetOffset(TimestampDiff(0));
 
   const auto& options =
@@ -84,10 +83,10 @@ REGISTER_CALCULATOR(TimedBoxListIdToLabelCalculator);
   while (std::getline(stream, line)) {
     label_map_[i++] = line;
   }
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status TimedBoxListIdToLabelCalculator::Process(
+mediapipe::Status TimedBoxListIdToLabelCalculator::Process(
     CalculatorContext* cc) {
   const auto& input_list = cc->Inputs().Index(0).Get<TimedBoxProtoList>();
   auto output_list = absl::make_unique<TimedBoxProtoList>();
@@ -100,7 +99,7 @@ REGISTER_CALCULATOR(TimedBoxListIdToLabelCalculator);
     }
   }
   cc->Outputs().Index(0).Add(output_list.release(), cc->InputTimestamp());
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
 }  // namespace mediapipe

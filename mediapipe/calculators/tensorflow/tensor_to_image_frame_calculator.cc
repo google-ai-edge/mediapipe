@@ -45,10 +45,10 @@ constexpr char kTensor[] = "TENSOR";
 // Possible extensions: support other input ranges, maybe 4D tensors.
 class TensorToImageFrameCalculator : public CalculatorBase {
  public:
-  static ::mediapipe::Status GetContract(CalculatorContract* cc);
+  static mediapipe::Status GetContract(CalculatorContract* cc);
 
-  ::mediapipe::Status Open(CalculatorContext* cc) override;
-  ::mediapipe::Status Process(CalculatorContext* cc) override;
+  mediapipe::Status Open(CalculatorContext* cc) override;
+  mediapipe::Status Process(CalculatorContext* cc) override;
 
  private:
   float scale_factor_;
@@ -56,7 +56,7 @@ class TensorToImageFrameCalculator : public CalculatorBase {
 
 REGISTER_CALCULATOR(TensorToImageFrameCalculator);
 
-::mediapipe::Status TensorToImageFrameCalculator::GetContract(
+mediapipe::Status TensorToImageFrameCalculator::GetContract(
     CalculatorContract* cc) {
   RET_CHECK_EQ(cc->Inputs().NumEntries(), 1)
       << "Only one input stream is supported.";
@@ -70,18 +70,17 @@ REGISTER_CALCULATOR(TensorToImageFrameCalculator);
   cc->Outputs().Tag(kImage).Set<ImageFrame>(
       // Output ImageFrame.
   );
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status TensorToImageFrameCalculator::Open(CalculatorContext* cc) {
+mediapipe::Status TensorToImageFrameCalculator::Open(CalculatorContext* cc) {
   scale_factor_ =
       cc->Options<TensorToImageFrameCalculatorOptions>().scale_factor();
   cc->SetOffset(TimestampDiff(0));
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status TensorToImageFrameCalculator::Process(
-    CalculatorContext* cc) {
+mediapipe::Status TensorToImageFrameCalculator::Process(CalculatorContext* cc) {
   const tf::Tensor& input_tensor = cc->Inputs().Tag(kTensor).Get<tf::Tensor>();
   int32 depth = 1;
   if (input_tensor.dims() != 2) {  // Depth is 1 for 2D tensors.
@@ -114,11 +113,11 @@ REGISTER_CALCULATOR(TensorToImageFrameCalculator);
         ImageFormat::GRAY8, input_tensor.dim_size(1), input_tensor.dim_size(0),
         input_tensor.dim_size(1), buffer.release());
   } else {
-    return ::mediapipe::InvalidArgumentError("Unrecognized image depth.");
+    return mediapipe::InvalidArgumentError("Unrecognized image depth.");
   }
   cc->Outputs().Tag(kImage).Add(output.release(), cc->InputTimestamp());
 
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
 }  // namespace mediapipe

@@ -22,11 +22,11 @@ namespace mediapipe {
 
 // Copies headers from |inputs| into |outputs| respectively. The size of
 // |inputs| and |outputs| must be equal.
-::mediapipe::Status CopyInputHeadersToOutputs(const InputStreamSet& inputs,
-                                              const OutputStreamSet& outputs);
+mediapipe::Status CopyInputHeadersToOutputs(const InputStreamSet& inputs,
+                                            const OutputStreamSet& outputs);
 
-::mediapipe::Status CopyInputHeadersToOutputs(const InputStreamShardSet& inputs,
-                                              OutputStreamShardSet* outputs);
+mediapipe::Status CopyInputHeadersToOutputs(const InputStreamShardSet& inputs,
+                                            OutputStreamShardSet* outputs);
 
 }  // namespace mediapipe
 

@@ -18,6 +18,7 @@
 #include <cmath>
 #include <vector>
 
+#include "absl/memory/memory.h"
 #include "absl/time/time.h"
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/framework/port/logging.h"
@@ -25,7 +26,7 @@
 namespace mediapipe {
 
 using DistanceEstimationMode =
-    ::mediapipe::RelativeVelocityFilter::DistanceEstimationMode;
+    mediapipe::RelativeVelocityFilter::DistanceEstimationMode;
 
 absl::Duration DurationFromNanos(int64_t nanos) {
   return absl::FromChrono(std::chrono::nanoseconds{nanos});

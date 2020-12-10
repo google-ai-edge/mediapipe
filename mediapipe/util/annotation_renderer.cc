@@ -16,6 +16,7 @@
 
 #include <math.h>
 
+#include <algorithm>
 #include <cmath>
 
 #include "mediapipe/framework/port/logging.h"
@@ -36,6 +37,11 @@ using Oval = RenderAnnotation::Oval;
 using Rectangle = RenderAnnotation::Rectangle;
 using RoundedRectangle = RenderAnnotation::RoundedRectangle;
 using Text = RenderAnnotation::Text;
+
+int ClampThickness(int thickness) {
+  constexpr int kMaxThickness = 32767;  // OpenCV MAX_THICKNESS
+  return std::clamp(thickness, 1, kMaxThickness);
+}
 
 bool NormalizedtoPixelCoordinates(double normalized_x, double normalized_y,
                                   int image_width, int image_height, int* x_px,
@@ -152,7 +158,8 @@ void AnnotationRenderer::DrawRectangle(const RenderAnnotation& annotation) {
   }
 
   const cv::Scalar color = MediapipeColorToOpenCVColor(annotation.color());
-  const int thickness = round(annotation.thickness() * scale_factor_);
+  const int thickness =
+      ClampThickness(round(annotation.thickness() * scale_factor_));
   if (rectangle.rotation() != 0.0) {
     const auto& rect = RectangleToOpenCVRotatedRect(left, top, right, bottom,
                                                     rectangle.rotation());
@@ -231,7 +238,8 @@ void AnnotationRenderer::DrawRoundedRectangle(
   }
 
   const cv::Scalar color = MediapipeColorToOpenCVColor(annotation.color());
-  const int thickness = round(annotation.thickness() * scale_factor_);
+  const int thickness =
+      ClampThickness(round(annotation.thickness() * scale_factor_));
   const int corner_radius =
       round(annotation.rounded_rectangle().corner_radius() * scale_factor_);
   const int line_type = annotation.rounded_rectangle().line_type();
@@ -336,9 +344,11 @@ void AnnotationRenderer::DrawOval(const RenderAnnotation& annotation) {
 
   cv::Point center((left + right) / 2, (top + bottom) / 2);
   cv::Size size((right - left) / 2, (bottom - top) / 2);
+  const double rotation = enclosing_rectangle.rotation() / M_PI * 180.f;
   const cv::Scalar color = MediapipeColorToOpenCVColor(annotation.color());
-  const int thickness = round(annotation.thickness() * scale_factor_);
-  cv::ellipse(mat_image_, center, size, 0, 0, 360, color, thickness);
+  const int thickness =
+      ClampThickness(round(annotation.thickness() * scale_factor_));
+  cv::ellipse(mat_image_, center, size, rotation, 0, 360, color, thickness);
 }
 
 void AnnotationRenderer::DrawFilledOval(const RenderAnnotation& annotation) {
@@ -364,8 +374,9 @@ void AnnotationRenderer::DrawFilledOval(const RenderAnnotation& annotation) {
   cv::Point center((left + right) / 2, (top + bottom) / 2);
   cv::Size size(std::max(0, (right - left) / 2),
                 std::max(0, (bottom - top) / 2));
+  const double rotation = enclosing_rectangle.rotation() / M_PI * 180.f;
   const cv::Scalar color = MediapipeColorToOpenCVColor(annotation.color());
-  cv::ellipse(mat_image_, center, size, 0, 0, 360, color, -1);
+  cv::ellipse(mat_image_, center, size, rotation, 0, 360, color, -1);
 }
 
 void AnnotationRenderer::DrawArrow(const RenderAnnotation& annotation) {
@@ -392,7 +403,8 @@ void AnnotationRenderer::DrawArrow(const RenderAnnotation& annotation) {
   cv::Point arrow_start(x_start, y_start);
   cv::Point arrow_end(x_end, y_end);
   const cv::Scalar color = MediapipeColorToOpenCVColor(annotation.color());
-  const int thickness = round(annotation.thickness() * scale_factor_);
+  const int thickness =
+      ClampThickness(round(annotation.thickness() * scale_factor_));
 
   // Draw the main arrow line.
   cv::line(mat_image_, arrow_start, arrow_end, color, thickness);
@@ -431,7 +443,8 @@ void AnnotationRenderer::DrawPoint(const RenderAnnotation& annotation) {
 
   cv::Point point_to_draw(x, y);
   const cv::Scalar color = MediapipeColorToOpenCVColor(annotation.color());
-  const int thickness = round(annotation.thickness() * scale_factor_);
+  const int thickness =
+      ClampThickness(round(annotation.thickness() * scale_factor_));
   cv::circle(mat_image_, point_to_draw, thickness, color, -1);
 }
 
@@ -458,7 +471,8 @@ void AnnotationRenderer::DrawLine(const RenderAnnotation& annotation) {
   cv::Point start(x_start, y_start);
   cv::Point end(x_end, y_end);
   const cv::Scalar color = MediapipeColorToOpenCVColor(annotation.color());
-  const int thickness = round(annotation.thickness() * scale_factor_);
+  const int thickness =
+      ClampThickness(round(annotation.thickness() * scale_factor_));
   cv::line(mat_image_, start, end, color, thickness);
 }
 
@@ -484,7 +498,8 @@ void AnnotationRenderer::DrawGradientLine(const RenderAnnotation& annotation) {
 
   const cv::Point start(x_start, y_start);
   const cv::Point end(x_end, y_end);
-  const int thickness = round(annotation.thickness() * scale_factor_);
+  const int thickness =
+      ClampThickness(round(annotation.thickness() * scale_factor_));
   const cv::Scalar color1 = MediapipeColorToOpenCVColor(line.color1());
   const cv::Scalar color2 = MediapipeColorToOpenCVColor(line.color2());
   cv_line2(mat_image_, start, end, color1, color2, thickness);
@@ -509,7 +524,8 @@ void AnnotationRenderer::DrawText(const RenderAnnotation& annotation) {
 
   cv::Point origin(left, baseline);
   const cv::Scalar color = MediapipeColorToOpenCVColor(annotation.color());
-  const int thickness = round(annotation.thickness() * scale_factor_);
+  const int thickness =
+      ClampThickness(round(annotation.thickness() * scale_factor_));
   const int font_face = text.font_face();
 
   const double font_scale = ComputeFontScale(font_face, font_size, thickness);

@@ -207,9 +207,8 @@ TEST(ValidateNameTest, ParseTagIndexName) {
                             "mieko_harada");
   TestPassParseTagIndexName("A1:100:mieko1", "A1", 100, "mieko1");
   TestPassParseTagIndexName(
-      absl::StrCat("A1:", ::mediapipe::internal::kMaxCollectionItemId,
-                   ":mieko1"),
-      "A1", ::mediapipe::internal::kMaxCollectionItemId, "mieko1");
+      absl::StrCat("A1:", mediapipe::internal::kMaxCollectionItemId, ":mieko1"),
+      "A1", mediapipe::internal::kMaxCollectionItemId, "mieko1");
 
   // Failure cases.
   TestFailParseTagIndexName("");    // Empty name.
@@ -246,7 +245,7 @@ TEST(ValidateNameTest, ParseTagIndexName) {
   TestFailParseTagIndexName("A:01:name");  // Leading zero.
   TestFailParseTagIndexName("A:00:name");  // Leading zero.
   TestFailParseTagIndexName(
-      absl::StrCat("A:", ::mediapipe::internal::kMaxCollectionItemId + 1,
+      absl::StrCat("A:", mediapipe::internal::kMaxCollectionItemId + 1,
                    ":a"));  // Too large an index.
   // Extra field
   TestFailParseTagIndexName("A:1:a:");   // extra field.

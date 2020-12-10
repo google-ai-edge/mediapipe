@@ -50,7 +50,7 @@ void DumpPostStreamPacket(Packet* post_stream_packet, const Packet& packet) {
 // while that pointer is still alive.
 class CallbackPacketCalculator : public CalculatorBase {
  public:
-  static ::mediapipe::Status GetContract(CalculatorContract* cc) {
+  static mediapipe::Status GetContract(CalculatorContract* cc) {
     const auto& options = cc->Options<CallbackPacketCalculatorOptions>();
     switch (options.type()) {
       case CallbackPacketCalculatorOptions::VECTOR_PACKET:
@@ -60,17 +60,17 @@ class CallbackPacketCalculator : public CalculatorBase {
             .Set<std::function<void(const Packet&)>>();
         break;
       default:
-        return ::mediapipe::InvalidArgumentErrorBuilder(MEDIAPIPE_LOC)
+        return mediapipe::InvalidArgumentErrorBuilder(MEDIAPIPE_LOC)
                << "Invalid type of callback to produce.";
     }
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Open(CalculatorContext* cc) override {
+  mediapipe::Status Open(CalculatorContext* cc) override {
     const auto& options = cc->Options<CallbackPacketCalculatorOptions>();
     void* ptr;
     if (sscanf(options.pointer().c_str(), "%p", &ptr) != 1) {
-      return ::mediapipe::InvalidArgumentErrorBuilder(MEDIAPIPE_LOC)
+      return mediapipe::InvalidArgumentErrorBuilder(MEDIAPIPE_LOC)
              << "Stored pointer value in options is invalid.";
     }
     switch (options.type()) {
@@ -87,14 +87,14 @@ class CallbackPacketCalculator : public CalculatorBase {
                           std::placeholders::_1)));
         break;
       default:
-        return ::mediapipe::InvalidArgumentErrorBuilder(MEDIAPIPE_LOC)
+        return mediapipe::InvalidArgumentErrorBuilder(MEDIAPIPE_LOC)
                << "Invalid type to dump into.";
     }
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Process(CalculatorContext* cc) override {
-    return ::mediapipe::OkStatus();
+  mediapipe::Status Process(CalculatorContext* cc) override {
+    return mediapipe::OkStatus();
   }
 };
 

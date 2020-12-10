@@ -36,7 +36,7 @@ namespace mediapipe {
 namespace {
 
 namespace tf = ::tensorflow;
-namespace mpms = ::mediapipe::mediasequence;
+namespace mpms = mediapipe::mediasequence;
 
 class PackMediaSequenceCalculatorTest : public ::testing::Test {
  protected:
@@ -433,7 +433,7 @@ TEST_F(PackMediaSequenceCalculatorTest, PacksBBoxWithoutImageDims) {
       Adopt(input_sequence.release());
 
   auto status = runner_->Run();
-  EXPECT_EQ(::mediapipe::StatusCode::kInvalidArgument, status.code());
+  EXPECT_EQ(mediapipe::StatusCode::kInvalidArgument, status.code());
 }
 
 TEST_F(PackMediaSequenceCalculatorTest, PacksBBoxWithImages) {

@@ -183,7 +183,7 @@ TEST(CollectionTest, StaticEmptyCollectionHeapCheck) {
 }
 
 template <typename T>
-::mediapipe::Status TestCollectionWithPointers(
+mediapipe::Status TestCollectionWithPointers(
     const std::vector<T>& original_values, const T& inject1, const T& inject2) {
   std::shared_ptr<tool::TagMap> tag_map =
       tool::CreateTagMap({"TAG_A:a", "TAG_B:1:b", "TAG_A:2:c", "TAG_B:d",
@@ -451,7 +451,7 @@ template <typename T>
       ++i;
     }
   }
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
 TEST(CollectionTest, TestCollectionWithPointersIntAndString) {

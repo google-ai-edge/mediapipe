@@ -47,7 +47,7 @@ TimestampDiff TimestampDiffFromSeconds(double seconds) {
 }
 }  // namespace
 
-::mediapipe::Status PacketResamplerCalculator::GetContract(
+mediapipe::Status PacketResamplerCalculator::GetContract(
     CalculatorContract* cc) {
   const auto& resampler_options =
       cc->Options<PacketResamplerCalculatorOptions>();
@@ -78,10 +78,10 @@ TimestampDiff TimestampDiffFromSeconds(double seconds) {
     RET_CHECK(cc->InputSidePackets().HasTag("SEED"));
     cc->InputSidePackets().Tag("SEED").Set<std::string>();
   }
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status PacketResamplerCalculator::Open(CalculatorContext* cc) {
+mediapipe::Status PacketResamplerCalculator::Open(CalculatorContext* cc) {
   const auto resampler_options =
       tool::RetrieveOptions(cc->Options<PacketResamplerCalculatorOptions>(),
                             cc->InputSidePackets(), "OPTIONS");
@@ -156,8 +156,8 @@ TimestampDiff TimestampDiffFromSeconds(double seconds) {
     const auto& seed = cc->InputSidePackets().Tag("SEED").Get<std::string>();
     random_ = CreateSecureRandom(seed);
     if (random_ == nullptr) {
-      return ::mediapipe::Status(
-          ::mediapipe::StatusCode::kInvalidArgument,
+      return mediapipe::Status(
+          mediapipe::StatusCode::kInvalidArgument,
           "SecureRandom is not available.  With \"jitter\" specified, "
           "PacketResamplerCalculator processing cannot proceed.");
     }
@@ -165,17 +165,17 @@ TimestampDiff TimestampDiffFromSeconds(double seconds) {
   }
   packet_reservoir_ =
       std::make_unique<PacketReservoir>(packet_reservoir_random_.get());
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status PacketResamplerCalculator::Process(CalculatorContext* cc) {
+mediapipe::Status PacketResamplerCalculator::Process(CalculatorContext* cc) {
   if (cc->InputTimestamp() == Timestamp::PreStream() &&
       cc->Inputs().UsesTags() && cc->Inputs().HasTag("VIDEO_HEADER") &&
       !cc->Inputs().Tag("VIDEO_HEADER").IsEmpty()) {
     video_header_ = cc->Inputs().Tag("VIDEO_HEADER").Get<VideoHeader>();
     video_header_.frame_rate = frame_rate_;
     if (cc->Inputs().Get(input_data_id_).IsEmpty()) {
-      return ::mediapipe::OkStatus();
+      return mediapipe::OkStatus();
     }
   }
   if (jitter_ != 0.0 && random_ != nullptr) {
@@ -192,7 +192,7 @@ TimestampDiff TimestampDiffFromSeconds(double seconds) {
     MP_RETURN_IF_ERROR(ProcessWithoutJitter(cc));
   }
   last_packet_ = cc->Inputs().Get(input_data_id_).Value();
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
 void PacketResamplerCalculator::InitializeNextOutputTimestampWithJitter() {
@@ -229,7 +229,7 @@ void PacketResamplerCalculator::UpdateNextOutputTimestampWithJitter() {
       ((1.0 - jitter_) + 2.0 * jitter_ * random_->RandFloat());
 }
 
-::mediapipe::Status PacketResamplerCalculator::ProcessWithJitter(
+mediapipe::Status PacketResamplerCalculator::ProcessWithJitter(
     CalculatorContext* cc) {
   RET_CHECK_GT(cc->InputTimestamp(), Timestamp::PreStream());
   RET_CHECK_NE(jitter_, 0.0);
@@ -243,7 +243,7 @@ void PacketResamplerCalculator::UpdateNextOutputTimestampWithJitter() {
           cc->Inputs().Get(input_data_id_).Value().At(next_output_timestamp_));
       UpdateNextOutputTimestampWithJitter();
     }
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
   if (frame_time_usec_ <
@@ -267,10 +267,10 @@ void PacketResamplerCalculator::UpdateNextOutputTimestampWithJitter() {
                                .At(next_output_timestamp_));
     UpdateNextOutputTimestampWithJitter();
   }
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status PacketResamplerCalculator::ProcessWithoutJitter(
+mediapipe::Status PacketResamplerCalculator::ProcessWithoutJitter(
     CalculatorContext* cc) {
   RET_CHECK_GT(cc->InputTimestamp(), Timestamp::PreStream());
   RET_CHECK_EQ(jitter_, 0.0);
@@ -333,12 +333,12 @@ void PacketResamplerCalculator::UpdateNextOutputTimestampWithJitter() {
         .Get(output_data_id_)
         .SetNextTimestampBound(PeriodIndexToTimestamp(period_count_));
   }
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status PacketResamplerCalculator::Close(CalculatorContext* cc) {
+mediapipe::Status PacketResamplerCalculator::Close(CalculatorContext* cc) {
   if (!cc->GraphStatus().ok()) {
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
   // Emit the last packet received if we have at least one packet, but
   // haven't sent anything for its period.
@@ -350,7 +350,7 @@ void PacketResamplerCalculator::UpdateNextOutputTimestampWithJitter() {
   if (!packet_reservoir_->IsEmpty()) {
     OutputWithinLimits(cc, packet_reservoir_->GetSample());
   }
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
 Timestamp PacketResamplerCalculator::PeriodIndexToTimestamp(int64 index) const {

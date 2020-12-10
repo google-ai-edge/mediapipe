@@ -73,7 +73,7 @@ namespace mediapipe {
 // MuxCalculator/MuxInputStreamHandler.
 class RoundRobinDemuxCalculator : public CalculatorBase {
  public:
-  static ::mediapipe::Status GetContract(CalculatorContract* cc) {
+  static mediapipe::Status GetContract(CalculatorContract* cc) {
     RET_CHECK_EQ(cc->Inputs().NumEntries(), 1);
     cc->Inputs().Index(0).SetAny();
     if (cc->Outputs().HasTag("SELECT")) {
@@ -83,18 +83,18 @@ class RoundRobinDemuxCalculator : public CalculatorBase {
          id < cc->Outputs().EndId("OUTPUT"); ++id) {
       cc->Outputs().Get(id).SetSameAs(&cc->Inputs().Index(0));
     }
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Open(CalculatorContext* cc) override {
+  mediapipe::Status Open(CalculatorContext* cc) override {
     select_output_ = cc->Outputs().GetId("SELECT", 0);
     output_data_stream_index_ = 0;
     output_data_stream_base_ = cc->Outputs().GetId("OUTPUT", 0);
     num_output_data_streams_ = cc->Outputs().NumEntries("OUTPUT");
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Process(CalculatorContext* cc) override {
+  mediapipe::Status Process(CalculatorContext* cc) override {
     cc->Outputs()
         .Get(output_data_stream_base_ + output_data_stream_index_)
         .AddPacket(cc->Inputs().Index(0).Value());
@@ -105,7 +105,7 @@ class RoundRobinDemuxCalculator : public CalculatorBase {
     }
     output_data_stream_index_ =
         (output_data_stream_index_ + 1) % num_output_data_streams_;
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
  private:

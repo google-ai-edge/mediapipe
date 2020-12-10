@@ -130,6 +130,16 @@ mediapipe_proto_library(
     ],
 )
 
+mediapipe_proto_library(
+    name = "flow_limiter_calculator_proto",
+    srcs = ["flow_limiter_calculator.proto"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//mediapipe/framework:calculator_options_proto",
+        "//mediapipe/framework:calculator_proto",
+    ],
+)
+
 cc_library(
     name = "add_header_calculator",
     srcs = ["add_header_calculator.cc"],
@@ -238,13 +248,14 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         ":concatenate_vector_calculator_cc_proto",
-        "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/formats:classification_cc_proto",
         "//mediapipe/framework/formats:landmark_cc_proto",
         "//mediapipe/framework/formats:tensor",
         "//mediapipe/framework/port:integral_types",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/util:render_data_cc_proto",
         "@org_tensorflow//tensorflow/lite:framework",
     ] + select({
         "//mediapipe/gpu:disable_gpu": [],
@@ -607,6 +618,7 @@ cc_library(
     srcs = ["flow_limiter_calculator.cc"],
     visibility = ["//visibility:public"],
     deps = [
+        ":flow_limiter_calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework:packet",
         "//mediapipe/framework:timestamp",
@@ -782,6 +794,7 @@ cc_test(
     srcs = ["flow_limiter_calculator_test.cc"],
     deps = [
         ":flow_limiter_calculator",
+        ":flow_limiter_calculator_cc_proto",
         "//mediapipe/calculators/core:counting_source_calculator",
         "//mediapipe/calculators/core:pass_through_calculator",
         "//mediapipe/framework:calculator_framework",
@@ -793,6 +806,8 @@ cc_test(
         "//mediapipe/framework/port:integral_types",
         "//mediapipe/framework/port:parse_text_proto",
         "//mediapipe/framework/stream_handler:immediate_input_stream_handler",
+        "//mediapipe/framework/tool:simulation_clock",
+        "//mediapipe/framework/tool:simulation_clock_executor",
         "//mediapipe/framework/tool:sink",
         "@com_google_absl//absl/time",
     ],

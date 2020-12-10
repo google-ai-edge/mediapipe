@@ -62,7 +62,7 @@ constexpr char kMatrixTag[] = "MATRIX";
 // }
 class LandmarksToFloatsCalculator : public CalculatorBase {
  public:
-  static ::mediapipe::Status GetContract(CalculatorContract* cc) {
+  static mediapipe::Status GetContract(CalculatorContract* cc) {
     cc->Inputs().Tag(kLandmarksTag).Set<NormalizedLandmarkList>();
     RET_CHECK(cc->Outputs().HasTag(kFloatsTag) ||
               cc->Outputs().HasTag(kMatrixTag));
@@ -73,10 +73,10 @@ class LandmarksToFloatsCalculator : public CalculatorBase {
       cc->Outputs().Tag(kMatrixTag).Set<Matrix>();
     }
 
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Open(CalculatorContext* cc) override {
+  mediapipe::Status Open(CalculatorContext* cc) override {
     cc->SetOffset(TimestampDiff(0));
     const auto& options =
         cc->Options<::mediapipe::LandmarksToFloatsCalculatorOptions>();
@@ -84,13 +84,13 @@ class LandmarksToFloatsCalculator : public CalculatorBase {
     // Currently number of dimensions must be within [1, 3].
     RET_CHECK_GE(num_dimensions_, 1);
     RET_CHECK_LE(num_dimensions_, 3);
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Process(CalculatorContext* cc) override {
+  mediapipe::Status Process(CalculatorContext* cc) override {
     // Only process if there's input landmarks.
     if (cc->Inputs().Tag(kLandmarksTag).IsEmpty()) {
-      return ::mediapipe::OkStatus();
+      return mediapipe::OkStatus();
     }
 
     const auto& input_landmarks =
@@ -128,7 +128,7 @@ class LandmarksToFloatsCalculator : public CalculatorBase {
           .Tag(kMatrixTag)
           .Add(output_matrix.release(), cc->InputTimestamp());
     }
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
  private:

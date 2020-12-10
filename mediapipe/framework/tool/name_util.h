@@ -93,7 +93,7 @@ std::string CatStream(const std::pair<std::string, int>& tag_index,
 }  // namespace mediapipe
 
 namespace mediapipe {
-using ::mediapipe::tool::CanonicalNodeName;
+using mediapipe::tool::CanonicalNodeName;
 }  // namespace mediapipe
 
 #endif  // MEDIAPIPE_FRAMEWORK_TOOL_NAME_UTIL_H_

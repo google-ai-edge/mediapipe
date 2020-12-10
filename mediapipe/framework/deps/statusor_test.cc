@@ -74,19 +74,19 @@ TEST(StatusOr, ElementType) {
 
 TEST(StatusOr, TestNoDefaultConstructorInitialization) {
   // Explicitly initialize it with an error code.
-  ::mediapipe::StatusOr<NoDefaultConstructor> statusor(
-      ::mediapipe::CancelledError(""));
+  mediapipe::StatusOr<NoDefaultConstructor> statusor(
+      mediapipe::CancelledError(""));
   EXPECT_FALSE(statusor.ok());
-  EXPECT_EQ(statusor.status().code(), ::mediapipe::StatusCode::kCancelled);
+  EXPECT_EQ(statusor.status().code(), mediapipe::StatusCode::kCancelled);
 
   // Default construction of StatusOr initializes it with an UNKNOWN error code.
-  ::mediapipe::StatusOr<NoDefaultConstructor> statusor2;
+  mediapipe::StatusOr<NoDefaultConstructor> statusor2;
   EXPECT_FALSE(statusor2.ok());
-  EXPECT_EQ(statusor2.status().code(), ::mediapipe::StatusCode::kUnknown);
+  EXPECT_EQ(statusor2.status().code(), mediapipe::StatusCode::kUnknown);
 }
 
 TEST(StatusOr, TestMoveOnlyInitialization) {
-  ::mediapipe::StatusOr<std::unique_ptr<int>> thing(ReturnUniquePtr());
+  mediapipe::StatusOr<std::unique_ptr<int>> thing(ReturnUniquePtr());
   ASSERT_TRUE(thing.ok());
   EXPECT_EQ(0, *thing.ValueOrDie());
   int* previous = thing.ValueOrDie().get();
@@ -98,13 +98,13 @@ TEST(StatusOr, TestMoveOnlyInitialization) {
 }
 
 TEST(StatusOr, TestMoveOnlyStatusCtr) {
-  ::mediapipe::StatusOr<std::unique_ptr<int>> thing(
-      ::mediapipe::CancelledError(""));
+  mediapipe::StatusOr<std::unique_ptr<int>> thing(
+      mediapipe::CancelledError(""));
   ASSERT_FALSE(thing.ok());
 }
 
 TEST(StatusOr, TestMoveOnlyValueExtraction) {
-  ::mediapipe::StatusOr<std::unique_ptr<int>> thing(ReturnUniquePtr());
+  mediapipe::StatusOr<std::unique_ptr<int>> thing(ReturnUniquePtr());
   ASSERT_TRUE(thing.ok());
   std::unique_ptr<int> ptr = thing.ConsumeValueOrDie();
   EXPECT_EQ(0, *ptr);
@@ -115,7 +115,7 @@ TEST(StatusOr, TestMoveOnlyValueExtraction) {
 }
 
 TEST(StatusOr, TestMoveOnlyConversion) {
-  ::mediapipe::StatusOr<std::unique_ptr<const int>> const_thing(
+  mediapipe::StatusOr<std::unique_ptr<const int>> const_thing(
       ReturnUniquePtr());
   EXPECT_TRUE(const_thing.ok());
   EXPECT_EQ(0, *const_thing.ValueOrDie());
@@ -129,23 +129,23 @@ TEST(StatusOr, TestMoveOnlyConversion) {
 }
 
 TEST(StatusOr, TestMoveOnlyVector) {
-  // Sanity check that ::mediapipe::StatusOr<MoveOnly> works in vector.
-  std::vector<::mediapipe::StatusOr<std::unique_ptr<int>>> vec;
+  // Sanity check that mediapipe::StatusOr<MoveOnly> works in vector.
+  std::vector<mediapipe::StatusOr<std::unique_ptr<int>>> vec;
   vec.push_back(ReturnUniquePtr());
   vec.resize(2);
   auto another_vec = std::move(vec);
   EXPECT_EQ(0, *another_vec[0].ValueOrDie());
-  EXPECT_EQ(::mediapipe::StatusCode::kUnknown, another_vec[1].status().code());
+  EXPECT_EQ(mediapipe::StatusCode::kUnknown, another_vec[1].status().code());
 }
 
 TEST(StatusOr, TestMoveWithValuesAndErrors) {
-  ::mediapipe::StatusOr<std::string> status_or(std::string(1000, '0'));
-  ::mediapipe::StatusOr<std::string> value1(std::string(1000, '1'));
-  ::mediapipe::StatusOr<std::string> value2(std::string(1000, '2'));
-  ::mediapipe::StatusOr<std::string> error1(
-      Status(::mediapipe::StatusCode::kUnknown, "error1"));
-  ::mediapipe::StatusOr<std::string> error2(
-      Status(::mediapipe::StatusCode::kUnknown, "error2"));
+  mediapipe::StatusOr<std::string> status_or(std::string(1000, '0'));
+  mediapipe::StatusOr<std::string> value1(std::string(1000, '1'));
+  mediapipe::StatusOr<std::string> value2(std::string(1000, '2'));
+  mediapipe::StatusOr<std::string> error1(
+      Status(mediapipe::StatusCode::kUnknown, "error1"));
+  mediapipe::StatusOr<std::string> error2(
+      Status(mediapipe::StatusCode::kUnknown, "error2"));
 
   ASSERT_TRUE(status_or.ok());
   EXPECT_EQ(std::string(1000, '0'), status_or.ValueOrDie());
@@ -172,13 +172,13 @@ TEST(StatusOr, TestMoveWithValuesAndErrors) {
 }
 
 TEST(StatusOr, TestCopyWithValuesAndErrors) {
-  ::mediapipe::StatusOr<std::string> status_or(std::string(1000, '0'));
-  ::mediapipe::StatusOr<std::string> value1(std::string(1000, '1'));
-  ::mediapipe::StatusOr<std::string> value2(std::string(1000, '2'));
-  ::mediapipe::StatusOr<std::string> error1(
-      Status(::mediapipe::StatusCode::kUnknown, "error1"));
-  ::mediapipe::StatusOr<std::string> error2(
-      Status(::mediapipe::StatusCode::kUnknown, "error2"));
+  mediapipe::StatusOr<std::string> status_or(std::string(1000, '0'));
+  mediapipe::StatusOr<std::string> value1(std::string(1000, '1'));
+  mediapipe::StatusOr<std::string> value2(std::string(1000, '2'));
+  mediapipe::StatusOr<std::string> error1(
+      Status(mediapipe::StatusCode::kUnknown, "error1"));
+  mediapipe::StatusOr<std::string> error2(
+      Status(mediapipe::StatusCode::kUnknown, "error2"));
 
   ASSERT_TRUE(status_or.ok());
   EXPECT_EQ(std::string(1000, '0'), status_or.ValueOrDie());
@@ -211,226 +211,225 @@ TEST(StatusOr, TestCopyWithValuesAndErrors) {
 }
 
 TEST(StatusOr, TestDefaultCtor) {
-  ::mediapipe::StatusOr<int> thing;
+  mediapipe::StatusOr<int> thing;
   EXPECT_FALSE(thing.ok());
-  EXPECT_EQ(thing.status().code(), ::mediapipe::StatusCode::kUnknown);
+  EXPECT_EQ(thing.status().code(), mediapipe::StatusCode::kUnknown);
 }
 
 TEST(StatusOrDeathTest, TestDefaultCtorValue) {
-  ::mediapipe::StatusOr<int> thing;
+  mediapipe::StatusOr<int> thing;
   EXPECT_DEATH(thing.ValueOrDie(), "");
 
-  const ::mediapipe::StatusOr<int> thing2;
+  const mediapipe::StatusOr<int> thing2;
   EXPECT_DEATH(thing.ValueOrDie(), "");
 }
 
 TEST(StatusOr, TestStatusCtor) {
-  ::mediapipe::StatusOr<int> thing(
-      ::mediapipe::Status(::mediapipe::StatusCode::kCancelled, ""));
+  mediapipe::StatusOr<int> thing(
+      mediapipe::Status(mediapipe::StatusCode::kCancelled, ""));
   EXPECT_FALSE(thing.ok());
-  EXPECT_EQ(thing.status().code(), ::mediapipe::StatusCode::kCancelled);
+  EXPECT_EQ(thing.status().code(), mediapipe::StatusCode::kCancelled);
 }
 
 TEST(StatusOr, TestValueCtor) {
   const int kI = 4;
-  const ::mediapipe::StatusOr<int> thing(kI);
+  const mediapipe::StatusOr<int> thing(kI);
   EXPECT_TRUE(thing.ok());
   EXPECT_EQ(kI, thing.ValueOrDie());
 }
 
 TEST(StatusOr, TestCopyCtorStatusOk) {
   const int kI = 4;
-  const ::mediapipe::StatusOr<int> original(kI);
-  const ::mediapipe::StatusOr<int> copy(original);
+  const mediapipe::StatusOr<int> original(kI);
+  const mediapipe::StatusOr<int> copy(original);
   EXPECT_EQ(copy.status(), original.status());
   EXPECT_EQ(original.ValueOrDie(), copy.ValueOrDie());
 }
 
 TEST(StatusOr, TestCopyCtorStatusNotOk) {
-  ::mediapipe::StatusOr<int> original(
-      Status(::mediapipe::StatusCode::kCancelled, ""));
-  ::mediapipe::StatusOr<int> copy(original);
+  mediapipe::StatusOr<int> original(
+      Status(mediapipe::StatusCode::kCancelled, ""));
+  mediapipe::StatusOr<int> copy(original);
   EXPECT_EQ(copy.status(), original.status());
 }
 
 TEST(StatusOr, TestCopyCtorNonAssignable) {
   const int kI = 4;
   CopyNoAssign value(kI);
-  ::mediapipe::StatusOr<CopyNoAssign> original(value);
-  ::mediapipe::StatusOr<CopyNoAssign> copy(original);
+  mediapipe::StatusOr<CopyNoAssign> original(value);
+  mediapipe::StatusOr<CopyNoAssign> copy(original);
   EXPECT_EQ(copy.status(), original.status());
   EXPECT_EQ(original.ValueOrDie().foo_, copy.ValueOrDie().foo_);
 }
 
 TEST(StatusOr, TestCopyCtorStatusOKConverting) {
   const int kI = 4;
-  ::mediapipe::StatusOr<int> original(kI);
-  ::mediapipe::StatusOr<double> copy(original);
+  mediapipe::StatusOr<int> original(kI);
+  mediapipe::StatusOr<double> copy(original);
   EXPECT_EQ(copy.status(), original.status());
   EXPECT_DOUBLE_EQ(original.ValueOrDie(), copy.ValueOrDie());
 }
 
 TEST(StatusOr, TestCopyCtorStatusNotOkConverting) {
-  ::mediapipe::StatusOr<int> original(
-      Status(::mediapipe::StatusCode::kCancelled, ""));
-  ::mediapipe::StatusOr<double> copy(original);
+  mediapipe::StatusOr<int> original(
+      Status(mediapipe::StatusCode::kCancelled, ""));
+  mediapipe::StatusOr<double> copy(original);
   EXPECT_EQ(copy.status(), original.status());
 }
 
 TEST(StatusOr, TestAssignmentStatusOk) {
   const int kI = 4;
-  ::mediapipe::StatusOr<int> source(kI);
-  ::mediapipe::StatusOr<int> target;
+  mediapipe::StatusOr<int> source(kI);
+  mediapipe::StatusOr<int> target;
   target = source;
   EXPECT_EQ(target.status(), source.status());
   EXPECT_EQ(source.ValueOrDie(), target.ValueOrDie());
 }
 
 TEST(StatusOr, TestAssignmentStatusNotOk) {
-  ::mediapipe::StatusOr<int> source(
-      Status(::mediapipe::StatusCode::kCancelled, ""));
-  ::mediapipe::StatusOr<int> target;
+  mediapipe::StatusOr<int> source(
+      Status(mediapipe::StatusCode::kCancelled, ""));
+  mediapipe::StatusOr<int> target;
   target = source;
   EXPECT_EQ(target.status(), source.status());
 }
 
 TEST(StatusOr, TestStatus) {
-  ::mediapipe::StatusOr<int> good(4);
+  mediapipe::StatusOr<int> good(4);
   EXPECT_TRUE(good.ok());
-  ::mediapipe::StatusOr<int> bad(
-      Status(::mediapipe::StatusCode::kCancelled, ""));
+  mediapipe::StatusOr<int> bad(Status(mediapipe::StatusCode::kCancelled, ""));
   EXPECT_FALSE(bad.ok());
-  EXPECT_EQ(bad.status(), Status(::mediapipe::StatusCode::kCancelled, ""));
+  EXPECT_EQ(bad.status(), Status(mediapipe::StatusCode::kCancelled, ""));
 }
 
 TEST(StatusOr, TestValue) {
   const int kI = 4;
-  ::mediapipe::StatusOr<int> thing(kI);
+  mediapipe::StatusOr<int> thing(kI);
   EXPECT_EQ(kI, thing.ValueOrDie());
 }
 
 TEST(StatusOr, TestValueConst) {
   const int kI = 4;
-  const ::mediapipe::StatusOr<int> thing(kI);
+  const mediapipe::StatusOr<int> thing(kI);
   EXPECT_EQ(kI, thing.ValueOrDie());
 }
 
 TEST(StatusOrDeathTest, TestValueNotOk) {
-  ::mediapipe::StatusOr<int> thing(
-      ::mediapipe::Status(::mediapipe::StatusCode::kCancelled, "cancelled"));
+  mediapipe::StatusOr<int> thing(
+      mediapipe::Status(mediapipe::StatusCode::kCancelled, "cancelled"));
   EXPECT_DEATH(thing.ValueOrDie(), "cancelled");
 }
 
 TEST(StatusOrDeathTest, TestValueNotOkConst) {
-  const ::mediapipe::StatusOr<int> thing(
-      ::mediapipe::Status(::mediapipe::StatusCode::kUnknown, ""));
+  const mediapipe::StatusOr<int> thing(
+      mediapipe::Status(mediapipe::StatusCode::kUnknown, ""));
   EXPECT_DEATH(thing.ValueOrDie(), "");
 }
 
 TEST(StatusOr, TestPointerDefaultCtor) {
-  ::mediapipe::StatusOr<int*> thing;
+  mediapipe::StatusOr<int*> thing;
   EXPECT_FALSE(thing.ok());
-  EXPECT_EQ(thing.status().code(), ::mediapipe::StatusCode::kUnknown);
+  EXPECT_EQ(thing.status().code(), mediapipe::StatusCode::kUnknown);
 }
 
 TEST(StatusOrDeathTest, TestPointerDefaultCtorValue) {
-  ::mediapipe::StatusOr<int*> thing;
+  mediapipe::StatusOr<int*> thing;
   EXPECT_DEATH(thing.ValueOrDie(), "");
 }
 
 TEST(StatusOr, TestPointerStatusCtor) {
-  ::mediapipe::StatusOr<int*> thing(
-      Status(::mediapipe::StatusCode::kCancelled, ""));
+  mediapipe::StatusOr<int*> thing(
+      Status(mediapipe::StatusCode::kCancelled, ""));
   EXPECT_FALSE(thing.ok());
-  EXPECT_EQ(thing.status(), Status(::mediapipe::StatusCode::kCancelled, ""));
+  EXPECT_EQ(thing.status(), Status(mediapipe::StatusCode::kCancelled, ""));
 }
 
 TEST(StatusOr, TestPointerValueCtor) {
   const int kI = 4;
-  ::mediapipe::StatusOr<const int*> thing(&kI);
+  mediapipe::StatusOr<const int*> thing(&kI);
   EXPECT_TRUE(thing.ok());
   EXPECT_EQ(&kI, thing.ValueOrDie());
 }
 
 TEST(StatusOr, TestPointerCopyCtorStatusOk) {
   const int kI = 0;
-  ::mediapipe::StatusOr<const int*> original(&kI);
-  ::mediapipe::StatusOr<const int*> copy(original);
+  mediapipe::StatusOr<const int*> original(&kI);
+  mediapipe::StatusOr<const int*> copy(original);
   EXPECT_EQ(copy.status(), original.status());
   EXPECT_EQ(original.ValueOrDie(), copy.ValueOrDie());
 }
 
 TEST(StatusOr, TestPointerCopyCtorStatusNotOk) {
-  ::mediapipe::StatusOr<int*> original(
-      Status(::mediapipe::StatusCode::kCancelled, ""));
-  ::mediapipe::StatusOr<int*> copy(original);
+  mediapipe::StatusOr<int*> original(
+      Status(mediapipe::StatusCode::kCancelled, ""));
+  mediapipe::StatusOr<int*> copy(original);
   EXPECT_EQ(copy.status(), original.status());
 }
 
 TEST(StatusOr, TestPointerCopyCtorStatusOKConverting) {
   Derived derived;
-  ::mediapipe::StatusOr<Derived*> original(&derived);
-  ::mediapipe::StatusOr<Base2*> copy(original);
+  mediapipe::StatusOr<Derived*> original(&derived);
+  mediapipe::StatusOr<Base2*> copy(original);
   EXPECT_EQ(copy.status(), original.status());
   EXPECT_EQ(static_cast<const Base2*>(original.ValueOrDie()),
             copy.ValueOrDie());
 }
 
 TEST(StatusOr, TestPointerCopyCtorStatusNotOkConverting) {
-  ::mediapipe::StatusOr<Derived*> original(
-      ::mediapipe::Status(::mediapipe::StatusCode::kCancelled, ""));
-  ::mediapipe::StatusOr<Base2*> copy(original);
+  mediapipe::StatusOr<Derived*> original(
+      mediapipe::Status(mediapipe::StatusCode::kCancelled, ""));
+  mediapipe::StatusOr<Base2*> copy(original);
   EXPECT_EQ(copy.status(), original.status());
 }
 
 TEST(StatusOr, TestPointerAssignmentStatusOk) {
   const int kI = 0;
-  ::mediapipe::StatusOr<const int*> source(&kI);
-  ::mediapipe::StatusOr<const int*> target;
+  mediapipe::StatusOr<const int*> source(&kI);
+  mediapipe::StatusOr<const int*> target;
   target = source;
   EXPECT_EQ(target.status(), source.status());
   EXPECT_EQ(source.ValueOrDie(), target.ValueOrDie());
 }
 
 TEST(StatusOr, TestPointerAssignmentStatusNotOk) {
-  ::mediapipe::StatusOr<int*> source(
-      ::mediapipe::Status(::mediapipe::StatusCode::kCancelled, ""));
-  ::mediapipe::StatusOr<int*> target;
+  mediapipe::StatusOr<int*> source(
+      mediapipe::Status(mediapipe::StatusCode::kCancelled, ""));
+  mediapipe::StatusOr<int*> target;
   target = source;
   EXPECT_EQ(target.status(), source.status());
 }
 
 TEST(StatusOr, TestPointerStatus) {
   const int kI = 0;
-  ::mediapipe::StatusOr<const int*> good(&kI);
+  mediapipe::StatusOr<const int*> good(&kI);
   EXPECT_TRUE(good.ok());
-  ::mediapipe::StatusOr<const int*> bad(
-      ::mediapipe::Status(::mediapipe::StatusCode::kCancelled, ""));
+  mediapipe::StatusOr<const int*> bad(
+      mediapipe::Status(mediapipe::StatusCode::kCancelled, ""));
   EXPECT_EQ(bad.status(),
-            ::mediapipe::Status(::mediapipe::StatusCode::kCancelled, ""));
+            mediapipe::Status(mediapipe::StatusCode::kCancelled, ""));
 }
 
 TEST(StatusOr, TestPointerValue) {
   const int kI = 0;
-  ::mediapipe::StatusOr<const int*> thing(&kI);
+  mediapipe::StatusOr<const int*> thing(&kI);
   EXPECT_EQ(&kI, thing.ValueOrDie());
 }
 
 TEST(StatusOr, TestPointerValueConst) {
   const int kI = 0;
-  const ::mediapipe::StatusOr<const int*> thing(&kI);
+  const mediapipe::StatusOr<const int*> thing(&kI);
   EXPECT_EQ(&kI, thing.ValueOrDie());
 }
 
 TEST(StatusOrDeathTest, TestPointerValueNotOk) {
-  ::mediapipe::StatusOr<int*> thing(
-      ::mediapipe::Status(::mediapipe::StatusCode::kCancelled, "cancelled"));
+  mediapipe::StatusOr<int*> thing(
+      mediapipe::Status(mediapipe::StatusCode::kCancelled, "cancelled"));
   EXPECT_DEATH(thing.ValueOrDie(), "cancelled");
 }
 
 TEST(StatusOrDeathTest, TestPointerValueNotOkConst) {
-  const ::mediapipe::StatusOr<int*> thing(
-      ::mediapipe::Status(::mediapipe::StatusCode::kCancelled, "cancelled"));
+  const mediapipe::StatusOr<int*> thing(
+      mediapipe::Status(mediapipe::StatusCode::kCancelled, "cancelled"));
   EXPECT_DEATH(thing.ValueOrDie(), "cancelled");
 }
 

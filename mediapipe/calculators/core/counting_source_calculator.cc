@@ -30,7 +30,7 @@ namespace mediapipe {
 // provided, then batches are of size 1.
 class CountingSourceCalculator : public CalculatorBase {
  public:
-  static ::mediapipe::Status GetContract(CalculatorContract* cc) {
+  static mediapipe::Status GetContract(CalculatorContract* cc) {
     cc->Outputs().Index(0).Set<int>();
 
     if (cc->InputSidePackets().HasTag("ERROR_ON_OPEN")) {
@@ -55,13 +55,13 @@ class CountingSourceCalculator : public CalculatorBase {
     if (cc->InputSidePackets().HasTag("INCREMENT")) {
       cc->InputSidePackets().Tag("INCREMENT").Set<int>();
     }
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Open(CalculatorContext* cc) override {
+  mediapipe::Status Open(CalculatorContext* cc) override {
     if (cc->InputSidePackets().HasTag("ERROR_ON_OPEN") &&
         cc->InputSidePackets().Tag("ERROR_ON_OPEN").Get<bool>()) {
-      return ::mediapipe::NotFoundError("expected error");
+      return mediapipe::NotFoundError("expected error");
     }
     if (cc->InputSidePackets().HasTag("ERROR_COUNT")) {
       error_count_ = cc->InputSidePackets().Tag("ERROR_COUNT").Get<int>();
@@ -83,12 +83,12 @@ class CountingSourceCalculator : public CalculatorBase {
       RET_CHECK_LT(0, increment_);
     }
     RET_CHECK(error_count_ >= 0 || max_count_ >= 0);
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Process(CalculatorContext* cc) override {
+  mediapipe::Status Process(CalculatorContext* cc) override {
     if (error_count_ >= 0 && batch_counter_ >= error_count_) {
-      return ::mediapipe::InternalError("expected error");
+      return mediapipe::InternalError("expected error");
     }
     if (max_count_ >= 0 && batch_counter_ >= max_count_) {
       return tool::StatusStop();
@@ -98,7 +98,7 @@ class CountingSourceCalculator : public CalculatorBase {
       counter_ += increment_;
     }
     ++batch_counter_;
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
  private:

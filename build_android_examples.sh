@@ -89,33 +89,34 @@ for app in ${apps}; do
     fi
     target="${app}:${target_name}"
     bin="${bin_dir}/${app}/${target_name}.apk"
-    apk="${out_dir}/${target_name}.apk"
 
     echo "=== Target: ${target}"
 
+    if [[ $install_only == false ]]; then
+      bazel_flags=("${default_bazel_flags[@]}")
+      bazel_flags+=(${target})
+      if [[ $strip == true ]]; then
+        bazel_flags+=(--linkopt=-s)
+      fi
+    fi
+
     if [[ ${app_name} == "objectdetection3d" ]]; then
       categories=("shoe" "chair" "cup" "camera" "shoe_1stage" "chair_1stage")
-      for category in ${categories[@]}; do
+      for category in "${categories[@]}"; do
         apk="${out_dir}/${target_name}_${category}.apk"
         if [[ $install_only == false ]]; then
           bazel_flags_extended=("${bazel_flags[@]}")
           if [[ ${category} != "shoe" ]]; then
             bazel_flags_extended+=(--define ${category}=true)
           fi
-          echo "bazel ${bazel_flags_extended[@]}"
           bazel "${bazel_flags_extended[@]}"
           cp -f "${bin}" "${apk}"
         fi
         apks+=(${apk})
       done
     else
+      apk="${out_dir}/${target_name}.apk"
       if [[ $install_only == false ]]; then
-        bazel_flags=("${default_bazel_flags[@]}")
-        bazel_flags+=(${target})
-        if [[ $strip == true ]]; then
-          bazel_flags+=(--linkopt=-s)
-        fi
-
         if [[ ${app_name} == "templatematchingcpu" ]]; then
           switch_to_opencv_4
         fi

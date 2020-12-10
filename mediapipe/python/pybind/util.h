@@ -97,7 +97,8 @@ inline ::mediapipe::CalculatorGraphConfig ReadCalculatorGraphConfigFromFile(
     throw RaisePyError(PyExc_FileNotFoundError, status.message().data());
   }
   std::string graph_config_string;
-  RaisePyErrorIfNotOk(file::GetContents(file_name, &graph_config_string));
+  RaisePyErrorIfNotOk(file::GetContents(file_name, &graph_config_string,
+                                        /*read_as_binary=*/true));
   if (!graph_config_proto.ParseFromArray(graph_config_string.c_str(),
                                          graph_config_string.length())) {
     throw RaisePyError(

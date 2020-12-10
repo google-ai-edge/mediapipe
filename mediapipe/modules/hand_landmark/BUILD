@@ -40,7 +40,6 @@ mediapipe_simple_subgraph(
         "//mediapipe/calculators/tensor:tensors_to_landmarks_calculator",
         "//mediapipe/calculators/util:landmark_letterbox_removal_calculator",
         "//mediapipe/calculators/util:landmark_projection_calculator",
-        "//mediapipe/calculators/util:logic_calculator",
         "//mediapipe/calculators/util:thresholding_calculator",
     ],
 )
@@ -59,7 +58,6 @@ mediapipe_simple_subgraph(
         "//mediapipe/calculators/tensor:tensors_to_landmarks_calculator",
         "//mediapipe/calculators/util:landmark_letterbox_removal_calculator",
         "//mediapipe/calculators/util:landmark_projection_calculator",
-        "//mediapipe/calculators/util:logic_calculator",
         "//mediapipe/calculators/util:thresholding_calculator",
     ],
 )
@@ -74,6 +72,7 @@ mediapipe_simple_subgraph(
         ":palm_detection_detection_to_roi",
         "//mediapipe/calculators/core:begin_loop_calculator",
         "//mediapipe/calculators/core:clip_vector_size_calculator",
+        "//mediapipe/calculators/core:constant_side_packet_calculator",
         "//mediapipe/calculators/core:end_loop_calculator",
         "//mediapipe/calculators/core:flow_limiter_calculator",
         "//mediapipe/calculators/core:gate_calculator",
@@ -96,6 +95,7 @@ mediapipe_simple_subgraph(
         ":palm_detection_detection_to_roi",
         "//mediapipe/calculators/core:begin_loop_calculator",
         "//mediapipe/calculators/core:clip_vector_size_calculator",
+        "//mediapipe/calculators/core:constant_side_packet_calculator",
         "//mediapipe/calculators/core:end_loop_calculator",
         "//mediapipe/calculators/core:flow_limiter_calculator",
         "//mediapipe/calculators/core:gate_calculator",

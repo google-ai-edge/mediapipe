@@ -42,7 +42,7 @@ namespace mediapipe {
 template <typename IterableT>
 class FilterCollectionCalculator : public CalculatorBase {
  public:
-  static ::mediapipe::Status GetContract(CalculatorContract* cc) {
+  static mediapipe::Status GetContract(CalculatorContract* cc) {
     RET_CHECK(cc->Inputs().HasTag("ITERABLE"));
     RET_CHECK(cc->Inputs().HasTag("CONDITION"));
     RET_CHECK(cc->Outputs().HasTag("ITERABLE"));
@@ -52,20 +52,20 @@ class FilterCollectionCalculator : public CalculatorBase {
 
     cc->Outputs().Tag("ITERABLE").Set<IterableT>();
 
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Open(CalculatorContext* cc) override {
+  mediapipe::Status Open(CalculatorContext* cc) override {
     cc->SetOffset(TimestampDiff(0));
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Process(CalculatorContext* cc) override {
+  mediapipe::Status Process(CalculatorContext* cc) override {
     if (cc->Inputs().Tag("ITERABLE").IsEmpty()) {
-      return ::mediapipe::OkStatus();
+      return mediapipe::OkStatus();
     }
     if (cc->Inputs().Tag("CONDITION").IsEmpty()) {
-      return ::mediapipe::OkStatus();
+      return mediapipe::OkStatus();
     }
 
     const std::vector<bool>& filter_by =
@@ -77,11 +77,11 @@ class FilterCollectionCalculator : public CalculatorBase {
   }
 
   template <typename IterableU>
-  ::mediapipe::Status FilterCollection(std::true_type, CalculatorContext* cc,
-                                       const std::vector<bool>& filter_by) {
+  mediapipe::Status FilterCollection(std::true_type, CalculatorContext* cc,
+                                     const std::vector<bool>& filter_by) {
     const IterableU& input = cc->Inputs().Tag("ITERABLE").Get<IterableU>();
     if (input.size() != filter_by.size()) {
-      return ::mediapipe::InternalError(absl::StrCat(
+      return mediapipe::InternalError(absl::StrCat(
           "Input vector size: ", input.size(),
           " doesn't mach condition vector size: ", filter_by.size()));
     }
@@ -93,13 +93,13 @@ class FilterCollectionCalculator : public CalculatorBase {
       }
     }
     cc->Outputs().Tag("ITERABLE").Add(output.release(), cc->InputTimestamp());
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
   template <typename IterableU>
-  ::mediapipe::Status FilterCollection(std::false_type, CalculatorContext* cc,
-                                       const std::vector<bool>& filter_by) {
-    return ::mediapipe::InternalError(
+  mediapipe::Status FilterCollection(std::false_type, CalculatorContext* cc,
+                                     const std::vector<bool>& filter_by) {
+    return mediapipe::InternalError(
         "Cannot copy input collection to filter it.");
   }
 };

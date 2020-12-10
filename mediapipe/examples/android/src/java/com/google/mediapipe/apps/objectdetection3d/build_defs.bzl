@@ -10,5 +10,6 @@ def generate_manifest_values(application_id, app_name):
         "inputVideoStreamName": "input_video",
         "outputVideoStreamName": "output_video",
         "flipFramesVertically": "True",
+        "converterNumBuffers": "2",
     }
     return manifest_values

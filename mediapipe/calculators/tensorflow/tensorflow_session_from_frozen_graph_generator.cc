@@ -55,7 +55,7 @@ void SetPreferredDevice(tf::GraphDef* graph_def, absl::string_view device_id) {
 
 class TensorFlowSessionFromFrozenGraphGenerator : public PacketGenerator {
  public:
-  static ::mediapipe::Status FillExpectations(
+  static mediapipe::Status FillExpectations(
       const PacketGeneratorOptions& extendable_options,
       PacketTypeSet* input_side_packets, PacketTypeSet* output_side_packets) {
     RET_CHECK(extendable_options.HasExtension(
@@ -87,10 +87,10 @@ class TensorFlowSessionFromFrozenGraphGenerator : public PacketGenerator {
         // a map from tags to tensor names.
     );
     RET_CHECK_GT(options.tag_to_tensor_names().size(), 0);
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  static ::mediapipe::Status Generate(
+  static mediapipe::Status Generate(
       const PacketGeneratorOptions& packet_generator_options,
       const PacketSet& input_side_packets, PacketSet* output_side_packets) {
     auto clock = std::unique_ptr<mediapipe::Clock>(
@@ -151,7 +151,7 @@ class TensorFlowSessionFromFrozenGraphGenerator : public PacketGenerator {
     const uint64 end_time = absl::ToUnixMicros(clock->TimeNow());
     LOG(INFO) << "Loaded frozen model in: " << end_time - start_time
               << " microseconds.";
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 };
 REGISTER_PACKET_GENERATOR(TensorFlowSessionFromFrozenGraphGenerator);

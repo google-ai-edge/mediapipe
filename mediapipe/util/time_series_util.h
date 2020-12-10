@@ -45,25 +45,25 @@ bool LogWarningIfTimestampIsInconsistent(const Timestamp& current_timestamp,
 
 // Returns mediapipe::status::OK if the header is valid. Otherwise, returns a
 // Status object with an error message.
-::mediapipe::Status IsTimeSeriesHeaderValid(const TimeSeriesHeader& header);
+mediapipe::Status IsTimeSeriesHeaderValid(const TimeSeriesHeader& header);
 
 // Fills header and returns mediapipe::status::OK if the header is non-empty and
 // valid. Otherwise, returns a Status object with an error message.
-::mediapipe::Status FillTimeSeriesHeaderIfValid(const Packet& header_packet,
-                                                TimeSeriesHeader* header);
+mediapipe::Status FillTimeSeriesHeaderIfValid(const Packet& header_packet,
+                                              TimeSeriesHeader* header);
 
 // Fills header and returns mediapipe::status::OK if the header contains a
 // non-empty and valid TimeSeriesHeader. Otherwise, returns a Status object with
 // an error message.
-::mediapipe::Status FillMultiStreamTimeSeriesHeaderIfValid(
+mediapipe::Status FillMultiStreamTimeSeriesHeaderIfValid(
     const Packet& header_packet, MultiStreamTimeSeriesHeader* header);
 
-// Returns::mediapipe::Status::OK iff options contains an extension of type
+// Returnsmediapipe::Status::OK iff options contains an extension of type
 // OptionsClass.
 template <typename OptionsClass>
-::mediapipe::Status HasOptionsExtension(const CalculatorOptions& options) {
+mediapipe::Status HasOptionsExtension(const CalculatorOptions& options) {
   if (options.HasExtension(OptionsClass::ext)) {
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
   std::string error_message = "Options proto does not contain extension ";
   absl::StrAppend(&error_message,
@@ -72,15 +72,15 @@ template <typename OptionsClass>
   // Avoid lite proto APIs on mobile targets.
   absl::StrAppend(&error_message, " : ", options.DebugString());
 #endif
-  return ::mediapipe::InvalidArgumentError(error_message);
+  return mediapipe::InvalidArgumentError(error_message);
 }
 
-// Returns::mediapipe::Status::OK if the shape of 'matrix' is consistent
+// Returnsmediapipe::Status::OK if the shape of 'matrix' is consistent
 // with the num_samples and num_channels fields present in 'header'.
 // The corresponding matrix dimensions of unset header fields are
 // ignored, so e.g. an empty header (which is not valid according to
 // FillTimeSeriesHeaderIfValid) is considered consistent with any matrix.
-::mediapipe::Status IsMatrixShapeConsistentWithHeader(
+mediapipe::Status IsMatrixShapeConsistentWithHeader(
     const Matrix& matrix, const TimeSeriesHeader& header);
 
 template <typename OptionsClass>

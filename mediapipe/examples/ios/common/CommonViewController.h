@@ -18,6 +18,7 @@
 #import "mediapipe/objc/MPPGraph.h"
 #import "mediapipe/objc/MPPLayerRenderer.h"
 #import "mediapipe/objc/MPPPlayerInputSource.h"
+#import "mediapipe/objc/MPPTimestampConverter.h"
 
 typedef NS_ENUM(NSInteger, MediaPipeDemoSourceMode) {
   MediaPipeDemoSourceCamera,
@@ -35,6 +36,9 @@ typedef NS_ENUM(NSInteger, MediaPipeDemoSourceMode) {
 
 // Provides data from a video.
 @property(nonatomic) MPPPlayerInputSource* videoSource;
+
+// Helps to convert timestamp.
+@property(nonatomic) MPPTimestampConverter* timestampConverter;
 
 // The data source for the demo.
 @property(nonatomic) MediaPipeDemoSourceMode sourceMode;

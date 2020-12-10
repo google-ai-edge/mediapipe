@@ -14,6 +14,7 @@
 
 #include "mediapipe/util/filtering/low_pass_filter.h"
 
+#include "absl/memory/memory.h"
 #include "mediapipe/framework/port/gtest.h"
 
 namespace mediapipe {

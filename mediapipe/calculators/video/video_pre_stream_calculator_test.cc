@@ -118,7 +118,7 @@ TEST(VideoPreStreamCalculatorTest, FailsWithoutFrameRateInOptions) {
       "frame",
       Adopt(new ImageFrame(ImageFormat::SRGB, 1, 2)).At(Timestamp(0))));
   MP_ASSERT_OK(graph.CloseInputStream("frame"));
-  ::mediapipe::Status status = graph.WaitUntilDone();
+  mediapipe::Status status = graph.WaitUntilDone();
   EXPECT_FALSE(status.ok());
   EXPECT_THAT(status.ToString(),
               testing::HasSubstr("frame rate should be non-zero"));
@@ -144,7 +144,7 @@ TEST(VideoPreStreamCalculatorTest, FailsWithoutFrameRateInPreStream1) {
       Adopt(new ImageFrame(ImageFormat::SRGB, 1, 2)).At(Timestamp(0))));
   MP_ASSERT_OK(graph.CloseInputStream("frame"));
   MP_ASSERT_OK(graph.CloseInputStream("input_header"));
-  ::mediapipe::Status status = graph.WaitUntilDone();
+  mediapipe::Status status = graph.WaitUntilDone();
   EXPECT_FALSE(status.ok());
   EXPECT_THAT(status.ToString(),
               testing::HasSubstr("frame rate should be non-zero"));
@@ -177,7 +177,7 @@ TEST(VideoPreStreamCalculatorTest, FailsWithoutFrameRateInPreStream2) {
         "frame",
         Adopt(new ImageFrame(ImageFormat::SRGB, 1, 2)).At(Timestamp(0))));
     MP_ASSERT_OK(graph.CloseInputStream("frame"));
-    ::mediapipe::Status status = graph.WaitUntilDone();
+    mediapipe::Status status = graph.WaitUntilDone();
     EXPECT_FALSE(status.ok());
   }
 }

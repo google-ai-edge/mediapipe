@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Lint as: python3
 """MediaPipe SolutionBase module.
 
 MediaPipe SolutionBase is the common base class for the high-level MediaPipe
@@ -32,9 +31,12 @@ import numpy as np
 
 from google.protobuf import descriptor
 # resources dependency
+# pylint: disable=unused-import
+# pylint: enable=unused-import
 from mediapipe.framework import calculator_pb2
 # pylint: disable=unused-import
 from mediapipe.framework.formats import detection_pb2
+from mediapipe.calculators.core import constant_side_packet_calculator_pb2
 from mediapipe.calculators.image import image_transformation_calculator_pb2
 from mediapipe.calculators.tensor import tensors_to_detections_calculator_pb2
 from mediapipe.calculators.util import landmarks_smoothing_calculator_pb2
@@ -55,6 +57,8 @@ import mediapipe.python.packet_getter as packet_getter
 RGB_CHANNELS = 3
 # TODO: Enable calculator options modification for more calculators.
 CALCULATOR_TO_OPTIONS = {
+    'ConstantSidePacketCalculator':
+        constant_side_packet_calculator_pb2.ConstantSidePacketCalculatorOptions,
     'ImageTransformationCalculator':
         image_transformation_calculator_pb2
         .ImageTransformationCalculatorOptions,
@@ -76,6 +80,7 @@ class _PacketDataType(enum.Enum):
   """The packet data types supported by the SolutionBase class."""
   STRING = 'string'
   BOOL = 'bool'
+  BOOL_LIST = 'bool_list'
   INT = 'int'
   FLOAT = 'float'
   AUDIO = 'matrix'
@@ -93,6 +98,8 @@ NAME_TO_TYPE: Mapping[str, '_PacketDataType'] = {
         _PacketDataType.STRING,
     'bool':
         _PacketDataType.BOOL,
+    '::std::vector<bool>':
+        _PacketDataType.BOOL_LIST,
     'int':
         _PacketDataType.INT,
     'float':
@@ -112,6 +119,8 @@ NAME_TO_TYPE: Mapping[str, '_PacketDataType'] = {
     '::mediapipe::Landmark':
         _PacketDataType.PROTO,
     '::mediapipe::NormalizedLandmark':
+        _PacketDataType.PROTO,
+    '::mediapipe::Trigger':
         _PacketDataType.PROTO,
     '::mediapipe::Rect':
         _PacketDataType.PROTO,
@@ -198,7 +207,7 @@ class SolutionBase:
       raise ValueError(
           "Must provide exactly one of 'binary_graph_path' or 'graph_config'.")
     # MediaPipe package root path
-    root_path = os.sep.join( os.path.abspath(__file__).split(os.sep)[:-3])
+    root_path = os.sep.join(os.path.abspath(__file__).split(os.sep)[:-3])
     resource_util.set_resource_dir(root_path)
     validated_graph = validated_graph_config.ValidatedGraphConfig()
     if binary_graph_path:

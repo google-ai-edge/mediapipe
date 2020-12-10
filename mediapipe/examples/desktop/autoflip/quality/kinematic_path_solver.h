@@ -43,13 +43,15 @@ class KinematicPathSolver {
         initialized_(false),
         pixels_per_degree_(pixels_per_degree) {}
   // Add an observation (detection) at a position and time.
-  ::mediapipe::Status AddObservation(int position, const uint64 time_us);
+  mediapipe::Status AddObservation(int position, const uint64 time_us);
   // Get the predicted position at a time.
-  ::mediapipe::Status UpdatePrediction(const int64 time_us);
+  mediapipe::Status UpdatePrediction(const int64 time_us);
   // Get the state at a time.
-  ::mediapipe::Status GetState(int* position);
+  mediapipe::Status GetState(int* position);
   // Update PixelPerDegree value.
-  ::mediapipe::Status UpdatePixelsPerDegree(const float pixels_per_degree);
+  mediapipe::Status UpdatePixelsPerDegree(const float pixels_per_degree);
+  // Provide the current target position of the reframe action.
+  mediapipe::Status GetTargetPosition(int* target_position);
 
  private:
   // Tuning options.
@@ -65,6 +67,13 @@ class KinematicPathSolver {
   uint64 current_time_;
   // History of observations (second) and their time (first).
   std::deque<std::pair<uint64, int>> raw_positions_at_time_;
+  // Current target position.
+  double target_position_px_;
+  // Defines if the camera is moving to a target (true) or reached a target
+  // within a tolerance (false).
+  bool motion_state_;
+  // Average period of incoming frames.
+  double mean_delta_t_;
 };
 
 }  // namespace autoflip

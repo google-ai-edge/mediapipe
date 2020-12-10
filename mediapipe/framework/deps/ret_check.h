@@ -21,23 +21,23 @@
 
 namespace mediapipe {
 // Returns a StatusBuilder that corresponds to a `RET_CHECK` failure.
-::mediapipe::StatusBuilder RetCheckFailSlowPath(
-    ::mediapipe::source_location location);
+mediapipe::StatusBuilder RetCheckFailSlowPath(
+    mediapipe::source_location location);
 
 // Returns a StatusBuilder that corresponds to a `RET_CHECK` failure.
-::mediapipe::StatusBuilder RetCheckFailSlowPath(
-    ::mediapipe::source_location location, const char* condition);
+mediapipe::StatusBuilder RetCheckFailSlowPath(
+    mediapipe::source_location location, const char* condition);
 
 // Returns a StatusBuilder that corresponds to a `RET_CHECK` failure.
-::mediapipe::StatusBuilder RetCheckFailSlowPath(
-    ::mediapipe::source_location location, const char* condition,
-    const ::mediapipe::Status& status);
+mediapipe::StatusBuilder RetCheckFailSlowPath(
+    mediapipe::source_location location, const char* condition,
+    const mediapipe::Status& status);
 
-inline StatusBuilder RetCheckImpl(const ::mediapipe::Status& status,
+inline StatusBuilder RetCheckImpl(const mediapipe::Status& status,
                                   const char* condition,
-                                  ::mediapipe::source_location location) {
+                                  mediapipe::source_location location) {
   if (ABSL_PREDICT_TRUE(status.ok()))
-    return ::mediapipe::StatusBuilder(OkStatus(), location);
+    return mediapipe::StatusBuilder(OkStatus(), location);
   return RetCheckFailSlowPath(location, condition, status);
 }
 
@@ -45,13 +45,12 @@ inline StatusBuilder RetCheckImpl(const ::mediapipe::Status& status,
 
 #define RET_CHECK(cond)               \
   while (ABSL_PREDICT_FALSE(!(cond))) \
-  return ::mediapipe::RetCheckFailSlowPath(MEDIAPIPE_LOC, #cond)
+  return mediapipe::RetCheckFailSlowPath(MEDIAPIPE_LOC, #cond)
 
 #define RET_CHECK_OK(status) \
-  MP_RETURN_IF_ERROR(        \
-      ::mediapipe::RetCheckImpl((status), #status, MEDIAPIPE_LOC))
+  MP_RETURN_IF_ERROR(mediapipe::RetCheckImpl((status), #status, MEDIAPIPE_LOC))
 
-#define RET_CHECK_FAIL() return ::mediapipe::RetCheckFailSlowPath(MEDIAPIPE_LOC)
+#define RET_CHECK_FAIL() return mediapipe::RetCheckFailSlowPath(MEDIAPIPE_LOC)
 
 #define MEDIAPIPE_INTERNAL_RET_CHECK_OP(name, op, lhs, rhs) \
   RET_CHECK((lhs)op(rhs))

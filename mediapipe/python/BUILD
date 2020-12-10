@@ -53,14 +53,20 @@ pybind_extension(
 cc_library(
     name = "builtin_calculators",
     deps = [
+        "//mediapipe/calculators/core:gate_calculator",
         "//mediapipe/calculators/core:pass_through_calculator",
+        "//mediapipe/calculators/core:side_packet_to_stream_calculator",
         "//mediapipe/calculators/core:split_normalized_landmark_list_calculator",
+        "//mediapipe/calculators/core:string_to_int_calculator",
+        "//mediapipe/calculators/image:image_transformation_calculator",
+        "//mediapipe/calculators/util:detection_unique_id_calculator",
         "//mediapipe/modules/face_detection:face_detection_front_cpu",
         "//mediapipe/modules/face_landmark:face_landmark_front_cpu",
         "//mediapipe/modules/hand_landmark:hand_landmark_tracking_cpu",
+        "//mediapipe/modules/holistic_landmark:holistic_landmark_cpu",
         "//mediapipe/modules/palm_detection:palm_detection_cpu",
         "//mediapipe/modules/pose_detection:pose_detection_cpu",
-        "//mediapipe/modules/pose_landmark:pose_landmark_upper_body_by_roi_cpu",
-        "//mediapipe/modules/pose_landmark:pose_landmark_upper_body_smoothed_cpu",
+        "//mediapipe/modules/pose_landmark:pose_landmark_by_roi_cpu",
+        "//mediapipe/modules/pose_landmark:pose_landmark_cpu",
     ],
 )

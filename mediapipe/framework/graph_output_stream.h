@@ -50,18 +50,18 @@ class GraphOutputStream {
   // input stream and attaches the input stream to an output stream as
   // the mirror for observation/polling.  Ownership of output_stream_manager
   // is not transferred to the graph output stream object.
-  ::mediapipe::Status Initialize(const std::string& stream_name,
-                                 const PacketType* packet_type,
-                                 OutputStreamManager* output_stream_manager);
+  mediapipe::Status Initialize(const std::string& stream_name,
+                               const PacketType* packet_type,
+                               OutputStreamManager* output_stream_manager);
 
   // Installs callbacks into its GraphOutputStreamHandler.
   virtual void PrepareForRun(
       std::function<void()> notification_callback,
-      std::function<void(::mediapipe::Status)> error_callback);
+      std::function<void(mediapipe::Status)> error_callback);
 
   // Notifies the graph output stream of new packets emitted by the output
   // stream.
-  virtual ::mediapipe::Status Notify() = 0;
+  virtual mediapipe::Status Notify() = 0;
 
   // Notifies the graph output stream of the errors in the calculator graph.
   virtual void NotifyError() = 0;
@@ -110,21 +110,21 @@ class OutputStreamObserver : public GraphOutputStream {
  public:
   virtual ~OutputStreamObserver() {}
 
-  ::mediapipe::Status Initialize(
+  mediapipe::Status Initialize(
       const std::string& stream_name, const PacketType* packet_type,
-      std::function<::mediapipe::Status(const Packet&)> packet_callback,
+      std::function<mediapipe::Status(const Packet&)> packet_callback,
       OutputStreamManager* output_stream_manager);
 
   // Notifies the observer of new packets emitted by the observed
   // output stream.
-  ::mediapipe::Status Notify() override;
+  mediapipe::Status Notify() override;
 
   // Notifies the observer of the errors in the calculator graph.
   void NotifyError() override {}
 
  private:
   // Invoked on every packet emitted by the observed output stream.
-  std::function<::mediapipe::Status(const Packet&)> packet_callback_;
+  std::function<mediapipe::Status(const Packet&)> packet_callback_;
 };
 
 // OutputStreamPollerImpl that returns packets to the caller via
@@ -134,14 +134,14 @@ class OutputStreamPollerImpl : public GraphOutputStream {
   virtual ~OutputStreamPollerImpl() {}
 
   // Initializes an OutputStreamPollerImpl.
-  ::mediapipe::Status Initialize(
+  mediapipe::Status Initialize(
       const std::string& stream_name, const PacketType* packet_type,
       std::function<void(InputStreamManager*, bool*)> queue_size_callback,
       OutputStreamManager* output_stream_manager);
 
   void PrepareForRun(
       std::function<void()> notification_callback,
-      std::function<void(::mediapipe::Status)> error_callback) override;
+      std::function<void(mediapipe::Status)> error_callback) override;
 
   // Resets graph_has_error_ and cleans the internal packet queue.
   void Reset();
@@ -152,7 +152,7 @@ class OutputStreamPollerImpl : public GraphOutputStream {
   int QueueSize();
 
   // Notifies the poller of new packets emitted by the output stream.
-  ::mediapipe::Status Notify() override;
+  mediapipe::Status Notify() override;
 
   // Notifies the poller of the errors in the calculator graph.
   void NotifyError() override;

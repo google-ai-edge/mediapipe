@@ -1,0 +1,57 @@
+# Converts hand landmarks to ROI.
+
+type: "HandLandmarksToRoi"
+
+# Hand landmarks. (NormalizedLandmarkList)
+input_stream: "LANDMARKS:hand_landmarks"
+# Image size (width & height). (std::pair<int, int>)
+input_stream: "IMAGE_SIZE:image_size"
+
+# ROI according to the hand landmarks. (NormalizedRect)
+output_stream: "ROI:roi"
+
+# Gets hand palm landmarks.
+node {
+  calculator: "SplitNormalizedLandmarkListCalculator"
+  input_stream: "hand_landmarks"
+  output_stream: "palm_landmarks"
+  options: {
+    [mediapipe.SplitVectorCalculatorOptions.ext] {
+      ranges: { begin: 0 end: 4 }
+      ranges: { begin: 5 end: 7 }
+      ranges: { begin: 9 end: 11 }
+      ranges: { begin: 13 end: 15 }
+      ranges: { begin: 17 end: 19 }
+      combine_outputs: true
+    }
+  }
+}
+
+# Converts the hand landmarks into a rectangle (normalized by image size)
+# that encloses the hand. The calculator uses a subset of all hand landmarks
+# extracted from SplitNormalizedLandmarkListCalculator above to
+# calculate the bounding box and the rotation of the output rectangle. Please
+# see the comments in the calculator for more detail.
+node {
+  calculator: "HandLandmarksToRectCalculator"
+  input_stream: "NORM_LANDMARKS:palm_landmarks"
+  input_stream: "IMAGE_SIZE:image_size"
+  output_stream: "NORM_RECT:palm_landmarks_rect"
+}
+
+# Expands the hand rectangle so that it's likely to contain the hand even with
+# some motion.
+node {
+  calculator: "RectTransformationCalculator"
+  input_stream: "NORM_RECT:palm_landmarks_rect"
+  input_stream: "IMAGE_SIZE:image_size"
+  output_stream: "roi"
+  options: {
+    [mediapipe.RectTransformationCalculatorOptions.ext] {
+      scale_x: 2.0
+      scale_y: 2.0
+      shift_y: -0.1
+      square_long: true
+    }
+  }
+}

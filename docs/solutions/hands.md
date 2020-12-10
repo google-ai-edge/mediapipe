@@ -8,8 +8,14 @@ nav_order: 4
 # MediaPipe Hands
 {: .no_toc }
 
+<details close markdown="block">
+  <summary>
+    Table of contents
+  </summary>
+  {: .text-delta }
 1. TOC
 {:toc}
+</details>
 ---
 
 ## Overview
@@ -126,16 +132,239 @@ and provide additional supervision on the nature of hand geometry, we also
 render a high-quality synthetic hand model over various backgrounds and map it
 to the corresponding 3D coordinates.
 
+![hand_landmarks.png](../images/mobile/hand_landmarks.png) |
+:--------------------------------------------------------: |
+*Fig 2. 21 hand landmarks.*                                |
+
 | ![hand_crops.png](../images/mobile/hand_crops.png)                          |
 | :-------------------------------------------------------------------------: |
-| *Fig 2. Top: Aligned hand crops passed to the tracking network with ground truth annotation. Bottom: Rendered synthetic hand images with ground truth annotation.* |
+| *Fig 3. Top: Aligned hand crops passed to the tracking network with ground  |
+: truth annotation. Bottom\: Rendered synthetic hand images with ground truth :
+: annotation.*                                                                :
+
+## Solution APIs
+
+### Configuration Options
+
+Naming style and availability may differ slightly across platforms/languages.
+
+#### static_image_mode
+
+If set to `false`, the solution treats the input images as a video stream. It
+will try to detect hands in the first input images, and upon a successful
+detection further localizes the hand landmarks. In subsequent images, once all
+[max_num_hands](#max_num_hands) hands are detected and the corresponding hand
+landmarks are localized, it simply tracks those landmarks without invoking
+another detection until it loses track of any of the hands. This reduces latency
+and is ideal for processing video frames. If set to `true`, hand detection runs
+on every input image, ideal for processing a batch of static, possibly
+unrelated, images. Default to `false`.
+
+#### max_num_hands
+
+Maximum number of hands to detect. Default to `2`.
+
+#### min_detection_confidence
+
+Minimum confidence value (`[0.0, 1.0]`) from the hand detection model for the
+detection to be considered successful. Default to `0.5`.
+
+#### min_tracking_confidence:
+
+Minimum confidence value (`[0.0, 1.0]`) from the landmark-tracking model for the
+hand landmarks to be considered tracked successfully, or otherwise hand
+detection will be invoked automatically on the next input image. Setting it to a
+higher value can increase robustness of the solution, at the expense of a higher
+latency. Ignored if [static_image_mode](#static_image_mode) is `true`, where
+hand detection simply runs on every image. Default to `0.5`.
+
+### Output
+
+Naming style may differ slightly across platforms/languages.
+
+#### multi_hand_landmarks
+
+Collection of detected/tracked hands, where each hand is represented as a list
+of 21 hand landmarks and each landmark is composed of `x`, `y` and `z`. `x` and
+`y` are normalized to `[0.0, 1.0]` by the image width and height respectively.
+`z` represents the landmark depth with the depth at the wrist being the origin,
+and the smaller the value the closer the landmark is to the camera. The
+magnitude of `z` uses roughly the same scale as `x`.
+
+#### multi_handedness
+
+Collection of handedness of the detected/tracked hands (i.e. is it a left or
+right hand). Each hand is composed of `label` and `score`. `label` is a string
+of value either `"Left"` or `"Right"`. `score` is the estimated probability of
+the predicted handedness and is always greater than or equal to `0.5` (and the
+opposite handedness has an estimated probability of `1 - score`).
+
+Note that handedness is determined assuming the input image is mirrored, i.e.,
+taken with a front-facing/selfie camera with images flipped horizontally. If it
+is not the case, please swap the handedness output in the application.
+
+### Python Solution API
+
+Please first follow general [instructions](../getting_started/python.md) to
+install MediaPipe Python package, then learn more in the companion [Colab] and
+the following usage example.
+
+Supported configuration options:
+
+*   [static_image_mode](#static_image_mode)
+*   [max_num_hands](#max_num_hands)
+*   [min_detection_confidence](#min_detection_confidence)
+*   [min_tracking_confidence](#min_tracking_confidence)
+
+```python
+import cv2
+import mediapipe as mp
+mp_drawing = mp.solutions.drawing_utils
+mp_hands = mp.solutions.hands
+
+# For static images:
+hands = mp_hands.Hands(
+    static_image_mode=True,
+    max_num_hands=2,
+    min_detection_confidence=0.5)
+for idx, file in enumerate(file_list):
+  # Read an image, flip it around y-axis for correct handedness output (see
+  # above).
+  image = cv2.flip(cv2.imread(file), 1)
+  # Convert the BGR image to RGB before processing.
+  results = hands.process(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
+
+  # Print handedness and draw hand landmarks on the image.
+  print('Handedness:', results.multi_handedness)
+  if not results.multi_hand_landmarks:
+    continue
+  image_hight, image_width, _ = image.shape
+  annotated_image = image.copy()
+  for hand_landmarks in results.multi_hand_landmarks:
+    print('hand_landmarks:', hand_landmarks)
+    print(
+        f'Index finger tip coordinates: (',
+        f'{hand_landmarks.landmark[mp_hands.HandLandmark.INDEX_FINGER_TIP].x * image_width}, '
+        f'{hand_landmarks.landmark[mp_hands.HandLandmark.INDEX_FINGER_TIP].y * image_hight})'
+    )
+    mp_drawing.draw_landmarks(
+        annotated_image, hand_landmarks, mp_hands.HAND_CONNECTIONS)
+  cv2.imwrite(
+      '/tmp/annotated_image' + str(idx) + '.png', cv2.flip(annotated_image, 1))
+hands.close()
+
+# For webcam input:
+hands = mp_hands.Hands(
+    min_detection_confidence=0.5, min_tracking_confidence=0.5)
+cap = cv2.VideoCapture(0)
+while cap.isOpened():
+  success, image = cap.read()
+  if not success:
+    print("Ignoring empty camera frame.")
+    # If loading a video, use 'break' instead of 'continue'.
+    continue
+
+  # Flip the image horizontally for a later selfie-view display, and convert
+  # the BGR image to RGB.
+  image = cv2.cvtColor(cv2.flip(image, 1), cv2.COLOR_BGR2RGB)
+  # To improve performance, optionally mark the image as not writeable to
+  # pass by reference.
+  image.flags.writeable = False
+  results = hands.process(image)
+
+  # Draw the hand annotations on the image.
+  image.flags.writeable = True
+  image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+  if results.multi_hand_landmarks:
+    for hand_landmarks in results.multi_hand_landmarks:
+      mp_drawing.draw_landmarks(
+          image, hand_landmarks, mp_hands.HAND_CONNECTIONS)
+  cv2.imshow('MediaPipe Hands', image)
+  if cv2.waitKey(5) & 0xFF == 27:
+    break
+hands.close()
+cap.release()
+```
+
+### JavaScript Solution API
+
+Please first see general [introduction](../getting_started/javascript.md) on
+MediaPipe in JavaScript, then learn more in the companion [web demo] and a
+[fun application], and the following usage example.
+
+Supported configuration options:
+
+*   [maxNumHands](#max_num_hands)
+*   [minDetectionConfidence](#min_detection_confidence)
+*   [minTrackingConfidence](#min_tracking_confidence)
+
+```html
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+</head>
+
+<body>
+  <div class="container">
+    <video class="input_video"></video>
+    <canvas class="output_canvas" width="1280px" height="720px"></canvas>
+  </div>
+</body>
+</html>
+```
+
+```javascript
+<script type="module">
+const videoElement = document.getElementsByClassName('input_video')[0];
+const canvasElement = document.getElementsByClassName('output_canvas')[0];
+const canvasCtx = canvasElement.getContext('2d');
+
+function onResults(results) {
+  canvasCtx.save();
+  canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+  canvasCtx.drawImage(
+      results.image, 0, 0, canvasElement.width, canvasElement.height);
+  if (results.multiHandLandmarks) {
+    for (const landmarks of results.multiHandLandmarks) {
+      drawConnectors(canvasCtx, landmarks, HAND_CONNECTIONS,
+                     {color: '#00FF00', lineWidth: 5});
+      drawLandmarks(canvasCtx, landmarks, {color: '#FF0000', lineWidth: 2});
+    }
+  }
+  canvasCtx.restore();
+}
+
+const hands = new Hands({locateFile: (file) => {
+  return `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`;
+}});
+hands.setOptions({
+  maxNumHands: 2,
+  minDetectionConfidence: 0.5,
+  minTrackingConfidence: 0.5
+});
+hands.onResults(onResults);
+
+const camera = new Camera(videoElement, {
+  onFrame: async () => {
+    await hands.send({image: videoElement});
+  },
+  width: 1280,
+  height: 720
+});
+camera.start();
+</script>
+```
 
 ## Example Apps
 
 Please first see general instructions for
-[Android](../getting_started/building_examples.md#android), [iOS](../getting_started/building_examples.md#ios)
-and [desktop](../getting_started/building_examples.md#desktop) on how to build MediaPipe
-examples.
+[Android](../getting_started/android.md), [iOS](../getting_started/ios.md) and
+[desktop](../getting_started/cpp.md) on how to build MediaPipe examples.
 
 Note: To visualize a graph, copy the graph and paste it into
 [MediaPipe Visualizer](https://viz.mediapipe.dev/). For more information on how
@@ -186,99 +415,6 @@ and for iOS modify `kNumHands` in
 Tip: Maximum number of hands to detect/process is set to 2 by default. To change
 it, in the graph file modify the option of `ConstantSidePacketCalculator`.
 
-### Python
-
-MediaPipe Python package is available on
-[PyPI](https://pypi.org/project/mediapipe/), and can be installed simply by `pip
-install mediapipe` on Linux and macOS, as described below and in this
-[colab](https://mediapipe.page.link/hands_py_colab). If you do need to build the
-Python package from source, see
-[additional instructions](../getting_started/building_examples.md#python).
-
-Activate a Python virtual environment:
-
-```bash
-$ python3 -m venv mp_env && source mp_env/bin/activate
-```
-
-Install MediaPipe Python package:
-
-```bash
-(mp_env)$ pip install mediapipe
-```
-
-Run the following Python code:
-
-<!-- Do not change the example code below directly. Change the corresponding example in mediapipe/python/solutions/hands.py and copy it over. -->
-
-```python
-import cv2
-import mediapipe as mp
-mp_drawing = mp.solutions.drawing_utils
-mp_hands = mp.solutions.hands
-
-# For static images:
-hands = mp_hands.Hands(
-    static_image_mode=True,
-    max_num_hands=2,
-    min_detection_confidence=0.7)
-for idx, file in enumerate(file_list):
-  # Read an image, flip it around y-axis for correct handedness output (see
-  # above).
-  image = cv2.flip(cv2.imread(file), 1)
-  # Convert the BGR image to RGB before processing.
-  results = hands.process(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
-
-  # Print handedness and draw hand landmarks on the image.
-  print('handedness:', results.multi_handedness)
-  if not results.multi_hand_landmarks:
-    continue
-  annotated_image = image.copy()
-  for hand_landmarks in results.multi_hand_landmarks:
-    print('hand_landmarks:', hand_landmarks)
-    mp_drawing.draw_landmarks(
-        annotated_image, hand_landmarks, mp_hands.HAND_CONNECTIONS)
-  cv2.imwrite(
-      '/tmp/annotated_image' + str(idx) + '.png', cv2.flip(image, 1))
-hands.close()
-
-# For webcam input:
-hands = mp_hands.Hands(
-    min_detection_confidence=0.7, min_tracking_confidence=0.5)
-cap = cv2.VideoCapture(0)
-while cap.isOpened():
-  success, image = cap.read()
-  if not success:
-    break
-
-  # Flip the image horizontally for a later selfie-view display, and convert
-  # the BGR image to RGB.
-  image = cv2.cvtColor(cv2.flip(image, 1), cv2.COLOR_BGR2RGB)
-  # To improve performance, optionally mark the image as not writeable to
-  # pass by reference.
-  image.flags.writeable = False
-  results = hands.process(image)
-
-  # Draw the hand annotations on the image.
-  image.flags.writeable = True
-  image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
-  if results.multi_hand_landmarks:
-    for hand_landmarks in results.multi_hand_landmarks:
-      mp_drawing.draw_landmarks(
-          image, hand_landmarks, mp_hands.HAND_CONNECTIONS)
-  cv2.imshow('MediaPipe Hands', image)
-  if cv2.waitKey(5) & 0xFF == 27:
-    break
-hands.close()
-cap.release()
-```
-
-Tip: Use command `deactivate` to exit the Python virtual environment.
-
-### Web
-
-Please refer to [these instructions](../index.md#mediapipe-on-the-web).
-
 ## Resources
 
 *   Google AI Blog:
@@ -289,3 +425,8 @@ Please refer to [these instructions](../index.md#mediapipe-on-the-web).
     [MediaPipe Hands: On-device Real-time Hand Tracking](https://arxiv.org/abs/2006.10214)
     ([presentation](https://www.youtube.com/watch?v=I-UOrvxxXEk))
 *   [Models and model cards](./models.md#hands)
+
+[Colab]:https://mediapipe.page.link/hands_py_colab
+
+[web demo]:https://code.mediapipe.dev/codepen/hands
+[fun application]:https://code.mediapipe.dev/codepen/defrost

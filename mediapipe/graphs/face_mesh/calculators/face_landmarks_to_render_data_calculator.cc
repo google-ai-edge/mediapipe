@@ -81,11 +81,11 @@ constexpr int kFaceLandmarkConnections[] = {
 class FaceLandmarksToRenderDataCalculator
     : public LandmarksToRenderDataCalculator {
  public:
-  ::mediapipe::Status Open(CalculatorContext* cc) override;
+  mediapipe::Status Open(CalculatorContext* cc) override;
 };
 REGISTER_CALCULATOR(FaceLandmarksToRenderDataCalculator);
 
-::mediapipe::Status FaceLandmarksToRenderDataCalculator::Open(
+mediapipe::Status FaceLandmarksToRenderDataCalculator::Open(
     CalculatorContext* cc) {
   cc->SetOffset(TimestampDiff(0));
   options_ = cc->Options<mediapipe::LandmarksToRenderDataCalculatorOptions>();
@@ -95,7 +95,7 @@ REGISTER_CALCULATOR(FaceLandmarksToRenderDataCalculator);
     landmark_connections_.push_back(kFaceLandmarkConnections[i * 2 + 1]);
   }
 
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
 }  // namespace mediapipe

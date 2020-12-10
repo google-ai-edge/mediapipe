@@ -302,9 +302,9 @@ struct LogFatalOnError {
 // type is created per type_name.
 #define MEDIAPIPE_DEFINE_SAFE_INT_TYPE(type_name, value_type, policy_type) \
   struct type_name##_safe_tag_ {};                                         \
-  typedef ::mediapipe::intops::StrongInt<                                  \
+  typedef mediapipe::intops::StrongInt<                                    \
       type_name##_safe_tag_, value_type,                                   \
-      ::mediapipe::intops::SafeIntStrongIntValidator<policy_type>>         \
+      mediapipe::intops::SafeIntStrongIntValidator<policy_type>>           \
       type_name;
 
 #endif  // MEDIAPIPE_DEPS_SAFE_INT_H_

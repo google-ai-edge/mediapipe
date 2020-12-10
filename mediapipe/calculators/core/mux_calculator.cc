@@ -36,7 +36,7 @@ constexpr char kInputTag[] = "INPUT";
 // with DefaultInputStreamHandler.
 class MuxCalculator : public CalculatorBase {
  public:
-  static ::mediapipe::Status CheckAndInitAllowDisallowInputs(
+  static mediapipe::Status CheckAndInitAllowDisallowInputs(
       CalculatorContract* cc) {
     RET_CHECK(cc->Inputs().HasTag(kSelectTag) ^
               cc->InputSidePackets().HasTag(kSelectTag));
@@ -45,10 +45,10 @@ class MuxCalculator : public CalculatorBase {
     } else {
       cc->InputSidePackets().Tag(kSelectTag).Set<int>();
     }
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  static ::mediapipe::Status GetContract(CalculatorContract* cc) {
+  static mediapipe::Status GetContract(CalculatorContract* cc) {
     RET_CHECK_OK(CheckAndInitAllowDisallowInputs(cc));
     CollectionItemId data_input_id = cc->Inputs().BeginId(kInputTag);
     PacketType* data_input0 = &cc->Inputs().Get(data_input_id);
@@ -64,10 +64,10 @@ class MuxCalculator : public CalculatorBase {
     MediaPipeOptions options;
     cc->SetInputStreamHandlerOptions(options);
 
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Open(CalculatorContext* cc) final {
+  mediapipe::Status Open(CalculatorContext* cc) final {
     use_side_packet_select_ = false;
     if (cc->InputSidePackets().HasTag(kSelectTag)) {
       use_side_packet_select_ = true;
@@ -79,10 +79,10 @@ class MuxCalculator : public CalculatorBase {
     num_data_inputs_ = cc->Inputs().NumEntries(kInputTag);
     output_ = cc->Outputs().GetId("OUTPUT", 0);
     cc->SetOffset(TimestampDiff(0));
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Process(CalculatorContext* cc) final {
+  mediapipe::Status Process(CalculatorContext* cc) final {
     int select = use_side_packet_select_
                      ? selected_index_
                      : cc->Inputs().Get(select_input_).Get<int>();
@@ -91,7 +91,7 @@ class MuxCalculator : public CalculatorBase {
       cc->Outputs().Get(output_).AddPacket(
           cc->Inputs().Get(data_input_base_ + select).Value());
     }
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
  private:

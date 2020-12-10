@@ -30,7 +30,7 @@ TEST(DefaultInputStreamHandlerTest, NoBatchingWorks) {
   // A single calculator with two input streams, and two output streams. This
   // calculator passes all the input packets along.
   CalculatorGraphConfig config =
-      ::mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
         input_stream: "input0"
         input_stream: "input1"
         node {
@@ -88,7 +88,7 @@ TEST(DefaultInputStreamHandlerTest, Batches) {
   // A single batching calculator with one input stream and one output stream.
   // This calculator passes all the input packets onto the output streams.
   CalculatorGraphConfig config =
-      ::mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
         input_stream: "input0"
         node {
           calculator: "PassThroughCalculator"
@@ -152,7 +152,7 @@ TEST(DefaultInputStreamHandlerTest, BatchIsFlushedWhenClosing) {
   // A single batching calculator with one input stream and one output stream.
   // This calculator passes all the input packets onto the output streams.
   CalculatorGraphConfig config =
-      ::mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
         input_stream: "input0"
         node {
           calculator: "PassThroughCalculator"
@@ -211,7 +211,7 @@ TEST(DefaultInputStreamHandlerTest, BatchIsFlushedWhenClosing) {
 // batching except for the first timestamp of the batch.
 TEST(DefaultInputStreamHandlerTest, DoesntPropagateTimestampWhenBatching) {
   CalculatorGraphConfig config =
-      ::mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
         input_stream: "input0"
         input_stream: "input1"
         node {

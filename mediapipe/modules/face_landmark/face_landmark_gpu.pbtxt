@@ -81,6 +81,11 @@ node {
   calculator: "TensorsToFloatsCalculator"
   input_stream: "TENSORS:face_flag_tensor"
   output_stream: "FLOAT:face_presence_score"
+    options {
+      [mediapipe.TensorsToFloatsCalculatorOptions.ext] {
+        activation: SIGMOID
+      }
+    }
 }
 
 # Applies a threshold to the confidence score to determine whether a face is
@@ -91,7 +96,7 @@ node {
   output_stream: "FLAG:face_presence"
   options: {
     [mediapipe.ThresholdingCalculatorOptions.ext] {
-      threshold: 0.1
+      threshold: 0.5
     }
   }
 }

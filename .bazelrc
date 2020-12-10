@@ -9,21 +9,21 @@ build --define='absl=1'
 build --enable_platform_specific_config
 
 # Linux
-build:linux --cxxopt=-std=c++14
-build:linux --host_cxxopt=-std=c++14
+build:linux --cxxopt=-std=c++17
+build:linux --host_cxxopt=-std=c++17
 build:linux --copt=-w
 
 # windows
-build:windows --cxxopt=/std:c++14
-build:windows --host_cxxopt=/std:c++14
+build:windows --cxxopt=/std:c++17
+build:windows --host_cxxopt=/std:c++17
 build:windows --copt=/w
 # For using M_* math constants on Windows with MSVC.
 build:windows --copt=/D_USE_MATH_DEFINES
 build:windows --host_copt=/D_USE_MATH_DEFINES
 
 # macOS
-build:macos --cxxopt=-std=c++14
-build:macos --host_cxxopt=-std=c++14
+build:macos --cxxopt=-std=c++17
+build:macos --host_cxxopt=-std=c++17
 build:macos --copt=-w
 
 # Sets the default Apple platform to macOS.
@@ -83,3 +83,9 @@ build:ios_fat --watchos_cpus=armv7k
 build:darwin_x86_64 --apple_platform_type=macos
 build:darwin_x86_64 --macos_minimum_os=10.12
 build:darwin_x86_64 --cpu=darwin_x86_64
+
+# This bazelrc file is meant to be written by a setup script.
+try-import %workspace%/.configure.bazelrc
+
+# This bazelrc file can be used for user-specific custom build settings.
+try-import %workspace%/.user.bazelrc

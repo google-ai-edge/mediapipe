@@ -82,18 +82,18 @@ class BilateralFilterCalculator : public CalculatorBase {
   BilateralFilterCalculator() = default;
   ~BilateralFilterCalculator() override = default;
 
-  static ::mediapipe::Status GetContract(CalculatorContract* cc);
+  static mediapipe::Status GetContract(CalculatorContract* cc);
 
   // From Calculator.
-  ::mediapipe::Status Open(CalculatorContext* cc) override;
-  ::mediapipe::Status Process(CalculatorContext* cc) override;
-  ::mediapipe::Status Close(CalculatorContext* cc) override;
+  mediapipe::Status Open(CalculatorContext* cc) override;
+  mediapipe::Status Process(CalculatorContext* cc) override;
+  mediapipe::Status Close(CalculatorContext* cc) override;
 
  private:
-  ::mediapipe::Status RenderGpu(CalculatorContext* cc);
-  ::mediapipe::Status RenderCpu(CalculatorContext* cc);
+  mediapipe::Status RenderGpu(CalculatorContext* cc);
+  mediapipe::Status RenderCpu(CalculatorContext* cc);
 
-  ::mediapipe::Status GlSetup(CalculatorContext* cc);
+  mediapipe::Status GlSetup(CalculatorContext* cc);
   void GlRender(CalculatorContext* cc);
 
   mediapipe::BilateralFilterCalculatorOptions options_;
@@ -111,17 +111,17 @@ class BilateralFilterCalculator : public CalculatorBase {
 };
 REGISTER_CALCULATOR(BilateralFilterCalculator);
 
-::mediapipe::Status BilateralFilterCalculator::GetContract(
+mediapipe::Status BilateralFilterCalculator::GetContract(
     CalculatorContract* cc) {
   CHECK_GE(cc->Inputs().NumEntries(), 1);
 
   if (cc->Inputs().HasTag(kInputFrameTag) &&
       cc->Inputs().HasTag(kInputFrameTagGpu)) {
-    return ::mediapipe::InternalError("Cannot have multiple input images.");
+    return mediapipe::InternalError("Cannot have multiple input images.");
   }
   if (cc->Inputs().HasTag(kInputFrameTagGpu) !=
       cc->Outputs().HasTag(kOutputFrameTagGpu)) {
-    return ::mediapipe::InternalError("GPU output must have GPU input.");
+    return mediapipe::InternalError("GPU output must have GPU input.");
   }
 
   bool use_gpu = false;
@@ -165,10 +165,10 @@ REGISTER_CALCULATOR(BilateralFilterCalculator);
 #endif  //  !MEDIAPIPE_DISABLE_GPU
   }
 
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status BilateralFilterCalculator::Open(CalculatorContext* cc) {
+mediapipe::Status BilateralFilterCalculator::Open(CalculatorContext* cc) {
   cc->SetOffset(TimestampDiff(0));
 
   options_ = cc->Options<mediapipe::BilateralFilterCalculatorOptions>();
@@ -194,30 +194,30 @@ REGISTER_CALCULATOR(BilateralFilterCalculator);
 #endif  //  !MEDIAPIPE_DISABLE_GPU
   }
 
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status BilateralFilterCalculator::Process(CalculatorContext* cc) {
+mediapipe::Status BilateralFilterCalculator::Process(CalculatorContext* cc) {
   if (use_gpu_) {
 #if !defined(MEDIAPIPE_DISABLE_GPU)
     MP_RETURN_IF_ERROR(
-        gpu_helper_.RunInGlContext([this, cc]() -> ::mediapipe::Status {
+        gpu_helper_.RunInGlContext([this, cc]() -> mediapipe::Status {
           if (!gpu_initialized_) {
             MP_RETURN_IF_ERROR(GlSetup(cc));
             gpu_initialized_ = true;
           }
           MP_RETURN_IF_ERROR(RenderGpu(cc));
-          return ::mediapipe::OkStatus();
+          return mediapipe::OkStatus();
         }));
 #endif  //  !MEDIAPIPE_DISABLE_GPU
   } else {
     MP_RETURN_IF_ERROR(RenderCpu(cc));
   }
 
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status BilateralFilterCalculator::Close(CalculatorContext* cc) {
+mediapipe::Status BilateralFilterCalculator::Close(CalculatorContext* cc) {
 #if !defined(MEDIAPIPE_DISABLE_GPU)
   gpu_helper_.RunInGlContext([this] {
     if (program_) glDeleteProgram(program_);
@@ -230,13 +230,12 @@ REGISTER_CALCULATOR(BilateralFilterCalculator);
   });
 #endif  //  !MEDIAPIPE_DISABLE_GPU
 
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status BilateralFilterCalculator::RenderCpu(
-    CalculatorContext* cc) {
+mediapipe::Status BilateralFilterCalculator::RenderCpu(CalculatorContext* cc) {
   if (cc->Inputs().Tag(kInputFrameTag).IsEmpty()) {
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
   const auto& input_frame = cc->Inputs().Tag(kInputFrameTag).Get<ImageFrame>();
@@ -244,7 +243,7 @@ REGISTER_CALCULATOR(BilateralFilterCalculator);
 
   // Only 1 or 3 channel images supported by OpenCV.
   if ((input_mat.channels() == 1 || input_mat.channels() == 3)) {
-    return ::mediapipe::InternalError(
+    return mediapipe::InternalError(
         "CPU filtering supports only 1 or 3 channel input images.");
   }
 
@@ -255,7 +254,7 @@ REGISTER_CALCULATOR(BilateralFilterCalculator);
 
   if (has_guide_image) {
     // cv::jointBilateralFilter() is in contrib module 'ximgproc'.
-    return ::mediapipe::UnimplementedError(
+    return mediapipe::UnimplementedError(
         "CPU joint filtering support is not implemented yet.");
   } else {
     auto output_mat = mediapipe::formats::MatView(output_frame.get());
@@ -267,13 +266,12 @@ REGISTER_CALCULATOR(BilateralFilterCalculator);
   cc->Outputs()
       .Tag(kOutputFrameTag)
       .Add(output_frame.release(), cc->InputTimestamp());
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status BilateralFilterCalculator::RenderGpu(
-    CalculatorContext* cc) {
+mediapipe::Status BilateralFilterCalculator::RenderGpu(CalculatorContext* cc) {
   if (cc->Inputs().Tag(kInputFrameTagGpu).IsEmpty()) {
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 #if !defined(MEDIAPIPE_DISABLE_GPU)
   const auto& input_frame =
@@ -334,7 +332,7 @@ REGISTER_CALCULATOR(BilateralFilterCalculator);
   output_texture.Release();
 #endif  //  !MEDIAPIPE_DISABLE_GPU
 
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
 void BilateralFilterCalculator::GlRender(CalculatorContext* cc) {
@@ -350,7 +348,7 @@ void BilateralFilterCalculator::GlRender(CalculatorContext* cc) {
 #endif  //  !MEDIAPIPE_DISABLE_GPU
 }
 
-::mediapipe::Status BilateralFilterCalculator::GlSetup(CalculatorContext* cc) {
+mediapipe::Status BilateralFilterCalculator::GlSetup(CalculatorContext* cc) {
 #if !defined(MEDIAPIPE_DISABLE_GPU)
   const GLint attr_location[NUM_ATTRIBUTES] = {
       ATTRIB_VERTEX,
@@ -517,7 +515,7 @@ void BilateralFilterCalculator::GlRender(CalculatorContext* cc) {
 
 #endif  //  !MEDIAPIPE_DISABLE_GPU
 
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
 }  // namespace mediapipe

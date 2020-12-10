@@ -28,20 +28,20 @@ namespace test_ns {
 
 class TestSinkCalculator : public CalculatorBase {
  public:
-  static ::mediapipe::Status GetContract(CalculatorContract* cc) {
+  static mediapipe::Status GetContract(CalculatorContract* cc) {
     cc->Inputs().Tag("IN").Set<mediapipe::InputOnlyProto>();
     cc->Outputs().Tag("OUT").Set<int>();
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Process(CalculatorContext* cc) override {
+  mediapipe::Status Process(CalculatorContext* cc) override {
     int x = cc->Inputs().Tag("IN").Get<mediapipe::InputOnlyProto>().x();
     cc->Outputs().Tag("OUT").AddPacket(
         MakePacket<int>(x).At(cc->InputTimestamp()));
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 };
-REGISTER_CALCULATOR(::mediapipe::test_ns::TestSinkCalculator);
+REGISTER_CALCULATOR(TestSinkCalculator);
 
 }  // namespace test_ns
 

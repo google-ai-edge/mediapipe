@@ -62,10 +62,10 @@ bool LogWarningIfTimestampIsInconsistent(const Timestamp& current_timestamp,
   }
 }
 
-::mediapipe::Status IsTimeSeriesHeaderValid(const TimeSeriesHeader& header) {
+mediapipe::Status IsTimeSeriesHeaderValid(const TimeSeriesHeader& header) {
   if (header.has_sample_rate() && header.sample_rate() >= 0 &&
       header.has_num_channels() && header.num_channels() >= 0) {
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   } else {
     std::string error_message =
         "TimeSeriesHeader is missing necessary fields: "
@@ -77,8 +77,8 @@ bool LogWarningIfTimestampIsInconsistent(const Timestamp& current_timestamp,
   }
 }
 
-::mediapipe::Status FillTimeSeriesHeaderIfValid(const Packet& header_packet,
-                                                TimeSeriesHeader* header) {
+mediapipe::Status FillTimeSeriesHeaderIfValid(const Packet& header_packet,
+                                              TimeSeriesHeader* header) {
   CHECK(header);
   if (header_packet.IsEmpty()) {
     return tool::StatusFail("No header found.");
@@ -90,7 +90,7 @@ bool LogWarningIfTimestampIsInconsistent(const Timestamp& current_timestamp,
   return IsTimeSeriesHeaderValid(*header);
 }
 
-::mediapipe::Status FillMultiStreamTimeSeriesHeaderIfValid(
+mediapipe::Status FillMultiStreamTimeSeriesHeaderIfValid(
     const Packet& header_packet, MultiStreamTimeSeriesHeader* header) {
   CHECK(header);
   if (header_packet.IsEmpty()) {
@@ -107,7 +107,7 @@ bool LogWarningIfTimestampIsInconsistent(const Timestamp& current_timestamp,
   return IsTimeSeriesHeaderValid(header->time_series_header());
 }
 
-::mediapipe::Status IsMatrixShapeConsistentWithHeader(
+mediapipe::Status IsMatrixShapeConsistentWithHeader(
     const Matrix& matrix, const TimeSeriesHeader& header) {
   if (header.has_num_samples() && matrix.cols() != header.num_samples()) {
     return tool::StatusInvalid(absl::StrCat(
@@ -119,7 +119,7 @@ bool LogWarningIfTimestampIsInconsistent(const Timestamp& current_timestamp,
         "Matrix size is inconsistent with header.  Expected ",
         header.num_channels(), " rows, but found ", matrix.rows()));
   }
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
 int64 SecondsToSamples(double time_in_seconds, double sample_rate) {

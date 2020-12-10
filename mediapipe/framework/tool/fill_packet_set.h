@@ -32,7 +32,7 @@ namespace tool {
 // missing_packet_count_ptr is not null, the number of missing packets
 // is returned in *missing_packet_count_ptr.  Otherwise, an error is
 // returned if any packets are missing.
-::mediapipe::StatusOr<std::unique_ptr<PacketSet>> FillPacketSet(
+mediapipe::StatusOr<std::unique_ptr<PacketSet>> FillPacketSet(
     const PacketTypeSet& input_side_packet_types,
     const std::map<std::string, Packet>& input_side_packets,
     int* missing_packet_count_ptr);

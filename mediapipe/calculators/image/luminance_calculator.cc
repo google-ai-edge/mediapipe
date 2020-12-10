@@ -26,10 +26,10 @@ namespace mediapipe {
 // See GlSimpleCalculatorBase for inputs, outputs and input side packets.
 class LuminanceCalculator : public GlSimpleCalculator {
  public:
-  ::mediapipe::Status GlSetup() override;
-  ::mediapipe::Status GlRender(const GlTexture& src,
-                               const GlTexture& dst) override;
-  ::mediapipe::Status GlTeardown() override;
+  mediapipe::Status GlSetup() override;
+  mediapipe::Status GlRender(const GlTexture& src,
+                             const GlTexture& dst) override;
+  mediapipe::Status GlTeardown() override;
 
  private:
   GLuint program_ = 0;
@@ -37,7 +37,7 @@ class LuminanceCalculator : public GlSimpleCalculator {
 };
 REGISTER_CALCULATOR(LuminanceCalculator);
 
-::mediapipe::Status LuminanceCalculator::GlSetup() {
+mediapipe::Status LuminanceCalculator::GlSetup() {
   // Load vertex and fragment shaders
   const GLint attr_location[NUM_ATTRIBUTES] = {
       ATTRIB_VERTEX,
@@ -83,11 +83,11 @@ REGISTER_CALCULATOR(LuminanceCalculator);
                    (const GLchar**)&attr_name[0], attr_location, &program_);
   RET_CHECK(program_) << "Problem initializing the program.";
   frame_ = glGetUniformLocation(program_, "video_frame");
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status LuminanceCalculator::GlRender(const GlTexture& src,
-                                                  const GlTexture& dst) {
+mediapipe::Status LuminanceCalculator::GlRender(const GlTexture& src,
+                                                const GlTexture& dst) {
   static const GLfloat square_vertices[] = {
       -1.0f, -1.0f,  // bottom left
       1.0f,  -1.0f,  // bottom right
@@ -137,15 +137,15 @@ REGISTER_CALCULATOR(LuminanceCalculator);
   glDeleteVertexArrays(1, &vao);
   glDeleteBuffers(2, vbo);
 
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status LuminanceCalculator::GlTeardown() {
+mediapipe::Status LuminanceCalculator::GlTeardown() {
   if (program_) {
     glDeleteProgram(program_);
     program_ = 0;
   }
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
 }  // namespace mediapipe

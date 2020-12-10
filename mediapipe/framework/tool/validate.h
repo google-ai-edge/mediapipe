@@ -24,12 +24,12 @@ namespace mediapipe {
 
 namespace tool {
 
-// Returns ::mediapipe::OkStatus() if the InputCollection is valid.  An input
+// Returns mediapipe::OkStatus() if the InputCollection is valid.  An input
 // collection is invalid if it does not have the proper fields set
 // depending on what its input_type field is.  Furthermore, if it uses
 // INLINE, then the number of value fields in each inputs must match
 // the number of input_side_packet_name fields.
-::mediapipe::Status ValidateInput(const InputCollection& input);
+mediapipe::Status ValidateInput(const InputCollection& input);
 
 }  // namespace tool
 }  // namespace mediapipe

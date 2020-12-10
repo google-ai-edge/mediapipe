@@ -103,7 +103,7 @@ class CalculatorContext {
   // Returns the status of the graph run.
   //
   // NOTE: This method should only be called during CalculatorBase::Close().
-  ::mediapipe::Status GraphStatus() const { return graph_status_; }
+  mediapipe::Status GraphStatus() const { return graph_status_; }
 
   ProfilingContext* GetProfilingContext() const {
     return calculator_state_->GetSharedProfilingContext().get();
@@ -148,7 +148,7 @@ class CalculatorContext {
     input_timestamps_.pop();
   }
 
-  void SetGraphStatus(const ::mediapipe::Status& status) {
+  void SetGraphStatus(const mediapipe::Status& status) {
     graph_status_ = status;
   }
 
@@ -167,7 +167,7 @@ class CalculatorContext {
   std::queue<Timestamp> input_timestamps_;
 
   // The status of the graph run. Only used when Close() is called.
-  ::mediapipe::Status graph_status_;
+  mediapipe::Status graph_status_;
 
   // Accesses CalculatorContext for setting input timestamp.
   friend class CalculatorContextManager;

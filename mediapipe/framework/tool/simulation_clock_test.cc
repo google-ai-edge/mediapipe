@@ -96,7 +96,7 @@ class SimulationClockTest : public ::testing::Test {
   }
 
   // Initialize the test clock as a RealClock.
-  void SetupRealClock() { clock_ = ::mediapipe::Clock::RealClock(); }
+  void SetupRealClock() { clock_ = mediapipe::Clock::RealClock(); }
 
   // Return the values of the timestamps of a vector of Packets.
   static std::vector<int64> TimestampValues(
@@ -119,7 +119,7 @@ class SimulationClockTest : public ::testing::Test {
   std::shared_ptr<SimulationClock> simulation_clock_;
   CalculatorGraphConfig graph_config_;
   CalculatorGraph graph_;
-  ::mediapipe::Clock* clock_;
+  mediapipe::Clock* clock_;
 };
 
 // Just directly calls SimulationClock::Sleep on several threads.
@@ -177,19 +177,19 @@ TEST_F(SimulationClockTest, DuplicateWakeTimes) {
 }
 
 // A Calculator::Process callback function.
-typedef std::function<::mediapipe::Status(const InputStreamShardSet&,
-                                          OutputStreamShardSet*)>
+typedef std::function<mediapipe::Status(const InputStreamShardSet&,
+                                        OutputStreamShardSet*)>
     ProcessFunction;
 
 // A testing callback function that passes through all packets.
-::mediapipe::Status PassThrough(const InputStreamShardSet& inputs,
-                                OutputStreamShardSet* outputs) {
+mediapipe::Status PassThrough(const InputStreamShardSet& inputs,
+                              OutputStreamShardSet* outputs) {
   for (int i = 0; i < inputs.NumEntries(); ++i) {
     if (!inputs.Index(i).Value().IsEmpty()) {
       outputs->Index(i).AddPacket(inputs.Index(i).Value());
     }
   }
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
 // This test shows sim clock synchronizing a bunch of parallel tasks.

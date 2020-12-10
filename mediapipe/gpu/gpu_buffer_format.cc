@@ -73,12 +73,16 @@ const GlTextureInfo& GlTextureInfoForGpuBufferFormat(GpuBufferFormat format,
           {GpuBufferFormat::kBGRA32,
            {
   // internal_format, format, type, downscale
-#ifdef __APPLE__
-               // On Apple platforms, the preferred transfer format is BGRA.
+#if MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
+               // On Apple platforms, we have different code paths for iOS
+               // (using CVPixelBuffer) and on macOS (using GlTextureBuffer).
+               // When using CVPixelBuffer, the preferred transfer format is
+               // BGRA.
+               // TODO: Check iOS simulator.
                {GL_RGBA, GL_BGRA, GL_UNSIGNED_BYTE, 1},
 #else
                {GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, 1},
-#endif  // __APPLE__
+#endif  // MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
            }},
           {GpuBufferFormat::kOneComponent8,
            {

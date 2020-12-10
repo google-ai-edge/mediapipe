@@ -53,7 +53,7 @@ TEST_F(CircularBufferTest, ParallelWriteAndRead) {
   std::atomic_int read_sum(0);
   std::atomic_int read_count(0);
   {
-    ::mediapipe::ThreadPool pool(12);
+    mediapipe::ThreadPool pool(12);
     pool.StartWorkers();
 
     // Start 6 writers.

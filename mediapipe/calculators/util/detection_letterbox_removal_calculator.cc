@@ -70,7 +70,7 @@ constexpr char kLetterboxPaddingTag[] = "LETTERBOX_PADDING";
 // }
 class DetectionLetterboxRemovalCalculator : public CalculatorBase {
  public:
-  static ::mediapipe::Status GetContract(CalculatorContract* cc) {
+  static mediapipe::Status GetContract(CalculatorContract* cc) {
     RET_CHECK(cc->Inputs().HasTag(kDetectionsTag) &&
               cc->Inputs().HasTag(kLetterboxPaddingTag))
         << "Missing one or more input streams.";
@@ -80,19 +80,19 @@ class DetectionLetterboxRemovalCalculator : public CalculatorBase {
 
     cc->Outputs().Tag(kDetectionsTag).Set<std::vector<Detection>>();
 
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Open(CalculatorContext* cc) override {
+  mediapipe::Status Open(CalculatorContext* cc) override {
     cc->SetOffset(TimestampDiff(0));
 
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Process(CalculatorContext* cc) override {
+  mediapipe::Status Process(CalculatorContext* cc) override {
     // Only process if there's input detections.
     if (cc->Inputs().Tag(kDetectionsTag).IsEmpty()) {
-      return ::mediapipe::OkStatus();
+      return mediapipe::OkStatus();
     }
 
     const auto& input_detections =
@@ -146,7 +146,7 @@ class DetectionLetterboxRemovalCalculator : public CalculatorBase {
     cc->Outputs()
         .Tag("DETECTIONS")
         .Add(output_detections.release(), cc->InputTimestamp());
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 };
 REGISTER_CALCULATOR(DetectionLetterboxRemovalCalculator);

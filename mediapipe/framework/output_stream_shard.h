@@ -31,16 +31,16 @@ class OutputStreamManager;
 // The output stream spec shared across all output stream shards and their
 // output stream manager.
 struct OutputStreamSpec {
-  // Triggers the error callback with ::mediapipe::Status info when an error
+  // Triggers the error callback with mediapipe::Status info when an error
   // occurs.
-  void TriggerErrorCallback(const ::mediapipe::Status& status) const {
+  void TriggerErrorCallback(const mediapipe::Status& status) const {
     CHECK(error_callback);
     error_callback(status);
   }
 
   std::string name;
   const PacketType* packet_type;
-  std::function<void(::mediapipe::Status)> error_callback;
+  std::function<void(mediapipe::Status)> error_callback;
   bool locked_intro_data;
   // Those three variables are the intro data protected by locked_intro_data.
   bool offset_enabled;
@@ -102,7 +102,7 @@ class OutputStreamShard : public OutputStream {
   // AddPacketInternal template is called by either AddPacket(Packet&& packet)
   // or AddPacket(const Packet& packet).
   template <typename T>
-  ::mediapipe::Status AddPacketInternal(T&& packet);
+  mediapipe::Status AddPacketInternal(T&& packet);
 
   // Returns a pointer to the output queue.
   std::list<Packet>* OutputQueue() { return &output_queue_; }

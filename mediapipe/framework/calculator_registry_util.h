@@ -31,11 +31,11 @@ namespace mediapipe {
 bool IsLegacyCalculator(const std::string& package_name,
                         const std::string& node_class);
 
-::mediapipe::Status VerifyCalculatorWithContract(
-    const std::string& package_name, const std::string& node_class,
-    CalculatorContract* contract);
+mediapipe::Status VerifyCalculatorWithContract(const std::string& package_name,
+                                               const std::string& node_class,
+                                               CalculatorContract* contract);
 
-::mediapipe::StatusOr<std::unique_ptr<CalculatorBase>> CreateCalculator(
+mediapipe::StatusOr<std::unique_ptr<CalculatorBase>> CreateCalculator(
     const std::shared_ptr<tool::TagMap>& input_tag_map,
     const std::shared_ptr<tool::TagMap>& output_tag_map,
     const std::string& package_name, CalculatorState* calculator_state,

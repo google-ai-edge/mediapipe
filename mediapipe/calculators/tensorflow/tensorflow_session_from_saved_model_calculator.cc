@@ -35,9 +35,9 @@ static constexpr char kStringSavedModelPath[] = "STRING_SAVED_MODEL_PATH";
 
 // Given the path to a directory containing multiple tensorflow saved models
 // in subdirectories, replaces path with the alphabetically last subdirectory.
-::mediapipe::Status GetLatestDirectory(std::string* path) {
+mediapipe::Status GetLatestDirectory(std::string* path) {
 #if defined(__ANDROID__)
-  return ::mediapipe::UnimplementedError(
+  return mediapipe::UnimplementedError(
       "GetLatestDirectory is not implemented on Android");
 #else
   std::vector<std::string> saved_models;
@@ -47,7 +47,7 @@ static constexpr char kStringSavedModelPath[] = "STRING_SAVED_MODEL_PATH";
       << "No exported bundles found in " << path;
   ::std::sort(saved_models.begin(), saved_models.end());
   *path = std::string(file::Dirname(saved_models.back()));
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 #endif
 }
 
@@ -93,7 +93,7 @@ const std::string MaybeConvertSignatureToTag(
 // }
 class TensorFlowSessionFromSavedModelCalculator : public CalculatorBase {
  public:
-  static ::mediapipe::Status GetContract(CalculatorContract* cc) {
+  static mediapipe::Status GetContract(CalculatorContract* cc) {
     const auto& options =
         cc->Options<TensorFlowSessionFromSavedModelCalculatorOptions>();
     const bool has_exactly_one_model =
@@ -108,10 +108,10 @@ class TensorFlowSessionFromSavedModelCalculator : public CalculatorBase {
     }
     // A TensorFlow model loaded and ready for use along with tensor
     cc->OutputSidePackets().Tag("SESSION").Set<TensorFlowSession>();
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Open(CalculatorContext* cc) override {
+  mediapipe::Status Open(CalculatorContext* cc) override {
     const auto& options =
         cc->Options<TensorFlowSessionFromSavedModelCalculatorOptions>();
     std::string path = cc->InputSidePackets().HasTag(kStringSavedModelPath)
@@ -140,9 +140,8 @@ class TensorFlowSessionFromSavedModelCalculator : public CalculatorBase {
     ::tensorflow::Status status = tensorflow::LoadSavedModel(
         session_options, run_options, path, tags_set, saved_model.get());
     if (!status.ok()) {
-      return ::mediapipe::Status(
-          static_cast<::mediapipe::StatusCode>(status.code()),
-          status.ToString());
+      return mediapipe::Status(
+          static_cast<mediapipe::StatusCode>(status.code()), status.ToString());
     }
 
     auto session = absl::make_unique<TensorFlowSession>();
@@ -161,11 +160,11 @@ class TensorFlowSessionFromSavedModelCalculator : public CalculatorBase {
     }
 
     cc->OutputSidePackets().Tag("SESSION").Set(Adopt(session.release()));
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Process(CalculatorContext* cc) override {
-    return ::mediapipe::OkStatus();
+  mediapipe::Status Process(CalculatorContext* cc) override {
+    return mediapipe::OkStatus();
   }
 };
 

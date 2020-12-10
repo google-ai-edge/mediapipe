@@ -4,9 +4,9 @@
 #include "mediapipe/framework/port/integral_types.h"
 #include "mediapipe/framework/type_map.h"
 
-#define MEDIAPIPE_REGISTER_GENERIC_TYPE(type)                                \
-  MEDIAPIPE_REGISTER_TYPE(                                                   \
-      ::mediapipe::type_map_internal::ReflectType<void(type*)>::Type, #type, \
+#define MEDIAPIPE_REGISTER_GENERIC_TYPE(type)                              \
+  MEDIAPIPE_REGISTER_TYPE(                                                 \
+      mediapipe::type_map_internal::ReflectType<void(type*)>::Type, #type, \
       nullptr, nullptr)
 
 // Note: we cannot define a type which type hash id is already in the map.

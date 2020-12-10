@@ -45,7 +45,7 @@ JNIEXPORT jobjectArray JNICALL GRAPH_METHOD(nativeGetCalculatorProfiles)(
 
   std::vector<mediapipe::CalculatorProfile> profiles_vec;
   if (profiling_context->GetCalculatorProfiles(&profiles_vec) !=
-      ::mediapipe::OkStatus()) {
+      mediapipe::OkStatus()) {
     return nullptr;
   }
   int num_profiles = profiles_vec.size();

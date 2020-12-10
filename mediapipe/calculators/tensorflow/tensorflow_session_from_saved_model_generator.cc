@@ -37,9 +37,9 @@ static constexpr char kStringSavedModelPath[] = "STRING_SAVED_MODEL_PATH";
 
 // Given the path to a directory containing multiple tensorflow saved models
 // in subdirectories, replaces path with the alphabetically last subdirectory.
-::mediapipe::Status GetLatestDirectory(std::string* path) {
+mediapipe::Status GetLatestDirectory(std::string* path) {
 #if defined(__ANDROID__)
-  return ::mediapipe::UnimplementedError(
+  return mediapipe::UnimplementedError(
       "GetLatestDirectory is not implemented on Android");
 #else
   std::vector<std::string> saved_models;
@@ -49,7 +49,7 @@ static constexpr char kStringSavedModelPath[] = "STRING_SAVED_MODEL_PATH";
       << "No exported bundles found in " << path;
   ::std::sort(saved_models.begin(), saved_models.end());
   *path = std::string(file::Dirname(saved_models.back()));
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 #endif
 }
 
@@ -83,7 +83,7 @@ const std::string MaybeConvertSignatureToTag(
 // ready for execution and a map between tags and tensor names.
 class TensorFlowSessionFromSavedModelGenerator : public PacketGenerator {
  public:
-  static ::mediapipe::Status FillExpectations(
+  static mediapipe::Status FillExpectations(
       const PacketGeneratorOptions& extendable_options,
       PacketTypeSet* input_side_packets, PacketTypeSet* output_side_packets) {
     const TensorFlowSessionFromSavedModelGeneratorOptions& options =
@@ -101,10 +101,10 @@ class TensorFlowSessionFromSavedModelGenerator : public PacketGenerator {
     }
     // A TensorFlow model loaded and ready for use along with tensor
     output_side_packets->Tag("SESSION").Set<TensorFlowSession>();
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  static ::mediapipe::Status Generate(
+  static mediapipe::Status Generate(
       const PacketGeneratorOptions& extendable_options,
       const PacketSet& input_side_packets, PacketSet* output_side_packets) {
     const TensorFlowSessionFromSavedModelGeneratorOptions& options =
@@ -135,9 +135,8 @@ class TensorFlowSessionFromSavedModelGenerator : public PacketGenerator {
     ::tensorflow::Status status = tensorflow::LoadSavedModel(
         session_options, run_options, path, tags_set, saved_model.get());
     if (!status.ok()) {
-      return ::mediapipe::Status(
-          static_cast<::mediapipe::StatusCode>(status.code()),
-          status.ToString());
+      return mediapipe::Status(
+          static_cast<mediapipe::StatusCode>(status.code()), status.ToString());
     }
     auto session = absl::make_unique<TensorFlowSession>();
     session->session = std::move(saved_model->session);
@@ -155,7 +154,7 @@ class TensorFlowSessionFromSavedModelGenerator : public PacketGenerator {
     }
 
     output_side_packets->Tag("SESSION") = Adopt(session.release());
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 };
 REGISTER_PACKET_GENERATOR(TensorFlowSessionFromSavedModelGenerator);

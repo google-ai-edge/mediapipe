@@ -28,7 +28,7 @@ Detection TensorToDetection(
     const ::tensorflow::TTypes<const float>::Vec& box, float score,
     const ::absl::variant<int, std::string>& class_label);
 
-::mediapipe::Status TensorsToDetections(
+mediapipe::Status TensorsToDetections(
     const ::tensorflow::Tensor& num_detections,
     const ::tensorflow::Tensor& boxes, const ::tensorflow::Tensor& scores,
     const ::tensorflow::Tensor& classes,
@@ -36,7 +36,7 @@ Detection TensorToDetection(
     std::vector<Detection>* detections);
 
 // Use this version if keypoints or masks are available.
-::mediapipe::Status TensorsToDetections(
+mediapipe::Status TensorsToDetections(
     const ::tensorflow::Tensor& num_detections,
     const ::tensorflow::Tensor& boxes, const ::tensorflow::Tensor& scores,
     const ::tensorflow::Tensor& classes, const ::tensorflow::Tensor& keypoints,

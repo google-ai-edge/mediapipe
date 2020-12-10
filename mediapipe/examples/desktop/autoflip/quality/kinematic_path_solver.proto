@@ -22,4 +22,6 @@ message KinematicOptions {
   optional double max_update_rate = 6 [default = 0.8];
   // History time window of observations to be median filtered.
   optional int64 filtering_time_window_us = 7 [default = 0];
+  // Weighted update of average period, used for motion updates.
+  optional float mean_period_update_rate = 8 [default = 0.25];
 }

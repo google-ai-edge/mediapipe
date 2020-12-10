@@ -37,8 +37,7 @@ StatusOr<std::string> GetDefaultTraceLogDirectory() {
                             error:&error];
   if (!success) {
     // TODO: Use NSError+util_status to get status from NSError.
-    return ::mediapipe::InternalError(
-        [[error localizedDescription] UTF8String]);
+    return mediapipe::InternalError([[error localizedDescription] UTF8String]);
   }
 
   std::string trace_log_directory = [ns_documents_directory UTF8String];

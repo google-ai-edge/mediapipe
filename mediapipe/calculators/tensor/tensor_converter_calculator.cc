@@ -100,22 +100,21 @@ namespace mediapipe {
 
 class TensorConverterCalculator : public CalculatorBase {
  public:
-  static ::mediapipe::Status GetContract(CalculatorContract* cc);
+  static mediapipe::Status GetContract(CalculatorContract* cc);
 
-  ::mediapipe::Status Open(CalculatorContext* cc) override;
-  ::mediapipe::Status Process(CalculatorContext* cc) override;
-  ::mediapipe::Status Close(CalculatorContext* cc) override;
+  mediapipe::Status Open(CalculatorContext* cc) override;
+  mediapipe::Status Process(CalculatorContext* cc) override;
+  mediapipe::Status Close(CalculatorContext* cc) override;
 
  private:
-  ::mediapipe::Status InitGpu(CalculatorContext* cc);
-  ::mediapipe::Status LoadOptions(CalculatorContext* cc);
+  mediapipe::Status InitGpu(CalculatorContext* cc);
+  mediapipe::Status LoadOptions(CalculatorContext* cc);
   template <class T>
-  ::mediapipe::Status NormalizeImage(const ImageFrame& image_frame,
-                                     bool flip_vertically, float* tensor_ptr);
-  ::mediapipe::Status CopyMatrixToTensor(const Matrix& matrix,
-                                         float* tensor_ptr);
-  ::mediapipe::Status ProcessCPU(CalculatorContext* cc);
-  ::mediapipe::Status ProcessGPU(CalculatorContext* cc);
+  mediapipe::Status NormalizeImage(const ImageFrame& image_frame,
+                                   bool flip_vertically, float* tensor_ptr);
+  mediapipe::Status CopyMatrixToTensor(const Matrix& matrix, float* tensor_ptr);
+  mediapipe::Status ProcessCPU(CalculatorContext* cc);
+  mediapipe::Status ProcessGPU(CalculatorContext* cc);
 
 #if MEDIAPIPE_METAL_ENABLED
   MPPMetalHelper* gpu_helper_ = nullptr;
@@ -140,7 +139,7 @@ class TensorConverterCalculator : public CalculatorBase {
 };
 REGISTER_CALCULATOR(TensorConverterCalculator);
 
-::mediapipe::Status TensorConverterCalculator::GetContract(
+mediapipe::Status TensorConverterCalculator::GetContract(
     CalculatorContract* cc) {
   // Confirm only one of the input streams is present.
   RET_CHECK(static_cast<int>(cc->Inputs().HasTag(kImageFrameTag)) +
@@ -168,10 +167,10 @@ REGISTER_CALCULATOR(TensorConverterCalculator);
 
   RET_CHECK(cc->Outputs().HasTag(kTensorsTag));
   cc->Outputs().Tag(kTensorsTag).Set<std::vector<Tensor>>();
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status TensorConverterCalculator::Open(CalculatorContext* cc) {
+mediapipe::Status TensorConverterCalculator::Open(CalculatorContext* cc) {
   cc->SetOffset(TimestampDiff(0));
 
   MP_RETURN_IF_ERROR(LoadOptions(cc));
@@ -188,13 +187,13 @@ REGISTER_CALCULATOR(TensorConverterCalculator);
   }
 #endif  // !MEDIAPIPE_DISABLE_GPU
 
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status TensorConverterCalculator::Process(CalculatorContext* cc) {
+mediapipe::Status TensorConverterCalculator::Process(CalculatorContext* cc) {
   if (use_gpu_) {
     if (cc->Inputs().Tag(kGpuBufferTag).IsEmpty()) {
-      return ::mediapipe::OkStatus();
+      return mediapipe::OkStatus();
     }
     // Convert to GPU tensors type.
     MP_RETURN_IF_ERROR(ProcessGPU(cc));
@@ -202,10 +201,10 @@ REGISTER_CALCULATOR(TensorConverterCalculator);
     // Convert to CPU tensors or Matrix type.
     MP_RETURN_IF_ERROR(ProcessCPU(cc));
   }
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status TensorConverterCalculator::Close(CalculatorContext* cc) {
+mediapipe::Status TensorConverterCalculator::Close(CalculatorContext* cc) {
 #if !MEDIAPIPE_DISABLE_GPU
   if (use_gpu_) {
 #if MEDIAPIPE_METAL_ENABLED
@@ -222,15 +221,14 @@ REGISTER_CALCULATOR(TensorConverterCalculator);
 #endif  // MEDIAPIPE_METAL_ENABLED
   }
 #endif  // !MEDIAPIPE_DISABLE_GPU
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status TensorConverterCalculator::ProcessCPU(
-    CalculatorContext* cc) {
+mediapipe::Status TensorConverterCalculator::ProcessCPU(CalculatorContext* cc) {
   auto output_tensors = absl::make_unique<std::vector<Tensor>>();
   if (cc->Inputs().HasTag(kImageFrameTag)) {
     if (cc->Inputs().Tag(kImageFrameTag).IsEmpty()) {
-      return ::mediapipe::OkStatus();
+      return mediapipe::OkStatus();
     }
     const auto& image_frame =
         cc->Inputs().Tag(kImageFrameTag).Get<ImageFrame>();
@@ -259,12 +257,12 @@ REGISTER_CALCULATOR(TensorConverterCalculator);
       MP_RETURN_IF_ERROR(NormalizeImage<float>(image_frame, flip_vertically_,
                                                cpu_view.buffer<float>()));
     } else {
-      return ::mediapipe::InternalError(
+      return mediapipe::InternalError(
           "Only byte-based (8 bit) and float (32 bit) images supported.");
     }
   } else if (cc->Inputs().HasTag(kMatrixTag)) {
     if (cc->Inputs().Tag(kMatrixTag).IsEmpty()) {
-      return ::mediapipe::OkStatus();
+      return mediapipe::OkStatus();
     }
     const auto& matrix = cc->Inputs().Tag(kMatrixTag).Get<Matrix>();
     const int height = matrix.rows();
@@ -275,17 +273,16 @@ REGISTER_CALCULATOR(TensorConverterCalculator);
     MP_RETURN_IF_ERROR(CopyMatrixToTensor(
         matrix, output_tensors->back().GetCpuWriteView().buffer<float>()));
   } else {
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
   cc->Outputs()
       .Tag(kTensorsTag)
       .Add(output_tensors.release(), cc->InputTimestamp());
 
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status TensorConverterCalculator::ProcessGPU(
-    CalculatorContext* cc) {
+mediapipe::Status TensorConverterCalculator::ProcessGPU(CalculatorContext* cc) {
 #if !MEDIAPIPE_DISABLE_GPU
   if (!initialized_) {
     MP_RETURN_IF_ERROR(InitGpu(cc));
@@ -321,7 +318,7 @@ REGISTER_CALCULATOR(TensorConverterCalculator);
   [command_buffer commit];
 #elif MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30
   MP_RETURN_IF_ERROR(gpu_helper_.RunInGlContext(
-      [this, &output_tensors, &input]() -> ::mediapipe::Status {
+      [this, &output_tensors, &input]() -> mediapipe::Status {
         auto src = gpu_helper_.CreateSourceTexture(input);
 #if MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31
         // Convert GL texture into SSBO.
@@ -364,7 +361,7 @@ REGISTER_CALCULATOR(TensorConverterCalculator);
         glBindTexture(GL_TEXTURE_2D, 0);
 #endif  // MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31
         src.Release();
-        return ::mediapipe::OkStatus();
+        return mediapipe::OkStatus();
       }));
 #endif  // MEDIAPIPE_METAL_ENABLED
   cc->Outputs()
@@ -374,10 +371,10 @@ REGISTER_CALCULATOR(TensorConverterCalculator);
   RET_CHECK_FAIL() << "GPU processing is not enabled.";
 #endif  // !MEDIAPIPE_DISABLE_GPU
 
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status TensorConverterCalculator::InitGpu(CalculatorContext* cc) {
+mediapipe::Status TensorConverterCalculator::InitGpu(CalculatorContext* cc) {
 #if !MEDIAPIPE_DISABLE_GPU
   // Get input image sizes.
   const auto& input =
@@ -451,7 +448,7 @@ REGISTER_CALCULATOR(TensorConverterCalculator);
                                                  &input,
 #endif  // MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31
                                                  &single_channel]()
-                                                    -> ::mediapipe::Status {
+                                                    -> mediapipe::Status {
 #if MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31
     // Shader to convert GL Texture to Shader Storage Buffer Object (SSBO),
     // with normalization to either: [0,1] or [-1,1].
@@ -561,14 +558,14 @@ REGISTER_CALCULATOR(TensorConverterCalculator);
     glGenFramebuffers(1, &framebuffer_);
 
 #endif  // MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }));
 #endif  // MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30
 #endif  // !MEDIAPIPE_DISABLE_GPU
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status TensorConverterCalculator::LoadOptions(
+mediapipe::Status TensorConverterCalculator::LoadOptions(
     CalculatorContext* cc) {
   // Get calculator options specified in the graph.
   const auto& options =
@@ -607,11 +604,11 @@ REGISTER_CALCULATOR(TensorConverterCalculator);
   CHECK_GE(max_num_channels_, 1);
   CHECK_LE(max_num_channels_, 4);
   CHECK_NE(max_num_channels_, 2);
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
 template <class T>
-::mediapipe::Status TensorConverterCalculator::NormalizeImage(
+mediapipe::Status TensorConverterCalculator::NormalizeImage(
     const ImageFrame& image_frame, bool flip_vertically, float* tensor_ptr) {
   const int height = image_frame.Height();
   const int width = image_frame.Width();
@@ -655,10 +652,10 @@ template <class T>
     }
   }
 
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status TensorConverterCalculator::CopyMatrixToTensor(
+mediapipe::Status TensorConverterCalculator::CopyMatrixToTensor(
     const Matrix& matrix, float* tensor_ptr) {
   if (row_major_matrix_) {
     auto matrix_map =
@@ -670,7 +667,7 @@ template <class T>
     matrix_map = matrix;
   }
 
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
 }  // namespace mediapipe

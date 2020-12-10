@@ -54,7 +54,7 @@ namespace {}  // namespace
 // }
 class ConstantSidePacketCalculator : public CalculatorBase {
  public:
-  static ::mediapipe::Status GetContract(CalculatorContract* cc) {
+  static mediapipe::Status GetContract(CalculatorContract* cc) {
     const auto& options =
         cc->Options<::mediapipe::ConstantSidePacketCalculatorOptions>();
     RET_CHECK_EQ(cc->OutputSidePackets().NumEntries(kPacketTag),
@@ -80,14 +80,14 @@ class ConstantSidePacketCalculator : public CalculatorBase {
       } else if (packet_options.has_classification_list_value()) {
         packet.Set<ClassificationList>();
       } else {
-        return ::mediapipe::InvalidArgumentError(
+        return mediapipe::InvalidArgumentError(
             "None of supported values were specified in options.");
       }
     }
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Open(CalculatorContext* cc) override {
+  mediapipe::Status Open(CalculatorContext* cc) override {
     const auto& options =
         cc->Options<::mediapipe::ConstantSidePacketCalculatorOptions>();
     int index = 0;
@@ -109,15 +109,15 @@ class ConstantSidePacketCalculator : public CalculatorBase {
         packet.Set(MakePacket<ClassificationList>(
             packet_options.classification_list_value()));
       } else {
-        return ::mediapipe::InvalidArgumentError(
+        return mediapipe::InvalidArgumentError(
             "None of supported values were specified in options.");
       }
     }
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Process(CalculatorContext* cc) override {
-    return ::mediapipe::OkStatus();
+  mediapipe::Status Process(CalculatorContext* cc) override {
+    return mediapipe::OkStatus();
   }
 
  private:

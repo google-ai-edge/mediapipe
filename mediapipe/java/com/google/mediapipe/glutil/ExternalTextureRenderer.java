@@ -17,6 +17,7 @@ package com.google.mediapipe.glutil;
 import android.graphics.SurfaceTexture;
 import android.opengl.GLES11Ext;
 import android.opengl.GLES20;
+import android.view.Surface;
 import java.nio.FloatBuffer;
 import java.util.HashMap;
 import java.util.Map;
@@ -44,6 +45,17 @@ public class ExternalTextureRenderer {
           0.0f, 0.0f, // bottom left
           1.0f, 0.0f // bottom right
           );
+  private static final Vertex BOTTOM_LEFT = new Vertex(-1.0f, -1.0f);
+  private static final Vertex BOTTOM_RIGHT = new Vertex(1.0f, -1.0f);
+  private static final Vertex TOP_LEFT = new Vertex(-1.0f, 1.0f);
+  private static final Vertex TOP_RIGHT = new Vertex(1.0f, 1.0f);
+  private static final Vertex[] POSITION_VERTICIES = {
+    BOTTOM_LEFT, BOTTOM_RIGHT, TOP_LEFT, TOP_RIGHT
+  };
+  private static final FloatBuffer POSITION_VERTICIES_0 = fb(POSITION_VERTICIES, 0, 1, 2, 3);
+  private static final FloatBuffer POSITION_VERTICIES_90 = fb(POSITION_VERTICIES, 2, 0, 3, 1);
+  private static final FloatBuffer POSITION_VERTICIES_180 = fb(POSITION_VERTICIES, 3, 2, 1, 0);
+  private static final FloatBuffer POSITION_VERTICIES_270 = fb(POSITION_VERTICIES, 1, 3, 0, 2);
 
   private static final String TAG = "ExternalTextureRend"; // Max length of a tag is 23.
   private static final int ATTRIB_POSITION = 1;
@@ -54,6 +66,7 @@ public class ExternalTextureRenderer {
   private int textureTransformUniform;
   private float[] textureTransformMatrix = new float[16];
   private boolean flipY;
+  private int rotation = Surface.ROTATION_0;
 
   /** Call this to setup the shader program before rendering. */
   public void setup() {
@@ -77,6 +90,15 @@ public class ExternalTextureRenderer {
    */
   public void setFlipY(boolean flip) {
     flipY = flip;
+  }
+
+  /**
+   * Rotates the rendering output, useful for supporting landscape orientations. The value should
+   * correspond to Display.getRotation(), e.g. Surface.ROTATION_0. Flipping (if any) is applied
+   * before rotation. Effective in subsequent {@link #render(SurfaceTexture)} calls.
+   */
+  public void setRotation(int rotation) {
+    this.rotation = rotation;
   }
 
   /**
@@ -111,7 +133,7 @@ public class ExternalTextureRenderer {
     ShaderUtil.checkGlError("glUniformMatrix4fv");
     GLES20.glEnableVertexAttribArray(ATTRIB_POSITION);
     GLES20.glVertexAttribPointer(
-        ATTRIB_POSITION, 2, GLES20.GL_FLOAT, false, 0, CommonShaders.SQUARE_VERTICES);
+        ATTRIB_POSITION, 2, GLES20.GL_FLOAT, false, 0, getPositionVerticies());
 
     GLES20.glEnableVertexAttribArray(ATTRIB_TEXTURE_COORDINATE);
     GLES20.glVertexAttribPointer(
@@ -139,5 +161,35 @@ public class ExternalTextureRenderer {
    */
   public void release() {
     GLES20.glDeleteProgram(program);
+  }
+
+  private FloatBuffer getPositionVerticies() {
+    switch (rotation) {
+      case Surface.ROTATION_90:
+        return POSITION_VERTICIES_90;
+      case Surface.ROTATION_180:
+        return POSITION_VERTICIES_180;
+      case Surface.ROTATION_270:
+        return POSITION_VERTICIES_270;
+      case Surface.ROTATION_0:
+      default:
+        return POSITION_VERTICIES_0;
+    }
+  }
+
+  private static FloatBuffer fb(Vertex[] v, int i0, int i1, int i2, int i3) {
+    return ShaderUtil.floatBuffer(
+        v[i0].x, v[i0].y, v[i1].x, v[i1].y, v[i2].x, v[i2].y, v[i3].x, v[i3].y);
+  }
+
+  /** Convenience class to make rotations easier. */
+  private static class Vertex {
+    float x;
+    float y;
+
+    Vertex(float x, float y) {
+      this.x = x;
+      this.y = y;
+    }
   }
 }

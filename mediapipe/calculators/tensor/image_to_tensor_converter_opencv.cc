@@ -35,16 +35,26 @@ namespace {
 
 class OpenCvProcessor : public ImageToTensorConverter {
  public:
+  OpenCvProcessor(BorderMode border_mode) {
+    switch (border_mode) {
+      case BorderMode::kReplicate:
+        border_mode_ = cv::BORDER_REPLICATE;
+        break;
+      case BorderMode::kZero:
+        border_mode_ = cv::BORDER_CONSTANT;
+        break;
+    }
+  }
+
   Size GetImageSize(const Packet& image_packet) override {
     const auto& image = image_packet.Get<mediapipe::ImageFrame>();
     return {image.Width(), image.Height()};
   }
 
-  ::mediapipe::StatusOr<Tensor> Convert(const Packet& image_packet,
-                                        const RotatedRect& roi,
-                                        const Size& output_dims,
-                                        float range_min,
-                                        float range_max) override {
+  mediapipe::StatusOr<Tensor> Convert(const Packet& image_packet,
+                                      const RotatedRect& roi,
+                                      const Size& output_dims, float range_min,
+                                      float range_max) override {
     const auto& input = image_packet.Get<mediapipe::ImageFrame>();
     if (input.Format() != mediapipe::ImageFormat::SRGB &&
         input.Format() != mediapipe::ImageFormat::SRGBA) {
@@ -84,7 +94,7 @@ class OpenCvProcessor : public ImageToTensorConverter {
     cv::warpPerspective(src, transformed, projection_matrix,
                         cv::Size(dst_width, dst_height),
                         /*flags=*/cv::INTER_LINEAR,
-                        /*borderMode=*/cv::BORDER_REPLICATE);
+                        /*borderMode=*/border_mode_);
 
     if (transformed.channels() > kNumChannels) {
       cv::Mat proper_channels_mat;
@@ -101,16 +111,19 @@ class OpenCvProcessor : public ImageToTensorConverter {
     transformed.convertTo(dst, CV_32FC3, transform.scale, transform.offset);
     return tensor;
   }
+
+ private:
+  enum cv::BorderTypes border_mode_;
 };
 
 }  // namespace
 
-::mediapipe::StatusOr<std::unique_ptr<ImageToTensorConverter>>
-CreateOpenCvConverter(CalculatorContext* cc) {
+mediapipe::StatusOr<std::unique_ptr<ImageToTensorConverter>>
+CreateOpenCvConverter(CalculatorContext* cc, BorderMode border_mode) {
   // Simply "return absl::make_unique<OpenCvProcessor>()" failed to build on
   // macOS with bazel.
   return std::unique_ptr<ImageToTensorConverter>(
-      absl::make_unique<OpenCvProcessor>());
+      absl::make_unique<OpenCvProcessor>(border_mode));
 }
 
 }  // namespace mediapipe

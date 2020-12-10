@@ -33,7 +33,7 @@ ABSL_FLAG(std::string, log_root_dir, "",
 #ifdef __ANDROID__
 namespace mediapipe {
 namespace file {
-::mediapipe::Status RecursivelyCreateDir(absl::string_view path) {
+mediapipe::Status RecursivelyCreateDir(absl::string_view path) {
   return RecursivelyCreateDir(path, file::Options());
 }
 }  // namespace file
@@ -42,18 +42,18 @@ namespace file {
 
 namespace mediapipe {
 
-::mediapipe::StatusOr<std::string> GetLogDirectory() {
+mediapipe::StatusOr<std::string> GetLogDirectory() {
   if (!FLAGS_log_root_dir.CurrentValue().empty()) {
     return FLAGS_log_root_dir.CurrentValue();
   }
   return GetDefaultTraceLogDirectory();
 }
 
-::mediapipe::StatusOr<std::string> PathToLogFile(const std::string& path) {
+mediapipe::StatusOr<std::string> PathToLogFile(const std::string& path) {
   ASSIGN_OR_RETURN(std::string log_dir, GetLogDirectory());
   std::string result = file::JoinPath(log_dir, path);
   MP_RETURN_IF_ERROR(
-      ::mediapipe::file::RecursivelyCreateDir(file::Dirname(result)));
+      mediapipe::file::RecursivelyCreateDir(file::Dirname(result)));
   return result;
 }
 

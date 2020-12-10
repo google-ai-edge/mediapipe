@@ -53,9 +53,9 @@ JNIEXPORT jlong JNICALL ANDROID_PACKET_CREATOR_METHOD(
                << "is not equal to 4 times bitmap width: " << info.width;
     return 0L;
   }
-  auto image_frame = absl::make_unique<::mediapipe::ImageFrame>(
+  auto image_frame = absl::make_unique<mediapipe::ImageFrame>(
       mediapipe::ImageFormat::SRGB, info.width, info.height,
-      ::mediapipe::ImageFrame::kGlDefaultAlignmentBoundary);
+      mediapipe::ImageFrame::kGlDefaultAlignmentBoundary);
   void* pixel_addr = nullptr;
   result = AndroidBitmap_lockPixels(env, bitmap, &pixel_addr);
   if (result != ANDROID_BITMAP_RESULT_SUCCESS) {
@@ -86,9 +86,9 @@ JNIEXPORT jlong JNICALL ANDROID_PACKET_CREATOR_METHOD(
     LOG(ERROR) << "AndroidBitmap_getInfo() failed with result code " << result;
     return 0L;
   }
-  auto image_frame = absl::make_unique<::mediapipe::ImageFrame>(
+  auto image_frame = absl::make_unique<mediapipe::ImageFrame>(
       mediapipe::ImageFormat::SRGBA, info.width, info.height,
-      ::mediapipe::ImageFrame::kGlDefaultAlignmentBoundary);
+      mediapipe::ImageFrame::kGlDefaultAlignmentBoundary);
   int64_t buffer_size = info.stride * info.height;
   if (buffer_size != image_frame->PixelDataSize()) {
     LOG(ERROR) << "Bitmap stride: " << info.stride

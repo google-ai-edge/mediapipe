@@ -45,7 +45,7 @@ class ImmediateInputStreamHandler : public InputStreamHandler {
       std::function<void()> headers_ready_callback,
       std::function<void()> notification_callback,
       std::function<void(CalculatorContext*)> schedule_callback,
-      std::function<void(::mediapipe::Status)> error_callback) override;
+      std::function<void(mediapipe::Status)> error_callback) override;
 
   // Returns kReadyForProcess whenever a Packet is available at any of
   // the input streams, or any input stream becomes done.
@@ -83,7 +83,7 @@ void ImmediateInputStreamHandler::PrepareForRun(
     std::function<void()> headers_ready_callback,
     std::function<void()> notification_callback,
     std::function<void(CalculatorContext*)> schedule_callback,
-    std::function<void(::mediapipe::Status)> error_callback) {
+    std::function<void(mediapipe::Status)> error_callback) {
   {
     absl::MutexLock lock(&mutex_);
     for (int i = 0; i < sync_sets_.size(); ++i) {

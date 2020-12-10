@@ -86,7 +86,7 @@ ImageFormat::Format GetImageFormat(int num_channels) {
 //
 class OpenCvVideoDecoderCalculator : public CalculatorBase {
  public:
-  static ::mediapipe::Status GetContract(CalculatorContract* cc) {
+  static mediapipe::Status GetContract(CalculatorContract* cc) {
     cc->InputSidePackets().Tag("INPUT_FILE_PATH").Set<std::string>();
     cc->Outputs().Tag("VIDEO").Set<ImageFrame>();
     if (cc->Outputs().HasTag("VIDEO_PRESTREAM")) {
@@ -95,15 +95,15 @@ class OpenCvVideoDecoderCalculator : public CalculatorBase {
     if (cc->OutputSidePackets().HasTag("SAVED_AUDIO_PATH")) {
       cc->OutputSidePackets().Tag("SAVED_AUDIO_PATH").Set<std::string>();
     }
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Open(CalculatorContext* cc) override {
+  mediapipe::Status Open(CalculatorContext* cc) override {
     const std::string& input_file_path =
         cc->InputSidePackets().Tag("INPUT_FILE_PATH").Get<std::string>();
     cap_ = absl::make_unique<cv::VideoCapture>(input_file_path);
     if (!cap_->isOpened()) {
-      return ::mediapipe::InvalidArgumentErrorBuilder(MEDIAPIPE_LOC)
+      return mediapipe::InvalidArgumentErrorBuilder(MEDIAPIPE_LOC)
              << "Fail to open video file at " << input_file_path;
     }
     width_ = static_cast<int>(cap_->get(cv::CAP_PROP_FRAME_WIDTH));
@@ -116,19 +116,19 @@ class OpenCvVideoDecoderCalculator : public CalculatorBase {
     cv::Mat frame;
     cap_->read(frame);
     if (frame.empty()) {
-      return ::mediapipe::InvalidArgumentErrorBuilder(MEDIAPIPE_LOC)
+      return mediapipe::InvalidArgumentErrorBuilder(MEDIAPIPE_LOC)
              << "Fail to read any frames from the video file at "
              << input_file_path;
     }
     format_ = GetImageFormat(frame.channels());
     if (format_ == ImageFormat::UNKNOWN) {
-      return ::mediapipe::InvalidArgumentErrorBuilder(MEDIAPIPE_LOC)
+      return mediapipe::InvalidArgumentErrorBuilder(MEDIAPIPE_LOC)
              << "Unsupported video format of the video file at "
              << input_file_path;
     }
 
     if (fps <= 0 || frame_count_ <= 0 || width_ <= 0 || height_ <= 0) {
-      return ::mediapipe::InvalidArgumentErrorBuilder(MEDIAPIPE_LOC)
+      return mediapipe::InvalidArgumentErrorBuilder(MEDIAPIPE_LOC)
              << "Fail to make video header due to the incorrect metadata from "
                 "the video file at "
              << input_file_path;
@@ -170,17 +170,17 @@ class OpenCvVideoDecoderCalculator : public CalculatorBase {
             .Set(MakePacket<std::string>(std::string()));
       }
 #else
-      return ::mediapipe::InvalidArgumentErrorBuilder(MEDIAPIPE_LOC)
+      return mediapipe::InvalidArgumentErrorBuilder(MEDIAPIPE_LOC)
              << "OpenCVVideoDecoderCalculator can't save the audio file "
                 "because FFmpeg is not installed. Please remove "
                 "output_side_packet: \"SAVED_AUDIO_PATH\" from the node "
                 "config.";
 #endif
     }
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Process(CalculatorContext* cc) override {
+  mediapipe::Status Process(CalculatorContext* cc) override {
     auto image_frame = absl::make_unique<ImageFrame>(format_, width_, height_,
                                                      /*alignment_boundary=*/1);
     // Use microsecond as the unit of time.
@@ -213,10 +213,10 @@ class OpenCvVideoDecoderCalculator : public CalculatorBase {
       decoded_frames_++;
     }
 
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Close(CalculatorContext* cc) override {
+  mediapipe::Status Close(CalculatorContext* cc) override {
     if (cap_ && cap_->isOpened()) {
       cap_->release();
     }
@@ -225,7 +225,7 @@ class OpenCvVideoDecoderCalculator : public CalculatorBase {
                    << frame_count_ << " vs decoded frames: " << decoded_frames_
                    << ").";
     }
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
  private:

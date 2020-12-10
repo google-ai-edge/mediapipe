@@ -43,7 +43,7 @@ namespace mediapipe {
 //
 class MergeCalculator : public CalculatorBase {
  public:
-  static ::mediapipe::Status GetContract(CalculatorContract* cc) {
+  static mediapipe::Status GetContract(CalculatorContract* cc) {
     RET_CHECK_GT(cc->Inputs().NumEntries(), 0)
         << "Needs at least one input stream";
     RET_CHECK_EQ(cc->Outputs().NumEntries(), 1);
@@ -60,29 +60,29 @@ class MergeCalculator : public CalculatorBase {
     }
     cc->Outputs().Index(0).SetAny();
 
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Open(CalculatorContext* cc) final {
+  mediapipe::Status Open(CalculatorContext* cc) final {
     cc->SetOffset(TimestampDiff(0));
 
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Process(CalculatorContext* cc) final {
+  mediapipe::Status Process(CalculatorContext* cc) final {
     // Output the packet from the first input stream with a packet ready at this
     // timestamp.
     for (int i = 0; i < cc->Inputs().NumEntries(); ++i) {
       if (!cc->Inputs().Index(i).IsEmpty()) {
         cc->Outputs().Index(0).AddPacket(cc->Inputs().Index(i).Value());
-        return ::mediapipe::OkStatus();
+        return mediapipe::OkStatus();
       }
     }
 
     LOG(WARNING) << "Empty input packets at timestamp "
                  << cc->InputTimestamp().Value();
 
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 };
 

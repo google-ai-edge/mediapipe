@@ -1176,7 +1176,7 @@ TEST(GraphProfilerTest, ParallelReads) {
   MP_ASSERT_OK(graph.ObserveOutputStream("out_1", [&](const Packet& packet) {
     absl::MutexLock lock(&out_1_mutex);
     out_1_packets.push_back(packet);
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }));
   MP_EXPECT_OK(graph.StartRun(
       {{"range_step", MakePacket<std::pair<uint32, uint32>>(1000, 1)}}));

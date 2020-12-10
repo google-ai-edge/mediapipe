@@ -28,7 +28,7 @@ namespace {
 // MuxInputStreamHandler should fail when running this test.
 TEST(MuxInputStreamHandlerTest, AtomicAccessToControlAndDataStreams) {
   CalculatorGraphConfig config =
-      ::mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
         input_stream: "input"
         node {
           calculator: "RoundRobinDemuxCalculator"

@@ -35,7 +35,7 @@ namespace mediapipe {
 // NormalizedLandmarkList.
 class SplitNormalizedLandmarkListCalculator : public CalculatorBase {
  public:
-  static ::mediapipe::Status GetContract(CalculatorContract* cc) {
+  static mediapipe::Status GetContract(CalculatorContract* cc) {
     RET_CHECK(cc->Inputs().NumEntries() == 1);
     RET_CHECK(cc->Outputs().NumEntries() != 0);
 
@@ -55,7 +55,7 @@ class SplitNormalizedLandmarkListCalculator : public CalculatorBase {
                range_0.begin() < range_1.end()) ||
               (range_1.begin() >= range_0.begin() &&
                range_1.begin() < range_0.end())) {
-            return ::mediapipe::InvalidArgumentError(
+            return mediapipe::InvalidArgumentError(
                 "Ranges must be non-overlapping when using combine_outputs "
                 "option.");
           }
@@ -63,7 +63,7 @@ class SplitNormalizedLandmarkListCalculator : public CalculatorBase {
       }
     } else {
       if (cc->Outputs().NumEntries() != options.ranges_size()) {
-        return ::mediapipe::InvalidArgumentError(
+        return mediapipe::InvalidArgumentError(
             "The number of output streams should match the number of ranges "
             "specified in the CalculatorOptions.");
       }
@@ -72,13 +72,13 @@ class SplitNormalizedLandmarkListCalculator : public CalculatorBase {
       for (int i = 0; i < cc->Outputs().NumEntries(); ++i) {
         if (options.ranges(i).begin() < 0 || options.ranges(i).end() < 0 ||
             options.ranges(i).begin() >= options.ranges(i).end()) {
-          return ::mediapipe::InvalidArgumentError(
+          return mediapipe::InvalidArgumentError(
               "Indices should be non-negative and begin index should be less "
               "than the end index.");
         }
         if (options.element_only()) {
           if (options.ranges(i).end() - options.ranges(i).begin() != 1) {
-            return ::mediapipe::InvalidArgumentError(
+            return mediapipe::InvalidArgumentError(
                 "Since element_only is true, all ranges should be of size 1.");
           }
           cc->Outputs().Index(i).Set<NormalizedLandmark>();
@@ -88,10 +88,10 @@ class SplitNormalizedLandmarkListCalculator : public CalculatorBase {
       }
     }
 
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Open(CalculatorContext* cc) override {
+  mediapipe::Status Open(CalculatorContext* cc) override {
     cc->SetOffset(TimestampDiff(0));
 
     const auto& options =
@@ -106,10 +106,10 @@ class SplitNormalizedLandmarkListCalculator : public CalculatorBase {
       total_elements_ += range.end() - range.begin();
     }
 
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Process(CalculatorContext* cc) override {
+  mediapipe::Status Process(CalculatorContext* cc) override {
     const NormalizedLandmarkList& input =
         cc->Inputs().Index(0).Get<NormalizedLandmarkList>();
     RET_CHECK_GE(input.landmark_size(), max_range_end_)
@@ -148,7 +148,7 @@ class SplitNormalizedLandmarkListCalculator : public CalculatorBase {
       }
     }
 
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
  private:

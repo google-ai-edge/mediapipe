@@ -25,7 +25,7 @@ namespace mediapipe {
 // A multithreaded executor based on a thread pool.
 class ThreadPoolExecutor : public Executor {
  public:
-  static ::mediapipe::StatusOr<Executor*> Create(
+  static mediapipe::StatusOr<Executor*> Create(
       const MediaPipeOptions& extendable_options);
 
   explicit ThreadPoolExecutor(int num_threads);
@@ -43,7 +43,7 @@ class ThreadPoolExecutor : public Executor {
   // Saves the value of the stack size option and starts the thread pool.
   void Start();
 
-  ::mediapipe::ThreadPool thread_pool_;
+  mediapipe::ThreadPool thread_pool_;
 
   // Records the stack size in ThreadOptions right before we call
   // thread_pool_.StartWorkers().

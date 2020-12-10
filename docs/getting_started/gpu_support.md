@@ -2,7 +2,7 @@
 layout: default
 title: GPU Support
 parent: Getting Started
-nav_order: 6
+nav_order: 7
 ---
 
 # GPU Support

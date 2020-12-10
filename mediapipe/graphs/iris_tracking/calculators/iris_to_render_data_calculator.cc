@@ -108,7 +108,7 @@ float CalculateDepth(const NormalizedLandmark& center, float focal_length,
 // }
 class IrisToRenderDataCalculator : public CalculatorBase {
  public:
-  static ::mediapipe::Status GetContract(CalculatorContract* cc) {
+  static mediapipe::Status GetContract(CalculatorContract* cc) {
     cc->Inputs().Tag(kIrisTag).Set<NormalizedLandmarkList>();
     cc->Outputs().Tag(kRenderDataTag).Set<RenderData>();
     cc->Inputs().Tag(kImageSizeTag).Set<std::pair<int, int>>();
@@ -119,12 +119,12 @@ class IrisToRenderDataCalculator : public CalculatorBase {
     if (cc->Inputs().HasTag(kRightIrisDepthTag)) {
       cc->Inputs().Tag(kRightIrisDepthTag).Set<float>();
     }
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Open(CalculatorContext* cc) override;
+  mediapipe::Status Open(CalculatorContext* cc) override;
 
-  ::mediapipe::Status Process(CalculatorContext* cc) override;
+  mediapipe::Status Process(CalculatorContext* cc) override;
 
  private:
   void RenderIris(const NormalizedLandmarkList& iris_landmarks,
@@ -150,15 +150,15 @@ class IrisToRenderDataCalculator : public CalculatorBase {
 };
 REGISTER_CALCULATOR(IrisToRenderDataCalculator);
 
-::mediapipe::Status IrisToRenderDataCalculator::Open(CalculatorContext* cc) {
+mediapipe::Status IrisToRenderDataCalculator::Open(CalculatorContext* cc) {
   cc->SetOffset(TimestampDiff(0));
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status IrisToRenderDataCalculator::Process(CalculatorContext* cc) {
+mediapipe::Status IrisToRenderDataCalculator::Process(CalculatorContext* cc) {
   // Only process if there's input landmarks.
   if (cc->Inputs().Tag(kIrisTag).IsEmpty()) {
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
   const auto& options =
       cc->Options<::mediapipe::IrisToRenderDataCalculatorOptions>();
@@ -212,7 +212,7 @@ REGISTER_CALCULATOR(IrisToRenderDataCalculator);
   cc->Outputs()
       .Tag(kRenderDataTag)
       .Add(render_data.release(), cc->InputTimestamp());
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
 void IrisToRenderDataCalculator::AddTextRenderData(

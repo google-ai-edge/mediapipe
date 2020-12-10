@@ -33,34 +33,34 @@ class MatrixMultiplyCalculator : public CalculatorBase {
   MatrixMultiplyCalculator() {}
   ~MatrixMultiplyCalculator() override {}
 
-  static ::mediapipe::Status GetContract(CalculatorContract* cc);
+  static mediapipe::Status GetContract(CalculatorContract* cc);
 
-  ::mediapipe::Status Open(CalculatorContext* cc) override;
-  ::mediapipe::Status Process(CalculatorContext* cc) override;
+  mediapipe::Status Open(CalculatorContext* cc) override;
+  mediapipe::Status Process(CalculatorContext* cc) override;
 };
 REGISTER_CALCULATOR(MatrixMultiplyCalculator);
 
 // static
-::mediapipe::Status MatrixMultiplyCalculator::GetContract(
+mediapipe::Status MatrixMultiplyCalculator::GetContract(
     CalculatorContract* cc) {
   cc->Inputs().Index(0).Set<Matrix>();
   cc->Outputs().Index(0).Set<Matrix>();
   cc->InputSidePackets().Index(0).Set<Matrix>();
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status MatrixMultiplyCalculator::Open(CalculatorContext* cc) {
+mediapipe::Status MatrixMultiplyCalculator::Open(CalculatorContext* cc) {
   // The output is at the same timestamp as the input.
   cc->SetOffset(TimestampDiff(0));
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status MatrixMultiplyCalculator::Process(CalculatorContext* cc) {
+mediapipe::Status MatrixMultiplyCalculator::Process(CalculatorContext* cc) {
   Matrix* multiplied = new Matrix();
   *multiplied = cc->InputSidePackets().Index(0).Get<Matrix>() *
                 cc->Inputs().Index(0).Get<Matrix>();
   cc->Outputs().Index(0).Add(multiplied, cc->InputTimestamp());
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
 }  // namespace mediapipe

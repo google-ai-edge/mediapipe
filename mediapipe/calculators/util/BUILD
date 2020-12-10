@@ -545,6 +545,30 @@ mediapipe_proto_library(
     ],
 )
 
+cc_library(
+    name = "landmark_visibility_calculator",
+    srcs = ["landmark_visibility_calculator.cc"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/formats:landmark_cc_proto",
+        "//mediapipe/framework/port:ret_check",
+    ],
+    alwayslink = 1,
+)
+
+cc_library(
+    name = "set_landmark_visibility_calculator",
+    srcs = ["set_landmark_visibility_calculator.cc"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/formats:landmark_cc_proto",
+        "//mediapipe/framework/port:ret_check",
+    ],
+    alwayslink = 1,
+)
+
 mediapipe_proto_library(
     name = "landmarks_to_floats_calculator_proto",
     srcs = ["landmarks_to_floats_calculator.proto"],
@@ -718,6 +742,39 @@ cc_library(
         "//mediapipe/framework/port:status",
     ],
     alwayslink = 1,
+)
+
+cc_library(
+    name = "detection_projection_calculator",
+    srcs = ["detection_projection_calculator.cc"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/formats:detection_cc_proto",
+        "//mediapipe/framework/formats:location",
+        "//mediapipe/framework/formats:rect_cc_proto",
+        "//mediapipe/framework/port:point",
+        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:status",
+    ],
+    alwayslink = 1,
+)
+
+cc_test(
+    name = "detection_projection_calculator_test",
+    srcs = ["detection_projection_calculator_test.cc"],
+    deps = [
+        ":detection_projection_calculator",
+        "//mediapipe/calculators/tensor:image_to_tensor_utils",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:calculator_runner",
+        "//mediapipe/framework/formats:detection_cc_proto",
+        "//mediapipe/framework/formats:location",
+        "//mediapipe/framework/formats:rect_cc_proto",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:parse_text_proto",
+        "//mediapipe/framework/port:point",
+    ],
 )
 
 cc_library(

@@ -69,7 +69,7 @@ TEST_F(TensorFlowSessionFromSavedModelGeneratorTest,
   PacketSet input_side_packets(tool::CreateTagMap({}).ValueOrDie());
   PacketSet output_side_packets(
       tool::CreateTagMap({"SESSION:session"}).ValueOrDie());
-  ::mediapipe::Status run_status = tool::RunGenerateAndValidateTypes(
+  mediapipe::Status run_status = tool::RunGenerateAndValidateTypes(
       "TensorFlowSessionFromSavedModelGenerator", extendable_options_,
       input_side_packets, &output_side_packets);
   MP_EXPECT_OK(run_status) << run_status.message();
@@ -111,7 +111,7 @@ TEST_F(TensorFlowSessionFromSavedModelGeneratorTest,
       Adopt(new std::string(GetSavedModelDir()));
   PacketSet output_side_packets(
       tool::CreateTagMap({"SESSION:session"}).ValueOrDie());
-  ::mediapipe::Status run_status = tool::RunGenerateAndValidateTypes(
+  mediapipe::Status run_status = tool::RunGenerateAndValidateTypes(
       "TensorFlowSessionFromSavedModelGenerator", extendable_options_,
       input_side_packets, &output_side_packets);
   MP_EXPECT_OK(run_status) << run_status.message();
@@ -126,7 +126,7 @@ TEST_F(TensorFlowSessionFromSavedModelGeneratorTest,
 TEST_F(TensorFlowSessionFromSavedModelGeneratorTest,
        ProducesPacketUsableByTensorFlowInferenceCalculator) {
   CalculatorGraphConfig graph_config =
-      ::mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(
           absl::Substitute(R"(
       node {
         calculator: "TensorFlowInferenceCalculator"
@@ -187,7 +187,7 @@ TEST_F(TensorFlowSessionFromSavedModelGeneratorTest,
   PacketSet input_side_packets(tool::CreateTagMap({}).ValueOrDie());
   PacketSet output_side_packets(
       tool::CreateTagMap({"SESSION:session"}).ValueOrDie());
-  ::mediapipe::Status run_status = tool::RunGenerateAndValidateTypes(
+  mediapipe::Status run_status = tool::RunGenerateAndValidateTypes(
       "TensorFlowSessionFromSavedModelGenerator", extendable_options_,
       input_side_packets, &output_side_packets);
   MP_EXPECT_OK(run_status) << run_status.message();
@@ -208,7 +208,7 @@ TEST_F(TensorFlowSessionFromSavedModelGeneratorTest,
   PacketSet input_side_packets(tool::CreateTagMap({}).ValueOrDie());
   PacketSet output_side_packets(
       tool::CreateTagMap({"SESSION:session"}).ValueOrDie());
-  ::mediapipe::Status run_status = tool::RunGenerateAndValidateTypes(
+  mediapipe::Status run_status = tool::RunGenerateAndValidateTypes(
       "TensorFlowSessionFromSavedModelGenerator", extendable_options_,
       input_side_packets, &output_side_packets);
   MP_EXPECT_OK(run_status) << run_status.message();

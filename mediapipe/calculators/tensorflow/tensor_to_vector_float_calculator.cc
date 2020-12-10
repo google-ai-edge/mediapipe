@@ -28,17 +28,17 @@ namespace tf = ::tensorflow;
 
 class TensorToVectorFloatCalculator : public CalculatorBase {
  public:
-  static ::mediapipe::Status GetContract(CalculatorContract* cc);
+  static mediapipe::Status GetContract(CalculatorContract* cc);
 
-  ::mediapipe::Status Open(CalculatorContext* cc) override;
-  ::mediapipe::Status Process(CalculatorContext* cc) override;
+  mediapipe::Status Open(CalculatorContext* cc) override;
+  mediapipe::Status Process(CalculatorContext* cc) override;
 
  private:
   TensorToVectorFloatCalculatorOptions options_;
 };
 REGISTER_CALCULATOR(TensorToVectorFloatCalculator);
 
-::mediapipe::Status TensorToVectorFloatCalculator::GetContract(
+mediapipe::Status TensorToVectorFloatCalculator::GetContract(
     CalculatorContract* cc) {
   // Start with only one input packet.
   RET_CHECK_EQ(cc->Inputs().NumEntries(), 1)
@@ -58,15 +58,15 @@ REGISTER_CALCULATOR(TensorToVectorFloatCalculator);
         // Output vector<float>.
     );
   }
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status TensorToVectorFloatCalculator::Open(CalculatorContext* cc) {
+mediapipe::Status TensorToVectorFloatCalculator::Open(CalculatorContext* cc) {
   options_ = cc->Options<TensorToVectorFloatCalculatorOptions>();
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status TensorToVectorFloatCalculator::Process(
+mediapipe::Status TensorToVectorFloatCalculator::Process(
     CalculatorContext* cc) {
   const tf::Tensor& input_tensor =
       cc->Inputs().Index(0).Value().Get<tf::Tensor>();
@@ -103,7 +103,7 @@ REGISTER_CALCULATOR(TensorToVectorFloatCalculator);
     cc->Outputs().Index(0).Add(output.release(), cc->InputTimestamp());
   }
 
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
 }  // namespace mediapipe

@@ -30,7 +30,7 @@
 namespace mediapipe {
 namespace autoflip {
 
-::mediapipe::Status
+mediapipe::Status
 SceneCameraMotionAnalyzer::AnalyzeSceneAndPopulateFocusPointFrames(
     const KeyFrameCropOptions& key_frame_crop_options,
     const std::vector<KeyFrameCropResult>& key_frame_crop_results,
@@ -67,7 +67,7 @@ SceneCameraMotionAnalyzer::AnalyzeSceneAndPopulateFocusPointFrames(
                                   scene_frame_timestamps, focus_point_frames);
 }
 
-::mediapipe::Status SceneCameraMotionAnalyzer::ToUseSteadyMotion(
+mediapipe::Status SceneCameraMotionAnalyzer::ToUseSteadyMotion(
     const float look_at_center_x, const float look_at_center_y,
     const int crop_window_width, const int crop_window_height,
     SceneKeyFrameCropSummary* scene_summary,
@@ -77,10 +77,10 @@ SceneCameraMotionAnalyzer::AnalyzeSceneAndPopulateFocusPointFrames(
   auto* steady_motion = scene_camera_motion->mutable_steady_motion();
   steady_motion->set_steady_look_at_center_x(look_at_center_x);
   steady_motion->set_steady_look_at_center_y(look_at_center_y);
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status SceneCameraMotionAnalyzer::ToUseSweepingMotion(
+mediapipe::Status SceneCameraMotionAnalyzer::ToUseSweepingMotion(
     const float start_x, const float start_y, const float end_x,
     const float end_y, const int crop_window_width,
     const int crop_window_height, const double time_duration_in_sec,
@@ -99,10 +99,10 @@ SceneCameraMotionAnalyzer::AnalyzeSceneAndPopulateFocusPointFrames(
       scene_summary->frame_success_rate(), start_x, start_y, end_x, end_y,
       time_duration_in_sec);
   VLOG(1) << sweeping_log;
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status SceneCameraMotionAnalyzer::DecideCameraMotionType(
+mediapipe::Status SceneCameraMotionAnalyzer::DecideCameraMotionType(
     const KeyFrameCropOptions& key_frame_crop_options,
     const double scene_span_sec, const int64 end_time_us,
     SceneKeyFrameCropSummary* scene_summary,
@@ -131,7 +131,7 @@ SceneCameraMotionAnalyzer::AnalyzeSceneAndPopulateFocusPointFrames(
         no_salient_position_x, no_salient_position_y,
         scene_summary->crop_window_width(), scene_summary->crop_window_height(),
         scene_summary, scene_camera_motion));
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
   // Sweep across the scene when 1) success rate is too low, AND 2) the current
@@ -164,7 +164,7 @@ SceneCameraMotionAnalyzer::AnalyzeSceneAndPopulateFocusPointFrames(
         start_x, start_y, end_x, end_y, key_frame_crop_options.target_width(),
         key_frame_crop_options.target_height(), scene_span_sec, scene_summary,
         scene_camera_motion));
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
   // If scene motion is small, then look at a steady point in the scene.
@@ -179,14 +179,14 @@ SceneCameraMotionAnalyzer::AnalyzeSceneAndPopulateFocusPointFrames(
 
   // Otherwise, tracks the focus regions.
   scene_camera_motion->mutable_tracking_motion();
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
 // If there is no required focus region, looks at the middle of the center
 // range, and snaps to the scene center if close. Otherwise, look at the center
 // of the union of the required focus regions, and ensures the crop region
 // covers this union.
-::mediapipe::Status SceneCameraMotionAnalyzer::DecideSteadyLookAtRegion(
+mediapipe::Status SceneCameraMotionAnalyzer::DecideSteadyLookAtRegion(
     const KeyFrameCropOptions& key_frame_crop_options,
     SceneKeyFrameCropSummary* scene_summary,
     SceneCameraMotion* scene_camera_motion) const {
@@ -252,10 +252,10 @@ SceneCameraMotionAnalyzer::AnalyzeSceneAndPopulateFocusPointFrames(
   MP_RETURN_IF_ERROR(ToUseSteadyMotion(center_x, center_y, crop_width,
                                        crop_height, scene_summary,
                                        scene_camera_motion));
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status
+mediapipe::Status
 SceneCameraMotionAnalyzer::AddFocusPointsFromCenterTypeAndWeight(
     const float center_x, const float center_y, const int frame_width,
     const int frame_height, const FocusPointFrameType type, const float weight,
@@ -294,10 +294,10 @@ SceneCameraMotionAnalyzer::AddFocusPointsFromCenterTypeAndWeight(
   } else {
     RET_CHECK_FAIL() << absl::StrCat("Invalid FocusPointFrameType ", type);
   }
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status SceneCameraMotionAnalyzer::PopulateFocusPointFrames(
+mediapipe::Status SceneCameraMotionAnalyzer::PopulateFocusPointFrames(
     const SceneKeyFrameCropSummary& scene_summary,
     const SceneCameraMotion& scene_camera_motion,
     const std::vector<int64>& scene_frame_timestamps,
@@ -340,7 +340,7 @@ SceneCameraMotionAnalyzer::AddFocusPointsFromCenterTypeAndWeight(
           options_.salient_point_bound(), &focus_point_frame));
       focus_point_frames->push_back(focus_point_frame);
     }
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   } else if (scene_camera_motion.has_sweeping_motion()) {
     // Camera sweeps across the frame.
     const auto& sweeping_motion = scene_camera_motion.sweeping_motion();
@@ -361,7 +361,7 @@ SceneCameraMotionAnalyzer::AddFocusPointsFromCenterTypeAndWeight(
           options_.salient_point_bound(), &focus_point_frame));
       focus_point_frames->push_back(focus_point_frame);
     }
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   } else if (scene_camera_motion.has_tracking_motion()) {
     // Camera tracks crop regions.
     RET_CHECK_GT(scene_summary.num_key_frames(), 0) << "No key frames.";
@@ -369,8 +369,8 @@ SceneCameraMotionAnalyzer::AddFocusPointsFromCenterTypeAndWeight(
         scene_summary, focus_point_frame_type, scene_frame_timestamps,
         focus_point_frames);
   } else {
-    return ::mediapipe::Status(StatusCode::kInvalidArgument,
-                               "Unknown motion type.");
+    return mediapipe::Status(StatusCode::kInvalidArgument,
+                             "Unknown motion type.");
   }
 }
 
@@ -380,7 +380,7 @@ SceneCameraMotionAnalyzer::AddFocusPointsFromCenterTypeAndWeight(
 // The weight for the focus point is proportional to the interpolated score
 // and scaled so that the maximum weight is equal to
 // maximum_focus_point_weight in the SceneCameraMotionAnalyzerOptions.
-::mediapipe::Status
+mediapipe::Status
 SceneCameraMotionAnalyzer::PopulateFocusPointFramesForTracking(
     const SceneKeyFrameCropSummary& scene_summary,
     const FocusPointFrameType focus_point_frame_type,
@@ -440,7 +440,7 @@ SceneCameraMotionAnalyzer::PopulateFocusPointFramesForTracking(
       focus_point->set_weight(scale * focus_point->weight());
     }
   }
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
 }  // namespace autoflip

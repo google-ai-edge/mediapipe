@@ -106,7 +106,7 @@ class Reporter {
   // Accepts names of of columns or wildcard patterns (* or ?) to
   // select which statistics columns will be included in a generated
   // report.
-  ::mediapipe::Status set_columns(const std::vector<std::string>& columns);
+  mediapipe::Status set_columns(const std::vector<std::string>& columns);
 
   // Generates a report based on the current accumulated statistics.
   std::unique_ptr<reporter::Report> Report();

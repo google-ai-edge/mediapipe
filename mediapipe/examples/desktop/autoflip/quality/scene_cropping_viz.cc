@@ -46,7 +46,7 @@ const cv::Scalar kOrange =
     cv::Scalar(255.0, 165.0, 0.0);  // ica object detector
 const cv::Scalar kWhite = cv::Scalar(255.0, 255.0, 255.0);  // others
 
-::mediapipe::Status DrawDetectionsAndCropRegions(
+mediapipe::Status DrawDetectionsAndCropRegions(
     const std::vector<cv::Mat>& scene_frames,
     const std::vector<bool>& is_key_frames,
     const std::vector<KeyFrameInfo>& key_frame_infos,
@@ -130,7 +130,7 @@ const cv::Scalar kWhite = cv::Scalar(255.0, 255.0, 255.0);  // others
     }
     viz_frames->push_back(std::move(viz_frame));
   }
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
 namespace {
@@ -147,7 +147,7 @@ cv::Rect LimitBounds(const cv::Rect& rect, const int max_width,
 }
 }  // namespace
 
-::mediapipe::Status DrawDetectionAndFramingWindow(
+mediapipe::Status DrawDetectionAndFramingWindow(
     const std::vector<cv::Mat>& org_scene_frames,
     const std::vector<cv::Rect>& crop_from_locations,
     const ImageFormat::Format image_format, const float overlay_opacity,
@@ -166,10 +166,10 @@ cv::Rect LimitBounds(const cv::Rect& rect, const int max_width,
     scene_frame(crop_from_bounded).copyTo(darkened(crop_from_bounded));
     viz_frames->push_back(std::move(viz_frame));
   }
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status DrawFocusPointAndCropWindow(
+mediapipe::Status DrawFocusPointAndCropWindow(
     const std::vector<cv::Mat>& scene_frames,
     const std::vector<FocusPointFrame>& focus_point_frames,
     const float overlay_opacity, const int crop_window_width,
@@ -215,7 +215,7 @@ cv::Rect LimitBounds(const cv::Rect& rect, const int max_width,
     }
     viz_frames->push_back(std::move(viz_frame));
   }
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
 }  // namespace autoflip

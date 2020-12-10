@@ -44,15 +44,15 @@ constexpr char kSequenceExample[] = "SEQUENCE_EXAMPLE";
 
 class StringToSequenceExampleCalculator : public CalculatorBase {
  public:
-  static ::mediapipe::Status GetContract(CalculatorContract* cc);
-  ::mediapipe::Status Open(CalculatorContext* cc) override;
-  ::mediapipe::Status Process(CalculatorContext* cc) override;
-  ::mediapipe::Status Close(CalculatorContext* cc) override;
+  static mediapipe::Status GetContract(CalculatorContract* cc);
+  mediapipe::Status Open(CalculatorContext* cc) override;
+  mediapipe::Status Process(CalculatorContext* cc) override;
+  mediapipe::Status Close(CalculatorContext* cc) override;
 };
 
 REGISTER_CALCULATOR(StringToSequenceExampleCalculator);
 
-::mediapipe::Status StringToSequenceExampleCalculator::GetContract(
+mediapipe::Status StringToSequenceExampleCalculator::GetContract(
     CalculatorContract* cc) {
   if (cc->InputSidePackets().HasTag(kString)) {
     cc->InputSidePackets().Tag(kString).Set<std::string>();
@@ -62,10 +62,10 @@ REGISTER_CALCULATOR(StringToSequenceExampleCalculator);
     cc->InputSidePackets().Tag(kSequenceExample).Set<tf::SequenceExample>();
     cc->OutputSidePackets().Tag(kString).Set<std::string>();
   }
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status StringToSequenceExampleCalculator::Open(
+mediapipe::Status StringToSequenceExampleCalculator::Open(
     CalculatorContext* cc) {
   if (cc->InputSidePackets().HasTag(kString)) {
     auto string_value = cc->InputSidePackets().Tag(kString).Get<std::string>();
@@ -73,17 +73,17 @@ REGISTER_CALCULATOR(StringToSequenceExampleCalculator);
     example->ParseFromString(string_value);
     cc->OutputSidePackets()
         .Tag(kSequenceExample)
-        .Set(::mediapipe::Adopt(example.release()));
+        .Set(mediapipe::Adopt(example.release()));
   }
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status StringToSequenceExampleCalculator::Process(
+mediapipe::Status StringToSequenceExampleCalculator::Process(
     CalculatorContext* cc) {
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status StringToSequenceExampleCalculator::Close(
+mediapipe::Status StringToSequenceExampleCalculator::Close(
     CalculatorContext* cc) {
   if (cc->InputSidePackets().HasTag(kSequenceExample)) {
     const auto& example =
@@ -91,9 +91,9 @@ REGISTER_CALCULATOR(StringToSequenceExampleCalculator);
     auto string_value = absl::make_unique<std::string>();
     example.SerializeToString(string_value.get());
     cc->OutputSidePackets().Tag(kString).Set(
-        ::mediapipe::Adopt(string_value.release()));
+        mediapipe::Adopt(string_value.release()));
   }
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
 }  // namespace mediapipe

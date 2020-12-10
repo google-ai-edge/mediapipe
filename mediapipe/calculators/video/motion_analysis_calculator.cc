@@ -95,11 +95,11 @@ class MotionAnalysisCalculator : public CalculatorBase {
  public:
   ~MotionAnalysisCalculator() override = default;
 
-  static ::mediapipe::Status GetContract(CalculatorContract* cc);
+  static mediapipe::Status GetContract(CalculatorContract* cc);
 
-  ::mediapipe::Status Open(CalculatorContext* cc) override;
-  ::mediapipe::Status Process(CalculatorContext* cc) override;
-  ::mediapipe::Status Close(CalculatorContext* cc) override;
+  mediapipe::Status Open(CalculatorContext* cc) override;
+  mediapipe::Status Process(CalculatorContext* cc) override;
+  mediapipe::Status Close(CalculatorContext* cc) override;
 
  private:
   // Outputs results to Outputs() if MotionAnalysis buffered sufficient results.
@@ -107,8 +107,8 @@ class MotionAnalysisCalculator : public CalculatorBase {
   void OutputMotionAnalyzedFrames(bool flush, CalculatorContext* cc);
 
   // Lazy init function to be called on Process.
-  ::mediapipe::Status InitOnProcess(InputStream* video_stream,
-                                    InputStream* selection_stream);
+  mediapipe::Status InitOnProcess(InputStream* video_stream,
+                                  InputStream* selection_stream);
 
   // Parses CSV file contents to homographies.
   bool ParseModelCSV(const std::string& contents,
@@ -189,7 +189,7 @@ class MotionAnalysisCalculator : public CalculatorBase {
 
 REGISTER_CALCULATOR(MotionAnalysisCalculator);
 
-::mediapipe::Status MotionAnalysisCalculator::GetContract(
+mediapipe::Status MotionAnalysisCalculator::GetContract(
     CalculatorContract* cc) {
   if (cc->Inputs().HasTag("VIDEO")) {
     cc->Inputs().Tag("VIDEO").Set<ImageFrame>();
@@ -246,10 +246,10 @@ REGISTER_CALCULATOR(MotionAnalysisCalculator);
     cc->InputSidePackets().Tag(kOptionsTag).Set<CalculatorOptions>();
   }
 
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status MotionAnalysisCalculator::Open(CalculatorContext* cc) {
+mediapipe::Status MotionAnalysisCalculator::Open(CalculatorContext* cc) {
   options_ =
       tool::RetrieveOptions(cc->Options<MotionAnalysisCalculatorOptions>(),
                             cc->InputSidePackets(), kOptionsTag);
@@ -364,7 +364,7 @@ REGISTER_CALCULATOR(MotionAnalysisCalculator);
   // If no video header is provided, just return and initialize on the first
   // Process() call.
   if (video_header == nullptr) {
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
   ////////////// EARLY RETURN; ONLY HEADER OUTPUT SHOULD GO HERE ///////////////
@@ -397,12 +397,12 @@ REGISTER_CALCULATOR(MotionAnalysisCalculator);
         .SetHeader(Adopt(new VideoHeader(*video_header)));
   }
 
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status MotionAnalysisCalculator::Process(CalculatorContext* cc) {
+mediapipe::Status MotionAnalysisCalculator::Process(CalculatorContext* cc) {
   if (options_.bypass_mode()) {
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
   InputStream* video_stream =
@@ -441,7 +441,7 @@ REGISTER_CALCULATOR(MotionAnalysisCalculator);
     }
 
     ++frame_idx_;
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
   if (motion_analysis_ == nullptr) {
@@ -491,7 +491,7 @@ REGISTER_CALCULATOR(MotionAnalysisCalculator);
       cc->Outputs().Tag("VIDEO_OUT").AddPacket(video_stream->Value());
     }
 
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
   if (use_frame) {
@@ -520,7 +520,7 @@ REGISTER_CALCULATOR(MotionAnalysisCalculator);
       selected_motions_.push_back(frame_selection_result->camera_motion());
       switch (options_.selection_analysis()) {
         case MotionAnalysisCalculatorOptions::NO_ANALYSIS_USE_SELECTION:
-          return ::mediapipe::UnknownErrorBuilder(MEDIAPIPE_LOC)
+          return mediapipe::UnknownErrorBuilder(MEDIAPIPE_LOC)
                  << "Should not reach this point!";
 
         case MotionAnalysisCalculatorOptions::ANALYSIS_FROM_FEATURES:
@@ -574,10 +574,10 @@ REGISTER_CALCULATOR(MotionAnalysisCalculator);
     OutputMotionAnalyzedFrames(false, cc);
   }
 
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status MotionAnalysisCalculator::Close(CalculatorContext* cc) {
+mediapipe::Status MotionAnalysisCalculator::Close(CalculatorContext* cc) {
   // Guard against empty videos.
   if (motion_analysis_) {
     OutputMotionAnalyzedFrames(true, cc);
@@ -588,7 +588,7 @@ REGISTER_CALCULATOR(MotionAnalysisCalculator);
                  << meta_motions_.size();
     }
   }
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
 void MotionAnalysisCalculator::OutputMotionAnalyzedFrames(
@@ -688,7 +688,7 @@ void MotionAnalysisCalculator::OutputMotionAnalyzedFrames(
   }
 }
 
-::mediapipe::Status MotionAnalysisCalculator::InitOnProcess(
+mediapipe::Status MotionAnalysisCalculator::InitOnProcess(
     InputStream* video_stream, InputStream* selection_stream) {
   if (video_stream) {
     frame_width_ = video_stream->Get<ImageFrame>().Width();
@@ -761,7 +761,7 @@ void MotionAnalysisCalculator::OutputMotionAnalyzedFrames(
     motion_options->set_filter_initialized_irls_weights(true);
   }
 
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
 bool MotionAnalysisCalculator::ParseModelCSV(

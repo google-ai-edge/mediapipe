@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Lint as: python3
 """The public facing packet getter APIs."""
 
 from typing import List, Type
@@ -29,6 +28,7 @@ get_int = _packet_getter.get_int
 get_uint = _packet_getter.get_uint
 get_float = _packet_getter.get_float
 get_int_list = _packet_getter.get_int_list
+get_bool_list = _packet_getter.get_bool_list
 get_float_list = _packet_getter.get_float_list
 get_str_list = _packet_getter.get_str_list
 get_packet_list = _packet_getter.get_packet_list

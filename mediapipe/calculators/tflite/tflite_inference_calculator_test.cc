@@ -56,18 +56,18 @@ void DoSmokeTest(const std::string& graph_proto) {
   interpreter->SetTensorParametersReadWrite(0, kTfLiteFloat32, "", {3},
                                             TfLiteQuantization());
   int t = interpreter->inputs()[0];
-  TfLiteTensor* tensor = interpreter->tensor(t);
+  TfLiteTensor* input_tensor = interpreter->tensor(t);
   interpreter->ResizeInputTensor(t, {width, height, channels});
   interpreter->AllocateTensors();
 
-  float* tensor_buffer = tensor->data.f;
-  ASSERT_NE(tensor_buffer, nullptr);
+  float* input_tensor_buffer = input_tensor->data.f;
+  ASSERT_NE(input_tensor_buffer, nullptr);
   for (int i = 0; i < width * height * channels - 1; i++) {
-    tensor_buffer[i] = 1;
+    input_tensor_buffer[i] = 1;
   }
 
   auto input_vec = absl::make_unique<std::vector<TfLiteTensor>>();
-  input_vec->emplace_back(*tensor);
+  input_vec->emplace_back(*input_tensor);
 
   // Prepare single calculator graph to and wait for packets.
   CalculatorGraphConfig graph_config =

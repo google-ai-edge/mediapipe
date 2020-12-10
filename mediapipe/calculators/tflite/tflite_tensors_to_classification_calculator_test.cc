@@ -27,7 +27,7 @@
 
 namespace mediapipe {
 
-using ::mediapipe::ParseTextProtoOrDie;
+using mediapipe::ParseTextProtoOrDie;
 using ::tflite::Interpreter;
 using Node = ::mediapipe::CalculatorGraphConfig::Node;
 

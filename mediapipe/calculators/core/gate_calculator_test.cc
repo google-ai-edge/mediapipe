@@ -25,7 +25,7 @@ namespace {
 class GateCalculatorTest : public ::testing::Test {
  protected:
   // Helper to run a graph and return status.
-  static ::mediapipe::Status RunGraph(const std::string& proto) {
+  static mediapipe::Status RunGraph(const std::string& proto) {
     auto runner = absl::make_unique<CalculatorRunner>(
         ParseTextProtoOrDie<CalculatorGraphConfig::Node>(proto));
     return runner->Run();

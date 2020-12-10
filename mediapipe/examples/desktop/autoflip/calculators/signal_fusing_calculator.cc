@@ -105,7 +105,7 @@ class SignalFusingCalculator : public mediapipe::CalculatorBase {
   SignalFusingCalculator(const SignalFusingCalculator&) = delete;
   SignalFusingCalculator& operator=(const SignalFusingCalculator&) = delete;
 
-  static ::mediapipe::Status GetContract(mediapipe::CalculatorContract* cc);
+  static mediapipe::Status GetContract(mediapipe::CalculatorContract* cc);
   mediapipe::Status Open(mediapipe::CalculatorContext* cc) override;
   mediapipe::Status Process(mediapipe::CalculatorContext* cc) override;
   mediapipe::Status Close(mediapipe::CalculatorContext* cc) override;
@@ -166,7 +166,7 @@ mediapipe::Status SignalFusingCalculator::Open(
       process_by_scene_ = false;
     }
   }
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
 mediapipe::Status SignalFusingCalculator::Close(
@@ -175,7 +175,7 @@ mediapipe::Status SignalFusingCalculator::Close(
     MP_RETURN_IF_ERROR(ProcessScene(cc));
     scene_frames_.clear();
   }
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
 mediapipe::Status SignalFusingCalculator::ProcessScene(
@@ -240,7 +240,7 @@ mediapipe::Status SignalFusingCalculator::ProcessScene(
     }
   }
 
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
 std::vector<Packet> SignalFusingCalculator::GetSignalPackets(
@@ -302,17 +302,17 @@ mediapipe::Status SignalFusingCalculator::Process(
     scene_frames_.clear();
   }
 
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status SignalFusingCalculator::GetContract(
+mediapipe::Status SignalFusingCalculator::GetContract(
     mediapipe::CalculatorContract* cc) {
   if (cc->Inputs().NumEntries(kSignalInputsTag) > 0) {
     SetupTagInput(cc);
   } else {
     SetupOrderedInput(cc);
   }
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
 }  // namespace autoflip

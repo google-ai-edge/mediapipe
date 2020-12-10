@@ -28,16 +28,16 @@ namespace mediapipe {
 
 class BasicTimeSeriesCalculatorBase : public CalculatorBase {
  public:
-  static ::mediapipe::Status GetContract(CalculatorContract* cc);
-  ::mediapipe::Status Open(CalculatorContext* cc) override;
-  ::mediapipe::Status Process(CalculatorContext* cc) override;
+  static mediapipe::Status GetContract(CalculatorContract* cc);
+  mediapipe::Status Open(CalculatorContext* cc) override;
+  mediapipe::Status Process(CalculatorContext* cc) override;
 
  protected:
   // Open() calls this method to mutate the output stream header.  The input
   // to this function will contain a copy of the input stream header, so
   // subclasses that do not need to mutate the header do not need to override
   // it.
-  virtual ::mediapipe::Status MutateHeader(TimeSeriesHeader* output_header);
+  virtual mediapipe::Status MutateHeader(TimeSeriesHeader* output_header);
 
   // Process() calls this method on each packet to compute the output matrix.
   virtual Matrix ProcessMatrix(const Matrix& input_matrix) = 0;

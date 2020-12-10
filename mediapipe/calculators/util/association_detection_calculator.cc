@@ -37,27 +37,27 @@ namespace mediapipe {
 class AssociationDetectionCalculator
     : public AssociationCalculator<::mediapipe::Detection> {
  public:
-  static ::mediapipe::Status GetContract(CalculatorContract* cc) {
+  static mediapipe::Status GetContract(CalculatorContract* cc) {
     return AssociationCalculator<::mediapipe::Detection>::GetContract(cc);
   }
 
-  ::mediapipe::Status Open(CalculatorContext* cc) override {
+  mediapipe::Status Open(CalculatorContext* cc) override {
     return AssociationCalculator<::mediapipe::Detection>::Open(cc);
   }
 
-  ::mediapipe::Status Process(CalculatorContext* cc) override {
+  mediapipe::Status Process(CalculatorContext* cc) override {
     return AssociationCalculator<::mediapipe::Detection>::Process(cc);
   }
 
-  ::mediapipe::Status Close(CalculatorContext* cc) override {
+  mediapipe::Status Close(CalculatorContext* cc) override {
     return AssociationCalculator<::mediapipe::Detection>::Close(cc);
   }
 
  protected:
-  ::mediapipe::StatusOr<Rectangle_f> GetRectangle(
+  mediapipe::StatusOr<Rectangle_f> GetRectangle(
       const ::mediapipe::Detection& input) override {
     if (!input.has_location_data()) {
-      return ::mediapipe::InternalError("Missing location_data in Detection");
+      return mediapipe::InternalError("Missing location_data in Detection");
     }
     const Location location(input.location_data());
     return location.GetRelativeBBox();

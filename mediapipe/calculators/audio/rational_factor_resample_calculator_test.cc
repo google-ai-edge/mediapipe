@@ -80,7 +80,7 @@ class RationalFactorResampleCalculatorTest
   }
 
   // Initializes and runs the test graph.
-  ::mediapipe::Status Run(double output_sample_rate) {
+  mediapipe::Status Run(double output_sample_rate) {
     options_.set_target_sample_rate(output_sample_rate);
     InitializeGraph();
 

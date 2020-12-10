@@ -28,11 +28,11 @@ namespace scale_image {
 // is a centered, cropped portion of the image that falls within the min
 // and max aspect ratio.  If either the min or max aspect ratio argument
 // is empty or has a 0 in the numerator or denominator then it is ignored.
-::mediapipe::Status FindCropDimensions(int input_width, int input_height,    //
-                                       const std::string& min_aspect_ratio,  //
-                                       const std::string& max_aspect_ratio,  //
-                                       int* crop_width, int* crop_height,    //
-                                       int* col_start, int* row_start);
+mediapipe::Status FindCropDimensions(int input_width, int input_height,    //
+                                     const std::string& min_aspect_ratio,  //
+                                     const std::string& max_aspect_ratio,  //
+                                     int* crop_width, int* crop_height,    //
+                                     int* col_start, int* row_start);
 
 // Given an input width and height, a target width and height, whether to
 // preserve the aspect ratio, and whether to round-down to the multiple of a
@@ -43,12 +43,12 @@ namespace scale_image {
 // output_height will be reduced as necessary to preserve_aspect_ratio if the
 // option is specified. If preserving the aspect ratio is desired, you must set
 // scale_to_multiple_of to 2.
-::mediapipe::Status FindOutputDimensions(int input_width, int input_height,  //
-                                         int target_width,
-                                         int target_height,           //
-                                         bool preserve_aspect_ratio,  //
-                                         int scale_to_multiple_of,    //
-                                         int* output_width, int* output_height);
+mediapipe::Status FindOutputDimensions(int input_width, int input_height,  //
+                                       int target_width,
+                                       int target_height,           //
+                                       bool preserve_aspect_ratio,  //
+                                       int scale_to_multiple_of,    //
+                                       int* output_width, int* output_height);
 
 }  // namespace scale_image
 }  // namespace mediapipe

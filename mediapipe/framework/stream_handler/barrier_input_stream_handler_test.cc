@@ -109,12 +109,10 @@ class BarrierInputStreamHandlerTest : public ::testing::Test {
     calculator_context_ = calculator_context;
   }
 
-  void RecordError(const ::mediapipe::Status& error) {
-    errors_.push_back(error);
-  }
+  void RecordError(const mediapipe::Status& error) { errors_.push_back(error); }
 
-  ::mediapipe::Status SetupShardsNoOp(CalculatorContext* calculator_context) {
-    return ::mediapipe::OkStatus();
+  mediapipe::Status SetupShardsNoOp(CalculatorContext* calculator_context) {
+    return mediapipe::OkStatus();
   }
 
   void ReportQueueNoOp(InputStreamManager* stream, bool* stream_was_full) {}
@@ -123,13 +121,13 @@ class BarrierInputStreamHandlerTest : public ::testing::Test {
   std::function<void()> headers_ready_callback_;
   std::function<void()> notification_callback_;
   std::function<void(CalculatorContext*)> schedule_callback_;
-  std::function<void(::mediapipe::Status)> error_callback_;
-  std::function<::mediapipe::Status(CalculatorContext*)> setup_shards_callback_;
+  std::function<void(mediapipe::Status)> error_callback_;
+  std::function<mediapipe::Status(CalculatorContext*)> setup_shards_callback_;
   InputStreamManager::QueueSizeCallback queue_full_callback_;
   InputStreamManager::QueueSizeCallback queue_not_full_callback_;
 
   // Vector of errors encountered while using the stream.
-  std::vector<::mediapipe::Status> errors_;
+  std::vector<mediapipe::Status> errors_;
 
   std::unique_ptr<CalculatorState> calculator_state_;
   CalculatorContextManager calculator_context_manager_;

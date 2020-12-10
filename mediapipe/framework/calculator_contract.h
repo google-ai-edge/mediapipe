@@ -47,9 +47,9 @@ namespace mediapipe {
 //
 class CalculatorContract {
  public:
-  ::mediapipe::Status Initialize(const CalculatorGraphConfig::Node& node);
-  ::mediapipe::Status Initialize(const PacketGeneratorConfig& node);
-  ::mediapipe::Status Initialize(const StatusHandlerConfig& node);
+  mediapipe::Status Initialize(const CalculatorGraphConfig::Node& node);
+  mediapipe::Status Initialize(const PacketGeneratorConfig& node);
+  mediapipe::Status Initialize(const StatusHandlerConfig& node);
   void SetNodeName(const std::string& node_name) { node_name_ = node_name; }
 
   // Returns the options given to this node.

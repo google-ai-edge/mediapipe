@@ -105,7 +105,7 @@ struct SchedulerShared {
   // flag indicates that the graph is in that mode.
   std::atomic<bool> stopping;
   std::atomic<bool> has_error;
-  std::function<void(const ::mediapipe::Status& error)> error_callback;
+  std::function<void(const mediapipe::Status& error)> error_callback;
   // Collects timing information for measuring overhead.
   internal::SchedulerTimer timer;
 };

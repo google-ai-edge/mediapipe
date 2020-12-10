@@ -600,6 +600,123 @@ cc_library(
     }),
 )
 
+cc_library(
+    name = "container_util",
+    srcs = ["container_util.cc"],
+    hdrs = ["container_util.h"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":name_util",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:status",
+        "//mediapipe/framework/tool:switch_container_cc_proto",
+    ],
+)
+
+cc_library(
+    name = "switch_demux_calculator",
+    srcs = ["switch_demux_calculator.cc"],
+    visibility = [
+        "//visibility:public",
+    ],
+    deps = [
+        ":container_util",
+        ":options_util",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:collection_item_id",
+        "//mediapipe/framework/deps:mathutil",
+        "//mediapipe/framework/formats:video_stream_header",
+        "//mediapipe/framework/port:integral_types",
+        "//mediapipe/framework/port:logging",
+        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:status",
+        "@com_google_absl//absl/strings",
+    ],
+    alwayslink = 1,
+)
+
+cc_library(
+    name = "switch_mux_calculator",
+    srcs = ["switch_mux_calculator.cc"],
+    visibility = [
+        "//visibility:public",
+    ],
+    deps = [
+        ":container_util",
+        ":options_util",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:collection_item_id",
+        "//mediapipe/framework:input_stream_shard",
+        "//mediapipe/framework:output_stream_shard",
+        "//mediapipe/framework/deps:mathutil",
+        "//mediapipe/framework/formats:video_stream_header",
+        "//mediapipe/framework/port:integral_types",
+        "//mediapipe/framework/port:logging",
+        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:status",
+        "@com_google_absl//absl/strings",
+    ],
+    alwayslink = 1,
+)
+
+mediapipe_proto_library(
+    name = "switch_container_proto",
+    srcs = ["switch_container.proto"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//mediapipe/framework:calculator_options_proto",
+        "//mediapipe/framework:calculator_proto",
+    ],
+)
+
+cc_library(
+    name = "switch_container",
+    srcs = ["switch_container.cc"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":container_util",
+        ":name_util",
+        ":subgraph_expansion",
+        ":switch_demux_calculator",
+        ":switch_mux_calculator",
+        "//mediapipe/framework:calculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:mediapipe_options_cc_proto",
+        "//mediapipe/framework:stream_handler_cc_proto",
+        "//mediapipe/framework:subgraph",
+        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:status",
+        "//mediapipe/framework/stream_handler:sync_set_input_stream_handler_cc_proto",
+        "//mediapipe/framework/tool:switch_container_cc_proto",
+    ],
+    alwayslink = 1,
+)
+
+cc_test(
+    name = "switch_container_test",
+    size = "small",
+    srcs = ["switch_container_test.cc"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":node_chain_subgraph_cc_proto",
+        ":subgraph_expansion",
+        ":switch_container",
+        "//mediapipe/calculators/core:pass_through_calculator",
+        "//mediapipe/framework:calculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:subgraph",
+        "//mediapipe/framework:test_calculators",
+        "//mediapipe/framework/deps:message_matchers",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:logging",
+        "//mediapipe/framework/port:parse_text_proto",
+        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:status",
+        "//mediapipe/framework/stream_handler:immediate_input_stream_handler",
+    ],
+)
+
 exports_files(
     ["build_defs.bzl"],
     visibility = ["//mediapipe/framework:__subpackages__"],

@@ -37,34 +37,34 @@ namespace mediapipe {
 
 class DequantizeByteArrayCalculator : public CalculatorBase {
  public:
-  static ::mediapipe::Status GetContract(CalculatorContract* cc) {
+  static mediapipe::Status GetContract(CalculatorContract* cc) {
     cc->Inputs().Tag("ENCODED").Set<std::string>();
     cc->Outputs().Tag("FLOAT_VECTOR").Set<std::vector<float>>();
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Open(CalculatorContext* cc) final {
+  mediapipe::Status Open(CalculatorContext* cc) final {
     const auto options =
         cc->Options<::mediapipe::DequantizeByteArrayCalculatorOptions>();
     if (!options.has_max_quantized_value() ||
         !options.has_min_quantized_value()) {
-      return ::mediapipe::InvalidArgumentError(
+      return mediapipe::InvalidArgumentError(
           "Both max_quantized_value and min_quantized_value must be provided "
           "in DequantizeByteArrayCalculatorOptions.");
     }
     float max_quantized_value = options.max_quantized_value();
     float min_quantized_value = options.min_quantized_value();
     if (max_quantized_value < min_quantized_value + FLT_EPSILON) {
-      return ::mediapipe::InvalidArgumentError(
+      return mediapipe::InvalidArgumentError(
           "max_quantized_value must be greater than min_quantized_value.");
     }
     float range = max_quantized_value - min_quantized_value;
     scalar_ = range / 255.0;
     bias_ = (range / 512.0) + min_quantized_value;
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Process(CalculatorContext* cc) final {
+  mediapipe::Status Process(CalculatorContext* cc) final {
     const std::string& encoded =
         cc->Inputs().Tag("ENCODED").Value().Get<std::string>();
     std::vector<float> float_vector;
@@ -77,7 +77,7 @@ class DequantizeByteArrayCalculator : public CalculatorBase {
         .Tag("FLOAT_VECTOR")
         .AddPacket(MakePacket<std::vector<float>>(float_vector)
                        .At(cc->InputTimestamp()));
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
  private:

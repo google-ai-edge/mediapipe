@@ -29,7 +29,7 @@ constexpr float kWidthFieldOfView = 60;
 namespace mediapipe {
 namespace autoflip {
 
-::mediapipe::Status SceneCropper::ProcessKinematicPathSolver(
+mediapipe::Status SceneCropper::ProcessKinematicPathSolver(
     const SceneKeyFrameCropSummary& scene_summary,
     const std::vector<int64>& scene_timestamps,
     const std::vector<bool>& is_key_frames,
@@ -77,10 +77,10 @@ namespace autoflip {
         -(x_path - scene_summary.crop_window_width() / 2);
     all_xforms->push_back(transform);
   }
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status SceneCropper::CropFrames(
+mediapipe::Status SceneCropper::CropFrames(
     const SceneKeyFrameCropSummary& scene_summary,
     const std::vector<int64>& scene_timestamps,
     const std::vector<bool>& is_key_frames,
@@ -151,7 +151,7 @@ namespace autoflip {
 
   // If no cropped_frames is passed in, return directly.
   if (!cropped_frames) {
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
   RET_CHECK(!scene_frames_or_empty.empty())
       << "If |cropped_frames| != nullptr, scene_frames_or_empty must not be "

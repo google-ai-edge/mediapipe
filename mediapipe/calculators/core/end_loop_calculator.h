@@ -57,7 +57,7 @@ class EndLoopCalculator : public CalculatorBase {
   using ItemT = typename IterableT::value_type;
 
  public:
-  static ::mediapipe::Status GetContract(CalculatorContract* cc) {
+  static mediapipe::Status GetContract(CalculatorContract* cc) {
     RET_CHECK(cc->Inputs().HasTag("BATCH_END"))
         << "Missing BATCH_END tagged input_stream.";
     cc->Inputs().Tag("BATCH_END").Set<Timestamp>();
@@ -67,10 +67,10 @@ class EndLoopCalculator : public CalculatorBase {
 
     RET_CHECK(cc->Outputs().HasTag("ITERABLE"));
     cc->Outputs().Tag("ITERABLE").Set<IterableT>();
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Process(CalculatorContext* cc) override {
+  mediapipe::Status Process(CalculatorContext* cc) override {
     if (!cc->Inputs().Tag("ITEM").IsEmpty()) {
       if (!input_stream_collection_) {
         input_stream_collection_.reset(new IterableT);
@@ -94,7 +94,7 @@ class EndLoopCalculator : public CalculatorBase {
             .SetNextTimestampBound(Timestamp(loop_control_ts.Value() + 1));
       }
     }
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
  private:

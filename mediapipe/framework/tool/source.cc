@@ -43,19 +43,19 @@ class SidePacketsToStreamsCalculator : public CalculatorBase {
       const SidePacketsToStreamsCalculator&) = delete;
   ~SidePacketsToStreamsCalculator() override {}
 
-  static ::mediapipe::Status GetContract(CalculatorContract* cc) {
+  static mediapipe::Status GetContract(CalculatorContract* cc) {
     auto& options = cc->Options<SidePacketsToStreamsCalculatorOptions>();
     if (options.has_num_inputs() &&
         (options.num_inputs() != cc->InputSidePackets().NumEntries() ||
          options.num_inputs() != cc->Outputs().NumEntries())) {
-      return ::mediapipe::InvalidArgumentError(
+      return mediapipe::InvalidArgumentError(
           "If num_inputs is specified it must be equal to the number of "
           "input side packets and output streams.");
     }
     if (!options.vectors_of_packets() &&
         options.set_timestamp() ==
             SidePacketsToStreamsCalculatorOptions::NONE) {
-      return ::mediapipe::InvalidArgumentError(
+      return mediapipe::InvalidArgumentError(
           "If set_timestamp is NONE, vectors_of_packets must not be false.");
     }
     for (int i = 0; i < cc->InputSidePackets().NumEntries(); ++i) {
@@ -72,10 +72,10 @@ class SidePacketsToStreamsCalculator : public CalculatorBase {
         cc->Outputs().Index(i).SetSameAs(&cc->InputSidePackets().Index(i));
       }
     }
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Process(CalculatorContext* cc) final {
+  mediapipe::Status Process(CalculatorContext* cc) final {
     const auto& options = cc->Options<SidePacketsToStreamsCalculatorOptions>();
     // The i-th input side packet contains a vector of packets corresponding
     // to the values of this input for all batch elements.
@@ -87,7 +87,7 @@ class SidePacketsToStreamsCalculator : public CalculatorBase {
         const auto& packets = input_side_packet.Get<std::vector<Packet>>();
         if (batch_size >= 0) {
           if (packets.size() != batch_size) {
-            return ::mediapipe::InvalidArgumentError(
+            return mediapipe::InvalidArgumentError(
                 "The specified input side packets contain vectors of different "
                 "sizes.");
           }

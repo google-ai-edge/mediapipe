@@ -166,10 +166,10 @@ class CallbackCalculator : public CalculatorBase {
 
   ~CallbackCalculator() override {}
 
-  static ::mediapipe::Status GetContract(CalculatorContract* cc);
+  static mediapipe::Status GetContract(CalculatorContract* cc);
 
-  ::mediapipe::Status Open(CalculatorContext* cc) override;
-  ::mediapipe::Status Process(CalculatorContext* cc) override;
+  mediapipe::Status Open(CalculatorContext* cc) override;
+  mediapipe::Status Process(CalculatorContext* cc) override;
 
  private:
   std::function<void(const Packet&)> callback_;
@@ -185,10 +185,10 @@ class CallbackWithHeaderCalculator : public CalculatorBase {
 
   ~CallbackWithHeaderCalculator() override {}
 
-  static ::mediapipe::Status GetContract(CalculatorContract* cc);
+  static mediapipe::Status GetContract(CalculatorContract* cc);
 
-  ::mediapipe::Status Open(CalculatorContext* cc) override;
-  ::mediapipe::Status Process(CalculatorContext* cc) override;
+  mediapipe::Status Open(CalculatorContext* cc) override;
+  mediapipe::Status Process(CalculatorContext* cc) override;
 
  private:
   std::function<void(const Packet&, const Packet&)> callback_;

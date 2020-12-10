@@ -289,19 +289,19 @@ TEST_F(ImmediateMuxCalculatorTest, SimultaneousTimestamps) {
 }
 
 // A Calculator::Process callback function.
-typedef std::function<::mediapipe::Status(const InputStreamShardSet&,
-                                          OutputStreamShardSet*)>
+typedef std::function<mediapipe::Status(const InputStreamShardSet&,
+                                        OutputStreamShardSet*)>
     ProcessFunction;
 
 // A testing callback function that passes through all packets.
-::mediapipe::Status PassThrough(const InputStreamShardSet& inputs,
-                                OutputStreamShardSet* outputs) {
+mediapipe::Status PassThrough(const InputStreamShardSet& inputs,
+                              OutputStreamShardSet* outputs) {
   for (int i = 0; i < inputs.NumEntries(); ++i) {
     if (!inputs.Index(i).Value().IsEmpty()) {
       outputs->Index(i).AddPacket(inputs.Index(i).Value());
     }
   }
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
 TEST_F(ImmediateMuxCalculatorTest, Demux) {
@@ -325,7 +325,7 @@ TEST_F(ImmediateMuxCalculatorTest, Demux) {
   auto out_cb = [&](const Packet& p) {
     absl::MutexLock lock(&out_mutex);
     out_packets.push_back(p);
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   };
   auto wait_for = [&](std::function<bool()> cond) {
     absl::MutexLock lock(&out_mutex);

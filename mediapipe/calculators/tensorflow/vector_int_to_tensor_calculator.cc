@@ -62,17 +62,17 @@ void AssignMatrixValue(int r, int c, int value, tf::Tensor* output_tensor) {
 // }
 class VectorIntToTensorCalculator : public CalculatorBase {
  public:
-  static ::mediapipe::Status GetContract(CalculatorContract* cc);
+  static mediapipe::Status GetContract(CalculatorContract* cc);
 
-  ::mediapipe::Status Open(CalculatorContext* cc) override;
-  ::mediapipe::Status Process(CalculatorContext* cc) override;
+  mediapipe::Status Open(CalculatorContext* cc) override;
+  mediapipe::Status Process(CalculatorContext* cc) override;
 
  private:
   VectorIntToTensorCalculatorOptions options_;
 };
 REGISTER_CALCULATOR(VectorIntToTensorCalculator);
 
-::mediapipe::Status VectorIntToTensorCalculator::GetContract(
+mediapipe::Status VectorIntToTensorCalculator::GetContract(
     CalculatorContract* cc) {
   const auto& options = cc->Options<VectorIntToTensorCalculatorOptions>();
   // Start with only one input packet.
@@ -92,20 +92,19 @@ REGISTER_CALCULATOR(VectorIntToTensorCalculator);
   RET_CHECK_EQ(cc->Outputs().NumEntries(), 1)
       << "Only one output stream is supported.";
   cc->Outputs().Tag(kTensorOut).Set<tf::Tensor>();
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status VectorIntToTensorCalculator::Open(CalculatorContext* cc) {
+mediapipe::Status VectorIntToTensorCalculator::Open(CalculatorContext* cc) {
   options_ = cc->Options<VectorIntToTensorCalculatorOptions>();
   RET_CHECK(options_.tensor_data_type() == tf::DT_UINT8 ||
             options_.tensor_data_type() == tf::DT_INT32 ||
             options_.tensor_data_type() == tf::DT_INT64)
       << "Output tensor data type is not supported.";
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status VectorIntToTensorCalculator::Process(
-    CalculatorContext* cc) {
+mediapipe::Status VectorIntToTensorCalculator::Process(CalculatorContext* cc) {
   tf::TensorShape tensor_shape;
   if (options_.input_size() == INPUT_2D) {
     const std::vector<std::vector<int>>& input =
@@ -197,7 +196,7 @@ REGISTER_CALCULATOR(VectorIntToTensorCalculator);
   } else {
     LOG(FATAL) << "input size not supported";
   }
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
 }  // namespace mediapipe

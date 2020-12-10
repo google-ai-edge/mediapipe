@@ -51,13 +51,13 @@ class TfLiteModelCalculator : public CalculatorBase {
       std::unique_ptr<tflite::FlatBufferModel,
                       std::function<void(tflite::FlatBufferModel*)>>;
 
-  static ::mediapipe::Status GetContract(CalculatorContract* cc) {
+  static mediapipe::Status GetContract(CalculatorContract* cc) {
     cc->InputSidePackets().Tag("MODEL_BLOB").Set<std::string>();
     cc->OutputSidePackets().Tag("MODEL").Set<TfLiteModelPtr>();
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Open(CalculatorContext* cc) override {
+  mediapipe::Status Open(CalculatorContext* cc) override {
     const Packet& model_packet = cc->InputSidePackets().Tag("MODEL_BLOB");
     const std::string& model_blob = model_packet.Get<std::string>();
     std::unique_ptr<tflite::FlatBufferModel> model =
@@ -74,11 +74,11 @@ class TfLiteModelCalculator : public CalculatorBase {
               delete model;
             })));
 
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Process(CalculatorContext* cc) override {
-    return ::mediapipe::OkStatus();
+  mediapipe::Status Process(CalculatorContext* cc) override {
+    return mediapipe::OkStatus();
   }
 };
 REGISTER_CALCULATOR(TfLiteModelCalculator);

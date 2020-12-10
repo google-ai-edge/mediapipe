@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Lint as: python3
 """MediaPipe solution drawing utils."""
 
 import math
@@ -24,8 +23,10 @@ import numpy as np
 
 from mediapipe.framework.formats import landmark_pb2
 
+PRESENCE_THRESHOLD = 0.5
 RGB_CHANNELS = 3
 RED_COLOR = (0, 0, 255)
+VISIBILITY_THRESHOLD = 0.5
 
 
 @dataclasses.dataclass
@@ -88,7 +89,10 @@ def draw_landmarks(
   image_rows, image_cols, _ = image.shape
   idx_to_coordinates = {}
   for idx, landmark in enumerate(landmark_list.landmark):
-    if landmark.visibility < 0 or landmark.presence < 0:
+    if ((landmark.HasField('visibility') and
+         landmark.visibility < VISIBILITY_THRESHOLD) or
+        (landmark.HasField('presence') and
+         landmark.presence < PRESENCE_THRESHOLD)):
       continue
     landmark_px = _normalized_to_pixel_coordinates(landmark.x, landmark.y,
                                                    image_cols, image_rows)

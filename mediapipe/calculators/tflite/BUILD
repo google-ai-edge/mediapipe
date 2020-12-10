@@ -185,8 +185,8 @@ cc_library(
         ":tflite_inference_calculator_cc_proto",
         "@com_google_absl//absl/memory",
         "//mediapipe/framework:calculator_framework",
-        "//mediapipe/util:resource_util",
         "//mediapipe/util/tflite:config",
+        "//mediapipe/util/tflite:tflite_model_loader",
         "@org_tensorflow//tensorflow/lite:framework",
         "@org_tensorflow//tensorflow/lite/delegates/xnnpack:xnnpack_delegate",
         "@org_tensorflow//tensorflow/lite/kernels:builtin_ops",
@@ -404,6 +404,7 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         ":tflite_tensors_to_classification_calculator_cc_proto",
+        "@com_google_absl//absl/container:node_hash_map",
         "@com_google_absl//absl/strings:str_format",
         "@com_google_absl//absl/types:span",
         "//mediapipe/framework/formats:classification_cc_proto",

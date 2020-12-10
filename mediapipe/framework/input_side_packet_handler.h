@@ -41,11 +41,11 @@ class InputSidePacketHandler {
 
   // Resets the input side packet handler and its underlying input side packets
   // for another run of the graph.
-  ::mediapipe::Status PrepareForRun(
+  mediapipe::Status PrepareForRun(
       const PacketTypeSet* input_side_packet_types,
       const std::map<std::string, Packet>& all_side_packets,
       std::function<void()> input_side_packets_ready_callback,
-      std::function<void(::mediapipe::Status)> error_callback);
+      std::function<void(mediapipe::Status)> error_callback);
 
   // Sets a particular input side packet.
   void Set(CollectionItemId id, const Packet& packet);
@@ -63,11 +63,11 @@ class InputSidePacketHandler {
 
  private:
   // Called by Set().
-  ::mediapipe::Status SetInternal(CollectionItemId id, const Packet& packet);
+  mediapipe::Status SetInternal(CollectionItemId id, const Packet& packet);
 
-  // Triggers the error callback with ::mediapipe::Status info when an error
+  // Triggers the error callback with mediapipe::Status info when an error
   // occurs.
-  void TriggerErrorCallback(const ::mediapipe::Status& status) const;
+  void TriggerErrorCallback(const mediapipe::Status& status) const;
 
   const PacketTypeSet* input_side_packet_types_;
 
@@ -77,7 +77,7 @@ class InputSidePacketHandler {
   std::atomic<int> missing_input_side_packet_count_{0};
 
   std::function<void()> input_side_packets_ready_callback_;
-  std::function<void(::mediapipe::Status)> error_callback_;
+  std::function<void(mediapipe::Status)> error_callback_;
 };
 
 }  // namespace mediapipe

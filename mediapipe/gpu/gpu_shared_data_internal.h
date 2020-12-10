@@ -69,7 +69,7 @@ class GpuResources {
   MPPGraphGPUData* ios_gpu_data();
 #endif  // defined(__APPLE__)§
 
-  ::mediapipe::Status PrepareGpuNode(CalculatorNode* node);
+  mediapipe::Status PrepareGpuNode(CalculatorNode* node);
 
   // If the node requires custom GPU executors in the current configuration,
   // returns the executor's names and the executors themselves.

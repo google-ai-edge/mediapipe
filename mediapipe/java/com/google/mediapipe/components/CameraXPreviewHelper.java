@@ -120,17 +120,41 @@ public class CameraXPreviewHelper extends CameraHelper {
   // the source is CameraCharacteristics.SENSOR_INFO_TIMESTAMP_SOURCE_UNKNOWN.
   private int cameraTimestampSource = CameraCharacteristics.SENSOR_INFO_TIMESTAMP_SOURCE_UNKNOWN;
 
+  /**
+   * Initializes the camera and sets it up for accessing frames, using the default 1280 * 720
+   * preview size.
+   */
   @Override
   public void startCamera(
-      Activity context, CameraFacing cameraFacing, SurfaceTexture surfaceTexture) {
-    startCamera(context, cameraFacing, surfaceTexture, TARGET_SIZE);
+      Activity activity, CameraFacing cameraFacing, SurfaceTexture unusedSurfaceTexture) {
+    startCamera(activity, (LifecycleOwner) activity, cameraFacing, TARGET_SIZE);
   }
 
+  /**
+   * Initializes the camera and sets it up for accessing frames.
+   *
+   * @param targetSize the preview size to use. If set to {@code null}, the helper will default to
+   *        1280 * 720.
+   */
   public void startCamera(
-      Activity context,
+      Activity activity,
       CameraFacing cameraFacing,
       SurfaceTexture unusedSurfaceTexture,
-      Size targetSize) {
+      @Nullable Size targetSize) {
+    startCamera(activity, (LifecycleOwner) activity, cameraFacing, targetSize);
+  }
+
+  /**
+   * Initializes the camera and sets it up for accessing frames.
+   *
+   * @param targetSize the preview size to use. If set to {@code null}, the helper will default to
+   *        1280 * 720.
+   */
+  public void startCamera(
+      Context context,
+      LifecycleOwner lifecycleOwner,
+      CameraFacing cameraFacing,
+      @Nullable Size targetSize) {
     Executor mainThreadExecutor = ContextCompat.getMainExecutor(context);
     ListenableFuture<ProcessCameraProvider> cameraProviderFuture =
         ProcessCameraProvider.getInstance(context);
@@ -209,9 +233,7 @@ public class CameraXPreviewHelper extends CameraHelper {
           cameraProvider.unbindAll();
 
           // Bind preview use case to camera.
-          camera =
-              cameraProvider.bindToLifecycle(
-                  /*lifecycleOwner=*/ (LifecycleOwner) context, cameraSelector, preview);
+          camera = cameraProvider.bindToLifecycle(lifecycleOwner, cameraSelector, preview);
         },
         mainThreadExecutor);
   }
@@ -316,7 +338,7 @@ public class CameraXPreviewHelper extends CameraHelper {
     return frameSize;
   }
 
-  private void onInitialFrameReceived(Activity context, SurfaceTexture previewFrameTexture) {
+  private void onInitialFrameReceived(Context context, SurfaceTexture previewFrameTexture) {
     // This method is called by the onFrameAvailableListener we install when opening the camera
     // session, the first time we receive a frame. In this method, we remove our callback,
     // acknowledge the frame (via updateTextImage()), detach the texture from the GL context we
@@ -395,7 +417,7 @@ public class CameraXPreviewHelper extends CameraHelper {
 
   @Nullable
   private static CameraCharacteristics getCameraCharacteristics(
-      Activity context, Integer lensFacing) {
+      Context context, Integer lensFacing) {
     CameraManager cameraManager = (CameraManager) context.getSystemService(Context.CAMERA_SERVICE);
     try {
       List<String> cameraList = Arrays.asList(cameraManager.getCameraIdList());

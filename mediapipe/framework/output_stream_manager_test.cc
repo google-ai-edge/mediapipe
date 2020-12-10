@@ -85,9 +85,7 @@ class OutputStreamManagerTest : public ::testing::Test {
 
   void ScheduleNoOp(CalculatorContext* cc) {}
 
-  void RecordError(const ::mediapipe::Status& error) {
-    errors_.push_back(error);
-  }
+  void RecordError(const mediapipe::Status& error) { errors_.push_back(error); }
 
   void ReportQueueNoOp(InputStreamManager* stream, bool* stream_was_full) {}
 
@@ -106,7 +104,7 @@ class OutputStreamManagerTest : public ::testing::Test {
   std::function<void()> headers_ready_callback_;
   std::function<void()> notification_callback_;
   std::function<void(CalculatorContext*)> schedule_callback_;
-  std::function<void(::mediapipe::Status)> error_callback_;
+  std::function<void(mediapipe::Status)> error_callback_;
   InputStreamManager::QueueSizeCallback queue_full_callback_;
   InputStreamManager::QueueSizeCallback queue_not_full_callback_;
 
@@ -116,7 +114,7 @@ class OutputStreamManagerTest : public ::testing::Test {
   InputStreamManager input_stream_manager_;
 
   // Vector of errors encountered while using the stream.
-  std::vector<::mediapipe::Status> errors_;
+  std::vector<mediapipe::Status> errors_;
 };
 
 TEST_F(OutputStreamManagerTest, Init) {}

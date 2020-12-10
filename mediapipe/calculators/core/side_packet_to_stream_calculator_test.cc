@@ -20,6 +20,7 @@
 #include "absl/strings/str_replace.h"
 #include "absl/strings/string_view.h"
 #include "mediapipe/framework/calculator_framework.h"
+#include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/framework/port/integral_types.h"
 #include "mediapipe/framework/port/parse_text_proto.h"
@@ -29,6 +30,8 @@
 
 namespace mediapipe {
 namespace {
+
+using testing::HasSubstr;
 
 TEST(SidePacketToStreamCalculator, WrongConfig_MissingTick) {
   CalculatorGraphConfig graph_config =
@@ -46,9 +49,10 @@ TEST(SidePacketToStreamCalculator, WrongConfig_MissingTick) {
   CalculatorGraph graph;
   auto status = graph.Initialize(graph_config);
   EXPECT_FALSE(status.ok());
-  EXPECT_PRED2(
-      absl::StrContains, status.message(),
-      "Either both of TICK and AT_TICK should be used or none of them.");
+  EXPECT_THAT(
+      status.message(),
+      HasSubstr(
+          "Either both of TICK and AT_TICK should be used or none of them."));
 }
 
 TEST(SidePacketToStreamCalculator, WrongConfig_MissingTimestampSideInput) {
@@ -67,9 +71,9 @@ TEST(SidePacketToStreamCalculator, WrongConfig_MissingTimestampSideInput) {
   CalculatorGraph graph;
   auto status = graph.Initialize(graph_config);
   EXPECT_FALSE(status.ok());
-  EXPECT_PRED2(
-      absl::StrContains, status.message(),
-      "Either both TIMESTAMP and AT_TIMESTAMP should be used or none of them.");
+  EXPECT_THAT(status.message(),
+              HasSubstr("Either both TIMESTAMP and AT_TIMESTAMP should be used "
+                        "or none of them."));
 }
 
 TEST(SidePacketToStreamCalculator, WrongConfig_NonExistentTag) {
@@ -88,10 +92,11 @@ TEST(SidePacketToStreamCalculator, WrongConfig_NonExistentTag) {
   CalculatorGraph graph;
   auto status = graph.Initialize(graph_config);
   EXPECT_FALSE(status.ok());
-  EXPECT_PRED2(absl::StrContains, status.message(),
-               "Only one of AT_PRESTREAM, AT_POSTSTREAM, AT_ZERO, AT_TICK and "
-               "AT_TIMESTAMP tags is allowed and required to specify output "
-               "stream(s).");
+  EXPECT_THAT(
+      status.message(),
+      HasSubstr("Only one of AT_PRESTREAM, AT_POSTSTREAM, AT_ZERO, AT_TICK and "
+                "AT_TIMESTAMP tags is allowed and required to specify output "
+                "stream(s)."));
 }
 
 TEST(SidePacketToStreamCalculator, WrongConfig_MixedTags) {
@@ -112,10 +117,11 @@ TEST(SidePacketToStreamCalculator, WrongConfig_MixedTags) {
   CalculatorGraph graph;
   auto status = graph.Initialize(graph_config);
   EXPECT_FALSE(status.ok());
-  EXPECT_PRED2(absl::StrContains, status.message(),
-               "Only one of AT_PRESTREAM, AT_POSTSTREAM, AT_ZERO, AT_TICK and "
-               "AT_TIMESTAMP tags is allowed and required to specify output "
-               "stream(s).");
+  EXPECT_THAT(
+      status.message(),
+      HasSubstr("Only one of AT_PRESTREAM, AT_POSTSTREAM, AT_ZERO, AT_TICK and "
+                "AT_TIMESTAMP tags is allowed and required to specify output "
+                "stream(s)."));
 }
 
 TEST(SidePacketToStreamCalculator, WrongConfig_NotEnoughSidePackets) {
@@ -134,9 +140,10 @@ TEST(SidePacketToStreamCalculator, WrongConfig_NotEnoughSidePackets) {
   CalculatorGraph graph;
   auto status = graph.Initialize(graph_config);
   EXPECT_FALSE(status.ok());
-  EXPECT_PRED2(
-      absl::StrContains, status.message(),
-      "Same number of input side packets and output streams is required.");
+  EXPECT_THAT(
+      status.message(),
+      HasSubstr(
+          "Same number of input side packets and output streams is required."));
 }
 
 TEST(SidePacketToStreamCalculator, WrongConfig_NotEnoughOutputStreams) {
@@ -155,9 +162,10 @@ TEST(SidePacketToStreamCalculator, WrongConfig_NotEnoughOutputStreams) {
   CalculatorGraph graph;
   auto status = graph.Initialize(graph_config);
   EXPECT_FALSE(status.ok());
-  EXPECT_PRED2(
-      absl::StrContains, status.message(),
-      "Same number of input side packets and output streams is required.");
+  EXPECT_THAT(
+      status.message(),
+      HasSubstr(
+          "Same number of input side packets and output streams is required."));
 }
 
 void DoTestNonAtTickOutputTag(absl::string_view tag,
@@ -181,7 +189,7 @@ void DoTestNonAtTickOutputTag(absl::string_view tag,
   MP_ASSERT_OK(graph.ObserveOutputStream(
       "packet", [&output_packets](const Packet& packet) {
         output_packets.push_back(packet);
-        return ::mediapipe::OkStatus();
+        return mediapipe::OkStatus();
       }));
   MP_ASSERT_OK(
       graph.StartRun({{"side_packet", MakePacket<int>(expected_value)}}));

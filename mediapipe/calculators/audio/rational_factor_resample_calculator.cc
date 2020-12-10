@@ -23,15 +23,15 @@ using audio_dsp::RationalFactorResampler;
 using audio_dsp::Resampler;
 
 namespace mediapipe {
-::mediapipe::Status RationalFactorResampleCalculator::Process(
+mediapipe::Status RationalFactorResampleCalculator::Process(
     CalculatorContext* cc) {
   return ProcessInternal(cc->Inputs().Index(0).Get<Matrix>(), false, cc);
 }
 
-::mediapipe::Status RationalFactorResampleCalculator::Close(
+mediapipe::Status RationalFactorResampleCalculator::Close(
     CalculatorContext* cc) {
   if (initial_timestamp_ == Timestamp::Unstarted()) {
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
   Matrix empty_input_frame(num_channels_, 0);
   return ProcessInternal(empty_input_frame, true, cc);
@@ -62,7 +62,7 @@ void CopyVectorToChannel(const std::vector<float>& vec, Matrix* matrix,
 
 }  // namespace
 
-::mediapipe::Status RationalFactorResampleCalculator::Open(
+mediapipe::Status RationalFactorResampleCalculator::Open(
     CalculatorContext* cc) {
   RationalFactorResampleCalculatorOptions resample_options =
       cc->Options<RationalFactorResampleCalculatorOptions>();
@@ -88,7 +88,7 @@ void CopyVectorToChannel(const std::vector<float>& vec, Matrix* matrix,
                                resample_options);
       if (!r) {
         LOG(ERROR) << "Failed to initialize resampler.";
-        return ::mediapipe::UnknownError("Failed to initialize resampler.");
+        return mediapipe::UnknownError("Failed to initialize resampler.");
       }
     }
   }
@@ -106,10 +106,10 @@ void CopyVectorToChannel(const std::vector<float>& vec, Matrix* matrix,
   initial_timestamp_ = Timestamp::Unstarted();
   check_inconsistent_timestamps_ =
       resample_options.check_inconsistent_timestamps();
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status RationalFactorResampleCalculator::ProcessInternal(
+mediapipe::Status RationalFactorResampleCalculator::ProcessInternal(
     const Matrix& input_frame, bool should_flush, CalculatorContext* cc) {
   if (initial_timestamp_ == Timestamp::Unstarted()) {
     initial_timestamp_ = cc->InputTimestamp();
@@ -131,7 +131,7 @@ void CopyVectorToChannel(const std::vector<float>& vec, Matrix* matrix,
     *output_frame = input_frame;
   } else {
     if (!Resample(input_frame, output_frame.get(), should_flush)) {
-      return ::mediapipe::UnknownError("Resample() failed.");
+      return mediapipe::UnknownError("Resample() failed.");
     }
   }
   cumulative_output_samples_ += output_frame->cols();
@@ -139,7 +139,7 @@ void CopyVectorToChannel(const std::vector<float>& vec, Matrix* matrix,
   if (output_frame->cols() > 0) {
     cc->Outputs().Index(0).Add(output_frame.release(), output_timestamp);
   }
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
 bool RationalFactorResampleCalculator::Resample(const Matrix& input_frame,

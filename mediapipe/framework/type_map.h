@@ -36,9 +36,9 @@
 //
 //    // If your type is serialized by converting it to an easily serializable
 //    // type (such as a proto) use a proxy.
-//    // See mediapipe/framework/formats/location.cc for more details.
-//    MEDIAPIPE_REGISTER_TYPE_WITH_PROXY(
-//        ::mediapipe::Location, "::mediapipe::Location",
+//    // See mediapipe/framework/formats/location.cc for more
+//    details. MEDIAPIPE_REGISTER_TYPE_WITH_PROXY(
+//        mediapipe::Location, "mediapipe::Location",
 //        ::mediapipe::SerializeUsingGenericFn<Location WITH_MEDIAPIPE_PROXY
 //        LocationData>,
 //        ::mediapipe::DeserializeUsingGenericFn<Location WITH_MEDIAPIPE_PROXY
@@ -79,9 +79,9 @@ class HolderBase;
 // These functions use HolderBase to hide the type T from the function
 // definition.  This allows these functions to be placed into an untyped
 // struct in the map of MediaPipeTypeData objects.
-using SerializeFn = std::function<::mediapipe::Status(
+using SerializeFn = std::function<mediapipe::Status(
     const packet_internal::HolderBase& holder_base, std::string* output)>;
-using DeserializeFn = std::function<::mediapipe::Status(
+using DeserializeFn = std::function<mediapipe::Status(
     const std::string& encoding,
     std::unique_ptr<packet_internal::HolderBase>* holder_base)>;
 
@@ -252,7 +252,7 @@ DEFINE_MEDIAPIPE_TYPE_MAP(PacketTypeStringToMediaPipeTypeData, std::string);
 //     Even std types should have their names start with "::std".
 //     Only basic types such as "int" can be left bare.  Remember to
 //     include full namespaces for template arguments.  For example
-//     "::map<std::string,::mediapipe::Packet>".
+//     "::map<std::string,mediapipe::Packet>".
 //
 // Examples:
 //   Prefers an additional macro to define a type that contains comma(s) in
@@ -271,20 +271,18 @@ DEFINE_MEDIAPIPE_TYPE_MAP(PacketTypeStringToMediaPipeTypeData, std::string);
 //
 #define MEDIAPIPE_REGISTER_TYPE(type, type_name, serialize_fn, deserialize_fn) \
   SET_MEDIAPIPE_TYPE_MAP_VALUE(                                                \
-      ::mediapipe::PacketTypeIdToMediaPipeTypeData,                            \
-      ::mediapipe::tool::GetTypeHash<                                          \
-          ::mediapipe::type_map_internal::ReflectType<void(type*)>::Type>(),   \
-      (::mediapipe::MediaPipeTypeData{                                         \
-          ::mediapipe::tool::GetTypeHash<                                      \
-              ::mediapipe::type_map_internal::ReflectType<void(                \
-                  type*)>::Type>(),                                            \
+      mediapipe::PacketTypeIdToMediaPipeTypeData,                              \
+      mediapipe::tool::GetTypeHash<                                            \
+          mediapipe::type_map_internal::ReflectType<void(type*)>::Type>(),     \
+      (mediapipe::MediaPipeTypeData{                                           \
+          mediapipe::tool::GetTypeHash<                                        \
+              mediapipe::type_map_internal::ReflectType<void(type*)>::Type>(), \
           type_name, serialize_fn, deserialize_fn}));                          \
   SET_MEDIAPIPE_TYPE_MAP_VALUE(                                                \
-      ::mediapipe::PacketTypeStringToMediaPipeTypeData, type_name,             \
-      (::mediapipe::MediaPipeTypeData{                                         \
-          ::mediapipe::tool::GetTypeHash<                                      \
-              ::mediapipe::type_map_internal::ReflectType<void(                \
-                  type*)>::Type>(),                                            \
+      mediapipe::PacketTypeStringToMediaPipeTypeData, type_name,               \
+      (mediapipe::MediaPipeTypeData{                                           \
+          mediapipe::tool::GetTypeHash<                                        \
+              mediapipe::type_map_internal::ReflectType<void(type*)>::Type>(), \
           type_name, serialize_fn, deserialize_fn}));
 // End define MEDIAPIPE_REGISTER_TYPE.
 
@@ -296,18 +294,18 @@ DEFINE_MEDIAPIPE_TYPE_MAP(PacketTypeStringToMediaPipeTypeData, std::string);
 //     seperated by double colons.
 //
 // Example 1: register type with non-std::string proxy.
-//   ::mediapipe::Status ToProxyFn(
+//   mediapipe::Status ToProxyFn(
 //       const ClassType& obj, ProxyType* proxy)
 //   {
 //     ...
-//     return ::mediapipe::OkStatus();
+//     return mediapipe::OkStatus();
 //   }
 //
-//   ::mediapipe::Status FromProxyFn(
+//   mediapipe::Status FromProxyFn(
 //       const ProxyType& proxy, ClassType* obj)
 //   {
 //     ...
-//     return ::mediapipe::OkStatus();
+//     return mediapipe::OkStatus();
 //   }
 //
 //   MEDIAPIPE_REGISTER_TYPE_WITH_PROXY(
@@ -318,16 +316,16 @@ DEFINE_MEDIAPIPE_TYPE_MAP(PacketTypeStringToMediaPipeTypeData, std::string);
 //      ProxyType>, ToProxyFn, FromProxyFn);
 //
 // Example 2: register type with std::string proxy.
-//   ::mediapipe::Status ToProxyFn(const ClassType& obj, std::string* encoding)
+//   mediapipe::Status ToProxyFn(const ClassType& obj, std::string* encoding)
 //   {
 //     ...
-//     return ::mediapipe::OkStatus();
+//     return mediapipe::OkStatus();
 //   }
 //
-//   ::mediapipe::Status FromProxyFn(
+//   mediapipe::Status FromProxyFn(
 //       const ProxyType& proxy, std::string* encoding) {
 //     ...
-//     return ::mediapipe::OkStatus();
+//     return mediapipe::OkStatus();
 //   }
 //
 //   MEDIAPIPE_REGISTER_TYPE_WITH_PROXY(
@@ -339,24 +337,22 @@ DEFINE_MEDIAPIPE_TYPE_MAP(PacketTypeStringToMediaPipeTypeData, std::string);
 #define MEDIAPIPE_REGISTER_TYPE_WITH_PROXY(                                    \
     type, type_name, serialize_fn, deserialize_fn, to_proxy_fn, from_proxy_fn) \
   SET_MEDIAPIPE_TYPE_MAP_VALUE(                                                \
-      ::mediapipe::PacketTypeIdToMediaPipeTypeData,                            \
-      ::mediapipe::tool::GetTypeHash<                                          \
-          ::mediapipe::type_map_internal::ReflectType<void(type*)>::Type>(),   \
-      (::mediapipe::MediaPipeTypeData{                                         \
-          ::mediapipe::tool::GetTypeHash<                                      \
-              ::mediapipe::type_map_internal::ReflectType<void(                \
-                  type*)>::Type>(),                                            \
+      mediapipe::PacketTypeIdToMediaPipeTypeData,                              \
+      mediapipe::tool::GetTypeHash<                                            \
+          mediapipe::type_map_internal::ReflectType<void(type*)>::Type>(),     \
+      (mediapipe::MediaPipeTypeData{                                           \
+          mediapipe::tool::GetTypeHash<                                        \
+              mediapipe::type_map_internal::ReflectType<void(type*)>::Type>(), \
           type_name,                                                           \
           std::bind(&serialize_fn, to_proxy_fn, std::placeholders::_1,         \
                     std::placeholders::_2),                                    \
           std::bind(&deserialize_fn, from_proxy_fn, std::placeholders::_1,     \
                     std::placeholders::_2)}));                                 \
   SET_MEDIAPIPE_TYPE_MAP_VALUE(                                                \
-      ::mediapipe::PacketTypeStringToMediaPipeTypeData, type_name,             \
-      (::mediapipe::MediaPipeTypeData{                                         \
-          ::mediapipe::tool::GetTypeHash<                                      \
-              ::mediapipe::type_map_internal::ReflectType<void(                \
-                  type*)>::Type>(),                                            \
+      mediapipe::PacketTypeStringToMediaPipeTypeData, type_name,               \
+      (mediapipe::MediaPipeTypeData{                                           \
+          mediapipe::tool::GetTypeHash<                                        \
+              mediapipe::type_map_internal::ReflectType<void(type*)>::Type>(), \
           type_name,                                                           \
           std::bind(&serialize_fn, to_proxy_fn, std::placeholders::_1,         \
                     std::placeholders::_2),                                    \
@@ -383,7 +379,7 @@ const std::string MediaPipeTypeStringOrDemangled() {
   if (type_string) {
     return *type_string;
   } else {
-    return ::mediapipe::Demangle(tool::TypeId<T>().name());
+    return mediapipe::Demangle(tool::TypeId<T>().name());
   }
 }
 

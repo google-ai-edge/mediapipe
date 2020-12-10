@@ -56,27 +56,27 @@ class FlowToImageCalculator : public CalculatorBase {
  public:
   FlowToImageCalculator() {}
   ~FlowToImageCalculator() override {}
-  static ::mediapipe::Status GetContract(CalculatorContract* cc);
-  ::mediapipe::Status Open(CalculatorContext* cc) override;
-  ::mediapipe::Status Process(CalculatorContext* cc) override;
+  static mediapipe::Status GetContract(CalculatorContract* cc);
+  mediapipe::Status Open(CalculatorContext* cc) override;
+  mediapipe::Status Process(CalculatorContext* cc) override;
 
  private:
   FlowQuantizerModel model_;
 };
 
-::mediapipe::Status FlowToImageCalculator::GetContract(CalculatorContract* cc) {
+mediapipe::Status FlowToImageCalculator::GetContract(CalculatorContract* cc) {
   cc->Inputs().Index(0).Set<OpticalFlowField>();
   cc->Outputs().Index(0).Set<ImageFrame>();
 
   // Model sanity check
   const auto& options = cc->Options<FlowToImageCalculatorOptions>();
   if (options.min_value() >= options.max_value()) {
-    return ::mediapipe::InvalidArgumentError("Invalid quantizer model.");
+    return mediapipe::InvalidArgumentError("Invalid quantizer model.");
   }
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status FlowToImageCalculator::Open(CalculatorContext* cc) {
+mediapipe::Status FlowToImageCalculator::Open(CalculatorContext* cc) {
   const auto& options = cc->Options<FlowToImageCalculatorOptions>();
   // Fill the the model_data, ideally we want to train the model, but we omit
   // the step for now, and takes the (min, max) range from protobuf.
@@ -86,10 +86,10 @@ class FlowToImageCalculator : public CalculatorBase {
                           options.min_value(), options.min_value(),
                           options.max_value(), options.max_value()));
   model_.LoadFromProto(model_data);
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status FlowToImageCalculator::Process(CalculatorContext* cc) {
+mediapipe::Status FlowToImageCalculator::Process(CalculatorContext* cc) {
   const auto& input = cc->Inputs().Index(0).Get<OpticalFlowField>();
   // Input flow is 2-channel with x-dim flow and y-dim flow.
   // Convert it to a ImageFrame in SRGB space, the 3rd channel is not used (0).
@@ -106,7 +106,7 @@ class FlowToImageCalculator : public CalculatorBase {
     }
   }
   cc->Outputs().Index(0).Add(output.release(), cc->InputTimestamp());
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
 REGISTER_CALCULATOR(FlowToImageCalculator);

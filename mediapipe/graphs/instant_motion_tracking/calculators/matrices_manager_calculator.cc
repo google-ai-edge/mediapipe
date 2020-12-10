@@ -25,8 +25,8 @@
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/graphs/instant_motion_tracking/calculators/transformations.h"
-#include "mediapipe/graphs/object_detection_3d/calculators/box.h"
 #include "mediapipe/graphs/object_detection_3d/calculators/model_matrix.pb.h"
+#include "mediapipe/modules/objectron/calculators/box.h"
 
 namespace mediapipe {
 
@@ -87,9 +87,9 @@ constexpr float kInitialZ = -10.0f;
 
 class MatricesManagerCalculator : public CalculatorBase {
  public:
-  static ::mediapipe::Status GetContract(CalculatorContract* cc);
-  ::mediapipe::Status Open(CalculatorContext* cc) override;
-  ::mediapipe::Status Process(CalculatorContext* cc) override;
+  static mediapipe::Status GetContract(CalculatorContract* cc);
+  mediapipe::Status Open(CalculatorContext* cc) override;
+  mediapipe::Status Process(CalculatorContext* cc) override;
 
  private:
   // Device properties that will be preset by side packets
@@ -137,7 +137,7 @@ class MatricesManagerCalculator : public CalculatorBase {
 
 REGISTER_CALCULATOR(MatricesManagerCalculator);
 
-::mediapipe::Status MatricesManagerCalculator::GetContract(
+mediapipe::Status MatricesManagerCalculator::GetContract(
     CalculatorContract* cc) {
   RET_CHECK(cc->Inputs().HasTag(kAnchorsTag) &&
             cc->Inputs().HasTag(kIMUMatrixTag) &&
@@ -162,20 +162,20 @@ REGISTER_CALCULATOR(MatricesManagerCalculator);
   cc->InputSidePackets().Tag(kFOVSidePacketTag).Set<float>();
   cc->InputSidePackets().Tag(kAspectRatioSidePacketTag).Set<float>();
 
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status MatricesManagerCalculator::Open(CalculatorContext* cc) {
+mediapipe::Status MatricesManagerCalculator::Open(CalculatorContext* cc) {
   cc->SetOffset(TimestampDiff(0));
   // Set device properties from side packets
   vertical_fov_radians_ =
       cc->InputSidePackets().Tag(kFOVSidePacketTag).Get<float>();
   aspect_ratio_ =
       cc->InputSidePackets().Tag(kAspectRatioSidePacketTag).Get<float>();
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status MatricesManagerCalculator::Process(CalculatorContext* cc) {
+mediapipe::Status MatricesManagerCalculator::Process(CalculatorContext* cc) {
   // Define each object's model matrices
   auto asset_matrices_gif =
       std::make_unique<mediapipe::TimedModelMatrixProtoList>();
@@ -276,7 +276,7 @@ REGISTER_CALCULATOR(MatricesManagerCalculator);
       .Get(cc->Outputs().GetId("MATRICES", 1))
       .Add(asset_matrices_1.release(), cc->InputTimestamp());
 
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
 // Using a specified rotation value in radians, generate a rotation matrix for

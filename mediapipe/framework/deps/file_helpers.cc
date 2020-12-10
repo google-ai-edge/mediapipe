@@ -138,11 +138,11 @@ class DirectoryListing {
 
 }  // namespace
 
-::mediapipe::Status GetContents(absl::string_view file_name,
-                                std::string* output) {
-  FILE* fp = fopen(file_name.data(), "r");
+mediapipe::Status GetContents(absl::string_view file_name, std::string* output,
+                              bool read_as_binary) {
+  FILE* fp = fopen(file_name.data(), read_as_binary ? "rb" : "r");
   if (fp == NULL) {
-    return ::mediapipe::InvalidArgumentErrorBuilder(MEDIAPIPE_LOC)
+    return mediapipe::InvalidArgumentErrorBuilder(MEDIAPIPE_LOC)
            << "Can't find file: " << file_name;
   }
 
@@ -151,36 +151,36 @@ class DirectoryListing {
     char buf[4096];
     size_t ret = fread(buf, 1, 4096, fp);
     if (ret == 0 && ferror(fp)) {
-      return ::mediapipe::InternalErrorBuilder(MEDIAPIPE_LOC)
+      return mediapipe::InternalErrorBuilder(MEDIAPIPE_LOC)
              << "Error while reading file: " << file_name;
     }
     output->append(std::string(buf, ret));
   }
   fclose(fp);
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status SetContents(absl::string_view file_name,
-                                absl::string_view content) {
+mediapipe::Status SetContents(absl::string_view file_name,
+                              absl::string_view content) {
   FILE* fp = fopen(file_name.data(), "w");
   if (fp == NULL) {
-    return ::mediapipe::InvalidArgumentErrorBuilder(MEDIAPIPE_LOC)
+    return mediapipe::InvalidArgumentErrorBuilder(MEDIAPIPE_LOC)
            << "Can't open file: " << file_name;
   }
 
   fwrite(content.data(), sizeof(char), content.size(), fp);
   size_t write_error = ferror(fp);
   if (fclose(fp) != 0 || write_error) {
-    return ::mediapipe::InternalErrorBuilder(MEDIAPIPE_LOC)
+    return mediapipe::InternalErrorBuilder(MEDIAPIPE_LOC)
            << "Error while writing file: " << file_name
            << ". Error message: " << strerror(write_error);
   }
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status MatchInTopSubdirectories(
-    const std::string& parent_directory, const std::string& file_name,
-    std::vector<std::string>* results) {
+mediapipe::Status MatchInTopSubdirectories(const std::string& parent_directory,
+                                           const std::string& file_name,
+                                           std::vector<std::string>* results) {
   DirectoryListing parent_listing(parent_directory);
 
   while (parent_listing.HasNextEntry()) {
@@ -194,12 +194,12 @@ class DirectoryListing {
       }
     }
   }
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status MatchFileTypeInDirectory(
-    const std::string& directory, const std::string& file_suffix,
-    std::vector<std::string>* results) {
+mediapipe::Status MatchFileTypeInDirectory(const std::string& directory,
+                                           const std::string& file_suffix,
+                                           std::vector<std::string>* results) {
   DirectoryListing directory_listing(directory);
 
   while (directory_listing.HasNextEntry()) {
@@ -209,21 +209,21 @@ class DirectoryListing {
     }
   }
 
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status Exists(absl::string_view file_name) {
+mediapipe::Status Exists(absl::string_view file_name) {
   struct stat buffer;
   int status;
   status = stat(std::string(file_name).c_str(), &buffer);
   if (status == 0) {
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
   switch (errno) {
     case EACCES:
-      return ::mediapipe::PermissionDeniedError("Insufficient permissions.");
+      return mediapipe::PermissionDeniedError("Insufficient permissions.");
     default:
-      return ::mediapipe::NotFoundError("The path does not exist.");
+      return mediapipe::NotFoundError("The path does not exist.");
   }
 }
 
@@ -235,7 +235,7 @@ int mkdir(std::string path) {
 int mkdir(std::string path) { return _mkdir(path.c_str()); }
 #endif
 
-::mediapipe::Status RecursivelyCreateDir(absl::string_view path) {
+mediapipe::Status RecursivelyCreateDir(absl::string_view path) {
   if (path.empty() || Exists(path).ok()) {
     return mediapipe::OkStatus();
   }
@@ -244,9 +244,9 @@ int mkdir(std::string path) { return _mkdir(path.c_str()); }
   if (mkdir(std::string(path)) != 0) {
     switch (errno) {
       case EACCES:
-        return ::mediapipe::PermissionDeniedError("Insufficient permissions.");
+        return mediapipe::PermissionDeniedError("Insufficient permissions.");
       default:
-        return ::mediapipe::UnavailableError("Failed to create directory.");
+        return mediapipe::UnavailableError("Failed to create directory.");
     }
   }
   return mediapipe::OkStatus();

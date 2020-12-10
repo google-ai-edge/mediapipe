@@ -25,23 +25,23 @@ namespace mediapipe {
 RotatedRect GetRoi(int input_width, int input_height,
                    absl::optional<mediapipe::NormalizedRect> norm_rect) {
   if (norm_rect) {
-    return {.center_x = norm_rect->x_center() * input_width,
-            .center_y = norm_rect->y_center() * input_height,
-            .width = norm_rect->width() * input_width,
-            .height = norm_rect->height() * input_height,
-            .rotation = norm_rect->rotation()};
+    return {/*center_x=*/norm_rect->x_center() * input_width,
+            /*center_y =*/norm_rect->y_center() * input_height,
+            /*width =*/norm_rect->width() * input_width,
+            /*height =*/norm_rect->height() * input_height,
+            /*rotation =*/norm_rect->rotation()};
   }
-  return {.center_x = 0.5f * input_width,
-          .center_y = 0.5f * input_height,
-          .width = static_cast<float>(input_width),
-          .height = static_cast<float>(input_height),
-          .rotation = 0};
+  return {/*center_x=*/0.5f * input_width,
+          /*center_y =*/0.5f * input_height,
+          /*width =*/static_cast<float>(input_width),
+          /*height =*/static_cast<float>(input_height),
+          /*rotation =*/0};
 }
 
-::mediapipe::StatusOr<std::array<float, 4>> PadRoi(int input_tensor_width,
-                                                   int input_tensor_height,
-                                                   bool keep_aspect_ratio,
-                                                   RotatedRect* roi) {
+mediapipe::StatusOr<std::array<float, 4>> PadRoi(int input_tensor_width,
+                                                 int input_tensor_height,
+                                                 bool keep_aspect_ratio,
+                                                 RotatedRect* roi) {
   if (!keep_aspect_ratio) {
     return std::array<float, 4>{0.0f, 0.0f, 0.0f, 0.0f};
   }
@@ -76,7 +76,7 @@ RotatedRect GetRoi(int input_width, int input_height,
                               horizontal_padding, vertical_padding};
 }
 
-::mediapipe::StatusOr<ValueTransformation> GetValueRangeTransformation(
+mediapipe::StatusOr<ValueTransformation> GetValueRangeTransformation(
     float from_range_min, float from_range_max, float to_range_min,
     float to_range_max) {
   RET_CHECK_LT(from_range_min, from_range_max)

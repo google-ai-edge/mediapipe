@@ -84,6 +84,21 @@
       maxLocalDifference:(int)maxLocalDiff
     maxAverageDifference:(float)maxAvgDiff;
 
+/// Compares two pixel buffers with some leniency.
+/// Returns true iff the two buffers have the same size and format, and:
+/// - the difference between each pixel of A and the corresponding pixel of B does
+///   not exceed maxLocalDiff, and
+/// - the average difference between corresponding pixels of A and B does not
+///   exceed maxAvgDiff.
+/// The maximum local difference and average difference will be written
+/// to @c maxLocalDiffOut and @c maxAvgDiffOut respectively.
+- (BOOL)pixelBuffer:(CVPixelBufferRef)a
+                  isCloseTo:(CVPixelBufferRef)b
+         maxLocalDifference:(int)maxLocalDiff
+       maxAverageDifference:(float)maxAvgDiff
+      maxLocalDifferenceOut:(int*)maxLocalDiffOut
+    maxAverageDifferenceOut:(float*)maxAvgDiffOut;
+
 /// Utility function for making a copy of a pixel buffer with a different pixel
 /// format.
 - (CVPixelBufferRef)convertPixelBuffer:(CVPixelBufferRef)input toPixelFormat:(OSType)pixelFormat;

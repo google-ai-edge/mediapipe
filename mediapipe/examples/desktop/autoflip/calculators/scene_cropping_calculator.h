@@ -125,35 +125,35 @@ namespace autoflip {
 // fields are optional with default settings.
 class SceneCroppingCalculator : public CalculatorBase {
  public:
-  static ::mediapipe::Status GetContract(CalculatorContract* cc);
+  static mediapipe::Status GetContract(CalculatorContract* cc);
 
   // Validates calculator options and initializes SceneCameraMotionAnalyzer and
   // SceneCropper.
-  ::mediapipe::Status Open(CalculatorContext* cc) override;
+  mediapipe::Status Open(CalculatorContext* cc) override;
 
   // Buffers each scene frame and its timestamp. Packs and stores KeyFrameInfo
   // for key frames (a.k.a. frames with detection features). When a shot
   // boundary is encountered or when the buffer is full, calls ProcessScene()
   // to process the scene at once, and clears buffers.
-  ::mediapipe::Status Process(CalculatorContext* cc) override;
+  mediapipe::Status Process(CalculatorContext* cc) override;
 
   // Calls ProcessScene() on remaining buffered frames. Optionally outputs a
   // VideoCroppingSummary if the output stream CROPPING_SUMMARY is present.
-  ::mediapipe::Status Close(::mediapipe::CalculatorContext* cc) override;
+  mediapipe::Status Close(mediapipe::CalculatorContext* cc) override;
 
  private:
   // Removes any static borders from the scene frames before cropping. The
   // arguments |top_border_size| and |bottom_border_size| report the size of the
   // removed borders.
-  ::mediapipe::Status RemoveStaticBorders(CalculatorContext* cc,
-                                          int* top_border_size,
-                                          int* bottom_border_size);
+  mediapipe::Status RemoveStaticBorders(CalculatorContext* cc,
+                                        int* top_border_size,
+                                        int* bottom_border_size);
 
   // Sets up autoflip after first frame is received and input size is known.
-  ::mediapipe::Status InitializeSceneCroppingCalculator(
-      ::mediapipe::CalculatorContext* cc);
+  mediapipe::Status InitializeSceneCroppingCalculator(
+      mediapipe::CalculatorContext* cc);
   // Initializes a FrameCropRegionComputer given input and target frame sizes.
-  ::mediapipe::Status InitializeFrameCropRegionComputer();
+  mediapipe::Status InitializeFrameCropRegionComputer();
 
   // Processes a scene using buffered scene frames and KeyFrameInfos:
   // 1. Computes key frame crop regions using a FrameCropRegionComputer.
@@ -165,8 +165,8 @@ class SceneCroppingCalculator : public CalculatorBase {
   //    to force flush).
   // 6. Optionally outputs visualization frames.
   // 7. Optionally updates cropping summary.
-  ::mediapipe::Status ProcessScene(const bool is_end_of_scene,
-                                   CalculatorContext* cc);
+  mediapipe::Status ProcessScene(const bool is_end_of_scene,
+                                 CalculatorContext* cc);
 
   // Formats and outputs the cropped frames passed in through
   // |cropped_frames_ptr|. Scales them to be at least as big as the target
@@ -177,14 +177,14 @@ class SceneCroppingCalculator : public CalculatorBase {
   // cropped frames. This is useful when the calculator is only used for
   // computing the cropping metadata rather than doing the actual cropping
   // operation.
-  ::mediapipe::Status FormatAndOutputCroppedFrames(
+  mediapipe::Status FormatAndOutputCroppedFrames(
       const int crop_width, const int crop_height, const int num_frames,
       std::vector<cv::Rect>* render_to_locations, bool* apply_padding,
       std::vector<cv::Scalar>* padding_colors, float* vertical_fill_percent,
       const std::vector<cv::Mat>* cropped_frames_ptr, CalculatorContext* cc);
 
   // Draws and outputs visualization frames if those streams are present.
-  ::mediapipe::Status OutputVizFrames(
+  mediapipe::Status OutputVizFrames(
       const std::vector<KeyFrameCropResult>& key_frame_crop_results,
       const std::vector<FocusPointFrame>& focus_point_frames,
       const std::vector<cv::Rect>& crop_from_locations,

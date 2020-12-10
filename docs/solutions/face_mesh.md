@@ -8,8 +8,14 @@ nav_order: 2
 # MediaPipe Face Mesh
 {: .no_toc }
 
+<details close markdown="block">
+  <summary>
+    Table of contents
+  </summary>
+  {: .text-delta }
 1. TOC
 {:toc}
+</details>
 ---
 
 ## Overview
@@ -206,11 +212,222 @@ The effect renderer is implemented as a MediaPipe
 | :---------------------------------------------------------------------: |
 | *Fig 4. An example of face effects rendered by the Face Geometry Effect Renderer.* |
 
+## Solution APIs
+
+### Configuration Options
+
+Naming style and availability may differ slightly across platforms/languages.
+
+#### static_image_mode
+
+If set to `false`, the solution treats the input images as a video stream. It
+will try to detect faces in the first input images, and upon a successful
+detection further localizes the face landmarks. In subsequent images, once all
+[max_num_faces](#max_num_faces) faces are detected and the corresponding face
+landmarks are localized, it simply tracks those landmarks without invoking
+another detection until it loses track of any of the faces. This reduces latency
+and is ideal for processing video frames. If set to `true`, face detection runs
+on every input image, ideal for processing a batch of static, possibly
+unrelated, images. Default to `false`.
+
+#### max_num_faces
+
+Maximum number of faces to detect. Default to `1`.
+
+#### min_detection_confidence
+
+Minimum confidence value (`[0.0, 1.0]`) from the face detection model for the
+detection to be considered successful. Default to `0.5`.
+
+#### min_tracking_confidence
+
+Minimum confidence value (`[0.0, 1.0]`) from the landmark-tracking model for the
+face landmarks to be considered tracked successfully, or otherwise face
+detection will be invoked automatically on the next input image. Setting it to a
+higher value can increase robustness of the solution, at the expense of a higher
+latency. Ignored if [static_image_mode](#static_image_mode) is `true`, where
+face detection simply runs on every image. Default to `0.5`.
+
+### Output
+
+Naming style may differ slightly across platforms/languages.
+
+#### multi_face_landmarks
+
+Collection of detected/tracked faces, where each face is represented as a list
+of 468 face landmarks and each landmark is composed of `x`, `y` and `z`. `x` and
+`y` are normalized to `[0.0, 1.0]` by the image width and height respectively.
+`z` represents the landmark depth with the depth at center of the head being the
+origin, and the smaller the value the closer the landmark is to the camera. The
+magnitude of `z` uses roughly the same scale as `x`.
+
+### Python Solution API
+
+Please first follow general [instructions](../getting_started/python.md) to
+install MediaPipe Python package, then learn more in the companion [Colab] and
+the following usage example.
+
+Supported configuration options:
+
+*   [static_image_mode](#static_image_mode)
+*   [max_num_faces](#max_num_faces)
+*   [min_detection_confidence](#min_detection_confidence)
+*   [min_tracking_confidence](#min_tracking_confidence)
+
+```python
+import cv2
+import mediapipe as mp
+mp_drawing = mp.solutions.drawing_utils
+mp_face_mesh = mp.solutions.face_mesh
+
+# For static images:
+face_mesh = mp_face_mesh.FaceMesh(
+    static_image_mode=True,
+    max_num_faces=1,
+    min_detection_confidence=0.5)
+drawing_spec = mp_drawing.DrawingSpec(thickness=1, circle_radius=1)
+for idx, file in enumerate(file_list):
+  image = cv2.imread(file)
+  # Convert the BGR image to RGB before processing.
+  results = face_mesh.process(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
+
+  # Print and draw face mesh landmarks on the image.
+  if not results.multi_face_landmarks:
+    continue
+  annotated_image = image.copy()
+  for face_landmarks in results.multi_face_landmarks:
+    print('face_landmarks:', face_landmarks)
+    mp_drawing.draw_landmarks(
+        image=annotated_image,
+        landmark_list=face_landmarks,
+        connections=mp_face_mesh.FACE_CONNECTIONS,
+        landmark_drawing_spec=drawing_spec,
+        connection_drawing_spec=drawing_spec)
+  cv2.imwrite('/tmp/annotated_image' + str(idx) + '.png', annotated_image)
+face_mesh.close()
+
+# For webcam input:
+face_mesh = mp_face_mesh.FaceMesh(
+    min_detection_confidence=0.5, min_tracking_confidence=0.5)
+drawing_spec = mp_drawing.DrawingSpec(thickness=1, circle_radius=1)
+cap = cv2.VideoCapture(0)
+while cap.isOpened():
+  success, image = cap.read()
+  if not success:
+    print("Ignoring empty camera frame.")
+    # If loading a video, use 'break' instead of 'continue'.
+    continue
+
+  # Flip the image horizontally for a later selfie-view display, and convert
+  # the BGR image to RGB.
+  image = cv2.cvtColor(cv2.flip(image, 1), cv2.COLOR_BGR2RGB)
+  # To improve performance, optionally mark the image as not writeable to
+  # pass by reference.
+  image.flags.writeable = False
+  results = face_mesh.process(image)
+
+  # Draw the face mesh annotations on the image.
+  image.flags.writeable = True
+  image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+  if results.multi_face_landmarks:
+    for face_landmarks in results.multi_face_landmarks:
+      mp_drawing.draw_landmarks(
+          image=image,
+          landmark_list=face_landmarks,
+          connections=mp_face_mesh.FACE_CONNECTIONS,
+          landmark_drawing_spec=drawing_spec,
+          connection_drawing_spec=drawing_spec)
+  cv2.imshow('MediaPipe FaceMesh', image)
+  if cv2.waitKey(5) & 0xFF == 27:
+    break
+face_mesh.close()
+cap.release()
+```
+
+### JavaScript Solution API
+
+Please first see general [introduction](../getting_started/javascript.md) on
+MediaPipe in JavaScript, then learn more in the companion [web demo] and the
+following usage example.
+
+Supported configuration options:
+
+*   [maxNumFaces](#max_num_faces)
+*   [minDetectionConfidence](#min_detection_confidence)
+*   [minTrackingConfidence](#min_tracking_confidence)
+
+```html
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js" crossorigin="anonymous"></script>
+</head>
+
+<body>
+  <div class="container">
+    <video class="input_video"></video>
+    <canvas class="output_canvas" width="1280px" height="720px"></canvas>
+  </div>
+</body>
+</html>
+```
+
+```javascript
+<script type="module">
+const videoElement = document.getElementsByClassName('input_video')[0];
+const canvasElement = document.getElementsByClassName('output_canvas')[0];
+const canvasCtx = canvasElement.getContext('2d');
+
+function onResults(results) {
+  canvasCtx.save();
+  canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+  canvasCtx.drawImage(
+      results.image, 0, 0, canvasElement.width, canvasElement.height);
+  if (results.multiFaceLandmarks) {
+    for (const landmarks of results.multiFaceLandmarks) {
+      drawConnectors(canvasCtx, landmarks, FACEMESH_TESSELATION,
+                     {color: '#C0C0C070', lineWidth: 1});
+      drawConnectors(canvasCtx, landmarks, FACEMESH_RIGHT_EYE, {color: '#FF3030'});
+      drawConnectors(canvasCtx, landmarks, FACEMESH_RIGHT_EYEBROW, {color: '#FF3030'});
+      drawConnectors(canvasCtx, landmarks, FACEMESH_LEFT_EYE, {color: '#30FF30'});
+      drawConnectors(canvasCtx, landmarks, FACEMESH_LEFT_EYEBROW, {color: '#30FF30'});
+      drawConnectors(canvasCtx, landmarks, FACEMESH_FACE_OVAL, {color: '#E0E0E0'});
+      drawConnectors(canvasCtx, landmarks, FACEMESH_LIPS, {color: '#E0E0E0'});
+    }
+  }
+  canvasCtx.restore();
+}
+
+const faceMesh = new FaceMesh({locateFile: (file) => {
+  return `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`;
+}});
+faceMesh.setOptions({
+  maxNumFaces: 1,
+  minDetectionConfidence: 0.5,
+  minTrackingConfidence: 0.5
+});
+faceMesh.onResults(onResults);
+
+const camera = new Camera(videoElement, {
+  onFrame: async () => {
+    await faceMesh.send({image: videoElement});
+  },
+  width: 1280,
+  height: 720
+});
+camera.start();
+</script>
+```
+
 ## Example Apps
 
 Please first see general instructions for
-[Android](../getting_started/building_examples.md#android), [iOS](../getting_started/building_examples.md#ios) and
-[desktop](../getting_started/building_examples.md#desktop) on how to build MediaPipe examples.
+[Android](../getting_started/android.md), [iOS](../getting_started/ios.md) and
+[desktop](../getting_started/cpp.md) on how to build MediaPipe examples.
 
 Note: To visualize a graph, copy the graph and paste it into
 [MediaPipe Visualizer](https://viz.mediapipe.dev/). For more information on how
@@ -254,99 +471,6 @@ and for iOS modify `kNumFaces` in
 Tip: Maximum number of faces to detect/process is set to 1 by default. To change
 it, in the graph file modify the option of `ConstantSidePacketCalculator`.
 
-#### Python
-
-MediaPipe Python package is available on
-[PyPI](https://pypi.org/project/mediapipe/), and can be installed simply by `pip
-install mediapipe` on Linux and macOS, as described below and in this
-[colab](https://mediapipe.page.link/face_mesh_py_colab). If you do need to build
-the Python package from source, see
-[additional instructions](../getting_started/building_examples.md#python).
-
-Activate a Python virtual environment:
-
-```bash
-$ python3 -m venv mp_env && source mp_env/bin/activate
-```
-
-Install MediaPipe Python package:
-
-```bash
-(mp_env)$ pip install mediapipe
-```
-
-Run the following Python code:
-
-<!-- Do not change the example code below directly. Change the corresponding example in mediapipe/python/solutions/face_mesh.py and copy it over. -->
-
-```python
-import cv2
-import mediapipe as mp
-mp_drawing = mp.solutions.drawing_utils
-mp_face_mesh = mp.solutions.face_mesh
-
-# For static images:
-face_mesh = mp_face_mesh.FaceMesh(
-    static_image_mode=True,
-    max_num_faces=1,
-    min_detection_confidence=0.5)
-drawing_spec = mp_drawing.DrawingSpec(thickness=1, circle_radius=1)
-for idx, file in enumerate(file_list):
-  image = cv2.imread(file)
-  # Convert the BGR image to RGB before processing.
-  results = face_mesh.process(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
-
-  # Print and draw face mesh landmarks on the image.
-  if not results.multi_face_landmarks:
-    continue
-  annotated_image = image.copy()
-  for face_landmarks in results.multi_face_landmarks:
-    print('face_landmarks:', face_landmarks)
-    mp_drawing.draw_landmarks(
-        image=annotated_image,
-        landmark_list=face_landmarks,
-        connections=mp_face_mesh.FACE_CONNECTIONS,
-        landmark_drawing_spec=drawing_spec,
-        connection_drawing_spec=drawing_spec)
-  cv2.imwrite('/tmp/annotated_image' + str(idx) + '.png', image)
-face_mesh.close()
-
-# For webcam input:
-face_mesh = mp_face_mesh.FaceMesh(
-    min_detection_confidence=0.5, min_tracking_confidence=0.5)
-drawing_spec = mp_drawing.DrawingSpec(thickness=1, circle_radius=1)
-cap = cv2.VideoCapture(0)
-while cap.isOpened():
-  success, image = cap.read()
-  if not success:
-    break
-
-  # Flip the image horizontally for a later selfie-view display, and convert
-  # the BGR image to RGB.
-  image = cv2.cvtColor(cv2.flip(image, 1), cv2.COLOR_BGR2RGB)
-  # To improve performance, optionally mark the image as not writeable to
-  # pass by reference.
-  image.flags.writeable = False
-  results = face_mesh.process(image)
-
-  # Draw the face mesh annotations on the image.
-  image.flags.writeable = True
-  image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
-  if results.multi_face_landmarks:
-    for face_landmarks in results.multi_face_landmarks:
-      mp_drawing.draw_landmarks(
-          image=image,
-          landmark_list=face_landmarks,
-          connections=mp_face_mesh.FACE_CONNECTIONS,
-          landmark_drawing_spec=drawing_spec,
-          connection_drawing_spec=drawing_spec)
-  cv2.imshow('MediaPipe FaceMesh', image)
-  if cv2.waitKey(5) & 0xFF == 27:
-    break
-face_mesh.close()
-cap.release()
-```
-
 ### Face Effect Example
 
 Face effect example showcases real-time mobile face effect application use case
@@ -379,3 +503,7 @@ only works for a single face. For visual reference, please refer to *Fig. 4*.
     [OBJ](https://github.com/google/mediapipe/tree/master/mediapipe/modules/face_geometry/data/canonical_face_model.obj),
     [UV visualization](https://github.com/google/mediapipe/tree/master/mediapipe/modules/face_geometry/data/canonical_face_model_uv_visualization.png)
 *   [Models and model cards](./models.md#face_mesh)
+
+[Colab]:https://mediapipe.page.link/face_mesh_py_colab
+
+[web demo]:https://code.mediapipe.dev/codepen/face_mesh

@@ -90,7 +90,7 @@ class PacketThinnerCalculator : public CalculatorBase {
   PacketThinnerCalculator() {}
   ~PacketThinnerCalculator() override {}
 
-  static ::mediapipe::Status GetContract(CalculatorContract* cc) {
+  static mediapipe::Status GetContract(CalculatorContract* cc) {
     if (cc->InputSidePackets().HasTag(kOptionsTag)) {
       cc->InputSidePackets().Tag(kOptionsTag).Set<CalculatorOptions>();
     }
@@ -99,21 +99,21 @@ class PacketThinnerCalculator : public CalculatorBase {
     if (cc->InputSidePackets().HasTag(kPeriodTag)) {
       cc->InputSidePackets().Tag(kPeriodTag).Set<int64>();
     }
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Open(CalculatorContext* cc) override;
-  ::mediapipe::Status Close(CalculatorContext* cc) override;
-  ::mediapipe::Status Process(CalculatorContext* cc) override {
+  mediapipe::Status Open(CalculatorContext* cc) override;
+  mediapipe::Status Close(CalculatorContext* cc) override;
+  mediapipe::Status Process(CalculatorContext* cc) override {
     if (cc->InputTimestamp() < start_time_) {
-      return ::mediapipe::OkStatus();  // Drop packets before start_time_.
+      return mediapipe::OkStatus();  // Drop packets before start_time_.
     } else if (cc->InputTimestamp() >= end_time_) {
       if (!cc->Outputs().Index(0).IsClosed()) {
         cc->Outputs()
             .Index(0)
             .Close();  // No more Packets will be output after end_time_.
       }
-      return ::mediapipe::OkStatus();
+      return mediapipe::OkStatus();
     } else {
       return thinner_type_ == PacketThinnerCalculatorOptions::ASYNC
                  ? AsyncThinnerProcess(cc)
@@ -123,8 +123,8 @@ class PacketThinnerCalculator : public CalculatorBase {
 
  private:
   // Implementation of ASYNC and SYNC versions of thinner algorithm.
-  ::mediapipe::Status AsyncThinnerProcess(CalculatorContext* cc);
-  ::mediapipe::Status SyncThinnerProcess(CalculatorContext* cc);
+  mediapipe::Status AsyncThinnerProcess(CalculatorContext* cc);
+  mediapipe::Status SyncThinnerProcess(CalculatorContext* cc);
 
   // Cached option.
   PacketThinnerCalculatorOptions::ThinnerType thinner_type_;
@@ -153,7 +153,7 @@ namespace {
 TimestampDiff abs(TimestampDiff t) { return t < 0 ? -t : t; }
 }  // namespace
 
-::mediapipe::Status PacketThinnerCalculator::Open(CalculatorContext* cc) {
+mediapipe::Status PacketThinnerCalculator::Open(CalculatorContext* cc) {
   PacketThinnerCalculatorOptions options = mediapipe::tool::RetrieveOptions(
       cc->Options<PacketThinnerCalculatorOptions>(), cc->InputSidePackets(),
       kOptionsTag);
@@ -224,10 +224,10 @@ TimestampDiff abs(TimestampDiff t) { return t < 0 ? -t : t; }
     }
   }
 
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status PacketThinnerCalculator::Close(CalculatorContext* cc) {
+mediapipe::Status PacketThinnerCalculator::Close(CalculatorContext* cc) {
   // Emit any saved packets before quitting.
   if (!saved_packet_.IsEmpty()) {
     // Only sync thinner should have saved packets.
@@ -239,10 +239,10 @@ TimestampDiff abs(TimestampDiff t) { return t < 0 ? -t : t; }
       cc->Outputs().Index(0).AddPacket(saved_packet_);
     }
   }
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status PacketThinnerCalculator::AsyncThinnerProcess(
+mediapipe::Status PacketThinnerCalculator::AsyncThinnerProcess(
     CalculatorContext* cc) {
   if (cc->InputTimestamp() >= next_valid_timestamp_) {
     cc->Outputs().Index(0).AddPacket(
@@ -251,10 +251,10 @@ TimestampDiff abs(TimestampDiff t) { return t < 0 ? -t : t; }
     // Guaranteed not to emit packets seen during refractory period.
     cc->Outputs().Index(0).SetNextTimestampBound(next_valid_timestamp_);
   }
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status PacketThinnerCalculator::SyncThinnerProcess(
+mediapipe::Status PacketThinnerCalculator::SyncThinnerProcess(
     CalculatorContext* cc) {
   if (saved_packet_.IsEmpty()) {
     // If no packet has been saved, store the current packet.
@@ -290,7 +290,7 @@ TimestampDiff abs(TimestampDiff t) { return t < 0 ? -t : t; }
       saved_packet_ = cc->Inputs().Index(0).Value();
     }
   }
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
 Timestamp PacketThinnerCalculator::NearestSyncTimestamp(Timestamp now) const {

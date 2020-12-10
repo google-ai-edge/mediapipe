@@ -109,11 +109,11 @@ class CalculatorRunner {
 
   // Runs the calculator, by calling Open(), Process() with the
   // inputs provided via mutable_inputs(), and Close(). Returns the
-  // ::mediapipe::Status from CalculatorGraph::Run().  Internally, Run()
+  // mediapipe::Status from CalculatorGraph::Run().  Internally, Run()
   // constructs a CalculatorGraph in the first call, and calls
   // CalculatorGraph::Run().  A single instance of CalculatorRunner
   // uses the same instance of CalculatorGraph for all runs.
-  ::mediapipe::Status Run();
+  mediapipe::Status Run();
 
   // Returns the vector of contents of the output streams. The .header
   // field contains the stream header and the .packets field contains
@@ -135,11 +135,11 @@ class CalculatorRunner {
   static const char kSinkPrefix[];
 
   // Initialize using a node config (does the constructor's work).
-  ::mediapipe::Status InitializeFromNodeConfig(
+  mediapipe::Status InitializeFromNodeConfig(
       const CalculatorGraphConfig::Node& node_config);
 
   // Builds the graph if one does not already exist.
-  ::mediapipe::Status BuildGraph();
+  mediapipe::Status BuildGraph();
 
   CalculatorGraphConfig::Node node_config_;
 

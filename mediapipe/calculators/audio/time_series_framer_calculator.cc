@@ -66,26 +66,26 @@ namespace mediapipe {
 // cumulative_completed_samples / sample_rate_.
 class TimeSeriesFramerCalculator : public CalculatorBase {
  public:
-  static ::mediapipe::Status GetContract(CalculatorContract* cc) {
+  static mediapipe::Status GetContract(CalculatorContract* cc) {
     cc->Inputs().Index(0).Set<Matrix>(
         // Input stream with TimeSeriesHeader.
     );
     cc->Outputs().Index(0).Set<Matrix>(
         // Fixed length time series Packets with TimeSeriesHeader.
     );
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
   // Returns FAIL if the input stream header is invalid.
-  ::mediapipe::Status Open(CalculatorContext* cc) override;
+  mediapipe::Status Open(CalculatorContext* cc) override;
 
   // Outputs as many framed packets as possible given the accumulated
   // input.  Always returns OK.
-  ::mediapipe::Status Process(CalculatorContext* cc) override;
+  mediapipe::Status Process(CalculatorContext* cc) override;
 
   // Flushes any remaining samples in a zero-padded packet.  Always
   // returns OK.
-  ::mediapipe::Status Close(CalculatorContext* cc) override;
+  mediapipe::Status Close(CalculatorContext* cc) override;
 
  private:
   // Adds input data to the internal buffer.
@@ -205,7 +205,7 @@ void TimeSeriesFramerCalculator::FrameOutput(CalculatorContext* cc) {
   }
 }
 
-::mediapipe::Status TimeSeriesFramerCalculator::Process(CalculatorContext* cc) {
+mediapipe::Status TimeSeriesFramerCalculator::Process(CalculatorContext* cc) {
   if (initial_input_timestamp_ == Timestamp::Unstarted()) {
     initial_input_timestamp_ = cc->InputTimestamp();
     current_timestamp_ = initial_input_timestamp_;
@@ -214,10 +214,10 @@ void TimeSeriesFramerCalculator::FrameOutput(CalculatorContext* cc) {
   EnqueueInput(cc);
   FrameOutput(cc);
 
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status TimeSeriesFramerCalculator::Close(CalculatorContext* cc) {
+mediapipe::Status TimeSeriesFramerCalculator::Close(CalculatorContext* cc) {
   while (samples_still_to_drop_ > 0 && !sample_buffer_.empty()) {
     sample_buffer_.pop_front();
     --samples_still_to_drop_;
@@ -234,10 +234,10 @@ void TimeSeriesFramerCalculator::FrameOutput(CalculatorContext* cc) {
                                CurrentOutputTimestamp());
   }
 
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status TimeSeriesFramerCalculator::Open(CalculatorContext* cc) {
+mediapipe::Status TimeSeriesFramerCalculator::Open(CalculatorContext* cc) {
   TimeSeriesFramerCalculatorOptions framer_options =
       cc->Options<TimeSeriesFramerCalculatorOptions>();
 
@@ -317,7 +317,7 @@ void TimeSeriesFramerCalculator::FrameOutput(CalculatorContext* cc) {
   }
   use_local_timestamp_ = framer_options.use_local_timestamp();
 
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
 }  // namespace mediapipe

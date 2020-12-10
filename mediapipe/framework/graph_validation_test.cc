@@ -66,7 +66,7 @@ TEST(GraphValidationTest, InitializeGraphFromProtos) {
       graph_1.Initialize({config_1, config_2}, {}, {}, "PassThroughGraph"));
   EXPECT_THAT(
       graph_1.Config(),
-      EqualsProto(::mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+      EqualsProto(mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
         type: "PassThroughGraph"
         input_stream: "INPUT:stream_1"
         output_stream: "OUTPUT:stream_2"
@@ -84,7 +84,7 @@ TEST(GraphValidationTest, InitializeGraphFromProtos) {
   MP_EXPECT_OK(graph_2.Initialize({config_1, config_2}, {}));
   EXPECT_THAT(
       graph_2.Config(),
-      EqualsProto(::mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+      EqualsProto(mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
         input_stream: "INPUT:stream_1"
         output_stream: "OUTPUT:stream_2"
         node {
@@ -106,9 +106,9 @@ TEST(GraphValidationTest, InitializeGraphFromProtos) {
 TEST(GraphValidationTest, InitializeGraphFromLinker) {
   EXPECT_FALSE(SubgraphRegistry::IsRegistered("DubQuadTestSubgraph"));
   ValidatedGraphConfig builder_1;
-  ::mediapipe::Status status_1 =
+  mediapipe::Status status_1 =
       builder_1.Initialize({}, {}, "DubQuadTestSubgraph");
-  EXPECT_EQ(status_1.code(), ::mediapipe::StatusCode::kNotFound);
+  EXPECT_EQ(status_1.code(), mediapipe::StatusCode::kNotFound);
   EXPECT_THAT(status_1.message(),
               testing::HasSubstr(
                   R"(No registered object with name: DubQuadTestSubgraph)"));
@@ -174,7 +174,7 @@ TEST(GraphValidationTest, InitializeTemplateFromProtos) {
                                   "PassThroughGraph", &options));
   EXPECT_THAT(
       graph_1.Config(),
-      EqualsProto(::mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+      EqualsProto(mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
         type: "PassThroughGraph"
         input_stream: "INPUT:stream_9"
         output_stream: "OUTPUT:stream_2"
@@ -193,7 +193,7 @@ TEST(GraphValidationTest, InitializeTemplateFromProtos) {
   MP_EXPECT_OK(graph_2.Initialize({config_2}, {config_1}));
   EXPECT_THAT(
       graph_2.Config(),
-      EqualsProto(::mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+      EqualsProto(mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
         input_stream: "INPUT:stream_1"
         output_stream: "OUTPUT:stream_2"
         node {
@@ -254,7 +254,7 @@ TEST(GraphValidationTest, OptionalSubgraphStreams) {
       graph_1.Config(),
 
       // The result includes only the requested input and output streams.
-      EqualsProto(::mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+      EqualsProto(mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
         input_stream: "INPUT:foo_in"
         output_stream: "OUTPUT:foo_out"
         node {
@@ -314,7 +314,7 @@ TEST(GraphValidationTest, OptionalSubgraphStreamsMismatched) {
 
   GraphValidation validation_1;
   mediapipe::Status status = validation_1.Validate({config_1, config_2}, {});
-  ASSERT_EQ(status.code(), ::mediapipe::StatusCode::kInvalidArgument);
+  ASSERT_EQ(status.code(), mediapipe::StatusCode::kInvalidArgument);
   ASSERT_THAT(status.ToString(),
               testing::HasSubstr(
                   "PassThroughCalculator must use matching tags and indexes"));
@@ -323,22 +323,22 @@ TEST(GraphValidationTest, OptionalSubgraphStreamsMismatched) {
 // A calculator that optionally accepts an input-side-packet.
 class OptionalSideInputTestCalculator : public CalculatorBase {
  public:
-  static ::mediapipe::Status GetContract(CalculatorContract* cc) {
+  static mediapipe::Status GetContract(CalculatorContract* cc) {
     cc->InputSidePackets().Tag("SIDEINPUT").Set<std::string>().Optional();
     cc->Inputs().Tag("SELECT").Set<int>().Optional();
     cc->Inputs().Tag("ENABLE").Set<bool>().Optional();
     cc->Outputs().Tag("OUTPUT").Set<std::string>();
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Process(CalculatorContext* cc) final {
+  mediapipe::Status Process(CalculatorContext* cc) final {
     std::string value("default");
     if (cc->InputSidePackets().HasTag("SIDEINPUT")) {
       value = cc->InputSidePackets().Tag("SIDEINPUT").Get<std::string>();
     }
     cc->Outputs().Tag("OUTPUT").Add(new std::string(value),
                                     cc->InputTimestamp());
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 };
 REGISTER_CALCULATOR(OptionalSideInputTestCalculator);
@@ -374,7 +374,7 @@ TEST(GraphValidationTest, OptionalInputNotProvidedForSubgraphCalculator) {
       graph_1.Config(),
 
       // The expanded graph omits the optional input-side-packet.
-      EqualsProto(::mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+      EqualsProto(mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
         input_side_packet: "INPUT:foo_in"
         output_stream: "OUTPUT:foo_out"
         node {
@@ -431,7 +431,7 @@ TEST(GraphValidationTest, MultipleOptionalInputsForSubgraph) {
       // The expanded graph includes only the specified input, "SELECT".
       // Without the fix to RemoveIgnoredStreams(), the expanded graph
       // includes the wrong input.
-      EqualsProto(::mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+      EqualsProto(mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
         input_side_packet: "INPUT:foo_in"
         input_stream: "SELECT:foo_select"
         output_stream: "OUTPUT:foo_out"

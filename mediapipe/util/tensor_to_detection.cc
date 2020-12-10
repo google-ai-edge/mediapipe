@@ -168,14 +168,14 @@ Status TensorsToDetections(const ::tensorflow::Tensor& num_detections,
           TensorToDetection(boxes_mat(i, 0), boxes_mat(i, 1), boxes_mat(i, 2),
                             boxes_mat(i, 3), score, class_id);
     } else {
-      if (!::mediapipe::ContainsKey(label_map, class_id)) {
+      if (!mediapipe::ContainsKey(label_map, class_id)) {
         return InvalidArgumentError(StrFormat(
             "Input label_map does not contain entry for integer label: %d",
             class_id));
       }
-      detection = TensorToDetection(
-          boxes_mat(i, 0), boxes_mat(i, 1), boxes_mat(i, 2), boxes_mat(i, 3),
-          score, ::mediapipe::FindOrDie(label_map, class_id));
+      detection = TensorToDetection(boxes_mat(i, 0), boxes_mat(i, 1),
+                                    boxes_mat(i, 2), boxes_mat(i, 3), score,
+                                    mediapipe::FindOrDie(label_map, class_id));
     }
     // Adding keypoints
     LocationData* location_data = detection.mutable_location_data();
@@ -201,7 +201,7 @@ Status TensorsToDetections(const ::tensorflow::Tensor& num_detections,
     }
     detections->emplace_back(detection);
   }
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
 }  // namespace mediapipe

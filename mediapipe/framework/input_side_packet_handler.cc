@@ -21,11 +21,11 @@
 
 namespace mediapipe {
 
-::mediapipe::Status InputSidePacketHandler::PrepareForRun(
+mediapipe::Status InputSidePacketHandler::PrepareForRun(
     const PacketTypeSet* input_side_packet_types,
     const std::map<std::string, Packet>& all_side_packets,
     std::function<void()> input_side_packets_ready_callback,
-    std::function<void(::mediapipe::Status)> error_callback) {
+    std::function<void(mediapipe::Status)> error_callback) {
   int missing_input_side_packet_count;
   prev_input_side_packets_ = std::move(input_side_packets_);
   ASSIGN_OR_RETURN(
@@ -39,7 +39,7 @@ namespace mediapipe {
   input_side_packets_ready_callback_ =
       std::move(input_side_packets_ready_callback);
   error_callback_ = std::move(error_callback);
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
 bool InputSidePacketHandler::InputSidePacketsChanged() {
@@ -49,25 +49,24 @@ bool InputSidePacketHandler::InputSidePacketsChanged() {
 }
 
 void InputSidePacketHandler::Set(CollectionItemId id, const Packet& packet) {
-  ::mediapipe::Status status = SetInternal(id, packet);
+  mediapipe::Status status = SetInternal(id, packet);
   if (!status.ok()) {
     TriggerErrorCallback(status);
   }
 }
 
-::mediapipe::Status InputSidePacketHandler::SetInternal(CollectionItemId id,
-                                                        const Packet& packet) {
+mediapipe::Status InputSidePacketHandler::SetInternal(CollectionItemId id,
+                                                      const Packet& packet) {
   RET_CHECK_GT(missing_input_side_packet_count_, 0);
   Packet& side_packet = input_side_packets_->Get(id);
 
   if (!side_packet.IsEmpty()) {
-    return ::mediapipe::AlreadyExistsErrorBuilder(MEDIAPIPE_LOC)
+    return mediapipe::AlreadyExistsErrorBuilder(MEDIAPIPE_LOC)
            << "Input side packet with id " << id << " was already set.";
   }
-  ::mediapipe::Status result =
-      input_side_packet_types_->Get(id).Validate(packet);
+  mediapipe::Status result = input_side_packet_types_->Get(id).Validate(packet);
   if (!result.ok()) {
-    return ::mediapipe::StatusBuilder(result, MEDIAPIPE_LOC).SetPrepend()
+    return mediapipe::StatusBuilder(result, MEDIAPIPE_LOC).SetPrepend()
            << absl::StrCat(
                   "Packet type mismatch on calculator input side packet with "
                   "id ",
@@ -78,11 +77,11 @@ void InputSidePacketHandler::Set(CollectionItemId id, const Packet& packet) {
           1, std::memory_order_acq_rel) == 1) {
     input_side_packets_ready_callback_();
   }
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
 void InputSidePacketHandler::TriggerErrorCallback(
-    const ::mediapipe::Status& status) const {
+    const mediapipe::Status& status) const {
   CHECK(error_callback_);
   error_callback_(status);
 }

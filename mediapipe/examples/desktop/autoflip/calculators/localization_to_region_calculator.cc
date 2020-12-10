@@ -38,9 +38,9 @@ class LocalizationToRegionCalculator : public mediapipe::CalculatorBase {
   LocalizationToRegionCalculator& operator=(
       const LocalizationToRegionCalculator&) = delete;
 
-  static ::mediapipe::Status GetContract(mediapipe::CalculatorContract* cc);
-  ::mediapipe::Status Open(mediapipe::CalculatorContext* cc) override;
-  ::mediapipe::Status Process(mediapipe::CalculatorContext* cc) override;
+  static mediapipe::Status GetContract(mediapipe::CalculatorContract* cc);
+  mediapipe::Status Open(mediapipe::CalculatorContext* cc) override;
+  mediapipe::Status Process(mediapipe::CalculatorContext* cc) override;
 
  private:
   // Calculator options.
@@ -84,21 +84,21 @@ void FillSalientRegion(const mediapipe::Detection& detection,
 
 }  // namespace
 
-::mediapipe::Status LocalizationToRegionCalculator::GetContract(
+mediapipe::Status LocalizationToRegionCalculator::GetContract(
     mediapipe::CalculatorContract* cc) {
   cc->Inputs().Tag("DETECTIONS").Set<std::vector<mediapipe::Detection>>();
   cc->Outputs().Tag("REGIONS").Set<DetectionSet>();
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status LocalizationToRegionCalculator::Open(
+mediapipe::Status LocalizationToRegionCalculator::Open(
     mediapipe::CalculatorContext* cc) {
   options_ = cc->Options<LocalizationToRegionCalculatorOptions>();
 
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status LocalizationToRegionCalculator::Process(
+mediapipe::Status LocalizationToRegionCalculator::Process(
     mediapipe::CalculatorContext* cc) {
   const auto& annotations =
       cc->Inputs().Tag("DETECTIONS").Get<std::vector<mediapipe::Detection>>();
@@ -119,7 +119,7 @@ void FillSalientRegion(const mediapipe::Detection& detection,
   }
 
   cc->Outputs().Tag("REGIONS").Add(regions.release(), cc->InputTimestamp());
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
 }  // namespace autoflip

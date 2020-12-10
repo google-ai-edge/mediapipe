@@ -48,7 +48,7 @@ class SyncSetInputStreamHandler : public InputStreamHandler {
       std::function<void()> headers_ready_callback,
       std::function<void()> notification_callback,
       std::function<void(CalculatorContext*)> schedule_callback,
-      std::function<void(::mediapipe::Status)> error_callback) override;
+      std::function<void(mediapipe::Status)> error_callback) override;
 
  protected:
   // In SyncSetInputStreamHandler, a node is "ready" if any
@@ -94,7 +94,7 @@ void SyncSetInputStreamHandler::PrepareForRun(
     std::function<void()> headers_ready_callback,
     std::function<void()> notification_callback,
     std::function<void(CalculatorContext*)> schedule_callback,
-    std::function<void(::mediapipe::Status)> error_callback) {
+    std::function<void(mediapipe::Status)> error_callback) {
   const auto& handler_options =
       options_.GetExtension(SyncSetInputStreamHandlerOptions::ext);
   {
@@ -110,7 +110,7 @@ void SyncSetInputStreamHandler::PrepareForRun(
         MEDIAPIPE_CHECK_OK(tool::ParseTagIndex(tag_index, &tag, &index));
         CollectionItemId id = input_stream_managers_.GetId(tag, index);
         CHECK(id.IsValid()) << "stream \"" << tag_index << "\" is not found.";
-        CHECK(!::mediapipe::ContainsKey(used_ids, id))
+        CHECK(!mediapipe::ContainsKey(used_ids, id))
             << "stream \"" << tag_index << "\" is in more than one sync set.";
         used_ids.insert(id);
         stream_ids.push_back(id);
@@ -120,7 +120,7 @@ void SyncSetInputStreamHandler::PrepareForRun(
     std::vector<CollectionItemId> remaining_ids;
     for (CollectionItemId id = input_stream_managers_.BeginId();
          id < input_stream_managers_.EndId(); ++id) {
-      if (!::mediapipe::ContainsKey(used_ids, id)) {
+      if (!mediapipe::ContainsKey(used_ids, id)) {
         remaining_ids.push_back(id);
       }
     }

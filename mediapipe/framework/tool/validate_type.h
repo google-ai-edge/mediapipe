@@ -26,14 +26,14 @@ namespace mediapipe {
 
 namespace tool {
 // Equivalent functions for PacketGenerators.
-::mediapipe::Status RunGeneratorFillExpectations(
+mediapipe::Status RunGeneratorFillExpectations(
     const PacketGeneratorConfig& config,
     const std::string& package = "mediapipe");
 
 // Run PacketGenerator::Generate() on the given generator, options,
 // and inputs to produce outputs.  Validate the types of the inputs and
 // outputs using PacketGenerator::FillExpectations.
-::mediapipe::Status RunGenerateAndValidateTypes(
+mediapipe::Status RunGenerateAndValidateTypes(
     const std::string& packet_generator_name,
     const PacketGeneratorOptions& extendable_options,
     const PacketSet& input_side_packets, PacketSet* output_side_packets,

@@ -52,10 +52,10 @@ class ClockTimestampCalculator : public CalculatorBase {
  public:
   ClockTimestampCalculator() {}
 
-  static ::mediapipe::Status GetContract(CalculatorContract* cc);
+  static mediapipe::Status GetContract(CalculatorContract* cc);
 
-  ::mediapipe::Status Open(CalculatorContext* cc) override;
-  ::mediapipe::Status Process(CalculatorContext* cc) override;
+  mediapipe::Status Open(CalculatorContext* cc) override;
+  mediapipe::Status Process(CalculatorContext* cc) override;
 
  private:
   // Clock object.
@@ -63,7 +63,7 @@ class ClockTimestampCalculator : public CalculatorBase {
 };
 REGISTER_CALCULATOR(ClockTimestampCalculator);
 
-::mediapipe::Status ClockTimestampCalculator::GetContract(
+mediapipe::Status ClockTimestampCalculator::GetContract(
     CalculatorContract* cc) {
   RET_CHECK_EQ(cc->Inputs().NumEntries(), 1);
   RET_CHECK_EQ(cc->Outputs().NumEntries(), 1);
@@ -78,10 +78,10 @@ REGISTER_CALCULATOR(ClockTimestampCalculator);
         .Set<std::shared_ptr<::mediapipe::Clock>>();
   }
 
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status ClockTimestampCalculator::Open(CalculatorContext* cc) {
+mediapipe::Status ClockTimestampCalculator::Open(CalculatorContext* cc) {
   // Direct passthrough, as far as timestamp and bounds are concerned.
   cc->SetOffset(TimestampDiff(0));
 
@@ -95,14 +95,14 @@ REGISTER_CALCULATOR(ClockTimestampCalculator);
         ::mediapipe::MonotonicClock::CreateSynchronizedMonotonicClock());
   }
 
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status ClockTimestampCalculator::Process(CalculatorContext* cc) {
+mediapipe::Status ClockTimestampCalculator::Process(CalculatorContext* cc) {
   // Push the Time packet to output.
   auto timestamp_packet = MakePacket<absl::Time>(clock_->TimeNow());
   cc->Outputs().Index(0).AddPacket(timestamp_packet.At(cc->InputTimestamp()));
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
 }  // namespace mediapipe

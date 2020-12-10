@@ -67,14 +67,14 @@ class PacketGeneratorGraph {
   // stage and will be common to all calls to CalculatorGraph::Run().
   // Any generators which are runnable at this stage (that only depend on
   // things in the graph or input_side_packets) will be run at this time.
-  virtual ::mediapipe::Status Initialize(
+  virtual mediapipe::Status Initialize(
       const ValidatedGraphConfig* validated_graph,
-      ::mediapipe::Executor* executor,
+      mediapipe::Executor* executor,
       const std::map<std::string, Packet>& input_side_packets);
 
   // Add the input_side_packets and run any remaining generators (which
   // must now be runnable) to produce output_side_packets.
-  virtual ::mediapipe::Status RunGraphSetup(
+  virtual mediapipe::Status RunGraphSetup(
       const std::map<std::string, Packet>& input_side_packets,
       std::map<std::string, Packet>* output_side_packets) const;
 
@@ -96,7 +96,7 @@ class PacketGeneratorGraph {
   // packets and unrunnable generators.  "initial" must be set to true for
   // the first pass and false for subsequent passes.  output_side_packets
   // must be set to include the input side packets before calling.
-  ::mediapipe::Status ExecuteGenerators(
+  mediapipe::Status ExecuteGenerators(
       std::map<std::string, Packet>* output_side_packets,
       std::vector<int>* non_scheduled_generators, bool initial) const;
 
@@ -109,9 +109,9 @@ class PacketGeneratorGraph {
 
   // The executor to use for running the generators.  We do not own the
   // executor but it must outlive this object.
-  ::mediapipe::Executor* executor_ = nullptr;
+  mediapipe::Executor* executor_ = nullptr;
   // An object to own the executor if it needs to be deleted.
-  std::unique_ptr<::mediapipe::Executor> executor_owner_;
+  std::unique_ptr<mediapipe::Executor> executor_owner_;
 
   // The base level packets available after initialization.
   std::map<std::string, Packet> base_packets_;

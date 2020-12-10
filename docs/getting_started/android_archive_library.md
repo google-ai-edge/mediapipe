@@ -1,8 +1,9 @@
 ---
 layout: default
 title: MediaPipe Android Archive
-parent: Getting Started
-nav_order: 7
+parent: MediaPipe on Android
+grand_parent: Getting Started
+nav_order: 2
 ---
 
 # MediaPipe Android Archive

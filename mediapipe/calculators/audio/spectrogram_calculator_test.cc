@@ -50,7 +50,7 @@ class SpectrogramCalculatorTest
   }
 
   // Initializes and runs the test graph.
-  ::mediapipe::Status Run() {
+  mediapipe::Status Run() {
     // Now that options are set, we can set up some internal constants.
     frame_duration_samples_ =
         round(options_.frame_duration_seconds() * input_sample_rate_);

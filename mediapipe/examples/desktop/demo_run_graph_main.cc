@@ -40,7 +40,7 @@ DEFINE_string(output_video_path, "",
               "Full path of where to save result (.mp4 only). "
               "If not provided, show result in a window.");
 
-::mediapipe::Status RunMPPGraph() {
+mediapipe::Status RunMPPGraph() {
   std::string calculator_graph_config_contents;
   MP_RETURN_IF_ERROR(mediapipe::file::GetContents(
       FLAGS_calculator_graph_config_file, &calculator_graph_config_contents));
@@ -86,7 +86,14 @@ DEFINE_string(output_video_path, "",
     // Capture opencv camera or video frame.
     cv::Mat camera_frame_raw;
     capture >> camera_frame_raw;
-    if (camera_frame_raw.empty()) break;  // End of video.
+    if (camera_frame_raw.empty()) {
+      if (!load_video) {
+        LOG(INFO) << "Ignore empty frames from camera.";
+        continue;
+      }
+      LOG(INFO) << "Empty frame, end of video reached.";
+      break;
+    }
     cv::Mat camera_frame;
     cv::cvtColor(camera_frame_raw, camera_frame, cv::COLOR_BGR2RGB);
     if (!load_video) {
@@ -141,7 +148,7 @@ DEFINE_string(output_video_path, "",
 int main(int argc, char** argv) {
   google::InitGoogleLogging(argv[0]);
   gflags::ParseCommandLineFlags(&argc, &argv, true);
-  ::mediapipe::Status run_status = RunMPPGraph();
+  mediapipe::Status run_status = RunMPPGraph();
   if (!run_status.ok()) {
     LOG(ERROR) << "Failed to run the graph: " << run_status.message();
     return EXIT_FAILURE;

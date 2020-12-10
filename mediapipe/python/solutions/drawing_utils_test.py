@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Lint as: python3
 """Tests for mediapipe.python.solutions.drawing_utils."""
 
 from absl.testing import absltest
@@ -48,7 +47,7 @@ class DrawingUtilTest(parameterized.TestCase):
   @parameterized.named_parameters(
       ('landmark_list_has_only_one_element', 'landmark {x: 0.1 y: 0.1}'),
       ('second_landmark_is_invisible',
-       'landmark {x: 0.1 y: 0.1} landmark {x: 0.5 y: 0.5 visibility: -1.0}'))
+       'landmark {x: 0.1 y: 0.1} landmark {x: 0.5 y: 0.5 visibility: 0.0}'))
   def test_draw_single_landmark_point(self, landmark_list_text):
     landmark_list = text_format.Parse(landmark_list_text,
                                       landmark_pb2.NormalizedLandmarkList())
@@ -65,8 +64,8 @@ class DrawingUtilTest(parameterized.TestCase):
       ('landmarks_have_x_and_y_only',
        'landmark {x: 0.1 y: 0.5} landmark {x: 0.5 y: 0.1}'),
       ('landmark_zero_visibility_and_presence',
-       'landmark {x: 0.1 y: 0.5 presence: 0.0}'
-       'landmark {x: 0.5 y: 0.1 visibility: 0.0}'))
+       'landmark {x: 0.1 y: 0.5 presence: 0.5}'
+       'landmark {x: 0.5 y: 0.1 visibility: 0.5}'))
   def test_draw_landmarks_and_connections(self, landmark_list_text):
     landmark_list = text_format.Parse(landmark_list_text,
                                       landmark_pb2.NormalizedLandmarkList())

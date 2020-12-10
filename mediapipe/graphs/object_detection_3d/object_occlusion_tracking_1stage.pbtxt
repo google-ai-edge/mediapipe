@@ -44,13 +44,13 @@ node {
 }
 
 node {
-  calculator: "ObjectronDetectionSubgraphGpu"
+  calculator: "ObjectronDetection1StageSubgraphGpu"
   input_stream: "IMAGE_GPU:sampled_input_video"
   output_stream: "ANNOTATIONS:objects"
 }
 
 node {
-  calculator: "ObjectronTrackingSubgraphGpu"
+  calculator: "ObjectronTracking1StageSubgraphGpu"
   input_stream: "FRAME_ANNOTATION:objects"
   input_stream: "IMAGE_GPU:input_video_copy"
   output_stream: "LIFTED_FRAME_ANNOTATION:lifted_tracked_objects"

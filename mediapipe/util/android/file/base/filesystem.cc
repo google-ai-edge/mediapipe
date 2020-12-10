@@ -25,10 +25,10 @@ static_assert(sizeof(off_t) == 8, "Large file support is required");
 namespace mediapipe {
 namespace file {
 
-::mediapipe::Status RecursivelyCreateDir(absl::string_view path,
-                                         const file::Options& options) {
+mediapipe::Status RecursivelyCreateDir(absl::string_view path,
+                                       const file::Options& options) {
   if (path.empty()) {
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
   std::vector<std::string> path_comp = absl::StrSplit(path, '/');
@@ -45,45 +45,44 @@ namespace file {
       if (S_ISDIR(stat_buf.st_mode)) {
         continue;
       }
-      return ::mediapipe::Status(mediapipe::StatusCode::kInternal,
-                                 "Could not stat " + std::string(crpath));
+      return mediapipe::Status(mediapipe::StatusCode::kInternal,
+                               "Could not stat " + std::string(crpath));
     } else {
       int mkval = mkdir(crpath, options.permissions());
       if (mkval == -1) {
-        return ::mediapipe::Status(mediapipe::StatusCode::kInternal,
-                                   "Could not create " + std::string(crpath));
+        return mediapipe::Status(mediapipe::StatusCode::kInternal,
+                                 "Could not create " + std::string(crpath));
       }
     }
   }
 
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status Exists(absl::string_view path,
-                           const file::Options& ignored) {
+mediapipe::Status Exists(absl::string_view path, const file::Options& ignored) {
   struct stat64 stat_buf;
   int statval = lstat64(std::string(path).c_str(), &stat_buf);
   if (statval == 0) {
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   } else {
-    return ::mediapipe::Status(mediapipe::StatusCode::kNotFound,
-                               "Could not stat file.");
+    return mediapipe::Status(mediapipe::StatusCode::kNotFound,
+                             "Could not stat file.");
   }
 }
 
-::mediapipe::Status IsDirectory(absl::string_view path,
-                                const file::Options& /*ignored*/) {
+mediapipe::Status IsDirectory(absl::string_view path,
+                              const file::Options& /*ignored*/) {
   struct stat64 stat_buf;
   int statval = lstat64(std::string(path).c_str(), &stat_buf);
   bool is_dir = (statval == 0 && S_ISREG(stat_buf.st_mode));
   if (is_dir) {
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   } else if (statval != 0) {
-    return ::mediapipe::Status(mediapipe::StatusCode::kNotFound,
-                               "File does not exists");
+    return mediapipe::Status(mediapipe::StatusCode::kNotFound,
+                             "File does not exists");
   } else {
-    return ::mediapipe::Status(mediapipe::StatusCode::kNotFound,
-                               "Not a directory");
+    return mediapipe::Status(mediapipe::StatusCode::kNotFound,
+                             "Not a directory");
   }
 }
 

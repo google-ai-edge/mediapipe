@@ -27,7 +27,7 @@ import PIL.Image
 # TODO: Add unit tests specifically for memory management.
 class ImageFrameTest(absltest.TestCase):
 
-  def testCreateImageFrameFromGrayCvMat(self):
+  def test_create_image_frame_from_gray_cv_mat(self):
     w, h = random.randrange(3, 100), random.randrange(3, 100)
     mat = cv2.cvtColor(
         np.random.randint(2**8 - 1, size=(h, w, 3), dtype=np.uint8),
@@ -41,7 +41,7 @@ class ImageFrameTest(absltest.TestCase):
       print(image_frame[w, h])
     self.assertEqual(42, image_frame[2, 2])
 
-  def testCreateImageFrameFromRgbCvMat(self):
+  def test_create_image_frame_from_rgb_cv_mat(self):
     w, h, channels = random.randrange(3, 100), random.randrange(3, 100), 3
     mat = cv2.cvtColor(
         np.random.randint(2**8 - 1, size=(h, w, channels), dtype=np.uint8),
@@ -53,7 +53,7 @@ class ImageFrameTest(absltest.TestCase):
       print(image_frame[w, h, channels])
     self.assertEqual(42, image_frame[2, 2, 1])
 
-  def testCreateImageFrameFromRgb48CvMat(self):
+  def test_create_image_frame_from_rgb48_cv_mat(self):
     w, h, channels = random.randrange(3, 100), random.randrange(3, 100), 3
     mat = cv2.cvtColor(
         np.random.randint(2**16 - 1, size=(h, w, channels), dtype=np.uint16),
@@ -65,7 +65,7 @@ class ImageFrameTest(absltest.TestCase):
       print(image_frame[w, h, channels])
     self.assertEqual(42, image_frame[2, 2, 1])
 
-  def testCreateImageFrameFromGrayPilImage(self):
+  def test_create_image_frame_from_gray_pil_image(self):
     w, h = random.randrange(3, 100), random.randrange(3, 100)
     img = PIL.Image.fromarray(
         np.random.randint(2**8 - 1, size=(h, w), dtype=np.uint8), 'L')
@@ -77,7 +77,7 @@ class ImageFrameTest(absltest.TestCase):
     with self.assertRaisesRegex(IndexError, 'out of bounds'):
       print(image_frame[w, h])
 
-  def testCreateImageFrameFromRgbPilImage(self):
+  def test_create_image_frame_from_rgb_pil_image(self):
     w, h, channels = random.randrange(3, 100), random.randrange(3, 100), 3
     img = PIL.Image.fromarray(
         np.random.randint(2**8 - 1, size=(h, w, channels), dtype=np.uint8),
@@ -88,7 +88,7 @@ class ImageFrameTest(absltest.TestCase):
     with self.assertRaisesRegex(IndexError, 'out of bounds'):
       print(image_frame[w, h, channels])
 
-  def testCreateImageFrameFromRgba64PilImage(self):
+  def test_create_image_frame_from_rgba64_pil_image(self):
     w, h, channels = random.randrange(3, 100), random.randrange(3, 100), 4
     img = PIL.Image.fromarray(
         np.random.randint(2**16 - 1, size=(h, w, channels), dtype=np.uint16),
@@ -100,7 +100,7 @@ class ImageFrameTest(absltest.TestCase):
     with self.assertRaisesRegex(IndexError, 'out of bounds'):
       print(image_frame[1000, 1000, 1000])
 
-  def testImageFrameNumbyView(self):
+  def test_image_frame_numby_view(self):
     w, h, channels = random.randrange(3, 100), random.randrange(3, 100), 3
     mat = cv2.cvtColor(
         np.random.randint(2**8 - 1, size=(h, w, channels), dtype=np.uint8),
@@ -116,7 +116,7 @@ class ImageFrameTest(absltest.TestCase):
     copied_ndarray = np.copy(output_ndarray)
     copied_ndarray[0, 0, 0] = 0
 
-  def testCroppedGray8Image(self):
+  def test_cropped_gray8_image(self):
     w, h = random.randrange(20, 100), random.randrange(20, 100)
     channels, offset = 3, 10
     mat = cv2.cvtColor(
@@ -129,7 +129,7 @@ class ImageFrameTest(absltest.TestCase):
         np.array_equal(mat[offset:-offset, offset:-offset],
                        image_frame.numpy_view()))
 
-  def testCroppedRGBImage(self):
+  def test_cropped_rgb_image(self):
     w, h = random.randrange(20, 100), random.randrange(20, 100)
     channels, offset = 3, 10
     mat = cv2.cvtColor(
@@ -145,7 +145,7 @@ class ImageFrameTest(absltest.TestCase):
   # For image frames that store contiguous data, the output of numpy_view()
   # points to the pixel data of the original image frame object. The life cycle
   # of the data array should tie to the image frame object.
-  def testImageFrameNumpyViewWithContiguousData(self):
+  def test_image_frame_numpy_view_with_contiguous_data(self):
     w, h = 640, 480
     mat = np.random.randint(2**8 - 1, size=(h, w, 3), dtype=np.uint8)
     image_frame = mp.ImageFrame(image_format=mp.ImageFormat.SRGB, data=mat)
@@ -168,7 +168,7 @@ class ImageFrameTest(absltest.TestCase):
   # For image frames that store non contiguous data, the output of numpy_view()
   # stores a copy of the pixel data of the image frame object. The life cycle of
   # the data array doesn't tie to the image frame object.
-  def testImageFrameNumpyViewWithNonContiguousData(self):
+  def test_image_frame_numpy_view_with_non_contiguous_data(self):
     w, h = 641, 481
     mat = np.random.randint(2**8 - 1, size=(h, w, 3), dtype=np.uint8)
     image_frame = mp.ImageFrame(image_format=mp.ImageFormat.SRGB, data=mat)

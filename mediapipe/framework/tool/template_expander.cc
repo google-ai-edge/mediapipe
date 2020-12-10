@@ -98,7 +98,7 @@ mediapipe::Status ProtoPathSplit(const std::string& path, ProtoPath* result) {
       bool ok = absl::SimpleAtoi(id_pair.first, &tag) &&
                 absl::SimpleAtoi(id_pair.second, &index);
       if (!ok) {
-        status.Update(::mediapipe::InvalidArgumentError(path));
+        status.Update(mediapipe::InvalidArgumentError(path));
       }
       result->push_back(std::make_pair(tag, index));
     }
@@ -146,7 +146,7 @@ int FieldCount(const FieldValue& base, ProtoPath field_path,
 // The default implementation for the mediapipe template rule interpreter.
 class TemplateExpanderImpl {
  public:
-  explicit TemplateExpanderImpl(std::vector<::mediapipe::Status>* errors)
+  explicit TemplateExpanderImpl(std::vector<mediapipe::Status>* errors)
       : errors_(errors) {}
 
   // Applies the rules specified in a CalculatorGraphTemplate to a
@@ -221,12 +221,12 @@ class TemplateExpanderImpl {
                                  std::vector<FieldValue>* base) {
     if (!rule.has_path()) {
       base->push_back(output);
-      return ::mediapipe::OkStatus();
+      return mediapipe::OkStatus();
     }
     if (rule.has_field_value()) {
       // For a non-repeated field, the field value is stored only in the rule.
       base->push_back(rule.field_value());
-      return ::mediapipe::OkStatus();
+      return mediapipe::OkStatus();
     }
     ProtoPath field_path;
     mediapipe::Status status =
@@ -242,7 +242,7 @@ class TemplateExpanderImpl {
       const std::vector<FieldValue>& field_values, FieldValue* output) {
     if (!rule.has_path()) {
       *output = field_values[0];
-      return ::mediapipe::OkStatus();
+      return mediapipe::OkStatus();
     }
     ProtoPath field_path;
     RET_CHECK_OK(
@@ -252,7 +252,7 @@ class TemplateExpanderImpl {
       // For a non-repeated field, only one value can be specified.
       if (!field_values.empty() &&
           FieldCount(*output, field_path, GetFieldType(rule)) > 0) {
-        return ::mediapipe::InvalidArgumentError(absl::StrCat(
+        return mediapipe::InvalidArgumentError(absl::StrCat(
             "Multiple values specified for non-repeated field: ", rule.path()));
       }
       // For a non-repeated field, the field value is stored only in the rule.
@@ -280,7 +280,7 @@ class TemplateExpanderImpl {
       if (!status.ok()) break;
       std::vector<FieldValue> values;
       if (!ExpandTemplateRule(rules[i], base[0], &values)) {
-        status = ::mediapipe::InternalError("ExpandTemplateRule failed");
+        status = mediapipe::InternalError("ExpandTemplateRule failed");
         break;
       }
       edits.push_back(values);
@@ -348,7 +348,7 @@ class TemplateExpanderImpl {
     // Retrieve the var param and the range expression.
     const TemplateExpression& rule = template_rules_.rule().Get(base_index);
     if (rule.arg().empty() || rule.arg().size() > 2) {
-      RecordError(::mediapipe::InvalidArgumentError(
+      RecordError(mediapipe::InvalidArgumentError(
           "Param declaration must specify a parameter name and "
           "may specify a single default value."));
     }
@@ -401,7 +401,7 @@ class TemplateExpanderImpl {
     TemplateArgument* result = GetItem(&environment_, expr.param());
     if (result == nullptr) {
       RecordError(
-          ::mediapipe::NotFoundError(absl::StrCat("param: ", expr.param())));
+          mediapipe::NotFoundError(absl::StrCat("param: ", expr.param())));
       return AsArgument(0.0);
     }
     return *result;
@@ -412,7 +412,7 @@ class TemplateExpanderImpl {
     TemplateArgument lhs = EvalExpression(expr.arg(0));
     TemplateArgument* result = GetItem(lhs.mutable_dict(), expr.arg(1).param());
     if (result == nullptr) {
-      RecordError(::mediapipe::NotFoundError(
+      RecordError(mediapipe::NotFoundError(
           absl::StrCat("param field: ", expr.arg(1).param())));
       return AsArgument(0.0);
     }
@@ -427,7 +427,7 @@ class TemplateExpanderImpl {
     }
     if (value.has_str()) {
       if (!absl::SimpleAtod(value.str(), &result)) {
-        RecordError(::mediapipe::InvalidArgumentError(value.str()));
+        RecordError(mediapipe::InvalidArgumentError(value.str()));
       }
     }
     return result;
@@ -452,7 +452,7 @@ class TemplateExpanderImpl {
       return value.num() != 0;
     } else if (value.has_str()) {
       if (!absl::SimpleAtob(value.str(), &result)) {
-        RecordError(::mediapipe::InvalidArgumentError(value.str()));
+        RecordError(mediapipe::InvalidArgumentError(value.str()));
       }
     }
     return result;
@@ -462,7 +462,7 @@ class TemplateExpanderImpl {
   TemplateArgument AsDict(const std::vector<TemplateArgument>& args) {
     TemplateArgument result;
     if (args.size() % 2 != 0) {
-      RecordError(::mediapipe::InvalidArgumentError(absl::StrCat(
+      RecordError(mediapipe::InvalidArgumentError(absl::StrCat(
           "Dict requires an even number of arguments, got: ", args.size())));
       return result;
     }
@@ -613,11 +613,11 @@ class TemplateExpanderImpl {
         result->push_back(r[0]);
       }
     }
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
   // Record a Status if it indicates an error.
-  void RecordError(const ::mediapipe::Status& status) {
+  void RecordError(const mediapipe::Status& status) {
     if (!status.ok()) {
       errors_->push_back(status);
     }
@@ -631,23 +631,23 @@ class TemplateExpanderImpl {
   TemplateDict environment_;
 
   // List of errors found in template parameters.
-  std::vector<::mediapipe::Status>* errors_;
+  std::vector<mediapipe::Status>* errors_;
 };
 
 TemplateExpander::TemplateExpander() {}
 
 // Expands template rules within a proto message.
 // Replaces template rules with expanded sub-messages.
-::mediapipe::Status TemplateExpander::ExpandTemplates(
+mediapipe::Status TemplateExpander::ExpandTemplates(
     const TemplateDict& args, const CalculatorGraphTemplate& templ,
     CalculatorGraphConfig* output) {
   errors_.clear();
   TemplateExpanderImpl expander(&errors_);
   if (!expander.ExpandTemplates(args, templ, output)) {
-    errors_.push_back(::mediapipe::InternalError("ExpandTemplates failed"));
+    errors_.push_back(mediapipe::InternalError("ExpandTemplates failed"));
   }
-  ::mediapipe::Status status;
-  for (const ::mediapipe::Status& error : errors_) {
+  mediapipe::Status status;
+  for (const mediapipe::Status& error : errors_) {
     LOG(ERROR) << error;
     status.Update(error);
   }

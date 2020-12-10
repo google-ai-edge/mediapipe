@@ -55,7 +55,7 @@ mediapipe::Status AddStreamHeadersIntoGraph(
     jobjectArray stream_names, jlongArray packets) {
   jsize num_headers = env->GetArrayLength(stream_names);
   if (num_headers != env->GetArrayLength(packets)) {
-    return mediapipe::Status(::mediapipe::StatusCode::kFailedPrecondition,
+    return mediapipe::Status(mediapipe::StatusCode::kFailedPrecondition,
                              "Number of streams and packets doesn't match!");
   }
   jlong* packets_array_ref = env->GetLongArrayElements(packets, nullptr);
@@ -180,7 +180,7 @@ GRAPH_METHOD(nativeAddPacketCallback)(JNIEnv* env, jobject thiz, jlong context,
   jobject global_callback_ref = env->NewGlobalRef(callback);
   if (!global_callback_ref) {
     ThrowIfError(
-        env, ::mediapipe::InternalError("Failed to allocate packet callback"));
+        env, mediapipe::InternalError("Failed to allocate packet callback"));
     return;
   }
   ThrowIfError(env, mediapipe_graph->AddCallbackHandler(output_stream_name,

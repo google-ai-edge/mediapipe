@@ -245,8 +245,8 @@ void SchedulerQueue::RunCalculatorNode(CalculatorNode* node,
     // source node always reuses the same CalculatorContext and Close() doesn't
     // access any inputs.
     // TODO: Should we pass tool::StatusStop() in this case?
-    const ::mediapipe::Status result =
-        node->CloseNode(::mediapipe::OkStatus(), /*graph_run_ended=*/false);
+    const mediapipe::Status result =
+        node->CloseNode(mediapipe::OkStatus(), /*graph_run_ended=*/false);
     shared_->timer.EndNode(start_time);
     if (!result.ok()) {
       VLOG(3) << node->DebugName()
@@ -257,7 +257,7 @@ void SchedulerQueue::RunCalculatorNode(CalculatorNode* node,
     // Note that we don't need a lock because only one thread can execute this
     // due to the lock on running_nodes.
     int64 start_time = shared_->timer.StartNode();
-    const ::mediapipe::Status result = node->ProcessNode(cc);
+    const mediapipe::Status result = node->ProcessNode(cc);
     shared_->timer.EndNode(start_time);
 
     if (!result.ok()) {
@@ -284,7 +284,7 @@ void SchedulerQueue::RunCalculatorNode(CalculatorNode* node,
 void SchedulerQueue::OpenCalculatorNode(CalculatorNode* node) {
   VLOG(3) << "Opening " << node->DebugName();
   int64 start_time = shared_->timer.StartNode();
-  const ::mediapipe::Status result = node->OpenNode();
+  const mediapipe::Status result = node->OpenNode();
   shared_->timer.EndNode(start_time);
   if (!result.ok()) {
     VLOG(3) << node->DebugName() << " had an error!";

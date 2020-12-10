@@ -47,7 +47,7 @@ class ProtoUtilLite {
     FieldAccess(uint32 field_id, FieldType field_type);
 
     // Specifies the original serialized protobuf message.
-    ::mediapipe::Status SetMessage(const FieldValue& message);
+    mediapipe::Status SetMessage(const FieldValue& message);
 
     // Returns the serialized protobuf message with updated field values.
     void GetMessage(FieldValue* result);
@@ -64,23 +64,24 @@ class ProtoUtilLite {
 
   // Replace a range of field values nested within a protobuf.
   // Starting at the proto_path index, "length" values are replaced.
-  static ::mediapipe::Status ReplaceFieldRange(
+  static mediapipe::Status ReplaceFieldRange(
       FieldValue* message, ProtoPath proto_path, int length,
       FieldType field_type, const std::vector<FieldValue>& field_values);
 
   // Retrieve a range of field values nested within a protobuf.
   // Starting at the proto_path index, "length" values are retrieved.
-  static ::mediapipe::Status GetFieldRange(
-      const FieldValue& message, ProtoPath proto_path, int length,
-      FieldType field_type, std::vector<FieldValue>* field_values);
+  static mediapipe::Status GetFieldRange(const FieldValue& message,
+                                         ProtoPath proto_path, int length,
+                                         FieldType field_type,
+                                         std::vector<FieldValue>* field_values);
 
   // Serialize one or more protobuf field values from text.
-  static ::mediapipe::Status Serialize(
+  static mediapipe::Status Serialize(
       const std::vector<std::string>& text_values, FieldType field_type,
       std::vector<FieldValue>* result);
 
   // Deserialize one or more protobuf field values to text.
-  static ::mediapipe::Status Deserialize(
+  static mediapipe::Status Deserialize(
       const std::vector<FieldValue>& field_values, FieldType field_type,
       std::vector<std::string>* result);
 };

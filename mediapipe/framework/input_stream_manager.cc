@@ -27,13 +27,14 @@
 
 namespace mediapipe {
 
-::mediapipe::Status InputStreamManager::Initialize(
-    const std::string& name, const PacketType* packet_type, bool back_edge) {
+mediapipe::Status InputStreamManager::Initialize(const std::string& name,
+                                                 const PacketType* packet_type,
+                                                 bool back_edge) {
   name_ = name;
   packet_type_ = packet_type;
   back_edge_ = back_edge;
   PrepareForRun();
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
 const std::string& InputStreamManager::Name() const { return name_; }
@@ -69,28 +70,28 @@ Packet InputStreamManager::QueueHead() const {
   return queue_.front();
 }
 
-::mediapipe::Status InputStreamManager::SetHeader(const Packet& header) {
+mediapipe::Status InputStreamManager::SetHeader(const Packet& header) {
   if (header.Timestamp() != Timestamp::Unset()) {
-    return ::mediapipe::InvalidArgumentErrorBuilder(MEDIAPIPE_LOC)
+    return mediapipe::InvalidArgumentErrorBuilder(MEDIAPIPE_LOC)
            << "Headers must not have a timestamp.  Stream: \"" << name_
            << "\".";
   }
   header_ = header;
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status InputStreamManager::AddPackets(
+mediapipe::Status InputStreamManager::AddPackets(
     const std::list<Packet>& container, bool* notify) {
   return AddOrMovePacketsInternal<const std::list<Packet>&>(container, notify);
 }
 
-::mediapipe::Status InputStreamManager::MovePackets(
-    std::list<Packet>* container, bool* notify) {
+mediapipe::Status InputStreamManager::MovePackets(std::list<Packet>* container,
+                                                  bool* notify) {
   return AddOrMovePacketsInternal<std::list<Packet>&>(*container, notify);
 }
 
 template <typename Container>
-::mediapipe::Status InputStreamManager::AddOrMovePacketsInternal(
+mediapipe::Status InputStreamManager::AddOrMovePacketsInternal(
     Container container, bool* notify) {
   *notify = false;
   bool queue_became_non_empty = false;
@@ -99,7 +100,7 @@ template <typename Container>
     // Scope to prevent locking the stream when notification is called.
     absl::MutexLock stream_lock(&stream_mutex_);
     if (closed_) {
-      return ::mediapipe::OkStatus();
+      return mediapipe::OkStatus();
     }
     // Check if the queue was full before packets came in.
     bool was_queue_full =
@@ -107,7 +108,7 @@ template <typename Container>
     // Check if the queue becomes non-empty.
     queue_became_non_empty = queue_.empty() && !container.empty();
     for (auto& packet : container) {
-      ::mediapipe::Status result = packet_type_->Validate(packet);
+      mediapipe::Status result = packet_type_->Validate(packet);
       if (!result.ok()) {
         return tool::AddStatusPrefix(
             absl::StrCat(
@@ -118,7 +119,7 @@ template <typename Container>
 
       const Timestamp timestamp = packet.Timestamp();
       if (!timestamp.IsAllowedInStream()) {
-        return ::mediapipe::InvalidArgumentErrorBuilder(MEDIAPIPE_LOC)
+        return mediapipe::InvalidArgumentErrorBuilder(MEDIAPIPE_LOC)
                << "In stream \"" << name_
                << "\", timestamp not specified or set to illegal value: "
                << timestamp.DebugString();
@@ -129,13 +130,13 @@ template <typename Container>
         // Timestamp::PreStream().NextAllowedInStream() is
         // Timestamp::OneOverPostStream().
         if (timestamp == Timestamp::PostStream() && num_packets_added_ > 0) {
-          return ::mediapipe::InvalidArgumentErrorBuilder(MEDIAPIPE_LOC)
+          return mediapipe::InvalidArgumentErrorBuilder(MEDIAPIPE_LOC)
                  << "In stream \"" << name_
                  << "\", a packet at Timestamp::PostStream() must be the only "
                     "Packet in an InputStream.";
         }
         if (timestamp < next_timestamp_bound_) {
-          return ::mediapipe::InvalidArgumentErrorBuilder(MEDIAPIPE_LOC)
+          return mediapipe::InvalidArgumentErrorBuilder(MEDIAPIPE_LOC)
                  << "Packet timestamp mismatch on a calculator receiving from "
                     "stream \""
                  << name_ << "\". Current minimum expected timestamp is "
@@ -176,21 +177,21 @@ template <typename Container>
     becomes_full_callback_(this, &last_reported_stream_full_);
   }
   *notify = queue_became_non_empty;
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status InputStreamManager::SetNextTimestampBound(
+mediapipe::Status InputStreamManager::SetNextTimestampBound(
     const Timestamp bound, bool* notify) {
   *notify = false;
   {
     // Scope to prevent locking the stream when notification is called.
     absl::MutexLock stream_lock(&stream_mutex_);
     if (closed_) {
-      return ::mediapipe::OkStatus();
+      return mediapipe::OkStatus();
     }
 
     if (enable_timestamps_ && bound < next_timestamp_bound_) {
-      return ::mediapipe::UnknownErrorBuilder(MEDIAPIPE_LOC)
+      return mediapipe::UnknownErrorBuilder(MEDIAPIPE_LOC)
              << "SetNextTimestampBound must be called with a timestamp greater "
                 "than or equal to the current bound. In stream \""
              << name_ << "\". Current minimum expected timestamp is "
@@ -210,7 +211,7 @@ template <typename Container>
       }
     }
   }
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
 void InputStreamManager::DisableTimestamps() { enable_timestamps_ = false; }

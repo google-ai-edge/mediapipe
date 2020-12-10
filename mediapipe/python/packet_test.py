@@ -26,17 +26,17 @@ from mediapipe.framework.formats import detection_pb2
 
 class PacketTest(absltest.TestCase):
 
-  def testEmptyPacket(self):
+  def test_empty_packet(self):
     p = mp.Packet()
     self.assertTrue(p.is_empty())
 
-  def testBooleanPacket(self):
+  def test_boolean_packet(self):
     p = mp.packet_creator.create_bool(True)
     p.timestamp = 0
     self.assertEqual(mp.packet_getter.get_bool(p), True)
     self.assertEqual(p.timestamp, 0)
 
-  def testIntPacket(self):
+  def test_int_packet(self):
     with self.assertRaisesRegex(OverflowError, 'execeeds the maximum value'):
       p = mp.packet_creator.create_int(2**32)
     p = mp.packet_creator.create_int(42)
@@ -48,7 +48,7 @@ class PacketTest(absltest.TestCase):
     self.assertEqual(mp.packet_getter.get_int(p2), 1)
     self.assertEqual(p2.timestamp, 0)
 
-  def testInt8Packet(self):
+  def test_int8_packet(self):
     with self.assertRaisesRegex(OverflowError, 'execeeds the maximum value'):
       p = mp.packet_creator.create_int8(2**7)
     p = mp.packet_creator.create_int8(2**7 - 1)
@@ -60,7 +60,7 @@ class PacketTest(absltest.TestCase):
     self.assertEqual(mp.packet_getter.get_int(p2), 1)
     self.assertEqual(p2.timestamp, 0)
 
-  def testInt16Packet(self):
+  def test_int16_packet(self):
     with self.assertRaisesRegex(OverflowError, 'execeeds the maximum value'):
       p = mp.packet_creator.create_int16(2**15)
     p = mp.packet_creator.create_int16(2**15 - 1)
@@ -72,7 +72,7 @@ class PacketTest(absltest.TestCase):
     self.assertEqual(mp.packet_getter.get_int(p2), 1)
     self.assertEqual(p2.timestamp, 0)
 
-  def testInt32Packet(self):
+  def test_int32_packet(self):
     with self.assertRaisesRegex(OverflowError, 'execeeds the maximum value'):
       p = mp.packet_creator.create_int32(2**31)
 
@@ -85,7 +85,7 @@ class PacketTest(absltest.TestCase):
     self.assertEqual(mp.packet_getter.get_int(p2), 1)
     self.assertEqual(p2.timestamp, 0)
 
-  def testInt64Packet(self):
+  def test_int64_packet(self):
     p = mp.packet_creator.create_int64(2**63 - 1)
     p.timestamp = 0
     self.assertEqual(mp.packet_getter.get_int(p), 2**63 - 1)
@@ -95,7 +95,7 @@ class PacketTest(absltest.TestCase):
     self.assertEqual(mp.packet_getter.get_int(p2), 1)
     self.assertEqual(p2.timestamp, 0)
 
-  def testUint8Packet(self):
+  def test_uint8_packet(self):
     with self.assertRaisesRegex(OverflowError, 'execeeds the maximum value'):
       p = mp.packet_creator.create_uint8(2**8)
     p = mp.packet_creator.create_uint8(2**8 - 1)
@@ -107,7 +107,7 @@ class PacketTest(absltest.TestCase):
     self.assertEqual(mp.packet_getter.get_uint(p2), 1)
     self.assertEqual(p2.timestamp, 0)
 
-  def testUint16Packet(self):
+  def test_uint16_packet(self):
     with self.assertRaisesRegex(OverflowError, 'execeeds the maximum value'):
       p = mp.packet_creator.create_uint16(2**16)
     p = mp.packet_creator.create_uint16(2**16 - 1)
@@ -119,7 +119,7 @@ class PacketTest(absltest.TestCase):
     self.assertEqual(mp.packet_getter.get_uint(p2), 1)
     self.assertEqual(p2.timestamp, 0)
 
-  def testUint32Packet(self):
+  def test_uint32_packet(self):
     with self.assertRaisesRegex(OverflowError, 'execeeds the maximum value'):
       p = mp.packet_creator.create_uint32(2**32)
     p = mp.packet_creator.create_uint32(2**32 - 1)
@@ -131,7 +131,7 @@ class PacketTest(absltest.TestCase):
     self.assertEqual(mp.packet_getter.get_uint(p2), 1)
     self.assertEqual(p2.timestamp, 0)
 
-  def testUint64Packet(self):
+  def test_uint64_packet(self):
     p = mp.packet_creator.create_uint64(2**64 - 1)
     p.timestamp = 0
     self.assertEqual(mp.packet_getter.get_uint(p), 2**64 - 1)
@@ -141,7 +141,7 @@ class PacketTest(absltest.TestCase):
     self.assertEqual(mp.packet_getter.get_uint(p2), 1)
     self.assertEqual(p2.timestamp, 0)
 
-  def testFloatPacket(self):
+  def test_float_packet(self):
     p = mp.packet_creator.create_float(0.42)
     p.timestamp = 0
     self.assertAlmostEqual(mp.packet_getter.get_float(p), 0.42)
@@ -151,7 +151,7 @@ class PacketTest(absltest.TestCase):
     self.assertAlmostEqual(mp.packet_getter.get_float(p2), 0.42)
     self.assertEqual(p2.timestamp, 0)
 
-  def testDoublePacket(self):
+  def test_double_packet(self):
     p = mp.packet_creator.create_double(0.42)
     p.timestamp = 0
     self.assertAlmostEqual(mp.packet_getter.get_float(p), 0.42)
@@ -161,37 +161,37 @@ class PacketTest(absltest.TestCase):
     self.assertAlmostEqual(mp.packet_getter.get_float(p2), 0.42)
     self.assertEqual(p2.timestamp, 0)
 
-  def testDetectionProtoPacket(self):
+  def test_detection_proto_packet(self):
     detection = detection_pb2.Detection()
     text_format.Parse('score: 0.5', detection)
     p = mp.packet_creator.create_proto(detection).at(100)
 
-  def testStringPacket(self):
+  def test_string_packet(self):
     p = mp.packet_creator.create_string('abc').at(100)
     self.assertEqual(mp.packet_getter.get_str(p), 'abc')
     self.assertEqual(p.timestamp, 100)
     p.timestamp = 200
     self.assertEqual(p.timestamp, 200)
 
-  def testBytesPacket(self):
+  def test_bytes_packet(self):
     p = mp.packet_creator.create_string(b'xd0\xba\xd0').at(300)
     self.assertEqual(mp.packet_getter.get_bytes(p), b'xd0\xba\xd0')
     self.assertEqual(p.timestamp, 300)
 
-  def testIntArrayPacket(self):
+  def test_int_array_packet(self):
     p = mp.packet_creator.create_int_array([1, 2, 3]).at(100)
     self.assertEqual(p.timestamp, 100)
 
-  def testFloatArrayPacket(self):
+  def test_float_array_packet(self):
     p = mp.packet_creator.create_float_array([0.1, 0.2, 0.3]).at(100)
     self.assertEqual(p.timestamp, 100)
 
-  def testIntVectorPacket(self):
+  def test_int_vector_packet(self):
     p = mp.packet_creator.create_int_vector([1, 2, 3]).at(100)
     self.assertEqual(mp.packet_getter.get_int_list(p), [1, 2, 3])
     self.assertEqual(p.timestamp, 100)
 
-  def testFloatVectorPacket(self):
+  def test_float_vector_packet(self):
     p = mp.packet_creator.create_float_vector([0.1, 0.2, 0.3]).at(100)
     output_list = mp.packet_getter.get_float_list(p)
     self.assertAlmostEqual(output_list[0], 0.1)
@@ -199,7 +199,7 @@ class PacketTest(absltest.TestCase):
     self.assertAlmostEqual(output_list[2], 0.3)
     self.assertEqual(p.timestamp, 100)
 
-  def testStringVectorPacket(self):
+  def test_string_vector_packet(self):
     p = mp.packet_creator.create_string_vector(['a', 'b', 'c']).at(100)
     output_list = mp.packet_getter.get_str_list(p)
     self.assertEqual(output_list[0], 'a')
@@ -207,7 +207,7 @@ class PacketTest(absltest.TestCase):
     self.assertEqual(output_list[2], 'c')
     self.assertEqual(p.timestamp, 100)
 
-  def testPacketVectorPacket(self):
+  def test_packet_vector_packet(self):
     p = mp.packet_creator.create_packet_vector([
         mp.packet_creator.create_float(0.42),
         mp.packet_creator.create_int(42),
@@ -219,7 +219,7 @@ class PacketTest(absltest.TestCase):
     self.assertEqual(mp.packet_getter.get_str(output_list[2]), '42')
     self.assertEqual(p.timestamp, 100)
 
-  def testStringToPacketMapPacket(self):
+  def test_string_to_packet_map_packet(self):
     p = mp.packet_creator.create_string_to_packet_map({
         'float': mp.packet_creator.create_float(0.42),
         'int': mp.packet_creator.create_int(42),
@@ -232,7 +232,7 @@ class PacketTest(absltest.TestCase):
     self.assertEqual(mp.packet_getter.get_str(output_list['string']), '42')
     self.assertEqual(p.timestamp, 100)
 
-  def testUint8ImageFramePacket(self):
+  def test_uint8_image_frame_packet(self):
     uint8_img = np.random.randint(
         2**8 - 1,
         size=(random.randrange(3, 100), random.randrange(3, 100), 3),
@@ -242,7 +242,7 @@ class PacketTest(absltest.TestCase):
     output_image_frame = mp.packet_getter.get_image_frame(p)
     self.assertTrue(np.array_equal(output_image_frame.numpy_view(), uint8_img))
 
-  def testUint16ImageFramePacket(self):
+  def test_uint16_image_frame_packet(self):
     uint16_img = np.random.randint(
         2**16 - 1,
         size=(random.randrange(3, 100), random.randrange(3, 100), 4),
@@ -252,7 +252,7 @@ class PacketTest(absltest.TestCase):
     output_image_frame = mp.packet_getter.get_image_frame(p)
     self.assertTrue(np.array_equal(output_image_frame.numpy_view(), uint16_img))
 
-  def testFloatImageFramePacket(self):
+  def test_float_image_frame_packet(self):
     float_img = np.float32(
         np.random.random_sample(
             (random.randrange(3, 100), random.randrange(3, 100), 2)))
@@ -261,7 +261,7 @@ class PacketTest(absltest.TestCase):
     output_image_frame = mp.packet_getter.get_image_frame(p)
     self.assertTrue(np.allclose(output_image_frame.numpy_view(), float_img))
 
-  def testImageFramePacketCreationCopyMode(self):
+  def test_image_frame_packet_creation_copy_mode(self):
     w, h, channels = random.randrange(3, 100), random.randrange(3, 100), 3
     rgb_data = np.random.randint(255, size=(h, w, channels), dtype=np.uint8)
     # rgb_data is c_contiguous.
@@ -294,7 +294,7 @@ class PacketTest(absltest.TestCase):
     # copy mode.
     self.assertEqual(sys.getrefcount(rgb_data), initial_ref_count)
 
-  def testImageFramePacketCreationReferenceMode(self):
+  def test_image_frame_packet_creation_reference_mode(self):
     w, h, channels = random.randrange(3, 100), random.randrange(3, 100), 3
     rgb_data = np.random.randint(255, size=(h, w, channels), dtype=np.uint8)
     rgb_data.flags.writeable = False
@@ -338,7 +338,7 @@ class PacketTest(absltest.TestCase):
             mp.packet_getter.get_image_frame(output_packet).numpy_view(),
             rgb_data_copy))
 
-  def testImageFramePacketCopyCreationWithCropping(self):
+  def test_image_frame_packet_copy_creation_with_cropping(self):
     w, h, channels = random.randrange(40, 100), random.randrange(40, 100), 3
     channels, offset = 3, 10
     rgb_data = np.random.randint(255, size=(h, w, channels), dtype=np.uint8)
@@ -362,7 +362,7 @@ class PacketTest(absltest.TestCase):
     # copy mode.
     self.assertEqual(sys.getrefcount(rgb_data), initial_ref_count)
 
-  def testMatrixPacket(self):
+  def test_matrix_packet(self):
     np_matrix = np.array([[.1, .2, .3], [.4, .5, .6]])
     initial_ref_count = sys.getrefcount(np_matrix)
     p = mp.packet_creator.create_matrix(np_matrix)
@@ -374,7 +374,7 @@ class PacketTest(absltest.TestCase):
     self.assertTrue(
         np.allclose(output_matrix, np.array([[.1, .2, .3], [.4, .5, .6]])))
 
-  def testMatrixPacketWithNonCContiguousData(self):
+  def test_matrix_packet_with_non_c_contiguous_data(self):
     np_matrix = np.array([[.1, .2, .3], [.4, .5, .6]])[:, ::-1]
     # np_matrix is not c_contiguous.
     self.assertFalse(np_matrix.flags.c_contiguous)

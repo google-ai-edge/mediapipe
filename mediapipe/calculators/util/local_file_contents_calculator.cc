@@ -52,7 +52,7 @@ constexpr char kContentsTag[] = "CONTENTS";
 // }
 class LocalFileContentsCalculator : public CalculatorBase {
  public:
-  static ::mediapipe::Status GetContract(CalculatorContract* cc) {
+  static mediapipe::Status GetContract(CalculatorContract* cc) {
     RET_CHECK(cc->InputSidePackets().HasTag(kFilePathTag))
         << "Missing PATH input side packet(s)";
     RET_CHECK(cc->OutputSidePackets().HasTag(kContentsTag))
@@ -72,10 +72,10 @@ class LocalFileContentsCalculator : public CalculatorBase {
       cc->OutputSidePackets().Get(id).Set<std::string>();
     }
 
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Open(CalculatorContext* cc) override {
+  mediapipe::Status Open(CalculatorContext* cc) override {
     CollectionItemId input_id = cc->InputSidePackets().BeginId(kFilePathTag);
     CollectionItemId output_id = cc->OutputSidePackets().BeginId(kContentsTag);
     // Number of inputs and outpus is the same according to the contract.
@@ -90,11 +90,11 @@ class LocalFileContentsCalculator : public CalculatorBase {
       cc->OutputSidePackets().Get(output_id).Set(
           MakePacket<std::string>(std::move(contents)));
     }
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Process(CalculatorContext* cc) override {
-    return ::mediapipe::OkStatus();
+  mediapipe::Status Process(CalculatorContext* cc) override {
+    return mediapipe::OkStatus();
   }
 };
 

@@ -37,7 +37,7 @@ void TagMap::InitializeNames(
   }
 }
 
-::mediapipe::Status TagMap::Initialize(
+mediapipe::Status TagMap::Initialize(
     const proto_ns::RepeatedPtrField<ProtoString>& tag_index_names) {
   std::map<std::string, std::vector<std::string>> tag_to_names;
   for (const auto& tag_index_name : tag_index_names) {
@@ -63,7 +63,7 @@ void TagMap::InitializeNames(
       names.resize(index + 1);
     }
     if (!names[index].empty()) {
-      return ::mediapipe::FailedPreconditionErrorBuilder(MEDIAPIPE_LOC)
+      return mediapipe::FailedPreconditionErrorBuilder(MEDIAPIPE_LOC)
              << "tag \"" << tag << "\" index " << index
              << " already had a name \"" << names[index]
              << "\" but is being reassigned a name \"" << name << "\"";
@@ -81,7 +81,7 @@ void TagMap::InitializeNames(
     // loop above), this means that all indexes were used exactly once.
     const std::vector<std::string>& names = tag_to_names[item.first];
     if (tag_data.count != names.size()) {
-      auto builder = ::mediapipe::FailedPreconditionErrorBuilder(MEDIAPIPE_LOC)
+      auto builder = mediapipe::FailedPreconditionErrorBuilder(MEDIAPIPE_LOC)
                      << "Not all indexes were assigned names.  Tag \""
                      << item.first << "\" has the following:\n";
       // Note, names.size() will always be larger than tag_data.count.
@@ -100,10 +100,10 @@ void TagMap::InitializeNames(
   num_entries_ = current_index;
 
   InitializeNames(tag_to_names);
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status TagMap::Initialize(const TagAndNameInfo& info) {
+mediapipe::Status TagMap::Initialize(const TagAndNameInfo& info) {
   if (info.tags.empty()) {
     if (!info.names.empty()) {
       mapping_.emplace(
@@ -115,7 +115,7 @@ void TagMap::InitializeNames(
   } else {
     std::map<std::string, std::vector<std::string>> tag_to_names;
     if (info.tags.size() != info.names.size()) {
-      return ::mediapipe::FailedPreconditionError(
+      return mediapipe::FailedPreconditionError(
           "Expected info.tags.size() == info.names.size()");
     }
 
@@ -139,7 +139,7 @@ void TagMap::InitializeNames(
     // Now create the names_ array in the correctly sorted order.
     InitializeNames(tag_to_names);
   }
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
 proto_ns::RepeatedPtrField<ProtoString> TagMap::CanonicalEntries() const {

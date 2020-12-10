@@ -21,7 +21,7 @@
 
 namespace mediapipe {
 
-::mediapipe::Status PrintHelloWorld() {
+mediapipe::Status PrintHelloWorld() {
   // Configures a simple graph, which concatenates 2 PassThroughCalculators.
   CalculatorGraphConfig config = ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
     input_stream: "in"

@@ -31,7 +31,7 @@ namespace mediapipe {
 namespace tool {
 
 // Create using a vector of TAG:<index>:name.
-::mediapipe::StatusOr<std::shared_ptr<TagMap>> CreateTagMap(
+mediapipe::StatusOr<std::shared_ptr<TagMap>> CreateTagMap(
     const std::vector<std::string>& tag_index_names) {
   proto_ns::RepeatedPtrField<ProtoString> fields;
   for (const auto& tag_index_name : tag_index_names) {
@@ -41,7 +41,7 @@ namespace tool {
 }
 
 // Create using an integer number of entries (for tag "").
-::mediapipe::StatusOr<std::shared_ptr<TagMap>> CreateTagMap(int num_entries) {
+mediapipe::StatusOr<std::shared_ptr<TagMap>> CreateTagMap(int num_entries) {
   RET_CHECK_LE(0, num_entries);
   proto_ns::RepeatedPtrField<ProtoString> fields;
   for (int i = 0; i < num_entries; ++i) {
@@ -51,7 +51,7 @@ namespace tool {
 }
 
 // Create using a vector of just tag names.
-::mediapipe::StatusOr<std::shared_ptr<TagMap>> CreateTagMapFromTags(
+mediapipe::StatusOr<std::shared_ptr<TagMap>> CreateTagMapFromTags(
     const std::vector<std::string>& tags) {
   proto_ns::RepeatedPtrField<ProtoString> fields;
   for (int i = 0; i < tags.size(); ++i) {

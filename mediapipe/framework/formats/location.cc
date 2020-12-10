@@ -72,13 +72,13 @@ std::unique_ptr<cv::Mat> MaskToMat(const LocationData::BinaryMask& mask) {
   }
   return image;
 }
-::mediapipe::StatusOr<std::unique_ptr<cv::Mat>> RectangleToMat(
+mediapipe::StatusOr<std::unique_ptr<cv::Mat>> RectangleToMat(
     int image_width, int image_height, const Rectangle_i& rect) {
   // These checks prevent undefined behavior caused when setting memory for
   // rectangles whose edges lie outside image edges.
   if (rect.ymin() < 0 || rect.xmin() < 0 || rect.xmax() > image_width ||
       rect.ymax() > image_height) {
-    return ::mediapipe::InvalidArgumentError(absl::Substitute(
+    return mediapipe::InvalidArgumentError(absl::Substitute(
         "Rectangle must be bounded by image boundaries.\nImage Width: "
         "$0\nImage Height: $1\nRectangle: [($2, $3), ($4, $5)]",
         image_width, image_height, rect.xmin(), rect.ymin(), rect.xmax(),
@@ -564,7 +564,6 @@ Rectangle_f Location::ConvertToRelativeBBox(int image_width,
   switch (location_data_.format()) {
     case LocationData::GLOBAL: {
       return Rectangle_f(0.0f, 0.0f, 1.0f, 1.0f);
-      break;
     }
     case LocationData::BOUNDING_BOX: {
       const auto& box = location_data_.bounding_box();

@@ -23,14 +23,14 @@ namespace mediapipe {
 namespace tool {
 
 // Create a TagMap using a vector of TAG:<index>:name.
-::mediapipe::StatusOr<std::shared_ptr<TagMap>> CreateTagMap(
+mediapipe::StatusOr<std::shared_ptr<TagMap>> CreateTagMap(
     const std::vector<std::string>& tag_index_names);
 
 // Create a TagMap using an integer number of entries (for tag "").
-::mediapipe::StatusOr<std::shared_ptr<TagMap>> CreateTagMap(int num_entries);
+mediapipe::StatusOr<std::shared_ptr<TagMap>> CreateTagMap(int num_entries);
 
 // Create a TagMap using a vector of just tag names.
-::mediapipe::StatusOr<std::shared_ptr<TagMap>> CreateTagMapFromTags(
+mediapipe::StatusOr<std::shared_ptr<TagMap>> CreateTagMapFromTags(
     const std::vector<std::string>& tags);
 
 }  // namespace tool

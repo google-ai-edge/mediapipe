@@ -2,21 +2,27 @@
 layout: default
 title: Objectron (3D Object Detection)
 parent: Solutions
-nav_order: 10
+nav_order: 11
 ---
 
 # MediaPipe Objectron
 {: .no_toc }
 
+<details close markdown="block">
+  <summary>
+    Table of contents
+  </summary>
+  {: .text-delta }
 1. TOC
 {:toc}
+</details>
 ---
 
 ## Overview
 
 MediaPipe Objectron is a mobile real-time 3D object detection solution for
 everyday objects. It detects objects in 2D images, and estimates their poses
-through a machine learning (ML) model, trained on a newly created 3D dataset.
+through a machine learning (ML) model, trained on the [Objectron dataset](https://github.com/google-research-datasets/Objectron).
 
 ![objectron_shoe_android_gpu.gif](../images/mobile/objectron_shoe_android_gpu.gif) | ![objectron_chair_android_gpu.gif](../images/mobile/objectron_chair_android_gpu.gif) | ![objectron_camera_android_gpu.gif](../images/mobile/objectron_camera_android_gpu.gif) | ![objectron_cup_android_gpu.gif](../images/mobile/objectron_cup_android_gpu.gif)
 :--------------------------------------------------------------------------------: | :----------------------------------------------------------------------------------: | :------------------------------------------------------------------------------------: | :------------------------------------------------------------------------------:
@@ -106,7 +112,8 @@ detector does not need to run every frame.
 *Fig 5. Network architecture and post-processing for two-stage 3D object detection.*       |
 
 We can use any 2D object detector for the first stage. In this solution, we use
-[TensorFlow Object Detection](https://github.com/tensorflow/models/tree/master/research/object_detection).
+[TensorFlow Object Detection](https://github.com/tensorflow/models/tree/master/research/object_detection) trained
+with the [Open Images dataset](https://storage.googleapis.com/openimages/web/index.html).
 The second stage 3D bounding box predictor we released runs 83FPS on Adreno 650
 mobile GPU.
 
@@ -157,9 +164,9 @@ The Objectron 3D object detection and tracking pipeline is implemented as a
 MediaPipe
 [graph](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/object_detection_3d/object_occlusion_tracking_1stage.pbtxt),
 which internally uses a
-[detection subgraph](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/object_detection_3d/subgraphs/objectron_detection_gpu.pbtxt)
+[detection subgraph](https://github.com/google/mediapipe/tree/master/mediapipe/modules/objectron/objectron_detection_1stage_gpu.pbtxt)
 and a
-[tracking subgraph](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/object_detection_3d/subgraphs/objectron_tracking_gpu.pbtxt).
+[tracking subgraph](https://github.com/google/mediapipe/tree/master/mediapipe/modules/objectron/objectron_tracking_1stage_gpu.pbtxt).
 The detection subgraph performs ML inference only once every few frames to
 reduce computation load, and decodes the output tensor to a FrameAnnotation that
 contains nine keypoints: the 3D bounding box's center and its eight vertices.
@@ -176,13 +183,14 @@ tracking results, based on the area of overlap.
 
 We also released our [Objectron dataset](http://objectron.dev), with which we
 trained our 3D object detection models. The technical details of the Objectron
-dataset, including usage and tutorials, are available on the dataset website.
+dataset, including usage and tutorials, are available on
+the [dataset website](https://github.com/google-research-datasets/Objectron/).
 
 ## Example Apps
 
 Please first see general instructions for
-[Android](../getting_started/building_examples.md#android) and
-[iOS](../getting_started/building_examples.md#ios) on how to build MediaPipe examples.
+[Android](../getting_started/android.md) and [iOS](../getting_started/ios.md) on
+how to build MediaPipe examples.
 
 Note: To visualize a graph, copy the graph and paste it into
 [MediaPipe Visualizer](https://viz.mediapipe.dev/). For more information on how
@@ -254,7 +262,7 @@ to visualize its associated subgraphs, please see
 ## Resources
 
 *   Google AI Blog:
-    [Announcing the Objectron Dataset](https://mediapipe.page.link/objectron_dataset_ai_blog)
+    [Announcing the Objectron Dataset](https://ai.googleblog.com/2020/11/announcing-objectron-dataset.html)
 *   Google AI Blog:
     [Real-Time 3D Object Detection on Mobile Devices with MediaPipe](https://ai.googleblog.com/2020/03/real-time-3d-object-detection-on-mobile.html)
 *   Paper: [MobilePose: Real-Time Pose Estimation for Unseen Objects with Weak

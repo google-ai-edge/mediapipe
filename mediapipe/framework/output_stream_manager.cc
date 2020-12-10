@@ -20,17 +20,17 @@
 
 namespace mediapipe {
 
-::mediapipe::Status OutputStreamManager::Initialize(
+mediapipe::Status OutputStreamManager::Initialize(
     const std::string& name, const PacketType* packet_type) {
   output_stream_spec_.name = name;
   output_stream_spec_.packet_type = packet_type;
   output_stream_spec_.offset_enabled = false;
   PrepareForRun(nullptr);
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
 void OutputStreamManager::PrepareForRun(
-    std::function<void(::mediapipe::Status)> error_callback) {
+    std::function<void(mediapipe::Status)> error_callback) {
   output_stream_spec_.error_callback = std::move(error_callback);
 
   output_stream_spec_.locked_intro_data = false;
@@ -66,7 +66,7 @@ bool OutputStreamManager::IsClosed() const {
 void OutputStreamManager::PropagateHeader() {
   if (output_stream_spec_.locked_intro_data) {
     output_stream_spec_.TriggerErrorCallback(
-        ::mediapipe::FailedPreconditionErrorBuilder(MEDIAPIPE_LOC)
+        mediapipe::FailedPreconditionErrorBuilder(MEDIAPIPE_LOC)
         << "PropagateHeader must be called in CalculatorNode::OpenNode(). "
            "Stream: \""
         << output_stream_spec_.name << "\".");
@@ -106,7 +106,7 @@ Timestamp OutputStreamManager::ComputeOutputTimestampBound(
   if (input_timestamp != Timestamp::Unstarted() &&
       !input_timestamp.IsAllowedInStream()) {
     output_stream_spec_.TriggerErrorCallback(
-        ::mediapipe::FailedPreconditionErrorBuilder(MEDIAPIPE_LOC)
+        mediapipe::FailedPreconditionErrorBuilder(MEDIAPIPE_LOC)
         << "Invalid input timestamp to compute the output timestamp bound. "
            "Stream: \""
         << output_stream_spec_.name

@@ -24,6 +24,7 @@
 
 #include "absl/strings/str_cat.h"
 #include "mediapipe/calculators/tensor/image_to_tensor_converter.h"
+#include "mediapipe/calculators/tensor/image_to_tensor_converter_gl_utils.h"
 #include "mediapipe/calculators/tensor/image_to_tensor_utils.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/tensor.h"
@@ -40,48 +41,22 @@ namespace mediapipe {
 
 namespace {
 
-class GlParametersOverride {
- public:
-  static ::mediapipe::StatusOr<GlParametersOverride> Create(
-      const std::vector<std::pair<GLenum, GLint>>& overrides) {
-    std::vector<GLint> old_values(overrides.size());
-    for (int i = 0; i < overrides.size(); ++i) {
-      glGetTexParameteriv(GL_TEXTURE_2D, overrides[i].first, &old_values[i]);
-      if (overrides[i].second != old_values[i]) {
-        glTexParameteri(GL_TEXTURE_2D, overrides[i].first, overrides[i].second);
-      }
-    }
-    return GlParametersOverride(overrides, std::move(old_values));
-  }
-
-  ::mediapipe::Status Revert() {
-    for (int i = 0; i < overrides_.size(); ++i) {
-      if (overrides_[i].second != old_values_[i]) {
-        glTexParameteri(GL_TEXTURE_2D, overrides_[i].first, old_values_[i]);
-      }
-    }
-    return ::mediapipe::OkStatus();
-  }
-
- private:
-  GlParametersOverride(const std::vector<std::pair<GLenum, GLint>>& overrides,
-                       std::vector<GLint> old_values)
-      : overrides_(overrides), old_values_(std::move(old_values)) {}
-
-  std::vector<std::pair<GLenum, GLint>> overrides_;
-  std::vector<GLint> old_values_;
-};
-
 constexpr int kAttribVertex = 0;
 constexpr int kAttribTexturePosition = 1;
 constexpr int kNumAttributes = 2;
 
 class GlProcessor : public ImageToTensorConverter {
  public:
-  ::mediapipe::Status Init(CalculatorContext* cc, bool input_starts_at_bottom) {
+  mediapipe::Status Init(CalculatorContext* cc, bool input_starts_at_bottom,
+                         BorderMode border_mode) {
     MP_RETURN_IF_ERROR(gl_helper_.Open(cc));
-    return gl_helper_.RunInGlContext([this, input_starts_at_bottom]()
-                                         -> ::mediapipe::Status {
+    return gl_helper_.RunInGlContext([this, input_starts_at_bottom,
+                                      border_mode]() -> mediapipe::Status {
+      use_custom_zero_border_ =
+          border_mode == BorderMode::kZero &&
+          !IsGlClampToBorderSupported(gl_helper_.GetGlContext());
+      border_mode_ = border_mode;
+
       const GLint attr_location[kNumAttributes] = {
           kAttribVertex,
           kAttribTexturePosition,
@@ -127,23 +102,38 @@ class GlProcessor : public ImageToTensorConverter {
             #endif  // defined(GL_ES);
 
             void main() {
-              fragColor = alpha * texture2D(input_texture, sample_coordinate) + beta;
+              vec4 color = texture2D(input_texture, sample_coordinate);
+            #ifdef CUSTOM_ZERO_BORDER_MODE
+              float out_of_bounds =
+                  float(sample_coordinate.x < 0.0 || sample_coordinate.x > 1.0 ||
+                        sample_coordinate.y < 0.0 || sample_coordinate.y > 1.0);
+              color = mix(color, vec4(0.0, 0.0, 0.0, 0.0), out_of_bounds);
+            #endif  // defined(CUSTOM_ZERO_BORDER_MODE)
+              fragColor = alpha * color + beta;
             }
           )";
 
       std::string starts_at_bottom_def;
       if (input_starts_at_bottom) {
         starts_at_bottom_def = R"(
-              #define INPUT_STARTS_AT_BOTTOM
-            )";
+          #define INPUT_STARTS_AT_BOTTOM
+        )";
       }
 
       // Create program and set parameters.
       const std::string extract_sub_rect_vertex_src =
           absl::StrCat(mediapipe::kMediaPipeVertexShaderPreamble,
                        starts_at_bottom_def, kExtractSubRectVertexShader);
-      const std::string extract_sub_rect_frag_src = absl::StrCat(
-          mediapipe::kMediaPipeFragmentShaderPreamble, kExtractSubRectFragBody);
+
+      std::string custom_zero_border_mode_def;
+      if (use_custom_zero_border_) {
+        custom_zero_border_mode_def = R"(
+          #define CUSTOM_ZERO_BORDER_MODE
+        )";
+      }
+      const std::string extract_sub_rect_frag_src =
+          absl::StrCat(mediapipe::kMediaPipeFragmentShaderPreamble,
+                       custom_zero_border_mode_def, kExtractSubRectFragBody);
       mediapipe::GlhCreateProgram(extract_sub_rect_vertex_src.c_str(),
                                   extract_sub_rect_frag_src.c_str(),
                                   kNumAttributes, &attr_name[0], attr_location,
@@ -174,7 +164,7 @@ class GlProcessor : public ImageToTensorConverter {
 
       glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-      return ::mediapipe::OkStatus();
+      return mediapipe::OkStatus();
     });
   }
 
@@ -183,11 +173,10 @@ class GlProcessor : public ImageToTensorConverter {
     return {image.width(), image.height()};
   }
 
-  ::mediapipe::StatusOr<Tensor> Convert(const Packet& image_packet,
-                                        const RotatedRect& roi,
-                                        const Size& output_dims,
-                                        float range_min,
-                                        float range_max) override {
+  mediapipe::StatusOr<Tensor> Convert(const Packet& image_packet,
+                                      const RotatedRect& roi,
+                                      const Size& output_dims, float range_min,
+                                      float range_max) override {
     const auto& input = image_packet.Get<mediapipe::GpuBuffer>();
     if (input.format() != mediapipe::GpuBufferFormat::kBGRA32) {
       return InvalidArgumentError(
@@ -202,7 +191,7 @@ class GlProcessor : public ImageToTensorConverter {
 
     MP_RETURN_IF_ERROR(gl_helper_.RunInGlContext(
         [this, &tensor, &input, &roi, &output_dims, range_min,
-         range_max]() -> ::mediapipe::Status {
+         range_max]() -> mediapipe::Status {
           auto input_texture = gl_helper_.CreateSourceTexture(input);
 
           constexpr float kInputImageRangeMin = 0.0f;
@@ -216,17 +205,17 @@ class GlProcessor : public ImageToTensorConverter {
                                             /*flip_horizontaly=*/false,
                                             transform.scale, transform.offset,
                                             output_dims, &tensor_view));
-          return ::mediapipe::OkStatus();
+          return mediapipe::OkStatus();
         }));
 
     return tensor;
   }
 
-  ::mediapipe::Status ExtractSubRect(const mediapipe::GlTexture& texture,
-                                     const RotatedRect& sub_rect,
-                                     bool flip_horizontaly, float alpha,
-                                     float beta, const Size& output_dims,
-                                     Tensor::OpenGlTexture2dView* output) {
+  mediapipe::Status ExtractSubRect(const mediapipe::GlTexture& texture,
+                                   const RotatedRect& sub_rect,
+                                   bool flip_horizontaly, float alpha,
+                                   float beta, const Size& output_dims,
+                                   Tensor::OpenGlTexture2dView* output) {
     std::array<float, 16> transform_mat;
     GetRotatedSubRectToRectTransformMatrix(sub_rect, texture.width(),
                                            texture.height(), flip_horizontaly,
@@ -244,11 +233,27 @@ class GlProcessor : public ImageToTensorConverter {
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(texture.target(), texture.name());
 
-    ASSIGN_OR_RETURN(auto overrides, GlParametersOverride::Create(
-                                         {{GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE},
-                                          {GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE},
-                                          {GL_TEXTURE_MIN_FILTER, GL_LINEAR},
-                                          {GL_TEXTURE_MAG_FILTER, GL_LINEAR}}));
+    // a) Filtering.
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    // b) Clamping.
+    switch (border_mode_) {
+      case BorderMode::kReplicate: {
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        break;
+      }
+      case BorderMode::kZero: {
+        if (!use_custom_zero_border_) {
+          glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+          glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+          glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR,
+                           std::array<float, 4>{0.0f, 0.0f, 0.0f, 0.0f}.data());
+        }
+        break;
+      }
+    }
 
     glUseProgram(program_);
     glUniform1f(alpha_id_, alpha);
@@ -271,7 +276,12 @@ class GlProcessor : public ImageToTensorConverter {
     // draw
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
-    // cleanup
+    // Resetting to MediaPipe texture param defaults.
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
     glDisableVertexAttribArray(kAttribVertex);
     glDisableVertexAttribArray(kAttribTexturePosition);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -282,7 +292,7 @@ class GlProcessor : public ImageToTensorConverter {
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, 0);
 
-    return overrides.Revert();
+    return mediapipe::OkStatus();
   }
 
   ~GlProcessor() override {
@@ -297,6 +307,8 @@ class GlProcessor : public ImageToTensorConverter {
 
  private:
   mediapipe::GlCalculatorHelper gl_helper_;
+  bool use_custom_zero_border_ = false;
+  BorderMode border_mode_ = BorderMode::kReplicate;
   GLuint vao_ = 0;
   GLuint vbo_[2] = {0, 0};
   GLuint program_ = 0;
@@ -308,11 +320,12 @@ class GlProcessor : public ImageToTensorConverter {
 
 }  // namespace
 
-::mediapipe::StatusOr<std::unique_ptr<ImageToTensorConverter>>
+mediapipe::StatusOr<std::unique_ptr<ImageToTensorConverter>>
 CreateImageToGlTextureTensorConverter(CalculatorContext* cc,
-                                      bool input_starts_at_bottom) {
+                                      bool input_starts_at_bottom,
+                                      BorderMode border_mode) {
   auto result = absl::make_unique<GlProcessor>();
-  MP_RETURN_IF_ERROR(result->Init(cc, input_starts_at_bottom));
+  MP_RETURN_IF_ERROR(result->Init(cc, input_starts_at_bottom, border_mode));
 
   // Simply "return std::move(result)" failed to build on macOS with bazel.
   return std::unique_ptr<ImageToTensorConverter>(std::move(result));

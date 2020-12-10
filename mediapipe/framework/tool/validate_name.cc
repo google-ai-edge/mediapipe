@@ -41,7 +41,7 @@ namespace tool {
 #define MEDIAPIPE_TAG_INDEX_REGEX \
   "(" MEDIAPIPE_TAG_REGEX ")?(:" MEDIAPIPE_NUMBER_REGEX ")?"
 
-::mediapipe::Status GetTagAndNameInfo(
+mediapipe::Status GetTagAndNameInfo(
     const proto_ns::RepeatedPtrField<ProtoString>& tags_and_names,
     TagAndNameInfo* info) {
   RET_CHECK(info);
@@ -59,15 +59,15 @@ namespace tool {
   if (info->tags.size() > 0 && info->names.size() != info->tags.size()) {
     info->tags.clear();
     info->names.clear();
-    return ::mediapipe::InvalidArgumentError(absl::StrCat(
+    return mediapipe::InvalidArgumentError(absl::StrCat(
         "Each set of names must use exclusively either tags or indexes.  "
         "Encountered: \"",
         absl::StrJoin(tags_and_names, "\", \""), "\""));
   }
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status SetFromTagAndNameInfo(
+mediapipe::Status SetFromTagAndNameInfo(
     const TagAndNameInfo& info,
     proto_ns::RepeatedPtrField<ProtoString>* tags_and_names) {
   tags_and_names->Clear();
@@ -78,7 +78,7 @@ namespace tool {
     }
   } else {
     if (info.names.size() != info.tags.size()) {
-      return ::mediapipe::InvalidArgumentErrorBuilder(MEDIAPIPE_LOC)
+      return mediapipe::InvalidArgumentErrorBuilder(MEDIAPIPE_LOC)
              << "Number of tags " << info.names.size()
              << " does not match the number of tags " << info.tags.size();
     }
@@ -88,52 +88,52 @@ namespace tool {
       *tags_and_names->Add() = absl::StrCat(info.tags[i], ":", info.names[i]);
     }
   }
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status ValidateName(const std::string& name) {
+mediapipe::Status ValidateName(const std::string& name) {
   return name.length() > 0 && (name[0] == '_' || islower(name[0])) &&
                  std::all_of(name.begin() + 1, name.end(),
                              [](char c) {
                                return c == '_' || isdigit(c) || islower(c);
                              })
-             ? ::mediapipe::OkStatus()
-             : ::mediapipe::InvalidArgumentError(absl::StrCat(
+             ? mediapipe::OkStatus()
+             : mediapipe::InvalidArgumentError(absl::StrCat(
                    "Name \"", absl::CEscape(name),
                    "\" does not match \"" MEDIAPIPE_NAME_REGEX "\"."));
 }
 
-::mediapipe::Status ValidateNumber(const std::string& number) {
+mediapipe::Status ValidateNumber(const std::string& number) {
   return (number.length() == 1 && isdigit(number[0])) ||
                  (number.length() > 1 && isdigit(number[0]) &&
                   number[0] != '0' &&
                   std::all_of(number.begin() + 1, number.end(),
                               [](char c) { return isdigit(c); }))
-             ? ::mediapipe::OkStatus()
-             : ::mediapipe::InvalidArgumentError(absl::StrCat(
+             ? mediapipe::OkStatus()
+             : mediapipe::InvalidArgumentError(absl::StrCat(
                    "Number \"", absl::CEscape(number),
                    "\" does not match \"" MEDIAPIPE_NUMBER_REGEX "\"."));
 }
 
-::mediapipe::Status ValidateTag(const std::string& tag) {
+mediapipe::Status ValidateTag(const std::string& tag) {
   return tag.length() > 0 && (tag[0] == '_' || isupper(tag[0])) &&
                  std::all_of(tag.begin() + 1, tag.end(),
                              [](char c) {
                                return c == '_' || isdigit(c) || isupper(c);
                              })
-             ? ::mediapipe::OkStatus()
-             : ::mediapipe::InvalidArgumentError(absl::StrCat(
+             ? mediapipe::OkStatus()
+             : mediapipe::InvalidArgumentError(absl::StrCat(
                    "Tag \"", absl::CEscape(tag),
                    "\" does not match \"" MEDIAPIPE_TAG_REGEX "\"."));
 }
 
-::mediapipe::Status ParseTagAndName(const std::string& tag_and_name,
-                                    std::string* tag, std::string* name) {
+mediapipe::Status ParseTagAndName(const std::string& tag_and_name,
+                                  std::string* tag, std::string* name) {
   // An optional tag and colon, followed by a name.
   RET_CHECK(tag);
   RET_CHECK(name);
-  ::mediapipe::Status tag_status = ::mediapipe::OkStatus();
-  ::mediapipe::Status name_status = ::mediapipe::UnknownError("");
+  mediapipe::Status tag_status = mediapipe::OkStatus();
+  mediapipe::Status name_status = mediapipe::UnknownError("");
   int name_index = 0;
   std::vector<std::string> v = absl::StrSplit(tag_and_name, ':');
   if (v.size() == 1) {
@@ -144,11 +144,11 @@ namespace tool {
     name_status = ValidateName(v[1]);
     name_index = 1;
   }
-  if (name_index == -1 || tag_status != ::mediapipe::OkStatus() ||
-      name_status != ::mediapipe::OkStatus()) {
+  if (name_index == -1 || tag_status != mediapipe::OkStatus() ||
+      name_status != mediapipe::OkStatus()) {
     tag->clear();
     name->clear();
-    return ::mediapipe::InvalidArgumentError(
+    return mediapipe::InvalidArgumentError(
         absl::StrCat("\"tag and name\" is invalid, \"", tag_and_name,
                      "\" does not match "
                      "\"" MEDIAPIPE_TAG_AND_NAME_REGEX
@@ -156,20 +156,20 @@ namespace tool {
   }
   *tag = name_index == 1 ? v[0] : "";
   *name = v[name_index];
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status ParseTagIndexName(const std::string& tag_index_name,
-                                      std::string* tag, int* index,
-                                      std::string* name) {
+mediapipe::Status ParseTagIndexName(const std::string& tag_index_name,
+                                    std::string* tag, int* index,
+                                    std::string* name) {
   // An optional tag and colon, an optional index and color, followed by a name.
   RET_CHECK(tag);
   RET_CHECK(index);
   RET_CHECK(name);
 
-  ::mediapipe::Status tag_status = ::mediapipe::OkStatus();
-  ::mediapipe::Status number_status = ::mediapipe::OkStatus();
-  ::mediapipe::Status name_status = ::mediapipe::UnknownError("");
+  mediapipe::Status tag_status = mediapipe::OkStatus();
+  mediapipe::Status number_status = mediapipe::OkStatus();
+  mediapipe::Status name_status = mediapipe::UnknownError("");
   int name_index = -1;
   int the_index = 0;
   std::vector<std::string> v = absl::StrSplit(tag_index_name, ':');
@@ -195,7 +195,7 @@ namespace tool {
   }  // else omitted, name_index == -1, triggering error.
   if (name_index == -1 || !tag_status.ok() || !number_status.ok() ||
       !name_status.ok()) {
-    return ::mediapipe::InvalidArgumentError(absl::StrCat(
+    return mediapipe::InvalidArgumentError(absl::StrCat(
         "TAG:index:name is invalid, \"", tag_index_name,
         "\" does not match "
         "\"" MEDIAPIPE_TAG_INDEX_NAME_REGEX
@@ -204,16 +204,16 @@ namespace tool {
   *tag = name_index != 0 ? v[0] : "";
   *index = the_index;
   *name = v[name_index];
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status ParseTagIndex(const std::string& tag_index,
-                                  std::string* tag, int* index) {
+mediapipe::Status ParseTagIndex(const std::string& tag_index, std::string* tag,
+                                int* index) {
   RET_CHECK(tag);
   RET_CHECK(index);
 
-  ::mediapipe::Status tag_status = ::mediapipe::OkStatus();
-  ::mediapipe::Status number_status = ::mediapipe::OkStatus();
+  mediapipe::Status tag_status = mediapipe::OkStatus();
+  mediapipe::Status number_status = mediapipe::OkStatus();
   int the_index = -1;
   std::vector<std::string> v = absl::StrSplit(tag_index, ':');
   if (v.size() == 1) {
@@ -234,14 +234,14 @@ namespace tool {
     }
   }  // else omitted, the_index == -1, triggering error.
   if (the_index == -1 || !tag_status.ok() || !number_status.ok()) {
-    return ::mediapipe::InvalidArgumentError(absl::StrCat(
+    return mediapipe::InvalidArgumentError(absl::StrCat(
         "TAG:index is invalid, \"", tag_index,
         "\" does not match "
         "\"" MEDIAPIPE_TAG_INDEX_REGEX "\" (examples: \"TAG\" \"VIDEO:2\")."));
   }
   *tag = v[0];
   *index = the_index;
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
 #undef MEDIAPIPE_NAME_REGEX

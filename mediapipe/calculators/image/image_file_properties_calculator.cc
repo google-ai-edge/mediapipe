@@ -28,23 +28,24 @@ namespace {
 // sqrt(36^2 + 24^2).
 static const double SENSOR_DIAGONAL_35MM = std::sqrt(1872.0);
 
-::mediapipe::StatusOr<double> ComputeFocalLengthInPixels(
-    int image_width, int image_height, double focal_length_35mm,
-    double focal_length_mm) {
+mediapipe::StatusOr<double> ComputeFocalLengthInPixels(int image_width,
+                                                       int image_height,
+                                                       double focal_length_35mm,
+                                                       double focal_length_mm) {
   // TODO: Allow returning image file properties even when focal length
   // computation is not possible.
   if (image_width == 0 || image_height == 0) {
-    return ::mediapipe::InternalError(
+    return mediapipe::InternalError(
         "Image dimensions should be non-zero to compute focal length in "
         "pixels.");
   }
   if (focal_length_mm == 0) {
-    return ::mediapipe::InternalError(
+    return mediapipe::InternalError(
         "Focal length in mm should be non-zero to compute focal length in "
         "pixels.");
   }
   if (focal_length_35mm == 0) {
-    return ::mediapipe::InternalError(
+    return mediapipe::InternalError(
         "Focal length in 35 mm should be non-zero to compute focal length in "
         "pixels.");
   }
@@ -76,13 +77,13 @@ static const double SENSOR_DIAGONAL_35MM = std::sqrt(1872.0);
   return focal_length_pixels;
 }
 
-::mediapipe::StatusOr<ImageFileProperties> GetImageFileProperites(
+mediapipe::StatusOr<ImageFileProperties> GetImageFileProperites(
     const std::string& image_bytes) {
   easyexif::EXIFInfo result;
   int code = result.parseFrom(image_bytes);
   if (code) {
-    return ::mediapipe::InternalError("Error parsing EXIF, code: " +
-                                      std::to_string(code));
+    return mediapipe::InternalError("Error parsing EXIF, code: " +
+                                    std::to_string(code));
   }
 
   ImageFileProperties properties;
@@ -125,7 +126,7 @@ static const double SENSOR_DIAGONAL_35MM = std::sqrt(1872.0);
 // }
 class ImageFilePropertiesCalculator : public CalculatorBase {
  public:
-  static ::mediapipe::Status GetContract(CalculatorContract* cc) {
+  static mediapipe::Status GetContract(CalculatorContract* cc) {
     if (cc->Inputs().NumEntries() != 0) {
       RET_CHECK(cc->Inputs().NumEntries() == 1);
       cc->Inputs().Index(0).Set<std::string>();
@@ -141,10 +142,10 @@ class ImageFilePropertiesCalculator : public CalculatorBase {
       cc->OutputSidePackets().Index(0).Set<::mediapipe::ImageFileProperties>();
     }
 
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Open(CalculatorContext* cc) override {
+  mediapipe::Status Open(CalculatorContext* cc) override {
     cc->SetOffset(TimestampDiff(0));
 
     if (cc->InputSidePackets().NumEntries() == 1) {
@@ -159,13 +160,13 @@ class ImageFilePropertiesCalculator : public CalculatorBase {
           MakePacket<ImageFileProperties>(properties_));
     }
 
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Process(CalculatorContext* cc) override {
+  mediapipe::Status Process(CalculatorContext* cc) override {
     if (cc->Inputs().NumEntries() == 1) {
       if (cc->Inputs().Index(0).IsEmpty()) {
-        return ::mediapipe::OkStatus();
+        return mediapipe::OkStatus();
       }
       const std::string& image_bytes = cc->Inputs().Index(0).Get<std::string>();
       ASSIGN_OR_RETURN(properties_, GetImageFileProperites(image_bytes));
@@ -179,11 +180,11 @@ class ImageFilePropertiesCalculator : public CalculatorBase {
       } else {
         cc->OutputSidePackets().Index(0).Set(
             MakePacket<ImageFileProperties>(properties_)
-                .At(::mediapipe::Timestamp::Unset()));
+                .At(mediapipe::Timestamp::Unset()));
       }
     }
 
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
  private:

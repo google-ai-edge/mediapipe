@@ -29,16 +29,11 @@ cc_library(
     name = "mobile_calculators",
     visibility = ["//visibility:public"],
     deps = [
-        "//mediapipe/calculators/core:constant_side_packet_calculator",
         "//mediapipe/calculators/core:flow_limiter_calculator",
-        "//mediapipe/calculators/core:gate_calculator",
-        "//mediapipe/calculators/core:merge_calculator",
-        "//mediapipe/calculators/core:previous_loopback_calculator",
         "//mediapipe/calculators/image:image_cropping_calculator",
         "//mediapipe/graphs/object_detection_3d/calculators:annotations_to_model_matrices_calculator",
         "//mediapipe/graphs/object_detection_3d/calculators:gl_animation_overlay_calculator",
-        "//mediapipe/graphs/object_detection_3d/subgraphs:box_landmark_gpu",
-        "//mediapipe/graphs/object_detection_3d/subgraphs:object_detection_oid_v4_gpu",
+        "//mediapipe/modules/objectron:objectron_gpu",
     ],
 )
 
@@ -51,8 +46,21 @@ cc_library(
         "//mediapipe/gpu:gl_scaler_calculator",
         "//mediapipe/graphs/object_detection_3d/calculators:annotations_to_model_matrices_calculator",
         "//mediapipe/graphs/object_detection_3d/calculators:gl_animation_overlay_calculator",
-        "//mediapipe/graphs/object_detection_3d/subgraphs:objectron_detection_gpu",
-        "//mediapipe/graphs/object_detection_3d/subgraphs:objectron_tracking_gpu",
+        "//mediapipe/modules/objectron:objectron_detection_1stage_gpu",
+        "//mediapipe/modules/objectron:objectron_tracking_1stage_gpu",
+    ],
+)
+
+cc_library(
+    name = "desktop_cpu_calculators",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//mediapipe/calculators/tflite:tflite_model_calculator",
+        "//mediapipe/calculators/util:local_file_contents_calculator",
+        "//mediapipe/calculators/video:opencv_video_decoder_calculator",
+        "//mediapipe/calculators/video:opencv_video_encoder_calculator",
+        "//mediapipe/graphs/object_detection_3d/subgraphs:renderer_cpu",
+        "//mediapipe/modules/objectron:objectron_cpu",
     ],
 )
 

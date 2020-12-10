@@ -40,13 +40,13 @@ class OutputStreamManager {
   OutputStreamManager() = default;
 
   // Initializes the OutputStreamManager.
-  ::mediapipe::Status Initialize(const std::string& name,
-                                 const PacketType* packet_type);
+  mediapipe::Status Initialize(const std::string& name,
+                               const PacketType* packet_type);
 
   // Prepares this for processing. If an error occurs in a user called function
   // (such as AddPacket()) then error_callback will be called before returning
   // control to the user.
-  void PrepareForRun(std::function<void(::mediapipe::Status)> error_callback);
+  void PrepareForRun(std::function<void(mediapipe::Status)> error_callback);
 
   // Gets the stream name.
   const std::string& Name() const { return output_stream_spec_.name; }

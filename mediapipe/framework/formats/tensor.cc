@@ -132,9 +132,6 @@ void Tensor::AllocateMtlBuffer(id<MTLDevice> device) const {
 
 #if MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30
 Tensor::OpenGlTexture2dView Tensor::GetOpenGlTexture2dReadView() const {
-  LOG_IF(FATAL, BhwcDepthFromShape(shape_) > 4)
-      << "OpenGlTexture2d supports depth <= 4. Current depth is "
-      << BhwcDepthFromShape(shape_);
   LOG_IF(FATAL, valid_ == kValidNone)
       << "Tensor must be written prior to read from.";
   LOG_IF(FATAL, !(valid_ & (kValidCpu | kValidOpenGlTexture2d)))
@@ -145,10 +142,11 @@ Tensor::OpenGlTexture2dView Tensor::GetOpenGlTexture2dReadView() const {
   if (!(valid_ & kValidOpenGlTexture2d)) {
     uint8_t* buffer;
     std::unique_ptr<uint8_t[]> temp_buffer;
-    if (BhwcDepthFromShape(shape_) == 4) {
+    if (BhwcDepthFromShape(shape_) % 4 == 0) {
+      // No padding exists because number of channels are multiple of 4.
       buffer = reinterpret_cast<uint8_t*>(cpu_buffer_);
     } else {
-      const int padded_depth = 4;
+      const int padded_depth = (BhwcDepthFromShape(shape_) + 3) / 4 * 4;
       const int padded_depth_size = padded_depth * element_size();
       const int padded_size = BhwcBatchFromShape(shape_) *
                               BhwcHeightFromShape(shape_) *
@@ -194,9 +192,14 @@ void Tensor::AllocateOpenGlTexture2d() const {
     // supported from floating point textures.
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA32F, BhwcWidthFromShape(shape_),
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
+    const int pixels_per_depth = (BhwcDepthFromShape(shape_) + 3) / 4;
+    const int width = BhwcWidthFromShape(shape_) * pixels_per_depth;
+    glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA32F, width,
                    BhwcHeightFromShape(shape_));
     glBindTexture(GL_TEXTURE_2D, 0);
+    glGenFramebuffers(1, &frame_buffer_);
   }
 }
 #endif  // MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30
@@ -265,6 +268,8 @@ void Tensor::Move(Tensor* src) {
 
 #if MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30
   gl_context_ = std::move(src->gl_context_);
+  frame_buffer_ = src->frame_buffer_;
+  src->frame_buffer_ = GL_INVALID_INDEX;
   opengl_texture2d_ = src->opengl_texture2d_;
   src->opengl_texture2d_ = GL_INVALID_INDEX;
 #if MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31
@@ -298,9 +303,13 @@ void Tensor::Invalidate() {
 #if MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30
   if (opengl_texture2d_ != GL_INVALID_INDEX) {
     GLuint opengl_texture2d = opengl_texture2d_;
-    gl_context_->RunWithoutWaiting(
-        [opengl_texture2d]() { glDeleteTextures(1, &opengl_texture2d); });
+    GLuint frame_buffer = frame_buffer_;
+    gl_context_->RunWithoutWaiting([opengl_texture2d, frame_buffer]() {
+      glDeleteTextures(1, &opengl_texture2d);
+      glDeleteFramebuffers(1, &frame_buffer);
+    });
     opengl_texture2d_ = GL_INVALID_INDEX;
+    frame_buffer_ = GL_INVALID_INDEX;
   }
 #if MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31
   if (opengl_buffer_ != GL_INVALID_INDEX) {
@@ -347,53 +356,34 @@ Tensor::CpuReadView Tensor::GetCpuReadView() const {
         // yet.
         if (valid_ & kValidOpenGlTexture2d) {
       gl_context_->Run([this]() {
-        GLint current_fbo;
-        glGetIntegerv(GL_FRAMEBUFFER_BINDING, &current_fbo);
+        const int pixels_per_depth = (BhwcDepthFromShape(shape_) + 3) / 4;
+        const int width = BhwcWidthFromShape(shape_) * pixels_per_depth;
 
         uint8_t* buffer;
         std::unique_ptr<uint8_t[]> temp_buffer;
-        if (BhwcDepthFromShape(shape_) == 4) {
+        if (BhwcDepthFromShape(shape_) % 4 == 0) {
           buffer = reinterpret_cast<uint8_t*>(cpu_buffer_);
         } else {
-          const int padded_depth = (BhwcDepthFromShape(shape_) + 3) / 4 * 4;
-          const int padded_size =
-              BhwcBatchFromShape(shape_) * BhwcHeightFromShape(shape_) *
-              BhwcWidthFromShape(shape_) * padded_depth * element_size();
+          const int padded_size = BhwcBatchFromShape(shape_) *
+                                  BhwcHeightFromShape(shape_) * width *
+                                  pixels_per_depth * 4 * element_size();
           temp_buffer = absl::make_unique<uint8_t[]>(padded_size);
           buffer = temp_buffer.get();
         }
 
-        GLint color_attachment_name;
-        glGetFramebufferAttachmentParameteriv(
-            GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
-            GL_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME, &color_attachment_name);
-        if (color_attachment_name != opengl_texture2d_) {
-          // Save the viewport. Note that we assume that the color attachment is
-          // a GL_TEXTURE_2D texture.
-          GLint viewport[4];
-          glGetIntegerv(GL_VIEWPORT, viewport);
+        glBindFramebuffer(GL_FRAMEBUFFER, frame_buffer_);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+                               GL_TEXTURE_2D, opengl_texture2d_, 0);
+        glPixelStorei(GL_PACK_ROW_LENGTH, width);
+        glPixelStorei(GL_PACK_ALIGNMENT, 1);
+        glReadPixels(0, 0, width, BhwcHeightFromShape(shape_), GL_RGBA,
+                     GL_FLOAT, buffer);
 
-          // Set the data from GLTexture object.
-          glViewport(0, 0, BhwcWidthFromShape(shape_),
-                     BhwcHeightFromShape(shape_));
-          glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
-                                 GL_TEXTURE_2D, opengl_texture2d_, 0);
-          glReadPixels(0, 0, BhwcWidthFromShape(shape_),
-                       BhwcHeightFromShape(shape_), GL_RGBA, GL_FLOAT, buffer);
-
-          // Restore from the saved viewport and color attachment name.
-          glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
-          glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
-                                 GL_TEXTURE_2D, color_attachment_name, 0);
-        } else {
-          glReadPixels(0, 0, BhwcWidthFromShape(shape_),
-                       BhwcHeightFromShape(shape_), GL_RGBA, GL_FLOAT, buffer);
-        }
-        if (BhwcDepthFromShape(shape_) < 4) {
+        if (BhwcDepthFromShape(shape_) % 4) {
           uint8_t* dest_buffer = reinterpret_cast<uint8_t*>(cpu_buffer_);
           const int actual_depth_size =
               BhwcDepthFromShape(shape_) * element_size();
-          const int padded_depth_size = 4 * element_size();
+          const int padded_depth_size = pixels_per_depth * 4 * element_size();
           for (int e = 0;
                e < BhwcBatchFromShape(shape_) * BhwcHeightFromShape(shape_) *
                        BhwcWidthFromShape(shape_);

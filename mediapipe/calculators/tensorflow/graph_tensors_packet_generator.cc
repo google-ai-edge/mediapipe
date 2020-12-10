@@ -33,7 +33,7 @@ namespace tf = ::tensorflow;
 
 class GraphTensorsPacketGenerator : public PacketGenerator {
  public:
-  static ::mediapipe::Status FillExpectations(
+  static mediapipe::Status FillExpectations(
       const PacketGeneratorOptions& extendable_options,
       PacketTypeSet* input_side_packets, PacketTypeSet* output_side_packets) {
     RET_CHECK(extendable_options.HasExtension(
@@ -45,10 +45,10 @@ class GraphTensorsPacketGenerator : public PacketGenerator {
             /* "A map of tensor tags and tensors" */);
     RET_CHECK_EQ(options.tensor_tag_size(), options.tensor_num_nodes_size());
     RET_CHECK_GT(options.tensor_tag_size(), 0);
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  static ::mediapipe::Status Generate(
+  static mediapipe::Status Generate(
       const PacketGeneratorOptions& packet_generator_options,
       const PacketSet& input_side_packets, PacketSet* output_side_packets) {
     const GraphTensorsPacketGeneratorOptions& options =
@@ -65,7 +65,7 @@ class GraphTensorsPacketGenerator : public PacketGenerator {
       (*tensor_map)[tensor_tag].flat<float>().setZero();
     }
     output_side_packets->Index(0) = AdoptAsUniquePtr(tensor_map.release());
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 };
 REGISTER_PACKET_GENERATOR(GraphTensorsPacketGenerator);

@@ -25,14 +25,14 @@
 namespace mediapipe {
 namespace tool {
 
-::mediapipe::StatusOr<std::unique_ptr<PacketSet>> FillPacketSet(
+mediapipe::StatusOr<std::unique_ptr<PacketSet>> FillPacketSet(
     const PacketTypeSet& input_side_packet_types,
     const std::map<std::string, Packet>& input_side_packets,
     int* missing_packet_count_ptr) {
   if (missing_packet_count_ptr != nullptr) {
     *missing_packet_count_ptr = 0;
   }
-  std::vector<::mediapipe::Status> errors;
+  std::vector<mediapipe::Status> errors;
   auto packet_set =
       absl::make_unique<PacketSet>(input_side_packet_types.TagMap());
   const auto& names = input_side_packet_types.TagMap()->Names();
@@ -44,20 +44,20 @@ namespace tool {
       if (missing_packet_count_ptr != nullptr) {
         ++(*missing_packet_count_ptr);
       } else {
-        errors.push_back(::mediapipe::InvalidArgumentErrorBuilder(MEDIAPIPE_LOC)
+        errors.push_back(mediapipe::InvalidArgumentErrorBuilder(MEDIAPIPE_LOC)
                          << "Missing input side packet: " << name);
       }
       continue;
     }
     packet_set->Get(id) = iter->second;
     // Check the type.
-    ::mediapipe::Status status =
+    mediapipe::Status status =
         input_side_packet_types.Get(id).Validate(iter->second);
     if (!status.ok()) {
       std::pair<std::string, int> tag_index =
           input_side_packet_types.TagAndIndexFromId(id);
       errors.push_back(
-          ::mediapipe::StatusBuilder(status, MEDIAPIPE_LOC).SetPrepend()
+          mediapipe::StatusBuilder(status, MEDIAPIPE_LOC).SetPrepend()
           << "Packet \""
           << input_side_packet_types.TagMap()->Names()[id.value()]
           << "\" with tag \"" << tag_index.first << "\" and index "

@@ -27,7 +27,7 @@
 
 namespace mediapipe {
 
-using ::mediapipe::ParseTextProtoOrDie;
+using mediapipe::ParseTextProtoOrDie;
 using Node = ::mediapipe::CalculatorGraphConfig::Node;
 
 class TensorsToClassificationCalculatorTest : public ::testing::Test {

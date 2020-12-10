@@ -35,7 +35,7 @@
 
 namespace mediapipe {
 
-using ::mediapipe::reporter::Reporter;
+using mediapipe::reporter::Reporter;
 using ::testing::ElementsAre;
 using ::testing::HasSubstr;
 using ::testing::IsSupersetOf;

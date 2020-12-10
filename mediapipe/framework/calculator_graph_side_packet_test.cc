@@ -38,16 +38,16 @@ namespace {
 // output side packet.
 class OutputSidePacketInProcessCalculator : public CalculatorBase {
  public:
-  static ::mediapipe::Status GetContract(CalculatorContract* cc) {
+  static mediapipe::Status GetContract(CalculatorContract* cc) {
     cc->Inputs().Index(0).SetAny();
     cc->OutputSidePackets().Index(0).SetSameAs(&cc->Inputs().Index(0));
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Process(CalculatorContext* cc) final {
+  mediapipe::Status Process(CalculatorContext* cc) final {
     cc->OutputSidePackets().Index(0).Set(
         cc->Inputs().Index(0).Value().At(Timestamp::Unset()));
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 };
 REGISTER_CALCULATOR(OutputSidePacketInProcessCalculator);
@@ -56,22 +56,22 @@ REGISTER_CALCULATOR(OutputSidePacketInProcessCalculator);
 // receives. Outputs the total number of packets as a side packet in Close.
 class CountAndOutputSummarySidePacketInCloseCalculator : public CalculatorBase {
  public:
-  static ::mediapipe::Status GetContract(CalculatorContract* cc) {
+  static mediapipe::Status GetContract(CalculatorContract* cc) {
     cc->Inputs().Index(0).SetAny();
     cc->OutputSidePackets().Index(0).Set<int>();
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Process(CalculatorContext* cc) final {
+  mediapipe::Status Process(CalculatorContext* cc) final {
     ++count_;
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Close(CalculatorContext* cc) final {
+  mediapipe::Status Close(CalculatorContext* cc) final {
     absl::SleepFor(absl::Milliseconds(300));  // For GetOutputSidePacket test.
     cc->OutputSidePackets().Index(0).Set(
         MakePacket<int>(count_).At(Timestamp::Unset()));
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
   int count_ = 0;
@@ -82,15 +82,15 @@ REGISTER_CALCULATOR(CountAndOutputSummarySidePacketInCloseCalculator);
 // output side packet. This triggers an error in the graph.
 class OutputSidePacketWithTimestampCalculator : public CalculatorBase {
  public:
-  static ::mediapipe::Status GetContract(CalculatorContract* cc) {
+  static mediapipe::Status GetContract(CalculatorContract* cc) {
     cc->Inputs().Index(0).SetAny();
     cc->OutputSidePackets().Index(0).SetSameAs(&cc->Inputs().Index(0));
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Process(CalculatorContext* cc) final {
+  mediapipe::Status Process(CalculatorContext* cc) final {
     cc->OutputSidePackets().Index(0).Set(cc->Inputs().Index(0).Value());
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 };
 REGISTER_CALCULATOR(OutputSidePacketWithTimestampCalculator);
@@ -98,19 +98,19 @@ REGISTER_CALCULATOR(OutputSidePacketWithTimestampCalculator);
 // Generates an output side packet containing the integer 1.
 class IntegerOutputSidePacketCalculator : public CalculatorBase {
  public:
-  static ::mediapipe::Status GetContract(CalculatorContract* cc) {
+  static mediapipe::Status GetContract(CalculatorContract* cc) {
     cc->OutputSidePackets().Index(0).Set<int>();
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Open(CalculatorContext* cc) final {
+  mediapipe::Status Open(CalculatorContext* cc) final {
     cc->OutputSidePackets().Index(0).Set(MakePacket<int>(1));
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Process(CalculatorContext* cc) final {
+  mediapipe::Status Process(CalculatorContext* cc) final {
     LOG(FATAL) << "Not reached.";
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 };
 REGISTER_CALCULATOR(IntegerOutputSidePacketCalculator);
@@ -119,23 +119,23 @@ REGISTER_CALCULATOR(IntegerOutputSidePacketCalculator);
 // side packets.
 class SidePacketAdderCalculator : public CalculatorBase {
  public:
-  static ::mediapipe::Status GetContract(CalculatorContract* cc) {
+  static mediapipe::Status GetContract(CalculatorContract* cc) {
     cc->InputSidePackets().Index(0).Set<int>();
     cc->InputSidePackets().Index(1).Set<int>();
     cc->OutputSidePackets().Index(0).Set<int>();
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Open(CalculatorContext* cc) final {
+  mediapipe::Status Open(CalculatorContext* cc) final {
     cc->OutputSidePackets().Index(0).Set(
         MakePacket<int>(cc->InputSidePackets().Index(1).Get<int>() +
                         cc->InputSidePackets().Index(0).Get<int>()));
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Process(CalculatorContext* cc) final {
+  mediapipe::Status Process(CalculatorContext* cc) final {
     LOG(FATAL) << "Not reached.";
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 };
 REGISTER_CALCULATOR(SidePacketAdderCalculator);
@@ -144,21 +144,21 @@ REGISTER_CALCULATOR(SidePacketAdderCalculator);
 // input side packet.
 class SidePacketToStreamPacketCalculator : public CalculatorBase {
  public:
-  static ::mediapipe::Status GetContract(CalculatorContract* cc) {
+  static mediapipe::Status GetContract(CalculatorContract* cc) {
     cc->InputSidePackets().Index(0).SetAny();
     cc->Outputs().Index(0).SetSameAs(&cc->InputSidePackets().Index(0));
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Open(CalculatorContext* cc) final {
+  mediapipe::Status Open(CalculatorContext* cc) final {
     cc->Outputs().Index(0).AddPacket(
         cc->InputSidePackets().Index(0).At(Timestamp::PostStream()));
     cc->Outputs().Index(0).Close();
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Process(CalculatorContext* cc) final {
-    return ::mediapipe::tool::StatusStop();
+  mediapipe::Status Process(CalculatorContext* cc) final {
+    return mediapipe::tool::StatusStop();
   }
 };
 REGISTER_CALCULATOR(SidePacketToStreamPacketCalculator);
@@ -166,18 +166,18 @@ REGISTER_CALCULATOR(SidePacketToStreamPacketCalculator);
 // Packet generator for an arbitrary unit64 packet.
 class Uint64PacketGenerator : public PacketGenerator {
  public:
-  static ::mediapipe::Status FillExpectations(
+  static mediapipe::Status FillExpectations(
       const PacketGeneratorOptions& extendable_options,
       PacketTypeSet* input_side_packets, PacketTypeSet* output_side_packets) {
     output_side_packets->Index(0).Set<uint64>();
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  static ::mediapipe::Status Generate(
+  static mediapipe::Status Generate(
       const PacketGeneratorOptions& extendable_options,
       const PacketSet& input_side_packets, PacketSet* output_side_packets) {
     output_side_packets->Index(0) = Adopt(new uint64(15LL << 32 | 5));
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 };
 REGISTER_PACKET_GENERATOR(Uint64PacketGenerator);
@@ -185,7 +185,7 @@ REGISTER_PACKET_GENERATOR(Uint64PacketGenerator);
 TEST(CalculatorGraph, OutputSidePacketInProcess) {
   const int64 offset = 100;
   CalculatorGraphConfig config =
-      ::mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
         input_stream: "offset"
         node {
           calculator: "OutputSidePacketInProcessCalculator"
@@ -204,7 +204,7 @@ TEST(CalculatorGraph, OutputSidePacketInProcess) {
   MP_ASSERT_OK(graph.ObserveOutputStream(
       "output", [&output_packets](const Packet& packet) {
         output_packets.push_back(packet);
-        return ::mediapipe::OkStatus();
+        return mediapipe::OkStatus();
       }));
 
   // Run the graph twice.
@@ -226,11 +226,11 @@ TEST(CalculatorGraph, OutputSidePacketInProcess) {
 // also be ignored.
 class PassThroughGenerator : public PacketGenerator {
  public:
-  static ::mediapipe::Status FillExpectations(
+  static mediapipe::Status FillExpectations(
       const PacketGeneratorOptions& extendable_options, PacketTypeSet* inputs,
       PacketTypeSet* outputs) {
     if (!inputs->TagMap()->SameAs(*outputs->TagMap())) {
-      return ::mediapipe::InvalidArgumentError(
+      return mediapipe::InvalidArgumentError(
           "Input and outputs to PassThroughGenerator must use the same tags "
           "and indexes.");
     }
@@ -238,24 +238,24 @@ class PassThroughGenerator : public PacketGenerator {
       inputs->Get(id).SetAny();
       outputs->Get(id).SetSameAs(&inputs->Get(id));
     }
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  static ::mediapipe::Status Generate(
+  static mediapipe::Status Generate(
       const PacketGeneratorOptions& extendable_options,
       const PacketSet& input_side_packets, PacketSet* output_side_packets) {
     for (CollectionItemId id = input_side_packets.BeginId();
          id < input_side_packets.EndId(); ++id) {
       output_side_packets->Get(id) = input_side_packets.Get(id);
     }
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 };
 REGISTER_PACKET_GENERATOR(PassThroughGenerator);
 
 TEST(CalculatorGraph, SharePacketGeneratorGraph) {
   CalculatorGraphConfig config =
-      ::mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
         node {
           calculator: 'CountingSourceCalculator'
           output_stream: 'count1'
@@ -383,7 +383,7 @@ TEST(CalculatorGraph, SharePacketGeneratorGraph) {
 TEST(CalculatorGraph, OutputSidePacketAlreadySet) {
   const int64 offset = 100;
   CalculatorGraphConfig config =
-      ::mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
         input_stream: "offset"
         node {
           calculator: "OutputSidePacketInProcessCalculator"
@@ -402,15 +402,15 @@ TEST(CalculatorGraph, OutputSidePacketAlreadySet) {
       "offset", MakePacket<TimestampDiff>(offset).At(Timestamp(1))));
   MP_ASSERT_OK(graph.CloseInputStream("offset"));
 
-  ::mediapipe::Status status = graph.WaitUntilDone();
-  EXPECT_EQ(status.code(), ::mediapipe::StatusCode::kAlreadyExists);
+  mediapipe::Status status = graph.WaitUntilDone();
+  EXPECT_EQ(status.code(), mediapipe::StatusCode::kAlreadyExists);
   EXPECT_THAT(status.message(), testing::HasSubstr("was already set."));
 }
 
 TEST(CalculatorGraph, OutputSidePacketWithTimestamp) {
   const int64 offset = 100;
   CalculatorGraphConfig config =
-      ::mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
         input_stream: "offset"
         node {
           calculator: "OutputSidePacketWithTimestampCalculator"
@@ -428,15 +428,15 @@ TEST(CalculatorGraph, OutputSidePacketWithTimestamp) {
   MP_ASSERT_OK(graph.AddPacketToInputStream(
       "offset", MakePacket<TimestampDiff>(offset).At(Timestamp(237))));
   MP_ASSERT_OK(graph.CloseInputStream("offset"));
-  ::mediapipe::Status status = graph.WaitUntilDone();
-  EXPECT_EQ(status.code(), ::mediapipe::StatusCode::kInvalidArgument);
+  mediapipe::Status status = graph.WaitUntilDone();
+  EXPECT_EQ(status.code(), mediapipe::StatusCode::kInvalidArgument);
   EXPECT_THAT(status.message(), testing::HasSubstr("has a timestamp 237."));
 }
 
 TEST(CalculatorGraph, OutputSidePacketConsumedBySourceNode) {
   const int max_count = 10;
   CalculatorGraphConfig config =
-      ::mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
         input_stream: "max_count"
         node {
           calculator: "OutputSidePacketInProcessCalculator"
@@ -460,7 +460,7 @@ TEST(CalculatorGraph, OutputSidePacketConsumedBySourceNode) {
   MP_ASSERT_OK(graph.ObserveOutputStream(
       "output", [&output_packets](const Packet& packet) {
         output_packets.push_back(packet);
-        return ::mediapipe::OkStatus();
+        return mediapipe::OkStatus();
       }));
   MP_ASSERT_OK(graph.StartRun({}));
   // Wait until the graph is idle so that
@@ -486,19 +486,19 @@ class FirstPacketFilterCalculator : public CalculatorBase {
   FirstPacketFilterCalculator() {}
   ~FirstPacketFilterCalculator() override {}
 
-  static ::mediapipe::Status GetContract(CalculatorContract* cc) {
+  static mediapipe::Status GetContract(CalculatorContract* cc) {
     cc->Inputs().Index(0).SetAny();
     cc->Outputs().Index(0).SetSameAs(&cc->Inputs().Index(0));
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Process(CalculatorContext* cc) override {
+  mediapipe::Status Process(CalculatorContext* cc) override {
     if (!seen_first_packet_) {
       cc->Outputs().Index(0).AddPacket(cc->Inputs().Index(0).Value());
       cc->Outputs().Index(0).Close();
       seen_first_packet_ = true;
     }
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
  private:
@@ -529,7 +529,7 @@ TEST(CalculatorGraph, SourceLayerInversion) {
   // Set num_threads to 1 to force sequential execution for deterministic
   // outputs.
   CalculatorGraphConfig config =
-      ::mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
         num_threads: 1
         node {
           calculator: "CountingSourceCalculator"
@@ -568,8 +568,8 @@ TEST(CalculatorGraph, SourceLayerInversion) {
   MP_ASSERT_OK(graph.Initialize(
       config, {{"max_count", MakePacket<int>(max_count)},
                {"initial_value1", MakePacket<int>(initial_value1)}}));
-  ::mediapipe::Status status = graph.Run();
-  EXPECT_EQ(status.code(), ::mediapipe::StatusCode::kUnknown);
+  mediapipe::Status status = graph.Run();
+  EXPECT_EQ(status.code(), mediapipe::StatusCode::kUnknown);
   EXPECT_THAT(status.message(), testing::HasSubstr("deadlock"));
 }
 
@@ -577,7 +577,7 @@ TEST(CalculatorGraph, SourceLayerInversion) {
 // streams and no output streams.
 TEST(CalculatorGraph, PacketGeneratorLikeCalculators) {
   CalculatorGraphConfig config =
-      ::mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
         node {
           calculator: "IntegerOutputSidePacketCalculator"
           output_side_packet: "one"
@@ -614,7 +614,7 @@ TEST(CalculatorGraph, PacketGeneratorLikeCalculators) {
   MP_ASSERT_OK(graph.ObserveOutputStream(
       "output", [&output_packets](const Packet& packet) {
         output_packets.push_back(packet);
-        return ::mediapipe::OkStatus();
+        return mediapipe::OkStatus();
       }));
   MP_ASSERT_OK(graph.Run());
   ASSERT_EQ(1, output_packets.size());
@@ -624,7 +624,7 @@ TEST(CalculatorGraph, PacketGeneratorLikeCalculators) {
 
 TEST(CalculatorGraph, OutputSummarySidePacketInClose) {
   CalculatorGraphConfig config =
-      ::mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
         input_stream: "input_packets"
         node {
           calculator: "CountAndOutputSummarySidePacketInCloseCalculator"
@@ -643,7 +643,7 @@ TEST(CalculatorGraph, OutputSummarySidePacketInClose) {
   MP_ASSERT_OK(graph.ObserveOutputStream(
       "output", [&output_packets](const Packet& packet) {
         output_packets.push_back(packet);
-        return ::mediapipe::OkStatus();
+        return mediapipe::OkStatus();
       }));
 
   // Run the graph twice.
@@ -665,7 +665,7 @@ TEST(CalculatorGraph, OutputSummarySidePacketInClose) {
 
 TEST(CalculatorGraph, GetOutputSidePacket) {
   CalculatorGraphConfig config =
-      ::mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
         input_stream: "input_packets"
         node {
           calculator: "CountAndOutputSummarySidePacketInCloseCalculator"
@@ -686,14 +686,14 @@ TEST(CalculatorGraph, GetOutputSidePacket) {
   MP_ASSERT_OK(graph.Initialize(config));
   // Check a packet generated by the PacketGenerator, which is available after
   // graph initialization, can be fetched before graph starts.
-  ::mediapipe::StatusOr<Packet> status_or_packet =
+  mediapipe::StatusOr<Packet> status_or_packet =
       graph.GetOutputSidePacket("output_uint64");
   MP_ASSERT_OK(status_or_packet);
   EXPECT_EQ(Timestamp::Unset(), status_or_packet.ValueOrDie().Timestamp());
   // IntSplitterPacketGenerator is missing its input side packet and we
   // won't be able to get its output side packet now.
   status_or_packet = graph.GetOutputSidePacket("output_uint32_pair");
-  EXPECT_EQ(::mediapipe::StatusCode::kUnavailable,
+  EXPECT_EQ(mediapipe::StatusCode::kUnavailable,
             status_or_packet.status().code());
   // Run the graph twice.
   int max_count = 100;
@@ -713,13 +713,13 @@ TEST(CalculatorGraph, GetOutputSidePacket) {
     // Should return NOT_FOUND for invalid side packets.
     status_or_packet = graph.GetOutputSidePacket("unknown");
     EXPECT_FALSE(status_or_packet.ok());
-    EXPECT_EQ(::mediapipe::StatusCode::kNotFound,
+    EXPECT_EQ(mediapipe::StatusCode::kNotFound,
               status_or_packet.status().code());
     // Should return UNAVAILABLE before graph is done for valid non-base
     // packets.
     status_or_packet = graph.GetOutputSidePacket("num_of_packets");
     EXPECT_FALSE(status_or_packet.ok());
-    EXPECT_EQ(::mediapipe::StatusCode::kUnavailable,
+    EXPECT_EQ(mediapipe::StatusCode::kUnavailable,
               status_or_packet.status().code());
     // Should stil return a base even before graph is done.
     status_or_packet = graph.GetOutputSidePacket("output_uint64");
@@ -749,20 +749,20 @@ typedef std::string HugeModel;
 // Generates an output-side-packet once for each calculator-graph.
 class OutputSidePacketCachedCalculator : public CalculatorBase {
  public:
-  static ::mediapipe::Status GetContract(CalculatorContract* cc) {
+  static mediapipe::Status GetContract(CalculatorContract* cc) {
     cc->OutputSidePackets().Index(0).Set<HugeModel>();
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Open(CalculatorContext* cc) final {
+  mediapipe::Status Open(CalculatorContext* cc) final {
     cc->OutputSidePackets().Index(0).Set(MakePacket<HugeModel>(
         R"(An expensive side-packet created only once per graph)"));
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Process(CalculatorContext* cc) final {
+  mediapipe::Status Process(CalculatorContext* cc) final {
     LOG(FATAL) << "Not reached.";
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 };
 REGISTER_CALCULATOR(OutputSidePacketCachedCalculator);
@@ -774,7 +774,7 @@ bool Equals(Packet p1, Packet p2) {
 
 TEST(CalculatorGraph, OutputSidePacketCached) {
   CalculatorGraphConfig config =
-      ::mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
         node {
           calculator: "OutputSidePacketCachedCalculator"
           output_side_packet: "model"
@@ -791,7 +791,7 @@ TEST(CalculatorGraph, OutputSidePacketCached) {
   MP_ASSERT_OK(graph.ObserveOutputStream(
       "output", [&output_packets](const Packet& packet) {
         output_packets.push_back(packet);
-        return ::mediapipe::OkStatus();
+        return mediapipe::OkStatus();
       }));
 
   // Run the graph three times.

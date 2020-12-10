@@ -76,20 +76,20 @@ namespace mediapipe {
 //
 class OpenCvVideoEncoderCalculator : public CalculatorBase {
  public:
-  static ::mediapipe::Status GetContract(CalculatorContract* cc);
-  ::mediapipe::Status Open(CalculatorContext* cc) override;
-  ::mediapipe::Status Process(CalculatorContext* cc) override;
-  ::mediapipe::Status Close(CalculatorContext* cc) override;
+  static mediapipe::Status GetContract(CalculatorContract* cc);
+  mediapipe::Status Open(CalculatorContext* cc) override;
+  mediapipe::Status Process(CalculatorContext* cc) override;
+  mediapipe::Status Close(CalculatorContext* cc) override;
 
  private:
-  ::mediapipe::Status SetUpVideoWriter(float frame_rate, int width, int height);
+  mediapipe::Status SetUpVideoWriter(float frame_rate, int width, int height);
 
   std::string output_file_path_;
   int four_cc_;
   std::unique_ptr<cv::VideoWriter> writer_;
 };
 
-::mediapipe::Status OpenCvVideoEncoderCalculator::GetContract(
+mediapipe::Status OpenCvVideoEncoderCalculator::GetContract(
     CalculatorContract* cc) {
   RET_CHECK(cc->Inputs().HasTag("VIDEO"));
   cc->Inputs().Tag("VIDEO").Set<ImageFrame>();
@@ -101,10 +101,10 @@ class OpenCvVideoEncoderCalculator : public CalculatorBase {
   if (cc->InputSidePackets().HasTag("AUDIO_FILE_PATH")) {
     cc->InputSidePackets().Tag("AUDIO_FILE_PATH").Set<std::string>();
   }
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status OpenCvVideoEncoderCalculator::Open(CalculatorContext* cc) {
+mediapipe::Status OpenCvVideoEncoderCalculator::Open(CalculatorContext* cc) {
   OpenCvVideoEncoderCalculatorOptions options =
       cc->Options<OpenCvVideoEncoderCalculatorOptions>();
   RET_CHECK(options.has_codec() && options.codec().length() == 4)
@@ -128,13 +128,12 @@ class OpenCvVideoEncoderCalculator : public CalculatorBase {
   // from the video header directly. The calculator will receive the video
   // header packet at timestamp prestream.
   if (cc->Inputs().HasTag("VIDEO_PRESTREAM")) {
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
   return SetUpVideoWriter(options.fps(), options.width(), options.height());
 }
 
-::mediapipe::Status OpenCvVideoEncoderCalculator::Process(
-    CalculatorContext* cc) {
+mediapipe::Status OpenCvVideoEncoderCalculator::Process(CalculatorContext* cc) {
   if (cc->InputTimestamp() == Timestamp::PreStream()) {
     const VideoHeader& video_header =
         cc->Inputs().Tag("VIDEO_PRESTREAM").Get<VideoHeader>();
@@ -149,7 +148,7 @@ class OpenCvVideoEncoderCalculator : public CalculatorBase {
   if (format == ImageFormat::GRAY8) {
     frame = formats::MatView(&image_frame);
     if (frame.empty()) {
-      return ::mediapipe::InvalidArgumentErrorBuilder(MEDIAPIPE_LOC)
+      return mediapipe::InvalidArgumentErrorBuilder(MEDIAPIPE_LOC)
              << "Receive empty frame at timestamp "
              << cc->Inputs().Tag("VIDEO").Value().Timestamp()
              << " in OpenCvVideoEncoderCalculator::Process()";
@@ -157,7 +156,7 @@ class OpenCvVideoEncoderCalculator : public CalculatorBase {
   } else {
     cv::Mat tmp_frame = formats::MatView(&image_frame);
     if (tmp_frame.empty()) {
-      return ::mediapipe::InvalidArgumentErrorBuilder(MEDIAPIPE_LOC)
+      return mediapipe::InvalidArgumentErrorBuilder(MEDIAPIPE_LOC)
              << "Receive empty frame at timestamp "
              << cc->Inputs().Tag("VIDEO").Value().Timestamp()
              << " in OpenCvVideoEncoderCalculator::Process()";
@@ -167,15 +166,15 @@ class OpenCvVideoEncoderCalculator : public CalculatorBase {
     } else if (format == ImageFormat::SRGBA) {
       cv::cvtColor(tmp_frame, frame, cv::COLOR_RGBA2BGR);
     } else {
-      return ::mediapipe::InvalidArgumentErrorBuilder(MEDIAPIPE_LOC)
+      return mediapipe::InvalidArgumentErrorBuilder(MEDIAPIPE_LOC)
              << "Unsupported image format: " << format;
     }
   }
   writer_->write(frame);
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status OpenCvVideoEncoderCalculator::Close(CalculatorContext* cc) {
+mediapipe::Status OpenCvVideoEncoderCalculator::Close(CalculatorContext* cc) {
   if (writer_ && writer_->isOpened()) {
     writer_->release();
   }
@@ -199,17 +198,17 @@ class OpenCvVideoEncoderCalculator : public CalculatorBase {
     }
 
 #else
-    return ::mediapipe::InvalidArgumentErrorBuilder(MEDIAPIPE_LOC)
+    return mediapipe::InvalidArgumentErrorBuilder(MEDIAPIPE_LOC)
            << "OpenCVVideoEncoderCalculator can't attach the audio tracks to "
               "the video because FFmpeg is not installed. Please remove "
               "input_side_packet: \"AUDIO_FILE_PATH\" from the node "
               "config.";
 #endif
   }
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status OpenCvVideoEncoderCalculator::SetUpVideoWriter(
+mediapipe::Status OpenCvVideoEncoderCalculator::SetUpVideoWriter(
     float frame_rate, int width, int height) {
   RET_CHECK(frame_rate > 0 && width > 0 && height > 0)
       << "Invalid video metadata: frame_rate=" << frame_rate
@@ -217,10 +216,10 @@ class OpenCvVideoEncoderCalculator : public CalculatorBase {
   writer_ = absl::make_unique<cv::VideoWriter>(
       output_file_path_, four_cc_, frame_rate, cv::Size(width, height));
   if (!writer_->isOpened()) {
-    return ::mediapipe::InvalidArgumentErrorBuilder(MEDIAPIPE_LOC)
+    return mediapipe::InvalidArgumentErrorBuilder(MEDIAPIPE_LOC)
            << "Fail to open file at " << output_file_path_;
   }
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
 REGISTER_CALCULATOR(OpenCvVideoEncoderCalculator);

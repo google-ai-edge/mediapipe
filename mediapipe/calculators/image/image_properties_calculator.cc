@@ -44,7 +44,7 @@ namespace mediapipe {
 // }
 class ImagePropertiesCalculator : public CalculatorBase {
  public:
-  static ::mediapipe::Status GetContract(CalculatorContract* cc) {
+  static mediapipe::Status GetContract(CalculatorContract* cc) {
     RET_CHECK(cc->Inputs().HasTag(kImageFrameTag) ^
               cc->Inputs().HasTag(kGpuBufferTag));
     if (cc->Inputs().HasTag(kImageFrameTag)) {
@@ -60,15 +60,15 @@ class ImagePropertiesCalculator : public CalculatorBase {
       cc->Outputs().Tag("SIZE").Set<std::pair<int, int>>();
     }
 
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Open(CalculatorContext* cc) override {
+  mediapipe::Status Open(CalculatorContext* cc) override {
     cc->SetOffset(TimestampDiff(0));
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Process(CalculatorContext* cc) override {
+  mediapipe::Status Process(CalculatorContext* cc) override {
     int width;
     int height;
 
@@ -92,7 +92,7 @@ class ImagePropertiesCalculator : public CalculatorBase {
         MakePacket<std::pair<int, int>>(width, height)
             .At(cc->InputTimestamp()));
 
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 };
 REGISTER_CALCULATOR(ImagePropertiesCalculator);

@@ -59,11 +59,11 @@ class FlowPackagerCalculator : public CalculatorBase {
  public:
   ~FlowPackagerCalculator() override = default;
 
-  static ::mediapipe::Status GetContract(CalculatorContract* cc);
+  static mediapipe::Status GetContract(CalculatorContract* cc);
 
-  ::mediapipe::Status Open(CalculatorContext* cc) override;
-  ::mediapipe::Status Process(CalculatorContext* cc) override;
-  ::mediapipe::Status Close(CalculatorContext* cc) override;
+  mediapipe::Status Open(CalculatorContext* cc) override;
+  mediapipe::Status Process(CalculatorContext* cc) override;
+  mediapipe::Status Close(CalculatorContext* cc) override;
 
   // Writes passed chunk to disk.
   void WriteChunk(const TrackingDataChunk& chunk) const;
@@ -90,8 +90,7 @@ class FlowPackagerCalculator : public CalculatorBase {
 
 REGISTER_CALCULATOR(FlowPackagerCalculator);
 
-::mediapipe::Status FlowPackagerCalculator::GetContract(
-    CalculatorContract* cc) {
+mediapipe::Status FlowPackagerCalculator::GetContract(CalculatorContract* cc) {
   if (!cc->Inputs().HasTag("FLOW")) {
     return tool::StatusFail("No input flow was specified.");
   }
@@ -115,10 +114,10 @@ REGISTER_CALCULATOR(FlowPackagerCalculator);
     cc->InputSidePackets().Tag("CACHE_DIR").Set<std::string>();
   }
 
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status FlowPackagerCalculator::Open(CalculatorContext* cc) {
+mediapipe::Status FlowPackagerCalculator::Open(CalculatorContext* cc) {
   options_ = cc->Options<FlowPackagerCalculatorOptions>();
 
   flow_packager_.reset(new FlowPackager(options_.flow_packager_options()));
@@ -129,10 +128,10 @@ REGISTER_CALCULATOR(FlowPackagerCalculator);
     cache_dir_ = cc->InputSidePackets().Tag("CACHE_DIR").Get<std::string>();
   }
 
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status FlowPackagerCalculator::Process(CalculatorContext* cc) {
+mediapipe::Status FlowPackagerCalculator::Process(CalculatorContext* cc) {
   InputStream* flow_stream = &(cc->Inputs().Tag("FLOW"));
   const RegionFlowFeatureList& flow = flow_stream->Get<RegionFlowFeatureList>();
 
@@ -194,10 +193,10 @@ REGISTER_CALCULATOR(FlowPackagerCalculator);
 
   prev_timestamp_ = timestamp;
   ++frame_idx_;
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status FlowPackagerCalculator::Close(CalculatorContext* cc) {
+mediapipe::Status FlowPackagerCalculator::Close(CalculatorContext* cc) {
   if (frame_idx_ > 0) {
     tracking_chunk_.set_last_chunk(true);
     if (cc->Outputs().HasTag("TRACKING_CHUNK")) {
@@ -216,7 +215,7 @@ REGISTER_CALCULATOR(FlowPackagerCalculator);
     cc->Outputs().Tag("COMPLETE").Add(new bool(true), Timestamp::PreStream());
   }
 
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
 void FlowPackagerCalculator::WriteChunk(const TrackingDataChunk& chunk) const {

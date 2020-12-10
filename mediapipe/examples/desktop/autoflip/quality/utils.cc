@@ -53,13 +53,12 @@ void NormalizedRectToRect(const RectF& normalized_location, const int width,
   ScaleRect(normalized_location, width, height, location);
 }
 
-::mediapipe::Status ClampRect(const int width, const int height,
-                              Rect* location) {
+mediapipe::Status ClampRect(const int width, const int height, Rect* location) {
   return ClampRect(0, 0, width, height, location);
 }
 
-::mediapipe::Status ClampRect(const int x0, const int y0, const int x1,
-                              const int y1, Rect* location) {
+mediapipe::Status ClampRect(const int x0, const int y0, const int x1,
+                            const int y1, Rect* location) {
   RET_CHECK(!(location->x() >= x1 || location->x() + location->width() <= x0 ||
               location->y() >= y1 || location->y() + location->height() <= y0));
 
@@ -74,7 +73,7 @@ void NormalizedRectToRect(const RectF& normalized_location, const int width,
   location->set_y(clamped_top);
   location->set_width(std::max(0, clamped_right - clamped_left));
   location->set_height(std::max(0, clamped_bottom - clamped_top));
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
 void RectUnion(const Rect& rect_to_add, Rect* rect) {
@@ -90,13 +89,13 @@ void RectUnion(const Rect& rect_to_add, Rect* rect) {
   rect->set_height(y2 - y1);
 }
 
-::mediapipe::Status PackKeyFrameInfo(const int64 frame_timestamp_ms,
-                                     const DetectionSet& detections,
-                                     const int original_frame_width,
-                                     const int original_frame_height,
-                                     const int feature_frame_width,
-                                     const int feature_frame_height,
-                                     KeyFrameInfo* key_frame_info) {
+mediapipe::Status PackKeyFrameInfo(const int64 frame_timestamp_ms,
+                                   const DetectionSet& detections,
+                                   const int original_frame_width,
+                                   const int original_frame_height,
+                                   const int feature_frame_width,
+                                   const int feature_frame_height,
+                                   KeyFrameInfo* key_frame_info) {
   RET_CHECK(key_frame_info != nullptr) << "KeyFrameInfo is null";
   RET_CHECK(original_frame_width > 0 && original_frame_height > 0 &&
             feature_frame_width > 0 && feature_frame_height > 0)
@@ -136,10 +135,10 @@ void RectUnion(const Rect& rect_to_add, Rect* rect) {
     }
   }
 
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status SortDetections(
+mediapipe::Status SortDetections(
     const DetectionSet& detections,
     std::vector<SalientRegion>* required_regions,
     std::vector<SalientRegion>* non_required_regions) {
@@ -175,13 +174,13 @@ void RectUnion(const Rect& rect_to_add, Rect* rect) {
     non_required_regions->push_back(detections.detections(original_idx));
   }
 
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status SetKeyFrameCropTarget(const int frame_width,
-                                          const int frame_height,
-                                          const double target_aspect_ratio,
-                                          KeyFrameCropOptions* crop_options) {
+mediapipe::Status SetKeyFrameCropTarget(const int frame_width,
+                                        const int frame_height,
+                                        const double target_aspect_ratio,
+                                        KeyFrameCropOptions* crop_options) {
   RET_CHECK_NE(crop_options, nullptr) << "KeyFrameCropOptions is null.";
   RET_CHECK_GT(frame_width, 0) << "Frame width is non-positive.";
   RET_CHECK_GT(frame_height, 0) << "Frame height is non-positive.";
@@ -199,10 +198,10 @@ void RectUnion(const Rect& rect_to_add, Rect* rect) {
           : std::round(frame_width / target_aspect_ratio);
   crop_options->set_target_width(crop_target_width);
   crop_options->set_target_height(crop_target_height);
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status AggregateKeyFrameResults(
+mediapipe::Status AggregateKeyFrameResults(
     const KeyFrameCropOptions& key_frame_crop_options,
     const std::vector<KeyFrameCropResult>& key_frame_crop_results,
     const int scene_frame_width, const int scene_frame_height,
@@ -232,7 +231,7 @@ void RectUnion(const Rect& rect_to_add, Rect* rect) {
   // Handles the corner case of no key frames.
   if (num_key_frames == 0) {
     scene_summary->set_has_salient_region(false);
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
   scene_summary->set_num_key_frames(num_key_frames);
@@ -328,10 +327,10 @@ void RectUnion(const Rect& rect_to_add, Rect* rect) {
                          scene_summary->key_frame_center_min_y()) /
       scene_frame_height;
   scene_summary->set_vertical_motion_amount(motion_y);
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status ComputeSceneStaticBordersSize(
+mediapipe::Status ComputeSceneStaticBordersSize(
     const std::vector<StaticFeatures>& static_features, int* top_border_size,
     int* bottom_border_size) {
   RET_CHECK(top_border_size) << "Output top border size is null.";
@@ -375,10 +374,10 @@ void RectUnion(const Rect& rect_to_add, Rect* rect) {
 
   *top_border_size = std::max(0, *top_border_size);
   *bottom_border_size = std::max(0, *bottom_border_size);
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status FindSolidBackgroundColor(
+mediapipe::Status FindSolidBackgroundColor(
     const std::vector<StaticFeatures>& static_features,
     const std::vector<int64>& static_features_timestamps,
     const double min_fraction_solid_background_color,
@@ -423,13 +422,13 @@ void RectUnion(const Rect& rect_to_add, Rect* rect) {
           min_fraction_solid_background_color) {
     *has_solid_background = true;
   }
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status AffineRetarget(
-    const cv::Size& output_size, const std::vector<cv::Mat>& frames,
-    const std::vector<cv::Mat>& affine_projection,
-    std::vector<cv::Mat>* cropped_frames) {
+mediapipe::Status AffineRetarget(const cv::Size& output_size,
+                                 const std::vector<cv::Mat>& frames,
+                                 const std::vector<cv::Mat>& affine_projection,
+                                 std::vector<cv::Mat>* cropped_frames) {
   RET_CHECK(frames.size() == affine_projection.size())
       << "number of frames and retarget offsets must be the same.";
   RET_CHECK(cropped_frames->size() == frames.size())
@@ -443,7 +442,7 @@ void RectUnion(const Rect& rect_to_add, Rect* rect) {
     RET_CHECK(affine.rows == 2) << "Affine matrix must be 2x3";
     cv::warpAffine(frames[i], (*cropped_frames)[i], affine, output_size);
   }
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 }  // namespace autoflip
 }  // namespace mediapipe

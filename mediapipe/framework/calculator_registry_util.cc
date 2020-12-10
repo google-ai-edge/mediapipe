@@ -30,9 +30,9 @@ bool IsLegacyCalculator(const std::string& package_name,
   return false;
 }
 
-::mediapipe::Status VerifyCalculatorWithContract(
-    const std::string& package_name, const std::string& node_class,
-    CalculatorContract* contract) {
+mediapipe::Status VerifyCalculatorWithContract(const std::string& package_name,
+                                               const std::string& node_class,
+                                               CalculatorContract* contract) {
   // A number of calculators use the non-CC methods on GlCalculatorHelper
   // even though they are CalculatorBase-based.
   ASSIGN_OR_RETURN(
@@ -43,10 +43,10 @@ bool IsLegacyCalculator(const std::string& package_name,
   MP_RETURN_IF_ERROR(static_access_to_calculator_base->GetContract(contract))
           .SetPrepend()
       << node_class << ": ";
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::StatusOr<std::unique_ptr<CalculatorBase>> CreateCalculator(
+mediapipe::StatusOr<std::unique_ptr<CalculatorBase>> CreateCalculator(
     const std::shared_ptr<tool::TagMap>& input_tag_map,
     const std::shared_ptr<tool::TagMap>& output_tag_map,
     const std::string& package_name, CalculatorState* calculator_state,

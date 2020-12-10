@@ -75,6 +75,13 @@ class TFLiteGPURunner {
   std::vector<BHWC> GetInputShapes() { return input_shapes_; }
   std::vector<BHWC> GetOutputShapes() { return output_shapes_; }
 
+  std::vector<std::vector<int>> GetTFLiteInputShapes() {
+    return input_shape_from_model_;
+  }
+  std::vector<std::vector<int>> GetTFLiteOutputShapes() {
+    return output_shape_from_model_;
+  }
+
 #ifdef __ANDROID__
   void SetSerializedBinaryCache(std::vector<uint8_t>&& cache) {
     serialized_binary_cache_ = std::move(cache);
@@ -109,6 +116,12 @@ class TFLiteGPURunner {
   // after graph_ becomes "converted" into runner_.
   std::vector<BHWC> input_shapes_;
   std::vector<BHWC> output_shapes_;
+
+  // Input/output shapes above belong to the internal graph representation. It
+  // is handy in certain situations to have the original tflite model's
+  // input/output shapes, which differ conceptually.
+  std::vector<std::vector<int>> input_shape_from_model_;
+  std::vector<std::vector<int>> output_shape_from_model_;
 
   bool opencl_is_forced_ = false;
   bool opengl_is_forced_ = false;

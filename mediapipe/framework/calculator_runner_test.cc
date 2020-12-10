@@ -40,7 +40,7 @@ namespace {
 // at InputTimestamp. The headers are strings.
 class CalculatorRunnerTestCalculator : public CalculatorBase {
  public:
-  static ::mediapipe::Status GetContract(CalculatorContract* cc) {
+  static mediapipe::Status GetContract(CalculatorContract* cc) {
     cc->Inputs().Index(0).Set<int>();
     cc->Inputs().Index(1).Set<int>();
     cc->Outputs().Index(0).Set<int>();
@@ -50,10 +50,10 @@ class CalculatorRunnerTestCalculator : public CalculatorBase {
     cc->OutputSidePackets()
         .Tag("SIDE_OUTPUT")
         .SetSameAs(&cc->InputSidePackets().Index(0));
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Open(CalculatorContext* cc) override {
+  mediapipe::Status Open(CalculatorContext* cc) override {
     std::string input_header_string =
         absl::StrCat(cc->Inputs().Index(0).Header().Get<std::string>(),
                      cc->Inputs().Index(1).Header().Get<std::string>());
@@ -66,17 +66,17 @@ class CalculatorRunnerTestCalculator : public CalculatorBase {
     cc->OutputSidePackets()
         .Tag("SIDE_OUTPUT")
         .Set(cc->InputSidePackets().Index(0));
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Process(CalculatorContext* cc) override {
+  mediapipe::Status Process(CalculatorContext* cc) override {
     for (int index = 0; index < 2; ++index) {
       cc->Outputs().Index(index).Add(
           new int(-cc->Inputs().Index(index).Get<int>()), cc->InputTimestamp());
     }
     cc->Outputs().Index(2).AddPacket(
         cc->InputSidePackets().Index(0).At(cc->InputTimestamp()));
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 };
 REGISTER_CALCULATOR(CalculatorRunnerTestCalculator);
@@ -87,7 +87,7 @@ REGISTER_CALCULATOR(CalculatorRunnerTestCalculator);
 //          with the same tag name (and any index).
 class CalculatorRunnerMultiTagTestCalculator : public CalculatorBase {
  public:
-  static ::mediapipe::Status GetContract(CalculatorContract* cc) {
+  static mediapipe::Status GetContract(CalculatorContract* cc) {
     for (const std::string& tag : cc->Inputs().GetTags()) {
       for (CollectionItemId item_id = cc->Inputs().BeginId(tag);
            item_id < cc->Inputs().EndId(tag); ++item_id) {
@@ -95,10 +95,10 @@ class CalculatorRunnerMultiTagTestCalculator : public CalculatorBase {
       }
       cc->Outputs().Get(tag, 0).Set<int>();
     }
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Process(CalculatorContext* cc) override {
+  mediapipe::Status Process(CalculatorContext* cc) override {
     for (const std::string& tag : cc->Inputs().GetTags()) {
       auto sum = absl::make_unique<int>(0);
       for (CollectionItemId item_id = cc->Inputs().BeginId(tag);
@@ -109,7 +109,7 @@ class CalculatorRunnerMultiTagTestCalculator : public CalculatorBase {
       }
       cc->Outputs().Get(tag, 0).Add(sum.release(), cc->InputTimestamp());
     }
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 };
 REGISTER_CALCULATOR(CalculatorRunnerMultiTagTestCalculator);

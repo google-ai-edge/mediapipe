@@ -36,15 +36,15 @@ namespace {
 // Input side packets: 1, pointing to CalculatorRunner::StreamContents.
 class CalculatorRunnerSourceCalculator : public CalculatorBase {
  public:
-  static ::mediapipe::Status GetContract(CalculatorContract* cc) {
+  static mediapipe::Status GetContract(CalculatorContract* cc) {
     cc->InputSidePackets()
         .Index(0)
         .Set<const CalculatorRunner::StreamContents*>();
     cc->Outputs().Index(0).SetAny();
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Open(CalculatorContext* cc) override {
+  mediapipe::Status Open(CalculatorContext* cc) override {
     const auto* contents = cc->InputSidePackets()
                                .Index(0)
                                .Get<const CalculatorRunner::StreamContents*>();
@@ -53,9 +53,9 @@ class CalculatorRunnerSourceCalculator : public CalculatorBase {
     for (const Packet& packet : contents->packets) {
       cc->Outputs().Index(0).AddPacket(packet);
     }
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
-  ::mediapipe::Status Process(CalculatorContext* cc) override {
+  mediapipe::Status Process(CalculatorContext* cc) override {
     return tool::StatusStop();
   }
 };
@@ -67,23 +67,23 @@ REGISTER_CALCULATOR(CalculatorRunnerSourceCalculator);
 // Input side packets: 1, pointing to CalculatorRunner::StreamContents.
 class CalculatorRunnerSinkCalculator : public CalculatorBase {
  public:
-  static ::mediapipe::Status GetContract(CalculatorContract* cc) {
+  static mediapipe::Status GetContract(CalculatorContract* cc) {
     cc->Inputs().Index(0).SetAny();
     cc->InputSidePackets().Index(0).Set<CalculatorRunner::StreamContents*>();
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Open(CalculatorContext* cc) override {
+  mediapipe::Status Open(CalculatorContext* cc) override {
     contents_ = cc->InputSidePackets()
                     .Index(0)
                     .Get<CalculatorRunner::StreamContents*>();
     contents_->header = cc->Inputs().Index(0).Header();
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Process(CalculatorContext* cc) override {
+  mediapipe::Status Process(CalculatorContext* cc) override {
     contents_->packets.push_back(cc->Inputs().Index(0).Value());
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
  private:
@@ -98,7 +98,7 @@ CalculatorRunner::CalculatorRunner(
   MEDIAPIPE_CHECK_OK(InitializeFromNodeConfig(node_config));
 }
 
-::mediapipe::Status CalculatorRunner::InitializeFromNodeConfig(
+mediapipe::Status CalculatorRunner::InitializeFromNodeConfig(
     const CalculatorGraphConfig::Node& node_config) {
   node_config_ = node_config;
 
@@ -126,7 +126,7 @@ CalculatorRunner::CalculatorRunner(
                    tool::TagMap::Create(node_config_.output_side_packet()));
   output_side_packets_ = absl::make_unique<PacketSet>(output_side_map);
 
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
 CalculatorRunner::CalculatorRunner(const std::string& calculator_type,
@@ -220,10 +220,10 @@ std::map<std::string, int64> CalculatorRunner::GetCountersValues() {
   return graph_->GetCounterFactory()->GetCounterSet()->GetCountersValues();
 }
 
-::mediapipe::Status CalculatorRunner::BuildGraph() {
+mediapipe::Status CalculatorRunner::BuildGraph() {
   if (graph_ != nullptr) {
     // The graph was already built.
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
   RET_CHECK(inputs_) << "The inputs were not initialized.";
   RET_CHECK(outputs_) << "The outputs were not initialized.";
@@ -277,10 +277,10 @@ std::map<std::string, int64> CalculatorRunner::GetCountersValues() {
 
   graph_ = absl::make_unique<CalculatorGraph>();
   MP_RETURN_IF_ERROR(graph_->Initialize(config));
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status CalculatorRunner::Run() {
+mediapipe::Status CalculatorRunner::Run() {
   MP_RETURN_IF_ERROR(BuildGraph());
   // Set the input side packets for the sources.
   std::map<std::string, Packet> input_side_packets;
@@ -352,7 +352,7 @@ std::map<std::string, int64> CalculatorRunner::GetCountersValues() {
         tag, (index == -1) ? ++positional_index : index);
     ASSIGN_OR_RETURN(contents, graph_->GetOutputSidePacket(name));
   }
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
 }  // namespace mediapipe

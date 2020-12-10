@@ -2,14 +2,20 @@
 layout: default
 title: Hair Segmentation
 parent: Solutions
-nav_order: 6
+nav_order: 7
 ---
 
 # MediaPipe Hair Segmentation
 {: .no_toc }
 
+<details close markdown="block">
+  <summary>
+    Table of contents
+  </summary>
+  {: .text-delta }
 1. TOC
 {:toc}
+</details>
 ---
 
 ![hair_segmentation_android_gpu_gif](../images/mobile/hair_segmentation_android_gpu.gif)
@@ -17,9 +23,8 @@ nav_order: 6
 ## Example Apps
 
 Please first see general instructions for
-[Android](../getting_started/building_examples.md#android), [iOS](../getting_started/building_examples.md#ios)
-and [desktop](../getting_started/building_examples.md#desktop) on how to build MediaPipe
-examples.
+[Android](../getting_started/android.md), [iOS](../getting_started/ios.md) and
+[desktop](../getting_started/cpp.md) on how to build MediaPipe examples.
 
 Note: To visualize a graph, copy the graph and paste it into
 [MediaPipe Visualizer](https://viz.mediapipe.dev/). For more information on how

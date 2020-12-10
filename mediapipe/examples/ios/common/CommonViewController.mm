@@ -77,6 +77,8 @@ static const char* kVideoQueueLabel = "com.google.mediapipe.example.videoQueue";
   [self.liveView.layer addSublayer:self.renderer.layer];
   self.renderer.frameScaleMode = MPPFrameScaleModeFillAndCrop;
 
+  self.timestampConverter = [[MPPTimestampConverter alloc] init];
+
   dispatch_queue_attr_t qosAttribute = dispatch_queue_attr_make_with_qos_class(
       DISPATCH_QUEUE_SERIAL, QOS_CLASS_USER_INTERACTIVE, /*relative_priority=*/0);
   self.videoQueue = dispatch_queue_create(kVideoQueueLabel, qosAttribute);
@@ -173,7 +175,8 @@ static const char* kVideoQueueLabel = "com.google.mediapipe.example.videoQueue";
 
   [self.mediapipeGraph sendPixelBuffer:imageBuffer
                             intoStream:self.graphInputStream
-                            packetType:MPPPacketTypePixelBuffer];
+                            packetType:MPPPacketTypePixelBuffer
+                             timestamp:[self.timestampConverter timestampForMediaTime:timestamp]];
 }
 
 #pragma mark - MPPGraphDelegate methods

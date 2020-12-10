@@ -140,9 +140,9 @@ class GraphProfiler : public std::enable_shared_from_this<ProfilingContext> {
   // Process() and does NOT affect information for Open() and Close() methods.
   void Reset() ABSL_LOCKS_EXCLUDED(profiler_mutex_);
   // Begins profiling for a single graph run.
-  ::mediapipe::Status Start(::mediapipe::Executor* executor);
+  mediapipe::Status Start(mediapipe::Executor* executor);
   // Ends profiling for a single graph run.
-  ::mediapipe::Status Stop();
+  mediapipe::Status Stop();
 
   // Record a tracing event.
   void LogEvent(const TraceEvent& event);
@@ -150,12 +150,12 @@ class GraphProfiler : public std::enable_shared_from_this<ProfilingContext> {
   // Collects the runtime profile for Open(), Process(), and Close() of each
   // calculator in the graph. May be called at any time after the graph has been
   // initialized.
-  ::mediapipe::Status GetCalculatorProfiles(std::vector<CalculatorProfile>*)
-      const ABSL_LOCKS_EXCLUDED(profiler_mutex_);
+  mediapipe::Status GetCalculatorProfiles(std::vector<CalculatorProfile>*) const
+      ABSL_LOCKS_EXCLUDED(profiler_mutex_);
 
   // Writes recent profiling and tracing data to a file specified in the
   // ProfilerConfig.  Includes events since the previous call to WriteProfile.
-  ::mediapipe::Status WriteProfile();
+  mediapipe::Status WriteProfile();
 
   // Returns the trace event buffer.
   GraphTracer* tracer() { return packet_tracer_.get(); }
@@ -294,7 +294,7 @@ class GraphProfiler : public std::enable_shared_from_this<ProfilingContext> {
   // Helper method to get trace_log_path.  If the trace_log_path is empty and
   // tracing is enabled, this function returns a default platform dependent
   // trace_log_path.
-  ::mediapipe::StatusOr<std::string> GetTraceLogPath();
+  mediapipe::StatusOr<std::string> GetTraceLogPath();
 
   // Helper method to get the clock time in microsecond.
   int64 TimeNowUsec() { return ToUnixMicros(clock_->TimeNow()); }

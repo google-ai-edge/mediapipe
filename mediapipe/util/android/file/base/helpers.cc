@@ -42,16 +42,16 @@ class FdCloser {
 }  // namespace
 
 // Read contents of a file to a std::string.
-::mediapipe::Status GetContents(int fd, std::string* output) {
+mediapipe::Status GetContents(int fd, std::string* output) {
   // Determine the length of the file.
   struct stat buf;
   if (fstat(fd, &buf) != 0) {
-    return ::mediapipe::Status(mediapipe::StatusCode::kUnknown,
-                               "Failed to get file status");
+    return mediapipe::Status(mediapipe::StatusCode::kUnknown,
+                             "Failed to get file status");
   }
   if (buf.st_size < 0 || buf.st_size > SIZE_MAX) {
-    return ::mediapipe::Status(mediapipe::StatusCode::kInternal,
-                               "Invalid file size");
+    return mediapipe::Status(mediapipe::StatusCode::kInternal,
+                             "Invalid file size");
   }
   size_t length = buf.st_size;
 
@@ -61,46 +61,43 @@ class FdCloser {
   while (length != 0) {
     const ssize_t nread = read(fd, output_ptr, length);
     if (nread <= 0) {
-      return ::mediapipe::Status(mediapipe::StatusCode::kUnknown,
-                                 "Failed to read file");
+      return mediapipe::Status(mediapipe::StatusCode::kUnknown,
+                               "Failed to read file");
     }
     output_ptr += nread;
     length -= nread;
   }
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
 // Read contents of a file to a std::string.
-::mediapipe::Status GetContents(absl::string_view file_name,
-                                std::string* output,
-                                const file::Options& /*options*/) {
+mediapipe::Status GetContents(absl::string_view file_name, std::string* output,
+                              const file::Options& /*options*/) {
   int fd = open(std::string(file_name).c_str(), O_RDONLY);
   if (fd < 0) {
-    return ::mediapipe::Status(
-        mediapipe::StatusCode::kUnknown,
-        "Failed to open file: " + std::string(file_name));
+    return mediapipe::Status(mediapipe::StatusCode::kUnknown,
+                             "Failed to open file: " + std::string(file_name));
   }
 
   FdCloser closer(fd);
   return GetContents(fd, output);
 }
 
-::mediapipe::Status GetContents(absl::string_view file_name,
-                                std::string* output) {
+mediapipe::Status GetContents(absl::string_view file_name,
+                              std::string* output) {
   return GetContents(file_name, output, file::Defaults());
 }
 
-::mediapipe::Status SetContents(absl::string_view file_name,
-                                absl::string_view content,
-                                const file::Options& options) {
+mediapipe::Status SetContents(absl::string_view file_name,
+                              absl::string_view content,
+                              const file::Options& options) {
   // Mode -rw-r--r--
   mode_t mode = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH;
   int fd =
       open(std::string(file_name).c_str(), O_WRONLY | O_CREAT | O_TRUNC, mode);
   if (fd < 0) {
-    return ::mediapipe::Status(
-        mediapipe::StatusCode::kUnknown,
-        "Failed to open file: " + std::string(file_name));
+    return mediapipe::Status(mediapipe::StatusCode::kUnknown,
+                             "Failed to open file: " + std::string(file_name));
   }
 
   int bytes_written = 0;
@@ -110,15 +107,15 @@ class FdCloser {
 
   close(fd);
   if (bytes_written == content.size()) {
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   } else {
-    return ::mediapipe::Status(mediapipe::StatusCode::kUnknown,
-                               "Failed to write file");
+    return mediapipe::Status(mediapipe::StatusCode::kUnknown,
+                             "Failed to write file");
   }
 }
 
-::mediapipe::Status SetContents(absl::string_view file_name,
-                                absl::string_view content) {
+mediapipe::Status SetContents(absl::string_view file_name,
+                              absl::string_view content) {
   return SetContents(file_name, content, file::Defaults());
 }
 

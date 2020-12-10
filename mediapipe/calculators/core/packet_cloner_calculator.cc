@@ -45,17 +45,17 @@ namespace mediapipe {
 //   packet_inner_join_calculator.cc: Don't output unless all inputs are new.
 class PacketClonerCalculator : public CalculatorBase {
  public:
-  static ::mediapipe::Status GetContract(CalculatorContract* cc) {
+  static mediapipe::Status GetContract(CalculatorContract* cc) {
     const int tick_signal_index = cc->Inputs().NumEntries() - 1;
     for (int i = 0; i < tick_signal_index; ++i) {
       cc->Inputs().Index(i).SetAny();
       cc->Outputs().Index(i).SetSameAs(&cc->Inputs().Index(i));
     }
     cc->Inputs().Index(tick_signal_index).SetAny();
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Open(CalculatorContext* cc) final {
+  mediapipe::Status Open(CalculatorContext* cc) final {
     // Load options.
     const auto calculator_options =
         cc->Options<mediapipe::PacketClonerCalculatorOptions>();
@@ -71,10 +71,10 @@ class PacketClonerCalculator : public CalculatorBase {
         cc->Outputs().Index(i).SetHeader(cc->Inputs().Index(i).Header());
       }
     }
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
-  ::mediapipe::Status Process(CalculatorContext* cc) final {
+  mediapipe::Status Process(CalculatorContext* cc) final {
     // Store input signals.
     for (int i = 0; i < tick_signal_index_; ++i) {
       if (!cc->Inputs().Index(i).Value().IsEmpty()) {
@@ -88,7 +88,7 @@ class PacketClonerCalculator : public CalculatorBase {
         // Return if one of the input is null.
         for (int i = 0; i < tick_signal_index_; ++i) {
           if (current_[i].IsEmpty()) {
-            return ::mediapipe::OkStatus();
+            return mediapipe::OkStatus();
           }
         }
       }
@@ -103,7 +103,7 @@ class PacketClonerCalculator : public CalculatorBase {
         }
       }
     }
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
  private:
