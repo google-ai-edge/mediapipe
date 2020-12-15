@@ -91,7 +91,7 @@ To detect initial hand locations, we designed a
 mobile real-time uses in a manner similar to the face detection model in
 [MediaPipe Face Mesh](./face_mesh.md). Detecting hands is a decidedly complex
 task: our
-[model](https://github.com/google/mediapipe/tree/master/mediapipe/models/palm_detection.tflite) has
+[model](https://github.com/google/mediapipe/blob/master/mediapipe/modules/palm_detection/palm_detection.tflite) has
 to work across a variety of hand sizes with a large scale span (~20x) relative
 to the image frame and be able to detect occluded and self-occluded hands.
 Whereas faces have high contrast patterns, e.g., in the eye and mouth region,
@@ -119,7 +119,7 @@ just 86.22%.
 ### Hand Landmark Model
 
 After the palm detection over the whole image our subsequent hand landmark
-[model](https://github.com/google/mediapipe/tree/master/mediapipe/models/hand_landmark.tflite)
+[model](https://github.com/google/mediapipe/blob/master/mediapipe/modules/hand_landmark/hand_landmark.tflite)
 performs precise keypoint localization of 21 3D hand-knuckle coordinates inside
 the detected hand regions via regression, that is direct coordinate prediction.
 The model learns a consistent internal hand pose representation and is robust
