@@ -15,6 +15,7 @@
 #include <string>
 #include <vector>
 
+#include "absl/container/flat_hash_map.h"
 #include "absl/strings/match.h"
 #include "mediapipe/calculators/image/opencv_image_encoder_calculator.pb.h"
 #include "mediapipe/calculators/tensorflow/pack_media_sequence_calculator.pb.h"
@@ -57,7 +58,7 @@ namespace mpms = mediapipe::mediasequence;
 // bounding boxes from vector<Detections>, and streams with the
 // "FLOAT_FEATURE_${NAME}" pattern, which stores the values from vector<float>'s
 // associated with the name ${NAME}. "KEYPOINTS" stores a map of 2D keypoints
-// from unordered_map<std::string, vector<pair<float, float>>>. "IMAGE_${NAME}",
+// from flat_hash_map<std::string, vector<pair<float, float>>>. "IMAGE_${NAME}",
 // "BBOX_${NAME}", and "KEYPOINTS_${NAME}" will also store prefixed versions of
 // each stream, which allows for multiple image streams to be included. However,
 // the default names are suppored by more tools.
@@ -131,8 +132,8 @@ class PackMediaSequenceCalculator : public CalculatorBase {
         }
         cc->Inputs()
             .Tag(tag)
-            .Set<std::unordered_map<std::string,
-                                    std::vector<std::pair<float, float>>>>();
+            .Set<absl::flat_hash_map<std::string,
+                                     std::vector<std::pair<float, float>>>>();
       }
       if (absl::StartsWith(tag, kBBoxTag)) {
         std::string key = "";
@@ -348,7 +349,7 @@ class PackMediaSequenceCalculator : public CalculatorBase {
         const auto& keypoints =
             cc->Inputs()
                 .Tag(tag)
-                .Get<std::unordered_map<
+                .Get<absl::flat_hash_map<
                     std::string, std::vector<std::pair<float, float>>>>();
         for (const auto& pair : keypoints) {
           std::string prefix = mpms::merge_prefix(key, pair.first);

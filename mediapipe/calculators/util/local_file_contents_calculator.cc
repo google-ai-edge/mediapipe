@@ -15,6 +15,7 @@
 #include <memory>
 #include <string>
 
+#include "mediapipe/calculators/util/local_file_contents_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/util/resource_util.h"
@@ -78,6 +79,8 @@ class LocalFileContentsCalculator : public CalculatorBase {
   mediapipe::Status Open(CalculatorContext* cc) override {
     CollectionItemId input_id = cc->InputSidePackets().BeginId(kFilePathTag);
     CollectionItemId output_id = cc->OutputSidePackets().BeginId(kContentsTag);
+    auto options = cc->Options<mediapipe::LocalFileContentsCalculatorOptions>();
+
     // Number of inputs and outpus is the same according to the contract.
     for (; input_id != cc->InputSidePackets().EndId(kFilePathTag);
          ++input_id, ++output_id) {
@@ -86,7 +89,8 @@ class LocalFileContentsCalculator : public CalculatorBase {
       ASSIGN_OR_RETURN(file_path, PathToResourceAsFile(file_path));
 
       std::string contents;
-      MP_RETURN_IF_ERROR(GetResourceContents(file_path, &contents));
+      MP_RETURN_IF_ERROR(
+          GetResourceContents(file_path, &contents, options.read_as_binary()));
       cc->OutputSidePackets().Get(output_id).Set(
           MakePacket<std::string>(std::move(contents)));
     }

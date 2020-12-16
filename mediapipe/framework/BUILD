@@ -351,7 +351,6 @@ cc_library(
         ":calculator_base",
         ":calculator_context",
         ":calculator_context_manager",
-        ":calculator_registry_util",
         ":calculator_state",
         ":counter_factory",
         ":input_side_packet_handler",
@@ -402,27 +401,6 @@ cc_library(
     ],
     deps = [
         ":calculator_base",
-    ],
-)
-
-cc_library(
-    name = "calculator_registry_util",
-    srcs = ["calculator_registry_util.cc"],
-    hdrs = ["calculator_registry_util.h"],
-    visibility = [
-        ":mediapipe_internal",
-    ],
-    deps = [
-        ":calculator_base",
-        ":calculator_context",
-        ":calculator_state",
-        ":collection",
-        ":collection_item_id",
-        ":packet_set",
-        ":timestamp",
-        "//mediapipe/framework/port:status",
-        "//mediapipe/framework/port:statusor",
-        "//mediapipe/framework/tool:tag_map",
     ],
 )
 
@@ -1128,7 +1106,6 @@ cc_library(
     deps = [
         ":calculator_base",
         ":calculator_contract",
-        ":calculator_registry_util",
         ":legacy_calculator_support",
         ":packet",
         ":packet_generator",

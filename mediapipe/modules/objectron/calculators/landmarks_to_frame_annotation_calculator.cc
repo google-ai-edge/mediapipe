@@ -23,6 +23,7 @@ namespace mediapipe {
 namespace {
 
 constexpr char kInputLandmarksTag[] = "LANDMARKS";
+constexpr char kInputMultiLandmarksTag[] = "MULTI_LANDMARKS";
 constexpr char kOutputFrameAnnotationTag[] = "FRAME_ANNOTATION";
 
 }  // namespace
@@ -30,12 +31,17 @@ constexpr char kOutputFrameAnnotationTag[] = "FRAME_ANNOTATION";
 // A calculator that converts NormalizedLandmarkList to FrameAnnotation proto.
 class LandmarksToFrameAnnotationCalculator : public CalculatorBase {
  public:
-  static ::mediapipe::Status GetContract(CalculatorContract* cc);
-  ::mediapipe::Status Process(CalculatorContext* cc) override;
+  static mediapipe::Status GetContract(CalculatorContract* cc);
+  mediapipe::Status Open(CalculatorContext* cc) override;
+  mediapipe::Status Process(CalculatorContext* cc) override;
+
+ private:
+  void AddLandmarksToFrameAnnotation(const NormalizedLandmarkList& landmarks,
+                                     FrameAnnotation* frame_annotation);
 };
 REGISTER_CALCULATOR(LandmarksToFrameAnnotationCalculator);
 
-::mediapipe::Status LandmarksToFrameAnnotationCalculator::GetContract(
+mediapipe::Status LandmarksToFrameAnnotationCalculator::GetContract(
     CalculatorContract* cc) {
   RET_CHECK(!cc->Inputs().GetTags().empty());
   RET_CHECK(!cc->Outputs().GetTags().empty());
@@ -43,34 +49,65 @@ REGISTER_CALCULATOR(LandmarksToFrameAnnotationCalculator);
   if (cc->Inputs().HasTag(kInputLandmarksTag)) {
     cc->Inputs().Tag(kInputLandmarksTag).Set<NormalizedLandmarkList>();
   }
-
+  if (cc->Inputs().HasTag(kInputMultiLandmarksTag)) {
+    cc->Inputs()
+        .Tag(kInputMultiLandmarksTag)
+        .Set<std::vector<NormalizedLandmarkList>>();
+  }
   if (cc->Outputs().HasTag(kOutputFrameAnnotationTag)) {
     cc->Outputs().Tag(kOutputFrameAnnotationTag).Set<FrameAnnotation>();
   }
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status LandmarksToFrameAnnotationCalculator::Process(
+mediapipe::Status LandmarksToFrameAnnotationCalculator::Open(
+    CalculatorContext* cc) {
+  cc->SetOffset(TimestampDiff(0));
+  return mediapipe::OkStatus();
+}
+
+mediapipe::Status LandmarksToFrameAnnotationCalculator::Process(
     CalculatorContext* cc) {
   auto frame_annotation = absl::make_unique<FrameAnnotation>();
-  auto* box_annotation = frame_annotation->add_annotations();
 
-  const auto& landmarks =
-      cc->Inputs().Tag(kInputLandmarksTag).Get<NormalizedLandmarkList>();
-  RET_CHECK_GT(landmarks.landmark_size(), 0)
-      << "Input landmark vector is empty.";
-  for (int i = 0; i < landmarks.landmark_size(); ++i) {
-    auto* point2d = box_annotation->add_keypoints()->mutable_point_2d();
-    point2d->set_x(landmarks.landmark(i).x());
-    point2d->set_y(landmarks.landmark(i).y());
+  // Handle the case when input has only one NormalizedLandmarkList.
+  if (cc->Inputs().HasTag(kInputLandmarksTag) &&
+      !cc->Inputs().Tag(kInputLandmarksTag).IsEmpty()) {
+    const auto& landmarks =
+        cc->Inputs().Tag(kInputMultiLandmarksTag).Get<NormalizedLandmarkList>();
+    AddLandmarksToFrameAnnotation(landmarks, frame_annotation.get());
   }
+
+  // Handle the case when input has muliple NormalizedLandmarkList.
+  if (cc->Inputs().HasTag(kInputMultiLandmarksTag) &&
+      !cc->Inputs().Tag(kInputMultiLandmarksTag).IsEmpty()) {
+    const auto& landmarks_list =
+        cc->Inputs()
+            .Tag(kInputMultiLandmarksTag)
+            .Get<std::vector<NormalizedLandmarkList>>();
+    for (const auto& landmarks : landmarks_list) {
+      AddLandmarksToFrameAnnotation(landmarks, frame_annotation.get());
+    }
+  }
+
   // Output
   if (cc->Outputs().HasTag(kOutputFrameAnnotationTag)) {
     cc->Outputs()
         .Tag(kOutputFrameAnnotationTag)
         .Add(frame_annotation.release(), cc->InputTimestamp());
   }
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
+}
+
+void LandmarksToFrameAnnotationCalculator::AddLandmarksToFrameAnnotation(
+    const NormalizedLandmarkList& landmarks,
+    FrameAnnotation* frame_annotation) {
+  auto* new_annotation = frame_annotation->add_annotations();
+  for (const auto& landmark : landmarks.landmark()) {
+    auto* point2d = new_annotation->add_keypoints()->mutable_point_2d();
+    point2d->set_x(landmark.x());
+    point2d->set_y(landmark.y());
+  }
 }
 
 }  // namespace mediapipe

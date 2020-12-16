@@ -192,15 +192,15 @@ class FaceMesh(SolutionBase):
     Args:
       static_image_mode: Whether to treat the input images as a batch of static
         and possibly unrelated images, or a video stream. See details in
-        https://solutions.mediapipe.dev/face_mesh#static-image-mode.
+        https://solutions.mediapipe.dev/face_mesh#static_image_mode.
       max_num_faces: Maximum number of faces to detect. See details in
-        https://solutions.mediapipe.dev/face_mesh#max-num-faces.
+        https://solutions.mediapipe.dev/face_mesh#max_num_faces.
       min_detection_confidence: Minimum confidence value ([0.0, 1.0]) for face
         detection to be considered successful. See details in
-        https://solutions.mediapipe.dev/face_mesh#min-detection-confidence.
+        https://solutions.mediapipe.dev/face_mesh#min_detection_confidence.
       min_tracking_confidence: Minimum confidence value ([0.0, 1.0]) for the
         face landmarks to be considered tracked successfully. See details in
-        https://solutions.mediapipe.dev/face_mesh#min-tracking-confidence.
+        https://solutions.mediapipe.dev/face_mesh#min_tracking_confidence.
     """
     super().__init__(
         binary_graph_path=BINARYPB_FILE_PATH,

@@ -8,6 +8,7 @@ input_side_packet: "LABELS_CSV:allowed_labels"
 input_side_packet: "MODEL_SCALE:model_scale"
 input_side_packet: "MODEL_TRANSFORMATION:model_transformation"
 input_side_packet: "TEXTURE:box_texture"
+input_side_packet: "MAX_NUM_OBJECTS:max_num_objects"
 input_side_packet: "ANIMATION_ASSET:box_asset_name"
 input_side_packet: "MASK_TEXTURE:obj_texture"
 input_side_packet: "MASK_ASSET:obj_asset_name"
@@ -26,7 +27,7 @@ output_stream: "output_video"
 node {
   calculator: "FlowLimiterCalculator"
   input_stream: "input_video"
-  input_stream: "FINISHED:lifted_objects"
+  input_stream: "FINISHED:output_video"
   input_stream_info: {
     tag_index: "FINISHED"
     back_edge: true
@@ -52,6 +53,7 @@ node {
   calculator: "ObjectronGpuSubgraph"
   input_stream: "IMAGE_GPU:throttled_input_video_3x4"
   input_side_packet: "LABELS_CSV:allowed_labels"
+  input_side_packet: "MAX_NUM_OBJECTS:max_num_objects"
   output_stream: "FRAME_ANNOTATION:lifted_objects"
 }
 

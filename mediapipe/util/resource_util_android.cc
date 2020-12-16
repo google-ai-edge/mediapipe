@@ -57,7 +57,12 @@ mediapipe::StatusOr<std::string> PathToResourceAsFile(const std::string& path) {
 }
 
 mediapipe::Status GetResourceContents(const std::string& path,
-                                      std::string* output) {
+                                      std::string* output,
+                                      bool read_as_binary) {
+  if (!read_as_binary) {
+    LOG(WARNING)
+        << "Setting \"read_as_binary\" to false is a no-op on Android.";
+  }
   if (absl::StartsWith(path, "/")) {
     return file::GetContents(path, output, file::Defaults());
   }

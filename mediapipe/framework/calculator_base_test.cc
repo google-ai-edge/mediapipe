@@ -128,7 +128,6 @@ TEST(CalculatorTest, SourceProcessOrder) {
   CalculatorContext calculator_context(&calculator_state,
                                        tool::CreateTagMap({}).ValueOrDie(),
                                        output_stream_managers.TagMap());
-  InputStreamShardSet& input_set = calculator_context.Inputs();
   OutputStreamShardSet& output_set = calculator_context.Outputs();
   output_set.Index(0).SetSpec(output_stream_managers.Index(0).Spec());
   output_set.Index(0).SetNextTimestampBound(Timestamp(10));
@@ -136,19 +135,6 @@ TEST(CalculatorTest, SourceProcessOrder) {
   output_set.Index(1).SetNextTimestampBound(Timestamp(11));
   CalculatorContextManager().PushInputTimestampToContext(
       &calculator_context, Timestamp::Unstarted());
-
-  InputStreamSet input_streams(input_set.TagMap());
-  OutputStreamSet output_streams(output_set.TagMap());
-  for (CollectionItemId id = input_streams.BeginId();
-       id < input_streams.EndId(); ++id) {
-    input_streams.Get(id) = &input_set.Get(id);
-  }
-  for (CollectionItemId id = output_streams.BeginId();
-       id < output_streams.EndId(); ++id) {
-    output_streams.Get(id) = &output_set.Get(id);
-  }
-  calculator_state.SetInputStreamSet(&input_streams);
-  calculator_state.SetOutputStreamSet(&output_streams);
 
   test_ns::DeadEndCalculator calculator;
   EXPECT_EQ(Timestamp(10), calculator.SourceProcessOrder(&calculator_context));
@@ -202,7 +188,8 @@ TEST(CalculatorTest, CreateByNameWhitelisted) {
   // Register a whitelisted calculator.
   CalculatorBaseRegistry::Register(
       "::mediapipe::test_ns::whitelisted_ns::DeadCalculator",
-      absl::make_unique<mediapipe::test_ns::whitelisted_ns::DeadCalculator>);
+      absl::make_unique<internal::CalculatorBaseFactoryFor<
+          mediapipe::test_ns::whitelisted_ns::DeadCalculator>>);
 
   // A whitelisted calculator can be found in its own namespace.
   MP_EXPECT_OK(CalculatorBaseRegistry::CreateByNameInNamespace(  //

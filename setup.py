@@ -309,7 +309,7 @@ class BuildBazelExtension(build_ext.build_ext):
     if IS_WINDOWS:
       for opencv_dll in glob.glob(
           os.path.join('bazel-bin', ext.relpath, '*opencv*.dll')):
-        shutil.copyfile(opencv_dll, ext_dest_dir)
+        shutil.copy(opencv_dll, ext_dest_dir)
 
 
 class Build(build.build):

@@ -116,15 +116,15 @@ class Hands(SolutionBase):
     Args:
       static_image_mode: Whether to treat the input images as a batch of static
         and possibly unrelated images, or a video stream. See details in
-        https://solutions.mediapipe.dev/hands#static-image-mode.
+        https://solutions.mediapipe.dev/hands#static_image_mode.
       max_num_hands: Maximum number of hands to detect. See details in
-        https://solutions.mediapipe.dev/hands#max-num-hands.
+        https://solutions.mediapipe.dev/hands#max_num_hands.
       min_detection_confidence: Minimum confidence value ([0.0, 1.0]) for hand
         detection to be considered successful. See details in
-        https://solutions.mediapipe.dev/hands#min-detection-confidence.
+        https://solutions.mediapipe.dev/hands#min_detection_confidence.
       min_tracking_confidence: Minimum confidence value ([0.0, 1.0]) for the
         hand landmarks to be considered tracked successfully. See details in
-        https://solutions.mediapipe.dev/hands#min-tracking-confidence.
+        https://solutions.mediapipe.dev/hands#min_tracking_confidence.
     """
     super().__init__(
         binary_graph_path=BINARYPB_FILE_PATH,

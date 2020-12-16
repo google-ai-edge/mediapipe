@@ -430,7 +430,8 @@ public class ExternalTextureConverter implements TextureFrameProducer {
       framesInUse--;
       int keep = max(framesToKeep - framesInUse, 0);
       while (framesAvailable.size() > keep) {
-        teardownFrame(framesAvailable.remove());
+        PoolTextureFrame textureFrameToRemove = framesAvailable.remove();
+        handler.post(() -> teardownFrame(textureFrameToRemove));
       }
     }
 

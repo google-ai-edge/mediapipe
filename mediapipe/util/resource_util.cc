@@ -33,8 +33,9 @@ mediapipe::StatusOr<std::string> PathToResourceAsFile(const std::string& path) {
 }
 
 mediapipe::Status GetResourceContents(const std::string& path,
-                                      std::string* output) {
-  return mediapipe::file::GetContents(path, output);
+                                      std::string* output,
+                                      bool read_as_binary) {
+  return mediapipe::file::GetContents(path, output, read_as_binary);
 }
 
 }  // namespace mediapipe

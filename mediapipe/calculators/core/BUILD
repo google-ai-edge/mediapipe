@@ -146,6 +146,7 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/api2:node",
         "//mediapipe/framework/port:logging",
         "//mediapipe/framework/port:status",
     ],
@@ -286,6 +287,7 @@ cc_library(
     deps = [
         ":concatenate_vector_calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/api2:node",
         "//mediapipe/framework/formats:landmark_cc_proto",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
@@ -393,6 +395,7 @@ cc_library(
     ],
     deps = [
         "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/api2:node",
         "//mediapipe/framework/port:status",
     ],
     alwayslink = 1,
@@ -406,7 +409,7 @@ cc_library(
     ],
     deps = [
         "//mediapipe/framework:calculator_framework",
-        "//mediapipe/framework:timestamp",
+        "//mediapipe/framework/api2:node",
         "//mediapipe/framework/formats:matrix",
         "//mediapipe/framework/port:status",
         "@eigen_archive//:eigen",
@@ -422,7 +425,7 @@ cc_library(
     ],
     deps = [
         "//mediapipe/framework:calculator_framework",
-        "//mediapipe/framework:timestamp",
+        "//mediapipe/framework/api2:node",
         "//mediapipe/framework/formats:matrix",
         "//mediapipe/framework/port:status",
         "@eigen_archive//:eigen",
@@ -438,6 +441,7 @@ cc_library(
     ],
     deps = [
         "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/api2:node",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/stream_handler:mux_input_stream_handler",
     ],
@@ -606,6 +610,7 @@ cc_library(
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework:packet",
         "//mediapipe/framework:timestamp",
+        "//mediapipe/framework/api2:node",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
         "//mediapipe/framework/stream_handler:immediate_input_stream_handler",
@@ -958,6 +963,7 @@ cc_library(
     deps = [
         ":sequence_shift_calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/api2:node",
         "//mediapipe/framework/port:status",
     ],
     alwayslink = 1,
@@ -1007,6 +1013,7 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/api2:node",
         "//mediapipe/framework/formats:matrix",
         "//mediapipe/framework/port:integral_types",
         "//mediapipe/framework/port:logging",
@@ -1042,6 +1049,7 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/api2:node",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
     ],

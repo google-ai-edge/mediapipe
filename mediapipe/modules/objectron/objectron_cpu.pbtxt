@@ -4,6 +4,8 @@ input_stream: "IMAGE:input_video"
 input_side_packet: "MODEL:box_landmark_model"
 # Allowed category labels, e.g. Footwear, Coffee cup, Mug, Chair, Camera
 input_side_packet: "LABELS_CSV:allowed_labels"
+# Max number of objects to detect/track. (int)
+input_side_packet: "MAX_NUM_OBJECTS:max_num_objects"
 # Bounding box landmarks topology definition.
 # The numbers are indices in the box_landmarks list.
 #
@@ -22,36 +24,47 @@ input_side_packet: "LABELS_CSV:allowed_labels"
 #          \+                \+
 #           2 + + + + + + + + 6
 #
-output_stream: "LANDMARKS:box_landmarks"
-# Crop rectangle derived from bounding box landmarks.
-output_stream: "NORM_RECT:box_rect"
+output_stream: "MULTI_LANDMARKS:multi_box_landmarks"
+# Crop rectangles derived from bounding box landmarks.
+output_stream: "NORM_RECTS:multi_box_rects"
 
-
-# Caches a box-presence decision fed back from boxLandmarkSubgraph, and upon
-# the arrival of the next input image sends out the cached decision with the
-# timestamp replaced by that of the input image, essentially generating a packet
-# that carries the previous box-presence decision. Note that upon the arrival
-# of the very first input image, an empty packet is sent out to jump start the
-# feedback loop.
+# Defines whether landmarks from the previous video frame should be used to help
+# predict landmarks on the current video frame.
 node {
-  calculator: "PreviousLoopbackCalculator"
-  input_stream: "MAIN:input_video"
-  input_stream: "LOOP:box_presence"
-  input_stream_info: {
-    tag_index: "LOOP"
-    back_edge: true
+  name: "ConstantSidePacketCalculator"
+  calculator: "ConstantSidePacketCalculator"
+  output_side_packet: "PACKET:use_prev_landmarks"
+  options: {
+    [mediapipe.ConstantSidePacketCalculatorOptions.ext]: {
+      packet { bool_value: true }
+    }
   }
-  output_stream: "PREV_LOOP:prev_box_presence"
 }
 
-# Drops the incoming image if boxLandmarkSubgraph was able to identify box
+node {
+  calculator: "GateCalculator"
+  input_side_packet: "ALLOW:use_prev_landmarks"
+  input_stream: "prev_box_rects_from_landmarks"
+  output_stream: "gated_prev_box_rects_from_landmarks"
+}
+
+# Determines if an input vector of NormalizedRect has a size greater than or
+# equal to the provided max_num_objects.
+node {
+  calculator: "NormalizedRectVectorHasMinSizeCalculator"
+  input_stream: "ITERABLE:gated_prev_box_rects_from_landmarks"
+  input_side_packet: "max_num_objects"
+  output_stream: "prev_has_enough_objects"
+}
+
+# Drops the incoming image if BoxLandmarkSubgraph was able to identify box
 # presence in the previous image. Otherwise, passes the incoming image through
-# to trigger a new round of box detection in boxDetectionSubgraph.
+# to trigger a new round of box detection in ObjectDetectionOidV4Subgraph.
 node {
   calculator: "GateCalculator"
   input_stream: "input_video"
-  input_stream: "DISALLOW:prev_box_presence"
-  output_stream: "box_detection_input_video"
+  input_stream: "DISALLOW:prev_has_enough_objects"
+  output_stream: "detection_input_video"
 
   options: {
     [mediapipe.GateCalculatorOptions.ext] {
@@ -60,23 +73,112 @@ node {
   }
 }
 
-# Subgraph that detections boxs (see object_detection_oid_v4_cpu.pbtxt).
+# Subgraph that performs 2D object detection.
 node {
   calculator: "ObjectDetectionOidV4Subgraph"
-  input_stream: "IMAGE:box_detection_input_video"
+  input_stream: "IMAGE:detection_input_video"
   input_side_packet: "LABELS_CSV:allowed_labels"
-  output_stream: "NORM_RECT:box_rect_from_object_detections"
+  output_stream: "DETECTIONS:raw_detections"
 }
 
-# Subgraph that localizes box landmarks (see box_landmark_gpu.pbtxt).
+# Makes sure there are no more detections than provided max_num_objects.
+node {
+  calculator: "ClipDetectionVectorSizeCalculator"
+  input_stream: "raw_detections"
+  output_stream: "detections"
+  input_side_packet: "max_num_objects"
+
+}
+
+# Extracts image size from the input images.
+node {
+  calculator: "ImagePropertiesCalculator"
+  input_stream: "IMAGE:input_video"
+  output_stream: "SIZE:image_size"
+}
+
+# Converts results of box detection into rectangles (normalized by image size)
+# that encloses the box.
+node {
+  calculator: "DetectionsToRectsCalculator"
+  input_stream: "DETECTIONS:detections"
+  input_stream: "IMAGE_SIZE:image_size"
+  output_stream: "NORM_RECTS:box_rects_from_detections"
+  options: {
+    [mediapipe.DetectionsToRectsCalculatorOptions.ext] {
+      output_zero_rect_for_empty_detections: false
+    }
+  }
+}
+
+# Performs association between NormalizedRect vector elements from previous
+# image and rects based on object detections from the current image. This
+# calculator ensures that the output box_rects vector doesn't contain
+# overlapping regions based on the specified min_similarity_threshold.
+node {
+  calculator: "AssociationNormRectCalculator"
+  input_stream: "box_rects_from_detections"
+  input_stream: "gated_prev_box_rects_from_landmarks"
+  output_stream: "multi_box_rects"
+  options: {
+    [mediapipe.AssociationCalculatorOptions.ext] {
+      min_similarity_threshold: 0.2
+    }
+  }
+}
+
+# Outputs each element of box_rects at a fake timestamp for the rest of the
+# graph to process. Clones image and image size packets for each
+# single_box_rect at the fake timestamp. At the end of the loop, outputs the
+# BATCH_END timestamp for downstream calculators to inform them that all
+# elements in the vector have been processed.
+node {
+  calculator: "BeginLoopNormalizedRectCalculator"
+  input_stream: "ITERABLE:multi_box_rects"
+  input_stream: "CLONE:input_video"
+  output_stream: "ITEM:single_box_rect"
+  output_stream: "CLONE:landmarks_input_video"
+  output_stream: "BATCH_END:box_rects_timestamp"
+}
+
+# Subgraph that localizes box landmarks.
 node {
   calculator: "BoxLandmarkSubgraph"
-  input_stream: "IMAGE:input_video"
-  input_stream: "NORM_RECT:box_rect"
+  input_stream: "IMAGE:landmarks_input_video"
   input_side_packet: "MODEL:box_landmark_model"
-  output_stream: "LANDMARKS:box_landmarks"
-  output_stream: "NORM_RECT:box_rect_from_landmarks"
-  output_stream: "PRESENCE:box_presence"
+  input_stream: "NORM_RECT:single_box_rect"
+  output_stream: "NORM_LANDMARKS:single_box_landmarks"
+}
+
+# Collects a set of landmarks for each hand into a vector. Upon receiving the
+# BATCH_END timestamp, outputs the vector of landmarks at the BATCH_END
+# timestamp.
+node {
+  calculator: "EndLoopNormalizedLandmarkListVectorCalculator"
+  input_stream: "ITEM:single_box_landmarks"
+  input_stream: "BATCH_END:box_rects_timestamp"
+  output_stream: "ITERABLE:multi_box_landmarks"
+}
+
+# Convert box landmarks to frame annotations.
+node {
+  calculator: "LandmarksToFrameAnnotationCalculator"
+  input_stream: "MULTI_LANDMARKS:multi_box_landmarks"
+  output_stream: "FRAME_ANNOTATION:box_annotations"
+}
+
+# Lift the 2D landmarks to 3D using EPnP algorithm.
+node {
+  calculator: "Lift2DFrameAnnotationTo3DCalculator"
+  input_stream: "FRAME_ANNOTATION:box_annotations"
+  output_stream: "LIFTED_FRAME_ANNOTATION:lifted_objects"
+}
+
+# Get rotated rectangle from lifted box.
+node {
+  calculator: "FrameAnnotationToRectCalculator"
+  input_stream: "FRAME_ANNOTATION:lifted_objects"
+  output_stream: "NORM_RECTS:box_rects_from_landmarks"
 }
 
 # Caches a box rectangle fed back from boxLandmarkSubgraph, and upon the
@@ -88,25 +190,10 @@ node {
 node {
   calculator: "PreviousLoopbackCalculator"
   input_stream: "MAIN:input_video"
-  input_stream: "LOOP:box_rect_from_landmarks"
+  input_stream: "LOOP:box_rects_from_landmarks"
   input_stream_info: {
     tag_index: "LOOP"
     back_edge: true
   }
-  output_stream: "PREV_LOOP:prev_box_rect_from_landmarks"
-}
-
-# Merges a stream of box rectangles generated by ObjectDetectionSubgraph and that
-# generated by BoxLandmarkSubgraph into a single output stream by selecting
-# between one of the two streams. The former is selected if the incoming packet
-# is not empty, i.e., box detection is performed on the current image by
-# BoxDetectionSubgraph (because BoxLandmarkSubgraph could not identify box
-# presence in the previous image). Otherwise, the latter is selected, which is
-# never empty because BoxLandmarkSubgraphs processes all images (that went
-# through FlowLimiterCaculator).
-node {
-  calculator: "MergeCalculator"
-  input_stream: "box_rect_from_object_detections"
-  input_stream: "prev_box_rect_from_landmarks"
-  output_stream: "box_rect"
+  output_stream: "PREV_LOOP:prev_box_rects_from_landmarks"
 }

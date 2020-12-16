@@ -934,11 +934,22 @@ cc_test(
     ],
 )
 
+mediapipe_proto_library(
+    name = "local_file_contents_calculator_proto",
+    srcs = ["local_file_contents_calculator.proto"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//mediapipe/framework:calculator_options_proto",
+        "//mediapipe/framework:calculator_proto",
+    ],
+)
+
 cc_library(
     name = "local_file_contents_calculator",
     srcs = ["local_file_contents_calculator.cc"],
     visibility = ["//visibility:public"],
     deps = [
+        ":local_file_contents_calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",

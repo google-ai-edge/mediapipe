@@ -46,6 +46,11 @@ node {
   calculator: "LocalFileContentsCalculator"
   input_side_packet: "FILE_PATH:model_path"
   output_side_packet: "CONTENTS:model_blob"
+  options: {
+    [mediapipe.LocalFileContentsCalculatorOptions.ext]: {
+      read_as_binary: true
+    }
+  }
 }
 
 # Converts the input blob into a TF Lite model.

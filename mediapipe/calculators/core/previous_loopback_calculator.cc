@@ -14,12 +14,14 @@
 
 #include <deque>
 
+#include "mediapipe/framework/api2/node.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/timestamp.h"
 
 namespace mediapipe {
+namespace api2 {
 
 // PreviousLoopbackCalculator is useful when a graph needs to process an input
 // together with some previous output.
@@ -51,15 +53,19 @@ namespace mediapipe {
 //   input_stream: "PREV_TRACK:prev_output"
 //   output_stream: "TRACK:output"
 // }
-class PreviousLoopbackCalculator : public CalculatorBase {
+class PreviousLoopbackCalculator : public Node {
  public:
-  static mediapipe::Status GetContract(CalculatorContract* cc) {
-    cc->Inputs().Get("MAIN", 0).SetAny();
-    cc->Inputs().Get("LOOP", 0).SetAny();
-    cc->Outputs().Get("PREV_LOOP", 0).SetSameAs(&(cc->Inputs().Get("LOOP", 0)));
-    // TODO: an optional PREV_TIMESTAMP output could be added to
-    // carry the original timestamp of the packet on PREV_LOOP.
-    cc->SetInputStreamHandler("ImmediateInputStreamHandler");
+  static constexpr Input<AnyType> kMain{"MAIN"};
+  static constexpr Input<AnyType> kLoop{"LOOP"};
+  static constexpr Output<SameType<kLoop>> kPrevLoop{"PREV_LOOP"};
+  // TODO: an optional PREV_TIMESTAMP output could be added to
+  // carry the original timestamp of the packet on PREV_LOOP.
+
+  MEDIAPIPE_NODE_CONTRACT(kMain, kLoop, kPrevLoop,
+                          StreamHandler("ImmediateInputStreamHandler"),
+                          TimestampChange::Arbitrary());
+
+  static mediapipe::Status UpdateContract(CalculatorContract* cc) {
     // Process() function is invoked in response to MAIN/LOOP stream timestamp
     // bound updates.
     cc->SetProcessTimestampBounds(true);
@@ -67,12 +73,7 @@ class PreviousLoopbackCalculator : public CalculatorBase {
   }
 
   mediapipe::Status Open(CalculatorContext* cc) final {
-    main_id_ = cc->Inputs().GetId("MAIN", 0);
-    loop_id_ = cc->Inputs().GetId("LOOP", 0);
-    prev_loop_id_ = cc->Outputs().GetId("PREV_LOOP", 0);
-    cc->Outputs()
-        .Get(prev_loop_id_)
-        .SetHeader(cc->Inputs().Get(loop_id_).Header());
+    kPrevLoop(cc).SetHeader(kLoop(cc).Header());
     return mediapipe::OkStatus();
   }
 
@@ -82,48 +83,47 @@ class PreviousLoopbackCalculator : public CalculatorBase {
     // packets within the same stream. Calculator tracks and operates on such
     // packets.
 
-    const Packet& main_packet = cc->Inputs().Get(main_id_).Value();
-    if (prev_main_ts_ < main_packet.Timestamp()) {
+    const PacketBase& main_packet = kMain(cc).packet();
+    if (prev_main_ts_ < main_packet.timestamp()) {
       Timestamp loop_timestamp;
       if (!main_packet.IsEmpty()) {
         loop_timestamp = prev_non_empty_main_ts_;
-        prev_non_empty_main_ts_ = main_packet.Timestamp();
+        prev_non_empty_main_ts_ = main_packet.timestamp();
       } else {
         // Calculator advances PREV_LOOP timestamp bound in response to empty
         // MAIN packet, hence not caring about corresponding loop packet.
         loop_timestamp = Timestamp::Unset();
       }
-      main_packet_specs_.push_back({main_packet.Timestamp(), loop_timestamp});
-      prev_main_ts_ = main_packet.Timestamp();
+      main_packet_specs_.push_back({main_packet.timestamp(), loop_timestamp});
+      prev_main_ts_ = main_packet.timestamp();
     }
 
-    const Packet& loop_packet = cc->Inputs().Get(loop_id_).Value();
-    if (prev_loop_ts_ < loop_packet.Timestamp()) {
+    const PacketBase& loop_packet = kLoop(cc).packet();
+    if (prev_loop_ts_ < loop_packet.timestamp()) {
       loop_packets_.push_back(loop_packet);
-      prev_loop_ts_ = loop_packet.Timestamp();
+      prev_loop_ts_ = loop_packet.timestamp();
     }
 
-    auto& prev_loop = cc->Outputs().Get(prev_loop_id_);
     while (!main_packet_specs_.empty() && !loop_packets_.empty()) {
       // The earliest MAIN packet.
       const MainPacketSpec& main_spec = main_packet_specs_.front();
       // The earliest LOOP packet.
-      const Packet& loop_candidate = loop_packets_.front();
+      const PacketBase& loop_candidate = loop_packets_.front();
       // Match LOOP and MAIN packets.
-      if (main_spec.loop_timestamp < loop_candidate.Timestamp()) {
+      if (main_spec.loop_timestamp < loop_candidate.timestamp()) {
         // No LOOP packet can match the MAIN packet under review.
-        prev_loop.SetNextTimestampBound(main_spec.timestamp + 1);
+        kPrevLoop(cc).SetNextTimestampBound(main_spec.timestamp + 1);
         main_packet_specs_.pop_front();
-      } else if (main_spec.loop_timestamp > loop_candidate.Timestamp()) {
+      } else if (main_spec.loop_timestamp > loop_candidate.timestamp()) {
         // No MAIN packet can match the LOOP packet under review.
         loop_packets_.pop_front();
       } else {
         // Exact match found.
         if (loop_candidate.IsEmpty()) {
           // However, LOOP packet is empty.
-          prev_loop.SetNextTimestampBound(main_spec.timestamp + 1);
+          kPrevLoop(cc).SetNextTimestampBound(main_spec.timestamp + 1);
         } else {
-          prev_loop.AddPacket(loop_candidate.At(main_spec.timestamp));
+          kPrevLoop(cc).Send(loop_candidate.At(main_spec.timestamp));
         }
         loop_packets_.pop_front();
         main_packet_specs_.pop_front();
@@ -135,7 +135,7 @@ class PreviousLoopbackCalculator : public CalculatorBase {
       // b) Empty MAIN packet has been received with Timestamp::Max() indicating
       //    MAIN is done.
       if (main_spec.timestamp == Timestamp::Done().PreviousAllowedInStream()) {
-        prev_loop.Close();
+        kPrevLoop(cc).Close();
       }
     }
 
@@ -149,10 +149,6 @@ class PreviousLoopbackCalculator : public CalculatorBase {
     // packet from MAIN stream descirbed by this spec.
     Timestamp loop_timestamp;
   };
-
-  CollectionItemId main_id_;
-  CollectionItemId loop_id_;
-  CollectionItemId prev_loop_id_;
 
   // Contains specs for MAIN packets which only can be:
   // - non-empty packets
@@ -169,12 +165,13 @@ class PreviousLoopbackCalculator : public CalculatorBase {
   // - empty packets indicating timestamp bound updates
   //
   // Sorted according to packet timestamps.
-  std::deque<Packet> loop_packets_;
+  std::deque<PacketBase> loop_packets_;
   // Using "Timestamp::Unset" instead of "Timestamp::Unstarted" in order to
   // allow addition of the very first empty packet (which doesn't indicate
   // timestamp bound change necessarily).
   Timestamp prev_loop_ts_ = Timestamp::Unset();
 };
-REGISTER_CALCULATOR(PreviousLoopbackCalculator);
+MEDIAPIPE_REGISTER_NODE(PreviousLoopbackCalculator);
 
+}  // namespace api2
 }  // namespace mediapipe

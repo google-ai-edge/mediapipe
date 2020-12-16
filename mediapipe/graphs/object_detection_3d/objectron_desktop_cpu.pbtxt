@@ -4,6 +4,16 @@ input_side_packet: "FILE_PATH:0:box_landmark_model_path"
 input_side_packet: "LABELS_CSV:allowed_labels"
 input_side_packet: "OUTPUT_FILE_PATH:output_video_path"
 
+# Generates side packet with max number of objects to detect/track.
+node {
+  calculator: "ConstantSidePacketCalculator"
+  output_side_packet: "PACKET:max_num_objects"
+  node_options: {
+    [type.googleapis.com/mediapipe.ConstantSidePacketCalculatorOptions]: {
+      packet { int_value: 5 }
+    }
+  }
+}
 
 # Decodes an input video file into images and a video header.
 node {
@@ -30,8 +40,9 @@ node {
   input_stream: "IMAGE:input_video"
   input_side_packet: "MODEL:box_landmark_model"
   input_side_packet: "LABELS_CSV:allowed_labels"
-  output_stream: "LANDMARKS:box_landmarks"
-  output_stream: "NORM_RECT:box_rect"
+  input_side_packet: "MAX_NUM_OBJECTS:max_num_objects"
+  output_stream: "MULTI_LANDMARKS:box_landmarks"
+  output_stream: "NORM_RECTS:box_rect"
 }
 
 # Subgraph that renders annotations and overlays them on top of the input
@@ -39,8 +50,8 @@ node {
 node {
   calculator: "RendererSubgraph"
   input_stream: "IMAGE:input_video"
-  input_stream: "LANDMARKS:box_landmarks"
-  input_stream: "NORM_RECT:box_rect"
+  input_stream: "MULTI_LANDMARKS:box_landmarks"
+  input_stream: "NORM_RECTS:box_rect"
   output_stream: "IMAGE:output_video"
 }
 

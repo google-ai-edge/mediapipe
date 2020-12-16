@@ -19,6 +19,7 @@
 
 #include <type_traits>
 
+#include "absl/memory/memory.h"
 #include "mediapipe/framework/calculator_context.h"
 #include "mediapipe/framework/calculator_contract.h"
 #include "mediapipe/framework/deps/registration.h"
@@ -168,21 +169,22 @@ class CalculatorBase {
   virtual Timestamp SourceProcessOrder(const CalculatorContext* cc) const;
 };
 
-using CalculatorBaseRegistry =
-    GlobalFactoryRegistry<std::unique_ptr<CalculatorBase>>;
+namespace api2 {
+class Node;
+}  // namespace api2
 
 namespace internal {
 
 // Gives access to the static functions within subclasses of CalculatorBase.
 // This adds functionality akin to virtual static functions.
-class StaticAccessToCalculatorBase {
+class CalculatorBaseFactory {
  public:
-  virtual ~StaticAccessToCalculatorBase() {}
+  virtual ~CalculatorBaseFactory() {}
   virtual mediapipe::Status GetContract(CalculatorContract* cc) = 0;
+  virtual std::unique_ptr<CalculatorBase> CreateCalculator(
+      CalculatorContext* calculator_context) = 0;
+  virtual std::string ContractMethodName() { return "GetContract"; }
 };
-
-using StaticAccessToCalculatorBaseRegistry =
-    GlobalFactoryRegistry<std::unique_ptr<StaticAccessToCalculatorBase>>;
 
 // Functions for checking that the calculator has the required GetContract.
 template <class T>
@@ -197,14 +199,21 @@ constexpr bool CalculatorHasGetContract(...) {
 
 // Provides access to the static functions within a specific subclass
 // of CalculatorBase.
-template <typename CalculatorBaseSubclass>
-class StaticAccessToCalculatorBaseTyped : public StaticAccessToCalculatorBase {
+template <class T, class Enable = void>
+class CalculatorBaseFactoryFor : public CalculatorBaseFactory {
+  static_assert(std::is_base_of<mediapipe::CalculatorBase, T>::value,
+                "Classes registered with REGISTER_CALCULATOR must be "
+                "subclasses of mediapipe::CalculatorBase.");
+};
+
+template <class T>
+class CalculatorBaseFactoryFor<
+    T,
+    typename std::enable_if<std::is_base_of<mediapipe::CalculatorBase, T>{} &&
+                            !std::is_base_of<mediapipe::api2::Node, T>{}>::type>
+    : public CalculatorBaseFactory {
  public:
-  static_assert(
-      std::is_base_of<mediapipe::CalculatorBase, CalculatorBaseSubclass>::value,
-      "Classes registered with REGISTER_CALCULATOR must be "
-      "subclasses of mediapipe::CalculatorBase.");
-  static_assert(CalculatorHasGetContract<CalculatorBaseSubclass>(nullptr),
+  static_assert(CalculatorHasGetContract<T>(nullptr),
                 "GetContract() must be defined with the correct signature in "
                 "every calculator.");
 
@@ -213,11 +222,19 @@ class StaticAccessToCalculatorBaseTyped : public StaticAccessToCalculatorBase {
   mediapipe::Status GetContract(CalculatorContract* cc) final {
     // CalculatorBaseSubclass must implement this function, since it is not
     // implemented in the parent class.
-    return CalculatorBaseSubclass::GetContract(cc);
+    return T::GetContract(cc);
+  }
+
+  std::unique_ptr<CalculatorBase> CreateCalculator(
+      CalculatorContext* calculator_context) final {
+    return absl::make_unique<T>();
   }
 };
 
 }  // namespace internal
+
+using CalculatorBaseRegistry =
+    GlobalFactoryRegistry<std::unique_ptr<internal::CalculatorBaseFactory>>;
 
 }  // namespace mediapipe
 

@@ -3,15 +3,26 @@
 type: "RendererSubgraph"
 
 input_stream: "IMAGE:input_image"
-input_stream: "LANDMARKS:landmarks"
-input_stream: "NORM_RECT:rect"
+input_stream: "MULTI_LANDMARKS:multi_landmarks"
+input_stream: "NORM_RECTS:multi_rect"
 output_stream: "IMAGE:output_image"
+
+# Outputs each element of multi_landmarks at a fake timestamp for the rest
+# of the graph to process. At the end of the loop, outputs the BATCH_END
+# timestamp for downstream calculators to inform them that all elements in the
+# vector have been processed.
+node {
+  calculator: "BeginLoopNormalizedLandmarkListVectorCalculator"
+  input_stream: "ITERABLE:multi_landmarks"
+  output_stream: "ITEM:single_landmarks"
+  output_stream: "BATCH_END:landmark_timestamp"
+}
 
 # Converts landmarks to drawing primitives for annotation overlay.
 node {
   calculator: "LandmarksToRenderDataCalculator"
-  input_stream: "NORM_LANDMARKS:landmarks"
-  output_stream: "RENDER_DATA:landmark_render_data"
+  input_stream: "NORM_LANDMARKS:single_landmarks"
+  output_stream: "RENDER_DATA:single_landmark_render_data"
   node_options: {
     [type.googleapis.com/mediapipe.LandmarksToRenderDataCalculatorOptions] {
       landmark_connections: [1, 2] # edge 1-2
@@ -33,11 +44,18 @@ node {
   }
 }
 
+node {
+  calculator: "EndLoopRenderDataCalculator"
+  input_stream: "ITEM:single_landmark_render_data"
+  input_stream: "BATCH_END:landmark_timestamp"
+  output_stream: "ITERABLE:multi_landmarks_render_data"
+}
+
 # Converts normalized rects to drawing primitives for annotation overlay.
 node {
   calculator: "RectToRenderDataCalculator"
-  input_stream: "NORM_RECT:rect"
-  output_stream: "RENDER_DATA:rect_render_data"
+  input_stream: "NORM_RECTS:multi_rect"
+  output_stream: "RENDER_DATA:multi_rect_render_data"
   node_options: {
     [type.googleapis.com/mediapipe.RectToRenderDataCalculatorOptions] {
       filled: false
@@ -51,7 +69,7 @@ node {
 node {
   calculator: "AnnotationOverlayCalculator"
   input_stream: "IMAGE:input_image"
-  input_stream: "landmark_render_data"
-  input_stream: "rect_render_data"
+  input_stream: "VECTOR:multi_landmarks_render_data"
+  input_stream: "multi_rect_render_data"
   output_stream: "IMAGE:output_image"
 }

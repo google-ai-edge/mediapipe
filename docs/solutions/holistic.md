@@ -405,7 +405,7 @@ on how to build MediaPipe examples.
 ## Resources
 
 *   Google AI Blog:
-    [MediaPipe Holistic - Simultaneous Face, Hand and Pose Prediction on Device](https://ai.googleblog.com/2020/08/on-device-real-time-body-pose-tracking.html)
+    [MediaPipe Holistic - Simultaneous Face, Hand and Pose Prediction, on Device](https://ai.googleblog.com/2020/12/mediapipe-holistic-simultaneous-face.html)
 *   [Models and model cards](./models.md#holistic)
 
 [Colab]:https://mediapipe.page.link/holistic_py_colab

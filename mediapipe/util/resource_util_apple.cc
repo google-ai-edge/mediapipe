@@ -66,7 +66,11 @@ mediapipe::StatusOr<std::string> PathToResourceAsFile(const std::string& path) {
 }
 
 mediapipe::Status GetResourceContents(const std::string& path,
-                                      std::string* output) {
+                                      std::string* output,
+                                      bool read_as_binary) {
+  if (!read_as_binary) {
+    LOG(WARNING) << "Setting \"read_as_binary\" to false is a no-op on ios.";
+  }
   ASSIGN_OR_RETURN(std::string full_path, PathToResourceAsFile(path));
 
   std::ifstream input_file(full_path);

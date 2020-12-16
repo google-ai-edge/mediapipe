@@ -27,6 +27,8 @@ mediapipe_simple_subgraph(
     register_as = "RendererSubgraph",
     visibility = ["//visibility:public"],
     deps = [
+        "//mediapipe/calculators/core:begin_loop_calculator",
+        "//mediapipe/calculators/core:end_loop_calculator",
         "//mediapipe/calculators/util:annotation_overlay_calculator",
         "//mediapipe/calculators/util:detections_to_render_data_calculator",
         "//mediapipe/calculators/util:landmarks_to_render_data_calculator",

@@ -27,7 +27,6 @@
 #include "absl/synchronization/mutex.h"
 #include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/framework/calculator_base.h"
-#include "mediapipe/framework/calculator_registry_util.h"
 #include "mediapipe/framework/counter_factory.h"
 #include "mediapipe/framework/input_stream_manager.h"
 #include "mediapipe/framework/mediapipe_profiling.h"
@@ -374,15 +373,12 @@ mediapipe::Status CalculatorNode::PrepareForRun(
   MP_RETURN_IF_ERROR(calculator_context_manager_.PrepareForRun(std::bind(
       &CalculatorNode::ConnectShardsToStreams, this, std::placeholders::_1)));
 
-  auto calculator_statusor = CreateCalculator(
-      input_stream_handler_->InputTagMap(),
-      output_stream_handler_->OutputTagMap(), validated_graph_->Package(),
-      calculator_state_.get(),
+  ASSIGN_OR_RETURN(
+      auto calculator_factory,
+      CalculatorBaseRegistry::CreateByNameInNamespace(
+          validated_graph_->Package(), calculator_state_->CalculatorType()));
+  calculator_ = calculator_factory->CreateCalculator(
       calculator_context_manager_.GetDefaultCalculatorContext());
-  if (!calculator_statusor.ok()) {
-    return calculator_statusor.status();
-  }
-  calculator_ = std::move(calculator_statusor).ValueOrDie();
 
   needs_to_close_ = false;
 

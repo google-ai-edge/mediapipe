@@ -14,6 +14,7 @@
 
 #include <algorithm>
 
+#include "absl/container/flat_hash_map.h"
 #include "absl/memory/memory.h"
 #include "absl/strings/numbers.h"
 #include "mediapipe/calculators/image/opencv_image_encoder_calculator.pb.h"
@@ -537,8 +538,8 @@ TEST_F(PackMediaSequenceCalculatorTest, PacksTwoKeypoints) {
   std::string test_video_id = "test_video_id";
   mpms::SetClipMediaId(test_video_id, input_sequence.get());
 
-  std::unordered_map<std::string, std::vector<std::pair<float, float>>> points =
-      {{"HEAD", {{0.1, 0.2}, {0.3, 0.4}}}, {"TAIL", {{0.5, 0.6}}}};
+  absl::flat_hash_map<std::string, std::vector<std::pair<float, float>>>
+      points = {{"HEAD", {{0.1, 0.2}, {0.3, 0.4}}}, {"TAIL", {{0.5, 0.6}}}};
   runner_->MutableInputs()
       ->Tag("KEYPOINTS_TEST")
       .packets.push_back(PointToForeign(&points).At(Timestamp(0)));

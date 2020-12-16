@@ -52,8 +52,9 @@ mediapipe::Status KinematicPathSolver::AddObservation(int position,
     }
   }
 
-  double delta_degs = (Median(raw_positions_at_time_) - current_position_px_) /
-                      pixels_per_degree_;
+  int filtered_position = Median(raw_positions_at_time_);
+  double delta_degs =
+      (filtered_position - current_position_px_) / pixels_per_degree_;
 
   // If the motion is smaller than the min_motion_to_reframe and camera is
   // stationary, don't use the update.
@@ -68,14 +69,14 @@ mediapipe::Status KinematicPathSolver::AddObservation(int position,
   } else if (delta_degs > 0) {
     // Apply new position, less the reframe window size.
     target_position_px_ =
-        position - pixels_per_degree_ * options_.reframe_window();
+        filtered_position - pixels_per_degree_ * options_.reframe_window();
     delta_degs =
         (target_position_px_ - current_position_px_) / pixels_per_degree_;
     motion_state_ = true;
   } else {
     // Apply new position, plus the reframe window size.
     target_position_px_ =
-        position + pixels_per_degree_ * options_.reframe_window();
+        filtered_position + pixels_per_degree_ * options_.reframe_window();
     delta_degs =
         (target_position_px_ - current_position_px_) / pixels_per_degree_;
     motion_state_ = true;

@@ -70,6 +70,11 @@ Python package from source. Otherwise, we strongly encourage our users to simply
 run `pip install mediapipe` to use the ready-to-use solutions, more convenient
 and much faster.
 
+MediaPipe PyPI currently doesn't provide aarch64 Python wheel
+files. For building and using MediaPipe Python on aarch64 Linux systems such as
+Nvidia Jetson and Raspberry Pi, please read
+[here](https://github.com/jiuqiant/mediapipe-python-aarch64).
+
 1.  Make sure that Bazel and OpenCV are correctly installed and configured for
     MediaPipe. Please see [Installation](./install.md) for how to setup Bazel
     and OpenCV for MediaPipe on Linux and macOS.
@@ -82,12 +87,18 @@ and much faster.
     $ sudo apt install python3-dev
     $ sudo apt install python3-venv
     $ sudo apt install -y protobuf-compiler
+
+    # If you need to build opencv from source.
+    $ sudo apt install cmake
     ```
 
     macOS:
 
     ```bash
     $ brew install protobuf
+
+    # If you need to build opencv from source.
+    $ brew install cmake
     ```
 
     Windows:
@@ -117,4 +128,11 @@ and much faster.
     ```bash
     (mp_env)mediapipe$ python3 setup.py gen_protos
     (mp_env)mediapipe$ python3 setup.py install --link-opencv
+    ```
+
+    or
+
+    ```bash
+    (mp_env)mediapipe$ python3 setup.py gen_protos
+    (mp_env)mediapipe$ python3 setup.py bdist_wheel
     ```

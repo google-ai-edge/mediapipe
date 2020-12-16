@@ -13,12 +13,14 @@
 // limitations under the License.
 
 #include "mediapipe/calculators/tensor/tensors_to_landmarks_calculator.pb.h"
+#include "mediapipe/framework/api2/node.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/landmark.pb.h"
 #include "mediapipe/framework/formats/tensor.h"
 #include "mediapipe/framework/port/ret_check.h"
 
 namespace mediapipe {
+namespace api2 {
 
 namespace {
 
@@ -85,9 +87,18 @@ float ApplyActivation(
 //     }
 //   }
 // }
-class TensorsToLandmarksCalculator : public CalculatorBase {
+class TensorsToLandmarksCalculator : public Node {
  public:
-  static mediapipe::Status GetContract(CalculatorContract* cc);
+  static constexpr Input<std::vector<Tensor>> kInTensors{"TENSORS"};
+  static constexpr Input<bool>::SideFallback::Optional kFlipHorizontally{
+      "FLIP_HORIZONTALLY"};
+  static constexpr Input<bool>::SideFallback::Optional kFlipVertically{
+      "FLIP_VERTICALLY"};
+  static constexpr Output<LandmarkList>::Optional kOutLandmarkList{"LANDMARKS"};
+  static constexpr Output<NormalizedLandmarkList>::Optional
+      kOutNormalizedLandmarkList{"NORM_LANDMARKS"};
+  MEDIAPIPE_NODE_CONTRACT(kInTensors, kFlipHorizontally, kFlipVertically,
+                          kOutLandmarkList, kOutNormalizedLandmarkList);
 
   mediapipe::Status Open(CalculatorContext* cc) override;
   mediapipe::Status Process(CalculatorContext* cc) override;
@@ -95,100 +106,39 @@ class TensorsToLandmarksCalculator : public CalculatorBase {
  private:
   mediapipe::Status LoadOptions(CalculatorContext* cc);
   int num_landmarks_ = 0;
-  bool flip_vertically_ = false;
-  bool flip_horizontally_ = false;
-
   ::mediapipe::TensorsToLandmarksCalculatorOptions options_;
 };
-REGISTER_CALCULATOR(TensorsToLandmarksCalculator);
-
-mediapipe::Status TensorsToLandmarksCalculator::GetContract(
-    CalculatorContract* cc) {
-  RET_CHECK(!cc->Inputs().GetTags().empty());
-  RET_CHECK(!cc->Outputs().GetTags().empty());
-
-  if (cc->Inputs().HasTag("TENSORS")) {
-    cc->Inputs().Tag("TENSORS").Set<std::vector<Tensor>>();
-  }
-
-  if (cc->Inputs().HasTag("FLIP_HORIZONTALLY")) {
-    cc->Inputs().Tag("FLIP_HORIZONTALLY").Set<bool>();
-  }
-
-  if (cc->Inputs().HasTag("FLIP_VERTICALLY")) {
-    cc->Inputs().Tag("FLIP_VERTICALLY").Set<bool>();
-  }
-
-  if (cc->InputSidePackets().HasTag("FLIP_HORIZONTALLY")) {
-    cc->InputSidePackets().Tag("FLIP_HORIZONTALLY").Set<bool>();
-  }
-
-  if (cc->InputSidePackets().HasTag("FLIP_VERTICALLY")) {
-    cc->InputSidePackets().Tag("FLIP_VERTICALLY").Set<bool>();
-  }
-
-  if (cc->Outputs().HasTag("LANDMARKS")) {
-    cc->Outputs().Tag("LANDMARKS").Set<LandmarkList>();
-  }
-
-  if (cc->Outputs().HasTag("NORM_LANDMARKS")) {
-    cc->Outputs().Tag("NORM_LANDMARKS").Set<NormalizedLandmarkList>();
-  }
-
-  return mediapipe::OkStatus();
-}
+MEDIAPIPE_REGISTER_NODE(TensorsToLandmarksCalculator);
 
 mediapipe::Status TensorsToLandmarksCalculator::Open(CalculatorContext* cc) {
-  cc->SetOffset(TimestampDiff(0));
-
   MP_RETURN_IF_ERROR(LoadOptions(cc));
 
-  if (cc->Outputs().HasTag("NORM_LANDMARKS")) {
+  if (kOutNormalizedLandmarkList(cc).IsConnected()) {
     RET_CHECK(options_.has_input_image_height() &&
               options_.has_input_image_width())
         << "Must provide input with/height for getting normalized landmarks.";
   }
-  if (cc->Outputs().HasTag("LANDMARKS") &&
-      (options_.flip_vertically() || options_.flip_horizontally() ||
-       cc->InputSidePackets().HasTag("FLIP_HORIZONTALLY") ||
-       cc->InputSidePackets().HasTag("FLIP_VERTICALLY"))) {
+  if (kOutLandmarkList(cc).IsConnected() &&
+      (options_.flip_horizontally() || options_.flip_vertically() ||
+       kFlipHorizontally(cc).IsConnected() ||
+       kFlipVertically(cc).IsConnected())) {
     RET_CHECK(options_.has_input_image_height() &&
               options_.has_input_image_width())
-        << "Must provide input with/height for using flip_vertically option "
-           "when outputing landmarks in absolute coordinates.";
+        << "Must provide input with/height for using flipping when outputing "
+           "landmarks in absolute coordinates.";
   }
-
-  flip_horizontally_ =
-      cc->InputSidePackets().HasTag("FLIP_HORIZONTALLY")
-          ? cc->InputSidePackets().Tag("FLIP_HORIZONTALLY").Get<bool>()
-          : options_.flip_horizontally();
-
-  flip_vertically_ =
-      cc->InputSidePackets().HasTag("FLIP_VERTICALLY")
-          ? cc->InputSidePackets().Tag("FLIP_VERTICALLY").Get<bool>()
-          : options_.flip_vertically();
-
   return mediapipe::OkStatus();
 }
 
 mediapipe::Status TensorsToLandmarksCalculator::Process(CalculatorContext* cc) {
-  // Override values if specified so.
-  if (cc->Inputs().HasTag("FLIP_HORIZONTALLY") &&
-      !cc->Inputs().Tag("FLIP_HORIZONTALLY").IsEmpty()) {
-    flip_horizontally_ = cc->Inputs().Tag("FLIP_HORIZONTALLY").Get<bool>();
-  }
-  if (cc->Inputs().HasTag("FLIP_VERTICALLY") &&
-      !cc->Inputs().Tag("FLIP_VERTICALLY").IsEmpty()) {
-    flip_vertically_ = cc->Inputs().Tag("FLIP_VERTICALLY").Get<bool>();
-  }
-
-  if (cc->Inputs().Tag("TENSORS").IsEmpty()) {
+  if (kInTensors(cc).IsEmpty()) {
     return mediapipe::OkStatus();
   }
+  bool flip_horizontally =
+      kFlipHorizontally(cc).GetOr(options_.flip_horizontally());
+  bool flip_vertically = kFlipVertically(cc).GetOr(options_.flip_vertically());
 
-  const auto& input_tensors =
-      cc->Inputs().Tag("TENSORS").Get<std::vector<Tensor>>();
-
+  const auto& input_tensors = *kInTensors(cc);
   int num_values = input_tensors[0].shape().num_elements();
   const int num_dimensions = num_values / num_landmarks_;
   CHECK_GT(num_dimensions, 0);
@@ -202,13 +152,13 @@ mediapipe::Status TensorsToLandmarksCalculator::Process(CalculatorContext* cc) {
     const int offset = ld * num_dimensions;
     Landmark* landmark = output_landmarks.add_landmark();
 
-    if (flip_horizontally_) {
+    if (flip_horizontally) {
       landmark->set_x(options_.input_image_width() - raw_landmarks[offset]);
     } else {
       landmark->set_x(raw_landmarks[offset]);
     }
     if (num_dimensions > 1) {
-      if (flip_vertically_) {
+      if (flip_vertically) {
         landmark->set_y(options_.input_image_height() -
                         raw_landmarks[offset + 1]);
       } else {
@@ -229,7 +179,7 @@ mediapipe::Status TensorsToLandmarksCalculator::Process(CalculatorContext* cc) {
   }
 
   // Output normalized landmarks if required.
-  if (cc->Outputs().HasTag("NORM_LANDMARKS")) {
+  if (kOutNormalizedLandmarkList(cc).IsConnected()) {
     NormalizedLandmarkList output_norm_landmarks;
     for (int i = 0; i < output_landmarks.landmark_size(); ++i) {
       const Landmark& landmark = output_landmarks.landmark(i);
@@ -246,18 +196,12 @@ mediapipe::Status TensorsToLandmarksCalculator::Process(CalculatorContext* cc) {
         norm_landmark->set_presence(landmark.presence());
       }
     }
-    cc->Outputs()
-        .Tag("NORM_LANDMARKS")
-        .AddPacket(MakePacket<NormalizedLandmarkList>(output_norm_landmarks)
-                       .At(cc->InputTimestamp()));
+    kOutNormalizedLandmarkList(cc).Send(std::move(output_norm_landmarks));
   }
 
   // Output absolute landmarks.
-  if (cc->Outputs().HasTag("LANDMARKS")) {
-    cc->Outputs()
-        .Tag("LANDMARKS")
-        .AddPacket(MakePacket<LandmarkList>(output_landmarks)
-                       .At(cc->InputTimestamp()));
+  if (kOutLandmarkList(cc).IsConnected()) {
+    kOutLandmarkList(cc).Send(std::move(output_landmarks));
   }
 
   return mediapipe::OkStatus();
@@ -272,4 +216,5 @@ mediapipe::Status TensorsToLandmarksCalculator::LoadOptions(
 
   return mediapipe::OkStatus();
 }
+}  // namespace api2
 }  // namespace mediapipe

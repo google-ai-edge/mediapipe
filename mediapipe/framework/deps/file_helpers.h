@@ -21,7 +21,7 @@
 namespace mediapipe {
 namespace file {
 mediapipe::Status GetContents(absl::string_view file_name, std::string* output,
-                              bool read_as_binary = false);
+                              bool read_as_binary = true);
 
 mediapipe::Status SetContents(absl::string_view file_name,
                               absl::string_view content);

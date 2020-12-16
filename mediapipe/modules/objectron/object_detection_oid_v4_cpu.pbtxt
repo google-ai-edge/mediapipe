@@ -4,9 +4,9 @@ type: "ObjectDetectionOidV4Subgraph"
 
 input_stream: "IMAGE:input_video"
 input_side_packet: "LABELS_CSV:allowed_labels"
-output_stream: "NORM_RECT:box_rect_from_object_detections"
+output_stream: "DETECTIONS:detections"
 
-# Transforms the input image on GPU to a 300x300 image. To scale the image, by
+# Transforms the input image on CPU to a 300x300 image. To scale the image, by
 # default it uses the STRETCH scale mode that maps the entire input image to the
 # entire transformed image. As a result, image aspect ratio may be changed and
 # objects in the image may be deformed (stretched or squeezed), but the object
@@ -23,7 +23,7 @@ node: {
   }
 }
 
-# Converts the transformed input image on GPU into an image tensor stored as a
+# Converts the transformed input image on CPU into an image tensor stored as a
 # TfLiteTensor.
 node {
   calculator: "TfLiteConverterCalculator"
@@ -31,7 +31,7 @@ node {
   output_stream: "TENSORS:image_tensor"
 }
 
-# Runs a TensorFlow Lite model on GPU that takes an image tensor and outputs a
+# Runs a TensorFlow Lite model on CPU that takes an image tensor and outputs a
 # vector of tensors representing, for instance, detection boxes/keypoints and
 # scores.
 node {
@@ -82,7 +82,7 @@ node {
   calculator: "TfLiteTensorsToDetectionsCalculator"
   input_stream: "TENSORS:detection_tensors"
   input_side_packet: "ANCHORS:anchors"
-  output_stream: "DETECTIONS:detections"
+  output_stream: "DETECTIONS:all_detections"
   options: {
     [mediapipe.TfLiteTensorsToDetectionsCalculatorOptions.ext] {
       num_classes: 195
@@ -95,22 +95,7 @@ node {
       y_scale: 10.0
       h_scale: 5.0
       w_scale: 5.0
-      min_score_thresh: 0.6
-    }
-  }
-}
-
-# Performs non-max suppression to remove excessive detections.
-node {
-  calculator: "NonMaxSuppressionCalculator"
-  input_stream: "detections"
-  output_stream: "suppressed_detections"
-  options: {
-    [mediapipe.NonMaxSuppressionCalculatorOptions.ext] {
-      min_suppression_threshold: 0.4
-      max_num_detections: 1
-      overlap_type: INTERSECTION_OVER_UNION
-      return_empty_detections: true
+      min_score_thresh: 0.5
     }
   }
 }
@@ -119,7 +104,7 @@ node {
 # provided in the label_map_path option.
 node {
   calculator: "DetectionLabelIdToTextCalculator"
-  input_stream: "suppressed_detections"
+  input_stream: "all_detections"
   output_stream: "labeled_detections"
   options: {
     [mediapipe.DetectionLabelIdToTextCalculatorOptions.ext] {
@@ -128,50 +113,26 @@ node {
   }
 }
 
+# Filters the detections to only those with valid scores
+# for the specified allowed labels.
 node {
   calculator: "FilterDetectionCalculator"
   input_stream: "DETECTIONS:labeled_detections"
   output_stream: "DETECTIONS:filtered_detections"
   input_side_packet: "LABELS_CSV:allowed_labels"
-  options: {
-    [mediapipe.FilterDetectionCalculatorOptions.ext]: {
-      min_score: 0.4
-    }
-  }
 }
 
-# Extracts image size from the input images.
+# Performs non-max suppression to remove excessive detections.
 node {
-  calculator: "ImagePropertiesCalculator"
-  input_stream: "IMAGE:input_video"
-  output_stream: "SIZE:image_size"
-}
-
-# Converts results of box detection into a rectangle (normalized by image size)
-# that encloses the box.
-node {
-  calculator: "DetectionsToRectsCalculator"
-  input_stream: "DETECTIONS:filtered_detections"
-  input_stream: "IMAGE_SIZE:image_size"
-  output_stream: "NORM_RECT:box_rect"
+  calculator: "NonMaxSuppressionCalculator"
+  input_stream: "filtered_detections"
+  output_stream: "detections"
   options: {
-    [mediapipe.DetectionsToRectsCalculatorOptions.ext] {
-      output_zero_rect_for_empty_detections: true
-    }
-  }
-}
-
-# Expands the rectangle that contains the box so that it's likely to cover the
-# entire box.
-node {
-  calculator: "RectTransformationCalculator"
-  input_stream: "NORM_RECT:box_rect"
-  input_stream: "IMAGE_SIZE:image_size"
-  output_stream: "box_rect_from_object_detections"
-  options: {
-    [mediapipe.RectTransformationCalculatorOptions.ext] {
-      scale_x: 1.5
-      scale_y: 1.5
+    [mediapipe.NonMaxSuppressionCalculatorOptions.ext] {
+      min_suppression_threshold: 0.5
+      max_num_detections: 100
+      overlap_type: INTERSECTION_OVER_UNION
+      return_empty_detections: true
     }
   }
 }

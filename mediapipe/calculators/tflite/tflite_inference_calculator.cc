@@ -450,7 +450,9 @@ mediapipe::Status TfLiteInferenceCalculator::Process(CalculatorContext* cc) {
     }
 #else
 #if MEDIAPIPE_TFLITE_METAL_INFERENCE
-    if (gpu_inference_) {
+    // Metal delegate supports external command encoder only if all input and
+    // output buffers are on GPU.
+    if (gpu_inference_ && gpu_input_ && gpu_output_) {
       RET_CHECK(
           TFLGpuDelegateSetCommandEncoder(delegate_.get(), compute_encoder));
     }

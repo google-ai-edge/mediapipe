@@ -59,6 +59,7 @@ cc_library(
     deps = [
         ":inference_calculator_cc_proto",
         "@com_google_absl//absl/memory",
+        "//mediapipe/framework/api2:node",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/formats:tensor",
         "//mediapipe/util/tflite:tflite_model_loader",
@@ -234,6 +235,7 @@ cc_library(
         "//mediapipe/framework/formats:detection_cc_proto",
         "@com_google_absl//absl/strings:str_format",
         "@com_google_absl//absl/types:span",
+        "//mediapipe/framework/api2:node",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework:port",
         "//mediapipe/framework/deps:file_path",
@@ -286,6 +288,7 @@ cc_library(
     deps = [
         ":tensors_to_landmarks_calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/api2:node",
         "//mediapipe/framework/formats:landmark_cc_proto",
         "//mediapipe/framework/formats:tensor",
         "//mediapipe/framework/port:ret_check",
@@ -317,6 +320,7 @@ cc_library(
     deps = [
         ":tensors_to_floats_calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/api2:node",
         "//mediapipe/framework/formats:tensor",
         "//mediapipe/framework/port:ret_check",
     ],
@@ -355,6 +359,7 @@ cc_library(
         ":tensors_to_classification_calculator_cc_proto",
         "@com_google_absl//absl/strings:str_format",
         "@com_google_absl//absl/types:span",
+        "//mediapipe/framework/api2:node",
         "//mediapipe/framework/formats:classification_cc_proto",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/formats:location",
@@ -421,6 +426,7 @@ cc_library(
         ":image_to_tensor_converter",
         ":image_to_tensor_converter_opencv",
         ":image_to_tensor_utils",
+        "//mediapipe/framework/api2:node",
         "//mediapipe/framework/formats:image_frame",
         "//mediapipe/framework/formats:rect_cc_proto",
         "//mediapipe/framework/formats:tensor",

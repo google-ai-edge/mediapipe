@@ -33,8 +33,6 @@ CalculatorState::CalculatorState(
       calculator_type_(calculator_type),
       node_config_(node_config),
       profiling_context_(profiling_context),
-      input_streams_(nullptr),
-      output_streams_(nullptr),
       counter_factory_(nullptr) {
   options_.Initialize(node_config);
   ResetBetweenRuns();
@@ -42,20 +40,8 @@ CalculatorState::CalculatorState(
 
 CalculatorState::~CalculatorState() {}
 
-void CalculatorState::SetInputStreamSet(InputStreamSet* input_stream_set) {
-  CHECK(input_stream_set);
-  input_streams_ = input_stream_set;
-}
-
-void CalculatorState::SetOutputStreamSet(OutputStreamSet* output_stream_set) {
-  CHECK(output_stream_set);
-  output_streams_ = output_stream_set;
-}
-
 void CalculatorState::ResetBetweenRuns() {
   input_side_packets_ = nullptr;
-  input_streams_ = nullptr;
-  output_streams_ = nullptr;
   counter_factory_ = nullptr;
 }
 

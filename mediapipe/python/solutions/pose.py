@@ -31,6 +31,7 @@ from mediapipe.calculators.tensor import tensors_to_landmarks_calculator_pb2
 from mediapipe.calculators.tflite import ssd_anchors_calculator_pb2
 from mediapipe.calculators.util import detections_to_rects_calculator_pb2
 from mediapipe.calculators.util import landmarks_smoothing_calculator_pb2
+from mediapipe.calculators.util import local_file_contents_calculator_pb2
 from mediapipe.calculators.util import logic_calculator_pb2
 from mediapipe.calculators.util import non_max_suppression_calculator_pb2
 from mediapipe.calculators.util import rect_transformation_calculator_pb2
@@ -137,19 +138,19 @@ class Pose(SolutionBase):
     Args:
       static_image_mode: Whether to treat the input images as a batch of static
         and possibly unrelated images, or a video stream. See details in
-        https://solutions.mediapipe.dev/pose#static-image-mode.
+        https://solutions.mediapipe.dev/pose#static_image_mode.
       upper_body_only: Whether to track the full set of 33 pose landmarks or
         only the 25 upper-body pose landmarks. See details in
-        https://solutions.mediapipe.dev/pose#upper-body-only.
+        https://solutions.mediapipe.dev/pose#upper_body_only.
       smooth_landmarks: Whether to filter landmarks across different input
         images to reduce jitter. See details in
         https://solutions.mediapipe.dev/pose#smooth_landmarks.
       min_detection_confidence: Minimum confidence value ([0.0, 1.0]) for person
         detection to be considered successful. See details in
-        https://solutions.mediapipe.dev/pose#min-detection-confidence.
+        https://solutions.mediapipe.dev/pose#min_detection_confidence.
       min_tracking_confidence: Minimum confidence value ([0.0, 1.0]) for the
         pose landmarks to be considered tracked successfully. See details in
-        https://solutions.mediapipe.dev/pose#min-tracking-confidence.
+        https://solutions.mediapipe.dev/pose#min_tracking_confidence.
     """
     super().__init__(
         binary_graph_path=BINARYPB_FILE_PATH,

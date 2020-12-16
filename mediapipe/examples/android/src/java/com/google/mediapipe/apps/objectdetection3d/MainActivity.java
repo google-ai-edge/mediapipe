@@ -56,8 +56,10 @@ public class MainActivity extends com.google.mediapipe.apps.basic.MainActivity {
     } catch (NameNotFoundException e) {
       Log.e(TAG, "Cannot find application info: " + e);
     }
-
+    // Get allowed object category.
     String categoryName = applicationInfo.metaData.getString("categoryName");
+    // Get maximum allowed number of objects.
+    int maxNumObjects = applicationInfo.metaData.getInt("maxNumObjects");
     float[] modelScale = parseFloatArrayFromString(
         applicationInfo.metaData.getString("modelScale"));
     float[] modelTransform = parseFloatArrayFromString(
@@ -70,6 +72,7 @@ public class MainActivity extends com.google.mediapipe.apps.basic.MainActivity {
     inputSidePackets.put("obj_texture", packetCreator.createRgbaImageFrame(objTexture));
     inputSidePackets.put("box_texture", packetCreator.createRgbaImageFrame(boxTexture));
     inputSidePackets.put("allowed_labels", packetCreator.createString(categoryName));
+    inputSidePackets.put("max_num_objects", packetCreator.createInt32(maxNumObjects));
     inputSidePackets.put("model_scale", packetCreator.createFloat32Array(modelScale));
     inputSidePackets.put("model_transformation", packetCreator.createFloat32Array(modelTransform));
     processor.setInputSidePackets(inputSidePackets);
@@ -118,8 +121,8 @@ public class MainActivity extends com.google.mediapipe.apps.basic.MainActivity {
             } catch (RuntimeException e) {
               Log.e(
                   TAG,
-                  "MediaPipeException encountered adding packets to width and height"
-                      + " input streams.");
+                  "MediaPipeException encountered adding packets to input_width and input_height"
+                      + " input streams.", e);
             }
             widthPacket.release();
             heightPacket.release();

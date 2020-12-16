@@ -635,12 +635,15 @@ void GlAnimationOverlayCalculator::LoadModelMatrices(
 
     // Process model matrices, if any are being streamed in, and update our
     // list.
+    current_model_matrices_.clear();
     if (has_model_matrix_stream_ &&
         !cc->Inputs().Tag("MODEL_MATRICES").IsEmpty()) {
       const TimedModelMatrixProtoList &model_matrices =
           cc->Inputs().Tag("MODEL_MATRICES").Get<TimedModelMatrixProtoList>();
       LoadModelMatrices(model_matrices, &current_model_matrices_);
     }
+
+    current_mask_model_matrices_.clear();
     if (has_mask_model_matrix_stream_ &&
         !cc->Inputs().Tag("MASK_MODEL_MATRICES").IsEmpty()) {
       const TimedModelMatrixProtoList &model_matrices =

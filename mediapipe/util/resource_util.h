@@ -44,7 +44,8 @@ mediapipe::StatusOr<std::string> PathToResourceAsFile(const std::string& path);
 // Reads the entire contents of a resource. The search path is as in
 // PathToResourceAsFile.
 mediapipe::Status GetResourceContents(const std::string& path,
-                                      std::string* output);
+                                      std::string* output,
+                                      bool read_as_binary = true);
 
 }  // namespace mediapipe
 

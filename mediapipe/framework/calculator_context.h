@@ -163,6 +163,10 @@ class CalculatorContext {
   CalculatorState* calculator_state_;
   InputStreamShardSet inputs_;
   OutputStreamShardSet outputs_;
+  // Created on-demand when needed by legacy APIs. No synchronization needed
+  // because all possible callers are already serialized.
+  mutable std::unique_ptr<InputStreamSet> input_streams_;
+  mutable std::unique_ptr<OutputStreamSet> output_streams_;
   // The queue of timestamp values to Process() in this calculator context.
   std::queue<Timestamp> input_timestamps_;
 

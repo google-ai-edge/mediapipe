@@ -31,16 +31,16 @@ install --user six`.
     [Bazel documentation](https://docs.bazel.build/versions/master/install-ubuntu.html)
     to install Bazel 3.4 or higher.
 
-    For Nvidia Jetson and Raspberry Pi devices with ARM Ubuntu only, Bazel needs
+    For Nvidia Jetson and Raspberry Pi devices with aarch64 Linux, Bazel needs
     to be built from source:
 
     ```bash
-    # For Bazel 3.4.0
-    mkdir $HOME/bazel-3.4.0
-    cd $HOME/bazel-3.4.0
-    wget https://github.com/bazelbuild/bazel/releases/download/3.4.0/bazel-3.4.0-dist.zip
+    # For Bazel 3.4.1
+    mkdir $HOME/bazel-3.4.1
+    cd $HOME/bazel-3.4.1
+    wget https://github.com/bazelbuild/bazel/releases/download/3.4.1/bazel-3.4.1-dist.zip
     sudo apt-get install build-essential openjdk-8-jdk python zip unzip
-    unzip bazel-3.4.0-dist.zip
+    unzip bazel-3.4.1-dist.zip
     env EXTRA_BAZEL_ARGS="--host_javabase=@local_jdk//:jdk" bash ./compile.sh
     sudo cp output/bazel /usr/local/bin/
     ```
@@ -338,14 +338,7 @@ build issues.
 
 2.  Install Bazel.
 
-    Option 1. Use package manager tool to install Bazel
-
-    ```bash
-    $ brew install bazel
-    # Run 'bazel version' to check version of bazel
-    ```
-
-    Option 2. Follow the official
+    Follow the official
     [Bazel documentation](https://docs.bazel.build/versions/master/install-os-x.html#install-with-installer-mac-os-x)
     to install Bazel 3.4 or higher.
 
@@ -604,14 +597,14 @@ cameras. Alternatively, you use a video file as input.
 
     ```bash
     username@DESKTOP-TMVLBJ1:~$ curl -sLO --retry 5 --retry-max-time 10 \
-    https://storage.googleapis.com/bazel/3.4.0/release/bazel-3.4.0-installer-linux-x86_64.sh && \
-    sudo mkdir -p /usr/local/bazel/3.4.0 && \
-    chmod 755 bazel-3.4.0-installer-linux-x86_64.sh && \
-    sudo ./bazel-3.4.0-installer-linux-x86_64.sh --prefix=/usr/local/bazel/3.4.0 && \
-    source /usr/local/bazel/3.4.0/lib/bazel/bin/bazel-complete.bash
+    https://storage.googleapis.com/bazel/3.4.1/release/bazel-3.4.1-installer-linux-x86_64.sh && \
+    sudo mkdir -p /usr/local/bazel/3.4.1 && \
+    chmod 755 bazel-3.4.1-installer-linux-x86_64.sh && \
+    sudo ./bazel-3.4.1-installer-linux-x86_64.sh --prefix=/usr/local/bazel/3.4.1 && \
+    source /usr/local/bazel/3.4.1/lib/bazel/bin/bazel-complete.bash
 
-    username@DESKTOP-TMVLBJ1:~$ /usr/local/bazel/3.4.0/lib/bazel/bin/bazel version && \
-    alias bazel='/usr/local/bazel/3.4.0/lib/bazel/bin/bazel'
+    username@DESKTOP-TMVLBJ1:~$ /usr/local/bazel/3.4.1/lib/bazel/bin/bazel version && \
+    alias bazel='/usr/local/bazel/3.4.1/lib/bazel/bin/bazel'
     ```
 
 6.  Checkout MediaPipe repository.

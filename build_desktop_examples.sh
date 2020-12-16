@@ -94,7 +94,8 @@ for app in ${apps}; do
       else
         graph_name="${target_name}/${target_name}"
       fi
-      if [[ ${target_name} == "iris_tracking" ||
+      if [[ ${target_name} == "holistic_tracking" ||
+            ${target_name} == "iris_tracking" ||
             ${target_name} == "pose_tracking" ||
             ${target_name} == "upper_body_pose_tracking" ]]; then
         graph_suffix="cpu"

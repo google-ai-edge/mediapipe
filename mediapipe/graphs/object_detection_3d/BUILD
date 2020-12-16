@@ -55,6 +55,7 @@ cc_library(
     name = "desktop_cpu_calculators",
     visibility = ["//visibility:public"],
     deps = [
+        "//mediapipe/calculators/core:constant_side_packet_calculator",
         "//mediapipe/calculators/tflite:tflite_model_calculator",
         "//mediapipe/calculators/util:local_file_contents_calculator",
         "//mediapipe/calculators/video:opencv_video_decoder_calculator",

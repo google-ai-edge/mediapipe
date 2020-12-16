@@ -20,6 +20,7 @@
 #include "mediapipe/calculators/tensor/image_to_tensor_converter.h"
 #include "mediapipe/calculators/tensor/image_to_tensor_converter_opencv.h"
 #include "mediapipe/calculators/tensor/image_to_tensor_utils.h"
+#include "mediapipe/framework/api2/node.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/image_frame.h"
 #include "mediapipe/framework/formats/rect.pb.h"
@@ -45,16 +46,15 @@
 
 #endif  // !MEDIAPIPE_DISABLE_GPU
 
-namespace {
-constexpr char kInputCpu[] = "IMAGE";
-constexpr char kInputGpu[] = "IMAGE_GPU";
-constexpr char kOutputMatrix[] = "MATRIX";
-constexpr char kOutput[] = "TENSORS";
-constexpr char kInputNormRect[] = "NORM_RECT";
-constexpr char kOutputLetterboxPadding[] = "LETTERBOX_PADDING";
-}  // namespace
-
 namespace mediapipe {
+namespace api2 {
+
+#if MEDIAPIPE_DISABLE_GPU
+// Just a placeholder to not have to depend on mediapipe::GpuBuffer.
+using GpuBuffer = AnyType;
+#else
+using GpuBuffer = mediapipe::GpuBuffer;
+#endif  // MEDIAPIPE_DISABLE_GPU
 
 // Converts image into Tensor, possibly with cropping, resizing and
 // normalization, according to specified inputs and options.
@@ -110,9 +110,21 @@ namespace mediapipe {
 //     }
 //   }
 // }
-class ImageToTensorCalculator : public CalculatorBase {
+class ImageToTensorCalculator : public Node {
  public:
-  static mediapipe::Status GetContract(CalculatorContract* cc) {
+  static constexpr Input<mediapipe::ImageFrame>::Optional kInCpu{"IMAGE"};
+  static constexpr Input<GpuBuffer>::Optional kInGpu{"IMAGE_GPU"};
+  static constexpr Input<mediapipe::NormalizedRect>::Optional kInNormRect{
+      "NORM_RECT"};
+  static constexpr Output<std::vector<Tensor>> kOutTensors{"TENSORS"};
+  static constexpr Output<std::array<float, 4>>::Optional kOutLetterboxPadding{
+      "LETTERBOX_PADDING"};
+  static constexpr Output<std::array<float, 16>>::Optional kOutMatrix{"MATRIX"};
+
+  MEDIAPIPE_NODE_CONTRACT(kInCpu, kInGpu, kInNormRect, kOutTensors,
+                          kOutLetterboxPadding, kOutMatrix);
+
+  static ::mediapipe::Status UpdateContract(CalculatorContract* cc) {
     const auto& options =
         cc->Options<mediapipe::ImageToTensorCalculatorOptions>();
 
@@ -126,24 +138,10 @@ class ImageToTensorCalculator : public CalculatorBase {
     RET_CHECK_GT(options.output_tensor_height(), 0)
         << "Valid output tensor height is required.";
 
-    if (cc->Inputs().HasTag(kInputNormRect)) {
-      cc->Inputs().Tag(kInputNormRect).Set<mediapipe::NormalizedRect>();
-    }
-    if (cc->Outputs().HasTag(kOutputLetterboxPadding)) {
-      cc->Outputs().Tag(kOutputLetterboxPadding).Set<std::array<float, 4>>();
-    }
-    if (cc->Outputs().HasTag(kOutputMatrix)) {
-      cc->Outputs().Tag(kOutputMatrix).Set<std::array<float, 16>>();
-    }
+    RET_CHECK(kInCpu(cc).IsConnected() ^ kInGpu(cc).IsConnected())
+        << "One and only one of CPU or GPU input is expected.";
 
-    const bool has_cpu_input = cc->Inputs().HasTag(kInputCpu);
-    const bool has_gpu_input = cc->Inputs().HasTag(kInputGpu);
-    RET_CHECK_EQ((has_cpu_input ? 1 : 0) + (has_gpu_input ? 1 : 0), 1)
-        << "Either CPU or GPU input is expected, not both.";
-
-    if (has_cpu_input) {
-      cc->Inputs().Tag(kInputCpu).Set<mediapipe::ImageFrame>();
-    } else if (has_gpu_input) {
+    if (kInGpu(cc).IsConnected()) {
 #if MEDIAPIPE_DISABLE_GPU
       return mediapipe::UnimplementedError("GPU processing is disabled");
 #else
@@ -153,25 +151,20 @@ class ImageToTensorCalculator : public CalculatorBase {
 #else
       MP_RETURN_IF_ERROR(mediapipe::GlCalculatorHelper::UpdateContract(cc));
 #endif  // MEDIAPIPE_METAL_ENABLED
-      cc->Inputs().Tag(kInputGpu).Set<mediapipe::GpuBuffer>();
 
 #endif  // MEDIAPIPE_DISABLE_GPU
     }
-    cc->Outputs().Tag(kOutput).Set<std::vector<Tensor>>();
     return mediapipe::OkStatus();
   }
 
   mediapipe::Status Open(CalculatorContext* cc) {
-    // Makes sure outputs' next timestamp bound update is handled automatically
-    // by the framework.
-    cc->SetOffset(TimestampDiff(0));
     options_ = cc->Options<mediapipe::ImageToTensorCalculatorOptions>();
     output_width_ = options_.output_tensor_width();
     output_height_ = options_.output_tensor_height();
     range_min_ = options_.output_tensor_float_range().min();
     range_max_ = options_.output_tensor_float_range().max();
 
-    if (cc->Inputs().HasTag(kInputCpu)) {
+    if (kInCpu(cc).IsConnected()) {
       ASSIGN_OR_RETURN(converter_, CreateOpenCvConverter(cc, GetBorderMode()));
     } else {
 #if MEDIAPIPE_DISABLE_GPU
@@ -196,21 +189,20 @@ class ImageToTensorCalculator : public CalculatorBase {
   }
 
   mediapipe::Status Process(CalculatorContext* cc) {
-    const InputStreamShard& input = cc->Inputs().Tag(
-        cc->Inputs().HasTag(kInputCpu) ? kInputCpu : kInputGpu);
-    if (input.IsEmpty()) {
+    const PacketBase& image_packet =
+        kInCpu(cc).IsConnected() ? kInCpu(cc).packet() : kInGpu(cc).packet();
+    if (image_packet.IsEmpty()) {
       // Timestamp bound update happens automatically. (See Open().)
       return mediapipe::OkStatus();
     }
 
     absl::optional<mediapipe::NormalizedRect> norm_rect;
-    if (cc->Inputs().HasTag(kInputNormRect)) {
-      if (cc->Inputs().Tag(kInputNormRect).IsEmpty()) {
+    if (kInNormRect(cc).IsConnected()) {
+      if (kInNormRect(cc).IsEmpty()) {
         // Timestamp bound update happens automatically. (See Open().)
         return mediapipe::OkStatus();
       }
-      norm_rect =
-          cc->Inputs().Tag(kInputNormRect).Get<mediapipe::NormalizedRect>();
+      norm_rect = *kInNormRect(cc);
       if (norm_rect->width() == 0 && norm_rect->height() == 0) {
         // WORKAROUND: some existing graphs may use sentinel rects {width=0,
         // height=0, ...} quite often and calculator has to handle them
@@ -223,27 +215,20 @@ class ImageToTensorCalculator : public CalculatorBase {
       }
     }
 
-    const Packet& image_packet = input.Value();
     const Size& size = converter_->GetImageSize(image_packet);
     RotatedRect roi = GetRoi(size.width, size.height, norm_rect);
     ASSIGN_OR_RETURN(auto padding, PadRoi(options_.output_tensor_width(),
                                           options_.output_tensor_height(),
                                           options_.keep_aspect_ratio(), &roi));
-    if (cc->Outputs().HasTag(kOutputLetterboxPadding)) {
-      cc->Outputs()
-          .Tag(kOutputLetterboxPadding)
-          .AddPacket(MakePacket<std::array<float, 4>>(padding).At(
-              cc->InputTimestamp()));
+    if (kOutLetterboxPadding(cc).IsConnected()) {
+      kOutLetterboxPadding(cc).Send(padding);
     }
-    if (cc->Outputs().HasTag(kOutputMatrix)) {
+    if (kOutMatrix(cc).IsConnected()) {
       std::array<float, 16> matrix;
       GetRotatedSubRectToRectTransformMatrix(roi, size.width, size.height,
                                              /*flip_horizontaly=*/false,
                                              &matrix);
-      cc->Outputs()
-          .Tag(kOutputMatrix)
-          .AddPacket(MakePacket<std::array<float, 16>>(std::move(matrix))
-                         .At(cc->InputTimestamp()));
+      kOutMatrix(cc).Send(std::move(matrix));
     }
 
     ASSIGN_OR_RETURN(
@@ -251,11 +236,9 @@ class ImageToTensorCalculator : public CalculatorBase {
         converter_->Convert(image_packet, roi, {output_width_, output_height_},
                             range_min_, range_max_));
 
-    std::vector<Tensor> result;
-    result.push_back(std::move(tensor));
-    cc->Outputs().Tag(kOutput).AddPacket(
-        MakePacket<std::vector<Tensor>>(std::move(result))
-            .At(cc->InputTimestamp()));
+    auto result = std::make_unique<std::vector<Tensor>>();
+    result->push_back(std::move(tensor));
+    kOutTensors(cc).Send(std::move(result));
 
     return mediapipe::OkStatus();
   }
@@ -286,6 +269,7 @@ class ImageToTensorCalculator : public CalculatorBase {
   float range_max_ = 1.0f;
 };
 
-REGISTER_CALCULATOR(ImageToTensorCalculator);
+MEDIAPIPE_REGISTER_NODE(ImageToTensorCalculator);
 
+}  // namespace api2
 }  // namespace mediapipe

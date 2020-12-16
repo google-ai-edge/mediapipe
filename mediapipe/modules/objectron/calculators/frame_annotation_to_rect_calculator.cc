@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 
 #include <cmath>
+#include <vector>
 
 #include "Eigen/Dense"
 #include "absl/memory/memory.h"
@@ -32,7 +33,7 @@ using Eigen::Vector3f;
 namespace {
 
 constexpr char kInputFrameAnnotationTag[] = "FRAME_ANNOTATION";
-constexpr char kOutputNormRectTag[] = "NORM_RECT";
+constexpr char kOutputNormRectsTag[] = "NORM_RECTS";
 
 }  // namespace
 
@@ -47,14 +48,14 @@ class FrameAnnotationToRectCalculator : public CalculatorBase {
     TOP_VIEW_OFF,
   };
 
-  static ::mediapipe::Status GetContract(CalculatorContract* cc);
-  ::mediapipe::Status Open(CalculatorContext* cc) override;
-  ::mediapipe::Status Process(CalculatorContext* cc) override;
+  static mediapipe::Status GetContract(CalculatorContract* cc);
+  mediapipe::Status Open(CalculatorContext* cc) override;
+  mediapipe::Status Process(CalculatorContext* cc) override;
 
  private:
-  void AnnotationToRect(const FrameAnnotation& annotation,
-                        NormalizedRect* rect);
-  float RotationAngleFromAnnotation(const FrameAnnotation& annotation);
+  void AddAnnotationToRect(const ObjectAnnotation& annotation,
+                           std::vector<NormalizedRect>* rect);
+  float RotationAngleFromAnnotation(const ObjectAnnotation& annotation);
 
   float RotationAngleFromPose(const Matrix3fRM& rotation,
                               const Vector3f& translation, const Vector3f& vec);
@@ -64,17 +65,7 @@ class FrameAnnotationToRectCalculator : public CalculatorBase {
 };
 REGISTER_CALCULATOR(FrameAnnotationToRectCalculator);
 
-::mediapipe::Status FrameAnnotationToRectCalculator::Open(
-    CalculatorContext* cc) {
-  status_ = TOP_VIEW_OFF;
-  const auto& options = cc->Options<FrameAnnotationToRectCalculatorOptions>();
-  off_threshold_ = options.off_threshold();
-  on_threshold_ = options.on_threshold();
-  RET_CHECK(off_threshold_ <= on_threshold_);
-  return ::mediapipe::OkStatus();
-}
-
-::mediapipe::Status FrameAnnotationToRectCalculator::GetContract(
+mediapipe::Status FrameAnnotationToRectCalculator::GetContract(
     CalculatorContract* cc) {
   RET_CHECK(!cc->Inputs().GetTags().empty());
   RET_CHECK(!cc->Outputs().GetTags().empty());
@@ -83,57 +74,69 @@ REGISTER_CALCULATOR(FrameAnnotationToRectCalculator);
     cc->Inputs().Tag(kInputFrameAnnotationTag).Set<FrameAnnotation>();
   }
 
-  if (cc->Outputs().HasTag(kOutputNormRectTag)) {
-    cc->Outputs().Tag(kOutputNormRectTag).Set<NormalizedRect>();
+  if (cc->Outputs().HasTag(kOutputNormRectsTag)) {
+    cc->Outputs().Tag(kOutputNormRectsTag).Set<std::vector<NormalizedRect>>();
   }
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status FrameAnnotationToRectCalculator::Process(
+mediapipe::Status FrameAnnotationToRectCalculator::Open(CalculatorContext* cc) {
+  cc->SetOffset(TimestampDiff(0));
+  status_ = TOP_VIEW_OFF;
+  const auto& options = cc->Options<FrameAnnotationToRectCalculatorOptions>();
+  off_threshold_ = options.off_threshold();
+  on_threshold_ = options.on_threshold();
+  RET_CHECK(off_threshold_ <= on_threshold_);
+  return mediapipe::OkStatus();
+}
+
+mediapipe::Status FrameAnnotationToRectCalculator::Process(
     CalculatorContext* cc) {
   if (cc->Inputs().Tag(kInputFrameAnnotationTag).IsEmpty()) {
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
-  auto output_rect = absl::make_unique<NormalizedRect>();
-  AnnotationToRect(
-      cc->Inputs().Tag(kInputFrameAnnotationTag).Get<FrameAnnotation>(),
-      output_rect.get());
+  auto output_rects = absl::make_unique<std::vector<NormalizedRect>>();
+  const auto& frame_annotation =
+      cc->Inputs().Tag(kInputFrameAnnotationTag).Get<FrameAnnotation>();
+  for (const auto& object_annotation : frame_annotation.annotations()) {
+    AddAnnotationToRect(object_annotation, output_rects.get());
+  }
 
-  // Output
+  // Output.
   cc->Outputs()
-      .Tag(kOutputNormRectTag)
-      .Add(output_rect.release(), cc->InputTimestamp());
-  return ::mediapipe::OkStatus();
+      .Tag(kOutputNormRectsTag)
+      .Add(output_rects.release(), cc->InputTimestamp());
+  return mediapipe::OkStatus();
 }
 
-void FrameAnnotationToRectCalculator::AnnotationToRect(
-    const FrameAnnotation& annotation, NormalizedRect* rect) {
+void FrameAnnotationToRectCalculator::AddAnnotationToRect(
+    const ObjectAnnotation& annotation, std::vector<NormalizedRect>* rects) {
   float x_min = std::numeric_limits<float>::max();
   float x_max = std::numeric_limits<float>::min();
   float y_min = std::numeric_limits<float>::max();
   float y_max = std::numeric_limits<float>::min();
-  const auto& object = annotation.annotations(0);
-  for (const auto& keypoint : object.keypoints()) {
+  for (const auto& keypoint : annotation.keypoints()) {
     const auto& point_2d = keypoint.point_2d();
     x_min = std::min(x_min, point_2d.x());
     x_max = std::max(x_max, point_2d.x());
     y_min = std::min(y_min, point_2d.y());
     y_max = std::max(y_max, point_2d.y());
   }
-  rect->set_x_center((x_min + x_max) / 2);
-  rect->set_y_center((y_min + y_max) / 2);
-  rect->set_width(x_max - x_min);
-  rect->set_height(y_max - y_min);
-  rect->set_rotation(RotationAngleFromAnnotation(annotation));
+  NormalizedRect new_rect;
+  new_rect.set_x_center((x_min + x_max) / 2);
+  new_rect.set_y_center((y_min + y_max) / 2);
+  new_rect.set_width(x_max - x_min);
+  new_rect.set_height(y_max - y_min);
+  new_rect.set_rotation(RotationAngleFromAnnotation(annotation));
+  rects->push_back(new_rect);
 }
 
 float FrameAnnotationToRectCalculator::RotationAngleFromAnnotation(
-    const FrameAnnotation& annotation) {
-  const auto& object = annotation.annotations(0);
+    const ObjectAnnotation& annotation) {
   Box box("category");
   std::vector<Vector3f> vertices_3d;
   std::vector<Vector2f> vertices_2d;
-  for (const auto& keypoint : object.keypoints()) {
+  for (const auto& keypoint : annotation.keypoints()) {
     const auto& point_3d = keypoint.point_3d();
     const auto& point_2d = keypoint.point_2d();
     vertices_3d.emplace_back(

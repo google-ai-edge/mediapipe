@@ -21,7 +21,6 @@
 #include "absl/strings/substitute.h"
 #include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/framework/calculator_base.h"
-#include "mediapipe/framework/calculator_registry_util.h"
 #include "mediapipe/framework/legacy_calculator_support.h"
 #include "mediapipe/framework/packet_generator.h"
 #include "mediapipe/framework/packet_generator.pb.h"
@@ -236,8 +235,14 @@ mediapipe::Status NodeTypeInfo::Initialize(
   }
 #endif
   LegacyCalculatorSupport::Scoped<CalculatorContract> s(&contract_);
-  MP_RETURN_IF_ERROR(VerifyCalculatorWithContract(validated_graph.Package(),
-                                                  node_class, &contract_));
+  // A number of calculators use the non-CC methods on GlCalculatorHelper
+  // even though they are CalculatorBase-based.
+  ASSIGN_OR_RETURN(auto calculator_factory,
+                   CalculatorBaseRegistry::CreateByNameInNamespace(
+                       validated_graph.Package(), node_class),
+                   _ << "Unable to find Calculator \"" << node_class << "\"");
+  MP_RETURN_IF_ERROR(calculator_factory->GetContract(&contract_)).SetPrepend()
+      << node_class << ": ";
 
   // Validate result of FillExpectations or GetContract.
   std::vector<mediapipe::Status> statuses;
@@ -261,10 +266,7 @@ mediapipe::Status NodeTypeInfo::Initialize(
   }
   if (!statuses.empty()) {
     return tool::CombinedStatus(
-        absl::StrCat(node_class,
-                     IsLegacyCalculator(validated_graph.Package(), node_class)
-                         ? "::FillExpectations"
-                         : "::GetContract",
+        absl::StrCat(node_class, "::", calculator_factory->ContractMethodName(),
                      " failed to validate: "),
         statuses);
   }

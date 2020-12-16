@@ -43,6 +43,7 @@ node {
   options: {
     [mediapipe.InferenceCalculatorOptions.ext] {
       model_path: "mediapipe/modules/holistic_landmark/hand_recrop.tflite"
+      delegate { xnnpack {} }
     }
   }
 }

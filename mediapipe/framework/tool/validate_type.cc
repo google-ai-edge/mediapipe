@@ -20,6 +20,7 @@
 
 #include "absl/strings/str_cat.h"
 #include "mediapipe/framework/calculator_contract.h"
+#include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/legacy_calculator_support.h"
 #include "mediapipe/framework/packet_generator.h"
 #include "mediapipe/framework/packet_generator.pb.h"

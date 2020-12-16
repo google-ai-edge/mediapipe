@@ -19,6 +19,7 @@
 
 #include "absl/memory/memory.h"
 #include "mediapipe/calculators/tensor/inference_calculator.pb.h"
+#include "mediapipe/framework/api2/node.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/tensor.h"
 #include "mediapipe/framework/port/ret_check.h"
@@ -88,7 +89,6 @@ bool ShouldUseGpu(const mediapipe::InferenceCalculatorOptions& options) {
 }
 
 constexpr char kTensorsTag[] = "TENSORS";
-}  // namespace
 
 #if defined(MEDIAPIPE_EDGE_TPU)
 #include "edgetpu.h"
@@ -112,7 +112,10 @@ std::unique_ptr<tflite::Interpreter> BuildEdgeTpuInterpreter(
 }
 #endif  // MEDIAPIPE_EDGE_TPU
 
+}  // namespace
+
 namespace mediapipe {
+namespace api2 {
 
 #if MEDIAPIPE_TFLITE_METAL_INFERENCE
 namespace {
@@ -224,12 +227,19 @@ int GetXnnpackNumThreads(const mediapipe::InferenceCalculatorOptions& opts) {
 //  Tensors are assumed to be ordered correctly (sequentially added to model).
 //  Input tensors are assumed to be of the correct size and already normalized.
 
-class InferenceCalculator : public CalculatorBase {
+class InferenceCalculator : public Node {
  public:
   using TfLiteDelegatePtr =
       std::unique_ptr<TfLiteDelegate, std::function<void(TfLiteDelegate*)>>;
 
-  static mediapipe::Status GetContract(CalculatorContract* cc);
+  static constexpr Input<std::vector<Tensor>> kInTensors{"TENSORS"};
+  static constexpr SideInput<tflite::ops::builtin::BuiltinOpResolver>::Optional
+      kSideInCustomOpResolver{"CUSTOM_OP_RESOLVER"};
+  static constexpr SideInput<TfLiteModelPtr>::Optional kSideInModel{"MODEL"};
+  static constexpr Output<std::vector<Tensor>> kOutTensors{"TENSORS"};
+  MEDIAPIPE_NODE_CONTRACT(kInTensors, kSideInCustomOpResolver, kSideInModel,
+                          kOutTensors);
+  static mediapipe::Status UpdateContract(CalculatorContract* cc);
 
   mediapipe::Status Open(CalculatorContext* cc) override;
   mediapipe::Status Process(CalculatorContext* cc) override;
@@ -239,11 +249,12 @@ class InferenceCalculator : public CalculatorBase {
   mediapipe::Status ReadKernelsFromFile();
   mediapipe::Status WriteKernelsToFile();
   mediapipe::Status LoadModel(CalculatorContext* cc);
-  mediapipe::StatusOr<Packet> GetModelAsPacket(const CalculatorContext& cc);
+  mediapipe::StatusOr<mediapipe::Packet> GetModelAsPacket(
+      const CalculatorContext& cc);
   mediapipe::Status LoadDelegate(CalculatorContext* cc);
   mediapipe::Status InitTFLiteGPURunner(CalculatorContext* cc);
 
-  Packet model_packet_;
+  mediapipe::Packet model_packet_;
   std::unique_ptr<tflite::Interpreter> interpreter_;
   TfLiteDelegatePtr delegate_;
 
@@ -277,27 +288,12 @@ class InferenceCalculator : public CalculatorBase {
   std::string cached_kernel_filename_;
 };
 
-REGISTER_CALCULATOR(InferenceCalculator);
+MEDIAPIPE_REGISTER_NODE(InferenceCalculator);
 
-mediapipe::Status InferenceCalculator::GetContract(CalculatorContract* cc) {
-  RET_CHECK(cc->Inputs().HasTag(kTensorsTag));
-  cc->Inputs().Tag(kTensorsTag).Set<std::vector<Tensor>>();
-  RET_CHECK(cc->Outputs().HasTag(kTensorsTag));
-  cc->Outputs().Tag(kTensorsTag).Set<std::vector<Tensor>>();
-
+mediapipe::Status InferenceCalculator::UpdateContract(CalculatorContract* cc) {
   const auto& options = cc->Options<::mediapipe::InferenceCalculatorOptions>();
-  RET_CHECK(!options.model_path().empty() ^
-            cc->InputSidePackets().HasTag("MODEL"))
+  RET_CHECK(!options.model_path().empty() ^ kSideInModel(cc).IsConnected())
       << "Either model as side packet or model path in options is required.";
-
-  if (cc->InputSidePackets().HasTag("CUSTOM_OP_RESOLVER")) {
-    cc->InputSidePackets()
-        .Tag("CUSTOM_OP_RESOLVER")
-        .Set<tflite::ops::builtin::BuiltinOpResolver>();
-  }
-  if (cc->InputSidePackets().HasTag("MODEL")) {
-    cc->InputSidePackets().Tag("MODEL").Set<TfLiteModelPtr>();
-  }
 
   if (ShouldUseGpu(options)) {
 #if MEDIAPIPE_TFLITE_GL_INFERENCE
@@ -310,8 +306,6 @@ mediapipe::Status InferenceCalculator::GetContract(CalculatorContract* cc) {
 }
 
 mediapipe::Status InferenceCalculator::Open(CalculatorContext* cc) {
-  cc->SetOffset(TimestampDiff(0));
-
 #if MEDIAPIPE_TFLITE_GL_INFERENCE || MEDIAPIPE_TFLITE_METAL_INFERENCE
   const auto& options = cc->Options<::mediapipe::InferenceCalculatorOptions>();
   if (ShouldUseGpu(options)) {
@@ -361,11 +355,10 @@ mediapipe::Status InferenceCalculator::Open(CalculatorContext* cc) {
 }
 
 mediapipe::Status InferenceCalculator::Process(CalculatorContext* cc) {
-  if (cc->Inputs().Tag(kTensorsTag).IsEmpty()) {
+  if (kInTensors(cc).IsEmpty()) {
     return mediapipe::OkStatus();
   }
-  const auto& input_tensors =
-      cc->Inputs().Tag(kTensorsTag).Get<std::vector<Tensor>>();
+  const auto& input_tensors = *kInTensors(cc);
   RET_CHECK(!input_tensors.empty());
   auto output_tensors = absl::make_unique<std::vector<Tensor>>();
 #if MEDIAPIPE_TFLITE_METAL_INFERENCE
@@ -509,9 +502,7 @@ mediapipe::Status InferenceCalculator::Process(CalculatorContext* cc) {
                   output_tensors->back().bytes());
     }
   }
-  cc->Outputs()
-      .Tag(kTensorsTag)
-      .Add(output_tensors.release(), cc->InputTimestamp());
+  kOutTensors(cc).Send(std::move(output_tensors));
   return mediapipe::OkStatus();
 }
 
@@ -575,12 +566,9 @@ mediapipe::Status InferenceCalculator::InitTFLiteGPURunner(
 #if MEDIAPIPE_TFLITE_GL_INFERENCE
   ASSIGN_OR_RETURN(model_packet_, GetModelAsPacket(*cc));
   const auto& model = *model_packet_.Get<TfLiteModelPtr>();
-  tflite::ops::builtin::BuiltinOpResolver op_resolver;
-  if (cc->InputSidePackets().HasTag("CUSTOM_OP_RESOLVER")) {
-    op_resolver = cc->InputSidePackets()
-                      .Tag("CUSTOM_OP_RESOLVER")
-                      .Get<tflite::ops::builtin::BuiltinOpResolver>();
-  }
+  tflite::ops::builtin::BuiltinOpResolver op_resolver =
+      kSideInCustomOpResolver(cc).GetOr(
+          tflite::ops::builtin::BuiltinOpResolver());
 
   // Create runner
   tflite::gpu::InferenceOptions options;
@@ -629,12 +617,9 @@ mediapipe::Status InferenceCalculator::InitTFLiteGPURunner(
 mediapipe::Status InferenceCalculator::LoadModel(CalculatorContext* cc) {
   ASSIGN_OR_RETURN(model_packet_, GetModelAsPacket(*cc));
   const auto& model = *model_packet_.Get<TfLiteModelPtr>();
-  tflite::ops::builtin::BuiltinOpResolver op_resolver;
-  if (cc->InputSidePackets().HasTag("CUSTOM_OP_RESOLVER")) {
-    op_resolver = cc->InputSidePackets()
-                      .Tag("CUSTOM_OP_RESOLVER")
-                      .Get<tflite::ops::builtin::BuiltinOpResolver>();
-  }
+  tflite::ops::builtin::BuiltinOpResolver op_resolver =
+      kSideInCustomOpResolver(cc).GetOr(
+          tflite::ops::builtin::BuiltinOpResolver());
 
 #if defined(MEDIAPIPE_EDGE_TPU)
   interpreter_ =
@@ -659,7 +644,7 @@ mediapipe::Status InferenceCalculator::LoadModel(CalculatorContext* cc) {
   return mediapipe::OkStatus();
 }
 
-mediapipe::StatusOr<Packet> InferenceCalculator::GetModelAsPacket(
+mediapipe::StatusOr<mediapipe::Packet> InferenceCalculator::GetModelAsPacket(
     const CalculatorContext& cc) {
   const auto& options = cc.Options<mediapipe::InferenceCalculatorOptions>();
   if (!options.model_path().empty()) {
@@ -845,4 +830,5 @@ mediapipe::Status InferenceCalculator::LoadDelegate(CalculatorContext* cc) {
   return mediapipe::OkStatus();
 }
 
+}  // namespace api2
 }  // namespace mediapipe

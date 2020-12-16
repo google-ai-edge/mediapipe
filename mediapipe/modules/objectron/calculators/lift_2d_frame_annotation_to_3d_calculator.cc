@@ -55,16 +55,16 @@ namespace mediapipe {
 // }
 class Lift2DFrameAnnotationTo3DCalculator : public CalculatorBase {
  public:
-  static ::mediapipe::Status GetContract(CalculatorContract* cc);
+  static mediapipe::Status GetContract(CalculatorContract* cc);
 
-  ::mediapipe::Status Open(CalculatorContext* cc) override;
-  ::mediapipe::Status Process(CalculatorContext* cc) override;
-  ::mediapipe::Status Close(CalculatorContext* cc) override;
+  mediapipe::Status Open(CalculatorContext* cc) override;
+  mediapipe::Status Process(CalculatorContext* cc) override;
+  mediapipe::Status Close(CalculatorContext* cc) override;
 
  private:
-  ::mediapipe::Status ProcessCPU(CalculatorContext* cc,
-                                 FrameAnnotation* output_objects);
-  ::mediapipe::Status LoadOptions(CalculatorContext* cc);
+  mediapipe::Status ProcessCPU(CalculatorContext* cc,
+                               FrameAnnotation* output_objects);
+  mediapipe::Status LoadOptions(CalculatorContext* cc);
 
   // Increment and assign object ID for each detected object.
   // In a single MediaPipe session, the IDs are unique.
@@ -73,23 +73,24 @@ class Lift2DFrameAnnotationTo3DCalculator : public CalculatorBase {
   void AssignObjectIdAndTimestamp(int64 timestamp_us,
                                   FrameAnnotation* annotation);
   std::unique_ptr<Decoder> decoder_;
-  ::mediapipe::Lift2DFrameAnnotationTo3DCalculatorOptions options_;
+  Lift2DFrameAnnotationTo3DCalculatorOptions options_;
   Eigen::Matrix<float, 4, 4, Eigen::RowMajor> projection_matrix_;
 };
 REGISTER_CALCULATOR(Lift2DFrameAnnotationTo3DCalculator);
 
-::mediapipe::Status Lift2DFrameAnnotationTo3DCalculator::GetContract(
+mediapipe::Status Lift2DFrameAnnotationTo3DCalculator::GetContract(
     CalculatorContract* cc) {
   RET_CHECK(cc->Inputs().HasTag(kInputStreamTag));
   RET_CHECK(cc->Outputs().HasTag(kOutputStreamTag));
   cc->Inputs().Tag(kInputStreamTag).Set<FrameAnnotation>();
   cc->Outputs().Tag(kOutputStreamTag).Set<FrameAnnotation>();
 
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status Lift2DFrameAnnotationTo3DCalculator::Open(
+mediapipe::Status Lift2DFrameAnnotationTo3DCalculator::Open(
     CalculatorContext* cc) {
+  cc->SetOffset(TimestampDiff(0));
   MP_RETURN_IF_ERROR(LoadOptions(cc));
   // clang-format off
   projection_matrix_ <<
@@ -101,13 +102,13 @@ REGISTER_CALCULATOR(Lift2DFrameAnnotationTo3DCalculator);
 
   decoder_ = absl::make_unique<Decoder>(
       BeliefDecoderConfig(options_.decoder_config()));
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status Lift2DFrameAnnotationTo3DCalculator::Process(
+mediapipe::Status Lift2DFrameAnnotationTo3DCalculator::Process(
     CalculatorContext* cc) {
   if (cc->Inputs().Tag(kInputStreamTag).IsEmpty()) {
-    return ::mediapipe::OkStatus();
+    return mediapipe::OkStatus();
   }
 
   auto output_objects = absl::make_unique<FrameAnnotation>();
@@ -121,10 +122,10 @@ REGISTER_CALCULATOR(Lift2DFrameAnnotationTo3DCalculator);
         .Add(output_objects.release(), cc->InputTimestamp());
   }
 
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status Lift2DFrameAnnotationTo3DCalculator::ProcessCPU(
+mediapipe::Status Lift2DFrameAnnotationTo3DCalculator::ProcessCPU(
     CalculatorContext* cc, FrameAnnotation* output_objects) {
   const auto& input_frame_annotations =
       cc->Inputs().Tag(kInputStreamTag).Get<FrameAnnotation>();
@@ -140,21 +141,20 @@ REGISTER_CALCULATOR(Lift2DFrameAnnotationTo3DCalculator);
   AssignObjectIdAndTimestamp(cc->InputTimestamp().Microseconds(),
                              output_objects);
 
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status Lift2DFrameAnnotationTo3DCalculator::Close(
+mediapipe::Status Lift2DFrameAnnotationTo3DCalculator::Close(
     CalculatorContext* cc) {
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status Lift2DFrameAnnotationTo3DCalculator::LoadOptions(
+mediapipe::Status Lift2DFrameAnnotationTo3DCalculator::LoadOptions(
     CalculatorContext* cc) {
   // Get calculator options specified in the graph.
-  options_ =
-      cc->Options<::mediapipe::Lift2DFrameAnnotationTo3DCalculatorOptions>();
+  options_ = cc->Options<Lift2DFrameAnnotationTo3DCalculatorOptions>();
 
-  return ::mediapipe::OkStatus();
+  return mediapipe::OkStatus();
 }
 
 void Lift2DFrameAnnotationTo3DCalculator::AssignObjectIdAndTimestamp(

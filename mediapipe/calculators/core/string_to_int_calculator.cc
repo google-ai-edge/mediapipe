@@ -61,7 +61,7 @@ class StringToIntCalculatorTemplate : public CalculatorBase {
 using StringToIntCalculator = StringToIntCalculatorTemplate<int>;
 REGISTER_CALCULATOR(StringToIntCalculator);
 
-using StringToUintCalculator = StringToIntCalculatorTemplate<uint>;
+using StringToUintCalculator = StringToIntCalculatorTemplate<unsigned int>;
 REGISTER_CALCULATOR(StringToUintCalculator);
 
 using StringToInt32Calculator = StringToIntCalculatorTemplate<int32>;
