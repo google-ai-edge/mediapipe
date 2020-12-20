@@ -116,7 +116,7 @@ mediapipe::Status TensorsToLandmarksCalculator::Open(CalculatorContext* cc) {
   if (kOutNormalizedLandmarkList(cc).IsConnected()) {
     RET_CHECK(options_.has_input_image_height() &&
               options_.has_input_image_width())
-        << "Must provide input with/height for getting normalized landmarks.";
+        << "Must provide input width/height for getting normalized landmarks.";
   }
   if (kOutLandmarkList(cc).IsConnected() &&
       (options_.flip_horizontally() || options_.flip_vertically() ||
@@ -124,7 +124,7 @@ mediapipe::Status TensorsToLandmarksCalculator::Open(CalculatorContext* cc) {
        kFlipVertically(cc).IsConnected())) {
     RET_CHECK(options_.has_input_image_height() &&
               options_.has_input_image_width())
-        << "Must provide input with/height for using flipping when outputing "
+        << "Must provide input width/height for using flipping when outputing "
            "landmarks in absolute coordinates.";
   }
   return mediapipe::OkStatus();

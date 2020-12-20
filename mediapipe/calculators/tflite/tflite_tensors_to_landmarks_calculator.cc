@@ -149,7 +149,7 @@ mediapipe::Status TfLiteTensorsToLandmarksCalculator::Open(
   if (cc->Outputs().HasTag("NORM_LANDMARKS")) {
     RET_CHECK(options_.has_input_image_height() &&
               options_.has_input_image_width())
-        << "Must provide input with/height for getting normalized landmarks.";
+        << "Must provide input width/height for getting normalized landmarks.";
   }
   if (cc->Outputs().HasTag("LANDMARKS") &&
       (options_.flip_vertically() || options_.flip_horizontally() ||
@@ -157,7 +157,7 @@ mediapipe::Status TfLiteTensorsToLandmarksCalculator::Open(
        cc->InputSidePackets().HasTag("FLIP_VERTICALLY"))) {
     RET_CHECK(options_.has_input_image_height() &&
               options_.has_input_image_width())
-        << "Must provide input with/height for using flip_vertically option "
+        << "Must provide input width/height for using flip_vertically option "
            "when outputing landmarks in absolute coordinates.";
   }
 
