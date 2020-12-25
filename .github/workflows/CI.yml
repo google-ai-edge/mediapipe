@@ -1,0 +1,33 @@
+name: PullRequest
+
+on: [pull_request]
+
+jobs:
+  buildTest:
+    name: Build
+    runs-on: macOS-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2.3.4
+      - name: Install Android SDK
+        uses: malinskiy/action-android/install-sdk@release/0.1.0
+      - name: Install prerequisite
+        run: | 
+          brew install opencv@3
+          brew install python
+          python --version
+          pip3 install --user six
+      - name: Build project
+        run: |
+          export ANDROID_HOME=/Users/runner/Library/Android/sdk
+          export ANDROID_NDK_HOME=$ANDROID_HOME/ndk-bundle 
+          echo a | ./build_android_examples.sh
+      - name: Show result
+        run: git status
+      - name: Archive APK
+        uses: actions/upload-artifact@v2.2.1
+        if: ${{ always() }}
+        with:
+          name: APKs
+          path: ./*.apk
+          if-no-files-found: error
