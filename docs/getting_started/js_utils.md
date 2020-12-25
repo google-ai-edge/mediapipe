@@ -56,41 +56,73 @@ drawRectangle(canvasContext, {
 })
 ```
 This allows drawing of a rectangle, with a certain width, height and rotation given the coordinates of its location.
-
-The quickest way to get acclimated is to look at the examples above. Each demo
-has a link to a [CodePen][codepen] so that you can edit the code and try it
-yourself. We have included a number of utility packages to help you get started:
-
-*   [@mediapipe/drawing_utils][draw-npm] - Utilities to draw landmarks and
-    connectors.
-*   [@mediapipe/camera_utils][cam-npm] - Utilities to operate the camera.
-*   [@mediapipe/control_utils][ctrl-npm] - Utilities to show sliders and FPS
-    widgets.
-
-Note: See these demos and more at [MediaPipe on CodePen][codepen]
-
-All of these solutions are staged in [NPM][npm]. You can install any package
-locally with `npm install`. Example:
+                                                              
+### Camera Utilities
+This module has a `Camera` object that can be initialized and used easily, like below.
+```js
+// Our input frames will come from here.
+const videoElement =
+    document.getElementsByClassName('input_video')[0];
+const camera = new Camera(videoElement, {
+  onFrame: async () => {
+    // Send it to a demo, for example, hands
+    await hands.send({image: videoElement});
+  },
+  // Set the width of camera to be rendered
+  width: 1280,
+  // And set the height
+  height: 720
+});
+// Start the camera.
+// Note: It will ask the user for permission, and will error out if this is not given.
+camera.start();
+```
+### Control Panel Utilities
+To showcase and monitor the model in elegant ways, MediaPipe has this Control Panel module.
+This panel is also convenient to use and set up.
+```js
+// Pass in a <div>
+new ControlPanel(controlsElement, {
+      // Whether to invert the camera, defaults to false
+      selfieMode: true,
+      // Maximum Number of Hands to detect, a placeholder, only when using Hands API
+      maxNumHands: 2,
+      // Minimum Confidence score
+      minDetectionConfidence: 0.5,
+      // Minimum Tracking score
+      minTrackingConfidence: 0.5
+    })
+    .add([
+      // a StaticText is simply a label
+      new StaticText({title: 'MediaPipe Hands'}),
+      // a Toggle is one with only 2 options (i.e., true or false)
+      new Toggle({title: 'Selfie Mode', field: 'selfieMode'}),
+      // A slider can have multiple options. This will have the options 1,2,3 and 4. 
+      // Range determines maximum and minimum allowed value
+      // Step determines the difference between two options
+      new Slider(
+          {title: 'Max Number of Hands', field: 'maxNumHands', range: [1, 4], step: 1}),
+      new Slider({
+        title: 'Min Detection Confidence',
+        field: 'minDetectionConfidence',
+        range: [0, 1],
+        step: 0.01
+      }),
+      new Slider({
+        title: 'Min Tracking Confidence',
+        field: 'minTrackingConfidence',
+        range: [0, 1],
+        step: 0.01
+      }),
+    ])
+    // This is run when an option is updated. 
+    // the options object will contain parameters for all the above in a array.
+    .on(options => {
+      videoElement.classList.toggle('selfie', options.selfieMode);
+      hands.setOptions(options);
+    });
 
 ```
-npm install @mediapipe/holistic.
-```
-
-If you would rather not stage these locally, you can rely on a CDN (e.g.,
-[jsDelivr](https://www.jsdelivr.com/)). This will allow you to add scripts
-directly to your HTML:
-
-```
-<head>
-<script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils@0.1/drawing_utils.js" crossorigin="anonymous"></script>
-<script src="https://cdn.jsdelivr.net/npm/@mediapipe/holistic@0.1/holistic.js" crossorigin="anonymous"></script>
-</head>
-```
-
-Note: You can specify version numbers to both NPM and jsdelivr. They are
-structured as `<major>.<minor>.<build>`. To prevent breaking changes from
-affecting your work, restrict your request to a `<minor>` number. e.g.,
-`@mediapipe/holistic@0.1`.
 
 [Ho-pg]: ../solutions/holistic#javascript-solution-api
 [F-pg]: ../solutions/face_mesh#javascript-solution-api
