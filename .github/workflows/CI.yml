@@ -21,6 +21,14 @@ jobs:
         run: |
           export ANDROID_HOME=/Users/runner/Library/Android/sdk
           export ANDROID_NDK_HOME=$ANDROID_HOME/ndk-bundle 
-          echo a | ./build_android_examples.sh
+          bazel build -c opt --host_crosstool_top=@bazel_tools//tools/cpp:toolchain --fat_apk_cpu=arm64-v8a,armeabi-v7a //mediapipe/examples/android/src/java/com/google/mediapipe/apps/aar_example:mp_face_detection_aar
       - name: Show result
         run: git status
+      - name: Search AAR
+        run: find bazel-bin/mediapipe/ -name *.aar | xargs ls -la
+      - name: Archive AAR
+        uses: actions/upload-artifact@v2.2.1
+        if: ${{ always() }}
+        with:
+          name: AAR-library
+          path: bazel-bin/mediapipe//examples/android/src/java/com/google/mediapipe/apps/**/*.aar
