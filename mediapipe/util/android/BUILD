@@ -53,4 +53,5 @@ cc_library(
         "-landroid",
         "-llog",
     ],
+    visibility = ["//visibility:public"],
 )
