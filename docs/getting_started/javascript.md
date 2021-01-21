@@ -23,6 +23,8 @@ Solution          | NPM Package                   | Example
 [Pose][P-pg]      | [@mediapipe/pose][P-npm]      | [mediapipe.dev/demo/pose][P-demo]
 [Holistic][Ho-pg] | [@mediapipe/holistic][Ho-npm] | [mediapipe.dev/demo/holistic][Ho-demo]
 
+Note: Also see the [Holistic Remote demo][Ho-Re], which explores more options in the Holistic Demo. <!--This doesn't have a CodePen or NPM repository yet.-->
+
 Click on a solution link above for more information, including API and code
 snippets.
 
@@ -81,6 +83,7 @@ affecting your work, restrict your request to a `<minor>` number. e.g.,
 [H-pen]: https://code.mediapipe.dev/codepen/hands
 [P-pen]: https://code.mediapipe.dev/codepen/pose
 [Ho-demo]: https://mediapipe.dev/demo/holistic
+[Ho-Re]: https://mediapipe.dev/demo/holistic_remote
 [F-demo]: https://mediapipe.dev/demo/face_mesh
 [H-demo]: https://mediapipe.dev/demo/hands
 [P-demo]: https://mediapipe.dev/demo/pose
