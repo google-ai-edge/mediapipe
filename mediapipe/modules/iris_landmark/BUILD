@@ -78,7 +78,7 @@ mediapipe_simple_subgraph(
     register_as = "IrisLandmarkLeftAndRightFromFaceLandmarksGpu",
     deps = [
         ":iris_landmark_left_and_right_gpu",
-        "//mediapipe/calculators/core:concateneate_normalized_landmark_list_calculator",
+        "//mediapipe/calculators/core:concatenate_normalized_landmark_list_calculator",
         "//mediapipe/calculators/core:split_normalized_landmark_list_calculator",
         "//mediapipe/graphs/iris_tracking/calculators:update_face_landmarks_calculator",
     ],
@@ -103,7 +103,7 @@ mediapipe_simple_subgraph(
     register_as = "IrisLandmarkLeftAndRightFromFaceLandmarksCpu",
     deps = [
         ":iris_landmark_left_and_right_cpu",
-        "//mediapipe/calculators/core:concateneate_normalized_landmark_list_calculator",
+        "//mediapipe/calculators/core:concatenate_normalized_landmark_list_calculator",
         "//mediapipe/calculators/core:split_normalized_landmark_list_calculator",
         "//mediapipe/graphs/iris_tracking/calculators:update_face_landmarks_calculator",
     ],

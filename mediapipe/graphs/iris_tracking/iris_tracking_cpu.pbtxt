@@ -61,60 +61,18 @@ node {
   }
 }
 
-# Gets two landmarks which define left eye boundary.
-node {
-  calculator: "SplitNormalizedLandmarkListCalculator"
-  input_stream: "face_landmarks"
-  output_stream: "left_eye_boundary_landmarks"
-  node_options: {
-    [type.googleapis.com/mediapipe.SplitVectorCalculatorOptions] {
-      ranges: { begin: 33 end: 34 }
-      ranges: { begin: 133 end: 134 }
-      combine_outputs: true
-    }
-  }
-}
-
-# Gets two landmarks which define right eye boundary.
-node {
-  calculator: "SplitNormalizedLandmarkListCalculator"
-  input_stream: "face_landmarks"
-  output_stream: "right_eye_boundary_landmarks"
-  node_options: {
-    [type.googleapis.com/mediapipe.SplitVectorCalculatorOptions] {
-      ranges: { begin: 362 end: 363 }
-      ranges: { begin: 263 end: 264 }
-      combine_outputs: true
-    }
-  }
-}
-
 # Detects iris landmarks, eye contour landmarks, and corresponding rect (ROI).
 node {
-  calculator: "IrisLandmarkLeftAndRightCpu"
+  calculator: "IrisLandmarkLeftAndRightFromFaceLandmarksCpu"
   input_stream: "IMAGE:input_video"
-  input_stream: "LEFT_EYE_BOUNDARY_LANDMARKS:left_eye_boundary_landmarks"
-  input_stream: "RIGHT_EYE_BOUNDARY_LANDMARKS:right_eye_boundary_landmarks"
+  input_stream: "FACE_LANDMARKS:face_landmarks"
+  output_stream: "UPDATED_FACE_LANDMARKS:updated_face_landmarks"
   output_stream: "LEFT_EYE_CONTOUR_LANDMARKS:left_eye_contour_landmarks"
   output_stream: "LEFT_EYE_IRIS_LANDMARKS:left_iris_landmarks"
   output_stream: "LEFT_EYE_ROI:left_eye_rect_from_landmarks"
   output_stream: "RIGHT_EYE_CONTOUR_LANDMARKS:right_eye_contour_landmarks"
   output_stream: "RIGHT_EYE_IRIS_LANDMARKS:right_iris_landmarks"
   output_stream: "RIGHT_EYE_ROI:right_eye_rect_from_landmarks"
-}
-
-node {
-  calculator: "ConcatenateNormalizedLandmarkListCalculator"
-  input_stream: "left_eye_contour_landmarks"
-  input_stream: "right_eye_contour_landmarks"
-  output_stream: "refined_eye_landmarks"
-}
-
-node {
-  calculator: "UpdateFaceLandmarksCalculator"
-  input_stream: "NEW_EYE_LANDMARKS:refined_eye_landmarks"
-  input_stream: "FACE_LANDMARKS:face_landmarks"
-  output_stream: "UPDATED_FACE_LANDMARKS:updated_face_landmarks"
 }
 
 # Renders annotations and overlays them on top of the input images.

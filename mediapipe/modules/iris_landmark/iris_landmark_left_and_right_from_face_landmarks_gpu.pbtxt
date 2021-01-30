@@ -3,7 +3,7 @@
 type: "IrisLandmarkLeftAndRightFromFaceLandmarksGpu"
 
 # GPU image. (GpuBuffer)
-input_stream: "IMAGE:input_video"
+input_stream: "IMAGE:image"
 # Face landmarks. (NormalizedLandmarkList)
 input_stream: "FACE_LANDMARKS:face_landmarks"
 
@@ -55,7 +55,7 @@ node {
 # Detects iris landmarks, eye contour landmarks, and corresponding rect (ROI).
 node {
   calculator: "IrisLandmarkLeftAndRightGpu"
-  input_stream: "IMAGE:input_image"
+  input_stream: "IMAGE:image"
   input_stream: "LEFT_EYE_BOUNDARY_LANDMARKS:left_eye_boundary_landmarks"
   input_stream: "RIGHT_EYE_BOUNDARY_LANDMARKS:right_eye_boundary_landmarks"
   output_stream: "LEFT_EYE_CONTOUR_LANDMARKS:left_eye_contour_landmarks"
