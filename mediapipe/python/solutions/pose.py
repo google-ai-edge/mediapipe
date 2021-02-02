@@ -41,7 +41,7 @@ from mediapipe.python.solution_base import SolutionBase
 
 
 class PoseLandmark(enum.IntEnum):
-  """The 25 (upper-body) pose landmarks."""
+  """The 33 pose (first 25 are upper-body) landmarks."""
   NOSE = 0
   LEFT_EYE_INNER = 1
   LEFT_EYE = 2
@@ -114,6 +114,35 @@ POSE_CONNECTIONS = frozenset([
     (PoseLandmark.LEFT_HEEL, PoseLandmark.LEFT_FOOT_INDEX),
     (PoseLandmark.RIGHT_ANKLE, PoseLandmark.RIGHT_FOOT_INDEX),
     (PoseLandmark.LEFT_ANKLE, PoseLandmark.LEFT_FOOT_INDEX),
+])
+
+UPPER_POSE_CONNECTIONS = frozenset([
+    (PoseLandmark.NOSE, PoseLandmark.RIGHT_EYE_INNER),
+    (PoseLandmark.RIGHT_EYE_INNER, PoseLandmark.RIGHT_EYE),
+    (PoseLandmark.RIGHT_EYE, PoseLandmark.RIGHT_EYE_OUTER),
+    (PoseLandmark.RIGHT_EYE_OUTER, PoseLandmark.RIGHT_EAR),
+    (PoseLandmark.NOSE, PoseLandmark.LEFT_EYE_INNER),
+    (PoseLandmark.LEFT_EYE_INNER, PoseLandmark.LEFT_EYE),
+    (PoseLandmark.LEFT_EYE, PoseLandmark.LEFT_EYE_OUTER),
+    (PoseLandmark.LEFT_EYE_OUTER, PoseLandmark.LEFT_EAR),
+    (PoseLandmark.MOUTH_RIGHT, PoseLandmark.MOUTH_LEFT),
+    (PoseLandmark.RIGHT_SHOULDER, PoseLandmark.LEFT_SHOULDER),
+    (PoseLandmark.RIGHT_SHOULDER, PoseLandmark.RIGHT_ELBOW),
+    (PoseLandmark.RIGHT_ELBOW, PoseLandmark.RIGHT_WRIST),
+    (PoseLandmark.RIGHT_WRIST, PoseLandmark.RIGHT_PINKY),
+    (PoseLandmark.RIGHT_WRIST, PoseLandmark.RIGHT_INDEX),
+    (PoseLandmark.RIGHT_WRIST, PoseLandmark.RIGHT_THUMB),
+    (PoseLandmark.RIGHT_PINKY, PoseLandmark.RIGHT_INDEX),
+    (PoseLandmark.LEFT_SHOULDER, PoseLandmark.LEFT_ELBOW),
+    (PoseLandmark.LEFT_ELBOW, PoseLandmark.LEFT_WRIST),
+    (PoseLandmark.LEFT_WRIST, PoseLandmark.LEFT_PINKY),
+    (PoseLandmark.LEFT_WRIST, PoseLandmark.LEFT_INDEX),
+    (PoseLandmark.LEFT_WRIST, PoseLandmark.LEFT_THUMB),
+    (PoseLandmark.LEFT_PINKY, PoseLandmark.LEFT_INDEX),
+    (PoseLandmark.RIGHT_SHOULDER, PoseLandmark.RIGHT_HIP),
+    (PoseLandmark.LEFT_SHOULDER, PoseLandmark.LEFT_HIP),
+    (PoseLandmark.RIGHT_HIP, PoseLandmark.LEFT_HIP),
+    (PoseLandmark.RIGHT_HIP, PoseLandmark.LEFT_HIP),
 ])
 
 
