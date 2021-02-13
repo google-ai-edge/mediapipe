@@ -121,7 +121,7 @@ def process_profile(profile_path, our_app_id_re):
   app_name = match.group(1)
   app_dir_name = app_name.lower()
   if app_dir_name not in example_names:
-    print(f"The app id '{app_id}' has our prefix, but does not seem to match" +
+    print(f"The app id '{app_id}' has our prefix, but does not seem to match " +
           "any of our examples. Skipping.")
     return
 
