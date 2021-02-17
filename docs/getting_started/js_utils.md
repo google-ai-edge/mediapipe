@@ -136,10 +136,10 @@ new ControlPanel(controlsElement, {
 
 ```
 
-[Ho-pg]: ../solutions/holistic#javascript-solution-api
-[F-pg]: ../solutions/face_mesh#javascript-solution-api
-[H-pg]: ../solutions/hands#javascript-solution-api
-[P-pg]: ../solutions/pose#javascript-solution-api
+[Ho-pg]: ../solutions/holistic.md#javascript-solution-api
+[F-pg]: ../solutions/face_mesh.md#javascript-solution-api
+[H-pg]: ../solutions/hands.md#javascript-solution-api
+[P-pg]: ../solutions/pose.md#javascript-solution-api
 [Ho-npm]: https://www.npmjs.com/package/@mediapipe/holistic
 [F-npm]: https://www.npmjs.com/package/@mediapipe/face_mesh
 [H-npm]: https://www.npmjs.com/package/@mediapipe/hands
