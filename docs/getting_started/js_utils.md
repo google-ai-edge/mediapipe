@@ -81,10 +81,11 @@ camera.start();
 To showcase and monitor the model in elegant ways, MediaPipe has this Control Panel module.
 This panel is also convenient to use and set up.                       
 One of the most interesting features is the built-in `FPS` object that allows us to monitor the FPS or Frames per Second.
+> Note that the event handler function mentioned in the code is [this][Ho-pg]
 ```js
 // Initialize the FPS control
 const fpsControl = new FPS();
-// In the event handler function onResults() in the [Hands demo][Ho-pg]()
+// In the event handler function onResults() 
 function onResults(results) {
     // Tick the FPS, i.e., set Incrementation breaks
     fpsControl.tick();
