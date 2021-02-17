@@ -79,8 +79,17 @@ camera.start();
 ```
 ### Control Panel Utilities
 To showcase and monitor the model in elegant ways, MediaPipe has this Control Panel module.
-This panel is also convenient to use and set up.
+This panel is also convenient to use and set up.                       
+One of the most interesting features is the built-in `FPS` object that allows us to monitor the FPS or Frames per Second.
 ```js
+// Initialize the FPS control
+const fpsControl = new FPS();
+// In the event handler function onResults() in the [Hands demo][Ho-pg]()
+function onResults(results) {
+    // Tick the FPS, i.e., set Incrementation breaks
+    fpsControl.tick();
+    // then do the required processing on the results object
+    
 // Pass in a <div>
 new ControlPanel(controlsElement, {
       // Whether to invert the camera, defaults to false
@@ -95,6 +104,8 @@ new ControlPanel(controlsElement, {
     .add([
       // a StaticText is simply a label
       new StaticText({title: 'MediaPipe Hands'}),
+      // Add the FPS control to the Control Panel
+      fpsControl,
       // a Toggle is one with only 2 options (i.e., true or false)
       new Toggle({title: 'Selfie Mode', field: 'selfieMode'}),
       // A slider can have multiple options. This will have the options 1,2,3 and 4. 
