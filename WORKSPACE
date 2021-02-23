@@ -125,16 +125,16 @@ http_archive(
 # ...but the Java download is currently broken, so we use the "source" download.
 http_archive(
     name = "com_google_protobuf_javalite",
-    sha256 = "a79d19dcdf9139fa4b81206e318e33d245c4c9da1ffed21c87288ed4380426f9",
-    strip_prefix = "protobuf-3.11.4",
-    urls = ["https://github.com/protocolbuffers/protobuf/archive/v3.11.4.tar.gz"],
+    sha256 = "f18a40816260a9a3190a94efb0fc26270b244a2436681602f0a944739095d632",
+    strip_prefix = "protobuf-3.15.1",
+    urls = ["https://github.com/protocolbuffers/protobuf/archive/v3.15.1.tar.gz"],
 )
 
 http_archive(
     name = "com_google_protobuf",
-    sha256 = "a79d19dcdf9139fa4b81206e318e33d245c4c9da1ffed21c87288ed4380426f9",
-    strip_prefix = "protobuf-3.11.4",
-    urls = ["https://github.com/protocolbuffers/protobuf/archive/v3.11.4.tar.gz"],
+    sha256 = "f18a40816260a9a3190a94efb0fc26270b244a2436681602f0a944739095d632",
+    strip_prefix = "protobuf-3.15.1",
+    urls = ["https://github.com/protocolbuffers/protobuf/archive/v3.15.1.tar.gz"],
     patches = [
         "@//third_party:com_google_protobuf_fixes.diff"
     ],
