@@ -40,14 +40,14 @@ static constexpr char kEnvironmentTag[] = "ENVIRONMENT";
 //
 class EnvGeneratorCalculator : public CalculatorBase {
  public:
-  static mediapipe::Status GetContract(CalculatorContract* cc) {
+  static absl::Status GetContract(CalculatorContract* cc) {
     cc->OutputSidePackets()
         .Tag(kEnvironmentTag)
         .Set<face_geometry::Environment>();
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
-  mediapipe::Status Open(CalculatorContext* cc) override {
+  absl::Status Open(CalculatorContext* cc) override {
     cc->SetOffset(mediapipe::TimestampDiff(0));
 
     const face_geometry::Environment& environment =
@@ -60,15 +60,15 @@ class EnvGeneratorCalculator : public CalculatorBase {
         .Tag(kEnvironmentTag)
         .Set(mediapipe::MakePacket<face_geometry::Environment>(environment));
 
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
-  mediapipe::Status Process(CalculatorContext* cc) override {
-    return mediapipe::OkStatus();
+  absl::Status Process(CalculatorContext* cc) override {
+    return absl::OkStatus();
   }
 
-  mediapipe::Status Close(CalculatorContext* cc) override {
-    return mediapipe::OkStatus();
+  absl::Status Close(CalculatorContext* cc) override {
+    return absl::OkStatus();
   }
 };
 

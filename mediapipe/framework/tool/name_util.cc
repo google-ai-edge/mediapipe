@@ -17,6 +17,7 @@
 #include <set>
 #include <unordered_map>
 
+#include "absl/container/flat_hash_set.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
 #include "mediapipe/framework/port/map_util.h"
@@ -47,16 +48,14 @@ std::string GetUnusedNodeName(const CalculatorGraphConfig& config,
 std::string GetUnusedSidePacketName(
     const CalculatorGraphConfig& config,
     const std::string& input_side_packet_name_base) {
-  std::unordered_map<std::string,
-                     std::vector<::mediapipe::CalculatorGraphConfig::Node>>
-      input_side_packets;
+  absl::flat_hash_set<std::string> input_side_packets;
   for (const ::mediapipe::CalculatorGraphConfig::Node& node : config.node()) {
     for (const auto& tag_and_name : node.input_side_packet()) {
       std::string tag;
       std::string name;
       int index;
       MEDIAPIPE_CHECK_OK(ParseTagIndexName(tag_and_name, &tag, &index, &name));
-      input_side_packets[name].push_back(node);
+      input_side_packets.insert(name);
     }
   }
   std::string candidate = input_side_packet_name_base;

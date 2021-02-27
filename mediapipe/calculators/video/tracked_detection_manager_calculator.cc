@@ -106,7 +106,15 @@ Detection GetAxisAlignedDetectionFromTrackedDetection(
   } else {
     detection.set_detection_id(tracked_detection.unique_id());
   }
+
+  // Sort the labels by descending scores.
+  std::vector<std::pair<std::string, float>> labels_and_scores;
   for (const auto& label_and_score : tracked_detection.label_to_score_map()) {
+    labels_and_scores.push_back(label_and_score);
+  }
+  std::sort(labels_and_scores.begin(), labels_and_scores.end(),
+            [](const auto& a, const auto& b) { return a.second > b.second; });
+  for (const auto& label_and_score : labels_and_scores) {
     detection.add_label(label_and_score.first);
     detection.add_score(label_and_score.second);
   }
@@ -139,10 +147,10 @@ Detection GetAxisAlignedDetectionFromTrackedDetection(
 // }
 class TrackedDetectionManagerCalculator : public CalculatorBase {
  public:
-  static mediapipe::Status GetContract(CalculatorContract* cc);
-  mediapipe::Status Open(CalculatorContext* cc) override;
+  static absl::Status GetContract(CalculatorContract* cc);
+  absl::Status Open(CalculatorContext* cc) override;
 
-  mediapipe::Status Process(CalculatorContext* cc) override;
+  absl::Status Process(CalculatorContext* cc) override;
 
  private:
   // Adds new list of detections to |waiting_for_update_detections_|.
@@ -161,7 +169,7 @@ class TrackedDetectionManagerCalculator : public CalculatorBase {
 };
 REGISTER_CALCULATOR(TrackedDetectionManagerCalculator);
 
-mediapipe::Status TrackedDetectionManagerCalculator::GetContract(
+absl::Status TrackedDetectionManagerCalculator::GetContract(
     CalculatorContract* cc) {
   if (cc->Inputs().HasTag(kDetectionsTag)) {
     cc->Inputs().Tag(kDetectionsTag).Set<std::vector<Detection>>();
@@ -183,20 +191,18 @@ mediapipe::Status TrackedDetectionManagerCalculator::GetContract(
     cc->Outputs().Tag(kDetectionBoxesTag).Set<std::vector<NormalizedRect>>();
   }
 
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-mediapipe::Status TrackedDetectionManagerCalculator::Open(
-    CalculatorContext* cc) {
+absl::Status TrackedDetectionManagerCalculator::Open(CalculatorContext* cc) {
   mediapipe::TrackedDetectionManagerCalculatorOptions options =
       cc->Options<mediapipe::TrackedDetectionManagerCalculatorOptions>();
   tracked_detection_manager_.SetConfig(
       options.tracked_detection_manager_options());
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-mediapipe::Status TrackedDetectionManagerCalculator::Process(
-    CalculatorContext* cc) {
+absl::Status TrackedDetectionManagerCalculator::Process(CalculatorContext* cc) {
   if (cc->Inputs().HasTag(kTrackingBoxesTag) &&
       !cc->Inputs().Tag(kTrackingBoxesTag).IsEmpty()) {
     const TimedBoxProtoList& tracked_boxes =
@@ -296,7 +302,7 @@ mediapipe::Status TrackedDetectionManagerCalculator::Process(
     AddDetectionList(detection_list, cc);
   }
 
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
 void TrackedDetectionManagerCalculator::AddDetectionList(

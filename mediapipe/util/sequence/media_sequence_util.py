@@ -22,8 +22,14 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-
+import types
 import tensorflow.compat.v1 as tf
+
+
+def function_with_default(f, default):
+  """Creates a new function with a default last parameter."""
+  return types.FunctionType(f.__code__, f.__globals__, f.__name__,
+                            (default,), f.__closure__)
 
 
 def add_functions_to_module(function_dict, module_dict=None):

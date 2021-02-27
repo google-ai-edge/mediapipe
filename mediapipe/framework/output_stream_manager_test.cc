@@ -58,13 +58,13 @@ class OutputStreamManagerTest : public ::testing::Test {
     output_stream_shard_.SetSpec(output_stream_manager_->Spec());
     output_stream_manager_->ResetShard(&output_stream_shard_);
 
-    std::shared_ptr<tool::TagMap> tag_map = tool::CreateTagMap(1).ValueOrDie();
-    mediapipe::StatusOr<std::unique_ptr<mediapipe::InputStreamHandler>>
+    std::shared_ptr<tool::TagMap> tag_map = tool::CreateTagMap(1).value();
+    absl::StatusOr<std::unique_ptr<mediapipe::InputStreamHandler>>
         status_or_handler = InputStreamHandlerRegistry::CreateByName(
             "DefaultInputStreamHandler", tag_map, /*cc_manager=*/nullptr,
             MediaPipeOptions(), /*calculator_run_in_parallel=*/false);
     ASSERT_TRUE(status_or_handler.ok());
-    input_stream_handler_ = std::move(status_or_handler.ValueOrDie());
+    input_stream_handler_ = std::move(status_or_handler.value());
     const CollectionItemId& id = tag_map->BeginId();
 
     MP_ASSERT_OK(input_stream_manager_.Initialize("a_test", &packet_type_,
@@ -85,7 +85,7 @@ class OutputStreamManagerTest : public ::testing::Test {
 
   void ScheduleNoOp(CalculatorContext* cc) {}
 
-  void RecordError(const mediapipe::Status& error) { errors_.push_back(error); }
+  void RecordError(const absl::Status& error) { errors_.push_back(error); }
 
   void ReportQueueNoOp(InputStreamManager* stream, bool* stream_was_full) {}
 
@@ -104,7 +104,7 @@ class OutputStreamManagerTest : public ::testing::Test {
   std::function<void()> headers_ready_callback_;
   std::function<void()> notification_callback_;
   std::function<void(CalculatorContext*)> schedule_callback_;
-  std::function<void(mediapipe::Status)> error_callback_;
+  std::function<void(absl::Status)> error_callback_;
   InputStreamManager::QueueSizeCallback queue_full_callback_;
   InputStreamManager::QueueSizeCallback queue_not_full_callback_;
 
@@ -114,7 +114,7 @@ class OutputStreamManagerTest : public ::testing::Test {
   InputStreamManager input_stream_manager_;
 
   // Vector of errors encountered while using the stream.
-  std::vector<mediapipe::Status> errors_;
+  std::vector<absl::Status> errors_;
 };
 
 TEST_F(OutputStreamManagerTest, Init) {}

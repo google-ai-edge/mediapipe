@@ -186,6 +186,175 @@ trained our 3D object detection models. The technical details of the Objectron
 dataset, including usage and tutorials, are available on
 the [dataset website](https://github.com/google-research-datasets/Objectron/).
 
+## Solution APIs
+
+### Cross-platform Configuration Options
+
+Naming style and availability may differ slightly across platforms/languages.
+
+#### static_image_mode
+
+If set to `false`, the solution treats the input images as a video stream. It
+will try to detect objects in the very first images, and upon successful
+detection further localizes the 3D bounding box landmarks. In subsequent images,
+once all [max_num_objects](#max_num_objects) objects are detected and the
+corresponding 3D bounding box landmarks are localized, it simply tracks those
+landmarks without invoking another detection until it loses track of any of the
+objects. This reduces latency and is ideal for processing video frames. If set
+to `true`, object detection runs every input image, ideal for processing a batch
+of static, possibly unrelated, images. Default to `false`.
+
+#### max_num_objects
+
+Maximum number of objects to detect. Default to `5`.
+
+#### min_detection_confidence
+
+Minimum confidence value (`[0.0, 1.0]`) from the object-detection model for the
+detection to be considered successful. Default to `0.5`.
+
+#### min_tracking_confidence
+
+Minimum confidence value (`[0.0, 1.0]`) from the landmark-tracking model for the
+3D bounding box landmarks to be considered tracked successfully, or otherwise
+object detection will be invoked automatically on the next input image. Setting
+it to a higher value can increase robustness of the solution, at the expense of
+a higher latency. Ignored if [static_image_mode](#static_image_mode) is `true`,
+where object detection simply runs on every image. Default to `0.99`.
+
+#### model_name
+
+Name of the model to use for predicting 3D bounding box landmarks. Currently supports
+`{'Shoe', 'Chair', 'Cup', 'Camera'}`.
+
+#### focal_length
+
+Camera focal length `(fx, fy)`, by default is defined in
+[NDC space](#ndc-space). To use focal length `(fx_pixel, fy_pixel)` in
+[pixel space](#pixel-space), users should provide `image_size` = `(image_width,
+image_height)` to enable conversions inside the API. For further details about
+NDC and pixel space, please see [Coordinate Systems](#coordinate-systems).
+
+#### principal_point
+
+Camera principal point `(px, py)`, by default is defined in
+[NDC space](#ndc-space). To use principal point `(px_pixel, py_pixel)` in
+[pixel space](#pixel-space), users should provide `image_size` = `(image_width,
+image_height)` to enable conversions inside the API. For further details about
+NDC and pixel space, please see [Coordinate Systems](#coordinate-systems).
+
+#### image_size
+
+(**Optional**) size `(image_width, image_height)` of the input image, **ONLY**
+needed when use `focal_length` and `principal_point` in pixel space.
+
+### Output
+
+<!-- Naming style may differ slightly across platforms/languages. -->
+
+#### detected_objects
+
+A list of detected 3D bounding box. Each 3D bounding box consists of the
+following:
+
+*   `landmarks_2d` : 2D landmarks of the object's 3D bounding box. The landmark
+    coordinates are normalized to `[0.0, 1.0]` by the image width and height
+    respectively.
+
+*   `landmarks_3d` : 3D landmarks of the object's 3D bounding box. The landmark
+    coordinates are represented in [camera coordinate](#camera-coordinate)
+    frame.
+
+*   `rotation` : rotation matrix from object coordinate frame to camera
+    coordinate frame.
+
+*   `translation` : translation vector from object coordinate frame to camera
+    coordinate frame.
+
+*   `scale` : relative scale of the object along `x`, `y` and `z` directions.
+
+## Python Solution API
+
+Please first follow general [instructions](../getting_started/python.md) to
+install MediaPipe Python package, then learn more in the companion
+[Python Colab](#resources) and the following usage example.
+
+Supported configuration options:
+
+*   [static_image_mode](#static_image_mode)
+*   [max_num_objects](#max_num_objects)
+*   [min_detection_confidence](#min_detection_confidence)
+*   [min_tracking_confidence](#min_tracking_confidence)
+*   [model_name](#model_name)
+*   [focal_length](#focal_length)
+*   [principal_point](#principal_point)
+*   [image_size](#image_size)
+
+```python
+import cv2
+import mediapipe as mp
+mp_drawing = mp.solutions.drawing_utils
+mp_objectron = mp.solutions.objectron
+
+# For static images:
+with mp_objectron.Objectron(static_image_mode=True,
+                            max_num_objects=5,
+                            min_detection_confidence=0.5,
+                            model_name='Shoe') as objectron:
+  for idx, file in enumerate(file_list):
+    image = cv2.imread(file)
+    # Convert the BGR image to RGB and process it with MediaPipe Objectron.
+    results = objectron.process(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
+
+    # Draw box landmarks.
+    if not results.detected_objects:
+      print(f'No box landmarks detected on {file}')
+      continue
+    print(f'Box landmarks of {file}:')
+    annotated_image = image.copy()
+    for detected_object in results.detected_objects:
+      mp_drawing.draw_landmarks(
+          annotated_image, detected_object.landmarks_2d, mp_objectron.BOX_CONNECTIONS)
+      mp_drawing.draw_axis(annotated_image, detected_object.rotation,
+                           detected_object.translation)
+      cv2.imwrite('/tmp/annotated_image' + str(idx) + '.png', annotated_image)
+
+# For webcam input:
+cap = cv2.VideoCapture(0)
+with mp_objectron.Objectron(static_image_mode=False,
+                            max_num_objects=5,
+                            min_detection_confidence=0.5,
+                            min_tracking_confidence=0.99,
+                            model_name='Shoe') as objectron:
+  while cap.isOpened():
+    success, image = cap.read()
+    if not success:
+      print("Ignoring empty camera frame.")
+      # If loading a video, use 'break' instead of 'continue'.
+      continue
+
+    # Convert the BGR image to RGB.
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    # To improve performance, optionally mark the image as not writeable to
+    # pass by reference.
+    image.flags.writeable = False
+    results = objectron.process(image)
+
+    # Draw the box landmarks on the image.
+    image.flags.writeable = True
+    image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+    if results.detected_objects:
+        for detected_object in results.detected_objects:
+            mp_drawing.draw_landmarks(
+              image, detected_object.landmarks_2d, mp_objectron.BOX_CONNECTIONS)
+            mp_drawing.draw_axis(image, detected_object.rotation,
+                                 detected_object.translation)
+    cv2.imshow('MediaPipe Objectron', image)
+    if cv2.waitKey(5) & 0xFF == 27:
+      break
+cap.release()
+```
+
 ## Example Apps
 
 Please first see general instructions for
@@ -259,6 +428,104 @@ to visualize its associated subgraphs, please see
 
 *   iOS target: Not available
 
+### Assets
+
+Example app bounding boxes are rendered with [GlAnimationOverlayCalculator](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/object_detection_3d/calculators/gl_animation_overlay_calculator.cc) using a parsing of the sequenced .obj file
+ format into a custom .uuu format. This can be done for user assets as follows:
+> First run
+>
+> ```shell
+> ./mediapipe/graphs/object_detection_3d/obj_parser/obj_cleanup.sh [INPUT_DIR] [INTERMEDIATE_OUTPUT_DIR]
+> ```
+> and then run
+>
+> ```build
+> bazel run -c opt mediapipe/graphs/object_detection_3d/obj_parser:ObjParser -- input_dir=[INTERMEDIATE_OUTPUT_DIR] output_dir=[OUTPUT_DIR]
+> ```
+> INPUT_DIR should be the folder with initial asset .obj files to be processed,
+> and OUTPUT_DIR is the folder where the processed asset .uuu file will be placed.
+>
+> Note: ObjParser combines all .obj files found in the given directory into a
+> single .uuu animation file, using the order given by sorting the filenames alphanumerically. Also the ObjParser directory inputs must be given as
+> absolute paths, not relative paths. See parser utility library at [`mediapipe/graphs/object_detection_3d/obj_parser/`](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/object_detection_3d/obj_parser/) for more details.
+
+### Coordinate Systems
+
+#### Object Coordinate
+
+Each object has its object coordinate frame. We use the below object coordinate
+definition, with `+x` pointing right, `+y` pointing up and `+z` pointing front,
+origin is at the center of the 3D bounding box.
+
+![box_coordinate.svg](../images/box_coordinate.svg)
+
+#### Camera Coordinate
+
+A 3D object is parameterized by its `scale` and `rotation`, `translation` with
+regard to the camera coordinate frame. In this API we use the below camera
+coordinate definition, with `+x` pointing right, `+y` pointing up and `-z`
+pointing to the scene.
+
+![camera_coordinate.svg](../images/camera_coordinate.svg)
+
+To work with box landmarks, one can first derive landmark coordinates in object
+frame by scaling a origin centered unit box with `scale`, then transform to
+camera frame by applying `rotation` and `translation`:
+
+```
+landmarks_3d = rotation * scale * unit_box + translation
+```
+
+#### NDC Space
+
+In this API we use
+[NDC(normalized device coordinates)](http://www.songho.ca/opengl/gl_projectionmatrix.html)
+as an intermediate space when projecting points from 3D to 2D. In NDC space,
+`x`, `y` are confined to `[-1, 1]`.
+
+![ndc_coordinate.svg](../images/ndc_coordinate.svg)
+
+By default the camera parameters `(fx, fy)` and `(px, py)` are defined in NDC
+space. Given `(X, Y, Z)` of 3D points in camera coordinate, one can project 3D
+points to NDC space as follows:
+
+```
+x_ndc = -fx * X / Z + px
+y_ndc = -fy * Y / Z + py
+z_ndc = 1 / Z
+```
+
+#### Pixel Space
+
+In this API we set upper-left coner of an image as the origin of pixel
+coordinate. One can convert from NDC to pixel space as follows:
+
+```
+x_pixel = (1 + x_ndc) / 2.0 * image_width
+y_pixel = (1 - y_ndc) / 2.0 * image_height
+```
+
+Alternatively one can directly project from camera coordinate to pixel
+coordinate with camera parameters `(fx_pixel, fy_pixel)` and `(px_pixel,
+py_pixel)` defined in pixel space as follows:
+
+```
+x_pixel = -fx_pixel * X / Z + px_pixel
+y_pixel =  fy_pixel * Y / Z + py_pixel
+```
+
+Conversion of camera parameters from pixel space to NDC space:
+
+```
+fx = fx_pixel * 2.0 / image_width
+fy = fy_pixel * 2.0 / image_height
+```
+
+```
+px = -px_pixel * 2.0 / image_width  + 1.0
+py = -py_pixel * 2.0 / image_height + 1.0
+```
+
 ## Resources
 
 *   Google AI Blog:
@@ -271,3 +538,4 @@ to visualize its associated subgraphs, please see
     [Instant 3D Object Tracking with Applications in Augmented Reality](https://drive.google.com/open?id=1O_zHmlgXIzAdKljp20U_JUkEHOGG52R8)
     ([presentation](https://www.youtube.com/watch?v=9ndF1AIo7h0))
 *   [Models and model cards](./models.md#objectron)
+*   [Python Colab](https://mediapipe.page.link/objectron_py_colab)

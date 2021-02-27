@@ -45,6 +45,8 @@ from mediapipe.calculators.util import thresholding_calculator_pb2
 from mediapipe.framework.formats import classification_pb2
 from mediapipe.framework.formats import landmark_pb2
 from mediapipe.framework.formats import rect_pb2
+from mediapipe.modules.objectron.calculators import annotation_data_pb2
+from mediapipe.modules.objectron.calculators import lift_2d_frame_annotation_to_3d_calculator_pb2
 # pylint: enable=unused-import
 from mediapipe.python._framework_bindings import calculator_graph
 from mediapipe.python._framework_bindings import image_frame
@@ -71,6 +73,9 @@ CALCULATOR_TO_OPTIONS = {
     'TensorsToDetectionsCalculator':
         tensors_to_detections_calculator_pb2
         .TensorsToDetectionsCalculatorOptions,
+    'Lift2DFrameAnnotationTo3DCalculator':
+        lift_2d_frame_annotation_to_3d_calculator_pb2
+        .Lift2DFrameAnnotationTo3DCalculatorOptions,
 }
 
 
@@ -120,6 +125,8 @@ NAME_TO_TYPE: Mapping[str, '_PacketDataType'] = {
         _PacketDataType.PROTO,
     '::mediapipe::NormalizedLandmark':
         _PacketDataType.PROTO,
+    '::mediapipe::FrameAnnotation':
+        _PacketDataType.PROTO,
     '::mediapipe::Trigger':
         _PacketDataType.PROTO,
     '::mediapipe::Rect':
@@ -157,15 +164,14 @@ class SolutionBase:
   shutdown.
 
   Example usage:
-    hand_tracker = solution_base.SolutionBase(
-      binary_graph_path='mediapipe/modules/hand_landmark/hand_landmark_tracking_cpu.binarypb',
-      side_inputs={'num_hands': 2})
-    # Read an image and convert the BGR image to RGB.
-    input_image = cv2.cvtColor(cv2.imread('/tmp/hand.png'), COLOR_BGR2RGB)
-    results = hand_tracker.process(input_image)
-    print(results.palm_detections)
-    print(results.multi_hand_landmarks)
-    hand_tracker.close()
+    with solution_base.SolutionBase(
+        binary_graph_path='mediapipe/modules/hand_landmark/hand_landmark_tracking_cpu.binarypb',
+        side_inputs={'num_hands': 2}) as hand_tracker:
+      # Read an image and convert the BGR image to RGB.
+      input_image = cv2.cvtColor(cv2.imread('/tmp/hand.png'), COLOR_BGR2RGB)
+      results = hand_tracker.process(input_image)
+      print(results.palm_detections)
+      print(results.multi_hand_landmarks)
   """
 
   def __init__(
@@ -479,3 +485,11 @@ class SolutionBase:
     else:
       return getattr(packet_getter, 'get_' + packet_data_type.value)(
           output_packet)
+
+  def __enter__(self):
+    """A "with" statement support."""
+    return self
+
+  def __exit__(self, exc_type, exc_val, exc_tb):
+    """Closes all the input sources and the graph."""
+    self.close()

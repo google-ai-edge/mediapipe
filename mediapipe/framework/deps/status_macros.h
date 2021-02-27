@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 // Helper macros and methods to return and propagate errors with
-// `mediapipe::Status`.
+// `absl::Status`.
 //
 // The owners of mediapipe do not endorse use of these macros as a good
 // programming practice, and would prefer that you write the equivalent C++
@@ -26,14 +26,14 @@
 #include "mediapipe/framework/deps/status.h"
 #include "mediapipe/framework/deps/status_builder.h"
 
-// Evaluates an expression that produces a `mediapipe::Status`. If the status
+// Evaluates an expression that produces a `absl::Status`. If the status
 // is not ok, returns it from the current function.
 //
 // For example:
-//   mediapipe::Status MultiStepFunction() {
+//   absl::Status MultiStepFunction() {
 //     MP_RETURN_IF_ERROR(Function(args...));
 //     MP_RETURN_IF_ERROR(foo.Method(args...));
-//     return mediapipe::OkStatus();
+//     return absl::OkStatus();
 //   }
 //
 // The macro ends with a `mediapipe::StatusBuilder` which allows the returned
@@ -41,11 +41,11 @@
 // macro will not be evaluated unless there is an error.
 //
 // For example:
-//   mediapipe::Status MultiStepFunction() {
+//   absl::Status MultiStepFunction() {
 //     MP_RETURN_IF_ERROR(Function(args...)) << "in MultiStepFunction";
 //     MP_RETURN_IF_ERROR(foo.Method(args...)).Log(base_logging::ERROR)
 //         << "while processing query: " << query.DebugString();
-//     return mediapipe::OkStatus();
+//     return absl::OkStatus();
 //   }
 //
 // `mediapipe::StatusBuilder` supports adapting the builder chain using a
@@ -74,12 +74,12 @@
 //
 // If using this macro inside a lambda, you need to annotate the return type
 // to avoid confusion between a `mediapipe::StatusBuilder` and a
-// `mediapipe::Status` type. E.g.
+// `absl::Status` type. E.g.
 //
-//   []() -> mediapipe::Status {
+//   []() -> absl::Status {
 //     MP_RETURN_IF_ERROR(Function(args...));
 //     MP_RETURN_IF_ERROR(foo.Method(args...));
-//     return mediapipe::OkStatus();
+//     return absl::OkStatus();
 //   }
 #define MP_RETURN_IF_ERROR(expr)                                          \
   STATUS_MACROS_IMPL_ELSE_BLOCKER_                                        \
@@ -88,7 +88,7 @@
   } else /* NOLINT */                                                     \
     return status_macro_internal_adaptor.Consume()
 
-// Executes an expression `rexpr` that returns a `mediapipe::StatusOr<T>`. On
+// Executes an expression `rexpr` that returns a `absl::StatusOr<T>`. On
 // OK, extracts its value into the variable defined by `lhs`, otherwise returns
 // from the current function. By default the error status is returned
 // unchanged, but it may be modified by an `error_expression`. If there is an
@@ -165,7 +165,7 @@
     (void)_; /* error_expression is allowed to not use this variable */ \
     return (error_expression);                                          \
   }                                                                     \
-  lhs = std::move(statusor).ValueOrDie()
+  lhs = std::move(statusor).value()
 
 // Internal helper for concatenating macro values.
 #define STATUS_MACROS_IMPL_CONCAT_INNER_(x, y) x##y

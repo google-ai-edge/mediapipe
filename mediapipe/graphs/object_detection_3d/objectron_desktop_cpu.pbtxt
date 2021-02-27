@@ -23,22 +23,11 @@ node {
   output_stream: "VIDEO_PRESTREAM:input_video_header"
 }
 
-node {
-  calculator: "LocalFileContentsCalculator"
-  input_side_packet: "FILE_PATH:0:box_landmark_model_path"
-  output_side_packet: "CONTENTS:0:box_landmark_model_blob"
-}
-
-node {
-  calculator: "TfLiteModelCalculator"
-  input_side_packet: "MODEL_BLOB:box_landmark_model_blob"
-  output_side_packet: "MODEL:box_landmark_model"
-}
-
+# Run Objectron subgraph.
 node {
   calculator: "ObjectronCpuSubgraph"
   input_stream: "IMAGE:input_video"
-  input_side_packet: "MODEL:box_landmark_model"
+  input_side_packet: "MODEL_PATH:box_landmark_model_path"
   input_side_packet: "LABELS_CSV:allowed_labels"
   input_side_packet: "MAX_NUM_OBJECTS:max_num_objects"
   output_stream: "MULTI_LANDMARKS:box_landmarks"

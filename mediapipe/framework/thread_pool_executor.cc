@@ -25,12 +25,12 @@
 namespace mediapipe {
 
 // static
-mediapipe::StatusOr<Executor*> ThreadPoolExecutor::Create(
+absl::StatusOr<Executor*> ThreadPoolExecutor::Create(
     const MediaPipeOptions& extendable_options) {
   auto& options =
       extendable_options.GetExtension(ThreadPoolExecutorOptions::ext);
   if (!options.has_num_threads()) {
-    return mediapipe::InvalidArgumentError(
+    return absl::InvalidArgumentError(
         "num_threads is not specified in ThreadPoolExecutorOptions.");
   }
   if (options.num_threads() <= 0) {

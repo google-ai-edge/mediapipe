@@ -26,7 +26,7 @@ class StreamHandler {
 
   const const_str& name() { return name_; }
 
-  mediapipe::Status AddToContract(CalculatorContract* cc) const {
+  absl::Status AddToContract(CalculatorContract* cc) const {
     cc->SetInputStreamHandler(name_.data());
     return {};
   }
@@ -47,7 +47,7 @@ class TimestampChange {
     return TimestampChange(kUnset);
   }
 
-  mediapipe::Status AddToContract(CalculatorContract* cc) const {
+  absl::Status AddToContract(CalculatorContract* cc) const {
     if (offset_ != kUnset) cc->SetTimestampOffset(offset_);
     return {};
   }
@@ -71,10 +71,9 @@ struct HasProcessMethod : std::false_type {};
 
 template <class T>
 struct HasProcessMethod<
-    T, std::void_t<decltype(mediapipe::Status(
-           std::declval<std::decay_t<T>>().Process(
-               std::declval<mediapipe::CalculatorContext*>())))>>
-    : std::true_type {};
+    T,
+    std::void_t<decltype(absl::Status(std::declval<std::decay_t<T>>().Process(
+        std::declval<mediapipe::CalculatorContext*>())))>> : std::true_type {};
 
 template <class T, class = void>
 struct HasNestedItems : std::false_type {};
@@ -142,9 +141,9 @@ class Contract {
   constexpr Contract(T&&... args)
       : Contract(std::tuple<T...>{std::move(args)...}) {}
 
-  mediapipe::Status GetContract(mediapipe::CalculatorContract* cc) const {
-    std::vector<mediapipe::Status> statuses;
-    auto store_status = [&statuses](mediapipe::Status status) {
+  absl::Status GetContract(mediapipe::CalculatorContract* cc) const {
+    std::vector<absl::Status> statuses;
+    auto store_status = [&statuses](absl::Status status) {
       if (!status.ok()) statuses.push_back(std::move(status));
     };
     internal::tuple_for_each(
@@ -209,7 +208,7 @@ class TaggedContract {
  public:
   constexpr TaggedContract() = default;
 
-  static mediapipe::Status GetContract(mediapipe::CalculatorContract* cc) {
+  static absl::Status GetContract(mediapipe::CalculatorContract* cc) {
     return c2.GetContract(cc);
   }
 
@@ -272,34 +271,32 @@ class OutputSender {
   OutputSender(std::tuple<P...>&& args) : outputs_(args) {}
 
   template <class R, std::enable_if_t<sizeof...(P) == 1, int> = 0>
-  mediapipe::Status operator()(CalculatorContext* cc,
-                               mediapipe::StatusOr<R>&& result) {
+  absl::Status operator()(CalculatorContext* cc, absl::StatusOr<R>&& result) {
     if (result.ok()) {
-      return this(cc, result.ValueOrDie());
+      return this(cc, result.value());
     } else {
       return result.status();
     }
   }
 
   template <class R, std::enable_if_t<sizeof...(P) == 1, int> = 0>
-  mediapipe::Status operator()(CalculatorContext* cc, R&& result) {
+  absl::Status operator()(CalculatorContext* cc, R&& result) {
     std::get<0>(outputs_)(cc).Send(std::forward<R>(result));
     return {};
   }
 
   template <class... R>
-  mediapipe::Status operator()(CalculatorContext* cc,
-                               mediapipe::StatusOr<std::tuple<R...>>&& result) {
+  absl::Status operator()(CalculatorContext* cc,
+                          absl::StatusOr<std::tuple<R...>>&& result) {
     if (result.ok()) {
-      return this(cc, result.ValueOrDie());
+      return this(cc, result.value());
     } else {
       return result.status();
     }
   }
 
   template <class... R>
-  mediapipe::Status operator()(CalculatorContext* cc,
-                               std::tuple<R...>&& result) {
+  absl::Status operator()(CalculatorContext* cc, std::tuple<R...>&& result) {
     static_assert(sizeof...(P) == sizeof...(R), "");
     internal::tuple_for_each(
         [cc, &result](const auto& port, auto i_const) {
@@ -345,9 +342,9 @@ class FunCaller {
   auto inputs() const { return internal::filter_tuple<IsInputPort>(args_); }
   auto outputs() const { return internal::filter_tuple<IsOutputPort>(args_); }
 
-  mediapipe::Status AddToContract(CalculatorContract* cc) const { return {}; }
+  absl::Status AddToContract(CalculatorContract* cc) const { return {}; }
 
-  mediapipe::Status Process(CalculatorContext* cc) const { return (*this)(cc); }
+  absl::Status Process(CalculatorContext* cc) const { return (*this)(cc); }
 
   constexpr std::tuple<P...> nested_items() const { return args_; }
 
@@ -359,16 +356,14 @@ class FunCaller {
 
 // TODO: implement multiple callers for syncsets.
 template <class... T>
-mediapipe::Status ProcessFnCallers(CalculatorContext* cc,
-                                   std::tuple<T...> callers);
+absl::Status ProcessFnCallers(CalculatorContext* cc, std::tuple<T...> callers);
 
-inline mediapipe::Status ProcessFnCallers(CalculatorContext* cc, std::tuple<>) {
-  return mediapipe::InternalError("Process unimplemented");
+inline absl::Status ProcessFnCallers(CalculatorContext* cc, std::tuple<>) {
+  return absl::InternalError("Process unimplemented");
 }
 
 template <class T>
-mediapipe::Status ProcessFnCallers(CalculatorContext* cc,
-                                   std::tuple<T> callers) {
+absl::Status ProcessFnCallers(CalculatorContext* cc, std::tuple<T> callers) {
   return std::get<0>(callers).Process(cc);
 }
 

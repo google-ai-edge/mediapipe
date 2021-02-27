@@ -28,6 +28,7 @@
 #include "mediapipe/framework/deps/clock.h"
 #include "mediapipe/framework/deps/message_matchers.h"
 #include "mediapipe/framework/port/advanced_proto_inc.h"
+#include "mediapipe/framework/port/commandlineflags.h"
 #include "mediapipe/framework/port/file_helpers.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
@@ -475,19 +476,19 @@ class GraphTracerE2ETest : public ::testing::Test {
   }
 
   // A Calculator::Process callback function.
-  typedef std::function<mediapipe::Status(const InputStreamShardSet&,
-                                          OutputStreamShardSet*)>
+  typedef std::function<absl::Status(const InputStreamShardSet&,
+                                     OutputStreamShardSet*)>
       ProcessFunction;
 
   // A testing callback function that passes through all packets.
-  mediapipe::Status PassThrough(const InputStreamShardSet& inputs,
-                                OutputStreamShardSet* outputs) {
+  absl::Status PassThrough(const InputStreamShardSet& inputs,
+                           OutputStreamShardSet* outputs) {
     for (int i = 0; i < inputs.NumEntries(); ++i) {
       if (!inputs.Index(i).Value().IsEmpty()) {
         outputs->Index(i).AddPacket(inputs.Index(i).Value());
       }
     }
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
   void RunPassThroughGraph() {
@@ -511,7 +512,7 @@ class GraphTracerE2ETest : public ::testing::Test {
     MP_ASSERT_OK(
         graph_.ObserveOutputStream("output_0", [&](const Packet& packet) {
           out_packets.push_back(packet);
-          return mediapipe::OkStatus();
+          return absl::OkStatus();
         }));
     simulation_clock_->ThreadStart();
     MP_ASSERT_OK(graph_.StartRun({}));
@@ -557,7 +558,7 @@ class GraphTracerE2ETest : public ::testing::Test {
         clock_->Sleep(absl::Microseconds(packets.front().first));
         outputs->Index(0).AddPacket(packets.front().second);
         packets.erase(packets.begin());
-        return mediapipe::OkStatus();
+        return absl::OkStatus();
       }
       return tool::StatusStop();
     };
@@ -580,7 +581,7 @@ class GraphTracerE2ETest : public ::testing::Test {
     MP_ASSERT_OK(graph_.ObserveOutputStream("output_packets_0",
                                             [&](const Packet& packet) {
                                               out_packets.push_back(packet);
-                                              return mediapipe::OkStatus();
+                                              return absl::OkStatus();
                                             }));
     simulation_clock_->ThreadStart();
     MP_ASSERT_OK(graph_.StartRun({}));
@@ -676,6 +677,7 @@ TEST_F(GraphTracerE2ETest, DemuxGraphLog) {
                 calculator_trace { node_id: 2 input_timestamp: 10000 }
                 calculator_trace { node_id: 3 input_timestamp: 10000 }
                 calculator_trace { node_id: 3 input_timestamp: 10000 }
+                calculator_trace { node_id: 4 input_timestamp: 10000 }
                 calculator_trace { node_id: 2 input_timestamp: 10000 }
                 calculator_trace { node_id: 3 input_timestamp: 10000 }
                 calculator_trace { node_id: 0 input_timestamp: 20000 }
@@ -988,14 +990,13 @@ TEST_F(GraphTracerE2ETest, DemuxGraphLog) {
 }
 
 // Read a GraphProfile from a file path.
-mediapipe::Status ReadGraphProfile(const std::string& path,
-                                   GraphProfile* profile) {
+absl::Status ReadGraphProfile(const std::string& path, GraphProfile* profile) {
   std::ifstream ifs;
   ifs.open(path);
   proto_ns::io::IstreamInputStream in_stream(&ifs);
   profile->ParseFromZeroCopyStream(&in_stream);
-  return ifs.is_open() ? mediapipe::OkStatus()
-                       : mediapipe::UnavailableError("Cannot open");
+  return ifs.is_open() ? absl::OkStatus()
+                       : absl::UnavailableError("Cannot open");
 }
 
 TEST_F(GraphTracerE2ETest, DemuxGraphLogFile) {
@@ -1007,7 +1008,7 @@ TEST_F(GraphTracerE2ETest, DemuxGraphLogFile) {
   GraphProfile profile;
   MP_EXPECT_OK(
       ReadGraphProfile(absl::StrCat(log_path, 0, ".binarypb"), &profile));
-  EXPECT_EQ(112, profile.graph_trace(0).calculator_trace().size());
+  EXPECT_EQ(113, profile.graph_trace(0).calculator_trace().size());
 }
 
 TEST_F(GraphTracerE2ETest, DemuxGraphLogFiles) {
@@ -1036,7 +1037,7 @@ TEST_F(GraphTracerE2ETest, DemuxGraphLogFiles) {
   // The expected counts of calculator_trace records in each of the log files.
   // The processing spans three 12.5ms log files, because
   // RunDemuxInFlightGraph adds packets over 30ms.
-  std::vector<int> expected = {49, 64, 12};
+  std::vector<int> expected = {50, 64, 12};
   EXPECT_EQ(event_counts, expected);
   GraphProfile& profile_2 = graph_profiles[2];
   profile_2.clear_calculator_profiles();
@@ -1242,7 +1243,7 @@ TEST_F(GraphTracerE2ETest, DisableLoggingToDisk) {
   graph_config_.mutable_profiler_config()->set_trace_log_path(log_path);
   graph_config_.mutable_profiler_config()->set_trace_log_disabled(true);
   RunDemuxInFlightGraph();
-  EXPECT_TRUE(mediapipe::IsNotFound(
+  EXPECT_TRUE(absl::IsNotFound(
       mediapipe::file::Exists(absl::StrCat(log_path, 0, ".binarypb"))));
 }
 

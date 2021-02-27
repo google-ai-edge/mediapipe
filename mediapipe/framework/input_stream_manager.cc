@@ -27,14 +27,14 @@
 
 namespace mediapipe {
 
-mediapipe::Status InputStreamManager::Initialize(const std::string& name,
-                                                 const PacketType* packet_type,
-                                                 bool back_edge) {
+absl::Status InputStreamManager::Initialize(const std::string& name,
+                                            const PacketType* packet_type,
+                                            bool back_edge) {
   name_ = name;
   packet_type_ = packet_type;
   back_edge_ = back_edge;
   PrepareForRun();
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
 const std::string& InputStreamManager::Name() const { return name_; }
@@ -70,29 +70,29 @@ Packet InputStreamManager::QueueHead() const {
   return queue_.front();
 }
 
-mediapipe::Status InputStreamManager::SetHeader(const Packet& header) {
+absl::Status InputStreamManager::SetHeader(const Packet& header) {
   if (header.Timestamp() != Timestamp::Unset()) {
     return mediapipe::InvalidArgumentErrorBuilder(MEDIAPIPE_LOC)
            << "Headers must not have a timestamp.  Stream: \"" << name_
            << "\".";
   }
   header_ = header;
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-mediapipe::Status InputStreamManager::AddPackets(
-    const std::list<Packet>& container, bool* notify) {
+absl::Status InputStreamManager::AddPackets(const std::list<Packet>& container,
+                                            bool* notify) {
   return AddOrMovePacketsInternal<const std::list<Packet>&>(container, notify);
 }
 
-mediapipe::Status InputStreamManager::MovePackets(std::list<Packet>* container,
-                                                  bool* notify) {
+absl::Status InputStreamManager::MovePackets(std::list<Packet>* container,
+                                             bool* notify) {
   return AddOrMovePacketsInternal<std::list<Packet>&>(*container, notify);
 }
 
 template <typename Container>
-mediapipe::Status InputStreamManager::AddOrMovePacketsInternal(
-    Container container, bool* notify) {
+absl::Status InputStreamManager::AddOrMovePacketsInternal(Container container,
+                                                          bool* notify) {
   *notify = false;
   bool queue_became_non_empty = false;
   bool queue_became_full = false;
@@ -100,7 +100,7 @@ mediapipe::Status InputStreamManager::AddOrMovePacketsInternal(
     // Scope to prevent locking the stream when notification is called.
     absl::MutexLock stream_lock(&stream_mutex_);
     if (closed_) {
-      return mediapipe::OkStatus();
+      return absl::OkStatus();
     }
     // Check if the queue was full before packets came in.
     bool was_queue_full =
@@ -108,7 +108,7 @@ mediapipe::Status InputStreamManager::AddOrMovePacketsInternal(
     // Check if the queue becomes non-empty.
     queue_became_non_empty = queue_.empty() && !container.empty();
     for (auto& packet : container) {
-      mediapipe::Status result = packet_type_->Validate(packet);
+      absl::Status result = packet_type_->Validate(packet);
       if (!result.ok()) {
         return tool::AddStatusPrefix(
             absl::StrCat(
@@ -177,17 +177,17 @@ mediapipe::Status InputStreamManager::AddOrMovePacketsInternal(
     becomes_full_callback_(this, &last_reported_stream_full_);
   }
   *notify = queue_became_non_empty;
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-mediapipe::Status InputStreamManager::SetNextTimestampBound(
-    const Timestamp bound, bool* notify) {
+absl::Status InputStreamManager::SetNextTimestampBound(const Timestamp bound,
+                                                       bool* notify) {
   *notify = false;
   {
     // Scope to prevent locking the stream when notification is called.
     absl::MutexLock stream_lock(&stream_mutex_);
     if (closed_) {
-      return mediapipe::OkStatus();
+      return absl::OkStatus();
     }
 
     if (enable_timestamps_ && bound < next_timestamp_bound_) {
@@ -211,7 +211,7 @@ mediapipe::Status InputStreamManager::SetNextTimestampBound(
       }
     }
   }
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
 void InputStreamManager::DisableTimestamps() { enable_timestamps_ = false; }

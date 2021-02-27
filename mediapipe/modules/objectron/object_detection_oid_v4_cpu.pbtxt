@@ -6,41 +6,37 @@ input_stream: "IMAGE:input_video"
 input_side_packet: "LABELS_CSV:allowed_labels"
 output_stream: "DETECTIONS:detections"
 
-# Transforms the input image on CPU to a 300x300 image. To scale the image, by
-# default it uses the STRETCH scale mode that maps the entire input image to the
-# entire transformed image. As a result, image aspect ratio may be changed and
-# objects in the image may be deformed (stretched or squeezed), but the object
-# detection model used in this graph is agnostic to that deformation.
-node: {
-  calculator: "ImageTransformationCalculator"
+# Crops, resizes, and converts the input video into tensor.
+# Preserves aspect ratio of the images.
+node {
+  calculator: "ImageToTensorCalculator"
   input_stream: "IMAGE:input_video"
-  output_stream: "IMAGE:transformed_input_video"
-  options: {
-    [mediapipe.ImageTransformationCalculatorOptions.ext] {
-      output_width: 300
-      output_height: 300
+  output_stream: "TENSORS:image_tensor"
+  output_stream: "LETTERBOX_PADDING:letterbox_padding"
+  options {
+    [mediapipe.ImageToTensorCalculatorOptions.ext] {
+      output_tensor_width: 300
+      output_tensor_height: 300
+      keep_aspect_ratio: false
+      output_tensor_float_range {
+        min: -1.0
+        max: 1.0
+      }
     }
   }
-}
-
-# Converts the transformed input image on CPU into an image tensor stored as a
-# TfLiteTensor.
-node {
-  calculator: "TfLiteConverterCalculator"
-  input_stream: "IMAGE:transformed_input_video"
-  output_stream: "TENSORS:image_tensor"
 }
 
 # Runs a TensorFlow Lite model on CPU that takes an image tensor and outputs a
 # vector of tensors representing, for instance, detection boxes/keypoints and
 # scores.
 node {
-  calculator: "TfLiteInferenceCalculator"
+  calculator: "InferenceCalculator"
   input_stream: "TENSORS:image_tensor"
   output_stream: "TENSORS:detection_tensors"
   options: {
-    [mediapipe.TfLiteInferenceCalculatorOptions.ext] {
-      model_path: "mediapipe/models/object_detection_ssd_mobilenetv2_oidv4_fp16.tflite"
+    [mediapipe.InferenceCalculatorOptions.ext] {
+      model_path: "mediapipe/modules/objectron/object_detection_ssd_mobilenetv2_oidv4_fp16.tflite"
+      delegate { xnnpack {} }
     }
   }
 }
@@ -79,13 +75,13 @@ node {
 # the SSD anchors and the specification in the options, into a vector of
 # detections. Each detection describes a detected object.
 node {
-  calculator: "TfLiteTensorsToDetectionsCalculator"
+  calculator: "TensorsToDetectionsCalculator"
   input_stream: "TENSORS:detection_tensors"
   input_side_packet: "ANCHORS:anchors"
   output_stream: "DETECTIONS:all_detections"
   options: {
-    [mediapipe.TfLiteTensorsToDetectionsCalculatorOptions.ext] {
-      num_classes: 195
+    [mediapipe.TensorsToDetectionsCalculatorOptions.ext] {
+      num_classes: 24
       num_boxes: 1917
       num_coords: 4
       ignore_classes: 0
@@ -108,7 +104,7 @@ node {
   output_stream: "labeled_detections"
   options: {
     [mediapipe.DetectionLabelIdToTextCalculatorOptions.ext] {
-      label_map_path: "mediapipe/models/object_detection_oidv4_labelmap.pbtxt"
+      label_map_path: "mediapipe/modules/objectron/object_detection_oidv4_labelmap.txt"
     }
   }
 }

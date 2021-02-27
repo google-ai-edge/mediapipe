@@ -351,7 +351,7 @@ message CalculatorGraphConfig {
   int32 num_threads = 8;
   // Configs for StatusHandlers that will be called after each call to
   // Run() on the graph.  StatusHandlers take zero or more input side
-  // packets and the ::util::Status returned by a graph run.  For example,
+  // packets and the absl::Status returned by a graph run.  For example,
   // a StatusHandler could store information about graph failures and
   // their causes for later monitoring.  Note that graph failures during
   // initialization may cause required input side packets (created by a

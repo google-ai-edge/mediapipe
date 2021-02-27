@@ -21,6 +21,12 @@ import "mediapipe/modules/face_geometry/protos/mesh_3d.proto";
 option java_package = "com.google.mediapipe.modules.facegeometry";
 option java_outer_classname = "GeometryPipelineMetadataProto";
 
+enum InputSource {
+  DEFAULT = 0;  // FACE_LANDMARK_PIPELINE
+  FACE_LANDMARK_PIPELINE = 1;
+  FACE_DETECTION_PIPELINE = 2;
+}
+
 message WeightedLandmarkRef {
   // Defines the landmark ID. References an existing face landmark ID.
   optional uint32 landmark_id = 1;
@@ -31,7 +37,18 @@ message WeightedLandmarkRef {
   optional float weight = 2;
 }
 
+// Next field ID: 4
 message GeometryPipelineMetadata {
+  // Defines the source of the input landmarks to let the underlying geometry
+  // pipeline to adjust in order to produce the best results.
+  //
+  // Face landmark pipeline is expected to produce 3D landmarks with relative Z
+  // coordinate, which is scaled as the X coordinate assuming the weak
+  // perspective projection camera model.
+  //
+  // Face landmark pipeline is expected to produce 2D landmarks with Z
+  // coordinate being equal to 0.
+  optional InputSource input_source = 3;
   // Defines a mesh surface for a canonical face. The canonical face mesh vertex
   // IDs are the same as the face landmark IDs.
   //

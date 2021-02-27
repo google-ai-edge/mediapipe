@@ -15,6 +15,14 @@
 #ifndef MEDIAPIPE_PORT_STATUSOR_H_
 #define MEDIAPIPE_PORT_STATUSOR_H_
 
-#include "mediapipe/framework/deps/statusor.h"
+#include "absl/status/statusor.h"
+
+namespace mediapipe {
+
+template <typename T>
+using StatusOr ABSL_DEPRECATED("Use absl::StatusOr directly") =
+    absl::StatusOr<T>;
+
+}  // namespace mediapipe
 
 #endif  // MEDIAPIPE_PORT_STATUSOR_H_

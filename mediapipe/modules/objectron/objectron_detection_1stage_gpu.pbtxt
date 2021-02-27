@@ -76,6 +76,8 @@ node {
         voting_allowance: 1
         voting_threshold: 0.2
       }
+      normalized_focal_x: 2.0975
+      normalized_focal_y: 1.5731
     }
   }
 }

@@ -71,19 +71,19 @@ std::vector<T> PacketValues(const std::vector<Packet>& packets) {
 }
 
 // A Calculator::Process callback function.
-typedef std::function<mediapipe::Status(const InputStreamShardSet&,
-                                        OutputStreamShardSet*)>
+typedef std::function<absl::Status(const InputStreamShardSet&,
+                                   OutputStreamShardSet*)>
     ProcessFunction;
 
 // A testing callback function that passes through all packets.
-mediapipe::Status PassthroughFunction(const InputStreamShardSet& inputs,
-                                      OutputStreamShardSet* outputs) {
+absl::Status PassthroughFunction(const InputStreamShardSet& inputs,
+                                 OutputStreamShardSet* outputs) {
   for (int i = 0; i < inputs.NumEntries(); ++i) {
     if (!inputs.Index(i).Value().IsEmpty()) {
       outputs->Index(i).AddPacket(inputs.Index(i).Value());
     }
   }
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
 // Tests demonstrating an FlowLimiterCalculator operating in a cyclic graph.
@@ -111,8 +111,8 @@ class FlowLimiterCalculatorSemaphoreTest : public testing::Test {
                            {"callback_1", Adopt(new auto(semaphore_1_func))},
                        }));
 
-    allow_poller_.reset(new OutputStreamPoller(
-        graph_.AddOutputStreamPoller("allow").ValueOrDie()));
+    allow_poller_.reset(
+        new OutputStreamPoller(graph_.AddOutputStreamPoller("allow").value()));
   }
 
   // Adds a packet to a graph input stream.
@@ -203,22 +203,22 @@ TEST_F(FlowLimiterCalculatorSemaphoreTest, FramesDropped) {
 // A calculator that sleeps during Process.
 class SleepCalculator : public CalculatorBase {
  public:
-  static mediapipe::Status GetContract(CalculatorContract* cc) {
+  static absl::Status GetContract(CalculatorContract* cc) {
     cc->Inputs().Tag("PACKET").SetAny();
     cc->Outputs().Tag("PACKET").SetSameAs(&cc->Inputs().Tag("PACKET"));
     cc->InputSidePackets().Tag("SLEEP_TIME").Set<int64>();
     cc->InputSidePackets().Tag("WARMUP_TIME").Set<int64>();
     cc->InputSidePackets().Tag("CLOCK").Set<mediapipe::Clock*>();
     cc->SetTimestampOffset(0);
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
-  mediapipe::Status Open(CalculatorContext* cc) final {
+  absl::Status Open(CalculatorContext* cc) final {
     clock_ = cc->InputSidePackets().Tag("CLOCK").Get<mediapipe::Clock*>();
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
-  mediapipe::Status Process(CalculatorContext* cc) final {
+  absl::Status Process(CalculatorContext* cc) final {
     ++packet_count;
     absl::Duration sleep_time = absl::Microseconds(
         packet_count == 1
@@ -226,7 +226,7 @@ class SleepCalculator : public CalculatorBase {
             : cc->InputSidePackets().Tag("SLEEP_TIME").Get<int64>());
     clock_->Sleep(sleep_time);
     cc->Outputs().Tag("PACKET").AddPacket(cc->Inputs().Tag("PACKET").Value());
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
  private:
@@ -239,15 +239,15 @@ REGISTER_CALCULATOR(SleepCalculator);
 // Drops the 3rd packet, and optionally the corresponding timestamp bound.
 class DropCalculator : public CalculatorBase {
  public:
-  static mediapipe::Status GetContract(CalculatorContract* cc) {
+  static absl::Status GetContract(CalculatorContract* cc) {
     cc->Inputs().Tag("PACKET").SetAny();
     cc->Outputs().Tag("PACKET").SetSameAs(&cc->Inputs().Tag("PACKET"));
     cc->InputSidePackets().Tag("DROP_TIMESTAMPS").Set<bool>();
     cc->SetProcessTimestampBounds(true);
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
-  mediapipe::Status Process(CalculatorContext* cc) final {
+  absl::Status Process(CalculatorContext* cc) final {
     if (!cc->Inputs().Tag("PACKET").Value().IsEmpty()) {
       ++packet_count;
     }
@@ -259,7 +259,7 @@ class DropCalculator : public CalculatorBase {
       cc->Outputs().Tag("PACKET").SetNextTimestampBound(
           cc->InputTimestamp().NextAllowedInStream());
     }
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
  private:
@@ -365,11 +365,11 @@ TEST_F(FlowLimiterCalculatorTest, FinishedTimestamps) {
   MP_ASSERT_OK(graph_.Initialize(graph_config));
   MP_EXPECT_OK(graph_.ObserveOutputStream("out_1", [this](Packet p) {
     out_1_packets_.push_back(p);
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }));
   MP_EXPECT_OK(graph_.ObserveOutputStream("allow", [this](Packet p) {
     allow_packets_.push_back(p);
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }));
   simulation_clock_->ThreadStart();
   MP_ASSERT_OK(graph_.StartRun(side_packets));
@@ -437,11 +437,11 @@ TEST_F(FlowLimiterCalculatorTest, FinishedLost) {
   MP_ASSERT_OK(graph_.Initialize(graph_config));
   MP_EXPECT_OK(graph_.ObserveOutputStream("out_1", [this](Packet p) {
     out_1_packets_.push_back(p);
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }));
   MP_EXPECT_OK(graph_.ObserveOutputStream("allow", [this](Packet p) {
     allow_packets_.push_back(p);
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }));
   simulation_clock_->ThreadStart();
   MP_ASSERT_OK(graph_.StartRun(side_packets));
@@ -501,11 +501,11 @@ TEST_F(FlowLimiterCalculatorTest, FinishedDelayed) {
   MP_ASSERT_OK(graph_.Initialize(graph_config));
   MP_EXPECT_OK(graph_.ObserveOutputStream("out_1", [this](Packet p) {
     out_1_packets_.push_back(p);
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }));
   MP_EXPECT_OK(graph_.ObserveOutputStream("allow", [this](Packet p) {
     allow_packets_.push_back(p);
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }));
   simulation_clock_->ThreadStart();
   MP_ASSERT_OK(graph_.StartRun(side_packets));
@@ -596,16 +596,16 @@ TEST_F(FlowLimiterCalculatorTest, TwoInputStreams) {
   MP_ASSERT_OK(graph_.Initialize(graph_config));
   MP_EXPECT_OK(graph_.ObserveOutputStream("out_1", [this](Packet p) {
     out_1_packets_.push_back(p);
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }));
   std::vector<Packet> out_2_packets;
   MP_EXPECT_OK(graph_.ObserveOutputStream("in_2_sampled", [&](Packet p) {
     out_2_packets.push_back(p);
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }));
   MP_EXPECT_OK(graph_.ObserveOutputStream("allow", [this](Packet p) {
     allow_packets_.push_back(p);
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }));
   simulation_clock_->ThreadStart();
   MP_ASSERT_OK(graph_.StartRun(side_packets));
@@ -705,16 +705,16 @@ TEST_F(FlowLimiterCalculatorTest, ZeroQueue) {
   MP_ASSERT_OK(graph_.Initialize(graph_config));
   MP_EXPECT_OK(graph_.ObserveOutputStream("out_1", [this](Packet p) {
     out_1_packets_.push_back(p);
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }));
   std::vector<Packet> out_2_packets;
   MP_EXPECT_OK(graph_.ObserveOutputStream("in_2_sampled", [&](Packet p) {
     out_2_packets.push_back(p);
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }));
   MP_EXPECT_OK(graph_.ObserveOutputStream("allow", [this](Packet p) {
     allow_packets_.push_back(p);
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }));
   simulation_clock_->ThreadStart();
   MP_ASSERT_OK(graph_.StartRun(side_packets));

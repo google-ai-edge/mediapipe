@@ -18,7 +18,6 @@ licenses(["notice"])
 
 exports_files([
     "proguard.pgcfg",
-    "proguard_allowobfuscation.pgcfg",
 ])
 
 android_library(
@@ -93,6 +92,7 @@ android_library(
     deps = [
         ":framework_proto_lite",
         ":mediapipe_exception_android",
+        "@com_google_protobuf//:protobuf_javalite",
         "@maven//:com_google_code_findbugs_jsr305",
         "@maven//:com_google_flogger_flogger",
         "@maven//:com_google_flogger_flogger_system_backend",
@@ -119,6 +119,7 @@ android_library(
         "//mediapipe/framework:calculator_profile_java_proto_lite",
         "//mediapipe/framework:stream_handler_java_proto_lite",
         "//mediapipe/framework/tool:calculator_graph_template_java_proto_lite",
+        "@com_google_protobuf//:protobuf_javalite",
         "@maven//:com_google_guava_guava",
     ],
 )

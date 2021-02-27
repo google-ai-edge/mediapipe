@@ -70,7 +70,7 @@ TEST(PadRoi, NoPadding) {
                   .rotation = 5};
   auto status_or_value = PadRoi(10, 10, /*keep_aspect_ratio=*/false, &roi);
   MP_ASSERT_OK(status_or_value);
-  EXPECT_THAT(status_or_value.ValueOrDie(),
+  EXPECT_THAT(status_or_value.value(),
               ElementsAreArray({0.0f, 0.0f, 0.0f, 0.0f}));
   EXPECT_THAT(roi, EqRotatedRect(100, 200, 20, 10, 5));
 }
@@ -83,7 +83,7 @@ TEST(PadRoi, HorizontalPadding) {
                   .rotation = 5};
   auto status_or_value = PadRoi(10, 10, /*keep_aspect_ratio=*/true, &roi);
   MP_ASSERT_OK(status_or_value);
-  EXPECT_THAT(status_or_value.ValueOrDie(),
+  EXPECT_THAT(status_or_value.value(),
               ElementsAreArray({0.25f, 0.0f, 0.25f, 0.0f}));
   EXPECT_THAT(roi, EqRotatedRect(200, 200, 20, 10, 5));
 }
@@ -95,7 +95,7 @@ TEST(PadRoi, VerticalPadding) {
   auto status_or_value = PadRoi(10, 10, /*keep_aspect_ratio=*/true, &roi);
   MP_ASSERT_OK(status_or_value);
   EXPECT_THAT(
-      status_or_value.ValueOrDie(),
+      status_or_value.value(),
       ElementsAre(testing::FloatEq(0.0f),
                   testing::FloatNear(expected_horizontal_padding, 1e-6),
                   testing::FloatEq(0.0f),
@@ -115,7 +115,7 @@ TEST(GetValueRangeTransformation, PixelToFloatZeroCenter) {
       /*from_range_min=*/0.0f, /*from_range_max=*/255.0f,
       /*to_range_min=*/-1.0f, /*to_range_max=*/1.0f);
   MP_ASSERT_OK(status_or_value);
-  EXPECT_THAT(status_or_value.ValueOrDie(),
+  EXPECT_THAT(status_or_value.value(),
               EqValueTransformation(/*scale=*/2 / 255.0f,
                                     /*offset=*/-1.0f));
 }
@@ -125,7 +125,7 @@ TEST(GetValueRangeTransformation, PixelToFloat) {
       /*from_range_min=*/0.0f, /*from_range_max=*/255.0f,
       /*to_range_min=*/0.0f, /*to_range_max=*/1.0f);
   MP_ASSERT_OK(status_or_value);
-  EXPECT_THAT(status_or_value.ValueOrDie(),
+  EXPECT_THAT(status_or_value.value(),
               EqValueTransformation(/*scale=*/1 / 255.0f,
                                     /*offset=*/0.0f));
 }
@@ -135,7 +135,7 @@ TEST(GetValueRangeTransformation, FloatToFloatNoOp) {
       /*from_range_min=*/0.0f, /*from_range_max=*/1.0f,
       /*to_range_min=*/0.0f, /*to_range_max=*/1.0f);
   MP_ASSERT_OK(status_or_value);
-  EXPECT_THAT(status_or_value.ValueOrDie(),
+  EXPECT_THAT(status_or_value.value(),
               EqValueTransformation(/*scale=*/1.0f, /*offset=*/0.0f));
 }
 
@@ -144,7 +144,7 @@ TEST(GetValueRangeTransformation, PixelToPixelNoOp) {
       /*from_range_min=*/0.0f, /*from_range_max=*/255.0f,
       /*to_range_min=*/0.0f, /*to_range_max=*/255.0f);
   MP_ASSERT_OK(status_or_value);
-  EXPECT_THAT(status_or_value.ValueOrDie(),
+  EXPECT_THAT(status_or_value.value(),
               EqValueTransformation(/*scale=*/1.0f, /*offset=*/0.0f));
 }
 
@@ -153,7 +153,7 @@ TEST(GetValueRangeTransformation, FloatToPixel) {
       /*from_range_min=*/0.0f, /*from_range_max=*/1.0f,
       /*to_range_min=*/0.0f, /*to_range_max=*/255.0f);
   MP_ASSERT_OK(status_or_value);
-  EXPECT_THAT(status_or_value.ValueOrDie(),
+  EXPECT_THAT(status_or_value.value(),
               EqValueTransformation(/*scale=*/255.0f, /*offset=*/0.0f));
 }
 

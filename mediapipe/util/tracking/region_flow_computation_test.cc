@@ -115,7 +115,7 @@ void RegionFlowComputationTest::MakeMovie(
 
   // First generate random positions.
   int seed = 900913;  // google.
-  if (FLAGS_time_seed) {
+  if (absl::GetFlag(FLAGS_time_seed)) {
     seed = ToUnixMillis(absl::Now()) % (1 << 16);
     LOG(INFO) << "Using time seed: " << seed;
   }

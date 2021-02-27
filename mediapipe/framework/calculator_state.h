@@ -78,6 +78,11 @@ class CalculatorState {
   // name is the passed-in name, prefixed by the calculator NodeName.
   Counter* GetCounter(const std::string& name);
 
+  // Returns a counter set, which can be passed to other classes, to generate
+  // counters.  NOTE: This differs from GetCounter, in that the counters
+  // created by this counter set do not have the NodeName prefix.
+  CounterSet* GetCounterSet();
+
   std::shared_ptr<ProfilingContext> GetSharedProfilingContext() const {
     return profiling_context_;
   }

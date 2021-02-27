@@ -18,13 +18,14 @@
 #include <sstream>
 
 #include "absl/strings/match.h"
+#include "mediapipe/framework/port/file_helpers.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/util/resource_util.h"
 
 namespace mediapipe {
 
 namespace {
-mediapipe::StatusOr<std::string> PathToResourceAsFileInternal(
+absl::StatusOr<std::string> PathToResourceAsFileInternal(
     const std::string& path) {
   NSString* ns_path = [NSString stringWithUTF8String:path.c_str()];
   Class mediapipeGraphClass = NSClassFromString(@"MPPGraph");
@@ -39,7 +40,7 @@ mediapipe::StatusOr<std::string> PathToResourceAsFileInternal(
 }
 }  // namespace
 
-mediapipe::StatusOr<std::string> PathToResourceAsFile(const std::string& path) {
+absl::StatusOr<std::string> PathToResourceAsFile(const std::string& path) {
   // Return full path.
   if (absl::StartsWith(path, "/")) {
     return path;
@@ -60,14 +61,30 @@ mediapipe::StatusOr<std::string> PathToResourceAsFile(const std::string& path) {
     CHECK_NE(last_slash_idx, std::string::npos);  // Make sure it's a path.
     auto base_name = path.substr(last_slash_idx + 1);
     auto status_or_path = PathToResourceAsFileInternal(base_name);
-    if (status_or_path.ok()) LOG(INFO) << "Successfully loaded: " << base_name;
-    return status_or_path;
+    if (status_or_path.ok()) {
+      LOG(INFO) << "Successfully loaded: " << base_name;
+      return status_or_path;
+    }
   }
+
+  // Try the test environment.
+  {
+    absl::string_view workspace = "mediapipe";
+    auto test_path =
+        file::JoinPath(std::getenv("TEST_SRCDIR"), workspace, path);
+    if ([[NSFileManager defaultManager]
+            fileExistsAtPath:[NSString
+                                 stringWithUTF8String:test_path.c_str()]]) {
+      LOG(INFO) << "Successfully loaded: " << test_path;
+      return test_path;
+    }
+  }
+
+  return path;
 }
 
-mediapipe::Status GetResourceContents(const std::string& path,
-                                      std::string* output,
-                                      bool read_as_binary) {
+absl::Status GetResourceContents(const std::string& path, std::string* output,
+                                 bool read_as_binary) {
   if (!read_as_binary) {
     LOG(WARNING) << "Setting \"read_as_binary\" to false is a no-op on ios.";
   }
@@ -77,7 +94,7 @@ mediapipe::Status GetResourceContents(const std::string& path,
   std::stringstream buffer;
   buffer << input_file.rdbuf();
   buffer.str().swap(*output);
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
 }  // namespace mediapipe

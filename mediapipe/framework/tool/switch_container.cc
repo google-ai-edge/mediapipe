@@ -62,7 +62,7 @@ using mediapipe::SwitchContainerOptions;
 class SwitchContainer : public Subgraph {
  public:
   SwitchContainer() = default;
-  mediapipe::StatusOr<CalculatorGraphConfig> GetConfig(
+  absl::StatusOr<CalculatorGraphConfig> GetConfig(
       const Subgraph::SubgraphOptions& options) override;
 };
 REGISTER_MEDIAPIPE_GRAPH(SwitchContainer);
@@ -157,7 +157,7 @@ void GetContainerNodeStreams(const CalculatorGraphConfig::Node& node,
 }
 
 // Validate all subgraph inputs and outputs.
-mediapipe::Status ValidateContract(
+absl::Status ValidateContract(
     const CalculatorGraphConfig::Node& subgraph_node,
     const Subgraph::SubgraphOptions& subgraph_options) {
   auto options =
@@ -166,20 +166,20 @@ mediapipe::Status ValidateContract(
   ParseTags(subgraph_node.input_stream(), &input_tags);
   ParseTags(subgraph_node.input_side_packet(), &side_tags);
   if (options.has_select() && options.has_enable()) {
-    return mediapipe::InvalidArgumentError(
+    return absl::InvalidArgumentError(
         "Only one of SwitchContainer options 'enable' and 'select' can be "
         "specified");
   }
   if (side_tags.count({"SELECT", 0}) + side_tags.count({"ENABLE", 0}) > 1 ||
       input_tags.count({"SELECT", 0}) + input_tags.count({"ENABLE", 0}) > 1) {
-    return mediapipe::InvalidArgumentError(
+    return absl::InvalidArgumentError(
         "Only one of SwitchContainer inputs 'ENABLE' and 'SELECT' can be "
         "specified");
   }
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-mediapipe::StatusOr<CalculatorGraphConfig> SwitchContainer::GetConfig(
+absl::StatusOr<CalculatorGraphConfig> SwitchContainer::GetConfig(
     const Subgraph::SubgraphOptions& options) {
   CalculatorGraphConfig config;
   std::vector<CalculatorGraphConfig::Node*> subnodes;

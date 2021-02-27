@@ -548,3 +548,21 @@ where the STFT is computed over audio at some other rate.
 |`PREFIX/feature/packet_rate`|context float|`set_feature_packet_rate` / `SetFeaturePacketRate`|The number of packets per second.|
 |`PREFIX/feature/audio_sample_rate`|context float|`set_feature_audio_sample_rate` / `SetFeatureAudioSampleRate`|The sample rate of the original audio for derived features.|
 
+### Keys related to text, captions, and ASR
+Text features may be timed with the media such as captions or automatic
+speech recognition results, or may be descriptions. This collection of keys
+should be used for many, very short text features. For a few, longer segments
+please use the Segment keys in the context as described above. As always,
+prefixes can be used to store different types of text such as automated and
+ground truth transcripts.
+
+| key | type | python call / c++ call | description |
+|-----|------|------------------------|-------------|
+|`text/language`|context bytes|`set_text_langage` / `SetTextLanguage`|The language for the corresponding text.|
+|`text/context/content`|context bytes|`set_text_context_content` / `SetTextContextContent`|Storage for large blocks of text in the context.|
+|`text/content`|feature list bytes|`add_text_content` / `AddTextContent`|One (or a few) text tokens that occur at one timestamp.|
+|`text/timestamp`|feature list int|`add_text_timestamp` / `AddTextTimestamp`|When a text token occurs in microseconds.|
+|`text/duration`|feature list int|`add_text_duration` / `SetTextDuration`|The duration in microseconds for the corresponding text tokens.|
+|`text/confidence`|feature list float|`add_text_confidence` / `AddTextConfidence`|How likely the text is correct.|
+|`text/embedding`|feautre list float list|`add_text_embedding` / `AddTextEmbedding`|A floating point vector for the corresponding text token.|
+|`text/token/id`|feature list int|`add_text_token_id` / `AddTextTokenId`|An integer id for the corresponding text token.|

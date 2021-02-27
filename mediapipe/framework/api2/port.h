@@ -179,7 +179,7 @@ inline void SetType(CalculatorContract* cc, PacketType& pt) {
 
 template <typename ValueT>
 InputShardAccess<ValueT> SinglePortAccess(mediapipe::CalculatorContext* cc,
-                                          const InputStreamShard* stream) {
+                                          InputStreamShard* stream) {
   return InputShardAccess<ValueT>(*cc, stream);
 }
 
@@ -203,7 +203,7 @@ OutputSidePacketAccess<ValueT> SinglePortAccess(
 
 template <typename ValueT>
 InputShardOrSideAccess<ValueT> SinglePortAccess(
-    mediapipe::CalculatorContext* cc, const InputStreamShard* stream,
+    mediapipe::CalculatorContext* cc, InputStreamShard* stream,
     const mediapipe::Packet* packet) {
   return InputShardOrSideAccess<ValueT>(*cc, stream, packet);
 }
@@ -226,19 +226,50 @@ auto AccessPort(std::false_type, const PortT& port, CC* cc) {
 template <typename ValueT, typename X, class CC>
 class MultiplePortAccess {
  public:
+  using AccessT = decltype(SinglePortAccess<ValueT>(std::declval<CC*>(),
+                                                    std::declval<X*>()));
+
   MultiplePortAccess(CC* cc, X* first, int count)
       : cc_(cc), first_(first), count_(count) {}
 
   // TODO: maybe this should be size(), like in a standard C++
   // container?
   int Count() { return count_; }
-  auto operator[](int pos) {
+  AccessT operator[](int pos) {
     CHECK_GE(pos, 0);
     CHECK_LT(pos, count_);
     return SinglePortAccess<ValueT>(cc_, &first_[pos]);
   }
 
-  // TODO: add begin/end.
+  class Iterator {
+   public:
+    using iterator_category = std::input_iterator_tag;
+    using value_type = AccessT;
+    using difference_type = std::ptrdiff_t;
+    using pointer = AccessT*;
+    using reference = AccessT;  // allowed; see e.g. std::istreambuf_iterator
+
+    Iterator(CC* cc, X* p) : cc_(cc), p_(p) {}
+    Iterator& operator++() {
+      ++p_;
+      return *this;
+    }
+    Iterator operator++(int) {
+      Iterator res = *this;
+      ++(*this);
+      return res;
+    }
+    bool operator==(const Iterator& other) const { return p_ == other.p_; }
+    bool operator!=(const Iterator& other) const { return !(*this == other); }
+    AccessT operator*() const { return SinglePortAccess<ValueT>(cc_, p_); }
+
+   private:
+    CC* cc_;
+    X* p_;
+  };
+
+  Iterator begin() { return Iterator(cc_, first_); }
+  Iterator end() { return Iterator(cc_, first_ + count_); }
 
  private:
   CC* cc_;
@@ -307,7 +338,7 @@ class PortCommon : public Base {
   }
 
  private:
-  mediapipe::Status AddToContract(CalculatorContract* cc) const {
+  absl::Status AddToContract(CalculatorContract* cc) const {
     if (kMultiple) {
       AddMultiple(cc);
     } else {
@@ -385,17 +416,17 @@ class SideFallbackT : public Base {
         side_port(tag) {}
 
  protected:
-  mediapipe::Status AddToContract(CalculatorContract* cc) const {
+  absl::Status AddToContract(CalculatorContract* cc) const {
     stream_port.AddToContract(cc);
     side_port.AddToContract(cc);
     int connected_count =
         stream_port(cc).IsConnected() + side_port(cc).IsConnected();
     if (connected_count > 1)
-      return mediapipe::InvalidArgumentError(absl::StrCat(
+      return absl::InvalidArgumentError(absl::StrCat(
           Tag(),
           " can be connected as a stream or as a side packet, but not both"));
     if (!IsOptionalV && connected_count == 0)
-      return mediapipe::InvalidArgumentError(
+      return absl::InvalidArgumentError(
           absl::StrCat(Tag(), " must be connected"));
     return {};
   }
@@ -452,6 +483,14 @@ class OutputShardAccess : public OutputShardAccessBase {
 
   void Send(const T& payload) { Send(payload, context_.InputTimestamp()); }
 
+  void Send(T&& payload, Timestamp time) {
+    Send(api2::MakePacket<T>(std::move(payload)).At(time));
+  }
+
+  void Send(T&& payload) {
+    Send(std::move(payload), context_.InputTimestamp());
+  }
+
   void Send(std::unique_ptr<T> payload, Timestamp time) {
     Send(api2::PacketAdopting(std::move(payload)).At(time));
   }
@@ -501,6 +540,7 @@ class OutputSidePacketAccess {
   }
 
   void Set(const T& payload) { Set(MakePacket<T>(payload)); }
+  void Set(T&& payload) { Set(MakePacket<T>(std::move(payload))); }
 
  private:
   OutputSidePacketAccess(OutputSidePacket* output) : output_(output) {}
@@ -523,15 +563,54 @@ class InputShardAccess : public Packet<T> {
 
   PacketBase Header() const { return FromOldPacket(stream_->Header()); }
 
+  // "Consume" requires exclusive ownership of the packet's payload. In the
+  // current interim implementation, InputShardAccess creates a new reference to
+  // the payload (as a Packet<T> instead of a type-erased Packet), which means
+  // the conditions for Consume would never be satisfied. This helper class
+  // defines wrappers for the Consume methods in Packet which temporarily erase
+  // the reference held by the underlying InputStreamShard.
+  // Note that we cannot simply take over the reference when InputShardAccess is
+  // created, because it is currently created as a temporary and we might create
+  // more than one instance for the same stream.
+  template <class U = T,
+            class = std::enable_if_t<std::is_same<U, T>{},
+                                     decltype(&Packet<U>::Consume)>>
+  absl::StatusOr<std::unique_ptr<U>> Consume() {
+    return WrapConsumeCall(&Packet<T>::Consume);
+  }
+
+  template <class V, class U = T,
+            std::enable_if_t<internal::IsCompatibleType<V, U>{}, int> = 0>
+  absl::StatusOr<std::unique_ptr<V>> Consume() {
+    return WrapConsumeCall(&Packet<T>::template Consume<V>);
+  }
+
+  template <class... F>
+  auto ConsumeAndVisit(F&&... args) {
+    auto f = &Packet<T>::template ConsumeAndVisit<F...>;
+    return WrapConsumeCall(f, std::forward<F>(args)...);
+  }
+
  private:
-  InputShardAccess(const CalculatorContext&, const InputStreamShard* stream)
+  InputShardAccess(const CalculatorContext&, InputStreamShard* stream)
       : Packet<T>(stream ? FromOldPacket(stream->Value()).template As<T>()
                          : Packet<T>()),
         stream_(stream) {}
-  const InputStreamShard* stream_;
+
+  template <class F, class... A>
+  auto WrapConsumeCall(F f, A&&... args) {
+    stream_->Value() = {};
+    auto result = (this->*f)(std::forward<A>(args)...);
+    if (!result.ok()) {
+      stream_->Value() = ToOldPacket(*this);
+    }
+    return result;
+  }
+
+  InputStreamShard* stream_;
 
   friend InputShardAccess<T> internal::SinglePortAccess<T>(
-      mediapipe::CalculatorContext*, const InputStreamShard*);
+      mediapipe::CalculatorContext*, InputStreamShard*);
 };
 
 template <typename T>
@@ -566,19 +645,18 @@ class InputShardOrSideAccess : public Packet<T> {
   PacketBase Header() const { return FromOldPacket(stream_->Header()); }
 
  private:
-  InputShardOrSideAccess(const CalculatorContext&,
-                         const InputStreamShard* stream,
+  InputShardOrSideAccess(const CalculatorContext&, InputStreamShard* stream,
                          const mediapipe::Packet* packet)
       : Packet<T>(stream   ? FromOldPacket(stream->Value()).template As<T>()
                   : packet ? FromOldPacket(*packet).template As<T>()
                            : Packet<T>()),
         stream_(stream),
         connected_(stream_ != nullptr || packet != nullptr) {}
-  const InputStreamShard* stream_;
+  InputStreamShard* stream_;
   bool connected_;
 
   friend InputShardOrSideAccess<T> internal::SinglePortAccess<T>(
-      mediapipe::CalculatorContext*, const InputStreamShard*,
+      mediapipe::CalculatorContext*, InputStreamShard*,
       const mediapipe::Packet*);
 };
 

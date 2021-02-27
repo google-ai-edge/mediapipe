@@ -39,15 +39,15 @@ namespace {}  // namespace
 class HandDetectionsFromPoseToRectsCalculator
     : public DetectionsToRectsCalculator {
  public:
-  ::mediapipe::Status Open(CalculatorContext* cc) override;
+  absl::Status Open(CalculatorContext* cc) override;
 
  private:
-  ::mediapipe::Status DetectionToNormalizedRect(
-      const Detection& detection, const DetectionSpec& detection_spec,
-      NormalizedRect* rect) override;
-  ::mediapipe::Status ComputeRotation(const Detection& detection,
-                                      const DetectionSpec& detection_spec,
-                                      float* rotation) override;
+  ::absl::Status DetectionToNormalizedRect(const Detection& detection,
+                                           const DetectionSpec& detection_spec,
+                                           NormalizedRect* rect) override;
+  absl::Status ComputeRotation(const Detection& detection,
+                               const DetectionSpec& detection_spec,
+                               float* rotation) override;
 };
 REGISTER_CALCULATOR(HandDetectionsFromPoseToRectsCalculator);
 
@@ -61,7 +61,7 @@ constexpr char kImageSizeTag[] = "IMAGE_SIZE";
 
 }  // namespace
 
-::mediapipe::Status HandDetectionsFromPoseToRectsCalculator::Open(
+::absl::Status HandDetectionsFromPoseToRectsCalculator::Open(
     CalculatorContext* cc) {
   RET_CHECK(cc->Inputs().HasTag(kImageSizeTag))
       << "Image size is required to calculate rotated rect.";
@@ -72,10 +72,10 @@ constexpr char kImageSizeTag[] = "IMAGE_SIZE";
   output_zero_rect_for_empty_detections_ =
       options_.output_zero_rect_for_empty_detections();
 
-  return ::mediapipe::OkStatus();
+  return ::absl::OkStatus();
 }
 
-::mediapipe::Status
+::absl::Status
 HandDetectionsFromPoseToRectsCalculator ::DetectionToNormalizedRect(
     const Detection& detection, const DetectionSpec& detection_spec,
     NormalizedRect* rect) {
@@ -118,10 +118,10 @@ HandDetectionsFromPoseToRectsCalculator ::DetectionToNormalizedRect(
   rect->set_width(box_size / image_size->first);
   rect->set_height(box_size / image_size->second);
 
-  return ::mediapipe::OkStatus();
+  return ::absl::OkStatus();
 }
 
-::mediapipe::Status HandDetectionsFromPoseToRectsCalculator::ComputeRotation(
+absl::Status HandDetectionsFromPoseToRectsCalculator::ComputeRotation(
     const Detection& detection, const DetectionSpec& detection_spec,
     float* rotation) {
   const auto& location_data = detection.location_data();
@@ -150,7 +150,7 @@ HandDetectionsFromPoseToRectsCalculator ::DetectionToNormalizedRect(
   *rotation = NormalizeRadians(
       target_angle_ - std::atan2(-(y_middle - y_wrist), x_middle - x_wrist));
 
-  return ::mediapipe::OkStatus();
+  return ::absl::OkStatus();
 }
 
 }  // namespace mediapipe

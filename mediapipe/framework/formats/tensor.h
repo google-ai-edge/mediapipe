@@ -161,6 +161,16 @@ class Tensor {
         : View(std::move(src)), name_(src.name_) {
       src.name_ = GL_INVALID_INDEX;
     }
+    // To fit a tensor into a texture two layouts are used:
+    // 1. Aligned. Width of the texture = tensor_width * num_slices, where slice
+    //    is a group of 4 depth values. Tensor depth is padded to 4.
+    // 2. Linearized. If texture width or height with the layout 1. is greater
+    //    than the GPU supports then all tensor values are packed into a texture
+    //    with fixed width calculated by this method.
+    // Must be called with the valid GL context bound to the current thread.
+    enum class Layout { kAligned, kLinearized };
+    static Layout GetLayoutDimensions(const Tensor::Shape& shape, int* width,
+                                      int* height);
 
    protected:
     friend class Tensor;
@@ -254,6 +264,8 @@ class Tensor {
   mutable std::shared_ptr<mediapipe::GlContext> gl_context_;
   mutable GLuint opengl_texture2d_ = GL_INVALID_INDEX;
   mutable GLuint frame_buffer_ = GL_INVALID_INDEX;
+  mutable int texture_width_;
+  mutable int texture_height_;
   void AllocateOpenGlTexture2d() const;
 #if MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31
   mutable GLuint opengl_buffer_ = GL_INVALID_INDEX;

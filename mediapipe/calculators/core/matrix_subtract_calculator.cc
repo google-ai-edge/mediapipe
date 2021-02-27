@@ -50,32 +50,31 @@ class MatrixSubtractCalculator : public Node {
   static constexpr Output<Matrix> kOut{""};
 
   MEDIAPIPE_NODE_CONTRACT(kMinuend, kSubtrahend, kOut);
-  static mediapipe::Status UpdateContract(CalculatorContract* cc);
+  static absl::Status UpdateContract(CalculatorContract* cc);
 
-  mediapipe::Status Process(CalculatorContext* cc) override;
+  absl::Status Process(CalculatorContext* cc) override;
 };
 MEDIAPIPE_REGISTER_NODE(MatrixSubtractCalculator);
 
 // static
-mediapipe::Status MatrixSubtractCalculator::UpdateContract(
-    CalculatorContract* cc) {
+absl::Status MatrixSubtractCalculator::UpdateContract(CalculatorContract* cc) {
   // TODO: the next restriction could be relaxed.
   RET_CHECK(kMinuend(cc).IsStream() ^ kSubtrahend(cc).IsStream())
       << "MatrixSubtractCalculator only accepts exactly one input stream and "
          "one input side packet";
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-mediapipe::Status MatrixSubtractCalculator::Process(CalculatorContext* cc) {
+absl::Status MatrixSubtractCalculator::Process(CalculatorContext* cc) {
   const Matrix& minuend = *kMinuend(cc);
   const Matrix& subtrahend = *kSubtrahend(cc);
   if (minuend.rows() != subtrahend.rows() ||
       minuend.cols() != subtrahend.cols()) {
-    return mediapipe::InvalidArgumentError(
+    return absl::InvalidArgumentError(
         "Minuend and subtrahend must have the same dimensions.");
   }
   kOut(cc).Send(minuend - subtrahend);
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
 }  // namespace api2

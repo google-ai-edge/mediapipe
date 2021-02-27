@@ -96,6 +96,7 @@ cc_library(
         ":validate_name",
         "//mediapipe/framework:calculator_cc_proto",
         "//mediapipe/framework/port:map_util",
+        "@com_google_absl//absl/container:flat_hash_set",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
     ],
@@ -128,16 +129,24 @@ cc_test(
 
 cc_library(
     name = "options_util",
+    srcs = ["options_util.cc"],
     hdrs = ["options_util.h"],
     visibility = ["//mediapipe/framework:mediapipe_internal"],
     deps = [
+        ":proto_util_lite",
         "//mediapipe/framework:calculator_cc_proto",
+        "//mediapipe/framework:collection",
         "//mediapipe/framework:input_stream_shard",
+        "//mediapipe/framework:output_side_packet",
         "//mediapipe/framework:packet",
-        "//mediapipe/framework:packet_generator_cc_proto",
         "//mediapipe/framework:packet_set",
+        "//mediapipe/framework:packet_type",
+        "//mediapipe/framework:timestamp",
+        "//mediapipe/framework/port:advanced_proto",
         "//mediapipe/framework/port:any_proto",
+        "//mediapipe/framework/port:status",
         "//mediapipe/framework/tool:type_util",
+        "@com_google_absl//absl/strings",
     ],
 )
 
@@ -280,7 +289,6 @@ cc_library(
 
 cc_library(
     name = "tag_map_helper",
-    testonly = 1,
     srcs = ["tag_map_helper.cc"],
     hdrs = ["tag_map_helper.h"],
     visibility = ["//visibility:public"],
@@ -578,26 +586,16 @@ cc_library(
     deps = [
         "//mediapipe/framework:calculator_cc_proto",
         "//mediapipe/framework/deps:file_path",
+        "//mediapipe/framework/deps:no_destructor",
         "//mediapipe/framework/formats:image_frame",
         "//mediapipe/framework/port:advanced_proto",
+        "//mediapipe/framework/port:file_helpers",
         "//mediapipe/framework/port:gtest",
+        "//mediapipe/framework/port:logging",
         "@com_google_absl//absl/container:flat_hash_set",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
-        "//mediapipe/framework/deps:no_destructor",
-        "//mediapipe/framework/port:logging",
-    ] + select({
-        "//conditions:default": [
-            "//mediapipe/framework/port:file_helpers",
-        ],
-        "//mediapipe:android": [
-            "//mediapipe/util/android/file/base",
-        ],
-        "//mediapipe:ios": [],
-        "//mediapipe:macos": [
-            "//mediapipe/framework/port:file_helpers",
-        ],
-    }),
+    ],
 )
 
 cc_library(

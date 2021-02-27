@@ -640,6 +640,90 @@ TEST(MediaSequenceTest, RoundTripOpticalFlowTimestamp) {
   ASSERT_EQ(GetForwardFlowTimestampSize(sequence), 0);
 }
 
+TEST(MediaSequenceTest, RoundTripTextLanguage) {
+  tensorflow::SequenceExample sequence;
+  ASSERT_FALSE(HasTextLanguage(sequence));
+  SetTextLanguage("test", &sequence);
+  ASSERT_TRUE(HasTextLanguage(sequence));
+  ASSERT_EQ("test", GetTextLanguage(sequence));
+  ClearTextLanguage(&sequence);
+  ASSERT_FALSE(HasTextLanguage(sequence));
+}
+
+TEST(MediaSequenceTest, RoundTripTextContextContent) {
+  tensorflow::SequenceExample sequence;
+  ASSERT_FALSE(HasTextContextContent(sequence));
+  SetTextContextContent("test", &sequence);
+  ASSERT_TRUE(HasTextContextContent(sequence));
+  ASSERT_EQ("test", GetTextContextContent(sequence));
+  ClearTextContextContent(&sequence);
+  ASSERT_FALSE(HasTextContextContent(sequence));
+}
+
+TEST(MediaSequenceTest, RoundTripTextContent) {
+  tensorflow::SequenceExample sequence;
+  std::vector<std::string> text = {"test", "again"};
+  for (int i = 0; i < text.size(); ++i) {
+    AddTextContent(text[i], &sequence);
+    ASSERT_EQ(GetTextContentSize(sequence), i + 1);
+    ASSERT_EQ(GetTextContentAt(sequence, i), text[i]);
+  }
+  ClearTextContent(&sequence);
+  ASSERT_EQ(GetTextContentSize(sequence), 0);
+}
+
+TEST(MediaSequenceTest, RoundTripTextDuration) {
+  tensorflow::SequenceExample sequence;
+  std::vector<int64> timestamps = {4, 7};
+  for (int i = 0; i < timestamps.size(); ++i) {
+    AddTextTimestamp(timestamps[i], &sequence);
+    ASSERT_EQ(GetTextTimestampSize(sequence), i + 1);
+    ASSERT_EQ(GetTextTimestampAt(sequence, i), timestamps[i]);
+  }
+  ClearTextTimestamp(&sequence);
+  ASSERT_EQ(GetTextTimestampSize(sequence), 0);
+}
+
+TEST(MediaSequenceTest, RoundTripTextConfidence) {
+  tensorflow::SequenceExample sequence;
+  std::vector<float> confidence = {0.25, 1.0};
+  for (int i = 0; i < confidence.size(); ++i) {
+    AddTextConfidence(confidence[i], &sequence);
+    ASSERT_EQ(GetTextConfidenceSize(sequence), i + 1);
+    ASSERT_EQ(GetTextConfidenceAt(sequence, i), confidence[i]);
+  }
+  ClearTextConfidence(&sequence);
+  ASSERT_EQ(GetTextConfidenceSize(sequence), 0);
+}
+
+TEST(MediaSequenceTest, RoundTripTextEmbedding) {
+  tensorflow::SequenceExample sequence;
+  int num_features = 3;
+  int num_floats_in_feature = 4;
+  for (int i = 0; i < num_features; ++i) {
+    std::vector<float> vf(num_floats_in_feature, 2 << i);
+    AddTextEmbedding(vf, &sequence);
+    ASSERT_EQ(GetTextEmbeddingSize(sequence), i + 1);
+    for (float value : GetTextEmbeddingAt(sequence, i)) {
+      ASSERT_EQ(value, 2 << i);
+    }
+  }
+  ClearTextEmbedding(&sequence);
+  ASSERT_EQ(GetTextEmbeddingSize(sequence), 0);
+}
+
+TEST(MediaSequenceTest, RoundTripTextTokenId) {
+  tensorflow::SequenceExample sequence;
+  std::vector<int64> ids = {4, 7};
+  for (int i = 0; i < ids.size(); ++i) {
+    AddTextTokenId(ids[i], &sequence);
+    ASSERT_EQ(GetTextTokenIdSize(sequence), i + 1);
+    ASSERT_EQ(GetTextTokenIdAt(sequence, i), ids[i]);
+  }
+  ClearTextTokenId(&sequence);
+  ASSERT_EQ(GetTextTokenIdSize(sequence), 0);
+}
+
 TEST(MediaSequenceTest, ReconcileMetadataOnEmptySequence) {
   tensorflow::SequenceExample sequence;
   MP_ASSERT_OK(ReconcileMetadata(true, false, &sequence));

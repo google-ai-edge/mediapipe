@@ -22,11 +22,13 @@
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/calculator_runner.h"
 #include "mediapipe/framework/deps/file_path.h"
+#include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/formats/image_format.pb.h"
 #include "mediapipe/framework/formats/image_frame.h"
 #include "mediapipe/framework/formats/image_frame_opencv.h"
 #include "mediapipe/framework/formats/rect.pb.h"
 #include "mediapipe/framework/formats/tensor.h"
+#include "mediapipe/framework/port/commandlineflags.h"
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/framework/port/integral_types.h"
 #include "mediapipe/framework/port/opencv_core_inc.h"
@@ -54,10 +56,12 @@ cv::Mat GetRgba(absl::string_view path) {
 
 // Image to tensor test template.
 // No processing/assertions should be done after the function is invoked.
-void RunTest(cv::Mat input, cv::Mat expected_result, float range_min,
-             float range_max, int tensor_width, int tensor_height,
-             bool keep_aspect, absl::optional<BorderMode> border_mode,
-             const mediapipe::NormalizedRect& roi) {
+void RunTestWithInputImagePacket(const Packet& input_image_packet,
+                                 cv::Mat expected_result, float range_min,
+                                 float range_max, int tensor_width,
+                                 int tensor_height, bool keep_aspect,
+                                 absl::optional<BorderMode> border_mode,
+                                 const mediapipe::NormalizedRect& roi) {
   std::string border_mode_str;
   if (border_mode) {
     switch (*border_mode) {
@@ -107,12 +111,8 @@ void RunTest(cv::Mat input, cv::Mat expected_result, float range_min,
   MP_ASSERT_OK(graph.Initialize(graph_config));
   MP_ASSERT_OK(graph.StartRun({}));
 
-  ImageFrame input_image(
-      input.channels() == 4 ? ImageFormat::SRGBA : ImageFormat::SRGB,
-      input.cols, input.rows, input.step, input.data, [](uint8*) {});
-  MP_ASSERT_OK(graph.AddPacketToInputStream(
-      "input_image",
-      MakePacket<ImageFrame>(std::move(input_image)).At(Timestamp(0))));
+  MP_ASSERT_OK(graph.AddPacketToInputStream("input_image", input_image_packet));
+
   MP_ASSERT_OK(graph.AddPacketToInputStream(
       "roi",
       MakePacket<mediapipe::NormalizedRect>(std::move(roi)).At(Timestamp(0))));
@@ -133,8 +133,7 @@ void RunTest(cv::Mat input, cv::Mat expected_result, float range_min,
                      const_cast<float*>(view.buffer<float>()));
   cv::Mat result_rgb;
   auto transformation =
-      GetValueRangeTransformation(range_min, range_max, 0.0f, 255.0f)
-          .ValueOrDie();
+      GetValueRangeTransformation(range_min, range_max, 0.0f, 255.0f).value();
   tensor_mat.convertTo(result_rgb, CV_8UC3, transformation.scale,
                        transformation.offset);
 
@@ -150,6 +149,38 @@ void RunTest(cv::Mat input, cv::Mat expected_result, float range_min,
   MP_ASSERT_OK(graph.CloseInputStream("input_image"));
   MP_ASSERT_OK(graph.CloseInputStream("roi"));
   MP_ASSERT_OK(graph.WaitUntilDone());
+}
+
+Packet MakeImageFramePacket(cv::Mat input) {
+  ImageFrame input_image(
+      input.channels() == 4 ? ImageFormat::SRGBA : ImageFormat::SRGB,
+      input.cols, input.rows, input.step, input.data, [](uint8*) {});
+  return MakePacket<ImageFrame>(std::move(input_image)).At(Timestamp(0));
+}
+
+Packet MakeImagePacket(cv::Mat input) {
+  mediapipe::Image input_image(std::make_shared<mediapipe::ImageFrame>(
+      input.channels() == 4 ? ImageFormat::SRGBA : ImageFormat::SRGB,
+      input.cols, input.rows, input.step, input.data, [](uint8*) {}));
+  return MakePacket<mediapipe::Image>(std::move(input_image)).At(Timestamp(0));
+}
+
+enum class InputType { kImageFrame, kImage };
+
+const std::vector<InputType> kInputTypesToTest = {InputType::kImageFrame,
+                                                  InputType::kImage};
+
+void RunTest(cv::Mat input, cv::Mat expected_result, float range_min,
+             float range_max, int tensor_width, int tensor_height,
+             bool keep_aspect, absl::optional<BorderMode> border_mode,
+             const mediapipe::NormalizedRect& roi) {
+  for (auto input_type : kInputTypesToTest) {
+    RunTestWithInputImagePacket(
+        input_type == InputType::kImageFrame ? MakeImageFramePacket(input)
+                                             : MakeImagePacket(input),
+        expected_result, range_min, range_max, tensor_width, tensor_height,
+        keep_aspect, border_mode, roi);
+  }
 }
 
 TEST(ImageToTensorCalculatorTest, MediumSubRectKeepAspect) {

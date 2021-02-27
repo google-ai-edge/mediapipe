@@ -56,7 +56,7 @@ class ProcrustesSolver {
   // Note: the output `transform_mat` argument is used instead of `StatusOr<>`
   // return type in order to avoid Eigen memory alignment issues. Details:
   // https://eigen.tuxfamily.org/dox/group__TopicStructHavingEigenMembers.html
-  virtual mediapipe::Status SolveWeightedOrthogonalProblem(
+  virtual absl::Status SolveWeightedOrthogonalProblem(
       const Eigen::Matrix3Xf& source_points,  //
       const Eigen::Matrix3Xf& target_points,  //
       const Eigen::VectorXf& point_weights,   //

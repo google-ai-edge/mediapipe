@@ -24,7 +24,6 @@
 #include "absl/flags/parse.h"
 #include "absl/flags/usage.h"
 #include "mediapipe/framework/port/advanced_proto_inc.h"
-#include "mediapipe/framework/port/commandlineflags.h"
 #include "mediapipe/framework/port/file_helpers.h"
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/profiler/reporter/reporter.h"

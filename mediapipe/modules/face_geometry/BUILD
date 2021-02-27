@@ -28,6 +28,27 @@ mediapipe_simple_subgraph(
     ],
 )
 
+mediapipe_simple_subgraph(
+    name = "face_geometry_from_detection",
+    graph = "face_geometry_from_detection.pbtxt",
+    register_as = "FaceGeometryFromDetection",
+    deps = [
+        ":geometry_pipeline_calculator",
+        "//mediapipe/calculators/core:begin_loop_calculator",
+        "//mediapipe/calculators/core:end_loop_calculator",
+        "//mediapipe/calculators/util:detection_to_landmarks_calculator",
+    ],
+)
+
+mediapipe_simple_subgraph(
+    name = "face_geometry_from_landmarks",
+    graph = "face_geometry_from_landmarks.pbtxt",
+    register_as = "FaceGeometryFromLandmarks",
+    deps = [
+        ":geometry_pipeline_calculator",
+    ],
+)
+
 mediapipe_proto_library(
     name = "effect_renderer_calculator_proto",
     srcs = ["effect_renderer_calculator.proto"],

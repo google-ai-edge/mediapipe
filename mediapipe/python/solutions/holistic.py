@@ -41,6 +41,7 @@ from mediapipe.python.solutions.hands import HAND_CONNECTIONS
 from mediapipe.python.solutions.hands import HandLandmark
 from mediapipe.python.solutions.pose import POSE_CONNECTIONS
 from mediapipe.python.solutions.pose import PoseLandmark
+from mediapipe.python.solutions.pose import UPPER_BODY_POSE_CONNECTIONS
 # pylint: enable=unused-import
 
 BINARYPB_FILE_PATH = 'mediapipe/modules/holistic_landmark/holistic_landmark_cpu.binarypb'
@@ -111,7 +112,7 @@ class Holistic(SolutionBase):
       image: An RGB image represented as a numpy ndarray.
 
     Raises:
-      RuntimeError: If the underlying graph occurs any error.
+      RuntimeError: If the underlying graph throws any error.
       ValueError: If the input image is not three channel RGB.
 
     Returns:

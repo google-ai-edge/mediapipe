@@ -23,6 +23,7 @@ package(default_visibility = ["//visibility:public"])
 
 exports_files([
     "hand_landmark.tflite",
+    "hand_landmark_sparse.tflite",
     "handedness.txt",
 ])
 
@@ -104,7 +105,7 @@ mediapipe_simple_subgraph(
         "//mediapipe/calculators/util:association_norm_rect_calculator",
         "//mediapipe/calculators/util:collection_has_min_size_calculator",
         "//mediapipe/calculators/util:filter_collection_calculator",
-        "//mediapipe/modules/palm_detection:palm_detection_gpu",
+        "//mediapipe/modules/palm_detection:palm_detection_cpu",
     ],
 )
 

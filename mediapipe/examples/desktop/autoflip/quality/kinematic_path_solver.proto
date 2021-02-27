@@ -8,8 +8,14 @@ message KinematicOptions {
   optional double update_rate = 1 [default = 0.5, deprecated = true];
   // Max velocity (degrees per second) that the camera can move.
   optional double max_velocity = 2 [default = 18];
-  // Min motion (in degrees) to react in pixels.
-  optional float min_motion_to_reframe = 3 [default = 1.8];
+  // Min motion (in degrees) to react for both upper and lower directions.  Must
+  // not be set if using min_motion_to_reframe_lower and
+  // min_motion_to_reframe_upper.
+  optional float min_motion_to_reframe = 3;
+  // Min motion (in degrees) for upper and lower direction to react.  Both must
+  // be set and min_motion_to_reframe cannot be set if these are specified.
+  optional float min_motion_to_reframe_lower = 9;
+  optional float min_motion_to_reframe_upper = 10;
   // When motion exceeds min_motion_to_reframe, move within this distance of the
   // camera from the starting direction.  Setting this value non-zero reduces
   // total reframe distance on average.  Value cannot exceed

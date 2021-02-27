@@ -368,6 +368,7 @@ cc_test(
         "//mediapipe/framework/deps:file_path",
         "//mediapipe/framework/formats:image_frame",
         "//mediapipe/framework/formats:image_frame_opencv",
+        "//mediapipe/framework/port:commandlineflags",
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/framework/port:opencv_core",
         "//mediapipe/framework/port:opencv_imgcodecs",

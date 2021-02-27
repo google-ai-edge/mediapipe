@@ -45,7 +45,7 @@ inline PyObject* StatusCodeToPyError(const ::absl::StatusCode& code) {
   }
 }
 
-inline void RaisePyErrorIfNotOk(const mediapipe::Status& status) {
+inline void RaisePyErrorIfNotOk(const absl::Status& status) {
   if (!status.ok()) {
     throw RaisePyError(StatusCodeToPyError(status.code()),
                        status.message().data());

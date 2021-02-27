@@ -75,7 +75,7 @@ namespace mediapipe {
 // }
 class RealTimeFlowLimiterCalculator : public CalculatorBase {
  public:
-  static mediapipe::Status GetContract(CalculatorContract* cc) {
+  static absl::Status GetContract(CalculatorContract* cc) {
     int num_data_streams = cc->Inputs().NumEntries("");
     RET_CHECK_GE(num_data_streams, 1);
     RET_CHECK_EQ(cc->Outputs().NumEntries(""), num_data_streams)
@@ -95,10 +95,10 @@ class RealTimeFlowLimiterCalculator : public CalculatorBase {
 
     cc->SetInputStreamHandler("ImmediateInputStreamHandler");
 
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
-  mediapipe::Status Open(CalculatorContext* cc) final {
+  absl::Status Open(CalculatorContext* cc) final {
     finished_id_ = cc->Inputs().GetId("FINISHED", 0);
     max_in_flight_ = 1;
     if (cc->InputSidePackets().HasTag("MAX_IN_FLIGHT")) {
@@ -113,12 +113,12 @@ class RealTimeFlowLimiterCalculator : public CalculatorBase {
     num_data_streams_ = cc->Inputs().NumEntries("");
     data_stream_bound_ts_.resize(num_data_streams_);
     RET_CHECK_OK(CopyInputHeadersToOutputs(cc->Inputs(), &(cc->Outputs())));
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
   bool Allow() { return num_in_flight_ < max_in_flight_; }
 
-  mediapipe::Status Process(CalculatorContext* cc) final {
+  absl::Status Process(CalculatorContext* cc) final {
     bool old_allow = Allow();
     Timestamp lowest_incomplete_ts = Timestamp::Done();
 
@@ -180,7 +180,7 @@ class RealTimeFlowLimiterCalculator : public CalculatorBase {
           .Get(allowed_id_)
           .AddPacket(MakePacket<bool>(Allow()).At(++allow_ctr_ts_));
     }
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
  private:

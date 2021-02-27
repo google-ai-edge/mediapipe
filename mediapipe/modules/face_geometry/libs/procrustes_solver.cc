@@ -32,7 +32,7 @@ class FloatPrecisionProcrustesSolver : public ProcrustesSolver {
  public:
   FloatPrecisionProcrustesSolver() = default;
 
-  mediapipe::Status SolveWeightedOrthogonalProblem(
+  absl::Status SolveWeightedOrthogonalProblem(
       const Eigen::Matrix3Xf& source_points,  //
       const Eigen::Matrix3Xf& target_points,  //
       const Eigen::VectorXf& point_weights,
@@ -52,13 +52,13 @@ class FloatPrecisionProcrustesSolver : public ProcrustesSolver {
         source_points, target_points, sqrt_weights, transform_mat))
         << "Failed to solve the WEOP problem!";
 
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
  private:
   static constexpr float kAbsoluteErrorEps = 1e-9f;
 
-  static mediapipe::Status ValidateInputPoints(
+  static absl::Status ValidateInputPoints(
       const Eigen::Matrix3Xf& source_points,
       const Eigen::Matrix3Xf& target_points) {
     RET_CHECK_GT(source_points.cols(), 0)
@@ -67,10 +67,10 @@ class FloatPrecisionProcrustesSolver : public ProcrustesSolver {
     RET_CHECK_EQ(source_points.cols(), target_points.cols())
         << "The number of source and target points must be equal!";
 
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
-  static mediapipe::Status ValidatePointWeights(
+  static absl::Status ValidatePointWeights(
       int num_points, const Eigen::VectorXf& point_weights) {
     RET_CHECK_GT(point_weights.size(), 0)
         << "The number of point weights must be positive!";
@@ -89,7 +89,7 @@ class FloatPrecisionProcrustesSolver : public ProcrustesSolver {
     RET_CHECK_GT(total_weight, kAbsoluteErrorEps)
         << "The total point weight is too small!";
 
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
   static Eigen::VectorXf ExtractSquareRoot(
@@ -139,7 +139,7 @@ class FloatPrecisionProcrustesSolver : public ProcrustesSolver {
   // Note: the output `transform_mat` argument is used instead of `StatusOr<>`
   // return type in order to avoid Eigen memory alignment issues. Details:
   // https://eigen.tuxfamily.org/dox/group__TopicStructHavingEigenMembers.html
-  static mediapipe::Status InternalSolveWeightedOrthogonalProblem(
+  static absl::Status InternalSolveWeightedOrthogonalProblem(
       const Eigen::Matrix3Xf& sources, const Eigen::Matrix3Xf& targets,
       const Eigen::VectorXf& sqrt_weights, Eigen::Matrix4f& transform_mat) {
     // tranposed(A_w).
@@ -195,7 +195,7 @@ class FloatPrecisionProcrustesSolver : public ProcrustesSolver {
 
     transform_mat = CombineTransformMatrix(rotation_and_scale, translation);
 
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
   // `design_matrix` is a transposed LHS of (51) in the paper.
@@ -203,7 +203,7 @@ class FloatPrecisionProcrustesSolver : public ProcrustesSolver {
   // Note: the output `rotation` argument is used instead of `StatusOr<>`
   // return type in order to avoid Eigen memory alignment issues. Details:
   // https://eigen.tuxfamily.org/dox/group__TopicStructHavingEigenMembers.html
-  static mediapipe::Status ComputeOptimalRotation(
+  static absl::Status ComputeOptimalRotation(
       const Eigen::Matrix3f& design_matrix, Eigen::Matrix3f& rotation) {
     RET_CHECK_GT(design_matrix.norm(), kAbsoluteErrorEps)
         << "Design matrix norm is too small!";
@@ -228,10 +228,10 @@ class FloatPrecisionProcrustesSolver : public ProcrustesSolver {
 
     // Transposed (52) from the paper.
     rotation = postrotation * prerotation;
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
-  static mediapipe::StatusOr<float> ComputeOptimalScale(
+  static absl::StatusOr<float> ComputeOptimalScale(
       const Eigen::Matrix3Xf& centered_weighted_sources,
       const Eigen::Matrix3Xf& weighted_sources,
       const Eigen::Matrix3Xf& weighted_targets,

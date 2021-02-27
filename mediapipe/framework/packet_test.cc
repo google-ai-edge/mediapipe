@@ -210,8 +210,8 @@ TEST(PacketTest, ValidateAsProtoMessageLite) {
   Packet packet = Adopt(proto_ptr.release());
   MP_EXPECT_OK(packet.ValidateAsProtoMessageLite());
   Packet packet2 = MakePacket<int>(3);
-  mediapipe::Status status = packet2.ValidateAsProtoMessageLite();
-  EXPECT_EQ(status.code(), mediapipe::StatusCode::kInvalidArgument);
+  absl::Status status = packet2.ValidateAsProtoMessageLite();
+  EXPECT_EQ(status.code(), absl::StatusCode::kInvalidArgument);
 }
 
 TEST(PacketTest, SyncedPacket) {
@@ -283,11 +283,10 @@ TEST(PacketTest, TestPacketMoveConstructor) {
 TEST(PacketTest, TestPacketConsume) {
   Packet packet1 = MakePacket<int>(33);
   Packet packet_copy = packet1;
-  mediapipe::StatusOr<std::unique_ptr<int>> result1 =
-      packet_copy.Consume<int>();
+  absl::StatusOr<std::unique_ptr<int>> result1 = packet_copy.Consume<int>();
   // Both packet1 and packet_copy own the data, Consume() should return error.
-  mediapipe::Status status1 = result1.status();
-  EXPECT_EQ(status1.code(), mediapipe::StatusCode::kFailedPrecondition);
+  absl::Status status1 = result1.status();
+  EXPECT_EQ(status1.code(), absl::StatusCode::kFailedPrecondition);
   EXPECT_THAT(status1.message(),
               testing::HasSubstr("isn't the sole owner of the holder"));
   ASSERT_FALSE(packet1.IsEmpty());
@@ -297,8 +296,7 @@ TEST(PacketTest, TestPacketConsume) {
 
   Packet packet2 = MakePacket<int>(33);
   // Types don't match (int vs float).
-  mediapipe::StatusOr<std::unique_ptr<float>> result2 =
-      packet2.Consume<float>();
+  absl::StatusOr<std::unique_ptr<float>> result2 = packet2.Consume<float>();
   EXPECT_THAT(
       result2.status().message(),
       testing::AllOf(testing::HasSubstr("int"), testing::HasSubstr("float")));
@@ -307,11 +305,11 @@ TEST(PacketTest, TestPacketConsume) {
 
   // packet3 is the sole owner of the data.
   Packet packet3 = MakePacket<int>(42);
-  mediapipe::StatusOr<std::unique_ptr<int>> result3 = packet3.Consume<int>();
+  absl::StatusOr<std::unique_ptr<int>> result3 = packet3.Consume<int>();
   // After Consume(), packet3 should be empty and result3 owns the data.
   EXPECT_TRUE(result3.ok());
-  ASSERT_NE(nullptr, result3.ValueOrDie());
-  EXPECT_EQ(42, *result3.ValueOrDie());
+  ASSERT_NE(nullptr, result3.value());
+  EXPECT_EQ(42, *result3.value());
   EXPECT_TRUE(packet3.IsEmpty());
 }
 
@@ -319,14 +317,14 @@ TEST(PacketTest, TestPacketConsumeOrCopy) {
   Packet packet1 = MakePacket<int>(33);
   Packet packet_copy = packet1;
   bool was_copied1 = false;
-  mediapipe::StatusOr<std::unique_ptr<int>> result1 =
+  absl::StatusOr<std::unique_ptr<int>> result1 =
       packet_copy.ConsumeOrCopy<int>(&was_copied1);
   // Both packet1 and packet_copy own the data, ConsumeOrCopy() returns a copy
   // of the data and sets packet_copy to empty.
   EXPECT_TRUE(result1.ok());
   EXPECT_TRUE(was_copied1);
-  ASSERT_NE(nullptr, result1.ValueOrDie());
-  EXPECT_EQ(33, *result1.ValueOrDie());
+  ASSERT_NE(nullptr, result1.value());
+  EXPECT_EQ(33, *result1.value());
   EXPECT_TRUE(packet_copy.IsEmpty());
   // ConsumeOrCopy() doesn't affect packet1.
   ASSERT_FALSE(packet1.IsEmpty());
@@ -334,7 +332,7 @@ TEST(PacketTest, TestPacketConsumeOrCopy) {
 
   Packet packet2 = MakePacket<int>(33);
   // Types don't match (int vs float).
-  mediapipe::StatusOr<std::unique_ptr<float>> result2 =
+  absl::StatusOr<std::unique_ptr<float>> result2 =
       packet2.ConsumeOrCopy<float>();
   EXPECT_THAT(
       result2.status().message(),
@@ -346,21 +344,21 @@ TEST(PacketTest, TestPacketConsumeOrCopy) {
   bool was_copied3 = false;
   // packet3 is the sole owner of the data. ConsumeOrCopy() transfers the
   // ownership to result3 and makes packet3 empty.
-  mediapipe::StatusOr<std::unique_ptr<int>> result3 =
+  absl::StatusOr<std::unique_ptr<int>> result3 =
       packet3.ConsumeOrCopy<int>(&was_copied3);
   EXPECT_FALSE(was_copied3);
   EXPECT_TRUE(result3.ok());
-  ASSERT_NE(nullptr, result3.ValueOrDie());
-  EXPECT_EQ(42, *result3.ValueOrDie());
+  ASSERT_NE(nullptr, result3.value());
+  EXPECT_EQ(42, *result3.value());
   EXPECT_TRUE(packet3.IsEmpty());
 }
 
 TEST(PacketTest, TestConsumeForeignHolder) {
   std::unique_ptr<int> data(new int(33));
   Packet packet = PointToForeign(data.get());
-  mediapipe::StatusOr<std::unique_ptr<int>> result = packet.Consume<int>();
+  absl::StatusOr<std::unique_ptr<int>> result = packet.Consume<int>();
   EXPECT_FALSE(result.ok());
-  EXPECT_EQ(result.status().code(), mediapipe::StatusCode::kInternal);
+  EXPECT_EQ(result.status().code(), absl::StatusCode::kInternal);
   EXPECT_EQ(result.status().message(),
             "Foreign holder can't release data ptr without ownership.");
   ASSERT_FALSE(packet.IsEmpty());
@@ -372,15 +370,15 @@ TEST(PacketTest, TestForeignHolderConsumeOrCopy) {
   Packet packet1 = PointToForeign(data1.get());
   Packet packet_copy = packet1;
   bool was_copied1 = false;
-  mediapipe::StatusOr<std::unique_ptr<int>> result1 =
+  absl::StatusOr<std::unique_ptr<int>> result1 =
       packet_copy.ConsumeOrCopy<int>(&was_copied1);
   // After ConsumeOrCopy(), result1 gets the copy of packet_copy's data and
   // packet_copy is set to empty.
   EXPECT_TRUE(packet_copy.IsEmpty());
   EXPECT_TRUE(was_copied1);
   EXPECT_TRUE(result1.ok());
-  ASSERT_NE(nullptr, result1.ValueOrDie());
-  EXPECT_EQ(42, *result1.ValueOrDie());
+  ASSERT_NE(nullptr, result1.value());
+  EXPECT_EQ(42, *result1.value());
   // ConsumeOrCopy() doesn't affect packet1.
   ASSERT_FALSE(packet1.IsEmpty());
   EXPECT_EQ(42, packet1.Get<int>());
@@ -388,25 +386,25 @@ TEST(PacketTest, TestForeignHolderConsumeOrCopy) {
   std::unique_ptr<int> data2(new int(33));
   Packet packet2 = PointToForeign(data2.get());
   bool was_copied2 = false;
-  mediapipe::StatusOr<std::unique_ptr<int>> result2 =
+  absl::StatusOr<std::unique_ptr<int>> result2 =
       packet2.ConsumeOrCopy<int>(&was_copied2);
   // After ConsumeOrCopy(), result2 gets the copy of packet2's data and packet2
   // is set to empty.
   EXPECT_TRUE(packet2.IsEmpty());
   EXPECT_TRUE(was_copied2);
   EXPECT_TRUE(result2.ok());
-  ASSERT_NE(nullptr, result2.ValueOrDie());
-  EXPECT_EQ(33, *result2.ValueOrDie());
+  ASSERT_NE(nullptr, result2.value());
+  EXPECT_EQ(33, *result2.value());
 }
 
 TEST(PacketTest, TestConsumeBoundedArray) {
   Packet packet1 = MakePacket<int[3]>(10, 20, 30);
   Packet packet_copy = packet1;
-  mediapipe::StatusOr<std::unique_ptr<int[3]>> result1 =
+  absl::StatusOr<std::unique_ptr<int[3]>> result1 =
       packet_copy.Consume<int[3]>();
   // Both packet1 and packet_copy own the data, Consume() should return error.
-  mediapipe::Status status1 = result1.status();
-  EXPECT_EQ(status1.code(), mediapipe::StatusCode::kFailedPrecondition);
+  absl::Status status1 = result1.status();
+  EXPECT_EQ(status1.code(), absl::StatusCode::kFailedPrecondition);
   EXPECT_THAT(status1.message(),
               testing::HasSubstr("isn't the sole owner of the holder"));
   ASSERT_FALSE(packet1.IsEmpty());
@@ -422,10 +420,9 @@ TEST(PacketTest, TestConsumeBoundedArray) {
 
   Packet packet2 = MakePacket<int[3]>(40, 50, 60);
   // After Consume(), packet2 should be empty and result2 owns the data.
-  mediapipe::StatusOr<std::unique_ptr<int[3]>> result2 =
-      packet2.Consume<int[3]>();
-  ASSERT_NE(nullptr, result2.ValueOrDie());
-  auto value3 = result2.ValueOrDie().get();
+  absl::StatusOr<std::unique_ptr<int[3]>> result2 = packet2.Consume<int[3]>();
+  ASSERT_NE(nullptr, result2.value());
+  auto value3 = result2.value().get();
   EXPECT_EQ(40, (*value3)[0]);
   EXPECT_EQ(50, (*value3)[1]);
   EXPECT_EQ(60, (*value3)[2]);
@@ -436,14 +433,14 @@ TEST(PacketTest, TestConsumeOrCopyBoundedArray) {
   Packet packet1 = MakePacket<int[3]>(10, 20, 30);
   Packet packet_copy = packet1;
   bool was_copied1 = false;
-  mediapipe::StatusOr<std::unique_ptr<int[3]>> result1 =
+  absl::StatusOr<std::unique_ptr<int[3]>> result1 =
       packet_copy.ConsumeOrCopy<int[3]>(&was_copied1);
   // Both packet1 and packet_copy own the data, ConsumeOrCopy() returns a copy
   // of the data and sets packet_copy to empty.
   EXPECT_TRUE(result1.ok());
   EXPECT_TRUE(was_copied1);
-  ASSERT_NE(nullptr, result1.ValueOrDie());
-  auto value1 = result1.ValueOrDie().get();
+  ASSERT_NE(nullptr, result1.value());
+  auto value1 = result1.value().get();
   EXPECT_EQ(10, (*value1)[0]);
   EXPECT_EQ(20, (*value1)[1]);
   EXPECT_EQ(30, (*value1)[2]);
@@ -459,12 +456,12 @@ TEST(PacketTest, TestConsumeOrCopyBoundedArray) {
   bool was_copied2 = false;
   // packet2 is the sole owner of the data. ConsumeOrCopy() transfers the
   // ownership to result2 and makes packet2 empty.
-  mediapipe::StatusOr<std::unique_ptr<int[3]>> result2 =
+  absl::StatusOr<std::unique_ptr<int[3]>> result2 =
       packet2.ConsumeOrCopy<int[3]>(&was_copied2);
   EXPECT_TRUE(result2.ok());
   EXPECT_FALSE(was_copied2);
-  ASSERT_NE(nullptr, result2.ValueOrDie());
-  auto value3 = result2.ValueOrDie().get();
+  ASSERT_NE(nullptr, result2.value());
+  auto value3 = result2.value().get();
   EXPECT_EQ(40, (*value3)[0]);
   EXPECT_EQ(50, (*value3)[1]);
   EXPECT_EQ(60, (*value3)[2]);
@@ -487,9 +484,22 @@ TEST(PacketTest, PacketFromSerializedProto) {
   StatusOr<Packet> maybe_packet = packet_internal::PacketFromDynamicProto(
       "mediapipe.SimpleProto", serialized);
   MP_ASSERT_OK(maybe_packet);
-  Packet packet = maybe_packet.ValueOrDie();
+  Packet packet = maybe_packet.value();
   MP_EXPECT_OK(packet.ValidateAsType<::mediapipe::SimpleProto>());
   EXPECT_FALSE(packet.ValidateAsType<::mediapipe::PacketTestProto>().ok());
+}
+
+TEST(PacketTest, SharedPtrWithPacketOwnership) {
+  bool exist;
+  Packet packet = MakePacket<MyClass>(&exist);
+  ASSERT_EQ(exist, true);
+  std::shared_ptr<const MyClass> ptr = SharedPtrWithPacket<MyClass>(packet);
+  packet = {};
+  // The shared_ptr should still be retaining the object.
+  EXPECT_EQ(exist, true);
+  ptr = nullptr;
+  // Now it should be released.
+  EXPECT_EQ(exist, false);
 }
 
 }  // namespace

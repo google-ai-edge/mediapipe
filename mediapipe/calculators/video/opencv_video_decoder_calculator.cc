@@ -86,7 +86,7 @@ ImageFormat::Format GetImageFormat(int num_channels) {
 //
 class OpenCvVideoDecoderCalculator : public CalculatorBase {
  public:
-  static mediapipe::Status GetContract(CalculatorContract* cc) {
+  static absl::Status GetContract(CalculatorContract* cc) {
     cc->InputSidePackets().Tag("INPUT_FILE_PATH").Set<std::string>();
     cc->Outputs().Tag("VIDEO").Set<ImageFrame>();
     if (cc->Outputs().HasTag("VIDEO_PRESTREAM")) {
@@ -95,10 +95,10 @@ class OpenCvVideoDecoderCalculator : public CalculatorBase {
     if (cc->OutputSidePackets().HasTag("SAVED_AUDIO_PATH")) {
       cc->OutputSidePackets().Tag("SAVED_AUDIO_PATH").Set<std::string>();
     }
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
-  mediapipe::Status Open(CalculatorContext* cc) override {
+  absl::Status Open(CalculatorContext* cc) override {
     const std::string& input_file_path =
         cc->InputSidePackets().Tag("INPUT_FILE_PATH").Get<std::string>();
     cap_ = absl::make_unique<cv::VideoCapture>(input_file_path);
@@ -177,10 +177,10 @@ class OpenCvVideoDecoderCalculator : public CalculatorBase {
                 "config.";
 #endif
     }
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
-  mediapipe::Status Process(CalculatorContext* cc) override {
+  absl::Status Process(CalculatorContext* cc) override {
     auto image_frame = absl::make_unique<ImageFrame>(format_, width_, height_,
                                                      /*alignment_boundary=*/1);
     // Use microsecond as the unit of time.
@@ -213,10 +213,10 @@ class OpenCvVideoDecoderCalculator : public CalculatorBase {
       decoded_frames_++;
     }
 
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
-  mediapipe::Status Close(CalculatorContext* cc) override {
+  absl::Status Close(CalculatorContext* cc) override {
     if (cap_ && cap_->isOpened()) {
       cap_->release();
     }
@@ -225,7 +225,7 @@ class OpenCvVideoDecoderCalculator : public CalculatorBase {
                    << frame_count_ << " vs decoded frames: " << decoded_frames_
                    << ").";
     }
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
  private:

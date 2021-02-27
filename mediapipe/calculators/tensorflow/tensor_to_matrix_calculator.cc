@@ -34,19 +34,19 @@ constexpr char kMatrix[] = "MATRIX";
 constexpr char kTensor[] = "TENSOR";
 constexpr char kReference[] = "REFERENCE";
 
-mediapipe::Status FillTimeSeriesHeaderIfValid(const Packet& header_packet,
-                                              TimeSeriesHeader* header) {
+absl::Status FillTimeSeriesHeaderIfValid(const Packet& header_packet,
+                                         TimeSeriesHeader* header) {
   CHECK(header);
   if (header_packet.IsEmpty()) {
-    return mediapipe::UnknownError("No header found.");
+    return absl::UnknownError("No header found.");
   }
   if (!header_packet.ValidateAsType<TimeSeriesHeader>().ok()) {
-    return mediapipe::UnknownError("Packet does not contain TimeSeriesHeader.");
+    return absl::UnknownError("Packet does not contain TimeSeriesHeader.");
   }
   *header = header_packet.Get<TimeSeriesHeader>();
   if (header->has_sample_rate() && header->sample_rate() >= 0 &&
       header->has_num_channels() && header->num_channels() >= 0) {
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   } else {
     std::string error_message =
         "TimeSeriesHeader is missing necessary fields: "
@@ -55,7 +55,7 @@ mediapipe::Status FillTimeSeriesHeaderIfValid(const Packet& header_packet,
     absl::StrAppend(&error_message, "Got header:\n",
                     header->ShortDebugString());
 #endif
-    return mediapipe::InvalidArgumentError(error_message);
+    return absl::InvalidArgumentError(error_message);
   }
 }
 
@@ -109,18 +109,17 @@ mediapipe::Status FillTimeSeriesHeaderIfValid(const Packet& header_packet,
 // }
 class TensorToMatrixCalculator : public CalculatorBase {
  public:
-  static mediapipe::Status GetContract(CalculatorContract* cc);
+  static absl::Status GetContract(CalculatorContract* cc);
 
-  mediapipe::Status Open(CalculatorContext* cc) override;
-  mediapipe::Status Process(CalculatorContext* cc) override;
+  absl::Status Open(CalculatorContext* cc) override;
+  absl::Status Process(CalculatorContext* cc) override;
 
   // Store header information so that we can verify the inputs in process().
   TimeSeriesHeader header_;
 };
 REGISTER_CALCULATOR(TensorToMatrixCalculator);
 
-mediapipe::Status TensorToMatrixCalculator::GetContract(
-    CalculatorContract* cc) {
+absl::Status TensorToMatrixCalculator::GetContract(CalculatorContract* cc) {
   RET_CHECK_LE(cc->Inputs().NumEntries(), 2)
       << "Only one or two input streams are supported.";
   RET_CHECK_GT(cc->Inputs().NumEntries(), 0)
@@ -146,12 +145,12 @@ mediapipe::Status TensorToMatrixCalculator::GetContract(
   cc->Outputs().Tag(kMatrix).Set<Matrix>(
       // Output Matrix.
   );
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-mediapipe::Status TensorToMatrixCalculator::Open(CalculatorContext* cc) {
+absl::Status TensorToMatrixCalculator::Open(CalculatorContext* cc) {
   auto input_header = absl::make_unique<TimeSeriesHeader>();
-  mediapipe::Status header_status;
+  absl::Status header_status;
   if (cc->Inputs().HasTag(kReference)) {
     header_status = FillTimeSeriesHeaderIfValid(
         cc->Inputs().Tag(kReference).Header(), input_header.get());
@@ -183,10 +182,10 @@ mediapipe::Status TensorToMatrixCalculator::Open(CalculatorContext* cc) {
     cc->Outputs().Tag(kMatrix).SetHeader(Adopt(input_header.release()));
   }
   cc->SetOffset(TimestampDiff(0));
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-mediapipe::Status TensorToMatrixCalculator::Process(CalculatorContext* cc) {
+absl::Status TensorToMatrixCalculator::Process(CalculatorContext* cc) {
   // Daredevil requested CHECK for noisy failures rather than quieter RET_CHECK
   // failures. These are absolute conditions of the graph for the graph to be
   // valid, and if it is violated by any input anywhere, the graph will be
@@ -220,7 +219,7 @@ mediapipe::Status TensorToMatrixCalculator::Process(CalculatorContext* cc) {
   *output =
       Eigen::MatrixXf::Map(input_tensor.flat<float>().data(), length, width);
   cc->Outputs().Tag(kMatrix).Add(output.release(), cc->InputTimestamp());
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
 }  // namespace mediapipe

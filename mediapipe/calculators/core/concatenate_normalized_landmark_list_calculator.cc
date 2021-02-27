@@ -36,35 +36,35 @@ class ConcatenateNormalizedLandmarkListCalculator : public Node {
 
   MEDIAPIPE_NODE_CONTRACT(kIn, kOut);
 
-  static mediapipe::Status UpdateContract(CalculatorContract* cc) {
+  static absl::Status UpdateContract(CalculatorContract* cc) {
     RET_CHECK_GE(kIn(cc).Count(), 1);
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
-  mediapipe::Status Open(CalculatorContext* cc) override {
+  absl::Status Open(CalculatorContext* cc) override {
     only_emit_if_all_present_ =
         cc->Options<::mediapipe::ConcatenateVectorCalculatorOptions>()
             .only_emit_if_all_present();
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
-  mediapipe::Status Process(CalculatorContext* cc) override {
+  absl::Status Process(CalculatorContext* cc) override {
     if (only_emit_if_all_present_) {
-      for (int i = 0; i < kIn(cc).Count(); ++i) {
-        if (kIn(cc)[i].IsEmpty()) return mediapipe::OkStatus();
+      for (const auto& input : kIn(cc)) {
+        if (input.IsEmpty()) return absl::OkStatus();
       }
     }
 
     NormalizedLandmarkList output;
-    for (int i = 0; i < kIn(cc).Count(); ++i) {
-      if (kIn(cc)[i].IsEmpty()) continue;
-      const NormalizedLandmarkList& input = *kIn(cc)[i];
-      for (int j = 0; j < input.landmark_size(); ++j) {
-        *output.add_landmark() = input.landmark(j);
+    for (const auto& input : kIn(cc)) {
+      if (input.IsEmpty()) continue;
+      const NormalizedLandmarkList& list = *input;
+      for (int j = 0; j < list.landmark_size(); ++j) {
+        *output.add_landmark() = list.landmark(j);
       }
     }
     kOut(cc).Send(std::move(output));
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
  private:

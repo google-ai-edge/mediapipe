@@ -15,4 +15,6 @@ Calculators|Details
 
 Subgraphs|Details
 :--- | :---
-[`FaceGeometry`](https://github.com/google/mediapipe/tree/master/mediapipe/modules/face_geometry/face_geometry.pbtxt)| Extracts face geometry from landmarks for multiple faces.
+[`FaceGeometryFromDetection`](https://github.com/google/mediapipe/tree/master/mediapipe/modules/face_geometry/face_geometry_from_detection.pbtxt)| Extracts geometry from face detection for multiple faces.
+[`FaceGeometryFromLandmarks`](https://github.com/google/mediapipe/tree/master/mediapipe/modules/face_geometry/face_geometry_from_landmarks.pbtxt)| Extracts geometry from face landmarks for multiple faces.
+[`FaceGeometry`](https://github.com/google/mediapipe/tree/master/mediapipe/modules/face_geometry/face_geometry.pbtxt)| Extracts geometry from face landmarks for multiple faces. Deprecated, please use `FaceGeometryFromLandmarks` in the new code.

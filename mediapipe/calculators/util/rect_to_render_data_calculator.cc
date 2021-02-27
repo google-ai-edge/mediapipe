@@ -94,19 +94,18 @@ void SetRect(bool normalized, double xmin, double ymin, double width,
 // }
 class RectToRenderDataCalculator : public CalculatorBase {
  public:
-  static mediapipe::Status GetContract(CalculatorContract* cc);
+  static absl::Status GetContract(CalculatorContract* cc);
 
-  mediapipe::Status Open(CalculatorContext* cc) override;
+  absl::Status Open(CalculatorContext* cc) override;
 
-  mediapipe::Status Process(CalculatorContext* cc) override;
+  absl::Status Process(CalculatorContext* cc) override;
 
  private:
   RectToRenderDataCalculatorOptions options_;
 };
 REGISTER_CALCULATOR(RectToRenderDataCalculator);
 
-mediapipe::Status RectToRenderDataCalculator::GetContract(
-    CalculatorContract* cc) {
+absl::Status RectToRenderDataCalculator::GetContract(CalculatorContract* cc) {
   RET_CHECK_EQ((cc->Inputs().HasTag(kNormRectTag) ? 1 : 0) +
                    (cc->Inputs().HasTag(kRectTag) ? 1 : 0) +
                    (cc->Inputs().HasTag(kNormRectsTag) ? 1 : 0) +
@@ -130,18 +129,18 @@ mediapipe::Status RectToRenderDataCalculator::GetContract(
   }
   cc->Outputs().Tag(kRenderDataTag).Set<RenderData>();
 
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-mediapipe::Status RectToRenderDataCalculator::Open(CalculatorContext* cc) {
+absl::Status RectToRenderDataCalculator::Open(CalculatorContext* cc) {
   cc->SetOffset(TimestampDiff(0));
 
   options_ = cc->Options<RectToRenderDataCalculatorOptions>();
 
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-mediapipe::Status RectToRenderDataCalculator::Process(CalculatorContext* cc) {
+absl::Status RectToRenderDataCalculator::Process(CalculatorContext* cc) {
   auto render_data = absl::make_unique<RenderData>();
 
   if (cc->Inputs().HasTag(kNormRectTag) &&
@@ -185,7 +184,7 @@ mediapipe::Status RectToRenderDataCalculator::Process(CalculatorContext* cc) {
       .Tag(kRenderDataTag)
       .Add(render_data.release(), cc->InputTimestamp());
 
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
 }  // namespace mediapipe

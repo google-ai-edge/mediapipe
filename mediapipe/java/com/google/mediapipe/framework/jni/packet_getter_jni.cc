@@ -24,9 +24,9 @@
 #include "mediapipe/java/com/google/mediapipe/framework/jni/colorspace.h"
 #include "mediapipe/java/com/google/mediapipe/framework/jni/graph.h"
 #include "mediapipe/java/com/google/mediapipe/framework/jni/jni_util.h"
-#ifndef MEDIAPIPE_DISABLE_GPU
+#if !MEDIAPIPE_DISABLE_GPU
 #include "mediapipe/gpu/gl_calculator_helper.h"
-#endif  // !defined(MEDIAPIPE_DISABLE_GPU)
+#endif  // !MEDIAPIPE_DISABLE_GPU
 
 namespace {
 using mediapipe::android::SerializedMessageIds;
@@ -152,7 +152,7 @@ JNIEXPORT void JNICALL PACKET_GETTER_METHOD(nativeGetProto)(JNIEnv* env,
                                                             jobject result) {
   mediapipe::Packet mediapipe_packet =
       mediapipe::android::Graph::GetPacketFromHandle(packet);
-  mediapipe::Status status = mediapipe_packet.ValidateAsProtoMessageLite();
+  absl::Status status = mediapipe_packet.ValidateAsProtoMessageLite();
   if (!ThrowIfError(env, status)) {
     // Convert type_name and value to Java data.
     const auto& proto_message = mediapipe_packet.GetProtoMessageLite();
@@ -182,7 +182,7 @@ JNIEXPORT jobjectArray JNICALL PACKET_GETTER_METHOD(nativeGetProtoVector)(
         env, get_proto_vector.status()));
   }
   const std::vector<const ::mediapipe::proto_ns::MessageLite*>& proto_vector =
-      get_proto_vector.ValueOrDie();
+      get_proto_vector.value();
   jobjectArray proto_array =
       env->NewObjectArray(proto_vector.size(), env->FindClass("[B"), nullptr);
   for (int i = 0; i < proto_vector.size(); ++i) {
@@ -403,7 +403,7 @@ JNIEXPORT jint JNICALL PACKET_GETTER_METHOD(nativeGetMatrixCols)(JNIEnv* env,
   return GetFromNativeHandle<mediapipe::Matrix>(packet).cols();
 }
 
-#ifndef MEDIAPIPE_DISABLE_GPU
+#if !MEDIAPIPE_DISABLE_GPU
 
 JNIEXPORT jint JNICALL PACKET_GETTER_METHOD(nativeGetGpuBufferName)(
     JNIEnv* env, jobject thiz, jlong packet) {
@@ -427,4 +427,4 @@ JNIEXPORT jlong JNICALL PACKET_GETTER_METHOD(nativeGetGpuBuffer)(JNIEnv* env,
       new mediapipe::GlTextureBufferSharedPtr(ptr));
 }
 
-#endif  // !defined(MEDIAPIPE_DISABLE_GPU)
+#endif  // !MEDIAPIPE_DISABLE_GPU

@@ -33,8 +33,9 @@
 #pragma mark - Public
 
 - (void)displayLinkCallback:(CADisplayLink *)sender {
-  void (*display)(id, SEL, CADisplayLink *) = (void *)[_target methodForSelector:_selector];
-  display(_target, _selector, sender);
+  __strong id target = _target;
+  void (*display)(id, SEL, CADisplayLink *) = (void *)[target methodForSelector:_selector];
+  display(target, _selector, sender);
 }
 
 @end

@@ -85,10 +85,10 @@ float TimestampsToRate(int64 first_timestamp, int64 second_timestamp) {
 // "segment/start/index" and "segment/end/index" by finding the closest
 // timestamps in the "image/timestamp" FeatureList if image timestamps are
 // present.
-::mediapipe::Status ReconcileAnnotationIndicesByImageTimestamps(
+absl::Status ReconcileAnnotationIndicesByImageTimestamps(
     tensorflow::SequenceExample* sequence) {
   if (GetImageTimestampSize(*sequence) == 0) {
-    return ::mediapipe::OkStatus();
+    return absl::OkStatus();
   }
   int index;
 
@@ -118,15 +118,15 @@ float TimestampsToRate(int64 first_timestamp, int64 second_timestamp) {
     }
     SetSegmentEndIndex(end_indices, sequence);
   }
-  return ::mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
 // Sets the values of "image/format", "image/channels", "image/height",
 // "image/width", and "image/frame_rate" based image metadata and timestamps.
-::mediapipe::Status ReconcileMetadataImages(
-    const std::string& prefix, tensorflow::SequenceExample* sequence) {
+absl::Status ReconcileMetadataImages(const std::string& prefix,
+                                     tensorflow::SequenceExample* sequence) {
   if (GetImageEncodedSize(prefix, *sequence) == 0) {
-    return ::mediapipe::OkStatus();
+    return absl::OkStatus();
   }
   std::string format;
   int height, width, channels;
@@ -144,7 +144,7 @@ float TimestampsToRate(int64 first_timestamp, int64 second_timestamp) {
                                   GetImageTimestampAt(prefix, *sequence, 1));
     SetImageFrameRate(prefix, rate, sequence);
   }
-  return ::mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
 // Sets the values of "feature/${TAG}/dimensions", and
@@ -152,7 +152,7 @@ float TimestampsToRate(int64 first_timestamp, int64 second_timestamp) {
 // dimensions are already present as a context feature, this method verifies
 // the number of elements in the feature. Otherwise, it will write the
 // dimensions as a 1D vector with the number of elements.
-::mediapipe::Status ReconcileMetadataFeatureFloats(
+absl::Status ReconcileMetadataFeatureFloats(
     tensorflow::SequenceExample* sequence) {
   // Loop through all keys and see if they contain "/feature/floats"
   // If so, check dimensions and set rate.
@@ -182,7 +182,7 @@ float TimestampsToRate(int64 first_timestamp, int64 second_timestamp) {
       }
     }
   }
-  return ::mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
 // Go through all bounding box annotations and move the annotation to the
@@ -190,7 +190,7 @@ float TimestampsToRate(int64 first_timestamp, int64 second_timestamp) {
 // nothing. If two or more annotations are closest to the same frame, then only
 // the closest annotation is saved. This matches the behavior of downsampling
 // images streams in time.
-::mediapipe::Status ReconcileMetadataBoxAnnotations(
+absl::Status ReconcileMetadataBoxAnnotations(
     const std::string& prefix, tensorflow::SequenceExample* sequence) {
   int num_bboxes = GetBBoxTimestampSize(prefix, *sequence);
   int num_frames = GetImageTimestampSize(*sequence);
@@ -355,10 +355,10 @@ float TimestampsToRate(int64 first_timestamp, int64 second_timestamp) {
       }
     }
   }
-  return ::mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-::mediapipe::Status ReconcileMetadataRegionAnnotations(
+absl::Status ReconcileMetadataRegionAnnotations(
     tensorflow::SequenceExample* sequence) {
   // Copy keys for fixed iteration order while updating feature_lists.
   std::vector<const std::string*> key_ptrs;
@@ -376,7 +376,7 @@ float TimestampsToRate(int64 first_timestamp, int64 second_timestamp) {
       RET_CHECK_OK(ReconcileMetadataBoxAnnotations(prefix, sequence));
     }
   }
-  return ::mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 }  // namespace
 
@@ -393,6 +393,7 @@ std::vector<::mediapipe::Location> GetBBoxAt(
   const auto& ymins = GetBBoxYMinAt(prefix, sequence, index);
   const auto& xmaxs = GetBBoxXMaxAt(prefix, sequence, index);
   const auto& ymaxs = GetBBoxYMaxAt(prefix, sequence, index);
+  bboxes.reserve(xmins.size());
   for (int i = 0; i < xmins.size(); ++i) {
     bboxes.push_back(::mediapipe::Location::CreateRelativeBBoxLocation(
         xmins[i], ymins[i], xmaxs[i] - xmins[i], ymaxs[i] - ymins[i]));
@@ -537,9 +538,9 @@ void AddAudioAsFeature(const std::string& prefix,
       .Swap(value_list);
 }
 
-::mediapipe::Status ReconcileMetadata(bool reconcile_bbox_annotations,
-                                      bool reconcile_region_annotations,
-                                      tensorflow::SequenceExample* sequence) {
+absl::Status ReconcileMetadata(bool reconcile_bbox_annotations,
+                               bool reconcile_region_annotations,
+                               tensorflow::SequenceExample* sequence) {
   RET_CHECK_OK(ReconcileAnnotationIndicesByImageTimestamps(sequence));
   RET_CHECK_OK(ReconcileMetadataImages("", sequence));
   RET_CHECK_OK(ReconcileMetadataImages(kForwardFlowPrefix, sequence));
@@ -553,7 +554,7 @@ void AddAudioAsFeature(const std::string& prefix,
     RET_CHECK_OK(ReconcileMetadataRegionAnnotations(sequence));
   }
   // audio is always reconciled in the framework.
-  return ::mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
 }  // namespace mediasequence

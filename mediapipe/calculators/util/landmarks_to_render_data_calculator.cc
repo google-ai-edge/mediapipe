@@ -177,7 +177,7 @@ RenderAnnotation* AddPointRenderData(const Color& landmark_color,
 
 }  // namespace
 
-mediapipe::Status LandmarksToRenderDataCalculator::GetContract(
+absl::Status LandmarksToRenderDataCalculator::GetContract(
     CalculatorContract* cc) {
   RET_CHECK(cc->Inputs().HasTag(kLandmarksTag) ||
             cc->Inputs().HasTag(kNormLandmarksTag))
@@ -197,10 +197,10 @@ mediapipe::Status LandmarksToRenderDataCalculator::GetContract(
     cc->Inputs().Tag(kRenderScaleTag).Set<float>();
   }
   cc->Outputs().Tag(kRenderDataTag).Set<RenderData>();
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-mediapipe::Status LandmarksToRenderDataCalculator::Open(CalculatorContext* cc) {
+absl::Status LandmarksToRenderDataCalculator::Open(CalculatorContext* cc) {
   cc->SetOffset(TimestampDiff(0));
   options_ = cc->Options<LandmarksToRenderDataCalculatorOptions>();
 
@@ -212,20 +212,19 @@ mediapipe::Status LandmarksToRenderDataCalculator::Open(CalculatorContext* cc) {
     landmark_connections_.push_back(options_.landmark_connections(i));
   }
 
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-mediapipe::Status LandmarksToRenderDataCalculator::Process(
-    CalculatorContext* cc) {
+absl::Status LandmarksToRenderDataCalculator::Process(CalculatorContext* cc) {
   // Check that landmarks are not empty and skip rendering if so.
   // Don't emit an empty packet for this timestamp.
   if (cc->Inputs().HasTag(kLandmarksTag) &&
       cc->Inputs().Tag(kLandmarksTag).IsEmpty()) {
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
   if (cc->Inputs().HasTag(kNormLandmarksTag) &&
       cc->Inputs().Tag(kNormLandmarksTag).IsEmpty()) {
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
   auto render_data = absl::make_unique<RenderData>();
@@ -341,7 +340,7 @@ mediapipe::Status LandmarksToRenderDataCalculator::Process(
   cc->Outputs()
       .Tag(kRenderDataTag)
       .Add(render_data.release(), cc->InputTimestamp());
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
 REGISTER_CALCULATOR(LandmarksToRenderDataCalculator);

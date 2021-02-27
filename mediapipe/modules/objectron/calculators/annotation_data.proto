@@ -56,6 +56,18 @@ message ObjectAnnotation {
 
   // Visibiity of this annotation in a frame.
   float visibility = 3;
+
+  // 3x3 row-major rotation matrix describing the orientation of the rigid
+  // object's frame of reference in the camera-coordinate system.
+  repeated float rotation = 4;
+
+  // 3x1 vector describing the translation of the rigid object's frame of
+  // reference in the camera-coordinate system in meters.
+  repeated float translation = 5;
+
+  // 3x1 vector describing the scale of the rigid object's frame of reference in
+  // the camera-coordinate system.
+  repeated float scale = 6;
 }
 
 message FrameAnnotation {

@@ -3,15 +3,10 @@ package(
     features = ["-use_header_modules"],
 )
 
-# API2 is in preview mode. Internal clients are welcome and encouraged to try
-# it out, but be aware that there may be more changes before release. Please
-# add your package to this list and reach out to the MediaPipe team (use
-# camillol@ as the CL reviewer).
 package_group(
     name = "preview_users",
     packages = [
         "//mediapipe/...",
-        "//video/content_analysis/...",
     ],
 )
 
@@ -134,6 +129,7 @@ cc_library(
         ":tuple",
         "//mediapipe/framework:packet",
         "//mediapipe/framework/port:logging",
+        "@com_google_absl//absl/meta:type_traits",
     ],
 )
 

@@ -49,7 +49,7 @@ void DoTestSingleSidePacket(absl::string_view packet_spec,
 
   MP_ASSERT_OK(graph.GetOutputSidePacket("packet"));
   auto actual_value =
-      graph.GetOutputSidePacket("packet").ValueOrDie().template Get<T>();
+      graph.GetOutputSidePacket("packet").value().template Get<T>();
   EXPECT_EQ(actual_value, expected_value);
 }
 
@@ -89,28 +89,24 @@ TEST(ConstantSidePacketCalculatorTest, MultiplePackets) {
   MP_ASSERT_OK(graph.WaitUntilIdle());
 
   MP_ASSERT_OK(graph.GetOutputSidePacket("int_packet"));
-  EXPECT_EQ(graph.GetOutputSidePacket("int_packet").ValueOrDie().Get<int>(),
-            256);
+  EXPECT_EQ(graph.GetOutputSidePacket("int_packet").value().Get<int>(), 256);
   MP_ASSERT_OK(graph.GetOutputSidePacket("float_packet"));
-  EXPECT_EQ(graph.GetOutputSidePacket("float_packet").ValueOrDie().Get<float>(),
+  EXPECT_EQ(graph.GetOutputSidePacket("float_packet").value().Get<float>(),
             0.5f);
   MP_ASSERT_OK(graph.GetOutputSidePacket("bool_packet"));
-  EXPECT_FALSE(
-      graph.GetOutputSidePacket("bool_packet").ValueOrDie().Get<bool>());
+  EXPECT_FALSE(graph.GetOutputSidePacket("bool_packet").value().Get<bool>());
   MP_ASSERT_OK(graph.GetOutputSidePacket("string_packet"));
-  EXPECT_EQ(graph.GetOutputSidePacket("string_packet")
-                .ValueOrDie()
-                .Get<std::string>(),
-            "string");
+  EXPECT_EQ(
+      graph.GetOutputSidePacket("string_packet").value().Get<std::string>(),
+      "string");
   MP_ASSERT_OK(graph.GetOutputSidePacket("another_string_packet"));
   EXPECT_EQ(graph.GetOutputSidePacket("another_string_packet")
-                .ValueOrDie()
+                .value()
                 .Get<std::string>(),
             "another string");
   MP_ASSERT_OK(graph.GetOutputSidePacket("another_int_packet"));
-  EXPECT_EQ(
-      graph.GetOutputSidePacket("another_int_packet").ValueOrDie().Get<int>(),
-      128);
+  EXPECT_EQ(graph.GetOutputSidePacket("another_int_packet").value().Get<int>(),
+            128);
 }
 
 TEST(ConstantSidePacketCalculatorTest, ProcessingPacketsWithCorrectTagOnly) {
@@ -142,19 +138,16 @@ TEST(ConstantSidePacketCalculatorTest, ProcessingPacketsWithCorrectTagOnly) {
   MP_ASSERT_OK(graph.WaitUntilIdle());
 
   MP_ASSERT_OK(graph.GetOutputSidePacket("int_packet"));
-  EXPECT_EQ(graph.GetOutputSidePacket("int_packet").ValueOrDie().Get<int>(),
-            256);
+  EXPECT_EQ(graph.GetOutputSidePacket("int_packet").value().Get<int>(), 256);
   MP_ASSERT_OK(graph.GetOutputSidePacket("float_packet"));
-  EXPECT_EQ(graph.GetOutputSidePacket("float_packet").ValueOrDie().Get<float>(),
+  EXPECT_EQ(graph.GetOutputSidePacket("float_packet").value().Get<float>(),
             0.5f);
   MP_ASSERT_OK(graph.GetOutputSidePacket("bool_packet"));
-  EXPECT_FALSE(
-      graph.GetOutputSidePacket("bool_packet").ValueOrDie().Get<bool>());
+  EXPECT_FALSE(graph.GetOutputSidePacket("bool_packet").value().Get<bool>());
   MP_ASSERT_OK(graph.GetOutputSidePacket("string_packet"));
-  EXPECT_EQ(graph.GetOutputSidePacket("string_packet")
-                .ValueOrDie()
-                .Get<std::string>(),
-            "string");
+  EXPECT_EQ(
+      graph.GetOutputSidePacket("string_packet").value().Get<std::string>(),
+      "string");
 }
 
 TEST(ConstantSidePacketCalculatorTest, IncorrectConfig_MoreOptionsThanPackets) {

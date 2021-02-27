@@ -27,16 +27,9 @@
 #include "mediapipe/framework/deps/file_path.h"
 #include "mediapipe/framework/deps/no_destructor.h"
 #include "mediapipe/framework/port/advanced_proto_inc.h"
+#include "mediapipe/framework/port/file_helpers.h"
 #include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/proto_ns.h"
-
-#ifdef __APPLE__
-#include <CoreFoundation/CoreFoundation.h>
-#elif defined(__ANDROID__)
-#include "mediapipe/util/android/file/base/helpers.h"
-#else
-#include "mediapipe/framework/port/file_helpers.h"
-#endif
 
 namespace mediapipe {
 
@@ -235,28 +228,18 @@ bool CompareImageFrames(const ImageFrame& image1, const ImageFrame& image2,
 }
 
 std::string GetTestRootDir() {
-#ifdef __APPLE__
-  char path[1024];
-  CFURLRef bundle_url = CFBundleCopyBundleURL(CFBundleGetMainBundle());
-  Boolean success = CFURLGetFileSystemRepresentation(
-      bundle_url, true, reinterpret_cast<UInt8*>(path), sizeof(path));
-  CHECK(success);
-  CFRelease(bundle_url);
-  return path;
-#elif defined(__ANDROID__)
+#if defined(__ANDROID__)
   char path[1024];
   char* ptr = getcwd(path, sizeof(path));
   CHECK_EQ(ptr, path);
   return path;
 #else
   return ::mediapipe::file::JoinPath(std::getenv("TEST_SRCDIR"), "mediapipe");
-#endif  // defined(__APPLE__)
+#endif  // defined(__ANDROID__)
 }
 
 std::string GetTestDataDir(const std::string& package_base_path) {
-#ifdef __APPLE__
-  return ::mediapipe::file::JoinPath(GetTestRootDir(), "testdata/");
-#elif defined(__ANDROID__)
+#if defined(__ANDROID__)
   std::string data_dir = GetTestRootDir();
   std::string binary_dir = GetBinaryDirectory();
   // In Mobile Harness, the cwd is "/" and the run dir is "/data/local/tmp".

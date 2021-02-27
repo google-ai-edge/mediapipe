@@ -52,6 +52,7 @@ node {
       model_path: "mediapipe/modules/hand_landmark/hand_landmark.tflite"
       delegate { xnnpack {} }
     }
+    #
   }
 }
 

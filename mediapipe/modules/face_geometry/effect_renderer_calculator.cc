@@ -85,7 +85,7 @@ static constexpr char kMultiFaceGeometryTag[] = "MULTI_FACE_GEOMETRY";
 //
 class EffectRendererCalculator : public CalculatorBase {
  public:
-  static mediapipe::Status GetContract(CalculatorContract* cc) {
+  static absl::Status GetContract(CalculatorContract* cc) {
     MP_RETURN_IF_ERROR(mediapipe::GlCalculatorHelper::UpdateContract(cc))
         << "Failed to update contract for the GPU helper!";
 
@@ -101,12 +101,12 @@ class EffectRendererCalculator : public CalculatorBase {
     return mediapipe::GlCalculatorHelper::UpdateContract(cc);
   }
 
-  mediapipe::Status Open(CalculatorContext* cc) override {
+  absl::Status Open(CalculatorContext* cc) override {
     cc->SetOffset(mediapipe::TimestampDiff(0));
 
     MP_RETURN_IF_ERROR(gpu_helper_.Open(cc))
         << "Failed to open the GPU helper!";
-    return gpu_helper_.RunInGlContext([&]() -> mediapipe::Status {
+    return gpu_helper_.RunInGlContext([&]() -> absl::Status {
       const auto& options =
           cc->Options<FaceGeometryEffectRendererCalculatorOptions>();
 
@@ -136,19 +136,19 @@ class EffectRendererCalculator : public CalculatorBase {
                                             std::move(effect_texture)),
                        _ << "Failed to create the effect renderer!");
 
-      return mediapipe::OkStatus();
+      return absl::OkStatus();
     });
   }
 
-  mediapipe::Status Process(CalculatorContext* cc) override {
+  absl::Status Process(CalculatorContext* cc) override {
     // The `IMAGE_GPU` stream is required to have a non-empty packet. In case
     // this requirement is not met, there's nothing to be processed at the
     // current timestamp.
     if (cc->Inputs().Tag(kImageGpuTag).IsEmpty()) {
-      return mediapipe::OkStatus();
+      return absl::OkStatus();
     }
 
-    return gpu_helper_.RunInGlContext([this, cc]() -> mediapipe::Status {
+    return gpu_helper_.RunInGlContext([this, cc]() -> absl::Status {
       const auto& input_gpu_buffer =
           cc->Inputs().Tag(kImageGpuTag).Get<GpuBuffer>();
 
@@ -191,7 +191,7 @@ class EffectRendererCalculator : public CalculatorBase {
       output_gl_texture.Release();
       input_gl_texture.Release();
 
-      return mediapipe::OkStatus();
+      return absl::OkStatus();
     });
   }
 
@@ -200,7 +200,7 @@ class EffectRendererCalculator : public CalculatorBase {
   }
 
  private:
-  static mediapipe::StatusOr<ImageFrame> ReadTextureFromFile(
+  static absl::StatusOr<ImageFrame> ReadTextureFromFile(
       const std::string& texture_path) {
     ASSIGN_OR_RETURN(std::string texture_blob,
                      ReadContentBlobFromFile(texture_path),
@@ -244,7 +244,7 @@ class EffectRendererCalculator : public CalculatorBase {
     return output_image_frame;
   }
 
-  static mediapipe::StatusOr<face_geometry::Mesh3d> ReadMesh3dFromFile(
+  static absl::StatusOr<face_geometry::Mesh3d> ReadMesh3dFromFile(
       const std::string& mesh_3d_path) {
     ASSIGN_OR_RETURN(std::string mesh_3d_blob,
                      ReadContentBlobFromFile(mesh_3d_path),
@@ -257,7 +257,7 @@ class EffectRendererCalculator : public CalculatorBase {
     return mesh_3d;
   }
 
-  static mediapipe::StatusOr<std::string> ReadContentBlobFromFile(
+  static absl::StatusOr<std::string> ReadContentBlobFromFile(
       const std::string& unresolved_path) {
     ASSIGN_OR_RETURN(std::string resolved_path,
                      mediapipe::PathToResourceAsFile(unresolved_path),
