@@ -27,7 +27,7 @@ jobs:
         run: |
           export ANDROID_HOME=/Users/runner/Library/Android/sdk
           export ANDROID_NDK_HOME=$ANDROID_HOME/ndk-bundle
-          echo a | ./build_android_examples.sh
+          bazel build -c opt --fat_apk_cpu=arm64-v8a mediapipe/examples/android/src/java/com/google/mediapipe/apps/multihandtrackinggpu_aar:mp_multi_hand_aar
       - name: Show result
         run: git status
       - name: Find Tag
@@ -46,4 +46,5 @@ jobs:
         if: ${{ always() }}
         with:
           name: AAR-library-${{steps.tagger.outputs.tag}}
-          path: bazel-bin/mediapipe//examples/android/src/java/com/google/mediapipe/apps/**/*.aar
+          path: bazel-bin/mediapipe//examples/android/src/java/com/google/mediapipe/apps/**/*${{steps.tagger.outputs.tag}}.aar
+          if-no-files-found: error
