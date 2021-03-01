@@ -41,6 +41,7 @@ cc_library(
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/formats:image_frame",
         "//mediapipe/framework/formats:image_frame_opencv",
+        "//mediapipe/framework/formats:landmark_cc_proto",
         "//mediapipe/framework/port:commandlineflags",
         "//mediapipe/framework/port:file_helpers",
         "//mediapipe/framework/port:opencv_highgui",

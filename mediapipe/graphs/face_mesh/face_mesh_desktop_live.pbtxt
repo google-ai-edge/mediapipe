@@ -8,6 +8,7 @@ output_stream: "output_video"
 # Collection of detected/processed faces, each represented as a list of
 # landmarks. (std::vector<NormalizedLandmarkList>)
 output_stream: "multi_face_landmarks"
+output_stream: "face_count"
 
 # Throttles the images flowing downstream for flow control. It passes through
 # the very first incoming image unaltered, and waits for downstream nodes
@@ -50,6 +51,7 @@ node {
   output_stream: "ROIS_FROM_LANDMARKS:face_rects_from_landmarks"
   output_stream: "DETECTIONS:face_detections"
   output_stream: "ROIS_FROM_DETECTIONS:face_rects_from_detections"
+  output_stream: "FACE_COUNT_FROM_LANDMARKS:face_count"
 }
 
 # Subgraph that renders face-landmark annotation onto the input image.
