@@ -466,6 +466,21 @@ cc_test(
 )
 
 cc_library(
+    name = "pulsar_calculator",
+    srcs = ["pulsar_calculator.cc"],
+    hdrs = ["pulsar_calculator.h"],
+    visibility = [
+        "//visibility:public",
+    ],
+    deps = [
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/formats:rect_cc_proto",
+        "//mediapipe/framework/port:ret_check",
+    ],
+    alwayslink = 1,
+)
+
+cc_library(
     name = "packet_cloner_calculator",
     srcs = ["packet_cloner_calculator.cc"],
     visibility = [
