@@ -209,6 +209,21 @@ cc_library(
     }),
 )
 
+cc_library(
+    name = "libtorch",
+    visibility = ["//visibility:public"],
+    deps = select({
+        "//mediapipe:android_x86": [],
+        "//mediapipe:android_x86_64": [],
+        "//mediapipe:android_armeabi": [],
+        "//mediapipe:android_arm": [],
+        "//mediapipe:android_arm64": [],
+        "//mediapipe:ios": ["@ios_libtorch//:libtorch"],
+        "//mediapipe:macos": ["@macos_libtorch_cpu//:libtorch_cpu"],
+        "//conditions:default": ["@linux_libtorch_cpu//:libtorch_cpu"],
+    }),
+)
+
 android_library(
     name = "androidx_annotation",
     exports = [
