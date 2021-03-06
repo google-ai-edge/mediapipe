@@ -57,20 +57,19 @@ class VideoFilteringCalculator : public CalculatorBase {
   VideoFilteringCalculator() = default;
   ~VideoFilteringCalculator() override = default;
 
-  static mediapipe::Status GetContract(CalculatorContract* cc);
+  static absl::Status GetContract(CalculatorContract* cc);
 
-  mediapipe::Status Process(CalculatorContext* cc) override;
+  absl::Status Process(CalculatorContext* cc) override;
 };
 REGISTER_CALCULATOR(VideoFilteringCalculator);
 
-mediapipe::Status VideoFilteringCalculator::GetContract(
-    CalculatorContract* cc) {
+absl::Status VideoFilteringCalculator::GetContract(CalculatorContract* cc) {
   cc->Inputs().Tag(kInputFrameTag).Set<ImageFrame>();
   cc->Outputs().Tag(kOutputFrameTag).Set<ImageFrame>();
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-mediapipe::Status VideoFilteringCalculator::Process(CalculatorContext* cc) {
+absl::Status VideoFilteringCalculator::Process(CalculatorContext* cc) {
   const auto& options = cc->Options<VideoFilteringCalculatorOptions>();
 
   const Packet& input_packet = cc->Inputs().Tag(kInputFrameTag).Value();
@@ -84,7 +83,7 @@ mediapipe::Status VideoFilteringCalculator::Process(CalculatorContext* cc) {
   if (filter_type ==
       VideoFilteringCalculatorOptions::AspectRatioFilter::NO_FILTERING) {
     cc->Outputs().Tag(kOutputFrameTag).AddPacket(input_packet);
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
   const int target_width = options.aspect_ratio_filter().target_width();
   const int target_height = options.aspect_ratio_filter().target_height();
@@ -106,7 +105,7 @@ mediapipe::Status VideoFilteringCalculator::Process(CalculatorContext* cc) {
   }
   if (should_pass) {
     cc->Outputs().Tag(kOutputFrameTag).AddPacket(input_packet);
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
   if (options.fail_if_any()) {
     return mediapipe::UnknownErrorBuilder(MEDIAPIPE_LOC) << absl::Substitute(
@@ -115,7 +114,7 @@ mediapipe::Status VideoFilteringCalculator::Process(CalculatorContext* cc) {
                target_ratio, frame.Width(), frame.Height());
   }
 
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 }  // namespace autoflip
 }  // namespace mediapipe

@@ -55,16 +55,16 @@ namespace mediapipe {
 // }
 class Lift2DFrameAnnotationTo3DCalculator : public CalculatorBase {
  public:
-  static mediapipe::Status GetContract(CalculatorContract* cc);
+  static absl::Status GetContract(CalculatorContract* cc);
 
-  mediapipe::Status Open(CalculatorContext* cc) override;
-  mediapipe::Status Process(CalculatorContext* cc) override;
-  mediapipe::Status Close(CalculatorContext* cc) override;
+  absl::Status Open(CalculatorContext* cc) override;
+  absl::Status Process(CalculatorContext* cc) override;
+  absl::Status Close(CalculatorContext* cc) override;
 
  private:
-  mediapipe::Status ProcessCPU(CalculatorContext* cc,
-                               FrameAnnotation* output_objects);
-  mediapipe::Status LoadOptions(CalculatorContext* cc);
+  absl::Status ProcessCPU(CalculatorContext* cc,
+                          FrameAnnotation* output_objects);
+  absl::Status LoadOptions(CalculatorContext* cc);
 
   // Increment and assign object ID for each detected object.
   // In a single MediaPipe session, the IDs are unique.
@@ -78,37 +78,39 @@ class Lift2DFrameAnnotationTo3DCalculator : public CalculatorBase {
 };
 REGISTER_CALCULATOR(Lift2DFrameAnnotationTo3DCalculator);
 
-mediapipe::Status Lift2DFrameAnnotationTo3DCalculator::GetContract(
+absl::Status Lift2DFrameAnnotationTo3DCalculator::GetContract(
     CalculatorContract* cc) {
   RET_CHECK(cc->Inputs().HasTag(kInputStreamTag));
   RET_CHECK(cc->Outputs().HasTag(kOutputStreamTag));
   cc->Inputs().Tag(kInputStreamTag).Set<FrameAnnotation>();
   cc->Outputs().Tag(kOutputStreamTag).Set<FrameAnnotation>();
 
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-mediapipe::Status Lift2DFrameAnnotationTo3DCalculator::Open(
-    CalculatorContext* cc) {
+absl::Status Lift2DFrameAnnotationTo3DCalculator::Open(CalculatorContext* cc) {
   cc->SetOffset(TimestampDiff(0));
   MP_RETURN_IF_ERROR(LoadOptions(cc));
+  // Load camera intrinsic matrix.
+  const float fx = options_.normalized_focal_x();
+  const float fy = options_.normalized_focal_y();
+  const float px = options_.normalized_principal_point_x();
+  const float py = options_.normalized_principal_point_y();
   // clang-format off
-  projection_matrix_ <<
-      1.5731,   0,       0,    0,
-      0,   2.0975,       0,    0,
-      0,        0, -1.0002, -0.2,
-      0,        0,      -1,    0;
+  projection_matrix_ << fx, 0.,  px, 0.,
+                        0., fy,  py, 0.,
+                        0., 0., -1., 0.,
+                        0., 0., -1., 0.;
   // clang-format on
-
   decoder_ = absl::make_unique<Decoder>(
       BeliefDecoderConfig(options_.decoder_config()));
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-mediapipe::Status Lift2DFrameAnnotationTo3DCalculator::Process(
+absl::Status Lift2DFrameAnnotationTo3DCalculator::Process(
     CalculatorContext* cc) {
   if (cc->Inputs().Tag(kInputStreamTag).IsEmpty()) {
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
   auto output_objects = absl::make_unique<FrameAnnotation>();
@@ -122,17 +124,17 @@ mediapipe::Status Lift2DFrameAnnotationTo3DCalculator::Process(
         .Add(output_objects.release(), cc->InputTimestamp());
   }
 
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-mediapipe::Status Lift2DFrameAnnotationTo3DCalculator::ProcessCPU(
+absl::Status Lift2DFrameAnnotationTo3DCalculator::ProcessCPU(
     CalculatorContext* cc, FrameAnnotation* output_objects) {
   const auto& input_frame_annotations =
       cc->Inputs().Tag(kInputStreamTag).Get<FrameAnnotation>();
   // Copy the input frame annotation to the output
   *output_objects = input_frame_annotations;
 
-  auto status = decoder_->Lift2DTo3D(projection_matrix_, /*portrait*/ true,
+  auto status = decoder_->Lift2DTo3D(projection_matrix_, /*portrait*/ false,
                                      output_objects);
   if (!status.ok()) {
     LOG(ERROR) << status;
@@ -141,20 +143,19 @@ mediapipe::Status Lift2DFrameAnnotationTo3DCalculator::ProcessCPU(
   AssignObjectIdAndTimestamp(cc->InputTimestamp().Microseconds(),
                              output_objects);
 
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-mediapipe::Status Lift2DFrameAnnotationTo3DCalculator::Close(
-    CalculatorContext* cc) {
-  return mediapipe::OkStatus();
+absl::Status Lift2DFrameAnnotationTo3DCalculator::Close(CalculatorContext* cc) {
+  return absl::OkStatus();
 }
 
-mediapipe::Status Lift2DFrameAnnotationTo3DCalculator::LoadOptions(
+absl::Status Lift2DFrameAnnotationTo3DCalculator::LoadOptions(
     CalculatorContext* cc) {
   // Get calculator options specified in the graph.
   options_ = cc->Options<Lift2DFrameAnnotationTo3DCalculatorOptions>();
 
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
 void Lift2DFrameAnnotationTo3DCalculator::AssignObjectIdAndTimestamp(

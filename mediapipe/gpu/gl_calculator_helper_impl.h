@@ -37,9 +37,8 @@ class GlCalculatorHelperImpl {
                                   GpuResources* gpu_resources);
   ~GlCalculatorHelperImpl();
 
-  ::mediapipe::Status RunInGlContext(
-      std::function<::mediapipe::Status(void)> gl_func,
-      CalculatorContext* calculator_context);
+  absl::Status RunInGlContext(std::function<absl::Status(void)> gl_func,
+                              CalculatorContext* calculator_context);
 
   GlTexture CreateSourceTexture(const ImageFrame& image_frame);
   GlTexture CreateSourceTexture(const GpuBuffer& gpu_buffer);
@@ -54,9 +53,7 @@ class GlCalculatorHelperImpl {
   GLuint framebuffer() const { return framebuffer_; }
   void BindFramebuffer(const GlTexture& dst);
 
-#ifdef __APPLE__
-  GlVersion GetGlVersion();
-#endif
+  GlVersion GetGlVersion() const { return gl_context_->GetGlVersion(); }
 
   GlContext& GetGlContext() const;
 

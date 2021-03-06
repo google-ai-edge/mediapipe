@@ -77,8 +77,8 @@ struct FirstGreaterComparator {
   }
 };
 
-mediapipe::Status SortLabelsByDecreasingScore(const Detection& detection,
-                                              Detection* sorted_detection) {
+absl::Status SortLabelsByDecreasingScore(const Detection& detection,
+                                         Detection* sorted_detection) {
   RET_CHECK(sorted_detection);
   RET_CHECK_EQ(detection.score_size(), detection.label_size());
   if (!detection.label_id().empty()) {
@@ -110,14 +110,14 @@ mediapipe::Status SortLabelsByDecreasingScore(const Detection& detection,
       sorted_detection->set_label_id(i, detection.label_id(index));
     }
   }
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
 class FilterDetectionCalculator : public CalculatorBase {
  public:
-  static mediapipe::Status GetContract(CalculatorContract* cc);
-  mediapipe::Status Open(CalculatorContext* cc) override;
-  mediapipe::Status Process(CalculatorContext* cc) override;
+  static absl::Status GetContract(CalculatorContract* cc);
+  absl::Status Open(CalculatorContext* cc) override;
+  absl::Status Process(CalculatorContext* cc) override;
 
  private:
   bool IsValidLabel(const std::string& label);
@@ -134,8 +134,7 @@ class FilterDetectionCalculator : public CalculatorBase {
 };
 REGISTER_CALCULATOR(FilterDetectionCalculator);
 
-mediapipe::Status FilterDetectionCalculator::GetContract(
-    CalculatorContract* cc) {
+absl::Status FilterDetectionCalculator::GetContract(CalculatorContract* cc) {
   RET_CHECK(!cc->Inputs().GetTags().empty());
   RET_CHECK(!cc->Outputs().GetTags().empty());
 
@@ -153,10 +152,10 @@ mediapipe::Status FilterDetectionCalculator::GetContract(
   if (cc->InputSidePackets().HasTag(kLabelsCsvTag)) {
     cc->InputSidePackets().Tag(kLabelsCsvTag).Set<std::string>();
   }
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-mediapipe::Status FilterDetectionCalculator::Open(CalculatorContext* cc) {
+absl::Status FilterDetectionCalculator::Open(CalculatorContext* cc) {
   cc->SetOffset(TimestampDiff(0));
   options_ = cc->Options<FilterDetectionCalculatorOptions>();
   limit_labels_ = cc->InputSidePackets().HasTag(kLabelsTag) ||
@@ -187,12 +186,12 @@ mediapipe::Status FilterDetectionCalculator::Open(CalculatorContext* cc) {
       limit_labels_ = false;
     }
   }
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-mediapipe::Status FilterDetectionCalculator::Process(CalculatorContext* cc) {
+absl::Status FilterDetectionCalculator::Process(CalculatorContext* cc) {
   if (limit_labels_ && allowed_labels_.empty()) {
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
   Detections detections;
   if (cc->Inputs().HasTag(kDetectionsTag)) {
@@ -234,7 +233,7 @@ mediapipe::Status FilterDetectionCalculator::Process(CalculatorContext* cc) {
         .Tag(kDetectionsTag)
         .Add(new Detection((*outputs)[0]), cc->InputTimestamp());
   }
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
 bool FilterDetectionCalculator::IsValidLabel(const std::string& label) {
@@ -258,7 +257,6 @@ bool FilterDetectionCalculator::IsValidScore(float score) {
     LOG(ERROR) << "Filter out detection with high score " << score;
     return false;
   }
-  LOG(ERROR) << "Pass detection with score " << score;
   return true;
 }
 

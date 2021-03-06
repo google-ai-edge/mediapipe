@@ -27,14 +27,13 @@ ABSL_FLAG(
 
 namespace mediapipe {
 
-mediapipe::StatusOr<std::string> PathToResourceAsFile(const std::string& path) {
-  return mediapipe::file::JoinPath(FLAGS_resource_root_dir.CurrentValue(),
+absl::StatusOr<std::string> PathToResourceAsFile(const std::string& path) {
+  return mediapipe::file::JoinPath(absl::GetFlag(FLAGS_resource_root_dir),
                                    path);
 }
 
-mediapipe::Status GetResourceContents(const std::string& path,
-                                      std::string* output,
-                                      bool read_as_binary) {
+absl::Status GetResourceContents(const std::string& path, std::string* output,
+                                 bool read_as_binary) {
   return mediapipe::file::GetContents(path, output, read_as_binary);
 }
 

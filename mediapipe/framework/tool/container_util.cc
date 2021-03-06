@@ -12,7 +12,7 @@ std::string ChannelTag(const std::string& tag, int channel) {
 // Parses a tag name starting with a channel prefix, like "C2__".
 bool ParseChannelTag(const std::string& channel_name, std::string* name,
                      std::string* num) {
-  int pos = channel_name.find("C");
+  int pos = channel_name.find('C');
   int sep = channel_name.find("__");
   if (pos != 0 || sep == std::string::npos) {
     return false;

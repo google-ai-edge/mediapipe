@@ -101,10 +101,10 @@ class PacketLatencyCalculator : public CalculatorBase {
  public:
   PacketLatencyCalculator() {}
 
-  static mediapipe::Status GetContract(CalculatorContract* cc);
+  static absl::Status GetContract(CalculatorContract* cc);
 
-  mediapipe::Status Open(CalculatorContext* cc) override;
-  mediapipe::Status Process(CalculatorContext* cc) override;
+  absl::Status Open(CalculatorContext* cc) override;
+  absl::Status Process(CalculatorContext* cc) override;
 
  private:
   // Resets the histogram and running average variables by initializing them to
@@ -139,7 +139,7 @@ class PacketLatencyCalculator : public CalculatorBase {
 };
 REGISTER_CALCULATOR(PacketLatencyCalculator);
 
-mediapipe::Status PacketLatencyCalculator::GetContract(CalculatorContract* cc) {
+absl::Status PacketLatencyCalculator::GetContract(CalculatorContract* cc) {
   RET_CHECK_GT(cc->Inputs().NumEntries(), 1);
 
   // Input and output streams.
@@ -160,7 +160,7 @@ mediapipe::Status PacketLatencyCalculator::GetContract(CalculatorContract* cc) {
         .Set<std::shared_ptr<::mediapipe::Clock>>();
   }
 
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
 void PacketLatencyCalculator::ResetStatistics() {
@@ -177,7 +177,7 @@ void PacketLatencyCalculator::ResetStatistics() {
   }
 }
 
-mediapipe::Status PacketLatencyCalculator::Open(CalculatorContext* cc) {
+absl::Status PacketLatencyCalculator::Open(CalculatorContext* cc) {
   options_ = cc->Options<PacketLatencyCalculatorOptions>();
   num_packet_streams_ = cc->Inputs().NumEntries() - 1;
 
@@ -224,10 +224,10 @@ mediapipe::Status PacketLatencyCalculator::Open(CalculatorContext* cc) {
         ::mediapipe::MonotonicClock::CreateSynchronizedMonotonicClock());
   }
 
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-mediapipe::Status PacketLatencyCalculator::Process(CalculatorContext* cc) {
+absl::Status PacketLatencyCalculator::Process(CalculatorContext* cc) {
   // Record first process timestamp if this is the first call.
   if (first_process_time_usec_ < 0 &&
       !cc->Inputs().Tag(kReferenceSignalTag).IsEmpty()) {
@@ -238,7 +238,7 @@ mediapipe::Status PacketLatencyCalculator::Process(CalculatorContext* cc) {
 
   if (first_process_time_usec_ < 0) {
     LOG(WARNING) << "No reference packet received.";
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
   if (options_.reset_duration_usec() > 0) {
@@ -292,7 +292,7 @@ mediapipe::Status PacketLatencyCalculator::Process(CalculatorContext* cc) {
     }
   }
 
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
 }  // namespace mediapipe

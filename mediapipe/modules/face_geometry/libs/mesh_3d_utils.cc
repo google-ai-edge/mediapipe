@@ -78,7 +78,7 @@ bool HasVertexComponent(Mesh3d::VertexType vertex_type,
   }
 }
 
-mediapipe::StatusOr<uint32_t> GetVertexComponentOffset(
+absl::StatusOr<uint32_t> GetVertexComponentOffset(
     Mesh3d::VertexType vertex_type, VertexComponent vertex_component) {
   RET_CHECK(HasVertexComponentVertexPT(vertex_component))
       << "A given vertex type doesn't have the requested component!";
@@ -89,7 +89,7 @@ mediapipe::StatusOr<uint32_t> GetVertexComponentOffset(
   }
 }
 
-mediapipe::StatusOr<uint32_t> GetVertexComponentSize(
+absl::StatusOr<uint32_t> GetVertexComponentSize(
     Mesh3d::VertexType vertex_type, VertexComponent vertex_component) {
   RET_CHECK(HasVertexComponentVertexPT(vertex_component))
       << "A given vertex type doesn't have the requested component!";

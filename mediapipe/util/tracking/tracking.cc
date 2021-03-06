@@ -1652,7 +1652,8 @@ bool MotionBox::GetVectorsAndWeights(
 
     vectors->push_back(&motion_vectors[k]);
 
-    auto is_close_to_test_vector = [test_vector](const Vector2_f v) -> bool {
+    auto is_close_to_test_vector = [test_vector,
+                                    kSqProximity](const Vector2_f v) -> bool {
       return (v - test_vector.pos).Norm2() < kSqProximity;
     };
 

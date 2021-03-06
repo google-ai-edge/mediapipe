@@ -29,4 +29,10 @@ namespace proto_ns = ::google::protobuf;
 typedef ::std::string ProtoString;
 }  // namespace mediapipe.
 
+// Legacy namespace support.
+namespace mediapipe {
+namespace proto_ns = mediapipe::proto_ns;
+typedef ::std::string ProtoString;
+}  // namespace mediapipe
+
 #endif  // MEDIAPIPE_PORT_PROTO_NS_H_

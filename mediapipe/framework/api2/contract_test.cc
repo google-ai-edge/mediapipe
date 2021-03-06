@@ -10,7 +10,7 @@ namespace api2 {
 namespace {
 
 struct ProcessItem {
-  mediapipe::Status Process(CalculatorContext* cc) { return {}; }
+  absl::Status Process(CalculatorContext* cc) { return {}; }
 };
 
 struct ItemWithNested {

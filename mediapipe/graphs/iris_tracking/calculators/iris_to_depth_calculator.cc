@@ -89,7 +89,7 @@ float CalculateDepth(const NormalizedLandmark& center, float focal_length,
 // }
 class IrisToDepthCalculator : public CalculatorBase {
  public:
-  static mediapipe::Status GetContract(CalculatorContract* cc) {
+  static absl::Status GetContract(CalculatorContract* cc) {
     cc->Inputs().Tag(kIrisTag).Set<NormalizedLandmarkList>();
     cc->Inputs().Tag(kImageSizeTag).Set<std::pair<int, int>>();
 
@@ -111,12 +111,12 @@ class IrisToDepthCalculator : public CalculatorBase {
     if (cc->Outputs().HasTag(kRightIrisDepthTag)) {
       cc->Outputs().Tag(kRightIrisDepthTag).Set<float>();
     }
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
-  mediapipe::Status Open(CalculatorContext* cc) override;
+  absl::Status Open(CalculatorContext* cc) override;
 
-  mediapipe::Status Process(CalculatorContext* cc) override;
+  absl::Status Process(CalculatorContext* cc) override;
 
  private:
   float focal_length_pixels_ = -1.f;
@@ -134,7 +134,7 @@ class IrisToDepthCalculator : public CalculatorBase {
 };
 REGISTER_CALCULATOR(IrisToDepthCalculator);
 
-mediapipe::Status IrisToDepthCalculator::Open(CalculatorContext* cc) {
+absl::Status IrisToDepthCalculator::Open(CalculatorContext* cc) {
   cc->SetOffset(TimestampDiff(0));
   if (cc->InputSidePackets().HasTag(kFocalLengthPixelTag)) {
 #if defined(__APPLE__)
@@ -155,13 +155,13 @@ mediapipe::Status IrisToDepthCalculator::Open(CalculatorContext* cc) {
   }
 
   options_ = cc->Options<::mediapipe::IrisToDepthCalculatorOptions>();
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-mediapipe::Status IrisToDepthCalculator::Process(CalculatorContext* cc) {
+absl::Status IrisToDepthCalculator::Process(CalculatorContext* cc) {
   // Only process if there's input landmarks.
   if (cc->Inputs().Tag(kIrisTag).IsEmpty()) {
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
   const auto& iris_landmarks =
@@ -220,7 +220,7 @@ mediapipe::Status IrisToDepthCalculator::Process(CalculatorContext* cc) {
                          .At(cc->InputTimestamp()));
     }
   }
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
 void IrisToDepthCalculator::GetLeftIris(const NormalizedLandmarkList& lds,

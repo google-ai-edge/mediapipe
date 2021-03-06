@@ -614,6 +614,36 @@ PREFIXED_IMAGE(ForwardFlow, kForwardFlowPrefix);
 PREFIXED_IMAGE(ClassSegmentation, kClassSegmentationPrefix);
 PREFIXED_IMAGE(InstanceSegmentation, kInstanceSegmentationPrefix);
 
+// **************************   TEXT   ****************************************
+// Context keys:
+// Which language text tokens are likely to be in.
+const char kTextLanguageKey[] = "text/language";
+// A large block of text that applies to the media.
+const char kTextContextContentKey[] = "text/context/content";
+
+// Feature list keys:
+// The text contents for a given time.
+const char kTextContentKey[] = "text/content";
+// The start time for the text becoming relevant.
+const char kTextTimestampKey[] = "text/timestamp";
+// The duration where the text is relevant.
+const char kTextDurationKey[] = "text/duration";
+// The confidence that this is the correct text.
+const char kTextConfidenceKey[] = "text/confidence";
+// A floating point embedding corresponding to the text.
+const char kTextEmbeddingKey[] = "text/embedding";
+// An integer id corresponding to the text.
+const char kTextTokenIdKey[] = "text/token/id";
+
+BYTES_CONTEXT_FEATURE(TextLanguage, kTextLanguageKey);
+BYTES_CONTEXT_FEATURE(TextContextContent, kTextContextContentKey);
+BYTES_FEATURE_LIST(TextContent, kTextContentKey);
+INT64_FEATURE_LIST(TextTimestamp, kTextTimestampKey);
+INT64_FEATURE_LIST(TextDuration, kTextDurationKey);
+FLOAT_FEATURE_LIST(TextConfidence, kTextConfidenceKey);
+VECTOR_FLOAT_FEATURE_LIST(TextEmbedding, kTextEmbeddingKey);
+INT64_FEATURE_LIST(TextTokenId, kTextTokenIdKey);
+
 // ***********************    FEATURES    *************************************
 // Context keys:
 // The dimensions of the feature.
@@ -691,9 +721,9 @@ PREFIXED_FLOAT_CONTEXT_FEATURE(FeatureAudioSampleRate,
 // code verifies the number of elements matches the dimensions.
 // Reconciling bounding box annotations is optional because will remove
 // annotations if the sequence rate is lower than the annotation rate.
-::mediapipe::Status ReconcileMetadata(bool reconcile_bbox_annotations,
-                                      bool reconcile_region_annotations,
-                                      tensorflow::SequenceExample* sequence);
+absl::Status ReconcileMetadata(bool reconcile_bbox_annotations,
+                               bool reconcile_region_annotations,
+                               tensorflow::SequenceExample* sequence);
 }  // namespace mediasequence
 }  // namespace mediapipe
 

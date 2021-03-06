@@ -41,14 +41,14 @@ class MakePairCalculator : public Node {
 
   MEDIAPIPE_NODE_CONTRACT(kIn, kPair);
 
-  static mediapipe::Status UpdateContract(CalculatorContract* cc) {
+  static absl::Status UpdateContract(CalculatorContract* cc) {
     RET_CHECK_EQ(kIn(cc).Count(), 2);
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
-  mediapipe::Status Process(CalculatorContext* cc) override {
+  absl::Status Process(CalculatorContext* cc) override {
     kPair(cc).Send({kIn(cc)[0].packet(), kIn(cc)[1].packet()});
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 };
 

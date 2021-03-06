@@ -58,7 +58,7 @@ def mediapipe_proto_library(
       portable_deps: the portable_proto_library targets for all referenced protobufs.
       visibility: visibility of this target.
       testonly: true means the proto can be used for testing only.
-      compatible_with: see go/target-constraints.
+      compatible_with: a list of environments the rule is compatible with.
       def_proto: define the proto_library target
       def_cc_proto: define the cc_proto_library target
       def_py_proto: define the py_proto_library target
@@ -111,7 +111,6 @@ def mediapipe_proto_library(
         native.java_lite_proto_library(**provided_args(
             name = replace_suffix(name, "_proto", "_java_proto_lite"),
             deps = proto_deps,
-            strict_deps = 0,
             visibility = visibility,
             testonly = testonly,
             compatible_with = compatible_with,

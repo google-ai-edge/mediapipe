@@ -39,6 +39,169 @@ section.
 
 ![face_detection_android_gpu.gif](../images/mobile/face_detection_android_gpu.gif)
 
+## Solution APIs
+
+### Configuration Options
+
+Naming style and availability may differ slightly across platforms/languages.
+
+#### min_detection_confidence
+
+Minimum confidence value (`[0.0, 1.0]`) from the face detection model for the
+detection to be considered successful. Default to `0.5`.
+
+### Output
+
+Naming style may differ slightly across platforms/languages.
+
+#### detections
+
+Collection of detected faces, where each face is represented as a detection
+proto message that contains a bounding box and 6 key points (right eye, left
+eye, nose tip, mouth center, right ear tragion, and left ear tragion). The
+bounding box is composed of `xmin` and `width` (both normalized to `[0.0, 1.0]`
+by the image width) and `ymin` and `height` (both normalized to `[0.0, 1.0]` by
+the image height). Each key point is composed of `x` and `y`, which are
+normalized to `[0.0, 1.0]` by the image width and height respectively.
+
+### Python Solution API
+
+Please first follow general [instructions](../getting_started/python.md) to
+install MediaPipe Python package, then learn more in the companion
+[Python Colab](#resources) and the following usage example.
+
+Supported configuration options:
+
+*   [min_detection_confidence](#min_detection_confidence)
+
+```python
+import cv2
+import mediapipe as mp
+mp_face_detction = mp.solutions.face_detection
+
+# For static images:
+with mp_face_detection.FaceDetection(
+    min_detection_confidence=0.5) as face_detection:
+  for idx, file in enumerate(file_list):
+    image = cv2.imread(file)
+    # Convert the BGR image to RGB and process it with MediaPipe Face Detection.
+    results = face_detection.process(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
+
+    # Draw face detections of each face.
+    if not results.detections:
+      continue
+    annotated_image = image.copy()
+    for detection in results.detections:
+      print('Nose tip:')
+      print(mp_face_detection.get_key_point(
+          detection, mp_face_detection.FaceKeyPoint.NOSE_TIP))
+      mp_drawing.draw_detection(annotated_image, detection)
+    cv2.imwrite('/tmp/annotated_image' + str(idx) + '.png', annotated_image)
+
+# For webcam input:
+cap = cv2.VideoCapture(0)
+with mp_face_detection.FaceDetection(
+    min_detection_confidence=0.5) as face_detection:
+  while cap.isOpened():
+    success, image = cap.read()
+    if not success:
+      print("Ignoring empty camera frame.")
+      # If loading a video, use 'break' instead of 'continue'.
+      continue
+
+    # Flip the image horizontally for a later selfie-view display, and convert
+    # the BGR image to RGB.
+    image = cv2.cvtColor(cv2.flip(image, 1), cv2.COLOR_BGR2RGB)
+    # To improve performance, optionally mark the image as not writeable to
+    # pass by reference.
+    image.flags.writeable = False
+    results = face_detection.process(image)
+
+    # Draw the face detection annotations on the image.
+    image.flags.writeable = True
+    image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+    if results.detections:
+      for detection in results.detections:
+        mp_drawing.draw_detection(image, detection)
+    cv2.imshow('MediaPipe Face Detection', image)
+    if cv2.waitKey(5) & 0xFF == 27:
+      break
+cap.release()
+```
+
+### JavaScript Solution API
+
+Please first see general [introduction](../getting_started/javascript.md) on
+MediaPipe in JavaScript, then learn more in the companion [web demo](#resources)
+and the following usage example.
+
+Supported configuration options:
+
+*   [minDetectionConfidence](#min_detection_confidence)
+
+```html
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_detection/face_detection.js" crossorigin="anonymous"></script>
+</head>
+
+<body>
+  <div class="container">
+    <video class="input_video"></video>
+    <canvas class="output_canvas" width="1280px" height="720px"></canvas>
+  </div>
+</body>
+</html>
+```
+
+```javascript
+<script type="module">
+const videoElement = document.getElementsByClassName('input_video')[0];
+const canvasElement = document.getElementsByClassName('output_canvas')[0];
+const canvasCtx = canvasElement.getContext('2d');
+
+function onResults(results) {
+  // Draw the overlays.
+  canvasCtx.save();
+  canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+  canvasCtx.drawImage(
+      results.image, 0, 0, canvasElement.width, canvasElement.height);
+  if (results.detections.length > 0) {
+    drawingUtils.drawRectangle(
+        canvasCtx, results.detections[0].boundingBox,
+        {color: 'blue', lineWidth: 4, fillColor: '#00000000'});
+    drawingUtils.drawLandmarks(canvasCtx, results.detections[0].landmarks, {
+      color: 'red',
+      radius: 5,
+    });
+  }
+  canvasCtx.restore();
+}
+
+const faceDetection = new Objectron({locateFile: (file) => {
+  return `https://cdn.jsdelivr.net/npm/@mediapipe/objectron@0.0/${file}`;
+}});
+faceDetection.setOptions({
+  minDetectionConfidence: 0.5
+});
+faceDetection.onResults(onResults);
+
+const camera = new Camera(videoElement, {
+  onFrame: async () => {
+    await faceDetection.send({image: videoElement});
+  },
+  width: 1280,
+  height: 720
+});
+camera.start();
+</script>
+```
+
 ## Example Apps
 
 Please first see general instructions for
@@ -108,3 +271,5 @@ to cross-compile and run MediaPipe examples on the
     ([presentation](https://docs.google.com/presentation/d/1YCtASfnYyZtH-41QvnW5iZxELFnf0MF-pPWSLGj8yjQ/present?slide=id.g5bc8aeffdd_1_0))
     ([poster](https://drive.google.com/file/d/1u6aB6wxDY7X2TmeUUKgFydulNtXkb3pu/view))
 *   [Models and model cards](./models.md#face_detection)
+*   [Web demo](https://code.mediapipe.dev/codepen/face_detection)
+*   [Python Colab](https://mediapipe.page.link/face_detection_py_colab)

@@ -48,12 +48,14 @@ const cv::Scalar kRed = cv::Scalar(255, 0, 0);
 void TestWithAspectRatio(const double aspect_ratio,
                          const cv::Scalar* background_color_in_rgb = nullptr) {
   std::string test_image;
-  const bool process_arbitrary_image = !FLAGS_input_image.empty();
+  const bool process_arbitrary_image =
+      !absl::GetFlag(FLAGS_input_image).empty();
   if (!process_arbitrary_image) {
     std::string test_image_path = mediapipe::file::JoinPath("./", kTestImage);
     MP_ASSERT_OK(mediapipe::file::GetContents(test_image_path, &test_image));
   } else {
-    MP_ASSERT_OK(mediapipe::file::GetContents(FLAGS_input_image, &test_image));
+    MP_ASSERT_OK(mediapipe::file::GetContents(absl::GetFlag(FLAGS_input_image),
+                                              &test_image));
   }
 
   const std::vector<char> contents_vector(test_image.begin(), test_image.end());
@@ -138,7 +140,7 @@ void TestWithAspectRatio(const double aspect_ratio,
     EXPECT_EQ(result_image, output_string);
   } else {
     std::string output_string_path = mediapipe::file::JoinPath(
-        FLAGS_output_folder,
+        absl::GetFlag(FLAGS_output_folder),
         absl::StrCat("result_", aspect_ratio,
                      background_color_in_rgb ? "_solid_background" : "",
                      ".jpg"));

@@ -13,7 +13,6 @@
 // limitations under the License.
 
 // Executor class for the MediaPipe scheduler.
-// Design doc: go/mediapipe-executor
 
 #ifndef MEDIAPIPE_FRAMEWORK_EXECUTOR_H_
 #define MEDIAPIPE_FRAMEWORK_EXECUTOR_H_
@@ -48,7 +47,7 @@ class Executor {
   // A registered Executor subclass must implement the static factory method
   // Create.  The Executor subclass cannot be registered without it.
   //
-  // static mediapipe::StatusOr<Executor*> Create(
+  // static absl::StatusOr<Executor*> Create(
   //     const MediaPipeOptions& extendable_options);
   //
   // Create validates extendable_options, then calls the constructor, and
@@ -65,8 +64,8 @@ class Executor {
   virtual void Schedule(std::function<void()> task) = 0;
 };
 
-using ExecutorRegistry = GlobalFactoryRegistry<mediapipe::StatusOr<Executor*>,
-                                               const MediaPipeOptions&>;
+using ExecutorRegistry =
+    GlobalFactoryRegistry<absl::StatusOr<Executor*>, const MediaPipeOptions&>;
 
 // Macro for registering the executor.
 #define REGISTER_EXECUTOR(name)        \

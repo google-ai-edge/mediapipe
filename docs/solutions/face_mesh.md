@@ -185,8 +185,8 @@ following steps are executed in the given order:
 The geometry pipeline is implemented as a MediaPipe
 [calculator](https://github.com/google/mediapipe/tree/master/mediapipe/modules/face_geometry/geometry_pipeline_calculator.cc).
 For your convenience, the face geometry pipeline calculator is bundled together
-with the face landmark module into a unified MediaPipe
-[subgraph](https://github.com/google/mediapipe/tree/master/mediapipe/modules/face_geometry/face_geometry_front_gpu.pbtxt).
+with corresponding metadata into a unified MediaPipe
+[subgraph](https://github.com/google/mediapipe/tree/master/mediapipe/modules/face_geometry/face_geometry_from_landmarks.pbtxt).
 The face geometry format is defined as a Protocol Buffer
 [message](https://github.com/google/mediapipe/tree/master/mediapipe/modules/face_geometry/protos/face_geometry.proto).
 
@@ -264,8 +264,8 @@ magnitude of `z` uses roughly the same scale as `x`.
 ### Python Solution API
 
 Please first follow general [instructions](../getting_started/python.md) to
-install MediaPipe Python package, then learn more in the companion [Colab] and
-the following usage example.
+install MediaPipe Python package, then learn more in the companion
+[Python Colab](#resources) and the following usage example.
 
 Supported configuration options:
 
@@ -281,74 +281,73 @@ mp_drawing = mp.solutions.drawing_utils
 mp_face_mesh = mp.solutions.face_mesh
 
 # For static images:
-face_mesh = mp_face_mesh.FaceMesh(
+drawing_spec = mp_drawing.DrawingSpec(thickness=1, circle_radius=1)
+with mp_face_mesh.FaceMesh(
     static_image_mode=True,
     max_num_faces=1,
-    min_detection_confidence=0.5)
-drawing_spec = mp_drawing.DrawingSpec(thickness=1, circle_radius=1)
-for idx, file in enumerate(file_list):
-  image = cv2.imread(file)
-  # Convert the BGR image to RGB before processing.
-  results = face_mesh.process(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
+    min_detection_confidence=0.5) as face_mesh:
+  for idx, file in enumerate(file_list):
+    image = cv2.imread(file)
+    # Convert the BGR image to RGB before processing.
+    results = face_mesh.process(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
 
-  # Print and draw face mesh landmarks on the image.
-  if not results.multi_face_landmarks:
-    continue
-  annotated_image = image.copy()
-  for face_landmarks in results.multi_face_landmarks:
-    print('face_landmarks:', face_landmarks)
-    mp_drawing.draw_landmarks(
-        image=annotated_image,
-        landmark_list=face_landmarks,
-        connections=mp_face_mesh.FACE_CONNECTIONS,
-        landmark_drawing_spec=drawing_spec,
-        connection_drawing_spec=drawing_spec)
-  cv2.imwrite('/tmp/annotated_image' + str(idx) + '.png', annotated_image)
-face_mesh.close()
-
-# For webcam input:
-face_mesh = mp_face_mesh.FaceMesh(
-    min_detection_confidence=0.5, min_tracking_confidence=0.5)
-drawing_spec = mp_drawing.DrawingSpec(thickness=1, circle_radius=1)
-cap = cv2.VideoCapture(0)
-while cap.isOpened():
-  success, image = cap.read()
-  if not success:
-    print("Ignoring empty camera frame.")
-    # If loading a video, use 'break' instead of 'continue'.
-    continue
-
-  # Flip the image horizontally for a later selfie-view display, and convert
-  # the BGR image to RGB.
-  image = cv2.cvtColor(cv2.flip(image, 1), cv2.COLOR_BGR2RGB)
-  # To improve performance, optionally mark the image as not writeable to
-  # pass by reference.
-  image.flags.writeable = False
-  results = face_mesh.process(image)
-
-  # Draw the face mesh annotations on the image.
-  image.flags.writeable = True
-  image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
-  if results.multi_face_landmarks:
+    # Print and draw face mesh landmarks on the image.
+    if not results.multi_face_landmarks:
+      continue
+    annotated_image = image.copy()
     for face_landmarks in results.multi_face_landmarks:
+      print('face_landmarks:', face_landmarks)
       mp_drawing.draw_landmarks(
-          image=image,
+          image=annotated_image,
           landmark_list=face_landmarks,
           connections=mp_face_mesh.FACE_CONNECTIONS,
           landmark_drawing_spec=drawing_spec,
           connection_drawing_spec=drawing_spec)
-  cv2.imshow('MediaPipe FaceMesh', image)
-  if cv2.waitKey(5) & 0xFF == 27:
-    break
-face_mesh.close()
+    cv2.imwrite('/tmp/annotated_image' + str(idx) + '.png', annotated_image)
+
+# For webcam input:
+drawing_spec = mp_drawing.DrawingSpec(thickness=1, circle_radius=1)
+cap = cv2.VideoCapture(0)
+with mp_face_mesh.FaceMesh(
+    min_detection_confidence=0.5,
+    min_tracking_confidence=0.5) as face_mesh:
+  while cap.isOpened():
+    success, image = cap.read()
+    if not success:
+      print("Ignoring empty camera frame.")
+      # If loading a video, use 'break' instead of 'continue'.
+      continue
+
+    # Flip the image horizontally for a later selfie-view display, and convert
+    # the BGR image to RGB.
+    image = cv2.cvtColor(cv2.flip(image, 1), cv2.COLOR_BGR2RGB)
+    # To improve performance, optionally mark the image as not writeable to
+    # pass by reference.
+    image.flags.writeable = False
+    results = face_mesh.process(image)
+
+    # Draw the face mesh annotations on the image.
+    image.flags.writeable = True
+    image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+    if results.multi_face_landmarks:
+      for face_landmarks in results.multi_face_landmarks:
+        mp_drawing.draw_landmarks(
+            image=image,
+            landmark_list=face_landmarks,
+            connections=mp_face_mesh.FACE_CONNECTIONS,
+            landmark_drawing_spec=drawing_spec,
+            connection_drawing_spec=drawing_spec)
+    cv2.imshow('MediaPipe FaceMesh', image)
+    if cv2.waitKey(5) & 0xFF == 27:
+      break
 cap.release()
 ```
 
 ### JavaScript Solution API
 
 Please first see general [introduction](../getting_started/javascript.md) on
-MediaPipe in JavaScript, then learn more in the companion [web demo] and the
-following usage example.
+MediaPipe in JavaScript, then learn more in the companion [web demo](#resources)
+and the following usage example.
 
 Supported configuration options:
 
@@ -503,7 +502,5 @@ only works for a single face. For visual reference, please refer to *Fig. 4*.
     [OBJ](https://github.com/google/mediapipe/tree/master/mediapipe/modules/face_geometry/data/canonical_face_model.obj),
     [UV visualization](https://github.com/google/mediapipe/tree/master/mediapipe/modules/face_geometry/data/canonical_face_model_uv_visualization.png)
 *   [Models and model cards](./models.md#face_mesh)
-
-[Colab]:https://mediapipe.page.link/face_mesh_py_colab
-
-[web demo]:https://code.mediapipe.dev/codepen/face_mesh
+*   [Web demo](https://code.mediapipe.dev/codepen/face_mesh)
+*   [Python Colab](https://mediapipe.page.link/face_mesh_py_colab)

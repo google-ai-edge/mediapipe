@@ -51,9 +51,9 @@ namespace mediapipe {
 //   }
 class DetectionProjectionCalculator : public CalculatorBase {
  public:
-  static mediapipe::Status GetContract(CalculatorContract* cc);
-  mediapipe::Status Open(CalculatorContext* cc) override;
-  mediapipe::Status Process(CalculatorContext* cc) override;
+  static absl::Status GetContract(CalculatorContract* cc);
+  absl::Status Open(CalculatorContext* cc) override;
+  absl::Status Process(CalculatorContext* cc) override;
 };
 REGISTER_CALCULATOR(DetectionProjectionCalculator);
 
@@ -62,7 +62,7 @@ namespace {
 constexpr char kDetections[] = "DETECTIONS";
 constexpr char kProjectionMatrix[] = "PROJECTION_MATRIX";
 
-mediapipe::Status ProjectDetection(
+absl::Status ProjectDetection(
     const std::function<Point2_f(const Point2_f&)>& project_fn,
     Detection* detection) {
   auto* location_data = detection->mutable_location_data();
@@ -107,12 +107,12 @@ mediapipe::Status ProjectDetection(
   box->set_width(right_bottom.x() - left_top.x());
   box->set_height(right_bottom.y() - left_top.y());
 
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
 }  // namespace
 
-mediapipe::Status DetectionProjectionCalculator::GetContract(
+absl::Status DetectionProjectionCalculator::GetContract(
     CalculatorContract* cc) {
   RET_CHECK(cc->Inputs().HasTag(kDetections) &&
             cc->Inputs().HasTag(kProjectionMatrix))
@@ -133,18 +133,17 @@ mediapipe::Status DetectionProjectionCalculator::GetContract(
     cc->Outputs().Get(id).Set<std::vector<Detection>>();
   }
 
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-mediapipe::Status DetectionProjectionCalculator::Open(CalculatorContext* cc) {
+absl::Status DetectionProjectionCalculator::Open(CalculatorContext* cc) {
   cc->SetOffset(TimestampDiff(0));
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-mediapipe::Status DetectionProjectionCalculator::Process(
-    CalculatorContext* cc) {
+absl::Status DetectionProjectionCalculator::Process(CalculatorContext* cc) {
   if (cc->Inputs().Tag(kProjectionMatrix).IsEmpty()) {
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
   const auto& project_mat =
       cc->Inputs().Tag(kProjectionMatrix).Get<std::array<float, 16>>();
@@ -173,7 +172,7 @@ mediapipe::Status DetectionProjectionCalculator::Process(
         MakePacket<std::vector<Detection>>(std::move(output_detections))
             .At(cc->InputTimestamp()));
   }
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
 }  // namespace mediapipe

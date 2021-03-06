@@ -63,6 +63,52 @@ const PacketType* GetPacketType(const PacketTypeSet& packet_type_set,
   return &packet_type_set.Get(id);
 }
 
+// Copies a TagMap omitting entries with certain names.
+std::shared_ptr<tool::TagMap> RemoveNames(const tool::TagMap& tag_map,
+                                          std::set<std::string> names) {
+  auto tag_index_names = tag_map.CanonicalEntries();
+  for (auto id = tag_map.EndId() - 1; id >= tag_map.BeginId(); --id) {
+    std::string name = tag_map.Names()[id.value()];
+    if (names.count(name) > 0) {
+      tag_index_names.erase(tag_index_names.begin() + id.value());
+    }
+  }
+  return tool::TagMap::Create(tag_index_names).value();
+}
+
+// Copies matching entries from another Collection.
+template <class CollectionType>
+void CopyCollection(const CollectionType& other, CollectionType* result) {
+  auto tag_map = result->TagMap();
+  for (auto id = tag_map->BeginId(); id != tag_map->EndId(); ++id) {
+    auto tag_index = tag_map->TagAndIndexFromId(id);
+    auto other_id = other.GetId(tag_index.first, tag_index.second);
+    if (other_id.IsValid()) {
+      result->Get(id) = other.Get(other_id);
+    }
+  }
+}
+
+// Copies packet types omitting entries that are optional and not provided.
+std::unique_ptr<PacketTypeSet> RemoveOmittedPacketTypes(
+    const PacketTypeSet& packet_types,
+    const std::map<std::string, Packet>& all_side_packets,
+    const ValidatedGraphConfig* validated_graph) {
+  std::set<std::string> omitted_names;
+  for (auto id = packet_types.BeginId(); id != packet_types.EndId(); ++id) {
+    std::string name = packet_types.TagMap()->Names()[id.value()];
+    if (packet_types.Get(id).IsOptional() &&
+        validated_graph->IsExternalSidePacket(name) &&
+        all_side_packets.count(name) == 0) {
+      omitted_names.insert(name);
+    }
+  }
+  auto tag_map = RemoveNames(*packet_types.TagMap(), omitted_names);
+  auto result = std::make_unique<PacketTypeSet>(tag_map);
+  CopyCollection(packet_types, result.get());
+  return result;
+}
+
 }  // namespace
 
 CalculatorNode::CalculatorNode() {}
@@ -72,7 +118,7 @@ Timestamp CalculatorNode::SourceProcessOrder(
   return calculator_->SourceProcessOrder(cc);
 }
 
-mediapipe::Status CalculatorNode::Initialize(
+absl::Status CalculatorNode::Initialize(
     const ValidatedGraphConfig* validated_graph, int node_id,
     InputStreamManager* input_stream_managers,
     OutputStreamManager* output_stream_managers,
@@ -158,7 +204,7 @@ mediapipe::Status CalculatorNode::Initialize(
   return InitializeInputStreams(input_stream_managers, output_stream_managers);
 }
 
-mediapipe::Status CalculatorNode::InitializeOutputSidePackets(
+absl::Status CalculatorNode::InitializeOutputSidePackets(
     const PacketTypeSet& output_side_packet_types,
     OutputSidePacketImpl* output_side_packets) {
   output_side_packets_ =
@@ -172,10 +218,10 @@ mediapipe::Status CalculatorNode::InitializeOutputSidePackets(
     output_side_packets_->GetPtr(id) =
         &output_side_packets[base_index + id.value()];
   }
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-mediapipe::Status CalculatorNode::InitializeInputSidePackets(
+absl::Status CalculatorNode::InitializeInputSidePackets(
     OutputSidePacketImpl* output_side_packets) {
   const NodeTypeInfo& node_type_info =
       validated_graph_->CalculatorInfos()[node_id_];
@@ -200,10 +246,10 @@ mediapipe::Status CalculatorNode::InitializeInputSidePackets(
             << output_side_packet_index;
     origin_output_side_packet->AddMirror(&input_side_packet_handler_, id);
   }
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-mediapipe::Status CalculatorNode::InitializeOutputStreams(
+absl::Status CalculatorNode::InitializeOutputStreams(
     OutputStreamManager* output_stream_managers) {
   RET_CHECK(output_stream_managers) << "output_stream_managers is NULL";
   const NodeTypeInfo& node_type_info =
@@ -215,7 +261,7 @@ mediapipe::Status CalculatorNode::InitializeOutputStreams(
       current_output_stream_managers);
 }
 
-mediapipe::Status CalculatorNode::InitializeInputStreams(
+absl::Status CalculatorNode::InitializeInputStreams(
     InputStreamManager* input_stream_managers,
     OutputStreamManager* output_stream_managers) {
   RET_CHECK(input_stream_managers) << "input_stream_managers is NULL";
@@ -246,10 +292,10 @@ mediapipe::Status CalculatorNode::InitializeInputStreams(
             << output_stream_index;
     origin_output_stream_manager->AddMirror(input_stream_handler_.get(), id);
   }
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-mediapipe::Status CalculatorNode::InitializeInputStreamHandler(
+absl::Status CalculatorNode::InitializeInputStreamHandler(
     const InputStreamHandlerConfig& handler_config,
     const PacketTypeSet& input_stream_types) {
   const ProtoString& input_stream_handler_name =
@@ -264,10 +310,10 @@ mediapipe::Status CalculatorNode::InitializeInputStreamHandler(
                    _ << "\"" << input_stream_handler_name
                      << "\" is not a registered input stream handler.");
 
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-mediapipe::Status CalculatorNode::InitializeOutputStreamHandler(
+absl::Status CalculatorNode::InitializeOutputStreamHandler(
     const OutputStreamHandlerConfig& handler_config,
     const PacketTypeSet& output_stream_types) {
   const ProtoString& output_stream_handler_name =
@@ -281,10 +327,10 @@ mediapipe::Status CalculatorNode::InitializeOutputStreamHandler(
                        /*calculator_run_in_parallel=*/max_in_flight_ > 1),
                    _ << "\"" << output_stream_handler_name
                      << "\" is not a registered output stream handler.");
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-mediapipe::Status CalculatorNode::ConnectShardsToStreams(
+absl::Status CalculatorNode::ConnectShardsToStreams(
     CalculatorContext* calculator_context) {
   RET_CHECK(calculator_context);
   MP_RETURN_IF_ERROR(
@@ -324,13 +370,13 @@ void CalculatorNode::SetMaxInputStreamQueueSize(int max_queue_size) {
   input_stream_handler_->SetMaxQueueSize(max_queue_size);
 }
 
-mediapipe::Status CalculatorNode::PrepareForRun(
+absl::Status CalculatorNode::PrepareForRun(
     const std::map<std::string, Packet>& all_side_packets,
     const std::map<std::string, Packet>& service_packets,
     std::function<void()> ready_for_open_callback,
     std::function<void()> source_node_opened_callback,
     std::function<void(CalculatorContext*)> schedule_callback,
-    std::function<void(mediapipe::Status)> error_callback,
+    std::function<void(absl::Status)> error_callback,
     CounterFactory* counter_factory) {
   RET_CHECK(ready_for_open_callback) << "ready_for_open_callback is NULL";
   RET_CHECK(schedule_callback) << "schedule_callback is NULL";
@@ -345,10 +391,12 @@ mediapipe::Status CalculatorNode::PrepareForRun(
       std::move(schedule_callback), error_callback);
   output_stream_handler_->PrepareForRun(error_callback);
 
-  const PacketTypeSet* input_side_packet_types =
+  const PacketTypeSet* packet_types =
       &validated_graph_->CalculatorInfos()[node_id_].InputSidePacketTypes();
+  input_side_packet_types_ = RemoveOmittedPacketTypes(
+      *packet_types, all_side_packets, validated_graph_);
   MP_RETURN_IF_ERROR(input_side_packet_handler_.PrepareForRun(
-      input_side_packet_types, all_side_packets,
+      input_side_packet_types_.get(), all_side_packets,
       [this]() { CalculatorNode::InputSidePacketsReady(); },
       std::move(error_callback)));
   calculator_state_->SetInputSidePackets(
@@ -394,7 +442,7 @@ mediapipe::Status CalculatorNode::PrepareForRun(
     input_side_packets_ready_ =
         (input_side_packet_handler_.MissingInputSidePacketCount() == 0);
   }
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
 namespace {
@@ -406,7 +454,7 @@ const Packet GetPacket(const OutputSidePacket& out) {
 }
 
 // Resends the output-side-packets from the previous graph run.
-mediapipe::Status ResendSidePackets(CalculatorContext* cc) {
+absl::Status ResendSidePackets(CalculatorContext* cc) {
   auto& outs = cc->OutputSidePackets();
   for (CollectionItemId id = outs.BeginId(); id < outs.EndId(); ++id) {
     Packet packet = GetPacket(outs.Get(id));
@@ -415,7 +463,7 @@ mediapipe::Status ResendSidePackets(CalculatorContext* cc) {
       outs.Get(id).Set(packet);
     }
   }
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 }  // namespace
 
@@ -429,7 +477,7 @@ bool CalculatorNode::OutputsAreConstant(CalculatorContext* cc) {
   return true;
 }
 
-mediapipe::Status CalculatorNode::OpenNode() {
+absl::Status CalculatorNode::OpenNode() {
   VLOG(2) << "CalculatorNode::OpenNode() for " << DebugName();
 
   CalculatorContext* default_context =
@@ -444,7 +492,7 @@ mediapipe::Status CalculatorNode::OpenNode() {
   calculator_context_manager_.PushInputTimestampToContext(
       default_context, Timestamp::Unstarted());
 
-  mediapipe::Status result;
+  absl::Status result;
   if (OutputsAreConstant(default_context)) {
     result = ResendSidePackets(default_context);
   } else {
@@ -489,7 +537,7 @@ mediapipe::Status CalculatorNode::OpenNode() {
     status_ = kStateOpened;
   }
 
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
 void CalculatorNode::ActivateNode() {
@@ -523,8 +571,8 @@ void CalculatorNode::CloseOutputStreams(OutputStreamShardSet* outputs) {
   output_stream_handler_->Close(outputs);
 }
 
-mediapipe::Status CalculatorNode::CloseNode(
-    const mediapipe::Status& graph_status, bool graph_run_ended) {
+absl::Status CalculatorNode::CloseNode(const absl::Status& graph_status,
+                                       bool graph_run_ended) {
   {
     absl::MutexLock status_lock(&status_mutex_);
     RET_CHECK_NE(status_, kStateClosed)
@@ -544,11 +592,11 @@ mediapipe::Status CalculatorNode::CloseNode(
   calculator_context_manager_.SetGraphStatusInContext(default_context,
                                                       graph_status);
 
-  mediapipe::Status result;
+  absl::Status result;
 
   if (OutputsAreConstant(default_context)) {
     // Do nothing.
-    result = mediapipe::OkStatus();
+    result = absl::OkStatus();
   } else {
     MEDIAPIPE_PROFILING(CLOSE, default_context);
     LegacyCalculatorSupport::Scoped<CalculatorContext> s(default_context);
@@ -578,10 +626,10 @@ mediapipe::Status CalculatorNode::CloseNode(
       "Calculator::Close() for node \"$0\" failed: ", DebugName());
 
   VLOG(2) << "Closed node " << DebugName();
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-void CalculatorNode::CleanupAfterRun(const mediapipe::Status& graph_status) {
+void CalculatorNode::CleanupAfterRun(const absl::Status& graph_status) {
   if (needs_to_close_) {
     calculator_context_manager_.PushInputTimestampToContext(
         calculator_context_manager_.GetDefaultCalculatorContext(),
@@ -750,12 +798,12 @@ std::string CalculatorNode::DebugName() const {
 }
 
 // TODO: Split this function.
-mediapipe::Status CalculatorNode::ProcessNode(
+absl::Status CalculatorNode::ProcessNode(
     CalculatorContext* calculator_context) {
   if (IsSource()) {
     // This is a source Calculator.
     if (Closed()) {
-      return mediapipe::OkStatus();
+      return absl::OkStatus();
     }
 
     const Timestamp input_timestamp = calculator_context->InputTimestamp();
@@ -764,7 +812,7 @@ mediapipe::Status CalculatorNode::ProcessNode(
     output_stream_handler_->PrepareOutputs(input_timestamp, outputs);
 
     VLOG(2) << "Calling Calculator::Process() for node: " << DebugName();
-    mediapipe::Status result;
+    absl::Status result;
 
     {
       MEDIAPIPE_PROFILING(PROCESS, calculator_context);
@@ -787,15 +835,15 @@ mediapipe::Status CalculatorNode::ProcessNode(
     output_stream_handler_->PostProcess(input_timestamp);
     if (node_stopped) {
       MP_RETURN_IF_ERROR(
-          CloseNode(mediapipe::OkStatus(), /*graph_run_ended=*/false));
+          CloseNode(absl::OkStatus(), /*graph_run_ended=*/false));
     }
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   } else {
     // This is not a source Calculator.
     InputStreamShardSet* const inputs = &calculator_context->Inputs();
     OutputStreamShardSet* const outputs = &calculator_context->Outputs();
-    mediapipe::Status result =
-        mediapipe::InternalError("Calculator context has no input packets.");
+    absl::Status result =
+        absl::InternalError("Calculator context has no input packets.");
 
     int num_invocations = calculator_context_manager_.NumberOfContextTimestamps(
         *calculator_context);
@@ -814,7 +862,7 @@ mediapipe::Status CalculatorNode::ProcessNode(
 
         if (OutputsAreConstant(calculator_context)) {
           // Do nothing.
-          result = mediapipe::OkStatus();
+          result = absl::OkStatus();
         } else {
           MEDIAPIPE_PROFILING(PROCESS, calculator_context);
           LegacyCalculatorSupport::Scoped<CalculatorContext> s(
@@ -851,7 +899,7 @@ mediapipe::Status CalculatorNode::ProcessNode(
         CHECK_EQ(calculator_context_manager_.NumberOfContextTimestamps(
                      *calculator_context),
                  1);
-        return CloseNode(mediapipe::OkStatus(), /*graph_run_ended=*/false);
+        return CloseNode(absl::OkStatus(), /*graph_run_ended=*/false);
       } else {
         RET_CHECK_FAIL()
             << "Invalid input timestamp in ProcessNode(). timestamp: "

@@ -58,7 +58,7 @@ float ComputeRotation(const NormalizedLandmarkList& landmarks,
   return rotation;
 }
 
-mediapipe::Status NormalizedLandmarkListToRect(
+absl::Status NormalizedLandmarkListToRect(
     const NormalizedLandmarkList& landmarks,
     const std::pair<int, int>& image_size, NormalizedRect* rect) {
   const float rotation = ComputeRotation(landmarks, image_size);
@@ -117,7 +117,7 @@ mediapipe::Status NormalizedLandmarkListToRect(
   rect->set_height(height);
   rect->set_rotation(rotation);
 
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
 }  // namespace
@@ -130,21 +130,21 @@ mediapipe::Status NormalizedLandmarkListToRect(
 // mean of PIP joints at the top.
 class HandLandmarksToRectCalculator : public CalculatorBase {
  public:
-  static mediapipe::Status GetContract(CalculatorContract* cc) {
+  static absl::Status GetContract(CalculatorContract* cc) {
     cc->Inputs().Tag(kNormalizedLandmarksTag).Set<NormalizedLandmarkList>();
     cc->Inputs().Tag(kImageSizeTag).Set<std::pair<int, int>>();
     cc->Outputs().Tag(kNormRectTag).Set<NormalizedRect>();
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
-  mediapipe::Status Open(CalculatorContext* cc) override {
+  absl::Status Open(CalculatorContext* cc) override {
     cc->SetOffset(TimestampDiff(0));
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
-  mediapipe::Status Process(CalculatorContext* cc) override {
+  absl::Status Process(CalculatorContext* cc) override {
     if (cc->Inputs().Tag(kNormalizedLandmarksTag).IsEmpty()) {
-      return mediapipe::OkStatus();
+      return absl::OkStatus();
     }
     RET_CHECK(!cc->Inputs().Tag(kImageSizeTag).IsEmpty());
 
@@ -159,7 +159,7 @@ class HandLandmarksToRectCalculator : public CalculatorBase {
         .Tag(kNormRectTag)
         .Add(output_rect.release(), cc->InputTimestamp());
 
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 };
 REGISTER_CALCULATOR(HandLandmarksToRectCalculator);

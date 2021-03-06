@@ -54,6 +54,10 @@ node: {
         max: 1.0
       }
       border_mode: BORDER_ZERO
+      # If this calculator truly operates in the CPU, then gpu_origin is
+      # ignored, but if some build switch insists on GPU inference, then we will
+      # still need to set this.
+      gpu_origin: TOP_LEFT
     }
   }
 }

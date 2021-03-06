@@ -63,7 +63,8 @@ bool GlTextureBuffer::CreateInternal(const void* data) {
   if (!name_) return false;
 
   glBindTexture(target_, name_);
-  GlTextureInfo info = GlTextureInfoForGpuBufferFormat(format_, 0);
+  GlTextureInfo info =
+      GlTextureInfoForGpuBufferFormat(format_, 0, context->GetGlVersion());
 
   // See b/70294573 for details about this.
   if (info.gl_internal_format == GL_RGBA16F &&

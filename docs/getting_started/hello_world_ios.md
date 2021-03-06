@@ -492,6 +492,9 @@ in our app:
     if (![self.mediapipeGraph startWithError:&error]) {
       NSLog(@"Failed to start graph: %@", error);
     }
+    else if (![self.mediapipeGraph waitUntilIdleWithError:&error]) {
+      NSLog(@"Failed to complete graph initial run: %@", error);
+    }
 
     dispatch_async(_videoQueue, ^{
       [_cameraSource start];
@@ -500,8 +503,9 @@ in our app:
 }];
 ```
 
-Note: It is important to start the graph before starting the camera, so that the
-graph is ready to process frames as soon as the camera starts sending them.
+Note: It is important to start the graph before starting the camera and wait
+until completion, so that the graph is ready to process frames as soon as the
+camera starts sending them.
 
 Earlier, when we received frames from the camera in the `processVideoFrame`
 function, we displayed them in the `_liveView` using the `_renderer`. Now, we

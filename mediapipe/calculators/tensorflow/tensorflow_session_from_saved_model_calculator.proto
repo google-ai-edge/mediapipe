@@ -28,7 +28,7 @@ message TensorFlowSessionFromSavedModelCalculatorOptions {
   // SavedModels, include a flag to load the most recent model.
 
   // Path to a directory containing a trained TensorFlow model as prepared
-  // by SavedModel (go/saved-model).
+  // by SavedModel.
   optional string saved_model_path = 1;
   // The name of the generic signature to load into the mapping from tags to
   // tensor names.

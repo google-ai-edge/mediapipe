@@ -44,7 +44,7 @@ nav_order: 1
     `PrintHelloWorld()` function, defined in a [`CalculatorGraphConfig`] proto.
 
     ```C++
-    ::mediapipe::Status PrintHelloWorld() {
+    absl::Status PrintHelloWorld() {
       // Configures a simple graph, which concatenates 2 PassThroughCalculators.
       CalculatorGraphConfig config = ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
         input_stream: "in"

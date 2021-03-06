@@ -22,15 +22,40 @@ licenses(["notice"])
 package(default_visibility = ["//visibility:public"])
 
 mediapipe_simple_subgraph(
-    name = "single_face_smooth_landmark_gpu",
-    graph = "single_face_smooth_landmark_gpu.pbtxt",
-    register_as = "SingleFaceSmoothLandmarkGpu",
+    name = "face_landmarks_smoothing",
+    graph = "face_landmarks_smoothing.pbtxt",
+    register_as = "FaceLandmarksSmoothing",
     deps = [
+        "//mediapipe/calculators/util:landmarks_smoothing_calculator",
+    ],
+)
+
+mediapipe_simple_subgraph(
+    name = "single_face_geometry_from_detection_gpu",
+    graph = "single_face_geometry_from_detection_gpu.pbtxt",
+    register_as = "SingleFaceGeometryFromDetectionGpu",
+    deps = [
+        ":face_landmarks_smoothing",
+        "//mediapipe/calculators/core:concatenate_detection_vector_calculator",
+        "//mediapipe/calculators/core:split_vector_calculator",
+        "//mediapipe/calculators/image:image_properties_calculator",
+        "//mediapipe/modules/face_detection:face_detection_front_gpu",
+        "//mediapipe/modules/face_geometry:face_geometry_from_detection",
+    ],
+)
+
+mediapipe_simple_subgraph(
+    name = "single_face_geometry_from_landmarks_gpu",
+    graph = "single_face_geometry_from_landmarks_gpu.pbtxt",
+    register_as = "SingleFaceGeometryFromLandmarksGpu",
+    deps = [
+        ":face_landmarks_smoothing",
         "//mediapipe/calculators/core:concatenate_vector_calculator",
         "//mediapipe/calculators/core:constant_side_packet_calculator",
         "//mediapipe/calculators/core:split_vector_calculator",
         "//mediapipe/calculators/image:image_properties_calculator",
         "//mediapipe/calculators/util:landmarks_smoothing_calculator",
+        "//mediapipe/modules/face_geometry:face_geometry_from_landmarks",
         "//mediapipe/modules/face_landmark:face_landmark_front_gpu",
     ],
 )

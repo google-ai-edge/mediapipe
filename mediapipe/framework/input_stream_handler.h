@@ -84,13 +84,13 @@ class InputStreamHandler {
   // InputStreamHandler::input_stream_managers_ (meaning it should point
   // to somewhere in the middle of the master flat array of all input
   // stream managers).
-  mediapipe::Status InitializeInputStreamManagers(
+  absl::Status InitializeInputStreamManagers(
       InputStreamManager* flat_input_stream_managers);
 
   InputStreamManager* GetInputStreamManager(CollectionItemId id);
 
   // Sets up the InputStreamShardSet by propagating data from the managers.
-  mediapipe::Status SetupInputShards(InputStreamShardSet* input_shards);
+  absl::Status SetupInputShards(InputStreamShardSet* input_shards);
 
   // Returns a vector of pairs of stream name and queue size for monitoring
   // purpose.
@@ -106,7 +106,7 @@ class InputStreamHandler {
       std::function<void()> headers_ready_callback,
       std::function<void()> notification_callback,
       std::function<void(CalculatorContext*)> schedule_callback,
-      std::function<void(mediapipe::Status)> error_callback);
+      std::function<void(absl::Status)> error_callback);
 
   int NumInputStreams() const { return input_stream_managers_.NumEntries(); }
 
@@ -286,7 +286,7 @@ class InputStreamHandler {
   std::function<void()> notification_;
   // A callback to schedule the node with the prepared calculator context.
   std::function<void(CalculatorContext*)> schedule_callback_;
-  std::function<void(mediapipe::Status)> error_callback_;
+  std::function<void(absl::Status)> error_callback_;
 
  private:
   // Indicates when to fill the input set. If true, every input set will be

@@ -26,13 +26,13 @@
 #include "mediapipe/calculators/tensor/image_to_tensor_converter.h"
 #include "mediapipe/calculators/tensor/image_to_tensor_utils.h"
 #include "mediapipe/framework/calculator_framework.h"
+#include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/formats/tensor.h"
 #include "mediapipe/framework/port/canonical_errors.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/port/statusor.h"
 #include "mediapipe/gpu/MPPMetalHelper.h"
-#include "mediapipe/gpu/gpu_buffer.h"
 #include "tensorflow/lite/delegates/gpu/common/shape.h"
 #include "tensorflow/lite/delegates/gpu/common/types.h"
 
@@ -146,7 +146,7 @@ int GetBytesPerRaw(OutputFormat output_format, const tflite::gpu::HW& size) {
 
 class SubRectExtractorMetal {
  public:
-  static mediapipe::StatusOr<std::unique_ptr<SubRectExtractorMetal>> Make(
+  static absl::StatusOr<std::unique_ptr<SubRectExtractorMetal>> Make(
       id<MTLDevice> device, OutputFormat output_format,
       BorderMode border_mode) {
     id<MTLRenderPipelineState> pipeline_state;
@@ -174,12 +174,12 @@ class SubRectExtractorMetal {
                             options:MTLResourceOptionCPUCacheModeDefault];
   }
 
-  mediapipe::Status Execute(id<MTLTexture> input_texture,
-                            const RotatedRect& sub_rect, bool flip_horizontaly,
-                            float alpha, float beta,
-                            const tflite::gpu::HW& destination_size,
-                            id<MTLCommandBuffer> command_buffer,
-                            id<MTLBuffer> destination) {
+  absl::Status Execute(id<MTLTexture> input_texture,
+                       const RotatedRect& sub_rect, bool flip_horizontaly,
+                       float alpha, float beta,
+                       const tflite::gpu::HW& destination_size,
+                       id<MTLCommandBuffer> command_buffer,
+                       id<MTLBuffer> destination) {
     auto output_texture = MTLTextureWithBuffer(destination_size, destination);
     return InternalExecute(input_texture, sub_rect, flip_horizontaly, alpha,
                            beta, destination_size, command_buffer,
@@ -205,13 +205,12 @@ class SubRectExtractorMetal {
     return texture;
   }
 
-  mediapipe::Status InternalExecute(id<MTLTexture> input_texture,
-                                    const RotatedRect& sub_rect,
-                                    bool flip_horizontaly, float alpha,
-                                    float beta,
-                                    const tflite::gpu::HW& destination_size,
-                                    id<MTLCommandBuffer> command_buffer,
-                                    id<MTLTexture> output_texture) {
+  absl::Status InternalExecute(id<MTLTexture> input_texture,
+                               const RotatedRect& sub_rect,
+                               bool flip_horizontaly, float alpha, float beta,
+                               const tflite::gpu::HW& destination_size,
+                               id<MTLCommandBuffer> command_buffer,
+                               id<MTLTexture> output_texture) {
     RET_CHECK(command_buffer != nil);
     RET_CHECK(output_texture != nil);
 
@@ -254,10 +253,10 @@ class SubRectExtractorMetal {
                         vertexCount:6];
     [command_encoder endEncoding];
 
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
-  static mediapipe::Status MakePipelineState(
+  static absl::Status MakePipelineState(
       id<MTLDevice> device, OutputFormat output_format, BorderMode border_mode,
       id<MTLRenderPipelineState>* pipeline_state) {
     RET_CHECK(pipeline_state != nil);
@@ -328,7 +327,7 @@ class SubRectExtractorMetal {
     RET_CHECK(error == nil) << "Couldn't create a pipeline state"
                             << [[error localizedDescription] UTF8String];
 
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
   id<MTLBuffer> positions_buffer_;
@@ -340,25 +339,19 @@ class SubRectExtractorMetal {
 
 class MetalProcessor : public ImageToTensorConverter {
  public:
-  mediapipe::Status Init(CalculatorContext* cc, BorderMode border_mode) {
+  absl::Status Init(CalculatorContext* cc, BorderMode border_mode) {
     metal_helper_ = [[MPPMetalHelper alloc] initWithCalculatorContext:cc];
     RET_CHECK(metal_helper_);
     ASSIGN_OR_RETURN(extractor_, SubRectExtractorMetal::Make(
                                      metal_helper_.mtlDevice,
                                      OutputFormat::kF32C4, border_mode));
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
-  Size GetImageSize(const Packet& image_packet) override {
-    const auto& image = image_packet.Get<mediapipe::GpuBuffer>();
-    return {image.width(), image.height()};
-  }
-
-  mediapipe::StatusOr<Tensor> Convert(const Packet& image_packet,
-                                      const RotatedRect& roi,
-                                      const Size& output_dims, float range_min,
-                                      float range_max) override {
-    const auto& input = image_packet.Get<mediapipe::GpuBuffer>();
+  absl::StatusOr<Tensor> Convert(const mediapipe::Image& input,
+                                 const RotatedRect& roi,
+                                 const Size& output_dims, float range_min,
+                                 float range_max) override {
     if (input.format() != mediapipe::GpuBufferFormat::kBGRA32) {
       return InvalidArgumentError(
           absl::StrCat("Only BGRA/RGBA textures are supported, passed "
@@ -367,7 +360,8 @@ class MetalProcessor : public ImageToTensorConverter {
     }
 
     @autoreleasepool {
-      id<MTLTexture> texture = [metal_helper_ metalTextureWithGpuBuffer:input];
+      id<MTLTexture> texture =
+          [metal_helper_ metalTextureWithGpuBuffer:input.GetGpuBuffer()];
 
       constexpr int kNumChannels = 4;
       Tensor tensor(Tensor::ElementType::kFloat32,
@@ -400,8 +394,8 @@ class MetalProcessor : public ImageToTensorConverter {
 
 }  // namespace
 
-mediapipe::StatusOr<std::unique_ptr<ImageToTensorConverter>>
-CreateMetalConverter(CalculatorContext* cc, BorderMode border_mode) {
+absl::StatusOr<std::unique_ptr<ImageToTensorConverter>> CreateMetalConverter(
+    CalculatorContext* cc, BorderMode border_mode) {
   auto result = absl::make_unique<MetalProcessor>();
   MP_RETURN_IF_ERROR(result->Init(cc, border_mode));
 

@@ -91,13 +91,14 @@ To detect initial hand locations, we designed a
 mobile real-time uses in a manner similar to the face detection model in
 [MediaPipe Face Mesh](./face_mesh.md). Detecting hands is a decidedly complex
 task: our
-[model](https://github.com/google/mediapipe/tree/master/mediapipe/models/palm_detection.tflite) has
-to work across a variety of hand sizes with a large scale span (~20x) relative
-to the image frame and be able to detect occluded and self-occluded hands.
-Whereas faces have high contrast patterns, e.g., in the eye and mouth region,
-the lack of such features in hands makes it comparatively difficult to detect
-them reliably from their visual features alone. Instead, providing additional
-context, like arm, body, or person features, aids accurate hand localization.
+[model](https://github.com/google/mediapipe/tree/master/mediapipe/modules/palm_detection/palm_detection.tflite)
+has to work across a variety of hand sizes with a large scale span (~20x)
+relative to the image frame and be able to detect occluded and self-occluded
+hands. Whereas faces have high contrast patterns, e.g., in the eye and mouth
+region, the lack of such features in hands makes it comparatively difficult to
+detect them reliably from their visual features alone. Instead, providing
+additional context, like arm, body, or person features, aids accurate hand
+localization.
 
 Our method addresses the above challenges using different strategies. First, we
 train a palm detector instead of a hand detector, since estimating bounding
@@ -119,7 +120,7 @@ just 86.22%.
 ### Hand Landmark Model
 
 After the palm detection over the whole image our subsequent hand landmark
-[model](https://github.com/google/mediapipe/tree/master/mediapipe/models/hand_landmark.tflite)
+[model](https://github.com/google/mediapipe/tree/master/mediapipe/modules/hand_landmark/hand_landmark.tflite)
 performs precise keypoint localization of 21 3D hand-knuckle coordinates inside
 the detected hand regions via regression, that is direct coordinate prediction.
 The model learns a consistent internal hand pose representation and is robust
@@ -136,11 +137,9 @@ to the corresponding 3D coordinates.
 :--------------------------------------------------------: |
 *Fig 2. 21 hand landmarks.*                                |
 
-| ![hand_crops.png](../images/mobile/hand_crops.png)                          |
-| :-------------------------------------------------------------------------: |
-| *Fig 3. Top: Aligned hand crops passed to the tracking network with ground  |
-: truth annotation. Bottom\: Rendered synthetic hand images with ground truth :
-: annotation.*                                                                :
+![hand_crops.png](../images/mobile/hand_crops.png)                          |
+:-------------------------------------------------------------------------: |
+*Fig 3. Top: Aligned hand crops passed to the tracking network with ground truth annotation. Bottom: Rendered synthetic hand images with ground truth annotation.* |
 
 ## Solution APIs
 
@@ -206,8 +205,8 @@ is not the case, please swap the handedness output in the application.
 ### Python Solution API
 
 Please first follow general [instructions](../getting_started/python.md) to
-install MediaPipe Python package, then learn more in the companion [Colab] and
-the following usage example.
+install MediaPipe Python package, then learn more in the companion
+[Python Colab](#resources) and the following usage example.
 
 Supported configuration options:
 
@@ -223,74 +222,73 @@ mp_drawing = mp.solutions.drawing_utils
 mp_hands = mp.solutions.hands
 
 # For static images:
-hands = mp_hands.Hands(
+with mp_hands.Hands(
     static_image_mode=True,
     max_num_hands=2,
-    min_detection_confidence=0.5)
-for idx, file in enumerate(file_list):
-  # Read an image, flip it around y-axis for correct handedness output (see
-  # above).
-  image = cv2.flip(cv2.imread(file), 1)
-  # Convert the BGR image to RGB before processing.
-  results = hands.process(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
+    min_detection_confidence=0.5) as hands:
+  for idx, file in enumerate(file_list):
+    # Read an image, flip it around y-axis for correct handedness output (see
+    # above).
+    image = cv2.flip(cv2.imread(file), 1)
+    # Convert the BGR image to RGB before processing.
+    results = hands.process(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
 
-  # Print handedness and draw hand landmarks on the image.
-  print('Handedness:', results.multi_handedness)
-  if not results.multi_hand_landmarks:
-    continue
-  image_hight, image_width, _ = image.shape
-  annotated_image = image.copy()
-  for hand_landmarks in results.multi_hand_landmarks:
-    print('hand_landmarks:', hand_landmarks)
-    print(
-        f'Index finger tip coordinates: (',
-        f'{hand_landmarks.landmark[mp_hands.HandLandmark.INDEX_FINGER_TIP].x * image_width}, '
-        f'{hand_landmarks.landmark[mp_hands.HandLandmark.INDEX_FINGER_TIP].y * image_hight})'
-    )
-    mp_drawing.draw_landmarks(
-        annotated_image, hand_landmarks, mp_hands.HAND_CONNECTIONS)
-  cv2.imwrite(
-      '/tmp/annotated_image' + str(idx) + '.png', cv2.flip(annotated_image, 1))
-hands.close()
+    # Print handedness and draw hand landmarks on the image.
+    print('Handedness:', results.multi_handedness)
+    if not results.multi_hand_landmarks:
+      continue
+    image_height, image_width, _ = image.shape
+    annotated_image = image.copy()
+    for hand_landmarks in results.multi_hand_landmarks:
+      print('hand_landmarks:', hand_landmarks)
+      print(
+          f'Index finger tip coordinates: (',
+          f'{hand_landmarks.landmark[mp_hands.HandLandmark.INDEX_FINGER_TIP].x * image_width}, '
+          f'{hand_landmarks.landmark[mp_hands.HandLandmark.INDEX_FINGER_TIP].y * image_height})'
+      )
+      mp_drawing.draw_landmarks(
+          annotated_image, hand_landmarks, mp_hands.HAND_CONNECTIONS)
+    cv2.imwrite(
+        '/tmp/annotated_image' + str(idx) + '.png', cv2.flip(annotated_image, 1))
 
 # For webcam input:
-hands = mp_hands.Hands(
-    min_detection_confidence=0.5, min_tracking_confidence=0.5)
 cap = cv2.VideoCapture(0)
-while cap.isOpened():
-  success, image = cap.read()
-  if not success:
-    print("Ignoring empty camera frame.")
-    # If loading a video, use 'break' instead of 'continue'.
-    continue
+with mp_hands.Hands(
+    min_detection_confidence=0.5,
+    min_tracking_confidence=0.5) as hands:
+  while cap.isOpened():
+    success, image = cap.read()
+    if not success:
+      print("Ignoring empty camera frame.")
+      # If loading a video, use 'break' instead of 'continue'.
+      continue
 
-  # Flip the image horizontally for a later selfie-view display, and convert
-  # the BGR image to RGB.
-  image = cv2.cvtColor(cv2.flip(image, 1), cv2.COLOR_BGR2RGB)
-  # To improve performance, optionally mark the image as not writeable to
-  # pass by reference.
-  image.flags.writeable = False
-  results = hands.process(image)
+    # Flip the image horizontally for a later selfie-view display, and convert
+    # the BGR image to RGB.
+    image = cv2.cvtColor(cv2.flip(image, 1), cv2.COLOR_BGR2RGB)
+    # To improve performance, optionally mark the image as not writeable to
+    # pass by reference.
+    image.flags.writeable = False
+    results = hands.process(image)
 
-  # Draw the hand annotations on the image.
-  image.flags.writeable = True
-  image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
-  if results.multi_hand_landmarks:
-    for hand_landmarks in results.multi_hand_landmarks:
-      mp_drawing.draw_landmarks(
-          image, hand_landmarks, mp_hands.HAND_CONNECTIONS)
-  cv2.imshow('MediaPipe Hands', image)
-  if cv2.waitKey(5) & 0xFF == 27:
-    break
-hands.close()
+    # Draw the hand annotations on the image.
+    image.flags.writeable = True
+    image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+    if results.multi_hand_landmarks:
+      for hand_landmarks in results.multi_hand_landmarks:
+        mp_drawing.draw_landmarks(
+            image, hand_landmarks, mp_hands.HAND_CONNECTIONS)
+    cv2.imshow('MediaPipe Hands', image)
+    if cv2.waitKey(5) & 0xFF == 27:
+      break
 cap.release()
 ```
 
 ### JavaScript Solution API
 
 Please first see general [introduction](../getting_started/javascript.md) on
-MediaPipe in JavaScript, then learn more in the companion [web demo] and a
-[fun application], and the following usage example.
+MediaPipe in JavaScript, then learn more in the companion [web demo](#resources)
+and a [fun application], and the following usage example.
 
 Supported configuration options:
 
@@ -425,8 +423,6 @@ it, in the graph file modify the option of `ConstantSidePacketCalculator`.
     [MediaPipe Hands: On-device Real-time Hand Tracking](https://arxiv.org/abs/2006.10214)
     ([presentation](https://www.youtube.com/watch?v=I-UOrvxxXEk))
 *   [Models and model cards](./models.md#hands)
-
-[Colab]:https://mediapipe.page.link/hands_py_colab
-
-[web demo]:https://code.mediapipe.dev/codepen/hands
-[fun application]:https://code.mediapipe.dev/codepen/defrost
+*   [Web demo](https://code.mediapipe.dev/codepen/hands)
+*   [Fun application](https://code.mediapipe.dev/codepen/defrost)
+*   [Python Colab](https://mediapipe.page.link/hands_py_colab)

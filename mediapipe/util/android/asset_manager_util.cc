@@ -95,16 +95,23 @@ bool AssetManager::InitializeFromActivity(JNIEnv* env, jobject activity,
   return InitializeFromContext(env, activity, cache_dir_path);
 }
 
-bool AssetManager::FileExists(const std::string& filename) {
+bool AssetManager::FileExists(const std::string& filename, bool* is_dir) {
   if (!asset_manager_) {
     LOG(ERROR) << "Asset manager was not initialized from JNI";
     return false;
   }
 
+  auto safe_set_is_dir = [is_dir](bool is_dir_value) {
+    if (is_dir) {
+      *is_dir = is_dir_value;
+    }
+  };
+
   AAsset* asset =
       AAssetManager_open(asset_manager_, filename.c_str(), AASSET_MODE_RANDOM);
   if (asset != nullptr) {
     AAsset_close(asset);
+    safe_set_is_dir(false);
     return true;
   }
 
@@ -117,6 +124,7 @@ bool AssetManager::FileExists(const std::string& filename) {
     // unusable (i.e. not considered a valid path).
     bool dir_exists = AAssetDir_getNextFileName(asset_dir) != nullptr;
     AAssetDir_close(asset_dir);
+    safe_set_is_dir(dir_exists);
     return dir_exists;
   }
 
@@ -143,7 +151,7 @@ bool AssetManager::ReadFile(const std::string& filename, std::string* output) {
   return true;
 }
 
-mediapipe::StatusOr<std::string> AssetManager::CachedFileFromAsset(
+absl::StatusOr<std::string> AssetManager::CachedFileFromAsset(
     const std::string& asset_path) {
   RET_CHECK(cache_dir_path_.size()) << "asset manager not initialized";
 
@@ -170,8 +178,8 @@ mediapipe::StatusOr<std::string> AssetManager::CachedFileFromAsset(
   return file_path;
 }
 
-mediapipe::Status AssetManager::ReadContentUri(const std::string& content_uri,
-                                               std::string* output) {
+absl::Status AssetManager::ReadContentUri(const std::string& content_uri,
+                                          std::string* output) {
   RET_CHECK(mediapipe::java::HasJavaVM()) << "JVM instance not set";
   JNIEnv* env = mediapipe::java::GetJNIEnv();
   RET_CHECK(env != nullptr) << "Unable to retrieve JNIEnv";
@@ -242,7 +250,7 @@ mediapipe::Status AssetManager::ReadContentUri(const std::string& content_uri,
                           reinterpret_cast<jbyte*>(&output->at(0)));
   RET_CHECK(!ExceptionPrintClear(env)) << "failed to copy array data";
 
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
 }  // namespace mediapipe

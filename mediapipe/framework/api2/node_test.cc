@@ -12,6 +12,7 @@
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/framework/port/parse_text_proto.h"
+#include "mediapipe/framework/port/status_macros.h"
 #include "mediapipe/framework/port/status_matchers.h"
 
 namespace mediapipe {
@@ -32,7 +33,7 @@ std::vector<T> PacketValues(const std::vector<mediapipe::Packet>& packets) {
 
 class FooImpl : public NodeImpl<Foo, FooImpl> {
  public:
-  mediapipe::Status Process(CalculatorContext* cc) override {
+  absl::Status Process(CalculatorContext* cc) override {
     float bias = kBias(cc).GetOr(0.0);
     float scale = kScale(cc).GetOr(1.0);
     kOut(cc).Send(*kBase(cc) * scale + bias);
@@ -80,7 +81,7 @@ class Foo5 : public FunctionNode<Foo5> {
 
 class Foo2Impl : public NodeImpl<Foo2, Foo2Impl> {
  public:
-  mediapipe::Status Process(CalculatorContext* cc) override {
+  absl::Status Process(CalculatorContext* cc) override {
     float bias = SideIn(MPP_TAG("BIAS"), cc).GetOr(0.0);
     float scale = In(MPP_TAG("SCALE"), cc).GetOr(1.0);
     Out(MPP_TAG("OUT"), cc).Send(*In(MPP_TAG("BASE"), cc) * scale + bias);
@@ -90,7 +91,7 @@ class Foo2Impl : public NodeImpl<Foo2, Foo2Impl> {
 
 class BarImpl : public NodeImpl<Bar, BarImpl> {
  public:
-  mediapipe::Status Process(CalculatorContext* cc) override {
+  absl::Status Process(CalculatorContext* cc) override {
     Packet p = kIn(cc);
     kOut(cc).Send(p);
     return {};
@@ -99,9 +100,9 @@ class BarImpl : public NodeImpl<Bar, BarImpl> {
 
 class BazImpl : public NodeImpl<Baz> {
  public:
-  static mediapipe::Status UpdateContract(CalculatorContract* cc) { return {}; }
+  static absl::Status UpdateContract(CalculatorContract* cc) { return {}; }
 
-  mediapipe::Status Process(CalculatorContext* cc) override {
+  absl::Status Process(CalculatorContext* cc) override {
     for (int i = 0; i < kData(cc).Count(); ++i) {
       kDataOut(cc)[i].Send(kData(cc)[i]);
     }
@@ -112,7 +113,7 @@ MEDIAPIPE_NODE_IMPLEMENTATION(BazImpl);
 
 class IntForwarderImpl : public NodeImpl<IntForwarder, IntForwarderImpl> {
  public:
-  mediapipe::Status Process(CalculatorContext* cc) override {
+  absl::Status Process(CalculatorContext* cc) override {
     kOut(cc).Send(*kIn(cc));
     return {};
   }
@@ -120,7 +121,7 @@ class IntForwarderImpl : public NodeImpl<IntForwarder, IntForwarderImpl> {
 
 class ToFloatImpl : public NodeImpl<ToFloat, ToFloatImpl> {
  public:
-  mediapipe::Status Process(CalculatorContext* cc) override {
+  absl::Status Process(CalculatorContext* cc) override {
     kIn(cc).Visit([cc](auto x) { kOut(cc).Send(x); });
     return {};
   }
@@ -315,7 +316,7 @@ struct SideFallback : public Node {
 
   MEDIAPIPE_NODE_CONTRACT(kIn, kFactor, kOut);
 
-  mediapipe::Status Process(CalculatorContext* cc) override {
+  absl::Status Process(CalculatorContext* cc) override {
     kOut(cc).Send(kIn(cc).Get() * kFactor(cc).Get());
     return {};
   }
@@ -341,7 +342,7 @@ TEST(NodeTest, SideFallbackWithStream) {
   MP_EXPECT_OK(
       graph.ObserveOutputStream("out", [&outputs](const mediapipe::Packet& p) {
         outputs.push_back(p.Get<int>());
-        return mediapipe::OkStatus();
+        return absl::OkStatus();
       }));
   MP_EXPECT_OK(graph.StartRun({}));
   MP_EXPECT_OK(graph.AddPacketToInputStream(
@@ -372,7 +373,7 @@ TEST(NodeTest, SideFallbackWithSide) {
   MP_EXPECT_OK(
       graph.ObserveOutputStream("out", [&outputs](const mediapipe::Packet& p) {
         outputs.push_back(p.Get<int>());
-        return mediapipe::OkStatus();
+        return absl::OkStatus();
       }));
   MP_EXPECT_OK(graph.StartRun({{"factor", mediapipe::MakePacket<int>(2)}}));
   MP_EXPECT_OK(graph.AddPacketToInputStream(
@@ -451,7 +452,7 @@ struct DropEvenTimestamps : public Node {
 
   MEDIAPIPE_NODE_CONTRACT(kIn, kOut);
 
-  mediapipe::Status Process(CalculatorContext* cc) override {
+  absl::Status Process(CalculatorContext* cc) override {
     if (cc->InputTimestamp().Value() % 2) {
       kOut(cc).Send(kIn(cc));
     }
@@ -466,7 +467,7 @@ struct ListIntPackets : public Node {
 
   MEDIAPIPE_NODE_CONTRACT(kIn, kOut);
 
-  mediapipe::Status Process(CalculatorContext* cc) override {
+  absl::Status Process(CalculatorContext* cc) override {
     std::string result = absl::StrCat(cc->InputTimestamp().DebugString(), ":");
     for (int i = 0; i < kIn(cc).Count(); ++i) {
       if (kIn(cc)[i].IsEmpty()) {
@@ -518,6 +519,48 @@ TEST(NodeTest, DefaultTimestampChange0) {
   // should be forwarded by IntForwarder, and ListIntPackets should have run.
   EXPECT_THAT(PacketValues<std::string>(out_packets),
               testing::ElementsAre("2: empty 10"));
+  MP_EXPECT_OK(graph.CloseAllPacketSources());
+  MP_EXPECT_OK(graph.WaitUntilDone());
+}
+
+struct ConsumerNode : public Node {
+  static constexpr Input<int> kInt{"INT"};
+  static constexpr Input<AnyType> kGeneric{"ANY"};
+  static constexpr Input<OneOf<int, float>> kOneOf{"NUM"};
+
+  MEDIAPIPE_NODE_CONTRACT(kInt, kGeneric, kOneOf);
+
+  absl::Status Process(CalculatorContext* cc) override {
+    ASSIGN_OR_RETURN(auto maybe_int, kInt(cc).Consume());
+    ASSIGN_OR_RETURN(auto maybe_float, kGeneric(cc).Consume<float>());
+    ASSIGN_OR_RETURN(auto maybe_int2, kOneOf(cc).Consume<int>());
+    return {};
+  }
+};
+MEDIAPIPE_REGISTER_NODE(ConsumerNode);
+
+TEST(NodeTest, ConsumeInputs) {
+  CalculatorGraphConfig config =
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+        input_stream: "int"
+        input_stream: "any"
+        input_stream: "num"
+        node {
+          calculator: "ConsumerNode"
+          input_stream: "INT:int"
+          input_stream: "ANY:any"
+          input_stream: "NUM:num"
+        }
+      )");
+  mediapipe::CalculatorGraph graph;
+  MP_EXPECT_OK(graph.Initialize(config, {}));
+  MP_EXPECT_OK(graph.StartRun({}));
+  MP_EXPECT_OK(graph.AddPacketToInputStream(
+      "int", mediapipe::MakePacket<int>(10).At(Timestamp(0))));
+  MP_EXPECT_OK(graph.AddPacketToInputStream(
+      "any", mediapipe::MakePacket<float>(10).At(Timestamp(0))));
+  MP_EXPECT_OK(graph.AddPacketToInputStream(
+      "num", mediapipe::MakePacket<int>(10).At(Timestamp(0))));
   MP_EXPECT_OK(graph.CloseAllPacketSources());
   MP_EXPECT_OK(graph.WaitUntilDone());
 }

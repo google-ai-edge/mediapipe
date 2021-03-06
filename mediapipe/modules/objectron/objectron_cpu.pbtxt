@@ -1,7 +1,10 @@
 # MediaPipe Objectron on CPU that produces 3D bounding boxes for objects.
-input_stream: "IMAGE:input_video"
-# TfLite model for 3D bounding box landmark prediction
-input_side_packet: "MODEL:box_landmark_model"
+type: "ObjectronCpuSubgraph"
+
+# Input/Output streams and input side packets.
+input_stream: "IMAGE:image"
+# Path to TfLite model for 3D bounding box landmark prediction
+input_side_packet: "MODEL_PATH:box_landmark_model_path"
 # Allowed category labels, e.g. Footwear, Coffee cup, Mug, Chair, Camera
 input_side_packet: "LABELS_CSV:allowed_labels"
 # Max number of objects to detect/track. (int)
@@ -23,10 +26,27 @@ input_side_packet: "MAX_NUM_OBJECTS:max_num_objects"
 #         \ +               \ +           \
 #          \+                \+
 #           2 + + + + + + + + 6
-#
+
+# Collection of detected 3D objects, represented as a FrameAnnotation.
+output_stream: "FRAME_ANNOTATION:detected_objects"
+# Collection of box landmarks. (NormalizedLandmarkList)
 output_stream: "MULTI_LANDMARKS:multi_box_landmarks"
 # Crop rectangles derived from bounding box landmarks.
 output_stream: "NORM_RECTS:multi_box_rects"
+
+# Loads the file in the specified path into a blob.
+node {
+  calculator: "LocalFileContentsCalculator"
+  input_side_packet: "FILE_PATH:0:box_landmark_model_path"
+  output_side_packet: "CONTENTS:0:box_landmark_model_blob"
+}
+
+# Converts the input blob into a TF Lite model.
+node {
+  calculator: "TfLiteModelCalculator"
+  input_side_packet: "MODEL_BLOB:box_landmark_model_blob"
+  output_side_packet: "MODEL:box_landmark_model"
+}
 
 # Defines whether landmarks from the previous video frame should be used to help
 # predict landmarks on the current video frame.
@@ -62,9 +82,9 @@ node {
 # to trigger a new round of box detection in ObjectDetectionOidV4Subgraph.
 node {
   calculator: "GateCalculator"
-  input_stream: "input_video"
+  input_stream: "image"
   input_stream: "DISALLOW:prev_has_enough_objects"
-  output_stream: "detection_input_video"
+  output_stream: "detection_image"
 
   options: {
     [mediapipe.GateCalculatorOptions.ext] {
@@ -76,7 +96,7 @@ node {
 # Subgraph that performs 2D object detection.
 node {
   calculator: "ObjectDetectionOidV4Subgraph"
-  input_stream: "IMAGE:detection_input_video"
+  input_stream: "IMAGE:detection_image"
   input_side_packet: "LABELS_CSV:allowed_labels"
   output_stream: "DETECTIONS:raw_detections"
 }
@@ -93,7 +113,7 @@ node {
 # Extracts image size from the input images.
 node {
   calculator: "ImagePropertiesCalculator"
-  input_stream: "IMAGE:input_video"
+  input_stream: "IMAGE:image"
   output_stream: "SIZE:image_size"
 }
 
@@ -135,16 +155,16 @@ node {
 node {
   calculator: "BeginLoopNormalizedRectCalculator"
   input_stream: "ITERABLE:multi_box_rects"
-  input_stream: "CLONE:input_video"
+  input_stream: "CLONE:image"
   output_stream: "ITEM:single_box_rect"
-  output_stream: "CLONE:landmarks_input_video"
+  output_stream: "CLONE:landmarks_image"
   output_stream: "BATCH_END:box_rects_timestamp"
 }
 
 # Subgraph that localizes box landmarks.
 node {
   calculator: "BoxLandmarkSubgraph"
-  input_stream: "IMAGE:landmarks_input_video"
+  input_stream: "IMAGE:landmarks_image"
   input_side_packet: "MODEL:box_landmark_model"
   input_stream: "NORM_RECT:single_box_rect"
   output_stream: "NORM_LANDMARKS:single_box_landmarks"
@@ -169,15 +189,22 @@ node {
 
 # Lift the 2D landmarks to 3D using EPnP algorithm.
 node {
+  name: "Lift2DFrameAnnotationTo3DCalculator"
   calculator: "Lift2DFrameAnnotationTo3DCalculator"
   input_stream: "FRAME_ANNOTATION:box_annotations"
-  output_stream: "LIFTED_FRAME_ANNOTATION:lifted_objects"
+  output_stream: "LIFTED_FRAME_ANNOTATION:detected_objects"
+  options: {
+    [mediapipe.Lift2DFrameAnnotationTo3DCalculatorOptions.ext] {
+      normalized_focal_x: 1.0
+      normalized_focal_y: 1.0
+    }
+  }
 }
 
-# Get rotated rectangle from lifted box.
+# Get rotated rectangle from detected box.
 node {
   calculator: "FrameAnnotationToRectCalculator"
-  input_stream: "FRAME_ANNOTATION:lifted_objects"
+  input_stream: "FRAME_ANNOTATION:detected_objects"
   output_stream: "NORM_RECTS:box_rects_from_landmarks"
 }
 
@@ -189,7 +216,7 @@ node {
 # feedback loop.
 node {
   calculator: "PreviousLoopbackCalculator"
-  input_stream: "MAIN:input_video"
+  input_stream: "MAIN:image"
   input_stream: "LOOP:box_rects_from_landmarks"
   input_stream_info: {
     tag_index: "LOOP"

@@ -45,17 +45,23 @@ Tip: Use command `deactivate` to later exit the Python virtual environment.
 To learn more about configuration options and usage examples, please find
 details in each solution via the links below:
 
+*   [MediaPipe Face Detection](../solutions/face_detection#python-solution-api)
 *   [MediaPipe Face Mesh](../solutions/face_mesh#python-solution-api)
 *   [MediaPipe Hands](../solutions/hands#python-solution-api)
-*   [MediaPipe Pose](../solutions/pose#python-solution-api)
 *   [MediaPipe Holistic](../solutions/holistic#python-solution-api)
+*   [MediaPipe Objectron](../solutions/objectron#python-solution-api)
+*   [MediaPipe Pose](../solutions/pose#python-solution-api)
 
 ## MediaPipe on Google Colab
 
+*   [MediaPipe Face Detection Colab](https://mediapipe.page.link/face_detection_py_colab)
 *   [MediaPipe Face Mesh Colab](https://mediapipe.page.link/face_mesh_py_colab)
 *   [MediaPipe Hands Colab](https://mediapipe.page.link/hands_py_colab)
-*   [MediaPipe Pose Colab](https://mediapipe.page.link/pose_py_colab)
 *   [MediaPipe Holistic Colab](https://mediapipe.page.link/holistic_py_colab)
+*   [MediaPipe Objectron Colab](https://mediapipe.page.link/objectron_py_colab)
+*   [MediaPipe Pose Colab](https://mediapipe.page.link/pose_py_colab)
+*   [MediaPipe Pose Classification Colab (Basic)](https://mediapipe.page.link/pose_classification_basic)
+*   [MediaPipe Pose Classification Colab (Extended)](https://mediapipe.page.link/pose_classification_extended)
 
 ## MediaPipe Python Framework
 

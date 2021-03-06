@@ -40,13 +40,13 @@ class MuxCalculator : public Node {
   MEDIAPIPE_NODE_CONTRACT(kSelect, kIn, kOut,
                           StreamHandler("MuxInputStreamHandler"));
 
-  mediapipe::Status Process(CalculatorContext* cc) final {
+  absl::Status Process(CalculatorContext* cc) final {
     int select = *kSelect(cc);
     RET_CHECK(0 <= select && select < kIn(cc).Count());
     if (!kIn(cc)[select].IsEmpty()) {
       kOut(cc).Send(kIn(cc)[select].packet());
     }
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 };
 

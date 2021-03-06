@@ -22,6 +22,7 @@
 #include "mediapipe/calculators/tensor/image_to_tensor_utils.h"
 #include "mediapipe/framework/api2/node.h"
 #include "mediapipe/framework/calculator_framework.h"
+#include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/formats/image_frame.h"
 #include "mediapipe/framework/formats/rect.pb.h"
 #include "mediapipe/framework/formats/tensor.h"
@@ -29,6 +30,7 @@
 #include "mediapipe/framework/port/canonical_errors.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status.h"
+#include "mediapipe/framework/port/statusor.h"
 
 #if !MEDIAPIPE_DISABLE_GPU
 #include "mediapipe/gpu/gpu_buffer.h"
@@ -60,11 +62,18 @@ using GpuBuffer = mediapipe::GpuBuffer;
 // normalization, according to specified inputs and options.
 //
 // Inputs:
-//   IMAGE - ImageFrame [ImageFormat::SRGB/SRGBA]
-//     Image to extract from.
+//   IMAGE - Image[ImageFormat::SRGB / SRGBA, GpuBufferFormat::kBGRA32] or
+//           ImageFrame [ImageFormat::SRGB/SRGBA] (for backward compatibility
+//           with existing graphs that use IMAGE for ImageFrame input)
 //   IMAGE_GPU - GpuBuffer [GpuBufferFormat::kBGRA32]
 //     Image to extract from.
-//   (Either IMAGE or IMAGE_GPU has to be specified.)
+//
+//   Note:
+//   - One and only one of IMAGE and IMAGE_GPU should be specified.
+//   - IMAGE input of type Image is processed on GPU if the data is already on
+//     GPU (i.e., Image::UsesGpu() returns true), or otherwise processed on CPU.
+//   - IMAGE input of type ImageFrame is always processed on CPU.
+//   - IMAGE_GPU input (of type GpuBuffer) is always processed on GPU.
 //
 //   NORM_RECT - NormalizedRect @Optional
 //     Describes region of image to extract.
@@ -112,7 +121,8 @@ using GpuBuffer = mediapipe::GpuBuffer;
 // }
 class ImageToTensorCalculator : public Node {
  public:
-  static constexpr Input<mediapipe::ImageFrame>::Optional kInCpu{"IMAGE"};
+  static constexpr Input<
+      OneOf<mediapipe::Image, mediapipe::ImageFrame>>::Optional kIn{"IMAGE"};
   static constexpr Input<GpuBuffer>::Optional kInGpu{"IMAGE_GPU"};
   static constexpr Input<mediapipe::NormalizedRect>::Optional kInNormRect{
       "NORM_RECT"};
@@ -121,10 +131,10 @@ class ImageToTensorCalculator : public Node {
       "LETTERBOX_PADDING"};
   static constexpr Output<std::array<float, 16>>::Optional kOutMatrix{"MATRIX"};
 
-  MEDIAPIPE_NODE_CONTRACT(kInCpu, kInGpu, kInNormRect, kOutTensors,
+  MEDIAPIPE_NODE_CONTRACT(kIn, kInGpu, kInNormRect, kOutTensors,
                           kOutLetterboxPadding, kOutMatrix);
 
-  static ::mediapipe::Status UpdateContract(CalculatorContract* cc) {
+  static absl::Status UpdateContract(CalculatorContract* cc) {
     const auto& options =
         cc->Options<mediapipe::ImageToTensorCalculatorOptions>();
 
@@ -138,69 +148,47 @@ class ImageToTensorCalculator : public Node {
     RET_CHECK_GT(options.output_tensor_height(), 0)
         << "Valid output tensor height is required.";
 
-    RET_CHECK(kInCpu(cc).IsConnected() ^ kInGpu(cc).IsConnected())
-        << "One and only one of CPU or GPU input is expected.";
+    RET_CHECK(kIn(cc).IsConnected() ^ kInGpu(cc).IsConnected())
+        << "One and only one of IMAGE and IMAGE_GPU input is expected.";
 
-    if (kInGpu(cc).IsConnected()) {
 #if MEDIAPIPE_DISABLE_GPU
-      return mediapipe::UnimplementedError("GPU processing is disabled");
-#else
-
-#if MEDIAPIPE_METAL_ENABLED
-      MP_RETURN_IF_ERROR([MPPMetalHelper updateContract:cc]);
-#else
-      MP_RETURN_IF_ERROR(mediapipe::GlCalculatorHelper::UpdateContract(cc));
-#endif  // MEDIAPIPE_METAL_ENABLED
-
-#endif  // MEDIAPIPE_DISABLE_GPU
+    if (kInGpu(cc).IsConnected()) {
+      return absl::UnimplementedError(
+          "GPU processing is disabled in build flags");
     }
-    return mediapipe::OkStatus();
+#else  // !MEDIAPIPE_DISABLE_GPU
+#if MEDIAPIPE_METAL_ENABLED
+    MP_RETURN_IF_ERROR([MPPMetalHelper updateContract:cc]);
+#else
+    MP_RETURN_IF_ERROR(mediapipe::GlCalculatorHelper::UpdateContract(cc));
+#endif  // MEDIAPIPE_METAL_ENABLED
+#endif  // MEDIAPIPE_DISABLE_GPU
+
+    return absl::OkStatus();
   }
 
-  mediapipe::Status Open(CalculatorContext* cc) {
+  absl::Status Open(CalculatorContext* cc) {
     options_ = cc->Options<mediapipe::ImageToTensorCalculatorOptions>();
     output_width_ = options_.output_tensor_width();
     output_height_ = options_.output_tensor_height();
     range_min_ = options_.output_tensor_float_range().min();
     range_max_ = options_.output_tensor_float_range().max();
 
-    if (kInCpu(cc).IsConnected()) {
-      ASSIGN_OR_RETURN(converter_, CreateOpenCvConverter(cc, GetBorderMode()));
-    } else {
-#if MEDIAPIPE_DISABLE_GPU
-      return mediapipe::UnimplementedError("GPU processing is disabled");
-#else
-
-#if MEDIAPIPE_METAL_ENABLED
-      ASSIGN_OR_RETURN(converter_, CreateMetalConverter(cc, GetBorderMode()));
-#elif MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31
-      ASSIGN_OR_RETURN(converter_,
-                       CreateImageToGlBufferTensorConverter(
-                           cc, DoesInputStartAtBottom(), GetBorderMode()));
-#else
-      ASSIGN_OR_RETURN(converter_,
-                       CreateImageToGlTextureTensorConverter(
-                           cc, DoesInputStartAtBottom(), GetBorderMode()));
-#endif  // MEDIAPIPE_METAL_ENABLED
-
-#endif  // MEDIAPIPE_DISABLE_GPU
-    }
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
-  mediapipe::Status Process(CalculatorContext* cc) {
-    const PacketBase& image_packet =
-        kInCpu(cc).IsConnected() ? kInCpu(cc).packet() : kInGpu(cc).packet();
-    if (image_packet.IsEmpty()) {
-      // Timestamp bound update happens automatically. (See Open().)
-      return mediapipe::OkStatus();
+  absl::Status Process(CalculatorContext* cc) {
+    if ((kIn(cc).IsConnected() && kIn(cc).IsEmpty()) ||
+        (kInGpu(cc).IsConnected() && kInGpu(cc).IsEmpty())) {
+      // Timestamp bound update happens automatically.
+      return absl::OkStatus();
     }
 
     absl::optional<mediapipe::NormalizedRect> norm_rect;
     if (kInNormRect(cc).IsConnected()) {
       if (kInNormRect(cc).IsEmpty()) {
         // Timestamp bound update happens automatically. (See Open().)
-        return mediapipe::OkStatus();
+        return absl::OkStatus();
       }
       norm_rect = *kInNormRect(cc);
       if (norm_rect->width() == 0 && norm_rect->height() == 0) {
@@ -211,11 +199,12 @@ class ImageToTensorCalculator : public Node {
         // NOTE: usage of sentinel rects should be avoided.
         DLOG(WARNING)
             << "Updating timestamp bound in response to a sentinel rect";
-        return mediapipe::OkStatus();
+        return absl::OkStatus();
       }
     }
 
-    const Size& size = converter_->GetImageSize(image_packet);
+    ASSIGN_OR_RETURN(auto image, GetInputImage(cc));
+    const Size size{image->width(), image->height()};
     RotatedRect roi = GetRoi(size.width, size.height, norm_rect);
     ASSIGN_OR_RETURN(auto padding, PadRoi(options_.output_tensor_width(),
                                           options_.output_tensor_height(),
@@ -231,16 +220,19 @@ class ImageToTensorCalculator : public Node {
       kOutMatrix(cc).Send(std::move(matrix));
     }
 
-    ASSIGN_OR_RETURN(
-        Tensor tensor,
-        converter_->Convert(image_packet, roi, {output_width_, output_height_},
-                            range_min_, range_max_));
+    // Lazy initialization of the GPU or CPU converter.
+    MP_RETURN_IF_ERROR(InitConverterIfNecessary(cc, image->UsesGpu()));
+
+    ASSIGN_OR_RETURN(Tensor tensor,
+                     (image->UsesGpu() ? gpu_converter_ : cpu_converter_)
+                         ->Convert(*image, roi, {output_width_, output_height_},
+                                   range_min_, range_max_));
 
     auto result = std::make_unique<std::vector<Tensor>>();
     result->push_back(std::move(tensor));
     kOutTensors(cc).Send(std::move(result));
 
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
  private:
@@ -261,7 +253,62 @@ class ImageToTensorCalculator : public Node {
     }
   }
 
-  std::unique_ptr<ImageToTensorConverter> converter_;
+  absl::StatusOr<std::shared_ptr<const mediapipe::Image>> GetInputImage(
+      CalculatorContext* cc) {
+    if (kIn(cc).IsConnected()) {
+      const auto& packet = kIn(cc).packet();
+      return kIn(cc).Visit(
+          [&packet](const mediapipe::Image&) {
+            return SharedPtrWithPacket<mediapipe::Image>(packet);
+          },
+          [&packet](const mediapipe::ImageFrame&) {
+            return std::make_shared<const mediapipe::Image>(
+                std::const_pointer_cast<mediapipe::ImageFrame>(
+                    SharedPtrWithPacket<mediapipe::ImageFrame>(packet)));
+          });
+    } else {  // if (kInGpu(cc).IsConnected())
+#if !MEDIAPIPE_DISABLE_GPU
+      const GpuBuffer& input = *kInGpu(cc);
+      // A shallow copy is okay since the resulting 'image' object is local in
+      // Process(), and thus never outlives 'input'.
+      return std::make_shared<const mediapipe::Image>(input);
+#else
+      return absl::UnimplementedError(
+          "GPU processing is disabled in build flags");
+#endif  // !MEDIAPIPE_DISABLE_GPU
+    }
+  }
+
+  absl::Status InitConverterIfNecessary(CalculatorContext* cc, bool use_gpu) {
+    // Lazy initialization of the GPU or CPU converter.
+    if (use_gpu) {
+      if (!gpu_converter_) {
+#if !MEDIAPIPE_DISABLE_GPU
+#if MEDIAPIPE_METAL_ENABLED
+        ASSIGN_OR_RETURN(gpu_converter_,
+                         CreateMetalConverter(cc, GetBorderMode()));
+#elif MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31
+        ASSIGN_OR_RETURN(gpu_converter_,
+                         CreateImageToGlBufferTensorConverter(
+                             cc, DoesInputStartAtBottom(), GetBorderMode()));
+#else
+        ASSIGN_OR_RETURN(gpu_converter_,
+                         CreateImageToGlTextureTensorConverter(
+                             cc, DoesInputStartAtBottom(), GetBorderMode()));
+#endif  // MEDIAPIPE_METAL_ENABLED
+#endif  // !MEDIAPIPE_DISABLE_GPU
+      }
+    } else {
+      if (!cpu_converter_) {
+        ASSIGN_OR_RETURN(cpu_converter_,
+                         CreateOpenCvConverter(cc, GetBorderMode()));
+      }
+    }
+    return absl::OkStatus();
+  }
+
+  std::unique_ptr<ImageToTensorConverter> gpu_converter_;
+  std::unique_ptr<ImageToTensorConverter> cpu_converter_;
   mediapipe::ImageToTensorCalculatorOptions options_;
   int output_width_ = 0;
   int output_height_ = 0;

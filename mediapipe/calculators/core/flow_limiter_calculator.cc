@@ -67,7 +67,7 @@ namespace mediapipe {
 //
 class FlowLimiterCalculator : public CalculatorBase {
  public:
-  static mediapipe::Status GetContract(CalculatorContract* cc) {
+  static absl::Status GetContract(CalculatorContract* cc) {
     auto& side_inputs = cc->InputSidePackets();
     side_inputs.Tag("OPTIONS").Set<FlowLimiterCalculatorOptions>().Optional();
     cc->Inputs().Tag("OPTIONS").Set<FlowLimiterCalculatorOptions>().Optional();
@@ -81,10 +81,10 @@ class FlowLimiterCalculator : public CalculatorBase {
     cc->Outputs().Tag("ALLOW").Set<bool>().Optional();
     cc->SetInputStreamHandler("ImmediateInputStreamHandler");
     cc->SetProcessTimestampBounds(true);
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
-  mediapipe::Status Open(CalculatorContext* cc) final {
+  absl::Status Open(CalculatorContext* cc) final {
     options_ = cc->Options<FlowLimiterCalculatorOptions>();
     options_ = tool::RetrieveOptions(options_, cc->InputSidePackets());
     if (cc->InputSidePackets().HasTag("MAX_IN_FLIGHT")) {
@@ -93,7 +93,7 @@ class FlowLimiterCalculator : public CalculatorBase {
     }
     input_queues_.resize(cc->Inputs().NumEntries(""));
     RET_CHECK_OK(CopyInputHeadersToOutputs(cc->Inputs(), &(cc->Outputs())));
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
   // Returns true if an additional frame can be released for processing.
@@ -151,7 +151,7 @@ class FlowLimiterCalculator : public CalculatorBase {
   }
 
   // Releases input packets allowed by the max_in_flight constraint.
-  mediapipe::Status Process(CalculatorContext* cc) final {
+  absl::Status Process(CalculatorContext* cc) final {
     options_ = tool::RetrieveOptions(options_, cc->Inputs());
 
     // Process the FINISHED input stream.
@@ -216,7 +216,7 @@ class FlowLimiterCalculator : public CalculatorBase {
     }
 
     ProcessAuxiliaryInputs(cc);
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
  private:

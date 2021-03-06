@@ -26,7 +26,7 @@ import numpy.testing as npt
 from mediapipe.python.solutions import hands as mp_hands
 
 TEST_IMAGE_PATH = 'mediapipe/python/solutions/testdata'
-DIFF_THRESHOLOD = 20
+DIFF_THRESHOLD = 20  # pixels
 EXPECTED_HAND_COORDINATES_PREDICTION = [[[332, 144], [323, 211], [286, 257],
                                          [237, 289], [203, 322], [216, 219],
                                          [138, 238], [90, 249], [51, 253],
@@ -46,53 +46,48 @@ EXPECTED_HAND_COORDINATES_PREDICTION = [[[332, 144], [323, 211], [286, 257],
 class HandsTest(parameterized.TestCase):
 
   def test_invalid_image_shape(self):
-    hands = mp_hands.Hands()
-    with self.assertRaisesRegex(
-        ValueError, 'Input image must contain three channel rgb data.'):
-      hands.process(np.arange(36, dtype=np.uint8).reshape(3, 3, 4))
+    with mp_hands.Hands() as hands:
+      with self.assertRaisesRegex(
+          ValueError, 'Input image must contain three channel rgb data.'):
+        hands.process(np.arange(36, dtype=np.uint8).reshape(3, 3, 4))
 
   def test_blank_image(self):
-    hands = mp_hands.Hands()
-    image = np.zeros([100, 100, 3], dtype=np.uint8)
-    image.fill(255)
-    results = hands.process(image)
-    self.assertIsNone(results.multi_hand_landmarks)
-    self.assertIsNone(results.multi_handedness)
-    hands.close()
+    with mp_hands.Hands() as hands:
+      image = np.zeros([100, 100, 3], dtype=np.uint8)
+      image.fill(255)
+      results = hands.process(image)
+      self.assertIsNone(results.multi_hand_landmarks)
+      self.assertIsNone(results.multi_handedness)
 
   @parameterized.named_parameters(('static_image_mode', True, 1),
                                   ('video_mode', False, 5))
   def test_multi_hands(self, static_image_mode, num_frames):
     image_path = os.path.join(os.path.dirname(__file__), 'testdata/hands.jpg')
-    hands = mp_hands.Hands(
-        static_image_mode=static_image_mode,
-        max_num_hands=2,
-        min_detection_confidence=0.5)
     image = cv2.flip(cv2.imread(image_path), 1)
 
-    def process_one_frame():
-      results = hands.process(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
-      handedness = [
-          handedness.classification[0].label
-          for handedness in results.multi_handedness
-      ]
-      self.assertLen(handedness, 2)
-      multi_hand_coordinates = []
-      for landmarks in results.multi_hand_landmarks:
-        self.assertLen(landmarks.landmark, 21)
-        x = [landmark.x for landmark in landmarks.landmark]
-        y = [landmark.y for landmark in landmarks.landmark]
-        hand_coordinates = np.transpose(np.stack((y, x))) * image.shape[0:2]
-        multi_hand_coordinates.append(hand_coordinates)
-      self.assertLen(multi_hand_coordinates, 2)
-      prediction_error = np.abs(
-          np.asarray(multi_hand_coordinates) -
-          np.asarray(EXPECTED_HAND_COORDINATES_PREDICTION))
-      npt.assert_array_less(prediction_error, DIFF_THRESHOLOD)
-
-    for _ in range(num_frames):
-      process_one_frame()
-    hands.close()
+    with mp_hands.Hands(
+        static_image_mode=static_image_mode,
+        max_num_hands=2,
+        min_detection_confidence=0.5) as hands:
+      for _ in range(num_frames):
+        results = hands.process(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
+        handedness = [
+            handedness.classification[0].label
+            for handedness in results.multi_handedness
+        ]
+        multi_hand_coordinates = []
+        for landmarks in results.multi_hand_landmarks:
+          self.assertLen(landmarks.landmark, 21)
+          x = [landmark.x for landmark in landmarks.landmark]
+          y = [landmark.y for landmark in landmarks.landmark]
+          hand_coordinates = np.transpose(np.stack((y, x))) * image.shape[0:2]
+          multi_hand_coordinates.append(hand_coordinates)
+        self.assertLen(handedness, 2)
+        self.assertLen(multi_hand_coordinates, 2)
+        prediction_error = np.abs(
+            np.asarray(multi_hand_coordinates) -
+            np.asarray(EXPECTED_HAND_COORDINATES_PREDICTION))
+        npt.assert_array_less(prediction_error, DIFF_THRESHOLD)
 
 
 if __name__ == '__main__':

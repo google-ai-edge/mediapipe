@@ -22,6 +22,7 @@
 #include "mediapipe/framework/port/opencv_imgproc_inc.h"
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/modules/objectron/calculators/annotation_data.pb.h"
+#include "mediapipe/modules/objectron/calculators/box.h"
 
 namespace mediapipe {
 constexpr int Decoder::kNumOffsetmaps = 16;
@@ -203,8 +204,9 @@ absl::Status Decoder::Lift2DTo3D(
     float u, v;
     for (int i = 0; i < 8; ++i) {
       const auto& keypoint2d = annotation.keypoints(i + 1).point_2d();
+      // Convert 2d point from screen coordinates to NDC coordinates([-1, 1]).
       if (portrait) {
-        // swap x and y given that our image is in portrait orientation
+        // Swap x and y given that our image is in portrait orientation
         u = keypoint2d.y() * 2 - 1;
         v = keypoint2d.x() * 2 - 1;
       } else {
@@ -237,6 +239,7 @@ absl::Status Decoder::Lift2DTo3D(
     Eigen::VectorXf eigen_vec = eigen_solver.eigenvectors().col(0);
     Eigen::Map<Eigen::Matrix<float, 4, 3, Eigen::RowMajor>> control_matrix(
         eigen_vec.data());
+    // All 3d points should be in front of camera (z < 0).
     if (control_matrix(0, 2) > 0) {
       control_matrix = -control_matrix;
     }
@@ -246,10 +249,36 @@ absl::Status Decoder::Lift2DTo3D(
     // Then set the 8 vertices.
     Eigen::Matrix<float, 8, 3, Eigen::RowMajor> vertices =
         epnp_alpha_ * control_matrix;
+
+    std::vector<Eigen::Vector3f> vertices_vec;
+    vertices_vec.emplace_back(Eigen::Vector3f(
+        control_matrix(0, 0), control_matrix(0, 1), control_matrix(0, 2)));
     for (int i = 0; i < 8; ++i) {
       SetPoint3d(vertices(i, 0), vertices(i, 1), vertices(i, 2),
                  annotation.mutable_keypoints(i + 1)->mutable_point_3d());
+      vertices_vec.emplace_back(
+          Eigen::Vector3f(vertices(i, 0), vertices(i, 1), vertices(i, 2)));
     }
+
+    // Fit a box to the vertices to get box scale, rotation, translation.
+    Box box("category");
+    box.Fit(vertices_vec);
+    const Eigen::Matrix<float, 3, 3, Eigen::RowMajor> rotation =
+        box.GetRotation();
+    const Eigen::Vector3f translation = box.GetTranslation();
+    const Eigen::Vector3f scale = box.GetScale();
+    // Fill box rotation.
+    std::vector<float> rotation_vec(rotation.data(),
+                                    rotation.data() + rotation.size());
+    *annotation.mutable_rotation() = {rotation_vec.begin(), rotation_vec.end()};
+    // Fill box translation.
+    std::vector<float> translation_vec(translation.data(),
+                                       translation.data() + translation.size());
+    *annotation.mutable_translation() = {translation_vec.begin(),
+                                         translation_vec.end()};
+    // Fill box scale.
+    std::vector<float> scale_vec(scale.data(), scale.data() + scale.size());
+    *annotation.mutable_scale() = {scale_vec.begin(), scale_vec.end()};
   }
   return absl::OkStatus();
 }

@@ -20,24 +20,26 @@
 
 namespace mediapipe {
 
+// clang-format off
 static const char binary_graph[] =
 #include "{{SUBGRAPH_INC_FILE_PATH}}"
     ;  // NOLINT(whitespace/semicolon)
 
 class {{SUBGRAPH_CLASS_NAME}} : public Subgraph {
  public:
-  ::mediapipe::StatusOr<CalculatorGraphConfig> GetConfig(
-      const SubgraphOptions& /*options*/) {
+  absl::StatusOr<CalculatorGraphConfig> GetConfig(
+        const SubgraphOptions& /*options*/) {
     CalculatorGraphConfig config;
     // Note: this is a binary protobuf serialization, and may include NUL
     // bytes. The trailing NUL added to the std::string literal should be excluded.
     if (config.ParseFromArray(binary_graph, sizeof(binary_graph) - 1)) {
       return config;
     } else {
-      return ::mediapipe::InternalError("Could not parse subgraph.");
+      return absl::InternalError("Could not parse subgraph.");
     }
   }
 };
 REGISTER_MEDIAPIPE_GRAPH({{SUBGRAPH_CLASS_NAME}});
+// clang-format on
 
 }  // namespace mediapipe

@@ -5120,6 +5120,7 @@ bool MotionEstimation::MixtureHomographyFromFeature(
   MixtureHomography norm_model;
 
   // Initialize with identity.
+  norm_model.mutable_model()->Reserve(num_mixtures);
   for (int k = 0; k < num_mixtures; ++k) {
     norm_model.add_model();
   }

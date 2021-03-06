@@ -53,7 +53,7 @@ GlContext::StatusOrGlContext GlContext::Create(EAGLSharegroup* sharegroup,
   return std::move(context);
 }
 
-::mediapipe::Status GlContext::CreateContext(EAGLSharegroup* sharegroup) {
+absl::Status GlContext::CreateContext(EAGLSharegroup* sharegroup) {
   context_ = [[EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES3
                                    sharegroup:sharegroup];
   if (context_) {
@@ -72,7 +72,7 @@ GlContext::StatusOrGlContext GlContext::Create(EAGLSharegroup* sharegroup,
       << "Error at CVOpenGLESTextureCacheCreate";
   texture_cache_.adopt(cache);
 
-  return ::mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
 void GlContext::DestroyContext() {
@@ -95,11 +95,11 @@ void GlContext::GetCurrentContextBinding(GlContext::ContextBinding* binding) {
   binding->context = [EAGLContext currentContext];
 }
 
-::mediapipe::Status GlContext::SetCurrentContextBinding(
+absl::Status GlContext::SetCurrentContextBinding(
     const ContextBinding& new_binding) {
   BOOL success = [EAGLContext setCurrentContext:new_binding.context];
   RET_CHECK(success) << "Cannot set OpenGL context";
-  return ::mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
 bool GlContext::HasContext() const { return context_ != nil; }

@@ -21,9 +21,7 @@ package(default_visibility = ["//visibility:private"])
 mediapipe_proto_library(
     name = "opencv_image_encoder_calculator_proto",
     srcs = ["opencv_image_encoder_calculator.proto"],
-    visibility = [
-        "//visibility:public",
-    ],
+    visibility = ["//visibility:public"],
     deps = [
         "//mediapipe/framework:calculator_options_proto",
         "//mediapipe/framework:calculator_proto",
@@ -64,9 +62,7 @@ mediapipe_proto_library(
 mediapipe_proto_library(
     name = "bilateral_filter_calculator_proto",
     srcs = ["bilateral_filter_calculator.proto"],
-    visibility = [
-        "//visibility:public",
-    ],
+    visibility = ["//visibility:public"],
     deps = [
         "//mediapipe/framework:calculator_options_proto",
         "//mediapipe/framework:calculator_proto",
@@ -87,9 +83,7 @@ mediapipe_proto_library(
 cc_library(
     name = "color_convert_calculator",
     srcs = ["color_convert_calculator.cc"],
-    visibility = [
-        "//visibility:public",
-    ],
+    visibility = ["//visibility:public"],
     deps = [
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework:timestamp",
@@ -123,9 +117,7 @@ cc_library(
 cc_library(
     name = "opencv_image_encoder_calculator",
     srcs = ["opencv_image_encoder_calculator.cc"],
-    visibility = [
-        "//visibility:public",
-    ],
+    visibility = ["//visibility:public"],
     deps = [
         ":opencv_image_encoder_calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
@@ -181,9 +173,7 @@ cc_library(
 cc_library(
     name = "bilateral_filter_calculator",
     srcs = ["bilateral_filter_calculator.cc"],
-    visibility = [
-        "//visibility:public",
-    ],
+    visibility = ["//visibility:public"],
     deps = [
         ":bilateral_filter_calculator_cc_proto",
         "//mediapipe/framework:calculator_options_cc_proto",
@@ -448,7 +438,6 @@ cc_test(
         "//mediapipe/framework/port:opencv_imgcodecs",
         "//mediapipe/framework/port:opencv_imgproc",
         "//mediapipe/framework/port:parse_text_proto",
-        "//mediapipe/framework/port:status",
     ],
 )
 
@@ -467,7 +456,6 @@ cc_test(
         "//mediapipe/framework/port:opencv_imgcodecs",
         "//mediapipe/framework/port:opencv_imgproc",
         "//mediapipe/framework/port:parse_text_proto",
-        "//mediapipe/framework/port:status",
     ],
 )
 
@@ -503,6 +491,7 @@ mediapipe_proto_library(
 mediapipe_proto_library(
     name = "feature_detector_calculator_proto",
     srcs = ["feature_detector_calculator.proto"],
+    visibility = ["//visibility:public"],
     deps = [
         "//mediapipe/framework:calculator_options_proto",
         "//mediapipe/framework:calculator_proto",
@@ -528,7 +517,7 @@ cc_library(
 cc_library(
     name = "feature_detector_calculator",
     srcs = ["feature_detector_calculator.cc"],
-    visibility = ["//mediapipe:__subpackages__"],
+    visibility = ["//visibility:public"],
     deps = [
         ":feature_detector_calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
@@ -579,6 +568,5 @@ cc_test(
         "//mediapipe/framework/port:file_helpers",
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/framework/port:parse_text_proto",
-        "//mediapipe/framework/port:status",
     ],
 )
