@@ -21,11 +21,13 @@ import numpy as np
 
 from google.protobuf import text_format
 
+from mediapipe.framework.formats import detection_pb2
 from mediapipe.framework.formats import landmark_pb2
 from mediapipe.python.solutions import drawing_utils
 
+DEFAULT_BBOX_DRAWING_SPEC = drawing_utils.DrawingSpec()
 DEFAULT_CONNECTION_DRAWING_SPEC = drawing_utils.DrawingSpec()
-DEFAULT_LANDMARK_DRAWING_SPEC = drawing_utils.DrawingSpec(color=(0, 0, 255))
+DEFAULT_CIRCLE_DRAWING_SPEC = drawing_utils.DrawingSpec(color=(0, 0, 255))
 
 
 class DrawingUtilTest(parameterized.TestCase):
@@ -35,6 +37,9 @@ class DrawingUtilTest(parameterized.TestCase):
     with self.assertRaisesRegex(
         ValueError, 'Input image must contain three channel rgb data.'):
       drawing_utils.draw_landmarks(image, landmark_pb2.NormalizedLandmarkList())
+    with self.assertRaisesRegex(
+        ValueError, 'Input image must contain three channel rgb data.'):
+      drawing_utils.draw_detection(image, detection_pb2.Detection())
 
   def test_invalid_connection(self):
     landmark_list = text_format.Parse(
@@ -43,6 +48,46 @@ class DrawingUtilTest(parameterized.TestCase):
     image = np.arange(27, dtype=np.uint8).reshape(3, 3, 3)
     with self.assertRaisesRegex(ValueError, 'Landmark index is out of range.'):
       drawing_utils.draw_landmarks(image, landmark_list, [(0, 2)])
+
+  def test_unqualified_detection(self):
+    detection = text_format.Parse('location_data {format: GLOBAL}',
+                                  detection_pb2.Detection())
+    image = np.arange(27, dtype=np.uint8).reshape(3, 3, 3)
+    with self.assertRaisesRegex(ValueError, 'LocationData must be relative'):
+      drawing_utils.draw_detection(image, detection)
+
+  def test_draw_keypoints_only(self):
+    detection = text_format.Parse(
+        'location_data {'
+        '  format: RELATIVE_BOUNDING_BOX'
+        '  relative_keypoints {x: 0 y: 1}'
+        '  relative_keypoints {x: 1 y: 0}}', detection_pb2.Detection())
+    image = np.zeros((100, 100, 3), np.uint8)
+    expected_result = np.copy(image)
+    cv2.circle(expected_result, (0, 99),
+               DEFAULT_CIRCLE_DRAWING_SPEC.circle_radius,
+               DEFAULT_CIRCLE_DRAWING_SPEC.color,
+               DEFAULT_CIRCLE_DRAWING_SPEC.thickness)
+    cv2.circle(expected_result, (99, 0),
+               DEFAULT_CIRCLE_DRAWING_SPEC.circle_radius,
+               DEFAULT_CIRCLE_DRAWING_SPEC.color,
+               DEFAULT_CIRCLE_DRAWING_SPEC.thickness)
+    drawing_utils.draw_detection(image, detection)
+    np.testing.assert_array_equal(image, expected_result)
+
+  def test_draw_bboxs_only(self):
+    detection = text_format.Parse(
+        'location_data {'
+        '  format: RELATIVE_BOUNDING_BOX'
+        '  relative_bounding_box {xmin: 0 ymin: 0 width: 1 height: 1}}',
+        detection_pb2.Detection())
+    image = np.zeros((100, 100, 3), np.uint8)
+    expected_result = np.copy(image)
+    cv2.rectangle(expected_result, (0, 0), (99, 99),
+                  DEFAULT_BBOX_DRAWING_SPEC.color,
+                  DEFAULT_BBOX_DRAWING_SPEC.thickness)
+    drawing_utils.draw_detection(image, detection)
+    np.testing.assert_array_equal(image, expected_result)
 
   @parameterized.named_parameters(
       ('landmark_list_has_only_one_element', 'landmark {x: 0.1 y: 0.1}'),
@@ -54,9 +99,9 @@ class DrawingUtilTest(parameterized.TestCase):
     image = np.zeros((100, 100, 3), np.uint8)
     expected_result = np.copy(image)
     cv2.circle(expected_result, (10, 10),
-               DEFAULT_LANDMARK_DRAWING_SPEC.circle_radius,
-               DEFAULT_LANDMARK_DRAWING_SPEC.color,
-               DEFAULT_LANDMARK_DRAWING_SPEC.thickness)
+               DEFAULT_CIRCLE_DRAWING_SPEC.circle_radius,
+               DEFAULT_CIRCLE_DRAWING_SPEC.color,
+               DEFAULT_CIRCLE_DRAWING_SPEC.thickness)
     drawing_utils.draw_landmarks(image, landmark_list)
     np.testing.assert_array_equal(image, expected_result)
 
@@ -77,13 +122,13 @@ class DrawingUtilTest(parameterized.TestCase):
              DEFAULT_CONNECTION_DRAWING_SPEC.color,
              DEFAULT_CONNECTION_DRAWING_SPEC.thickness)
     cv2.circle(expected_result, start_point,
-               DEFAULT_LANDMARK_DRAWING_SPEC.circle_radius,
-               DEFAULT_LANDMARK_DRAWING_SPEC.color,
-               DEFAULT_LANDMARK_DRAWING_SPEC.thickness)
+               DEFAULT_CIRCLE_DRAWING_SPEC.circle_radius,
+               DEFAULT_CIRCLE_DRAWING_SPEC.color,
+               DEFAULT_CIRCLE_DRAWING_SPEC.thickness)
     cv2.circle(expected_result, end_point,
-               DEFAULT_LANDMARK_DRAWING_SPEC.circle_radius,
-               DEFAULT_LANDMARK_DRAWING_SPEC.color,
-               DEFAULT_LANDMARK_DRAWING_SPEC.thickness)
+               DEFAULT_CIRCLE_DRAWING_SPEC.circle_radius,
+               DEFAULT_CIRCLE_DRAWING_SPEC.color,
+               DEFAULT_CIRCLE_DRAWING_SPEC.thickness)
     drawing_utils.draw_landmarks(
         image=image, landmark_list=landmark_list, connections=[(0, 1)])
     np.testing.assert_array_equal(image, expected_result)
@@ -100,13 +145,13 @@ class DrawingUtilTest(parameterized.TestCase):
              DEFAULT_CONNECTION_DRAWING_SPEC.color,
              DEFAULT_CONNECTION_DRAWING_SPEC.thickness)
     cv2.circle(expected_result, start_point,
-               DEFAULT_LANDMARK_DRAWING_SPEC.circle_radius,
-               DEFAULT_LANDMARK_DRAWING_SPEC.color,
-               DEFAULT_LANDMARK_DRAWING_SPEC.thickness)
+               DEFAULT_CIRCLE_DRAWING_SPEC.circle_radius,
+               DEFAULT_CIRCLE_DRAWING_SPEC.color,
+               DEFAULT_CIRCLE_DRAWING_SPEC.thickness)
     cv2.circle(expected_result, end_point,
-               DEFAULT_LANDMARK_DRAWING_SPEC.circle_radius,
-               DEFAULT_LANDMARK_DRAWING_SPEC.color,
-               DEFAULT_LANDMARK_DRAWING_SPEC.thickness)
+               DEFAULT_CIRCLE_DRAWING_SPEC.circle_radius,
+               DEFAULT_CIRCLE_DRAWING_SPEC.color,
+               DEFAULT_CIRCLE_DRAWING_SPEC.thickness)
     drawing_utils.draw_landmarks(
         image=image, landmark_list=landmark_list, connections=[(0, 1)])
     np.testing.assert_array_equal(image, expected_result)

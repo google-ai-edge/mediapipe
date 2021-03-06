@@ -602,7 +602,7 @@ void InternalPacketCreators(pybind11::module* m) {
       "_create_proto",
       [](const std::string& type_name, const py::bytes& serialized_proto) {
         using packet_internal::HolderBase;
-        mediapipe::StatusOr<std::unique_ptr<HolderBase>> maybe_holder =
+        absl::StatusOr<std::unique_ptr<HolderBase>> maybe_holder =
             packet_internal::MessageHolderRegistry::CreateByName(type_name);
         if (!maybe_holder.ok()) {
           throw RaisePyError(
@@ -612,7 +612,7 @@ void InternalPacketCreators(pybind11::module* m) {
         }
         // Creates a Packet with the concrete C++ payload type.
         std::unique_ptr<HolderBase> message_holder =
-            std::move(maybe_holder).ValueOrDie();
+            std::move(maybe_holder).value();
         auto* copy = const_cast<proto_ns::MessageLite*>(
             message_holder->GetProtoMessageLite());
         copy->ParseFromString(std::string(serialized_proto));

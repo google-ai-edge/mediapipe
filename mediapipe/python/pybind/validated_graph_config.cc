@@ -98,7 +98,7 @@ void ValidatedGraphConfigSubmodule(pybind11::module* module) {
       [](ValidatedGraphConfig& self, const std::string& stream_name) {
         auto status_or_type_name = self.RegisteredStreamTypeName(stream_name);
         RaisePyErrorIfNotOk(status_or_type_name.status());
-        return status_or_type_name.ValueOrDie();
+        return status_or_type_name.value();
       },
       R"doc(Return the registered type name of the specified stream if it can be determined.
 
@@ -122,7 +122,7 @@ void ValidatedGraphConfigSubmodule(pybind11::module* module) {
         auto status_or_type_name =
             self.RegisteredSidePacketTypeName(side_packet_name);
         RaisePyErrorIfNotOk(status_or_type_name.status());
-        return status_or_type_name.ValueOrDie();
+        return status_or_type_name.value();
       },
       R"doc(Return the registered type name of the specified side packet if it can be determined.
 

@@ -26,7 +26,7 @@ import numpy.testing as npt
 from mediapipe.python.solutions import face_mesh as mp_faces
 
 TEST_IMAGE_PATH = 'mediapipe/python/solutions/testdata'
-DIFF_THRESHOLOD = 20
+DIFF_THRESHOLD = 20  # pixels
 EYE_INDICES_TO_LANDMARKS = {
     33: [176, 350],
     7: [177, 353],
@@ -66,46 +66,42 @@ EYE_INDICES_TO_LANDMARKS = {
 class FaceMeshTest(parameterized.TestCase):
 
   def test_invalid_image_shape(self):
-    faces = mp_faces.FaceMesh()
-    with self.assertRaisesRegex(
-        ValueError, 'Input image must contain three channel rgb data.'):
-      faces.process(np.arange(36, dtype=np.uint8).reshape(3, 3, 4))
+    with mp_faces.FaceMesh() as faces:
+      with self.assertRaisesRegex(
+          ValueError, 'Input image must contain three channel rgb data.'):
+        faces.process(np.arange(36, dtype=np.uint8).reshape(3, 3, 4))
 
   def test_blank_image(self):
-    faces = mp_faces.FaceMesh()
-    image = np.zeros([100, 100, 3], dtype=np.uint8)
-    image.fill(255)
-    results = faces.process(image)
-    self.assertIsNone(results.multi_face_landmarks)
-    faces.close()
+    with mp_faces.FaceMesh() as faces:
+      image = np.zeros([100, 100, 3], dtype=np.uint8)
+      image.fill(255)
+      results = faces.process(image)
+      self.assertIsNone(results.multi_face_landmarks)
 
   @parameterized.named_parameters(('static_image_mode', True, 1),
                                   ('video_mode', False, 5))
   def test_face(self, static_image_mode: bool, num_frames: int):
     image_path = os.path.join(os.path.dirname(__file__), 'testdata/face.jpg')
-    faces = mp_faces.FaceMesh(
-        static_image_mode=static_image_mode, min_detection_confidence=0.5)
     image = cv2.flip(cv2.imread(image_path), 1)
 
-    def process_one_frame():
-      results = faces.process(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
-      multi_face_landmarks = []
-      for landmarks in results.multi_face_landmarks:
-        self.assertLen(landmarks.landmark, 468)
-        x = [landmark.x for landmark in landmarks.landmark]
-        y = [landmark.y for landmark in landmarks.landmark]
-        face_landmarks = np.transpose(np.stack((y, x))) * image.shape[0:2]
-        multi_face_landmarks.append(face_landmarks)
-      self.assertLen(multi_face_landmarks, 1)
-      # Verify the eye landmarks are correct as sanity check.
-      for idx, gt_lds in EYE_INDICES_TO_LANDMARKS.items():
-        prediction_error = np.abs(
-            np.asarray(multi_face_landmarks[0][idx]) - np.asarray(gt_lds))
-        npt.assert_array_less(prediction_error, DIFF_THRESHOLOD)
-
-    for _ in range(num_frames):
-      process_one_frame()
-    faces.close()
+    with mp_faces.FaceMesh(
+        static_image_mode=static_image_mode,
+        min_detection_confidence=0.5) as faces:
+      for _ in range(num_frames):
+        results = faces.process(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
+        multi_face_landmarks = []
+        for landmarks in results.multi_face_landmarks:
+          self.assertLen(landmarks.landmark, 468)
+          x = [landmark.x for landmark in landmarks.landmark]
+          y = [landmark.y for landmark in landmarks.landmark]
+          face_landmarks = np.transpose(np.stack((y, x))) * image.shape[0:2]
+          multi_face_landmarks.append(face_landmarks)
+        self.assertLen(multi_face_landmarks, 1)
+        # Verify the eye landmarks are correct as sanity check.
+        for idx, gt_lds in EYE_INDICES_TO_LANDMARKS.items():
+          prediction_error = np.abs(
+              np.asarray(multi_face_landmarks[0][idx]) - np.asarray(gt_lds))
+          npt.assert_array_less(prediction_error, DIFF_THRESHOLD)
 
 
 if __name__ == '__main__':

@@ -47,26 +47,25 @@ namespace mediapipe {
 // }
 class DetectionLabelIdToTextCalculator : public CalculatorBase {
  public:
-  static mediapipe::Status GetContract(CalculatorContract* cc);
+  static absl::Status GetContract(CalculatorContract* cc);
 
-  mediapipe::Status Open(CalculatorContext* cc) override;
-  mediapipe::Status Process(CalculatorContext* cc) override;
+  absl::Status Open(CalculatorContext* cc) override;
+  absl::Status Process(CalculatorContext* cc) override;
 
  private:
   absl::node_hash_map<int, std::string> label_map_;
 };
 REGISTER_CALCULATOR(DetectionLabelIdToTextCalculator);
 
-mediapipe::Status DetectionLabelIdToTextCalculator::GetContract(
+absl::Status DetectionLabelIdToTextCalculator::GetContract(
     CalculatorContract* cc) {
   cc->Inputs().Index(0).Set<std::vector<Detection>>();
   cc->Outputs().Index(0).Set<std::vector<Detection>>();
 
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-mediapipe::Status DetectionLabelIdToTextCalculator::Open(
-    CalculatorContext* cc) {
+absl::Status DetectionLabelIdToTextCalculator::Open(CalculatorContext* cc) {
   cc->SetOffset(TimestampDiff(0));
 
   const auto& options =
@@ -90,11 +89,10 @@ mediapipe::Status DetectionLabelIdToTextCalculator::Open(
       label_map_[i] = options.label(i);
     }
   }
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-mediapipe::Status DetectionLabelIdToTextCalculator::Process(
-    CalculatorContext* cc) {
+absl::Status DetectionLabelIdToTextCalculator::Process(CalculatorContext* cc) {
   std::vector<Detection> output_detections;
   for (const auto& input_detection :
        cc->Inputs().Index(0).Get<std::vector<Detection>>()) {
@@ -115,7 +113,7 @@ mediapipe::Status DetectionLabelIdToTextCalculator::Process(
   cc->Outputs().Index(0).AddPacket(
       MakePacket<std::vector<Detection>>(output_detections)
           .At(cc->InputTimestamp()));
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
 }  // namespace mediapipe

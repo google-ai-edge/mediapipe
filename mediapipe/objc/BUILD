@@ -261,9 +261,9 @@ exports_files(
     [
         "testdata/googlelogo_color_272x92dp.png",
         "testdata/googlelogo_color_272x92dp_luminance.png",
+        "testdata/sergey.png",
     ],
     visibility = [
-        "//mediapipe/feature_extraction/video/video_effects:__pkg__",
-        "//mediapipe/gpu:__pkg__",
+        "//mediapipe:__subpackages__",
     ],
 )

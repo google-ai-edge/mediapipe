@@ -20,9 +20,9 @@
 #include "mediapipe/calculators/tensor/image_to_tensor_converter.h"
 #include "mediapipe/calculators/tensor/image_to_tensor_utils.h"
 #include "mediapipe/framework/calculator_framework.h"
+#include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/formats/image_format.pb.h"
-#include "mediapipe/framework/formats/image_frame.h"
-#include "mediapipe/framework/formats/image_frame_opencv.h"
+#include "mediapipe/framework/formats/image_opencv.h"
 #include "mediapipe/framework/formats/tensor.h"
 #include "mediapipe/framework/port/canonical_errors.h"
 #include "mediapipe/framework/port/opencv_core_inc.h"
@@ -46,21 +46,15 @@ class OpenCvProcessor : public ImageToTensorConverter {
     }
   }
 
-  Size GetImageSize(const Packet& image_packet) override {
-    const auto& image = image_packet.Get<mediapipe::ImageFrame>();
-    return {image.Width(), image.Height()};
-  }
-
-  mediapipe::StatusOr<Tensor> Convert(const Packet& image_packet,
-                                      const RotatedRect& roi,
-                                      const Size& output_dims, float range_min,
-                                      float range_max) override {
-    const auto& input = image_packet.Get<mediapipe::ImageFrame>();
-    if (input.Format() != mediapipe::ImageFormat::SRGB &&
-        input.Format() != mediapipe::ImageFormat::SRGBA) {
+  absl::StatusOr<Tensor> Convert(const mediapipe::Image& input,
+                                 const RotatedRect& roi,
+                                 const Size& output_dims, float range_min,
+                                 float range_max) override {
+    if (input.image_format() != mediapipe::ImageFormat::SRGB &&
+        input.image_format() != mediapipe::ImageFormat::SRGBA) {
       return InvalidArgumentError(
           absl::StrCat("Only RGBA/RGB formats are supported, passed format: ",
-                       static_cast<uint32_t>(input.Format())));
+                       static_cast<uint32_t>(input.image_format())));
     }
     cv::Mat src = mediapipe::formats::MatView(&input);
 
@@ -118,8 +112,8 @@ class OpenCvProcessor : public ImageToTensorConverter {
 
 }  // namespace
 
-mediapipe::StatusOr<std::unique_ptr<ImageToTensorConverter>>
-CreateOpenCvConverter(CalculatorContext* cc, BorderMode border_mode) {
+absl::StatusOr<std::unique_ptr<ImageToTensorConverter>> CreateOpenCvConverter(
+    CalculatorContext* cc, BorderMode border_mode) {
   // Simply "return absl::make_unique<OpenCvProcessor>()" failed to build on
   // macOS with bazel.
   return std::unique_ptr<ImageToTensorConverter>(

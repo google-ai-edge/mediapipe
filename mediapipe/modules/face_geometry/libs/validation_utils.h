@@ -29,26 +29,26 @@ namespace mediapipe::face_geometry {
 // Far Z must be greater than Near Z with a margin of `1e-9`.
 // Vertical FOV must be in range (0, 180) with a margin of `1e-9` on the range
 // edges.
-mediapipe::Status ValidatePerspectiveCamera(
+absl::Status ValidatePerspectiveCamera(
     const PerspectiveCamera& perspective_camera);
 
 // Validates `environment`.
 //
 // Environment's perspective camera must be valid.
-mediapipe::Status ValidateEnvironment(const Environment& environment);
+absl::Status ValidateEnvironment(const Environment& environment);
 
 // Validates `mesh_3d`.
 //
 // Mesh vertex buffer size must a multiple of the vertex size.
 // Mesh index buffer size must a multiple of the primitive size.
 // All mesh indices must reference an existing mesh vertex.
-mediapipe::Status ValidateMesh3d(const Mesh3d& mesh_3d);
+absl::Status ValidateMesh3d(const Mesh3d& mesh_3d);
 
 // Validates `face_geometry`.
 //
 // Face mesh must be valid.
 // Face pose transformation matrix must be a 4x4 matrix.
-mediapipe::Status ValidateFaceGeometry(const FaceGeometry& face_geometry);
+absl::Status ValidateFaceGeometry(const FaceGeometry& face_geometry);
 
 // Validates `metadata`.
 //
@@ -57,13 +57,13 @@ mediapipe::Status ValidateFaceGeometry(const FaceGeometry& face_geometry);
 // All Procrustes basis indices must reference an existing canonical mesh
 // vertex.
 // All Procrustes basis landmarks must have a non-negative weight.
-mediapipe::Status ValidateGeometryPipelineMetadata(
+absl::Status ValidateGeometryPipelineMetadata(
     const GeometryPipelineMetadata& metadata);
 
 // Validates frame dimensions.
 //
 // Both frame width and frame height must be positive.
-mediapipe::Status ValidateFrameDimensions(int frame_width, int frame_height);
+absl::Status ValidateFrameDimensions(int frame_width, int frame_height);
 
 }  // namespace mediapipe::face_geometry
 

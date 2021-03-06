@@ -127,25 +127,25 @@ TEST(RealTimeFlowLimiterCalculator, BasicTest) {
 }
 
 // A Calculator::Process callback function.
-typedef std::function<mediapipe::Status(const InputStreamShardSet&,
-                                        OutputStreamShardSet*)>
+typedef std::function<absl::Status(const InputStreamShardSet&,
+                                   OutputStreamShardSet*)>
     ProcessFunction;
 
 // A testing callback function that passes through all packets.
-mediapipe::Status PassthroughFunction(const InputStreamShardSet& inputs,
-                                      OutputStreamShardSet* outputs) {
+absl::Status PassthroughFunction(const InputStreamShardSet& inputs,
+                                 OutputStreamShardSet* outputs) {
   for (int i = 0; i < inputs.NumEntries(); ++i) {
     if (!inputs.Index(i).Value().IsEmpty()) {
       outputs->Index(i).AddPacket(inputs.Index(i).Value());
     }
   }
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
 // A Calculator that runs a testing callback function in Close.
 class CloseCallbackCalculator : public CalculatorBase {
  public:
-  static mediapipe::Status GetContract(CalculatorContract* cc) {
+  static absl::Status GetContract(CalculatorContract* cc) {
     for (CollectionItemId id = cc->Inputs().BeginId();
          id < cc->Inputs().EndId(); ++id) {
       cc->Inputs().Get(id).SetAny();
@@ -154,18 +154,17 @@ class CloseCallbackCalculator : public CalculatorBase {
          id < cc->Outputs().EndId(); ++id) {
       cc->Outputs().Get(id).SetAny();
     }
-    cc->InputSidePackets().Index(0).Set<std::function<mediapipe::Status()>>();
-    return mediapipe::OkStatus();
+    cc->InputSidePackets().Index(0).Set<std::function<absl::Status()>>();
+    return absl::OkStatus();
   }
 
-  mediapipe::Status Process(CalculatorContext* cc) override {
+  absl::Status Process(CalculatorContext* cc) override {
     return PassthroughFunction(cc->Inputs(), &(cc->Outputs()));
   }
 
-  mediapipe::Status Close(CalculatorContext* cc) override {
-    const auto& callback = cc->InputSidePackets()
-                               .Index(0)
-                               .Get<std::function<mediapipe::Status()>>();
+  absl::Status Close(CalculatorContext* cc) override {
+    const auto& callback =
+        cc->InputSidePackets().Index(0).Get<std::function<absl::Status()>>();
     return callback();
   }
 };
@@ -196,9 +195,9 @@ class RealTimeFlowLimiterCalculatorTest : public testing::Test {
       exit_semaphore_.Acquire(1);
       return PassthroughFunction(inputs, outputs);
     };
-    std::function<mediapipe::Status()> close_func = [this]() {
+    std::function<absl::Status()> close_func = [this]() {
       close_count_++;
-      return mediapipe::OkStatus();
+      return absl::OkStatus();
     };
     MP_ASSERT_OK(graph_.Initialize(
         graph_config_, {

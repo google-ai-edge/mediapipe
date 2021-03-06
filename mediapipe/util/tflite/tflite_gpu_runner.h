@@ -53,24 +53,23 @@ class TFLiteGPURunner {
   explicit TFLiteGPURunner(const InferenceOptions& options)
       : options_(options) {}
 
-  mediapipe::Status InitializeWithModel(
-      const tflite::FlatBufferModel& flatbuffer,
-      const tflite::OpResolver& op_resolver);
+  absl::Status InitializeWithModel(const tflite::FlatBufferModel& flatbuffer,
+                                   const tflite::OpResolver& op_resolver);
 
   void ForceOpenGL() { opengl_is_forced_ = true; }
   void ForceOpenCL() { opencl_is_forced_ = true; }
 
-  mediapipe::Status BindSSBOToInputTensor(GLuint ssbo_id, int input_id);
-  mediapipe::Status BindSSBOToOutputTensor(GLuint ssbo_id, int output_id);
+  absl::Status BindSSBOToInputTensor(GLuint ssbo_id, int input_id);
+  absl::Status BindSSBOToOutputTensor(GLuint ssbo_id, int output_id);
 
   int inputs_size() const { return input_shapes_.size(); }
   int outputs_size() const { return output_shapes_.size(); }
 
-  mediapipe::StatusOr<int64_t> GetInputElements(int id);
-  mediapipe::StatusOr<int64_t> GetOutputElements(int id);
+  absl::StatusOr<int64_t> GetInputElements(int id);
+  absl::StatusOr<int64_t> GetOutputElements(int id);
 
-  mediapipe::Status Build();
-  mediapipe::Status Invoke();
+  absl::Status Build();
+  absl::Status Invoke();
 
   std::vector<BHWC> GetInputShapes() { return input_shapes_; }
   std::vector<BHWC> GetOutputShapes() { return output_shapes_; }
@@ -93,10 +92,8 @@ class TFLiteGPURunner {
 #endif
 
  private:
-  mediapipe::Status InitializeOpenGL(
-      std::unique_ptr<InferenceBuilder>* builder);
-  mediapipe::Status InitializeOpenCL(
-      std::unique_ptr<InferenceBuilder>* builder);
+  absl::Status InitializeOpenGL(std::unique_ptr<InferenceBuilder>* builder);
+  absl::Status InitializeOpenCL(std::unique_ptr<InferenceBuilder>* builder);
 
   InferenceOptions options_;
   std::unique_ptr<gl::InferenceEnvironment> gl_environment_;

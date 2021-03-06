@@ -1,15 +1,16 @@
 # MediaPipe Objectron on GPU that produces 3D bounding boxes for objects.
+type: "ObjectronGpuSubgraph"
 
 # Input/Output streams and input side packets.
-# Note that the input video is assumed to have aspect ratio 3:4 (width:height).
-input_stream: "IMAGE_GPU:input_video"
+# Note that the input image is assumed to have aspect ratio 3:4 (width:height).
+input_stream: "IMAGE_GPU:image"
 # Allowed category labels, e.g. Footwear, Coffee cup, Mug, Chair, Camera
 input_side_packet: "LABELS_CSV:allowed_labels"
 # Max number of objects to detect/track. (int)
 input_side_packet: "MAX_NUM_OBJECTS:max_num_objects"
 
 # Collection of detected 3D objects, represented as a FrameAnnotation.
-output_stream: "FRAME_ANNOTATION:lifted_objects"
+output_stream: "FRAME_ANNOTATION:detected_objects"
 
 # Defines whether landmarks from the previous video frame should be used to help
 # predict landmarks on the current video frame.
@@ -45,9 +46,9 @@ node {
 # to trigger a new round of box detection in ObjectDetectionOidV4Subgraph.
 node {
   calculator: "GateCalculator"
-  input_stream: "input_video"
+  input_stream: "image"
   input_stream: "DISALLOW:prev_has_enough_objects"
-  output_stream: "detection_input_video"
+  output_stream: "detection_image"
 
   options: {
     [mediapipe.GateCalculatorOptions.ext] {
@@ -59,7 +60,7 @@ node {
 # Subgraph that performs 2D object detection.
 node {
   calculator: "ObjectDetectionOidV4Subgraph"
-  input_stream: "IMAGE_GPU:detection_input_video"
+  input_stream: "IMAGE_GPU:detection_image"
   input_side_packet: "LABELS_CSV:allowed_labels"
   output_stream: "DETECTIONS:raw_detections"
 }
@@ -76,7 +77,7 @@ node {
 # Extracts image size from the input images.
 node {
   calculator: "ImagePropertiesCalculator"
-  input_stream: "IMAGE_GPU:input_video"
+  input_stream: "IMAGE_GPU:image"
   output_stream: "SIZE:image_size"
 }
 
@@ -118,16 +119,16 @@ node {
 node {
   calculator: "BeginLoopNormalizedRectCalculator"
   input_stream: "ITERABLE:box_rects"
-  input_stream: "CLONE:input_video"
+  input_stream: "CLONE:image"
   output_stream: "ITEM:single_box_rect"
-  output_stream: "CLONE:landmarks_input_video"
+  output_stream: "CLONE:landmarks_image"
   output_stream: "BATCH_END:box_rects_timestamp"
 }
 
 # Subgraph that localizes box landmarks.
 node {
   calculator: "BoxLandmarkSubgraph"
-  input_stream: "IMAGE:landmarks_input_video"
+  input_stream: "IMAGE:landmarks_image"
   input_stream: "NORM_RECT:single_box_rect"
   output_stream: "NORM_LANDMARKS:single_box_landmarks"
 }
@@ -153,13 +154,19 @@ node {
 node {
   calculator: "Lift2DFrameAnnotationTo3DCalculator"
   input_stream: "FRAME_ANNOTATION:box_annotations"
-  output_stream: "LIFTED_FRAME_ANNOTATION:lifted_objects"
+  output_stream: "LIFTED_FRAME_ANNOTATION:detected_objects"
+  options: {
+    [mediapipe.Lift2DFrameAnnotationTo3DCalculatorOptions.ext] {
+      normalized_focal_x: 2.0975
+      normalized_focal_y: 1.5731
+    }
+  }
 }
 
-# Get rotated rectangle from lifted box.
+# Get rotated rectangle from detected box.
 node {
   calculator: "FrameAnnotationToRectCalculator"
-  input_stream: "FRAME_ANNOTATION:lifted_objects"
+  input_stream: "FRAME_ANNOTATION:detected_objects"
   output_stream: "NORM_RECTS:box_rects_from_landmarks"
 }
 
@@ -171,7 +178,7 @@ node {
 # feedback loop.
 node {
   calculator: "PreviousLoopbackCalculator"
-  input_stream: "MAIN:input_video"
+  input_stream: "MAIN:image"
   input_stream: "LOOP:box_rects_from_landmarks"
   input_stream_info: {
     tag_index: "LOOP"

@@ -17,7 +17,7 @@ namespace test {
 
 class FooBarImpl1 : public SubgraphImpl<FooBar1, FooBarImpl1> {
  public:
-  mediapipe::StatusOr<CalculatorGraphConfig> GetConfig(
+  absl::StatusOr<CalculatorGraphConfig> GetConfig(
       const SubgraphOptions& /*options*/) {
     builder::Graph graph;
     auto& foo = graph.AddNode("Foo");
@@ -31,7 +31,7 @@ class FooBarImpl1 : public SubgraphImpl<FooBar1, FooBarImpl1> {
 
 class FooBarImpl2 : public SubgraphImpl<FooBar2, FooBarImpl2> {
  public:
-  mediapipe::StatusOr<CalculatorGraphConfig> GetConfig(
+  absl::StatusOr<CalculatorGraphConfig> GetConfig(
       const SubgraphOptions& /*options*/) {
     builder::Graph graph;
     auto& foo = graph.AddNode<Foo>();
@@ -44,7 +44,7 @@ class FooBarImpl2 : public SubgraphImpl<FooBar2, FooBarImpl2> {
 };
 
 TEST(SubgraphTest, SubgraphConfig) {
-  CalculatorGraphConfig subgraph = FooBarImpl1().GetConfig({}).ValueOrDie();
+  CalculatorGraphConfig subgraph = FooBarImpl1().GetConfig({}).value();
   const CalculatorGraphConfig expected_graph =
       mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
         input_stream: "IN:__stream_0"
@@ -64,7 +64,7 @@ TEST(SubgraphTest, SubgraphConfig) {
 }
 
 TEST(SubgraphTest, TypedSubgraphConfig) {
-  CalculatorGraphConfig subgraph = FooBarImpl2().GetConfig({}).ValueOrDie();
+  CalculatorGraphConfig subgraph = FooBarImpl2().GetConfig({}).value();
   const CalculatorGraphConfig expected_graph =
       mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
         input_stream: "IN:__stream_0"

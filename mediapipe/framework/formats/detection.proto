@@ -29,7 +29,6 @@ option java_outer_classname = "DetectionProto";
 
 message Detection {
   // i-th label or label_id has a score encoded by the i-th element in score.
-  // Either string or integer labels must be used but not both at the same time.
   repeated string label = 1;
   repeated int32 label_id = 2 [packed = true];
   repeated float score = 3 [packed = true];

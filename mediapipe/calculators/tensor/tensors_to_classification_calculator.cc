@@ -16,6 +16,7 @@
 #include <unordered_map>
 #include <vector>
 
+#include "absl/container/node_hash_map.h"
 #include "absl/strings/str_format.h"
 #include "absl/types/span.h"
 #include "mediapipe/calculators/tensor/tensors_to_classification_calculator.pb.h"
@@ -66,20 +67,19 @@ class TensorsToClassificationCalculator : public Node {
       "CLASSIFICATIONS"};
   MEDIAPIPE_NODE_CONTRACT(kInTensors, kOutClassificationList);
 
-  mediapipe::Status Open(CalculatorContext* cc) override;
-  mediapipe::Status Process(CalculatorContext* cc) override;
-  mediapipe::Status Close(CalculatorContext* cc) override;
+  absl::Status Open(CalculatorContext* cc) override;
+  absl::Status Process(CalculatorContext* cc) override;
+  absl::Status Close(CalculatorContext* cc) override;
 
  private:
   ::mediapipe::TensorsToClassificationCalculatorOptions options_;
   int top_k_ = 0;
-  std::unordered_map<int, std::string> label_map_;
+  absl::node_hash_map<int, std::string> label_map_;
   bool label_map_loaded_ = false;
 };
 MEDIAPIPE_REGISTER_NODE(TensorsToClassificationCalculator);
 
-mediapipe::Status TensorsToClassificationCalculator::Open(
-    CalculatorContext* cc) {
+absl::Status TensorsToClassificationCalculator::Open(CalculatorContext* cc) {
   options_ =
       cc->Options<::mediapipe::TensorsToClassificationCalculatorOptions>();
 
@@ -100,11 +100,10 @@ mediapipe::Status TensorsToClassificationCalculator::Open(
     label_map_loaded_ = true;
   }
 
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-mediapipe::Status TensorsToClassificationCalculator::Process(
-    CalculatorContext* cc) {
+absl::Status TensorsToClassificationCalculator::Process(CalculatorContext* cc) {
   const auto& input_tensors = *kInTensors(cc);
   RET_CHECK_EQ(input_tensors.size(), 1);
 
@@ -168,12 +167,11 @@ mediapipe::Status TensorsToClassificationCalculator::Process(
         top_k_, raw_classification_list->size() - top_k_);
   }
   kOutClassificationList(cc).Send(std::move(classification_list));
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-mediapipe::Status TensorsToClassificationCalculator::Close(
-    CalculatorContext* cc) {
-  return mediapipe::OkStatus();
+absl::Status TensorsToClassificationCalculator::Close(CalculatorContext* cc) {
+  return absl::OkStatus();
 }
 
 }  // namespace api2

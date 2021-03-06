@@ -72,24 +72,24 @@ using testing::HasSubstr;
 // instead of Open().
 class SetOffsetInProcessCalculator : public CalculatorBase {
  public:
-  static mediapipe::Status GetContract(CalculatorContract* cc) {
+  static absl::Status GetContract(CalculatorContract* cc) {
     cc->Inputs().Index(0).SetAny();
     cc->Outputs().Index(0).SetSameAs(&cc->Inputs().Index(0));
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
-  mediapipe::Status Open(CalculatorContext* cc) final {
+  absl::Status Open(CalculatorContext* cc) final {
     // Input: arbitrary Packets.
     // Output: copy of the input.
     cc->Outputs().Index(0).SetHeader(cc->Inputs().Index(0).Header());
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
-  mediapipe::Status Process(CalculatorContext* cc) final {
+  absl::Status Process(CalculatorContext* cc) final {
     cc->SetOffset(TimestampDiff(0));
     cc->GetCounter("PassThrough")->Increment();
     cc->Outputs().Index(0).AddPacket(cc->Inputs().Index(0).Value());
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 };
 REGISTER_CALCULATOR(SetOffsetInProcessCalculator);
@@ -97,21 +97,19 @@ REGISTER_CALCULATOR(SetOffsetInProcessCalculator);
 // A Calculator that outputs the square of its input packet (an int).
 class SquareIntCalculator : public CalculatorBase {
  public:
-  static mediapipe::Status GetContract(CalculatorContract* cc) {
+  static absl::Status GetContract(CalculatorContract* cc) {
     cc->Inputs().Index(0).Set<int>();
     cc->Outputs().Index(0).SetSameAs(&cc->Inputs().Index(0));
     cc->SetTimestampOffset(TimestampDiff(0));
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
-  mediapipe::Status Open(CalculatorContext* cc) final {
-    return mediapipe::OkStatus();
-  }
+  absl::Status Open(CalculatorContext* cc) final { return absl::OkStatus(); }
 
-  mediapipe::Status Process(CalculatorContext* cc) final {
+  absl::Status Process(CalculatorContext* cc) final {
     int value = cc->Inputs().Index(0).Value().Get<int>();
     cc->Outputs().Index(0).Add(new int(value * value), cc->InputTimestamp());
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 };
 REGISTER_CALCULATOR(SquareIntCalculator);
@@ -125,7 +123,7 @@ REGISTER_CALCULATOR(SquareIntCalculator);
 // the unselected outputs.
 class DemuxTimedCalculator : public CalculatorBase {
  public:
-  static mediapipe::Status GetContract(CalculatorContract* cc) {
+  static absl::Status GetContract(CalculatorContract* cc) {
     RET_CHECK_EQ(cc->Inputs().NumEntries(), 2);
     cc->Inputs().Tag("SELECT").Set<int>();
     PacketType* data_input = &cc->Inputs().Tag("INPUT");
@@ -135,18 +133,18 @@ class DemuxTimedCalculator : public CalculatorBase {
       cc->Outputs().Get(id).SetSameAs(data_input);
     }
     cc->SetTimestampOffset(TimestampDiff(0));
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
-  mediapipe::Status Open(CalculatorContext* cc) final {
+  absl::Status Open(CalculatorContext* cc) final {
     select_input_ = cc->Inputs().GetId("SELECT", 0);
     data_input_ = cc->Inputs().GetId("INPUT", 0);
     output_base_ = cc->Outputs().GetId("OUTPUT", 0);
     num_outputs_ = cc->Outputs().NumEntries("OUTPUT");
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
-  mediapipe::Status Process(CalculatorContext* cc) final {
+  absl::Status Process(CalculatorContext* cc) final {
     int select = cc->Inputs().Get(select_input_).Get<int>();
     RET_CHECK(0 <= select && select < num_outputs_);
     const Timestamp next_timestamp_bound =
@@ -162,7 +160,7 @@ class DemuxTimedCalculator : public CalculatorBase {
             .SetNextTimestampBound(next_timestamp_bound);
       }
     }
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
  private:
@@ -183,7 +181,7 @@ REGISTER_CALCULATOR(DemuxTimedCalculator);
 // propagation on the unselected inputs.
 class MuxTimedCalculator : public CalculatorBase {
  public:
-  static mediapipe::Status GetContract(CalculatorContract* cc) {
+  static absl::Status GetContract(CalculatorContract* cc) {
     cc->Inputs().Tag("SELECT").Set<int>();
     CollectionItemId data_input_id = cc->Inputs().BeginId("INPUT");
     PacketType* data_input0 = &cc->Inputs().Get(data_input_id);
@@ -195,23 +193,23 @@ class MuxTimedCalculator : public CalculatorBase {
     RET_CHECK_EQ(cc->Outputs().NumEntries(), 1);
     cc->Outputs().Tag("OUTPUT").SetSameAs(data_input0);
     cc->SetTimestampOffset(TimestampDiff(0));
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
-  mediapipe::Status Open(CalculatorContext* cc) final {
+  absl::Status Open(CalculatorContext* cc) final {
     select_input_ = cc->Inputs().GetId("SELECT", 0);
     data_input_base_ = cc->Inputs().GetId("INPUT", 0);
     num_data_inputs_ = cc->Inputs().NumEntries("INPUT");
     output_ = cc->Outputs().GetId("OUTPUT", 0);
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
-  mediapipe::Status Process(CalculatorContext* cc) final {
+  absl::Status Process(CalculatorContext* cc) final {
     int select = cc->Inputs().Get(select_input_).Get<int>();
     RET_CHECK(0 <= select && select < num_data_inputs_);
     cc->Outputs().Get(output_).AddPacket(
         cc->Inputs().Get(data_input_base_ + select).Value());
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
  private:
@@ -227,26 +225,24 @@ REGISTER_CALCULATOR(MuxTimedCalculator);
 // streams and outputs the sum to the output stream.
 class IntAdderCalculator : public CalculatorBase {
  public:
-  static mediapipe::Status GetContract(CalculatorContract* cc) {
+  static absl::Status GetContract(CalculatorContract* cc) {
     for (int i = 0; i < cc->Inputs().NumEntries(); ++i) {
       cc->Inputs().Index(i).Set<int>();
     }
     cc->Outputs().Index(0).Set<int>();
     cc->SetTimestampOffset(TimestampDiff(0));
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
-  mediapipe::Status Open(CalculatorContext* cc) final {
-    return mediapipe::OkStatus();
-  }
+  absl::Status Open(CalculatorContext* cc) final { return absl::OkStatus(); }
 
-  mediapipe::Status Process(CalculatorContext* cc) final {
+  absl::Status Process(CalculatorContext* cc) final {
     int sum = 0;
     for (int i = 0; i < cc->Inputs().NumEntries(); ++i) {
       sum += cc->Inputs().Index(i).Get<int>();
     }
     cc->Outputs().Index(0).Add(new int(sum), cc->InputTimestamp());
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 };
 REGISTER_CALCULATOR(IntAdderCalculator);
@@ -255,26 +251,24 @@ REGISTER_CALCULATOR(IntAdderCalculator);
 // streams and outputs the sum to the output stream.
 class FloatAdderCalculator : public CalculatorBase {
  public:
-  static mediapipe::Status GetContract(CalculatorContract* cc) {
+  static absl::Status GetContract(CalculatorContract* cc) {
     for (int i = 0; i < cc->Inputs().NumEntries(); ++i) {
       cc->Inputs().Index(i).Set<float>();
     }
     cc->Outputs().Index(0).Set<float>();
     cc->SetTimestampOffset(TimestampDiff(0));
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
-  mediapipe::Status Open(CalculatorContext* cc) final {
-    return mediapipe::OkStatus();
-  }
+  absl::Status Open(CalculatorContext* cc) final { return absl::OkStatus(); }
 
-  mediapipe::Status Process(CalculatorContext* cc) final {
+  absl::Status Process(CalculatorContext* cc) final {
     float sum = 0.0;
     for (int i = 0; i < cc->Inputs().NumEntries(); ++i) {
       sum += cc->Inputs().Index(i).Get<float>();
     }
     cc->Outputs().Index(0).Add(new float(sum), cc->InputTimestamp());
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 };
 REGISTER_CALCULATOR(FloatAdderCalculator);
@@ -283,26 +277,24 @@ REGISTER_CALCULATOR(FloatAdderCalculator);
 // input streams and outputs the product to the output stream.
 class IntMultiplierCalculator : public CalculatorBase {
  public:
-  static mediapipe::Status GetContract(CalculatorContract* cc) {
+  static absl::Status GetContract(CalculatorContract* cc) {
     for (int i = 0; i < cc->Inputs().NumEntries(); ++i) {
       cc->Inputs().Index(i).Set<int>();
     }
     cc->Outputs().Index(0).Set<int>();
     cc->SetTimestampOffset(TimestampDiff(0));
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
-  mediapipe::Status Open(CalculatorContext* cc) final {
-    return mediapipe::OkStatus();
-  }
+  absl::Status Open(CalculatorContext* cc) final { return absl::OkStatus(); }
 
-  mediapipe::Status Process(CalculatorContext* cc) final {
+  absl::Status Process(CalculatorContext* cc) final {
     int product = 1;
     for (int i = 0; i < cc->Inputs().NumEntries(); ++i) {
       product *= cc->Inputs().Index(i).Get<int>();
     }
     cc->Outputs().Index(0).Add(new int(product), cc->InputTimestamp());
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 };
 REGISTER_CALCULATOR(IntMultiplierCalculator);
@@ -312,24 +304,24 @@ REGISTER_CALCULATOR(IntMultiplierCalculator);
 // output stream.
 class FloatScalarMultiplierCalculator : public CalculatorBase {
  public:
-  static mediapipe::Status GetContract(CalculatorContract* cc) {
+  static absl::Status GetContract(CalculatorContract* cc) {
     cc->Inputs().Index(0).Set<float>();
     cc->Outputs().Index(0).Set<float>();
     cc->InputSidePackets().Index(0).Set<float>();
     cc->SetTimestampOffset(TimestampDiff(0));
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
-  mediapipe::Status Open(CalculatorContext* cc) final {
+  absl::Status Open(CalculatorContext* cc) final {
     scalar_ = cc->InputSidePackets().Index(0).Get<float>();
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
-  mediapipe::Status Process(CalculatorContext* cc) final {
+  absl::Status Process(CalculatorContext* cc) final {
     float value = cc->Inputs().Index(0).Value().Get<float>();
     cc->Outputs().Index(0).Add(new float(scalar_ * value),
                                cc->InputTimestamp());
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
  private:
@@ -340,22 +332,20 @@ REGISTER_CALCULATOR(FloatScalarMultiplierCalculator);
 // A Calculator that converts an integer to a float.
 class IntToFloatCalculator : public CalculatorBase {
  public:
-  static mediapipe::Status GetContract(CalculatorContract* cc) {
+  static absl::Status GetContract(CalculatorContract* cc) {
     cc->Inputs().Index(0).Set<int>();
     cc->Outputs().Index(0).Set<float>();
     cc->SetTimestampOffset(TimestampDiff(0));
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
-  mediapipe::Status Open(CalculatorContext* cc) final {
-    return mediapipe::OkStatus();
-  }
+  absl::Status Open(CalculatorContext* cc) final { return absl::OkStatus(); }
 
-  mediapipe::Status Process(CalculatorContext* cc) final {
+  absl::Status Process(CalculatorContext* cc) final {
     int value = cc->Inputs().Index(0).Value().Get<int>();
     cc->Outputs().Index(0).Add(new float(static_cast<float>(value)),
                                cc->InputTimestamp());
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 };
 REGISTER_CALCULATOR(IntToFloatCalculator);
@@ -363,12 +353,12 @@ REGISTER_CALCULATOR(IntToFloatCalculator);
 template <typename OutputType>
 class TypedEmptySourceCalculator : public CalculatorBase {
  public:
-  static mediapipe::Status GetContract(CalculatorContract* cc) {
+  static absl::Status GetContract(CalculatorContract* cc) {
     cc->Outputs().Index(0).SetAny();
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
-  mediapipe::Status Process(CalculatorContext* cc) override {
+  absl::Status Process(CalculatorContext* cc) override {
     cc->Outputs().Index(0).Add(new OutputType(), Timestamp::PostStream());
     return tool::StatusStop();
   }
@@ -381,13 +371,13 @@ REGISTER_CALCULATOR(IntEmptySourceCalculator);
 template <typename InputType>
 class TypedSinkCalculator : public CalculatorBase {
  public:
-  static mediapipe::Status GetContract(CalculatorContract* cc) {
+  static absl::Status GetContract(CalculatorContract* cc) {
     cc->Inputs().Index(0).Set<InputType>();
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
-  mediapipe::Status Process(CalculatorContext* cc) override {
-    return mediapipe::OkStatus();
+  absl::Status Process(CalculatorContext* cc) override {
+    return absl::OkStatus();
   }
 };
 typedef TypedSinkCalculator<std::string> StringSinkCalculator;
@@ -403,29 +393,29 @@ class GlobalCountSourceCalculator : public CalculatorBase {
  public:
   static const int kNumOutputPackets;
 
-  static mediapipe::Status GetContract(CalculatorContract* cc) {
+  static absl::Status GetContract(CalculatorContract* cc) {
     cc->InputSidePackets().Index(0).Set<std::atomic<int>*>();
     if (cc->InputSidePackets().NumEntries() >= 2) {
       cc->InputSidePackets().Index(1).Set<bool>();
     }
     cc->Outputs().Index(0).Set<int>();
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
-  mediapipe::Status Open(CalculatorContext* cc) override {
+  absl::Status Open(CalculatorContext* cc) override {
     if (cc->InputSidePackets().NumEntries() >= 2 &&
         cc->InputSidePackets().Index(1).Get<bool>()) {
       OutputOne(cc);
     }
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
-  mediapipe::Status Process(CalculatorContext* cc) override {
+  absl::Status Process(CalculatorContext* cc) override {
     OutputOne(cc);
     if (local_count_ >= kNumOutputPackets) {
       return tool::StatusStop();
     } else {
-      return mediapipe::OkStatus();
+      return absl::OkStatus();
     }
   }
 
@@ -448,19 +438,19 @@ static const int kTestSequenceLength = 15;
 // Outputs the integers 0, 1, 2, 3, ..., 14, all with timestamp 0.
 class TestSequence1SourceCalculator : public CalculatorBase {
  public:
-  static mediapipe::Status GetContract(CalculatorContract* cc) {
+  static absl::Status GetContract(CalculatorContract* cc) {
     cc->Outputs().Index(0).Set<int>();
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
-  mediapipe::Status Process(CalculatorContext* cc) override {
+  absl::Status Process(CalculatorContext* cc) override {
     cc->Outputs().Index(0).Add(new int(count_), Timestamp(0));
     ++count_;
     ++num_outputs_;
     if (num_outputs_ >= kTestSequenceLength) {
       return tool::StatusStop();
     } else {
-      return mediapipe::OkStatus();
+      return absl::OkStatus();
     }
   }
 
@@ -474,12 +464,12 @@ REGISTER_CALCULATOR(TestSequence1SourceCalculator);
 // 100, 99, 98, 97, ....
 class TestSequence2SourceCalculator : public CalculatorBase {
  public:
-  static mediapipe::Status GetContract(CalculatorContract* cc) {
+  static absl::Status GetContract(CalculatorContract* cc) {
     cc->Outputs().Index(0).Set<int>();
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
-  mediapipe::Status Process(CalculatorContext* cc) override {
+  absl::Status Process(CalculatorContext* cc) override {
     cc->Outputs().Index(0).Add(new int(count_), Timestamp(timestamp_));
     ++count_;
     ++num_outputs_;
@@ -487,7 +477,7 @@ class TestSequence2SourceCalculator : public CalculatorBase {
     if (num_outputs_ >= kTestSequenceLength) {
       return tool::StatusStop();
     } else {
-      return mediapipe::OkStatus();
+      return absl::OkStatus();
     }
   }
 
@@ -501,19 +491,19 @@ REGISTER_CALCULATOR(TestSequence2SourceCalculator);
 // Outputs the integers 0, 1, 2 repeatedly for a total of 15 outputs.
 class Modulo3SourceCalculator : public CalculatorBase {
  public:
-  static mediapipe::Status GetContract(CalculatorContract* cc) {
+  static absl::Status GetContract(CalculatorContract* cc) {
     cc->Outputs().Index(0).Set<int>();
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
-  mediapipe::Status Process(CalculatorContext* cc) override {
+  absl::Status Process(CalculatorContext* cc) override {
     cc->Outputs().Index(0).Add(new int(count_ % 3), Timestamp(count_ % 3));
     ++count_;
     ++num_outputs_;
     if (num_outputs_ >= kTestSequenceLength) {
       return tool::StatusStop();
     } else {
-      return mediapipe::OkStatus();
+      return absl::OkStatus();
     }
   }
 
@@ -532,12 +522,12 @@ class OutputAllSourceCalculator : public CalculatorBase {
  public:
   static constexpr int kNumOutputPackets = 100;
 
-  static mediapipe::Status GetContract(CalculatorContract* cc) {
+  static absl::Status GetContract(CalculatorContract* cc) {
     cc->Outputs().Index(0).Set<int>();
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
-  mediapipe::Status Process(CalculatorContext* cc) override {
+  absl::Status Process(CalculatorContext* cc) override {
     for (int i = 0; i < kNumOutputPackets; ++i) {
       cc->Outputs().Index(0).Add(new int(0), Timestamp(i));
     }
@@ -555,16 +545,16 @@ class OutputOneAtATimeSourceCalculator : public CalculatorBase {
  public:
   static constexpr int kNumOutputPackets = 1000;
 
-  static mediapipe::Status GetContract(CalculatorContract* cc) {
+  static absl::Status GetContract(CalculatorContract* cc) {
     cc->Outputs().Index(0).Set<int>();
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
-  mediapipe::Status Process(CalculatorContext* cc) override {
+  absl::Status Process(CalculatorContext* cc) override {
     if (index_ < kNumOutputPackets) {
       cc->Outputs().Index(0).Add(new int(0), Timestamp(index_));
       ++index_;
-      return mediapipe::OkStatus();
+      return absl::OkStatus();
     }
     return tool::StatusStop();
   }
@@ -582,18 +572,18 @@ class DecimatorCalculator : public CalculatorBase {
  public:
   static constexpr int kDecimationRatio = 101;
 
-  static mediapipe::Status GetContract(CalculatorContract* cc) {
+  static absl::Status GetContract(CalculatorContract* cc) {
     cc->Inputs().Index(0).SetAny();
     cc->Outputs().Index(0).SetSameAs(&cc->Inputs().Index(0));
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
-  mediapipe::Status Process(CalculatorContext* cc) final {
+  absl::Status Process(CalculatorContext* cc) final {
     if (index_ % kDecimationRatio == 0) {
       cc->Outputs().Index(0).AddPacket(cc->Inputs().Index(0).Value());
     }
     ++index_;
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
  private:
@@ -605,23 +595,23 @@ REGISTER_CALCULATOR(DecimatorCalculator);
 // this calculator simply passes its input packets through, unchanged.
 class ErrorOnOpenCalculator : public CalculatorBase {
  public:
-  static mediapipe::Status GetContract(CalculatorContract* cc) {
+  static absl::Status GetContract(CalculatorContract* cc) {
     cc->Inputs().Index(0).SetAny();
     cc->Outputs().Index(0).SetSameAs(&cc->Inputs().Index(0));
     cc->InputSidePackets().Tag("ERROR_ON_OPEN").Set<bool>();
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
-  mediapipe::Status Open(CalculatorContext* cc) final {
+  absl::Status Open(CalculatorContext* cc) final {
     if (cc->InputSidePackets().Tag("ERROR_ON_OPEN").Get<bool>()) {
-      return mediapipe::NotFoundError("expected error");
+      return absl::NotFoundError("expected error");
     }
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
-  mediapipe::Status Process(CalculatorContext* cc) final {
+  absl::Status Process(CalculatorContext* cc) final {
     cc->Outputs().Index(0).AddPacket(cc->Inputs().Index(0).Value());
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 };
 REGISTER_CALCULATOR(ErrorOnOpenCalculator);
@@ -631,64 +621,64 @@ REGISTER_CALCULATOR(ErrorOnOpenCalculator);
 // Process() method. The input stream and output stream have the integer type.
 class UnitDelayCalculator : public CalculatorBase {
  public:
-  static mediapipe::Status GetContract(CalculatorContract* cc) {
+  static absl::Status GetContract(CalculatorContract* cc) {
     cc->Inputs().Index(0).Set<int>();
     cc->Outputs().Index(0).Set<int>();
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
-  mediapipe::Status Open(CalculatorContext* cc) final {
+  absl::Status Open(CalculatorContext* cc) final {
     cc->Outputs().Index(0).Add(new int(0), Timestamp(0));
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
-  mediapipe::Status Process(CalculatorContext* cc) final {
+  absl::Status Process(CalculatorContext* cc) final {
     const Packet& packet = cc->Inputs().Index(0).Value();
     cc->Outputs().Index(0).AddPacket(
         packet.At(packet.Timestamp().NextAllowedInStream()));
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 };
 REGISTER_CALCULATOR(UnitDelayCalculator);
 
 class UnitDelayUntimedCalculator : public CalculatorBase {
  public:
-  static mediapipe::Status GetContract(CalculatorContract* cc) {
+  static absl::Status GetContract(CalculatorContract* cc) {
     cc->Inputs().Index(0).Set<int>();
     cc->Outputs().Index(0).Set<int>();
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
-  mediapipe::Status Open(CalculatorContext* cc) final {
+  absl::Status Open(CalculatorContext* cc) final {
     cc->Outputs().Index(0).Add(new int(0), Timestamp::Min());
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
-  mediapipe::Status Process(CalculatorContext* cc) final {
+  absl::Status Process(CalculatorContext* cc) final {
     cc->Outputs().Index(0).AddPacket(cc->Inputs().Index(0).Value());
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 };
 REGISTER_CALCULATOR(UnitDelayUntimedCalculator);
 
 class FloatUnitDelayCalculator : public CalculatorBase {
  public:
-  static mediapipe::Status GetContract(CalculatorContract* cc) {
+  static absl::Status GetContract(CalculatorContract* cc) {
     cc->Inputs().Index(0).Set<float>();
     cc->Outputs().Index(0).Set<float>();
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
-  mediapipe::Status Open(CalculatorContext* cc) final {
+  absl::Status Open(CalculatorContext* cc) final {
     cc->Outputs().Index(0).Add(new float(0.0), Timestamp(0));
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
-  mediapipe::Status Process(CalculatorContext* cc) final {
+  absl::Status Process(CalculatorContext* cc) final {
     const Packet& packet = cc->Inputs().Index(0).Value();
     cc->Outputs().Index(0).AddPacket(
         packet.At(packet.Timestamp().NextAllowedInStream()));
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 };
 REGISTER_CALCULATOR(FloatUnitDelayCalculator);
@@ -697,20 +687,18 @@ REGISTER_CALCULATOR(FloatUnitDelayCalculator);
 // discards input packets in Process().
 class AssertEmptyInputInOpenCalculator : public CalculatorBase {
  public:
-  static mediapipe::Status GetContract(CalculatorContract* cc) {
+  static absl::Status GetContract(CalculatorContract* cc) {
     cc->Inputs().Index(0).SetAny();
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
-  mediapipe::Status Open(CalculatorContext* cc) final {
+  absl::Status Open(CalculatorContext* cc) final {
     RET_CHECK(cc->Inputs().Index(0).Value().IsEmpty());
     RET_CHECK_EQ(cc->Inputs().Index(0).Value().Timestamp(), Timestamp::Unset());
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
-  mediapipe::Status Process(CalculatorContext* cc) final {
-    return mediapipe::OkStatus();
-  }
+  absl::Status Process(CalculatorContext* cc) final { return absl::OkStatus(); }
 };
 REGISTER_CALCULATOR(AssertEmptyInputInOpenCalculator);
 
@@ -718,22 +706,22 @@ REGISTER_CALCULATOR(AssertEmptyInputInOpenCalculator);
 // 0, 1, ..., 9.
 class SlowCountingSinkCalculator : public CalculatorBase {
  public:
-  static mediapipe::Status GetContract(CalculatorContract* cc) {
+  static absl::Status GetContract(CalculatorContract* cc) {
     cc->Inputs().Index(0).Set<int>();
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
-  mediapipe::Status Process(CalculatorContext* cc) override {
+  absl::Status Process(CalculatorContext* cc) override {
     absl::SleepFor(absl::Milliseconds(10));
     int value = cc->Inputs().Index(0).Get<int>();
     CHECK_EQ(value, counter_);
     ++counter_;
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
-  mediapipe::Status Close(CalculatorContext* cc) override {
+  absl::Status Close(CalculatorContext* cc) override {
     CHECK_EQ(10, counter_);
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
  private:
@@ -745,25 +733,24 @@ template <typename InputType>
 class TypedStatusHandler : public StatusHandler {
  public:
   ~TypedStatusHandler() override = 0;
-  static mediapipe::Status FillExpectations(
+  static absl::Status FillExpectations(
       const MediaPipeOptions& extendable_options,
       PacketTypeSet* input_side_packets) {
     input_side_packets->Index(0).Set<InputType>();
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
-  static mediapipe::Status HandlePreRunStatus(
+  static absl::Status HandlePreRunStatus(
       const MediaPipeOptions& extendable_options,
       const PacketSet& input_side_packets,  //
-      const mediapipe::Status& pre_run_status) {
-    return mediapipe::OkStatus();
+      const absl::Status& pre_run_status) {
+    return absl::OkStatus();
   }
 
-  static mediapipe::Status HandleStatus(
-      const MediaPipeOptions& extendable_options,
-      const PacketSet& input_side_packets,  //
-      const mediapipe::Status& run_status) {
-    return mediapipe::OkStatus();
+  static absl::Status HandleStatus(const MediaPipeOptions& extendable_options,
+                                   const PacketSet& input_side_packets,  //
+                                   const absl::Status& run_status) {
+    return absl::OkStatus();
   }
 };
 typedef TypedStatusHandler<std::string> StringStatusHandler;
@@ -774,22 +761,22 @@ REGISTER_STATUS_HANDLER(Uint32StatusHandler);
 // A std::string generator that will succeed.
 class StaticCounterStringGenerator : public PacketGenerator {
  public:
-  static mediapipe::Status FillExpectations(
+  static absl::Status FillExpectations(
       const PacketGeneratorOptions& extendable_options,
       PacketTypeSet* input_side_packets, PacketTypeSet* output_side_packets) {
     for (int i = 0; i < input_side_packets->NumEntries(); ++i) {
       input_side_packets->Index(i).SetAny();
     }
     output_side_packets->Index(0).Set<std::string>();
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
-  static mediapipe::Status Generate(
-      const PacketGeneratorOptions& extendable_options,
-      const PacketSet& input_side_packets, PacketSet* output_side_packets) {
+  static absl::Status Generate(const PacketGeneratorOptions& extendable_options,
+                               const PacketSet& input_side_packets,
+                               PacketSet* output_side_packets) {
     output_side_packets->Index(0) = MakePacket<std::string>("fixed_string");
     ++num_packets_generated_;
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
   static int NumPacketsGenerated() { return num_packets_generated_; }
@@ -806,20 +793,20 @@ REGISTER_PACKET_GENERATOR(StaticCounterStringGenerator);
 // called. Both claim to output strings but instead always fail.
 class FailingPacketGenerator : public PacketGenerator {
  public:
-  static mediapipe::Status FillExpectations(
+  static absl::Status FillExpectations(
       const PacketGeneratorOptions& extendable_options,
       PacketTypeSet* input_side_packets, PacketTypeSet* output_side_packets) {
     for (int i = 0; i < input_side_packets->NumEntries(); ++i) {
       input_side_packets->Index(i).SetAny();
     }
     output_side_packets->Index(0).Set<std::string>();
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
-  static mediapipe::Status Generate(
-      const PacketGeneratorOptions& extendable_options,
-      const PacketSet& input_side_packets, PacketSet* output_side_packets) {
-    return mediapipe::UnknownError("this always fails.");
+  static absl::Status Generate(const PacketGeneratorOptions& extendable_options,
+                               const PacketSet& input_side_packets,
+                               PacketSet* output_side_packets) {
+    return absl::UnknownError("this always fails.");
   }
 };
 REGISTER_PACKET_GENERATOR(FailingPacketGenerator);
@@ -827,28 +814,28 @@ REGISTER_PACKET_GENERATOR(FailingPacketGenerator);
 // Passes the integer through if it is positive.
 class EnsurePositivePacketGenerator : public PacketGenerator {
  public:
-  static mediapipe::Status FillExpectations(
+  static absl::Status FillExpectations(
       const PacketGeneratorOptions& extendable_options,
       PacketTypeSet* input_side_packets, PacketTypeSet* output_side_packets) {
     for (int i = 0; i < input_side_packets->NumEntries(); ++i) {
       input_side_packets->Index(i).Set<int>();
       output_side_packets->Index(i).Set<int>();
     }
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
-  static mediapipe::Status Generate(
-      const PacketGeneratorOptions& extendable_options,
-      const PacketSet& input_side_packets, PacketSet* output_side_packets) {
+  static absl::Status Generate(const PacketGeneratorOptions& extendable_options,
+                               const PacketSet& input_side_packets,
+                               PacketSet* output_side_packets) {
     for (int i = 0; i < input_side_packets.NumEntries(); ++i) {
       if (input_side_packets.Index(i).Get<int>() > 0) {
         output_side_packets->Index(i) = input_side_packets.Index(i);
       } else {
-        return mediapipe::UnknownError(
+        return absl::UnknownError(
             absl::StrCat("Integer ", i, " was not positive."));
       }
     }
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 };
 REGISTER_PACKET_GENERATOR(EnsurePositivePacketGenerator);
@@ -865,32 +852,30 @@ class FailableStatusHandler : public StatusHandler {
     kFailPostRun = 2,
   };
 
-  static mediapipe::Status FillExpectations(
+  static absl::Status FillExpectations(
       const MediaPipeOptions& extendable_options,
       PacketTypeSet* input_side_packets) {
     input_side_packets->Index(0).Set<int>();
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
-  static mediapipe::Status HandlePreRunStatus(
+  static absl::Status HandlePreRunStatus(
       const MediaPipeOptions& extendable_options,
-      const PacketSet& input_side_packets,
-      const mediapipe::Status& pre_run_status) {
+      const PacketSet& input_side_packets, const absl::Status& pre_run_status) {
     if (input_side_packets.Index(0).Get<int>() == kFailPreRun) {
-      return mediapipe::UnknownError(
+      return absl::UnknownError(
           "FailableStatusHandler failing pre run as intended.");
     } else {
-      return mediapipe::OkStatus();
+      return absl::OkStatus();
     }
   }
-  static mediapipe::Status HandleStatus(
-      const MediaPipeOptions& extendable_options,
-      const PacketSet& input_side_packets,
-      const mediapipe::Status& run_status) {
+  static absl::Status HandleStatus(const MediaPipeOptions& extendable_options,
+                                   const PacketSet& input_side_packets,
+                                   const absl::Status& run_status) {
     if (input_side_packets.Index(0).Get<int>() == kFailPostRun) {
-      return mediapipe::UnknownError(
+      return absl::UnknownError(
           "FailableStatusHandler failing post run as intended.");
     } else {
-      return mediapipe::OkStatus();
+      return absl::OkStatus();
     }
   }
 };
@@ -898,13 +883,13 @@ REGISTER_STATUS_HANDLER(FailableStatusHandler);
 
 class FailingSourceCalculator : public CalculatorBase {
  public:
-  static mediapipe::Status GetContract(CalculatorContract* cc) {
+  static absl::Status GetContract(CalculatorContract* cc) {
     cc->Outputs().Index(0).Set<std::string>();
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
-  mediapipe::Status Process(CalculatorContext* cc) override {
-    return mediapipe::UnknownError("this always fails.");
+  absl::Status Process(CalculatorContext* cc) override {
+    return absl::UnknownError("this always fails.");
   }
 };
 REGISTER_CALCULATOR(FailingSourceCalculator);
@@ -932,24 +917,22 @@ class SemaphoreCalculator : public CalculatorBase {
  public:
   using Semaphore = AtomicSemaphore;
 
-  static mediapipe::Status GetContract(CalculatorContract* cc) {
+  static absl::Status GetContract(CalculatorContract* cc) {
     cc->Inputs().Index(0).SetAny();
     cc->Outputs().Index(0).SetSameAs(&cc->Inputs().Index(0));
     cc->InputSidePackets().Tag("POST_SEM").Set<Semaphore*>();
     cc->InputSidePackets().Tag("WAIT_SEM").Set<Semaphore*>();
     cc->SetTimestampOffset(TimestampDiff(0));
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
-  mediapipe::Status Open(CalculatorContext* cc) override {
-    return mediapipe::OkStatus();
-  }
+  absl::Status Open(CalculatorContext* cc) override { return absl::OkStatus(); }
 
-  mediapipe::Status Process(CalculatorContext* cc) override {
+  absl::Status Process(CalculatorContext* cc) override {
     cc->InputSidePackets().Tag("POST_SEM").Get<Semaphore*>()->Release(1);
     cc->InputSidePackets().Tag("WAIT_SEM").Get<Semaphore*>()->Acquire(1);
     cc->Outputs().Index(0).AddPacket(cc->Inputs().Index(0).Value());
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 };
 REGISTER_CALCULATOR(SemaphoreCalculator);
@@ -958,11 +941,11 @@ REGISTER_CALCULATOR(SemaphoreCalculator);
 // and takes 20 milliseconds to run.
 class OneShot20MsCalculator : public CalculatorBase {
  public:
-  static mediapipe::Status GetContract(CalculatorContract* cc) {
-    return mediapipe::OkStatus();
+  static absl::Status GetContract(CalculatorContract* cc) {
+    return absl::OkStatus();
   }
 
-  mediapipe::Status Process(CalculatorContext* cc) override {
+  absl::Status Process(CalculatorContext* cc) override {
     absl::SleepFor(absl::Milliseconds(20));
     return tool::StatusStop();
   }
@@ -973,12 +956,12 @@ REGISTER_CALCULATOR(OneShot20MsCalculator);
 // pthread_self() (the pthread id of the current thread).
 class PthreadSelfSourceCalculator : public CalculatorBase {
  public:
-  static mediapipe::Status GetContract(CalculatorContract* cc) {
+  static absl::Status GetContract(CalculatorContract* cc) {
     cc->Outputs().Index(0).Set<pthread_t>();
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
-  mediapipe::Status Process(CalculatorContext* cc) override {
+  absl::Status Process(CalculatorContext* cc) override {
     cc->Outputs().Index(0).AddPacket(
         MakePacket<pthread_t>(pthread_self()).At(Timestamp(0)));
     return tool::StatusStop();
@@ -990,38 +973,38 @@ REGISTER_CALCULATOR(PthreadSelfSourceCalculator);
 // It outputs five int packets with timestamps 0, 1, 2, 3, 4.
 class CheckInputTimestampSourceCalculator : public CalculatorBase {
  public:
-  static mediapipe::Status GetContract(CalculatorContract* cc) {
+  static absl::Status GetContract(CalculatorContract* cc) {
     cc->Outputs().Index(0).Set<int>();
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
   // InputTimestamp() returns Timestamp::Unstarted() in Open() for both source
   // and non-source nodes.
-  mediapipe::Status Open(CalculatorContext* cc) final {
+  absl::Status Open(CalculatorContext* cc) final {
     RET_CHECK_EQ(cc->InputTimestamp(), Timestamp::Unstarted());
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
   // InputTimestamp() always returns Timestamp(0) in Process() for source
   // nodes.
-  mediapipe::Status Process(CalculatorContext* cc) final {
+  absl::Status Process(CalculatorContext* cc) final {
     RET_CHECK_EQ(cc->InputTimestamp(), Timestamp(0));
     cc->Outputs().Index(0).Add(new int(count_), Timestamp(count_));
     ++count_;
     if (count_ >= 5) {
       return tool::StatusStop();
     } else {
-      return mediapipe::OkStatus();
+      return absl::OkStatus();
     }
   }
 
   // InputTimestamp() returns Timestamp::Done() in Close() for both source
   // and non-source nodes.
-  mediapipe::Status Close(CalculatorContext* cc) final {
+  absl::Status Close(CalculatorContext* cc) final {
     // Must use CHECK instead of RET_CHECK in Close(), because the framework
     // may call the Close() method of a source node with .IgnoreError().
     CHECK_EQ(cc->InputTimestamp(), Timestamp::Done());
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
  private:
@@ -1033,33 +1016,33 @@ REGISTER_CALCULATOR(CheckInputTimestampSourceCalculator);
 // It expects to consume the output of a CheckInputTimestampSourceCalculator.
 class CheckInputTimestampSinkCalculator : public CalculatorBase {
  public:
-  static mediapipe::Status GetContract(CalculatorContract* cc) {
+  static absl::Status GetContract(CalculatorContract* cc) {
     cc->Inputs().Index(0).Set<int>();
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
   // InputTimestamp() returns Timestamp::Unstarted() in Open() for both source
   // and non-source nodes.
-  mediapipe::Status Open(CalculatorContext* cc) final {
+  absl::Status Open(CalculatorContext* cc) final {
     RET_CHECK_EQ(cc->InputTimestamp(), Timestamp::Unstarted());
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
   // InputTimestamp() returns the timestamp of input packets in Process() for
   // non-source nodes.
-  mediapipe::Status Process(CalculatorContext* cc) final {
+  absl::Status Process(CalculatorContext* cc) final {
     RET_CHECK_EQ(cc->InputTimestamp(),
                  cc->Inputs().Index(0).Value().Timestamp());
     RET_CHECK_EQ(cc->InputTimestamp(), Timestamp(count_));
     ++count_;
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
   // InputTimestamp() returns Timestamp::Done() in Close() for both source
   // and non-source nodes.
-  mediapipe::Status Close(CalculatorContext* cc) final {
+  absl::Status Close(CalculatorContext* cc) final {
     RET_CHECK_EQ(cc->InputTimestamp(), Timestamp::Done());
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
  private:
@@ -1072,34 +1055,34 @@ REGISTER_CALCULATOR(CheckInputTimestampSinkCalculator);
 // the framework.
 class CheckInputTimestamp2SourceCalculator : public CalculatorBase {
  public:
-  static mediapipe::Status GetContract(CalculatorContract* cc) {
+  static absl::Status GetContract(CalculatorContract* cc) {
     cc->Outputs().Index(0).Set<int>();
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
   // InputTimestamp() returns Timestamp::Unstarted() in Open() for both source
   // and non-source nodes.
-  mediapipe::Status Open(CalculatorContext* cc) final {
+  absl::Status Open(CalculatorContext* cc) final {
     RET_CHECK_EQ(cc->InputTimestamp(), Timestamp::Unstarted());
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
   // InputTimestamp() always returns Timestamp(0) in Process() for source
   // nodes.
-  mediapipe::Status Process(CalculatorContext* cc) final {
+  absl::Status Process(CalculatorContext* cc) final {
     RET_CHECK_EQ(cc->InputTimestamp(), Timestamp(0));
     cc->Outputs().Index(0).Add(new int(count_), Timestamp(count_));
     ++count_;
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
   // InputTimestamp() returns Timestamp::Done() in Close() for both source
   // and non-source nodes.
-  mediapipe::Status Close(CalculatorContext* cc) final {
+  absl::Status Close(CalculatorContext* cc) final {
     // Must use CHECK instead of RET_CHECK in Close(), because the framework
     // may call the Close() method of a source node with .IgnoreError().
     CHECK_EQ(cc->InputTimestamp(), Timestamp::Done());
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
  private:
@@ -1112,21 +1095,21 @@ REGISTER_CALCULATOR(CheckInputTimestamp2SourceCalculator);
 // It returns tool::StatusStop() after consuming five input packets.
 class CheckInputTimestamp2SinkCalculator : public CalculatorBase {
  public:
-  static mediapipe::Status GetContract(CalculatorContract* cc) {
+  static absl::Status GetContract(CalculatorContract* cc) {
     cc->Inputs().Index(0).Set<int>();
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
   // InputTimestamp() returns Timestamp::Unstarted() in Open() for both source
   // and non-source nodes.
-  mediapipe::Status Open(CalculatorContext* cc) final {
+  absl::Status Open(CalculatorContext* cc) final {
     RET_CHECK_EQ(cc->InputTimestamp(), Timestamp::Unstarted());
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
   // InputTimestamp() returns the timestamp of input packets in Process() for
   // non-source nodes.
-  mediapipe::Status Process(CalculatorContext* cc) final {
+  absl::Status Process(CalculatorContext* cc) final {
     RET_CHECK_EQ(cc->InputTimestamp(),
                  cc->Inputs().Index(0).Value().Timestamp());
     RET_CHECK_EQ(cc->InputTimestamp(), Timestamp(count_));
@@ -1134,15 +1117,15 @@ class CheckInputTimestamp2SinkCalculator : public CalculatorBase {
     if (count_ >= 5) {
       return tool::StatusStop();
     } else {
-      return mediapipe::OkStatus();
+      return absl::OkStatus();
     }
   }
 
   // InputTimestamp() returns Timestamp::Done() in Close() for both source
   // and non-source nodes.
-  mediapipe::Status Close(CalculatorContext* cc) final {
+  absl::Status Close(CalculatorContext* cc) final {
     RET_CHECK_EQ(cc->InputTimestamp(), Timestamp::Done());
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
  private:
@@ -1154,16 +1137,16 @@ REGISTER_CALCULATOR(CheckInputTimestamp2SinkCalculator);
 // output side packet.
 class OutputSidePacketInProcessCalculator : public CalculatorBase {
  public:
-  static mediapipe::Status GetContract(CalculatorContract* cc) {
+  static absl::Status GetContract(CalculatorContract* cc) {
     cc->Inputs().Index(0).SetAny();
     cc->OutputSidePackets().Index(0).SetSameAs(&cc->Inputs().Index(0));
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
-  mediapipe::Status Process(CalculatorContext* cc) final {
+  absl::Status Process(CalculatorContext* cc) final {
     cc->OutputSidePackets().Index(0).Set(
         cc->Inputs().Index(0).Value().At(Timestamp::Unset()));
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 };
 REGISTER_CALCULATOR(OutputSidePacketInProcessCalculator);
@@ -1172,21 +1155,21 @@ REGISTER_CALCULATOR(OutputSidePacketInProcessCalculator);
 // sends the packet to the single output stream with the same timestamp.
 class SimpleMuxCalculator : public CalculatorBase {
  public:
-  static mediapipe::Status GetContract(CalculatorContract* cc) {
+  static absl::Status GetContract(CalculatorContract* cc) {
     RET_CHECK_EQ(cc->Inputs().NumEntries(), 2);
     cc->Inputs().Index(0).SetAny();
     cc->Inputs().Index(1).SetSameAs(&cc->Inputs().Index(0));
     RET_CHECK_EQ(cc->Outputs().NumEntries(), 1);
     cc->Outputs().Index(0).SetSameAs(&cc->Inputs().Index(0));
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
-  mediapipe::Status Open(CalculatorContext* cc) final {
+  absl::Status Open(CalculatorContext* cc) final {
     data_input_base_ = cc->Inputs().BeginId();
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
-  mediapipe::Status Process(CalculatorContext* cc) final {
+  absl::Status Process(CalculatorContext* cc) final {
     int select_packet_index = -1;
     if (!cc->Inputs().Index(0).IsEmpty()) {
       select_packet_index = 0;
@@ -1197,7 +1180,7 @@ class SimpleMuxCalculator : public CalculatorBase {
       cc->Outputs().Index(0).AddPacket(
           cc->Inputs().Get(data_input_base_ + select_packet_index).Value());
     }
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
  private:
@@ -1209,51 +1192,50 @@ REGISTER_CALCULATOR(SimpleMuxCalculator);
 // by modifying the int in its input side packet.
 class IncrementingStatusHandler : public StatusHandler {
  public:
-  static mediapipe::Status FillExpectations(
+  static absl::Status FillExpectations(
       const MediaPipeOptions& extendable_options,
       PacketTypeSet* input_side_packets) {
     input_side_packets->Tag("EXTRA").SetAny().Optional();
     input_side_packets->Tag("COUNTER1").Set<std::unique_ptr<int>>();
     input_side_packets->Tag("COUNTER2").Set<std::unique_ptr<int>>();
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
-  static mediapipe::Status HandlePreRunStatus(
+  static absl::Status HandlePreRunStatus(
       const MediaPipeOptions& extendable_options,
       const PacketSet& input_side_packets,  //
-      const mediapipe::Status& pre_run_status) {
+      const absl::Status& pre_run_status) {
     int* counter = GetFromUniquePtr<int>(input_side_packets.Tag("COUNTER1"));
     (*counter)++;
     return pre_run_status_result_;
   }
 
-  static mediapipe::Status HandleStatus(
-      const MediaPipeOptions& extendable_options,
-      const PacketSet& input_side_packets,  //
-      const mediapipe::Status& run_status) {
+  static absl::Status HandleStatus(const MediaPipeOptions& extendable_options,
+                                   const PacketSet& input_side_packets,  //
+                                   const absl::Status& run_status) {
     int* counter = GetFromUniquePtr<int>(input_side_packets.Tag("COUNTER2"));
     (*counter)++;
     return post_run_status_result_;
   }
 
-  static void SetPreRunStatusResult(const mediapipe::Status& status) {
+  static void SetPreRunStatusResult(const absl::Status& status) {
     pre_run_status_result_ = status;
   }
 
-  static void SetPostRunStatusResult(const mediapipe::Status& status) {
+  static void SetPostRunStatusResult(const absl::Status& status) {
     post_run_status_result_ = status;
   }
 
  private:
   // Return values of HandlePreRunStatus() and HandleSTatus(), respectively.
-  static mediapipe::Status pre_run_status_result_;
-  static mediapipe::Status post_run_status_result_;
+  static absl::Status pre_run_status_result_;
+  static absl::Status post_run_status_result_;
 };
 
-mediapipe::Status IncrementingStatusHandler::pre_run_status_result_ =
-    mediapipe::OkStatus();
-mediapipe::Status IncrementingStatusHandler::post_run_status_result_ =
-    mediapipe::OkStatus();
+absl::Status IncrementingStatusHandler::pre_run_status_result_ =
+    absl::OkStatus();
+absl::Status IncrementingStatusHandler::post_run_status_result_ =
+    absl::OkStatus();
 
 REGISTER_STATUS_HANDLER(IncrementingStatusHandler);
 
@@ -1601,18 +1583,18 @@ TEST(CalculatorGraph, RunsCorrectlyWithMultipleExecutors) {
 // Packet generator for an arbitrary unit64 packet.
 class Uint64PacketGenerator : public PacketGenerator {
  public:
-  static mediapipe::Status FillExpectations(
+  static absl::Status FillExpectations(
       const PacketGeneratorOptions& extendable_options,
       PacketTypeSet* input_side_packets, PacketTypeSet* output_side_packets) {
     output_side_packets->Index(0).Set<uint64>();
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
-  static mediapipe::Status Generate(
-      const PacketGeneratorOptions& extendable_options,
-      const PacketSet& input_side_packets, PacketSet* output_side_packets) {
+  static absl::Status Generate(const PacketGeneratorOptions& extendable_options,
+                               const PacketSet& input_side_packets,
+                               PacketSet* output_side_packets) {
     output_side_packets->Index(0) = Adopt(new uint64(15LL << 32 | 5));
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 };
 REGISTER_PACKET_GENERATOR(Uint64PacketGenerator);
@@ -1806,7 +1788,7 @@ TEST(CalculatorGraph, StatusHandlerInputVerification) {
   invalid_handler->set_status_handler("Uint32StatusHandler");
   invalid_handler->add_input_side_packet("created_by_factory");
   graph.reset(new CalculatorGraph());
-  mediapipe::Status status = graph->Initialize(config);
+  absl::Status status = graph->Initialize(config);
   EXPECT_THAT(status.message(),
               testing::AllOf(testing::HasSubstr("Uint32StatusHandler"),
                              // The problematic input side packet.
@@ -2037,17 +2019,17 @@ TEST(CalculatorGraph, HandlersRun) {
   EXPECT_EQ(1, *GetFromUniquePtr<int>(
                    input_side_packets.at("unavailable_input_counter2")));
 
-  mediapipe::Status run_status;
+  absl::Status run_status;
 
   // Make status handlers fail. The graph should fail.
   // First, when the PRE_run fails
   IncrementingStatusHandler::SetPreRunStatusResult(
-      mediapipe::InternalError("Fail at pre-run"));
+      absl::InternalError("Fail at pre-run"));
   graph.reset(new CalculatorGraph());
   MP_ASSERT_OK(graph->Initialize(config));
   ResetCounters(&input_side_packets);
   run_status = graph->Run(input_side_packets);
-  EXPECT_TRUE(run_status.code() == mediapipe::StatusCode::kInternal);
+  EXPECT_TRUE(run_status.code() == absl::StatusCode::kInternal);
   EXPECT_THAT(run_status.ToString(), testing::HasSubstr("Fail at pre-run"));
   EXPECT_EQ(1,
             *GetFromUniquePtr<int>(input_side_packets.at("no_input_counter1")));
@@ -2063,14 +2045,14 @@ TEST(CalculatorGraph, HandlersRun) {
                    input_side_packets.at("unavailable_input_counter2")));
 
   // Second, when the POST_run fails
-  IncrementingStatusHandler::SetPreRunStatusResult(mediapipe::OkStatus());
+  IncrementingStatusHandler::SetPreRunStatusResult(absl::OkStatus());
   IncrementingStatusHandler::SetPostRunStatusResult(
-      mediapipe::InternalError("Fail at post-run"));
+      absl::InternalError("Fail at post-run"));
   graph.reset(new CalculatorGraph());
   MP_ASSERT_OK(graph->Initialize(config));
   ResetCounters(&input_side_packets);
   run_status = graph->Run(input_side_packets);
-  EXPECT_TRUE(run_status.code() == mediapipe::StatusCode::kInternal);
+  EXPECT_TRUE(run_status.code() == absl::StatusCode::kInternal);
   EXPECT_THAT(run_status.ToString(), testing::HasSubstr("Fail at post-run"));
   EXPECT_EQ(1,
             *GetFromUniquePtr<int>(input_side_packets.at("no_input_counter1")));
@@ -2087,7 +2069,7 @@ TEST(CalculatorGraph, HandlersRun) {
 }
 
 // Test that calling SetOffset() in Calculator::Process() results in the
-// mediapipe::StatusCode::kFailedPrecondition error.
+// absl::StatusCode::kFailedPrecondition error.
 TEST(CalculatorGraph, SetOffsetInProcess) {
   CalculatorGraph graph;
   CalculatorGraphConfig config =
@@ -2104,9 +2086,9 @@ TEST(CalculatorGraph, SetOffsetInProcess) {
   MP_EXPECT_OK(graph.StartRun({}));
   MP_EXPECT_OK(
       graph.AddPacketToInputStream("in", MakePacket<int>(0).At(Timestamp(0))));
-  mediapipe::Status status = graph.WaitUntilIdle();
+  absl::Status status = graph.WaitUntilIdle();
   EXPECT_FALSE(status.ok());
-  EXPECT_EQ(mediapipe::StatusCode::kFailedPrecondition, status.code());
+  EXPECT_EQ(absl::StatusCode::kFailedPrecondition, status.code());
 }
 
 // Test that MediaPipe releases input packets when it is done with them.
@@ -2262,7 +2244,7 @@ TEST(CalculatorGraph, IfThenElse) {
 // for the unselected outputs.
 class DemuxUntimedCalculator : public CalculatorBase {
  public:
-  static mediapipe::Status GetContract(CalculatorContract* cc) {
+  static absl::Status GetContract(CalculatorContract* cc) {
     RET_CHECK_EQ(cc->Inputs().NumEntries(), 2);
     cc->Inputs().Tag("INPUT").SetAny();
     cc->Inputs().Tag("SELECT").Set<int>();
@@ -2270,9 +2252,9 @@ class DemuxUntimedCalculator : public CalculatorBase {
          id < cc->Outputs().EndId("OUTPUT"); ++id) {
       cc->Outputs().Get(id).SetSameAs(&cc->Inputs().Tag("INPUT"));
     }
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
-  mediapipe::Status Process(CalculatorContext* cc) final {
+  absl::Status Process(CalculatorContext* cc) final {
     int index = cc->Inputs().Tag("SELECT").Get<int>();
     if (!cc->Inputs().Tag("INPUT").IsEmpty()) {
       cc->Outputs()
@@ -2283,7 +2265,7 @@ class DemuxUntimedCalculator : public CalculatorBase {
           .Get("OUTPUT", index)
           .SetNextTimestampBound(cc->InputTimestamp() + 1);
     }
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 };
 REGISTER_CALCULATOR(DemuxUntimedCalculator);
@@ -3088,8 +3070,8 @@ TEST(CalculatorGraph, TerminatesOnCancelWithOpenGraphInputStreams) {
   graph.Cancel();
   // This tests that the graph doesn't deadlock on WaitUntilDone (because
   // the scheduler thread is sleeping).
-  mediapipe::Status status = graph.WaitUntilDone();
-  EXPECT_EQ(status.code(), mediapipe::StatusCode::kCancelled);
+  absl::Status status = graph.WaitUntilDone();
+  EXPECT_EQ(status.code(), absl::StatusCode::kCancelled);
 }
 
 TEST(CalculatorGraph, TerminatesOnCancelAfterPause) {
@@ -3117,8 +3099,8 @@ TEST(CalculatorGraph, TerminatesOnCancelAfterPause) {
   graph.Pause();
   // This tests that the graph doesn't deadlock on WaitUntilDone (because
   // the scheduler thread is sleeping).
-  mediapipe::Status status = graph.WaitUntilDone();
-  EXPECT_EQ(status.code(), mediapipe::StatusCode::kCancelled);
+  absl::Status status = graph.WaitUntilDone();
+  EXPECT_EQ(status.code(), absl::StatusCode::kCancelled);
 }
 
 // A PacketGenerator that simply passes its input Packets through
@@ -3127,11 +3109,11 @@ TEST(CalculatorGraph, TerminatesOnCancelAfterPause) {
 // also be ignored.
 class PassThroughGenerator : public PacketGenerator {
  public:
-  static mediapipe::Status FillExpectations(
+  static absl::Status FillExpectations(
       const PacketGeneratorOptions& extendable_options, PacketTypeSet* inputs,
       PacketTypeSet* outputs) {
     if (!inputs->TagMap()->SameAs(*outputs->TagMap())) {
-      return mediapipe::InvalidArgumentError(
+      return absl::InvalidArgumentError(
           "Input and outputs to PassThroughGenerator must use the same tags "
           "and indexes.");
     }
@@ -3139,17 +3121,17 @@ class PassThroughGenerator : public PacketGenerator {
       inputs->Get(id).SetAny();
       outputs->Get(id).SetSameAs(&inputs->Get(id));
     }
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
-  static mediapipe::Status Generate(
-      const PacketGeneratorOptions& extendable_options,
-      const PacketSet& input_side_packets, PacketSet* output_side_packets) {
+  static absl::Status Generate(const PacketGeneratorOptions& extendable_options,
+                               const PacketSet& input_side_packets,
+                               PacketSet* output_side_packets) {
     for (CollectionItemId id = input_side_packets.BeginId();
          id < input_side_packets.EndId(); ++id) {
       output_side_packets->Get(id) = input_side_packets.Get(id);
     }
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 };
 REGISTER_PACKET_GENERATOR(PassThroughGenerator);
@@ -3183,7 +3165,7 @@ TEST(CalculatorGraph, RecoverAfterRunError) {
   MP_ASSERT_OK(graph.ObserveOutputStream("count1",
                                          [&packet_count](const Packet& packet) {
                                            ++packet_count;
-                                           return mediapipe::OkStatus();
+                                           return absl::OkStatus();
                                          }));
   // Set ERROR_COUNT higher than MAX_COUNT and hence the calculator will
   // finish successfully.
@@ -3328,9 +3310,9 @@ TEST(CalculatorGraph, SetInputStreamMaxQueueSizeWorksSlowCalculator) {
     MP_EXPECT_OK(
         graph.AddPacketToInputStream("in", MakePacket<int>(i).At(timestamp)));
     // We should be prevented from adding another, since the queue is now full.
-    mediapipe::Status status = graph.AddPacketToInputStream(
+    absl::Status status = graph.AddPacketToInputStream(
         "in", MakePacket<int>(i).At(timestamp + 1));
-    EXPECT_EQ(status.code(), mediapipe::StatusCode::kUnavailable);
+    EXPECT_EQ(status.code(), absl::StatusCode::kUnavailable);
     // Allow calculator to complete its Process call.
     calc_can_exit_process.Release(1);
   }
@@ -3393,7 +3375,7 @@ TEST(CalculatorGraph, AddPacketNoBusyLoop) {
   MP_ASSERT_OK(
       graph.ObserveOutputStream("out", [&out_packets](const Packet& packet) {
         out_packets.push_back(packet);
-        return mediapipe::OkStatus();
+        return absl::OkStatus();
       }));
 
   MP_ASSERT_OK(graph.StartRun({}));
@@ -3438,29 +3420,29 @@ TEST(CalculatorGraph, AddPacketNoBusyLoop) {
 
 namespace nested_ns {
 
-typedef std::function<mediapipe::Status(const InputStreamShardSet&,
-                                        OutputStreamShardSet*)>
+typedef std::function<absl::Status(const InputStreamShardSet&,
+                                   OutputStreamShardSet*)>
     ProcessFunction;
 
 // A Calculator that delegates its Process function to a callback function.
 class ProcessCallbackCalculator : public CalculatorBase {
  public:
-  static mediapipe::Status GetContract(CalculatorContract* cc) {
+  static absl::Status GetContract(CalculatorContract* cc) {
     for (int i = 0; i < cc->Inputs().NumEntries(); ++i) {
       cc->Inputs().Index(i).SetAny();
       cc->Outputs().Index(i).SetSameAs(&cc->Inputs().Index(0));
     }
     cc->InputSidePackets().Index(0).Set<std::unique_ptr<ProcessFunction>>();
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
-  mediapipe::Status Open(CalculatorContext* cc) final {
+  absl::Status Open(CalculatorContext* cc) final {
     callback_ =
         *GetFromUniquePtr<ProcessFunction>(cc->InputSidePackets().Index(0));
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
-  mediapipe::Status Process(CalculatorContext* cc) final {
+  absl::Status Process(CalculatorContext* cc) final {
     return callback_(cc->Inputs(), &(cc->Outputs()));
   }
 
@@ -3492,14 +3474,14 @@ TEST(CalculatorGraph, CalculatorInNamepsace) {
 }
 
 // A ProcessFunction that passes through all packets.
-mediapipe::Status DoProcess(const InputStreamShardSet& inputs,
-                            OutputStreamShardSet* outputs) {
+absl::Status DoProcess(const InputStreamShardSet& inputs,
+                       OutputStreamShardSet* outputs) {
   for (int i = 0; i < inputs.NumEntries(); ++i) {
     if (!inputs.Index(i).Value().IsEmpty()) {
       outputs->Index(i).AddPacket(inputs.Index(i).Value());
     }
   }
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
 TEST(CalculatorGraph, ObserveOutputStream) {
@@ -3532,12 +3514,12 @@ TEST(CalculatorGraph, ObserveOutputStream) {
   MP_ASSERT_OK(graph.ObserveOutputStream(
       "count", [&count_packets](const Packet& packet) {
         count_packets.push_back(packet);
-        return mediapipe::OkStatus();
+        return absl::OkStatus();
       }));
   MP_ASSERT_OK(
       graph.ObserveOutputStream("out", [&out_packets](const Packet& packet) {
         out_packets.push_back(packet);
-        return mediapipe::OkStatus();
+        return absl::OkStatus();
       }));
   MP_ASSERT_OK(graph.Run());
   ASSERT_EQ(max_count, count_packets.size());
@@ -3554,7 +3536,7 @@ TEST(CalculatorGraph, ObserveOutputStream) {
 
 class PassThroughSubgraph : public Subgraph {
  public:
-  mediapipe::StatusOr<CalculatorGraphConfig> GetConfig(
+  absl::StatusOr<CalculatorGraphConfig> GetConfig(
       const SubgraphOptions& options) override {
     CalculatorGraphConfig config =
         mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
@@ -3594,7 +3576,7 @@ TEST(CalculatorGraph, ObserveOutputStreamSubgraph) {
   MP_ASSERT_OK(
       graph.ObserveOutputStream("out", [&out_packets](const Packet& packet) {
         out_packets.push_back(packet);
-        return mediapipe::OkStatus();
+        return absl::OkStatus();
       }));
   MP_ASSERT_OK(graph.Run());
   ASSERT_EQ(max_count, out_packets.size());
@@ -3636,17 +3618,17 @@ TEST(CalculatorGraph, ObserveOutputStreamError) {
       "count", [&count_packets](const Packet& packet) {
         count_packets.push_back(packet);
         if (count_packets.size() >= fail_count) {
-          return mediapipe::UnknownError("Expected. MagicString-eatnhuea");
+          return absl::UnknownError("Expected. MagicString-eatnhuea");
         } else {
-          return mediapipe::OkStatus();
+          return absl::OkStatus();
         }
       }));
   MP_ASSERT_OK(
       graph.ObserveOutputStream("out", [&out_packets](const Packet& packet) {
         out_packets.push_back(packet);
-        return mediapipe::OkStatus();
+        return absl::OkStatus();
       }));
-  mediapipe::Status status = graph.Run();
+  absl::Status status = graph.Run();
   ASSERT_THAT(status.message(), testing::HasSubstr("MagicString-eatnhuea"));
   ASSERT_EQ(fail_count, count_packets.size());
   for (int i = 0; i < count_packets.size(); ++i) {
@@ -3680,12 +3662,12 @@ TEST(CalculatorGraph, ObserveOutputStreamNonexistent) {
       graph.Initialize(config, {{"max_count", MakePacket<int>(max_count)}}));
   // Observe the internal output stream "count".
   std::vector<Packet> count_packets;  // Packets from the output stream "count".
-  mediapipe::Status status = graph.ObserveOutputStream(
+  absl::Status status = graph.ObserveOutputStream(
       "not_found", [&count_packets](const Packet& packet) {
         count_packets.push_back(packet);
-        return mediapipe::OkStatus();
+        return absl::OkStatus();
       });
-  EXPECT_EQ(status.code(), mediapipe::StatusCode::kNotFound);
+  EXPECT_EQ(status.code(), absl::StatusCode::kNotFound);
   EXPECT_THAT(status.message(), testing::HasSubstr("not_found"));
 }
 
@@ -3856,7 +3838,7 @@ TEST(CalculatorGraph, ReuseValidatedGraphConfig) {
 
 class TestRangeStdDevSubgraph : public Subgraph {
  public:
-  mediapipe::StatusOr<CalculatorGraphConfig> GetConfig(
+  absl::StatusOr<CalculatorGraphConfig> GetConfig(
       const SubgraphOptions& options) override {
     CalculatorGraphConfig config =
         mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
@@ -3886,7 +3868,7 @@ REGISTER_MEDIAPIPE_GRAPH(TestRangeStdDevSubgraph);
 
 class TestMergeSaverSubgraph : public Subgraph {
  public:
-  mediapipe::StatusOr<CalculatorGraphConfig> GetConfig(
+  absl::StatusOr<CalculatorGraphConfig> GetConfig(
       const SubgraphOptions& options) override {
     CalculatorGraphConfig config =
         mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
@@ -3987,18 +3969,18 @@ TEST(CalculatorGraph, SetExecutorTwice) {
       graph.SetExecutor("xyz", std::make_shared<ThreadPoolExecutor>(1)));
   MP_EXPECT_OK(
       graph.SetExecutor("abc", std::make_shared<ThreadPoolExecutor>(1)));
-  mediapipe::Status status =
+  absl::Status status =
       graph.SetExecutor("xyz", std::make_shared<ThreadPoolExecutor>(1));
-  EXPECT_EQ(status.code(), mediapipe::StatusCode::kAlreadyExists);
+  EXPECT_EQ(status.code(), absl::StatusCode::kAlreadyExists);
   EXPECT_THAT(status.message(), testing::HasSubstr("xyz"));
 }
 
 TEST(CalculatorGraph, ReservedNameSetExecutor) {
   // A reserved executor name such as "__gpu" must not be used.
   CalculatorGraph graph;
-  mediapipe::Status status =
+  absl::Status status =
       graph.SetExecutor("__gpu", std::make_shared<ThreadPoolExecutor>(1));
-  EXPECT_EQ(status.code(), mediapipe::StatusCode::kInvalidArgument);
+  EXPECT_EQ(status.code(), absl::StatusCode::kInvalidArgument);
   EXPECT_THAT(status.message(), testing::AllOf(testing::HasSubstr("__gpu"),
                                                testing::HasSubstr("reserved")));
 }
@@ -4022,8 +4004,8 @@ TEST(CalculatorGraph, ReservedNameExecutorConfig) {
           output_stream: 'out'
         }
       )");
-  mediapipe::Status status = graph.Initialize(config);
-  EXPECT_EQ(status.code(), mediapipe::StatusCode::kInvalidArgument);
+  absl::Status status = graph.Initialize(config);
+  EXPECT_EQ(status.code(), absl::StatusCode::kInvalidArgument);
   EXPECT_THAT(status.message(), testing::AllOf(testing::HasSubstr("__gpu"),
                                                testing::HasSubstr("reserved")));
 }
@@ -4041,8 +4023,8 @@ TEST(CalculatorGraph, ReservedNameNodeExecutor) {
           output_stream: 'out'
         }
       )");
-  mediapipe::Status status = graph.Initialize(config);
-  EXPECT_EQ(status.code(), mediapipe::StatusCode::kInvalidArgument);
+  absl::Status status = graph.Initialize(config);
+  EXPECT_EQ(status.code(), absl::StatusCode::kInvalidArgument);
   EXPECT_THAT(status.message(), testing::AllOf(testing::HasSubstr("__gpu"),
                                                testing::HasSubstr("reserved")));
 }
@@ -4062,8 +4044,8 @@ TEST(CalculatorGraph, NonExistentExecutor) {
           output_stream: 'out'
         }
       )");
-  mediapipe::Status status = graph.Initialize(config);
-  EXPECT_EQ(status.code(), mediapipe::StatusCode::kInvalidArgument);
+  absl::Status status = graph.Initialize(config);
+  EXPECT_EQ(status.code(), absl::StatusCode::kInvalidArgument);
   EXPECT_THAT(status.message(),
               testing::AllOf(testing::HasSubstr("xyz"),
                              testing::HasSubstr("not declared")));
@@ -4086,8 +4068,8 @@ TEST(CalculatorGraph, UndeclaredExecutor) {
           output_stream: 'out'
         }
       )");
-  mediapipe::Status status = graph.Initialize(config);
-  EXPECT_EQ(status.code(), mediapipe::StatusCode::kInvalidArgument);
+  absl::Status status = graph.Initialize(config);
+  EXPECT_EQ(status.code(), absl::StatusCode::kInvalidArgument);
   EXPECT_THAT(status.message(),
               testing::AllOf(testing::HasSubstr("xyz"),
                              testing::HasSubstr("not declared")));
@@ -4108,8 +4090,8 @@ TEST(CalculatorGraph, UntypedExecutorDeclaredButNotSet) {
           output_stream: 'out'
         }
       )");
-  mediapipe::Status status = graph.Initialize(config);
-  EXPECT_EQ(status.code(), mediapipe::StatusCode::kInvalidArgument);
+  absl::Status status = graph.Initialize(config);
+  EXPECT_EQ(status.code(), absl::StatusCode::kInvalidArgument);
   EXPECT_THAT(status.message(),
               testing::AllOf(testing::HasSubstr("xyz"),
                              testing::HasSubstr("SetExecutor")));
@@ -4132,8 +4114,8 @@ TEST(CalculatorGraph, DuplicateExecutorConfig) {
           output_stream: 'out'
         }
       )");
-  mediapipe::Status status = graph.Initialize(config);
-  EXPECT_EQ(status.code(), mediapipe::StatusCode::kInvalidArgument);
+  absl::Status status = graph.Initialize(config);
+  EXPECT_EQ(status.code(), absl::StatusCode::kInvalidArgument);
   EXPECT_THAT(status.message(),
               testing::AllOf(testing::HasSubstr("xyz"),
                              testing::HasSubstr("duplicate")));
@@ -4162,8 +4144,8 @@ TEST(CalculatorGraph, TypedExecutorDeclaredAndSet) {
           output_stream: 'out'
         }
       )");
-  mediapipe::Status status = graph.Initialize(config);
-  EXPECT_EQ(status.code(), mediapipe::StatusCode::kInvalidArgument);
+  absl::Status status = graph.Initialize(config);
+  EXPECT_EQ(status.code(), absl::StatusCode::kInvalidArgument);
   EXPECT_THAT(status.message(),
               testing::AllOf(testing::HasSubstr("xyz"),
                              testing::HasSubstr("SetExecutor")));
@@ -4194,8 +4176,8 @@ TEST(CalculatorGraph, NumThreadsAndDefaultExecutorConfig) {
           output_stream: 'out'
         }
       )");
-  mediapipe::Status status = graph.Initialize(config);
-  EXPECT_EQ(status.code(), mediapipe::StatusCode::kInvalidArgument);
+  absl::Status status = graph.Initialize(config);
+  EXPECT_EQ(status.code(), absl::StatusCode::kInvalidArgument);
   EXPECT_THAT(status.message(),
               testing::AllOf(testing::HasSubstr("num_threads"),
                              testing::HasSubstr("default executor")));
@@ -4268,7 +4250,7 @@ TEST(CalculatorGraph, RunWithNumThreadsInExecutorConfig) {
     MP_ASSERT_OK(
         graph.ObserveOutputStream("out", [&out_packet](const Packet& packet) {
           out_packet = packet;
-          return mediapipe::OkStatus();
+          return absl::OkStatus();
         }));
     MP_ASSERT_OK(graph.Run());
     EXPECT_EQ(cases[i].use_app_thread_is_expected,
@@ -4380,19 +4362,19 @@ class FirstPacketFilterCalculator : public CalculatorBase {
   FirstPacketFilterCalculator() {}
   ~FirstPacketFilterCalculator() override {}
 
-  static mediapipe::Status GetContract(CalculatorContract* cc) {
+  static absl::Status GetContract(CalculatorContract* cc) {
     cc->Inputs().Index(0).SetAny();
     cc->Outputs().Index(0).SetSameAs(&cc->Inputs().Index(0));
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
-  mediapipe::Status Process(CalculatorContext* cc) override {
+  absl::Status Process(CalculatorContext* cc) override {
     if (!seen_first_packet_) {
       cc->Outputs().Index(0).AddPacket(cc->Inputs().Index(0).Value());
       cc->Outputs().Index(0).Close();
       seen_first_packet_ = true;
     }
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
  private:
@@ -4412,7 +4394,7 @@ TEST(CalculatorGraph, TestPollPacket) {
   MP_ASSERT_OK(graph.Initialize(config));
   auto status_or_poller = graph.AddOutputStreamPoller("output");
   ASSERT_TRUE(status_or_poller.ok());
-  OutputStreamPoller poller = std::move(status_or_poller.ValueOrDie());
+  OutputStreamPoller poller = std::move(status_or_poller.value());
   MP_ASSERT_OK(
       graph.StartRun({{"max_count", MakePacket<int>(kDefaultMaxCount)}}));
   Packet packet;
@@ -4439,7 +4421,7 @@ TEST(CalculatorGraph, TestOutputStreamPollerDesiredQueueSize) {
     MP_ASSERT_OK(graph.Initialize(config));
     auto status_or_poller = graph.AddOutputStreamPoller("output");
     ASSERT_TRUE(status_or_poller.ok());
-    OutputStreamPoller poller = std::move(status_or_poller.ValueOrDie());
+    OutputStreamPoller poller = std::move(status_or_poller.value());
     poller.SetMaxQueueSize(queue_size);
     MP_ASSERT_OK(
         graph.StartRun({{"max_count", MakePacket<int>(kDefaultMaxCount)}}));
@@ -4471,10 +4453,10 @@ TEST(CalculatorGraph, TestPollPacketsFromMultipleStreams) {
   MP_ASSERT_OK(graph.Initialize(config));
   auto status_or_poller1 = graph.AddOutputStreamPoller("stream1");
   ASSERT_TRUE(status_or_poller1.ok());
-  OutputStreamPoller poller1 = std::move(status_or_poller1.ValueOrDie());
+  OutputStreamPoller poller1 = std::move(status_or_poller1.value());
   auto status_or_poller2 = graph.AddOutputStreamPoller("stream2");
   ASSERT_TRUE(status_or_poller2.ok());
-  OutputStreamPoller poller2 = std::move(status_or_poller2.ValueOrDie());
+  OutputStreamPoller poller2 = std::move(status_or_poller2.value());
   MP_ASSERT_OK(
       graph.StartRun({{"max_count", MakePacket<int>(kDefaultMaxCount)}}));
   Packet packet1;
@@ -4550,7 +4532,7 @@ TEST(CalculatorGraph, SimpleMuxCalculatorWithCustomInputStreamHandler) {
   Timestamp input1_timestamp = Timestamp(0);
   MP_EXPECT_OK(graph.AddPacketToInputStream(
       "input1", MakePacket<int>(2).At(input1_timestamp)));
-  mediapipe::Status run_status = graph.WaitUntilIdle();
+  absl::Status run_status = graph.WaitUntilIdle();
   EXPECT_THAT(
       run_status.ToString(),
       testing::AllOf(

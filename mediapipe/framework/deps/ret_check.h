@@ -31,9 +31,9 @@ mediapipe::StatusBuilder RetCheckFailSlowPath(
 // Returns a StatusBuilder that corresponds to a `RET_CHECK` failure.
 mediapipe::StatusBuilder RetCheckFailSlowPath(
     mediapipe::source_location location, const char* condition,
-    const mediapipe::Status& status);
+    const absl::Status& status);
 
-inline StatusBuilder RetCheckImpl(const mediapipe::Status& status,
+inline StatusBuilder RetCheckImpl(const absl::Status& status,
                                   const char* condition,
                                   mediapipe::source_location location) {
   if (ABSL_PREDICT_TRUE(status.ok()))

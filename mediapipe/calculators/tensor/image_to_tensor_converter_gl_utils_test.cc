@@ -14,7 +14,7 @@ namespace {
 TEST(ImageToTensorConverterGlUtilsTest, GlTexParameteriOverrider) {
   auto status_or_context = mediapipe::GlContext::Create(nullptr, false);
   MP_ASSERT_OK(status_or_context);
-  auto context = status_or_context.ValueOrDie();
+  auto context = status_or_context.value();
 
   std::vector<GLint> min_filter_changes;
   context->Run([&min_filter_changes]() {

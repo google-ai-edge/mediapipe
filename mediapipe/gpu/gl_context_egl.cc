@@ -85,8 +85,8 @@ GlContext::StatusOrGlContext GlContext::Create(EGLContext share_context,
   return std::move(context);
 }
 
-::mediapipe::Status GlContext::CreateContextInternal(
-    EGLContext external_context, int gl_version) {
+absl::Status GlContext::CreateContextInternal(EGLContext external_context,
+                                              int gl_version) {
   CHECK(gl_version == 2 || gl_version == 3);
 
   const EGLint config_attr[] = {
@@ -146,10 +146,10 @@ GlContext::StatusOrGlContext GlContext::Create(EGLContext share_context,
   // GLES 2 does not have them, so let's set the major version here at least.
   gl_major_version_ = gl_version;
 
-  return ::mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-::mediapipe::Status GlContext::CreateContext(EGLContext external_context) {
+absl::Status GlContext::CreateContext(EGLContext external_context) {
   EGLint major = 0;
   EGLint minor = 0;
 
@@ -178,7 +178,7 @@ GlContext::StatusOrGlContext GlContext::Create(EGLContext share_context,
       << "eglCreatePbufferSurface() returned error " << std::showbase
       << std::hex << eglGetError();
 
-  return ::mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
 void GlContext::DestroyContext() {
@@ -212,7 +212,7 @@ void GlContext::DestroyContext() {
     thread_
         ->Run([] {
           eglReleaseThread();
-          return ::mediapipe::OkStatus();
+          return absl::OkStatus();
         })
         .IgnoreError();
   }
@@ -271,7 +271,7 @@ void GlContext::GetCurrentContextBinding(GlContext::ContextBinding* binding) {
   binding->context = eglGetCurrentContext();
 }
 
-::mediapipe::Status GlContext::SetCurrentContextBinding(
+absl::Status GlContext::SetCurrentContextBinding(
     const ContextBinding& new_binding) {
   EnsureEglThreadRelease();
   EGLDisplay display = new_binding.display;
@@ -286,7 +286,7 @@ void GlContext::GetCurrentContextBinding(GlContext::ContextBinding* binding) {
                      new_binding.read_surface, new_binding.context);
   RET_CHECK(success) << "eglMakeCurrent() returned error " << std::showbase
                      << std::hex << eglGetError();
-  return ::mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
 bool GlContext::HasContext() const { return context_ != EGL_NO_CONTEXT; }

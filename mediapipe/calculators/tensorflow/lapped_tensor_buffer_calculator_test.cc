@@ -153,6 +153,35 @@ TEST_F(LappedTensorBufferCalculatorTest, OneToThreeSkip) {
   }
 }
 
+TEST_F(LappedTensorBufferCalculatorTest, OneToThreeNegativeOverlap) {
+  int buffer_size = 3;
+  int overlap = -1;
+  bool add_dim = false;
+  SetUpCalculator(buffer_size, overlap, add_dim, 0, 0, false);
+  int num_timesteps = 7;
+  for (int i = 0; i < num_timesteps; ++i) {
+    auto input = ::absl::make_unique<tensorflow::Tensor>(
+        tensorflow::DT_FLOAT, tensorflow::TensorShape({1}));
+    input->tensor<float, 1>()(0) = i;
+    runner_->MutableInputs()->Index(0).packets.push_back(
+        Adopt(input.release()).At(Timestamp(i)));
+  }
+  ASSERT_TRUE(runner_->Run().ok());
+
+  const std::vector<Packet>& output_packets =
+      runner_->Outputs().Index(0).packets;
+  ASSERT_EQ(2, output_packets.size());
+  // The outputs in packet one should be {0, 1, 2}, and in packet two {4, 5, 6}
+  for (int i = 0; i < 3; ++i) {
+    float value_0 = output_packets[0].Get<tf::Tensor>().tensor<float, 1>()(i);
+    ASSERT_NEAR(value_0, i, 0.0001);
+  }
+  for (int i = 0; i < 3; ++i) {
+    float value_1 = output_packets[1].Get<tf::Tensor>().tensor<float, 1>()(i);
+    ASSERT_NEAR(value_1, 4 + i, 0.0001);
+  }
+}
+
 TEST_F(LappedTensorBufferCalculatorTest, OneToThreeBatch) {
   int buffer_size = 3;
   int overlap = 2;

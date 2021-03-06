@@ -19,8 +19,30 @@ licenses(["notice"])
 package(default_visibility = ["//visibility:public"])
 
 encode_binary_proto(
+    name = "geometry_pipeline_metadata_detection",
+    input = "geometry_pipeline_metadata_detection.pbtxt",
+    message_type = "mediapipe.face_geometry.GeometryPipelineMetadata",
+    output = "geometry_pipeline_metadata_detection.binarypb",
+    deps = [
+        "//mediapipe/modules/face_geometry/protos:geometry_pipeline_metadata_proto",
+    ],
+)
+
+encode_binary_proto(
+    name = "geometry_pipeline_metadata_landmarks",
+    input = "geometry_pipeline_metadata_landmarks.pbtxt",
+    message_type = "mediapipe.face_geometry.GeometryPipelineMetadata",
+    output = "geometry_pipeline_metadata_landmarks.binarypb",
+    deps = [
+        "//mediapipe/modules/face_geometry/protos:geometry_pipeline_metadata_proto",
+    ],
+)
+
+# For backward-compatibility reasons, generate `geometry_pipeline_metadata.binarypb` from
+# the `geometry_pipeline_metadata_landmarks.pbtxt` definition.
+encode_binary_proto(
     name = "geometry_pipeline_metadata",
-    input = "geometry_pipeline_metadata.pbtxt",
+    input = "geometry_pipeline_metadata_landmarks.pbtxt",
     message_type = "mediapipe.face_geometry.GeometryPipelineMetadata",
     output = "geometry_pipeline_metadata.binarypb",
     deps = [

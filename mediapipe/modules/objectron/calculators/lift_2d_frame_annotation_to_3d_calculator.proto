@@ -27,4 +27,16 @@ message Lift2DFrameAnnotationTo3DCalculatorOptions {
   }
 
   optional BeliefDecoderConfig decoder_config = 1;
+
+  // Camera focal length along x, normalized by width/2.
+  optional float normalized_focal_x = 2 [default = 1.0];
+
+  // Camera focal length along y, normalized by height/2.
+  optional float normalized_focal_y = 3 [default = 1.0];
+
+  // Camera principle point x, normalized by width/2, origin is image center.
+  optional float normalized_principal_point_x = 4 [default = 0.0];
+
+  // Camera principle point y, normalized by height/2, origin is image center.
+  optional float normalized_principal_point_y = 5 [default = 0.0];
 }

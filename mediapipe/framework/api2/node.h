@@ -34,7 +34,7 @@ class CalculatorBaseFactoryFor<
     typename std::enable_if<std::is_base_of<mediapipe::api2::Node, T>{}>::type>
     : public CalculatorBaseFactory {
  public:
-  mediapipe::Status GetContract(CalculatorContract* cc) final {
+  absl::Status GetContract(CalculatorContract* cc) final {
     auto status = T::Contract::GetContract(cc);
     if (status.ok()) {
       status = UpdateContract<T>(cc);
@@ -54,7 +54,7 @@ class CalculatorBaseFactoryFor<
     return U::UpdateContract(cc);
   }
   template <typename U>
-  mediapipe::Status UpdateContract(...) {
+  absl::Status UpdateContract(...) {
     return {};
   }
 };
@@ -142,7 +142,7 @@ class RegisteredNode<void> : public Node {};
 
 template <class Impl>
 struct FunctionNode : public RegisteredNode<Impl> {
-  mediapipe::Status Process(CalculatorContext* cc) override {
+  absl::Status Process(CalculatorContext* cc) override {
     return internal::ProcessFnCallers(cc, Impl::kContract.process_items());
   }
 };

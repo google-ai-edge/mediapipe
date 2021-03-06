@@ -29,6 +29,7 @@
 #include "mediapipe/framework/collection_item_id.h"
 #include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/tool/tag_map.h"
+#include "mediapipe/framework/tool/tag_map_helper.h"
 #include "mediapipe/framework/tool/validate_name.h"
 #include "mediapipe/framework/type_map.h"
 
@@ -379,39 +380,17 @@ Collection<T, storage, ErrorHandler>::Collection(
 
 template <typename T, CollectionStorage storage, typename ErrorHandler>
 Collection<T, storage, ErrorHandler>::Collection(
-    const tool::TagAndNameInfo& info) {
-  tag_map_ = std::move(tool::TagMap::Create(info).ValueOrDie());
-  if (tag_map_->NumEntries() != 0) {
-    data_ = absl::make_unique<stored_type[]>(tag_map_->NumEntries());
-  }
-}
+    const tool::TagAndNameInfo& info)
+    : Collection(tool::TagMap::Create(info).value()) {}
 
 template <typename T, CollectionStorage storage, typename ErrorHandler>
-Collection<T, storage, ErrorHandler>::Collection(const int num_entries) {
-  proto_ns::RepeatedPtrField<ProtoString> fields;
-  for (int i = 0; i < num_entries; ++i) {
-    *fields.Add() = absl::StrCat("name", i);
-  }
-  tag_map_ = std::move(tool::TagMap::Create(fields).ValueOrDie());
-  if (tag_map_->NumEntries() != 0) {
-    data_ = absl::make_unique<stored_type[]>(tag_map_->NumEntries());
-  }
-}
+Collection<T, storage, ErrorHandler>::Collection(const int num_entries)
+    : Collection(tool::CreateTagMap(num_entries).value()) {}
 
 template <typename T, CollectionStorage storage, typename ErrorHandler>
 Collection<T, storage, ErrorHandler>::Collection(
-    const std::initializer_list<std::string>& tag_names) {
-  proto_ns::RepeatedPtrField<ProtoString> fields;
-  int i = 0;
-  for (const std::string& name : tag_names) {
-    *fields.Add() = absl::StrCat(name, ":name", i);
-    ++i;
-  }
-  tag_map_ = std::move(tool::TagMap::Create(fields).ValueOrDie());
-  if (tag_map_->NumEntries() != 0) {
-    data_ = absl::make_unique<stored_type[]>(tag_map_->NumEntries());
-  }
-}
+    const std::initializer_list<std::string>& tag_names)
+    : Collection(tool::CreateTagMapFromTags(tag_names).value()) {}
 
 template <typename T, CollectionStorage storage, typename ErrorHandler>
 bool Collection<T, storage, ErrorHandler>::UsesTags() const {

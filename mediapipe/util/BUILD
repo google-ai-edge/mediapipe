@@ -78,7 +78,6 @@ cc_library(
         "@com_google_absl//absl/algorithm:container",
         "@com_google_absl//absl/strings",
         "//mediapipe/framework/port:integral_types",
-        "//mediapipe/framework:port",
         "//mediapipe/framework/port:status",
         "//mediapipe/framework/port:statusor",
     ] + select({
@@ -168,13 +167,14 @@ cc_library(
     ],
     deps = [
         "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:singleton",
         "//mediapipe/framework/port:status",
         "//mediapipe/framework/port:statusor",
+        "//mediapipe/framework/port:file_helpers",
         "@com_google_absl//absl/strings",
     ] + select({
         "//conditions:default": [
             "//mediapipe/framework/deps:file_path",
-            "//mediapipe/framework/port:file_helpers",
             "@com_google_absl//absl/flags:flag",
         ],
         "//mediapipe:android": [
@@ -184,7 +184,6 @@ cc_library(
         "//mediapipe:ios": [],
         "//mediapipe:macos": [
             "//mediapipe/framework/deps:file_path",
-            "//mediapipe/framework/port:file_helpers",
             "@com_google_absl//absl/flags:flag",
         ],
     }),

@@ -27,13 +27,13 @@
 #include "mediapipe/calculators/tensor/image_to_tensor_converter_gl_utils.h"
 #include "mediapipe/calculators/tensor/image_to_tensor_utils.h"
 #include "mediapipe/framework/calculator_framework.h"
+#include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/formats/tensor.h"
 #include "mediapipe/framework/port/canonical_errors.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/port/statusor.h"
 #include "mediapipe/gpu/gl_calculator_helper.h"
-#include "mediapipe/gpu/gpu_buffer.h"
 #include "tensorflow/lite/delegates/gpu/common/shape.h"
 #include "tensorflow/lite/delegates/gpu/common/types.h"
 #include "tensorflow/lite/delegates/gpu/gl/command_queue.h"
@@ -54,7 +54,7 @@ class SubRectExtractorGl {
  public:
   // Extracts a region defined by @sub_rect, removes A channel, transforms input
   // pixels as alpha * x + beta and resizes result into destination.
-  mediapipe::Status ExtractSubRectToBuffer(
+  absl::Status ExtractSubRectToBuffer(
       const tflite::gpu::gl::GlTexture& texture,
       const tflite::gpu::HW& texture_size, const RotatedRect& sub_rect,
       bool flip_horizontaly, float alpha, float beta,
@@ -62,7 +62,7 @@ class SubRectExtractorGl {
       tflite::gpu::gl::CommandQueue* command_queue,
       tflite::gpu::gl::GlBuffer* destination);
 
-  static mediapipe::StatusOr<SubRectExtractorGl> Create(
+  static absl::StatusOr<SubRectExtractorGl> Create(
       const mediapipe::GlContext& gl_context, bool input_starts_at_bottom,
       BorderMode border_mode);
 
@@ -82,8 +82,8 @@ class SubRectExtractorGl {
   BorderMode border_mode_ = BorderMode::kReplicate;
 };
 
-mediapipe::Status SetMat4x4(const tflite::gpu::gl::GlProgram& program,
-                            const std::string& name, float* data) {
+absl::Status SetMat4x4(const tflite::gpu::gl::GlProgram& program,
+                       const std::string& name, float* data) {
   GLint uniform_id;
   MP_RETURN_IF_ERROR(TFLITE_GPU_CALL_GL(glGetUniformLocation, &uniform_id,
                                         program.id(), name.c_str()));
@@ -151,7 +151,7 @@ void main() {
 }
 )";
 
-mediapipe::Status SubRectExtractorGl::ExtractSubRectToBuffer(
+absl::Status SubRectExtractorGl::ExtractSubRectToBuffer(
     const tflite::gpu::gl::GlTexture& texture,
     const tflite::gpu::HW& texture_size, const RotatedRect& texture_sub_rect,
     bool flip_horizontaly, float alpha, float beta,
@@ -205,10 +205,10 @@ mediapipe::Status SubRectExtractorGl::ExtractSubRectToBuffer(
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-mediapipe::StatusOr<SubRectExtractorGl> SubRectExtractorGl::Create(
+absl::StatusOr<SubRectExtractorGl> SubRectExtractorGl::Create(
     const mediapipe::GlContext& gl_context, bool input_starts_at_bottom,
     BorderMode border_mode) {
   bool use_custom_zero_border = border_mode == BorderMode::kZero &&
@@ -244,11 +244,11 @@ mediapipe::StatusOr<SubRectExtractorGl> SubRectExtractorGl::Create(
 
 class GlProcessor : public ImageToTensorConverter {
  public:
-  mediapipe::Status Init(CalculatorContext* cc, bool input_starts_at_bottom,
-                         BorderMode border_mode) {
+  absl::Status Init(CalculatorContext* cc, bool input_starts_at_bottom,
+                    BorderMode border_mode) {
     MP_RETURN_IF_ERROR(gl_helper_.Open(cc));
     return gl_helper_.RunInGlContext([this, input_starts_at_bottom,
-                                      border_mode]() -> mediapipe::Status {
+                                      border_mode]() -> absl::Status {
       tflite::gpu::GpuInfo gpu_info;
       MP_RETURN_IF_ERROR(tflite::gpu::gl::RequestGpuInfo(&gpu_info));
       RET_CHECK(gpu_info.IsApiOpenGl31OrAbove())
@@ -260,20 +260,14 @@ class GlProcessor : public ImageToTensorConverter {
           SubRectExtractorGl::Create(gl_helper_.GetGlContext(),
                                      input_starts_at_bottom, border_mode));
       extractor_ = absl::make_unique<SubRectExtractorGl>(std::move(extractor));
-      return mediapipe::OkStatus();
+      return absl::OkStatus();
     });
   }
 
-  Size GetImageSize(const Packet& image_packet) override {
-    const auto& image = image_packet.Get<mediapipe::GpuBuffer>();
-    return {image.width(), image.height()};
-  }
-
-  mediapipe::StatusOr<Tensor> Convert(const Packet& image_packet,
-                                      const RotatedRect& roi,
-                                      const Size& output_dims, float range_min,
-                                      float range_max) override {
-    const auto& input = image_packet.Get<mediapipe::GpuBuffer>();
+  absl::StatusOr<Tensor> Convert(const mediapipe::Image& input,
+                                 const RotatedRect& roi,
+                                 const Size& output_dims, float range_min,
+                                 float range_max) override {
     if (input.format() != mediapipe::GpuBufferFormat::kBGRA32) {
       return InvalidArgumentError(
           absl::StrCat("Only BGRA/RGBA textures are supported, passed format: ",
@@ -284,40 +278,39 @@ class GlProcessor : public ImageToTensorConverter {
     Tensor tensor(Tensor::ElementType::kFloat32,
                   {1, output_dims.height, output_dims.width, kNumChannels});
 
-    MP_RETURN_IF_ERROR(gl_helper_.RunInGlContext(
-        [this, &tensor, &input, &roi, &output_dims, range_min,
-         range_max]() -> mediapipe::Status {
-          constexpr int kRgbaNumChannels = 4;
-          auto source_texture = gl_helper_.CreateSourceTexture(input);
-          tflite::gpu::gl::GlTexture input_texture(
-              GL_TEXTURE_2D, source_texture.name(), GL_RGBA,
-              source_texture.width() * source_texture.height() *
-                  kRgbaNumChannels * sizeof(uint8_t),
-              /*layer=*/0,
-              /*owned=*/false);
+    MP_RETURN_IF_ERROR(gl_helper_.RunInGlContext([this, &tensor, &input, &roi,
+                                                  &output_dims, range_min,
+                                                  range_max]() -> absl::Status {
+      constexpr int kRgbaNumChannels = 4;
+      auto source_texture = gl_helper_.CreateSourceTexture(input);
+      tflite::gpu::gl::GlTexture input_texture(
+          GL_TEXTURE_2D, source_texture.name(), GL_RGBA,
+          source_texture.width() * source_texture.height() * kRgbaNumChannels *
+              sizeof(uint8_t),
+          /*layer=*/0,
+          /*owned=*/false);
 
-          constexpr float kInputImageRangeMin = 0.0f;
-          constexpr float kInputImageRangeMax = 1.0f;
-          ASSIGN_OR_RETURN(auto transform,
-                           GetValueRangeTransformation(kInputImageRangeMin,
-                                                       kInputImageRangeMax,
-                                                       range_min, range_max));
+      constexpr float kInputImageRangeMin = 0.0f;
+      constexpr float kInputImageRangeMax = 1.0f;
+      ASSIGN_OR_RETURN(
+          auto transform,
+          GetValueRangeTransformation(kInputImageRangeMin, kInputImageRangeMax,
+                                      range_min, range_max));
 
-          auto buffer_view = tensor.GetOpenGlBufferWriteView();
-          tflite::gpu::gl::GlBuffer output(GL_SHADER_STORAGE_BUFFER,
-                                           buffer_view.name(), tensor.bytes(),
-                                           /*offset=*/0,
-                                           /*has_ownership=*/false);
-          MP_RETURN_IF_ERROR(extractor_->ExtractSubRectToBuffer(
-              input_texture,
-              tflite::gpu::HW(source_texture.height(), source_texture.width()),
-              roi,
-              /*flip_horizontaly=*/false, transform.scale, transform.offset,
-              tflite::gpu::HW(output_dims.height, output_dims.width),
-              command_queue_.get(), &output));
+      auto buffer_view = tensor.GetOpenGlBufferWriteView();
+      tflite::gpu::gl::GlBuffer output(GL_SHADER_STORAGE_BUFFER,
+                                       buffer_view.name(), tensor.bytes(),
+                                       /*offset=*/0,
+                                       /*has_ownership=*/false);
+      MP_RETURN_IF_ERROR(extractor_->ExtractSubRectToBuffer(
+          input_texture,
+          tflite::gpu::HW(source_texture.height(), source_texture.width()), roi,
+          /*flip_horizontaly=*/false, transform.scale, transform.offset,
+          tflite::gpu::HW(output_dims.height, output_dims.width),
+          command_queue_.get(), &output));
 
-          return mediapipe::OkStatus();
-        }));
+      return absl::OkStatus();
+    }));
 
     return tensor;
   }
@@ -338,7 +331,7 @@ class GlProcessor : public ImageToTensorConverter {
 
 }  // namespace
 
-mediapipe::StatusOr<std::unique_ptr<ImageToTensorConverter>>
+absl::StatusOr<std::unique_ptr<ImageToTensorConverter>>
 CreateImageToGlBufferTensorConverter(CalculatorContext* cc,
                                      bool input_starts_at_bottom,
                                      BorderMode border_mode) {

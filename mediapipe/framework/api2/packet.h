@@ -13,6 +13,7 @@
 #include <functional>
 #include <type_traits>
 
+#include "absl/meta/type_traits.h"
 #include "mediapipe/framework/api2/tuple.h"
 #include "mediapipe/framework/packet.h"
 #include "mediapipe/framework/port/logging.h"
@@ -58,7 +59,22 @@ class PacketBase {
   const T& Get() const;
 
   // Conversion to old Packet type.
-  operator mediapipe::Packet() const { return ToOldPacket(*this); }
+  operator mediapipe::Packet() const& { return ToOldPacket(*this); }
+  operator mediapipe::Packet() && { return ToOldPacket(std::move(*this)); }
+
+  // Note: Consume is included for compatibility with the old Packet; however,
+  // it relies on shared_ptr.unique(), which is deprecated and is not guaranteed
+  // to give exact results.
+  template <typename T>
+  absl::StatusOr<std::unique_ptr<T>> Consume() {
+    // Using the implementation in the old Packet for now.
+    mediapipe::Packet old =
+        packet_internal::Create(std::move(payload_), timestamp_);
+    auto result = old.Consume<T>();
+    if (!result.ok())
+      payload_ = packet_internal::GetHolderShared(std::move(old));
+    return result;
+  }
 
  protected:
   explicit PacketBase(std::shared_ptr<HolderBase> payload)
@@ -70,11 +86,15 @@ class PacketBase {
   template <typename T>
   friend PacketBase PacketBaseAdopting(const T* ptr);
   friend PacketBase FromOldPacket(const mediapipe::Packet& op);
+  friend PacketBase FromOldPacket(mediapipe::Packet&& op);
   friend mediapipe::Packet ToOldPacket(const PacketBase& p);
+  friend mediapipe::Packet ToOldPacket(PacketBase&& p);
 };
 
 PacketBase FromOldPacket(const mediapipe::Packet& op);
+PacketBase FromOldPacket(mediapipe::Packet&& op);
 mediapipe::Packet ToOldPacket(const PacketBase& p);
+mediapipe::Packet ToOldPacket(PacketBase&& p);
 
 template <typename T>
 inline const T& PacketBase::Get() const {
@@ -131,6 +151,16 @@ inline void CheckCompatibleType(const HolderBase& holder,
 struct Generic {
   Generic() = delete;
 };
+
+template <class V, class U>
+struct IsCompatibleType : std::false_type {};
+template <class V>
+struct IsCompatibleType<V, V> : std::true_type {};
+template <class V>
+struct IsCompatibleType<V, internal::Generic> : std::true_type {};
+template <class V, class... U>
+struct IsCompatibleType<V, OneOf<U...>>
+    : std::integral_constant<bool, (std::is_same_v<V, U> || ...)> {};
 
 };  // namespace internal
 
@@ -191,6 +221,13 @@ class Packet : public Packet<internal::Generic> {
     return IsEmpty() ? static_cast<T>(absl::forward<U>(v)) : **this;
   }
 
+  // Note: Consume is included for compatibility with the old Packet; however,
+  // it relies on shared_ptr.unique(), which is deprecated and is not guaranteed
+  // to give exact results.
+  absl::StatusOr<std::unique_ptr<T>> Consume() {
+    return PacketBase::Consume<T>();
+  }
+
  private:
   explicit Packet(std::shared_ptr<HolderBase> payload)
       : Packet<internal::Generic>(std::move(payload)) {}
@@ -216,6 +253,44 @@ template <class T, class... U>
 struct First {
   using type = T;
 };
+
+template <class T>
+struct AddStatus {
+  using type = StatusOr<T>;
+};
+template <class T>
+struct AddStatus<StatusOr<T>> {
+  using type = StatusOr<T>;
+};
+template <>
+struct AddStatus<Status> {
+  using type = Status;
+};
+template <>
+struct AddStatus<void> {
+  using type = Status;
+};
+
+template <class R, class F, class... A>
+struct CallAndAddStatusImpl {
+  typename AddStatus<R>::type operator()(const F& f, A&&... a) {
+    return f(std::forward<A>(a)...);
+  }
+};
+template <class F, class... A>
+struct CallAndAddStatusImpl<void, F, A...> {
+  Status operator()(const F& f, A&&... a) {
+    f(std::forward<A>(a)...);
+    return {};
+  }
+};
+
+template <class F, class... A>
+auto CallAndAddStatus(const F& f, A&&... a) {
+  return CallAndAddStatusImpl<absl::result_of_t<F(A...)>, F, A...>()(
+      f, std::forward<A>(a)...);
+}
+
 }  // namespace internal
 
 template <class... T>
@@ -276,6 +351,30 @@ class Packet<OneOf<T...>> : public PacketBase {
     return Invoke<decltype(f), T...>(f);
   }
 
+  // Note: Consume is included for compatibility with the old Packet; however,
+  // it relies on shared_ptr.unique(), which is deprecated and is not guaranteed
+  // to give exact results.
+  template <class U, class = AllowedType<U>>
+  absl::StatusOr<std::unique_ptr<U>> Consume() {
+    return PacketBase::Consume<U>();
+  }
+
+  template <class... F>
+  auto ConsumeAndVisit(const F&... args) {
+    CHECK(payload_);
+    auto f = internal::Overload{args...};
+    using FirstT = typename internal::First<T...>::type;
+    using VisitorResultType =
+        absl::result_of_t<decltype(f)(std::unique_ptr<FirstT>)>;
+    static_assert(
+        (std::is_same_v<VisitorResultType,
+                        absl::result_of_t<decltype(f)(std::unique_ptr<T>)>> &&
+         ...),
+        "All visitor overloads must have the same return type");
+    using ResultType = typename internal::AddStatus<VisitorResultType>::type;
+    return InvokeConsuming<ResultType, decltype(f), T...>(f);
+  }
+
  protected:
   explicit Packet(std::shared_ptr<HolderBase> payload)
       : PacketBase(std::move(payload)) {}
@@ -291,6 +390,21 @@ class Packet<OneOf<T...>> : public PacketBase {
   template <class F, class U, class V, class... W>
   auto Invoke(const F& f) const {
     return Has<U>() ? f(Get<U>()) : Invoke<F, V, W...>(f);
+  }
+
+  template <class R, class F, class U>
+  auto InvokeConsuming(const F& f) -> R {
+    auto maybe_value = Consume<U>();
+    if (maybe_value.ok())
+      return internal::CallAndAddStatus(f, std::move(maybe_value).value());
+    else
+      return maybe_value.status();
+  }
+
+  template <class R, class F, class U, class V, class... W>
+  auto InvokeConsuming(const F& f) -> R {
+    return Has<U>() ? InvokeConsuming<R, F, U>(f)
+                    : InvokeConsuming<R, F, V, W...>(f);
   }
 };
 

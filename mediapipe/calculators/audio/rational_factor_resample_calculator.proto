@@ -1,4 +1,4 @@
-// Copyright 2019 The MediaPipe Authors.
+// Copyright 2019, 2021 The MediaPipe Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,6 +18,8 @@ package mediapipe;
 
 import "mediapipe/framework/calculator.proto";
 
+// NOTE: This calculator uses QResampler, despite the name, which supersedes
+// RationalFactorResampler.
 message RationalFactorResampleCalculatorOptions {
   extend CalculatorOptions {
     optional RationalFactorResampleCalculatorOptions ext = 259760074;
@@ -27,8 +29,7 @@ message RationalFactorResampleCalculatorOptions {
   // stream.  Required.  Must be greater than 0.
   optional double target_sample_rate = 1;
 
-  // Parameters for initializing the RationalFactorResampler. See
-  // RationalFactorResampler for more details.
+  // Parameters for initializing QResampler. See QResampler for more details.
   message ResamplerRationalFactorOptions {
     // Kernel radius in units of input samples.
     optional double radius = 1;

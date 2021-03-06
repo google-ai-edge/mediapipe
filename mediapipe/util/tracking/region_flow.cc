@@ -21,6 +21,7 @@
 #include <numeric>
 
 #include "absl/container/node_hash_map.h"
+#include "absl/container/node_hash_set.h"
 #include "absl/strings/str_cat.h"
 #include "mediapipe/framework/port/integral_types.h"
 #include "mediapipe/util/tracking/measure_time.h"
@@ -580,7 +581,7 @@ void LongFeatureStream::AddFeatures(const RegionFlowFeatureList& feature_list,
   }
 
   // Record id of each track that is present in the current feature_list.
-  std::unordered_set<int> present_tracks;
+  absl::node_hash_set<int> present_tracks;
   for (auto feature : feature_list.feature()) {  // Copy feature.
     if (feature.track_id() < 0) {
       LOG_IF(WARNING, []() {

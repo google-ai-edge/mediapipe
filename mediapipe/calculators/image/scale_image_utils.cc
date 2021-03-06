@@ -35,11 +35,11 @@ double ParseRational(const std::string& rational) {
 }
 }  // namespace
 
-mediapipe::Status FindCropDimensions(int input_width, int input_height,    //
-                                     const std::string& min_aspect_ratio,  //
-                                     const std::string& max_aspect_ratio,  //
-                                     int* crop_width, int* crop_height,    //
-                                     int* col_start, int* row_start) {
+absl::Status FindCropDimensions(int input_width, int input_height,    //
+                                const std::string& min_aspect_ratio,  //
+                                const std::string& max_aspect_ratio,  //
+                                int* crop_width, int* crop_height,    //
+                                int* col_start, int* row_start) {
   CHECK(crop_width);
   CHECK(crop_height);
   CHECK(col_start);
@@ -85,16 +85,16 @@ mediapipe::Status FindCropDimensions(int input_width, int input_height,    //
 
   CHECK_LE(*crop_width, input_width);
   CHECK_LE(*crop_height, input_height);
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-mediapipe::Status FindOutputDimensions(int input_width,             //
-                                       int input_height,            //
-                                       int target_width,            //
-                                       int target_height,           //
-                                       bool preserve_aspect_ratio,  //
-                                       int scale_to_multiple_of,    //
-                                       int* output_width, int* output_height) {
+absl::Status FindOutputDimensions(int input_width,             //
+                                  int input_height,            //
+                                  int target_width,            //
+                                  int target_height,           //
+                                  bool preserve_aspect_ratio,  //
+                                  int scale_to_multiple_of,    //
+                                  int* output_width, int* output_height) {
   CHECK(output_width);
   CHECK(output_height);
 
@@ -122,7 +122,7 @@ mediapipe::Status FindOutputDimensions(int input_width,             //
     *output_width = target_width;
     *output_height = target_height;
 
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
   if (target_width > 0) {
@@ -139,7 +139,7 @@ mediapipe::Status FindOutputDimensions(int input_width,             //
       // was within the image, so use these dimensions.
       *output_width = try_width;
       *output_height = try_height;
-      return mediapipe::OkStatus();
+      return absl::OkStatus();
     }
   }
 
@@ -157,7 +157,7 @@ mediapipe::Status FindOutputDimensions(int input_width,             //
       // was within the image, so use these dimensions.
       *output_width = try_width;
       *output_height = try_height;
-      return mediapipe::OkStatus();
+      return absl::OkStatus();
     }
   }
   RET_CHECK_FAIL()

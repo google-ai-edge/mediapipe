@@ -73,10 +73,12 @@ class ScreenToMetricSpaceConverter {
  public:
   ScreenToMetricSpaceConverter(
       OriginPointLocation origin_point_location,      //
+      InputSource input_source,                       //
       Eigen::Matrix3Xf&& canonical_metric_landmarks,  //
       Eigen::VectorXf&& landmark_weights,             //
       std::unique_ptr<ProcrustesSolver> procrustes_solver)
       : origin_point_location_(origin_point_location),
+        input_source_(input_source),
         canonical_metric_landmarks_(std::move(canonical_metric_landmarks)),
         landmark_weights_(std::move(landmark_weights)),
         procrustes_solver_(std::move(procrustes_solver)) {}
@@ -118,11 +120,10 @@ class ScreenToMetricSpaceConverter {
   //
   //       To keep the logic correct, the landmark set handedness is changed any
   //       time the screen-to-metric semantic barrier is passed.
-  mediapipe::Status Convert(
-      const NormalizedLandmarkList& screen_landmark_list,  //
-      const PerspectiveCameraFrustum& pcf,                 //
-      LandmarkList& metric_landmark_list,                  //
-      Eigen::Matrix4f& pose_transform_mat) const {
+  absl::Status Convert(const NormalizedLandmarkList& screen_landmark_list,  //
+                       const PerspectiveCameraFrustum& pcf,                 //
+                       LandmarkList& metric_landmark_list,                  //
+                       Eigen::Matrix4f& pose_transform_mat) const {
     RET_CHECK_EQ(screen_landmark_list.landmark_size(),
                  canonical_metric_landmarks_.cols())
         << "The number of landmarks doesn't match the number passed upon "
@@ -151,12 +152,27 @@ class ScreenToMetricSpaceConverter {
                     intermediate_landmarks);
     UnprojectXY(pcf, intermediate_landmarks);
     ChangeHandedness(intermediate_landmarks);
+
+    // For face detection input landmarks, re-write Z-coord from the canonical
+    // landmarks.
+    if (input_source_ == InputSource::FACE_DETECTION_PIPELINE) {
+      Eigen::Matrix4f intermediate_pose_transform_mat;
+      MP_RETURN_IF_ERROR(procrustes_solver_->SolveWeightedOrthogonalProblem(
+          canonical_metric_landmarks_, intermediate_landmarks,
+          landmark_weights_, intermediate_pose_transform_mat))
+          << "Failed to estimate pose transform matrix!";
+
+      intermediate_landmarks.row(2) =
+          (intermediate_pose_transform_mat *
+           canonical_metric_landmarks_.colwise().homogeneous())
+              .row(2);
+    }
     ASSIGN_OR_RETURN(const float second_iteration_scale,
                      EstimateScale(intermediate_landmarks),
                      _ << "Failed to estimate second iteration scale!");
 
     // Use the total scale to unproject the screen landmarks.
-    float total_scale = first_iteration_scale * second_iteration_scale;
+    const float total_scale = first_iteration_scale * second_iteration_scale;
     MoveAndRescaleZ(pcf, depth_offset, total_scale, screen_landmarks);
     UnprojectXY(pcf, screen_landmarks);
     ChangeHandedness(screen_landmarks);
@@ -169,18 +185,30 @@ class ScreenToMetricSpaceConverter {
         pose_transform_mat))
         << "Failed to estimate pose transform matrix!";
 
-    // Multiply each of the metric landmarks by the inverse pose transformation
-    // matrix to align the runtime metric face landmarks with the canonical
-    // metric face landmarks.
-    Eigen::Matrix4f inv_pose_transform_mat = pose_transform_mat.inverse();
-    auto inv_pose_rotation = inv_pose_transform_mat.leftCols(3).topRows(3);
-    auto inv_pose_translation = inv_pose_transform_mat.col(3).topRows(3);
-    metric_landmarks =
-        (inv_pose_rotation * metric_landmarks).colwise() + inv_pose_translation;
+    // For face detection input landmarks, re-write Z-coord from the canonical
+    // landmarks and run the pose transform estimation again.
+    if (input_source_ == InputSource::FACE_DETECTION_PIPELINE) {
+      metric_landmarks.row(2) =
+          (pose_transform_mat *
+           canonical_metric_landmarks_.colwise().homogeneous())
+              .row(2);
+
+      MP_RETURN_IF_ERROR(procrustes_solver_->SolveWeightedOrthogonalProblem(
+          canonical_metric_landmarks_, metric_landmarks, landmark_weights_,
+          pose_transform_mat))
+          << "Failed to estimate pose transform matrix!";
+    }
+
+    // Multiply each of the metric landmarks by the inverse pose
+    // transformation matrix to align the runtime metric face landmarks with
+    // the canonical metric face landmarks.
+    metric_landmarks = (pose_transform_mat.inverse() *
+                        metric_landmarks.colwise().homogeneous())
+                           .topRows(3);
 
     ConvertEigenMatrixToLandmarkList(metric_landmarks, metric_landmark_list);
 
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
  private:
@@ -200,7 +228,7 @@ class ScreenToMetricSpaceConverter {
     landmarks.colwise() += Eigen::Vector3f(x_translation, y_translation, 0.f);
   }
 
-  mediapipe::StatusOr<float> EstimateScale(Eigen::Matrix3Xf& landmarks) const {
+  absl::StatusOr<float> EstimateScale(Eigen::Matrix3Xf& landmarks) const {
     Eigen::Matrix4f transform_mat;
     MP_RETURN_IF_ERROR(procrustes_solver_->SolveWeightedOrthogonalProblem(
         canonical_metric_landmarks_, landmarks, landmark_weights_,
@@ -253,7 +281,8 @@ class ScreenToMetricSpaceConverter {
     }
   }
 
-  OriginPointLocation origin_point_location_;
+  const OriginPointLocation origin_point_location_;
+  const InputSource input_source_;
   Eigen::Matrix3Xf canonical_metric_landmarks_;
   Eigen::VectorXf landmark_weights_;
 
@@ -277,7 +306,7 @@ class GeometryPipelineImpl : public GeometryPipeline {
             canonical_mesh_vertex_position_offset),
         space_converter_(std::move(space_converter)) {}
 
-  mediapipe::StatusOr<std::vector<FaceGeometry>> EstimateFaceGeometry(
+  absl::StatusOr<std::vector<FaceGeometry>> EstimateFaceGeometry(
       const std::vector<NormalizedLandmarkList>& multi_face_landmarks,
       int frame_width, int frame_height) const override {
     MP_RETURN_IF_ERROR(ValidateFrameDimensions(frame_width, frame_height))
@@ -301,8 +330,8 @@ class GeometryPipelineImpl : public GeometryPipeline {
         continue;
       }
 
-      // Convert the screen landmarks into the metric landmarks and
-      // get the pose transformation matrix.
+      // Convert the screen landmarks into the metric landmarks and get the pose
+      // transformation matrix.
       LandmarkList metric_face_landmarks;
       Eigen::Matrix4f pose_transform_mat;
       MP_RETURN_IF_ERROR(space_converter_->Convert(screen_face_landmarks, pcf,
@@ -370,7 +399,7 @@ class GeometryPipelineImpl : public GeometryPipeline {
 
 }  // namespace
 
-mediapipe::StatusOr<std::unique_ptr<GeometryPipeline>> CreateGeometryPipeline(
+absl::StatusOr<std::unique_ptr<GeometryPipeline>> CreateGeometryPipeline(
     const Environment& environment, const GeometryPipelineMetadata& metadata) {
   MP_RETURN_IF_ERROR(ValidateEnvironment(environment))
       << "Invalid environment!";
@@ -392,7 +421,7 @@ mediapipe::StatusOr<std::unique_ptr<GeometryPipeline>> CreateGeometryPipeline(
   uint32_t canonical_mesh_vertex_position_offset =
       GetVertexComponentOffset(canonical_mesh.vertex_type(),
                                VertexComponent::POSITION)
-          .ValueOrDie();
+          .value();
 
   // Put the Procrustes landmark basis into Eigen matrices for an easier access.
   Eigen::Matrix3Xf canonical_metric_landmarks =
@@ -424,6 +453,9 @@ mediapipe::StatusOr<std::unique_ptr<GeometryPipeline>> CreateGeometryPipeline(
           canonical_mesh_vertex_position_offset,
           absl::make_unique<ScreenToMetricSpaceConverter>(
               environment.origin_point_location(),
+              metadata.input_source() == InputSource::DEFAULT
+                  ? InputSource::FACE_LANDMARK_PIPELINE
+                  : metadata.input_source(),
               std::move(canonical_metric_landmarks),
               std::move(landmark_weights),
               CreateFloatPrecisionProcrustesSolver()));

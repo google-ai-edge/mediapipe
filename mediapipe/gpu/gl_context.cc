@@ -29,6 +29,7 @@
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/port/status_builder.h"
 #include "mediapipe/gpu/gl_context_internal.h"
+#include "mediapipe/gpu/gpu_buffer_format.h"
 
 #ifndef __EMSCRIPTEN__
 #include "absl/debugging/leak_check.h"
@@ -140,13 +141,13 @@ void GlContext::DedicatedThread::ThreadBody() {
 #endif
 }
 
-::mediapipe::Status GlContext::DedicatedThread::Run(GlStatusFunction gl_func) {
+absl::Status GlContext::DedicatedThread::Run(GlStatusFunction gl_func) {
   // Neither ENDO_SCOPE nor ENDO_TASK seem to work here.
   if (IsCurrentThread()) {
     return gl_func();
   }
   bool done = false;  // Guarded by mutex_ after initialization.
-  ::mediapipe::Status status;
+  absl::Status status;
   PutJob([this, gl_func, &done, &status]() {
     status = gl_func();
     absl::MutexLock lock(&mutex_);
@@ -204,6 +205,14 @@ bool GlContext::ParseGlVersion(absl::string_view version_string, GLint* major,
   return true;
 }
 
+GlVersion GlContext::GetGlVersion() const {
+#ifdef GL_ES_VERSION_2_0  // This actually means "is GLES available".
+  return gl_major_version() < 3 ? GlVersion::kGLES2 : GlVersion::kGLES3;
+#else  // This is the "desktop GL" case.
+  return GlVersion::kGL;
+#endif
+}
+
 bool GlContext::HasGlExtension(absl::string_view extension) const {
   return gl_extensions_.find(extension) != gl_extensions_.end();
 }
@@ -212,7 +221,7 @@ bool GlContext::HasGlExtension(absl::string_view extension) const {
 // in an easily-accessible set.  The glGetString call is actually *not* required
 // to work with GL_EXTENSIONS for newer GL versions, so we must maintain both
 // variations of this function.
-::mediapipe::Status GlContext::GetGlExtensions() {
+absl::Status GlContext::GetGlExtensions() {
   gl_extensions_.clear();
   // glGetStringi only introduced in GL 3.0+; so we exit out this function if
   // we don't have that function defined, regardless of version number reported.
@@ -226,54 +235,52 @@ bool GlContext::HasGlExtension(absl::string_view extension) const {
     LOG(ERROR) << "GL major version > 3.0 indicated, but glGetStringi not "
                << "defined. Falling back to deprecated GL extensions querying "
                << "method.";
-    return ::mediapipe::InternalError("glGetStringi not defined, but queried");
+    return absl::InternalError("glGetStringi not defined, but queried");
   }
   int num_extensions = 0;
   glGetIntegerv(GL_NUM_EXTENSIONS, &num_extensions);
   if (glGetError() != 0) {
-    return ::mediapipe::InternalError(
-        "Error querying for number of extensions");
+    return absl::InternalError("Error querying for number of extensions");
   }
 
   for (int i = 0; i < num_extensions; ++i) {
     const GLubyte* res = glGetStringi(GL_EXTENSIONS, i);
     if (glGetError() != 0 || res == nullptr) {
-      return ::mediapipe::InternalError(
-          "Error querying for an extension by index");
+      return absl::InternalError("Error querying for an extension by index");
     }
     const char* signed_res = reinterpret_cast<const char*>(res);
     gl_extensions_.insert(signed_res);
   }
 
-  return ::mediapipe::OkStatus();
+  return absl::OkStatus();
 #else
-  return ::mediapipe::InternalError("GL version mismatch in GlGetExtensions");
+  return absl::InternalError("GL version mismatch in GlGetExtensions");
 #endif  // (GL_VERSION_3_0 || GL_ES_VERSION_3_0) && !defined(__EMSCRIPTEN__)
 }
 
 // Same as GetGlExtensions() above, but for pre-GL3.0, where glGetStringi did
 // not exist.
-::mediapipe::Status GlContext::GetGlExtensionsCompat() {
+absl::Status GlContext::GetGlExtensionsCompat() {
   gl_extensions_.clear();
 
   const GLubyte* res = glGetString(GL_EXTENSIONS);
   if (glGetError() != 0 || res == nullptr) {
     LOG(ERROR) << "Error querying for GL extensions";
-    return ::mediapipe::InternalError("Error querying for GL extensions");
+    return absl::InternalError("Error querying for GL extensions");
   }
   const char* signed_res = reinterpret_cast<const char*>(res);
   gl_extensions_ = absl::StrSplit(signed_res, ' ');
 
-  return ::mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-::mediapipe::Status GlContext::FinishInitialization(bool create_thread) {
+absl::Status GlContext::FinishInitialization(bool create_thread) {
   if (create_thread) {
     thread_ = absl::make_unique<GlContext::DedicatedThread>();
     MP_RETURN_IF_ERROR(thread_->Run([this] { return EnterContext(nullptr); }));
   }
 
-  return Run([this]() -> ::mediapipe::Status {
+  return Run([this]() -> absl::Status {
     // Clear any GL errors at this point: as this is a fresh context
     // there shouldn't be any, but if we adopted an existing context (e.g. in
     // some Emscripten cases), there might be some existing tripped error.
@@ -326,7 +333,7 @@ bool GlContext::HasGlExtension(absl::string_view extension) const {
     if (gl_major_version_ >= 3) {
       auto status = GetGlExtensions();
       if (status.ok()) {
-        return ::mediapipe::OkStatus();
+        return absl::OkStatus();
       }
     }
     return GetGlExtensionsCompat();
@@ -368,7 +375,7 @@ void GlContext::SetProfilingContext(
   }
 }
 
-::mediapipe::Status GlContext::SwitchContextAndRun(GlStatusFunction gl_func) {
+absl::Status GlContext::SwitchContextAndRun(GlStatusFunction gl_func) {
   ContextBinding saved_context;
   MP_RETURN_IF_ERROR(EnterContext(&saved_context)) << " (entering GL context)";
   auto status = gl_func();
@@ -377,9 +384,9 @@ void GlContext::SetProfilingContext(
   return status;
 }
 
-::mediapipe::Status GlContext::Run(GlStatusFunction gl_func, int node_id,
-                                   Timestamp input_timestamp) {
-  ::mediapipe::Status status;
+absl::Status GlContext::Run(GlStatusFunction gl_func, int node_id,
+                            Timestamp input_timestamp) {
+  absl::Status status;
   if (profiling_helper_) {
     gl_func = [=] {
       profiling_helper_->MarkTimestamp(node_id, input_timestamp,
@@ -416,7 +423,7 @@ void GlContext::RunWithoutWaiting(GlVoidFunction gl_func) {
     // TODO: queue up task instead.
     auto status = SwitchContextAndRun([gl_func] {
       gl_func();
-      return ::mediapipe::OkStatus();
+      return absl::OkStatus();
     });
     if (!status.ok()) {
       LOG(ERROR) << "Error in RunWithoutWaiting: " << status;
@@ -433,8 +440,8 @@ std::weak_ptr<GlContext>& GlContext::CurrentContext() {
   return current_context;
 }
 
-::mediapipe::Status GlContext::SwitchContext(ContextBinding* saved_context,
-                                             const ContextBinding& new_context)
+absl::Status GlContext::SwitchContext(ContextBinding* saved_context,
+                                      const ContextBinding& new_context)
     ABSL_NO_THREAD_SAFETY_ANALYSIS {
   std::shared_ptr<GlContext> old_context_obj = CurrentContext().lock();
   std::shared_ptr<GlContext> new_context_obj =
@@ -452,7 +459,7 @@ std::weak_ptr<GlContext>& GlContext::CurrentContext() {
   }
 
   if (new_context_obj && (old_context_obj == new_context_obj)) {
-    return ::mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
   if (old_context_obj) {
@@ -479,13 +486,12 @@ std::weak_ptr<GlContext>& GlContext::CurrentContext() {
   }
 }
 
-::mediapipe::Status GlContext::EnterContext(ContextBinding* saved_context) {
+absl::Status GlContext::EnterContext(ContextBinding* saved_context) {
   DCHECK(HasContext());
   return SwitchContext(saved_context, ThisContextBinding());
 }
 
-::mediapipe::Status GlContext::ExitContext(
-    const ContextBinding* saved_context) {
+absl::Status GlContext::ExitContext(const ContextBinding* saved_context) {
   ContextBinding no_context;
   if (!saved_context) {
     saved_context = &no_context;
@@ -820,6 +826,13 @@ void GlContext::LogUncheckedGlErrors(bool had_gl_errors) {
     // you want to debug.
     LOG(WARNING) << "Ignoring unchecked GL error.";
   }
+}
+
+const GlTextureInfo& GlTextureInfoForGpuBufferFormat(GpuBufferFormat format,
+                                                     int plane) {
+  std::shared_ptr<GlContext> ctx = GlContext::GetCurrent();
+  CHECK(ctx != nullptr);
+  return GlTextureInfoForGpuBufferFormat(format, plane, ctx->GetGlVersion());
 }
 
 }  // namespace mediapipe

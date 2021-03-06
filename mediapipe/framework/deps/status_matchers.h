@@ -50,8 +50,8 @@ inline IsOkMatcher IsOk() { return IsOkMatcher(); }
 
 }  // namespace mediapipe
 
-// Macros for testing the results of functions that return mediapipe::Status or
-// mediapipe::StatusOr<T> (for any type T).
+// Macros for testing the results of functions that return absl::Status or
+// absl::StatusOr<T> (for any type T).
 #define MP_EXPECT_OK(expression) EXPECT_THAT(expression, mediapipe::IsOk())
 #define MP_ASSERT_OK(expression) ASSERT_THAT(expression, mediapipe::IsOk())
 

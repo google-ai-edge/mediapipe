@@ -51,38 +51,37 @@ constexpr char kRenderScaleTag[] = "RENDER_SCALE";
 //   }
 class RectToRenderScaleCalculator : public CalculatorBase {
  public:
-  static mediapipe::Status GetContract(CalculatorContract* cc);
-  mediapipe::Status Open(CalculatorContext* cc) override;
-  mediapipe::Status Process(CalculatorContext* cc) override;
+  static absl::Status GetContract(CalculatorContract* cc);
+  absl::Status Open(CalculatorContext* cc) override;
+  absl::Status Process(CalculatorContext* cc) override;
 
  private:
   RectToRenderScaleCalculatorOptions options_;
 };
 REGISTER_CALCULATOR(RectToRenderScaleCalculator);
 
-mediapipe::Status RectToRenderScaleCalculator::GetContract(
-    CalculatorContract* cc) {
+absl::Status RectToRenderScaleCalculator::GetContract(CalculatorContract* cc) {
   cc->Inputs().Tag(kNormRectTag).Set<NormalizedRect>();
   cc->Inputs().Tag(kImageSizeTag).Set<std::pair<int, int>>();
   cc->Outputs().Tag(kRenderScaleTag).Set<float>();
 
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-mediapipe::Status RectToRenderScaleCalculator::Open(CalculatorContext* cc) {
+absl::Status RectToRenderScaleCalculator::Open(CalculatorContext* cc) {
   cc->SetOffset(TimestampDiff(0));
   options_ = cc->Options<RectToRenderScaleCalculatorOptions>();
 
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-mediapipe::Status RectToRenderScaleCalculator::Process(CalculatorContext* cc) {
+absl::Status RectToRenderScaleCalculator::Process(CalculatorContext* cc) {
   if (cc->Inputs().Tag(kNormRectTag).IsEmpty()) {
     cc->Outputs()
         .Tag(kRenderScaleTag)
         .AddPacket(
             MakePacket<float>(options_.multiplier()).At(cc->InputTimestamp()));
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
   // Get image size.
@@ -104,7 +103,7 @@ mediapipe::Status RectToRenderScaleCalculator::Process(CalculatorContext* cc) {
       .Tag(kRenderScaleTag)
       .AddPacket(MakePacket<float>(render_scale).At(cc->InputTimestamp()));
 
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
 }  // namespace mediapipe

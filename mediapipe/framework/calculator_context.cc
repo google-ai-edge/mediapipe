@@ -41,6 +41,11 @@ Counter* CalculatorContext::GetCounter(const std::string& name) {
   return calculator_state_->GetCounter(name);
 }
 
+CounterSet* CalculatorContext::GetCounterSet() {
+  CHECK(calculator_state_);
+  return calculator_state_->GetCounterSet();
+}
+
 const PacketSet& CalculatorContext::InputSidePackets() const {
   return calculator_state_->InputSidePackets();
 }

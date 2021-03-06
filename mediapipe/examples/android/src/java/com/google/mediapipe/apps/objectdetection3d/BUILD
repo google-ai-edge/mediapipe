@@ -90,7 +90,7 @@ genrule(
     cmd = "cp $< $@",
 )
 
-MODELS_DIR = "//mediapipe/models"
+MODELS_DIR = "//mediapipe/modules/objectron"
 
 genrule(
     name = "model",
@@ -165,7 +165,7 @@ android_binary(
         ":mesh",
         ":texture",
         MODELS_DIR + ":object_detection_ssd_mobilenetv2_oidv4_fp16.tflite",
-        MODELS_DIR + ":object_detection_oidv4_labelmap.pbtxt",
+        MODELS_DIR + ":object_detection_oidv4_labelmap.txt",
         ASSETS_DIR + ":box.obj.uuu",
         ASSETS_DIR + ":classic_colors.png",
     ],

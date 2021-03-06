@@ -65,19 +65,19 @@ class PreviousLoopbackCalculator : public Node {
                           StreamHandler("ImmediateInputStreamHandler"),
                           TimestampChange::Arbitrary());
 
-  static mediapipe::Status UpdateContract(CalculatorContract* cc) {
+  static absl::Status UpdateContract(CalculatorContract* cc) {
     // Process() function is invoked in response to MAIN/LOOP stream timestamp
     // bound updates.
     cc->SetProcessTimestampBounds(true);
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
-  mediapipe::Status Open(CalculatorContext* cc) final {
+  absl::Status Open(CalculatorContext* cc) final {
     kPrevLoop(cc).SetHeader(kLoop(cc).Header());
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
-  mediapipe::Status Process(CalculatorContext* cc) final {
+  absl::Status Process(CalculatorContext* cc) final {
     // Non-empty packets and empty packets indicating timestamp bound updates
     // are guaranteed to have timestamps greater than timestamps of previous
     // packets within the same stream. Calculator tracks and operates on such
@@ -106,7 +106,7 @@ class PreviousLoopbackCalculator : public Node {
 
     while (!main_packet_specs_.empty() && !loop_packets_.empty()) {
       // The earliest MAIN packet.
-      const MainPacketSpec& main_spec = main_packet_specs_.front();
+      MainPacketSpec main_spec = main_packet_specs_.front();
       // The earliest LOOP packet.
       const PacketBase& loop_candidate = loop_packets_.front();
       // Match LOOP and MAIN packets.
@@ -139,7 +139,7 @@ class PreviousLoopbackCalculator : public Node {
       }
     }
 
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
  private:

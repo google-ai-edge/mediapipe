@@ -219,23 +219,23 @@ packet timestamps 0, 1, 2, 3, ...
 ```c++
 class UnitDelayCalculator : public Calculator {
  public:
-  static ::util::Status FillExpectations(
+  static absl::Status FillExpectations(
       const CalculatorOptions& extendable_options, PacketTypeSet* inputs,
       PacketTypeSet* outputs, PacketTypeSet* input_side_packets) {
     inputs->Index(0)->Set<int>("An integer.");
     outputs->Index(0)->Set<int>("The input delayed by one time unit.");
-    return ::mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
-  ::util::Status Open() final {
+  absl::Status Open() final {
     Output()->Add(new int(0), Timestamp(0));
-    return ::mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
-  ::util::Status Process() final {
+  absl::Status Process() final {
     const Packet& packet = Input()->Value();
     Output()->AddPacket(packet.At(packet.Timestamp().NextAllowedInStream()));
-    return ::mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 };
 ```

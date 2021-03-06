@@ -87,9 +87,9 @@ constexpr float kInitialZ = -10.0f;
 
 class MatricesManagerCalculator : public CalculatorBase {
  public:
-  static mediapipe::Status GetContract(CalculatorContract* cc);
-  mediapipe::Status Open(CalculatorContext* cc) override;
-  mediapipe::Status Process(CalculatorContext* cc) override;
+  static absl::Status GetContract(CalculatorContract* cc);
+  absl::Status Open(CalculatorContext* cc) override;
+  absl::Status Process(CalculatorContext* cc) override;
 
  private:
   // Device properties that will be preset by side packets
@@ -137,8 +137,7 @@ class MatricesManagerCalculator : public CalculatorBase {
 
 REGISTER_CALCULATOR(MatricesManagerCalculator);
 
-mediapipe::Status MatricesManagerCalculator::GetContract(
-    CalculatorContract* cc) {
+absl::Status MatricesManagerCalculator::GetContract(CalculatorContract* cc) {
   RET_CHECK(cc->Inputs().HasTag(kAnchorsTag) &&
             cc->Inputs().HasTag(kIMUMatrixTag) &&
             cc->Inputs().HasTag(kUserRotationsTag) &&
@@ -162,20 +161,20 @@ mediapipe::Status MatricesManagerCalculator::GetContract(
   cc->InputSidePackets().Tag(kFOVSidePacketTag).Set<float>();
   cc->InputSidePackets().Tag(kAspectRatioSidePacketTag).Set<float>();
 
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-mediapipe::Status MatricesManagerCalculator::Open(CalculatorContext* cc) {
+absl::Status MatricesManagerCalculator::Open(CalculatorContext* cc) {
   cc->SetOffset(TimestampDiff(0));
   // Set device properties from side packets
   vertical_fov_radians_ =
       cc->InputSidePackets().Tag(kFOVSidePacketTag).Get<float>();
   aspect_ratio_ =
       cc->InputSidePackets().Tag(kAspectRatioSidePacketTag).Get<float>();
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-mediapipe::Status MatricesManagerCalculator::Process(CalculatorContext* cc) {
+absl::Status MatricesManagerCalculator::Process(CalculatorContext* cc) {
   // Define each object's model matrices
   auto asset_matrices_gif =
       std::make_unique<mediapipe::TimedModelMatrixProtoList>();
@@ -276,7 +275,7 @@ mediapipe::Status MatricesManagerCalculator::Process(CalculatorContext* cc) {
       .Get(cc->Outputs().GetId("MATRICES", 1))
       .Add(asset_matrices_1.release(), cc->InputTimestamp());
 
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
 // Using a specified rotation value in radians, generate a rotation matrix for

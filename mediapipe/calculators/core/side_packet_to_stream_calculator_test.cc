@@ -189,7 +189,7 @@ void DoTestNonAtTickOutputTag(absl::string_view tag,
   MP_ASSERT_OK(graph.ObserveOutputStream(
       "packet", [&output_packets](const Packet& packet) {
         output_packets.push_back(packet);
-        return mediapipe::OkStatus();
+        return absl::OkStatus();
       }));
   MP_ASSERT_OK(
       graph.StartRun({{"side_packet", MakePacket<int>(expected_value)}}));

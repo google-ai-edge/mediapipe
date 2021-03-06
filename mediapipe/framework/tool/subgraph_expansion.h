@@ -29,13 +29,13 @@ namespace tool {
 
 // Apply the given transformation function to the names of streams and
 // side packets.
-mediapipe::Status TransformStreamNames(
+absl::Status TransformStreamNames(
     proto_ns::RepeatedPtrField<ProtoString>* streams,
     const std::function<std::string(absl::string_view)>& transform);
 
 // Apply the given transformation function to the names of streams,
 // side packets, and nodes.
-mediapipe::Status TransformNames(
+absl::Status TransformNames(
     CalculatorGraphConfig* config,
     const std::function<std::string(absl::string_view)>& transform);
 
@@ -48,7 +48,7 @@ mediapipe::Status TransformNames(
 //   src: FOO:abc    dst: FOO:bob
 //        BAR:def
 // The entry 'abc' -> 'bob' is added to the map.
-mediapipe::Status FindCorrespondingStreams(
+absl::Status FindCorrespondingStreams(
     std::map<std::string, std::string>* stream_map,
     const proto_ns::RepeatedPtrField<ProtoString>& src_streams,
     const proto_ns::RepeatedPtrField<ProtoString>& dst_streams);
@@ -56,21 +56,20 @@ mediapipe::Status FindCorrespondingStreams(
 // Validates the fields in the given Node message that specifies a subgraph.
 // Returns an error status if the Node message contains any field that is only
 // applicable to calculators.
-mediapipe::Status ValidateSubgraphFields(
+absl::Status ValidateSubgraphFields(
     const CalculatorGraphConfig::Node& subgraph_node);
 
 // Renames the streams in a subgraph config to match the connections on the
 // wrapping node.
-mediapipe::Status ConnectSubgraphStreams(
+absl::Status ConnectSubgraphStreams(
     const CalculatorGraphConfig::Node& subgraph_node,
     CalculatorGraphConfig* subgraph_config);
 
 // Replaces subgraph nodes in the given config with the contents of the
 // corresponding subgraphs. Nested subgraphs are retrieved from the
 // graph registry and expanded recursively.
-mediapipe::Status ExpandSubgraphs(
-    CalculatorGraphConfig* config,
-    const GraphRegistry* graph_registry = nullptr);
+absl::Status ExpandSubgraphs(CalculatorGraphConfig* config,
+                             const GraphRegistry* graph_registry = nullptr);
 
 // Creates a graph wrapping the provided node and exposing all of its
 // connections

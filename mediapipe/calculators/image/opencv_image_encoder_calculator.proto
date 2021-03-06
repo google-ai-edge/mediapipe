@@ -29,11 +29,13 @@ message OpenCvImageEncoderCalculatorOptions {
 
 // TODO: Consider renaming it to EncodedImage.
 message OpenCvImageEncoderCalculatorResults {
-  // Encoded image
-  optional string encoded_image = 1;
+  // Pixel data encoded as JPEG.
+  optional bytes encoded_image = 1;
 
-  // Dimensions of the encoded image
+  // Height of the image data under #1 once decoded.
   optional int32 height = 2;
+
+  // Width of the image data under #1 once decoded.
   optional int32 width = 3;
 
   enum ColorSpace {

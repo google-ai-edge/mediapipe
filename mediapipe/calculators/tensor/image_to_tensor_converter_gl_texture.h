@@ -30,7 +30,7 @@ namespace mediapipe {
 // Creates image to tensor (represented as OpenGL texture) converter.
 // NOTE: mediapipe::GlCalculatorHelper::UpdateContract invocation must precede
 // converter creation.
-mediapipe::StatusOr<std::unique_ptr<ImageToTensorConverter>>
+absl::StatusOr<std::unique_ptr<ImageToTensorConverter>>
 CreateImageToGlTextureTensorConverter(CalculatorContext* cc,
                                       bool input_starts_at_bottom,
                                       BorderMode border_mode);

@@ -25,14 +25,14 @@
 namespace mediapipe {
 namespace tool {
 
-mediapipe::StatusOr<std::unique_ptr<PacketSet>> FillPacketSet(
+absl::StatusOr<std::unique_ptr<PacketSet>> FillPacketSet(
     const PacketTypeSet& input_side_packet_types,
     const std::map<std::string, Packet>& input_side_packets,
     int* missing_packet_count_ptr) {
   if (missing_packet_count_ptr != nullptr) {
     *missing_packet_count_ptr = 0;
   }
-  std::vector<mediapipe::Status> errors;
+  std::vector<absl::Status> errors;
   auto packet_set =
       absl::make_unique<PacketSet>(input_side_packet_types.TagMap());
   const auto& names = input_side_packet_types.TagMap()->Names();
@@ -51,7 +51,7 @@ mediapipe::StatusOr<std::unique_ptr<PacketSet>> FillPacketSet(
     }
     packet_set->Get(id) = iter->second;
     // Check the type.
-    mediapipe::Status status =
+    absl::Status status =
         input_side_packet_types.Get(id).Validate(iter->second);
     if (!status.ok()) {
       std::pair<std::string, int> tag_index =

@@ -111,9 +111,9 @@ TEST(InferenceCalculatorTest, SmokeTest) {
   // Test CPU inference only.
   DoSmokeTest(/*graph_proto=*/absl::StrReplaceAll(
       graph_proto, {{"$delegate", "delegate { tflite {} }"}}));
-  DoSmokeTest(/*graph_proto=*/absl::StrReplaceAll(
-      graph_proto, {{"$delegate", "delegate { xnnpack {} }"}}));
-  DoSmokeTest(/*graph_proto=*/absl::StrReplaceAll(
+  DoSmokeTest(absl::StrReplaceAll(graph_proto,
+                                  {{"$delegate", "delegate { xnnpack {} }"}}));
+  DoSmokeTest(absl::StrReplaceAll(
       graph_proto,
       {{"$delegate", "delegate { xnnpack { num_threads: 10 } }"}}));
 }

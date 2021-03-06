@@ -14,42 +14,25 @@
 
 #include "absl/flags/flag.h"
 #include "mediapipe/framework/deps/file_path.h"
+#include "mediapipe/framework/port/file_helpers.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status_macros.h"
 #include "mediapipe/framework/profiler/profiler_resource_util.h"
-
-// TODO: Move this Android include to port/file_helpers.
-// Also move this from resource_util.cc.
-#ifdef __ANDROID__
-#include "mediapipe/util/android/file/base/filesystem.h"
-#else
-#include "mediapipe/framework/port/file_helpers.h"
-#endif
 
 ABSL_FLAG(std::string, log_root_dir, "",
           "The absolute path to the logging output directory.  If specified, "
           "log_root_dir will be prepended to each specified log file path.");
 
-#ifdef __ANDROID__
-namespace mediapipe {
-namespace file {
-mediapipe::Status RecursivelyCreateDir(absl::string_view path) {
-  return RecursivelyCreateDir(path, file::Options());
-}
-}  // namespace file
-}  // namespace mediapipe
-#endif
-
 namespace mediapipe {
 
-mediapipe::StatusOr<std::string> GetLogDirectory() {
-  if (!FLAGS_log_root_dir.CurrentValue().empty()) {
-    return FLAGS_log_root_dir.CurrentValue();
+absl::StatusOr<std::string> GetLogDirectory() {
+  if (!absl::GetFlag(FLAGS_log_root_dir).empty()) {
+    return absl::GetFlag(FLAGS_log_root_dir);
   }
   return GetDefaultTraceLogDirectory();
 }
 
-mediapipe::StatusOr<std::string> PathToLogFile(const std::string& path) {
+absl::StatusOr<std::string> PathToLogFile(const std::string& path) {
   ASSIGN_OR_RETURN(std::string log_dir, GetLogDirectory());
   std::string result = file::JoinPath(log_dir, path);
   MP_RETURN_IF_ERROR(

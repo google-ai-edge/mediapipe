@@ -55,23 +55,25 @@ class ContentZoomingCalculator : public CalculatorBase {
   ContentZoomingCalculator(const ContentZoomingCalculator&) = delete;
   ContentZoomingCalculator& operator=(const ContentZoomingCalculator&) = delete;
 
-  static mediapipe::Status GetContract(mediapipe::CalculatorContract* cc);
-  mediapipe::Status Open(mediapipe::CalculatorContext* cc) override;
-  mediapipe::Status Process(mediapipe::CalculatorContext* cc) override;
+  static absl::Status GetContract(mediapipe::CalculatorContract* cc);
+  absl::Status Open(mediapipe::CalculatorContext* cc) override;
+  absl::Status Process(mediapipe::CalculatorContext* cc) override;
 
  private:
   // Converts bounds to tilt offset, pan offset and height.
-  mediapipe::Status ConvertToPanTiltZoom(float xmin, float xmax, float ymin,
-                                         float ymax, int* tilt_offset,
-                                         int* pan_offset, int* height);
+  absl::Status ConvertToPanTiltZoom(float xmin, float xmax, float ymin,
+                                    float ymax, int* tilt_offset,
+                                    int* pan_offset, int* height);
+  // Sets max_frame_value_ and target_aspect_
+  absl::Status UpdateAspectAndMax();
   ContentZoomingCalculatorOptions options_;
   // Detection frame width/height.
   int frame_height_;
   int frame_width_;
   // Path solver used to smooth top/bottom border crop values.
-  std::unique_ptr<KinematicPathSolver> path_solver_height_;
-  std::unique_ptr<KinematicPathSolver> path_solver_width_;
-  std::unique_ptr<KinematicPathSolver> path_solver_offset_;
+  std::unique_ptr<KinematicPathSolver> path_solver_zoom_;
+  std::unique_ptr<KinematicPathSolver> path_solver_pan_;
+  std::unique_ptr<KinematicPathSolver> path_solver_tilt_;
   // Are parameters initialized.
   bool initialized_;
   // Stores the time of the last "only_required" input.
@@ -89,7 +91,7 @@ class ContentZoomingCalculator : public CalculatorBase {
 };
 REGISTER_CALCULATOR(ContentZoomingCalculator);
 
-mediapipe::Status ContentZoomingCalculator::GetContract(
+absl::Status ContentZoomingCalculator::GetContract(
     mediapipe::CalculatorContract* cc) {
   RET_CHECK(
       !(cc->Inputs().HasTag(kVideoFrame) && cc->Inputs().HasTag(kVideoSize)))
@@ -114,11 +116,10 @@ mediapipe::Status ContentZoomingCalculator::GetContract(
   if (cc->Outputs().HasTag(kCropRect)) {
     cc->Outputs().Tag(kCropRect).Set<mediapipe::Rect>();
   }
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-mediapipe::Status ContentZoomingCalculator::Open(
-    mediapipe::CalculatorContext* cc) {
+absl::Status ContentZoomingCalculator::Open(mediapipe::CalculatorContext* cc) {
   options_ = cc->Options<ContentZoomingCalculatorOptions>();
   if (options_.has_kinematic_options()) {
     return mediapipe::UnknownErrorBuilder(MEDIAPIPE_LOC)
@@ -131,10 +132,10 @@ mediapipe::Status ContentZoomingCalculator::Open(
               "in kinematic_options_zoom and kinematic_options_tilt "
               "directly.";
   }
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-mediapipe::Status ContentZoomingCalculator::ConvertToPanTiltZoom(
+absl::Status ContentZoomingCalculator::ConvertToPanTiltZoom(
     float xmin, float xmax, float ymin, float ymax, int* tilt_offset,
     int* pan_offset, int* height) {
   // Find center of the y-axis offset (for tilt control).
@@ -142,10 +143,11 @@ mediapipe::Status ContentZoomingCalculator::ConvertToPanTiltZoom(
   // Find center of the x-axis offset (for pan control).
   float x_center = xmin + (xmax - xmin) / 2;
   // Find size and apply scale factor to y-axis.
-  float fit_size = fmax((ymax - ymin) / options_.scale_factor(), xmax - xmin);
+  float fit_size_raw =
+      fmax((ymax - ymin) / options_.scale_factor(), xmax - xmin);
   // Apply max frame for cases where the target size is different than input
   // frame size.
-  fit_size = fmin(max_frame_value_, fit_size);
+  float fit_size = fmin(max_frame_value_, fit_size_raw);
   // Prevent box from extending beyond the image.
   if (y_center - fit_size / 2 < 0) {
     y_center = fit_size / 2;
@@ -160,8 +162,8 @@ mediapipe::Status ContentZoomingCalculator::ConvertToPanTiltZoom(
   // Scale to pixel coordinates.
   *tilt_offset = frame_height_ * y_center;
   *pan_offset = frame_width_ * x_center;
-  *height = frame_height_ * fit_size;
-  return mediapipe::OkStatus();
+  *height = frame_height_ * fit_size_raw;
+  return absl::OkStatus();
 }
 
 namespace {
@@ -185,10 +187,10 @@ mediapipe::autoflip::RectF ShiftDetection(
                    relative_bounding_box.width() * x_offset_percent);
   return shifted_bb;
 }
-mediapipe::Status UpdateRanges(const SalientRegion& region,
-                               const float shift_vertical,
-                               const float shift_horizontal, float* xmin,
-                               float* xmax, float* ymin, float* ymax) {
+absl::Status UpdateRanges(const SalientRegion& region,
+                          const float shift_vertical,
+                          const float shift_horizontal, float* xmin,
+                          float* xmax, float* ymin, float* ymax) {
   if (!region.has_location_normalized()) {
     return mediapipe::UnknownErrorBuilder(MEDIAPIPE_LOC)
            << "SalientRegion did not have location normalized set.";
@@ -200,12 +202,12 @@ mediapipe::Status UpdateRanges(const SalientRegion& region,
   *ymin = fmin(*ymin, location.y());
   *ymax = fmax(*ymax, location.y() + location.height());
 
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
-mediapipe::Status UpdateRanges(const mediapipe::Detection& detection,
-                               const float shift_vertical,
-                               const float shift_horizontal, float* xmin,
-                               float* xmax, float* ymin, float* ymax) {
+absl::Status UpdateRanges(const mediapipe::Detection& detection,
+                          const float shift_vertical,
+                          const float shift_horizontal, float* xmin,
+                          float* xmax, float* ymin, float* ymax) {
   RET_CHECK(detection.location_data().format() ==
             mediapipe::LocationData::RELATIVE_BOUNDING_BOX)
       << "Face detection input is lacking required relative_bounding_box()";
@@ -217,7 +219,7 @@ mediapipe::Status UpdateRanges(const mediapipe::Detection& detection,
   *ymin = fmin(*ymin, location.ymin());
   *ymax = fmax(*ymax, location.ymin() + location.height());
 
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 void MakeStaticFeatures(const int top_border, const int bottom_border,
                         const int frame_width, const int frame_height,
@@ -236,55 +238,95 @@ void MakeStaticFeatures(const int top_border, const int bottom_border,
   border_bottom->mutable_border_position()->set_width(frame_width);
   border_bottom->mutable_border_position()->set_height(bottom_border);
 }
-}  // namespace
-
-mediapipe::Status ContentZoomingCalculator::Process(
-    mediapipe::CalculatorContext* cc) {
+absl::Status GetVideoResolution(mediapipe::CalculatorContext* cc,
+                                int* frame_width, int* frame_height) {
   if (cc->Inputs().HasTag(kVideoFrame)) {
-    frame_width_ = cc->Inputs().Tag(kVideoFrame).Get<ImageFrame>().Width();
-    frame_height_ = cc->Inputs().Tag(kVideoFrame).Get<ImageFrame>().Height();
+    *frame_width = cc->Inputs().Tag(kVideoFrame).Get<ImageFrame>().Width();
+    *frame_height = cc->Inputs().Tag(kVideoFrame).Get<ImageFrame>().Height();
   } else if (cc->Inputs().HasTag(kVideoSize)) {
-    if (cc->Inputs().Tag(kVideoSize).IsEmpty()) {
-      return mediapipe::OkStatus();
-    }
-    frame_width_ =
+    *frame_width =
         cc->Inputs().Tag(kVideoSize).Get<std::pair<int, int>>().first;
-    frame_height_ =
+    *frame_height =
         cc->Inputs().Tag(kVideoSize).Get<std::pair<int, int>>().second;
   } else {
     return mediapipe::UnknownErrorBuilder(MEDIAPIPE_LOC)
            << "Input VIDEO or VIDEO_SIZE must be provided.";
   }
+  return absl::OkStatus();
+}
+}  // namespace
 
+absl::Status ContentZoomingCalculator::UpdateAspectAndMax() {
+  max_frame_value_ = 1.0;
+  target_aspect_ = frame_width_ / static_cast<float>(frame_height_);
+  // If target size is set and wider than input aspect, make sure to always
+  // crop the min required amount.
+  if (options_.has_target_size()) {
+    RET_CHECK_GT(options_.target_size().width(), 0)
+        << "Provided target width not valid.";
+    RET_CHECK_GT(options_.target_size().height(), 0)
+        << "Provided target height not valid.";
+    float input_aspect = frame_width_ / static_cast<float>(frame_height_);
+    target_aspect_ = options_.target_size().width() /
+                     static_cast<float>(options_.target_size().height());
+    max_frame_value_ =
+        std::min(input_aspect / target_aspect_, target_aspect_ / input_aspect);
+  }
+  return absl::OkStatus();
+}
+
+absl::Status ContentZoomingCalculator::Process(
+    mediapipe::CalculatorContext* cc) {
+  // For async subgraph support, return on empty video size packets.
+  if (cc->Inputs().HasTag(kVideoSize) &&
+      cc->Inputs().Tag(kVideoSize).IsEmpty()) {
+    return absl::OkStatus();
+  }
+  int frame_width, frame_height;
+  MP_RETURN_IF_ERROR(GetVideoResolution(cc, &frame_width, &frame_height));
+
+  // Init on first call.
   if (!initialized_) {
-    path_solver_height_ = std::make_unique<KinematicPathSolver>(
-        options_.kinematic_options_zoom(), 0, frame_height_,
-        static_cast<float>(frame_height_) / kFieldOfView);
-    path_solver_width_ = std::make_unique<KinematicPathSolver>(
+    frame_width_ = frame_width;
+    frame_height_ = frame_height;
+    path_solver_pan_ = std::make_unique<KinematicPathSolver>(
         options_.kinematic_options_pan(), 0, frame_width_,
         static_cast<float>(frame_width_) / kFieldOfView);
-    path_solver_offset_ = std::make_unique<KinematicPathSolver>(
+    path_solver_tilt_ = std::make_unique<KinematicPathSolver>(
         options_.kinematic_options_tilt(), 0, frame_height_,
         static_cast<float>(frame_height_) / kFieldOfView);
-    max_frame_value_ = 1.0;
-    target_aspect_ = frame_width_ / static_cast<float>(frame_height_);
-    // If target size is set and wider than input aspect, make sure to always
-    // crop the min required amount.
-    if (options_.has_target_size()) {
-      RET_CHECK_GT(options_.target_size().width(), 0)
-          << "Provided target width not valid.";
-      RET_CHECK_GT(options_.target_size().height(), 0)
-          << "Provided target height not valid.";
-      float input_aspect = frame_width_ / static_cast<float>(frame_height_);
-      target_aspect_ = options_.target_size().width() /
-                       static_cast<float>(options_.target_size().height());
-      max_frame_value_ = std::min(input_aspect / target_aspect_,
-                                  target_aspect_ / input_aspect);
-    }
+    MP_RETURN_IF_ERROR(UpdateAspectAndMax());
+    int min_zoom_size = frame_height_ * (options_.max_zoom_value_deg() /
+                                         static_cast<double>(kFieldOfView));
+    path_solver_zoom_ = std::make_unique<KinematicPathSolver>(
+        options_.kinematic_options_zoom(), min_zoom_size,
+        max_frame_value_ * frame_height_,
+        static_cast<float>(frame_height_) / kFieldOfView);
     last_measured_height_ = max_frame_value_ * frame_height_;
     last_measured_x_offset_ = target_aspect_ * frame_width_;
     last_measured_y_offset_ = frame_width_ / 2;
     initialized_ = true;
+  }
+
+  // Update state for change in input resolution.
+  if (frame_width_ != frame_width || frame_height_ != frame_height) {
+    double width_scale = frame_width / static_cast<double>(frame_width_);
+    double height_scale = frame_height / static_cast<double>(frame_height_);
+    last_measured_height_ = last_measured_height_ * height_scale;
+    last_measured_y_offset_ = last_measured_y_offset_ * height_scale;
+    last_measured_x_offset_ = last_measured_x_offset_ * width_scale;
+    frame_width_ = frame_width;
+    frame_height_ = frame_height;
+    MP_RETURN_IF_ERROR(UpdateAspectAndMax());
+    MP_RETURN_IF_ERROR(path_solver_pan_->UpdateMinMaxLocation(0, frame_width_));
+    MP_RETURN_IF_ERROR(
+        path_solver_tilt_->UpdateMinMaxLocation(0, frame_height_));
+    int min_zoom_size = frame_height_ * (options_.max_zoom_value_deg() /
+                                         static_cast<double>(kFieldOfView));
+    MP_RETURN_IF_ERROR(path_solver_zoom_->UpdateMinMaxLocation(
+        min_zoom_size, max_frame_value_ * frame_height_));
+    MP_RETURN_IF_ERROR(path_solver_zoom_->UpdatePixelsPerDegree(
+        static_cast<float>(frame_height_) / kFieldOfView));
   }
 
   bool only_required_found = false;
@@ -307,11 +349,13 @@ mediapipe::Status ContentZoomingCalculator::Process(
   if (cc->Inputs().HasTag(kDetections)) {
     if (cc->Inputs().Tag(kDetections).IsEmpty()) {
       auto default_rect = absl::make_unique<mediapipe::Rect>();
+      default_rect->set_x_center(frame_width_ / 2);
+      default_rect->set_y_center(frame_height_ / 2);
       default_rect->set_width(frame_width_);
       default_rect->set_height(frame_height_);
       cc->Outputs().Tag(kCropRect).Add(default_rect.release(),
                                        Timestamp(cc->InputTimestamp()));
-      return mediapipe::OkStatus();
+      return absl::OkStatus();
     }
     auto raw_detections =
         cc->Inputs().Tag(kDetections).Get<std::vector<mediapipe::Detection>>();
@@ -350,31 +394,46 @@ mediapipe::Status ContentZoomingCalculator::Process(
     offset_y = last_measured_y_offset_;
   }
 
+  // Check if the camera is changing in pan, tilt or zoom.  If the camera is in
+  // motion disable temporal filtering.
+  bool pan_state, tilt_state, zoom_state;
+  MP_RETURN_IF_ERROR(path_solver_pan_->PredictMotionState(
+      offset_x, cc->InputTimestamp().Microseconds(), &pan_state));
+  MP_RETURN_IF_ERROR(path_solver_tilt_->PredictMotionState(
+      offset_y, cc->InputTimestamp().Microseconds(), &tilt_state));
+  MP_RETURN_IF_ERROR(path_solver_zoom_->PredictMotionState(
+      height, cc->InputTimestamp().Microseconds(), &zoom_state));
+  if (pan_state || tilt_state || zoom_state) {
+    path_solver_pan_->ClearHistory();
+    path_solver_tilt_->ClearHistory();
+    path_solver_zoom_->ClearHistory();
+  }
+
   // Compute smoothed zoom camera path.
-  MP_RETURN_IF_ERROR(path_solver_height_->AddObservation(
+  MP_RETURN_IF_ERROR(path_solver_zoom_->AddObservation(
       height, cc->InputTimestamp().Microseconds()));
   int path_height;
-  MP_RETURN_IF_ERROR(path_solver_height_->GetState(&path_height));
+  MP_RETURN_IF_ERROR(path_solver_zoom_->GetState(&path_height));
   int path_width = path_height * target_aspect_;
 
   // Update pixel-per-degree value for pan/tilt.
   int target_height;
-  MP_RETURN_IF_ERROR(path_solver_height_->GetTargetPosition(&target_height));
+  MP_RETURN_IF_ERROR(path_solver_zoom_->GetTargetPosition(&target_height));
   int target_width = target_height * target_aspect_;
-  MP_RETURN_IF_ERROR(path_solver_width_->UpdatePixelsPerDegree(
+  MP_RETURN_IF_ERROR(path_solver_pan_->UpdatePixelsPerDegree(
       static_cast<float>(target_width) / kFieldOfView));
-  MP_RETURN_IF_ERROR(path_solver_offset_->UpdatePixelsPerDegree(
+  MP_RETURN_IF_ERROR(path_solver_tilt_->UpdatePixelsPerDegree(
       static_cast<float>(target_height) / kFieldOfView));
 
   // Compute smoothed pan/tilt paths.
-  MP_RETURN_IF_ERROR(path_solver_width_->AddObservation(
+  MP_RETURN_IF_ERROR(path_solver_pan_->AddObservation(
       offset_x, cc->InputTimestamp().Microseconds()));
-  MP_RETURN_IF_ERROR(path_solver_offset_->AddObservation(
+  MP_RETURN_IF_ERROR(path_solver_tilt_->AddObservation(
       offset_y, cc->InputTimestamp().Microseconds()));
   int path_offset_x;
-  MP_RETURN_IF_ERROR(path_solver_width_->GetState(&path_offset_x));
+  MP_RETURN_IF_ERROR(path_solver_pan_->GetState(&path_offset_x));
   int path_offset_y;
-  MP_RETURN_IF_ERROR(path_solver_offset_->GetState(&path_offset_y));
+  MP_RETURN_IF_ERROR(path_solver_tilt_->GetState(&path_offset_y));
 
   // Prevent box from extending beyond the image after camera smoothing.
   if (path_offset_y - ceil(path_height / 2.0) < 0) {
@@ -415,7 +474,7 @@ mediapipe::Status ContentZoomingCalculator::Process(
                                      Timestamp(cc->InputTimestamp()));
   }
 
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
 }  // namespace autoflip

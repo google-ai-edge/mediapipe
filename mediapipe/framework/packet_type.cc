@@ -125,9 +125,9 @@ const std::string PacketType::DebugTypeName() const {
   return type_name_;
 }
 
-mediapipe::Status PacketType::Validate(const Packet& packet) const {
+absl::Status PacketType::Validate(const Packet& packet) const {
   if (!initialized_) {
-    return mediapipe::InvalidArgumentError(
+    return absl::InvalidArgumentError(
         "Uninitialized PacketType was used for validation.");
   }
   if (same_as_) {
@@ -147,7 +147,7 @@ mediapipe::Status PacketType::Validate(const Packet& packet) const {
     return mediapipe::InvalidArgumentErrorBuilder(MEDIAPIPE_LOC)
            << "Empty packets are not allowed for type: " << type_name_;
   }
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
 bool PacketType::IsConsistentWith(const PacketType& other) const {
@@ -176,7 +176,7 @@ bool PacketType::IsConsistentWith(const PacketType& other) const {
   return type1->validate_method_ == type2->validate_method_;
 }
 
-mediapipe::Status ValidatePacketTypeSet(const PacketTypeSet& packet_type_set) {
+absl::Status ValidatePacketTypeSet(const PacketTypeSet& packet_type_set) {
   std::vector<std::string> errors;
   if (packet_type_set.GetErrorHandler().HasError()) {
     errors = packet_type_set.GetErrorHandler().ErrorMessages();
@@ -190,25 +190,24 @@ mediapipe::Status ValidatePacketTypeSet(const PacketTypeSet& packet_type_set) {
     }
   }
   if (!errors.empty()) {
-    return mediapipe::InvalidArgumentError(absl::StrCat(
+    return absl::InvalidArgumentError(absl::StrCat(
         "ValidatePacketTypeSet failed:\n", absl::StrJoin(errors, "\n")));
   }
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-mediapipe::Status ValidatePacketSet(const PacketTypeSet& packet_type_set,
-                                    const PacketSet& packet_set) {
-  std::vector<mediapipe::Status> errors;
+absl::Status ValidatePacketSet(const PacketTypeSet& packet_type_set,
+                               const PacketSet& packet_set) {
+  std::vector<absl::Status> errors;
   if (!packet_type_set.TagMap()->SameAs(*packet_set.TagMap())) {
-    return mediapipe::InvalidArgumentError(absl::StrCat(
+    return absl::InvalidArgumentError(absl::StrCat(
         "TagMaps do not match.  PacketTypeSet TagMap:\n",
         packet_type_set.TagMap()->DebugString(), "\n\nPacketSet TagMap:\n",
         packet_set.TagMap()->DebugString()));
   }
   for (CollectionItemId id = packet_type_set.BeginId();
        id < packet_type_set.EndId(); ++id) {
-    mediapipe::Status status =
-        packet_type_set.Get(id).Validate(packet_set.Get(id));
+    absl::Status status = packet_type_set.Get(id).Validate(packet_set.Get(id));
     if (!status.ok()) {
       std::pair<std::string, int> tag_index =
           packet_type_set.TagAndIndexFromId(id);
@@ -222,7 +221,7 @@ mediapipe::Status ValidatePacketSet(const PacketTypeSet& packet_type_set,
   if (!errors.empty()) {
     return tool::CombinedStatus("ValidatePacketSet failed:", errors);
   }
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
 }  // namespace mediapipe

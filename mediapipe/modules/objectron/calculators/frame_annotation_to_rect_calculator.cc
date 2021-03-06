@@ -21,7 +21,6 @@
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/modules/objectron/calculators/annotation_data.pb.h"
-#include "mediapipe/modules/objectron/calculators/box.h"
 #include "mediapipe/modules/objectron/calculators/frame_annotation_to_rect_calculator.pb.h"
 
 namespace mediapipe {
@@ -48,9 +47,9 @@ class FrameAnnotationToRectCalculator : public CalculatorBase {
     TOP_VIEW_OFF,
   };
 
-  static mediapipe::Status GetContract(CalculatorContract* cc);
-  mediapipe::Status Open(CalculatorContext* cc) override;
-  mediapipe::Status Process(CalculatorContext* cc) override;
+  static absl::Status GetContract(CalculatorContract* cc);
+  absl::Status Open(CalculatorContext* cc) override;
+  absl::Status Process(CalculatorContext* cc) override;
 
  private:
   void AddAnnotationToRect(const ObjectAnnotation& annotation,
@@ -65,7 +64,7 @@ class FrameAnnotationToRectCalculator : public CalculatorBase {
 };
 REGISTER_CALCULATOR(FrameAnnotationToRectCalculator);
 
-mediapipe::Status FrameAnnotationToRectCalculator::GetContract(
+absl::Status FrameAnnotationToRectCalculator::GetContract(
     CalculatorContract* cc) {
   RET_CHECK(!cc->Inputs().GetTags().empty());
   RET_CHECK(!cc->Outputs().GetTags().empty());
@@ -77,23 +76,22 @@ mediapipe::Status FrameAnnotationToRectCalculator::GetContract(
   if (cc->Outputs().HasTag(kOutputNormRectsTag)) {
     cc->Outputs().Tag(kOutputNormRectsTag).Set<std::vector<NormalizedRect>>();
   }
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-mediapipe::Status FrameAnnotationToRectCalculator::Open(CalculatorContext* cc) {
+absl::Status FrameAnnotationToRectCalculator::Open(CalculatorContext* cc) {
   cc->SetOffset(TimestampDiff(0));
   status_ = TOP_VIEW_OFF;
   const auto& options = cc->Options<FrameAnnotationToRectCalculatorOptions>();
   off_threshold_ = options.off_threshold();
   on_threshold_ = options.on_threshold();
   RET_CHECK(off_threshold_ <= on_threshold_);
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-mediapipe::Status FrameAnnotationToRectCalculator::Process(
-    CalculatorContext* cc) {
+absl::Status FrameAnnotationToRectCalculator::Process(CalculatorContext* cc) {
   if (cc->Inputs().Tag(kInputFrameAnnotationTag).IsEmpty()) {
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
   auto output_rects = absl::make_unique<std::vector<NormalizedRect>>();
   const auto& frame_annotation =
@@ -106,7 +104,7 @@ mediapipe::Status FrameAnnotationToRectCalculator::Process(
   cc->Outputs()
       .Tag(kOutputNormRectsTag)
       .Add(output_rects.release(), cc->InputTimestamp());
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
 void FrameAnnotationToRectCalculator::AddAnnotationToRect(
@@ -133,20 +131,11 @@ void FrameAnnotationToRectCalculator::AddAnnotationToRect(
 
 float FrameAnnotationToRectCalculator::RotationAngleFromAnnotation(
     const ObjectAnnotation& annotation) {
-  Box box("category");
-  std::vector<Vector3f> vertices_3d;
-  std::vector<Vector2f> vertices_2d;
-  for (const auto& keypoint : annotation.keypoints()) {
-    const auto& point_3d = keypoint.point_3d();
-    const auto& point_2d = keypoint.point_2d();
-    vertices_3d.emplace_back(
-        Vector3f(point_3d.x(), point_3d.y(), point_3d.z()));
-    vertices_2d.emplace_back(Vector2f(point_2d.x(), point_2d.y()));
-  }
-  box.Fit(vertices_3d);
-  Vector3f scale = box.GetScale();
-  Matrix3fRM box_rotation = box.GetRotation();
-  Vector3f box_translation = box.GetTranslation();
+  // Get box rotation and translation from annotation.
+  const auto box_rotation =
+      Eigen::Map<const Matrix3fRM>(annotation.rotation().data());
+  const auto box_translation =
+      Eigen::Map<const Vector3f>(annotation.translation().data());
 
   // Rotation angle to use when top-view is on(top-view on),
   // Which will make z-axis upright after the rotation.
@@ -180,9 +169,9 @@ float FrameAnnotationToRectCalculator::RotationAngleFromPose(
     const Vector3f& vec) {
   auto p1 = rotation * vec + translation;
   auto p2 = -rotation * vec + translation;
-  const float dy = p2[2] * p1[1] - p1[2] * p2[1];
-  const float dx = p2[2] * p1[0] - p1[2] * p2[0];
-  return std::atan2(-dy, dx);
+  const float dy = p2[2] * p2[1] - p1[2] * p1[1];
+  const float dx = p2[2] * p2[0] - p1[2] * p1[0];
+  return M_PI / 2 - std::atan2(dy, dx);
 }
 
 }  // namespace mediapipe

@@ -44,11 +44,10 @@ class SyncSetInputStreamHandler : public InputStreamHandler {
                             const MediaPipeOptions& extendable_options,
                             bool calculator_run_in_parallel);
 
-  void PrepareForRun(
-      std::function<void()> headers_ready_callback,
-      std::function<void()> notification_callback,
-      std::function<void(CalculatorContext*)> schedule_callback,
-      std::function<void(mediapipe::Status)> error_callback) override;
+  void PrepareForRun(std::function<void()> headers_ready_callback,
+                     std::function<void()> notification_callback,
+                     std::function<void(CalculatorContext*)> schedule_callback,
+                     std::function<void(absl::Status)> error_callback) override;
 
  protected:
   // In SyncSetInputStreamHandler, a node is "ready" if any
@@ -94,7 +93,7 @@ void SyncSetInputStreamHandler::PrepareForRun(
     std::function<void()> headers_ready_callback,
     std::function<void()> notification_callback,
     std::function<void(CalculatorContext*)> schedule_callback,
-    std::function<void(mediapipe::Status)> error_callback) {
+    std::function<void(absl::Status)> error_callback) {
   const auto& handler_options =
       options_.GetExtension(SyncSetInputStreamHandlerOptions::ext);
   {

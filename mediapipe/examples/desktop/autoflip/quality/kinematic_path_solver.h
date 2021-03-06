@@ -43,22 +43,34 @@ class KinematicPathSolver {
         initialized_(false),
         pixels_per_degree_(pixels_per_degree) {}
   // Add an observation (detection) at a position and time.
-  mediapipe::Status AddObservation(int position, const uint64 time_us);
+  absl::Status AddObservation(int position, const uint64 time_us);
   // Get the predicted position at a time.
-  mediapipe::Status UpdatePrediction(const int64 time_us);
+  absl::Status UpdatePrediction(const int64 time_us);
   // Get the state at a time.
-  mediapipe::Status GetState(int* position);
+  absl::Status GetState(int* position);
   // Update PixelPerDegree value.
-  mediapipe::Status UpdatePixelsPerDegree(const float pixels_per_degree);
+  absl::Status UpdatePixelsPerDegree(const float pixels_per_degree);
   // Provide the current target position of the reframe action.
-  mediapipe::Status GetTargetPosition(int* target_position);
+  absl::Status GetTargetPosition(int* target_position);
+  // Change min/max location and update state based on new scaling.
+  absl::Status UpdateMinMaxLocation(const int min_location,
+                                    const int max_location);
+  // Check if motion is within the reframe window, return false if not.
+  bool IsMotionTooSmall(double delta_degs);
+  // Check if a position measurement will cause the camera to be in motion
+  // without updating the internal state.
+  absl::Status PredictMotionState(int position, const uint64 time_us,
+                                  bool* state);
+  // Clear any history buffer of positions that are used when
+  // filtering_time_window_us is set to a non-zero value.
+  void ClearHistory();
 
  private:
   // Tuning options.
   KinematicOptions options_;
   // Min and max value the state can be.
-  const int min_location_;
-  const int max_location_;
+  int min_location_;
+  int max_location_;
   bool initialized_;
   float pixels_per_degree_;
   // Current state values.

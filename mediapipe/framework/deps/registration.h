@@ -67,7 +67,7 @@ namespace mediapipe {
 //  class Client {};
 //
 //  using ClientRegistry =
-//      GlobalFactoryRegistry<mediapipe::StatusOr<unique_ptr<Client>>;
+//      GlobalFactoryRegistry<absl::StatusOr<unique_ptr<Client>>;
 //
 //  class MyClient : public Client {
 //   public:
@@ -84,7 +84,7 @@ namespace mediapipe {
 //      ::my_ns::MyClient,
 //      []() {
 //        auto backend = absl::make_unique<Backend>("/path/to/backend");
-//        const mediapipe::Status status = backend->Init();
+//        const absl::Status status = backend->Init();
 //        if (!status.ok()) {
 //          return status;
 //        }
@@ -95,13 +95,13 @@ namespace mediapipe {
 //
 // === Using the registry to create instances ==============================
 //
-//  // Registry will return mediapipe::StatusOr<Object>
-//  mediapipe::StatusOr<unique_ptr<Widget>> s_or_widget =
+//  // Registry will return absl::StatusOr<Object>
+//  absl::StatusOr<unique_ptr<Widget>> s_or_widget =
 //      WidgetRegistry::CreateByName(
 //          "my_ns.MyWidget", std::move(gadget), thing);
 //  // Registry will return NOT_FOUND if the name is unknown.
 //  if (!s_or_widget.ok()) ... // handle error
-//  DoStuffWithWidget(std::move(s_or_widget).ValueOrDie());
+//  DoStuffWithWidget(std::move(s_or_widget).value());
 //
 //  // It's also possible to find an instance by name within a source namespace.
 //  auto s_or_widget = WidgetRegistry::CreateByNameInNamespace(
@@ -115,7 +115,7 @@ namespace mediapipe {
 //  // This might be useful if clients outside of your codebase are registering
 //  // plugins.
 //  for (const auto& name : WidgetRegistry::GetRegisteredNames()) {
-//    mediapipe::StatusOr<unique_ptr<Widget>> s_or_widget =
+//    absl::StatusOr<unique_ptr<Widget>> s_or_widget =
 //        WidgetRegistry::CreateByName(name, std::move(gadget), thing);
 //    ...
 //  }
@@ -134,13 +134,13 @@ constexpr char kNameSep[] = ".";
 
 template <typename T>
 struct WrapStatusOr {
-  using type = mediapipe::StatusOr<T>;
+  using type = absl::StatusOr<T>;
 };
 
 // Specialization to avoid double-wrapping types that are already StatusOrs.
 template <typename T>
-struct WrapStatusOr<mediapipe::StatusOr<T>> {
-  using type = mediapipe::StatusOr<T>;
+struct WrapStatusOr<absl::StatusOr<T>> {
+  using type = absl::StatusOr<T>;
 };
 }  // namespace registration_internal
 
@@ -196,8 +196,7 @@ class FunctionRegistry {
       absl::ReaderMutexLock lock(&lock_);
       auto it = functions_.find(name);
       if (it == functions_.end()) {
-        return mediapipe::NotFoundError("No registered object with name: " +
-                                        name);
+        return absl::NotFoundError("No registered object with name: " + name);
       }
       function = it->second;
     }

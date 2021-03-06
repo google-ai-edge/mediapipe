@@ -358,6 +358,21 @@ cc_library(
 )
 
 cc_library(
+    name = "detection_to_landmarks_calculator",
+    srcs = ["detection_to_landmarks_calculator.cc"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/formats:detection_cc_proto",
+        "//mediapipe/framework/formats:landmark_cc_proto",
+        "//mediapipe/framework/formats:location_data_cc_proto",
+        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:status",
+    ],
+    alwayslink = 1,
+)
+
+cc_library(
     name = "landmarks_to_detection_calculator",
     srcs = ["landmarks_to_detection_calculator.cc"],
     visibility = ["//visibility:public"],
@@ -1133,5 +1148,49 @@ cc_library(
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
     ],
+    alwayslink = 1,
+)
+
+cc_library(
+    name = "to_image_calculator",
+    srcs = ["to_image_calculator.cc"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//mediapipe/framework:calculator_options_cc_proto",
+        "//mediapipe/framework/formats:image_format_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/formats:image_frame",
+        "//mediapipe/framework/formats:image",
+        "//mediapipe/framework/port:logging",
+        "//mediapipe/framework/port:status",
+        "//mediapipe/framework/port:vector",
+    ] + select({
+        "//mediapipe/gpu:disable_gpu": [],
+        "//conditions:default": [
+            "//mediapipe/gpu:gl_calculator_helper",
+        ],
+    }),
+    alwayslink = 1,
+)
+
+cc_library(
+    name = "from_image_calculator",
+    srcs = ["from_image_calculator.cc"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//mediapipe/framework:calculator_options_cc_proto",
+        "//mediapipe/framework/formats:image_format_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/formats:image_frame",
+        "//mediapipe/framework/formats:image",
+        "//mediapipe/framework/port:logging",
+        "//mediapipe/framework/port:status",
+        "//mediapipe/framework/port:vector",
+    ] + select({
+        "//mediapipe/gpu:disable_gpu": [],
+        "//conditions:default": [
+            "//mediapipe/gpu:gl_calculator_helper",
+        ],
+    }),
     alwayslink = 1,
 )

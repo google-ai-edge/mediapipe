@@ -15,6 +15,7 @@
 #include <vector>
 
 #include "absl/strings/match.h"
+#include "mediapipe/framework/port/file_helpers.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/singleton.h"
 #include "mediapipe/util/android/asset_manager_util.h"
@@ -24,13 +25,13 @@
 namespace mediapipe {
 
 namespace {
-mediapipe::StatusOr<std::string> PathToResourceAsFileInternal(
+absl::StatusOr<std::string> PathToResourceAsFileInternal(
     const std::string& path) {
   return Singleton<AssetManager>::get()->CachedFileFromAsset(path);
 }
 }  // namespace
 
-mediapipe::StatusOr<std::string> PathToResourceAsFile(const std::string& path) {
+absl::StatusOr<std::string> PathToResourceAsFile(const std::string& path) {
   // Return full path.
   if (absl::StartsWith(path, "/")) {
     return path;
@@ -51,14 +52,24 @@ mediapipe::StatusOr<std::string> PathToResourceAsFile(const std::string& path) {
     CHECK_NE(last_slash_idx, std::string::npos);  // Make sure it's a path.
     auto base_name = path.substr(last_slash_idx + 1);
     auto status_or_path = PathToResourceAsFileInternal(base_name);
-    if (status_or_path.ok()) LOG(INFO) << "Successfully loaded: " << base_name;
-    return status_or_path;
+    if (status_or_path.ok()) {
+      LOG(INFO) << "Successfully loaded: " << base_name;
+      return status_or_path;
+    }
   }
+
+  // Try the test environment.
+  absl::string_view workspace = "mediapipe";
+  auto test_path = file::JoinPath(std::getenv("TEST_SRCDIR"), workspace, path);
+  if (file::Exists(test_path).ok()) {
+    return test_path;
+  }
+
+  return path;
 }
 
-mediapipe::Status GetResourceContents(const std::string& path,
-                                      std::string* output,
-                                      bool read_as_binary) {
+absl::Status GetResourceContents(const std::string& path, std::string* output,
+                                 bool read_as_binary) {
   if (!read_as_binary) {
     LOG(WARNING)
         << "Setting \"read_as_binary\" to false is a no-op on Android.";
@@ -70,12 +81,12 @@ mediapipe::Status GetResourceContents(const std::string& path,
   if (absl::StartsWith(path, "content://")) {
     MP_RETURN_IF_ERROR(
         Singleton<AssetManager>::get()->ReadContentUri(path, output));
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
   RET_CHECK(Singleton<AssetManager>::get()->ReadFile(path, output))
       << "could not read asset: " << path;
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
 }  // namespace mediapipe

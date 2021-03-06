@@ -89,10 +89,10 @@ class SidePacketToStreamCalculator : public CalculatorBase {
   SidePacketToStreamCalculator() = default;
   ~SidePacketToStreamCalculator() override = default;
 
-  static mediapipe::Status GetContract(CalculatorContract* cc);
-  mediapipe::Status Open(CalculatorContext* cc) override;
-  mediapipe::Status Process(CalculatorContext* cc) override;
-  mediapipe::Status Close(CalculatorContext* cc) override;
+  static absl::Status GetContract(CalculatorContract* cc);
+  absl::Status Open(CalculatorContext* cc) override;
+  absl::Status Process(CalculatorContext* cc) override;
+  absl::Status Close(CalculatorContext* cc) override;
 
  private:
   bool is_tick_processing_ = false;
@@ -100,8 +100,7 @@ class SidePacketToStreamCalculator : public CalculatorBase {
 };
 REGISTER_CALCULATOR(SidePacketToStreamCalculator);
 
-mediapipe::Status SidePacketToStreamCalculator::GetContract(
-    CalculatorContract* cc) {
+absl::Status SidePacketToStreamCalculator::GetContract(CalculatorContract* cc) {
   const auto& tags = cc->Outputs().GetTags();
   RET_CHECK(tags.size() == 1 && kTimestampMap->count(*tags.begin()) == 1)
       << "Only one of AT_PRESTREAM, AT_POSTSTREAM, AT_ZERO, AT_TICK and "
@@ -138,10 +137,10 @@ mediapipe::Status SidePacketToStreamCalculator::GetContract(
     cc->Inputs().Tag(kTagTick).SetAny();
   }
 
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-mediapipe::Status SidePacketToStreamCalculator::Open(CalculatorContext* cc) {
+absl::Status SidePacketToStreamCalculator::Open(CalculatorContext* cc) {
   output_tag_ = GetOutputTag(*cc);
   if (cc->Inputs().HasTag(kTagTick)) {
     is_tick_processing_ = true;
@@ -149,10 +148,10 @@ mediapipe::Status SidePacketToStreamCalculator::Open(CalculatorContext* cc) {
     // timestamp bound update.
     cc->SetOffset(TimestampDiff(0));
   }
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-mediapipe::Status SidePacketToStreamCalculator::Process(CalculatorContext* cc) {
+absl::Status SidePacketToStreamCalculator::Process(CalculatorContext* cc) {
   if (is_tick_processing_) {
     // TICK input is guaranteed to be non-empty, as it's the only input stream
     // for this calculator.
@@ -163,13 +162,13 @@ mediapipe::Status SidePacketToStreamCalculator::Process(CalculatorContext* cc) {
           .AddPacket(cc->InputSidePackets().Index(i).At(timestamp));
     }
 
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
   return mediapipe::tool::StatusStop();
 }
 
-mediapipe::Status SidePacketToStreamCalculator::Close(CalculatorContext* cc) {
+absl::Status SidePacketToStreamCalculator::Close(CalculatorContext* cc) {
   if (!cc->Outputs().HasTag(kTagAtTick) &&
       !cc->Outputs().HasTag(kTagAtTimestamp)) {
     const auto& timestamp = kTimestampMap->at(output_tag_);
@@ -187,7 +186,7 @@ mediapipe::Status SidePacketToStreamCalculator::Close(CalculatorContext* cc) {
           .AddPacket(cc->InputSidePackets().Index(i).At(Timestamp(timestamp)));
     }
   }
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
 }  // namespace mediapipe

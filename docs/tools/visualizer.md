@@ -37,7 +37,7 @@ The graph can be modified by adding and editing code in the Editor view.
     ![New Button](../images/upload_button.png)
 
 *   Pressing the "Upload" button will prompt the user to select a local PBTXT
-    file, which will everwrite the current code within the editor.
+    file, which will overwrite the current code within the editor.
 
 *   Alternatively, code can be pasted directly into the editor window.
 

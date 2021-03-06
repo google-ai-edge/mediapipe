@@ -165,6 +165,7 @@ cc_library(
     }),
     visibility = ["//visibility:public"],
     deps = [
+        "@com_google_protobuf//:protobuf",
         "//mediapipe/framework/formats:location_data_cc_proto",
         "//mediapipe/framework/formats/annotation:locus_cc_proto",
         "@com_google_absl//absl/base:core_headers",
@@ -182,8 +183,6 @@ cc_library(
         "//mediapipe/framework/port:statusor",
         "//mediapipe/framework/formats/annotation:rasterization_cc_proto",
     ] + select({
-        "//conditions:default": ["@com_google_protobuf//:protobuf"],
-    }) + select({
         "//conditions:default": [
             "//mediapipe/framework/port:opencv_imgproc",
         ],
@@ -275,6 +274,95 @@ filegroup(
     name = "protos_src",
     srcs = glob(["*.proto"]),
     visibility = ["//mediapipe:__subpackages__"],
+)
+
+cc_library(
+    name = "image",
+    srcs = ["image.cc"],
+    hdrs = ["image.h"],
+    copts = select({
+        "//mediapipe:ios": [
+            "-x objective-c++",
+            "-fobjc-arc",  # enable reference-counting
+        ],
+        "//conditions:default": [],
+    }),
+    visibility = ["//visibility:public"],
+    deps = [
+        "//mediapipe/framework/formats:image_frame",
+        "//mediapipe/framework/formats:image_format_cc_proto",
+        "@com_google_absl//absl/synchronization",
+        "//mediapipe/framework:port",
+        "//mediapipe/framework/port:logging",
+    ] + select({
+        "//conditions:default": [
+            "//mediapipe/gpu:gpu_buffer",
+            "//mediapipe/gpu:gpu_buffer_format",
+            "//mediapipe/gpu:gl_texture_buffer",
+        ],
+        "//mediapipe:ios": [
+            "//mediapipe/gpu:gpu_buffer",
+            "//mediapipe/gpu:gpu_buffer_format",
+        ],
+        "//mediapipe/gpu:disable_gpu": [],
+    }) + select({
+        "//conditions:default": [],
+        "//mediapipe:apple": [
+            "//mediapipe/objc:CFHolder",
+            "//mediapipe/objc:util",
+        ],
+    }),
+)
+
+cc_library(
+    name = "image_multi_pool",
+    srcs = ["image_multi_pool.cc"],
+    hdrs = ["image_multi_pool.h"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":image",
+        "//mediapipe/framework/formats:image_frame_pool",
+        "//mediapipe/framework:port",
+        "//mediapipe/framework/port:logging",
+        "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/synchronization",
+    ] + select({
+        "//conditions:default": [
+            "//mediapipe/gpu:gl_texture_buffer",
+            "//mediapipe/gpu:gl_texture_buffer_pool",
+            "//mediapipe/gpu:gl_base",
+            "//mediapipe/gpu:gpu_buffer",
+        ],
+        "//mediapipe:ios": [
+            "//mediapipe/gpu:gl_base",
+            "//mediapipe/gpu:gpu_buffer",
+        ],
+        "//mediapipe/gpu:disable_gpu": [],
+    }) + select({
+        "//conditions:default": [],
+        "//mediapipe:apple": [
+            "//mediapipe/gpu:pixel_buffer_pool_util",
+            "//mediapipe/objc:CFHolder",
+        ],
+    }),
+)
+
+cc_library(
+    name = "image_opencv",
+    srcs = [
+        "image_opencv.cc",
+    ],
+    hdrs = [
+        "image_opencv.h",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":image",
+        "//mediapipe/framework/formats:image_format_cc_proto",
+        "//mediapipe/framework/port:logging",
+        "//mediapipe/framework/port:opencv_core",
+        "//mediapipe/framework/port:statusor",
+    ],
 )
 
 cc_library(

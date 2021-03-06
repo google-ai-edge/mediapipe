@@ -3,11 +3,20 @@
 # GPU buffer. (GpuBuffer)
 input_stream: "input_video"
 
-# Boolean flag, which indicates whether the Facepaint effect is selected. (bool)
+# An integer, which indicate which effect is selected. (int)
 #
-# If `true`, the Facepaint effect will be rendered.
-# If `false`, the Glasses effect will be rendered.
-input_stream: "is_facepaint_effect_selected"
+# If `selected_effect_id` is `0`, the Axis effect is selected.
+# If `selected_effect_id` is `1`, the Facepaint effect is selected.
+# If `selected_effect_id` is `2`, the Glasses effect is selected.
+#
+# No other values are allowed for `selected_effect_id`.
+input_stream: "selected_effect_id"
+
+# Indicates whether to use the face detection as the input source. (bool)
+#
+# If `true`, the face detection pipeline will be used to produce landmarks.
+# If `false`, the face landmark pipeline will be used to produce landmarks.
+input_side_packet: "use_face_detection_input_source"
 
 # Output image with rendered results. (GpuBuffer)
 output_stream: "output_video"
@@ -59,87 +68,63 @@ node {
   }
 }
 
-# Subgraph that detects a single face and corresponding landmarks. The landmarks
-# are also "smoothed" to achieve better visual results.
+# Computes the face geometry for a single face. The input source is defined
+# through `use_face_detection_input_source`.
 node {
-  calculator: "SingleFaceSmoothLandmarkGpu"
+  calculator: "SwitchContainer"
   input_stream: "IMAGE:throttled_input_video"
-  output_stream: "LANDMARKS:multi_face_landmarks"
-}
-
-# Extracts the throttled input video frame dimensions as a separate packet.
-node {
-  calculator: "ImagePropertiesCalculator"
-  input_stream: "IMAGE_GPU:throttled_input_video"
-  output_stream: "SIZE:input_video_size"
-}
-
-# Subgraph that computes face geometry from landmarks for a single face.
-node {
-  calculator: "FaceGeometry"
-  input_stream: "MULTI_FACE_LANDMARKS:multi_face_landmarks"
-  input_stream: "IMAGE_SIZE:input_video_size"
+  input_side_packet: "ENABLE:use_face_detection_input_source"
   input_side_packet: "ENVIRONMENT:environment"
   output_stream: "MULTI_FACE_GEOMETRY:multi_face_geometry"
-}
-
-# Decides whether to render the Facepaint effect based on the
-# `is_facepaint_effect_selected` flag value.
-node {
-  calculator: "GateCalculator"
-  input_stream: "throttled_input_video"
-  input_stream: "multi_face_geometry"
-  input_stream: "ALLOW:is_facepaint_effect_selected"
-  output_stream: "facepaint_effect_throttled_input_video"
-  output_stream: "facepaint_effect_multi_face_geometry"
-}
-
-# Renders the Facepaint effect.
-node {
-  calculator: "FaceGeometryEffectRendererCalculator"
-  input_side_packet: "ENVIRONMENT:environment"
-  input_stream: "IMAGE_GPU:facepaint_effect_throttled_input_video"
-  input_stream: "MULTI_FACE_GEOMETRY:facepaint_effect_multi_face_geometry"
-  output_stream: "IMAGE_GPU:facepaint_effect_output_video"
   node_options: {
-    [type.googleapis.com/mediapipe.FaceGeometryEffectRendererCalculatorOptions] {
-      effect_texture_path: "mediapipe/graphs/face_effect/data/facepaint.pngblob"
+    [type.googleapis.com/mediapipe.SwitchContainerOptions] {
+      contained_node: {
+        calculator: "SingleFaceGeometryFromLandmarksGpu"
+      }
+      contained_node: {
+        calculator: "SingleFaceGeometryFromDetectionGpu"
+      }
     }
   }
 }
 
-# Decides whether to render the Glasses effect based on the
-# `is_facepaint_effect_selected` flag value.
+# Renders the selected effect based on `selected_effect_id`.
 node {
-  calculator: "GateCalculator"
-  input_stream: "throttled_input_video"
-  input_stream: "multi_face_geometry"
-  input_stream: "DISALLOW:is_facepaint_effect_selected"
-  output_stream: "glasses_effect_throttled_input_video"
-  output_stream: "glasses_effect_multi_face_geometry"
-}
-
-# Renders the Glasses effect.
-node {
-  calculator: "FaceGeometryEffectRendererCalculator"
+  calculator: "SwitchContainer"
+  input_stream: "SELECT:selected_effect_id"
+  input_stream: "IMAGE_GPU:throttled_input_video"
+  input_stream: "MULTI_FACE_GEOMETRY:multi_face_geometry"
   input_side_packet: "ENVIRONMENT:environment"
-  input_stream: "IMAGE_GPU:glasses_effect_throttled_input_video"
-  input_stream: "MULTI_FACE_GEOMETRY:glasses_effect_multi_face_geometry"
-  output_stream: "IMAGE_GPU:glasses_effect_output_video"
+  output_stream: "IMAGE_GPU:output_video"
   node_options: {
-    [type.googleapis.com/mediapipe.FaceGeometryEffectRendererCalculatorOptions] {
-      effect_texture_path: "mediapipe/graphs/face_effect/data/glasses.pngblob"
-      effect_mesh_3d_path: "mediapipe/graphs/face_effect/data/glasses.binarypb"
+    [type.googleapis.com/mediapipe.SwitchContainerOptions] {
+      contained_node: {
+        calculator: "FaceGeometryEffectRendererCalculator"
+        node_options: {
+          [type.googleapis.com/mediapipe.FaceGeometryEffectRendererCalculatorOptions] {
+            effect_texture_path: "mediapipe/graphs/face_effect/data/axis.pngblob"
+            effect_mesh_3d_path: "mediapipe/graphs/face_effect/data/axis.binarypb"
+          }
+        }
+      }
+      contained_node: {
+        calculator: "FaceGeometryEffectRendererCalculator"
+        node_options: {
+          [type.googleapis.com/mediapipe.FaceGeometryEffectRendererCalculatorOptions] {
+            effect_texture_path: "mediapipe/graphs/face_effect/data/facepaint.pngblob"
+          }
+        }
+      }
+      contained_node: {
+        calculator: "FaceGeometryEffectRendererCalculator"
+        node_options: {
+          [type.googleapis.com/mediapipe.FaceGeometryEffectRendererCalculatorOptions] {
+            effect_texture_path: "mediapipe/graphs/face_effect/data/glasses.pngblob"
+            effect_mesh_3d_path: "mediapipe/graphs/face_effect/data/glasses.binarypb"
+          }
+        }
+      }
     }
   }
-}
-
-# Decides which of the Facepaint or the Glasses rendered results should be sent
-# as the output GPU frame.
-node {
-  calculator: "ImmediateMuxCalculator"
-  input_stream: "facepaint_effect_output_video"
-  input_stream: "glasses_effect_output_video"
-  output_stream: "output_video"
 }
 

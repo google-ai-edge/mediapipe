@@ -23,7 +23,7 @@
 
 CGImageRef CreateCGImageFromCVPixelBuffer(CVPixelBufferRef imageBuffer, NSError **error) {
   CFHolder<CGImageRef> cg_image_holder;
-  ::mediapipe::Status status = CreateCGImageFromCVPixelBuffer(imageBuffer, &cg_image_holder);
+  absl::Status status = CreateCGImageFromCVPixelBuffer(imageBuffer, &cg_image_holder);
   if (!status.ok()) {
     *error = [NSError gus_errorWithStatus:status];
     return nil;
@@ -35,7 +35,7 @@ CGImageRef CreateCGImageFromCVPixelBuffer(CVPixelBufferRef imageBuffer, NSError 
 
 CVPixelBufferRef CreateCVPixelBufferFromCGImage(CGImageRef image, NSError **error) {
   CFHolder<CVPixelBufferRef> pixel_buffer_holder;
-  ::mediapipe::Status status = CreateCVPixelBufferFromCGImage(image, &pixel_buffer_holder);
+  absl::Status status = CreateCVPixelBufferFromCGImage(image, &pixel_buffer_holder);
   if (!status.ok()) {
     *error = [NSError gus_errorWithStatus:status];
     return nil;

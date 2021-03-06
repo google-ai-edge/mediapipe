@@ -79,9 +79,9 @@ class HolderBase;
 // These functions use HolderBase to hide the type T from the function
 // definition.  This allows these functions to be placed into an untyped
 // struct in the map of MediaPipeTypeData objects.
-using SerializeFn = std::function<mediapipe::Status(
+using SerializeFn = std::function<absl::Status(
     const packet_internal::HolderBase& holder_base, std::string* output)>;
-using DeserializeFn = std::function<mediapipe::Status(
+using DeserializeFn = std::function<absl::Status(
     const std::string& encoding,
     std::unique_ptr<packet_internal::HolderBase>* holder_base)>;
 
@@ -294,18 +294,18 @@ DEFINE_MEDIAPIPE_TYPE_MAP(PacketTypeStringToMediaPipeTypeData, std::string);
 //     seperated by double colons.
 //
 // Example 1: register type with non-std::string proxy.
-//   mediapipe::Status ToProxyFn(
+//   absl::Status ToProxyFn(
 //       const ClassType& obj, ProxyType* proxy)
 //   {
 //     ...
-//     return mediapipe::OkStatus();
+//     return absl::OkStatus();
 //   }
 //
-//   mediapipe::Status FromProxyFn(
+//   absl::Status FromProxyFn(
 //       const ProxyType& proxy, ClassType* obj)
 //   {
 //     ...
-//     return mediapipe::OkStatus();
+//     return absl::OkStatus();
 //   }
 //
 //   MEDIAPIPE_REGISTER_TYPE_WITH_PROXY(
@@ -316,16 +316,16 @@ DEFINE_MEDIAPIPE_TYPE_MAP(PacketTypeStringToMediaPipeTypeData, std::string);
 //      ProxyType>, ToProxyFn, FromProxyFn);
 //
 // Example 2: register type with std::string proxy.
-//   mediapipe::Status ToProxyFn(const ClassType& obj, std::string* encoding)
+//   absl::Status ToProxyFn(const ClassType& obj, std::string* encoding)
 //   {
 //     ...
-//     return mediapipe::OkStatus();
+//     return absl::OkStatus();
 //   }
 //
-//   mediapipe::Status FromProxyFn(
+//   absl::Status FromProxyFn(
 //       const ProxyType& proxy, std::string* encoding) {
 //     ...
-//     return mediapipe::OkStatus();
+//     return absl::OkStatus();
 //   }
 //
 //   MEDIAPIPE_REGISTER_TYPE_WITH_PROXY(

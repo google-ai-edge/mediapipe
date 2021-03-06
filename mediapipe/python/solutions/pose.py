@@ -77,7 +77,7 @@ class PoseLandmark(enum.IntEnum):
   RIGHT_FOOT_INDEX = 32
 
 BINARYPB_FILE_PATH = 'mediapipe/modules/pose_landmark/pose_landmark_cpu.binarypb'
-POSE_CONNECTIONS = frozenset([
+UPPER_BODY_POSE_CONNECTIONS = frozenset([
     (PoseLandmark.NOSE, PoseLandmark.RIGHT_EYE_INNER),
     (PoseLandmark.RIGHT_EYE_INNER, PoseLandmark.RIGHT_EYE),
     (PoseLandmark.RIGHT_EYE, PoseLandmark.RIGHT_EYE_OUTER),
@@ -103,18 +103,21 @@ POSE_CONNECTIONS = frozenset([
     (PoseLandmark.RIGHT_SHOULDER, PoseLandmark.RIGHT_HIP),
     (PoseLandmark.LEFT_SHOULDER, PoseLandmark.LEFT_HIP),
     (PoseLandmark.RIGHT_HIP, PoseLandmark.LEFT_HIP),
-    (PoseLandmark.RIGHT_HIP, PoseLandmark.LEFT_HIP),
-    (PoseLandmark.RIGHT_HIP, PoseLandmark.RIGHT_KNEE),
-    (PoseLandmark.LEFT_HIP, PoseLandmark.LEFT_KNEE),
-    (PoseLandmark.RIGHT_KNEE, PoseLandmark.RIGHT_ANKLE),
-    (PoseLandmark.LEFT_KNEE, PoseLandmark.LEFT_ANKLE),
-    (PoseLandmark.RIGHT_ANKLE, PoseLandmark.RIGHT_HEEL),
-    (PoseLandmark.LEFT_ANKLE, PoseLandmark.LEFT_HEEL),
-    (PoseLandmark.RIGHT_HEEL, PoseLandmark.RIGHT_FOOT_INDEX),
-    (PoseLandmark.LEFT_HEEL, PoseLandmark.LEFT_FOOT_INDEX),
-    (PoseLandmark.RIGHT_ANKLE, PoseLandmark.RIGHT_FOOT_INDEX),
-    (PoseLandmark.LEFT_ANKLE, PoseLandmark.LEFT_FOOT_INDEX),
 ])
+POSE_CONNECTIONS = frozenset.union(
+    UPPER_BODY_POSE_CONNECTIONS,
+    frozenset([
+        (PoseLandmark.RIGHT_HIP, PoseLandmark.RIGHT_KNEE),
+        (PoseLandmark.LEFT_HIP, PoseLandmark.LEFT_KNEE),
+        (PoseLandmark.RIGHT_KNEE, PoseLandmark.RIGHT_ANKLE),
+        (PoseLandmark.LEFT_KNEE, PoseLandmark.LEFT_ANKLE),
+        (PoseLandmark.RIGHT_ANKLE, PoseLandmark.RIGHT_HEEL),
+        (PoseLandmark.LEFT_ANKLE, PoseLandmark.LEFT_HEEL),
+        (PoseLandmark.RIGHT_HEEL, PoseLandmark.RIGHT_FOOT_INDEX),
+        (PoseLandmark.LEFT_HEEL, PoseLandmark.LEFT_FOOT_INDEX),
+        (PoseLandmark.RIGHT_ANKLE, PoseLandmark.RIGHT_FOOT_INDEX),
+        (PoseLandmark.LEFT_ANKLE, PoseLandmark.LEFT_FOOT_INDEX),
+    ]))
 
 
 class Pose(SolutionBase):
@@ -178,7 +181,7 @@ class Pose(SolutionBase):
       image: An RGB image represented as a numpy ndarray.
 
     Raises:
-      RuntimeError: If the underlying graph occurs any error.
+      RuntimeError: If the underlying graph throws any error.
       ValueError: If the input image is not three channel RGB.
 
     Returns:

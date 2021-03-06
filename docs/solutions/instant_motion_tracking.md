@@ -117,6 +117,25 @@ Please first see general instructions for
 * Android target (or download prebuilt [ARM64 APK](https://drive.google.com/file/d/1KnaBBoKpCHR73nOBJ4fL_YdWVTAcwe6L/view?usp=sharing)):
 [`mediapipe/examples/android/src/java/com/google/mediapipe/apps/instantmotiontracking:instantmotiontracking`](https://github.com/google/mediapipe/tree/master/mediapipe/examples/android/src/java/com/google/mediapipe/apps/instantmotiontracking/BUILD)
 
+* Assets rendered by the [GlAnimationOverlayCalculator](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/object_detection_3d/calculators/gl_animation_overlay_calculator.cc) must be preprocessed into an OpenGL-ready custom .uuu format. This can be done
+for user assets as follows:
+> First run
+>
+> ```shell
+> ./mediapipe/graphs/object_detection_3d/obj_parser/obj_cleanup.sh [INPUT_DIR] [INTERMEDIATE_OUTPUT_DIR]
+> ```
+> and then run
+>
+> ```build
+> bazel run -c opt mediapipe/graphs/object_detection_3d/obj_parser:ObjParser -- input_dir=[INTERMEDIATE_OUTPUT_DIR] output_dir=[OUTPUT_DIR]
+> ```
+> INPUT_DIR should be the folder with initial asset .obj files to be processed,
+> and OUTPUT_DIR is the folder where the processed asset .uuu file will be placed.
+>
+> Note: ObjParser combines all .obj files found in the given directory into a
+> single .uuu animation file, using the order given by sorting the filenames alphanumerically. Also the ObjParser directory inputs must be given as
+> absolute paths, not relative paths. See parser utility library at [`mediapipe/graphs/object_detection_3d/obj_parser/`](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/object_detection_3d/obj_parser/) for more details.
+
 ## Resources
 
 *   Google Developers Blog:

@@ -137,10 +137,10 @@ static const char* kVideoQueueLabel = "com.google.mediapipe.example.videoQueue";
 
       [self.cameraSource requestCameraAccessWithCompletionHandler:^void(BOOL granted) {
         if (granted) {
-          [self startGraphAndCamera];
           dispatch_async(dispatch_get_main_queue(), ^{
             self.noCameraLabel.hidden = YES;
           });
+          [self startGraphAndCamera];
         }
       }];
 
@@ -154,6 +154,9 @@ static const char* kVideoQueueLabel = "com.google.mediapipe.example.videoQueue";
   NSError* error;
   if (![self.mediapipeGraph startWithError:&error]) {
     NSLog(@"Failed to start graph: %@", error);
+  }
+  else if (![self.mediapipeGraph waitUntilIdleWithError:&error]) {
+    NSLog(@"Failed to complete graph initial run: %@", error);
   }
 
   // Start fetching frames from the camera.

@@ -376,7 +376,7 @@ void CalculatorGraphSubmodule(pybind11::module* module) {
   calculator_graph.def(
       "get_combined_error_message",
       [](CalculatorGraph* self) {
-        mediapipe::Status error_status;
+        absl::Status error_status;
         if (self->GetCombinedErrors(&error_status) && !error_status.ok()) {
           return error_status.ToString();
         }
@@ -400,7 +400,7 @@ void CalculatorGraphSubmodule(pybind11::module* module) {
               // Acquire a mutex so that only one callback_fn can run at once.
               absl::MutexLock lock(&callback_mutex);
               callback_fn(stream_name, packet);
-              return mediapipe::OkStatus();
+              return absl::OkStatus();
             }));
       },
       R"doc(Observe the named output stream.
@@ -438,7 +438,7 @@ void CalculatorGraphSubmodule(pybind11::module* module) {
       [](CalculatorGraph* self, const std::string& packet_name) {
         auto status_or_packet = self->GetOutputSidePacket(packet_name);
         RaisePyErrorIfNotOk(status_or_packet.status());
-        return status_or_packet.ValueOrDie();
+        return status_or_packet.value();
       },
       R"doc(Get output side packet by name after the graph is done.
 

@@ -104,7 +104,7 @@ cc_library(
     srcs = ["tflite_model_loader.cc"],
     hdrs = ["tflite_model_loader.h"],
     deps = [
-        "//mediapipe/framework:packet",
+        "//mediapipe/framework/api2:packet",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
         "//mediapipe/framework/port:statusor",

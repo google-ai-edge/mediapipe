@@ -20,21 +20,21 @@
 
 namespace mediapipe {
 
-mediapipe::Status OutputSidePacketImpl::Initialize(
-    const std::string& name, const PacketType* packet_type) {
+absl::Status OutputSidePacketImpl::Initialize(const std::string& name,
+                                              const PacketType* packet_type) {
   name_ = name;
   packet_type_ = packet_type;
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
 void OutputSidePacketImpl::PrepareForRun(
-    std::function<void(mediapipe::Status)> error_callback) {
+    std::function<void(absl::Status)> error_callback) {
   error_callback_ = std::move(error_callback);
   initialized_ = false;
 }
 
 void OutputSidePacketImpl::Set(const Packet& packet) {
-  mediapipe::Status status = SetInternal(packet);
+  absl::Status status = SetInternal(packet);
   if (!status.ok()) {
     TriggerErrorCallback(status);
   }
@@ -46,7 +46,7 @@ void OutputSidePacketImpl::AddMirror(
   mirrors_.emplace_back(input_side_packet_handler, id);
 }
 
-mediapipe::Status OutputSidePacketImpl::SetInternal(const Packet& packet) {
+absl::Status OutputSidePacketImpl::SetInternal(const Packet& packet) {
   if (initialized_) {
     return mediapipe::AlreadyExistsErrorBuilder(MEDIAPIPE_LOC)
            << "Output side packet \"" << name_ << "\" was already set.";
@@ -63,7 +63,7 @@ mediapipe::Status OutputSidePacketImpl::SetInternal(const Packet& packet) {
            << packet.Timestamp().DebugString() << ".";
   }
 
-  mediapipe::Status result = packet_type_->Validate(packet);
+  absl::Status result = packet_type_->Validate(packet);
   if (!result.ok()) {
     return mediapipe::StatusBuilder(result, MEDIAPIPE_LOC).SetPrepend()
            << absl::StrCat(
@@ -76,11 +76,11 @@ mediapipe::Status OutputSidePacketImpl::SetInternal(const Packet& packet) {
   for (const auto& mirror : mirrors_) {
     mirror.input_side_packet_handler->Set(mirror.id, packet_);
   }
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
 void OutputSidePacketImpl::TriggerErrorCallback(
-    const mediapipe::Status& status) const {
+    const absl::Status& status) const {
   CHECK(error_callback_);
   error_callback_(status);
 }
