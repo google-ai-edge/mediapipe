@@ -87,7 +87,12 @@ cc_library(
         "@org_tensorflow//tensorflow/lite/delegates/gpu/gl:gl_buffer",
         "@org_tensorflow//tensorflow/lite/delegates/gpu/gl:gl_program",
         "@org_tensorflow//tensorflow/lite/delegates/gpu/gl:gl_shader",
-    ],
+    ] + select({
+        "//mediapipe:android": [
+            "//mediapipe/util/android/file/base",
+        ],
+        "//conditions:default": [],
+    }),
     alwayslink = 1,
 )
 
