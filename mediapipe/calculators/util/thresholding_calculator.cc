@@ -101,7 +101,7 @@ absl::Status ThresholdingCalculator::Open(CalculatorContext* cc) {
   }
 
   if (cc->InputSidePackets().HasTag("THRESHOLD")) {
-    threshold_ = cc->InputSidePackets().Tag("THRESHOLD").Get<float>();
+    threshold_ = cc->InputSidePackets().Tag("THRESHOLD").Get<double>();
   }
   return absl::OkStatus();
 }
