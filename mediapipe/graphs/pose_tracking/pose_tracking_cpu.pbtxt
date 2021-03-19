@@ -3,6 +3,18 @@
 # CPU buffer. (ImageFrame)
 input_stream: "input_video"
 
+
+# Transfers the input image from GPU to CPU memory for the purpose of
+# demonstrating a CPU-based pipeline. Note that the input image on GPU has the
+# origin defined at the bottom-left corner (OpenGL convention). As a result,
+# the transferred image on CPU also shares the same representation.
+node: {
+  calculator: "GpuBufferToImageFrameCalculator"
+  input_stream: "input_video"
+  output_stream: "input_video_cpu"
+}
+
+
 # Output image with rendered results. (ImageFrame)
 output_stream: "output_video"
 # Pose landmarks. (NormalizedLandmarkList)
@@ -20,7 +32,7 @@ output_stream: "pose_landmarks"
 # subsequent nodes are still busy processing previous inputs.
 node {
   calculator: "FlowLimiterCalculator"
-  input_stream: "input_video"
+  input_stream: "input_video_cpu"
   input_stream: "FINISHED:output_video"
   input_stream_info: {
     tag_index: "FINISHED"
@@ -68,5 +80,14 @@ node {
   input_stream: "LANDMARKS:pose_landmarks_smoothed"
   input_stream: "ROI:roi_from_landmarks"
   input_stream: "DETECTION:pose_detection"
-  output_stream: "IMAGE:output_video"
+  output_stream: "IMAGE:output_video_cpu"
+}
+
+
+# Transfers the annotated image from CPU back to GPU memory, to be sent out of
+# the graph.
+node: {
+  calculator: "ImageFrameToGpuBufferCalculator"
+  input_stream: "output_video_cpu"
+  output_stream: "output_video"
 }
