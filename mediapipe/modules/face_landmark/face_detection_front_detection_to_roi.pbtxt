@@ -26,7 +26,6 @@ node {
       rotation_vector_start_keypoint_index: 0  # Left eye.
       rotation_vector_end_keypoint_index: 1  # Right eye.
       rotation_vector_target_angle_degrees: 0
-      output_zero_rect_for_empty_detections: true
     }
   }
 }

@@ -48,12 +48,14 @@ const cv::Scalar kRed = cv::Scalar(255, 0, 0);
 void TestWithAspectRatio(const double aspect_ratio,
                          const cv::Scalar* background_color_in_rgb = nullptr) {
   std::string test_image;
-  const bool process_arbitrary_image = !FLAGS_input_image.empty();
+  const bool process_arbitrary_image =
+      !absl::GetFlag(FLAGS_input_image).empty();
   if (!process_arbitrary_image) {
     std::string test_image_path = mediapipe::file::JoinPath("./", kTestImage);
     MP_ASSERT_OK(mediapipe::file::GetContents(test_image_path, &test_image));
   } else {
-    MP_ASSERT_OK(mediapipe::file::GetContents(FLAGS_input_image, &test_image));
+    MP_ASSERT_OK(mediapipe::file::GetContents(absl::GetFlag(FLAGS_input_image),
+                                              &test_image));
   }
 
   const std::vector<char> contents_vector(test_image.begin(), test_image.end());
@@ -72,11 +74,11 @@ void TestWithAspectRatio(const double aspect_ratio,
       cv::cvtColor(decoded_mat, output_mat, cv::COLOR_BGR2RGB);
       break;
     case 4:
-      MP_ASSERT_OK(::mediapipe::UnimplementedErrorBuilder(MEDIAPIPE_LOC)
+      MP_ASSERT_OK(mediapipe::UnimplementedErrorBuilder(MEDIAPIPE_LOC)
                    << "4-channel image isn't supported yet");
       break;
     default:
-      MP_ASSERT_OK(::mediapipe::FailedPreconditionErrorBuilder(MEDIAPIPE_LOC)
+      MP_ASSERT_OK(mediapipe::FailedPreconditionErrorBuilder(MEDIAPIPE_LOC)
                    << "Unsupported number of channels: "
                    << decoded_mat.channels());
   }
@@ -101,11 +103,11 @@ void TestWithAspectRatio(const double aspect_ratio,
       cv::cvtColor(original_mat, input_mat, cv::COLOR_RGB2BGR);
       break;
     case 4:
-      MP_ASSERT_OK(::mediapipe::UnimplementedErrorBuilder(MEDIAPIPE_LOC)
+      MP_ASSERT_OK(mediapipe::UnimplementedErrorBuilder(MEDIAPIPE_LOC)
                    << "4-channel image isn't supported yet");
       break;
     default:
-      MP_ASSERT_OK(::mediapipe::FailedPreconditionErrorBuilder(MEDIAPIPE_LOC)
+      MP_ASSERT_OK(mediapipe::FailedPreconditionErrorBuilder(MEDIAPIPE_LOC)
                    << "Unsupported number of channels: "
                    << original_mat.channels());
   }
@@ -120,7 +122,7 @@ void TestWithAspectRatio(const double aspect_ratio,
   // Check its JpegEncoder::write() in "imgcodecs/src/grfmt_jpeg.cpp" for more
   // info.
   if (!cv::imencode(".jpg", input_mat, encode_buffer, parameters)) {
-    MP_ASSERT_OK(::mediapipe::InternalErrorBuilder(MEDIAPIPE_LOC)
+    MP_ASSERT_OK(mediapipe::InternalErrorBuilder(MEDIAPIPE_LOC)
                  << "Fail to encode the image to be jpeg format.");
   }
 
@@ -138,7 +140,7 @@ void TestWithAspectRatio(const double aspect_ratio,
     EXPECT_EQ(result_image, output_string);
   } else {
     std::string output_string_path = mediapipe::file::JoinPath(
-        FLAGS_output_folder,
+        absl::GetFlag(FLAGS_output_folder),
         absl::StrCat("result_", aspect_ratio,
                      background_color_in_rgb ? "_solid_background" : "",
                      ".jpg"));

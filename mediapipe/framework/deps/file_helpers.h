@@ -16,25 +16,27 @@
 #define MEDIAPIPE_DEPS_FILE_HELPERS_H_
 
 #include "absl/strings/match.h"
-#include "mediapipe/framework/deps/status.h"
+#include "mediapipe/framework/port/status.h"
 
 namespace mediapipe {
 namespace file {
-::mediapipe::Status GetContents(absl::string_view file_name,
-                                std::string* output);
+absl::Status GetContents(absl::string_view file_name, std::string* output,
+                         bool read_as_binary = true);
 
-::mediapipe::Status SetContents(absl::string_view file_name,
-                                absl::string_view content);
+absl::Status SetContents(absl::string_view file_name,
+                         absl::string_view content);
 
-::mediapipe::Status MatchInTopSubdirectories(
-    const std::string& parent_directory, const std::string& file_name,
-    std::vector<std::string>* results);
+absl::Status MatchInTopSubdirectories(const std::string& parent_directory,
+                                      const std::string& file_name,
+                                      std::vector<std::string>* results);
 
-::mediapipe::Status MatchFileTypeInDirectory(const std::string& directory,
-                                             const std::string& file_suffix,
-                                             std::vector<std::string>* results);
+absl::Status MatchFileTypeInDirectory(const std::string& directory,
+                                      const std::string& file_suffix,
+                                      std::vector<std::string>* results);
 
-::mediapipe::Status Exists(absl::string_view file_name);
+absl::Status Exists(absl::string_view file_name);
+
+absl::Status RecursivelyCreateDir(absl::string_view path);
 
 }  // namespace file
 }  // namespace mediapipe

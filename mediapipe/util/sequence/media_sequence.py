@@ -149,15 +149,15 @@ identify common storage patterns (e.g. storing an image along with the height
 and width) under different names (e.g. storing a left and right image in a
 stereo pair.) An example creating functions such as
 add_left_image_encoded that adds a string under the key "LEFT/image/encoded"
- add_left_image_encoded = functools.partial(add_image_encoded, prefix="LEFT")
+ add_left_image_encoded = msu.function_with_default(add_image_encoded, "LEFT")
 """
 
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
-import functools
 import numpy as np
-from mediapipe.util.sequence import media_sequence_util as msu
+from mediapipe.util.sequence import media_sequence_util
+msu = media_sequence_util
 
 _HAS_DYNAMIC_ATTRIBUTES = True
 
@@ -406,10 +406,17 @@ def _create_region_with_prefix(name, prefix):
         get_bbox_xmax_at(index, sequence_example, prefix=prefix)),
                     1)
   def add_prefixed_bbox(values, sequence_example, prefix):
-    add_bbox_ymin(values[:, 0], sequence_example, prefix=prefix)
-    add_bbox_xmin(values[:, 1], sequence_example, prefix=prefix)
-    add_bbox_ymax(values[:, 2], sequence_example, prefix=prefix)
-    add_bbox_xmax(values[:, 3], sequence_example, prefix=prefix)
+    values = np.array(values)
+    if values.size == 0:
+      add_bbox_ymin([], sequence_example, prefix=prefix)
+      add_bbox_xmin([], sequence_example, prefix=prefix)
+      add_bbox_ymax([], sequence_example, prefix=prefix)
+      add_bbox_xmax([], sequence_example, prefix=prefix)
+    else:
+      add_bbox_ymin(values[:, 0], sequence_example, prefix=prefix)
+      add_bbox_xmin(values[:, 1], sequence_example, prefix=prefix)
+      add_bbox_ymax(values[:, 2], sequence_example, prefix=prefix)
+      add_bbox_xmax(values[:, 3], sequence_example, prefix=prefix)
   def get_prefixed_bbox_size(sequence_example, prefix):
     return get_bbox_ymin_size(sequence_example, prefix=prefix)
   def has_prefixed_bbox(sequence_example, prefix):
@@ -455,39 +462,39 @@ def _create_region_with_prefix(name, prefix):
   # pylint: enable=undefined-variable
   msu.add_functions_to_module({
       "get_" + name + "_at":
-          functools.partial(get_prefixed_bbox_at, prefix=prefix),
+          msu.function_with_default(get_prefixed_bbox_at, prefix),
       "add_" + name:
-          functools.partial(add_prefixed_bbox, prefix=prefix),
+          msu.function_with_default(add_prefixed_bbox, prefix),
       "get_" + name + "_size":
-          functools.partial(get_prefixed_bbox_size, prefix=prefix),
+          msu.function_with_default(get_prefixed_bbox_size, prefix),
       "has_" + name:
-          functools.partial(has_prefixed_bbox, prefix=prefix),
+          msu.function_with_default(has_prefixed_bbox, prefix),
       "clear_" + name:
-          functools.partial(clear_prefixed_bbox, prefix=prefix),
+          msu.function_with_default(clear_prefixed_bbox, prefix),
   }, module_dict=globals())
   msu.add_functions_to_module({
       "get_" + name + "_point_at":
-          functools.partial(get_prefixed_point_at, prefix=prefix),
+          msu.function_with_default(get_prefixed_point_at, prefix),
       "add_" + name + "_point":
-          functools.partial(add_prefixed_point, prefix=prefix),
+          msu.function_with_default(add_prefixed_point, prefix),
       "get_" + name + "_point_size":
-          functools.partial(get_prefixed_point_size, prefix=prefix),
+          msu.function_with_default(get_prefixed_point_size, prefix),
       "has_" + name + "_point":
-          functools.partial(has_prefixed_point, prefix=prefix),
+          msu.function_with_default(has_prefixed_point, prefix),
       "clear_" + name + "_point":
-          functools.partial(clear_prefixed_point, prefix=prefix),
+          msu.function_with_default(clear_prefixed_point, prefix),
   }, module_dict=globals())
   msu.add_functions_to_module({
       "get_" + name + "_3d_point_at":
-          functools.partial(get_prefixed_3d_point_at, prefix=prefix),
+          msu.function_with_default(get_prefixed_3d_point_at, prefix),
       "add_" + name + "_3d_point":
-          functools.partial(add_prefixed_3d_point, prefix=prefix),
+          msu.function_with_default(add_prefixed_3d_point, prefix),
       "get_" + name + "_3d_point_size":
-          functools.partial(get_prefixed_3d_point_size, prefix=prefix),
+          msu.function_with_default(get_prefixed_3d_point_size, prefix),
       "has_" + name + "_3d_point":
-          functools.partial(has_prefixed_3d_point, prefix=prefix),
+          msu.function_with_default(has_prefixed_3d_point, prefix),
       "clear_" + name + "_3d_point":
-          functools.partial(clear_prefixed_3d_point, prefix=prefix),
+          msu.function_with_default(clear_prefixed_3d_point, prefix),
   }, module_dict=globals())
 
 
@@ -571,6 +578,42 @@ _create_image_with_prefix("image", "")
 _create_image_with_prefix("forward_flow", FORWARD_FLOW_PREFIX)
 _create_image_with_prefix("class_segmentation", CLASS_SEGMENTATION_PREFIX)
 _create_image_with_prefix("instance_segmentation", INSTANCE_SEGMENTATION_PREFIX)
+
+##################################  TEXT  #################################
+# Which language text tokens are likely to be in.
+TEXT_LANGUAGE_KEY = "text/language"
+# A large block of text that applies to the media.
+TEXT_CONTEXT_CONTENT_KEY = "text/context/content"
+
+# The text contents for a given time.
+TEXT_CONTENT_KEY = "text/content"
+# The start time for the text becoming relevant.
+TEXT_TIMESTAMP_KEY = "text/timestamp"
+# The duration where the text is relevant.
+TEXT_DURATION_KEY = "text/duration"
+# The confidence that this is the correct text.
+TEXT_CONFIDENCE_KEY = "text/confidence"
+# A floating point embedding corresponding to the text.
+TEXT_EMBEDDING_KEY = "text/embedding"
+# An integer id corresponding to the text.
+TEXT_TOKEN_ID_KEY = "text/token/id"
+
+msu.create_bytes_context_feature(
+    "text_language", TEXT_LANGUAGE_KEY, module_dict=globals())
+msu.create_bytes_context_feature(
+    "text_context_content", TEXT_CONTEXT_CONTENT_KEY, module_dict=globals())
+msu.create_bytes_feature_list(
+    "text_content", TEXT_CONTENT_KEY, module_dict=globals())
+msu.create_int_feature_list(
+    "text_timestamp", TEXT_TIMESTAMP_KEY, module_dict=globals())
+msu.create_int_feature_list(
+    "text_duration", TEXT_DURATION_KEY, module_dict=globals())
+msu.create_float_feature_list(
+    "text_confidence", TEXT_CONFIDENCE_KEY, module_dict=globals())
+msu.create_float_list_feature_list(
+    "text_embedding", TEXT_EMBEDDING_KEY, module_dict=globals())
+msu.create_int_feature_list(
+    "text_token_id", TEXT_TOKEN_ID_KEY, module_dict=globals())
 
 ##################################  FEATURES  #################################
 # The dimensions of the feature.

@@ -44,8 +44,8 @@ static constexpr int kRequestCountScrubInterval = 50;
 
 #if MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
 
-CvPixelBufferPoolWrapper::CvPixelBufferPoolWrapper(const BufferSpec& spec,
-                                                   CFTimeInterval maxAge) {
+CvPixelBufferPoolWrapper::CvPixelBufferPoolWrapper(
+    const GpuBufferMultiPool::BufferSpec& spec, CFTimeInterval maxAge) {
   OSType cv_format = CVPixelFormatForGpuBufferFormat(spec.format);
   CHECK_NE(cv_format, -1) << "unsupported pixel format";
   pool_ = MakeCFHolderAdopting(
@@ -90,7 +90,7 @@ std::string CvPixelBufferPoolWrapper::GetDebugString() const {
 void CvPixelBufferPoolWrapper::Flush() { CVPixelBufferPoolFlush(*pool_, 0); }
 
 GpuBufferMultiPool::SimplePool GpuBufferMultiPool::MakeSimplePool(
-    const BufferSpec& spec) {
+    const GpuBufferMultiPool::BufferSpec& spec) {
   return std::make_shared<CvPixelBufferPoolWrapper>(spec,
                                                     kMaxInactiveBufferAge);
 }

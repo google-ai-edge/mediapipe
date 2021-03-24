@@ -14,6 +14,7 @@
 
 #include "mediapipe/framework/profiler/graph_profiler.h"
 
+#include "absl/status/statusor.h"
 #include "absl/synchronization/mutex.h"
 #include "absl/time/time.h"
 #include "mediapipe/framework/calculator_framework.h"
@@ -22,6 +23,7 @@
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/framework/port/status_matchers.h"
+#include "mediapipe/framework/port/statusor.h"
 #include "mediapipe/framework/profiler/test_context_builder.h"
 #include "mediapipe/framework/tool/simulation_clock.h"
 #include "mediapipe/framework/tool/tag_map_helper.h"
@@ -326,8 +328,6 @@ TEST_F(GraphProfilerTestPeer, InitializeConfigWithoutStreamLatency) {
 
 // Tests that Initialize() reads all the configs defined in the graph
 // definition.
-// The best way to understand this test in case of debugging is to visualize
-// the graph using go/mediapipe-vis.
 TEST_F(GraphProfilerTestPeer, Initialize) {
   InitializeProfilerWithGraphConfig(R"(
     profiler_config {
@@ -1174,7 +1174,7 @@ TEST(GraphProfilerTest, ParallelReads) {
   MP_ASSERT_OK(graph.ObserveOutputStream("out_1", [&](const Packet& packet) {
     absl::MutexLock lock(&out_1_mutex);
     out_1_packets.push_back(packet);
-    return ::mediapipe::OkStatus();
+    return absl::OkStatus();
   }));
   MP_EXPECT_OK(graph.StartRun(
       {{"range_step", MakePacket<std::pair<uint32, uint32>>(1000, 1)}}));

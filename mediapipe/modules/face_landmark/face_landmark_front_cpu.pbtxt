@@ -44,18 +44,37 @@ output_stream: "ROIS_FROM_LANDMARKS:face_rects_from_landmarks"
 # (std::vector<NormalizedRect>)
 output_stream: "ROIS_FROM_DETECTIONS:face_rects_from_detections"
 
+# Defines whether landmarks on the previous image should be used to help
+# localize landmarks on the current image.
+node {
+  name: "ConstantSidePacketCalculator"
+  calculator: "ConstantSidePacketCalculator"
+  output_side_packet: "PACKET:use_prev_landmarks"
+  options: {
+    [mediapipe.ConstantSidePacketCalculatorOptions.ext]: {
+      packet { bool_value: true }
+    }
+  }
+}
+node {
+  calculator: "GateCalculator"
+  input_side_packet: "ALLOW:use_prev_landmarks"
+  input_stream: "prev_face_rects_from_landmarks"
+  output_stream: "gated_prev_face_rects_from_landmarks"
+}
+
 # Determines if an input vector of NormalizedRect has a size greater than or
 # equal to the provided num_faces.
 node {
   calculator: "NormalizedRectVectorHasMinSizeCalculator"
-  input_stream: "ITERABLE:prev_face_rects_from_landmarks"
+  input_stream: "ITERABLE:gated_prev_face_rects_from_landmarks"
   input_side_packet: "num_faces"
   output_stream: "prev_has_enough_faces"
 }
 
-# Drops the incoming image if FaceLandmarkCpu was able to identify face presence
-# in the previous image. Otherwise, passes the incoming image through to trigger
-# a new round of face detection in FaceDetectionFrontCpu.
+# Drops the incoming image if enough faces have already been identified from the
+# previous image. Otherwise, passes the incoming image through to trigger a new
+# round of face detection.
 node {
   calculator: "GateCalculator"
   input_stream: "image"
@@ -129,8 +148,8 @@ node {
 # overlapping regions based on the specified min_similarity_threshold.
 node {
   calculator: "AssociationNormRectCalculator"
-  input_stream: "prev_face_rects_from_landmarks"
   input_stream: "face_rects_from_detections"
+  input_stream: "gated_prev_face_rects_from_landmarks"
   output_stream: "face_rects"
   options: {
     [mediapipe.AssociationCalculatorOptions.ext] {

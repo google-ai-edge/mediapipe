@@ -22,12 +22,12 @@
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/gpu/scale_mode.pb.h"
 
-#if !defined(MEDIAPIPE_DISABLE_GPU)
+#if !MEDIAPIPE_DISABLE_GPU
 #include "mediapipe/gpu/gl_calculator_helper.h"
 #include "mediapipe/gpu/gl_quad_renderer.h"
 #include "mediapipe/gpu/gl_simple_shaders.h"
 #include "mediapipe/gpu/shader_util.h"
-#endif  //  !MEDIAPIPE_DISABLE_GPU
+#endif  // !MEDIAPIPE_DISABLE_GPU
 
 #if defined(__ANDROID__)
 // The size of Java arrays is dynamic, which makes it difficult to
@@ -42,9 +42,9 @@ typedef int DimensionsPacketType[2];
 
 namespace mediapipe {
 
-#if !defined(MEDIAPIPE_DISABLE_GPU)
+#if !MEDIAPIPE_DISABLE_GPU
 
-#endif  //  !MEDIAPIPE_DISABLE_GPU
+#endif  // !MEDIAPIPE_DISABLE_GPU
 
 namespace {
 constexpr char kImageFrameTag[] = "IMAGE";
@@ -163,16 +163,16 @@ class ImageTransformationCalculator : public CalculatorBase {
   ImageTransformationCalculator() = default;
   ~ImageTransformationCalculator() override = default;
 
-  static ::mediapipe::Status GetContract(CalculatorContract* cc);
+  static absl::Status GetContract(CalculatorContract* cc);
 
-  ::mediapipe::Status Open(CalculatorContext* cc) override;
-  ::mediapipe::Status Process(CalculatorContext* cc) override;
-  ::mediapipe::Status Close(CalculatorContext* cc) override;
+  absl::Status Open(CalculatorContext* cc) override;
+  absl::Status Process(CalculatorContext* cc) override;
+  absl::Status Close(CalculatorContext* cc) override;
 
  private:
-  ::mediapipe::Status RenderCpu(CalculatorContext* cc);
-  ::mediapipe::Status RenderGpu(CalculatorContext* cc);
-  ::mediapipe::Status GlSetup();
+  absl::Status RenderCpu(CalculatorContext* cc);
+  absl::Status RenderGpu(CalculatorContext* cc);
+  absl::Status GlSetup();
 
   void ComputeOutputDimensions(int input_width, int input_height,
                                int* output_width, int* output_height);
@@ -189,17 +189,17 @@ class ImageTransformationCalculator : public CalculatorBase {
   bool flip_vertically_ = false;
 
   bool use_gpu_ = false;
-#if !defined(MEDIAPIPE_DISABLE_GPU)
+#if !MEDIAPIPE_DISABLE_GPU
   GlCalculatorHelper gpu_helper_;
   std::unique_ptr<QuadRenderer> rgb_renderer_;
   std::unique_ptr<QuadRenderer> yuv_renderer_;
   std::unique_ptr<QuadRenderer> ext_rgb_renderer_;
-#endif  //  !MEDIAPIPE_DISABLE_GPU
+#endif  // !MEDIAPIPE_DISABLE_GPU
 };
 REGISTER_CALCULATOR(ImageTransformationCalculator);
 
 // static
-::mediapipe::Status ImageTransformationCalculator::GetContract(
+absl::Status ImageTransformationCalculator::GetContract(
     CalculatorContract* cc) {
   // Only one input can be set, and the output type must match.
   RET_CHECK(cc->Inputs().HasTag(kImageFrameTag) ^
@@ -212,14 +212,14 @@ REGISTER_CALCULATOR(ImageTransformationCalculator);
     cc->Inputs().Tag(kImageFrameTag).Set<ImageFrame>();
     cc->Outputs().Tag(kImageFrameTag).Set<ImageFrame>();
   }
-#if !defined(MEDIAPIPE_DISABLE_GPU)
+#if !MEDIAPIPE_DISABLE_GPU
   if (cc->Inputs().HasTag(kGpuBufferTag)) {
     RET_CHECK(cc->Outputs().HasTag(kGpuBufferTag));
     cc->Inputs().Tag(kGpuBufferTag).Set<GpuBuffer>();
     cc->Outputs().Tag(kGpuBufferTag).Set<GpuBuffer>();
     use_gpu |= true;
   }
-#endif  //  !MEDIAPIPE_DISABLE_GPU
+#endif  // !MEDIAPIPE_DISABLE_GPU
 
   if (cc->Inputs().HasTag("ROTATION_DEGREES")) {
     cc->Inputs().Tag("ROTATION_DEGREES").Set<int>();
@@ -249,15 +249,15 @@ REGISTER_CALCULATOR(ImageTransformationCalculator);
   }
 
   if (use_gpu) {
-#if !defined(MEDIAPIPE_DISABLE_GPU)
+#if !MEDIAPIPE_DISABLE_GPU
     MP_RETURN_IF_ERROR(GlCalculatorHelper::UpdateContract(cc));
-#endif  //  !MEDIAPIPE_DISABLE_GPU
+#endif  // !MEDIAPIPE_DISABLE_GPU
   }
 
-  return ::mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-::mediapipe::Status ImageTransformationCalculator::Open(CalculatorContext* cc) {
+absl::Status ImageTransformationCalculator::Open(CalculatorContext* cc) {
   // Inform the framework that we always output at the same timestamp
   // as we receive a packet at.
   cc->SetOffset(TimestampDiff(0));
@@ -303,19 +303,18 @@ REGISTER_CALCULATOR(ImageTransformationCalculator);
   scale_mode_ = ParseScaleMode(options_.scale_mode(), DEFAULT_SCALE_MODE);
 
   if (use_gpu_) {
-#if !defined(MEDIAPIPE_DISABLE_GPU)
+#if !MEDIAPIPE_DISABLE_GPU
     // Let the helper access the GL context information.
     MP_RETURN_IF_ERROR(gpu_helper_.Open(cc));
 #else
     RET_CHECK_FAIL() << "GPU processing not enabled.";
-#endif  //  !MEDIAPIPE_DISABLE_GPU
+#endif  // !MEDIAPIPE_DISABLE_GPU
   }
 
-  return ::mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-::mediapipe::Status ImageTransformationCalculator::Process(
-    CalculatorContext* cc) {
+absl::Status ImageTransformationCalculator::Process(CalculatorContext* cc) {
   // Override values if specified so.
   if (cc->Inputs().HasTag("ROTATION_DEGREES") &&
       !cc->Inputs().Tag("ROTATION_DEGREES").IsEmpty()) {
@@ -332,26 +331,25 @@ REGISTER_CALCULATOR(ImageTransformationCalculator);
   }
 
   if (use_gpu_) {
-#if !defined(MEDIAPIPE_DISABLE_GPU)
+#if !MEDIAPIPE_DISABLE_GPU
     if (cc->Inputs().Tag(kGpuBufferTag).IsEmpty()) {
-      return ::mediapipe::OkStatus();
+      return absl::OkStatus();
     }
     return gpu_helper_.RunInGlContext(
-        [this, cc]() -> ::mediapipe::Status { return RenderGpu(cc); });
-#endif  //  !MEDIAPIPE_DISABLE_GPU
+        [this, cc]() -> absl::Status { return RenderGpu(cc); });
+#endif  // !MEDIAPIPE_DISABLE_GPU
   } else {
     if (cc->Inputs().Tag(kImageFrameTag).IsEmpty()) {
-      return ::mediapipe::OkStatus();
+      return absl::OkStatus();
     }
     return RenderCpu(cc);
   }
-  return ::mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-::mediapipe::Status ImageTransformationCalculator::Close(
-    CalculatorContext* cc) {
+absl::Status ImageTransformationCalculator::Close(CalculatorContext* cc) {
   if (use_gpu_) {
-#if !defined(MEDIAPIPE_DISABLE_GPU)
+#if !MEDIAPIPE_DISABLE_GPU
     QuadRenderer* rgb_renderer = rgb_renderer_.release();
     QuadRenderer* yuv_renderer = yuv_renderer_.release();
     QuadRenderer* ext_rgb_renderer = ext_rgb_renderer_.release();
@@ -369,14 +367,13 @@ REGISTER_CALCULATOR(ImageTransformationCalculator);
         delete yuv_renderer;
       }
     });
-#endif  //  !MEDIAPIPE_DISABLE_GPU
+#endif  // !MEDIAPIPE_DISABLE_GPU
   }
 
-  return ::mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-::mediapipe::Status ImageTransformationCalculator::RenderCpu(
-    CalculatorContext* cc) {
+absl::Status ImageTransformationCalculator::RenderCpu(CalculatorContext* cc) {
   cv::Mat input_mat;
   mediapipe::ImageFormat::Format format;
 
@@ -480,12 +477,11 @@ REGISTER_CALCULATOR(ImageTransformationCalculator);
       .Tag(kImageFrameTag)
       .Add(output_frame.release(), cc->InputTimestamp());
 
-  return ::mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-::mediapipe::Status ImageTransformationCalculator::RenderGpu(
-    CalculatorContext* cc) {
-#if !defined(MEDIAPIPE_DISABLE_GPU)
+absl::Status ImageTransformationCalculator::RenderGpu(CalculatorContext* cc) {
+#if !MEDIAPIPE_DISABLE_GPU
   const auto& input = cc->Inputs().Tag(kGpuBufferTag).Get<GpuBuffer>();
   const int input_width = input.width();
   const int input_height = input.height();
@@ -519,7 +515,7 @@ REGISTER_CALCULATOR(ImageTransformationCalculator);
     renderer = yuv_renderer_.get();
     src1 = gpu_helper_.CreateSourceTexture(input, 0);
   } else  // NOLINT(readability/braces)
-#endif  // iOS
+#endif    // iOS
   {
     src1 = gpu_helper_.CreateSourceTexture(input);
 #if defined(TEXTURE_EXTERNAL_OES)
@@ -531,7 +527,7 @@ REGISTER_CALCULATOR(ImageTransformationCalculator);
       }
       renderer = ext_rgb_renderer_.get();
     } else  // NOLINT(readability/braces)
-#endif  // TEXTURE_EXTERNAL_OES
+#endif      // TEXTURE_EXTERNAL_OES
     {
       if (!rgb_renderer_) {
         rgb_renderer_ = absl::make_unique<QuadRenderer>();
@@ -568,9 +564,9 @@ REGISTER_CALCULATOR(ImageTransformationCalculator);
   auto output = dst.template GetFrame<GpuBuffer>();
   cc->Outputs().Tag(kGpuBufferTag).Add(output.release(), cc->InputTimestamp());
 
-#endif  //  !MEDIAPIPE_DISABLE_GPU
+#endif  // !MEDIAPIPE_DISABLE_GPU
 
-  return ::mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
 void ImageTransformationCalculator::ComputeOutputDimensions(

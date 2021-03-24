@@ -269,12 +269,6 @@ cc_library(
         "calculator_graph.h",
         "scheduler.h",
     ],
-    defines = select({
-        "//conditions:default": [],
-        "//mediapipe/gpu:disable_gpu": [
-            "MEDIAPIPE_DISABLE_GPU",
-        ],
-    }),
     visibility = [
         ":mediapipe_internal",
     ],
@@ -351,7 +345,6 @@ cc_library(
         ":calculator_base",
         ":calculator_context",
         ":calculator_context_manager",
-        ":calculator_registry_util",
         ":calculator_state",
         ":counter_factory",
         ":input_side_packet_handler",
@@ -402,27 +395,6 @@ cc_library(
     ],
     deps = [
         ":calculator_base",
-    ],
-)
-
-cc_library(
-    name = "calculator_registry_util",
-    srcs = ["calculator_registry_util.cc"],
-    hdrs = ["calculator_registry_util.h"],
-    visibility = [
-        ":mediapipe_internal",
-    ],
-    deps = [
-        ":calculator_base",
-        ":calculator_context",
-        ":calculator_state",
-        ":collection",
-        ":collection_item_id",
-        ":packet_set",
-        ":timestamp",
-        "//mediapipe/framework/port:status",
-        "//mediapipe/framework/port:statusor",
-        "//mediapipe/framework/tool:tag_map",
     ],
 )
 
@@ -482,6 +454,7 @@ cc_library(
         ":type_map",
         "//mediapipe/framework/port:logging",
         "//mediapipe/framework/tool:tag_map",
+        "//mediapipe/framework/tool:tag_map_helper",
         "//mediapipe/framework/tool:validate_name",
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/memory",
@@ -939,7 +912,7 @@ cc_library(
         "//conditions:default": [],
     }) + select({
         "//conditions:default": [],
-        "//mediapipe/gpu:disable_gpu": ["MEDIAPIPE_DISABLE_GPU"],
+        "//mediapipe/gpu:disable_gpu": ["MEDIAPIPE_DISABLE_GPU=1"],
     }) + select({
         "//conditions:default": [],
         "//mediapipe/framework:disable_rtti_and_exceptions": [
@@ -947,8 +920,10 @@ cc_library(
         ],
     }),
     visibility = [
+        "//mediapipe/calculators:__subpackages__",
         "//mediapipe/framework:__subpackages__",
         "//mediapipe/framework/port:__pkg__",
+        "//mediapipe/gpu:__pkg__",
         "//mediapipe/util:__subpackages__",
     ],
 )
@@ -1107,6 +1082,19 @@ cc_library(
 )
 
 cc_library(
+    name = "basic_types_registration",
+    srcs = ["basic_types_registration.cc"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":type_map",
+        "//mediapipe/framework/port:integral_types",
+        "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/strings",
+    ],
+    alwayslink = 1,
+)
+
+cc_library(
     name = "validated_graph_config",
     srcs = ["validated_graph_config.cc"],
     hdrs = ["validated_graph_config.h"],
@@ -1114,7 +1102,6 @@ cc_library(
     deps = [
         ":calculator_base",
         ":calculator_contract",
-        ":calculator_registry_util",
         ":legacy_calculator_support",
         ":packet",
         ":packet_generator",

@@ -1,0 +1,44 @@
+# Determines hand visibility from the visibility prediction values in the
+# hand-related pose landmarks.
+
+type: "HandVisibilityFromHandLandmarksFromPose"
+
+# Hand-related pose landmarks in [wrist, pinky, index] order.
+# (NormalizedLandmarkList)
+input_stream: "HAND_LANDMARKS_FROM_POSE:hand_landmarks_from_pose"
+
+# Hand visibility to be used as a trigger for hand landmark prediction. (bool)
+output_stream: "VISIBILITY:wrist_visibility"
+
+# Gets pose wrist landmark.
+node {
+  calculator: "SplitNormalizedLandmarkListCalculator"
+  input_stream: "hand_landmarks_from_pose"
+  output_stream: "pose_wrist_landmark"
+  options: {
+    [mediapipe.SplitVectorCalculatorOptions.ext] {
+      ranges: { begin: 0 end: 1 }
+    }
+  }
+}
+
+# TODO: Use other than pose wrist palm landmarks.
+# Gets pose wrist visiblity.
+node {
+  calculator: "LandmarkVisibilityCalculator"
+  input_stream: "NORM_LANDMARKS:pose_wrist_landmark"
+  output_stream: "VISIBILITY:wrist_visibility_score"
+}
+
+# TODO: ensure the same threshold in rendering.
+# Converts pose wrist visibility score into boolean flag.
+node {
+  calculator: "ThresholdingCalculator"
+  input_stream: "FLOAT:wrist_visibility_score"
+  output_stream: "FLAG:wrist_visibility"
+  options: {
+    [mediapipe.ThresholdingCalculatorOptions.ext] {
+      threshold: 0.1
+    }
+  }
+}

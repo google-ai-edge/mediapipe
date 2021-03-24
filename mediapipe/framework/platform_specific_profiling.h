@@ -81,16 +81,16 @@ class PlatformSpecificProfilingScope {
 }  // namespace mediapipe
 
 // General profiling macro.
-#define PLATFORM_SPECIFIC_PROFILER(name, id, packet_timestamp)         \
-  ::mediapipe::PlatformSpecificProfilingScope platform_specific_scope( \
+#define PLATFORM_SPECIFIC_PROFILER(name, id, packet_timestamp)       \
+  mediapipe::PlatformSpecificProfilingScope platform_specific_scope( \
       name, id, packet_timestamp);
 
 // Automated profiling macro.
 // Filters out all methods except Calculator::Process().
-#define PLATFORM_SPECIFIC_PROCESS_PROFILER(name, id, method_name,      \
-                                           packet_timestamp)           \
-  ::mediapipe::PlatformSpecificProfilingScope platform_specific_scope( \
-      name, id, packet_timestamp, ::mediapipe::TraceEvent::method_name);
+#define PLATFORM_SPECIFIC_PROCESS_PROFILER(name, id, method_name,    \
+                                           packet_timestamp)         \
+  mediapipe::PlatformSpecificProfilingScope platform_specific_scope( \
+      name, id, packet_timestamp, mediapipe::TraceEvent::method_name);
 
 #else
 #define PLATFORM_SPECIFIC_PROFILER(name, id, packet_timestamp)

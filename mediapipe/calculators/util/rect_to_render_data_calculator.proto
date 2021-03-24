@@ -32,4 +32,7 @@ message RectToRenderDataCalculatorOptions {
 
   // Thickness of the line (applicable when the rectangle is not filled).
   optional double thickness = 3 [default = 1.0];
+
+  // Whether the rendered rectangle should be an oval.
+  optional bool oval = 4 [default = false];
 }

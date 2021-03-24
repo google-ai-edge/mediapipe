@@ -70,7 +70,7 @@ TEST(OpenCvVideoEncoderCalculatorTest, DISABLED_TestMp4Avc720pVideo) {
   StatusOrPoller status_or_poller =
       graph.AddOutputStreamPoller("video_prestream");
   ASSERT_TRUE(status_or_poller.ok());
-  OutputStreamPoller poller = std::move(status_or_poller.ValueOrDie());
+  OutputStreamPoller poller = std::move(status_or_poller.value());
 
   MP_ASSERT_OK(graph.StartRun({}));
   Packet packet;
@@ -129,7 +129,7 @@ TEST(OpenCvVideoEncoderCalculatorTest, TestFlvH264Video) {
   StatusOrPoller status_or_poller =
       graph.AddOutputStreamPoller("video_prestream");
   ASSERT_TRUE(status_or_poller.ok());
-  OutputStreamPoller poller = std::move(status_or_poller.ValueOrDie());
+  OutputStreamPoller poller = std::move(status_or_poller.value());
 
   MP_ASSERT_OK(graph.StartRun({}));
   Packet packet;
@@ -190,7 +190,7 @@ TEST(OpenCvVideoEncoderCalculatorTest, TestMkvVp8Video) {
   StatusOrPoller status_or_poller =
       graph.AddOutputStreamPoller("video_prestream");
   ASSERT_TRUE(status_or_poller.ok());
-  OutputStreamPoller poller = std::move(status_or_poller.ValueOrDie());
+  OutputStreamPoller poller = std::move(status_or_poller.value());
 
   MP_ASSERT_OK(graph.StartRun({}));
   Packet packet;

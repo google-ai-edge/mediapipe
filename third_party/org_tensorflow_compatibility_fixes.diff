@@ -29,9 +29,22 @@ index ba50783765..5de5ea01f0 100644
 +++ b/tensorflow/core/platform/test.h
 @@ -42,7 +42,6 @@ limitations under the License.
  #if defined(PLATFORM_GOOGLE) || defined(PLATFORM_GOOGLE_ANDROID)
- #include "testing/base/public/gmock.h"
+ #include "testing/base/public/gmock.h"  // IWYU pragma: export
  #else
 -#include <gmock/gmock-generated-matchers.h>
  #include <gmock/gmock-matchers.h>
  #include <gmock/gmock-more-matchers.h>
- #endif
+ #include <gmock/gmock.h>
+diff --git a/tensorflow/lite/delegates/gpu/cl/serialization.fbs b/tensorflow/lite/delegates/gpu/cl/serialization.fbs
+index 67bd587162e..2a3c6bd30dc 100644
+--- a/tensorflow/lite/delegates/gpu/cl/serialization.fbs
++++ b/tensorflow/lite/delegates/gpu/cl/serialization.fbs
+@@ -12,7 +12,7 @@
+ // See the License for the specific language governing permissions and
+ // limitations under the License.
+ 
+-include "tensorflow/lite/delegates/gpu/common/task/serialization_base.fbs";
++include "../common/task/serialization_base.fbs";
+ 
+ namespace tflite.gpu.cl.data;
+

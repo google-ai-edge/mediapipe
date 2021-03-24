@@ -29,7 +29,7 @@ namespace {
 // NOTE: If we need to update this class, that means there is a
 // backward-incompatible change in the MediaPipe API and MediaPipe clients also
 // need to update their mediapipe::Executor subclasses.
-class MyExecutor : public ::mediapipe::Executor {
+class MyExecutor : public mediapipe::Executor {
  public:
   MyExecutor();
   ~MyExecutor() override;
@@ -37,21 +37,21 @@ class MyExecutor : public ::mediapipe::Executor {
   // To verify a mediapipe::Executor subclass outside the mediapipe namespace
   // can override any method, override every method in the mediapipe::Executor
   // interface.
-  void AddTask(::mediapipe::TaskQueue* task_queue) override;
+  void AddTask(mediapipe::TaskQueue* task_queue) override;
   void Schedule(std::function<void()> task) override;
 
  private:
-  std::unique_ptr<::mediapipe::ThreadPool> thread_pool_;
+  std::unique_ptr<mediapipe::ThreadPool> thread_pool_;
 };
 
 MyExecutor::MyExecutor() {
-  thread_pool_ = absl::make_unique<::mediapipe::ThreadPool>("my_executor", 1);
+  thread_pool_ = absl::make_unique<mediapipe::ThreadPool>("my_executor", 1);
   thread_pool_->StartWorkers();
 }
 
 MyExecutor::~MyExecutor() { thread_pool_.reset(nullptr); }
 
-void MyExecutor::AddTask(::mediapipe::TaskQueue* task_queue) {
+void MyExecutor::AddTask(mediapipe::TaskQueue* task_queue) {
   thread_pool_->Schedule([task_queue] { task_queue->RunNextTask(); });
 }
 
@@ -59,7 +59,7 @@ void MyExecutor::Schedule(std::function<void()> task) {
   thread_pool_->Schedule(std::move(task));
 }
 
-class NoOpTaskQueue : public ::mediapipe::TaskQueue {
+class NoOpTaskQueue : public mediapipe::TaskQueue {
  public:
   // Returns the number of times RunNextTask() was called.
   int call_count() const { return call_count_; }

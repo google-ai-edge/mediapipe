@@ -37,8 +37,7 @@ android_binary(
     srcs = glob(["*.java"]),
     assets = [
         "//mediapipe/graphs/hand_tracking:hand_detection_mobile_gpu.binarypb",
-        "//mediapipe/models:palm_detection.tflite",
-        "//mediapipe/models:palm_detection_labelmap.txt",
+        "//mediapipe/modules/palm_detection:palm_detection.tflite",
     ],
     assets_dir = "",
     manifest = "//mediapipe/examples/android/src/java/com/google/mediapipe/apps/basic:AndroidManifest.xml",
@@ -51,6 +50,7 @@ android_binary(
         "inputVideoStreamName": "input_video",
         "outputVideoStreamName": "output_video",
         "flipFramesVertically": "True",
+        "converterNumBuffers": "2",
     },
     multidex = "native",
     deps = [

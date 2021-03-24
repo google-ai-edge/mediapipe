@@ -123,13 +123,22 @@ class MediaSequenceTest(tf.test.TestCase):
     ms.add_bbox_embedding_floats((0.47, 0.49), example)
     ms.add_bbox_embedding_encoded((b"text", b"stings"), example)
     ms.add_bbox_embedding_confidence((0.47, 0.49), example)
+    ms.set_text_language(b"test", example)
+    ms.set_text_context_content(b"text", example)
+    ms.add_text_content(b"one", example)
+    ms.add_text_timestamp(47, example)
+    ms.add_text_confidence(0.47, example)
+    ms.add_text_duration(47, example)
+    ms.add_text_token_id(47, example)
+    ms.add_text_embedding((0.47, 0.49), example)
 
   def test_bbox_round_trip(self):
     example = tf.train.SequenceExample()
     boxes = np.array([[0.1, 0.2, 0.3, 0.4],
                       [0.5, 0.6, 0.7, 0.8]])
+    empty_boxes = np.array([])
     ms.add_bbox(boxes, example)
-    ms.add_bbox(boxes, example)
+    ms.add_bbox(empty_boxes, example)
     self.assertEqual(2, ms.get_bbox_size(example))
     self.assertAllClose(boxes, ms.get_bbox_at(0, example))
     self.assertTrue(ms.has_bbox(example))
@@ -147,6 +156,18 @@ class MediaSequenceTest(tf.test.TestCase):
     self.assertTrue(ms.has_bbox_point(example))
     ms.clear_bbox_point(example)
     self.assertEqual(0, ms.get_bbox_point_size(example))
+
+  def test_prefixed_point_round_trip(self):
+    example = tf.train.SequenceExample()
+    points = np.array([[0.1, 0.2],
+                       [0.5, 0.6]])
+    ms.add_bbox_point(points, example, "test")
+    ms.add_bbox_point(points, example, "test")
+    self.assertEqual(2, ms.get_bbox_point_size(example, "test"))
+    self.assertAllClose(points, ms.get_bbox_point_at(0, example, "test"))
+    self.assertTrue(ms.has_bbox_point(example, "test"))
+    ms.clear_bbox_point(example, "test")
+    self.assertEqual(0, ms.get_bbox_point_size(example, "test"))
 
   def test_3d_point_round_trip(self):
     example = tf.train.SequenceExample()

@@ -1,6 +1,8 @@
 absl-py
-numpy
-opencv-python>=3.4.0,<4.0.0
+attrs
+dataclasses
+numpy == 1.19.3
+opencv-python
 protobuf>=3.11.4
 six
 wheel

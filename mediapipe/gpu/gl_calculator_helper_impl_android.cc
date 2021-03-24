@@ -36,6 +36,15 @@ std::unique_ptr<ImageFrame> GlTexture::GetFrame<ImageFrame>() const {
 
 template <>
 std::unique_ptr<GpuBuffer> GlTexture::GetFrame<GpuBuffer>() const {
+#ifdef __EMSCRIPTEN__
+  // When WebGL is used, the GL context may be spontaneously lost which can
+  // cause GpuBuffer allocations to fail. In that case, return a dummy buffer
+  // to allow processing of the current frame complete.
+  if (!gpu_buffer_) {
+    return std::make_unique<GpuBuffer>();
+  }
+#endif  // __EMSCRIPTEN__
+
   CHECK(gpu_buffer_);
   // Inform the GlTextureBuffer that we have produced new content, and create
   // a producer sync point.

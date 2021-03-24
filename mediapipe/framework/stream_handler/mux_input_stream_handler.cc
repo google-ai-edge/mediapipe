@@ -14,6 +14,7 @@
 
 #include "absl/strings/substitute.h"
 #include "absl/synchronization/mutex.h"
+#include "mediapipe/framework/collection_item_id.h"
 #include "mediapipe/framework/input_stream_handler.h"
 #include "mediapipe/framework/port/logging.h"
 
@@ -121,6 +122,16 @@ class MuxInputStreamHandler : public InputStreamHandler {
                             num_packets_dropped, data_stream->Name());
     AddPacketToShard(&input_set->Get(data_stream_id), std::move(data_packet),
                      stream_is_done);
+
+    // Discard old packets on other streams.
+    // Note that control_stream_id is the last valid id.
+    auto next_timestamp = input_timestamp.NextAllowedInStream();
+    for (CollectionItemId id = input_stream_managers_.BeginId();
+         id < control_stream_id; ++id) {
+      if (id == data_stream_id) continue;
+      auto& other_stream = input_stream_managers_.Get(id);
+      other_stream->ErasePacketsEarlierThan(next_timestamp);
+    }
   }
 
  private:

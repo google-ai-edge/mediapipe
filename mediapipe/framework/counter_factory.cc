@@ -67,7 +67,7 @@ void CounterSet::PrintCounters() ABSL_LOCKS_EXCLUDED(mu_) {
 
 Counter* CounterSet::Get(const std::string& name) ABSL_LOCKS_EXCLUDED(mu_) {
   absl::ReaderMutexLock lock(&mu_);
-  if (!::mediapipe::ContainsKey(counters_, name)) {
+  if (!mediapipe::ContainsKey(counters_, name)) {
     return nullptr;
   }
   return counters_[name].get();

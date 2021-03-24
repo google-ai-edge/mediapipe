@@ -12,11 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "mediapipe/framework/api2/node.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/port/canonical_errors.h"
 #include "mediapipe/framework/port/logging.h"
 
 namespace mediapipe {
+namespace api2 {
 
 // Attach the header from a stream or side input to another stream.
 //
@@ -42,49 +44,41 @@ namespace mediapipe {
 //   output_stream: "audio_with_header"
 // }
 //
-class AddHeaderCalculator : public CalculatorBase {
+class AddHeaderCalculator : public Node {
  public:
-  static ::mediapipe::Status GetContract(CalculatorContract* cc) {
-    bool has_side_input = false;
-    bool has_header_stream = false;
-    if (cc->InputSidePackets().HasTag("HEADER")) {
-      cc->InputSidePackets().Tag("HEADER").SetAny();
-      has_side_input = true;
-    }
-    if (cc->Inputs().HasTag("HEADER")) {
-      cc->Inputs().Tag("HEADER").SetNone();
-      has_header_stream = true;
-    }
-    if (has_side_input == has_header_stream) {
-      return mediapipe::InvalidArgumentError(
+  static constexpr Input<NoneType>::Optional kHeader{"HEADER"};
+  static constexpr SideInput<AnyType>::Optional kHeaderSide{"HEADER"};
+  static constexpr Input<AnyType> kData{"DATA"};
+  static constexpr Output<SameType<kData>> kOut{""};
+
+  MEDIAPIPE_NODE_CONTRACT(kHeader, kHeaderSide, kData, kOut);
+
+  static absl::Status UpdateContract(CalculatorContract* cc) {
+    if (kHeader(cc).IsConnected() == kHeaderSide(cc).IsConnected()) {
+      return absl::InvalidArgumentError(
           "Header must be provided via exactly one of side input and input "
           "stream");
     }
-    cc->Inputs().Tag("DATA").SetAny();
-    cc->Outputs().Index(0).SetSameAs(&cc->Inputs().Tag("DATA"));
-    return ::mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
-  ::mediapipe::Status Open(CalculatorContext* cc) override {
-    Packet header;
-    if (cc->InputSidePackets().HasTag("HEADER")) {
-      header = cc->InputSidePackets().Tag("HEADER");
-    }
-    if (cc->Inputs().HasTag("HEADER")) {
-      header = cc->Inputs().Tag("HEADER").Header();
-    }
+  absl::Status Open(CalculatorContext* cc) override {
+    const PacketBase& header =
+        kHeader(cc).IsConnected() ? kHeader(cc).Header() : kHeaderSide(cc);
     if (!header.IsEmpty()) {
-      cc->Outputs().Index(0).SetHeader(header);
+      kOut(cc).SetHeader(header);
     }
-    cc->SetOffset(TimestampDiff(0));
-    return ::mediapipe::OkStatus();
+    cc->SetOffset(0);
+    return absl::OkStatus();
   }
 
-  ::mediapipe::Status Process(CalculatorContext* cc) override {
-    cc->Outputs().Index(0).AddPacket(cc->Inputs().Tag("DATA").Value());
-    return ::mediapipe::OkStatus();
+  absl::Status Process(CalculatorContext* cc) override {
+    kOut(cc).Send(kData(cc).packet());
+    return absl::OkStatus();
   }
 };
 
-REGISTER_CALCULATOR(AddHeaderCalculator);
+MEDIAPIPE_REGISTER_NODE(AddHeaderCalculator);
+
+}  // namespace api2
 }  // namespace mediapipe

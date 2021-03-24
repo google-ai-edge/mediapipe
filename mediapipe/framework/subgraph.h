@@ -41,7 +41,7 @@ class Subgraph {
   // the parent graph.
   // Subclasses may use the options argument to parameterize the config.
   // TODO: make this static?
-  virtual ::mediapipe::StatusOr<CalculatorGraphConfig> GetConfig(
+  virtual absl::StatusOr<CalculatorGraphConfig> GetConfig(
       const SubgraphOptions& options) = 0;
 
   // Returns options of a specific type.
@@ -49,13 +49,21 @@ class Subgraph {
   static T GetOptions(const Subgraph::SubgraphOptions& supgraph_options) {
     return tool::OptionsMap().Initialize(supgraph_options).Get<T>();
   }
+
+  // Returns the CalculatorGraphConfig::Node specifying the subgraph.
+  // This provides to Subgraphs the same graph information that GetContract
+  // provides to Calculators.
+  static CalculatorGraphConfig::Node GetNode(
+      const Subgraph::SubgraphOptions& supgraph_options) {
+    return supgraph_options;
+  }
 };
 
 using SubgraphRegistry = GlobalFactoryRegistry<std::unique_ptr<Subgraph>>;
 
-#define REGISTER_MEDIAPIPE_GRAPH(name)                               \
-  REGISTER_FACTORY_FUNCTION_QUALIFIED(::mediapipe::SubgraphRegistry, \
-                                      subgraph_registration, name,   \
+#define REGISTER_MEDIAPIPE_GRAPH(name)                             \
+  REGISTER_FACTORY_FUNCTION_QUALIFIED(mediapipe::SubgraphRegistry, \
+                                      subgraph_registration, name, \
                                       absl::make_unique<name>)
 
 // A graph factory holding a literal CalculatorGraphConfig.
@@ -63,7 +71,7 @@ class ProtoSubgraph : public Subgraph {
  public:
   ProtoSubgraph(const CalculatorGraphConfig& config);
   virtual ~ProtoSubgraph();
-  virtual ::mediapipe::StatusOr<CalculatorGraphConfig> GetConfig(
+  virtual absl::StatusOr<CalculatorGraphConfig> GetConfig(
       const Subgraph::SubgraphOptions& options);
 
  private:
@@ -75,7 +83,7 @@ class TemplateSubgraph : public Subgraph {
  public:
   TemplateSubgraph(const CalculatorGraphTemplate& templ);
   virtual ~TemplateSubgraph();
-  virtual ::mediapipe::StatusOr<CalculatorGraphConfig> GetConfig(
+  virtual absl::StatusOr<CalculatorGraphConfig> GetConfig(
       const Subgraph::SubgraphOptions& options);
 
  private:
@@ -110,7 +118,7 @@ class GraphRegistry {
   bool IsRegistered(const std::string& ns, const std::string& type_name) const;
 
   // Returns the specified graph config.
-  ::mediapipe::StatusOr<CalculatorGraphConfig> CreateByName(
+  absl::StatusOr<CalculatorGraphConfig> CreateByName(
       const std::string& ns, const std::string& type_name,
       const Subgraph::SubgraphOptions* options = nullptr) const;
 

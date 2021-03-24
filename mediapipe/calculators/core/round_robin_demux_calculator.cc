@@ -12,10 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "mediapipe/framework/api2/node.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/port/ret_check.h"
 
 namespace mediapipe {
+namespace api2 {
 
 // Forwards the input packet to one of the n output streams "OUTPUT:0",
 // "OUTPUT:1", ..., in round robin fashion.  The index of the selected output
@@ -71,50 +73,34 @@ namespace mediapipe {
 // output with MakePairCalculator, MakeVectorCalculator, or a similar variant to
 // use it with MuxCalculator and later unpack, or can create new variants of
 // MuxCalculator/MuxInputStreamHandler.
-class RoundRobinDemuxCalculator : public CalculatorBase {
+class RoundRobinDemuxCalculator : public Node {
  public:
-  static ::mediapipe::Status GetContract(CalculatorContract* cc) {
-    RET_CHECK_EQ(cc->Inputs().NumEntries(), 1);
-    cc->Inputs().Index(0).SetAny();
-    if (cc->Outputs().HasTag("SELECT")) {
-      cc->Outputs().Tag("SELECT").Set<int>();
-    }
-    for (CollectionItemId id = cc->Outputs().BeginId("OUTPUT");
-         id < cc->Outputs().EndId("OUTPUT"); ++id) {
-      cc->Outputs().Get(id).SetSameAs(&cc->Inputs().Index(0));
-    }
-    return ::mediapipe::OkStatus();
-  }
+  static constexpr Input<AnyType> kIn{""};
+  static constexpr Output<int>::Optional kSelect{"SELECT"};
+  static constexpr Output<SameType<kIn>>::Multiple kOut{"OUTPUT"};
 
-  ::mediapipe::Status Open(CalculatorContext* cc) override {
-    select_output_ = cc->Outputs().GetId("SELECT", 0);
+  MEDIAPIPE_NODE_CONTRACT(kIn, kSelect, kOut);
+
+  absl::Status Open(CalculatorContext* cc) override {
     output_data_stream_index_ = 0;
-    output_data_stream_base_ = cc->Outputs().GetId("OUTPUT", 0);
-    num_output_data_streams_ = cc->Outputs().NumEntries("OUTPUT");
-    return ::mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
-  ::mediapipe::Status Process(CalculatorContext* cc) override {
-    cc->Outputs()
-        .Get(output_data_stream_base_ + output_data_stream_index_)
-        .AddPacket(cc->Inputs().Index(0).Value());
-    if (select_output_.IsValid()) {
-      cc->Outputs()
-          .Get(select_output_)
-          .Add(new int(output_data_stream_index_), cc->InputTimestamp());
+  absl::Status Process(CalculatorContext* cc) override {
+    kOut(cc)[output_data_stream_index_].Send(kIn(cc).packet());
+    if (kSelect(cc).IsConnected()) {
+      kSelect(cc).Send(output_data_stream_index_);
     }
     output_data_stream_index_ =
-        (output_data_stream_index_ + 1) % num_output_data_streams_;
-    return ::mediapipe::OkStatus();
+        (output_data_stream_index_ + 1) % kOut(cc).Count();
+    return absl::OkStatus();
   }
 
  private:
-  CollectionItemId select_output_;
-  CollectionItemId output_data_stream_base_;
-  int num_output_data_streams_;
   int output_data_stream_index_;
 };
 
-REGISTER_CALCULATOR(RoundRobinDemuxCalculator);
+MEDIAPIPE_REGISTER_NODE(RoundRobinDemuxCalculator);
 
+}  // namespace api2
 }  // namespace mediapipe

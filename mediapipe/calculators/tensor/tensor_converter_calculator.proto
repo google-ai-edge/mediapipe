@@ -1,0 +1,69 @@
+syntax = "proto2";
+
+package mediapipe;
+
+import "mediapipe/framework/calculator.proto";
+
+// Full Example:
+//
+// node {
+//   calculator: "TensorConverterCalculator"
+//   input_stream: "IMAGE_IN:input_image"
+//   output_stream: "TENSOR_OUT:image_tensor"
+//   options {
+//     [mediapipe.TensorConverterCalculatorOptions.ext] {
+//       zero_center: true
+//     }
+//   }
+// }
+//
+message TensorConverterCalculatorOptions {
+  extend mediapipe.CalculatorOptions {
+    optional TensorConverterCalculatorOptions ext = 335742637;
+  }
+
+  // Choose normalization mode for output (not applied for Matrix inputs).
+  // true = [-1,1]
+  // false = [0,1]
+  // Ignored if using quantization.
+  optional bool zero_center = 1 [default = true];
+
+  // Custom settings to override the internal scaling factors `div` and `sub`.
+  // Both values must be set to non-negative values. Will only take effect on
+  // CPU AND when |use_custom_normalization| is set to true. When these custom
+  // values take effect, the |zero_center| setting above will be overriden, and
+  // the normalized_value will be calculated as:
+  // normalized_value = input / custom_div - custom_sub.
+  optional bool use_custom_normalization = 6 [default = false];
+  optional float custom_div = 7 [default = -1.0];
+  optional float custom_sub = 8 [default = -1.0];
+
+  // Whether the input image should be flipped vertically (along the
+  // y-direction). This is useful, for example, when the input image is defined
+  // with a coordinate system where the origin is at the bottom-left corner
+  // (e.g., in OpenGL) whereas the ML model expects an image with a top-left
+  // origin.
+  optional bool flip_vertically = 2 [default = false];
+
+  // Controls how many channels of the input image get passed through to the
+  // tensor. Valid values are 1,3,4 only. Ignored for iOS GPU.
+  optional int32 max_num_channels = 3 [default = 3];
+
+  // The calculator expects Matrix inputs to be in column-major order. Set
+  // row_major_matrix to true if the inputs are in row-major order.
+  optional bool row_major_matrix = 4 [default = false];
+
+  // Quantization option (CPU only).
+  // When true, output kUint8 tensor instead of kFloat32.
+  optional bool use_quantized_tensors = 5 [default = false];
+
+  // Normalization option.
+  // Setting normalization_range results in the values normalized to
+  // the range [output_tensor_float_range.min, output_tensor_float_range.max].
+  optional TensorFloatRange output_tensor_float_range = 9;
+
+  message TensorFloatRange {
+    optional float min = 1;
+    optional float max = 2;
+  }
+}

@@ -78,11 +78,11 @@ void RunTest(int num_input_packets, int max_in_flight) {
   StatusOrPoller status_or_poller1 =
       graph.AddOutputStreamPoller("forward_flow");
   ASSERT_TRUE(status_or_poller1.ok());
-  OutputStreamPoller poller1 = std::move(status_or_poller1.ValueOrDie());
+  OutputStreamPoller poller1 = std::move(status_or_poller1.value());
   StatusOrPoller status_or_poller2 =
       graph.AddOutputStreamPoller("backward_flow");
   ASSERT_TRUE(status_or_poller2.ok());
-  OutputStreamPoller poller2 = std::move(status_or_poller2.ValueOrDie());
+  OutputStreamPoller poller2 = std::move(status_or_poller2.value());
 
   MP_ASSERT_OK(graph.StartRun({}));
   AddInputPackets(num_input_packets, &graph);

@@ -31,7 +31,7 @@ namespace mediapipe {
 namespace {
 
 namespace tf = ::tensorflow;
-namespace mpms = ::mediapipe::mediasequence;
+namespace mpms = mediapipe::mediasequence;
 
 class UnpackMediaSequenceCalculatorTest : public ::testing::Test {
  protected:

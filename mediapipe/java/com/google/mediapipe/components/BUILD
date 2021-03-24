@@ -47,14 +47,18 @@ android_library(
     ],
     visibility = ["//visibility:public"],
     deps = [
+        "//mediapipe/java/com/google/mediapipe/glutil",
         "//third_party:androidx_appcompat",
+        "//third_party:androidx_core",
         "//third_party:androidx_legacy_support_v4",
-        "//third_party:camera2",
+        "//third_party:camerax_camera2",
         "//third_party:camerax_core",
+        "//third_party:camerax_lifecycle",
         "@maven//:androidx_concurrent_concurrent_futures",
         "@maven//:androidx_lifecycle_lifecycle_common",
         "@maven//:com_google_code_findbugs_jsr305",
         "@maven//:com_google_guava_guava",
+        "@maven//:com_google_guava_listenablefuture",
     ],
 )
 

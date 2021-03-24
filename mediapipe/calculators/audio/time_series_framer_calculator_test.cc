@@ -69,7 +69,7 @@ class TimeSeriesFramerCalculatorTest
   }
 
   // Initializes and runs the test graph.
-  ::mediapipe::Status Run() {
+  absl::Status Run() {
     InitializeGraph();
 
     FillInputHeader();
@@ -441,7 +441,7 @@ class TimeSeriesFramerCalculatorTimestampingTest
     }
   }
 
-  ::mediapipe::Status RunTimestampTest() {
+  absl::Status RunTimestampTest() {
     InitializeGraph();
     InitializeInputForTimeStampingTest();
     FillInputHeader();

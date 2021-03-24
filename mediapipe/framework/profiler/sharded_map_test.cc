@@ -57,7 +57,7 @@ void TestWriteAndRead(Map& time_map) {
 
 // Tests writing, reading and erasing in a ShardedMap.
 TEST(ShardedMapTest, TestWriteAndRead) {
-  std::unordered_map<int64, int64> simple_map;
+  absl::node_hash_map<int64, int64> simple_map;
   TestWriteAndRead(simple_map);
   ShardedMap<int64, int64> safe_map(4999, 1);
   TestWriteAndRead(safe_map);
@@ -79,7 +79,7 @@ void TestParallelAccess(Map& time_map, int num_threads) {
   int64 kNumWrites = 1000;
   int64 kNumReads = 10;
 
-  ::mediapipe::ThreadPool pool(num_threads);
+  mediapipe::ThreadPool pool(num_threads);
   pool.StartWorkers();
   for (int i = 0; i < kNumTasks; ++i) {
     pool.Schedule([=, &time_map]() {

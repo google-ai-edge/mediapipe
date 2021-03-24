@@ -8,8 +8,14 @@ nav_order: 3
 # MediaPipe Iris
 {: .no_toc }
 
+<details close markdown="block">
+  <summary>
+    Table of contents
+  </summary>
+  {: .text-delta }
 1. TOC
 {:toc}
+</details>
 ---
 
 ## Overview
@@ -116,10 +122,8 @@ along with some simple geometric arguments. For more details please refer to our
 ## Example Apps
 
 Please first see general instructions for
-[Android](../getting_started/building_examples.md#android),
-[iOS](../getting_started/building_examples.md#ios) and
-[desktop](../getting_started/building_examples.md#desktop) on how to build
-MediaPipe examples.
+[Android](../getting_started/android.md), [iOS](../getting_started/ios.md) and
+[desktop](../getting_started/cpp.md) on how to build MediaPipe examples.
 
 Note: To visualize a graph, copy the graph and paste it into
 [MediaPipe Visualizer](https://viz.mediapipe.dev/). For more information on how
@@ -140,9 +144,8 @@ to visualize its associated subgraphs, please see
 
 #### Live Camera Input
 
-Please first see general instructions for
-[desktop](../getting_started/building_examples.md#desktop) on how to build
-MediaPipe examples.
+Please first see general instructions for [desktop](../getting_started/cpp.md)
+on how to build MediaPipe examples.
 
 *   Running on CPU
     *   Graph:
@@ -199,11 +202,4 @@ Please refer to [these instructions](../index.md#mediapipe-on-the-web).
 *   Paper:
     [Real-time Pupil Tracking from Monocular Video for Digital Puppetry](https://arxiv.org/abs/2006.11341)
     ([presentation](https://youtu.be/cIhXkiiapQI))
-*   Face detection model:
-    [TFLite model](https://github.com/google/mediapipe/tree/master/mediapipe/modules/face_detection/face_detection_front.tflite)
-*   Face landmark model:
-    [TFLite model](https://github.com/google/mediapipe/tree/master/mediapipe/modules/face_landmark/face_landmark.tflite),
-    [TF.js model](https://tfhub.dev/mediapipe/facemesh/1)
-*   Iris landmark model:
-    [TFLite model](https://github.com/google/mediapipe/tree/master/mediapipe/modules/iris_landmark/iris_landmark.tflite)
-*   [Model card](https://mediapipe.page.link/iris-mc)
+*   [Models and model cards](./models.md#iris)

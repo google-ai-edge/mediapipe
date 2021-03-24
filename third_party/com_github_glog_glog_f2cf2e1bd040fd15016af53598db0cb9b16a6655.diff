@@ -1,0 +1,45 @@
+https://github.com/google/glog/pull/342
+
+diff --git a/CONTRIBUTORS b/CONTRIBUTORS
+index d63f62d1..aa0dd4a8 100644
+--- a/CONTRIBUTORS
++++ b/CONTRIBUTORS
+@@ -26,6 +26,7 @@ Abhishek Dasgupta <abhi2743@gmail.com>
+ Abhishek Parmar <abhishek@orng.net>
+ Andrew Schwartzmeyer <andrew@schwartzmeyer.com>
+ Andy Ying <andy@trailofbits.com>
++Bret McKee <bretmckee@google.com>
+ Brian Silverman <bsilver16384@gmail.com>
+ Fumitoshi Ukai <ukai@google.com>
+ Guillaume Dumont <dumont.guillaume@gmail.com>
+diff --git a/src/glog/logging.h.in b/src/glog/logging.h.in
+index 9968b96d..f6dccb29 100644
+--- a/src/glog/logging.h.in
++++ b/src/glog/logging.h.in
+@@ -649,6 +649,10 @@ void MakeCheckOpValueString(std::ostream* os, const signed char& v);
+ template <> GOOGLE_GLOG_DLL_DECL
+ void MakeCheckOpValueString(std::ostream* os, const unsigned char& v);
+ 
++// Provide printable value for nullptr_t
++template <> GOOGLE_GLOG_DLL_DECL
++void MakeCheckOpValueString(std::ostream* os, const std::nullptr_t& v);
++
+ // Build the error message string. Specify no inlining for code size.
+ template <typename T1, typename T2>
+ std::string* MakeCheckOpString(const T1& v1, const T2& v2, const char* exprtext)
+diff --git a/src/logging.cc b/src/logging.cc
+index 0c86cf62..256655e5 100644
+--- a/src/logging.cc
++++ b/src/logging.cc
+@@ -2163,6 +2163,11 @@ void MakeCheckOpValueString(std::ostream* os, const unsigned char& v) {
+   }
+ }
+ 
++template <>
++void MakeCheckOpValueString(std::ostream* os, const std::nullptr_t& v) {
++  (*os) << "nullptr";
++}
++
+ void InitGoogleLogging(const char* argv0) {
+   glog_internal_namespace_::InitGoogleLoggingUtilities(argv0);
+ }

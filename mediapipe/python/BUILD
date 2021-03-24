@@ -16,14 +16,6 @@ load("@pybind11_bazel//:build_defs.bzl", "pybind_extension")
 
 licenses(["notice"])  # Apache 2.0
 
-cc_library(
-    name = "builtin_calculators",
-    deps = [
-        "//mediapipe/calculators/core:pass_through_calculator",
-        "//mediapipe/graphs/pose_tracking:upper_body_pose_tracking_cpu_deps",
-    ],
-)
-
 pybind_extension(
     name = "_framework_bindings",
     srcs = ["framework_bindings.cc"],
@@ -49,5 +41,35 @@ pybind_extension(
         "//mediapipe/python/pybind:packet_getter",
         "//mediapipe/python/pybind:resource_util",
         "//mediapipe/python/pybind:timestamp",
+        "//mediapipe/python/pybind:validated_graph_config",
+        # Type registration.
+        "//mediapipe/framework:basic_types_registration",
+        "//mediapipe/framework/formats:classification_registration",
+        "//mediapipe/framework/formats:detection_registration",
+        "//mediapipe/framework/formats:landmark_registration",
+        "//mediapipe/framework/formats:rect_registration",
+        "//mediapipe/modules/objectron/calculators:annotation_registration",
+    ],
+)
+
+cc_library(
+    name = "builtin_calculators",
+    deps = [
+        "//mediapipe/calculators/core:gate_calculator",
+        "//mediapipe/calculators/core:pass_through_calculator",
+        "//mediapipe/calculators/core:side_packet_to_stream_calculator",
+        "//mediapipe/calculators/core:split_normalized_landmark_list_calculator",
+        "//mediapipe/calculators/core:string_to_int_calculator",
+        "//mediapipe/calculators/image:image_transformation_calculator",
+        "//mediapipe/calculators/util:detection_unique_id_calculator",
+        "//mediapipe/modules/face_detection:face_detection_front_cpu",
+        "//mediapipe/modules/face_landmark:face_landmark_front_cpu",
+        "//mediapipe/modules/hand_landmark:hand_landmark_tracking_cpu",
+        "//mediapipe/modules/holistic_landmark:holistic_landmark_cpu",
+        "//mediapipe/modules/objectron:objectron_cpu",
+        "//mediapipe/modules/palm_detection:palm_detection_cpu",
+        "//mediapipe/modules/pose_detection:pose_detection_cpu",
+        "//mediapipe/modules/pose_landmark:pose_landmark_by_roi_cpu",
+        "//mediapipe/modules/pose_landmark:pose_landmark_cpu",
     ],
 )

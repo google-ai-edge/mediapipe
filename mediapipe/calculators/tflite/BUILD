@@ -13,131 +13,91 @@
 # limitations under the License.
 #
 
-load("//mediapipe/framework/port:build_config.bzl", "mediapipe_cc_proto_library")
+load("//mediapipe/framework/port:build_config.bzl", "mediapipe_proto_library")
 load("@bazel_skylib//lib:selects.bzl", "selects")
 
 licenses(["notice"])
 
 package(default_visibility = ["//visibility:private"])
 
-proto_library(
+mediapipe_proto_library(
     name = "ssd_anchors_calculator_proto",
     srcs = ["ssd_anchors_calculator.proto"],
     visibility = ["//visibility:public"],
-    deps = ["//mediapipe/framework:calculator_proto"],
+    deps = [
+        "//mediapipe/framework:calculator_options_proto",
+        "//mediapipe/framework:calculator_proto",
+    ],
 )
 
-proto_library(
+mediapipe_proto_library(
     name = "tflite_custom_op_resolver_calculator_proto",
     srcs = ["tflite_custom_op_resolver_calculator.proto"],
     visibility = ["//visibility:public"],
-    deps = ["//mediapipe/framework:calculator_proto"],
+    deps = [
+        "//mediapipe/framework:calculator_options_proto",
+        "//mediapipe/framework:calculator_proto",
+    ],
 )
 
-proto_library(
+mediapipe_proto_library(
     name = "tflite_inference_calculator_proto",
     srcs = ["tflite_inference_calculator.proto"],
     visibility = ["//visibility:public"],
-    deps = ["//mediapipe/framework:calculator_proto"],
+    deps = [
+        "//mediapipe/framework:calculator_options_proto",
+        "//mediapipe/framework:calculator_proto",
+    ],
 )
 
-proto_library(
+mediapipe_proto_library(
     name = "tflite_converter_calculator_proto",
     srcs = ["tflite_converter_calculator.proto"],
     visibility = ["//visibility:public"],
-    deps = ["//mediapipe/framework:calculator_proto"],
+    deps = [
+        "//mediapipe/framework:calculator_options_proto",
+        "//mediapipe/framework:calculator_proto",
+    ],
 )
 
-proto_library(
+mediapipe_proto_library(
     name = "tflite_tensors_to_segmentation_calculator_proto",
     srcs = ["tflite_tensors_to_segmentation_calculator.proto"],
     visibility = ["//visibility:public"],
-    deps = ["//mediapipe/framework:calculator_proto"],
+    deps = [
+        "//mediapipe/framework:calculator_options_proto",
+        "//mediapipe/framework:calculator_proto",
+    ],
 )
 
-proto_library(
+mediapipe_proto_library(
     name = "tflite_tensors_to_detections_calculator_proto",
     srcs = ["tflite_tensors_to_detections_calculator.proto"],
     visibility = ["//visibility:public"],
-    deps = ["//mediapipe/framework:calculator_proto"],
+    deps = [
+        "//mediapipe/framework:calculator_options_proto",
+        "//mediapipe/framework:calculator_proto",
+    ],
 )
 
-proto_library(
+mediapipe_proto_library(
     name = "tflite_tensors_to_classification_calculator_proto",
     srcs = ["tflite_tensors_to_classification_calculator.proto"],
     visibility = ["//visibility:public"],
-    deps = ["//mediapipe/framework:calculator_proto"],
+    deps = [
+        "//mediapipe/framework:calculator_options_proto",
+        "//mediapipe/framework:calculator_proto",
+    ],
 )
 
-proto_library(
+mediapipe_proto_library(
     name = "tflite_tensors_to_landmarks_calculator_proto",
     srcs = ["tflite_tensors_to_landmarks_calculator.proto"],
     visibility = ["//visibility:public"],
-    deps = ["//mediapipe/framework:calculator_proto"],
-)
-
-mediapipe_cc_proto_library(
-    name = "ssd_anchors_calculator_cc_proto",
-    srcs = ["ssd_anchors_calculator.proto"],
-    cc_deps = ["//mediapipe/framework:calculator_cc_proto"],
-    visibility = ["//visibility:public"],
-    deps = [":ssd_anchors_calculator_proto"],
-)
-
-mediapipe_cc_proto_library(
-    name = "tflite_custom_op_resolver_calculator_cc_proto",
-    srcs = ["tflite_custom_op_resolver_calculator.proto"],
-    cc_deps = ["//mediapipe/framework:calculator_cc_proto"],
-    visibility = ["//visibility:public"],
-    deps = [":tflite_custom_op_resolver_calculator_proto"],
-)
-
-mediapipe_cc_proto_library(
-    name = "tflite_converter_calculator_cc_proto",
-    srcs = ["tflite_converter_calculator.proto"],
-    cc_deps = ["//mediapipe/framework:calculator_cc_proto"],
-    visibility = ["//visibility:public"],
-    deps = [":tflite_converter_calculator_proto"],
-)
-
-mediapipe_cc_proto_library(
-    name = "tflite_tensors_to_segmentation_calculator_cc_proto",
-    srcs = ["tflite_tensors_to_segmentation_calculator.proto"],
-    cc_deps = ["//mediapipe/framework:calculator_cc_proto"],
-    visibility = ["//visibility:public"],
-    deps = [":tflite_tensors_to_segmentation_calculator_proto"],
-)
-
-mediapipe_cc_proto_library(
-    name = "tflite_inference_calculator_cc_proto",
-    srcs = ["tflite_inference_calculator.proto"],
-    cc_deps = ["//mediapipe/framework:calculator_cc_proto"],
-    visibility = ["//visibility:public"],
-    deps = [":tflite_inference_calculator_proto"],
-)
-
-mediapipe_cc_proto_library(
-    name = "tflite_tensors_to_detections_calculator_cc_proto",
-    srcs = ["tflite_tensors_to_detections_calculator.proto"],
-    cc_deps = ["//mediapipe/framework:calculator_cc_proto"],
-    visibility = ["//visibility:public"],
-    deps = [":tflite_tensors_to_detections_calculator_proto"],
-)
-
-mediapipe_cc_proto_library(
-    name = "tflite_tensors_to_classification_calculator_cc_proto",
-    srcs = ["tflite_tensors_to_classification_calculator.proto"],
-    cc_deps = ["//mediapipe/framework:calculator_cc_proto"],
-    visibility = ["//visibility:public"],
-    deps = [":tflite_tensors_to_classification_calculator_proto"],
-)
-
-mediapipe_cc_proto_library(
-    name = "tflite_tensors_to_landmarks_calculator_cc_proto",
-    srcs = ["tflite_tensors_to_landmarks_calculator.proto"],
-    cc_deps = ["//mediapipe/framework:calculator_cc_proto"],
-    visibility = ["//visibility:public"],
-    deps = [":tflite_tensors_to_landmarks_calculator_proto"],
+    deps = [
+        "//mediapipe/framework:calculator_options_proto",
+        "//mediapipe/framework:calculator_proto",
+    ],
 )
 
 cc_library(
@@ -183,16 +143,15 @@ cc_test(
     data = [":anchor_golden_files"],
     deps = [
         ":ssd_anchors_calculator",
-        ":ssd_anchors_calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework:calculator_runner",
         "//mediapipe/framework/deps:file_path",
         "//mediapipe/framework/formats/object_detection:anchor_cc_proto",
+        "//mediapipe/framework/port:commandlineflags",
         "//mediapipe/framework/port:file_helpers",
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/framework/port:integral_types",
         "//mediapipe/framework/port:parse_text_proto",
-        "//mediapipe/framework/tool:validate_type",
     ],
 )
 
@@ -232,8 +191,8 @@ cc_library(
         ":tflite_inference_calculator_cc_proto",
         "@com_google_absl//absl/memory",
         "//mediapipe/framework:calculator_framework",
-        "//mediapipe/util:resource_util",
         "//mediapipe/util/tflite:config",
+        "//mediapipe/util/tflite:tflite_model_loader",
         "@org_tensorflow//tensorflow/lite:framework",
         "@org_tensorflow//tensorflow/lite/delegates/xnnpack:xnnpack_delegate",
         "@org_tensorflow//tensorflow/lite/kernels:builtin_ops",
@@ -453,6 +412,7 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         ":tflite_tensors_to_classification_calculator_cc_proto",
+        "@com_google_absl//absl/container:node_hash_map",
         "@com_google_absl//absl/strings:str_format",
         "@com_google_absl//absl/types:span",
         "//mediapipe/framework/formats:classification_cc_proto",
@@ -508,7 +468,10 @@ cc_library(
 # bazel test //mediapipe/calculators/tflite:tflite_inference_calculator_test --copt=-DTFLITE_GPU_EXTRA_GLES_DEPS --copt=-DMESA_EGL_NO_X11_HEADERS --copt=-DEGL_NO_X11 --config=grte_v5 --test_strategy=local
 cc_test(
     name = "tflite_inference_calculator_test",
-    srcs = ["tflite_inference_calculator_test.cc"],
+    srcs = [
+        "tflite_inference_calculator_test.cc",
+        "tflite_inference_calculator_test_common.h",
+    ],
     data = ["testdata/add.bin"],
     linkstatic = 1,
     deps = [
@@ -528,7 +491,9 @@ cc_test(
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/types:optional",
         "@org_tensorflow//tensorflow/lite:framework",
+        "@org_tensorflow//tensorflow/lite:type_to_tflitetype",
         "@org_tensorflow//tensorflow/lite/kernels:builtin_ops",
+        "@org_tensorflow//tensorflow/lite/kernels/internal:tensor",
     ],
 )
 

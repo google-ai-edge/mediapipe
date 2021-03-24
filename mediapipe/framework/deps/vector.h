@@ -241,7 +241,7 @@ class BasicVector {
     return out << "]";
   }
 
-  // These are only public for technical reasons (see cl/121145822).
+  // These are only public for technical reasons.
   template <typename K>
   D MulScalarInternal(const K& k) const {
     return Generate([k](const T& x) { return k * x; }, AsD());
@@ -313,9 +313,9 @@ VT2<T2> operator/(const K& k, const BasicVector<VT2, T2, N2>& a) {
 // ======================================================================
 template <typename T>
 class Vector2
-    : public ::mediapipe::deps::internal_vector::BasicVector<Vector2, T, 2> {
+    : public mediapipe::deps::internal_vector::BasicVector<Vector2, T, 2> {
  private:
-  using Base = ::mediapipe::deps::internal_vector::BasicVector<::Vector2, T, 2>;
+  using Base = mediapipe::deps::internal_vector::BasicVector<::Vector2, T, 2>;
   using VType = T;
 
  public:
@@ -383,9 +383,9 @@ class Vector2
 
 template <typename T>
 class Vector3
-    : public ::mediapipe::deps::internal_vector::BasicVector<Vector3, T, 3> {
+    : public mediapipe::deps::internal_vector::BasicVector<Vector3, T, 3> {
  private:
-  using Base = ::mediapipe::deps::internal_vector::BasicVector<::Vector3, T, 3>;
+  using Base = mediapipe::deps::internal_vector::BasicVector<::Vector3, T, 3>;
   using VType = T;
 
  public:
@@ -479,9 +479,9 @@ class Vector3
 
 template <typename T>
 class Vector4
-    : public ::mediapipe::deps::internal_vector::BasicVector<Vector4, T, 4> {
+    : public mediapipe::deps::internal_vector::BasicVector<Vector4, T, 4> {
  private:
-  using Base = ::mediapipe::deps::internal_vector::BasicVector<::Vector4, T, 4>;
+  using Base = mediapipe::deps::internal_vector::BasicVector<::Vector4, T, 4>;
   using VType = T;
 
  public:

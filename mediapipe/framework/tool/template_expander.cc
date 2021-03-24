@@ -86,8 +86,8 @@ std::unique_ptr<MessageLite> CloneMessage(const MessageLite& message) {
 
 // Returns the (tag, index) pairs in a field path.
 // For example, returns {{1, 1}, {2, 1}, {3, 1}} for path "/1[1]/2[1]/3[1]".
-mediapipe::Status ProtoPathSplit(const std::string& path, ProtoPath* result) {
-  mediapipe::Status status;
+absl::Status ProtoPathSplit(const std::string& path, ProtoPath* result) {
+  absl::Status status;
   std::vector<std::string> ids = absl::StrSplit(path, '/');
   for (const std::string& id : ids) {
     if (id.length() > 0) {
@@ -98,7 +98,7 @@ mediapipe::Status ProtoPathSplit(const std::string& path, ProtoPath* result) {
       bool ok = absl::SimpleAtoi(id_pair.first, &tag) &&
                 absl::SimpleAtoi(id_pair.second, &index);
       if (!ok) {
-        status.Update(::mediapipe::InvalidArgumentError(path));
+        status.Update(absl::InvalidArgumentError(path));
       }
       result->push_back(std::make_pair(tag, index));
     }
@@ -146,7 +146,7 @@ int FieldCount(const FieldValue& base, ProtoPath field_path,
 // The default implementation for the mediapipe template rule interpreter.
 class TemplateExpanderImpl {
  public:
-  explicit TemplateExpanderImpl(std::vector<::mediapipe::Status>* errors)
+  explicit TemplateExpanderImpl(std::vector<absl::Status>* errors)
       : errors_(errors) {}
 
   // Applies the rules specified in a CalculatorGraphTemplate to a
@@ -215,21 +215,21 @@ class TemplateExpanderImpl {
   }
 
   // Return the field values addressed by a template rule.
-  mediapipe::Status GetBaseValue(const std::string& base_path,
-                                 const TemplateExpression& rule,
-                                 const FieldValue& output,
-                                 std::vector<FieldValue>* base) {
+  absl::Status GetBaseValue(const std::string& base_path,
+                            const TemplateExpression& rule,
+                            const FieldValue& output,
+                            std::vector<FieldValue>* base) {
     if (!rule.has_path()) {
       base->push_back(output);
-      return ::mediapipe::OkStatus();
+      return absl::OkStatus();
     }
     if (rule.has_field_value()) {
       // For a non-repeated field, the field value is stored only in the rule.
       base->push_back(rule.field_value());
-      return ::mediapipe::OkStatus();
+      return absl::OkStatus();
     }
     ProtoPath field_path;
-    mediapipe::Status status =
+    absl::Status status =
         ProtoPathSplit(ProtoPathRelative(rule.path(), base_path), &field_path);
     if (!status.ok()) return status;
     return ProtoUtilLite::GetFieldRange(output, field_path, 1,
@@ -237,12 +237,13 @@ class TemplateExpanderImpl {
   }
 
   // Replace the field values addressed by a template rule.
-  mediapipe::Status ReplaceBaseValue(
-      const std::string& base_path, const TemplateExpression& rule,
-      const std::vector<FieldValue>& field_values, FieldValue* output) {
+  absl::Status ReplaceBaseValue(const std::string& base_path,
+                                const TemplateExpression& rule,
+                                const std::vector<FieldValue>& field_values,
+                                FieldValue* output) {
     if (!rule.has_path()) {
       *output = field_values[0];
-      return ::mediapipe::OkStatus();
+      return absl::OkStatus();
     }
     ProtoPath field_path;
     RET_CHECK_OK(
@@ -252,7 +253,7 @@ class TemplateExpanderImpl {
       // For a non-repeated field, only one value can be specified.
       if (!field_values.empty() &&
           FieldCount(*output, field_path, GetFieldType(rule)) > 0) {
-        return ::mediapipe::InvalidArgumentError(absl::StrCat(
+        return absl::InvalidArgumentError(absl::StrCat(
             "Multiple values specified for non-repeated field: ", rule.path()));
       }
       // For a non-repeated field, the field value is stored only in the rule.
@@ -267,7 +268,7 @@ class TemplateExpanderImpl {
   bool ExpandNestedRules(int base_index, const std::string& base_path,
                          const FieldValue& base_message,
                          std::vector<FieldValue>* result) {
-    mediapipe::Status status;
+    absl::Status status;
     FieldValue output = base_message;
 
     // Evaluate the rules nested below base_path in lexical order.
@@ -280,7 +281,7 @@ class TemplateExpanderImpl {
       if (!status.ok()) break;
       std::vector<FieldValue> values;
       if (!ExpandTemplateRule(rules[i], base[0], &values)) {
-        status = ::mediapipe::InternalError("ExpandTemplateRule failed");
+        status = absl::InternalError("ExpandTemplateRule failed");
         break;
       }
       edits.push_back(values);
@@ -348,7 +349,7 @@ class TemplateExpanderImpl {
     // Retrieve the var param and the range expression.
     const TemplateExpression& rule = template_rules_.rule().Get(base_index);
     if (rule.arg().empty() || rule.arg().size() > 2) {
-      RecordError(::mediapipe::InvalidArgumentError(
+      RecordError(absl::InvalidArgumentError(
           "Param declaration must specify a parameter name and "
           "may specify a single default value."));
     }
@@ -386,8 +387,8 @@ class TemplateExpanderImpl {
     const TemplateExpression& rule = template_rules_.rule().Get(base_index);
     TemplateArgument item = EvalExpression(rule);
     std::vector<FieldValue> values;
-    mediapipe::Status status = AsFieldValues(
-        std::vector<TemplateArgument>{item}, GetFieldType(rule), &values);
+    absl::Status status = AsFieldValues(std::vector<TemplateArgument>{item},
+                                        GetFieldType(rule), &values);
     if (!status.ok()) {
       RecordError(status);
       return false;
@@ -400,8 +401,7 @@ class TemplateExpanderImpl {
   TemplateArgument EvalParam(const TemplateExpression& expr) {
     TemplateArgument* result = GetItem(&environment_, expr.param());
     if (result == nullptr) {
-      RecordError(
-          ::mediapipe::NotFoundError(absl::StrCat("param: ", expr.param())));
+      RecordError(absl::NotFoundError(absl::StrCat("param: ", expr.param())));
       return AsArgument(0.0);
     }
     return *result;
@@ -412,7 +412,7 @@ class TemplateExpanderImpl {
     TemplateArgument lhs = EvalExpression(expr.arg(0));
     TemplateArgument* result = GetItem(lhs.mutable_dict(), expr.arg(1).param());
     if (result == nullptr) {
-      RecordError(::mediapipe::NotFoundError(
+      RecordError(absl::NotFoundError(
           absl::StrCat("param field: ", expr.arg(1).param())));
       return AsArgument(0.0);
     }
@@ -427,7 +427,7 @@ class TemplateExpanderImpl {
     }
     if (value.has_str()) {
       if (!absl::SimpleAtod(value.str(), &result)) {
-        RecordError(::mediapipe::InvalidArgumentError(value.str()));
+        RecordError(absl::InvalidArgumentError(value.str()));
       }
     }
     return result;
@@ -452,7 +452,7 @@ class TemplateExpanderImpl {
       return value.num() != 0;
     } else if (value.has_str()) {
       if (!absl::SimpleAtob(value.str(), &result)) {
-        RecordError(::mediapipe::InvalidArgumentError(value.str()));
+        RecordError(absl::InvalidArgumentError(value.str()));
       }
     }
     return result;
@@ -462,7 +462,7 @@ class TemplateExpanderImpl {
   TemplateArgument AsDict(const std::vector<TemplateArgument>& args) {
     TemplateArgument result;
     if (args.size() % 2 != 0) {
-      RecordError(::mediapipe::InvalidArgumentError(absl::StrCat(
+      RecordError(absl::InvalidArgumentError(absl::StrCat(
           "Dict requires an even number of arguments, got: ", args.size())));
       return result;
     }
@@ -595,9 +595,9 @@ class TemplateExpanderImpl {
   }
 
   // Convert between a proto feild value and a template argument.
-  mediapipe::Status AsFieldValues(const std::vector<TemplateArgument>& args,
-                                  FieldType field_type,
-                                  std::vector<FieldValue>* result) {
+  absl::Status AsFieldValues(const std::vector<TemplateArgument>& args,
+                             FieldType field_type,
+                             std::vector<FieldValue>* result) {
     for (int i = 0; i < args.size(); ++i) {
       if (args[i].has_dict()) {
         FieldValue dict_bytes;
@@ -613,11 +613,11 @@ class TemplateExpanderImpl {
         result->push_back(r[0]);
       }
     }
-    return ::mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
   // Record a Status if it indicates an error.
-  void RecordError(const ::mediapipe::Status& status) {
+  void RecordError(const absl::Status& status) {
     if (!status.ok()) {
       errors_->push_back(status);
     }
@@ -631,23 +631,23 @@ class TemplateExpanderImpl {
   TemplateDict environment_;
 
   // List of errors found in template parameters.
-  std::vector<::mediapipe::Status>* errors_;
+  std::vector<absl::Status>* errors_;
 };
 
 TemplateExpander::TemplateExpander() {}
 
 // Expands template rules within a proto message.
 // Replaces template rules with expanded sub-messages.
-::mediapipe::Status TemplateExpander::ExpandTemplates(
+absl::Status TemplateExpander::ExpandTemplates(
     const TemplateDict& args, const CalculatorGraphTemplate& templ,
     CalculatorGraphConfig* output) {
   errors_.clear();
   TemplateExpanderImpl expander(&errors_);
   if (!expander.ExpandTemplates(args, templ, output)) {
-    errors_.push_back(::mediapipe::InternalError("ExpandTemplates failed"));
+    errors_.push_back(absl::InternalError("ExpandTemplates failed"));
   }
-  ::mediapipe::Status status;
-  for (const ::mediapipe::Status& error : errors_) {
+  absl::Status status;
+  for (const absl::Status& error : errors_) {
     LOG(ERROR) << error;
     status.Update(error);
   }

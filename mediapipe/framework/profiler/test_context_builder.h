@@ -74,8 +74,8 @@ class TestContextBuilder {
     state_ = absl::make_unique<CalculatorState>(
         node_name, node_id, "PCalculator", CalculatorGraphConfig::Node(),
         nullptr);
-    input_map_ = tool::CreateTagMap(inputs).ValueOrDie();
-    output_map_ = tool::CreateTagMap(outputs).ValueOrDie();
+    input_map_ = tool::CreateTagMap(inputs).value();
+    output_map_ = tool::CreateTagMap(outputs).value();
     input_handler_ = absl::make_unique<InputStreamWriter>(
         input_map_, nullptr, MediaPipeOptions(), false);
     input_managers_.reset(new InputStreamManager[input_map_->NumEntries()]);
@@ -91,7 +91,7 @@ class TestContextBuilder {
       OutputStreamSpec spec;
       spec.name = output_map_->Names()[id.value()];
       spec.packet_type = packet_type;
-      spec.error_callback = [](const ::mediapipe::Status& status) {
+      spec.error_callback = [](const absl::Status& status) {
         LOG(ERROR) << status;
       };
       output_specs_[spec.name] = spec;

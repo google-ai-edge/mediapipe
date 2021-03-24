@@ -24,7 +24,6 @@
 #include "absl/flags/parse.h"
 #include "absl/flags/usage.h"
 #include "mediapipe/framework/port/advanced_proto_inc.h"
-#include "mediapipe/framework/port/commandlineflags.h"
 #include "mediapipe/framework/port/file_helpers.h"
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/profiler/reporter/reporter.h"
@@ -37,7 +36,7 @@ ABSL_FLAG(std::vector<std::string>, cols, {"*"},
 ABSL_FLAG(bool, compact, false,
           "if true, then don't print unnecessary whitespace.");
 
-using ::mediapipe::reporter::Reporter;
+using mediapipe::reporter::Reporter;
 
 // The command line utility to mine trace files of useful statistics to
 // determine bottlenecks and performance of a graph.

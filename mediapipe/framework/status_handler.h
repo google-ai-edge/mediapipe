@@ -48,19 +48,19 @@ class StatusHandler {
   // All subclasses of StatusHandler must implement these static functions with
   // the following signatures:
   //
-  // static ::mediapipe::Status FillExpectations(
+  // static absl::Status FillExpectations(
   //     const MediaPipeOptions& extendable_options,
   //     PacketTypeSet* input_side_packets);
   //
-  // static ::mediapipe::Status HandlePreRunStatus(
+  // static absl::Status HandlePreRunStatus(
   //     const MediaPipeOptions& extendable_options,
   //     const PacketSet& input_side_packets,
-  //     const ::mediapipe::Status& pre_run_status);
+  //     const absl::Status& pre_run_status);
   //
-  // static ::mediapipe::Status HandleStatus(
+  // static absl::Status HandleStatus(
   //     const MediaPipeOptions& extendable_options,
   //     const PacketSet& input_side_packets,
-  //     const ::mediapipe::Status& run_status);
+  //     const absl::Status& run_status);
   //
   // FillExpectations() is used to validate the graph and it is analogous to the
   // function in calculator.h, packet_generator.h, and packet_factory.h.
@@ -90,17 +90,16 @@ namespace internal {
 class StaticAccessToStatusHandler {
  public:
   virtual ~StaticAccessToStatusHandler() {}
-  virtual ::mediapipe::Status FillExpectations(
+  virtual absl::Status FillExpectations(
       const MediaPipeOptions& extendable_options,
       PacketTypeSet* input_side_packets) = 0;
-  virtual ::mediapipe::Status HandlePreRunStatus(
+  virtual absl::Status HandlePreRunStatus(
       const MediaPipeOptions& extendable_options,
       const PacketSet& input_side_packets,
-      const ::mediapipe::Status& pre_run_status) = 0;
-  virtual ::mediapipe::Status HandleStatus(
-      const MediaPipeOptions& extendable_options,
-      const PacketSet& input_side_packets,  //
-      const ::mediapipe::Status& run_status) = 0;
+      const absl::Status& pre_run_status) = 0;
+  virtual absl::Status HandleStatus(const MediaPipeOptions& extendable_options,
+                                    const PacketSet& input_side_packets,  //
+                                    const absl::Status& run_status) = 0;
 };
 
 using StaticAccessToStatusHandlerRegistry =
@@ -111,7 +110,7 @@ using StaticAccessToStatusHandlerRegistry =
 template <class T>
 constexpr bool StatusHandlerHasFillExpectations(
     decltype(&T::FillExpectations) /* unused */) {
-  typedef ::mediapipe::Status (*FillExpectationsType)(
+  typedef absl::Status (*FillExpectationsType)(
       const MediaPipeOptions& extendable_options,
       PacketTypeSet* input_side_packets);
   return std::is_same<decltype(&T::FillExpectations),
@@ -124,20 +123,18 @@ constexpr bool StatusHandlerHasFillExpectations(...) {
 template <class T>
 constexpr bool StatusHandlerHasHandlePreRunStatus(
     decltype(&T::HandlePreRunStatus) /* unused */) {
-  typedef ::mediapipe::Status (*HandlePreRunStatusType)(
+  typedef absl::Status (*HandlePreRunStatusType)(
       const MediaPipeOptions& extendable_options,
-      const PacketSet& input_side_packets,
-      const ::mediapipe::Status& pre_run_status);
+      const PacketSet& input_side_packets, const absl::Status& pre_run_status);
   return std::is_same<decltype(&T::HandlePreRunStatus),
                       HandlePreRunStatusType>::value;
 }
 template <class T>
 constexpr bool StatusHandlerHasHandleStatus(
     decltype(&T::HandleStatus) /* unused */) {
-  typedef ::mediapipe::Status (*HandleStatusType)(
+  typedef absl::Status (*HandleStatusType)(
       const MediaPipeOptions& extendable_options,
-      const PacketSet& input_side_packets,
-      const ::mediapipe::Status& run_status);
+      const PacketSet& input_side_packets, const absl::Status& run_status);
   return std::is_same<decltype(&T::HandleStatus), HandleStatusType>::value;
 }
 template <class T>
@@ -154,7 +151,7 @@ class StaticAccessToStatusHandlerTyped : public StaticAccessToStatusHandler {
   static_assert(
       std::is_base_of<StatusHandler, StatusHandlerSubclass>::value,
       "Classes registered with REGISTER_STATUS_HANDLER must be subclasses of "
-      "::mediapipe::StatusHandler.");
+      "mediapipe::StatusHandler.");
   static_assert(
       StatusHandlerHasFillExpectations<StatusHandlerSubclass>(nullptr),
       "FillExpectations() must be defined with the correct signature in every "
@@ -167,25 +164,22 @@ class StaticAccessToStatusHandlerTyped : public StaticAccessToStatusHandler {
                 "HandleStatus() must be defined with the correct signature in "
                 "every StatusHandler.");
 
-  ::mediapipe::Status FillExpectations(
-      const MediaPipeOptions& extendable_options,
-      PacketTypeSet* input_side_packets) final {
+  absl::Status FillExpectations(const MediaPipeOptions& extendable_options,
+                                PacketTypeSet* input_side_packets) final {
     return StatusHandlerSubclass::FillExpectations(extendable_options,
                                                    input_side_packets);
   }
 
-  ::mediapipe::Status HandlePreRunStatus(
-      const MediaPipeOptions& extendable_options,
-      const PacketSet& input_side_packets,
-      const ::mediapipe::Status& pre_run_status) final {
+  absl::Status HandlePreRunStatus(const MediaPipeOptions& extendable_options,
+                                  const PacketSet& input_side_packets,
+                                  const absl::Status& pre_run_status) final {
     return StatusHandlerSubclass::HandlePreRunStatus(
         extendable_options, input_side_packets, pre_run_status);
   }
 
-  ::mediapipe::Status HandleStatus(
-      const MediaPipeOptions& extendable_options,
-      const PacketSet& input_side_packets,
-      const ::mediapipe::Status& run_status) final {
+  absl::Status HandleStatus(const MediaPipeOptions& extendable_options,
+                            const PacketSet& input_side_packets,
+                            const absl::Status& run_status) final {
     return StatusHandlerSubclass::HandleStatus(extendable_options,
                                                input_side_packets, run_status);
   }
@@ -195,12 +189,12 @@ class StaticAccessToStatusHandlerTyped : public StaticAccessToStatusHandler {
 
 // Macro for registering StatusHandlers. It actually just registers the
 // StaticAccessToStatusHandlerTyped class.
-#define REGISTER_STATUS_HANDLER(name)                             \
-  REGISTER_FACTORY_FUNCTION_QUALIFIED(                            \
-      ::mediapipe::internal::StaticAccessToStatusHandlerRegistry, \
-      status_handler_registration, name,                          \
-      absl::make_unique<                                          \
-          ::mediapipe::internal::StaticAccessToStatusHandlerTyped<name>>)
+#define REGISTER_STATUS_HANDLER(name)                           \
+  REGISTER_FACTORY_FUNCTION_QUALIFIED(                          \
+      mediapipe::internal::StaticAccessToStatusHandlerRegistry, \
+      status_handler_registration, name,                        \
+      absl::make_unique<                                        \
+          mediapipe::internal::StaticAccessToStatusHandlerTyped<name>>)
 
 }  // namespace mediapipe
 

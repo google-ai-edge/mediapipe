@@ -76,6 +76,7 @@ class AnnotationRenderer {
   // Should be in the range (0-1].
   // See 'gpu_scale_factor' in annotation_overlay_calculator.proto
   void SetScaleFactor(float scale_factor);
+  float GetScaleFactor() { return scale_factor_; }
 
  private:
   // Draws a rectangle on the image as described in the annotation.

@@ -27,9 +27,9 @@ extern const GraphService<int> kAnotherService;
 // Use a service.
 class TestServiceCalculator : public CalculatorBase {
  public:
-  static ::mediapipe::Status GetContract(CalculatorContract* cc);
-  ::mediapipe::Status Open(CalculatorContext* cc) final;
-  ::mediapipe::Status Process(CalculatorContext* cc) final;
+  static absl::Status GetContract(CalculatorContract* cc);
+  absl::Status Open(CalculatorContext* cc) final;
+  absl::Status Process(CalculatorContext* cc) final;
 
  private:
   int optional_bias_ = 0;

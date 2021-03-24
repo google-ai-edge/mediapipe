@@ -15,9 +15,11 @@
 #include <deque>
 
 #include "mediapipe/calculators/core/sequence_shift_calculator.pb.h"
+#include "mediapipe/framework/api2/node.h"
 #include "mediapipe/framework/calculator_framework.h"
 
 namespace mediapipe {
+namespace api2 {
 
 // A Calculator that shifts the timestamps of packets along a stream. Packets on
 // the input stream are output with a timestamp of the packet given by packet
@@ -28,17 +30,17 @@ namespace mediapipe {
 // of -1, the first packet on the stream will be dropped, the second will be
 // output with the timestamp of the first, the third with the timestamp of the
 // second, and so on.
-class SequenceShiftCalculator : public CalculatorBase {
+class SequenceShiftCalculator : public Node {
  public:
-  static ::mediapipe::Status GetContract(CalculatorContract* cc) {
-    cc->Inputs().Index(0).SetAny();
-    cc->Outputs().Index(0).SetSameAs(&cc->Inputs().Index(0));
-    return ::mediapipe::OkStatus();
-  }
+  static constexpr Input<AnyType> kIn{""};
+  static constexpr SideInput<int>::Optional kOffset{"PACKET_OFFSET"};
+  static constexpr Output<SameType<kIn>> kOut{""};
+
+  MEDIAPIPE_NODE_CONTRACT(kIn, kOffset, kOut, TimestampChange::Arbitrary());
 
   // Reads from options to set cache_size_ and packet_offset_.
-  ::mediapipe::Status Open(CalculatorContext* cc) override;
-  ::mediapipe::Status Process(CalculatorContext* cc) override;
+  absl::Status Open(CalculatorContext* cc) override;
+  absl::Status Process(CalculatorContext* cc) override;
 
  private:
   // A positive offset means we want a packet to be output with the timestamp of
@@ -53,7 +55,7 @@ class SequenceShiftCalculator : public CalculatorBase {
 
   // Storage for packets waiting to be output when packet_offset > 0. When cache
   // is full, oldest packet is output with current timestamp.
-  std::deque<Packet> packet_cache_;
+  std::deque<PacketBase> packet_cache_;
 
   // Storage for previous timestamps used when packet_offset < 0. When cache is
   // full, oldest timestamp is used for current packet.
@@ -65,50 +67,49 @@ class SequenceShiftCalculator : public CalculatorBase {
   // the timestamp of packet[i + packet_offset]; equal to abs(packet_offset).
   int cache_size_;
 };
-REGISTER_CALCULATOR(SequenceShiftCalculator);
+MEDIAPIPE_REGISTER_NODE(SequenceShiftCalculator);
 
-::mediapipe::Status SequenceShiftCalculator::Open(CalculatorContext* cc) {
-  packet_offset_ =
-      cc->Options<mediapipe::SequenceShiftCalculatorOptions>().packet_offset();
+absl::Status SequenceShiftCalculator::Open(CalculatorContext* cc) {
+  packet_offset_ = kOffset(cc).GetOr(
+      cc->Options<mediapipe::SequenceShiftCalculatorOptions>().packet_offset());
   cache_size_ = abs(packet_offset_);
   // An offset of zero is a no-op, but someone might still request it.
   if (packet_offset_ == 0) {
     cc->Outputs().Index(0).SetOffset(0);
   }
-  return ::mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-::mediapipe::Status SequenceShiftCalculator::Process(CalculatorContext* cc) {
+absl::Status SequenceShiftCalculator::Process(CalculatorContext* cc) {
   if (packet_offset_ > 0) {
     ProcessPositiveOffset(cc);
   } else if (packet_offset_ < 0) {
     ProcessNegativeOffset(cc);
   } else {
-    cc->Outputs().Index(0).AddPacket(cc->Inputs().Index(0).Value());
+    kOut(cc).Send(kIn(cc).packet());
   }
-  return ::mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
 void SequenceShiftCalculator::ProcessPositiveOffset(CalculatorContext* cc) {
   if (packet_cache_.size() >= cache_size_) {
     // Ready to output oldest packet with current timestamp.
-    cc->Outputs().Index(0).AddPacket(
-        packet_cache_.front().At(cc->InputTimestamp()));
+    kOut(cc).Send(packet_cache_.front().At(cc->InputTimestamp()));
     packet_cache_.pop_front();
   }
   // Store current packet for later output.
-  packet_cache_.push_back(cc->Inputs().Index(0).Value());
+  packet_cache_.push_back(kIn(cc).packet());
 }
 
 void SequenceShiftCalculator::ProcessNegativeOffset(CalculatorContext* cc) {
   if (timestamp_cache_.size() >= cache_size_) {
     // Ready to output current packet with oldest timestamp.
-    cc->Outputs().Index(0).AddPacket(
-        cc->Inputs().Index(0).Value().At(timestamp_cache_.front()));
+    kOut(cc).Send(kIn(cc).packet().At(timestamp_cache_.front()));
     timestamp_cache_.pop_front();
   }
   // Store current timestamp for use by a future packet.
   timestamp_cache_.push_back(cc->InputTimestamp());
 }
 
+}  // namespace api2
 }  // namespace mediapipe

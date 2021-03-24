@@ -38,7 +38,7 @@ static bool SafeMultiply(int x, int y, int* result) {
 }
 }  // namespace
 
-::mediapipe::Status BasicTimeSeriesCalculatorBase::GetContract(
+absl::Status BasicTimeSeriesCalculatorBase::GetContract(
     CalculatorContract* cc) {
   cc->Inputs().Index(0).Set<Matrix>(
       // Input stream with TimeSeriesHeader.
@@ -46,10 +46,10 @@ static bool SafeMultiply(int x, int y, int* result) {
   cc->Outputs().Index(0).Set<Matrix>(
       // Output stream with TimeSeriesHeader.
   );
-  return ::mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-::mediapipe::Status BasicTimeSeriesCalculatorBase::Open(CalculatorContext* cc) {
+absl::Status BasicTimeSeriesCalculatorBase::Open(CalculatorContext* cc) {
   TimeSeriesHeader input_header;
   MP_RETURN_IF_ERROR(time_series_util::FillTimeSeriesHeaderIfValid(
       cc->Inputs().Index(0).Header(), &input_header));
@@ -57,11 +57,13 @@ static bool SafeMultiply(int x, int y, int* result) {
   auto output_header = new TimeSeriesHeader(input_header);
   MP_RETURN_IF_ERROR(MutateHeader(output_header));
   cc->Outputs().Index(0).SetHeader(Adopt(output_header));
-  return ::mediapipe::OkStatus();
+
+  cc->SetOffset(0);
+
+  return absl::OkStatus();
 }
 
-::mediapipe::Status BasicTimeSeriesCalculatorBase::Process(
-    CalculatorContext* cc) {
+absl::Status BasicTimeSeriesCalculatorBase::Process(CalculatorContext* cc) {
   const Matrix& input = cc->Inputs().Index(0).Get<Matrix>();
   MP_RETURN_IF_ERROR(time_series_util::IsMatrixShapeConsistentWithHeader(
       input, cc->Inputs().Index(0).Header().Get<TimeSeriesHeader>()));
@@ -71,12 +73,12 @@ static bool SafeMultiply(int x, int y, int* result) {
       *output, cc->Outputs().Index(0).Header().Get<TimeSeriesHeader>()));
 
   cc->Outputs().Index(0).Add(output.release(), cc->InputTimestamp());
-  return ::mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-::mediapipe::Status BasicTimeSeriesCalculatorBase::MutateHeader(
+absl::Status BasicTimeSeriesCalculatorBase::MutateHeader(
     TimeSeriesHeader* output_header) {
-  return ::mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
 // Calculator to sum an input time series across channels.  This is
@@ -86,9 +88,9 @@ static bool SafeMultiply(int x, int y, int* result) {
 class SumTimeSeriesAcrossChannelsCalculator
     : public BasicTimeSeriesCalculatorBase {
  protected:
-  ::mediapipe::Status MutateHeader(TimeSeriesHeader* output_header) final {
+  absl::Status MutateHeader(TimeSeriesHeader* output_header) final {
     output_header->set_num_channels(1);
-    return ::mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
   Matrix ProcessMatrix(const Matrix& input_matrix) final {
@@ -104,9 +106,9 @@ REGISTER_CALCULATOR(SumTimeSeriesAcrossChannelsCalculator);
 class AverageTimeSeriesAcrossChannelsCalculator
     : public BasicTimeSeriesCalculatorBase {
  protected:
-  ::mediapipe::Status MutateHeader(TimeSeriesHeader* output_header) final {
+  absl::Status MutateHeader(TimeSeriesHeader* output_header) final {
     output_header->set_num_channels(1);
-    return ::mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
   Matrix ProcessMatrix(const Matrix& input_matrix) final {
@@ -122,7 +124,7 @@ REGISTER_CALCULATOR(AverageTimeSeriesAcrossChannelsCalculator);
 // Options proto: None.
 class SummarySaiToPitchogramCalculator : public BasicTimeSeriesCalculatorBase {
  protected:
-  ::mediapipe::Status MutateHeader(TimeSeriesHeader* output_header) final {
+  absl::Status MutateHeader(TimeSeriesHeader* output_header) final {
     if (output_header->num_channels() != 1) {
       return tool::StatusInvalid(
           absl::StrCat("Expected single-channel input, got ",
@@ -131,7 +133,7 @@ class SummarySaiToPitchogramCalculator : public BasicTimeSeriesCalculatorBase {
     output_header->set_num_channels(output_header->num_samples());
     output_header->set_num_samples(1);
     output_header->set_sample_rate(output_header->packet_rate());
-    return ::mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
   Matrix ProcessMatrix(const Matrix& input_matrix) final {
@@ -160,7 +162,7 @@ REGISTER_CALCULATOR(ReverseChannelOrderCalculator);
 // Options proto: None.
 class FlattenPacketCalculator : public BasicTimeSeriesCalculatorBase {
  protected:
-  ::mediapipe::Status MutateHeader(TimeSeriesHeader* output_header) final {
+  absl::Status MutateHeader(TimeSeriesHeader* output_header) final {
     const int num_input_channels = output_header->num_channels();
     const int num_input_samples = output_header->num_samples();
     RET_CHECK(num_input_channels >= 0)
@@ -174,7 +176,7 @@ class FlattenPacketCalculator : public BasicTimeSeriesCalculatorBase {
     output_header->set_num_channels(output_num_channels);
     output_header->set_num_samples(1);
     output_header->set_sample_rate(output_header->packet_rate());
-    return ::mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
   Matrix ProcessMatrix(const Matrix& input_matrix) final {
@@ -253,10 +255,10 @@ REGISTER_CALCULATOR(DivideByMeanAcrossChannelsCalculator);
 // Options proto: None.
 class MeanCalculator : public BasicTimeSeriesCalculatorBase {
  protected:
-  ::mediapipe::Status MutateHeader(TimeSeriesHeader* output_header) final {
+  absl::Status MutateHeader(TimeSeriesHeader* output_header) final {
     output_header->set_num_samples(1);
     output_header->set_sample_rate(output_header->packet_rate());
-    return ::mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
   Matrix ProcessMatrix(const Matrix& input_matrix) final {
@@ -272,10 +274,10 @@ REGISTER_CALCULATOR(MeanCalculator);
 // Options proto: None.
 class StandardDeviationCalculator : public BasicTimeSeriesCalculatorBase {
  protected:
-  ::mediapipe::Status MutateHeader(TimeSeriesHeader* output_header) final {
+  absl::Status MutateHeader(TimeSeriesHeader* output_header) final {
     output_header->set_num_samples(1);
     output_header->set_sample_rate(output_header->packet_rate());
-    return ::mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
   Matrix ProcessMatrix(const Matrix& input_matrix) final {
@@ -293,9 +295,9 @@ REGISTER_CALCULATOR(StandardDeviationCalculator);
 // Options proto: None.
 class CovarianceCalculator : public BasicTimeSeriesCalculatorBase {
  protected:
-  ::mediapipe::Status MutateHeader(TimeSeriesHeader* output_header) final {
+  absl::Status MutateHeader(TimeSeriesHeader* output_header) final {
     output_header->set_num_samples(output_header->num_channels());
-    return ::mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
   Matrix ProcessMatrix(const Matrix& input_matrix) final {
@@ -313,9 +315,9 @@ REGISTER_CALCULATOR(CovarianceCalculator);
 // Options proto: None.
 class L2NormCalculator : public BasicTimeSeriesCalculatorBase {
  protected:
-  ::mediapipe::Status MutateHeader(TimeSeriesHeader* output_header) final {
+  absl::Status MutateHeader(TimeSeriesHeader* output_header) final {
     output_header->set_num_channels(1);
-    return ::mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
   Matrix ProcessMatrix(const Matrix& input_matrix) final {
@@ -385,12 +387,12 @@ REGISTER_CALCULATOR(ElementwiseSquareCalculator);
 // Options proto: None.
 class FirstHalfSlicerCalculator : public BasicTimeSeriesCalculatorBase {
  protected:
-  ::mediapipe::Status MutateHeader(TimeSeriesHeader* output_header) final {
+  absl::Status MutateHeader(TimeSeriesHeader* output_header) final {
     const int num_input_samples = output_header->num_samples();
     RET_CHECK(num_input_samples >= 0)
         << "FirstHalfSlicerCalculator: num_input_samples < 0";
     output_header->set_num_samples(num_input_samples / 2);
-    return ::mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
   Matrix ProcessMatrix(const Matrix& input_matrix) final {

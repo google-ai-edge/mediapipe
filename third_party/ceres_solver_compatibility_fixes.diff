@@ -1,22 +1,14 @@
 diff --git a/bazel/ceres.bzl b/bazel/ceres.bzl
-index d90e5a3..32a3fef 100644
+index ce170b2..bb5aa82 100644
 --- a/bazel/ceres.bzl
 +++ b/bazel/ceres.bzl
-@@ -180,7 +180,6 @@ def ceres_library(name,
-             ]),
-         copts = [
-             "-I" + internal,
--            "-Wno-sign-compare",
-         ] + schur_eliminator_copts,
-
-         # These include directories and defines are propagated to other targets
-@@ -202,7 +201,7 @@ def ceres_library(name,
+@@ -204,7 +204,7 @@ def ceres_library(name,
          ],
          visibility = ["//visibility:public"],
          deps = [
--            "@com_github_eigen_eigen//:eigen",
+-            "@com_gitlab_libeigen_eigen//:eigen",
 -            "@com_github_google_glog//:glog",
-+            "@eigen_archive//:eigen",
++            "@eigen_archive//:eigen",  # from TensorFlow
 +            "@com_github_glog_glog//:glog",
          ],
      )

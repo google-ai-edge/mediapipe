@@ -91,9 +91,9 @@ void TestSuccessTagMap(const std::vector<std::string>& tag_index_names,
                        const std::vector<std::string>& names) {
   std::shared_ptr<tool::TagMap> tag_map;
   if (create_from_tags) {
-    tag_map = tool::CreateTagMapFromTags(tag_index_names).ValueOrDie();
+    tag_map = tool::CreateTagMapFromTags(tag_index_names).value();
   } else {
-    tag_map = tool::CreateTagMap(tag_index_names).ValueOrDie();
+    tag_map = tool::CreateTagMap(tag_index_names).value();
   }
 
   EXPECT_EQ(num_entries, tag_map->NumEntries())
@@ -101,7 +101,7 @@ void TestSuccessTagMap(const std::vector<std::string>& tag_index_names,
   EXPECT_EQ(tags.size(), tag_map->Mapping().size())
       << "Parameters: in " << tag_map->DebugString();
   for (int i = 0; i < tags.size(); ++i) {
-    EXPECT_TRUE(::mediapipe::ContainsKey(tag_map->Mapping(), tags[i]))
+    EXPECT_TRUE(mediapipe::ContainsKey(tag_map->Mapping(), tags[i]))
         << "Parameters: Trying to find \"" << tags[i] << "\" in\n"
         << tag_map->DebugString();
   }
@@ -295,11 +295,11 @@ TEST(TagMapTest, SameAs) {
       auto statusor_tag_map =
           tool::CreateTagMapFromTags(std::get<2>(parameters));
       MP_ASSERT_OK(statusor_tag_map);
-      tag_maps.push_back(std::move(statusor_tag_map.ValueOrDie()));
+      tag_maps.push_back(std::move(statusor_tag_map.value()));
     } else {
       auto statusor_tag_map = tool::CreateTagMap(std::get<2>(parameters));
       MP_ASSERT_OK(statusor_tag_map);
-      tag_maps.push_back(std::move(statusor_tag_map.ValueOrDie()));
+      tag_maps.push_back(std::move(statusor_tag_map.value()));
     }
   }
 
@@ -321,12 +321,12 @@ TEST(TagMapTest, SameAs) {
 // A helper function to test that a TagMap's debug std::string and short
 // debug std::string each satisfy a matcher.
 template <typename Matcher>
-void TestDebugString(const ::mediapipe::StatusOr<std::shared_ptr<tool::TagMap>>&
-                         statusor_tag_map,
-                     const std::vector<std::string>& canonical_entries,
-                     Matcher short_string_matcher) {
+void TestDebugString(
+    const absl::StatusOr<std::shared_ptr<tool::TagMap>>& statusor_tag_map,
+    const std::vector<std::string>& canonical_entries,
+    Matcher short_string_matcher) {
   MP_ASSERT_OK(statusor_tag_map);
-  tool::TagMap& tag_map = *statusor_tag_map.ValueOrDie();
+  tool::TagMap& tag_map = *statusor_tag_map.value();
   std::string debug_string = tag_map.DebugString();
   std::string short_string = tag_map.ShortDebugString();
   LOG(INFO) << "ShortDebugString:\n" << short_string << "\n";

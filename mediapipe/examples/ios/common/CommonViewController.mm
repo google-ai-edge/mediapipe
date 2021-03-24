@@ -77,6 +77,8 @@ static const char* kVideoQueueLabel = "com.google.mediapipe.example.videoQueue";
   [self.liveView.layer addSublayer:self.renderer.layer];
   self.renderer.frameScaleMode = MPPFrameScaleModeFillAndCrop;
 
+  self.timestampConverter = [[MPPTimestampConverter alloc] init];
+
   dispatch_queue_attr_t qosAttribute = dispatch_queue_attr_make_with_qos_class(
       DISPATCH_QUEUE_SERIAL, QOS_CLASS_USER_INTERACTIVE, /*relative_priority=*/0);
   self.videoQueue = dispatch_queue_create(kVideoQueueLabel, qosAttribute);
@@ -135,10 +137,10 @@ static const char* kVideoQueueLabel = "com.google.mediapipe.example.videoQueue";
 
       [self.cameraSource requestCameraAccessWithCompletionHandler:^void(BOOL granted) {
         if (granted) {
-          [self startGraphAndCamera];
           dispatch_async(dispatch_get_main_queue(), ^{
             self.noCameraLabel.hidden = YES;
           });
+          [self startGraphAndCamera];
         }
       }];
 
@@ -152,6 +154,9 @@ static const char* kVideoQueueLabel = "com.google.mediapipe.example.videoQueue";
   NSError* error;
   if (![self.mediapipeGraph startWithError:&error]) {
     NSLog(@"Failed to start graph: %@", error);
+  }
+  else if (![self.mediapipeGraph waitUntilIdleWithError:&error]) {
+    NSLog(@"Failed to complete graph initial run: %@", error);
   }
 
   // Start fetching frames from the camera.
@@ -173,7 +178,8 @@ static const char* kVideoQueueLabel = "com.google.mediapipe.example.videoQueue";
 
   [self.mediapipeGraph sendPixelBuffer:imageBuffer
                             intoStream:self.graphInputStream
-                            packetType:MPPPacketTypePixelBuffer];
+                            packetType:MPPPacketTypePixelBuffer
+                             timestamp:[self.timestampConverter timestampForMediaTime:timestamp]];
 }
 
 #pragma mark - MPPGraphDelegate methods

@@ -249,6 +249,7 @@ cc_test(
         ":scene_camera_motion_analyzer",
         "//mediapipe/examples/desktop/autoflip:autoflip_messages_cc_proto",
         "//mediapipe/framework/deps:file_path",
+        "//mediapipe/framework/port:commandlineflags",
         "//mediapipe/framework/port:file_helpers",
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/framework/port:status",

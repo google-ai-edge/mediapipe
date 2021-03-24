@@ -1,0 +1,147 @@
+# MediaPipe Box landmark localization GPU subgraph.
+
+type: "BoxLandmarkSubgraph"
+
+input_stream: "IMAGE:image"
+input_stream: "NORM_RECT:box_rect"
+output_stream: "NORM_LANDMARKS:box_landmarks"
+
+# Extracts image size from the input images.
+node {
+  calculator: "ImagePropertiesCalculator"
+  input_stream: "IMAGE_GPU:image"
+  output_stream: "SIZE:image_size"
+}
+
+# Expands the rectangle that contain the box so that it's likely to cover the
+# entire box.
+node {
+  calculator: "RectTransformationCalculator"
+  input_stream: "NORM_RECT:box_rect"
+  input_stream: "IMAGE_SIZE:image_size"
+  output_stream: "box_rect_scaled"
+  options: {
+    [mediapipe.RectTransformationCalculatorOptions.ext] {
+      scale_x: 1.5
+      scale_y: 1.5
+      square_long: true
+    }
+  }
+}
+
+# Crops, resizes, and converts the input video into tensor.
+# Preserves aspect ratio of the images.
+node {
+  calculator: "ImageToTensorCalculator"
+  input_stream: "IMAGE_GPU:image"
+  input_stream: "NORM_RECT:box_rect_scaled"
+  output_stream: "TENSORS:image_tensor"
+  output_stream: "LETTERBOX_PADDING:letterbox_padding"
+  options {
+    [mediapipe.ImageToTensorCalculatorOptions.ext] {
+      output_tensor_width: 224
+      output_tensor_height: 224
+      keep_aspect_ratio: true
+      output_tensor_float_range {
+        min: 0.0
+        max: 1.0
+      }
+      gpu_origin: TOP_LEFT
+      border_mode: BORDER_REPLICATE
+    }
+  }
+}
+
+# Runs a TensorFlow Lite model on GPU that takes an image tensor and outputs a
+# vector of tensors representing, for instance, detection boxes/keypoints and
+# scores.
+node {
+  calculator: "InferenceCalculator"
+  input_stream: "TENSORS:image_tensor"
+  output_stream: "TENSORS:output_tensors"
+  options: {
+    [mediapipe.InferenceCalculatorOptions.ext] {
+      model_path: "object_detection_3d.tflite"
+      delegate { gpu {} }
+    }
+  }
+}
+
+# Splits a vector of tensors to multiple vectors according to the ranges
+# specified in option.
+node {
+  calculator: "SplitTensorVectorCalculator"
+  input_stream: "output_tensors"
+  output_stream: "landmark_tensors"
+  output_stream: "box_flag_tensor"
+  options: {
+    [mediapipe.SplitVectorCalculatorOptions.ext] {
+      ranges: { begin: 0 end: 1 }
+      ranges: { begin: 1 end: 2 }
+    }
+  }
+}
+
+# Converts the box-flag tensor into a float that represents the confidence
+# score of box presence.
+node {
+  calculator: "TensorsToFloatsCalculator"
+  input_stream: "TENSORS:box_flag_tensor"
+  output_stream: "FLOAT:box_presence_score"
+}
+
+# Applies a threshold to the confidence score to determine whether a box is
+# present.
+node {
+  calculator: "ThresholdingCalculator"
+  input_stream: "FLOAT:box_presence_score"
+  output_stream: "FLAG:box_presence"
+  options: {
+    [mediapipe.ThresholdingCalculatorOptions.ext] {
+      threshold: 0.99
+    }
+  }
+}
+
+# Drops landmarks tensors if box is not present.
+node {
+  calculator: "GateCalculator"
+  input_stream: "landmark_tensors"
+  input_stream: "ALLOW:box_presence"
+  output_stream: "gated_landmark_tensors"
+}
+
+# Decodes the landmark tensors into a list of landmarks, where the landmark
+# coordinates are normalized by the size of the input image to the model.
+node {
+  calculator: "TensorsToLandmarksCalculator"
+  input_stream: "TENSORS:gated_landmark_tensors"
+  output_stream: "NORM_LANDMARKS:landmarks"
+  options: {
+    [mediapipe.TensorsToLandmarksCalculatorOptions.ext] {
+      num_landmarks: 9
+      input_image_width: 224
+      input_image_height: 224
+    }
+  }
+}
+
+# Adjusts landmarks (already normalized to [0.f, 1.f]) on the letterboxed box
+# image (after image transformation with the FIT scale mode) to the
+# corresponding locations on the same image with the letterbox removed (box
+# image before image transformation).
+node {
+  calculator: "LandmarkLetterboxRemovalCalculator"
+  input_stream: "LANDMARKS:landmarks"
+  input_stream: "LETTERBOX_PADDING:letterbox_padding"
+  output_stream: "LANDMARKS:scaled_landmarks"
+}
+
+# Projects the landmarks from the cropped box image to the corresponding
+# locations on the full image before cropping (input to the graph).
+node {
+  calculator: "LandmarkProjectionCalculator"
+  input_stream: "NORM_LANDMARKS:scaled_landmarks"
+  input_stream: "NORM_RECT:box_rect_scaled"
+  output_stream: "NORM_LANDMARKS:box_landmarks"
+}

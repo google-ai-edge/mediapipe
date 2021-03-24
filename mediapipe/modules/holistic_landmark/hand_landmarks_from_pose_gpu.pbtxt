@@ -1,0 +1,78 @@
+# Predicts hand landmarks within a ROI derived from hand-related pose landmarks.
+
+type: "HandLandmarksFromPoseGpu"
+
+# GPU image. (ImageFrame)
+input_stream: "IMAGE:input_video"
+# Hand-related pose landmarks in [wrist, pinky, index] order.
+# (NormalizedLandmarkList)
+input_stream: "HAND_LANDMARKS_FROM_POSE:hand_landmarks_from_pose"
+
+# Hand landmarks. (NormalizedLandmarkList)
+output_stream: "HAND_LANDMARKS:hand_landmarks"
+
+# Debug outputs.
+# Hand ROI derived from hand-related landmarks, which defines the search region
+# for the hand re-crop model. (NormalizedRect)
+output_stream: "HAND_ROI_FROM_POSE:hand_roi_from_pose"
+# Refined hand crop rectangle predicted by hand re-crop model. (NormalizedRect)
+output_stream: "HAND_ROI_FROM_RECROP:hand_roi_from_recrop"
+# Rectangle used to predict hand landmarks. (NormalizedRect)
+output_stream: "HAND_TRACKING_ROI:hand_tracking_roi"
+
+# Gets hand visibility.
+node {
+  calculator: "HandVisibilityFromHandLandmarksFromPose"
+  input_stream: "HAND_LANDMARKS_FROM_POSE:hand_landmarks_from_pose"
+  output_stream: "VISIBILITY:hand_visibility"
+}
+
+# Drops hand-related pose landmarks if pose wrist is not visible. It will
+# prevent from predicting hand landmarks on the current frame.
+node {
+  calculator: "GateCalculator"
+  input_stream: "hand_landmarks_from_pose"
+  input_stream: "ALLOW:hand_visibility"
+  output_stream: "ensured_hand_landmarks_from_pose"
+}
+
+# Extracts image size from the input images.
+node {
+  calculator: "ImagePropertiesCalculator"
+  input_stream: "IMAGE_GPU:input_video"
+  output_stream: "SIZE:image_size"
+}
+
+# Gets ROI for re-crop model from hand-related pose landmarks.
+node {
+  calculator: "HandLandmarksFromPoseToRecropRoi"
+  input_stream: "HAND_LANDMARKS_FROM_POSE:ensured_hand_landmarks_from_pose"
+  input_stream: "IMAGE_SIZE:image_size"
+  output_stream: "ROI:hand_roi_from_pose"
+}
+
+# Predicts hand re-crop rectangle on the current frame.
+node {
+  calculator: "HandRecropByRoiGpu",
+  input_stream: "IMAGE:input_video"
+  input_stream: "ROI:hand_roi_from_pose"
+  output_stream: "HAND_ROI_FROM_RECROP:hand_roi_from_recrop"
+}
+
+# Gets hand tracking rectangle (either hand rectangle from the previous
+# frame or hand re-crop rectangle from the current frame) for hand prediction.
+node {
+  calculator: "HandTracking"
+  input_stream: "LANDMARKS:hand_landmarks"
+  input_stream: "HAND_ROI_FROM_RECROP:hand_roi_from_recrop"
+  input_stream: "IMAGE_SIZE:image_size"
+  output_stream: "HAND_TRACKING_ROI:hand_tracking_roi"
+}
+
+# Predicts hand landmarks from the tracking rectangle.
+node {
+  calculator: "HandLandmarkGpu"
+  input_stream: "IMAGE:input_video"
+  input_stream: "ROI:hand_tracking_roi"
+  output_stream: "LANDMARKS:hand_landmarks"
+}

@@ -47,29 +47,28 @@ constexpr char kNormReferenceRectTag[] = "NORM_REFERENCE_RECT";
 //
 class RectProjectionCalculator : public CalculatorBase {
  public:
-  static ::mediapipe::Status GetContract(CalculatorContract* cc);
-  ::mediapipe::Status Open(CalculatorContext* cc) override;
-  ::mediapipe::Status Process(CalculatorContext* cc) override;
+  static absl::Status GetContract(CalculatorContract* cc);
+  absl::Status Open(CalculatorContext* cc) override;
+  absl::Status Process(CalculatorContext* cc) override;
 };
 REGISTER_CALCULATOR(RectProjectionCalculator);
 
-::mediapipe::Status RectProjectionCalculator::GetContract(
-    CalculatorContract* cc) {
+absl::Status RectProjectionCalculator::GetContract(CalculatorContract* cc) {
   cc->Inputs().Tag(kNormRectTag).Set<NormalizedRect>();
   cc->Inputs().Tag(kNormReferenceRectTag).Set<NormalizedRect>();
   cc->Outputs().Tag(kNormRectTag).Set<NormalizedRect>();
-  return ::mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-::mediapipe::Status RectProjectionCalculator::Open(CalculatorContext* cc) {
+absl::Status RectProjectionCalculator::Open(CalculatorContext* cc) {
   cc->SetOffset(TimestampDiff(0));
 
-  return ::mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-::mediapipe::Status RectProjectionCalculator::Process(CalculatorContext* cc) {
+absl::Status RectProjectionCalculator::Process(CalculatorContext* cc) {
   if (cc->Inputs().Tag(kNormRectTag).IsEmpty()) {
-    return ::mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
   const auto& rect = cc->Inputs().Tag(kNormRectTag).Get<NormalizedRect>();
@@ -101,7 +100,7 @@ REGISTER_CALCULATOR(RectProjectionCalculator);
 
   cc->Outputs().Tag(kNormRectTag).Add(new_rect.release(), cc->InputTimestamp());
 
-  return ::mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
 }  // namespace mediapipe

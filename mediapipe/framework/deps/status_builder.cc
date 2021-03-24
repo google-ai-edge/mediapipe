@@ -68,7 +68,7 @@ StatusBuilder::operator Status() && {
   return JoinMessageToStatus();
 }
 
-::mediapipe::Status StatusBuilder::JoinMessageToStatus() {
+absl::Status StatusBuilder::JoinMessageToStatus() {
   std::string message;
   if (join_style_ == MessageJoinStyle::kAnnotate) {
     if (!status_.ok()) {

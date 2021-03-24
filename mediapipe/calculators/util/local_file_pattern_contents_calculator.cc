@@ -34,22 +34,22 @@ namespace mediapipe {
 // }
 class LocalFilePatternContentsCalculator : public CalculatorBase {
  public:
-  static ::mediapipe::Status GetContract(CalculatorContract* cc) {
+  static absl::Status GetContract(CalculatorContract* cc) {
     cc->InputSidePackets().Tag("FILE_DIRECTORY").Set<std::string>();
     cc->InputSidePackets().Tag("FILE_SUFFIX").Set<std::string>();
     cc->Outputs().Tag("CONTENTS").Set<std::string>();
-    return ::mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
-  ::mediapipe::Status Open(CalculatorContext* cc) override {
-    MP_RETURN_IF_ERROR(::mediapipe::file::MatchFileTypeInDirectory(
+  absl::Status Open(CalculatorContext* cc) override {
+    MP_RETURN_IF_ERROR(mediapipe::file::MatchFileTypeInDirectory(
         cc->InputSidePackets().Tag("FILE_DIRECTORY").Get<std::string>(),
         cc->InputSidePackets().Tag("FILE_SUFFIX").Get<std::string>(),
         &filenames_));
-    return ::mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
-  ::mediapipe::Status Process(CalculatorContext* cc) override {
+  absl::Status Process(CalculatorContext* cc) override {
     if (current_output_ < filenames_.size()) {
       auto contents = absl::make_unique<std::string>();
       LOG(INFO) << filenames_[current_output_];
@@ -62,7 +62,7 @@ class LocalFilePatternContentsCalculator : public CalculatorBase {
     } else {
       return tool::StatusStop();
     }
-    return ::mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
  private:

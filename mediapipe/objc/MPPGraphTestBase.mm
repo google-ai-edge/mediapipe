@@ -19,7 +19,7 @@
 
 static UIImage* UIImageWithPixelBuffer(CVPixelBufferRef pixelBuffer) {
   CFHolder<CGImageRef> cgImage;
-  ::mediapipe::Status status = CreateCGImageFromCVPixelBuffer(pixelBuffer, &cgImage);
+  absl::Status status = CreateCGImageFromCVPixelBuffer(pixelBuffer, &cgImage);
   if (!status.ok()) {
     return nil;
   }
@@ -187,8 +187,24 @@ static void EnsureOutputDirFor(NSString *outputFile) {
   return [self pixelBuffer:a isCloseTo:b maxLocalDifference:0 maxAverageDifference:0];
 }
 
-- (BOOL)pixelBuffer:(CVPixelBufferRef)a isCloseTo:(CVPixelBufferRef)b
-    maxLocalDifference:(int)maxLocalDiff maxAverageDifference:(float)maxAvgDiff {
+- (BOOL)pixelBuffer:(CVPixelBufferRef)a
+               isCloseTo:(CVPixelBufferRef)b
+      maxLocalDifference:(int)maxLocalDiff
+    maxAverageDifference:(float)maxAvgDiff {
+  return [self pixelBuffer:a
+                    isCloseTo:b
+           maxLocalDifference:maxLocalDiff
+         maxAverageDifference:maxAvgDiff
+        maxLocalDifferenceOut:nil
+      maxAverageDifferenceOut:nil];
+}
+
+- (BOOL)pixelBuffer:(CVPixelBufferRef)a
+                  isCloseTo:(CVPixelBufferRef)b
+         maxLocalDifference:(int)maxLocalDiff
+       maxAverageDifference:(float)maxAvgDiff
+      maxLocalDifferenceOut:(int*)maxLocalDiffOut
+    maxAverageDifferenceOut:(float*)maxAvgDiffOut {
   size_t aBytesPerRow = CVPixelBufferGetBytesPerRow(a);
   size_t aWidth = CVPixelBufferGetWidth(a);
   size_t aHeight = CVPixelBufferGetHeight(a);
@@ -229,17 +245,19 @@ static void EnsureOutputDirFor(NSString *outputFile) {
   // even if bytesPerRow match.
   size_t usedRowWidth = aWidth * bytesPerPixel;
   BOOL equal = YES;
-  float averageDiff = 0;
   float count = 0;
+  BOOL canSkipSomeDiffs = !maxLocalDiffOut && !maxAvgDiffOut;
+  int computedMaxLocalDiff = 0;
+  float computedAvgDiff = 0;
   for (int i = aHeight; i > 0 && equal; --i) {
-    if (maxLocalDiff == 0) {
+    if (maxLocalDiff == 0 && canSkipSomeDiffs) {
       // If we can, use memcmp for speed.
       equal = memcmp(aData, bData, usedRowWidth) == 0;
     } else {
       for (int j = 0; j < usedRowWidth; j++) {
         int diff = abs(aData[j] - bData[j]);
-        if (diff > maxLocalDiff) {
-          equal = NO;
+        computedMaxLocalDiff = MAX(computedMaxLocalDiff, diff);
+        if (diff > maxLocalDiff && canSkipSomeDiffs) {
           break;
         }
         // We use Welford's algorithm for computing a sample mean. This has better
@@ -247,13 +265,21 @@ static void EnsureOutputDirFor(NSString *outputFile) {
         // particularly matters here.
         // Welford: http://www.jstor.org/stable/1266577
         // Knuth: The Art of Computer Programming Vol 2, section 4.2.2
-        averageDiff += (diff - averageDiff) / ++count;
+        computedAvgDiff += (diff - computedAvgDiff) / ++count;
       }
     }
     aData += aBytesPerRow;
     bData += bBytesPerRow;
   }
-  if (averageDiff > maxAvgDiff) equal = NO;
+  if (computedMaxLocalDiff > maxLocalDiff || computedAvgDiff > maxAvgDiff) {
+    equal = NO;
+  }
+  if (maxLocalDiffOut) {
+    *maxLocalDiffOut = computedMaxLocalDiff;
+  }
+  if (maxAvgDiffOut) {
+    *maxAvgDiffOut = computedAvgDiff;
+  }
 
   err = CVPixelBufferUnlockBaseAddress(b, kCVPixelBufferLock_ReadOnly);
   XCTAssertEqual(err, kCVReturnSuccess);
@@ -415,7 +441,7 @@ static void EnsureOutputDirFor(NSString *outputFile) {
   for (NSString* inputStream in fileInputs) {
     UIImage* inputImage = [self testImageNamed:fileInputs[inputStream] extension:nil];
     XCTAssertNotNil(inputImage);
-    ::mediapipe::Status status =
+    absl::Status status =
         CreateCVPixelBufferFromCGImage(inputImage.CGImage, &inputBuffers[inputStream.UTF8String]);
     XCTAssert(status.ok());
   }
@@ -423,8 +449,7 @@ static void EnsureOutputDirFor(NSString *outputFile) {
   UIImage* expectedImage = [self testImageNamed:expectedPath extension:nil];
   XCTAssertNotNil(expectedImage);
   CFHolder<CVPixelBufferRef> expectedBuffer;
-  ::mediapipe::Status status =
-      CreateCVPixelBufferFromCGImage(expectedImage.CGImage, &expectedBuffer);
+  absl::Status status = CreateCVPixelBufferFromCGImage(expectedImage.CGImage, &expectedBuffer);
   XCTAssert(status.ok());
 
   CVPixelBufferRef outputBuffer = [self runGraph:graph

@@ -32,5 +32,6 @@
       <meta-data android:name="inputVideoStreamName" android:value="${inputVideoStreamName}"/>
       <meta-data android:name="outputVideoStreamName" android:value="${outputVideoStreamName}"/>
       <meta-data android:name="flipFramesVertically" android:value="${flipFramesVertically}"/>
+      <meta-data android:name="converterNumBuffers" android:value="${converterNumBuffers}"/>
   </application>
 </manifest>

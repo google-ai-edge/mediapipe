@@ -86,7 +86,7 @@ TEST_F(TfLiteConverterCalculatorTest, RandomMatrixColMajor) {
 
     // Run the calculator and verify that one output is generated.
     CalculatorGraphConfig graph_config =
-        ::mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+        mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
           input_stream: "matrix"
           node {
             calculator: "TfLiteConverterCalculator"
@@ -147,7 +147,7 @@ TEST_F(TfLiteConverterCalculatorTest, RandomMatrixRowMajor) {
 
     // Run the calculator and verify that one output is generated.
     CalculatorGraphConfig graph_config =
-        ::mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+        mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
           input_stream: "matrix"
           node {
             calculator: "TfLiteConverterCalculator"
@@ -205,7 +205,7 @@ TEST_F(TfLiteConverterCalculatorTest, CustomDivAndSub) {
   CalculatorGraph graph;
   // Run the calculator and verify that one output is generated.
   CalculatorGraphConfig graph_config =
-      ::mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
         input_stream: "input_image"
         node {
           calculator: "TfLiteConverterCalculator"
@@ -228,7 +228,7 @@ TEST_F(TfLiteConverterCalculatorTest, CustomDivAndSub) {
   MP_ASSERT_OK(graph.Initialize(graph_config));
   MP_ASSERT_OK(graph.StartRun({}));
   auto input_image = absl::make_unique<ImageFrame>(ImageFormat::GRAY8, 1, 1);
-  cv::Mat mat = ::mediapipe::formats::MatView(input_image.get());
+  cv::Mat mat = mediapipe::formats::MatView(input_image.get());
   mat.at<uint8>(0, 0) = 200;
   MP_ASSERT_OK(graph.AddPacketToInputStream(
       "input_image", Adopt(input_image.release()).At(Timestamp(0))));
@@ -258,7 +258,7 @@ TEST_F(TfLiteConverterCalculatorTest, SetOutputRange) {
   for (std::pair<float, float> range : range_values) {
     CalculatorGraph graph;
     CalculatorGraphConfig graph_config =
-        ::mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(
+        mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(
             absl::Substitute(R"(
         input_stream: "input_image"
         node {
@@ -284,7 +284,7 @@ TEST_F(TfLiteConverterCalculatorTest, SetOutputRange) {
     MP_ASSERT_OK(graph.Initialize(graph_config));
     MP_ASSERT_OK(graph.StartRun({}));
     auto input_image = absl::make_unique<ImageFrame>(ImageFormat::GRAY8, 1, 1);
-    cv::Mat mat = ::mediapipe::formats::MatView(input_image.get());
+    cv::Mat mat = mediapipe::formats::MatView(input_image.get());
     mat.at<uint8>(0, 0) = 200;
     MP_ASSERT_OK(graph.AddPacketToInputStream(
         "input_image", Adopt(input_image.release()).At(Timestamp(0))));

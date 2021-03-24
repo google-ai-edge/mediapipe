@@ -13,11 +13,13 @@
 // limitations under the License.
 
 #include "Eigen/Core"
+#include "mediapipe/framework/api2/node.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/matrix.h"
 #include "mediapipe/framework/port/status.h"
 
 namespace mediapipe {
+namespace api2 {
 
 // Subtract input matrix from the side input matrix and vice versa. The matrices
 // must have the same dimension.
@@ -41,83 +43,39 @@ namespace mediapipe {
 //   input_side_packet: "MINUEND:side_matrix"
 //   output_stream: "output_matrix"
 // }
-class MatrixSubtractCalculator : public CalculatorBase {
+class MatrixSubtractCalculator : public Node {
  public:
-  MatrixSubtractCalculator() {}
-  ~MatrixSubtractCalculator() override {}
+  static constexpr Input<Matrix>::SideFallback kMinuend{"MINUEND"};
+  static constexpr Input<Matrix>::SideFallback kSubtrahend{"SUBTRAHEND"};
+  static constexpr Output<Matrix> kOut{""};
 
-  static ::mediapipe::Status GetContract(CalculatorContract* cc);
+  MEDIAPIPE_NODE_CONTRACT(kMinuend, kSubtrahend, kOut);
+  static absl::Status UpdateContract(CalculatorContract* cc);
 
-  ::mediapipe::Status Open(CalculatorContext* cc) override;
-  ::mediapipe::Status Process(CalculatorContext* cc) override;
-
- private:
-  bool subtract_from_input_ = false;
+  absl::Status Process(CalculatorContext* cc) override;
 };
-REGISTER_CALCULATOR(MatrixSubtractCalculator);
+MEDIAPIPE_REGISTER_NODE(MatrixSubtractCalculator);
 
 // static
-::mediapipe::Status MatrixSubtractCalculator::GetContract(
-    CalculatorContract* cc) {
-  if (cc->Inputs().NumEntries() != 1 ||
-      cc->InputSidePackets().NumEntries() != 1) {
-    return ::mediapipe::InvalidArgumentError(
-        "MatrixSubtractCalculator only accepts exactly one input stream and "
-        "one "
-        "input side packet");
-  }
-  if (cc->Inputs().HasTag("MINUEND") &&
-      cc->InputSidePackets().HasTag("SUBTRAHEND")) {
-    cc->Inputs().Tag("MINUEND").Set<Matrix>();
-    cc->InputSidePackets().Tag("SUBTRAHEND").Set<Matrix>();
-  } else if (cc->Inputs().HasTag("SUBTRAHEND") &&
-             cc->InputSidePackets().HasTag("MINUEND")) {
-    cc->Inputs().Tag("SUBTRAHEND").Set<Matrix>();
-    cc->InputSidePackets().Tag("MINUEND").Set<Matrix>();
-  } else {
-    return ::mediapipe::InvalidArgumentError(
-        "Must specify exactly one minuend and one subtrahend.");
-  }
-  cc->Outputs().Index(0).Set<Matrix>();
-  return ::mediapipe::OkStatus();
+absl::Status MatrixSubtractCalculator::UpdateContract(CalculatorContract* cc) {
+  // TODO: the next restriction could be relaxed.
+  RET_CHECK(kMinuend(cc).IsStream() ^ kSubtrahend(cc).IsStream())
+      << "MatrixSubtractCalculator only accepts exactly one input stream and "
+         "one input side packet";
+  return absl::OkStatus();
 }
 
-::mediapipe::Status MatrixSubtractCalculator::Open(CalculatorContext* cc) {
-  // The output is at the same timestamp as the input.
-  cc->SetOffset(TimestampDiff(0));
-  if (cc->Inputs().HasTag("MINUEND")) {
-    subtract_from_input_ = true;
+absl::Status MatrixSubtractCalculator::Process(CalculatorContext* cc) {
+  const Matrix& minuend = *kMinuend(cc);
+  const Matrix& subtrahend = *kSubtrahend(cc);
+  if (minuend.rows() != subtrahend.rows() ||
+      minuend.cols() != subtrahend.cols()) {
+    return absl::InvalidArgumentError(
+        "Minuend and subtrahend must have the same dimensions.");
   }
-  return ::mediapipe::OkStatus();
+  kOut(cc).Send(minuend - subtrahend);
+  return absl::OkStatus();
 }
 
-::mediapipe::Status MatrixSubtractCalculator::Process(CalculatorContext* cc) {
-  Matrix* subtracted = new Matrix();
-  if (subtract_from_input_) {
-    const Matrix& input_matrix = cc->Inputs().Tag("MINUEND").Get<Matrix>();
-    const Matrix& side_input_matrix =
-        cc->InputSidePackets().Tag("SUBTRAHEND").Get<Matrix>();
-    if (input_matrix.rows() != side_input_matrix.rows() ||
-        input_matrix.cols() != side_input_matrix.cols()) {
-      return ::mediapipe::InvalidArgumentError(
-          "Input matrix and the input side matrix must have the same "
-          "dimension.");
-    }
-    *subtracted = input_matrix - side_input_matrix;
-  } else {
-    const Matrix& input_matrix = cc->Inputs().Tag("SUBTRAHEND").Get<Matrix>();
-    const Matrix& side_input_matrix =
-        cc->InputSidePackets().Tag("MINUEND").Get<Matrix>();
-    if (input_matrix.rows() != side_input_matrix.rows() ||
-        input_matrix.cols() != side_input_matrix.cols()) {
-      return ::mediapipe::InvalidArgumentError(
-          "Input matrix and the input side matrix must have the same "
-          "dimension.");
-    }
-    *subtracted = side_input_matrix - input_matrix;
-  }
-  cc->Outputs().Index(0).Add(subtracted, cc->InputTimestamp());
-  return ::mediapipe::OkStatus();
-}
-
+}  // namespace api2
 }  // namespace mediapipe

@@ -297,8 +297,7 @@ void Reporter::Accumulate(const mediapipe::GraphProfile& profile) {
   }
 }
 
-::mediapipe::Status Reporter::set_columns(
-    const std::vector<std::string>& columns) {
+absl::Status Reporter::set_columns(const std::vector<std::string>& columns) {
   bool error = false;
   std::stringstream warnings;
   std::vector<std::string> new_columns({"calculator"});
@@ -337,9 +336,9 @@ void Reporter::Accumulate(const mediapipe::GraphProfile& profile) {
     columns_.swap(new_columns);
   }
   if (!error) {
-    return ::mediapipe::OkStatus();
+    return absl::OkStatus();
   }
-  return ::mediapipe::InvalidArgumentError(warnings.str());
+  return absl::InvalidArgumentError(warnings.str());
 }
 
 class ReportImpl : public Report {

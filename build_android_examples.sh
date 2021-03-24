@@ -89,7 +89,6 @@ for app in ${apps}; do
     fi
     target="${app}:${target_name}"
     bin="${bin_dir}/${app}/${target_name}.apk"
-    apk="${out_dir}/${target_name}.apk"
 
     echo "=== Target: ${target}"
 
@@ -99,32 +98,36 @@ for app in ${apps}; do
       if [[ $strip == true ]]; then
         bazel_flags+=(--linkopt=-s)
       fi
-
-      if [[ ${app_name} == "templatematchingcpu" ]]; then
-        switch_to_opencv_4
-      fi
-      bazel "${bazel_flags[@]}"
-      cp -f "${bin}" "${apk}"
-      if [[ ${app_name} == "templatematchingcpu" ]]; then
-        switch_to_opencv_3
-      fi
     fi
 
     if [[ ${app_name} == "objectdetection3d" ]]; then
-      orig_apk=${apk}
-      apk="${out_dir}/${target_name}_shoes.apk"
-      cp -f "${orig_apk}" "${apk}"
-      apks+=(${apk})
-
-      apk="${out_dir}/${target_name}_chairs.apk"
+      categories=("shoe" "chair" "cup" "camera" "shoe_1stage" "chair_1stage")
+      for category in "${categories[@]}"; do
+        apk="${out_dir}/${target_name}_${category}.apk"
+        if [[ $install_only == false ]]; then
+          bazel_flags_extended=("${bazel_flags[@]}")
+          if [[ ${category} != "shoe" ]]; then
+            bazel_flags_extended+=(--define ${category}=true)
+          fi
+          bazel "${bazel_flags_extended[@]}"
+          cp -f "${bin}" "${apk}"
+        fi
+        apks+=(${apk})
+      done
+    else
+      apk="${out_dir}/${target_name}.apk"
       if [[ $install_only == false ]]; then
-        bazel_flags+=(--define chair=true)
+        if [[ ${app_name} == "templatematchingcpu" ]]; then
+          switch_to_opencv_4
+        fi
         bazel "${bazel_flags[@]}"
         cp -f "${bin}" "${apk}"
+        if [[ ${app_name} == "templatematchingcpu" ]]; then
+          switch_to_opencv_3
+        fi
       fi
+      apks+=(${apk})
     fi
-
-    apks+=(${apk})
   fi
 done
 

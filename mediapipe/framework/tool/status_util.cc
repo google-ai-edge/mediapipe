@@ -22,47 +22,44 @@
 namespace mediapipe {
 namespace tool {
 
-::mediapipe::Status StatusInvalid(const std::string& message) {
-  return ::mediapipe::Status(::mediapipe::StatusCode::kInvalidArgument,
-                             message);
+absl::Status StatusInvalid(const std::string& message) {
+  return absl::Status(absl::StatusCode::kInvalidArgument, message);
 }
 
-::mediapipe::Status StatusFail(const std::string& message) {
-  return ::mediapipe::Status(::mediapipe::StatusCode::kUnknown, message);
+absl::Status StatusFail(const std::string& message) {
+  return absl::Status(absl::StatusCode::kUnknown, message);
 }
 
-::mediapipe::Status StatusStop() {
-  return ::mediapipe::Status(::mediapipe::StatusCode::kOutOfRange,
-                             "::mediapipe::tool::StatusStop()");
+absl::Status StatusStop() {
+  return absl::Status(absl::StatusCode::kOutOfRange,
+                      "mediapipe::tool::StatusStop()");
 }
 
-::mediapipe::Status AddStatusPrefix(const std::string& prefix,
-                                    const ::mediapipe::Status& status) {
-  return ::mediapipe::Status(status.code(),
-                             absl::StrCat(prefix, status.message()));
+absl::Status AddStatusPrefix(const std::string& prefix,
+                             const absl::Status& status) {
+  return absl::Status(status.code(), absl::StrCat(prefix, status.message()));
 }
 
-::mediapipe::Status CombinedStatus(
-    const std::string& general_comment,
-    const std::vector<::mediapipe::Status>& statuses) {
-  // The final error code is ::mediapipe::StatusCode::kUnknown if not all
+absl::Status CombinedStatus(const std::string& general_comment,
+                            const std::vector<absl::Status>& statuses) {
+  // The final error code is absl::StatusCode::kUnknown if not all
   // the error codes are the same.  Otherwise it is the same error code
   // as all of the (non-OK) statuses.  If statuses is empty or they are
-  // all OK, then ::mediapipe::OkStatus() is returned.
-  ::mediapipe::StatusCode error_code = ::mediapipe::StatusCode::kOk;
+  // all OK, then absl::OkStatus() is returned.
+  absl::StatusCode error_code = absl::StatusCode::kOk;
   std::vector<std::string> errors;
-  for (const ::mediapipe::Status& status : statuses) {
+  for (const absl::Status& status : statuses) {
     if (!status.ok()) {
       errors.emplace_back(status.message());
-      if (error_code == ::mediapipe::StatusCode::kOk) {
+      if (error_code == absl::StatusCode::kOk) {
         error_code = status.code();
       } else if (error_code != status.code()) {
-        error_code = ::mediapipe::StatusCode::kUnknown;
+        error_code = absl::StatusCode::kUnknown;
       }
     }
   }
   if (error_code == StatusCode::kOk) return OkStatus();
-  Status combined = ::mediapipe::Status(
+  Status combined = absl::Status(
       error_code,
       absl::StrCat(general_comment, "\n", absl::StrJoin(errors, "\n")));
   return combined;

@@ -66,10 +66,10 @@ calculator derived from base class GlSimpleCalculator. The GPU calculator
 // See GlSimpleCalculator for inputs, outputs and input side packets.
 class LuminanceCalculator : public GlSimpleCalculator {
  public:
-  ::mediapipe::Status GlSetup() override;
-  ::mediapipe::Status GlRender(const GlTexture& src,
-                               const GlTexture& dst) override;
-  ::mediapipe::Status GlTeardown() override;
+  absl::Status GlSetup() override;
+  absl::Status GlRender(const GlTexture& src,
+                        const GlTexture& dst) override;
+  absl::Status GlTeardown() override;
 
  private:
   GLuint program_ = 0;
@@ -77,8 +77,8 @@ class LuminanceCalculator : public GlSimpleCalculator {
 };
 REGISTER_CALCULATOR(LuminanceCalculator);
 
-::mediapipe::Status LuminanceCalculator::GlRender(const GlTexture& src,
-                                                  const GlTexture& dst) {
+absl::Status LuminanceCalculator::GlRender(const GlTexture& src,
+                                           const GlTexture& dst) {
   static const GLfloat square_vertices[] = {
       -1.0f, -1.0f,  // bottom left
       1.0f,  -1.0f,  // bottom right
@@ -128,7 +128,7 @@ REGISTER_CALCULATOR(LuminanceCalculator);
   glDeleteVertexArrays(1, &vao);
   glDeleteBuffers(2, vbo);
 
-  return ::mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 ```
 

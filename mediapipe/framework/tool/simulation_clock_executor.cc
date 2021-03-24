@@ -19,11 +19,11 @@
 namespace mediapipe {
 
 SimulationClockExecutor::SimulationClockExecutor(int num_threads)
-    : ThreadPoolExecutor(num_threads), clock_(new SimulationClock()) {}
+    : clock_(new SimulationClock()), executor_(num_threads) {}
 
 void SimulationClockExecutor::Schedule(std::function<void()> task) {
   clock_->ThreadStart();
-  ThreadPoolExecutor::Schedule([this, task] {
+  executor_.Schedule([this, task] {
     clock_->Sleep(absl::ZeroDuration());
     task();
     clock_->ThreadFinish();

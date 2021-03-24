@@ -61,11 +61,12 @@ class LegacyCalculatorSupport {
     // platforms.
 #ifndef __APPLE__
     ABSL_CONST_INIT
-#endif  // !__APPLE__
+#endif                                // !__APPLE__
     static thread_local C* current_;  // NOLINT
   };
 };
 
+#if !defined(_MSC_VER)
 // We only declare this variable for two specializations of the template because
 // it is only meant to be used for these two types.
 // Note that, since these variables are members of specific template
@@ -79,6 +80,7 @@ thread_local CalculatorContext*
 template <>
 thread_local CalculatorContract*
     LegacyCalculatorSupport::Scoped<CalculatorContract>::current_;
+#endif
 
 }  // namespace mediapipe
 

@@ -12,16 +12,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#import <CoreVideo/CoreVideo.h>
+
 #import "MPPPlayerInputSource.h"
+#if !TARGET_OS_OSX
 #import "mediapipe/objc/MPPDisplayLinkWeakTarget.h"
+#endif
 
 @implementation MPPPlayerInputSource {
   AVAsset* _video;
   AVPlayerItem* _videoItem;
   AVPlayer* _videoPlayer;
   AVPlayerItemVideoOutput* _videoOutput;
+#if !TARGET_OS_OSX
   CADisplayLink* _videoDisplayLink;
   MPPDisplayLinkWeakTarget* _displayLinkWeakTarget;
+#else
+  CVDisplayLinkRef _videoDisplayLink;
+#endif  // TARGET_OS_OSX
   id _videoEndObserver;
 }
 
@@ -40,6 +48,7 @@
     _videoOutput.suppressesPlayerRendering = YES;
     [_videoItem addOutput:_videoOutput];
 
+#if !TARGET_OS_OSX
     _displayLinkWeakTarget =
         [[MPPDisplayLinkWeakTarget alloc] initWithTarget:self selector:@selector(videoUpdate:)];
 
@@ -47,7 +56,15 @@
                                                     selector:@selector(displayLinkCallback:)];
     _videoDisplayLink.paused = YES;
     [_videoDisplayLink addToRunLoop:[NSRunLoop mainRunLoop] forMode:NSRunLoopCommonModes];
-
+#else
+    CGDirectDisplayID displayID = CGMainDisplayID();
+    CVReturn error = CVDisplayLinkCreateWithCGDisplay(displayID, &_videoDisplayLink);
+    if (error) {
+      _videoDisplayLink = NULL;
+    }
+    CVDisplayLinkStop(_videoDisplayLink);
+    CVDisplayLinkSetOutputCallback(_videoDisplayLink, renderCallback, (__bridge void*)self);
+#endif  // TARGET_OS_OSX
     _videoPlayer = [AVPlayer playerWithPlayerItem:_videoItem];
     _videoPlayer.actionAtItemEnd = AVPlayerActionAtItemEndNone;
     NSNotificationCenter* center = [NSNotificationCenter defaultCenter];
@@ -65,11 +82,19 @@
 
 - (void)start {
   [_videoPlayer play];
+#if !TARGET_OS_OSX
   _videoDisplayLink.paused = NO;
+#else
+  CVDisplayLinkStart(_videoDisplayLink);
+#endif
 }
 
 - (void)stop {
+#if !TARGET_OS_OSX
   _videoDisplayLink.paused = YES;
+#else
+  CVDisplayLinkStop(_videoDisplayLink);
+#endif
   [_videoPlayer pause];
 }
 
@@ -77,7 +102,20 @@
   return _videoPlayer.rate != 0.0;
 }
 
+#if !TARGET_OS_OSX
 - (void)videoUpdate:(CADisplayLink*)sender {
+  [self videoUpdateIfNeeded];
+}
+#else
+static CVReturn renderCallback(CVDisplayLinkRef displayLink, const CVTimeStamp* inNow,
+                               const CVTimeStamp* inOutputTime, CVOptionFlags flagsIn,
+                               CVOptionFlags* flagsOut, void* displayLinkContext) {
+  [(__bridge MPPPlayerInputSource*)displayLinkContext videoUpdateIfNeeded];
+  return kCVReturnSuccess;
+}
+#endif  // TARGET_OS_OSX
+
+- (void)videoUpdateIfNeeded {
   CMTime timestamp = [_videoItem currentTime];
   if ([_videoOutput hasNewPixelBufferForItemTime:timestamp]) {
     CVPixelBufferRef pixelBuffer =
@@ -96,7 +134,11 @@
 
 - (void)dealloc {
   [[NSNotificationCenter defaultCenter] removeObserver:self];
+#if !TARGET_OS_OSX
   [_videoDisplayLink invalidate];
+#else
+  CVDisplayLinkRelease(_videoDisplayLink);
+#endif
   _videoPlayer = nil;
 }
 

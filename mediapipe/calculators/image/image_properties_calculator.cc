@@ -15,9 +15,9 @@
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/image_frame.h"
 
-#if !defined(MEDIAPIPE_DISABLE_GPU)
+#if !MEDIAPIPE_DISABLE_GPU
 #include "mediapipe/gpu/gpu_buffer.h"
-#endif  //  !MEDIAPIPE_DISABLE_GPU
+#endif  // !MEDIAPIPE_DISABLE_GPU
 
 namespace {
 constexpr char kImageFrameTag[] = "IMAGE";
@@ -44,31 +44,31 @@ namespace mediapipe {
 // }
 class ImagePropertiesCalculator : public CalculatorBase {
  public:
-  static ::mediapipe::Status GetContract(CalculatorContract* cc) {
+  static absl::Status GetContract(CalculatorContract* cc) {
     RET_CHECK(cc->Inputs().HasTag(kImageFrameTag) ^
               cc->Inputs().HasTag(kGpuBufferTag));
     if (cc->Inputs().HasTag(kImageFrameTag)) {
       cc->Inputs().Tag(kImageFrameTag).Set<ImageFrame>();
     }
-#if !defined(MEDIAPIPE_DISABLE_GPU)
+#if !MEDIAPIPE_DISABLE_GPU
     if (cc->Inputs().HasTag(kGpuBufferTag)) {
       cc->Inputs().Tag(kGpuBufferTag).Set<::mediapipe::GpuBuffer>();
     }
-#endif  //  !MEDIAPIPE_DISABLE_GPU
+#endif  // !MEDIAPIPE_DISABLE_GPU
 
     if (cc->Outputs().HasTag("SIZE")) {
       cc->Outputs().Tag("SIZE").Set<std::pair<int, int>>();
     }
 
-    return ::mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
-  ::mediapipe::Status Open(CalculatorContext* cc) override {
+  absl::Status Open(CalculatorContext* cc) override {
     cc->SetOffset(TimestampDiff(0));
-    return ::mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
-  ::mediapipe::Status Process(CalculatorContext* cc) override {
+  absl::Status Process(CalculatorContext* cc) override {
     int width;
     int height;
 
@@ -78,7 +78,7 @@ class ImagePropertiesCalculator : public CalculatorBase {
       width = image.Width();
       height = image.Height();
     }
-#if !defined(MEDIAPIPE_DISABLE_GPU)
+#if !MEDIAPIPE_DISABLE_GPU
     if (cc->Inputs().HasTag(kGpuBufferTag) &&
         !cc->Inputs().Tag(kGpuBufferTag).IsEmpty()) {
       const auto& image =
@@ -86,13 +86,13 @@ class ImagePropertiesCalculator : public CalculatorBase {
       width = image.width();
       height = image.height();
     }
-#endif  //  !MEDIAPIPE_DISABLE_GPU
+#endif  // !MEDIAPIPE_DISABLE_GPU
 
     cc->Outputs().Tag("SIZE").AddPacket(
         MakePacket<std::pair<int, int>>(width, height)
             .At(cc->InputTimestamp()));
 
-    return ::mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 };
 REGISTER_CALCULATOR(ImagePropertiesCalculator);

@@ -36,32 +36,32 @@ namespace mediapipe {
 template <typename IntType>
 class StringToIntCalculatorTemplate : public CalculatorBase {
  public:
-  static ::mediapipe::Status GetContract(CalculatorContract* cc) {
+  static absl::Status GetContract(CalculatorContract* cc) {
     cc->InputSidePackets().Index(0).Set<std::string>();
     cc->OutputSidePackets().Index(0).Set<IntType>();
-    return ::mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
-  ::mediapipe::Status Open(CalculatorContext* cc) override {
+  absl::Status Open(CalculatorContext* cc) override {
     IntType number;
     if (!absl::SimpleAtoi(cc->InputSidePackets().Index(0).Get<std::string>(),
                           &number)) {
-      return ::mediapipe::InvalidArgumentError(
+      return absl::InvalidArgumentError(
           "The std::string could not be parsed as an integer.");
     }
     cc->OutputSidePackets().Index(0).Set(MakePacket<IntType>(number));
-    return ::mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
-  ::mediapipe::Status Process(CalculatorContext* cc) override {
-    return ::mediapipe::OkStatus();
+  absl::Status Process(CalculatorContext* cc) override {
+    return absl::OkStatus();
   }
 };
 
 using StringToIntCalculator = StringToIntCalculatorTemplate<int>;
 REGISTER_CALCULATOR(StringToIntCalculator);
 
-using StringToUintCalculator = StringToIntCalculatorTemplate<uint>;
+using StringToUintCalculator = StringToIntCalculatorTemplate<unsigned int>;
 REGISTER_CALCULATOR(StringToUintCalculator);
 
 using StringToInt32Calculator = StringToIntCalculatorTemplate<int32>;

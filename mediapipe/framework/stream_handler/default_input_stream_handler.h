@@ -36,11 +36,10 @@ class DefaultInputStreamHandler : public InputStreamHandler {
 
  protected:
   // Reinitializes this InputStreamHandler before each CalculatorGraph run.
-  void PrepareForRun(
-      std::function<void()> headers_ready_callback,
-      std::function<void()> notification_callback,
-      std::function<void(CalculatorContext*)> schedule_callback,
-      std::function<void(::mediapipe::Status)> error_callback) override;
+  void PrepareForRun(std::function<void()> headers_ready_callback,
+                     std::function<void()> notification_callback,
+                     std::function<void(CalculatorContext*)> schedule_callback,
+                     std::function<void(absl::Status)> error_callback) override;
 
   // In DefaultInputStreamHandler, a node is "ready" if:
   // - all streams are done (need to call Close() in this case), or

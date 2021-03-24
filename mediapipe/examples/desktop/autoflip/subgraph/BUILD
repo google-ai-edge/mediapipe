@@ -18,14 +18,23 @@ licenses(["notice"])
 
 package(default_visibility = ["//mediapipe/examples:__subpackages__"])
 
+FACE_DETECTION_DEPS = [
+    "//mediapipe/calculators/image:image_transformation_calculator",
+    "//mediapipe/calculators/tflite:ssd_anchors_calculator",
+    "//mediapipe/calculators/tflite:tflite_converter_calculator",
+    "//mediapipe/calculators/tflite:tflite_inference_calculator",
+    "//mediapipe/calculators/tflite:tflite_tensors_to_detections_calculator",
+    "//mediapipe/calculators/util:detection_label_id_to_text_calculator",
+    "//mediapipe/calculators/util:detection_letterbox_removal_calculator",
+    "//mediapipe/calculators/util:non_max_suppression_calculator",
+]
+
 mediapipe_simple_subgraph(
     name = "autoflip_face_detection_subgraph",
     graph = "face_detection_subgraph.pbtxt",
     register_as = "AutoFlipFaceDetectionSubgraph",
     visibility = ["//visibility:public"],
-    deps = [
-        "//mediapipe/graphs/face_detection:desktop_tflite_calculators",
-    ],
+    deps = FACE_DETECTION_DEPS,
 )
 
 mediapipe_simple_subgraph(
@@ -33,16 +42,7 @@ mediapipe_simple_subgraph(
     graph = "front_face_detection_subgraph.pbtxt",
     register_as = "AutoFlipFrontFaceDetectionSubgraph",
     visibility = ["//visibility:public"],
-    deps = [
-        "//mediapipe/calculators/image:image_transformation_calculator",
-        "//mediapipe/calculators/tflite:ssd_anchors_calculator",
-        "//mediapipe/calculators/tflite:tflite_converter_calculator",
-        "//mediapipe/calculators/tflite:tflite_inference_calculator",
-        "//mediapipe/calculators/tflite:tflite_tensors_to_detections_calculator",
-        "//mediapipe/calculators/util:detection_label_id_to_text_calculator",
-        "//mediapipe/calculators/util:detection_letterbox_removal_calculator",
-        "//mediapipe/calculators/util:non_max_suppression_calculator",
-    ],
+    deps = FACE_DETECTION_DEPS,
 )
 
 mediapipe_simple_subgraph(

@@ -2,14 +2,20 @@
 layout: default
 title: Box Tracking
 parent: Solutions
-nav_order: 8
+nav_order: 9
 ---
 
 # MediaPipe Box Tracking
 {: .no_toc }
 
+<details close markdown="block">
+  <summary>
+    Table of contents
+  </summary>
+  {: .text-delta }
 1. TOC
 {:toc}
+</details>
 ---
 
 ## Overview
@@ -105,9 +111,8 @@ new detections to remove obsolete or duplicated boxes.
 ## Example Apps
 
 Please first see general instructions for
-[Android](../getting_started/building_examples.md#android), [iOS](../getting_started/building_examples.md#ios)
-and [desktop](../getting_started/building_examples.md#desktop) on how to build MediaPipe
-examples.
+[Android](../getting_started/android.md), [iOS](../getting_started/ios.md) and
+[desktop](../getting_started/cpp.md) on how to build MediaPipe examples.
 
 Note: To visualize a graph, copy the graph and paste it into
 [MediaPipe Visualizer](https://viz.mediapipe.dev/). For more information on how

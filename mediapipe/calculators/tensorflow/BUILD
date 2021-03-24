@@ -106,6 +106,13 @@ proto_library(
     deps = ["//mediapipe/framework:calculator_proto"],
 )
 
+proto_library(
+    name = "vector_string_to_tensor_calculator_options_proto",
+    srcs = ["vector_string_to_tensor_calculator_options.proto"],
+    visibility = ["//visibility:public"],
+    deps = ["//mediapipe/framework:calculator_proto"],
+)
+
 mediapipe_cc_proto_library(
     name = "graph_tensors_packet_generator_cc_proto",
     srcs = ["graph_tensors_packet_generator.proto"],
@@ -281,6 +288,14 @@ mediapipe_cc_proto_library(
     deps = [":vector_float_to_tensor_calculator_options_proto"],
 )
 
+mediapipe_cc_proto_library(
+    name = "vector_string_to_tensor_calculator_options_cc_proto",
+    srcs = ["vector_string_to_tensor_calculator_options.proto"],
+    cc_deps = ["//mediapipe/framework:calculator_cc_proto"],
+    visibility = ["//visibility:public"],
+    deps = [":vector_string_to_tensor_calculator_options_proto"],
+)
+
 cc_library(
     name = "graph_tensors_packet_generator",
     srcs = ["graph_tensors_packet_generator.cc"],
@@ -311,7 +326,6 @@ cc_library(
             "@org_tensorflow//tensorflow/core:framework",
         ],
         "//mediapipe:android": [
-            "@org_tensorflow//tensorflow/core:portable_tensorflow_lib_lite",
         ],
     }),
     alwayslink = 1,
@@ -397,6 +411,7 @@ cc_library(
         "//mediapipe/framework/port:status",
         "//mediapipe/util/sequence:media_sequence",
         "//mediapipe/util/sequence:media_sequence_util",
+        "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/strings",
         "@org_tensorflow//tensorflow/core:protos_all_cc",
     ],
@@ -729,6 +744,20 @@ cc_library(
 )
 
 cc_library(
+    name = "vector_string_to_tensor_calculator",
+    srcs = ["vector_string_to_tensor_calculator.cc"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":vector_string_to_tensor_calculator_options_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:status",
+        "@org_tensorflow//tensorflow/core:framework",
+    ],
+    alwayslink = 1,
+)
+
+cc_library(
     name = "unpack_yt8m_sequence_example_calculator",
     srcs = ["unpack_yt8m_sequence_example_calculator.cc"],
     visibility = ["//visibility:public"],
@@ -842,6 +871,7 @@ cc_test(
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/framework/port:opencv_imgcodecs",
         "//mediapipe/util/sequence:media_sequence",
+        "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
         "@org_tensorflow//tensorflow/core:protos_all_cc",
@@ -857,11 +887,12 @@ cc_test(
         ":tensorflow_inference_calculator",
         ":tensorflow_session",
         ":tensorflow_session_from_frozen_graph_calculator",
-        "//mediapipe/calculators/tensorflow:tensorflow_session_from_frozen_graph_calculator_cc_proto",
+        ":tensorflow_session_from_frozen_graph_calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework:calculator_runner",
         "//mediapipe/framework:packet",
         "//mediapipe/framework/deps:file_path",
+        "//mediapipe/framework/port:commandlineflags",
         "//mediapipe/framework/port:file_helpers",
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/framework/port:parse_text_proto",
@@ -892,6 +923,7 @@ cc_test(
         "//mediapipe/framework:packet",
         "//mediapipe/framework:packet_generator_cc_proto",
         "//mediapipe/framework/deps:file_path",
+        "//mediapipe/framework/port:commandlineflags",
         "//mediapipe/framework/port:file_helpers",
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/framework/port:parse_text_proto",
@@ -922,6 +954,7 @@ cc_test(
         "//mediapipe/framework:packet",
         "//mediapipe/framework:packet_generator_cc_proto",
         "//mediapipe/framework/deps:file_path",
+        "//mediapipe/framework/port:commandlineflags",
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/framework/port:parse_text_proto",
         "//mediapipe/framework/tool:tag_map_helper",
@@ -948,6 +981,7 @@ cc_test(
         "//mediapipe/framework:calculator_runner",
         "//mediapipe/framework:packet",
         "//mediapipe/framework/deps:file_path",
+        "//mediapipe/framework/port:commandlineflags",
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/framework/port:parse_text_proto",
         "//mediapipe/framework/tool:tag_map_helper",
@@ -1074,6 +1108,21 @@ cc_test(
     ],
 )
 
+cc_test(
+    name = "vector_string_to_tensor_calculator_test",
+    srcs = ["vector_string_to_tensor_calculator_test.cc"],
+    deps = [
+        ":vector_string_to_tensor_calculator",
+        ":vector_string_to_tensor_calculator_options_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:calculator_runner",
+        "//mediapipe/framework/port:gtest_main",
+        "@com_google_absl//absl/strings",
+        "@org_tensorflow//tensorflow/core:framework",
+        "@org_tensorflow//tensorflow/core:protos_all_cc",
+    ],
+)
+
 test_suite(
     name = "ios",
     tags = ["ios"],
@@ -1096,13 +1145,13 @@ cc_test(
         ":tensorflow_session_from_frozen_graph_generator",
         ":tensorflow_session_from_frozen_graph_generator_cc_proto",
         "//mediapipe/framework/deps:file_path",
+        "//mediapipe/framework/port:commandlineflags",
+        "//mediapipe/framework/port:integral_types",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework:calculator_runner",
         "//mediapipe/framework/tool:sink",
         "//mediapipe/framework/tool:validate_type",
         "//mediapipe/framework/port:gtest_main",
-        "//mediapipe/framework/port:status",
-        "//mediapipe/framework/port:ret_check",
     ] + select({
         "//conditions:default": [
             "@org_tensorflow//tensorflow/core:testlib",

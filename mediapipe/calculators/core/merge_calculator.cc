@@ -12,11 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "mediapipe/framework/api2/node.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status.h"
 
 namespace mediapipe {
+namespace api2 {
 
 // This calculator takes a set of input streams and combines them into a single
 // output stream. The packets from different streams do not need to contain the
@@ -41,51 +43,43 @@ namespace mediapipe {
 //   output_stream: "merged_shot_infos"
 // }
 //
-class MergeCalculator : public CalculatorBase {
+class MergeCalculator : public Node {
  public:
-  static ::mediapipe::Status GetContract(CalculatorContract* cc) {
-    RET_CHECK_GT(cc->Inputs().NumEntries(), 0)
-        << "Needs at least one input stream";
-    RET_CHECK_EQ(cc->Outputs().NumEntries(), 1);
-    if (cc->Inputs().NumEntries() == 1) {
+  static constexpr Input<AnyType>::Multiple kIn{""};
+  static constexpr Output<AnyType> kOut{""};
+
+  MEDIAPIPE_NODE_CONTRACT(kIn, kOut);
+
+  static absl::Status UpdateContract(CalculatorContract* cc) {
+    RET_CHECK_GT(kIn(cc).Count(), 0) << "Needs at least one input stream";
+    if (kIn(cc).Count() == 1) {
       LOG(WARNING)
           << "MergeCalculator expects multiple input streams to merge but is "
              "receiving only one. Make sure the calculator is configured "
              "correctly or consider removing this calculator to reduce "
              "unnecessary overhead.";
     }
-
-    for (int i = 0; i < cc->Inputs().NumEntries(); ++i) {
-      cc->Inputs().Index(i).SetAny();
-    }
-    cc->Outputs().Index(0).SetAny();
-
-    return ::mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
-  ::mediapipe::Status Open(CalculatorContext* cc) final {
-    cc->SetOffset(TimestampDiff(0));
-
-    return ::mediapipe::OkStatus();
-  }
-
-  ::mediapipe::Status Process(CalculatorContext* cc) final {
+  absl::Status Process(CalculatorContext* cc) final {
     // Output the packet from the first input stream with a packet ready at this
     // timestamp.
-    for (int i = 0; i < cc->Inputs().NumEntries(); ++i) {
-      if (!cc->Inputs().Index(i).IsEmpty()) {
-        cc->Outputs().Index(0).AddPacket(cc->Inputs().Index(i).Value());
-        return ::mediapipe::OkStatus();
+    for (const auto& input : kIn(cc)) {
+      if (!input.IsEmpty()) {
+        kOut(cc).Send(input.packet());
+        return absl::OkStatus();
       }
     }
 
     LOG(WARNING) << "Empty input packets at timestamp "
                  << cc->InputTimestamp().Value();
 
-    return ::mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 };
 
-REGISTER_CALCULATOR(MergeCalculator);
+MEDIAPIPE_REGISTER_NODE(MergeCalculator);
 
+}  // namespace api2
 }  // namespace mediapipe

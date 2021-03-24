@@ -22,31 +22,16 @@ licenses(["notice"])
 package(default_visibility = ["//visibility:public"])
 
 mediapipe_simple_subgraph(
-    name = "objectron_detection_gpu",
-    graph = "objectron_detection_gpu.pbtxt",
-    register_as = "ObjectronDetectionSubgraphGpu",
+    name = "renderer_cpu",
+    graph = "renderer_cpu.pbtxt",
+    register_as = "RendererSubgraph",
+    visibility = ["//visibility:public"],
     deps = [
-        "//mediapipe/calculators/image:image_transformation_calculator",
-        "//mediapipe/calculators/tflite:tflite_converter_calculator",
-        "//mediapipe/calculators/tflite:tflite_custom_op_resolver_calculator",
-        "//mediapipe/calculators/tflite:tflite_inference_calculator",
-        "//mediapipe/graphs/object_detection_3d/calculators:tflite_tensors_to_objects_calculator",
-    ],
-)
-
-mediapipe_simple_subgraph(
-    name = "objectron_tracking_gpu",
-    graph = "objectron_tracking_gpu.pbtxt",
-    register_as = "ObjectronTrackingSubgraphGpu",
-    deps = [
-        "//mediapipe/calculators/image:image_transformation_calculator",
-        "//mediapipe/calculators/video:box_tracker_calculator",
-        "//mediapipe/calculators/video:flow_packager_calculator",
-        "//mediapipe/calculators/video:motion_analysis_calculator",
-        "//mediapipe/framework/stream_handler:sync_set_input_stream_handler",
-        "//mediapipe/gpu:gpu_buffer_to_image_frame_calculator",
-        "//mediapipe/graphs/object_detection_3d/calculators:frame_annotation_to_timed_box_list_calculator",
-        "//mediapipe/graphs/object_detection_3d/calculators:frame_annotation_tracker_calculator",
-        "//mediapipe/graphs/object_detection_3d/calculators:lift_2d_frame_annotation_to_3d_calculator",
+        "//mediapipe/calculators/core:begin_loop_calculator",
+        "//mediapipe/calculators/core:end_loop_calculator",
+        "//mediapipe/calculators/util:annotation_overlay_calculator",
+        "//mediapipe/calculators/util:detections_to_render_data_calculator",
+        "//mediapipe/calculators/util:landmarks_to_render_data_calculator",
+        "//mediapipe/calculators/util:rect_to_render_data_calculator",
     ],
 )

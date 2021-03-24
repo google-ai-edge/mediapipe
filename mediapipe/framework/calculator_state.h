@@ -52,14 +52,6 @@ class CalculatorState {
   CalculatorState& operator=(const CalculatorState&) = delete;
   ~CalculatorState();
 
-  // Sets the pointer to the InputStreamSet. The function is invoked by
-  // CalculatorNode::PrepareForRun.
-  void SetInputStreamSet(InputStreamSet* input_stream_set);
-
-  // Sets the pointer to the OutputStreamSet. The function is invoked by
-  // CalculatorNode::PrepareForRun.
-  void SetOutputStreamSet(OutputStreamSet* output_stream_set);
-
   // Called before every call to Calculator::Open() (during the PrepareForRun
   // phase).
   void ResetBetweenRuns();
@@ -79,14 +71,17 @@ class CalculatorState {
   ////////////////////////////////////////
   // Interface for Calculator.
   ////////////////////////////////////////
-  const InputStreamSet& InputStreams() const { return *input_streams_; }
-  const OutputStreamSet& OutputStreams() const { return *output_streams_; }
   const PacketSet& InputSidePackets() const { return *input_side_packets_; }
   OutputSidePacketSet& OutputSidePackets() { return *output_side_packets_; }
 
   // Returns a counter using the graph's counter factory. The counter's
   // name is the passed-in name, prefixed by the calculator NodeName.
   Counter* GetCounter(const std::string& name);
+
+  // Returns a counter set, which can be passed to other classes, to generate
+  // counters.  NOTE: This differs from GetCounter, in that the counters
+  // created by this counter set do not have the NodeName prefix.
+  CounterSet* GetCounterSet();
 
   std::shared_ptr<ProfilingContext> GetSharedProfilingContext() const {
     return profiling_context_;
@@ -139,12 +134,6 @@ class CalculatorState {
   ////////////////////////////////////////
   // Variables which ARE cleared by ResetBetweenRuns().
   ////////////////////////////////////////
-  // The InputStreamSet object is owned by the CalculatorNode.
-  // CalculatorState obtains its pointer in CalculatorNode::PrepareForRun.
-  InputStreamSet* input_streams_;
-  // The OutputStreamSet object is owned by the CalculatorNode.
-  // CalculatorState obtains its pointer in CalculatorNode::PrepareForRun.
-  OutputStreamSet* output_streams_;
   // The set of input side packets set by CalculatorNode::PrepareForRun().
   // ResetBetweenRuns() clears this PacketSet pointer.
   const PacketSet* input_side_packets_;

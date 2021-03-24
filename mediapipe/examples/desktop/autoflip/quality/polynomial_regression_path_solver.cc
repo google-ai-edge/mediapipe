@@ -91,7 +91,7 @@ void PolynomialRegressionPathSolver::AddCostFunctionToProblem(
   problem->AddResidualBlock(cost_function, new CauchyLoss(0.5), a, b, c, d, k);
 }
 
-::mediapipe::Status PolynomialRegressionPathSolver::ComputeCameraPath(
+absl::Status PolynomialRegressionPathSolver::ComputeCameraPath(
     const std::vector<FocusPointFrame>& focus_point_frames,
     const std::vector<FocusPointFrame>& prior_focus_point_frames,
     const int original_width, const int original_height, const int output_width,
@@ -163,7 +163,7 @@ void PolynomialRegressionPathSolver::AddCostFunctionToProblem(
     }
     all_transforms->push_back(transform);
   }
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
 }  // namespace autoflip

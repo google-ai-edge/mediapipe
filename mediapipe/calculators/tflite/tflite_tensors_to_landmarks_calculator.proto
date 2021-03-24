@@ -25,6 +25,11 @@ message TfLiteTensorsToLandmarksCalculatorOptions {
     optional TfLiteTensorsToLandmarksCalculatorOptions ext = 257405002;
   }
 
+  enum Activation {
+    NONE = 0;
+    SIGMOID = 1;
+  }
+
   // Number of landmarks from the output of the model.
   required int32 num_landmarks = 1;
 
@@ -51,4 +56,10 @@ message TfLiteTensorsToLandmarksCalculatorOptions {
   // when normalized landmarks are needed. It is applied in addition to Z
   // coordinate being re-scaled as X.
   optional float normalize_z = 5 [default = 1.0];
+
+  // Apply activation function to the tensor representing landmark visibility.
+  optional Activation visibility_activation = 7 [default = NONE];
+
+  // Apply activation function to the tensor representing landmark presence.
+  optional Activation presence_activation = 8 [default = NONE];
 }

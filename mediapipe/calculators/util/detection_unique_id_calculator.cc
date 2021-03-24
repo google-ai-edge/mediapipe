@@ -44,7 +44,7 @@ inline int GetNextDetectionId() { return ++detection_id; }
 // }
 class DetectionUniqueIdCalculator : public CalculatorBase {
  public:
-  static ::mediapipe::Status GetContract(CalculatorContract* cc) {
+  static absl::Status GetContract(CalculatorContract* cc) {
     RET_CHECK(cc->Inputs().HasTag(kDetectionListTag) ||
               cc->Inputs().HasTag(kDetectionsTag))
         << "None of the input streams are provided.";
@@ -60,25 +60,24 @@ class DetectionUniqueIdCalculator : public CalculatorBase {
       cc->Outputs().Tag(kDetectionsTag).Set<std::vector<Detection>>();
     }
 
-    return ::mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
-  ::mediapipe::Status Open(CalculatorContext* cc) override {
-    cc->SetOffset(::mediapipe::TimestampDiff(0));
-    return ::mediapipe::OkStatus();
+  absl::Status Open(CalculatorContext* cc) override {
+    cc->SetOffset(mediapipe::TimestampDiff(0));
+    return absl::OkStatus();
   }
-  ::mediapipe::Status Process(CalculatorContext* cc) override;
+  absl::Status Process(CalculatorContext* cc) override;
 };
 REGISTER_CALCULATOR(DetectionUniqueIdCalculator);
 
-::mediapipe::Status DetectionUniqueIdCalculator::Process(
-    CalculatorContext* cc) {
+absl::Status DetectionUniqueIdCalculator::Process(CalculatorContext* cc) {
   if (cc->Inputs().HasTag(kDetectionListTag) &&
       !cc->Inputs().Tag(kDetectionListTag).IsEmpty()) {
     auto result =
         cc->Inputs().Tag(kDetectionListTag).Value().Consume<DetectionList>();
     if (result.ok()) {
-      auto detection_list = std::move(result).ValueOrDie();
+      auto detection_list = std::move(result).value();
       for (Detection& detection : *detection_list->mutable_detection()) {
         detection.set_detection_id(GetNextDetectionId());
       }
@@ -95,7 +94,7 @@ REGISTER_CALCULATOR(DetectionUniqueIdCalculator);
                       .Value()
                       .Consume<std::vector<Detection>>();
     if (result.ok()) {
-      auto detections = std::move(result).ValueOrDie();
+      auto detections = std::move(result).value();
       for (Detection& detection : *detections) {
         detection.set_detection_id(GetNextDetectionId());
       }
@@ -104,7 +103,7 @@ REGISTER_CALCULATOR(DetectionUniqueIdCalculator);
           .Add(detections.release(), cc->InputTimestamp());
     }
   }
-  return ::mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
 }  // namespace mediapipe

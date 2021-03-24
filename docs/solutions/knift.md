@@ -2,14 +2,20 @@
 layout: default
 title: KNIFT (Template-based Feature Matching)
 parent: Solutions
-nav_order: 11
+nav_order: 12
 ---
 
 # MediaPipe KNIFT
 {: .no_toc }
 
+<details close markdown="block">
+  <summary>
+    Table of contents
+  </summary>
+  {: .text-delta }
 1. TOC
 {:toc}
+</details>
 ---
 
 ## Overview
@@ -67,7 +73,7 @@ you'd like to use your own template images, see
 ![template_matching_mobile_template.jpg](../images/mobile/template_matching_mobile_template.jpg)
 
 Please first see general instructions for
-[Android](../getting_started/building_examples.md#android) on how to build MediaPipe examples.
+[Android](../getting_started/android.md) on how to build MediaPipe examples.
 
 Note: To visualize a graph, copy the graph and paste it into
 [MediaPipe Visualizer](https://viz.mediapipe.dev/). For more information on how
@@ -139,7 +145,4 @@ to run regular TFLite inference.
 
 *   Google Developers Blog:
     [MediaPipe KNIFT: Template-based feature matching](https://developers.googleblog.com/2020/04/mediapipe-knift-template-based-feature-matching.html)
-*   [TFLite model for up to 200 keypoints](https://github.com/google/mediapipe/tree/master/mediapipe/models/knift_float.tflite)
-*   [TFLite model for up to 400 keypoints](https://github.com/google/mediapipe/tree/master/mediapipe/models/knift_float_400.tflite)
-*   [TFLite model for up to 1000 keypoints](https://github.com/google/mediapipe/tree/master/mediapipe/models/knift_float_1k.tflite)
-*   [Model card](https://mediapipe.page.link/knift-mc)
+*   [Models and model cards](./models.md#knift)

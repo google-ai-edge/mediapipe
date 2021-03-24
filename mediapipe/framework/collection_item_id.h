@@ -157,7 +157,7 @@ class CollectionItemId {
   }
 
  private:
-  friend class ::mediapipe::tool::TagMap;
+  friend class mediapipe::tool::TagMap;
 
   // Initialization from a value.
   explicit constexpr CollectionItemId(int init_value) : value_(init_value) {}

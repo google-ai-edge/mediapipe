@@ -22,25 +22,25 @@ import mediapipe as mp
 
 class TimestampTest(absltest.TestCase):
 
-  def testTimesatmp(self):
+  def test_timestamp(self):
     t = mp.Timestamp(100)
     self.assertEqual(t.value, 100)
     self.assertEqual(t, 100)
     self.assertEqual(str(t), '<mediapipe.Timestamp with value: 100>')
 
-  def testTimestampCopyConstructor(self):
+  def test_timestamp_copy_constructor(self):
     ts1 = mp.Timestamp(100)
     ts2 = mp.Timestamp(ts1)
     self.assertEqual(ts1, ts2)
 
-  def testTimesatmpComparsion(self):
+  def test_timestamp_comparsion(self):
     ts1 = mp.Timestamp(100)
     ts2 = mp.Timestamp(100)
     self.assertEqual(ts1, ts2)
     ts3 = mp.Timestamp(200)
     self.assertNotEqual(ts1, ts3)
 
-  def testTimesatmpSpecialValues(self):
+  def test_timestamp_special_values(self):
     t1 = mp.Timestamp.UNSET
     self.assertEqual(str(t1), '<mediapipe.Timestamp with value: UNSET>')
     t2 = mp.Timestamp.UNSTARTED
@@ -56,7 +56,7 @@ class TimestampTest(absltest.TestCase):
     t7 = mp.Timestamp.DONE
     self.assertEqual(str(t7), '<mediapipe.Timestamp with value: DONE>')
 
-  def testTimestampComparisons(self):
+  def test_timestamp_comparisons(self):
     ts1 = mp.Timestamp(100)
     ts2 = mp.Timestamp(101)
     self.assertGreater(ts2, ts1)
@@ -65,7 +65,7 @@ class TimestampTest(absltest.TestCase):
     self.assertLessEqual(ts1, ts2)
     self.assertNotEqual(ts1, ts2)
 
-  def testFromSeconds(self):
+  def test_from_seconds(self):
     now = time.time()
     ts = mp.Timestamp.from_seconds(now)
     self.assertAlmostEqual(now, ts.seconds(), delta=1)

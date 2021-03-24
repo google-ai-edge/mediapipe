@@ -59,12 +59,12 @@ objc_library(
     hdrs = [
         "HandTrackingViewController.h",
     ],
+    copts = ["-std=c++17"],
     data = [
-        "//mediapipe/graphs/hand_tracking:hand_tracking_mobile_gpu_binary_graph",
-        "//mediapipe/models:hand_landmark.tflite",
-        "//mediapipe/models:handedness.txt",
-        "//mediapipe/models:palm_detection.tflite",
-        "//mediapipe/models:palm_detection_labelmap.txt",
+        "//mediapipe/graphs/hand_tracking:hand_tracking_mobile_gpu.binarypb",
+        "//mediapipe/modules/hand_landmark:hand_landmark.tflite",
+        "//mediapipe/modules/hand_landmark:handedness.txt",
+        "//mediapipe/modules/palm_detection:palm_detection.tflite",
     ],
     deps = [
         "//mediapipe/examples/ios/common:CommonMediaPipeAppLibrary",

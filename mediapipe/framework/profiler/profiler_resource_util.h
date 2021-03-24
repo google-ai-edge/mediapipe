@@ -27,6 +27,10 @@ namespace mediapipe {
 // error.
 StatusOr<std::string> GetDefaultTraceLogDirectory();
 
+// Given a log file path, this function provides an absolute path with which
+// it can be accessed as a file.  Enclosing directories are created as needed.
+StatusOr<std::string> PathToLogFile(const std::string& path);
+
 }  // namespace mediapipe
 
 #endif  // MEDIAPIPE_FRAMEWORK_PROFILER_PROFILER_RESOURCE_UTIL_H_

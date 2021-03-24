@@ -57,7 +57,7 @@ class ImmediateInputStreamHandlerTest : public ::testing::Test {
                   std::placeholders::_1, std::placeholders::_2);
 
     std::shared_ptr<tool::TagMap> input_tag_map =
-        tool::CreateTagMap({"input_a", "input_b", "input_c"}).ValueOrDie();
+        tool::CreateTagMap({"input_a", "input_b", "input_c"}).value();
 
     input_stream_managers_.reset(
         new InputStreamManager[input_tag_map->NumEntries()]);
@@ -79,16 +79,16 @@ class ImmediateInputStreamHandlerTest : public ::testing::Test {
         nullptr);
     cc_manager_.Initialize(
         calculator_state_.get(), input_tag_map,
-        /*output_tag_map=*/tool::CreateTagMap({"output_a"}).ValueOrDie(),
+        /*output_tag_map=*/tool::CreateTagMap({"output_a"}).value(),
         /*calculator_run_in_parallel=*/false);
 
-    mediapipe::StatusOr<std::unique_ptr<mediapipe::InputStreamHandler>>
+    absl::StatusOr<std::unique_ptr<mediapipe::InputStreamHandler>>
         status_or_handler = InputStreamHandlerRegistry::CreateByName(
             "ImmediateInputStreamHandler", input_tag_map, &cc_manager_,
             MediaPipeOptions(),
             /*calculator_run_in_parallel=*/false);
     ASSERT_TRUE(status_or_handler.ok());
-    input_stream_handler_ = std::move(status_or_handler.ValueOrDie());
+    input_stream_handler_ = std::move(status_or_handler.value());
     MP_ASSERT_OK(input_stream_handler_->InitializeInputStreamManagers(
         input_stream_managers_.get()));
     MP_ASSERT_OK(cc_manager_.PrepareForRun(setup_shards_callback_));
@@ -108,12 +108,10 @@ class ImmediateInputStreamHandlerTest : public ::testing::Test {
     cc_ = cc;
   }
 
-  void RecordError(const ::mediapipe::Status& error) {
-    errors_.push_back(error);
-  }
+  void RecordError(const absl::Status& error) { errors_.push_back(error); }
 
-  ::mediapipe::Status SetupShardsNoOp(CalculatorContext* calculator_context) {
-    return ::mediapipe::OkStatus();
+  absl::Status SetupShardsNoOp(CalculatorContext* calculator_context) {
+    return absl::OkStatus();
   }
 
   void ReportQueueNoOp(InputStreamManager* stream, bool* stream_was_full) {}
@@ -123,10 +121,10 @@ class ImmediateInputStreamHandlerTest : public ::testing::Test {
       const std::map<std::string, std::string>& expected_values) {
     for (const auto& name_and_id : name_to_id_) {
       const InputStream& input_stream = input_set.Get(name_and_id.second);
-      if (::mediapipe::ContainsKey(expected_values, name_and_id.first)) {
+      if (mediapipe::ContainsKey(expected_values, name_and_id.first)) {
         ASSERT_FALSE(input_stream.Value().IsEmpty());
         EXPECT_EQ(input_stream.Value().Get<std::string>(),
-                  ::mediapipe::FindOrDie(expected_values, name_and_id.first));
+                  mediapipe::FindOrDie(expected_values, name_and_id.first));
       } else {
         EXPECT_TRUE(input_stream.Value().IsEmpty());
       }
@@ -142,13 +140,13 @@ class ImmediateInputStreamHandlerTest : public ::testing::Test {
   std::function<void()> headers_ready_callback_;
   std::function<void()> notification_callback_;
   std::function<void(CalculatorContext*)> schedule_callback_;
-  std::function<void(::mediapipe::Status)> error_callback_;
-  std::function<::mediapipe::Status(CalculatorContext*)> setup_shards_callback_;
+  std::function<void(absl::Status)> error_callback_;
+  std::function<absl::Status(CalculatorContext*)> setup_shards_callback_;
   InputStreamManager::QueueSizeCallback queue_full_callback_;
   InputStreamManager::QueueSizeCallback queue_not_full_callback_;
 
   // Vector of errors encountered while using the stream.
-  std::vector<::mediapipe::Status> errors_;
+  std::vector<absl::Status> errors_;
 
   std::unique_ptr<CalculatorState> calculator_state_;
   CalculatorContextManager cc_manager_;

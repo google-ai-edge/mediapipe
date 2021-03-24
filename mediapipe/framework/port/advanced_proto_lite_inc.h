@@ -18,6 +18,7 @@
 #ifndef MEDIAPIPE_PORT_ADVANCED_PROTO_LITE_INC_H_
 #define MEDIAPIPE_PORT_ADVANCED_PROTO_LITE_INC_H_
 
+#include "google/protobuf/io/zero_copy_stream.h"
 #include "google/protobuf/io/zero_copy_stream_impl_lite.h"
 #include "google/protobuf/wire_format_lite.h"
 #include "mediapipe/framework/port.h"

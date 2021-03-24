@@ -1,0 +1,61 @@
+# Decides what ROI to use for face landmarks prediction: either previous frame
+# landmarks ROI or the current frame face re-crop ROI.
+
+type: "FaceTracking"
+
+# Face landmarks from the current frame. They will be memorized for tracking on
+# the next frame. (NormalizedLandmarkList)
+input_stream: "LANDMARKS:face_landmarks"
+# Face re-crop ROI from the current frame. (NormalizedRect)
+input_stream: "FACE_RECROP_ROI:face_recrop_roi"
+# Image size (width & height). (std::pair<int, int>)
+input_stream: "IMAGE_SIZE:image_size"
+
+# Face tracking ROI. Which is either face landmarks ROI from the previous frame
+# if face is still tracked, or face re-crop ROI from the current frame
+# otherwise. (NormalizedRect)
+output_stream: "FACE_TRACKING_ROI:face_tracking_roi"
+
+# Keeps track of face landmarks from the previous frame.
+node {
+  calculator: "PreviousLoopbackCalculator"
+  input_stream: "MAIN:image_size"
+  input_stream: "LOOP:face_landmarks"
+  input_stream_info: {
+    tag_index: "LOOP"
+    back_edge: true
+  }
+  output_stream: "PREV_LOOP:prev_face_landmarks"
+}
+
+# Gets hand landarmsk rect.
+node {
+  calculator: "FaceLandmarksToRoi"
+  input_stream: "LANDMARKS:prev_face_landmarks"
+  input_stream: "IMAGE_SIZE:image_size"
+  output_stream: "ROI:prev_face_landmarks_rect"
+}
+
+# Checks that all requirements for tracking are satisfied and use face rectangle
+# from the previous frame in that case. Otherwise - use face re-crop rectangle
+# from the current frame.
+node {
+  calculator: "RoiTrackingCalculator"
+  input_stream: "PREV_LANDMARKS:prev_face_landmarks"
+  input_stream: "PREV_LANDMARKS_RECT:prev_face_landmarks_rect"
+  input_stream: "RECROP_RECT:face_recrop_roi"
+  input_stream: "IMAGE_SIZE:image_size"
+  output_stream: "TRACKING_RECT:face_tracking_roi"
+  options: {
+    [mediapipe.RoiTrackingCalculatorOptions.ext] {
+      rect_requirements: {
+        rotation_degrees: 15.0
+        translation: 0.1
+        scale: 0.3
+      }
+      landmarks_requirements: {
+        recrop_rect_margin: -0.2
+      }
+    }
+  }
+}

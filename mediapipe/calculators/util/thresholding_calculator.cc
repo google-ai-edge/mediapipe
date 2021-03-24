@@ -50,18 +50,17 @@ namespace mediapipe {
 // }
 class ThresholdingCalculator : public CalculatorBase {
  public:
-  static ::mediapipe::Status GetContract(CalculatorContract* cc);
-  ::mediapipe::Status Open(CalculatorContext* cc) override;
+  static absl::Status GetContract(CalculatorContract* cc);
+  absl::Status Open(CalculatorContext* cc) override;
 
-  ::mediapipe::Status Process(CalculatorContext* cc) override;
+  absl::Status Process(CalculatorContext* cc) override;
 
  private:
   double threshold_{};
 };
 REGISTER_CALCULATOR(ThresholdingCalculator);
 
-::mediapipe::Status ThresholdingCalculator::GetContract(
-    CalculatorContract* cc) {
+absl::Status ThresholdingCalculator::GetContract(CalculatorContract* cc) {
   RET_CHECK(cc->Inputs().HasTag("FLOAT"));
   cc->Inputs().Tag("FLOAT").Set<float>();
 
@@ -84,10 +83,10 @@ REGISTER_CALCULATOR(ThresholdingCalculator);
            "supported.";
   }
 
-  return ::mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-::mediapipe::Status ThresholdingCalculator::Open(CalculatorContext* cc) {
+absl::Status ThresholdingCalculator::Open(CalculatorContext* cc) {
   cc->SetOffset(TimestampDiff(0));
 
   const auto& options =
@@ -104,10 +103,10 @@ REGISTER_CALCULATOR(ThresholdingCalculator);
   if (cc->InputSidePackets().HasTag("THRESHOLD")) {
     threshold_ = cc->InputSidePackets().Tag("THRESHOLD").Get<float>();
   }
-  return ::mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-::mediapipe::Status ThresholdingCalculator::Process(CalculatorContext* cc) {
+absl::Status ThresholdingCalculator::Process(CalculatorContext* cc) {
   if (cc->Inputs().HasTag("THRESHOLD") &&
       !cc->Inputs().Tag("THRESHOLD").IsEmpty()) {
     threshold_ = cc->Inputs().Tag("THRESHOLD").Get<double>();
@@ -132,6 +131,6 @@ REGISTER_CALCULATOR(ThresholdingCalculator);
         MakePacket<bool>(false).At(cc->InputTimestamp()));
   }
 
-  return ::mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 }  // namespace mediapipe

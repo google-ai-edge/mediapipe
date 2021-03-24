@@ -38,30 +38,28 @@ namespace mediapipe {
 // }
 class OpenCvImageEncoderCalculator : public CalculatorBase {
  public:
-  static ::mediapipe::Status GetContract(CalculatorContract* cc);
-  ::mediapipe::Status Open(CalculatorContext* cc) override;
-  ::mediapipe::Status Process(CalculatorContext* cc) override;
-  ::mediapipe::Status Close(CalculatorContext* cc) override;
+  static absl::Status GetContract(CalculatorContract* cc);
+  absl::Status Open(CalculatorContext* cc) override;
+  absl::Status Process(CalculatorContext* cc) override;
+  absl::Status Close(CalculatorContext* cc) override;
 
  private:
   int encoding_quality_;
 };
 
-::mediapipe::Status OpenCvImageEncoderCalculator::GetContract(
-    CalculatorContract* cc) {
+absl::Status OpenCvImageEncoderCalculator::GetContract(CalculatorContract* cc) {
   cc->Inputs().Index(0).Set<ImageFrame>();
   cc->Outputs().Index(0).Set<OpenCvImageEncoderCalculatorResults>();
-  return ::mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-::mediapipe::Status OpenCvImageEncoderCalculator::Open(CalculatorContext* cc) {
+absl::Status OpenCvImageEncoderCalculator::Open(CalculatorContext* cc) {
   auto options = cc->Options<OpenCvImageEncoderCalculatorOptions>();
   encoding_quality_ = options.quality();
-  return ::mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-::mediapipe::Status OpenCvImageEncoderCalculator::Process(
-    CalculatorContext* cc) {
+absl::Status OpenCvImageEncoderCalculator::Process(CalculatorContext* cc) {
   const ImageFrame& image_frame = cc->Inputs().Index(0).Get<ImageFrame>();
   CHECK_EQ(1, image_frame.ByteDepth());
 
@@ -85,10 +83,10 @@ class OpenCvImageEncoderCalculator : public CalculatorBase {
       encoded_result->set_colorspace(OpenCvImageEncoderCalculatorResults::RGB);
       break;
     case 4:
-      return ::mediapipe::UnimplementedErrorBuilder(MEDIAPIPE_LOC)
+      return mediapipe::UnimplementedErrorBuilder(MEDIAPIPE_LOC)
              << "4-channel image isn't supported yet";
     default:
-      return ::mediapipe::FailedPreconditionErrorBuilder(MEDIAPIPE_LOC)
+      return mediapipe::FailedPreconditionErrorBuilder(MEDIAPIPE_LOC)
              << "Unsupported number of channels: " << original_mat.channels();
   }
 
@@ -101,19 +99,18 @@ class OpenCvImageEncoderCalculator : public CalculatorBase {
   // Check its JpegEncoder::write() in "imgcodecs/src/grfmt_jpeg.cpp" for more
   // info.
   if (!cv::imencode(".jpg", input_mat, encode_buffer, parameters)) {
-    return ::mediapipe::InternalErrorBuilder(MEDIAPIPE_LOC)
+    return mediapipe::InternalErrorBuilder(MEDIAPIPE_LOC)
            << "Fail to encode the image to be jpeg format.";
   }
 
-  encoded_result->set_encoded_image(std::string(absl::string_view(
-      reinterpret_cast<const char*>(&encode_buffer[0]), encode_buffer.size())));
+  encoded_result->set_encoded_image(&encode_buffer[0], encode_buffer.size());
 
   cc->Outputs().Index(0).Add(encoded_result.release(), cc->InputTimestamp());
-  return ::mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-::mediapipe::Status OpenCvImageEncoderCalculator::Close(CalculatorContext* cc) {
-  return ::mediapipe::OkStatus();
+absl::Status OpenCvImageEncoderCalculator::Close(CalculatorContext* cc) {
+  return absl::OkStatus();
 }
 
 REGISTER_CALCULATOR(OpenCvImageEncoderCalculator);

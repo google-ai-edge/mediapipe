@@ -23,16 +23,28 @@ import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraManager;
 import android.hardware.camera2.CameraMetadata;
 import android.hardware.camera2.params.StreamConfigurationMap;
+import android.opengl.GLES20;
+import android.os.Handler;
+import android.os.HandlerThread;
+import android.os.Process;
 import android.os.SystemClock;
 import android.util.Log;
 import android.util.Size;
+import android.view.Surface;
+import androidx.camera.core.Camera;
+import androidx.camera.core.CameraSelector;
 import androidx.camera.core.CameraX;
-import androidx.camera.core.CameraX.LensFacing;
 import androidx.camera.core.Preview;
-import androidx.camera.core.PreviewConfig;
+import androidx.camera.lifecycle.ProcessCameraProvider;
+import androidx.core.content.ContextCompat;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.mediapipe.glutil.EglManager;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.Executor;
+import java.util.concurrent.RejectedExecutionException;
 import javax.annotation.Nullable;
+import javax.microedition.khronos.egl.EGLSurface;
 
 /**
  * Uses CameraX APIs for camera setup and access.
@@ -40,6 +52,43 @@ import javax.annotation.Nullable;
  * <p>{@link CameraX} connects to the camera and provides video frames.
  */
 public class CameraXPreviewHelper extends CameraHelper {
+  /**
+   * Provides an Executor that wraps a single-threaded Handler.
+   *
+   * <p>All operations involving the surface texture should happen in a single thread, and that
+   * thread should not be the main thread.
+   *
+   * <p>The surface provider callbacks require an Executor, and the onFrameAvailable callback
+   * requires a Handler. We want everything to run on the same thread, so we need an Executor that
+   * is also a Handler.
+   */
+  private static final class SingleThreadHandlerExecutor implements Executor {
+
+    private final HandlerThread handlerThread;
+    private final Handler handler;
+
+    SingleThreadHandlerExecutor(String threadName, int priority) {
+      handlerThread = new HandlerThread(threadName, priority);
+      handlerThread.start();
+      handler = new Handler(handlerThread.getLooper());
+    }
+
+    Handler getHandler() {
+      return handler;
+    }
+
+    @Override
+    public void execute(Runnable command) {
+      if (!handler.post(command)) {
+        throw new RejectedExecutionException(handlerThread.getName() + " is shutting down.");
+      }
+    }
+
+    boolean shutdown() {
+      return handlerThread.quitSafely();
+    }
+  }
+
   private static final String TAG = "CameraXPreviewHelper";
 
   // Target frame and view resolution size in landscape.
@@ -48,7 +97,12 @@ public class CameraXPreviewHelper extends CameraHelper {
   // Number of attempts for calculating the offset between the camera's clock and MONOTONIC clock.
   private static final int CLOCK_OFFSET_CALIBRATION_ATTEMPTS = 3;
 
+  private final SingleThreadHandlerExecutor renderExecutor =
+      new SingleThreadHandlerExecutor("RenderThread", Process.THREAD_PRIORITY_DEFAULT);
+
+  private ProcessCameraProvider cameraProvider;
   private Preview preview;
+  private Camera camera;
 
   // Size of the camera-preview frames from the camera.
   private Size frameSize;
@@ -66,58 +120,122 @@ public class CameraXPreviewHelper extends CameraHelper {
   // the source is CameraCharacteristics.SENSOR_INFO_TIMESTAMP_SOURCE_UNKNOWN.
   private int cameraTimestampSource = CameraCharacteristics.SENSOR_INFO_TIMESTAMP_SOURCE_UNKNOWN;
 
+  /**
+   * Initializes the camera and sets it up for accessing frames, using the default 1280 * 720
+   * preview size.
+   */
   @Override
   public void startCamera(
-      Activity context, CameraFacing cameraFacing, SurfaceTexture surfaceTexture) {
-    startCamera(context, cameraFacing, surfaceTexture, TARGET_SIZE);
+      Activity activity, CameraFacing cameraFacing, SurfaceTexture unusedSurfaceTexture) {
+    startCamera(activity, (LifecycleOwner) activity, cameraFacing, TARGET_SIZE);
   }
 
+  /**
+   * Initializes the camera and sets it up for accessing frames.
+   *
+   * @param targetSize the preview size to use. If set to {@code null}, the helper will default to
+   *        1280 * 720.
+   */
   public void startCamera(
-      Activity context, CameraFacing cameraFacing, SurfaceTexture surfaceTexture, Size targetSize) {
-    if (targetSize == null) {
-      targetSize = TARGET_SIZE;
-    }
+      Activity activity,
+      CameraFacing cameraFacing,
+      SurfaceTexture unusedSurfaceTexture,
+      @Nullable Size targetSize) {
+    startCamera(activity, (LifecycleOwner) activity, cameraFacing, targetSize);
+  }
 
-    LensFacing cameraLensFacing =
-        cameraFacing == CameraHelper.CameraFacing.FRONT ? LensFacing.FRONT : LensFacing.BACK;
-    PreviewConfig previewConfig =
-        new PreviewConfig.Builder()
-            .setLensFacing(cameraLensFacing)
-            .setTargetResolution(targetSize)
-            .build();
-    preview = new Preview(previewConfig);
+  /**
+   * Initializes the camera and sets it up for accessing frames.
+   *
+   * @param targetSize the preview size to use. If set to {@code null}, the helper will default to
+   *        1280 * 720.
+   */
+  public void startCamera(
+      Context context,
+      LifecycleOwner lifecycleOwner,
+      CameraFacing cameraFacing,
+      @Nullable Size targetSize) {
+    Executor mainThreadExecutor = ContextCompat.getMainExecutor(context);
+    ListenableFuture<ProcessCameraProvider> cameraProviderFuture =
+        ProcessCameraProvider.getInstance(context);
 
-    preview.setOnPreviewOutputUpdateListener(
-        previewOutput -> {
-          if (!previewOutput.getTextureSize().equals(frameSize)) {
-            frameSize = previewOutput.getTextureSize();
-            frameRotation = previewOutput.getRotationDegrees();
-            if (frameSize.getWidth() == 0 || frameSize.getHeight() == 0) {
-              // Invalid frame size. Wait for valid input dimensions before updating display size.
-              Log.d(TAG, "Invalid frameSize.");
-              return;
+    targetSize = (targetSize == null ? TARGET_SIZE : targetSize);
+    // According to CameraX documentation
+    // (https://developer.android.com/training/camerax/configuration#specify-resolution):
+    // "Express the resolution Size in the coordinate frame after rotating the supported sizes by
+    // the target rotation."
+    // Since we only support portrait orientation, we unconditionally transpose width and height.
+    Size rotatedSize =
+        new Size(/* width= */ targetSize.getHeight(), /* height= */ targetSize.getWidth());
+
+    cameraProviderFuture.addListener(
+        () -> {
+          try {
+            cameraProvider = cameraProviderFuture.get();
+          } catch (Exception e) {
+            if (e instanceof InterruptedException) {
+              Thread.currentThread().interrupt();
             }
+            Log.e(TAG, "Unable to get ProcessCameraProvider: ", e);
+            return;
           }
 
-          Integer selectedLensFacing =
+          preview = new Preview.Builder().setTargetResolution(rotatedSize).build();
+
+          CameraSelector cameraSelector =
               cameraFacing == CameraHelper.CameraFacing.FRONT
-                  ? CameraMetadata.LENS_FACING_FRONT
-                  : CameraMetadata.LENS_FACING_BACK;
-          cameraCharacteristics = getCameraCharacteristics(context, selectedLensFacing);
-          if (cameraCharacteristics != null) {
-            // Queries camera timestamp source. It should be one of REALTIME or UNKNOWN as
-            // documented in
-            // https://developer.android.com/reference/android/hardware/camera2/CameraCharacteristics.html#SENSOR_INFO_TIMESTAMP_SOURCE.
-            cameraTimestampSource =
-                cameraCharacteristics.get(CameraCharacteristics.SENSOR_INFO_TIMESTAMP_SOURCE);
-            focalLengthPixels = calculateFocalLengthInPixels();
-          }
+                  ? CameraSelector.DEFAULT_FRONT_CAMERA
+                  : CameraSelector.DEFAULT_BACK_CAMERA;
 
-          if (onCameraStartedListener != null) {
-            onCameraStartedListener.onCameraStarted(previewOutput.getSurfaceTexture());
-          }
-        });
-    CameraX.bindToLifecycle(/*lifecycleOwner=*/ (LifecycleOwner) context, preview);
+          // Provide surface texture.
+          preview.setSurfaceProvider(
+              renderExecutor,
+              request -> {
+                Size resolution = request.getResolution();
+                Log.d(
+                    TAG,
+                    String.format(
+                        "Received surface request for resolution %dx%d",
+                        resolution.getWidth(), resolution.getHeight()));
+
+                SurfaceTexture previewFrameTexture = createSurfaceTexture();
+                previewFrameTexture.setDefaultBufferSize(
+                    resolution.getWidth(), resolution.getHeight());
+                previewFrameTexture.setOnFrameAvailableListener(
+                    frameTexture -> {
+                      if (frameTexture != previewFrameTexture) {
+                        return;
+                      }
+                      onInitialFrameReceived(context, frameTexture);
+                    },
+                    renderExecutor.getHandler());
+                Surface surface = new Surface(previewFrameTexture);
+                Log.d(TAG, "Providing surface");
+                request.provideSurface(
+                    surface,
+                    renderExecutor,
+                    result -> {
+                      Log.d(TAG, "Surface request result: " + result);
+                      // Per
+                      // https://developer.android.com/reference/androidx/camera/core/SurfaceRequest.Result,
+                      // the surface was either never used (RESULT_INVALID_SURFACE,
+                      // RESULT_REQUEST_CANCELLED, RESULT_SURFACE_ALREADY_PROVIDED) or the surface
+                      // was used successfully and was eventually detached
+                      // (RESULT_SURFACE_USED_SUCCESSFULLY) so we can release it now to free up
+                      // resources.
+                      previewFrameTexture.release();
+                      surface.release();
+                    });
+              });
+
+          // If we pause/resume the activity, we need to unbind the earlier preview use case, given
+          // the way the activity is currently structured.
+          cameraProvider.unbindAll();
+
+          // Bind preview use case to camera.
+          camera = cameraProvider.bindToLifecycle(lifecycleOwner, cameraSelector, preview);
+        },
+        mainThreadExecutor);
   }
 
   @Override
@@ -127,17 +245,16 @@ public class CameraXPreviewHelper extends CameraHelper {
 
   @Override
   public Size computeDisplaySizeFromViewSize(Size viewSize) {
-    if (viewSize == null || frameSize == null) {
-      // Wait for all inputs before setting display size.
-      Log.d(TAG, "viewSize or frameSize is null.");
-      return null;
-    }
-
-    Size optimalSize = getOptimalViewSize(viewSize);
-    return optimalSize != null ? optimalSize : frameSize;
+    // Camera target size is computed already, so just return the capture frame size.
+    return frameSize;
   }
 
   @Nullable
+  // TODO: Compute optimal view size from available stream sizes.
+  // Currently, we create the preview stream before we know what size our preview SurfaceView is.
+  // Instead, we should determine our optimal stream size (based on resolution and aspect ratio
+  // difference with the preview SurfaceView) and open the preview stream then. Until we make that
+  // change, this method is unused.
   private Size getOptimalViewSize(Size targetSize) {
     if (cameraCharacteristics != null) {
       StreamConfigurationMap map =
@@ -221,6 +338,56 @@ public class CameraXPreviewHelper extends CameraHelper {
     return frameSize;
   }
 
+  private void onInitialFrameReceived(Context context, SurfaceTexture previewFrameTexture) {
+    // This method is called by the onFrameAvailableListener we install when opening the camera
+    // session, the first time we receive a frame. In this method, we remove our callback,
+    // acknowledge the frame (via updateTextImage()), detach the texture from the GL context we
+    // created earlier (so that the MediaPipe pipeline can attach it), and perform some other
+    // one-time initialization based on the newly opened camera device. Finally, we indicate the
+    // camera session is ready via the onCameraStartedListener.
+
+    // Remove our callback.
+    previewFrameTexture.setOnFrameAvailableListener(null);
+
+    // Update texture image so we don't stall callbacks.
+    previewFrameTexture.updateTexImage();
+
+    // Detach the SurfaceTexture from the GL context we created earlier so that the MediaPipe
+    // pipeline can attach it.
+    previewFrameTexture.detachFromGLContext();
+
+    if (!preview.getAttachedSurfaceResolution().equals(frameSize)) {
+      frameSize = preview.getAttachedSurfaceResolution();
+      frameRotation = camera.getCameraInfo().getSensorRotationDegrees();
+      if (frameSize.getWidth() == 0 || frameSize.getHeight() == 0) {
+        // Invalid frame size. Wait for valid input dimensions before updating
+        // display size.
+        Log.d(TAG, "Invalid frameSize.");
+        return;
+      }
+    }
+
+    Integer selectedLensFacing =
+        cameraFacing == CameraHelper.CameraFacing.FRONT
+            ? CameraMetadata.LENS_FACING_FRONT
+            : CameraMetadata.LENS_FACING_BACK;
+    cameraCharacteristics = getCameraCharacteristics(context, selectedLensFacing);
+    if (cameraCharacteristics != null) {
+      // Queries camera timestamp source. It should be one of REALTIME or UNKNOWN
+      // as documented in
+      // https://developer.android.com/reference/android/hardware/camera2/CameraCharacteristics.html#SENSOR_INFO_TIMESTAMP_SOURCE.
+      cameraTimestampSource =
+          cameraCharacteristics.get(CameraCharacteristics.SENSOR_INFO_TIMESTAMP_SOURCE);
+      focalLengthPixels = calculateFocalLengthInPixels();
+    }
+
+    OnCameraStartedListener listener = onCameraStartedListener;
+    if (listener != null) {
+      ContextCompat.getMainExecutor(context)
+          .execute(() -> listener.onCameraStarted(previewFrameTexture));
+    }
+  }
+
   // Computes the focal length of the camera in pixels based on lens and sensor properties.
   private float calculateFocalLengthInPixels() {
     // Focal length of the camera in millimeters.
@@ -237,9 +404,20 @@ public class CameraXPreviewHelper extends CameraHelper {
     return frameSize.getWidth() * focalLengthMm / sensorWidthMm;
   }
 
+  private static SurfaceTexture createSurfaceTexture() {
+    // Create a temporary surface to make the context current.
+    EglManager eglManager = new EglManager(null);
+    EGLSurface tempEglSurface = eglManager.createOffscreenSurface(1, 1);
+    eglManager.makeCurrent(tempEglSurface, tempEglSurface);
+    int[] textures = new int[1];
+    GLES20.glGenTextures(1, textures, 0);
+    SurfaceTexture previewFrameTexture = new SurfaceTexture(textures[0]);
+    return previewFrameTexture;
+  }
+
   @Nullable
   private static CameraCharacteristics getCameraCharacteristics(
-      Activity context, Integer lensFacing) {
+      Context context, Integer lensFacing) {
     CameraManager cameraManager = (CameraManager) context.getSystemService(Context.CAMERA_SERVICE);
     try {
       List<String> cameraList = Arrays.asList(cameraManager.getCameraIdList());

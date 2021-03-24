@@ -68,8 +68,8 @@ constexpr char kOutputSummary[] = "CROPPING_SUMMARY";
 constexpr char kExternalRenderingPerFrame[] = "EXTERNAL_RENDERING_PER_FRAME";
 constexpr char kExternalRenderingFullVid[] = "EXTERNAL_RENDERING_FULL_VID";
 
-::mediapipe::Status SceneCroppingCalculator::GetContract(
-    ::mediapipe::CalculatorContract* cc) {
+absl::Status SceneCroppingCalculator::GetContract(
+    mediapipe::CalculatorContract* cc) {
   if (cc->InputSidePackets().HasTag(kInputExternalSettings)) {
     cc->InputSidePackets().Tag(kInputExternalSettings).Set<std::string>();
   }
@@ -136,10 +136,10 @@ constexpr char kExternalRenderingFullVid[] = "EXTERNAL_RENDERING_FULL_VID";
             cc->Outputs().HasTag(kExternalRenderingFullVid) ||
             cc->Outputs().HasTag(kOutputCroppedFrames))
       << "At leaset one output stream must be specified";
-  return ::mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-::mediapipe::Status SceneCroppingCalculator::Open(CalculatorContext* cc) {
+absl::Status SceneCroppingCalculator::Open(CalculatorContext* cc) {
   options_ = cc->Options<SceneCroppingCalculatorOptions>();
   RET_CHECK_GT(options_.max_scene_size(), 0)
       << "Maximum scene size is non-positive.";
@@ -175,17 +175,17 @@ constexpr char kExternalRenderingFullVid[] = "EXTERNAL_RENDERING_FULL_VID";
   should_perform_frame_cropping_ = cc->Outputs().HasTag(kOutputCroppedFrames);
   scene_camera_motion_analyzer_ = absl::make_unique<SceneCameraMotionAnalyzer>(
       options_.scene_camera_motion_analyzer_options());
-  return ::mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
 namespace {
-::mediapipe::Status ParseAspectRatioString(
-    const std::string& aspect_ratio_string, double* aspect_ratio) {
+absl::Status ParseAspectRatioString(const std::string& aspect_ratio_string,
+                                    double* aspect_ratio) {
   std::string error_msg =
       "Aspect ratio std::string must be in the format of 'width:height', e.g. "
       "'1:1' or '5:4', your input was " +
       aspect_ratio_string;
-  auto pos = aspect_ratio_string.find(":");
+  auto pos = aspect_ratio_string.find(':');
   RET_CHECK(pos != std::string::npos) << error_msg;
   double width_ratio;
   RET_CHECK(absl::SimpleAtod(aspect_ratio_string.substr(0, pos), &width_ratio))
@@ -196,7 +196,7 @@ namespace {
       &height_ratio))
       << error_msg;
   *aspect_ratio = width_ratio / height_ratio;
-  return ::mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 void ConstructExternalRenderMessage(
     const cv::Rect& crop_from_location, const cv::Rect& render_to_location,
@@ -235,8 +235,8 @@ int RoundToEven(float value) {
 
 }  // namespace
 
-::mediapipe::Status SceneCroppingCalculator::InitializeSceneCroppingCalculator(
-    ::mediapipe::CalculatorContext* cc) {
+absl::Status SceneCroppingCalculator::InitializeSceneCroppingCalculator(
+    mediapipe::CalculatorContext* cc) {
   if (cc->Inputs().HasTag(kInputVideoFrames)) {
     const auto& frame = cc->Inputs().Tag(kInputVideoFrames).Get<ImageFrame>();
     frame_width_ = frame.Width();
@@ -248,7 +248,7 @@ int RoundToEven(float value) {
     frame_height_ =
         cc->Inputs().Tag(kInputVideoSize).Get<std::pair<int, int>>().second;
   } else {
-    return ::mediapipe::UnknownErrorBuilder(MEDIAPIPE_LOC)
+    return mediapipe::UnknownErrorBuilder(MEDIAPIPE_LOC)
            << "Input VIDEO or VIDEO_SIZE must be provided.";
   }
   RET_CHECK_GT(frame_height_, 0) << "Input frame height is non-positive.";
@@ -302,8 +302,7 @@ int RoundToEven(float value) {
       target_height_ = frame_height_;
       break;
     case SceneCroppingCalculatorOptions::UNKNOWN:
-      return mediapipe::InvalidArgumentError(
-          "target_size_type not set properly.");
+      return absl::InvalidArgumentError("target_size_type not set properly.");
   }
   target_aspect_ratio_ = GetRatio(target_width_, target_height_);
 
@@ -337,18 +336,18 @@ int RoundToEven(float value) {
   scene_cropper_ = absl::make_unique<SceneCropper>(
       options_.camera_motion_options(), frame_width_, frame_height_);
 
-  return ::mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-bool HasFrameSignal(::mediapipe::CalculatorContext* cc) {
+bool HasFrameSignal(mediapipe::CalculatorContext* cc) {
   if (cc->Inputs().HasTag(kInputVideoFrames)) {
     return !cc->Inputs().Tag(kInputVideoFrames).Value().IsEmpty();
   }
   return !cc->Inputs().Tag(kInputVideoSize).Value().IsEmpty();
 }
 
-::mediapipe::Status SceneCroppingCalculator::Process(
-    ::mediapipe::CalculatorContext* cc) {
+absl::Status SceneCroppingCalculator::Process(
+    mediapipe::CalculatorContext* cc) {
   // Sets frame dimension and initializes scenecroppingcalculator on first video
   // frame.
   if (frame_width_ < 0) {
@@ -417,11 +416,10 @@ bool HasFrameSignal(::mediapipe::CalculatorContext* cc) {
     continue_last_scene_ = true;
   }
 
-  return ::mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-::mediapipe::Status SceneCroppingCalculator::Close(
-    ::mediapipe::CalculatorContext* cc) {
+absl::Status SceneCroppingCalculator::Close(mediapipe::CalculatorContext* cc) {
   if (!scene_frame_timestamps_.empty()) {
     MP_RETURN_IF_ERROR(ProcessScene(/* is_end_of_scene = */ true, cc));
   }
@@ -435,12 +433,12 @@ bool HasFrameSignal(::mediapipe::CalculatorContext* cc) {
         .Tag(kExternalRenderingFullVid)
         .Add(external_render_list_.release(), Timestamp::PostStream());
   }
-  return ::mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
 // TODO: split this function into two, one for calculating the border
 // sizes, the other for the actual removal of borders from the frames.
-::mediapipe::Status SceneCroppingCalculator::RemoveStaticBorders(
+absl::Status SceneCroppingCalculator::RemoveStaticBorders(
     CalculatorContext* cc, int* top_border_size, int* bottom_border_size) {
   *top_border_size = 0;
   *bottom_border_size = 0;
@@ -492,11 +490,10 @@ bool HasFrameSignal(::mediapipe::CalculatorContext* cc) {
       *key_frame_infos_[i].mutable_detections() = adjusted_detections;
     }
   }
-  return ::mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-::mediapipe::Status
-SceneCroppingCalculator::InitializeFrameCropRegionComputer() {
+absl::Status SceneCroppingCalculator::InitializeFrameCropRegionComputer() {
   key_frame_crop_options_ = options_.key_frame_crop_options();
   MP_RETURN_IF_ERROR(
       SetKeyFrameCropTarget(frame_width_, effective_frame_height_,
@@ -505,7 +502,7 @@ SceneCroppingCalculator::InitializeFrameCropRegionComputer() {
   VLOG(1) << "Target height " << key_frame_crop_options_.target_height();
   frame_crop_region_computer_ =
       absl::make_unique<FrameCropRegionComputer>(key_frame_crop_options_);
-  return ::mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
 void SceneCroppingCalculator::FilterKeyFrameInfo() {
@@ -531,8 +528,8 @@ void SceneCroppingCalculator::FilterKeyFrameInfo() {
   }
 }
 
-::mediapipe::Status SceneCroppingCalculator::ProcessScene(
-    const bool is_end_of_scene, CalculatorContext* cc) {
+absl::Status SceneCroppingCalculator::ProcessScene(const bool is_end_of_scene,
+                                                   CalculatorContext* cc) {
   // Removes detections under special circumstances.
   FilterKeyFrameInfo();
 
@@ -654,10 +651,10 @@ void SceneCroppingCalculator::FilterKeyFrameInfo() {
   is_key_frames_.clear();
   static_features_.clear();
   static_features_timestamps_.clear();
-  return ::mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-::mediapipe::Status SceneCroppingCalculator::FormatAndOutputCroppedFrames(
+absl::Status SceneCroppingCalculator::FormatAndOutputCroppedFrames(
     const int crop_width, const int crop_height, const int num_frames,
     std::vector<cv::Rect>* render_to_locations, bool* apply_padding,
     std::vector<cv::Scalar>* padding_colors, float* vertical_fill_percent,
@@ -730,7 +727,7 @@ void SceneCroppingCalculator::FilterKeyFrameInfo() {
     padding_colors->push_back(padding_color_to_add);
   }
   if (!cropped_frames_ptr) {
-    return ::mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
   // Resizes cropped frames, pads frames, and output frames.
@@ -773,10 +770,10 @@ void SceneCroppingCalculator::FilterKeyFrameInfo() {
           .Add(scaled_frame.release(), timestamp);
     }
   }
-  return ::mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-mediapipe::Status SceneCroppingCalculator::OutputVizFrames(
+absl::Status SceneCroppingCalculator::OutputVizFrames(
     const std::vector<KeyFrameCropResult>& key_frame_crop_results,
     const std::vector<FocusPointFrame>& focus_point_frames,
     const std::vector<cv::Rect>& crop_from_locations,
@@ -816,7 +813,7 @@ mediapipe::Status SceneCroppingCalculator::OutputVizFrames(
           .Add(viz_frames[i].release(), Timestamp(scene_frame_timestamps_[i]));
     }
   }
-  return ::mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
 REGISTER_CALCULATOR(SceneCroppingCalculator);

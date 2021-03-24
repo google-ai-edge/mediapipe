@@ -18,8 +18,8 @@
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/calculator_options.pb.h"
 #include "mediapipe/framework/port/ret_check.h"
-#include "mediapipe/graphs/object_detection_3d/calculators/annotation_data.pb.h"
 #include "mediapipe/graphs/object_detection_3d/calculators/annotations_to_render_data_calculator.pb.h"
+#include "mediapipe/modules/objectron/calculators/annotation_data.pb.h"
 #include "mediapipe/util/color.pb.h"
 #include "mediapipe/util/render_data.pb.h"
 
@@ -98,11 +98,11 @@ class AnnotationsToRenderDataCalculator : public CalculatorBase {
   AnnotationsToRenderDataCalculator& operator=(
       const AnnotationsToRenderDataCalculator&) = delete;
 
-  static ::mediapipe::Status GetContract(CalculatorContract* cc);
+  static absl::Status GetContract(CalculatorContract* cc);
 
-  ::mediapipe::Status Open(CalculatorContext* cc) override;
+  absl::Status Open(CalculatorContext* cc) override;
 
-  ::mediapipe::Status Process(CalculatorContext* cc) override;
+  absl::Status Process(CalculatorContext* cc) override;
 
  private:
   static void SetRenderAnnotationColorThickness(
@@ -134,7 +134,7 @@ class AnnotationsToRenderDataCalculator : public CalculatorBase {
 };
 REGISTER_CALCULATOR(AnnotationsToRenderDataCalculator);
 
-::mediapipe::Status AnnotationsToRenderDataCalculator::GetContract(
+absl::Status AnnotationsToRenderDataCalculator::GetContract(
     CalculatorContract* cc) {
   RET_CHECK(cc->Inputs().HasTag(kAnnotationTag)) << "No input stream found.";
   if (cc->Inputs().HasTag(kAnnotationTag)) {
@@ -142,19 +142,17 @@ REGISTER_CALCULATOR(AnnotationsToRenderDataCalculator);
   }
   cc->Outputs().Tag(kRenderDataTag).Set<RenderData>();
 
-  return ::mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-::mediapipe::Status AnnotationsToRenderDataCalculator::Open(
-    CalculatorContext* cc) {
+absl::Status AnnotationsToRenderDataCalculator::Open(CalculatorContext* cc) {
   cc->SetOffset(TimestampDiff(0));
   options_ = cc->Options<AnnotationsToRenderDataCalculatorOptions>();
 
-  return ::mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-::mediapipe::Status AnnotationsToRenderDataCalculator::Process(
-    CalculatorContext* cc) {
+absl::Status AnnotationsToRenderDataCalculator::Process(CalculatorContext* cc) {
   auto render_data = absl::make_unique<RenderData>();
   bool visualize_depth = options_.visualize_landmark_depth();
   float z_min = 0.f;
@@ -215,7 +213,7 @@ REGISTER_CALCULATOR(AnnotationsToRenderDataCalculator);
       .Tag(kRenderDataTag)
       .Add(render_data.release(), cc->InputTimestamp());
 
-  return ::mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
 void AnnotationsToRenderDataCalculator::AddConnectionToRenderData(

@@ -44,10 +44,11 @@ DEFINE_string(output_video_path, "",
               "Full path of where to save result (.mp4 only). "
               "If not provided, show result in a window.");
 
-::mediapipe::Status RunMPPGraph() {
+absl::Status RunMPPGraph() {
   std::string calculator_graph_config_contents;
   MP_RETURN_IF_ERROR(mediapipe::file::GetContents(
-      FLAGS_calculator_graph_config_file, &calculator_graph_config_contents));
+      absl::GetFlag(FLAGS_calculator_graph_config_file),
+      &calculator_graph_config_contents));
   LOG(INFO) << "Get calculator graph config contents: "
             << calculator_graph_config_contents;
   mediapipe::CalculatorGraphConfig config =
@@ -66,16 +67,16 @@ DEFINE_string(output_video_path, "",
 
   LOG(INFO) << "Initialize the camera or load the video.";
   cv::VideoCapture capture;
-  const bool load_video = !FLAGS_input_video_path.empty();
+  const bool load_video = !absl::GetFlag(FLAGS_input_video_path).empty();
   if (load_video) {
-    capture.open(FLAGS_input_video_path);
+    capture.open(absl::GetFlag(FLAGS_input_video_path));
   } else {
     capture.open(0);
   }
   RET_CHECK(capture.isOpened());
 
   cv::VideoWriter writer;
-  const bool save_video = !FLAGS_output_video_path.empty();
+  const bool save_video = !absl::GetFlag(FLAGS_output_video_path).empty();
   if (!save_video) {
     cv::namedWindow(kWindowName, /*flags=WINDOW_AUTOSIZE*/ 1);
 #if (CV_MAJOR_VERSION >= 3) && (CV_MINOR_VERSION >= 2)
@@ -96,16 +97,23 @@ DEFINE_string(output_video_path, "",
     // Capture opencv camera or video frame.
     cv::Mat camera_frame_raw;
     capture >> camera_frame_raw;
-    if (camera_frame_raw.empty()) break;  // End of video.
+    if (camera_frame_raw.empty()) {
+      if (!load_video) {
+        LOG(INFO) << "Ignore empty frames from camera.";
+        continue;
+      }
+      LOG(INFO) << "Empty frame, end of video reached.";
+      break;
+    }
     cv::Mat camera_frame;
-    cv::cvtColor(camera_frame_raw, camera_frame, cv::COLOR_BGR2RGB);
+    cv::cvtColor(camera_frame_raw, camera_frame, cv::COLOR_BGR2RGBA);
     if (!load_video) {
       cv::flip(camera_frame, camera_frame, /*flipcode=HORIZONTAL*/ 1);
     }
 
     // Wrap Mat into an ImageFrame.
     auto input_frame = absl::make_unique<mediapipe::ImageFrame>(
-        mediapipe::ImageFormat::SRGB, camera_frame.cols, camera_frame.rows,
+        mediapipe::ImageFormat::SRGBA, camera_frame.cols, camera_frame.rows,
         mediapipe::ImageFrame::kGlDefaultAlignmentBoundary);
     cv::Mat input_frame_mat = mediapipe::formats::MatView(input_frame.get());
     camera_frame.copyTo(input_frame_mat);
@@ -115,7 +123,7 @@ DEFINE_string(output_video_path, "",
         (double)cv::getTickCount() / (double)cv::getTickFrequency() * 1e6;
     MP_RETURN_IF_ERROR(
         gpu_helper.RunInGlContext([&input_frame, &frame_timestamp_us, &graph,
-                                   &gpu_helper]() -> ::mediapipe::Status {
+                                   &gpu_helper]() -> absl::Status {
           // Convert ImageFrame to GpuBuffer.
           auto texture = gpu_helper.CreateSourceTexture(*input_frame.get());
           auto gpu_frame = texture.GetFrame<mediapipe::GpuBuffer>();
@@ -125,7 +133,7 @@ DEFINE_string(output_video_path, "",
           MP_RETURN_IF_ERROR(graph.AddPacketToInputStream(
               kInputStream, mediapipe::Adopt(gpu_frame.release())
                                 .At(mediapipe::Timestamp(frame_timestamp_us))));
-          return ::mediapipe::OkStatus();
+          return absl::OkStatus();
         }));
 
     // Get the graph result packet, or stop if that fails.
@@ -135,7 +143,7 @@ DEFINE_string(output_video_path, "",
 
     // Convert GpuBuffer to ImageFrame.
     MP_RETURN_IF_ERROR(gpu_helper.RunInGlContext(
-        [&packet, &output_frame, &gpu_helper]() -> ::mediapipe::Status {
+        [&packet, &output_frame, &gpu_helper]() -> absl::Status {
           auto& gpu_frame = packet.Get<mediapipe::GpuBuffer>();
           auto texture = gpu_helper.CreateSourceTexture(gpu_frame);
           output_frame = absl::make_unique<mediapipe::ImageFrame>(
@@ -143,22 +151,25 @@ DEFINE_string(output_video_path, "",
               gpu_frame.width(), gpu_frame.height(),
               mediapipe::ImageFrame::kGlDefaultAlignmentBoundary);
           gpu_helper.BindFramebuffer(texture);
-          const auto info =
-              mediapipe::GlTextureInfoForGpuBufferFormat(gpu_frame.format(), 0);
+          const auto info = mediapipe::GlTextureInfoForGpuBufferFormat(
+              gpu_frame.format(), 0, gpu_helper.GetGlVersion());
           glReadPixels(0, 0, texture.width(), texture.height(), info.gl_format,
                        info.gl_type, output_frame->MutablePixelData());
           glFlush();
           texture.Release();
-          return ::mediapipe::OkStatus();
+          return absl::OkStatus();
         }));
 
     // Convert back to opencv for display or saving.
     cv::Mat output_frame_mat = mediapipe::formats::MatView(output_frame.get());
-    cv::cvtColor(output_frame_mat, output_frame_mat, cv::COLOR_RGB2BGR);
+    if (output_frame_mat.channels() == 4)
+      cv::cvtColor(output_frame_mat, output_frame_mat, cv::COLOR_RGBA2BGR);
+    else
+      cv::cvtColor(output_frame_mat, output_frame_mat, cv::COLOR_RGB2BGR);
     if (save_video) {
       if (!writer.isOpened()) {
         LOG(INFO) << "Prepare video writer.";
-        writer.open(FLAGS_output_video_path,
+        writer.open(absl::GetFlag(FLAGS_output_video_path),
                     mediapipe::fourcc('a', 'v', 'c', '1'),  // .mp4
                     capture.get(cv::CAP_PROP_FPS), output_frame_mat.size());
         RET_CHECK(writer.isOpened());
@@ -181,7 +192,7 @@ DEFINE_string(output_video_path, "",
 int main(int argc, char** argv) {
   google::InitGoogleLogging(argv[0]);
   gflags::ParseCommandLineFlags(&argc, &argv, true);
-  ::mediapipe::Status run_status = RunMPPGraph();
+  absl::Status run_status = RunMPPGraph();
   if (!run_status.ok()) {
     LOG(ERROR) << "Failed to run the graph: " << run_status.message();
     return EXIT_FAILURE;

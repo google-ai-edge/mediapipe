@@ -21,6 +21,7 @@
 
 #include "Eigen/Core"
 #include "absl/memory/memory.h"
+#include "mediapipe/framework/api2/node.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/matrix.h"
 #include "mediapipe/framework/port/integral_types.h"
@@ -30,6 +31,7 @@
 #include "mediapipe/util/time_series_util.h"
 
 namespace mediapipe {
+namespace api2 {
 
 // A calculator that converts a Matrix M to a vector containing all the
 // entries of M in column-major order.
@@ -40,33 +42,27 @@ namespace mediapipe {
 //   input_stream: "input_matrix"
 //   output_stream: "column_major_vector"
 // }
-class MatrixToVectorCalculator : public CalculatorBase {
+class MatrixToVectorCalculator : public Node {
  public:
-  static ::mediapipe::Status GetContract(CalculatorContract* cc) {
-    cc->Inputs().Index(0).Set<Matrix>(
-        // Input Packet containing a Matrix.
-    );
-    cc->Outputs().Index(0).Set<std::vector<float>>(
-        // Output Packet containing a vector, one for each input Packet.
-    );
-    return ::mediapipe::OkStatus();
-  }
+  static constexpr Input<Matrix> kIn{""};
+  static constexpr Output<std::vector<float>> kOut{""};
 
-  ::mediapipe::Status Open(CalculatorContext* cc) override;
+  MEDIAPIPE_NODE_CONTRACT(kIn, kOut);
+
+  absl::Status Open(CalculatorContext* cc) override;
 
   // Outputs a packet containing a vector for each input packet.
-  ::mediapipe::Status Process(CalculatorContext* cc) override;
+  absl::Status Process(CalculatorContext* cc) override;
 };
-REGISTER_CALCULATOR(MatrixToVectorCalculator);
+MEDIAPIPE_REGISTER_NODE(MatrixToVectorCalculator);
 
-::mediapipe::Status MatrixToVectorCalculator::Open(CalculatorContext* cc) {
-  // Inform the framework that we don't alter timestamps.
-  cc->SetOffset(mediapipe::TimestampDiff(0));
-  return ::mediapipe::OkStatus();
+absl::Status MatrixToVectorCalculator::Open(CalculatorContext* cc) {
+  cc->SetOffset(0);
+  return mediapipe::OkStatus();
 }
 
-::mediapipe::Status MatrixToVectorCalculator::Process(CalculatorContext* cc) {
-  const Matrix& input = cc->Inputs().Index(0).Get<Matrix>();
+absl::Status MatrixToVectorCalculator::Process(CalculatorContext* cc) {
+  const Matrix& input = *kIn(cc);
   auto output = absl::make_unique<std::vector<float>>();
 
   // The following lines work to convert the Matrix to a vector because Matrix
@@ -76,8 +72,9 @@ REGISTER_CALCULATOR(MatrixToVectorCalculator);
       Eigen::Map<Matrix>(output->data(), input.rows(), input.cols());
   output_as_matrix = input;
 
-  cc->Outputs().Index(0).Add(output.release(), cc->InputTimestamp());
-  return ::mediapipe::OkStatus();
+  kOut(cc).Send(std::move(output));
+  return absl::OkStatus();
 }
 
+}  // namespace api2
 }  // namespace mediapipe

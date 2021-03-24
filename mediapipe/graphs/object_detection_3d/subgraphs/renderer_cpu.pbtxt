@@ -1,0 +1,75 @@
+# MediaPipe Objectron vertices/landmarks rendering CPU subgraph.
+
+type: "RendererSubgraph"
+
+input_stream: "IMAGE:input_image"
+input_stream: "MULTI_LANDMARKS:multi_landmarks"
+input_stream: "NORM_RECTS:multi_rect"
+output_stream: "IMAGE:output_image"
+
+# Outputs each element of multi_landmarks at a fake timestamp for the rest
+# of the graph to process. At the end of the loop, outputs the BATCH_END
+# timestamp for downstream calculators to inform them that all elements in the
+# vector have been processed.
+node {
+  calculator: "BeginLoopNormalizedLandmarkListVectorCalculator"
+  input_stream: "ITERABLE:multi_landmarks"
+  output_stream: "ITEM:single_landmarks"
+  output_stream: "BATCH_END:landmark_timestamp"
+}
+
+# Converts landmarks to drawing primitives for annotation overlay.
+node {
+  calculator: "LandmarksToRenderDataCalculator"
+  input_stream: "NORM_LANDMARKS:single_landmarks"
+  output_stream: "RENDER_DATA:single_landmark_render_data"
+  node_options: {
+    [type.googleapis.com/mediapipe.LandmarksToRenderDataCalculatorOptions] {
+      landmark_connections: [1, 2] # edge 1-2
+      landmark_connections: [1, 3] # edge 1-3
+      landmark_connections: [1, 5] # edge 1-5
+      landmark_connections: [2, 4] # edge 2-4
+      landmark_connections: [2, 6] # edge 2-6
+      landmark_connections: [3, 4] # edge 3-4
+      landmark_connections: [3, 7] # edge 3-7
+      landmark_connections: [4, 8] # edge 4-8
+      landmark_connections: [5, 6] # edge 5-6
+      landmark_connections: [5, 7] # edge 5-7
+      landmark_connections: [6, 8] # edge 6-8
+      landmark_connections: [7, 8] # edge 7-8
+      landmark_color { r: 255 g: 0 b: 0 }
+      connection_color { r: 0 g: 255 b: 0 }
+      thickness: 4.0
+    }
+  }
+}
+
+node {
+  calculator: "EndLoopRenderDataCalculator"
+  input_stream: "ITEM:single_landmark_render_data"
+  input_stream: "BATCH_END:landmark_timestamp"
+  output_stream: "ITERABLE:multi_landmarks_render_data"
+}
+
+# Converts normalized rects to drawing primitives for annotation overlay.
+node {
+  calculator: "RectToRenderDataCalculator"
+  input_stream: "NORM_RECTS:multi_rect"
+  output_stream: "RENDER_DATA:multi_rect_render_data"
+  node_options: {
+    [type.googleapis.com/mediapipe.RectToRenderDataCalculatorOptions] {
+      filled: false
+      color { r: 255 g: 0 b: 0 }
+      thickness: 4.0
+    }
+  }
+}
+
+# Draws annotations and overlays them on top of the input images.
+node {
+  calculator: "AnnotationOverlayCalculator"
+  input_stream: "IMAGE:input_image"
+  input_stream: "VECTOR:multi_landmarks_render_data"
+  input_stream: "multi_rect_render_data"
+  output_stream: "IMAGE:output_image"
+}

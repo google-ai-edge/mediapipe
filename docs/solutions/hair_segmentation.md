@@ -2,14 +2,20 @@
 layout: default
 title: Hair Segmentation
 parent: Solutions
-nav_order: 6
+nav_order: 7
 ---
 
 # MediaPipe Hair Segmentation
 {: .no_toc }
 
+<details close markdown="block">
+  <summary>
+    Table of contents
+  </summary>
+  {: .text-delta }
 1. TOC
 {:toc}
+</details>
 ---
 
 ![hair_segmentation_android_gpu_gif](../images/mobile/hair_segmentation_android_gpu.gif)
@@ -17,9 +23,8 @@ nav_order: 6
 ## Example Apps
 
 Please first see general instructions for
-[Android](../getting_started/building_examples.md#android), [iOS](../getting_started/building_examples.md#ios)
-and [desktop](../getting_started/building_examples.md#desktop) on how to build MediaPipe
-examples.
+[Android](../getting_started/android.md), [iOS](../getting_started/ios.md) and
+[desktop](../getting_started/cpp.md) on how to build MediaPipe examples.
 
 Note: To visualize a graph, copy the graph and paste it into
 [MediaPipe Visualizer](https://viz.mediapipe.dev/). For more information on how
@@ -54,5 +59,4 @@ Please refer to [these instructions](../index.md#mediapipe-on-the-web).
     [Real-time Hair segmentation and recoloring on Mobile GPUs](https://arxiv.org/abs/1907.06740)
     ([presentation](https://drive.google.com/file/d/1C8WYlWdDRNtU1_pYBvkkG5Z5wqYqf0yj/view))
     ([supplementary video](https://drive.google.com/file/d/1LPtM99Ch2ogyXYbDNpEqnUfhFq0TfLuf/view))
-*   [TFLite model](https://github.com/google/mediapipe/tree/master/mediapipe/models/hair_segmentation.tflite)
-*   [Model card](https://mediapipe.page.link/hairsegmentation-mc)
+*   [Models and model cards](./models.md#hair_segmentation)

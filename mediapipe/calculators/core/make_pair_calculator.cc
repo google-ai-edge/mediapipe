@@ -15,10 +15,12 @@
 #include <utility>
 #include <vector>
 
+#include "mediapipe/framework/api2/node.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/port/status.h"
 
 namespace mediapipe {
+namespace api2 {
 
 // Given two input streams (A, B), output a single stream containing a pair<A,
 // B>.
@@ -30,32 +32,27 @@ namespace mediapipe {
 //   input_stream: "packet_b"
 //   output_stream: "output_pair_a_b"
 // }
-class MakePairCalculator : public CalculatorBase {
+class MakePairCalculator : public Node {
  public:
-  MakePairCalculator() {}
-  ~MakePairCalculator() override {}
+  static constexpr Input<AnyType>::Multiple kIn{""};
+  // Note that currently api2::Packet is a different type from mediapipe::Packet
+  static constexpr Output<std::pair<mediapipe::Packet, mediapipe::Packet>>
+      kPair{""};
 
-  static ::mediapipe::Status GetContract(CalculatorContract* cc) {
-    cc->Inputs().Index(0).SetAny();
-    cc->Inputs().Index(1).SetAny();
-    cc->Outputs().Index(0).Set<std::pair<Packet, Packet>>();
-    return ::mediapipe::OkStatus();
+  MEDIAPIPE_NODE_CONTRACT(kIn, kPair);
+
+  static absl::Status UpdateContract(CalculatorContract* cc) {
+    RET_CHECK_EQ(kIn(cc).Count(), 2);
+    return absl::OkStatus();
   }
 
-  ::mediapipe::Status Open(CalculatorContext* cc) override {
-    cc->SetOffset(TimestampDiff(0));
-    return ::mediapipe::OkStatus();
-  }
-
-  ::mediapipe::Status Process(CalculatorContext* cc) override {
-    cc->Outputs().Index(0).Add(
-        new std::pair<Packet, Packet>(cc->Inputs().Index(0).Value(),
-                                      cc->Inputs().Index(1).Value()),
-        cc->InputTimestamp());
-    return ::mediapipe::OkStatus();
+  absl::Status Process(CalculatorContext* cc) override {
+    kPair(cc).Send({kIn(cc)[0].packet(), kIn(cc)[1].packet()});
+    return absl::OkStatus();
   }
 };
 
-REGISTER_CALCULATOR(MakePairCalculator);
+MEDIAPIPE_REGISTER_NODE(MakePairCalculator);
 
+}  // namespace api2
 }  // namespace mediapipe

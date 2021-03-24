@@ -15,11 +15,10 @@
 #ifndef MEDIAPIPE_GPU_GL_CALCULATOR_HELPER_H_
 #define MEDIAPIPE_GPU_GL_CALCULATOR_HELPER_H_
 
-#include <memory>
-
 #include "absl/memory/memory.h"
 #include "mediapipe/framework/calculator_context.h"
 #include "mediapipe/framework/calculator_contract.h"
+#include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/formats/image_frame.h"
 #include "mediapipe/framework/packet.h"
 #include "mediapipe/framework/packet_set.h"
@@ -29,6 +28,7 @@
 #include "mediapipe/gpu/gl_context.h"
 #include "mediapipe/gpu/gpu_buffer.h"
 #include "mediapipe/gpu/graph_support.h"
+
 #ifdef __APPLE__
 #include <CoreVideo/CoreVideo.h>
 
@@ -50,6 +50,8 @@ typedef CVOpenGLESTextureRef CVTextureType;
 #endif  // TARGET_OS_OSX
 #endif  // __APPLE__
 
+using ImageFrameSharedPtr = std::shared_ptr<ImageFrame>;
+
 // TODO: remove this and Process below, or make Process available
 // on Android.
 typedef std::function<void(const GlTexture& src, const GlTexture& dst)>
@@ -67,7 +69,7 @@ class GlCalculatorHelper {
   ~GlCalculatorHelper();
 
   // Call Open from the Open method of a calculator to initialize the helper.
-  ::mediapipe::Status Open(CalculatorContext* cc);
+  absl::Status Open(CalculatorContext* cc);
 
   // Can be used to initialize the helper outside of a calculator. Useful for
   // testing.
@@ -76,33 +78,31 @@ class GlCalculatorHelper {
 
   // This method can be called from GetContract to set up the needed GPU
   // resources.
-  static ::mediapipe::Status UpdateContract(CalculatorContract* cc);
+  static absl::Status UpdateContract(CalculatorContract* cc);
 
   // This method can be called from FillExpectations to set the correct types
   // for the shared GL input side packet(s).
-  static ::mediapipe::Status SetupInputSidePackets(
-      PacketTypeSet* input_side_packets);
+  static absl::Status SetupInputSidePackets(PacketTypeSet* input_side_packets);
 
   // Execute the provided function within the helper's GL context. On some
   // platforms, this may be run on a different thread; however, this method
   // will still wait for the function to finish executing before returning.
   // The status result from the function is passed on to the caller.
-  ::mediapipe::Status RunInGlContext(
-      std::function<::mediapipe::Status(void)> gl_func);
+  absl::Status RunInGlContext(std::function<absl::Status(void)> gl_func);
 
   // Convenience version of RunInGlContext for arguments with a void result
-  // type. As with the ::mediapipe::Status version, this also waits for the
+  // type. As with the absl::Status version, this also waits for the
   // function to finish executing before returning.
   //
   // Implementation note: we cannot use a std::function<void(void)> argument
   // here, because that would break passing in a lambda that returns a status;
   // e.g.:
-  //   RunInGlContext([]() -> ::mediapipe::Status { ... });
+  //   RunInGlContext([]() -> absl::Status { ... });
   //
   // The reason is that std::function<void(...)> allows the implicit conversion
   // of a callable with any result type, as long as the argument types match.
   // As a result, the above lambda would be implicitly convertible to both
-  // std::function<::mediapipe::Status(void)> and std::function<void(void)>, and
+  // std::function<absl::Status(void)> and std::function<void(void)>, and
   // the invocation would be ambiguous.
   //
   // Therefore, instead of using std::function<void(void)>, we use a template
@@ -112,7 +112,7 @@ class GlCalculatorHelper {
   void RunInGlContext(T f) {
     RunInGlContext([f] {
       f();
-      return ::mediapipe::OkStatus();
+      return absl::OkStatus();
     }).IgnoreError();
   }
 
@@ -121,9 +121,10 @@ class GlCalculatorHelper {
   // where it is supported (iOS, for now) they take advantage of memory sharing
   // between the CPU and GPU, avoiding memory copies.
 
-  // Creates a texture representing an input frame.
+  // Creates a texture representing an input frame, and manages sync token.
   GlTexture CreateSourceTexture(const GpuBuffer& pixel_buffer);
   GlTexture CreateSourceTexture(const ImageFrame& image_frame);
+  GlTexture CreateSourceTexture(const mediapipe::Image& image);
 
 #ifdef __APPLE__
   // Creates a texture from a plane of a planar buffer.
@@ -137,7 +138,7 @@ class GlCalculatorHelper {
   void GetGpuBufferDimensions(const GpuBuffer& pixel_buffer, int* width,
                               int* height);
 
-  // Creates a texture representing an output frame.
+  // Creates a texture representing an output frame, and manages sync token.
   // TODO: This should either return errors or a status.
   GlTexture CreateDestinationTexture(
       int output_width, int output_height,
@@ -152,11 +153,24 @@ class GlCalculatorHelper {
 
   GlContext& GetGlContext() const;
 
+  GlVersion GetGlVersion() const;
+
+  // Check if the calculator helper has been previously initialized.
+  bool Initialized() { return impl_ != nullptr; }
+
  private:
   std::unique_ptr<GlCalculatorHelperImpl> impl_;
 };
 
-// Represents an OpenGL texture.
+// Represents an OpenGL texture, and is a 'view' into the memory pool.
+// It's more like a GlTextureLock, because it's main purpose (in conjunction
+// with the helper): to manage GL sync points in the gl command queue.
+//
+// This class should be the main way to interface with GL memory within a single
+// calculator. This is the preferred way to utilize the memory pool inside of
+// the helper, because GlTexture manages efficiently releasing memory back into
+// the pool. A GPU backed Image can be extracted from the unerlying
+// memory.
 class GlTexture {
  public:
   GlTexture() {}
@@ -170,11 +184,12 @@ class GlTexture {
   GLuint name() const { return name_; }
 
   // Returns a buffer that can be sent to another calculator.
-  // Can be used with GpuBuffer or ImageFrame.
+  // & manages sync token
+  // Can be used with GpuBuffer or ImageFrame or Image
   template <typename T>
   std::unique_ptr<T> GetFrame() const;
 
-  // Releases texture memory
+  // Releases texture memory & manages sync token
   void Release();
 
  private:

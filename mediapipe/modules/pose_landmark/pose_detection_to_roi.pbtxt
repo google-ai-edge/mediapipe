@@ -9,6 +9,10 @@ type: "PoseDetectionToRoi"
 input_stream: "DETECTION:detection"
 # Frame size (width and height). (std::pair<int, int>)
 input_stream: "IMAGE_SIZE:image_size"
+# Whether to detect/predict the full set of pose landmarks, or only those on the
+# upper body. If unspecified, functions as set to false. (bool)
+input_side_packet: "UPPER_BODY_ONLY:upper_body_only"
+
 # ROI according to the first detection of input detections. (NormalizedRect)
 output_stream: "ROI:roi"
 
@@ -16,16 +20,33 @@ output_stream: "ROI:roi"
 # points. Pose detection contains four key points: first two for full-body pose
 # and two more for upper-body pose.
 node {
-  calculator: "AlignmentPointsRectsCalculator"
+  calculator: "SwitchContainer"
+  input_side_packet: "ENABLE:upper_body_only"
   input_stream: "DETECTION:detection"
   input_stream: "IMAGE_SIZE:image_size"
   output_stream: "NORM_RECT:raw_roi"
-  options: {
-    [mediapipe.DetectionsToRectsCalculatorOptions.ext] {
-      rotation_vector_start_keypoint_index: 2
-      rotation_vector_end_keypoint_index: 3
-      rotation_vector_target_angle_degrees: 90
-      output_zero_rect_for_empty_detections: true
+  options {
+    [mediapipe.SwitchContainerOptions.ext] {
+      contained_node: {
+        calculator: "AlignmentPointsRectsCalculator"
+        options: {
+          [mediapipe.DetectionsToRectsCalculatorOptions.ext] {
+            rotation_vector_start_keypoint_index: 0
+            rotation_vector_end_keypoint_index: 1
+            rotation_vector_target_angle_degrees: 90
+          }
+        }
+      }
+      contained_node: {
+        calculator: "AlignmentPointsRectsCalculator"
+        options: {
+          [mediapipe.DetectionsToRectsCalculatorOptions.ext] {
+            rotation_vector_start_keypoint_index: 2
+            rotation_vector_end_keypoint_index: 3
+            rotation_vector_target_angle_degrees: 90
+          }
+        }
+      }
     }
   }
 }

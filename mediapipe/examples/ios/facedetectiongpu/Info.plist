@@ -9,6 +9,6 @@
   <key>GraphInputStream</key>
   <string>input_video</string>
   <key>GraphName</key>
-  <string>mobile_gpu</string>
+  <string>face_detection_mobile_gpu</string>
 </dict>
 </plist>

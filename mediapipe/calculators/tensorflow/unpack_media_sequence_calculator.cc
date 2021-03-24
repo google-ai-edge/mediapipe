@@ -42,7 +42,7 @@ const char kImagesFrameRateTag[] = "IMAGE_FRAME_RATE";
 const char kAudioDecoderOptions[] = "AUDIO_DECODER_OPTIONS";
 
 namespace tf = ::tensorflow;
-namespace mpms = ::mediapipe::mediasequence;
+namespace mpms = mediapipe::mediasequence;
 
 // Source calculator to unpack side_packets and streams from tf.SequenceExamples
 //
@@ -84,7 +84,7 @@ namespace mpms = ::mediapipe::mediasequence;
 // node {
 //   calculator: "UnpackMediaSequenceCalculator"
 //   input_side_packet: "SEQUENCE_EXAMPLE:example_input_side_packet"
-//   input_side_packet: "ROOT_DIRECTORY:path_to_dataset_root_directory"
+//   input_side_packet: "DATASET_ROOT:path_to_dataset_root_directory"
 //   output_side_packet: "DATA_PATH:full_path_to_data_element"
 //   output_side_packet: "RESAMPLER_OPTIONS:packet_resampler_options"
 //   options {
@@ -118,7 +118,7 @@ namespace mpms = ::mediapipe::mediasequence;
 // }
 class UnpackMediaSequenceCalculator : public CalculatorBase {
  public:
-  static ::mediapipe::Status GetContract(CalculatorContract* cc) {
+  static absl::Status GetContract(CalculatorContract* cc) {
     const auto& options = cc->Options<UnpackMediaSequenceCalculatorOptions>();
     RET_CHECK(cc->InputSidePackets().HasTag(kSequenceExampleTag));
     cc->InputSidePackets().Tag(kSequenceExampleTag).Set<tf::SequenceExample>();
@@ -183,10 +183,10 @@ class UnpackMediaSequenceCalculator : public CalculatorBase {
         cc->Outputs().Tag(tag).Set<std::vector<float>>();
       }
     }
-    return ::mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
-  ::mediapipe::Status Open(CalculatorContext* cc) override {
+  absl::Status Open(CalculatorContext* cc) override {
     // Copy the packet to copy the otherwise inaccessible shared ptr.
     example_packet_holder_ = cc->InputSidePackets().Tag(kSequenceExampleTag);
     sequence_ = &example_packet_holder_.Get<tf::SequenceExample>();
@@ -335,10 +335,10 @@ class UnpackMediaSequenceCalculator : public CalculatorBase {
           .Set(MakePacket<double>(mpms::GetImageFrameRate(sequence)));
     }
 
-    return ::mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
-  ::mediapipe::Status Process(CalculatorContext* cc) override {
+  absl::Status Process(CalculatorContext* cc) override {
     if (timestamps_.empty()) {
       // This occurs when we only have metadata to unpack.
       LOG(INFO) << "only unpacking metadata because there are no timestamps.";
@@ -435,7 +435,7 @@ class UnpackMediaSequenceCalculator : public CalculatorBase {
 
     ++current_timestamp_index_;
     if (current_timestamp_index_ < timestamps_[last_timestamp_key_].size()) {
-      return ::mediapipe::OkStatus();
+      return absl::OkStatus();
     } else {
       return tool::StatusStop();
     }

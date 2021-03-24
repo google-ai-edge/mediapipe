@@ -1,5 +1,5 @@
 # MediaPipe graph that performs face detection with TensorFlow Lite on CPU.  Model paths setup for web use.
-# TODO: parameterize input paths to support desktop use.
+# TODO: parameterize input paths to support desktop use, for web only.
 input_stream: "VIDEO:input_video"
 output_stream: "DETECTIONS:output_detections"
 
@@ -37,7 +37,7 @@ node {
   output_stream: "TENSORS:detection_tensors"
   options: {
     [mediapipe.TfLiteInferenceCalculatorOptions.ext] {
-      model_path: "mediapipe/models/face_detection_front.tflite"
+      model_path: "face_detection_front.tflite"
     }
   }
 }
@@ -118,7 +118,7 @@ node {
   output_stream: "labeled_detections"
   options: {
     [mediapipe.DetectionLabelIdToTextCalculatorOptions.ext] {
-      label_map_path: "mediapipe/models/face_detection_front_labelmap.txt"
+      label_map_path: "face_detection_front_labelmap.txt"
     }
   }
 }

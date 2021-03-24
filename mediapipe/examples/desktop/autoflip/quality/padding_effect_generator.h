@@ -49,11 +49,10 @@ class PaddingEffectGenerator {
   //   the opacity of the black layer.
   // - background_color_in_rgb: If not null, uses this solid color as background
   //   instead of blurring the image, and does not adjust contrast or opacity.
-  ::mediapipe::Status Process(
-      const ImageFrame& input_frame, const float background_contrast,
-      const int blur_cv_size, const float overlay_opacity,
-      ImageFrame* output_frame,
-      const cv::Scalar* background_color_in_rgb = nullptr);
+  absl::Status Process(const ImageFrame& input_frame,
+                       const float background_contrast, const int blur_cv_size,
+                       const float overlay_opacity, ImageFrame* output_frame,
+                       const cv::Scalar* background_color_in_rgb = nullptr);
 
   // Compute the "render location" on the output frame where the "crop from"
   // location is to be placed.  For use with external rendering soutions.

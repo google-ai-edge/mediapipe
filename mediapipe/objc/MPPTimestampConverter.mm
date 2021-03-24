@@ -36,7 +36,7 @@
 }
 
 - (mediapipe::Timestamp)timestampForMediaTime:(CMTime)mediaTime {
-  float sampleSeconds = CMTIME_IS_VALID(mediaTime) ? CMTimeGetSeconds(mediaTime) : 0;
+  Float64 sampleSeconds = CMTIME_IS_VALID(mediaTime) ? CMTimeGetSeconds(mediaTime) : 0;
   const int64 sampleUsec = sampleSeconds * mediapipe::Timestamp::kTimestampUnitsPerSecond;
   _mediapipeTimestamp = mediapipe::Timestamp(sampleUsec) + _timestampOffset;
   if (_mediapipeTimestamp <= _lastTimestamp) {

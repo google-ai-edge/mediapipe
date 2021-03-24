@@ -1,0 +1,63 @@
+// Copyright 2020 The MediaPipe Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto2";
+
+package mediapipe.face_geometry;
+
+import "mediapipe/modules/face_geometry/protos/mesh_3d.proto";
+
+option java_package = "com.google.mediapipe.modules.facegeometry";
+option java_outer_classname = "GeometryPipelineMetadataProto";
+
+enum InputSource {
+  DEFAULT = 0;  // FACE_LANDMARK_PIPELINE
+  FACE_LANDMARK_PIPELINE = 1;
+  FACE_DETECTION_PIPELINE = 2;
+}
+
+message WeightedLandmarkRef {
+  // Defines the landmark ID. References an existing face landmark ID.
+  optional uint32 landmark_id = 1;
+  // Defines the landmark weight. The larger the weight the more influence this
+  // landmark has in the basis.
+  //
+  // Is positive.
+  optional float weight = 2;
+}
+
+// Next field ID: 4
+message GeometryPipelineMetadata {
+  // Defines the source of the input landmarks to let the underlying geometry
+  // pipeline to adjust in order to produce the best results.
+  //
+  // Face landmark pipeline is expected to produce 3D landmarks with relative Z
+  // coordinate, which is scaled as the X coordinate assuming the weak
+  // perspective projection camera model.
+  //
+  // Face landmark pipeline is expected to produce 2D landmarks with Z
+  // coordinate being equal to 0.
+  optional InputSource input_source = 3;
+  // Defines a mesh surface for a canonical face. The canonical face mesh vertex
+  // IDs are the same as the face landmark IDs.
+  //
+  // XYZ coordinates are defined in centimeter units.
+  optional Mesh3d canonical_mesh = 1;
+  // Defines a weighted landmark basis for running the Procrustes solver
+  // algorithm inside the geometry pipeline.
+  //
+  // A good basis sets face landmark weights in way to distinguish a head pose
+  // change from a facial expression change and to only respond to the former.
+  repeated WeightedLandmarkRef procrustes_landmark_basis = 2;
+}

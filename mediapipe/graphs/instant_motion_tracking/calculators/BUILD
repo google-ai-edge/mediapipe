@@ -18,8 +18,6 @@ licenses(["notice"])
 
 package(default_visibility = ["//visibility:public"])
 
-exports_files(["LICENSE"])
-
 proto_library(
     name = "sticker_buffer_proto",
     srcs = [
@@ -63,8 +61,8 @@ cc_library(
         "//mediapipe/framework/port:opencv_imgproc",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
-        "//mediapipe/graphs/object_detection_3d/calculators:box",
         "//mediapipe/graphs/object_detection_3d/calculators:model_matrix_cc_proto",
+        "//mediapipe/modules/objectron/calculators:box",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
         "@eigen_archive//:eigen",

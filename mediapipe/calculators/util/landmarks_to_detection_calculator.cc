@@ -80,17 +80,17 @@ Detection ConvertLandmarksToDetection(const NormalizedLandmarkList& landmarks) {
 // }
 class LandmarksToDetectionCalculator : public CalculatorBase {
  public:
-  static ::mediapipe::Status GetContract(CalculatorContract* cc);
-  ::mediapipe::Status Open(CalculatorContext* cc) override;
+  static absl::Status GetContract(CalculatorContract* cc);
+  absl::Status Open(CalculatorContext* cc) override;
 
-  ::mediapipe::Status Process(CalculatorContext* cc) override;
+  absl::Status Process(CalculatorContext* cc) override;
 
  private:
   ::mediapipe::LandmarksToDetectionCalculatorOptions options_;
 };
 REGISTER_CALCULATOR(LandmarksToDetectionCalculator);
 
-::mediapipe::Status LandmarksToDetectionCalculator::GetContract(
+absl::Status LandmarksToDetectionCalculator::GetContract(
     CalculatorContract* cc) {
   RET_CHECK(cc->Inputs().HasTag(kNormalizedLandmarksTag));
   RET_CHECK(cc->Outputs().HasTag(kDetectionTag));
@@ -98,19 +98,17 @@ REGISTER_CALCULATOR(LandmarksToDetectionCalculator);
   cc->Inputs().Tag(kNormalizedLandmarksTag).Set<NormalizedLandmarkList>();
   cc->Outputs().Tag(kDetectionTag).Set<Detection>();
 
-  return ::mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-::mediapipe::Status LandmarksToDetectionCalculator::Open(
-    CalculatorContext* cc) {
+absl::Status LandmarksToDetectionCalculator::Open(CalculatorContext* cc) {
   cc->SetOffset(TimestampDiff(0));
 
   options_ = cc->Options<::mediapipe::LandmarksToDetectionCalculatorOptions>();
-  return ::mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-::mediapipe::Status LandmarksToDetectionCalculator::Process(
-    CalculatorContext* cc) {
+absl::Status LandmarksToDetectionCalculator::Process(CalculatorContext* cc) {
   const auto& landmarks =
       cc->Inputs().Tag(kNormalizedLandmarksTag).Get<NormalizedLandmarkList>();
   RET_CHECK_GT(landmarks.landmark_size(), 0)
@@ -134,7 +132,7 @@ REGISTER_CALCULATOR(LandmarksToDetectionCalculator);
       .Tag(kDetectionTag)
       .Add(detection.release(), cc->InputTimestamp());
 
-  return ::mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
 }  // namespace mediapipe

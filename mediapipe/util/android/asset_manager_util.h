@@ -65,16 +65,18 @@ class AssetManager {
   bool InitializeFromContext(JNIEnv* env, jobject context,
                              const std::string& cache_dir_path);
 
-  // Checks if a file exists. Returns true on success, false otherwise.
-  bool FileExists(const std::string& filename);
+  // Checks if a file exists. Returns true on success, false otherwise. If it
+  // does exist, then 'is_dir' will be set to indicate whether the file is a
+  // directory.
+  bool FileExists(const std::string& filename, bool* is_dir = nullptr);
 
   // Reads a file into output. Returns true on success, false otherwise.
   bool ReadFile(const std::string& filename, std::string* output);
 
   // Reads the raw bytes referred to by the supplied content URI. Returns true
   // on success, false otherwise.
-  mediapipe::Status ReadContentUri(const std::string& content_uri,
-                                   std::string* output);
+  absl::Status ReadContentUri(const std::string& content_uri,
+                              std::string* output);
 
   // Returns the path to the Android cache directory. Will be empty if
   // InitializeFromActivity has not been called.
@@ -83,7 +85,7 @@ class AssetManager {
   // Caches the contents of the given asset as a file, and returns a path to
   // that file. This can be used to pass an asset to APIs that require a path
   // to a filesystem file.
-  ::mediapipe::StatusOr<std::string> CachedFileFromAsset(
+  absl::StatusOr<std::string> CachedFileFromAsset(
       const std::string& asset_path);
 
  private:

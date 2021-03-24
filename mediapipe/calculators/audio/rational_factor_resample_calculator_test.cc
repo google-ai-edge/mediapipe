@@ -80,7 +80,7 @@ class RationalFactorResampleCalculatorTest
   }
 
   // Initializes and runs the test graph.
-  ::mediapipe::Status Run(double output_sample_rate) {
+  absl::Status Run(double output_sample_rate) {
     options_.set_target_sample_rate(output_sample_rate);
     InitializeGraph();
 
@@ -120,7 +120,6 @@ class RationalFactorResampleCalculatorTest
 
     // The exact number of expected samples may vary based on the implementation
     // of the resampler since the exact value is not an integer.
-    // TODO: Reduce this offset to + 1 once cl/185829520 is submitted.
     const double expected_num_output_samples = num_input_samples_ * factor;
     EXPECT_LE(ceil(expected_num_output_samples), num_output_samples);
     EXPECT_GE(ceil(expected_num_output_samples) + 11, num_output_samples);

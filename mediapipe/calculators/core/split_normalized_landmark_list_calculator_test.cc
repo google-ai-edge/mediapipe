@@ -121,7 +121,7 @@ TEST_F(SplitNormalizedLandmarkListCalculatorTest, SmokeTest) {
 
   // Prepare a graph to use the SplitNormalizedLandmarkListCalculator.
   CalculatorGraphConfig graph_config =
-      ::mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(
           R"(
             input_stream: "landmarks_in"
             node {
@@ -170,7 +170,7 @@ TEST_F(SplitNormalizedLandmarkListCalculatorTest, SmokeTest) {
 TEST_F(SplitNormalizedLandmarkListCalculatorTest, InvalidRangeTest) {
   // Prepare a graph to use the SplitNormalizedLandmarkListCalculator.
   CalculatorGraphConfig graph_config =
-      ::mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(
           R"(
             input_stream: "landmarks_in"
             node {
@@ -195,7 +195,7 @@ TEST_F(SplitNormalizedLandmarkListCalculatorTest,
        InvalidOutputStreamCountTest) {
   // Prepare a graph to use the SplitNormalizedLandmarkListCalculator.
   CalculatorGraphConfig graph_config =
-      ::mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(
           R"(
             input_stream: "landmarks_in"
             node {
@@ -222,7 +222,7 @@ TEST_F(SplitNormalizedLandmarkListCalculatorTest,
        InvalidCombineOutputsMultipleOutputsTest) {
   // Prepare a graph to use the SplitNormalizedLandmarkListCalculator.
   CalculatorGraphConfig graph_config =
-      ::mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(
           R"(
             input_stream: "landmarks_in"
             node {
@@ -251,7 +251,7 @@ TEST_F(SplitNormalizedLandmarkListCalculatorTest,
        InvalidOverlappingRangesTest) {
   // Prepare a graph to use the SplitNormalizedLandmarkListCalculator.
   CalculatorGraphConfig graph_config =
-      ::mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(
           R"(
             input_stream: "landmarks_in"
             node {
@@ -280,7 +280,7 @@ TEST_F(SplitNormalizedLandmarkListCalculatorTest, SmokeTestElementOnly) {
 
   // Prepare a graph to use the SplitNormalizedLandmarkListCalculator.
   CalculatorGraphConfig graph_config =
-      ::mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(
           R"(
             input_stream: "landmarks_in"
             node {
@@ -333,7 +333,7 @@ TEST_F(SplitNormalizedLandmarkListCalculatorTest, SmokeTestCombiningOutputs) {
 
   // Prepare a graph to use the SplitNormalizedLandmarkListCalculator.
   CalculatorGraphConfig graph_config =
-      ::mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(
           R"(
             input_stream: "landmarks_in"
             node {
@@ -376,7 +376,7 @@ TEST_F(SplitNormalizedLandmarkListCalculatorTest,
        ElementOnlyDisablesVectorOutputs) {
   // Prepare a graph to use the SplitNormalizedLandmarkListCalculator.
   CalculatorGraphConfig graph_config =
-      ::mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(
           R"(
             input_stream: "landmarks_in"
             node {

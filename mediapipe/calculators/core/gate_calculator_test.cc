@@ -1,4 +1,4 @@
-// Copyright 2019 The MediaPipe Authors.
+// Copyright 2019-2020 The MediaPipe Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ namespace {
 class GateCalculatorTest : public ::testing::Test {
  protected:
   // Helper to run a graph and return status.
-  static ::mediapipe::Status RunGraph(const std::string& proto) {
+  static absl::Status RunGraph(const std::string& proto) {
     auto runner = absl::make_unique<CalculatorRunner>(
         ParseTextProtoOrDie<CalculatorGraphConfig::Node>(proto));
     return runner->Run();

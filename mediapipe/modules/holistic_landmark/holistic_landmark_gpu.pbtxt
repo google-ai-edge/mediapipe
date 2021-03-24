@@ -1,0 +1,114 @@
+# Predicts pose + left/right hand + face landmarks.
+#
+# It is required that:
+# - "face_detection_front.tflite" is available at
+# "mediapipe/modules/face_detection/face_detection_front.tflite"
+#
+# - "face_landmark.tflite" is available at
+# "mediapipe/modules/face_landmark/face_landmark.tflite"
+#
+# - "hand_landmark.tflite" is available at
+# "mediapipe/modules/hand_landmark/hand_landmark.tflite"
+#
+# - "hand_recrop.tflite" is available at
+# "mediapipe/modules/holistic_landmark/hand_recrop.tflite"
+#
+# - "handedness.txt" is available at
+# "mediapipe/modules/hand_landmark/handedness.txt"
+#
+# - "pose_detection.tflite" is available at
+# "mediapipe/modules/pose_detection/pose_detection.tflite"
+#
+# - "pose_landmark_full_body.tflite" or "pose_landmark_upper_body.tflite" is
+# available at
+# "mediapipe/modules/pose_landmark/pose_landmark_full_body.tflite"
+# or
+# "mediapipe/modules/pose_landmark/pose_landmark_upper_body.tflite"
+# path respectively during execution, depending on the specification in the
+# UPPER_BODY_ONLY input side packet.
+#
+# EXAMPLE:
+#   node {
+#     calculator: "HolisticLandmarkGpu"
+#     input_stream: "IMAGE:input_video"
+#     input_side_packet: UPPER_BODY_ONLY:upper_body_only
+#     input_side_packet: SMOOTH_LANDMARKS:smooth_landmarks
+#     output_stream: "POSE_LANDMARKS:pose_landmarks"
+#     output_stream: "FACE_LANDMARKS:face_landmarks"
+#     output_stream: "LEFT_HAND_LANDMARKS:left_hand_landmarks"
+#     output_stream: "RIGHT_HAND_LANDMARKS:right_hand_landmarks"
+#   }
+#
+# NOTE: if a pose/hand/face output is not present in the image, for this
+# particular timestamp there will not be an output packet in the corresponding
+# output stream below. However, the MediaPipe framework will internally inform
+# the downstream calculators of the absence of this packet so that they don't
+# wait for it unnecessarily.
+
+type: "HolisticLandmarkGpu"
+
+# GPU image. (GpuBuffer)
+input_stream: "IMAGE:image"
+
+# Whether to detect/predict the full set of pose landmarks (see below), or only
+# those on the upper body. If unspecified, functions as set to false. (bool)
+# Note that upper-body-only prediction may be more accurate for use cases where
+# the lower-body parts are mostly out of view.
+input_side_packet: "UPPER_BODY_ONLY:upper_body_only"
+# Whether to filter landmarks across different input images to reduce jitter.
+# If unspecified, functions as set to true. (bool)
+input_side_packet: "SMOOTH_LANDMARKS:smooth_landmarks"
+
+# Pose landmarks. (NormalizedLandmarkList)
+# We have 33 landmarks or 25 landmarks if UPPER_BODY_ONLY is set to true.
+output_stream: "POSE_LANDMARKS:pose_landmarks"
+# 21 left hand landmarks. (NormalizedLandmarkList)
+output_stream: "LEFT_HAND_LANDMARKS:left_hand_landmarks"
+# 21 right hand landmarks. (NormalizedLandmarkList)
+output_stream: "RIGHT_HAND_LANDMARKS:right_hand_landmarks"
+# 468 face landmarks. (NormalizedLandmarkList)
+output_stream: "FACE_LANDMARKS:face_landmarks"
+
+# Debug outputs
+output_stream: "POSE_ROI:pose_landmarks_roi"
+output_stream: "POSE_DETECTION:pose_detection"
+
+# Predicts pose landmarks.
+node {
+  calculator: "PoseLandmarkGpu"
+  input_stream: "IMAGE:image"
+  input_side_packet: "UPPER_BODY_ONLY:upper_body_only"
+  input_side_packet: "SMOOTH_LANDMARKS:smooth_landmarks"
+  output_stream: "LANDMARKS:pose_landmarks"
+  output_stream: "ROI_FROM_LANDMARKS:pose_landmarks_roi"
+  output_stream: "DETECTION:pose_detection"
+}
+
+# Predicts left and right hand landmarks based on the initial pose landmarks.
+node {
+  calculator: "HandLandmarksLeftAndRightGpu"
+  input_stream: "IMAGE:image"
+  input_stream: "POSE_LANDMARKS:pose_landmarks"
+  output_stream: "LEFT_HAND_LANDMARKS:left_hand_landmarks"
+  output_stream: "RIGHT_HAND_LANDMARKS:right_hand_landmarks"
+}
+
+# Extracts face-related pose landmarks.
+node {
+  calculator: "SplitNormalizedLandmarkListCalculator"
+  input_stream: "pose_landmarks"
+  output_stream: "face_landmarks_from_pose"
+  options: {
+    [mediapipe.SplitVectorCalculatorOptions.ext] {
+      ranges: { begin: 0 end: 11 }
+    }
+  }
+}
+
+# Predicts face landmarks based on the initial pose landmarks.
+node {
+  calculator: "FaceLandmarksFromPoseGpu"
+  input_stream: "IMAGE:image"
+  input_stream: "FACE_LANDMARKS_FROM_POSE:face_landmarks_from_pose"
+  output_stream: "FACE_LANDMARKS:face_landmarks"
+}

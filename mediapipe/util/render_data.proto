@@ -160,6 +160,12 @@ message RenderAnnotation {
     // cv::FONT_HERSHEY_SCRIPT_SIMPLEX (6)
     // cv::FONT_HERSHEY_SCRIPT_COMPLEX (7)
     optional int32 font_face = 6 [default = 0];
+
+    // Options to center text around the anchor point (left, baseline) by
+    // taking into account font shape, size and text length (e.g.,
+    // [left, baseline] represent  [center_x, center_y].
+    optional bool center_horizontally = 7 [default = false];
+    optional bool center_vertically = 8 [default = false];
   }
 
   // The RenderAnnotation can be one of the below formats.

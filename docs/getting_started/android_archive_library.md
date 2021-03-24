@@ -1,8 +1,9 @@
 ---
 layout: default
 title: MediaPipe Android Archive
-parent: Getting Started
-nav_order: 7
+parent: MediaPipe on Android
+grand_parent: Getting Started
+nav_order: 2
 ---
 
 # MediaPipe Android Archive
@@ -44,7 +45,8 @@ each project.
 2.  Run the Bazel build command to generate the AAR.
 
     ```bash
-    bazel build -c opt --host_crosstool_top=@bazel_tools//tools/cpp:toolchain --fat_apk_cpu=arm64-v8a,armeabi-v7a \
+    bazel build -c opt --host_crosstool_top=@bazel_tools//tools/cpp:toolchain \
+        --fat_apk_cpu=arm64-v8a,armeabi-v7a --strip=ALWAYS \
         //path/to/the/aar/build/file:aar_name
     ```
 
@@ -85,16 +87,14 @@ each project.
     Build the MediaPipe binary graph and copy the assets into
     app/src/main/assets, e.g., for the face detection graph, you need to build
     and copy
-    [the binary graph](https://github.com/google/mediapipe/blob/master/mediapipe/examples/android/src/java/com/google/mediapipe/apps/facedetectiongpu/BUILD#L41),
-    [the tflite model](https://github.com/google/mediapipe/tree/master/mediapipe/models/face_detection_front.tflite),
+    [the binary graph](https://github.com/google/mediapipe/blob/master/mediapipe/examples/android/src/java/com/google/mediapipe/apps/facedetectiongpu/BUILD#L41)
     and
-    [the label map](https://github.com/google/mediapipe/blob/master/mediapipe/models/face_detection_front_labelmap.txt).
+    [the face detection tflite model](https://github.com/google/mediapipe/tree/master/mediapipe/modules/face_detection/face_detection_front.tflite).
 
     ```bash
     bazel build -c opt mediapipe/mediapipe/graphs/face_detection:mobile_gpu_binary_graph
     cp bazel-bin/mediapipe/graphs/face_detection/mobile_gpu.binarypb /path/to/your/app/src/main/assets/
-    cp mediapipe/models/face_detection_front.tflite /path/to/your/app/src/main/assets/
-    cp mediapipe/models/face_detection_front_labelmap.txt /path/to/your/app/src/main/assets/
+    cp mediapipe/modules/face_detection/face_detection_front.tflite /path/to/your/app/src/main/assets/
     ```
 
     ![Screenshot](../images/mobile/assets_location.png)
@@ -132,9 +132,10 @@ each project.
         implementation 'com.google.guava:guava:27.0.1-android'
         implementation 'com.google.protobuf:protobuf-java:3.11.4'
         // CameraX core library
-        def camerax_version = "1.0.0-alpha06"
+        def camerax_version = "1.0.0-beta10"
         implementation "androidx.camera:camera-core:$camerax_version"
         implementation "androidx.camera:camera-camera2:$camerax_version"
+        implementation "androidx.camera:camera-lifecycle:$camerax_version"
     }
     ```
 

@@ -66,13 +66,13 @@ class GlScalerCalculator : public CalculatorBase {
   GlScalerCalculator() {}
   ~GlScalerCalculator();
 
-  static ::mediapipe::Status GetContract(CalculatorContract* cc);
+  static absl::Status GetContract(CalculatorContract* cc);
 
-  ::mediapipe::Status Open(CalculatorContext* cc) override;
-  ::mediapipe::Status Process(CalculatorContext* cc) override;
+  absl::Status Open(CalculatorContext* cc) override;
+  absl::Status Process(CalculatorContext* cc) override;
 
-  ::mediapipe::Status GlSetup();
-  ::mediapipe::Status GlRender(const GlTexture& src, const GlTexture& dst);
+  absl::Status GlSetup();
+  absl::Status GlRender(const GlTexture& src, const GlTexture& dst);
   void GetOutputDimensions(int src_width, int src_height, int* dst_width,
                            int* dst_height);
   void GetOutputPadding(int src_width, int src_height, int dst_width,
@@ -98,7 +98,7 @@ class GlScalerCalculator : public CalculatorBase {
 REGISTER_CALCULATOR(GlScalerCalculator);
 
 // static
-::mediapipe::Status GlScalerCalculator::GetContract(CalculatorContract* cc) {
+absl::Status GlScalerCalculator::GetContract(CalculatorContract* cc) {
   TagOrIndex(&cc->Inputs(), "VIDEO", 0).Set<GpuBuffer>();
   TagOrIndex(&cc->Outputs(), "VIDEO", 0).Set<GpuBuffer>();
   if (cc->Inputs().HasTag("ROTATION")) {
@@ -126,10 +126,10 @@ REGISTER_CALCULATOR(GlScalerCalculator);
     cc->Outputs().Tag("TOP_BOTTOM_PADDING").Set<float>();
     cc->Outputs().Tag("LEFT_RIGHT_PADDING").Set<float>();
   }
-  return ::mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-::mediapipe::Status GlScalerCalculator::Open(CalculatorContext* cc) {
+absl::Status GlScalerCalculator::Open(CalculatorContext* cc) {
   // Inform the framework that we always output at the same timestamp
   // as we receive a packet at.
   cc->SetOffset(mediapipe::TimestampDiff(0));
@@ -181,14 +181,14 @@ REGISTER_CALCULATOR(GlScalerCalculator);
 
   MP_RETURN_IF_ERROR(FrameRotationFromInt(&rotation_, rotation_ccw));
 
-  return ::mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-::mediapipe::Status GlScalerCalculator::Process(CalculatorContext* cc) {
+absl::Status GlScalerCalculator::Process(CalculatorContext* cc) {
   if (cc->Inputs().HasTag("OUTPUT_DIMENSIONS")) {
     if (cc->Inputs().Tag("OUTPUT_DIMENSIONS").IsEmpty()) {
       // OUTPUT_DIMENSIONS input stream is specified, but value is missing.
-      return ::mediapipe::OkStatus();
+      return absl::OkStatus();
     }
 
     const auto& dimensions =
@@ -197,7 +197,7 @@ REGISTER_CALCULATOR(GlScalerCalculator);
     dst_height_ = dimensions[1];
   }
 
-  return helper_.RunInGlContext([this, cc]() -> ::mediapipe::Status {
+  return helper_.RunInGlContext([this, cc]() -> absl::Status {
     const auto& input = TagOrIndex(cc->Inputs(), "VIDEO", 0).Get<GpuBuffer>();
     QuadRenderer* renderer = nullptr;
     GlTexture src1;
@@ -215,7 +215,7 @@ REGISTER_CALCULATOR(GlScalerCalculator);
       src1 = helper_.CreateSourceTexture(input, 0);
       src2 = helper_.CreateSourceTexture(input, 1);
     } else  // NOLINT(readability/braces)
-#endif  // __APPLE__
+#endif      // __APPLE__
     {
       src1 = helper_.CreateSourceTexture(input);
 #ifdef __ANDROID__
@@ -227,7 +227,7 @@ REGISTER_CALCULATOR(GlScalerCalculator);
         }
         renderer = ext_rgb_renderer_.get();
       } else  // NOLINT(readability/braces)
-#endif  // __ANDROID__
+#endif        // __ANDROID__
       {
         if (!rgb_renderer_) {
           rgb_renderer_ = absl::make_unique<QuadRenderer>();
@@ -294,7 +294,7 @@ REGISTER_CALCULATOR(GlScalerCalculator);
     TagOrIndex(&cc->Outputs(), "VIDEO", 0)
         .Add(output.release(), cc->InputTimestamp());
 
-    return ::mediapipe::OkStatus();
+    return absl::OkStatus();
   });
 }
 

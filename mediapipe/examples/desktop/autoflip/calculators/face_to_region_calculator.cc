@@ -55,9 +55,9 @@ class FaceToRegionCalculator : public CalculatorBase {
   FaceToRegionCalculator(const FaceToRegionCalculator&) = delete;
   FaceToRegionCalculator& operator=(const FaceToRegionCalculator&) = delete;
 
-  static ::mediapipe::Status GetContract(mediapipe::CalculatorContract* cc);
-  ::mediapipe::Status Open(mediapipe::CalculatorContext* cc) override;
-  ::mediapipe::Status Process(mediapipe::CalculatorContext* cc) override;
+  static absl::Status GetContract(mediapipe::CalculatorContract* cc);
+  absl::Status Open(mediapipe::CalculatorContext* cc) override;
+  absl::Status Process(mediapipe::CalculatorContext* cc) override;
 
  private:
   double NormalizeX(const int pixel);
@@ -78,18 +78,17 @@ REGISTER_CALCULATOR(FaceToRegionCalculator);
 
 FaceToRegionCalculator::FaceToRegionCalculator() {}
 
-::mediapipe::Status FaceToRegionCalculator::GetContract(
+absl::Status FaceToRegionCalculator::GetContract(
     mediapipe::CalculatorContract* cc) {
   if (cc->Inputs().HasTag("VIDEO")) {
     cc->Inputs().Tag("VIDEO").Set<ImageFrame>();
   }
   cc->Inputs().Tag("FACES").Set<std::vector<mediapipe::Detection>>();
   cc->Outputs().Tag("REGIONS").Set<DetectionSet>();
-  return ::mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-::mediapipe::Status FaceToRegionCalculator::Open(
-    mediapipe::CalculatorContext* cc) {
+absl::Status FaceToRegionCalculator::Open(mediapipe::CalculatorContext* cc) {
   options_ = cc->Options<FaceToRegionCalculatorOptions>();
   if (!cc->Inputs().HasTag("VIDEO")) {
     RET_CHECK(!options_.use_visual_scorer())
@@ -105,7 +104,7 @@ FaceToRegionCalculator::FaceToRegionCalculator() {}
   scorer_ = absl::make_unique<VisualScorer>(options_.scorer_options());
   frame_width_ = -1;
   frame_height_ = -1;
-  return ::mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
 inline double FaceToRegionCalculator::NormalizeX(const int pixel) {
@@ -146,11 +145,10 @@ void FaceToRegionCalculator::ExtendSalientRegionWithPoint(
   }
 }
 
-::mediapipe::Status FaceToRegionCalculator::Process(
-    mediapipe::CalculatorContext* cc) {
+absl::Status FaceToRegionCalculator::Process(mediapipe::CalculatorContext* cc) {
   if (cc->Inputs().HasTag("VIDEO") &&
       cc->Inputs().Tag("VIDEO").Value().IsEmpty()) {
-    return ::mediapipe::UnknownErrorBuilder(MEDIAPIPE_LOC)
+    return mediapipe::UnknownErrorBuilder(MEDIAPIPE_LOC)
            << "No VIDEO input at time " << cc->InputTimestamp().Seconds();
   }
 
@@ -280,7 +278,7 @@ void FaceToRegionCalculator::ExtendSalientRegionWithPoint(
   }
   cc->Outputs().Tag("REGIONS").Add(region_set.release(), cc->InputTimestamp());
 
-  return ::mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
 }  // namespace autoflip

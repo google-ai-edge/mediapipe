@@ -2,7 +2,7 @@
 layout: default
 title: Installation
 parent: Getting Started
-nav_order: 1
+nav_order: 6
 ---
 
 # Installation
@@ -12,7 +12,7 @@ nav_order: 1
 {:toc}
 ---
 
-Note: To interoperate with OpenCV, OpenCV 3.x and above are preferred. OpenCV
+Note: To interoperate with OpenCV, OpenCV 3.x to 4.1 are preferred. OpenCV
 2.x currently works but interoperability support may be deprecated in the
 future.
 
@@ -23,37 +23,36 @@ Note: To make Mediapipe work with TensorFlow, please set Python 3.7 as the
 default Python version and install the Python "six" library by running `pip3
 install --user six`.
 
-Note: To build and run Android example apps, see these
-[instructions](./building_examples.md#android). To build and run iOS example
-apps, see these [instructions](./building_examples.md#ios).
-
 ## Installing on Debian and Ubuntu
 
-1.  Checkout MediaPipe repository.
+1.  Install Bazel.
+
+    Follow the official
+    [Bazel documentation](https://docs.bazel.build/versions/master/install-ubuntu.html)
+    to install Bazel 3.4 or higher.
+
+    For Nvidia Jetson and Raspberry Pi devices with aarch64 Linux, Bazel needs
+    to be built from source:
 
     ```bash
+    # For Bazel 3.4.1
+    mkdir $HOME/bazel-3.4.1
+    cd $HOME/bazel-3.4.1
+    wget https://github.com/bazelbuild/bazel/releases/download/3.4.1/bazel-3.4.1-dist.zip
+    sudo apt-get install build-essential openjdk-8-jdk python zip unzip
+    unzip bazel-3.4.1-dist.zip
+    env EXTRA_BAZEL_ARGS="--host_javabase=@local_jdk//:jdk" bash ./compile.sh
+    sudo cp output/bazel /usr/local/bin/
+    ```
+
+2.  Checkout MediaPipe repository.
+
+    ```bash
+    $ cd $HOME
     $ git clone https://github.com/google/mediapipe.git
 
     # Change directory into MediaPipe root directory
     $ cd mediapipe
-    ```
-
-2.  Install Bazel.
-
-    Follow the official
-    [Bazel documentation](https://docs.bazel.build/versions/master/install-ubuntu.html)
-    to install Bazel 2.0 or higher.
-
-    For Nvidia Jetson and Raspberry Pi devices with ARM Ubuntu, Bazel needs to
-    be built from source.
-
-    ```bash
-    # For Bazel 3.0.0
-    wget https://github.com/bazelbuild/bazel/releases/download/3.0.0/bazel-3.0.0-dist.zip
-    sudo apt-get install build-essential openjdk-8-jdk python zip unzip
-    unzip bazel-3.0.0-dist.zip
-    env EXTRA_BAZEL_ARGS="--host_javabase=@local_jdk//:jdk" bash ./compile.sh
-    sudo cp output/bazel /usr/local/bin/
     ```
 
 3.  Install OpenCV and FFmpeg.
@@ -174,7 +173,7 @@ apps, see these [instructions](./building_examples.md#ios).
     # when building GPU examples.
     ```
 
-5.  Run the [Hello World desktop example](./hello_world_desktop.md).
+5.  Run the [Hello World! in C++ example](./hello_world_cpp.md).
 
     ```bash
     $ export GLOG_logtostderr=1
@@ -208,7 +207,13 @@ build issues.
 
 **Disclaimer**: Running MediaPipe on CentOS is experimental.
 
-1.  Checkout MediaPipe repository.
+1.  Install Bazel.
+
+    Follow the official
+    [Bazel documentation](https://docs.bazel.build/versions/master/install-redhat.html)
+    to install Bazel 3.4 or higher.
+
+2.  Checkout MediaPipe repository.
 
     ```bash
     $ git clone https://github.com/google/mediapipe.git
@@ -216,12 +221,6 @@ build issues.
     # Change directory into MediaPipe root directory
     $ cd mediapipe
     ```
-
-2.  Install Bazel.
-
-    Follow the official
-    [Bazel documentation](https://docs.bazel.build/versions/master/install-redhat.html)
-    to install Bazel 2.0 or higher.
 
 3.  Install OpenCV.
 
@@ -304,7 +303,7 @@ build issues.
     )
     ```
 
-4.  Run the [Hello World desktop example](./hello_world_desktop.md).
+4.  Run the [Hello World! in C++ example](./hello_world_cpp.md).
 
     ```bash
     $ export GLOG_logtostderr=1
@@ -337,26 +336,19 @@ build issues.
     *   Install [Xcode](https://developer.apple.com/xcode/) and its Command Line
         Tools by `xcode-select --install`.
 
-2.  Checkout MediaPipe repository.
+2.  Install Bazel.
+
+    Follow the official
+    [Bazel documentation](https://docs.bazel.build/versions/master/install-os-x.html#install-with-installer-mac-os-x)
+    to install Bazel 3.4 or higher.
+
+3.  Checkout MediaPipe repository.
 
     ```bash
     $ git clone https://github.com/google/mediapipe.git
 
     $ cd mediapipe
     ```
-
-3.  Install Bazel.
-
-    Option 1. Use package manager tool to install Bazel
-
-    ```bash
-    $ brew install bazel
-    # Run 'bazel version' to check version of bazel
-    ```
-
-    Option 2. Follow the official
-    [Bazel documentation](https://docs.bazel.build/versions/master/install-os-x.html#install-with-installer-mac-os-x)
-    to install Bazel 2.0 or higher.
 
 4.  Install OpenCV and FFmpeg.
 
@@ -427,7 +419,6 @@ build issues.
         linkstatic = 1,
         visibility = ["//visibility:public"],
     )
-
     ```
 
 5.  Make sure that Python 3 and the Python "six" library are installed.
@@ -440,7 +431,7 @@ build issues.
     $ pip3 install --user six
     ```
 
-6.  Run the [Hello World desktop example](./hello_world_desktop.md).
+6.  Run the [Hello World! in C++ example](./hello_world_cpp.md).
 
     ```bash
     $ export GLOG_logtostderr=1
@@ -506,7 +497,7 @@ next section.
 
     Follow the official
     [Bazel documentation](https://docs.bazel.build/versions/master/install-windows.html)
-    to install Bazel 2.0 or higher.
+    to install Bazel 3.4 or higher.
 
 6.  Set Bazel variables.
 
@@ -541,7 +532,7 @@ next section.
     )
     ```
 
-9.  Run the [Hello World desktop example](./hello_world_desktop.md).
+9.  Run the [Hello World! in C++ example](./hello_world_cpp.md).
 
     Note: For building MediaPipe on Windows, please add `--action_env
     PYTHON_BIN_PATH="C://path//to//python.exe"` to the build command.
@@ -567,7 +558,6 @@ next section.
     # I20200514 20:43:12.279618  1200 hello_world.cc:56] Hello World!
     # I20200514 20:43:12.279618  1200 hello_world.cc:56] Hello World!
     # I20200514 20:43:12.280613  1200 hello_world.cc:56] Hello World!
-
     ```
 
 If you run into a build error, please read
@@ -607,14 +597,14 @@ cameras. Alternatively, you use a video file as input.
 
     ```bash
     username@DESKTOP-TMVLBJ1:~$ curl -sLO --retry 5 --retry-max-time 10 \
-    https://storage.googleapis.com/bazel/3.0.0/release/bazel-3.0.0-installer-linux-x86_64.sh && \
-    sudo mkdir -p /usr/local/bazel/3.0.0 && \
-    chmod 755 bazel-3.0.0-installer-linux-x86_64.sh && \
-    sudo ./bazel-3.0.0-installer-linux-x86_64.sh --prefix=/usr/local/bazel/3.0.0 && \
-    source /usr/local/bazel/3.0.0/lib/bazel/bin/bazel-complete.bash
+    https://storage.googleapis.com/bazel/3.4.1/release/bazel-3.4.1-installer-linux-x86_64.sh && \
+    sudo mkdir -p /usr/local/bazel/3.4.1 && \
+    chmod 755 bazel-3.4.1-installer-linux-x86_64.sh && \
+    sudo ./bazel-3.4.1-installer-linux-x86_64.sh --prefix=/usr/local/bazel/3.4.1 && \
+    source /usr/local/bazel/3.4.1/lib/bazel/bin/bazel-complete.bash
 
-    username@DESKTOP-TMVLBJ1:~$ /usr/local/bazel/3.0.0/lib/bazel/bin/bazel version && \
-    alias bazel='/usr/local/bazel/3.0.0/lib/bazel/bin/bazel'
+    username@DESKTOP-TMVLBJ1:~$ /usr/local/bazel/3.4.1/lib/bazel/bin/bazel version && \
+    alias bazel='/usr/local/bazel/3.4.1/lib/bazel/bin/bazel'
     ```
 
 6.  Checkout MediaPipe repository.
@@ -675,7 +665,7 @@ cameras. Alternatively, you use a video file as input.
     )
     ```
 
-8.  Run the [Hello World desktop example](./hello_world_desktop.md).
+8.  Run the [Hello World! in C++ example](./hello_world_cpp.md).
 
     ```bash
     username@DESKTOP-TMVLBJ1:~/mediapipe$ export GLOG_logtostderr=1
@@ -731,7 +721,7 @@ This will use a Docker image that will isolate mediapipe's installation from the
     # Successfully tagged mediapipe:latest
     ```
 
-3.  Run the [Hello World desktop example](./hello_world_desktop.md).
+3.  Run the [Hello World! in C++ example](./hello_world_cpp.md).
 
     ```bash
     $ docker run -it --name mediapipe mediapipe:latest

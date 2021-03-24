@@ -54,11 +54,11 @@ FrameRotation FrameRotationFromDegrees(int degrees_ccw) {
   }
 }
 
-::mediapipe::Status QuadRenderer::GlSetup() {
+absl::Status QuadRenderer::GlSetup() {
   return GlSetup(kBasicTexturedFragmentShader, {"video_frame"});
 }
 
-::mediapipe::Status QuadRenderer::GlSetup(
+absl::Status QuadRenderer::GlSetup(
     const GLchar* custom_frag_shader,
     const std::vector<const GLchar*>& custom_frame_uniforms) {
   // Load vertex and fragment shaders
@@ -84,15 +84,20 @@ FrameRotation FrameRotationFromDegrees(int degrees_ccw) {
   scale_unif_ = glGetUniformLocation(program_, "scale");
   RET_CHECK(scale_unif_ != -1) << "could not find uniform 'scale'";
 
+  glGenVertexArrays(1, &vao_);
   glGenBuffers(2, vbo_);
 
-  return ::mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
 void QuadRenderer::GlTeardown() {
   if (program_) {
     glDeleteProgram(program_);
     program_ = 0;
+  }
+  if (vao_) {
+    glDeleteVertexArrays(1, &vao_);
+    vao_ = 0;
   }
   if (vbo_[0]) {
     glDeleteBuffers(2, vbo_);
@@ -101,10 +106,12 @@ void QuadRenderer::GlTeardown() {
   }
 }
 
-::mediapipe::Status QuadRenderer::GlRender(
-    float frame_width, float frame_height, float view_width, float view_height,
-    FrameScaleMode scale_mode, FrameRotation rotation, bool flip_horizontal,
-    bool flip_vertical, bool flip_texture) {
+absl::Status QuadRenderer::GlRender(float frame_width, float frame_height,
+                                    float view_width, float view_height,
+                                    FrameScaleMode scale_mode,
+                                    FrameRotation rotation,
+                                    bool flip_horizontal, bool flip_vertical,
+                                    bool flip_texture) {
   RET_CHECK(program_) << "Must setup the program before rendering.";
 
   glUseProgram(program_);
@@ -166,6 +173,7 @@ void QuadRenderer::GlTeardown() {
   // TODO: In practice, our vertex attributes almost never change, so
   // convert this to being actually static, with initialization done in the
   // GLSetup.
+  glBindVertexArray(vao_);
   glEnableVertexAttribArray(ATTRIB_VERTEX);
   glBindBuffer(GL_ARRAY_BUFFER, vbo_[0]);
   glBufferData(GL_ARRAY_BUFFER, sizeof(mediapipe::kBasicSquareVertices),
@@ -187,16 +195,16 @@ void QuadRenderer::GlTeardown() {
   glDisableVertexAttribArray(ATTRIB_VERTEX);
   glDisableVertexAttribArray(ATTRIB_TEXTURE_POSITION);
   glBindBuffer(GL_ARRAY_BUFFER, 0);
+  glBindVertexArray(0);
 
-  return ::mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-::mediapipe::Status FrameRotationFromInt(FrameRotation* rotation,
-                                         int degrees_ccw) {
+absl::Status FrameRotationFromInt(FrameRotation* rotation, int degrees_ccw) {
   RET_CHECK(degrees_ccw % 90 == 0) << "rotation must be a multiple of 90; "
                                    << degrees_ccw << " was provided";
   *rotation = FrameRotationFromDegrees(degrees_ccw % 360);
-  return ::mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
 }  // namespace mediapipe

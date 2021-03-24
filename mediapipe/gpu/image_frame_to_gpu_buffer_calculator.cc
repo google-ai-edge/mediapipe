@@ -28,10 +28,10 @@ class ImageFrameToGpuBufferCalculator : public CalculatorBase {
  public:
   ImageFrameToGpuBufferCalculator() {}
 
-  static ::mediapipe::Status GetContract(CalculatorContract* cc);
+  static absl::Status GetContract(CalculatorContract* cc);
 
-  ::mediapipe::Status Open(CalculatorContext* cc) override;
-  ::mediapipe::Status Process(CalculatorContext* cc) override;
+  absl::Status Open(CalculatorContext* cc) override;
+  absl::Status Process(CalculatorContext* cc) override;
 
  private:
 #if !MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
@@ -41,7 +41,7 @@ class ImageFrameToGpuBufferCalculator : public CalculatorBase {
 REGISTER_CALCULATOR(ImageFrameToGpuBufferCalculator);
 
 // static
-::mediapipe::Status ImageFrameToGpuBufferCalculator::GetContract(
+absl::Status ImageFrameToGpuBufferCalculator::GetContract(
     CalculatorContract* cc) {
   cc->Inputs().Index(0).Set<ImageFrame>();
   cc->Outputs().Index(0).Set<GpuBuffer>();
@@ -49,22 +49,20 @@ REGISTER_CALCULATOR(ImageFrameToGpuBufferCalculator);
   // to ensure the calculator's contract is the same. In particular, the helper
   // enables support for the legacy side packet, which several graphs still use.
   MP_RETURN_IF_ERROR(GlCalculatorHelper::UpdateContract(cc));
-  return ::mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-::mediapipe::Status ImageFrameToGpuBufferCalculator::Open(
-    CalculatorContext* cc) {
+absl::Status ImageFrameToGpuBufferCalculator::Open(CalculatorContext* cc) {
   // Inform the framework that we always output at the same timestamp
   // as we receive a packet at.
   cc->SetOffset(TimestampDiff(0));
 #if !MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
   MP_RETURN_IF_ERROR(helper_.Open(cc));
 #endif  // !MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
-  return ::mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-::mediapipe::Status ImageFrameToGpuBufferCalculator::Process(
-    CalculatorContext* cc) {
+absl::Status ImageFrameToGpuBufferCalculator::Process(CalculatorContext* cc) {
 #if MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
   CFHolder<CVPixelBufferRef> buffer;
   MP_RETURN_IF_ERROR(CreateCVPixelBufferForImageFramePacket(
@@ -80,7 +78,7 @@ REGISTER_CALCULATOR(ImageFrameToGpuBufferCalculator);
     src.Release();
   });
 #endif  // MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
-  return ::mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
 }  // namespace mediapipe

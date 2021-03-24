@@ -1,0 +1,24 @@
+diff --git a/tensorflow/lite/delegates/gpu/BUILD b/tensorflow/lite/delegates/gpu/BUILD
+index 069230ebcf6..3924d7cced7 100644
+--- a/tensorflow/lite/delegates/gpu/BUILD
++++ b/tensorflow/lite/delegates/gpu/BUILD
+@@ -83,6 +83,7 @@ objc_library(
+     hdrs = ["metal_delegate.h"],
+     module_name = "TensorFlowLiteCMetal",
+     sdk_frameworks = ["Metal"],
++    copts = ["-std=c++17"],
+     deps = [
+         "//tensorflow/lite:kernel_api",
+         "//tensorflow/lite:minimal_logging",
+diff --git a/tensorflow/lite/delegates/gpu/metal/BUILD b/tensorflow/lite/delegates/gpu/metal/BUILD
+index 6dcde34a62f..1adfc28aad9 100644
+--- a/tensorflow/lite/delegates/gpu/metal/BUILD
++++ b/tensorflow/lite/delegates/gpu/metal/BUILD
+@@ -17,6 +17,7 @@ package(
+ 
+ DEFAULT_COPTS = [
+     "-Wno-shorten-64-to-32",
++    "-std=c++17",
+ ]
+ 
+ cc_library(

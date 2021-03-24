@@ -1,4 +1,4 @@
-// Copyright 2019 The MediaPipe Authors.
+// Copyright 2019, 2021 The MediaPipe Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,22 +16,18 @@
 
 #include "mediapipe/calculators/audio/rational_factor_resample_calculator.h"
 
-#include "audio/dsp/resampler_rational_factor.h"
+#include "audio/dsp/resampler_q.h"
 
-using audio_dsp::DefaultResamplingKernel;
-using audio_dsp::RationalFactorResampler;
 using audio_dsp::Resampler;
 
 namespace mediapipe {
-::mediapipe::Status RationalFactorResampleCalculator::Process(
-    CalculatorContext* cc) {
+absl::Status RationalFactorResampleCalculator::Process(CalculatorContext* cc) {
   return ProcessInternal(cc->Inputs().Index(0).Get<Matrix>(), false, cc);
 }
 
-::mediapipe::Status RationalFactorResampleCalculator::Close(
-    CalculatorContext* cc) {
+absl::Status RationalFactorResampleCalculator::Close(CalculatorContext* cc) {
   if (initial_timestamp_ == Timestamp::Unstarted()) {
-    return ::mediapipe::OkStatus();
+    return absl::OkStatus();
   }
   Matrix empty_input_frame(num_channels_, 0);
   return ProcessInternal(empty_input_frame, true, cc);
@@ -40,11 +36,8 @@ namespace mediapipe {
 namespace {
 void CopyChannelToVector(const Matrix& matrix, int channel,
                          std::vector<float>* vec) {
-  vec->clear();
-  vec->reserve(matrix.cols());
-  for (int sample = 0; sample < matrix.cols(); ++sample) {
-    vec->push_back(matrix(channel, sample));
-  }
+  vec->resize(matrix.cols());
+  Eigen::Map<Eigen::ArrayXf>(vec->data(), vec->size()) = matrix.row(channel);
 }
 
 void CopyVectorToChannel(const std::vector<float>& vec, Matrix* matrix,
@@ -53,17 +46,14 @@ void CopyVectorToChannel(const std::vector<float>& vec, Matrix* matrix,
     matrix->resize(matrix->rows(), vec.size());
   } else {
     CHECK_EQ(vec.size(), matrix->cols());
-    CHECK_LT(channel, matrix->rows());
   }
-  for (int sample = 0; sample < matrix->cols(); ++sample) {
-    (*matrix)(channel, sample) = vec[sample];
-  }
+  CHECK_LT(channel, matrix->rows());
+  matrix->row(channel) =
+      Eigen::Map<const Eigen::ArrayXf>(vec.data(), vec.size());
 }
-
 }  // namespace
 
-::mediapipe::Status RationalFactorResampleCalculator::Open(
-    CalculatorContext* cc) {
+absl::Status RationalFactorResampleCalculator::Open(CalculatorContext* cc) {
   RationalFactorResampleCalculatorOptions resample_options =
       cc->Options<RationalFactorResampleCalculatorOptions>();
 
@@ -88,7 +78,7 @@ void CopyVectorToChannel(const std::vector<float>& vec, Matrix* matrix,
                                resample_options);
       if (!r) {
         LOG(ERROR) << "Failed to initialize resampler.";
-        return ::mediapipe::UnknownError("Failed to initialize resampler.");
+        return absl::UnknownError("Failed to initialize resampler.");
       }
     }
   }
@@ -106,10 +96,10 @@ void CopyVectorToChannel(const std::vector<float>& vec, Matrix* matrix,
   initial_timestamp_ = Timestamp::Unstarted();
   check_inconsistent_timestamps_ =
       resample_options.check_inconsistent_timestamps();
-  return ::mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-::mediapipe::Status RationalFactorResampleCalculator::ProcessInternal(
+absl::Status RationalFactorResampleCalculator::ProcessInternal(
     const Matrix& input_frame, bool should_flush, CalculatorContext* cc) {
   if (initial_timestamp_ == Timestamp::Unstarted()) {
     initial_timestamp_ = cc->InputTimestamp();
@@ -131,7 +121,7 @@ void CopyVectorToChannel(const std::vector<float>& vec, Matrix* matrix,
     *output_frame = input_frame;
   } else {
     if (!Resample(input_frame, output_frame.get(), should_flush)) {
-      return ::mediapipe::UnknownError("Resample() failed.");
+      return absl::UnknownError("Resample() failed.");
     }
   }
   cumulative_output_samples_ += output_frame->cols();
@@ -139,7 +129,7 @@ void CopyVectorToChannel(const std::vector<float>& vec, Matrix* matrix,
   if (output_frame->cols() > 0) {
     cc->Outputs().Index(0).Add(output_frame.release(), output_timestamp);
   }
-  return ::mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
 bool RationalFactorResampleCalculator::Resample(const Matrix& input_frame,
@@ -167,25 +157,28 @@ RationalFactorResampleCalculator::ResamplerFromOptions(
   std::unique_ptr<Resampler<float>> resampler;
   const auto& rational_factor_options =
       options.resampler_rational_factor_options();
-  std::unique_ptr<DefaultResamplingKernel> kernel;
+  audio_dsp::QResamplerParams params;
   if (rational_factor_options.has_radius() &&
       rational_factor_options.has_cutoff() &&
       rational_factor_options.has_kaiser_beta()) {
-    kernel = absl::make_unique<DefaultResamplingKernel>(
-        source_sample_rate, target_sample_rate,
-        rational_factor_options.radius(), rational_factor_options.cutoff(),
-        rational_factor_options.kaiser_beta());
-  } else {
-    kernel = absl::make_unique<DefaultResamplingKernel>(source_sample_rate,
-                                                        target_sample_rate);
+    // Convert RationalFactorResampler kernel parameters to QResampler
+    // settings.
+    params.filter_radius_factor =
+        rational_factor_options.radius() *
+        std::min(1.0, target_sample_rate / source_sample_rate);
+    params.cutoff_proportion = 2 * rational_factor_options.cutoff() /
+                               std::min(source_sample_rate, target_sample_rate);
+    params.kaiser_beta = rational_factor_options.kaiser_beta();
   }
-
   // Set large enough so that the resampling factor between common sample
   // rates (e.g. 8kHz, 16kHz, 22.05kHz, 32kHz, 44.1kHz, 48kHz) is exact, and
   // that any factor is represented with error less than 0.025%.
-  const int kMaxDenominator = 2000;
-  resampler = absl::make_unique<RationalFactorResampler<float>>(
-      *kernel, kMaxDenominator);
+  params.max_denominator = 2000;
+
+  // NOTE: QResampler supports multichannel resampling, so the code might be
+  // simplified using a single instance rather than one per channel.
+  resampler = absl::make_unique<audio_dsp::QResampler<float>>(
+      source_sample_rate, target_sample_rate, /*num_channels=*/1, params);
   if (resampler != nullptr && !resampler->Valid()) {
     resampler = std::unique_ptr<Resampler<float>>();
   }

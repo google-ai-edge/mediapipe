@@ -18,76 +18,75 @@ import android.os.Bundle;
 import android.util.Log;
 import com.google.mediapipe.formats.proto.LandmarkProto.NormalizedLandmark;
 import com.google.mediapipe.formats.proto.LandmarkProto.NormalizedLandmarkList;
+import com.google.mediapipe.framework.AndroidPacketCreator;
+import com.google.mediapipe.framework.Packet;
 import com.google.mediapipe.framework.PacketGetter;
-import com.google.protobuf.InvalidProtocolBufferException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /** Main activity of MediaPipe hand tracking app. */
 public class MainActivity extends com.google.mediapipe.apps.basic.MainActivity {
   private static final String TAG = "MainActivity";
 
-  private static final String OUTPUT_HAND_PRESENCE_STREAM_NAME = "hand_presence";
+  private static final String INPUT_NUM_HANDS_SIDE_PACKET_NAME = "num_hands";
   private static final String OUTPUT_LANDMARKS_STREAM_NAME = "hand_landmarks";
+  // Max number of hands to detect/process.
+  private static final int NUM_HANDS = 2;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
 
-    processor.addPacketCallback(
-        OUTPUT_HAND_PRESENCE_STREAM_NAME,
-        (packet) -> {
-          Boolean handPresence = PacketGetter.getBool(packet);
-          if (!handPresence) {
-            Log.d(
-                TAG,
-                "[TS:" + packet.getTimestamp() + "] Hand presence is false, no hands detected.");
-          }
-        });
+    AndroidPacketCreator packetCreator = processor.getPacketCreator();
+    Map<String, Packet> inputSidePackets = new HashMap<>();
+    inputSidePackets.put(INPUT_NUM_HANDS_SIDE_PACKET_NAME, packetCreator.createInt32(NUM_HANDS));
+    processor.setInputSidePackets(inputSidePackets);
 
     // To show verbose logging, run:
     // adb shell setprop log.tag.MainActivity VERBOSE
     if (Log.isLoggable(TAG, Log.VERBOSE)) {
       processor.addPacketCallback(
-        OUTPUT_LANDMARKS_STREAM_NAME,
-        (packet) -> {
-          byte[] landmarksRaw = PacketGetter.getProtoBytes(packet);
-          try {
-            NormalizedLandmarkList landmarks = NormalizedLandmarkList.parseFrom(landmarksRaw);
-            if (landmarks == null) {
-              Log.v(TAG, "[TS:" + packet.getTimestamp() + "] No hand landmarks.");
-              return;
-            }
-            // Note: If hand_presence is false, these landmarks are useless.
+          OUTPUT_LANDMARKS_STREAM_NAME,
+          (packet) -> {
+            Log.v(TAG, "Received multi-hand landmarks packet.");
+            List<NormalizedLandmarkList> multiHandLandmarks =
+                PacketGetter.getProtoVector(packet, NormalizedLandmarkList.parser());
             Log.v(
                 TAG,
                 "[TS:"
                     + packet.getTimestamp()
-                    + "] #Landmarks for hand: "
-                    + landmarks.getLandmarkCount());
-            Log.v(TAG, getLandmarksDebugString(landmarks));
-          } catch (InvalidProtocolBufferException e) {
-            Log.e(TAG, "Couldn't Exception received - " + e);
-            return;
-          }
-        });
+                    + "] "
+                    + getMultiHandLandmarksDebugString(multiHandLandmarks));
+          });
     }
   }
 
-  private static String getLandmarksDebugString(NormalizedLandmarkList landmarks) {
-    int landmarkIndex = 0;
-    String landmarksString = "";
-    for (NormalizedLandmark landmark : landmarks.getLandmarkList()) {
-      landmarksString +=
-          "\t\tLandmark["
-              + landmarkIndex
-              + "]: ("
-              + landmark.getX()
-              + ", "
-              + landmark.getY()
-              + ", "
-              + landmark.getZ()
-              + ")\n";
-      ++landmarkIndex;
+  private String getMultiHandLandmarksDebugString(List<NormalizedLandmarkList> multiHandLandmarks) {
+    if (multiHandLandmarks.isEmpty()) {
+      return "No hand landmarks";
     }
-    return landmarksString;
+    String multiHandLandmarksStr = "Number of hands detected: " + multiHandLandmarks.size() + "\n";
+    int handIndex = 0;
+    for (NormalizedLandmarkList landmarks : multiHandLandmarks) {
+      multiHandLandmarksStr +=
+          "\t#Hand landmarks for hand[" + handIndex + "]: " + landmarks.getLandmarkCount() + "\n";
+      int landmarkIndex = 0;
+      for (NormalizedLandmark landmark : landmarks.getLandmarkList()) {
+        multiHandLandmarksStr +=
+            "\t\tLandmark ["
+                + landmarkIndex
+                + "]: ("
+                + landmark.getX()
+                + ", "
+                + landmark.getY()
+                + ", "
+                + landmark.getZ()
+                + ")\n";
+        ++landmarkIndex;
+      }
+      ++handIndex;
+    }
+    return multiHandLandmarksStr;
   }
 }

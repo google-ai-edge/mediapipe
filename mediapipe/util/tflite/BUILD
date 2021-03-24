@@ -32,13 +32,20 @@ cc_library(
     name = "cpu_op_resolver",
     srcs = ["cpu_op_resolver.cc"],
     hdrs = ["cpu_op_resolver.h"],
+    visibility = ["//visibility:public"],
     deps = [
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/port:logging",
         "//mediapipe/util/tflite/operations:max_pool_argmax",
         "//mediapipe/util/tflite/operations:max_unpooling",
         "//mediapipe/util/tflite/operations:transpose_conv_bias",
         "@org_tensorflow//tensorflow/lite:builtin_op_data",
+        "@org_tensorflow//tensorflow/lite:framework",
         "@org_tensorflow//tensorflow/lite/kernels:builtin_ops",
     ],
+    # For using the symbol `MediaPipe_RegisterTfLiteOpResolver` in Python
+    # with `tensorflow.lite.python.interpreter.InterpreterWithCustomOps`.
+    alwayslink = 1,
 )
 
 cc_library(
@@ -49,41 +56,6 @@ cc_library(
         "@org_tensorflow//tensorflow/lite:builtin_op_data",
         "@org_tensorflow//tensorflow/lite/kernels:builtin_ops",
     ],
-)
-
-cc_library(
-    name = "tensor_buffer",
-    srcs = ["tensor_buffer.cc"],
-    hdrs = ["tensor_buffer.h"],
-    deps = [
-        "@org_tensorflow//tensorflow/lite:framework",
-        "@com_google_absl//absl/memory",
-        "//mediapipe/framework:port",
-    ] + select({
-        "//mediapipe/gpu:disable_gpu": [],
-        "//mediapipe:ios": [
-            "//mediapipe/gpu:MPPMetalUtil",
-            "//mediapipe/gpu:gl_base",
-        ],
-        "//conditions:default": [
-            "@org_tensorflow//tensorflow/lite/delegates/gpu/gl:gl_buffer",
-            "//mediapipe/gpu:gl_base",
-            "//mediapipe/gpu:gl_context",
-        ],
-    }),
-)
-
-cc_test(
-    name = "tensor_buffer_test",
-    srcs = ["tensor_buffer_test.cc"],
-    deps = [
-        ":tensor_buffer",
-        ":config",
-        "//mediapipe/framework/port:gtest_main",
-    ] + select({
-        "//mediapipe/gpu:disable_gpu": [],
-        "//conditions:default": [],
-    }),
 )
 
 cc_library(
@@ -125,4 +97,18 @@ cc_library(
             "@org_tensorflow//tensorflow/lite/delegates/gpu/gl:api2",
         ],
     }) + ["@org_tensorflow//tensorflow/lite/core/api"],
+)
+
+cc_library(
+    name = "tflite_model_loader",
+    srcs = ["tflite_model_loader.cc"],
+    hdrs = ["tflite_model_loader.h"],
+    deps = [
+        "//mediapipe/framework/api2:packet",
+        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:status",
+        "//mediapipe/framework/port:statusor",
+        "//mediapipe/util:resource_util",
+        "@org_tensorflow//tensorflow/lite:framework",
+    ],
 )

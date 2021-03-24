@@ -1,4 +1,4 @@
-// Copyright 2019 The MediaPipe Authors.
+// Copyright 2019-2020 The MediaPipe Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -20,14 +20,16 @@
 namespace mediapipe {
 
 // Example config:
+//
 // node {
 //   calculator: "ConcatenateDetectionVectorCalculator"
 //   input_stream: "detection_vector_1"
 //   input_stream: "detection_vector_2"
 //   output_stream: "concatenated_detection_vector"
 // }
+//
 typedef ConcatenateVectorCalculator<::mediapipe::Detection>
     ConcatenateDetectionVectorCalculator;
-REGISTER_CALCULATOR(ConcatenateDetectionVectorCalculator);
+MEDIAPIPE_REGISTER_NODE(ConcatenateDetectionVectorCalculator);
 
 }  // namespace mediapipe

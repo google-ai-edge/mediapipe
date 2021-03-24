@@ -19,6 +19,7 @@
 #include <unordered_set>
 
 #include "absl/container/flat_hash_set.h"
+#include "absl/container/node_hash_map.h"
 #include "absl/container/node_hash_set.h"
 #include "absl/strings/numbers.h"
 #include "mediapipe/calculators/video/box_tracker_calculator.pb.h"
@@ -122,10 +123,10 @@ class BoxTrackerCalculator : public CalculatorBase {
  public:
   ~BoxTrackerCalculator() override = default;
 
-  static ::mediapipe::Status GetContract(CalculatorContract* cc);
+  static absl::Status GetContract(CalculatorContract* cc);
 
-  ::mediapipe::Status Open(CalculatorContext* cc) override;
-  ::mediapipe::Status Process(CalculatorContext* cc) override;
+  absl::Status Open(CalculatorContext* cc) override;
+  absl::Status Process(CalculatorContext* cc) override;
 
  protected:
   void RenderStates(const std::vector<MotionBoxState>& states, cv::Mat* mat);
@@ -166,7 +167,7 @@ class BoxTrackerCalculator : public CalculatorBase {
   };
 
   // MotionBoxPath per unique id that we are tracking.
-  typedef std::unordered_map<int, MotionBoxPath> MotionBoxMap;
+  typedef absl::node_hash_map<int, MotionBoxPath> MotionBoxMap;
 
   // Performs tracking of all MotionBoxes in box_map by one frame forward or
   // backward to or from data_frame_num using passed TrackingData.
@@ -207,7 +208,7 @@ class BoxTrackerCalculator : public CalculatorBase {
   // Boxes that are tracked in streaming mode.
   MotionBoxMap streaming_motion_boxes_;
 
-  std::unordered_map<int, std::pair<TimedBox, TimedBox>> last_tracked_boxes_;
+  absl::node_hash_map<int, std::pair<TimedBox, TimedBox>> last_tracked_boxes_;
   int frame_num_since_reset_ = 0;
 
   // Cache used during streaming mode for fast forward tracking.
@@ -372,7 +373,7 @@ void AddStateToPath(const MotionBoxState& state, int64 time_msec,
 
 }  // namespace.
 
-::mediapipe::Status BoxTrackerCalculator::GetContract(CalculatorContract* cc) {
+absl::Status BoxTrackerCalculator::GetContract(CalculatorContract* cc) {
   if (cc->Inputs().HasTag("TRACKING")) {
     cc->Inputs().Tag("TRACKING").Set<TrackingData>();
   }
@@ -451,10 +452,10 @@ void AddStateToPath(const MotionBoxState& state, int64 time_msec,
     cc->InputSidePackets().Tag(kOptionsTag).Set<CalculatorOptions>();
   }
 
-  return ::mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-::mediapipe::Status BoxTrackerCalculator::Open(CalculatorContext* cc) {
+absl::Status BoxTrackerCalculator::Open(CalculatorContext* cc) {
   options_ = tool::RetrieveOptions(cc->Options<BoxTrackerCalculatorOptions>(),
                                    cc->InputSidePackets(), kOptionsTag);
 
@@ -514,10 +515,10 @@ void AddStateToPath(const MotionBoxState& state, int64 time_msec,
         << "Streaming mode not compatible with cache dir.";
   }
 
-  return ::mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-::mediapipe::Status BoxTrackerCalculator::Process(CalculatorContext* cc) {
+absl::Status BoxTrackerCalculator::Process(CalculatorContext* cc) {
   // Batch mode, issue tracking requests.
   if (box_tracker_ && !tracking_issued_) {
     for (const auto& pos : initial_pos_.box()) {
@@ -529,7 +530,7 @@ void AddStateToPath(const MotionBoxState& state, int64 time_msec,
   const Timestamp& timestamp = cc->InputTimestamp();
   if (timestamp == Timestamp::PreStream()) {
     // Indicator packet.
-    return ::mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
   InputStream* track_stream = cc->Inputs().HasTag("TRACKING")
@@ -891,7 +892,7 @@ void AddStateToPath(const MotionBoxState& state, int64 time_msec,
     cc->Outputs().Tag("VIZ").Add(viz_frame.release(), timestamp);
   }
 
-  return ::mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
 void BoxTrackerCalculator::AddSmoothTransitionToOutputBox(

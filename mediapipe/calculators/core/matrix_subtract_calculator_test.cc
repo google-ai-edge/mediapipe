@@ -89,9 +89,8 @@ TEST(MatrixSubtractCalculatorTest, WrongConfig2) {
       )");
   CalculatorRunner runner(node_config);
   auto status = runner.Run();
-  EXPECT_THAT(
-      status.message(),
-      testing::HasSubstr("specify exactly one minuend and one subtrahend."));
+  EXPECT_THAT(status.message(), testing::HasSubstr("must be connected"));
+  EXPECT_THAT(status.message(), testing::HasSubstr("not both"));
 }
 
 TEST(MatrixSubtractCalculatorTest, SubtractFromInput) {

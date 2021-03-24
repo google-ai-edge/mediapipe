@@ -114,6 +114,16 @@ public class ExternalTextureConverter implements TextureFrameProducer {
   }
 
   /**
+   * Sets rotation of the texture, useful for supporting landscape orientations. The value should
+   * correspond to Display.getRotation(), e.g. Surface.ROTATION_0. Flipping (if any) is applied
+   * before rotation. This should be called before {@link #setSurfaceTexture(SurfaceTexture, int,
+   * int)} or {@link #setSurfaceTextureAndAttachToGLContext(SurfaceTexture, int, int)}.
+   */
+  public void setRotation(int rotation) {
+    thread.setRotation(rotation);
+  }
+
+  /**
    * Sets an offset that can be used to adjust the timestamps on the camera frames, for example to
    * conform to a preferred time-base or to account for a known device latency. The offset is added
    * to each frame timetamp read by the ExternalTextureConverter.
@@ -249,6 +259,10 @@ public class ExternalTextureConverter implements TextureFrameProducer {
 
     public void setFlipY(boolean flip) {
       renderer.setFlipY(flip);
+    }
+
+    public void setRotation(int rotation) {
+      renderer.setRotation(rotation);
     }
 
     public void setSurfaceTexture(SurfaceTexture texture, int width, int height) {
@@ -416,7 +430,8 @@ public class ExternalTextureConverter implements TextureFrameProducer {
       framesInUse--;
       int keep = max(framesToKeep - framesInUse, 0);
       while (framesAvailable.size() > keep) {
-        teardownFrame(framesAvailable.remove());
+        PoolTextureFrame textureFrameToRemove = framesAvailable.remove();
+        handler.post(() -> teardownFrame(textureFrameToRemove));
       }
     }
 

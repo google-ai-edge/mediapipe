@@ -26,6 +26,7 @@
 #include <utility>
 
 #include "Eigen/Core"
+#include "absl/container/flat_hash_map.h"
 #include "absl/container/node_hash_set.h"
 #include "absl/memory/memory.h"
 #include "mediapipe/framework/port/logging.h"
@@ -557,7 +558,7 @@ struct RegionFlowComputation::LongTrackData {
     float motion_mag = 0;  // Smoothed average motion. -1 for unknown.
   };
 
-  std::unordered_map<int, TrackInfo> track_info;
+  absl::flat_hash_map<int, TrackInfo> track_info;
 };
 
 template <class T>
@@ -2097,8 +2098,8 @@ void RegionFlowComputation::WideBaselineMatchFeatures(
     !defined(CV_WRAPPER_3X)
   LOG(FATAL) << "Supported on only with OpenCV 3.0. "
              << "Use bazel build flag : --define CV_WRAPPER=3X";
-#else  // (defined(__ANDROID__) || defined(__APPLE__) ||
-       // defined(__EMSCRIPTEN__)) && !defined(CV_WRAPPER_3X)
+#else   // (defined(__ANDROID__) || defined(__APPLE__) ||
+        // defined(__EMSCRIPTEN__)) && !defined(CV_WRAPPER_3X)
   results->clear();
 
   const auto& frame1 = from_data_ptr->frame;

@@ -2,14 +2,20 @@
 layout: default
 title: Instant Motion Tracking
 parent: Solutions
-nav_order: 9
+nav_order: 10
 ---
 
 # MediaPipe Instant Motion Tracking
 {: .no_toc }
 
+<details close markdown="block">
+  <summary>
+    Table of contents
+  </summary>
+  {: .text-delta }
 1. TOC
 {:toc}
+</details>
 ---
 
 ## Overview
@@ -104,19 +110,37 @@ and connected camera.
 ## Example Apps
 
 Please first see general instructions for
-[Android](../getting_started/building_examples.md#android) on how to build
-MediaPipe examples.
+[Android](../getting_started/android.md) on how to build MediaPipe examples.
 
 * Graph: [mediapipe/graphs/instant_motion_tracking/instant_motion_tracking.pbtxt](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/instant_motion_tracking/instant_motion_tracking.pbtxt)
 
 * Android target (or download prebuilt [ARM64 APK](https://drive.google.com/file/d/1KnaBBoKpCHR73nOBJ4fL_YdWVTAcwe6L/view?usp=sharing)):
 [`mediapipe/examples/android/src/java/com/google/mediapipe/apps/instantmotiontracking:instantmotiontracking`](https://github.com/google/mediapipe/tree/master/mediapipe/examples/android/src/java/com/google/mediapipe/apps/instantmotiontracking/BUILD)
 
+* Assets rendered by the [GlAnimationOverlayCalculator](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/object_detection_3d/calculators/gl_animation_overlay_calculator.cc) must be preprocessed into an OpenGL-ready custom .uuu format. This can be done
+for user assets as follows:
+> First run
+>
+> ```shell
+> ./mediapipe/graphs/object_detection_3d/obj_parser/obj_cleanup.sh [INPUT_DIR] [INTERMEDIATE_OUTPUT_DIR]
+> ```
+> and then run
+>
+> ```build
+> bazel run -c opt mediapipe/graphs/object_detection_3d/obj_parser:ObjParser -- input_dir=[INTERMEDIATE_OUTPUT_DIR] output_dir=[OUTPUT_DIR]
+> ```
+> INPUT_DIR should be the folder with initial asset .obj files to be processed,
+> and OUTPUT_DIR is the folder where the processed asset .uuu file will be placed.
+>
+> Note: ObjParser combines all .obj files found in the given directory into a
+> single .uuu animation file, using the order given by sorting the filenames alphanumerically. Also the ObjParser directory inputs must be given as
+> absolute paths, not relative paths. See parser utility library at [`mediapipe/graphs/object_detection_3d/obj_parser/`](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/object_detection_3d/obj_parser/) for more details.
+
 ## Resources
 
-* Google Developers Blog:
-  [Instant Motion Tracking With MediaPipe](https://mediapipe.page.link/instant-motion-tracking-blog)
-* Google AI Blog:
-  [The Instant Motion Tracking Behind Motion Stills AR](https://ai.googleblog.com/2018/02/the-instant-motion-tracking-behind.html)
-* Paper:
-  [Instant Motion Tracking and Its Applications to Augmented Reality](https://arxiv.org/abs/1907.06796)
+*   Google Developers Blog:
+    [Instant Motion Tracking With MediaPipe](https://developers.googleblog.com/2020/08/instant-motion-tracking-with-mediapipe.html)
+*   Google AI Blog:
+    [The Instant Motion Tracking Behind Motion Stills AR](https://ai.googleblog.com/2018/02/the-instant-motion-tracking-behind.html)
+*   Paper:
+    [Instant Motion Tracking and Its Applications to Augmented Reality](https://arxiv.org/abs/1907.06796)

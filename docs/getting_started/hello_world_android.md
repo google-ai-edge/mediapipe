@@ -1,8 +1,9 @@
 ---
 layout: default
 title: Hello World! on Android
-parent: Getting Started
-nav_order: 3
+parent: MediaPipe on Android
+grand_parent: Getting Started
+nav_order: 1
 ---
 
 # Hello World! on Android
@@ -58,7 +59,7 @@ node: {
   output_stream: "luma_video"
 }
 
-# Applies the Sobel filter to luminance images sotred in RGB format.
+# Applies the Sobel filter to luminance images stored in RGB format.
 node: {
   calculator: "SobelEdgesCalculator"
   input_stream: "luma_video"
@@ -446,8 +447,8 @@ visible so that we can start seeing frames from the `previewFrameTexture`.
 However, before starting the camera, we need to decide which camera we want to
 use. [`CameraXPreviewHelper`] inherits from [`CameraHelper`] which provides two
 options, `FRONT` and `BACK`. We can pass in the decision from the `BUILD` file
-as metadata such that no code change is required to build a another version of
-the app using a different camera.
+as metadata such that no code change is required to build another version of the
+app using a different camera.
 
 Assuming we want to use `BACK` camera to perform edge detection on a live scene
 that we view from the camera, add the metadata into `AndroidManifest.xml`:
@@ -496,7 +497,7 @@ CameraHelper.CameraFacing cameraFacing =
     applicationInfo.metaData.getBoolean("cameraFacingFront", false)
         ? CameraHelper.CameraFacing.FRONT
         : CameraHelper.CameraFacing.BACK;
-cameraHelper.startCamera(this, cameraFacing, /*surfaceTexture=*/ null);
+cameraHelper.startCamera(this, cameraFacing, /*unusedSurfaceTexture=*/ null);
 ```
 
 At this point, the application should build successfully. However, when you run

@@ -34,29 +34,29 @@ namespace mediapipe {
 // }
 class OpenCvEncodedImageToImageFrameCalculator : public CalculatorBase {
  public:
-  static ::mediapipe::Status GetContract(CalculatorContract* cc);
-  ::mediapipe::Status Open(CalculatorContext* cc) override;
-  ::mediapipe::Status Process(CalculatorContext* cc) override;
+  static absl::Status GetContract(CalculatorContract* cc);
+  absl::Status Open(CalculatorContext* cc) override;
+  absl::Status Process(CalculatorContext* cc) override;
 
  private:
   mediapipe::OpenCvEncodedImageToImageFrameCalculatorOptions options_;
 };
 
-::mediapipe::Status OpenCvEncodedImageToImageFrameCalculator::GetContract(
+absl::Status OpenCvEncodedImageToImageFrameCalculator::GetContract(
     CalculatorContract* cc) {
   cc->Inputs().Index(0).Set<std::string>();
   cc->Outputs().Index(0).Set<ImageFrame>();
-  return ::mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-::mediapipe::Status OpenCvEncodedImageToImageFrameCalculator::Open(
+absl::Status OpenCvEncodedImageToImageFrameCalculator::Open(
     CalculatorContext* cc) {
   options_ =
       cc->Options<mediapipe::OpenCvEncodedImageToImageFrameCalculatorOptions>();
-  return ::mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-::mediapipe::Status OpenCvEncodedImageToImageFrameCalculator::Process(
+absl::Status OpenCvEncodedImageToImageFrameCalculator::Process(
     CalculatorContext* cc) {
   const std::string& contents = cc->Inputs().Index(0).Get<std::string>();
   const std::vector<char> contents_vector(contents.begin(), contents.end());
@@ -84,10 +84,11 @@ class OpenCvEncodedImageToImageFrameCalculator : public CalculatorBase {
       cv::cvtColor(decoded_mat, output_mat, cv::COLOR_BGR2RGB);
       break;
     case 4:
-      return ::mediapipe::UnimplementedErrorBuilder(MEDIAPIPE_LOC)
-             << "4-channel image isn't supported yet";
+      image_format = ImageFormat::SRGBA;
+      cv::cvtColor(decoded_mat, output_mat, cv::COLOR_BGR2RGBA);
+      break;
     default:
-      return ::mediapipe::FailedPreconditionErrorBuilder(MEDIAPIPE_LOC)
+      return mediapipe::FailedPreconditionErrorBuilder(MEDIAPIPE_LOC)
              << "Unsupported number of channels: " << decoded_mat.channels();
   }
   std::unique_ptr<ImageFrame> output_frame = absl::make_unique<ImageFrame>(
@@ -95,7 +96,7 @@ class OpenCvEncodedImageToImageFrameCalculator : public CalculatorBase {
       ImageFrame::kGlDefaultAlignmentBoundary);
   output_mat.copyTo(formats::MatView(output_frame.get()));
   cc->Outputs().Index(0).Add(output_frame.release(), cc->InputTimestamp());
-  return ::mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
 REGISTER_CALCULATOR(OpenCvEncodedImageToImageFrameCalculator);

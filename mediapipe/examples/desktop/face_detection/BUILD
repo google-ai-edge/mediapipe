@@ -20,7 +20,7 @@ cc_binary(
     name = "face_detection_cpu",
     deps = [
         "//mediapipe/examples/desktop:demo_run_graph_main",
-        "//mediapipe/graphs/face_detection:desktop_tflite_calculators",
+        "//mediapipe/graphs/face_detection:desktop_live_calculators",
     ],
 )
 
@@ -29,6 +29,6 @@ cc_binary(
     name = "face_detection_gpu",
     deps = [
         "//mediapipe/examples/desktop:demo_run_graph_main_gpu",
-        "//mediapipe/graphs/face_detection:mobile_calculators",
+        "//mediapipe/graphs/face_detection:desktop_live_gpu_calculators",
     ],
 )

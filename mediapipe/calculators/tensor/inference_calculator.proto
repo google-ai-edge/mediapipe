@@ -1,0 +1,116 @@
+// Copyright 2019 The MediaPipe Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto2";
+
+package mediapipe;
+
+import "mediapipe/framework/calculator.proto";
+
+// Full Example:
+//
+// node {
+//   calculator: "InferenceCalculator"
+//   input_stream: "TENSOR_IN:image_tensors"
+//   output_stream: "TENSOR_OUT:result_tensors"
+//   options {
+//     [mediapipe.InferenceCalculatorOptions.ext] {
+//       model_path: "model.tflite"
+//       delegate { gpu {} }
+//     }
+//   }
+// }
+//
+message InferenceCalculatorOptions {
+  extend mediapipe.CalculatorOptions {
+    optional InferenceCalculatorOptions ext = 336783863;
+  }
+
+  message Delegate {
+    // Default inference provided by tflite.
+    message TfLite {}
+    // Delegate to run GPU inference depending on the device.
+    // (Can use OpenGl, OpenCl, Metal depending on the device.)
+    message Gpu {
+      // Experimental, Android/Linux only. Use TFLite GPU delegate API2 for
+      // the NN inference.
+      // example:
+      //   delegate: { gpu { use_advanced_gpu_api: true } }
+      optional bool use_advanced_gpu_api = 1 [default = false];
+
+      // This option is valid for TFLite GPU delegate API2 only,
+      // Choose any of available APIs to force running inference using it.
+      enum API {
+        ANY = 0;
+        OPENGL = 1;
+        OPENCL = 2;
+      }
+      optional API api = 4 [default = ANY];
+
+      // This option is valid for TFLite GPU delegate API2 only,
+      // Set to true to use 16-bit float precision. If max precision is needed,
+      // set to false for 32-bit float calculations only.
+      optional bool allow_precision_loss = 3 [default = true];
+
+      // Load pre-compiled serialized binary cache to accelerate init process.
+      // Only available for OpenCL delegate on Android.
+      // Kernel caching will only be enabled if this path is set.
+      optional string cached_kernel_path = 2;
+    }
+    // Android only.
+    message Nnapi {}
+    message Xnnpack {
+      // Number of threads for XNNPACK delegate. (By default, calculator tries
+      // to choose optimal number of threads depending on the device.)
+      optional int32 num_threads = 1 [default = -1];
+    }
+
+    oneof delegate {
+      TfLite tflite = 1;
+      Gpu gpu = 2;
+      Nnapi nnapi = 3;
+      Xnnpack xnnpack = 4;
+    }
+  }
+
+  // Path to the TF Lite model (ex: /path/to/modelname.tflite).
+  // On mobile, this is generally just modelname.tflite.
+  optional string model_path = 1;
+
+  // Whether the TF Lite GPU or CPU backend should be used. Effective only when
+  // input tensors are on CPU. For input tensors on GPU, GPU backend is always
+  // used.
+  // DEPRECATED: configure "delegate" instead.
+  optional bool use_gpu = 2 [deprecated = true, default = false];
+
+  // Android only. When true, an NNAPI delegate will be used for inference.
+  // If NNAPI is not available, then the default CPU delegate will be used
+  // automatically.
+  // DEPRECATED: configure "delegate" instead.
+  optional bool use_nnapi = 3 [deprecated = true, default = false];
+
+  // The number of threads available to the interpreter. Effective only when
+  // input tensors are on CPU and 'use_gpu' is false.
+  optional int32 cpu_num_thread = 4 [default = -1];
+
+  // TfLite delegate to run inference.
+  // If not specified, TFLite GPU delegate is used by default (as if "gpu {}"
+  // is specified) unless GPU support is disabled in the build (i.e., with
+  // --define MEDIAPIPE_DISABLE_GPU=1), in which case regular TFLite on CPU is
+  // used (as if "tflite {}" is specified) except when building with emscripten
+  // where xnnpack is used.
+  // NOTE: use_gpu/use_nnapi are ignored if specified. (Delegate takes
+  // precedence over use_* deprecated options.)
+  optional Delegate delegate = 5;
+}

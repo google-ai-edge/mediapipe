@@ -37,6 +37,7 @@ static void AdaptGlTextureInfoForGLES2(GlTextureInfo* info) {
       info->gl_internal_format = info->gl_format = GL_LUMINANCE;
       return;
     case GL_RG16F:
+    case GL_RG32F:
       // Should this be GL_RG_EXT instead?
       info->gl_internal_format = info->gl_format = GL_LUMINANCE_ALPHA;
       return;
@@ -53,16 +54,6 @@ static void AdaptGlTextureInfoForGLES2(GlTextureInfo* info) {
 #endif  // GL_ES_VERSION_2_0
 
 const GlTextureInfo& GlTextureInfoForGpuBufferFormat(GpuBufferFormat format,
-                                                     int plane) {
-#if defined(__APPLE__) && TARGET_OS_OSX
-  constexpr GlVersion default_version = GlVersion::kGL;
-#else
-  constexpr GlVersion default_version = GlVersion::kGLES3;
-#endif  // defined(__APPLE__) && TARGET_OS_OSX
-  return GlTextureInfoForGpuBufferFormat(format, plane, default_version);
-}
-
-const GlTextureInfo& GlTextureInfoForGpuBufferFormat(GpuBufferFormat format,
                                                      int plane,
                                                      GlVersion gl_version) {
   // TODO: check/add more cases using info from
@@ -73,12 +64,16 @@ const GlTextureInfo& GlTextureInfoForGpuBufferFormat(GpuBufferFormat format,
           {GpuBufferFormat::kBGRA32,
            {
   // internal_format, format, type, downscale
-#ifdef __APPLE__
-               // On Apple platforms, the preferred transfer format is BGRA.
+#if MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
+               // On Apple platforms, we have different code paths for iOS
+               // (using CVPixelBuffer) and on macOS (using GlTextureBuffer).
+               // When using CVPixelBuffer, the preferred transfer format is
+               // BGRA.
+               // TODO: Check iOS simulator.
                {GL_RGBA, GL_BGRA, GL_UNSIGNED_BYTE, 1},
 #else
                {GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, 1},
-#endif  // __APPLE__
+#endif  // MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
            }},
           {GpuBufferFormat::kOneComponent8,
            {

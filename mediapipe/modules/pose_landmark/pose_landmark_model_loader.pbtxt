@@ -1,0 +1,61 @@
+# MediaPipe graph to load a selected pose landmark TF Lite model.
+
+type: "PoseLandmarkModelLoader"
+
+# Whether to load the full-body landmark model or the upper-body on. (bool)
+input_side_packet: "UPPER_BODY_ONLY:upper_body_only"
+
+# TF Lite model represented as a FlatBuffer.
+# (std::unique_ptr<tflite::FlatBufferModel, std::function<void(tflite::FlatBufferModel*)>>)
+output_side_packet: "MODEL:model"
+
+# Determines path to the desired pose landmark model file based on specification
+# in the input side packet.
+node {
+  calculator: "SwitchContainer"
+  input_side_packet: "ENABLE:upper_body_only"
+  output_side_packet: "PACKET:model_path"
+  options: {
+    [mediapipe.SwitchContainerOptions.ext] {
+      contained_node: {
+        calculator: "ConstantSidePacketCalculator"
+        options: {
+          [mediapipe.ConstantSidePacketCalculatorOptions.ext]: {
+            packet {
+              string_value: "mediapipe/modules/pose_landmark/pose_landmark_full_body.tflite"
+            }
+          }
+        }
+      }
+      contained_node: {
+        calculator: "ConstantSidePacketCalculator"
+        options: {
+          [mediapipe.ConstantSidePacketCalculatorOptions.ext]: {
+            packet {
+              string_value: "mediapipe/modules/pose_landmark/pose_landmark_upper_body.tflite"
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+# Loads the file in the specified path into a blob.
+node {
+  calculator: "LocalFileContentsCalculator"
+  input_side_packet: "FILE_PATH:model_path"
+  output_side_packet: "CONTENTS:model_blob"
+  options: {
+    [mediapipe.LocalFileContentsCalculatorOptions.ext]: {
+      text_mode: false
+    }
+  }
+}
+
+# Converts the input blob into a TF Lite model.
+node {
+  calculator: "TfLiteModelCalculator"
+  input_side_packet: "MODEL_BLOB:model_blob"
+  output_side_packet: "MODEL:model"
+}

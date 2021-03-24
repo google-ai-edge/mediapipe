@@ -15,6 +15,8 @@
 #ifndef MEDIAPIPE_EXAMPLES_DESKTOP_AUTOFLIP_QUALITY_UNIFORM_ACCELERATION_PATH_SOLVER_H_
 #define MEDIAPIPE_EXAMPLES_DESKTOP_AUTOFLIP_QUALITY_UNIFORM_ACCELERATION_PATH_SOLVER_H_
 
+#include <deque>
+
 #include "mediapipe/examples/desktop/autoflip/quality/kinematic_path_solver.pb.h"
 #include "mediapipe/framework/port/integral_types.h"
 #include "mediapipe/framework/port/ret_check.h"
@@ -41,24 +43,49 @@ class KinematicPathSolver {
         initialized_(false),
         pixels_per_degree_(pixels_per_degree) {}
   // Add an observation (detection) at a position and time.
-  ::mediapipe::Status AddObservation(int position, const uint64 time_us);
+  absl::Status AddObservation(int position, const uint64 time_us);
   // Get the predicted position at a time.
-  ::mediapipe::Status UpdatePrediction(const int64 time_us);
+  absl::Status UpdatePrediction(const int64 time_us);
   // Get the state at a time.
-  ::mediapipe::Status GetState(int* position);
+  absl::Status GetState(int* position);
+  // Update PixelPerDegree value.
+  absl::Status UpdatePixelsPerDegree(const float pixels_per_degree);
+  // Provide the current target position of the reframe action.
+  absl::Status GetTargetPosition(int* target_position);
+  // Change min/max location and update state based on new scaling.
+  absl::Status UpdateMinMaxLocation(const int min_location,
+                                    const int max_location);
+  // Check if motion is within the reframe window, return false if not.
+  bool IsMotionTooSmall(double delta_degs);
+  // Check if a position measurement will cause the camera to be in motion
+  // without updating the internal state.
+  absl::Status PredictMotionState(int position, const uint64 time_us,
+                                  bool* state);
+  // Clear any history buffer of positions that are used when
+  // filtering_time_window_us is set to a non-zero value.
+  void ClearHistory();
 
  private:
   // Tuning options.
   KinematicOptions options_;
   // Min and max value the state can be.
-  const int min_location_;
-  const int max_location_;
+  int min_location_;
+  int max_location_;
   bool initialized_;
   float pixels_per_degree_;
   // Current state values.
   double current_position_px_;
   double current_velocity_deg_per_s_;
   uint64 current_time_;
+  // History of observations (second) and their time (first).
+  std::deque<std::pair<uint64, int>> raw_positions_at_time_;
+  // Current target position.
+  double target_position_px_;
+  // Defines if the camera is moving to a target (true) or reached a target
+  // within a tolerance (false).
+  bool motion_state_;
+  // Average period of incoming frames.
+  double mean_delta_t_;
 };
 
 }  // namespace autoflip

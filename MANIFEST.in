@@ -7,5 +7,6 @@ include MANIFEST.in
 include README.md
 include requirements.txt
 
-recursive-include mediapipe/modules *.tflite *.txt
-recursive-include mediapipe/graphs *.binarypb
+recursive-include mediapipe/modules *.tflite *.txt *.binarypb
+exclude mediapipe/modules/objectron/object_detection_3d_chair_1stage.tflite
+exclude mediapipe/modules/objectron/object_detection_3d_sneakers_1stage.tflite

@@ -48,9 +48,9 @@ void CropRectToMat(const cv::Mat& image, cv::Rect* rect) {
 VisualScorer::VisualScorer(const VisualScorerOptions& options)
     : options_(options) {}
 
-mediapipe::Status VisualScorer::CalculateScore(const cv::Mat& image,
-                                               const SalientRegion& region,
-                                               float* score) const {
+absl::Status VisualScorer::CalculateScore(const cv::Mat& image,
+                                          const SalientRegion& region,
+                                          float* score) const {
   const float weight_sum = options_.area_weight() +
                            options_.sharpness_weight() +
                            options_.colorfulness_weight();
@@ -67,14 +67,14 @@ mediapipe::Status VisualScorer::CalculateScore(const cv::Mat& image,
                            region.location_normalized().width() * image.cols,
                            region.location_normalized().height() * image.rows);
   } else {
-    return ::mediapipe::UnknownErrorBuilder(MEDIAPIPE_LOC)
+    return mediapipe::UnknownErrorBuilder(MEDIAPIPE_LOC)
            << "Unset region location.";
   }
 
   CropRectToMat(image, &region_rect);
   if (region_rect.area() == 0) {
     *score = 0;
-    return ::mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
   // Compute a score based on area covered by this region.
@@ -89,7 +89,7 @@ mediapipe::Status VisualScorer::CalculateScore(const cv::Mat& image,
   float sharpness_score_result = 0.0;
   if (options_.sharpness_weight() > kEpsilon) {
     // TODO: implement a sharpness score or remove this code block.
-    return ::mediapipe::InvalidArgumentErrorBuilder(MEDIAPIPE_LOC)
+    return mediapipe::InvalidArgumentErrorBuilder(MEDIAPIPE_LOC)
            << "sharpness scorer is not yet implemented, please set weight to "
               "0.0";
   }
@@ -108,11 +108,11 @@ mediapipe::Status VisualScorer::CalculateScore(const cv::Mat& image,
   if (*score > 1.0f || *score < 0.0f) {
     LOG(WARNING) << "Score of region outside expected range: " << *score;
   }
-  return ::mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-mediapipe::Status VisualScorer::CalculateColorfulness(
-    const cv::Mat& image, float* colorfulness) const {
+absl::Status VisualScorer::CalculateColorfulness(const cv::Mat& image,
+                                                 float* colorfulness) const {
   // Convert the image to HSV.
   cv::Mat image_hsv;
   cv::cvtColor(image, image_hsv, CV_RGB2HSV);
@@ -134,7 +134,7 @@ mediapipe::Status VisualScorer::CalculateColorfulness(
   // If the mask is empty, return.
   if (empty_mask) {
     *colorfulness = 0;
-    return ::mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
   // Generate a 2D histogram (hue/saturation).
@@ -162,7 +162,7 @@ mediapipe::Status VisualScorer::CalculateColorfulness(
   }
   if (hue_sum == 0.0f) {
     *colorfulness = 0;
-    return ::mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
   // Compute the histogram entropy.
@@ -175,7 +175,7 @@ mediapipe::Status VisualScorer::CalculateColorfulness(
   }
   *colorfulness /= std::log(2.0f);
 
-  return ::mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
 }  // namespace autoflip

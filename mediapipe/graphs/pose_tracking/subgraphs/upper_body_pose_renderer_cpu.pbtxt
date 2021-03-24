@@ -121,7 +121,7 @@ node {
       thickness: 3.0
       visualize_landmark_depth: false
       utilize_visibility: true
-      visibility_threshold: 0.1
+      visibility_threshold: 0.5
     }
   }
 }
@@ -185,7 +185,7 @@ node {
       thickness: 5.0
       visualize_landmark_depth: false
       utilize_visibility: true
-      visibility_threshold: 0.1
+      visibility_threshold: 0.5
     }
   }
 }
@@ -203,7 +203,7 @@ node {
       thickness: 3.0
       visualize_landmark_depth: false
       utilize_visibility: true
-      visibility_threshold: 0.1
+      visibility_threshold: 0.5
     }
   }
 }
@@ -221,7 +221,7 @@ node {
       thickness: 3.0
       visualize_landmark_depth: false
       utilize_visibility: true
-      visibility_threshold: 0.1
+      visibility_threshold: 0.5
     }
   }
 }

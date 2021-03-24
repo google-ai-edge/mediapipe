@@ -1332,20 +1332,20 @@ bool IsFunctionOperator(const std::string& token) {
 // by the DynamicMessageFactory ("output").  These two Messages have
 // different Descriptors so Message::MergeFrom cannot be applied directly,
 // but they are expected to be equivalent.
-::mediapipe::Status MergeFields(const Message& source, Message* dest) {
+absl::Status MergeFields(const Message& source, Message* dest) {
   std::unique_ptr<Message> temp(dest->New());
   std::string temp_str;
   RET_CHECK(TextFormat::PrintToString(source, &temp_str));
   RET_CHECK(TextFormat::ParseFromString(temp_str, temp.get()));
   dest->MergeFrom(*temp);
-  return ::mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
 // Returns the (tag, index) pairs in a field path.
 // For example, returns {{1, 1}, {2, 1}, {3, 1}} for path "/1[1]/2[1]/3[1]".
-mediapipe::Status ProtoPathSplit(const std::string& path,
-                                 ProtoUtilLite::ProtoPath* result) {
-  mediapipe::Status status;
+absl::Status ProtoPathSplit(const std::string& path,
+                            ProtoUtilLite::ProtoPath* result) {
+  absl::Status status;
   std::vector<std::string> ids = absl::StrSplit(path, '/');
   for (const std::string& id : ids) {
     if (id.length() > 0) {
@@ -1356,7 +1356,7 @@ mediapipe::Status ProtoPathSplit(const std::string& path,
       bool ok = absl::SimpleAtoi(id_pair.first, &tag) &&
                 absl::SimpleAtoi(id_pair.second, &index);
       if (!ok) {
-        status.Update(::mediapipe::InvalidArgumentError(path));
+        status.Update(absl::InvalidArgumentError(path));
       }
       result->push_back(std::make_pair(tag, index));
     }

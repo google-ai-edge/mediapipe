@@ -45,9 +45,8 @@ class CalculatorContextManager {
   // Sets the callback that can setup the input and output stream shards in a
   // newly constructed calculator context. Then, initializes the default
   // calculator context.
-  ::mediapipe::Status PrepareForRun(
-      std::function<::mediapipe::Status(CalculatorContext*)>
-          setup_shards_callback);
+  absl::Status PrepareForRun(
+      std::function<absl::Status(CalculatorContext*)> setup_shards_callback);
 
   // Invoked by CalculatorNode::CleanupAfterRun().
   void CleanupAfterRun() ABSL_LOCKS_EXCLUDED(contexts_mutex_);
@@ -108,7 +107,7 @@ class CalculatorContextManager {
   }
 
   void SetGraphStatusInContext(CalculatorContext* calculator_context,
-                               const ::mediapipe::Status& status) {
+                               const absl::Status& status) {
     CHECK(calculator_context);
     calculator_context->SetGraphStatus(status);
   }
@@ -124,7 +123,7 @@ class CalculatorContextManager {
   // NOTE: This callback invokes input/output stream handler methods.
   // The callback is used to break the circular dependency between
   // calculator context manager and input/output stream handlers.
-  std::function<::mediapipe::Status(CalculatorContext*)> setup_shards_callback_;
+  std::function<absl::Status(CalculatorContext*)> setup_shards_callback_;
 
   // The default calculator context that is always reused for sequential
   // execution. It is also used by Open() and Close() method of a parallel

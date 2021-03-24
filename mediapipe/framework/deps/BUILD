@@ -94,7 +94,7 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         ":file_path",
-        ":status",
+        "//mediapipe/framework/port:status",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -258,22 +258,6 @@ cc_library(
 )
 
 cc_library(
-    name = "statusor",
-    srcs = ["statusor.cc"],
-    hdrs = [
-        "statusor.h",
-        "statusor_internals.h",
-    ],
-    # Use this library through "mediapipe/framework/port:statusor".
-    visibility = ["//mediapipe/framework/port:__pkg__"],
-    deps = [
-        ":status",
-        "//mediapipe/framework/port:logging",
-        "@com_google_absl//absl/base:core_headers",
-    ],
-)
-
-cc_library(
     name = "re2",
     hdrs = [
         "re2.h",
@@ -425,18 +409,6 @@ cc_test(
     deps = [
         ":status",
         ":status_matchers",
-        "//mediapipe/framework/port:gtest_main",
-    ],
-)
-
-cc_test(
-    name = "statusor_test",
-    size = "small",
-    srcs = ["statusor_test.cc"],
-    linkstatic = 1,
-    deps = [
-        ":status",
-        ":statusor",
         "//mediapipe/framework/port:gtest_main",
     ],
 )

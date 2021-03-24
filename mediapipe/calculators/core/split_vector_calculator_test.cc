@@ -162,7 +162,7 @@ TEST_F(SplitTfLiteTensorVectorCalculatorTest, SmokeTest) {
 
   // Prepare a graph to use the SplitTfLiteTensorVectorCalculator.
   CalculatorGraphConfig graph_config =
-      ::mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(
           R"(
             input_stream: "tensor_in"
             node {
@@ -213,7 +213,7 @@ TEST_F(SplitTfLiteTensorVectorCalculatorTest, InvalidRangeTest) {
 
   // Prepare a graph to use the SplitTfLiteTensorVectorCalculator.
   CalculatorGraphConfig graph_config =
-      ::mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(
           R"(
             input_stream: "tensor_in"
             node {
@@ -239,7 +239,7 @@ TEST_F(SplitTfLiteTensorVectorCalculatorTest, InvalidOutputStreamCountTest) {
 
   // Prepare a graph to use the SplitTfLiteTensorVectorCalculator.
   CalculatorGraphConfig graph_config =
-      ::mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(
           R"(
             input_stream: "tensor_in"
             node {
@@ -268,7 +268,7 @@ TEST_F(SplitTfLiteTensorVectorCalculatorTest,
 
   // Prepare a graph to use the SplitTfLiteTensorVectorCalculator.
   CalculatorGraphConfig graph_config =
-      ::mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(
           R"(
             input_stream: "tensor_in"
             node {
@@ -298,7 +298,7 @@ TEST_F(SplitTfLiteTensorVectorCalculatorTest, InvalidOverlappingRangesTest) {
 
   // Prepare a graph to use the SplitTfLiteTensorVectorCalculator.
   CalculatorGraphConfig graph_config =
-      ::mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(
           R"(
             input_stream: "tensor_in"
             node {
@@ -329,7 +329,7 @@ TEST_F(SplitTfLiteTensorVectorCalculatorTest, SmokeTestElementOnly) {
 
   // Prepare a graph to use the SplitTfLiteTensorVectorCalculator.
   CalculatorGraphConfig graph_config =
-      ::mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(
           R"(
             input_stream: "tensor_in"
             node {
@@ -384,7 +384,7 @@ TEST_F(SplitTfLiteTensorVectorCalculatorTest, SmokeTestCombiningOutputs) {
 
   // Prepare a graph to use the SplitTfLiteTensorVectorCalculator.
   CalculatorGraphConfig graph_config =
-      ::mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(
           R"(
             input_stream: "tensor_in"
             node {
@@ -427,7 +427,7 @@ TEST_F(SplitTfLiteTensorVectorCalculatorTest,
        ElementOnlyDisablesVectorOutputs) {
   // Prepare a graph to use the SplitTfLiteTensorVectorCalculator.
   CalculatorGraphConfig graph_config =
-      ::mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(
           R"(
             input_stream: "tensor_in"
             node {
@@ -510,7 +510,7 @@ class MovableSplitUniqueIntPtrCalculatorTest : public ::testing::Test {
 TEST_F(MovableSplitUniqueIntPtrCalculatorTest, InvalidOverlappingRangesTest) {
   // Prepare a graph to use the TestMovableSplitUniqueIntPtrVectorCalculator.
   CalculatorGraphConfig graph_config =
-      ::mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(
           R"(
             input_stream: "input_vector"
             node {
@@ -535,7 +535,7 @@ TEST_F(MovableSplitUniqueIntPtrCalculatorTest, InvalidOverlappingRangesTest) {
 TEST_F(MovableSplitUniqueIntPtrCalculatorTest, SmokeTest) {
   // Prepare a graph to use the TestMovableSplitUniqueIntPtrVectorCalculator.
   CalculatorGraphConfig graph_config =
-      ::mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(
           R"(
             input_stream: "input_vector"
             node {
@@ -591,7 +591,7 @@ TEST_F(MovableSplitUniqueIntPtrCalculatorTest, SmokeTest) {
 TEST_F(MovableSplitUniqueIntPtrCalculatorTest, SmokeTestElementOnly) {
   // Prepare a graph to use the TestMovableSplitUniqueIntPtrVectorCalculator.
   CalculatorGraphConfig graph_config =
-      ::mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(
           R"(
             input_stream: "input_vector"
             node {
@@ -645,7 +645,7 @@ TEST_F(MovableSplitUniqueIntPtrCalculatorTest, SmokeTestElementOnly) {
 TEST_F(MovableSplitUniqueIntPtrCalculatorTest, SmokeTestCombiningOutputs) {
   // Prepare a graph to use the TestMovableSplitUniqueIntPtrVectorCalculator.
   CalculatorGraphConfig graph_config =
-      ::mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(
           R"(
             input_stream: "input_vector"
             node {

@@ -54,7 +54,7 @@ class MetalHelperLegacySupport {
   return [self initWithGpuResources:&cc->Service(mediapipe::kGpuService).GetObject()];
 }
 
-+ (::mediapipe::Status)updateContract:(mediapipe::CalculatorContract*)cc {
++ (absl::Status)updateContract:(mediapipe::CalculatorContract*)cc {
   cc->UseService(mediapipe::kGpuService);
   // Allow the legacy side packet to be provided, too, for backwards
   // compatibility with existing graphs. It will just be ignored.
@@ -63,7 +63,7 @@ class MetalHelperLegacySupport {
   if (id.IsValid()) {
     input_side_packets.Get(id).Set<mediapipe::GpuSharedData*>();
   }
-  return ::mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
 // Legacy support.
@@ -85,7 +85,7 @@ class MetalHelperLegacySupport {
 }
 
 // Legacy support.
-+ (::mediapipe::Status)setupInputSidePackets:(mediapipe::PacketTypeSet*)inputSidePackets {
++ (absl::Status)setupInputSidePackets:(mediapipe::PacketTypeSet*)inputSidePackets {
   auto cc = mediapipe::MetalHelperLegacySupport::GetCalculatorContract();
   if (cc) {
     CHECK_EQ(inputSidePackets, &cc->InputSidePackets());
@@ -101,7 +101,7 @@ class MetalHelperLegacySupport {
       << "A " << mediapipe::kGpuSharedTagName
       << " input side packet is required here.";
   inputSidePackets->Get(id).Set<mediapipe::GpuSharedData*>();
-  return ::mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
 - (id<MTLDevice>)mtlDevice {

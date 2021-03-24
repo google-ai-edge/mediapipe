@@ -1,0 +1,63 @@
+# MediaPipe graph to calculate hand region of interest (ROI) from landmarks
+# detected by "HandLandmarkCpu" or "HandLandmarkGpu".
+
+type: "HandLandmarkLandmarksToRoi"
+
+# Normalized landmarks. (NormalizedLandmarkList)
+input_stream: "LANDMARKS:landmarks"
+# Image size (width & height). (std::pair<int, int>)
+input_stream: "IMAGE_SIZE:image_size"
+
+# ROI according to landmarks. (NormalizedRect)
+output_stream: "ROI:roi"
+
+# Extracts a subset of the hand landmarks that are relatively more stable across
+# frames (e.g. comparing to finger tips) for computing the bounding box. The box
+# will later be expanded to contain the entire hand. In this approach, it is
+# more robust to drastically changing hand size.
+# The landmarks extracted are: wrist, MCP/PIP of five fingers.
+node {
+  calculator: "SplitNormalizedLandmarkListCalculator"
+  input_stream: "landmarks"
+  output_stream: "partial_landmarks"
+  options: {
+    [mediapipe.SplitVectorCalculatorOptions.ext] {
+      ranges: { begin: 0 end: 4 }
+      ranges: { begin: 5 end: 7 }
+      ranges: { begin: 9 end: 11 }
+      ranges: { begin: 13 end: 15 }
+      ranges: { begin: 17 end: 19 }
+      combine_outputs: true
+    }
+  }
+}
+
+# Converts the hand landmarks into a rectangle (normalized by image size)
+# that encloses the hand. The calculator uses a subset of all hand landmarks
+# extracted from SplitNormalizedLandmarkListCalculator above to
+# calculate the bounding box and the rotation of the output rectangle. Please
+# see the comments in the calculator for more detail.
+node {
+  calculator: "HandLandmarksToRectCalculator"
+  input_stream: "NORM_LANDMARKS:partial_landmarks"
+  input_stream: "IMAGE_SIZE:image_size"
+  output_stream: "NORM_RECT:hand_rect_from_landmarks"
+}
+
+# Expands the hand rectangle so that the box contains the entire hand and it's
+# big enough so that it's likely to still contain the hand even with some motion
+# in the next video frame .
+node {
+  calculator: "RectTransformationCalculator"
+  input_stream: "NORM_RECT:hand_rect_from_landmarks"
+  input_stream: "IMAGE_SIZE:image_size"
+  output_stream: "roi"
+  options: {
+    [mediapipe.RectTransformationCalculatorOptions.ext] {
+      scale_x: 2.0
+      scale_y: 2.0
+      shift_y: -0.1
+      square_long: true
+    }
+  }
+}

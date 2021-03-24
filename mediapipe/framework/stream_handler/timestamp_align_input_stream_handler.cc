@@ -52,11 +52,10 @@ class TimestampAlignInputStreamHandler : public InputStreamHandler {
                                    const MediaPipeOptions& options,
                                    bool calculator_run_in_parallel);
 
-  void PrepareForRun(
-      std::function<void()> headers_ready_callback,
-      std::function<void()> notification_callback,
-      std::function<void(CalculatorContext*)> schedule_callback,
-      std::function<void(::mediapipe::Status)> error_callback) override;
+  void PrepareForRun(std::function<void()> headers_ready_callback,
+                     std::function<void()> notification_callback,
+                     std::function<void(CalculatorContext*)> schedule_callback,
+                     std::function<void(absl::Status)> error_callback) override;
 
  protected:
   // In TimestampAlignInputStreamHandler, a node is "ready" if:
@@ -107,7 +106,7 @@ void TimestampAlignInputStreamHandler::PrepareForRun(
     std::function<void()> headers_ready_callback,
     std::function<void()> notification_callback,
     std::function<void(CalculatorContext*)> schedule_callback,
-    std::function<void(::mediapipe::Status)> error_callback) {
+    std::function<void(absl::Status)> error_callback) {
   {
     absl::MutexLock lock(&mutex_);
     offsets_initialized_ = (input_stream_managers_.NumEntries() == 1);

@@ -28,21 +28,23 @@ Detection TensorToDetection(
     const ::tensorflow::TTypes<const float>::Vec& box, float score,
     const ::absl::variant<int, std::string>& class_label);
 
-::mediapipe::Status TensorsToDetections(
-    const ::tensorflow::Tensor& num_detections,
-    const ::tensorflow::Tensor& boxes, const ::tensorflow::Tensor& scores,
-    const ::tensorflow::Tensor& classes,
-    const std::map<int, std::string>& label_map,
-    std::vector<Detection>* detections);
+absl::Status TensorsToDetections(const ::tensorflow::Tensor& num_detections,
+                                 const ::tensorflow::Tensor& boxes,
+                                 const ::tensorflow::Tensor& scores,
+                                 const ::tensorflow::Tensor& classes,
+                                 const std::map<int, std::string>& label_map,
+                                 std::vector<Detection>* detections);
 
 // Use this version if keypoints or masks are available.
-::mediapipe::Status TensorsToDetections(
-    const ::tensorflow::Tensor& num_detections,
-    const ::tensorflow::Tensor& boxes, const ::tensorflow::Tensor& scores,
-    const ::tensorflow::Tensor& classes, const ::tensorflow::Tensor& keypoints,
-    const ::tensorflow::Tensor& masks, float mask_threshold,
-    const std::map<int, std::string>& label_map,
-    std::vector<Detection>* detections);
+absl::Status TensorsToDetections(const ::tensorflow::Tensor& num_detections,
+                                 const ::tensorflow::Tensor& boxes,
+                                 const ::tensorflow::Tensor& scores,
+                                 const ::tensorflow::Tensor& classes,
+                                 const ::tensorflow::Tensor& keypoints,
+                                 const ::tensorflow::Tensor& masks,
+                                 float mask_threshold,
+                                 const std::map<int, std::string>& label_map,
+                                 std::vector<Detection>* detections);
 }  // namespace mediapipe
 
 #endif  // MEDIAPIPE_TENSORFLOW_UTIL_TENSOR_TO_DETECTION_H_

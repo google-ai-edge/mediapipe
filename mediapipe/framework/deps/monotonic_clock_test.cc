@@ -428,7 +428,7 @@ class ClockFrenzy {
   void Start(int nthreads) {
     absl::MutexLock l(&lock_);
     running_ = true;
-    threads_ = absl::make_unique<::mediapipe::ThreadPool>("Frenzy", nthreads);
+    threads_ = absl::make_unique<mediapipe::ThreadPool>("Frenzy", nthreads);
     threads_->StartWorkers();
     for (int i = 0; i < nthreads; ++i) {
       threads_->Schedule([&]() { Feed(); });
@@ -452,7 +452,7 @@ class ClockFrenzy {
   Clock* real_clock_;
   std::vector<SimulationClock*> sim_clocks_;
   std::vector<MonotonicClock*> mono_clocks_;
-  std::unique_ptr<::mediapipe::ThreadPool> threads_;
+  std::unique_ptr<mediapipe::ThreadPool> threads_;
 
   // Provide a lock to avoid race conditions in non-threadsafe ACMRandom.
   mutable absl::Mutex lock_;

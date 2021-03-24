@@ -85,8 +85,8 @@ GlContext::StatusOrGlContext GlContext::Create(EGLContext share_context,
   return std::move(context);
 }
 
-::mediapipe::Status GlContext::CreateContextInternal(
-    EGLContext external_context, int gl_version) {
+absl::Status GlContext::CreateContextInternal(EGLContext external_context,
+                                              int gl_version) {
   CHECK(gl_version == 2 || gl_version == 3);
 
   const EGLint config_attr[] = {
@@ -94,7 +94,12 @@ GlContext::StatusOrGlContext GlContext::Create(EGLContext share_context,
       EGL_RENDERABLE_TYPE, gl_version == 3 ? EGL_OPENGL_ES3_BIT_KHR
                                            : EGL_OPENGL_ES2_BIT,
       // Allow rendering to pixel buffers or directly to windows.
-      EGL_SURFACE_TYPE, EGL_PBUFFER_BIT | EGL_WINDOW_BIT,
+      EGL_SURFACE_TYPE,
+#ifdef MEDIAPIPE_OMIT_EGL_WINDOW_BIT
+      EGL_PBUFFER_BIT,
+#else
+      EGL_PBUFFER_BIT | EGL_WINDOW_BIT,
+#endif
       EGL_RED_SIZE, 8,
       EGL_GREEN_SIZE, 8,
       EGL_BLUE_SIZE, 8,
@@ -114,7 +119,7 @@ GlContext::StatusOrGlContext GlContext::Create(EGLContext share_context,
            << eglGetError();
   }
   if (!num_configs) {
-    return ::mediapipe::UnknownErrorBuilder(MEDIAPIPE_LOC)
+    return mediapipe::UnknownErrorBuilder(MEDIAPIPE_LOC)
            << "eglChooseConfig() returned no matching EGL configuration for "
            << "RGBA8888 D16 ES" << gl_version << " request. ";
   }
@@ -141,10 +146,10 @@ GlContext::StatusOrGlContext GlContext::Create(EGLContext share_context,
   // GLES 2 does not have them, so let's set the major version here at least.
   gl_major_version_ = gl_version;
 
-  return ::mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-::mediapipe::Status GlContext::CreateContext(EGLContext external_context) {
+absl::Status GlContext::CreateContext(EGLContext external_context) {
   EGLint major = 0;
   EGLint minor = 0;
 
@@ -173,10 +178,31 @@ GlContext::StatusOrGlContext GlContext::Create(EGLContext share_context,
       << "eglCreatePbufferSurface() returned error " << std::showbase
       << std::hex << eglGetError();
 
-  return ::mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
 void GlContext::DestroyContext() {
+#ifdef __ANDROID__
+  if (HasContext()) {
+    // Detach the current program to work around b/166322604.
+    auto detach_program = [this] {
+      GlContext::ContextBinding saved_context;
+      GetCurrentContextBinding(&saved_context);
+      // Note: cannot use ThisContextBinding because it calls shared_from_this,
+      // which is not available during destruction.
+      if (eglMakeCurrent(display_, surface_, surface_, context_)) {
+        glUseProgram(0);
+      } else {
+        LOG(ERROR) << "eglMakeCurrent() returned error " << std::showbase
+                   << std::hex << eglGetError();
+      }
+      return SetCurrentContextBinding(saved_context);
+    };
+    auto status = thread_ ? thread_->Run(detach_program) : detach_program();
+    LOG_IF(ERROR, !status.ok()) << status;
+  }
+#endif  // __ANDROID__
+
   if (thread_) {
     // Delete thread-local storage.
     // TODO: in theory our EglThreadExitCallback should suffice for
@@ -186,22 +212,10 @@ void GlContext::DestroyContext() {
     thread_
         ->Run([] {
           eglReleaseThread();
-          return ::mediapipe::OkStatus();
+          return absl::OkStatus();
         })
         .IgnoreError();
   }
-
-#ifdef __ANDROID__
-  if (HasContext()) {
-    // Detach the current program to work around b/166322604.
-    if (eglMakeCurrent(display_, surface_, surface_, context_)) {
-      glUseProgram(0);
-    } else {
-      LOG(ERROR) << "eglMakeCurrent() returned error " << std::showbase
-                 << std::hex << eglGetError();
-    }
-  }
-#endif  // __ANDROID__
 
   // Destroy the context and surface.
   if (IsCurrent()) {
@@ -257,7 +271,7 @@ void GlContext::GetCurrentContextBinding(GlContext::ContextBinding* binding) {
   binding->context = eglGetCurrentContext();
 }
 
-::mediapipe::Status GlContext::SetCurrentContextBinding(
+absl::Status GlContext::SetCurrentContextBinding(
     const ContextBinding& new_binding) {
   EnsureEglThreadRelease();
   EGLDisplay display = new_binding.display;
@@ -272,7 +286,7 @@ void GlContext::GetCurrentContextBinding(GlContext::ContextBinding* binding) {
                      new_binding.read_surface, new_binding.context);
   RET_CHECK(success) << "eglMakeCurrent() returned error " << std::showbase
                      << std::hex << eglGetError();
-  return ::mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
 bool GlContext::HasContext() const { return context_ != EGL_NO_CONTEXT; }

@@ -24,11 +24,11 @@
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/util/color.pb.h"
 
-#if !defined(MEDIAPIPE_DISABLE_GPU)
+#if !MEDIAPIPE_DISABLE_GPU
 #include "mediapipe/gpu/gl_calculator_helper.h"
 #include "mediapipe/gpu/gl_simple_shaders.h"
 #include "mediapipe/gpu/shader_util.h"
-#endif  //  !MEDIAPIPE_DISABLE_GPU
+#endif  // !MEDIAPIPE_DISABLE_GPU
 
 namespace {
 enum { ATTRIB_VERTEX, ATTRIB_TEXTURE_POSITION, NUM_ATTRIBUTES };
@@ -84,17 +84,17 @@ class RecolorCalculator : public CalculatorBase {
   RecolorCalculator() = default;
   ~RecolorCalculator() override = default;
 
-  static ::mediapipe::Status GetContract(CalculatorContract* cc);
+  static absl::Status GetContract(CalculatorContract* cc);
 
-  ::mediapipe::Status Open(CalculatorContext* cc) override;
-  ::mediapipe::Status Process(CalculatorContext* cc) override;
-  ::mediapipe::Status Close(CalculatorContext* cc) override;
+  absl::Status Open(CalculatorContext* cc) override;
+  absl::Status Process(CalculatorContext* cc) override;
+  absl::Status Close(CalculatorContext* cc) override;
 
  private:
-  ::mediapipe::Status LoadOptions(CalculatorContext* cc);
-  ::mediapipe::Status InitGpu(CalculatorContext* cc);
-  ::mediapipe::Status RenderGpu(CalculatorContext* cc);
-  ::mediapipe::Status RenderCpu(CalculatorContext* cc);
+  absl::Status LoadOptions(CalculatorContext* cc);
+  absl::Status InitGpu(CalculatorContext* cc);
+  absl::Status RenderGpu(CalculatorContext* cc);
+  absl::Status RenderCpu(CalculatorContext* cc);
   void GlRender();
 
   bool initialized_ = false;
@@ -102,46 +102,46 @@ class RecolorCalculator : public CalculatorBase {
   mediapipe::RecolorCalculatorOptions::MaskChannel mask_channel_;
 
   bool use_gpu_ = false;
-#if !defined(MEDIAPIPE_DISABLE_GPU)
+#if !MEDIAPIPE_DISABLE_GPU
   mediapipe::GlCalculatorHelper gpu_helper_;
   GLuint program_ = 0;
-#endif  //  !MEDIAPIPE_DISABLE_GPU
+#endif  // !MEDIAPIPE_DISABLE_GPU
 };
 REGISTER_CALCULATOR(RecolorCalculator);
 
 // static
-::mediapipe::Status RecolorCalculator::GetContract(CalculatorContract* cc) {
+absl::Status RecolorCalculator::GetContract(CalculatorContract* cc) {
   RET_CHECK(!cc->Inputs().GetTags().empty());
   RET_CHECK(!cc->Outputs().GetTags().empty());
 
   bool use_gpu = false;
 
-#if !defined(MEDIAPIPE_DISABLE_GPU)
+#if !MEDIAPIPE_DISABLE_GPU
   if (cc->Inputs().HasTag(kGpuBufferTag)) {
     cc->Inputs().Tag(kGpuBufferTag).Set<mediapipe::GpuBuffer>();
     use_gpu |= true;
   }
-#endif  //  !MEDIAPIPE_DISABLE_GPU
+#endif  // !MEDIAPIPE_DISABLE_GPU
   if (cc->Inputs().HasTag(kImageFrameTag)) {
     cc->Inputs().Tag(kImageFrameTag).Set<ImageFrame>();
   }
 
-#if !defined(MEDIAPIPE_DISABLE_GPU)
+#if !MEDIAPIPE_DISABLE_GPU
   if (cc->Inputs().HasTag(kMaskGpuTag)) {
     cc->Inputs().Tag(kMaskGpuTag).Set<mediapipe::GpuBuffer>();
     use_gpu |= true;
   }
-#endif  //  !MEDIAPIPE_DISABLE_GPU
+#endif  // !MEDIAPIPE_DISABLE_GPU
   if (cc->Inputs().HasTag(kMaskCpuTag)) {
     cc->Inputs().Tag(kMaskCpuTag).Set<ImageFrame>();
   }
 
-#if !defined(MEDIAPIPE_DISABLE_GPU)
+#if !MEDIAPIPE_DISABLE_GPU
   if (cc->Outputs().HasTag(kGpuBufferTag)) {
     cc->Outputs().Tag(kGpuBufferTag).Set<mediapipe::GpuBuffer>();
     use_gpu |= true;
   }
-#endif  //  !MEDIAPIPE_DISABLE_GPU
+#endif  // !MEDIAPIPE_DISABLE_GPU
   if (cc->Outputs().HasTag(kImageFrameTag)) {
     cc->Outputs().Tag(kImageFrameTag).Set<ImageFrame>();
   }
@@ -154,62 +154,62 @@ REGISTER_CALCULATOR(RecolorCalculator);
             cc->Outputs().HasTag(kGpuBufferTag));
 
   if (use_gpu) {
-#if !defined(MEDIAPIPE_DISABLE_GPU)
+#if !MEDIAPIPE_DISABLE_GPU
     MP_RETURN_IF_ERROR(mediapipe::GlCalculatorHelper::UpdateContract(cc));
-#endif  //  !MEDIAPIPE_DISABLE_GPU
+#endif  // !MEDIAPIPE_DISABLE_GPU
   }
 
-  return ::mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-::mediapipe::Status RecolorCalculator::Open(CalculatorContext* cc) {
+absl::Status RecolorCalculator::Open(CalculatorContext* cc) {
   cc->SetOffset(TimestampDiff(0));
 
   if (cc->Inputs().HasTag(kGpuBufferTag)) {
     use_gpu_ = true;
-#if !defined(MEDIAPIPE_DISABLE_GPU)
+#if !MEDIAPIPE_DISABLE_GPU
     MP_RETURN_IF_ERROR(gpu_helper_.Open(cc));
-#endif  //  !MEDIAPIPE_DISABLE_GPU
+#endif  // !MEDIAPIPE_DISABLE_GPU
   }
 
   MP_RETURN_IF_ERROR(LoadOptions(cc));
 
-  return ::mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-::mediapipe::Status RecolorCalculator::Process(CalculatorContext* cc) {
+absl::Status RecolorCalculator::Process(CalculatorContext* cc) {
   if (use_gpu_) {
-#if !defined(MEDIAPIPE_DISABLE_GPU)
+#if !MEDIAPIPE_DISABLE_GPU
     MP_RETURN_IF_ERROR(
-        gpu_helper_.RunInGlContext([this, &cc]() -> ::mediapipe::Status {
+        gpu_helper_.RunInGlContext([this, &cc]() -> absl::Status {
           if (!initialized_) {
             MP_RETURN_IF_ERROR(InitGpu(cc));
             initialized_ = true;
           }
           MP_RETURN_IF_ERROR(RenderGpu(cc));
-          return ::mediapipe::OkStatus();
+          return absl::OkStatus();
         }));
-#endif  //  !MEDIAPIPE_DISABLE_GPU
+#endif  // !MEDIAPIPE_DISABLE_GPU
   } else {
     MP_RETURN_IF_ERROR(RenderCpu(cc));
   }
-  return ::mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-::mediapipe::Status RecolorCalculator::Close(CalculatorContext* cc) {
-#if !defined(MEDIAPIPE_DISABLE_GPU)
+absl::Status RecolorCalculator::Close(CalculatorContext* cc) {
+#if !MEDIAPIPE_DISABLE_GPU
   gpu_helper_.RunInGlContext([this] {
     if (program_) glDeleteProgram(program_);
     program_ = 0;
   });
-#endif  //  !MEDIAPIPE_DISABLE_GPU
+#endif  // !MEDIAPIPE_DISABLE_GPU
 
-  return ::mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-::mediapipe::Status RecolorCalculator::RenderCpu(CalculatorContext* cc) {
+absl::Status RecolorCalculator::RenderCpu(CalculatorContext* cc) {
   if (cc->Inputs().Tag(kMaskCpuTag).IsEmpty()) {
-    return ::mediapipe::OkStatus();
+    return absl::OkStatus();
   }
   // Get inputs and setup output.
   const auto& input_img = cc->Inputs().Tag(kImageFrameTag).Get<ImageFrame>();
@@ -265,14 +265,14 @@ REGISTER_CALCULATOR(RecolorCalculator);
       .Tag(kImageFrameTag)
       .Add(output_img.release(), cc->InputTimestamp());
 
-  return ::mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-::mediapipe::Status RecolorCalculator::RenderGpu(CalculatorContext* cc) {
+absl::Status RecolorCalculator::RenderGpu(CalculatorContext* cc) {
   if (cc->Inputs().Tag(kMaskGpuTag).IsEmpty()) {
-    return ::mediapipe::OkStatus();
+    return absl::OkStatus();
   }
-#if !defined(MEDIAPIPE_DISABLE_GPU)
+#if !MEDIAPIPE_DISABLE_GPU
   // Get inputs and setup output.
   const Packet& input_packet = cc->Inputs().Tag(kGpuBufferTag).Value();
   const Packet& mask_packet = cc->Inputs().Tag(kMaskGpuTag).Value();
@@ -311,13 +311,13 @@ REGISTER_CALCULATOR(RecolorCalculator);
   img_tex.Release();
   mask_tex.Release();
   dst_tex.Release();
-#endif  //  !MEDIAPIPE_DISABLE_GPU
+#endif  // !MEDIAPIPE_DISABLE_GPU
 
-  return ::mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
 void RecolorCalculator::GlRender() {
-#if !defined(MEDIAPIPE_DISABLE_GPU)
+#if !MEDIAPIPE_DISABLE_GPU
   static const GLfloat square_vertices[] = {
       -1.0f, -1.0f,  // bottom left
       1.0f,  -1.0f,  // bottom right
@@ -365,10 +365,10 @@ void RecolorCalculator::GlRender() {
   glBindVertexArray(0);
   glDeleteVertexArrays(1, &vao);
   glDeleteBuffers(2, vbo);
-#endif  //  !MEDIAPIPE_DISABLE_GPU
+#endif  // !MEDIAPIPE_DISABLE_GPU
 }
 
-::mediapipe::Status RecolorCalculator::LoadOptions(CalculatorContext* cc) {
+absl::Status RecolorCalculator::LoadOptions(CalculatorContext* cc) {
   const auto& options = cc->Options<mediapipe::RecolorCalculatorOptions>();
 
   mask_channel_ = options.mask_channel();
@@ -379,11 +379,11 @@ void RecolorCalculator::GlRender() {
   color_.push_back(options.color().g());
   color_.push_back(options.color().b());
 
-  return ::mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-::mediapipe::Status RecolorCalculator::InitGpu(CalculatorContext* cc) {
-#if !defined(MEDIAPIPE_DISABLE_GPU)
+absl::Status RecolorCalculator::InitGpu(CalculatorContext* cc) {
+#if !MEDIAPIPE_DISABLE_GPU
   const GLint attr_location[NUM_ATTRIBUTES] = {
       ATTRIB_VERTEX,
       ATTRIB_TEXTURE_POSITION,
@@ -452,9 +452,9 @@ void RecolorCalculator::GlRender() {
   glUniform1i(glGetUniformLocation(program_, "mask"), 2);
   glUniform3f(glGetUniformLocation(program_, "recolor"), color_[0] / 255.0,
               color_[1] / 255.0, color_[2] / 255.0);
-#endif  //  !MEDIAPIPE_DISABLE_GPU
+#endif  // !MEDIAPIPE_DISABLE_GPU
 
-  return ::mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
 }  // namespace mediapipe

@@ -17,12 +17,15 @@
 #include "mediapipe/calculators/core/constant_side_packet_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/collection_item_id.h"
+#include "mediapipe/framework/formats/classification.pb.h"
 #include "mediapipe/framework/port/canonical_errors.h"
 #include "mediapipe/framework/port/integral_types.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status.h"
 
 namespace mediapipe {
+
+namespace {}  // namespace
 
 // Generates an output side packet or multiple output side packets according to
 // the specified options.
@@ -51,7 +54,7 @@ namespace mediapipe {
 // }
 class ConstantSidePacketCalculator : public CalculatorBase {
  public:
-  static ::mediapipe::Status GetContract(CalculatorContract* cc) {
+  static absl::Status GetContract(CalculatorContract* cc) {
     const auto& options =
         cc->Options<::mediapipe::ConstantSidePacketCalculatorOptions>();
     RET_CHECK_EQ(cc->OutputSidePackets().NumEntries(kPacketTag),
@@ -74,15 +77,17 @@ class ConstantSidePacketCalculator : public CalculatorBase {
         packet.Set<std::string>();
       } else if (packet_options.has_uint64_value()) {
         packet.Set<uint64>();
+      } else if (packet_options.has_classification_list_value()) {
+        packet.Set<ClassificationList>();
       } else {
-        return ::mediapipe::InvalidArgumentError(
+        return absl::InvalidArgumentError(
             "None of supported values were specified in options.");
       }
     }
-    return ::mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
-  ::mediapipe::Status Open(CalculatorContext* cc) override {
+  absl::Status Open(CalculatorContext* cc) override {
     const auto& options =
         cc->Options<::mediapipe::ConstantSidePacketCalculatorOptions>();
     int index = 0;
@@ -100,16 +105,19 @@ class ConstantSidePacketCalculator : public CalculatorBase {
         packet.Set(MakePacket<std::string>(packet_options.string_value()));
       } else if (packet_options.has_uint64_value()) {
         packet.Set(MakePacket<uint64>(packet_options.uint64_value()));
+      } else if (packet_options.has_classification_list_value()) {
+        packet.Set(MakePacket<ClassificationList>(
+            packet_options.classification_list_value()));
       } else {
-        return ::mediapipe::InvalidArgumentError(
+        return absl::InvalidArgumentError(
             "None of supported values were specified in options.");
       }
     }
-    return ::mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
-  ::mediapipe::Status Process(CalculatorContext* cc) override {
-    return ::mediapipe::OkStatus();
+  absl::Status Process(CalculatorContext* cc) override {
+    return absl::OkStatus();
   }
 
  private:

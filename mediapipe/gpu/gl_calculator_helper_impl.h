@@ -37,15 +37,14 @@ class GlCalculatorHelperImpl {
                                   GpuResources* gpu_resources);
   ~GlCalculatorHelperImpl();
 
-  ::mediapipe::Status RunInGlContext(
-      std::function<::mediapipe::Status(void)> gl_func,
-      CalculatorContext* calculator_context);
+  absl::Status RunInGlContext(std::function<absl::Status(void)> gl_func,
+                              CalculatorContext* calculator_context);
 
   GlTexture CreateSourceTexture(const ImageFrame& image_frame);
-  GlTexture CreateSourceTexture(const GpuBuffer& pixel_buffer);
+  GlTexture CreateSourceTexture(const GpuBuffer& gpu_buffer);
 
   // Note: multi-plane support is currently only available on iOS.
-  GlTexture CreateSourceTexture(const GpuBuffer& pixel_buffer, int plane);
+  GlTexture CreateSourceTexture(const GpuBuffer& gpu_buffer, int plane);
 
   // Creates a framebuffer and returns the texture that it is bound to.
   GlTexture CreateDestinationTexture(int output_width, int output_height,
@@ -54,9 +53,7 @@ class GlCalculatorHelperImpl {
   GLuint framebuffer() const { return framebuffer_; }
   void BindFramebuffer(const GlTexture& dst);
 
-#ifdef __APPLE__
-  GlVersion GetGlVersion();
-#endif
+  GlVersion GetGlVersion() const { return gl_context_->GetGlVersion(); }
 
   GlContext& GetGlContext() const;
 

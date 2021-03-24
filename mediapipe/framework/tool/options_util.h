@@ -16,8 +16,8 @@
 #define MEDIAPIPE_FRAMEWORK_TOOL_OPTIONS_UTIL_H_
 
 #include "mediapipe/framework/calculator.pb.h"
+#include "mediapipe/framework/input_stream_shard.h"
 #include "mediapipe/framework/packet.h"
-#include "mediapipe/framework/packet_generator.pb.h"
 #include "mediapipe/framework/packet_set.h"
 #include "mediapipe/framework/port/any_proto.h"
 #include "mediapipe/framework/tool/type_util.h"
@@ -84,7 +84,7 @@ void GetNodeOptions(const CalculatorGraphConfig::Node& node_config, T* result) {
 #if defined(MEDIAPIPE_PROTO_LITE) && defined(MEDIAPIPE_PROTO_THIRD_PARTY)
   // protobuf::Any is unavailable with third_party/protobuf:protobuf-lite.
 #else
-  for (const ::mediapipe::protobuf::Any& options : node_config.node_options()) {
+  for (const mediapipe::protobuf::Any& options : node_config.node_options()) {
     if (options.Is<T>()) {
       options.UnpackTo(result);
     }
@@ -96,17 +96,38 @@ void GetNodeOptions(const CalculatorGraphConfig::Node& node_config, T* result) {
 // packet can hold either the specified options type T or CalculatorOptions.
 // Fields are either replaced or merged depending on field merge_fields.
 template <typename T>
-inline T RetrieveOptions(const T& base, const PacketSet& packet_set,
-                         const std::string& tag_name) {
-  if (packet_set.HasTag(tag_name)) {
-    const Packet& packet = packet_set.Tag(tag_name);
+inline T RetrieveOptions(const T& base, const Packet& options_packet) {
+  if (!options_packet.IsEmpty()) {
     T packet_options;
-    if (packet.ValidateAsType<T>().ok()) {
-      packet_options = packet.Get<T>();
-    } else if (packet.ValidateAsType<CalculatorOptions>().ok()) {
-      GetExtension<T>(packet.Get<CalculatorOptions>(), &packet_options);
+    if (options_packet.ValidateAsType<T>().ok()) {
+      packet_options = options_packet.Get<T>();
+    } else if (options_packet.ValidateAsType<CalculatorOptions>().ok()) {
+      GetExtension<T>(options_packet.Get<CalculatorOptions>(), &packet_options);
     }
     return tool::MergeOptions(base, packet_options);
+  }
+  return base;
+}
+
+// Combine a base options message with an optional side packet from
+// a PacketSet such as a calculator's input-side-packets.
+template <typename T>
+inline T RetrieveOptions(const T& base, const PacketSet& packet_set,
+                         const std::string& tag_name = "OPTIONS") {
+  if (packet_set.HasTag(tag_name)) {
+    return tool::RetrieveOptions(base, packet_set.Tag(tag_name));
+  }
+  return base;
+}
+
+// Combine a base options message with an optional input packet from
+// an InputStreamShardSet such as a calculator's input streams.
+template <typename T>
+inline T RetrieveOptions(const T& base, const InputStreamShardSet& stream_set,
+                         const std::string& tag_name = "OPTIONS") {
+  if (stream_set.HasTag(tag_name)) {
+    Packet options_packet = stream_set.Tag(tag_name).Value();
+    return tool::RetrieveOptions(base, options_packet);
   }
   return base;
 }
@@ -139,6 +160,9 @@ class OptionsMap {
   const CalculatorGraphConfig::Node* node_config_;
   TypeMap options_;
 };
+
+// Finds the descriptor for a protobuf.
+const proto_ns::Descriptor* GetProtobufDescriptor(const std::string& type_name);
 
 }  // namespace tool
 }  // namespace mediapipe

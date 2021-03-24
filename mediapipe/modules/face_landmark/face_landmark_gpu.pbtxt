@@ -1,5 +1,5 @@
-# MediaPipe graph to detect/predict face landmarks. (GPU input, and inference is
-# executed on GPU.)
+# MediaPipe graph to detect/predict face landmarks. (CPU input, and inference is
+# executed on CPU.)
 #
 # It is required that "face_landmark.tflite" is available at
 # "mediapipe/modules/face_landmark/face_landmark.tflite"
@@ -28,51 +28,34 @@ input_stream: "ROI:roi"
 # the absence of this packet so that they don't wait for it unnecessarily.
 output_stream: "LANDMARKS:face_landmarks"
 
-# Crops the input image to the given region of interest.
-node {
-  calculator: "ImageCroppingCalculator"
+# Transforms the input image into a 192x192 tensor.
+node: {
+  calculator: "ImageToTensorCalculator"
   input_stream: "IMAGE_GPU:image"
   input_stream: "NORM_RECT:roi"
-  output_stream: "IMAGE_GPU:face_region"
+  output_stream: "TENSORS:input_tensors"
   options: {
-    [mediapipe.ImageCroppingCalculatorOptions.ext] {
-      border_mode: BORDER_REPLICATE
+    [mediapipe.ImageToTensorCalculatorOptions.ext] {
+      output_tensor_width: 192
+      output_tensor_height: 192
+      output_tensor_float_range {
+        min: 0.0
+        max: 1.0
+      }
+      gpu_origin: TOP_LEFT
     }
   }
-}
-
-# Transforms the input image on GPU to a 192x192 image. To scale the input
-# image, the scale_mode option is set to FIT to preserve the aspect ratio,
-# resulting in potential letterboxing in the transformed image.
-node: {
-  calculator: "ImageTransformationCalculator"
-  input_stream: "IMAGE_GPU:face_region"
-  output_stream: "IMAGE_GPU:transformed_face_region"
-  options: {
-    [mediapipe.ImageTransformationCalculatorOptions.ext] {
-      output_width: 192
-      output_height: 192
-    }
-  }
-}
-
-# Converts the transformed input image on GPU into an image tensor stored as a
-# TfLiteTensor.
-node {
-  calculator: "TfLiteConverterCalculator"
-  input_stream: "IMAGE_GPU:transformed_face_region"
-  output_stream: "TENSORS_GPU:input_tensor"
 }
 
 # Runs a TensorFlow Lite model on GPU that takes an image tensor and outputs a
 # vector of GPU tensors representing, for instance, detection boxes/keypoints
 # and scores.
 node {
-  calculator: "TfLiteInferenceCalculator"
-  input_stream: "TENSORS_GPU:input_tensor"
+  calculator: "InferenceCalculator"
+  input_stream: "TENSORS:input_tensors"
   output_stream: "TENSORS:output_tensors"
   options: {
-    [mediapipe.TfLiteInferenceCalculatorOptions.ext] {
+    [mediapipe.InferenceCalculatorOptions.ext] {
       model_path: "mediapipe/modules/face_landmark/face_landmark.tflite"
     }
   }
@@ -80,7 +63,7 @@ node {
 
 # Splits a vector of tensors into multiple vectors.
 node {
-  calculator: "SplitTfLiteTensorVectorCalculator"
+  calculator: "SplitTensorVectorCalculator"
   input_stream: "output_tensors"
   output_stream: "landmark_tensors"
   output_stream: "face_flag_tensor"
@@ -95,9 +78,14 @@ node {
 # Converts the face-flag tensor into a float that represents the confidence
 # score of face presence.
 node {
-  calculator: "TfLiteTensorsToFloatsCalculator"
+  calculator: "TensorsToFloatsCalculator"
   input_stream: "TENSORS:face_flag_tensor"
   output_stream: "FLOAT:face_presence_score"
+    options {
+      [mediapipe.TensorsToFloatsCalculatorOptions.ext] {
+        activation: SIGMOID
+      }
+    }
 }
 
 # Applies a threshold to the confidence score to determine whether a face is
@@ -108,7 +96,7 @@ node {
   output_stream: "FLAG:face_presence"
   options: {
     [mediapipe.ThresholdingCalculatorOptions.ext] {
-      threshold: 0.1
+      threshold: 0.5
     }
   }
 }
@@ -124,11 +112,11 @@ node {
 # Decodes the landmark tensors into a vector of lanmarks, where the landmark
 # coordinates are normalized by the size of the input image to the model.
 node {
-  calculator: "TfLiteTensorsToLandmarksCalculator"
+  calculator: "TensorsToLandmarksCalculator"
   input_stream: "TENSORS:ensured_landmark_tensors"
   output_stream: "NORM_LANDMARKS:landmarks"
   options: {
-    [mediapipe.TfLiteTensorsToLandmarksCalculatorOptions.ext] {
+    [mediapipe.TensorsToLandmarksCalculatorOptions.ext] {
       num_landmarks: 468
       input_image_width: 192
       input_image_height: 192

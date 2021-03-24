@@ -34,10 +34,10 @@ namespace mediapipe {
 //   packet_cloner_calculator.cc: Repeats last-seen packets from empty inputs.
 class PacketInnerJoinCalculator : public CalculatorBase {
  public:
-  static ::mediapipe::Status GetContract(CalculatorContract* cc);
+  static absl::Status GetContract(CalculatorContract* cc);
 
-  ::mediapipe::Status Open(CalculatorContext* cc) override;
-  ::mediapipe::Status Process(CalculatorContext* cc) override;
+  absl::Status Open(CalculatorContext* cc) override;
+  absl::Status Process(CalculatorContext* cc) override;
 
  private:
   int num_streams_;
@@ -45,8 +45,7 @@ class PacketInnerJoinCalculator : public CalculatorBase {
 
 REGISTER_CALCULATOR(PacketInnerJoinCalculator);
 
-::mediapipe::Status PacketInnerJoinCalculator::GetContract(
-    CalculatorContract* cc) {
+absl::Status PacketInnerJoinCalculator::GetContract(CalculatorContract* cc) {
   RET_CHECK(cc->Inputs().NumEntries() == cc->Outputs().NumEntries())
       << "The number of input and output streams must match.";
   const int num_streams = cc->Inputs().NumEntries();
@@ -54,25 +53,25 @@ REGISTER_CALCULATOR(PacketInnerJoinCalculator);
     cc->Inputs().Index(i).SetAny();
     cc->Outputs().Index(i).SetSameAs(&cc->Inputs().Index(i));
   }
-  return ::mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-::mediapipe::Status PacketInnerJoinCalculator::Open(CalculatorContext* cc) {
+absl::Status PacketInnerJoinCalculator::Open(CalculatorContext* cc) {
   num_streams_ = cc->Inputs().NumEntries();
   cc->SetOffset(TimestampDiff(0));
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-::mediapipe::Status PacketInnerJoinCalculator::Process(CalculatorContext* cc) {
+absl::Status PacketInnerJoinCalculator::Process(CalculatorContext* cc) {
   for (int i = 0; i < num_streams_; ++i) {
     if (cc->Inputs().Index(i).Value().IsEmpty()) {
-      return ::mediapipe::OkStatus();
+      return absl::OkStatus();
     }
   }
   for (int i = 0; i < num_streams_; ++i) {
     cc->Outputs().Index(i).AddPacket(cc->Inputs().Index(i).Value());
   }
-  return ::mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
 }  // namespace mediapipe

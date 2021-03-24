@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Lint as: python3
 """The public facing packet creator APIs."""
 
 from typing import List, Union
@@ -42,6 +41,7 @@ create_double = _packet_creator.create_double
 create_int_array = _packet_creator.create_int_array
 create_float_array = _packet_creator.create_float_array
 create_int_vector = _packet_creator.create_int_vector
+create_bool_vector = _packet_creator.create_bool_vector
 create_float_vector = _packet_creator.create_float_vector
 create_string_vector = _packet_creator.create_string_vector
 create_packet_vector = _packet_creator.create_packet_vector

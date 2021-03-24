@@ -13,11 +13,13 @@
 // limitations under the License.
 
 #include "Eigen/Core"
+#include "mediapipe/framework/api2/node.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/matrix.h"
 #include "mediapipe/framework/port/status.h"
 
 namespace mediapipe {
+namespace api2 {
 // Perform a (left) matrix multiply.  Meaning (output = A * input)
 // where A is the matrix which is provided as an input side packet.
 //
@@ -28,39 +30,22 @@ namespace mediapipe {
 //   output_stream: "multiplied_samples"
 //   input_side_packet: "multiplication_matrix"
 // }
-class MatrixMultiplyCalculator : public CalculatorBase {
+class MatrixMultiplyCalculator : public Node {
  public:
-  MatrixMultiplyCalculator() {}
-  ~MatrixMultiplyCalculator() override {}
+  static constexpr Input<Matrix> kIn{""};
+  static constexpr Output<Matrix> kOut{""};
+  static constexpr SideInput<Matrix> kSide{""};
 
-  static ::mediapipe::Status GetContract(CalculatorContract* cc);
+  MEDIAPIPE_NODE_CONTRACT(kIn, kOut, kSide);
 
-  ::mediapipe::Status Open(CalculatorContext* cc) override;
-  ::mediapipe::Status Process(CalculatorContext* cc) override;
+  absl::Status Process(CalculatorContext* cc) override;
 };
-REGISTER_CALCULATOR(MatrixMultiplyCalculator);
+MEDIAPIPE_REGISTER_NODE(MatrixMultiplyCalculator);
 
-// static
-::mediapipe::Status MatrixMultiplyCalculator::GetContract(
-    CalculatorContract* cc) {
-  cc->Inputs().Index(0).Set<Matrix>();
-  cc->Outputs().Index(0).Set<Matrix>();
-  cc->InputSidePackets().Index(0).Set<Matrix>();
-  return ::mediapipe::OkStatus();
+absl::Status MatrixMultiplyCalculator::Process(CalculatorContext* cc) {
+  kOut(cc).Send(*kSide(cc) * *kIn(cc));
+  return absl::OkStatus();
 }
 
-::mediapipe::Status MatrixMultiplyCalculator::Open(CalculatorContext* cc) {
-  // The output is at the same timestamp as the input.
-  cc->SetOffset(TimestampDiff(0));
-  return ::mediapipe::OkStatus();
-}
-
-::mediapipe::Status MatrixMultiplyCalculator::Process(CalculatorContext* cc) {
-  Matrix* multiplied = new Matrix();
-  *multiplied = cc->InputSidePackets().Index(0).Get<Matrix>() *
-                cc->Inputs().Index(0).Get<Matrix>();
-  cc->Outputs().Index(0).Add(multiplied, cc->InputTimestamp());
-  return ::mediapipe::OkStatus();
-}
-
+}  // namespace api2
 }  // namespace mediapipe

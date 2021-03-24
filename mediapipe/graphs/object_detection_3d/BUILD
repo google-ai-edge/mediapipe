@@ -1,4 +1,4 @@
-# Copyright 2019 The MediaPipe Authors.
+# Copyright 2020 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -29,28 +29,52 @@ cc_library(
     name = "mobile_calculators",
     visibility = ["//visibility:public"],
     deps = [
+        "//mediapipe/calculators/core:flow_limiter_calculator",
+        "//mediapipe/calculators/image:image_cropping_calculator",
+        "//mediapipe/graphs/object_detection_3d/calculators:annotations_to_model_matrices_calculator",
+        "//mediapipe/graphs/object_detection_3d/calculators:gl_animation_overlay_calculator",
+        "//mediapipe/modules/objectron:objectron_gpu",
+    ],
+)
+
+cc_library(
+    name = "mobile_calculators_1stage",
+    visibility = ["//visibility:public"],
+    deps = [
         "//mediapipe/calculators/core:packet_resampler_calculator",
         "//mediapipe/calculators/image:image_cropping_calculator",
         "//mediapipe/gpu:gl_scaler_calculator",
         "//mediapipe/graphs/object_detection_3d/calculators:annotations_to_model_matrices_calculator",
         "//mediapipe/graphs/object_detection_3d/calculators:gl_animation_overlay_calculator",
-        "//mediapipe/graphs/object_detection_3d/subgraphs:objectron_detection_gpu",
-        "//mediapipe/graphs/object_detection_3d/subgraphs:objectron_tracking_gpu",
+        "//mediapipe/modules/objectron:objectron_detection_1stage_gpu",
+        "//mediapipe/modules/objectron:objectron_tracking_1stage_gpu",
+    ],
+)
+
+cc_library(
+    name = "desktop_cpu_calculators",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//mediapipe/calculators/core:constant_side_packet_calculator",
+        "//mediapipe/calculators/video:opencv_video_decoder_calculator",
+        "//mediapipe/calculators/video:opencv_video_encoder_calculator",
+        "//mediapipe/graphs/object_detection_3d/subgraphs:renderer_cpu",
+        "//mediapipe/modules/objectron:objectron_cpu",
     ],
 )
 
 mediapipe_binary_graph(
-    name = "mobile_gpu_binary_graph_shoe",
-    graph = "shoe_classic_occlusion_tracking.pbtxt",
-    output_name = "mobile_gpu_shoe.binarypb",
+    name = "mobile_gpu_binary_graph",
+    graph = "object_occlusion_tracking.pbtxt",
+    output_name = "mobile_gpu_binary_graph.binarypb",
     visibility = ["//visibility:public"],
     deps = [":mobile_calculators"],
 )
 
 mediapipe_binary_graph(
-    name = "mobile_gpu_binary_graph_chair",
-    graph = "chair_classic_occlusion_tracking.pbtxt",
-    output_name = "mobile_gpu_chair.binarypb",
+    name = "mobile_gpu_1stage_binary_graph",
+    graph = "object_occlusion_tracking_1stage.pbtxt",
+    output_name = "mobile_gpu_1stage_binary_graph.binarypb",
     visibility = ["//visibility:public"],
-    deps = [":mobile_calculators"],
+    deps = [":mobile_calculators_1stage"],
 )

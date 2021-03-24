@@ -25,11 +25,11 @@
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/port/vector.h"
 
-#if !defined(MEDIAPIPE_DISABLE_GPU)
+#if !MEDIAPIPE_DISABLE_GPU
 #include "mediapipe/gpu/gl_calculator_helper.h"
 #include "mediapipe/gpu/gl_simple_shaders.h"
 #include "mediapipe/gpu/shader_util.h"
-#endif  //  !MEDIAPIPE_DISABLE_GPU
+#endif  // !MEDIAPIPE_DISABLE_GPU
 
 namespace mediapipe {
 
@@ -87,18 +87,18 @@ class SetAlphaCalculator : public CalculatorBase {
   SetAlphaCalculator() = default;
   ~SetAlphaCalculator() override = default;
 
-  static ::mediapipe::Status GetContract(CalculatorContract* cc);
+  static absl::Status GetContract(CalculatorContract* cc);
 
   // From Calculator.
-  ::mediapipe::Status Open(CalculatorContext* cc) override;
-  ::mediapipe::Status Process(CalculatorContext* cc) override;
-  ::mediapipe::Status Close(CalculatorContext* cc) override;
+  absl::Status Open(CalculatorContext* cc) override;
+  absl::Status Process(CalculatorContext* cc) override;
+  absl::Status Close(CalculatorContext* cc) override;
 
  private:
-  ::mediapipe::Status RenderGpu(CalculatorContext* cc);
-  ::mediapipe::Status RenderCpu(CalculatorContext* cc);
+  absl::Status RenderGpu(CalculatorContext* cc);
+  absl::Status RenderCpu(CalculatorContext* cc);
 
-  ::mediapipe::Status GlSetup(CalculatorContext* cc);
+  absl::Status GlSetup(CalculatorContext* cc);
   void GlRender(CalculatorContext* cc);
 
   mediapipe::SetAlphaCalculatorOptions options_;
@@ -106,81 +106,81 @@ class SetAlphaCalculator : public CalculatorBase {
 
   bool use_gpu_ = false;
   bool gpu_initialized_ = false;
-#if !defined(MEDIAPIPE_DISABLE_GPU)
+#if !MEDIAPIPE_DISABLE_GPU
   mediapipe::GlCalculatorHelper gpu_helper_;
   GLuint program_ = 0;
-#endif  //  !MEDIAPIPE_DISABLE_GPU
+#endif  // !MEDIAPIPE_DISABLE_GPU
 };
 REGISTER_CALCULATOR(SetAlphaCalculator);
 
-::mediapipe::Status SetAlphaCalculator::GetContract(CalculatorContract* cc) {
+absl::Status SetAlphaCalculator::GetContract(CalculatorContract* cc) {
   CHECK_GE(cc->Inputs().NumEntries(), 1);
 
   bool use_gpu = false;
 
   if (cc->Inputs().HasTag(kInputFrameTag) &&
       cc->Inputs().HasTag(kInputFrameTagGpu)) {
-    return ::mediapipe::InternalError("Cannot have multiple input images.");
+    return absl::InternalError("Cannot have multiple input images.");
   }
   if (cc->Inputs().HasTag(kInputFrameTagGpu) !=
       cc->Outputs().HasTag(kOutputFrameTagGpu)) {
-    return ::mediapipe::InternalError("GPU output must have GPU input.");
+    return absl::InternalError("GPU output must have GPU input.");
   }
 
   // Input image to add/edit alpha channel.
-#if !defined(MEDIAPIPE_DISABLE_GPU)
+#if !MEDIAPIPE_DISABLE_GPU
   if (cc->Inputs().HasTag(kInputFrameTagGpu)) {
     cc->Inputs().Tag(kInputFrameTagGpu).Set<mediapipe::GpuBuffer>();
     use_gpu |= true;
   }
-#endif  //  !MEDIAPIPE_DISABLE_GPU
+#endif  // !MEDIAPIPE_DISABLE_GPU
   if (cc->Inputs().HasTag(kInputFrameTag)) {
     cc->Inputs().Tag(kInputFrameTag).Set<ImageFrame>();
   }
 
   // Input alpha image mask (optional)
-#if !defined(MEDIAPIPE_DISABLE_GPU)
+#if !MEDIAPIPE_DISABLE_GPU
   if (cc->Inputs().HasTag(kInputAlphaTagGpu)) {
     cc->Inputs().Tag(kInputAlphaTagGpu).Set<mediapipe::GpuBuffer>();
     use_gpu |= true;
   }
-#endif  //  !MEDIAPIPE_DISABLE_GPU
+#endif  // !MEDIAPIPE_DISABLE_GPU
   if (cc->Inputs().HasTag(kInputAlphaTag)) {
     cc->Inputs().Tag(kInputAlphaTag).Set<ImageFrame>();
   }
 
   // RGBA output image.
-#if !defined(MEDIAPIPE_DISABLE_GPU)
+#if !MEDIAPIPE_DISABLE_GPU
   if (cc->Outputs().HasTag(kOutputFrameTagGpu)) {
     cc->Outputs().Tag(kOutputFrameTagGpu).Set<mediapipe::GpuBuffer>();
     use_gpu |= true;
   }
-#endif  //  !MEDIAPIPE_DISABLE_GPU
+#endif  // !MEDIAPIPE_DISABLE_GPU
   if (cc->Outputs().HasTag(kOutputFrameTag)) {
     cc->Outputs().Tag(kOutputFrameTag).Set<ImageFrame>();
   }
 
   if (use_gpu) {
-#if !defined(MEDIAPIPE_DISABLE_GPU)
+#if !MEDIAPIPE_DISABLE_GPU
     MP_RETURN_IF_ERROR(mediapipe::GlCalculatorHelper::UpdateContract(cc));
-#endif  //  !MEDIAPIPE_DISABLE_GPU
+#endif  // !MEDIAPIPE_DISABLE_GPU
   }
 
-  return ::mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-::mediapipe::Status SetAlphaCalculator::Open(CalculatorContext* cc) {
+absl::Status SetAlphaCalculator::Open(CalculatorContext* cc) {
   cc->SetOffset(TimestampDiff(0));
 
   options_ = cc->Options<mediapipe::SetAlphaCalculatorOptions>();
 
   if (cc->Inputs().HasTag(kInputFrameTagGpu) &&
       cc->Outputs().HasTag(kOutputFrameTagGpu)) {
-#if !defined(MEDIAPIPE_DISABLE_GPU)
+#if !MEDIAPIPE_DISABLE_GPU
     use_gpu_ = true;
 #else
     RET_CHECK_FAIL() << "GPU processing not enabled.";
-#endif  //  !MEDIAPIPE_DISABLE_GPU
+#endif  // !MEDIAPIPE_DISABLE_GPU
   }
 
   // Get global value from options (-1 if not set).
@@ -193,48 +193,47 @@ REGISTER_CALCULATOR(SetAlphaCalculator);
     RET_CHECK_FAIL() << "Must use either image mask or options alpha value.";
 
   if (use_gpu_) {
-#if !defined(MEDIAPIPE_DISABLE_GPU)
+#if !MEDIAPIPE_DISABLE_GPU
     MP_RETURN_IF_ERROR(gpu_helper_.Open(cc));
 #endif
   }  //  !MEDIAPIPE_DISABLE_GPU
 
-  return ::mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-::mediapipe::Status SetAlphaCalculator::Process(CalculatorContext* cc) {
+absl::Status SetAlphaCalculator::Process(CalculatorContext* cc) {
   if (use_gpu_) {
-#if !defined(MEDIAPIPE_DISABLE_GPU)
-    MP_RETURN_IF_ERROR(
-        gpu_helper_.RunInGlContext([this, cc]() -> ::mediapipe::Status {
-          if (!gpu_initialized_) {
-            MP_RETURN_IF_ERROR(GlSetup(cc));
-            gpu_initialized_ = true;
-          }
-          MP_RETURN_IF_ERROR(RenderGpu(cc));
-          return ::mediapipe::OkStatus();
-        }));
-#endif  //  !MEDIAPIPE_DISABLE_GPU
+#if !MEDIAPIPE_DISABLE_GPU
+    MP_RETURN_IF_ERROR(gpu_helper_.RunInGlContext([this, cc]() -> absl::Status {
+      if (!gpu_initialized_) {
+        MP_RETURN_IF_ERROR(GlSetup(cc));
+        gpu_initialized_ = true;
+      }
+      MP_RETURN_IF_ERROR(RenderGpu(cc));
+      return absl::OkStatus();
+    }));
+#endif  // !MEDIAPIPE_DISABLE_GPU
   } else {
     MP_RETURN_IF_ERROR(RenderCpu(cc));
   }
 
-  return ::mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-::mediapipe::Status SetAlphaCalculator::Close(CalculatorContext* cc) {
-#if !defined(MEDIAPIPE_DISABLE_GPU)
+absl::Status SetAlphaCalculator::Close(CalculatorContext* cc) {
+#if !MEDIAPIPE_DISABLE_GPU
   gpu_helper_.RunInGlContext([this] {
     if (program_) glDeleteProgram(program_);
     program_ = 0;
   });
-#endif  //  !MEDIAPIPE_DISABLE_GPU
+#endif  // !MEDIAPIPE_DISABLE_GPU
 
-  return ::mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-::mediapipe::Status SetAlphaCalculator::RenderCpu(CalculatorContext* cc) {
+absl::Status SetAlphaCalculator::RenderCpu(CalculatorContext* cc) {
   if (cc->Inputs().Tag(kInputFrameTag).IsEmpty()) {
-    return ::mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
   // Setup source image
@@ -294,14 +293,14 @@ REGISTER_CALCULATOR(SetAlphaCalculator);
       .Tag(kOutputFrameTag)
       .Add(output_frame.release(), cc->InputTimestamp());
 
-  return ::mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-::mediapipe::Status SetAlphaCalculator::RenderGpu(CalculatorContext* cc) {
+absl::Status SetAlphaCalculator::RenderGpu(CalculatorContext* cc) {
   if (cc->Inputs().Tag(kInputFrameTagGpu).IsEmpty()) {
-    return ::mediapipe::OkStatus();
+    return absl::OkStatus();
   }
-#if !defined(MEDIAPIPE_DISABLE_GPU)
+#if !MEDIAPIPE_DISABLE_GPU
   // Setup source texture.
   const auto& input_frame =
       cc->Inputs().Tag(kInputFrameTagGpu).Get<mediapipe::GpuBuffer>();
@@ -354,13 +353,13 @@ REGISTER_CALCULATOR(SetAlphaCalculator);
   // Cleanup
   input_texture.Release();
   output_texture.Release();
-#endif  //  !MEDIAPIPE_DISABLE_GPU
+#endif  // !MEDIAPIPE_DISABLE_GPU
 
-  return ::mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
 void SetAlphaCalculator::GlRender(CalculatorContext* cc) {
-#if !defined(MEDIAPIPE_DISABLE_GPU)
+#if !MEDIAPIPE_DISABLE_GPU
   static const GLfloat square_vertices[] = {
       -1.0f, -1.0f,  // bottom left
       1.0f,  -1.0f,  // bottom right
@@ -409,11 +408,11 @@ void SetAlphaCalculator::GlRender(CalculatorContext* cc) {
   glDeleteVertexArrays(1, &vao);
   glDeleteBuffers(2, vbo);
 
-#endif  //  !MEDIAPIPE_DISABLE_GPU
+#endif  // !MEDIAPIPE_DISABLE_GPU
 }
 
-::mediapipe::Status SetAlphaCalculator::GlSetup(CalculatorContext* cc) {
-#if !defined(MEDIAPIPE_DISABLE_GPU)
+absl::Status SetAlphaCalculator::GlSetup(CalculatorContext* cc) {
+#if !MEDIAPIPE_DISABLE_GPU
   const GLint attr_location[NUM_ATTRIBUTES] = {
       ATTRIB_VERTEX,
       ATTRIB_TEXTURE_POSITION,
@@ -466,9 +465,9 @@ void SetAlphaCalculator::GlRender(CalculatorContext* cc) {
   glUniform1i(glGetUniformLocation(program_, "alpha_mask"), 2);
   glUniform1f(glGetUniformLocation(program_, "alpha_value"), alpha_value_);
 
-#endif  //  !MEDIAPIPE_DISABLE_GPU
+#endif  // !MEDIAPIPE_DISABLE_GPU
 
-  return ::mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
 }  // namespace mediapipe

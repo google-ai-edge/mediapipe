@@ -1,4 +1,4 @@
-// Copyright 2019 The MediaPipe Authors.
+// Copyright 2019, 2021 The MediaPipe Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -36,28 +36,31 @@ namespace mediapipe {
 // stream's sampling rate is specified by target_sample_rate in the
 // RationalFactorResampleCalculatorOptions.  The output time series may have
 // a varying number of samples per frame.
+//
+// NOTE: This calculator uses QResampler, despite the name, which supersedes
+// RationalFactorResampler.
 class RationalFactorResampleCalculator : public CalculatorBase {
  public:
   struct TestAccess;
 
-  static ::mediapipe::Status GetContract(CalculatorContract* cc) {
+  static absl::Status GetContract(CalculatorContract* cc) {
     cc->Inputs().Index(0).Set<Matrix>(
         // Single input stream with TimeSeriesHeader.
     );
     cc->Outputs().Index(0).Set<Matrix>(
         // Resampled stream with TimeSeriesHeader.
     );
-    return ::mediapipe::OkStatus();
+    return absl::OkStatus();
   }
   // Returns FAIL if the input stream header is invalid or if the
   // resampler cannot be initialized.
-  ::mediapipe::Status Open(CalculatorContext* cc) override;
+  absl::Status Open(CalculatorContext* cc) override;
   // Resamples a packet of TimeSeries data.  Returns FAIL if the
   // resampler state becomes inconsistent.
-  ::mediapipe::Status Process(CalculatorContext* cc) override;
+  absl::Status Process(CalculatorContext* cc) override;
   // Flushes any remaining state.  Returns FAIL if the resampler state
   // becomes inconsistent.
-  ::mediapipe::Status Close(CalculatorContext* cc) override;
+  absl::Status Close(CalculatorContext* cc) override;
 
  protected:
   typedef audio_dsp::Resampler<float> ResamplerType;
@@ -72,8 +75,8 @@ class RationalFactorResampleCalculator : public CalculatorBase {
   // Does Timestamp bookkeeping and resampling common to Process() and
   // Close().  Returns FAIL if the resampler state becomes
   // inconsistent.
-  ::mediapipe::Status ProcessInternal(const Matrix& input_frame,
-                                      bool should_flush, CalculatorContext* cc);
+  absl::Status ProcessInternal(const Matrix& input_frame, bool should_flush,
+                               CalculatorContext* cc);
 
   // Uses the internal resampler_ objects to actually resample each
   // row of the input TimeSeries.  Returns false if the resampler

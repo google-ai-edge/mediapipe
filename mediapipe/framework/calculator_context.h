@@ -74,6 +74,10 @@ class CalculatorContext {
   // the calculator's type (if not).
   Counter* GetCounter(const std::string& name);
 
+  // Returns the counter set, which can be used to create new counters.
+  // No prefix is added to counters created in this way.
+  CounterSet* GetCounterSet();
+
   // Returns the current input timestamp, or Timestamp::Unset if there are
   // no input packets.
   Timestamp InputTimestamp() const {
@@ -103,7 +107,7 @@ class CalculatorContext {
   // Returns the status of the graph run.
   //
   // NOTE: This method should only be called during CalculatorBase::Close().
-  ::mediapipe::Status GraphStatus() const { return graph_status_; }
+  absl::Status GraphStatus() const { return graph_status_; }
 
   ProfilingContext* GetProfilingContext() const {
     return calculator_state_->GetSharedProfilingContext().get();
@@ -148,9 +152,7 @@ class CalculatorContext {
     input_timestamps_.pop();
   }
 
-  void SetGraphStatus(const ::mediapipe::Status& status) {
-    graph_status_ = status;
-  }
+  void SetGraphStatus(const absl::Status& status) { graph_status_ = status; }
 
   // Interface for the friend class Calculator.
   const InputStreamSet& InputStreams() const;
@@ -163,11 +165,15 @@ class CalculatorContext {
   CalculatorState* calculator_state_;
   InputStreamShardSet inputs_;
   OutputStreamShardSet outputs_;
+  // Created on-demand when needed by legacy APIs. No synchronization needed
+  // because all possible callers are already serialized.
+  mutable std::unique_ptr<InputStreamSet> input_streams_;
+  mutable std::unique_ptr<OutputStreamSet> output_streams_;
   // The queue of timestamp values to Process() in this calculator context.
   std::queue<Timestamp> input_timestamps_;
 
   // The status of the graph run. Only used when Close() is called.
-  ::mediapipe::Status graph_status_;
+  absl::Status graph_status_;
 
   // Accesses CalculatorContext for setting input timestamp.
   friend class CalculatorContextManager;

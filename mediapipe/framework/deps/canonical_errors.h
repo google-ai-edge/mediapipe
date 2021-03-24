@@ -22,63 +22,60 @@ namespace mediapipe {
 // Each of the functions below creates a canonical error with the given
 // message. The error code of the returned status object matches the name of
 // the function.
-inline ::mediapipe::Status AlreadyExistsError(absl::string_view message) {
-  return ::mediapipe::Status(::mediapipe::StatusCode::kAlreadyExists, message);
+inline absl::Status AlreadyExistsError(absl::string_view message) {
+  return absl::Status(absl::StatusCode::kAlreadyExists, message);
 }
 
-inline ::mediapipe::Status CancelledError() {
-  return ::mediapipe::Status(::mediapipe::StatusCode::kCancelled, "");
+inline absl::Status CancelledError() {
+  return absl::Status(absl::StatusCode::kCancelled, "");
 }
 
-inline ::mediapipe::Status CancelledError(absl::string_view message) {
-  return ::mediapipe::Status(::mediapipe::StatusCode::kCancelled, message);
+inline absl::Status CancelledError(absl::string_view message) {
+  return absl::Status(absl::StatusCode::kCancelled, message);
 }
 
-inline ::mediapipe::Status InternalError(absl::string_view message) {
-  return ::mediapipe::Status(::mediapipe::StatusCode::kInternal, message);
+inline absl::Status InternalError(absl::string_view message) {
+  return absl::Status(absl::StatusCode::kInternal, message);
 }
 
-inline ::mediapipe::Status InvalidArgumentError(absl::string_view message) {
-  return ::mediapipe::Status(::mediapipe::StatusCode::kInvalidArgument,
-                             message);
+inline absl::Status InvalidArgumentError(absl::string_view message) {
+  return absl::Status(absl::StatusCode::kInvalidArgument, message);
 }
 
-inline ::mediapipe::Status FailedPreconditionError(absl::string_view message) {
-  return ::mediapipe::Status(::mediapipe::StatusCode::kFailedPrecondition,
-                             message);
+inline absl::Status FailedPreconditionError(absl::string_view message) {
+  return absl::Status(absl::StatusCode::kFailedPrecondition, message);
 }
 
-inline ::mediapipe::Status NotFoundError(absl::string_view message) {
-  return ::mediapipe::Status(::mediapipe::StatusCode::kNotFound, message);
+inline absl::Status NotFoundError(absl::string_view message) {
+  return absl::Status(absl::StatusCode::kNotFound, message);
 }
 
-inline ::mediapipe::Status OutOfRangeError(absl::string_view message) {
-  return ::mediapipe::Status(::mediapipe::StatusCode::kOutOfRange, message);
+inline absl::Status OutOfRangeError(absl::string_view message) {
+  return absl::Status(absl::StatusCode::kOutOfRange, message);
 }
 
-inline ::mediapipe::Status PermissionDeniedError(absl::string_view message) {
-  return ::mediapipe::Status(::mediapipe::StatusCode::kPermissionDenied,
-                             message);
+inline absl::Status PermissionDeniedError(absl::string_view message) {
+  return absl::Status(absl::StatusCode::kPermissionDenied, message);
 }
 
-inline ::mediapipe::Status UnimplementedError(absl::string_view message) {
-  return ::mediapipe::Status(::mediapipe::StatusCode::kUnimplemented, message);
+inline absl::Status UnimplementedError(absl::string_view message) {
+  return absl::Status(absl::StatusCode::kUnimplemented, message);
 }
 
-inline ::mediapipe::Status UnknownError(absl::string_view message) {
-  return ::mediapipe::Status(::mediapipe::StatusCode::kUnknown, message);
+inline absl::Status UnknownError(absl::string_view message) {
+  return absl::Status(absl::StatusCode::kUnknown, message);
 }
 
-inline ::mediapipe::Status UnavailableError(absl::string_view message) {
-  return ::mediapipe::Status(::mediapipe::StatusCode::kUnavailable, message);
+inline absl::Status UnavailableError(absl::string_view message) {
+  return absl::Status(absl::StatusCode::kUnavailable, message);
 }
 
-inline bool IsCancelled(const ::mediapipe::Status& status) {
-  return status.code() == ::mediapipe::StatusCode::kCancelled;
+inline bool IsCancelled(const absl::Status& status) {
+  return status.code() == absl::StatusCode::kCancelled;
 }
 
-inline bool IsNotFound(const ::mediapipe::Status& status) {
-  return status.code() == ::mediapipe::StatusCode::kNotFound;
+inline bool IsNotFound(const absl::Status& status) {
+  return status.code() == absl::StatusCode::kNotFound;
 }
 
 }  // namespace mediapipe

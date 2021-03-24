@@ -15,6 +15,7 @@
 #include <memory>
 #include <string>
 
+#include "mediapipe/calculators/util/local_file_contents_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/util/resource_util.h"
@@ -52,7 +53,7 @@ constexpr char kContentsTag[] = "CONTENTS";
 // }
 class LocalFileContentsCalculator : public CalculatorBase {
  public:
-  static ::mediapipe::Status GetContract(CalculatorContract* cc) {
+  static absl::Status GetContract(CalculatorContract* cc) {
     RET_CHECK(cc->InputSidePackets().HasTag(kFilePathTag))
         << "Missing PATH input side packet(s)";
     RET_CHECK(cc->OutputSidePackets().HasTag(kContentsTag))
@@ -72,12 +73,14 @@ class LocalFileContentsCalculator : public CalculatorBase {
       cc->OutputSidePackets().Get(id).Set<std::string>();
     }
 
-    return ::mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
-  ::mediapipe::Status Open(CalculatorContext* cc) override {
+  absl::Status Open(CalculatorContext* cc) override {
     CollectionItemId input_id = cc->InputSidePackets().BeginId(kFilePathTag);
     CollectionItemId output_id = cc->OutputSidePackets().BeginId(kContentsTag);
+    auto options = cc->Options<mediapipe::LocalFileContentsCalculatorOptions>();
+
     // Number of inputs and outpus is the same according to the contract.
     for (; input_id != cc->InputSidePackets().EndId(kFilePathTag);
          ++input_id, ++output_id) {
@@ -86,15 +89,16 @@ class LocalFileContentsCalculator : public CalculatorBase {
       ASSIGN_OR_RETURN(file_path, PathToResourceAsFile(file_path));
 
       std::string contents;
-      MP_RETURN_IF_ERROR(GetResourceContents(file_path, &contents));
+      MP_RETURN_IF_ERROR(GetResourceContents(
+          file_path, &contents, /*read_as_binary=*/!options.text_mode()));
       cc->OutputSidePackets().Get(output_id).Set(
           MakePacket<std::string>(std::move(contents)));
     }
-    return ::mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
-  ::mediapipe::Status Process(CalculatorContext* cc) override {
-    return ::mediapipe::OkStatus();
+  absl::Status Process(CalculatorContext* cc) override {
+    return absl::OkStatus();
   }
 };
 

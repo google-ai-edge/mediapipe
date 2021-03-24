@@ -36,41 +36,38 @@ input_stream: "IMAGE:image"
 # this packet so that they don't wait for it unnecessarily.
 output_stream: "DETECTIONS:detections"
 
-# Transforms the input image on GPU to a 128x128 image. To scale the input
-# image, the scale_mode option is set to FIT to preserve the aspect ratio,
-# resulting in potential letterboxing in the transformed image.
+# Transforms the input image into a 128x128 while keeping the aspect ratio
+# (what is expected by the corresponding model), resulting in potential
+# letterboxing in the transformed image.
 node: {
-  calculator: "ImageTransformationCalculator"
+  calculator: "ImageToTensorCalculator"
   input_stream: "IMAGE_GPU:image"
-  output_stream: "IMAGE_GPU:transformed_image"
+  output_stream: "TENSORS:input_tensors"
   output_stream: "LETTERBOX_PADDING:letterbox_padding"
   options: {
-    [mediapipe.ImageTransformationCalculatorOptions.ext] {
-      output_width: 128
-      output_height: 128
-      scale_mode: FIT
+    [mediapipe.ImageToTensorCalculatorOptions.ext] {
+      output_tensor_width: 128
+      output_tensor_height: 128
+      keep_aspect_ratio: true
+      output_tensor_float_range {
+        min: -1.0
+        max: 1.0
+      }
+      border_mode: BORDER_ZERO
+      gpu_origin: TOP_LEFT
     }
   }
 }
 
-# Converts the transformed input image on GPU into an image tensor stored as a
-# TfLiteTensor.
-node {
-  calculator: "TfLiteConverterCalculator"
-  input_stream: "IMAGE_GPU:transformed_image"
-  output_stream: "TENSORS_GPU:input_tensors"
-}
-
-# Runs a TensorFlow Lite model on GPU that takes an image tensor and outputs a
+# Runs a TensorFlow Lite model on CPU that takes an image tensor and outputs a
 # vector of tensors representing, for instance, detection boxes/keypoints and
 # scores.
 node {
-  calculator: "TfLiteInferenceCalculator"
-  input_stream: "TENSORS_GPU:input_tensors"
-  # TODO: we can use TENSORS_GPU here and in the downstream calculator
+  calculator: "InferenceCalculator"
+  input_stream: "TENSORS:input_tensors"
   output_stream: "TENSORS:detection_tensors"
   options: {
-    [mediapipe.TfLiteInferenceCalculatorOptions.ext] {
+    [mediapipe.InferenceCalculatorOptions.ext] {
       model_path: "mediapipe/modules/pose_detection/pose_detection.tflite"
     }
   }
@@ -104,12 +101,12 @@ node {
 # the SSD anchors and the specification in the options, into a vector of
 # detections. Each detection describes a detected object.
 node {
-  calculator: "TfLiteTensorsToDetectionsCalculator"
+  calculator: "TensorsToDetectionsCalculator"
   input_stream: "TENSORS:detection_tensors"
   input_side_packet: "ANCHORS:anchors"
   output_stream: "DETECTIONS:unfiltered_detections"
   options: {
-    [mediapipe.TfLiteTensorsToDetectionsCalculatorOptions.ext] {
+    [mediapipe.TensorsToDetectionsCalculatorOptions.ext] {
       num_classes: 1
       num_boxes: 896
       num_coords: 12

@@ -111,6 +111,7 @@ void CallFrameDelegate(void* wrapperVoid, const std::string& streamName,
                      didOutputPacket:packet
                           fromStream:streamName];
     } else if (packetType == MPPPacketTypeImageFrame) {
+      wrapper->_framesInFlight--;
       const auto& frame = packet.Get<mediapipe::ImageFrame>();
       mediapipe::ImageFormat::Format format = frame.Format();
 
@@ -163,6 +164,7 @@ void CallFrameDelegate(void* wrapperVoid, const std::string& streamName,
       }
 #if MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
     } else if (packetType == MPPPacketTypePixelBuffer) {
+      wrapper->_framesInFlight--;
       CVPixelBufferRef pixelBuffer = packet.Get<mediapipe::GpuBuffer>().GetCVPixelBufferRef();
       if ([wrapper.delegate
               respondsToSelector:@selector
@@ -182,8 +184,6 @@ void CallFrameDelegate(void* wrapperVoid, const std::string& streamName,
     } else {
       _GTMDevLog(@"unsupported packet type");
     }
-
-    wrapper->_framesInFlight--;
   }
 }
 
@@ -213,7 +213,7 @@ void CallFrameDelegate(void* wrapperVoid, const std::string& streamName,
 }
 
 - (BOOL)startWithError:(NSError**)error {
-  ::mediapipe::Status status = [self performStart];
+  absl::Status status = [self performStart];
   if (!status.ok()) {
     if (error) {
       *error = [NSError gus_errorWithStatus:status];
@@ -224,8 +224,8 @@ void CallFrameDelegate(void* wrapperVoid, const std::string& streamName,
   return YES;
 }
 
-- (::mediapipe::Status)performStart {
-  ::mediapipe::Status status = _graph->Initialize(_config);
+- (absl::Status)performStart {
+  absl::Status status = _graph->Initialize(_config);
   if (!status.ok()) {
     return status;
   }
@@ -251,13 +251,13 @@ void CallFrameDelegate(void* wrapperVoid, const std::string& streamName,
 }
 
 - (BOOL)closeInputStream:(const std::string&)inputName error:(NSError**)error {
-  ::mediapipe::Status status = _graph->CloseInputStream(inputName);
+  absl::Status status = _graph->CloseInputStream(inputName);
   if (!status.ok() && error) *error = [NSError gus_errorWithStatus:status];
   return status.ok();
 }
 
 - (BOOL)closeAllInputStreamsWithError:(NSError**)error {
-  ::mediapipe::Status status = _graph->CloseAllInputStreams();
+  absl::Status status = _graph->CloseAllInputStreams();
   if (!status.ok() && error) *error = [NSError gus_errorWithStatus:status];
   return status.ok();
 }
@@ -268,14 +268,14 @@ void CallFrameDelegate(void* wrapperVoid, const std::string& streamName,
   // TODO: is this too heavy-handed? Maybe a warning would be fine.
   _GTMDevAssert(![NSThread isMainThread] || (NSClassFromString(@"XCTest")),
                 @"waitUntilDoneWithError: should not be called on the main thread");
-  ::mediapipe::Status status = _graph->WaitUntilDone();
+  absl::Status status = _graph->WaitUntilDone();
   _started = NO;
   if (!status.ok() && error) *error = [NSError gus_errorWithStatus:status];
   return status.ok();
 }
 
 - (BOOL)waitUntilIdleWithError:(NSError**)error {
-  ::mediapipe::Status status = _graph->WaitUntilIdle();
+  absl::Status status = _graph->WaitUntilIdle();
   if (!status.ok() && error) *error = [NSError gus_errorWithStatus:status];
   return status.ok();
 }
@@ -283,7 +283,7 @@ void CallFrameDelegate(void* wrapperVoid, const std::string& streamName,
 - (BOOL)movePacket:(mediapipe::Packet&&)packet
         intoStream:(const std::string&)streamName
              error:(NSError**)error {
-  ::mediapipe::Status status = _graph->AddPacketToInputStream(streamName, std::move(packet));
+  absl::Status status = _graph->AddPacketToInputStream(streamName, std::move(packet));
   if (!status.ok() && error) *error = [NSError gus_errorWithStatus:status];
   return status.ok();
 }
@@ -291,7 +291,7 @@ void CallFrameDelegate(void* wrapperVoid, const std::string& streamName,
 - (BOOL)sendPacket:(const mediapipe::Packet&)packet
         intoStream:(const std::string&)streamName
              error:(NSError**)error {
-  ::mediapipe::Status status = _graph->AddPacketToInputStream(streamName, packet);
+  absl::Status status = _graph->AddPacketToInputStream(streamName, packet);
   if (!status.ok() && error) *error = [NSError gus_errorWithStatus:status];
   return status.ok();
 }
@@ -299,7 +299,7 @@ void CallFrameDelegate(void* wrapperVoid, const std::string& streamName,
 - (BOOL)setMaxQueueSize:(int)maxQueueSize
               forStream:(const std::string&)streamName
                   error:(NSError**)error {
-  ::mediapipe::Status status = _graph->SetInputStreamMaxQueueSize(streamName, maxQueueSize);
+  absl::Status status = _graph->SetInputStreamMaxQueueSize(streamName, maxQueueSize);
   if (!status.ok() && error) *error = [NSError gus_errorWithStatus:status];
   return status.ok();
 }
@@ -396,7 +396,7 @@ void CallFrameDelegate(void* wrapperVoid, const std::string& streamName,
   NSString* extensionString;
   (void)gpu_resources->gl_context()->Run([&extensionString]{
     extensionString = [NSString stringWithUTF8String:(char*)glGetString(GL_EXTENSIONS)];
-    return ::mediapipe::OkStatus();
+    return absl::OkStatus();
   });
 
   NSArray* extensions = [extensionString componentsSeparatedByCharactersInSet:
