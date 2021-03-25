@@ -365,9 +365,14 @@ NodeReadiness SyncSet::GetReadiness(Timestamp* min_stream_timestamp) {
     }
   } else {
     // Any unprocessed input_ts can be processed.
-    // Note that (min_bound - 1) is the highest fully settled timestamp.
-    Timestamp input_timestamp =
-        std::min(min_packet, min_bound.PreviousAllowedInStream());
+    // The settled timestamp is the highest timestamp at which no future packets
+    // can arrive. Timestamp::PostStream is treated specially because it is
+    // omitted by Timestamp::PreviousAllowedInStream.
+    Timestamp settled =
+        (min_packet == Timestamp::PostStream() && min_bound > min_packet)
+            ? min_packet
+            : min_bound.PreviousAllowedInStream();
+    Timestamp input_timestamp = std::min(min_packet, settled);
     if (input_timestamp >
         std::max(last_processed_ts_, Timestamp::Unstarted())) {
       *min_stream_timestamp = input_timestamp;

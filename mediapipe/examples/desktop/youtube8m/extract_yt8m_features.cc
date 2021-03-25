@@ -17,27 +17,27 @@
 // to disk.
 #include <cstdlib>
 
+#include "absl/flags/flag.h"
+#include "absl/flags/parse.h"
 #include "absl/strings/str_split.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/matrix.h"
-#include "mediapipe/framework/port/commandlineflags.h"
 #include "mediapipe/framework/port/file_helpers.h"
 #include "mediapipe/framework/port/map_util.h"
 #include "mediapipe/framework/port/parse_text_proto.h"
 #include "mediapipe/framework/port/status.h"
 
-DEFINE_string(
-    calculator_graph_config_file, "",
-    "Name of file containing text format CalculatorGraphConfig proto.");
-DEFINE_string(input_side_packets, "",
-              "Comma-separated list of key=value pairs specifying side packets "
-              "and corresponding file paths for the CalculatorGraph. The side "
-              "packets are read from the files and fed to the graph as strings "
-              "even if they represent doubles, floats, etc.");
-DEFINE_string(output_side_packets, "",
-              "Comma-separated list of key=value pairs specifying the output "
-              "side packets and paths to write to disk for the "
-              "CalculatorGraph.");
+ABSL_FLAG(std::string, calculator_graph_config_file, "",
+          "Name of file containing text format CalculatorGraphConfig proto.");
+ABSL_FLAG(std::string, input_side_packets, "",
+          "Comma-separated list of key=value pairs specifying side packets "
+          "and corresponding file paths for the CalculatorGraph. The side "
+          "packets are read from the files and fed to the graph as strings "
+          "even if they represent doubles, floats, etc.");
+ABSL_FLAG(std::string, output_side_packets, "",
+          "Comma-separated list of key=value pairs specifying the output "
+          "side packets and paths to write to disk for the "
+          "CalculatorGraph.");
 
 absl::Status RunMPPGraph() {
   std::string calculator_graph_config_contents;
@@ -126,7 +126,7 @@ absl::Status RunMPPGraph() {
 
 int main(int argc, char** argv) {
   google::InitGoogleLogging(argv[0]);
-  gflags::ParseCommandLineFlags(&argc, &argv, true);
+  absl::ParseCommandLine(argc, argv);
   absl::Status run_status = RunMPPGraph();
   if (!run_status.ok()) {
     LOG(ERROR) << "Failed to run the graph: " << run_status.message();

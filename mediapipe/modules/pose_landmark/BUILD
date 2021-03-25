@@ -79,6 +79,7 @@ mediapipe_simple_subgraph(
     register_as = "PoseLandmarkFiltering",
     deps = [
         "//mediapipe/calculators/util:landmarks_smoothing_calculator",
+        "//mediapipe/calculators/util:visibility_smoothing_calculator",
         "//mediapipe/framework/tool:switch_container",
     ],
 )

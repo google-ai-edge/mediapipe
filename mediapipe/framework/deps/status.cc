@@ -18,7 +18,7 @@
 
 namespace mediapipe {
 
-std::ostream& operator<<(std::ostream& os, const Status& x) {
+std::ostream& operator<<(std::ostream& os, const absl::Status& x) {
   os << x.ToString();
   return os;
 }

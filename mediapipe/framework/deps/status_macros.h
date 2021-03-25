@@ -194,10 +194,10 @@ namespace status_macro_internal {
 // that declares a variable.
 class StatusAdaptorForMacros {
  public:
-  StatusAdaptorForMacros(const Status& status, const char* file, int line)
+  StatusAdaptorForMacros(const absl::Status& status, const char* file, int line)
       : builder_(status, file, line) {}
 
-  StatusAdaptorForMacros(Status&& status, const char* file, int line)
+  StatusAdaptorForMacros(absl::Status&& status, const char* file, int line)
       : builder_(std::move(status), file, line) {}
 
   StatusAdaptorForMacros(const StatusBuilder& builder, const char* /* file */,

@@ -1,4 +1,4 @@
-// Copyright 2019 The MediaPipe Authors.
+// Copyright 2020 The MediaPipe Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,19 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef MEDIAPIPE_PORT_COMMANDLINEFLAGS_H_
-#define MEDIAPIPE_PORT_COMMANDLINEFLAGS_H_
+syntax = "proto2";
 
-#include "gflags/gflags.h"
-namespace absl {
-template <typename T>
-T GetFlag(const T& f) {
-  return f;
-}
-template <typename T, typename U>
-void SetFlag(T* f, const U& u) {
-  *f = u;
-}
-}  // namespace absl
+package mediapipe;
 
-#endif  // MEDIAPIPE_PORT_COMMANDLINEFLAGS_H_
+import "mediapipe/framework/calculator_options.proto";
+
+message VisibilityCopyCalculatorOptions {
+  extend CalculatorOptions {
+    optional VisibilityCopyCalculatorOptions ext = 363728421;
+  }
+
+  optional bool copy_visibility = 1 [default = true];
+
+  optional bool copy_presence = 2 [default = true];
+}

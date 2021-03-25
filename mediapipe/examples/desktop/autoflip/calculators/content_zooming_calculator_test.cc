@@ -16,6 +16,7 @@
 
 #include "mediapipe/examples/desktop/autoflip/autoflip_messages.pb.h"
 #include "mediapipe/examples/desktop/autoflip/calculators/content_zooming_calculator.pb.h"
+#include "mediapipe/examples/desktop/autoflip/calculators/content_zooming_calculator_state.h"
 #include "mediapipe/examples/desktop/autoflip/quality/kinematic_path_solver.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/calculator_runner.h"
@@ -109,6 +110,7 @@ const char kConfigD[] = R"(
     input_stream: "VIDEO_SIZE:size"
     input_stream: "DETECTIONS:detections"
     output_stream: "CROP_RECT:rect"
+    output_stream: "FIRST_CROP_RECT:first_rect"
     options: {
       [mediapipe.autoflip.ContentZoomingCalculatorOptions.ext]: {
         max_zoom_value_deg: 0
@@ -147,19 +149,24 @@ void AddDetectionFrameSize(const cv::Rect_<float>& position, const int64 time,
                            const int width, const int height,
                            CalculatorRunner* runner) {
   auto detections = std::make_unique<std::vector<mediapipe::Detection>>();
-  mediapipe::Detection detection;
-  detection.mutable_location_data()->set_format(
-      mediapipe::LocationData::RELATIVE_BOUNDING_BOX);
-  detection.mutable_location_data()
-      ->mutable_relative_bounding_box()
-      ->set_height(position.height);
-  detection.mutable_location_data()->mutable_relative_bounding_box()->set_width(
-      position.width);
-  detection.mutable_location_data()->mutable_relative_bounding_box()->set_xmin(
-      position.x);
-  detection.mutable_location_data()->mutable_relative_bounding_box()->set_ymin(
-      position.y);
-  detections->push_back(detection);
+  if (position.width > 0 && position.height > 0) {
+    mediapipe::Detection detection;
+    detection.mutable_location_data()->set_format(
+        mediapipe::LocationData::RELATIVE_BOUNDING_BOX);
+    detection.mutable_location_data()
+        ->mutable_relative_bounding_box()
+        ->set_height(position.height);
+    detection.mutable_location_data()
+        ->mutable_relative_bounding_box()
+        ->set_width(position.width);
+    detection.mutable_location_data()
+        ->mutable_relative_bounding_box()
+        ->set_xmin(position.x);
+    detection.mutable_location_data()
+        ->mutable_relative_bounding_box()
+        ->set_ymin(position.y);
+    detections->push_back(detection);
+  }
   runner->MutableInputs()
       ->Tag("DETECTIONS")
       .packets.push_back(Adopt(detections.release()).At(Timestamp(time)));
@@ -185,7 +192,6 @@ void CheckCropRect(const int x_center, const int y_center, const int width,
   EXPECT_EQ(rect.width(), width);
   EXPECT_EQ(rect.height(), height);
 }
-
 TEST(ContentZoomingCalculatorTest, ZoomTest) {
   auto runner = ::absl::make_unique<CalculatorRunner>(
       ParseTextProtoOrDie<CalculatorGraphConfig::Node>(kConfigA));
@@ -244,6 +250,46 @@ TEST(ContentZoomingCalculatorTest, PanConfig) {
                 runner->Outputs().Tag("CROP_RECT").packets);
 }
 
+TEST(ContentZoomingCalculatorTest, PanConfigWithCache) {
+  mediapipe::autoflip::ContentZoomingCalculatorStateCacheType cache;
+  auto config = ParseTextProtoOrDie<CalculatorGraphConfig::Node>(kConfigD);
+  config.add_input_side_packet("STATE_CACHE:state_cache");
+  auto* options = config.mutable_options()->MutableExtension(
+      ContentZoomingCalculatorOptions::ext);
+  options->mutable_kinematic_options_pan()->set_min_motion_to_reframe(0.0);
+  options->mutable_kinematic_options_pan()->set_update_rate_seconds(2);
+  options->mutable_kinematic_options_tilt()->set_min_motion_to_reframe(50.0);
+  options->mutable_kinematic_options_zoom()->set_min_motion_to_reframe(50.0);
+  {
+    auto runner = ::absl::make_unique<CalculatorRunner>(config);
+    runner->MutableSidePackets()->Tag("STATE_CACHE") = MakePacket<
+        mediapipe::autoflip::ContentZoomingCalculatorStateCacheType*>(&cache);
+    AddDetection(cv::Rect_<float>(.4, .5, .1, .1), 0, runner.get());
+    MP_ASSERT_OK(runner->Run());
+    CheckCropRect(450, 550, 111, 111, 0,
+                  runner->Outputs().Tag("CROP_RECT").packets);
+  }
+  {
+    auto runner = ::absl::make_unique<CalculatorRunner>(config);
+    runner->MutableSidePackets()->Tag("STATE_CACHE") = MakePacket<
+        mediapipe::autoflip::ContentZoomingCalculatorStateCacheType*>(&cache);
+    AddDetection(cv::Rect_<float>(.45, .55, .15, .15), 1000000, runner.get());
+    MP_ASSERT_OK(runner->Run());
+    CheckCropRect(483, 550, 111, 111, 0,
+                  runner->Outputs().Tag("CROP_RECT").packets);
+  }
+  // Now repeat the last frame for a new runner without the cache to see a reset
+  {
+    auto runner = ::absl::make_unique<CalculatorRunner>(config);
+    runner->MutableSidePackets()->Tag("STATE_CACHE") = MakePacket<
+        mediapipe::autoflip::ContentZoomingCalculatorStateCacheType*>(nullptr);
+    AddDetection(cv::Rect_<float>(.45, .55, .15, .15), 2000000, runner.get());
+    MP_ASSERT_OK(runner->Run());
+    CheckCropRect(525, 625, 166, 166, 0,  // Without a cache, state was lost.
+                  runner->Outputs().Tag("CROP_RECT").packets);
+  }
+}
+
 TEST(ContentZoomingCalculatorTest, TiltConfig) {
   auto config = ParseTextProtoOrDie<CalculatorGraphConfig::Node>(kConfigD);
   auto* options = config.mutable_options()->MutableExtension(
@@ -278,6 +324,46 @@ TEST(ContentZoomingCalculatorTest, ZoomConfig) {
                 runner->Outputs().Tag("CROP_RECT").packets);
   CheckCropRect(450, 550, 139, 139, 1,
                 runner->Outputs().Tag("CROP_RECT").packets);
+}
+
+TEST(ContentZoomingCalculatorTest, ZoomConfigWithCache) {
+  mediapipe::autoflip::ContentZoomingCalculatorStateCacheType cache;
+  auto config = ParseTextProtoOrDie<CalculatorGraphConfig::Node>(kConfigD);
+  config.add_input_side_packet("STATE_CACHE:state_cache");
+  auto* options = config.mutable_options()->MutableExtension(
+      ContentZoomingCalculatorOptions::ext);
+  options->mutable_kinematic_options_pan()->set_min_motion_to_reframe(50.0);
+  options->mutable_kinematic_options_tilt()->set_min_motion_to_reframe(50.0);
+  options->mutable_kinematic_options_zoom()->set_min_motion_to_reframe(0.0);
+  options->mutable_kinematic_options_zoom()->set_update_rate_seconds(2);
+  {
+    auto runner = ::absl::make_unique<CalculatorRunner>(config);
+    runner->MutableSidePackets()->Tag("STATE_CACHE") = MakePacket<
+        mediapipe::autoflip::ContentZoomingCalculatorStateCacheType*>(&cache);
+    AddDetection(cv::Rect_<float>(.4, .5, .1, .1), 0, runner.get());
+    MP_ASSERT_OK(runner->Run());
+    CheckCropRect(450, 550, 111, 111, 0,
+                  runner->Outputs().Tag("CROP_RECT").packets);
+  }
+  {
+    auto runner = ::absl::make_unique<CalculatorRunner>(config);
+    runner->MutableSidePackets()->Tag("STATE_CACHE") = MakePacket<
+        mediapipe::autoflip::ContentZoomingCalculatorStateCacheType*>(&cache);
+    AddDetection(cv::Rect_<float>(.45, .55, .15, .15), 1000000, runner.get());
+    MP_ASSERT_OK(runner->Run());
+    CheckCropRect(450, 550, 139, 139, 0,
+                  runner->Outputs().Tag("CROP_RECT").packets);
+  }
+  // Now repeat the last frame for a new runner without the cache to see a reset
+  {
+    auto runner = ::absl::make_unique<CalculatorRunner>(config);
+    runner->MutableSidePackets()->Tag("STATE_CACHE") = MakePacket<
+        mediapipe::autoflip::ContentZoomingCalculatorStateCacheType*>(nullptr);
+    AddDetection(cv::Rect_<float>(.45, .55, .15, .15), 2000000, runner.get());
+    MP_ASSERT_OK(runner->Run());
+    CheckCropRect(525, 625, 166, 166, 0,  // Without a cache, state was lost.
+                  runner->Outputs().Tag("CROP_RECT").packets);
+  }
 }
 
 TEST(ContentZoomingCalculatorTest, MinAspectBorderValues) {
@@ -509,6 +595,32 @@ TEST(ContentZoomingCalculatorTest, ResolutionChangeStationary) {
                 runner->Outputs().Tag("CROP_RECT").packets);
 }
 
+TEST(ContentZoomingCalculatorTest, ResolutionChangeStationaryWithCache) {
+  mediapipe::autoflip::ContentZoomingCalculatorStateCacheType cache;
+  auto config = ParseTextProtoOrDie<CalculatorGraphConfig::Node>(kConfigD);
+  config.add_input_side_packet("STATE_CACHE:state_cache");
+  {
+    auto runner = ::absl::make_unique<CalculatorRunner>(config);
+    runner->MutableSidePackets()->Tag("STATE_CACHE") = MakePacket<
+        mediapipe::autoflip::ContentZoomingCalculatorStateCacheType*>(&cache);
+    AddDetectionFrameSize(cv::Rect_<float>(.4, .4, .2, .2), 0, 1000, 1000,
+                          runner.get());
+    MP_ASSERT_OK(runner->Run());
+    CheckCropRect(500, 500, 222, 222, 0,
+                  runner->Outputs().Tag("CROP_RECT").packets);
+  }
+  {
+    auto runner = ::absl::make_unique<CalculatorRunner>(config);
+    runner->MutableSidePackets()->Tag("STATE_CACHE") = MakePacket<
+        mediapipe::autoflip::ContentZoomingCalculatorStateCacheType*>(&cache);
+    AddDetectionFrameSize(cv::Rect_<float>(.4, .4, .2, .2), 1, 500, 500,
+                          runner.get());
+    MP_ASSERT_OK(runner->Run());
+    CheckCropRect(500 * 0.5, 500 * 0.5, 222 * 0.5, 222 * 0.5, 0,
+                  runner->Outputs().Tag("CROP_RECT").packets);
+  }
+}
+
 TEST(ContentZoomingCalculatorTest, ResolutionChangeZooming) {
   auto config = ParseTextProtoOrDie<CalculatorGraphConfig::Node>(kConfigD);
   auto runner = ::absl::make_unique<CalculatorRunner>(config);
@@ -527,6 +639,37 @@ TEST(ContentZoomingCalculatorTest, ResolutionChangeZooming) {
                 runner->Outputs().Tag("CROP_RECT").packets);
 }
 
+TEST(ContentZoomingCalculatorTest, ResolutionChangeZoomingWithCache) {
+  mediapipe::autoflip::ContentZoomingCalculatorStateCacheType cache;
+  auto config = ParseTextProtoOrDie<CalculatorGraphConfig::Node>(kConfigD);
+  config.add_input_side_packet("STATE_CACHE:state_cache");
+  {
+    auto runner = ::absl::make_unique<CalculatorRunner>(config);
+    runner->MutableSidePackets()->Tag("STATE_CACHE") = MakePacket<
+        mediapipe::autoflip::ContentZoomingCalculatorStateCacheType*>(&cache);
+    AddDetectionFrameSize(cv::Rect_<float>(.1, .1, .8, .8), 0, 1000, 1000,
+                          runner.get());
+    MP_ASSERT_OK(runner->Run());
+    CheckCropRect(500, 500, 888, 888, 0,
+                  runner->Outputs().Tag("CROP_RECT").packets);
+  }
+  // The second runner should just resume based on state from the first runner.
+  {
+    auto runner = ::absl::make_unique<CalculatorRunner>(config);
+    runner->MutableSidePackets()->Tag("STATE_CACHE") = MakePacket<
+        mediapipe::autoflip::ContentZoomingCalculatorStateCacheType*>(&cache);
+    AddDetectionFrameSize(cv::Rect_<float>(.4, .4, .2, .2), 1000000, 1000, 1000,
+                          runner.get());
+    AddDetectionFrameSize(cv::Rect_<float>(.4, .4, .2, .2), 2000000, 500, 500,
+                          runner.get());
+    MP_ASSERT_OK(runner->Run());
+    CheckCropRect(500, 500, 588, 588, 0,
+                  runner->Outputs().Tag("CROP_RECT").packets);
+    CheckCropRect(500 * 0.5, 500 * 0.5, 288 * 0.5, 288 * 0.5, 1,
+                  runner->Outputs().Tag("CROP_RECT").packets);
+  }
+}
+
 TEST(ContentZoomingCalculatorTest, MaxZoomValue) {
   auto config = ParseTextProtoOrDie<CalculatorGraphConfig::Node>(kConfigD);
   auto* options = config.mutable_options()->MutableExtension(
@@ -539,6 +682,108 @@ TEST(ContentZoomingCalculatorTest, MaxZoomValue) {
   // 55/60 * 1000 = 916
   CheckCropRect(500, 500, 916, 916, 0,
                 runner->Outputs().Tag("CROP_RECT").packets);
+}
+TEST(ContentZoomingCalculatorTest, MaxZoomOutValue) {
+  auto config = ParseTextProtoOrDie<CalculatorGraphConfig::Node>(kConfigD);
+  auto* options = config.mutable_options()->MutableExtension(
+      ContentZoomingCalculatorOptions::ext);
+  options->set_scale_factor(1.0);
+  options->mutable_kinematic_options_zoom()->set_min_motion_to_reframe(5.0);
+  auto runner = ::absl::make_unique<CalculatorRunner>(config);
+  AddDetectionFrameSize(cv::Rect_<float>(.025, .025, .95, .95), 0, 1000, 1000,
+                        runner.get());
+  AddDetectionFrameSize(cv::Rect_<float>(0, 0, -1, -1), 1000000, 1000, 1000,
+                        runner.get());
+  AddDetectionFrameSize(cv::Rect_<float>(0, 0, -1, -1), 2000000, 1000, 1000,
+                        runner.get());
+  MP_ASSERT_OK(runner->Run());
+  // 55/60 * 1000 = 916
+  CheckCropRect(500, 500, 950, 950, 0,
+                runner->Outputs().Tag("CROP_RECT").packets);
+  CheckCropRect(500, 500, 1000, 1000, 2,
+                runner->Outputs().Tag("CROP_RECT").packets);
+}
+TEST(ContentZoomingCalculatorTest, StartZoomedOut) {
+  auto config = ParseTextProtoOrDie<CalculatorGraphConfig::Node>(kConfigD);
+  auto* options = config.mutable_options()->MutableExtension(
+      ContentZoomingCalculatorOptions::ext);
+  options->set_us_to_first_rect(1000000);
+  options->set_us_to_first_rect_delay(500000);
+  auto runner = ::absl::make_unique<CalculatorRunner>(config);
+  AddDetectionFrameSize(cv::Rect_<float>(.4, .4, .2, .2), 0, 1000, 1000,
+                        runner.get());
+  AddDetectionFrameSize(cv::Rect_<float>(.4, .4, .2, .2), 400000, 1000, 1000,
+                        runner.get());
+  AddDetectionFrameSize(cv::Rect_<float>(.4, .4, .2, .2), 800000, 1000, 1000,
+                        runner.get());
+  AddDetectionFrameSize(cv::Rect_<float>(.4, .4, .2, .2), 1000000, 1000, 1000,
+                        runner.get());
+  AddDetectionFrameSize(cv::Rect_<float>(.4, .4, .2, .2), 1500000, 1000, 1000,
+                        runner.get());
+  MP_ASSERT_OK(runner->Run());
+  CheckCropRect(500, 500, 1000, 1000, 0,
+                runner->Outputs().Tag("CROP_RECT").packets);
+  CheckCropRect(500, 500, 1000, 1000, 1,
+                runner->Outputs().Tag("CROP_RECT").packets);
+  CheckCropRect(500, 500, 470, 470, 2,
+                runner->Outputs().Tag("CROP_RECT").packets);
+  CheckCropRect(500, 500, 222, 222, 3,
+                runner->Outputs().Tag("CROP_RECT").packets);
+  CheckCropRect(500, 500, 222, 222, 4,
+                runner->Outputs().Tag("CROP_RECT").packets);
+}
+
+TEST(ContentZoomingCalculatorTest, ProvidesZeroSizeFirstRectWithoutDetections) {
+  auto config = ParseTextProtoOrDie<CalculatorGraphConfig::Node>(kConfigD);
+  auto runner = ::absl::make_unique<CalculatorRunner>(config);
+
+  auto input_size = ::absl::make_unique<std::pair<int, int>>(1000, 1000);
+  runner->MutableInputs()
+      ->Tag("VIDEO_SIZE")
+      .packets.push_back(Adopt(input_size.release()).At(Timestamp(0)));
+
+  MP_ASSERT_OK(runner->Run());
+
+  const std::vector<Packet>& output_packets =
+      runner->Outputs().Tag("FIRST_CROP_RECT").packets;
+  ASSERT_EQ(output_packets.size(), 1);
+  const auto& rect = output_packets[0].Get<mediapipe::NormalizedRect>();
+  EXPECT_EQ(rect.x_center(), 0);
+  EXPECT_EQ(rect.y_center(), 0);
+  EXPECT_EQ(rect.width(), 0);
+  EXPECT_EQ(rect.height(), 0);
+}
+
+TEST(ContentZoomingCalculatorTest, ProvidesConstantFirstRect) {
+  auto config = ParseTextProtoOrDie<CalculatorGraphConfig::Node>(kConfigD);
+  auto* options = config.mutable_options()->MutableExtension(
+      ContentZoomingCalculatorOptions::ext);
+  options->set_us_to_first_rect(500000);
+  auto runner = ::absl::make_unique<CalculatorRunner>(config);
+  AddDetectionFrameSize(cv::Rect_<float>(.4, .4, .2, .2), 0, 1000, 1000,
+                        runner.get());
+  AddDetectionFrameSize(cv::Rect_<float>(.4, .4, .2, .2), 500000, 1000, 1000,
+                        runner.get());
+  AddDetectionFrameSize(cv::Rect_<float>(.4, .4, .2, .2), 1000000, 1000, 1000,
+                        runner.get());
+  AddDetectionFrameSize(cv::Rect_<float>(.4, .4, .2, .2), 1500000, 1000, 1000,
+                        runner.get());
+  MP_ASSERT_OK(runner->Run());
+  const std::vector<Packet>& output_packets =
+      runner->Outputs().Tag("FIRST_CROP_RECT").packets;
+  ASSERT_EQ(output_packets.size(), 4);
+  const auto& first_rect = output_packets[0].Get<mediapipe::NormalizedRect>();
+  EXPECT_NEAR(first_rect.x_center(), 0.5, 0.05);
+  EXPECT_NEAR(first_rect.y_center(), 0.5, 0.05);
+  EXPECT_NEAR(first_rect.width(), 0.222, 0.05);
+  EXPECT_NEAR(first_rect.height(), 0.222, 0.05);
+  for (int i = 1; i < 4; ++i) {
+    const auto& rect = output_packets[i].Get<mediapipe::NormalizedRect>();
+    EXPECT_EQ(first_rect.x_center(), rect.x_center());
+    EXPECT_EQ(first_rect.y_center(), rect.y_center());
+    EXPECT_EQ(first_rect.width(), rect.width());
+    EXPECT_EQ(first_rect.height(), rect.height());
+  }
 }
 
 }  // namespace

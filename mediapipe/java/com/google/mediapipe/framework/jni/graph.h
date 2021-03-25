@@ -51,6 +51,9 @@ class Graph {
   // Adds a callback for a given stream name.
   absl::Status AddCallbackHandler(std::string output_stream_name,
                                   jobject java_callback);
+  // Adds a callback for multiple output streams.
+  absl::Status AddMultiStreamCallbackHandler(
+      std::vector<std::string> output_stream_names, jobject java_callback);
 
   // Loads a binary graph from a file.
   absl::Status LoadBinaryGraph(std::string path_to_graph);
@@ -157,6 +160,10 @@ class Graph {
   // Invokes a Java packet callback with header.
   void CallbackToJava(JNIEnv* env, jobject java_callback_obj,
                       const Packet& packet, const Packet& header_packet);
+
+  // Invokes a Java packet list callback.
+  void CallbackToJava(JNIEnv* env, jobject java_callback_obj,
+                      const std::vector<Packet>& packets);
 
   ProfilingContext* GetProfilingContext();
 

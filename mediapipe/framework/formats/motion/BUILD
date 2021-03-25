@@ -67,11 +67,11 @@ cc_test(
     deps = [
         ":optical_flow_field",
         "//mediapipe/framework/deps:file_path",
-        "//mediapipe/framework/port:commandlineflags",
         "//mediapipe/framework/port:file_helpers",
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/framework/port:integral_types",
         "//mediapipe/framework/port:logging",
+        "@com_google_absl//absl/flags:flag",
         "@org_tensorflow//tensorflow/core:framework",
     ],
 )

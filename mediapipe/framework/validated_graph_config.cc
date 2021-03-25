@@ -21,6 +21,7 @@
 #include "absl/strings/substitute.h"
 #include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/framework/calculator_base.h"
+#include "mediapipe/framework/graph_service_manager.h"
 #include "mediapipe/framework/legacy_calculator_support.h"
 #include "mediapipe/framework/packet_generator.h"
 #include "mediapipe/framework/packet_generator.pb.h"
@@ -142,10 +143,11 @@ absl::Status AddPredefinedExecutorConfigs(CalculatorGraphConfig* graph_config) {
 absl::Status PerformBasicTransforms(
     const CalculatorGraphConfig& input_graph_config,
     const GraphRegistry* graph_registry,
+    const GraphServiceManager* service_manager,
     CalculatorGraphConfig* output_graph_config) {
   *output_graph_config = input_graph_config;
-  MP_RETURN_IF_ERROR(
-      tool::ExpandSubgraphs(output_graph_config, graph_registry));
+  MP_RETURN_IF_ERROR(tool::ExpandSubgraphs(output_graph_config, graph_registry,
+                                           service_manager));
 
   MP_RETURN_IF_ERROR(AddPredefinedExecutorConfigs(output_graph_config));
 
@@ -344,7 +346,8 @@ absl::Status NodeTypeInfo::Initialize(
 
 absl::Status ValidatedGraphConfig::Initialize(
     const CalculatorGraphConfig& input_config,
-    const GraphRegistry* graph_registry) {
+    const GraphRegistry* graph_registry,
+    const GraphServiceManager* service_manager) {
   RET_CHECK(!initialized_)
       << "ValidatedGraphConfig can be initialized only once.";
 
@@ -353,8 +356,8 @@ absl::Status ValidatedGraphConfig::Initialize(
           << input_config.DebugString();
 #endif
 
-  MP_RETURN_IF_ERROR(
-      PerformBasicTransforms(input_config, graph_registry, &config_));
+  MP_RETURN_IF_ERROR(PerformBasicTransforms(input_config, graph_registry,
+                                            service_manager, &config_));
 
   // Initialize the basic node information.
   MP_RETURN_IF_ERROR(InitializeGeneratorInfo());
@@ -429,18 +432,22 @@ absl::Status ValidatedGraphConfig::Initialize(
 
 absl::Status ValidatedGraphConfig::Initialize(
     const std::string& graph_type, const Subgraph::SubgraphOptions* options,
-    const GraphRegistry* graph_registry) {
+    const GraphRegistry* graph_registry,
+    const GraphServiceManager* service_manager) {
   graph_registry =
       graph_registry ? graph_registry : &GraphRegistry::global_graph_registry;
-  auto status_or_config = graph_registry->CreateByName("", graph_type, options);
+  SubgraphContext subgraph_context(options, service_manager);
+  auto status_or_config =
+      graph_registry->CreateByName("", graph_type, &subgraph_context);
   MP_RETURN_IF_ERROR(status_or_config.status());
-  return Initialize(status_or_config.value(), graph_registry);
+  return Initialize(status_or_config.value(), graph_registry, service_manager);
 }
 
 absl::Status ValidatedGraphConfig::Initialize(
     const std::vector<CalculatorGraphConfig>& input_configs,
     const std::vector<CalculatorGraphTemplate>& input_templates,
-    const std::string& graph_type, const Subgraph::SubgraphOptions* options) {
+    const std::string& graph_type, const Subgraph::SubgraphOptions* arguments,
+    const GraphServiceManager* service_manager) {
   GraphRegistry graph_registry;
   for (auto& config : input_configs) {
     graph_registry.Register(config.type(), config);
@@ -448,7 +455,7 @@ absl::Status ValidatedGraphConfig::Initialize(
   for (auto& templ : input_templates) {
     graph_registry.Register(templ.config().type(), templ);
   }
-  return Initialize(graph_type, options, &graph_registry);
+  return Initialize(graph_type, arguments, &graph_registry, service_manager);
 }
 
 absl::Status ValidatedGraphConfig::InitializeCalculatorInfo() {

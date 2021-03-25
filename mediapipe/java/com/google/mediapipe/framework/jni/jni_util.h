@@ -27,6 +27,8 @@ namespace android {
 
 std::string JStringToStdString(JNIEnv* env, jstring jstr);
 
+std::vector<std::string> JavaListToStdStringVector(JNIEnv* env, jobject from);
+
 // Creates a java MediaPipeException object for a absl::Status.
 jthrowable CreateMediaPipeException(JNIEnv* env, absl::Status status);
 

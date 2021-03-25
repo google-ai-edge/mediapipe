@@ -41,7 +41,7 @@ class InferenceCalculatorSelectorImpl
         (options.has_delegate() && options.delegate().has_gpu());
     if (should_use_gpu) {
       impls.emplace_back("Metal");
-      impls.emplace_back("MlDrift");
+      impls.emplace_back("MlDriftWebGl");
       impls.emplace_back("Gl");
     }
     impls.emplace_back("Cpu");

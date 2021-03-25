@@ -93,7 +93,7 @@ cc_library(
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
         "@com_google_absl//absl/synchronization",
-        "@eigen_archive//:eigen",
+        "@eigen_archive//:eigen3",
         "//mediapipe/framework:camera_intrinsics",
         "//mediapipe/framework/formats:image_frame",
         "//mediapipe/framework/formats:matrix",

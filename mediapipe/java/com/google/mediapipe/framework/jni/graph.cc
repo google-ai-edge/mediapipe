@@ -89,8 +89,18 @@ class CallbackHandler {
                              packet, header);
   }
 
+  void PacketListCallback(const std::vector<Packet>& packets) {
+    context_->CallbackToJava(mediapipe::java::GetJNIEnv(), java_callback_,
+                             packets);
+  }
+
   std::function<void(const Packet&)> CreateCallback() {
     return std::bind(&CallbackHandler::PacketCallback, this,
+                     std::placeholders::_1);
+  }
+
+  std::function<void(const std::vector<Packet>&)> CreatePacketListCallback() {
+    return std::bind(&CallbackHandler::PacketListCallback, this,
                      std::placeholders::_1);
   }
 
@@ -187,6 +197,23 @@ absl::Status Graph::AddCallbackHandler(std::string output_stream_name,
   side_packets_callbacks_.emplace(
       side_packet_name, MakePacket<std::function<void(const Packet&)>>(
                             handler->CreateCallback()));
+  callback_handlers_.emplace_back(std::move(handler));
+  return absl::OkStatus();
+}
+
+absl::Status Graph::AddMultiStreamCallbackHandler(
+    std::vector<std::string> output_stream_names, jobject java_callback) {
+  if (!graph_config()) {
+    return absl::InternalError("Graph is not loaded!");
+  }
+  auto handler =
+      absl::make_unique<internal::CallbackHandler>(this, java_callback);
+  std::pair<std::string, Packet> side_packet_pair;
+  tool::AddMultiStreamCallback(output_stream_names,
+                               handler->CreatePacketListCallback(),
+                               graph_config(), &side_packet_pair);
+  side_packets_[side_packet_pair.first] = side_packet_pair.second;
+  EnsureMinimumExecutorStackSizeForJava();
   callback_handlers_.emplace_back(std::move(handler));
   return absl::OkStatus();
 }
@@ -331,6 +358,43 @@ void Graph::CallbackToJava(JNIEnv* env, jobject java_callback_obj,
   env->DeleteLocalRef(callback_cls);
   env->DeleteLocalRef(java_packet);
   env->DeleteLocalRef(java_header_packet);
+}
+
+void Graph::CallbackToJava(JNIEnv* env, jobject java_callback_obj,
+                           const std::vector<Packet>& packets) {
+  jclass callback_cls = env->GetObjectClass(java_callback_obj);
+
+  auto& class_registry = mediapipe::android::ClassRegistry::GetInstance();
+  const std::string process_method_name = class_registry.GetMethodName(
+      mediapipe::android::ClassRegistry::kPacketListCallbackClassName,
+      "process");
+  jmethodID processMethod = env->GetMethodID(
+      callback_cls, process_method_name.c_str(), "(Ljava/util/List;)V");
+
+  jclass list_cls = env->FindClass("java/util/ArrayList");
+  jobject java_list =
+      env->NewObject(list_cls, env->GetMethodID(list_cls, "<init>", "()V"));
+  jmethodID add_method =
+      env->GetMethodID(list_cls, "add", "(Ljava/lang/Object;)Z");
+  std::vector<int64_t> packet_handles;
+  for (const Packet& packet : packets) {
+    int64_t packet_handle = WrapPacketIntoContext(packet);
+    packet_handles.push_back(packet_handle);
+    jobject java_packet =
+        CreateJavaPacket(env, global_java_packet_cls_, packet_handle);
+    env->CallBooleanMethod(java_list, add_method, java_packet);
+    env->DeleteLocalRef(java_packet);
+  }
+
+  VLOG(2) << "Calling java callback.";
+  env->CallVoidMethod(java_callback_obj, processMethod, java_list);
+  // release the packet after callback.
+  for (int64_t packet_handle : packet_handles) {
+    RemovePacket(packet_handle);
+  }
+  env->DeleteLocalRef(callback_cls);
+  env->DeleteLocalRef(java_list);
+  VLOG(2) << "Returned from java callback.";
 }
 
 void Graph::SetPacketJavaClass(JNIEnv* env) {

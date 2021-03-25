@@ -31,6 +31,8 @@ message Classification {
   optional float score = 2;
   // Label or name of the class.
   optional string label = 3;
+  // Optional human-readable string for display purposes.
+  optional string display_name = 4;
 }
 
 // Group of Classification protos.

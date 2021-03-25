@@ -21,6 +21,7 @@
 #include "absl/container/flat_hash_set.h"
 #include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/framework/calculator_contract.h"
+#include "mediapipe/framework/graph_service_manager.h"
 #include "mediapipe/framework/packet_generator.pb.h"
 #include "mediapipe/framework/packet_type.h"
 #include "mediapipe/framework/port/map_util.h"
@@ -195,7 +196,8 @@ class ValidatedGraphConfig {
   // before any other functions.  Subgraphs are specified through the
   // global graph registry or an optional local graph registry.
   absl::Status Initialize(const CalculatorGraphConfig& input_config,
-                          const GraphRegistry* graph_registry = nullptr);
+                          const GraphRegistry* graph_registry = nullptr,
+                          const GraphServiceManager* service_manager = nullptr);
 
   // Initializes the ValidatedGraphConfig from registered graph and subgraph
   // configs.  Subgraphs are retrieved from the specified graph registry or from
@@ -203,7 +205,8 @@ class ValidatedGraphConfig {
   // specifying its type in |graph_type|.
   absl::Status Initialize(const std::string& graph_type,
                           const Subgraph::SubgraphOptions* options = nullptr,
-                          const GraphRegistry* graph_registry = nullptr);
+                          const GraphRegistry* graph_registry = nullptr,
+                          const GraphServiceManager* service_manager = nullptr);
 
   // Initializes the ValidatedGraphConfig from the specified graph and subgraph
   // configs.  Template graph and subgraph configs can be specified through
@@ -215,7 +218,8 @@ class ValidatedGraphConfig {
       const std::vector<CalculatorGraphConfig>& input_configs,
       const std::vector<CalculatorGraphTemplate>& input_templates,
       const std::string& graph_type = "",
-      const Subgraph::SubgraphOptions* arguments = nullptr);
+      const Subgraph::SubgraphOptions* arguments = nullptr,
+      const GraphServiceManager* service_manager = nullptr);
 
   // Returns true if the ValidatedGraphConfig has been initialized.
   bool Initialized() const { return initialized_; }

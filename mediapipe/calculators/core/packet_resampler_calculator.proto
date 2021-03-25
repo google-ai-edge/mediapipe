@@ -68,7 +68,22 @@ message PacketResamplerCalculatorOptions {
   // pseudo-random number generator does its job and the number of frames is
   // sufficiently large, the average frame rate will be close to this value.
   optional double jitter = 4;
+
+  // Enables reflection when applying jitter.
+  //
+  // This option is ignored when reproducible_sampling is true, in which case
+  // reflection will be used.
+  //
+  // New use cases should use reproducible_sampling = true, as
+  // jitter_with_reflection is deprecated and will be removed at some point.
   optional bool jitter_with_reflection = 9 [default = false];
+
+  // If set, enabled reproducible sampling, allowing frames to be sampled
+  // without regards to where the stream starts.  See
+  // packet_resampler_calculator.h for details.
+  //
+  // This enables reflection (ignoring jitter_with_reflection setting).
+  optional bool reproducible_sampling = 10 [default = false];
 
   // If specified, output timestamps are aligned with base_timestamp.
   // Otherwise, they are aligned with the first input timestamp.

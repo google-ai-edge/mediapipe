@@ -38,6 +38,7 @@
 #include "mediapipe/framework/executor.h"
 #include "mediapipe/framework/graph_output_stream.h"
 #include "mediapipe/framework/graph_service.h"
+#include "mediapipe/framework/graph_service_manager.h"
 #include "mediapipe/framework/mediapipe_profiling.h"
 #include "mediapipe/framework/output_side_packet_impl.h"
 #include "mediapipe/framework/output_stream.h"
@@ -377,19 +378,20 @@ class CalculatorGraph {
   template <typename T>
   absl::Status SetServiceObject(const GraphService<T>& service,
                                 std::shared_ptr<T> object) {
-    return SetServicePacket(service,
-                            MakePacket<std::shared_ptr<T>>(std::move(object)));
+    // TODO: check that the graph has not been started!
+    return service_manager_.SetServiceObject(service, object);
   }
 
   template <typename T>
   std::shared_ptr<T> GetServiceObject(const GraphService<T>& service) {
-    Packet p = GetServicePacket(service);
-    if (p.IsEmpty()) return nullptr;
-    return p.Get<std::shared_ptr<T>>();
+    return service_manager_.GetServiceObject(service);
   }
 
   // Only the Java API should call this directly.
-  absl::Status SetServicePacket(const GraphServiceBase& service, Packet p);
+  absl::Status SetServicePacket(const GraphServiceBase& service, Packet p) {
+    // TODO: check that the graph has not been started!
+    return service_manager_.SetServicePacket(service, p);
+  }
 
  private:
   // GraphRunState is used as a parameter in the function CallStatusHandlers.
@@ -523,7 +525,6 @@ class CalculatorGraph {
   // status before taking any action.
   void UpdateThrottledNodes(InputStreamManager* stream, bool* stream_was_full);
 
-  Packet GetServicePacket(const GraphServiceBase& service);
 #if !MEDIAPIPE_DISABLE_GPU
   // Owns the legacy GpuSharedData if we need to create one for backwards
   // compatibility.
@@ -598,7 +599,8 @@ class CalculatorGraph {
   // The processed input side packet map for this run.
   std::map<std::string, Packet> current_run_side_packets_;
 
-  std::map<std::string, Packet> service_packets_;
+  // Object to manage graph services.
+  GraphServiceManager service_manager_;
 
   // Vector of errors encountered while running graph. Always use RecordError()
   // to add an error to this vector.

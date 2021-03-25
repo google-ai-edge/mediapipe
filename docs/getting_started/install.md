@@ -25,25 +25,11 @@ install --user six`.
 
 ## Installing on Debian and Ubuntu
 
-1.  Install Bazel.
+1.  Install Bazelisk.
 
     Follow the official
-    [Bazel documentation](https://docs.bazel.build/versions/master/install-ubuntu.html)
-    to install Bazel 3.4 or higher.
-
-    For Nvidia Jetson and Raspberry Pi devices with aarch64 Linux, Bazel needs
-    to be built from source:
-
-    ```bash
-    # For Bazel 3.4.1
-    mkdir $HOME/bazel-3.4.1
-    cd $HOME/bazel-3.4.1
-    wget https://github.com/bazelbuild/bazel/releases/download/3.4.1/bazel-3.4.1-dist.zip
-    sudo apt-get install build-essential openjdk-8-jdk python zip unzip
-    unzip bazel-3.4.1-dist.zip
-    env EXTRA_BAZEL_ARGS="--host_javabase=@local_jdk//:jdk" bash ./compile.sh
-    sudo cp output/bazel /usr/local/bin/
-    ```
+    [Bazel documentation](https://docs.bazel.build/versions/master/install-bazelisk.html)
+    to install Bazelisk.
 
 2.  Checkout MediaPipe repository.
 
@@ -207,11 +193,11 @@ build issues.
 
 **Disclaimer**: Running MediaPipe on CentOS is experimental.
 
-1.  Install Bazel.
+1.  Install Bazelisk.
 
     Follow the official
-    [Bazel documentation](https://docs.bazel.build/versions/master/install-redhat.html)
-    to install Bazel 3.4 or higher.
+    [Bazel documentation](https://docs.bazel.build/versions/master/install-bazelisk.html)
+    to install Bazelisk.
 
 2.  Checkout MediaPipe repository.
 
@@ -336,11 +322,11 @@ build issues.
     *   Install [Xcode](https://developer.apple.com/xcode/) and its Command Line
         Tools by `xcode-select --install`.
 
-2.  Install Bazel.
+2.  Install Bazelisk.
 
     Follow the official
-    [Bazel documentation](https://docs.bazel.build/versions/master/install-os-x.html#install-with-installer-mac-os-x)
-    to install Bazel 3.4 or higher.
+    [Bazel documentation](https://docs.bazel.build/versions/master/install-bazelisk.html)
+    to install Bazelisk.
 
 3.  Checkout MediaPipe repository.
 
@@ -353,7 +339,7 @@ build issues.
 4.  Install OpenCV and FFmpeg.
 
     Option 1. Use HomeBrew package manager tool to install the pre-compiled
-    OpenCV 3.4.5 libraries. FFmpeg will be installed via OpenCV.
+    OpenCV 3 libraries. FFmpeg will be installed via OpenCV.
 
     ```bash
     $ brew install opencv@3
@@ -484,29 +470,36 @@ next section.
 
 4.  Install Visual C++ Build Tools 2019 and WinSDK
 
-    Go to https://visualstudio.microsoft.com/visual-cpp-build-tools, download
-    build tools, and install Microsoft Visual C++ 2019 Redistributable and
-    Microsoft Build Tools 2019.
+    Go to
+    [the VisualStudio website](ttps://visualstudio.microsoft.com/visual-cpp-build-tools),
+    download build tools, and install Microsoft Visual C++ 2019 Redistributable
+    and Microsoft Build Tools 2019.
 
     Download the WinSDK from
-    https://developer.microsoft.com/en-us/windows/downloads/windows-10-sdk/ and
-    install.
+    [the official MicroSoft website](https://developer.microsoft.com/en-us/windows/downloads/windows-10-sdk/)
+    and install.
 
-5.  Install Bazel and add the location of the Bazel executable to the `%PATH%`
-    environment variable.
+5.  Install Bazel or Bazelisk and add the location of the Bazel executable to
+    the `%PATH%` environment variable.
 
-    Follow the official
-    [Bazel documentation](https://docs.bazel.build/versions/master/install-windows.html)
-    to install Bazel 3.4 or higher.
+    Option 1. Follow
+    [the official Bazel documentation](https://docs.bazel.build/versions/master/install-windows.html)
+    to install Bazel 3.7.2 or higher.
 
-6.  Set Bazel variables.
+    Option 2. Follow the official
+    [Bazel documentation](https://docs.bazel.build/versions/master/install-bazelisk.html)
+    to install Bazelisk.
+
+6.  Set Bazel variables. Learn more details about
+    ["Build on Windows"](https://docs.bazel.build/versions/master/windows.html#build-c-with-msvc)
+    in the Bazel official documentation.
 
     ```
-    # Find the exact paths and version numbers from your local version.
+    # Please find the exact paths and version numbers from your local version.
     C:\> set BAZEL_VS=C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools
     C:\> set BAZEL_VC=C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\VC
-    C:\> set BAZEL_VC_FULL_VERSION=14.25.28610
-    C:\> set BAZEL_WINSDK_FULL_VERSION=10.1.18362.1
+    C:\> set BAZEL_VC_FULL_VERSION=<Your local VC version>
+    C:\> set BAZEL_WINSDK_FULL_VERSION=<Your local WinSDK version>
     ```
 
 7.  Checkout MediaPipe repository.
@@ -593,19 +586,11 @@ cameras. Alternatively, you use a video file as input.
     username@DESKTOP-TMVLBJ1:~$ sudo apt-get update && sudo apt-get install -y build-essential git python zip adb openjdk-8-jdk
     ```
 
-5.  Install Bazel.
+5.  Install Bazelisk.
 
-    ```bash
-    username@DESKTOP-TMVLBJ1:~$ curl -sLO --retry 5 --retry-max-time 10 \
-    https://storage.googleapis.com/bazel/3.4.1/release/bazel-3.4.1-installer-linux-x86_64.sh && \
-    sudo mkdir -p /usr/local/bazel/3.4.1 && \
-    chmod 755 bazel-3.4.1-installer-linux-x86_64.sh && \
-    sudo ./bazel-3.4.1-installer-linux-x86_64.sh --prefix=/usr/local/bazel/3.4.1 && \
-    source /usr/local/bazel/3.4.1/lib/bazel/bin/bazel-complete.bash
-
-    username@DESKTOP-TMVLBJ1:~$ /usr/local/bazel/3.4.1/lib/bazel/bin/bazel version && \
-    alias bazel='/usr/local/bazel/3.4.1/lib/bazel/bin/bazel'
-    ```
+    Follow the official
+    [Bazel documentation](https://docs.bazel.build/versions/master/install-bazelisk.html)
+    to install Bazelisk.
 
 6.  Checkout MediaPipe repository.
 

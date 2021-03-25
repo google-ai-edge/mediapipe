@@ -17,11 +17,12 @@
 #include <cstdlib>
 #include <memory>
 
+#include "absl/flags/flag.h"
+#include "absl/flags/parse.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/image_frame.h"
 #include "mediapipe/framework/formats/image_frame_opencv.h"
 #include "mediapipe/framework/port/canonical_errors.h"
-#include "mediapipe/framework/port/commandlineflags.h"
 #include "mediapipe/framework/port/file_helpers.h"
 #include "mediapipe/framework/port/opencv_highgui_inc.h"
 #include "mediapipe/framework/port/opencv_imgproc_inc.h"
@@ -38,12 +39,12 @@ constexpr char kCalculatorGraphConfigFile[] =
     "mediapipe/graphs/iris_tracking/iris_depth_cpu.pbtxt";
 constexpr float kMicrosPerSecond = 1e6;
 
-DEFINE_string(input_image_path, "",
-              "Full path of image to load. "
-              "If not provided, nothing will run.");
-DEFINE_string(output_image_path, "",
-              "Full path of where to save image result (.jpg only). "
-              "If not provided, show result in a window.");
+ABSL_FLAG(std::string, input_image_path, "",
+          "Full path of image to load. "
+          "If not provided, nothing will run.");
+ABSL_FLAG(std::string, output_image_path, "",
+          "Full path of where to save image result (.jpg only). "
+          "If not provided, show result in a window.");
 
 namespace {
 
@@ -148,7 +149,7 @@ absl::Status RunMPPGraph() {
 
 int main(int argc, char** argv) {
   google::InitGoogleLogging(argv[0]);
-  gflags::ParseCommandLineFlags(&argc, &argv, true);
+  absl::ParseCommandLine(argc, argv);
   absl::Status run_status = RunMPPGraph();
   if (!run_status.ok()) {
     LOG(ERROR) << "Failed to run the graph: " << run_status.message();

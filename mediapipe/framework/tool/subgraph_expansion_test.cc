@@ -19,6 +19,8 @@
 #include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/deps/message_matchers.h"
+#include "mediapipe/framework/graph_service_manager.h"
+#include "mediapipe/framework/packet.h"
 #include "mediapipe/framework/packet_set.h"
 #include "mediapipe/framework/packet_type.h"
 #include "mediapipe/framework/port/gmock.h"
@@ -523,6 +525,42 @@ TEST(SubgraphExpansionTest, ExecutorFieldOfNodeInSubgraphPreserved) {
     }
   )");
   MP_EXPECT_OK(tool::ExpandSubgraphs(&supergraph));
+  EXPECT_THAT(supergraph, mediapipe::EqualsProto(expected_graph));
+}
+
+const mediapipe::GraphService<std::string> kStringTestService{
+    "mediapipe::StringTestService"};
+class GraphServicesClientTestSubgraph : public Subgraph {
+ public:
+  absl::StatusOr<CalculatorGraphConfig> GetConfig(
+      SubgraphContext* sc) override {
+    auto string_service = sc->Service(kStringTestService);
+    RET_CHECK(string_service.IsAvailable()) << "Service not available";
+    CalculatorGraphConfig config;
+    config.add_node()->set_calculator(string_service.GetObject());
+    return config;
+  }
+};
+REGISTER_MEDIAPIPE_GRAPH(GraphServicesClientTestSubgraph);
+
+TEST(SubgraphExpansionTest, GraphServicesUsage) {
+  CalculatorGraphConfig supergraph =
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+        node { calculator: "GraphServicesClientTestSubgraph" }
+      )");
+
+  CalculatorGraphConfig expected_graph =
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+        node {
+          name: "graphservicesclienttestsubgraph__ExpectedNode"
+          calculator: "ExpectedNode"
+        }
+      )");
+  GraphServiceManager service_manager;
+  MP_ASSERT_OK(service_manager.SetServiceObject(
+      kStringTestService, std::make_shared<std::string>("ExpectedNode")));
+  MP_EXPECT_OK(tool::ExpandSubgraphs(&supergraph, /*graph_registry=*/nullptr,
+                                     &service_manager));
   EXPECT_THAT(supergraph, mediapipe::EqualsProto(expected_graph));
 }
 

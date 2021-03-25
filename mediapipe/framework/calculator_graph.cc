@@ -36,6 +36,7 @@
 #include "mediapipe/framework/calculator_base.h"
 #include "mediapipe/framework/counter_factory.h"
 #include "mediapipe/framework/delegating_executor.h"
+#include "mediapipe/framework/graph_service_manager.h"
 #include "mediapipe/framework/input_stream_manager.h"
 #include "mediapipe/framework/mediapipe_profiling.h"
 #include "mediapipe/framework/packet_generator.h"
@@ -392,7 +393,8 @@ absl::Status CalculatorGraph::Initialize(
     const CalculatorGraphConfig& input_config,
     const std::map<std::string, Packet>& side_packets) {
   auto validated_graph = absl::make_unique<ValidatedGraphConfig>();
-  MP_RETURN_IF_ERROR(validated_graph->Initialize(input_config));
+  MP_RETURN_IF_ERROR(validated_graph->Initialize(
+      input_config, /*graph_registry=*/nullptr, &service_manager_));
   return Initialize(std::move(validated_graph), side_packets);
 }
 
@@ -402,8 +404,8 @@ absl::Status CalculatorGraph::Initialize(
     const std::map<std::string, Packet>& side_packets,
     const std::string& graph_type, const Subgraph::SubgraphOptions* options) {
   auto validated_graph = absl::make_unique<ValidatedGraphConfig>();
-  MP_RETURN_IF_ERROR(validated_graph->Initialize(input_configs, input_templates,
-                                                 graph_type, options));
+  MP_RETURN_IF_ERROR(validated_graph->Initialize(
+      input_configs, input_templates, graph_type, options, &service_manager_));
   return Initialize(std::move(validated_graph), side_packets);
 }
 
@@ -509,19 +511,15 @@ absl::Status CalculatorGraph::StartRun(
 #if !MEDIAPIPE_DISABLE_GPU
 absl::Status CalculatorGraph::SetGpuResources(
     std::shared_ptr<::mediapipe::GpuResources> resources) {
-  RET_CHECK(!ContainsKey(service_packets_, kGpuService.key))
+  auto gpu_service = service_manager_.GetServiceObject(kGpuService);
+  RET_CHECK_EQ(gpu_service, nullptr)
       << "The GPU resources have already been configured.";
-  service_packets_[kGpuService.key] =
-      MakePacket<std::shared_ptr<::mediapipe::GpuResources>>(
-          std::move(resources));
-  return absl::OkStatus();
+  return service_manager_.SetServiceObject(kGpuService, std::move(resources));
 }
 
 std::shared_ptr<::mediapipe::GpuResources> CalculatorGraph::GetGpuResources()
     const {
-  auto service_iter = service_packets_.find(kGpuService.key);
-  if (service_iter == service_packets_.end()) return nullptr;
-  return service_iter->second.Get<std::shared_ptr<::mediapipe::GpuResources>>();
+  return service_manager_.GetServiceObject(kGpuService);
 }
 
 absl::StatusOr<std::map<std::string, Packet>> CalculatorGraph::PrepareGpu(
@@ -536,8 +534,7 @@ absl::StatusOr<std::map<std::string, Packet>> CalculatorGraph::PrepareGpu(
     }
   }
   if (uses_gpu) {
-    auto service_iter = service_packets_.find(kGpuService.key);
-    bool has_service = service_iter != service_packets_.end();
+    auto gpu_resources = service_manager_.GetServiceObject(kGpuService);
 
     auto legacy_sp_iter = side_packets.find(kGpuSharedSidePacketName);
     // Workaround for b/116875321: CalculatorRunner provides an empty packet,
@@ -545,15 +542,12 @@ absl::StatusOr<std::map<std::string, Packet>> CalculatorGraph::PrepareGpu(
     bool has_legacy_sp = legacy_sp_iter != side_packets.end() &&
                          !legacy_sp_iter->second.IsEmpty();
 
-    std::shared_ptr<::mediapipe::GpuResources> gpu_resources;
-    if (has_service) {
+    if (gpu_resources) {
       if (has_legacy_sp) {
         LOG(WARNING)
             << "::mediapipe::GpuSharedData provided as a side packet while the "
             << "graph already had one; ignoring side packet";
       }
-      gpu_resources = service_iter->second
-                          .Get<std::shared_ptr<::mediapipe::GpuResources>>();
       update_sp = true;
     } else {
       if (has_legacy_sp) {
@@ -564,8 +558,8 @@ absl::StatusOr<std::map<std::string, Packet>> CalculatorGraph::PrepareGpu(
         ASSIGN_OR_RETURN(gpu_resources, ::mediapipe::GpuResources::Create());
         update_sp = true;
       }
-      service_packets_[kGpuService.key] =
-          MakePacket<std::shared_ptr<::mediapipe::GpuResources>>(gpu_resources);
+      MP_RETURN_IF_ERROR(
+          service_manager_.SetServiceObject(kGpuService, gpu_resources));
     }
 
     // Create or replace the legacy side packet if needed.
@@ -682,8 +676,10 @@ absl::Status CalculatorGraph::PrepareForRun(
                   std::placeholders::_1, std::placeholders::_2);
     node.SetQueueSizeCallbacks(queue_size_callback, queue_size_callback);
     scheduler_.AssignNodeToSchedulerQueue(&node);
+    // TODO: update calculator node to use GraphServiceManager
+    // instead of service packets?
     const absl::Status result = node.PrepareForRun(
-        current_run_side_packets_, service_packets_,
+        current_run_side_packets_, service_manager_.ServicePackets(),
         std::bind(&internal::Scheduler::ScheduleNodeForOpen, &scheduler_,
                   &node),
         std::bind(&internal::Scheduler::AddNodeToSourcesQueue, &scheduler_,
@@ -811,6 +807,11 @@ absl::Status CalculatorGraph::AddPacketToInputStreamInternal(
   CHECK_GE(node_id, validated_graph_->CalculatorInfos().size());
   {
     absl::MutexLock lock(&full_input_streams_mutex_);
+    if (full_input_streams_.empty()) {
+      return mediapipe::FailedPreconditionErrorBuilder(MEDIAPIPE_LOC)
+             << "CalculatorGraph::AddPacketToInputStream() is called before "
+                "StartRun()";
+    }
     if (graph_input_stream_add_mode_ ==
         GraphInputStreamAddMode::ADD_IF_NOT_FULL) {
       if (has_error_) {
@@ -1169,21 +1170,6 @@ void CalculatorGraph::Cancel() {
 void CalculatorGraph::Pause() { scheduler_.Pause(); }
 
 void CalculatorGraph::Resume() { scheduler_.Resume(); }
-
-absl::Status CalculatorGraph::SetServicePacket(const GraphServiceBase& service,
-                                               Packet p) {
-  // TODO: check that the graph has not been started!
-  service_packets_[service.key] = std::move(p);
-  return absl::OkStatus();
-}
-
-Packet CalculatorGraph::GetServicePacket(const GraphServiceBase& service) {
-  auto it = service_packets_.find(service.key);
-  if (it == service_packets_.end()) {
-    return {};
-  }
-  return it->second;
-}
 
 absl::Status CalculatorGraph::SetExecutorInternal(
     const std::string& name, std::shared_ptr<Executor> executor) {

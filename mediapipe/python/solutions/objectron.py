@@ -15,7 +15,10 @@
 """MediaPipe Objectron."""
 
 import enum
+import os
+import shutil
 from typing import List, Tuple, NamedTuple, Optional
+import urllib.request
 
 import attr
 import numpy as np
@@ -89,6 +92,23 @@ BOX_CONNECTIONS = frozenset([
     (BoxLandmark.FRONT_BOTTOM_RIGHT, BoxLandmark.FRONT_TOP_RIGHT),
     (BoxLandmark.BACK_TOP_RIGHT, BoxLandmark.FRONT_TOP_RIGHT),
 ])
+_OSS_URL_PREFIX = 'https://github.com/google/mediapipe/raw/master/'
+
+
+def _download_oss_model(model_path: str):
+  """Download the objectron oss model from GitHub if it doesn't exist in the package."""
+
+  mp_root_path = os.sep.join(os.path.abspath(__file__).split(os.sep)[:-4])
+  model_abspath = os.path.join(mp_root_path, model_path)
+  if os.path.exists(model_abspath):
+    return
+  model_url = _OSS_URL_PREFIX + model_path
+  with urllib.request.urlopen(model_url) as response, open(model_abspath,
+                                                           'wb') as out_file:
+    if response.code != 200:
+      raise ConnectionError('Cannot download ' + model_path +
+                            ' from the MediaPipe Github repo.')
+    shutil.copyfileobj(response, out_file)
 
 
 @attr.s(auto_attribs=True)
@@ -132,9 +152,10 @@ _MODEL_DICT = {
 }
 
 
-def GetModelByName(name: str) -> ObjectronModel:
+def get_model_by_name(name: str) -> ObjectronModel:
   if name not in _MODEL_DICT:
     raise ValueError(f'{name} is not a valid model name for Objectron.')
+  _download_oss_model(_MODEL_DICT[name].model_path)
   return _MODEL_DICT[name]
 
 
@@ -186,6 +207,10 @@ class Objectron(SolutionBase):
         conversions inside the API.
       image_size (Optional): size (image_width, image_height) of the input image
         , ONLY needed when use focal_length and principal_point in pixel space.
+
+    Raises:
+      ConnectionError: If the objectron open source model can't be downloaded
+        from the MediaPipe Github repo.
     """
     # Get Camera parameters.
     fx, fy = focal_length
@@ -199,7 +224,7 @@ class Objectron(SolutionBase):
       py = - (py - half_height) / half_height
 
     # Create and init model.
-    model = GetModelByName(model_name)
+    model = get_model_by_name(model_name)
     super().__init__(
         binary_graph_path=BINARYPB_FILE_PATH,
         side_inputs={
@@ -275,4 +300,3 @@ class Objectron(SolutionBase):
       new_outputs.append(ObjectronOutputs(landmarks_2d, landmarks_3d,
                                           rotation, translation, scale=scale))
     return new_outputs
-

@@ -59,7 +59,7 @@ const std::vector<Param>& GetParams() {
     p.back().delegate.mutable_gpu();
 #endif  // TARGET_IPHONE_SIMULATOR
 #if __EMSCRIPTEN__
-    p.push_back({"MlDrift", "MlDrift"});
+    p.push_back({"MlDriftWebGl", "MlDriftWebGl"});
     p.back().delegate.mutable_gpu();
 #endif                // __EMSCRIPTEN__
 #if __ANDROID__ && 0  // Disabled for now since emulator can't go GLESv3

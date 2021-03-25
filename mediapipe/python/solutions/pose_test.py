@@ -13,7 +13,9 @@
 # limitations under the License.
 """Tests for mediapipe.python.solutions.pose."""
 
+import json
 import os
+import tempfile
 
 from absl.testing import absltest
 from absl.testing import parameterized
@@ -52,7 +54,7 @@ class PoseTest(parameterized.TestCase):
 
   def _landmarks_list_to_array(self, landmark_list, image_shape):
     rows, cols, _ = image_shape
-    return np.asarray([(lmk.x * cols, lmk.y * rows)
+    return np.asarray([(lmk.x * cols, lmk.y * rows, lmk.z * cols)
                        for lmk in landmark_list.landmark])
 
   def _assert_diff_less(self, array1, array2, threshold):
@@ -81,9 +83,9 @@ class PoseTest(parameterized.TestCase):
       for _ in range(num_frames):
         results = pose.process(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
         self._assert_diff_less(
-            self._landmarks_list_to_array(results.pose_landmarks, image.shape),
-            EXPECTED_UPPER_BODY_LANDMARKS,
-            DIFF_THRESHOLD)
+            self._landmarks_list_to_array(results.pose_landmarks,
+                                          image.shape)[:, :2],
+            EXPECTED_UPPER_BODY_LANDMARKS, DIFF_THRESHOLD)
 
   @parameterized.named_parameters(('static_image_mode', True, 3),
                                   ('video_mode', False, 3))
@@ -95,9 +97,66 @@ class PoseTest(parameterized.TestCase):
       for _ in range(num_frames):
         results = pose.process(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
         self._assert_diff_less(
-            self._landmarks_list_to_array(results.pose_landmarks, image.shape),
-            EXPECTED_FULL_BODY_LANDMARKS,
-            DIFF_THRESHOLD)
+            self._landmarks_list_to_array(results.pose_landmarks,
+                                          image.shape)[:, :2],
+            EXPECTED_FULL_BODY_LANDMARKS, DIFF_THRESHOLD)
+
+  @parameterized.named_parameters(
+      ('full_body', False, 'pose_squats.full_body.npz'),
+      ('upper_body', True, 'pose_squats.upper_body.npz'))
+  def test_on_video(self, upper_body_only, expected_name):
+    """Tests pose models on a video."""
+    # If set to `True` will dump actual predictions to .npz and JSON files.
+    dump_predictions = False
+
+    # Set threshold for comparing actual and expected predictions in pixels.
+    diff_threshold = 50
+
+    video_path = os.path.join(os.path.dirname(__file__),
+                              'testdata/pose_squats.mp4')
+    expected_path = os.path.join(os.path.dirname(__file__),
+                                 'testdata/{}'.format(expected_name))
+
+    # Predict pose landmarks for each frame.
+    video_cap = cv2.VideoCapture(video_path)
+    actual_per_frame = []
+    with mp_pose.Pose(
+        static_image_mode=False, upper_body_only=upper_body_only) as pose:
+      while True:
+        # Get next frame of the video.
+        success, input_frame = video_cap.read()
+        if not success:
+          break
+
+        # Run pose tracker.
+        input_frame = cv2.cvtColor(input_frame, cv2.COLOR_BGR2RGB)
+        result = pose.process(image=input_frame)
+        pose_landmarks = self._landmarks_list_to_array(result.pose_landmarks,
+                                                       input_frame.shape)
+
+        actual_per_frame.append(pose_landmarks)
+    actual = np.asarray(actual_per_frame)
+
+    if dump_predictions:
+      # Dump .npz
+      with tempfile.NamedTemporaryFile(delete=False) as tmp_file:
+        np.savez(tmp_file, predictions=np.array(actual))
+        print('Predictions saved as .npz to {}'.format(tmp_file.name))
+
+      # Dump JSON
+      with tempfile.NamedTemporaryFile(delete=False) as tmp_file:
+        with open(tmp_file.name, 'w') as fl:
+          dump_data = {'predictions': np.around(actual, 3).tolist()}
+          fl.write(json.dumps(dump_data, indent=2, separators=(',', ': ')))
+          print('Predictions saved as JSON to {}'.format(tmp_file.name))
+
+    # Validate actual vs. expected predictions.
+    expected = np.load(expected_path)['predictions']
+    assert actual.shape == expected.shape, (
+        'Unexpected shape of predictions: {} instead of {}'.format(
+            actual.shape, expected.shape))
+    self._assert_diff_less(
+        actual[..., :2], expected[..., :2], threshold=diff_threshold)
 
 
 if __name__ == '__main__':

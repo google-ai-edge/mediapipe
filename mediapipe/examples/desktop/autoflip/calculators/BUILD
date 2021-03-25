@@ -55,17 +55,26 @@ mediapipe_cc_proto_library(
 )
 
 cc_library(
+    name = "content_zooming_calculator_state",
+    hdrs = ["content_zooming_calculator_state.h"],
+    deps = [
+        "//mediapipe/examples/desktop/autoflip/quality:kinematic_path_solver",
+        "//mediapipe/framework:timestamp",
+        "//mediapipe/framework/formats:rect_cc_proto",
+    ],
+)
+
+cc_library(
     name = "content_zooming_calculator",
     srcs = ["content_zooming_calculator.cc"],
     deps = [
         ":content_zooming_calculator_cc_proto",
+        ":content_zooming_calculator_state",
         "//mediapipe/examples/desktop/autoflip:autoflip_messages_cc_proto",
-        "//mediapipe/examples/desktop/autoflip/quality:kinematic_path_solver",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/formats:detection_cc_proto",
         "//mediapipe/framework/formats:image_frame",
         "//mediapipe/framework/formats:location_data_cc_proto",
-        "//mediapipe/framework/formats:rect_cc_proto",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
     ],
@@ -88,7 +97,9 @@ mediapipe_cc_proto_library(
         "//mediapipe/examples/desktop/autoflip/quality:kinematic_path_solver_cc_proto",
         "//mediapipe/framework:calculator_cc_proto",
     ],
-    visibility = ["//mediapipe/examples:__subpackages__"],
+    visibility = [
+        "//mediapipe/examples:__subpackages__",
+    ],
     deps = [
         ":content_zooming_calculator_proto",
     ],
@@ -127,6 +138,7 @@ cc_test(
     deps = [
         ":content_zooming_calculator",
         ":content_zooming_calculator_cc_proto",
+        ":content_zooming_calculator_state",
         "//mediapipe/examples/desktop/autoflip:autoflip_messages_cc_proto",
         "//mediapipe/examples/desktop/autoflip/quality:kinematic_path_solver",
         "//mediapipe/framework:calculator_framework",
@@ -368,7 +380,6 @@ cc_test(
         "//mediapipe/framework/deps:file_path",
         "//mediapipe/framework/formats:image_frame",
         "//mediapipe/framework/formats:image_frame_opencv",
-        "//mediapipe/framework/port:commandlineflags",
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/framework/port:opencv_core",
         "//mediapipe/framework/port:opencv_imgcodecs",
@@ -376,6 +387,7 @@ cc_test(
         "//mediapipe/framework/port:parse_text_proto",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
+        "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/strings",
     ],
 )

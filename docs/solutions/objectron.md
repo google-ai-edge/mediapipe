@@ -358,15 +358,17 @@ cap.release()
 ## Example Apps
 
 Please first see general instructions for
-[Android](../getting_started/android.md) and [iOS](../getting_started/ios.md) on
-how to build MediaPipe examples.
+[Android](../getting_started/android.md), [iOS](../getting_started/ios.md), and
+[desktop](../getting_started/cpp.md) on how to build MediaPipe examples.
 
 Note: To visualize a graph, copy the graph and paste it into
 [MediaPipe Visualizer](https://viz.mediapipe.dev/). For more information on how
 to visualize its associated subgraphs, please see
 [visualizer documentation](../tools/visualizer.md).
 
-### Two-stage Objectron
+### Mobile
+
+#### Two-stage Objectron
 
 *   Graph:
     [`mediapipe/graphs/object_detection_3d/object_occlusion_tracking.pbtxt`](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/object_detection_3d/object_occlusion_tracking.pbtxt)
@@ -404,7 +406,7 @@ to visualize its associated subgraphs, please see
 
 *   iOS target: Not available
 
-### Single-stage Objectron
+#### Single-stage Objectron
 
 *   Graph:
     [`mediapipe/graphs/object_detection_3d/object_occlusion_tracking_1stage.pbtxt`](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/object_detection_3d/object_occlusion_tracking.pbtxt)
@@ -428,7 +430,7 @@ to visualize its associated subgraphs, please see
 
 *   iOS target: Not available
 
-### Assets
+#### Assets
 
 Example app bounding boxes are rendered with [GlAnimationOverlayCalculator](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/object_detection_3d/calculators/gl_animation_overlay_calculator.cc) using a parsing of the sequenced .obj file
  format into a custom .uuu format. This can be done for user assets as follows:
@@ -449,9 +451,35 @@ Example app bounding boxes are rendered with [GlAnimationOverlayCalculator](http
 > single .uuu animation file, using the order given by sorting the filenames alphanumerically. Also the ObjParser directory inputs must be given as
 > absolute paths, not relative paths. See parser utility library at [`mediapipe/graphs/object_detection_3d/obj_parser/`](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/object_detection_3d/obj_parser/) for more details.
 
-### Coordinate Systems
 
-#### Object Coordinate
+### Desktop
+
+To build the application, run:
+
+```bash
+bazel build -c opt --define MEDIAPIPE_DISABLE_GPU=1 mediapipe/examples/desktop/object_detection_3d:objectron_cpu
+```
+
+To run the application, replace `<input video path>` and `<output video path>`
+in the command below with your own paths, and `<landmark model path>` and
+`<allowed labels>` with the following:
+
+Category | `<landmark model path>`                                                     | `<allowed labels>`
+:------- | :-------------------------------------------------------------------------- | :-----------------
+Shoe     | mediapipe/modules/objectron/object_detection_3d_sneakers.tflite | Footwear
+Chair    | mediapipe/modules/objectron/object_detection_3d_chair.tflite    | Chair
+Cup      | mediapipe/modules/objectron/object_detection_3d_cup.tflite      | Mug
+Camera   | mediapipe/modules/objectron/object_detection_3d_camera.tflite   | Camera
+
+```
+GLOG_logtostderr=1 bazel-bin/mediapipe/examples/desktop/object_detection_3d/objectron_cpu \
+  --calculator_graph_config_file=mediapipe/graphs/object_detection_3d/objectron_desktop_cpu.pbtxt \
+  --input_side_packets=input_video_path=<input video path>,output_video_path=<output video path>,box_landmark_model_path=<landmark model path>,allowed_labels=<allowed labels>
+```
+
+## Coordinate Systems
+
+### Object Coordinate
 
 Each object has its object coordinate frame. We use the below object coordinate
 definition, with `+x` pointing right, `+y` pointing up and `+z` pointing front,
@@ -459,7 +487,7 @@ origin is at the center of the 3D bounding box.
 
 ![box_coordinate.svg](../images/box_coordinate.svg)
 
-#### Camera Coordinate
+### Camera Coordinate
 
 A 3D object is parameterized by its `scale` and `rotation`, `translation` with
 regard to the camera coordinate frame. In this API we use the below camera
@@ -476,7 +504,7 @@ camera frame by applying `rotation` and `translation`:
 landmarks_3d = rotation * scale * unit_box + translation
 ```
 
-#### NDC Space
+### NDC Space
 
 In this API we use
 [NDC(normalized device coordinates)](http://www.songho.ca/opengl/gl_projectionmatrix.html)
@@ -495,7 +523,7 @@ y_ndc = -fy * Y / Z + py
 z_ndc = 1 / Z
 ```
 
-#### Pixel Space
+### Pixel Space
 
 In this API we set upper-left coner of an image as the origin of pixel
 coordinate. One can convert from NDC to pixel space as follows:
@@ -532,10 +560,11 @@ py = -py_pixel * 2.0 / image_height + 1.0
     [Announcing the Objectron Dataset](https://ai.googleblog.com/2020/11/announcing-objectron-dataset.html)
 *   Google AI Blog:
     [Real-Time 3D Object Detection on Mobile Devices with MediaPipe](https://ai.googleblog.com/2020/03/real-time-3d-object-detection-on-mobile.html)
+*   Paper: [Objectron: A Large Scale Dataset of Object-Centric Videos in the Wild with Pose Annotations](https://arxiv.org/abs/2012.09988), to appear in CVPR 2021
 *   Paper: [MobilePose: Real-Time Pose Estimation for Unseen Objects with Weak
     Shape Supervision](https://arxiv.org/abs/2003.03522)
 *   Paper:
     [Instant 3D Object Tracking with Applications in Augmented Reality](https://drive.google.com/open?id=1O_zHmlgXIzAdKljp20U_JUkEHOGG52R8)
-    ([presentation](https://www.youtube.com/watch?v=9ndF1AIo7h0))
+    ([presentation](https://www.youtube.com/watch?v=9ndF1AIo7h0)), Fourth Workshop on Computer Vision for AR/VR, CVPR 2020
 *   [Models and model cards](./models.md#objectron)
 *   [Python Colab](https://mediapipe.page.link/objectron_py_colab)

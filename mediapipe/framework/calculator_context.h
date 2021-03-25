@@ -76,7 +76,7 @@ class CalculatorContext {
 
   // Returns the counter set, which can be used to create new counters.
   // No prefix is added to counters created in this way.
-  CounterSet* GetCounterSet();
+  CounterFactory* GetCounterFactory();
 
   // Returns the current input timestamp, or Timestamp::Unset if there are
   // no input packets.
@@ -114,25 +114,8 @@ class CalculatorContext {
   }
 
   template <typename T>
-  class ServiceBinding {
-   public:
-    bool IsAvailable() {
-      return calculator_state_->IsServiceAvailable(service_);
-    }
-    T& GetObject() { return calculator_state_->GetServiceObject(service_); }
-
-    ServiceBinding(CalculatorState* calculator_state,
-                   const GraphService<T>& service)
-        : calculator_state_(calculator_state), service_(service) {}
-
-   private:
-    CalculatorState* calculator_state_;
-    const GraphService<T>& service_;
-  };
-
-  template <typename T>
   ServiceBinding<T> Service(const GraphService<T>& service) {
-    return ServiceBinding<T>(calculator_state_, service);
+    return ServiceBinding<T>(calculator_state_->GetServiceObject(service));
   }
 
  private:

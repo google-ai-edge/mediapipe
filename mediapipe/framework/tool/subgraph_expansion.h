@@ -19,6 +19,7 @@
 
 #include "absl/strings/string_view.h"
 #include "mediapipe/framework/calculator.pb.h"
+#include "mediapipe/framework/graph_service_manager.h"
 #include "mediapipe/framework/port/proto_ns.h"
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/subgraph.h"
@@ -68,8 +69,10 @@ absl::Status ConnectSubgraphStreams(
 // Replaces subgraph nodes in the given config with the contents of the
 // corresponding subgraphs. Nested subgraphs are retrieved from the
 // graph registry and expanded recursively.
-absl::Status ExpandSubgraphs(CalculatorGraphConfig* config,
-                             const GraphRegistry* graph_registry = nullptr);
+absl::Status ExpandSubgraphs(
+    CalculatorGraphConfig* config,
+    const GraphRegistry* graph_registry = nullptr,
+    const GraphServiceManager* service_manager = nullptr);
 
 // Creates a graph wrapping the provided node and exposing all of its
 // connections

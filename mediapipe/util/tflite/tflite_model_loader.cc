@@ -24,7 +24,6 @@ absl::StatusOr<api2::Packet<TfLiteModelPtr>> TfLiteModelLoader::LoadFromPath(
   std::string model_path = path;
 
   ASSIGN_OR_RETURN(model_path, mediapipe::PathToResourceAsFile(model_path));
-
   auto model = tflite::FlatBufferModel::BuildFromFile(model_path.c_str());
   RET_CHECK(model) << "Failed to load model from path " << model_path;
   return api2::MakePacket<TfLiteModelPtr>(

@@ -55,7 +55,7 @@ class PacketReservoir {
 //     correspond to timestamp t.
 //   - The next packet is chosen randomly (uniform distribution) among frames
 //     that correspond to [t+(1-jitter)/frame_rate, t+(1+jitter)/frame_rate].
-//     - if jitter_with_reflection_ is true, the timestamp will be reflected
+//     - if jitter_with_reflection is true, the timestamp will be reflected
 //       against the boundaries of [t_0 + (k-1)/frame_rate, t_0 + k/frame_rate)
 //       so that its marginal distribution is uniform within this interval.
 //       In the formula, t_0 is the timestamp of the first sampled
@@ -66,6 +66,17 @@ class PacketReservoir {
 //     the resampling.  For Cloud ML Video Intelligence API, the hash of the
 //     input video should serve this purpose.  For YouTube, either video ID or
 //     content hex ID of the input video should do.
+//   - If reproducible_samping is true, care is taken to allow reproducible
+//     "mid-stream" sampling.  The calculator can be executed on a stream that
+//     doesn't start at the first period.  For instance, if the calculator
+//     is run on a 10 second stream it will produce the same set of samples
+//     as two runs of the calculator, the first with 3 seconds of input starting
+//     at time 0 and the second with 7 seconds of input starting at time +3s.
+//     - In order to guarantee the exact same samples, 1) the inputs must be
+//       aligned with the sampling period.  For instance, if the sampling rate
+//       is 2 frames per second, streams should be aligned on 0.5 second
+//       boundaries, and 2) the stream must include at least one extra packet
+//       before and after the second aligned sampling period.
 //
 // If jitter_ is not specified:
 //   - The first packet defines the first_timestamp of the output stream,
@@ -105,19 +116,6 @@ class PacketResamplerCalculator : public CalculatorBase {
   absl::Status Close(CalculatorContext* cc) override;
   absl::Status Process(CalculatorContext* cc) override;
 
- private:
-  // Calculates the first sampled timestamp that incorporates a jittering
-  // offset.
-  void InitializeNextOutputTimestampWithJitter();
-  // Calculates the next sampled timestamp that incorporates a jittering offset.
-  void UpdateNextOutputTimestampWithJitter();
-
-  // Logic for Process() when jitter_ != 0.0.
-  absl::Status ProcessWithJitter(CalculatorContext* cc);
-
-  // Logic for Process() when jitter_ == 0.0.
-  absl::Status ProcessWithoutJitter(CalculatorContext* cc);
-
   // Given the current count of periods that have passed, this returns
   // the next valid timestamp of the middle point of the next period:
   //    if count is 0, it returns the first_timestamp_.
@@ -141,6 +139,16 @@ class PacketResamplerCalculator : public CalculatorBase {
   // Outputs a packet if it is in range (start_time_, end_time_).
   void OutputWithinLimits(CalculatorContext* cc, const Packet& packet) const;
 
+ protected:
+  // Returns Sampling Strategy to use.
+  //
+  // Virtual to allow injection of testing strategies.
+  virtual std::unique_ptr<class PacketResamplerStrategy> GetSamplingStrategy(
+      const mediapipe::PacketResamplerCalculatorOptions& options);
+
+ private:
+  std::unique_ptr<class PacketResamplerStrategy> strategy_;
+
   // The timestamp of the first packet received.
   Timestamp first_timestamp_;
 
@@ -150,14 +158,6 @@ class PacketResamplerCalculator : public CalculatorBase {
   // Inverse of frame_rate_.
   int64 frame_time_usec_;
 
-  // Number of periods that have passed (= #packets sent to the output).
-  //
-  // Can only be used if jitter_ equals zero.
-  int64 period_count_;
-
-  // The last packet that was received.
-  Packet last_packet_;
-
   VideoHeader video_header_;
   // The "DATA" input stream.
   CollectionItemId input_data_id_;
@@ -165,23 +165,15 @@ class PacketResamplerCalculator : public CalculatorBase {
   CollectionItemId output_data_id_;
 
   // Indicator whether to flush last packet even if its timestamp is greater
-  // than the final stream timestamp.  Set to false when jitter_ is non-zero.
+  // than the final stream timestamp.
   bool flush_last_packet_;
 
-  // Jitter-related variables.
-  std::unique_ptr<RandomBase> random_;
   double jitter_ = 0.0;
-  bool jitter_with_reflection_;
-  int64 jitter_usec_;
-  Timestamp next_output_timestamp_;
-  // If jittering_with_reflection_ is true, next_output_timestamp_ will be
-  // kept within the interval
-  // [next_output_timestamp_min_, next_output_timestamp_min_ + frame_time_usec_)
-  Timestamp next_output_timestamp_min_;
 
-  // If specified, output timestamps are aligned with base_timestamp.
-  // Otherwise, they are aligned with the first input timestamp.
-  Timestamp base_timestamp_;
+  int64 jitter_usec_;
+
+  // The last packet that was received.
+  Packet last_packet_;
 
   // If specified, only outputs at/after start_time are included.
   Timestamp start_time_;
@@ -191,14 +183,209 @@ class PacketResamplerCalculator : public CalculatorBase {
 
   // If set, the output timestamps nearest to start_time and end_time
   // are included in the output, even if the nearest timestamp is not
-  // between start_time and end_time.W
+  // between start_time and end_time.
   bool round_limits_;
+
+  // Allow strategies access to all internal calculator state.
+  //
+  // The calculator and strategies are intimiately tied together so this should
+  // not break encapsulation.
+  friend class LegacyJitterWithReflectionStrategy;
+  friend class ReproducibleJitterWithReflectionStrategy;
+  friend class JitterWithoutReflectionStrategy;
+  friend class NoJitterStrategy;
+};
+
+// Abstract class encapsulating sampling stategy.
+//
+// These are used solely by PacketResamplerCalculator, but are exposed here
+// to facilitate tests.
+class PacketResamplerStrategy {
+ public:
+  PacketResamplerStrategy(PacketResamplerCalculator* calculator)
+      : calculator_(calculator) {}
+  virtual ~PacketResamplerStrategy() = default;
+
+  // Delegate for CalculatorBase::Open.  See CalculatorBase for relevant
+  // implementation considerations.
+  virtual absl::Status Open(CalculatorContext* cc) = 0;
+  // Delegate for CalculatorBase::Close.  See CalculatorBase for relevant
+  // implementation considerations.
+  virtual absl::Status Close(CalculatorContext* cc) = 0;
+  // Delegate for CalculatorBase::Process.  See CalculatorBase for relevant
+  // implementation considerations.
+  virtual absl::Status Process(CalculatorContext* cc) = 0;
+
+ protected:
+  // Calculator running strategy.
+  PacketResamplerCalculator* calculator_;
+};
+
+// Strategy that applies Jitter with reflection based sampling.
+//
+// Used by PacketResamplerCalculator when both Jitter and reflection are
+// enabled.
+//
+// This applies the legacy jitter with reflection which doesn't allow
+// for reproducibility of sampling when starting mid-stream.  This is maintained
+// for backward compatibility.
+class LegacyJitterWithReflectionStrategy : public PacketResamplerStrategy {
+ public:
+  LegacyJitterWithReflectionStrategy(PacketResamplerCalculator* calculator)
+      : PacketResamplerStrategy(calculator) {}
+
+  absl::Status Open(CalculatorContext* cc) override;
+  absl::Status Close(CalculatorContext* cc) override;
+  absl::Status Process(CalculatorContext* cc) override;
+
+ private:
+  void InitializeNextOutputTimestampWithJitter();
+  void UpdateNextOutputTimestampWithJitter();
+
+  // Jitter-related variables.
+  std::unique_ptr<RandomBase> random_;
+
+  // The timestamp of the first packet received.
+  Timestamp first_timestamp_;
+
+  // Next packet to be emitted.  Since packets may not align perfectly with
+  // next_output_timestamp_, the closest packet will be emitted.
+  Timestamp next_output_timestamp_;
+
+  // Lower bound for next timestamp.
+  //
+  // next_output_timestamp_ will be kept within the interval
+  // [next_output_timestamp_min_, next_output_timestamp_min_ + frame_time_usec_)
+  Timestamp next_output_timestamp_min_ = Timestamp::Unset();
 
   // packet reservior used for sampling random packet out of partial
   // period when jitter is enabled
   std::unique_ptr<PacketReservoir> packet_reservoir_;
+
   // random number generator used in packet_reservior_.
   std::unique_ptr<RandomBase> packet_reservoir_random_;
+};
+
+// Strategy that applies reproducible jitter with reflection based sampling.
+//
+// Used by PacketResamplerCalculator when both Jitter and reflection are
+// enabled.
+class ReproducibleJitterWithReflectionStrategy
+    : public PacketResamplerStrategy {
+ public:
+  ReproducibleJitterWithReflectionStrategy(
+      PacketResamplerCalculator* calculator)
+      : PacketResamplerStrategy(calculator) {}
+
+  absl::Status Open(CalculatorContext* cc) override;
+  absl::Status Close(CalculatorContext* cc) override;
+  absl::Status Process(CalculatorContext* cc) override;
+
+ protected:
+  // Returns next random in range (0,n].
+  //
+  // Exposed as virtual function for testing Jitter with reflection.
+  // This is the only way random_ is accessed.
+  virtual uint64 GetNextRandom(uint64 n) {
+    return random_->UnbiasedUniform64(n);
+  }
+
+ private:
+  // Initializes Jitter with reflection.
+  //
+  // This will fast-forward to the period containing current_timestamp.
+  // next_output_timestamp_ is guarnateed to be current_timestamp's period
+  // and packet_emitted_this_period_ will be set to false.
+  void InitializeNextOutputTimestamp(Timestamp current_timestamp);
+
+  // Potentially advances next_output_timestamp_ a single period.
+  //
+  // next_output_timestamp_ will only be advanced if packet_emitted_this_period_
+  // is false.  next_output_timestamp_ will never be advanced beyond
+  // current_timestamp's period.
+  //
+  // However, next_output_timestamp_ could fall before current_timestamp's
+  // period since only a single period can be advanced at a time.
+  void UpdateNextOutputTimestamp(Timestamp current_timestamp);
+
+  // Jitter-related variables.
+  std::unique_ptr<RandomBase> random_;
+
+  // Next packet to be emitted.  Since packets may not align perfectly with
+  // next_output_timestamp_, the closest packet will be emitted.
+  Timestamp next_output_timestamp_;
+
+  // Lower bound for next timestamp.
+  //
+  // next_output_timestamp_ will be kept within the interval
+  // [next_output_timestamp_min_, next_output_timestamp_min_ + frame_time_usec_)
+  Timestamp next_output_timestamp_min_ = Timestamp::Unset();
+
+  // Indicates packet was emitted for current period (i.e. the period
+  // next_output_timestamp_ falls in.
+  bool packet_emitted_this_period_ = false;
+};
+
+// Strategy that applies Jitter without reflection based sampling.
+//
+// Used by PacketResamplerCalculator when Jitter is enabled and reflection is
+// not enabled.
+class JitterWithoutReflectionStrategy : public PacketResamplerStrategy {
+ public:
+  JitterWithoutReflectionStrategy(PacketResamplerCalculator* calculator)
+      : PacketResamplerStrategy(calculator) {}
+
+  absl::Status Open(CalculatorContext* cc) override;
+  absl::Status Close(CalculatorContext* cc) override;
+  absl::Status Process(CalculatorContext* cc) override;
+
+ private:
+  // Calculates the first sampled timestamp that incorporates a jittering
+  // offset.
+  void InitializeNextOutputTimestamp();
+
+  // Calculates the next sampled timestamp that incorporates a jittering offset.
+  void UpdateNextOutputTimestamp();
+
+  // Jitter-related variables.
+  std::unique_ptr<RandomBase> random_;
+
+  // Next packet to be emitted.  Since packets may not align perfectly with
+  // next_output_timestamp_, the closest packet will be emitted.
+  Timestamp next_output_timestamp_;
+
+  // Lower bound for next timestamp.
+  //
+  // next_output_timestamp_ will be kept within the interval
+  // [next_output_timestamp_min_, next_output_timestamp_min_ + frame_time_usec_)
+  Timestamp next_output_timestamp_min_ = Timestamp::Unset();
+
+  // packet reservior used for sampling random packet out of partial period.
+  std::unique_ptr<PacketReservoir> packet_reservoir_;
+
+  // random number generator used in packet_reservior_.
+  std::unique_ptr<RandomBase> packet_reservoir_random_;
+};
+
+// Strategy that applies sampling without any jitter.
+//
+// Used by PacketResamplerCalculator when jitter is not enabled.
+class NoJitterStrategy : public PacketResamplerStrategy {
+ public:
+  NoJitterStrategy(PacketResamplerCalculator* calculator)
+      : PacketResamplerStrategy(calculator) {}
+
+  absl::Status Open(CalculatorContext* cc) override;
+  absl::Status Close(CalculatorContext* cc) override;
+  absl::Status Process(CalculatorContext* cc) override;
+
+ private:
+  // Number of periods that have passed (= #packets sent to the output).
+  int64 period_count_;
+
+  // If specified, output timestamps are aligned with base_timestamp.
+  // Otherwise, they are aligned with the first input timestamp.
+  Timestamp base_timestamp_;
 };
 
 }  // namespace mediapipe

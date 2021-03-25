@@ -202,7 +202,7 @@ absl::Status DrawFocusPointAndCropWindow(
         const auto& point = focus_point_frames[i].point(j);
         const int x = point.norm_point_x() * scene_frame.cols;
         const int y = point.norm_point_y() * scene_frame.rows;
-        cv::circle(viz_mat, cv::Point(x, y), 3, kRed, CV_FILLED);
+        cv::circle(viz_mat, cv::Point(x, y), 3, kRed, cv::FILLED);
         center_x += x;
         center_y += y;
       }

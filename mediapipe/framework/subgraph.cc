@@ -93,17 +93,17 @@ bool GraphRegistry::IsRegistered(const std::string& ns,
 
 absl::StatusOr<CalculatorGraphConfig> GraphRegistry::CreateByName(
     const std::string& ns, const std::string& type_name,
-    const Subgraph::SubgraphOptions* options) const {
-  Subgraph::SubgraphOptions graph_options;
-  if (options) {
-    graph_options = *options;
-  }
+    SubgraphContext* context) const {
   absl::StatusOr<std::unique_ptr<Subgraph>> maker =
       local_factories_.IsRegistered(ns, type_name)
           ? local_factories_.Invoke(ns, type_name)
           : global_factories_->Invoke(ns, type_name);
   MP_RETURN_IF_ERROR(maker.status());
-  return maker.value()->GetConfig(graph_options);
+  if (context != nullptr) {
+    return maker.value()->GetConfig(context);
+  }
+  SubgraphContext default_context;
+  return maker.value()->GetConfig(&default_context);
 }
 
 }  // namespace mediapipe

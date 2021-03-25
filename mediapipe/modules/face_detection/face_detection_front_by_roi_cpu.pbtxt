@@ -41,7 +41,7 @@ node: {
 # (padding tensor if needed).
 node {
   calculator: "ImageToTensorCalculator"
-  input_stream: "IMAGE:image"
+  input_stream: "IMAGE:multi_backend_image"
   input_stream: "NORM_RECT:roi"
   output_stream: "TENSORS:input_tensors"
   output_stream: "MATRIX:transform_matrix"

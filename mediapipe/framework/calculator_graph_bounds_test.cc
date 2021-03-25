@@ -1361,6 +1361,38 @@ TEST(CalculatorGraphBoundsTest, ProcessTimestampBounds_Passthrough) {
   MP_ASSERT_OK(graph.WaitUntilDone());
 }
 
+TEST(CalculatorGraphBoundsTest, PostStreamPacketToSetProcessTimestampBound) {
+  std::string config_str = R"(
+            input_stream: "input_0"
+            node {
+              calculator: "ProcessBoundToPacketCalculator"
+              input_stream: "input_0"
+              output_stream: "output_0"
+            }
+          )";
+  CalculatorGraphConfig config =
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(config_str);
+  CalculatorGraph graph;
+  std::vector<Packet> output_0_packets;
+  MP_ASSERT_OK(graph.Initialize(config));
+  MP_ASSERT_OK(graph.ObserveOutputStream("output_0", [&](const Packet& p) {
+    output_0_packets.push_back(p);
+    return absl::OkStatus();
+  }));
+  MP_ASSERT_OK(graph.StartRun({}));
+  MP_ASSERT_OK(graph.WaitUntilIdle());
+
+  MP_ASSERT_OK(graph.AddPacketToInputStream(
+      "input_0", MakePacket<int>(0).At(Timestamp::PostStream())));
+  MP_ASSERT_OK(graph.WaitUntilIdle());
+  EXPECT_EQ(output_0_packets.size(), 1);
+  EXPECT_EQ(output_0_packets[0].Timestamp(), Timestamp::PostStream());
+
+  // Shutdown the graph.
+  MP_ASSERT_OK(graph.CloseAllPacketSources());
+  MP_ASSERT_OK(graph.WaitUntilDone());
+}
+
 // A Calculator that sends a timestamp bound for every other input.
 class OccasionalBoundCalculator : public CalculatorBase {
  public:

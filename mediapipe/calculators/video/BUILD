@@ -426,6 +426,7 @@ cc_test(
         "//mediapipe/framework/port:logging",
         "//mediapipe/framework/port:opencv_core",
         "//mediapipe/framework/port:parse_text_proto",
+        "@com_google_absl//absl/flags:flag",
     ],
 )
 
@@ -450,6 +451,7 @@ cc_test(
         "//mediapipe/framework/port:opencv_imgproc",
         "//mediapipe/framework/port:opencv_video",
         "//mediapipe/framework/port:parse_text_proto",
+        "@com_google_absl//absl/flags:flag",
     ],
 )
 
@@ -534,6 +536,7 @@ cc_test(
         "//mediapipe/framework/stream_handler:sync_set_input_stream_handler",
         "//mediapipe/util/tracking:box_tracker_cc_proto",
         "//mediapipe/util/tracking:tracking_cc_proto",
+        "@com_google_absl//absl/flags:flag",
     ],
 )
 

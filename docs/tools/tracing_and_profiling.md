@@ -41,6 +41,7 @@ profiler_config {
   trace_enabled: true
   enable_profiler: true
   trace_log_interval_count: 200
+  trace_log_path: "/sdcard/Download/"
 }
 ```
 
@@ -64,7 +65,7 @@ MediaPipe will emit data into a pre-specified directory:
 
 *   On the desktop, this will be the `/tmp` directory.
 
-*   On Android, this will be the `/sdcard` directory.
+*   On Android, this will be the external storage directory (e.g., `/storage/emulated/0/`).
 
 *   On iOS, this can be reached through XCode. Select "Window/Devices and
     Simulators" and select the "Devices" tab.
@@ -103,7 +104,7 @@ we record ten intervals of half a second each. This can be overridden by adding
     *   Include the line below in your `AndroidManifest.xml` file.
 
         ```xml
-        <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+        <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" />
         ```
 
     *   Grant the permission either upon first app launch, or by going into
@@ -130,8 +131,8 @@ we record ten intervals of half a second each. This can be overridden by adding
     events to a trace log files at:
 
     ```bash
-    /sdcard/mediapipe_trace_0.binarypb
-    /sdcard/mediapipe_trace_1.binarypb
+    /storage/emulated/0/Download/mediapipe_trace_0.binarypb
+    /storage/emulated/0/Download/mediapipe_trace_1.binarypb
     ```
 
     After every 5 sec, writing shifts to a successive trace log file, such that
@@ -139,10 +140,10 @@ we record ten intervals of half a second each. This can be overridden by adding
     trace files have been written to the device using adb shell.
 
     ```bash
-    adb shell "ls -la /sdcard/"
+    adb shell "ls -la /storage/emulated/0/Download"
     ```
 
-    On android, MediaPipe selects the external storage directory `/sdcard` for
+    On android, MediaPipe selects the external storage (e.g., `/storage/emulated/0/`) for
     trace logs. This directory can be overridden using the setting
     `trace_log_path`, like:
 
@@ -150,7 +151,7 @@ we record ten intervals of half a second each. This can be overridden by adding
     profiler_config {
       trace_enabled: true
       enable_profiler: true
-      trace_log_path: "/sdcard/profiles/"
+      trace_log_path: "/sdcard/Download/profiles/"
     }
     ```
 
@@ -161,7 +162,7 @@ we record ten intervals of half a second each. This can be overridden by adding
 
     ```bash
     # from your terminal
-    adb pull /sdcard/mediapipe_trace_0.binarypb
+    adb pull /storage/emulated/0/Download/mediapipe_trace_0.binarypb
     # if successful you should see something like
     # /sdcard/mediapipe_trace_0.binarypb: 1 file pulled. 0.1 MB/s (6766 bytes in 0.045s)
     ```

@@ -57,7 +57,7 @@ namespace mediapipe {
 //
 // The "ALLOW" stream indicates the transition between accepting frames and
 // dropping frames.  "ALLOW = true" indicates the start of accepting frames
-// including the current timestamp, and "ALLOW = true" indicates the start of
+// including the current timestamp, and "ALLOW = false" indicates the start of
 // dropping frames including the current timestamp.
 //
 // FlowLimiterCalculator provides limited support for multiple input streams.

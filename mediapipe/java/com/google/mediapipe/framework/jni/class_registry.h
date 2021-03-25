@@ -49,6 +49,8 @@ class ClassRegistry {
       "com/google/mediapipe/framework/MediaPipeException";
   static constexpr char const* kPacketCallbackClassName =
       "com/google/mediapipe/framework/PacketCallback";
+  static constexpr char const* kPacketListCallbackClassName =
+      "com/google/mediapipe/framework/PacketListCallback";
   static constexpr char const* kPacketCreatorClassName =
       "com/google/mediapipe/framework/PacketCreator";
   static constexpr char const* kPacketGetterClassName =

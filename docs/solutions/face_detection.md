@@ -183,8 +183,8 @@ function onResults(results) {
   canvasCtx.restore();
 }
 
-const faceDetection = new Objectron({locateFile: (file) => {
-  return `https://cdn.jsdelivr.net/npm/@mediapipe/objectron@0.0/${file}`;
+const faceDetection = new FaceDetection({locateFile: (file) => {
+  return `https://cdn.jsdelivr.net/npm/@mediapipe/face_detection@0.0/${file}`;
 }});
 faceDetection.setOptions({
   minDetectionConfidence: 0.5

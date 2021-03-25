@@ -408,13 +408,13 @@ absl::Status CalculatorNode::PrepareForRun(
       validated_graph_->CalculatorInfos()[node_id_].Contract();
   for (const auto& svc_req : contract.ServiceRequests()) {
     const auto& req = svc_req.second;
-    std::string key{req.Service().key};
-    auto it = service_packets.find(key);
+    auto it = service_packets.find(req.Service().key);
     if (it == service_packets.end()) {
       RET_CHECK(req.IsOptional())
-          << "required service '" << key << "' was not provided";
+          << "required service '" << req.Service().key << "' was not provided";
     } else {
-      calculator_state_->SetServicePacket(key, it->second);
+      MP_RETURN_IF_ERROR(
+          calculator_state_->SetServicePacket(req.Service(), it->second));
     }
   }
 

@@ -14,11 +14,11 @@
 
 #include "mediapipe/examples/desktop/autoflip/quality/padding_effect_generator.h"
 
+#include "absl/flags/flag.h"
 #include "absl/strings/str_cat.h"
 #include "mediapipe/framework/deps/file_path.h"
 #include "mediapipe/framework/formats/image_frame.h"
 #include "mediapipe/framework/formats/image_frame_opencv.h"
-#include "mediapipe/framework/port/commandlineflags.h"
 #include "mediapipe/framework/port/file_helpers.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
@@ -28,8 +28,9 @@
 #include "mediapipe/framework/port/status_builder.h"
 #include "mediapipe/framework/port/status_matchers.h"
 
-DEFINE_string(input_image, "", "The path to an input image.");
-DEFINE_string(output_folder, "", "The folder to output test result images.");
+ABSL_FLAG(std::string, input_image, "", "The path to an input image.");
+ABSL_FLAG(std::string, output_folder, "",
+          "The folder to output test result images.");
 
 namespace mediapipe {
 namespace autoflip {

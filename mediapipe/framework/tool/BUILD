@@ -19,6 +19,7 @@ load(
     "data_as_c_string",
     "mediapipe_binary_graph",
 )
+load("//mediapipe/framework:mediapipe_cc_test.bzl", "mediapipe_cc_test")
 
 licenses(["notice"])
 
@@ -35,9 +36,10 @@ cc_library(
     deps = [
         "//mediapipe/framework:calculator_cc_proto",
         "//mediapipe/framework/port:advanced_proto",
-        "//mediapipe/framework/port:commandlineflags",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
+        "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/flags:parse",
     ],
 )
 
@@ -150,6 +152,28 @@ cc_library(
     ],
 )
 
+mediapipe_cc_test(
+    name = "options_util_test",
+    size = "small",
+    srcs = ["options_util_test.cc"],
+    data = [":node_chain_subgraph.proto"],
+    requires_full_emulation = False,
+    deps = [
+        ":options_util",
+        "//mediapipe/calculators/core:flow_limiter_calculator",
+        "//mediapipe/calculators/core:flow_limiter_calculator_cc_proto",
+        "//mediapipe/framework:basic_types_registration",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:calculator_runner",
+        "//mediapipe/framework:validated_graph_config",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:parse_text_proto",
+        "//mediapipe/framework/port:status",
+        "//mediapipe/framework/testdata:night_light_calculator_cc_proto",
+        "//mediapipe/util:header_util",
+    ],
+)
+
 cc_library(
     name = "packet_util",
     hdrs = ["packet_util.h"],
@@ -227,6 +251,7 @@ cc_library(
         ":name_util",
         ":tag_map",
         "//mediapipe/framework:calculator_cc_proto",
+        "//mediapipe/framework:graph_service_manager",
         "//mediapipe/framework:packet_generator",
         "//mediapipe/framework:packet_generator_cc_proto",
         "//mediapipe/framework:port",
@@ -560,7 +585,9 @@ cc_test(
         ":subgraph_expansion",
         "//mediapipe/framework:calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:graph_service_manager",
         "//mediapipe/framework:mediapipe_options_cc_proto",
+        "//mediapipe/framework:packet",
         "//mediapipe/framework:packet_generator_cc_proto",
         "//mediapipe/framework:packet_set",
         "//mediapipe/framework:packet_type",

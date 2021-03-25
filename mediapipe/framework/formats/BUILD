@@ -114,7 +114,7 @@ cc_library(
         "//mediapipe/framework/port:logging",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
-        "@eigen_archive//:eigen",
+        "@eigen_archive//:eigen3",
     ],
 )
 
@@ -260,9 +260,11 @@ mediapipe_register_type(
     include_headers = ["mediapipe/framework/formats/landmark.pb.h"],
     types = [
         "::mediapipe::Landmark",
+        "::mediapipe::LandmarkList",
         "::mediapipe::NormalizedLandmark",
         "::mediapipe::NormalizedLandmarkList",
         "::std::vector<::mediapipe::Landmark>",
+        "::std::vector<::mediapipe::LandmarkList>",
         "::std::vector<::mediapipe::NormalizedLandmark>",
         "::std::vector<::mediapipe::NormalizedLandmarkList>",
     ],

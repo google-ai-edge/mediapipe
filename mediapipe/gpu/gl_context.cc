@@ -782,7 +782,7 @@ bool GlContext::CheckForGlErrors() { return CheckForGlErrors(false); }
 bool GlContext::CheckForGlErrors(bool force) {
 #if UNSAFE_EMSCRIPTEN_SKIP_GL_ERROR_HANDLING
   if (!force) {
-    LOG_FIRST_N(WARNING, 1) << "MediaPipe OpenGL error checking is disabled";
+    LOG_FIRST_N(WARNING, 1) << "OpenGL error checking is disabled";
     return false;
   }
 #endif

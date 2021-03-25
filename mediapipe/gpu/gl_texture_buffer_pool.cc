@@ -52,15 +52,15 @@ GlTextureBufferSharedPtr GlTextureBufferPool::GetBuffer() {
   // Return a shared_ptr with a custom deleter that adds the buffer back
   // to our available list.
   std::weak_ptr<GlTextureBufferPool> weak_pool(shared_from_this());
-  return std::shared_ptr<GlTextureBuffer>(buffer.release(),
-                                          [weak_pool](GlTextureBuffer* buf) {
-                                            auto pool = weak_pool.lock();
-                                            if (pool) {
-                                              pool->Return(buf);
-                                            } else {
-                                              delete buf;
-                                            }
-                                          });
+  return std::shared_ptr<GlTextureBuffer>(
+      buffer.release(), [weak_pool](GlTextureBuffer* buf) {
+        auto pool = weak_pool.lock();
+        if (pool) {
+          pool->Return(absl::WrapUnique(buf));
+        } else {
+          delete buf;
+        }
+      });
 }
 
 std::pair<int, int> GlTextureBufferPool::GetInUseAndAvailableCounts() {
@@ -68,12 +68,12 @@ std::pair<int, int> GlTextureBufferPool::GetInUseAndAvailableCounts() {
   return {in_use_count_, available_.size()};
 }
 
-void GlTextureBufferPool::Return(GlTextureBuffer* buf) {
+void GlTextureBufferPool::Return(std::unique_ptr<GlTextureBuffer> buf) {
   std::vector<std::unique_ptr<GlTextureBuffer>> trimmed;
   {
     absl::MutexLock lock(&mutex_);
     --in_use_count_;
-    available_.emplace_back(buf);
+    available_.emplace_back(std::move(buf));
     TrimAvailable(&trimmed);
   }
   // The trimmed buffers will be released without holding the lock.

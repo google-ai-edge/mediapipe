@@ -35,7 +35,7 @@ node {
 }
 
 # Subgraph that renders annotations and overlays them on top of the input
-# images (see renderer_gpu.pbtxt).
+# images (see renderer_cpu.pbtxt).
 node {
   calculator: "RendererSubgraph"
   input_stream: "IMAGE:input_video"

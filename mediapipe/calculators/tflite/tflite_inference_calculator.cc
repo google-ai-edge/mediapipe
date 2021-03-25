@@ -278,7 +278,7 @@ class TfLiteInferenceCalculator : public CalculatorBase {
 
   bool use_advanced_gpu_api_ = false;
   bool allow_precision_loss_ = false;
-  mediapipe::TfLiteInferenceCalculatorOptions::Delegate::Gpu::API
+  mediapipe::TfLiteInferenceCalculatorOptions::Delegate::Gpu::Api
       tflite_gpu_runner_api_;
 
   bool use_kernel_caching_ = false;
@@ -702,11 +702,16 @@ absl::Status TfLiteInferenceCalculator::InitTFLiteGPURunner(
 #if MEDIAPIPE_TFLITE_GL_INFERENCE
   ASSIGN_OR_RETURN(model_packet_, GetModelAsPacket(*cc));
   const auto& model = *model_packet_.Get<TfLiteModelPtr>();
-  tflite::ops::builtin::BuiltinOpResolver op_resolver;
+
+  tflite::ops::builtin::BuiltinOpResolverWithoutDefaultDelegates
+      default_op_resolver;
+  auto op_resolver_ptr =
+      static_cast<const tflite::ops::builtin::BuiltinOpResolver*>(
+          &default_op_resolver);
   if (cc->InputSidePackets().HasTag("CUSTOM_OP_RESOLVER")) {
-    op_resolver = cc->InputSidePackets()
-                      .Tag("CUSTOM_OP_RESOLVER")
-                      .Get<tflite::ops::builtin::BuiltinOpResolver>();
+    op_resolver_ptr = &(cc->InputSidePackets()
+                            .Tag("CUSTOM_OP_RESOLVER")
+                            .Get<tflite::ops::builtin::BuiltinOpResolver>());
   }
 
   // Create runner
@@ -733,7 +738,7 @@ absl::Status TfLiteInferenceCalculator::InitTFLiteGPURunner(
     }
   }
   MP_RETURN_IF_ERROR(
-      tflite_gpu_runner_->InitializeWithModel(model, op_resolver));
+      tflite_gpu_runner_->InitializeWithModel(model, *op_resolver_ptr));
 
   // Allocate interpreter memory for cpu output.
   if (!gpu_output_) {
@@ -786,18 +791,24 @@ absl::Status TfLiteInferenceCalculator::LoadModel(CalculatorContext* cc) {
 
   ASSIGN_OR_RETURN(model_packet_, GetModelAsPacket(*cc));
   const auto& model = *model_packet_.Get<TfLiteModelPtr>();
-  tflite::ops::builtin::BuiltinOpResolver op_resolver;
+
+  tflite::ops::builtin::BuiltinOpResolverWithoutDefaultDelegates
+      default_op_resolver;
+  auto op_resolver_ptr =
+      static_cast<const tflite::ops::builtin::BuiltinOpResolver*>(
+          &default_op_resolver);
+
   if (cc->InputSidePackets().HasTag("CUSTOM_OP_RESOLVER")) {
-    op_resolver = cc->InputSidePackets()
-                      .Tag("CUSTOM_OP_RESOLVER")
-                      .Get<tflite::ops::builtin::BuiltinOpResolver>();
+    op_resolver_ptr = &(cc->InputSidePackets()
+                            .Tag("CUSTOM_OP_RESOLVER")
+                            .Get<tflite::ops::builtin::BuiltinOpResolver>());
   }
 
 #if defined(MEDIAPIPE_EDGE_TPU)
   interpreter_ =
-      BuildEdgeTpuInterpreter(model, &op_resolver, edgetpu_context_.get());
+      BuildEdgeTpuInterpreter(model, op_resolver_ptr, edgetpu_context_.get());
 #else
-  tflite::InterpreterBuilder(model, op_resolver)(&interpreter_);
+  tflite::InterpreterBuilder(model, *op_resolver_ptr)(&interpreter_);
 #endif  // MEDIAPIPE_EDGE_TPU
 
   RET_CHECK(interpreter_);

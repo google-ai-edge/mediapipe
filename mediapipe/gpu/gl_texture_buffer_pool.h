@@ -56,7 +56,7 @@ class GlTextureBufferPool
                       int keep_count);
 
   // Return a buffer to the pool.
-  void Return(GlTextureBuffer* buf);
+  void Return(std::unique_ptr<GlTextureBuffer> buf);
 
   // If the total number of buffers is greater than keep_count, destroys any
   // surplus buffers that are no longer in use.

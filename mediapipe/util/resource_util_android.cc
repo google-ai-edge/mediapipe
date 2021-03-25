@@ -18,9 +18,9 @@
 #include "mediapipe/framework/port/file_helpers.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/singleton.h"
+#include "mediapipe/framework/port/statusor.h"
 #include "mediapipe/util/android/asset_manager_util.h"
 #include "mediapipe/util/android/file/base/helpers.h"
-#include "mediapipe/util/resource_util.h"
 
 namespace mediapipe {
 
@@ -30,6 +30,37 @@ absl::StatusOr<std::string> PathToResourceAsFileInternal(
   return Singleton<AssetManager>::get()->CachedFileFromAsset(path);
 }
 }  // namespace
+
+namespace internal {
+absl::Status DefaultGetResourceContents(const std::string& path,
+                                        std::string* output,
+                                        bool read_as_binary) {
+  if (!read_as_binary) {
+    LOG(WARNING)
+        << "Setting \"read_as_binary\" to false is a no-op on Android.";
+  }
+  if (absl::StartsWith(path, "/")) {
+    return file::GetContents(path, output, file::Defaults());
+  }
+
+  if (absl::StartsWith(path, "content://")) {
+    MP_RETURN_IF_ERROR(
+        Singleton<AssetManager>::get()->ReadContentUri(path, output));
+    return absl::OkStatus();
+  }
+
+  // Try the test environment.
+  absl::string_view workspace = "mediapipe";
+  auto test_path = file::JoinPath(std::getenv("TEST_SRCDIR"), workspace, path);
+  if (file::Exists(test_path).ok()) {
+    return file::GetContents(path, output, file::Defaults());
+  }
+
+  RET_CHECK(Singleton<AssetManager>::get()->ReadFile(path, output))
+      << "could not read asset: " << path;
+  return absl::OkStatus();
+}
+}  // namespace internal
 
 absl::StatusOr<std::string> PathToResourceAsFile(const std::string& path) {
   // Return full path.
@@ -66,27 +97,6 @@ absl::StatusOr<std::string> PathToResourceAsFile(const std::string& path) {
   }
 
   return path;
-}
-
-absl::Status GetResourceContents(const std::string& path, std::string* output,
-                                 bool read_as_binary) {
-  if (!read_as_binary) {
-    LOG(WARNING)
-        << "Setting \"read_as_binary\" to false is a no-op on Android.";
-  }
-  if (absl::StartsWith(path, "/")) {
-    return file::GetContents(path, output, file::Defaults());
-  }
-
-  if (absl::StartsWith(path, "content://")) {
-    MP_RETURN_IF_ERROR(
-        Singleton<AssetManager>::get()->ReadContentUri(path, output));
-    return absl::OkStatus();
-  }
-
-  RET_CHECK(Singleton<AssetManager>::get()->ReadFile(path, output))
-      << "could not read asset: " << path;
-  return absl::OkStatus();
 }
 
 }  // namespace mediapipe

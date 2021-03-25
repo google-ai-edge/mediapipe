@@ -19,7 +19,7 @@ package mediapipe.autoflip;
 import "mediapipe/examples/desktop/autoflip/quality/kinematic_path_solver.proto";
 import "mediapipe/framework/calculator.proto";
 
-// NextTag: 14
+// NextTag: 17
 message ContentZoomingCalculatorOptions {
   extend mediapipe.CalculatorOptions {
     optional ContentZoomingCalculatorOptions ext = 313091992;
@@ -54,6 +54,16 @@ message ContentZoomingCalculatorOptions {
 
   // Defines the smallest value in degrees the camera is permitted to zoom.
   optional float max_zoom_value_deg = 13 [default = 35];
+
+  // Whether to keep state between frames or to compute the final crop rect.
+  optional bool is_stateless = 14 [default = false];
+
+  // Duration (in MicroSeconds) for moving to the first crop rect.
+  optional int64 us_to_first_rect = 15 [default = 0];
+  // Duration (in MicroSeconds) to delay moving to the first crop rect.
+  // Used only if us_to_first_rect is set and is interpreted as part of the
+  // us_to_first_rect time budget.
+  optional int64 us_to_first_rect_delay = 16 [default = 0];
 
   // Deprecated parameters
   optional KinematicOptions kinematic_options = 2 [deprecated = true];

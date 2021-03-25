@@ -37,7 +37,7 @@ inline StatusBuilder RetCheckImpl(const absl::Status& status,
                                   const char* condition,
                                   mediapipe::source_location location) {
   if (ABSL_PREDICT_TRUE(status.ok()))
-    return mediapipe::StatusBuilder(OkStatus(), location);
+    return mediapipe::StatusBuilder(absl::OkStatus(), location);
   return RetCheckFailSlowPath(location, condition, status);
 }
 

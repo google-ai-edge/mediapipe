@@ -28,6 +28,8 @@ from mediapipe.framework.formats import landmark_pb2
 PRESENCE_THRESHOLD = 0.5
 RGB_CHANNELS = 3
 RED_COLOR = (0, 0, 255)
+GREEN_COLOR = (0, 128, 0)
+BLUE_COLOR = (255, 0, 0)
 VISIBILITY_THRESHOLD = 0.5
 
 
@@ -178,9 +180,7 @@ def draw_axis(
     focal_length: Tuple[float, float] = (1.0, 1.0),
     principal_point: Tuple[float, float] = (0.0, 0.0),
     axis_length: float = 0.1,
-    x_axis_drawing_spec: DrawingSpec = DrawingSpec(color=(0, 0, 255)),
-    y_axis_drawing_spec: DrawingSpec = DrawingSpec(color=(0, 128, 0)),
-    z_axis_drawing_spec: DrawingSpec = DrawingSpec(color=(255, 0, 0))):
+    axis_drawing_spec: DrawingSpec = DrawingSpec()):
   """Draws the 3D axis on the image.
 
   Args:
@@ -190,12 +190,8 @@ def draw_axis(
     focal_length: camera focal length along x and y directions.
     principal_point: camera principal point in x and y.
     axis_length: length of the axis in the drawing.
-    x_axis_drawing_spec: A DrawingSpec object that specifies the x axis
-      drawing settings such as color, line thickness.
-    y_axis_drawing_spec: A DrawingSpec object that specifies the y axis
-      drawing settings such as color, line thickness.
-    z_axis_drawing_spec: A DrawingSpec object that specifies the z axis
-      drawing settings such as color, line thickness.
+    axis_drawing_spec: A DrawingSpec object that specifies the xyz axis
+      drawing settings such as line thickness.
 
   Raises:
     ValueError: If one of the followings:
@@ -213,8 +209,8 @@ def draw_axis(
   # Project 3D points to NDC space.
   fx, fy = focal_length
   px, py = principal_point
-  x_ndc = -fx * x / z + px
-  y_ndc = -fy * y / z + py
+  x_ndc = np.clip(-fx * x / (z + 1e-5) + px, -1., 1.)
+  y_ndc = np.clip(-fy * y / (z + 1e-5) + py, -1., 1.)
   # Convert from NDC space to image space.
   x_im = np.int32((1 + x_ndc) * 0.5 * image_cols)
   y_im = np.int32((1 - y_ndc) * 0.5 * image_rows)
@@ -223,9 +219,9 @@ def draw_axis(
   x_axis = (x_im[1], y_im[1])
   y_axis = (x_im[2], y_im[2])
   z_axis = (x_im[3], y_im[3])
-  image = cv2.arrowedLine(image, origin, x_axis, x_axis_drawing_spec.color,
-                          x_axis_drawing_spec.thickness)
-  image = cv2.arrowedLine(image, origin, y_axis, y_axis_drawing_spec.color,
-                          y_axis_drawing_spec.thickness)
-  image = cv2.arrowedLine(image, origin, z_axis, z_axis_drawing_spec.color,
-                          z_axis_drawing_spec.thickness)
+  cv2.arrowedLine(image, origin, x_axis, RED_COLOR,
+                  axis_drawing_spec.thickness)
+  cv2.arrowedLine(image, origin, y_axis, GREEN_COLOR,
+                  axis_drawing_spec.thickness)
+  cv2.arrowedLine(image, origin, z_axis, BLUE_COLOR,
+                  axis_drawing_spec.thickness)

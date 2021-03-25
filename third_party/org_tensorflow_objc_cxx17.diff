@@ -21,4 +21,4 @@ index 6dcde34a62f..1adfc28aad9 100644
 +    "-std=c++17",
  ]
  
- cc_library(
+ objc_library(

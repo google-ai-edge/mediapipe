@@ -64,4 +64,10 @@ message LandmarksToRenderDataCalculatorOptions {
 
   // Max thickness of the drawing for landmark circle.
   optional double max_depth_circle_thickness = 11 [default = 18.0];
+
+  // Gradient color for the lines connecting landmarks at the minimum depth.
+  optional Color min_depth_line_color = 12;
+
+  // Gradient color for the lines connecting landmarks at the maximum depth.
+  optional Color max_depth_line_color = 13;
 }

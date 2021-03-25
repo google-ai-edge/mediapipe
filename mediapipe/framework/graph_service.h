@@ -41,6 +41,19 @@ struct GraphService : public GraphServiceBase {
   constexpr GraphService(const char* key) : GraphServiceBase(key) {}
 };
 
+template <typename T>
+class ServiceBinding {
+ public:
+  bool IsAvailable() { return service_ != nullptr; }
+  T& GetObject() { return *service_; }
+
+  ServiceBinding() {}
+  explicit ServiceBinding(std::shared_ptr<T> service) : service_(service) {}
+
+ private:
+  std::shared_ptr<T> service_;
+};
+
 }  // namespace mediapipe
 
 #endif  // MEDIAPIPE_FRAMEWORK_GRAPH_SERVICE_H_

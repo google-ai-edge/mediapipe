@@ -180,13 +180,13 @@ class GeneratePyProtos(setuptools.Command):
         'mediapipe/util/**/*.proto'
     ]:
       for proto_file in glob.glob(pattern, recursive=True):
+        proto_dir = os.path.dirname(os.path.abspath(proto_file))
         # Ignore test protos.
         if proto_file.endswith('test.proto'):
           continue
-        # Ignore tensorflow protos.
-        if 'tensorflow' in proto_file:
+        # Ignore tensorflow protos in mediapipe/calculators/tensorflow.
+        if 'tensorflow' in proto_dir:
           continue
-        proto_dir = os.path.dirname(os.path.abspath(proto_file))
         # Ignore testdata dir.
         if proto_dir.endswith('testdata'):
           continue

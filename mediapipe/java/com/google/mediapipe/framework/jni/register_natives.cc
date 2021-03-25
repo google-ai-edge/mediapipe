@@ -103,6 +103,13 @@ void RegisterGraphNatives(JNIEnv *env) {
   AddJNINativeMethod(&graph_methods, graph, "nativeAddPacketCallback",
                      native_add_packet_callback_signature.c_str(),
                      (void *)&GRAPH_METHOD(nativeAddPacketCallback));
+  std::string packet_list_callback_name = class_registry.GetClassName(
+      mediapipe::android::ClassRegistry::kPacketListCallbackClassName);
+  std::string native_add_multi_stream_callback_signature =
+      absl::StrFormat("(JLjava/lang/List;L%s;)V", packet_list_callback_name);
+  AddJNINativeMethod(&graph_methods, graph, "nativeAddMultiStreamCallback",
+                     native_add_multi_stream_callback_signature.c_str(),
+                     (void *)&GRAPH_METHOD(nativeAddMultiStreamCallback));
   AddJNINativeMethod(&graph_methods, graph, "nativeMovePacketToInputStream",
                      "(JLjava/lang/String;JJ)V",
                      (void *)&GRAPH_METHOD(nativeMovePacketToInputStream));

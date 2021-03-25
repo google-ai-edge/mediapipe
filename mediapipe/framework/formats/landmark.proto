@@ -47,8 +47,8 @@ message LandmarkList {
   repeated Landmark landmark = 1;
 }
 
-// A normalized version of above Landmark proto. All coordiates should be within
-// [0, 1].
+// A normalized version of above Landmark proto. All coordinates should be
+// within [0, 1].
 message NormalizedLandmark {
   optional float x = 1;
   optional float y = 2;

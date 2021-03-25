@@ -28,7 +28,7 @@ Gradle.
 *   Install MediaPipe following these [instructions](./install.md).
 *   Setup Java Runtime.
 *   Setup Android SDK release 28.0.3 and above.
-*   Setup Android NDK r18b and above.
+*   Setup Android NDK version between 18 and 21.
 
 MediaPipe recommends setting up Android SDK and NDK via Android Studio (and see
 below for Android Studio setup). However, if you prefer using MediaPipe without

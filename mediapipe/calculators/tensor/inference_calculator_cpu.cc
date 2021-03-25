@@ -136,7 +136,7 @@ absl::Status InferenceCalculatorCpuImpl::LoadModel(CalculatorContext* cc) {
   const auto& model = *model_packet_.Get();
   tflite::ops::builtin::BuiltinOpResolver op_resolver =
       kSideInCustomOpResolver(cc).GetOr(
-          tflite::ops::builtin::BuiltinOpResolver());
+          tflite::ops::builtin::BuiltinOpResolverWithoutDefaultDelegates());
 
   tflite::InterpreterBuilder(model, op_resolver)(&interpreter_);
   RET_CHECK(interpreter_);

@@ -65,7 +65,7 @@ cc_library(
         "//mediapipe/modules/objectron/calculators:box",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
-        "@eigen_archive//:eigen",
+        "@eigen_archive//:eigen3",
     ],
     alwayslink = 1,
 )

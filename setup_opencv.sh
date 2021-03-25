@@ -64,7 +64,9 @@ if [ -z "$1" ]
           -DBUILD_opencv_plot=OFF -DBUILD_opencv_quality=OFF -DBUILD_opencv_reg=OFF \
           -DBUILD_opencv_rgbd=OFF -DBUILD_opencv_saliency=OFF -DBUILD_opencv_shape=OFF \
           -DBUILD_opencv_structured_light=OFF -DBUILD_opencv_surface_matching=OFF \
-          -DBUILD_opencv_world=OFF -DBUILD_opencv_xobjdetect=OFF -DBUILD_opencv_xphoto=OFF
+          -DBUILD_opencv_world=OFF -DBUILD_opencv_xobjdetect=OFF -DBUILD_opencv_xphoto=OFF \
+          -DCV_ENABLE_INTRINSICS=ON -DWITH_EIGEN=ON -DWITH_PTHREADS=ON -DWITH_PTHREADS_PF=ON \
+          -DWITH_JPEG=ON -DWITH_PNG=ON -DWITH_TIFF=ON
     make -j 16
     sudo make install
     rm -rf /tmp/build_opencv

@@ -29,11 +29,41 @@ output_stream: "FILTERED_NORM_LANDMARKS:filtered_landmarks"
 # Filtered auxiliary set of normalized landmarks. (NormalizedRect)
 output_stream: "FILTERED_AUX_NORM_LANDMARKS:filtered_aux_landmarks"
 
-# Smoothes pose landmarks to reduce jitter.
+# Smoothes pose landmark visibilities to reduce jitter.
 node {
   calculator: "SwitchContainer"
   input_side_packet: "ENABLE:enable"
   input_stream: "NORM_LANDMARKS:landmarks"
+  output_stream: "NORM_FILTERED_LANDMARKS:filtered_visibility"
+  options: {
+    [mediapipe.SwitchContainerOptions.ext] {
+      contained_node: {
+        calculator: "VisibilitySmoothingCalculator"
+        options: {
+          [mediapipe.VisibilitySmoothingCalculatorOptions.ext] {
+            no_filter: {}
+          }
+        }
+      }
+      contained_node: {
+        calculator: "VisibilitySmoothingCalculator"
+        options: {
+          [mediapipe.VisibilitySmoothingCalculatorOptions.ext] {
+            low_pass_filter {
+              alpha: 0.1
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+# Smoothes pose landmark coordinates to reduce jitter.
+node {
+  calculator: "SwitchContainer"
+  input_side_packet: "ENABLE:enable"
+  input_stream: "NORM_LANDMARKS:filtered_visibility"
   input_stream: "IMAGE_SIZE:image_size"
   output_stream: "NORM_FILTERED_LANDMARKS:filtered_landmarks"
   options: {
@@ -61,11 +91,41 @@ node {
   }
 }
 
-# Smoothes auxiliary landmarks to reduce jitter.
+# Smoothes pose landmark visibilities to reduce jitter.
 node {
   calculator: "SwitchContainer"
   input_side_packet: "ENABLE:enable"
   input_stream: "NORM_LANDMARKS:aux_landmarks"
+  output_stream: "NORM_FILTERED_LANDMARKS:filtered_aux_visibility"
+  options: {
+    [mediapipe.SwitchContainerOptions.ext] {
+      contained_node: {
+        calculator: "VisibilitySmoothingCalculator"
+        options: {
+          [mediapipe.VisibilitySmoothingCalculatorOptions.ext] {
+            no_filter: {}
+          }
+        }
+      }
+      contained_node: {
+        calculator: "VisibilitySmoothingCalculator"
+        options: {
+          [mediapipe.VisibilitySmoothingCalculatorOptions.ext] {
+            low_pass_filter {
+              alpha: 0.1
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+# Smoothes auxiliary landmarks to reduce jitter.
+node {
+  calculator: "SwitchContainer"
+  input_side_packet: "ENABLE:enable"
+  input_stream: "NORM_LANDMARKS:filtered_aux_visibility"
   input_stream: "IMAGE_SIZE:image_size"
   output_stream: "NORM_FILTERED_LANDMARKS:filtered_aux_landmarks"
   options: {

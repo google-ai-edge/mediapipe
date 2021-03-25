@@ -41,14 +41,14 @@ extern "C" {
 #include "libavutil/samplefmt.h"
 }
 
-DEFINE_int64(media_decoder_allowed_audio_gap_merge, 5,
-             "The time gap forwards or backwards in the audio to ignore.  "
-             "Timestamps in media files are restricted by the container format "
-             "and stream codec and are invariably not accurate to exact sample "
-             "numbers.  If the discrepency between time based on counting "
-             "samples and based on the container timestamps grows beyond this "
-             "value it will be reset to the value in the audio stream and "
-             "counting based on samples will resume.");
+ABSL_FLAG(int64_t, media_decoder_allowed_audio_gap_merge, 5,
+          "The time gap forwards or backwards in the audio to ignore.  "
+          "Timestamps in media files are restricted by the container format "
+          "and stream codec and are invariably not accurate to exact sample "
+          "numbers.  If the discrepency between time based on counting "
+          "samples and based on the container timestamps grows beyond this "
+          "value it will be reset to the value in the audio stream and "
+          "counting based on samples will resume.");
 
 namespace mediapipe {
 

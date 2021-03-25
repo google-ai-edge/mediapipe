@@ -39,6 +39,18 @@ cc_test(
 )
 
 cc_library(
+    name = "one_euro_filter",
+    srcs = ["one_euro_filter.cc"],
+    hdrs = ["one_euro_filter.h"],
+    deps = [
+        ":low_pass_filter",
+        "//mediapipe/framework/port:logging",
+        "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/time",
+    ],
+)
+
+cc_library(
     name = "relative_velocity_filter",
     srcs = ["relative_velocity_filter.cc"],
     hdrs = ["relative_velocity_filter.h"],

@@ -25,10 +25,11 @@ One of the applications
 [BlazePose](https://ai.googleblog.com/2020/08/on-device-real-time-body-pose-tracking.html)
 can enable is fitness. More specifically - pose classification and repetition
 counting. In this section we'll provide basic guidance on building a custom pose
-classifier with the help of [Colabs](#colabs) and wrap it in a simple
-[fitness app](https://mediapipe.page.link/mlkit-pose-classification-demo-app)
-powered by [ML Kit](https://developers.google.com/ml-kit). Push-ups and squats
-are used for demonstration purposes as the most common exercises.
+classifier with the help of [Colabs](#colabs) and wrap it in a simple fitness
+demo within
+[ML Kit quickstart app](https://developers.google.com/ml-kit/vision/pose-detection/classifying-poses#4_integrate_with_the_ml_kit_quickstart_app).
+Push-ups and squats are used for demonstration purposes as the most common
+exercises.
 
 ![pose_classification_pushups_and_squats.gif](../images/mobile/pose_classification_pushups_and_squats.gif) |
 :--------------------------------------------------------------------------------------------------------: |
@@ -47,7 +48,7 @@ determines the object's class based on the closest samples in the training set.
     classifier and form a training set using these [Colabs](#colabs),
 3.  Perform the classification itself followed by repetition counting (e.g., in
     the
-    [ML Kit demo app](https://mediapipe.page.link/mlkit-pose-classification-demo-app)).
+    [ML Kit quickstart app](https://developers.google.com/ml-kit/vision/pose-detection/classifying-poses#4_integrate_with_the_ml_kit_quickstart_app)).
 
 ## Training Set
 
@@ -76,7 +77,7 @@ video right in the Colab.
 
 Code of the classifier is available both in the
 [`Pose Classification Colab (Extended)`] and in the
-[ML Kit demo app](https://mediapipe.page.link/mlkit-pose-classification-demo-app).
+[ML Kit quickstart app](https://developers.google.com/ml-kit/vision/pose-detection/classifying-poses#4_integrate_with_the_ml_kit_quickstart_app).
 Please refer to them for details of the approach described below.
 
 The k-NN algorithm used for pose classification requires a feature vector
@@ -127,11 +128,13 @@ where the pose class and the counter can't be changed.
 
 ## Future Work
 
-We are actively working on improving BlazePose GHUM 3D's Z prediction. It will
-allow us to use joint angles in the feature vectors, which are more natural and
-easier to configure (although distances can still be useful to detect touches
-between body parts) and to perform rotation normalization of poses and reduce
-the number of camera angles required for accurate k-NN classification.
+We are actively working on improving
+[BlazePose GHUM 3D](./pose.md#pose-landmark-model-blazepose-ghum-3d)'s Z
+prediction. It will allow us to use joint angles in the feature vectors, which
+are more natural and easier to configure (although distances can still be useful
+to detect touches between body parts) and to perform rotation normalization of
+poses and reduce the number of camera angles required for accurate k-NN
+classification.
 
 ## Colabs
 

@@ -17,7 +17,6 @@
 
 #include <string>
 
-#include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/port/statusor.h"
 
 namespace mediapipe {

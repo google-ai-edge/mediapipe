@@ -21,9 +21,9 @@
 #include <random>
 #include <string>
 
+#include "absl/flags/flag.h"
 #include "absl/time/clock.h"
 #include "mediapipe/framework/deps/file_path.h"
-#include "mediapipe/framework/port/commandlineflags.h"
 #include "mediapipe/framework/port/file_helpers.h"
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/framework/port/logging.h"
@@ -37,7 +37,7 @@
 
 // To ensure that the selected thresholds are robust, it is recommend
 // to run this test mutiple times with time seed, if changes are made.
-DEFINE_bool(time_seed, false, "Activate to test thresholds");
+ABSL_FLAG(bool, time_seed, false, "Activate to test thresholds");
 
 namespace mediapipe {
 namespace {

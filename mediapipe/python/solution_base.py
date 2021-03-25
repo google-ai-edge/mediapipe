@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """MediaPipe SolutionBase module.
 
 MediaPipe SolutionBase is the common base class for the high-level MediaPipe
@@ -123,6 +122,8 @@ NAME_TO_TYPE: Mapping[str, '_PacketDataType'] = {
         _PacketDataType.PROTO,
     '::mediapipe::Landmark':
         _PacketDataType.PROTO,
+    '::mediapipe::LandmarkList':
+        _PacketDataType.PROTO,
     '::mediapipe::NormalizedLandmark':
         _PacketDataType.PROTO,
     '::mediapipe::FrameAnnotation':
@@ -144,6 +145,8 @@ NAME_TO_TYPE: Mapping[str, '_PacketDataType'] = {
     '::std::vector<::mediapipe::DetectionList>':
         _PacketDataType.PROTO_LIST,
     '::std::vector<::mediapipe::Landmark>':
+        _PacketDataType.PROTO_LIST,
+    '::std::vector<::mediapipe::LandmarkList>':
         _PacketDataType.PROTO_LIST,
     '::std::vector<::mediapipe::NormalizedLandmark>':
         _PacketDataType.PROTO_LIST,

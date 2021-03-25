@@ -79,13 +79,10 @@ def _get_proto_provider(dep):
 
 def _encode_binary_proto_impl(ctx):
     """Implementation of the encode_binary_proto rule."""
-    all_protos = depset()
-    for dep in ctx.attr.deps:
-        provider = _get_proto_provider(dep)
-        all_protos = depset(
-            direct = [],
-            transitive = [all_protos, provider.transitive_sources],
-        )
+    all_protos = depset(
+        direct = [],
+        transitive = [_get_proto_provider(dep).transitive_sources for dep in ctx.attr.deps],
+    )
 
     textpb = ctx.file.input
     binarypb = ctx.outputs.output or ctx.actions.declare_file(
@@ -120,7 +117,7 @@ def _encode_binary_proto_impl(ctx):
         data_runfiles = ctx.runfiles(transitive_files = output_depset),
     )]
 
-encode_binary_proto = rule(
+_encode_binary_proto = rule(
     implementation = _encode_binary_proto_impl,
     attrs = {
         "_proto_compiler": attr.label(
@@ -141,6 +138,15 @@ encode_binary_proto = rule(
         "output": attr.output(),
     },
 )
+
+def encode_binary_proto(name, input, message_type, deps, **kwargs):
+    _encode_binary_proto(
+        name = name,
+        input = input,
+        message_type = message_type,
+        deps = deps,
+        **kwargs
+    )
 
 def _generate_proto_descriptor_set_impl(ctx):
     """Implementation of the generate_proto_descriptor_set rule."""

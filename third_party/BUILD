@@ -109,7 +109,15 @@ cmake_external(
         "BUILD_SHARED_LIBS": "ON" if OPENCV_SHARED_LIBS else "OFF",
         "WITH_ITT": "OFF",
         "WITH_JASPER": "OFF",
+        "WITH_JPEG": "ON",
+        "WITH_PNG": "ON",
+        "WITH_TIFF": "ON",
         "WITH_WEBP": "OFF",
+        # Optimization flags
+        "CV_ENABLE_INTRINSICS": "ON",
+        "WITH_EIGEN": "ON",
+        "WITH_PTHREADS": "ON",
+        "WITH_PTHREADS_PF": "ON",
         # When building tests, by default Bazel builds them in dynamic mode.
         # See https://docs.bazel.build/versions/master/be/c-cpp.html#cc_binary.linkstatic
         # For example, when building //mediapipe/calculators/video:opencv_video_encoder_calculator_test,

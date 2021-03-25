@@ -63,7 +63,7 @@ class InferenceCalculatorGlImpl
   mediapipe::GlCalculatorHelper gpu_helper_;
   std::unique_ptr<tflite::gpu::TFLiteGPURunner> tflite_gpu_runner_;
   bool allow_precision_loss_ = false;
-  mediapipe::InferenceCalculatorOptions::Delegate::Gpu::API
+  mediapipe::InferenceCalculatorOptions::Delegate::Gpu::Api
       tflite_gpu_runner_api_;
 #endif  // MEDIAPIPE_TFLITE_GL_INFERENCE
 
@@ -244,7 +244,7 @@ absl::Status InferenceCalculatorGlImpl::InitTFLiteGPURunner(
   const auto& model = *model_packet_.Get();
   tflite::ops::builtin::BuiltinOpResolver op_resolver =
       kSideInCustomOpResolver(cc).GetOr(
-          tflite::ops::builtin::BuiltinOpResolver());
+          tflite::ops::builtin::BuiltinOpResolverWithoutDefaultDelegates());
 
   // Create runner
   tflite::gpu::InferenceOptions options;
@@ -294,7 +294,7 @@ absl::Status InferenceCalculatorGlImpl::LoadModel(CalculatorContext* cc) {
   const auto& model = *model_packet_.Get();
   tflite::ops::builtin::BuiltinOpResolver op_resolver =
       kSideInCustomOpResolver(cc).GetOr(
-          tflite::ops::builtin::BuiltinOpResolver());
+          tflite::ops::builtin::BuiltinOpResolverWithoutDefaultDelegates());
 
   tflite::InterpreterBuilder(model, op_resolver)(&interpreter_);
   RET_CHECK(interpreter_);

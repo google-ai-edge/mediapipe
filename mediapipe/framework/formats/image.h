@@ -78,6 +78,12 @@ class Image {
     pixel_mutex_ = std::make_shared<absl::Mutex>();
   }
 
+  // CPU getters.
+  const ImageFrameSharedPtr& GetImageFrameSharedPtr() const {
+    if (use_gpu_ == true) ConvertToCpu();
+    return image_frame_;
+  }
+
   // Creates an Image representing the same image content as the input GPU
   // buffer in platform-specific representations.
 #if !MEDIAPIPE_DISABLE_GPU
@@ -95,13 +101,8 @@ class Image {
     gpu_buffer_ = gpu_buffer;
     pixel_mutex_ = std::make_shared<absl::Mutex>();
   }
-#endif  // !MEDIAPIPE_DISABLE_GPU
 
-  const ImageFrameSharedPtr& GetImageFrameSharedPtr() const {
-    if (use_gpu_ == true) ConvertToCpu();
-    return image_frame_;
-  }
-#if !MEDIAPIPE_DISABLE_GPU
+  // GPU getters.
 #if MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
   CVPixelBufferRef GetCVPixelBufferRef() const {
     if (use_gpu_ == false) ConvertToGpu();

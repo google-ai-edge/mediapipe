@@ -414,7 +414,7 @@ cc_library(
         "//mediapipe/framework/api2:node",
         "//mediapipe/framework/formats:matrix",
         "//mediapipe/framework/port:status",
-        "@eigen_archive//:eigen",
+        "@eigen_archive//:eigen3",
     ],
     alwayslink = 1,
 )
@@ -430,7 +430,7 @@ cc_library(
         "//mediapipe/framework/api2:node",
         "//mediapipe/framework/formats:matrix",
         "//mediapipe/framework/port:status",
-        "@eigen_archive//:eigen",
+        "@eigen_archive//:eigen3",
     ],
     alwayslink = 1,
 )
@@ -446,6 +446,20 @@ cc_library(
         "//mediapipe/framework/api2:node",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/stream_handler:mux_input_stream_handler",
+    ],
+    alwayslink = 1,
+)
+
+cc_library(
+    name = "nonzero_calculator",
+    srcs = ["nonzero_calculator.cc"],
+    visibility = [
+        "//visibility:public",
+    ],
+    deps = [
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/api2:node",
+        "//mediapipe/framework/port:ret_check",
     ],
     alwayslink = 1,
 )
@@ -776,7 +790,7 @@ cc_test(
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/framework/port:logging",
         "//mediapipe/framework/tool:validate_type",
-        "@eigen_archive//:eigen",
+        "@eigen_archive//:eigen3",
     ],
 )
 
@@ -793,7 +807,7 @@ cc_test(
         "//mediapipe/framework/port:logging",
         "//mediapipe/framework/port:parse_text_proto",
         "//mediapipe/framework/tool:validate_type",
-        "@eigen_archive//:eigen",
+        "@eigen_archive//:eigen3",
     ],
 )
 
@@ -1024,7 +1038,7 @@ cc_library(
         "//mediapipe/framework/tool:status_util",
         "//mediapipe/util:time_series_util",
         "@com_google_absl//absl/memory",
-        "@eigen_archive//:eigen",
+        "@eigen_archive//:eigen3",
     ],
     alwayslink = 1,
 )

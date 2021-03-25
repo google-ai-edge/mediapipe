@@ -34,6 +34,34 @@ constexpr char kRenderScaleTag[] = "RENDER_SCALE";
 constexpr char kRenderDataTag[] = "RENDER_DATA";
 constexpr char kLandmarkLabel[] = "KEYPOINT";
 
+inline Color DefaultMinDepthLineColor() {
+  Color color;
+  color.set_r(0);
+  color.set_g(0);
+  color.set_b(0);
+  return color;
+}
+
+inline Color DefaultMaxDepthLineColor() {
+  Color color;
+  color.set_r(255);
+  color.set_g(255);
+  color.set_b(255);
+  return color;
+}
+
+inline Color MixColors(const Color& color1, const Color& color2,
+                       float color1_weight) {
+  Color color;
+  color.set_r(static_cast<int>(color1.r() * color1_weight +
+                               color2.r() * (1.f - color1_weight)));
+  color.set_g(static_cast<int>(color1.g() * color1_weight +
+                               color2.g() * (1.f - color1_weight)));
+  color.set_b(static_cast<int>(color1.b() * color1_weight +
+                               color2.b() * (1.f - color1_weight)));
+  return color;
+}
+
 inline void SetColor(RenderAnnotation* annotation, const Color& color) {
   annotation->mutable_color()->set_r(color.r());
   annotation->mutable_color()->set_g(color.g());
@@ -57,6 +85,23 @@ inline void GetMinMaxZ(const LandmarkListType& landmarks, float* z_min,
   }
 }
 
+template <class LandmarkType>
+bool IsLandmarkVisibileAndPresent(const LandmarkType& landmark,
+                                  bool utilize_visibility,
+                                  float visibility_threshold,
+                                  bool utilize_presence,
+                                  float presence_threshold) {
+  if (utilize_visibility && landmark.has_visibility() &&
+      landmark.visibility() < visibility_threshold) {
+    return false;
+  }
+  if (utilize_presence && landmark.has_presence() &&
+      landmark.presence() < presence_threshold) {
+    return false;
+  }
+  return true;
+}
+
 void SetColorSizeValueFromZ(float z, float z_min, float z_max,
                             RenderAnnotation* render_annotation,
                             float min_depth_circle_thickness,
@@ -75,8 +120,9 @@ void SetColorSizeValueFromZ(float z, float z_min, float z_max,
 
 template <class LandmarkType>
 void AddConnectionToRenderData(const LandmarkType& start,
-                               const LandmarkType& end, int gray_val1,
-                               int gray_val2, float thickness, bool normalized,
+                               const LandmarkType& end,
+                               const Color& color_start, const Color& color_end,
+                               float thickness, bool normalized,
                                RenderData* render_data) {
   auto* connection_annotation = render_data->add_render_annotations();
   RenderAnnotation::GradientLine* line =
@@ -86,12 +132,13 @@ void AddConnectionToRenderData(const LandmarkType& start,
   line->set_x_end(end.x());
   line->set_y_end(end.y());
   line->set_normalized(normalized);
-  line->mutable_color1()->set_r(gray_val1);
-  line->mutable_color1()->set_g(gray_val1);
-  line->mutable_color1()->set_b(gray_val1);
-  line->mutable_color2()->set_r(gray_val2);
-  line->mutable_color2()->set_g(gray_val2);
-  line->mutable_color2()->set_b(gray_val2);
+  line->mutable_color1()->set_r(color_start.r());
+  line->mutable_color1()->set_g(color_start.g());
+  line->mutable_color1()->set_b(color_start.b());
+  line->mutable_color2()->set_r(color_end.r());
+  line->mutable_color2()->set_g(color_end.g());
+  line->mutable_color2()->set_b(color_end.b());
+
   connection_annotation->set_thickness(thickness);
 }
 
@@ -102,26 +149,26 @@ void AddConnectionsWithDepth(const LandmarkListType& landmarks,
                              float visibility_threshold, bool utilize_presence,
                              float presence_threshold, float thickness,
                              bool normalized, float min_z, float max_z,
+                             const Color& min_depth_line_color,
+                             const Color& max_depth_line_color,
                              RenderData* render_data) {
   for (int i = 0; i < landmark_connections.size(); i += 2) {
     const auto& ld0 = landmarks.landmark(landmark_connections[i]);
     const auto& ld1 = landmarks.landmark(landmark_connections[i + 1]);
-    if (utilize_visibility &&
-        ((ld0.has_visibility() && ld0.visibility() < visibility_threshold) ||
-         (ld1.has_visibility() && ld1.visibility() < visibility_threshold))) {
+    if (!IsLandmarkVisibileAndPresent<LandmarkType>(
+            ld0, utilize_visibility, visibility_threshold, utilize_presence,
+            presence_threshold) ||
+        !IsLandmarkVisibileAndPresent<LandmarkType>(
+            ld1, utilize_visibility, visibility_threshold, utilize_presence,
+            presence_threshold)) {
       continue;
     }
-    if (utilize_presence &&
-        ((ld0.has_presence() && ld0.presence() < presence_threshold) ||
-         (ld1.has_presence() && ld1.presence() < presence_threshold))) {
-      continue;
-    }
-    const int gray_val1 =
-        255 - static_cast<int>(Remap(ld0.z(), min_z, max_z, 255));
-    const int gray_val2 =
-        255 - static_cast<int>(Remap(ld1.z(), min_z, max_z, 255));
-    AddConnectionToRenderData<LandmarkType>(ld0, ld1, gray_val1, gray_val2,
-                                            thickness, normalized, render_data);
+    const Color color0 = MixColors(min_depth_line_color, max_depth_line_color,
+                                   Remap(ld0.z(), min_z, max_z, 1.f));
+    const Color color1 = MixColors(min_depth_line_color, max_depth_line_color,
+                                   Remap(ld1.z(), min_z, max_z, 1.f));
+    AddConnectionToRenderData<LandmarkType>(ld0, ld1, color0, color1, thickness,
+                                            normalized, render_data);
   }
 }
 
@@ -151,14 +198,12 @@ void AddConnections(const LandmarkListType& landmarks,
   for (int i = 0; i < landmark_connections.size(); i += 2) {
     const auto& ld0 = landmarks.landmark(landmark_connections[i]);
     const auto& ld1 = landmarks.landmark(landmark_connections[i + 1]);
-    if (utilize_visibility &&
-        ((ld0.has_visibility() && ld0.visibility() < visibility_threshold) ||
-         (ld1.has_visibility() && ld1.visibility() < visibility_threshold))) {
-      continue;
-    }
-    if (utilize_presence &&
-        ((ld0.has_presence() && ld0.presence() < presence_threshold) ||
-         (ld1.has_presence() && ld1.presence() < presence_threshold))) {
+    if (!IsLandmarkVisibileAndPresent<LandmarkType>(
+            ld0, utilize_visibility, visibility_threshold, utilize_presence,
+            presence_threshold) ||
+        !IsLandmarkVisibileAndPresent<LandmarkType>(
+            ld1, utilize_visibility, visibility_threshold, utilize_presence,
+            presence_threshold)) {
       continue;
     }
     AddConnectionToRenderData<LandmarkType>(ld0, ld1, connection_color,
@@ -232,6 +277,13 @@ absl::Status LandmarksToRenderDataCalculator::Process(CalculatorContext* cc) {
   float z_min = 0.f;
   float z_max = 0.f;
 
+  const Color min_depth_line_color = options_.has_min_depth_line_color()
+                                         ? options_.min_depth_line_color()
+                                         : DefaultMinDepthLineColor();
+  const Color max_depth_line_color = options_.has_max_depth_line_color()
+                                         ? options_.max_depth_line_color()
+                                         : DefaultMaxDepthLineColor();
+
   // Apply scale to `thickness` of rendered landmarks and connections to make
   // them bigger when object (e.g. pose, hand or face) is closer/bigger and
   // snaller when object is further/smaller.
@@ -254,7 +306,7 @@ absl::Status LandmarksToRenderDataCalculator::Process(CalculatorContext* cc) {
           landmarks, landmark_connections_, options_.utilize_visibility(),
           options_.visibility_threshold(), options_.utilize_presence(),
           options_.presence_threshold(), thickness, /*normalized=*/false, z_min,
-          z_max, render_data.get());
+          z_max, min_depth_line_color, max_depth_line_color, render_data.get());
     } else {
       AddConnections<LandmarkList, Landmark>(
           landmarks, landmark_connections_, options_.utilize_visibility(),
@@ -265,13 +317,10 @@ absl::Status LandmarksToRenderDataCalculator::Process(CalculatorContext* cc) {
     for (int i = 0; i < landmarks.landmark_size(); ++i) {
       const Landmark& landmark = landmarks.landmark(i);
 
-      if (options_.utilize_visibility() && landmark.has_visibility() &&
-          landmark.visibility() < options_.visibility_threshold()) {
-        continue;
-      }
-
-      if (options_.utilize_presence() && landmark.has_presence() &&
-          landmark.presence() < options_.presence_threshold()) {
+      if (!IsLandmarkVisibileAndPresent<Landmark>(
+              landmark, options_.utilize_visibility(),
+              options_.visibility_threshold(), options_.utilize_presence(),
+              options_.presence_threshold())) {
         continue;
       }
 
@@ -303,7 +352,7 @@ absl::Status LandmarksToRenderDataCalculator::Process(CalculatorContext* cc) {
           landmarks, landmark_connections_, options_.utilize_visibility(),
           options_.visibility_threshold(), options_.utilize_presence(),
           options_.presence_threshold(), thickness, /*normalized=*/true, z_min,
-          z_max, render_data.get());
+          z_max, min_depth_line_color, max_depth_line_color, render_data.get());
     } else {
       AddConnections<NormalizedLandmarkList, NormalizedLandmark>(
           landmarks, landmark_connections_, options_.utilize_visibility(),
@@ -314,12 +363,10 @@ absl::Status LandmarksToRenderDataCalculator::Process(CalculatorContext* cc) {
     for (int i = 0; i < landmarks.landmark_size(); ++i) {
       const NormalizedLandmark& landmark = landmarks.landmark(i);
 
-      if (options_.utilize_visibility() && landmark.has_visibility() &&
-          landmark.visibility() < options_.visibility_threshold()) {
-        continue;
-      }
-      if (options_.utilize_presence() && landmark.has_presence() &&
-          landmark.presence() < options_.presence_threshold()) {
+      if (!IsLandmarkVisibileAndPresent<NormalizedLandmark>(
+              landmark, options_.utilize_visibility(),
+              options_.visibility_threshold(), options_.utilize_presence(),
+              options_.presence_threshold())) {
         continue;
       }
 

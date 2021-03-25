@@ -61,13 +61,9 @@ Counter* CalculatorState::GetCounter(const std::string& name) {
   return counter_factory_->GetCounter(absl::StrCat(NodeName(), "-", name));
 }
 
-CounterSet* CalculatorState::GetCounterSet() {
+CounterFactory* CalculatorState::GetCounterFactory() {
   CHECK(counter_factory_);
-  return counter_factory_->GetCounterSet();
-}
-
-void CalculatorState::SetServicePacket(const std::string& key, Packet packet) {
-  service_packets_[key] = std::move(packet);
+  return counter_factory_;
 }
 
 }  // namespace mediapipe

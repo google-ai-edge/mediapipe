@@ -33,8 +33,8 @@ public class Graph {
   private static final FluentLogger logger = FluentLogger.forEnclosingClass();
   private static final int MAX_BUFFER_SIZE = 20;
   private long nativeGraphHandle;
-  // Hold the references to callbacks.
-  private final List<PacketCallback> packetCallbacks = new ArrayList<>();
+  // Hold the references to callbacks (PacketCallback and PacketListCallback).
+  private final List<Object> callbacks = new ArrayList<>();
   // Side packets used for running the graph.
   private Map<String, Packet> sidePackets = new HashMap<>();
   // Stream headers used for running the graph.
@@ -151,8 +151,27 @@ public class Graph {
     Preconditions.checkNotNull(streamName);
     Preconditions.checkNotNull(callback);
     Preconditions.checkState(!graphRunning && !startRunningGraphCalled);
-    packetCallbacks.add(callback);
+    callbacks.add(callback);
     nativeAddPacketCallback(nativeGraphHandle, streamName, callback);
+  }
+
+  /**
+   * Adds a {@link PacketListCallback} to the context for callback during graph running.
+   *
+   * @param streamNames The output stream names in the graph for callback.
+   * @param callback The callback for handling the call when all output streams listed in
+   *     streamNames get {@link Packet}.
+   * @throws MediaPipeException for any error status.
+   */
+  public synchronized void addMultiStreamCallback(
+      List<String> streamNames, PacketListCallback callback) {
+    Preconditions.checkState(
+        nativeGraphHandle != 0, "Invalid context, tearDown() might have been called already.");
+    Preconditions.checkNotNull(streamNames);
+    Preconditions.checkNotNull(callback);
+    Preconditions.checkState(!graphRunning && !startRunningGraphCalled);
+    callbacks.add(callback);
+    nativeAddMultiStreamCallback(nativeGraphHandle, streamNames, callback);
   }
 
   /**
@@ -443,7 +462,7 @@ public class Graph {
         nativeGraphHandle = 0;
       }
     }
-    packetCallbacks.clear();
+    callbacks.clear();
   }
 
   /**
@@ -579,6 +598,9 @@ public class Graph {
 
   private native void nativeAddPacketCallback(
       long context, String streamName, PacketCallback callback);
+
+  private native void nativeAddMultiStreamCallback(
+      long context, List<String> streamName, PacketListCallback callback);
 
   private native long nativeAddSurfaceOutput(long context, String streamName);
 

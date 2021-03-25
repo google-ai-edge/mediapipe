@@ -20,7 +20,7 @@ package(default_visibility = ["//mediapipe/examples:__subpackages__"])
 # To run 3D object detection for shoes,
 # bazel-bin/mediapipe/examples/desktop/object_detection_3d/objectron_cpu \
 #   --calculator_graph_config_file=mediapipe/graphs/object_detection_3d/objectron_desktop_cpu.pbtxt \
-#   --input_side_packets="input_video_path=<input_video_path>,box_landmark_model_path=mediapipe/models/object_detection_3d_sneakers.tflite,output_video_path=<output_video_path>,allowed_labels=Footwear"
+#   --input_side_packets="input_video_path=<input_video_path>,box_landmark_model_path=mediapipe/modules/objectron/object_detection_3d_sneakers.tflite,output_video_path=<output_video_path>,allowed_labels=Footwear"
 # To detect objects from other categories, change box_landmark_model_path and allowed_labels accordingly.
 # Chair: box_landmark_model_path=mediapipe/modules/objectron/object_detection_3d_chair.tflite,allowed_labels=Chair
 # Camera: box_landmark_model_path=mediapipe/modules/objectron/object_detection_3d_camera.tflite,allowed_labels=Camera

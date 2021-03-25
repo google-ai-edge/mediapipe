@@ -19,19 +19,19 @@
 #include <fstream>
 #include <string>
 
+#include "absl/flags/flag.h"
+#include "absl/flags/parse.h"
 #include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/framework/port/advanced_proto_inc.h"
 #include "mediapipe/framework/port/canonical_errors.h"
-#include "mediapipe/framework/port/commandlineflags.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status.h"
 
-DEFINE_string(proto_source, "",
-              "The template source file containing CalculatorGraphConfig "
-              "protobuf text with inline template params.");
-DEFINE_string(
-    proto_output, "",
-    "An output template file in binary CalculatorGraphTemplate form.");
+ABSL_FLAG(std::string, proto_source, "",
+          "The template source file containing CalculatorGraphConfig "
+          "protobuf text with inline template params.");
+ABSL_FLAG(std::string, proto_output, "",
+          "An output template file in binary CalculatorGraphTemplate form.");
 
 #define EXIT_IF_ERROR(status) \
   if (!status.ok()) {         \
@@ -92,7 +92,7 @@ absl::Status WriteFile(const std::string& proto_output, bool write_text,
 
 int main(int argc, char** argv) {
   google::InitGoogleLogging(argv[0]);
-  gflags::ParseCommandLineFlags(&argc, &argv, true);
+  absl::ParseCommandLine(argc, argv);
 
   // Validate command line options.
   absl::Status status;

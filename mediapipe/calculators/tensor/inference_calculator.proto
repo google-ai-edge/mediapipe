@@ -51,12 +51,12 @@ message InferenceCalculatorOptions {
 
       // This option is valid for TFLite GPU delegate API2 only,
       // Choose any of available APIs to force running inference using it.
-      enum API {
+      enum Api {
         ANY = 0;
         OPENGL = 1;
         OPENCL = 2;
       }
-      optional API api = 4 [default = ANY];
+      optional Api api = 4 [default = ANY];
 
       // This option is valid for TFLite GPU delegate API2 only,
       // Set to true to use 16-bit float precision. If max precision is needed,

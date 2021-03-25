@@ -20,6 +20,7 @@
 #include "absl/strings/match.h"
 #include "mediapipe/framework/port/file_helpers.h"
 #include "mediapipe/framework/port/ret_check.h"
+#include "mediapipe/framework/port/statusor.h"
 #include "mediapipe/util/resource_util.h"
 
 namespace mediapipe {
@@ -39,6 +40,23 @@ absl::StatusOr<std::string> PathToResourceAsFileInternal(
   return resolved_path;
 }
 }  // namespace
+
+namespace internal {
+absl::Status DefaultGetResourceContents(const std::string& path,
+                                        std::string* output,
+                                        bool read_as_binary) {
+  if (!read_as_binary) {
+    LOG(WARNING) << "Setting \"read_as_binary\" to false is a no-op on ios.";
+  }
+  ASSIGN_OR_RETURN(std::string full_path, PathToResourceAsFile(path));
+
+  std::ifstream input_file(full_path);
+  std::stringstream buffer;
+  buffer << input_file.rdbuf();
+  buffer.str().swap(*output);
+  return absl::OkStatus();
+}
+}  // namespace internal
 
 absl::StatusOr<std::string> PathToResourceAsFile(const std::string& path) {
   // Return full path.
@@ -81,20 +99,6 @@ absl::StatusOr<std::string> PathToResourceAsFile(const std::string& path) {
   }
 
   return path;
-}
-
-absl::Status GetResourceContents(const std::string& path, std::string* output,
-                                 bool read_as_binary) {
-  if (!read_as_binary) {
-    LOG(WARNING) << "Setting \"read_as_binary\" to false is a no-op on ios.";
-  }
-  ASSIGN_OR_RETURN(std::string full_path, PathToResourceAsFile(path));
-
-  std::ifstream input_file(full_path);
-  std::stringstream buffer;
-  buffer << input_file.rdbuf();
-  buffer.str().swap(*output);
-  return absl::OkStatus();
 }
 
 }  // namespace mediapipe
