@@ -205,7 +205,6 @@ public class MainActivity extends com.google.mediapipe.apps.basic.MainActivity {
     currentSticker = null;
 
     SensorManager sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
-    List<Sensor> sensorList = sensorManager.getSensorList(Sensor.TYPE_ROTATION_VECTOR);
     sensorManager.registerListener(
         new SensorEventListener() {
           private final float[] rotMatFromVec = new float[9];
@@ -224,7 +223,7 @@ public class MainActivity extends com.google.mediapipe.apps.basic.MainActivity {
                 rotMatFromVec, SensorManager.AXIS_MINUS_X, SensorManager.AXIS_Y, rotationMatrix);
           }
         },
-        (Sensor) sensorList.get(0),
+        sensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR),
         SENSOR_SAMPLE_DELAY);
 
     // Mechanisms for zoom, pinch, rotation, tap gestures
