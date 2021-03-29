@@ -19,9 +19,10 @@ MediaPipe currently offers the following solutions:
 Solution          | NPM Package                   | Example
 ----------------- | ----------------------------- | -------
 [Face Mesh][F-pg] | [@mediapipe/face_mesh][F-npm] | [mediapipe.dev/demo/face_mesh][F-demo]
+[Face Detection][Fd-pg] | [@mediapipe/face_detection][Fd-npm] | [mediapipe.dev/demo/face_detection][Fd-demo]
 [Hands][H-pg]     | [@mediapipe/hands][H-npm]     | [mediapipe.dev/demo/hands][H-demo]
-[Pose][P-pg]      | [@mediapipe/pose][P-npm]      | [mediapipe.dev/demo/pose][P-demo]
 [Holistic][Ho-pg] | [@mediapipe/holistic][Ho-npm] | [mediapipe.dev/demo/holistic][Ho-demo]
+[Pose][P-pg]      | [@mediapipe/pose][P-npm]      | [mediapipe.dev/demo/pose][P-demo]
 
 Note: Also see the [Holistic Remote demo][Ho-Re], which explores more options in the Holistic Demo. <!--This doesn't have a CodePen or NPM repository yet.-->
 
@@ -69,6 +70,7 @@ affecting your work, restrict your request to a `<minor>` number. e.g.,
 [P-pg]: ../solutions/pose.md#javascript-solution-api
 [Ho-npm]: https://www.npmjs.com/package/@mediapipe/holistic
 [F-npm]: https://www.npmjs.com/package/@mediapipe/face_mesh
+[Fd-npm]: https://www.npmjs.com/package/@mediapipe/face_detection
 [H-npm]: https://www.npmjs.com/package/@mediapipe/hands
 [P-npm]: https://www.npmjs.com/package/@mediapipe/pose
 [draw-npm]: https://www.npmjs.com/package/@mediapipe/drawing_utils
@@ -76,15 +78,18 @@ affecting your work, restrict your request to a `<minor>` number. e.g.,
 [ctrl-npm]: https://www.npmjs.com/package/@mediapipe/control_utils
 [Ho-jsd]: https://www.jsdelivr.com/package/npm/@mediapipe/holistic
 [F-jsd]: https://www.jsdelivr.com/package/npm/@mediapipe/face_mesh
+[Fd-jsd]: https://www.jsdelivr.com/package/npm/@mediapipe/face_detection
 [H-jsd]: https://www.jsdelivr.com/package/npm/@mediapipe/hands
 [P-jsd]: https://www.jsdelivr.com/package/npm/@mediapipe/pose
 [Ho-pen]: https://code.mediapipe.dev/codepen/holistic
 [F-pen]: https://code.mediapipe.dev/codepen/face_mesh
+[Fd-pen]: https://code.mediapipe.dev/codepen/face_detection
 [H-pen]: https://code.mediapipe.dev/codepen/hands
 [P-pen]: https://code.mediapipe.dev/codepen/pose
 [Ho-demo]: https://mediapipe.dev/demo/holistic
 [Ho-Re]: https://mediapipe.dev/demo/holistic_remote
 [F-demo]: https://mediapipe.dev/demo/face_mesh
+[Fd-demo]: https://mediapipe.dev/demo/face_detection
 [H-demo]: https://mediapipe.dev/demo/hands
 [P-demo]: https://mediapipe.dev/demo/pose
 [npm]: https://www.npmjs.com/package/@mediapipe

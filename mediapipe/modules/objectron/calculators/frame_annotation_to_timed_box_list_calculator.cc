@@ -47,15 +47,15 @@ namespace mediapipe {
 // }
 class FrameAnnotationToTimedBoxListCalculator : public CalculatorBase {
  public:
-  static mediapipe::Status GetContract(CalculatorContract* cc);
+  static absl::Status GetContract(CalculatorContract* cc);
 
-  mediapipe::Status Open(CalculatorContext* cc) override;
-  mediapipe::Status Process(CalculatorContext* cc) override;
-  mediapipe::Status Close(CalculatorContext* cc) override;
+  absl::Status Open(CalculatorContext* cc) override;
+  absl::Status Process(CalculatorContext* cc) override;
+  absl::Status Close(CalculatorContext* cc) override;
 };
 REGISTER_CALCULATOR(FrameAnnotationToTimedBoxListCalculator);
 
-mediapipe::Status FrameAnnotationToTimedBoxListCalculator::GetContract(
+absl::Status FrameAnnotationToTimedBoxListCalculator::GetContract(
     CalculatorContract* cc) {
   RET_CHECK(!cc->Inputs().GetTags().empty());
   RET_CHECK(!cc->Outputs().GetTags().empty());
@@ -67,15 +67,15 @@ mediapipe::Status FrameAnnotationToTimedBoxListCalculator::GetContract(
   if (cc->Outputs().HasTag(kOutputStreamTag)) {
     cc->Outputs().Tag(kOutputStreamTag).Set<TimedBoxProtoList>();
   }
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-mediapipe::Status FrameAnnotationToTimedBoxListCalculator::Open(
+absl::Status FrameAnnotationToTimedBoxListCalculator::Open(
     CalculatorContext* cc) {
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-mediapipe::Status FrameAnnotationToTimedBoxListCalculator::Process(
+absl::Status FrameAnnotationToTimedBoxListCalculator::Process(
     CalculatorContext* cc) {
   if (cc->Inputs().HasTag(kInputStreamTag) &&
       !cc->Inputs().Tag(kInputStreamTag).IsEmpty()) {
@@ -104,12 +104,12 @@ mediapipe::Status FrameAnnotationToTimedBoxListCalculator::Process(
     }
   }
 
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-mediapipe::Status FrameAnnotationToTimedBoxListCalculator::Close(
+absl::Status FrameAnnotationToTimedBoxListCalculator::Close(
     CalculatorContext* cc) {
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
 }  // namespace mediapipe

@@ -123,10 +123,10 @@ class BoxTrackerCalculator : public CalculatorBase {
  public:
   ~BoxTrackerCalculator() override = default;
 
-  static mediapipe::Status GetContract(CalculatorContract* cc);
+  static absl::Status GetContract(CalculatorContract* cc);
 
-  mediapipe::Status Open(CalculatorContext* cc) override;
-  mediapipe::Status Process(CalculatorContext* cc) override;
+  absl::Status Open(CalculatorContext* cc) override;
+  absl::Status Process(CalculatorContext* cc) override;
 
  protected:
   void RenderStates(const std::vector<MotionBoxState>& states, cv::Mat* mat);
@@ -373,7 +373,7 @@ void AddStateToPath(const MotionBoxState& state, int64 time_msec,
 
 }  // namespace.
 
-mediapipe::Status BoxTrackerCalculator::GetContract(CalculatorContract* cc) {
+absl::Status BoxTrackerCalculator::GetContract(CalculatorContract* cc) {
   if (cc->Inputs().HasTag("TRACKING")) {
     cc->Inputs().Tag("TRACKING").Set<TrackingData>();
   }
@@ -452,10 +452,10 @@ mediapipe::Status BoxTrackerCalculator::GetContract(CalculatorContract* cc) {
     cc->InputSidePackets().Tag(kOptionsTag).Set<CalculatorOptions>();
   }
 
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-mediapipe::Status BoxTrackerCalculator::Open(CalculatorContext* cc) {
+absl::Status BoxTrackerCalculator::Open(CalculatorContext* cc) {
   options_ = tool::RetrieveOptions(cc->Options<BoxTrackerCalculatorOptions>(),
                                    cc->InputSidePackets(), kOptionsTag);
 
@@ -515,10 +515,10 @@ mediapipe::Status BoxTrackerCalculator::Open(CalculatorContext* cc) {
         << "Streaming mode not compatible with cache dir.";
   }
 
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-mediapipe::Status BoxTrackerCalculator::Process(CalculatorContext* cc) {
+absl::Status BoxTrackerCalculator::Process(CalculatorContext* cc) {
   // Batch mode, issue tracking requests.
   if (box_tracker_ && !tracking_issued_) {
     for (const auto& pos : initial_pos_.box()) {
@@ -530,7 +530,7 @@ mediapipe::Status BoxTrackerCalculator::Process(CalculatorContext* cc) {
   const Timestamp& timestamp = cc->InputTimestamp();
   if (timestamp == Timestamp::PreStream()) {
     // Indicator packet.
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
   InputStream* track_stream = cc->Inputs().HasTag("TRACKING")
@@ -892,7 +892,7 @@ mediapipe::Status BoxTrackerCalculator::Process(CalculatorContext* cc) {
     cc->Outputs().Tag("VIZ").Add(viz_frame.release(), timestamp);
   }
 
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
 void BoxTrackerCalculator::AddSmoothTransitionToOutputBox(

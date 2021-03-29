@@ -481,8 +481,7 @@ class Graph {
   std::string TaggedName(const TagIndexLocation& loc, const std::string& name) {
     if (loc.tag.empty()) {
       // ParseTagIndexName does not allow using explicit indices without tags,
-      // while ParseTagIndex does. There is no explanation for this discrepancy
-      // in the CLs that introduced them (cl/143209019, cl/156499931).
+      // while ParseTagIndex does.
       // TODO: decide whether we should just allow it.
       return name;
     } else {
@@ -494,8 +493,8 @@ class Graph {
     }
   }
 
-  mediapipe::Status UpdateNodeConfig(const NodeBase& node,
-                                     CalculatorGraphConfig::Node* config) {
+  absl::Status UpdateNodeConfig(const NodeBase& node,
+                                CalculatorGraphConfig::Node* config) {
     config->set_calculator(node.type_);
     node.in_streams_.Visit(
         [&](const TagIndexLocation& loc, const DestinationBase& endpoint) {
@@ -521,8 +520,8 @@ class Graph {
     return {};
   }
 
-  mediapipe::Status UpdateNodeConfig(const PacketGenerator& node,
-                                     PacketGeneratorConfig* config) {
+  absl::Status UpdateNodeConfig(const PacketGenerator& node,
+                                PacketGeneratorConfig* config) {
     config->set_packet_generator(node.type_);
     node.in_sides_.Visit([&](const TagIndexLocation& loc,
                              const DestinationBase& endpoint) {
@@ -540,7 +539,7 @@ class Graph {
   }
 
   // For special boundary node.
-  mediapipe::Status UpdateBoundaryConfig(CalculatorGraphConfig* config) {
+  absl::Status UpdateBoundaryConfig(CalculatorGraphConfig* config) {
     graph_boundary_.in_streams_.Visit(
         [&](const TagIndexLocation& loc, const DestinationBase& endpoint) {
           CHECK(endpoint.source != nullptr);

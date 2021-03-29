@@ -63,9 +63,11 @@ cc_library(
 cc_test(
     name = "optical_flow_field_test",
     srcs = ["optical_flow_field_test.cc"],
+    linkstatic = 1,
     deps = [
         ":optical_flow_field",
         "//mediapipe/framework/deps:file_path",
+        "//mediapipe/framework/port:commandlineflags",
         "//mediapipe/framework/port:file_helpers",
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/framework/port:integral_types",

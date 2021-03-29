@@ -78,7 +78,7 @@ TEST(CollectionTest, MixedTagAndIndexUsage) {
                           "TAG_C:0:e", "TAG_A:1:f"});
   MP_ASSERT_OK(tags_statusor);
 
-  internal::Collection<int> collection1(std::move(tags_statusor.ValueOrDie()));
+  internal::Collection<int> collection1(std::move(tags_statusor.value()));
   collection1.Get("TAG_A", 0) = 100;
   collection1.Get("TAG_A", 1) = 101;
   collection1.Get("TAG_A", 2) = 102;
@@ -165,16 +165,16 @@ TEST(CollectionTest, StaticEmptyCollectionHeapCheck) {
   // "new T[0]" returns a non-null pointer which the heap checker has
   // issues in tracking.  Additionally, allocating of empty arrays is
   // also inefficient as it invokes heap management routines.
-  static auto* collection1 = new PacketSet(tool::CreateTagMap({}).ValueOrDie());
+  static auto* collection1 = new PacketSet(tool::CreateTagMap({}).value());
   // Heap check issues are most triggered when zero length and non-zero
   // length allocations are interleaved.  Additionally, this heap check
   // wasn't triggered by "char", so a more complex type (Packet) is used.
   static auto* collection2 =
-      new PacketSet(tool::CreateTagMap({"TAG:name"}).ValueOrDie());
-  static auto* collection3 = new PacketSet(tool::CreateTagMap({}).ValueOrDie());
+      new PacketSet(tool::CreateTagMap({"TAG:name"}).value());
+  static auto* collection3 = new PacketSet(tool::CreateTagMap({}).value());
   static auto* collection4 =
-      new PacketSet(tool::CreateTagMap({"TAG:name"}).ValueOrDie());
-  static auto* collection5 = new PacketSet(tool::CreateTagMap({}).ValueOrDie());
+      new PacketSet(tool::CreateTagMap({"TAG:name"}).value());
+  static auto* collection5 = new PacketSet(tool::CreateTagMap({}).value());
   EXPECT_EQ(0, collection1->NumEntries());
   EXPECT_EQ(1, collection2->NumEntries());
   EXPECT_EQ(0, collection3->NumEntries());
@@ -183,12 +183,12 @@ TEST(CollectionTest, StaticEmptyCollectionHeapCheck) {
 }
 
 template <typename T>
-mediapipe::Status TestCollectionWithPointers(
-    const std::vector<T>& original_values, const T& inject1, const T& inject2) {
+absl::Status TestCollectionWithPointers(const std::vector<T>& original_values,
+                                        const T& inject1, const T& inject2) {
   std::shared_ptr<tool::TagMap> tag_map =
       tool::CreateTagMap({"TAG_A:a", "TAG_B:1:b", "TAG_A:2:c", "TAG_B:d",
                           "TAG_C:0:e", "TAG_A:1:f"})
-          .ValueOrDie();
+          .value();
 
   {
     // Test a regular collection.
@@ -451,7 +451,7 @@ mediapipe::Status TestCollectionWithPointers(
       ++i;
     }
   }
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
 TEST(CollectionTest, TestCollectionWithPointersIntAndString) {
@@ -464,7 +464,7 @@ TEST(CollectionTest, TestIteratorFunctions) {
   std::shared_ptr<tool::TagMap> tag_map =
       tool::CreateTagMap({"TAG_A:a", "TAG_B:1:b", "TAG_A:2:c", "TAG_B:d",
                           "TAG_C:0:e", "TAG_A:1:f"})
-          .ValueOrDie();
+          .value();
 
   std::vector<std::string> values = {"a0", "a1", "a2", "b0", "b1", "c0"};
   internal::Collection<std::string, internal::CollectionStorage::kStorePointer>

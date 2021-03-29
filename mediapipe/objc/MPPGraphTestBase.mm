@@ -19,7 +19,7 @@
 
 static UIImage* UIImageWithPixelBuffer(CVPixelBufferRef pixelBuffer) {
   CFHolder<CGImageRef> cgImage;
-  ::mediapipe::Status status = CreateCGImageFromCVPixelBuffer(pixelBuffer, &cgImage);
+  absl::Status status = CreateCGImageFromCVPixelBuffer(pixelBuffer, &cgImage);
   if (!status.ok()) {
     return nil;
   }
@@ -441,7 +441,7 @@ static void EnsureOutputDirFor(NSString *outputFile) {
   for (NSString* inputStream in fileInputs) {
     UIImage* inputImage = [self testImageNamed:fileInputs[inputStream] extension:nil];
     XCTAssertNotNil(inputImage);
-    ::mediapipe::Status status =
+    absl::Status status =
         CreateCVPixelBufferFromCGImage(inputImage.CGImage, &inputBuffers[inputStream.UTF8String]);
     XCTAssert(status.ok());
   }
@@ -449,8 +449,7 @@ static void EnsureOutputDirFor(NSString *outputFile) {
   UIImage* expectedImage = [self testImageNamed:expectedPath extension:nil];
   XCTAssertNotNil(expectedImage);
   CFHolder<CVPixelBufferRef> expectedBuffer;
-  ::mediapipe::Status status =
-      CreateCVPixelBufferFromCGImage(expectedImage.CGImage, &expectedBuffer);
+  absl::Status status = CreateCVPixelBufferFromCGImage(expectedImage.CGImage, &expectedBuffer);
   XCTAssert(status.ok());
 
   CVPixelBufferRef outputBuffer = [self runGraph:graph

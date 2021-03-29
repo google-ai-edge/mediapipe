@@ -67,14 +67,14 @@ class PacketGeneratorGraph {
   // stage and will be common to all calls to CalculatorGraph::Run().
   // Any generators which are runnable at this stage (that only depend on
   // things in the graph or input_side_packets) will be run at this time.
-  virtual mediapipe::Status Initialize(
+  virtual absl::Status Initialize(
       const ValidatedGraphConfig* validated_graph,
       mediapipe::Executor* executor,
       const std::map<std::string, Packet>& input_side_packets);
 
   // Add the input_side_packets and run any remaining generators (which
   // must now be runnable) to produce output_side_packets.
-  virtual mediapipe::Status RunGraphSetup(
+  virtual absl::Status RunGraphSetup(
       const std::map<std::string, Packet>& input_side_packets,
       std::map<std::string, Packet>* output_side_packets) const;
 
@@ -96,7 +96,7 @@ class PacketGeneratorGraph {
   // packets and unrunnable generators.  "initial" must be set to true for
   // the first pass and false for subsequent passes.  output_side_packets
   // must be set to include the input side packets before calling.
-  mediapipe::Status ExecuteGenerators(
+  absl::Status ExecuteGenerators(
       std::map<std::string, Packet>* output_side_packets,
       std::vector<int>* non_scheduled_generators, bool initial) const;
 

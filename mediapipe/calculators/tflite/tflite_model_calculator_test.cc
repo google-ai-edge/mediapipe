@@ -58,7 +58,7 @@ TEST(TfLiteModelCalculatorTest, SmokeTest) {
   MP_ASSERT_OK(graph.WaitUntilIdle());
   auto status_or_packet = graph.GetOutputSidePacket("model");
   MP_ASSERT_OK(status_or_packet);
-  auto model_packet = status_or_packet.ValueOrDie();
+  auto model_packet = status_or_packet.value();
   const auto& model = model_packet.Get<
       std::unique_ptr<tflite::FlatBufferModel,
                       std::function<void(tflite::FlatBufferModel*)>>>();

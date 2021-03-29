@@ -56,8 +56,6 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         "//mediapipe/calculators/core:constant_side_packet_calculator",
-        "//mediapipe/calculators/tflite:tflite_model_calculator",
-        "//mediapipe/calculators/util:local_file_contents_calculator",
         "//mediapipe/calculators/video:opencv_video_decoder_calculator",
         "//mediapipe/calculators/video:opencv_video_encoder_calculator",
         "//mediapipe/graphs/object_detection_3d/subgraphs:renderer_cpu",

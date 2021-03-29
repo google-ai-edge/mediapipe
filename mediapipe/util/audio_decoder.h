@@ -50,10 +50,10 @@ class BasePacketProcessor {
   virtual ~BasePacketProcessor();
 
   // Opens the codec.
-  virtual mediapipe::Status Open(int id, AVStream* stream) = 0;
+  virtual absl::Status Open(int id, AVStream* stream) = 0;
 
   // Processes a packet of data.  Caller retains ownership of packet.
-  virtual mediapipe::Status ProcessPacket(AVPacket* packet) = 0;
+  virtual absl::Status ProcessPacket(AVPacket* packet) = 0;
 
   // Returns true if the processor has data immediately available
   // (without providing more data with ProcessPacket()).
@@ -61,11 +61,11 @@ class BasePacketProcessor {
 
   // Fills packet with the next frame of data.  Returns an empty packet
   // if there is nothing to return.
-  mediapipe::Status GetData(Packet* packet);
+  absl::Status GetData(Packet* packet);
 
   // Once no more AVPackets are available in the file, each stream must
   // be flushed to get any remaining frames which the codec is buffering.
-  mediapipe::Status Flush();
+  absl::Status Flush();
 
   // Closes the Processor, this does not close the file.  You may not
   // call ProcessPacket() after calling Close().  Close() may be called
@@ -74,11 +74,11 @@ class BasePacketProcessor {
 
  protected:
   // Decodes frames in a packet.
-  virtual mediapipe::Status Decode(const AVPacket& packet,
-                                   bool ignore_decode_failures);
+  virtual absl::Status Decode(const AVPacket& packet,
+                              bool ignore_decode_failures);
 
   // Processes a decoded frame.
-  virtual mediapipe::Status ProcessDecodedFrame(const AVPacket& packet) = 0;
+  virtual absl::Status ProcessDecodedFrame(const AVPacket& packet) = 0;
 
   // Corrects the given PTS for MPEG PTS rollover. Assumed to be called with
   // the PTS of each frame in decode order. We detect a rollover whenever the
@@ -132,17 +132,17 @@ class AudioPacketProcessor : public BasePacketProcessor {
  public:
   explicit AudioPacketProcessor(const AudioStreamOptions& options);
 
-  mediapipe::Status Open(int id, AVStream* stream) override;
+  absl::Status Open(int id, AVStream* stream) override;
 
-  mediapipe::Status ProcessPacket(AVPacket* packet) override;
+  absl::Status ProcessPacket(AVPacket* packet) override;
 
-  mediapipe::Status FillHeader(TimeSeriesHeader* header) const;
+  absl::Status FillHeader(TimeSeriesHeader* header) const;
 
  private:
   // Appends audio in buffer(s) to the output buffer (buffer_).
-  mediapipe::Status AddAudioDataToBuffer(const Timestamp output_timestamp,
-                                         uint8* const* raw_audio,
-                                         int buf_size_bytes);
+  absl::Status AddAudioDataToBuffer(const Timestamp output_timestamp,
+                                    uint8* const* raw_audio,
+                                    int buf_size_bytes);
 
   // Converts a number of samples into an approximate stream timestamp value.
   int64 SampleNumberToTimestamp(const int64 sample_number);
@@ -154,11 +154,11 @@ class AudioPacketProcessor : public BasePacketProcessor {
 
   // Returns an error if the sample format in avformat_ctx_.sample_format
   // is not supported.
-  mediapipe::Status ValidateSampleFormat();
+  absl::Status ValidateSampleFormat();
 
   // Processes a decoded audio frame.  audio_frame_ must have been filled
   // with the frame before calling this function.
-  mediapipe::Status ProcessDecodedFrame(const AVPacket& packet) override;
+  absl::Status ProcessDecodedFrame(const AVPacket& packet) override;
 
   // Corrects PTS for rollover if correction is enabled.
   int64 MaybeCorrectPtsForRollover(int64 media_pts);
@@ -194,19 +194,19 @@ class AudioDecoder {
   AudioDecoder();
   ~AudioDecoder();
 
-  mediapipe::Status Initialize(const std::string& input_file,
-                               const mediapipe::AudioDecoderOptions options);
+  absl::Status Initialize(const std::string& input_file,
+                          const mediapipe::AudioDecoderOptions options);
 
-  mediapipe::Status GetData(int* options_index, Packet* data);
+  absl::Status GetData(int* options_index, Packet* data);
 
-  mediapipe::Status Close();
+  absl::Status Close();
 
-  mediapipe::Status FillAudioHeader(const AudioStreamOptions& stream_option,
-                                    TimeSeriesHeader* header) const;
+  absl::Status FillAudioHeader(const AudioStreamOptions& stream_option,
+                               TimeSeriesHeader* header) const;
 
  private:
-  mediapipe::Status ProcessPacket();
-  mediapipe::Status Flush();
+  absl::Status ProcessPacket();
+  absl::Status Flush();
 
   std::map<int, int> stream_id_to_audio_options_index_;
   std::map<int, int> stream_index_to_stream_id_;

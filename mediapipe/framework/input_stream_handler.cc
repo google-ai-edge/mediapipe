@@ -24,13 +24,13 @@ namespace mediapipe {
 
 using SyncSet = InputStreamHandler::SyncSet;
 
-mediapipe::Status InputStreamHandler::InitializeInputStreamManagers(
+absl::Status InputStreamHandler::InitializeInputStreamManagers(
     InputStreamManager* flat_input_stream_managers) {
   for (CollectionItemId id = input_stream_managers_.BeginId();
        id < input_stream_managers_.EndId(); ++id) {
     input_stream_managers_.Get(id) = &flat_input_stream_managers[id.value()];
   }
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
 InputStreamManager* InputStreamHandler::GetInputStreamManager(
@@ -38,7 +38,7 @@ InputStreamManager* InputStreamHandler::GetInputStreamManager(
   return input_stream_managers_.Get(id);
 }
 
-mediapipe::Status InputStreamHandler::SetupInputShards(
+absl::Status InputStreamHandler::SetupInputShards(
     InputStreamShardSet* input_shards) {
   RET_CHECK(input_shards);
   for (CollectionItemId id = input_stream_managers_.BeginId();
@@ -48,7 +48,7 @@ mediapipe::Status InputStreamHandler::SetupInputShards(
     input_shards->Get(id).SetName(&manager->Name());
     input_shards->Get(id).SetHeader(manager->Header());
   }
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
 std::vector<std::pair<std::string, int>>
@@ -68,7 +68,7 @@ void InputStreamHandler::PrepareForRun(
     std::function<void()> headers_ready_callback,
     std::function<void()> notification_callback,
     std::function<void(CalculatorContext*)> schedule_callback,
-    std::function<void(mediapipe::Status)> error_callback) {
+    std::function<void(absl::Status)> error_callback) {
   headers_ready_callback_ = std::move(headers_ready_callback);
   notification_ = std::move(notification_callback);
   schedule_callback_ = std::move(schedule_callback);
@@ -94,7 +94,7 @@ void InputStreamHandler::SetQueueSizeCallbacks(
 }
 
 void InputStreamHandler::SetHeader(CollectionItemId id, const Packet& header) {
-  mediapipe::Status result = input_stream_managers_.Get(id)->SetHeader(header);
+  absl::Status result = input_stream_managers_.Get(id)->SetHeader(header);
   if (!result.ok()) {
     error_callback_(result);
     return;
@@ -260,7 +260,7 @@ void InputStreamHandler::AddPackets(CollectionItemId id,
   LogQueuedPackets(GetCalculatorContext(calculator_context_manager_),
                    input_stream_managers_.Get(id), packets.back());
   bool notify = false;
-  mediapipe::Status result =
+  absl::Status result =
       input_stream_managers_.Get(id)->AddPackets(packets, &notify);
   if (!result.ok()) {
     error_callback_(result);
@@ -275,7 +275,7 @@ void InputStreamHandler::MovePackets(CollectionItemId id,
   LogQueuedPackets(GetCalculatorContext(calculator_context_manager_),
                    input_stream_managers_.Get(id), packets->back());
   bool notify = false;
-  mediapipe::Status result =
+  absl::Status result =
       input_stream_managers_.Get(id)->MovePackets(packets, &notify);
   if (!result.ok()) {
     error_callback_(result);
@@ -288,7 +288,7 @@ void InputStreamHandler::MovePackets(CollectionItemId id,
 void InputStreamHandler::SetNextTimestampBound(CollectionItemId id,
                                                Timestamp bound) {
   bool notify = false;
-  mediapipe::Status result =
+  absl::Status result =
       input_stream_managers_.Get(id)->SetNextTimestampBound(bound, &notify);
   if (!result.ok()) {
     error_callback_(result);

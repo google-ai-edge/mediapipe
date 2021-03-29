@@ -20,17 +20,17 @@
 
 namespace mediapipe {
 
-mediapipe::Status OutputStreamManager::Initialize(
-    const std::string& name, const PacketType* packet_type) {
+absl::Status OutputStreamManager::Initialize(const std::string& name,
+                                             const PacketType* packet_type) {
   output_stream_spec_.name = name;
   output_stream_spec_.packet_type = packet_type;
   output_stream_spec_.offset_enabled = false;
   PrepareForRun(nullptr);
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
 void OutputStreamManager::PrepareForRun(
-    std::function<void(mediapipe::Status)> error_callback) {
+    std::function<void(absl::Status)> error_callback) {
   output_stream_spec_.error_callback = std::move(error_callback);
 
   output_stream_spec_.locked_intro_data = false;
@@ -117,7 +117,6 @@ Timestamp OutputStreamManager::ComputeOutputTimestampBound(
   //                 MaxOutputTimestamp(completed_timestamp) + 1)
   // Note that "MaxOutputTimestamp()" must consider both output packet
   // timetstamp and SetNextTimestampBound values.
-  // See the timestamp mapping section in go/mediapipe-bounds for details.
   Timestamp input_bound;
   if (output_stream_spec_.offset_enabled &&
       input_timestamp != Timestamp::Unstarted()) {

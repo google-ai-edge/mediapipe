@@ -39,14 +39,14 @@ namespace mediapipe {
 // }
 class TfLiteCustomOpResolverCalculator : public CalculatorBase {
  public:
-  static mediapipe::Status GetContract(CalculatorContract* cc) {
+  static absl::Status GetContract(CalculatorContract* cc) {
     cc->OutputSidePackets()
         .Index(0)
         .Set<tflite::ops::builtin::BuiltinOpResolver>();
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
-  mediapipe::Status Open(CalculatorContext* cc) override {
+  absl::Status Open(CalculatorContext* cc) override {
     cc->SetOffset(TimestampDiff(0));
 
     const TfLiteCustomOpResolverCalculatorOptions& options =
@@ -60,11 +60,11 @@ class TfLiteCustomOpResolverCalculator : public CalculatorBase {
     }
 
     cc->OutputSidePackets().Index(0).Set(Adopt(op_resolver.release()));
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
-  mediapipe::Status Process(CalculatorContext* cc) override {
-    return mediapipe::OkStatus();
+  absl::Status Process(CalculatorContext* cc) override {
+    return absl::OkStatus();
   }
 };
 REGISTER_CALCULATOR(TfLiteCustomOpResolverCalculator);

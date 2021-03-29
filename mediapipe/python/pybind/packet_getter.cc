@@ -358,7 +358,7 @@ void InternalPacketGetters(pybind11::module* m) {
       [](Packet& packet) {
         auto proto_vector = packet.GetVectorOfProtoMessageLitePtrs();
         RaisePyErrorIfNotOk(proto_vector.status());
-        return proto_vector.ValueOrDie().size();
+        return proto_vector.value().size();
       },
       py::return_value_policy::move);
 
@@ -367,10 +367,10 @@ void InternalPacketGetters(pybind11::module* m) {
       [](Packet& packet) {
         auto proto_vector = packet.GetVectorOfProtoMessageLitePtrs();
         RaisePyErrorIfNotOk(proto_vector.status());
-        if (proto_vector.ValueOrDie().empty()) {
+        if (proto_vector.value().empty()) {
           return std::string();
         }
-        return proto_vector.ValueOrDie()[0]->GetTypeName();
+        return proto_vector.value()[0]->GetTypeName();
       },
       py::return_value_policy::move);
 
@@ -391,10 +391,10 @@ void InternalPacketGetters(pybind11::module* m) {
       [](Packet& packet) {
         auto proto_vector = packet.GetVectorOfProtoMessageLitePtrs();
         RaisePyErrorIfNotOk(proto_vector.status());
-        int size = proto_vector.ValueOrDie().size();
+        int size = proto_vector.value().size();
         std::vector<py::bytes> results;
         results.reserve(size);
-        for (const proto_ns::MessageLite* ptr : proto_vector.ValueOrDie()) {
+        for (const proto_ns::MessageLite* ptr : proto_vector.value()) {
           results.push_back(py::bytes(ptr->SerializeAsString()));
         }
         return results;

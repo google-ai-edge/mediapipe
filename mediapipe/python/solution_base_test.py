@@ -105,14 +105,14 @@ class SolutionBaseTest(parameterized.TestCase):
     """
     config_proto = text_format.Parse(text_config,
                                      calculator_pb2.CalculatorGraphConfig())
-    solution = solution_base.SolutionBase(graph_config=config_proto)
-    detection = detection_pb2.Detection()
-    text_format.Parse('score: 0.5', detection)
-    with self.assertRaisesRegex(
-        NotImplementedError,
-        'SolutionBase can only process image data. PROTO_LIST type is not supported.'
-    ):
-      solution.process({'input_detections': detection})
+    with solution_base.SolutionBase(graph_config=config_proto) as solution:
+      detection = detection_pb2.Detection()
+      text_format.Parse('score: 0.5', detection)
+      with self.assertRaisesRegex(
+          NotImplementedError,
+          'SolutionBase can only process image data. PROTO_LIST type is not supported.'
+      ):
+        solution.process({'input_detections': detection})
 
   def test_invalid_input_image_data(self):
     text_config = """
@@ -131,10 +131,10 @@ class SolutionBaseTest(parameterized.TestCase):
     """
     config_proto = text_format.Parse(text_config,
                                      calculator_pb2.CalculatorGraphConfig())
-    solution = solution_base.SolutionBase(graph_config=config_proto)
-    with self.assertRaisesRegex(
-        ValueError, 'Input image must contain three channel rgb data.'):
-      solution.process(np.arange(36, dtype=np.uint8).reshape(3, 3, 4))
+    with solution_base.SolutionBase(graph_config=config_proto) as solution:
+      with self.assertRaisesRegex(
+          ValueError, 'Input image must contain three channel rgb data.'):
+        solution.process(np.arange(36, dtype=np.uint8).reshape(3, 3, 4))
 
   @parameterized.named_parameters(('graph_without_side_packets', """
       input_stream: 'image_in'
@@ -272,15 +272,14 @@ class SolutionBaseTest(parameterized.TestCase):
                           side_inputs=None,
                           calculator_params=None):
     input_image = np.arange(27, dtype=np.uint8).reshape(3, 3, 3)
-    solution = solution_base.SolutionBase(
+    with solution_base.SolutionBase(
         graph_config=config_proto,
         side_inputs=side_inputs,
-        calculator_params=calculator_params)
-    outputs = solution.process(input_image)
+        calculator_params=calculator_params) as solution:
+      outputs = solution.process(input_image)
+      outputs2 = solution.process({'image_in': input_image})
     self.assertTrue(np.array_equal(input_image, outputs.image_out))
-    outputs2 = solution.process({'image_in': input_image})
     self.assertTrue(np.array_equal(input_image, outputs2.image_out))
-    solution.close()
 
 
 if __name__ == '__main__':

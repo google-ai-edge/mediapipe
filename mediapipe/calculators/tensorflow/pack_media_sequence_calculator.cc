@@ -94,7 +94,7 @@ uint8 ConvertFloatToByte(const float float_value) {
 
 class PackMediaSequenceCalculator : public CalculatorBase {
  public:
-  static ::mediapipe::Status GetContract(CalculatorContract* cc) {
+  static absl::Status GetContract(CalculatorContract* cc) {
     RET_CHECK(cc->InputSidePackets().HasTag(kSequenceExampleTag));
     cc->InputSidePackets().Tag(kSequenceExampleTag).Set<tf::SequenceExample>();
 
@@ -167,10 +167,10 @@ class PackMediaSequenceCalculator : public CalculatorBase {
           .Tag(kSequenceExampleTag)
           .Set<tf::SequenceExample>();
     }
-    return ::mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
-  ::mediapipe::Status Open(CalculatorContext* cc) override {
+  absl::Status Open(CalculatorContext* cc) override {
     sequence_ = ::absl::make_unique<tf::SequenceExample>(
         cc->InputSidePackets()
             .Tag(kSequenceExampleTag)
@@ -248,10 +248,10 @@ class PackMediaSequenceCalculator : public CalculatorBase {
           .Tag(kSequenceExampleTag)
           .SetNextTimestampBound(Timestamp::Max());
     }
-    return ::mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
-  ::mediapipe::Status VerifySequence() {
+  absl::Status VerifySequence() {
     std::string error_msg = "Missing features - ";
     bool all_present = true;
     for (const auto& iter : features_present_) {
@@ -261,13 +261,13 @@ class PackMediaSequenceCalculator : public CalculatorBase {
       }
     }
     if (all_present) {
-      return ::mediapipe::OkStatus();
+      return absl::OkStatus();
     } else {
       return ::mediapipe::NotFoundErrorBuilder(MEDIAPIPE_LOC) << error_msg;
     }
   }
 
-  ::mediapipe::Status Close(CalculatorContext* cc) override {
+  absl::Status Close(CalculatorContext* cc) override {
     auto& options = cc->Options<PackMediaSequenceCalculatorOptions>();
     if (options.reconcile_metadata()) {
       RET_CHECK_OK(mpms::ReconcileMetadata(
@@ -276,7 +276,7 @@ class PackMediaSequenceCalculator : public CalculatorBase {
     }
 
     if (options.output_only_if_all_present()) {
-      ::mediapipe::Status status = VerifySequence();
+      absl::Status status = VerifySequence();
       if (!status.ok()) {
         cc->GetCounter(status.ToString())->Increment();
         return status;
@@ -295,10 +295,10 @@ class PackMediaSequenceCalculator : public CalculatorBase {
     }
     sequence_.reset();
 
-    return ::mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
-  ::mediapipe::Status Process(CalculatorContext* cc) override {
+  absl::Status Process(CalculatorContext* cc) override {
     int image_height = -1;
     int image_width = -1;
     // Because the tag order may vary, we need to loop through tags to get
@@ -489,12 +489,12 @@ class PackMediaSequenceCalculator : public CalculatorBase {
                                                      sequence_.get());
           already_has_mask = true;
         } else {
-          return ::mediapipe::UnimplementedError(
+          return absl::UnimplementedError(
               "Global detections and empty detections are not supported.");
         }
       }
     }
-    return ::mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
   std::unique_ptr<tf::SequenceExample> sequence_;

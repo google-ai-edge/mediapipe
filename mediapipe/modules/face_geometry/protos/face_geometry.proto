@@ -34,6 +34,15 @@ message FaceGeometry {
   // the input face landmarks after (1) being multiplied by the face pose
   // transformation matrix and then (2) being projected with a perspective
   // camera matrix of the same environment.
+  //
+  // NOTE: the triangular topology of the face mesh is only useful when derived
+  //       from the 468 face landmarks, not from the 6 face detection landmarks
+  //       (keypoints). The former don't cover the entire face and this mesh is
+  //       defined here only to comply with the API. It should be considered as
+  //       a placeholder and/or for debugging purposes.
+  //
+  //       Use the face geometry derived from the face detection landmarks
+  //       (keypoints) for the face pose transformation matrix, not the mesh.
   optional Mesh3d mesh = 1;
 
   // Defines a face pose transformation matrix, which provides mapping from

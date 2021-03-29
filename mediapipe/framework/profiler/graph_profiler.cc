@@ -199,7 +199,7 @@ void GraphProfiler::Reset() {
 }
 
 // Begins profiling for a single graph run.
-mediapipe::Status GraphProfiler::Start(mediapipe::Executor* executor) {
+absl::Status GraphProfiler::Start(mediapipe::Executor* executor) {
   // If specified, start periodic profile output while the graph runs.
   Resume();
   if (is_tracing_ && IsTraceIntervalEnabled(profiler_config_, tracer()) &&
@@ -220,18 +220,18 @@ mediapipe::Status GraphProfiler::Start(mediapipe::Executor* executor) {
       }
     });
   }
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
 // Ends profiling for a single graph run.
-mediapipe::Status GraphProfiler::Stop() {
+absl::Status GraphProfiler::Stop() {
   is_running_ = false;
   Pause();
   // If specified, write a final profile.
   if (IsTraceLogEnabled(profiler_config_)) {
     MP_RETURN_IF_ERROR(WriteProfile());
   }
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
 void GraphProfiler::LogEvent(const TraceEvent& event) {
@@ -281,7 +281,7 @@ void GraphProfiler::AddPacketInfo(const TraceEvent& packet_info) {
                         production_time_usec, production_time_usec);
 }
 
-mediapipe::Status GraphProfiler::GetCalculatorProfiles(
+absl::Status GraphProfiler::GetCalculatorProfiles(
     std::vector<CalculatorProfile>* profiles) const {
   absl::ReaderMutexLock lock(&profiler_mutex_);
   RET_CHECK(is_initialized_)
@@ -289,7 +289,7 @@ mediapipe::Status GraphProfiler::GetCalculatorProfiles(
   for (auto& entry : calculator_profiles_) {
     profiles->push_back(entry.second);
   }
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
 void GraphProfiler::InitializeTimeHistogram(int64 interval_size_usec,
@@ -308,7 +308,7 @@ void GraphProfiler::InitializeInputStreams(
     const CalculatorGraphConfig::Node& node_config, int64 interval_size_usec,
     int64 num_intervals, CalculatorProfile* calculator_profile) {
   std::shared_ptr<tool::TagMap> input_tag_map =
-      TagMap::Create(node_config.input_stream()).ValueOrDie();
+      TagMap::Create(node_config.input_stream()).value();
   std::set<int> back_edge_ids = GetBackEdgeIds(node_config, *input_tag_map);
   auto input_tag_map_names = input_tag_map->Names();
   for (int i = 0; i < input_tag_map_names.size(); ++i) {
@@ -566,9 +566,9 @@ void AssignNodeNames(GraphProfile* profile) {
   }
 }
 
-mediapipe::StatusOr<std::string> GraphProfiler::GetTraceLogPath() {
+absl::StatusOr<std::string> GraphProfiler::GetTraceLogPath() {
   if (!IsTraceLogEnabled(profiler_config_)) {
-    return mediapipe::InternalError(
+    return absl::InternalError(
         "Trace log writing is disabled, unable to get trace_log_path.");
   }
   if (profiler_config_.trace_log_path().empty()) {
@@ -581,42 +581,49 @@ mediapipe::StatusOr<std::string> GraphProfiler::GetTraceLogPath() {
   }
 }
 
-mediapipe::Status GraphProfiler::WriteProfile() {
-  if (profiler_config_.trace_log_disabled()) {
-    // Logging is disabled, so we can exit writing without error.
-    return mediapipe::OkStatus();
-  }
-  ASSIGN_OR_RETURN(std::string trace_log_path, GetTraceLogPath());
-  int log_interval_count = GetLogIntervalCount(profiler_config_);
-  int log_file_count = GetLogFileCount(profiler_config_);
-
+absl::Status GraphProfiler::CaptureProfile(GraphProfile* result) {
   // Record the GraphTrace events since the previous WriteProfile.
   // The end_time is chosen to be trace_log_margin_usec in the past,
   // providing time for events to be appended to the TraceBuffer.
   absl::Time end_time =
       clock_->TimeNow() -
       absl::Microseconds(profiler_config_.trace_log_margin_usec());
-  GraphProfile profile;
-  GraphTrace* trace = profile.add_graph_trace();
+  GraphTrace* trace = result->add_graph_trace();
   if (!profiler_config_.trace_log_instant_events()) {
     tracer()->GetTrace(previous_log_end_time_, end_time, trace);
   } else {
     tracer()->GetLog(previous_log_end_time_, end_time, trace);
   }
   previous_log_end_time_ = end_time;
-  // If there are no trace events, skip log writing.
-  if (is_tracing_ && trace->calculator_trace().empty()) {
-    return mediapipe::OkStatus();
-  }
 
   // Record the latest CalculatorProfiles.
   Status status;
   std::vector<CalculatorProfile> profiles;
   status.Update(GetCalculatorProfiles(&profiles));
   for (CalculatorProfile& p : profiles) {
-    *profile.mutable_calculator_profiles()->Add() = std::move(p);
+    *result->mutable_calculator_profiles()->Add() = std::move(p);
   }
   this->Reset();
+  AssignNodeNames(result);
+  return status;
+}
+
+absl::Status GraphProfiler::WriteProfile() {
+  if (profiler_config_.trace_log_disabled()) {
+    // Logging is disabled, so we can exit writing without error.
+    return absl::OkStatus();
+  }
+  ASSIGN_OR_RETURN(std::string trace_log_path, GetTraceLogPath());
+  int log_interval_count = GetLogIntervalCount(profiler_config_);
+  int log_file_count = GetLogFileCount(profiler_config_);
+  GraphProfile profile;
+  MP_RETURN_IF_ERROR(CaptureProfile(&profile));
+
+  // If there are no trace events, skip log writing.
+  const GraphTrace& trace = *profile.graph_trace().rbegin();
+  if (is_tracing_ && trace.calculator_trace().empty()) {
+    return absl::OkStatus();
+  }
 
   // Record the CalculatorGraphConfig, once per log file.
   ++previous_log_index_;
@@ -638,7 +645,7 @@ mediapipe::Status GraphProfiler::WriteProfile() {
   OstreamStream out(&ofs);
   RET_CHECK(profile.SerializeToZeroCopyStream(&out))
       << "Could not write binary GraphProfile to: " << log_path;
-  return status;
+  return absl::OkStatus();
 }
 
 }  // namespace mediapipe

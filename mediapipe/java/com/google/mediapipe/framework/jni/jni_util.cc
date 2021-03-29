@@ -111,7 +111,7 @@ std::string JStringToStdString(JNIEnv* env, jstring jstr) {
   return str;
 }
 
-jthrowable CreateMediaPipeException(JNIEnv* env, mediapipe::Status status) {
+jthrowable CreateMediaPipeException(JNIEnv* env, absl::Status status) {
   auto& class_registry = mediapipe::android::ClassRegistry::GetInstance();
   std::string mpe_class_name = class_registry.GetClassName(
       mediapipe::android::ClassRegistry::kMediaPipeExceptionClassName);
@@ -131,7 +131,7 @@ jthrowable CreateMediaPipeException(JNIEnv* env, mediapipe::Status status) {
       env->NewObject(status_cls, status_ctr, status.code(), message_bytes));
 }
 
-bool ThrowIfError(JNIEnv* env, mediapipe::Status status) {
+bool ThrowIfError(JNIEnv* env, absl::Status status) {
   if (!status.ok()) {
     env->Throw(mediapipe::android::CreateMediaPipeException(env, status));
     return true;

@@ -21,7 +21,6 @@ cc_binary(
         "@com_google_absl//absl/strings",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/formats:matrix",
-        "//mediapipe/framework/formats:matrix_data_cc_proto",
         "//mediapipe/framework/port:commandlineflags",
         "//mediapipe/framework/port:file_helpers",
         "//mediapipe/framework/port:map_util",

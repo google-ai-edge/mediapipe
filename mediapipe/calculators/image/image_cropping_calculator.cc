@@ -24,11 +24,11 @@
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status.h"
 
-#if !defined(MEDIAPIPE_DISABLE_GPU)
+#if !MEDIAPIPE_DISABLE_GPU
 #include "mediapipe/gpu/gl_simple_shaders.h"
 #include "mediapipe/gpu/gpu_buffer.h"
 #include "mediapipe/gpu/shader_util.h"
-#endif  //  !MEDIAPIPE_DISABLE_GPU
+#endif  // !MEDIAPIPE_DISABLE_GPU
 
 namespace {
 enum { ATTRIB_VERTEX, ATTRIB_TEXTURE_POSITION, NUM_ATTRIBUTES };
@@ -38,9 +38,9 @@ namespace mediapipe {
 
 namespace {
 
-#if !defined(MEDIAPIPE_DISABLE_GPU)
+#if !MEDIAPIPE_DISABLE_GPU
 
-#endif  //  !MEDIAPIPE_DISABLE_GPU
+#endif  // !MEDIAPIPE_DISABLE_GPU
 
 constexpr char kRectTag[] = "RECT";
 constexpr char kNormRectTag[] = "NORM_RECT";
@@ -53,7 +53,7 @@ constexpr char kWidthTag[] = "WIDTH";
 
 REGISTER_CALCULATOR(ImageCroppingCalculator);
 
-mediapipe::Status ImageCroppingCalculator::GetContract(CalculatorContract* cc) {
+absl::Status ImageCroppingCalculator::GetContract(CalculatorContract* cc) {
   RET_CHECK(cc->Inputs().HasTag(kImageTag) ^ cc->Inputs().HasTag(kImageGpuTag));
   RET_CHECK(cc->Outputs().HasTag(kImageTag) ^
             cc->Outputs().HasTag(kImageGpuTag));
@@ -65,14 +65,14 @@ mediapipe::Status ImageCroppingCalculator::GetContract(CalculatorContract* cc) {
     cc->Inputs().Tag(kImageTag).Set<ImageFrame>();
     cc->Outputs().Tag(kImageTag).Set<ImageFrame>();
   }
-#if !defined(MEDIAPIPE_DISABLE_GPU)
+#if !MEDIAPIPE_DISABLE_GPU
   if (cc->Inputs().HasTag(kImageGpuTag)) {
     RET_CHECK(cc->Outputs().HasTag(kImageGpuTag));
     cc->Inputs().Tag(kImageGpuTag).Set<GpuBuffer>();
     cc->Outputs().Tag(kImageGpuTag).Set<GpuBuffer>();
     use_gpu |= true;
   }
-#endif  //  !MEDIAPIPE_DISABLE_GPU
+#endif  // !MEDIAPIPE_DISABLE_GPU
 
   int flags = 0;
   if (cc->Inputs().HasTag(kRectTag)) {
@@ -110,15 +110,15 @@ mediapipe::Status ImageCroppingCalculator::GetContract(CalculatorContract* cc) {
   }
 
   if (use_gpu) {
-#if !defined(MEDIAPIPE_DISABLE_GPU)
+#if !MEDIAPIPE_DISABLE_GPU
     MP_RETURN_IF_ERROR(mediapipe::GlCalculatorHelper::UpdateContract(cc));
-#endif  //  !MEDIAPIPE_DISABLE_GPU
+#endif  // !MEDIAPIPE_DISABLE_GPU
   }
 
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-mediapipe::Status ImageCroppingCalculator::Open(CalculatorContext* cc) {
+absl::Status ImageCroppingCalculator::Open(CalculatorContext* cc) {
   cc->SetOffset(TimestampDiff(0));
 
   if (cc->Inputs().HasTag(kImageGpuTag)) {
@@ -132,11 +132,11 @@ mediapipe::Status ImageCroppingCalculator::Open(CalculatorContext* cc) {
       options_.has_output_max_height() ? options_.output_max_height() : FLT_MAX;
 
   if (use_gpu_) {
-#if !defined(MEDIAPIPE_DISABLE_GPU)
+#if !MEDIAPIPE_DISABLE_GPU
     MP_RETURN_IF_ERROR(gpu_helper_.Open(cc));
 #else
     RET_CHECK_FAIL() << "GPU processing is for Android and iOS only.";
-#endif  //  !MEDIAPIPE_DISABLE_GPU
+#endif  // !MEDIAPIPE_DISABLE_GPU
   }
 
   // Validate border mode.
@@ -146,56 +146,55 @@ mediapipe::Status ImageCroppingCalculator::Open(CalculatorContext* cc) {
     MP_RETURN_IF_ERROR(ValidateBorderModeForCPU(cc));
   }
 
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-mediapipe::Status ImageCroppingCalculator::Process(CalculatorContext* cc) {
+absl::Status ImageCroppingCalculator::Process(CalculatorContext* cc) {
   if (cc->Inputs().HasTag(kRectTag) && cc->Inputs().Tag(kRectTag).IsEmpty()) {
     VLOG(1) << "RECT is empty for timestamp: " << cc->InputTimestamp();
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
   if (cc->Inputs().HasTag(kNormRectTag) &&
       cc->Inputs().Tag(kNormRectTag).IsEmpty()) {
     VLOG(1) << "NORM_RECT is empty for timestamp: " << cc->InputTimestamp();
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
   if (use_gpu_) {
-#if !defined(MEDIAPIPE_DISABLE_GPU)
-    MP_RETURN_IF_ERROR(
-        gpu_helper_.RunInGlContext([this, cc]() -> mediapipe::Status {
-          if (!gpu_initialized_) {
-            MP_RETURN_IF_ERROR(InitGpu(cc));
-            gpu_initialized_ = true;
-          }
-          MP_RETURN_IF_ERROR(RenderGpu(cc));
-          return mediapipe::OkStatus();
-        }));
-#endif  //  !MEDIAPIPE_DISABLE_GPU
+#if !MEDIAPIPE_DISABLE_GPU
+    MP_RETURN_IF_ERROR(gpu_helper_.RunInGlContext([this, cc]() -> absl::Status {
+      if (!gpu_initialized_) {
+        MP_RETURN_IF_ERROR(InitGpu(cc));
+        gpu_initialized_ = true;
+      }
+      MP_RETURN_IF_ERROR(RenderGpu(cc));
+      return absl::OkStatus();
+    }));
+#endif  // !MEDIAPIPE_DISABLE_GPU
   } else {
     MP_RETURN_IF_ERROR(RenderCpu(cc));
   }
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-mediapipe::Status ImageCroppingCalculator::Close(CalculatorContext* cc) {
-#if !defined(MEDIAPIPE_DISABLE_GPU)
+absl::Status ImageCroppingCalculator::Close(CalculatorContext* cc) {
+#if !MEDIAPIPE_DISABLE_GPU
   gpu_helper_.RunInGlContext([this] {
     if (program_) glDeleteProgram(program_);
     program_ = 0;
   });
   gpu_initialized_ = false;
-#endif  //  !MEDIAPIPE_DISABLE_GPU
+#endif  // !MEDIAPIPE_DISABLE_GPU
 
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-mediapipe::Status ImageCroppingCalculator::ValidateBorderModeForCPU(
+absl::Status ImageCroppingCalculator::ValidateBorderModeForCPU(
     CalculatorContext* cc) {
   int border_mode;
   return GetBorderModeForOpenCV(cc, &border_mode);
 }
 
-mediapipe::Status ImageCroppingCalculator::ValidateBorderModeForGPU(
+absl::Status ImageCroppingCalculator::ValidateBorderModeForGPU(
     CalculatorContext* cc) {
   mediapipe::ImageCroppingCalculatorOptions options =
       cc->Options<mediapipe::ImageCroppingCalculatorOptions>();
@@ -212,12 +211,12 @@ mediapipe::Status ImageCroppingCalculator::ValidateBorderModeForGPU(
                        << options.border_mode();
   }
 
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-mediapipe::Status ImageCroppingCalculator::RenderCpu(CalculatorContext* cc) {
+absl::Status ImageCroppingCalculator::RenderCpu(CalculatorContext* cc) {
   if (cc->Inputs().Tag(kImageTag).IsEmpty()) {
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
   const auto& input_img = cc->Inputs().Tag(kImageTag).Get<ImageFrame>();
   cv::Mat input_mat = formats::MatView(&input_img);
@@ -267,14 +266,14 @@ mediapipe::Status ImageCroppingCalculator::RenderCpu(CalculatorContext* cc) {
   cropped_image.copyTo(output_mat);
   cc->Outputs().Tag(kImageTag).Add(output_frame.release(),
                                    cc->InputTimestamp());
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-mediapipe::Status ImageCroppingCalculator::RenderGpu(CalculatorContext* cc) {
+absl::Status ImageCroppingCalculator::RenderGpu(CalculatorContext* cc) {
   if (cc->Inputs().Tag(kImageGpuTag).IsEmpty()) {
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
-#if !defined(MEDIAPIPE_DISABLE_GPU)
+#if !MEDIAPIPE_DISABLE_GPU
   const Packet& input_packet = cc->Inputs().Tag(kImageGpuTag).Value();
   const auto& input_buffer = input_packet.Get<mediapipe::GpuBuffer>();
   auto src_tex = gpu_helper_.CreateSourceTexture(input_buffer);
@@ -305,13 +304,13 @@ mediapipe::Status ImageCroppingCalculator::RenderGpu(CalculatorContext* cc) {
   // Cleanup
   src_tex.Release();
   dst_tex.Release();
-#endif  //  !MEDIAPIPE_DISABLE_GPU
+#endif  // !MEDIAPIPE_DISABLE_GPU
 
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
 void ImageCroppingCalculator::GlRender() {
-#if !defined(MEDIAPIPE_DISABLE_GPU)
+#if !MEDIAPIPE_DISABLE_GPU
   static const GLfloat square_vertices[] = {
       -1.0f, -1.0f,  // bottom left
       1.0f,  -1.0f,  // bottom right
@@ -355,11 +354,11 @@ void ImageCroppingCalculator::GlRender() {
   glDeleteVertexArrays(1, &vao);
   glDeleteBuffers(2, vbo);
 
-#endif  //  !MEDIAPIPE_DISABLE_GPU
+#endif  // !MEDIAPIPE_DISABLE_GPU
 }
 
-mediapipe::Status ImageCroppingCalculator::InitGpu(CalculatorContext* cc) {
-#if !defined(MEDIAPIPE_DISABLE_GPU)
+absl::Status ImageCroppingCalculator::InitGpu(CalculatorContext* cc) {
+#if !MEDIAPIPE_DISABLE_GPU
   const GLint attr_location[NUM_ATTRIBUTES] = {
       ATTRIB_VERTEX,
       ATTRIB_TEXTURE_POSITION,
@@ -405,9 +404,9 @@ mediapipe::Status ImageCroppingCalculator::InitGpu(CalculatorContext* cc) {
   // Parameters
   glUseProgram(program_);
   glUniform1i(glGetUniformLocation(program_, "input_frame"), 1);
-#endif  //  !MEDIAPIPE_DISABLE_GPU
+#endif  // !MEDIAPIPE_DISABLE_GPU
 
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
 // For GPU only.
@@ -533,7 +532,7 @@ RectSpec ImageCroppingCalculator::GetCropSpecs(const CalculatorContext* cc,
   return {crop_width, crop_height, x_center, y_center, rotation};
 }
 
-mediapipe::Status ImageCroppingCalculator::GetBorderModeForOpenCV(
+absl::Status ImageCroppingCalculator::GetBorderModeForOpenCV(
     CalculatorContext* cc, int* border_mode) {
   mediapipe::ImageCroppingCalculatorOptions options =
       cc->Options<mediapipe::ImageCroppingCalculatorOptions>();
@@ -550,7 +549,7 @@ mediapipe::Status ImageCroppingCalculator::GetBorderModeForOpenCV(
                        << options.border_mode();
   }
 
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
 }  // namespace mediapipe

@@ -184,6 +184,12 @@ void RegisterPacketCreatorNatives(JNIEnv *env) {
   AddJNINativeMethod(&packet_creator_methods, packet_creator,
                      "nativeCreateInt32", "(JI)J",
                      (void *)&PACKET_CREATOR_METHOD(nativeCreateInt32));
+  AddJNINativeMethod(&packet_creator_methods, packet_creator,
+                     "nativeCreateFloat32", "(JF)J",
+                     (void *)&PACKET_CREATOR_METHOD(nativeCreateFloat32));
+  AddJNINativeMethod(&packet_creator_methods, packet_creator,
+                     "nativeCreateBool", "(JZ)J",
+                     (void *)&PACKET_CREATOR_METHOD(nativeCreateBool));
   RegisterNativesVector(env, packet_creator_class, packet_creator_methods);
 }
 
@@ -203,6 +209,12 @@ void RegisterPacketGetterNatives(JNIEnv *env) {
   AddJNINativeMethod(&packet_getter_methods, packet_getter,
                      "nativeGetImageData", "(JLjava/nio/ByteBuffer;)Z",
                      (void *)&PACKET_GETTER_METHOD(nativeGetImageData));
+  AddJNINativeMethod(&packet_getter_methods, packet_getter,
+                     "nativeGetImageWidth", "(J)I",
+                     (void *)&PACKET_GETTER_METHOD(nativeGetImageWidth));
+  AddJNINativeMethod(&packet_getter_methods, packet_getter,
+                     "nativeGetImageHeight", "(J)I",
+                     (void *)&PACKET_GETTER_METHOD(nativeGetImageHeight));
   AddJNINativeMethod(&packet_getter_methods, packet_getter,
                      "nativeGetFloat32Vector", "(J)[F",
                      (void *)&PACKET_GETTER_METHOD(nativeGetFloat32Vector));

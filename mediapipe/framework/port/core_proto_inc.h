@@ -22,6 +22,7 @@
 #include "google/protobuf/repeated_field.h"
 #include "mediapipe/framework/port.h"
 #include "mediapipe/framework/port/proto_ns.h"
+
 #if !defined(MEDIAPIPE_PROTO_LITE)
 #include "google/protobuf/text_format.h"
 #endif  // !defined(MEDIAPIPE_PROTO_LITE)

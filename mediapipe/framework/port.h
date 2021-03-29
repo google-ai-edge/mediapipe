@@ -44,9 +44,9 @@
 
 // These platforms do not support OpenGL ES Compute Shaders (v3.1 and up),
 // but may or may not still be able to run other OpenGL code.
-#if !defined(MEDIAPIPE_DISABLE_GL_COMPUTE) &&         \
-    (defined(__APPLE__) || defined(__EMSCRIPTEN__) || \
-     defined(MEDIAPIPE_DISABLE_GPU) || MEDIAPIPE_USING_SWIFTSHADER)
+#if !defined(MEDIAPIPE_DISABLE_GL_COMPUTE) &&                                  \
+    (defined(__APPLE__) || defined(__EMSCRIPTEN__) || MEDIAPIPE_DISABLE_GPU || \
+     MEDIAPIPE_USING_SWIFTSHADER)
 #define MEDIAPIPE_DISABLE_GL_COMPUTE
 #endif
 
@@ -56,7 +56,7 @@
 #define MEDIAPIPE_OPENGL_ES_30 300
 #define MEDIAPIPE_OPENGL_ES_31 310
 
-#if defined(MEDIAPIPE_DISABLE_GPU)
+#if MEDIAPIPE_DISABLE_GPU
 #define MEDIAPIPE_OPENGL_ES_VERSION 0
 #define MEDIAPIPE_METAL_ENABLED 0
 #else

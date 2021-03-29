@@ -44,7 +44,7 @@ class StreamToSidePacketCalculatorTest : public Test {
 
 TEST_F(StreamToSidePacketCalculatorTest,
        StreamToSidePacketCalculatorWithEmptyStreamFails) {
-  EXPECT_EQ(runner_->Run().code(), mediapipe::StatusCode::kUnavailable);
+  EXPECT_EQ(runner_->Run().code(), absl::StatusCode::kUnavailable);
 }
 
 TEST_F(StreamToSidePacketCalculatorTest,
@@ -61,7 +61,7 @@ TEST_F(StreamToSidePacketCalculatorTest,
       Adopt(new std::string("test1")).At(Timestamp(1)));
   runner_->MutableInputs()->Index(0).packets.push_back(
       Adopt(new std::string("test2")).At(Timestamp(2)));
-  EXPECT_EQ(runner_->Run().code(), mediapipe::StatusCode::kAlreadyExists);
+  EXPECT_EQ(runner_->Run().code(), absl::StatusCode::kAlreadyExists);
 }
 
 }  // namespace mediapipe

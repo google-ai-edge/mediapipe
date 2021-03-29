@@ -54,11 +54,11 @@ class LandmarksToRenderDataCalculator : public CalculatorBase {
   LandmarksToRenderDataCalculator& operator=(
       const LandmarksToRenderDataCalculator&) = delete;
 
-  static mediapipe::Status GetContract(CalculatorContract* cc);
+  static absl::Status GetContract(CalculatorContract* cc);
 
-  mediapipe::Status Open(CalculatorContext* cc) override;
+  absl::Status Open(CalculatorContext* cc) override;
 
-  mediapipe::Status Process(CalculatorContext* cc) override;
+  absl::Status Process(CalculatorContext* cc) override;
 
  protected:
   ::mediapipe::LandmarksToRenderDataCalculatorOptions options_;

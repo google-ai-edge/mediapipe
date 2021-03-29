@@ -40,8 +40,8 @@ constexpr char kNormRectsTag[] = "NORM_RECTS";
 constexpr float kMinFloat = std::numeric_limits<float>::lowest();
 constexpr float kMaxFloat = std::numeric_limits<float>::max();
 
-mediapipe::Status NormRectFromKeyPoints(const LocationData& location_data,
-                                        NormalizedRect* rect) {
+absl::Status NormRectFromKeyPoints(const LocationData& location_data,
+                                   NormalizedRect* rect) {
   RET_CHECK_GT(location_data.relative_keypoints_size(), 1)
       << "2 or more key points required to calculate a rect.";
   float xmin = kMaxFloat;
@@ -59,7 +59,7 @@ mediapipe::Status NormRectFromKeyPoints(const LocationData& location_data,
   rect->set_y_center((ymin + ymax) / 2);
   rect->set_width(xmax - xmin);
   rect->set_height(ymax - ymin);
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
 template <class B, class R>
@@ -72,7 +72,7 @@ void RectFromBox(B box, R* rect) {
 
 }  // namespace
 
-mediapipe::Status DetectionsToRectsCalculator::DetectionToRect(
+absl::Status DetectionsToRectsCalculator::DetectionToRect(
     const Detection& detection, const DetectionSpec& detection_spec,
     Rect* rect) {
   const LocationData location_data = detection.location_data();
@@ -101,10 +101,10 @@ mediapipe::Status DetectionsToRectsCalculator::DetectionToRect(
       break;
     }
   }
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-mediapipe::Status DetectionsToRectsCalculator::DetectionToNormalizedRect(
+absl::Status DetectionsToRectsCalculator::DetectionToNormalizedRect(
     const Detection& detection, const DetectionSpec& detection_spec,
     NormalizedRect* rect) {
   const LocationData location_data = detection.location_data();
@@ -124,11 +124,10 @@ mediapipe::Status DetectionsToRectsCalculator::DetectionToNormalizedRect(
       break;
     }
   }
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-mediapipe::Status DetectionsToRectsCalculator::GetContract(
-    CalculatorContract* cc) {
+absl::Status DetectionsToRectsCalculator::GetContract(CalculatorContract* cc) {
   RET_CHECK(cc->Inputs().HasTag(kDetectionTag) ^
             cc->Inputs().HasTag(kDetectionsTag))
       << "Exactly one of DETECTION or DETECTIONS input stream should be "
@@ -164,10 +163,10 @@ mediapipe::Status DetectionsToRectsCalculator::GetContract(
     cc->Outputs().Tag(kNormRectsTag).Set<std::vector<NormalizedRect>>();
   }
 
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-mediapipe::Status DetectionsToRectsCalculator::Open(CalculatorContext* cc) {
+absl::Status DetectionsToRectsCalculator::Open(CalculatorContext* cc) {
   cc->SetOffset(TimestampDiff(0));
 
   options_ = cc->Options<DetectionsToRectsCalculatorOptions>();
@@ -192,17 +191,17 @@ mediapipe::Status DetectionsToRectsCalculator::Open(CalculatorContext* cc) {
   output_zero_rect_for_empty_detections_ =
       options_.output_zero_rect_for_empty_detections();
 
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-mediapipe::Status DetectionsToRectsCalculator::Process(CalculatorContext* cc) {
+absl::Status DetectionsToRectsCalculator::Process(CalculatorContext* cc) {
   if (cc->Inputs().HasTag(kDetectionTag) &&
       cc->Inputs().Tag(kDetectionTag).IsEmpty()) {
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
   if (cc->Inputs().HasTag(kDetectionsTag) &&
       cc->Inputs().Tag(kDetectionsTag).IsEmpty()) {
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
   std::vector<Detection> detections;
@@ -230,7 +229,7 @@ mediapipe::Status DetectionsToRectsCalculator::Process(CalculatorContext* cc) {
               .Add(rect_vector.release(), cc->InputTimestamp());
         }
       }
-      return mediapipe::OkStatus();
+      return absl::OkStatus();
     }
   }
 
@@ -297,10 +296,10 @@ mediapipe::Status DetectionsToRectsCalculator::Process(CalculatorContext* cc) {
         .Add(output_rects.release(), cc->InputTimestamp());
   }
 
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-mediapipe::Status DetectionsToRectsCalculator::ComputeRotation(
+absl::Status DetectionsToRectsCalculator::ComputeRotation(
     const Detection& detection, const DetectionSpec& detection_spec,
     float* rotation) {
   const auto& location_data = detection.location_data();
@@ -318,7 +317,7 @@ mediapipe::Status DetectionsToRectsCalculator::ComputeRotation(
 
   *rotation = NormalizeRadians(target_angle_ - std::atan2(-(y1 - y0), x1 - x0));
 
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
 DetectionSpec DetectionsToRectsCalculator::GetDetectionSpec(

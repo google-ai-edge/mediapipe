@@ -37,23 +37,23 @@ class CountCalculator : public CalculatorBase {
   CountCalculator() { ++num_constructed_; }
   ~CountCalculator() override { ++num_destroyed_; }
 
-  static mediapipe::Status GetContract(CalculatorContract* cc) {
+  static absl::Status GetContract(CalculatorContract* cc) {
     ++num_fill_expectations_;
     cc->Inputs().Get(cc->Inputs().BeginId()).Set<int>();
     cc->Outputs().Get(cc->Outputs().BeginId()).Set<int>();
     cc->InputSidePackets().Get(cc->InputSidePackets().BeginId()).Set<int>();
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
-  mediapipe::Status Open(CalculatorContext* cc) override {
+  absl::Status Open(CalculatorContext* cc) override {
     ++num_open_;
     // Simulate doing nontrivial work to ensure that the time spent in the
     // method will register on streamz each time it is called.
     usleep(100);
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
-  mediapipe::Status Process(CalculatorContext* cc) override {
+  absl::Status Process(CalculatorContext* cc) override {
     ++num_process_;
     int input_stream_int = cc->Inputs().Get(cc->Inputs().BeginId()).Get<int>();
     int side_packet_int =
@@ -65,15 +65,15 @@ class CountCalculator : public CalculatorBase {
     // Simulate doing nontrivial work to ensure that the time spent in the
     // method will register on streamz each time it is called.
     usleep(100);
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
-  mediapipe::Status Close(CalculatorContext* cc) override {
+  absl::Status Close(CalculatorContext* cc) override {
     ++num_close_;
     // Simulate doing nontrivial work to ensure that the time spent in the
     // method will register on streamz each time it is called.
     usleep(100);
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
   static int num_constructed_;
@@ -94,7 +94,7 @@ int CountCalculator::num_destroyed_ = 0;
 
 void SourceNodeOpenedNoOp() {}
 
-void CheckFail(const mediapipe::Status& status) {
+void CheckFail(const absl::Status& status) {
   LOG(FATAL) << "The test triggered the error callback with status: " << status;
 }
 
@@ -165,7 +165,7 @@ class CalculatorNodeTest : public ::testing::Test {
         &buffer_size_hint_, graph_profiler_));
   }
 
-  mediapipe::Status PrepareNodeForRun() {
+  absl::Status PrepareNodeForRun() {
     return node_->PrepareForRun(                      //
         input_side_packets_,                          //
         service_packets_,                             //
@@ -180,7 +180,7 @@ class CalculatorNodeTest : public ::testing::Test {
         nullptr);
   }
 
-  mediapipe::Status InitializeStreams() {
+  absl::Status InitializeStreams() {
     // START OF: code is copied from
     // CalculatorGraph::InitializePacketGeneratorGraph.
     // Create and initialize the output side packets.
@@ -220,7 +220,7 @@ class CalculatorNodeTest : public ::testing::Test {
 
     stream_a_manager_ = &output_stream_managers_[1];
     stream_b_manager_ = &output_stream_managers_[2];
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
   virtual void SimulateParentOpenNode() { stream_a_manager_->LockIntroData(); }
@@ -482,7 +482,7 @@ TEST_F(CalculatorNodeTest, CleanupAfterRun) {
   node_->EndScheduling();
   // The max parallelism is already reached.
   EXPECT_FALSE(node_->TryToBeginScheduling());
-  node_->CleanupAfterRun(mediapipe::OkStatus());
+  node_->CleanupAfterRun(absl::OkStatus());
 
   EXPECT_FALSE(node_->Prepared());
   EXPECT_FALSE(node_->Opened());
@@ -517,7 +517,7 @@ void CalculatorNodeTest::TestCleanupAfterRunTwice() {
   EXPECT_TRUE(node_->TryToBeginScheduling());
   MP_EXPECT_OK(node_->ProcessNode(cc_));
   node_->EndScheduling();
-  node_->CleanupAfterRun(mediapipe::OkStatus());
+  node_->CleanupAfterRun(absl::OkStatus());
 
   stream_a_manager_->PrepareForRun(nullptr);
 
@@ -543,7 +543,7 @@ void CalculatorNodeTest::TestCleanupAfterRunTwice() {
   node_->EndScheduling();
   // The max parallelism is already reached.
   EXPECT_FALSE(node_->TryToBeginScheduling());
-  node_->CleanupAfterRun(mediapipe::OkStatus());
+  node_->CleanupAfterRun(absl::OkStatus());
 
   EXPECT_FALSE(node_->Prepared());
   EXPECT_FALSE(node_->Opened());

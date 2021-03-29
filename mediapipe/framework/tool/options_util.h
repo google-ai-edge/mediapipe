@@ -18,7 +18,6 @@
 #include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/framework/input_stream_shard.h"
 #include "mediapipe/framework/packet.h"
-#include "mediapipe/framework/packet_generator.pb.h"
 #include "mediapipe/framework/packet_set.h"
 #include "mediapipe/framework/port/any_proto.h"
 #include "mediapipe/framework/tool/type_util.h"
@@ -161,6 +160,9 @@ class OptionsMap {
   const CalculatorGraphConfig::Node* node_config_;
   TypeMap options_;
 };
+
+// Finds the descriptor for a protobuf.
+const proto_ns::Descriptor* GetProtobufDescriptor(const std::string& type_name);
 
 }  // namespace tool
 }  // namespace mediapipe

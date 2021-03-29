@@ -41,7 +41,7 @@ class Subgraph {
   // the parent graph.
   // Subclasses may use the options argument to parameterize the config.
   // TODO: make this static?
-  virtual mediapipe::StatusOr<CalculatorGraphConfig> GetConfig(
+  virtual absl::StatusOr<CalculatorGraphConfig> GetConfig(
       const SubgraphOptions& options) = 0;
 
   // Returns options of a specific type.
@@ -71,7 +71,7 @@ class ProtoSubgraph : public Subgraph {
  public:
   ProtoSubgraph(const CalculatorGraphConfig& config);
   virtual ~ProtoSubgraph();
-  virtual mediapipe::StatusOr<CalculatorGraphConfig> GetConfig(
+  virtual absl::StatusOr<CalculatorGraphConfig> GetConfig(
       const Subgraph::SubgraphOptions& options);
 
  private:
@@ -83,7 +83,7 @@ class TemplateSubgraph : public Subgraph {
  public:
   TemplateSubgraph(const CalculatorGraphTemplate& templ);
   virtual ~TemplateSubgraph();
-  virtual mediapipe::StatusOr<CalculatorGraphConfig> GetConfig(
+  virtual absl::StatusOr<CalculatorGraphConfig> GetConfig(
       const Subgraph::SubgraphOptions& options);
 
  private:
@@ -118,7 +118,7 @@ class GraphRegistry {
   bool IsRegistered(const std::string& ns, const std::string& type_name) const;
 
   // Returns the specified graph config.
-  mediapipe::StatusOr<CalculatorGraphConfig> CreateByName(
+  absl::StatusOr<CalculatorGraphConfig> CreateByName(
       const std::string& ns, const std::string& type_name,
       const Subgraph::SubgraphOptions* options = nullptr) const;
 

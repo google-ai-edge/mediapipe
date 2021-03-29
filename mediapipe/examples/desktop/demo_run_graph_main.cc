@@ -40,10 +40,11 @@ DEFINE_string(output_video_path, "",
               "Full path of where to save result (.mp4 only). "
               "If not provided, show result in a window.");
 
-mediapipe::Status RunMPPGraph() {
+absl::Status RunMPPGraph() {
   std::string calculator_graph_config_contents;
   MP_RETURN_IF_ERROR(mediapipe::file::GetContents(
-      FLAGS_calculator_graph_config_file, &calculator_graph_config_contents));
+      absl::GetFlag(FLAGS_calculator_graph_config_file),
+      &calculator_graph_config_contents));
   LOG(INFO) << "Get calculator graph config contents: "
             << calculator_graph_config_contents;
   mediapipe::CalculatorGraphConfig config =
@@ -56,16 +57,16 @@ mediapipe::Status RunMPPGraph() {
 
   LOG(INFO) << "Initialize the camera or load the video.";
   cv::VideoCapture capture;
-  const bool load_video = !FLAGS_input_video_path.empty();
+  const bool load_video = !absl::GetFlag(FLAGS_input_video_path).empty();
   if (load_video) {
-    capture.open(FLAGS_input_video_path);
+    capture.open(absl::GetFlag(FLAGS_input_video_path));
   } else {
     capture.open(0);
   }
   RET_CHECK(capture.isOpened());
 
   cv::VideoWriter writer;
-  const bool save_video = !FLAGS_output_video_path.empty();
+  const bool save_video = !absl::GetFlag(FLAGS_output_video_path).empty();
   if (!save_video) {
     cv::namedWindow(kWindowName, /*flags=WINDOW_AUTOSIZE*/ 1);
 #if (CV_MAJOR_VERSION >= 3) && (CV_MINOR_VERSION >= 2)
@@ -125,7 +126,7 @@ mediapipe::Status RunMPPGraph() {
     if (save_video) {
       if (!writer.isOpened()) {
         LOG(INFO) << "Prepare video writer.";
-        writer.open(FLAGS_output_video_path,
+        writer.open(absl::GetFlag(FLAGS_output_video_path),
                     mediapipe::fourcc('a', 'v', 'c', '1'),  // .mp4
                     capture.get(cv::CAP_PROP_FPS), output_frame_mat.size());
         RET_CHECK(writer.isOpened());
@@ -148,7 +149,7 @@ mediapipe::Status RunMPPGraph() {
 int main(int argc, char** argv) {
   google::InitGoogleLogging(argv[0]);
   gflags::ParseCommandLineFlags(&argc, &argv, true);
-  mediapipe::Status run_status = RunMPPGraph();
+  absl::Status run_status = RunMPPGraph();
   if (!run_status.ok()) {
     LOG(ERROR) << "Failed to run the graph: " << run_status.message();
     return EXIT_FAILURE;

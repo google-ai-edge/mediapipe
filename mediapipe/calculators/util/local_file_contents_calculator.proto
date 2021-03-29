@@ -23,6 +23,6 @@ message LocalFileContentsCalculatorOptions {
     optional LocalFileContentsCalculatorOptions ext = 346849340;
   }
 
-  // If true, set the file open mode to 'rb'. Otherwise, set the mode to 'r'.
-  optional bool read_as_binary = 1 [default = true];
+  // By default, set the file open mode to 'rb'. Otherwise, set the mode to 'r'.
+  optional bool text_mode = 1;
 }

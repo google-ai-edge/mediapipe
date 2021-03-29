@@ -53,30 +53,29 @@ class GlSimpleCalculator : public CalculatorBase {
   GlSimpleCalculator& operator=(const GlSimpleCalculator&) = delete;
   ~GlSimpleCalculator() override = default;
 
-  static ::mediapipe::Status GetContract(CalculatorContract* cc);
-  ::mediapipe::Status Open(CalculatorContext* cc) override;
-  ::mediapipe::Status Process(CalculatorContext* cc) override;
-  ::mediapipe::Status Close(CalculatorContext* cc) override;
+  static absl::Status GetContract(CalculatorContract* cc);
+  absl::Status Open(CalculatorContext* cc) override;
+  absl::Status Process(CalculatorContext* cc) override;
+  absl::Status Close(CalculatorContext* cc) override;
 
   // This method is called once on the first frame. Use it to setup any objects
   // that will be reused throughout the calculator's life.
-  virtual ::mediapipe::Status GlSetup() = 0;
+  virtual absl::Status GlSetup() = 0;
 
   // You can use this optional method to do any pre-rendering setup that needs
   // to be redone after the context has been used by another calculator.
   // If your context is not shared, it will only be called once.
-  virtual ::mediapipe::Status GlBind() { return ::mediapipe::OkStatus(); }
+  virtual absl::Status GlBind() { return absl::OkStatus(); }
 
   // Do your rendering here. The source and destination textures have already
   // been created and bound for you.
   // - src: source texture (contains input frame); already bound to GL_TEXTURE1.
   // - dst: destination texture (write output frame here); already bound to
   //        GL_TEXTURE0 and attached to the framebuffer.
-  virtual ::mediapipe::Status GlRender(const GlTexture& src,
-                                       const GlTexture& dst) = 0;
+  virtual absl::Status GlRender(const GlTexture& src, const GlTexture& dst) = 0;
 
   // The method is called to delete all the programs.
-  virtual ::mediapipe::Status GlTeardown() = 0;
+  virtual absl::Status GlTeardown() = 0;
 
   // You can override this method to compute the size of the destination
   // texture. By default, it will take the same size as the source texture.

@@ -39,7 +39,7 @@
 namespace mediapipe {
 
 namespace tool {
-mediapipe::Status RunGeneratorFillExpectations(
+absl::Status RunGeneratorFillExpectations(
     const PacketGeneratorConfig& input_config, const std::string& package) {
   // TODO Remove conversion after everyone uses input/output
   // side packet.
@@ -65,7 +65,7 @@ mediapipe::Status RunGeneratorFillExpectations(
   }
 
   // Check that everything got initialized.
-  std::vector<mediapipe::Status> statuses;
+  std::vector<absl::Status> statuses;
   statuses.push_back(ValidatePacketTypeSet(contract.InputSidePackets()));
   statuses.push_back(ValidatePacketTypeSet(contract.OutputSidePackets()));
   return tool::CombinedStatus(
@@ -73,7 +73,7 @@ mediapipe::Status RunGeneratorFillExpectations(
       statuses);
 }
 
-mediapipe::Status RunGenerateAndValidateTypes(
+absl::Status RunGenerateAndValidateTypes(
     const std::string& packet_generator_name,
     const PacketGeneratorOptions& extendable_options,
     const PacketSet& input_side_packets, PacketSet* output_side_packets,
@@ -96,7 +96,7 @@ mediapipe::Status RunGenerateAndValidateTypes(
           .SetPrepend()
       << packet_generator_name << "::FillExpectations failed: ";
   // Check that the types were filled well.
-  std::vector<mediapipe::Status> statuses;
+  std::vector<absl::Status> statuses;
   statuses.push_back(ValidatePacketTypeSet(input_side_packet_types));
   statuses.push_back(ValidatePacketTypeSet(output_side_packet_types));
   MP_RETURN_IF_ERROR(tool::CombinedStatus(
@@ -119,7 +119,7 @@ mediapipe::Status RunGenerateAndValidateTypes(
       << packet_generator_name
       << "::FillExpectations expected different "
          "output type than those produced: ";
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
 }  // namespace tool

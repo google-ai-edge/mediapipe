@@ -19,6 +19,7 @@
 #include "mediapipe/framework/deps/file_path.h"
 #include "mediapipe/framework/packet.h"
 #include "mediapipe/framework/packet_generator.pb.h"
+#include "mediapipe/framework/port/commandlineflags.h"
 #include "mediapipe/framework/port/file_helpers.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
@@ -101,10 +102,10 @@ class TensorFlowSessionFromFrozenGraphGeneratorTest : public ::testing::Test {
 
 TEST_F(TensorFlowSessionFromFrozenGraphGeneratorTest,
        CreatesPacketWithGraphAndBindings) {
-  PacketSet input_side_packets(tool::CreateTagMap({}).ValueOrDie());
+  PacketSet input_side_packets(tool::CreateTagMap({}).value());
   PacketSet output_side_packets(
-      tool::CreateTagMap({"SESSION:session"}).ValueOrDie());
-  mediapipe::Status run_status = tool::RunGenerateAndValidateTypes(
+      tool::CreateTagMap({"SESSION:session"}).value());
+  absl::Status run_status = tool::RunGenerateAndValidateTypes(
       "TensorFlowSessionFromFrozenGraphGenerator", extendable_options_,
       input_side_packets, &output_side_packets);
   MP_EXPECT_OK(run_status) << run_status.message();
@@ -149,7 +150,7 @@ TEST_F(TensorFlowSessionFromFrozenGraphGeneratorTest,
   StatusOrPoller status_or_poller =
       graph.AddOutputStreamPoller("multiplied_tensor");
   ASSERT_TRUE(status_or_poller.ok());
-  OutputStreamPoller poller = std::move(status_or_poller.ValueOrDie());
+  OutputStreamPoller poller = std::move(status_or_poller.value());
 
   MP_ASSERT_OK(graph.StartRun({}));
   MP_ASSERT_OK(graph.AddPacketToInputStream(
@@ -171,16 +172,16 @@ TEST_F(TensorFlowSessionFromFrozenGraphGeneratorTest,
 TEST_F(TensorFlowSessionFromFrozenGraphGeneratorTest,
        CreatesPacketWithGraphAndBindingsFromInputSidePacket) {
   PacketSet input_side_packets(
-      tool::CreateTagMap({"STRING_MODEL:model"}).ValueOrDie());
+      tool::CreateTagMap({"STRING_MODEL:model"}).value());
   PacketSet output_side_packets(
-      tool::CreateTagMap({"SESSION:session"}).ValueOrDie());
+      tool::CreateTagMap({"SESSION:session"}).value());
   std::string serialized_graph_contents;
   MP_EXPECT_OK(mediapipe::file::GetContents(GetGraphDefPath(),
                                             &serialized_graph_contents));
   generator_options_->clear_graph_proto_path();
   input_side_packets.Tag("STRING_MODEL") =
       Adopt(new std::string(serialized_graph_contents));
-  mediapipe::Status run_status = tool::RunGenerateAndValidateTypes(
+  absl::Status run_status = tool::RunGenerateAndValidateTypes(
       "TensorFlowSessionFromFrozenGraphGenerator", extendable_options_,
       input_side_packets, &output_side_packets);
   MP_EXPECT_OK(run_status) << run_status.message();
@@ -191,13 +192,13 @@ TEST_F(
     TensorFlowSessionFromFrozenGraphGeneratorTest,
     CreatesPacketWithGraphAndBindingsFromInputSidePacketStringModelFilePath) {
   PacketSet input_side_packets(
-      tool::CreateTagMap({"STRING_MODEL_FILE_PATH:model_path"}).ValueOrDie());
+      tool::CreateTagMap({"STRING_MODEL_FILE_PATH:model_path"}).value());
   PacketSet output_side_packets(
-      tool::CreateTagMap({"SESSION:session"}).ValueOrDie());
+      tool::CreateTagMap({"SESSION:session"}).value());
   generator_options_->clear_graph_proto_path();
   input_side_packets.Tag("STRING_MODEL_FILE_PATH") =
       Adopt(new std::string(GetGraphDefPath()));
-  mediapipe::Status run_status = tool::RunGenerateAndValidateTypes(
+  absl::Status run_status = tool::RunGenerateAndValidateTypes(
       "TensorFlowSessionFromFrozenGraphGenerator", extendable_options_,
       input_side_packets, &output_side_packets);
   MP_EXPECT_OK(run_status) << run_status.message();
@@ -207,15 +208,15 @@ TEST_F(
 TEST_F(TensorFlowSessionFromFrozenGraphGeneratorTest,
        CheckFailureForOptionsAndInputsProvideGraphDefProto) {
   PacketSet input_side_packets(
-      tool::CreateTagMap({"STRING_MODEL_FILE_PATH:model_path"}).ValueOrDie());
+      tool::CreateTagMap({"STRING_MODEL_FILE_PATH:model_path"}).value());
   PacketSet output_side_packets(
-      tool::CreateTagMap({"SESSION:session"}).ValueOrDie());
+      tool::CreateTagMap({"SESSION:session"}).value());
   input_side_packets.Tag("STRING_MODEL_FILE_PATH") =
       Adopt(new std::string(GetGraphDefPath()));
-  mediapipe::Status run_status = tool::RunGenerateAndValidateTypes(
+  absl::Status run_status = tool::RunGenerateAndValidateTypes(
       "TensorFlowSessionFromFrozenGraphGenerator", extendable_options_,
       input_side_packets, &output_side_packets);
-  EXPECT_EQ(run_status.code(), mediapipe::StatusCode::kInternal);
+  EXPECT_EQ(run_status.code(), absl::StatusCode::kInternal);
   EXPECT_THAT(
       run_status.message(),
       ::testing::HasSubstr("Must have exactly one of graph_proto_path"));
@@ -226,9 +227,9 @@ TEST_F(TensorFlowSessionFromFrozenGraphGeneratorTest,
   PacketSet input_side_packets(
       tool::CreateTagMap(
           {"STRING_MODEL_FILE_PATH:model_path", "STRING_MODEL:model"})
-          .ValueOrDie());
+          .value());
   PacketSet output_side_packets(
-      tool::CreateTagMap({"SESSION:session"}).ValueOrDie());
+      tool::CreateTagMap({"SESSION:session"}).value());
   std::string serialized_graph_contents;
   MP_EXPECT_OK(mediapipe::file::GetContents(GetGraphDefPath(),
                                             &serialized_graph_contents));
@@ -237,10 +238,10 @@ TEST_F(TensorFlowSessionFromFrozenGraphGeneratorTest,
   input_side_packets.Tag("STRING_MODEL_FILE_PATH") =
       Adopt(new std::string(GetGraphDefPath()));
 
-  mediapipe::Status run_status = tool::RunGenerateAndValidateTypes(
+  absl::Status run_status = tool::RunGenerateAndValidateTypes(
       "TensorFlowSessionFromFrozenGraphGenerator", extendable_options_,
       input_side_packets, &output_side_packets);
-  EXPECT_EQ(run_status.code(), mediapipe::StatusCode::kInternal);
+  EXPECT_EQ(run_status.code(), absl::StatusCode::kInternal);
   EXPECT_THAT(
       run_status.message(),
       ::testing::HasSubstr("Must have exactly one of graph_proto_path"));
@@ -251,9 +252,9 @@ TEST_F(TensorFlowSessionFromFrozenGraphGeneratorTest,
   PacketSet input_side_packets(
       tool::CreateTagMap(
           {"STRING_MODEL_FILE_PATH:model_path", "STRING_MODEL:model"})
-          .ValueOrDie());
+          .value());
   PacketSet output_side_packets(
-      tool::CreateTagMap({"SESSION:session"}).ValueOrDie());
+      tool::CreateTagMap({"SESSION:session"}).value());
   std::string serialized_graph_contents;
   MP_EXPECT_OK(mediapipe::file::GetContents(GetGraphDefPath(),
                                             &serialized_graph_contents));
@@ -263,10 +264,10 @@ TEST_F(TensorFlowSessionFromFrozenGraphGeneratorTest,
       Adopt(new std::string(GetGraphDefPath()));
   generator_options_->clear_graph_proto_path();
 
-  mediapipe::Status run_status = tool::RunGenerateAndValidateTypes(
+  absl::Status run_status = tool::RunGenerateAndValidateTypes(
       "TensorFlowSessionFromFrozenGraphGenerator", extendable_options_,
       input_side_packets, &output_side_packets);
-  EXPECT_EQ(run_status.code(), mediapipe::StatusCode::kInternal);
+  EXPECT_EQ(run_status.code(), absl::StatusCode::kInternal);
   EXPECT_THAT(
       run_status.message(),
       ::testing::HasSubstr("Must have exactly one of graph_proto_path"));
@@ -274,11 +275,11 @@ TEST_F(TensorFlowSessionFromFrozenGraphGeneratorTest,
 
 TEST_F(TensorFlowSessionFromFrozenGraphGeneratorTest,
        CheckInitializationOpName) {
-  PacketSet input_side_packets(tool::CreateTagMap({}).ValueOrDie());
+  PacketSet input_side_packets(tool::CreateTagMap({}).value());
   PacketSet output_side_packets(
-      tool::CreateTagMap({"SESSION:session"}).ValueOrDie());
+      tool::CreateTagMap({"SESSION:session"}).value());
   generator_options_->add_initialization_op_names("multiplied:0");
-  mediapipe::Status run_status = tool::RunGenerateAndValidateTypes(
+  absl::Status run_status = tool::RunGenerateAndValidateTypes(
       "TensorFlowSessionFromFrozenGraphGenerator", extendable_options_,
       input_side_packets, &output_side_packets);
   MP_EXPECT_OK(run_status);

@@ -64,7 +64,7 @@ std::vector<Point2_f> GetPoints(const Detection& detection) {
 }
 
 // Test helper function to run "DetectionProjectionCalculator".
-mediapipe::StatusOr<Detection> RunProjectionCalculator(
+absl::StatusOr<Detection> RunProjectionCalculator(
     Detection detection, std::array<float, 16> project_mat) {
   CalculatorRunner runner(ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"(
     calculator: "DetectionProjectionCalculator"
@@ -132,7 +132,7 @@ TEST(DetectionProjectionCalculatorTest, ProjectionFullRoiNoOp) {
   auto status_or_result = RunProjectionCalculator(std::move(detection),
                                                   std::move(projection_matrix));
   MP_ASSERT_OK(status_or_result);
-  const auto& result = status_or_result.ValueOrDie();
+  const auto& result = status_or_result.value();
   ASSERT_EQ(result.location_data().format(),
             LocationData::RELATIVE_BOUNDING_BOX);
   EXPECT_THAT(result.location_data().relative_bounding_box(),
@@ -178,7 +178,7 @@ TEST(DetectionProjectionCalculatorTest, ProjectionFullRoi90Rotation) {
   auto status_or_result = RunProjectionCalculator(std::move(detection),
                                                   std::move(projection_matrix));
   MP_ASSERT_OK(status_or_result);
-  const auto& result = status_or_result.ValueOrDie();
+  const auto& result = status_or_result.value();
   ASSERT_EQ(result.location_data().format(),
             LocationData::RELATIVE_BOUNDING_BOX);
   EXPECT_THAT(result.location_data().relative_bounding_box(),
@@ -224,7 +224,7 @@ TEST(DetectionProjectionCalculatorTest, ProjectionSmallerRoi) {
   auto status_or_result = RunProjectionCalculator(std::move(detection),
                                                   std::move(projection_matrix));
   MP_ASSERT_OK(status_or_result);
-  const auto& result = status_or_result.ValueOrDie();
+  const auto& result = status_or_result.value();
   ASSERT_EQ(result.location_data().format(),
             LocationData::RELATIVE_BOUNDING_BOX);
   EXPECT_THAT(result.location_data().relative_bounding_box(),
@@ -293,7 +293,7 @@ TEST(DetectionProjectionCalculatorTest, ProjectionSmallerRoi30Rotation) {
   auto status_or_result = RunProjectionCalculator(std::move(detection),
                                                   std::move(projection_matrix));
   MP_ASSERT_OK(status_or_result);
-  const auto& result = status_or_result.ValueOrDie();
+  const auto& result = status_or_result.value();
   ASSERT_EQ(result.location_data().format(),
             LocationData::RELATIVE_BOUNDING_BOX);
   EXPECT_THAT(result.location_data().relative_bounding_box(),

@@ -1,4 +1,4 @@
-# Copyright 2019 The MediaPipe Authors.
+# Copyright 2019, 2021 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -167,7 +167,7 @@ cc_library(
         "//mediapipe/util:time_series_util",
         "@com_google_absl//absl/strings",
         "@com_google_audio_tools//audio/dsp:resampler",
-        "@com_google_audio_tools//audio/dsp:resampler_rational_factor",
+        "@com_google_audio_tools//audio/dsp:resampler_q",
         "@eigen_archive//:eigen",
     ],
     alwayslink = 1,
@@ -242,6 +242,7 @@ cc_test(
         "//mediapipe/framework:calculator_runner",
         "//mediapipe/framework/deps:file_path",
         "//mediapipe/framework/formats:time_series_header_cc_proto",
+        "//mediapipe/framework/port:commandlineflags",
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/framework/port:parse_text_proto",
     ],

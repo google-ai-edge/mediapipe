@@ -82,7 +82,7 @@ class GpuBufferMultiPool {
     std::size_t operator()(const BufferSpec& spec) const {
       // Width and height are expected to be smaller than half the width of
       // size_t. We can combine them into a single integer, and then use
-      // std::hash, which is what go/hashing recommends for hashing numbers.
+      // std::hash.
       constexpr int kWidth = std::numeric_limits<size_t>::digits;
       return std::hash<std::size_t>{}(
           spec.width ^ RotateLeft(spec.height, kWidth / 2) ^

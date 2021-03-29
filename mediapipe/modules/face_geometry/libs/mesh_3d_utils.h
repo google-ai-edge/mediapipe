@@ -36,14 +36,14 @@ bool HasVertexComponent(Mesh3d::VertexType vertex_type,
 //
 // Returns an error status if a given vertex type doesn't have the requested
 // component.
-mediapipe::StatusOr<uint32_t> GetVertexComponentOffset(
+absl::StatusOr<uint32_t> GetVertexComponentOffset(
     Mesh3d::VertexType vertex_type, VertexComponent vertex_component);
 
 // Computes the vertex component size.
 //
 // Returns an error status if a given vertex type doesn't have the requested
 // component.
-mediapipe::StatusOr<uint32_t> GetVertexComponentSize(
+absl::StatusOr<uint32_t> GetVertexComponentSize(
     Mesh3d::VertexType vertex_type, VertexComponent vertex_component);
 
 }  // namespace mediapipe::face_geometry

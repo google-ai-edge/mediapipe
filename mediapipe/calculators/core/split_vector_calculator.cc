@@ -26,7 +26,7 @@
 
 #if !defined(MEDIAPIPE_DISABLE_GL_COMPUTE)
 #include "tensorflow/lite/delegates/gpu/gl/gl_buffer.h"
-#endif  //  !MEDIAPIPE_DISABLE_GPU
+#endif  // !defined(MEDIAPIPE_DISABLE_GL_COMPUTE)
 
 namespace mediapipe {
 

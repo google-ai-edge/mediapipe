@@ -89,13 +89,13 @@ float ApplyActivation(
 // }
 class TfLiteTensorsToLandmarksCalculator : public CalculatorBase {
  public:
-  static mediapipe::Status GetContract(CalculatorContract* cc);
+  static absl::Status GetContract(CalculatorContract* cc);
 
-  mediapipe::Status Open(CalculatorContext* cc) override;
-  mediapipe::Status Process(CalculatorContext* cc) override;
+  absl::Status Open(CalculatorContext* cc) override;
+  absl::Status Process(CalculatorContext* cc) override;
 
  private:
-  mediapipe::Status LoadOptions(CalculatorContext* cc);
+  absl::Status LoadOptions(CalculatorContext* cc);
   int num_landmarks_ = 0;
   bool flip_vertically_ = false;
   bool flip_horizontally_ = false;
@@ -104,7 +104,7 @@ class TfLiteTensorsToLandmarksCalculator : public CalculatorBase {
 };
 REGISTER_CALCULATOR(TfLiteTensorsToLandmarksCalculator);
 
-mediapipe::Status TfLiteTensorsToLandmarksCalculator::GetContract(
+absl::Status TfLiteTensorsToLandmarksCalculator::GetContract(
     CalculatorContract* cc) {
   RET_CHECK(!cc->Inputs().GetTags().empty());
   RET_CHECK(!cc->Outputs().GetTags().empty());
@@ -137,11 +137,10 @@ mediapipe::Status TfLiteTensorsToLandmarksCalculator::GetContract(
     cc->Outputs().Tag("NORM_LANDMARKS").Set<NormalizedLandmarkList>();
   }
 
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-mediapipe::Status TfLiteTensorsToLandmarksCalculator::Open(
-    CalculatorContext* cc) {
+absl::Status TfLiteTensorsToLandmarksCalculator::Open(CalculatorContext* cc) {
   cc->SetOffset(TimestampDiff(0));
 
   MP_RETURN_IF_ERROR(LoadOptions(cc));
@@ -149,7 +148,7 @@ mediapipe::Status TfLiteTensorsToLandmarksCalculator::Open(
   if (cc->Outputs().HasTag("NORM_LANDMARKS")) {
     RET_CHECK(options_.has_input_image_height() &&
               options_.has_input_image_width())
-        << "Must provide input with/height for getting normalized landmarks.";
+        << "Must provide input width/height for getting normalized landmarks.";
   }
   if (cc->Outputs().HasTag("LANDMARKS") &&
       (options_.flip_vertically() || options_.flip_horizontally() ||
@@ -157,7 +156,7 @@ mediapipe::Status TfLiteTensorsToLandmarksCalculator::Open(
        cc->InputSidePackets().HasTag("FLIP_VERTICALLY"))) {
     RET_CHECK(options_.has_input_image_height() &&
               options_.has_input_image_width())
-        << "Must provide input with/height for using flip_vertically option "
+        << "Must provide input width/height for using flip_vertically option "
            "when outputing landmarks in absolute coordinates.";
   }
 
@@ -171,10 +170,10 @@ mediapipe::Status TfLiteTensorsToLandmarksCalculator::Open(
           ? cc->InputSidePackets().Tag("FLIP_VERTICALLY").Get<bool>()
           : options_.flip_vertically();
 
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-mediapipe::Status TfLiteTensorsToLandmarksCalculator::Process(
+absl::Status TfLiteTensorsToLandmarksCalculator::Process(
     CalculatorContext* cc) {
   // Override values if specified so.
   if (cc->Inputs().HasTag("FLIP_HORIZONTALLY") &&
@@ -187,7 +186,7 @@ mediapipe::Status TfLiteTensorsToLandmarksCalculator::Process(
   }
 
   if (cc->Inputs().Tag("TENSORS").IsEmpty()) {
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
   const auto& input_tensors =
@@ -268,16 +267,16 @@ mediapipe::Status TfLiteTensorsToLandmarksCalculator::Process(
                        .At(cc->InputTimestamp()));
   }
 
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-mediapipe::Status TfLiteTensorsToLandmarksCalculator::LoadOptions(
+absl::Status TfLiteTensorsToLandmarksCalculator::LoadOptions(
     CalculatorContext* cc) {
   // Get calculator options specified in the graph.
   options_ =
       cc->Options<::mediapipe::TfLiteTensorsToLandmarksCalculatorOptions>();
   num_landmarks_ = options_.num_landmarks();
 
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 }  // namespace mediapipe

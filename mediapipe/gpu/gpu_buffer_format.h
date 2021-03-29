@@ -64,8 +64,6 @@ struct GlTextureInfo {
 };
 
 const GlTextureInfo& GlTextureInfoForGpuBufferFormat(GpuBufferFormat format,
-                                                     int plane);
-const GlTextureInfo& GlTextureInfoForGpuBufferFormat(GpuBufferFormat format,
                                                      int plane,
                                                      GlVersion gl_version);
 

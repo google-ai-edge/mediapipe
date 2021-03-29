@@ -44,7 +44,7 @@ namespace {
 // generator cannot be run given the currently available side packets
 // (and false otherwise).  If an error occurs then unrunnable and
 // input_side_packet_set are undefined.
-mediapipe::Status CreateInputsForGenerator(
+absl::Status CreateInputsForGenerator(
     const ValidatedGraphConfig& validated_graph, int generator_index,
     const std::map<std::string, Packet>& side_packets,
     PacketSet* input_side_packet_set, bool* unrunnable) {
@@ -55,7 +55,7 @@ mediapipe::Status CreateInputsForGenerator(
                                    .packet_generator();
   // Fill the PacketSet (if possible).
   *unrunnable = false;
-  std::vector<mediapipe::Status> statuses;
+  std::vector<absl::Status> statuses;
   for (CollectionItemId id = node_type_info.InputSidePacketTypes().BeginId();
        id < node_type_info.InputSidePacketTypes().EndId(); ++id) {
     const std::string& name =
@@ -67,7 +67,7 @@ mediapipe::Status CreateInputsForGenerator(
       continue;
     }
     input_side_packet_set->Get(id) = it->second;
-    mediapipe::Status status =
+    absl::Status status =
         node_type_info.InputSidePacketTypes().Get(id).Validate(
             input_side_packet_set->Get(id));
     if (!status.ok()) {
@@ -82,15 +82,15 @@ mediapipe::Status CreateInputsForGenerator(
     return tool::CombinedStatus(
         absl::StrCat(generator_name, " had invalid configuration."), statuses);
   }
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
 // Generate the packets from a PacketGenerator, place them in
 // output_side_packet_set, and validate their types.
-mediapipe::Status Generate(const ValidatedGraphConfig& validated_graph,
-                           int generator_index,
-                           const PacketSet& input_side_packet_set,
-                           PacketSet* output_side_packet_set) {
+absl::Status Generate(const ValidatedGraphConfig& validated_graph,
+                      int generator_index,
+                      const PacketSet& input_side_packet_set,
+                      PacketSet* output_side_packet_set) {
   const NodeTypeInfo& node_type_info =
       validated_graph.GeneratorInfos()[generator_index];
   const PacketGeneratorConfig& generator_config =
@@ -113,7 +113,7 @@ mediapipe::Status Generate(const ValidatedGraphConfig& validated_graph,
           .SetPrepend()
       << generator_name
       << "::Generate() output packets were of incorrect type: ";
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
 // GeneratorScheduler schedules the packet generators in a validated graph for
@@ -149,7 +149,7 @@ class GeneratorScheduler {
   // rather, not executed) in non_scheduled_generators. Returns the combined
   // error status if there were errors while running the packet generators.
   // NOTE: This method should only be called when there are no pending tasks.
-  mediapipe::Status GetNonScheduledGenerators(
+  absl::Status GetNonScheduledGenerators(
       std::vector<int>* non_scheduled_generators) const;
 
  private:
@@ -169,7 +169,7 @@ class GeneratorScheduler {
   // This condition variable is signaled when num_tasks_ becomes 0.
   absl::CondVar idle_condvar_;
   // Accumulates the error statuses while running the packet generators.
-  std::vector<mediapipe::Status> statuses_ ABSL_GUARDED_BY(mutex_);
+  std::vector<absl::Status> statuses_ ABSL_GUARDED_BY(mutex_);
   // scheduled_generators_[i] is true if the packet generator with index i was
   // scheduled (or rather, executed).
   std::vector<bool> scheduled_generators_ ABSL_GUARDED_BY(mutex_);
@@ -219,7 +219,7 @@ void GeneratorScheduler::GenerateAndScheduleNext(
           .OutputSidePacketTypes()
           .TagMap());
   VLOG(1) << "Running generator " << generator_index;
-  mediapipe::Status status =
+  absl::Status status =
       Generate(*validated_graph_, generator_index, *input_side_packet_set,
                &output_side_packet_set);
 
@@ -235,7 +235,7 @@ void GeneratorScheduler::GenerateAndScheduleNext(
       const auto& name = output_side_packet_set.TagMap()->Names()[id.value()];
       auto item = side_packets->emplace(name, output_side_packet_set.Get(id));
       if (!item.second) {
-        statuses_.push_back(mediapipe::AlreadyExistsError(
+        statuses_.push_back(absl::AlreadyExistsError(
             absl::StrCat("Side packet \"", name, "\" was defined twice.")));
       }
     }
@@ -266,7 +266,7 @@ void GeneratorScheduler::ScheduleAllRunnableGenerators(
                                          .InputSidePacketTypes()
                                          .TagMap());
 
-    mediapipe::Status status =
+    absl::Status status =
         CreateInputsForGenerator(*validated_graph_, index, *side_packets,
                                  input_side_packet_set.get(), &is_unrunnable);
     if (!status.ok()) {
@@ -313,7 +313,7 @@ void GeneratorScheduler::WaitUntilIdle() {
   }
 }
 
-mediapipe::Status GeneratorScheduler::GetNonScheduledGenerators(
+absl::Status GeneratorScheduler::GetNonScheduledGenerators(
     std::vector<int>* non_scheduled_generators) const {
   non_scheduled_generators->clear();
 
@@ -326,7 +326,7 @@ mediapipe::Status GeneratorScheduler::GetNonScheduledGenerators(
       non_scheduled_generators->push_back(i);
     }
   }
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
 void GeneratorScheduler::AddApplicationThreadTask(std::function<void()> task) {
@@ -356,7 +356,7 @@ void GeneratorScheduler::RunApplicationThreadTasks() {
 
 PacketGeneratorGraph::~PacketGeneratorGraph() {}
 
-mediapipe::Status PacketGeneratorGraph::Initialize(
+absl::Status PacketGeneratorGraph::Initialize(
     const ValidatedGraphConfig* validated_graph, mediapipe::Executor* executor,
     const std::map<std::string, Packet>& input_side_packets) {
   validated_graph_ = validated_graph;
@@ -368,14 +368,14 @@ mediapipe::Status PacketGeneratorGraph::Initialize(
                            /*initial=*/true);
 }
 
-mediapipe::Status PacketGeneratorGraph::RunGraphSetup(
+absl::Status PacketGeneratorGraph::RunGraphSetup(
     const std::map<std::string, Packet>& input_side_packets,
     std::map<std::string, Packet>* output_side_packets) const {
   *output_side_packets = base_packets_;
   for (const std::pair<const std::string, Packet>& item : input_side_packets) {
     auto iter = output_side_packets->find(item.first);
     if (iter != output_side_packets->end()) {
-      return mediapipe::AlreadyExistsError(
+      return absl::AlreadyExistsError(
           absl::StrCat("Side packet \"", iter->first, "\" was defined twice."));
     }
     output_side_packets->insert(iter, item);
@@ -394,10 +394,10 @@ mediapipe::Status PacketGeneratorGraph::RunGraphSetup(
       << "Some Generators were unrunnable (validation should have failed).\n"
          "Generator indexes: "
       << absl::StrJoin(non_scheduled_generators, ", ");
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-mediapipe::Status PacketGeneratorGraph::ExecuteGenerators(
+absl::Status PacketGeneratorGraph::ExecuteGenerators(
     std::map<std::string, Packet>* output_side_packets,
     std::vector<int>* non_scheduled_generators, bool initial) const {
   VLOG(1) << "ExecuteGenerators initial == " << initial;

@@ -1,7 +1,9 @@
 #include "mediapipe/framework/api2/packet.h"
 
 #include "absl/strings/str_cat.h"
+#include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
+#include "mediapipe/framework/port/status_matchers.h"
 
 namespace mediapipe {
 namespace api2 {
@@ -168,12 +170,26 @@ TEST(PacketTest, FromOldPacket) {
   mediapipe::Packet op = mediapipe::MakePacket<int>(7);
   Packet<int> p = FromOldPacket(op).As<int>();
   EXPECT_EQ(p.Get(), 7);
+  EXPECT_EQ(op.Get<int>(), 7);
+}
+
+TEST(PacketTest, FromOldPacketConsume) {
+  mediapipe::Packet op = mediapipe::MakePacket<int>(7);
+  Packet<int> p = FromOldPacket(std::move(op)).As<int>();
+  MP_EXPECT_OK(p.Consume());
 }
 
 TEST(PacketTest, ToOldPacket) {
   auto p = MakePacket<int>(7);
   mediapipe::Packet op = ToOldPacket(p);
   EXPECT_EQ(op.Get<int>(), 7);
+  EXPECT_EQ(p.Get(), 7);
+}
+
+TEST(PacketTest, ToOldPacketConsume) {
+  auto p = MakePacket<int>(7);
+  mediapipe::Packet op = ToOldPacket(std::move(p));
+  MP_EXPECT_OK(op.Consume<int>());
 }
 
 TEST(PacketTest, OldRefCounting) {
@@ -188,6 +204,42 @@ TEST(PacketTest, OldRefCounting) {
   EXPECT_TRUE(alive);
   p2 = {};
   EXPECT_FALSE(alive);
+}
+
+TEST(PacketTest, Consume) {
+  auto p = MakePacket<int>(7);
+  auto maybe_int = p.Consume();
+  EXPECT_TRUE(p.IsEmpty());
+  ASSERT_TRUE(maybe_int.ok());
+  EXPECT_EQ(*maybe_int.value(), 7);
+
+  p = MakePacket<int>(3);
+  auto p2 = p;
+  maybe_int = p.Consume();
+  EXPECT_FALSE(maybe_int.ok());
+  EXPECT_FALSE(p.IsEmpty());
+  EXPECT_FALSE(p2.IsEmpty());
+}
+
+TEST(PacketTest, OneOfConsume) {
+  Packet<OneOf<std::string, int>> p = MakePacket<std::string>("hi");
+  EXPECT_TRUE(p.Has<std::string>());
+  EXPECT_FALSE(p.Has<int>());
+  EXPECT_EQ(p.Get<std::string>(), "hi");
+  absl::StatusOr<std::string> out = p.ConsumeAndVisit(
+      [](std::unique_ptr<std::string> s) {
+        return absl::StrCat("string: ", *s);
+      },
+      [](std::unique_ptr<int> i) { return absl::StrCat("int: ", *i); });
+  MP_EXPECT_OK(out);
+  EXPECT_EQ(out.value(), "string: hi");
+  EXPECT_TRUE(p.IsEmpty());
+
+  p = MakePacket<int>(3);
+  absl::Status out2 = p.ConsumeAndVisit([](std::unique_ptr<std::string> s) {},
+                                        [](std::unique_ptr<int> i) {});
+  MP_EXPECT_OK(out2);
+  EXPECT_TRUE(p.IsEmpty());
 }
 
 }  // namespace

@@ -48,7 +48,7 @@ node {
   output_side_packet: "CONTENTS:model_blob"
   options: {
     [mediapipe.LocalFileContentsCalculatorOptions.ext]: {
-      read_as_binary: true
+      text_mode: false
     }
   }
 }

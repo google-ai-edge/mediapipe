@@ -21,6 +21,8 @@ syntax = "proto2";
 package mediapipe;
 
 option objc_class_prefix = "MediaPipe";
+option java_package = "com.google.mediapipe.formats.proto";
+option java_outer_classname = "ClassificationProto";
 
 message Classification {
   // The index of the class in the corresponding label map.

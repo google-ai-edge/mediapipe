@@ -60,11 +60,11 @@ namespace mediapipe {
 // }
 class TfLiteTensorsToClassificationCalculator : public CalculatorBase {
  public:
-  static mediapipe::Status GetContract(CalculatorContract* cc);
+  static absl::Status GetContract(CalculatorContract* cc);
 
-  mediapipe::Status Open(CalculatorContext* cc) override;
-  mediapipe::Status Process(CalculatorContext* cc) override;
-  mediapipe::Status Close(CalculatorContext* cc) override;
+  absl::Status Open(CalculatorContext* cc) override;
+  absl::Status Process(CalculatorContext* cc) override;
+  absl::Status Close(CalculatorContext* cc) override;
 
  private:
   ::mediapipe::TfLiteTensorsToClassificationCalculatorOptions options_;
@@ -74,7 +74,7 @@ class TfLiteTensorsToClassificationCalculator : public CalculatorBase {
 };
 REGISTER_CALCULATOR(TfLiteTensorsToClassificationCalculator);
 
-mediapipe::Status TfLiteTensorsToClassificationCalculator::GetContract(
+absl::Status TfLiteTensorsToClassificationCalculator::GetContract(
     CalculatorContract* cc) {
   RET_CHECK(!cc->Inputs().GetTags().empty());
   RET_CHECK(!cc->Outputs().GetTags().empty());
@@ -87,10 +87,10 @@ mediapipe::Status TfLiteTensorsToClassificationCalculator::GetContract(
     cc->Outputs().Tag("CLASSIFICATIONS").Set<ClassificationList>();
   }
 
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-mediapipe::Status TfLiteTensorsToClassificationCalculator::Open(
+absl::Status TfLiteTensorsToClassificationCalculator::Open(
     CalculatorContext* cc) {
   cc->SetOffset(TimestampDiff(0));
 
@@ -114,10 +114,10 @@ mediapipe::Status TfLiteTensorsToClassificationCalculator::Open(
     label_map_loaded_ = true;
   }
 
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-mediapipe::Status TfLiteTensorsToClassificationCalculator::Process(
+absl::Status TfLiteTensorsToClassificationCalculator::Process(
     CalculatorContext* cc) {
   const auto& input_tensors =
       cc->Inputs().Tag("TENSORS").Get<std::vector<TfLiteTensor>>();
@@ -190,12 +190,12 @@ mediapipe::Status TfLiteTensorsToClassificationCalculator::Process(
       .Tag("CLASSIFICATIONS")
       .Add(classification_list.release(), cc->InputTimestamp());
 
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-mediapipe::Status TfLiteTensorsToClassificationCalculator::Close(
+absl::Status TfLiteTensorsToClassificationCalculator::Close(
     CalculatorContext* cc) {
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
 }  // namespace mediapipe

@@ -143,16 +143,15 @@ cc_test(
     data = [":anchor_golden_files"],
     deps = [
         ":ssd_anchors_calculator",
-        ":ssd_anchors_calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework:calculator_runner",
         "//mediapipe/framework/deps:file_path",
         "//mediapipe/framework/formats/object_detection:anchor_cc_proto",
+        "//mediapipe/framework/port:commandlineflags",
         "//mediapipe/framework/port:file_helpers",
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/framework/port:integral_types",
         "//mediapipe/framework/port:parse_text_proto",
-        "//mediapipe/framework/tool:validate_type",
     ],
 )
 
@@ -460,7 +459,10 @@ cc_library(
 # bazel test //mediapipe/calculators/tflite:tflite_inference_calculator_test --copt=-DTFLITE_GPU_EXTRA_GLES_DEPS --copt=-DMESA_EGL_NO_X11_HEADERS --copt=-DEGL_NO_X11 --config=grte_v5 --test_strategy=local
 cc_test(
     name = "tflite_inference_calculator_test",
-    srcs = ["tflite_inference_calculator_test.cc"],
+    srcs = [
+        "tflite_inference_calculator_test.cc",
+        "tflite_inference_calculator_test_common.h",
+    ],
     data = ["testdata/add.bin"],
     linkstatic = 1,
     deps = [
@@ -480,7 +482,9 @@ cc_test(
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/types:optional",
         "@org_tensorflow//tensorflow/lite:framework",
+        "@org_tensorflow//tensorflow/lite:type_to_tflitetype",
         "@org_tensorflow//tensorflow/lite/kernels:builtin_ops",
+        "@org_tensorflow//tensorflow/lite/kernels/internal:tensor",
     ],
 )
 

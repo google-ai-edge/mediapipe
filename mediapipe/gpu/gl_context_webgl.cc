@@ -46,7 +46,7 @@ GlContext::StatusOrGlContext GlContext::Create(
   return std::move(context);
 }
 
-::mediapipe::Status GlContext::CreateContextInternal(
+absl::Status GlContext::CreateContextInternal(
     EMSCRIPTEN_WEBGL_CONTEXT_HANDLE external_context, int webgl_version) {
   CHECK(webgl_version == 1 || webgl_version == 2);
 
@@ -58,9 +58,12 @@ GlContext::StatusOrGlContext GlContext::Create(
   attrs.majorVersion = webgl_version;
   attrs.minorVersion = 0;
 
-  attrs.premultipliedAlpha = 0;
-  // New one to try out...  TODO: see if actually necessary for
-  // pushing resulting texture through MediaPipe pipeline.
+  // This flag tells the page compositor that the image written to the canvas
+  // uses premultiplied alpha, and so can be used directly for compositing.
+  // Without this, it needs to make an additional full-canvas rendering pass.
+  attrs.premultipliedAlpha = 1;
+
+  // TODO: Investigate this option in more detail, esp. on Safari.
   attrs.preserveDrawingBuffer = 0;
 
   // Since the Emscripten canvas target finding function is visible from here,
@@ -124,10 +127,10 @@ GlContext::StatusOrGlContext GlContext::Create(
   // GLES 2 does not have them, so let's set the major version here at least.
   // WebGL 1.0 maps to GLES 2.0 and WebGL 2.0 maps to GLES 3.0, so we add 1.
   gl_major_version_ = webgl_version + 1;
-  return ::mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-::mediapipe::Status GlContext::CreateContext(
+absl::Status GlContext::CreateContext(
     EMSCRIPTEN_WEBGL_CONTEXT_HANDLE external_context) {
   // TODO: If we're given a non-0 external_context, could try to use
   // that directly, since we're assuming a single-threaded single-context
@@ -144,7 +147,7 @@ GlContext::StatusOrGlContext GlContext::Create(
   LOG(INFO) << "Successfully created a WebGL context with major version "
             << gl_major_version_ << " and handle " << context_;
 
-  return ::mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
 void GlContext::DestroyContext() {
@@ -177,13 +180,13 @@ void GlContext::GetCurrentContextBinding(GlContext::ContextBinding* binding) {
   binding->context = emscripten_webgl_get_current_context();
 }
 
-::mediapipe::Status GlContext::SetCurrentContextBinding(
+absl::Status GlContext::SetCurrentContextBinding(
     const ContextBinding& new_binding) {
   if (new_binding.context == 0) {
     // Calling emscripten_webgl_make_context_current(0) is resulting in an error
     // so don't remove context for now, only replace!  In the future, can
     // perhaps create a separate "do-nothing" context for this.
-    return ::mediapipe::OkStatus();
+    return absl::OkStatus();
   }
   // TODO: See if setting the same context to current multiple times
   // comes with a performance cost, and fix if so.
@@ -191,7 +194,7 @@ void GlContext::GetCurrentContextBinding(GlContext::ContextBinding* binding) {
       emscripten_webgl_make_context_current(new_binding.context);
   RET_CHECK(res == EMSCRIPTEN_RESULT_SUCCESS)
       << "emscripten_webgl_make_context_current() returned error " << res;
-  return ::mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
 bool GlContext::HasContext() const { return context_ != 0; }

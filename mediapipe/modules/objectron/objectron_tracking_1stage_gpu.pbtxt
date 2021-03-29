@@ -167,4 +167,10 @@ node {
   calculator: "Lift2DFrameAnnotationTo3DCalculator"
   input_stream: "FRAME_ANNOTATION:tracked_objects"
   output_stream: "LIFTED_FRAME_ANNOTATION:lifted_tracked_objects"
+  options: {
+    [mediapipe.Lift2DFrameAnnotationTo3DCalculatorOptions.ext] {
+      normalized_focal_x: 2.0975
+      normalized_focal_y: 1.5731
+    }
+  }
 }

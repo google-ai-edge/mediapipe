@@ -67,26 +67,26 @@ class CalculatorBase {
 
   // The subclasses of CalculatorBase must implement GetContract.
   // ...
-  static ::MediaPipe::Status GetContract(CalculatorContract* cc);
+  static absl::Status GetContract(CalculatorContract* cc);
 
   // Open is called before any Process() calls, on a freshly constructed
   // calculator.  Subclasses may override this method to perform necessary
   // setup, and possibly output Packets and/or set output streams' headers.
   // ...
-  virtual ::MediaPipe::Status Open(CalculatorContext* cc) {
-    return ::MediaPipe::OkStatus();
+  virtual absl::Status Open(CalculatorContext* cc) {
+    return absl::OkStatus();
   }
 
   // Processes the incoming inputs. May call the methods on cc to access
   // inputs and produce outputs.
   // ...
-  virtual ::MediaPipe::Status Process(CalculatorContext* cc) = 0;
+  virtual absl::Status Process(CalculatorContext* cc) = 0;
 
   // Is called if Open() was called and succeeded.  Is called either
   // immediately after processing is complete or after a graph run has ended
   // (if an error occurred in the graph).  ...
-  virtual ::MediaPipe::Status Close(CalculatorContext* cc) {
-    return ::MediaPipe::OkStatus();
+  virtual absl::Status Close(CalculatorContext* cc) {
+    return absl::OkStatus();
   }
 
   ...
@@ -199,7 +199,7 @@ name and index number. In the function below input are output are identified:
 // c++ Code snippet describing the SomeAudioVideoCalculator GetContract() method
 class SomeAudioVideoCalculator : public CalculatorBase {
  public:
-  static ::mediapipe::Status GetContract(CalculatorContract* cc) {
+  static absl::Status GetContract(CalculatorContract* cc) {
     cc->Inputs().Index(0).SetAny();
     // SetAny() is used to specify that whatever the type of the
     // stream is, it's acceptable.  This does not mean that any
@@ -209,13 +209,13 @@ class SomeAudioVideoCalculator : public CalculatorBase {
     cc->Outputs().Tag("VIDEO").Set<ImageFrame>();
     cc->Outputs().Get("AUDIO", 0).Set<Matrix>();
     cc->Outputs().Get("AUDIO", 1).Set<Matrix>();
-    return ::mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 ```
 
 ## Processing
 
-`Process()` called on a non-source node must return `::mediapipe::OkStatus()` to
+`Process()` called on a non-source node must return `absl::OkStatus()` to
 indicate that all went well, or any other status code to signal an error
 
 If a non-source calculator returns `tool::StatusStop()`, then this signals the
@@ -224,12 +224,12 @@ input streams will be closed (and remaining Packets will propagate through the
 graph).
 
 A source node in a graph will continue to have `Process()` called on it as long
-as it returns `::mediapipe::OkStatus(`). To indicate that there is no more data
-to be generated return `tool::StatusStop()`. Any other status indicates an error
-has occurred.
+as it returns `absl::OkStatus(`). To indicate that there is no more data to be
+generated return `tool::StatusStop()`. Any other status indicates an error has
+occurred.
 
-`Close()` returns `::mediapipe::OkStatus()` to indicate success. Any other
-status indicates a failure.
+`Close()` returns `absl::OkStatus()` to indicate success. Any other status
+indicates a failure.
 
 Here is the basic `Process()` function. It uses the `Input()` method (which can
 be used only if the calculator has a single input) to request its input data. It
@@ -238,13 +238,13 @@ and does the calculations. When done it releases the pointer when adding it to
 the output stream.
 
 ```c++
-::util::Status MyCalculator::Process() {
+absl::Status MyCalculator::Process() {
   const Matrix& input = Input()->Get<Matrix>();
   std::unique_ptr<Matrix> output(new Matrix(input.rows(), input.cols()));
   // do your magic here....
   //    output->row(n) =  ...
   Output()->Add(output.release(), InputTimestamp());
-  return ::mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 ```
 
@@ -312,7 +312,7 @@ namespace mediapipe {
 //
 class PacketClonerCalculator : public CalculatorBase {
  public:
-  static ::mediapipe::Status GetContract(CalculatorContract* cc) {
+  static absl::Status GetContract(CalculatorContract* cc) {
     const int tick_signal_index = cc->Inputs().NumEntries() - 1;
     // cc->Inputs().NumEntries() returns the number of input streams
     // for the PacketClonerCalculator
@@ -322,10 +322,10 @@ class PacketClonerCalculator : public CalculatorBase {
       cc->Outputs().Index(i).SetSameAs(&cc->Inputs().Index(i));
     }
     cc->Inputs().Index(tick_signal_index).SetAny();
-    return ::mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
-  ::mediapipe::Status Open(CalculatorContext* cc) final {
+  absl::Status Open(CalculatorContext* cc) final {
     tick_signal_index_ = cc->Inputs().NumEntries() - 1;
     current_.resize(tick_signal_index_);
     // Pass along the header for each stream if present.
@@ -336,10 +336,10 @@ class PacketClonerCalculator : public CalculatorBase {
         // the header for the input stream of index i
       }
     }
-    return ::mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
-  ::mediapipe::Status Process(CalculatorContext* cc) final {
+  absl::Status Process(CalculatorContext* cc) final {
     // Store input signals.
     for (int i = 0; i < tick_signal_index_; ++i) {
       if (!cc->Inputs().Index(i).Value().IsEmpty()) {
@@ -364,7 +364,7 @@ class PacketClonerCalculator : public CalculatorBase {
         }
       }
     }
-    return ::mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
  private:

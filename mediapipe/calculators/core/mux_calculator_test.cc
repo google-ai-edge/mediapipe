@@ -134,7 +134,7 @@ void RunGraph(const std::string& graph_config_proto,
               const std::string& input_stream_name, int num_input_packets,
               std::function<Packet(int)> input_fn,
               const std::string& output_stream_name,
-              std::function<mediapipe::Status(const Packet&)> output_fn) {
+              std::function<absl::Status(const Packet&)> output_fn) {
   CalculatorGraphConfig config =
       mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(graph_config_proto);
   CalculatorGraph graph;
@@ -165,9 +165,9 @@ TEST(MuxCalculatorTest, InputStreamSelector_DefaultInputStreamHandler) {
   // Output and handling.
   std::vector<int> output;
   // This function collects the output from the packet.
-  auto output_fn = [&output](const Packet& p) -> mediapipe::Status {
+  auto output_fn = [&output](const Packet& p) -> absl::Status {
     output.push_back(p.Get<int>());
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   };
 
   RunGraph(kTestGraphConfig1, {}, kInputName, input_packets.size(), input_fn,
@@ -191,9 +191,9 @@ TEST(MuxCalculatorTest, InputSidePacketSelector_DefaultInputStreamHandler) {
   // Output and handling.
   std::vector<int> output;
   // This function collects the output from the packet.
-  auto output_fn = [&output](const Packet& p) -> mediapipe::Status {
+  auto output_fn = [&output](const Packet& p) -> absl::Status {
     output.push_back(p.Get<int>());
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   };
 
   RunGraph(kTestGraphConfig2, {{kInputSelector, MakePacket<int>(0)}},
@@ -225,9 +225,9 @@ TEST(MuxCalculatorTest, InputStreamSelector_MuxInputStreamHandler) {
   // Output and handling.
   std::vector<int> output;
   // This function collects the output from the packet.
-  auto output_fn = [&output](const Packet& p) -> mediapipe::Status {
+  auto output_fn = [&output](const Packet& p) -> absl::Status {
     output.push_back(p.Get<int>());
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   };
 
   RunGraph(kTestGraphConfig3, {}, kInputName, input_packets.size(), input_fn,
@@ -260,7 +260,7 @@ TEST(MuxCalculatorTest, DiscardSkippedInputs_MuxInputStreamHandler) {
   MP_ASSERT_OK(
       graph.ObserveOutputStream("test_output", [&output](const Packet& p) {
         output = p.Get<std::shared_ptr<int>>();
-        return mediapipe::OkStatus();
+        return absl::OkStatus();
       }));
 
   MP_ASSERT_OK(graph.StartRun({}));

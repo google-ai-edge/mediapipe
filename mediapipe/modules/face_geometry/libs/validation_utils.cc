@@ -28,7 +28,7 @@
 
 namespace mediapipe::face_geometry {
 
-mediapipe::Status ValidatePerspectiveCamera(
+absl::Status ValidatePerspectiveCamera(
     const PerspectiveCamera& perspective_camera) {
   static constexpr float kAbsoluteErrorEps = 1e-9f;
 
@@ -46,18 +46,18 @@ mediapipe::Status ValidatePerspectiveCamera(
                180.f)
       << "Vertical FOV must be less than 180 degrees with a margin of 10^{-9}";
 
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-mediapipe::Status ValidateEnvironment(const Environment& environment) {
+absl::Status ValidateEnvironment(const Environment& environment) {
   MP_RETURN_IF_ERROR(
       ValidatePerspectiveCamera(environment.perspective_camera()))
       << "Invalid perspective camera!";
 
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-mediapipe::Status ValidateMesh3d(const Mesh3d& mesh_3d) {
+absl::Status ValidateMesh3d(const Mesh3d& mesh_3d) {
   const std::size_t vertex_size = GetVertexSize(mesh_3d.vertex_type());
   const std::size_t primitive_type = GetPrimitiveSize(mesh_3d.primitive_type());
 
@@ -73,10 +73,10 @@ mediapipe::Status ValidateMesh3d(const Mesh3d& mesh_3d) {
         << "All mesh indices must refer to an existing vertex!";
   }
 
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-mediapipe::Status ValidateFaceGeometry(const FaceGeometry& face_geometry) {
+absl::Status ValidateFaceGeometry(const FaceGeometry& face_geometry) {
   MP_RETURN_IF_ERROR(ValidateMesh3d(face_geometry.mesh())) << "Invalid mesh!";
 
   static constexpr char kInvalid4x4MatrixMessage[] =
@@ -89,10 +89,10 @@ mediapipe::Status ValidateFaceGeometry(const FaceGeometry& face_geometry) {
   RET_CHECK_EQ(pose_transform_matrix.packed_data_size(), 16)
       << kInvalid4x4MatrixMessage;
 
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-mediapipe::Status ValidateGeometryPipelineMetadata(
+absl::Status ValidateGeometryPipelineMetadata(
     const GeometryPipelineMetadata& metadata) {
   MP_RETURN_IF_ERROR(ValidateMesh3d(metadata.canonical_mesh()))
       << "Invalid canonical mesh!";
@@ -113,14 +113,14 @@ mediapipe::Status ValidateGeometryPipelineMetadata(
         << "All Procrustes basis landmarks must have a non-negative weight!";
   }
 
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
-mediapipe::Status ValidateFrameDimensions(int frame_width, int frame_height) {
+absl::Status ValidateFrameDimensions(int frame_width, int frame_height) {
   RET_CHECK_GT(frame_width, 0) << "Frame width must be positive!";
   RET_CHECK_GT(frame_height, 0) << "Frame height must be positive!";
 
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
 }  // namespace mediapipe::face_geometry

@@ -60,7 +60,7 @@ constexpr char kRectTag[] = "NORM_RECT";
 // }
 class LandmarkProjectionCalculator : public CalculatorBase {
  public:
-  static mediapipe::Status GetContract(CalculatorContract* cc) {
+  static absl::Status GetContract(CalculatorContract* cc) {
     RET_CHECK(cc->Inputs().HasTag(kLandmarksTag) &&
               cc->Inputs().HasTag(kRectTag))
         << "Missing one or more input streams.";
@@ -80,18 +80,18 @@ class LandmarkProjectionCalculator : public CalculatorBase {
       cc->Outputs().Get(id).Set<NormalizedLandmarkList>();
     }
 
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
-  mediapipe::Status Open(CalculatorContext* cc) override {
+  absl::Status Open(CalculatorContext* cc) override {
     cc->SetOffset(TimestampDiff(0));
 
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
-  mediapipe::Status Process(CalculatorContext* cc) override {
+  absl::Status Process(CalculatorContext* cc) override {
     if (cc->Inputs().Tag(kRectTag).IsEmpty()) {
-      return mediapipe::OkStatus();
+      return absl::OkStatus();
     }
     const auto& input_rect = cc->Inputs().Tag(kRectTag).Get<NormalizedRect>();
 
@@ -136,7 +136,7 @@ class LandmarkProjectionCalculator : public CalculatorBase {
           MakePacket<NormalizedLandmarkList>(output_landmarks)
               .At(cc->InputTimestamp()));
     }
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 };
 REGISTER_CALCULATOR(LandmarkProjectionCalculator);

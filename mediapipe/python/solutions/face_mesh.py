@@ -227,7 +227,7 @@ class FaceMesh(SolutionBase):
       image: An RGB image represented as a numpy ndarray.
 
     Raises:
-      RuntimeError: If the underlying graph occurs any error.
+      RuntimeError: If the underlying graph throws any error.
       ValueError: If the input image is not three channel RGB.
 
     Returns:
