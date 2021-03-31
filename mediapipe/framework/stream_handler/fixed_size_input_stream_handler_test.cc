@@ -149,18 +149,18 @@ TEST_P(FixedSizeInputStreamHandlerTest, DropsPackets) {
   // regulated by FixedSizeInputStreamHandler.
   CalculatorGraphConfig graph_config =
       ParseTextProtoOrDie<CalculatorGraphConfig>(
-          R"(node {
-               calculator: "TestSourceCalculator"
-               output_stream: "input_packets"
-             }
-             node {
-               calculator: "TestSlowCalculator"
-               input_stream: "input_packets"
-               output_stream: "output_packets"
-               input_stream_handler {
-                 input_stream_handler: "FixedSizeInputStreamHandler"
+          R"pb(node {
+                 calculator: "TestSourceCalculator"
+                 output_stream: "input_packets"
                }
-             })");
+               node {
+                 calculator: "TestSlowCalculator"
+                 input_stream: "input_packets"
+                 output_stream: "output_packets"
+                 input_stream_handler {
+                   input_stream_handler: "FixedSizeInputStreamHandler"
+                 }
+               })pb");
   SetFixedMinSize(graph_config.mutable_node(1), GetParam());
   std::vector<Packet> output_packets;
   tool::AddVectorSink("output_packets", &graph_config, &output_packets);
@@ -190,21 +190,21 @@ TEST_P(FixedSizeInputStreamHandlerTest, DropsPacketsInFullStream) {
   // CountingSourceCalculator will stay throttled and the test will time out.
   CalculatorGraphConfig graph_config =
       ParseTextProtoOrDie<CalculatorGraphConfig>(
-          R"(max_queue_size: 10
-             node {
-               calculator: "CountingSourceCalculator"
-               input_side_packet: "MAX_COUNT:max_count"
-               input_side_packet: "BATCH_SIZE:batch_size"
-               output_stream: "input_packets"
-             }
-             node {
-               calculator: "PassThroughCalculator"
-               input_stream: "input_packets"
-               output_stream: "output_packets"
-               input_stream_handler {
-                 input_stream_handler: "FixedSizeInputStreamHandler"
+          R"pb(max_queue_size: 10
+               node {
+                 calculator: "CountingSourceCalculator"
+                 input_side_packet: "MAX_COUNT:max_count"
+                 input_side_packet: "BATCH_SIZE:batch_size"
+                 output_stream: "input_packets"
                }
-             })");
+               node {
+                 calculator: "PassThroughCalculator"
+                 input_stream: "input_packets"
+                 output_stream: "output_packets"
+                 input_stream_handler {
+                   input_stream_handler: "FixedSizeInputStreamHandler"
+                 }
+               })pb");
   SetFixedMinSize(graph_config.mutable_node(1), GetParam());
   std::vector<Packet> output_packets;
   tool::AddVectorSink("output_packets", &graph_config, &output_packets);
@@ -220,7 +220,7 @@ TEST_P(FixedSizeInputStreamHandlerTest, DropsPacketsInFullStream) {
 TEST_P(FixedSizeInputStreamHandlerTest, ParallelWriteAndRead) {
   CalculatorGraphConfig graph_config =
       ParseTextProtoOrDie<CalculatorGraphConfig>(
-          R"(
+          R"pb(
             input_stream: "in_0"
             input_stream: "in_1"
             input_stream: "in_2"
@@ -241,7 +241,7 @@ TEST_P(FixedSizeInputStreamHandlerTest, ParallelWriteAndRead) {
                   }
                 }
               }
-            })");
+            })pb");
   SetFixedMinSize(graph_config.mutable_node(0), GetParam());
   std::vector<Packet> output_packets[3];
   for (int i = 0; i < 3; ++i) {
@@ -289,7 +289,7 @@ TEST_P(FixedSizeInputStreamHandlerTest, ParallelWriteAndRead) {
 TEST_P(FixedSizeInputStreamHandlerTest, LateArrivalDrop) {
   CalculatorGraphConfig graph_config =
       ParseTextProtoOrDie<CalculatorGraphConfig>(
-          R"(
+          R"pb(
             input_stream: "in_0"
             input_stream: "in_1"
             input_stream: "in_2"
@@ -310,7 +310,7 @@ TEST_P(FixedSizeInputStreamHandlerTest, LateArrivalDrop) {
                   }
                 }
               }
-            })");
+            })pb");
   SetFixedMinSize(graph_config.mutable_node(0), GetParam());
   std::vector<Packet> output_packets[3];
   std::string in_streams[3];

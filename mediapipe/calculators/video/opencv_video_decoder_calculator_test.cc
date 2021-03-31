@@ -31,11 +31,11 @@ namespace {
 
 TEST(OpenCvVideoDecoderCalculatorTest, TestMp4Avc720pVideo) {
   CalculatorGraphConfig::Node node_config =
-      ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"(
+      ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"pb(
         calculator: "OpenCvVideoDecoderCalculator"
         input_side_packet: "INPUT_FILE_PATH:input_file_path"
         output_stream: "VIDEO:video"
-        output_stream: "VIDEO_PRESTREAM:video_prestream")");
+        output_stream: "VIDEO_PRESTREAM:video_prestream")pb");
   CalculatorRunner runner(node_config);
   runner.MutableSidePackets()->Tag("INPUT_FILE_PATH") = MakePacket<std::string>(
       file::JoinPath("./",
@@ -77,11 +77,11 @@ TEST(OpenCvVideoDecoderCalculatorTest, TestMp4Avc720pVideo) {
 
 TEST(OpenCvVideoDecoderCalculatorTest, TestFlvH264Video) {
   CalculatorGraphConfig::Node node_config =
-      ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"(
+      ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"pb(
         calculator: "OpenCvVideoDecoderCalculator"
         input_side_packet: "INPUT_FILE_PATH:input_file_path"
         output_stream: "VIDEO:video"
-        output_stream: "VIDEO_PRESTREAM:video_prestream")");
+        output_stream: "VIDEO_PRESTREAM:video_prestream")pb");
   CalculatorRunner runner(node_config);
   runner.MutableSidePackets()->Tag("INPUT_FILE_PATH") = MakePacket<std::string>(
       file::JoinPath("./",
@@ -121,11 +121,11 @@ TEST(OpenCvVideoDecoderCalculatorTest, TestFlvH264Video) {
 
 TEST(OpenCvVideoDecoderCalculatorTest, TestMkvVp8Video) {
   CalculatorGraphConfig::Node node_config =
-      ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"(
+      ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"pb(
         calculator: "OpenCvVideoDecoderCalculator"
         input_side_packet: "INPUT_FILE_PATH:input_file_path"
         output_stream: "VIDEO:video"
-        output_stream: "VIDEO_PRESTREAM:video_prestream")");
+        output_stream: "VIDEO_PRESTREAM:video_prestream")pb");
   CalculatorRunner runner(node_config);
   runner.MutableSidePackets()->Tag("INPUT_FILE_PATH") = MakePacket<std::string>(
       file::JoinPath("./",

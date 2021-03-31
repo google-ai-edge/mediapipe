@@ -48,14 +48,14 @@ class GraphServiceTest : public ::testing::Test {
  protected:
   void SetUp() override {
     CalculatorGraphConfig config =
-        mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+        mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
           input_stream: "in"
           node {
             calculator: "TestServiceCalculator"
             input_stream: "in"
             output_stream: "out"
           }
-        )");
+        )pb");
     MP_ASSERT_OK(graph_.Initialize(config));
     MP_ASSERT_OK(
         graph_.ObserveOutputStream("out", [this](const Packet& packet) {
@@ -98,11 +98,11 @@ TEST_F(GraphServiceTest, UseInCalculator) {
 
 TEST_F(GraphServiceTest, Contract) {
   const CalculatorGraphConfig::Node node =
-      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"(
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"pb(
         calculator: "TestServiceCalculator"
         input_stream: "in"
         output_stream: "out"
-      )");
+      )pb");
   CalculatorContract contract;
   MP_EXPECT_OK(contract.Initialize(node));
   MP_EXPECT_OK(TestServiceCalculator::GetContract(&contract));

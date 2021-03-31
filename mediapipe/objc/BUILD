@@ -19,6 +19,9 @@ cc_library(
     srcs = ["util.cc"],
     hdrs = ["util.h"],
     features = ["-parse_headers"],
+    linkopts = [
+        "-framework Accelerate",
+    ],
     visibility = ["//mediapipe/framework:mediapipe_internal"],
     deps = [
         ":CFHolder",

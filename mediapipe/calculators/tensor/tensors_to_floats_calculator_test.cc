@@ -57,11 +57,11 @@ class TensorsToFloatsCalculatorTest : public ::testing::Test {
 };
 
 TEST_F(TensorsToFloatsCalculatorTest, SingleValue) {
-  mediapipe::CalculatorRunner runner(ParseTextProtoOrDie<Node>(R"(
+  mediapipe::CalculatorRunner runner(ParseTextProtoOrDie<Node>(R"pb(
     calculator: "TensorsToFloatsCalculator"
     input_stream: "TENSORS:tensors"
     output_stream: "FLOAT:float"
-  )"));
+  )pb"));
 
   const float single_value = 0.5;
   BuildGraph(&runner, {single_value});
@@ -76,11 +76,11 @@ TEST_F(TensorsToFloatsCalculatorTest, SingleValue) {
 }
 
 TEST_F(TensorsToFloatsCalculatorTest, SingleValueAsVector) {
-  mediapipe::CalculatorRunner runner(ParseTextProtoOrDie<Node>(R"(
+  mediapipe::CalculatorRunner runner(ParseTextProtoOrDie<Node>(R"pb(
     calculator: "TensorsToFloatsCalculator"
     input_stream: "TENSORS:tensors"
     output_stream: "FLOATS:floats"
-  )"));
+  )pb"));
 
   const float single_value = 0.5;
   BuildGraph(&runner, {single_value});
@@ -95,11 +95,11 @@ TEST_F(TensorsToFloatsCalculatorTest, SingleValueAsVector) {
 }
 
 TEST_F(TensorsToFloatsCalculatorTest, FloatVector) {
-  mediapipe::CalculatorRunner runner(ParseTextProtoOrDie<Node>(R"(
+  mediapipe::CalculatorRunner runner(ParseTextProtoOrDie<Node>(R"pb(
     calculator: "TensorsToFloatsCalculator"
     input_stream: "TENSORS:tensors"
     output_stream: "FLOATS:floats"
-  )"));
+  )pb"));
 
   const std::vector<float> input_values = {0.f, 0.5f, 1.0f};
   BuildGraph(&runner, input_values);
@@ -116,14 +116,14 @@ TEST_F(TensorsToFloatsCalculatorTest, FloatVector) {
 }
 
 TEST_F(TensorsToFloatsCalculatorTest, FloatVectorWithSigmoid) {
-  mediapipe::CalculatorRunner runner(ParseTextProtoOrDie<Node>(R"(
+  mediapipe::CalculatorRunner runner(ParseTextProtoOrDie<Node>(R"pb(
     calculator: "TensorsToFloatsCalculator"
     input_stream: "TENSORS:tensors"
     output_stream: "FLOATS:floats"
     options {
       [mediapipe.TensorsToFloatsCalculatorOptions.ext] { activation: SIGMOID }
     }
-  )"));
+  )pb"));
 
   const std::vector<float> input_values = {-1.f, 0.f, 1.0f};
   const std::vector<float> expected_output_with_sigmoid = {0.269f, 0.5f,

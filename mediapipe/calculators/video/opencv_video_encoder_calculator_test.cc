@@ -36,26 +36,28 @@ namespace {
 // TODO: Investigate the “Could not open codec 'libx264'” error with
 // opencv2.
 TEST(OpenCvVideoEncoderCalculatorTest, DISABLED_TestMp4Avc720pVideo) {
-  CalculatorGraphConfig config = ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
-    node {
-      calculator: "OpenCvVideoDecoderCalculator"
-      input_side_packet: "INPUT_FILE_PATH:input_file_path"
-      output_stream: "VIDEO:video"
-      output_stream: "VIDEO_PRESTREAM:video_prestream"
-    }
-    node {
-      calculator: "OpenCvVideoEncoderCalculator"
-      input_stream: "VIDEO:video"
-      input_stream: "VIDEO_PRESTREAM:video_prestream"
-      input_side_packet: "OUTPUT_FILE_PATH:output_file_path"
-      node_options {
-        [type.googleapis.com/mediapipe.OpenCvVideoEncoderCalculatorOptions]: {
-          codec: "avc1"
-          video_format: "mp4"
+  CalculatorGraphConfig config =
+      ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
+        node {
+          calculator: "OpenCvVideoDecoderCalculator"
+          input_side_packet: "INPUT_FILE_PATH:input_file_path"
+          output_stream: "VIDEO:video"
+          output_stream: "VIDEO_PRESTREAM:video_prestream"
         }
-      }
-    }
-  )");
+        node {
+          calculator: "OpenCvVideoEncoderCalculator"
+          input_stream: "VIDEO:video"
+          input_stream: "VIDEO_PRESTREAM:video_prestream"
+          input_side_packet: "OUTPUT_FILE_PATH:output_file_path"
+          node_options {
+            [type.googleapis.com/
+             mediapipe.OpenCvVideoEncoderCalculatorOptions]: {
+              codec: "avc1"
+              video_format: "mp4"
+            }
+          }
+        }
+      )pb");
   std::map<std::string, Packet> input_side_packets;
   input_side_packets["input_file_path"] = MakePacket<std::string>(
       file::JoinPath("./",
@@ -95,26 +97,28 @@ TEST(OpenCvVideoEncoderCalculatorTest, DISABLED_TestMp4Avc720pVideo) {
 }
 
 TEST(OpenCvVideoEncoderCalculatorTest, TestFlvH264Video) {
-  CalculatorGraphConfig config = ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
-    node {
-      calculator: "OpenCvVideoDecoderCalculator"
-      input_side_packet: "INPUT_FILE_PATH:input_file_path"
-      output_stream: "VIDEO:video"
-      output_stream: "VIDEO_PRESTREAM:video_prestream"
-    }
-    node {
-      calculator: "OpenCvVideoEncoderCalculator"
-      input_stream: "VIDEO:video"
-      input_stream: "VIDEO_PRESTREAM:video_prestream"
-      input_side_packet: "OUTPUT_FILE_PATH:output_file_path"
-      node_options {
-        [type.googleapis.com/mediapipe.OpenCvVideoEncoderCalculatorOptions]: {
-          codec: "MJPG"
-          video_format: "avi"
+  CalculatorGraphConfig config =
+      ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
+        node {
+          calculator: "OpenCvVideoDecoderCalculator"
+          input_side_packet: "INPUT_FILE_PATH:input_file_path"
+          output_stream: "VIDEO:video"
+          output_stream: "VIDEO_PRESTREAM:video_prestream"
         }
-      }
-    }
-  )");
+        node {
+          calculator: "OpenCvVideoEncoderCalculator"
+          input_stream: "VIDEO:video"
+          input_stream: "VIDEO_PRESTREAM:video_prestream"
+          input_side_packet: "OUTPUT_FILE_PATH:output_file_path"
+          node_options {
+            [type.googleapis.com/
+             mediapipe.OpenCvVideoEncoderCalculatorOptions]: {
+              codec: "MJPG"
+              video_format: "avi"
+            }
+          }
+        }
+      )pb");
   std::map<std::string, Packet> input_side_packets;
   input_side_packets["input_file_path"] = MakePacket<std::string>(
       file::JoinPath("./",
@@ -156,26 +160,28 @@ TEST(OpenCvVideoEncoderCalculatorTest, TestFlvH264Video) {
 }
 
 TEST(OpenCvVideoEncoderCalculatorTest, TestMkvVp8Video) {
-  CalculatorGraphConfig config = ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
-    node {
-      calculator: "OpenCvVideoDecoderCalculator"
-      input_side_packet: "INPUT_FILE_PATH:input_file_path"
-      output_stream: "VIDEO:video"
-      output_stream: "VIDEO_PRESTREAM:video_prestream"
-    }
-    node {
-      calculator: "OpenCvVideoEncoderCalculator"
-      input_stream: "VIDEO:video"
-      input_stream: "VIDEO_PRESTREAM:video_prestream"
-      input_side_packet: "OUTPUT_FILE_PATH:output_file_path"
-      node_options {
-        [type.googleapis.com/mediapipe.OpenCvVideoEncoderCalculatorOptions]: {
-          codec: "PIM1"
-          video_format: "mkv"
+  CalculatorGraphConfig config =
+      ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
+        node {
+          calculator: "OpenCvVideoDecoderCalculator"
+          input_side_packet: "INPUT_FILE_PATH:input_file_path"
+          output_stream: "VIDEO:video"
+          output_stream: "VIDEO_PRESTREAM:video_prestream"
         }
-      }
-    }
-  )");
+        node {
+          calculator: "OpenCvVideoEncoderCalculator"
+          input_stream: "VIDEO:video"
+          input_stream: "VIDEO_PRESTREAM:video_prestream"
+          input_side_packet: "OUTPUT_FILE_PATH:output_file_path"
+          node_options {
+            [type.googleapis.com/
+             mediapipe.OpenCvVideoEncoderCalculatorOptions]: {
+              codec: "PIM1"
+              video_format: "mkv"
+            }
+          }
+        }
+      )pb");
   std::map<std::string, Packet> input_side_packets;
   input_side_packets["input_file_path"] = MakePacket<std::string>(
       file::JoinPath("./",

@@ -64,13 +64,13 @@ const char kMatrixText2[] =
 
 TEST(MatrixSubtractCalculatorTest, WrongConfig) {
   CalculatorGraphConfig::Node node_config =
-      ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"(
+      ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"pb(
         calculator: "MatrixSubtractCalculator"
         input_stream: "input_matrix"
         input_side_packet: "SUBTRAHEND:side_matrix"
         input_side_packet: "MINUEND:side_matrix2"
         output_stream: "output_matrix"
-      )");
+      )pb");
   CalculatorRunner runner(node_config);
   auto status = runner.Run();
   EXPECT_THAT(
@@ -81,12 +81,12 @@ TEST(MatrixSubtractCalculatorTest, WrongConfig) {
 
 TEST(MatrixSubtractCalculatorTest, WrongConfig2) {
   CalculatorGraphConfig::Node node_config =
-      ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"(
+      ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"pb(
         calculator: "MatrixSubtractCalculator"
         input_side_packet: "SUBTRAHEND:side_matrix"
         input_stream: "SUBTRAHEND:side_matrix2"
         output_stream: "output_matrix"
-      )");
+      )pb");
   CalculatorRunner runner(node_config);
   auto status = runner.Run();
   EXPECT_THAT(status.message(), testing::HasSubstr("must be connected"));
@@ -95,12 +95,12 @@ TEST(MatrixSubtractCalculatorTest, WrongConfig2) {
 
 TEST(MatrixSubtractCalculatorTest, SubtractFromInput) {
   CalculatorGraphConfig::Node node_config =
-      ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"(
+      ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"pb(
         calculator: "MatrixSubtractCalculator"
         input_stream: "MINUEND:input_matrix"
         input_side_packet: "SUBTRAHEND:side_matrix"
         output_stream: "output_matrix"
-      )");
+      )pb");
   CalculatorRunner runner(node_config);
   Matrix* side_matrix = new Matrix();
   MatrixFromTextProto(kMatrixText, side_matrix);
@@ -124,12 +124,12 @@ TEST(MatrixSubtractCalculatorTest, SubtractFromInput) {
 
 TEST(MatrixSubtractCalculatorTest, SubtractFromSideMatrix) {
   CalculatorGraphConfig::Node node_config =
-      ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"(
+      ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"pb(
         calculator: "MatrixSubtractCalculator"
         input_stream: "SUBTRAHEND:input_matrix"
         input_side_packet: "MINUEND:side_matrix"
         output_stream: "output_matrix"
-      )");
+      )pb");
   CalculatorRunner runner(node_config);
   Matrix* side_matrix = new Matrix();
   MatrixFromTextProto(kMatrixText, side_matrix);

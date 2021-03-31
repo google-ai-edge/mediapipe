@@ -67,7 +67,7 @@ REGISTER_CALCULATOR(TripleIntCalculator);
 // Note that the input and output tags supplied to the container node,
 // must match the input and output tags required by the subnodes.
 CalculatorGraphConfig SubnodeContainerExample() {
-  return mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+  return mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
     input_stream: "foo"
     input_stream: "enable"
     input_side_packet: "timezone"
@@ -90,14 +90,14 @@ CalculatorGraphConfig SubnodeContainerExample() {
       output_stream: "output_foo"
       output_stream: "output_bar"
     }
-  )");
+  )pb");
 }
 
 // A testing example of a SwitchContainer containing two subnodes.
 // Note that the side-input and side-output tags supplied to the container node,
 // must match the side-input and side-output tags required by the subnodes.
 CalculatorGraphConfig SideSubnodeContainerExample() {
-  return mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+  return mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
     input_side_packet: "foo"
     input_side_packet: "enable"
     output_side_packet: "output_bar"
@@ -120,7 +120,7 @@ CalculatorGraphConfig SideSubnodeContainerExample() {
       output_side_packet: "output_foo"
       output_side_packet: "output_bar"
     }
-  )");
+  )pb");
 }
 
 // Runs the test container graph with a few input packets.
@@ -217,7 +217,7 @@ TEST(SwitchContainerTest, ApplyToSubnodes) {
   EXPECT_TRUE(SubgraphRegistry::IsRegistered("SwitchContainer"));
   CalculatorGraphConfig supergraph = SubnodeContainerExample();
   CalculatorGraphConfig expected_graph =
-      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
         node {
           name: "switchcontainer__SwitchDemuxCalculator"
           calculator: "SwitchDemuxCalculator"
@@ -256,7 +256,7 @@ TEST(SwitchContainerTest, ApplyToSubnodes) {
         input_stream: "foo"
         input_stream: "enable"
         input_side_packet: "timezone"
-      )");
+      )pb");
   expected_graph = OrderNodes(expected_graph, {4, 0, 3, 1, 2});
   MP_EXPECT_OK(tool::ExpandSubgraphs(&supergraph));
   EXPECT_THAT(supergraph, mediapipe::EqualsProto(expected_graph));
@@ -275,7 +275,7 @@ TEST(SwitchContainerTest, ApplyToSideSubnodes) {
   EXPECT_TRUE(SubgraphRegistry::IsRegistered("SwitchContainer"));
   CalculatorGraphConfig supergraph = SideSubnodeContainerExample();
   CalculatorGraphConfig expected_graph =
-      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
         input_side_packet: "foo"
         input_side_packet: "enable"
         output_side_packet: "output_bar"
@@ -314,7 +314,7 @@ TEST(SwitchContainerTest, ApplyToSideSubnodes) {
           output_side_packet: "output_foo"
           output_side_packet: "output_bar"
         }
-      )");
+      )pb");
   expected_graph = OrderNodes(expected_graph, {4, 0, 3, 1, 2});
   MP_EXPECT_OK(tool::ExpandSubgraphs(&supergraph));
   EXPECT_THAT(supergraph, mediapipe::EqualsProto(expected_graph));
@@ -332,7 +332,7 @@ TEST(SwitchContainerTest, RunWithSideSubnodes) {
 TEST(SwitchContainerTest, ValidateSideInputs) {
   EXPECT_TRUE(SubgraphRegistry::IsRegistered("SwitchContainer"));
   CalculatorGraphConfig supergraph =
-      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
         input_side_packet: "foo"
         input_side_packet: "enable"
         output_side_packet: "output_bar"
@@ -356,7 +356,7 @@ TEST(SwitchContainerTest, ValidateSideInputs) {
           output_side_packet: "output_foo"
           output_side_packet: "output_bar"
         }
-      )");
+      )pb");
   auto status = tool::ExpandSubgraphs(&supergraph);
   EXPECT_EQ(std::pair(status.code(), std::string(status.message())),
             std::pair(absl::StatusCode::kInvalidArgument,

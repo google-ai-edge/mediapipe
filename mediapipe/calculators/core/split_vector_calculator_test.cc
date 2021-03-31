@@ -163,7 +163,7 @@ TEST_F(SplitTfLiteTensorVectorCalculatorTest, SmokeTest) {
   // Prepare a graph to use the SplitTfLiteTensorVectorCalculator.
   CalculatorGraphConfig graph_config =
       mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(
-          R"(
+          R"pb(
             input_stream: "tensor_in"
             node {
               calculator: "SplitTfLiteTensorVectorCalculator"
@@ -179,7 +179,7 @@ TEST_F(SplitTfLiteTensorVectorCalculatorTest, SmokeTest) {
                 }
               }
             }
-          )");
+          )pb");
   std::vector<Packet> range_0_packets;
   tool::AddVectorSink("range_0", &graph_config, &range_0_packets);
   std::vector<Packet> range_1_packets;
@@ -214,7 +214,7 @@ TEST_F(SplitTfLiteTensorVectorCalculatorTest, InvalidRangeTest) {
   // Prepare a graph to use the SplitTfLiteTensorVectorCalculator.
   CalculatorGraphConfig graph_config =
       mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(
-          R"(
+          R"pb(
             input_stream: "tensor_in"
             node {
               calculator: "SplitTfLiteTensorVectorCalculator"
@@ -226,7 +226,7 @@ TEST_F(SplitTfLiteTensorVectorCalculatorTest, InvalidRangeTest) {
                 }
               }
             }
-          )");
+          )pb");
 
   // Run the graph.
   CalculatorGraph graph;
@@ -240,7 +240,7 @@ TEST_F(SplitTfLiteTensorVectorCalculatorTest, InvalidOutputStreamCountTest) {
   // Prepare a graph to use the SplitTfLiteTensorVectorCalculator.
   CalculatorGraphConfig graph_config =
       mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(
-          R"(
+          R"pb(
             input_stream: "tensor_in"
             node {
               calculator: "SplitTfLiteTensorVectorCalculator"
@@ -253,7 +253,7 @@ TEST_F(SplitTfLiteTensorVectorCalculatorTest, InvalidOutputStreamCountTest) {
                 }
               }
             }
-          )");
+          )pb");
 
   // Run the graph.
   CalculatorGraph graph;
@@ -269,7 +269,7 @@ TEST_F(SplitTfLiteTensorVectorCalculatorTest,
   // Prepare a graph to use the SplitTfLiteTensorVectorCalculator.
   CalculatorGraphConfig graph_config =
       mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(
-          R"(
+          R"pb(
             input_stream: "tensor_in"
             node {
               calculator: "SplitTfLiteTensorVectorCalculator"
@@ -284,7 +284,7 @@ TEST_F(SplitTfLiteTensorVectorCalculatorTest,
                 }
               }
             }
-          )");
+          )pb");
 
   // Run the graph.
   CalculatorGraph graph;
@@ -299,7 +299,7 @@ TEST_F(SplitTfLiteTensorVectorCalculatorTest, InvalidOverlappingRangesTest) {
   // Prepare a graph to use the SplitTfLiteTensorVectorCalculator.
   CalculatorGraphConfig graph_config =
       mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(
-          R"(
+          R"pb(
             input_stream: "tensor_in"
             node {
               calculator: "SplitTfLiteTensorVectorCalculator"
@@ -313,7 +313,7 @@ TEST_F(SplitTfLiteTensorVectorCalculatorTest, InvalidOverlappingRangesTest) {
                 }
               }
             }
-          )");
+          )pb");
 
   // Run the graph.
   CalculatorGraph graph;
@@ -330,7 +330,7 @@ TEST_F(SplitTfLiteTensorVectorCalculatorTest, SmokeTestElementOnly) {
   // Prepare a graph to use the SplitTfLiteTensorVectorCalculator.
   CalculatorGraphConfig graph_config =
       mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(
-          R"(
+          R"pb(
             input_stream: "tensor_in"
             node {
               calculator: "SplitTfLiteTensorVectorCalculator"
@@ -347,7 +347,7 @@ TEST_F(SplitTfLiteTensorVectorCalculatorTest, SmokeTestElementOnly) {
                 }
               }
             }
-          )");
+          )pb");
   std::vector<Packet> range_0_packets;
   tool::AddVectorSink("range_0", &graph_config, &range_0_packets);
   std::vector<Packet> range_1_packets;
@@ -385,7 +385,7 @@ TEST_F(SplitTfLiteTensorVectorCalculatorTest, SmokeTestCombiningOutputs) {
   // Prepare a graph to use the SplitTfLiteTensorVectorCalculator.
   CalculatorGraphConfig graph_config =
       mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(
-          R"(
+          R"pb(
             input_stream: "tensor_in"
             node {
               calculator: "SplitTfLiteTensorVectorCalculator"
@@ -400,7 +400,7 @@ TEST_F(SplitTfLiteTensorVectorCalculatorTest, SmokeTestCombiningOutputs) {
                 }
               }
             }
-          )");
+          )pb");
   std::vector<Packet> range_0_packets;
   tool::AddVectorSink("range_0", &graph_config, &range_0_packets);
 
@@ -428,7 +428,7 @@ TEST_F(SplitTfLiteTensorVectorCalculatorTest,
   // Prepare a graph to use the SplitTfLiteTensorVectorCalculator.
   CalculatorGraphConfig graph_config =
       mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(
-          R"(
+          R"pb(
             input_stream: "tensor_in"
             node {
               calculator: "SplitTfLiteTensorVectorCalculator"
@@ -445,7 +445,7 @@ TEST_F(SplitTfLiteTensorVectorCalculatorTest,
                 }
               }
             }
-          )");
+          )pb");
 
   // Run the graph.
   CalculatorGraph graph;
@@ -511,7 +511,7 @@ TEST_F(MovableSplitUniqueIntPtrCalculatorTest, InvalidOverlappingRangesTest) {
   // Prepare a graph to use the TestMovableSplitUniqueIntPtrVectorCalculator.
   CalculatorGraphConfig graph_config =
       mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(
-          R"(
+          R"pb(
             input_stream: "input_vector"
             node {
               calculator: "MovableSplitUniqueIntPtrCalculator"
@@ -524,7 +524,7 @@ TEST_F(MovableSplitUniqueIntPtrCalculatorTest, InvalidOverlappingRangesTest) {
                 }
               }
             }
-          )");
+          )pb");
 
   // Run the graph.
   CalculatorGraph graph;
@@ -536,7 +536,7 @@ TEST_F(MovableSplitUniqueIntPtrCalculatorTest, SmokeTest) {
   // Prepare a graph to use the TestMovableSplitUniqueIntPtrVectorCalculator.
   CalculatorGraphConfig graph_config =
       mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(
-          R"(
+          R"pb(
             input_stream: "input_vector"
             node {
               calculator: "MovableSplitUniqueIntPtrCalculator"
@@ -552,7 +552,7 @@ TEST_F(MovableSplitUniqueIntPtrCalculatorTest, SmokeTest) {
                 }
               }
             }
-          )");
+          )pb");
 
   std::vector<Packet> range_0_packets;
   tool::AddVectorSink("range_0", &graph_config, &range_0_packets);
@@ -592,7 +592,7 @@ TEST_F(MovableSplitUniqueIntPtrCalculatorTest, SmokeTestElementOnly) {
   // Prepare a graph to use the TestMovableSplitUniqueIntPtrVectorCalculator.
   CalculatorGraphConfig graph_config =
       mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(
-          R"(
+          R"pb(
             input_stream: "input_vector"
             node {
               calculator: "MovableSplitUniqueIntPtrCalculator"
@@ -609,7 +609,7 @@ TEST_F(MovableSplitUniqueIntPtrCalculatorTest, SmokeTestElementOnly) {
                 }
               }
             }
-          )");
+          )pb");
 
   std::vector<Packet> range_0_packets;
   tool::AddVectorSink("range_0", &graph_config, &range_0_packets);
@@ -646,7 +646,7 @@ TEST_F(MovableSplitUniqueIntPtrCalculatorTest, SmokeTestCombiningOutputs) {
   // Prepare a graph to use the TestMovableSplitUniqueIntPtrVectorCalculator.
   CalculatorGraphConfig graph_config =
       mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(
-          R"(
+          R"pb(
             input_stream: "input_vector"
             node {
               calculator: "MovableSplitUniqueIntPtrCalculator"
@@ -661,7 +661,7 @@ TEST_F(MovableSplitUniqueIntPtrCalculatorTest, SmokeTestCombiningOutputs) {
                 }
               }
             }
-          )");
+          )pb");
 
   std::vector<Packet> range_0_packets;
   tool::AddVectorSink("range_0", &graph_config, &range_0_packets);

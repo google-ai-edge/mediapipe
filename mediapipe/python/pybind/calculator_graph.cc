@@ -397,7 +397,6 @@ void CalculatorGraphSubmodule(pybind11::module* module) {
          pybind11::function callback_fn) {
         RaisePyErrorIfNotOk(self->ObserveOutputStream(
             stream_name, [callback_fn, stream_name](const Packet& packet) {
-              // Acquire a mutex so that only one callback_fn can run at once.
               absl::MutexLock lock(&callback_mutex);
               callback_fn(stream_name, packet);
               return absl::OkStatus();

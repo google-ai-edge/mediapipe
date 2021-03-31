@@ -32,12 +32,12 @@ NormalizedLandmark CreateLandmark(float x, float y) {
 }
 
 CalculatorGraphConfig::Node GetDefaultNode() {
-  return ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"(
+  return ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"pb(
     calculator: "LandmarkLetterboxRemovalCalculator"
     input_stream: "LANDMARKS:landmarks"
     input_stream: "LETTERBOX_PADDING:letterbox_padding"
     output_stream: "LANDMARKS:adjusted_landmarks"
-  )");
+  )pb");
 }
 
 TEST(LandmarkLetterboxRemovalCalculatorTest, PaddingLeftRight) {

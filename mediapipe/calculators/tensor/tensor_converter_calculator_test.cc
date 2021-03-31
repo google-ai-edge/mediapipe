@@ -84,7 +84,7 @@ TEST_F(TensorConverterCalculatorTest, RandomMatrixColMajor) {
 
     // Run the calculator and verify that one output is generated.
     CalculatorGraphConfig graph_config =
-        mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+        mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
           input_stream: "matrix"
           node {
             calculator: "TensorConverterCalculator"
@@ -96,7 +96,7 @@ TEST_F(TensorConverterCalculatorTest, RandomMatrixColMajor) {
               }
             }
           }
-        )");
+        )pb");
     std::vector<Packet> output_packets;
     tool::AddVectorSink("tensor", &graph_config, &output_packets);
 
@@ -146,7 +146,7 @@ TEST_F(TensorConverterCalculatorTest, RandomMatrixRowMajor) {
 
     // Run the calculator and verify that one output is generated.
     CalculatorGraphConfig graph_config =
-        mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+        mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
           input_stream: "matrix"
           node {
             calculator: "TensorConverterCalculator"
@@ -158,7 +158,7 @@ TEST_F(TensorConverterCalculatorTest, RandomMatrixRowMajor) {
               }
             }
           }
-        )");
+        )pb");
     std::vector<Packet> output_packets;
     tool::AddVectorSink("tensor", &graph_config, &output_packets);
 
@@ -205,7 +205,7 @@ TEST_F(TensorConverterCalculatorTest, CustomDivAndSub) {
   CalculatorGraph graph;
   // Run the calculator and verify that one output is generated.
   CalculatorGraphConfig graph_config =
-      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
         input_stream: "input_image"
         node {
           calculator: "TensorConverterCalculator"
@@ -220,7 +220,7 @@ TEST_F(TensorConverterCalculatorTest, CustomDivAndSub) {
             }
           }
         }
-      )");
+      )pb");
   std::vector<Packet> output_packets;
   tool::AddVectorSink("tensor", &graph_config, &output_packets);
 

@@ -27,7 +27,7 @@ namespace mediapipe {
 
 TEST(QuantizeFloatVectorCalculatorTest, WrongConfig) {
   CalculatorGraphConfig::Node node_config =
-      ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"(
+      ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"pb(
         calculator: "QuantizeFloatVectorCalculator"
         input_stream: "FLOAT_VECTOR:float_vector"
         output_stream: "ENCODED:encoded"
@@ -36,7 +36,7 @@ TEST(QuantizeFloatVectorCalculatorTest, WrongConfig) {
             min_quantized_value: 1
           }
         }
-      )");
+      )pb");
   CalculatorRunner runner(node_config);
   std::vector<float> empty_vector;
   runner.MutableInputs()
@@ -53,7 +53,7 @@ TEST(QuantizeFloatVectorCalculatorTest, WrongConfig) {
 
 TEST(QuantizeFloatVectorCalculatorTest, WrongConfig2) {
   CalculatorGraphConfig::Node node_config =
-      ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"(
+      ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"pb(
         calculator: "QuantizeFloatVectorCalculator"
         input_stream: "FLOAT_VECTOR:float_vector"
         output_stream: "ENCODED:encoded"
@@ -63,7 +63,7 @@ TEST(QuantizeFloatVectorCalculatorTest, WrongConfig2) {
             min_quantized_value: 1
           }
         }
-      )");
+      )pb");
   CalculatorRunner runner(node_config);
   std::vector<float> empty_vector;
   runner.MutableInputs()
@@ -80,7 +80,7 @@ TEST(QuantizeFloatVectorCalculatorTest, WrongConfig2) {
 
 TEST(QuantizeFloatVectorCalculatorTest, WrongConfig3) {
   CalculatorGraphConfig::Node node_config =
-      ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"(
+      ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"pb(
         calculator: "QuantizeFloatVectorCalculator"
         input_stream: "FLOAT_VECTOR:float_vector"
         output_stream: "ENCODED:encoded"
@@ -90,7 +90,7 @@ TEST(QuantizeFloatVectorCalculatorTest, WrongConfig3) {
             min_quantized_value: 1
           }
         }
-      )");
+      )pb");
   CalculatorRunner runner(node_config);
   std::vector<float> empty_vector;
   runner.MutableInputs()
@@ -107,7 +107,7 @@ TEST(QuantizeFloatVectorCalculatorTest, WrongConfig3) {
 
 TEST(QuantizeFloatVectorCalculatorTest, TestEmptyVector) {
   CalculatorGraphConfig::Node node_config =
-      ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"(
+      ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"pb(
         calculator: "QuantizeFloatVectorCalculator"
         input_stream: "FLOAT_VECTOR:float_vector"
         output_stream: "ENCODED:encoded"
@@ -117,7 +117,7 @@ TEST(QuantizeFloatVectorCalculatorTest, TestEmptyVector) {
             min_quantized_value: -1
           }
         }
-      )");
+      )pb");
   CalculatorRunner runner(node_config);
   std::vector<float> empty_vector;
   runner.MutableInputs()
@@ -133,7 +133,7 @@ TEST(QuantizeFloatVectorCalculatorTest, TestEmptyVector) {
 
 TEST(QuantizeFloatVectorCalculatorTest, TestNonEmptyVector) {
   CalculatorGraphConfig::Node node_config =
-      ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"(
+      ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"pb(
         calculator: "QuantizeFloatVectorCalculator"
         input_stream: "FLOAT_VECTOR:float_vector"
         output_stream: "ENCODED:encoded"
@@ -143,7 +143,7 @@ TEST(QuantizeFloatVectorCalculatorTest, TestNonEmptyVector) {
             min_quantized_value: -64
           }
         }
-      )");
+      )pb");
   CalculatorRunner runner(node_config);
   std::vector<float> vector = {0.0f, -64.0f, 64.0f, -32.0f, 32.0f};
   runner.MutableInputs()
@@ -171,7 +171,7 @@ TEST(QuantizeFloatVectorCalculatorTest, TestNonEmptyVector) {
 
 TEST(QuantizeFloatVectorCalculatorTest, TestSaturation) {
   CalculatorGraphConfig::Node node_config =
-      ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"(
+      ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"pb(
         calculator: "QuantizeFloatVectorCalculator"
         input_stream: "FLOAT_VECTOR:float_vector"
         output_stream: "ENCODED:encoded"
@@ -181,7 +181,7 @@ TEST(QuantizeFloatVectorCalculatorTest, TestSaturation) {
             min_quantized_value: -64
           }
         }
-      )");
+      )pb");
   CalculatorRunner runner(node_config);
   std::vector<float> vector = {-65.0f, 65.0f};
   runner.MutableInputs()

@@ -24,7 +24,7 @@
 namespace mediapipe {
 
 TEST(TopKScoresCalculatorTest, TestNodeConfig) {
-  CalculatorRunner runner(ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"(
+  CalculatorRunner runner(ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"pb(
     calculator: "TopKScoresCalculator"
     input_stream: "SCORES:score_vector"
     output_stream: "TOP_K_INDEXES:top_k_indexes"
@@ -32,7 +32,7 @@ TEST(TopKScoresCalculatorTest, TestNodeConfig) {
     options: {
       [mediapipe.TopKScoresCalculatorOptions.ext] {}
     }
-  )"));
+  )pb"));
 
   auto status = runner.Run();
   ASSERT_TRUE(!status.ok());
@@ -43,7 +43,7 @@ TEST(TopKScoresCalculatorTest, TestNodeConfig) {
 }
 
 TEST(TopKScoresCalculatorTest, TestTopKOnly) {
-  CalculatorRunner runner(ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"(
+  CalculatorRunner runner(ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"pb(
     calculator: "TopKScoresCalculator"
     input_stream: "SCORES:score_vector"
     output_stream: "TOP_K_INDEXES:top_k_indexes"
@@ -51,7 +51,7 @@ TEST(TopKScoresCalculatorTest, TestTopKOnly) {
     options: {
       [mediapipe.TopKScoresCalculatorOptions.ext] { top_k: 2 }
     }
-  )"));
+  )pb"));
 
   std::vector<float> score_vector{0.9, 0.2, 0.3, 1.0, 0.1};
 
@@ -76,7 +76,7 @@ TEST(TopKScoresCalculatorTest, TestTopKOnly) {
 }
 
 TEST(TopKScoresCalculatorTest, TestThresholdOnly) {
-  CalculatorRunner runner(ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"(
+  CalculatorRunner runner(ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"pb(
     calculator: "TopKScoresCalculator"
     input_stream: "SCORES:score_vector"
     output_stream: "TOP_K_INDEXES:top_k_indexes"
@@ -84,7 +84,7 @@ TEST(TopKScoresCalculatorTest, TestThresholdOnly) {
     options: {
       [mediapipe.TopKScoresCalculatorOptions.ext] { threshold: 0.2 }
     }
-  )"));
+  )pb"));
 
   std::vector<float> score_vector{0.9, 0.2, 0.3, 1.0, 0.1};
 
@@ -113,7 +113,7 @@ TEST(TopKScoresCalculatorTest, TestThresholdOnly) {
 }
 
 TEST(TopKScoresCalculatorTest, TestBothTopKAndThreshold) {
-  CalculatorRunner runner(ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"(
+  CalculatorRunner runner(ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"pb(
     calculator: "TopKScoresCalculator"
     input_stream: "SCORES:score_vector"
     output_stream: "TOP_K_INDEXES:top_k_indexes"
@@ -121,7 +121,7 @@ TEST(TopKScoresCalculatorTest, TestBothTopKAndThreshold) {
     options: {
       [mediapipe.TopKScoresCalculatorOptions.ext] { top_k: 4 threshold: 0.3 }
     }
-  )"));
+  )pb"));
 
   std::vector<float> score_vector{0.9, 0.2, 0.3, 1.0, 0.1};
 

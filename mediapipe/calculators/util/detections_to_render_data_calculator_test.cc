@@ -85,11 +85,11 @@ Detection CreateDetection(const std::vector<std::string>& labels,
 }
 
 TEST(DetectionsToRenderDataCalculatorTest, OnlyDetecctionList) {
-  CalculatorRunner runner(ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"(
+  CalculatorRunner runner(ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"pb(
     calculator: "DetectionsToRenderDataCalculator"
     input_stream: "DETECTION_LIST:detection_list"
     output_stream: "RENDER_DATA:render_data"
-  )"));
+  )pb"));
 
   LocationData location_data = CreateLocationData(100, 200, 300, 400);
   auto detections(absl::make_unique<DetectionList>());
@@ -119,11 +119,11 @@ TEST(DetectionsToRenderDataCalculatorTest, OnlyDetecctionList) {
 }
 
 TEST(DetectionsToRenderDataCalculatorTest, OnlyDetecctionVector) {
-  CalculatorRunner runner{ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"(
+  CalculatorRunner runner{ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"pb(
     calculator: "DetectionsToRenderDataCalculator"
     input_stream: "DETECTIONS:detections"
     output_stream: "RENDER_DATA:render_data"
-  )")};
+  )pb")};
 
   LocationData location_data = CreateLocationData(100, 200, 300, 400);
   auto detections(absl::make_unique<std::vector<Detection>>());
@@ -153,12 +153,12 @@ TEST(DetectionsToRenderDataCalculatorTest, OnlyDetecctionVector) {
 }
 
 TEST(DetectionsToRenderDataCalculatorTest, BothDetecctionListAndVector) {
-  CalculatorRunner runner{ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"(
+  CalculatorRunner runner{ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"pb(
     calculator: "DetectionsToRenderDataCalculator"
     input_stream: "DETECTION_LIST:detection_list"
     input_stream: "DETECTIONS:detections"
     output_stream: "RENDER_DATA:render_data"
-  )")};
+  )pb")};
 
   LocationData location_data1 = CreateLocationData(100, 200, 300, 400);
   auto detection_list(absl::make_unique<DetectionList>());
@@ -194,17 +194,18 @@ TEST(DetectionsToRenderDataCalculatorTest, BothDetecctionListAndVector) {
 
 TEST(DetectionsToRenderDataCalculatorTest, ProduceEmptyPacket) {
   // Check when produce_empty_packet is false.
-  CalculatorRunner runner1{ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"(
-    calculator: "DetectionsToRenderDataCalculator"
-    input_stream: "DETECTION_LIST:detection_list"
-    input_stream: "DETECTIONS:detections"
-    output_stream: "RENDER_DATA:render_data"
-    options {
-      [mediapipe.DetectionsToRenderDataCalculatorOptions.ext] {
-        produce_empty_packet: false
-      }
-    }
-  )")};
+  CalculatorRunner runner1{
+      ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"pb(
+        calculator: "DetectionsToRenderDataCalculator"
+        input_stream: "DETECTION_LIST:detection_list"
+        input_stream: "DETECTIONS:detections"
+        output_stream: "RENDER_DATA:render_data"
+        options {
+          [mediapipe.DetectionsToRenderDataCalculatorOptions.ext] {
+            produce_empty_packet: false
+          }
+        }
+      )pb")};
 
   auto detection_list1(absl::make_unique<DetectionList>());
   runner1.MutableInputs()
@@ -224,17 +225,18 @@ TEST(DetectionsToRenderDataCalculatorTest, ProduceEmptyPacket) {
   ASSERT_EQ(0, exact1.size());
 
   // Check when produce_empty_packet is true.
-  CalculatorRunner runner2{ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"(
-    calculator: "DetectionsToRenderDataCalculator"
-    input_stream: "DETECTION_LIST:detection_list"
-    input_stream: "DETECTIONS:detections"
-    output_stream: "RENDER_DATA:render_data"
-    options {
-      [mediapipe.DetectionsToRenderDataCalculatorOptions.ext] {
-        produce_empty_packet: true
-      }
-    }
-  )")};
+  CalculatorRunner runner2{
+      ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"pb(
+        calculator: "DetectionsToRenderDataCalculator"
+        input_stream: "DETECTION_LIST:detection_list"
+        input_stream: "DETECTIONS:detections"
+        output_stream: "RENDER_DATA:render_data"
+        options {
+          [mediapipe.DetectionsToRenderDataCalculatorOptions.ext] {
+            produce_empty_packet: true
+          }
+        }
+      )pb")};
 
   auto detection_list2(absl::make_unique<DetectionList>());
   runner2.MutableInputs()

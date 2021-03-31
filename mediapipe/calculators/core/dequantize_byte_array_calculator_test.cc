@@ -27,7 +27,7 @@ namespace mediapipe {
 
 TEST(QuantizeFloatVectorCalculatorTest, WrongConfig) {
   CalculatorGraphConfig::Node node_config =
-      ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"(
+      ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"pb(
         calculator: "DequantizeByteArrayCalculator"
         input_stream: "ENCODED:encoded"
         output_stream: "FLOAT_VECTOR:float_vector"
@@ -36,7 +36,7 @@ TEST(QuantizeFloatVectorCalculatorTest, WrongConfig) {
             max_quantized_value: 2
           }
         }
-      )");
+      )pb");
   CalculatorRunner runner(node_config);
   std::string empty_string;
   runner.MutableInputs()->Tag("ENCODED").packets.push_back(
@@ -51,7 +51,7 @@ TEST(QuantizeFloatVectorCalculatorTest, WrongConfig) {
 
 TEST(QuantizeFloatVectorCalculatorTest, WrongConfig2) {
   CalculatorGraphConfig::Node node_config =
-      ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"(
+      ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"pb(
         calculator: "DequantizeByteArrayCalculator"
         input_stream: "ENCODED:encoded"
         output_stream: "FLOAT_VECTOR:float_vector"
@@ -61,7 +61,7 @@ TEST(QuantizeFloatVectorCalculatorTest, WrongConfig2) {
             min_quantized_value: 2
           }
         }
-      )");
+      )pb");
   CalculatorRunner runner(node_config);
   std::string empty_string;
   runner.MutableInputs()->Tag("ENCODED").packets.push_back(
@@ -76,7 +76,7 @@ TEST(QuantizeFloatVectorCalculatorTest, WrongConfig2) {
 
 TEST(QuantizeFloatVectorCalculatorTest, WrongConfig3) {
   CalculatorGraphConfig::Node node_config =
-      ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"(
+      ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"pb(
         calculator: "DequantizeByteArrayCalculator"
         input_stream: "ENCODED:encoded"
         output_stream: "FLOAT_VECTOR:float_vector"
@@ -86,7 +86,7 @@ TEST(QuantizeFloatVectorCalculatorTest, WrongConfig3) {
             min_quantized_value: 1
           }
         }
-      )");
+      )pb");
   CalculatorRunner runner(node_config);
   std::string empty_string;
   runner.MutableInputs()->Tag("ENCODED").packets.push_back(
@@ -101,7 +101,7 @@ TEST(QuantizeFloatVectorCalculatorTest, WrongConfig3) {
 
 TEST(DequantizeByteArrayCalculatorTest, TestDequantization) {
   CalculatorGraphConfig::Node node_config =
-      ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"(
+      ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"pb(
         calculator: "DequantizeByteArrayCalculator"
         input_stream: "ENCODED:encoded"
         output_stream: "FLOAT_VECTOR:float_vector"
@@ -111,7 +111,7 @@ TEST(DequantizeByteArrayCalculatorTest, TestDequantization) {
             min_quantized_value: -2
           }
         }
-      )");
+      )pb");
   CalculatorRunner runner(node_config);
   unsigned char input[4] = {0x7F, 0xFF, 0x00, 0x01};
   runner.MutableInputs()->Tag("ENCODED").packets.push_back(

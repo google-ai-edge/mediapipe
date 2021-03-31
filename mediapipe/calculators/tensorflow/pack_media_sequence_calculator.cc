@@ -267,6 +267,17 @@ class PackMediaSequenceCalculator : public CalculatorBase {
     }
   }
 
+  absl::Status VerifySize() {
+    const int64 MAX_PROTO_BYTES = 1073741823;
+    std::string id = mpms::HasExampleId(*sequence_)
+                         ? mpms::GetExampleId(*sequence_)
+                         : "example";
+    RET_CHECK_LT(sequence_->ByteSizeLong(), MAX_PROTO_BYTES)
+        << "sequence '" << id
+        << "' would be too many bytes to serialize after adding features.";
+    return absl::OkStatus();
+  }
+
   absl::Status Close(CalculatorContext* cc) override {
     auto& options = cc->Options<PackMediaSequenceCalculatorOptions>();
     if (options.reconcile_metadata()) {
@@ -275,6 +286,9 @@ class PackMediaSequenceCalculator : public CalculatorBase {
           options.reconcile_region_annotations(), sequence_.get()));
     }
 
+    if (options.skip_large_sequences()) {
+      RET_CHECK_OK(VerifySize());
+    }
     if (options.output_only_if_all_present()) {
       absl::Status status = VerifySequence();
       if (!status.ok()) {

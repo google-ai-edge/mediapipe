@@ -38,7 +38,7 @@ class PacketLatencyCalculatorTest : public ::testing::Test {
   }
 
   void InitializeSingleStreamGraph() {
-    graph_config_ = ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+    graph_config_ = ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
       input_stream: "delayed_packet_0"
       input_stream: "camera_frames"
       node {
@@ -59,7 +59,7 @@ class PacketLatencyCalculatorTest : public ::testing::Test {
           input_stream_handler: "ImmediateInputStreamHandler"
         }
       }
-    )");
+    )pb");
 
     mediapipe::tool::AddVectorSink("packet_latency_0", &graph_config_,
                                    &out_0_packets_);
@@ -79,7 +79,7 @@ class PacketLatencyCalculatorTest : public ::testing::Test {
   }
 
   void InitializeMultipleStreamGraph() {
-    graph_config_ = ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+    graph_config_ = ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
       input_stream: "delayed_packet_0"
       input_stream: "delayed_packet_1"
       input_stream: "delayed_packet_2"
@@ -107,7 +107,7 @@ class PacketLatencyCalculatorTest : public ::testing::Test {
           input_stream_handler: "ImmediateInputStreamHandler"
         }
       }
-    )");
+    )pb");
 
     mediapipe::tool::AddVectorSink("packet_latency_0", &graph_config_,
                                    &out_0_packets_);
@@ -131,7 +131,7 @@ class PacketLatencyCalculatorTest : public ::testing::Test {
   }
 
   void InitializeSingleStreamGraphWithoutClock() {
-    graph_config_ = ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+    graph_config_ = ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
       input_stream: "delayed_packet_0"
       input_stream: "camera_frames"
       node {
@@ -150,7 +150,7 @@ class PacketLatencyCalculatorTest : public ::testing::Test {
           input_stream_handler: "ImmediateInputStreamHandler"
         }
       }
-    )");
+    )pb");
 
     mediapipe::tool::AddVectorSink("packet_latency_0", &graph_config_,
                                    &out_0_packets_);

@@ -84,11 +84,11 @@ Detection DetectionWithRelativeLocationData(double xmin, double ymin,
 }
 
 TEST(DetectionsToRectsCalculatorTest, DetectionToRect) {
-  CalculatorRunner runner(ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"(
+  CalculatorRunner runner(ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"pb(
     calculator: "DetectionsToRectsCalculator"
     input_stream: "DETECTION:detection"
     output_stream: "RECT:rect"
-  )"));
+  )pb"));
 
   auto detection = absl::make_unique<Detection>(
       DetectionWithLocationData(100, 200, 300, 400));
@@ -107,7 +107,7 @@ TEST(DetectionsToRectsCalculatorTest, DetectionToRect) {
 
 absl::StatusOr<Rect> RunDetectionKeyPointsToRectCalculation(
     Detection detection, std::pair<int, int> image_size) {
-  CalculatorRunner runner(ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"(
+  CalculatorRunner runner(ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"pb(
     calculator: "DetectionsToRectsCalculator"
     input_stream: "DETECTION:detection"
     input_stream: "IMAGE_SIZE:image_size"
@@ -117,7 +117,7 @@ absl::StatusOr<Rect> RunDetectionKeyPointsToRectCalculation(
         conversion_mode: USE_KEYPOINTS
       }
     }
-  )"));
+  )pb"));
 
   runner.MutableInputs()
       ->Tag("DETECTION")
@@ -160,11 +160,11 @@ TEST(DetectionsToRectsCalculatorTest, DetectionKeyPointsToRect) {
 }
 
 TEST(DetectionsToRectsCalculatorTest, DetectionToNormalizedRect) {
-  CalculatorRunner runner(ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"(
+  CalculatorRunner runner(ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"pb(
     calculator: "DetectionsToRectsCalculator"
     input_stream: "DETECTION:detection"
     output_stream: "NORM_RECT:rect"
-  )"));
+  )pb"));
 
   auto detection = absl::make_unique<Detection>(
       DetectionWithRelativeLocationData(0.1, 0.2, 0.3, 0.4));
@@ -183,7 +183,7 @@ TEST(DetectionsToRectsCalculatorTest, DetectionToNormalizedRect) {
 
 absl::StatusOr<NormalizedRect> RunDetectionKeyPointsToNormRectCalculation(
     Detection detection) {
-  CalculatorRunner runner(ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"(
+  CalculatorRunner runner(ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"pb(
     calculator: "DetectionsToRectsCalculator"
     input_stream: "DETECTION:detection"
     output_stream: "NORM_RECT:rect"
@@ -192,7 +192,7 @@ absl::StatusOr<NormalizedRect> RunDetectionKeyPointsToNormRectCalculation(
         conversion_mode: USE_KEYPOINTS
       }
     }
-  )"));
+  )pb"));
 
   runner.MutableInputs()
       ->Tag("DETECTION")
@@ -231,11 +231,11 @@ TEST(DetectionsToRectsCalculatorTest, DetectionKeyPointsToNormalizedRect) {
 }
 
 TEST(DetectionsToRectsCalculatorTest, DetectionsToRect) {
-  CalculatorRunner runner(ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"(
+  CalculatorRunner runner(ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"pb(
     calculator: "DetectionsToRectsCalculator"
     input_stream: "DETECTIONS:detections"
     output_stream: "RECT:rect"
-  )"));
+  )pb"));
 
   auto detections(absl::make_unique<std::vector<Detection>>());
   detections->push_back(DetectionWithLocationData(100, 200, 300, 400));
@@ -254,11 +254,11 @@ TEST(DetectionsToRectsCalculatorTest, DetectionsToRect) {
 }
 
 TEST(DetectionsToRectsCalculatorTest, DetectionsToNormalizedRect) {
-  CalculatorRunner runner(ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"(
+  CalculatorRunner runner(ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"pb(
     calculator: "DetectionsToRectsCalculator"
     input_stream: "DETECTIONS:detections"
     output_stream: "NORM_RECT:rect"
-  )"));
+  )pb"));
 
   auto detections(absl::make_unique<std::vector<Detection>>());
   detections->push_back(DetectionWithRelativeLocationData(0.1, 0.2, 0.3, 0.4));
@@ -277,11 +277,11 @@ TEST(DetectionsToRectsCalculatorTest, DetectionsToNormalizedRect) {
 }
 
 TEST(DetectionsToRectsCalculatorTest, DetectionsToRects) {
-  CalculatorRunner runner(ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"(
+  CalculatorRunner runner(ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"pb(
     calculator: "DetectionsToRectsCalculator"
     input_stream: "DETECTIONS:detections"
     output_stream: "RECTS:rect"
-  )"));
+  )pb"));
 
   auto detections(absl::make_unique<std::vector<Detection>>());
   detections->push_back(DetectionWithLocationData(100, 200, 300, 400));
@@ -302,11 +302,11 @@ TEST(DetectionsToRectsCalculatorTest, DetectionsToRects) {
 }
 
 TEST(DetectionsToRectsCalculatorTest, DetectionsToNormalizedRects) {
-  CalculatorRunner runner(ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"(
+  CalculatorRunner runner(ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"pb(
     calculator: "DetectionsToRectsCalculator"
     input_stream: "DETECTIONS:detections"
     output_stream: "NORM_RECTS:rect"
-  )"));
+  )pb"));
 
   auto detections(absl::make_unique<std::vector<Detection>>());
   detections->push_back(DetectionWithRelativeLocationData(0.1, 0.2, 0.3, 0.4));
@@ -328,11 +328,11 @@ TEST(DetectionsToRectsCalculatorTest, DetectionsToNormalizedRects) {
 }
 
 TEST(DetectionsToRectsCalculatorTest, DetectionToRects) {
-  CalculatorRunner runner(ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"(
+  CalculatorRunner runner(ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"pb(
     calculator: "DetectionsToRectsCalculator"
     input_stream: "DETECTION:detection"
     output_stream: "RECTS:rect"
-  )"));
+  )pb"));
 
   auto detection = absl::make_unique<Detection>(
       DetectionWithLocationData(100, 200, 300, 400));
@@ -351,11 +351,11 @@ TEST(DetectionsToRectsCalculatorTest, DetectionToRects) {
 }
 
 TEST(DetectionsToRectsCalculatorTest, DetectionToNormalizedRects) {
-  CalculatorRunner runner(ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"(
+  CalculatorRunner runner(ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"pb(
     calculator: "DetectionsToRectsCalculator"
     input_stream: "DETECTION:detection"
     output_stream: "NORM_RECTS:rect"
-  )"));
+  )pb"));
 
   auto detection = absl::make_unique<Detection>(
       DetectionWithRelativeLocationData(0.1, 0.2, 0.3, 0.4));
@@ -375,11 +375,11 @@ TEST(DetectionsToRectsCalculatorTest, DetectionToNormalizedRects) {
 }
 
 TEST(DetectionsToRectsCalculatorTest, WrongInputToRect) {
-  CalculatorRunner runner(ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"(
+  CalculatorRunner runner(ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"pb(
     calculator: "DetectionsToRectsCalculator"
     input_stream: "DETECTIONS:detections"
     output_stream: "RECT:rect"
-  )"));
+  )pb"));
 
   auto detections(absl::make_unique<std::vector<Detection>>());
   detections->push_back(DetectionWithRelativeLocationData(0.1, 0.2, 0.3, 0.4));
@@ -395,11 +395,11 @@ TEST(DetectionsToRectsCalculatorTest, WrongInputToRect) {
 }
 
 TEST(DetectionsToRectsCalculatorTest, WrongInputToNormalizedRect) {
-  CalculatorRunner runner(ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"(
+  CalculatorRunner runner(ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"pb(
     calculator: "DetectionsToRectsCalculator"
     input_stream: "DETECTIONS:detections"
     output_stream: "NORM_RECT:rect"
-  )"));
+  )pb"));
 
   auto detections(absl::make_unique<std::vector<Detection>>());
   detections->push_back(DetectionWithLocationData(100, 200, 300, 400));

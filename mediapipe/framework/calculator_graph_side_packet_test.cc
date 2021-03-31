@@ -185,7 +185,7 @@ REGISTER_PACKET_GENERATOR(Uint64PacketGenerator);
 TEST(CalculatorGraph, OutputSidePacketInProcess) {
   const int64 offset = 100;
   CalculatorGraphConfig config =
-      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
         input_stream: "offset"
         node {
           calculator: "OutputSidePacketInProcessCalculator"
@@ -197,7 +197,7 @@ TEST(CalculatorGraph, OutputSidePacketInProcess) {
           output_stream: "output"
           input_side_packet: "offset"
         }
-      )");
+      )pb");
   CalculatorGraph graph;
   MP_ASSERT_OK(graph.Initialize(config));
   std::vector<Packet> output_packets;
@@ -255,7 +255,7 @@ REGISTER_PACKET_GENERATOR(PassThroughGenerator);
 
 TEST(CalculatorGraph, SharePacketGeneratorGraph) {
   CalculatorGraphConfig config =
-      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
         node {
           calculator: 'CountingSourceCalculator'
           output_stream: 'count1'
@@ -296,7 +296,7 @@ TEST(CalculatorGraph, SharePacketGeneratorGraph) {
           input_side_packet: 'max_count4'
           output_side_packet: 'max_count5'
         }
-      )");
+      )pb");
 
   // At this point config is a standard config which specifies both
   // calculators and packet_factories/packet_genators.  The following
@@ -383,14 +383,14 @@ TEST(CalculatorGraph, SharePacketGeneratorGraph) {
 TEST(CalculatorGraph, OutputSidePacketAlreadySet) {
   const int64 offset = 100;
   CalculatorGraphConfig config =
-      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
         input_stream: "offset"
         node {
           calculator: "OutputSidePacketInProcessCalculator"
           input_stream: "offset"
           output_side_packet: "offset"
         }
-      )");
+      )pb");
   CalculatorGraph graph;
   MP_ASSERT_OK(graph.Initialize(config));
   MP_ASSERT_OK(graph.StartRun({}));
@@ -410,14 +410,14 @@ TEST(CalculatorGraph, OutputSidePacketAlreadySet) {
 TEST(CalculatorGraph, OutputSidePacketWithTimestamp) {
   const int64 offset = 100;
   CalculatorGraphConfig config =
-      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
         input_stream: "offset"
         node {
           calculator: "OutputSidePacketWithTimestampCalculator"
           input_stream: "offset"
           output_side_packet: "offset"
         }
-      )");
+      )pb");
   CalculatorGraph graph;
   MP_ASSERT_OK(graph.Initialize(config));
   MP_ASSERT_OK(graph.StartRun({}));
@@ -436,7 +436,7 @@ TEST(CalculatorGraph, OutputSidePacketWithTimestamp) {
 TEST(CalculatorGraph, OutputSidePacketConsumedBySourceNode) {
   const int max_count = 10;
   CalculatorGraphConfig config =
-      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
         input_stream: "max_count"
         node {
           calculator: "OutputSidePacketInProcessCalculator"
@@ -453,7 +453,7 @@ TEST(CalculatorGraph, OutputSidePacketConsumedBySourceNode) {
           input_stream: "count"
           output_stream: "output"
         }
-      )");
+      )pb");
   CalculatorGraph graph;
   MP_ASSERT_OK(graph.Initialize(config));
   std::vector<Packet> output_packets;
@@ -529,7 +529,7 @@ TEST(CalculatorGraph, SourceLayerInversion) {
   // Set num_threads to 1 to force sequential execution for deterministic
   // outputs.
   CalculatorGraphConfig config =
-      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
         num_threads: 1
         node {
           calculator: "CountingSourceCalculator"
@@ -563,7 +563,7 @@ TEST(CalculatorGraph, SourceLayerInversion) {
           input_side_packet: "INCREMENT:increment2"
           source_layer: 0
         }
-      )");
+      )pb");
   CalculatorGraph graph;
   MP_ASSERT_OK(graph.Initialize(
       config, {{"max_count", MakePacket<int>(max_count)},
@@ -577,7 +577,7 @@ TEST(CalculatorGraph, SourceLayerInversion) {
 // streams and no output streams.
 TEST(CalculatorGraph, PacketGeneratorLikeCalculators) {
   CalculatorGraphConfig config =
-      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
         node {
           calculator: "IntegerOutputSidePacketCalculator"
           output_side_packet: "one"
@@ -607,7 +607,7 @@ TEST(CalculatorGraph, PacketGeneratorLikeCalculators) {
           input_side_packet: "three"
           output_stream: "output"
         }
-      )");
+      )pb");
   CalculatorGraph graph;
   MP_ASSERT_OK(graph.Initialize(config));
   std::vector<Packet> output_packets;
@@ -624,7 +624,7 @@ TEST(CalculatorGraph, PacketGeneratorLikeCalculators) {
 
 TEST(CalculatorGraph, OutputSummarySidePacketInClose) {
   CalculatorGraphConfig config =
-      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
         input_stream: "input_packets"
         node {
           calculator: "CountAndOutputSummarySidePacketInCloseCalculator"
@@ -636,7 +636,7 @@ TEST(CalculatorGraph, OutputSummarySidePacketInClose) {
           input_side_packet: "num_of_packets"
           output_stream: "output"
         }
-      )");
+      )pb");
   CalculatorGraph graph;
   MP_ASSERT_OK(graph.Initialize(config));
   std::vector<Packet> output_packets;
@@ -665,7 +665,7 @@ TEST(CalculatorGraph, OutputSummarySidePacketInClose) {
 
 TEST(CalculatorGraph, GetOutputSidePacket) {
   CalculatorGraphConfig config =
-      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
         input_stream: "input_packets"
         node {
           calculator: "CountAndOutputSummarySidePacketInCloseCalculator"
@@ -681,7 +681,7 @@ TEST(CalculatorGraph, GetOutputSidePacket) {
           input_side_packet: "input_uint64"
           output_side_packet: "output_uint32_pair"
         }
-      )");
+      )pb");
   CalculatorGraph graph;
   MP_ASSERT_OK(graph.Initialize(config));
   // Check a packet generated by the PacketGenerator, which is available after
@@ -771,7 +771,7 @@ bool Equals(Packet p1, Packet p2) {
 
 TEST(CalculatorGraph, OutputSidePacketCached) {
   CalculatorGraphConfig config =
-      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
         node {
           calculator: "OutputSidePacketCachedCalculator"
           output_side_packet: "model"
@@ -781,7 +781,7 @@ TEST(CalculatorGraph, OutputSidePacketCached) {
           input_side_packet: "model"
           output_stream: "output"
         }
-      )");
+      )pb");
   CalculatorGraph graph;
   MP_ASSERT_OK(graph.Initialize(config));
   std::vector<Packet> output_packets;

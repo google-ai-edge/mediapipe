@@ -57,12 +57,12 @@ Detection CreateDetection(const std::vector<std::string>& labels,
 }
 
 CalculatorGraphConfig::Node GetDefaultNode() {
-  return ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"(
+  return ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"pb(
     calculator: "DetectionLetterboxRemovalCalculator"
     input_stream: "DETECTIONS:detections"
     input_stream: "LETTERBOX_PADDING:letterbox_padding"
     output_stream: "DETECTIONS:adjusted_detections"
-  )");
+  )pb");
 }
 
 TEST(DetectionLetterboxRemovalCalculatorTest, PaddingLeftRight) {

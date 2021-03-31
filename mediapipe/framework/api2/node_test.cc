@@ -132,12 +132,12 @@ TEST(NodeTest, GetContract) {
   // with what you have in the graph, then you let the calculator fill it in
   // with what it expects, and then you see if they match.
   const CalculatorGraphConfig::Node node_config =
-      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"(
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"pb(
         calculator: "Foo"
         input_stream: "BASE:base"
         input_stream: "SCALE:scale"
         output_stream: "OUT:out"
-      )");
+      )pb");
   mediapipe::CalculatorContract contract;
   MP_EXPECT_OK(contract.Initialize(node_config));
   MP_EXPECT_OK(Foo::Contract::GetContract(&contract));
@@ -147,13 +147,13 @@ TEST(NodeTest, GetContract) {
 
 TEST(NodeTest, GetContractMulti) {
   const CalculatorGraphConfig::Node node_config =
-      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"(
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"pb(
         calculator: "Baz"
         input_stream: "DATA:0:b"
         input_stream: "DATA:1:c"
         output_stream: "DATA:0:d"
         output_stream: "DATA:1:e"
-      )");
+      )pb");
   mediapipe::CalculatorContract contract;
   MP_EXPECT_OK(contract.Initialize(node_config));
   MP_EXPECT_OK(Baz::Contract::GetContract(&contract));
@@ -204,7 +204,7 @@ TEST(NodeTest, RunInGraph5) { RunFooCalculatorInGraph("Foo5"); }
 
 TEST(NodeTest, OptionalStream) {
   CalculatorGraphConfig config =
-      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
         input_stream: "base"
         input_side_packet: "bias"
         output_stream: "out"
@@ -214,7 +214,7 @@ TEST(NodeTest, OptionalStream) {
           input_side_packet: "BIAS:bias"
           output_stream: "OUT:out"
         }
-      )");
+      )pb");
   std::vector<mediapipe::Packet> out_packets;
   tool::AddVectorSink("out", &config, &out_packets);
   mediapipe::CalculatorGraph graph;
@@ -229,7 +229,7 @@ TEST(NodeTest, OptionalStream) {
 
 TEST(NodeTest, DynamicTypes) {
   CalculatorGraphConfig config =
-      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
         input_stream: "in"
         output_stream: "out"
         node {
@@ -242,7 +242,7 @@ TEST(NodeTest, DynamicTypes) {
           input_stream: "IN:bar"
           output_stream: "OUT:out"
         }
-      )");
+      )pb");
   std::vector<mediapipe::Packet> out_packets;
   tool::AddVectorSink("out", &config, &out_packets);
   mediapipe::CalculatorGraph graph;
@@ -257,7 +257,7 @@ TEST(NodeTest, DynamicTypes) {
 
 TEST(NodeTest, MultiPort) {
   CalculatorGraphConfig config =
-      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
         input_stream: "in0"
         input_stream: "in1"
         output_stream: "out0"
@@ -279,7 +279,7 @@ TEST(NodeTest, MultiPort) {
           input_stream: "IN:baz1"
           output_stream: "OUT:out1"
         }
-      )");
+      )pb");
   std::vector<mediapipe::Packet> out0_packets;
   std::vector<mediapipe::Packet> out1_packets;
   tool::AddVectorSink("out0", &config, &out0_packets);
@@ -325,7 +325,7 @@ MEDIAPIPE_REGISTER_NODE(SideFallback);
 
 TEST(NodeTest, SideFallbackWithStream) {
   CalculatorGraphConfig config =
-      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
         input_stream: "in"
         input_stream: "factor"
         output_stream: "out"
@@ -335,7 +335,7 @@ TEST(NodeTest, SideFallbackWithStream) {
           input_stream: "FACTOR:factor"
           output_stream: "OUT:out"
         }
-      )");
+      )pb");
   std::vector<int> outputs;
   mediapipe::CalculatorGraph graph;
   MP_EXPECT_OK(graph.Initialize(config, {}));
@@ -356,7 +356,7 @@ TEST(NodeTest, SideFallbackWithStream) {
 
 TEST(NodeTest, SideFallbackWithSide) {
   CalculatorGraphConfig config =
-      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
         input_stream: "in"
         input_side_packet: "factor"
         output_stream: "out"
@@ -366,7 +366,7 @@ TEST(NodeTest, SideFallbackWithSide) {
           input_side_packet: "FACTOR:factor"
           output_stream: "OUT:out"
         }
-      )");
+      )pb");
   std::vector<int> outputs;
   mediapipe::CalculatorGraph graph;
   MP_EXPECT_OK(graph.Initialize(config, {}));
@@ -385,7 +385,7 @@ TEST(NodeTest, SideFallbackWithSide) {
 
 TEST(NodeTest, SideFallbackWithNone) {
   CalculatorGraphConfig config =
-      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
         input_stream: "in"
         output_stream: "out"
         node {
@@ -393,7 +393,7 @@ TEST(NodeTest, SideFallbackWithNone) {
           input_stream: "IN:in"
           output_stream: "OUT:out"
         }
-      )");
+      )pb");
   std::vector<int> outputs;
   mediapipe::CalculatorGraph graph;
   auto status = graph.Initialize(config, {});
@@ -402,7 +402,7 @@ TEST(NodeTest, SideFallbackWithNone) {
 
 TEST(NodeTest, SideFallbackWithBoth) {
   CalculatorGraphConfig config =
-      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
         input_stream: "in"
         input_stream: "factor"
         input_side_packet: "factor_side"
@@ -414,7 +414,7 @@ TEST(NodeTest, SideFallbackWithBoth) {
           input_side_packet: "FACTOR:factor_side"
           output_stream: "OUT:out"
         }
-      )");
+      )pb");
   std::vector<int> outputs;
   mediapipe::CalculatorGraph graph;
   auto status = graph.Initialize(config, {});
@@ -423,7 +423,7 @@ TEST(NodeTest, SideFallbackWithBoth) {
 
 TEST(NodeTest, OneOf) {
   CalculatorGraphConfig config =
-      ::mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+      ::mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
         input_stream: "in"
         output_stream: "out"
         node {
@@ -431,7 +431,7 @@ TEST(NodeTest, OneOf) {
           input_stream: "IN:in"
           output_stream: "OUT:out"
         }
-      )");
+      )pb");
   std::vector<mediapipe::Packet> out_packets;
   tool::AddVectorSink("out", &config, &out_packets);
   mediapipe::CalculatorGraph graph;
@@ -484,7 +484,7 @@ MEDIAPIPE_REGISTER_NODE(ListIntPackets);
 
 TEST(NodeTest, DefaultTimestampChange0) {
   CalculatorGraphConfig config =
-      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
         input_stream: "a"
         input_stream: "b"
         output_stream: "out"
@@ -504,7 +504,7 @@ TEST(NodeTest, DefaultTimestampChange0) {
           input_stream: "INT:1:b"
           output_stream: "STR:out"
         }
-      )");
+      )pb");
   std::vector<mediapipe::Packet> out_packets;
   tool::AddVectorSink("out", &config, &out_packets);
   mediapipe::CalculatorGraph graph;
@@ -541,7 +541,7 @@ MEDIAPIPE_REGISTER_NODE(ConsumerNode);
 
 TEST(NodeTest, ConsumeInputs) {
   CalculatorGraphConfig config =
-      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
         input_stream: "int"
         input_stream: "any"
         input_stream: "num"
@@ -551,7 +551,7 @@ TEST(NodeTest, ConsumeInputs) {
           input_stream: "ANY:any"
           input_stream: "NUM:num"
         }
-      )");
+      )pb");
   mediapipe::CalculatorGraph graph;
   MP_EXPECT_OK(graph.Initialize(config, {}));
   MP_EXPECT_OK(graph.StartRun({}));

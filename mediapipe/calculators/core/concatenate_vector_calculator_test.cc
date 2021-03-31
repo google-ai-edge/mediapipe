@@ -392,7 +392,7 @@ TEST(TestConcatenateUniqueIntVectorCalculatorTest, ConsumeOneTimestamp) {
    * The test needs to send packets that own the data.
    */
   CalculatorGraphConfig graph_config =
-      ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+      ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
         input_stream: "in_1"
         input_stream: "in_2"
         input_stream: "in_3"
@@ -403,7 +403,7 @@ TEST(TestConcatenateUniqueIntVectorCalculatorTest, ConsumeOneTimestamp) {
           input_stream: "in_3"
           output_stream: "out"
         }
-      )");
+      )pb");
 
   std::vector<Packet> outputs;
   tool::AddVectorSink("out", &graph_config, &outputs);
@@ -456,7 +456,7 @@ TEST(TestConcatenateUniqueIntVectorCalculatorTest, OneEmptyStreamStillOutput) {
    * The test needs to send packets that own the data.
    */
   CalculatorGraphConfig graph_config =
-      ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+      ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
         input_stream: "in_1"
         input_stream: "in_2"
         node {
@@ -465,7 +465,7 @@ TEST(TestConcatenateUniqueIntVectorCalculatorTest, OneEmptyStreamStillOutput) {
           input_stream: "in_2"
           output_stream: "out"
         }
-      )");
+      )pb");
 
   std::vector<Packet> outputs;
   tool::AddVectorSink("out", &graph_config, &outputs);
@@ -505,7 +505,7 @@ TEST(TestConcatenateUniqueIntVectorCalculatorTest, OneEmptyStreamNoOutput) {
    * The test needs to send packets that own the data.
    */
   CalculatorGraphConfig graph_config =
-      ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+      ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
         input_stream: "in_1"
         input_stream: "in_2"
         node {
@@ -519,7 +519,7 @@ TEST(TestConcatenateUniqueIntVectorCalculatorTest, OneEmptyStreamNoOutput) {
             }
           }
         }
-      )");
+      )pb");
 
   std::vector<Packet> outputs;
   tool::AddVectorSink("out", &graph_config, &outputs);

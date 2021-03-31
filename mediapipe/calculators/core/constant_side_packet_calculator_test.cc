@@ -62,7 +62,7 @@ TEST(ConstantSidePacketCalculatorTest, EveryPossibleType) {
 
 TEST(ConstantSidePacketCalculatorTest, MultiplePackets) {
   CalculatorGraphConfig graph_config =
-      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
         node {
           calculator: "ConstantSidePacketCalculator"
           output_side_packet: "PACKET:0:int_packet"
@@ -82,7 +82,7 @@ TEST(ConstantSidePacketCalculatorTest, MultiplePackets) {
             }
           }
         }
-      )");
+      )pb");
   CalculatorGraph graph;
   MP_ASSERT_OK(graph.Initialize(graph_config));
   MP_ASSERT_OK(graph.StartRun({}));
@@ -111,7 +111,7 @@ TEST(ConstantSidePacketCalculatorTest, MultiplePackets) {
 
 TEST(ConstantSidePacketCalculatorTest, ProcessingPacketsWithCorrectTagOnly) {
   CalculatorGraphConfig graph_config =
-      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
         node {
           calculator: "ConstantSidePacketCalculator"
           output_side_packet: "PACKET:0:int_packet"
@@ -131,7 +131,7 @@ TEST(ConstantSidePacketCalculatorTest, ProcessingPacketsWithCorrectTagOnly) {
             }
           }
         }
-      )");
+      )pb");
   CalculatorGraph graph;
   MP_ASSERT_OK(graph.Initialize(graph_config));
   MP_ASSERT_OK(graph.StartRun({}));
@@ -152,7 +152,7 @@ TEST(ConstantSidePacketCalculatorTest, ProcessingPacketsWithCorrectTagOnly) {
 
 TEST(ConstantSidePacketCalculatorTest, IncorrectConfig_MoreOptionsThanPackets) {
   CalculatorGraphConfig graph_config =
-      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
         node {
           calculator: "ConstantSidePacketCalculator"
           output_side_packet: "PACKET:int_packet"
@@ -163,14 +163,14 @@ TEST(ConstantSidePacketCalculatorTest, IncorrectConfig_MoreOptionsThanPackets) {
             }
           }
         }
-      )");
+      )pb");
   CalculatorGraph graph;
   EXPECT_FALSE(graph.Initialize(graph_config).ok());
 }
 
 TEST(ConstantSidePacketCalculatorTest, IncorrectConfig_MorePacketsThanOptions) {
   CalculatorGraphConfig graph_config =
-      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
         node {
           calculator: "ConstantSidePacketCalculator"
           output_side_packet: "PACKET:0:int_packet"
@@ -181,7 +181,7 @@ TEST(ConstantSidePacketCalculatorTest, IncorrectConfig_MorePacketsThanOptions) {
             }
           }
         }
-      )");
+      )pb");
   CalculatorGraph graph;
   EXPECT_FALSE(graph.Initialize(graph_config).ok());
 }

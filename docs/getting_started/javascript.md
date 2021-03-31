@@ -72,9 +72,9 @@ affecting your work, restrict your request to a `<minor>` number. e.g.,
 [Fd-npm]: https://www.npmjs.com/package/@mediapipe/face_detection
 [H-npm]: https://www.npmjs.com/package/@mediapipe/hands
 [P-npm]: https://www.npmjs.com/package/@mediapipe/pose
-[draw-npm]: https://www.npmjs.com/package/@mediapipe/pose
-[cam-npm]: https://www.npmjs.com/package/@mediapipe/pose
-[ctrl-npm]: https://www.npmjs.com/package/@mediapipe/pose
+[draw-npm]: https://www.npmjs.com/package/@mediapipe/drawing_utils
+[cam-npm]: https://www.npmjs.com/package/@mediapipe/camera_utils
+[ctrl-npm]: https://www.npmjs.com/package/@mediapipe/control_utils
 [Ho-jsd]: https://www.jsdelivr.com/package/npm/@mediapipe/holistic
 [F-jsd]: https://www.jsdelivr.com/package/npm/@mediapipe/face_mesh
 [Fd-jsd]: https://www.jsdelivr.com/package/npm/@mediapipe/face_detection

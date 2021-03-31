@@ -91,7 +91,7 @@ class ParallelExecutionTest : public testing::Test {
 
 TEST_F(ParallelExecutionTest, SlowPlusOneCalculatorsTest) {
   CalculatorGraphConfig graph_config =
-      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
         input_stream: "input"
         node {
           calculator: "SlowPlusOneCalculator"
@@ -111,7 +111,7 @@ TEST_F(ParallelExecutionTest, SlowPlusOneCalculatorsTest) {
           input_side_packet: "CALLBACK:callback"
         }
         num_threads: 5
-      )");
+      )pb");
 
   // Starts MediaPipe graph.
   CalculatorGraph graph(graph_config);

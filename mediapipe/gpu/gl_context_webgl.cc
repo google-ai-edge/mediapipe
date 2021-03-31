@@ -51,6 +51,7 @@ absl::Status GlContext::CreateContextInternal(
   CHECK(webgl_version == 1 || webgl_version == 2);
 
   EmscriptenWebGLContextAttributes attrs;
+  emscripten_webgl_init_context_attributes(&attrs);
   attrs.explicitSwapControl = 0;
   attrs.depth = 1;
   attrs.stencil = 0;

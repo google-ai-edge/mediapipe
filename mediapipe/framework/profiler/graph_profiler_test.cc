@@ -249,7 +249,7 @@ TEST_F(GraphProfilerTestPeer, InitializeConfig) {
   // Checks histogram_interval_size_usec and num_histogram_intervals.
   CalculatorProfile actual =
       GetCalculatorProfilesMap()->find(kDummyTestCalculatorName)->second;
-  EXPECT_THAT(actual, EqualsProto(R"(
+  EXPECT_THAT(actual, EqualsProto(R"pb(
                 name: "DummyTestCalculator"
                 process_runtime {
                   total: 0
@@ -287,7 +287,7 @@ TEST_F(GraphProfilerTestPeer, InitializeConfig) {
                     count: 0
                   }
                 }
-              )"));
+              )pb"));
 }
 
 // Tests that Initialize() uses the ProfilerConfig in the graph definition.
@@ -313,7 +313,7 @@ TEST_F(GraphProfilerTestPeer, InitializeConfigWithoutStreamLatency) {
   // Checks histogram_interval_size_usec and num_histogram_intervals.
   CalculatorProfile actual =
       GetCalculatorProfilesMap()->find(kDummyTestCalculatorName)->second;
-  EXPECT_THAT(actual, EqualsProto(R"(
+  EXPECT_THAT(actual, EqualsProto(R"pb(
                 name: "DummyTestCalculator"
                 process_runtime {
                   total: 0
@@ -323,7 +323,7 @@ TEST_F(GraphProfilerTestPeer, InitializeConfigWithoutStreamLatency) {
                   count: 0
                   count: 0
                 }
-              )"));
+              )pb"));
 }
 
 // Tests that Initialize() reads all the configs defined in the graph
@@ -654,11 +654,11 @@ TEST_F(GraphProfilerTestPeer, SetOpenRuntime) {
   simulation_clock->ThreadFinish();
 
   ASSERT_EQ(profiles.size(), 1);
-  EXPECT_THAT(profiles[0], Partially(EqualsProto(R"(
+  EXPECT_THAT(profiles[0], Partially(EqualsProto(R"pb(
                 name: "DummyTestCalculator"
                 open_runtime: 100
                 process_runtime { total: 0 }
-              )")));
+              )pb")));
   // Checks packets_info_ map hasn't changed.
   ASSERT_EQ(GetPacketsInfoMap()->size(), 0);
 }
@@ -711,7 +711,7 @@ TEST_F(GraphProfilerTestPeer, SetOpenRuntimeWithStreamLatency) {
   CalculatorProfile source_profile =
       GetProfileWithName(profiles, "source_calc");
 
-  EXPECT_THAT(source_profile, EqualsProto(R"(
+  EXPECT_THAT(source_profile, EqualsProto(R"pb(
                 name: "source_calc"
                 open_runtime: 150
                 process_runtime {
@@ -732,7 +732,7 @@ TEST_F(GraphProfilerTestPeer, SetOpenRuntimeWithStreamLatency) {
                   num_intervals: 1
                   count: 0
                 }
-              )"));
+              )pb"));
 
   // Check packets_info_ map has been updated.
   ASSERT_EQ(GetPacketsInfoMap()->size(), 1);
@@ -773,7 +773,7 @@ TEST_F(GraphProfilerTestPeer, SetCloseRuntime) {
   std::vector<CalculatorProfile> profiles = Profiles();
   simulation_clock->ThreadFinish();
 
-  EXPECT_THAT(profiles[0], EqualsProto(R"(
+  EXPECT_THAT(profiles[0], EqualsProto(R"pb(
                 name: "DummyTestCalculator"
                 close_runtime: 100
                 process_runtime {
@@ -782,7 +782,7 @@ TEST_F(GraphProfilerTestPeer, SetCloseRuntime) {
                   num_intervals: 1
                   count: 0
                 }
-              )"));
+              )pb"));
 }
 
 // Tests that SetCloseRuntime() updates |close_runtime| and doesn't affect other
@@ -832,7 +832,7 @@ TEST_F(GraphProfilerTestPeer, SetCloseRuntimeWithStreamLatency) {
   CalculatorProfile source_profile =
       GetProfileWithName(profiles, "source_calc");
 
-  EXPECT_THAT(source_profile, EqualsProto(R"(
+  EXPECT_THAT(source_profile, EqualsProto(R"pb(
                 name: "source_calc"
                 close_runtime: 100
                 process_runtime {
@@ -863,7 +863,7 @@ TEST_F(GraphProfilerTestPeer, SetCloseRuntimeWithStreamLatency) {
                     count: 0
                   }
                 }
-              )"));
+              )pb"));
   PacketInfo expected_packet_info = {0,
                                      /*production_time_usec=*/1000 + 100,
                                      /*source_process_start_usec=*/1000 + 0};
@@ -1003,7 +1003,7 @@ TEST_F(GraphProfilerTestPeer, AddProcessSample) {
   simulation_clock->ThreadFinish();
 
   ASSERT_EQ(profiles.size(), 1);
-  EXPECT_THAT(profiles[0], EqualsProto(R"(
+  EXPECT_THAT(profiles[0], EqualsProto(R"pb(
                 name: "DummyTestCalculator"
                 process_runtime {
                   total: 150
@@ -1011,7 +1011,7 @@ TEST_F(GraphProfilerTestPeer, AddProcessSample) {
                   num_intervals: 1
                   count: 1
                 }
-              )"));
+              )pb"));
   // Checks packets_info_ map hasn't changed.
   ASSERT_EQ(GetPacketsInfoMap()->size(), 0);
 }
@@ -1061,7 +1061,7 @@ TEST_F(GraphProfilerTestPeer, AddProcessSampleWithStreamLatency) {
   CalculatorProfile source_profile =
       GetProfileWithName(profiles, "source_calc");
 
-  EXPECT_THAT(profiles[0], Partially(EqualsProto(R"(
+  EXPECT_THAT(profiles[0], Partially(EqualsProto(R"pb(
                 process_runtime {
                   total: 150
                   interval_size_usec: 1000000
@@ -1080,7 +1080,7 @@ TEST_F(GraphProfilerTestPeer, AddProcessSampleWithStreamLatency) {
                   num_intervals: 1
                   count: 1
                 }
-              )")));
+              )pb")));
 
   // Check packets_info_ map has been updated.
   ASSERT_EQ(GetPacketsInfoMap()->size(), 1);
@@ -1114,7 +1114,7 @@ TEST_F(GraphProfilerTestPeer, AddProcessSampleWithStreamLatency) {
   // 1000 process output latency total = 2000 (end) + 250 - 1000 (when source
   // started) = 1250 For "stream_0" should have not changed since it was empty.
   // For "stream_1" = 2000 (end) - 1250 (when source finished) = 850
-  EXPECT_THAT(consumer_profile, Partially(EqualsProto(R"(
+  EXPECT_THAT(consumer_profile, Partially(EqualsProto(R"pb(
                 name: "consumer_calc"
                 process_input_latency { total: 1000 }
                 process_output_latency { total: 1250 }
@@ -1126,7 +1126,7 @@ TEST_F(GraphProfilerTestPeer, AddProcessSampleWithStreamLatency) {
                   name: "stream_1"
                   latency { total: 850 }
                 }
-              )")));
+              )pb")));
 
   // Check packets_info_ map for PacketId({"stream_1", 100}) should not yet be
   // garbage collected.

@@ -41,14 +41,14 @@ void AddInputVector(const std::vector<int>& input, int64 timestamp,
 
 TEST(TestIntCollectionHasMinSizeCalculator, DoesHaveMinSize) {
   CalculatorGraphConfig::Node node_config =
-      ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"(
+      ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"pb(
         calculator: "TestIntCollectionHasMinSizeCalculator"
         input_stream: "ITERABLE:input_vector"
         output_stream: "output_vector"
         options {
           [mediapipe.CollectionHasMinSizeCalculatorOptions.ext] { min_size: 2 }
         }
-      )");
+      )pb");
   CalculatorRunner runner(node_config);
   const std::vector<Packet>& outputs = runner.Outputs().Index(0).packets;
 
@@ -70,12 +70,12 @@ TEST(TestIntCollectionHasMinSizeCalculator, DoesHaveMinSize) {
 TEST(TestIntCollectionHasMinSizeCalculator,
      DoesHaveMinSize_MinSizeAsSidePacket) {
   CalculatorGraphConfig::Node node_config =
-      ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"(
+      ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"pb(
         calculator: "TestIntCollectionHasMinSizeCalculator"
         input_stream: "ITERABLE:input_vector"
         input_side_packet: "min_size"
         output_stream: "output_vector"
-      )");
+      )pb");
   CalculatorRunner runner(node_config);
   const std::vector<Packet>& outputs = runner.Outputs().Index(0).packets;
 
@@ -98,14 +98,14 @@ TEST(TestIntCollectionHasMinSizeCalculator,
 
 TEST(TestIntCollectionHasMinSizeCalculator, DoesNotHaveMinSize) {
   CalculatorGraphConfig::Node node_config =
-      ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"(
+      ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"pb(
         calculator: "TestIntCollectionHasMinSizeCalculator"
         input_stream: "ITERABLE:input_vector"
         output_stream: "output_vector"
         options {
           [mediapipe.CollectionHasMinSizeCalculatorOptions.ext] { min_size: 3 }
         }
-      )");
+      )pb");
   CalculatorRunner runner(node_config);
   const std::vector<Packet>& outputs = runner.Outputs().Index(0).packets;
 
@@ -127,12 +127,12 @@ TEST(TestIntCollectionHasMinSizeCalculator, DoesNotHaveMinSize) {
 TEST(TestIntCollectionHasMinSizeCalculator,
      DoesNotHaveMinSize_MinSizeAsSidePacket) {
   CalculatorGraphConfig::Node node_config =
-      ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"(
+      ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"pb(
         calculator: "TestIntCollectionHasMinSizeCalculator"
         input_stream: "ITERABLE:input_vector"
         input_side_packet: "min_size"
         output_stream: "output_vector"
-      )");
+      )pb");
   CalculatorRunner runner(node_config);
   const std::vector<Packet>& outputs = runner.Outputs().Index(0).packets;
 

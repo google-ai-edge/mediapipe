@@ -26,7 +26,7 @@ namespace {
 
 TEST(TimestampAlignInputStreamHandlerTest, Initialization) {
   CalculatorGraphConfig config =
-      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
         input_stream: "input_video"
         input_stream: "input_camera"
         node {
@@ -43,7 +43,7 @@ TEST(TimestampAlignInputStreamHandlerTest, Initialization) {
               }
             }
           }
-        })");
+        })pb");
   std::vector<Packet> sink_video, sink_camera;
   tool::AddVectorSink("output_video", &config, &sink_video);
   tool::AddVectorSink("output_camera", &config, &sink_camera);
@@ -121,7 +121,7 @@ TEST(TimestampAlignInputStreamHandlerTest, Initialization) {
 
 TEST(TimestampAlignInputStreamHandlerTest, TickRate) {
   CalculatorGraphConfig config =
-      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
         input_stream: "input_video"
         input_stream: "input_camera"
         node {
@@ -139,7 +139,7 @@ TEST(TimestampAlignInputStreamHandlerTest, TickRate) {
               }
             }
           }
-        })");
+        })pb");
   std::vector<Packet> sink_video, sink_camera;
   tool::AddVectorSink("output_video", &config, &sink_video);
   tool::AddVectorSink("output_camera", &config, &sink_camera);

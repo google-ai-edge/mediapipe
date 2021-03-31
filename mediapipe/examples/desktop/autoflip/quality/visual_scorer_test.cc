@@ -27,10 +27,10 @@ namespace {
 TEST(VisualScorerTest, ScoresArea) {
   cv::Mat image_mat(200, 200, CV_8UC3);
   SalientRegion region = ParseTextProtoOrDie<SalientRegion>(
-      R"(location { x: 10 y: 10 width: 100 height: 100 })");
+      R"pb(location { x: 10 y: 10 width: 100 height: 100 })pb");
 
   VisualScorerOptions options = ParseTextProtoOrDie<VisualScorerOptions>(
-      R"(area_weight: 1.0 sharpness_weight: 0 colorfulness_weight: 0)");
+      R"pb(area_weight: 1.0 sharpness_weight: 0 colorfulness_weight: 0)pb");
   VisualScorer scorer(options);
   float score = 0.0;
   MP_EXPECT_OK(scorer.CalculateScore(image_mat, region, &score));
@@ -39,10 +39,10 @@ TEST(VisualScorerTest, ScoresArea) {
 
 TEST(VisualScorerTest, ScoresSharpness) {
   SalientRegion region = ParseTextProtoOrDie<SalientRegion>(
-      R"(location { x: 10 y: 10 width: 100 height: 100 })");
+      R"pb(location { x: 10 y: 10 width: 100 height: 100 })pb");
 
   VisualScorerOptions options = ParseTextProtoOrDie<VisualScorerOptions>(
-      R"(area_weight: 0 sharpness_weight: 1.0 colorfulness_weight: 0)");
+      R"pb(area_weight: 0 sharpness_weight: 1.0 colorfulness_weight: 0)pb");
   VisualScorer scorer(options);
 
   // Compute the score of an empty image and an image with a rectangle.
@@ -55,10 +55,10 @@ TEST(VisualScorerTest, ScoresSharpness) {
 
 TEST(VisualScorerTest, ScoresColorfulness) {
   SalientRegion region = ParseTextProtoOrDie<SalientRegion>(
-      R"(location { x: 10 y: 10 width: 50 height: 150 })");
+      R"pb(location { x: 10 y: 10 width: 50 height: 150 })pb");
 
   VisualScorerOptions options = ParseTextProtoOrDie<VisualScorerOptions>(
-      R"(area_weight: 0 sharpness_weight: 0 colorfulness_weight: 1.0)");
+      R"pb(area_weight: 0 sharpness_weight: 0 colorfulness_weight: 1.0)pb");
   VisualScorer scorer(options);
 
   // Compute the scores of images with 1, 2 and 3 colors.

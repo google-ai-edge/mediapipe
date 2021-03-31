@@ -452,7 +452,7 @@ TEST(PacketResamplerCalculatorTest, FrameRateTest) {
 }
 
 TEST(PacketResamplerCalculatorTest, SetVideoHeader) {
-  CalculatorRunner runner(ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"(
+  CalculatorRunner runner(ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"pb(
     calculator: "PacketResamplerCalculator"
     input_stream: "DATA:in_data"
     input_stream: "VIDEO_HEADER:in_video_header"
@@ -461,7 +461,7 @@ TEST(PacketResamplerCalculatorTest, SetVideoHeader) {
     options {
       [mediapipe.PacketResamplerCalculatorOptions.ext] { frame_rate: 50.0 }
     }
-  )"));
+  )pb"));
 
   for (const int64 ts : {0, 5000, 10010, 15001, 19990}) {
     runner.MutableInputs()->Tag("DATA").packets.push_back(
@@ -705,7 +705,7 @@ TEST(PacketResamplerCalculatorTest, OutputTimestampRangeAligned) {
 
 TEST(PacketResamplerCalculatorTest, OptionsSidePacket) {
   CalculatorGraphConfig::Node node_config =
-      ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"(
+      ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"pb(
         calculator: "PacketResamplerCalculator"
         input_side_packet: "OPTIONS:options"
         input_stream: "input"
@@ -715,16 +715,16 @@ TEST(PacketResamplerCalculatorTest, OptionsSidePacket) {
             frame_rate: 60
             base_timestamp: 0
           }
-        })");
+        })pb");
 
   {
     SimpleRunner runner(node_config);
     auto options =
         new CalculatorOptions(ParseTextProtoOrDie<CalculatorOptions>(
-            R"(
+            R"pb(
               [mediapipe.PacketResamplerCalculatorOptions.ext] {
                 frame_rate: 30
-              })"));
+              })pb"));
     runner.MutableSidePackets()->Tag("OPTIONS") = Adopt(options);
     runner.SetInput({-222, 15000, 32000, 49999, 150000});
     MP_ASSERT_OK(runner.Run());
@@ -734,12 +734,12 @@ TEST(PacketResamplerCalculatorTest, OptionsSidePacket) {
     SimpleRunner runner(node_config);
 
     auto options =
-        new CalculatorOptions(ParseTextProtoOrDie<CalculatorOptions>(R"(
+        new CalculatorOptions(ParseTextProtoOrDie<CalculatorOptions>(R"pb(
           merge_fields: false
           [mediapipe.PacketResamplerCalculatorOptions.ext] {
             frame_rate: 30
             base_timestamp: 0
-          })"));
+          })pb"));
     runner.MutableSidePackets()->Tag("OPTIONS") = Adopt(options);
 
     runner.SetInput({-222, 15000, 32000, 49999, 150000});

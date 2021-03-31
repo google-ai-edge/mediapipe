@@ -25,7 +25,7 @@ namespace mediapipe {
 namespace {
 
 TEST(VideoPreStreamCalculatorTest, ProcessesWithFrameRateInOptions) {
-  auto config = ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+  auto config = ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
     input_stream: "input"
     node {
       calculator: "VideoPreStreamCalculator"
@@ -34,7 +34,7 @@ TEST(VideoPreStreamCalculatorTest, ProcessesWithFrameRateInOptions) {
       options {
         [mediapipe.VideoPreStreamCalculatorOptions.ext] { fps { value: 3 } }
       }
-    })");
+    })pb");
   CalculatorGraph graph;
   MP_ASSERT_OK(graph.Initialize(config));
   auto poller_status = graph.AddOutputStreamPoller("output");
@@ -66,7 +66,7 @@ TEST(VideoPreStreamCalculatorTest, ProcessesWithFrameRateInOptions) {
 }
 
 TEST(VideoPreStreamCalculatorTest, ProcessesWithFrameRateInPreStream) {
-  auto config = ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+  auto config = ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
     input_stream: "frame"
     input_stream: "input_header"
     node {
@@ -74,7 +74,7 @@ TEST(VideoPreStreamCalculatorTest, ProcessesWithFrameRateInPreStream) {
       input_stream: "FRAME:frame"
       input_stream: "VIDEO_PRESTREAM:input_header"
       output_stream: "output_header"
-    })");
+    })pb");
   CalculatorGraph graph;
   MP_ASSERT_OK(graph.Initialize(config));
   auto poller_status = graph.AddOutputStreamPoller("output_header");
@@ -104,13 +104,13 @@ TEST(VideoPreStreamCalculatorTest, ProcessesWithFrameRateInPreStream) {
 }
 
 TEST(VideoPreStreamCalculatorTest, FailsWithoutFrameRateInOptions) {
-  auto config = ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+  auto config = ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
     input_stream: "frame"
     node {
       calculator: "VideoPreStreamCalculator"
       input_stream: "frame"
       output_stream: "output_header"
-    })");
+    })pb");
   CalculatorGraph graph;
   MP_ASSERT_OK(graph.Initialize(config));
   MP_ASSERT_OK(graph.StartRun({}));
@@ -126,7 +126,7 @@ TEST(VideoPreStreamCalculatorTest, FailsWithoutFrameRateInOptions) {
 
 // Input header missing.
 TEST(VideoPreStreamCalculatorTest, FailsWithoutFrameRateInPreStream1) {
-  auto config = ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+  auto config = ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
     input_stream: "frame"
     input_stream: "input_header"
     node {
@@ -135,7 +135,7 @@ TEST(VideoPreStreamCalculatorTest, FailsWithoutFrameRateInPreStream1) {
       input_stream: "VIDEO_PRESTREAM:input_header"
       output_stream: "output_header"
     }
-  )");
+  )pb");
   CalculatorGraph graph;
   MP_ASSERT_OK(graph.Initialize(config));
   MP_ASSERT_OK(graph.StartRun({}));
@@ -152,7 +152,7 @@ TEST(VideoPreStreamCalculatorTest, FailsWithoutFrameRateInPreStream1) {
 
 // Input header not at prestream (before, with, and after frame data).
 TEST(VideoPreStreamCalculatorTest, FailsWithoutFrameRateInPreStream2) {
-  auto config = ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+  auto config = ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
     input_stream: "frame"
     input_stream: "input_header"
     node {
@@ -161,7 +161,7 @@ TEST(VideoPreStreamCalculatorTest, FailsWithoutFrameRateInPreStream2) {
       input_stream: "VIDEO_PRESTREAM:input_header"
       output_stream: "output_header"
     }
-  )");
+  )pb");
 
   for (int64 timestamp = -1; timestamp < 2; ++timestamp) {
     CalculatorGraph graph;

@@ -122,7 +122,7 @@ TEST_F(SplitNormalizedLandmarkListCalculatorTest, SmokeTest) {
   // Prepare a graph to use the SplitNormalizedLandmarkListCalculator.
   CalculatorGraphConfig graph_config =
       mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(
-          R"(
+          R"pb(
             input_stream: "landmarks_in"
             node {
               calculator: "SplitNormalizedLandmarkListCalculator"
@@ -138,7 +138,7 @@ TEST_F(SplitNormalizedLandmarkListCalculatorTest, SmokeTest) {
                 }
               }
             }
-          )");
+          )pb");
   std::vector<Packet> range_0_packets;
   tool::AddVectorSink("range_0", &graph_config, &range_0_packets);
   std::vector<Packet> range_1_packets;
@@ -171,7 +171,7 @@ TEST_F(SplitNormalizedLandmarkListCalculatorTest, InvalidRangeTest) {
   // Prepare a graph to use the SplitNormalizedLandmarkListCalculator.
   CalculatorGraphConfig graph_config =
       mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(
-          R"(
+          R"pb(
             input_stream: "landmarks_in"
             node {
               calculator: "SplitNormalizedLandmarkListCalculator"
@@ -183,7 +183,7 @@ TEST_F(SplitNormalizedLandmarkListCalculatorTest, InvalidRangeTest) {
                 }
               }
             }
-          )");
+          )pb");
 
   // Run the graph.
   CalculatorGraph graph;
@@ -196,7 +196,7 @@ TEST_F(SplitNormalizedLandmarkListCalculatorTest,
   // Prepare a graph to use the SplitNormalizedLandmarkListCalculator.
   CalculatorGraphConfig graph_config =
       mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(
-          R"(
+          R"pb(
             input_stream: "landmarks_in"
             node {
               calculator: "SplitNormalizedLandmarkListCalculator"
@@ -209,7 +209,7 @@ TEST_F(SplitNormalizedLandmarkListCalculatorTest,
                 }
               }
             }
-          )");
+          )pb");
 
   // Run the graph.
   CalculatorGraph graph;
@@ -223,7 +223,7 @@ TEST_F(SplitNormalizedLandmarkListCalculatorTest,
   // Prepare a graph to use the SplitNormalizedLandmarkListCalculator.
   CalculatorGraphConfig graph_config =
       mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(
-          R"(
+          R"pb(
             input_stream: "landmarks_in"
             node {
               calculator: "SplitNormalizedLandmarkListCalculator"
@@ -238,7 +238,7 @@ TEST_F(SplitNormalizedLandmarkListCalculatorTest,
                 }
               }
             }
-          )");
+          )pb");
 
   // Run the graph.
   CalculatorGraph graph;
@@ -252,7 +252,7 @@ TEST_F(SplitNormalizedLandmarkListCalculatorTest,
   // Prepare a graph to use the SplitNormalizedLandmarkListCalculator.
   CalculatorGraphConfig graph_config =
       mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(
-          R"(
+          R"pb(
             input_stream: "landmarks_in"
             node {
               calculator: "SplitNormalizedLandmarkListCalculator"
@@ -266,7 +266,7 @@ TEST_F(SplitNormalizedLandmarkListCalculatorTest,
                 }
               }
             }
-          )");
+          )pb");
 
   // Run the graph.
   CalculatorGraph graph;
@@ -281,7 +281,7 @@ TEST_F(SplitNormalizedLandmarkListCalculatorTest, SmokeTestElementOnly) {
   // Prepare a graph to use the SplitNormalizedLandmarkListCalculator.
   CalculatorGraphConfig graph_config =
       mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(
-          R"(
+          R"pb(
             input_stream: "landmarks_in"
             node {
               calculator: "SplitNormalizedLandmarkListCalculator"
@@ -298,7 +298,7 @@ TEST_F(SplitNormalizedLandmarkListCalculatorTest, SmokeTestElementOnly) {
                 }
               }
             }
-          )");
+          )pb");
   std::vector<Packet> range_0_packets;
   tool::AddVectorSink("range_0", &graph_config, &range_0_packets);
   std::vector<Packet> range_1_packets;
@@ -334,7 +334,7 @@ TEST_F(SplitNormalizedLandmarkListCalculatorTest, SmokeTestCombiningOutputs) {
   // Prepare a graph to use the SplitNormalizedLandmarkListCalculator.
   CalculatorGraphConfig graph_config =
       mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(
-          R"(
+          R"pb(
             input_stream: "landmarks_in"
             node {
               calculator: "SplitNormalizedLandmarkListCalculator"
@@ -349,7 +349,7 @@ TEST_F(SplitNormalizedLandmarkListCalculatorTest, SmokeTestCombiningOutputs) {
                 }
               }
             }
-          )");
+          )pb");
   std::vector<Packet> range_0_packets;
   tool::AddVectorSink("range_0", &graph_config, &range_0_packets);
 
@@ -377,7 +377,7 @@ TEST_F(SplitNormalizedLandmarkListCalculatorTest,
   // Prepare a graph to use the SplitNormalizedLandmarkListCalculator.
   CalculatorGraphConfig graph_config =
       mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(
-          R"(
+          R"pb(
             input_stream: "landmarks_in"
             node {
               calculator: "SplitNormalizedLandmarkListCalculator"
@@ -394,7 +394,7 @@ TEST_F(SplitNormalizedLandmarkListCalculatorTest,
                 }
               }
             }
-          )");
+          )pb");
 
   // Run the graph.
   CalculatorGraph graph;

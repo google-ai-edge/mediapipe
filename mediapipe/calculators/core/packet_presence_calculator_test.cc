@@ -40,7 +40,7 @@ MATCHER_P2(BoolPacket, value, timestamp, "") {
 TEST(PreviousLoopbackCalculator, CorrectTimestamps) {
   std::vector<Packet> output_packets;
   CalculatorGraphConfig graph_config =
-      ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+      ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
         input_stream: 'allow'
         input_stream: 'value'
         node {
@@ -54,7 +54,7 @@ TEST(PreviousLoopbackCalculator, CorrectTimestamps) {
           input_stream: 'PACKET:gated_value'
           output_stream: 'PRESENCE:presence'
         }
-      )");
+      )pb");
   tool::AddVectorSink("presence", &graph_config, &output_packets);
 
   CalculatorGraph graph;

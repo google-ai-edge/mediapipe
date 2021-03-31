@@ -68,31 +68,31 @@ class ObjectDetectionTensorsToDetectionsCalculatorTest
 
   void CreateNodeConfig(CalculatorGraphConfig::Node* node_config) const {
     ASSERT_NE(nullptr, node_config);
-    *node_config = ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"(
+    *node_config = ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"pb(
       calculator: "ObjectDetectionTensorsToDetectionsCalculator"
       input_stream: "NUM_DETECTIONS:num_detections"
       input_stream: "BOXES:boxes"
       input_stream: "SCORES:scores"
       input_stream: "CLASSES:classes"
       output_stream: "DETECTIONS:detections"
-    )");
+    )pb");
   }
 
   void CreateNodeConfigRawTensors(
       CalculatorGraphConfig::Node* node_config) const {
     ASSERT_NE(nullptr, node_config);
-    *node_config = ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"(
+    *node_config = ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"pb(
       calculator: "ObjectDetectionTensorsToDetectionsCalculator"
       input_stream: "BOXES:raw_detection_boxes"
       input_stream: "SCORES:raw_detection_scores"
       output_stream: "DETECTIONS:detections"
-    )");
+    )pb");
   }
 
   void CreateNodeConfigWithKeypoints(
       CalculatorGraphConfig::Node* node_config) const {
     ASSERT_NE(nullptr, node_config);
-    *node_config = ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"(
+    *node_config = ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"pb(
       calculator: "ObjectDetectionTensorsToDetectionsCalculator"
       input_stream: "NUM_DETECTIONS:num_detections"
       input_stream: "BOXES:boxes"
@@ -100,7 +100,7 @@ class ObjectDetectionTensorsToDetectionsCalculatorTest
       input_stream: "CLASSES:classes"
       input_stream: "KEYPOINTS:keypoints"
       output_stream: "DETECTIONS:detections"
-    )");
+    )pb");
   }
 
   void SetUpCalculatorRunner() {
@@ -177,7 +177,7 @@ class ObjectDetectionTensorsToDetectionsCalculatorTest
     InsertExtraSingltonDim(&input_scores_);
     InsertExtraSingltonDim(&input_classes_);
     CalculatorGraphConfig::Node node_config =
-        ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"(
+        ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"pb(
           calculator: "ObjectDetectionTensorsToDetectionsCalculator"
           input_stream: "NUM_DETECTIONS:num_detections"
           input_stream: "BOXES:boxes"
@@ -188,7 +188,7 @@ class ObjectDetectionTensorsToDetectionsCalculatorTest
             [mediapipe.ObjectDetectionsTensorToDetectionsCalculatorOptions
                  .ext]: { tensor_dim_to_squeeze: 0 }
           }
-        )");
+        )pb");
     runner_ = absl::make_unique<CalculatorRunner>(node_config);
     runner_->MutableInputs()
         ->Tag(kNumDetections)

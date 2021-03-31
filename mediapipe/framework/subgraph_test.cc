@@ -110,13 +110,13 @@ REGISTER_MEDIAPIPE_GRAPH(EmitSideServiceStringTestSubgraph);
 
 TEST(SubgraphServicesTest, EmitStringFromTestService) {
   CalculatorGraphConfig config =
-      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
         output_side_packet: "str"
         node {
           calculator: "EmitSideServiceStringTestSubgraph"
           output_side_packet: "str"
         }
-      )");
+      )pb");
 
   Packet side_string;
   tool::AddSidePacketSink("str", &config, &side_string);

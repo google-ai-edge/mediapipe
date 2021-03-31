@@ -43,7 +43,7 @@ namespace {
 class SimulationClockTest : public ::testing::Test {
  protected:
   void SetUpInFlightGraph() {
-    graph_config_ = ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+    graph_config_ = ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
       input_stream: "input_packets_0"
       node {
         calculator: 'FlowLimiterCalculator'
@@ -84,7 +84,7 @@ class SimulationClockTest : public ::testing::Test {
         output_stream: 'output_packets_0'
         output_stream: 'finish_indicator'
       }
-    )");
+    )pb");
   }
 
   // Initialize the test clock as a SimulationClock.
@@ -246,7 +246,7 @@ TEST_F(SimulationClockTest, InFlight) {
 // and SimulationClock.  With tsan, this test reveals a race condition unless
 // the SimulationClock destructor calls ThreadFinish to waits for all threads.
 TEST_F(SimulationClockTest, DestroyClock) {
-  auto graph_config = ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+  auto graph_config = ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
     node {
       calculator: "LambdaCalculator"
       input_side_packet: 'callback_0'
@@ -258,7 +258,7 @@ TEST_F(SimulationClockTest, DestroyClock) {
       input_stream: "input_1"
       output_stream: "output_1"
     }
-  )");
+  )pb");
 
   int input_count = 0;
   ProcessFunction wait_0 = [&](const InputStreamShardSet& inputs,

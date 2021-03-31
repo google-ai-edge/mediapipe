@@ -78,6 +78,7 @@ Supported configuration options:
 import cv2
 import mediapipe as mp
 mp_face_detction = mp.solutions.face_detection
+mp_drawing = mp.solutions.drawing_utils
 
 # For static images:
 with mp_face_detection.FaceDetection(

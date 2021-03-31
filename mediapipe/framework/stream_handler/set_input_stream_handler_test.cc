@@ -35,7 +35,7 @@ namespace {
 // MuxInputStreamHandler should fail when running this test.
 TEST(MuxInputStreamHandlerTest, AtomicAccessToControlAndDataStreams) {
   CalculatorGraphConfig config =
-      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
         input_stream: "input"
         node {
           calculator: "RoundRobinDemuxCalculator"
@@ -82,7 +82,7 @@ TEST(MuxInputStreamHandlerTest, AtomicAccessToControlAndDataStreams) {
           input_stream: "SELECT:select"
           output_stream: "OUTPUT:output"
           # MuxInputStreamHandler set in GetContract().
-        })");
+        })pb");
   CalculatorGraph graph;
   MP_ASSERT_OK(graph.Initialize(config));
   MP_ASSERT_OK(graph.StartRun({}));
@@ -195,7 +195,7 @@ TEST(FixedSizeInputStreamHandlerTest, ParallelWriteAndRead) {
 #define NUM_STREAMS 4
   CalculatorGraphConfig graph_config =
       mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(
-          R"(
+          R"pb(
             input_stream: "in_0"
             input_stream: "in_1"
             input_stream: "in_2"
@@ -211,7 +211,7 @@ TEST(FixedSizeInputStreamHandlerTest, ParallelWriteAndRead) {
               output_stream: "out_2"
               output_stream: "out_3"
               # FixedSizeInputStreamHandler set in GetContract()
-            })");
+            })pb");
   std::vector<Packet> output_packets[NUM_STREAMS];
   for (int i = 0; i < NUM_STREAMS; ++i) {
     tool::AddVectorSink(absl::StrCat("out_", i), &graph_config,

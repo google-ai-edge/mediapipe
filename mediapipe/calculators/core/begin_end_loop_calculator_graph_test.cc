@@ -70,7 +70,7 @@ class BeginEndLoopCalculatorGraphTest : public ::testing::Test {
  protected:
   void SetUp() override {
     auto graph_config = ParseTextProtoOrDie<CalculatorGraphConfig>(
-        R"(
+        R"pb(
           num_threads: 4
           input_stream: "ints"
           node {
@@ -90,7 +90,7 @@ class BeginEndLoopCalculatorGraphTest : public ::testing::Test {
             input_stream: "BATCH_END:timestamp"
             output_stream: "ITERABLE:ints_plus_one"
           }
-        )");
+        )pb");
     tool::AddVectorSink("ints_plus_one", &graph_config, &output_packets_);
     MP_ASSERT_OK(graph_.Initialize(graph_config));
     MP_ASSERT_OK(graph_.StartRun({}));
@@ -197,7 +197,7 @@ class BeginEndLoopCalculatorGraphProcessingEmptyPacketsTest
  protected:
   void SetUp() override {
     auto graph_config = ParseTextProtoOrDie<CalculatorGraphConfig>(
-        R"(
+        R"pb(
           num_threads: 4
           input_stream: "ints"
           input_stream: "force_ints_to_be_timestamp_bound_update"
@@ -229,7 +229,7 @@ class BeginEndLoopCalculatorGraphProcessingEmptyPacketsTest
             input_stream: "ints_plus_one"
             output_stream: "ints_plus_one_passed_through"
           }
-        )");
+        )pb");
     tool::AddVectorSink("ints_plus_one_passed_through", &graph_config,
                         &output_packets_);
     MP_ASSERT_OK(graph_.Initialize(graph_config));
@@ -338,7 +338,7 @@ class BeginEndLoopCalculatorGraphWithClonedInputsTest : public ::testing::Test {
  protected:
   void SetUp() override {
     auto graph_config = ParseTextProtoOrDie<CalculatorGraphConfig>(
-        R"(
+        R"pb(
           num_threads: 4
           input_stream: "ints"
           input_stream: "multiplier"
@@ -362,7 +362,7 @@ class BeginEndLoopCalculatorGraphWithClonedInputsTest : public ::testing::Test {
             input_stream: "BATCH_END:timestamp"
             output_stream: "ITERABLE:multiplied_ints"
           }
-        )");
+        )pb");
     tool::AddVectorSink("multiplied_ints", &graph_config, &output_packets_);
     MP_ASSERT_OK(graph_.Initialize(graph_config));
     MP_ASSERT_OK(graph_.StartRun({}));

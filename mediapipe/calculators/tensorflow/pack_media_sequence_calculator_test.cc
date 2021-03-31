@@ -889,5 +889,24 @@ TEST_F(PackMediaSequenceCalculatorTest, TestOverwritingAndReconciling) {
   MP_ASSERT_OK(runner_->Run());
 }
 
+TEST_F(PackMediaSequenceCalculatorTest, TestTooLargeInputFailsSoftly) {
+  SetUpCalculator({"FLOAT_FEATURE_TEST:test"}, {}, false, true);
+  auto input_sequence = ::absl::make_unique<tf::SequenceExample>();
+
+  // 1 billion floats should be > 1GB which can't be serialized. It should fail
+  // gracefully with this input.
+  int num_timesteps = 1000;
+  for (int i = 0; i < num_timesteps; ++i) {
+    auto vf_ptr = ::absl::make_unique<std::vector<float>>(1000000, i);
+    runner_->MutableInputs()
+        ->Tag("FLOAT_FEATURE_TEST")
+        .packets.push_back(Adopt(vf_ptr.release()).At(Timestamp(i)));
+  }
+
+  runner_->MutableSidePackets()->Tag("SEQUENCE_EXAMPLE") =
+      Adopt(input_sequence.release());
+  ASSERT_FALSE(runner_->Run().ok());
+}
+
 }  // namespace
 }  // namespace mediapipe

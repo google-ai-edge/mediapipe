@@ -126,7 +126,7 @@ class FlowLimiterCalculatorSemaphoreTest : public testing::Test {
   // Back-edge "finished" limits processing to one frame in-flight.
   // The LambdaCalculator is used to keep certain frames in flight.
   CalculatorGraphConfig InflightGraphConfig() {
-    return ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+    return ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
       input_stream: 'in_1'
       node {
         calculator: 'FlowLimiterCalculator'
@@ -143,7 +143,7 @@ class FlowLimiterCalculatorSemaphoreTest : public testing::Test {
         input_stream: 'in_1_sampled'
         output_stream: 'out_1'
       }
-    )");
+    )pb");
   }
 
  protected:
@@ -271,7 +271,7 @@ REGISTER_CALCULATOR(DropCalculator);
 class FlowLimiterCalculatorTest : public testing::Test {
  protected:
   CalculatorGraphConfig InflightGraphConfig() {
-    return ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+    return ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
       input_stream: 'in_1'
       node {
         calculator: 'FlowLimiterCalculator'
@@ -296,7 +296,7 @@ class FlowLimiterCalculatorTest : public testing::Test {
         input_stream: 'PACKET:out_1_sampled'
         output_stream: 'PACKET:out_1'
       }
-    )");
+    )pb");
   }
 
   // Parse an absl::Time from RFC3339 format.
@@ -348,10 +348,10 @@ TEST_F(FlowLimiterCalculatorTest, FinishedTimestamps) {
   SetUpInputData();
   SetUpSimulationClock();
   CalculatorGraphConfig graph_config = InflightGraphConfig();
-  auto limiter_options = ParseTextProtoOrDie<FlowLimiterCalculatorOptions>(R"(
+  auto limiter_options = ParseTextProtoOrDie<FlowLimiterCalculatorOptions>(R"pb(
     max_in_flight: 1
     max_in_queue: 1
-  )");
+  )pb");
   std::map<std::string, Packet> side_packets = {
       {"limiter_options",
        MakePacket<FlowLimiterCalculatorOptions>(limiter_options)},
@@ -419,11 +419,11 @@ TEST_F(FlowLimiterCalculatorTest, FinishedLost) {
   SetUpInputData();
   SetUpSimulationClock();
   CalculatorGraphConfig graph_config = InflightGraphConfig();
-  auto limiter_options = ParseTextProtoOrDie<FlowLimiterCalculatorOptions>(R"(
+  auto limiter_options = ParseTextProtoOrDie<FlowLimiterCalculatorOptions>(R"pb(
     max_in_flight: 1
     max_in_queue: 1
     in_flight_timeout: 100000  # 100 ms
-  )");
+  )pb");
   std::map<std::string, Packet> side_packets = {
       {"limiter_options",
        MakePacket<FlowLimiterCalculatorOptions>(limiter_options)},
@@ -483,11 +483,11 @@ TEST_F(FlowLimiterCalculatorTest, FinishedDelayed) {
   SetUpInputData();
   SetUpSimulationClock();
   CalculatorGraphConfig graph_config = InflightGraphConfig();
-  auto limiter_options = ParseTextProtoOrDie<FlowLimiterCalculatorOptions>(R"(
+  auto limiter_options = ParseTextProtoOrDie<FlowLimiterCalculatorOptions>(R"pb(
     max_in_flight: 1
     max_in_queue: 1
     in_flight_timeout: 100000  # 100 ms
-  )");
+  )pb");
   std::map<std::string, Packet> side_packets = {
       {"limiter_options",
        MakePacket<FlowLimiterCalculatorOptions>(limiter_options)},
@@ -548,7 +548,7 @@ TEST_F(FlowLimiterCalculatorTest, TwoInputStreams) {
   SetUpInputData();
   SetUpSimulationClock();
   CalculatorGraphConfig graph_config =
-      ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+      ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
         input_stream: 'in_1'
         input_stream: 'in_2'
         node {
@@ -576,13 +576,13 @@ TEST_F(FlowLimiterCalculatorTest, TwoInputStreams) {
           input_stream: 'PACKET:out_1_sampled'
           output_stream: 'PACKET:out_1'
         }
-      )");
+      )pb");
 
-  auto limiter_options = ParseTextProtoOrDie<FlowLimiterCalculatorOptions>(R"(
+  auto limiter_options = ParseTextProtoOrDie<FlowLimiterCalculatorOptions>(R"pb(
     max_in_flight: 1
     max_in_queue: 1
     in_flight_timeout: 100000  # 100 ms
-  )");
+  )pb");
   std::map<std::string, Packet> side_packets = {
       {"limiter_options",
        MakePacket<FlowLimiterCalculatorOptions>(limiter_options)},
@@ -657,7 +657,7 @@ TEST_F(FlowLimiterCalculatorTest, ZeroQueue) {
   SetUpInputData();
   SetUpSimulationClock();
   CalculatorGraphConfig graph_config =
-      ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+      ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
         input_stream: 'in_1'
         input_stream: 'in_2'
         node {
@@ -685,13 +685,13 @@ TEST_F(FlowLimiterCalculatorTest, ZeroQueue) {
           input_stream: 'PACKET:out_1_sampled'
           output_stream: 'PACKET:out_1'
         }
-      )");
+      )pb");
 
-  auto limiter_options = ParseTextProtoOrDie<FlowLimiterCalculatorOptions>(R"(
+  auto limiter_options = ParseTextProtoOrDie<FlowLimiterCalculatorOptions>(R"pb(
     max_in_flight: 1
     max_in_queue: 0
     in_flight_timeout: 100000  # 100 ms
-  )");
+  )pb");
   std::map<std::string, Packet> side_packets = {
       {"limiter_options",
        MakePacket<FlowLimiterCalculatorOptions>(limiter_options)},

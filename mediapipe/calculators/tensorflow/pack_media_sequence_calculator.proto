@@ -61,4 +61,8 @@ message PackMediaSequenceCalculatorOptions {
   // present, the previous images and timestamps will be removed before adding
   // the new images.
   optional bool replace_data_instead_of_append = 4 [default = true];
+
+  // If true, will return an error status if an output sequence would be too
+  // many bytes to serialize.
+  optional bool skip_large_sequences = 7 [default = true];
 }

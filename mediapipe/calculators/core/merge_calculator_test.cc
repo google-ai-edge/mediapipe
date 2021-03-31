@@ -26,31 +26,33 @@ namespace {
 
 // Checks that the calculator fails if no input streams are provided.
 TEST(InvariantMergeInputStreamsCalculator, NoInputStreamsMustFail) {
-  CalculatorRunner runner(ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"(
+  CalculatorRunner runner(ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"pb(
     calculator: "MergeCalculator"
     output_stream: "merged_output"
-  )"));
+  )pb"));
   // Expect calculator to fail.
   ASSERT_FALSE(runner.Run().ok());
 }
 
 // Checks that the calculator fails with an incorrect number of output streams.
 TEST(InvariantMergeInputStreamsCalculator, ExpectExactlyOneOutputStream) {
-  CalculatorRunner runner1(ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"(
-    calculator: "MergeCalculator"
-    input_stream: "input1"
-    input_stream: "input2"
-  )"));
+  CalculatorRunner runner1(
+      ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"pb(
+        calculator: "MergeCalculator"
+        input_stream: "input1"
+        input_stream: "input2"
+      )pb"));
   // Expect calculator to fail.
   EXPECT_FALSE(runner1.Run().ok());
 
-  CalculatorRunner runner2(ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"(
-    calculator: "MergeCalculator"
-    input_stream: "input1"
-    input_stream: "input2"
-    output_stream: "output1"
-    output_stream: "output2"
-  )"));
+  CalculatorRunner runner2(
+      ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"pb(
+        calculator: "MergeCalculator"
+        input_stream: "input1"
+        input_stream: "input2"
+        output_stream: "output1"
+        output_stream: "output2"
+      )pb"));
   // Expect calculator to fail.
   ASSERT_FALSE(runner2.Run().ok());
 }
@@ -58,12 +60,12 @@ TEST(InvariantMergeInputStreamsCalculator, ExpectExactlyOneOutputStream) {
 // Ensures two streams with differing types can be merged correctly.
 TEST(MediaPipeDetectionToSoapboxDetectionCalculatorTest,
      TestMergingTwoStreams) {
-  CalculatorRunner runner(ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"(
+  CalculatorRunner runner(ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"pb(
     calculator: "MergeCalculator"
     input_stream: "input1"
     input_stream: "input2"
     output_stream: "combined_output"
-  )"));
+  )pb"));
 
   // input1: integers 10, 20, 30, occurring at times 10, 20, 30.
   runner.MutableInputs()->Index(0).packets.push_back(
@@ -102,13 +104,13 @@ TEST(MediaPipeDetectionToSoapboxDetectionCalculatorTest,
 // Ensures three streams with differing types can be merged correctly.
 TEST(MediaPipeDetectionToSoapboxDetectionCalculatorTest,
      TestMergingThreeStreams) {
-  CalculatorRunner runner(ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"(
+  CalculatorRunner runner(ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"pb(
     calculator: "MergeCalculator"
     input_stream: "input1"
     input_stream: "input2"
     input_stream: "input3"
     output_stream: "combined_output"
-  )"));
+  )pb"));
 
   // input1: integer 30 occurring at time 30.
   runner.MutableInputs()->Index(0).packets.push_back(

@@ -30,7 +30,7 @@ TEST(DefaultInputStreamHandlerTest, NoBatchingWorks) {
   // A single calculator with two input streams, and two output streams. This
   // calculator passes all the input packets along.
   CalculatorGraphConfig config =
-      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
         input_stream: "input0"
         input_stream: "input1"
         node {
@@ -47,7 +47,7 @@ TEST(DefaultInputStreamHandlerTest, NoBatchingWorks) {
               }
             }
           }
-        })");
+        })pb");
   std::vector<Packet> sink_0, sink_1;
   tool::AddVectorSink("output0", &config, &sink_0);
   tool::AddVectorSink("output1", &config, &sink_1);
@@ -88,7 +88,7 @@ TEST(DefaultInputStreamHandlerTest, Batches) {
   // A single batching calculator with one input stream and one output stream.
   // This calculator passes all the input packets onto the output streams.
   CalculatorGraphConfig config =
-      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
         input_stream: "input0"
         node {
           calculator: "PassThroughCalculator"
@@ -102,7 +102,7 @@ TEST(DefaultInputStreamHandlerTest, Batches) {
               }
             }
           }
-        })");
+        })pb");
   std::vector<Packet> sink;
   tool::AddVectorSink("output0", &config, &sink);
 
@@ -152,7 +152,7 @@ TEST(DefaultInputStreamHandlerTest, BatchIsFlushedWhenClosing) {
   // A single batching calculator with one input stream and one output stream.
   // This calculator passes all the input packets onto the output streams.
   CalculatorGraphConfig config =
-      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
         input_stream: "input0"
         node {
           calculator: "PassThroughCalculator"
@@ -166,7 +166,7 @@ TEST(DefaultInputStreamHandlerTest, BatchIsFlushedWhenClosing) {
               }
             }
           }
-        })");
+        })pb");
   std::vector<Packet> sink;
   tool::AddVectorSink("output0", &config, &sink);
 
@@ -211,7 +211,7 @@ TEST(DefaultInputStreamHandlerTest, BatchIsFlushedWhenClosing) {
 // batching except for the first timestamp of the batch.
 TEST(DefaultInputStreamHandlerTest, DoesntPropagateTimestampWhenBatching) {
   CalculatorGraphConfig config =
-      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
         input_stream: "input0"
         input_stream: "input1"
         node {
@@ -233,7 +233,7 @@ TEST(DefaultInputStreamHandlerTest, DoesntPropagateTimestampWhenBatching) {
           input_stream: "input1_batched"
           output_stream: "output"
           output_stream: "dummy"
-        })");
+        })pb");
   std::vector<Packet> sink;
   tool::AddVectorSink("output", &config, &sink);
   CalculatorGraph graph;

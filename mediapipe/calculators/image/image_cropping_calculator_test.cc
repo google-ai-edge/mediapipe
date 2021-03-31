@@ -41,7 +41,7 @@ constexpr char kWidthTag[] = "WIDTH";
 TEST(ImageCroppingCalculatorTest, GetCroppingDimensionsNormal) {
   auto calculator_node =
       ParseTextProtoOrDie<mediapipe::CalculatorGraphConfig::Node>(
-          R"(
+          R"pb(
             calculator: "ImageCroppingCalculator"
             input_stream: "IMAGE_GPU:input_frames"
             output_stream: "IMAGE_GPU:cropped_output_frames"
@@ -54,7 +54,7 @@ TEST(ImageCroppingCalculatorTest, GetCroppingDimensionsNormal) {
                 rotation: 0.3
               }
             }
-          )");
+          )pb");
 
   auto calculator_state = absl::make_unique<CalculatorState>(
       "Node", 0, "Calculator", calculator_node, nullptr);
@@ -79,7 +79,7 @@ TEST(ImageCroppingCalculatorTest, GetCroppingDimensionsNormal) {
 TEST(ImageCroppingCalculatorTest, RedundantSpecInOptions) {
   auto calculator_node =
       ParseTextProtoOrDie<mediapipe::CalculatorGraphConfig::Node>(
-          R"(
+          R"pb(
             calculator: "ImageCroppingCalculator"
             input_stream: "IMAGE_GPU:input_frames"
             output_stream: "IMAGE_GPU:cropped_output_frames"
@@ -94,7 +94,7 @@ TEST(ImageCroppingCalculatorTest, RedundantSpecInOptions) {
                 rotation: 0.3
               }
             }
-          )");
+          )pb");
 
   auto calculator_state = absl::make_unique<CalculatorState>(
       "Node", 0, "Calculator", calculator_node, nullptr);
@@ -119,7 +119,7 @@ TEST(ImageCroppingCalculatorTest, RedundantSpecInOptions) {
 TEST(ImageCroppingCalculatorTest, RedundantSpectWithInputStream) {
   auto calculator_node =
       ParseTextProtoOrDie<mediapipe::CalculatorGraphConfig::Node>(
-          R"(
+          R"pb(
             calculator: "ImageCroppingCalculator"
             input_stream: "IMAGE_GPU:input_frames"
             input_stream: "WIDTH:crop_width"
@@ -136,7 +136,7 @@ TEST(ImageCroppingCalculatorTest, RedundantSpectWithInputStream) {
                 rotation: 0.3
               }
             }
-          )");
+          )pb");
 
   auto calculator_state = absl::make_unique<CalculatorState>(
       "Node", 0, "Calculator", calculator_node, nullptr);
@@ -168,7 +168,7 @@ TEST(ImageCroppingCalculatorTest, RedundantSpectWithInputStream) {
 TEST(ImageCroppingCalculatorTest, RedundantSpecWithInputStream) {
   auto calculator_node =
       ParseTextProtoOrDie<mediapipe::CalculatorGraphConfig::Node>(
-          R"(
+          R"pb(
             calculator: "ImageCroppingCalculator"
             input_stream: "IMAGE_GPU:input_frames"
             input_stream: "RECT:rect"
@@ -184,7 +184,7 @@ TEST(ImageCroppingCalculatorTest, RedundantSpecWithInputStream) {
                 rotation: 0.3
               }
             }
-          )");
+          )pb");
 
   auto calculator_state = absl::make_unique<CalculatorState>(
       "Node", 0, "Calculator", calculator_node, nullptr);
@@ -196,9 +196,9 @@ TEST(ImageCroppingCalculatorTest, RedundantSpecWithInputStream) {
       calculator_state.get(), inputTags, tool::CreateTagMap({}).value());
   auto& inputs = cc->Inputs();
   mediapipe::Rect rect = ParseTextProtoOrDie<mediapipe::Rect>(
-      R"(
+      R"pb(
         width: 1 height: 1 x_center: 40 y_center: 40 rotation: 0.5
-      )");
+      )pb");
   inputs.Tag(kRectTag).Value() = MakePacket<mediapipe::Rect>(rect);
   RectSpec expectRect = {
       .width = 1,

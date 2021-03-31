@@ -84,7 +84,7 @@ absl::Status InputsToDebugString(const InputStreamShardSet& inputs,
 
 TEST(SyncSetInputStreamHandlerTest, OrdinaryOperation) {
   CalculatorGraphConfig config = ParseTextProtoOrDie<CalculatorGraphConfig>(
-      R"(
+      R"pb(
         input_stream: "a"
         input_stream: "b"
         input_stream: "c"
@@ -123,7 +123,7 @@ TEST(SyncSetInputStreamHandlerTest, OrdinaryOperation) {
               }
             }
           }
-        })");
+        })pb");
   // The sync sets by stream name and CollectionItemId.
   //   {a, c, e}, {b, d}, {f}, {g}, {h}
   //   {0, 2, 4}, {1, 3}, {5}, {6}, {7}

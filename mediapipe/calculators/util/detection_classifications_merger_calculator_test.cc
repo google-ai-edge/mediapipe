@@ -94,10 +94,10 @@ TEST(DetectionClassificationsMergerCalculator,
   Packet input_detection_packet =
       MakePacket<Detection>(input_detection).At(Timestamp(0));
   const ClassificationList& classification_list =
-      ParseTextProtoOrDie<ClassificationList>(R"(
+      ParseTextProtoOrDie<ClassificationList>(R"pb(
         classification { index: 11 score: 0.5 label: "dog" display_name: "Dog" }
         classification { index: 12 score: 0.4 label: "fox" display_name: "Fox" }
-      )");
+      )pb");
   Packet classification_list_packet =
       MakePacket<ClassificationList>(classification_list).At(Timestamp(0));
 
@@ -119,7 +119,7 @@ TEST(DetectionClassificationsMergerCalculator,
   EXPECT_THAT(output_packets, testing::SizeIs(1));
   const Detection& output_detection = output_packets[0].Get<Detection>();
   EXPECT_THAT(output_detection,
-              mediapipe::EqualsProto(ParseTextProtoOrDie<Detection>(R"(
+              mediapipe::EqualsProto(ParseTextProtoOrDie<Detection>(R"pb(
                 label: "dog"
                 label: "fox"
                 label_id: 11
@@ -132,7 +132,7 @@ TEST(DetectionClassificationsMergerCalculator,
                 }
                 display_name: "Dog"
                 display_name: "Fox"
-              )")));
+              )pb")));
 }
 
 // Checks that merging succeeds when the input ClassificationList doesn't
@@ -147,10 +147,10 @@ TEST(DetectionClassificationsMergerCalculator,
   Packet input_detection_packet =
       MakePacket<Detection>(input_detection).At(Timestamp(0));
   const ClassificationList& classification_list =
-      ParseTextProtoOrDie<ClassificationList>(R"(
+      ParseTextProtoOrDie<ClassificationList>(R"pb(
         classification { index: 11 score: 0.5 }
         classification { index: 12 score: 0.4 }
-      )");
+      )pb");
   Packet classification_list_packet =
       MakePacket<ClassificationList>(classification_list).At(Timestamp(0));
 
@@ -172,7 +172,7 @@ TEST(DetectionClassificationsMergerCalculator,
   EXPECT_THAT(output_packets, testing::SizeIs(1));
   const Detection& output_detection = output_packets[0].Get<Detection>();
   EXPECT_THAT(output_detection,
-              mediapipe::EqualsProto(ParseTextProtoOrDie<Detection>(R"(
+              mediapipe::EqualsProto(ParseTextProtoOrDie<Detection>(R"pb(
                 label_id: 11
                 label_id: 12
                 score: 0.5
@@ -181,7 +181,7 @@ TEST(DetectionClassificationsMergerCalculator,
                   format: BOUNDING_BOX
                   bounding_box { xmin: 50 ymin: 60 width: 70 height: 80 }
                 }
-              )")));
+              )pb")));
 }
 
 // Checks that merging fails if the input ClassificationList misses mandatory
@@ -195,9 +195,9 @@ TEST(DetectionClassificationsMergerCalculator, FailsWithMissingIndex) {
   Packet input_detection_packet =
       MakePacket<Detection>(input_detection).At(Timestamp(0));
   const ClassificationList& classification_list =
-      ParseTextProtoOrDie<ClassificationList>(R"(
+      ParseTextProtoOrDie<ClassificationList>(R"pb(
         classification { score: 0.5 label: "dog" }
-      )");
+      )pb");
   Packet classification_list_packet =
       MakePacket<ClassificationList>(classification_list).At(Timestamp(0));
 
@@ -227,9 +227,9 @@ TEST(DetectionClassificationsMergerCalculator, FailsWithMissingScore) {
   Packet input_detection_packet =
       MakePacket<Detection>(input_detection).At(Timestamp(0));
   const ClassificationList& classification_list =
-      ParseTextProtoOrDie<ClassificationList>(R"(
+      ParseTextProtoOrDie<ClassificationList>(R"pb(
         classification { index: 11 label: "dog" }
-      )");
+      )pb");
   Packet classification_list_packet =
       MakePacket<ClassificationList>(classification_list).At(Timestamp(0));
 
@@ -260,10 +260,10 @@ TEST(DetectionClassificationsMergerCalculator,
   Packet input_detection_packet =
       MakePacket<Detection>(input_detection).At(Timestamp(0));
   const ClassificationList& classification_list =
-      ParseTextProtoOrDie<ClassificationList>(R"(
+      ParseTextProtoOrDie<ClassificationList>(R"pb(
         classification { index: 11 score: 0.5 label: "dog" display_name: "Dog" }
         classification { index: 12 score: 0.4 display_name: "Fox" }
-      )");
+      )pb");
   Packet classification_list_packet =
       MakePacket<ClassificationList>(classification_list).At(Timestamp(0));
 
@@ -294,10 +294,10 @@ TEST(DetectionClassificationsMergerCalculator,
   Packet input_detection_packet =
       MakePacket<Detection>(input_detection).At(Timestamp(0));
   const ClassificationList& classification_list =
-      ParseTextProtoOrDie<ClassificationList>(R"(
+      ParseTextProtoOrDie<ClassificationList>(R"pb(
         classification { index: 11 score: 0.5 label: "dog" }
         classification { index: 12 score: 0.4 label: "fox" display_name: "Fox" }
-      )");
+      )pb");
   Packet classification_list_packet =
       MakePacket<ClassificationList>(classification_list).At(Timestamp(0));
 

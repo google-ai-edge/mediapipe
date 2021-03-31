@@ -111,7 +111,7 @@ TEST(SignalFusingCalculatorTest, TwoInputNoTracking) {
 
   auto input_face =
       absl::make_unique<DetectionSet>(ParseTextProtoOrDie<DetectionSet>(
-          R"(
+          R"pb(
             detections {
               score: 0.5
               signal_type: { standard: FACE_FULL }
@@ -120,14 +120,14 @@ TEST(SignalFusingCalculatorTest, TwoInputNoTracking) {
               score: 0.3
               signal_type: { standard: FACE_FULL }
             }
-          )"));
+          )pb"));
 
   runner->MutableInputs()->Index(1).packets.push_back(
       Adopt(input_face.release()).At(Timestamp(0)));
 
   auto input_ocr =
       absl::make_unique<DetectionSet>(ParseTextProtoOrDie<DetectionSet>(
-          R"(
+          R"pb(
             detections {
               score: 0.3
               signal_type: { standard: TEXT }
@@ -136,7 +136,7 @@ TEST(SignalFusingCalculatorTest, TwoInputNoTracking) {
               score: 0.9
               signal_type: { standard: TEXT }
             }
-          )"));
+          )pb"));
 
   runner->MutableInputs()->Index(2).packets.push_back(
       Adopt(input_ocr.release()).At(Timestamp(0)));
@@ -165,7 +165,7 @@ TEST(SignalFusingCalculatorTest, TwoInputShotLabeledTags) {
 
   auto input_face =
       absl::make_unique<DetectionSet>(ParseTextProtoOrDie<DetectionSet>(
-          R"(
+          R"pb(
             detections {
               score: 0.5
               signal_type: { standard: FACE_FULL }
@@ -174,7 +174,7 @@ TEST(SignalFusingCalculatorTest, TwoInputShotLabeledTags) {
               score: 0.3
               signal_type: { standard: FACE_FULL }
             }
-          )"));
+          )pb"));
 
   runner->MutableInputs()
       ->Get("SIGNAL", 0)
@@ -182,7 +182,7 @@ TEST(SignalFusingCalculatorTest, TwoInputShotLabeledTags) {
 
   auto input_ocr =
       absl::make_unique<DetectionSet>(ParseTextProtoOrDie<DetectionSet>(
-          R"(
+          R"pb(
             detections {
               score: 0.3
               signal_type: { standard: TEXT }
@@ -191,7 +191,7 @@ TEST(SignalFusingCalculatorTest, TwoInputShotLabeledTags) {
               score: 0.9
               signal_type: { standard: TEXT }
             }
-          )"));
+          )pb"));
 
   runner->MutableInputs()
       ->Get("SIGNAL", 1)
@@ -216,7 +216,7 @@ TEST(SignalFusingCalculatorTest, TwoInputNoShotLabeledTags) {
 
   auto input_face =
       absl::make_unique<DetectionSet>(ParseTextProtoOrDie<DetectionSet>(
-          R"(
+          R"pb(
             detections {
               score: 0.5
               signal_type: { standard: FACE_FULL }
@@ -225,7 +225,7 @@ TEST(SignalFusingCalculatorTest, TwoInputNoShotLabeledTags) {
               score: 0.3
               signal_type: { standard: FACE_FULL }
             }
-          )"));
+          )pb"));
 
   runner->MutableInputs()
       ->Get("SIGNAL", 0)
@@ -233,7 +233,7 @@ TEST(SignalFusingCalculatorTest, TwoInputNoShotLabeledTags) {
 
   auto input_ocr =
       absl::make_unique<DetectionSet>(ParseTextProtoOrDie<DetectionSet>(
-          R"(
+          R"pb(
             detections {
               score: 0.3
               signal_type: { standard: TEXT }
@@ -242,7 +242,7 @@ TEST(SignalFusingCalculatorTest, TwoInputNoShotLabeledTags) {
               score: 0.9
               signal_type: { standard: TEXT }
             }
-          )"));
+          )pb"));
 
   runner->MutableInputs()
       ->Get("SIGNAL", 1)
@@ -272,7 +272,7 @@ TEST(SignalFusingCalculatorTest, ThreeInputTracking) {
   // Time zero.
   auto input_face_0 =
       absl::make_unique<DetectionSet>(ParseTextProtoOrDie<DetectionSet>(
-          R"(
+          R"pb(
             detections {
               score: 0.2
               signal_type: { standard: FACE_FULL }
@@ -287,32 +287,32 @@ TEST(SignalFusingCalculatorTest, ThreeInputTracking) {
               score: 0.1
               signal_type: { standard: FACE_FULL }
             }
-          )"));
+          )pb"));
 
   runner->MutableInputs()->Index(1).packets.push_back(
       Adopt(input_face_0.release()).At(Timestamp(0)));
 
   auto input_ocr_0 =
       absl::make_unique<DetectionSet>(ParseTextProtoOrDie<DetectionSet>(
-          R"(
+          R"pb(
             detections {
               score: 0.2
               signal_type: { custom: "text" }
             }
-          )"));
+          )pb"));
 
   runner->MutableInputs()->Index(2).packets.push_back(
       Adopt(input_ocr_0.release()).At(Timestamp(0)));
 
   auto input_agn_0 =
       absl::make_unique<DetectionSet>(ParseTextProtoOrDie<DetectionSet>(
-          R"(
+          R"pb(
             detections {
               score: 0.3
               signal_type: { standard: LOGO }
               tracking_id: 0
             }
-          )"));
+          )pb"));
 
   runner->MutableInputs()->Index(3).packets.push_back(
       Adopt(input_agn_0.release()).At(Timestamp(0)));
@@ -324,7 +324,7 @@ TEST(SignalFusingCalculatorTest, ThreeInputTracking) {
 
   auto input_face_1 =
       absl::make_unique<DetectionSet>(ParseTextProtoOrDie<DetectionSet>(
-          R"(
+          R"pb(
             detections {
               score: 0.7
               signal_type: { standard: FACE_FULL }
@@ -339,32 +339,32 @@ TEST(SignalFusingCalculatorTest, ThreeInputTracking) {
               score: 0.2
               signal_type: { standard: FACE_FULL }
             }
-          )"));
+          )pb"));
 
   runner->MutableInputs()->Index(1).packets.push_back(
       Adopt(input_face_1.release()).At(Timestamp(1)));
 
   auto input_ocr_1 =
       absl::make_unique<DetectionSet>(ParseTextProtoOrDie<DetectionSet>(
-          R"(
+          R"pb(
             detections {
               score: 0.3
               signal_type: { custom: "text" }
             }
-          )"));
+          )pb"));
 
   runner->MutableInputs()->Index(2).packets.push_back(
       Adopt(input_ocr_1.release()).At(Timestamp(1)));
 
   auto input_agn_1 =
       absl::make_unique<DetectionSet>(ParseTextProtoOrDie<DetectionSet>(
-          R"(
+          R"pb(
             detections {
               score: 0.3
               signal_type: { standard: LOGO }
               tracking_id: 0
             }
-          )"));
+          )pb"));
 
   runner->MutableInputs()->Index(3).packets.push_back(
       Adopt(input_agn_1.release()).At(Timestamp(1)));
@@ -376,7 +376,7 @@ TEST(SignalFusingCalculatorTest, ThreeInputTracking) {
 
   auto input_face_2 =
       absl::make_unique<DetectionSet>(ParseTextProtoOrDie<DetectionSet>(
-          R"(
+          R"pb(
             detections {
               score: 0.8
               signal_type: { standard: FACE_FULL }
@@ -391,32 +391,32 @@ TEST(SignalFusingCalculatorTest, ThreeInputTracking) {
               score: 0.3
               signal_type: { standard: FACE_FULL }
             }
-          )"));
+          )pb"));
 
   runner->MutableInputs()->Index(1).packets.push_back(
       Adopt(input_face_2.release()).At(Timestamp(2)));
 
   auto input_ocr_2 =
       absl::make_unique<DetectionSet>(ParseTextProtoOrDie<DetectionSet>(
-          R"(
+          R"pb(
             detections {
               score: 0.3
               signal_type: { custom: "text" }
             }
-          )"));
+          )pb"));
 
   runner->MutableInputs()->Index(2).packets.push_back(
       Adopt(input_ocr_2.release()).At(Timestamp(2)));
 
   auto input_agn_2 =
       absl::make_unique<DetectionSet>(ParseTextProtoOrDie<DetectionSet>(
-          R"(
+          R"pb(
             detections {
               score: 0.9
               signal_type: { standard: LOGO }
               tracking_id: 0
             }
-          )"));
+          )pb"));
 
   runner->MutableInputs()->Index(3).packets.push_back(
       Adopt(input_agn_2.release()).At(Timestamp(2)));
@@ -428,7 +428,7 @@ TEST(SignalFusingCalculatorTest, ThreeInputTracking) {
 
   auto input_face_3 =
       absl::make_unique<DetectionSet>(ParseTextProtoOrDie<DetectionSet>(
-          R"(
+          R"pb(
             detections {
               score: 0.2
               signal_type: { standard: FACE_FULL }
@@ -443,32 +443,32 @@ TEST(SignalFusingCalculatorTest, ThreeInputTracking) {
               score: 0.4
               signal_type: { standard: FACE_FULL }
             }
-          )"));
+          )pb"));
 
   runner->MutableInputs()->Index(1).packets.push_back(
       Adopt(input_face_3.release()).At(Timestamp(3)));
 
   auto input_ocr_3 =
       absl::make_unique<DetectionSet>(ParseTextProtoOrDie<DetectionSet>(
-          R"(
+          R"pb(
             detections {
               score: 0.5
               signal_type: { custom: "text" }
             }
-          )"));
+          )pb"));
 
   runner->MutableInputs()->Index(2).packets.push_back(
       Adopt(input_ocr_3.release()).At(Timestamp(3)));
 
   auto input_agn_3 =
       absl::make_unique<DetectionSet>(ParseTextProtoOrDie<DetectionSet>(
-          R"(
+          R"pb(
             detections {
               score: 0.6
               signal_type: { standard: LOGO }
               tracking_id: 0
             }
-          )"));
+          )pb"));
 
   runner->MutableInputs()->Index(3).packets.push_back(
       Adopt(input_agn_3.release()).At(Timestamp(3)));

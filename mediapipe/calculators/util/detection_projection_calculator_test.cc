@@ -66,12 +66,12 @@ std::vector<Point2_f> GetPoints(const Detection& detection) {
 // Test helper function to run "DetectionProjectionCalculator".
 absl::StatusOr<Detection> RunProjectionCalculator(
     Detection detection, std::array<float, 16> project_mat) {
-  CalculatorRunner runner(ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"(
+  CalculatorRunner runner(ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"pb(
     calculator: "DetectionProjectionCalculator"
     input_stream: "DETECTIONS:detections"
     input_stream: "PROJECTION_MATRIX:matrix"
     output_stream: "DETECTIONS:projected_detections"
-  )"));
+  )pb"));
 
   runner.MutableInputs()
       ->Tag("DETECTIONS")

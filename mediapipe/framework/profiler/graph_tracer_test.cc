@@ -122,11 +122,11 @@ TEST_F(GraphTracerTest, EmptyTrace) {
 
   // Validate the GraphTrace data.
   EXPECT_THAT(GetTrace(),
-              EqualsProto(mediapipe::ParseTextProtoOrDie<GraphTrace>(R"(
+              EqualsProto(mediapipe::ParseTextProtoOrDie<GraphTrace>(R"pb(
                 base_time: 0
                 base_timestamp: 0
                 stream_name: ""
-              )")));
+              )pb")));
 }
 
 TEST_F(GraphTracerTest, CalculatorTrace) {
@@ -145,7 +145,7 @@ TEST_F(GraphTracerTest, CalculatorTrace) {
 
   // Validate the GraphTrace data.
   EXPECT_THAT(
-      GetTrace(), EqualsProto(mediapipe::ParseTextProtoOrDie<GraphTrace>(R"(
+      GetTrace(), EqualsProto(mediapipe::ParseTextProtoOrDie<GraphTrace>(R"pb(
         base_time: 1608911100000000
         base_timestamp: 1608911100000000
         stream_name: ""
@@ -166,7 +166,7 @@ TEST_F(GraphTracerTest, CalculatorTrace) {
           }
           output_trace { packet_timestamp: 0 stream_id: 2 event_data: 2 }
         }
-      )")));
+      )pb")));
 }
 
 TEST_F(GraphTracerTest, GraphTrace) {
@@ -226,7 +226,7 @@ TEST_F(GraphTracerTest, GraphTrace) {
 
   // Validate the GraphTrace data.
   EXPECT_THAT(
-      GetTrace(), EqualsProto(mediapipe::ParseTextProtoOrDie<GraphTrace>(R"(
+      GetTrace(), EqualsProto(mediapipe::ParseTextProtoOrDie<GraphTrace>(R"pb(
         base_time: 1608911100000000
         base_timestamp: 1608911100000000
         stream_name: ""
@@ -300,7 +300,7 @@ TEST_F(GraphTracerTest, GraphTrace) {
           }
           output_trace { packet_timestamp: 5 stream_id: 5 event_data: 10 }
         }
-      )")));
+      )pb")));
 
   // No timestamps are completed before start_time_.
   // One timestamp is completed before start_time_ + 10ms.
@@ -629,11 +629,11 @@ TEST_F(GraphTracerE2ETest, PassThroughGraphProfile) {
   MP_EXPECT_OK(graph_.profiler()->GetCalculatorProfiles(&profiles));
   EXPECT_EQ(1, profiles.size());
   CalculatorProfile expected =
-      mediapipe::ParseTextProtoOrDie<CalculatorProfile>(R"(
+      mediapipe::ParseTextProtoOrDie<CalculatorProfile>(R"pb(
         name: "LambdaCalculator"
         open_runtime: 0
         close_runtime: 0
-        input_stream_profiles { name: "input_0" back_edge: false })");
+        input_stream_profiles { name: "input_0" back_edge: false })pb");
 
   FillHistogram({20001, 20001, 20001, 20001, 20001, 20001},
                 expected.mutable_process_runtime());
@@ -659,7 +659,7 @@ TEST_F(GraphTracerE2ETest, DemuxGraphLog) {
                                       absl::InfiniteFuture(), &trace);
   GraphTrace node_timestamps = NodeTimestamps(trace);
   EXPECT_THAT(node_timestamps,
-              EqualsProto(mediapipe::ParseTextProtoOrDie<GraphTrace>(R"(
+              EqualsProto(mediapipe::ParseTextProtoOrDie<GraphTrace>(R"pb(
                 calculator_trace { node_id: 1 input_timestamp: 10000 }
                 calculator_trace { node_id: 2 input_timestamp: 10000 }
                 calculator_trace { node_id: 3 input_timestamp: 10000 }
@@ -805,7 +805,7 @@ TEST_F(GraphTracerE2ETest, DemuxGraphLog) {
                 calculator_trace { node_id: 1 input_timestamp: 50001 }
                 calculator_trace { node_id: 1 input_timestamp: 10000 }
                 calculator_trace { node_id: 1 input_timestamp: 10000 }
-              )")));
+              )pb")));
 
   // Validate a one-timestamp slice of the event trace.
   GraphTrace trace_2;
@@ -817,7 +817,7 @@ TEST_F(GraphTracerE2ETest, DemuxGraphLog) {
   EXPECT_THAT(
       trace_2,
       EqualsProto(mediapipe::ParseTextProtoOrDie<GraphTrace>(
-          R"(
+          R"pb(
             base_time: 1544086800000000
             base_timestamp: 10000
             stream_name: ""
@@ -986,7 +986,7 @@ TEST_F(GraphTracerE2ETest, DemuxGraphLog) {
               event_type: NOT_READY
               start_time: 25005
             }
-          )")));
+          )pb")));
 }
 
 // Read a GraphProfile from a file path.
@@ -1047,7 +1047,7 @@ TEST_F(GraphTracerE2ETest, DemuxGraphLogFiles) {
     StripDataIds(&trace);
   }
   EXPECT_THAT(profile_2,
-              EqualsProto(mediapipe::ParseTextProtoOrDie<GraphProfile>(R"(
+              EqualsProto(mediapipe::ParseTextProtoOrDie<GraphProfile>(R"pb(
                 graph_trace {
                   base_time: 1544086800000000
                   base_timestamp: 0
@@ -1233,7 +1233,7 @@ TEST_F(GraphTracerE2ETest, DemuxGraphLogFiles) {
                     trace_enabled: true
                   }
                 }
-              )")));
+              )pb")));
 }
 
 TEST_F(GraphTracerE2ETest, DisableLoggingToDisk) {
@@ -1295,7 +1295,7 @@ TEST_F(GraphTracerE2ETest, GpuTaskTrace) {
   EXPECT_THAT(
       trace_1,
       EqualsProto(mediapipe::ParseTextProtoOrDie<GraphTrace>(
-          R"(
+          R"pb(
             base_time: 1100
             base_timestamp: 1000
             stream_name: ""
@@ -1324,7 +1324,7 @@ TEST_F(GraphTracerE2ETest, GpuTaskTrace) {
               finish_time: 2100
               thread_id: 0
             }
-          )")));
+          )pb")));
 
   GraphTrace trace_2;
   builder.CreateLog(buffer, absl::InfinitePast(), absl::InfiniteFuture(),
@@ -1332,7 +1332,7 @@ TEST_F(GraphTracerE2ETest, GpuTaskTrace) {
   EXPECT_THAT(
       trace_2,
       EqualsProto(mediapipe::ParseTextProtoOrDie<GraphTrace>(
-          R"(
+          R"pb(
             base_time: 1100
             base_timestamp: 1000
             stream_name: ""
@@ -1368,7 +1368,7 @@ TEST_F(GraphTracerE2ETest, GpuTaskTrace) {
               output_trace { packet_timestamp: 0 stream_id: 2 event_data: 0 }
               thread_id: 0
             }
-          )")));
+          )pb")));
 }
 
 // Show that trace_enabled activates the GlContextProfiler.

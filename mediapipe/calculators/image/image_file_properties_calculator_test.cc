@@ -50,11 +50,11 @@ TEST(ImageFilePropertiesCalculatorTest, ReadsFocalLengthFromJpegInStreams) {
   MP_ASSERT_OK(file::GetContents(image_filepath, &image_contents));
 
   CalculatorGraphConfig::Node node_config =
-      ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"(
+      ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"pb(
         calculator: "ImageFilePropertiesCalculator"
         input_stream: "image_bytes"
         output_stream: "properties"
-      )");
+      )pb");
 
   CalculatorRunner runner(node_config);
   runner.MutableInputs()->Index(0).packets.push_back(
@@ -79,11 +79,11 @@ TEST(ImageFilePropertiesCalculatorTest, ReadsFocalLengthFromJpegInSidePackets) {
   MP_ASSERT_OK(file::GetContents(image_filepath, &image_contents));
 
   CalculatorGraphConfig::Node node_config =
-      ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"(
+      ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"pb(
         calculator: "ImageFilePropertiesCalculator"
         input_side_packet: "image_bytes"
         output_side_packet: "properties"
-      )");
+      )pb");
 
   CalculatorRunner runner(node_config);
   runner.MutableSidePackets()->Index(0) =
@@ -108,11 +108,11 @@ TEST(ImageFilePropertiesCalculatorTest,
   MP_ASSERT_OK(file::GetContents(image_filepath, &image_contents));
 
   CalculatorGraphConfig::Node node_config =
-      ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"(
+      ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"pb(
         calculator: "ImageFilePropertiesCalculator"
         input_stream: "image_bytes"
         output_side_packet: "properties"
-      )");
+      )pb");
 
   CalculatorRunner runner(node_config);
   runner.MutableInputs()->Index(0).packets.push_back(

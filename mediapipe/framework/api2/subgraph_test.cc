@@ -46,7 +46,7 @@ class FooBarImpl2 : public SubgraphImpl<FooBar2, FooBarImpl2> {
 TEST(SubgraphTest, SubgraphConfig) {
   CalculatorGraphConfig subgraph = FooBarImpl1().GetConfig({}).value();
   const CalculatorGraphConfig expected_graph =
-      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
         input_stream: "IN:__stream_0"
         output_stream: "OUT:__stream_2"
         node {
@@ -59,14 +59,14 @@ TEST(SubgraphTest, SubgraphConfig) {
           input_stream: "IN:__stream_1"
           output_stream: "OUT:__stream_2"
         }
-      )");
+      )pb");
   EXPECT_THAT(subgraph, EqualsProto(expected_graph));
 }
 
 TEST(SubgraphTest, TypedSubgraphConfig) {
   CalculatorGraphConfig subgraph = FooBarImpl2().GetConfig({}).value();
   const CalculatorGraphConfig expected_graph =
-      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
         input_stream: "IN:__stream_0"
         output_stream: "OUT:__stream_2"
         node {
@@ -79,7 +79,7 @@ TEST(SubgraphTest, TypedSubgraphConfig) {
           input_stream: "IN:__stream_1"
           output_stream: "OUT:__stream_2"
         }
-      )");
+      )pb");
   EXPECT_THAT(subgraph, EqualsProto(expected_graph));
 }
 
@@ -97,7 +97,7 @@ TEST(SubgraphTest, ProtoApiConfig) {
   bar->add_output_stream("OUT:__stream_2");
 
   const CalculatorGraphConfig expected_graph =
-      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
         input_stream: "IN:__stream_0"
         output_stream: "OUT:__stream_2"
         node {
@@ -110,13 +110,13 @@ TEST(SubgraphTest, ProtoApiConfig) {
           input_stream: "IN:__stream_1"
           output_stream: "OUT:__stream_2"
         }
-      )");
+      )pb");
   EXPECT_THAT(graph, EqualsProto(expected_graph));
 }
 
 TEST(SubgraphTest, ExpandSubgraphs) {
   CalculatorGraphConfig supergraph =
-      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
         node {
           name: "simple_source"
           calculator: "SomeSourceCalculator"
@@ -127,9 +127,9 @@ TEST(SubgraphTest, ExpandSubgraphs) {
           input_stream: "IN:foo"
           output_stream: "OUT:output"
         }
-      )");
+      )pb");
   const CalculatorGraphConfig expected_graph =
-      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
         node {
           name: "simple_source"
           calculator: "SomeSourceCalculator"
@@ -147,7 +147,7 @@ TEST(SubgraphTest, ExpandSubgraphs) {
           input_stream: "IN:foobar____stream_1"
           output_stream: "OUT:output"
         }
-      )");
+      )pb");
   MP_EXPECT_OK(tool::ExpandSubgraphs(&supergraph));
   EXPECT_THAT(supergraph, EqualsProto(expected_graph));
 }

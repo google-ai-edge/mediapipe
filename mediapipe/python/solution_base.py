@@ -87,6 +87,7 @@ class _PacketDataType(enum.Enum):
   BOOL_LIST = 'bool_list'
   INT = 'int'
   FLOAT = 'float'
+  FLOAT_LIST = 'float_list'
   AUDIO = 'matrix'
   IMAGE = 'image_frame'
   PROTO = 'proto'
@@ -108,6 +109,8 @@ NAME_TO_TYPE: Mapping[str, '_PacketDataType'] = {
         _PacketDataType.INT,
     'float':
         _PacketDataType.FLOAT,
+    '::std::vector<float>':
+        _PacketDataType.FLOAT_LIST,
     '::mediapipe::Matrix':
         _PacketDataType.AUDIO,
     '::mediapipe::ImageFrame':

@@ -38,14 +38,14 @@ void AddInputVector(const std::vector<int>& input, int64 timestamp,
 
 TEST(TestClipIntVectorSizeCalculatorTest, EmptyVectorInput) {
   CalculatorGraphConfig::Node node_config =
-      ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"(
+      ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"pb(
         calculator: "TestClipIntVectorSizeCalculator"
         input_stream: "input_vector"
         output_stream: "output_vector"
         options {
           [mediapipe.ClipVectorSizeCalculatorOptions.ext] { max_vec_size: 1 }
         }
-      )");
+      )pb");
   CalculatorRunner runner(node_config);
 
   std::vector<int> input = {};
@@ -60,14 +60,14 @@ TEST(TestClipIntVectorSizeCalculatorTest, EmptyVectorInput) {
 
 TEST(TestClipIntVectorSizeCalculatorTest, OneTimestamp) {
   CalculatorGraphConfig::Node node_config =
-      ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"(
+      ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"pb(
         calculator: "TestClipIntVectorSizeCalculator"
         input_stream: "input_vector"
         output_stream: "output_vector"
         options {
           [mediapipe.ClipVectorSizeCalculatorOptions.ext] { max_vec_size: 2 }
         }
-      )");
+      )pb");
   CalculatorRunner runner(node_config);
 
   std::vector<int> input = {0, 1, 2, 3};
@@ -85,14 +85,14 @@ TEST(TestClipIntVectorSizeCalculatorTest, OneTimestamp) {
 
 TEST(TestClipIntVectorSizeCalculatorTest, TwoInputsAtTwoTimestamps) {
   CalculatorGraphConfig::Node node_config =
-      ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"(
+      ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"pb(
         calculator: "TestClipIntVectorSizeCalculator"
         input_stream: "input_vector"
         output_stream: "output_vector"
         options {
           [mediapipe.ClipVectorSizeCalculatorOptions.ext] { max_vec_size: 3 }
         }
-      )");
+      )pb");
   CalculatorRunner runner(node_config);
 
   {
@@ -133,7 +133,7 @@ TEST(TestClipUniqueIntPtrVectorSizeCalculatorTest, ConsumeOneTimestamp) {
    * The test needs to send packets that own the data.
    */
   CalculatorGraphConfig graph_config =
-      ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+      ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
         input_stream: "input_vector"
         node {
           calculator: "TestClipUniqueIntPtrVectorSizeCalculator"
@@ -143,7 +143,7 @@ TEST(TestClipUniqueIntPtrVectorSizeCalculatorTest, ConsumeOneTimestamp) {
             [mediapipe.ClipVectorSizeCalculatorOptions.ext] { max_vec_size: 3 }
           }
         }
-      )");
+      )pb");
 
   std::vector<Packet> outputs;
   tool::AddVectorSink("output_vector", &graph_config, &outputs);
@@ -178,7 +178,7 @@ TEST(TestClipUniqueIntPtrVectorSizeCalculatorTest, ConsumeOneTimestamp) {
 
 TEST(TestClipIntVectorSizeCalculatorTest, SidePacket) {
   CalculatorGraphConfig::Node node_config =
-      ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"(
+      ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"pb(
         calculator: "TestClipIntVectorSizeCalculator"
         input_stream: "input_vector"
         input_side_packet: "max_vec_size"
@@ -186,7 +186,7 @@ TEST(TestClipIntVectorSizeCalculatorTest, SidePacket) {
         options {
           [mediapipe.ClipVectorSizeCalculatorOptions.ext] { max_vec_size: 1 }
         }
-      )");
+      )pb");
   CalculatorRunner runner(node_config);
   // This should override the default of 1 set in the options.
   runner.MutableSidePackets()->Index(0) = Adopt(new int(2));

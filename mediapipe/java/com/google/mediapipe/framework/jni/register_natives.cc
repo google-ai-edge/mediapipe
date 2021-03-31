@@ -59,9 +59,10 @@ void RegisterNativesVector(JNIEnv *env, jclass cls,
                            const std::vector<JNINativeMethodStrings> &methods) {
   // A client Java project may not use some methods and classes that we attempt
   // to register and could be removed by Proguard. In that case, we want to
-  // avoid triggering a crash due to ClassNotFoundException, so we are trading
-  // safety check here in exchange for flexibility to list out all registrations
-  // without worrying about usage subset by client Java projects.
+  // avoid triggering a crash due to ClassNotFoundException triggered by
+  // failure of env->FindClass() calls. We are trading safety check here in
+  // in exchange for flexibility to list out all registrations without worrying
+  // about usage subset by client Java projects.
   if (!cls || methods.empty()) {
     LOG(INFO) << "Skipping registration and clearing exception. Class or "
                  "native methods not found, may be unused and/or trimmed by "
@@ -77,7 +78,14 @@ void RegisterNativesVector(JNIEnv *env, jclass cls,
         const_cast<char *>(methods[i].signature.c_str()), methods[i].fnPtr};
     methods_array[i] = jniNativeMethod;
   }
-  env->RegisterNatives(cls, methods_array, methods.size());
+  // Fatal crash if registration fails.
+  if (env->RegisterNatives(cls, methods_array, methods.size()) < 0) {
+    LOG(FATAL)
+        << "Failed during native method registration, so likely the "
+           "signature of a method is incorrect. Make sure there are no typos "
+           "and "
+           "that symbols used in the signature have not been re-obfuscated.";
+  }
   delete[] methods_array;
 }
 
@@ -106,7 +114,7 @@ void RegisterGraphNatives(JNIEnv *env) {
   std::string packet_list_callback_name = class_registry.GetClassName(
       mediapipe::android::ClassRegistry::kPacketListCallbackClassName);
   std::string native_add_multi_stream_callback_signature =
-      absl::StrFormat("(JLjava/lang/List;L%s;)V", packet_list_callback_name);
+      absl::StrFormat("(JLjava/util/List;L%s;)V", packet_list_callback_name);
   AddJNINativeMethod(&graph_methods, graph, "nativeAddMultiStreamCallback",
                      native_add_multi_stream_callback_signature.c_str(),
                      (void *)&GRAPH_METHOD(nativeAddMultiStreamCallback));

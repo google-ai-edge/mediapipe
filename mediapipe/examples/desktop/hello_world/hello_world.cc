@@ -23,20 +23,21 @@ namespace mediapipe {
 
 absl::Status PrintHelloWorld() {
   // Configures a simple graph, which concatenates 2 PassThroughCalculators.
-  CalculatorGraphConfig config = ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
-    input_stream: "in"
-    output_stream: "out"
-    node {
-      calculator: "PassThroughCalculator"
-      input_stream: "in"
-      output_stream: "out1"
-    }
-    node {
-      calculator: "PassThroughCalculator"
-      input_stream: "out1"
-      output_stream: "out"
-    }
-  )");
+  CalculatorGraphConfig config =
+      ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
+        input_stream: "in"
+        output_stream: "out"
+        node {
+          calculator: "PassThroughCalculator"
+          input_stream: "in"
+          output_stream: "out1"
+        }
+        node {
+          calculator: "PassThroughCalculator"
+          input_stream: "out1"
+          output_stream: "out"
+        }
+      )pb");
 
   CalculatorGraph graph;
   MP_RETURN_IF_ERROR(graph.Initialize(config));

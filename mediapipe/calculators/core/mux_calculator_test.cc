@@ -31,7 +31,7 @@ namespace {
 
 // Graph with default input stream handler, and the input selection is driven
 // by an input stream. All MuxCalculator inputs are present at each timestamp.
-constexpr char kTestGraphConfig1[] = R"proto(
+constexpr char kTestGraphConfig1[] = R"pb(
   input_stream: "input"
   output_stream: "test_output"
   node {
@@ -60,12 +60,12 @@ constexpr char kTestGraphConfig1[] = R"proto(
     output_stream: "OUTPUT:test_output"
     input_stream_handler { input_stream_handler: "DefaultInputStreamHandler" }
   }
-)proto";
+)pb";
 
 // Graph with default input stream handler, and the input selection is driven
 // by an input side packet. All MuxCalculator inputs are present at each
 // timestamp.
-constexpr char kTestGraphConfig2[] = R"proto(
+constexpr char kTestGraphConfig2[] = R"pb(
   input_side_packet: "input_selector"
   input_stream: "input"
   output_stream: "test_output"
@@ -93,12 +93,12 @@ constexpr char kTestGraphConfig2[] = R"proto(
     output_stream: "OUTPUT:test_output"
     input_stream_handler { input_stream_handler: "DefaultInputStreamHandler" }
   }
-)proto";
+)pb";
 
 // Graph with mux input stream handler, and the input selection is driven
 // by an input stream. Only one MuxCalculator input is present at each
 // timestamp.
-constexpr char kTestGraphConfig3[] = R"proto(
+constexpr char kTestGraphConfig3[] = R"pb(
   input_stream: "input"
   output_stream: "test_output"
   node {
@@ -117,7 +117,7 @@ constexpr char kTestGraphConfig3[] = R"proto(
     input_stream: "SELECT:input_select"
     output_stream: "OUTPUT:test_output"
   }
-)proto";
+)pb";
 
 constexpr char kOutputName[] = "test_output";
 constexpr char kInputName[] = "input";
@@ -235,7 +235,7 @@ TEST(MuxCalculatorTest, InputStreamSelector_MuxInputStreamHandler) {
   EXPECT_EQ(output, input_packets);
 }
 
-constexpr char kDualInputGraphConfig[] = R"proto(
+constexpr char kDualInputGraphConfig[] = R"pb(
   input_stream: "input_0"
   input_stream: "input_1"
   input_stream: "input_select"
@@ -247,7 +247,7 @@ constexpr char kDualInputGraphConfig[] = R"proto(
     input_stream: "SELECT:input_select"
     output_stream: "OUTPUT:test_output"
   }
-)proto";
+)pb";
 
 TEST(MuxCalculatorTest, DiscardSkippedInputs_MuxInputStreamHandler) {
   CalculatorGraphConfig config =

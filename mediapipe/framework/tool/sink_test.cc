@@ -75,14 +75,14 @@ TEST(CallbackFromGeneratorTest, TestAddVectorSink) {
 
 TEST(CalculatorGraph, OutputSummarySidePacketInClose) {
   CalculatorGraphConfig config =
-      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
         input_stream: "input_packets"
         node {
           calculator: "CountAndOutputSummarySidePacketInCloseCalculator"
           input_stream: "input_packets"
           output_side_packet: "num_of_packets"
         }
-      )");
+      )pb");
 
   Packet summary_packet;
   tool::AddSidePacketSink("num_of_packets", &config, &summary_packet);
