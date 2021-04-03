@@ -98,10 +98,7 @@ process new data sets, in the documentation of
     PYTHONPATH="${PYTHONPATH};"+`pwd`
     ```
 
-    and then you can import the data set in Python using
-    [read_demo_dataset.py](https://github.com/google/mediapipe/tree/master/mediapipe/examples/desktop/media_sequence/read_demo_dataset.py)
-
-## Preparing a practical data set
+    and then you can import the data set in Python using [read_demo_dataset.py](mediapipe/examples/desktop/media_sequence/read_demo_dataset.py)
 
 As an example of processing a practical data set, a similar set of commands will
 prepare the [Charades data set](https://allenai.org/plato/charades/). The

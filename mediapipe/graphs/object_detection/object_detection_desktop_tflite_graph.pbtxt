@@ -173,7 +173,9 @@ node {
   input_side_packet: "OUTPUT_FILE_PATH:output_video_path"
   node_options: {
     [type.googleapis.com/mediapipe.OpenCvVideoEncoderCalculatorOptions]: {
+#MPEG
       codec: "avc1"
+#mkv
       video_format: "mp4"
     }
   }
