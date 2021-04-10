@@ -23,6 +23,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
         build-essential \
+        gcc-8 g++-8 \
         ca-certificates \
         curl \
         ffmpeg \
@@ -43,6 +44,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     apt-get update && apt-get install -y openjdk-8-jdk && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
+
+# Use gcc-8 and g++-8 by default
+RUN update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-8 800 --slave /usr/bin/g++ g++ /usr/bin/g++-8
 
 RUN pip3 install --upgrade setuptools
 RUN pip3 install wheel
