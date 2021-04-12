@@ -471,7 +471,7 @@ next section.
 4.  Install Visual C++ Build Tools 2019 and WinSDK
 
     Go to
-    [the VisualStudio website](ttps://visualstudio.microsoft.com/visual-cpp-build-tools),
+    [the VisualStudio website](https://visualstudio.microsoft.com/visual-cpp-build-tools),
     download build tools, and install Microsoft Visual C++ 2019 Redistributable
     and Microsoft Build Tools 2019.
 
