@@ -4,7 +4,7 @@ title: Home
 nav_order: 1
 ---
 
-![MediaPipe](docs/images/mediapipe_small.png)
+![MediaPipe](docs/images/mediapipe_small.png.png)
 
 --------------------------------------------------------------------------------
 
