@@ -92,8 +92,8 @@ each project.
     [the face detection tflite model](https://github.com/google/mediapipe/tree/master/mediapipe/modules/face_detection/face_detection_front.tflite).
 
     ```bash
-    bazel build -c opt mediapipe/mediapipe/graphs/face_detection:mobile_gpu_binary_graph
-    cp bazel-bin/mediapipe/graphs/face_detection/mobile_gpu.binarypb /path/to/your/app/src/main/assets/
+    bazel build -c opt mediapipe/mediapipe/graphs/face_detection:face_detection_mobile_gpu_binary_graph
+    cp bazel-bin/mediapipe/graphs/face_detection/face_detection_mobile_gpu.binarypb /path/to/your/app/src/main/assets/
     cp mediapipe/modules/face_detection/face_detection_front.tflite /path/to/your/app/src/main/assets/
     ```
 
