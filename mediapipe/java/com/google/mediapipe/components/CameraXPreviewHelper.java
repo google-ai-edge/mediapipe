@@ -34,15 +34,22 @@ import android.view.Surface;
 import androidx.camera.core.Camera;
 import androidx.camera.core.CameraSelector;
 import androidx.camera.core.CameraX;
+import androidx.camera.core.ImageCapture;
+import androidx.camera.core.ImageCapture.OnImageSavedCallback;
+import androidx.camera.core.ImageCapture.OutputFileOptions;
 import androidx.camera.core.Preview;
 import androidx.camera.lifecycle.ProcessCameraProvider;
 import androidx.core.content.ContextCompat;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.mediapipe.glutil.EglManager;
+import java.io.File;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.RejectedExecutionException;
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.microedition.khronos.egl.EGLSurface;
 
@@ -102,12 +109,17 @@ public class CameraXPreviewHelper extends CameraHelper {
 
   private ProcessCameraProvider cameraProvider;
   private Preview preview;
+  private ImageCapture imageCapture;
+  private ImageCapture.Builder imageCaptureBuilder;
+  private ExecutorService imageCaptureExecutorService;
   private Camera camera;
 
   // Size of the camera-preview frames from the camera.
   private Size frameSize;
   // Rotation of the camera-preview frames in degrees.
   private int frameRotation;
+  // Checks if the image capture use case is enabled.
+  private boolean isImageCaptureEnabled = false;
 
   @Nullable private CameraCharacteristics cameraCharacteristics = null;
 
@@ -145,10 +157,28 @@ public class CameraXPreviewHelper extends CameraHelper {
   }
 
   /**
+   * Initializes the camera and sets it up for accessing frames. This constructor also enables the
+   * image capture use case from {@link CameraX}.
+   *
+   * @param imageCaptureBuilder Builder for an {@link ImageCapture}, this builder must contain the
+   *     desired configuration options for the image capture being build (e.g. target resolution).
+   * @param targetSize the preview size to use. If set to {@code null}, the helper will default to
+   *     1280 * 720.
+   */
+  public void startCamera(
+      Activity activity,
+      @Nonnull ImageCapture.Builder imageCaptureBuilder,
+      CameraFacing cameraFacing,
+      @Nullable Size targetSize) {
+    this.imageCaptureBuilder = imageCaptureBuilder;
+    startCamera(activity, (LifecycleOwner) activity, cameraFacing, targetSize);
+  }
+
+  /**
    * Initializes the camera and sets it up for accessing frames.
    *
    * @param targetSize the preview size to use. If set to {@code null}, the helper will default to
-   *        1280 * 720.
+   *     1280 * 720.
    */
   public void startCamera(
       Context context,
@@ -232,10 +262,36 @@ public class CameraXPreviewHelper extends CameraHelper {
           // the way the activity is currently structured.
           cameraProvider.unbindAll();
 
-          // Bind preview use case to camera.
-          camera = cameraProvider.bindToLifecycle(lifecycleOwner, cameraSelector, preview);
+          // Bind use case(s) to camera.
+          if (imageCaptureBuilder != null) {
+            imageCapture = imageCaptureBuilder.build();
+            camera =
+                cameraProvider.bindToLifecycle(
+                    lifecycleOwner, cameraSelector, preview, imageCapture);
+            imageCaptureExecutorService = Executors.newSingleThreadExecutor();
+            isImageCaptureEnabled = true;
+          } else {
+            camera = cameraProvider.bindToLifecycle(lifecycleOwner, cameraSelector, preview);
+          }
         },
         mainThreadExecutor);
+  }
+
+  /**
+   * Captures a new still image and saves to a file along with application specified metadata. This
+   * method works when {@link CameraXPreviewHelper#startCamera(Activity, ImageCapture.Builder,
+   * CameraFacing, Size)} has been called previously enabling image capture. The callback will be
+   * called only once for every invocation of this method.
+   *
+   * @param outputFile Save location for captured image.
+   * @param onImageSavedCallback Callback to be called for the newly captured image.
+   */
+  public void takePicture(File outputFile, OnImageSavedCallback onImageSavedCallback) {
+    if (isImageCaptureEnabled) {
+      OutputFileOptions outputFileOptions = new OutputFileOptions.Builder(outputFile).build();
+      imageCapture.takePicture(
+          outputFileOptions, imageCaptureExecutorService, onImageSavedCallback);
+    }
   }
 
   @Override

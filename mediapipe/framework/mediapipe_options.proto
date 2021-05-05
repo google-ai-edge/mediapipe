@@ -20,6 +20,9 @@ syntax = "proto2";
 
 package mediapipe;
 
+option java_package = "com.google.mediapipe.proto";
+option java_outer_classname = "MediaPipeOptionsProto";
+
 // Options used by a MediaPipe object.
 message MediaPipeOptions {
   extensions 20000 to max;

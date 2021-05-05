@@ -15,6 +15,8 @@
 """Tests for mediapipe.python.solutions.face_mesh."""
 
 import os
+import tempfile  # pylint: disable=unused-import
+from typing import NamedTuple
 
 from absl.testing import absltest
 from absl.testing import parameterized
@@ -23,47 +25,60 @@ import numpy as np
 import numpy.testing as npt
 
 # resources dependency
+# undeclared dependency
+from mediapipe.python.solutions import drawing_utils as mp_drawing
 from mediapipe.python.solutions import face_mesh as mp_faces
 
 TEST_IMAGE_PATH = 'mediapipe/python/solutions/testdata'
-DIFF_THRESHOLD = 20  # pixels
+DIFF_THRESHOLD = 5  # pixels
 EYE_INDICES_TO_LANDMARKS = {
-    33: [176, 350],
-    7: [177, 353],
-    163: [178, 357],
-    144: [179, 362],
-    145: [179, 369],
-    153: [179, 376],
-    154: [178, 382],
-    155: [177, 386],
-    133: [177, 388],
-    246: [175, 352],
-    161: [174, 355],
-    160: [172, 360],
-    159: [170, 367],
-    158: [171, 374],
-    157: [172, 381],
-    173: [175, 386],
-    263: [176, 475],
-    249: [177, 471],
-    390: [177, 467],
-    373: [178, 462],
-    374: [179, 454],
-    380: [179, 448],
-    381: [178, 441],
-    382: [177, 437],
-    362: [177, 435],
-    466: [175, 473],
-    388: [173, 469],
-    387: [171, 464],
-    386: [170, 457],
-    385: [171, 450],
-    384: [172, 443],
-    398: [175, 438]
+    33: [178, 345],
+    7: [179, 348],
+    163: [178, 352],
+    144: [179, 357],
+    145: [179, 365],
+    153: [179, 371],
+    154: [178, 378],
+    155: [177, 381],
+    133: [177, 383],
+    246: [175, 347],
+    161: [174, 350],
+    160: [172, 355],
+    159: [170, 362],
+    158: [171, 368],
+    157: [172, 375],
+    173: [175, 380],
+    263: [176, 467],
+    249: [177, 464],
+    390: [177, 460],
+    373: [178, 455],
+    374: [179, 448],
+    380: [179, 441],
+    381: [178, 435],
+    382: [177, 432],
+    362: [177, 430],
+    466: [175, 465],
+    388: [173, 462],
+    387: [171, 457],
+    386: [170, 450],
+    385: [171, 444],
+    384: [172, 437],
+    398: [175, 432]
 }
 
 
 class FaceMeshTest(parameterized.TestCase):
+
+  def _annotate(self, frame: np.ndarray, results: NamedTuple, idx: int):
+    drawing_spec = mp_drawing.DrawingSpec(thickness=1, circle_radius=1)
+    for face_landmarks in results.multi_face_landmarks:
+      mp_drawing.draw_landmarks(
+          image=frame,
+          landmark_list=face_landmarks,
+          landmark_drawing_spec=drawing_spec)
+    path = os.path.join(tempfile.gettempdir(), self.id().split('.')[-1] +
+                                              '_frame_{}.png'.format(idx))
+    cv2.imwrite(path, frame)
 
   def test_invalid_image_shape(self):
     with mp_faces.FaceMesh() as faces:
@@ -82,13 +97,13 @@ class FaceMeshTest(parameterized.TestCase):
                                   ('video_mode', False, 5))
   def test_face(self, static_image_mode: bool, num_frames: int):
     image_path = os.path.join(os.path.dirname(__file__), 'testdata/face.jpg')
-    image = cv2.flip(cv2.imread(image_path), 1)
-
+    image = cv2.imread(image_path)
     with mp_faces.FaceMesh(
         static_image_mode=static_image_mode,
         min_detection_confidence=0.5) as faces:
-      for _ in range(num_frames):
+      for idx in range(num_frames):
         results = faces.process(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
+        self._annotate(image.copy(), results, idx)
         multi_face_landmarks = []
         for landmarks in results.multi_face_landmarks:
           self.assertLen(landmarks.landmark, 468)
@@ -98,9 +113,9 @@ class FaceMeshTest(parameterized.TestCase):
           multi_face_landmarks.append(face_landmarks)
         self.assertLen(multi_face_landmarks, 1)
         # Verify the eye landmarks are correct as sanity check.
-        for idx, gt_lds in EYE_INDICES_TO_LANDMARKS.items():
+        for eye_idx, gt_lds in EYE_INDICES_TO_LANDMARKS.items():
           prediction_error = np.abs(
-              np.asarray(multi_face_landmarks[0][idx]) - np.asarray(gt_lds))
+              np.asarray(multi_face_landmarks[0][eye_idx]) - np.asarray(gt_lds))
           npt.assert_array_less(prediction_error, DIFF_THRESHOLD)
 
 

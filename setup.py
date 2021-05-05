@@ -85,8 +85,10 @@ def _check_bazel():
     sys.exit(-1)
   try:
     bazel_version_info = subprocess.check_output(['bazel', '--version'])
-  except subprocess.CalledProcessError:
-    sys.stderr.write('fail to get bazel version by $ bazel --version.')
+  except subprocess.CalledProcessError as e:
+    sys.stderr.write('fail to get bazel version by $ bazel --version: ' +
+                     str(e.output))
+    sys.exit(-1)
   bazel_version_info = bazel_version_info.decode('UTF-8').strip()
   version = bazel_version_info.split('bazel ')[1].split('-')[0]
   version_segments = version.split('.')

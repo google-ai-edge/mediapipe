@@ -165,13 +165,29 @@ public class Graph {
    */
   public synchronized void addMultiStreamCallback(
       List<String> streamNames, PacketListCallback callback) {
+    addMultiStreamCallback(streamNames, callback, false);
+  }
+
+  /**
+   * Adds a {@link PacketListCallback} to the context for callback during graph running.
+   *
+   * @param streamNames The output stream names in the graph for callback.
+   * @param callback The callback for handling the call when all output streams listed in
+   *     streamNames get {@link Packet}.
+   * @param observeTimestampBounds Whether to output an empty packet when a timestamp bound change
+   *     is observed with no output data. This can happen when an input packet is processed but no
+   *     corresponding output packet is immediately generated.
+   * @throws MediaPipeException for any error status.
+   */
+  public synchronized void addMultiStreamCallback(
+      List<String> streamNames, PacketListCallback callback, boolean observeTimestampBounds) {
     Preconditions.checkState(
         nativeGraphHandle != 0, "Invalid context, tearDown() might have been called already.");
     Preconditions.checkNotNull(streamNames);
     Preconditions.checkNotNull(callback);
     Preconditions.checkState(!graphRunning && !startRunningGraphCalled);
     callbacks.add(callback);
-    nativeAddMultiStreamCallback(nativeGraphHandle, streamNames, callback);
+    nativeAddMultiStreamCallback(nativeGraphHandle, streamNames, callback, observeTimestampBounds);
   }
 
   /**
@@ -180,7 +196,7 @@ public class Graph {
    * <p>Multiple outputs can be attached to the same stream.
    *
    * @param streamName The output stream name in the graph.
-   * @result a new SurfaceOutput.
+   * @return a new SurfaceOutput.
    */
   public synchronized SurfaceOutput addSurfaceOutput(String streamName) {
     Preconditions.checkState(
@@ -600,7 +616,10 @@ public class Graph {
       long context, String streamName, PacketCallback callback);
 
   private native void nativeAddMultiStreamCallback(
-      long context, List<String> streamName, PacketListCallback callback);
+      long context,
+      List<String> streamName,
+      PacketListCallback callback,
+      boolean observeTimestampBounds);
 
   private native long nativeAddSurfaceOutput(long context, String streamName);
 

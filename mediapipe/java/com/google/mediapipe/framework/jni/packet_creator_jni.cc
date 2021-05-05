@@ -19,6 +19,7 @@
 
 #include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/framework/camera_intrinsics.h"
+#include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/formats/image_format.pb.h"
 #include "mediapipe/framework/formats/image_frame.h"
 #include "mediapipe/framework/formats/matrix.h"
@@ -26,6 +27,7 @@
 #include "mediapipe/framework/formats/video_stream_header.h"
 #include "mediapipe/framework/port/core_proto_inc.h"
 #include "mediapipe/framework/port/logging.h"
+#include "mediapipe/gpu/gpu_buffer.h"
 #include "mediapipe/java/com/google/mediapipe/framework/jni/colorspace.h"
 #include "mediapipe/java/com/google/mediapipe/framework/jni/graph.h"
 #include "mediapipe/java/com/google/mediapipe/framework/jni/jni_util.h"
@@ -53,6 +55,110 @@ int64_t CreatePacketWithContext(jlong context,
       reinterpret_cast<mediapipe::android::Graph*>(context);
   return mediapipe_graph->WrapPacketIntoContext(packet);
 }
+
+#if !MEDIAPIPE_DISABLE_GPU
+mediapipe::GpuBuffer CreateGpuBuffer(JNIEnv* env, jobject thiz, jlong context,
+                                     jint name, jint width, jint height,
+                                     jobject texture_release_callback) {
+  mediapipe::android::Graph* mediapipe_graph =
+      reinterpret_cast<mediapipe::android::Graph*>(context);
+  auto* gpu_resources = mediapipe_graph->GetGpuResources();
+  CHECK(gpu_resources) << "Cannot create a mediapipe::GpuBuffer packet on a "
+                          "graph without GPU support";
+  mediapipe::GlTextureBuffer::DeletionCallback cc_callback;
+
+  if (texture_release_callback) {
+    // TODO: see if this can be cached.
+    // Note: we don't get this from the object because people may pass a
+    // subclass of PacketCreator, and the method is private.
+    jclass my_class =
+        env->FindClass("com/google/mediapipe/framework/PacketCreator");
+    jmethodID release_method =
+        env->GetMethodID(my_class, "releaseWithSyncToken",
+                         "(JL"
+                         "com/google/mediapipe/framework/TextureReleaseCallback"
+                         ";)V");
+    CHECK(release_method);
+    env->DeleteLocalRef(my_class);
+
+    jobject java_callback = env->NewGlobalRef(texture_release_callback);
+    jobject packet_creator = env->NewGlobalRef(thiz);
+    cc_callback = [packet_creator, release_method,
+                   java_callback](mediapipe::GlSyncToken release_token) {
+      JNIEnv* env = mediapipe::java::GetJNIEnv();
+
+      jlong raw_token = reinterpret_cast<jlong>(
+          new mediapipe::GlSyncToken(std::move(release_token)));
+      env->CallVoidMethod(packet_creator, release_method, raw_token,
+                          java_callback);
+
+      // Note that this callback is called only once, and is not saved
+      // anywhere else, so we can and should delete it here.
+      env->DeleteGlobalRef(java_callback);
+      env->DeleteGlobalRef(packet_creator);
+    };
+  }
+  return mediapipe::GpuBuffer(mediapipe::GlTextureBuffer::Wrap(
+      GL_TEXTURE_2D, name, width, height, mediapipe::GpuBufferFormat::kBGRA32,
+      gpu_resources->gl_context(), cc_callback));
+}
+#endif  // !MEDIAPIPE_DISABLE_GPU
+
+// Create a 1, 3, or 4 channel 8-bit ImageFrame shared pointer from a Java
+// ByteBuffer.
+std::unique_ptr<mediapipe::ImageFrame> CreateImageFrameFromByteBuffer(
+    JNIEnv* env, jobject byte_buffer, jint width, jint height,
+    mediapipe::ImageFormat::Format format) {
+  switch (format) {
+    case mediapipe::ImageFormat::SRGBA:
+    case mediapipe::ImageFormat::SRGB:
+    case mediapipe::ImageFormat::GRAY8:
+      break;
+    default:
+      LOG(ERROR) << "Format must be either SRGBA, SRGB, or GRAY8.";
+      return nullptr;
+  }
+
+  auto image_frame = std::make_unique<mediapipe::ImageFrame>(
+      format, width, height,
+      mediapipe::ImageFrame::kGlDefaultAlignmentBoundary);
+
+  const int64_t buffer_size = env->GetDirectBufferCapacity(byte_buffer);
+  const int num_channels = image_frame->NumberOfChannels();
+  const int expected_buffer_size =
+      num_channels == 1 ? width * height : image_frame->PixelDataSize();
+
+  if (buffer_size != expected_buffer_size) {
+    if (num_channels != 1)
+      LOG(ERROR) << "The input image buffer should have 4 bytes alignment.";
+    LOG(ERROR) << "Please check the input buffer size.";
+    LOG(ERROR) << "Buffer size: " << buffer_size
+               << ", Buffer size needed: " << expected_buffer_size
+               << ", Image width: " << width;
+    return nullptr;
+  }
+
+  // Copy buffer data to image frame's pixel_data_.
+  if (num_channels == 1) {
+    const int width_step = image_frame->WidthStep();
+    const char* src_row =
+        reinterpret_cast<const char*>(env->GetDirectBufferAddress(byte_buffer));
+    char* dst_row = reinterpret_cast<char*>(image_frame->MutablePixelData());
+    for (int i = height; i > 0; --i) {
+      std::memcpy(dst_row, src_row, width);
+      src_row += width;
+      dst_row += width_step;
+    }
+  } else {
+    // 3 and 4 channels.
+    const void* buffer_data = env->GetDirectBufferAddress(byte_buffer);
+    std::memcpy(image_frame->MutablePixelData(), buffer_data,
+                image_frame->PixelDataSize());
+  }
+
+  return image_frame;
+}
+
 }  // namespace
 
 JNIEXPORT jlong JNICALL PACKET_CREATOR_METHOD(nativeCreateReferencePacket)(
@@ -69,20 +175,10 @@ JNIEXPORT jlong JNICALL PACKET_CREATOR_METHOD(nativeCreateReferencePacket)(
 JNIEXPORT jlong JNICALL PACKET_CREATOR_METHOD(nativeCreateRgbImage)(
     JNIEnv* env, jobject thiz, jlong context, jobject byte_buffer, jint width,
     jint height) {
-  const void* data = env->GetDirectBufferAddress(byte_buffer);
-  auto image_frame = absl::make_unique<mediapipe::ImageFrame>(
-      mediapipe::ImageFormat::SRGB, width, height,
-      mediapipe::ImageFrame::kGlDefaultAlignmentBoundary);
-  int64_t buffer_size = env->GetDirectBufferCapacity(byte_buffer);
-  if (buffer_size != image_frame->PixelDataSize()) {
-    LOG(ERROR) << "The input image buffer should have 4 bytes alignment.";
-    LOG(ERROR) << "Buffer size: " << buffer_size
-               << ", Buffer size needed: " << image_frame->PixelDataSize()
-               << ", Image width: " << width;
-    return 0L;
-  }
-  std::memcpy(image_frame->MutablePixelData(), data,
-              image_frame->PixelDataSize());
+  auto image_frame = CreateImageFrameFromByteBuffer(
+      env, byte_buffer, width, height, mediapipe::ImageFormat::SRGB);
+  if (nullptr == image_frame) return 0L;
+
   mediapipe::Packet packet = mediapipe::Adopt(image_frame.release());
   return CreatePacketWithContext(context, packet);
 }
@@ -113,28 +209,10 @@ JNIEXPORT jlong JNICALL PACKET_CREATOR_METHOD(nativeCreateRgbImageFromRgba)(
 JNIEXPORT jlong JNICALL PACKET_CREATOR_METHOD(nativeCreateGrayscaleImage)(
     JNIEnv* env, jobject thiz, jlong context, jobject byte_buffer, jint width,
     jint height) {
-  auto image_frame = absl::make_unique<mediapipe::ImageFrame>(
-      mediapipe::ImageFormat::GRAY8, width, height,
-      mediapipe::ImageFrame::kGlDefaultAlignmentBoundary);
-  int64_t buffer_size = env->GetDirectBufferCapacity(byte_buffer);
-  if (buffer_size != width * height) {
-    LOG(ERROR) << "Please check the input buffer size.";
-    LOG(ERROR) << "Buffer size: " << buffer_size
-               << ", Buffer size needed: " << width * height
-               << ", Image height: " << height;
-    return 0L;
-  }
+  auto image_frame = CreateImageFrameFromByteBuffer(
+      env, byte_buffer, width, height, mediapipe::ImageFormat::GRAY8);
+  if (nullptr == image_frame) return 0L;
 
-  int width_step = image_frame->WidthStep();
-  // Copy buffer data to image frame's pixel_data_.
-  const char* src_row =
-      reinterpret_cast<const char*>(env->GetDirectBufferAddress(byte_buffer));
-  char* dst_row = reinterpret_cast<char*>(image_frame->MutablePixelData());
-  for (int i = height; i > 0; --i) {
-    std::memcpy(dst_row, src_row, width);
-    src_row += width;
-    dst_row += width_step;
-  }
   mediapipe::Packet packet = mediapipe::Adopt(image_frame.release());
   return CreatePacketWithContext(context, packet);
 }
@@ -163,20 +241,10 @@ JNIEXPORT jlong JNICALL PACKET_CREATOR_METHOD(nativeCreateFloatImageFrame)(
 JNIEXPORT jlong JNICALL PACKET_CREATOR_METHOD(nativeCreateRgbaImageFrame)(
     JNIEnv* env, jobject thiz, jlong context, jobject byte_buffer, jint width,
     jint height) {
-  const void* rgba_data = env->GetDirectBufferAddress(byte_buffer);
-  auto image_frame = absl::make_unique<mediapipe::ImageFrame>(
-      mediapipe::ImageFormat::SRGBA, width, height,
-      mediapipe::ImageFrame::kGlDefaultAlignmentBoundary);
-  int64_t buffer_size = env->GetDirectBufferCapacity(byte_buffer);
-  if (buffer_size != image_frame->PixelDataSize()) {
-    LOG(ERROR) << "Please check the input buffer size.";
-    LOG(ERROR) << "Buffer size: " << buffer_size
-               << ", Buffer size needed: " << image_frame->PixelDataSize()
-               << ", Image width: " << width;
-    return 0L;
-  }
-  std::memcpy(image_frame->MutablePixelData(), rgba_data,
-              image_frame->PixelDataSize());
+  auto image_frame = CreateImageFrameFromByteBuffer(
+      env, byte_buffer, width, height, mediapipe::ImageFormat::SRGBA);
+  if (nullptr == image_frame) return 0L;
+
   mediapipe::Packet packet = mediapipe::Adopt(image_frame.release());
   return CreatePacketWithContext(context, packet);
 }
@@ -287,8 +355,7 @@ JNIEXPORT jlong JNICALL PACKET_CREATOR_METHOD(nativeCreateMatrix)(
     JNIEnv* env, jobject thiz, jlong context, jint rows, jint cols,
     jfloatArray data) {
   if (env->GetArrayLength(data) != rows * cols) {
-    LOG(ERROR) << "Please check the matrix data size, "
-                  "has to be rows * cols = "
+    LOG(ERROR) << "Please check the matrix data size, has to be rows * cols = "
                << rows * cols;
     return 0L;
   }
@@ -300,54 +367,51 @@ JNIEXPORT jlong JNICALL PACKET_CREATOR_METHOD(nativeCreateMatrix)(
   return CreatePacketWithContext(context, packet);
 }
 
+JNIEXPORT jlong JNICALL PACKET_CREATOR_METHOD(nativeCreateCpuImage)(
+    JNIEnv* env, jobject thiz, jlong context, jobject byte_buffer, jint width,
+    jint height, jint num_channels) {
+  mediapipe::ImageFormat::Format format;
+  switch (num_channels) {
+    case 4:
+      format = mediapipe::ImageFormat::SRGBA;
+      break;
+    case 3:
+      format = mediapipe::ImageFormat::SRGB;
+      break;
+    case 1:
+      format = mediapipe::ImageFormat::GRAY8;
+      break;
+    default:
+      LOG(ERROR) << "Channels must be either 1, 3, or 4.";
+      return 0L;
+  }
+
+  auto image_frame =
+      CreateImageFrameFromByteBuffer(env, byte_buffer, width, height, format);
+  if (nullptr == image_frame) return 0L;
+
+  mediapipe::Packet packet =
+      mediapipe::MakePacket<mediapipe::Image>(std::move(image_frame));
+  return CreatePacketWithContext(context, packet);
+}
+
 #if !MEDIAPIPE_DISABLE_GPU
+
+JNIEXPORT jlong JNICALL PACKET_CREATOR_METHOD(nativeCreateGpuImage)(
+    JNIEnv* env, jobject thiz, jlong context, jint name, jint width,
+    jint height, jobject texture_release_callback) {
+  mediapipe::Packet image_packet =
+      mediapipe::MakePacket<mediapipe::Image>(CreateGpuBuffer(
+          env, thiz, context, name, width, height, texture_release_callback));
+  return CreatePacketWithContext(context, image_packet);
+}
 
 JNIEXPORT jlong JNICALL PACKET_CREATOR_METHOD(nativeCreateGpuBuffer)(
     JNIEnv* env, jobject thiz, jlong context, jint name, jint width,
     jint height, jobject texture_release_callback) {
-  mediapipe::android::Graph* mediapipe_graph =
-      reinterpret_cast<mediapipe::android::Graph*>(context);
-  auto* gpu_resources = mediapipe_graph->GetGpuResources();
-  CHECK(gpu_resources) << "Cannot create a mediapipe::GpuBuffer packet on a "
-                          "graph without GPU support";
-  mediapipe::GlTextureBuffer::DeletionCallback cc_callback;
-
-  if (texture_release_callback) {
-    // TODO: see if this can be cached.
-    // Note: we don't get this from the object because people may pass a
-    // subclass of PacketCreator, and the method is private.
-    jclass my_class =
-        env->FindClass("com/google/mediapipe/framework/PacketCreator");
-    jmethodID release_method =
-        env->GetMethodID(my_class, "releaseWithSyncToken",
-                         "(JL"
-                         "com/google/mediapipe/framework/TextureReleaseCallback"
-                         ";)V");
-    CHECK(release_method);
-    env->DeleteLocalRef(my_class);
-
-    jobject java_callback = env->NewGlobalRef(texture_release_callback);
-    jobject packet_creator = env->NewGlobalRef(thiz);
-    cc_callback = [mediapipe_graph, packet_creator, release_method,
-                   java_callback](mediapipe::GlSyncToken release_token) {
-      JNIEnv* env = mediapipe::java::GetJNIEnv();
-
-      jlong raw_token = reinterpret_cast<jlong>(
-          new mediapipe::GlSyncToken(std::move(release_token)));
-      env->CallVoidMethod(packet_creator, release_method, raw_token,
-                          java_callback);
-
-      // Note that this callback is called only once, and is not saved
-      // anywhere else, so we can and should delete it here.
-      env->DeleteGlobalRef(java_callback);
-      env->DeleteGlobalRef(packet_creator);
-    };
-  }
-  mediapipe::Packet packet = mediapipe::MakePacket<mediapipe::GpuBuffer>(
-      mediapipe::GlTextureBuffer::Wrap(GL_TEXTURE_2D, name, width, height,
-                                       mediapipe::GpuBufferFormat::kBGRA32,
-                                       gpu_resources->gl_context(),
-                                       cc_callback));
+  mediapipe::Packet packet =
+      mediapipe::MakePacket<mediapipe::GpuBuffer>(CreateGpuBuffer(
+          env, thiz, context, name, width, height, texture_release_callback));
   return CreatePacketWithContext(context, packet);
 }
 

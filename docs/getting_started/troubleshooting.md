@@ -97,6 +97,49 @@ linux_opencv/macos_opencv/windows_opencv.BUILD files for your local opencv
 libraries. [This GitHub issue](https://github.com/google/mediapipe/issues/666)
 may also help.
 
+## Python pip install failure
+
+The error message:
+
+```
+ERROR: Could not find a version that satisfies the requirement mediapipe
+ERROR: No matching distribution found for mediapipe
+```
+
+after running `pip install mediapipe` usually indicates that there is no qualified MediaPipe Python for your system.
+Please note that MediaPipe Python PyPI officially supports the **64-bit**
+version of Python 3.7 and above on the following OS:
+
+-   x86_64 Linux
+-   x86_64 macOS 10.15+
+-   amd64 Windows
+
+If the OS is currently supported and you still see this error, please make sure
+that both the Python and pip binary are for Python 3.7 and above. Otherwise,
+please consider building the MediaPipe Python package locally by following the
+instructions [here](python.md#building-mediapipe-python-package).
+
+## Python DLL load failure on Windows
+
+The error message:
+
+```
+ImportError: DLL load failed: The specified module could not be found
+```
+
+usually indicates that the local Windows system is missing Visual C++
+redistributable packages and/or Visual C++ runtime DLLs. This can be solved by
+either installing the official
+[vc_redist.x64.exe](https://support.microsoft.com/en-us/topic/the-latest-supported-visual-c-downloads-2647da03-1eea-4433-9aff-95f26a218cc0)
+or installing the "msvc-runtime" Python package by running
+
+```bash
+$ python -m pip install msvc-runtime
+```
+
+Please note that the "msvc-runtime" Python package is not released or maintained
+by Microsoft.
+
 ## Native method not found
 
 The error message:

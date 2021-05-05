@@ -80,6 +80,7 @@ const std::string MaybeConvertSignatureToTag(
 // which in turn contains a TensorFlow Session ready for execution and a map
 // between tags and tensor names.
 //
+//
 // Example usage:
 // node {
 //   calculator: "TensorFlowSessionFromSavedModelCalculator"

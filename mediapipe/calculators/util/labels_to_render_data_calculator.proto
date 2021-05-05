@@ -59,4 +59,7 @@ message LabelsToRenderDataCalculatorOptions {
     BOTTOM_LEFT = 1;
   }
   optional Location location = 6 [default = TOP_LEFT];
+
+  // Uses Classification.display_name field instead of Classification.label.
+  optional bool use_display_name = 9 [default = false];
 }

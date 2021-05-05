@@ -220,7 +220,7 @@ absl::Status KinematicPathSolver::GetTargetPosition(int* target_position) {
 
 absl::Status KinematicPathSolver::UpdatePixelsPerDegree(
     const float pixels_per_degree) {
-  RET_CHECK_GT(pixels_per_degree_, 0)
+  RET_CHECK_GT(pixels_per_degree, 0)
       << "pixels_per_degree must be larger than 0.";
   pixels_per_degree_ = pixels_per_degree;
   return absl::OkStatus();

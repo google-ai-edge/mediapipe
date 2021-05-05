@@ -451,8 +451,8 @@ cc_library(
 )
 
 cc_library(
-    name = "nonzero_calculator",
-    srcs = ["nonzero_calculator.cc"],
+    name = "non_zero_calculator",
+    srcs = ["non_zero_calculator.cc"],
     visibility = [
         "//visibility:public",
     ],
@@ -462,6 +462,21 @@ cc_library(
         "//mediapipe/framework/port:ret_check",
     ],
     alwayslink = 1,
+)
+
+cc_test(
+    name = "non_zero_calculator_test",
+    size = "small",
+    srcs = ["non_zero_calculator_test.cc"],
+    deps = [
+        ":non_zero_calculator",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:calculator_runner",
+        "//mediapipe/framework:timestamp",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:status",
+        "//mediapipe/framework/tool:validate_type",
+    ],
 )
 
 cc_test(
@@ -661,6 +676,18 @@ cc_library(
         "//mediapipe/framework/port:integral_types",
         "//mediapipe/framework/port:status",
         "@com_google_absl//absl/strings",
+    ],
+    alwayslink = 1,
+)
+
+cc_library(
+    name = "default_side_packet_calculator",
+    srcs = ["default_side_packet_calculator.cc"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:status",
     ],
     alwayslink = 1,
 )

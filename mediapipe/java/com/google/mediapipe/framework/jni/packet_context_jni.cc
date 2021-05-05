@@ -34,6 +34,12 @@ JNIEXPORT jlong JNICALL PACKET_METHOD(nativeGetTimestamp)(JNIEnv* env,
       .Value();
 }
 
+JNIEXPORT jboolean JNICALL PACKET_METHOD(nativeIsEmpty)(JNIEnv* env,
+                                                        jobject thiz,
+                                                        jlong packet) {
+  return mediapipe::android::Graph::GetPacketFromHandle(packet).IsEmpty();
+}
+
 JNIEXPORT jlong JNICALL PACKET_METHOD(nativeCopyPacket)(JNIEnv* env,
                                                         jobject thiz,
                                                         jlong packet) {

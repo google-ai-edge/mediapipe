@@ -22,12 +22,10 @@
 #ifndef MEDIAPIPE_GPU_GPU_BUFFER_MULTI_POOL_H_
 #define MEDIAPIPE_GPU_GPU_BUFFER_MULTI_POOL_H_
 
-#include <deque>
-#include <limits>
-#include <unordered_map>
-
+#include "absl/hash/hash.h"
 #include "absl/synchronization/mutex.h"
 #include "mediapipe/gpu/gpu_buffer.h"
+#include "mediapipe/util/resource_cache.h"
 
 #ifdef __APPLE__
 #include "mediapipe/gpu/pixel_buffer_pool_util.h"
@@ -65,29 +63,22 @@ class GpuBufferMultiPool {
   void FlushTextureCaches();
 #endif  // defined(__APPLE__)
 
-  // This generates a "rol" instruction with both Clang and GCC.
-  inline static std::size_t RotateLeft(std::size_t x, int n) {
-    return (x << n) | (x >> (std::numeric_limits<size_t>::digits - n));
-  }
-
+  // This class is not intended as part of the public api of this class. It is
+  // public only because it is used as a map key type, and the map
+  // implementation needs access to, e.g., the equality operator.
   struct BufferSpec {
     BufferSpec(int w, int h, mediapipe::GpuBufferFormat f)
         : width(w), height(h), format(f) {}
+
+    template <typename H>
+    friend H AbslHashValue(H h, const BufferSpec& spec) {
+      return H::combine(std::move(h), spec.width, spec.height,
+                        static_cast<uint32_t>(spec.format));
+    }
+
     int width;
     int height;
     mediapipe::GpuBufferFormat format;
-  };
-
-  struct BufferSpecHash {
-    std::size_t operator()(const BufferSpec& spec) const {
-      // Width and height are expected to be smaller than half the width of
-      // size_t. We can combine them into a single integer, and then use
-      // std::hash.
-      constexpr int kWidth = std::numeric_limits<size_t>::digits;
-      return std::hash<std::size_t>{}(
-          spec.width ^ RotateLeft(spec.height, kWidth / 2) ^
-          RotateLeft(static_cast<uint32_t>(spec.format), kWidth / 4));
-    }
   };
 
  private:
@@ -97,53 +88,18 @@ class GpuBufferMultiPool {
   using SimplePool = std::shared_ptr<GlTextureBufferPool>;
 #endif  // MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
 
-  struct Entry {
-    Entry(const BufferSpec& spec) : spec(spec) {}
-    Entry* prev = nullptr;
-    Entry* next = nullptr;
-    BufferSpec spec;
-    int request_count = 0;
-    SimplePool pool;
-  };
-
-  // Unlike std::list, this is an intrusive list, meaning that the prev and next
-  // pointers live inside the element. Apart from not requiring an extra
-  // allocation, this means that once we look up an entry by key in the pools_
-  // map we do not need to look it up separately in the list.
-  //
-  class EntryList {
-   public:
-    void Prepend(Entry* entry);
-    void Append(Entry* entry);
-    void Remove(Entry* entry);
-    void InsertAfter(Entry* entry, Entry* after);
-
-    Entry* head() { return head_; }
-    Entry* tail() { return tail_; }
-    size_t size() { return size_; }
-
-   private:
-    Entry* head_ = nullptr;
-    Entry* tail_ = nullptr;
-    size_t size_ = 0;
-  };
-
   SimplePool MakeSimplePool(const BufferSpec& spec);
   // Requests a simple buffer pool for the given spec. This may return nullptr
   // if we have not yet reached a sufficient number of requests to allocate a
   // pool, in which case the caller should invoke GetBufferWithoutPool instead
   // of GetBufferFromSimplePool.
-  SimplePool RequestPool(const BufferSpec& key);
+  SimplePool RequestPool(const BufferSpec& spec);
   GpuBuffer GetBufferFromSimplePool(BufferSpec spec, const SimplePool& pool);
   GpuBuffer GetBufferWithoutPool(const BufferSpec& spec);
-  void Evict(std::vector<SimplePool>* evicted)
-      ABSL_EXCLUSIVE_LOCKS_REQUIRED(mutex_);
 
   absl::Mutex mutex_;
-  std::unordered_map<BufferSpec, Entry, BufferSpecHash> pools_
-      ABSL_GUARDED_BY(mutex_);
-  EntryList entry_list_ ABSL_GUARDED_BY(mutex_);
-  int total_request_count_ = 0;
+  mediapipe::ResourceCache<BufferSpec, SimplePool, absl::Hash<BufferSpec>>
+      cache_ ABSL_GUARDED_BY(mutex_);
 
 #ifdef __APPLE__
   // Texture caches used with this pool.

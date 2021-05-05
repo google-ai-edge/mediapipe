@@ -72,6 +72,7 @@ objc_library(
         ":util",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework:mediapipe_profiling",
+        "//mediapipe/framework/formats:image",
         "//mediapipe/framework/port:map_util",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:source_location",

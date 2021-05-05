@@ -209,6 +209,9 @@ absl::Status RecolorCalculator::Close(CalculatorContext* cc) {
 
 absl::Status RecolorCalculator::RenderCpu(CalculatorContext* cc) {
   if (cc->Inputs().Tag(kMaskCpuTag).IsEmpty()) {
+    cc->Outputs()
+        .Tag(kImageFrameTag)
+        .AddPacket(cc->Inputs().Tag(kImageFrameTag).Value());
     return absl::OkStatus();
   }
   // Get inputs and setup output.
@@ -270,6 +273,9 @@ absl::Status RecolorCalculator::RenderCpu(CalculatorContext* cc) {
 
 absl::Status RecolorCalculator::RenderGpu(CalculatorContext* cc) {
   if (cc->Inputs().Tag(kMaskGpuTag).IsEmpty()) {
+    cc->Outputs()
+        .Tag(kGpuBufferTag)
+        .AddPacket(cc->Inputs().Tag(kGpuBufferTag).Value());
     return absl::OkStatus();
   }
 #if !MEDIAPIPE_DISABLE_GPU
@@ -287,7 +293,7 @@ absl::Status RecolorCalculator::RenderGpu(CalculatorContext* cc) {
 
   // Run recolor shader on GPU.
   {
-    gpu_helper_.BindFramebuffer(dst_tex);  // GL_TEXTURE0
+    gpu_helper_.BindFramebuffer(dst_tex);
 
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(img_tex.target(), img_tex.name());

@@ -15,10 +15,10 @@ nav_order: 30
 ### [Face Detection](https://google.github.io/mediapipe/solutions/face_detection)
 
 *   Face detection model for front-facing/selfie camera:
-    [TFLite model](https://github.com/google/mediapipe/tree/master/mediapipe/models/face_detection_front.tflite),
+    [TFLite model](https://github.com/google/mediapipe/tree/master/mediapipe/modules/face_detection/face_detection_front.tflite),
     [TFLite model quantized for EdgeTPU/Coral](https://github.com/google/mediapipe/tree/master/mediapipe/examples/coral/models/face-detector-quantized_edgetpu.tflite)
 *   Face detection model for back-facing camera:
-    [TFLite model ](https://github.com/google/mediapipe/tree/master/mediapipe/models/face_detection_back.tflite)
+    [TFLite model ](https://github.com/google/mediapipe/tree/master/mediapipe/modules/face_detection/face_detection_back.tflite)
 *   [Model card](https://mediapipe.page.link/blazeface-mc)
 
 ### [Face Mesh](https://google.github.io/mediapipe/solutions/face_mesh)
@@ -49,10 +49,10 @@ nav_order: 30
 
 *   Pose detection model:
     [TFLite model](https://github.com/google/mediapipe/tree/master/mediapipe/modules/pose_detection/pose_detection.tflite)
-*   Full-body pose landmark model:
-    [TFLite model](https://github.com/google/mediapipe/tree/master/mediapipe/modules/pose_landmark/pose_landmark_full_body.tflite)
-*   Upper-body pose landmark model:
-    [TFLite model](https://github.com/google/mediapipe/tree/master/mediapipe/modules/pose_landmark/pose_landmark_upper_body.tflite)
+*   Pose landmark model:
+    [TFLite model (lite)](https://github.com/google/mediapipe/tree/master/mediapipe/modules/pose_landmark/pose_landmark_lite.tflite),
+    [TFLite model (full)](https://github.com/google/mediapipe/tree/master/mediapipe/modules/pose_landmark/pose_landmark_full.tflite),
+    [TFLite model (heavy)](https://github.com/google/mediapipe/tree/master/mediapipe/modules/pose_landmark/pose_landmark_heavy.tflite)
 *   [Model card](https://mediapipe.page.link/blazepose-mc)
 
 ### [Holistic](https://google.github.io/mediapipe/solutions/holistic)

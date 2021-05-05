@@ -47,4 +47,10 @@ message FaceBoxAdjusterCalculatorOptions {
   // and height respectively.
   optional float ipd_face_box_width_ratio = 6 [default = 0.5566];
   optional float ipd_face_box_height_ratio = 7 [default = 0.3131];
+
+  // The max look up angle before considering the eye distance unstable.
+  optional float max_head_tilt_angle_deg = 8 [default = 12.0];
+  // The max amount of time to use an old eye distance when the face look angle
+  // is unstable.
+  optional int32 max_facesize_history_us = 9 [default = 8000000];
 }

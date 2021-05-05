@@ -16,6 +16,7 @@
 import json
 import os
 import tempfile
+from typing import NamedTuple
 
 from absl.testing import absltest
 from absl.testing import parameterized
@@ -24,30 +25,23 @@ import numpy as np
 import numpy.testing as npt
 
 # resources dependency
+# undeclared dependency
+from mediapipe.python.solutions import drawing_utils as mp_drawing
 from mediapipe.python.solutions import pose as mp_pose
 
 TEST_IMAGE_PATH = 'mediapipe/python/solutions/testdata'
 DIFF_THRESHOLD = 30  # pixels
-EXPECTED_UPPER_BODY_LANDMARKS = np.array([[457, 289], [465, 278], [467, 278],
-                                          [470, 277], [461, 279], [461, 279],
-                                          [461, 279], [485, 277], [474, 278],
-                                          [468, 296], [463, 297], [542, 324],
-                                          [449, 327], [614, 321], [376, 318],
-                                          [680, 322], [312, 310], [697, 320],
-                                          [293, 305], [699, 314], [289, 302],
-                                          [693, 316], [296, 305], [515, 451],
-                                          [467, 453]])
-EXPECTED_FULL_BODY_LANDMARKS = np.array([[460, 287], [469, 277], [472, 276],
-                                         [475, 276], [464, 277], [463, 277],
-                                         [463, 276], [492, 277], [472, 277],
-                                         [471, 295], [465, 295], [542, 323],
-                                         [448, 318], [619, 319], [372, 313],
-                                         [695, 316], [296, 308], [717, 313],
-                                         [273, 304], [718, 304], [280, 298],
-                                         [709, 307], [289, 303], [521, 470],
-                                         [459, 466], [626, 533], [364, 500],
-                                         [704, 616], [347, 614], [710, 631],
-                                         [357, 633], [737, 625], [306, 639]])
+EXPECTED_POSE_LANDMARKS = np.array([[460, 287], [469, 277], [472, 276],
+                                    [475, 276], [464, 277], [463, 277],
+                                    [463, 276], [492, 277], [472, 277],
+                                    [471, 295], [465, 295], [542, 323],
+                                    [448, 318], [619, 319], [372, 313],
+                                    [695, 316], [296, 308], [717, 313],
+                                    [273, 304], [718, 304], [280, 298],
+                                    [709, 307], [289, 303], [521, 470],
+                                    [459, 466], [626, 533], [364, 500],
+                                    [704, 616], [347, 614], [710, 631],
+                                    [357, 633], [737, 625], [306, 639]])
 
 
 class PoseTest(parameterized.TestCase):
@@ -59,6 +53,13 @@ class PoseTest(parameterized.TestCase):
 
   def _assert_diff_less(self, array1, array2, threshold):
     npt.assert_array_less(np.abs(array1 - array2), threshold)
+
+  def _annotate(self, frame: np.ndarray, results: NamedTuple, idx: int):
+    mp_drawing.draw_landmarks(frame, results.pose_landmarks,
+                              mp_pose.POSE_CONNECTIONS)
+    path = os.path.join(tempfile.gettempdir(), self.id().split('.')[-1] +
+                                              '_frame_{}.png'.format(idx))
+    cv2.imwrite(path, frame)
 
   def test_invalid_image_shape(self):
     with mp_pose.Pose() as pose:
@@ -73,38 +74,28 @@ class PoseTest(parameterized.TestCase):
       results = pose.process(image)
       self.assertIsNone(results.pose_landmarks)
 
-  @parameterized.named_parameters(('static_image_mode', True, 3),
-                                  ('video_mode', False, 3))
-  def test_upper_body_model(self, static_image_mode, num_frames):
-    image_path = os.path.join(os.path.dirname(__file__), 'testdata/pose.jpg')
-    with mp_pose.Pose(
-        static_image_mode=static_image_mode, upper_body_only=True) as pose:
-      image = cv2.imread(image_path)
-      for _ in range(num_frames):
-        results = pose.process(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
-        self._assert_diff_less(
-            self._landmarks_list_to_array(results.pose_landmarks,
-                                          image.shape)[:, :2],
-            EXPECTED_UPPER_BODY_LANDMARKS, DIFF_THRESHOLD)
-
-  @parameterized.named_parameters(('static_image_mode', True, 3),
-                                  ('video_mode', False, 3))
-  def test_full_body_model(self, static_image_mode, num_frames):
+  @parameterized.named_parameters(('static_lite', True, 0, 3),
+                                  ('static_full', True, 1, 3),
+                                  ('static_heavy', True, 2, 3),
+                                  ('video_lite', False, 0, 3),
+                                  ('video_full', False, 1, 3),
+                                  ('video_heavy', False, 2, 3))
+  def test_on_image(self, static_image_mode, model_complexity, num_frames):
     image_path = os.path.join(os.path.dirname(__file__), 'testdata/pose.jpg')
     image = cv2.imread(image_path)
-
-    with mp_pose.Pose(static_image_mode=static_image_mode) as pose:
-      for _ in range(num_frames):
+    with mp_pose.Pose(static_image_mode=static_image_mode,
+                      model_complexity=model_complexity) as pose:
+      for idx in range(num_frames):
         results = pose.process(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
+        self._annotate(image.copy(), results, idx)
         self._assert_diff_less(
             self._landmarks_list_to_array(results.pose_landmarks,
                                           image.shape)[:, :2],
-            EXPECTED_FULL_BODY_LANDMARKS, DIFF_THRESHOLD)
+            EXPECTED_POSE_LANDMARKS, DIFF_THRESHOLD)
 
   @parameterized.named_parameters(
-      ('full_body', False, 'pose_squats.full_body.npz'),
-      ('upper_body', True, 'pose_squats.upper_body.npz'))
-  def test_on_video(self, upper_body_only, expected_name):
+      ('full', 1, 'pose_squats.full.npz'))
+  def test_on_video(self, model_complexity, expected_name):
     """Tests pose models on a video."""
     # If set to `True` will dump actual predictions to .npz and JSON files.
     dump_predictions = False
@@ -120,8 +111,9 @@ class PoseTest(parameterized.TestCase):
     # Predict pose landmarks for each frame.
     video_cap = cv2.VideoCapture(video_path)
     actual_per_frame = []
-    with mp_pose.Pose(
-        static_image_mode=False, upper_body_only=upper_body_only) as pose:
+    frame_idx = 0
+    with mp_pose.Pose(static_image_mode=False,
+                      model_complexity=model_complexity) as pose:
       while True:
         # Get next frame of the video.
         success, input_frame = video_cap.read()
@@ -135,6 +127,10 @@ class PoseTest(parameterized.TestCase):
                                                        input_frame.shape)
 
         actual_per_frame.append(pose_landmarks)
+
+        input_frame = cv2.cvtColor(input_frame, cv2.COLOR_RGB2BGR)
+        self._annotate(input_frame, result, frame_idx)
+        frame_idx += 1
     actual = np.asarray(actual_per_frame)
 
     if dump_predictions:

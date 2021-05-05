@@ -14,6 +14,8 @@
 
 #include "mediapipe/framework/formats/image.h"
 
+#include "mediapipe/framework/type_map.h"
+
 namespace mediapipe {
 
 // TODO Refactor common code from GpuBufferToImageFrameCalculator
@@ -67,8 +69,7 @@ bool Image::ConvertToGpu() const {
 #else
   if (use_gpu_) return true;  // Already on GPU.
 #if MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
-  auto packet = MakePacket<ImageFrame>(std::move(*image_frame_));
-  image_frame_ = nullptr;
+  auto packet = PointToForeign<ImageFrame>(image_frame_.get());
   CFHolder<CVPixelBufferRef> buffer;
   auto status = CreateCVPixelBufferForImageFramePacket(packet, true, &buffer);
   CHECK_OK(status);
@@ -93,5 +94,8 @@ bool Image::ConvertToGpu() const {
   return true;
 #endif  // MEDIAPIPE_DISABLE_GPU
 }
+
+MEDIAPIPE_REGISTER_TYPE(mediapipe::Image, "::mediapipe::Image", nullptr,
+                        nullptr);
 
 }  // namespace mediapipe

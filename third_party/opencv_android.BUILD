@@ -29,3 +29,14 @@ OPENCVANDROIDSDK_JNI_PATH = "sdk/native/jni/"
     "x86",
     "x86_64",
 ]]
+
+[alias(
+    name = "libopencv_java3_so_" + arch,
+    actual = OPENCVANDROIDSDK_NATIVELIBS_PATH + arch + "/" + OPENCV_LIBRARY_NAME,
+    visibility = ["//visibility:public"],
+) for arch in [
+    "arm64-v8a",
+    "armeabi-v7a",
+    "x86",
+    "x86_64",
+]]

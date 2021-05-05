@@ -202,17 +202,16 @@ absl::Status Graph::AddCallbackHandler(std::string output_stream_name,
 }
 
 absl::Status Graph::AddMultiStreamCallbackHandler(
-    std::vector<std::string> output_stream_names, jobject java_callback) {
+    std::vector<std::string> output_stream_names, jobject java_callback,
+    bool observe_timestamp_bounds) {
   if (!graph_config()) {
     return absl::InternalError("Graph is not loaded!");
   }
   auto handler =
       absl::make_unique<internal::CallbackHandler>(this, java_callback);
-  std::pair<std::string, Packet> side_packet_pair;
-  tool::AddMultiStreamCallback(output_stream_names,
-                               handler->CreatePacketListCallback(),
-                               graph_config(), &side_packet_pair);
-  side_packets_[side_packet_pair.first] = side_packet_pair.second;
+  tool::AddMultiStreamCallback(
+      output_stream_names, handler->CreatePacketListCallback(), graph_config(),
+      &side_packets_, observe_timestamp_bounds);
   EnsureMinimumExecutorStackSizeForJava();
   callback_handlers_.emplace_back(std::move(handler));
   return absl::OkStatus();

@@ -267,8 +267,7 @@ public class PacketCreator {
   /** Creates a {@link Packet} containing a protobuf MessageLite. */
   public Packet createProto(MessageLite message) {
     SerializedMessage serialized = ProtoUtil.pack(message);
-    return Packet.create(
-        nativeCreateProto(mediapipeGraph.getNativeHandle(), serialized));
+    return Packet.create(nativeCreateProto(mediapipeGraph.getNativeHandle(), serialized));
   }
 
   /** Creates a {@link Packet} containing the given camera intrinsics. */
@@ -327,13 +326,59 @@ public class PacketCreator {
             frame));
   }
 
+  /**
+   * Creates a mediapipe::Image with the provided {@link TextureFrame}.
+   *
+   * <p>Note: in order for MediaPipe to be able to access the texture, the application's GL context
+   * must be linked with MediaPipe's. This is ensured by calling {@link
+   * Graph#createGlRunner(String,long)} with the native handle to the application's GL context as
+   * the second argument.
+   */
+  public Packet createImage(TextureFrame frame) {
+    return Packet.create(
+        nativeCreateGpuImage(
+            mediapipeGraph.getNativeHandle(),
+            frame.getTextureName(),
+            frame.getWidth(),
+            frame.getHeight(),
+            frame));
+  }
+
+  /**
+   * Creates a 1, 3, or 4 channel 8-bit Image packet from a U8, RGB, or RGBA byte buffer.
+   *
+   * <p>Use {@link ByteBuffer#allocateDirect} when allocating the buffer.
+   *
+   * <p>For 3 and 4 channel images, the pixel rows should have 4-byte alignment.
+   */
+  public Packet createImage(ByteBuffer buffer, int width, int height, int numChannels) {
+    if (numChannels == 4) {
+      if (buffer.capacity() != width * height * 4) {
+        throw new RuntimeException("buffer doesn't have the correct size.");
+      }
+    } else if (numChannels == 3) {
+      int widthStep = (((width * 3) + 3) / 4) * 4;
+      if (widthStep * height != buffer.capacity()) {
+        throw new RuntimeException("The size of the buffer should be: " + widthStep * height);
+      }
+    } else if (numChannels == 1) {
+      if (width * height != buffer.capacity()) {
+        throw new RuntimeException(
+            "The size of the buffer should be: " + width * height + " but is " + buffer.capacity());
+      }
+    } else {
+      throw new RuntimeException("Channels should be: 1, 3, or 4, but is " + numChannels);
+    }
+    return Packet.create(
+        nativeCreateCpuImage(mediapipeGraph.getNativeHandle(), buffer, width, height, numChannels));
+  }
+
   /** Helper callback adaptor to create the Java {@link GlSyncToken}. This is called by JNI code. */
   private void releaseWithSyncToken(long nativeSyncToken, TextureReleaseCallback releaseCallback) {
     releaseCallback.release(new GraphGlSyncToken(nativeSyncToken));
   }
 
   private native long nativeCreateReferencePacket(long context, long packet);
-  private native long nativeCreateRgbImage(long context, ByteBuffer buffer, int width, int height);
 
   private native long nativeCreateAudioPacket(
       long context, byte[] data, int offset, int numChannels, int numSamples);
@@ -344,32 +389,55 @@ public class PacketCreator {
   private native long nativeCreateRgbImageFromRgba(
       long context, ByteBuffer buffer, int width, int height);
 
+  private native long nativeCreateRgbImage(long context, ByteBuffer buffer, int width, int height);
+
   private native long nativeCreateGrayscaleImage(
       long context, ByteBuffer buffer, int width, int height);
 
   private native long nativeCreateRgbaImageFrame(
       long context, ByteBuffer buffer, int width, int height);
+
   private native long nativeCreateFloatImageFrame(
       long context, FloatBuffer buffer, int width, int height);
+
   private native long nativeCreateInt16(long context, short value);
+
   private native long nativeCreateInt32(long context, int value);
+
   private native long nativeCreateInt64(long context, long value);
+
   private native long nativeCreateFloat32(long context, float value);
+
   private native long nativeCreateFloat64(long context, double value);
+
   private native long nativeCreateBool(long context, boolean value);
+
   private native long nativeCreateString(long context, String value);
+
   private native long nativeCreateVideoHeader(long context, int width, int height);
+
   private native long nativeCreateTimeSeriesHeader(
       long context, int numChannels, double sampleRate);
+
   private native long nativeCreateMatrix(long context, int rows, int cols, float[] data);
+
   private native long nativeCreateGpuBuffer(
       long context, int name, int width, int height, TextureReleaseCallback releaseCallback);
+
+  private native long nativeCreateGpuImage(
+      long context, int name, int width, int height, TextureReleaseCallback releaseCallback);
+
+  private native long nativeCreateCpuImage(
+      long context, ByteBuffer buffer, int width, int height, int numChannels);
+
   private native long nativeCreateInt32Array(long context, int[] data);
+
   private native long nativeCreateFloat32Array(long context, float[] data);
 
   private native long nativeCreateFloat32Vector(long context, float[] data);
 
   private native long nativeCreateStringFromByteArray(long context, byte[] data);
+
   private native long nativeCreateProto(long context, SerializedMessage data);
 
   private native long nativeCreateCalculatorOptions(long context, byte[] data);

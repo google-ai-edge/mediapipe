@@ -120,7 +120,11 @@ absl::Status LabelsToRenderDataCalculator::Process(CalculatorContext* cc) {
     labels.resize(classifications.classification_size());
     scores.resize(classifications.classification_size());
     for (int i = 0; i < classifications.classification_size(); ++i) {
-      labels[i] = classifications.classification(i).label();
+      if (options_.use_display_name()) {
+        labels[i] = classifications.classification(i).display_name();
+      } else {
+        labels[i] = classifications.classification(i).label();
+      }
       scores[i] = classifications.classification(i).score();
     }
   } else {

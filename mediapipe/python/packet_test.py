@@ -232,34 +232,46 @@ class PacketTest(absltest.TestCase):
     self.assertEqual(mp.packet_getter.get_str(output_list['string']), '42')
     self.assertEqual(p.timestamp, 100)
 
-  def test_uint8_image_frame_packet(self):
+  def test_uint8_image_packet(self):
     uint8_img = np.random.randint(
         2**8 - 1,
         size=(random.randrange(3, 100), random.randrange(3, 100), 3),
         dtype=np.uint8)
-    p = mp.packet_creator.create_image_frame(
+    image_frame_packet = mp.packet_creator.create_image_frame(
         mp.ImageFrame(image_format=mp.ImageFormat.SRGB, data=uint8_img))
-    output_image_frame = mp.packet_getter.get_image_frame(p)
+    output_image_frame = mp.packet_getter.get_image_frame(image_frame_packet)
     self.assertTrue(np.array_equal(output_image_frame.numpy_view(), uint8_img))
+    image_packet = mp.packet_creator.create_image(
+        mp.Image(image_format=mp.ImageFormat.SRGB, data=uint8_img))
+    output_image = mp.packet_getter.get_image(image_packet)
+    self.assertTrue(np.array_equal(output_image.numpy_view(), uint8_img))
 
-  def test_uint16_image_frame_packet(self):
+  def test_uint16_image_packet(self):
     uint16_img = np.random.randint(
         2**16 - 1,
         size=(random.randrange(3, 100), random.randrange(3, 100), 4),
         dtype=np.uint16)
-    p = mp.packet_creator.create_image_frame(
+    image_frame_packet = mp.packet_creator.create_image_frame(
         mp.ImageFrame(image_format=mp.ImageFormat.SRGBA64, data=uint16_img))
-    output_image_frame = mp.packet_getter.get_image_frame(p)
+    output_image_frame = mp.packet_getter.get_image_frame(image_frame_packet)
     self.assertTrue(np.array_equal(output_image_frame.numpy_view(), uint16_img))
+    image_packet = mp.packet_creator.create_image(
+        mp.Image(image_format=mp.ImageFormat.SRGBA64, data=uint16_img))
+    output_image = mp.packet_getter.get_image(image_packet)
+    self.assertTrue(np.array_equal(output_image.numpy_view(), uint16_img))
 
   def test_float_image_frame_packet(self):
     float_img = np.float32(
         np.random.random_sample(
             (random.randrange(3, 100), random.randrange(3, 100), 2)))
-    p = mp.packet_creator.create_image_frame(
+    image_frame_packet = mp.packet_creator.create_image_frame(
         mp.ImageFrame(image_format=mp.ImageFormat.VEC32F2, data=float_img))
-    output_image_frame = mp.packet_getter.get_image_frame(p)
+    output_image_frame = mp.packet_getter.get_image_frame(image_frame_packet)
     self.assertTrue(np.allclose(output_image_frame.numpy_view(), float_img))
+    image_packet = mp.packet_creator.create_image(
+        mp.Image(image_format=mp.ImageFormat.VEC32F2, data=float_img))
+    output_image = mp.packet_getter.get_image(image_packet)
+    self.assertTrue(np.array_equal(output_image.numpy_view(), float_img))
 
   def test_image_frame_packet_creation_copy_mode(self):
     w, h, channels = random.randrange(3, 100), random.randrange(3, 100), 3
@@ -357,6 +369,107 @@ class PacketTest(absltest.TestCase):
                        output_frame.numpy_view()))
     del p
     del output_frame
+    gc.collect()
+    # Destroying the packet also doesn't affect the ref count becuase of the
+    # copy mode.
+    self.assertEqual(sys.getrefcount(rgb_data), initial_ref_count)
+
+  def test_image_packet_creation_copy_mode(self):
+    w, h, channels = random.randrange(3, 100), random.randrange(3, 100), 3
+    rgb_data = np.random.randint(255, size=(h, w, channels), dtype=np.uint8)
+    # rgb_data is c_contiguous.
+    self.assertTrue(rgb_data.flags.c_contiguous)
+    initial_ref_count = sys.getrefcount(rgb_data)
+    p = mp.packet_creator.create_image(
+        image_format=mp.ImageFormat.SRGB, data=rgb_data)
+    # copy mode doesn't increase the ref count of the data.
+    self.assertEqual(sys.getrefcount(rgb_data), initial_ref_count)
+
+    rgb_data = rgb_data[:, :, ::-1]
+    # rgb_data is now not c_contiguous. But, copy mode shouldn't be affected.
+    self.assertFalse(rgb_data.flags.c_contiguous)
+    initial_ref_count = sys.getrefcount(rgb_data)
+    p = mp.packet_creator.create_image(
+        image_format=mp.ImageFormat.SRGB, data=rgb_data)
+    # copy mode doesn't increase the ref count of the data.
+    self.assertEqual(sys.getrefcount(rgb_data), initial_ref_count)
+
+    output_image = mp.packet_getter.get_image(p)
+    self.assertEqual(output_image.height, h)
+    self.assertEqual(output_image.width, w)
+    self.assertEqual(output_image.channels, channels)
+    self.assertTrue(np.array_equal(output_image.numpy_view(), rgb_data))
+
+    del p
+    del output_image
+    gc.collect()
+    # Destroying the packet also doesn't affect the ref count becuase of the
+    # copy mode.
+    self.assertEqual(sys.getrefcount(rgb_data), initial_ref_count)
+
+  def test_image_packet_creation_reference_mode(self):
+    w, h, channels = random.randrange(3, 100), random.randrange(3, 100), 3
+    rgb_data = np.random.randint(255, size=(h, w, channels), dtype=np.uint8)
+    rgb_data.flags.writeable = False
+    initial_ref_count = sys.getrefcount(rgb_data)
+    image_packet = mp.packet_creator.create_image(
+        image_format=mp.ImageFormat.SRGB, data=rgb_data)
+    # Reference mode increase the ref count of the rgb_data by 1.
+    self.assertEqual(sys.getrefcount(rgb_data), initial_ref_count + 1)
+    del image_packet
+    gc.collect()
+    # Deleting image_packet should decrese the ref count of rgb_data by 1.
+    self.assertEqual(sys.getrefcount(rgb_data), initial_ref_count)
+    rgb_data_copy = np.copy(rgb_data)
+    # rgb_data_copy is a copy of rgb_data and should not increase the ref count.
+    self.assertEqual(sys.getrefcount(rgb_data), initial_ref_count)
+    text_config = """
+      node {
+        calculator: 'PassThroughCalculator'
+        input_side_packet: "in"
+        output_side_packet: "out"
+      }
+    """
+    graph = mp.CalculatorGraph(graph_config=text_config)
+    graph.start_run(
+        input_side_packets={
+            'in':
+                mp.packet_creator.create_image(
+                    image_format=mp.ImageFormat.SRGB, data=rgb_data)
+        })
+    # reference mode increase the ref count of the rgb_data by 1.
+    self.assertEqual(sys.getrefcount(rgb_data), initial_ref_count + 1)
+    graph.wait_until_done()
+    output_packet = graph.get_output_side_packet('out')
+    del rgb_data
+    del graph
+    gc.collect()
+    # The pixel data of the output image frame packet should still be valid
+    # after the graph and the original rgb_data data are deleted.
+    self.assertTrue(
+        np.array_equal(
+            mp.packet_getter.get_image(output_packet).numpy_view(),
+            rgb_data_copy))
+
+  def test_image_packet_copy_creation_with_cropping(self):
+    w, h, channels = random.randrange(40, 100), random.randrange(40, 100), 3
+    channels, offset = 3, 10
+    rgb_data = np.random.randint(255, size=(h, w, channels), dtype=np.uint8)
+    initial_ref_count = sys.getrefcount(rgb_data)
+    p = mp.packet_creator.create_image(
+        image_format=mp.ImageFormat.SRGB,
+        data=rgb_data[offset:-offset, offset:-offset, :])
+    # copy mode doesn't increase the ref count of the data.
+    self.assertEqual(sys.getrefcount(rgb_data), initial_ref_count)
+    output_image = mp.packet_getter.get_image(p)
+    self.assertEqual(output_image.height, h - 2 * offset)
+    self.assertEqual(output_image.width, w - 2 * offset)
+    self.assertEqual(output_image.channels, channels)
+    self.assertTrue(
+        np.array_equal(rgb_data[offset:-offset, offset:-offset, :],
+                       output_image.numpy_view()))
+    del p
+    del output_image
     gc.collect()
     # Destroying the packet also doesn't affect the ref count becuase of the
     # copy mode.

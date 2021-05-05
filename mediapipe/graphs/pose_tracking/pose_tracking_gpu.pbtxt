@@ -29,9 +29,20 @@ node {
   output_stream: "throttled_input_video"
 }
 
+node {
+  calculator: "ConstantSidePacketCalculator"
+  output_side_packet: "PACKET:model_complexity"
+  node_options: {
+    [type.googleapis.com/mediapipe.ConstantSidePacketCalculatorOptions]: {
+      packet { int_value: 1 }
+    }
+  }
+}
+
 # Subgraph that detects poses and corresponding landmarks.
 node {
   calculator: "PoseLandmarkGpu"
+  input_side_packet: "MODEL_COMPLEXITY:model_complexity"
   input_stream: "IMAGE:throttled_input_video"
   output_stream: "LANDMARKS:pose_landmarks"
   output_stream: "DETECTION:pose_detection"

@@ -34,6 +34,7 @@ pybind_extension(
     deps = [
         ":builtin_calculators",
         "//mediapipe/python/pybind:calculator_graph",
+        "//mediapipe/python/pybind:image",
         "//mediapipe/python/pybind:image_frame",
         "//mediapipe/python/pybind:matrix",
         "//mediapipe/python/pybind:packet",

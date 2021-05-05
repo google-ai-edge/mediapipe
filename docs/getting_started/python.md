@@ -26,7 +26,7 @@ You can, for instance, activate a Python virtual environment:
 $ python3 -m venv mp_env && source mp_env/bin/activate
 ```
 
-Install MediaPipe Python package and start Python intepreter:
+Install MediaPipe Python package and start Python interpreter:
 
 ```bash
 (mp_env)$ pip install mediapipe

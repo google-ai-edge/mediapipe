@@ -392,7 +392,7 @@ struct RegionFlowComputation::FrameTrackingData {
 
   void BuildPyramid(int levels, int window_size, bool with_derivative) {
     if (use_cv_tracking) {
-#if CV_MAJOR_VERSION == 3
+#if CV_MAJOR_VERSION >= 3
       // No-op if not called for opencv 3.0 (c interface computes
       // pyramids in place).
       // OpenCV changed how window size gets specified from our radius setting
@@ -761,7 +761,7 @@ RegionFlowComputation::RegionFlowComputation(
 
   // Tracking algorithm dependent on cv support and flag.
   use_cv_tracking_ = options_.tracking_options().use_cv_tracking_algorithm();
-#if CV_MAJOR_VERSION != 3
+#if CV_MAJOR_VERSION < 3
   if (use_cv_tracking_) {
     LOG(WARNING) << "Compiled without OpenCV 3.0 but cv_tracking_algorithm "
                  << "was requested. Falling back to older algorithm";
@@ -2577,7 +2577,7 @@ void RegionFlowComputation::TrackFeatures(FrameTrackingData* from_data_ptr,
                          input_mean, gain_image_.get());
   }
 
-#if CV_MAJOR_VERSION == 3
+#if CV_MAJOR_VERSION >= 3
   // OpenCV changed how window size gets specified from our radius setting
   // < 2.2 to diameter in 2.2+.
   const cv::Size cv_window_size(track_win_size * 2 + 1, track_win_size * 2 + 1);
@@ -2599,7 +2599,7 @@ void RegionFlowComputation::TrackFeatures(FrameTrackingData* from_data_ptr,
   feature_track_error_.resize(num_features);
   feature_status_.resize(num_features);
   if (use_cv_tracking_) {
-#if CV_MAJOR_VERSION == 3
+#if CV_MAJOR_VERSION >= 3
     if (gain_correction) {
       if (!frame1_gain_reference) {
         input_frame1 = cv::_InputArray(*gain_image_);
@@ -2788,7 +2788,7 @@ void RegionFlowComputation::TrackFeatures(FrameTrackingData* from_data_ptr,
     feature_status_.resize(num_to_verify);
 
     if (use_cv_tracking_) {
-#if CV_MAJOR_VERSION == 3
+#if CV_MAJOR_VERSION >= 3
       cv::calcOpticalFlowPyrLK(input_frame2, input_frame1, verify_features,
                                verify_features_tracked, feature_status_,
                                verify_track_error, cv_window_size,

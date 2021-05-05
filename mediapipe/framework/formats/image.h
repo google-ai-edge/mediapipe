@@ -72,8 +72,8 @@ class Image {
 
   // Creates an Image representing the same image content as the ImageFrame
   // the input shared pointer points to, and retaining shared ownership.
-  explicit Image(ImageFrameSharedPtr frame_buffer)
-      : image_frame_(std::move(frame_buffer)) {
+  explicit Image(ImageFrameSharedPtr image_frame)
+      : image_frame_(std::move(image_frame)) {
     use_gpu_ = false;
     pixel_mutex_ = std::make_shared<absl::Mutex>();
   }

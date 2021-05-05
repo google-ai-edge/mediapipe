@@ -1,6 +1,5 @@
 absl-py
 attrs>=19.1.0
-dataclasses
 numpy
 opencv-contrib-python
 protobuf>=3.11.4

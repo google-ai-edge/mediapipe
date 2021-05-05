@@ -563,8 +563,14 @@ class GlFenceSyncPoint : public GlSyncPoint {
 
   void WaitOnGpu() override {
     if (!sync_) return;
-    // TODO: do not wait if we are already on the same context?
+      // TODO: do not wait if we are already on the same context?
+      // WebGL2 specifies a waitSync call, but since cross-context
+      // synchronization is not supported, it's actually a no-op. Firefox prints
+      // a warning when it's called, so let's just skip the call. See
+      // b/184637485 for details.
+#ifndef __EMSCRIPTEN__
     glWaitSync(sync_, 0, GL_TIMEOUT_IGNORED);
+#endif
   }
 
   bool IsReady() override {

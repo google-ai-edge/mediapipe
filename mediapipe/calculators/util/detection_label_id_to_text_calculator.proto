@@ -31,4 +31,9 @@ message DetectionLabelIdToTextCalculatorOptions {
   // label: "label for id 1"
   // ...
   repeated string label = 2;
+
+  // By default, the `label_id` field from the input is stripped if a text label
+  // could be found. By setting this field to true, it is always copied to the
+  // output detections.
+  optional bool keep_label_id = 3;
 }

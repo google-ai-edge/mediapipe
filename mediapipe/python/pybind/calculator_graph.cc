@@ -394,13 +394,15 @@ void CalculatorGraphSubmodule(pybind11::module* module) {
   calculator_graph.def(
       "observe_output_stream",
       [](CalculatorGraph* self, const std::string& stream_name,
-         pybind11::function callback_fn) {
+         pybind11::function callback_fn, bool observe_timestamp_bounds) {
         RaisePyErrorIfNotOk(self->ObserveOutputStream(
-            stream_name, [callback_fn, stream_name](const Packet& packet) {
+            stream_name,
+            [callback_fn, stream_name](const Packet& packet) {
               absl::MutexLock lock(&callback_mutex);
               callback_fn(stream_name, packet);
               return absl::OkStatus();
-            }));
+            },
+            observe_timestamp_bounds));
       },
       R"doc(Observe the named output stream.
 
@@ -411,6 +413,8 @@ void CalculatorGraphSubmodule(pybind11::module* module) {
     stream_name: The name of the output stream.
     callback_fn: The callback function to invoke on every packet emitted by the
       output stream.
+    observe_timestamp_bounds: If true, emits an empty packet at
+      timestamp_bound -1 when timestamp bound changes.
 
   Raises:
     RuntimeError: If the calculator graph isn't initialized or the stream
@@ -422,7 +426,9 @@ void CalculatorGraphSubmodule(pybind11::module* module) {
     graph.observe_output_stream('out',
                                 lambda stream_name, packet: out.append(packet))
 
-)doc");
+)doc",
+      py::arg("stream_name"), py::arg("callback_fn"),
+      py::arg("observe_timestamp_bounds") = false);
 
   calculator_graph.def(
       "close",

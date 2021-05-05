@@ -61,8 +61,7 @@ objc_library(
         "//mediapipe/modules/hand_landmark:handedness.txt",
         "//mediapipe/modules/holistic_landmark:hand_recrop.tflite",
         "//mediapipe/modules/pose_detection:pose_detection.tflite",
-        "//mediapipe/modules/pose_landmark:pose_landmark_full_body.tflite",
-        "//mediapipe/modules/pose_landmark:pose_landmark_upper_body.tflite",
+        "//mediapipe/modules/pose_landmark:pose_landmark_full.tflite",
     ],
     deps = [
         "//mediapipe/examples/ios/common:CommonMediaPipeAppLibrary",

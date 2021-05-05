@@ -36,7 +36,7 @@ input_stream: "IMAGE:image"
 # this packet so that they don't wait for it unnecessarily.
 output_stream: "DETECTIONS:detections"
 
-# Transforms the input image into a 128x128 while keeping the aspect ratio
+# Transforms the input image into a 224x224 one while keeping the aspect ratio
 # (what is expected by the corresponding model), resulting in potential
 # letterboxing in the transformed image.
 node: {
@@ -46,8 +46,8 @@ node: {
   output_stream: "LETTERBOX_PADDING:letterbox_padding"
   options: {
     [mediapipe.ImageToTensorCalculatorOptions.ext] {
-      output_tensor_width: 128
-      output_tensor_height: 128
+      output_tensor_width: 224
+      output_tensor_height: 224
       keep_aspect_ratio: true
       output_tensor_float_range {
         min: -1.0
@@ -74,6 +74,7 @@ node {
       model_path: "mediapipe/modules/pose_detection/pose_detection.tflite"
       delegate { xnnpack {} }
     }
+    #
   }
 }
 
@@ -84,17 +85,18 @@ node {
   output_side_packet: "anchors"
   options: {
     [mediapipe.SsdAnchorsCalculatorOptions.ext] {
-      num_layers: 4
+      num_layers: 5
       min_scale: 0.1484375
       max_scale: 0.75
-      input_size_height: 128
-      input_size_width: 128
+      input_size_height: 224
+      input_size_width: 224
       anchor_offset_x: 0.5
       anchor_offset_y: 0.5
       strides: 8
       strides: 16
-      strides: 16
-      strides: 16
+      strides: 32
+      strides: 32
+      strides: 32
       aspect_ratios: 1.0
       fixed_anchor_size: true
     }
@@ -112,7 +114,7 @@ node {
   options: {
     [mediapipe.TensorsToDetectionsCalculatorOptions.ext] {
       num_classes: 1
-      num_boxes: 896
+      num_boxes: 2254
       num_coords: 12
       box_coord_offset: 0
       keypoint_coord_offset: 4
@@ -121,10 +123,10 @@ node {
       sigmoid_score: true
       score_clipping_thresh: 100.0
       reverse_output_order: true
-      x_scale: 128.0
-      y_scale: 128.0
-      h_scale: 128.0
-      w_scale: 128.0
+      x_scale: 224.0
+      y_scale: 224.0
+      h_scale: 224.0
+      w_scale: 224.0
       min_score_thresh: 0.5
     }
   }

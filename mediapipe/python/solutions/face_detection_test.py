@@ -14,6 +14,8 @@
 """Tests for mediapipe.python.solutions.face_detection."""
 
 import os
+import tempfile  # pylint: disable=unused-import
+from typing import NamedTuple
 
 from absl.testing import absltest
 import cv2
@@ -21,15 +23,24 @@ import numpy as np
 import numpy.testing as npt
 
 # resources dependency
+# undeclared dependency
+from mediapipe.python.solutions import drawing_utils as mp_drawing
 from mediapipe.python.solutions import face_detection as mp_faces
 
 TEST_IMAGE_PATH = 'mediapipe/python/solutions/testdata'
-EXPECTED_FACE_KEY_POINTS = [[182, 368], [186, 467], [236, 416], [284, 415],
-                            [203, 310], [212, 521]]
-DIFF_THRESHOLD = 10  # pixels
+EXPECTED_FACE_KEY_POINTS = [[182, 363], [186, 460], [241, 420], [284, 417],
+                            [199, 295], [198, 502]]
+DIFF_THRESHOLD = 5  # pixels
 
 
 class FaceDetectionTest(absltest.TestCase):
+
+  def _annotate(self, frame: np.ndarray, results: NamedTuple, idx: int):
+    for detection in results.detections:
+      mp_drawing.draw_detection(frame, detection)
+    path = os.path.join(tempfile.gettempdir(), self.id().split('.')[-1] +
+                                              '_frame_{}.png'.format(idx))
+    cv2.imwrite(path, frame)
 
   def test_invalid_image_shape(self):
     with mp_faces.FaceDetection() as faces:
@@ -46,11 +57,11 @@ class FaceDetectionTest(absltest.TestCase):
 
   def test_face(self):
     image_path = os.path.join(os.path.dirname(__file__), 'testdata/face.jpg')
-    image = cv2.flip(cv2.imread(image_path), 1)
-
+    image = cv2.imread(image_path)
     with mp_faces.FaceDetection(min_detection_confidence=0.5) as faces:
-      for _ in range(5):
+      for idx in range(5):
         results = faces.process(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
+        self._annotate(image.copy(), results, idx)
         location_data = results.detections[0].location_data
         x = [keypoint.x for keypoint in location_data.relative_keypoints]
         y = [keypoint.y for keypoint in location_data.relative_keypoints]

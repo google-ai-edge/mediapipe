@@ -33,6 +33,7 @@ get_float_list = _packet_getter.get_float_list
 get_str_list = _packet_getter.get_str_list
 get_packet_list = _packet_getter.get_packet_list
 get_str_to_packet_dict = _packet_getter.get_str_to_packet_dict
+get_image = _packet_getter.get_image
 get_image_frame = _packet_getter.get_image_frame
 get_matrix = _packet_getter.get_matrix
 

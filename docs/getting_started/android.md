@@ -57,7 +57,7 @@ Please verify all the necessary packages are installed.
 *   Android SDK Build-Tools 28 or 29
 *   Android SDK Platform-Tools 28 or 29
 *   Android SDK Tools 26.1.1
-*   Android NDK 17c or above
+*   Android NDK 19c or above
 
 ### Option 1: Build with Bazel in Command Line
 
@@ -111,7 +111,7 @@ app:
     *   Verify that Android SDK Build-Tools 28 or 29 is installed.
     *   Verify that Android SDK Platform-Tools 28 or 29 is installed.
     *   Verify that Android SDK Tools 26.1.1 is installed.
-    *   Verify that Android NDK 17c or above is installed.
+    *   Verify that Android NDK 19c or above is installed.
     *   Take note of the Android NDK Location, e.g.,
         `/usr/local/home/Android/Sdk/ndk-bundle` or
         `/usr/local/home/Android/Sdk/ndk/20.0.5594570`.

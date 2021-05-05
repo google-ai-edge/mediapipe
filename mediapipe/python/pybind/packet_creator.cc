@@ -16,6 +16,7 @@
 
 #include "absl/memory/memory.h"
 #include "absl/strings/str_cat.h"
+#include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/formats/matrix.h"
 #include "mediapipe/framework/packet.h"
 #include "mediapipe/framework/port/integral_types.h"
@@ -43,6 +44,28 @@ Packet CreateImageFramePacket(mediapipe::ImageFormat::Format format,
   } else if (format == mediapipe::ImageFormat::VEC32F1 ||
              format == mediapipe::ImageFormat::VEC32F2) {
     return Adopt(CreateImageFrame<float>(format, data, copy).release());
+  }
+  throw RaisePyError(PyExc_RuntimeError,
+                     absl::StrCat("Unsupported ImageFormat: ", format).c_str());
+  return Packet();
+}
+
+Packet CreateImagePacket(mediapipe::ImageFormat::Format format,
+                         const py::array& data, bool copy) {
+  if (format == mediapipe::ImageFormat::SRGB ||
+      format == mediapipe::ImageFormat::SRGBA ||
+      format == mediapipe::ImageFormat::GRAY8) {
+    return MakePacket<Image>(std::make_shared<ImageFrame>(
+        std::move(*CreateImageFrame<uint8>(format, data, copy).release())));
+  } else if (format == mediapipe::ImageFormat::GRAY16 ||
+             format == mediapipe::ImageFormat::SRGB48 ||
+             format == mediapipe::ImageFormat::SRGBA64) {
+    return MakePacket<Image>(std::make_shared<ImageFrame>(
+        std::move(*CreateImageFrame<uint16>(format, data, copy).release())));
+  } else if (format == mediapipe::ImageFormat::VEC32F1 ||
+             format == mediapipe::ImageFormat::VEC32F2) {
+    return MakePacket<Image>(std::make_shared<ImageFrame>(
+        std::move(*CreateImageFrame<float>(format, data, copy).release())));
   }
   throw RaisePyError(PyExc_RuntimeError,
                      absl::StrCat("Unsupported ImageFormat: ", format).c_str());
@@ -586,6 +609,10 @@ void InternalPacketCreators(pybind11::module* m) {
          py::arg("format"), py::arg("data").noconvert(), py::arg("copy"),
          py::return_value_policy::move);
 
+  m->def("_create_image_from_pixel_data", &CreateImagePacket, py::arg("format"),
+         py::arg("data").noconvert(), py::arg("copy"),
+         py::return_value_policy::move);
+
   m->def(
       "_create_image_frame_from_image_frame",
       [](ImageFrame& image_frame) {
@@ -597,6 +624,19 @@ void InternalPacketCreators(pybind11::module* m) {
         return Adopt(image_frame_copy.release());
       },
       py::arg("image_frame").noconvert(), py::return_value_policy::move);
+
+  m->def(
+      "_create_image_from_image",
+      [](Image& image) {
+        auto image_frame_copy = absl::make_unique<ImageFrame>();
+        // Set alignment_boundary to kGlDefaultAlignmentBoundary so that
+        // both GPU and CPU can process it.
+        image_frame_copy->CopyFrom(*image.GetImageFrameSharedPtr(),
+                                   ImageFrame::kGlDefaultAlignmentBoundary);
+        return MakePacket<Image>(std::make_shared<ImageFrame>(
+            std::move(*image_frame_copy.release())));
+      },
+      py::arg("image").noconvert(), py::return_value_policy::move);
 
   m->def(
       "_create_proto",

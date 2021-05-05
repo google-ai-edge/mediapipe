@@ -34,6 +34,11 @@ JNIEXPORT jlong JNICALL PACKET_METHOD(nativeGetTimestamp)(JNIEnv* env,
                                                           jobject thiz,
                                                           jlong packet);
 
+// Returns true if the packet is empty.
+JNIEXPORT jboolean JNICALL PACKET_METHOD(nativeIsEmpty)(JNIEnv* env,
+                                                        jobject thiz,
+                                                        jlong packet);
+
 // Make a copy of a mediapipe packet, basically increase the reference count.
 JNIEXPORT jlong JNICALL PACKET_METHOD(nativeCopyPacket)(JNIEnv* env,
                                                         jobject thiz,

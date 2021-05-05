@@ -191,7 +191,7 @@ GRAPH_METHOD(nativeAddPacketCallback)(JNIEnv* env, jobject thiz, jlong context,
 
 JNIEXPORT void JNICALL GRAPH_METHOD(nativeAddMultiStreamCallback)(
     JNIEnv* env, jobject thiz, jlong context, jobject stream_names,
-    jobject callback) {
+    jobject callback, jboolean observe_timestamp_bounds) {
   mediapipe::android::Graph* mediapipe_graph =
       reinterpret_cast<mediapipe::android::Graph*>(context);
   std::vector<std::string> output_stream_names =
@@ -214,7 +214,8 @@ JNIEXPORT void JNICALL GRAPH_METHOD(nativeAddMultiStreamCallback)(
     return;
   }
   ThrowIfError(env, mediapipe_graph->AddMultiStreamCallbackHandler(
-                        output_stream_names, global_callback_ref));
+                        output_stream_names, global_callback_ref,
+                        observe_timestamp_bounds));
 }
 
 JNIEXPORT jlong JNICALL GRAPH_METHOD(nativeAddSurfaceOutput)(

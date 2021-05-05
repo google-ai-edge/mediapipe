@@ -1,13 +1,6 @@
 package(
-    default_visibility = [":preview_users"],
+    default_visibility = ["//visibility:public"],
     features = ["-use_header_modules"],
-)
-
-package_group(
-    name = "preview_users",
-    packages = [
-        "//mediapipe/...",
-    ],
 )
 
 licenses(["notice"])

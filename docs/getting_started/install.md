@@ -471,7 +471,7 @@ next section.
 4.  Install Visual C++ Build Tools 2019 and WinSDK
 
     Go to
-    [the VisualStudio website](ttps://visualstudio.microsoft.com/visual-cpp-build-tools),
+    [the VisualStudio website](https://visualstudio.microsoft.com/visual-cpp-build-tools),
     download build tools, and install Microsoft Visual C++ 2019 Redistributable
     and Microsoft Build Tools 2019.
 
@@ -738,7 +738,7 @@ common build issues.
     root@bca08b91ff63:/mediapipe# bash ./setup_android_sdk_and_ndk.sh
 
     # Should print:
-    # Android NDK is now installed. Consider setting $ANDROID_NDK_HOME environment variable to be /root/Android/Sdk/ndk-bundle/android-ndk-r18b
+    # Android NDK is now installed. Consider setting $ANDROID_NDK_HOME environment variable to be /root/Android/Sdk/ndk-bundle/android-ndk-r19c
     # Set android_ndk_repository and android_sdk_repository in WORKSPACE
     # Done
 

@@ -41,7 +41,6 @@ from mediapipe.python.solutions.hands import HAND_CONNECTIONS
 from mediapipe.python.solutions.hands import HandLandmark
 from mediapipe.python.solutions.pose import POSE_CONNECTIONS
 from mediapipe.python.solutions.pose import PoseLandmark
-from mediapipe.python.solutions.pose import UPPER_BODY_POSE_CONNECTIONS
 # pylint: enable=unused-import
 
 BINARYPB_FILE_PATH = 'mediapipe/modules/holistic_landmark/holistic_landmark_cpu.binarypb'
@@ -60,7 +59,7 @@ class Holistic(SolutionBase):
 
   def __init__(self,
                static_image_mode=False,
-               upper_body_only=False,
+               model_complexity=1,
                smooth_landmarks=True,
                min_detection_confidence=0.5,
                min_tracking_confidence=0.5):
@@ -70,9 +69,8 @@ class Holistic(SolutionBase):
       static_image_mode: Whether to treat the input images as a batch of static
         and possibly unrelated images, or a video stream. See details in
         https://solutions.mediapipe.dev/holistic#static_image_mode.
-      upper_body_only: Whether to track the full set of 33 pose landmarks or
-        only the 25 upper-body pose landmarks. See details in
-        https://solutions.mediapipe.dev/holistic#upper_body_only.
+      model_complexity: Complexity of the pose landmark model: 0, 1 or 2. See
+        details in https://solutions.mediapipe.dev/holistic#model_complexity.
       smooth_landmarks: Whether to filter landmarks across different input
         images to reduce jitter. See details in
         https://solutions.mediapipe.dev/holistic#smooth_landmarks.
@@ -86,7 +84,7 @@ class Holistic(SolutionBase):
     super().__init__(
         binary_graph_path=BINARYPB_FILE_PATH,
         side_inputs={
-            'upper_body_only': upper_body_only,
+            'model_complexity': model_complexity,
             'smooth_landmarks': smooth_landmarks and not static_image_mode,
         },
         calculator_params={

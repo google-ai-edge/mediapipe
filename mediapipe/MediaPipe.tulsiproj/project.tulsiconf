@@ -22,7 +22,6 @@
     "mediapipe/examples/ios/objectdetectiongpu",
     "mediapipe/examples/ios/objectdetectiontrackinggpu",
     "mediapipe/examples/ios/posetrackinggpu",
-    "mediapipe/examples/ios/upperbodyposetrackinggpu",
     "mediapipe/objc"
   ],
   "projectName" : "Mediapipe",

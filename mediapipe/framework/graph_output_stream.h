@@ -52,7 +52,8 @@ class GraphOutputStream {
   // is not transferred to the graph output stream object.
   absl::Status Initialize(const std::string& stream_name,
                           const PacketType* packet_type,
-                          OutputStreamManager* output_stream_manager);
+                          OutputStreamManager* output_stream_manager,
+                          bool observe_timestamp_bounds = false);
 
   // Installs callbacks into its GraphOutputStreamHandler.
   virtual void PrepareForRun(std::function<void()> notification_callback,
@@ -99,6 +100,10 @@ class GraphOutputStream {
     }
   };
 
+  bool observe_timestamp_bounds_;
+  absl::Mutex mutex_;
+  bool notifying_ ABSL_GUARDED_BY(mutex_) = false;
+  Timestamp last_processed_ts_ = Timestamp::Unstarted();
   std::unique_ptr<InputStreamHandler> input_stream_handler_;
   std::unique_ptr<InputStreamManager> input_stream_;
 };
@@ -112,7 +117,8 @@ class OutputStreamObserver : public GraphOutputStream {
   absl::Status Initialize(
       const std::string& stream_name, const PacketType* packet_type,
       std::function<absl::Status(const Packet&)> packet_callback,
-      OutputStreamManager* output_stream_manager);
+      OutputStreamManager* output_stream_manager,
+      bool observe_timestamp_bounds = false);
 
   // Notifies the observer of new packets emitted by the observed
   // output stream.
@@ -128,6 +134,7 @@ class OutputStreamObserver : public GraphOutputStream {
 
 // OutputStreamPollerImpl that returns packets to the caller via
 // Next()/NextBatch().
+// TODO: Support observe_timestamp_bounds.
 class OutputStreamPollerImpl : public GraphOutputStream {
  public:
   virtual ~OutputStreamPollerImpl() {}

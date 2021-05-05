@@ -19,6 +19,7 @@
 #include "mediapipe/framework/tool/sink.h"
 
 #include <memory>
+#include <utility>
 #include <vector>
 
 #include "absl/strings/str_cat.h"
@@ -168,8 +169,19 @@ void AddMultiStreamCallback(
     std::function<void(const std::vector<Packet>&)> callback,
     CalculatorGraphConfig* config,
     std::pair<std::string, Packet>* side_packet) {
+  std::map<std::string, Packet> side_packets;
+  AddMultiStreamCallback(streams, callback, config, &side_packets,
+                         /*observe_timestamp_bounds=*/false);
+  *side_packet = *side_packets.begin();
+}
+
+void AddMultiStreamCallback(
+    const std::vector<std::string>& streams,
+    std::function<void(const std::vector<Packet>&)> callback,
+    CalculatorGraphConfig* config, std::map<std::string, Packet>* side_packets,
+    bool observe_timestamp_bounds) {
   CHECK(config);
-  CHECK(side_packet);
+  CHECK(side_packets);
   CalculatorGraphConfig::Node* sink_node = config->add_node();
   const std::string name = GetUnusedNodeName(
       *config, absl::StrCat("multi_callback_", absl::StrJoin(streams, "_")));
@@ -179,15 +191,23 @@ void AddMultiStreamCallback(
     sink_node->add_input_stream(stream_name);
   }
 
+  if (observe_timestamp_bounds) {
+    const std::string observe_ts_bounds_packet_name = GetUnusedSidePacketName(
+        *config, absl::StrCat(name, "_observe_ts_bounds"));
+    sink_node->add_input_side_packet(absl::StrCat(
+        "OBSERVE_TIMESTAMP_BOUNDS:", observe_ts_bounds_packet_name));
+    InsertIfNotPresent(side_packets, observe_ts_bounds_packet_name,
+                       MakePacket<bool>(true));
+  }
   const std::string input_side_packet_name =
       GetUnusedSidePacketName(*config, absl::StrCat(name, "_callback"));
-  side_packet->first = input_side_packet_name;
   sink_node->add_input_side_packet(
       absl::StrCat("VECTOR_CALLBACK:", input_side_packet_name));
 
-  side_packet->second =
+  InsertIfNotPresent(
+      side_packets, input_side_packet_name,
       MakePacket<std::function<void(const std::vector<Packet>&)>>(
-          std::move(callback));
+          std::move(callback)));
 }
 
 void AddCallbackWithHeaderCalculator(const std::string& stream_name,
@@ -240,6 +260,10 @@ absl::Status CallbackCalculator::GetContract(CalculatorContract* cc) {
     return mediapipe::InvalidArgumentErrorBuilder(MEDIAPIPE_LOC)
            << "InputSidePackets must use tags.";
   }
+  if (cc->InputSidePackets().HasTag("OBSERVE_TIMESTAMP_BOUNDS")) {
+    cc->InputSidePackets().Tag("OBSERVE_TIMESTAMP_BOUNDS").Set<bool>();
+    cc->SetProcessTimestampBounds(true);
+  }
 
   int count = allow_multiple_streams ? cc->Inputs().NumEntries("") : 1;
   for (int i = 0; i < count; ++i) {
@@ -265,6 +289,12 @@ absl::Status CallbackCalculator::Open(CalculatorContext* cc) {
   if (callback_ == nullptr && vector_callback_ == nullptr) {
     return mediapipe::InvalidArgumentErrorBuilder(MEDIAPIPE_LOC)
            << "missing callback.";
+  }
+  if (cc->InputSidePackets().HasTag("OBSERVE_TIMESTAMP_BOUNDS") &&
+      !cc->InputSidePackets().Tag("OBSERVE_TIMESTAMP_BOUNDS").Get<bool>()) {
+    return mediapipe::InvalidArgumentErrorBuilder(MEDIAPIPE_LOC)
+           << "The value of the OBSERVE_TIMESTAMP_BOUNDS input side packet "
+              "must be set to true";
   }
   return absl::OkStatus();
 }

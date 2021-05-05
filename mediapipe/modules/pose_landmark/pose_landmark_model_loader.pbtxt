@@ -2,18 +2,19 @@
 
 type: "PoseLandmarkModelLoader"
 
-# Whether to load the full-body landmark model or the upper-body on. (bool)
-input_side_packet: "UPPER_BODY_ONLY:upper_body_only"
+# Complexity of the pose landmark model: 0, 1 or 2. Landmark accuracy as well as
+# inference latency generally go up with the model complexity. If unspecified,
+# functions as set to 0. (int)
+input_side_packet: "MODEL_COMPLEXITY:model_complexity"
 
 # TF Lite model represented as a FlatBuffer.
 # (std::unique_ptr<tflite::FlatBufferModel, std::function<void(tflite::FlatBufferModel*)>>)
 output_side_packet: "MODEL:model"
 
-# Determines path to the desired pose landmark model file based on specification
-# in the input side packet.
+# Determines path to the desired pose landmark model file.
 node {
   calculator: "SwitchContainer"
-  input_side_packet: "ENABLE:upper_body_only"
+  input_side_packet: "SELECT:model_complexity"
   output_side_packet: "PACKET:model_path"
   options: {
     [mediapipe.SwitchContainerOptions.ext] {
@@ -22,7 +23,7 @@ node {
         options: {
           [mediapipe.ConstantSidePacketCalculatorOptions.ext]: {
             packet {
-              string_value: "mediapipe/modules/pose_landmark/pose_landmark_full_body.tflite"
+              string_value: "mediapipe/modules/pose_landmark/pose_landmark_lite.tflite"
             }
           }
         }
@@ -32,7 +33,17 @@ node {
         options: {
           [mediapipe.ConstantSidePacketCalculatorOptions.ext]: {
             packet {
-              string_value: "mediapipe/modules/pose_landmark/pose_landmark_upper_body.tflite"
+              string_value: "mediapipe/modules/pose_landmark/pose_landmark_full.tflite"
+            }
+          }
+        }
+      }
+      contained_node: {
+        calculator: "ConstantSidePacketCalculator"
+        options: {
+          [mediapipe.ConstantSidePacketCalculatorOptions.ext]: {
+            packet {
+              string_value: "mediapipe/modules/pose_landmark/pose_landmark_heavy.tflite"
             }
           }
         }

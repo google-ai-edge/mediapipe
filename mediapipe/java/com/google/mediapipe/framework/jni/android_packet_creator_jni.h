@@ -32,6 +32,9 @@ JNIEXPORT jlong JNICALL ANDROID_PACKET_CREATOR_METHOD(
     nativeCreateRgbaImageFrame)(JNIEnv* env, jobject thiz, jlong context,
                                 jobject bitmap);
 
+JNIEXPORT jlong JNICALL ANDROID_PACKET_CREATOR_METHOD(nativeCreateRgbaImage)(
+    JNIEnv* env, jobject thiz, jlong context, jobject bitmap);
+
 #ifdef __cplusplus
 }  // extern "C"
 #endif  // __cplusplus

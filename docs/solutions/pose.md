@@ -30,8 +30,7 @@ overlay of digital content and information on top of the physical world in
 augmented reality.
 
 MediaPipe Pose is a ML solution for high-fidelity body pose tracking, inferring
-33 3D landmarks on the whole body (or 25 upper-body landmarks) from RGB video
-frames utilizing our
+33 3D landmarks on the whole body from RGB video frames utilizing our
 [BlazePose](https://ai.googleblog.com/2020/08/on-device-real-time-body-pose-tracking.html)
 research that also powers the
 [ML Kit Pose Detection API](https://developers.google.com/ml-kit/vision/pose-detection).
@@ -40,9 +39,9 @@ environments for inference, whereas our method achieves real-time performance on
 most modern [mobile phones](#mobile), [desktops/laptops](#desktop), in
 [python](#python-solution-api) and even on the [web](#javascript-solution-api).
 
-![pose_tracking_upper_body_example.gif](../images/mobile/pose_tracking_upper_body_example.gif) |
-:--------------------------------------------------------------------------------------------: |
-*Fig 1. Example of MediaPipe Pose for upper-body pose tracking.*                               |
+![pose_tracking_example.gif](../images/mobile/pose_tracking_example.gif) |
+:----------------------------------------------------------------------: |
+*Fig 1. Example of MediaPipe Pose for pose tracking.*                    |
 
 ## ML Pipeline
 
@@ -77,6 +76,23 @@ Note: To visualize a graph, copy the graph and paste it into
 to visualize its associated subgraphs, please see
 [visualizer documentation](../tools/visualizer.md).
 
+## Pose Estimation Quality
+
+To evaluate the quality of our [models](./models.md#pose) against other
+well-performing publicly available solutions, we use a validation dataset,
+consisting of 1k images with diverse Yoga, HIIT, and Dance postures. Each image
+contains only a single person located 2-4 meters from the camera. To be
+consistent with other solutions, we perform evaluation only for 17 keypoints
+from [COCO topology](https://cocodataset.org/#keypoints-2020).
+
+Method                                                                                                | [mAP](https://cocodataset.org/#keypoints-eval) | [PCK@0.2](https://github.com/cbsudux/Human-Pose-Estimation-101) | [FPS](https://en.wikipedia.org/wiki/Frame_rate), Pixel 3 [TFLite GPU](https://www.tensorflow.org/lite/performance/gpu_advanced) | [FPS](https://en.wikipedia.org/wiki/Frame_rate), MacBook Pro (15-inch, 2017)
+----------------------------------------------------------------------------------------------------- | ---------------------------------------------: | --------------------------------------------------------------: | ------------------------------------------------------------------------------------------------------------------------------: | ---------------------------------------------------------------------------:
+BlazePose.Lite                                                                                        | 49.1                                           | 91.7                                                            | 49                                                                                                                              | 40
+BlazePose.Full                                                                                        | 64.5                                           | 95.8                                                            | 40                                                                                                                              | 37
+BlazePose.Heavy                                                                                       | 70.9                                           | 97.0                                                            | 19                                                                                                                              | 26
+[AlphaPose.ResNet50](https://github.com/MVIG-SJTU/AlphaPose)                                          | 57.6                                           | 93.1                                                            | N/A                                                                                                                             | N/A
+[Apple Vision](https://developer.apple.com/documentation/vision/detecting_human_body_poses_in_images) | 37.0                                           | 85.3                                                            | N/A                                                                                                                             | N/A
+
 ## Models
 
 ### Person/pose Detection Model (BlazePose Detector)
@@ -97,11 +113,8 @@ hip midpoints.
 
 ### Pose Landmark Model (BlazePose GHUM 3D)
 
-The landmark model in MediaPipe Pose comes in two versions: a full-body model
-that predicts the location of 33 pose landmarks (see figure below), and an
-upper-body version that only predicts the first 25. The latter may be more
-accurate than the former in scenarios where the lower-body parts are mostly out
-of view.
+The landmark model in MediaPipe Pose predicts the location of 33 pose landmarks
+(see figure below).
 
 Please find more detail in the
 [BlazePose Google AI Blog](https://ai.googleblog.com/2020/08/on-device-real-time-body-pose-tracking.html),
@@ -129,12 +142,11 @@ until it loses track, on reducing computation and latency. If set to `true`,
 person detection runs every input image, ideal for processing a batch of static,
 possibly unrelated, images. Default to `false`.
 
-#### upper_body_only
+#### model_complexity
 
-If set to `true`, the solution outputs only the 25 upper-body pose landmarks.
-Otherwise, it outputs the full set of 33 pose landmarks. Note that
-upper-body-only prediction may be more accurate for use cases where the
-lower-body parts are mostly out of view. Default to `false`.
+Complexity of the pose landmark model: `0`, `1` or `2`. Landmark accuracy as
+well as inference latency generally go up with the model complexity. Default to
+`1`.
 
 #### smooth_landmarks
 
@@ -170,9 +182,6 @@ A list of pose landmarks. Each lanmark consists of the following:
     being the origin, and the smaller the value the closer the landmark is to
     the camera. The magnitude of `z` uses roughly the same scale as `x`.
 
-    Note: `z` is predicted only in full-body mode, and should be discarded when
-    [upper_body_only](#upper_body_only) is `true`.
-
 *   `visibility`: A value in `[0.0, 1.0]` indicating the likelihood of the
     landmark being visible (present and not occluded) in the image.
 
@@ -185,7 +194,7 @@ install MediaPipe Python package, then learn more in the companion
 Supported configuration options:
 
 *   [static_image_mode](#static_image_mode)
-*   [upper_body_only](#upper_body_only)
+*   [model_complexity](#model_complexity)
 *   [smooth_landmarks](#smooth_landmarks)
 *   [min_detection_confidence](#min_detection_confidence)
 *   [min_tracking_confidence](#min_tracking_confidence)
@@ -198,7 +207,9 @@ mp_pose = mp.solutions.pose
 
 # For static images:
 with mp_pose.Pose(
-    static_image_mode=True, min_detection_confidence=0.5) as pose:
+    static_image_mode=True,
+    model_complexity=2,
+    min_detection_confidence=0.5) as pose:
   for idx, file in enumerate(file_list):
     image = cv2.imread(file)
     image_height, image_width, _ = image.shape
@@ -214,8 +225,6 @@ with mp_pose.Pose(
     )
     # Draw pose landmarks on the image.
     annotated_image = image.copy()
-    # Use mp_pose.UPPER_BODY_POSE_CONNECTIONS for drawing below when
-    # upper_body_only is set to True.
     mp_drawing.draw_landmarks(
         annotated_image, results.pose_landmarks, mp_pose.POSE_CONNECTIONS)
     cv2.imwrite('/tmp/annotated_image' + str(idx) + '.png', annotated_image)
@@ -259,7 +268,7 @@ and the following usage example.
 
 Supported configuration options:
 
-*   [upperBodyOnly](#upper_body_only)
+*   [modelComplexity](#model_complexity)
 *   [smoothLandmarks](#smooth_landmarks)
 *   [minDetectionConfidence](#min_detection_confidence)
 *   [minTrackingConfidence](#min_tracking_confidence)
@@ -306,7 +315,7 @@ const pose = new Pose({locateFile: (file) => {
   return `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`;
 }});
 pose.setOptions({
-  upperBodyOnly: false,
+  modelComplexity: 1,
   smoothLandmarks: true,
   minDetectionConfidence: 0.5,
   minTrackingConfidence: 0.5
@@ -347,16 +356,6 @@ to visualize its associated subgraphs, please see
 *   iOS target:
     [`mediapipe/examples/ios/posetrackinggpu:PoseTrackingGpuApp`](http:/mediapipe/examples/ios/posetrackinggpu/BUILD)
 
-#### Upper-body Only
-
-*   Graph:
-    [`mediapipe/graphs/pose_tracking/upper_body_pose_tracking_gpu.pbtxt`](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/pose_tracking/upper_body_pose_tracking_gpu.pbtxt)
-*   Android target:
-    [(or download prebuilt ARM64 APK)](https://drive.google.com/file/d/1uKc6T7KSuA0Mlq2URi5YookHu0U3yoh_/view?usp=sharing)
-    [`mediapipe/examples/android/src/java/com/google/mediapipe/apps/upperbodyposetrackinggpu:upperbodyposetrackinggpu`](https://github.com/google/mediapipe/tree/master/mediapipe/examples/android/src/java/com/google/mediapipe/apps/upperbodyposetrackinggpu/BUILD)
-*   iOS target:
-    [`mediapipe/examples/ios/upperbodyposetrackinggpu:UpperBodyPoseTrackingGpuApp`](http:/mediapipe/examples/ios/upperbodyposetrackinggpu/BUILD)
-
 ### Desktop
 
 Please first see general instructions for [desktop](../getting_started/cpp.md)
@@ -374,19 +373,6 @@ on how to build MediaPipe examples.
         [`mediapipe/graphs/pose_tracking/pose_tracking_gpu.pbtxt`](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/pose_tracking/pose_tracking_gpu.pbtxt)
     *   Target:
         [`mediapipe/examples/desktop/pose_tracking:pose_tracking_gpu`](https://github.com/google/mediapipe/tree/master/mediapipe/examples/desktop/pose_tracking/BUILD)
-
-#### Upper-body Only
-
-*   Running on CPU
-    *   Graph:
-        [`mediapipe/graphs/pose_tracking/upper_body_pose_tracking_cpu.pbtxt`](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/pose_tracking/upper_body_pose_tracking_cpu.pbtxt)
-    *   Target:
-        [`mediapipe/examples/desktop/upper_body_pose_tracking:upper_body_pose_tracking_cpu`](https://github.com/google/mediapipe/tree/master/mediapipe/examples/desktop/upper_body_pose_tracking/BUILD)
-*   Running on GPU
-    *   Graph:
-        [`mediapipe/graphs/pose_tracking/upper_body_pose_tracking_gpu.pbtxt`](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/pose_tracking/upper_body_pose_tracking_gpu.pbtxt)
-    *   Target:
-        [`mediapipe/examples/desktop/upper_body_pose_tracking:upper_body_pose_tracking_gpu`](https://github.com/google/mediapipe/tree/master/mediapipe/examples/desktop/upper_body_pose_tracking/BUILD)
 
 ## Resources
 

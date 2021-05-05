@@ -33,6 +33,10 @@ constexpr char kDetections[] = "DETECTIONS";
 constexpr char kDetectedBorders[] = "BORDERS";
 constexpr char kCropRect[] = "CROP_RECT";
 constexpr char kFirstCropRect[] = "FIRST_CROP_RECT";
+// Can be used to control whether an animated zoom should actually performed
+// (configured through option us_to_first_rect). If provided, a non-zero integer
+// will allow the animated zoom to be used when the first detections arrive.
+constexpr char kAnimateZoom[] = "ANIMATE_ZOOM";
 // Field-of-view (degrees) of the camera's x-axis (width).
 // TODO: Parameterize FOV based on camera specs.
 constexpr float kFieldOfView = 60;
@@ -76,10 +80,10 @@ class ContentZoomingCalculator : public CalculatorBase {
   absl::Status InitializeState(int frame_width, int frame_height);
   // Adjusts state to work with an updated frame size.
   absl::Status UpdateForResolutionChange(int frame_width, int frame_height);
-  // Returns true if we are zooming to the initial rect.
-  bool IsZoomingToInitialRect(const Timestamp& timestamp) const;
-  // Builds the output rectangle when zooming to the initial rect.
-  absl::StatusOr<mediapipe::Rect> GetInitialZoomingRect(
+  // Returns true if we are animating to the first rect.
+  bool IsAnimatingToFirstRect(const Timestamp& timestamp) const;
+  // Builds the output rectangle when animating to the first rect.
+  absl::StatusOr<mediapipe::Rect> GetAnimationRect(
       int frame_width, int frame_height, const Timestamp& timestamp) const;
   // Converts bounds to tilt offset, pan offset and height.
   absl::Status ConvertToPanTiltZoom(float xmin, float xmax, float ymin,
@@ -97,7 +101,10 @@ class ContentZoomingCalculator : public CalculatorBase {
   std::unique_ptr<KinematicPathSolver> path_solver_tilt_;
   // Are parameters initialized.
   bool initialized_;
-  // Stores the time of the first crop rectangle.
+  // Stores the time of the first crop rectangle. This is used to control
+  // animating to it. Until a first crop rectangle was computed, it has
+  // the value Timestamp::Unset(). If animating is not requested, it receives
+  // the value Timestamp::Done() instead of the time.
   Timestamp first_rect_timestamp_;
   // Stores the first crop rectangle.
   mediapipe::NormalizedRect first_rect_;
@@ -134,6 +141,9 @@ absl::Status ContentZoomingCalculator::GetContract(
   }
   if (cc->Inputs().HasTag(kDetections)) {
     cc->Inputs().Tag(kDetections).Set<std::vector<mediapipe::Detection>>();
+  }
+  if (cc->Inputs().HasTag(kAnimateZoom)) {
+    cc->Inputs().Tag(kAnimateZoom).Set<bool>();
   }
   if (cc->Outputs().HasTag(kDetectedBorders)) {
     cc->Outputs().Tag(kDetectedBorders).Set<StaticFeatures>();
@@ -419,10 +429,11 @@ absl::Status ContentZoomingCalculator::UpdateForResolutionChange(
   return absl::OkStatus();
 }
 
-bool ContentZoomingCalculator::IsZoomingToInitialRect(
+bool ContentZoomingCalculator::IsAnimatingToFirstRect(
     const Timestamp& timestamp) const {
   if (options_.us_to_first_rect() == 0 ||
-      first_rect_timestamp_ == Timestamp::Unset()) {
+      first_rect_timestamp_ == Timestamp::Unset() ||
+      first_rect_timestamp_ == Timestamp::Done()) {
     return false;
   }
 
@@ -443,10 +454,10 @@ double easeInOutQuad(double t) {
 double lerp(double a, double b, double i) { return a * (1 - i) + b * i; }
 }  // namespace
 
-absl::StatusOr<mediapipe::Rect> ContentZoomingCalculator::GetInitialZoomingRect(
+absl::StatusOr<mediapipe::Rect> ContentZoomingCalculator::GetAnimationRect(
     int frame_width, int frame_height, const Timestamp& timestamp) const {
-  RET_CHECK(IsZoomingToInitialRect(timestamp))
-      << "Must only be called if zooming to initial rect.";
+  RET_CHECK(IsAnimatingToFirstRect(timestamp))
+      << "Must only be called if animating to first rect.";
 
   const int64 delta_us = (timestamp - first_rect_timestamp_).Value();
   const int64 delay = options_.us_to_first_rect_delay();
@@ -538,15 +549,20 @@ absl::Status ContentZoomingCalculator::Process(
     }
   }
 
-  bool zooming_to_initial_rect = IsZoomingToInitialRect(cc->InputTimestamp());
+  const bool may_start_animation = (options_.us_to_first_rect() != 0) &&
+                                   (!cc->Inputs().HasTag(kAnimateZoom) ||
+                                    cc->Inputs().Tag(kAnimateZoom).Get<bool>());
+  bool is_animating = IsAnimatingToFirstRect(cc->InputTimestamp());
 
   int offset_y, height, offset_x;
-  if (zooming_to_initial_rect) {
-    // If we are zooming to the first rect, ignore any new incoming detections.
-    height = last_measured_height_;
-    offset_x = last_measured_x_offset_;
-    offset_y = last_measured_y_offset_;
-  } else if (only_required_found) {
+  if (!is_animating && options_.start_zoomed_out() && !may_start_animation &&
+      first_rect_timestamp_ == Timestamp::Unset()) {
+    // If we should start zoomed out and won't be doing an animation,
+    // initialize the path solvers using the full frame, ignoring detections.
+    height = max_frame_value_ * frame_height_;
+    offset_x = (target_aspect_ * height) / 2;
+    offset_y = frame_height_ / 2;
+  } else if (!is_animating && only_required_found) {
     // Convert bounds to tilt/zoom and in pixel coordinates.
     MP_RETURN_IF_ERROR(ConvertToPanTiltZoom(xmin, xmax, ymin, ymax, &offset_y,
                                             &offset_x, &height));
@@ -555,9 +571,9 @@ absl::Status ContentZoomingCalculator::Process(
     last_measured_height_ = height;
     last_measured_x_offset_ = offset_x;
     last_measured_y_offset_ = offset_y;
-  } else if (cc->InputTimestamp().Microseconds() -
-                 last_only_required_detection_ >=
-             options_.us_before_zoomout()) {
+  } else if (!is_animating && cc->InputTimestamp().Microseconds() -
+                                      last_only_required_detection_ >=
+                                  options_.us_before_zoomout()) {
     // No only_require detections found within salient regions packets
     // arriving since us_before_zoomout duration.
     height = max_frame_value_ * frame_height_ +
@@ -566,7 +582,8 @@ absl::Status ContentZoomingCalculator::Process(
     offset_x = (target_aspect_ * height) / 2;
     offset_y = frame_height_ / 2;
   } else {
-    // No only detection found but using last detection due to
+    // Either animating to the first rectangle, or
+    // no only detection found but using last detection due to
     // duration_before_zoomout_us setting.
     height = last_measured_height_;
     offset_x = last_measured_x_offset_;
@@ -642,24 +659,28 @@ absl::Status ContentZoomingCalculator::Process(
         .AddPacket(Adopt(features.release()).At(cc->InputTimestamp()));
   }
 
-  if (first_rect_timestamp_ == Timestamp::Unset() &&
-      options_.us_to_first_rect() != 0) {
-    first_rect_timestamp_ = cc->InputTimestamp();
+  // Record the first crop rectangle
+  if (first_rect_timestamp_ == Timestamp::Unset()) {
     first_rect_.set_x_center(path_offset_x / static_cast<float>(frame_width_));
     first_rect_.set_width(path_height * target_aspect_ /
                           static_cast<float>(frame_width_));
     first_rect_.set_y_center(path_offset_y / static_cast<float>(frame_height_));
     first_rect_.set_height(path_height / static_cast<float>(frame_height_));
-    // After setting the first rectangle, check whether we should zoom to it.
-    zooming_to_initial_rect = IsZoomingToInitialRect(cc->InputTimestamp());
+
+    // Record the time to serve as departure point for the animation.
+    // If we are not allowed to start the animation, set Timestamp::Done.
+    first_rect_timestamp_ =
+        may_start_animation ? cc->InputTimestamp() : Timestamp::Done();
+    // After setting the first rectangle, check whether we should animate to it.
+    is_animating = IsAnimatingToFirstRect(cc->InputTimestamp());
   }
 
   // Transmit downstream to glcroppingcalculator.
   if (cc->Outputs().HasTag(kCropRect)) {
     std::unique_ptr<mediapipe::Rect> gpu_rect;
-    if (zooming_to_initial_rect) {
-      auto rect = GetInitialZoomingRect(frame_width, frame_height,
-                                        cc->InputTimestamp());
+    if (is_animating) {
+      auto rect =
+          GetAnimationRect(frame_width, frame_height, cc->InputTimestamp());
       MP_RETURN_IF_ERROR(rect.status());
       gpu_rect = absl::make_unique<mediapipe::Rect>(*rect);
     } else {

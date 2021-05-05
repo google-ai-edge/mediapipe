@@ -89,7 +89,8 @@ class _PacketDataType(enum.Enum):
   FLOAT = 'float'
   FLOAT_LIST = 'float_list'
   AUDIO = 'matrix'
-  IMAGE = 'image_frame'
+  IMAGE = 'image'
+  IMAGE_FRAME = 'image_frame'
   PROTO = 'proto'
   PROTO_LIST = 'proto_list'
 
@@ -114,7 +115,7 @@ NAME_TO_TYPE: Mapping[str, '_PacketDataType'] = {
     '::mediapipe::Matrix':
         _PacketDataType.AUDIO,
     '::mediapipe::ImageFrame':
-        _PacketDataType.IMAGE,
+        _PacketDataType.IMAGE_FRAME,
     '::mediapipe::Classification':
         _PacketDataType.PROTO,
     '::mediapipe::ClassificationList':
@@ -139,6 +140,8 @@ NAME_TO_TYPE: Mapping[str, '_PacketDataType'] = {
         _PacketDataType.PROTO,
     '::mediapipe::NormalizedLandmarkList':
         _PacketDataType.PROTO,
+    '::mediapipe::Image':
+        _PacketDataType.IMAGE,
     '::std::vector<::mediapipe::Classification>':
         _PacketDataType.PROTO_LIST,
     '::std::vector<::mediapipe::ClassificationList>':
@@ -242,7 +245,7 @@ class SolutionBase:
       self._graph_outputs[stream_name] = output_packet
 
     for stream_name in self._output_stream_type_info.keys():
-      self._graph.observe_output_stream(stream_name, callback)
+      self._graph.observe_output_stream(stream_name, callback, True)
 
     input_side_packets = {
         name: self._make_packet(self._side_input_type_info[name], data)
@@ -296,12 +299,14 @@ class SolutionBase:
     # input.
     self._simulated_timestamp += 33333
     for stream_name, data in input_dict.items():
-      if self._input_stream_type_info[stream_name] == _PacketDataType.IMAGE:
+      input_stream_type = self._input_stream_type_info[stream_name]
+      if (input_stream_type == _PacketDataType.IMAGE_FRAME or
+          input_stream_type == _PacketDataType.IMAGE):
         if data.shape[2] != RGB_CHANNELS:
           raise ValueError('Input image must contain three channel rgb data.')
         self._graph.add_packet_to_input_stream(
             stream=stream_name,
-            packet=self._make_packet(_PacketDataType.IMAGE,
+            packet=self._make_packet(input_stream_type,
                                      data).at(self._simulated_timestamp))
       else:
         # TODO: Support audio data.
@@ -476,18 +481,34 @@ class SolutionBase:
 
   def _make_packet(self, packet_data_type: _PacketDataType,
                    data: Any) -> packet.Packet:
-    if packet_data_type == _PacketDataType.IMAGE:
-      return packet_creator.create_image_frame(
+    if (packet_data_type == _PacketDataType.IMAGE_FRAME or
+        packet_data_type == _PacketDataType.IMAGE):
+      return getattr(packet_creator, 'create_' + packet_data_type.value)(
           data, image_format=image_frame.ImageFormat.SRGB)
     else:
       return getattr(packet_creator, 'create_' + packet_data_type.value)(data)
 
   def _get_packet_content(self, packet_data_type: _PacketDataType,
                           output_packet: packet.Packet) -> Any:
+    """Gets packet content from a packet by type.
+
+    Args:
+      packet_data_type: The supported packet data type.
+      output_packet: The packet to get content from.
+
+    Returns:
+      Packet content by packet data type. None to indicate "no output".
+
+    """
+
+    if output_packet.is_empty():
+      return None
     if packet_data_type == _PacketDataType.STRING:
       return packet_getter.get_str(output_packet)
-    elif packet_data_type == _PacketDataType.IMAGE:
-      return packet_getter.get_image_frame(output_packet).numpy_view()
+    elif (packet_data_type == _PacketDataType.IMAGE_FRAME or
+          packet_data_type == _PacketDataType.IMAGE):
+      return getattr(packet_getter, 'get_' +
+                     packet_data_type.value)(output_packet).numpy_view()
     else:
       return getattr(packet_getter, 'get_' + packet_data_type.value)(
           output_packet)

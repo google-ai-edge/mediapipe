@@ -63,7 +63,7 @@ objc_library(
     data = [
         "//mediapipe/graphs/pose_tracking:pose_tracking_gpu.binarypb",
         "//mediapipe/modules/pose_detection:pose_detection.tflite",
-        "//mediapipe/modules/pose_landmark:pose_landmark_full_body.tflite",
+        "//mediapipe/modules/pose_landmark:pose_landmark_full.tflite",
     ],
     deps = [
         "//mediapipe/examples/ios/common:CommonMediaPipeAppLibrary",

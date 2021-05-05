@@ -146,5 +146,63 @@ TEST(CallbackTest, TestAddMultiStreamCallback) {
   EXPECT_THAT(sums, testing::ElementsAre(15, 7, 9));
 }
 
+class TimestampBoundTestCalculator : public CalculatorBase {
+ public:
+  static absl::Status GetContract(CalculatorContract* cc) {
+    cc->Outputs().Index(0).Set<int>();
+    cc->Outputs().Index(1).Set<int>();
+    return absl::OkStatus();
+  }
+  absl::Status Open(CalculatorContext* cc) final { return absl::OkStatus(); }
+  absl::Status Process(CalculatorContext* cc) final {
+    if (count_ % 5 == 0) {
+      cc->Outputs().Index(0).SetNextTimestampBound(Timestamp(count_ + 1));
+      cc->Outputs().Index(1).SetNextTimestampBound(Timestamp(count_ + 1));
+    }
+    ++count_;
+    if (count_ == 13) {
+      return tool::StatusStop();
+    }
+    return absl::OkStatus();
+  }
+
+ private:
+  int count_ = 1;
+};
+REGISTER_CALCULATOR(TimestampBoundTestCalculator);
+
+TEST(CallbackTest, TestAddMultiStreamCallbackWithTimestampNotification) {
+  std::string config_str = R"(
+            node {
+              calculator: "TimestampBoundTestCalculator"
+              output_stream: "foo"
+              output_stream: "bar"
+            }
+          )";
+  CalculatorGraphConfig graph_config =
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(config_str);
+
+  std::vector<int> sums;
+
+  std::map<std::string, Packet> side_packets;
+  tool::AddMultiStreamCallback(
+      {"foo", "bar"},
+      [&sums](const std::vector<Packet>& packets) {
+        Packet foo_p = packets[0];
+        Packet bar_p = packets[1];
+        ASSERT_TRUE(foo_p.IsEmpty() && bar_p.IsEmpty());
+        int foo = foo_p.Timestamp().Value();
+        int bar = bar_p.Timestamp().Value();
+        sums.push_back(foo + bar);
+      },
+      &graph_config, &side_packets, true);
+
+  CalculatorGraph graph(graph_config);
+  MP_ASSERT_OK(graph.StartRun(side_packets));
+  MP_ASSERT_OK(graph.WaitUntilDone());
+
+  EXPECT_THAT(sums, testing::ElementsAre(10, 20));
+}
+
 }  // namespace
 }  // namespace mediapipe

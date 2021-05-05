@@ -412,6 +412,72 @@ TEST_F(UnpackMediaSequenceCalculatorTest, UnpacksTwoPostStreamFloatLists) {
               ::testing::Eq(Timestamp::PostStream()));
 }
 
+TEST_F(UnpackMediaSequenceCalculatorTest, UnpacksImageWithPostStreamFloatList) {
+  SetUpCalculator({"IMAGE:images"}, {});
+  auto input_sequence = absl::make_unique<tf::SequenceExample>();
+  std::string test_video_id = "test_video_id";
+  mpms::SetClipMediaId(test_video_id, input_sequence.get());
+
+  std::string test_image_string = "test_image_string";
+
+  int num_images = 1;
+  for (int i = 0; i < num_images; ++i) {
+    mpms::AddImageTimestamp(i, input_sequence.get());
+    mpms::AddImageEncoded(test_image_string, input_sequence.get());
+  }
+
+  mpms::AddFeatureFloats("FDENSE_MAX", {3.0f, 4.0f}, input_sequence.get());
+  mpms::AddFeatureTimestamp("FDENSE_MAX", Timestamp::PostStream().Value(),
+                            input_sequence.get());
+
+  runner_->MutableSidePackets()->Tag("SEQUENCE_EXAMPLE") =
+      Adopt(input_sequence.release());
+
+  MP_ASSERT_OK(runner_->Run());
+
+  const std::vector<Packet>& output_packets =
+      runner_->Outputs().Tag("IMAGE").packets;
+  ASSERT_EQ(num_images, output_packets.size());
+
+  for (int i = 0; i < num_images; ++i) {
+    const std::string& output_image = output_packets[i].Get<std::string>();
+    ASSERT_EQ(output_image, test_image_string);
+  }
+}
+
+TEST_F(UnpackMediaSequenceCalculatorTest, UnpacksPostStreamFloatListWithImage) {
+  SetUpCalculator({"FLOAT_FEATURE_FDENSE_MAX:max"}, {});
+  auto input_sequence = absl::make_unique<tf::SequenceExample>();
+  std::string test_video_id = "test_video_id";
+  mpms::SetClipMediaId(test_video_id, input_sequence.get());
+
+  std::string test_image_string = "test_image_string";
+
+  int num_images = 1;
+  for (int i = 0; i < num_images; ++i) {
+    mpms::AddImageTimestamp(i, input_sequence.get());
+    mpms::AddImageEncoded(test_image_string, input_sequence.get());
+  }
+
+  mpms::AddFeatureFloats("FDENSE_MAX", {3.0f, 4.0f}, input_sequence.get());
+  mpms::AddFeatureTimestamp("FDENSE_MAX", Timestamp::PostStream().Value(),
+                            input_sequence.get());
+
+  runner_->MutableSidePackets()->Tag("SEQUENCE_EXAMPLE") =
+      Adopt(input_sequence.release());
+
+  MP_ASSERT_OK(runner_->Run());
+
+  const std::vector<Packet>& fdense_max_packets =
+      runner_->Outputs().Tag("FLOAT_FEATURE_FDENSE_MAX").packets;
+  ASSERT_EQ(fdense_max_packets.size(), 1);
+  const auto& fdense_max_vector =
+      fdense_max_packets[0].Get<std::vector<float>>();
+  ASSERT_THAT(fdense_max_vector, ::testing::ElementsAreArray({3.0f, 4.0f}));
+  ASSERT_THAT(fdense_max_packets[0].Timestamp(),
+              ::testing::Eq(Timestamp::PostStream()));
+}
+
 TEST_F(UnpackMediaSequenceCalculatorTest, GetDatasetFromPacket) {
   SetUpCalculator({}, {"DATA_PATH:data_path"}, {"DATASET_ROOT:root"});
 

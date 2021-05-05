@@ -187,7 +187,7 @@ node {
 ```
 
 In the calculator implementation, inputs and outputs are also identified by tag
-name and index number. In the function below input are output are identified:
+name and index number. In the function below input and output are identified:
 
 *   By index number: The combined input stream is identified simply by index
     `0`.
@@ -355,7 +355,6 @@ class PacketClonerCalculator : public CalculatorBase {
               current_[i].At(cc->InputTimestamp()));
           // Add a packet to output stream of index i a packet from inputstream i
           // with timestamp common to all present inputs
-          //
         } else {
           cc->Outputs().Index(i).SetNextTimestampBound(
               cc->InputTimestamp().NextAllowedInStream());
@@ -382,7 +381,7 @@ defined your calculator class, register it with a macro invocation
 REGISTER_CALCULATOR(calculator_class_name).
 
 Below is a trivial MediaPipe graph that has 3 input streams, 1 node
-(PacketClonerCalculator) and 3 output streams.
+(PacketClonerCalculator) and 2 output streams.
 
 ```proto
 input_stream: "room_mic_signal"

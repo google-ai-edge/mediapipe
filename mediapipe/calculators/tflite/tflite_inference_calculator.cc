@@ -904,7 +904,8 @@ absl::Status TfLiteInferenceCalculator::LoadDelegate(CalculatorContext* cc) {
 #if MEDIAPIPE_TFLITE_GL_INFERENCE
   // Configure and create the delegate.
   TfLiteGpuDelegateOptions options = TfLiteGpuDelegateOptionsDefault();
-  options.compile_options.precision_loss_allowed = 1;
+  options.compile_options.precision_loss_allowed =
+      allow_precision_loss_ ? 1 : 0;
   options.compile_options.preferred_gl_object_type =
       TFLITE_GL_OBJECT_TYPE_FASTEST;
   options.compile_options.dynamic_batch_enabled = 0;
@@ -968,7 +969,7 @@ absl::Status TfLiteInferenceCalculator::LoadDelegate(CalculatorContext* cc) {
   const int kHalfSize = 2;  // sizeof(half)
   // Configure and create the delegate.
   TFLGpuDelegateOptions options;
-  options.allow_precision_loss = true;
+  options.allow_precision_loss = allow_precision_loss_;
   options.wait_type = TFLGpuDelegateWaitType::TFLGpuDelegateWaitTypeActive;
   if (!delegate_)
     delegate_ = TfLiteDelegatePtr(TFLGpuDelegateCreate(&options),
@@ -1080,9 +1081,10 @@ absl::Status TfLiteInferenceCalculator::LoadDelegate(CalculatorContext* cc) {
     }
 
     // Create converter for GPU output.
-    converter_from_BPHWC4_ = [[TFLBufferConvert alloc] initWithDevice:device
-                                                            isFloat16:true
-                                                      convertToPBHWC4:false];
+    converter_from_BPHWC4_ =
+        [[TFLBufferConvert alloc] initWithDevice:device
+                                       isFloat16:allow_precision_loss_
+                                 convertToPBHWC4:false];
     if (converter_from_BPHWC4_ == nil) {
       return absl::InternalError(
           "Error initializating output buffer converter");

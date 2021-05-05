@@ -63,7 +63,7 @@ public final class PacketGetter {
    * @param packet A MediaPipe packet that contains a pair of packets.
    */
   public static PacketPair getPairOfPackets(final Packet packet) {
-     long[] handles = nativeGetPairPackets(packet.getNativeHandle());
+    long[] handles = nativeGetPairPackets(packet.getNativeHandle());
     return new PacketPair(Packet.create(handles[0]), Packet.create(handles[1]));
   }
 
@@ -75,12 +75,12 @@ public final class PacketGetter {
    * @param packet A MediaPipe packet that contains a vector of packets.
    */
   public static List<Packet> getVectorOfPackets(final Packet packet) {
-     long[] handles = nativeGetVectorPackets(packet.getNativeHandle());
+    long[] handles = nativeGetVectorPackets(packet.getNativeHandle());
     List<Packet> packets = new ArrayList<>(handles.length);
-     for (long handle : handles) {
+    for (long handle : handles) {
       packets.add(Packet.create(handle));
-     }
-     return packets;
+    }
+    return packets;
   }
 
   public static short getInt16(final Packet packet) {
@@ -292,33 +292,53 @@ public final class PacketGetter {
   }
 
   private static native long nativeGetPacketFromReference(long nativePacketHandle);
+
   private static native long[] nativeGetPairPackets(long nativePacketHandle);
+
   private static native long[] nativeGetVectorPackets(long nativePacketHandle);
 
   private static native short nativeGetInt16(long nativePacketHandle);
+
   private static native int nativeGetInt32(long nativePacketHandle);
+
   private static native long nativeGetInt64(long nativePacketHandle);
+
   private static native float nativeGetFloat32(long nativePacketHandle);
+
   private static native double nativeGetFloat64(long nativePacketHandle);
+
   private static native boolean nativeGetBool(long nativePacketHandle);
+
   private static native String nativeGetString(long nativePacketHandle);
+
   private static native byte[] nativeGetBytes(long nativePacketHandle);
+
   private static native byte[] nativeGetProtoBytes(long nativePacketHandle);
+
   private static native void nativeGetProto(long nativePacketHandle, SerializedMessage result);
+
   private static native short[] nativeGetInt16Vector(long nativePacketHandle);
+
   private static native int[] nativeGetInt32Vector(long nativePacketHandle);
+
   private static native long[] nativeGetInt64Vector(long nativePacketHandle);
+
   private static native float[] nativeGetFloat32Vector(long nativePacketHandle);
+
   private static native double[] nativeGetFloat64Vector(long nativePacketHandle);
 
   private static native byte[][] nativeGetProtoVector(long nativePacketHandle);
 
   private static native int nativeGetImageWidth(long nativePacketHandle);
+
   private static native int nativeGetImageHeight(long nativePacketHandle);
+
   private static native boolean nativeGetImageData(long nativePacketHandle, ByteBuffer buffer);
+
   private static native boolean nativeGetRgbaFromRgb(long nativePacketHandle, ByteBuffer buffer);
   // Retrieves the values that are in the VideoHeader.
   private static native int nativeGetVideoHeaderWidth(long nativepackethandle);
+
   private static native int nativeGetVideoHeaderHeight(long nativepackethandle);
   // Retrieves the values that are in the mediapipe::TimeSeriesHeader.
   private static native int nativeGetTimeSeriesHeaderNumChannels(long nativepackethandle);
@@ -331,8 +351,11 @@ public final class PacketGetter {
   private static native float[] nativeGetMatrixData(long nativePacketHandle);
 
   private static native int nativeGetMatrixRows(long nativePacketHandle);
+
   private static native int nativeGetMatrixCols(long nativePacketHandle);
+
   private static native int nativeGetGpuBufferName(long nativePacketHandle);
+
   private static native long nativeGetGpuBuffer(long nativePacketHandle);
 
   private PacketGetter() {}

@@ -157,125 +157,19 @@ GpuBuffer GpuBufferMultiPool::GetBufferFromSimplePool(
 
 #endif  // MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
 
-void GpuBufferMultiPool::EntryList::Prepend(Entry* entry) {
-  if (head_ == nullptr) {
-    head_ = tail_ = entry;
-  } else {
-    entry->next = head_;
-    head_->prev = entry;
-    head_ = entry;
-  }
-  ++size_;
-}
-
-void GpuBufferMultiPool::EntryList::Append(Entry* entry) {
-  if (tail_ == nullptr) {
-    head_ = tail_ = entry;
-  } else {
-    tail_->next = entry;
-    entry->prev = tail_;
-    tail_ = entry;
-  }
-  ++size_;
-}
-
-void GpuBufferMultiPool::EntryList::Remove(Entry* entry) {
-  if (entry == head_) {
-    head_ = entry->next;
-  } else {
-    entry->prev->next = entry->next;
-  }
-  if (entry == tail_) {
-    tail_ = entry->prev;
-  } else {
-    entry->next->prev = entry->prev;
-  }
-  entry->prev = nullptr;
-  entry->next = nullptr;
-  --size_;
-}
-
-void GpuBufferMultiPool::EntryList::InsertAfter(Entry* entry, Entry* after) {
-  if (after != nullptr) {
-    entry->next = after->next;
-    if (entry->next) entry->next->prev = entry;
-    entry->prev = after;
-    after->next = entry;
-    ++size_;
-  } else
-    Prepend(entry);
-}
-
-void GpuBufferMultiPool::Evict(std::vector<SimplePool>* evicted) {
-  // Remove excess entries.
-  while (entry_list_.size() > kMaxPoolCount) {
-    Entry* victim = entry_list_.tail();
-    evicted->emplace_back(std::move(victim->pool));
-    entry_list_.Remove(victim);
-    pools_.erase(victim->spec);
-  }
-  // Every kRequestCountScrubInterval requests, halve the request counts, and
-  // remove entries which have fallen to 0.
-  // This keeps sporadic requests from accumulating and eventually exceeding
-  // the minimum request threshold for allocating a pool. Also, it means that
-  // if the request regimen changes (e.g. a graph was always requesting a large
-  // size, but then switches to a small size to save memory or CPU), the pool
-  // can quickly adapt to it.
-  if (total_request_count_ >= kRequestCountScrubInterval) {
-    total_request_count_ = 0;
-    VLOG(2) << "begin pool scrub";
-    for (Entry* entry = entry_list_.head(); entry != nullptr;) {
-      VLOG(2) << "entry for: " << entry->spec.width << "x" << entry->spec.height
-              << " request_count: " << entry->request_count
-              << " has pool: " << (entry->pool != nullptr);
-      entry->request_count /= 2;
-      Entry* next = entry->next;
-      if (entry->request_count == 0) {
-        evicted->emplace_back(std::move(entry->pool));
-        entry_list_.Remove(entry);
-        pools_.erase(entry->spec);
-      }
-      entry = next;
-    }
-  }
-}
-
 GpuBufferMultiPool::SimplePool GpuBufferMultiPool::RequestPool(
-    const BufferSpec& key) {
+    const BufferSpec& spec) {
   SimplePool pool;
   std::vector<SimplePool> evicted;
   {
     absl::MutexLock lock(&mutex_);
-    auto pool_it = pools_.find(key);
-    Entry* entry;
-    if (pool_it == pools_.end()) {
-      std::tie(pool_it, std::ignore) =
-          pools_.emplace(std::piecewise_construct, std::forward_as_tuple(key),
-                         std::forward_as_tuple(key));
-      entry = &pool_it->second;
-      CHECK_EQ(entry->request_count, 0);
-      entry->request_count = 1;
-      entry_list_.Append(entry);
-      if (entry->prev != nullptr) CHECK_GE(entry->prev->request_count, 1);
-    } else {
-      entry = &pool_it->second;
-      ++entry->request_count;
-      Entry* larger = entry->prev;
-      while (larger != nullptr &&
-             larger->request_count < entry->request_count) {
-        larger = larger->prev;
-      }
-      if (larger != entry->prev) {
-        entry_list_.Remove(entry);
-        entry_list_.InsertAfter(entry, larger);
-      }
-    }
-    if (!entry->pool && entry->request_count >= kMinRequestsBeforePool) {
-      entry->pool = MakeSimplePool(key);
-    }
-    pool = entry->pool;
-    ++total_request_count_;
-    Evict(&evicted);
+    pool =
+        cache_.Lookup(spec, [this](const BufferSpec& spec, int request_count) {
+          return (request_count >= kMinRequestsBeforePool)
+                     ? MakeSimplePool(spec)
+                     : nullptr;
+        });
+    evicted = cache_.Evict(kMaxPoolCount, kRequestCountScrubInterval);
   }
   // Evicted pools, and their buffers, will be released without holding the
   // lock.

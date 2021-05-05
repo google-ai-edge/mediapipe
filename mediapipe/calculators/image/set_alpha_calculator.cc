@@ -323,7 +323,7 @@ absl::Status SetAlphaCalculator::RenderGpu(CalculatorContext* cc) {
     const auto& alpha_mask =
         cc->Inputs().Tag(kInputAlphaTagGpu).Get<mediapipe::GpuBuffer>();
     auto alpha_texture = gpu_helper_.CreateSourceTexture(alpha_mask);
-    gpu_helper_.BindFramebuffer(output_texture);  // GL_TEXTURE0
+    gpu_helper_.BindFramebuffer(output_texture);
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, input_texture.name());
     glActiveTexture(GL_TEXTURE2);
@@ -335,7 +335,7 @@ absl::Status SetAlphaCalculator::RenderGpu(CalculatorContext* cc) {
     glBindTexture(GL_TEXTURE_2D, 0);
     alpha_texture.Release();
   } else {
-    gpu_helper_.BindFramebuffer(output_texture);  // GL_TEXTURE0
+    gpu_helper_.BindFramebuffer(output_texture);
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, input_texture.name());
     GlRender(cc);  // use value from options

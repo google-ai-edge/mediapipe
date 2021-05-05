@@ -345,8 +345,7 @@ TEST(SceneCroppingCalculatorTest, ChecksPriorFrameBufferSize) {
 TEST(SceneCroppingCalculatorTest, ChecksDebugConfigWithoutCroppedFrame) {
   const CalculatorGraphConfig::Node config =
       ParseTextProtoOrDie<CalculatorGraphConfig::Node>(absl::Substitute(
-          kDebugConfigNoCroppedFrame, kTargetWidth, kTargetHeight,
-          kTargetSizeType, 0, kPriorFrameBufferSize));
+          kDebugConfigNoCroppedFrame, kTargetWidth, kTargetHeight));
   auto runner = absl::make_unique<CalculatorRunner>(config);
   const auto status = runner->Run();
   EXPECT_FALSE(status.ok());

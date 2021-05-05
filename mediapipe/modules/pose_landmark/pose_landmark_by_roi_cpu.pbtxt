@@ -1,18 +1,18 @@
-# MediaPipe graph to detect/predict upper-body pose landmarks. (CPU input, and
-# inference is executed on CPU.)
+# MediaPipe graph to detect/predict pose landmarks. (CPU input, and inference is
+# executed on CPU.)
 #
-# It is required that "pose_landmark_full_body.tflite" or
-# "pose_landmark_upper_body.tflite" is available at
-# "mediapipe/modules/pose_landmark/pose_landmark_full_body.tflite"
-# or
-# "mediapipe/modules/pose_landmark/pose_landmark_upper_body.tflite"
+# It is required that "pose_landmark_lite.tflite" or
+# "pose_landmark_full.tflite" or "pose_landmark_heavy.tflite" is available at
+# "mediapipe/modules/pose_landmark/pose_landmark_lite.tflite" or
+# "mediapipe/modules/pose_landmark/pose_landmark_full.tflite" or
+# "mediapipe/modules/pose_landmark/pose_landmark_heavy.tflite"
 # path respectively during execution, depending on the specification in the
-# UPPER_BODY_ONLY input side packet.
+# MODEL_COMPLEXITY input side packet.
 #
 # EXAMPLE:
 #   node {
 #     calculator: "PoseLandmarkByRoiCpu"
-#     input_side_packet: "UPPER_BODY_ONLY:upper_body_only"
+#     input_side_packet: "MODEL_COMPLEXITY:model_complexity"
 #     input_stream: "IMAGE:image"
 #     input_stream: "ROI:roi"
 #     output_stream: "LANDMARKS:landmarks"
@@ -26,16 +26,14 @@ input_stream: "IMAGE:image"
 # (NormalizedRect)
 input_stream: "ROI:roi"
 
-# Whether to detect/predict the full set of pose landmarks (see below), or only
-# those on the upper body. If unspecified, functions as set to false. (bool)
-# Note that upper-body-only prediction may be more accurate for use cases where
-# the lower-body parts are mostly out of view.
-input_side_packet: "UPPER_BODY_ONLY:upper_body_only"
+# Complexity of the pose landmark model: 0, 1 or 2. Landmark accuracy as well as
+# inference latency generally go up with the model complexity. If unspecified,
+# functions as set to 0. (int)
+input_side_packet: "MODEL_COMPLEXITY:model_complexity"
 
 # Pose landmarks within the given ROI. (NormalizedLandmarkList)
-# We have 33 landmarks (see pose_landmark_full_body_topology.svg) with the
-# first 25 fall on the upper body (see pose_landmark_upper_body_topology.svg),
-# and there are other auxiliary key points.
+# We have 33 landmarks (see pose_landmark_topology.svg) and there are other
+# auxiliary key points.
 # 0 - nose
 # 1 - left eye (inner)
 # 2 - left eye
@@ -104,7 +102,7 @@ node: {
 # Loads the pose landmark TF Lite model.
 node {
   calculator: "PoseLandmarkModelLoader"
-  input_side_packet: "UPPER_BODY_ONLY:upper_body_only"
+  input_side_packet: "MODEL_COMPLEXITY:model_complexity"
   output_side_packet: "MODEL:model"
 }
 
@@ -128,10 +126,12 @@ node {
   input_stream: "output_tensors"
   output_stream: "landmark_tensors"
   output_stream: "pose_flag_tensor"
+  output_stream: "heatmap_tensor"
   options: {
     [mediapipe.SplitVectorCalculatorOptions.ext] {
       ranges: { begin: 0 end: 1 }
       ranges: { begin: 1 end: 2 }
+      ranges: { begin: 3 end: 4 }
     }
   }
 }
@@ -168,36 +168,29 @@ node {
 # Decodes the landmark tensors into a vector of landmarks, where the landmark
 # coordinates are normalized by the size of the input image to the model.
 node {
-  calculator: "SwitchContainer"
-  input_side_packet: "ENABLE:upper_body_only"
+  calculator: "TensorsToLandmarksCalculator"
   input_stream: "TENSORS:ensured_landmark_tensors"
   output_stream: "NORM_LANDMARKS:raw_landmarks"
   options: {
-    [mediapipe.SwitchContainerOptions.ext] {
-      contained_node: {
-        calculator: "TensorsToLandmarksCalculator"
-        options: {
-          [mediapipe.TensorsToLandmarksCalculatorOptions.ext] {
-            num_landmarks: 35
-            input_image_width: 256
-            input_image_height: 256
-            visibility_activation: SIGMOID
-            presence_activation: SIGMOID
-          }
-        }
-      }
-      contained_node: {
-        calculator: "TensorsToLandmarksCalculator"
-        options: {
-          [mediapipe.TensorsToLandmarksCalculatorOptions.ext] {
-            num_landmarks: 27
-            input_image_width: 256
-            input_image_height: 256
-            visibility_activation: SIGMOID
-            presence_activation: SIGMOID
-          }
-        }
-      }
+    [mediapipe.TensorsToLandmarksCalculatorOptions.ext] {
+      num_landmarks: 39
+      input_image_width: 256
+      input_image_height: 256
+      visibility_activation: SIGMOID
+      presence_activation: SIGMOID
+    }
+  }
+}
+
+# Refines landmarks with the heatmap tensor.
+node {
+  calculator: "RefineLandmarksFromHeatmapCalculator"
+  input_stream: "NORM_LANDMARKS:raw_landmarks"
+  input_stream: "TENSORS:heatmap_tensor"
+  output_stream: "NORM_LANDMARKS:refined_landmarks"
+  options: {
+    [mediapipe.RefineLandmarksFromHeatmapCalculatorOptions.ext] {
+      kernel_size: 7
     }
   }
 }
@@ -208,7 +201,7 @@ node {
 # image before image transformation).
 node {
   calculator: "LandmarkLetterboxRemovalCalculator"
-  input_stream: "LANDMARKS:raw_landmarks"
+  input_stream: "LANDMARKS:refined_landmarks"
   input_stream: "LETTERBOX_PADDING:letterbox_padding"
   output_stream: "LANDMARKS:adjusted_landmarks"
 }
@@ -225,31 +218,14 @@ node {
 # Splits the landmarks into two sets: the actual pose landmarks and the
 # auxiliary landmarks.
 node {
-  calculator: "SwitchContainer"
-  input_side_packet: "ENABLE:upper_body_only"
+  calculator: "SplitNormalizedLandmarkListCalculator"
   input_stream: "all_landmarks"
   output_stream: "landmarks"
   output_stream: "auxiliary_landmarks"
   options: {
-    [mediapipe.SwitchContainerOptions.ext] {
-      contained_node: {
-        calculator: "SplitNormalizedLandmarkListCalculator"
-        options: {
-          [mediapipe.SplitVectorCalculatorOptions.ext] {
-            ranges: { begin: 0 end: 33 }
-            ranges: { begin: 33 end: 35 }
-          }
-        }
-      }
-      contained_node: {
-        calculator: "SplitNormalizedLandmarkListCalculator"
-        options: {
-          [mediapipe.SplitVectorCalculatorOptions.ext] {
-            ranges: { begin: 0 end: 25 }
-            ranges: { begin: 25 end: 27 }
-          }
-        }
-      }
+    [mediapipe.SplitVectorCalculatorOptions.ext] {
+      ranges: { begin: 0 end: 33 }
+      ranges: { begin: 33 end: 35 }
     }
   }
 }

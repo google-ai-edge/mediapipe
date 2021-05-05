@@ -97,6 +97,7 @@ class InferenceCalculatorMetalImpl
   Packet<TfLiteModelPtr> model_packet_;
   std::unique_ptr<tflite::Interpreter> interpreter_;
   TfLiteDelegatePtr delegate_;
+  bool allow_precision_loss_ = false;
 
 #if MEDIAPIPE_TFLITE_METAL_INFERENCE
   MPPMetalHelper* gpu_helper_ = nullptr;
@@ -122,6 +123,9 @@ absl::Status InferenceCalculatorMetalImpl::UpdateContract(
 }
 
 absl::Status InferenceCalculatorMetalImpl::Open(CalculatorContext* cc) {
+  const auto& options = cc->Options<::mediapipe::InferenceCalculatorOptions>();
+  allow_precision_loss_ = options.delegate().gpu().allow_precision_loss();
+
   MP_RETURN_IF_ERROR(LoadModel(cc));
 
   gpu_helper_ = [[MPPMetalHelper alloc] initWithCalculatorContext:cc];
@@ -222,7 +226,7 @@ absl::Status InferenceCalculatorMetalImpl::LoadDelegate(CalculatorContext* cc) {
 
   // Configure and create the delegate.
   TFLGpuDelegateOptions options;
-  options.allow_precision_loss = true;
+  options.allow_precision_loss = allow_precision_loss_;
   options.wait_type = TFLGpuDelegateWaitType::TFLGpuDelegateWaitTypeDoNotWait;
   delegate_ =
       TfLiteDelegatePtr(TFLGpuDelegateCreate(&options), &TFLGpuDelegateDelete);
@@ -239,7 +243,9 @@ absl::Status InferenceCalculatorMetalImpl::LoadDelegate(CalculatorContext* cc) {
                           tensor->dims->data + tensor->dims->size};
     dims.back() = RoundUp(dims.back(), 4);
     gpu_buffers_in_.emplace_back(absl::make_unique<Tensor>(
-        Tensor::ElementType::kFloat16, Tensor::Shape{dims}));
+        allow_precision_loss_ ? Tensor::ElementType::kFloat16
+                              : Tensor::ElementType::kFloat32,
+        Tensor::Shape{dims}));
     auto buffer_view =
         gpu_buffers_in_[i]->GetMtlBufferWriteView(gpu_helper_.mtlDevice);
     RET_CHECK_EQ(TFLGpuDelegateBindMetalBufferToTensor(
@@ -261,7 +267,9 @@ absl::Status InferenceCalculatorMetalImpl::LoadDelegate(CalculatorContext* cc) {
     output_shapes_[i] = {dims};
     dims.back() = RoundUp(dims.back(), 4);
     gpu_buffers_out_.emplace_back(absl::make_unique<Tensor>(
-        Tensor::ElementType::kFloat16, Tensor::Shape{dims}));
+        allow_precision_loss_ ? Tensor::ElementType::kFloat16
+                              : Tensor::ElementType::kFloat32,
+        Tensor::Shape{dims}));
     RET_CHECK_EQ(TFLGpuDelegateBindMetalBufferToTensor(
                      delegate_.get(), output_indices[i],
                      gpu_buffers_out_[i]
@@ -271,17 +279,19 @@ absl::Status InferenceCalculatorMetalImpl::LoadDelegate(CalculatorContext* cc) {
   }
 
   // Create converter for GPU input.
-  converter_to_BPHWC4_ = [[TFLBufferConvert alloc] initWithDevice:device
-                                                        isFloat16:true
-                                                  convertToPBHWC4:true];
+  converter_to_BPHWC4_ =
+      [[TFLBufferConvert alloc] initWithDevice:device
+                                     isFloat16:allow_precision_loss_
+                               convertToPBHWC4:true];
   if (converter_to_BPHWC4_ == nil) {
     return mediapipe::InternalError(
         "Error initializating input buffer converter");
   }
   // Create converter for GPU output.
-  converter_from_BPHWC4_ = [[TFLBufferConvert alloc] initWithDevice:device
-                                                          isFloat16:true
-                                                    convertToPBHWC4:false];
+  converter_from_BPHWC4_ =
+      [[TFLBufferConvert alloc] initWithDevice:device
+                                     isFloat16:allow_precision_loss_
+                               convertToPBHWC4:false];
   if (converter_from_BPHWC4_ == nil) {
     return absl::InternalError("Error initializating output buffer converter");
   }

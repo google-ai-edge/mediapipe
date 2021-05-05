@@ -21,20 +21,21 @@
 extern "C" {
 #endif  // __cplusplus
 
-#define GRAPH_METHOD(METHOD_NAME) \
+#define GRAPH_PROFILER_METHOD(METHOD_NAME) \
   Java_com_google_mediapipe_framework_GraphProfiler_##METHOD_NAME
 
-JNIEXPORT void JNICALL GRAPH_METHOD(nativeReset)(JNIEnv* env, jobject thiz,
-                                                 jlong profiling_context);
-
-JNIEXPORT void JNICALL GRAPH_METHOD(nativeResume)(JNIEnv* env, jobject thiz,
-                                                  jlong profiling_context);
-
-JNIEXPORT void JNICALL GRAPH_METHOD(nativePause)(JNIEnv* env, jobject thiz,
-                                                 jlong profiling_context);
-
-JNIEXPORT jobjectArray JNICALL GRAPH_METHOD(nativeGetCalculatorProfiles)(
+JNIEXPORT void JNICALL GRAPH_PROFILER_METHOD(nativeReset)(
     JNIEnv* env, jobject thiz, jlong profiling_context);
+
+JNIEXPORT void JNICALL GRAPH_PROFILER_METHOD(nativeResume)(
+    JNIEnv* env, jobject thiz, jlong profiling_context);
+
+JNIEXPORT void JNICALL GRAPH_PROFILER_METHOD(nativePause)(
+    JNIEnv* env, jobject thiz, jlong profiling_context);
+
+JNIEXPORT jobjectArray JNICALL GRAPH_PROFILER_METHOD(
+    nativeGetCalculatorProfiles)(JNIEnv* env, jobject thiz,
+                                 jlong profiling_context);
 
 #ifdef __cplusplus
 }  // extern "C"

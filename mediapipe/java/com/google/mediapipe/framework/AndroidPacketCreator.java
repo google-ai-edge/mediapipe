@@ -15,6 +15,7 @@
 package com.google.mediapipe.framework;
 
 import android.graphics.Bitmap;
+import java.nio.ByteBuffer;
 
 // TODO: use Preconditions in this file.
 /**
@@ -46,6 +47,14 @@ public class AndroidPacketCreator extends PacketCreator {
     return Packet.create(nativeCreateRgbaImageFrame(mediapipeGraph.getNativeHandle(), bitmap));
   }
 
+  /** Creates a 4 channel RGBA Image packet from a {@link Bitmap}. */
+  public Packet createRgbaImage(Bitmap bitmap) {
+    if (bitmap.getConfig() != Bitmap.Config.ARGB_8888) {
+      throw new RuntimeException("bitmap must use ARGB_8888 config.");
+    }
+    return Packet.create(nativeCreateRgbaImage(mediapipeGraph.getNativeHandle(), bitmap));
+  }
+
   /**
    * Returns the native handle of a new internal::PacketWithContext object on success. Returns 0 on
    * failure.
@@ -57,4 +66,10 @@ public class AndroidPacketCreator extends PacketCreator {
    * failure.
    */
   private native long nativeCreateRgbaImageFrame(long context, Bitmap bitmap);
+
+  /**
+   * Returns the native handle of a new internal::PacketWithContext object on success. Returns 0 on
+   * failure.
+   */
+  private native long nativeCreateRgbaImage(long context, Bitmap bitmap);
 }

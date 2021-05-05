@@ -14,6 +14,7 @@
 
 #include "mediapipe/python/pybind/packet_getter.h"
 
+#include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/formats/matrix.h"
 #include "mediapipe/framework/packet.h"
 #include "mediapipe/framework/port/integral_types.h"
@@ -321,6 +322,24 @@ void PublicPacketGetters(pybind11::module* m) {
     data = packet_getter.get_image_frame(packet)
 )doc",
       py::return_value_policy::reference_internal);
+
+  m->def("get_image", &GetContent<Image>,
+         R"doc(Get the content of a MediaPipe Image Packet as an Image object.
+
+  Args:
+    packet: A MediaPipe Image Packet.
+
+  Returns:
+    A MediaPipe Image object.
+
+  Raises:
+    ValueError: If the Packet doesn't contain Image.
+
+  Examples:
+    packet = packet_creator.create_image(frame)
+    data = packet_getter.get_image(packet)
+)doc",
+         py::return_value_policy::reference_internal);
 
   m->def(
       "get_matrix",

@@ -6,18 +6,18 @@
 # "mediapipe/modules/pose_detection/pose_detection.tflite"
 # path during execution.
 #
-# It is required that "pose_landmark_full_body.tflite" or
-# "pose_landmark_upper_body.tflite" is available at
-# "mediapipe/modules/pose_landmark/pose_landmark_full_body.tflite"
-# or
-# "mediapipe/modules/pose_landmark/pose_landmark_upper_body.tflite"
+# It is required that "pose_landmark_lite.tflite" or
+# "pose_landmark_full.tflite" or "pose_landmark_heavy.tflite" is available at
+# "mediapipe/modules/pose_landmark/pose_landmark_lite.tflite" or
+# "mediapipe/modules/pose_landmark/pose_landmark_full.tflite" or
+# "mediapipe/modules/pose_landmark/pose_landmark_heavy.tflite"
 # path respectively during execution, depending on the specification in the
-# UPPER_BODY_ONLY input side packet.
+# MODEL_COMPLEXITY input side packet.
 #
 # EXAMPLE:
 #   node {
 #     calculator: "PoseLandmarkGpu"
-#     input_side_packet: "UPPER_BODY_ONLY:upper_body_only"
+#     input_side_packet: "MODEL_COMPLEXITY:model_complexity"
 #     input_side_packet: "SMOOTH_LANDMARKS:smooth_landmarks"
 #     input_stream: "IMAGE:image"
 #     output_stream: "LANDMARKS:pose_landmarks"
@@ -28,20 +28,18 @@ type: "PoseLandmarkGpu"
 # GPU image. (GpuBuffer)
 input_stream: "IMAGE:image"
 
-# Whether to detect/predict the full set of pose landmarks (see below), or only
-# those on the upper body. If unspecified, functions as set to false. (bool)
-# Note that upper-body-only prediction may be more accurate for use cases where
-# the lower-body parts are mostly out of view.
-input_side_packet: "UPPER_BODY_ONLY:upper_body_only"
-
 # Whether to filter landmarks across different input images to reduce jitter.
 # If unspecified, functions as set to false. (bool)
 input_side_packet: "SMOOTH_LANDMARKS:smooth_landmarks"
 
+# Complexity of the pose landmark model: 0, 1 or 2. Landmark accuracy as well as
+# inference latency generally go up with the model complexity. If unspecified,
+# functions as set to 0. (int)
+input_side_packet: "MODEL_COMPLEXITY:model_complexity"
+
 # Pose landmarks within the given ROI. (NormalizedLandmarkList)
-# We have 33 landmarks (see pose_landmark_full_body_topology.svg) with the
-# first 25 fall on the upper body (see pose_landmark_upper_body_topology.svg),
-# and there are other auxiliary key points.
+# We have 33 landmarks (see pose_landmark_topology.svg), and there are other
+# auxiliary key points.
 # 0 - nose
 # 1 - left eye (inner)
 # 2 - left eye
@@ -164,7 +162,6 @@ node {
 # to detect landmarks.
 node {
   calculator: "PoseDetectionToRoi"
-  input_side_packet: "UPPER_BODY_ONLY:upper_body_only"
   input_stream: "DETECTION:pose_detection"
   input_stream: "IMAGE_SIZE:image_size_for_pose_detection"
   output_stream: "ROI:pose_rect_from_detection"
@@ -183,7 +180,7 @@ node {
 # Detects pose landmarks within specified region of interest of the image.
 node {
   calculator: "PoseLandmarkByRoiGpu"
-  input_side_packet: "UPPER_BODY_ONLY:upper_body_only"
+  input_side_packet: "MODEL_COMPLEXITY:model_complexity"
   input_stream: "IMAGE:image"
   input_stream: "ROI:pose_rect"
   output_stream: "LANDMARKS:unfiltered_pose_landmarks"

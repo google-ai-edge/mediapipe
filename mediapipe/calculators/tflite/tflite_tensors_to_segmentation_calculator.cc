@@ -439,7 +439,7 @@ absl::Status TfLiteTensorsToSegmentationCalculator::ProcessGpu(
 
   // Run shader, upsample result.
   {
-    gpu_helper_.BindFramebuffer(output_texture);  // GL_TEXTURE0
+    gpu_helper_.BindFramebuffer(output_texture);
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, small_mask_texture.id());
     GlRender();

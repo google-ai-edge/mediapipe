@@ -97,6 +97,14 @@ JNIEXPORT jlong JNICALL PACKET_CREATOR_METHOD(nativeCreateMatrix)(
     JNIEnv* env, jobject thiz, jlong context, jint rows, jint cols,
     jfloatArray data);
 
+JNIEXPORT jlong JNICALL PACKET_CREATOR_METHOD(nativeCreateCpuImage)(
+    JNIEnv* env, jobject thiz, jlong context, jobject byte_buffer, jint width,
+    jint height, jint num_channels);
+
+JNIEXPORT jlong JNICALL PACKET_CREATOR_METHOD(nativeCreateGpuImage)(
+    JNIEnv* env, jobject thiz, jlong context, jint name, jint width,
+    jint height, jobject texture_release_callback);
+
 JNIEXPORT jlong JNICALL PACKET_CREATOR_METHOD(nativeCreateGpuBuffer)(
     JNIEnv* env, jobject thiz, jlong context, jint name, jint width,
     jint height, jobject texture_release_callback);

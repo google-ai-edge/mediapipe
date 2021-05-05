@@ -546,7 +546,7 @@ absl::Status ImageTransformationCalculator::RenderGpu(CalculatorContext* cc) {
   auto dst = gpu_helper_.CreateDestinationTexture(output_width, output_height,
                                                   input.format());
 
-  gpu_helper_.BindFramebuffer(dst);  // GL_TEXTURE0
+  gpu_helper_.BindFramebuffer(dst);
   glActiveTexture(GL_TEXTURE1);
   glBindTexture(src1.target(), src1.name());
 

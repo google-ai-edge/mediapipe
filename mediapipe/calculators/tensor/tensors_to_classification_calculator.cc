@@ -89,13 +89,22 @@ absl::Status TensorsToClassificationCalculator::Open(CalculatorContext* cc) {
     ASSIGN_OR_RETURN(string_path,
                      PathToResourceAsFile(options_.label_map_path()));
     std::string label_map_string;
-    MP_RETURN_IF_ERROR(file::GetContents(string_path, &label_map_string));
+    MP_RETURN_IF_ERROR(
+        mediapipe::GetResourceContents(string_path, &label_map_string));
 
     std::istringstream stream(label_map_string);
     std::string line;
     int i = 0;
     while (std::getline(stream, line)) {
       label_map_[i++] = line;
+    }
+    label_map_loaded_ = true;
+  } else if (options_.has_label_map()) {
+    for (int i = 0; i < options_.label_map().entries_size(); ++i) {
+      const auto& entry = options_.label_map().entries(i);
+      RET_CHECK(!label_map_.contains(entry.id()))
+          << "Duplicate id found: " << entry.id();
+      label_map_[entry.id()] = entry.label();
     }
     label_map_loaded_ = true;
   }

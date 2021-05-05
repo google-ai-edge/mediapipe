@@ -1518,5 +1518,72 @@ TEST(CalculatorGraphBoundsTest, OffsetAndBound) {
   MP_ASSERT_OK(graph.WaitUntilDone());
 }
 
+// A Calculator that sends empty output stream packets.
+class EmptyPacketCalculator : public CalculatorBase {
+ public:
+  static absl::Status GetContract(CalculatorContract* cc) {
+    cc->Inputs().Index(0).Set<int>();
+    cc->Outputs().Index(0).SetSameAs(&cc->Inputs().Index(0));
+    return absl::OkStatus();
+  }
+  absl::Status Open(CalculatorContext* cc) final { return absl::OkStatus(); }
+  absl::Status Process(CalculatorContext* cc) final {
+    if (cc->InputTimestamp().Value() % 2 == 0) {
+      cc->Outputs().Index(0).AddPacket(Packet().At(cc->InputTimestamp()));
+    }
+    return absl::OkStatus();
+  }
+};
+REGISTER_CALCULATOR(EmptyPacketCalculator);
+
+// This test shows that an output timestamp bound can be specified by outputing
+// an empty packet with a settled timestamp.
+TEST(CalculatorGraphBoundsTest, EmptyPacketOutput) {
+  // OffsetAndBoundCalculator runs on parallel threads and sends ts
+  // occasionally.
+  std::string config_str = R"(
+            input_stream: "input_0"
+            node {
+              calculator: "EmptyPacketCalculator"
+              input_stream: "input_0"
+              output_stream: "empty_0"
+            }
+            node {
+              calculator: "ProcessBoundToPacketCalculator"
+              input_stream: "empty_0"
+              output_stream: "output_0"
+            }
+          )";
+  CalculatorGraphConfig config =
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(config_str);
+  CalculatorGraph graph;
+  std::vector<Packet> output_0_packets;
+  MP_ASSERT_OK(graph.Initialize(config));
+  MP_ASSERT_OK(graph.ObserveOutputStream("output_0", [&](const Packet& p) {
+    output_0_packets.push_back(p);
+    return absl::OkStatus();
+  }));
+  MP_ASSERT_OK(graph.StartRun({}));
+  MP_ASSERT_OK(graph.WaitUntilIdle());
+
+  // Send in packets.
+  for (int i = 0; i < 9; ++i) {
+    const int ts = 10 + i * 10;
+    Packet p = MakePacket<int>(i).At(Timestamp(ts));
+    MP_ASSERT_OK(graph.AddPacketToInputStream("input_0", p));
+    MP_ASSERT_OK(graph.WaitUntilIdle());
+  }
+
+  // 9 empty packets are converted to bounds and then to packets.
+  EXPECT_EQ(output_0_packets.size(), 9);
+  for (int i = 0; i < 9; ++i) {
+    EXPECT_EQ(output_0_packets[i].Timestamp(), Timestamp(10 + i * 10));
+  }
+
+  // Shutdown the graph.
+  MP_ASSERT_OK(graph.CloseAllPacketSources());
+  MP_ASSERT_OK(graph.WaitUntilDone());
+}
+
 }  // namespace
 }  // namespace mediapipe

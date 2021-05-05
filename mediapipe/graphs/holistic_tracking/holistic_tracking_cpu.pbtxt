@@ -38,11 +38,11 @@ node {
 
 node {
   calculator: "ConstantSidePacketCalculator"
-  output_side_packet: "PACKET:0:upper_body_only"
+  output_side_packet: "PACKET:0:model_complexity"
   output_side_packet: "PACKET:1:smooth_landmarks"
   node_options: {
     [type.googleapis.com/mediapipe.ConstantSidePacketCalculatorOptions]: {
-      packet { bool_value: false }
+      packet { int_value: 1 }
       packet { bool_value: true }
     }
   }
@@ -51,7 +51,7 @@ node {
 node {
   calculator: "HolisticLandmarkCpu"
   input_stream: "IMAGE:throttled_input_video"
-  input_side_packet: "UPPER_BODY_ONLY:upper_body_only"
+  input_side_packet: "MODEL_COMPLEXITY:model_complexity"
   input_side_packet: "SMOOTH_LANDMARKS:smooth_landmarks"
   output_stream: "POSE_LANDMARKS:pose_landmarks"
   output_stream: "POSE_ROI:pose_roi"
@@ -77,7 +77,6 @@ node {
   input_stream: "LEFT_HAND_LANDMARKS:left_hand_landmarks"
   input_stream: "RIGHT_HAND_LANDMARKS:right_hand_landmarks"
   input_stream: "FACE_LANDMARKS:face_landmarks"
-  input_side_packet: "UPPER_BODY_ONLY:upper_body_only"
   output_stream: "RENDER_DATA_VECTOR:render_data_vector"
 }
 

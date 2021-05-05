@@ -127,6 +127,29 @@ const char kConfigD[] = R"(
     }
     )";
 
+const char kConfigE[] = R"(
+    calculator: "ContentZoomingCalculator"
+    input_stream: "VIDEO_SIZE:size"
+    input_stream: "DETECTIONS:detections"
+    input_stream: "ANIMATE_ZOOM:animate_zoom"
+    output_stream: "CROP_RECT:rect"
+    output_stream: "FIRST_CROP_RECT:first_rect"
+    options: {
+      [mediapipe.autoflip.ContentZoomingCalculatorOptions.ext]: {
+        max_zoom_value_deg: 0
+        kinematic_options_zoom {
+          min_motion_to_reframe: 1.2
+        }
+        kinematic_options_tilt {
+          min_motion_to_reframe: 1.2
+        }
+        kinematic_options_pan {
+          min_motion_to_reframe: 1.2
+        }
+      }
+    }
+    )";
+
 void CheckBorder(const StaticFeatures& static_features, int width, int height,
                  int top_border, int bottom_border) {
   ASSERT_EQ(2, static_features.border().size());
@@ -145,9 +168,14 @@ void CheckBorder(const StaticFeatures& static_features, int width, int height,
   EXPECT_EQ(Border::BOTTOM, part.relative_position());
 }
 
+struct AddDetectionFlags {
+  std::optional<bool> animated_zoom;
+};
+
 void AddDetectionFrameSize(const cv::Rect_<float>& position, const int64 time,
                            const int width, const int height,
-                           CalculatorRunner* runner) {
+                           CalculatorRunner* runner,
+                           const AddDetectionFlags& flags = {}) {
   auto detections = std::make_unique<std::vector<mediapipe::Detection>>();
   if (position.width > 0 && position.height > 0) {
     mediapipe::Detection detection;
@@ -175,6 +203,14 @@ void AddDetectionFrameSize(const cv::Rect_<float>& position, const int64 time,
   runner->MutableInputs()
       ->Tag("VIDEO_SIZE")
       .packets.push_back(Adopt(input_size.release()).At(Timestamp(time)));
+
+  if (flags.animated_zoom.has_value()) {
+    runner->MutableInputs()
+        ->Tag("ANIMATE_ZOOM")
+        .packets.push_back(
+            mediapipe::MakePacket<bool>(flags.animated_zoom.value())
+                .At(Timestamp(time)));
+  }
 }
 
 void AddDetection(const cv::Rect_<float>& position, const int64 time,
@@ -703,7 +739,33 @@ TEST(ContentZoomingCalculatorTest, MaxZoomOutValue) {
   CheckCropRect(500, 500, 1000, 1000, 2,
                 runner->Outputs().Tag("CROP_RECT").packets);
 }
+
 TEST(ContentZoomingCalculatorTest, StartZoomedOut) {
+  auto config = ParseTextProtoOrDie<CalculatorGraphConfig::Node>(kConfigD);
+  auto* options = config.mutable_options()->MutableExtension(
+      ContentZoomingCalculatorOptions::ext);
+  options->set_start_zoomed_out(true);
+  auto runner = ::absl::make_unique<CalculatorRunner>(config);
+  AddDetectionFrameSize(cv::Rect_<float>(.4, .4, .2, .2), 0, 1000, 1000,
+                        runner.get());
+  AddDetectionFrameSize(cv::Rect_<float>(.4, .4, .2, .2), 400000, 1000, 1000,
+                        runner.get());
+  AddDetectionFrameSize(cv::Rect_<float>(.4, .4, .2, .2), 800000, 1000, 1000,
+                        runner.get());
+  AddDetectionFrameSize(cv::Rect_<float>(.4, .4, .2, .2), 1000000, 1000, 1000,
+                        runner.get());
+  MP_ASSERT_OK(runner->Run());
+  CheckCropRect(500, 500, 1000, 1000, 0,
+                runner->Outputs().Tag("CROP_RECT").packets);
+  CheckCropRect(500, 500, 880, 880, 1,
+                runner->Outputs().Tag("CROP_RECT").packets);
+  CheckCropRect(500, 500, 760, 760, 2,
+                runner->Outputs().Tag("CROP_RECT").packets);
+  CheckCropRect(500, 500, 655, 655, 3,
+                runner->Outputs().Tag("CROP_RECT").packets);
+}
+
+TEST(ContentZoomingCalculatorTest, AnimateToFirstRect) {
   auto config = ParseTextProtoOrDie<CalculatorGraphConfig::Node>(kConfigD);
   auto* options = config.mutable_options()->MutableExtension(
       ContentZoomingCalculatorOptions::ext);
@@ -730,6 +792,65 @@ TEST(ContentZoomingCalculatorTest, StartZoomedOut) {
   CheckCropRect(500, 500, 222, 222, 3,
                 runner->Outputs().Tag("CROP_RECT").packets);
   CheckCropRect(500, 500, 222, 222, 4,
+                runner->Outputs().Tag("CROP_RECT").packets);
+}
+
+TEST(ContentZoomingCalculatorTest, CanControlAnimation) {
+  auto config = ParseTextProtoOrDie<CalculatorGraphConfig::Node>(kConfigE);
+  auto* options = config.mutable_options()->MutableExtension(
+      ContentZoomingCalculatorOptions::ext);
+  options->set_start_zoomed_out(true);
+  options->set_us_to_first_rect(1000000);
+  options->set_us_to_first_rect_delay(500000);
+  auto runner = ::absl::make_unique<CalculatorRunner>(config);
+  // Request the animation for the first frame.
+  AddDetectionFrameSize(cv::Rect_<float>(.4, .4, .2, .2), 0, 1000, 1000,
+                        runner.get(), {.animated_zoom = true});
+  // We now stop requesting animated zoom and expect the already started
+  // animation run to completion. This tests that the zoom in continues in the
+  // call when it was started in the Meet greenroom.
+  AddDetectionFrameSize(cv::Rect_<float>(.4, .4, .2, .2), 400000, 1000, 1000,
+                        runner.get(), {.animated_zoom = false});
+  AddDetectionFrameSize(cv::Rect_<float>(.4, .4, .2, .2), 800000, 1000, 1000,
+                        runner.get(), {.animated_zoom = false});
+  AddDetectionFrameSize(cv::Rect_<float>(.4, .4, .2, .2), 1000000, 1000, 1000,
+                        runner.get(), {.animated_zoom = false});
+  AddDetectionFrameSize(cv::Rect_<float>(.4, .4, .2, .2), 1500000, 1000, 1000,
+                        runner.get(), {.animated_zoom = false});
+  MP_ASSERT_OK(runner->Run());
+  CheckCropRect(500, 500, 1000, 1000, 0,
+                runner->Outputs().Tag("CROP_RECT").packets);
+  CheckCropRect(500, 500, 1000, 1000, 1,
+                runner->Outputs().Tag("CROP_RECT").packets);
+  CheckCropRect(500, 500, 470, 470, 2,
+                runner->Outputs().Tag("CROP_RECT").packets);
+  CheckCropRect(500, 500, 222, 222, 3,
+                runner->Outputs().Tag("CROP_RECT").packets);
+  CheckCropRect(500, 500, 222, 222, 4,
+                runner->Outputs().Tag("CROP_RECT").packets);
+}
+
+TEST(ContentZoomingCalculatorTest, DoesNotAnimateIfDisabledViaInput) {
+  auto config = ParseTextProtoOrDie<CalculatorGraphConfig::Node>(kConfigE);
+  auto* options = config.mutable_options()->MutableExtension(
+      ContentZoomingCalculatorOptions::ext);
+  options->set_start_zoomed_out(true);
+  options->set_us_to_first_rect(1000000);
+  options->set_us_to_first_rect_delay(500000);
+  auto runner = ::absl::make_unique<CalculatorRunner>(config);
+  // Disable the animation already for the first frame.
+  AddDetectionFrameSize(cv::Rect_<float>(.4, .4, .2, .2), 0, 1000, 1000,
+                        runner.get(), {.animated_zoom = false});
+  AddDetectionFrameSize(cv::Rect_<float>(.4, .4, .2, .2), 400000, 1000, 1000,
+                        runner.get(), {.animated_zoom = false});
+  AddDetectionFrameSize(cv::Rect_<float>(.4, .4, .2, .2), 800000, 1000, 1000,
+                        runner.get(), {.animated_zoom = false});
+  MP_ASSERT_OK(runner->Run());
+  CheckCropRect(500, 500, 1000, 1000, 0,
+                runner->Outputs().Tag("CROP_RECT").packets);
+  CheckCropRect(500, 500, 880, 880, 1,
+                runner->Outputs().Tag("CROP_RECT").packets);
+  CheckCropRect(500, 500, 760, 760, 2,
                 runner->Outputs().Tag("CROP_RECT").packets);
 }
 

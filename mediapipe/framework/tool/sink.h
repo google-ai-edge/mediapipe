@@ -115,6 +115,12 @@ void AddMultiStreamCallback(
     std::function<void(const std::vector<Packet>&)> callback,
     CalculatorGraphConfig* config, std::pair<std::string, Packet>* side_packet);
 
+void AddMultiStreamCallback(
+    const std::vector<std::string>& streams,
+    std::function<void(const std::vector<Packet>&)> callback,
+    CalculatorGraphConfig* config, std::map<std::string, Packet>* side_packets,
+    bool observe_timestamp_bounds = false);
+
 // Add a CallbackWithHeaderCalculator to intercept packets sent on
 // stream stream_name, and the header packet on stream stream_header.
 // The input side packet with the produced name callback_side_packet_name

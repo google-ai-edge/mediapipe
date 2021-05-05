@@ -285,7 +285,7 @@ absl::Status ImageCroppingCalculator::RenderGpu(CalculatorContext* cc) {
 
   // Run cropping shader on GPU.
   {
-    gpu_helper_.BindFramebuffer(dst_tex);  // GL_TEXTURE0
+    gpu_helper_.BindFramebuffer(dst_tex);
 
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(src_tex.target(), src_tex.name());

@@ -21,6 +21,7 @@
 
 #include "absl/memory/memory.h"
 #include "mediapipe/framework/calculator_framework.h"
+#include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/formats/image_frame.h"
 #include "mediapipe/framework/graph_service.h"
 #include "mediapipe/gpu/MPPGraphGPUData.h"
@@ -163,10 +164,15 @@ void CallFrameDelegate(void* wrapperVoid, const std::string& streamName,
         _GTMDevLog(@"unsupported ImageFormat: %d", format);
       }
 #if MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
-    } else if (packetType == MPPPacketTypePixelBuffer) {
+    } else if (packetType == MPPPacketTypePixelBuffer ||
+               packetType == MPPPacketTypeImage) {
       wrapper->_framesInFlight--;
-      CVPixelBufferRef pixelBuffer = packet.Get<mediapipe::GpuBuffer>().GetCVPixelBufferRef();
-      if ([wrapper.delegate
+      CVPixelBufferRef pixelBuffer;
+      if (packetType == MPPPacketTypePixelBuffer)
+        pixelBuffer = packet.Get<mediapipe::GpuBuffer>().GetCVPixelBufferRef();
+      else
+        pixelBuffer = packet.Get<mediapipe::Image>().GetCVPixelBufferRef();
+if ([wrapper.delegate
               respondsToSelector:@selector
               (mediapipeGraph:didOutputPixelBuffer:fromStream:timestamp:)]) {
         [wrapper.delegate mediapipeGraph:wrapper
@@ -316,10 +322,24 @@ void CallFrameDelegate(void* wrapperVoid, const std::string& streamName,
   } else if (packetType == MPPPacketTypePixelBuffer) {
     packet = mediapipe::MakePacket<mediapipe::GpuBuffer>(imageBuffer);
 #endif  // MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
+  } else if (packetType == MPPPacketTypeImage) {
+#if MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
+    // GPU
+    packet = mediapipe::MakePacket<mediapipe::Image>(imageBuffer);
+#else
+    // CPU
+    auto frame = CreateImageFrameForCVPixelBuffer(imageBuffer, /* canOverwrite = */ false,
+                                                  /* bgrAsRgb = */ false);
+    packet = mediapipe::MakePacket<mediapipe::Image>(std::move(frame));
+#endif  // MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
   } else {
     _GTMDevLog(@"unsupported packet type: %d", packetType);
   }
   return packet;
+}
+
+- (mediapipe::Packet)imagePacketWithPixelBuffer:(CVPixelBufferRef)pixelBuffer {
+  return [self packetWithPixelBuffer:(pixelBuffer) packetType:(MPPPacketTypeImage)];
 }
 
 - (BOOL)sendPixelBuffer:(CVPixelBufferRef)imageBuffer

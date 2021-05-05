@@ -17,15 +17,15 @@
 # Script to build/run all MediaPipe desktop example apps (with webcam input).
 #
 # To build and run all apps and store them in out_dir:
-#   $ ./build_ios_examples.sh -d out_dir
+#   $ ./build_desktop_examples.sh -d out_dir
 #   Omitting -d and the associated directory saves all generated apps in the
 #   current directory.
 # To build all apps and store them in out_dir:
-#   $ ./build_ios_examples.sh -d out_dir -b
+#   $ ./build_desktop_examples.sh -d out_dir -b
 #   Omitting -d and the associated directory saves all generated apps in the
 #   current directory.
 # To run all apps already stored in out_dir:
-#   $ ./build_ios_examples.sh -d out_dir -r
+#   $ ./build_desktop_examples.sh -d out_dir -r
 #   Omitting -d and the associated directory assumes all apps are in the current
 #   directory.
 

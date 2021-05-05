@@ -317,7 +317,8 @@ absl::Status InferenceCalculatorGlImpl::LoadModel(CalculatorContext* cc) {
 absl::Status InferenceCalculatorGlImpl::LoadDelegate(CalculatorContext* cc) {
   // Configure and create the delegate.
   TfLiteGpuDelegateOptions options = TfLiteGpuDelegateOptionsDefault();
-  options.compile_options.precision_loss_allowed = 1;
+  options.compile_options.precision_loss_allowed =
+      allow_precision_loss_ ? 1 : 0;
   options.compile_options.preferred_gl_object_type =
       TFLITE_GL_OBJECT_TYPE_FASTEST;
   options.compile_options.dynamic_batch_enabled = 0;

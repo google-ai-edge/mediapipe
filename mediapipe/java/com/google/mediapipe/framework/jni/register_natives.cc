@@ -24,6 +24,7 @@
 #endif
 #include "mediapipe/java/com/google/mediapipe/framework/jni/compat_jni.h"
 #include "mediapipe/java/com/google/mediapipe/framework/jni/graph_jni.h"
+#include "mediapipe/java/com/google/mediapipe/framework/jni/graph_profiler_jni.h"
 #include "mediapipe/java/com/google/mediapipe/framework/jni/packet_context_jni.h"
 #include "mediapipe/java/com/google/mediapipe/framework/jni/packet_creator_jni.h"
 #include "mediapipe/java/com/google/mediapipe/framework/jni/packet_getter_jni.h"
@@ -114,7 +115,7 @@ void RegisterGraphNatives(JNIEnv *env) {
   std::string packet_list_callback_name = class_registry.GetClassName(
       mediapipe::android::ClassRegistry::kPacketListCallbackClassName);
   std::string native_add_multi_stream_callback_signature =
-      absl::StrFormat("(JLjava/util/List;L%s;)V", packet_list_callback_name);
+      absl::StrFormat("(JLjava/util/List;L%s;Z)V", packet_list_callback_name);
   AddJNINativeMethod(&graph_methods, graph, "nativeAddMultiStreamCallback",
                      native_add_multi_stream_callback_signature.c_str(),
                      (void *)&GRAPH_METHOD(nativeAddMultiStreamCallback));
@@ -133,7 +134,23 @@ void RegisterGraphNatives(JNIEnv *env) {
                      (void *)&GRAPH_METHOD(nativeWaitUntilGraphDone));
   AddJNINativeMethod(&graph_methods, graph, "nativeReleaseGraph", "(J)V",
                      (void *)&GRAPH_METHOD(nativeReleaseGraph));
+  AddJNINativeMethod(&graph_methods, graph, "nativeGetProfiler", "(J)J",
+                     (void *)&GRAPH_METHOD(nativeGetProfiler));
   RegisterNativesVector(env, graph_class, graph_methods);
+}
+
+void RegisterGraphProfilerNatives(JNIEnv *env) {
+  auto &class_registry = mediapipe::android::ClassRegistry::GetInstance();
+  std::string graph_profiler(
+      mediapipe::android::ClassRegistry::kGraphProfilerClassName);
+  std::string graph_profiler_name = class_registry.GetClassName(graph_profiler);
+  jclass graph_profiler_class = env->FindClass(graph_profiler_name.c_str());
+
+  std::vector<JNINativeMethodStrings> graph_profiler_methods;
+  AddJNINativeMethod(
+      &graph_profiler_methods, graph_profiler, "nativeGetCalculatorProfiles",
+      "(J)[[B", (void *)&GRAPH_PROFILER_METHOD(nativeGetCalculatorProfiles));
+  RegisterNativesVector(env, graph_profiler_class, graph_profiler_methods);
 }
 
 void RegisterAndroidAssetUtilNatives(JNIEnv *env) {
@@ -249,6 +266,8 @@ void RegisterPacketNatives(JNIEnv *env) {
                      (void *)&PACKET_METHOD(nativeCopyPacket));
   AddJNINativeMethod(&packet_methods, packet, "nativeGetTimestamp", "(J)J",
                      (void *)&PACKET_METHOD(nativeGetTimestamp));
+  AddJNINativeMethod(&packet_methods, packet, "nativeIsEmpty", "(J)Z",
+                     (void *)&PACKET_METHOD(nativeIsEmpty));
   RegisterNativesVector(env, packet_class, packet_methods);
 }
 
@@ -271,6 +290,7 @@ void RegisterCompatNatives(JNIEnv *env) {
 
 void RegisterAllNatives(JNIEnv *env) {
   RegisterGraphNatives(env);
+  RegisterGraphProfilerNatives(env);
   RegisterAndroidAssetUtilNatives(env);
   RegisterAndroidPacketCreatorNatives(env);
   RegisterPacketCreatorNatives(env);

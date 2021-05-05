@@ -157,7 +157,8 @@ class CalculatorGraph {
   // TODO: Rename to AddOutputStreamCallback.
   absl::Status ObserveOutputStream(
       const std::string& stream_name,
-      std::function<absl::Status(const Packet&)> packet_callback);
+      std::function<absl::Status(const Packet&)> packet_callback,
+      bool observe_timestamp_bounds = false);
 
   // Adds an OutputStreamPoller for a stream. This provides a synchronous,
   // polling API for accessing a stream's output. Should only be called before

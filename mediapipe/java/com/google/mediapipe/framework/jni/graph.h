@@ -53,7 +53,8 @@ class Graph {
                                   jobject java_callback);
   // Adds a callback for multiple output streams.
   absl::Status AddMultiStreamCallbackHandler(
-      std::vector<std::string> output_stream_names, jobject java_callback);
+      std::vector<std::string> output_stream_names, jobject java_callback,
+      bool observe_timestamp_bounds);
 
   // Loads a binary graph from a file.
   absl::Status LoadBinaryGraph(std::string path_to_graph);

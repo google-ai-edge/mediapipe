@@ -42,7 +42,7 @@ from mediapipe.python.solution_base import SolutionBase
 
 
 class PoseLandmark(enum.IntEnum):
-  """The 25 (upper-body) pose landmarks."""
+  """The 33 pose landmarks."""
   NOSE = 0
   LEFT_EYE_INNER = 1
   LEFT_EYE = 2
@@ -78,7 +78,7 @@ class PoseLandmark(enum.IntEnum):
   RIGHT_FOOT_INDEX = 32
 
 BINARYPB_FILE_PATH = 'mediapipe/modules/pose_landmark/pose_landmark_cpu.binarypb'
-UPPER_BODY_POSE_CONNECTIONS = frozenset([
+POSE_CONNECTIONS = frozenset([
     (PoseLandmark.NOSE, PoseLandmark.RIGHT_EYE_INNER),
     (PoseLandmark.RIGHT_EYE_INNER, PoseLandmark.RIGHT_EYE),
     (PoseLandmark.RIGHT_EYE, PoseLandmark.RIGHT_EYE_OUTER),
@@ -104,21 +104,17 @@ UPPER_BODY_POSE_CONNECTIONS = frozenset([
     (PoseLandmark.RIGHT_SHOULDER, PoseLandmark.RIGHT_HIP),
     (PoseLandmark.LEFT_SHOULDER, PoseLandmark.LEFT_HIP),
     (PoseLandmark.RIGHT_HIP, PoseLandmark.LEFT_HIP),
+    (PoseLandmark.RIGHT_HIP, PoseLandmark.RIGHT_KNEE),
+    (PoseLandmark.LEFT_HIP, PoseLandmark.LEFT_KNEE),
+    (PoseLandmark.RIGHT_KNEE, PoseLandmark.RIGHT_ANKLE),
+    (PoseLandmark.LEFT_KNEE, PoseLandmark.LEFT_ANKLE),
+    (PoseLandmark.RIGHT_ANKLE, PoseLandmark.RIGHT_HEEL),
+    (PoseLandmark.LEFT_ANKLE, PoseLandmark.LEFT_HEEL),
+    (PoseLandmark.RIGHT_HEEL, PoseLandmark.RIGHT_FOOT_INDEX),
+    (PoseLandmark.LEFT_HEEL, PoseLandmark.LEFT_FOOT_INDEX),
+    (PoseLandmark.RIGHT_ANKLE, PoseLandmark.RIGHT_FOOT_INDEX),
+    (PoseLandmark.LEFT_ANKLE, PoseLandmark.LEFT_FOOT_INDEX),
 ])
-POSE_CONNECTIONS = frozenset.union(
-    UPPER_BODY_POSE_CONNECTIONS,
-    frozenset([
-        (PoseLandmark.RIGHT_HIP, PoseLandmark.RIGHT_KNEE),
-        (PoseLandmark.LEFT_HIP, PoseLandmark.LEFT_KNEE),
-        (PoseLandmark.RIGHT_KNEE, PoseLandmark.RIGHT_ANKLE),
-        (PoseLandmark.LEFT_KNEE, PoseLandmark.LEFT_ANKLE),
-        (PoseLandmark.RIGHT_ANKLE, PoseLandmark.RIGHT_HEEL),
-        (PoseLandmark.LEFT_ANKLE, PoseLandmark.LEFT_HEEL),
-        (PoseLandmark.RIGHT_HEEL, PoseLandmark.RIGHT_FOOT_INDEX),
-        (PoseLandmark.LEFT_HEEL, PoseLandmark.LEFT_FOOT_INDEX),
-        (PoseLandmark.RIGHT_ANKLE, PoseLandmark.RIGHT_FOOT_INDEX),
-        (PoseLandmark.LEFT_ANKLE, PoseLandmark.LEFT_FOOT_INDEX),
-    ]))
 
 
 class Pose(SolutionBase):
@@ -133,7 +129,7 @@ class Pose(SolutionBase):
 
   def __init__(self,
                static_image_mode=False,
-               upper_body_only=False,
+               model_complexity=1,
                smooth_landmarks=True,
                min_detection_confidence=0.5,
                min_tracking_confidence=0.5):
@@ -143,9 +139,8 @@ class Pose(SolutionBase):
       static_image_mode: Whether to treat the input images as a batch of static
         and possibly unrelated images, or a video stream. See details in
         https://solutions.mediapipe.dev/pose#static_image_mode.
-      upper_body_only: Whether to track the full set of 33 pose landmarks or
-        only the 25 upper-body pose landmarks. See details in
-        https://solutions.mediapipe.dev/pose#upper_body_only.
+      model_complexity: Complexity of the pose landmark model: 0, 1 or 2. See
+        details in https://solutions.mediapipe.dev/pose#model_complexity.
       smooth_landmarks: Whether to filter landmarks across different input
         images to reduce jitter. See details in
         https://solutions.mediapipe.dev/pose#smooth_landmarks.
@@ -159,7 +154,7 @@ class Pose(SolutionBase):
     super().__init__(
         binary_graph_path=BINARYPB_FILE_PATH,
         side_inputs={
-            'upper_body_only': upper_body_only,
+            'model_complexity': model_complexity,
             'smooth_landmarks': smooth_landmarks and not static_image_mode,
         },
         calculator_params={

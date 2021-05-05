@@ -490,6 +490,7 @@ cc_library(
         "//mediapipe/framework/port:statusor",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework:port",
+        "//mediapipe/gpu:gpu_origin_cc_proto",
     ] + select({
         "//mediapipe/gpu:disable_gpu": [],
         "//conditions:default": [":image_to_tensor_calculator_gpu_deps"],
@@ -526,6 +527,7 @@ mediapipe_proto_library(
     deps = [
         "//mediapipe/framework:calculator_options_proto",
         "//mediapipe/framework:calculator_proto",
+        "//mediapipe/gpu:gpu_origin_proto",
     ],
 )
 

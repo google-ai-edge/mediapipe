@@ -422,6 +422,9 @@ message CalculatorGraphConfig {
   // the graph config.
   string type = 20;
 
-  // Can be used for annotating a graph.
+  // The types and default values for graph options, in proto2 syntax.
   MediaPipeOptions options = 1001;
+
+  // The types and default values for graph options, in proto3 syntax.
+  repeated google.protobuf.Any graph_options = 1002;
 }

@@ -17,29 +17,32 @@
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/calculator_profile.pb.h"
 
-JNIEXPORT void JNICALL GRAPH_METHOD(nativeReset)(JNIEnv* env, jobject thiz,
-                                                 jlong handle) {
+JNIEXPORT void JNICALL GRAPH_PROFILER_METHOD(nativeReset)(JNIEnv* env,
+                                                          jobject thiz,
+                                                          jlong handle) {
   mediapipe::ProfilingContext* profiling_context =
       reinterpret_cast<mediapipe::ProfilingContext*>(handle);
   profiling_context->Reset();
 }
 
-JNIEXPORT void JNICALL GRAPH_METHOD(nativePause)(JNIEnv* env, jobject thiz,
-                                                 jlong handle) {
+JNIEXPORT void JNICALL GRAPH_PROFILER_METHOD(nativePause)(JNIEnv* env,
+                                                          jobject thiz,
+                                                          jlong handle) {
   mediapipe::ProfilingContext* profiling_context =
       reinterpret_cast<mediapipe::ProfilingContext*>(handle);
   profiling_context->Pause();
 }
 
-JNIEXPORT void JNICALL GRAPH_METHOD(nativeResume)(JNIEnv* env, jobject thiz,
-                                                  jlong handle) {
+JNIEXPORT void JNICALL GRAPH_PROFILER_METHOD(nativeResume)(JNIEnv* env,
+                                                           jobject thiz,
+                                                           jlong handle) {
   mediapipe::ProfilingContext* profiling_context =
       reinterpret_cast<mediapipe::ProfilingContext*>(handle);
   profiling_context->Resume();
 }
 
-JNIEXPORT jobjectArray JNICALL GRAPH_METHOD(nativeGetCalculatorProfiles)(
-    JNIEnv* env, jobject thiz, jlong handle) {
+JNIEXPORT jobjectArray JNICALL GRAPH_PROFILER_METHOD(
+    nativeGetCalculatorProfiles)(JNIEnv* env, jobject thiz, jlong handle) {
   mediapipe::ProfilingContext* profiling_context =
       reinterpret_cast<mediapipe::ProfilingContext*>(handle);
 

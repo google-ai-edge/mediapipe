@@ -48,8 +48,8 @@ mediapipe_simple_subgraph(
         "//mediapipe/calculators/tensor:tensors_to_landmarks_calculator",
         "//mediapipe/calculators/util:landmark_letterbox_removal_calculator",
         "//mediapipe/calculators/util:landmark_projection_calculator",
+        "//mediapipe/calculators/util:refine_landmarks_from_heatmap_calculator",
         "//mediapipe/calculators/util:thresholding_calculator",
-        "//mediapipe/framework/tool:switch_container",
     ],
 )
 
@@ -68,8 +68,8 @@ mediapipe_simple_subgraph(
         "//mediapipe/calculators/tensor:tensors_to_landmarks_calculator",
         "//mediapipe/calculators/util:landmark_letterbox_removal_calculator",
         "//mediapipe/calculators/util:landmark_projection_calculator",
+        "//mediapipe/calculators/util:refine_landmarks_from_heatmap_calculator",
         "//mediapipe/calculators/util:thresholding_calculator",
-        "//mediapipe/framework/tool:switch_container",
     ],
 )
 
@@ -124,30 +124,11 @@ mediapipe_simple_subgraph(
     ],
 )
 
-mediapipe_simple_subgraph(
-    name = "pose_landmark_upper_body_gpu",
-    graph = "pose_landmark_upper_body_gpu.pbtxt",
-    register_as = "PoseLandmarkUpperBodyGpu",
-    deps = [
-        ":pose_landmark_gpu",
-        "//mediapipe/calculators/core:constant_side_packet_calculator",
-    ],
-)
-
-mediapipe_simple_subgraph(
-    name = "pose_landmark_upper_body_cpu",
-    graph = "pose_landmark_upper_body_cpu.pbtxt",
-    register_as = "PoseLandmarkUpperBodyCpu",
-    deps = [
-        ":pose_landmark_cpu",
-        "//mediapipe/calculators/core:constant_side_packet_calculator",
-    ],
-)
-
 exports_files(
     srcs = [
-        "pose_landmark_full_body.tflite",
-        "pose_landmark_upper_body.tflite",
+        "pose_landmark_full.tflite",
+        "pose_landmark_heavy.tflite",
+        "pose_landmark_lite.tflite",
     ],
 )
 
@@ -158,7 +139,6 @@ mediapipe_simple_subgraph(
     deps = [
         "//mediapipe/calculators/util:alignment_points_to_rects_calculator",
         "//mediapipe/calculators/util:rect_transformation_calculator",
-        "//mediapipe/framework/tool:switch_container",
     ],
 )
 

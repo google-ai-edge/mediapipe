@@ -142,26 +142,13 @@ node {
   }
 }
 
-# Maps detection label IDs to the corresponding label text ("Face"). The label
-# map is provided in the label_map_path option.
-node {
-  calculator: "DetectionLabelIdToTextCalculator"
-  input_stream: "filtered_detections"
-  output_stream: "labeled_detections"
-  options: {
-    [mediapipe.DetectionLabelIdToTextCalculatorOptions.ext] {
-      label_map_path: "mediapipe/models/face_detection_front_labelmap.txt"
-    }
-  }
-}
-
 # Adjusts detection locations (already normalized to [0.f, 1.f]) on the
 # letterboxed image (after image transformation with the FIT scale mode) to the
 # corresponding locations on the same image with the letterbox removed (the
 # input image to the graph before image transformation).
 node {
   calculator: "DetectionLetterboxRemovalCalculator"
-  input_stream: "DETECTIONS:labeled_detections"
+  input_stream: "DETECTIONS:filtered_detections"
   input_stream: "LETTERBOX_PADDING:letterbox_padding"
   output_stream: "DETECTIONS:output_detections"
 }

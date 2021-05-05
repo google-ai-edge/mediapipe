@@ -25,6 +25,14 @@ message TensorsToClassificationCalculatorOptions {
     optional TensorsToClassificationCalculatorOptions ext = 335742638;
   }
 
+  message LabelMap {
+    message Entry {
+      optional int32 id = 1;
+      optional string label = 2;
+    }
+    repeated Entry entries = 1;
+  }
+
   // Score threshold for perserving the class.
   optional float min_score_threshold = 1;
   // Number of highest scoring labels to output.  If top_k is not positive then
@@ -32,6 +40,10 @@ message TensorsToClassificationCalculatorOptions {
   optional int32 top_k = 2;
   // Path to a label map file for getting the actual name of class ids.
   optional string label_map_path = 3;
+  // Label map. (Can be used instead of label_map_path.)
+  // NOTE: "label_map_path", if specified, takes precedence over "label_map".
+  optional LabelMap label_map = 5;
+
   // Whether the input is a single float for binary classification.
   // When true, only a single float is expected in the input tensor and the
   // label map, if provided, is expected to have exactly two labels.

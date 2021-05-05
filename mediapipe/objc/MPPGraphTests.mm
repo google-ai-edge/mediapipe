@@ -16,6 +16,7 @@
 #import <XCTest/XCTest.h>
 
 #include "absl/memory/memory.h"
+#include "mediapipe/framework/formats/image.h"
 #import "mediapipe/objc/MPPGraph.h"
 #import "mediapipe/objc/MPPGraphTestBase.h"
 #import "mediapipe/objc/NSError+util_status.h"
@@ -331,6 +332,23 @@ REGISTER_CALCULATOR(ErrorCalculator);
   });
 
   [self waitForExpectationsWithTimeout:3.0 handler:NULL];
+}
+
+- (void)testPixelBufferToImage {
+  CFHolder<CVPixelBufferRef> pixelBufferIn;
+  absl::Status status = CreateCVPixelBufferFromCGImage(_sourceImage.CGImage, &pixelBufferIn);
+  XCTAssert(status.ok());
+
+  mediapipe::CalculatorGraphConfig config;
+  _graph = [[MPPGraph alloc] initWithGraphConfig:config];
+
+  mediapipe::Packet packet = [_graph imagePacketWithPixelBuffer:*pixelBufferIn];
+  CVPixelBufferRef pixelBufferOut = packet.Get<mediapipe::Image>().GetCVPixelBufferRef();
+
+  XCTAssertTrue([self pixelBuffer:*pixelBufferIn
+                        isCloseTo:pixelBufferOut
+               maxLocalDifference:0
+             maxAverageDifference:0]);
 }
 
 @end

@@ -21,6 +21,7 @@ import numpy as np
 
 from google.protobuf import message
 from mediapipe.python._framework_bindings import _packet_creator
+from mediapipe.python._framework_bindings import image
 from mediapipe.python._framework_bindings import image_frame
 from mediapipe.python._framework_bindings import packet
 
@@ -115,8 +116,11 @@ def create_image_frame(data: Union[image_frame.ImageFrame, np.ndarray],
       raise ValueError(
           'The provided image_format doesn\'t match the one from the data arg.')
     if copy is not None and not copy:
+      # Taking a reference will make the created packet be mutable since the
+      # ImageFrame object can still be manipulated in Python, which voids packet
+      # immutability.
       raise ValueError(
-          'Creating image frame packet by taking a reference of another image frame object is not supported yet.'
+          'Creating ImageFrame packet by taking a reference of another ImageFrame object is not supported yet.'
       )
     # pylint:disable=protected-access
     return _packet_creator._create_image_frame_from_image_frame(data)
@@ -140,6 +144,104 @@ def create_image_frame(data: Union[image_frame.ImageFrame, np.ndarray],
             RuntimeWarning, 2)
     # pylint:disable=protected-access
     return _packet_creator._create_image_frame_from_pixel_data(
+        image_format, data, copy)
+    # pylint:enable=protected-access
+
+
+def create_image(data: Union[image.Image, np.ndarray],
+                 *,
+                 image_format: image_frame.ImageFormat = None,
+                 copy: bool = None) -> packet.Packet:
+  """Create a MediaPipe Image packet.
+
+  A MediaPipe Image packet can be created from an existing MediaPipe
+  Image object and the data will be realigned and copied into a new
+  Image object inside of the packet.
+
+  A MediaPipe Image packet can also be created from the raw pixel data
+  represented as a numpy array with one of the uint8, uint16, and float data
+  types. There are three data ownership modes depending on how the 'copy' arg
+  is set.
+
+  i) Default mode
+  If copy is not set, mutable data is always copied while the immutable data
+  is by reference.
+
+  ii) Copy mode (safe)
+  If copy is set to True, the data will be realigned and copied into an
+  Image object inside of the packet regardless the immutablity of the
+  original data.
+
+  iii) Reference mode (dangerous)
+  If copy is set to False, the data will be forced to be shared. If the data is
+  mutable (data.flags.writeable is True), a warning will be raised.
+
+  Args:
+    data: A MediaPipe Image object or the raw pixel data that is represnted as a
+      numpy ndarray.
+    image_format: One of the mp.ImageFormat enum types.
+    copy: Indicate if the packet should copy the data from the numpy nparray.
+
+  Returns:
+    A MediaPipe Image Packet.
+
+  Raises:
+    ValueError:
+      i) When "data" is a numpy ndarray, "image_format" is not provided or
+        the "data" array is not c_contiguous in the reference mode.
+      ii) When "data" is an Image object, the "image_format" arg doesn't
+        match the image format of the "data" Image object or "copy" is
+        explicitly set to False.
+    TypeError: If "image format" doesn't match "data" array's data type.
+
+  Examples:
+    np_array = np.random.randint(255, size=(321, 123, 3), dtype=np.uint8)
+    # Copy mode by default if the data array is writable.
+    image_packet = mp.packet_creator.create_image(
+        image_format=mp.ImageFormat.SRGB, data=np_array)
+
+    # Make the array unwriteable to trigger the reference mode.
+    np_array.flags.writeable = False
+    image_packet = mp.packet_creator.create_image(
+        image_format=mp.ImageFormat.SRGB, data=np_array)
+
+    image = mp.Image(image_format=mp.ImageFormat.SRGB, data=np_array)
+    image_packet = mp.packet_creator.create_image(image)
+
+  """
+  if isinstance(data, image.Image):
+    if image_format is not None and data.image_format != image_format:
+      raise ValueError(
+          'The provided image_format doesn\'t match the one from the data arg.')
+    if copy is not None and not copy:
+      # Taking a reference will make the created packet be mutable since the
+      # Image object can still be manipulated in Python, which voids packet
+      # immutability.
+      raise ValueError(
+          'Creating Image packet by taking a reference of another Image object is not supported yet.'
+      )
+    # pylint:disable=protected-access
+    return _packet_creator._create_image_from_image(data)
+    # pylint:enable=protected-access
+  else:
+    if image_format is None:
+      raise ValueError('Please provide \'image_format\' with \'data\'.')
+    # If copy arg is not set, copying the data if it's immutable. Otherwise,
+    # take a reference of the immutable data to avoid data copy.
+    if copy is None:
+      copy = True if data.flags.writeable else False
+    if not copy:
+      # TODO: Investigate why the first 2 bytes of the data has data
+      # corruption when "data" is not c_contiguous.
+      if not data.flags.c_contiguous:
+        raise ValueError(
+            'Reference mode is unavailable if \'data\' is not c_contiguous.')
+      if data.flags.writeable:
+        warnings.warn(
+            '\'data\' is still writeable. Taking a reference of the data to create Image packet is dangerous.',
+            RuntimeWarning, 2)
+    # pylint:disable=protected-access
+    return _packet_creator._create_image_from_pixel_data(
         image_format, data, copy)
     # pylint:enable=protected-access
 

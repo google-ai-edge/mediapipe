@@ -17,20 +17,7 @@ syntax = "proto2";
 package mediapipe;
 
 import "mediapipe/framework/calculator.proto";
-
-message GpuOrigin {
-  enum Mode {
-    DEFAULT = 0;
-
-    // OpenGL: bottom-left origin
-    // Metal : top-left origin
-    CONVENTIONAL = 1;
-
-    // OpenGL: top-left origin
-    // Metal : top-left origin
-    TOP_LEFT = 2;
-  }
-}
+import "mediapipe/gpu/gpu_origin.proto";
 
 message ImageToTensorCalculatorOptions {
   extend mediapipe.CalculatorOptions {

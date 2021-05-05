@@ -295,6 +295,7 @@ cc_library(
         "//mediapipe/framework/formats:image_format_cc_proto",
         "@com_google_absl//absl/synchronization",
         "//mediapipe/framework:port",
+        "//mediapipe/framework:type_map",
         "//mediapipe/framework/port:logging",
     ] + select({
         "//conditions:default": [

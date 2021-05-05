@@ -217,38 +217,41 @@ class UnpackMediaSequenceCalculator : public CalculatorBase {
             first_timestamp_seen_ = recent_timestamp;
           }
         }
-        if (recent_timestamp > last_timestamp_seen) {
+        if (recent_timestamp > last_timestamp_seen &&
+            recent_timestamp < Timestamp::PostStream().Value()) {
           last_timestamp_key_ = map_kv.first;
           last_timestamp_seen = recent_timestamp;
         }
       }
     }
     if (!timestamps_.empty()) {
-      RET_CHECK(!last_timestamp_key_.empty())
-          << "Something went wrong because the timestamp key is unset. "
-             "Example: "
-          << sequence_->DebugString();
-      RET_CHECK_GT(last_timestamp_seen, Timestamp::PreStream().Value())
-          << "Something went wrong because the last timestamp is unset. "
-             "Example: "
-          << sequence_->DebugString();
-      RET_CHECK_LT(first_timestamp_seen_,
-                   Timestamp::OneOverPostStream().Value())
-          << "Something went wrong because the first timestamp is unset. "
-             "Example: "
-          << sequence_->DebugString();
+      for (const auto& kv : timestamps_) {
+        if (!kv.second.empty() &&
+            kv.second[0] < Timestamp::PostStream().Value()) {
+          // These checks only make sense if any values are not PostStream, but
+          // only need to be made once.
+          RET_CHECK(!last_timestamp_key_.empty())
+              << "Something went wrong because the timestamp key is unset. "
+              << "Example: " << sequence_->DebugString();
+          RET_CHECK_GT(last_timestamp_seen, Timestamp::PreStream().Value())
+              << "Something went wrong because the last timestamp is unset. "
+              << "Example: " << sequence_->DebugString();
+          RET_CHECK_LT(first_timestamp_seen_,
+                       Timestamp::OneOverPostStream().Value())
+              << "Something went wrong because the first timestamp is unset. "
+              << "Example: " << sequence_->DebugString();
+          break;
+        }
+      }
     }
     current_timestamp_index_ = 0;
+    process_poststream_ = false;
 
     // Determine the data path and output it.
     const auto& options = cc->Options<UnpackMediaSequenceCalculatorOptions>();
     const auto& sequence = cc->InputSidePackets()
                                .Tag(kSequenceExampleTag)
                                .Get<tensorflow::SequenceExample>();
-    if (cc->Outputs().HasTag(kKeypointsTag)) {
-      keypoint_names_ = absl::StrSplit(options.keypoint_names(), ',');
-      default_keypoint_location_ = options.default_keypoint_location();
-    }
     if (cc->OutputSidePackets().HasTag(kDataPath)) {
       std::string root_directory = "";
       if (cc->InputSidePackets().HasTag(kDatasetRootDirTag)) {
@@ -349,19 +352,30 @@ class UnpackMediaSequenceCalculator : public CalculatorBase {
     // all packets on all streams that have a timestamp between the current
     // reference timestep and the previous reference timestep. This ensures that
     // we emit all timestamps in order, but also only emit a limited number in
-    // any particular call to Process().
-    int64 start_timestamp =
-        timestamps_[last_timestamp_key_][current_timestamp_index_];
-    if (current_timestamp_index_ == 0) {
-      start_timestamp = first_timestamp_seen_;
+    // any particular call to Process(). At the every end, we output the
+    // poststream packets. If we only have poststream packets,
+    // last_timestamp_key_ will be empty.
+    int64 start_timestamp = 0;
+    int64 end_timestamp = 0;
+    if (last_timestamp_key_.empty() || process_poststream_) {
+      process_poststream_ = true;
+      start_timestamp = Timestamp::PostStream().Value();
+      end_timestamp = Timestamp::OneOverPostStream().Value();
+    } else {
+      start_timestamp =
+          timestamps_[last_timestamp_key_][current_timestamp_index_];
+      if (current_timestamp_index_ == 0) {
+        start_timestamp = first_timestamp_seen_;
+      }
+
+      end_timestamp = start_timestamp + 1;  // Base case at end of sequence.
+      if (current_timestamp_index_ <
+          timestamps_[last_timestamp_key_].size() - 1) {
+        end_timestamp =
+            timestamps_[last_timestamp_key_][current_timestamp_index_ + 1];
+      }
     }
 
-    int64 end_timestamp = start_timestamp + 1;  // Base case at end of sequence.
-    if (current_timestamp_index_ <
-        timestamps_[last_timestamp_key_].size() - 1) {
-      end_timestamp =
-          timestamps_[last_timestamp_key_][current_timestamp_index_ + 1];
-    }
     for (const auto& map_kv : timestamps_) {
       for (int i = 0; i < map_kv.second.size(); ++i) {
         if (map_kv.second[i] >= start_timestamp &&
@@ -438,7 +452,14 @@ class UnpackMediaSequenceCalculator : public CalculatorBase {
     if (current_timestamp_index_ < timestamps_[last_timestamp_key_].size()) {
       return absl::OkStatus();
     } else {
-      return tool::StatusStop();
+      if (process_poststream_) {
+        // Once we've processed the PostStream timestamp we can stop.
+        return tool::StatusStop();
+      } else {
+        // Otherwise, we still need to do one more pass to process it.
+        process_poststream_ = true;
+        return absl::OkStatus();
+      }
     }
   }
 
@@ -462,6 +483,7 @@ class UnpackMediaSequenceCalculator : public CalculatorBase {
   std::vector<std::string> keypoint_names_;
   // Default keypoint location when missing.
   float default_keypoint_location_;
+  bool process_poststream_;
 };
 REGISTER_CALCULATOR(UnpackMediaSequenceCalculator);
 }  // namespace mediapipe

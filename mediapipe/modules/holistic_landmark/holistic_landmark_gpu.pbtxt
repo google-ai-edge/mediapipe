@@ -19,19 +19,19 @@
 # - "pose_detection.tflite" is available at
 # "mediapipe/modules/pose_detection/pose_detection.tflite"
 #
-# - "pose_landmark_full_body.tflite" or "pose_landmark_upper_body.tflite" is
-# available at
-# "mediapipe/modules/pose_landmark/pose_landmark_full_body.tflite"
-# or
-# "mediapipe/modules/pose_landmark/pose_landmark_upper_body.tflite"
+# - "pose_landmark_lite.tflite" or "pose_landmark_full.tflite" or
+# "pose_landmark_heavy.tflite" is available at
+# "mediapipe/modules/pose_landmark/pose_landmark_lite.tflite" or
+# "mediapipe/modules/pose_landmark/pose_landmark_full.tflite" or
+# "mediapipe/modules/pose_landmark/pose_landmark_heavy.tflite"
 # path respectively during execution, depending on the specification in the
-# UPPER_BODY_ONLY input side packet.
+# MODEL_COMPLEXITY input side packet.
 #
 # EXAMPLE:
 #   node {
 #     calculator: "HolisticLandmarkGpu"
 #     input_stream: "IMAGE:input_video"
-#     input_side_packet: UPPER_BODY_ONLY:upper_body_only
+#     input_side_packet: "MODEL_COMPLEXITY:model_complexity"
 #     input_side_packet: SMOOTH_LANDMARKS:smooth_landmarks
 #     output_stream: "POSE_LANDMARKS:pose_landmarks"
 #     output_stream: "FACE_LANDMARKS:face_landmarks"
@@ -50,17 +50,17 @@ type: "HolisticLandmarkGpu"
 # GPU image. (GpuBuffer)
 input_stream: "IMAGE:image"
 
-# Whether to detect/predict the full set of pose landmarks (see below), or only
-# those on the upper body. If unspecified, functions as set to false. (bool)
-# Note that upper-body-only prediction may be more accurate for use cases where
-# the lower-body parts are mostly out of view.
-input_side_packet: "UPPER_BODY_ONLY:upper_body_only"
+# Complexity of the pose landmark model: 0, 1 or 2. Landmark accuracy as well as
+# inference latency generally go up with the model complexity. If unspecified,
+# functions as set to 0. (int)
+input_side_packet: "MODEL_COMPLEXITY:model_complexity"
+
 # Whether to filter landmarks across different input images to reduce jitter.
 # If unspecified, functions as set to true. (bool)
 input_side_packet: "SMOOTH_LANDMARKS:smooth_landmarks"
 
 # Pose landmarks. (NormalizedLandmarkList)
-# We have 33 landmarks or 25 landmarks if UPPER_BODY_ONLY is set to true.
+# 33 pose landmarks.
 output_stream: "POSE_LANDMARKS:pose_landmarks"
 # 21 left hand landmarks. (NormalizedLandmarkList)
 output_stream: "LEFT_HAND_LANDMARKS:left_hand_landmarks"
@@ -77,7 +77,7 @@ output_stream: "POSE_DETECTION:pose_detection"
 node {
   calculator: "PoseLandmarkGpu"
   input_stream: "IMAGE:image"
-  input_side_packet: "UPPER_BODY_ONLY:upper_body_only"
+  input_side_packet: "MODEL_COMPLEXITY:model_complexity"
   input_side_packet: "SMOOTH_LANDMARKS:smooth_landmarks"
   output_stream: "LANDMARKS:pose_landmarks"
   output_stream: "ROI_FROM_LANDMARKS:pose_landmarks_roi"

@@ -54,6 +54,7 @@ class DetectionLabelIdToTextCalculator : public CalculatorBase {
 
  private:
   absl::node_hash_map<int, std::string> label_map_;
+  ::mediapipe::DetectionLabelIdToTextCalculatorOptions options_;
 };
 REGISTER_CALCULATOR(DetectionLabelIdToTextCalculator);
 
@@ -68,13 +69,13 @@ absl::Status DetectionLabelIdToTextCalculator::GetContract(
 absl::Status DetectionLabelIdToTextCalculator::Open(CalculatorContext* cc) {
   cc->SetOffset(TimestampDiff(0));
 
-  const auto& options =
+  options_ =
       cc->Options<::mediapipe::DetectionLabelIdToTextCalculatorOptions>();
 
-  if (options.has_label_map_path()) {
+  if (options_.has_label_map_path()) {
     std::string string_path;
     ASSIGN_OR_RETURN(string_path,
-                     PathToResourceAsFile(options.label_map_path()));
+                     PathToResourceAsFile(options_.label_map_path()));
     std::string label_map_string;
     MP_RETURN_IF_ERROR(file::GetContents(string_path, &label_map_string));
 
@@ -85,8 +86,8 @@ absl::Status DetectionLabelIdToTextCalculator::Open(CalculatorContext* cc) {
       label_map_[i++] = line;
     }
   } else {
-    for (int i = 0; i < options.label_size(); ++i) {
-      label_map_[i] = options.label(i);
+    for (int i = 0; i < options_.label_size(); ++i) {
+      label_map_[i] = options_.label(i);
     }
   }
   return absl::OkStatus();
@@ -106,7 +107,7 @@ absl::Status DetectionLabelIdToTextCalculator::Process(CalculatorContext* cc) {
       }
     }
     // Remove label_id field if text labels exist.
-    if (has_text_label) {
+    if (has_text_label && !options_.keep_label_id()) {
       output_detection.clear_label_id();
     }
   }

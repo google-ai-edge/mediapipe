@@ -1,4 +1,4 @@
-# Copyright 2020 The MediaPipe Authors.
+# Copyright 2020-2021 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 from mediapipe.python._framework_bindings import resource_util
 from mediapipe.python._framework_bindings.calculator_graph import CalculatorGraph
 from mediapipe.python._framework_bindings.calculator_graph import GraphInputStreamAddMode
+from mediapipe.python._framework_bindings.image import Image
 from mediapipe.python._framework_bindings.image_frame import ImageFormat
 from mediapipe.python._framework_bindings.image_frame import ImageFrame
 from mediapipe.python._framework_bindings.matrix import Matrix

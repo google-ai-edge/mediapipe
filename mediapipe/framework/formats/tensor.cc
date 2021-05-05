@@ -30,6 +30,9 @@
 
 namespace mediapipe {
 
+// Zero and negative values are not checked here.
+bool IsPowerOfTwo(int v) { return (v & (v - 1)) == 0; }
+
 int BhwcBatchFromShape(const Tensor::Shape& shape) {
   LOG_IF(FATAL, shape.dims.empty())
       << "Tensor::Shape must be non-empty to retrieve a named dimension";
@@ -237,6 +240,12 @@ void Tensor::AllocateOpenGlTexture2d() const {
       glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA32F, texture_width_,
                      texture_height_);
     } else {
+      // GLES2.0 supports only clamp addressing mode for NPOT textures.
+      // If any of dimensions is NPOT then both addressing modes are clamp.
+      if (!IsPowerOfTwo(texture_width_) || !IsPowerOfTwo(texture_height_)) {
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+      }
       // We assume all contexts will have the same extensions, so we only check
       // once for OES_texture_float extension, to save time.
       static bool has_oes_extension =

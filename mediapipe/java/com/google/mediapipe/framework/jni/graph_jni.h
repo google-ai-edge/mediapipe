@@ -64,7 +64,7 @@ JNIEXPORT void JNICALL GRAPH_METHOD(nativeAddPacketCallback)(
 
 JNIEXPORT void JNICALL GRAPH_METHOD(nativeAddMultiStreamCallback)(
     JNIEnv* env, jobject thiz, jlong context, jobject stream_names,
-    jobject callback);
+    jobject callback, jboolean observe_timestamp_bounds);
 
 JNIEXPORT jlong JNICALL GRAPH_METHOD(nativeAddSurfaceOutput)(
     JNIEnv* env, jobject thiz, jlong context, jstring stream_name);

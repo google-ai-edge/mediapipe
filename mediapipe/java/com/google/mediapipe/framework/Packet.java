@@ -31,26 +31,31 @@ public class Packet {
   /**
    * Creates a Java packet from a native mediapipe packet handle.
    *
-   * @return A Packet from a native internal::PacketWithContext handle.
+   * Returns a Packet from a native internal::PacketWithContext handle.
    */
   public static Packet create(long nativeHandle) {
     return new Packet(nativeHandle);
   }
 
   /**
-   * @return The native handle of the packet.
+   * Returns the native handle of the packet.
    */
   public long getNativeHandle() {
     return nativePacketHandle;
   }
 
-  /** @return The timestamp of the Packet. */
+  /** Returns the timestamp of the Packet. */
   public long getTimestamp() {
     return nativeGetTimestamp(nativePacketHandle);
   }
 
+  /** Returns true if the Packet is empty. */
+  public boolean isEmpty() {
+    return nativeIsEmpty(nativePacketHandle);
+  }
+
   /**
-   * @return a shared copy of the Packet.
+   * Returns a shared copy of the Packet.
    *     <p>This is essentially increasing the reference count to the data encapsulated in the
    *     native mediapipe packet.
    */
@@ -82,4 +87,6 @@ public class Packet {
   private native long nativeCopyPacket(long packetHandle);
 
   private native long nativeGetTimestamp(long packetHandle);
+
+  private native boolean nativeIsEmpty(long packetHandle);
 }

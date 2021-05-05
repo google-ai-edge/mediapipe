@@ -1,4 +1,4 @@
-// Copyright 2020 The MediaPipe Authors.
+// Copyright 2020-2021 The MediaPipe Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "mediapipe/python/pybind/calculator_graph.h"
+#include "mediapipe/python/pybind/image.h"
 #include "mediapipe/python/pybind/image_frame.h"
 #include "mediapipe/python/pybind/matrix.h"
 #include "mediapipe/python/pybind/packet.h"
@@ -27,6 +28,7 @@ namespace python {
 
 PYBIND11_MODULE(_framework_bindings, m) {
   ResourceUtilSubmodule(&m);
+  ImageSubmodule(&m);
   ImageFrameSubmodule(&m);
   MatrixSubmodule(&m);
   TimestampSubmodule(&m);

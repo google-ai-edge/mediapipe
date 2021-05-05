@@ -200,6 +200,25 @@ cc_library(
 )
 
 cc_library(
+    name = "resource_cache",
+    hdrs = ["resource_cache.h"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//mediapipe/framework/port:logging",
+        "@com_google_absl//absl/functional:function_ref",
+    ],
+)
+
+cc_test(
+    name = "resource_cache_test",
+    srcs = ["resource_cache_test.cc"],
+    deps = [
+        ":resource_cache",
+        "//mediapipe/framework/port:gtest_main",
+    ],
+)
+
+cc_library(
     name = "tensor_to_detection",
     srcs = ["tensor_to_detection.cc"],
     hdrs = ["tensor_to_detection.h"],

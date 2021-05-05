@@ -36,7 +36,6 @@ mediapipe_simple_subgraph(
         "//mediapipe/calculators/util:landmarks_to_render_data_calculator",
         "//mediapipe/calculators/util:rect_to_render_data_calculator",
         "//mediapipe/calculators/util:rect_to_render_scale_calculator",
-        "//mediapipe/framework/tool:switch_container",
         "//mediapipe/modules/holistic_landmark:hand_wrist_for_pose",
     ],
 )

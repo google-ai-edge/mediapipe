@@ -43,6 +43,8 @@ class ClassRegistry {
       "com/google/mediapipe/framework/Compat";
   static constexpr char const* kGraphClassName =
       "com/google/mediapipe/framework/Graph";
+  static constexpr char const* kGraphProfilerClassName =
+      "com/google/mediapipe/framework/GraphProfiler";
   static constexpr char const* kPacketClassName =
       "com/google/mediapipe/framework/Packet";
   static constexpr char const* kMediaPipeExceptionClassName =

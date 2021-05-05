@@ -37,7 +37,7 @@ android_binary(
     srcs = glob(["*.java"]),
     assets = [
         "//mediapipe/graphs/pose_tracking:pose_tracking_gpu.binarypb",
-        "//mediapipe/modules/pose_landmark:pose_landmark_full_body.tflite",
+        "//mediapipe/modules/pose_landmark:pose_landmark_full.tflite",
         "//mediapipe/modules/pose_detection:pose_detection.tflite",
     ],
     assets_dir = "",

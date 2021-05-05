@@ -15,10 +15,6 @@ input_stream: "RIGHT_HAND_LANDMARKS:right_hand_landmarks"
 # Face landmarks. (NormalizedLandmarkList)
 input_stream: "FACE_LANDMARKS:face_landmarks"
 
-# Whether to render the full set of pose landmarks, or only those on the
-# upper body. If unspecified, functions as set to false. (bool)
-input_side_packet: "UPPER_BODY_ONLY:upper_body_only"
-
 # Render data vector. (std::vector<RenderData>)
 output_stream: "RENDER_DATA_VECTOR:render_data_vector"
 
@@ -81,28 +77,12 @@ node {
 
 # Gets pose landmarks after wrists.
 node {
-  calculator: "SwitchContainer"
-  input_side_packet: "ENABLE:upper_body_only"
+  calculator: "SplitNormalizedLandmarkListCalculator"
   input_stream: "landmarks"
   output_stream: "landmarks_after_wrist"
   node_options: {
-    [type.googleapis.com/mediapipe.SwitchContainerOptions] {
-      contained_node: {
-        calculator: "SplitNormalizedLandmarkListCalculator"
-        node_options: {
-          [type.googleapis.com/mediapipe.SplitVectorCalculatorOptions] {
-            ranges: { begin: 23 end: 33 }
-          }
-        }
-      }
-      contained_node: {
-        calculator: "SplitNormalizedLandmarkListCalculator"
-        node_options: {
-          [type.googleapis.com/mediapipe.SplitVectorCalculatorOptions] {
-            ranges: { begin: 23 end: 25 }
-          }
-        }
-      }
+    [type.googleapis.com/mediapipe.SplitVectorCalculatorOptions] {
+      ranges: { begin: 23 end: 33 }
     }
   }
 }
@@ -156,80 +136,40 @@ node {
 
 # Takes left pose landmarks.
 node {
-  calculator: "SwitchContainer"
-  input_side_packet: "ENABLE:upper_body_only"
+  calculator: "SplitNormalizedLandmarkListCalculator"
   input_stream: "landmarks_merged"
   output_stream: "landmarks_left_side"
   node_options: {
-    [type.googleapis.com/mediapipe.SwitchContainerOptions] {
-      contained_node: {
-        calculator: "SplitNormalizedLandmarkListCalculator"
-        node_options: {
-          [type.googleapis.com/mediapipe.SplitVectorCalculatorOptions] {
-            ranges: { begin: 0 end: 1 }
-            ranges: { begin: 2 end: 3 }
-            ranges: { begin: 4 end: 5 }
-            ranges: { begin: 6 end: 7 }
-            ranges: { begin: 8 end: 9 }
-            ranges: { begin: 10 end: 11 }
-            ranges: { begin: 12 end: 13 }
-            ranges: { begin: 14 end: 15 }
-            combine_outputs: true
-          }
-        }
-      }
-      contained_node: {
-        calculator: "SplitNormalizedLandmarkListCalculator"
-        node_options: {
-          [type.googleapis.com/mediapipe.SplitVectorCalculatorOptions] {
-            ranges: { begin: 0 end: 1 }
-            ranges: { begin: 2 end: 3 }
-            ranges: { begin: 4 end: 5 }
-            ranges: { begin: 6 end: 7 }
-            combine_outputs: true
-          }
-        }
-      }
+    [type.googleapis.com/mediapipe.SplitVectorCalculatorOptions] {
+      ranges: { begin: 0 end: 1 }
+      ranges: { begin: 2 end: 3 }
+      ranges: { begin: 4 end: 5 }
+      ranges: { begin: 6 end: 7 }
+      ranges: { begin: 8 end: 9 }
+      ranges: { begin: 10 end: 11 }
+      ranges: { begin: 12 end: 13 }
+      ranges: { begin: 14 end: 15 }
+      combine_outputs: true
     }
   }
 }
 
 # Takes right pose landmarks.
 node {
-  calculator: "SwitchContainer"
-  input_side_packet: "ENABLE:upper_body_only"
+  calculator: "SplitNormalizedLandmarkListCalculator"
   input_stream: "landmarks_merged"
   output_stream: "landmarks_right_side"
   node_options: {
-    [type.googleapis.com/mediapipe.SwitchContainerOptions] {
-      contained_node: {
-        calculator: "SplitNormalizedLandmarkListCalculator"
-        node_options: {
-          [type.googleapis.com/mediapipe.SplitVectorCalculatorOptions] {
-            ranges: { begin: 1 end: 2 }
-            ranges: { begin: 3 end: 4 }
-            ranges: { begin: 5 end: 6 }
-            ranges: { begin: 7 end: 8 }
-            ranges: { begin: 9 end: 10 }
-            ranges: { begin: 11 end: 12 }
-            ranges: { begin: 13 end: 14 }
-            ranges: { begin: 15 end: 16 }
-            combine_outputs: true
-          }
-        }
-      }
-      contained_node: {
-        calculator: "SplitNormalizedLandmarkListCalculator"
-        node_options: {
-          [type.googleapis.com/mediapipe.SplitVectorCalculatorOptions] {
-            ranges: { begin: 1 end: 2 }
-            ranges: { begin: 3 end: 4 }
-            ranges: { begin: 5 end: 6 }
-            ranges: { begin: 7 end: 8 }
-            combine_outputs: true
-          }
-        }
-      }
+    [type.googleapis.com/mediapipe.SplitVectorCalculatorOptions] {
+      ranges: { begin: 1 end: 2 }
+      ranges: { begin: 3 end: 4 }
+      ranges: { begin: 5 end: 6 }
+      ranges: { begin: 7 end: 8 }
+      ranges: { begin: 9 end: 10 }
+      ranges: { begin: 11 end: 12 }
+      ranges: { begin: 13 end: 14 }
+      ranges: { begin: 15 end: 16 }
+      combine_outputs: true
     }
   }
 }
@@ -240,92 +180,55 @@ node {
 
 # Converts pose connections to white lines.
 node {
-  calculator: "SwitchContainer"
-  input_side_packet: "ENABLE:upper_body_only"
+  calculator: "LandmarksToRenderDataCalculator"
   input_stream: "NORM_LANDMARKS:landmarks_merged"
   input_stream: "RENDER_SCALE:render_scale"
   output_stream: "RENDER_DATA:landmarks_render_data"
   node_options: {
-    [type.googleapis.com/mediapipe.SwitchContainerOptions] {
-      contained_node: {
-        calculator: "LandmarksToRenderDataCalculator"
-        node_options: {
-          [type.googleapis.com/mediapipe.LandmarksToRenderDataCalculatorOptions] {
-            landmark_connections: 0
-            landmark_connections: 1
-            landmark_connections: 0
-            landmark_connections: 2
-            landmark_connections: 2
-            landmark_connections: 4
-            landmark_connections: 1
-            landmark_connections: 3
-            landmark_connections: 3
-            landmark_connections: 5
-            landmark_connections: 0
-            landmark_connections: 6
-            landmark_connections: 1
-            landmark_connections: 7
-            landmark_connections: 6
-            landmark_connections: 7
-            landmark_connections: 6
-            landmark_connections: 8
-            landmark_connections: 7
-            landmark_connections: 9
-            landmark_connections: 8
-            landmark_connections: 10
-            landmark_connections: 9
-            landmark_connections: 11
-            landmark_connections: 10
-            landmark_connections: 12
-            landmark_connections: 11
-            landmark_connections: 13
-            landmark_connections: 12
-            landmark_connections: 14
-            landmark_connections: 13
-            landmark_connections: 15
-            landmark_connections: 10
-            landmark_connections: 14
-            landmark_connections: 11
-            landmark_connections: 15
+    [type.googleapis.com/mediapipe.LandmarksToRenderDataCalculatorOptions] {
+      landmark_connections: 0
+      landmark_connections: 1
+      landmark_connections: 0
+      landmark_connections: 2
+      landmark_connections: 2
+      landmark_connections: 4
+      landmark_connections: 1
+      landmark_connections: 3
+      landmark_connections: 3
+      landmark_connections: 5
+      landmark_connections: 0
+      landmark_connections: 6
+      landmark_connections: 1
+      landmark_connections: 7
+      landmark_connections: 6
+      landmark_connections: 7
+      landmark_connections: 6
+      landmark_connections: 8
+      landmark_connections: 7
+      landmark_connections: 9
+      landmark_connections: 8
+      landmark_connections: 10
+      landmark_connections: 9
+      landmark_connections: 11
+      landmark_connections: 10
+      landmark_connections: 12
+      landmark_connections: 11
+      landmark_connections: 13
+      landmark_connections: 12
+      landmark_connections: 14
+      landmark_connections: 13
+      landmark_connections: 15
+      landmark_connections: 10
+      landmark_connections: 14
+      landmark_connections: 11
+      landmark_connections: 15
 
-            landmark_color { r: 255 g: 255 b: 255 }
-            connection_color { r: 255 g: 255 b: 255 }
-            thickness: 3.0
-            visualize_landmark_depth: false
-            utilize_visibility: true
-            visibility_threshold: 0.1
-          }
-        }
-      }
-      contained_node: {
-        calculator: "LandmarksToRenderDataCalculator"
-        node_options: {
-          [type.googleapis.com/mediapipe.LandmarksToRenderDataCalculatorOptions] {
-            landmark_connections: 0
-            landmark_connections: 1
-            landmark_connections: 0
-            landmark_connections: 2
-            landmark_connections: 2
-            landmark_connections: 4
-            landmark_connections: 1
-            landmark_connections: 3
-            landmark_connections: 3
-            landmark_connections: 5
-            landmark_connections: 0
-            landmark_connections: 6
-            landmark_connections: 1
-            landmark_connections: 7
-            landmark_connections: 6
-            landmark_connections: 7
-            landmark_color { r: 255 g: 255 b: 255 }
-            connection_color { r: 255 g: 255 b: 255 }
-            thickness: 3.0
-            visualize_landmark_depth: false
-            utilize_visibility: true
-            visibility_threshold: 0.5
-          }
-        }
-      }
+      landmark_color { r: 255 g: 255 b: 255 }
+      connection_color { r: 255 g: 255 b: 255 }
+      thickness: 3.0
+      visualize_landmark_depth: false
+      utilize_visibility: true
+      visibility_threshold: 0.1
     }
   }
 }
