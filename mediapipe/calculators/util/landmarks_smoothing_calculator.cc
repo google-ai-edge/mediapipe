@@ -205,11 +205,12 @@ class VelocityFilter : public LandmarksFilter {
 class OneEuroFilterImpl : public LandmarksFilter {
  public:
   OneEuroFilterImpl(double frequency, double min_cutoff, double beta,
-                    double derivate_cutoff)
+                    double derivate_cutoff, float min_allowed_object_scale)
       : frequency_(frequency),
         min_cutoff_(min_cutoff),
         beta_(beta),
-        derivate_cutoff_(derivate_cutoff) {}
+        derivate_cutoff_(derivate_cutoff),
+        min_allowed_object_scale_(min_allowed_object_scale) {}
 
   absl::Status Reset() override {
     x_filters_.clear();
@@ -224,15 +225,25 @@ class OneEuroFilterImpl : public LandmarksFilter {
     // Initialize filters once.
     MP_RETURN_IF_ERROR(InitializeFiltersIfEmpty(in_landmarks.landmark_size()));
 
+    const float object_scale = GetObjectScale(in_landmarks);
+    if (object_scale < min_allowed_object_scale_) {
+      *out_landmarks = in_landmarks;
+      return absl::OkStatus();
+    }
+    const float value_scale = 1.0f / object_scale;
+
     // Filter landmarks. Every axis of every landmark is filtered separately.
     for (int i = 0; i < in_landmarks.landmark_size(); ++i) {
       const auto& in_landmark = in_landmarks.landmark(i);
 
       auto* out_landmark = out_landmarks->add_landmark();
       *out_landmark = in_landmark;
-      out_landmark->set_x(x_filters_[i].Apply(timestamp, in_landmark.x()));
-      out_landmark->set_y(y_filters_[i].Apply(timestamp, in_landmark.y()));
-      out_landmark->set_z(z_filters_[i].Apply(timestamp, in_landmark.z()));
+      out_landmark->set_x(
+          x_filters_[i].Apply(timestamp, value_scale, in_landmark.x()));
+      out_landmark->set_y(
+          y_filters_[i].Apply(timestamp, value_scale, in_landmark.y()));
+      out_landmark->set_z(
+          z_filters_[i].Apply(timestamp, value_scale, in_landmark.z()));
     }
 
     return absl::OkStatus();
@@ -265,6 +276,7 @@ class OneEuroFilterImpl : public LandmarksFilter {
   double min_cutoff_;
   double beta_;
   double derivate_cutoff_;
+  double min_allowed_object_scale_;
 
   std::vector<OneEuroFilter> x_filters_;
   std::vector<OneEuroFilter> y_filters_;
@@ -344,7 +356,8 @@ absl::Status LandmarksSmoothingCalculator::Open(CalculatorContext* cc) {
         options.one_euro_filter().frequency(),
         options.one_euro_filter().min_cutoff(),
         options.one_euro_filter().beta(),
-        options.one_euro_filter().derivate_cutoff());
+        options.one_euro_filter().derivate_cutoff(),
+        options.one_euro_filter().min_allowed_object_scale());
   } else {
     RET_CHECK_FAIL()
         << "Landmarks filter is either not specified or not supported";

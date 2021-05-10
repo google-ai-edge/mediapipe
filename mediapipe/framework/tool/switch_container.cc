@@ -82,6 +82,8 @@ CalculatorGraphConfig::Node* BuildDemuxNode(
     CalculatorGraphConfig* config) {
   CalculatorGraphConfig::Node* result = config->add_node();
   *result->mutable_calculator() = "SwitchDemuxCalculator";
+  *result->mutable_input_stream_handler()->mutable_input_stream_handler() =
+      "ImmediateInputStreamHandler";
   return result;
 }
 
@@ -91,7 +93,40 @@ CalculatorGraphConfig::Node* BuildMuxNode(
     CalculatorGraphConfig* config) {
   CalculatorGraphConfig::Node* result = config->add_node();
   *result->mutable_calculator() = "SwitchMuxCalculator";
+  *result->mutable_input_stream_handler()->mutable_input_stream_handler() =
+      "ImmediateInputStreamHandler";
   return result;
+}
+
+// Copies options from one node to another.
+void CopyOptions(const CalculatorGraphConfig::Node& source,
+                 CalculatorGraphConfig::Node* dest) {
+  if (source.has_options()) {
+    *dest->mutable_options() = source.options();
+  }
+  *dest->mutable_node_options() = source.node_options();
+}
+
+// Clears options that are consumed by the container and not forwarded.
+void ClearContainerOptions(SwitchContainerOptions* result) {
+  result->clear_contained_node();
+}
+
+// Clears options that are consumed by the container and not forwarded.
+void ClearContainerOptions(CalculatorGraphConfig::Node* dest) {
+  if (dest->has_options() &&
+      dest->mutable_options()->HasExtension(SwitchContainerOptions::ext)) {
+    ClearContainerOptions(
+        dest->mutable_options()->MutableExtension(SwitchContainerOptions::ext));
+  }
+  for (google::protobuf::Any& a : *dest->mutable_node_options()) {
+    if (a.Is<SwitchContainerOptions>()) {
+      SwitchContainerOptions extension;
+      a.UnpackTo(&extension);
+      ClearContainerOptions(&extension);
+      a.PackFrom(extension);
+    }
+  }
 }
 
 // Returns an unused name similar to a specified name.
@@ -199,12 +234,16 @@ absl::StatusOr<CalculatorGraphConfig> SwitchContainer::GetConfig(
 
   // Add a graph node for the demux, mux.
   auto demux = BuildDemuxNode(input_tags, &config);
+  CopyOptions(container_node, demux);
+  ClearContainerOptions(demux);
   demux->add_input_stream("SELECT:gate_select");
   demux->add_input_stream("ENABLE:gate_enable");
   demux->add_input_side_packet("SELECT:gate_select");
   demux->add_input_side_packet("ENABLE:gate_enable");
 
   auto mux = BuildMuxNode(output_tags, &config);
+  CopyOptions(container_node, mux);
+  ClearContainerOptions(mux);
   mux->add_input_stream("SELECT:gate_select");
   mux->add_input_stream("ENABLE:gate_enable");
   mux->add_input_side_packet("SELECT:gate_select");

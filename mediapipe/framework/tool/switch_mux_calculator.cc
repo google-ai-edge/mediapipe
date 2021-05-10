@@ -73,17 +73,11 @@ REGISTER_CALCULATOR(SwitchMuxCalculator);
 
 absl::Status SwitchMuxCalculator::GetContract(CalculatorContract* cc) {
   // Allow any one of kSelectTag, kEnableTag.
-  if (cc->Inputs().HasTag(kSelectTag)) {
-    cc->Inputs().Tag(kSelectTag).Set<int>();
-  } else if (cc->Inputs().HasTag(kEnableTag)) {
-    cc->Inputs().Tag(kEnableTag).Set<bool>();
-  }
+  cc->Inputs().Tag(kSelectTag).Set<int>().Optional();
+  cc->Inputs().Tag(kEnableTag).Set<bool>().Optional();
   // Allow any one of kSelectTag, kEnableTag.
-  if (cc->InputSidePackets().HasTag(kSelectTag)) {
-    cc->InputSidePackets().Tag(kSelectTag).Set<int>();
-  } else if (cc->InputSidePackets().HasTag(kEnableTag)) {
-    cc->InputSidePackets().Tag(kEnableTag).Set<bool>();
-  }
+  cc->InputSidePackets().Tag(kSelectTag).Set<int>().Optional();
+  cc->InputSidePackets().Tag(kEnableTag).Set<bool>().Optional();
 
   // Set the types for all input channels to corresponding output types.
   std::set<std::string> channel_tags = ChannelTags(cc->Inputs().TagMap());

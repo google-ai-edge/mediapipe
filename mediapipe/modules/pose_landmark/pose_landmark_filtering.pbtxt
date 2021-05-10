@@ -14,7 +14,7 @@
 
 type: "PoseLandmarkFiltering"
 
-# Whether to enable filtering. If unspecified, functions as not enabled. (bool)
+# Whether to enable filtering. If unspecified, functions as enabled. (bool)
 input_side_packet: "ENABLE:enable"
 
 # Size of the image (width & height) where the landmarks are estimated from.
@@ -37,6 +37,7 @@ node {
   output_stream: "NORM_FILTERED_LANDMARKS:filtered_visibility"
   options: {
     [mediapipe.SwitchContainerOptions.ext] {
+      enable: true
       contained_node: {
         calculator: "VisibilitySmoothingCalculator"
         options: {
@@ -68,6 +69,7 @@ node {
   output_stream: "NORM_FILTERED_LANDMARKS:filtered_landmarks"
   options: {
     [mediapipe.SwitchContainerOptions.ext] {
+      enable: true
       contained_node: {
         calculator: "LandmarksSmoothingCalculator"
         options: {
@@ -80,9 +82,16 @@ node {
         calculator: "LandmarksSmoothingCalculator"
         options: {
           [mediapipe.LandmarksSmoothingCalculatorOptions.ext] {
-            velocity_filter: {
-              window_size: 5
-              velocity_scale: 10.0
+            one_euro_filter {
+              # Min cutoff 0.1 results into ~ 0.02 alpha in landmark EMA filter
+              # when landmark is static.
+              min_cutoff: 0.1
+              # Beta 40.0 in combintation with min_cutoff 0.1 results into ~0.8
+              # alpha in landmark EMA filter when landmark is moving fast.
+              beta: 40.0
+              # Derivative cutoff 1.0 results into ~0.17 alpha in landmark
+              # velocity EMA filter.
+              derivate_cutoff: 1.0
             }
           }
         }
@@ -93,29 +102,13 @@ node {
 
 # Smoothes pose landmark visibilities to reduce jitter.
 node {
-  calculator: "SwitchContainer"
-  input_side_packet: "ENABLE:enable"
+  calculator: "VisibilitySmoothingCalculator"
   input_stream: "NORM_LANDMARKS:aux_landmarks"
   output_stream: "NORM_FILTERED_LANDMARKS:filtered_aux_visibility"
   options: {
-    [mediapipe.SwitchContainerOptions.ext] {
-      contained_node: {
-        calculator: "VisibilitySmoothingCalculator"
-        options: {
-          [mediapipe.VisibilitySmoothingCalculatorOptions.ext] {
-            no_filter: {}
-          }
-        }
-      }
-      contained_node: {
-        calculator: "VisibilitySmoothingCalculator"
-        options: {
-          [mediapipe.VisibilitySmoothingCalculatorOptions.ext] {
-            low_pass_filter {
-              alpha: 0.1
-            }
-          }
-        }
+    [mediapipe.VisibilitySmoothingCalculatorOptions.ext] {
+      low_pass_filter {
+        alpha: 0.1
       }
     }
   }
@@ -123,31 +116,26 @@ node {
 
 # Smoothes auxiliary landmarks to reduce jitter.
 node {
-  calculator: "SwitchContainer"
-  input_side_packet: "ENABLE:enable"
+  calculator: "LandmarksSmoothingCalculator"
   input_stream: "NORM_LANDMARKS:filtered_aux_visibility"
   input_stream: "IMAGE_SIZE:image_size"
   output_stream: "NORM_FILTERED_LANDMARKS:filtered_aux_landmarks"
   options: {
-    [mediapipe.SwitchContainerOptions.ext] {
-      contained_node: {
-        calculator: "LandmarksSmoothingCalculator"
-        options: {
-          [mediapipe.LandmarksSmoothingCalculatorOptions.ext] {
-            no_filter: {}
-          }
-        }
-      }
-      contained_node: {
-        calculator: "LandmarksSmoothingCalculator"
-        options: {
-          [mediapipe.LandmarksSmoothingCalculatorOptions.ext] {
-            velocity_filter: {
-              window_size: 5
-              velocity_scale: 10.0
-            }
-          }
-        }
+    [mediapipe.LandmarksSmoothingCalculatorOptions.ext] {
+      # Auxiliary landmarks are smoothed heavier than main landmarks to
+      # make ROI crop for pose landmarks prediction very stable when
+      # object is not moving but responsive enough in case of sudden
+      # movements.
+      one_euro_filter {
+        # Min cutoff 0.01 results into ~ 0.002 alpha in landmark EMA
+        # filter when landmark is static.
+        min_cutoff: 0.01
+        # Beta 1.0 in combintation with min_cutoff 0.01 results into ~0.2
+        # alpha in landmark EMA filter when landmark is moving fast.
+        beta: 1.0
+        # Derivative cutoff 1.0 results into ~0.17 alpha in landmark
+        # velocity EMA filter.
+        derivate_cutoff: 1.0
       }
     }
   }

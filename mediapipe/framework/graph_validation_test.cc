@@ -499,5 +499,55 @@ TEST(GraphValidationTest, OptionalInputsForGraph) {
   MP_EXPECT_OK(graph_1.WaitUntilDone());
 }
 
+// Shows a calculator graph and DefaultSidePacketCalculator running with and
+// without one optional side packet.
+TEST(GraphValidationTest, DefaultOptionalInputsForGraph) {
+  // A subgraph defining one optional input-side-packet.
+  auto config_1 = ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
+    type: "PassThroughGraph"
+    input_side_packet: "side_input_0"
+    output_side_packet: "OUTPUT:output_0"
+    node {
+      calculator: "ConstantSidePacketCalculator"
+      options: {
+        [mediapipe.ConstantSidePacketCalculatorOptions.ext]: {
+          packet { int_value: 2 }
+        }
+      }
+      output_side_packet: "PACKET:int_packet"
+    }
+    node {
+      calculator: "DefaultSidePacketCalculator"
+      input_side_packet: "OPTIONAL_VALUE:side_input_0"
+      input_side_packet: "DEFAULT_VALUE:int_packet"
+      output_side_packet: "VALUE:side_output_0"
+    }
+  )pb");
+  GraphValidation validation_1;
+  MP_EXPECT_OK(validation_1.Validate({config_1}, {}));
+  CalculatorGraph graph_1;
+  MP_EXPECT_OK(graph_1.Initialize({config_1}, {}));
+
+  // Run the graph specifying the optional side packet.
+  std::map<std::string, Packet> side_packets;
+  side_packets.insert({"side_input_0", MakePacket<int>(33)});
+  MP_EXPECT_OK(graph_1.StartRun(side_packets));
+  MP_EXPECT_OK(graph_1.CloseAllPacketSources());
+  MP_EXPECT_OK(graph_1.WaitUntilDone());
+
+  // The specified side packet value is used.
+  auto side_packet_0 = graph_1.GetOutputSidePacket("side_output_0");
+  EXPECT_EQ(side_packet_0->Get<int>(), 33);
+
+  // Run the graph omitting the optional inputs.
+  MP_EXPECT_OK(graph_1.StartRun({}));
+  MP_EXPECT_OK(graph_1.CloseAllPacketSources());
+  MP_EXPECT_OK(graph_1.WaitUntilDone());
+
+  // The default side packet value is used.
+  side_packet_0 = graph_1.GetOutputSidePacket("side_output_0");
+  EXPECT_EQ(side_packet_0->Get<int>(), 2);
+}
+
 }  // namespace
 }  // namespace mediapipe

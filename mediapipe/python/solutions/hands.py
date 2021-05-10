@@ -44,7 +44,7 @@ class HandLandmark(enum.IntEnum):
   WRIST = 0
   THUMB_CMC = 1
   THUMB_MCP = 2
-  THUMB_DIP = 3
+  THUMB_IP = 3
   THUMB_TIP = 4
   INDEX_FINGER_MCP = 5
   INDEX_FINGER_PIP = 6
@@ -68,8 +68,8 @@ BINARYPB_FILE_PATH = 'mediapipe/modules/hand_landmark/hand_landmark_tracking_cpu
 HAND_CONNECTIONS = frozenset([
     (HandLandmark.WRIST, HandLandmark.THUMB_CMC),
     (HandLandmark.THUMB_CMC, HandLandmark.THUMB_MCP),
-    (HandLandmark.THUMB_MCP, HandLandmark.THUMB_DIP),
-    (HandLandmark.THUMB_DIP, HandLandmark.THUMB_TIP),
+    (HandLandmark.THUMB_MCP, HandLandmark.THUMB_IP),
+    (HandLandmark.THUMB_IP, HandLandmark.THUMB_TIP),
     (HandLandmark.WRIST, HandLandmark.INDEX_FINGER_MCP),
     (HandLandmark.INDEX_FINGER_MCP, HandLandmark.INDEX_FINGER_PIP),
     (HandLandmark.INDEX_FINGER_PIP, HandLandmark.INDEX_FINGER_DIP),

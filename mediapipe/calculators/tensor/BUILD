@@ -585,6 +585,7 @@ cc_library(
         ],
         "//conditions:default": [],
     }),
+    visibility = ["//visibility:public"],
     deps = [
         ":image_to_tensor_utils",
         "//mediapipe/framework/formats:image",

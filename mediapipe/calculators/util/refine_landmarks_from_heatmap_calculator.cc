@@ -77,10 +77,12 @@ class RefineLandmarksFromHeatmapCalculatorImpl
     const auto& options =
         cc->Options<mediapipe::RefineLandmarksFromHeatmapCalculatorOptions>();
 
-    ASSIGN_OR_RETURN(auto out_lms, RefineLandmarksFromHeatMap(
-                                       in_lms, hm_raw, hm_tensor.shape().dims,
-                                       options.kernel_size(),
-                                       options.min_confidence_to_refine()));
+    ASSIGN_OR_RETURN(
+        auto out_lms,
+        RefineLandmarksFromHeatMap(
+            in_lms, hm_raw, hm_tensor.shape().dims, options.kernel_size(),
+            options.min_confidence_to_refine(), options.refine_presence(),
+            options.refine_visibility()));
 
     kOutLandmarks(cc).Send(std::move(out_lms));
     return absl::OkStatus();
@@ -104,7 +106,8 @@ class RefineLandmarksFromHeatmapCalculatorImpl
 absl::StatusOr<mediapipe::NormalizedLandmarkList> RefineLandmarksFromHeatMap(
     const mediapipe::NormalizedLandmarkList& in_lms,
     const float* heatmap_raw_data, const std::vector<int>& heatmap_dims,
-    int kernel_size, float min_confidence_to_refine) {
+    int kernel_size, float min_confidence_to_refine, bool refine_presence,
+    bool refine_visibility) {
   ASSIGN_OR_RETURN(auto hm_dims, GetHwcFromDims(heatmap_dims));
   auto [hm_height, hm_width, hm_channels] = hm_dims;
 
@@ -136,7 +139,7 @@ absl::StatusOr<mediapipe::NormalizedLandmarkList> RefineLandmarksFromHeatMap(
     float sum = 0;
     float weighted_col = 0;
     float weighted_row = 0;
-    float max_value = 0;
+    float max_confidence_value = 0;
 
     // Main loop. Go over kernel and calculate weighted sum of coordinates,
     // sum of weights and max weights.
@@ -150,14 +153,32 @@ absl::StatusOr<mediapipe::NormalizedLandmarkList> RefineLandmarksFromHeatMap(
         // options.
         float confidence = Sigmoid(heatmap_raw_data[idx]);
         sum += confidence;
-        max_value = std::max(max_value, confidence);
+        max_confidence_value = std::max(max_confidence_value, confidence);
         weighted_col += col * confidence;
         weighted_row += row * confidence;
       }
     }
-    if (max_value >= min_confidence_to_refine && sum > 0) {
+    if (max_confidence_value >= min_confidence_to_refine && sum > 0) {
       out_lms.mutable_landmark(lm_index)->set_x(weighted_col / hm_width / sum);
       out_lms.mutable_landmark(lm_index)->set_y(weighted_row / hm_height / sum);
+    }
+    if (refine_presence && sum > 0 &&
+        out_lms.landmark(lm_index).has_presence()) {
+      // We assume confidence in heatmaps describes landmark presence.
+      // If landmark is not confident in heatmaps, probably it is not present.
+      const float presence = out_lms.landmark(lm_index).presence();
+      const float new_presence = std::min(presence, max_confidence_value);
+      out_lms.mutable_landmark(lm_index)->set_presence(new_presence);
+    }
+    if (refine_visibility && sum > 0 &&
+        out_lms.landmark(lm_index).has_visibility()) {
+      // We assume confidence in heatmaps describes landmark presence.
+      // As visibility = (not occluded but still present) -> that mean that if
+      // landmark is not present, it is not visible as well.
+      // I.e. visibility confidence cannot be bigger than presence confidence.
+      const float visibility = out_lms.landmark(lm_index).visibility();
+      const float new_visibility = std::min(visibility, max_confidence_value);
+      out_lms.mutable_landmark(lm_index)->set_visibility(new_visibility);
     }
   }
   return out_lms;

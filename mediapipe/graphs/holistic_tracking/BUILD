@@ -44,7 +44,6 @@ cc_library(
     name = "holistic_tracking_gpu_deps",
     deps = [
         ":holistic_tracking_to_render_data",
-        "//mediapipe/calculators/core:constant_side_packet_calculator",
         "//mediapipe/calculators/core:flow_limiter_calculator",
         "//mediapipe/calculators/image:image_properties_calculator",
         "//mediapipe/calculators/util:annotation_overlay_calculator",
@@ -63,7 +62,6 @@ cc_library(
     name = "holistic_tracking_cpu_graph_deps",
     deps = [
         ":holistic_tracking_to_render_data",
-        "//mediapipe/calculators/core:constant_side_packet_calculator",
         "//mediapipe/calculators/core:flow_limiter_calculator",
         "//mediapipe/calculators/image:image_properties_calculator",
         "//mediapipe/calculators/util:annotation_overlay_calculator",

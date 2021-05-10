@@ -70,8 +70,8 @@ TEST(RefineLandmarksFromHeatmapTest, Smoke) {
     z, z, z};
   // clang-format on
 
-  auto ret_or_error = RefineLandmarksFromHeatMap(vec_to_lms({{0.5, 0.5}}),
-                                                 hm.data(), {3, 3, 1}, 3, 0.1);
+  auto ret_or_error = RefineLandmarksFromHeatMap(
+      vec_to_lms({{0.5, 0.5}}), hm.data(), {3, 3, 1}, 3, 0.1, true, true);
   MP_EXPECT_OK(ret_or_error);
   EXPECT_THAT(lms_to_vec(*ret_or_error),
               ElementsAre(Pair(FloatEq(0), FloatEq(1 / 3.))));
@@ -94,7 +94,7 @@ TEST(RefineLandmarksFromHeatmapTest, MultiLayer) {
 
   auto ret_or_error = RefineLandmarksFromHeatMap(
       vec_to_lms({{0.5, 0.5}, {0.5, 0.5}, {0.5, 0.5}}), hm.data(), {3, 3, 3}, 3,
-      0.1);
+      0.1, true, true);
   MP_EXPECT_OK(ret_or_error);
   EXPECT_THAT(lms_to_vec(*ret_or_error),
               ElementsAre(Pair(FloatEq(0), FloatEq(1 / 3.)),
@@ -119,7 +119,7 @@ TEST(RefineLandmarksFromHeatmapTest, KeepIfNotSure) {
 
   auto ret_or_error = RefineLandmarksFromHeatMap(
       vec_to_lms({{0.5, 0.5}, {0.5, 0.5}, {0.5, 0.5}}), hm.data(), {3, 3, 3}, 3,
-      0.6);
+      0.6, true, true);
   MP_EXPECT_OK(ret_or_error);
   EXPECT_THAT(lms_to_vec(*ret_or_error),
               ElementsAre(Pair(FloatEq(0.5), FloatEq(0.5)),
@@ -140,8 +140,9 @@ TEST(RefineLandmarksFromHeatmapTest, Border) {
     z, z, 0}, 3, 3, 2);
   // clang-format on
 
-  auto ret_or_error = RefineLandmarksFromHeatMap(
-      vec_to_lms({{0.0, 0.0}, {0.9, 0.9}}), hm.data(), {3, 3, 2}, 3, 0.1);
+  auto ret_or_error =
+      RefineLandmarksFromHeatMap(vec_to_lms({{0.0, 0.0}, {0.9, 0.9}}),
+                                 hm.data(), {3, 3, 2}, 3, 0.1, true, true);
   MP_EXPECT_OK(ret_or_error);
   EXPECT_THAT(lms_to_vec(*ret_or_error),
               ElementsAre(Pair(FloatEq(0), FloatEq(1 / 3.)),

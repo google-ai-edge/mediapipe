@@ -14,3 +14,6 @@ exclude mediapipe/modules/objectron/object_detection_3d_sneakers.tflite
 exclude mediapipe/modules/objectron/object_detection_3d_chair.tflite
 exclude mediapipe/modules/objectron/object_detection_3d_camera.tflite
 exclude mediapipe/modules/objectron/object_detection_3d_cup.tflite
+exclude mediapipe/modules/objectron/object_detection_ssd_mobilenetv2_oidv4_fp16.tflite
+exclude mediapipe/modules/pose_landmark/pose_landmark_lite.tflite
+exclude mediapipe/modules/pose_landmark/pose_landmark_heavy.tflite

@@ -12,25 +12,32 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "mediapipe/framework/api2/node.h"
 #include "mediapipe/framework/calculator_framework.h"
+#include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/formats/image_frame.h"
 
 #if !MEDIAPIPE_DISABLE_GPU
 #include "mediapipe/gpu/gpu_buffer.h"
 #endif  // !MEDIAPIPE_DISABLE_GPU
 
-namespace {
-constexpr char kImageFrameTag[] = "IMAGE";
-constexpr char kGpuBufferTag[] = "IMAGE_GPU";
-}  // namespace
-
 namespace mediapipe {
+namespace api2 {
+
+#if MEDIAPIPE_DISABLE_GPU
+// Just a placeholder to not have to depend on mediapipe::GpuBuffer.
+using GpuBuffer = AnyType;
+#else
+using GpuBuffer = mediapipe::GpuBuffer;
+#endif  // MEDIAPIPE_DISABLE_GPU
 
 // Extracts image properties from the input image and outputs the properties.
 // Currently only supports image size.
 // Input:
 //   One of the following:
-//   IMAGE: An ImageFrame
+//   IMAGE: An Image or ImageFrame (for backward compatibility with existing
+//          graphs that use IMAGE for ImageFrame input)
+//   IMAGE_CPU: An ImageFrame
 //   IMAGE_GPU: A GpuBuffer
 //
 // Output:
@@ -42,59 +49,64 @@ namespace mediapipe {
 //   input_stream: "IMAGE:image"
 //   output_stream: "SIZE:size"
 // }
-class ImagePropertiesCalculator : public CalculatorBase {
+class ImagePropertiesCalculator : public Node {
  public:
-  static absl::Status GetContract(CalculatorContract* cc) {
-    RET_CHECK(cc->Inputs().HasTag(kImageFrameTag) ^
-              cc->Inputs().HasTag(kGpuBufferTag));
-    if (cc->Inputs().HasTag(kImageFrameTag)) {
-      cc->Inputs().Tag(kImageFrameTag).Set<ImageFrame>();
-    }
-#if !MEDIAPIPE_DISABLE_GPU
-    if (cc->Inputs().HasTag(kGpuBufferTag)) {
-      cc->Inputs().Tag(kGpuBufferTag).Set<::mediapipe::GpuBuffer>();
-    }
-#endif  // !MEDIAPIPE_DISABLE_GPU
+  static constexpr Input<
+      OneOf<mediapipe::Image, mediapipe::ImageFrame>>::Optional kIn{"IMAGE"};
+  // IMAGE_CPU, dedicated to ImageFrame input, is only needed in some top-level
+  // graphs for the Python Solution APIs to figure out the type of input stream
+  // without running into ambiguities from IMAGE.
+  // TODO: Remove IMAGE_CPU once Python Solution APIs adopt Image.
+  static constexpr Input<mediapipe::ImageFrame>::Optional kInCpu{"IMAGE_CPU"};
+  static constexpr Input<GpuBuffer>::Optional kInGpu{"IMAGE_GPU"};
+  static constexpr Output<std::pair<int, int>> kOut{"SIZE"};
 
-    if (cc->Outputs().HasTag("SIZE")) {
-      cc->Outputs().Tag("SIZE").Set<std::pair<int, int>>();
-    }
+  MEDIAPIPE_NODE_CONTRACT(kIn, kInCpu, kInGpu, kOut);
 
-    return absl::OkStatus();
-  }
+  static absl::Status UpdateContract(CalculatorContract* cc) {
+    RET_CHECK_EQ(kIn(cc).IsConnected() + kInCpu(cc).IsConnected() +
+                     kInGpu(cc).IsConnected(),
+                 1)
+        << "One and only one of IMAGE, IMAGE_CPU and IMAGE_GPU input is "
+           "expected.";
 
-  absl::Status Open(CalculatorContext* cc) override {
-    cc->SetOffset(TimestampDiff(0));
     return absl::OkStatus();
   }
 
   absl::Status Process(CalculatorContext* cc) override {
-    int width;
-    int height;
+    std::pair<int, int> size;
 
-    if (cc->Inputs().HasTag(kImageFrameTag) &&
-        !cc->Inputs().Tag(kImageFrameTag).IsEmpty()) {
-      const auto& image = cc->Inputs().Tag(kImageFrameTag).Get<ImageFrame>();
-      width = image.Width();
-      height = image.Height();
+    if (kIn(cc).IsConnected()) {
+      kIn(cc).Visit(
+          [&size](const mediapipe::Image& value) {
+            size.first = value.width();
+            size.second = value.height();
+          },
+          [&size](const mediapipe::ImageFrame& value) {
+            size.first = value.Width();
+            size.second = value.Height();
+          });
+    }
+    if (kInCpu(cc).IsConnected()) {
+      const auto& image = *kInCpu(cc);
+      size.first = image.Width();
+      size.second = image.Height();
     }
 #if !MEDIAPIPE_DISABLE_GPU
-    if (cc->Inputs().HasTag(kGpuBufferTag) &&
-        !cc->Inputs().Tag(kGpuBufferTag).IsEmpty()) {
-      const auto& image =
-          cc->Inputs().Tag(kGpuBufferTag).Get<mediapipe::GpuBuffer>();
-      width = image.width();
-      height = image.height();
+    if (kInGpu(cc).IsConnected()) {
+      const auto& image = *kInGpu(cc);
+      size.first = image.width();
+      size.second = image.height();
     }
 #endif  // !MEDIAPIPE_DISABLE_GPU
 
-    cc->Outputs().Tag("SIZE").AddPacket(
-        MakePacket<std::pair<int, int>>(width, height)
-            .At(cc->InputTimestamp()));
+    kOut(cc).Send(size);
 
     return absl::OkStatus();
   }
 };
-REGISTER_CALCULATOR(ImagePropertiesCalculator);
 
+MEDIAPIPE_REGISTER_NODE(ImagePropertiesCalculator);
+
+}  // namespace api2
 }  // namespace mediapipe

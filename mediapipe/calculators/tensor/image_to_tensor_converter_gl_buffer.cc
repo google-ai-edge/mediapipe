@@ -312,7 +312,7 @@ class GlProcessor : public ImageToTensorConverter {
       return absl::OkStatus();
     }));
 
-    return tensor;
+    return std::move(tensor);
   }
 
   ~GlProcessor() override {

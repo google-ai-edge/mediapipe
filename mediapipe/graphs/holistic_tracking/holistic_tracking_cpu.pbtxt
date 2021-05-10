@@ -37,22 +37,8 @@ node {
 }
 
 node {
-  calculator: "ConstantSidePacketCalculator"
-  output_side_packet: "PACKET:0:model_complexity"
-  output_side_packet: "PACKET:1:smooth_landmarks"
-  node_options: {
-    [type.googleapis.com/mediapipe.ConstantSidePacketCalculatorOptions]: {
-      packet { int_value: 1 }
-      packet { bool_value: true }
-    }
-  }
-}
-
-node {
   calculator: "HolisticLandmarkCpu"
   input_stream: "IMAGE:throttled_input_video"
-  input_side_packet: "MODEL_COMPLEXITY:model_complexity"
-  input_side_packet: "SMOOTH_LANDMARKS:smooth_landmarks"
   output_stream: "POSE_LANDMARKS:pose_landmarks"
   output_stream: "POSE_ROI:pose_roi"
   output_stream: "POSE_DETECTION:pose_detection"

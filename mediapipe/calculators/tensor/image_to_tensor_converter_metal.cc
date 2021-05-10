@@ -383,7 +383,7 @@ class MetalProcessor : public ImageToTensorConverter {
           tflite::gpu::HW(output_dims.height, output_dims.width),
           command_buffer, buffer_view.buffer()));
       [command_buffer commit];
-      return tensor;
+      return std::move(tensor);
     }
   }
 

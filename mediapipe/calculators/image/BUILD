@@ -410,7 +410,9 @@ cc_library(
     srcs = ["image_properties_calculator.cc"],
     visibility = ["//visibility:public"],
     deps = [
+        "//mediapipe/framework/api2:node",
         "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/formats:image",
         "//mediapipe/framework/formats:image_frame",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",

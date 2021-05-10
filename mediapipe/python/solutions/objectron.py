@@ -1,4 +1,4 @@
-# Copyright 2020 The MediaPipe Authors.
+# Copyright 2020-2021 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,10 +15,7 @@
 """MediaPipe Objectron."""
 
 import enum
-import os
-import shutil
 from typing import List, Tuple, NamedTuple, Optional
-import urllib.request
 
 import attr
 import numpy as np
@@ -48,6 +45,7 @@ from mediapipe.modules.objectron.calculators import frame_annotation_to_rect_cal
 from mediapipe.modules.objectron.calculators import lift_2d_frame_annotation_to_3d_calculator_pb2
 # pylint: enable=unused-import
 from mediapipe.python.solution_base import SolutionBase
+from mediapipe.python.solutions import download_utils
 
 
 class BoxLandmark(enum.IntEnum):
@@ -92,23 +90,6 @@ BOX_CONNECTIONS = frozenset([
     (BoxLandmark.FRONT_BOTTOM_RIGHT, BoxLandmark.FRONT_TOP_RIGHT),
     (BoxLandmark.BACK_TOP_RIGHT, BoxLandmark.FRONT_TOP_RIGHT),
 ])
-_OSS_URL_PREFIX = 'https://github.com/google/mediapipe/raw/master/'
-
-
-def _download_oss_model(model_path: str):
-  """Download the objectron oss model from GitHub if it doesn't exist in the package."""
-
-  mp_root_path = os.sep.join(os.path.abspath(__file__).split(os.sep)[:-4])
-  model_abspath = os.path.join(mp_root_path, model_path)
-  if os.path.exists(model_abspath):
-    return
-  model_url = _OSS_URL_PREFIX + model_path
-  with urllib.request.urlopen(model_url) as response, open(model_abspath,
-                                                           'wb') as out_file:
-    if response.code != 200:
-      raise ConnectionError('Cannot download ' + model_path +
-                            ' from the MediaPipe Github repo.')
-    shutil.copyfileobj(response, out_file)
 
 
 @attr.s(auto_attribs=True)
@@ -152,10 +133,19 @@ _MODEL_DICT = {
 }
 
 
+def _download_oss_objectron_models(objectron_model: str):
+  """Downloads the objectron models from the MediaPipe Github repo if they don't exist in the package."""
+
+  download_utils.download_oss_model(
+      'mediapipe/modules/objectron/object_detection_ssd_mobilenetv2_oidv4_fp16.tflite'
+  )
+  download_utils.download_oss_model(objectron_model)
+
+
 def get_model_by_name(name: str) -> ObjectronModel:
   if name not in _MODEL_DICT:
     raise ValueError(f'{name} is not a valid model name for Objectron.')
-  _download_oss_model(_MODEL_DICT[name].model_path)
+  _download_oss_objectron_models(_MODEL_DICT[name].model_path)
   return _MODEL_DICT[name]
 
 

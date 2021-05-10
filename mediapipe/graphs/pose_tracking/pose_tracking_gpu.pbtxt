@@ -29,54 +29,20 @@ node {
   output_stream: "throttled_input_video"
 }
 
-node {
-  calculator: "ConstantSidePacketCalculator"
-  output_side_packet: "PACKET:model_complexity"
-  node_options: {
-    [type.googleapis.com/mediapipe.ConstantSidePacketCalculatorOptions]: {
-      packet { int_value: 1 }
-    }
-  }
-}
-
 # Subgraph that detects poses and corresponding landmarks.
 node {
   calculator: "PoseLandmarkGpu"
-  input_side_packet: "MODEL_COMPLEXITY:model_complexity"
   input_stream: "IMAGE:throttled_input_video"
   output_stream: "LANDMARKS:pose_landmarks"
   output_stream: "DETECTION:pose_detection"
   output_stream: "ROI_FROM_LANDMARKS:roi_from_landmarks"
 }
 
-# Calculates size of the image.
-node {
-  calculator: "ImagePropertiesCalculator"
-  input_stream: "IMAGE_GPU:throttled_input_video"
-  output_stream: "SIZE:image_size"
-}
-
-# Smoothes pose landmarks in order to reduce jitter.
-node {
-  calculator: "LandmarksSmoothingCalculator"
-  input_stream: "NORM_LANDMARKS:pose_landmarks"
-  input_stream: "IMAGE_SIZE:image_size"
-  output_stream: "NORM_FILTERED_LANDMARKS:pose_landmarks_smoothed"
-  node_options: {
-    [type.googleapis.com/mediapipe.LandmarksSmoothingCalculatorOptions] {
-      velocity_filter: {
-        window_size: 5
-        velocity_scale: 10.0
-      }
-    }
-  }
-}
-
 # Subgraph that renders pose-landmark annotation onto the input image.
 node {
   calculator: "PoseRendererGpu"
   input_stream: "IMAGE:throttled_input_video"
-  input_stream: "LANDMARKS:pose_landmarks_smoothed"
+  input_stream: "LANDMARKS:pose_landmarks"
   input_stream: "ROI:roi_from_landmarks"
   input_stream: "DETECTION:pose_detection"
   output_stream: "IMAGE:output_video"

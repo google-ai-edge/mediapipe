@@ -234,6 +234,22 @@ cc_test(
 )
 
 cc_library(
+    name = "concatenate_vector_calculator_hdr",
+    hdrs = ["concatenate_vector_calculator.h"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":concatenate_vector_calculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/api2:node",
+        "//mediapipe/framework/api2:port",
+        "//mediapipe/framework/port:integral_types",
+        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:status",
+    ],
+    alwayslink = 1,
+)
+
+cc_library(
     name = "concatenate_vector_calculator",
     srcs = ["concatenate_vector_calculator.cc"],
     hdrs = ["concatenate_vector_calculator.h"],

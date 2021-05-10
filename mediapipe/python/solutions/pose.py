@@ -1,4 +1,4 @@
-# Copyright 2020 The MediaPipe Authors.
+# Copyright 2020-2021 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,6 +20,8 @@ from typing import NamedTuple
 import numpy as np
 
 from mediapipe.calculators.core import constant_side_packet_calculator_pb2
+# The following imports are needed because python pb2 silently discards
+# unknown protobuf fields.
 # pylint: disable=unused-import
 from mediapipe.calculators.core import gate_calculator_pb2
 from mediapipe.calculators.core import split_vector_calculator_pb2
@@ -37,8 +39,11 @@ from mediapipe.calculators.util import non_max_suppression_calculator_pb2
 from mediapipe.calculators.util import rect_transformation_calculator_pb2
 from mediapipe.calculators.util import thresholding_calculator_pb2
 from mediapipe.calculators.util import visibility_smoothing_calculator_pb2
+from mediapipe.framework.tool import switch_container_pb2
 # pylint: enable=unused-import
+
 from mediapipe.python.solution_base import SolutionBase
+from mediapipe.python.solutions import download_utils
 
 
 class PoseLandmark(enum.IntEnum):
@@ -117,6 +122,17 @@ POSE_CONNECTIONS = frozenset([
 ])
 
 
+def _download_oss_pose_landmark_model(model_complexity):
+  """Downloads the pose landmark lite/heavy model from the MediaPipe Github repo if it doesn't exist in the package."""
+
+  if model_complexity == 0:
+    download_utils.download_oss_model(
+        'mediapipe/modules/pose_landmark/pose_landmark_lite.tflite')
+  elif model_complexity == 2:
+    download_utils.download_oss_model(
+        'mediapipe/modules/pose_landmark/pose_landmark_heavy.tflite')
+
+
 class Pose(SolutionBase):
   """MediaPipe Pose.
 
@@ -151,6 +167,7 @@ class Pose(SolutionBase):
         pose landmarks to be considered tracked successfully. See details in
         https://solutions.mediapipe.dev/pose#min_tracking_confidence.
     """
+    _download_oss_pose_landmark_model(model_complexity)
     super().__init__(
         binary_graph_path=BINARYPB_FILE_PATH,
         side_inputs={

@@ -71,7 +71,8 @@ absl::Status DefaultSidePacketCalculator::GetContract(CalculatorContract* cc) {
   if (cc->InputSidePackets().HasTag(kOptionalValueTag)) {
     cc->InputSidePackets()
         .Tag(kOptionalValueTag)
-        .SetSameAs(&cc->InputSidePackets().Tag(kDefaultValueTag));
+        .SetSameAs(&cc->InputSidePackets().Tag(kDefaultValueTag))
+        .Optional();
   }
 
   RET_CHECK(cc->OutputSidePackets().HasTag(kValueTag));

@@ -13,7 +13,7 @@ class OneEuroFilter {
   OneEuroFilter(double frequency, double min_cutoff, double beta,
                 double derivate_cutoff);
 
-  double Apply(absl::Duration timestamp, double value);
+  double Apply(absl::Duration timestamp, double value_scale, double value);
 
  private:
   double GetAlpha(double cutoff);

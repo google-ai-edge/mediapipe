@@ -154,7 +154,7 @@ node {
 # Extracts image size.
 node {
   calculator: "ImagePropertiesCalculator"
-  input_stream: "IMAGE:image"
+  input_stream: "IMAGE_CPU:image"
   output_stream: "SIZE:image_size"
 }
 

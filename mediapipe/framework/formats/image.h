@@ -236,7 +236,8 @@ inline int Image::channels() const {
 
 inline int Image::step() const {
   if (use_gpu_)
-    return width() * ImageFrame::ByteDepthForFormat(image_format());
+    return width() * channels() *
+           ImageFrame::ByteDepthForFormat(image_format());
   else
     return image_frame_->WidthStep();
 }

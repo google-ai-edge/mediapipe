@@ -1638,6 +1638,8 @@ cc_test(
         ":calculator_contract_test_cc_proto",
         ":calculator_framework",
         ":graph_validation",
+        "//mediapipe/calculators/core:constant_side_packet_calculator",
+        "//mediapipe/calculators/core:default_side_packet_calculator",
         "//mediapipe/calculators/core:pass_through_calculator",
         "//mediapipe/framework:calculator_cc_proto",
         "//mediapipe/framework:packet_generator_cc_proto",

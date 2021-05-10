@@ -21,7 +21,8 @@ OneEuroFilter::OneEuroFilter(double frequency, double min_cutoff, double beta,
   last_time_ = 0;
 }
 
-double OneEuroFilter::Apply(absl::Duration timestamp, double value) {
+double OneEuroFilter::Apply(absl::Duration timestamp, double value_scale,
+                            double value) {
   int64_t new_timestamp = absl::ToInt64Nanoseconds(timestamp);
   if (last_time_ >= new_timestamp) {
     // Results are unpredictable in this case, so nothing to do but
@@ -39,7 +40,7 @@ double OneEuroFilter::Apply(absl::Duration timestamp, double value) {
 
   // estimate the current variation per second
   double dvalue = x_->HasLastRawValue()
-                      ? (value - x_->LastRawValue()) * frequency_
+                      ? (value - x_->LastRawValue()) * value_scale * frequency_
                       : 0.0;  // FIXME: 0.0 or value?
   double edvalue = dx_->ApplyWithAlpha(dvalue, GetAlpha(derivate_cutoff_));
   // use it to update the cutoff frequency

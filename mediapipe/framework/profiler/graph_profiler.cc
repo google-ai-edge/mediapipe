@@ -604,7 +604,6 @@ absl::Status GraphProfiler::CaptureProfile(GraphProfile* result) {
     *result->mutable_calculator_profiles()->Add() = std::move(p);
   }
   this->Reset();
-  AssignNodeNames(result);
   return status;
 }
 

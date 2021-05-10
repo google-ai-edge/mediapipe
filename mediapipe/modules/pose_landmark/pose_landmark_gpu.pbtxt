@@ -29,12 +29,12 @@ type: "PoseLandmarkGpu"
 input_stream: "IMAGE:image"
 
 # Whether to filter landmarks across different input images to reduce jitter.
-# If unspecified, functions as set to false. (bool)
+# If unspecified, functions as set to true. (bool)
 input_side_packet: "SMOOTH_LANDMARKS:smooth_landmarks"
 
 # Complexity of the pose landmark model: 0, 1 or 2. Landmark accuracy as well as
 # inference latency generally go up with the model complexity. If unspecified,
-# functions as set to 0. (int)
+# functions as set to 1. (int)
 input_side_packet: "MODEL_COMPLEXITY:model_complexity"
 
 # Pose landmarks within the given ROI. (NormalizedLandmarkList)

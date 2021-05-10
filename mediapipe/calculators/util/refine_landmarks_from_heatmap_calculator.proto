@@ -24,4 +24,6 @@ message RefineLandmarksFromHeatmapCalculatorOptions {
   }
   optional int32 kernel_size = 1 [default = 9];
   optional float min_confidence_to_refine = 2 [default = 0.5];
+  optional bool refine_presence = 3 [default = false];
+  optional bool refine_visibility = 4 [default = false];
 }
