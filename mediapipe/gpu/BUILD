@@ -753,6 +753,7 @@ cc_library(
         ":gl_simple_shaders",
         ":shader_util",
         "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/formats:image",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
         "//mediapipe/framework/tool:options_util",

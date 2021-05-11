@@ -399,4 +399,4 @@ on how to build MediaPipe examples.
 *   [Python Colab](https://mediapipe.page.link/pose_py_colab)
 
 [`mAP`]: https://cocodataset.org/#keypoints-eval
-[`PCK@0.2`]: https\://github.com/cbsudux/Human-Pose-Estimation-101
+[`PCK@0.2`]: https://github.com/cbsudux/Human-Pose-Estimation-101

@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "mediapipe/framework/calculator_framework.h"
+#include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/tool/options_util.h"
@@ -32,6 +33,8 @@ typedef int DimensionsPacketType[2];
 #endif
 
 namespace mediapipe {
+
+using Image = mediapipe::Image;
 
 // Scales, rotates, horizontal or vertical flips the image.
 // See GlSimpleCalculatorBase for inputs, outputs and input side packets.
@@ -99,8 +102,17 @@ REGISTER_CALCULATOR(GlScalerCalculator);
 
 // static
 absl::Status GlScalerCalculator::GetContract(CalculatorContract* cc) {
-  TagOrIndex(&cc->Inputs(), "VIDEO", 0).Set<GpuBuffer>();
-  TagOrIndex(&cc->Outputs(), "VIDEO", 0).Set<GpuBuffer>();
+  if (cc->Inputs().HasTag("IMAGE")) {
+    cc->Inputs().Tag("IMAGE").Set<Image>();
+  } else {
+    TagOrIndex(&cc->Inputs(), "VIDEO", 0).Set<GpuBuffer>();
+  }
+  if (cc->Outputs().HasTag("IMAGE")) {
+    cc->Outputs().Tag("IMAGE").Set<Image>();
+  } else {
+    TagOrIndex(&cc->Outputs(), "VIDEO", 0).Set<GpuBuffer>();
+  }
+
   if (cc->Inputs().HasTag("ROTATION")) {
     cc->Inputs().Tag("ROTATION").Set<int>();
   }
@@ -198,7 +210,10 @@ absl::Status GlScalerCalculator::Process(CalculatorContext* cc) {
   }
 
   return helper_.RunInGlContext([this, cc]() -> absl::Status {
-    const auto& input = TagOrIndex(cc->Inputs(), "VIDEO", 0).Get<GpuBuffer>();
+    const auto& input =
+        cc->Inputs().HasTag("IMAGE")
+            ? cc->Inputs().Tag("IMAGE").Get<Image>().GetGpuBuffer()
+            : TagOrIndex(cc->Inputs(), "VIDEO", 0).Get<GpuBuffer>();
     QuadRenderer* renderer = nullptr;
     GlTexture src1;
     GlTexture src2;
@@ -289,10 +304,14 @@ absl::Status GlScalerCalculator::Process(CalculatorContext* cc) {
 
     glFlush();
 
-    auto output = dst.GetFrame<GpuBuffer>();
-
-    TagOrIndex(&cc->Outputs(), "VIDEO", 0)
-        .Add(output.release(), cc->InputTimestamp());
+    if (cc->Outputs().HasTag("IMAGE")) {
+      auto output = dst.GetFrame<Image>();
+      cc->Outputs().Tag("IMAGE").Add(output.release(), cc->InputTimestamp());
+    } else {
+      auto output = dst.GetFrame<GpuBuffer>();
+      TagOrIndex(&cc->Outputs(), "VIDEO", 0)
+          .Add(output.release(), cc->InputTimestamp());
+    }
 
     return absl::OkStatus();
   });

@@ -405,6 +405,36 @@ cc_library(
     alwayslink = 1,
 )
 
+mediapipe_proto_library(
+    name = "image_clone_calculator_proto",
+    srcs = ["image_clone_calculator.proto"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//mediapipe/framework:calculator_options_proto",
+        "//mediapipe/framework:calculator_proto",
+    ],
+)
+
+cc_library(
+    name = "image_clone_calculator",
+    srcs = ["image_clone_calculator.cc"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":image_clone_calculator_cc_proto",
+        "//mediapipe/framework/api2:node",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/formats:image",
+        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:status",
+    ] + select({
+        "//mediapipe/gpu:disable_gpu": [],
+        "//conditions:default": [
+            "//mediapipe/gpu:gl_calculator_helper",
+        ],
+    }),
+    alwayslink = 1,
+)
+
 cc_library(
     name = "image_properties_calculator",
     srcs = ["image_properties_calculator.cc"],
