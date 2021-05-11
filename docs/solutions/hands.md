@@ -316,6 +316,8 @@ Supported configuration options:
 </html>
 ```
 
+<br id=code></br>
+
 ```javascript
 <script type="module">
 const videoElement = document.getElementsByClassName('input_video')[0];

@@ -24,6 +24,8 @@ Solution          | NPM Package                   | Example
 [Holistic][Ho-pg] | [@mediapipe/holistic][Ho-npm] | [mediapipe.dev/demo/holistic][Ho-demo]
 [Pose][P-pg]      | [@mediapipe/pose][P-npm]      | [mediapipe.dev/demo/pose][P-demo]
 
+Note: Also see the [Holistic Remote demo][Ho-Re], which explores more options in the Holistic Demo. <!--This doesn't have a CodePen or NPM repository yet.-->
+
 Click on a solution link above for more information, including API and code
 snippets.
 
@@ -62,11 +64,10 @@ structured as `<major>.<minor>.<build>`. To prevent breaking changes from
 affecting your work, restrict your request to a `<minor>` number. e.g.,
 `@mediapipe/holistic@0.1`.
 
-[Ho-pg]: ../solutions/holistic#javascript-solution-api
-[F-pg]: ../solutions/face_mesh#javascript-solution-api
-[Fd-pg]: ../solutions/face_detection#javascript-solution-api
-[H-pg]: ../solutions/hands#javascript-solution-api
-[P-pg]: ../solutions/pose#javascript-solution-api
+[Ho-pg]: ../solutions/holistic.md#javascript-solution-api
+[F-pg]: ../solutions/face_mesh.md#javascript-solution-api
+[H-pg]: ../solutions/hands.md#javascript-solution-api
+[P-pg]: ../solutions/pose.md#javascript-solution-api
 [Ho-npm]: https://www.npmjs.com/package/@mediapipe/holistic
 [F-npm]: https://www.npmjs.com/package/@mediapipe/face_mesh
 [Fd-npm]: https://www.npmjs.com/package/@mediapipe/face_detection
@@ -86,6 +87,7 @@ affecting your work, restrict your request to a `<minor>` number. e.g.,
 [H-pen]: https://code.mediapipe.dev/codepen/hands
 [P-pen]: https://code.mediapipe.dev/codepen/pose
 [Ho-demo]: https://mediapipe.dev/demo/holistic
+[Ho-Re]: https://mediapipe.dev/demo/holistic_remote
 [F-demo]: https://mediapipe.dev/demo/face_mesh
 [Fd-demo]: https://mediapipe.dev/demo/face_detection
 [H-demo]: https://mediapipe.dev/demo/hands
