@@ -25,6 +25,6 @@ cc_binary(
         "//mediapipe/framework:calculator_graph",
         "//mediapipe/framework/port:logging",
         "//mediapipe/framework/port:parse_text_proto",
-        "//mediapipe/framework/port:status",
+        "//mediapipe/framework/port:status"
     ],
 )
