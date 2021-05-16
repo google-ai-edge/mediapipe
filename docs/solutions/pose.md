@@ -187,7 +187,7 @@ Naming style may differ slightly across platforms/languages.
 
 #### pose_landmarks
 
-A list of pose landmarks. Each lanmark consists of the following:
+A list of pose landmarks. Each landmark consists of the following:
 
 *   `x` and `y`: Landmark coordinates normalized to `[0.0, 1.0]` by the image
     width and height respectively.
