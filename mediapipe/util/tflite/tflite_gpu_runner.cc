@@ -27,6 +27,7 @@
 #include "tensorflow/lite/core/api/op_resolver.h"
 #include "tensorflow/lite/delegates/gpu/api.h"
 #include "tensorflow/lite/delegates/gpu/common/model.h"
+#include "tensorflow/lite/delegates/gpu/common/model_builder.h"
 #include "tensorflow/lite/delegates/gpu/gl/api2.h"
 #include "tensorflow/lite/model.h"
 
@@ -35,7 +36,6 @@
 #ifdef __ANDROID__
 #include "tensorflow/lite/delegates/gpu/cl/api.h"
 #endif
-#include "tensorflow/lite/delegates/gpu/common/testing/tflite_model_reader.h"
 
 namespace tflite {
 namespace gpu {

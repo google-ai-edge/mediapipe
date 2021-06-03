@@ -96,7 +96,8 @@ class FaceMeshTest(parameterized.TestCase):
   @parameterized.named_parameters(('static_image_mode', True, 1),
                                   ('video_mode', False, 5))
   def test_face(self, static_image_mode: bool, num_frames: int):
-    image_path = os.path.join(os.path.dirname(__file__), 'testdata/face.jpg')
+    image_path = os.path.join(os.path.dirname(__file__),
+                              'testdata/portrait.jpg')
     image = cv2.imread(image_path)
     with mp_faces.FaceMesh(
         static_image_mode=static_image_mode,

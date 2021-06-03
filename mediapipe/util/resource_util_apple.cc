@@ -88,8 +88,9 @@ absl::StatusOr<std::string> PathToResourceAsFile(const std::string& path) {
   // Try the test environment.
   {
     absl::string_view workspace = "mediapipe";
+    const char* test_srcdir = std::getenv("TEST_SRCDIR");
     auto test_path =
-        file::JoinPath(std::getenv("TEST_SRCDIR"), workspace, path);
+        file::JoinPath(test_srcdir ? test_srcdir : "", workspace, path);
     if ([[NSFileManager defaultManager]
             fileExistsAtPath:[NSString
                                  stringWithUTF8String:test_path.c_str()]]) {

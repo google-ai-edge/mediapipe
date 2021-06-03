@@ -36,4 +36,11 @@ message RecolorCalculatorOptions {
   // Color to blend into input image where mask is > 0.
   // The blending is based on the input image luminosity.
   optional Color color = 2;
+
+  // Swap the meaning of mask values for foreground/background.
+  optional bool invert_mask = 3 [default = false];
+
+  // Whether to use the luminance of the input image to further adjust the
+  // blending weight, to help preserve image textures.
+  optional bool adjust_with_luminance = 4 [default = true];
 }

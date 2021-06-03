@@ -56,7 +56,7 @@ message TensorsToDetectionsCalculatorOptions {
   // [x_center, y_center, w, h].
   optional bool reverse_output_order = 14 [default = false];
   // The ids of classes that should be ignored during decoding the score for
-  // each predicted box.
+  // each predicted box. Can be overridden with IGNORE_CLASSES side packet.
   repeated int32 ignore_classes = 8;
 
   optional bool sigmoid_score = 15 [default = false];

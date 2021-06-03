@@ -16,6 +16,7 @@ package com.google.mediapipe.framework;
 
 import android.graphics.Bitmap;
 import java.nio.ByteBuffer;
+import java.util.List;
 
 // TODO: use Preconditions in this file.
 /**

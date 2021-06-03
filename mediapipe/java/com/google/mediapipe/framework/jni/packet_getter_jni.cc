@@ -444,8 +444,16 @@ JNIEXPORT jlong JNICALL PACKET_GETTER_METHOD(nativeGetGpuBuffer)(JNIEnv* env,
       mediapipe::android::Graph::GetPacketFromHandle(packet);
   mediapipe::GlTextureBufferSharedPtr ptr;
   if (mediapipe_packet.ValidateAsType<mediapipe::Image>().ok()) {
-    const mediapipe::Image& buffer = mediapipe_packet.Get<mediapipe::Image>();
-    ptr = buffer.GetGlTextureBufferSharedPtr();
+    auto mediapipe_graph =
+        mediapipe::android::Graph::GetContextFromHandle(packet);
+    auto gl_context = mediapipe_graph->GetGpuResources()->gl_context();
+    auto status =
+        gl_context->Run([gl_context, mediapipe_packet, &ptr]() -> absl::Status {
+          const mediapipe::Image& buffer =
+              mediapipe_packet.Get<mediapipe::Image>();
+          ptr = buffer.GetGlTextureBufferSharedPtr();
+          return absl::OkStatus();
+        });
   } else {
     const mediapipe::GpuBuffer& buffer =
         mediapipe_packet.Get<mediapipe::GpuBuffer>();

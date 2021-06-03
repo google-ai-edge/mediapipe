@@ -83,6 +83,8 @@ mediapipe_simple_subgraph(
 
 exports_files(
     srcs = [
+        "face_detection_back.tflite",
+        "face_detection_back_sparse.tflite",
         "face_detection_front.tflite",
     ],
 )

@@ -157,6 +157,12 @@ TEST(DetectionsToRectsCalculatorTest, DetectionKeyPointsToRect) {
       /*image_size=*/{640, 480});
   MP_ASSERT_OK(status_or_value);
   EXPECT_THAT(status_or_value.value(), RectEq(480, 360, 320, 240));
+
+  status_or_value = RunDetectionKeyPointsToRectCalculation(
+      /*detection=*/DetectionWithKeyPoints({{0.25f, 0.25f}, {0.75f, 0.75f}}),
+      /*image_size=*/{0, 0});
+  MP_ASSERT_OK(status_or_value);
+  EXPECT_THAT(status_or_value.value(), RectEq(0, 0, 0, 0));
 }
 
 TEST(DetectionsToRectsCalculatorTest, DetectionToNormalizedRect) {

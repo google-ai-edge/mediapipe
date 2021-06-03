@@ -109,7 +109,7 @@ node {
   output_stream: "ensured_landmark_tensors"
 }
 
-# Decodes the landmark tensors into a vector of lanmarks, where the landmark
+# Decodes the landmark tensors into a vector of landmarks, where the landmark
 # coordinates are normalized by the size of the input image to the model.
 node {
   calculator: "TensorsToLandmarksCalculator"

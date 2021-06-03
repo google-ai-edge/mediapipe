@@ -16,8 +16,6 @@
 #define MEDIAPIPE_FRAMEWORK_TOOL_TYPE_UTIL_H_
 
 #include <cstddef>
-#include <string>
-#include <typeindex>
 #include <typeinfo>
 
 #include "mediapipe/framework/port.h"

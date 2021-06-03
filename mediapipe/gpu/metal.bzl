@@ -142,7 +142,7 @@ def _metal_library_impl(ctx):
     if ctx.files.hdrs:
         additional_params["header"] = depset([f for f in ctx.files.hdrs])
     objc_provider = apple_common.new_objc_provider(
-        providers = [x.objc for x in ctx.attr.deps if hasattr(x, "objc")],
+        providers = [x[apple_common.Objc] for x in ctx.attr.deps if apple_common.Objc in x],
         **additional_params
     )
 
@@ -169,7 +169,7 @@ def _metal_library_impl(ctx):
 METAL_LIBRARY_ATTRS = dicts.add(apple_support.action_required_attrs(), {
     "srcs": attr.label_list(allow_files = [".metal"], allow_empty = False),
     "hdrs": attr.label_list(allow_files = [".h"]),
-    "deps": attr.label_list(providers = [["objc", CcInfo]]),
+    "deps": attr.label_list(providers = [["objc", CcInfo], [apple_common.Objc, CcInfo]]),
     "copts": attr.string_list(),
     "minimum_os_version": attr.string(),
 })

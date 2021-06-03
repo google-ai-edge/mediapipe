@@ -226,7 +226,8 @@ class BuildBinaryGraphs(build.build):
         'face_landmark/face_landmark_front_cpu',
         'hand_landmark/hand_landmark_tracking_cpu',
         'holistic_landmark/holistic_landmark_cpu', 'objectron/objectron_cpu',
-        'pose_landmark/pose_landmark_cpu'
+        'pose_landmark/pose_landmark_cpu',
+        'selfie_segmentation/selfie_segmentation_cpu'
     ]
     for binary_graph in binary_graphs:
       sys.stderr.write('generating binarypb: %s\n' %
@@ -379,12 +380,20 @@ class RemoveGenerated(clean.clean):
 
   def run(self):
     for pattern in [
-        'mediapipe/framework/**/*pb2.py', 'mediapipe/calculators/**/*pb2.py',
-        'mediapipe/gpu/**/*pb2.py', 'mediapipe/util/**/*pb2.py'
+        'mediapipe/calculators/**/*pb2.py',
+        'mediapipe/framework/**/*pb2.py',
+        'mediapipe/gpu/**/*pb2.py',
+        'mediapipe/modules/**/*pb2.py',
+        'mediapipe/util/**/*pb2.py',
     ]:
       for py_file in glob.glob(pattern, recursive=True):
         sys.stderr.write('removing generated files: %s\n' % py_file)
         os.remove(py_file)
+        init_py = os.path.join(
+            os.path.dirname(os.path.abspath(py_file)), '__init__.py')
+        if os.path.exists(init_py):
+          sys.stderr.write('removing __init__ file: %s\n' % init_py)
+          os.remove(init_py)
     for binarypb_file in glob.glob(
         'mediapipe/modules/**/*.binarypb', recursive=True):
       sys.stderr.write('removing generated binary graphs: %s\n' % binarypb_file)

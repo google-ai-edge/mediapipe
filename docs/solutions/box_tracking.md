@@ -2,7 +2,7 @@
 layout: default
 title: Box Tracking
 parent: Solutions
-nav_order: 9
+nav_order: 10
 ---
 
 # MediaPipe Box Tracking

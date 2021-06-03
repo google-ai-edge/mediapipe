@@ -859,6 +859,7 @@ cc_library(
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework:timestamp",
         "//mediapipe/framework/formats:landmark_cc_proto",
+        "//mediapipe/framework/formats:rect_cc_proto",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/util/filtering:one_euro_filter",
         "//mediapipe/util/filtering:relative_velocity_filter",

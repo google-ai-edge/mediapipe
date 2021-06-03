@@ -155,11 +155,24 @@ cc_test(
 )
 
 cc_library(
+    name = "options_map",
+    hdrs = ["options_map.h"],
+    visibility = ["//mediapipe/framework:mediapipe_internal"],
+    deps = [
+        "//mediapipe/framework:calculator_cc_proto",
+        "//mediapipe/framework/port:any_proto",
+        "//mediapipe/framework/port:status",
+        "//mediapipe/framework/tool:type_util",
+    ],
+)
+
+cc_library(
     name = "options_util",
     srcs = ["options_util.cc"],
     hdrs = ["options_util.h"],
     visibility = ["//mediapipe/framework:mediapipe_internal"],
     deps = [
+        ":options_map",
         ":proto_util_lite",
         "//mediapipe/framework:calculator_cc_proto",
         "//mediapipe/framework:collection",
@@ -196,17 +209,6 @@ mediapipe_cc_test(
         "//mediapipe/framework/port:status",
         "//mediapipe/framework/testdata:night_light_calculator_cc_proto",
         "//mediapipe/util:header_util",
-    ],
-)
-
-cc_library(
-    name = "packet_util",
-    hdrs = ["packet_util.h"],
-    visibility = ["//visibility:public"],
-    deps = [
-        "//mediapipe/framework:packet",
-        "//mediapipe/framework/port:statusor",
-        "@org_tensorflow//tensorflow/core:protos_all_cc",
     ],
 )
 
@@ -681,6 +683,7 @@ cc_library(
         "//mediapipe/framework/port:logging",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
+        "//mediapipe/framework/stream_handler:immediate_input_stream_handler",
         "//mediapipe/framework/tool:switch_container_cc_proto",
         "@com_google_absl//absl/strings",
     ],
@@ -706,6 +709,7 @@ cc_library(
         "//mediapipe/framework/port:logging",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
+        "//mediapipe/framework/stream_handler:immediate_input_stream_handler",
         "//mediapipe/framework/tool:switch_container_cc_proto",
         "@com_google_absl//absl/strings",
     ],

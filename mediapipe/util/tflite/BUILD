@@ -81,7 +81,7 @@ cc_library(
             "@org_tensorflow//tensorflow/lite:framework",
             "@org_tensorflow//tensorflow/lite/delegates/gpu:api",
             "@org_tensorflow//tensorflow/lite/delegates/gpu/common:model",
-            "@org_tensorflow//tensorflow/lite/delegates/gpu/common/testing:tflite_model_reader",
+            "@org_tensorflow//tensorflow/lite/delegates/gpu/common:model_builder",
             "@org_tensorflow//tensorflow/lite/delegates/gpu/gl:api2",
         ],
         "//mediapipe:android": [
@@ -93,7 +93,7 @@ cc_library(
             "@org_tensorflow//tensorflow/lite/delegates/gpu:api",
             "@org_tensorflow//tensorflow/lite/delegates/gpu/cl:api",
             "@org_tensorflow//tensorflow/lite/delegates/gpu/common:model",
-            "@org_tensorflow//tensorflow/lite/delegates/gpu/common/testing:tflite_model_reader",
+            "@org_tensorflow//tensorflow/lite/delegates/gpu/common:model_builder",
             "@org_tensorflow//tensorflow/lite/delegates/gpu/gl:api2",
         ],
     }) + ["@org_tensorflow//tensorflow/lite/core/api"],

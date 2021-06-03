@@ -1,0 +1,52 @@
+# MediaPipe graph that performs selfie segmentation with TensorFlow Lite on GPU.
+
+# GPU buffer. (GpuBuffer)
+input_stream: "input_video"
+
+# Output image with rendered results. (GpuBuffer)
+output_stream: "output_video"
+
+# Throttles the images flowing downstream for flow control. It passes through
+# the very first incoming image unaltered, and waits for downstream nodes
+# (calculators and subgraphs) in the graph to finish their tasks before it
+# passes through another image. All images that come in while waiting are
+# dropped, limiting the number of in-flight images in most part of the graph to
+# 1. This prevents the downstream nodes from queuing up incoming images and data
+# excessively, which leads to increased latency and memory usage, unwanted in
+# real-time mobile applications. It also eliminates unnecessarily computation,
+# e.g., the output produced by a node may get dropped downstream if the
+# subsequent nodes are still busy processing previous inputs.
+node {
+  calculator: "FlowLimiterCalculator"
+  input_stream: "input_video"
+  input_stream: "FINISHED:output_video"
+  input_stream_info: {
+    tag_index: "FINISHED"
+    back_edge: true
+  }
+  output_stream: "throttled_input_video"
+}
+
+# Subgraph that performs selfie segmentation.
+node {
+  calculator: "SelfieSegmentationGpu"
+  input_stream: "IMAGE:throttled_input_video"
+  output_stream: "SEGMENTATION_MASK:segmentation_mask"
+}
+
+
+# Colors the selfie segmentation with the color specified in the option.
+node {
+  calculator: "RecolorCalculator"
+  input_stream: "IMAGE_GPU:throttled_input_video"
+  input_stream: "MASK_GPU:segmentation_mask"
+  output_stream: "IMAGE_GPU:output_video"
+  node_options: {
+    [type.googleapis.com/mediapipe.RecolorCalculatorOptions] {
+      color { r: 0 g: 0 b: 255 }
+      mask_channel: RED
+      invert_mask: true
+      adjust_with_luminance: false
+    }
+  }
+}

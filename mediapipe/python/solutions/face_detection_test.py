@@ -56,7 +56,8 @@ class FaceDetectionTest(absltest.TestCase):
       self.assertIsNone(results.detections)
 
   def test_face(self):
-    image_path = os.path.join(os.path.dirname(__file__), 'testdata/face.jpg')
+    image_path = os.path.join(os.path.dirname(__file__),
+                              'testdata/portrait.jpg')
     image = cv2.imread(image_path)
     with mp_faces.FaceDetection(min_detection_confidence=0.5) as faces:
       for idx in range(5):

@@ -40,7 +40,7 @@ constexpr char kRectTag[] = "NORM_RECT";
 // Input:
 //   LANDMARKS: A LandmarkList representing world landmarks in the rectangle.
 //   NORM_RECT: An NormalizedRect representing a normalized rectangle in image
-//              coordinates.
+//              coordinates. (Optional)
 //
 // Output:
 //   LANDMARKS: A LandmarkList representing world landmarks projected (rotated
@@ -59,7 +59,9 @@ class WorldLandmarkProjectionCalculator : public CalculatorBase {
  public:
   static absl::Status GetContract(CalculatorContract* cc) {
     cc->Inputs().Tag(kLandmarksTag).Set<LandmarkList>();
-    cc->Inputs().Tag(kRectTag).Set<NormalizedRect>();
+    if (cc->Inputs().HasTag(kRectTag)) {
+      cc->Inputs().Tag(kRectTag).Set<NormalizedRect>();
+    }
     cc->Outputs().Tag(kLandmarksTag).Set<LandmarkList>();
 
     return absl::OkStatus();
@@ -74,13 +76,24 @@ class WorldLandmarkProjectionCalculator : public CalculatorBase {
   absl::Status Process(CalculatorContext* cc) override {
     // Check that landmarks and rect are not empty.
     if (cc->Inputs().Tag(kLandmarksTag).IsEmpty() ||
-        cc->Inputs().Tag(kRectTag).IsEmpty()) {
+        (cc->Inputs().HasTag(kRectTag) &&
+         cc->Inputs().Tag(kRectTag).IsEmpty())) {
       return absl::OkStatus();
     }
 
     const auto& in_landmarks =
         cc->Inputs().Tag(kLandmarksTag).Get<LandmarkList>();
-    const auto& in_rect = cc->Inputs().Tag(kRectTag).Get<NormalizedRect>();
+    std::function<void(const Landmark&, Landmark*)> rotate_fn;
+    if (cc->Inputs().HasTag(kRectTag)) {
+      const auto& in_rect = cc->Inputs().Tag(kRectTag).Get<NormalizedRect>();
+      const float cosa = std::cos(in_rect.rotation());
+      const float sina = std::sin(in_rect.rotation());
+      rotate_fn = [cosa, sina](const Landmark& in_landmark,
+                               Landmark* out_landmark) {
+        out_landmark->set_x(cosa * in_landmark.x() - sina * in_landmark.y());
+        out_landmark->set_y(sina * in_landmark.x() + cosa * in_landmark.y());
+      };
+    }
 
     auto out_landmarks = absl::make_unique<LandmarkList>();
     for (int i = 0; i < in_landmarks.landmark_size(); ++i) {
@@ -89,11 +102,9 @@ class WorldLandmarkProjectionCalculator : public CalculatorBase {
       Landmark* out_landmark = out_landmarks->add_landmark();
       *out_landmark = in_landmark;
 
-      const float angle = in_rect.rotation();
-      out_landmark->set_x(std::cos(angle) * in_landmark.x() -
-                          std::sin(angle) * in_landmark.y());
-      out_landmark->set_y(std::sin(angle) * in_landmark.x() +
-                          std::cos(angle) * in_landmark.y());
+      if (rotate_fn) {
+        rotate_fn(in_landmark, out_landmark);
+      }
     }
 
     cc->Outputs()

@@ -265,7 +265,7 @@ magnitude of `z` uses roughly the same scale as `x`.
 
 Please first follow general [instructions](../getting_started/python.md) to
 install MediaPipe Python package, then learn more in the companion
-[Python Colab](#resources) and the following usage example.
+[Python Colab](#resources) and the usage example below.
 
 Supported configuration options:
 
@@ -281,12 +281,13 @@ mp_drawing = mp.solutions.drawing_utils
 mp_face_mesh = mp.solutions.face_mesh
 
 # For static images:
+IMAGE_FILES = []
 drawing_spec = mp_drawing.DrawingSpec(thickness=1, circle_radius=1)
 with mp_face_mesh.FaceMesh(
     static_image_mode=True,
     max_num_faces=1,
     min_detection_confidence=0.5) as face_mesh:
-  for idx, file in enumerate(file_list):
+  for idx, file in enumerate(IMAGE_FILES):
     image = cv2.imread(file)
     # Convert the BGR image to RGB before processing.
     results = face_mesh.process(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))

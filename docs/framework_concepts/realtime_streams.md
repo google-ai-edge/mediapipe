@@ -1,29 +1,28 @@
 ---
 layout: default
-title: Processing real-time data streams
+title: Real-time Streams
+parent: Framework Concepts
 nav_order: 6
-has_children: true
-has_toc: false
 ---
 
-# Processing real-time data streams
+# Real-time Streams
 {: .no_toc }
 
 1. TOC
 {:toc}
 ---
 
-## Realtime timestamps
+## Real-time timestamps
 
 MediaPipe calculator graphs are often used to process streams of video or audio
 frames for interactive applications. The MediaPipe framework requires only that
 successive packets be assigned monotonically increasing timestamps. By
-convention, realtime calculators and graphs use the recording time or the
+convention, real-time calculators and graphs use the recording time or the
 presentation time of each frame as its timestamp, with each timestamp indicating
 the microseconds since `Jan/1/1970:00:00:00`. This allows packets from various
 sources to be processed in a globally consistent sequence.
 
-## Realtime scheduling
+## Real-time scheduling
 
 Normally, each Calculator runs as soon as all of its input packets for a given
 timestamp become available. Normally, this happens when the calculator has
@@ -38,7 +37,7 @@ When a calculator does not produce any output packets for a given timestamp, it
 can instead output a "timestamp bound" indicating that no packet will be
 produced for that timestamp. This indication is necessary to allow downstream
 calculators to run at that timestamp, even though no packet has arrived for
-certain streams for that timestamp. This is especially important for realtime
+certain streams for that timestamp. This is especially important for real-time
 graphs in interactive applications, where it is crucial that each calculator
 begin processing as soon as possible.
 
@@ -83,12 +82,12 @@ For example, `Timestamp(1).NextAllowedInStream() == Timestamp(2)`.
 
 ## Propagating timestamp bounds
 
-Calculators that will be used in realtime graphs need to define output timestamp
-bounds based on input timestamp bounds in order to allow downstream calculators
-to be scheduled promptly. A common pattern is for calculators to output packets
-with the same timestamps as their input packets. In this case, simply outputting
-a packet on every call to `Calculator::Process` is sufficient to define output
-timestamp bounds.
+Calculators that will be used in real-time graphs need to define output
+timestamp bounds based on input timestamp bounds in order to allow downstream
+calculators to be scheduled promptly. A common pattern is for calculators to
+output packets with the same timestamps as their input packets. In this case,
+simply outputting a packet on every call to `Calculator::Process` is sufficient
+to define output timestamp bounds.
 
 However, calculators are not required to follow this common pattern for output
 timestamps, they are only required to choose monotonically increasing output

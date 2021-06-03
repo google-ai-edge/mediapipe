@@ -105,6 +105,15 @@ void ConvertAnchorsToRawValues(const std::vector<Anchor>& anchors,
 //            for anchors (e.g. for SSD models) depend on the outputs of the
 //            detection model. The size of anchor tensor must be (num_boxes *
 //            4).
+//
+// Input side packet:
+//  ANCHORS (optional) - The anchors used for decoding the bounding boxes, as a
+//      vector of `Anchor` protos. Not required if post-processing is built-in
+//      the model.
+//  IGNORE_CLASSES (optional) - The list of class ids that should be ignored, as
+//      a vector of integers. It overrides the corresponding field in the
+//      calculator options.
+//
 // Output:
 //  DETECTIONS - Result MediaPipe detections.
 //
@@ -132,8 +141,11 @@ class TensorsToDetectionsCalculator : public Node {
   static constexpr Input<std::vector<Tensor>> kInTensors{"TENSORS"};
   static constexpr SideInput<std::vector<Anchor>>::Optional kInAnchors{
       "ANCHORS"};
+  static constexpr SideInput<std::vector<int>>::Optional kSideInIgnoreClasses{
+      "IGNORE_CLASSES"};
   static constexpr Output<std::vector<Detection>> kOutDetections{"DETECTIONS"};
-  MEDIAPIPE_NODE_CONTRACT(kInTensors, kInAnchors, kOutDetections);
+  MEDIAPIPE_NODE_CONTRACT(kInTensors, kInAnchors, kSideInIgnoreClasses,
+                          kOutDetections);
   static absl::Status UpdateContract(CalculatorContract* cc);
 
   absl::Status Open(CalculatorContext* cc) override;
@@ -566,8 +578,15 @@ absl::Status TensorsToDetectionsCalculator::LoadOptions(CalculatorContext* cc) {
                kNumCoordsPerBox,
            num_coords_);
 
-  for (int i = 0; i < options_.ignore_classes_size(); ++i) {
-    ignore_classes_.insert(options_.ignore_classes(i));
+  if (kSideInIgnoreClasses(cc).IsConnected()) {
+    RET_CHECK(!kSideInIgnoreClasses(cc).IsEmpty());
+    for (int ignore_class : *kSideInIgnoreClasses(cc)) {
+      ignore_classes_.insert(ignore_class);
+    }
+  } else {
+    for (int i = 0; i < options_.ignore_classes_size(); ++i) {
+      ignore_classes_.insert(options_.ignore_classes(i));
+    }
   }
 
   return absl::OkStatus();

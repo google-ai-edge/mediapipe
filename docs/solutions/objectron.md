@@ -2,7 +2,7 @@
 layout: default
 title: Objectron (3D Object Detection)
 parent: Solutions
-nav_order: 11
+nav_order: 12
 ---
 
 # MediaPipe Objectron
@@ -277,7 +277,7 @@ following:
 
 Please first follow general [instructions](../getting_started/python.md) to
 install MediaPipe Python package, then learn more in the companion
-[Python Colab](#resources) and the following usage example.
+[Python Colab](#resources) and the usage example below.
 
 Supported configuration options:
 
@@ -297,11 +297,12 @@ mp_drawing = mp.solutions.drawing_utils
 mp_objectron = mp.solutions.objectron
 
 # For static images:
+IMAGE_FILES = []
 with mp_objectron.Objectron(static_image_mode=True,
                             max_num_objects=5,
                             min_detection_confidence=0.5,
                             model_name='Shoe') as objectron:
-  for idx, file in enumerate(file_list):
+  for idx, file in enumerate(IMAGE_FILES):
     image = cv2.imread(file)
     # Convert the BGR image to RGB and process it with MediaPipe Objectron.
     results = objectron.process(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))

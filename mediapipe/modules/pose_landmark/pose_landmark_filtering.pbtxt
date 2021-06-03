@@ -29,6 +29,29 @@ output_stream: "FILTERED_NORM_LANDMARKS:filtered_landmarks"
 # Filtered auxiliary set of normalized landmarks. (NormalizedRect)
 output_stream: "FILTERED_AUX_NORM_LANDMARKS:filtered_aux_landmarks"
 
+# Converts landmarks to a detection that tightly encloses all landmarks.
+node {
+  calculator: "LandmarksToDetectionCalculator"
+  input_stream: "NORM_LANDMARKS:aux_landmarks"
+  output_stream: "DETECTION:aux_detection"
+}
+
+# Converts detection into a rectangle based on center and scale alignment
+# points.
+node {
+  calculator: "AlignmentPointsRectsCalculator"
+  input_stream: "DETECTION:aux_detection"
+  input_stream: "IMAGE_SIZE:image_size"
+  output_stream: "NORM_RECT:roi"
+  options: {
+    [mediapipe.DetectionsToRectsCalculatorOptions.ext] {
+      rotation_vector_start_keypoint_index: 0
+      rotation_vector_end_keypoint_index: 1
+      rotation_vector_target_angle_degrees: 90
+    }
+  }
+}
+
 # Smoothes pose landmark visibilities to reduce jitter.
 node {
   calculator: "SwitchContainer"
@@ -66,6 +89,7 @@ node {
   input_side_packet: "ENABLE:enable"
   input_stream: "NORM_LANDMARKS:filtered_visibility"
   input_stream: "IMAGE_SIZE:image_size"
+  input_stream: "OBJECT_SCALE_ROI:roi"
   output_stream: "NORM_FILTERED_LANDMARKS:filtered_landmarks"
   options: {
     [mediapipe.SwitchContainerOptions.ext] {
@@ -83,12 +107,12 @@ node {
         options: {
           [mediapipe.LandmarksSmoothingCalculatorOptions.ext] {
             one_euro_filter {
-              # Min cutoff 0.1 results into ~ 0.02 alpha in landmark EMA filter
+              # Min cutoff 0.1 results into ~0.01 alpha in landmark EMA filter
               # when landmark is static.
-              min_cutoff: 0.1
-              # Beta 40.0 in combintation with min_cutoff 0.1 results into ~0.8
-              # alpha in landmark EMA filter when landmark is moving fast.
-              beta: 40.0
+              min_cutoff: 0.05
+              # Beta 80.0 in combintation with min_cutoff 0.05 results into
+              # ~0.94 alpha in landmark EMA filter when landmark is moving fast.
+              beta: 80.0
               # Derivative cutoff 1.0 results into ~0.17 alpha in landmark
               # velocity EMA filter.
               derivate_cutoff: 1.0
@@ -119,6 +143,7 @@ node {
   calculator: "LandmarksSmoothingCalculator"
   input_stream: "NORM_LANDMARKS:filtered_aux_visibility"
   input_stream: "IMAGE_SIZE:image_size"
+  input_stream: "OBJECT_SCALE_ROI:roi"
   output_stream: "NORM_FILTERED_LANDMARKS:filtered_aux_landmarks"
   options: {
     [mediapipe.LandmarksSmoothingCalculatorOptions.ext] {
@@ -127,12 +152,12 @@ node {
       # object is not moving but responsive enough in case of sudden
       # movements.
       one_euro_filter {
-        # Min cutoff 0.01 results into ~ 0.002 alpha in landmark EMA
+        # Min cutoff 0.01 results into ~0.002 alpha in landmark EMA
         # filter when landmark is static.
         min_cutoff: 0.01
-        # Beta 1.0 in combintation with min_cutoff 0.01 results into ~0.2
+        # Beta 10.0 in combintation with min_cutoff 0.01 results into ~0.68
         # alpha in landmark EMA filter when landmark is moving fast.
-        beta: 1.0
+        beta: 10.0
         # Derivative cutoff 1.0 results into ~0.17 alpha in landmark
         # velocity EMA filter.
         derivate_cutoff: 1.0

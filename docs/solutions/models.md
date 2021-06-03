@@ -16,10 +16,15 @@ nav_order: 30
 
 *   Face detection model for front-facing/selfie camera:
     [TFLite model](https://github.com/google/mediapipe/tree/master/mediapipe/modules/face_detection/face_detection_front.tflite),
-    [TFLite model quantized for EdgeTPU/Coral](https://github.com/google/mediapipe/tree/master/mediapipe/examples/coral/models/face-detector-quantized_edgetpu.tflite)
+    [TFLite model quantized for EdgeTPU/Coral](https://github.com/google/mediapipe/tree/master/mediapipe/examples/coral/models/face-detector-quantized_edgetpu.tflite),
+    [Model card](https://mediapipe.page.link/blazeface-mc)
 *   Face detection model for back-facing camera:
-    [TFLite model ](https://github.com/google/mediapipe/tree/master/mediapipe/modules/face_detection/face_detection_back.tflite)
-*   [Model card](https://mediapipe.page.link/blazeface-mc)
+    [TFLite model](https://github.com/google/mediapipe/tree/master/mediapipe/modules/face_detection/face_detection_back.tflite),
+    [Model card](https://mediapipe.page.link/blazeface-back-mc)
+*   Face detection model for back-facing camera (sparse):
+    [TFLite model](https://github.com/google/mediapipe/tree/master/mediapipe/modules/face_detection/face_detection_back_sparse.tflite),
+    [Model card](https://mediapipe.page.link/blazeface-back-sparse-mc)
+
 
 ### [Face Mesh](https://google.github.io/mediapipe/solutions/face_mesh)
 
@@ -59,6 +64,12 @@ nav_order: 30
 
 *   Hand recrop model:
     [TFLite model](https://github.com/google/mediapipe/tree/master/mediapipe/modules/holistic_landmark/hand_recrop.tflite)
+
+### [Selfie Segmentation](https://google.github.io/mediapipe/solutions/selfie_segmentation)
+
+*   [TFLite model (general)](https://github.com/google/mediapipe/tree/master/mediapipe/modules/selfie_segmentation/selfie_segmentation.tflite)
+*   [TFLite model (landscape)](https://github.com/google/mediapipe/tree/master/mediapipe/modules/selfie_segmentation/selfie_segmentation_landscape.tflite)
+*   [Model card](https://mediapipe.page.link/selfiesegmentation-mc)
 
 ### [Hair Segmentation](https://google.github.io/mediapipe/solutions/hair_segmentation)
 

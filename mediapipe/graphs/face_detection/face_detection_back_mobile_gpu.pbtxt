@@ -41,8 +41,8 @@ node: {
   output_stream: "LETTERBOX_PADDING:letterbox_padding"
   node_options: {
     [type.googleapis.com/mediapipe.ImageTransformationCalculatorOptions] {
-      output_width: 256
-      output_height: 256
+      output_width: 192
+      output_height: 192
       scale_mode: FIT
     }
   }
@@ -77,19 +77,17 @@ node {
   output_side_packet: "anchors"
   node_options: {
     [type.googleapis.com/mediapipe.SsdAnchorsCalculatorOptions] {
-      num_layers: 4
-      min_scale: 0.15625
+      num_layers: 1
+      min_scale: 0.1484375
       max_scale: 0.75
-      input_size_height: 256
-      input_size_width: 256
+      input_size_height: 192
+      input_size_width: 192
       anchor_offset_x: 0.5
       anchor_offset_y: 0.5
-      strides: 16
-      strides: 32
-      strides: 32
-      strides: 32
+      strides: 4
       aspect_ratios: 1.0
       fixed_anchor_size: true
+      interpolated_scale_aspect_ratio: 0.0
     }
   }
 }
@@ -105,7 +103,7 @@ node {
   node_options: {
     [type.googleapis.com/mediapipe.TfLiteTensorsToDetectionsCalculatorOptions] {
       num_classes: 1
-      num_boxes: 896
+      num_boxes: 2304
       num_coords: 16
       box_coord_offset: 0
       keypoint_coord_offset: 4
@@ -114,11 +112,11 @@ node {
       sigmoid_score: true
       score_clipping_thresh: 100.0
       reverse_output_order: true
-      x_scale: 256.0
-      y_scale: 256.0
-      h_scale: 256.0
-      w_scale: 256.0
-      min_score_thresh: 0.65
+      x_scale: 192.0
+      y_scale: 192.0
+      h_scale: 192.0
+      w_scale: 192.0
+      min_score_thresh: 0.6
     }
   }
 }

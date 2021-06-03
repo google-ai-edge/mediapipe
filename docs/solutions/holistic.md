@@ -201,7 +201,7 @@ A list of 21 hand landmarks on the right hand, in the same representation as
 
 Please first follow general [instructions](../getting_started/python.md) to
 install MediaPipe Python package, then learn more in the companion
-[Python Colab](#resources) and the following usage example.
+[Python Colab](#resources) and the usage example below.
 
 Supported configuration options:
 
@@ -218,10 +218,11 @@ mp_drawing = mp.solutions.drawing_utils
 mp_holistic = mp.solutions.holistic
 
 # For static images:
+IMAGE_FILES = []
 with mp_holistic.Holistic(
     static_image_mode=True,
     model_complexity=2) as holistic:
-  for idx, file in enumerate(file_list):
+  for idx, file in enumerate(IMAGE_FILES):
     image = cv2.imread(file)
     image_height, image_width, _ = image.shape
     # Convert the BGR image to RGB before processing.

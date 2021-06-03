@@ -29,7 +29,7 @@
 #include "mediapipe/framework/port.h"
 #include "mediapipe/framework/port/any_proto.h"
 #include "mediapipe/framework/status_handler.pb.h"
-#include "mediapipe/framework/tool/options_util.h"
+#include "mediapipe/framework/tool/options_map.h"
 
 namespace mediapipe {
 

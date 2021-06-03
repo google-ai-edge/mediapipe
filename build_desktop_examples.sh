@@ -97,6 +97,7 @@ for app in ${apps}; do
       if [[ ${target_name} == "holistic_tracking" ||
             ${target_name} == "iris_tracking" ||
             ${target_name} == "pose_tracking" ||
+            ${target_name} == "selfie_segmentation" ||
             ${target_name} == "upper_body_pose_tracking" ]]; then
         graph_suffix="cpu"
       else

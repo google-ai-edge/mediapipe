@@ -78,7 +78,9 @@ mediapipe_simple_subgraph(
     graph = "pose_landmark_filtering.pbtxt",
     register_as = "PoseLandmarkFiltering",
     deps = [
+        "//mediapipe/calculators/util:alignment_points_to_rects_calculator",
         "//mediapipe/calculators/util:landmarks_smoothing_calculator",
+        "//mediapipe/calculators/util:landmarks_to_detection_calculator",
         "//mediapipe/calculators/util:visibility_smoothing_calculator",
         "//mediapipe/framework/tool:switch_container",
     ],

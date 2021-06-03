@@ -68,7 +68,7 @@ normalized to `[0.0, 1.0]` by the image width and height respectively.
 
 Please first follow general [instructions](../getting_started/python.md) to
 install MediaPipe Python package, then learn more in the companion
-[Python Colab](#resources) and the following usage example.
+[Python Colab](#resources) and the usage example below.
 
 Supported configuration options:
 
@@ -81,9 +81,10 @@ mp_face_detection = mp.solutions.face_detection
 mp_drawing = mp.solutions.drawing_utils
 
 # For static images:
+IMAGE_FILES = []
 with mp_face_detection.FaceDetection(
     min_detection_confidence=0.5) as face_detection:
-  for idx, file in enumerate(file_list):
+  for idx, file in enumerate(IMAGE_FILES):
     image = cv2.imread(file)
     # Convert the BGR image to RGB and process it with MediaPipe Face Detection.
     results = face_detection.process(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))

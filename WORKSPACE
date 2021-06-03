@@ -71,8 +71,8 @@ http_archive(
 # Google Benchmark library.
 http_archive(
     name = "com_google_benchmark",
-    urls = ["https://github.com/google/benchmark/archive/master.zip"],
-    strip_prefix = "benchmark-master",
+    urls = ["https://github.com/google/benchmark/archive/main.zip"],
+    strip_prefix = "benchmark-main",
     build_file = "@//third_party:benchmark.BUILD",
 )
 
@@ -369,9 +369,9 @@ http_archive(
 )
 
 # Tensorflow repo should always go after the other external dependencies.
-# 2021-04-30
-_TENSORFLOW_GIT_COMMIT = "5bd3c57ef184543d22e34e36cff9d9bea608e06d"
-_TENSORFLOW_SHA256= "9a45862834221aafacf6fb275f92b3876bc89443cbecc51be93f13839a6609f0"
+# 2021-05-27
+_TENSORFLOW_GIT_COMMIT = "d6bfcdb0926173dbb7aa02ceba5aae6250b8aaa6"
+_TENSORFLOW_SHA256 = "ec40e1462239d8783d02f76a43412c8f80bac71ea20e41e1b7729b990aad6923"
 http_archive(
     name = "org_tensorflow",
     urls = [

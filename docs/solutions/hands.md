@@ -206,7 +206,7 @@ is not the case, please swap the handedness output in the application.
 
 Please first follow general [instructions](../getting_started/python.md) to
 install MediaPipe Python package, then learn more in the companion
-[Python Colab](#resources) and the following usage example.
+[Python Colab](#resources) and the usage example below.
 
 Supported configuration options:
 
@@ -222,11 +222,12 @@ mp_drawing = mp.solutions.drawing_utils
 mp_hands = mp.solutions.hands
 
 # For static images:
+IMAGE_FILES = []
 with mp_hands.Hands(
     static_image_mode=True,
     max_num_hands=2,
     min_detection_confidence=0.5) as hands:
-  for idx, file in enumerate(file_list):
+  for idx, file in enumerate(IMAGE_FILES):
     # Read an image, flip it around y-axis for correct handedness output (see
     # above).
     image = cv2.flip(cv2.imread(file), 1)

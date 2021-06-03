@@ -16,13 +16,14 @@ nav_order: 4
 
 MediaPipe currently offers the following solutions:
 
-Solution          | NPM Package                   | Example
------------------ | ----------------------------- | -------
-[Face Mesh][F-pg] | [@mediapipe/face_mesh][F-npm] | [mediapipe.dev/demo/face_mesh][F-demo]
-[Face Detection][Fd-pg] | [@mediapipe/face_detection][Fd-npm] | [mediapipe.dev/demo/face_detection][Fd-demo]
-[Hands][H-pg]     | [@mediapipe/hands][H-npm]     | [mediapipe.dev/demo/hands][H-demo]
-[Holistic][Ho-pg] | [@mediapipe/holistic][Ho-npm] | [mediapipe.dev/demo/holistic][Ho-demo]
-[Pose][P-pg]      | [@mediapipe/pose][P-npm]      | [mediapipe.dev/demo/pose][P-demo]
+Solution                    | NPM Package                             | Example
+--------------------------- | --------------------------------------- | -------
+[Face Mesh][F-pg]           | [@mediapipe/face_mesh][F-npm]           | [mediapipe.dev/demo/face_mesh][F-demo]
+[Face Detection][Fd-pg]     | [@mediapipe/face_detection][Fd-npm]     | [mediapipe.dev/demo/face_detection][Fd-demo]
+[Hands][H-pg]               | [@mediapipe/hands][H-npm]               | [mediapipe.dev/demo/hands][H-demo]
+[Holistic][Ho-pg]           | [@mediapipe/holistic][Ho-npm]           | [mediapipe.dev/demo/holistic][Ho-demo]
+[Pose][P-pg]                | [@mediapipe/pose][P-npm]                | [mediapipe.dev/demo/pose][P-demo]
+[Selfie Segmentation][S-pg] | [@mediapipe/selfie_segmentation][S-npm] | [mediapipe.dev/demo/selfie_segmentation][S-demo]
 
 Click on a solution link above for more information, including API and code
 snippets.
@@ -67,11 +68,13 @@ affecting your work, restrict your request to a `<minor>` number. e.g.,
 [Fd-pg]: ../solutions/face_detection#javascript-solution-api
 [H-pg]: ../solutions/hands#javascript-solution-api
 [P-pg]: ../solutions/pose#javascript-solution-api
+[S-pg]: ../solutions/selfie_segmentation#javascript-solution-api
 [Ho-npm]: https://www.npmjs.com/package/@mediapipe/holistic
 [F-npm]: https://www.npmjs.com/package/@mediapipe/face_mesh
 [Fd-npm]: https://www.npmjs.com/package/@mediapipe/face_detection
 [H-npm]: https://www.npmjs.com/package/@mediapipe/hands
 [P-npm]: https://www.npmjs.com/package/@mediapipe/pose
+[S-npm]: https://www.npmjs.com/package/@mediapipe/selfie_segmentation
 [draw-npm]: https://www.npmjs.com/package/@mediapipe/drawing_utils
 [cam-npm]: https://www.npmjs.com/package/@mediapipe/camera_utils
 [ctrl-npm]: https://www.npmjs.com/package/@mediapipe/control_utils
@@ -80,15 +83,18 @@ affecting your work, restrict your request to a `<minor>` number. e.g.,
 [Fd-jsd]: https://www.jsdelivr.com/package/npm/@mediapipe/face_detection
 [H-jsd]: https://www.jsdelivr.com/package/npm/@mediapipe/hands
 [P-jsd]: https://www.jsdelivr.com/package/npm/@mediapipe/pose
+[P-jsd]: https://www.jsdelivr.com/package/npm/@mediapipe/selfie_segmentation
 [Ho-pen]: https://code.mediapipe.dev/codepen/holistic
 [F-pen]: https://code.mediapipe.dev/codepen/face_mesh
 [Fd-pen]: https://code.mediapipe.dev/codepen/face_detection
 [H-pen]: https://code.mediapipe.dev/codepen/hands
 [P-pen]: https://code.mediapipe.dev/codepen/pose
+[S-pen]: https://code.mediapipe.dev/codepen/selfie_segmentation
 [Ho-demo]: https://mediapipe.dev/demo/holistic
 [F-demo]: https://mediapipe.dev/demo/face_mesh
 [Fd-demo]: https://mediapipe.dev/demo/face_detection
 [H-demo]: https://mediapipe.dev/demo/hands
 [P-demo]: https://mediapipe.dev/demo/pose
+[S-demo]: https://mediapipe.dev/demo/selfie_segmentation
 [npm]: https://www.npmjs.com/package/@mediapipe
 [codepen]: https://code.mediapipe.dev/codepen

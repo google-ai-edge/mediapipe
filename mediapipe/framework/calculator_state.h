@@ -32,7 +32,7 @@
 #include "mediapipe/framework/packet_set.h"
 #include "mediapipe/framework/port.h"
 #include "mediapipe/framework/port/any_proto.h"
-#include "mediapipe/framework/tool/options_util.h"
+#include "mediapipe/framework/tool/options_map.h"
 
 namespace mediapipe {
 

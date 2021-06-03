@@ -15,7 +15,7 @@
 """MediaPipe solution drawing utils."""
 
 import math
-from typing import List, Tuple, Union
+from typing import List, Optional, Tuple, Union
 
 import cv2
 import dataclasses
@@ -116,7 +116,7 @@ def draw_detection(
 def draw_landmarks(
     image: np.ndarray,
     landmark_list: landmark_pb2.NormalizedLandmarkList,
-    connections: List[Tuple[int, int]] = None,
+    connections: Optional[List[Tuple[int, int]]] = None,
     landmark_drawing_spec: DrawingSpec = DrawingSpec(color=RED_COLOR),
     connection_drawing_spec: DrawingSpec = DrawingSpec()):
   """Draws the landmarks and the connections on the image.
