@@ -42,9 +42,12 @@ and therefore, runs faster. Note that MediaPipe Selfie Segmentation
 automatically resizes the input image to the desired tensor dimension before
 feeding it into the ML models.
 
-The general model is also powering [ML Kit](https://developers.google.com/ml-kit/vision/selfie-segmentation),
-and a variant of the landscape model is powering [Google Meet](https://ai.googleblog.com/2020/10/background-features-in-google-meet.html).
-Please find more detail about the models in the [model card](./models.md#selfie_segmentation).
+The general model is also powering
+[ML Kit](https://developers.google.com/ml-kit/vision/selfie-segmentation), and a
+variant of the landscape model is powering
+[Google Meet](https://ai.googleblog.com/2020/10/background-features-in-google-meet.html).
+Please find more detail about the models in the
+[model card](./models.md#selfie-segmentation).
 
 ## ML Pipeline
 
