@@ -35,20 +35,28 @@ namespace api2 {
 
 namespace {
 
+int GetXnnpackDefaultNumThreads() {
+#if defined(MEDIAPIPE_ANDROID) || defined(MEDIAPIPE_IOS) || \
+    defined(__EMSCRIPTEN_PTHREADS__)
+  constexpr int kMinNumThreadsByDefault = 1;
+  constexpr int kMaxNumThreadsByDefault = 4;
+  return std::clamp(NumCPUCores() / 2, kMinNumThreadsByDefault,
+                    kMaxNumThreadsByDefault);
+#else
+  return 1;
+#endif  // MEDIAPIPE_ANDROID || MEDIAPIPE_IOS || __EMSCRIPTEN_PTHREADS__
+}
+
 // Returns number of threads to configure XNNPACK delegate with.
-// (Equal to user provided value if specified.  Otherwise, it returns number of
-// high cores (hard-coded to 1 for Emscripten without Threads extension))
+// Returns user provided value if specified. Otherwise, tries to choose optimal
+// number of threads depending on the device.
 int GetXnnpackNumThreads(const mediapipe::InferenceCalculatorOptions& opts) {
   static constexpr int kDefaultNumThreads = -1;
   if (opts.has_delegate() && opts.delegate().has_xnnpack() &&
       opts.delegate().xnnpack().num_threads() != kDefaultNumThreads) {
     return opts.delegate().xnnpack().num_threads();
   }
-#if !defined(__EMSCRIPTEN__) || defined(__EMSCRIPTEN_PTHREADS__)
-  return InferHigherCoreIds().size();
-#else
-  return 1;
-#endif  // !__EMSCRIPTEN__ || __EMSCRIPTEN_PTHREADS__
+  return GetXnnpackDefaultNumThreads();
 }
 
 }  // namespace

@@ -8,6 +8,7 @@ def mediapipe_cc_test(
         data = [],
         deps = [],
         size = None,
+        tags = [],
         timeout = None,
         additional_deps = DEFAULT_ADDITIONAL_TEST_DEPS,
         **kwargs):

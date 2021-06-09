@@ -69,6 +69,8 @@ node {
   options: {
     [mediapipe.InferenceCalculatorOptions.ext] {
       model_path: "mediapipe/modules/pose_detection/pose_detection.tflite"
+      #
+      delegate: { gpu { use_advanced_gpu_api: true } }
     }
   }
 }

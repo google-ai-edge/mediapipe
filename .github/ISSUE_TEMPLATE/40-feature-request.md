@@ -1,3 +1,9 @@
+---
+name: "Feature Request"
+about: Use this template for raising a feature request
+labels: type:feature
+
+---
 <em>Please make sure that this is a feature request.</em>
 
 **System information** (Please provide as much relevant information as possible)

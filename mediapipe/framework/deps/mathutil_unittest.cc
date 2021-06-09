@@ -262,7 +262,7 @@ TEST(MathUtil, IntRound) {
 
   // A double-precision number has a 53-bit mantissa (52 fraction bits),
   // so the following value can be represented exactly.
-  int64 value64 = GG_ULONGLONG(0x1234567890abcd00);
+  int64 value64 = static_cast<int64_t>(0x1234567890abcd00);
   EXPECT_EQ(mediapipe::MathUtil::Round<int64>(static_cast<double>(value64)),
             value64);
 }
@@ -369,7 +369,7 @@ class SafeCastTester {
     if (sizeof(FloatIn) >= 64) {
       // A double-precision number has a 53-bit mantissa (52 fraction bits),
       // so the following value can be represented exactly by a double.
-      int64 value64 = GG_ULONGLONG(0x1234567890abcd00);
+      int64 value64 = static_cast<int64_t>(0x1234567890abcd00);
       const IntOut expected =
           (sizeof(IntOut) >= 64) ? static_cast<IntOut>(value64) : imax;
       EXPECT_EQ(
@@ -565,7 +565,7 @@ TEST(MathUtil, SafeCast) {
       -12345);
   EXPECT_EQ(mediapipe::MathUtil::SafeCast<int>(1E47), 2147483647);
   EXPECT_EQ(mediapipe::MathUtil::SafeCast<int>(-1E47),
-            GG_LONGLONG(-2147483648));
+            static_cast<int64_t>(-2147483648));
 }
 
 template <class FloatIn, class IntOut>
@@ -682,7 +682,7 @@ class SafeRoundTester {
     if (sizeof(FloatIn) >= 64) {
       // A double-precision number has a 53-bit mantissa (52 fraction bits),
       // so the following value can be represented exactly by a double.
-      int64 value64 = GG_ULONGLONG(0x1234567890abcd00);
+      int64 value64 = static_cast<int64_t>(0x1234567890abcd00);
       const IntOut expected =
           (sizeof(IntOut) >= 64) ? static_cast<IntOut>(value64) : imax;
       EXPECT_EQ(
@@ -873,7 +873,7 @@ TEST(MathUtil, SafeRound) {
       -12345);
   EXPECT_EQ(mediapipe::MathUtil::SafeRound<int>(1E47), 2147483647);
   EXPECT_EQ(mediapipe::MathUtil::SafeRound<int>(-1E47),
-            GG_LONGLONG(-2147483648));
+            static_cast<int64_t>(-2147483648));
 }
 
 }  // namespace

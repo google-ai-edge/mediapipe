@@ -15,6 +15,7 @@
 #ifndef MEDIAPIPE_FRAMEWORK_TEST_UTIL_H_
 #define MEDIAPIPE_FRAMEWORK_TEST_UTIL_H_
 
+#include "absl/status/statusor.h"
 #include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/framework/formats/image_frame.h"
 
@@ -35,13 +36,28 @@ using mediapipe::CalculatorGraphConfig;
 // Note: Although max_color_diff and max_alpha_diff are floats, all uint8/uint16
 // values are exactly representable. (2^24 + 1 is the first non-representable
 // positive integral value.)
+absl::Status CompareImageFrames(const ImageFrame& image1,
+                                const ImageFrame& image2,
+                                const float max_color_diff,
+                                const float max_alpha_diff,
+                                const float max_avg_diff,
+                                std::unique_ptr<ImageFrame>& diff_image);
+
 bool CompareImageFrames(const ImageFrame& image1, const ImageFrame& image2,
                         const float max_color_diff, const float max_alpha_diff,
                         const float max_avg_diff = 1.0,
                         std::string* error_message = nullptr);
 
-// Returns the absolute path to the directory that contains test source code.
+// Returns the absolute path to the directory that contains test source code
+// (TEST_SRCDIR).
 std::string GetTestRootDir();
+
+// Returns the absolute path to a directory where tests can write outputs to
+// be sent to bazel (TEST_UNDECLARED_OUTPUTS_DIR or a fallback).
+std::string GetTestOutputsDir();
+
+// Returns the absolute path to a file within TEST_SRCDIR.
+std::string GetTestFilePath(absl::string_view relative_path);
 
 // Returns the absolute path to the contents of the package's "testdata"
 // directory.
@@ -51,6 +67,10 @@ std::string GetTestDataDir(const std::string& package_base_path);
 
 // Loads a binary graph from path. Returns true iff successful.
 bool LoadTestGraph(CalculatorGraphConfig* proto, const std::string& path);
+
+// Loads an image from path.
+absl::StatusOr<std::unique_ptr<ImageFrame>> LoadTestImage(
+    absl::string_view path, ImageFormat::Format format = ImageFormat::SRGBA);
 
 // Loads a PNG image from path using the given ImageFormat. Returns nullptr in
 // case of failure.

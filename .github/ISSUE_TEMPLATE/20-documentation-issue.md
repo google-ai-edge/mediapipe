@@ -1,3 +1,9 @@
+---
+name: "Documentation Issue"
+about: Use this template for documentation related issues
+labels: type:docs
+
+---
 Thank you for submitting a MediaPipe documentation issue.
 The MediaPipe docs are open source! To get involved, read the documentation Contributor Guide
 ## URL(s) with the issue:

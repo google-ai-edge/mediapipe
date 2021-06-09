@@ -37,6 +37,13 @@ constexpr char kFirstCropRect[] = "FIRST_CROP_RECT";
 // (configured through option us_to_first_rect). If provided, a non-zero integer
 // will allow the animated zoom to be used when the first detections arrive.
 constexpr char kAnimateZoom[] = "ANIMATE_ZOOM";
+// Can be used to control the maximum zoom; note that it is re-evaluated only
+// upon change of input resolution. A value of 100 disables zooming and is the
+// smallest allowed value. A value of 200 allows zooming such that a pixel of
+// the input may cover up to four times its original area. Note that
+// max_zoom_value_deg from options is always respected; MAX_ZOOM_PCT can only be
+// used to limit zooming further.
+constexpr char kMaxZoomFactorPercent[] = "MAX_ZOOM_FACTOR_PCT";
 // Field-of-view (degrees) of the camera's x-axis (width).
 // TODO: Parameterize FOV based on camera specs.
 constexpr float kFieldOfView = 60;
@@ -75,11 +82,16 @@ class ContentZoomingCalculator : public CalculatorBase {
                               int frame_height);
   // Saves state to a state-cache, if provided.
   absl::Status SaveState(mediapipe::CalculatorContext* cc) const;
+  // Returns the factor for maximum zoom based on options and the
+  // kMaxZoomFactorPercent input (if present).
+  double GetMaxZoomFactor(mediapipe::CalculatorContext* cc) const;
   // Initializes the calculator for the given frame size, creating path solvers
   // and resetting history like last measured values.
-  absl::Status InitializeState(int frame_width, int frame_height);
+  absl::Status InitializeState(mediapipe::CalculatorContext* cc,
+                               int frame_width, int frame_height);
   // Adjusts state to work with an updated frame size.
-  absl::Status UpdateForResolutionChange(int frame_width, int frame_height);
+  absl::Status UpdateForResolutionChange(mediapipe::CalculatorContext* cc,
+                                         int frame_width, int frame_height);
   // Returns true if we are animating to the first rect.
   bool IsAnimatingToFirstRect(const Timestamp& timestamp) const;
   // Builds the output rectangle when animating to the first rect.
@@ -135,6 +147,9 @@ absl::Status ContentZoomingCalculator::GetContract(
   } else {
     return mediapipe::UnknownErrorBuilder(MEDIAPIPE_LOC)
            << "Input VIDEO or VIDEO_SIZE must be provided.";
+  }
+  if (cc->Inputs().HasTag(kMaxZoomFactorPercent)) {
+    cc->Inputs().Tag(kMaxZoomFactorPercent).Set<int>();
   }
   if (cc->Inputs().HasTag(kSalientRegions)) {
     cc->Inputs().Tag(kSalientRegions).Set<DetectionSet>();
@@ -330,7 +345,7 @@ absl::Status ContentZoomingCalculator::MaybeLoadState(
           ? cc->InputSidePackets().Tag(kStateCache).Get<StateCacheType*>()
           : nullptr;
   if (!state_cache || !state_cache->has_value()) {
-    return InitializeState(frame_width, frame_height);
+    return InitializeState(cc, frame_width, frame_height);
   }
 
   const ContentZoomingCalculatorState& state = state_cache->value();
@@ -350,7 +365,7 @@ absl::Status ContentZoomingCalculator::MaybeLoadState(
   last_measured_y_offset_ = state.last_measured_y_offset;
   MP_RETURN_IF_ERROR(UpdateAspectAndMax());
 
-  return UpdateForResolutionChange(frame_width, frame_height);
+  return UpdateForResolutionChange(cc, frame_width, frame_height);
 }
 
 absl::Status ContentZoomingCalculator::SaveState(
@@ -379,8 +394,20 @@ absl::Status ContentZoomingCalculator::SaveState(
   return absl::OkStatus();
 }
 
-absl::Status ContentZoomingCalculator::InitializeState(int frame_width,
-                                                       int frame_height) {
+double ContentZoomingCalculator::GetMaxZoomFactor(
+    mediapipe::CalculatorContext* cc) const {
+  double max_zoom_value =
+      options_.max_zoom_value_deg() / static_cast<double>(kFieldOfView);
+  if (cc->Inputs().HasTag(kMaxZoomFactorPercent)) {
+    const double factor = std::max(
+        1.0, cc->Inputs().Tag(kMaxZoomFactorPercent).Get<int>() / 100.0);
+    max_zoom_value = std::max(max_zoom_value, 1.0 / factor);
+  }
+  return max_zoom_value;
+}
+
+absl::Status ContentZoomingCalculator::InitializeState(
+    mediapipe::CalculatorContext* cc, int frame_width, int frame_height) {
   frame_width_ = frame_width;
   frame_height_ = frame_height;
   path_solver_pan_ = std::make_unique<KinematicPathSolver>(
@@ -390,8 +417,7 @@ absl::Status ContentZoomingCalculator::InitializeState(int frame_width,
       options_.kinematic_options_tilt(), 0, frame_height_,
       static_cast<float>(frame_height_) / kFieldOfView);
   MP_RETURN_IF_ERROR(UpdateAspectAndMax());
-  int min_zoom_size = frame_height_ * (options_.max_zoom_value_deg() /
-                                       static_cast<double>(kFieldOfView));
+  int min_zoom_size = frame_height_ * GetMaxZoomFactor(cc);
   path_solver_zoom_ = std::make_unique<KinematicPathSolver>(
       options_.kinematic_options_zoom(), min_zoom_size,
       max_frame_value_ * frame_height_,
@@ -405,7 +431,7 @@ absl::Status ContentZoomingCalculator::InitializeState(int frame_width,
 }
 
 absl::Status ContentZoomingCalculator::UpdateForResolutionChange(
-    int frame_width, int frame_height) {
+    mediapipe::CalculatorContext* cc, int frame_width, int frame_height) {
   // Update state for change in input resolution.
   if (frame_width_ != frame_width || frame_height_ != frame_height) {
     double width_scale = frame_width / static_cast<double>(frame_width_);
@@ -419,8 +445,7 @@ absl::Status ContentZoomingCalculator::UpdateForResolutionChange(
     MP_RETURN_IF_ERROR(path_solver_pan_->UpdateMinMaxLocation(0, frame_width_));
     MP_RETURN_IF_ERROR(
         path_solver_tilt_->UpdateMinMaxLocation(0, frame_height_));
-    int min_zoom_size = frame_height_ * (options_.max_zoom_value_deg() /
-                                         static_cast<double>(kFieldOfView));
+    int min_zoom_size = frame_height_ * GetMaxZoomFactor(cc);
     MP_RETURN_IF_ERROR(path_solver_zoom_->UpdateMinMaxLocation(
         min_zoom_size, max_frame_value_ * frame_height_));
     MP_RETURN_IF_ERROR(path_solver_zoom_->UpdatePixelsPerDegree(
@@ -493,7 +518,8 @@ absl::Status ContentZoomingCalculator::Process(
     MP_RETURN_IF_ERROR(MaybeLoadState(cc, frame_width, frame_height));
     initialized_ = !options_.is_stateless();
   } else {
-    MP_RETURN_IF_ERROR(UpdateForResolutionChange(frame_width, frame_height));
+    MP_RETURN_IF_ERROR(
+        UpdateForResolutionChange(cc, frame_width, frame_height));
   }
 
   bool only_required_found = false;

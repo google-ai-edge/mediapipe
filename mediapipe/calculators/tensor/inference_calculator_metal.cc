@@ -226,6 +226,10 @@ absl::Status InferenceCalculatorMetalImpl::LoadDelegate(CalculatorContext* cc) {
 
   // Configure and create the delegate.
   TFLGpuDelegateOptions options;
+  // `enable_quantization` enables the run of sparse models i.e. the models with
+  // DENSIFY op preceding DEQUINTIZE op. Both ops get removed from the execution
+  // graph after the tensor of the weights is read.
+  options.enable_quantization = true;
   options.allow_precision_loss = allow_precision_loss_;
   options.wait_type = TFLGpuDelegateWaitType::TFLGpuDelegateWaitTypeDoNotWait;
   delegate_ =

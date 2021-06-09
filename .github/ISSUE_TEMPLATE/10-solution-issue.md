@@ -1,3 +1,9 @@
+---
+name: "Solution Issue"
+about: Use this template for assistance with a specific mediapipe solution, such as "Pose" or "Iris", including inference model usage/training, solution-specific calculators, etc.
+labels: type:support
+
+---
 <em>Please make sure that this is a [solution](https://google.github.io/mediapipe/solutions/solutions.html) issue.<em>
 
 **System information** (Please provide as much relevant information as possible)

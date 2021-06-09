@@ -763,9 +763,13 @@ out vec4 fragColor;
 #endif  // defined(GL_ES);
 
 void main() {
-
-  vec4 input_value = texture2D(input_texture, sample_coordinate);
-  vec2 gid = sample_coordinate;
+#ifdef FLIP_Y_COORD
+  float y_coord = 1.0 - sample_coordinate.y;
+#else
+  float y_coord = sample_coordinate.y;
+#endif  // defined(FLIP_Y_COORD)
+  vec2 adjusted_coordinate = vec2(sample_coordinate.x, y_coord);
+  vec4 input_value = texture2D(input_texture, adjusted_coordinate);
 
   // Run activation function.
   // One and only one of FN_SOFTMAX,FN_SIGMOID,FN_NONE will be defined.
@@ -786,13 +790,6 @@ void main() {
 #ifdef FN_NONE
   float new_mask_value = input_value.r;
 #endif // FN_NONE
-
-#ifdef FLIP_Y_COORD
-  float y_coord = 1.0 - gid.y;
-#else
-  float y_coord = gid.y;
-#endif  // defined(FLIP_Y_COORD)
-  vec2 output_coordinate = vec2(gid.x, y_coord);
 
   vec4 out_value = vec4(new_mask_value, 0.0, 0.0, new_mask_value);
   fragColor = out_value;

@@ -150,6 +150,29 @@ const char kConfigE[] = R"(
     }
     )";
 
+const char kConfigF[] = R"(
+    calculator: "ContentZoomingCalculator"
+    input_stream: "VIDEO_SIZE:size"
+    input_stream: "DETECTIONS:detections"
+    input_stream: "MAX_ZOOM_FACTOR_PCT:max_zoom_factor_pct"
+    output_stream: "CROP_RECT:rect"
+    output_stream: "FIRST_CROP_RECT:first_rect"
+    options: {
+      [mediapipe.autoflip.ContentZoomingCalculatorOptions.ext]: {
+        max_zoom_value_deg: 0
+        kinematic_options_zoom {
+          min_motion_to_reframe: 1.2
+        }
+        kinematic_options_tilt {
+          min_motion_to_reframe: 1.2
+        }
+        kinematic_options_pan {
+          min_motion_to_reframe: 1.2
+        }
+      }
+    }
+    )";
+
 void CheckBorder(const StaticFeatures& static_features, int width, int height,
                  int top_border, int bottom_border) {
   ASSERT_EQ(2, static_features.border().size());
@@ -170,6 +193,7 @@ void CheckBorder(const StaticFeatures& static_features, int width, int height,
 
 struct AddDetectionFlags {
   std::optional<bool> animated_zoom;
+  std::optional<int> max_zoom_factor_percent;
 };
 
 void AddDetectionFrameSize(const cv::Rect_<float>& position, const int64 time,
@@ -209,6 +233,14 @@ void AddDetectionFrameSize(const cv::Rect_<float>& position, const int64 time,
         ->Tag("ANIMATE_ZOOM")
         .packets.push_back(
             mediapipe::MakePacket<bool>(flags.animated_zoom.value())
+                .At(Timestamp(time)));
+  }
+
+  if (flags.max_zoom_factor_percent.has_value()) {
+    runner->MutableInputs()
+        ->Tag("MAX_ZOOM_FACTOR_PCT")
+        .packets.push_back(
+            mediapipe::MakePacket<int>(flags.max_zoom_factor_percent.value())
                 .At(Timestamp(time)));
   }
 }
@@ -259,6 +291,7 @@ TEST(ContentZoomingCalculatorTest, ZoomTest) {
   CheckBorder(static_features, 1000, 1000, 495, 395);
 }
 
+#if 0
 TEST(ContentZoomingCalculatorTest, ZoomTestFullPTZ) {
   auto runner = ::absl::make_unique<CalculatorRunner>(
       ParseTextProtoOrDie<CalculatorGraphConfig::Node>(kConfigD));
@@ -694,8 +727,8 @@ TEST(ContentZoomingCalculatorTest, ResolutionChangeZoomingWithCache) {
     auto runner = ::absl::make_unique<CalculatorRunner>(config);
     runner->MutableSidePackets()->Tag("STATE_CACHE") = MakePacket<
         mediapipe::autoflip::ContentZoomingCalculatorStateCacheType*>(&cache);
-    AddDetectionFrameSize(cv::Rect_<float>(.4, .4, .2, .2), 1000000, 1000, 1000,
-                          runner.get());
+    AddDetectionFrameSize(cv::Rect_<float>(.4, .4, .2, .2), 1000000, 1000,
+                          1000, runner.get());
     AddDetectionFrameSize(cv::Rect_<float>(.4, .4, .2, .2), 2000000, 500, 500,
                           runner.get());
     MP_ASSERT_OK(runner->Run());
@@ -719,6 +752,36 @@ TEST(ContentZoomingCalculatorTest, MaxZoomValue) {
   CheckCropRect(500, 500, 916, 916, 0,
                 runner->Outputs().Tag("CROP_RECT").packets);
 }
+#endif
+
+TEST(ContentZoomingCalculatorTest, MaxZoomValueOverride) {
+  auto config = ParseTextProtoOrDie<CalculatorGraphConfig::Node>(kConfigF);
+  auto* options = config.mutable_options()->MutableExtension(
+      ContentZoomingCalculatorOptions::ext);
+  options->set_max_zoom_value_deg(30);
+  auto runner = ::absl::make_unique<CalculatorRunner>(config);
+  AddDetectionFrameSize(cv::Rect_<float>(.4, .4, .2, .2), 0, 640, 480,
+                        runner.get(), {.max_zoom_factor_percent = 133});
+  // Change resolution and allow more zoom, and give time to use the new limit
+  AddDetectionFrameSize(cv::Rect_<float>(.4, .4, .2, .2), 1000000, 1280, 720,
+                        runner.get(), {.max_zoom_factor_percent = 166});
+  AddDetectionFrameSize(cv::Rect_<float>(.4, .4, .2, .2), 2000000, 1280, 720,
+                        runner.get(), {.max_zoom_factor_percent = 166});
+  // Switch back to a smaller resolution with a more limited zoom
+  AddDetectionFrameSize(cv::Rect_<float>(.4, .4, .2, .2), 3000000, 640, 480,
+                        runner.get(), {.max_zoom_factor_percent = 133});
+  MP_ASSERT_OK(runner->Run());
+  // Max. 133% zoomed in means min. (100/133) ~ 75% of height left: ~360
+  // Max. 166% zoomed in means min. (100/166) ~ 60% of height left: ~430
+  CheckCropRect(320, 240, 480, 360, 0,
+                runner->Outputs().Tag("CROP_RECT").packets);
+  CheckCropRect(640, 360, 769, 433, 2,
+                runner->Outputs().Tag("CROP_RECT").packets);
+  CheckCropRect(320, 240, 480, 360, 3,
+                runner->Outputs().Tag("CROP_RECT").packets);
+}
+
+#if 0
 TEST(ContentZoomingCalculatorTest, MaxZoomOutValue) {
   auto config = ParseTextProtoOrDie<CalculatorGraphConfig::Node>(kConfigD);
   auto* options = config.mutable_options()->MutableExtension(
@@ -906,6 +969,7 @@ TEST(ContentZoomingCalculatorTest, ProvidesConstantFirstRect) {
     EXPECT_EQ(first_rect.height(), rect.height());
   }
 }
+#endif
 
 }  // namespace
 }  // namespace autoflip

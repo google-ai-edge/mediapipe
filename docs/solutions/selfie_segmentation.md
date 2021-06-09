@@ -284,6 +284,6 @@ on how to build MediaPipe examples.
 *   Google AI Blog:
     [Background Features in Google Meet, Powered by Web ML](https://ai.googleblog.com/2020/10/background-features-in-google-meet.html)
 *   [ML Kit Selfie Segmentation API](https://developers.google.com/ml-kit/vision/selfie-segmentation)
-*   [Models and model cards](./models.md#selfie_segmentation)
+*   [Models and model cards](./models.md#selfie-segmentation)
 *   [Web demo](https://code.mediapipe.dev/codepen/selfie_segmentation)
 *   [Python Colab](https://mediapipe.page.link/selfie_segmentation_py_colab)

@@ -1,0 +1,35 @@
+From fed8c5b355e00b7cc7dd5abfebecf0338f2c2f24 Mon Sep 17 00:00:00 2001
+From: Camillo Lugaresi <camillol@google.com>
+Date: Fri, 4 Jun 2021 00:44:45 +0000
+Subject: impl files
+
+---
+ stb_image.c       | 4 ++++
+ stb_image_write.c | 4 ++++
+ 2 files changed, 8 insertions(+)
+ create mode 100644 stb_image.c
+ create mode 100644 stb_image_write.c
+
+diff --git a/stb_image.c b/stb_image.c
+new file mode 100644
+index 0000000..f88aaf6
+--- /dev/null
++++ b/stb_image.c
+@@ -0,0 +1,4 @@
++// By defining STB_IMAGE_IMPLEMENTATION the included header file will also
++// define the implementation.
++#define STB_IMAGE_IMPLEMENTATION
++#include "stb_image.h"
+diff --git a/stb_image_write.c b/stb_image_write.c
+new file mode 100644
+index 0000000..623d757
+--- /dev/null
++++ b/stb_image_write.c
+@@ -0,0 +1,4 @@
++// By defining STB_IMAGE_WRITE_IMPLEMENTATION the included header file will also
++// define the implementation.
++#define STB_IMAGE_WRITE_IMPLEMENTATION
++#include "stb_image_write.h"
+-- 
+2.32.0.rc1.229.g3e70b5a671-goog
+

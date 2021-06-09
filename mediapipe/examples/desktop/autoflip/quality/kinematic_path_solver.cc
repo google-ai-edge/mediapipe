@@ -154,10 +154,18 @@ absl::Status KinematicPathSolver::AddObservation(int position,
 
   // Time and position updates.
   double delta_t = (time_us - current_time_) / 1000000.0;
+  // Time since last state/prediction update, smoothed by
+  // mean_period_update_rate.
+  if (mean_delta_t_ < 0) {
+    mean_delta_t_ = delta_t;
+  } else {
+    mean_delta_t_ = mean_delta_t_ * (1 - options_.mean_period_update_rate()) +
+                    delta_t * options_.mean_period_update_rate();
+  }
 
   // Observed velocity and then weighted update of this velocity.
   double observed_velocity = delta_degs / delta_t;
-  double update_rate = std::min(delta_t / options_.update_rate_seconds(),
+  double update_rate = std::min(mean_delta_t_ / options_.update_rate_seconds(),
                                 options_.max_update_rate());
   double updated_velocity = current_velocity_deg_per_s_ * (1 - update_rate) +
                             observed_velocity * update_rate;
@@ -173,16 +181,6 @@ absl::Status KinematicPathSolver::AddObservation(int position,
 absl::Status KinematicPathSolver::UpdatePrediction(const int64 time_us) {
   RET_CHECK(current_time_ < time_us)
       << "Prediction time added before a prior observation or prediction.";
-
-  // Time since last state/prediction update, smoothed by
-  // mean_period_update_rate.
-  double delta_t = (time_us - current_time_) / 1000000.0;
-  if (mean_delta_t_ < 0) {
-    mean_delta_t_ = delta_t;
-  } else {
-    mean_delta_t_ = mean_delta_t_ * (1 - options_.mean_period_update_rate()) +
-                    delta_t * options_.mean_period_update_rate();
-  }
 
   // Position update limited by min/max.
   double update_position_px =

@@ -164,7 +164,9 @@ const GlTextureInfo& GlTextureInfoForGpuBufferFormat(GpuBufferFormat format,
   }
 
   auto iter = format_info->find(format);
-  CHECK(iter != format_info->end()) << "unsupported format";
+  CHECK(iter != format_info->end())
+      << "unsupported format: "
+      << static_cast<std::underlying_type_t<decltype(format)>>(format);
   const auto& planes = iter->second;
 #ifndef __APPLE__
   CHECK_EQ(planes.size(), 1)

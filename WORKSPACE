@@ -242,6 +242,20 @@ http_archive(
     url = "https://github.com/opencv/opencv/releases/download/3.2.0/opencv-3.2.0-ios-framework.zip",
 )
 
+http_archive(
+    name = "stblib",
+    strip_prefix = "stb-b42009b3b9d4ca35bc703f5310eedc74f584be58",
+    sha256 = "13a99ad430e930907f5611325ec384168a958bf7610e63e60e2fd8e7b7379610",
+    urls = ["https://github.com/nothings/stb/archive/b42009b3b9d4ca35bc703f5310eedc74f584be58.tar.gz"],
+    build_file = "@//third_party:stblib.BUILD",
+    patches = [
+        "@//third_party:stb_image_impl.diff"
+    ],
+    patch_args = [
+        "-p1",
+    ],
+)
+
 # You may run setup_android.sh to install Android SDK and NDK.
 android_ndk_repository(
     name = "androidndk",
@@ -369,9 +383,9 @@ http_archive(
 )
 
 # Tensorflow repo should always go after the other external dependencies.
-# 2021-05-27
-_TENSORFLOW_GIT_COMMIT = "d6bfcdb0926173dbb7aa02ceba5aae6250b8aaa6"
-_TENSORFLOW_SHA256 = "ec40e1462239d8783d02f76a43412c8f80bac71ea20e41e1b7729b990aad6923"
+# 2021-06-07
+_TENSORFLOW_GIT_COMMIT = "700533808e6016dc458bb2eeecfca4babfc482ec"
+_TENSORFLOW_SHA256 = "b6edd7f4039bfc19f3e77594ecff558ba620091d0dc48181484b3d9085026126"
 http_archive(
     name = "org_tensorflow",
     urls = [

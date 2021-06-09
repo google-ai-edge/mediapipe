@@ -269,8 +269,8 @@ absl::Status InferenceCalculatorGlImpl::InitTFLiteGPURunner(
       break;
     }
   }
-  MP_RETURN_IF_ERROR(
-      tflite_gpu_runner_->InitializeWithModel(model, op_resolver));
+  MP_RETURN_IF_ERROR(tflite_gpu_runner_->InitializeWithModel(
+      model, op_resolver, /*allow_quant_ops=*/true));
 
   // Create and bind OpenGL buffers for outputs.
   // The buffers are created once and their ids are passed to calculator outputs

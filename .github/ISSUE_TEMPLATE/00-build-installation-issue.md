@@ -1,3 +1,9 @@
+---
+name: "Build/Installation Issue"
+about: Use this template for build/installation issues
+labels: type:build/install
+
+---
 <em>Please make sure that this is a build/installation issue and also refer to the [troubleshooting](https://google.github.io/mediapipe/getting_started/troubleshooting.html) documentation before raising any issues.</em>
 
 **System information** (Please provide as much relevant information as possible)

@@ -262,7 +262,7 @@ specified, appear as literal values in the `node_options` field of the
     output_stream: "TENSORS:main_model_output"
     node_options: {
       [type.googleapis.com/mediapipe.TfLiteInferenceCalculatorOptions] {
-        model_path: "mediapipe/models/active_speaker_detection/audio_visual_model.tflite"
+        model_path: "mediapipe/models/detection_model.tflite"
       }
     }
   }
@@ -272,14 +272,13 @@ The `node_options` field accepts the proto3 syntax.  Alternatively, calculator
 options can be specified in the `options` field using proto2 syntax.
 
 ```
-  node: {
-    calculator: "IntervalFilterCalculator"
+  node {
+    calculator: "TfLiteInferenceCalculator"
+    input_stream: "TENSORS:main_model_input"
+    output_stream: "TENSORS:main_model_output"
     node_options: {
-      [type.googleapis.com/mediapipe.IntervalFilterCalculatorOptions] {
-        intervals {
-          start_us: 20000
-          end_us: 40000
-        }
+      [type.googleapis.com/mediapipe.TfLiteInferenceCalculatorOptions] {
+        model_path: "mediapipe/models/detection_model.tflite"
       }
     }
   }
@@ -287,12 +286,25 @@ options can be specified in the `options` field using proto2 syntax.
 
 Not all calculators accept calcuator options. In order to accept options, a
 calculator will normally define a new protobuf message type to represent its
-options, such as `IntervalFilterCalculatorOptions`. The calculator will then
+options, such as `PacketClonerCalculatorOptions`. The calculator will then
 read that protobuf message in its `CalculatorBase::Open` method, and possibly
-also in the `CalculatorBase::GetContract` function or its
+also in its `CalculatorBase::GetContract` function or its
 `CalculatorBase::Process` method. Normally, the new protobuf message type will
 be defined as a protobuf schema using a ".proto" file and a
 `mediapipe_proto_library()` build rule.
+
+```
+  mediapipe_proto_library(
+      name = "packet_cloner_calculator_proto",
+      srcs = ["packet_cloner_calculator.proto"],
+      visibility = ["//visibility:public"],
+      deps = [
+          "//mediapipe/framework:calculator_options_proto",
+          "//mediapipe/framework:calculator_proto",
+      ],
+  )
+```
+
 
 ## Example calculator
 

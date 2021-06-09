@@ -1,3 +1,9 @@
+---
+name: "Bug Issue"
+about: Use this template for reporting a bug
+labels: type:bug
+
+---
 <em>Please make sure that this is a bug and also refer to the [troubleshooting](https://google.github.io/mediapipe/getting_started/troubleshooting.html), FAQ documentation before raising any issues.</em>
 
 **System information** (Please provide as much relevant information as possible)
