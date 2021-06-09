@@ -222,7 +222,6 @@ mp_pose = mp.solutions.pose
 IMAGE_FILES = []
 with mp_pose.Pose(
     static_image_mode=True,
-    model_complexity=2,
     min_detection_confidence=0.5) as pose:
   for idx, file in enumerate(IMAGE_FILES):
     image = cv2.imread(file)
@@ -234,8 +233,8 @@ with mp_pose.Pose(
       continue
     print(
         f'Nose coordinates: ('
-        f'{results.pose_landmarks.landmark[mp_holistic.PoseLandmark.NOSE].x * image_width}, '
-        f'{results.pose_landmarks.landmark[mp_holistic.PoseLandmark.NOSE].y * image_height})'
+        f'{results.pose_landmarks.landmark[mp_pose.PoseLandmark.NOSE].x * image_width}, '
+        f'{results.pose_landmarks.landmark[mp_pose.PoseLandmark.NOSE].y * image_height})'
     )
     # Draw pose landmarks on the image.
     annotated_image = image.copy()
