@@ -1,0 +1,92 @@
+# MediaPipe graph that build feature descriptors index for specific target.
+
+# max_queue_size limits the number of packets enqueued on any input stream
+# by throttling inputs to the graph. This makes the graph only process one
+# frame per time.
+max_queue_size: 1
+
+# Decodes an input video file into images and a video header.
+node {
+  calculator: "LocalFilePatternContentsCalculator"
+  input_side_packet: "FILE_DIRECTORY:file_directory"
+  input_side_packet: "FILE_SUFFIX:file_suffix"
+  output_stream: "CONTENTS:encoded_image"
+}
+
+node {
+  calculator: "OpenCvEncodedImageToImageFrameCalculator"
+  input_stream: "encoded_image"
+  output_stream: "image_frame"
+}
+
+node: {
+  calculator: "ImageTransformationCalculator"
+  input_stream: "IMAGE:image_frame"
+  output_stream: "IMAGE:scaled_image_frame"
+  node_options: {
+    [type.googleapis.com/mediapipe.ImageTransformationCalculatorOptions] {
+      output_width: 320
+      output_height: 320
+      scale_mode: FILL_AND_CROP
+    }
+  }
+}
+
+node {
+  calculator: "ImagePropertiesCalculator"
+  input_stream: "IMAGE:scaled_image_frame"
+  output_stream: "SIZE:input_video_size"
+}
+
+node {
+  calculator: "FeatureDetectorCalculator"
+  input_stream: "IMAGE:scaled_image_frame"
+  output_stream: "FEATURES:features"
+  output_stream: "LANDMARKS:landmarks"
+  output_stream: "PATCHES:patches"
+  node_options: {
+    [type.googleapis.com/mediapipe.FeatureDetectorCalculatorOptions] {
+      max_features: 400
+    }
+  }
+}
+
+# input tensors: 200*32*32*1 float
+# output tensors: 200*40 float, only first keypoint.size()*40 is knift features,
+# rest is padded by zero.
+node {
+  calculator: "TfLiteInferenceCalculator"
+  input_stream: "TENSORS:patches"
+  output_stream: "TENSORS:knift_feature_tensors"
+  input_stream_handler {
+    input_stream_handler: "DefaultInputStreamHandler"
+  }
+  node_options: {
+    [type.googleapis.com/mediapipe.TfLiteInferenceCalculatorOptions] {
+      model_path: "mediapipe/models/knift_float_400.tflite"
+    }
+  }
+}
+
+node {
+  calculator: "TfLiteTensorsToFloatsCalculator"
+  input_stream: "TENSORS:knift_feature_tensors"
+  output_stream: "FLOATS:knift_feature_floats"
+}
+
+node {
+  calculator: "BoxDetectorCalculator"
+  input_side_packet: "OUTPUT_INDEX_FILENAME:output_index_filename"
+  input_stream: "FEATURES:features"
+  input_stream: "IMAGE_SIZE:input_video_size"
+  input_stream: "DESCRIPTORS:knift_feature_floats"
+
+  node_options: {
+    [type.googleapis.com/mediapipe.BoxDetectorCalculatorOptions] {
+      detector_options {
+        index_type: OPENCV_BF
+        detect_every_n_frame: 1
+      }
+    }
+  }
+}

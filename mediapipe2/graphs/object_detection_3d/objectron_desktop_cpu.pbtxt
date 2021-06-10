@@ -1,0 +1,60 @@
+# MediaPipe Objectron 3D object detection on Desktop CPU.
+input_side_packet: "INPUT_FILE_PATH:input_video_path"
+input_side_packet: "FILE_PATH:0:box_landmark_model_path"
+input_side_packet: "LABELS_CSV:allowed_labels"
+input_side_packet: "OUTPUT_FILE_PATH:output_video_path"
+
+# Generates side packet with max number of objects to detect/track.
+node {
+  calculator: "ConstantSidePacketCalculator"
+  output_side_packet: "PACKET:max_num_objects"
+  node_options: {
+    [type.googleapis.com/mediapipe.ConstantSidePacketCalculatorOptions]: {
+      packet { int_value: 5 }
+    }
+  }
+}
+
+# Decodes an input video file into images and a video header.
+node {
+  calculator: "OpenCvVideoDecoderCalculator"
+  input_side_packet: "INPUT_FILE_PATH:input_video_path"
+  output_stream: "VIDEO:input_video"
+  output_stream: "VIDEO_PRESTREAM:input_video_header"
+}
+
+# Run Objectron subgraph.
+node {
+  calculator: "ObjectronCpuSubgraph"
+  input_stream: "IMAGE:input_video"
+  input_side_packet: "MODEL_PATH:box_landmark_model_path"
+  input_side_packet: "LABELS_CSV:allowed_labels"
+  input_side_packet: "MAX_NUM_OBJECTS:max_num_objects"
+  output_stream: "MULTI_LANDMARKS:box_landmarks"
+  output_stream: "NORM_RECTS:box_rect"
+}
+
+# Subgraph that renders annotations and overlays them on top of the input
+# images (see renderer_cpu.pbtxt).
+node {
+  calculator: "RendererSubgraph"
+  input_stream: "IMAGE:input_video"
+  input_stream: "MULTI_LANDMARKS:box_landmarks"
+  input_stream: "NORM_RECTS:box_rect"
+  output_stream: "IMAGE:output_video"
+}
+
+# Encodes the annotated images into a video file, adopting properties specified
+# in the input video header, e.g., video framerate.
+node {
+  calculator: "OpenCvVideoEncoderCalculator"
+  input_stream: "VIDEO:output_video"
+  input_stream: "VIDEO_PRESTREAM:input_video_header"
+  input_side_packet: "OUTPUT_FILE_PATH:output_video_path"
+  node_options: {
+    [type.googleapis.com/mediapipe.OpenCvVideoEncoderCalculatorOptions]: {
+      codec: "avc1"
+      video_format: "mp4"
+    }
+  }
+}

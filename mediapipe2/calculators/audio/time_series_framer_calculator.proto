@@ -1,0 +1,72 @@
+// Copyright 2019 The MediaPipe Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto2";
+
+package mediapipe;
+
+import "mediapipe/framework/calculator.proto";
+
+message TimeSeriesFramerCalculatorOptions {
+  extend CalculatorOptions {
+    optional TimeSeriesFramerCalculatorOptions ext = 50631621;
+  }
+
+  // Frame duration in seconds.  Required.  Must be greater than 0.  This is
+  // rounded to the nearest integer number of samples.
+  optional double frame_duration_seconds = 1;
+
+  // Frame overlap in seconds.
+  //
+  // If emulate_fractional_frame_overlap is false (the default), then the frame
+  // overlap is rounded to the nearest integer number of samples, and the step
+  // from one frame to the next will be the difference between the number of
+  // samples in a frame and the number of samples in the overlap.
+  //
+  // If emulate_fractional_frame_overlap is true, then frame overlap will be a
+  // variable number of samples, such that the long-time average time step from
+  // one frame to the next will be the difference between the (nominal, not
+  // rounded) frame_duration_seconds and frame_overlap_seconds.  This is useful
+  // where the desired time step is not an integral number of input samples.
+  //
+  // A negative frame_overlap_seconds corresponds to skipping some input samples
+  // between each frame of emitted samples.
+  //
+  // Required that frame_overlap_seconds <  frame_duration_seconds.
+  optional double frame_overlap_seconds = 2 [default = 0.0];
+
+  // See frame_overlap_seconds for semantics.
+  optional bool emulate_fractional_frame_overlap = 5 [default = false];
+
+  // Whether to pad the final packet with zeros.  If true, guarantees that all
+  // input samples (other than those that fall in gaps implied by negative
+  // frame_overlap_seconds) will be emitted.  If set to false, any partial
+  // packet at the end of the stream will be dropped.
+  optional bool pad_final_packet = 3 [default = true];
+
+  // Optional windowing function. The default is NONE (no windowing function).
+  enum WindowFunction {
+    NONE = 0;
+    HAMMING = 1;
+    HANN = 2;
+  }
+  optional WindowFunction window_function = 4 [default = NONE];
+
+  // If use_local_timestamp is true, the output packet's timestamp is based on
+  // the last sample of the packet and it's inferred from the latest input
+  // packet's timestamp.  If false, the output packet's timestamp is based on
+  // the cumulative timestamping, which is inferred from the intial input
+  // timestamp and the cumulative number of samples.
+  optional bool use_local_timestamp = 6 [default = false];
+}

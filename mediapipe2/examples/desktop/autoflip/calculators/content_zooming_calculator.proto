@@ -1,0 +1,79 @@
+// Copyright 2019 The MediaPipe Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto2";
+
+package mediapipe.autoflip;
+
+import "mediapipe/examples/desktop/autoflip/quality/kinematic_path_solver.proto";
+import "mediapipe/framework/calculator.proto";
+
+// NextTag: 18
+message ContentZoomingCalculatorOptions {
+  extend mediapipe.CalculatorOptions {
+    optional ContentZoomingCalculatorOptions ext = 313091992;
+  }
+  // Amount the only required area should fill the image.  When set to 1,
+  // reframing is done to remove content to the very edge of the salient region
+  // bounding box.  When a smaller value is used, zooming will be done to fill
+  // this ratio of the frame.
+  optional float scale_factor = 1 [default = .9];
+  // Kinematic options for zooming.
+  optional KinematicOptions kinematic_options_zoom = 6;
+  // Kinematic options for tilt (y-axis reframing.)
+  optional KinematicOptions kinematic_options_tilt = 7;
+  // Kinematic options for pan (x-axis reframing.)
+  optional KinematicOptions kinematic_options_pan = 10;
+  // Duration (in MicroSeconds) before returning to fully zoomed out position
+  // when no "only_required" frames are received.
+  optional int64 us_before_zoomout = 9 [default = 1000000];
+  // Value of target output size, required to be set if different than input.
+  // Should match target_width and target_height in croppingcalculator.
+  message Size {
+    optional int64 width = 1;
+    optional int64 height = 2;
+  }
+  optional Size target_size = 8;
+  // Amount to shift an input detection as a ratio of the size (positive:
+  // down/right, negative: up/left).  Use a negative value to increase padding
+  // above/left of an object, positive to increase padding below/right of an
+  // object.
+  optional float detection_shift_vertical = 11 [default = 0.0];
+  optional float detection_shift_horizontal = 12 [default = 0.0];
+
+  // Defines the smallest value in degrees the camera is permitted to zoom.
+  optional float max_zoom_value_deg = 13 [default = 35];
+
+  // Whether to keep state between frames or to compute the final crop rect.
+  optional bool is_stateless = 14 [default = false];
+
+  // If true, on the first packet start with the camera zoomed out and then zoom
+  // in on the subject.  If false, the camera will start zoomed in on the
+  // subject.
+  optional bool start_zoomed_out = 17 [default = false];
+
+  // Duration (in MicroSeconds) for animating to the first crop rect.
+  // Note that if set, takes precedence over start_zoomed_out.
+  optional int64 us_to_first_rect = 15 [default = 0];
+  // Duration (in MicroSeconds) to delay animating to the first crop rect.
+  // Used only if us_to_first_rect is set and is interpreted as part of the
+  // us_to_first_rect time budget.
+  optional int64 us_to_first_rect_delay = 16 [default = 0];
+
+  // Deprecated parameters
+  optional KinematicOptions kinematic_options = 2 [deprecated = true];
+  optional int64 min_motion_to_reframe = 4 [deprecated = true];
+  optional float min_vertical_zoom = 5 [default = 1, deprecated = true];
+  optional int64 frames_before_zoomout = 3 [default = 30, deprecated = true];
+}

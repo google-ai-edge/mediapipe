@@ -1,0 +1,113 @@
+// Copyright 2018 The MediaPipe Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto2";
+
+package mediapipe;
+
+import "mediapipe/framework/calculator.proto";
+
+option objc_class_prefix = "MediaPipe";
+
+message PacketResamplerCalculatorOptions {
+  extend CalculatorOptions {
+    optional PacketResamplerCalculatorOptions ext = 95743844;
+  }
+
+  // The output frame rate measured in frames per second.
+  //
+  // The closest packet in time in each period will be chosen. If there
+  // is no packet in the period then the most recent packet will be chosen
+  // (not the closest in time).
+  optional double frame_rate = 1 [default = -1.0];
+
+  enum OutputHeader {
+    // Do not output a header, even if the input contained one.
+    NONE = 0;
+    // Pass the header, if the input contained one.
+    PASS_HEADER = 1;
+    // Update the frame rate in the header, which must be of type VideoHeader.
+    UPDATE_VIDEO_HEADER = 2;
+  }
+
+  // Whether and what kind of header to place on the output stream.
+  // Note, this is about the actual header, not the VIDEO_HEADER stream.
+  // If this option is set to UPDATE_VIDEO_HEADER then the header will
+  // also be parsed (updated) and passed along to the VIDEO_HEADER stream.
+  optional OutputHeader output_header = 2 [default = NONE];
+
+  // Flush last packet even if its timestamp is greater than the final stream
+  // timestamp.
+  optional bool flush_last_packet = 3 [default = true];
+
+  // Adds jitter to resampling if set, so that Google's sampling is not
+  // externally deterministic.
+  //
+  // When set, the randomizer will be initialized with a seed.  Then, the first
+  // sample is chosen randomly (uniform distribution) among frames that
+  // correspond to timestamps [0, 1/frame_rate).  Let the chosen frame
+  // correspond to timestamp t.  The next frame is chosen randomly (uniform
+  // distribution) among frames that correspond to [t+(1-jitter)/frame_rate,
+  // t+(1+jitter)/frame_rate].  t is updated and the process is repeated.
+  //
+  // Valid values are in the range of [0.0, 1.0] with the default being 0.0 (no
+  // jitter).  A typical value would be a value in the range of 0.1-0.25.
+  //
+  // Note that this does NOT guarantee the desired frame rate, but if the
+  // pseudo-random number generator does its job and the number of frames is
+  // sufficiently large, the average frame rate will be close to this value.
+  optional double jitter = 4;
+
+  // Enables reflection when applying jitter.
+  //
+  // This option is ignored when reproducible_sampling is true, in which case
+  // reflection will be used.
+  //
+  // New use cases should use reproducible_sampling = true, as
+  // jitter_with_reflection is deprecated and will be removed at some point.
+  optional bool jitter_with_reflection = 9 [default = false];
+
+  // If set, enabled reproducible sampling, allowing frames to be sampled
+  // without regards to where the stream starts.  See
+  // packet_resampler_calculator.h for details.
+  //
+  // This enables reflection (ignoring jitter_with_reflection setting).
+  optional bool reproducible_sampling = 10 [default = false];
+
+  // If specified, output timestamps are aligned with base_timestamp.
+  // Otherwise, they are aligned with the first input timestamp.
+  //
+  // In order to ensure that the outptut timestamps are reproducible,
+  // with round_limits = false, the bounds for input timestamps must include:
+  //   [start_time - period / 2, end_time + period / 2],
+  // with round_limits = true, the bounds for input timestamps must include:
+  //   [start_time - period, end_time + period],
+  // where period = 1 / frame_rate.
+  //
+  // For example, in PacketResamplerCalculatorOptions specify
+  // "start_time: 3000000", and in MediaDecoderOptions specify
+  // "start_time: 2999950".
+  optional int64 base_timestamp = 5;
+
+  // If specified, only outputs at/after start_time are included.
+  optional int64 start_time = 6;
+
+  // If specified, only outputs before end_time are included.
+  optional int64 end_time = 7;
+
+  // If set, the output timestamps nearest to start_time and end_time
+  // are included in the output, even if the nearest timestamp is not
+  // between start_time and end_time.
+  optional bool round_limits = 8 [default = false];
+}

@@ -1,0 +1,137 @@
+# MediaPipe graph that performs template matching with TensorFlow Lite on CPU.
+# Used in the examples in
+# mediapipe/examples/android/src/java/com/mediapipe/apps/templatematchingcpu
+
+# Images on GPU coming into and out of the graph.
+input_stream: "input_video"
+output_stream: "output_video"
+
+# Throttles the images flowing downstream for flow control.
+node {
+  calculator: "FlowLimiterCalculator"
+  input_stream: "input_video"
+  input_stream: "FINISHED:detections"
+  input_stream_info: {
+    tag_index: "FINISHED"
+    back_edge: true
+  }
+  output_stream: "throttled_input_video"
+}
+
+# Transfers the input image from GPU to CPU memory.
+node: {
+  calculator: "GpuBufferToImageFrameCalculator"
+  input_stream: "throttled_input_video"
+  output_stream: "input_video_cpu"
+}
+
+# Transforms the input image on CPU to a 480x640 image.
+node: {
+  calculator: "ImageTransformationCalculator"
+  input_stream: "IMAGE:input_video_cpu"
+  output_stream: "IMAGE:transformed_input_video_cpu"
+  node_options: {
+    [type.googleapis.com/mediapipe.ImageTransformationCalculatorOptions] {
+      output_width: 640
+      output_height: 640
+      scale_mode: FILL_AND_CROP
+    }
+  }
+}
+
+node {
+  calculator: "ImagePropertiesCalculator"
+  input_stream: "IMAGE:transformed_input_video_cpu"
+  output_stream: "SIZE:input_video_size"
+}
+
+node {
+  calculator: "FeatureDetectorCalculator"
+  input_stream: "IMAGE:transformed_input_video_cpu"
+  output_stream: "FEATURES:features"
+  output_stream: "LANDMARKS:landmarks"
+  output_stream: "PATCHES:patches"
+}
+
+# input tensors: 200*32*32*1 float
+# output tensors: 200*40 float, only first keypoint.size()*40 is knift features,
+# rest is padded by zero.
+node {
+  calculator: "TfLiteInferenceCalculator"
+  input_stream: "TENSORS:patches"
+  output_stream: "TENSORS:knift_feature_tensors"
+  node_options: {
+    [type.googleapis.com/mediapipe.TfLiteInferenceCalculatorOptions] {
+      model_path: "mediapipe/models/knift_float.tflite"
+      delegate { xnnpack {} }
+    }
+  }
+}
+
+node {
+  calculator: "TfLiteTensorsToFloatsCalculator"
+  input_stream: "TENSORS:knift_feature_tensors"
+  output_stream: "FLOATS:knift_feature_floats"
+}
+
+node {
+  calculator: "BoxDetectorCalculator"
+  input_stream: "FEATURES:features"
+  input_stream: "IMAGE_SIZE:input_video_size"
+  input_stream: "DESCRIPTORS:knift_feature_floats"
+  output_stream: "BOXES:detections"
+
+  node_options: {
+    [type.googleapis.com/mediapipe.BoxDetectorCalculatorOptions] {
+      detector_options {
+        index_type: OPENCV_BF
+        detect_every_n_frame: 1
+      }
+      index_proto_filename: "mediapipe/models/knift_index.pb"
+    }
+  }
+}
+
+node {
+  calculator: "TimedBoxListIdToLabelCalculator"
+  input_stream: "detections"
+  output_stream: "labeled_detections"
+  node_options: {
+    [type.googleapis.com/mediapipe.TimedBoxListIdToLabelCalculatorOptions] {
+      label_map_path: "mediapipe/models/knift_labelmap.txt"
+    }
+  }
+}
+
+node {
+  calculator: "TimedBoxListToRenderDataCalculator"
+  input_stream: "BOX_LIST:labeled_detections"
+  output_stream: "RENDER_DATA:box_render_data"
+  node_options: {
+    [type.googleapis.com/mediapipe.TimedBoxListToRenderDataCalculatorOptions] {
+      box_color { r: 255 g: 0 b: 0 }
+      thickness: 5.0
+    }
+  }
+}
+
+node {
+  calculator: "LandmarksToRenderDataCalculator"
+  input_stream: "NORM_LANDMARKS:landmarks"
+  output_stream: "RENDER_DATA:landmarks_render_data"
+  node_options: {
+    [type.googleapis.com/mediapipe.LandmarksToRenderDataCalculatorOptions] {
+      landmark_color { r: 0 g: 255 b: 0 }
+      thickness: 2.0
+    }
+  }
+}
+
+# Draws annotations and overlays them on top of the input images.
+node {
+  calculator: "AnnotationOverlayCalculator"
+  input_stream: "IMAGE_GPU:throttled_input_video"
+  input_stream: "box_render_data"
+  input_stream: "landmarks_render_data"
+  output_stream: "IMAGE_GPU:output_video"
+}

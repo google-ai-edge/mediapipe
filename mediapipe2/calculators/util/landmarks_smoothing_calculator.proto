@@ -1,0 +1,88 @@
+// Copyright 2020 The MediaPipe Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto2";
+
+package mediapipe;
+
+import "mediapipe/framework/calculator_options.proto";
+
+message LandmarksSmoothingCalculatorOptions {
+  extend CalculatorOptions {
+    optional LandmarksSmoothingCalculatorOptions ext = 325671429;
+  }
+
+  // Default behaviour and fast way to disable smoothing.
+  message NoFilter {}
+
+  message VelocityFilter {
+    // Number of value changes to keep over time.
+    // Higher value adds to lag and to stability.
+    optional int32 window_size = 1 [default = 5];
+
+    // Scale to apply to the velocity calculated over the given window. With
+    // higher velocity `low pass filter` weights new values higher.
+    // Lower value adds to lag and to stability.
+    optional float velocity_scale = 2 [default = 10.0];
+
+    // If calculated object scale is less than given value smoothing will be
+    // disabled and landmarks will be returned as is.
+    optional float min_allowed_object_scale = 3 [default = 1e-6];
+
+    // Disable value scaling based on object size and use `1.0` instead.
+    // If not disabled, value scale is calculated as inverse value of object
+    // size. Object size is calculated as maximum side of rectangular bounding
+    // box of the object in XY plane.
+    optional bool disable_value_scaling = 4 [default = false];
+  }
+
+  // For the details of the filter implementation and the procedure of its
+  // configuration please check http://cristal.univ-lille.fr/~casiez/1euro/
+  message OneEuroFilter {
+    // Frequency of incomming frames defined in frames per seconds. Used only if
+    // can't be calculated from provided events (e.g. on the very first frame).
+    optional float frequency = 1 [default = 30.0];
+
+    // Minimum cutoff frequency. Start by tuning this parameter while keeping
+    // `beta = 0` to reduce jittering to the desired level. 1Hz (the default
+    // value) is a good starting point.
+    optional float min_cutoff = 2 [default = 1.0];
+
+    // Cutoff slope. After `min_cutoff` is configured, start increasing `beta`
+    // value to reduce the lag introduced by the `min_cutoff`. Find the desired
+    // balance between jittering and lag.
+    optional float beta = 3 [default = 0.0];
+
+    // Cutoff frequency for derivate. It is set to 1Hz in the original
+    // algorithm, but can be tuned to further smooth the speed (i.e. derivate)
+    // on the object.
+    optional float derivate_cutoff = 4 [default = 1.0];
+
+    // If calculated object scale is less than given value smoothing will be
+    // disabled and landmarks will be returned as is.
+    optional float min_allowed_object_scale = 5 [default = 1e-6];
+
+    // Disable value scaling based on object size and use `1.0` instead.
+    // If not disabled, value scale is calculated as inverse value of object
+    // size. Object size is calculated as maximum side of rectangular bounding
+    // box of the object in XY plane.
+    optional bool disable_value_scaling = 6 [default = false];
+  }
+
+  oneof filter_options {
+    NoFilter no_filter = 1;
+    VelocityFilter velocity_filter = 2;
+    OneEuroFilter one_euro_filter = 3;
+  }
+}

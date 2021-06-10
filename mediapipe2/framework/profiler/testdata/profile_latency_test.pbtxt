@@ -1,0 +1,97 @@
+graph_trace: {
+    calculator_name : ["ACalculator", "BCalculator"]
+    stream_name     : [ "", "input1", "a_b"]
+    base_time       : 0
+    base_timestamp  : 100
+
+    # Fire off three input packets and have them spend time in Calculator A.
+    # Drop the middle packet.
+
+    calculator_trace: {
+      node_id: -1
+      input_timestamp: 100
+      event_type     : PROCESS
+      finish_time    : 1000
+      output_trace: {
+        packet_timestamp: 100
+        stream_id       : 1
+      }
+      thread_id      : 1
+    }
+    calculator_trace: {
+      node_id: -1
+      input_timestamp: 101
+      event_type     : PROCESS
+      finish_time    : 2000
+      output_trace: {
+        packet_timestamp: 101
+        stream_id       : 1
+      }
+      thread_id      : 1
+    }
+
+    calculator_trace: {
+      node_id: 0
+      input_timestamp: 100
+      event_type     : PROCESS
+      start_time     : 1200  # 200 after initial input (emits at 1000)
+      finish_time    : 1500  # Speed to delivery is 500 (1500 - 1000)
+      input_trace: {
+        packet_timestamp: 100
+        stream_id       : 1
+      }
+      thread_id      : 1
+    }
+
+    calculator_trace: {
+      node_id: 0
+      input_timestamp: 101
+      event_type     : PROCESS
+      start_time     : 2100  # 100 after initial input (emits at 2000)
+      finish_time    : 2500  # Speed to delivery is 500 (2500 - 2000)
+      input_trace: {
+        packet_timestamp: 101
+        stream_id       : 1
+      }
+      thread_id      : 1
+    }
+
+    calculator_trace: {
+      node_id: 1
+      input_timestamp: 100
+      event_type     : PROCESS
+      start_time     : 1600  # 600 after the initial input (emits at 1000)
+      finish_time    : 2000  # Speed to delivery is 1000 (2000 - 1000)
+      input_trace: {
+        packet_timestamp: 100
+        stream_id       : 1
+      }
+      thread_id      : 1
+    }
+
+    calculator_trace: {
+      node_id: 1
+      input_timestamp: 101
+      event_type     : PROCESS
+      start_time     : 2900  # 700 after the initial input (emits at 2000)
+      finish_time    : 3100  # Speed to delivery is 1000 (3000 - 2000)
+      input_trace: {
+        packet_timestamp: 101
+        stream_id       : 1
+      }
+      thread_id      : 1
+    }
+}
+config: {
+  node: {
+    name: "ACalculator"
+    calculator: "ACalculator"
+    input_stream: "input1"
+    output_stream: "a_b"
+  }
+  node: {
+    name: "BCalculator"
+    calculator: "BCalculator"
+    input_stream: "a_b"
+  }
+}

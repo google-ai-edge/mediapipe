@@ -1,0 +1,48 @@
+// Copyright 2020 The MediaPipe Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto2";
+
+package mediapipe;
+
+message TimedModelMatrixProto {
+  // 4x4 model matrix stored in ROW major order.
+  repeated float matrix_entries = 1 [packed = true];
+  // Timestamp of this model matrix in milliseconds.
+  optional int64 time_msec = 2 [default = 0];
+  // Unique per object id
+  optional int32 id = 3 [default = -1];
+}
+
+message TimedModelMatrixProtoList {
+  repeated TimedModelMatrixProto model_matrix = 1;
+}
+
+// For convenience, when the desired information or transformation can be
+// encoded into vectors (e.g. when the matrix represents a scale or Euler-angle-
+// based rotation operation.)
+message TimedVectorProto {
+  // The vector values themselves.
+  repeated float vector_entries = 1 [packed = true];
+
+  // Timestamp of this vector in milliseconds.
+  optional int64 time_msec = 2 [default = 0];
+
+  // Unique per object id
+  optional int32 id = 3 [default = -1];
+}
+
+message TimedVectorProtoList {
+  repeated TimedVectorProto vector_list = 1;
+}

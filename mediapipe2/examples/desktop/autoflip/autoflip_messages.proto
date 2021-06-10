@@ -1,0 +1,201 @@
+// Copyright 2019 The MediaPipe Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+// Proto messages used for the AutoFlip Pipeline.
+syntax = "proto2";
+
+package mediapipe.autoflip;
+
+import "mediapipe/framework/calculator.proto";
+
+// Borders detected on the frame as well as non-border color (if present).
+// Next tag: 4
+message StaticFeatures {
+  // A list of the static parts for a frame.
+  repeated Border border = 1;
+  // The background color (only set if solid color).
+  optional Color solid_background = 2;
+  // Area of the image that is not a border.
+  optional Rect non_static_area = 3;
+}
+
+// A static border area within the video.
+// Next tag: 3
+message Border {
+  // Original location within the input frame.
+  optional Rect border_position = 1;
+  // Position for static area.
+  // Next tag: 3
+  enum RelativePosition {
+    TOP = 1;
+    BOTTOM = 2;
+  }
+  // Top or bottom position.
+  optional RelativePosition relative_position = 2;
+}
+
+// Rectangle (opencv format).
+// Next tag: 5
+message Rect {
+  optional int32 x = 1;
+  optional int32 y = 2;
+  optional int32 width = 3;
+  optional int32 height = 4;
+}
+
+// Color (RGB 8bit)
+// Next tag: 4
+message Color {
+  optional int32 r = 1;
+  optional int32 g = 2;
+  optional int32 b = 3;
+}
+
+// Rectangle (opencv format).
+// Next tag: 5
+message RectF {
+  optional float x = 1;
+  optional float y = 2;
+  optional float width = 3;
+  optional float height = 4;
+}
+
+// An image region of interest (eg a detected face or object), accompanied by an
+// importance score.
+// Next tag: 10
+message SalientRegion {
+  reserved 3;
+  // The bounding box for this region in the image.
+  optional Rect location = 1;
+
+  // The bounding box for this region in the image normalized.
+  optional RectF location_normalized = 8;
+
+  // A score indicating the importance of this region.
+  optional float score = 2;
+
+  // A tracking id used to identify this region across video frames. Not always
+  // set.
+  optional int64 tracking_id = 4;
+
+  // If true, this region is required to be present in the final video (eg it
+  // contains text that cannot be cropped).
+  optional bool is_required = 5 [default = false];
+
+  // Type of signal carried in this message.
+  optional SignalType signal_type = 6;
+
+  // If true, object cannot move in the output window (e.g. text would look
+  // strange moving around).
+  // TODO: this feature is not implemented, remove proto message.
+  optional bool requires_static_location = 7 [default = false];
+
+  // When used with ContentZoomingCalculator, this flag can be set in the
+  // SignalFusingCalculator indicating that areas outside of these detections
+  // can be cropped from the frame.  When no salient regions have this flag set
+  // true, no zooming is performed.  When one or more salient regions have this
+  // flag set true, the max zoom value will be used that keeps all
+  // “only_required” detections within view.  The ContentZoomingCalculator
+  // currently supports zooming by finding the size of non-salient top/bottom
+  // borders regions and provides this information to the
+  // SceneCroppingCalculator for reframing.
+  optional bool only_required = 9 [default = false];
+}
+
+// Stores the message type, including standard types (face, object) and custom
+// types defined by a string id.
+// Next tag: 3
+message SignalType {
+  enum StandardType {
+    UNSET = 0;
+    // Full face bounding boxed detected.
+    FACE_FULL = 1;
+    // Face landmarks for eyes, nose, chin only.
+    FACE_CORE_LANDMARKS = 2;
+    // All face landmarks (eyes, ears, nose, chin).
+    FACE_ALL_LANDMARKS = 3;
+    // A specific face landmark.
+    FACE_LANDMARK = 4;
+    HUMAN = 5;
+    CAR = 6;
+    PET = 7;
+    OBJECT = 8;
+    MOTION = 9;
+    TEXT = 10;
+    LOGO = 11;
+    USER_HINT = 12;
+  }
+  oneof Signal {
+    StandardType standard = 1;
+    string custom = 2;
+  }
+}
+
+// Features extracted from a image.
+// Next tag: 3
+message DetectionSet {
+  // Mask image showing pixel-wise values at a given location.
+  optional string encoded_mask = 1;
+  // List of rectangle detections.
+  repeated SalientRegion detections = 2;
+}
+
+// General settings needed for multiple calculators.
+message ConversionOptions {
+  extend mediapipe.CalculatorOptions {
+    optional ConversionOptions ext = 284806832;
+  }
+  // Target output width of the conversion.
+  optional int32 target_width = 1;
+  // Target output height of the conversion.
+  optional int32 target_height = 2;
+}
+
+// Self-contained message that provides all needed information to render
+// autoflip with an external renderer.  One of these messages is required for
+// each frame of the video.
+message ExternalRenderFrame {
+  // Rectangle using opencv standard.
+  message Rect {
+    optional float x = 1;
+    optional float y = 2;
+    optional float width = 3;
+    optional float height = 4;
+  }
+  // RGB color [0...255]
+  message Color {
+    optional int32 r = 1;
+    optional int32 g = 2;
+    optional int32 b = 3;
+  }
+  // Rect that must be cropped out of the input frame.  It is in the
+  // original dimensions of the input video.  The first step to render this
+  // frame is to crop this rect from the input frame.
+  optional Rect crop_from_location = 1;
+  // The placement location where the above rect is placed on the output frame.
+  // This will always have the same aspect ratio as the above rect but scaling
+  // may be required.
+  optional Rect render_to_location = 2;
+  // If render_to_location is smaller than the output dimensions of the frame,
+  // fill the rest of the frame with this color.
+  optional Color padding_color = 3;
+  // Timestamp in microseconds of this frame.
+  optional uint64 timestamp_us = 4;
+  // Target width of the cropped video in pixels. |render_to_location| is
+  // relative to this dimension.
+  optional int32 target_width = 5;
+  // Target height of the cropped video in pixels. |render_to_location| is
+  // relative to this dimension.
+  optional int32 target_height = 6;
+}

@@ -1,0 +1,76 @@
+# Predicts face landmarks within an ROI derived from face-related pose
+# landmarks.
+
+type: "FaceLandmarksFromPoseGpu"
+
+# GPU image. (ImageFrame)
+input_stream: "IMAGE:input_video"
+# Face-related pose landmarks. (NormalizedLandmarkList)
+input_stream: "FACE_LANDMARKS_FROM_POSE:face_landmarks_from_pose"
+
+# Face landmarks. (NormalizedLandmarkList)
+output_stream: "FACE_LANDMARKS:face_landmarks"
+
+# Debug outputs.
+# Face ROI derived from face-related pose landmarks, which defines the search
+# region for the face detection model. (NormalizedRect)
+output_stream: "FACE_ROI_FROM_POSE:face_roi_from_pose"
+# Refined face crop rectangle predicted by face detection model.
+# (NormalizedRect)
+output_stream: "FACE_ROI_FROM_DETECTION:face_roi_from_detection"
+# Rectangle used to predict face landmarks. (NormalizedRect)
+output_stream: "FACE_TRACKING_ROI:face_tracking_roi"
+
+# TODO: do not predict face when most of the face landmarks from
+# pose are invisible.
+
+# Extracts image size from the input images.
+node {
+  calculator: "ImagePropertiesCalculator"
+  input_stream: "IMAGE_GPU:input_video"
+  output_stream: "SIZE:image_size"
+}
+
+# Gets ROI for re-crop model from face-related pose landmarks.
+node {
+  calculator: "FaceLandmarksFromPoseToRecropRoi"
+  input_stream: "FACE_LANDMARKS_FROM_POSE:face_landmarks_from_pose"
+  input_stream: "IMAGE_SIZE:image_size"
+  output_stream: "ROI:face_roi_from_pose"
+}
+
+# Detects faces within the face ROI calculated from pose landmarks. This is done
+# to refine face ROI for further landmark detection as ROI calculated from
+# pose landmarks may be inaccurate.
+node {
+  calculator: "FaceDetectionFrontByRoiGpu"
+  input_stream: "IMAGE:input_video"
+  input_stream: "ROI:face_roi_from_pose"
+  output_stream: "DETECTIONS:face_detections"
+}
+
+# Calculates refined face ROI.
+node {
+  calculator: "FaceDetectionFrontDetectionsToRoi",
+  input_stream: "DETECTIONS:face_detections"
+  input_stream: "IMAGE_SIZE:image_size"
+  output_stream: "ROI:face_roi_from_detection"
+}
+
+# Gets face tracking rectangle (either face rectangle from the previous
+# frame or face re-crop rectangle from the current frame) for face prediction.
+node {
+  calculator: "FaceTracking"
+  input_stream: "LANDMARKS:face_landmarks"
+  input_stream: "FACE_RECROP_ROI:face_roi_from_detection"
+  input_stream: "IMAGE_SIZE:image_size"
+  output_stream: "FACE_TRACKING_ROI:face_tracking_roi"
+}
+
+# Predicts face landmarks from the tracking rectangle.
+node {
+  calculator: "FaceLandmarkGpu"
+  input_stream: "IMAGE:input_video"
+  input_stream: "ROI:face_tracking_roi"
+  output_stream: "LANDMARKS:face_landmarks"
+}

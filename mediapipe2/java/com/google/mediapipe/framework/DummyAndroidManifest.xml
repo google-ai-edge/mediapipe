@@ -1,0 +1,2 @@
+<!-- Intended to be empty to get around the issue of not able to build a
+     android_native_library without a AndroidManifest.xml file.  -->

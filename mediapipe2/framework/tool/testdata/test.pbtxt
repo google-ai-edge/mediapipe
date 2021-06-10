@@ -1,0 +1,5 @@
+node {
+  calculator: "PassThroughCalculator"
+  input_stream: "in"
+  output_stream: "out"
+}

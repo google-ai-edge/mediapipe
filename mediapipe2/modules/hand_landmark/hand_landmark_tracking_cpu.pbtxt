@@ -1,0 +1,239 @@
+# MediaPipe graph to detect/predict hand landmarks on CPU.
+#
+# The procedure is done in two steps:
+# - locate palms/hands
+# - detect landmarks for each palm/hand.
+# This graph tries to skip palm detection as much as possible by reusing
+# previously detected/predicted landmarks for new images.
+
+type: "HandLandmarkTrackingCpu"
+
+# CPU image. (ImageFrame)
+input_stream: "IMAGE:image"
+
+# Max number of hands to detect/track. (int)
+input_side_packet: "NUM_HANDS:num_hands"
+
+# Collection of detected/predicted hands, each represented as a list of
+# landmarks. (std::vector<NormalizedLandmarkList>)
+# NOTE: there will not be an output packet in the LANDMARKS stream for this
+# particular timestamp if none of hands detected. However, the MediaPipe
+# framework will internally inform the downstream calculators of the absence of
+# this packet so that they don't wait for it unnecessarily.
+output_stream: "LANDMARKS:multi_hand_landmarks"
+# Collection of handedness of the detected hands (i.e. is hand left or right),
+# each represented as a Classification proto.
+# Note that handedness is determined assuming the input image is mirrored,
+# i.e., taken with a front-facing/selfie camera with images flipped
+# horizontally.
+output_stream: "HANDEDNESS:multi_handedness"
+
+# Extra outputs (for debugging, for instance).
+# Detected palms. (std::vector<Detection>)
+output_stream: "PALM_DETECTIONS:palm_detections"
+# Regions of interest calculated based on landmarks.
+# (std::vector<NormalizedRect>)
+output_stream: "HAND_ROIS_FROM_LANDMARKS:hand_rects"
+# Regions of interest calculated based on palm detections.
+# (std::vector<NormalizedRect>)
+output_stream: "HAND_ROIS_FROM_PALM_DETECTIONS:hand_rects_from_palm_detections"
+
+# Defines whether landmarks on the previous image should be used to help
+# localize landmarks on the current image.
+node {
+  name: "ConstantSidePacketCalculator"
+  calculator: "ConstantSidePacketCalculator"
+  output_side_packet: "PACKET:use_prev_landmarks"
+  options: {
+    [mediapipe.ConstantSidePacketCalculatorOptions.ext]: {
+      packet { bool_value: true }
+    }
+  }
+}
+node {
+  calculator: "GateCalculator"
+  input_side_packet: "ALLOW:use_prev_landmarks"
+  input_stream: "prev_hand_rects_from_landmarks"
+  output_stream: "gated_prev_hand_rects_from_landmarks"
+}
+
+# Determines if an input vector of NormalizedRect has a size greater than or
+# equal to the provided num_hands.
+node {
+  calculator: "NormalizedRectVectorHasMinSizeCalculator"
+  input_stream: "ITERABLE:gated_prev_hand_rects_from_landmarks"
+  input_side_packet: "num_hands"
+  output_stream: "prev_has_enough_hands"
+}
+
+# Drops the incoming image if enough hands have already been identified from the
+# previous image. Otherwise, passes the incoming image through to trigger a new
+# round of palm detection.
+node {
+  calculator: "GateCalculator"
+  input_stream: "image"
+  input_stream: "DISALLOW:prev_has_enough_hands"
+  output_stream: "palm_detection_image"
+  options: {
+    [mediapipe.GateCalculatorOptions.ext] {
+      empty_packets_as_allow: true
+    }
+  }
+}
+
+# Detects palms.
+node {
+  calculator: "PalmDetectionCpu"
+  input_stream: "IMAGE:palm_detection_image"
+  output_stream: "DETECTIONS:all_palm_detections"
+}
+
+# Makes sure there are no more detections than the provided num_hands.
+node {
+  calculator: "ClipDetectionVectorSizeCalculator"
+  input_stream: "all_palm_detections"
+  output_stream: "palm_detections"
+  input_side_packet: "num_hands"
+}
+
+# Extracts image size.
+node {
+  calculator: "ImagePropertiesCalculator"
+  input_stream: "IMAGE:palm_detection_image"
+  output_stream: "SIZE:palm_detection_image_size"
+}
+
+# Outputs each element of palm_detections at a fake timestamp for the rest of
+# the graph to process. Clones the image size packet for each palm_detection at
+# the fake timestamp. At the end of the loop, outputs the BATCH_END timestamp
+# for downstream calculators to inform them that all elements in the vector have
+# been processed.
+node {
+  calculator: "BeginLoopDetectionCalculator"
+  input_stream: "ITERABLE:palm_detections"
+  input_stream: "CLONE:palm_detection_image_size"
+  output_stream: "ITEM:palm_detection"
+  output_stream: "CLONE:image_size_for_palms"
+  output_stream: "BATCH_END:palm_detections_timestamp"
+}
+
+# Calculates region of interest (ROI) based on the specified palm.
+node {
+  calculator: "PalmDetectionDetectionToRoi"
+  input_stream: "DETECTION:palm_detection"
+  input_stream: "IMAGE_SIZE:image_size_for_palms"
+  output_stream: "ROI:hand_rect_from_palm_detection"
+}
+
+# Collects a NormalizedRect for each hand into a vector. Upon receiving the
+# BATCH_END timestamp, outputs the vector of NormalizedRect at the BATCH_END
+# timestamp.
+node {
+  calculator: "EndLoopNormalizedRectCalculator"
+  input_stream: "ITEM:hand_rect_from_palm_detection"
+  input_stream: "BATCH_END:palm_detections_timestamp"
+  output_stream: "ITERABLE:hand_rects_from_palm_detections"
+}
+
+# Performs association between NormalizedRect vector elements from previous
+# image and rects based on palm detections from the current image. This
+# calculator ensures that the output hand_rects vector doesn't contain
+# overlapping regions based on the specified min_similarity_threshold.
+node {
+  calculator: "AssociationNormRectCalculator"
+  input_stream: "hand_rects_from_palm_detections"
+  input_stream: "gated_prev_hand_rects_from_landmarks"
+  output_stream: "hand_rects"
+  options: {
+    [mediapipe.AssociationCalculatorOptions.ext] {
+      min_similarity_threshold: 0.5
+    }
+  }
+}
+
+# Extracts image size.
+node {
+  calculator: "ImagePropertiesCalculator"
+  input_stream: "IMAGE_CPU:image"
+  output_stream: "SIZE:image_size"
+}
+
+# Outputs each element of hand_rects at a fake timestamp for the rest of the
+# graph to process. Clones image and image size packets for each
+# single_hand_rect at the fake timestamp. At the end of the loop, outputs the
+# BATCH_END timestamp for downstream calculators to inform them that all
+# elements in the vector have been processed.
+node {
+  calculator: "BeginLoopNormalizedRectCalculator"
+  input_stream: "ITERABLE:hand_rects"
+  input_stream: "CLONE:0:image"
+  input_stream: "CLONE:1:image_size"
+  output_stream: "ITEM:single_hand_rect"
+  output_stream: "CLONE:0:image_for_landmarks"
+  output_stream: "CLONE:1:image_size_for_landmarks"
+  output_stream: "BATCH_END:hand_rects_timestamp"
+}
+
+# Detect hand landmarks for the specific hand rect.
+node {
+  calculator: "HandLandmarkCpu"
+  input_stream: "IMAGE:image_for_landmarks"
+  input_stream: "ROI:single_hand_rect"
+  output_stream: "LANDMARKS:single_hand_landmarks"
+  output_stream: "HANDEDNESS:single_handedness"
+}
+
+# Collects the handedness for each single hand into a vector. Upon
+# receiving the BATCH_END timestamp, outputs a vector of classification at the
+# BATCH_END timestamp.
+node {
+  calculator: "EndLoopClassificationListCalculator"
+  input_stream: "ITEM:single_handedness"
+  input_stream: "BATCH_END:hand_rects_timestamp"
+  output_stream: "ITERABLE:multi_handedness"
+}
+
+# Calculate region of interest (ROI) based on detected hand landmarks to reuse
+# on the subsequent runs of the graph.
+node {
+  calculator: "HandLandmarkLandmarksToRoi"
+  input_stream: "IMAGE_SIZE:image_size_for_landmarks"
+  input_stream: "LANDMARKS:single_hand_landmarks"
+  output_stream: "ROI:single_hand_rect_from_landmarks"
+}
+
+# Collects a set of landmarks for each hand into a vector. Upon receiving the
+# BATCH_END timestamp, outputs the vector of landmarks at the BATCH_END
+# timestamp.
+node {
+  calculator: "EndLoopNormalizedLandmarkListVectorCalculator"
+  input_stream: "ITEM:single_hand_landmarks"
+  input_stream: "BATCH_END:hand_rects_timestamp"
+  output_stream: "ITERABLE:multi_hand_landmarks"
+}
+
+# Collects a NormalizedRect for each hand into a vector. Upon receiving the
+# BATCH_END timestamp, outputs the vector of NormalizedRect at the BATCH_END
+# timestamp.
+node {
+  calculator: "EndLoopNormalizedRectCalculator"
+  input_stream: "ITEM:single_hand_rect_from_landmarks"
+  input_stream: "BATCH_END:hand_rects_timestamp"
+  output_stream: "ITERABLE:hand_rects_from_landmarks"
+}
+
+# Caches hand rects calculated from landmarks, and upon the arrival of the next
+# input image, sends out the cached rects with timestamps replaced by that of
+# the input image, essentially generating a packet that carries the previous
+# hand rects. Note that upon the arrival of the very first input image, a
+# timestamp bound update occurs to jump start the feedback loop.
+node {
+  calculator: "PreviousLoopbackCalculator"
+  input_stream: "MAIN:image"
+  input_stream: "LOOP:hand_rects_from_landmarks"
+  input_stream_info: {
+    tag_index: "LOOP"
+    back_edge: true
+  }
+  output_stream: "PREV_LOOP:prev_hand_rects_from_landmarks"
+}

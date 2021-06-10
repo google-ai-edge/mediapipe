@@ -1,0 +1,122 @@
+input_stream: "image_cpu_frames"
+input_stream: "start_pos"
+input_stream: "cancel_object_id"
+input_stream: "ra_track"
+input_stream: "restart_pos"
+input_stream: "track_time"
+
+num_threads: 4
+
+node: {
+  calculator: "MotionAnalysisCalculator"
+  options: {
+    [mediapipe.MotionAnalysisCalculatorOptions.ext]: {
+      analysis_options: {
+        analysis_policy: ANALYSIS_POLICY_CAMERA_MOBILE
+
+        flow_options: {
+          # Maybe move down to 50
+          fast_estimation_min_block_size: 100
+          top_inlier_sets: 1
+          frac_inlier_error_threshold: 3e-3
+          # For mobile application, downsample before input into graph
+          # and use DOWNSAMPLE_TO_INPUT_SIZE and specify
+          # downsampling_factor option or DOWNSAMPLE input_side_packet
+          downsample_mode: DOWNSAMPLE_TO_INPUT_SIZE
+          verification_distance: 5.0
+          verify_long_feature_acceleration: true
+          verify_long_feature_trigger_ratio: 0.1
+          tracking_options: {
+            max_features: 500
+            corner_extraction_method: EXTRACTION_FAST
+            adaptive_extraction_levels: 2
+            min_eig_val_settings: {
+              adaptive_lowest_quality_level: 2e-4
+            }
+            klt_tracker_implementation: KLT_OPENCV
+          }
+        }
+      }
+    }
+  }
+
+  # Drops packets if calculator cannot keep up with the input rate.
+  input_stream_handler: {
+    input_stream_handler: "FixedSizeInputStreamHandler"
+  }
+
+  input_stream: "VIDEO:image_cpu_frames"
+  input_side_packet: "DOWNSAMPLE:analysis_downsample_factor"
+  input_side_packet: "OPTIONS:calculator_options"
+  output_stream: "CAMERA:camera_motion"
+  output_stream: "FLOW:region_flow"
+}
+
+node: {
+  calculator: "FlowPackagerCalculator"
+
+  input_stream: "FLOW:region_flow"
+  input_stream: "CAMERA:camera_motion"
+  output_stream: "TRACKING:tracking_data"
+  options: {
+    [mediapipe.FlowPackagerCalculatorOptions.ext]: {
+      flow_packager_options: {
+        binary_tracking_data_support: false
+      }
+    }
+  }
+}
+
+node: {
+  calculator: "BoxTrackerCalculator"
+
+  input_side_packet: "OPTIONS:calculator_options"
+  input_stream: "TRACKING:tracking_data"
+  input_stream: "TRACK_TIME:track_time"
+  input_stream: "START_POS:start_pos"
+  input_stream: "RESTART_POS:restart_pos"
+  input_stream: "CANCEL_OBJECT_ID:cancel_object_id"
+  input_stream: "RA_TRACK:ra_track"
+  output_stream: "BOXES:boxes"
+  output_stream: "RA_BOXES:ra_boxes"
+
+  input_stream_handler: {
+    input_stream_handler: "SyncSetInputStreamHandler"
+    options: {
+      [mediapipe.SyncSetInputStreamHandlerOptions.ext]: {
+        sync_set: {
+          tag_index: "TRACKING"
+          tag_index: "TRACK_TIME"
+        }
+        sync_set: {
+          tag_index: "START_POS"
+        }
+        sync_set: {
+          tag_index: "RESTART_POS"
+        }
+        sync_set: {
+          tag_index: "CANCEL_OBJECT_ID"
+        }
+        sync_set: {
+          tag_index: "RA_TRACK"
+        }
+      }
+    }
+  }
+
+  options: {
+    [mediapipe.BoxTrackerCalculatorOptions.ext]: {
+      tracker_options: {
+        track_step_options: {
+          track_object_and_camera: true
+          tracking_degrees: TRACKING_DEGREE_OBJECT_ROTATION_SCALE
+          inlier_spring_force: 0.0
+          static_motion_temporal_ratio: 3e-2
+          object_similarity_min_contd_inliers: 10
+        }
+      }
+      visualize_tracking_data: false
+      streaming_track_data_cache_size: 100
+    }
+  }
+}

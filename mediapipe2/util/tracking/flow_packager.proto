@@ -1,0 +1,324 @@
+// Copyright 2019 The MediaPipe Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto2";
+
+package mediapipe;
+
+import "mediapipe/util/tracking/motion_models.proto";
+import "mediapipe/util/tracking/region_flow.proto";
+
+// Messages encapsulating compressed and uncompressed TrackingData.
+//
+// Uncompressed tracking data can be aggregated via an TrackingDataChunk
+// (e.g. to be cached to file per chunk). The whole chunk persists in memory
+// after reading.
+//
+// Compressed tracking data can be aggregated as binary encoded TrackingData
+// messages into two container formats (with support for random seeking):
+// 1) TrackingContainerProto:
+//    Encoding using proto buffer wire format, using default proto
+//    serialization and de-serialization to binary string.
+//    The container uses the MetaData message to store the stream offsets and
+//    milliseconds for each frame of TrackingData. TrackingData itself is custom
+//    encoded to binary using FlowPackager::EncodeTrackingData and the resulting
+//    binary blob wrapped in a BinaryTrackingData message.
+// 2) TrackingContainerFormat:
+//    Encoding without any dependencies to protobuffers, for clients without
+//    proto buffer support.
+//    Encoding is based on encoding binary blobs of data wrapped into repeated
+//    containers. The layout of a container is described by the message
+//    TrackingContainer and serialized to binary data as described below
+//    (without using proto encoding). Therefore, message TrackingContainer is
+//    mostly for documentation purposes than for direct use.
+//    The format is described by the proto message TrackingContainerFormat (used
+//    internally by FlowPackager) however serialization and de-serialization
+//    to binary string is performed using custom methods supplied by
+//    FlowPackager (TrackingContainerFormatToBinary and
+//    TrackingContainerFormatFromBinary).
+//    The format stores the MetaData first as above, although using custom
+//    encoding. TrackingData is encoded to binary as above using
+//    FlowPackager::EncodeTrackingData and the resulting binary blob is storred
+//    within a TrackingContainer.
+
+// Next flag: 9
+message TrackingData {
+  enum FrameFlags {
+    FLAG_PROFILE_BASELINE = 0;
+    FLAG_PROFILE_HIGH = 1;
+    FLAG_HIGH_FIDELITY_VECTORS = 2;
+    FLAG_BACKGROUND_UNSTABLE = 4;  // Background model could not be estimated.
+    FLAG_DUPLICATED = 8;           // Frame is duplicated, i.e. identical to
+                                   // previous one.
+    // Indicates the beginning of a new chunk. In this case the track_id's
+    // are not compatible w.r.t. previous one.
+    FLAG_CHUNK_BOUNDARY = 16;
+  }
+
+  optional int32 frame_flags = 1 [default = 0];
+
+  // Tracking data is resolution independent specified w.r.t.
+  // specified domain.
+  optional int32 domain_width = 2;
+  optional int32 domain_height = 3;
+
+  // Aspect ratio (w/h) of the original frame tracking data was computed from.
+  optional float frame_aspect = 6 [default = 1.0];
+
+  optional Homography background_model = 4;
+
+  // Stores num_elements vectors of motion data. (x,y) position encoded via
+  // row_indices and col_starts, as compressed sparse column matrix storage
+  // format:
+  // (https://en.wikipedia.org/wiki/Sparse_matrix#Compressed_sparse_column_.28CSC_or_CCS.29),
+  // Vector data is stored as (dx, dy) position. Optionally we store the fitting
+  // error and track id for each feature.
+  message MotionData {
+    optional int32 num_elements = 1;
+
+    // #num_elements pairs (flow_x, flow_y) densely packed.
+    repeated float vector_data = 2 [packed = true];
+
+    // Stores corresponding track index for each feature. Features belonging
+    // to the same track over time are assigned the same id.
+    // NOTE: Due to size, tracking ids are never stored as compressed binary
+    // tracking data.
+    repeated int32 track_id = 3 [packed = true];
+
+    // # num_elements row indices.
+    repeated int32 row_indices = 4 [packed = true];
+
+    // Start index in above array for each column (#domain_width + 1 entries).
+    repeated int32 col_starts = 5 [packed = true];
+
+    // Feature descriptors for num_elements feature points.
+    repeated BinaryFeatureDescriptor feature_descriptors = 6;
+
+    // Stores all the tracked ids that have been discarded actively. This
+    // information will be used by downstreaming to avoid misjudgement on
+    // tracking continuity.
+    repeated int32 actively_discarded_tracked_ids = 7;
+  }
+
+  optional MotionData motion_data = 5;
+
+  // Total number of features in our analysis
+  optional uint32 global_feature_count = 7;
+
+  // Average of all motion vector magnitudes (without accounting for any motion
+  // model), within 10th to 90th percentile (to remove outliers).
+  optional float average_motion_magnitude = 8;
+}
+
+message TrackingDataChunk {
+  message Item {
+    optional TrackingData tracking_data = 1;
+    // Global frame index.
+    optional int32 frame_idx = 2;
+    // Corresponding timestamp.
+    optional int64 timestamp_usec = 3;
+    // Previous frame timestamp.
+    optional int64 prev_timestamp_usec = 4;
+  }
+
+  repeated Item item = 1;
+
+  // Set as marker for last chunk.
+  optional bool last_chunk = 2 [default = false];
+
+  // Set as marker for first chunk.
+  optional bool first_chunk = 3 [default = false];
+}
+
+// TrackingData in compressed binary format. Obtainable via
+// FlowPackager::EncodeTrackingData. Details of binary encode are below.
+message BinaryTrackingData {  // TrackingContainer::header = "TRAK"
+  optional bytes data = 1;
+}
+
+// Detailed explanation of binary Tracking data encode (LITTLE ENDIAN encode!)
+// TrackingData is stored in binary as a struct of the above fields and the
+// compressed motion data in sparse column matrix storage format.
+// (https://en.wikipedia.org/wiki/Sparse_matrix#Compressed_sparse_column_.28CSC_or_CCS.29)
+// Specifically, TrackingData is encoded as:
+// {  frame_flags        : 32 bit int    (from member)
+//    domain_width       : 32 bit int    (from member)
+//    domain_height      : 32 bit int    (from member)
+//    frame_aspect       : 32 bit float  (from member)
+//
+//    background_model   : 6 * 32 bit float  (dx, dy, a, b, c, d of AffineModel)
+//    scale              : 32 bit float  (scale vectors are multiplied with)
+//    num_vectors        : 32 bit int    (from member num_elements)
+//
+//    col_start_delta    : (domain_width + 1) * 8 bit uint   (col starts delta
+//                                                           encoded)
+//    row_idx_size       : 32 bit int     (size of row_idx array <= num_vectors)
+//    row_idx            : row_idx_size * 8 bit uint
+//    vector_size        : 32 bit int     (size of vector_data)
+//    vector_data        : vector_size * [8 bit | 16 bit] int
+//                         (depending on FLAG_HIGH_FIDELITY_VECTORS)
+// }
+//
+// >> Baseline encode <<
+// Scale is determined such that maximum vector value (maximum across x and y)
+// is mapped to highest 8 bit or 16 bit SIGNED int
+// (i.e. 7 or 15 bit resolution respectively).
+// Vector values are multiplied by this scale (storring float in int with
+// truncation) and (dx, dy) is packed as [dy | dx] into a 16bit or 32 bit word.
+// Unpacking requires therefore dividing the vector values by scale.
+//
+// Column starts are delta compressed, that is, col_start_delta[i] stores
+// col_starts(i) - col_starts(i - 1) from MotionData.
+//
+// Row indices are directly stored at 8 bit uints, that is row_idx_size ==
+// num_vectors in this case.
+//
+//
+// >> High profile encode <<
+// Scale is determined as above but for maximum vector deltas (maximum across x
+// and y of magnitude in difference between two adjacent vectors). Vector value
+// deltas are multiplied by this scale before encoding.
+//
+// Encoding is more complex compared to baseline. Instead of vector value, delta
+// vector values (difference in dx = ddx, difference in dy = ddy)
+// are multiplied by scale and storred packed as [ddy | ddx] into to 16bit or
+// 32bit word. Compression algorithm accounts for error accumulation, so
+// unpacking should first add deltas in integer domain (for x and y separately)
+// and then divide by scale to yield (an approximation) of the
+// original vector value.
+// Most importantly, not every vector value is storred, but only if the delta is
+// above the FlowPackagerOptions::high_profile_reuse_threshold, in which case we
+// advance to the next vector data. Otherwise the previous vector is used.
+//
+// The information whether to advance is stored for each vector in the
+// highest bit of of the row index (FlowPackagerOptions::ADVANCE_FLAG). Row
+// indicies are not storred as in the baseline profile directly, but as deltas
+// (reset at the beginning of every column). As deltas are small it is often
+// possible to store two deltas (if both are < 8) in a single byte. This is
+// indicated by the second highest flag in the row index
+// (FlowPackagerOptions::DOUBLE_INDEX_ENCODE). If set, row index stores
+// [row_delta_1 | row_delta_2] in the lower 6 bit. Note, that the advance flag
+// applies uniformly to both deltas in this case.
+// Sidenote (edge case): Due to the use of the top 2 bits as flags,
+// at times we cannot store the full row delta in the lower 6 bits.
+// In this case the vector is duplicated (using the ADVANCE_FLAG)
+// until the delta sum of duplicated vectors reaches the original delta.
+// Consequently, the compressed vector field in high profile may contain a few
+// vectors more than the original.
+//
+// Column starts are delta compressed as in baseline, but account for double
+// index encodes. Therefore each column delta is reduced by the number of double
+// index encodes occuring for this column. This has to be replicated on the
+// decoding side, each delta needs to be increased by the number of double index
+// encodes encountered during encoding.
+
+// Stores offsets for random seek and time offsets for each frame of
+// TrackingData. Stream offsets are specified relative w.r.t. end of metadata
+// blob.
+// Offsets specify start of the corresponding binary encoded TrackingContainer
+// (for TrackingContainerFormat) or BinaryTrackingData proto (for
+// TrackingContainerProto).
+message MetaData {  // TrackingContainer::header = "META"
+  optional fixed32 num_frames = 2;
+
+  message TrackOffset {
+    optional fixed32 msec = 1;           // Time offset of the metadata in msec.
+    optional fixed32 stream_offset = 2;  // Offset of TrackingContainer or
+                                         // respectively BinaryTrackingData
+                                         // in stream.
+                                         // Specifed w.r.t. end of the Metadata.
+  }
+
+  repeated TrackOffset track_offsets = 3;
+}
+
+// TrackingContainer is self-describing container format to store arbitrary
+// chunks of binary data. Each container is typed via its 4 character header,
+// versioned via an int, and followed by the size of the binary data and the
+// actual data. Designed for clients without availability of protobuffer
+// support.
+// Note: This message is mainly used for documentation purposes and uses custom
+// encoding as specified by FlowPackager::TrackingContainerFormatToBinary.
+// Default binary size of a TrackingContainer (DO NOT CHANGE!):
+// header:    4 byte +
+// version:   4 byte +
+// size:      4 byte +
+// data       #size
+// SUM:       12 + #size.
+message TrackingContainer {
+  optional string header = 1;                  // 4 character header.
+  optional fixed32 version = 2 [default = 1];  // Version information.
+  optional fixed32 size = 3;  // Size of binary data held by container
+  optional bytes data = 4;    // Binary data encoded.
+
+  // DO NOT alter layout of TrackingContainer.
+  // Use version to extend or alter encoded binary data.
+}
+
+// Container format for clients without proto support (written via
+// FlowPackager::TrackingContainerFormatToBinary and read via
+// FlowPackager::TrackingContainerFormatFromBinary).
+// Proto here is intermediate format for documentationa and internal use.
+// Stores multiple TrackingContainers of different types.
+// Meta data is storred first, to facilitate random seek (via stream offset
+// positions) to arbitrary binary TrackinData. Termination container signals end
+// of stream.
+message TrackingContainerFormat {
+  optional TrackingContainer meta_data = 1;   // Wraps binary meta data, via
+                                              // custom encode.
+  repeated TrackingContainer track_data = 2;  // Wraps BinaryTrackingData.
+
+  // Add new TrackingContainers above before end of stream indicator.
+  // Zero sized termination container with TrackingContainer::header = "TERM".
+  optional TrackingContainer term_data = 3;
+}
+
+// Simplified proto format of above TrackingContainerFormat. Instead of using
+// self-describing TrackingContainer's, we simply use the proto wire format for
+// encoding and decoding (proto format is typed and versioned via ids).
+message TrackingContainerProto {
+  optional MetaData meta_data = 1;
+  repeated BinaryTrackingData track_data = 2;
+}
+
+// Options controlling compression and encoding.
+message FlowPackagerOptions {
+  // Tracking data is resolution independent specified w.r.t.
+  // specified domain. Only values <= 256 are supported if binary tracking data
+  // is requested to be supported (see below).
+  optional int32 domain_width = 1 [default = 256];
+  optional int32 domain_height = 2 [default = 192];
+
+  // Needs to be set for calls to FlowPackager::EncodeTrackingData. If encoding
+  // is not required, can be set to false in which case a higher domain_width
+  // can be used.
+  optional bool binary_tracking_data_support = 6 [default = true];
+
+  optional bool use_high_profile = 3 [default = false];
+
+  // If set uses 16 bit encode for vector data, in BinaryTrackingData,
+  // otherwise only 8 bits are used.
+  optional bool high_fidelity_16bit_encode = 4 [default = true];
+
+  // In high profile encode, re-use previously encoded vector when absolute
+  // difference to current vector is below threshold.
+  optional float high_profile_reuse_threshold = 5 [default = 0.5];
+
+  // High profile encoding flags.
+  enum HighProfileEncoding {
+    ADVANCE_FLAG = 0x80;
+    DOUBLE_INDEX_ENCODE = 0x40;
+    INDEX_MASK = 0x3F;
+  }
+}

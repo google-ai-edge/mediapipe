@@ -1,0 +1,154 @@
+// Copyright 2019 The MediaPipe Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto2";
+
+package mediapipe;
+
+import "mediapipe/util/tracking/motion_estimation.proto";
+import "mediapipe/util/tracking/motion_saliency.proto";
+import "mediapipe/util/tracking/region_flow_computation.proto";
+
+// Settings for MotionAnalysis. This class computes sparse, locally consistent
+// flow (referred to as region flow), camera motions, and foreground saliency
+// (i.e. likely foreground objects moving different from the background).
+// Next tag: 16
+message MotionAnalysisOptions {
+  // Pre-configured policies for MotionAnalysis.
+  // For general use, it is recommended to select an appropiate policy
+  // instead of customizing flow and motion options by hand.
+  // Policies are being kept up to date with appropiate settings.
+  enum AnalysisPolicy {
+    // Default legacy options. Effectivley no op.
+    ANALYSIS_POLICY_LEGACY = 0;
+
+    // Use for video.
+    ANALYSIS_POLICY_VIDEO = 1;
+
+    // Use for video on mobile.
+    ANALYSIS_POLICY_VIDEO_MOBILE = 2;
+
+    // Use if applied to camera stream on mobile, e.g.
+    // low latency and high throughput.
+    // ASSUMES DOWNSAMPLED INPUT, e.g. from GPU.
+    ANALYSIS_POLICY_CAMERA_MOBILE = 3;
+
+    // Use for sped up video / hyperlapse when adding frames with seeds
+    // and rejection transforms. Mostly ups temporal consistency weights
+    // and relaxes stability constraints.
+    // Only recommended to be used as second pass after initial MotionAnalysis
+    // and FrameSelection.
+    ANALYSIS_POLICY_HYPERLAPSE = 4;
+  }
+
+  optional AnalysisPolicy analysis_policy = 14
+      [default = ANALYSIS_POLICY_LEGACY];
+
+  // Options for the actual motion stabilization
+  // (in order of object usage).
+  optional RegionFlowComputationOptions flow_options = 1;
+  optional MotionEstimationOptions motion_options = 2;
+  optional MotionSaliencyOptions saliency_options = 3;
+
+  // Clip-size used for (parallelized) motion estimation.
+  optional int32 estimation_clip_size = 4 [default = 16];
+
+  // If set, camera motion is subtracted from features before output.
+  // Effectively outputs, residual motion w.r.t. background.
+  optional bool subtract_camera_motion_from_features = 5 [default = false];
+
+  // If flow_options().tracking_options().tracking_policy() equals
+  // POLICY_MULTI_FRAME, this flag indicates which RegionFlowFeatureList to use.
+  // Specifically, for frame C, we use the motion from C to C - 1 - track_index.
+  optional int32 track_index = 6 [default = 0];
+
+  // If set, compute motion saliency (regions of moving foreground).
+  optional bool compute_motion_saliency = 7 [default = false];
+
+  // Selects saliency inliers (only saliency locations with sufficient
+  // spatial and temporal support are kept).
+  // Only applied when compute_motion_saliency is set.
+  optional bool select_saliency_inliers = 8 [default = true];
+
+  // Performs spatio-temporal filtering of extracted foreground saliency. If
+  // used with above selection of saliency inliers, filtering is performed
+  // *after* inlier selection.
+  // Only applied when compute_motion_saliency is set.
+  optional bool filter_saliency = 9 [default = true];
+
+  // If set, irls weights of motion estimation are spatio-temporally smoothed
+  // after model estimation.
+  optional bool post_irls_smoothing = 10 [default = false];
+
+  // If a rejection_transform is passed to AddFrameGeneric, features that
+  // do not agree with the transform within below threshold are removed.
+  optional float rejection_transform_threshold = 13 [default = 20.0];
+
+  // Adapts visualization for rendered_results when passed to GetResults.
+  message VisualizationOptions {
+    // Visualizes tracked region flow features, colored w.r.t. fitting error.
+    optional bool visualize_region_flow_features = 1 [default = true];
+
+    // Visualizes salient points. Only applicable is compute_motion_saliency is
+    // set to true.
+    optional bool visualize_salient_points = 2 [default = false];
+
+    // Line thickness of ellipse when rendering salient points.
+    optional int32 line_thickness = 5 [default = 4];
+
+    // Instead of green burn in uses jet coloring to indicate magnitude of
+    // foreground motion.
+    optional bool foreground_jet_coloring = 3 [default = false];
+
+    // If set, only keeps masks of pixels that is used for blur analysis, rest
+    // is set to zero.
+    optional bool visualize_blur_analysis_region = 4 [default = false];
+
+    optional bool visualize_stats = 6 [default = true];
+
+    // Only long feature tracks with specified minimum length are rendered.
+    // Set to zero to consider all tracks.
+    optional int32 min_long_feature_track = 7 [default = 0];
+
+    // Only the last N points of a long feature track are rendered. Set to zero
+    // to render all points.
+    optional int32 max_long_feature_points = 8 [default = 0];
+  }
+
+  optional VisualizationOptions visualization_options = 11;
+
+  // Describes how to compute foreground from features.
+  message ForegroundOptions {
+    // Indicates the *inverse* registration error (i.e. the irls weight)
+    // that is deemed a complete inlier.
+    // Weights in the interval [0, foreground_threshold] (corresponding to
+    // pixel errors in the interval [1 / foreground_threshold, inf])
+    // are mappend to 1 - [0, 1], i.e. foreground threshold is mapped to zero
+    // with weights below the threshold being assigned values > 0.
+    // Therefore, larger values will increase amount of detected foreground
+    // as well as noise.
+    optional float foreground_threshold = 1 [default = 0.5];
+
+    // By using foreground_gamma < 1.0 you can increase resolution of small
+    // foreground motion at the expense of the resolution of large foreground
+    // motions.
+    optional float foreground_gamma = 2 [default = 1.0];
+
+    // Threshold is scaled by coverage, i.e. for frames with large registration
+    // error less forground is visualized.
+    optional bool threshold_coverage_scaling = 3 [default = true];
+  }
+
+  optional ForegroundOptions foreground_options = 12;
+}

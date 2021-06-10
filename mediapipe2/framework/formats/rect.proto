@@ -1,0 +1,58 @@
+// Copyright 2019 The MediaPipe Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto2";
+
+package mediapipe;
+
+option java_package = "com.google.mediapipe.formats.proto";
+option java_outer_classname = "RectProto";
+
+// A rectangle with rotation in image coordinates.
+message Rect {
+  // Location of the center of the rectangle in image coordinates.
+  // The (0, 0) point is at the (top, left) corner.
+  required int32 x_center = 1;
+  required int32 y_center = 2;
+
+  // Size of the rectangle.
+  required int32 height = 3;
+  required int32 width = 4;
+
+  // Rotation angle is clockwise in radians.
+  optional float rotation = 5 [default = 0.0];
+
+  // Optional unique id to help associate different Rects to each other.
+  optional int64 rect_id = 6;
+}
+
+// A rectangle with rotation in normalized coordinates. The values of box center
+// location and size are within [0, 1].
+message NormalizedRect {
+  // Location of the center of the rectangle in image coordinates.
+  // The (0.0, 0.0) point is at the (top, left) corner.
+  required float x_center = 1;
+  required float y_center = 2;
+
+  // Size of the rectangle.
+  required float height = 3;
+  required float width = 4;
+
+  // Rotation angle is clockwise in radians.
+  optional float rotation = 5 [default = 0.0];
+
+  // Optional unique id to help associate different NormalizedRects to each
+  // other.
+  optional int64 rect_id = 6;
+}

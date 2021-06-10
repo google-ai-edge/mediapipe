@@ -1,0 +1,45 @@
+// Copyright 2019 The MediaPipe Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto2";
+
+package mediapipe;
+
+import "mediapipe/framework/calculator.proto";
+
+option objc_class_prefix = "MediaPipe";
+
+// A Range {begin, end} specifies beginning ane ending indices to splice a
+// vector. A vector v is spliced to have elements v[begin:(end-1)], i.e., with
+// begin index inclusive and end index exclusive.
+message Range {
+  optional int32 begin = 1;
+  optional int32 end = 2;
+}
+
+message SplitVectorCalculatorOptions {
+  extend mediapipe.CalculatorOptions {
+    optional SplitVectorCalculatorOptions ext = 259438222;
+  }
+
+  repeated Range ranges = 1;
+
+  // Specify if single element ranges should be outputted as std::vector<T> or
+  // just element of type T. By default, if a range specifies only one element,
+  // it is outputted as an std::vector<T>.
+  optional bool element_only = 2 [default = false];
+
+  // Combines output elements to one vector.
+  optional bool combine_outputs = 3 [default = false];
+}

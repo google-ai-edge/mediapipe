@@ -1,0 +1,50 @@
+// Copyright 2019 The MediaPipe Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+// Forked from mediapipe/framework/packet_generator.proto.
+// The forked proto must remain identical to the original proto and should be
+// ONLY used by mediapipe open source project.
+//
+// Messages for specifying PacketGenerators.
+
+syntax = "proto2";
+
+package mediapipe;
+
+// Options used by a PacketGenerator.
+message PacketGeneratorOptions {
+  extensions 20000 to max;
+}
+
+// The settings specifying a packet generator and how it is connected.
+message PacketGeneratorConfig {
+  // The name of the registered packet generator class.
+  optional string packet_generator = 1;
+
+  // The names of the input side packets.  The PacketGenerator can choose
+  // to access its input side packets either by index or by tag.
+  repeated string input_side_packet = 2;
+  // DEPRECATED(mgeorg) The old name for input_side_packet.
+  repeated string external_input = 1002;
+
+  // The names of the output side packets that this generator produces.
+  // The PacketGenerator can choose to access its output side packets
+  // either by index or by tag.
+  repeated string output_side_packet = 3;
+  // DEPRECATED(mgeorg) The old name for output_side_packet.
+  repeated string external_output = 1003;
+
+  // The options for the packet generator.
+  optional PacketGeneratorOptions options = 4;
+}

@@ -1,0 +1,44 @@
+// Copyright 2019 The MediaPipe Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto2";
+
+package mediapipe.autoflip;
+
+import "mediapipe/framework/calculator.proto";
+
+// Next tag: 7
+message BorderDetectionCalculatorOptions {
+  extend mediapipe.CalculatorOptions {
+    optional BorderDetectionCalculatorOptions ext = 276599815;
+  }
+  // Max difference in color to be considered the same (per rgb channel).
+  optional int32 color_tolerance = 1 [default = 6];
+
+  // Amount of padding to add around any object within the border that is
+  // resized to fit into the new border.
+  optional int32 border_object_padding_px = 2 [default = 5];
+
+  // Distance (as a percent of height) to search for a border.
+  optional float vertical_search_distance = 3 [default = .20];
+
+  // Percent of pixels matching border color to be a border
+  optional float border_color_pixel_perc = 4 [default = .995];
+
+  // Percent of pixels matching background to be a solid background frame
+  optional float solid_background_tol_perc = 5 [default = .5];
+
+  // Force a border of this size in pixels on top and bottom.
+  optional int32 default_padding_px = 6 [default = 0];
+}

@@ -1,0 +1,62 @@
+// Copyright 2019 The MediaPipe Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto2";
+
+package mediapipe;
+
+import "mediapipe/framework/packet_generator.proto";
+import "tensorflow/core/protobuf/config.proto";
+
+message TensorFlowSessionFromSavedModelGeneratorOptions {
+  extend mediapipe.PacketGeneratorOptions {
+    optional TensorFlowSessionFromSavedModelGeneratorOptions ext = 151486368;
+  }
+  // TODO: SessionBundles provided global step versioning of models
+  // that let you load the latest model. If there's a similar solution for
+  // SavedModels, include a flag to load the most recent model.
+
+  // Path to a directory containing a trained TensorFlow model as prepared
+  // by SavedModel.
+  optional string saved_model_path = 1;
+  // The name of the generic signature to load into the mapping from tags to
+  // tensor names.
+  optional string signature_name = 2 [default = "serving_default"];
+  // Whether to convert the signature keys to uppercase as well as switch /'s
+  // and -'s to _'s, which enables common signatures to be used as Tags.
+  optional bool convert_signature_to_tags = 3 [default = true];
+  // If true, saved_model_path can have multiple exported models in
+  // subdirectories saved_model_path/%08d and the alphabetically last (i.e.,
+  // latest checkpoint) model is loaded. Note that saved models are not exported
+  // in numbered directories by default. If you want to use this feature, you
+  // need to arrange your directories by global_step or some other order when
+  // you save your models.
+  optional bool load_latest_model = 4;
+  // [DEPRECATED] If true, this calculator will try to initialize local Tensor
+  // Processing Unit (TPU) hardware so that the Tensorflow session loaded from
+  // this saved model may benefit from TPU speedups. If you want to use this
+  // feature, you need to make sure that the calculator runs on a machine that
+  // has TPU hardware installed. The saved model should have correct device
+  // placements in the graph (have the ops already placed on TPU), typically if
+  // the saved model was exported through TPUEstimator then device placement is
+  // automatically taken care of.
+  optional bool use_tpu = 5 [deprecated = true];
+  // User specified tags in a saved model.
+  // If no tag is specified, then use "serve" as the default. Note that in order
+  // to use TPU accelerator hardware, the tag "tpu" needs to be specified.
+  repeated string saved_model_tag = 6;
+
+  // Tensorflow session config options.
+  optional tensorflow.ConfigProto session_config = 9;
+}

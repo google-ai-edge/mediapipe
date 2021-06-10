@@ -1,0 +1,49 @@
+// Copyright 2019 The MediaPipe Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto2";
+
+package mediapipe;
+
+import "mediapipe/framework/calculator.proto";
+
+message RectTransformationCalculatorOptions {
+  extend mediapipe.CalculatorOptions {
+    optional RectTransformationCalculatorOptions ext = 262226312;
+  }
+
+  // Scaling factor along the side of a rotated rect that was aligned with the
+  // X and Y axis before rotation respectively.
+  optional float scale_x = 1 [default = 1.0];
+  optional float scale_y = 2 [default = 1.0];
+
+  // Additional rotation (counter-clockwise) around the rect center either in
+  // radians or in degrees.
+  optional float rotation = 3;
+  optional int32 rotation_degrees = 4;
+
+  // Shift along the side of a rotated rect that was aligned with the X and Y
+  // axis before rotation respectively. The shift is relative to the length of
+  // corresponding side. For example, for a rect with size (0.4, 0.6), with
+  // shift_x = 0.5 and shift_y = -0.5 the rect is shifted along the two sides
+  // by 0.2 and -0.3 respectively.
+  optional float shift_x = 5;
+  optional float shift_y = 6;
+
+  // Change the final transformed rect into a square that shares the same center
+  // and rotation with the rect, and with the side of the square equal to either
+  // the long or short side of the rect respectively.
+  optional bool square_long = 7;
+  optional bool square_short = 8;
+}

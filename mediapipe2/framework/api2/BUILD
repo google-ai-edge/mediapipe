@@ -1,0 +1,220 @@
+package(
+    default_visibility = ["//visibility:public"],
+    features = ["-use_header_modules"],
+)
+
+licenses(["notice"])
+
+cc_library(
+    name = "const_str",
+    hdrs = ["const_str.h"],
+)
+
+cc_library(
+    name = "builder",
+    hdrs = ["builder.h"],
+    deps = [
+        ":const_str",
+        ":contract",
+        ":node",
+        ":packet",
+        ":port",
+        "//mediapipe/framework:calculator_base",
+        "//mediapipe/framework:calculator_contract",
+        "@com_google_absl//absl/container:flat_hash_map",
+    ],
+)
+
+cc_test(
+    name = "builder_test",
+    srcs = ["builder_test.cc"],
+    deps = [
+        ":builder",
+        ":node",
+        ":packet",
+        ":port",
+        ":tag",
+        ":test_contracts",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/deps:message_matchers",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:parse_text_proto",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_library(
+    name = "contract",
+    hdrs = ["contract.h"],
+    deps = [
+        ":const_str",
+        ":packet",
+        ":port",
+        ":tag",
+        ":tuple",
+        "//mediapipe/framework:calculator_context",
+        "//mediapipe/framework:calculator_contract",
+        "//mediapipe/framework:output_side_packet",
+        "//mediapipe/framework/port:logging",
+    ],
+)
+
+cc_test(
+    name = "contract_test",
+    srcs = ["contract_test.cc"],
+    deps = [
+        ":contract",
+        ":port",
+        ":tag",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:parse_text_proto",
+    ],
+)
+
+cc_library(
+    name = "node",
+    srcs = ["node.cc"],
+    hdrs = ["node.h"],
+    deps = [
+        ":const_str",
+        ":contract",
+        ":packet",
+        ":port",
+        "//mediapipe/framework:calculator_base",
+        "//mediapipe/framework:calculator_context",
+        "//mediapipe/framework:calculator_contract",
+        "//mediapipe/framework:subgraph",
+        "//mediapipe/framework/deps:no_destructor",
+    ],
+)
+
+cc_library(
+    name = "test_contracts",
+    testonly = 1,
+    hdrs = ["test_contracts.h"],
+    deps = [
+        ":node",
+    ],
+)
+
+cc_test(
+    name = "node_test",
+    srcs = ["node_test.cc"],
+    deps = [
+        ":node",
+        ":packet",
+        ":port",
+        ":test_contracts",
+        ":tuple",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:parse_text_proto",
+        "//mediapipe/framework/port:status",
+    ],
+)
+
+cc_library(
+    name = "packet",
+    srcs = ["packet.cc"],
+    hdrs = ["packet.h"],
+    deps = [
+        ":tuple",
+        "//mediapipe/framework:packet",
+        "//mediapipe/framework/port:logging",
+        "@com_google_absl//absl/meta:type_traits",
+    ],
+)
+
+cc_test(
+    name = "packet_test",
+    size = "small",
+    srcs = [
+        "packet_test.cc",
+    ],
+    deps = [
+        ":packet",
+        "//mediapipe/framework/port:gtest_main",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_library(
+    name = "port",
+    hdrs = ["port.h"],
+    deps = [
+        ":const_str",
+        ":packet",
+        "//mediapipe/framework:calculator_context",
+        "//mediapipe/framework:calculator_contract",
+        "//mediapipe/framework:output_side_packet",
+        "//mediapipe/framework/port:logging",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_test(
+    name = "port_test",
+    size = "small",
+    srcs = [
+        "port_test.cc",
+    ],
+    deps = [
+        ":port",
+        "//mediapipe/framework/port:gtest_main",
+    ],
+)
+
+cc_test(
+    name = "subgraph_test",
+    srcs = ["subgraph_test.cc"],
+    deps = [
+        ":builder",
+        ":node",
+        ":packet",
+        ":port",
+        ":test_contracts",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/deps:message_matchers",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:parse_text_proto",
+        "//mediapipe/framework/tool:subgraph_expansion",
+    ],
+)
+
+cc_library(
+    name = "tag",
+    hdrs = ["tag.h"],
+    deps = [":const_str"],
+)
+
+cc_test(
+    name = "tag_test",
+    size = "small",
+    srcs = [
+        "tag_test.cc",
+    ],
+    deps = [
+        ":tag",
+        "//mediapipe/framework/port:gtest_main",
+    ],
+)
+
+cc_library(
+    name = "tuple",
+    hdrs = ["tuple.h"],
+    deps = ["@com_google_absl//absl/meta:type_traits"],
+)
+
+cc_test(
+    name = "tuple_test",
+    size = "small",
+    srcs = [
+        "tuple_test.cc",
+    ],
+    deps = [
+        ":tuple",
+        "//mediapipe/framework/port:gtest_main",
+        "@com_google_absl//absl/strings",
+    ],
+)

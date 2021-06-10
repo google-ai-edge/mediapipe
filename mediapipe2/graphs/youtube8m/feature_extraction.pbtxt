@@ -1,0 +1,295 @@
+input_side_packet: "input_sequence_example"
+input_side_packet: "inception3_pca_mean_matrix"
+input_side_packet: "inception3_pca_projection_matrix"
+input_side_packet: "vggish_pca_mean_matrix"
+input_side_packet: "vggish_pca_projection_matrix"
+output_side_packet: "sequence_example_to_serialize"
+
+node {
+  calculator: "StringToSequenceExampleCalculator"
+  input_side_packet: "STRING:input_sequence_example"
+  output_side_packet: "SEQUENCE_EXAMPLE:parsed_sequence_example"
+}
+
+node {
+  calculator: "UnpackMediaSequenceCalculator"
+  input_side_packet: "SEQUENCE_EXAMPLE:parsed_sequence_example"
+  output_side_packet: "DATA_PATH:input_file"
+  output_side_packet: "RESAMPLER_OPTIONS:packet_resampler_options"
+  output_side_packet: "AUDIO_DECODER_OPTIONS:audio_decoder_options"
+  node_options: {
+    [type.googleapis.com/mediapipe.UnpackMediaSequenceCalculatorOptions]: {
+      base_packet_resampler_options {
+        frame_rate: 1.0
+        base_timestamp: 0
+      }
+      base_audio_decoder_options {
+        audio_stream { stream_index: 0 }
+      }
+    }
+  }
+}
+
+# Decode the entire video.
+node {
+  calculator: "OpenCvVideoDecoderCalculator"
+  input_side_packet: "INPUT_FILE_PATH:input_file"
+  output_stream: "VIDEO:decoded_frames"
+}
+
+# Extract the subset of frames we want to keep.
+node {
+  calculator: "PacketResamplerCalculator"
+  input_stream: "decoded_frames"
+  output_stream: "sampled_decoded_frames"
+  input_side_packet: "OPTIONS:packet_resampler_options"
+}
+
+node {
+  calculator: "ImageFrameToTensorCalculator"
+  input_stream: "sampled_decoded_frames"
+  output_stream: "tensor_frame"
+}
+
+node {
+  calculator: "TensorFlowSessionFromFrozenGraphCalculator"
+  output_side_packet: "SESSION:session"
+  node_options: {
+    [type.googleapis.com/mediapipe.TensorFlowSessionFromFrozenGraphCalculatorOptions]: {
+      graph_proto_path: "/tmp/mediapipe/classify_image_graph_def.pb"
+      tag_to_tensor_names {
+        key: "IMG_UINT8"
+        value: "DecodeJpeg:0"
+      }
+      tag_to_tensor_names {
+        key: "INCEPTION_POOL3"
+        value: "pool_3/_reshape:0"
+      }
+    }
+  }
+}
+
+node {
+  calculator: "TensorFlowInferenceCalculator"
+  input_side_packet: "SESSION:session"
+  input_stream: "IMG_UINT8:tensor_frame"
+  output_stream: "INCEPTION_POOL3:inception3_hidden_activation_single_element_batch"
+  node_options: {
+    [type.googleapis.com/mediapipe.TensorFlowInferenceCalculatorOptions]: {
+      signature_name: ""
+      batch_size: 1
+      add_batch_dim_to_tensors: false
+    }
+  }
+}
+
+# Remove the batch dimension.
+node: {
+  calculator: "TensorSqueezeDimensionsCalculator"
+  input_stream: "inception3_hidden_activation_single_element_batch"
+  output_stream: "inception3_hidden_activation"
+  node_options: {
+    [type.googleapis.com/mediapipe.TensorSqueezeDimensionsCalculatorOptions]: {
+      dim: 0
+    }
+  }
+}
+
+node {
+  calculator: "TensorToMatrixCalculator"
+  input_stream: "TENSOR:inception3_hidden_activation"
+  output_stream: "MATRIX:inception3_hidden_activation_matrix"
+}
+
+node {
+  calculator: "MatrixSubtractCalculator"
+  input_stream: "MINUEND:inception3_hidden_activation_matrix"
+  input_side_packet: "SUBTRAHEND:inception3_pca_mean_matrix"
+  output_stream: "mean_subtracted_inception3_matrix"
+}
+node {
+  calculator: "MatrixMultiplyCalculator"
+  input_stream: "mean_subtracted_inception3_matrix"
+  input_side_packet: "inception3_pca_projection_matrix"
+  output_stream: "pca_inception3_matrix"
+}
+node {
+  calculator: "MatrixToVectorCalculator"
+  input_stream: "pca_inception3_matrix"
+  output_stream: "pca_inception3_vf"
+}
+
+######################## END OF VISUAL ###########################
+
+######################## BEGIN OF AUDIO ##########################
+node {
+  calculator: "AudioDecoderCalculator"
+  input_side_packet: "INPUT_FILE_PATH:input_file"
+  input_side_packet: "OPTIONS:audio_decoder_options"
+  output_stream: "AUDIO:audio"
+  output_stream: "AUDIO_HEADER:audio_header"
+}
+
+node {
+  calculator: "AddHeaderCalculator"
+  input_stream: "DATA:audio"
+  input_stream: "HEADER:audio_header"
+  output_stream: "media_audio"
+}
+
+# Always convert the audio to mono.
+node {
+  calculator: "AverageTimeSeriesAcrossChannelsCalculator"
+  input_stream: "media_audio"
+  output_stream: "mono_waveform"
+}
+
+node {
+  calculator: "RationalFactorResampleCalculator"
+  input_stream: "mono_waveform"
+  output_stream: "resampled_waveform"
+  node_options: {
+    [type.googleapis.com/mediapipe.RationalFactorResampleCalculatorOptions] {
+      target_sample_rate: 16000.0
+    }
+  }
+}
+node {
+  calculator: "SpectrogramCalculator"
+  input_stream: "resampled_waveform"
+  output_stream: "spectrogram_squared_magnitude"
+  node_options: {
+    [type.googleapis.com/mediapipe.SpectrogramCalculatorOptions] {
+      frame_duration_seconds: 0.025
+      frame_overlap_seconds: 0.015
+      output_type: SQUARED_MAGNITUDE
+    }
+  }
+}
+node {
+  calculator: "MelSpectrumCalculator"
+  # MelSpectrumCalculator expects SQUARED_MAGNITUDE input, but its output is in
+  # linear magnitude units.
+  input_stream: "spectrogram_squared_magnitude"
+  output_stream: "mel_spectrum_magnitude"
+  node_options: {
+    [type.googleapis.com/mediapipe.MelSpectrumCalculatorOptions] {
+      # Follow the 'wideband' or '16kHz' speech convention.
+      channel_count: 64
+      min_frequency_hertz: 125.0
+      max_frequency_hertz: 7500.0
+    }
+  }
+}
+node {
+  calculator: "StabilizedLogCalculator"
+  input_stream: "mel_spectrum_magnitude"
+  output_stream: "log_mel_spectrum_magnitude"
+  node_options: {
+    [type.googleapis.com/mediapipe.StabilizedLogCalculatorOptions] {
+      stabilizer: 0.01
+    }
+  }
+}
+node {
+  calculator: "TimeSeriesFramerCalculator"
+  input_stream: "log_mel_spectrum_magnitude"
+  output_stream: "log_mel_spectrum_magnitude_with_context"
+  node_options: {
+    [type.googleapis.com/mediapipe.TimeSeriesFramerCalculatorOptions] {
+      frame_duration_seconds: 0.96
+      frame_overlap_seconds: -0.04
+    }
+  }
+}
+node {
+  calculator: "MatrixToTensorCalculator"
+  input_stream: "log_mel_spectrum_magnitude_with_context"
+  output_stream: "log_mel_spectrum_magnitude_tensor"
+  node_options: {
+    [type.googleapis.com/mediapipe.MatrixToTensorCalculatorOptions] {
+      transpose: true
+    }
+  }
+}
+
+node {
+  calculator: "TensorFlowSessionFromFrozenGraphCalculator"
+  output_side_packet: "SESSION:vggish_session"
+  node_options: {
+    [type.googleapis.com/mediapipe.TensorFlowSessionFromFrozenGraphCalculatorOptions]: {
+      graph_proto_path: "/tmp/mediapipe/vggish_new.pb"
+      tag_to_tensor_names {
+        key: "INPUT"
+        value: "vggish/input_features:0"
+      }
+      tag_to_tensor_names {
+        key: "VGGISH"
+        value: "vggish/fc2/BiasAdd:0"
+      }
+    }
+  }
+}
+
+node {
+  calculator: "TensorFlowInferenceCalculator"
+  input_side_packet: "SESSION:vggish_session"
+  input_stream: "INPUT:log_mel_spectrum_magnitude_tensor"
+  output_stream: "VGGISH:vggish_tensor"
+  node_options: {
+    [type.googleapis.com/mediapipe.TensorFlowInferenceCalculatorOptions]: {
+      signature_name: ""
+      batch_size: 128
+    }
+  }
+}
+
+node {
+  calculator: "TensorToMatrixCalculator"
+  input_stream: "REFERENCE:log_mel_spectrum_magnitude_with_context"
+  input_stream: "TENSOR:vggish_tensor"
+  output_stream: "MATRIX:vggish_matrix"
+  node_options: {
+    [type.googleapis.com/mediapipe.TensorToMatrixCalculatorOptions] {
+      time_series_header_overrides {
+        num_channels: 128
+        num_samples: 1
+      }
+    }
+  }
+}
+
+node {
+  calculator: "MatrixSubtractCalculator"
+  input_stream: "MINUEND:vggish_matrix"
+  input_side_packet: "SUBTRAHEND:vggish_pca_mean_matrix"
+  output_stream: "mean_subtracted_vggish_matrix"
+}
+node {
+  calculator: "MatrixMultiplyCalculator"
+  input_stream: "mean_subtracted_vggish_matrix"
+  input_side_packet: "vggish_pca_projection_matrix"
+  output_stream: "pca_vggish_matrix"
+}
+node {
+  calculator: "MatrixToVectorCalculator"
+  input_stream: "pca_vggish_matrix"
+  output_stream: "pca_vggish_vf"
+}
+
+# Store the features in the SequenceExample.
+node {
+  calculator: "PackMediaSequenceCalculator"
+  input_side_packet: "SEQUENCE_EXAMPLE:parsed_sequence_example"
+  output_side_packet: "SEQUENCE_EXAMPLE:sequence_example_to_serialize"
+  input_stream: "FLOAT_FEATURE_RGB:pca_inception3_vf"
+  input_stream: "FLOAT_FEATURE_AUDIO:pca_vggish_vf"
+}
+
+# Serialize the SequenceExample to a string for storage.
+node {
+  calculator: "StringToSequenceExampleCalculator"
+  input_side_packet: "SEQUENCE_EXAMPLE:sequence_example_to_serialize"
+  output_side_packet: "STRING:output_sequence_example"
+}
+

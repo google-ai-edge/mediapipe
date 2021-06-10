@@ -1,0 +1,59 @@
+// Copyright 2019 The MediaPipe Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+// Forked from mediapipe/framework/thread_pool_executor.proto.
+// The forked proto must remain identical to the original proto and should be
+// ONLY used by mediapipe open source project.
+
+syntax = "proto2";
+
+package mediapipe;
+
+import "mediapipe/framework/mediapipe_options.proto";
+
+message ThreadPoolExecutorOptions {
+  extend MediaPipeOptions {
+    optional ThreadPoolExecutorOptions ext = 157116819;
+  }
+  // Number of threads for running calculators in multithreaded mode.
+  //
+  // When ThreadPoolExecutorOptions is used in the ExecutorOptions for the
+  // default executor with the executor type unspecified, the num_threads
+  // field is allowed to be -1 or 0.  If not specified or -1, the scheduler
+  // will pick an appropriate number of threads depending on the number of
+  // available processors.
+  optional int32 num_threads = 1;
+  // Make all worker threads have the specified stack size (in bytes).
+  // NOTE: The stack_size option may not be implemented on some platforms.
+  optional int32 stack_size = 2;
+  // The nice priority level of the worker threads.
+  // The nice priority level is 0 by default, and lower value means higher
+  // priority. The valid thread nice priority level value range varies by OS.
+  // Refer to system documentation for more details.
+  optional int32 nice_priority_level = 3;
+  // Processor performance enum.
+  enum ProcessorPerformance {
+    NORMAL = 0;
+    LOW = 1;
+    HIGH = 2;
+  }
+  // The performance hint of the processor(s) that the threads will be bound to.
+  // Framework will make the best effort to run the threads on the specific
+  // processors based on the performance hint.
+  // The attempt may fail for various reasons. Success isn't guaranteed.
+  optional ProcessorPerformance require_processor_performance = 4;
+  // Name prefix for worker threads, which can be useful for debugging
+  // multithreaded applications.
+  optional string thread_name_prefix = 5;
+}

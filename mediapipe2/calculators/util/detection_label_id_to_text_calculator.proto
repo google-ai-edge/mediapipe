@@ -1,0 +1,39 @@
+// Copyright 2019 The MediaPipe Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto2";
+
+package mediapipe;
+
+import "mediapipe/framework/calculator.proto";
+
+message DetectionLabelIdToTextCalculatorOptions {
+  extend mediapipe.CalculatorOptions {
+    optional DetectionLabelIdToTextCalculatorOptions ext = 251889072;
+  }
+
+  // Path to a label map file for getting the actual name of detected classes.
+  optional string label_map_path = 1;
+
+  // Alternative way to specify label map
+  // label: "label for id 0"
+  // label: "label for id 1"
+  // ...
+  repeated string label = 2;
+
+  // By default, the `label_id` field from the input is stripped if a text label
+  // could be found. By setting this field to true, it is always copied to the
+  // output detections.
+  optional bool keep_label_id = 3;
+}

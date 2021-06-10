@@ -1,0 +1,76 @@
+syntax = "proto2";
+
+package mediapipe;
+
+import "mediapipe/framework/calculator.proto";
+import "mediapipe/framework/deps/proto_descriptor.proto";
+
+option java_package = "com.google.mediapipe.proto";
+option java_outer_classname = "GraphTemplateProto";
+
+// A template rule or a template rule argument expression.
+message TemplateExpression {
+  // A template parameter name or a literal value.
+  optional string param = 1;
+
+  // A template rule operation or a template expression operation.
+  optional string op = 2;
+
+  // Nested template expressions, which define the operation args.
+  // TODO: Rename this field to avoid collision with TemplateDict::arg.
+  repeated TemplateExpression arg = 3;
+
+  // The path within the protobuf to the modified field values.
+  optional string path = 4;
+
+  // The FieldDescriptor::Type of the modified field.
+  optional mediapipe.FieldDescriptorProto.Type field_type = 5;
+
+  // Alternative value for the modified field, in protobuf binary format.
+  optional string field_value = 7;
+}
+
+// A protobuf extension defining a list of template rules.
+message CalculatorGraphTemplate {
+  // The base configuration.
+  optional CalculatorGraphConfig config = 1;
+
+  // The list of template rules.
+  repeated TemplateExpression rule = 2;
+}
+
+// The value for a template parameter.
+// The value can be either a simple value, a dictionary, or a list.
+message TemplateArgument {
+  oneof param_value {
+    // A string value for the parameter.
+    string str = 1;
+    // A numeric value for the parameter.
+    double num = 2;
+    // A dictionary of values for the parameter.
+    TemplateDict dict = 3;
+  }
+  // An ordered list of values for the parameter.
+  repeated TemplateArgument element = 4;
+}
+
+// A dictionary of parameter values.
+message TemplateDict {
+  message Parameter {
+    optional string key = 1;
+    optional TemplateArgument value = 2;
+  }
+  // A map from parameter name to parameter value.
+  repeated Parameter arg = 1;
+}
+
+// Options for a mediapipe template subgraph consisting of
+// mediapipe template arguments.
+message TemplateSubgraphOptions {
+  extend mediapipe.CalculatorOptions {
+    optional TemplateSubgraphOptions ext = 172998261;
+  }
+
+  // The template arguments used to expand the template for the subgraph.
+  optional TemplateDict dict = 1;
+}

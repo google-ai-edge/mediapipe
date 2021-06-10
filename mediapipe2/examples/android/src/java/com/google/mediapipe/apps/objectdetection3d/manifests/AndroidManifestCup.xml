@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.google.mediapipe.apps.objectdetection3d">
+
+  <uses-sdk
+      android:minSdkVersion="21"
+      android:targetSdkVersion="27" />
+
+  <application>
+      <meta-data android:name="categoryName" android:value="Coffee cup,Mug"/>
+      <meta-data android:name="maxNumObjects" android:value="5"/>
+      <meta-data android:name="modelScale" android:value="500, 500, 500"/>
+      <meta-data android:name="modelTransformation" android:value="1.0,  0.0, 0.0,    0.0,
+                                                                   0.0,  0.0, 1.0, -0.001,
+                                                                   0.0, -1.0, 0.0,    0.0,
+                                                                   0.0,  0.0, 0.0,    1.0"/>
+  </application>
+</manifest>

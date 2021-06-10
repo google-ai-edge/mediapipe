@@ -1,0 +1,196 @@
+// Copyright 2019 The MediaPipe Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto2";
+
+package mediapipe;
+
+import "mediapipe/util/tracking/tone_models.proto";
+
+// Capture tone change between two frames and per-frame tone statistics.
+// The estimated tone change describes the transformation of color intensities
+// from the current to the previous frame.
+// Next tag: 16
+message ToneChange {
+  optional GainBiasModel gain_bias = 1;
+  optional AffineToneModel affine = 2;
+
+  optional MixtureGainBiasModel mixture_gain_bias = 3;
+  optional MixtureAffineToneModel mixture_affine = 4;
+
+  // TODO: Implement.
+  optional float mixture_domain_sigma = 5;
+
+  // Tone statistics, describing statistics of intensities of the current frame
+  // (independent from the previous frame).
+
+  // Fraction of clipped pixels in [0, 1].
+  // A pixel is considered clipped if more than
+  // ToneEstimationOptions::max_clipped_channels are over-
+  // or under exposed.
+  optional float frac_clipped = 6 [default = 0.0];
+
+  // Intensity percentiles of the current frame. Normalized to [0, 1].
+  // We sort the intensities in the image (RGB to intensity conversion) and
+  // select the intensities that fall at the ranks specified by the
+  // stats_[low|mid|high]_percentile options below as the
+  /*
+    // Minimum fractional number of inlier gain features for gain correction
+    // deemed to be successful.
+    optional float min_frac_gain_inliers = 39 [default = 0.8];
+
+    // On average accept up to 10% intensity registration error.
+    optional float min_gain_inlier_weight = 40 [default = 0.1];
+    */
+  // [low|mid|high]_percentile's.
+  optional float low_percentile = 8;
+  optional float low_mid_percentile = 9;
+  optional float mid_percentile = 10;
+  optional float high_mid_percentile = 11;
+  optional float high_percentile = 12;
+
+  // If set, all models are estimated in log domain, specifically
+  // intensity I is transformed via log(1.0 + I) := I'
+  // Consequently after apply the models, intensity needs to be transformed
+  // back to visible range via exp(I') - 1.0.
+  optional bool log_domain = 13 [default = false];
+
+  // ToneChange type indicates whether highest degree of freedom (DOF)
+  // model estimation was deemed stable, in which case ToneChange::Type is set
+  // to VALID.
+  // If a model was deemed not stable (according to *StabilityBounds in
+  // ToneEstimationOptions), it is set to the lower dof type which was deemed
+  // stable.
+  enum Type {
+    VALID = 0;
+    INVALID = 10;  // Identity model, gain bias unrealiable.
+  }
+
+  optional Type type = 14 [default = VALID];
+
+  // Stats based on stability analysis.
+  message StabilityStats {
+    // Number of tone matches that were iniliers (used for tone estimation).
+    optional int32 num_inliers = 1;
+    // Fraction of tone matches that were inliers.
+    optional float inlier_fraction = 2;
+    // Total IRLS weight summed over all inliers.
+    optional double inlier_weight = 3;
+  }
+  optional StabilityStats stability_stats = 15;
+}
+
+message ToneMatchOptions {
+  // ToneChange's are fit to ToneMatches extracted from matching patches, using
+  // order statistics of their corresponding intensities. Matches are defined by
+  // having the same percentile of ordered intensities. If any member of the
+  // ToneMatch is below under or above over-exposed the match is discarded
+  // (based on parameters min and max_exposure above).
+  // Matches are extracted from min_match_percentile to max_match_percentile in
+  // #match_percentile_steps equidistant steps.
+  optional float min_match_percentile = 1 [default = 0.01];
+  optional float max_match_percentile = 2 [default = 0.99];
+  optional int32 match_percentile_steps = 3 [default = 10];
+
+  // Patch radius from which order statistics are collected.
+  optional int32 patch_radius = 4 [default = 18];
+
+  // Only matches with not too many pixels over- or underexposed are used.
+  optional float max_frac_clipped = 5 [default = 0.4];
+
+  // If set matches will be collected in the log domain.
+  optional bool log_domain = 8 [default = false];
+}
+
+message ClipMaskOptions {
+  // Over/Under exposure setting. Pixels that are clipped due to limited
+  // dynamic range are masked out from analysis. Values specified w.r.t.
+  // [0, 1] range.
+  optional float min_exposure = 1 [default = 0.02];
+  optional float max_exposure = 2 [default = 0.98];
+
+  // A pixel can have clipped color values in atmost max_clipped_channels before
+  // it will be labeled as clipped.
+  optional int32 max_clipped_channels = 4 [default = 1];
+
+  // Over-exposure tends to show blooming (neighboring pixels are affected by
+  // over-exposure as well). For robustness mask of clipped pixels is dilated
+  // with structuring element of diameter clip_mask_diam.
+  optional int32 clip_mask_diameter = 5 [default = 5];
+}
+
+// Next tag: 13
+message ToneEstimationOptions {
+  optional ToneMatchOptions tone_match_options = 1;
+  optional ClipMaskOptions clip_mask_options = 2;
+
+  // Percentiles for tone statistics.
+  optional float stats_low_percentile = 3 [default = 0.05];
+  optional float stats_low_mid_percentile = 4 [default = 0.2];
+  optional float stats_mid_percentile = 5 [default = 0.5];
+  optional float stats_high_mid_percentile = 6 [default = 0.8];
+  optional float stats_high_percentile = 7 [default = 0.95];
+
+  optional int32 irls_iterations = 8 [default = 10];
+
+  message GainBiasBounds {
+    optional float min_inlier_fraction = 1 [default = 0.75];
+
+    // Accept 2% intensity difference as valid inlier.
+    optional float min_inlier_weight = 2 [default = 0.5];
+
+    optional float lower_gain = 3 [default = 0.75];
+    optional float upper_gain = 4 [default = 1.334];
+
+    optional float lower_bias = 5 [default = -0.2];
+    optional float upper_bias = 6 [default = 0.2];
+  }
+
+  optional GainBiasBounds stable_gain_bias_bounds = 9;
+
+  // We support down-sampling of an incoming frame before running the
+  // resolution dependent part of the tone estimation.
+  // tracking if desired).
+  enum DownsampleMode {
+    DOWNSAMPLE_NONE = 1;         // no downsampling.
+    DOWNSAMPLE_TO_MAX_SIZE = 2;  // downsizes frame such that frame_size ==
+                                 // downsampling_size.
+                                 // frame_size := max(width, height).
+    DOWNSAMPLE_BY_FACTOR = 3;    // downsizes frame by pre-defined factor.
+    DOWNSAMPLE_TO_MIN_SIZE = 4;  // downsizes frame such that frame_size ==
+                                 // downsampling_size.
+                                 // frame_size := min(width, height).
+  }
+
+  optional DownsampleMode downsample_mode = 10 [default = DOWNSAMPLE_NONE];
+
+  // Specify the size of either dimension here, the frame will be
+  // downsampled to fit downsampling_size.
+  optional int32 downsampling_size = 11 [default = 256];
+  optional float downsample_factor = 12 [default = 2.0];
+}
+
+message ToneMatch {
+  // Intensity in current frame.
+  optional float curr_val = 1;
+  // Matching intensity in previous frame.
+  optional float prev_val = 2;
+}
+
+message PatchToneMatch {
+  // Several intensity matches computed from equal percentiles of matching patch
+  // pairs. No number or particular ordering is assumed.
+  repeated ToneMatch tone_match = 1;
+  optional float irls_weight = 2 [default = 1.0];
+}

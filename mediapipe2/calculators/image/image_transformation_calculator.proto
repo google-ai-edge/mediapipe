@@ -1,0 +1,53 @@
+// Copyright 2019 The MediaPipe Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto2";
+
+package mediapipe;
+
+import "mediapipe/framework/calculator.proto";
+import "mediapipe/gpu/scale_mode.proto";
+
+// Counterclockwise rotation.
+message RotationMode {
+  enum Mode {
+    UNKNOWN = 0;
+    ROTATION_0 = 1;
+    ROTATION_90 = 2;
+    ROTATION_180 = 3;
+    ROTATION_270 = 4;
+  }
+}
+
+message ImageTransformationCalculatorOptions {
+  extend CalculatorOptions {
+    optional ImageTransformationCalculatorOptions ext = 251952830;
+  }
+
+  // Output dimensions. Set to 0 if they should be the same as the input.
+  optional int32 output_width = 1 [default = 0];
+  optional int32 output_height = 2 [default = 0];
+  // Counterclockwise rotation mode.
+  optional RotationMode.Mode rotation_mode = 3;
+  // Vertical flipping, applied after rotation.
+  optional bool flip_vertically = 4 [default = false];
+  // Horizontal flipping, applied after rotation.
+  optional bool flip_horizontally = 5 [default = false];
+  // Scale mode.
+  optional ScaleMode.Mode scale_mode = 6;
+  // Padding type. This option is only used when the scale mode is FIT.
+  // Default is to use BORDER_CONSTANT. If set to false, it will use
+  // BORDER_REPLICATE instead.
+  optional bool constant_padding = 7 [default = true];
+}

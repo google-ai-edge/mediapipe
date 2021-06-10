@@ -1,0 +1,78 @@
+# Copyright 2019 The MediaPipe Authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Convert the string input into a decoded SequenceExample.
+node {
+  calculator: "StringToSequenceExampleCalculator"
+  input_side_packet: "STRING:input_sequence_example"
+  output_side_packet: "SEQUENCE_EXAMPLE:parsed_sequence_example"
+}
+
+# Unpack the data path and clip timing from the SequenceExample.
+node {
+  calculator: "UnpackMediaSequenceCalculator"
+  input_side_packet: "SEQUENCE_EXAMPLE:parsed_sequence_example"
+  output_side_packet: "DATA_PATH:input_video_path"
+  output_side_packet: "RESAMPLER_OPTIONS:packet_resampler_options"
+  node_options: {
+    [type.googleapis.com/mediapipe.UnpackMediaSequenceCalculatorOptions]: {
+      base_packet_resampler_options: {
+        frame_rate: 24.0
+        base_timestamp: 0
+      }
+    }
+  }
+}
+
+# Decode the entire video.
+node {
+  calculator: "OpenCvVideoDecoderCalculator"
+  input_side_packet: "INPUT_FILE_PATH:input_video_path"
+  output_stream: "VIDEO:decoded_frames"
+}
+
+# Extract the subset of frames we want to keep.
+node {
+  calculator: "PacketResamplerCalculator"
+  input_stream: "decoded_frames"
+  output_stream: "sampled_frames"
+  input_side_packet: "OPTIONS:packet_resampler_options"
+}
+
+# Encode the images to store in the SequenceExample.
+node {
+  calculator: "OpenCvImageEncoderCalculator"
+  input_stream: "sampled_frames"
+  output_stream: "encoded_frames"
+  node_options: {
+    [type.googleapis.com/mediapipe.OpenCvImageEncoderCalculatorOptions]: {
+      quality: 80
+    }
+  }
+}
+
+# Store the images in the SequenceExample.
+node {
+  calculator: "PackMediaSequenceCalculator"
+  input_side_packet: "SEQUENCE_EXAMPLE:parsed_sequence_example"
+  output_side_packet: "SEQUENCE_EXAMPLE:sequence_example_to_serialize"
+  input_stream: "IMAGE:encoded_frames"
+}
+
+# Serialize the SequenceExample to a string for storage.
+node {
+  calculator: "StringToSequenceExampleCalculator"
+  input_side_packet: "SEQUENCE_EXAMPLE:sequence_example_to_serialize"
+  output_side_packet: "STRING:output_sequence_example"
+}

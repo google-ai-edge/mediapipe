@@ -1,0 +1,61 @@
+# MediaPipe graph that performs multi-hand tracking with TensorFlow Lite on GPU.
+# Used in the examples in
+# mediapipe/examples/android/src/java/com/mediapipe/apps/handtrackinggpu.
+
+# GPU image. (GpuBuffer)
+input_stream: "input_video"
+
+# Max number of hands to detect/process. (int)
+input_side_packet: "num_hands"
+
+# GPU image. (GpuBuffer)
+output_stream: "output_video"
+# Collection of detected/predicted hands, each represented as a list of
+# landmarks. (std::vector<NormalizedLandmarkList>)
+output_stream: "hand_landmarks"
+
+# Throttles the images flowing downstream for flow control. It passes through
+# the very first incoming image unaltered, and waits for downstream nodes
+# (calculators and subgraphs) in the graph to finish their tasks before it
+# passes through another image. All images that come in while waiting are
+# dropped, limiting the number of in-flight images in most part of the graph to
+# 1. This prevents the downstream nodes from queuing up incoming images and data
+# excessively, which leads to increased latency and memory usage, unwanted in
+# real-time mobile applications. It also eliminates unnecessarily computation,
+# e.g., the output produced by a node may get dropped downstream if the
+# subsequent nodes are still busy processing previous inputs.
+node {
+  calculator: "FlowLimiterCalculator"
+  input_stream: "input_video"
+  input_stream: "FINISHED:output_video"
+  input_stream_info: {
+    tag_index: "FINISHED"
+    back_edge: true
+  }
+  output_stream: "throttled_input_video"
+}
+
+# Detects/tracks hand landmarks.
+node {
+  calculator: "HandLandmarkTrackingGpu"
+  input_stream: "IMAGE:throttled_input_video"
+  input_side_packet: "NUM_HANDS:num_hands"
+  output_stream: "LANDMARKS:hand_landmarks"
+  output_stream: "HANDEDNESS:handedness"
+  output_stream: "PALM_DETECTIONS:palm_detections"
+  output_stream: "HAND_ROIS_FROM_LANDMARKS:hand_rects_from_landmarks"
+  output_stream: "HAND_ROIS_FROM_PALM_DETECTIONS:hand_rects_from_palm_detections"
+}
+
+# Subgraph that renders annotations and overlays them on top of the input
+# images (see hand_renderer_gpu.pbtxt).
+node {
+  calculator: "HandRendererSubgraph"
+  input_stream: "IMAGE:throttled_input_video"
+  input_stream: "DETECTIONS:palm_detections"
+  input_stream: "LANDMARKS:hand_landmarks"
+  input_stream: "HANDEDNESS:handedness"
+  input_stream: "NORM_RECTS:0:hand_rects_from_palm_detections"
+  input_stream: "NORM_RECTS:1:hand_rects_from_landmarks"
+  output_stream: "IMAGE:output_video"
+}

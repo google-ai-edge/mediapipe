@@ -1,0 +1,32 @@
+// Copyright 2020 The MediaPipe Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto2";
+
+package mediapipe;
+
+import "mediapipe/framework/calculator.proto";
+
+message RectToRenderScaleCalculatorOptions {
+  extend CalculatorOptions {
+    optional RectToRenderScaleCalculatorOptions ext = 299463409;
+  }
+
+  // Multiplier to apply to the rect size.
+  // If one defined `thickness` for RenderData primitives for object (e.g. pose,
+  // hand or face) of size `A` then multiplier should be `1/A`. It means that
+  // when actual object size on the image will be `B`, than all RenderData
+  // primitives will be scaled with factor `B/A`.
+  optional float multiplier = 1 [default = 0.01];
+}

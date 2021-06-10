@@ -1,0 +1,68 @@
+// Copyright 2019 The MediaPipe Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto2";
+
+package mediapipe;
+
+import "mediapipe/framework/calculator.proto";
+
+// Options to NonMaxSuppression calculator, which performs non-maximum
+// suppression on a set of detections.
+message NonMaxSuppressionCalculatorOptions {
+  extend CalculatorOptions {
+    optional NonMaxSuppressionCalculatorOptions ext = 55383100;
+  }
+
+  // Number of input streams. Each input stream should contain a vector of
+  // detections.
+  optional int32 num_detection_streams = 1 [default = 1];
+
+  // Maximum number of detections to be returned. If -1, then all detections are
+  // returned.
+  optional int32 max_num_detections = 2 [default = -1];
+
+  // Minimum score of detections to be returned.
+  optional float min_score_threshold = 6 [default = -1.0];
+
+  // Jaccard similarity threshold for suppression -- a detection would suppress
+  // all other detections whose scores are lower and overlap by at least the
+  // specified threshold.
+  optional float min_suppression_threshold = 3 [default = 1.0];
+
+  // During the overlap computation, which is used to determine whether a
+  // rectangle suppresses another rectangle, one can use the Jaccard similarity,
+  // defined as the ration of the intersection over union of the two rectangles.
+  // Alternatively a modified version of Jaccard can be used, where the
+  // normalization is done by the area of the rectangle being checked for
+  // suppression.
+  enum OverlapType {
+    UNSPECIFIED_OVERLAP_TYPE = 0;
+    JACCARD = 1;
+    MODIFIED_JACCARD = 2;
+    INTERSECTION_OVER_UNION = 3;
+  }
+  optional OverlapType overlap_type = 4 [default = JACCARD];
+
+  // Whether to put empty detection vector in output stream.
+  optional bool return_empty_detections = 5;
+
+  // Algorithms that can be used to apply non-maximum suppression.
+  enum NmsAlgorithm {
+    DEFAULT = 0;
+    // Only supports relative bounding box for weighted NMS.
+    WEIGHTED = 1;
+  }
+  optional NmsAlgorithm algorithm = 7 [default = DEFAULT];
+}

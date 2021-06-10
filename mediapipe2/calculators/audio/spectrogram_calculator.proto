@@ -1,0 +1,76 @@
+// Copyright 2019 The MediaPipe Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto2";
+
+package mediapipe;
+
+import "mediapipe/framework/calculator.proto";
+
+message SpectrogramCalculatorOptions {
+  extend CalculatorOptions {
+    optional SpectrogramCalculatorOptions ext = 76186688;
+  }
+
+  // Options mirror those of TimeSeriesFramerCalculator.
+
+  // Analysis window duration in seconds.  Required.  Must be greater than 0.
+  // (Note: the spectrogram DFT length will be the smallest power-of-2
+  // sample count that can hold this duration.)
+  optional double frame_duration_seconds = 1;
+
+  // Duration of overlap between adjacent windows.
+  // Hence, frame_rate = 1/(frame_duration_seconds - frame_overlap_seconds).
+  // Required that 0 <= frame_overlap_seconds <  frame_duration_seconds.
+  optional double frame_overlap_seconds = 2 [default = 0.0];
+
+  // Whether to pad the final packet with zeros.  If true, guarantees that
+  // all input samples will output.  If set to false, any partial packet
+  // at the end of the stream will be dropped.
+  optional bool pad_final_packet = 3 [default = true];
+
+  // Output value type can be squared-magnitude, linear-magnitude,
+  // deciBels (dB, = 20*log10(linear_magnitude)), or std::complex.
+  enum OutputType {
+    SQUARED_MAGNITUDE = 0;
+    LINEAR_MAGNITUDE = 1;
+    DECIBELS = 2;
+    COMPLEX = 3;
+  }
+  optional OutputType output_type = 4 [default = SQUARED_MAGNITUDE];
+
+  // If set to true then the output will be a vector of spectrograms, one for
+  // each channel and the stream will have a MultiStreamTimeSeriesHeader.
+  optional bool allow_multichannel_input = 5 [default = false];
+
+  // Which window to use when computing the FFT.
+  enum WindowType {
+    HANN = 0;
+    HAMMING = 1;
+    COSINE = 2;
+  }
+  optional WindowType window_type = 6 [default = HANN];
+
+  // Support a fixed multiplicative scaling of the output.  This is applied
+  // uniformly regardless of output type (i.e., even dBs are multiplied, not
+  // offset).
+  optional double output_scale = 7 [default = 1.0];
+
+  // If use_local_timestamp is true, the output packet's timestamp is based on
+  // the last sample of the packet and it's inferred from the latest input
+  // packet's timestamp.  If false, the output packet's timestamp is based on
+  // the cumulative timestamping, which is inferred from the intial input
+  // timestamp and the cumulative number of samples.
+  optional bool use_local_timestamp = 8 [default = false];
+}

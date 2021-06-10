@@ -1,0 +1,50 @@
+// Copyright 2019 The MediaPipe Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto2";
+
+package mediapipe;
+
+import "mediapipe/framework/calculator.proto";
+
+message MelSpectrumCalculatorOptions {
+  extend CalculatorOptions {
+    optional MelSpectrumCalculatorOptions ext = 78581812;
+  }
+  // The fields are to populate the config parameters in
+  // audio/dsp/mfcc/mel_filterbank.h
+  // but the names are chose to mirror
+  // audio/hearing/filterbanks/cochlea_gammatone_filterbank.proto
+  // and the default values match those in
+  // speech/greco3/frontend/filter_bank.proto .
+
+  // Total number of frequency bands to use.
+  optional int32 channel_count = 1 [default = 20];
+  // Lower edge of lowest triangular Mel band.
+  optional float min_frequency_hertz = 2 [default = 125.0];
+  // Upper edge of highest triangular Mel band.
+  optional float max_frequency_hertz = 3 [default = 3800.0];
+}
+
+message MfccCalculatorOptions {
+  extend CalculatorOptions {
+    optional MfccCalculatorOptions ext = 78450441;
+  }
+
+  // Specification of the underlying mel filterbank.
+  optional MelSpectrumCalculatorOptions mel_spectrum_params = 1;
+
+  // How many MFCC coefficients to emit.
+  optional uint32 mfcc_count = 2 [default = 13];
+}

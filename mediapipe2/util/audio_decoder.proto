@@ -1,0 +1,53 @@
+// Copyright 2019 The MediaPipe Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto2";
+
+package mediapipe;
+
+import "mediapipe/framework/calculator.proto";
+
+message AudioStreamOptions {
+  // The stream to decode.  Stream indexes start from 0 (audio and video
+  // are handled separately).
+  optional int64 stream_index = 1 [default = 0];
+
+  // Process the file despite this stream not being present.
+  optional bool allow_missing = 2 [default = false];
+
+  // If true, failures to decode a frame of data will be ignored.
+  optional bool ignore_decode_failures = 3 [default = false];
+
+  // Output packets with regressing timestamps. By default those packets are
+  // dropped.
+  optional bool output_regressing_timestamps = 4 [default = false];
+
+  // MPEG PTS timestamps roll over back to 0 after 26.5h. If this flag is set
+  // we detect any rollover and continue incrementing timestamps past this
+  // point. Set this flag if you want non-regressing timestamps for MPEG
+  // content where the PTS may roll over.
+  optional bool correct_pts_for_rollover = 5;
+}
+
+message AudioDecoderOptions {
+  extend CalculatorOptions {
+    optional AudioDecoderOptions ext = 263370674;
+  }
+  repeated AudioStreamOptions audio_stream = 1;
+
+  // The start time in seconds to decode.
+  optional double start_time = 2;
+  // The end time in seconds to decode (inclusive).
+  optional double end_time = 3;
+}

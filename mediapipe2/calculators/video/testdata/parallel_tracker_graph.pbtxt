@@ -1,0 +1,134 @@
+input_stream: "image_cpu_frames"
+input_stream: "start_pos"
+input_stream: "ra_track"
+
+num_threads: 4
+
+node: {
+  calculator: "MotionAnalysisCalculator"
+  input_stream: "VIDEO:image_cpu_frames"
+  output_stream: "CAMERA:camera_motion"
+  output_stream: "FLOW:region_flow"
+
+  options: {
+    [mediapipe.MotionAnalysisCalculatorOptions.ext]: {
+      analysis_options: {
+        analysis_policy: ANALYSIS_POLICY_CAMERA_MOBILE
+
+        flow_options: {
+          # Maybe move down to 50
+          fast_estimation_min_block_size: 100
+          top_inlier_sets: 1
+          frac_inlier_error_threshold: 3e-3
+          downsample_mode: DOWNSAMPLE_NONE
+          verification_distance: 5.0
+          verify_long_feature_acceleration: true
+          verify_long_feature_trigger_ratio: 0.1
+          tracking_options: {
+            max_features: 500
+            adaptive_extraction_levels: 2
+            min_eig_val_settings: {
+              adaptive_lowest_quality_level: 2e-4
+            }
+            klt_tracker_implementation: KLT_OPENCV
+          }
+        }
+
+        motion_options: {
+          label_empty_frames_as_valid: false
+        }
+      }
+    }
+  }
+}
+
+node: {
+  calculator: "FlowPackagerCalculator"
+  input_stream: "FLOW:region_flow"
+  input_stream: "CAMERA:camera_motion"
+  output_stream: "TRACKING:tracking_data"
+
+  options: {
+    [mediapipe.FlowPackagerCalculatorOptions.ext]: {
+      flow_packager_options: {
+        binary_tracking_data_support: false
+      }
+    }
+  }
+}
+
+node: {
+  calculator: "BoxTrackerCalculator"
+  input_stream: "TRACKING:tracking_data"
+  input_stream: "START_POS:start_pos"
+  output_stream: "BOXES:boxes"
+  input_side_packet: "OPTIONS:calculator_options"
+
+  input_stream_handler: {
+    input_stream_handler: "SyncSetInputStreamHandler"
+    options: {
+      [mediapipe.SyncSetInputStreamHandlerOptions.ext]: {
+        sync_set: {
+          tag_index: "TRACKING"
+        }
+        sync_set: {
+          tag_index: "START_POS"
+        }
+      }
+    }
+  }
+
+  options: {
+    [mediapipe.BoxTrackerCalculatorOptions.ext]: {
+      tracker_options: {
+        track_step_options: {
+          track_object_and_camera: true
+          tracking_degrees: TRACKING_DEGREE_OBJECT_PERSPECTIVE
+          object_similarity_min_contd_inliers: 6
+          inlier_spring_force: 0.0
+          static_motion_temporal_ratio: 3e-2
+        }
+      }
+      visualize_tracking_data: false
+      streaming_track_data_cache_size: 100
+    }
+  }
+}
+
+node: {
+  calculator: "BoxTrackerCalculator"
+  input_stream: "TRACKING:tracking_data"
+  input_stream: "RA_TRACK:ra_track"
+  output_stream: "RA_BOXES:ra_boxes"
+  input_side_packet: "OPTIONS:calculator_options"
+
+  input_stream_handler: {
+    input_stream_handler: "SyncSetInputStreamHandler"
+    options: {
+      [mediapipe.SyncSetInputStreamHandlerOptions.ext]: {
+        sync_set: {
+          tag_index: "TRACKING"
+        }
+        sync_set: {
+          tag_index: "RA_TRACK"
+        }
+      }
+    }
+  }
+
+  options: {
+    [mediapipe.BoxTrackerCalculatorOptions.ext]: {
+      tracker_options: {
+        track_step_options: {
+          track_object_and_camera: true
+          tracking_degrees: TRACKING_DEGREE_OBJECT_PERSPECTIVE
+          object_similarity_min_contd_inliers: 6
+          inlier_spring_force: 0.0
+          static_motion_temporal_ratio: 3e-2
+        }
+      }
+      visualize_tracking_data: false
+      streaming_track_data_cache_size: 100
+    }
+  }
+}

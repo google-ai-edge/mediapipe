@@ -1,0 +1,106 @@
+// Copyright 2019 The MediaPipe Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto2";
+
+package mediapipe.autoflip;
+
+import "mediapipe/examples/desktop/autoflip/quality/cropping.proto";
+import "mediapipe/framework/calculator.proto";
+
+// Options for the SceneCroppingCalculator.
+message SceneCroppingCalculatorOptions {
+  extend mediapipe.CalculatorOptions {
+    optional SceneCroppingCalculatorOptions ext = 284806831;
+  }
+
+  // Target frame size - this has to be even (for ffmpeg encoding).
+  optional int32 target_width = 1;
+  optional int32 target_height = 2;
+
+  // Choices for target size specification.
+  enum TargetSizeType {
+    // Unknown type (needed by ProtoBestPractices to ensure consistent behavior
+    // across proto2 and proto3). This type should not be used.
+    UNKNOWN = 0;
+    // Directly uses the target dimension given above.
+    USE_TARGET_DIMENSION = 1;
+    // Uses the target dimension to compute the target aspect ratio, but keeps
+    // original height/width. If the resulting size for the other dimension is
+    // odd, it is rounded down to an even size.
+    KEEP_ORIGINAL_HEIGHT = 2;
+    KEEP_ORIGINAL_WIDTH = 3;
+    // Used on conjuntion with external_aspect_ratio, create the largest sized
+    // output without upscaling the video.
+    MAXIMIZE_TARGET_DIMENSION = 4;
+    // Uses original dimensions to calculate aspect ratio.
+    KEEP_ORIGINAL_DIMENSION = 5;
+  }
+  optional TargetSizeType target_size_type = 3 [default = USE_TARGET_DIMENSION];
+
+  // Forces a flush of the frame buffer after this number of frames even if
+  // there is not a shot boundary.
+  optional int32 max_scene_size = 4 [default = 600];
+
+  // Number of frames from prior buffer to be used to smooth out camera
+  // trajectory when it was a forced flush.
+  optional int32 prior_frame_buffer_size = 5 [default = 30, deprecated = true];
+  // Set camera motion type along with parameters.  Must select between the two
+  // provided options.
+  optional CameraMotionOptions camera_motion_options = 14;
+
+  // Options for computing key frame crop regions using the
+  // FrameCropRegionComputer.
+  // **** Note: You shall NOT manually set the target width and height fields
+  // inside this field as they will be overridden internally in the calculator
+  // (i.e. automatically computed from target aspect ratio).
+  optional KeyFrameCropOptions key_frame_crop_options = 6;
+
+  // Options for analyzing scene camera motion and populating SalientPointFrames
+  // using the SceneCameraMotionAnalyzer.
+  optional SceneCameraMotionAnalyzerOptions
+      scene_camera_motion_analyzer_options = 7;
+
+  // If the fraction of frames with solid background in one shot exceeds this
+  // threshold, use a solid color for background in padding for this shot.
+  optional float solid_background_frames_padding_fraction = 8 [default = 0.6];
+
+  // Options for padding using the PaddingEffectGenerator (copied from
+  // ad_creation/calculators/universal_padding_calculator.proto).
+  message PaddingEffectParameters {
+    // Contrast adjustment for padding background. This value should between 0
+    // and 1. The smaller the value, the darker the background. 1 means no
+    // contrast change.
+    optional float background_contrast = 1 [default = 1.0];
+    // The cv::Size() parameter used in creating blurry effects for padding
+    // backgrounds.
+    optional int32 blur_cv_size = 2 [default = 200];
+    // The opacity of the black layer overlaied on top of the background. The
+    // value should be within [0, 1], in which 0 means totally transparent, and
+    // 1 means totally opaque.
+    optional float overlay_opacity = 3 [default = 0.6];
+  }
+  optional PaddingEffectParameters padding_parameters = 9;
+
+  // If set and input "KEY_FRAMES" not provided, uses these keyframe values.
+  optional int32 video_features_width = 10;
+  optional int32 video_features_height = 11;
+
+  // If a user hint is provided on a scene, use only this signal for cropping
+  // and camera motion.
+  optional bool user_hint_override = 12;
+
+  // An opacity used to render cropping windows for visualization purposes.
+  optional float viz_overlay_opacity = 13 [default = 0.7];
+}

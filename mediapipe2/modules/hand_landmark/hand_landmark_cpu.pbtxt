@@ -1,0 +1,164 @@
+# MediaPipe graph to detect/predict hand landmarks on CPU.
+
+type: "HandLandmarkCpu"
+
+# CPU image. (ImageFrame)
+input_stream: "IMAGE:image"
+# ROI (region of interest) within the given image where a palm/hand is located.
+# (NormalizedRect)
+input_stream: "ROI:hand_rect"
+
+# 21 hand landmarks within the given ROI. (NormalizedLandmarkList)
+# NOTE: if a hand is not present within the given ROI, for this particular
+# timestamp there will not be an output packet in the LANDMARKS stream. However,
+# the MediaPipe framework will internally inform the downstream calculators of
+# the absence of this packet so that they don't wait for it unnecessarily.
+output_stream: "LANDMARKS:hand_landmarks"
+
+# Handedness of the detected hand (i.e. is hand left or right).
+# (ClassificationList)
+output_stream: "HANDEDNESS:handedness"
+
+# Transforms a region of image into a 224x224 tensor while keeping the aspect
+# ratio, and therefore may result in potential letterboxing.
+node {
+  calculator: "ImageToTensorCalculator"
+  input_stream: "IMAGE:image"
+  input_stream: "NORM_RECT:hand_rect"
+  output_stream: "TENSORS:input_tensor"
+  output_stream: "LETTERBOX_PADDING:letterbox_padding"
+  options: {
+    [mediapipe.ImageToTensorCalculatorOptions.ext] {
+      output_tensor_width: 224
+      output_tensor_height: 224
+      keep_aspect_ratio: true
+      output_tensor_float_range {
+        min: 0.0
+        max: 1.0
+      }
+    }
+  }
+}
+
+# Runs a TensorFlow Lite model on CPU that takes an image tensor and outputs a
+# vector of tensors representing, for instance, detection boxes/keypoints and
+# scores.
+node {
+  calculator: "InferenceCalculator"
+  input_stream: "TENSORS:input_tensor"
+  output_stream: "TENSORS:output_tensors"
+  options: {
+    [mediapipe.InferenceCalculatorOptions.ext] {
+      model_path: "mediapipe/modules/hand_landmark/hand_landmark.tflite"
+      delegate { xnnpack {} }
+    }
+    #
+  }
+}
+
+# Splits a vector of tensors to multiple vectors according to the ranges
+# specified in option.
+node {
+  calculator: "SplitTensorVectorCalculator"
+  input_stream: "output_tensors"
+  output_stream: "landmark_tensors"
+  output_stream: "hand_flag_tensor"
+  output_stream: "handedness_tensor"
+  options: {
+    [mediapipe.SplitVectorCalculatorOptions.ext] {
+      ranges: { begin: 0 end: 1 }
+      ranges: { begin: 1 end: 2 }
+      ranges: { begin: 2 end: 3 }
+    }
+  }
+}
+
+# Converts the hand-flag tensor into a float that represents the confidence
+# score of hand presence.
+node {
+  calculator: "TensorsToFloatsCalculator"
+  input_stream: "TENSORS:hand_flag_tensor"
+  output_stream: "FLOAT:hand_presence_score"
+}
+
+# Applies a threshold to the confidence score to determine whether a hand is
+# present.
+node {
+  calculator: "ThresholdingCalculator"
+  input_stream: "FLOAT:hand_presence_score"
+  output_stream: "FLAG:hand_presence"
+  options: {
+    [mediapipe.ThresholdingCalculatorOptions.ext] {
+      threshold: 0.5
+    }
+  }
+}
+
+# Drops handedness tensor if hand is not present.
+node {
+  calculator: "GateCalculator"
+  input_stream: "handedness_tensor"
+  input_stream: "ALLOW:hand_presence"
+  output_stream: "ensured_handedness_tensor"
+}
+
+# Converts the handedness tensor into a float that represents the classification
+# score of handedness.
+node {
+  calculator: "TensorsToClassificationCalculator"
+  input_stream: "TENSORS:ensured_handedness_tensor"
+  output_stream: "CLASSIFICATIONS:handedness"
+  options: {
+    [mediapipe.TensorsToClassificationCalculatorOptions.ext] {
+      top_k: 1
+      label_map_path: "mediapipe/modules/hand_landmark/handedness.txt"
+      binary_classification: true
+    }
+  }
+}
+
+# Drops landmarks tensors if hand is not present.
+node {
+  calculator: "GateCalculator"
+  input_stream: "landmark_tensors"
+  input_stream: "ALLOW:hand_presence"
+  output_stream: "ensured_landmark_tensors"
+}
+
+# Decodes the landmark tensors into a list of landmarks, where the landmark
+# coordinates are normalized by the size of the input image to the model.
+node {
+  calculator: "TensorsToLandmarksCalculator"
+  input_stream: "TENSORS:ensured_landmark_tensors"
+  output_stream: "NORM_LANDMARKS:landmarks"
+  options: {
+    [mediapipe.TensorsToLandmarksCalculatorOptions.ext] {
+      num_landmarks: 21
+      input_image_width: 224
+      input_image_height: 224
+      # The additional scaling factor is used to account for the Z coordinate
+      # distribution in the training data.
+      normalize_z: 0.4
+    }
+  }
+}
+
+# Adjusts landmarks (already normalized to [0.f, 1.f]) on the letterboxed hand
+# image (after image transformation with the FIT scale mode) to the
+# corresponding locations on the same image with the letterbox removed (hand
+# image before image transformation).
+node {
+  calculator: "LandmarkLetterboxRemovalCalculator"
+  input_stream: "LANDMARKS:landmarks"
+  input_stream: "LETTERBOX_PADDING:letterbox_padding"
+  output_stream: "LANDMARKS:scaled_landmarks"
+}
+
+# Projects the landmarks from the cropped hand image to the corresponding
+# locations on the full image before cropping (input to the graph).
+node {
+  calculator: "LandmarkProjectionCalculator"
+  input_stream: "NORM_LANDMARKS:scaled_landmarks"
+  input_stream: "NORM_RECT:hand_rect"
+  output_stream: "NORM_LANDMARKS:hand_landmarks"
+}

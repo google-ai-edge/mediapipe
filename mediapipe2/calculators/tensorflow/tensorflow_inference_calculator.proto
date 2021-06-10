@@ -1,0 +1,88 @@
+// Copyright 2019 The MediaPipe Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto2";
+
+package mediapipe;
+
+import "mediapipe/framework/calculator.proto";
+
+message TensorFlowInferenceCalculatorOptions {
+  extend mediapipe.CalculatorOptions {
+    optional TensorFlowInferenceCalculatorOptions ext = 113766539;
+  }
+
+  // The signature_name specifies the mapping between stream tags and TensorFlow
+  // session tensors. The mapping between tags and tensors is encoded as a
+  // ModelManifest signature. The signatures are keyed by name and the
+  // named_signature matching signature_name is used by the calculator to
+  // match stream tags to tensors. The named_signature must be a
+  // ModelManifest.generic_signature with map keys that are valid tags (i.e.
+  // [A-Z0-9]*).
+  optional string signature_name = 1;
+
+  // How many elements to batch together and feed into the graph.
+  // Setting the batch_size to 1 disables batching entirely. You still may or
+  // may not need to add the batch dimension via the option below depending on
+  // the input data shape and the model's expectations.
+  optional int32 batch_size = 2;
+
+  // Whether to add a 0th dimension to the input tensors for batching.
+  // If the 0th dimension is the batch dimension, then the tensors are
+  // concatenated on that dimension. If the 0th is a data dimension, then a 0th
+  // dimension is added before concatenating. If added, the extra dimension is
+  // removed before outputing the tensor. Examples of each case: If you want
+  // to batch spectra of audio over time for an LSTM, a time-frequency
+  // representation has a 0th dimension as the batch dimension. If you want to
+  // batch frames of video that are [width, height, channels], the batch
+  // dimension needs to be added.
+  optional bool add_batch_dim_to_tensors = 3 [default = true];
+
+  // These pairs represent feed and fetch tensors for handling recurrent state.
+  // Each entry is a colon separated pair of strings. The first half of each
+  // string is the signature tag for the feed tensor for recurrent state. The
+  // second half of the string is the signature tag for the fetch tensor for the
+  // recurrent state. More than two colon separated strings is an error. During
+  // inference, The fetch tensor is fetched at every timestep and will be output
+  // if there is a corresponding output stream. The behavior of the feed tensor
+  // is determined by the following conditions in order: If the MediaPipe input
+  // stream with the matching tag has a packet available, then the input
+  // packet's tensor is passed in. If no input packet is available and we have
+  // fetched a tensor from the previous time step, we will feed the tensor from
+  // the previous timestep back in. If neither tensor is available, no tensor
+  // will be fed into the model.
+  // If this flag is set, batch_size must be 1. Do not list recurrent_tag_pair
+  // tags as initial_state_tags because those are only fed once.
+  repeated string recurrent_tag_pair = 4;
+
+  // If set to true, skips input for which any of the features are missing.
+  // If set to false, requires that all input features to be available. If not,
+  // it will report an error for the calculator.
+  optional bool skip_on_missing_features = 5 [default = false];
+
+  // Maximum allowed concurrent Tensorflow session run calls in the calculator
+  // to avoid overloading local compute hardware such as TPU. Note that this
+  // only works in the local process, not "globally" across multiple processes
+  // or replicas (if any). Default to 0, i.e. no limit.
+  optional int32 max_concurrent_session_runs = 6 [default = 0];
+
+  // If turned on, the Calculator expects a vector of batched packages as input.
+  // This will make sure that you can turn on max_in_flight for batch_size
+  // greater than 1. Otherwise it results in problems of none-monotonically
+  // increasing timestamps.
+  // Use BatchSequentialCalculator to create the batches. The batch_size
+  // should agree for both calculators. All the data in a batch is processed
+  // together. The BatchSequentialCalculator can't run with max_in_flight.
+  optional bool batched_input = 7;
+}

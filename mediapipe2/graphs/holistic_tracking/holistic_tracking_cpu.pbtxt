@@ -1,0 +1,75 @@
+# Tracks and renders pose + hands + face landmarks.
+
+# CPU image. (ImageFrame)
+input_stream: "input_video"
+
+# CPU image with rendered results. (ImageFrame)
+output_stream: "output_video"
+
+# Throttles the images flowing downstream for flow control. It passes through
+# the very first incoming image unaltered, and waits for downstream nodes
+# (calculators and subgraphs) in the graph to finish their tasks before it
+# passes through another image. All images that come in while waiting are
+# dropped, limiting the number of in-flight images in most part of the graph to
+# 1. This prevents the downstream nodes from queuing up incoming images and data
+# excessively, which leads to increased latency and memory usage, unwanted in
+# real-time mobile applications. It also eliminates unnecessarily computation,
+# e.g., the output produced by a node may get dropped downstream if the
+# subsequent nodes are still busy processing previous inputs.
+node {
+  calculator: "FlowLimiterCalculator"
+  input_stream: "input_video"
+  input_stream: "FINISHED:output_video"
+  input_stream_info: {
+    tag_index: "FINISHED"
+    back_edge: true
+  }
+  output_stream: "throttled_input_video"
+  node_options: {
+    [type.googleapis.com/mediapipe.FlowLimiterCalculatorOptions] {
+      max_in_flight: 1
+      max_in_queue: 1
+      # Timeout is disabled (set to 0) as first frame processing can take more
+      # than 1 second.
+      in_flight_timeout: 0
+    }
+  }
+}
+
+node {
+  calculator: "HolisticLandmarkCpu"
+  input_stream: "IMAGE:throttled_input_video"
+  output_stream: "POSE_LANDMARKS:pose_landmarks"
+  output_stream: "POSE_ROI:pose_roi"
+  output_stream: "POSE_DETECTION:pose_detection"
+  output_stream: "FACE_LANDMARKS:face_landmarks"
+  output_stream: "LEFT_HAND_LANDMARKS:left_hand_landmarks"
+  output_stream: "RIGHT_HAND_LANDMARKS:right_hand_landmarks"
+}
+
+# Gets image size.
+node {
+  calculator: "ImagePropertiesCalculator"
+  input_stream: "IMAGE:throttled_input_video"
+  output_stream: "SIZE:image_size"
+}
+
+# Converts pose, hands and face landmarks to a render data vector.
+node {
+  calculator: "HolisticTrackingToRenderData"
+  input_stream: "IMAGE_SIZE:image_size"
+  input_stream: "POSE_LANDMARKS:pose_landmarks"
+  input_stream: "POSE_ROI:pose_roi"
+  input_stream: "LEFT_HAND_LANDMARKS:left_hand_landmarks"
+  input_stream: "RIGHT_HAND_LANDMARKS:right_hand_landmarks"
+  input_stream: "FACE_LANDMARKS:face_landmarks"
+  output_stream: "RENDER_DATA_VECTOR:render_data_vector"
+}
+
+# Draws annotations and overlays them on top of the input images.
+node {
+  calculator: "AnnotationOverlayCalculator"
+  input_stream: "IMAGE:throttled_input_video"
+  input_stream: "VECTOR:render_data_vector"
+  output_stream: "IMAGE:output_video"
+}

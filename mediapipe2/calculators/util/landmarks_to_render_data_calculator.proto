@@ -1,0 +1,73 @@
+// Copyright 2019 The MediaPipe Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto2";
+
+package mediapipe;
+
+import "mediapipe/framework/calculator.proto";
+import "mediapipe/util/color.proto";
+
+message LandmarksToRenderDataCalculatorOptions {
+  extend CalculatorOptions {
+    optional LandmarksToRenderDataCalculatorOptions ext = 258435389;
+  }
+
+  // Specifies the landmarks to be connected in the drawing. For example, the
+  // landmark_connections value of [0, 1, 1, 2] specifies two connections: one
+  // that connects landmarks with index 0 and 1, and another that connects
+  // landmarks with index 1 and 2.
+  repeated int32 landmark_connections = 1;
+
+  // Color of the landmarks.
+  optional Color landmark_color = 2;
+  // Color of the connections.
+  optional Color connection_color = 3;
+
+  // Thickness of the drawing of landmarks and connections.
+  optional double thickness = 4 [default = 1.0];
+
+  // Change color and size of rendered landmarks based on its z value.
+  optional bool visualize_landmark_depth = 5 [default = true];
+
+  // Use landmarks visibility while rendering landmarks and connections. If
+  // landmark is not visible, neither it nor adjacent connections will be
+  // rendered.
+  optional bool utilize_visibility = 6 [default = false];
+
+  // Threshold to determine visibility of the landmark. Landmark with visibility
+  // greater or equal than threshold is considered visible.
+  optional double visibility_threshold = 7 [default = 0.0];
+
+  // Use landmarks presence while rendering landmarks and connections. If
+  // landmark is not present, neither it nor adjacent connections will be
+  // rendered.
+  optional bool utilize_presence = 8 [default = false];
+
+  // Threshold to determine presence of the landmark. Landmark with presence
+  // greater or equal than threshold is considered present.
+  optional double presence_threshold = 9 [default = 0.0];
+
+  // Min thickness of the drawing for landmark circle.
+  optional double min_depth_circle_thickness = 10 [default = 0.0];
+
+  // Max thickness of the drawing for landmark circle.
+  optional double max_depth_circle_thickness = 11 [default = 18.0];
+
+  // Gradient color for the lines connecting landmarks at the minimum depth.
+  optional Color min_depth_line_color = 12;
+
+  // Gradient color for the lines connecting landmarks at the maximum depth.
+  optional Color max_depth_line_color = 13;
+}

@@ -1,0 +1,52 @@
+// Copyright 2019 The MediaPipe Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto2";
+
+package mediapipe;
+
+import "mediapipe/framework/calculator.proto";
+
+message LappedTensorBufferCalculatorOptions {
+  extend mediapipe.CalculatorOptions {
+    optional LappedTensorBufferCalculatorOptions ext = 175222228;
+  }
+
+  // The output tensor will have this many tensors concatenated together along
+  // their first dimension.
+  optional int32 buffer_size = 1;
+
+  // The overlap determines how many input tensors are shared between frames.
+  // Because the input tensors may have a non-singleton first dimension, this
+  // is not necessarily the number of overlapping entries in the first
+  // dimension.
+  optional int32 overlap = 2;
+
+  // If true, inserts a singleton first dimension before concatenating the
+  // tensors together.
+  optional bool add_batch_dim_to_tensors = 3 [default = false];
+
+  // Timestamp offset for output batch. The valid range is [0, buffer_size).
+  // The timestamp of the output tensor will match the timestamp of the input
+  // correspeonding to the offset. For example, setting to 0 will output at the
+  // timestamp matching the first input tensor. Setting the timestamp_offset to
+  // int((N-1) / 2) output at the timestamp matching the middle input tensor.
+  // This is useful for aligning the timestamp to be centered on the input
+  // range.
+  optional int32 timestamp_offset = 4 [default = 0];
+
+  // Amount of padding (repeating of first/last value) to add to the beginning
+  // and end of the input stream.
+  optional int32 padding = 5;
+}
