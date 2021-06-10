@@ -7,3 +7,4 @@ six
 wheel
 gradio
 mediapipe
+torch
