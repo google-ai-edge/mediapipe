@@ -5,3 +5,4 @@ opencv-contrib-python
 protobuf>=3.11.4
 six
 wheel
+gradio
