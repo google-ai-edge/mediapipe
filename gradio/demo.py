@@ -36,7 +36,7 @@ def inference(image):
 
 title = "Face Mesh"
 description = "demo for Face Mesh. To use it, simply upload your image, or click one of the examples to load them. Read more at the links below."
-article = "<p style='text-align: center'><a href='https://arxiv.org/abs/2006.10962'>Attention Mesh: High-fidelity Face Mesh Prediction in Real-time</a> | <a href='https://github.com/google/mediapipe'>Github Repo</a></p>"
+article = "<p style='text-align: center'><a href='https://arxiv.org/abs/1907.06724'>Real-time Facial Surface Geometry from Monocular Video on Mobile GPUs</a> | <a href='https://github.com/google/mediapipe'>Github Repo</a></p>"
 
 gr.Interface(
     inference, 
