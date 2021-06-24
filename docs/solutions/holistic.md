@@ -176,6 +176,16 @@ A list of pose landmarks. Each landmark consists of the following:
 *   `visibility`: A value in `[0.0, 1.0]` indicating the likelihood of the
     landmark being visible (present and not occluded) in the image.
 
+#### pose_world_landmarks
+
+Another list of pose landmarks in world coordinates. Each landmark consists of
+the following:
+
+*   `x`, `y` and `z`: Real-world 3D coordinates in meters with the origin at the
+    center between hips.
+*   `visibility`: Identical to that defined in the corresponding
+    [pose_landmarks](#pose_landmarks).
+
 #### face_landmarks
 
 A list of 468 face landmarks. Each landmark consists of `x`, `y` and `z`. `x`
@@ -245,6 +255,9 @@ with mp_holistic.Holistic(
     mp_drawing.draw_landmarks(
         annotated_image, results.pose_landmarks, mp_holistic.POSE_CONNECTIONS)
     cv2.imwrite('/tmp/annotated_image' + str(idx) + '.png', annotated_image)
+    # Plot pose world landmarks.
+    mp_drawing.plot_landmarks(
+        results.pose_world_landmarks, mp_holistic.POSE_CONNECTIONS)
 
 # For webcam input:
 cap = cv2.VideoCapture(0)

@@ -42,7 +42,7 @@ android_binary(
         "//mediapipe/graphs/face_effect/data:glasses.binarypb",
         "//mediapipe/graphs/face_effect/data:glasses.pngblob",
         "//mediapipe/graphs/face_effect:face_effect_gpu.binarypb",
-        "//mediapipe/modules/face_detection:face_detection_front.tflite",
+        "//mediapipe/modules/face_detection:face_detection_short_range.tflite",
         "//mediapipe/modules/face_geometry/data:geometry_pipeline_metadata_detection.binarypb",
         "//mediapipe/modules/face_geometry/data:geometry_pipeline_metadata_landmarks.binarypb",
         "//mediapipe/modules/face_landmark:face_landmark.tflite",

@@ -41,7 +41,7 @@ node: {
 
 # Subgraph that detects faces.
 node {
-  calculator: "FaceDetectionFrontCpu"
+  calculator: "FaceDetectionShortRangeCpu"
   input_stream: "IMAGE:input_video_cpu"
   output_stream: "DETECTIONS:face_detections"
 }

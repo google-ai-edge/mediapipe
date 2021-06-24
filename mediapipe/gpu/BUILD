@@ -585,6 +585,7 @@ cc_library(
         "//mediapipe:apple": [
             ":gl_calculator_helper_ios",
             "//mediapipe/objc:util",
+            "//mediapipe/objc:CFHolder",
         ],
     }),
 )
@@ -714,11 +715,12 @@ cc_library(
     deps = [
         ":gl_calculator_helper",
         "//mediapipe/framework:calculator_framework",
-        "//mediapipe/framework:timestamp",
         "//mediapipe/framework/formats:image_frame",
-        "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
-    ],
+    ] + select({
+        "//conditions:default": [],
+        "//mediapipe:apple": ["//mediapipe/objc:util"],
+    }),
     alwayslink = 1,
 )
 

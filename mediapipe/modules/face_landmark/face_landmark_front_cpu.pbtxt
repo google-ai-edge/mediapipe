@@ -2,8 +2,8 @@
 # executed on CPU.) This graph tries to skip face detection as much as possible
 # by using previously detected/predicted landmarks for new images.
 #
-# It is required that "face_detection_front.tflite" is available at
-# "mediapipe/modules/face_detection/face_detection_front.tflite"
+# It is required that "face_detection_short_range.tflite" is available at
+# "mediapipe/modules/face_detection/face_detection_short_range.tflite"
 # path during execution.
 #
 # It is required that "face_landmark.tflite" is available at
@@ -89,7 +89,7 @@ node {
 
 # Detects faces.
 node {
-  calculator: "FaceDetectionFrontCpu"
+  calculator: "FaceDetectionShortRangeCpu"
   input_stream: "IMAGE:gated_image"
   output_stream: "DETECTIONS:all_face_detections"
 }

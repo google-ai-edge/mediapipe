@@ -1,21 +1,26 @@
 # MediaPipe graph to detect faces. (CPU input, and inference is executed on
 # CPU.)
 #
-# It is required that "face_detection_front.tflite" is available at
-# "mediapipe/modules/face_detection/face_detection_front.tflite"
+# It is required that "face_detection_short_range.tflite" is available at
+# "mediapipe/modules/face_detection/face_detection_short_range.tflite"
 # path during execution.
 #
 # EXAMPLE:
 #   node {
-#     calculator: "FaceDetectionFrontGpu"
+#     calculator: "FaceDetectionShortRangeByRoiGpu"
 #     input_stream: "IMAGE:image"
+#     input_stream: "ROI:roi"
 #     output_stream: "DETECTIONS:face_detections"
 #   }
 
-type: "FaceDetectionFrontGpu"
+type: "FaceDetectionShortRangeByRoiGpu"
 
 # GPU image. (GpuBuffer)
 input_stream: "IMAGE:image"
+
+# ROI (region of interest) within the given image where faces should be
+# detected. (NormalizedRect)
+input_stream: "ROI:roi"
 
 # Detected faces. (std::vector<Detection>)
 # NOTE: there will not be an output packet in the DETECTIONS stream for this
@@ -32,12 +37,12 @@ node: {
   output_stream: "IMAGE:multi_backend_image"
 }
 
-# Transforms the input image into a 128x128 tensor while keeping the aspect
-# ratio (what is expected by the corresponding face detection model), resulting
-# in potential letterboxing in the transformed image.
-node: {
+# Transforms specified region of image into 128x128 tensor keeping aspect ratio
+# (padding tensor if needed).
+node {
   calculator: "ImageToTensorCalculator"
   input_stream: "IMAGE:multi_backend_image"
+  input_stream: "NORM_RECT:roi"
   output_stream: "TENSORS:input_tensors"
   output_stream: "MATRIX:transform_matrix"
   options: {
@@ -64,14 +69,14 @@ node {
   output_stream: "TENSORS:detection_tensors"
   options: {
     [mediapipe.InferenceCalculatorOptions.ext] {
-      model_path: "mediapipe/modules/face_detection/face_detection_front.tflite"
+      model_path: "mediapipe/modules/face_detection/face_detection_short_range.tflite"
     }
   }
 }
 
 # Performs tensor post processing to generate face detections.
 node {
-  calculator: "FaceDetectionFrontCommon"
+  calculator: "FaceDetectionShortRangeCommon"
   input_stream: "TENSORS:detection_tensors"
   input_stream: "MATRIX:transform_matrix"
   output_stream: "DETECTIONS:detections"

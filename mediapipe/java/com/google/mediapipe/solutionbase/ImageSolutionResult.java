@@ -39,6 +39,9 @@ public class ImageSolutionResult implements SolutionResult {
 
   // Returns the corresponding input image as a {@link Bitmap}.
   public Bitmap inputBitmap() {
+    if (imagePacket == null) {
+      return null;
+    }
     if (cachedBitmap != null) {
       return cachedBitmap;
     }
@@ -49,6 +52,9 @@ public class ImageSolutionResult implements SolutionResult {
   // Returns the corresponding input image as a {@link TextureFrame}. The caller must release the
   // acquired {@link TextureFrame} after using.
   public TextureFrame acquireTextureFrame() {
+    if (imagePacket == null) {
+      return null;
+    }
     return PacketGetter.getTextureFrame(imagePacket);
   }
 

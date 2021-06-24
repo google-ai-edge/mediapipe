@@ -32,38 +32,38 @@ from mediapipe.python.solutions import face_mesh as mp_faces
 TEST_IMAGE_PATH = 'mediapipe/python/solutions/testdata'
 DIFF_THRESHOLD = 5  # pixels
 EYE_INDICES_TO_LANDMARKS = {
-    33: [178, 345],
-    7: [179, 348],
-    163: [178, 352],
-    144: [179, 357],
-    145: [179, 365],
-    153: [179, 371],
-    154: [178, 378],
-    155: [177, 381],
-    133: [177, 383],
-    246: [175, 347],
-    161: [174, 350],
-    160: [172, 355],
-    159: [170, 362],
-    158: [171, 368],
-    157: [172, 375],
-    173: [175, 380],
-    263: [176, 467],
-    249: [177, 464],
-    390: [177, 460],
-    373: [178, 455],
-    374: [179, 448],
-    380: [179, 441],
-    381: [178, 435],
-    382: [177, 432],
-    362: [177, 430],
-    466: [175, 465],
-    388: [173, 462],
-    387: [171, 457],
-    386: [170, 450],
-    385: [171, 444],
-    384: [172, 437],
-    398: [175, 432]
+    33: [345, 178],
+    7: [348, 179],
+    163: [352, 178],
+    144: [357, 179],
+    145: [365, 179],
+    153: [371, 179],
+    154: [378, 178],
+    155: [381, 177],
+    133: [383, 177],
+    246: [347, 175],
+    161: [350, 174],
+    160: [355, 172],
+    159: [362, 170],
+    158: [368, 171],
+    157: [375, 172],
+    173: [380, 175],
+    263: [467, 176],
+    249: [464, 177],
+    390: [460, 177],
+    373: [455, 178],
+    374: [448, 179],
+    380: [441, 179],
+    381: [435, 178],
+    382: [432, 177],
+    362: [430, 177],
+    466: [465, 175],
+    388: [462, 173],
+    387: [457, 171],
+    386: [450, 170],
+    385: [444, 171],
+    384: [437, 172],
+    398: [432, 175]
 }
 
 
@@ -99,6 +99,7 @@ class FaceMeshTest(parameterized.TestCase):
     image_path = os.path.join(os.path.dirname(__file__),
                               'testdata/portrait.jpg')
     image = cv2.imread(image_path)
+    rows, cols, _ = image.shape
     with mp_faces.FaceMesh(
         static_image_mode=static_image_mode,
         min_detection_confidence=0.5) as faces:
@@ -108,9 +109,9 @@ class FaceMeshTest(parameterized.TestCase):
         multi_face_landmarks = []
         for landmarks in results.multi_face_landmarks:
           self.assertLen(landmarks.landmark, 468)
-          x = [landmark.x for landmark in landmarks.landmark]
-          y = [landmark.y for landmark in landmarks.landmark]
-          face_landmarks = np.transpose(np.stack((y, x))) * image.shape[0:2]
+          x = [landmark.x * cols for landmark in landmarks.landmark]
+          y = [landmark.y * rows for landmark in landmarks.landmark]
+          face_landmarks = np.column_stack((x, y))
           multi_face_landmarks.append(face_landmarks)
         self.assertLen(multi_face_landmarks, 1)
         # Verify the eye landmarks are correct as sanity check.

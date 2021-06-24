@@ -31,7 +31,7 @@ node {
 
 # Subgraph that detects faces.
 node {
-  calculator: "FaceDetectionFrontGpu"
+  calculator: "FaceDetectionShortRangeGpu"
   input_stream: "IMAGE:throttled_input_video"
   output_stream: "DETECTIONS:face_detections"
 }

@@ -14,17 +14,27 @@ nav_order: 30
 
 ### [Face Detection](https://google.github.io/mediapipe/solutions/face_detection)
 
-*   Face detection model for front-facing/selfie camera:
-    [TFLite model](https://github.com/google/mediapipe/tree/master/mediapipe/modules/face_detection/face_detection_front.tflite),
+*   Short-range model (best for faces within 2 meters from the camera):
+    [TFLite model](https://github.com/google/mediapipe/tree/master/mediapipe/modules/face_detection/face_detection_short_range.tflite),
     [TFLite model quantized for EdgeTPU/Coral](https://github.com/google/mediapipe/tree/master/mediapipe/examples/coral/models/face-detector-quantized_edgetpu.tflite),
     [Model card](https://mediapipe.page.link/blazeface-mc)
-*   Face detection model for back-facing camera:
-    [TFLite model](https://github.com/google/mediapipe/tree/master/mediapipe/modules/face_detection/face_detection_back.tflite),
+*   Full-range model (dense, best for faces within 5 meters from the camera):
+    [TFLite model](https://github.com/google/mediapipe/tree/master/mediapipe/modules/face_detection/face_detection_full_range.tflite),
     [Model card](https://mediapipe.page.link/blazeface-back-mc)
-*   Face detection model for back-facing camera (sparse):
-    [TFLite model](https://github.com/google/mediapipe/tree/master/mediapipe/modules/face_detection/face_detection_back_sparse.tflite),
+*   Full-range model (sparse, best for faces within 5 meters from the camera):
+    [TFLite model](https://github.com/google/mediapipe/tree/master/mediapipe/modules/face_detection/face_detection_full_range_sparse.tflite),
     [Model card](https://mediapipe.page.link/blazeface-back-sparse-mc)
 
+Full-range dense and sparse models have the same quality in terms of
+[F-score](https://en.wikipedia.org/wiki/F-score) however differ in underlying
+metrics. The dense model is slightly better in
+[Recall](https://en.wikipedia.org/wiki/Precision_and_recall) whereas the sparse
+model outperforms the dense one in
+[Precision](https://en.wikipedia.org/wiki/Precision_and_recall). Speed-wise
+sparse model is ~30% faster when executing on CPU via
+[XNNPACK](https://github.com/google/XNNPACK) whereas on GPU the models
+demonstrate comparable latencies. Depending on your application, you may prefer
+one over the other.
 
 ### [Face Mesh](https://google.github.io/mediapipe/solutions/face_mesh)
 

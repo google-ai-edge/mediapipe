@@ -12,6 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <memory>
+
+#include "mediapipe/framework/formats/image_frame.h"
 #include "mediapipe/gpu/gl_calculator_helper_impl.h"
 #include "mediapipe/gpu/gpu_buffer_format.h"
 #include "mediapipe/gpu/gpu_shared_data_internal.h"
@@ -176,10 +179,8 @@ GlTexture GlCalculatorHelperImpl::MapGlTextureBuffer(
 GlTextureBufferSharedPtr GlCalculatorHelperImpl::MakeGlTextureBuffer(
     const ImageFrame& image_frame) {
   CHECK(gl_context_->IsCurrent());
-  auto buffer = GlTextureBuffer::Create(
-      image_frame.Width(), image_frame.Height(),
-      GpuBufferFormatForImageFormat(image_frame.Format()),
-      image_frame.PixelData());
+
+  auto buffer = GlTextureBuffer::Create(image_frame);
 
   if (buffer->format_ != GpuBufferFormat::kUnknown) {
     glBindTexture(GL_TEXTURE_2D, buffer->name_);

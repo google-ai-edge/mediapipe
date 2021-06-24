@@ -43,7 +43,7 @@ node {
 # to refine face ROI for further landmark detection as ROI calculated from
 # pose landmarks may be inaccurate.
 node {
-  calculator: "FaceDetectionFrontByRoiGpu"
+  calculator: "FaceDetectionShortRangeByRoiGpu"
   input_stream: "IMAGE:input_video"
   input_stream: "ROI:face_roi_from_pose"
   output_stream: "DETECTIONS:face_detections"
@@ -51,7 +51,7 @@ node {
 
 # Calculates refined face ROI.
 node {
-  calculator: "FaceDetectionFrontDetectionsToRoi",
+  calculator: "FaceDetectionFrontDetectionsToRoi"
   input_stream: "DETECTIONS:face_detections"
   input_stream: "IMAGE_SIZE:image_size"
   output_stream: "ROI:face_roi_from_detection"

@@ -194,9 +194,22 @@ A list of pose landmarks. Each landmark consists of the following:
 *   `z`: Represents the landmark depth with the depth at the midpoint of hips
     being the origin, and the smaller the value the closer the landmark is to
     the camera. The magnitude of `z` uses roughly the same scale as `x`.
-
 *   `visibility`: A value in `[0.0, 1.0]` indicating the likelihood of the
     landmark being visible (present and not occluded) in the image.
+
+#### pose_world_landmarks
+
+*Fig 5. Example of MediaPipe Pose real-world 3D coordinates.* |
+:-----------------------------------------------------------: |
+<video autoplay muted loop preload style="height: auto; width: 480px"><source src="../images/mobile/pose_world_landmarks.mp4" type="video/mp4"></video> |
+
+Another list of pose landmarks in world coordinates. Each landmark consists of
+the following:
+
+*   `x`, `y` and `z`: Real-world 3D coordinates in meters with the origin at the
+    center between hips.
+*   `visibility`: Identical to that defined in the corresponding
+    [pose_landmarks](#pose_landmarks).
 
 ### Python Solution API
 
@@ -242,6 +255,9 @@ with mp_pose.Pose(
     mp_drawing.draw_landmarks(
         annotated_image, results.pose_landmarks, mp_pose.POSE_CONNECTIONS)
     cv2.imwrite('/tmp/annotated_image' + str(idx) + '.png', annotated_image)
+    # Plot pose world landmarks.
+    mp_drawing.plot_landmarks(
+        results.pose_world_landmarks, mp_pose.POSE_CONNECTIONS)
 
 # For webcam input:
 cap = cv2.VideoCapture(0)
@@ -294,6 +310,7 @@ Supported configuration options:
   <meta charset="utf-8">
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/control_utils_3d.js" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js" crossorigin="anonymous"></script>
 </head>
@@ -312,8 +329,15 @@ Supported configuration options:
 const videoElement = document.getElementsByClassName('input_video')[0];
 const canvasElement = document.getElementsByClassName('output_canvas')[0];
 const canvasCtx = canvasElement.getContext('2d');
+const landmarkContainer = document.getElementsByClassName('landmark-grid-container')[0];
+const grid = new LandmarkGrid(landmarkContainer);
 
 function onResults(results) {
+  if (!results.poseLandmarks) {
+    grid.updateLandmarks([]);
+    return;
+  }
+
   canvasCtx.save();
   canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
   canvasCtx.drawImage(
@@ -323,6 +347,8 @@ function onResults(results) {
   drawLandmarks(canvasCtx, results.poseLandmarks,
                 {color: '#FF0000', lineWidth: 2});
   canvasCtx.restore();
+
+  grid.updateLandmarks(results.poseWorldLandmarks);
 }
 
 const pose = new Pose({locateFile: (file) => {

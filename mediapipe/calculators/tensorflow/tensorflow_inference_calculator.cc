@@ -490,7 +490,7 @@ class TensorFlowInferenceCalculator : public CalculatorBase {
               << keyed_tensors.first;
         }
       } else {
-        // Pad by replicating the first tens  or, then ignore the values.
+        // Pad by replicating the first tensor, then ignore the values.
         keyed_tensors.second.resize(options_.batch_size());
         std::fill(keyed_tensors.second.begin() +
                       inference_state->batch_timestamps_.size(),

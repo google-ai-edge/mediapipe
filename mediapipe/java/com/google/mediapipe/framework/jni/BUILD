@@ -73,6 +73,7 @@ cc_library(
         ],
         "//mediapipe/gpu:disable_gpu": [],
     }),
+    features = ["-no_undefined"],
     linkopts = select({
         "//conditions:default": [],
         "//mediapipe:android": [

@@ -80,6 +80,16 @@ mediapipe_proto_library(
     ],
 )
 
+mediapipe_proto_library(
+    name = "segmentation_smoothing_calculator_proto",
+    srcs = ["segmentation_smoothing_calculator.proto"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//mediapipe/framework:calculator_options_proto",
+        "//mediapipe/framework:calculator_proto",
+    ],
+)
+
 cc_library(
     name = "color_convert_calculator",
     srcs = ["color_convert_calculator.cc"],
@@ -599,6 +609,55 @@ cc_test(
         "//mediapipe/framework/formats:image_file_properties_cc_proto",
         "//mediapipe/framework/port:file_helpers",
         "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:parse_text_proto",
+    ],
+)
+
+cc_library(
+    name = "segmentation_smoothing_calculator",
+    srcs = ["segmentation_smoothing_calculator.cc"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":segmentation_smoothing_calculator_cc_proto",
+        "//mediapipe/framework:calculator_options_cc_proto",
+        "//mediapipe/framework/formats:image_format_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/formats:image_frame",
+        "//mediapipe/framework/formats:image_frame_opencv",
+        "//mediapipe/framework/formats:image",
+        "//mediapipe/framework/formats:image_opencv",
+        "//mediapipe/framework/port:logging",
+        "//mediapipe/framework/port:opencv_core",
+        "//mediapipe/framework/port:status",
+        "//mediapipe/framework/port:vector",
+    ] + select({
+        "//mediapipe/gpu:disable_gpu": [],
+        "//conditions:default": [
+            "//mediapipe/gpu:gl_calculator_helper",
+            "//mediapipe/gpu:gl_simple_shaders",
+            "//mediapipe/gpu:gl_quad_renderer",
+            "//mediapipe/gpu:shader_util",
+        ],
+    }),
+    alwayslink = 1,
+)
+
+cc_test(
+    name = "segmentation_smoothing_calculator_test",
+    srcs = ["segmentation_smoothing_calculator_test.cc"],
+    deps = [
+        ":image_clone_calculator",
+        ":image_clone_calculator_cc_proto",
+        ":segmentation_smoothing_calculator",
+        ":segmentation_smoothing_calculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:calculator_runner",
+        "//mediapipe/framework/deps:file_path",
+        "//mediapipe/framework/formats:image_frame",
+        "//mediapipe/framework/formats:image_opencv",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:opencv_imgcodecs",
+        "//mediapipe/framework/port:opencv_imgproc",
         "//mediapipe/framework/port:parse_text_proto",
     ],
 )

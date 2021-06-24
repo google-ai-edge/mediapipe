@@ -933,8 +933,8 @@ cc_test(
 )
 
 cc_library(
-    name = "split_normalized_landmark_list_calculator",
-    srcs = ["split_normalized_landmark_list_calculator.cc"],
+    name = "split_landmarks_calculator",
+    srcs = ["split_landmarks_calculator.cc"],
     visibility = ["//visibility:public"],
     deps = [
         ":split_vector_calculator_cc_proto",
@@ -948,10 +948,10 @@ cc_library(
 )
 
 cc_test(
-    name = "split_normalized_landmark_list_calculator_test",
-    srcs = ["split_normalized_landmark_list_calculator_test.cc"],
+    name = "split_landmarks_calculator_test",
+    srcs = ["split_landmarks_calculator_test.cc"],
     deps = [
-        ":split_normalized_landmark_list_calculator",
+        ":split_landmarks_calculator",
         ":split_vector_calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework:calculator_runner",

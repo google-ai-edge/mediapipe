@@ -77,6 +77,14 @@ output_stream: "LANDMARKS:landmarks"
 # (NormalizedLandmarkList)
 output_stream: "AUXILIARY_LANDMARKS:auxiliary_landmarks"
 
+# Pose world landmarks within the given ROI. (LandmarkList)
+# World landmarks are real-world 3D coordinates in meters with the origin at the
+# center between hips. WORLD_LANDMARKS shares the same landmark topology as
+# LANDMARKS. However, LANDMARKS provides coordinates (in pixels) of a 3D object
+# projected onto the 2D image surface, while WORLD_LANDMARKS provides
+# coordinates (in meters) of the 3D object itself.
+output_stream: "WORLD_LANDMARKS:pose_world_landmarks"
+
 # Transforms the input image into a 256x256 tensor while keeping the aspect
 # ratio (what is expected by the corresponding model), resulting in potential
 # letterboxing in the transformed image.
@@ -113,124 +121,14 @@ node {
   input_side_packet: "MODEL:model"
   input_stream: "TENSORS:input_tensors"
   output_stream: "TENSORS:output_tensors"
-  options: {
-    [mediapipe.InferenceCalculatorOptions.ext] {
-      delegate {
-        gpu {
-          allow_precision_loss: false
-        }
-      }
-    }
-  }
 }
 
-# Splits a vector of TFLite tensors to multiple vectors according to the ranges
-# specified in option.
 node {
-  calculator: "SplitTensorVectorCalculator"
-  input_stream: "output_tensors"
-  output_stream: "landmark_tensors"
-  output_stream: "pose_flag_tensor"
-  output_stream: "heatmap_tensor"
-  options: {
-    [mediapipe.SplitVectorCalculatorOptions.ext] {
-      ranges: { begin: 0 end: 1 }
-      ranges: { begin: 1 end: 2 }
-      ranges: { begin: 3 end: 4 }
-    }
-  }
-}
-
-# Converts the pose-flag tensor into a float that represents the confidence
-# score of pose presence.
-node {
-  calculator: "TensorsToFloatsCalculator"
-  input_stream: "TENSORS:pose_flag_tensor"
-  output_stream: "FLOAT:pose_presence_score"
-}
-
-# Applies a threshold to the confidence score to determine whether a pose is
-# present.
-node {
-  calculator: "ThresholdingCalculator"
-  input_stream: "FLOAT:pose_presence_score"
-  output_stream: "FLAG:pose_presence"
-  options: {
-    [mediapipe.ThresholdingCalculatorOptions.ext] {
-      threshold: 0.5
-    }
-  }
-}
-
-# Drops landmark tensors if pose is not present.
-node {
-  calculator: "GateCalculator"
-  input_stream: "landmark_tensors"
-  input_stream: "ALLOW:pose_presence"
-  output_stream: "ensured_landmark_tensors"
-}
-
-# Decodes the landmark tensors into a vector of landmarks, where the landmark
-# coordinates are normalized by the size of the input image to the model.
-node {
-  calculator: "TensorsToLandmarksCalculator"
-  input_stream: "TENSORS:ensured_landmark_tensors"
-  output_stream: "NORM_LANDMARKS:raw_landmarks"
-  options: {
-    [mediapipe.TensorsToLandmarksCalculatorOptions.ext] {
-      num_landmarks: 39
-      input_image_width: 256
-      input_image_height: 256
-      visibility_activation: SIGMOID
-      presence_activation: SIGMOID
-    }
-  }
-}
-
-# Refines landmarks with the heatmap tensor.
-node {
-  calculator: "RefineLandmarksFromHeatmapCalculator"
-  input_stream: "NORM_LANDMARKS:raw_landmarks"
-  input_stream: "TENSORS:heatmap_tensor"
-  output_stream: "NORM_LANDMARKS:refined_landmarks"
-  options: {
-    [mediapipe.RefineLandmarksFromHeatmapCalculatorOptions.ext] {
-      kernel_size: 7
-    }
-  }
-}
-
-# Adjusts landmarks (already normalized to [0.f, 1.f]) on the letterboxed pose
-# image (after image transformation with the FIT scale mode) to the
-# corresponding locations on the same image with the letterbox removed (pose
-# image before image transformation).
-node {
-  calculator: "LandmarkLetterboxRemovalCalculator"
-  input_stream: "LANDMARKS:refined_landmarks"
+  calculator: "PoseLandmarkByRoiPostProcessing"
+  input_stream: "TENSORS:output_tensors"
+  input_stream: "ROI:roi"
   input_stream: "LETTERBOX_PADDING:letterbox_padding"
-  output_stream: "LANDMARKS:adjusted_landmarks"
-}
-
-# Projects the landmarks from the cropped pose image to the corresponding
-# locations on the full image before cropping (input to the graph).
-node {
-  calculator: "LandmarkProjectionCalculator"
-  input_stream: "NORM_LANDMARKS:adjusted_landmarks"
-  input_stream: "NORM_RECT:roi"
-  output_stream: "NORM_LANDMARKS:all_landmarks"
-}
-
-# Splits the landmarks into two sets: the actual pose landmarks and the
-# auxiliary landmarks.
-node {
-  calculator: "SplitNormalizedLandmarkListCalculator"
-  input_stream: "all_landmarks"
-  output_stream: "landmarks"
-  output_stream: "auxiliary_landmarks"
-  options: {
-    [mediapipe.SplitVectorCalculatorOptions.ext] {
-      ranges: { begin: 0 end: 33 }
-      ranges: { begin: 33 end: 35 }
-    }
-  }
+  output_stream: "LANDMARKS:landmarks"
+  output_stream: "AUXILIARY_LANDMARKS:auxiliary_landmarks"
+  output_stream: "WORLD_LANDMARKS:pose_world_landmarks"
 }

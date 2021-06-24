@@ -45,9 +45,7 @@ public class SolutionBase {
   protected final AtomicBoolean solutionGraphStarted = new AtomicBoolean(false);
 
   static {
-    // Load all native libraries needed by the app.
     System.loadLibrary("mediapipe_jni");
-    System.loadLibrary("opencv_java3");
   }
 
   /**

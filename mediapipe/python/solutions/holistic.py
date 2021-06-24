@@ -116,8 +116,8 @@ class Holistic(SolutionBase):
                 min_tracking_confidence,
         },
         outputs=[
-            'pose_landmarks', 'left_hand_landmarks', 'right_hand_landmarks',
-            'face_landmarks'
+            'pose_landmarks', 'pose_world_landmarks', 'left_hand_landmarks',
+            'right_hand_landmarks', 'face_landmarks'
         ])
 
   def process(self, image: np.ndarray) -> NamedTuple:
@@ -131,17 +131,22 @@ class Holistic(SolutionBase):
       ValueError: If the input image is not three channel RGB.
 
     Returns:
-      A NamedTuple that has four fields:
-        1) "pose_landmarks" field that contains the pose landmarks on the most
-        prominent person detected.
-        2) "left_hand_landmarks" and "right_hand_landmarks" fields that contain
-        the left and right hand landmarks of the most prominent person detected.
-        3) "face_landmarks" field that contains the face landmarks of the most
-        prominent person detected.
+      A NamedTuple that has five fields describing the landmarks on the most
+      prominate person detected:
+        1) "pose_landmarks" field that contains the pose landmarks.
+        2) "pose_world_landmarks" field that contains the pose landmarks in
+        real-world 3D coordinates that are in meters with the origin at the
+        center between hips.
+        3) "left_hand_landmarks" field that contains the left-hand landmarks.
+        4) "right_hand_landmarks" field that contains the right-hand landmarks.
+        5) "face_landmarks" field that contains the face landmarks.
     """
 
     results = super().process(input_data={'image': image})
     if results.pose_landmarks:
       for landmark in results.pose_landmarks.landmark:
+        landmark.ClearField('presence')
+    if results.pose_world_landmarks:
+      for landmark in results.pose_world_landmarks.landmark:
         landmark.ClearField('presence')
     return results

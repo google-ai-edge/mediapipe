@@ -222,7 +222,8 @@ class BuildBinaryGraphs(build.build):
   def run(self):
     _check_bazel()
     binary_graphs = [
-        'face_detection/face_detection_front_cpu',
+        'face_detection/face_detection_short_range_cpu',
+        'face_detection/face_detection_full_range_cpu',
         'face_landmark/face_landmark_front_cpu',
         'hand_landmark/hand_landmark_tracking_cpu',
         'holistic_landmark/holistic_landmark_cpu', 'objectron/objectron_cpu',
@@ -241,6 +242,7 @@ class BuildBinaryGraphs(build.build):
         'bazel',
         'build',
         '--compilation_mode=opt',
+        '--copt=-DNDEBUG',
         '--define=MEDIAPIPE_DISABLE_GPU=1',
         '--action_env=PYTHON_BIN_PATH=' + _normalize_path(sys.executable),
         os.path.join('mediapipe/modules/', graph_path),
@@ -297,6 +299,7 @@ class BuildBazelExtension(build_ext.build_ext):
         'bazel',
         'build',
         '--compilation_mode=opt',
+        '--copt=-DNDEBUG',
         '--define=MEDIAPIPE_DISABLE_GPU=1',
         '--action_env=PYTHON_BIN_PATH=' + _normalize_path(sys.executable),
         str(ext.bazel_target + '.so'),
@@ -416,7 +419,7 @@ setuptools.setup(
     version=__version__,
     url='https://github.com/google/mediapipe',
     description='MediaPipe is the simplest way for researchers and developers to build world-class ML solutions and applications for mobile, edge, cloud and the web.',
-    author='MediaPipe Authors',
+    author='The MediaPipe Authors',
     author_email='mediapipe@google.com',
     long_description=_get_long_description(),
     long_description_content_type='text/markdown',

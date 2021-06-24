@@ -185,7 +185,7 @@ class Pose(SolutionBase):
             'poselandmarkcpu__poselandmarkbyroicpu__ThresholdingCalculator.threshold':
                 min_tracking_confidence,
         },
-        outputs=['pose_landmarks'])
+        outputs=['pose_landmarks', 'pose_world_landmarks'])
 
   def process(self, image: np.ndarray) -> NamedTuple:
     """Processes an RGB image and returns the pose landmarks on the most prominent person detected.
@@ -198,12 +198,19 @@ class Pose(SolutionBase):
       ValueError: If the input image is not three channel RGB.
 
     Returns:
-      A NamedTuple object with a "pose_landmarks" field that contains the pose
-      landmarks on the most prominent person detected.
+      A NamedTuple that has two fields describing the landmarks on the most
+      prominate person detected:
+        1) "pose_landmarks" field that contains the pose landmarks.
+        2) "pose_world_landmarks" field that contains the pose landmarks in
+        real-world 3D coordinates that are in meters with the origin at the
+        center between hips.
     """
 
     results = super().process(input_data={'image': image})
     if results.pose_landmarks:
       for landmark in results.pose_landmarks.landmark:
+        landmark.ClearField('presence')
+    if results.pose_world_landmarks:
+      for landmark in results.pose_world_landmarks.landmark:
         landmark.ClearField('presence')
     return results

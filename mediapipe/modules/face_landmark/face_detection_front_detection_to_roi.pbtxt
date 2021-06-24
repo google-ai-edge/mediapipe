@@ -1,6 +1,6 @@
 # MediaPipe graph to calculate face region of interest (ROI) from the very
 # first face detection in the vector of detections provided by
-# "FaceDetectionFrontCpu" or "FaceDetectionFrontGpu"
+# "FaceDetectionShortRangeCpu" or "FaceDetectionShortRangeGpu"
 #
 # NOTE: this graph is subject to change and should not be used directly.
 

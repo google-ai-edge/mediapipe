@@ -383,7 +383,7 @@ class MetalProcessor : public ImageToTensorConverter {
           tflite::gpu::HW(output_dims.height, output_dims.width),
           command_buffer, buffer_view.buffer()));
       [command_buffer commit];
-      return std::move(tensor);
+      return tensor;
     }
   }
 
@@ -399,8 +399,7 @@ absl::StatusOr<std::unique_ptr<ImageToTensorConverter>> CreateMetalConverter(
   auto result = absl::make_unique<MetalProcessor>();
   MP_RETURN_IF_ERROR(result->Init(cc, border_mode));
 
-  // Simply "return std::move(result)" failed to build on macOS with bazel.
-  return std::unique_ptr<ImageToTensorConverter>(std::move(result));
+  return result;
 }
 
 }  // namespace mediapipe

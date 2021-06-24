@@ -1,8 +1,8 @@
 # Predicts pose + left/right hand + face landmarks.
 #
 # It is required that:
-# - "face_detection_front.tflite" is available at
-# "mediapipe/modules/face_detection/face_detection_front.tflite"
+# - "face_detection_short_range.tflite" is available at
+# "mediapipe/modules/face_detection/face_detection_short_range.tflite"
 #
 # - "face_landmark.tflite" is available at
 # "mediapipe/modules/face_landmark/face_landmark.tflite"
@@ -62,6 +62,8 @@ input_side_packet: "SMOOTH_LANDMARKS:smooth_landmarks"
 # Pose landmarks. (NormalizedLandmarkList)
 # 33 pose landmarks.
 output_stream: "POSE_LANDMARKS:pose_landmarks"
+# 33 pose world landmarks. (LandmarkList)
+output_stream: "WORLD_LANDMARKS:pose_world_landmarks"
 # 21 left hand landmarks. (NormalizedLandmarkList)
 output_stream: "LEFT_HAND_LANDMARKS:left_hand_landmarks"
 # 21 right hand landmarks. (NormalizedLandmarkList)
@@ -80,6 +82,7 @@ node {
   input_side_packet: "MODEL_COMPLEXITY:model_complexity"
   input_side_packet: "SMOOTH_LANDMARKS:smooth_landmarks"
   output_stream: "LANDMARKS:pose_landmarks"
+  output_stream: "WORLD_LANDMARKS:pose_world_landmarks"
   output_stream: "ROI_FROM_LANDMARKS:pose_landmarks_roi"
   output_stream: "DETECTION:pose_detection"
 }

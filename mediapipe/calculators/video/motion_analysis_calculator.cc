@@ -549,7 +549,7 @@ absl::Status MotionAnalysisCalculator::Process(CalculatorContext* cc) {
     timestamp_buffer_.push_back(timestamp);
     ++frame_idx_;
 
-    VLOG_EVERY_N(0, 100) << "Analyzed frame " << frame_idx_;
+    VLOG_EVERY_N(1, 100) << "Analyzed frame " << frame_idx_;
 
     // Buffer input frames only if visualization is requested.
     if (visualize_output_ || video_output_) {

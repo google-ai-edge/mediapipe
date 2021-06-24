@@ -840,6 +840,20 @@ cc_test(
     ],
 )
 
+cc_library(
+    name = "world_landmark_projection_calculator",
+    srcs = ["world_landmark_projection_calculator.cc"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/formats:landmark_cc_proto",
+        "//mediapipe/framework/formats:rect_cc_proto",
+        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:status",
+    ],
+    alwayslink = 1,
+)
+
 mediapipe_proto_library(
     name = "landmarks_smoothing_calculator_proto",
     srcs = ["landmarks_smoothing_calculator.proto"],
@@ -889,6 +903,31 @@ cc_library(
         "//mediapipe/framework/formats:landmark_cc_proto",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/util/filtering:low_pass_filter",
+        "@com_google_absl//absl/algorithm:container",
+    ],
+    alwayslink = 1,
+)
+
+mediapipe_proto_library(
+    name = "visibility_copy_calculator_proto",
+    srcs = ["visibility_copy_calculator.proto"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//mediapipe/framework:calculator_options_proto",
+        "//mediapipe/framework:calculator_proto",
+    ],
+)
+
+cc_library(
+    name = "visibility_copy_calculator",
+    srcs = ["visibility_copy_calculator.cc"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":visibility_copy_calculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:timestamp",
+        "//mediapipe/framework/formats:landmark_cc_proto",
+        "//mediapipe/framework/port:ret_check",
         "@com_google_absl//absl/algorithm:container",
     ],
     alwayslink = 1,

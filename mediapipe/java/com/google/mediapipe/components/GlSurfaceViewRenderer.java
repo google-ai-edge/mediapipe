@@ -91,15 +91,15 @@ public class GlSurfaceViewRenderer implements GLSurfaceView.Renderer {
     GLES20.glViewport(0, 0, width, height);
   }
 
-  @Override
-  public void onDrawFrame(GL10 gl) {
+  /** Renders the frame. Note that the {@link #flush} method must be called afterwards. */
+  protected TextureFrame renderFrame() {
     TextureFrame frame = nextFrame.getAndSet(null);
 
     GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
     ShaderUtil.checkGlError("glClear");
 
     if (surfaceTexture == null && frame == null) {
-      return;
+      return null;
     }
 
     GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
@@ -161,12 +161,26 @@ public class GlSurfaceViewRenderer implements GLSurfaceView.Renderer {
     GLES20.glBindTexture(textureTarget, 0);
     ShaderUtil.checkGlError("unbind surfaceTexture");
 
-    // We must flush before releasing the frame.
-    GLES20.glFlush();
+    return frame;
+  }
 
+  /**
+   * Calls {@link #GLES20.glFlush} and releases the texture frame. Should be invoked after the
+   * {@link #renderFrame} method is called.
+   *
+   * @param frame the {@link TextureFrame} to be released after {@link #GLES20.glFlush}.
+   */
+  protected void flush(TextureFrame frame) {
+    GLES20.glFlush();
     if (frame != null) {
       frame.release();
     }
+  }
+
+  @Override
+  public void onDrawFrame(GL10 gl) {
+    TextureFrame frame = renderFrame();
+    flush(frame);
   }
 
   public void setTextureTarget(int target) {

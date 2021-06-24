@@ -312,7 +312,7 @@ class GlProcessor : public ImageToTensorConverter {
       return absl::OkStatus();
     }));
 
-    return std::move(tensor);
+    return tensor;
   }
 
   ~GlProcessor() override {
@@ -338,8 +338,7 @@ CreateImageToGlBufferTensorConverter(CalculatorContext* cc,
   auto result = absl::make_unique<GlProcessor>();
   MP_RETURN_IF_ERROR(result->Init(cc, input_starts_at_bottom, border_mode));
 
-  // Simply "return std::move(result)" failed to build on macOS with bazel.
-  return std::unique_ptr<ImageToTensorConverter>(std::move(result));
+  return result;
 }
 
 }  // namespace mediapipe

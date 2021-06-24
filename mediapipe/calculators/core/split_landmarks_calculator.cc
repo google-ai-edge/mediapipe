@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef MEDIAPIPE_CALCULATORS_CORE_SPLIT_NORMALIZED_LANDMARK_LIST_CALCULATOR_H_  // NOLINT
-#define MEDIAPIPE_CALCULATORS_CORE_SPLIT_NORMALIZED_LANDMARK_LIST_CALCULATOR_H_  // NOLINT
+#ifndef MEDIAPIPE_CALCULATORS_CORE_SPLIT_LANDMARKS_CALCULATOR_H_  // NOLINT
+#define MEDIAPIPE_CALCULATORS_CORE_SPLIT_LANDMARKS_CALCULATOR_H_  // NOLINT
 
 #include "mediapipe/calculators/core/split_vector_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
@@ -24,29 +24,30 @@
 
 namespace mediapipe {
 
-// Splits an input packet with NormalizedLandmarkList into
-// multiple NormalizedLandmarkList output packets using the [begin, end) ranges
+// Splits an input packet with LandmarkListType into
+// multiple LandmarkListType output packets using the [begin, end) ranges
 // specified in SplitVectorCalculatorOptions. If the option "element_only" is
 // set to true, all ranges should be of size 1 and all outputs will be elements
-// of type NormalizedLandmark. If "element_only" is false, ranges can be
-// non-zero in size and all outputs will be of type NormalizedLandmarkList.
+// of type LandmarkType. If "element_only" is false, ranges can be
+// non-zero in size and all outputs will be of type LandmarkListType.
 // If the option "combine_outputs" is set to true, only one output stream can be
 // specified and all ranges of elements will be combined into one
-// NormalizedLandmarkList.
-class SplitNormalizedLandmarkListCalculator : public CalculatorBase {
+// LandmarkListType.
+template <typename LandmarkType, typename LandmarkListType>
+class SplitLandmarksCalculator : public CalculatorBase {
  public:
   static absl::Status GetContract(CalculatorContract* cc) {
     RET_CHECK(cc->Inputs().NumEntries() == 1);
     RET_CHECK(cc->Outputs().NumEntries() != 0);
 
-    cc->Inputs().Index(0).Set<NormalizedLandmarkList>();
+    cc->Inputs().Index(0).Set<LandmarkListType>();
 
     const auto& options =
         cc->Options<::mediapipe::SplitVectorCalculatorOptions>();
 
     if (options.combine_outputs()) {
       RET_CHECK_EQ(cc->Outputs().NumEntries(), 1);
-      cc->Outputs().Index(0).Set<NormalizedLandmarkList>();
+      cc->Outputs().Index(0).Set<LandmarkListType>();
       for (int i = 0; i < options.ranges_size() - 1; ++i) {
         for (int j = i + 1; j < options.ranges_size(); ++j) {
           const auto& range_0 = options.ranges(i);
@@ -81,9 +82,9 @@ class SplitNormalizedLandmarkListCalculator : public CalculatorBase {
             return absl::InvalidArgumentError(
                 "Since element_only is true, all ranges should be of size 1.");
           }
-          cc->Outputs().Index(i).Set<NormalizedLandmark>();
+          cc->Outputs().Index(i).Set<LandmarkType>();
         } else {
-          cc->Outputs().Index(i).Set<NormalizedLandmarkList>();
+          cc->Outputs().Index(i).Set<LandmarkListType>();
         }
       }
     }
@@ -110,40 +111,39 @@ class SplitNormalizedLandmarkListCalculator : public CalculatorBase {
   }
 
   absl::Status Process(CalculatorContext* cc) override {
-    const NormalizedLandmarkList& input =
-        cc->Inputs().Index(0).Get<NormalizedLandmarkList>();
+    const LandmarkListType& input =
+        cc->Inputs().Index(0).Get<LandmarkListType>();
     RET_CHECK_GE(input.landmark_size(), max_range_end_)
         << "Max range end " << max_range_end_ << " exceeds landmarks size "
         << input.landmark_size();
 
     if (combine_outputs_) {
-      NormalizedLandmarkList output;
+      LandmarkListType output;
       for (int i = 0; i < ranges_.size(); ++i) {
         for (int j = ranges_[i].first; j < ranges_[i].second; ++j) {
-          const NormalizedLandmark& input_landmark = input.landmark(j);
+          const LandmarkType& input_landmark = input.landmark(j);
           *output.add_landmark() = input_landmark;
         }
       }
       RET_CHECK_EQ(output.landmark_size(), total_elements_);
       cc->Outputs().Index(0).AddPacket(
-          MakePacket<NormalizedLandmarkList>(output).At(cc->InputTimestamp()));
+          MakePacket<LandmarkListType>(output).At(cc->InputTimestamp()));
     } else {
       if (element_only_) {
         for (int i = 0; i < ranges_.size(); ++i) {
           cc->Outputs().Index(i).AddPacket(
-              MakePacket<NormalizedLandmark>(input.landmark(ranges_[i].first))
+              MakePacket<LandmarkType>(input.landmark(ranges_[i].first))
                   .At(cc->InputTimestamp()));
         }
       } else {
         for (int i = 0; i < ranges_.size(); ++i) {
-          NormalizedLandmarkList output;
+          LandmarkListType output;
           for (int j = ranges_[i].first; j < ranges_[i].second; ++j) {
-            const NormalizedLandmark& input_landmark = input.landmark(j);
+            const LandmarkType& input_landmark = input.landmark(j);
             *output.add_landmark() = input_landmark;
           }
           cc->Outputs().Index(i).AddPacket(
-              MakePacket<NormalizedLandmarkList>(output).At(
-                  cc->InputTimestamp()));
+              MakePacket<LandmarkListType>(output).At(cc->InputTimestamp()));
         }
       }
     }
@@ -159,9 +159,15 @@ class SplitNormalizedLandmarkListCalculator : public CalculatorBase {
   bool combine_outputs_ = false;
 };
 
+typedef SplitLandmarksCalculator<NormalizedLandmark, NormalizedLandmarkList>
+    SplitNormalizedLandmarkListCalculator;
 REGISTER_CALCULATOR(SplitNormalizedLandmarkListCalculator);
+
+typedef SplitLandmarksCalculator<Landmark, LandmarkList>
+    SplitLandmarkListCalculator;
+REGISTER_CALCULATOR(SplitLandmarkListCalculator);
 
 }  // namespace mediapipe
 
 // NOLINTNEXTLINE
-#endif  // MEDIAPIPE_CALCULATORS_CORE_SPLIT_NORMALIZED_LANDMARK_LIST_CALCULATOR_H_
+#endif  // MEDIAPIPE_CALCULATORS_CORE_SPLIT_LANDMARKS_CALCULATOR_H_

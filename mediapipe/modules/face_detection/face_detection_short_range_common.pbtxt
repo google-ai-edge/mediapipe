@@ -3,13 +3,13 @@
 #
 # EXAMPLE:
 #   node {
-#     calculator: "FaceDetectionFrontCommon"
+#     calculator: "FaceDetectionShortRangeCommon"
 #     input_stream: "TENSORS:detection_tensors"
 #     input_stream: "MATRIX:transform_matrix"
 #     output_stream: "DETECTIONS:detections"
 #   }
 
-type: "FaceDetectionFrontCommon"
+type: "FaceDetectionShortRangeCommon"
 
 # Detection tensors. (std::vector<Tensor>)
 input_stream: "TENSORS:detection_tensors"

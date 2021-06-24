@@ -22,6 +22,9 @@ android_library(
         ["*.java"],
         exclude = [
             "CameraInput.java",
+            "ResultGlRenderer.java",
+            "SolutionGlSurfaceView.java",
+            "SolutionGlSurfaceViewRenderer.java",
         ],
     ),
     visibility = ["//visibility:public"],
@@ -29,6 +32,7 @@ android_library(
         "//mediapipe/java/com/google/mediapipe/framework:android_framework",
         "//mediapipe/java/com/google/mediapipe/glutil",
         "//third_party:autovalue",
+        "@com_google_protobuf//:protobuf_javalite",
         "@maven//:com_google_code_findbugs_jsr305",
         "@maven//:com_google_guava_guava",
     ],
@@ -42,6 +46,23 @@ android_library(
         "//mediapipe/java/com/google/mediapipe/components:android_camerax_helper",
         "//mediapipe/java/com/google/mediapipe/components:android_components",
         "//mediapipe/java/com/google/mediapipe/framework:android_framework",
+        "@maven//:com_google_guava_guava",
+    ],
+)
+
+android_library(
+    name = "solution_rendering",
+    srcs = [
+        "ResultGlRenderer.java",
+        "SolutionGlSurfaceView.java",
+        "SolutionGlSurfaceViewRenderer.java",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":solution_base",
+        "//mediapipe/java/com/google/mediapipe/components:android_components",
+        "//mediapipe/java/com/google/mediapipe/framework:android_framework",
+        "//mediapipe/java/com/google/mediapipe/glutil",
         "@maven//:com_google_guava_guava",
     ],
 )
@@ -64,4 +85,12 @@ cc_library(
     srcs = [":libmediapipe_jni.so"],
     visibility = ["//visibility:public"],
     alwayslink = 1,
+)
+
+load("//mediapipe/java/com/google/mediapipe:mediapipe_aar.bzl", "mediapipe_aar")
+
+mediapipe_aar(
+    name = "solution_core",
+    srcs = glob(["*.java"]),
+    gen_libmediapipe = False,
 )

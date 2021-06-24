@@ -19,7 +19,7 @@ package com.google.mediapipe.framework;
  * has reached the specified point in the sequence of commands it is executing. This can be
  * necessary when working with multiple GL contexts.
  */
-final class GraphGlSyncToken implements GlSyncToken {
+public final class GraphGlSyncToken implements GlSyncToken {
   private long token;
 
   @Override
@@ -44,7 +44,7 @@ final class GraphGlSyncToken implements GlSyncToken {
     }
   }
 
-  GraphGlSyncToken(long token) {
+  public GraphGlSyncToken(long token) {
     this.token = token;
   }
 

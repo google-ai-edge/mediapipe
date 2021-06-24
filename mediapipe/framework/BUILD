@@ -955,6 +955,9 @@ cc_library(
         "//mediapipe/gpu:disable_gpu": ["MEDIAPIPE_DISABLE_GPU=1"],
     }) + select({
         "//conditions:default": [],
+        "//mediapipe/framework/port:disable_opencv": ["MEDIAPIPE_DISABLE_OPENCV=1"],
+    }) + select({
+        "//conditions:default": [],
         "//mediapipe/framework:disable_rtti_and_exceptions": [
             "MEDIAPIPE_HAS_RTTI=0",
         ],

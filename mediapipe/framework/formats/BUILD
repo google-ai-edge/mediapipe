@@ -186,6 +186,7 @@ cc_library(
         "//conditions:default": [
             "//mediapipe/framework/port:opencv_imgproc",
         ],
+        "//mediapipe/framework/port:disable_opencv": [],
     }) + select({
         "//conditions:default": [
         ],

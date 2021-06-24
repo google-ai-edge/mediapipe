@@ -45,6 +45,15 @@ section.
 
 Naming style and availability may differ slightly across platforms/languages.
 
+#### model_selection
+
+An integer index `0` or `1`. Use `0` to select a short-range model that works
+best for faces within 2 meters from the camera, and `1` for a full-range model
+best for faces within 5 meters. For the full-range option, a sparse model is
+used for its improved inference speed. Please refer to the
+[model cards](./models.md#face_detection) for details. Default to `0` if not
+specified.
+
 #### min_detection_confidence
 
 Minimum confidence value (`[0.0, 1.0]`) from the face detection model for the
@@ -72,6 +81,7 @@ install MediaPipe Python package, then learn more in the companion
 
 Supported configuration options:
 
+*   [model_selection](#model_selection)
 *   [min_detection_confidence](#min_detection_confidence)
 
 ```python
@@ -83,7 +93,7 @@ mp_drawing = mp.solutions.drawing_utils
 # For static images:
 IMAGE_FILES = []
 with mp_face_detection.FaceDetection(
-    min_detection_confidence=0.5) as face_detection:
+    model_selection=1, min_detection_confidence=0.5) as face_detection:
   for idx, file in enumerate(IMAGE_FILES):
     image = cv2.imread(file)
     # Convert the BGR image to RGB and process it with MediaPipe Face Detection.
@@ -103,7 +113,7 @@ with mp_face_detection.FaceDetection(
 # For webcam input:
 cap = cv2.VideoCapture(0)
 with mp_face_detection.FaceDetection(
-    min_detection_confidence=0.5) as face_detection:
+    model_selection=0, min_detection_confidence=0.5) as face_detection:
   while cap.isOpened():
     success, image = cap.read()
     if not success:
@@ -139,6 +149,7 @@ and the following usage example.
 
 Supported configuration options:
 
+*   [modelSelection](#model_selection)
 *   [minDetectionConfidence](#min_detection_confidence)
 
 ```html
@@ -189,6 +200,7 @@ const faceDetection = new FaceDetection({locateFile: (file) => {
   return `https://cdn.jsdelivr.net/npm/@mediapipe/face_detection@0.0/${file}`;
 }});
 faceDetection.setOptions({
+  modelSelection: 0
   minDetectionConfidence: 0.5
 });
 faceDetection.onResults(onResults);
@@ -254,10 +266,6 @@ same configuration as the GPU pipeline, runs entirely on CPU.
         [`mediapipe/graphs/face_detection/face_detection_mobile_gpu.pbtxt`](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/face_detection/face_detection_mobile_gpu.pbtxt)
     *   Target:
         [`mediapipe/examples/desktop/face_detection:face_detection_gpu`](https://github.com/google/mediapipe/tree/master/mediapipe/examples/desktop/face_detection/BUILD)
-
-### Web
-
-Please refer to [these instructions](../index.md#mediapipe-on-the-web).
 
 ### Coral
 

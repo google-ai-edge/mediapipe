@@ -38,18 +38,10 @@ mediapipe_simple_subgraph(
     graph = "pose_landmark_by_roi_gpu.pbtxt",
     register_as = "PoseLandmarkByRoiGpu",
     deps = [
+        ":pose_landmark_by_roi_post_processing",
         ":pose_landmark_model_loader",
-        "//mediapipe/calculators/core:gate_calculator",
-        "//mediapipe/calculators/core:split_normalized_landmark_list_calculator",
-        "//mediapipe/calculators/core:split_vector_calculator",
         "//mediapipe/calculators/tensor:image_to_tensor_calculator",
         "//mediapipe/calculators/tensor:inference_calculator",
-        "//mediapipe/calculators/tensor:tensors_to_floats_calculator",
-        "//mediapipe/calculators/tensor:tensors_to_landmarks_calculator",
-        "//mediapipe/calculators/util:landmark_letterbox_removal_calculator",
-        "//mediapipe/calculators/util:landmark_projection_calculator",
-        "//mediapipe/calculators/util:refine_landmarks_from_heatmap_calculator",
-        "//mediapipe/calculators/util:thresholding_calculator",
     ],
 )
 
@@ -58,18 +50,29 @@ mediapipe_simple_subgraph(
     graph = "pose_landmark_by_roi_cpu.pbtxt",
     register_as = "PoseLandmarkByRoiCpu",
     deps = [
+        ":pose_landmark_by_roi_post_processing",
         ":pose_landmark_model_loader",
-        "//mediapipe/calculators/core:gate_calculator",
-        "//mediapipe/calculators/core:split_normalized_landmark_list_calculator",
-        "//mediapipe/calculators/core:split_vector_calculator",
         "//mediapipe/calculators/tensor:image_to_tensor_calculator",
         "//mediapipe/calculators/tensor:inference_calculator",
+    ],
+)
+
+mediapipe_simple_subgraph(
+    name = "pose_landmark_by_roi_post_processing",
+    graph = "pose_landmark_by_roi_post_processing.pbtxt",
+    register_as = "PoseLandmarkByRoiPostProcessing",
+    deps = [
+        "//mediapipe/calculators/core:gate_calculator",
+        "//mediapipe/calculators/core:split_landmarks_calculator",
+        "//mediapipe/calculators/core:split_vector_calculator",
         "//mediapipe/calculators/tensor:tensors_to_floats_calculator",
         "//mediapipe/calculators/tensor:tensors_to_landmarks_calculator",
         "//mediapipe/calculators/util:landmark_letterbox_removal_calculator",
         "//mediapipe/calculators/util:landmark_projection_calculator",
         "//mediapipe/calculators/util:refine_landmarks_from_heatmap_calculator",
         "//mediapipe/calculators/util:thresholding_calculator",
+        "//mediapipe/calculators/util:visibility_copy_calculator",
+        "//mediapipe/calculators/util:world_landmark_projection_calculator",
     ],
 )
 

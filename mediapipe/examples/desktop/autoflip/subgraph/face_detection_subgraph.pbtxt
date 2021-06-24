@@ -38,7 +38,7 @@ node {
   output_stream: "TENSORS:detection_tensors"
   options: {
     [mediapipe.TfLiteInferenceCalculatorOptions.ext] {
-      model_path: "mediapipe/modules/face_detection/face_detection_back.tflite"
+      model_path: "mediapipe/modules/face_detection/face_detection_full_range_sparse.tflite"
     }
   }
 }

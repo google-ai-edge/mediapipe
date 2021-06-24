@@ -92,12 +92,12 @@ each project.
     and copy
     [the binary graph](https://github.com/google/mediapipe/blob/master/mediapipe/examples/android/src/java/com/google/mediapipe/apps/facedetectiongpu/BUILD#L41)
     and
-    [the face detection tflite model](https://github.com/google/mediapipe/tree/master/mediapipe/modules/face_detection/face_detection_front.tflite).
+    [the face detection tflite model](https://github.com/google/mediapipe/tree/master/mediapipe/modules/face_detection/face_detection_short_range.tflite).
 
     ```bash
     bazel build -c opt mediapipe/graphs/face_detection:face_detection_mobile_gpu_binary_graph
     cp bazel-bin/mediapipe/graphs/face_detection/face_detection_mobile_gpu.binarypb /path/to/your/app/src/main/assets/
-    cp mediapipe/modules/face_detection/face_detection_front.tflite /path/to/your/app/src/main/assets/
+    cp mediapipe/modules/face_detection/face_detection_short_range.tflite /path/to/your/app/src/main/assets/
     ```
 
     ![Screenshot](../images/mobile/assets_location.png)
@@ -117,7 +117,6 @@ each project.
         implementation 'com.google.flogger:flogger-system-backend:0.3.1'
         implementation 'com.google.code.findbugs:jsr305:3.0.2'
         implementation 'com.google.guava:guava:27.0.1-android'
-        implementation 'com.google.guava:guava:27.0.1-android'
         implementation 'com.google.protobuf:protobuf-java:3.11.4'
         // CameraX core library
         def camerax_version = "1.0.0-beta10"
@@ -125,7 +124,7 @@ each project.
         implementation "androidx.camera:camera-camera2:$camerax_version"
         implementation "androidx.camera:camera-lifecycle:$camerax_version"
         // AutoValue
-        def auto_value_version = "1.6.4"
+        def auto_value_version = "1.8.1"
         implementation "com.google.auto.value:auto-value-annotations:$auto_value_version"
         annotationProcessor "com.google.auto.value:auto-value:$auto_value_version"
     }

@@ -55,46 +55,22 @@ See also
 [MediaPipe Models and Model Cards](https://google.github.io/mediapipe/solutions/models)
 for ML models released in MediaPipe.
 
-## MediaPipe in Python
-
-MediaPipe offers customizable Python solutions as a prebuilt Python package on
-[PyPI](https://pypi.org/project/mediapipe/), which can be installed simply with
-`pip install mediapipe`. It also provides tools for users to build their own
-solutions. Please see
-[MediaPipe in Python](https://google.github.io/mediapipe/getting_started/python)
-for more info.
-
-## MediaPipe on the Web
-
-MediaPipe on the Web is an effort to run the same ML solutions built for mobile
-and desktop also in web browsers. The official API is under construction, but
-the core technology has been proven effective. Please see
-[MediaPipe on the Web](https://developers.googleblog.com/2020/01/mediapipe-on-web.html)
-in Google Developers Blog for details.
-
-You can use the following links to load a demo in the MediaPipe Visualizer, and
-over there click the "Runner" icon in the top bar like shown below. The demos
-use your webcam video as input, which is processed all locally in real-time and
-never leaves your device.
-
-![visualizer_runner](docs/images/visualizer_runner.png)
-
-*   [MediaPipe Face Detection](https://viz.mediapipe.dev/demo/face_detection)
-*   [MediaPipe Iris](https://viz.mediapipe.dev/demo/iris_tracking)
-*   [MediaPipe Iris: Depth-from-Iris](https://viz.mediapipe.dev/demo/iris_depth)
-*   [MediaPipe Hands](https://viz.mediapipe.dev/demo/hand_tracking)
-*   [MediaPipe Hands (palm/hand detection only)](https://viz.mediapipe.dev/demo/hand_detection)
-*   [MediaPipe Pose](https://viz.mediapipe.dev/demo/pose_tracking)
-*   [MediaPipe Hair Segmentation](https://viz.mediapipe.dev/demo/hair_segmentation)
-
 ## Getting started
 
-Learn how to [install](https://google.github.io/mediapipe/getting_started/install)
-MediaPipe and
-[build example applications](https://google.github.io/mediapipe/getting_started/building_examples),
-and start exploring our ready-to-use
-[solutions](https://google.github.io/mediapipe/solutions/solutions) that you can
-further extend and customize.
+To start using MediaPipe
+[solutions](https://google.github.io/mediapipe/solutions/solutions) with only a few
+lines code, see example code and demos in
+[MediaPipe in Python](https://google.github.io/mediapipe/getting_started/python) and
+[MediaPipe in JavaScript](https://google.github.io/mediapipe/getting_started/javascript).
+
+To use MediaPipe in C++, Android and iOS, which allow further customization of
+the [solutions](https://google.github.io/mediapipe/solutions/solutions) as well as
+building your own, learn how to
+[install](https://google.github.io/mediapipe/getting_started/install) MediaPipe and
+start building example applications in
+[C++](https://google.github.io/mediapipe/getting_started/cpp),
+[Android](https://google.github.io/mediapipe/getting_started/android) and
+[iOS](https://google.github.io/mediapipe/getting_started/ios).
 
 The source code is hosted in the
 [MediaPipe Github repository](https://github.com/google/mediapipe), and you can

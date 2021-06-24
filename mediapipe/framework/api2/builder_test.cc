@@ -138,6 +138,35 @@ TEST(BuilderTest, TypedMultiple) {
   EXPECT_THAT(graph.GetConfig(), EqualsProto(expected));
 }
 
+TEST(BuilderTest, TypedByPorts) {
+  builder::Graph graph;
+  auto& foo = graph.AddNode<Foo>();
+  auto& adder = graph.AddNode<FloatAdder>();
+
+  graph[FooBar1::kIn].SetName("base") >> foo[Foo::kBase];
+  foo[Foo::kOut] >> adder[FloatAdder::kIn][0];
+  foo[Foo::kOut] >> adder[FloatAdder::kIn][1];
+  adder[FloatAdder::kOut].SetName("out") >> graph[FooBar1::kOut];
+
+  CalculatorGraphConfig expected =
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
+        input_stream: "IN:base"
+        output_stream: "OUT:out"
+        node {
+          calculator: "Foo"
+          input_stream: "BASE:base"
+          output_stream: "OUT:__stream_0"
+        }
+        node {
+          calculator: "FloatAdder"
+          input_stream: "IN:0:__stream_0"
+          input_stream: "IN:1:__stream_0"
+          output_stream: "OUT:out"
+        }
+      )pb");
+  EXPECT_THAT(graph.GetConfig(), EqualsProto(expected));
+}
+
 TEST(BuilderTest, PacketGenerator) {
   builder::Graph graph;
   auto& generator = graph.AddPacketGenerator("FloatGenerator");

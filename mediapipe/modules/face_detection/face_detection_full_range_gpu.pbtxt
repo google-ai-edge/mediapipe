@@ -1,20 +1,20 @@
-# MediaPipe graph to detect faces. (CPU input, and inference is executed on
-# CPU.)
+# MediaPipe graph to detect faces. (GPU input, and inference is executed on
+# GPU.)
 #
-# It is required that "face_detection_front.tflite" is available at
-# "mediapipe/modules/face_detection/face_detection_front.tflite"
+# It is required that "face_detection_full_range_sparse.tflite" is available at
+# "mediapipe/modules/face_detection/face_detection_full_range_sparse.tflite"
 # path during execution.
 #
 # EXAMPLE:
 #   node {
-#     calculator: "FaceDetectionFrontCpu"
+#     calculator: "FaceDetectionFullRangeGpu"
 #     input_stream: "IMAGE:image"
 #     output_stream: "DETECTIONS:face_detections"
 #   }
 
-type: "FaceDetectionFrontCpu"
+type: "FaceDetectionFullRangeGpu"
 
-# CPU image. (ImageFrame)
+# GPU image. (GpuBuffer)
 input_stream: "IMAGE:image"
 
 # Detected faces. (std::vector<Detection>)
@@ -24,11 +24,11 @@ input_stream: "IMAGE:image"
 # this packet so that they don't wait for it unnecessarily.
 output_stream: "DETECTIONS:detections"
 
-# Converts the input CPU image (ImageFrame) to the multi-backend image type
+# Converts the input GPU image (GpuBuffer) to the multi-backend image type
 # (Image).
 node: {
   calculator: "ToImageCalculator"
-  input_stream: "IMAGE_CPU:image"
+  input_stream: "IMAGE_GPU:image"
   output_stream: "IMAGE:multi_backend_image"
 }
 
@@ -42,19 +42,20 @@ node: {
   output_stream: "MATRIX:transform_matrix"
   options: {
     [mediapipe.ImageToTensorCalculatorOptions.ext] {
-      output_tensor_width: 128
-      output_tensor_height: 128
+      output_tensor_width: 192
+      output_tensor_height: 192
       keep_aspect_ratio: true
       output_tensor_float_range {
         min: -1.0
         max: 1.0
       }
       border_mode: BORDER_ZERO
+      gpu_origin: TOP_LEFT
     }
   }
 }
 
-# Runs a TensorFlow Lite model on CPU that takes an image tensor and outputs a
+# Runs a TensorFlow Lite model on GPU that takes an image tensor and outputs a
 # vector of tensors representing, for instance, detection boxes/keypoints and
 # scores.
 node {
@@ -63,15 +64,16 @@ node {
   output_stream: "TENSORS:detection_tensors"
   options: {
     [mediapipe.InferenceCalculatorOptions.ext] {
-      model_path: "mediapipe/modules/face_detection/face_detection_front.tflite"
-      delegate { xnnpack {} }
+      model_path: "mediapipe/modules/face_detection/face_detection_full_range_sparse.tflite"
+      #
+      delegate: { gpu { use_advanced_gpu_api: true } }
     }
   }
 }
 
 # Performs tensor post processing to generate face detections.
 node {
-  calculator: "FaceDetectionFrontCommon"
+  calculator: "FaceDetectionFullRangeCommon"
   input_stream: "TENSORS:detection_tensors"
   input_stream: "MATRIX:transform_matrix"
   output_stream: "DETECTIONS:detections"

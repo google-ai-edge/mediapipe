@@ -272,6 +272,15 @@ absl::Status AnnotationOverlayCalculator::Open(CalculatorContext* cc) {
 }
 
 absl::Status AnnotationOverlayCalculator::Process(CalculatorContext* cc) {
+  if (cc->Inputs().HasTag(kGpuBufferTag) &&
+      cc->Inputs().Tag(kGpuBufferTag).IsEmpty()) {
+    return absl::OkStatus();
+  }
+  if (cc->Inputs().HasTag(kImageFrameTag) &&
+      cc->Inputs().Tag(kImageFrameTag).IsEmpty()) {
+    return absl::OkStatus();
+  }
+
   // Initialize render target, drawn with OpenCV.
   std::unique_ptr<cv::Mat> image_mat;
   ImageFormat::Format target_format;
