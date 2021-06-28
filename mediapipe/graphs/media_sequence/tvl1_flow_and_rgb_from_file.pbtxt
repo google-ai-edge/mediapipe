@@ -57,8 +57,9 @@ node: {
   output_stream: "scaled_frames"
   node_options: {
     [type.googleapis.com/mediapipe.ScaleImageCalculatorOptions]: {
-      target_height: 256
-      preserve_aspect_ratio: true
+      target_width: 224
+      target_height: 224
+      preserve_aspect_ratio: false
     }
   }
 }
