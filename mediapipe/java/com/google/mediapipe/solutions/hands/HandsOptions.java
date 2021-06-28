@@ -33,6 +33,8 @@ import com.google.auto.value.AutoValue;
  * <p>minTrackingConfidence: Minimum confidence value ([0.0, 1.0]) for the hand landmarks to be
  * considered tracked successfully. See details in
  * https://solutions.mediapipe.dev/hands#min_tracking_confidence.
+ *
+ * <p>runOnGpu: Whether to run pipeline on GPU or CPU. Default to true.
  */
 @AutoValue
 public abstract class HandsOptions {
@@ -57,13 +59,22 @@ public abstract class HandsOptions {
 
   public abstract float minTrackingConfidence();
 
+  public abstract boolean runOnGpu();
+
   public static Builder builder() {
-    return new AutoValue_HandsOptions.Builder();
+    return new AutoValue_HandsOptions.Builder().withDefaultValues();
   }
 
   /** Builder for {@link HandsOptions}. */
   @AutoValue.Builder
   public abstract static class Builder {
+    public Builder withDefaultValues() {
+      return setMaxNumHands(2)
+          .setMinDetectionConfidence(0.5f)
+          .setMinTrackingConfidence(0.5f)
+          .setRunOnGpu(true);
+    }
+
     public abstract Builder setMode(int value);
 
     public abstract Builder setMaxNumHands(int value);
@@ -71,6 +82,8 @@ public abstract class HandsOptions {
     public abstract Builder setMinDetectionConfidence(float value);
 
     public abstract Builder setMinTrackingConfidence(float value);
+
+    public abstract Builder setRunOnGpu(boolean value);
 
     public abstract HandsOptions build();
   }

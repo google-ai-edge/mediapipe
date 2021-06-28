@@ -68,5 +68,10 @@ message FaceBoxAdjusterCalculatorOptions {
 
   // The max amount of time to use an old eye distance when the face look angle
   // is unstable.
-  optional int32 max_facesize_history_us = 9 [default = 8000000];
+  optional int32 max_facesize_history_us = 9 [default = 300000000];
+
+  // Scale factor of face width to shift based on pan look angle.
+  optional float pan_position_shift_scale = 15 [default = 0.5];
+  // Scale factor of face height to shift based on tilt look angle.
+  optional float tilt_position_shift_scale = 16 [default = 0.5];
 }

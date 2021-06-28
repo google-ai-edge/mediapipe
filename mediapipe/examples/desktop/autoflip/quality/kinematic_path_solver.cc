@@ -209,6 +209,12 @@ absl::Status KinematicPathSolver::GetState(int* position) {
   return absl::OkStatus();
 }
 
+absl::Status KinematicPathSolver::SetState(const int position) {
+  RET_CHECK(initialized_) << "SetState called before first observation added.";
+  current_position_px_ = position;
+  return absl::OkStatus();
+}
+
 absl::Status KinematicPathSolver::GetTargetPosition(int* target_position) {
   RET_CHECK(initialized_)
       << "GetTargetPosition called before first observation added.";

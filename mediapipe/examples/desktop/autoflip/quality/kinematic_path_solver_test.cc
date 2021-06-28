@@ -371,6 +371,27 @@ TEST(KinematicPathSolverTest, TimestampSmoothing) {
   EXPECT_EQ(state, 701);
 }
 
+TEST(KinematicPathSolverTest, PassSetPosition) {
+  KinematicOptions options;
+  // Set min motion to 2deg
+  options.set_min_motion_to_reframe(1.0);
+  options.set_update_rate_seconds(.0000001);
+  options.set_max_update_rate(1.0);
+  options.set_max_velocity(18);
+  // Set degrees / pixel to 8.3
+  KinematicPathSolver solver(options, 0, 500, 500.0 / kWidthFieldOfView);
+  int state;
+  MP_ASSERT_OK(solver.AddObservation(400, kMicroSecInSec * 0));
+  // Move target by 10px / 8.3 = 1.2deg
+  MP_ASSERT_OK(solver.AddObservation(410, kMicroSecInSec * 1));
+  MP_ASSERT_OK(solver.GetState(&state));
+  // Expect cam to move.
+  EXPECT_EQ(state, 410);
+  MP_ASSERT_OK(solver.SetState(400));
+  MP_ASSERT_OK(solver.GetState(&state));
+  EXPECT_EQ(state, 400);
+}
+
 }  // namespace
 }  // namespace autoflip
 }  // namespace mediapipe

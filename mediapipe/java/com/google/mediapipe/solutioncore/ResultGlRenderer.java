@@ -12,9 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package com.google.mediapipe.solutionbase;
+package com.google.mediapipe.solutioncore;
 
-/** Interface for the customizable MediaPipe solution error listener. */
-public interface ErrorListener {
-  void onError(String message, RuntimeException e);
+/** Interface for the customizable MediaPipe solution result OpenGL renderer. */
+public interface ResultGlRenderer<T extends ImageSolutionResult> {
+
+  /** Sets up OpenGL rendering when the surface is created or recreated. */
+  void setupRendering();
+
+  /** Renders the solution result. */
+  void renderResult(T result);
 }

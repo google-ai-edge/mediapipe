@@ -21,11 +21,11 @@ import com.google.mediapipe.formats.proto.LandmarkProto.NormalizedLandmarkList;
 import com.google.mediapipe.formats.proto.ClassificationProto.Classification;
 import com.google.mediapipe.framework.MediaPipeException;
 import com.google.mediapipe.framework.Packet;
-import com.google.mediapipe.solutionbase.ErrorListener;
-import com.google.mediapipe.solutionbase.ImageSolutionBase;
-import com.google.mediapipe.solutionbase.OutputHandler;
-import com.google.mediapipe.solutionbase.ResultListener;
-import com.google.mediapipe.solutionbase.SolutionInfo;
+import com.google.mediapipe.solutioncore.ErrorListener;
+import com.google.mediapipe.solutioncore.ImageSolutionBase;
+import com.google.mediapipe.solutioncore.OutputHandler;
+import com.google.mediapipe.solutioncore.ResultListener;
+import com.google.mediapipe.solutioncore.SolutionInfo;
 import java.util.HashMap;
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -41,7 +41,8 @@ public class Hands extends ImageSolutionBase {
   private static final String TAG = "Hands";
 
   private static final String NUM_HANDS = "num_hands";
-  private static final String SOLUTION_GRAPH_NAME = "hand_landmark_tracking_gpu_image.binarypb";
+  private static final String GPU_GRAPH_NAME = "hand_landmark_tracking_gpu_image.binarypb";
+  private static final String CPU_GRAPH_NAME = "hand_landmark_tracking_cpu_image.binarypb";
   private static final String IMAGE_INPUT_STREAM = "image";
   private static final ImmutableList<String> OUTPUT_STREAMS =
       ImmutableList.of("multi_hand_landmarks", "multi_handedness", "image");
@@ -82,7 +83,7 @@ public class Hands extends ImageSolutionBase {
 
     SolutionInfo solutionInfo =
         SolutionInfo.builder()
-            .setBinaryGraphPath(SOLUTION_GRAPH_NAME)
+            .setBinaryGraphPath(options.runOnGpu() ? GPU_GRAPH_NAME : CPU_GRAPH_NAME)
             .setImageInputStreamName(IMAGE_INPUT_STREAM)
             .setOutputStreamNames(OUTPUT_STREAMS)
             .setStaticImageMode(options.mode() == HandsOptions.STATIC_IMAGE_MODE)

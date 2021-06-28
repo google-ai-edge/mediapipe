@@ -75,6 +75,7 @@ cc_binary(
     # TODO: Add more calculators to support other top-level solutions.
     deps = [
         "//mediapipe/java/com/google/mediapipe/framework/jni:mediapipe_framework_jni",
+        "//mediapipe/modules/hand_landmark:hand_landmark_tracking_cpu_image",
         "//mediapipe/modules/hand_landmark:hand_landmark_tracking_gpu_image",
     ],
 )

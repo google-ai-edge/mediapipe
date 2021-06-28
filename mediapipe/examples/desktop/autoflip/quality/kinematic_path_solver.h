@@ -48,6 +48,8 @@ class KinematicPathSolver {
   absl::Status UpdatePrediction(const int64 time_us);
   // Get the state at a time.
   absl::Status GetState(int* position);
+  // Overwrite the current state value.
+  absl::Status SetState(const int position);
   // Update PixelPerDegree value.
   absl::Status UpdatePixelsPerDegree(const float pixels_per_degree);
   // Provide the current target position of the reframe action.

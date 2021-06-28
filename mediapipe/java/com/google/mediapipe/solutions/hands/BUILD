@@ -24,6 +24,7 @@ android_library(
     ],
     assets = [
         "//mediapipe/modules/hand_landmark:hand_landmark_tracking_gpu_image.binarypb",
+        "//mediapipe/modules/hand_landmark:hand_landmark_tracking_cpu_image.binarypb",
         "//mediapipe/modules/hand_landmark:handedness.txt",
         "//mediapipe/modules/hand_landmark:hand_landmark.tflite",
         "//mediapipe/modules/palm_detection:palm_detection.tflite",
@@ -36,7 +37,7 @@ android_library(
         "//mediapipe/framework/formats:classification_java_proto_lite",
         "//mediapipe/framework/formats:landmark_java_proto_lite",
         "//mediapipe/java/com/google/mediapipe/framework:android_framework",
-        "//mediapipe/java/com/google/mediapipe/solutionbase:solution_base",
+        "//mediapipe/java/com/google/mediapipe/solutioncore:solution_base",
         "//third_party:autovalue",
         "@maven//:androidx_annotation_annotation",
         "@maven//:com_google_code_findbugs_jsr305",

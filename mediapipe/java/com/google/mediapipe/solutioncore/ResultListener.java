@@ -12,12 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package com.google.mediapipe.solutionbase;
+package com.google.mediapipe.solutioncore;
 
-/**
- * Interface of the MediaPipe solution result. Any MediaPipe solution-specific result class should
- * implement SolutionResult.
- */
-public interface SolutionResult {
-  long timestamp();
+/** Interface for the customizable MediaPipe solution result listener. */
+public interface ResultListener<T> {
+  void run(T result);
 }

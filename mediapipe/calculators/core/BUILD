@@ -419,6 +419,23 @@ cc_library(
     alwayslink = 1,
 )
 
+cc_test(
+    name = "make_pair_calculator_test",
+    size = "small",
+    srcs = ["make_pair_calculator_test.cc"],
+    deps = [
+        ":make_pair_calculator",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:calculator_runner",
+        "//mediapipe/framework:timestamp",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:status",
+        "//mediapipe/framework/tool:validate_type",
+        "//mediapipe/util:packet_test_util",
+        "//mediapipe/util:time_series_test_util",
+    ],
+)
+
 cc_library(
     name = "matrix_multiply_calculator",
     srcs = ["matrix_multiply_calculator.cc"],

@@ -660,14 +660,18 @@ absl::Status ContentZoomingCalculator::Process(
   // Prevent box from extending beyond the image after camera smoothing.
   if (path_offset_y - ceil(path_height / 2.0) < 0) {
     path_offset_y = ceil(path_height / 2.0);
+    MP_RETURN_IF_ERROR(path_solver_tilt_->SetState(path_offset_y));
   } else if (path_offset_y + ceil(path_height / 2.0) > frame_height_) {
     path_offset_y = frame_height_ - ceil(path_height / 2.0);
+    MP_RETURN_IF_ERROR(path_solver_tilt_->SetState(path_offset_y));
   }
 
   if (path_offset_x - ceil(path_width / 2.0) < 0) {
     path_offset_x = ceil(path_width / 2.0);
+    MP_RETURN_IF_ERROR(path_solver_pan_->SetState(path_offset_x));
   } else if (path_offset_x + ceil(path_width / 2.0) > frame_width_) {
     path_offset_x = frame_width_ - ceil(path_width / 2.0);
+    MP_RETURN_IF_ERROR(path_solver_pan_->SetState(path_offset_x));
   }
 
   // Convert to top/bottom borders to remove.

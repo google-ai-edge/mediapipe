@@ -21,7 +21,7 @@ import com.google.mediapipe.formats.proto.LandmarkProto.NormalizedLandmarkList;
 import com.google.mediapipe.formats.proto.ClassificationProto.Classification;
 import com.google.mediapipe.framework.Packet;
 import com.google.mediapipe.framework.TextureFrame;
-import com.google.mediapipe.solutionbase.ImageSolutionResult;
+import com.google.mediapipe.solutioncore.ImageSolutionResult;
 import java.util.List;
 
 /**
