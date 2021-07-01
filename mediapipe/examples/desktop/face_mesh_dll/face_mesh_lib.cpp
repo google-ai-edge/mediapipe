@@ -2,14 +2,14 @@
 
 #include "face_mesh_lib.h"
 
-FaceMeshDetector::FaceMeshDetector() {
+MPFaceMeshDetector::MPFaceMeshDetector() {
   const auto status = InitFaceMeshDetector();
   if (!status.ok()) {
     LOG(INFO) << "Failed constructing FaceMeshDetector.";
   }
 }
 
-absl::Status FaceMeshDetector::InitFaceMeshDetector() {
+absl::Status MPFaceMeshDetector::InitFaceMeshDetector() {
   LOG(INFO) << "Get calculator graph config contents: " << graphConfig;
 
   mediapipe::CalculatorGraphConfig config =
@@ -37,8 +37,8 @@ absl::Status FaceMeshDetector::InitFaceMeshDetector() {
   return absl::Status();
 }
 
-absl::Status FaceMeshDetector::ProcessFrameWithStatus(
-    cv::Mat &camera_frame,
+absl::Status MPFaceMeshDetector::ProcessFrameWithStatus(
+    const cv::Mat &camera_frame,
     std::unique_ptr<std::vector<std::vector<cv::Point2f>>>
         &multi_face_landmarks) {
   // Wrap Mat into an ImageFrame.
@@ -115,7 +115,7 @@ absl::Status FaceMeshDetector::ProcessFrameWithStatus(
 }
 
 std::vector<std::vector<cv::Point2f>> *
-FaceMeshDetector::ProcessFrame2D(cv::Mat &camera_frame) {
+MPFaceMeshDetector::ProcessFrame2D(const cv::Mat &camera_frame) {
   auto landmarks = std::make_unique<std::vector<std::vector<cv::Point2f>>>();
 
   ProcessFrameWithStatus(camera_frame, landmarks);
@@ -124,25 +124,27 @@ FaceMeshDetector::ProcessFrame2D(cv::Mat &camera_frame) {
 }
 
 extern "C" {
-DLLEXPORT FaceMeshDetector *FaceMeshDetector_Construct() {
-  return new FaceMeshDetector();
+DLLEXPORT MPFaceMeshDetector *FaceMeshDetector_Construct() {
+  return new MPFaceMeshDetector();
 }
 
-DLLEXPORT void FaceMeshDetector_Destruct(FaceMeshDetector *detector) {
+DLLEXPORT void FaceMeshDetector_Destruct(MPFaceMeshDetector *detector) {
   delete detector;
 }
 
-DLLEXPORT void *FaceMeshDetector_ProcessFrame2D(FaceMeshDetector *detector,
-                                                cv::Mat &camera_frame) {
+DLLEXPORT void *
+FaceMeshDetector_ProcessFrame2D(MPFaceMeshDetector *detector,
+                                const cv::Mat &camera_frame) {
   return reinterpret_cast<void *>(detector->ProcessFrame2D(camera_frame));
 }
 }
 
-const char FaceMeshDetector::kInputStream[] = "input_video";
-const char FaceMeshDetector::kOutputStream_landmarks[] = "multi_face_landmarks";
-const char FaceMeshDetector::kOutputStream_faceCount[] = "face_count";
+const char MPFaceMeshDetector::kInputStream[] = "input_video";
+const char MPFaceMeshDetector::kOutputStream_landmarks[] =
+    "multi_face_landmarks";
+const char MPFaceMeshDetector::kOutputStream_faceCount[] = "face_count";
 
-const std::string FaceMeshDetector::graphConfig = R"pb(
+const std::string MPFaceMeshDetector::graphConfig = R"pb(
 # MediaPipe graph that performs face mesh with TensorFlow Lite on CPU.
 
 # Input image. (ImageFrame)

@@ -25,16 +25,16 @@
 #include "mediapipe/framework/port/parse_text_proto.h"
 #include "mediapipe/framework/port/status.h"
 
-class FaceMeshDetector {
+class MPFaceMeshDetector {
 public:
-  FaceMeshDetector();
-  ~FaceMeshDetector() = default;
-  std::vector<std::vector<cv::Point2f>> *ProcessFrame2D(cv::Mat &camera_frame);
+  MPFaceMeshDetector();
+  ~MPFaceMeshDetector() = default;
+  std::vector<std::vector<cv::Point2f>> *ProcessFrame2D(const cv::Mat &camera_frame);
 
 private:
   absl::Status InitFaceMeshDetector();
   absl::Status
-  ProcessFrameWithStatus(cv::Mat &camera_frame,
+  ProcessFrameWithStatus(const cv::Mat &camera_frame,
                          std::unique_ptr<std::vector<std::vector<cv::Point2f>>>
                              &multi_face_landmarks);
 
@@ -54,12 +54,12 @@ private:
 extern "C" {
 #endif
 
-DLLEXPORT FaceMeshDetector *FaceMeshDetector_Construct();
+DLLEXPORT MPFaceMeshDetector *FaceMeshDetector_Construct();
 
-DLLEXPORT void FaceMeshDetector_Destruct(FaceMeshDetector *detector);
+DLLEXPORT void FaceMeshDetector_Destruct(MPFaceMeshDetector *detector);
 
-DLLEXPORT void *FaceMeshDetector_ProcessFrame2D(FaceMeshDetector *detector,
-                                                cv::Mat &camera_frame);
+DLLEXPORT void *FaceMeshDetector_ProcessFrame2D(MPFaceMeshDetector *detector,
+                                                const cv::Mat &camera_frame);
 
 #ifdef __cplusplus
 };

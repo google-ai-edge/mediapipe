@@ -21,7 +21,7 @@ int main(int argc, char **argv) {
 
   LOG(INFO) << "VideoCapture initialized.";
 
-  FaceMeshDetector *faceMeshDetector = FaceMeshDetector_Construct();
+  MPFaceMeshDetector *faceMeshDetector = FaceMeshDetector_Construct();
 
   LOG(INFO) << "FaceMeshDetector constructed.";
 
