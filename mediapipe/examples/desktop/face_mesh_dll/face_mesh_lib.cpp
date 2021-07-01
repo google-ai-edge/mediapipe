@@ -2,8 +2,6 @@
 
 #include "face_mesh_lib.h"
 
-#define DEBUG
-
 FaceMeshDetector::FaceMeshDetector() {
   const auto status = InitFaceMeshDetector();
   if (!status.ok()) {
@@ -39,7 +37,10 @@ absl::Status FaceMeshDetector::InitFaceMeshDetector() {
   return absl::Status();
 }
 
-absl::Status FaceMeshDetector::ProcessFrameWithStatus(cv::Mat &camera_frame) {
+absl::Status FaceMeshDetector::ProcessFrameWithStatus(
+    cv::Mat &camera_frame,
+    std::unique_ptr<std::vector<std::vector<cv::Point2f>>>
+        &multi_face_landmarks) {
   // Wrap Mat into an ImageFrame.
   auto input_frame = absl::make_unique<mediapipe::ImageFrame>(
       mediapipe::ImageFormat::SRGB, camera_frame.cols, camera_frame.rows,
@@ -88,26 +89,38 @@ absl::Status FaceMeshDetector::ProcessFrameWithStatus(cv::Mat &camera_frame) {
       face_landmarks_packet
           .Get<::std::vector<::mediapipe::NormalizedLandmarkList>>();
 
-  auto &output_landmarks = output_landmarks_vector[0];
+  multi_face_landmarks->reserve(output_landmarks_vector.size());
+
+  for (const auto &normalizedLandmarkList : output_landmarks_vector) {
+    multi_face_landmarks->emplace_back();
+
+    auto &face_landmarks = multi_face_landmarks->back();
+
+    const auto landmarks_num = normalizedLandmarkList.landmark_size();
 
 #ifdef DEBUG
-  LOG(INFO) << "Got landmarks_packet: " << output_landmarks.landmark_size();
+    LOG(INFO) << "Got landmarks_num: " << landmarks_num;
 #endif
 
-  auto &landmark = output_landmarks.landmark(0);
-#ifdef DEBUG
-  LOG(INFO) << "First landmark: x - " << landmark.x() << ", y - "
-            << landmark.y() << ", z - " << landmark.z();
-#endif
+    face_landmarks.reserve(landmarks_num);
+
+    for (int i = 0; i < landmarks_num; ++i) {
+      auto &landmark = normalizedLandmarkList.landmark(i);
+
+      face_landmarks.emplace_back(landmark.x(), landmark.y());
+    }
+  }
 
   return absl::Status();
 }
 
-std::vector<cv::Point2f> *
-FaceMeshDetector::ProcessFrame(cv::Mat &camera_frame) {
-  ProcessFrameWithStatus(camera_frame);
+std::vector<std::vector<cv::Point2f>> *
+FaceMeshDetector::ProcessFrame2D(cv::Mat &camera_frame) {
+  auto landmarks = std::make_unique<std::vector<std::vector<cv::Point2f>>>();
 
-  return new std::vector<cv::Point2f>();
+  ProcessFrameWithStatus(camera_frame, landmarks);
+
+  return landmarks.release();
 }
 
 extern "C" {
@@ -119,9 +132,9 @@ DLLEXPORT void FaceMeshDetector_Destruct(FaceMeshDetector *detector) {
   delete detector;
 }
 
-DLLEXPORT void *FaceMeshDetector_ProcessFrame(FaceMeshDetector *detector,
-                                              cv::Mat &camera_frame) {
-  return reinterpret_cast<void *>(detector->ProcessFrame(camera_frame));
+DLLEXPORT void *FaceMeshDetector_ProcessFrame2D(FaceMeshDetector *detector,
+                                                cv::Mat &camera_frame) {
+  return reinterpret_cast<void *>(detector->ProcessFrame2D(camera_frame));
 }
 }
 

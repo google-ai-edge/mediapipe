@@ -4,7 +4,6 @@ int main(int argc, char **argv) {
   google::InitGoogleLogging(argv[0]);
   absl::ParseCommandLine(argc, argv);
 
-
   cv::VideoCapture capture;
   capture.open(0);
   if (!capture.isOpened()) {
@@ -41,7 +40,21 @@ int main(int argc, char **argv) {
     cv::cvtColor(camera_frame_raw, camera_frame, cv::COLOR_BGR2RGB);
     cv::flip(camera_frame, camera_frame, /*flipcode=HORIZONTAL*/ 1);
 
-    FaceMeshDetector_ProcessFrame(faceMeshDetector, camera_frame);
+    std::unique_ptr<std::vector<std::vector<cv::Point2f>>> multi_face_landmarks(
+        reinterpret_cast<std::vector<std::vector<cv::Point2f>> *>(
+            FaceMeshDetector_ProcessFrame2D(faceMeshDetector, camera_frame)));
+
+    const auto multi_face_landmarks_num = multi_face_landmarks->size();
+
+    LOG(INFO) << "Got multi_face_landmarks_num: " << multi_face_landmarks_num;
+
+    if (multi_face_landmarks_num) {
+      auto &face_landmarks = multi_face_landmarks->operator[](0);
+      auto &landmark = face_landmarks[0];
+
+      LOG(INFO) << "First landmark: x - " << landmark.x << ", y - "
+                << landmark.y;
+    }
 
     const int pressed_key = cv::waitKey(5);
     if (pressed_key >= 0 && pressed_key != 255)

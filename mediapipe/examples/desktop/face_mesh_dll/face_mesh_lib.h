@@ -8,8 +8,8 @@
 #endif
 
 #include <cstdlib>
-#include <string>
 #include <memory>
+#include <string>
 
 #include "absl/flags/flag.h"
 #include "absl/flags/parse.h"
@@ -29,11 +29,14 @@ class FaceMeshDetector {
 public:
   FaceMeshDetector();
   ~FaceMeshDetector() = default;
-  std::vector<cv::Point2f> *ProcessFrame(cv::Mat &camera_frame);
+  std::vector<std::vector<cv::Point2f>> *ProcessFrame2D(cv::Mat &camera_frame);
 
 private:
   absl::Status InitFaceMeshDetector();
-  absl::Status ProcessFrameWithStatus(cv::Mat &camera_frame);
+  absl::Status
+  ProcessFrameWithStatus(cv::Mat &camera_frame,
+                         std::unique_ptr<std::vector<std::vector<cv::Point2f>>>
+                             &multi_face_landmarks);
 
   static const char kInputStream[];
   static const char kOutputStream_landmarks[];
@@ -42,7 +45,7 @@ private:
   static const std::string graphConfig;
 
   mediapipe::CalculatorGraph graph;
-  
+
   std::unique_ptr<mediapipe::OutputStreamPoller> landmarks_poller_ptr;
   std::unique_ptr<mediapipe::OutputStreamPoller> face_count_poller_ptr;
 };
@@ -55,8 +58,8 @@ DLLEXPORT FaceMeshDetector *FaceMeshDetector_Construct();
 
 DLLEXPORT void FaceMeshDetector_Destruct(FaceMeshDetector *detector);
 
-DLLEXPORT void *FaceMeshDetector_ProcessFrame(FaceMeshDetector *detector,
-                                              cv::Mat &camera_frame);
+DLLEXPORT void *FaceMeshDetector_ProcessFrame2D(FaceMeshDetector *detector,
+                                                cv::Mat &camera_frame);
 
 #ifdef __cplusplus
 };
