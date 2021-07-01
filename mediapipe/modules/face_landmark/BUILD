@@ -75,6 +75,28 @@ mediapipe_simple_subgraph(
 )
 
 mediapipe_simple_subgraph(
+    name = "face_landmark_front_cpu_with_face_counter",
+    graph = "face_landmark_front_cpu_with_face_counter.pbtxt",
+    register_as = "FaceLandmarkFrontCpuWithFaceCounter",
+    deps = [
+        ":face_detection_front_detection_to_roi",
+        ":face_landmark_cpu",
+        ":face_landmark_landmarks_to_roi",
+        "//mediapipe/calculators/core:begin_loop_calculator",
+        "//mediapipe/calculators/core:clip_vector_size_calculator",
+        "//mediapipe/calculators/core:constant_side_packet_calculator",
+        "//mediapipe/calculators/core:end_loop_calculator",
+        "//mediapipe/calculators/core:gate_calculator",
+        "//mediapipe/calculators/core:previous_loopback_calculator",
+        "//mediapipe/calculators/image:image_properties_calculator",
+        "//mediapipe/calculators/util:association_norm_rect_calculator",
+        "//mediapipe/calculators/util:collection_has_min_size_calculator",
+        "//mediapipe/calculators/util:counting_vector_size_calculator",
+        "//mediapipe/modules/face_detection:face_detection_short_range_cpu",
+    ],
+)
+
+mediapipe_simple_subgraph(
     name = "face_landmark_front_gpu",
     graph = "face_landmark_front_gpu.pbtxt",
     register_as = "FaceLandmarkFrontGpu",
