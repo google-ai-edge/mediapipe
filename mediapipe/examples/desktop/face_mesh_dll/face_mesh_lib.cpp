@@ -57,9 +57,6 @@ absl::Status MPFaceMeshDetector::ProcessFrameWithStatus(
                         .At(mediapipe::Timestamp(frame_timestamp_us))));
   LOG(INFO) << "Pushed new frame.";
 
-#ifdef DEBUG
-  LOG(INFO) << "Pushed new frame.";
-#endif
   mediapipe::Packet face_count_packet;
   if (!face_count_poller_ptr ||
       !face_count_poller_ptr->Next(&face_count_packet)) {
@@ -68,10 +65,6 @@ absl::Status MPFaceMeshDetector::ProcessFrameWithStatus(
     return absl::Status();
   }
   auto &face_count = face_count_packet.Get<int>();
-
-#ifdef DEBUG
-  LOG(INFO) << "Got face_count: " << face_count;
-#endif
 
   if (!face_count) {
     return absl::Status();
@@ -97,10 +90,6 @@ absl::Status MPFaceMeshDetector::ProcessFrameWithStatus(
     auto &face_landmarks = multi_face_landmarks->back();
 
     const auto landmarks_num = normalizedLandmarkList.landmark_size();
-
-#ifdef DEBUG
-    LOG(INFO) << "Got landmarks_num: " << landmarks_num;
-#endif
 
     face_landmarks.reserve(landmarks_num);
 

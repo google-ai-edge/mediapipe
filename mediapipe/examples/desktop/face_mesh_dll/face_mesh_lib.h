@@ -28,7 +28,6 @@
 class MPFaceMeshDetector {
 public:
   MPFaceMeshDetector();
-  ~MPFaceMeshDetector() = default;
   std::vector<std::vector<cv::Point2f>> *ProcessFrame2D(const cv::Mat &camera_frame);
 
 private:
