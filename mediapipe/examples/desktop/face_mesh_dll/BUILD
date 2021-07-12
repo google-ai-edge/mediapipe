@@ -47,9 +47,9 @@ windows_dll_library(
 
         "//mediapipe/calculators/core:constant_side_packet_calculator",
         "//mediapipe/calculators/core:flow_limiter_calculator",
-        "//mediapipe/modules/face_landmark:face_landmark_front_cpu_with_face_counter",
-
-
+        "//mediapipe/calculators/tflite:tflite_model_calculator",
+        "//mediapipe/calculators/util:local_file_contents_calculator",
+        "//mediapipe/modules/face_landmark:face_landmark_front_side_model_cpu_with_face_counter",
     ]
 )
 
