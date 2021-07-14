@@ -28,15 +28,15 @@ int main(int argc, char **argv) {
   constexpr char face_landmark_model_path[] =
       "mediapipe/modules/face_landmark/face_landmark.tflite";
 
-  MPFaceMeshDetector *faceMeshDetector = FaceMeshDetector_Construct(
+  MPFaceMeshDetector *faceMeshDetector = MPFaceMeshDetectorConstruct(
       maxNumFaces, face_detection_model_path, face_landmark_model_path);
 
-  // allocate memory for face landmarks
+  // Allocate memory for face landmarks.
   auto multiFaceLandmarks = new cv::Point2f *[maxNumFaces];
-  constexpr auto mediapipeFaceLandmarksNum = 468;
   for (int i = 0; i < maxNumFaces; ++i) {
-    multiFaceLandmarks[i] = new cv::Point2f[mediapipeFaceLandmarksNum];
+    multiFaceLandmarks[i] = new cv::Point2f[MPFaceMeshDetectorLandmarksNum];
   }
+  const auto faceCount = std::make_unique<int>();
 
   LOG(INFO) << "FaceMeshDetector constructed.";
 
@@ -56,21 +56,19 @@ int main(int argc, char **argv) {
     cv::cvtColor(camera_frame_raw, camera_frame, cv::COLOR_BGR2RGB);
     cv::flip(camera_frame, camera_frame, /*flipcode=HORIZONTAL*/ 1);
 
-    int faceCount =
-        FaceMeshDetector_GetFaceCount(faceMeshDetector, camera_frame);
+    MPFaceMeshDetectorProcessFrame2D(faceMeshDetector, camera_frame,
+                                     faceCount.get(), multiFaceLandmarks);
 
-    LOG(INFO) << "Detected faces num: " << faceCount;
+    LOG(INFO) << "Detected faces num: " << *faceCount;
 
-    if (faceCount > 0) {
-
-      FaceMeshDetector_GetFaceLandmarks(faceMeshDetector, multiFaceLandmarks);
-
+    if (*faceCount > 0) {
       auto &face_landmarks = multiFaceLandmarks[0];
       auto &landmark = face_landmarks[0];
 
       LOG(INFO) << "First landmark: x - " << landmark.x << ", y - "
                 << landmark.y;
     }
+
     const int pressed_key = cv::waitKey(5);
     if (pressed_key >= 0 && pressed_key != 255)
       grab_frames = false;
@@ -80,11 +78,11 @@ int main(int argc, char **argv) {
 
   LOG(INFO) << "Shutting down.";
 
-  // deallocate memory for face landmarks
+  // Deallocate memory for face landmarks.
   for (int i = 0; i < maxNumFaces; ++i) {
     delete[] multiFaceLandmarks[i];
   }
   delete[] multiFaceLandmarks;
 
-  FaceMeshDetector_Destruct(faceMeshDetector);
+  MPFaceMeshDetectorDestruct(faceMeshDetector);
 }

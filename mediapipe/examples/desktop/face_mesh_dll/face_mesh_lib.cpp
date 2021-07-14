@@ -1,8 +1,4 @@
-#include <windows.h>
-
 #include "face_mesh_lib.h"
-
-#define DEBUG
 
 MPFaceMeshDetector::MPFaceMeshDetector(int numFaces,
                                        const char *face_detection_model_path,
@@ -19,9 +15,7 @@ absl::Status
 MPFaceMeshDetector::InitFaceMeshDetector(int numFaces,
                                          const char *face_detection_model_path,
                                          const char *face_landmark_model_path) {
-  if (numFaces <= 0) {
-    numFaces = 1;
-  }
+  numFaces = std::max(numFaces, 1);
 
   if (face_detection_model_path == nullptr) {
     face_detection_model_path =
@@ -33,6 +27,7 @@ MPFaceMeshDetector::InitFaceMeshDetector(int numFaces,
         "mediapipe/modules/face_landmark/face_landmark.tflite";
   }
 
+  // Prepare graph config.
   auto preparedGraphConfig = absl::StrReplaceAll(
       graphConfig, {{"$numFaces", std::to_string(numFaces)}});
   preparedGraphConfig = absl::StrReplaceAll(
@@ -70,8 +65,11 @@ MPFaceMeshDetector::InitFaceMeshDetector(int numFaces,
   return absl::OkStatus();
 }
 
-absl::Status
-MPFaceMeshDetector::GetFaceCountWithStatus(const cv::Mat &camera_frame) {
+absl::Status MPFaceMeshDetector::ProcessFrame2DWithStatus(
+    const cv::Mat &camera_frame, int *numFaces,
+    cv::Point2f **multi_face_landmarks) {
+  *numFaces = 0;
+
   // Wrap Mat into an ImageFrame.
   auto input_frame = absl::make_unique<mediapipe::ImageFrame>(
       mediapipe::ImageFormat::SRGB, camera_frame.cols, camera_frame.rows,
@@ -85,6 +83,8 @@ MPFaceMeshDetector::GetFaceCountWithStatus(const cv::Mat &camera_frame) {
   MP_RETURN_IF_ERROR(graph.AddPacketToInputStream(
       kInputStream, mediapipe::Adopt(input_frame.release())
                         .At(mediapipe::Timestamp(frame_timestamp_us))));
+
+  // Get face count.
   mediapipe::Packet face_count_packet;
   if (!face_count_poller_ptr ||
       !face_count_poller_ptr->Next(&face_count_packet)) {
@@ -94,29 +94,11 @@ MPFaceMeshDetector::GetFaceCountWithStatus(const cv::Mat &camera_frame) {
 
   auto &face_count = face_count_packet.Get<int>();
 
-  faceCount = face_count;
-
-  return absl::OkStatus();
-}
-
-int MPFaceMeshDetector::GetFaceCount(const cv::Mat &camera_frame) {
-  const auto status = GetFaceCountWithStatus(camera_frame);
-  if (!status.ok()) {
-    LOG(INFO) << "Failed GetFaceCount.";
-    LOG(INFO) << status.message();
+  if (face_count <= 0) {
+    return absl::OkStatus();
   }
 
-  return faceCount;
-}
-
-absl::Status MPFaceMeshDetector::GetFaceLandmarksWithStatus(
-    cv::Point2f **multi_face_landmarks) {
-
-  if (faceCount <= 0) {
-    return absl::CancelledError(
-        "Failed during gettinglandmarks, because faceCount is <= 0.");
-  }
-
+  // Get face landmarks.
   mediapipe::Packet face_landmarks_packet;
   if (!landmarks_poller_ptr ||
       !landmarks_poller_ptr->Next(&face_landmarks_packet)) {
@@ -127,9 +109,15 @@ absl::Status MPFaceMeshDetector::GetFaceLandmarksWithStatus(
       face_landmarks_packet
           .Get<::std::vector<::mediapipe::NormalizedLandmarkList>>();
 
-  for (int i = 0; i < faceCount; ++i) {
+  // Convert landmarks to cv::Point2f**.
+  for (int i = 0; i < face_count; ++i) {
     const auto &normalizedLandmarkList = output_landmarks_vector[i];
     const auto landmarks_num = normalizedLandmarkList.landmark_size();
+
+    if (landmarks_num != kLandmarksNum) {
+      return absl::CancelledError("Detected unexpected landmarks number.");
+    }
+
     auto &face_landmarks = multi_face_landmarks[i];
 
     for (int j = 0; j < landmarks_num; ++j) {
@@ -139,47 +127,43 @@ absl::Status MPFaceMeshDetector::GetFaceLandmarksWithStatus(
     }
   }
 
-  faceCount = -1;
+  *numFaces = face_count;
 
   return absl::OkStatus();
 }
 
-void MPFaceMeshDetector::GetFaceLandmarks(cv::Point2f **multi_face_landmarks) {
-  const auto status = GetFaceLandmarksWithStatus(multi_face_landmarks);
+void MPFaceMeshDetector::ProcessFrame2D(const cv::Mat &camera_frame,
+                                        int *numFaces,
+                                        cv::Point2f **multi_face_landmarks) {
+  const auto status =
+      ProcessFrame2DWithStatus(camera_frame, numFaces, multi_face_landmarks);
   if (!status.ok()) {
-    LOG(INFO) << "Failed GetFaceLandmarks.";
+    LOG(INFO) << "Failed ProcessFrame2D.";
     LOG(INFO) << status.message();
   }
 }
 
 extern "C" {
 DLLEXPORT MPFaceMeshDetector *
-FaceMeshDetector_Construct(int numFaces, const char *face_detection_model_path,
-                           const char *face_landmark_model_path) {
+MPFaceMeshDetectorConstruct(int numFaces, const char *face_detection_model_path,
+                            const char *face_landmark_model_path) {
   return new MPFaceMeshDetector(numFaces, face_detection_model_path,
                                 face_landmark_model_path);
 }
 
-DLLEXPORT void FaceMeshDetector_Destruct(MPFaceMeshDetector *detector) {
+DLLEXPORT void MPFaceMeshDetectorDestruct(MPFaceMeshDetector *detector) {
   delete detector;
 }
 
-DLLEXPORT int FaceMeshDetector_GetFaceCount(MPFaceMeshDetector *detector,
-                                            const cv::Mat &camera_frame) {
-  return detector->GetFaceCount(camera_frame);
-}
-
 DLLEXPORT void
-FaceMeshDetector_GetFaceLandmarks(MPFaceMeshDetector *detector,
-                                  cv::Point2f **multi_face_landmarks) {
-  detector->GetFaceLandmarks(multi_face_landmarks);
-}
+MPFaceMeshDetectorProcessFrame2D(MPFaceMeshDetector *detector,
+                                 const cv::Mat &camera_frame, int *numFaces,
+                                 cv::Point2f **multi_face_landmarks) {
+  detector->ProcessFrame2D(camera_frame, numFaces, multi_face_landmarks);
 }
 
-const char MPFaceMeshDetector::kInputStream[] = "input_video";
-const char MPFaceMeshDetector::kOutputStream_landmarks[] =
-    "multi_face_landmarks";
-const char MPFaceMeshDetector::kOutputStream_faceCount[] = "face_count";
+DLLEXPORT const int MPFaceMeshDetectorLandmarksNum = MPFaceMeshDetector::kLandmarksNum;
+}
 
 const std::string MPFaceMeshDetector::graphConfig = R"pb(
 # MediaPipe graph that performs face mesh with TensorFlow Lite on CPU.
@@ -197,7 +181,7 @@ output_stream: "face_count"
 node {
   calculator: "FlowLimiterCalculator"
   input_stream: "input_video"
-  input_stream: "FINISHED:multi_face_landmarks"
+  input_stream: "FINISHED:face_count"
   input_stream_info: {
     tag_index: "FINISHED"
     back_edge: true
