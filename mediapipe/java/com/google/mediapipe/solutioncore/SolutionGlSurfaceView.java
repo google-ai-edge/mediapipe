@@ -68,7 +68,7 @@ public class SolutionGlSurfaceView<T extends ImageSolutionResult> extends GLSurf
   public SolutionGlSurfaceView(Context context, EGLContext glContext, int glMajorVersion) {
     super(context);
     setEGLContextClientVersion(glMajorVersion);
-    getHolder().addCallback(new HolderCallbacks());
+    getHolder().addCallback(new DummyHolderCallback());
     setEGLContextFactory(
         new GLSurfaceView.EGLContextFactory() {
           @Override
@@ -92,7 +92,7 @@ public class SolutionGlSurfaceView<T extends ImageSolutionResult> extends GLSurf
     setVisibility(View.GONE);
   }
 
-  private class HolderCallbacks implements SurfaceHolder.Callback {
+  private class DummyHolderCallback implements SurfaceHolder.Callback {
     @Override
     public void surfaceCreated(SurfaceHolder holder) {
       Log.d(TAG, "main surfaceCreated");

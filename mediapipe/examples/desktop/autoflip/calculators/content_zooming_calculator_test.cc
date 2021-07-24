@@ -291,7 +291,6 @@ TEST(ContentZoomingCalculatorTest, ZoomTest) {
   CheckBorder(static_features, 1000, 1000, 495, 395);
 }
 
-#if 0
 TEST(ContentZoomingCalculatorTest, ZoomTestFullPTZ) {
   auto runner = ::absl::make_unique<CalculatorRunner>(
       ParseTextProtoOrDie<CalculatorGraphConfig::Node>(kConfigD));
@@ -727,8 +726,8 @@ TEST(ContentZoomingCalculatorTest, ResolutionChangeZoomingWithCache) {
     auto runner = ::absl::make_unique<CalculatorRunner>(config);
     runner->MutableSidePackets()->Tag("STATE_CACHE") = MakePacket<
         mediapipe::autoflip::ContentZoomingCalculatorStateCacheType*>(&cache);
-    AddDetectionFrameSize(cv::Rect_<float>(.4, .4, .2, .2), 1000000, 1000,
-                          1000, runner.get());
+    AddDetectionFrameSize(cv::Rect_<float>(.4, .4, .2, .2), 1000000, 1000, 1000,
+                          runner.get());
     AddDetectionFrameSize(cv::Rect_<float>(.4, .4, .2, .2), 2000000, 500, 500,
                           runner.get());
     MP_ASSERT_OK(runner->Run());
@@ -752,7 +751,6 @@ TEST(ContentZoomingCalculatorTest, MaxZoomValue) {
   CheckCropRect(500, 500, 916, 916, 0,
                 runner->Outputs().Tag("CROP_RECT").packets);
 }
-#endif
 
 TEST(ContentZoomingCalculatorTest, MaxZoomValueOverride) {
   auto config = ParseTextProtoOrDie<CalculatorGraphConfig::Node>(kConfigF);
@@ -781,7 +779,6 @@ TEST(ContentZoomingCalculatorTest, MaxZoomValueOverride) {
                 runner->Outputs().Tag("CROP_RECT").packets);
 }
 
-#if 0
 TEST(ContentZoomingCalculatorTest, MaxZoomOutValue) {
   auto config = ParseTextProtoOrDie<CalculatorGraphConfig::Node>(kConfigD);
   auto* options = config.mutable_options()->MutableExtension(
@@ -969,7 +966,6 @@ TEST(ContentZoomingCalculatorTest, ProvidesConstantFirstRect) {
     EXPECT_EQ(first_rect.height(), rect.height());
   }
 }
-#endif
 
 }  // namespace
 }  // namespace autoflip

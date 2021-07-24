@@ -28,6 +28,7 @@ package(default_visibility = ["//visibility:private"])
 
 exports_files([
     "simple_subgraph_template.cc",
+    "options_lib_template.cc",
 ])
 
 bzl_library(
@@ -40,6 +41,7 @@ bzl_library(
         ":build_defs_bzl",
         "//mediapipe/framework:encode_binary_proto",
         "//mediapipe/framework:transitive_protos_bzl",
+        "//mediapipe/framework/deps:descriptor_set_bzl",
         "//mediapipe/framework/deps:expand_template_bzl",
     ],
 )
@@ -71,12 +73,24 @@ cc_library(
 mediapipe_proto_library(
     name = "calculator_graph_template_proto",
     srcs = ["calculator_graph_template.proto"],
+    def_options_lib = False,
     def_py_proto = False,
     visibility = ["//visibility:public"],
     deps = [
         "//mediapipe/framework:calculator_options_proto",
         "//mediapipe/framework:calculator_proto",
         "//mediapipe/framework/deps:proto_descriptor_proto",
+    ],
+)
+
+mediapipe_proto_library(
+    name = "packet_generator_wrapper_calculator_proto",
+    srcs = ["packet_generator_wrapper_calculator.proto"],
+    def_py_proto = False,
+    visibility = ["//mediapipe/framework:mediapipe_internal"],
+    deps = [
+        "//mediapipe/framework:calculator_options_proto",
+        "//mediapipe/framework:packet_generator_proto",
     ],
 )
 
@@ -159,10 +173,10 @@ cc_library(
     hdrs = ["options_map.h"],
     visibility = ["//mediapipe/framework:mediapipe_internal"],
     deps = [
+        ":type_util",
         "//mediapipe/framework:calculator_cc_proto",
         "//mediapipe/framework/port:any_proto",
         "//mediapipe/framework/port:status",
-        "//mediapipe/framework/tool:type_util",
     ],
 )
 
@@ -190,13 +204,41 @@ cc_library(
     ],
 )
 
+cc_binary(
+    name = "message_type_util",
+    srcs = ["message_type_util.cc"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//mediapipe/framework/port:advanced_proto",
+        "//mediapipe/framework/port:file_helpers",
+        "//mediapipe/framework/port:logging",
+        "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/flags:parse",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_library(
+    name = "options_registry",
+    srcs = ["options_registry.cc"],
+    hdrs = ["options_registry.h"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//mediapipe/framework/deps:registration",
+        "//mediapipe/framework/port:advanced_proto",
+        "//mediapipe/framework/port:logging",
+    ],
+)
+
 mediapipe_cc_test(
     name = "options_util_test",
     size = "small",
     srcs = ["options_util_test.cc"],
+    # A non-empty "data" param is needed to build the "_test_wasm" target.
     data = [":node_chain_subgraph.proto"],
     requires_full_emulation = False,
     deps = [
+        ":options_registry",
         ":options_util",
         "//mediapipe/calculators/core:flow_limiter_calculator",
         "//mediapipe/calculators/core:flow_limiter_calculator_cc_proto",
@@ -207,9 +249,24 @@ mediapipe_cc_test(
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/framework/port:parse_text_proto",
         "//mediapipe/framework/port:status",
-        "//mediapipe/framework/testdata:night_light_calculator_cc_proto",
+        "//mediapipe/framework/testdata:night_light_calculator_options_lib",
+        "//mediapipe/framework/tool:node_chain_subgraph_options_lib",
         "//mediapipe/util:header_util",
     ],
+)
+
+cc_library(
+    name = "packet_generator_wrapper_calculator",
+    srcs = ["packet_generator_wrapper_calculator.cc"],
+    visibility = ["//mediapipe/framework:mediapipe_internal"],
+    deps = [
+        ":packet_generator_wrapper_calculator_cc_proto",
+        "//mediapipe/framework:calculator_base",
+        "//mediapipe/framework:calculator_registry",
+        "//mediapipe/framework:output_side_packet",
+        "//mediapipe/framework:packet_generator",
+    ],
+    alwayslink = 1,
 )
 
 cc_library(
@@ -776,6 +833,7 @@ cc_test(
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
         "//mediapipe/framework/stream_handler:immediate_input_stream_handler",
+        "@com_google_absl//absl/strings",
     ],
 )
 

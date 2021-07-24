@@ -26,6 +26,7 @@ import numpy.testing as npt
 
 # resources dependency
 # undeclared dependency
+from mediapipe.python.solutions import drawing_styles
 from mediapipe.python.solutions import drawing_utils as mp_drawing
 from mediapipe.python.solutions import hands as mp_hands
 
@@ -51,8 +52,10 @@ class HandsTest(parameterized.TestCase):
 
   def _annotate(self, frame: np.ndarray, results: NamedTuple, idx: int):
     for hand_landmarks in results.multi_hand_landmarks:
-      mp_drawing.draw_landmarks(frame, hand_landmarks,
-                                mp_hands.HAND_CONNECTIONS)
+      mp_drawing.draw_landmarks(
+          frame, hand_landmarks, mp_hands.HAND_CONNECTIONS,
+          drawing_styles.get_default_hand_landmark_style(),
+          drawing_styles.get_default_hand_connection_style())
     path = os.path.join(tempfile.gettempdir(), self.id().split('.')[-1] +
                                               '_frame_{}.png'.format(idx))
     cv2.imwrite(path, frame)

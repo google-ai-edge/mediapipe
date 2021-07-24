@@ -23,7 +23,7 @@ public final class HandLandmark {
   public static final int WRIST = 0;
   public static final int THUMB_CMC = 1;
   public static final int THUMB_MCP = 2;
-  public static final int THUMB_DIP = 3;
+  public static final int THUMB_IP = 3;
   public static final int THUMB_TIP = 4;
   public static final int INDEX_FINGER_MCP = 5;
   public static final int INDEX_FINGER_PIP = 6;
@@ -47,7 +47,7 @@ public final class HandLandmark {
     WRIST,
     THUMB_CMC,
     THUMB_MCP,
-    THUMB_DIP,
+    THUMB_IP,
     THUMB_TIP,
     INDEX_FINGER_MCP,
     INDEX_FINGER_PIP,

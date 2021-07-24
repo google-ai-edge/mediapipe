@@ -21,5 +21,5 @@ public interface ResultGlRenderer<T extends ImageSolutionResult> {
   void setupRendering();
 
   /** Renders the solution result. */
-  void renderResult(T result);
+  void renderResult(T result, ResultGlBoundary boundary);
 }

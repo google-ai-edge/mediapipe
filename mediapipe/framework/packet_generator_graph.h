@@ -76,7 +76,8 @@ class PacketGeneratorGraph {
   // must now be runnable) to produce output_side_packets.
   virtual absl::Status RunGraphSetup(
       const std::map<std::string, Packet>& input_side_packets,
-      std::map<std::string, Packet>* output_side_packets) const;
+      std::map<std::string, Packet>* output_side_packets,
+      std::vector<int>* non_scheduled_generators = nullptr) const;
 
   // Get the base packets: the packets which are produced when Initialize
   // is called.

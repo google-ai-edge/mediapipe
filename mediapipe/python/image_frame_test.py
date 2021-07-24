@@ -95,7 +95,7 @@ class ImageFrameTest(absltest.TestCase):
         'RGBA')
     image_frame = mp.ImageFrame(
         image_format=mp.ImageFormat.SRGBA64,
-        data=np.asarray(img, dtype=np.uint16))
+        data=np.asarray(img).astype(np.uint16))
     self.assertTrue(np.array_equal(np.asarray(img), image_frame.numpy_view()))
     with self.assertRaisesRegex(IndexError, 'out of bounds'):
       print(image_frame[1000, 1000, 1000])

@@ -71,7 +71,10 @@ message FaceBoxAdjusterCalculatorOptions {
   optional int32 max_facesize_history_us = 9 [default = 300000000];
 
   // Scale factor of face width to shift based on pan look angle.
-  optional float pan_position_shift_scale = 15 [default = 0.5];
+  optional float pan_position_shift_scale = 15
+      [default = 1.0, deprecated = true];
   // Scale factor of face height to shift based on tilt look angle.
-  optional float tilt_position_shift_scale = 16 [default = 0.5];
+  optional float tilt_position_shift_scale = 16 [default = 0.25];
+  // Scale factor of face width to shift based on roll look angle.
+  optional float roll_position_shift_scale = 17 [default = 0.7];
 }

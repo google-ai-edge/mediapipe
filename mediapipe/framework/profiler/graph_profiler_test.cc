@@ -1205,5 +1205,68 @@ TEST(GraphProfilerTest, ParallelReads) {
   EXPECT_EQ(1001, out_1_packets.size());
 }
 
+// Returns the set of calculator names in a GraphProfile captured from
+// CalculatorGraph initialized from a certain CalculatorGraphConfig.
+std::set<std::string> GetCalculatorNames(const CalculatorGraphConfig& config) {
+  std::set<std::string> result;
+  CalculatorGraph graph;
+  MP_EXPECT_OK(graph.Initialize(config));
+  GraphProfile profile;
+  MP_EXPECT_OK(graph.profiler()->CaptureProfile(&profile));
+  for (auto& p : profile.calculator_profiles()) {
+    result.insert(p.name());
+  }
+  return result;
+}
+
+TEST(GraphProfilerTest, CalculatorProfileFilter) {
+  CalculatorGraphConfig config;
+  QCHECK(proto2::TextFormat::ParseFromString(R"(
+    profiler_config {
+     enable_profiler: true
+    }
+    node {
+      calculator: "RangeCalculator"
+      input_side_packet: "range_step"
+      output_stream: "out"
+      output_stream: "sum"
+      output_stream: "mean"
+    }
+    node {
+      calculator: "PassThroughCalculator"
+      input_stream: "out"
+      input_stream: "sum"
+      input_stream: "mean"
+      output_stream: "out_1"
+      output_stream: "sum_1"
+      output_stream: "mean_1"
+    }
+    output_stream: "OUT:0:the_integers"
+    )",
+                                             &config));
+
+  std::set<std::string> expected_names;
+  expected_names = {"RangeCalculator", "PassThroughCalculator"};
+  EXPECT_EQ(GetCalculatorNames(config), expected_names);
+
+  *config.mutable_profiler_config()->mutable_calculator_filter() =
+      "RangeCalculator";
+  expected_names = {"RangeCalculator"};
+  EXPECT_EQ(GetCalculatorNames(config), expected_names);
+
+  *config.mutable_profiler_config()->mutable_calculator_filter() = "Range.*";
+  expected_names = {"RangeCalculator"};
+  EXPECT_EQ(GetCalculatorNames(config), expected_names);
+
+  *config.mutable_profiler_config()->mutable_calculator_filter() =
+      ".*Calculator";
+  expected_names = {"RangeCalculator", "PassThroughCalculator"};
+  EXPECT_EQ(GetCalculatorNames(config), expected_names);
+
+  *config.mutable_profiler_config()->mutable_calculator_filter() = ".*Clock.*";
+  expected_names = {};
+  EXPECT_EQ(GetCalculatorNames(config), expected_names);
+}
+
 }  // namespace
 }  // namespace mediapipe

@@ -224,29 +224,33 @@ where object detection simply runs on every image. Default to `0.99`.
 
 #### model_name
 
-Name of the model to use for predicting 3D bounding box landmarks. Currently supports
-`{'Shoe', 'Chair', 'Cup', 'Camera'}`.
+Name of the model to use for predicting 3D bounding box landmarks. Currently
+supports `{'Shoe', 'Chair', 'Cup', 'Camera'}`. Default to `Shoe`.
 
 #### focal_length
 
-Camera focal length `(fx, fy)`, by default is defined in
-[NDC space](#ndc-space). To use focal length `(fx_pixel, fy_pixel)` in
-[pixel space](#pixel-space), users should provide `image_size` = `(image_width,
-image_height)` to enable conversions inside the API. For further details about
-NDC and pixel space, please see [Coordinate Systems](#coordinate-systems).
+By default, camera focal length defined in [NDC space](#ndc-space), i.e., `(fx,
+fy)`. Default to `(1.0, 1.0)`. To specify focal length in
+[pixel space](#pixel-space) instead, i.e., `(fx_pixel, fy_pixel)`, users should
+provide [`image_size`](#image_size) = `(image_width, image_height)` to enable
+conversions inside the API. For further details about NDC and pixel space,
+please see [Coordinate Systems](#coordinate-systems).
 
 #### principal_point
 
-Camera principal point `(px, py)`, by default is defined in
-[NDC space](#ndc-space). To use principal point `(px_pixel, py_pixel)` in
-[pixel space](#pixel-space), users should provide `image_size` = `(image_width,
-image_height)` to enable conversions inside the API. For further details about
-NDC and pixel space, please see [Coordinate Systems](#coordinate-systems).
+By default, camera principal point defined in [NDC space](#ndc-space), i.e.,
+`(px, py)`. Default to `(0.0, 0.0)`. To specify principal point in
+[pixel space](#pixel-space), i.e.,`(px_pixel, py_pixel)`, users should provide
+[`image_size`](#image_size) = `(image_width, image_height)` to enable
+conversions inside the API. For further details about NDC and pixel space,
+please see [Coordinate Systems](#coordinate-systems).
 
 #### image_size
 
-(**Optional**) size `(image_width, image_height)` of the input image, **ONLY**
-needed when use `focal_length` and `principal_point` in pixel space.
+**Specify only when [`focal_length`](#focal_length) and
+[`principal_point`](#principal_point) are specified in pixel space.**
+
+Size of the input image, i.e., `(image_width, image_height)`.
 
 ### Output
 
@@ -354,6 +358,89 @@ with mp_objectron.Objectron(static_image_mode=False,
     if cv2.waitKey(5) & 0xFF == 27:
       break
 cap.release()
+```
+
+## JavaScript Solution API
+
+Please first see general [introduction](../getting_started/javascript.md) on
+MediaPipe in JavaScript, then learn more in the companion [web demo](#resources)
+and the following usage example.
+
+Supported configuration options:
+
+*   [staticImageMode](#static_image_mode)
+*   [maxNumObjects](#max_num_objects)
+*   [minDetectionConfidence](#min_detection_confidence)
+*   [minTrackingConfidence](#min_tracking_confidence)
+*   [modelName](#model_name)
+*   [focalLength](#focal_length)
+*   [principalPoint](#principal_point)
+*   [imageSize](#image_size)
+
+```html
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/control_utils_3d.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/objectron/objectron.js" crossorigin="anonymous"></script>
+</head>
+
+<body>
+  <div class="container">
+    <video class="input_video"></video>
+    <canvas class="output_canvas" width="1280px" height="720px"></canvas>
+  </div>
+</body>
+</html>
+```
+
+```javascript
+<script type="module">
+const videoElement = document.getElementsByClassName('input_video')[0];
+const canvasElement = document.getElementsByClassName('output_canvas')[0];
+const canvasCtx = canvasElement.getContext('2d');
+
+function onResults(results) {
+  canvasCtx.save();
+  canvasCtx.drawImage(
+      results.image, 0, 0, canvasElement.width, canvasElement.height);
+  if (!!results.objectDetections) {
+    for (const detectedObject of results.objectDetections) {
+      // Reformat keypoint information as landmarks, for easy drawing.
+      const landmarks: mpObjectron.Point2D[] =
+          detectedObject.keypoints.map(x => x.point2d);
+      // Draw bounding box.
+      drawingUtils.drawConnectors(canvasCtx, landmarks,
+          mpObjectron.BOX_CONNECTIONS, {color: '#FF0000'});
+      // Draw centroid.
+      drawingUtils.drawLandmarks(canvasCtx, [landmarks[0]], {color: '#FFFFFF'});
+    }
+  }
+  canvasCtx.restore();
+}
+
+const objectron = new Objectron({locateFile: (file) => {
+  return `https://cdn.jsdelivr.net/npm/@mediapipe/objectron/${file}`;
+}});
+objectron.setOptions({
+  modelName: 'Chair',
+  maxNumObjects: 3,
+});
+objectron.onResults(onResults);
+
+const camera = new Camera(videoElement, {
+  onFrame: async () => {
+    await objectron.send({image: videoElement});
+  },
+  width: 1280,
+  height: 720
+});
+camera.start();
+</script>
 ```
 
 ## Example Apps
@@ -561,11 +648,15 @@ py = -py_pixel * 2.0 / image_height + 1.0
     [Announcing the Objectron Dataset](https://ai.googleblog.com/2020/11/announcing-objectron-dataset.html)
 *   Google AI Blog:
     [Real-Time 3D Object Detection on Mobile Devices with MediaPipe](https://ai.googleblog.com/2020/03/real-time-3d-object-detection-on-mobile.html)
-*   Paper: [Objectron: A Large Scale Dataset of Object-Centric Videos in the Wild with Pose Annotations](https://arxiv.org/abs/2012.09988), to appear in CVPR 2021
+*   Paper: [Objectron: A Large Scale Dataset of Object-Centric Videos in the
+    Wild with Pose Annotations](https://arxiv.org/abs/2012.09988), to appear in
+    CVPR 2021
 *   Paper: [MobilePose: Real-Time Pose Estimation for Unseen Objects with Weak
     Shape Supervision](https://arxiv.org/abs/2003.03522)
 *   Paper:
     [Instant 3D Object Tracking with Applications in Augmented Reality](https://drive.google.com/open?id=1O_zHmlgXIzAdKljp20U_JUkEHOGG52R8)
-    ([presentation](https://www.youtube.com/watch?v=9ndF1AIo7h0)), Fourth Workshop on Computer Vision for AR/VR, CVPR 2020
+    ([presentation](https://www.youtube.com/watch?v=9ndF1AIo7h0)), Fourth
+    Workshop on Computer Vision for AR/VR, CVPR 2020
 *   [Models and model cards](./models.md#objectron)
+*   [Web demo](https://code.mediapipe.dev/codepen/objectron)
 *   [Python Colab](https://mediapipe.page.link/objectron_py_colab)

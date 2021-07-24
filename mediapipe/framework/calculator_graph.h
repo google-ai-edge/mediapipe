@@ -486,6 +486,8 @@ class CalculatorGraph {
   absl::Status InitializeStreams();
   absl::Status InitializeProfiler();
   absl::Status InitializeCalculatorNodes();
+  absl::Status InitializePacketGeneratorNodes(
+      const std::vector<int>& non_scheduled_generators);
 
   // Iterates through all nodes and schedules any that can be opened.
   void ScheduleAllOpenableNodes();
@@ -556,7 +558,8 @@ class CalculatorGraph {
   std::unique_ptr<InputStreamManager[]> input_stream_managers_;
   std::unique_ptr<OutputStreamManager[]> output_stream_managers_;
   std::unique_ptr<OutputSidePacketImpl[]> output_side_packets_;
-  std::unique_ptr<absl::FixedArray<CalculatorNode>> nodes_;
+  std::vector<std::unique_ptr<CalculatorNode>> nodes_;
+  bool packet_generator_nodes_added_ = false;
 
   // The graph output streams.
   std::vector<std::shared_ptr<internal::GraphOutputStream>>

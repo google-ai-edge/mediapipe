@@ -15,7 +15,9 @@
 package com.google.mediapipe.solutions.hands;
 
 import android.content.Context;
+import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.mediapipe.formats.proto.LandmarkProto.NormalizedLandmark;
 import com.google.mediapipe.formats.proto.LandmarkProto.NormalizedLandmarkList;
 import com.google.mediapipe.formats.proto.ClassificationProto.Classification;
@@ -39,6 +41,42 @@ import javax.annotation.Nullable;
  */
 public class Hands extends ImageSolutionBase {
   private static final String TAG = "Hands";
+
+  /** Value class representing hand connection. */
+  @AutoValue
+  public abstract static class Connection {
+    static Connection create(int start, int end) {
+      return new AutoValue_Hands_Connection(start, end);
+    }
+
+    public abstract int start();
+
+    public abstract int end();
+  }
+
+  public static final ImmutableSet<Connection> HAND_CONNECTIONS =
+      ImmutableSet.of(
+          Connection.create(HandLandmark.WRIST, HandLandmark.THUMB_CMC),
+          Connection.create(HandLandmark.THUMB_CMC, HandLandmark.THUMB_MCP),
+          Connection.create(HandLandmark.THUMB_MCP, HandLandmark.THUMB_IP),
+          Connection.create(HandLandmark.THUMB_IP, HandLandmark.THUMB_TIP),
+          Connection.create(HandLandmark.WRIST, HandLandmark.INDEX_FINGER_MCP),
+          Connection.create(HandLandmark.INDEX_FINGER_MCP, HandLandmark.INDEX_FINGER_PIP),
+          Connection.create(HandLandmark.INDEX_FINGER_PIP, HandLandmark.INDEX_FINGER_DIP),
+          Connection.create(HandLandmark.INDEX_FINGER_DIP, HandLandmark.INDEX_FINGER_TIP),
+          Connection.create(HandLandmark.INDEX_FINGER_MCP, HandLandmark.MIDDLE_FINGER_MCP),
+          Connection.create(HandLandmark.MIDDLE_FINGER_MCP, HandLandmark.MIDDLE_FINGER_PIP),
+          Connection.create(HandLandmark.MIDDLE_FINGER_PIP, HandLandmark.MIDDLE_FINGER_DIP),
+          Connection.create(HandLandmark.MIDDLE_FINGER_DIP, HandLandmark.MIDDLE_FINGER_TIP),
+          Connection.create(HandLandmark.MIDDLE_FINGER_MCP, HandLandmark.RING_FINGER_MCP),
+          Connection.create(HandLandmark.RING_FINGER_MCP, HandLandmark.RING_FINGER_PIP),
+          Connection.create(HandLandmark.RING_FINGER_PIP, HandLandmark.RING_FINGER_DIP),
+          Connection.create(HandLandmark.RING_FINGER_DIP, HandLandmark.RING_FINGER_TIP),
+          Connection.create(HandLandmark.RING_FINGER_MCP, HandLandmark.PINKY_MCP),
+          Connection.create(HandLandmark.WRIST, HandLandmark.PINKY_MCP),
+          Connection.create(HandLandmark.PINKY_MCP, HandLandmark.PINKY_PIP),
+          Connection.create(HandLandmark.PINKY_PIP, HandLandmark.PINKY_DIP),
+          Connection.create(HandLandmark.PINKY_DIP, HandLandmark.PINKY_TIP));
 
   private static final String NUM_HANDS = "num_hands";
   private static final String GPU_GRAPH_NAME = "hand_landmark_tracking_gpu_image.binarypb";

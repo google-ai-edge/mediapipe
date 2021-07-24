@@ -1133,24 +1133,6 @@ class CheckInputTimestamp2SinkCalculator : public CalculatorBase {
 };
 REGISTER_CALCULATOR(CheckInputTimestamp2SinkCalculator);
 
-// Takes an input stream packet and passes it (with timestamp removed) as an
-// output side packet.
-class OutputSidePacketInProcessCalculator : public CalculatorBase {
- public:
-  static absl::Status GetContract(CalculatorContract* cc) {
-    cc->Inputs().Index(0).SetAny();
-    cc->OutputSidePackets().Index(0).SetSameAs(&cc->Inputs().Index(0));
-    return absl::OkStatus();
-  }
-
-  absl::Status Process(CalculatorContext* cc) final {
-    cc->OutputSidePackets().Index(0).Set(
-        cc->Inputs().Index(0).Value().At(Timestamp::Unset()));
-    return absl::OkStatus();
-  }
-};
-REGISTER_CALCULATOR(OutputSidePacketInProcessCalculator);
-
 // A calculator checks if either of two input streams contains a packet and
 // sends the packet to the single output stream with the same timestamp.
 class SimpleMuxCalculator : public CalculatorBase {

@@ -15,7 +15,6 @@
 package com.google.mediapipe.components;
 
 import android.app.Activity;
-import androidx.lifecycle.LifecycleOwner;
 import android.content.Context;
 import android.graphics.SurfaceTexture;
 import android.hardware.camera2.CameraAccessException;
@@ -40,6 +39,7 @@ import androidx.camera.core.ImageCapture.OutputFileOptions;
 import androidx.camera.core.Preview;
 import androidx.camera.lifecycle.ProcessCameraProvider;
 import androidx.core.content.ContextCompat;
+import androidx.lifecycle.LifecycleOwner;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.mediapipe.glutil.EglManager;
 import java.io.File;
@@ -100,7 +100,8 @@ public class CameraXPreviewHelper extends CameraHelper {
 
   // Target frame and view resolution size in landscape.
   private static final Size TARGET_SIZE = new Size(1280, 720);
-
+  private static final double ASPECT_TOLERANCE = 0.25;
+  private static final double ASPECT_PENALTY = 10000;
   // Number of attempts for calculating the offset between the camera's clock and MONOTONIC clock.
   private static final int CLOCK_OFFSET_CALIBRATION_ATTEMPTS = 3;
 
@@ -177,8 +178,8 @@ public class CameraXPreviewHelper extends CameraHelper {
   /**
    * Initializes the camera and sets it up for accessing frames.
    *
-   * @param targetSize the preview size to use. If set to {@code null}, the helper will default to
-   *     1280 * 720.
+   * @param targetSize a predefined constant {@link #TARGET_SIZE}. If set to {@code null}, the
+   *     helper will default to 1280 * 720.
    */
   public void startCamera(
       Context context,
@@ -189,7 +190,17 @@ public class CameraXPreviewHelper extends CameraHelper {
     ListenableFuture<ProcessCameraProvider> cameraProviderFuture =
         ProcessCameraProvider.getInstance(context);
 
-    targetSize = (targetSize == null ? TARGET_SIZE : targetSize);
+    Integer selectedLensFacing =
+        cameraFacing == CameraHelper.CameraFacing.FRONT
+            ? CameraMetadata.LENS_FACING_FRONT
+            : CameraMetadata.LENS_FACING_BACK;
+    cameraCharacteristics = getCameraCharacteristics(context, selectedLensFacing);
+    targetSize = getOptimalViewSize(targetSize);
+    // Falls back to TARGET_SIZE if either targetSize is not set or getOptimalViewSize() can't
+    // determine the optimal view size.
+    if (targetSize == null) {
+      targetSize = TARGET_SIZE;
+    }
     // According to CameraX documentation
     // (https://developer.android.com/training/camerax/configuration#specify-resolution):
     // "Express the resolution Size in the coordinate frame after rotating the supported sizes by
@@ -306,43 +317,49 @@ public class CameraXPreviewHelper extends CameraHelper {
   }
 
   @Nullable
-  // TODO: Compute optimal view size from available stream sizes.
-  // Currently, we create the preview stream before we know what size our preview SurfaceView is.
-  // Instead, we should determine our optimal stream size (based on resolution and aspect ratio
-  // difference with the preview SurfaceView) and open the preview stream then. Until we make that
-  // change, this method is unused.
-  private Size getOptimalViewSize(Size targetSize) {
-    if (cameraCharacteristics != null) {
-      StreamConfigurationMap map =
-          cameraCharacteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
-      Size[] outputSizes = map.getOutputSizes(SurfaceTexture.class);
+  private Size getOptimalViewSize(@Nullable Size targetSize) {
+    if (targetSize == null || cameraCharacteristics == null) {
+      return null;
+    }
+    StreamConfigurationMap map =
+        cameraCharacteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
+    Size[] outputSizes = map.getOutputSizes(SurfaceTexture.class);
 
-      int selectedWidth = -1;
-      int selectedHeight = -1;
-      float selectedAspectRatioDifference = 1e3f;
-      float targetAspectRatio = targetSize.getWidth() / (float) targetSize.getHeight();
-
-      // Find the smallest size >= target size with the closest aspect ratio.
-      for (Size size : outputSizes) {
-        float aspectRatio = (float) size.getWidth() / size.getHeight();
-        float aspectRatioDifference = Math.abs(aspectRatio - targetAspectRatio);
-        if (aspectRatioDifference <= selectedAspectRatioDifference) {
-          if ((selectedWidth == -1 && selectedHeight == -1)
-              || (size.getWidth() <= selectedWidth
-                  && size.getWidth() >= frameSize.getWidth()
-                  && size.getHeight() <= selectedHeight
-                  && size.getHeight() >= frameSize.getHeight())) {
-            selectedWidth = size.getWidth();
-            selectedHeight = size.getHeight();
-            selectedAspectRatioDifference = aspectRatioDifference;
-          }
-        }
-      }
-      if (selectedWidth != -1 && selectedHeight != -1) {
-        return new Size(selectedWidth, selectedHeight);
+    // Find the best matching size. We give a large penalty to sizes whose aspect
+    // ratio is too different from the desired one. That way we choose a size with
+    // an acceptable aspect ratio if available, otherwise we fall back to one that
+    // is close in width.
+    Size optimalSize = null;
+    double targetRatio = (double) targetSize.getWidth() / targetSize.getHeight();
+    Log.d(
+        TAG,
+        String.format(
+            "Camera target size ratio: %f width: %d", targetRatio, targetSize.getWidth()));
+    double minCost = Double.MAX_VALUE;
+    for (Size size : outputSizes) {
+      double aspectRatio = (double) size.getWidth() / size.getHeight();
+      double ratioDiff = Math.abs(aspectRatio - targetRatio);
+      double cost =
+          (ratioDiff > ASPECT_TOLERANCE ? ASPECT_PENALTY + ratioDiff * targetSize.getHeight() : 0)
+              + Math.abs(size.getWidth() - targetSize.getWidth());
+      Log.d(
+          TAG,
+          String.format(
+              "Camera size candidate width: %d height: %d ratio: %f cost: %f",
+              size.getWidth(), size.getHeight(), aspectRatio, cost));
+      if (cost < minCost) {
+        optimalSize = size;
+        minCost = cost;
       }
     }
-    return null;
+    if (optimalSize != null) {
+      Log.d(
+          TAG,
+          String.format(
+              "Optimal camera size width: %d height: %d",
+              optimalSize.getWidth(), optimalSize.getHeight()));
+    }
+    return optimalSize;
   }
 
   // Computes the difference between the camera's clock and MONOTONIC clock using camera's
@@ -423,11 +440,6 @@ public class CameraXPreviewHelper extends CameraHelper {
       }
     }
 
-    Integer selectedLensFacing =
-        cameraFacing == CameraHelper.CameraFacing.FRONT
-            ? CameraMetadata.LENS_FACING_FRONT
-            : CameraMetadata.LENS_FACING_BACK;
-    cameraCharacteristics = getCameraCharacteristics(context, selectedLensFacing);
     if (cameraCharacteristics != null) {
       // Queries camera timestamp source. It should be one of REALTIME or UNKNOWN
       // as documented in

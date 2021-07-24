@@ -31,8 +31,8 @@ stream on an Android device.
 
 ## Setup
 
-1.  Install MediaPipe on your system, see [MediaPipe installation guide] for
-    details.
+1.  Install MediaPipe on your system, see
+    [MediaPipe installation guide](./install.md) for details.
 2.  Install Android Development SDK and Android NDK. See how to do so also in
     [MediaPipe installation guide].
 3.  Enable [developer options] on your Android device.
@@ -770,7 +770,6 @@ If you ran into any issues, please see the full code of the tutorial
 [`ExternalTextureConverter`]:https://github.com/google/mediapipe/tree/master/mediapipe/java/com/google/mediapipe/components/ExternalTextureConverter.java
 [`FrameLayout`]:https://developer.android.com/reference/android/widget/FrameLayout
 [`FrameProcessor`]:https://github.com/google/mediapipe/tree/master/mediapipe/java/com/google/mediapipe/components/FrameProcessor.java
-[MediaPipe installation guide]:./install.md
 [`PermissionHelper`]: https://github.com/google/mediapipe/tree/master/mediapipe/java/com/google/mediapipe/components/PermissionHelper.java
 [`SurfaceHolder.Callback`]:https://developer.android.com/reference/android/view/SurfaceHolder.Callback.html
 [`SurfaceView`]:https://developer.android.com/reference/android/view/SurfaceView

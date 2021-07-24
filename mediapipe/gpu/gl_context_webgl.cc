@@ -97,10 +97,10 @@ absl::Status GlContext::CreateContextInternal(
           } else if (Module && Module.canvasCssSelector) {
             return cachedFindCanvasEventTarget(Module.canvasCssSelector);
           }
-        }
-        if (typeof console !== 'undefined') {
-          console.warn('Module properties canvas and canvasCssSelector not ' +
-                       'found during WebGL context creation.');
+          if (typeof console !== 'undefined') {
+            console.warn('Module properties canvas and canvasCssSelector not ' +
+                         'found during WebGL context creation.');
+          }
         }
         // We still go through with the find attempt, although for most use
         // cases it will not succeed, just in case the user does want to fall-

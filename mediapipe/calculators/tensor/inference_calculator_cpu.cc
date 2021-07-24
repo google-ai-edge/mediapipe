@@ -181,9 +181,21 @@ absl::Status InferenceCalculatorCpuImpl::LoadDelegate(CalculatorContext* cc) {
     // Attempt to use NNAPI.
     // If not supported, the default CPU delegate will be created and used.
     interpreter_->SetAllowFp16PrecisionForFp32(1);
-    delegate_ = TfLiteDelegatePtr(tflite::NnApiDelegate(), [](TfLiteDelegate*) {
-      // No need to free according to tflite::NnApiDelegate() documentation.
-    });
+    tflite::StatefulNnApiDelegate::Options options;
+    const auto& nnapi = calculator_opts.delegate().nnapi();
+    // Set up cache_dir and model_token for NNAPI compilation cache.
+    options.cache_dir =
+        nnapi.has_cache_dir() ? nnapi.cache_dir().c_str() : nullptr;
+    if (!kNnApiDelegateCacheDir(cc).IsEmpty()) {
+      options.cache_dir = kNnApiDelegateCacheDir(cc).Get().c_str();
+    }
+    options.model_token =
+        nnapi.has_model_token() ? nnapi.model_token().c_str() : nullptr;
+    if (!kNnApiDelegateModelToken(cc).IsEmpty()) {
+      options.model_token = kNnApiDelegateModelToken(cc).Get().c_str();
+    }
+    delegate_ = TfLiteDelegatePtr(new tflite::StatefulNnApiDelegate(options),
+                                  [](TfLiteDelegate*) {});
     RET_CHECK_EQ(interpreter_->ModifyGraphWithDelegate(delegate_.get()),
                  kTfLiteOk);
     return absl::OkStatus();

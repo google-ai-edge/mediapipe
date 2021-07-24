@@ -428,37 +428,37 @@ Tensor::CpuReadView Tensor::GetCpuReadView() const {
     } else
 #endif  // MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31
 
-        // Transfer data from texture if not transferred from SSBO/MTLBuffer
-        // yet.
-        if (valid_ & kValidOpenGlTexture2d) {
-      gl_context_->Run([this]() {
-        const int padded_size =
-            texture_height_ * texture_width_ * 4 * element_size();
-        auto temp_buffer = absl::make_unique<uint8_t[]>(padded_size);
-        uint8_t* buffer = temp_buffer.get();
+      // Transfer data from texture if not transferred from SSBO/MTLBuffer
+      // yet.
+      if (valid_ & kValidOpenGlTexture2d) {
+        gl_context_->Run([this]() {
+          const int padded_size =
+              texture_height_ * texture_width_ * 4 * element_size();
+          auto temp_buffer = absl::make_unique<uint8_t[]>(padded_size);
+          uint8_t* buffer = temp_buffer.get();
 
-        glBindFramebuffer(GL_FRAMEBUFFER, frame_buffer_);
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
-                               GL_TEXTURE_2D, opengl_texture2d_, 0);
-        glPixelStorei(GL_PACK_ALIGNMENT, 4);
-        glReadPixels(0, 0, texture_width_, texture_height_, GL_RGBA, GL_FLOAT,
-                     buffer);
+          glBindFramebuffer(GL_FRAMEBUFFER, frame_buffer_);
+          glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+                                 GL_TEXTURE_2D, opengl_texture2d_, 0);
+          glPixelStorei(GL_PACK_ALIGNMENT, 4);
+          glReadPixels(0, 0, texture_width_, texture_height_, GL_RGBA, GL_FLOAT,
+                       buffer);
 
-        uint8_t* dest_buffer = reinterpret_cast<uint8_t*>(cpu_buffer_);
-        const int actual_depth_size =
-            BhwcDepthFromShape(shape_) * element_size();
-        const int num_slices = (BhwcDepthFromShape(shape_) + 3) / 4;
-        const int padded_depth_size = num_slices * 4 * element_size();
-        const int num_elements = BhwcWidthFromShape(shape_) *
-                                 BhwcHeightFromShape(shape_) *
-                                 BhwcBatchFromShape(shape_);
-        for (int e = 0; e < num_elements; e++) {
-          std::memcpy(dest_buffer, buffer, actual_depth_size);
-          dest_buffer += actual_depth_size;
-          buffer += padded_depth_size;
-        }
-      });
-    }
+          uint8_t* dest_buffer = reinterpret_cast<uint8_t*>(cpu_buffer_);
+          const int actual_depth_size =
+              BhwcDepthFromShape(shape_) * element_size();
+          const int num_slices = (BhwcDepthFromShape(shape_) + 3) / 4;
+          const int padded_depth_size = num_slices * 4 * element_size();
+          const int num_elements = BhwcWidthFromShape(shape_) *
+                                   BhwcHeightFromShape(shape_) *
+                                   BhwcBatchFromShape(shape_);
+          for (int e = 0; e < num_elements; e++) {
+            std::memcpy(dest_buffer, buffer, actual_depth_size);
+            dest_buffer += actual_depth_size;
+            buffer += padded_depth_size;
+          }
+        });
+      }
 #endif  // MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30
     valid_ |= kValidCpu;
   }

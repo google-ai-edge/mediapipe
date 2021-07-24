@@ -54,6 +54,7 @@ mediapipe_register_type(
     types = [
         "::mediapipe::Classification",
         "::mediapipe::ClassificationList",
+        "::mediapipe::ClassificationListCollection",
         "::std::vector<::mediapipe::Classification>",
         "::std::vector<::mediapipe::ClassificationList>",
     ],
@@ -262,8 +263,10 @@ mediapipe_register_type(
     types = [
         "::mediapipe::Landmark",
         "::mediapipe::LandmarkList",
+        "::mediapipe::LandmarkListCollection",
         "::mediapipe::NormalizedLandmark",
         "::mediapipe::NormalizedLandmarkList",
+        "::mediapipe::NormalizedLandmarkListCollection",
         "::std::vector<::mediapipe::Landmark>",
         "::std::vector<::mediapipe::LandmarkList>",
         "::std::vector<::mediapipe::NormalizedLandmark>",

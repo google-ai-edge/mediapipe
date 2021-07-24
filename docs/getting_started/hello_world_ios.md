@@ -31,8 +31,8 @@ stream on an iOS device.
 
 ## Setup
 
-1.  Install MediaPipe on your system, see [MediaPipe installation guide] for
-    details.
+1.  Install MediaPipe on your system, see
+    [MediaPipe installation guide](./install.md) for details.
 2.  Setup your iOS device for development.
 3.  Setup [Bazel] on your system to build and deploy the iOS app.
 
@@ -560,6 +560,5 @@ appropriate `BUILD` file dependencies for the edge detection graph.
 
 [Bazel]:https://bazel.build/
 [`edge_detection_mobile_gpu.pbtxt`]:https://github.com/google/mediapipe/tree/master/mediapipe/graphs/edge_detection/edge_detection_mobile_gpu.pbtxt
-[MediaPipe installation guide]:./install.md
 [common]:(https://github.com/google/mediapipe/tree/master/mediapipe/examples/ios/common)
 [helloworld]:(https://github.com/google/mediapipe/tree/master/mediapipe/examples/ios/helloworld)

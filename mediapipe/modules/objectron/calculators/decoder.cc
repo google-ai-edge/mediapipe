@@ -15,24 +15,33 @@
 #include "mediapipe/modules/objectron/calculators/decoder.h"
 
 #include <limits>
+#include <vector>
 
+#include "Eigen/Core"
 #include "Eigen/Dense"
+#include "absl/status/status.h"
 #include "mediapipe/framework/port/canonical_errors.h"
 #include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/opencv_imgproc_inc.h"
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/modules/objectron/calculators/annotation_data.pb.h"
 #include "mediapipe/modules/objectron/calculators/box.h"
+#include "mediapipe/modules/objectron/calculators/epnp.h"
+#include "mediapipe/modules/objectron/calculators/types.h"
 
 namespace mediapipe {
+
 constexpr int Decoder::kNumOffsetmaps = 16;
+constexpr int kNumKeypoints = 9;
 
 namespace {
-void SetPoint3d(float x, float y, float z, Point3D* point_3d) {
-  point_3d->set_x(x);
-  point_3d->set_y(y);
-  point_3d->set_z(z);
+
+inline void SetPoint3d(const Eigen::Vector3f& point_vec, Point3D* point_3d) {
+  point_3d->set_x(point_vec.x());
+  point_3d->set_y(point_vec.y());
+  point_3d->set_z(point_vec.z());
 }
+
 }  // namespace
 
 FrameAnnotation Decoder::DecodeBoundingBoxKeypoints(
@@ -193,92 +202,49 @@ absl::Status Decoder::Lift2DTo3D(
     const Eigen::Matrix<float, 4, 4, Eigen::RowMajor>& projection_matrix,
     bool portrait, FrameAnnotation* estimated_box) const {
   CHECK(estimated_box != nullptr);
-  const float fx = projection_matrix(0, 0);
-  const float fy = projection_matrix(1, 1);
-  const float cx = projection_matrix(0, 2);
-  const float cy = projection_matrix(1, 2);
+
   for (auto& annotation : *estimated_box->mutable_annotations()) {
-    Eigen::Matrix<float, 16, 12, Eigen::RowMajor> m =
-        Eigen::Matrix<float, 16, 12, Eigen::RowMajor>::Zero(16, 12);
-    CHECK_EQ(9, annotation.keypoints_size());
-    float u, v;
-    for (int i = 0; i < 8; ++i) {
-      const auto& keypoint2d = annotation.keypoints(i + 1).point_2d();
-      // Convert 2d point from screen coordinates to NDC coordinates([-1, 1]).
-      if (portrait) {
-        // Swap x and y given that our image is in portrait orientation
-        u = keypoint2d.y() * 2 - 1;
-        v = keypoint2d.x() * 2 - 1;
-      } else {
-        u = keypoint2d.x() * 2 - 1;
-        v = 1 - keypoint2d.y() * 2;  // (1 - keypoint2d.y()) * 2 - 1
-      }
-      for (int j = 0; j < 4; ++j) {
-        // For each of the 4 control points, formulate two rows of the
-        // m matrix (two equations).
-        const float control_alpha = epnp_alpha_(i, j);
-        m(i * 2, j * 3) = fx * control_alpha;
-        m(i * 2, j * 3 + 2) = (cx + u) * control_alpha;
-        m(i * 2 + 1, j * 3 + 1) = fy * control_alpha;
-        m(i * 2 + 1, j * 3 + 2) = (cy + v) * control_alpha;
-      }
-    }
-    // This is a self adjoint matrix. Use SelfAdjointEigenSolver for a fast
-    // and stable solution.
-    Eigen::Matrix<float, 12, 12, Eigen::RowMajor> mt_m = m.transpose() * m;
-    Eigen::SelfAdjointEigenSolver<Eigen::Matrix<float, 12, 12, Eigen::RowMajor>>
-        eigen_solver(mt_m);
-    if (eigen_solver.info() != Eigen::Success) {
-      return absl::AbortedError("Eigen decomposition failed.");
-    }
-    CHECK_EQ(12, eigen_solver.eigenvalues().size());
-    // Eigenvalues are sorted in increasing order for SelfAdjointEigenSolver
-    // only! If you use other Eigen Solvers, it's not guaranteed to be in
-    // increasing order. Here, we just take the eigen vector corresponding
-    // to first/smallest eigen value, since we used SelfAdjointEigenSolver.
-    Eigen::VectorXf eigen_vec = eigen_solver.eigenvectors().col(0);
-    Eigen::Map<Eigen::Matrix<float, 4, 3, Eigen::RowMajor>> control_matrix(
-        eigen_vec.data());
-    // All 3d points should be in front of camera (z < 0).
-    if (control_matrix(0, 2) > 0) {
-      control_matrix = -control_matrix;
-    }
-    // First set the center keypoint.
-    SetPoint3d(control_matrix(0, 0), control_matrix(0, 1), control_matrix(0, 2),
-               annotation.mutable_keypoints(0)->mutable_point_3d());
-    // Then set the 8 vertices.
-    Eigen::Matrix<float, 8, 3, Eigen::RowMajor> vertices =
-        epnp_alpha_ * control_matrix;
+    CHECK_EQ(kNumKeypoints, annotation.keypoints_size());
 
-    std::vector<Eigen::Vector3f> vertices_vec;
-    vertices_vec.emplace_back(Eigen::Vector3f(
-        control_matrix(0, 0), control_matrix(0, 1), control_matrix(0, 2)));
-    for (int i = 0; i < 8; ++i) {
-      SetPoint3d(vertices(i, 0), vertices(i, 1), vertices(i, 2),
-                 annotation.mutable_keypoints(i + 1)->mutable_point_3d());
-      vertices_vec.emplace_back(
-          Eigen::Vector3f(vertices(i, 0), vertices(i, 1), vertices(i, 2)));
+    // Fill input 2D Points;
+    std::vector<Vector2f> input_points_2d;
+    input_points_2d.reserve(kNumKeypoints);
+    for (const auto& keypoint : annotation.keypoints()) {
+      input_points_2d.emplace_back(keypoint.point_2d().x(),
+                                   keypoint.point_2d().y());
     }
 
-    // Fit a box to the vertices to get box scale, rotation, translation.
+    // Run EPnP.
+    std::vector<Vector3f> output_points_3d;
+    output_points_3d.reserve(kNumKeypoints);
+    auto status = SolveEpnp(projection_matrix, portrait, input_points_2d,
+                            &output_points_3d);
+    if (!status.ok()) {
+      LOG(ERROR) << status;
+      return status;
+    }
+
+    // Fill 3D keypoints;
+    for (int i = 0; i < kNumKeypoints; ++i) {
+      SetPoint3d(output_points_3d[i],
+                 annotation.mutable_keypoints(i)->mutable_point_3d());
+    }
+
+    // Fit a box to the 3D points to get box scale, rotation, translation.
     Box box("category");
-    box.Fit(vertices_vec);
+    box.Fit(output_points_3d);
     const Eigen::Matrix<float, 3, 3, Eigen::RowMajor> rotation =
         box.GetRotation();
     const Eigen::Vector3f translation = box.GetTranslation();
     const Eigen::Vector3f scale = box.GetScale();
     // Fill box rotation.
-    std::vector<float> rotation_vec(rotation.data(),
-                                    rotation.data() + rotation.size());
-    *annotation.mutable_rotation() = {rotation_vec.begin(), rotation_vec.end()};
+    *annotation.mutable_rotation() = {rotation.data(),
+                                      rotation.data() + rotation.size()};
     // Fill box translation.
-    std::vector<float> translation_vec(translation.data(),
-                                       translation.data() + translation.size());
-    *annotation.mutable_translation() = {translation_vec.begin(),
-                                         translation_vec.end()};
+    *annotation.mutable_translation() = {
+        translation.data(), translation.data() + translation.size()};
     // Fill box scale.
-    std::vector<float> scale_vec(scale.data(), scale.data() + scale.size());
-    *annotation.mutable_scale() = {scale_vec.begin(), scale_vec.end()};
+    *annotation.mutable_scale() = {scale.data(), scale.data() + scale.size()};
   }
   return absl::OkStatus();
 }

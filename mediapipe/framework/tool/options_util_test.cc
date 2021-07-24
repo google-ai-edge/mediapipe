@@ -19,6 +19,8 @@
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/framework/port/parse_text_proto.h"
 #include "mediapipe/framework/port/status_matchers.h"
+#include "mediapipe/framework/testdata/night_light_calculator.pb.h"
+#include "mediapipe/framework/tool/options_registry.h"
 
 namespace mediapipe {
 namespace {
@@ -40,6 +42,14 @@ TEST_F(OptionsUtilTest, GetProtobufDescriptor) {
 #else
   EXPECT_EQ(nullptr, descriptor);
 #endif
+}
+
+// Retrieves the description of a protobuf from the OptionsRegistry.
+TEST_F(OptionsUtilTest, GetProtobufDescriptorRegistered) {
+  const proto_ns::Descriptor* descriptor =
+      tool::OptionsRegistry::GetProtobufDescriptor(
+          "mediapipe.NightLightCalculatorOptions");
+  EXPECT_NE(nullptr, descriptor);
 }
 
 }  // namespace

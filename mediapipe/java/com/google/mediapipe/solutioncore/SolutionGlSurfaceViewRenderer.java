@@ -15,8 +15,10 @@
 package com.google.mediapipe.solutioncore;
 
 import android.graphics.SurfaceTexture;
+import android.opengl.GLES20;
 import com.google.mediapipe.components.GlSurfaceViewRenderer;
 import com.google.mediapipe.framework.TextureFrame;
+import com.google.mediapipe.glutil.ShaderUtil;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
@@ -53,7 +55,9 @@ public class SolutionGlSurfaceViewRenderer<T extends ImageSolutionResult>
    *     textureframe.
    */
   public void setRenderData(T solutionResult) {
-    setNextFrame(solutionResult.acquireTextureFrame());
+    TextureFrame frame = solutionResult.acquireTextureFrame();
+    setFrameSize(frame.getWidth(), frame.getHeight());
+    setNextFrame(frame);
     nextSolutionResult.getAndSet(solutionResult);
   }
 
@@ -68,10 +72,23 @@ public class SolutionGlSurfaceViewRenderer<T extends ImageSolutionResult>
     TextureFrame frame = null;
     if (renderInputImage) {
       frame = renderFrame();
+    } else {
+      GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
+      ShaderUtil.checkGlError("glClear");
+      GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
+      ShaderUtil.checkGlError("glActiveTexture");
     }
     if (nextSolutionResult != null) {
       T solutionResult = nextSolutionResult.getAndSet(null);
-      resultGlRenderer.renderResult(solutionResult);
+      float[] textureBoundary = calculateTextureBoundary();
+      // Scales the values from [0, 1] to [-1, 1].
+      ResultGlBoundary resultGlBoundary =
+          ResultGlBoundary.create(
+              textureBoundary[0] * 2 - 1,
+              textureBoundary[1] * 2 - 1,
+              textureBoundary[2] * 2 - 1,
+              textureBoundary[3] * 2 - 1);
+      resultGlRenderer.renderResult(solutionResult, resultGlBoundary);
     }
     flush(frame);
   }

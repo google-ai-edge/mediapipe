@@ -22,6 +22,7 @@ android_library(
         ["*.java"],
         exclude = [
             "CameraInput.java",
+            "ResultGlBoundary.java",
             "ResultGlRenderer.java",
             "SolutionGlSurfaceView.java",
             "SolutionGlSurfaceViewRenderer.java",
@@ -53,6 +54,7 @@ android_library(
 android_library(
     name = "solution_rendering",
     srcs = [
+        "ResultGlBoundary.java",
         "ResultGlRenderer.java",
         "SolutionGlSurfaceView.java",
         "SolutionGlSurfaceViewRenderer.java",
@@ -63,6 +65,7 @@ android_library(
         "//mediapipe/java/com/google/mediapipe/components:android_components",
         "//mediapipe/java/com/google/mediapipe/framework:android_framework",
         "//mediapipe/java/com/google/mediapipe/glutil",
+        "//third_party:autovalue",
         "@maven//:com_google_guava_guava",
     ],
 )
@@ -75,6 +78,8 @@ cc_binary(
     # TODO: Add more calculators to support other top-level solutions.
     deps = [
         "//mediapipe/java/com/google/mediapipe/framework/jni:mediapipe_framework_jni",
+        "//mediapipe/modules/face_landmark:face_landmark_front_cpu_image",
+        "//mediapipe/modules/face_landmark:face_landmark_front_gpu_image",
         "//mediapipe/modules/hand_landmark:hand_landmark_tracking_cpu_image",
         "//mediapipe/modules/hand_landmark:hand_landmark_tracking_gpu_image",
     ],

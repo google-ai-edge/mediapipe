@@ -29,6 +29,7 @@
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/framework/port/opencv_imgcodecs_inc.h"
 #include "mediapipe/framework/port/status_matchers.h"
+#include "mediapipe/framework/timestamp.h"
 #include "mediapipe/util/sequence/media_sequence.h"
 #include "tensorflow/core/example/example.pb.h"
 #include "tensorflow/core/example/feature.pb.h"
@@ -43,8 +44,9 @@ class PackMediaSequenceCalculatorTest : public ::testing::Test {
  protected:
   void SetUpCalculator(const std::vector<std::string>& input_streams,
                        const tf::Features& features,
-                       bool output_only_if_all_present,
-                       bool replace_instead_of_append) {
+                       const bool output_only_if_all_present,
+                       const bool replace_instead_of_append,
+                       const bool output_as_zero_timestamp = false) {
     CalculatorGraphConfig::Node config;
     config.set_calculator("PackMediaSequenceCalculator");
     config.add_input_side_packet("SEQUENCE_EXAMPLE:input_sequence");
@@ -57,6 +59,7 @@ class PackMediaSequenceCalculatorTest : public ::testing::Test {
     *options->mutable_context_feature_map() = features;
     options->set_output_only_if_all_present(output_only_if_all_present);
     options->set_replace_data_instead_of_append(replace_instead_of_append);
+    options->set_output_as_zero_timestamp(output_as_zero_timestamp);
     runner_ = ::absl::make_unique<CalculatorRunner>(config);
   }
 
@@ -192,6 +195,29 @@ TEST_F(PackMediaSequenceCalculatorTest, PacksTwoFloatLists) {
     ASSERT_THAT(mpms::GetFeatureFloatsAt("OTHER", output_sequence, i),
                 ::testing::ElementsAreArray(std::vector<float>(2, 2 << i)));
   }
+}
+
+TEST_F(PackMediaSequenceCalculatorTest, OutputAsZeroTimestamp) {
+  SetUpCalculator({"FLOAT_FEATURE_TEST:test"}, {}, false, true, true);
+  auto input_sequence = ::absl::make_unique<tf::SequenceExample>();
+
+  int num_timesteps = 2;
+  for (int i = 0; i < num_timesteps; ++i) {
+    auto vf_ptr = ::absl::make_unique<std::vector<float>>(2, 2 << i);
+    runner_->MutableInputs()
+        ->Tag("FLOAT_FEATURE_TEST")
+        .packets.push_back(Adopt(vf_ptr.release()).At(Timestamp(i)));
+  }
+
+  runner_->MutableSidePackets()->Tag("SEQUENCE_EXAMPLE") =
+      Adopt(input_sequence.release());
+
+  MP_ASSERT_OK(runner_->Run());
+
+  const std::vector<Packet>& output_packets =
+      runner_->Outputs().Tag("SEQUENCE_EXAMPLE").packets;
+  ASSERT_EQ(1, output_packets.size());
+  EXPECT_EQ(output_packets[0].Timestamp().Value(), 0ll);
 }
 
 TEST_F(PackMediaSequenceCalculatorTest, PacksTwoContextFloatLists) {

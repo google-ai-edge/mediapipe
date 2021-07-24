@@ -113,9 +113,9 @@ each project.
         androidTestImplementation 'androidx.test.ext:junit:1.1.0'
         androidTestImplementation 'androidx.test.espresso:espresso-core:3.1.1'
         // MediaPipe deps
-        implementation 'com.google.flogger:flogger:0.3.1'
-        implementation 'com.google.flogger:flogger-system-backend:0.3.1'
-        implementation 'com.google.code.findbugs:jsr305:3.0.2'
+        implementation 'com.google.flogger:flogger:latest.release'
+        implementation 'com.google.flogger:flogger-system-backend:latest.release'
+        implementation 'com.google.code.findbugs:jsr305:latest.release'
         implementation 'com.google.guava:guava:27.0.1-android'
         implementation 'com.google.protobuf:protobuf-java:3.11.4'
         // CameraX core library

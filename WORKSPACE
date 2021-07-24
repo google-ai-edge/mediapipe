@@ -53,19 +53,12 @@ rules_foreign_cc_dependencies()
 all_content = """filegroup(name = "all", srcs = glob(["**"]), visibility = ["//visibility:public"])"""
 
 # GoogleTest/GoogleMock framework. Used by most unit-tests.
-# Last updated 2020-06-30.
+# Last updated 2021-07-02.
 http_archive(
     name = "com_google_googletest",
-    urls = ["https://github.com/google/googletest/archive/aee0f9d9b5b87796ee8a0ab26b7587ec30e8858e.zip"],
-    patches = [
-        # fix for https://github.com/google/googletest/issues/2817
-        "@//third_party:com_google_googletest_9d580ea80592189e6d44fa35bcf9cdea8bf620d6.diff"
-    ],
-    patch_args = [
-        "-p1",
-    ],
-    strip_prefix = "googletest-aee0f9d9b5b87796ee8a0ab26b7587ec30e8858e",
-    sha256 = "04a1751f94244307cebe695a69cc945f9387a80b0ef1af21394a490697c5c895",
+    urls = ["https://github.com/google/googletest/archive/4ec4cd23f486bf70efcc5d2caa40f24368f752e3.zip"],
+    strip_prefix = "googletest-4ec4cd23f486bf70efcc5d2caa40f24368f752e3",
+    sha256 = "de682ea824bfffba05b4e33b67431c247397d6175962534305136aa06f92e049",
 )
 
 # Google Benchmark library.
@@ -353,9 +346,9 @@ maven_install(
         "com.google.android.material:material:aar:1.0.0-rc01",
         "com.google.auto.value:auto-value:1.8.1",
         "com.google.auto.value:auto-value-annotations:1.8.1",
-        "com.google.code.findbugs:jsr305:3.0.2",
-        "com.google.flogger:flogger-system-backend:0.3.1",
-        "com.google.flogger:flogger:0.3.1",
+        "com.google.code.findbugs:jsr305:latest.release",
+        "com.google.flogger:flogger-system-backend:latest.release",
+        "com.google.flogger:flogger:latest.release",
         "com.google.guava:guava:27.0.1-android",
         "com.google.guava:listenablefuture:1.0",
         "junit:junit:4.12",

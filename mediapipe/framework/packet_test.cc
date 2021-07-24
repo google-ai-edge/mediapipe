@@ -21,6 +21,7 @@
 #include <vector>
 
 #include "absl/strings/str_cat.h"
+#include "mediapipe/framework/deps/message_matchers.h"
 #include "mediapipe/framework/packet_test.pb.h"
 #include "mediapipe/framework/port/core_proto_inc.h"
 #include "mediapipe/framework/port/gmock.h"
@@ -212,6 +213,21 @@ TEST(PacketTest, ValidateAsProtoMessageLite) {
   Packet packet2 = MakePacket<int>(3);
   absl::Status status = packet2.ValidateAsProtoMessageLite();
   EXPECT_EQ(status.code(), absl::StatusCode::kInvalidArgument);
+}
+
+TEST(PacketTest, GetVectorOfProtos) {
+  std::vector<mediapipe::PacketTestProto> protos(2);
+  protos[0].add_x(123);
+  protos[1].add_x(456);
+  // Normally we'd move here, but we copy to use the protos for comparison.
+  const Packet packet =
+      MakePacket<std::vector<mediapipe::PacketTestProto>>(protos);
+  auto maybe_proto_ptrs = packet.GetVectorOfProtoMessageLitePtrs();
+  EXPECT_THAT(maybe_proto_ptrs,
+              IsOkAndHolds(testing::Pointwise(EqualsProto(), protos)));
+
+  const Packet wrong = MakePacket<int>(1);
+  EXPECT_THAT(wrong.GetVectorOfProtoMessageLitePtrs(), testing::Not(IsOk()));
 }
 
 TEST(PacketTest, SyncedPacket) {

@@ -243,11 +243,6 @@ class PackMediaSequenceCalculator : public CalculatorBase {
       }
     }
 
-    if (cc->Outputs().HasTag(kSequenceExampleTag)) {
-      cc->Outputs()
-          .Tag(kSequenceExampleTag)
-          .SetNextTimestampBound(Timestamp::Max());
-    }
     return absl::OkStatus();
   }
 
@@ -305,7 +300,9 @@ class PackMediaSequenceCalculator : public CalculatorBase {
     if (cc->Outputs().HasTag(kSequenceExampleTag)) {
       cc->Outputs()
           .Tag(kSequenceExampleTag)
-          .Add(sequence_.release(), Timestamp::PostStream());
+          .Add(sequence_.release(), options.output_as_zero_timestamp()
+                                        ? Timestamp(0ll)
+                                        : Timestamp::PostStream());
     }
     sequence_.reset();
 

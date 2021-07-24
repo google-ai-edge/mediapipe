@@ -29,6 +29,7 @@ from typing import Any, Iterable, List, Mapping, NamedTuple, Optional, Union
 import numpy as np
 
 from google.protobuf import descriptor
+from google.protobuf import message
 # resources dependency
 # pylint: disable=unused-import
 # pylint: enable=unused-import
@@ -120,6 +121,8 @@ NAME_TO_TYPE: Mapping[str, '_PacketDataType'] = {
         _PacketDataType.PROTO,
     '::mediapipe::ClassificationList':
         _PacketDataType.PROTO,
+    '::mediapipe::ClassificationListCollection':
+        _PacketDataType.PROTO,
     '::mediapipe::Detection':
         _PacketDataType.PROTO,
     '::mediapipe::DetectionList':
@@ -127,6 +130,8 @@ NAME_TO_TYPE: Mapping[str, '_PacketDataType'] = {
     '::mediapipe::Landmark':
         _PacketDataType.PROTO,
     '::mediapipe::LandmarkList':
+        _PacketDataType.PROTO,
+    '::mediapipe::LandmarkListCollection':
         _PacketDataType.PROTO,
     '::mediapipe::NormalizedLandmark':
         _PacketDataType.PROTO,
@@ -139,6 +144,8 @@ NAME_TO_TYPE: Mapping[str, '_PacketDataType'] = {
     '::mediapipe::NormalizedRect':
         _PacketDataType.PROTO,
     '::mediapipe::NormalizedLandmarkList':
+        _PacketDataType.PROTO,
+    '::mediapipe::NormalizedLandmarkListCollection':
         _PacketDataType.PROTO,
     '::mediapipe::Image':
         _PacketDataType.IMAGE,
@@ -257,17 +264,19 @@ class SolutionBase:
   # types from "_input_stream_type_info" and then auto generate the process
   # method signature by "inspect.Signature" in __init__.
   def process(
-      self, input_data: Union[np.ndarray, Mapping[str,
-                                                  np.ndarray]]) -> NamedTuple:
+      self, input_data: Union[np.ndarray, Mapping[str, Union[np.ndarray,
+                                                             message.Message]]]
+  ) -> NamedTuple:
     """Processes a set of RGB image data and output SolutionOutputs.
 
     Args:
       input_data: Either a single numpy ndarray object representing the solo
-        image input of a graph or a mapping from the stream name to the image
-        data that represents every input streams of a graph.
+        image input of a graph or a mapping from the stream name to the image or
+        proto data that represents every input streams of a graph.
 
     Raises:
-      NotImplementedError: If input_data contains non image data.
+      NotImplementedError: If input_data contains audio data or a list of proto
+        objects.
       RuntimeError: If the underlying graph occurs any error.
       ValueError: If the input image data is not three channel RGB.
 
@@ -300,8 +309,15 @@ class SolutionBase:
     self._simulated_timestamp += 33333
     for stream_name, data in input_dict.items():
       input_stream_type = self._input_stream_type_info[stream_name]
-      if (input_stream_type == _PacketDataType.IMAGE_FRAME or
-          input_stream_type == _PacketDataType.IMAGE):
+      if (input_stream_type == _PacketDataType.PROTO_LIST or
+          input_stream_type == _PacketDataType.AUDIO):
+        # TODO: Support audio data.
+        raise NotImplementedError(
+            f'SolutionBase can only process non-audio and non-proto-list data. '
+            f'{self._input_stream_type_info[stream_name].name} '
+            f'type is not supported yet.')
+      elif (input_stream_type == _PacketDataType.IMAGE_FRAME or
+            input_stream_type == _PacketDataType.IMAGE):
         if data.shape[2] != RGB_CHANNELS:
           raise ValueError('Input image must contain three channel rgb data.')
         self._graph.add_packet_to_input_stream(
@@ -309,11 +325,10 @@ class SolutionBase:
             packet=self._make_packet(input_stream_type,
                                      data).at(self._simulated_timestamp))
       else:
-        # TODO: Support audio data.
-        raise NotImplementedError(
-            f'SolutionBase can only process image data. '
-            f'{self._input_stream_type_info[stream_name].name} '
-            f'type is not supported yet.')
+        self._graph.add_packet_to_input_stream(
+            stream=stream_name,
+            packet=self._make_packet(input_stream_type,
+                                     data).at(self._simulated_timestamp))
 
     self._graph.wait_until_idle()
     # Create a NamedTuple object where the field names are mapping to the graph

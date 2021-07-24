@@ -292,6 +292,8 @@ class TfLiteInferenceCalculator : public CalculatorBase {
   bool allow_precision_loss_ = false;
   mediapipe::TfLiteInferenceCalculatorOptions::Delegate::Gpu::Api
       tflite_gpu_runner_api_;
+  mediapipe::TfLiteInferenceCalculatorOptions::Delegate::Gpu::InferenceUsage
+      tflite_gpu_runner_usage_;
 
   bool use_kernel_caching_ = false;
   std::string cached_kernel_filename_;
@@ -377,6 +379,7 @@ absl::Status TfLiteInferenceCalculator::Open(CalculatorContext* cc) {
                           options.delegate().gpu().use_advanced_gpu_api();
   allow_precision_loss_ = options.delegate().gpu().allow_precision_loss();
   tflite_gpu_runner_api_ = options.delegate().gpu().api();
+  tflite_gpu_runner_usage_ = options.delegate().gpu().usage();
 
   use_kernel_caching_ = use_advanced_gpu_api_ &&
                         options.delegate().gpu().has_cached_kernel_path();
@@ -733,7 +736,23 @@ absl::Status TfLiteInferenceCalculator::InitTFLiteGPURunner(
                           : tflite::gpu::InferencePriority::MAX_PRECISION;
   options.priority2 = tflite::gpu::InferencePriority::AUTO;
   options.priority3 = tflite::gpu::InferencePriority::AUTO;
-  options.usage = tflite::gpu::InferenceUsage::SUSTAINED_SPEED;
+  switch (tflite_gpu_runner_usage_) {
+    case mediapipe::TfLiteInferenceCalculatorOptions::Delegate::Gpu::
+        FAST_SINGLE_ANSWER: {
+      options.usage = tflite::gpu::InferenceUsage::FAST_SINGLE_ANSWER;
+      break;
+    }
+    case mediapipe::TfLiteInferenceCalculatorOptions::Delegate::Gpu::
+        SUSTAINED_SPEED: {
+      options.usage = tflite::gpu::InferenceUsage::SUSTAINED_SPEED;
+      break;
+    }
+    case mediapipe::TfLiteInferenceCalculatorOptions::Delegate::Gpu::
+        UNSPECIFIED: {
+      return absl::InternalError("inference usage need to be specified.");
+    }
+  }
+
   tflite_gpu_runner_ = std::make_unique<tflite::gpu::TFLiteGPURunner>(options);
   switch (tflite_gpu_runner_api_) {
     case mediapipe::TfLiteInferenceCalculatorOptions::Delegate::Gpu::OPENGL: {
@@ -878,11 +897,15 @@ absl::Status TfLiteInferenceCalculator::LoadDelegate(CalculatorContext* cc) {
       // Attempt to use NNAPI.
       // If not supported, the default CPU delegate will be created and used.
       interpreter_->SetAllowFp16PrecisionForFp32(1);
-      delegate_ =
-          TfLiteDelegatePtr(tflite::NnApiDelegate(), [](TfLiteDelegate*) {
-            // No need to free according to tflite::NnApiDelegate()
-            // documentation.
-          });
+      tflite::StatefulNnApiDelegate::Options options;
+      const auto& nnapi = calculator_opts.delegate().nnapi();
+      // Set up cache_dir and model_token for NNAPI compilation cache.
+      if (nnapi.has_cache_dir() && nnapi.has_model_token()) {
+        options.cache_dir = nnapi.cache_dir().c_str();
+        options.model_token = nnapi.model_token().c_str();
+      }
+      delegate_ = TfLiteDelegatePtr(new tflite::StatefulNnApiDelegate(options),
+                                    [](TfLiteDelegate*) {});
       RET_CHECK_EQ(interpreter_->ModifyGraphWithDelegate(delegate_.get()),
                    kTfLiteOk);
       return absl::OkStatus();

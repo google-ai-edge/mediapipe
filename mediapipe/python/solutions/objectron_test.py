@@ -26,7 +26,7 @@ import numpy.testing as npt
 from mediapipe.python.solutions import objectron as mp_objectron
 
 TEST_IMAGE_PATH = 'mediapipe/python/solutions/testdata'
-DIFF_THRESHOLD = 30  # pixels
+DIFF_THRESHOLD = 35  # pixels
 EXPECTED_BOX_COORDINATES_PREDICTION = [[[236, 413], [408, 474], [135, 457],
                                         [383, 505], [80, 478], [408, 345],
                                         [130, 347], [384, 355], [72, 353]],

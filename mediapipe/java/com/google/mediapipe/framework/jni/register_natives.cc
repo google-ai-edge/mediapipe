@@ -222,6 +222,9 @@ void RegisterPacketCreatorNatives(JNIEnv *env) {
   AddJNINativeMethod(&packet_creator_methods, packet_creator,
                      "nativeCreateBool", "(JZ)J",
                      (void *)&PACKET_CREATOR_METHOD(nativeCreateBool));
+  AddJNINativeMethod(&packet_creator_methods, packet_creator,
+                     "nativeCreateString", "(JLjava/lang/String;)J",
+                     (void *)&PACKET_CREATOR_METHOD(nativeCreateString));
   RegisterNativesVector(env, packet_creator_class, packet_creator_methods);
 }
 

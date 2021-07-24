@@ -186,7 +186,6 @@ absl::Status FindCorrespondingStreams(
 absl::Status ValidateSubgraphFields(
     const CalculatorGraphConfig::Node& subgraph_node) {
   if (subgraph_node.source_layer() || subgraph_node.buffer_size_hint() ||
-      subgraph_node.has_input_stream_handler() ||
       subgraph_node.has_output_stream_handler() ||
       subgraph_node.input_stream_info_size() != 0 ||
       !subgraph_node.executor().empty()) {

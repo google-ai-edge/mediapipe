@@ -38,7 +38,7 @@ output_stream: "HAND_ROIS_FROM_LANDMARKS:hand_rects"
 # (std::vector<NormalizedRect>)
 output_stream: "HAND_ROIS_FROM_PALM_DETECTIONS:hand_rects_from_palm_detections"
 
-# Converts Image to GpuBuffer for HandLandmarkTrackingGpu to consume.
+# Converts Image to ImageFrame for HandLandmarkTrackingCpu to consume.
 node {
   calculator: "FromImageCalculator"
   input_stream: "IMAGE:image"

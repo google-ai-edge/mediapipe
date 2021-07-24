@@ -80,7 +80,7 @@ TEST(CalculatorContractTest, PacketGenerator) {
         output_side_packet: "content_fingerprint"
       )pb");
   CalculatorContract contract;
-  MP_EXPECT_OK(contract.Initialize(node));
+  MP_EXPECT_OK(contract.Initialize(node, ""));
   EXPECT_EQ(contract.InputSidePackets().NumEntries(), 1);
   EXPECT_EQ(contract.OutputSidePackets().NumEntries(), 4);
 }

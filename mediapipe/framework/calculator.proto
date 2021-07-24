@@ -212,6 +212,9 @@ message ProfilerConfig {
   // False specifies an event for each calculator invocation.
   // True specifies a separate event for each start and finish time.
   bool trace_log_instant_events = 17;
+
+  // Limits calculator-profile histograms to a subset of calculators.
+  string calculator_filter = 18;
 }
 
 // Describes the topology and function of a MediaPipe Graph.  The graph of

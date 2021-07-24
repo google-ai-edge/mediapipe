@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+    <LinearLayout
+        android:id="@+id/buttons"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:orientation="horizontal">
+        <Button
+            android:id="@+id/button_load_picture"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Load Picture" />
+        <Button
+            android:id="@+id/button_start_camera"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Start Camera" />
+    </LinearLayout>
+    <FrameLayout
+        android:id="@+id/preview_display_layout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+        <TextView
+            android:id="@+id/no_view"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:text="Please press any button above to start" />
+    </FrameLayout>
+</LinearLayout>

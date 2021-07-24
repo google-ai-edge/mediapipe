@@ -47,6 +47,11 @@ message LandmarkList {
   repeated Landmark landmark = 1;
 }
 
+// Group of LandmarkList protos.
+message LandmarkListCollection {
+  repeated LandmarkList landmark_list = 1;
+}
+
 // A normalized version of above Landmark proto. All coordinates should be
 // within [0, 1].
 message NormalizedLandmark {
@@ -60,4 +65,9 @@ message NormalizedLandmark {
 // Group of NormalizedLandmark protos.
 message NormalizedLandmarkList {
   repeated NormalizedLandmark landmark = 1;
+}
+
+// Group of NormalizedLandmarkList protos.
+message NormalizedLandmarkListCollection {
+  repeated NormalizedLandmarkList landmark_list = 1;
 }

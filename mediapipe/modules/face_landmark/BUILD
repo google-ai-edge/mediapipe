@@ -95,6 +95,26 @@ mediapipe_simple_subgraph(
     ],
 )
 
+mediapipe_simple_subgraph(
+    name = "face_landmark_front_cpu_image",
+    graph = "face_landmark_front_cpu_image.pbtxt",
+    register_as = "FaceLandmarkFrontCpuImage",
+    deps = [
+        ":face_landmark_front_cpu",
+        "//mediapipe/calculators/util:from_image_calculator",
+    ],
+)
+
+mediapipe_simple_subgraph(
+    name = "face_landmark_front_gpu_image",
+    graph = "face_landmark_front_gpu_image.pbtxt",
+    register_as = "FaceLandmarkFrontGpuImage",
+    deps = [
+        ":face_landmark_front_gpu",
+        "//mediapipe/calculators/util:from_image_calculator",
+    ],
+)
+
 exports_files(
     srcs = [
         "face_landmark.tflite",
