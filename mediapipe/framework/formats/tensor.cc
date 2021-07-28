@@ -134,6 +134,21 @@ void Tensor::AllocateMtlBuffer(id<MTLDevice> device) const {
 #endif  // MEDIAPIPE_METAL_ENABLED
 
 #if MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30
+bool Tensor::NeedsHalfFloatRenderTarget() const {
+  static bool has_color_buffer_float =
+      gl_context_->HasGlExtension("WEBGL_color_buffer_float") ||
+      gl_context_->HasGlExtension("EXT_color_buffer_float");
+  if (!has_color_buffer_float) {
+    static bool has_color_buffer_half_float =
+        gl_context_->HasGlExtension("EXT_color_buffer_half_float");
+    LOG_IF(FATAL, !has_color_buffer_half_float)
+        << "EXT_color_buffer_half_float or WEBGL_color_buffer_float "
+        << "required on web to use MP tensor";
+    return true;
+  }
+  return false;
+}
+
 Tensor::OpenGlTexture2dView Tensor::GetOpenGlTexture2dReadView() const {
   LOG_IF(FATAL, valid_ == kValidNone)
       << "Tensor must be written prior to read from.";
@@ -164,8 +179,24 @@ Tensor::OpenGlTexture2dView Tensor::GetOpenGlTexture2dReadView() const {
     // Set alignment for the proper value (default) to avoid address sanitizer
     // error "out of boundary reading".
     glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
-    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, texture_width_, texture_height_,
-                    GL_RGBA, GL_FLOAT, temp_buffer.get());
+#ifdef __EMSCRIPTEN__
+    // Under WebGL1, format must match in order to use glTexSubImage2D, so if we
+    // have a half-float texture, then uploading from GL_FLOAT here would fail.
+    // We change the texture's data type to float here to accommodate.
+    // Furthermore, for a full-image replacement operation, glTexImage2D is
+    // expected to be more performant than glTexSubImage2D. Note that for WebGL2
+    // we cannot use glTexImage2D, because we allocate using glTexStorage2D in
+    // that case, which is incompatible.
+    if (gl_context_->GetGlVersion() == mediapipe::GlVersion::kGLES2) {
+      glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, texture_width_, texture_height_,
+                   0, GL_RGBA, GL_FLOAT, temp_buffer.get());
+      texture_is_half_float_ = false;
+    } else
+#endif  // __EMSCRIPTEN__
+    {
+      glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, texture_width_, texture_height_,
+                      GL_RGBA, GL_FLOAT, temp_buffer.get());
+    }
     glBindTexture(GL_TEXTURE_2D, 0);
     valid_ |= kValidOpenGlTexture2d;
   }
@@ -175,6 +206,16 @@ Tensor::OpenGlTexture2dView Tensor::GetOpenGlTexture2dReadView() const {
 Tensor::OpenGlTexture2dView Tensor::GetOpenGlTexture2dWriteView() const {
   auto lock = absl::make_unique<absl::MutexLock>(&view_mutex_);
   AllocateOpenGlTexture2d();
+#ifdef __EMSCRIPTEN__
+  // On web, we may have to change type from float to half-float
+  if (!texture_is_half_float_ && NeedsHalfFloatRenderTarget()) {
+    glBindTexture(GL_TEXTURE_2D, opengl_texture2d_);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, texture_width_, texture_height_, 0,
+                 GL_RGBA, GL_HALF_FLOAT_OES, 0 /* data */);
+    glBindTexture(GL_TEXTURE_2D, 0);
+    texture_is_half_float_ = true;
+  }
+#endif
   valid_ = kValidOpenGlTexture2d;
   return {opengl_texture2d_, std::move(lock)};
 }
@@ -255,8 +296,18 @@ void Tensor::AllocateOpenGlTexture2d() const {
           << "with GLES 2.0";
       // Allocate the image data; note that it's no longer RGBA32F, so will be
       // lower precision.
+      auto type = GL_FLOAT;
+      // On web, we might need to change type to half-float (e.g. for iOS-
+      // Safari) in order to have a valid framebuffer. See b/194442743 for more
+      // details.
+#ifdef __EMSCRIPTEN__
+      if (NeedsHalfFloatRenderTarget()) {
+        type = GL_HALF_FLOAT_OES;
+        texture_is_half_float_ = true;
+      }
+#endif  // __EMSCRIPTEN
       glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, texture_width_, texture_height_,
-                   0, GL_RGBA, GL_FLOAT, 0 /* data */);
+                   0, GL_RGBA, type, 0 /* data */);
     }
     glBindTexture(GL_TEXTURE_2D, 0);
     glGenFramebuffers(1, &frame_buffer_);
@@ -443,7 +494,6 @@ Tensor::CpuReadView Tensor::GetCpuReadView() const {
           glPixelStorei(GL_PACK_ALIGNMENT, 4);
           glReadPixels(0, 0, texture_width_, texture_height_, GL_RGBA, GL_FLOAT,
                        buffer);
-
           uint8_t* dest_buffer = reinterpret_cast<uint8_t*>(cpu_buffer_);
           const int actual_depth_size =
               BhwcDepthFromShape(shape_) * element_size();

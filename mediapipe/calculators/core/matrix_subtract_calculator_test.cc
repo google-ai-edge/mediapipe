@@ -29,6 +29,9 @@
 namespace mediapipe {
 namespace {
 
+constexpr char kMinuendTag[] = "MINUEND";
+constexpr char kSubtrahendTag[] = "SUBTRAHEND";
+
 // A 3x4 Matrix of random integers in [0,1000).
 const char kMatrixText[] =
     "rows: 3\n"
@@ -104,12 +107,13 @@ TEST(MatrixSubtractCalculatorTest, SubtractFromInput) {
   CalculatorRunner runner(node_config);
   Matrix* side_matrix = new Matrix();
   MatrixFromTextProto(kMatrixText, side_matrix);
-  runner.MutableSidePackets()->Tag("SUBTRAHEND") = Adopt(side_matrix);
+  runner.MutableSidePackets()->Tag(kSubtrahendTag) = Adopt(side_matrix);
 
   Matrix* input_matrix = new Matrix();
   MatrixFromTextProto(kMatrixText2, input_matrix);
-  runner.MutableInputs()->Tag("MINUEND").packets.push_back(
-      Adopt(input_matrix).At(Timestamp(0)));
+  runner.MutableInputs()
+      ->Tag(kMinuendTag)
+      .packets.push_back(Adopt(input_matrix).At(Timestamp(0)));
 
   MP_ASSERT_OK(runner.Run());
   EXPECT_EQ(1, runner.Outputs().Index(0).packets.size());
@@ -133,12 +137,12 @@ TEST(MatrixSubtractCalculatorTest, SubtractFromSideMatrix) {
   CalculatorRunner runner(node_config);
   Matrix* side_matrix = new Matrix();
   MatrixFromTextProto(kMatrixText, side_matrix);
-  runner.MutableSidePackets()->Tag("MINUEND") = Adopt(side_matrix);
+  runner.MutableSidePackets()->Tag(kMinuendTag) = Adopt(side_matrix);
 
   Matrix* input_matrix = new Matrix();
   MatrixFromTextProto(kMatrixText2, input_matrix);
   runner.MutableInputs()
-      ->Tag("SUBTRAHEND")
+      ->Tag(kSubtrahendTag)
       .packets.push_back(Adopt(input_matrix).At(Timestamp(0)));
 
   MP_ASSERT_OK(runner.Run());

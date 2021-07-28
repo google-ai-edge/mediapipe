@@ -254,11 +254,11 @@ class SolutionBase:
     for stream_name in self._output_stream_type_info.keys():
       self._graph.observe_output_stream(stream_name, callback, True)
 
-    input_side_packets = {
+    self._input_side_packets = {
         name: self._make_packet(self._side_input_type_info[name], data)
         for name, data in (side_inputs or {}).items()
     }
-    self._graph.start_run(input_side_packets)
+    self._graph.start_run(self._input_side_packets)
 
   # TODO: Use "inspect.Parameter" to fetch the input argument names and
   # types from "_input_stream_type_info" and then auto generate the process
@@ -352,6 +352,12 @@ class SolutionBase:
     self._graph = None
     self._input_stream_type_info = None
     self._output_stream_type_info = None
+
+  def reset(self) -> None:
+    """Resets the graph for another run."""
+    if self._graph:
+      self._graph.close()
+      self._graph.start_run(self._input_side_packets)
 
   def _initialize_graph_interface(
       self,

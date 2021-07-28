@@ -298,6 +298,56 @@ class SolutionBaseTest(parameterized.TestCase):
             'ImageTransformation.output_height': 0
         })
 
+  @parameterized.named_parameters(('graph_without_side_packets', """
+      input_stream: 'image_in'
+      output_stream: 'image_out'
+      node {
+        calculator: 'ImageTransformationCalculator'
+        input_stream: 'IMAGE:image_in'
+        output_stream: 'IMAGE:transformed_image_in'
+      }
+      node {
+        calculator: 'ImageTransformationCalculator'
+        input_stream: 'IMAGE:transformed_image_in'
+        output_stream: 'IMAGE:image_out'
+      }
+      """, None), ('graph_with_side_packets', """
+      input_stream: 'image_in'
+      input_side_packet: 'allow_signal'
+      input_side_packet: 'rotation_degrees'
+      output_stream: 'image_out'
+      node {
+        calculator: 'ImageTransformationCalculator'
+        input_stream: 'IMAGE:image_in'
+        input_side_packet: 'ROTATION_DEGREES:rotation_degrees'
+        output_stream: 'IMAGE:transformed_image_in'
+      }
+      node {
+        calculator: 'GateCalculator'
+        input_stream: 'transformed_image_in'
+        input_side_packet: 'ALLOW:allow_signal'
+        output_stream: 'image_out_to_transform'
+      }
+      node {
+        calculator: 'ImageTransformationCalculator'
+        input_stream: 'IMAGE:image_out_to_transform'
+        input_side_packet: 'ROTATION_DEGREES:rotation_degrees'
+        output_stream: 'IMAGE:image_out'
+      }""", {
+          'allow_signal': True,
+          'rotation_degrees': 0
+      }))
+  def test_solution_reset(self, text_config, side_inputs):
+    config_proto = text_format.Parse(text_config,
+                                     calculator_pb2.CalculatorGraphConfig())
+    input_image = np.arange(27, dtype=np.uint8).reshape(3, 3, 3)
+    with solution_base.SolutionBase(
+        graph_config=config_proto, side_inputs=side_inputs) as solution:
+      for _ in range(20):
+        outputs = solution.process(input_image)
+        self.assertTrue(np.array_equal(input_image, outputs.image_out))
+        solution.reset()
+
   def _process_and_verify(self,
                           config_proto,
                           side_inputs=None,

@@ -39,20 +39,24 @@ using testing::ElementsAre;
 
 namespace mediapipe {
 namespace {
+
+constexpr char kClockTag[] = "CLOCK";
+
 using mediapipe::Clock;
 
 // A Calculator with a fixed Process call latency.
 class SleepCalculator : public CalculatorBase {
  public:
   static absl::Status GetContract(CalculatorContract* cc) {
-    cc->InputSidePackets().Tag("CLOCK").Set<std::shared_ptr<Clock>>();
+    cc->InputSidePackets().Tag(kClockTag).Set<std::shared_ptr<Clock>>();
     cc->Inputs().Index(0).SetAny();
     cc->Outputs().Index(0).SetSameAs(&cc->Inputs().Index(0));
     cc->SetTimestampOffset(TimestampDiff(0));
     return absl::OkStatus();
   }
   absl::Status Open(CalculatorContext* cc) final {
-    clock_ = cc->InputSidePackets().Tag("CLOCK").Get<std::shared_ptr<Clock>>();
+    clock_ =
+        cc->InputSidePackets().Tag(kClockTag).Get<std::shared_ptr<Clock>>();
     return absl::OkStatus();
   }
 

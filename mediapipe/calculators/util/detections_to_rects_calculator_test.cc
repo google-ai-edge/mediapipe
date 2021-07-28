@@ -32,6 +32,14 @@
 namespace mediapipe {
 namespace {
 
+constexpr char kNormRectsTag[] = "NORM_RECTS";
+constexpr char kRectsTag[] = "RECTS";
+constexpr char kDetectionsTag[] = "DETECTIONS";
+constexpr char kNormRectTag[] = "NORM_RECT";
+constexpr char kImageSizeTag[] = "IMAGE_SIZE";
+constexpr char kRectTag[] = "RECT";
+constexpr char kDetectionTag[] = "DETECTION";
+
 MATCHER_P4(RectEq, x_center, y_center, width, height, "") {
   return testing::Value(arg.x_center(), testing::Eq(x_center)) &&
          testing::Value(arg.y_center(), testing::Eq(y_center)) &&
@@ -94,12 +102,12 @@ TEST(DetectionsToRectsCalculatorTest, DetectionToRect) {
       DetectionWithLocationData(100, 200, 300, 400));
 
   runner.MutableInputs()
-      ->Tag("DETECTION")
+      ->Tag(kDetectionTag)
       .packets.push_back(
           Adopt(detection.release()).At(Timestamp::PostStream()));
 
   MP_ASSERT_OK(runner.Run()) << "Calculator execution failed.";
-  const std::vector<Packet>& output = runner.Outputs().Tag("RECT").packets;
+  const std::vector<Packet>& output = runner.Outputs().Tag(kRectTag).packets;
   ASSERT_EQ(1, output.size());
   const auto& rect = output[0].Get<Rect>();
   EXPECT_THAT(rect, RectEq(250, 400, 300, 400));
@@ -120,16 +128,16 @@ absl::StatusOr<Rect> RunDetectionKeyPointsToRectCalculation(
   )pb"));
 
   runner.MutableInputs()
-      ->Tag("DETECTION")
+      ->Tag(kDetectionTag)
       .packets.push_back(MakePacket<Detection>(std::move(detection))
                              .At(Timestamp::PostStream()));
   runner.MutableInputs()
-      ->Tag("IMAGE_SIZE")
+      ->Tag(kImageSizeTag)
       .packets.push_back(MakePacket<std::pair<int, int>>(image_size)
                              .At(Timestamp::PostStream()));
 
   MP_RETURN_IF_ERROR(runner.Run());
-  const std::vector<Packet>& output = runner.Outputs().Tag("RECT").packets;
+  const std::vector<Packet>& output = runner.Outputs().Tag(kRectTag).packets;
   RET_CHECK_EQ(output.size(), 1);
   return output[0].Get<Rect>();
 }
@@ -176,12 +184,13 @@ TEST(DetectionsToRectsCalculatorTest, DetectionToNormalizedRect) {
       DetectionWithRelativeLocationData(0.1, 0.2, 0.3, 0.4));
 
   runner.MutableInputs()
-      ->Tag("DETECTION")
+      ->Tag(kDetectionTag)
       .packets.push_back(
           Adopt(detection.release()).At(Timestamp::PostStream()));
 
   MP_ASSERT_OK(runner.Run()) << "Calculator execution failed.";
-  const std::vector<Packet>& output = runner.Outputs().Tag("NORM_RECT").packets;
+  const std::vector<Packet>& output =
+      runner.Outputs().Tag(kNormRectTag).packets;
   ASSERT_EQ(1, output.size());
   const auto& rect = output[0].Get<NormalizedRect>();
   EXPECT_THAT(rect, NormRectEq(0.25f, 0.4f, 0.3f, 0.4f));
@@ -201,12 +210,13 @@ absl::StatusOr<NormalizedRect> RunDetectionKeyPointsToNormRectCalculation(
   )pb"));
 
   runner.MutableInputs()
-      ->Tag("DETECTION")
+      ->Tag(kDetectionTag)
       .packets.push_back(MakePacket<Detection>(std::move(detection))
                              .At(Timestamp::PostStream()));
 
   MP_RETURN_IF_ERROR(runner.Run());
-  const std::vector<Packet>& output = runner.Outputs().Tag("NORM_RECT").packets;
+  const std::vector<Packet>& output =
+      runner.Outputs().Tag(kNormRectTag).packets;
   RET_CHECK_EQ(output.size(), 1);
   return output[0].Get<NormalizedRect>();
 }
@@ -248,12 +258,12 @@ TEST(DetectionsToRectsCalculatorTest, DetectionsToRect) {
   detections->push_back(DetectionWithLocationData(200, 300, 400, 500));
 
   runner.MutableInputs()
-      ->Tag("DETECTIONS")
+      ->Tag(kDetectionsTag)
       .packets.push_back(
           Adopt(detections.release()).At(Timestamp::PostStream()));
 
   MP_ASSERT_OK(runner.Run()) << "Calculator execution failed.";
-  const std::vector<Packet>& output = runner.Outputs().Tag("RECT").packets;
+  const std::vector<Packet>& output = runner.Outputs().Tag(kRectTag).packets;
   ASSERT_EQ(1, output.size());
   const auto& rect = output[0].Get<Rect>();
   EXPECT_THAT(rect, RectEq(250, 400, 300, 400));
@@ -271,12 +281,13 @@ TEST(DetectionsToRectsCalculatorTest, DetectionsToNormalizedRect) {
   detections->push_back(DetectionWithRelativeLocationData(0.2, 0.3, 0.4, 0.5));
 
   runner.MutableInputs()
-      ->Tag("DETECTIONS")
+      ->Tag(kDetectionsTag)
       .packets.push_back(
           Adopt(detections.release()).At(Timestamp::PostStream()));
 
   MP_ASSERT_OK(runner.Run()) << "Calculator execution failed.";
-  const std::vector<Packet>& output = runner.Outputs().Tag("NORM_RECT").packets;
+  const std::vector<Packet>& output =
+      runner.Outputs().Tag(kNormRectTag).packets;
   ASSERT_EQ(1, output.size());
   const auto& rect = output[0].Get<NormalizedRect>();
   EXPECT_THAT(rect, NormRectEq(0.25f, 0.4f, 0.3f, 0.4f));
@@ -294,12 +305,12 @@ TEST(DetectionsToRectsCalculatorTest, DetectionsToRects) {
   detections->push_back(DetectionWithLocationData(200, 300, 400, 500));
 
   runner.MutableInputs()
-      ->Tag("DETECTIONS")
+      ->Tag(kDetectionsTag)
       .packets.push_back(
           Adopt(detections.release()).At(Timestamp::PostStream()));
 
   MP_ASSERT_OK(runner.Run()) << "Calculator execution failed.";
-  const std::vector<Packet>& output = runner.Outputs().Tag("RECTS").packets;
+  const std::vector<Packet>& output = runner.Outputs().Tag(kRectsTag).packets;
   ASSERT_EQ(1, output.size());
   const auto& rects = output[0].Get<std::vector<Rect>>();
   ASSERT_EQ(rects.size(), 2);
@@ -319,13 +330,13 @@ TEST(DetectionsToRectsCalculatorTest, DetectionsToNormalizedRects) {
   detections->push_back(DetectionWithRelativeLocationData(0.2, 0.3, 0.4, 0.5));
 
   runner.MutableInputs()
-      ->Tag("DETECTIONS")
+      ->Tag(kDetectionsTag)
       .packets.push_back(
           Adopt(detections.release()).At(Timestamp::PostStream()));
 
   MP_ASSERT_OK(runner.Run()) << "Calculator execution failed.";
   const std::vector<Packet>& output =
-      runner.Outputs().Tag("NORM_RECTS").packets;
+      runner.Outputs().Tag(kNormRectsTag).packets;
   ASSERT_EQ(1, output.size());
   const auto& rects = output[0].Get<std::vector<NormalizedRect>>();
   ASSERT_EQ(rects.size(), 2);
@@ -344,12 +355,12 @@ TEST(DetectionsToRectsCalculatorTest, DetectionToRects) {
       DetectionWithLocationData(100, 200, 300, 400));
 
   runner.MutableInputs()
-      ->Tag("DETECTION")
+      ->Tag(kDetectionTag)
       .packets.push_back(
           Adopt(detection.release()).At(Timestamp::PostStream()));
 
   MP_ASSERT_OK(runner.Run()) << "Calculator execution failed.";
-  const std::vector<Packet>& output = runner.Outputs().Tag("RECTS").packets;
+  const std::vector<Packet>& output = runner.Outputs().Tag(kRectsTag).packets;
   ASSERT_EQ(1, output.size());
   const auto& rects = output[0].Get<std::vector<Rect>>();
   EXPECT_EQ(rects.size(), 1);
@@ -367,13 +378,13 @@ TEST(DetectionsToRectsCalculatorTest, DetectionToNormalizedRects) {
       DetectionWithRelativeLocationData(0.1, 0.2, 0.3, 0.4));
 
   runner.MutableInputs()
-      ->Tag("DETECTION")
+      ->Tag(kDetectionTag)
       .packets.push_back(
           Adopt(detection.release()).At(Timestamp::PostStream()));
 
   MP_ASSERT_OK(runner.Run()) << "Calculator execution failed.";
   const std::vector<Packet>& output =
-      runner.Outputs().Tag("NORM_RECTS").packets;
+      runner.Outputs().Tag(kNormRectsTag).packets;
   ASSERT_EQ(1, output.size());
   const auto& rects = output[0].Get<std::vector<NormalizedRect>>();
   ASSERT_EQ(rects.size(), 1);
@@ -391,7 +402,7 @@ TEST(DetectionsToRectsCalculatorTest, WrongInputToRect) {
   detections->push_back(DetectionWithRelativeLocationData(0.1, 0.2, 0.3, 0.4));
 
   runner.MutableInputs()
-      ->Tag("DETECTIONS")
+      ->Tag(kDetectionsTag)
       .packets.push_back(
           Adopt(detections.release()).At(Timestamp::PostStream()));
 
@@ -411,7 +422,7 @@ TEST(DetectionsToRectsCalculatorTest, WrongInputToNormalizedRect) {
   detections->push_back(DetectionWithLocationData(100, 200, 300, 400));
 
   runner.MutableInputs()
-      ->Tag("DETECTIONS")
+      ->Tag(kDetectionsTag)
       .packets.push_back(
           Adopt(detections.release()).At(Timestamp::PostStream()));
 

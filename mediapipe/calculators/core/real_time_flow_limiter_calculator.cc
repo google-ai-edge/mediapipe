@@ -23,6 +23,9 @@
 
 namespace mediapipe {
 
+constexpr char kAllowTag[] = "ALLOW";
+constexpr char kMaxInFlightTag[] = "MAX_IN_FLIGHT";
+
 // RealTimeFlowLimiterCalculator is used to limit the number of pipelined
 // processing operations in a section of the graph.
 //
@@ -86,11 +89,11 @@ class RealTimeFlowLimiterCalculator : public CalculatorBase {
       cc->Outputs().Get("", i).SetSameAs(&(cc->Inputs().Get("", i)));
     }
     cc->Inputs().Get("FINISHED", 0).SetAny();
-    if (cc->InputSidePackets().HasTag("MAX_IN_FLIGHT")) {
-      cc->InputSidePackets().Tag("MAX_IN_FLIGHT").Set<int>();
+    if (cc->InputSidePackets().HasTag(kMaxInFlightTag)) {
+      cc->InputSidePackets().Tag(kMaxInFlightTag).Set<int>();
     }
-    if (cc->Outputs().HasTag("ALLOW")) {
-      cc->Outputs().Tag("ALLOW").Set<bool>();
+    if (cc->Outputs().HasTag(kAllowTag)) {
+      cc->Outputs().Tag(kAllowTag).Set<bool>();
     }
 
     cc->SetInputStreamHandler("ImmediateInputStreamHandler");
@@ -101,8 +104,8 @@ class RealTimeFlowLimiterCalculator : public CalculatorBase {
   absl::Status Open(CalculatorContext* cc) final {
     finished_id_ = cc->Inputs().GetId("FINISHED", 0);
     max_in_flight_ = 1;
-    if (cc->InputSidePackets().HasTag("MAX_IN_FLIGHT")) {
-      max_in_flight_ = cc->InputSidePackets().Tag("MAX_IN_FLIGHT").Get<int>();
+    if (cc->InputSidePackets().HasTag(kMaxInFlightTag)) {
+      max_in_flight_ = cc->InputSidePackets().Tag(kMaxInFlightTag).Get<int>();
     }
     RET_CHECK_GE(max_in_flight_, 1);
     num_in_flight_ = 0;

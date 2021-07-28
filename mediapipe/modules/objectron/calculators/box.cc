@@ -245,14 +245,6 @@ void Box::Fit(const std::vector<T>& vertices) {
   auto system_g = system_h.colPivHouseholderQr();
   auto solution = system_g.solve(v).eval();
   transformation_.topLeftCorner<3, 4>() = solution.transpose();
-
-  // Adjust rotation matrix to its nearest orthogonal matrix.
-  const auto rotation = transformation_.topLeftCorner<3, 3>();
-  Eigen::JacobiSVD<Eigen::Matrix3f> svd(
-      rotation, Eigen::ComputeFullV | Eigen::ComputeFullU);
-  const Eigen::Matrix3f matrix_u = svd.matrixU();
-  const Eigen::Matrix3f matrix_v = svd.matrixV();
-  transformation_.topLeftCorner<3, 3>() = matrix_u * matrix_v.transpose();
   Update();
 }
 

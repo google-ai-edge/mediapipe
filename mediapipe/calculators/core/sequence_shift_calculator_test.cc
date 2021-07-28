@@ -22,6 +22,8 @@ namespace mediapipe {
 
 namespace {
 
+constexpr char kPacketOffsetTag[] = "PACKET_OFFSET";
+
 // Adds packets containing integers equal to their original timestamp.
 void AddPackets(CalculatorRunner* runner) {
   for (int i = 0; i < 10; ++i) {
@@ -111,7 +113,7 @@ TEST(SequenceShiftCalculatorTest, SidePacketOffset) {
 
   CalculatorRunner runner(node);
   AddPackets(&runner);
-  runner.MutableSidePackets()->Tag("PACKET_OFFSET") = Adopt(new int(-2));
+  runner.MutableSidePackets()->Tag(kPacketOffsetTag) = Adopt(new int(-2));
   MP_ASSERT_OK(runner.Run());
   const std::vector<Packet>& input_packets =
       runner.MutableInputs()->Index(0).packets;

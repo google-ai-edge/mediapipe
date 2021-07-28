@@ -29,6 +29,8 @@
 namespace mediapipe {
 namespace {
 
+constexpr char kPeriodTag[] = "PERIOD";
+
 // A simple version of CalculatorRunner with built-in convenience methods for
 // setting inputs from a vector and checking outputs against a vector of
 // expected outputs.
@@ -121,7 +123,7 @@ TEST(PacketThinnerCalculatorTest, ASyncUniformStreamThinningTestBySidePacket) {
 
   SimpleRunner runner(node);
   runner.SetInput({2, 4, 6, 8, 10, 12, 14});
-  runner.MutableSidePackets()->Tag("PERIOD") = MakePacket<int64>(5);
+  runner.MutableSidePackets()->Tag(kPeriodTag) = MakePacket<int64>(5);
   MP_ASSERT_OK(runner.Run());
 
   const std::vector<int64> expected_timestamps = {2, 8, 14};
@@ -160,7 +162,7 @@ TEST(PacketThinnerCalculatorTest, SyncUniformStreamThinningTestBySidePacket1) {
 
   SimpleRunner runner(node);
   runner.SetInput({2, 4, 6, 8, 10, 12, 14});
-  runner.MutableSidePackets()->Tag("PERIOD") = MakePacket<int64>(5);
+  runner.MutableSidePackets()->Tag(kPeriodTag) = MakePacket<int64>(5);
   MP_ASSERT_OK(runner.Run());
 
   const std::vector<int64> expected_timestamps = {2, 6, 10, 14};

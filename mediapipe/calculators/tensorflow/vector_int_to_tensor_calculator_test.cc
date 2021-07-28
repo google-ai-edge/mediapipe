@@ -26,6 +26,10 @@ namespace {
 
 namespace tf = ::tensorflow;
 
+constexpr char kSingleIntTag[] = "SINGLE_INT";
+constexpr char kTensorOutTag[] = "TENSOR_OUT";
+constexpr char kVectorIntTag[] = "VECTOR_INT";
+
 class VectorIntToTensorCalculatorTest : public ::testing::Test {
  protected:
   void SetUpRunner(
@@ -61,13 +65,13 @@ class VectorIntToTensorCalculatorTest : public ::testing::Test {
 
     const int64 time = 1234;
     runner_->MutableInputs()
-        ->Tag("VECTOR_INT")
+        ->Tag(kVectorIntTag)
         .packets.push_back(Adopt(input.release()).At(Timestamp(time)));
 
     EXPECT_TRUE(runner_->Run().ok());
 
     const std::vector<Packet>& output_packets =
-        runner_->Outputs().Tag("TENSOR_OUT").packets;
+        runner_->Outputs().Tag(kTensorOutTag).packets;
     EXPECT_EQ(1, output_packets.size());
     EXPECT_EQ(time, output_packets[0].Timestamp().Value());
     const tf::Tensor& output_tensor = output_packets[0].Get<tf::Tensor>();
@@ -95,13 +99,13 @@ TEST_F(VectorIntToTensorCalculatorTest, TestSingleValue) {
               tensorflow::DT_INT32, false, true);
   const int64 time = 1234;
   runner_->MutableInputs()
-      ->Tag("SINGLE_INT")
+      ->Tag(kSingleIntTag)
       .packets.push_back(MakePacket<int>(1).At(Timestamp(time)));
 
   EXPECT_TRUE(runner_->Run().ok());
 
   const std::vector<Packet>& output_packets =
-      runner_->Outputs().Tag("TENSOR_OUT").packets;
+      runner_->Outputs().Tag(kTensorOutTag).packets;
   EXPECT_EQ(1, output_packets.size());
   EXPECT_EQ(time, output_packets[0].Timestamp().Value());
   const tf::Tensor& output_tensor = output_packets[0].Get<tf::Tensor>();
@@ -121,13 +125,13 @@ TEST_F(VectorIntToTensorCalculatorTest, TesOneDim) {
   }
   const int64 time = 1234;
   runner_->MutableInputs()
-      ->Tag("VECTOR_INT")
+      ->Tag(kVectorIntTag)
       .packets.push_back(Adopt(input.release()).At(Timestamp(time)));
 
   EXPECT_TRUE(runner_->Run().ok());
 
   const std::vector<Packet>& output_packets =
-      runner_->Outputs().Tag("TENSOR_OUT").packets;
+      runner_->Outputs().Tag(kTensorOutTag).packets;
   EXPECT_EQ(1, output_packets.size());
   EXPECT_EQ(time, output_packets[0].Timestamp().Value());
   const tf::Tensor& output_tensor = output_packets[0].Get<tf::Tensor>();
@@ -152,13 +156,13 @@ TEST_F(VectorIntToTensorCalculatorTest, TestInt64) {
               tensorflow::DT_INT64, false, true);
   const int64 time = 1234;
   runner_->MutableInputs()
-      ->Tag("SINGLE_INT")
+      ->Tag(kSingleIntTag)
       .packets.push_back(MakePacket<int>(1LL << 31).At(Timestamp(time)));
 
   EXPECT_TRUE(runner_->Run().ok());
 
   const std::vector<Packet>& output_packets =
-      runner_->Outputs().Tag("TENSOR_OUT").packets;
+      runner_->Outputs().Tag(kTensorOutTag).packets;
   EXPECT_EQ(1, output_packets.size());
   EXPECT_EQ(time, output_packets[0].Timestamp().Value());
   const tf::Tensor& output_tensor = output_packets[0].Get<tf::Tensor>();
@@ -179,13 +183,13 @@ TEST_F(VectorIntToTensorCalculatorTest, TestUint8) {
   }
   const int64 time = 1234;
   runner_->MutableInputs()
-      ->Tag("VECTOR_INT")
+      ->Tag(kVectorIntTag)
       .packets.push_back(Adopt(input.release()).At(Timestamp(time)));
 
   EXPECT_TRUE(runner_->Run().ok());
 
   const std::vector<Packet>& output_packets =
-      runner_->Outputs().Tag("TENSOR_OUT").packets;
+      runner_->Outputs().Tag(kTensorOutTag).packets;
   EXPECT_EQ(1, output_packets.size());
   EXPECT_EQ(time, output_packets[0].Timestamp().Value());
   const tf::Tensor& output_tensor = output_packets[0].Get<tf::Tensor>();

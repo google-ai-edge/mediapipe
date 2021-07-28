@@ -41,6 +41,11 @@ namespace mediapipe {
 namespace tf = ::tensorflow;
 
 namespace {
+
+constexpr char kMultipliedTag[] = "MULTIPLIED";
+constexpr char kBTag[] = "B";
+constexpr char kSessionTag[] = "SESSION";
+
 std::string GetGraphDefPath() {
 #ifdef __APPLE__
   char path[1024];
@@ -86,8 +91,8 @@ class TensorflowInferenceCalculatorTest : public ::testing::Test {
     MEDIAPIPE_CHECK_OK(tool::RunGenerateAndValidateTypes(
         "TensorFlowSessionFromFrozenGraphGenerator", extendable_options,
         input_side_packets, &output_side_packets));
-    runner_->MutableSidePackets()->Tag("SESSION") =
-        output_side_packets.Tag("SESSION");
+    runner_->MutableSidePackets()->Tag(kSessionTag) =
+        output_side_packets.Tag(kSessionTag);
   }
 
   Packet CreateTensorPacket(const std::vector<int32>& input, int64 time) {
@@ -140,7 +145,7 @@ TEST_F(TensorflowInferenceCalculatorTest, GetConstants) {
   MP_ASSERT_OK(runner_->Run());
 
   const std::vector<Packet>& output_packets_b =
-      runner_->Outputs().Tag("B").packets;
+      runner_->Outputs().Tag(kBTag).packets;
   ASSERT_EQ(output_packets_b.size(), 1);
   const tf::Tensor& tensor_b = output_packets_b[0].Get<tf::Tensor>();
   tf::TensorShape expected_shape({1, 3});
@@ -148,7 +153,7 @@ TEST_F(TensorflowInferenceCalculatorTest, GetConstants) {
   tf::test::ExpectTensorEqual<int32>(expected_tensor, tensor_b);
 
   const std::vector<Packet>& output_packets_mult =
-      runner_->Outputs().Tag("MULTIPLIED").packets;
+      runner_->Outputs().Tag(kMultipliedTag).packets;
   ASSERT_EQ(1, output_packets_mult.size());
   const tf::Tensor& tensor_mult = output_packets_mult[0].Get<tf::Tensor>();
   expected_tensor = tf::test::AsTensor<int32>({0, 0, 0}, expected_shape);
@@ -181,7 +186,7 @@ TEST_F(TensorflowInferenceCalculatorTest, GetComputed) {
   MP_ASSERT_OK(runner_->Run());
 
   const std::vector<Packet>& output_packets_mult =
-      runner_->Outputs().Tag("MULTIPLIED").packets;
+      runner_->Outputs().Tag(kMultipliedTag).packets;
   ASSERT_EQ(1, output_packets_mult.size());
   const tf::Tensor& tensor_mult = output_packets_mult[0].Get<tf::Tensor>();
   tf::TensorShape expected_shape({3});
@@ -220,7 +225,7 @@ TEST_F(TensorflowInferenceCalculatorTest, GetComputed_MaxInFlight) {
   MP_ASSERT_OK(runner_->Run());
 
   const std::vector<Packet>& output_packets_mult =
-      runner_->Outputs().Tag("MULTIPLIED").packets;
+      runner_->Outputs().Tag(kMultipliedTag).packets;
   ASSERT_EQ(1, output_packets_mult.size());
   const tf::Tensor& tensor_mult = output_packets_mult[0].Get<tf::Tensor>();
   tf::TensorShape expected_shape({3});
@@ -274,7 +279,7 @@ TEST_F(TensorflowInferenceCalculatorTest, GetMultiBatchComputed) {
   MP_ASSERT_OK(runner_->Run());
 
   const std::vector<Packet>& output_packets_mult =
-      runner_->Outputs().Tag("MULTIPLIED").packets;
+      runner_->Outputs().Tag(kMultipliedTag).packets;
   ASSERT_EQ(2, output_packets_mult.size());
   const tf::Tensor& tensor_mult = output_packets_mult[0].Get<tf::Tensor>();
   auto expected_tensor = tf::test::AsTensor<int32>({6, 8, 10});
@@ -311,7 +316,7 @@ TEST_F(TensorflowInferenceCalculatorTest, GetMultiBatchComputed_MaxInFlight) {
   MP_ASSERT_OK(runner_->Run());
 
   const std::vector<Packet>& output_packets_mult =
-      runner_->Outputs().Tag("MULTIPLIED").packets;
+      runner_->Outputs().Tag(kMultipliedTag).packets;
   ASSERT_EQ(2, output_packets_mult.size());
   const tf::Tensor& tensor_mult = output_packets_mult[0].Get<tf::Tensor>();
   auto expected_tensor = tf::test::AsTensor<int32>({6, 8, 10});
@@ -351,7 +356,7 @@ TEST_F(TensorflowInferenceCalculatorTest,
   MP_ASSERT_OK(runner_->Run());
 
   const std::vector<Packet>& output_packets_mult =
-      runner_->Outputs().Tag("MULTIPLIED").packets;
+      runner_->Outputs().Tag(kMultipliedTag).packets;
   ASSERT_EQ(3, output_packets_mult.size());
   const tf::Tensor& tensor_mult = output_packets_mult[0].Get<tf::Tensor>();
   auto expected_tensor = tf::test::AsTensor<int32>({6, 8, 10});
@@ -392,7 +397,7 @@ TEST_F(TensorflowInferenceCalculatorTest, GetSingleBatchComputed) {
   MP_ASSERT_OK(runner_->Run());
 
   const std::vector<Packet>& output_packets_mult =
-      runner_->Outputs().Tag("MULTIPLIED").packets;
+      runner_->Outputs().Tag(kMultipliedTag).packets;
   ASSERT_EQ(2, output_packets_mult.size());
   const tf::Tensor& tensor_mult = output_packets_mult[0].Get<tf::Tensor>();
   auto expected_tensor = tf::test::AsTensor<int32>({6, 8, 10});
@@ -430,7 +435,7 @@ TEST_F(TensorflowInferenceCalculatorTest, GetCloseBatchComputed) {
   MP_ASSERT_OK(runner_->Run());
 
   const std::vector<Packet>& output_packets_mult =
-      runner_->Outputs().Tag("MULTIPLIED").packets;
+      runner_->Outputs().Tag(kMultipliedTag).packets;
   ASSERT_EQ(2, output_packets_mult.size());
   const tf::Tensor& tensor_mult = output_packets_mult[0].Get<tf::Tensor>();
   auto expected_tensor = tf::test::AsTensor<int32>({6, 8, 10});
@@ -481,7 +486,7 @@ TEST_F(TensorflowInferenceCalculatorTest, GetBatchComputed_MaxInFlight) {
   MP_ASSERT_OK(runner_->Run());
 
   const std::vector<Packet>& output_packets_mult =
-      runner_->Outputs().Tag("MULTIPLIED").packets;
+      runner_->Outputs().Tag(kMultipliedTag).packets;
   ASSERT_EQ(5, output_packets_mult.size());
   const tf::Tensor& tensor_mult = output_packets_mult[0].Get<tf::Tensor>();
   auto expected_tensor = tf::test::AsTensor<int32>({6, 8, 10});
@@ -528,7 +533,7 @@ TEST_F(TensorflowInferenceCalculatorTest, TestRecurrentStates) {
   MP_ASSERT_OK(runner_->Run());
 
   const std::vector<Packet>& output_packets_mult =
-      runner_->Outputs().Tag("MULTIPLIED").packets;
+      runner_->Outputs().Tag(kMultipliedTag).packets;
   ASSERT_EQ(2, output_packets_mult.size());
   const tf::Tensor& tensor_mult = output_packets_mult[0].Get<tf::Tensor>();
   LOG(INFO) << "timestamp: " << 0;
@@ -569,7 +574,7 @@ TEST_F(TensorflowInferenceCalculatorTest, TestRecurrentStateOverride) {
   MP_ASSERT_OK(runner_->Run());
 
   const std::vector<Packet>& output_packets_mult =
-      runner_->Outputs().Tag("MULTIPLIED").packets;
+      runner_->Outputs().Tag(kMultipliedTag).packets;
   ASSERT_EQ(2, output_packets_mult.size());
   const tf::Tensor& tensor_mult = output_packets_mult[0].Get<tf::Tensor>();
   LOG(INFO) << "timestamp: " << 0;
@@ -662,7 +667,7 @@ TEST_F(TensorflowInferenceCalculatorTest, MissingInputFeature_Skip) {
   MP_ASSERT_OK(runner_->Run());
 
   const std::vector<Packet>& output_packets_mult =
-      runner_->Outputs().Tag("MULTIPLIED").packets;
+      runner_->Outputs().Tag(kMultipliedTag).packets;
   ASSERT_EQ(0, output_packets_mult.size());
 }
 
@@ -691,7 +696,7 @@ TEST_F(TensorflowInferenceCalculatorTest,
   MP_ASSERT_OK(runner_->Run());
 
   const std::vector<Packet>& output_packets_mult =
-      runner_->Outputs().Tag("MULTIPLIED").packets;
+      runner_->Outputs().Tag(kMultipliedTag).packets;
   ASSERT_EQ(1, output_packets_mult.size());
   const tf::Tensor& tensor_mult = output_packets_mult[0].Get<tf::Tensor>();
   auto expected_tensor = tf::test::AsTensor<int32>({9, 12, 15});

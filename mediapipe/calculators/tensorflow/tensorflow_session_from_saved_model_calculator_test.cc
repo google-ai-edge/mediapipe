@@ -35,6 +35,9 @@ namespace {
 
 namespace tf = ::tensorflow;
 
+constexpr char kStringSavedModelPathTag[] = "STRING_SAVED_MODEL_PATH";
+constexpr char kSessionTag[] = "SESSION";
+
 std::string GetSavedModelDir() {
   std::string out_path =
       file::JoinPath("./", "mediapipe/calculators/tensorflow/testdata/",
@@ -79,7 +82,7 @@ TEST_F(TensorFlowSessionFromSavedModelCalculatorTest,
                                            options_->DebugString()));
   MP_ASSERT_OK(runner.Run());
   const TensorFlowSession& session =
-      runner.OutputSidePackets().Tag("SESSION").Get<TensorFlowSession>();
+      runner.OutputSidePackets().Tag(kSessionTag).Get<TensorFlowSession>();
   // Session must be set.
   ASSERT_NE(session.session, nullptr);
 
@@ -119,11 +122,11 @@ TEST_F(TensorFlowSessionFromSavedModelCalculatorTest,
           }
         })",
                                            options_->DebugString()));
-  runner.MutableSidePackets()->Tag("STRING_SAVED_MODEL_PATH") =
+  runner.MutableSidePackets()->Tag(kStringSavedModelPathTag) =
       MakePacket<std::string>(GetSavedModelDir());
   MP_ASSERT_OK(runner.Run());
   const TensorFlowSession& session =
-      runner.OutputSidePackets().Tag("SESSION").Get<TensorFlowSession>();
+      runner.OutputSidePackets().Tag(kSessionTag).Get<TensorFlowSession>();
   // Session must be set.
   ASSERT_NE(session.session, nullptr);
 }
@@ -201,7 +204,7 @@ TEST_F(TensorFlowSessionFromSavedModelCalculatorTest,
                                            options_->DebugString()));
   MP_ASSERT_OK(runner.Run());
   const TensorFlowSession& session =
-      runner.OutputSidePackets().Tag("SESSION").Get<TensorFlowSession>();
+      runner.OutputSidePackets().Tag(kSessionTag).Get<TensorFlowSession>();
   // Session must be set.
   ASSERT_NE(session.session, nullptr);
 }
@@ -224,7 +227,7 @@ TEST_F(TensorFlowSessionFromSavedModelCalculatorTest,
                                            options_->DebugString()));
   MP_ASSERT_OK(runner.Run());
   const TensorFlowSession& session =
-      runner.OutputSidePackets().Tag("SESSION").Get<TensorFlowSession>();
+      runner.OutputSidePackets().Tag(kSessionTag).Get<TensorFlowSession>();
   // Session must be set.
   ASSERT_NE(session.session, nullptr);
   std::vector<tensorflow::DeviceAttributes> devices;

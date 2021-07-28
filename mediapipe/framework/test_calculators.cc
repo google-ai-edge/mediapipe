@@ -34,6 +34,19 @@
 
 namespace mediapipe {
 
+constexpr char kOutTag[] = "OUT";
+constexpr char kClockTag[] = "CLOCK";
+constexpr char kSleepMicrosTag[] = "SLEEP_MICROS";
+constexpr char kCloseTag[] = "CLOSE";
+constexpr char kProcessTag[] = "PROCESS";
+constexpr char kOpenTag[] = "OPEN";
+constexpr char kTag[] = "";
+constexpr char kMeanTag[] = "MEAN";
+constexpr char kDataTag[] = "DATA";
+constexpr char kPairTag[] = "PAIR";
+constexpr char kLowTag[] = "LOW";
+constexpr char kHighTag[] = "HIGH";
+
 using RandomEngine = std::mt19937_64;
 
 // A Calculator that outputs twice the value of its input packet (an int).
@@ -95,9 +108,9 @@ class TaggedIntSplitterPacketGenerator : public PacketGenerator {
       PacketTypeSet* input_side_packets,                 //
       PacketTypeSet* output_side_packets) {
     input_side_packets->Index(0).Set<uint64>();
-    output_side_packets->Tag("HIGH").Set<uint32>();
-    output_side_packets->Tag("LOW").Set<uint32>();
-    output_side_packets->Tag("PAIR").Set<std::pair<uint32, uint32>>();
+    output_side_packets->Tag(kHighTag).Set<uint32>();
+    output_side_packets->Tag(kLowTag).Set<uint32>();
+    output_side_packets->Tag(kPairTag).Set<std::pair<uint32, uint32>>();
     return absl::OkStatus();
   }
 
@@ -108,9 +121,9 @@ class TaggedIntSplitterPacketGenerator : public PacketGenerator {
     uint64 value = input_side_packets.Index(0).Get<uint64>();
     uint32 high = value >> 32;
     uint32 low = value & 0xFFFFFFFF;
-    output_side_packets->Tag("HIGH") = Adopt(new uint32(high));
-    output_side_packets->Tag("LOW") = Adopt(new uint32(low));
-    output_side_packets->Tag("PAIR") =
+    output_side_packets->Tag(kHighTag) = Adopt(new uint32(high));
+    output_side_packets->Tag(kLowTag) = Adopt(new uint32(low));
+    output_side_packets->Tag(kPairTag) =
         Adopt(new std::pair<uint32, uint32>(high, low));
     return absl::OkStatus();
   }
@@ -221,8 +234,8 @@ class StdDevCalculator : public CalculatorBase {
   StdDevCalculator() {}
 
   static absl::Status GetContract(CalculatorContract* cc) {
-    cc->Inputs().Tag("DATA").Set<int>();
-    cc->Inputs().Tag("MEAN").Set<double>();
+    cc->Inputs().Tag(kDataTag).Set<int>();
+    cc->Inputs().Tag(kMeanTag).Set<double>();
     cc->Outputs().Index(0).Set<int>();
     return absl::OkStatus();
   }
@@ -234,15 +247,15 @@ class StdDevCalculator : public CalculatorBase {
 
   absl::Status Process(CalculatorContext* cc) final {
     if (cc->InputTimestamp() == Timestamp::PreStream()) {
-      RET_CHECK(cc->Inputs().Tag("DATA").Value().IsEmpty());
-      RET_CHECK(!cc->Inputs().Tag("MEAN").Value().IsEmpty());
-      mean_ = cc->Inputs().Tag("MEAN").Get<double>();
+      RET_CHECK(cc->Inputs().Tag(kDataTag).Value().IsEmpty());
+      RET_CHECK(!cc->Inputs().Tag(kMeanTag).Value().IsEmpty());
+      mean_ = cc->Inputs().Tag(kMeanTag).Get<double>();
       initialized_ = true;
     } else {
       RET_CHECK(initialized_);
-      RET_CHECK(!cc->Inputs().Tag("DATA").Value().IsEmpty());
-      RET_CHECK(cc->Inputs().Tag("MEAN").Value().IsEmpty());
-      double diff = cc->Inputs().Tag("DATA").Get<int>() - mean_;
+      RET_CHECK(!cc->Inputs().Tag(kDataTag).Value().IsEmpty());
+      RET_CHECK(cc->Inputs().Tag(kMeanTag).Value().IsEmpty());
+      double diff = cc->Inputs().Tag(kDataTag).Get<int>() - mean_;
       cummulative_variance_ += diff * diff;
       ++count_;
     }
@@ -564,8 +577,8 @@ class LambdaCalculator : public CalculatorBase {
          id < cc->Outputs().EndId(); ++id) {
       cc->Outputs().Get(id).SetAny();
     }
-    if (cc->InputSidePackets().HasTag("") > 0) {
-      cc->InputSidePackets().Tag("").Set<ProcessFunction>();
+    if (cc->InputSidePackets().HasTag(kTag) > 0) {
+      cc->InputSidePackets().Tag(kTag).Set<ProcessFunction>();
     }
     for (const std::string& tag : {"OPEN", "PROCESS", "CLOSE"}) {
       if (cc->InputSidePackets().HasTag(tag)) {
@@ -576,24 +589,24 @@ class LambdaCalculator : public CalculatorBase {
   }
 
   absl::Status Open(CalculatorContext* cc) final {
-    if (cc->InputSidePackets().HasTag("OPEN")) {
+    if (cc->InputSidePackets().HasTag(kOpenTag)) {
       return GetContextFn(cc, "OPEN")(cc);
     }
     return absl::OkStatus();
   }
 
   absl::Status Process(CalculatorContext* cc) final {
-    if (cc->InputSidePackets().HasTag("PROCESS")) {
+    if (cc->InputSidePackets().HasTag(kProcessTag)) {
       return GetContextFn(cc, "PROCESS")(cc);
     }
-    if (cc->InputSidePackets().HasTag("") > 0) {
+    if (cc->InputSidePackets().HasTag(kTag) > 0) {
       return GetProcessFn(cc, "")(cc->Inputs(), &cc->Outputs());
     }
     return absl::OkStatus();
   }
 
   absl::Status Close(CalculatorContext* cc) final {
-    if (cc->InputSidePackets().HasTag("CLOSE")) {
+    if (cc->InputSidePackets().HasTag(kCloseTag)) {
       return GetContextFn(cc, "CLOSE")(cc);
     }
     return absl::OkStatus();
@@ -645,17 +658,18 @@ class PassThroughWithSleepCalculator : public CalculatorBase {
   static absl::Status GetContract(CalculatorContract* cc) {
     cc->Inputs().Index(0).Set<int>();
     cc->Outputs().Index(0).SetSameAs(&cc->Inputs().Index(0));
-    cc->InputSidePackets().Tag("SLEEP_MICROS").Set<int>();
-    cc->InputSidePackets().Tag("CLOCK").Set<std::shared_ptr<Clock>>();
+    cc->InputSidePackets().Tag(kSleepMicrosTag).Set<int>();
+    cc->InputSidePackets().Tag(kClockTag).Set<std::shared_ptr<Clock>>();
     return absl::OkStatus();
   }
   absl::Status Open(CalculatorContext* cc) final {
     cc->SetOffset(TimestampDiff(0));
-    sleep_micros_ = cc->InputSidePackets().Tag("SLEEP_MICROS").Get<int>();
+    sleep_micros_ = cc->InputSidePackets().Tag(kSleepMicrosTag).Get<int>();
     if (sleep_micros_ < 0) {
       return absl::InternalError("SLEEP_MICROS should be >= 0");
     }
-    clock_ = cc->InputSidePackets().Tag("CLOCK").Get<std::shared_ptr<Clock>>();
+    clock_ =
+        cc->InputSidePackets().Tag(kClockTag).Get<std::shared_ptr<Clock>>();
     return absl::OkStatus();
   }
   absl::Status Process(CalculatorContext* cc) final {
@@ -678,8 +692,8 @@ class MultiplyIntCalculator : public CalculatorBase {
     cc->Inputs().Index(0).Set<int>();
     cc->Inputs().Index(1).SetSameAs(&cc->Inputs().Index(0));
     // cc->Outputs().Index(0).SetSameAs(&cc->Inputs().Index(0));
-    RET_CHECK(cc->Outputs().HasTag("OUT"));
-    cc->Outputs().Tag("OUT").SetSameAs(&cc->Inputs().Index(0));
+    RET_CHECK(cc->Outputs().HasTag(kOutTag));
+    cc->Outputs().Tag(kOutTag).SetSameAs(&cc->Inputs().Index(0));
     return absl::OkStatus();
   }
   absl::Status Open(CalculatorContext* cc) final {
@@ -689,7 +703,7 @@ class MultiplyIntCalculator : public CalculatorBase {
   absl::Status Process(CalculatorContext* cc) final {
     int x = cc->Inputs().Index(0).Value().Get<int>();
     int y = cc->Inputs().Index(1).Value().Get<int>();
-    cc->Outputs().Tag("OUT").Add(new int(x * y), cc->InputTimestamp());
+    cc->Outputs().Tag(kOutTag).Add(new int(x * y), cc->InputTimestamp());
     return absl::OkStatus();
   }
 };

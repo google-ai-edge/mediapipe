@@ -33,6 +33,9 @@
 namespace mediapipe {
 
 namespace {
+
+constexpr char kSessionTag[] = "SESSION";
+
 static constexpr char kStringSavedModelPath[] = "STRING_SAVED_MODEL_PATH";
 
 // Given the path to a directory containing multiple tensorflow saved models
@@ -100,7 +103,7 @@ class TensorFlowSessionFromSavedModelGenerator : public PacketGenerator {
       input_side_packets->Tag(kStringSavedModelPath).Set<std::string>();
     }
     // A TensorFlow model loaded and ready for use along with tensor
-    output_side_packets->Tag("SESSION").Set<TensorFlowSession>();
+    output_side_packets->Tag(kSessionTag).Set<TensorFlowSession>();
     return absl::OkStatus();
   }
 
@@ -153,7 +156,7 @@ class TensorFlowSessionFromSavedModelGenerator : public PacketGenerator {
           output_signature.first, options)] = output_signature.second.name();
     }
 
-    output_side_packets->Tag("SESSION") = Adopt(session.release());
+    output_side_packets->Tag(kSessionTag) = Adopt(session.release());
     return absl::OkStatus();
   }
 };

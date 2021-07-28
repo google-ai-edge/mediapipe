@@ -60,6 +60,18 @@ def mediapipe_aar(
       assets: additional assets to be included into the archive.
       assets_dir: path where the assets will the packaged.
     """
+
+    # When "--define EXCLUDE_OPENCV_SO_LIB=1" is set in the build command,
+    # the OpenCV so libraries will be excluded from the AAR package to
+    # save the package size.
+    native.config_setting(
+        name = "exclude_opencv_so_lib",
+        define_values = {
+            "EXCLUDE_OPENCV_SO_LIB": "1",
+        },
+        visibility = ["//visibility:public"],
+    )
+
     _mediapipe_jni(
         name = name + "_jni",
         gen_libmediapipe = gen_libmediapipe,
@@ -133,6 +145,7 @@ EOF
         ] + select({
             "//conditions:default": [":" + name + "_jni_opencv_cc_lib"],
             "//mediapipe/framework/port:disable_opencv": [],
+            "exclude_opencv_so_lib": [],
         }),
         assets = assets,
         assets_dir = assets_dir,

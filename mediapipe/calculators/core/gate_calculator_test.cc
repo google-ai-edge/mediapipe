@@ -22,6 +22,9 @@ namespace mediapipe {
 
 namespace {
 
+constexpr char kDisallowTag[] = "DISALLOW";
+constexpr char kAllowTag[] = "ALLOW";
+
 class GateCalculatorTest : public ::testing::Test {
  protected:
   // Helper to run a graph and return status.
@@ -117,7 +120,7 @@ TEST_F(GateCalculatorTest, AllowByALLOWSidePacketSetToTrue) {
         input_stream: "test_input"
         output_stream: "test_output"
   )");
-  runner()->MutableSidePackets()->Tag("ALLOW") = Adopt(new bool(true));
+  runner()->MutableSidePackets()->Tag(kAllowTag) = Adopt(new bool(true));
 
   constexpr int64 kTimestampValue0 = 42;
   RunTimeStep(kTimestampValue0, true);
@@ -139,7 +142,7 @@ TEST_F(GateCalculatorTest, AllowByDisallowSidePacketSetToFalse) {
         input_stream: "test_input"
         output_stream: "test_output"
   )");
-  runner()->MutableSidePackets()->Tag("DISALLOW") = Adopt(new bool(false));
+  runner()->MutableSidePackets()->Tag(kDisallowTag) = Adopt(new bool(false));
 
   constexpr int64 kTimestampValue0 = 42;
   RunTimeStep(kTimestampValue0, true);
@@ -161,7 +164,7 @@ TEST_F(GateCalculatorTest, DisallowByALLOWSidePacketSetToFalse) {
         input_stream: "test_input"
         output_stream: "test_output"
   )");
-  runner()->MutableSidePackets()->Tag("ALLOW") = Adopt(new bool(false));
+  runner()->MutableSidePackets()->Tag(kAllowTag) = Adopt(new bool(false));
 
   constexpr int64 kTimestampValue0 = 42;
   RunTimeStep(kTimestampValue0, true);
@@ -179,7 +182,7 @@ TEST_F(GateCalculatorTest, DisallowByDISALLOWSidePacketSetToTrue) {
         input_stream: "test_input"
         output_stream: "test_output"
   )");
-  runner()->MutableSidePackets()->Tag("DISALLOW") = Adopt(new bool(true));
+  runner()->MutableSidePackets()->Tag(kDisallowTag) = Adopt(new bool(true));
 
   constexpr int64 kTimestampValue0 = 42;
   RunTimeStep(kTimestampValue0, true);

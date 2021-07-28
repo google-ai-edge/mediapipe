@@ -65,6 +65,16 @@ namespace mediapipe {
 
 namespace {
 
+constexpr char kCounter2Tag[] = "COUNTER2";
+constexpr char kCounter1Tag[] = "COUNTER1";
+constexpr char kExtraTag[] = "EXTRA";
+constexpr char kWaitSemTag[] = "WAIT_SEM";
+constexpr char kPostSemTag[] = "POST_SEM";
+constexpr char kErrorOnOpenTag[] = "ERROR_ON_OPEN";
+constexpr char kOutputTag[] = "OUTPUT";
+constexpr char kInputTag[] = "INPUT";
+constexpr char kSelectTag[] = "SELECT";
+
 using testing::ElementsAre;
 using testing::HasSubstr;
 
@@ -125,8 +135,8 @@ class DemuxTimedCalculator : public CalculatorBase {
  public:
   static absl::Status GetContract(CalculatorContract* cc) {
     RET_CHECK_EQ(cc->Inputs().NumEntries(), 2);
-    cc->Inputs().Tag("SELECT").Set<int>();
-    PacketType* data_input = &cc->Inputs().Tag("INPUT");
+    cc->Inputs().Tag(kSelectTag).Set<int>();
+    PacketType* data_input = &cc->Inputs().Tag(kInputTag);
     data_input->SetAny();
     for (CollectionItemId id = cc->Outputs().BeginId("OUTPUT");
          id < cc->Outputs().EndId("OUTPUT"); ++id) {
@@ -182,7 +192,7 @@ REGISTER_CALCULATOR(DemuxTimedCalculator);
 class MuxTimedCalculator : public CalculatorBase {
  public:
   static absl::Status GetContract(CalculatorContract* cc) {
-    cc->Inputs().Tag("SELECT").Set<int>();
+    cc->Inputs().Tag(kSelectTag).Set<int>();
     CollectionItemId data_input_id = cc->Inputs().BeginId("INPUT");
     PacketType* data_input0 = &cc->Inputs().Get(data_input_id);
     data_input0->SetAny();
@@ -191,7 +201,7 @@ class MuxTimedCalculator : public CalculatorBase {
       cc->Inputs().Get(data_input_id).SetSameAs(data_input0);
     }
     RET_CHECK_EQ(cc->Outputs().NumEntries(), 1);
-    cc->Outputs().Tag("OUTPUT").SetSameAs(data_input0);
+    cc->Outputs().Tag(kOutputTag).SetSameAs(data_input0);
     cc->SetTimestampOffset(TimestampDiff(0));
     return absl::OkStatus();
   }
@@ -598,12 +608,12 @@ class ErrorOnOpenCalculator : public CalculatorBase {
   static absl::Status GetContract(CalculatorContract* cc) {
     cc->Inputs().Index(0).SetAny();
     cc->Outputs().Index(0).SetSameAs(&cc->Inputs().Index(0));
-    cc->InputSidePackets().Tag("ERROR_ON_OPEN").Set<bool>();
+    cc->InputSidePackets().Tag(kErrorOnOpenTag).Set<bool>();
     return absl::OkStatus();
   }
 
   absl::Status Open(CalculatorContext* cc) final {
-    if (cc->InputSidePackets().Tag("ERROR_ON_OPEN").Get<bool>()) {
+    if (cc->InputSidePackets().Tag(kErrorOnOpenTag).Get<bool>()) {
       return absl::NotFoundError("expected error");
     }
     return absl::OkStatus();
@@ -920,8 +930,8 @@ class SemaphoreCalculator : public CalculatorBase {
   static absl::Status GetContract(CalculatorContract* cc) {
     cc->Inputs().Index(0).SetAny();
     cc->Outputs().Index(0).SetSameAs(&cc->Inputs().Index(0));
-    cc->InputSidePackets().Tag("POST_SEM").Set<Semaphore*>();
-    cc->InputSidePackets().Tag("WAIT_SEM").Set<Semaphore*>();
+    cc->InputSidePackets().Tag(kPostSemTag).Set<Semaphore*>();
+    cc->InputSidePackets().Tag(kWaitSemTag).Set<Semaphore*>();
     cc->SetTimestampOffset(TimestampDiff(0));
     return absl::OkStatus();
   }
@@ -929,8 +939,8 @@ class SemaphoreCalculator : public CalculatorBase {
   absl::Status Open(CalculatorContext* cc) override { return absl::OkStatus(); }
 
   absl::Status Process(CalculatorContext* cc) override {
-    cc->InputSidePackets().Tag("POST_SEM").Get<Semaphore*>()->Release(1);
-    cc->InputSidePackets().Tag("WAIT_SEM").Get<Semaphore*>()->Acquire(1);
+    cc->InputSidePackets().Tag(kPostSemTag).Get<Semaphore*>()->Release(1);
+    cc->InputSidePackets().Tag(kWaitSemTag).Get<Semaphore*>()->Acquire(1);
     cc->Outputs().Index(0).AddPacket(cc->Inputs().Index(0).Value());
     return absl::OkStatus();
   }
@@ -1177,9 +1187,9 @@ class IncrementingStatusHandler : public StatusHandler {
   static absl::Status FillExpectations(
       const MediaPipeOptions& extendable_options,
       PacketTypeSet* input_side_packets) {
-    input_side_packets->Tag("EXTRA").SetAny().Optional();
-    input_side_packets->Tag("COUNTER1").Set<std::unique_ptr<int>>();
-    input_side_packets->Tag("COUNTER2").Set<std::unique_ptr<int>>();
+    input_side_packets->Tag(kExtraTag).SetAny().Optional();
+    input_side_packets->Tag(kCounter1Tag).Set<std::unique_ptr<int>>();
+    input_side_packets->Tag(kCounter2Tag).Set<std::unique_ptr<int>>();
     return absl::OkStatus();
   }
 
@@ -1187,7 +1197,7 @@ class IncrementingStatusHandler : public StatusHandler {
       const MediaPipeOptions& extendable_options,
       const PacketSet& input_side_packets,  //
       const absl::Status& pre_run_status) {
-    int* counter = GetFromUniquePtr<int>(input_side_packets.Tag("COUNTER1"));
+    int* counter = GetFromUniquePtr<int>(input_side_packets.Tag(kCounter1Tag));
     (*counter)++;
     return pre_run_status_result_;
   }
@@ -1195,7 +1205,7 @@ class IncrementingStatusHandler : public StatusHandler {
   static absl::Status HandleStatus(const MediaPipeOptions& extendable_options,
                                    const PacketSet& input_side_packets,  //
                                    const absl::Status& run_status) {
-    int* counter = GetFromUniquePtr<int>(input_side_packets.Tag("COUNTER2"));
+    int* counter = GetFromUniquePtr<int>(input_side_packets.Tag(kCounter2Tag));
     (*counter)++;
     return post_run_status_result_;
   }
@@ -2228,20 +2238,20 @@ class DemuxUntimedCalculator : public CalculatorBase {
  public:
   static absl::Status GetContract(CalculatorContract* cc) {
     RET_CHECK_EQ(cc->Inputs().NumEntries(), 2);
-    cc->Inputs().Tag("INPUT").SetAny();
-    cc->Inputs().Tag("SELECT").Set<int>();
+    cc->Inputs().Tag(kInputTag).SetAny();
+    cc->Inputs().Tag(kSelectTag).Set<int>();
     for (CollectionItemId id = cc->Outputs().BeginId("OUTPUT");
          id < cc->Outputs().EndId("OUTPUT"); ++id) {
-      cc->Outputs().Get(id).SetSameAs(&cc->Inputs().Tag("INPUT"));
+      cc->Outputs().Get(id).SetSameAs(&cc->Inputs().Tag(kInputTag));
     }
     return absl::OkStatus();
   }
   absl::Status Process(CalculatorContext* cc) final {
-    int index = cc->Inputs().Tag("SELECT").Get<int>();
-    if (!cc->Inputs().Tag("INPUT").IsEmpty()) {
+    int index = cc->Inputs().Tag(kSelectTag).Get<int>();
+    if (!cc->Inputs().Tag(kInputTag).IsEmpty()) {
       cc->Outputs()
           .Get("OUTPUT", index)
-          .AddPacket(cc->Inputs().Tag("INPUT").Value());
+          .AddPacket(cc->Inputs().Tag(kInputTag).Value());
     } else {
       cc->Outputs()
           .Get("OUTPUT", index)

@@ -39,6 +39,8 @@ using ::testing::Pair;
 using ::testing::Value;
 namespace {
 
+constexpr char kDisallowTag[] = "DISALLOW";
+
 // Returns the timestamp values for a vector of Packets.
 // TODO: puth this kind of test util in a common place.
 std::vector<int64> TimestampValues(const std::vector<Packet>& packets) {
@@ -702,14 +704,14 @@ class DroppingGateCalculator : public CalculatorBase {
  public:
   static absl::Status GetContract(CalculatorContract* cc) {
     cc->Inputs().Index(0).SetAny();
-    cc->Inputs().Tag("DISALLOW").Set<bool>();
+    cc->Inputs().Tag(kDisallowTag).Set<bool>();
     cc->Outputs().Index(0).SetSameAs(&cc->Inputs().Index(0));
     return absl::OkStatus();
   }
 
   absl::Status Process(CalculatorContext* cc) final {
     if (!cc->Inputs().Index(0).IsEmpty() &&
-        !cc->Inputs().Tag("DISALLOW").Get<bool>()) {
+        !cc->Inputs().Tag(kDisallowTag).Get<bool>()) {
       cc->Outputs().Index(0).AddPacket(cc->Inputs().Index(0).Value());
     }
     return absl::OkStatus();
