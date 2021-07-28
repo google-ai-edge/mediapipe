@@ -44,7 +44,7 @@ if [ -z "$1" ]
                        libjpeg-dev libpng-dev libswscale-dev libtbb2 libtbb-dev \
                        libtiff-dev
     elif [[ -x "$(command -v dnf)" ]]; then
-      sudo dnf update && sudo dnf install cmake gcc gcc-c git
+      sudo dnf update && sudo dnf install cmake gcc gcc-c++ git
       sudo dnf install ffmpeg-devel libdc1394-devel gtk2-devel \
                        libjpeg-turbo-devel libpng-devel tbb-devel \
                        libtiff-devel
