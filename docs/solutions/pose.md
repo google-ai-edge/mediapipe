@@ -319,6 +319,7 @@ Supported configuration options:
   <div class="container">
     <video class="input_video"></video>
     <canvas class="output_canvas" width="1280px" height="720px"></canvas>
+    <div class="landmark-grid-container"></div>
   </div>
 </body>
 </html>
