@@ -358,7 +358,6 @@ public class MicrophoneHelper implements AudioDataProducer {
    * Stops the AudioRecord object from reading data from the microphone.
    */
   public void stopMicrophoneWithoutCleanup() {
-    Preconditions.checkNotNull(audioRecord);
     if (!recording) {
       return;
     }
@@ -372,6 +371,7 @@ public class MicrophoneHelper implements AudioDataProducer {
       Log.e(TAG, "Exception: ", ie);
     }
 
+    Preconditions.checkNotNull(audioRecord);
     audioRecord.stop();
     if (audioRecord.getRecordingState() != AudioRecord.RECORDSTATE_STOPPED) {
       Log.e(TAG, "AudioRecord.stop() didn't run properly.");
@@ -382,11 +382,12 @@ public class MicrophoneHelper implements AudioDataProducer {
    * Releases the AudioRecord object when there is no ongoing recording.
    */
   public void cleanup() {
-    Preconditions.checkNotNull(audioRecord);
     if (recording) {
       return;
     }
-    audioRecord.release();
+    if (audioRecord != null) {
+      audioRecord.release();
+    }
   }
 
   @Override
