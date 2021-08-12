@@ -36,7 +36,8 @@ int main(int argc, char **argv) {
   for (int i = 0; i < maxNumFaces; ++i) {
     multiFaceLandmarks[i] = new cv::Point2f[MPFaceMeshDetectorLandmarksNum];
   }
-  const auto faceCount = std::make_unique<int>();
+
+  std::vector<cv::Rect> multiFaceBoundingBoxes(maxNumFaces);
 
   LOG(INFO) << "FaceMeshDetector constructed.";
 
@@ -54,14 +55,21 @@ int main(int argc, char **argv) {
 
     cv::Mat camera_frame;
     cv::cvtColor(camera_frame_raw, camera_frame, cv::COLOR_BGR2RGB);
-    cv::flip(camera_frame, camera_frame, /*flipcode=HORIZONTAL*/ 1);
 
-    MPFaceMeshDetectorProcessFrame2D(faceMeshDetector, camera_frame,
-                                     faceCount.get(), multiFaceLandmarks);
+    int faceCount = 0;
 
-    LOG(INFO) << "Detected faces num: " << *faceCount;
+    MPFaceMeshDetectorDetectFaces(faceMeshDetector, camera_frame,
+                                  multiFaceBoundingBoxes.data(), &faceCount);
 
-    if (*faceCount > 0) {
+    if (faceCount > 0) {
+      auto &face_bounding_box = multiFaceBoundingBoxes[0];
+
+      cv::rectangle(camera_frame_raw, face_bounding_box, cv::Scalar(0, 255, 0),
+                    3);
+
+      int landmarksNum = 0;
+      MPFaceMeshDetectorDetect2DLandmarks(faceMeshDetector, multiFaceLandmarks,
+                                          &landmarksNum);
       auto &face_landmarks = multiFaceLandmarks[0];
       auto &landmark = face_landmarks[0];
 
