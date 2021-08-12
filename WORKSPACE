@@ -144,6 +144,12 @@ http_archive(
     name = "com_google_audio_tools",
     strip_prefix = "multichannel-audio-tools-master",
     urls = ["https://github.com/google/multichannel-audio-tools/archive/master.zip"],
+    patches = [
+        "@//third_party:com_google_audio_tools_fixes.diff"
+    ],
+    patch_args = [
+        "-p1",
+    ],
 )
 
 # 2020-07-09
