@@ -34,6 +34,23 @@ namespace mediapipe {
 namespace autoflip {
 namespace {
 
+constexpr char kFramingDetectionsVizFramesTag[] =
+    "FRAMING_DETECTIONS_VIZ_FRAMES";
+constexpr char kExternalRenderingFullVidTag[] = "EXTERNAL_RENDERING_FULL_VID";
+constexpr char kExternalRenderingPerFrameTag[] = "EXTERNAL_RENDERING_PER_FRAME";
+constexpr char kCroppingSummaryTag[] = "CROPPING_SUMMARY";
+constexpr char kSalientPointFrameVizFramesTag[] =
+    "SALIENT_POINT_FRAME_VIZ_FRAMES";
+constexpr char kKeyFrameCropRegionVizFramesTag[] =
+    "KEY_FRAME_CROP_REGION_VIZ_FRAMES";
+constexpr char kCroppedFramesTag[] = "CROPPED_FRAMES";
+constexpr char kShotBoundariesTag[] = "SHOT_BOUNDARIES";
+constexpr char kStaticFeaturesTag[] = "STATIC_FEATURES";
+constexpr char kVideoSizeTag[] = "VIDEO_SIZE";
+constexpr char kVideoFramesTag[] = "VIDEO_FRAMES";
+constexpr char kDetectionFeaturesTag[] = "DETECTION_FEATURES";
+constexpr char kKeyFramesTag[] = "KEY_FRAMES";
+
 using ::testing::HasSubstr;
 
 constexpr char kConfig[] = R"(
@@ -241,10 +258,10 @@ void AddKeyFrameFeatures(const int64 time_ms, const int key_frame_width,
                          const int key_frame_height, bool randomize,
                          CalculatorRunner::StreamContentsSet* inputs) {
   Timestamp timestamp(time_ms);
-  if (inputs->HasTag("KEY_FRAMES")) {
+  if (inputs->HasTag(kKeyFramesTag)) {
     auto key_frame = MakeImageFrameFromColor(GetRandomColor(), key_frame_width,
                                              key_frame_height);
-    inputs->Tag("KEY_FRAMES")
+    inputs->Tag(kKeyFramesTag)
         .packets.push_back(Adopt(key_frame.release()).At(timestamp));
   }
   if (randomize) {
@@ -252,11 +269,11 @@ void AddKeyFrameFeatures(const int64 time_ms, const int key_frame_width,
         kMinNumDetections, kMaxNumDetections)(GetGen());
     auto detections =
         MakeDetections(num_detections, key_frame_width, key_frame_height);
-    inputs->Tag("DETECTION_FEATURES")
+    inputs->Tag(kDetectionFeaturesTag)
         .packets.push_back(Adopt(detections.release()).At(timestamp));
   } else {
     auto detections = MakeCenterDetection(key_frame_width, key_frame_height);
-    inputs->Tag("DETECTION_FEATURES")
+    inputs->Tag(kDetectionFeaturesTag)
         .packets.push_back(Adopt(detections.release()).At(timestamp));
   }
 }
@@ -272,19 +289,19 @@ void AddScene(const int start_frame_index, const int num_scene_frames,
   int64 time_ms = start_frame_index * kTimestampDiff;
   for (int i = 0; i < num_scene_frames; ++i) {
     Timestamp timestamp(time_ms);
-    if (inputs->HasTag("VIDEO_FRAMES")) {
+    if (inputs->HasTag(kVideoFramesTag)) {
       auto frame =
           MakeImageFrameFromColor(GetRandomColor(), frame_width, frame_height);
-      inputs->Tag("VIDEO_FRAMES")
+      inputs->Tag(kVideoFramesTag)
           .packets.push_back(Adopt(frame.release()).At(timestamp));
     } else {
       auto input_size =
           ::absl::make_unique<std::pair<int, int>>(frame_width, frame_height);
-      inputs->Tag("VIDEO_SIZE")
+      inputs->Tag(kVideoSizeTag)
           .packets.push_back(Adopt(input_size.release()).At(timestamp));
     }
     auto static_features = absl::make_unique<StaticFeatures>();
-    inputs->Tag("STATIC_FEATURES")
+    inputs->Tag(kStaticFeaturesTag)
         .packets.push_back(Adopt(static_features.release()).At(timestamp));
     if (DownSampleRate == 1) {
       AddKeyFrameFeatures(time_ms, key_frame_width, key_frame_height, false,
@@ -294,7 +311,7 @@ void AddScene(const int start_frame_index, const int num_scene_frames,
                           inputs);
     }
     if (i == num_scene_frames - 1) {  // adds shot boundary
-      inputs->Tag("SHOT_BOUNDARIES")
+      inputs->Tag(kShotBoundariesTag)
           .packets.push_back(Adopt(new bool(true)).At(Timestamp(time_ms)));
     }
     time_ms += kTimestampDiff;
@@ -306,8 +323,8 @@ void AddScene(const int start_frame_index, const int num_scene_frames,
 void CheckCroppedFrames(const CalculatorRunner& runner, const int num_frames,
                         const int target_width, const int target_height) {
   const auto& outputs = runner.Outputs();
-  EXPECT_TRUE(outputs.HasTag("CROPPED_FRAMES"));
-  const auto& cropped_frames_outputs = outputs.Tag("CROPPED_FRAMES").packets;
+  EXPECT_TRUE(outputs.HasTag(kCroppedFramesTag));
+  const auto& cropped_frames_outputs = outputs.Tag(kCroppedFramesTag).packets;
   EXPECT_EQ(cropped_frames_outputs.size(), num_frames);
   for (int i = 0; i < num_frames; ++i) {
     const auto& cropped_frame = cropped_frames_outputs[i].Get<ImageFrame>();
@@ -392,23 +409,23 @@ TEST(SceneCroppingCalculatorTest, OutputsDebugStreams) {
 
   MP_EXPECT_OK(runner->Run());
   const auto& outputs = runner->Outputs();
-  EXPECT_TRUE(outputs.HasTag("KEY_FRAME_CROP_REGION_VIZ_FRAMES"));
-  EXPECT_TRUE(outputs.HasTag("SALIENT_POINT_FRAME_VIZ_FRAMES"));
-  EXPECT_TRUE(outputs.HasTag("CROPPING_SUMMARY"));
-  EXPECT_TRUE(outputs.HasTag("EXTERNAL_RENDERING_PER_FRAME"));
-  EXPECT_TRUE(outputs.HasTag("EXTERNAL_RENDERING_FULL_VID"));
-  EXPECT_TRUE(outputs.HasTag("FRAMING_DETECTIONS_VIZ_FRAMES"));
+  EXPECT_TRUE(outputs.HasTag(kKeyFrameCropRegionVizFramesTag));
+  EXPECT_TRUE(outputs.HasTag(kSalientPointFrameVizFramesTag));
+  EXPECT_TRUE(outputs.HasTag(kCroppingSummaryTag));
+  EXPECT_TRUE(outputs.HasTag(kExternalRenderingPerFrameTag));
+  EXPECT_TRUE(outputs.HasTag(kExternalRenderingFullVidTag));
+  EXPECT_TRUE(outputs.HasTag(kFramingDetectionsVizFramesTag));
   const auto& crop_region_viz_frames_outputs =
-      outputs.Tag("KEY_FRAME_CROP_REGION_VIZ_FRAMES").packets;
+      outputs.Tag(kKeyFrameCropRegionVizFramesTag).packets;
   const auto& salient_point_viz_frames_outputs =
-      outputs.Tag("SALIENT_POINT_FRAME_VIZ_FRAMES").packets;
-  const auto& summary_output = outputs.Tag("CROPPING_SUMMARY").packets;
+      outputs.Tag(kSalientPointFrameVizFramesTag).packets;
+  const auto& summary_output = outputs.Tag(kCroppingSummaryTag).packets;
   const auto& ext_render_per_frame =
-      outputs.Tag("EXTERNAL_RENDERING_PER_FRAME").packets;
+      outputs.Tag(kExternalRenderingPerFrameTag).packets;
   const auto& ext_render_full_vid =
-      outputs.Tag("EXTERNAL_RENDERING_FULL_VID").packets;
+      outputs.Tag(kExternalRenderingFullVidTag).packets;
   const auto& framing_viz_frames_output =
-      outputs.Tag("FRAMING_DETECTIONS_VIZ_FRAMES").packets;
+      outputs.Tag(kFramingDetectionsVizFramesTag).packets;
   EXPECT_EQ(crop_region_viz_frames_outputs.size(), num_frames);
   EXPECT_EQ(salient_point_viz_frames_outputs.size(), num_frames);
   EXPECT_EQ(framing_viz_frames_output.size(), num_frames);
@@ -597,7 +614,7 @@ TEST(SceneCroppingCalculatorTest, ProducesEvenFrameSize) {
                  kKeyFrameHeight, kDownSampleRate, runner->MutableInputs());
         MP_EXPECT_OK(runner->Run());
         const auto& output_frame = runner->Outputs()
-                                       .Tag("CROPPED_FRAMES")
+                                       .Tag(kCroppedFramesTag)
                                        .packets[0]
                                        .Get<ImageFrame>();
         EXPECT_EQ(output_frame.Width() % 2, 0);
@@ -646,7 +663,7 @@ TEST(SceneCroppingCalculatorTest, PadsWithSolidColorFromStaticFeatures) {
     Timestamp timestamp(time_ms);
     auto frame =
         MakeImageFrameFromColor(GetRandomColor(), input_width, input_height);
-    inputs->Tag("VIDEO_FRAMES")
+    inputs->Tag(kVideoFramesTag)
         .packets.push_back(Adopt(frame.release()).At(timestamp));
     if (i % static_features_downsample_rate == 0) {
       auto static_features = absl::make_unique<StaticFeatures>();
@@ -657,7 +674,7 @@ TEST(SceneCroppingCalculatorTest, PadsWithSolidColorFromStaticFeatures) {
         color->set_g(green);
         color->set_b(red);
       }
-      inputs->Tag("STATIC_FEATURES")
+      inputs->Tag(kStaticFeaturesTag)
           .packets.push_back(Adopt(static_features.release()).At(timestamp));
       num_static_features++;
     }
@@ -672,7 +689,7 @@ TEST(SceneCroppingCalculatorTest, PadsWithSolidColorFromStaticFeatures) {
       location->set_y(0);
       location->set_width(80);
       location->set_height(input_height);
-      inputs->Tag("DETECTION_FEATURES")
+      inputs->Tag(kDetectionFeaturesTag)
           .packets.push_back(Adopt(detections.release()).At(timestamp));
     }
     time_ms += kTimestampDiff;
@@ -683,7 +700,7 @@ TEST(SceneCroppingCalculatorTest, PadsWithSolidColorFromStaticFeatures) {
   // Checks that the top and bottom borders indeed have the background color.
   const int border_size = 37;
   const auto& cropped_frames_outputs =
-      runner->Outputs().Tag("CROPPED_FRAMES").packets;
+      runner->Outputs().Tag(kCroppedFramesTag).packets;
   EXPECT_EQ(cropped_frames_outputs.size(), kSceneSize);
   for (int i = 0; i < kSceneSize; ++i) {
     const auto& cropped_frame = cropped_frames_outputs[i].Get<ImageFrame>();
@@ -727,7 +744,7 @@ TEST(SceneCroppingCalculatorTest, RemovesStaticBorders) {
   auto mat = formats::MatView(frame.get());
   mat(top_border_rect) = border_color;
   mat(bottom_border_rect) = border_color;
-  inputs->Tag("VIDEO_FRAMES")
+  inputs->Tag(kVideoFramesTag)
       .packets.push_back(Adopt(frame.release()).At(timestamp));
   // Set borders in static features.
   auto static_features = absl::make_unique<StaticFeatures>();
@@ -737,11 +754,11 @@ TEST(SceneCroppingCalculatorTest, RemovesStaticBorders) {
   auto* bottom_part = static_features->add_border();
   bottom_part->set_relative_position(Border::BOTTOM);
   bottom_part->mutable_border_position()->set_height(bottom_border_size);
-  inputs->Tag("STATIC_FEATURES")
+  inputs->Tag(kStaticFeaturesTag)
       .packets.push_back(Adopt(static_features.release()).At(timestamp));
   // Add empty detections to ensure no padding is used.
   auto detections = absl::make_unique<DetectionSet>();
-  inputs->Tag("DETECTION_FEATURES")
+  inputs->Tag(kDetectionFeaturesTag)
       .packets.push_back(Adopt(detections.release()).At(timestamp));
 
   MP_EXPECT_OK(runner->Run());
@@ -749,7 +766,7 @@ TEST(SceneCroppingCalculatorTest, RemovesStaticBorders) {
   // Checks that the top and bottom borders are removed. Each frame should have
   // solid color equal to frame color.
   const auto& cropped_frames_outputs =
-      runner->Outputs().Tag("CROPPED_FRAMES").packets;
+      runner->Outputs().Tag(kCroppedFramesTag).packets;
   EXPECT_EQ(cropped_frames_outputs.size(), 1);
   const auto& cropped_frame = cropped_frames_outputs[0].Get<ImageFrame>();
   const auto cropped_mat = formats::MatView(&cropped_frame);
@@ -775,7 +792,7 @@ TEST(SceneCroppingCalculatorTest, OutputsCropMessagePolyPath) {
   MP_EXPECT_OK(runner->Run());
   const auto& outputs = runner->Outputs();
   const auto& ext_render_per_frame =
-      outputs.Tag("EXTERNAL_RENDERING_PER_FRAME").packets;
+      outputs.Tag(kExternalRenderingPerFrameTag).packets;
   EXPECT_EQ(ext_render_per_frame.size(), num_frames);
 
   for (int i = 0; i < num_frames - 1; ++i) {
@@ -813,7 +830,7 @@ TEST(SceneCroppingCalculatorTest, OutputsCropMessageKinematicPath) {
   MP_EXPECT_OK(runner->Run());
   const auto& outputs = runner->Outputs();
   const auto& ext_render_per_frame =
-      outputs.Tag("EXTERNAL_RENDERING_PER_FRAME").packets;
+      outputs.Tag(kExternalRenderingPerFrameTag).packets;
   EXPECT_EQ(ext_render_per_frame.size(), num_frames);
 
   for (int i = 0; i < num_frames - 1; ++i) {
@@ -846,7 +863,7 @@ TEST(SceneCroppingCalculatorTest, OutputsCropMessagePolyPathNoVideo) {
   MP_EXPECT_OK(runner->Run());
   const auto& outputs = runner->Outputs();
   const auto& ext_render_per_frame =
-      outputs.Tag("EXTERNAL_RENDERING_PER_FRAME").packets;
+      outputs.Tag(kExternalRenderingPerFrameTag).packets;
   EXPECT_EQ(ext_render_per_frame.size(), num_frames);
 
   for (int i = 0; i < num_frames - 1; ++i) {
@@ -886,7 +903,7 @@ TEST(SceneCroppingCalculatorTest, OutputsCropMessageKinematicPathNoVideo) {
   MP_EXPECT_OK(runner->Run());
   const auto& outputs = runner->Outputs();
   const auto& ext_render_per_frame =
-      outputs.Tag("EXTERNAL_RENDERING_PER_FRAME").packets;
+      outputs.Tag(kExternalRenderingPerFrameTag).packets;
   EXPECT_EQ(ext_render_per_frame.size(), num_frames);
 
   for (int i = 0; i < num_frames - 1; ++i) {

@@ -26,6 +26,7 @@ import numpy.testing as npt
 
 # resources dependency
 # undeclared dependency
+from mediapipe.python.solutions import drawing_styles
 from mediapipe.python.solutions import drawing_utils as mp_drawing
 from mediapipe.python.solutions import face_mesh as mp_faces
 
@@ -70,12 +71,21 @@ EYE_INDICES_TO_LANDMARKS = {
 class FaceMeshTest(parameterized.TestCase):
 
   def _annotate(self, frame: np.ndarray, results: NamedTuple, idx: int):
-    drawing_spec = mp_drawing.DrawingSpec(thickness=1, circle_radius=1)
     for face_landmarks in results.multi_face_landmarks:
       mp_drawing.draw_landmarks(
-          image=frame,
-          landmark_list=face_landmarks,
-          landmark_drawing_spec=drawing_spec)
+          frame,
+          face_landmarks,
+          mp_faces.FACEMESH_TESSELATION,
+          landmark_drawing_spec=None,
+          connection_drawing_spec=drawing_styles
+          .get_default_face_mesh_tesselation_style())
+      mp_drawing.draw_landmarks(
+          frame,
+          face_landmarks,
+          mp_faces.FACEMESH_CONTOURS,
+          landmark_drawing_spec=None,
+          connection_drawing_spec=drawing_styles
+          .get_default_face_mesh_contours_style())
     path = os.path.join(tempfile.gettempdir(), self.id().split('.')[-1] +
                                               '_frame_{}.png'.format(idx))
     cv2.imwrite(path, frame)

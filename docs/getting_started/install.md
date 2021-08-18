@@ -43,104 +43,189 @@ install --user six`.
 
 3.  Install OpenCV and FFmpeg.
 
-    Option 1. Use package manager tool to install the pre-compiled OpenCV
-    libraries. FFmpeg will be installed via libopencv-video-dev.
+    **Option 1**. Use package manager tool to install the pre-compiled OpenCV
+    libraries. FFmpeg will be installed via `libopencv-video-dev`.
 
-    Note: Debian 9 and Ubuntu 16.04 provide OpenCV 2.4.9. You may want to take
-    option 2 or 3 to install OpenCV 3 or above.
-
-    ```bash
-    $ sudo apt-get install libopencv-core-dev libopencv-highgui-dev \
-                           libopencv-calib3d-dev libopencv-features2d-dev \
-                           libopencv-imgproc-dev libopencv-video-dev
-    ```
-
-    Debian 9 and Ubuntu 18.04 install the packages in
-    `/usr/lib/x86_64-linux-gnu`. MediaPipe's [`opencv_linux.BUILD`] and
-    [`ffmpeg_linux.BUILD`] are configured for this library path. Ubuntu 20.04
-    may install the OpenCV and FFmpeg packages in `/usr/local`, Please follow
-    the option 3 below to modify the [`WORKSPACE`], [`opencv_linux.BUILD`] and
-    [`ffmpeg_linux.BUILD`] files accordingly.
-
-    Moreover, for Nvidia Jetson and Raspberry Pi devices with ARM Ubuntu, the
-    library path needs to be modified like the following:
+    OS                   | OpenCV
+    -------------------- | ------
+    Debian 9 (stretch)   | 2.4
+    Debian 10 (buster)   | 3.2
+    Debian 11 (bullseye) | 4.5
+    Ubuntu 16.04 LTS     | 2.4
+    Ubuntu 18.04 LTS     | 3.2
+    Ubuntu 20.04 LTS     | 4.2
+    Ubuntu 20.04 LTS     | 4.2
+    Ubuntu 21.04         | 4.5
 
     ```bash
-    sed -i "s/x86_64-linux-gnu/aarch64-linux-gnu/g" third_party/opencv_linux.BUILD
+    $ sudo apt-get install -y \
+        libopencv-core-dev \
+        libopencv-highgui-dev \
+        libopencv-calib3d-dev \
+        libopencv-features2d-dev \
+        libopencv-imgproc-dev \
+        libopencv-video-dev
     ```
 
-    Option 2. Run [`setup_opencv.sh`] to automatically build OpenCV from source
-    and modify MediaPipe's OpenCV config.
+    MediaPipe's [`opencv_linux.BUILD`] and [`WORKSPACE`] are already configured
+    for OpenCV 2/3 and should work correctly on any architecture:
 
-    Option 3. Follow OpenCV's
+    ```bash
+    # WORKSPACE
+    new_local_repository(
+      name = "linux_opencv",
+      build_file = "@//third_party:opencv_linux.BUILD",
+      path = "/usr",
+    )
+
+    # opencv_linux.BUILD for OpenCV 2/3 installed from Debian package
+    cc_library(
+      name = "opencv",
+      linkopts = [
+        "-l:libopencv_core.so",
+        "-l:libopencv_calib3d.so",
+        "-l:libopencv_features2d.so",
+        "-l:libopencv_highgui.so",
+        "-l:libopencv_imgcodecs.so",
+        "-l:libopencv_imgproc.so",
+        "-l:libopencv_video.so",
+        "-l:libopencv_videoio.so",
+      ],
+    )
+    ```
+
+    For OpenCV 4 you need to modify [`opencv_linux.BUILD`] taking into account
+    current architecture:
+
+    ```bash
+    # WORKSPACE
+    new_local_repository(
+      name = "linux_opencv",
+      build_file = "@//third_party:opencv_linux.BUILD",
+      path = "/usr",
+    )
+
+    # opencv_linux.BUILD for OpenCV 4 installed from Debian package
+    cc_library(
+      name = "opencv",
+      hdrs = glob([
+        # Uncomment according to your multiarch value (gcc -print-multiarch):
+        #  "include/aarch64-linux-gnu/opencv4/opencv2/cvconfig.h",
+        #  "include/arm-linux-gnueabihf/opencv4/opencv2/cvconfig.h",
+        #  "include/x86_64-linux-gnu/opencv4/opencv2/cvconfig.h",
+        "include/opencv4/opencv2/**/*.h*",
+      ]),
+      includes = [
+        # Uncomment according to your multiarch value (gcc -print-multiarch):
+        #  "include/aarch64-linux-gnu/opencv4/",
+        #  "include/arm-linux-gnueabihf/opencv4/",
+        #  "include/x86_64-linux-gnu/opencv4/",
+        "include/opencv4/",
+      ],
+      linkopts = [
+        "-l:libopencv_core.so",
+        "-l:libopencv_calib3d.so",
+        "-l:libopencv_features2d.so",
+        "-l:libopencv_highgui.so",
+        "-l:libopencv_imgcodecs.so",
+        "-l:libopencv_imgproc.so",
+        "-l:libopencv_video.so",
+        "-l:libopencv_videoio.so",
+      ],
+    )
+    ```
+
+    **Option 2**. Run [`setup_opencv.sh`] to automatically build OpenCV from
+    source and modify MediaPipe's OpenCV config. This option will do all steps
+    defined in Option 3 automatically.
+
+    **Option 3**. Follow OpenCV's
     [documentation](https://docs.opencv.org/3.4.6/d7/d9f/tutorial_linux_install.html)
     to manually build OpenCV from source code.
 
-    Note: You may need to modify [`WORKSPACE`], [`opencv_linux.BUILD`] and
-    [`ffmpeg_linux.BUILD`] to point MediaPipe to your own OpenCV and FFmpeg
-    libraries. For example if OpenCV and FFmpeg are both manually installed in
-    "/usr/local/", you will need to update: (1) the "linux_opencv" and
-    "linux_ffmpeg" new_local_repository rules in [`WORKSPACE`], (2) the "opencv"
-    cc_library rule in [`opencv_linux.BUILD`], and (3) the "libffmpeg"
-    cc_library rule in [`ffmpeg_linux.BUILD`]. These 3 changes are shown below:
+    You may need to modify [`WORKSPACE`] and [`opencv_linux.BUILD`] to point
+    MediaPipe to your own OpenCV libraries. Assume OpenCV would be installed to
+    `/usr/local/` which is recommended by default.
+
+    OpenCV 2/3 setup:
 
     ```bash
+    # WORKSPACE
     new_local_repository(
-        name = "linux_opencv",
-        build_file = "@//third_party:opencv_linux.BUILD",
-        path = "/usr/local",
+      name = "linux_opencv",
+      build_file = "@//third_party:opencv_linux.BUILD",
+      path = "/usr/local",
     )
 
+    # opencv_linux.BUILD for OpenCV 2/3 installed to /usr/local
+    cc_library(
+      name = "opencv",
+      linkopts = [
+        "-L/usr/local/lib",
+        "-l:libopencv_core.so",
+        "-l:libopencv_calib3d.so",
+        "-l:libopencv_features2d.so",
+        "-l:libopencv_highgui.so",
+        "-l:libopencv_imgcodecs.so",
+        "-l:libopencv_imgproc.so",
+        "-l:libopencv_video.so",
+        "-l:libopencv_videoio.so",
+      ],
+    )
+    ```
+
+    OpenCV 4 setup:
+
+    ```bash
+    # WORKSPACE
     new_local_repository(
-        name = "linux_ffmpeg",
-        build_file = "@//third_party:ffmpeg_linux.BUILD",
-        path = "/usr/local",
+      name = "linux_opencv",
+      build_file = "@//third_party:opencv_linux.BUILD",
+      path = "/usr/local",
     )
 
+    # opencv_linux.BUILD for OpenCV 4 installed to /usr/local
     cc_library(
-        name = "opencv",
-        srcs = glob(
-            [
-                "lib/libopencv_core.so",
-                "lib/libopencv_highgui.so",
-                "lib/libopencv_imgcodecs.so",
-                "lib/libopencv_imgproc.so",
-                "lib/libopencv_video.so",
-                "lib/libopencv_videoio.so",
-            ],
-        ),
-        hdrs = glob([
-            # For OpenCV 3.x
-            "include/opencv2/**/*.h*",
-            # For OpenCV 4.x
-            # "include/opencv4/opencv2/**/*.h*",
-        ]),
-        includes = [
-            # For OpenCV 3.x
-            "include/",
-            # For OpenCV 4.x
-            # "include/opencv4/",
-        ],
-        linkstatic = 1,
-        visibility = ["//visibility:public"],
+      name = "opencv",
+      hdrs = glob([
+        "include/opencv4/opencv2/**/*.h*",
+      ]),
+      includes = [
+        "include/opencv4/",
+      ],
+      linkopts = [
+        "-L/usr/local/lib",
+        "-l:libopencv_core.so",
+        "-l:libopencv_calib3d.so",
+        "-l:libopencv_features2d.so",
+        "-l:libopencv_highgui.so",
+        "-l:libopencv_imgcodecs.so",
+        "-l:libopencv_imgproc.so",
+        "-l:libopencv_video.so",
+        "-l:libopencv_videoio.so",
+      ],
+    )
+    ```
+
+    Current FFmpeg setup is defined in [`ffmpeg_linux.BUILD`] and should work
+    for any architecture:
+
+    ```bash
+    # WORKSPACE
+    new_local_repository(
+      name = "linux_ffmpeg",
+      build_file = "@//third_party:ffmpeg_linux.BUILD",
+      path = "/usr"
     )
 
+    # ffmpeg_linux.BUILD for FFmpeg installed from Debian package
     cc_library(
-        name = "libffmpeg",
-        srcs = glob(
-            [
-                "lib/libav*.so",
-            ],
-        ),
-        hdrs = glob(["include/libav*/*.h"]),
-        includes = ["include"],
-        linkopts = [
-            "-lavcodec",
-            "-lavformat",
-            "-lavutil",
-        ],
-        linkstatic = 1,
-        visibility = ["//visibility:public"],
+      name = "libffmpeg",
+      linkopts = [
+        "-l:libavcodec.so",
+        "-l:libavformat.so",
+        "-l:libavutil.so",
+      ],
     )
     ```
 

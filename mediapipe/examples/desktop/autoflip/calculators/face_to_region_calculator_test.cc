@@ -33,6 +33,10 @@ namespace mediapipe {
 namespace autoflip {
 namespace {
 
+constexpr char kRegionsTag[] = "REGIONS";
+constexpr char kFacesTag[] = "FACES";
+constexpr char kVideoTag[] = "VIDEO";
+
 const char kConfig[] = R"(
     calculator: "FaceToRegionCalculator"
     input_stream: "VIDEO:frames"
@@ -100,7 +104,7 @@ void SetInputs(const std::vector<std::string>& faces, const bool include_video,
   if (include_video) {
     auto input_frame =
         ::absl::make_unique<ImageFrame>(ImageFormat::SRGB, 800, 600);
-    runner->MutableInputs()->Tag("VIDEO").packets.push_back(
+    runner->MutableInputs()->Tag(kVideoTag).packets.push_back(
         Adopt(input_frame.release()).At(Timestamp::PostStream()));
   }
   // Setup two faces as input.
@@ -109,7 +113,7 @@ void SetInputs(const std::vector<std::string>& faces, const bool include_video,
   for (const auto& face : faces) {
     input_faces->push_back(ParseTextProtoOrDie<Detection>(face));
   }
-  runner->MutableInputs()->Tag("FACES").packets.push_back(
+  runner->MutableInputs()->Tag(kFacesTag).packets.push_back(
       Adopt(input_faces.release()).At(Timestamp::PostStream()));
 }
 
@@ -144,7 +148,7 @@ TEST(FaceToRegionCalculatorTest, FaceFullTypeSize) {
 
   // Check the output regions.
   const std::vector<Packet>& output_packets =
-      runner->Outputs().Tag("REGIONS").packets;
+      runner->Outputs().Tag(kRegionsTag).packets;
   ASSERT_EQ(1, output_packets.size());
 
   const auto& regions = output_packets[0].Get<DetectionSet>();
@@ -177,7 +181,7 @@ TEST(FaceToRegionCalculatorTest, FaceLandmarksTypeSize) {
 
   // Check the output regions.
   const std::vector<Packet>& output_packets =
-      runner->Outputs().Tag("REGIONS").packets;
+      runner->Outputs().Tag(kRegionsTag).packets;
   ASSERT_EQ(1, output_packets.size());
 
   const auto& regions = output_packets[0].Get<DetectionSet>();
@@ -208,7 +212,7 @@ TEST(FaceToRegionCalculatorTest, FaceLandmarksBox) {
 
   // Check the output regions.
   const std::vector<Packet>& output_packets =
-      runner->Outputs().Tag("REGIONS").packets;
+      runner->Outputs().Tag(kRegionsTag).packets;
   ASSERT_EQ(1, output_packets.size());
 
   const auto& regions = output_packets[0].Get<DetectionSet>();
@@ -243,7 +247,7 @@ TEST(FaceToRegionCalculatorTest, FaceScore) {
 
   // Check the output regions.
   const std::vector<Packet>& output_packets =
-      runner->Outputs().Tag("REGIONS").packets;
+      runner->Outputs().Tag(kRegionsTag).packets;
   ASSERT_EQ(1, output_packets.size());
   const auto& regions = output_packets[0].Get<DetectionSet>();
   ASSERT_EQ(1, regions.detections().size());
@@ -292,7 +296,7 @@ TEST(FaceToRegionCalculatorTest, FaceNoVideoPass) {
 
   // Check the output regions.
   const std::vector<Packet>& output_packets =
-      runner->Outputs().Tag("REGIONS").packets;
+      runner->Outputs().Tag(kRegionsTag).packets;
   ASSERT_EQ(1, output_packets.size());
 
   const auto& regions = output_packets[0].Get<DetectionSet>();

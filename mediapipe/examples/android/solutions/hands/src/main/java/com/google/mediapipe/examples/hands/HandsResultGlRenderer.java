@@ -46,7 +46,6 @@ public class HandsResultGlRenderer implements ResultGlRenderer<HandsResult> {
   private int positionHandle;
   private int transformMatrixHandle;
   private final float[] transformMatrix = new float[16];
-  private FloatBuffer vertexBuffer;
 
   private int loadShader(int type, String shaderCode) {
     int shader = GLES20.glCreateShader(type);
@@ -74,12 +73,15 @@ public class HandsResultGlRenderer implements ResultGlRenderer<HandsResult> {
     }
     GLES20.glUseProgram(program);
     // Sets the transform matrix to align the result rendering with the scaled output texture.
+    // Also flips the rendering vertically since OpenGL assumes the coordinate origin is at the
+    // bottom-left corner, whereas MediaPipe landmark data assumes the coordinate origin is at the
+    // top-left corner.
     Matrix.setIdentityM(transformMatrix, 0);
     Matrix.scaleM(
         transformMatrix,
         0,
         2 / (boundary.right() - boundary.left()),
-        2 / (boundary.top() - boundary.bottom()),
+        -2 / (boundary.top() - boundary.bottom()),
         1.0f);
     GLES20.glUniformMatrix4fv(transformMatrixHandle, 1, false, transformMatrix, 0);
     GLES20.glLineWidth(CONNECTION_THICKNESS);
@@ -109,7 +111,7 @@ public class HandsResultGlRenderer implements ResultGlRenderer<HandsResult> {
       NormalizedLandmark end = handLandmarkList.get(c.end());
       vertex[2] = normalizedLandmarkValue(end.getX());
       vertex[3] = normalizedLandmarkValue(end.getY());
-      vertexBuffer =
+      FloatBuffer vertexBuffer =
           ByteBuffer.allocateDirect(vertex.length * 4)
               .order(ByteOrder.nativeOrder())
               .asFloatBuffer()

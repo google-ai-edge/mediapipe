@@ -26,6 +26,7 @@ android_library(
             "ResultGlRenderer.java",
             "SolutionGlSurfaceView.java",
             "SolutionGlSurfaceViewRenderer.java",
+            "VideoInput.java",
         ],
     ),
     visibility = ["//visibility:public"],
@@ -47,6 +48,18 @@ android_library(
         "//mediapipe/java/com/google/mediapipe/components:android_camerax_helper",
         "//mediapipe/java/com/google/mediapipe/components:android_components",
         "//mediapipe/java/com/google/mediapipe/framework:android_framework",
+        "@maven//:com_google_guava_guava",
+    ],
+)
+
+android_library(
+    name = "video_input",
+    srcs = ["VideoInput.java"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//mediapipe/java/com/google/mediapipe/components:android_components",
+        "//mediapipe/java/com/google/mediapipe/framework:android_framework",
+        "//mediapipe/java/com/google/mediapipe/glutil",
         "@maven//:com_google_guava_guava",
     ],
 )

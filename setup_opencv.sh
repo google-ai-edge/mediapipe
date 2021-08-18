@@ -81,7 +81,7 @@ fi
 # Modify the build file.
 echo "Modifying MediaPipe opencv config"
 
-sed -i "s/lib\/x86_64-linux-gnu/lib/g" $opencv_build_file
+sed -i '/linkopts/a \ \ \ \ \ \ \ \ \"-L/usr/local/lib",' $opencv_build_file
 linux_opencv_config=$(grep -n 'linux_opencv' $workspace_file | awk -F  ":" '{print $1}')
 path_line=$((linux_opencv_config + 2))
 sed -i "$path_line d" $workspace_file

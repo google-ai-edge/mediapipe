@@ -85,7 +85,22 @@ constexpr char kTensorsGpuTag[] = "TENSORS_GPU";
 }  // namespace
 
 #if defined(MEDIAPIPE_EDGE_TPU)
-#include "edgetpu.h"
+#include "tflite/public/edgetpu.h"
+
+// Checkes whether model contains Edge TPU custom op or not.
+bool ContainsEdgeTpuCustomOp(const tflite::FlatBufferModel& model) {
+  const auto* opcodes = model.GetModel()->operator_codes();
+  for (const auto* subgraph : *model.GetModel()->subgraphs()) {
+    for (const auto* op : *subgraph->operators()) {
+      const auto* opcode = opcodes->Get(op->opcode_index());
+      if (opcode->custom_code() &&
+          opcode->custom_code()->str() == edgetpu::kCustomOp) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
 
 // Creates and returns an Edge TPU interpreter to run the given edgetpu model.
 std::unique_ptr<tflite::Interpreter> BuildEdgeTpuInterpreter(
@@ -94,14 +109,9 @@ std::unique_ptr<tflite::Interpreter> BuildEdgeTpuInterpreter(
     edgetpu::EdgeTpuContext* edgetpu_context) {
   resolver->AddCustom(edgetpu::kCustomOp, edgetpu::RegisterCustomOp());
   std::unique_ptr<tflite::Interpreter> interpreter;
-  if (tflite::InterpreterBuilder(model, *resolver)(&interpreter) != kTfLiteOk) {
-    std::cerr << "Failed to build edge TPU interpreter." << std::endl;
-  }
+  CHECK_EQ(tflite::InterpreterBuilder(model, *resolver)(&interpreter),
+           kTfLiteOk);
   interpreter->SetExternalContext(kTfLiteEdgeTpuContext, edgetpu_context);
-  interpreter->SetNumThreads(1);
-  if (interpreter->AllocateTensors() != kTfLiteOk) {
-    std::cerr << "Failed to allocate edge TPU tensors." << std::endl;
-  }
   return interpreter;
 }
 #endif  // MEDIAPIPE_EDGE_TPU
@@ -279,8 +289,7 @@ class TfLiteInferenceCalculator : public CalculatorBase {
 #endif  // MEDIAPIPE_TFLITE_GL_INFERENCE
 
 #if defined(MEDIAPIPE_EDGE_TPU)
-  std::shared_ptr<edgetpu::EdgeTpuContext> edgetpu_context_ =
-      edgetpu::EdgeTpuManager::GetSingleton()->OpenDevice();
+  std::shared_ptr<edgetpu::EdgeTpuContext> edgetpu_context_;
 #endif
 
   bool gpu_inference_ = false;
@@ -303,6 +312,10 @@ REGISTER_CALCULATOR(TfLiteInferenceCalculator);
 // Calculator Core Section
 
 namespace {
+
+constexpr char kCustomOpResolverTag[] = "CUSTOM_OP_RESOLVER";
+constexpr char kModelTag[] = "MODEL";
+
 template <class CC>
 bool ShouldUseGpu(CC* cc) {
 #if MEDIAPIPE_TFLITE_GPU_SUPPORTED
@@ -327,7 +340,7 @@ absl::Status TfLiteInferenceCalculator::GetContract(CalculatorContract* cc) {
   const auto& options =
       cc->Options<::mediapipe::TfLiteInferenceCalculatorOptions>();
   RET_CHECK(!options.model_path().empty() ^
-            cc->InputSidePackets().HasTag("MODEL"))
+            cc->InputSidePackets().HasTag(kModelTag))
       << "Either model as side packet or model path in options is required.";
 
   if (cc->Inputs().HasTag(kTensorsTag))
@@ -340,13 +353,13 @@ absl::Status TfLiteInferenceCalculator::GetContract(CalculatorContract* cc) {
   if (cc->Outputs().HasTag(kTensorsGpuTag))
     cc->Outputs().Tag(kTensorsGpuTag).Set<std::vector<GpuTensor>>();
 
-  if (cc->InputSidePackets().HasTag("CUSTOM_OP_RESOLVER")) {
+  if (cc->InputSidePackets().HasTag(kCustomOpResolverTag)) {
     cc->InputSidePackets()
-        .Tag("CUSTOM_OP_RESOLVER")
+        .Tag(kCustomOpResolverTag)
         .Set<tflite::ops::builtin::BuiltinOpResolver>();
   }
-  if (cc->InputSidePackets().HasTag("MODEL")) {
-    cc->InputSidePackets().Tag("MODEL").Set<TfLiteModelPtr>();
+  if (cc->InputSidePackets().HasTag(kModelTag)) {
+    cc->InputSidePackets().Tag(kModelTag).Set<TfLiteModelPtr>();
   }
 
   if (ShouldUseGpu(cc)) {
@@ -486,8 +499,8 @@ absl::Status TfLiteInferenceCalculator::Close(CalculatorContext* cc) {
   MP_RETURN_IF_ERROR(WriteKernelsToFile());
 
   return RunInContextIfNeeded([this]() -> absl::Status {
+    interpreter_ = nullptr;
     if (delegate_) {
-      interpreter_ = nullptr;
       delegate_ = nullptr;
 #if MEDIAPIPE_TFLITE_GPU_SUPPORTED
       if (gpu_inference_) {
@@ -501,7 +514,7 @@ absl::Status TfLiteInferenceCalculator::Close(CalculatorContext* cc) {
 #endif  // MEDIAPIPE_TFLITE_GPU_SUPPORTED
     }
 #if defined(MEDIAPIPE_EDGE_TPU)
-    edgetpu_context_.reset();
+    edgetpu_context_ = nullptr;
 #endif
     return absl::OkStatus();
   });
@@ -723,9 +736,9 @@ absl::Status TfLiteInferenceCalculator::InitTFLiteGPURunner(
   auto op_resolver_ptr =
       static_cast<const tflite::ops::builtin::BuiltinOpResolver*>(
           &default_op_resolver);
-  if (cc->InputSidePackets().HasTag("CUSTOM_OP_RESOLVER")) {
+  if (cc->InputSidePackets().HasTag(kCustomOpResolverTag)) {
     op_resolver_ptr = &(cc->InputSidePackets()
-                            .Tag("CUSTOM_OP_RESOLVER")
+                            .Tag(kCustomOpResolverTag)
                             .Get<tflite::ops::builtin::BuiltinOpResolver>());
   }
 
@@ -825,21 +838,26 @@ absl::Status TfLiteInferenceCalculator::LoadModel(CalculatorContext* cc) {
 
   tflite::ops::builtin::BuiltinOpResolverWithoutDefaultDelegates
       default_op_resolver;
-  auto op_resolver_ptr =
-      static_cast<const tflite::ops::builtin::BuiltinOpResolver*>(
-          &default_op_resolver);
-
-  if (cc->InputSidePackets().HasTag("CUSTOM_OP_RESOLVER")) {
-    op_resolver_ptr = &(cc->InputSidePackets()
-                            .Tag("CUSTOM_OP_RESOLVER")
-                            .Get<tflite::ops::builtin::BuiltinOpResolver>());
-  }
-
 #if defined(MEDIAPIPE_EDGE_TPU)
-  interpreter_ =
-      BuildEdgeTpuInterpreter(model, op_resolver_ptr, edgetpu_context_.get());
-#else
-  tflite::InterpreterBuilder(model, *op_resolver_ptr)(&interpreter_);
+  if (ContainsEdgeTpuCustomOp(model)) {
+    edgetpu_context_ = edgetpu::EdgeTpuManager::GetSingleton()->OpenDevice();
+    interpreter_ = BuildEdgeTpuInterpreter(model, &default_op_resolver,
+                                           edgetpu_context_.get());
+  } else {
+#endif  // MEDIAPIPE_EDGE_TPU
+    auto op_resolver_ptr =
+        static_cast<const tflite::ops::builtin::BuiltinOpResolver*>(
+            &default_op_resolver);
+
+    if (cc->InputSidePackets().HasTag(kCustomOpResolverTag)) {
+      op_resolver_ptr = &(cc->InputSidePackets()
+                              .Tag(kCustomOpResolverTag)
+                              .Get<tflite::ops::builtin::BuiltinOpResolver>());
+    }
+
+    tflite::InterpreterBuilder(model, *op_resolver_ptr)(&interpreter_);
+#if defined(MEDIAPIPE_EDGE_TPU)
+  }
 #endif  // MEDIAPIPE_EDGE_TPU
 
   RET_CHECK(interpreter_);
@@ -872,8 +890,8 @@ absl::StatusOr<Packet> TfLiteInferenceCalculator::GetModelAsPacket(
   if (!options.model_path().empty()) {
     return TfLiteModelLoader::LoadFromPath(options.model_path());
   }
-  if (cc.InputSidePackets().HasTag("MODEL")) {
-    return cc.InputSidePackets().Tag("MODEL");
+  if (cc.InputSidePackets().HasTag(kModelTag)) {
+    return cc.InputSidePackets().Tag(kModelTag);
   }
   return absl::Status(absl::StatusCode::kNotFound,
                       "Must specify TFLite model as path or loaded model.");
@@ -929,6 +947,8 @@ absl::Status TfLiteInferenceCalculator::LoadDelegate(CalculatorContext* cc) {
                    kTfLiteOk);
       return absl::OkStatus();
     }
+#else
+    (void)use_xnnpack;
 #endif  // !EDGETPU
 
     // Return and use default tflite infernece (on CPU). No need for GPU

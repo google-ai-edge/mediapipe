@@ -162,6 +162,27 @@ selects.config_setting_group(
     ],
 )
 
+config_setting(
+    name = "edge_tpu_usb",
+    define_values = {
+        "MEDIAPIPE_EDGE_TPU": "usb",
+    },
+)
+
+config_setting(
+    name = "edge_tpu_pci",
+    define_values = {
+        "MEDIAPIPE_EDGE_TPU": "pci",
+    },
+)
+
+config_setting(
+    name = "edge_tpu_all",
+    define_values = {
+        "MEDIAPIPE_EDGE_TPU": "all",
+    },
+)
+
 cc_library(
     name = "tflite_inference_calculator",
     srcs = ["tflite_inference_calculator.cc"],
@@ -171,6 +192,12 @@ cc_library(
             "-fobjc-arc",  # enable reference-counting
         ],
         "//conditions:default": [],
+    }),
+    defines = select({
+        "//conditions:default": [],
+        ":edge_tpu_usb": ["MEDIAPIPE_EDGE_TPU=usb"],
+        ":edge_tpu_pci": ["MEDIAPIPE_EDGE_TPU=pci"],
+        ":edge_tpu_all": ["MEDIAPIPE_EDGE_TPU=all"],
     }),
     linkopts = select({
         "//mediapipe:ios": [
@@ -222,6 +249,20 @@ cc_library(
     }) + select({
         "//conditions:default": [
             "//mediapipe/util:cpu_util",
+        ],
+    }) + select({
+        "//conditions:default": [],
+        ":edge_tpu_usb": [
+            "@libedgetpu//tflite/public:edgetpu",
+            "@libedgetpu//tflite/public:oss_edgetpu_direct_usb",
+        ],
+        ":edge_tpu_pci": [
+            "@libedgetpu//tflite/public:edgetpu",
+            "@libedgetpu//tflite/public:oss_edgetpu_direct_pci",
+        ],
+        ":edge_tpu_all": [
+            "@libedgetpu//tflite/public:edgetpu",
+            "@libedgetpu//tflite/public:oss_edgetpu_direct_all",
         ],
     }),
     alwayslink = 1,

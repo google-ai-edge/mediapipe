@@ -587,9 +587,21 @@ cc_library(
         "//mediapipe/framework/port:ret_check",
     ] + select({
         "//conditions:default": [
-            "//mediapipe/framework/port:file_helpers",
         ],
-    }),
+        "//mediapipe:android": [],
+    }) + select(
+        {
+            "//conditions:default": [
+            ],
+        },
+    ) + select(
+        {
+            "//conditions:default": [
+            ],
+            "//mediapipe:android": [
+            ],
+        },
+    ),
     alwayslink = 1,
 )
 

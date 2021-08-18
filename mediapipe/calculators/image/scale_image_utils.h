@@ -34,15 +34,25 @@ absl::Status FindCropDimensions(int input_width, int input_height,    //
                                 int* crop_width, int* crop_height,    //
                                 int* col_start, int* row_start);
 
-// Given an input width and height, a target width and height, whether to
-// preserve the aspect ratio, and whether to round-down to the multiple of a
-// given number nearest to the targets, determine the output width and height.
-// If target_width or target_height is non-positive, then they will be set to
-// the input_width and input_height respectively. If scale_to_multiple_of is
-// less than 1, it will be treated like 1. The output_width and
-// output_height will be reduced as necessary to preserve_aspect_ratio if the
-// option is specified. If preserving the aspect ratio is desired, you must set
-// scale_to_multiple_of to 2.
+// Given an input width and height, a target width and height or max area,
+// whether to preserve the aspect ratio, and whether to round-down to the
+// multiple of a given number nearest to the targets, determine the output width
+// and height. If target_width or target_height is non-positive, then they will
+// be set to the input_width and input_height respectively. If target_area is
+// non-positive, then it will be ignored. If scale_to_multiple_of is less than
+// 1, it will be treated like 1. The output_width and output_height will be
+// reduced as necessary to preserve_aspect_ratio if the option is specified. If
+// preserving the aspect ratio is desired, you must set scale_to_multiple_of
+// to 2.
+absl::Status FindOutputDimensions(int input_width, int input_height,  //
+                                  int target_width,
+                                  int target_height,           //
+                                  int target_max_area,         //
+                                  bool preserve_aspect_ratio,  //
+                                  int scale_to_multiple_of,    //
+                                  int* output_width, int* output_height);
+
+// Backwards compatible helper.
 absl::Status FindOutputDimensions(int input_width, int input_height,  //
                                   int target_width,
                                   int target_height,           //

@@ -18,6 +18,7 @@ android_library(
     name = "facemesh",
     srcs = [
         "FaceMesh.java",
+        "FaceMeshConnections.java",
         "FaceMeshOptions.java",
         "FaceMeshResult.java",
     ],

@@ -26,6 +26,11 @@ licenses(["notice"])
 
 package(default_visibility = ["//visibility:private"])
 
+exports_files(
+    glob(["testdata/image_to_tensor/*"]),
+    visibility = ["//mediapipe/calculators/image:__subpackages__"],
+)
+
 selects.config_setting_group(
     name = "compute_shader_unavailable",
     match_any = [

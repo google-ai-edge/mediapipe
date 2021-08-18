@@ -148,18 +148,18 @@ class SourceImpl {
 
   explicit SourceImpl(std::vector<std::unique_ptr<Base>>* vec)
       : SourceImpl(&GetWithAutoGrow(vec, 0)) {}
-  explicit SourceImpl(SourceBase* base) : base_(*base) {}
+  explicit SourceImpl(SourceBase* base) : base_(base) {}
 
   template <typename U,
             typename std::enable_if<AllowConnection<U>{}, int>::type = 0>
   Src& AddTarget(const Dst<U>& dest) {
     CHECK(dest.base_.source == nullptr);
-    dest.base_.source = &base_;
-    base_.dests_.emplace_back(&dest.base_);
+    dest.base_.source = base_;
+    base_->dests_.emplace_back(&dest.base_);
     return *this;
   }
   Src& SetName(std::string name) {
-    base_.name_ = std::move(name);
+    base_->name_ = std::move(name);
     return *this;
   }
   template <typename U>
@@ -168,7 +168,8 @@ class SourceImpl {
   }
 
  private:
-  SourceBase& base_;
+  // Never null.
+  SourceBase* base_;
 };
 
 template <bool IsSide, typename T>

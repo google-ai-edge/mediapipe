@@ -19,6 +19,7 @@ import com.google.mediapipe.framework.AndroidPacketGetter;
 import com.google.mediapipe.framework.Packet;
 import com.google.mediapipe.framework.PacketGetter;
 import com.google.mediapipe.framework.TextureFrame;
+import java.util.List;
 
 /**
  * The base class of any MediaPipe image solution result. The base class contains the common parts
@@ -29,6 +30,8 @@ public class ImageSolutionResult implements SolutionResult {
   protected long timestamp;
   protected Packet imagePacket;
   private Bitmap cachedBitmap;
+  // A list of the output image packets produced by the graph.
+  protected List<Packet> imageResultPackets;
 
   // Result timestamp, which is set to the timestamp of the corresponding input image. May return
   // Long.MIN_VALUE if the input image is not associated with a timestamp.
@@ -51,7 +54,7 @@ public class ImageSolutionResult implements SolutionResult {
 
   // Returns the corresponding input image as a {@link TextureFrame}. The caller must release the
   // acquired {@link TextureFrame} after using.
-  public TextureFrame acquireTextureFrame() {
+  public TextureFrame acquireInputTextureFrame() {
     if (imagePacket == null) {
       return null;
     }
@@ -61,5 +64,10 @@ public class ImageSolutionResult implements SolutionResult {
   // Releases image packet and the underlying data.
   void releaseImagePacket() {
     imagePacket.release();
+    if (imageResultPackets != null) {
+      for (Packet p : imageResultPackets) {
+        p.release();
+      }
+    }
   }
 }

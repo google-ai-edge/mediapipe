@@ -19,8 +19,11 @@
 #     calculator: "PoseLandmarkCpu"
 #     input_side_packet: "MODEL_COMPLEXITY:model_complexity"
 #     input_side_packet: "SMOOTH_LANDMARKS:smooth_landmarks"
+#     input_side_packet: "ENABLE_SEGMENTATION:enable_segmentation"
+#     input_side_packet: "SMOOTH_SEGMENTATION:smooth_segmentation"
 #     input_stream: "IMAGE:image"
 #     output_stream: "LANDMARKS:pose_landmarks"
+#     output_stream: "SEGMENTATION_MASK:segmentation_mask"
 #   }
 
 type: "PoseLandmarkCpu"
@@ -31,6 +34,14 @@ input_stream: "IMAGE:image"
 # Whether to filter landmarks across different input images to reduce jitter.
 # If unspecified, functions as set to true. (bool)
 input_side_packet: "SMOOTH_LANDMARKS:smooth_landmarks"
+
+# Whether to predict the segmentation mask. If unspecified, functions as set to
+# false. (bool)
+input_side_packet: "ENABLE_SEGMENTATION:enable_segmentation"
+
+# Whether to filter segmentation mask across different input images to reduce
+# jitter. If unspecified, functions as set to true. (bool)
+input_side_packet: "SMOOTH_SEGMENTATION:smooth_segmentation"
 
 # Complexity of the pose landmark model: 0, 1 or 2. Landmark accuracy as well as
 # inference latency generally go up with the model complexity. If unspecified,
@@ -87,6 +98,9 @@ output_stream: "LANDMARKS:pose_landmarks"
 # projected onto the 2D image surface, while WORLD_LANDMARKS provides
 # coordinates (in meters) of the 3D object itself.
 output_stream: "WORLD_LANDMARKS:pose_world_landmarks"
+
+# Segmentation mask. (ImageFrame in ImageFormat::VEC32F1)
+output_stream: "SEGMENTATION_MASK:segmentation_mask"
 
 # Extra outputs (for debugging, for instance).
 # Detected poses. (Detection)
@@ -189,11 +203,13 @@ node {
 node {
   calculator: "PoseLandmarkByRoiCpu"
   input_side_packet: "MODEL_COMPLEXITY:model_complexity"
+  input_side_packet: "ENABLE_SEGMENTATION:enable_segmentation"
   input_stream: "IMAGE:image"
   input_stream: "ROI:pose_rect"
   output_stream: "LANDMARKS:unfiltered_pose_landmarks"
   output_stream: "AUXILIARY_LANDMARKS:unfiltered_auxiliary_landmarks"
   output_stream: "WORLD_LANDMARKS:unfiltered_world_landmarks"
+  output_stream: "SEGMENTATION_MASK:unfiltered_segmentation_mask"
 }
 
 # Smoothes landmarks to reduce jitter.
@@ -232,4 +248,20 @@ node {
     back_edge: true
   }
   output_stream: "PREV_LOOP:prev_pose_rect_from_landmarks"
+}
+
+# Smoothes segmentation to reduce jitter.
+node {
+  calculator: "PoseSegmentationFiltering"
+  input_side_packet: "ENABLE:smooth_segmentation"
+  input_stream: "SEGMENTATION_MASK:unfiltered_segmentation_mask"
+  output_stream: "FILTERED_SEGMENTATION_MASK:filtered_segmentation_mask"
+}
+
+# Converts the incoming segmentation mask represented as an Image into the
+# corresponding ImageFrame type.
+node: {
+  calculator: "FromImageCalculator"
+  input_stream: "IMAGE:filtered_segmentation_mask"
+  output_stream: "IMAGE_CPU:segmentation_mask"
 }

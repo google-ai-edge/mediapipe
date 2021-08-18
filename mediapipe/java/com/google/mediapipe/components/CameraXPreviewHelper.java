@@ -80,10 +80,6 @@ public class CameraXPreviewHelper extends CameraHelper {
       handler = new Handler(handlerThread.getLooper());
     }
 
-    Handler getHandler() {
-      return handler;
-    }
-
     @Override
     public void execute(Runnable command) {
       if (!handler.post(command)) {
@@ -114,6 +110,7 @@ public class CameraXPreviewHelper extends CameraHelper {
   private ImageCapture.Builder imageCaptureBuilder;
   private ExecutorService imageCaptureExecutorService;
   private Camera camera;
+  private int[] textures = null;
 
   // Size of the camera-preview frames from the camera.
   private Size frameSize;
@@ -139,22 +136,22 @@ public class CameraXPreviewHelper extends CameraHelper {
    */
   @Override
   public void startCamera(
-      Activity activity, CameraFacing cameraFacing, SurfaceTexture unusedSurfaceTexture) {
-    startCamera(activity, (LifecycleOwner) activity, cameraFacing, TARGET_SIZE);
+      Activity activity, CameraFacing cameraFacing, @Nullable SurfaceTexture surfaceTexture) {
+    startCamera(activity, (LifecycleOwner) activity, cameraFacing, surfaceTexture, TARGET_SIZE);
   }
 
   /**
    * Initializes the camera and sets it up for accessing frames.
    *
    * @param targetSize the preview size to use. If set to {@code null}, the helper will default to
-   *        1280 * 720.
+   *     1280 * 720.
    */
   public void startCamera(
       Activity activity,
       CameraFacing cameraFacing,
-      SurfaceTexture unusedSurfaceTexture,
+      @Nullable SurfaceTexture surfaceTexture,
       @Nullable Size targetSize) {
-    startCamera(activity, (LifecycleOwner) activity, cameraFacing, targetSize);
+    startCamera(activity, (LifecycleOwner) activity, cameraFacing, surfaceTexture, targetSize);
   }
 
   /**
@@ -186,9 +183,25 @@ public class CameraXPreviewHelper extends CameraHelper {
       LifecycleOwner lifecycleOwner,
       CameraFacing cameraFacing,
       @Nullable Size targetSize) {
+    startCamera(context, lifecycleOwner, cameraFacing, null, targetSize);
+  }
+
+  /**
+   * Initializes the camera and sets it up for accessing frames.
+   *
+   * @param targetSize a predefined constant {@link #TARGET_SIZE}. If set to {@code null}, the
+   *     helper will default to 1280 * 720.
+   */
+  private void startCamera(
+      Context context,
+      LifecycleOwner lifecycleOwner,
+      CameraFacing cameraFacing,
+      @Nullable SurfaceTexture surfaceTexture,
+      @Nullable Size targetSize) {
     Executor mainThreadExecutor = ContextCompat.getMainExecutor(context);
     ListenableFuture<ProcessCameraProvider> cameraProviderFuture =
         ProcessCameraProvider.getInstance(context);
+    final boolean isSurfaceTextureProvided = surfaceTexture != null;
 
     Integer selectedLensFacing =
         cameraFacing == CameraHelper.CameraFacing.FRONT
@@ -232,24 +245,38 @@ public class CameraXPreviewHelper extends CameraHelper {
           preview.setSurfaceProvider(
               renderExecutor,
               request -> {
-                Size resolution = request.getResolution();
+                frameSize = request.getResolution();
                 Log.d(
                     TAG,
                     String.format(
                         "Received surface request for resolution %dx%d",
-                        resolution.getWidth(), resolution.getHeight()));
+                        frameSize.getWidth(), frameSize.getHeight()));
 
-                SurfaceTexture previewFrameTexture = createSurfaceTexture();
+                SurfaceTexture previewFrameTexture =
+                    isSurfaceTextureProvided ? surfaceTexture : createSurfaceTexture();
                 previewFrameTexture.setDefaultBufferSize(
-                    resolution.getWidth(), resolution.getHeight());
-                previewFrameTexture.setOnFrameAvailableListener(
-                    frameTexture -> {
-                      if (frameTexture != previewFrameTexture) {
-                        return;
+                    frameSize.getWidth(), frameSize.getHeight());
+
+                request.setTransformationInfoListener(
+                    renderExecutor,
+                    transformationInfo -> {
+                      frameRotation = transformationInfo.getRotationDegrees();
+                      updateCameraCharacteristics();
+
+                      if (!isSurfaceTextureProvided) {
+                        // Detach the SurfaceTexture from the GL context we created earlier so that
+                        // the MediaPipe pipeline can attach it.
+                        // Only needed if MediaPipe pipeline doesn't provide a SurfaceTexture.
+                        previewFrameTexture.detachFromGLContext();
                       }
-                      onInitialFrameReceived(context, frameTexture);
-                    },
-                    renderExecutor.getHandler());
+
+                      OnCameraStartedListener listener = onCameraStartedListener;
+                      if (listener != null) {
+                        ContextCompat.getMainExecutor(context)
+                            .execute(() -> listener.onCameraStarted(previewFrameTexture));
+                      }
+                    });
+
                 Surface surface = new Surface(previewFrameTexture);
                 Log.d(TAG, "Providing surface");
                 request.provideSurface(
@@ -257,6 +284,9 @@ public class CameraXPreviewHelper extends CameraHelper {
                     renderExecutor,
                     result -> {
                       Log.d(TAG, "Surface request result: " + result);
+                      if (textures != null) {
+                        GLES20.glDeleteTextures(1, textures, 0);
+                      }
                       // Per
                       // https://developer.android.com/reference/androidx/camera/core/SurfaceRequest.Result,
                       // the surface was either never used (RESULT_INVALID_SURFACE,
@@ -264,7 +294,9 @@ public class CameraXPreviewHelper extends CameraHelper {
                       // was used successfully and was eventually detached
                       // (RESULT_SURFACE_USED_SUCCESSFULLY) so we can release it now to free up
                       // resources.
-                      previewFrameTexture.release();
+                      if (!isSurfaceTextureProvided) {
+                        previewFrameTexture.release();
+                      }
                       surface.release();
                     });
               });
@@ -411,35 +443,7 @@ public class CameraXPreviewHelper extends CameraHelper {
     return frameSize;
   }
 
-  private void onInitialFrameReceived(Context context, SurfaceTexture previewFrameTexture) {
-    // This method is called by the onFrameAvailableListener we install when opening the camera
-    // session, the first time we receive a frame. In this method, we remove our callback,
-    // acknowledge the frame (via updateTextImage()), detach the texture from the GL context we
-    // created earlier (so that the MediaPipe pipeline can attach it), and perform some other
-    // one-time initialization based on the newly opened camera device. Finally, we indicate the
-    // camera session is ready via the onCameraStartedListener.
-
-    // Remove our callback.
-    previewFrameTexture.setOnFrameAvailableListener(null);
-
-    // Update texture image so we don't stall callbacks.
-    previewFrameTexture.updateTexImage();
-
-    // Detach the SurfaceTexture from the GL context we created earlier so that the MediaPipe
-    // pipeline can attach it.
-    previewFrameTexture.detachFromGLContext();
-
-    if (!preview.getAttachedSurfaceResolution().equals(frameSize)) {
-      frameSize = preview.getAttachedSurfaceResolution();
-      frameRotation = camera.getCameraInfo().getSensorRotationDegrees();
-      if (frameSize.getWidth() == 0 || frameSize.getHeight() == 0) {
-        // Invalid frame size. Wait for valid input dimensions before updating
-        // display size.
-        Log.d(TAG, "Invalid frameSize.");
-        return;
-      }
-    }
-
+  private void updateCameraCharacteristics() {
     if (cameraCharacteristics != null) {
       // Queries camera timestamp source. It should be one of REALTIME or UNKNOWN
       // as documented in
@@ -447,12 +451,6 @@ public class CameraXPreviewHelper extends CameraHelper {
       cameraTimestampSource =
           cameraCharacteristics.get(CameraCharacteristics.SENSOR_INFO_TIMESTAMP_SOURCE);
       focalLengthPixels = calculateFocalLengthInPixels();
-    }
-
-    OnCameraStartedListener listener = onCameraStartedListener;
-    if (listener != null) {
-      ContextCompat.getMainExecutor(context)
-          .execute(() -> listener.onCameraStarted(previewFrameTexture));
     }
   }
 
@@ -472,12 +470,12 @@ public class CameraXPreviewHelper extends CameraHelper {
     return frameSize.getWidth() * focalLengthMm / sensorWidthMm;
   }
 
-  private static SurfaceTexture createSurfaceTexture() {
+  private SurfaceTexture createSurfaceTexture() {
     // Create a temporary surface to make the context current.
     EglManager eglManager = new EglManager(null);
     EGLSurface tempEglSurface = eglManager.createOffscreenSurface(1, 1);
     eglManager.makeCurrent(tempEglSurface, tempEglSurface);
-    int[] textures = new int[1];
+    textures = new int[1];
     GLES20.glGenTextures(1, textures, 0);
     SurfaceTexture previewFrameTexture = new SurfaceTexture(textures[0]);
     return previewFrameTexture;

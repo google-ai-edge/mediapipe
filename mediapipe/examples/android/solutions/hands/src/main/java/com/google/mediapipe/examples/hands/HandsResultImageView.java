@@ -20,7 +20,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Paint;
-import android.widget.ImageView;
+import androidx.appcompat.widget.AppCompatImageView;
 import com.google.mediapipe.formats.proto.LandmarkProto;
 import com.google.mediapipe.formats.proto.LandmarkProto.NormalizedLandmark;
 import com.google.mediapipe.solutions.hands.Hands;
@@ -28,17 +28,18 @@ import com.google.mediapipe.solutions.hands.HandsResult;
 import java.util.List;
 
 /** An ImageView implementation for displaying MediaPipe Hands results. */
-public class HandsResultImageView extends ImageView {
+public class HandsResultImageView extends AppCompatImageView {
   private static final String TAG = "HandsResultImageView";
 
   private static final int LANDMARK_COLOR = Color.RED;
   private static final int LANDMARK_RADIUS = 15;
   private static final int CONNECTION_COLOR = Color.GREEN;
   private static final int CONNECTION_THICKNESS = 10;
+  private Bitmap latest;
 
   public HandsResultImageView(Context context) {
     super(context);
-    setScaleType(ImageView.ScaleType.FIT_CENTER);
+    setScaleType(AppCompatImageView.ScaleType.FIT_CENTER);
   }
 
   /**
@@ -54,8 +55,8 @@ public class HandsResultImageView extends ImageView {
     Bitmap bmInput = result.inputBitmap();
     int width = bmInput.getWidth();
     int height = bmInput.getHeight();
-    Bitmap bmOutput = Bitmap.createBitmap(width, height, bmInput.getConfig());
-    Canvas canvas = new Canvas(bmOutput);
+    latest = Bitmap.createBitmap(width, height, bmInput.getConfig());
+    Canvas canvas = new Canvas(latest);
 
     canvas.drawBitmap(bmInput, new Matrix(), null);
     int numHands = result.multiHandLandmarks().size();
@@ -63,8 +64,14 @@ public class HandsResultImageView extends ImageView {
       drawLandmarksOnCanvas(
           result.multiHandLandmarks().get(i).getLandmarkList(), canvas, width, height);
     }
+  }
+
+  /** Updates the image view with the latest hands result. */
+  public void update() {
     postInvalidate();
-    setImageBitmap(bmOutput);
+    if (latest != null) {
+      setImageBitmap(latest);
+    }
   }
 
   // TODO: Better hand landmark and hand connection drawing.

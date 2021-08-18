@@ -32,6 +32,9 @@ namespace mediapipe {
 namespace autoflip {
 namespace {
 
+constexpr char kOutputTag[] = "OUTPUT";
+constexpr char kIsShotBoundaryTag[] = "IS_SHOT_BOUNDARY";
+
 const char kConfigA[] = R"(
     calculator: "SignalFusingCalculator"
     input_stream: "scene_change"
@@ -160,7 +163,7 @@ TEST(SignalFusingCalculatorTest, TwoInputShotLabeledTags) {
 
   auto input_shot = absl::make_unique<bool>(false);
   runner->MutableInputs()
-      ->Tag("IS_SHOT_BOUNDARY")
+      ->Tag(kIsShotBoundaryTag)
       .packets.push_back(Adopt(input_shot.release()).At(Timestamp(0)));
 
   auto input_face =
@@ -200,7 +203,7 @@ TEST(SignalFusingCalculatorTest, TwoInputShotLabeledTags) {
   MP_ASSERT_OK(runner->Run());
 
   const std::vector<Packet>& output_packets =
-      runner->Outputs().Tag("OUTPUT").packets;
+      runner->Outputs().Tag(kOutputTag).packets;
   const auto& detection_set = output_packets[0].Get<DetectionSet>();
 
   ASSERT_EQ(detection_set.detections().size(), 4);
@@ -251,7 +254,7 @@ TEST(SignalFusingCalculatorTest, TwoInputNoShotLabeledTags) {
   MP_ASSERT_OK(runner->Run());
 
   const std::vector<Packet>& output_packets =
-      runner->Outputs().Tag("OUTPUT").packets;
+      runner->Outputs().Tag(kOutputTag).packets;
   const auto& detection_set = output_packets[0].Get<DetectionSet>();
 
   ASSERT_EQ(detection_set.detections().size(), 4);

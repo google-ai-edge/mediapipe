@@ -41,11 +41,12 @@ from mediapipe.modules.holistic_landmark.calculators import roi_tracking_calcula
 from mediapipe.python.solution_base import SolutionBase
 from mediapipe.python.solutions import download_utils
 # pylint: disable=unused-import
-from mediapipe.python.solutions.face_mesh import FACE_CONNECTIONS
-from mediapipe.python.solutions.hands import HAND_CONNECTIONS
+from mediapipe.python.solutions.face_mesh_connections import FACEMESH_CONTOURS
+from mediapipe.python.solutions.face_mesh_connections import FACEMESH_TESSELATION
 from mediapipe.python.solutions.hands import HandLandmark
-from mediapipe.python.solutions.pose import POSE_CONNECTIONS
+from mediapipe.python.solutions.hands_connections import HAND_CONNECTIONS
 from mediapipe.python.solutions.pose import PoseLandmark
+from mediapipe.python.solutions.pose_connections import POSE_CONNECTIONS
 # pylint: enable=unused-import
 
 BINARYPB_FILE_PATH = 'mediapipe/modules/holistic_landmark/holistic_landmark_cpu.binarypb'
@@ -103,6 +104,7 @@ class Holistic(SolutionBase):
         side_inputs={
             'model_complexity': model_complexity,
             'smooth_landmarks': smooth_landmarks and not static_image_mode,
+            'smooth_segmentation': not static_image_mode,
         },
         calculator_params={
             'poselandmarkcpu__ConstantSidePacketCalculator.packet': [
@@ -112,7 +114,7 @@ class Holistic(SolutionBase):
             ],
             'poselandmarkcpu__posedetectioncpu__TensorsToDetectionsCalculator.min_score_thresh':
                 min_detection_confidence,
-            'poselandmarkcpu__poselandmarkbyroicpu__ThresholdingCalculator.threshold':
+            'poselandmarkcpu__poselandmarkbyroicpu__tensorstoposelandmarksandsegmentation__ThresholdingCalculator.threshold':
                 min_tracking_confidence,
         },
         outputs=[

@@ -224,6 +224,7 @@ class SolutionBase:
         calculator_params is not allowed to be modified.
         e) If the calculator options field is a repeated field but the field
         value to be set is not iterable.
+        f) If not all calculator params are valid.
     """
     if bool(binary_graph_path) == bool(graph_config):
       raise ValueError(
@@ -499,6 +500,8 @@ class SolutionBase:
       # have been visited.
       if num_modified == len(nested_calculator_params):
         break
+    if num_modified < len(nested_calculator_params):
+      raise ValueError('Not all calculator params are valid.')
 
   def _make_packet(self, packet_data_type: _PacketDataType,
                    data: Any) -> packet.Packet:

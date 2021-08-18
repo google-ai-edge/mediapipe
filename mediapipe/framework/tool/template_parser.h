@@ -37,6 +37,10 @@ class TemplateParser {
     Parser();
     ~Parser();
 
+    void set_allow_unknown_extension(bool allow_unknown_extension) {
+      allow_unknown_extension_ = allow_unknown_extension;
+    }
+
     // Like TextFormat::Parse().
     bool Parse(proto_ns::io::ZeroCopyInputStream* input,
                proto_ns::Message* output);
@@ -99,6 +103,7 @@ class TemplateParser {
     bool allow_partial_;
     bool allow_case_insensitive_field_;
     bool allow_unknown_field_;
+    bool allow_unknown_extension_;
     bool allow_unknown_enum_;
     bool allow_field_number_;
     bool allow_relaxed_whitespace_;

@@ -29,6 +29,16 @@ Solution                    | NPM Package                             | Example
 Click on a solution link above for more information, including API and code
 snippets.
 
+### Supported plaforms:
+
+| Browser | Platform                | Notes                                  |
+| ------- | ----------------------- | -------------------------------------- |
+| Chrome  | Android / Windows / Mac | Pixel 4 and older unsupported. Fuschia |
+|         |                         | unsupported.                           |
+| Chrome  | iOS                     | Camera unavailable in Chrome on iOS.   |
+| Safari  | iPad/iPhone/Mac         | iOS and Safari on iPad / iPhone /      |
+|         |                         | MacBook                                |
+
 The quickest way to get acclimated is to look at the examples above. Each demo
 has a link to a [CodePen][codepen] so that you can edit the code and try it
 yourself. We have included a number of utility packages to help you get started:

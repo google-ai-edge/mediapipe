@@ -42,7 +42,7 @@ public class CameraInput {
 
   private final CameraXPreviewHelper cameraHelper;
   private CameraHelper.OnCameraStartedListener customOnCameraStartedListener;
-  private TextureFrameConsumer cameraNewFrameListener;
+  private TextureFrameConsumer newFrameListener;
   // {@link SurfaceTexture} where the camera-preview frames can be accessed.
   private SurfaceTexture frameTexture;
   private ExternalTextureConverter converter;
@@ -62,8 +62,8 @@ public class CameraInput {
    *
    * @param listener the callback.
    */
-  public void setCameraNewFrameListener(TextureFrameConsumer listener) {
-    cameraNewFrameListener = listener;
+  public void setNewFrameListener(TextureFrameConsumer listener) {
+    newFrameListener = listener;
   }
 
   /**
@@ -92,15 +92,15 @@ public class CameraInput {
     if (converter == null) {
       converter = new ExternalTextureConverter(eglContext, 2);
     }
-    if (cameraNewFrameListener == null) {
+    if (newFrameListener == null) {
       throw new MediaPipeException(
           MediaPipeException.StatusCode.FAILED_PRECONDITION.ordinal(),
-          "cameraNewFrameListener is not set.");
+          "newFrameListener is not set.");
     }
-    converter.setConsumer(cameraNewFrameListener);
+    frameTexture = converter.getSurfaceTexture();
+    converter.setConsumer(newFrameListener);
     cameraHelper.setOnCameraStartedListener(
         surfaceTexture -> {
-          frameTexture = surfaceTexture;
           if (width != 0 && height != 0) {
             // Sets the size of the output texture frame.
             updateOutputSize(width, height);
@@ -114,7 +114,7 @@ public class CameraInput {
         cameraFacing == CameraFacing.FRONT
             ? CameraHelper.CameraFacing.FRONT
             : CameraHelper.CameraFacing.BACK,
-        /*unusedSurfaceTexture=*/ null,
+        /*surfaceTexture=*/ frameTexture,
         (width == 0 || height == 0) ? null : new Size(width, height));
   }
 
@@ -134,17 +134,15 @@ public class CameraInput {
             + displaySize.getWidth()
             + " , height="
             + displaySize.getHeight());
-    // Reconnects the converter to the camera-preview frames as its input (via
-    // frameTexture), and configure the output width and height as the computed
+    // Configure the output width and height as the computed
     // display size.
-    converter.setSurfaceTextureAndAttachToGLContext(
-        frameTexture,
+    converter.setDestinationSize(
         isCameraRotated ? displaySize.getHeight() : displaySize.getWidth(),
         isCameraRotated ? displaySize.getWidth() : displaySize.getHeight());
   }
 
-  /** Stops the camera input. */
-  public void stop() {
+  /** Closes the camera input. */
+  public void close() {
     if (converter != null) {
       converter.close();
     }

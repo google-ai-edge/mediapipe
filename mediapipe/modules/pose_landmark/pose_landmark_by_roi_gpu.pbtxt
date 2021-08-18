@@ -1,5 +1,5 @@
-# MediaPipe graph to detect/predict pose landmarks. (GPU input, and inference is
-# executed on GPU.)
+# MediaPipe graph to detect/predict pose landmarks and optionally segmentation
+# within an ROI. (GPU input, and inference is executed on GPU.)
 #
 # It is required that "pose_landmark_lite.tflite" or
 # "pose_landmark_full.tflite" or "pose_landmark_heavy.tflite" is available at
@@ -13,9 +13,11 @@
 #   node {
 #     calculator: "PoseLandmarkByRoiGpu"
 #     input_side_packet: "MODEL_COMPLEXITY:model_complexity"
+#     input_side_packet: "ENABLE_SEGMENTATION:enable_segmentation"
 #     input_stream: "IMAGE:image"
 #     input_stream: "ROI:roi"
 #     output_stream: "LANDMARKS:landmarks"
+#     output_stream: "SEGMENTATION_MASK:segmentation_mask"
 #   }
 
 type: "PoseLandmarkByRoiGpu"
@@ -25,6 +27,10 @@ input_stream: "IMAGE:image"
 # ROI (region of interest) within the given image where a pose is located.
 # (NormalizedRect)
 input_stream: "ROI:roi"
+
+# Whether to predict the segmentation mask. If unspecified, functions as set to
+# false. (bool)
+input_side_packet: "ENABLE_SEGMENTATION:enable_segmentation"
 
 # Complexity of the pose landmark model: 0, 1 or 2. Landmark accuracy as well as
 # inference latency generally go up with the model complexity. If unspecified,
@@ -68,7 +74,7 @@ input_side_packet: "MODEL_COMPLEXITY:model_complexity"
 # 31 - left foot index
 # 32 - right foot index
 #
-# NOTE: if a pose is not present within the given ROI, for this particular
+# NOTE: If a pose is not present within the given ROI, for this particular
 # timestamp there will not be an output packet in the LANDMARKS stream. However,
 # the MediaPipe framework will internally inform the downstream calculators of
 # the absence of this packet so that they don't wait for it unnecessarily.
@@ -83,17 +89,30 @@ output_stream: "AUXILIARY_LANDMARKS:auxiliary_landmarks"
 # LANDMARKS. However, LANDMARKS provides coordinates (in pixels) of a 3D object
 # projected onto the 2D image surface, while WORLD_LANDMARKS provides
 # coordinates (in meters) of the 3D object itself.
-output_stream: "WORLD_LANDMARKS:pose_world_landmarks"
+output_stream: "WORLD_LANDMARKS:world_landmarks"
 
-# Transforms the input image into a 256x256 tensor while keeping the aspect
-# ratio (what is expected by the corresponding model), resulting in potential
-# letterboxing in the transformed image.
+# Segmentation mask on GPU in RGBA with the same mask values in R and A. (Image)
+output_stream: "SEGMENTATION_MASK:segmentation_mask"
+
+# Retrieves the image size.
+node {
+  calculator: "ImagePropertiesCalculator"
+  input_stream: "IMAGE_GPU:image"
+  output_stream: "SIZE:image_size"
+}
+
+# Crops and transforms the specified ROI in the input image into an image patch
+# represented as a tensor of dimension expected by the corresponding ML model,
+# while maintaining the aspect ratio of the ROI (which can be different from
+# that of the image patch). Therefore, there can be letterboxing around the ROI
+# in the generated tensor representation.
 node: {
   calculator: "ImageToTensorCalculator"
   input_stream: "IMAGE_GPU:image"
   input_stream: "NORM_RECT:roi"
   output_stream: "TENSORS:input_tensors"
   output_stream: "LETTERBOX_PADDING:letterbox_padding"
+  output_stream: "MATRIX:transformation_matrix"
   options: {
     [mediapipe.ImageToTensorCalculatorOptions.ext] {
       output_tensor_width: 256
@@ -123,12 +142,33 @@ node {
   output_stream: "TENSORS:output_tensors"
 }
 
+# Decodes the tensors into the corresponding landmark and segmentation mask
+# representation.
 node {
-  calculator: "PoseLandmarkByRoiPostProcessing"
+  calculator: "TensorsToPoseLandmarksAndSegmentation"
+  input_side_packet: "ENABLE_SEGMENTATION:enable_segmentation"
   input_stream: "TENSORS:output_tensors"
-  input_stream: "ROI:roi"
+  output_stream: "LANDMARKS:roi_landmarks"
+  output_stream: "AUXILIARY_LANDMARKS:roi_auxiliary_landmarks"
+  output_stream: "WORLD_LANDMARKS:roi_world_landmarks"
+  output_stream: "SEGMENTATION_MASK:roi_segmentation_mask"
+}
+
+# Projects the landmarks and segmentation mask in the local coordinates of the
+# (potentially letterboxed) ROI back to the global coordinates of the full input
+# image.
+node {
+  calculator: "PoseLandmarksAndSegmentationInverseProjection"
+  input_stream: "IMAGE_SIZE:image_size"
+  input_stream: "NORM_RECT:roi"
   input_stream: "LETTERBOX_PADDING:letterbox_padding"
+  input_stream: "MATRIX:transformation_matrix"
+  input_stream: "LANDMARKS:roi_landmarks"
+  input_stream: "AUXILIARY_LANDMARKS:roi_auxiliary_landmarks"
+  input_stream: "WORLD_LANDMARKS:roi_world_landmarks"
+  input_stream: "SEGMENTATION_MASK:roi_segmentation_mask"
   output_stream: "LANDMARKS:landmarks"
   output_stream: "AUXILIARY_LANDMARKS:auxiliary_landmarks"
-  output_stream: "WORLD_LANDMARKS:pose_world_landmarks"
+  output_stream: "WORLD_LANDMARKS:world_landmarks"
+  output_stream: "SEGMENTATION_MASK:segmentation_mask"
 }

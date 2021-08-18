@@ -14,6 +14,8 @@ input_stream: "IMAGE:image"
 # Max number of hands to detect/track. (int)
 input_side_packet: "NUM_HANDS:num_hands"
 
+# The original input image. (Image)
+output_stream: "IMAGE:image"
 # Collection of detected/predicted hands, each represented as a list of
 # landmarks. (std::vector<NormalizedLandmarkList>)
 # NOTE: there will not be an output packet in the LANDMARKS stream for this
@@ -42,7 +44,20 @@ output_stream: "HAND_ROIS_FROM_PALM_DETECTIONS:hand_rects_from_palm_detections"
 node {
   calculator: "FromImageCalculator"
   input_stream: "IMAGE:image"
-  output_stream: "IMAGE_CPU:image_frame"
+  output_stream: "IMAGE_CPU:raw_image_frame"
+  output_stream: "SOURCE_ON_GPU:is_gpu_image"
+}
+
+# TODO: Remove the extra flipping once adopting MlImage.
+# If the source images are on gpu, flip the data vertically before sending them
+# into HandLandmarkTrackingCpu. This maybe needed because OpenGL represents
+# images assuming the image origin is at the bottom-left corner, whereas
+# MediaPipe in general assumes the image origin is at the top-left corner.
+node: {
+  calculator: "ImageTransformationCalculator"
+  input_stream: "IMAGE:raw_image_frame"
+  input_stream: "FLIP_VERTICALLY:is_gpu_image"
+  output_stream: "IMAGE:image_frame"
 }
 
 node {

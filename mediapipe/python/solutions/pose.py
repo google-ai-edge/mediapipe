@@ -25,11 +25,13 @@ from mediapipe.calculators.core import constant_side_packet_calculator_pb2
 # pylint: disable=unused-import
 from mediapipe.calculators.core import gate_calculator_pb2
 from mediapipe.calculators.core import split_vector_calculator_pb2
+from mediapipe.calculators.image import warp_affine_calculator_pb2
 from mediapipe.calculators.tensor import image_to_tensor_calculator_pb2
 from mediapipe.calculators.tensor import inference_calculator_pb2
 from mediapipe.calculators.tensor import tensors_to_classification_calculator_pb2
 from mediapipe.calculators.tensor import tensors_to_detections_calculator_pb2
 from mediapipe.calculators.tensor import tensors_to_landmarks_calculator_pb2
+from mediapipe.calculators.tensor import tensors_to_segmentation_calculator_pb2
 from mediapipe.calculators.tflite import ssd_anchors_calculator_pb2
 from mediapipe.calculators.util import detections_to_rects_calculator_pb2
 from mediapipe.calculators.util import landmarks_smoothing_calculator_pb2
@@ -41,9 +43,11 @@ from mediapipe.calculators.util import thresholding_calculator_pb2
 from mediapipe.calculators.util import visibility_smoothing_calculator_pb2
 from mediapipe.framework.tool import switch_container_pb2
 # pylint: enable=unused-import
-
 from mediapipe.python.solution_base import SolutionBase
 from mediapipe.python.solutions import download_utils
+# pylint: disable=unused-import
+from mediapipe.python.solutions.pose_connections import POSE_CONNECTIONS
+# pylint: enable=unused-import
 
 
 class PoseLandmark(enum.IntEnum):
@@ -82,44 +86,8 @@ class PoseLandmark(enum.IntEnum):
   LEFT_FOOT_INDEX = 31
   RIGHT_FOOT_INDEX = 32
 
+
 BINARYPB_FILE_PATH = 'mediapipe/modules/pose_landmark/pose_landmark_cpu.binarypb'
-POSE_CONNECTIONS = frozenset([
-    (PoseLandmark.NOSE, PoseLandmark.RIGHT_EYE_INNER),
-    (PoseLandmark.RIGHT_EYE_INNER, PoseLandmark.RIGHT_EYE),
-    (PoseLandmark.RIGHT_EYE, PoseLandmark.RIGHT_EYE_OUTER),
-    (PoseLandmark.RIGHT_EYE_OUTER, PoseLandmark.RIGHT_EAR),
-    (PoseLandmark.NOSE, PoseLandmark.LEFT_EYE_INNER),
-    (PoseLandmark.LEFT_EYE_INNER, PoseLandmark.LEFT_EYE),
-    (PoseLandmark.LEFT_EYE, PoseLandmark.LEFT_EYE_OUTER),
-    (PoseLandmark.LEFT_EYE_OUTER, PoseLandmark.LEFT_EAR),
-    (PoseLandmark.MOUTH_RIGHT, PoseLandmark.MOUTH_LEFT),
-    (PoseLandmark.RIGHT_SHOULDER, PoseLandmark.LEFT_SHOULDER),
-    (PoseLandmark.RIGHT_SHOULDER, PoseLandmark.RIGHT_ELBOW),
-    (PoseLandmark.RIGHT_ELBOW, PoseLandmark.RIGHT_WRIST),
-    (PoseLandmark.RIGHT_WRIST, PoseLandmark.RIGHT_PINKY),
-    (PoseLandmark.RIGHT_WRIST, PoseLandmark.RIGHT_INDEX),
-    (PoseLandmark.RIGHT_WRIST, PoseLandmark.RIGHT_THUMB),
-    (PoseLandmark.RIGHT_PINKY, PoseLandmark.RIGHT_INDEX),
-    (PoseLandmark.LEFT_SHOULDER, PoseLandmark.LEFT_ELBOW),
-    (PoseLandmark.LEFT_ELBOW, PoseLandmark.LEFT_WRIST),
-    (PoseLandmark.LEFT_WRIST, PoseLandmark.LEFT_PINKY),
-    (PoseLandmark.LEFT_WRIST, PoseLandmark.LEFT_INDEX),
-    (PoseLandmark.LEFT_WRIST, PoseLandmark.LEFT_THUMB),
-    (PoseLandmark.LEFT_PINKY, PoseLandmark.LEFT_INDEX),
-    (PoseLandmark.RIGHT_SHOULDER, PoseLandmark.RIGHT_HIP),
-    (PoseLandmark.LEFT_SHOULDER, PoseLandmark.LEFT_HIP),
-    (PoseLandmark.RIGHT_HIP, PoseLandmark.LEFT_HIP),
-    (PoseLandmark.RIGHT_HIP, PoseLandmark.RIGHT_KNEE),
-    (PoseLandmark.LEFT_HIP, PoseLandmark.LEFT_KNEE),
-    (PoseLandmark.RIGHT_KNEE, PoseLandmark.RIGHT_ANKLE),
-    (PoseLandmark.LEFT_KNEE, PoseLandmark.LEFT_ANKLE),
-    (PoseLandmark.RIGHT_ANKLE, PoseLandmark.RIGHT_HEEL),
-    (PoseLandmark.LEFT_ANKLE, PoseLandmark.LEFT_HEEL),
-    (PoseLandmark.RIGHT_HEEL, PoseLandmark.RIGHT_FOOT_INDEX),
-    (PoseLandmark.LEFT_HEEL, PoseLandmark.LEFT_FOOT_INDEX),
-    (PoseLandmark.RIGHT_ANKLE, PoseLandmark.RIGHT_FOOT_INDEX),
-    (PoseLandmark.LEFT_ANKLE, PoseLandmark.LEFT_FOOT_INDEX),
-])
 
 
 def _download_oss_pose_landmark_model(model_complexity):
@@ -147,6 +115,8 @@ class Pose(SolutionBase):
                static_image_mode=False,
                model_complexity=1,
                smooth_landmarks=True,
+               enable_segmentation=False,
+               smooth_segmentation=True,
                min_detection_confidence=0.5,
                min_tracking_confidence=0.5):
     """Initializes a MediaPipe Pose object.
@@ -160,6 +130,11 @@ class Pose(SolutionBase):
       smooth_landmarks: Whether to filter landmarks across different input
         images to reduce jitter. See details in
         https://solutions.mediapipe.dev/pose#smooth_landmarks.
+      enable_segmentation: Whether to predict segmentation mask. See details in
+        https://solutions.mediapipe.dev/pose#enable_segmentation.
+      smooth_segmentation: Whether to filter segmentation across different input
+        images to reduce jitter. See details in
+        https://solutions.mediapipe.dev/pose#smooth_segmentation.
       min_detection_confidence: Minimum confidence value ([0.0, 1.0]) for person
         detection to be considered successful. See details in
         https://solutions.mediapipe.dev/pose#min_detection_confidence.
@@ -173,6 +148,9 @@ class Pose(SolutionBase):
         side_inputs={
             'model_complexity': model_complexity,
             'smooth_landmarks': smooth_landmarks and not static_image_mode,
+            'enable_segmentation': enable_segmentation,
+            'smooth_segmentation':
+                smooth_segmentation and not static_image_mode,
         },
         calculator_params={
             'ConstantSidePacketCalculator.packet': [
@@ -180,12 +158,12 @@ class Pose(SolutionBase):
                 .ConstantSidePacketCalculatorOptions.ConstantSidePacket(
                     bool_value=not static_image_mode)
             ],
-            'poselandmarkcpu__posedetectioncpu__TensorsToDetectionsCalculator.min_score_thresh':
+            'posedetectioncpu__TensorsToDetectionsCalculator.min_score_thresh':
                 min_detection_confidence,
-            'poselandmarkcpu__poselandmarkbyroicpu__ThresholdingCalculator.threshold':
+            'poselandmarkbyroicpu__tensorstoposelandmarksandsegmentation__ThresholdingCalculator.threshold':
                 min_tracking_confidence,
         },
-        outputs=['pose_landmarks', 'pose_world_landmarks'])
+        outputs=['pose_landmarks', 'pose_world_landmarks', 'segmentation_mask'])
 
   def process(self, image: np.ndarray) -> NamedTuple:
     """Processes an RGB image and returns the pose landmarks on the most prominent person detected.

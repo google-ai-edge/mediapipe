@@ -30,6 +30,7 @@ from mediapipe.python.solutions import drawing_styles
 from mediapipe.python.solutions import drawing_utils as mp_drawing
 from mediapipe.python.solutions import hands as mp_hands
 
+
 TEST_IMAGE_PATH = 'mediapipe/python/solutions/testdata'
 DIFF_THRESHOLD = 15  # pixels
 EXPECTED_HAND_COORDINATES_PREDICTION = [[[144, 345], [211, 323], [257, 286],
@@ -54,8 +55,8 @@ class HandsTest(parameterized.TestCase):
     for hand_landmarks in results.multi_hand_landmarks:
       mp_drawing.draw_landmarks(
           frame, hand_landmarks, mp_hands.HAND_CONNECTIONS,
-          drawing_styles.get_default_hand_landmark_style(),
-          drawing_styles.get_default_hand_connection_style())
+          drawing_styles.get_default_hand_landmarks_style(),
+          drawing_styles.get_default_hand_connections_style())
     path = os.path.join(tempfile.gettempdir(), self.id().split('.')[-1] +
                                               '_frame_{}.png'.format(idx))
     cv2.imwrite(path, frame)

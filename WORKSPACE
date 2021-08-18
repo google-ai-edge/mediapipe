@@ -331,7 +331,9 @@ load("@rules_jvm_external//:defs.bzl", "maven_install")
 maven_install(
     artifacts = [
         "androidx.concurrent:concurrent-futures:1.0.0-alpha03",
-        "androidx.lifecycle:lifecycle-common:2.2.0",
+        "androidx.lifecycle:lifecycle-common:2.3.1",
+        "androidx.activity:activity:1.2.2",
+        "androidx.fragment:fragment:1.3.4",
         "androidx.annotation:annotation:aar:1.1.0",
         "androidx.appcompat:appcompat:aar:1.1.0-rc01",
         "androidx.camera:camera-core:1.0.0-beta10",
@@ -376,9 +378,9 @@ http_archive(
 )
 
 # Tensorflow repo should always go after the other external dependencies.
-# 2021-06-07
-_TENSORFLOW_GIT_COMMIT = "700533808e6016dc458bb2eeecfca4babfc482ec"
-_TENSORFLOW_SHA256 = "b6edd7f4039bfc19f3e77594ecff558ba620091d0dc48181484b3d9085026126"
+# 2021-07-29
+_TENSORFLOW_GIT_COMMIT = "52a2905cbc21034766c08041933053178c5d10e3"
+_TENSORFLOW_SHA256 = "06d4691bcdb700f3275fa0971a1585221c2b9f3dffe867963be565a6643d7f56"
 http_archive(
     name = "org_tensorflow",
     urls = [
@@ -399,3 +401,18 @@ load("@org_tensorflow//tensorflow:workspace3.bzl", "tf_workspace3")
 tf_workspace3()
 load("@org_tensorflow//tensorflow:workspace2.bzl", "tf_workspace2")
 tf_workspace2()
+
+# Edge TPU
+http_archive(
+  name = "libedgetpu",
+  sha256 = "14d5527a943a25bc648c28a9961f954f70ba4d79c0a9ca5ae226e1831d72fe80",
+  strip_prefix = "libedgetpu-3164995622300286ef2bb14d7fdc2792dae045b7",
+  urls = [
+    "https://github.com/google-coral/libedgetpu/archive/3164995622300286ef2bb14d7fdc2792dae045b7.tar.gz"
+  ],
+)
+load("@libedgetpu//:workspace.bzl", "libedgetpu_dependencies")
+libedgetpu_dependencies()
+
+load("@coral_crosstool//:configure.bzl", "cc_crosstool")
+cc_crosstool(name = "crosstool")

@@ -52,6 +52,9 @@ LocalizationToRegionCalculator::LocalizationToRegionCalculator() {}
 
 namespace {
 
+constexpr char kRegionsTag[] = "REGIONS";
+constexpr char kDetectionsTag[] = "DETECTIONS";
+
 // Converts an object detection to a autoflip SignalType.  Returns true if the
 // std::string label has a autoflip label.
 bool MatchType(const std::string& label, SignalType* type) {
@@ -86,8 +89,8 @@ void FillSalientRegion(const mediapipe::Detection& detection,
 
 absl::Status LocalizationToRegionCalculator::GetContract(
     mediapipe::CalculatorContract* cc) {
-  cc->Inputs().Tag("DETECTIONS").Set<std::vector<mediapipe::Detection>>();
-  cc->Outputs().Tag("REGIONS").Set<DetectionSet>();
+  cc->Inputs().Tag(kDetectionsTag).Set<std::vector<mediapipe::Detection>>();
+  cc->Outputs().Tag(kRegionsTag).Set<DetectionSet>();
   return absl::OkStatus();
 }
 
@@ -101,7 +104,7 @@ absl::Status LocalizationToRegionCalculator::Open(
 absl::Status LocalizationToRegionCalculator::Process(
     mediapipe::CalculatorContext* cc) {
   const auto& annotations =
-      cc->Inputs().Tag("DETECTIONS").Get<std::vector<mediapipe::Detection>>();
+      cc->Inputs().Tag(kDetectionsTag).Get<std::vector<mediapipe::Detection>>();
   auto regions = ::absl::make_unique<DetectionSet>();
   for (const auto& detection : annotations) {
     RET_CHECK_EQ(detection.label().size(), 1)
@@ -118,7 +121,7 @@ absl::Status LocalizationToRegionCalculator::Process(
     }
   }
 
-  cc->Outputs().Tag("REGIONS").Add(regions.release(), cc->InputTimestamp());
+  cc->Outputs().Tag(kRegionsTag).Add(regions.release(), cc->InputTimestamp());
   return absl::OkStatus();
 }
 

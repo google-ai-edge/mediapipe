@@ -55,7 +55,7 @@ public class SolutionGlSurfaceViewRenderer<T extends ImageSolutionResult>
    *     textureframe.
    */
   public void setRenderData(T solutionResult) {
-    TextureFrame frame = solutionResult.acquireTextureFrame();
+    TextureFrame frame = solutionResult.acquireInputTextureFrame();
     setFrameSize(frame.getWidth(), frame.getHeight());
     setNextFrame(frame);
     nextSolutionResult.getAndSet(solutionResult);

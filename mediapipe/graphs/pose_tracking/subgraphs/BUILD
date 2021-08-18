@@ -27,6 +27,7 @@ mediapipe_simple_subgraph(
     register_as = "PoseRendererGpu",
     deps = [
         "//mediapipe/calculators/core:split_landmarks_calculator",
+        "//mediapipe/calculators/image:recolor_calculator",
         "//mediapipe/calculators/util:annotation_overlay_calculator",
         "//mediapipe/calculators/util:detections_to_render_data_calculator",
         "//mediapipe/calculators/util:landmarks_to_render_data_calculator",
@@ -41,6 +42,7 @@ mediapipe_simple_subgraph(
     register_as = "PoseRendererCpu",
     deps = [
         "//mediapipe/calculators/core:split_landmarks_calculator",
+        "//mediapipe/calculators/image:recolor_calculator",
         "//mediapipe/calculators/util:annotation_overlay_calculator",
         "//mediapipe/calculators/util:detections_to_render_data_calculator",
         "//mediapipe/calculators/util:landmarks_to_render_data_calculator",

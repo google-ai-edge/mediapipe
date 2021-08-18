@@ -49,6 +49,8 @@ constexpr char kKeypointsTestTag[] = "KEYPOINTS_TEST";
 constexpr char kBboxPredictedTag[] = "BBOX_PREDICTED";
 constexpr char kAudioOtherTag[] = "AUDIO_OTHER";
 constexpr char kAudioTestTag[] = "AUDIO_TEST";
+constexpr char kBytesFeatureOtherTag[] = "BYTES_FEATURE_OTHER";
+constexpr char kBytesFeatureTestTag[] = "BYTES_FEATURE_TEST";
 constexpr char kForwardFlowEncodedTag[] = "FORWARD_FLOW_ENCODED";
 constexpr char kFloatContextFeatureOtherTag[] = "FLOAT_CONTEXT_FEATURE_OTHER";
 constexpr char kFloatContextFeatureTestTag[] = "FLOAT_CONTEXT_FEATURE_TEST";
@@ -212,6 +214,54 @@ TEST_F(PackMediaSequenceCalculatorTest, PacksTwoFloatLists) {
     ASSERT_EQ(i, mpms::GetFeatureTimestampAt("OTHER", output_sequence, i));
     ASSERT_THAT(mpms::GetFeatureFloatsAt("OTHER", output_sequence, i),
                 ::testing::ElementsAreArray(std::vector<float>(2, 2 << i)));
+  }
+}
+
+TEST_F(PackMediaSequenceCalculatorTest, PacksTwoBytesLists) {
+  SetUpCalculator({"BYTES_FEATURE_TEST:test", "BYTES_FEATURE_OTHER:test2"}, {},
+                  false, true);
+  auto input_sequence = ::absl::make_unique<tf::SequenceExample>();
+
+  int num_timesteps = 2;
+  for (int i = 0; i < num_timesteps; ++i) {
+    auto vs_ptr = ::absl::make_unique<std::vector<std::string>>(
+        2, absl::StrCat("foo", 2 << i));
+    runner_->MutableInputs()
+        ->Tag(kBytesFeatureTestTag)
+        .packets.push_back(Adopt(vs_ptr.release()).At(Timestamp(i)));
+    vs_ptr = ::absl::make_unique<std::vector<std::string>>(
+        2, absl::StrCat("bar", 2 << i));
+    runner_->MutableInputs()
+        ->Tag(kBytesFeatureOtherTag)
+        .packets.push_back(Adopt(vs_ptr.release()).At(Timestamp(i)));
+  }
+
+  runner_->MutableSidePackets()->Tag(kSequenceExampleTag) =
+      Adopt(input_sequence.release());
+
+  MP_ASSERT_OK(runner_->Run());
+
+  const std::vector<Packet>& output_packets =
+      runner_->Outputs().Tag(kSequenceExampleTag).packets;
+  ASSERT_EQ(1, output_packets.size());
+  const tf::SequenceExample& output_sequence =
+      output_packets[0].Get<tf::SequenceExample>();
+
+  ASSERT_EQ(num_timesteps,
+            mpms::GetFeatureTimestampSize("TEST", output_sequence));
+  ASSERT_EQ(num_timesteps, mpms::GetFeatureBytesSize("TEST", output_sequence));
+  ASSERT_EQ(num_timesteps,
+            mpms::GetFeatureTimestampSize("OTHER", output_sequence));
+  ASSERT_EQ(num_timesteps, mpms::GetFeatureBytesSize("OTHER", output_sequence));
+  for (int i = 0; i < num_timesteps; ++i) {
+    ASSERT_EQ(i, mpms::GetFeatureTimestampAt("TEST", output_sequence, i));
+    ASSERT_THAT(mpms::GetFeatureBytesAt("TEST", output_sequence, i),
+                ::testing::ElementsAreArray(
+                    std::vector<std::string>(2, absl::StrCat("foo", 2 << i))));
+    ASSERT_EQ(i, mpms::GetFeatureTimestampAt("OTHER", output_sequence, i));
+    ASSERT_THAT(mpms::GetFeatureBytesAt("OTHER", output_sequence, i),
+                ::testing::ElementsAreArray(
+                    std::vector<std::string>(2, absl::StrCat("bar", 2 << i))));
   }
 }
 
@@ -812,6 +862,45 @@ TEST_F(PackMediaSequenceCalculatorTest, TestReplacingFloatVectors) {
             mpms::GetFeatureTimestampSize("OTHER", *input_sequence));
   ASSERT_EQ(num_timesteps,
             mpms::GetFeatureFloatsSize("OTHER", *input_sequence));
+  runner_->MutableSidePackets()->Tag(kSequenceExampleTag) =
+      Adopt(input_sequence.release());
+
+  MP_ASSERT_OK(runner_->Run());
+
+  const std::vector<Packet>& output_packets =
+      runner_->Outputs().Tag(kSequenceExampleTag).packets;
+  ASSERT_EQ(1, output_packets.size());
+  const tf::SequenceExample& output_sequence =
+      output_packets[0].Get<tf::SequenceExample>();
+
+  ASSERT_EQ(0, mpms::GetFeatureTimestampSize("TEST", output_sequence));
+  ASSERT_EQ(0, mpms::GetFeatureFloatsSize("TEST", output_sequence));
+  ASSERT_EQ(0, mpms::GetFeatureTimestampSize("OTHER", output_sequence));
+  ASSERT_EQ(0, mpms::GetFeatureFloatsSize("OTHER", output_sequence));
+}
+
+TEST_F(PackMediaSequenceCalculatorTest, TestReplacingBytesVectors) {
+  SetUpCalculator({"BYTES_FEATURE_TEST:test", "BYTES_FEATURE_OTHER:test2"}, {},
+                  false, true);
+  auto input_sequence = ::absl::make_unique<tf::SequenceExample>();
+
+  int num_timesteps = 2;
+  for (int i = 0; i < num_timesteps; ++i) {
+    auto vs_ptr = ::absl::make_unique<std::vector<std::string>>(
+        2, absl::StrCat("foo", 2 << i));
+    mpms::AddFeatureBytes("TEST", *vs_ptr, input_sequence.get());
+    mpms::AddFeatureTimestamp("TEST", i, input_sequence.get());
+    vs_ptr = ::absl::make_unique<std::vector<std::string>>(
+        2, absl::StrCat("bar", 2 << i));
+    mpms::AddFeatureBytes("OTHER", *vs_ptr, input_sequence.get());
+    mpms::AddFeatureTimestamp("OTHER", i, input_sequence.get());
+  }
+  ASSERT_EQ(num_timesteps,
+            mpms::GetFeatureTimestampSize("TEST", *input_sequence));
+  ASSERT_EQ(num_timesteps, mpms::GetFeatureBytesSize("TEST", *input_sequence));
+  ASSERT_EQ(num_timesteps,
+            mpms::GetFeatureTimestampSize("OTHER", *input_sequence));
+  ASSERT_EQ(num_timesteps, mpms::GetFeatureBytesSize("OTHER", *input_sequence));
   runner_->MutableSidePackets()->Tag(kSequenceExampleTag) =
       Adopt(input_sequence.release());
 

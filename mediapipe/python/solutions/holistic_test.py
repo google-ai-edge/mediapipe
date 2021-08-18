@@ -25,6 +25,7 @@ import numpy.testing as npt
 
 # resources dependency
 # undeclared dependency
+from mediapipe.python.solutions import drawing_styles
 from mediapipe.python.solutions import drawing_utils as mp_drawing
 from mediapipe.python.solutions import holistic as mp_holistic
 
@@ -69,17 +70,18 @@ class PoseTest(parameterized.TestCase):
     npt.assert_array_less(np.abs(array1 - array2), threshold)
 
   def _annotate(self, frame: np.ndarray, results: NamedTuple, idx: int):
-    drawing_spec = mp_drawing.DrawingSpec(thickness=1, circle_radius=1)
     mp_drawing.draw_landmarks(
-        image=frame,
-        landmark_list=results.face_landmarks,
-        landmark_drawing_spec=drawing_spec)
-    mp_drawing.draw_landmarks(frame, results.left_hand_landmarks,
-                              mp_holistic.HAND_CONNECTIONS)
-    mp_drawing.draw_landmarks(frame, results.right_hand_landmarks,
-                              mp_holistic.HAND_CONNECTIONS)
-    mp_drawing.draw_landmarks(frame, results.pose_landmarks,
-                              mp_holistic.POSE_CONNECTIONS)
+        frame,
+        results.face_landmarks,
+        mp_holistic.FACEMESH_TESSELATION,
+        landmark_drawing_spec=None,
+        connection_drawing_spec=drawing_styles
+        .get_default_face_mesh_tesselation_style())
+    mp_drawing.draw_landmarks(
+        frame,
+        results.pose_landmarks,
+        mp_holistic.POSE_CONNECTIONS,
+        landmark_drawing_spec=drawing_styles.get_default_pose_landmarks_style())
     path = os.path.join(tempfile.gettempdir(), self.id().split('.')[-1] +
                                               '_frame_{}.png'.format(idx))
     cv2.imwrite(path, frame)

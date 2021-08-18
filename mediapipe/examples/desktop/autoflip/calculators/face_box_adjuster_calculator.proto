@@ -64,7 +64,7 @@ message FaceBoxAdjusterCalculatorOptions {
 
   // Max value of head motion (max of current or history) to be considered still
   // stable.
-  optional float head_motion_threshold = 14 [default = 10.0];
+  optional float head_motion_threshold = 14 [default = 360.0];
 
   // The max amount of time to use an old eye distance when the face look angle
   // is unstable.

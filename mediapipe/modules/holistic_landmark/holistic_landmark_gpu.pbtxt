@@ -32,7 +32,9 @@
 #     calculator: "HolisticLandmarkGpu"
 #     input_stream: "IMAGE:input_video"
 #     input_side_packet: "MODEL_COMPLEXITY:model_complexity"
-#     input_side_packet: SMOOTH_LANDMARKS:smooth_landmarks
+#     input_side_packet: "SMOOTH_LANDMARKS:smooth_landmarks"
+#     input_side_packet: "ENABLE_SEGMENTATION:enable_segmentation"
+#     input_side_packet: "SMOOTH_SEGMENTATION:smooth_segmentation"
 #     output_stream: "POSE_LANDMARKS:pose_landmarks"
 #     output_stream: "FACE_LANDMARKS:face_landmarks"
 #     output_stream: "LEFT_HAND_LANDMARKS:left_hand_landmarks"
@@ -59,6 +61,14 @@ input_side_packet: "MODEL_COMPLEXITY:model_complexity"
 # If unspecified, functions as set to true. (bool)
 input_side_packet: "SMOOTH_LANDMARKS:smooth_landmarks"
 
+# Whether to predict the segmentation mask. If unspecified, functions as set to
+# false. (bool)
+input_side_packet: "ENABLE_SEGMENTATION:enable_segmentation"
+
+# Whether to filter segmentation mask across different input images to reduce
+# jitter. If unspecified, functions as set to true. (bool)
+input_side_packet: "SMOOTH_SEGMENTATION:smooth_segmentation"
+
 # Pose landmarks. (NormalizedLandmarkList)
 # 33 pose landmarks.
 output_stream: "POSE_LANDMARKS:pose_landmarks"
@@ -81,6 +91,8 @@ node {
   input_stream: "IMAGE:image"
   input_side_packet: "MODEL_COMPLEXITY:model_complexity"
   input_side_packet: "SMOOTH_LANDMARKS:smooth_landmarks"
+  input_side_packet: "ENABLE_SEGMENTATION:enable_segmentation"
+  input_side_packet: "SMOOTH_SEGMENTATION:smooth_segmentation"
   output_stream: "LANDMARKS:pose_landmarks"
   output_stream: "WORLD_LANDMARKS:pose_world_landmarks"
   output_stream: "ROI_FROM_LANDMARKS:pose_landmarks_roi"

@@ -1353,3 +1353,34 @@ cc_test(
         "//mediapipe/framework/port:gtest_main",
     ],
 )
+
+cc_library(
+    name = "inverse_matrix_calculator",
+    srcs = ["inverse_matrix_calculator.cc"],
+    hdrs = ["inverse_matrix_calculator.h"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/api2:node",
+        "//mediapipe/framework/api2:port",
+        "@com_google_absl//absl/status",
+        "@eigen_archive//:eigen3",
+    ],
+    alwayslink = True,
+)
+
+cc_test(
+    name = "inverse_matrix_calculator_test",
+    srcs = ["inverse_matrix_calculator_test.cc"],
+    tags = ["desktop_only_test"],
+    deps = [
+        ":inverse_matrix_calculator",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:calculator_runner",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:integral_types",
+        "//mediapipe/framework/port:parse_text_proto",
+        "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/strings",
+    ],
+)

@@ -92,6 +92,7 @@ mediapipe_simple_subgraph(
     register_as = "HandLandmarkTrackingCpuImage",
     deps = [
         ":hand_landmark_tracking_cpu",
+        "//mediapipe/calculators/image:image_transformation_calculator",
         "//mediapipe/calculators/util:from_image_calculator",
     ],
 )
@@ -102,6 +103,7 @@ mediapipe_simple_subgraph(
     register_as = "HandLandmarkTrackingGpuImage",
     deps = [
         ":hand_landmark_tracking_gpu",
+        "//mediapipe/calculators/image:image_transformation_calculator",
         "//mediapipe/calculators/util:from_image_calculator",
     ],
 )
