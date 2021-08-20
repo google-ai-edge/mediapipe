@@ -249,17 +249,17 @@ JNIEXPORT jlong JNICALL PACKET_CREATOR_METHOD(nativeCreateRgbaImageFrame)(
   return CreatePacketWithContext(context, packet);
 }
 
-static mediapipe::Packet createAudioPacket(const uint8_t* audio_sample,
+static mediapipe::Packet createAudioPacket(const uint8_t* audio_sample, bool is_little_endian,
                                            int num_samples, int num_channels) {
   std::unique_ptr<mediapipe::Matrix> matrix(
       new mediapipe::Matrix(num_channels, num_samples));
   // Preparing and normalize the audio data.
   // kMultiplier is same as what used in av_sync_media_decoder.cc.
   static const float kMultiplier = 1.f / (1 << 15);
-  // We try to not assume the Endian order of the data.
+
   for (int sample = 0; sample < num_samples; ++sample) {
     for (int channel = 0; channel < num_channels; ++channel) {
-      int16_t value = (audio_sample[1] & 0xff) << 8 | audio_sample[0];
+      int16_t value = (audio_sample[is_little_endian ? 1 : 0] & 0xff) << 8 | audio_sample[is_little_endian ? 0 : 1];
       (*matrix)(channel, sample) = kMultiplier * value;
       audio_sample += 2;
     }
@@ -269,25 +269,25 @@ static mediapipe::Packet createAudioPacket(const uint8_t* audio_sample,
 
 JNIEXPORT jlong JNICALL PACKET_CREATOR_METHOD(nativeCreateAudioPacket)(
     JNIEnv* env, jobject thiz, jlong context, jbyteArray data, jint offset,
-    jint num_channels, jint num_samples) {
+    jboolean is_little_endian, jint num_channels, jint num_samples) {
   // Note, audio_data_ref is really a const jbyte* but this clashes with the
   // the expectation of ReleaseByteArrayElements below.
   jbyte* audio_data_ref = env->GetByteArrayElements(data, nullptr);
   const uint8_t* audio_sample =
       reinterpret_cast<uint8_t*>(audio_data_ref) + offset;
   mediapipe::Packet packet =
-      createAudioPacket(audio_sample, num_samples, num_channels);
+      createAudioPacket(audio_sample, is_little_endian, num_samples, num_channels);
   env->ReleaseByteArrayElements(data, audio_data_ref, JNI_ABORT);
   return CreatePacketWithContext(context, packet);
 }
 
 JNIEXPORT jlong JNICALL PACKET_CREATOR_METHOD(nativeCreateAudioPacketDirect)(
-    JNIEnv* env, jobject thiz, jlong context, jobject data, jint num_channels,
-    jint num_samples) {
+    JNIEnv* env, jobject thiz, jlong context, jobject data,
+    jboolean is_little_endian, jint num_channels, jint num_samples) {
   const uint8_t* audio_sample =
       reinterpret_cast<uint8_t*>(env->GetDirectBufferAddress(data));
   mediapipe::Packet packet =
-      createAudioPacket(audio_sample, num_samples, num_channels);
+      createAudioPacket(audio_sample, is_little_endian, num_samples, num_channels);
   return CreatePacketWithContext(context, packet);
 }
 

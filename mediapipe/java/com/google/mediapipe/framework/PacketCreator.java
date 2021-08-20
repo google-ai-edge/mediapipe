@@ -17,6 +17,7 @@ package com.google.mediapipe.framework;
 import com.google.mediapipe.framework.ProtoUtil.SerializedMessage;
 import com.google.protobuf.MessageLite;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 
 // TODO: use Preconditions in this file.
@@ -65,14 +66,15 @@ public class PacketCreator {
    * Create a MediaPipe audio packet that is used by most of the audio calculators.
    *
    * @param data the raw audio data, bytes per sample is 2.
+   * @param isLittleEndian the raw audio data is little endian or not.
    * @param numChannels number of channels in the raw data.
    * @param numSamples number of samples in the data.
    */
-  public Packet createAudioPacket(byte[] data, int numChannels, int numSamples) {
+  public Packet createAudioPacket(byte[] data, boolean isLittleEndian, int numChannels, int numSamples) {
     checkAudioDataSize(data.length, numChannels, numSamples);
     return Packet.create(
         nativeCreateAudioPacket(
-            mediapipeGraph.getNativeHandle(), data, /*offset=*/ 0, numChannels, numSamples));
+            mediapipeGraph.getNativeHandle(), data, /*offset=*/ 0, isLittleEndian, numChannels, numSamples));
   }
 
   /**
@@ -88,13 +90,14 @@ public class PacketCreator {
     if (data.isDirect()) {
       return Packet.create(
           nativeCreateAudioPacketDirect(
-              mediapipeGraph.getNativeHandle(), data.slice(), numChannels, numSamples));
+              mediapipeGraph.getNativeHandle(), data.slice(), ByteOrder.LITTLE_ENDIAN.equals(data.order()), numChannels, numSamples));
     } else if (data.hasArray()) {
       return Packet.create(
           nativeCreateAudioPacket(
               mediapipeGraph.getNativeHandle(),
               data.array(),
               data.arrayOffset() + data.position(),
+              ByteOrder.LITTLE_ENDIAN.equals(data.order()),
               numChannels,
               numSamples));
     } else {
@@ -381,10 +384,10 @@ public class PacketCreator {
   private native long nativeCreateReferencePacket(long context, long packet);
 
   private native long nativeCreateAudioPacket(
-      long context, byte[] data, int offset, int numChannels, int numSamples);
+      long context, byte[] data, int offset, boolean isLittleEndian, int numChannels, int numSamples);
 
   private native long nativeCreateAudioPacketDirect(
-      long context, ByteBuffer data, int numChannels, int numSamples);
+      long context, ByteBuffer data, boolean isLittleEndian, int numChannels, int numSamples);
 
   private native long nativeCreateRgbImageFromRgba(
       long context, ByteBuffer buffer, int width, int height);
