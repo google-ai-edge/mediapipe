@@ -141,7 +141,7 @@ Optionally, MediaPipe Pose can predicts a full-body
 Please find more detail in the
 [BlazePose Google AI Blog](https://ai.googleblog.com/2020/08/on-device-real-time-body-pose-tracking.html),
 this [paper](https://arxiv.org/abs/2006.10204),
-[the model card](./models.md#pose) and the [Output](#Output) section below.
+[the model card](./models.md#pose) and the [Output](#output) section below.
 
 ## Solution APIs
 
