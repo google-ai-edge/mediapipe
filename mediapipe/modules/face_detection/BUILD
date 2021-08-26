@@ -58,6 +58,18 @@ mediapipe_simple_subgraph(
 )
 
 mediapipe_simple_subgraph(
+    name = "face_detection_short_range_side_model_cpu",
+    graph = "face_detection_short_range_side_model_cpu.pbtxt",
+    register_as = "FaceDetectionShortRangeSideModelCpu",
+    deps = [
+        ":face_detection_short_range_common",
+        "//mediapipe/calculators/tensor:image_to_tensor_calculator",
+        "//mediapipe/calculators/tensor:inference_calculator",
+        "//mediapipe/calculators/util:to_image_calculator",
+    ],
+)
+
+mediapipe_simple_subgraph(
     name = "face_detection_short_range_gpu",
     graph = "face_detection_short_range_gpu.pbtxt",
     register_as = "FaceDetectionShortRangeGpu",

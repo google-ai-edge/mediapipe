@@ -19,6 +19,20 @@ licenses(["notice"])
 package(default_visibility = ["//visibility:public"])
 
 cc_library(
+    name = "counting_vector_size_calculator",
+    srcs = ["counting_vector_size_calculator.cc"],
+    hdrs = ["counting_vector_size_calculator.h"],
+    visibility = [
+        "//visibility:public",
+    ],
+    deps = [
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/formats:landmark_cc_proto",
+    ],
+    alwayslink = 1,
+)
+
+cc_library(
     name = "alignment_points_to_rects_calculator",
     srcs = ["alignment_points_to_rects_calculator.cc"],
     visibility = ["//visibility:public"],
