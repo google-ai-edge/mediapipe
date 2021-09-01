@@ -50,13 +50,25 @@ public class SolutionGlSurfaceView<T extends ImageSolutionResult> extends GLSurf
   }
 
   /**
-   * Sets the next textureframe and solution result to render.
+   * Sets the next input {@link TextureFrame} and solution result to render.
    *
    * @param solutionResult a solution result object that contains the solution outputs and a
    *     textureframe.
    */
   public void setRenderData(T solutionResult) {
-    renderer.setRenderData(solutionResult);
+    renderer.setRenderData(solutionResult, false);
+  }
+
+  /**
+   * Sets the next input {@link TextureFrame} and solution result to render.
+   *
+   * @param solutionResult a solution result object that contains the solution outputs and a {@link
+   *     TextureFrame}.
+   * @param produceTextureFrames whether to produce and cache all the {@link TextureFrame}s for
+   *     further use.
+   */
+  public void setRenderData(T solutionResult, boolean produceTextureFrames) {
+    renderer.setRenderData(solutionResult, produceTextureFrames);
   }
 
   /** Sets if the input image needs to be rendered. Default to true. */

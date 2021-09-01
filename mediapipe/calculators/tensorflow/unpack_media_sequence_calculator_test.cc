@@ -56,6 +56,8 @@ constexpr char kBboxTag[] = "BBOX";
 constexpr char kForwardFlowEncodedTag[] = "FORWARD_FLOW_ENCODED";
 constexpr char kImagePrefixTag[] = "IMAGE_PREFIX";
 constexpr char kImageTag[] = "IMAGE";
+constexpr char kFloatContextFeatureOtherTag[] = "FLOAT_CONTEXT_FEATURE_OTHER";
+constexpr char kFloatContextFeatureTestTag[] = "FLOAT_CONTEXT_FEATURE_TEST";
 constexpr char kSequenceExampleTag[] = "SEQUENCE_EXAMPLE";
 
 class UnpackMediaSequenceCalculatorTest : public ::testing::Test {

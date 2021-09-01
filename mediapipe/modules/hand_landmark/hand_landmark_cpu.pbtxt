@@ -50,9 +50,10 @@ node {
   options: {
     [mediapipe.InferenceCalculatorOptions.ext] {
       model_path: "mediapipe/modules/hand_landmark/hand_landmark.tflite"
-      delegate { xnnpack {} }
+      delegate {
+        xnnpack {}
+      }
     }
-    #
   }
 }
 

@@ -27,9 +27,10 @@ import javax.microedition.khronos.opengles.GL10;
  * MediaPipe Solution's GlSurfaceViewRenderer.
  *
  * <p>Users can provide a custom {@link ResultGlRenderer} for rendering MediaPipe solution results.
- * For setting the latest solution result, call {@link #setRenderData(ImageSolutionResult)}. By
- * default, the renderer renders the input images. Call {@link #setRenderInputImage(boolean)} to
- * explicitly set whether the input images should be rendered or not.
+ * For setting the latest solution result, call {@link #setRenderData(ImageSolutionResult,
+ * boolean)}. By default, the renderer renders the input images. Call {@link
+ * #setRenderInputImage(boolean)} to explicitly set whether the input images should be rendered or
+ * not.
  */
 public class SolutionGlSurfaceViewRenderer<T extends ImageSolutionResult>
     extends GlSurfaceViewRenderer {
@@ -49,16 +50,24 @@ public class SolutionGlSurfaceViewRenderer<T extends ImageSolutionResult>
   }
 
   /**
-   * Sets the next textureframe and solution result to render.
+   * Sets the next input {@link TextureFrame} and solution result to render.
    *
    * @param solutionResult a solution result object that contains the solution outputs and a
    *     textureframe.
+   * @param produceTextureFrames whether to produce and cache all the {@link TextureFrame}s for
+   *     further use.
    */
-  public void setRenderData(T solutionResult) {
+  public void setRenderData(T solutionResult, boolean produceTextureFrames) {
     TextureFrame frame = solutionResult.acquireInputTextureFrame();
     setFrameSize(frame.getWidth(), frame.getHeight());
     setNextFrame(frame);
-    nextSolutionResult.getAndSet(solutionResult);
+    if (produceTextureFrames) {
+      solutionResult.produceAllTextureFrames();
+    }
+    T oldSolutionResult = nextSolutionResult.getAndSet(solutionResult);
+    if (oldSolutionResult != null) {
+      oldSolutionResult.releaseCachedTextureFrames();
+    }
   }
 
   @Override
@@ -78,8 +87,9 @@ public class SolutionGlSurfaceViewRenderer<T extends ImageSolutionResult>
       GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
       ShaderUtil.checkGlError("glActiveTexture");
     }
+    T solutionResult = null;
     if (nextSolutionResult != null) {
-      T solutionResult = nextSolutionResult.getAndSet(null);
+      solutionResult = nextSolutionResult.getAndSet(null);
       float[] textureBoundary = calculateTextureBoundary();
       // Scales the values from [0, 1] to [-1, 1].
       ResultGlBoundary resultGlBoundary =
@@ -91,6 +101,9 @@ public class SolutionGlSurfaceViewRenderer<T extends ImageSolutionResult>
       resultGlRenderer.renderResult(solutionResult, resultGlBoundary);
     }
     flush(frame);
+    if (solutionResult != null) {
+      solutionResult.releaseCachedTextureFrames();
+    }
   }
 
   @Override

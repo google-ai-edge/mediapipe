@@ -79,7 +79,7 @@ public class OutputHandler<T extends SolutionResult> {
       }
       if (solutionResult instanceof ImageSolutionResult) {
         ImageSolutionResult imageSolutionResult = (ImageSolutionResult) solutionResult;
-        imageSolutionResult.releaseImagePacket();
+        imageSolutionResult.releaseImagePackets();
       }
     }
   }

@@ -529,7 +529,7 @@ Example app bounding boxes are rendered with [GlAnimationOverlayCalculator](http
 > ```
 > and then run
 >
-> ```build
+> ```bash
 > bazel run -c opt mediapipe/graphs/object_detection_3d/obj_parser:ObjParser -- input_dir=[INTERMEDIATE_OUTPUT_DIR] output_dir=[OUTPUT_DIR]
 > ```
 > INPUT_DIR should be the folder with initial asset .obj files to be processed,

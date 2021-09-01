@@ -245,7 +245,7 @@ node {
   output_stream: "enabled_segmentation_tensor"
   options: {
     [mediapipe.GateCalculatorOptions.ext] {
-      allow: true
+      allow: false
     }
   }
 }

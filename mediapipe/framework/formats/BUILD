@@ -82,6 +82,12 @@ mediapipe_proto_library(
 )
 
 mediapipe_proto_library(
+    name = "affine_transform_data_proto",
+    srcs = ["affine_transform_data.proto"],
+    visibility = ["//visibility:public"],
+)
+
+mediapipe_proto_library(
     name = "time_series_header_proto",
     srcs = ["time_series_header.proto"],
     visibility = ["//visibility:public"],
@@ -116,6 +122,31 @@ cc_library(
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
         "@eigen_archive//:eigen3",
+    ],
+)
+
+cc_library(
+    name = "affine_transform",
+    srcs = ["affine_transform.cc"],
+    hdrs = ["affine_transform.h"],
+    visibility = [
+        "//visibility:public",
+    ],
+    deps = [
+        "//mediapipe/framework:port",
+        "//mediapipe/framework:type_map",
+        "//mediapipe/framework/formats:affine_transform_data_cc_proto",
+        "//mediapipe/framework/port:integral_types",
+        "//mediapipe/framework/port:logging",
+        "//mediapipe/framework/port:point",
+        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:status",
+        "//mediapipe/framework/port:statusor",
+        "//mediapipe/framework/tool:status_util",
+        "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/strings",
+        "@com_google_protobuf//:protobuf",
     ],
 )
 

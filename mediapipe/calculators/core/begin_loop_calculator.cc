@@ -42,4 +42,9 @@ REGISTER_CALCULATOR(BeginLoopDetectionCalculator);
 typedef BeginLoopCalculator<std::vector<Matrix>> BeginLoopMatrixCalculator;
 REGISTER_CALCULATOR(BeginLoopMatrixCalculator);
 
+// A calculator to process std::vector<std::vector<Matrix>>.
+typedef BeginLoopCalculator<std::vector<std::vector<Matrix>>>
+    BeginLoopMatrixVectorCalculator;
+REGISTER_CALCULATOR(BeginLoopMatrixVectorCalculator);
+
 }  // namespace mediapipe

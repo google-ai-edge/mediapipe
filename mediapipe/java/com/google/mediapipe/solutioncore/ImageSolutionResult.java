@@ -19,6 +19,7 @@ import com.google.mediapipe.framework.AndroidPacketGetter;
 import com.google.mediapipe.framework.Packet;
 import com.google.mediapipe.framework.PacketGetter;
 import com.google.mediapipe.framework.TextureFrame;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -32,6 +33,9 @@ public class ImageSolutionResult implements SolutionResult {
   private Bitmap cachedBitmap;
   // A list of the output image packets produced by the graph.
   protected List<Packet> imageResultPackets;
+  // The cached texture frames.
+  protected List<TextureFrame> imageResultTextureFrames;
+  private TextureFrame cachedTextureFrame;
 
   // Result timestamp, which is set to the timestamp of the corresponding input image. May return
   // Long.MIN_VALUE if the input image is not associated with a timestamp.
@@ -61,8 +65,38 @@ public class ImageSolutionResult implements SolutionResult {
     return PacketGetter.getTextureFrame(imagePacket);
   }
 
+  // Returns the cached input image as a {@link TextureFrame}.
+  public TextureFrame getCachedInputTextureFrame() {
+    return cachedTextureFrame;
+  }
+
+  // Produces all texture frames from image packets and caches them for further use. The caller must
+  // release the cached {@link TextureFrame}s after using.
+  void produceAllTextureFrames() {
+    cachedTextureFrame = acquireInputTextureFrame();
+    if (imageResultPackets == null) {
+      return;
+    }
+    imageResultTextureFrames = new ArrayList<>();
+    for (Packet p : imageResultPackets) {
+      imageResultTextureFrames.add(PacketGetter.getTextureFrame(p));
+    }
+  }
+
+  // Releases all cached {@link TextureFrame}s.
+  void releaseCachedTextureFrames() {
+    if (cachedTextureFrame != null) {
+      cachedTextureFrame.release();
+    }
+    if (imageResultTextureFrames != null) {
+      for (TextureFrame textureFrame : imageResultTextureFrames) {
+        textureFrame.release();
+      }
+    }
+  }
+
   // Releases image packet and the underlying data.
-  void releaseImagePacket() {
+  void releaseImagePackets() {
     imagePacket.release();
     if (imageResultPackets != null) {
       for (Packet p : imageResultPackets) {

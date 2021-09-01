@@ -53,6 +53,7 @@ class InferenceCalculatorGlImpl
   absl::Status WriteKernelsToFile();
   absl::Status LoadModel(CalculatorContext* cc);
   absl::Status LoadDelegate(CalculatorContext* cc);
+  absl::Status LoadDelegateAndAllocateTensors(CalculatorContext* cc);
   absl::Status InitTFLiteGPURunner(CalculatorContext* cc);
 
   // TfLite requires us to keep the model alive as long as the interpreter is.
@@ -119,10 +120,11 @@ absl::Status InferenceCalculatorGlImpl::Open(CalculatorContext* cc) {
   }
 
   MP_RETURN_IF_ERROR(gpu_helper_.Open(cc));
-  MP_RETURN_IF_ERROR(gpu_helper_.RunInGlContext([this,
-                                                 &cc]() -> ::mediapipe::Status {
-    return use_advanced_gpu_api_ ? InitTFLiteGPURunner(cc) : LoadDelegate(cc);
-  }));
+  MP_RETURN_IF_ERROR(
+      gpu_helper_.RunInGlContext([this, &cc]() -> ::mediapipe::Status {
+        return use_advanced_gpu_api_ ? InitTFLiteGPURunner(cc)
+                                     : LoadDelegateAndAllocateTensors(cc);
+      }));
   return absl::OkStatus();
 }
 
@@ -324,11 +326,19 @@ absl::Status InferenceCalculatorGlImpl::LoadModel(CalculatorContext* cc) {
       cc->Options<mediapipe::InferenceCalculatorOptions>().cpu_num_thread());
 #endif  // __EMSCRIPTEN__
 
+  return absl::OkStatus();
+}
+
+absl::Status InferenceCalculatorGlImpl::LoadDelegateAndAllocateTensors(
+    CalculatorContext* cc) {
+  MP_RETURN_IF_ERROR(LoadDelegate(cc));
+
+  // AllocateTensors() can be called only after ModifyGraphWithDelegate.
   RET_CHECK_EQ(interpreter_->AllocateTensors(), kTfLiteOk);
   // TODO: Support quantized tensors.
-  CHECK(interpreter_->tensor(interpreter_->inputs()[0])->quantization.type !=
-        kTfLiteAffineQuantization);
-
+  RET_CHECK_NE(
+      interpreter_->tensor(interpreter_->inputs()[0])->quantization.type,
+      kTfLiteAffineQuantization);
   return absl::OkStatus();
 }
 

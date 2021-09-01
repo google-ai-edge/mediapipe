@@ -111,7 +111,7 @@ def draw_detection(
       image_rows)
   rect_end_point = _normalized_to_pixel_coordinates(
       relative_bounding_box.xmin + relative_bounding_box.width,
-      relative_bounding_box.ymin + +relative_bounding_box.height, image_cols,
+      relative_bounding_box.ymin + relative_bounding_box.height, image_cols,
       image_rows)
   cv2.rectangle(image, rect_start_point, rect_end_point,
                 bbox_drawing_spec.color, bbox_drawing_spec.thickness)

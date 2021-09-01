@@ -141,7 +141,7 @@ Optionally, MediaPipe Pose can predicts a full-body
 Please find more detail in the
 [BlazePose Google AI Blog](https://ai.googleblog.com/2020/08/on-device-real-time-body-pose-tracking.html),
 this [paper](https://arxiv.org/abs/2006.10204),
-[the model card](./models.md#pose) and the [Output](#Output) section below.
+[the model card](./models.md#pose) and the [Output](#output) section below.
 
 ## Solution APIs
 
@@ -281,8 +281,8 @@ with mp_pose.Pose(
       continue
     print(
         f'Nose coordinates: ('
-        f'{results.pose_landmarks.landmark[mp_holistic.PoseLandmark.NOSE].x * image_width}, '
-        f'{results.pose_landmarks.landmark[mp_holistic.PoseLandmark.NOSE].y * image_height})'
+        f'{results.pose_landmarks.landmark[mp_pose.PoseLandmark.NOSE].x * image_width}, '
+        f'{results.pose_landmarks.landmark[mp_pose.PoseLandmark.NOSE].y * image_height})'
     )
 
     annotated_image = image.copy()
@@ -369,6 +369,7 @@ Supported configuration options:
   <div class="container">
     <video class="input_video"></video>
     <canvas class="output_canvas" width="1280px" height="720px"></canvas>
+    <div class="landmark-grid-container"></div>
   </div>
 </body>
 </html>

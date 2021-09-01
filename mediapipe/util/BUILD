@@ -175,8 +175,9 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         ":resource_util_custom",
-        "@com_google_absl//absl/container:flat_hash_map",
+        "@com_google_absl//absl/strings:str_format",
         "//mediapipe/framework/deps:file_path",
+        "//mediapipe/framework/port:logging",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:singleton",
         "//mediapipe/framework/port:status",

@@ -13,6 +13,9 @@ has_toc: false
 {:toc}
 ---
 
+MediaPipe offers open source cross-platform, customizable ML solutions for live
+and streaming media.
+
 <!-- []() in the first cell is needed to preserve table formatting in GitHub Pages. -->
 <!-- Whenever this table is updated, paste a copy to ../external_index.md. -->
 

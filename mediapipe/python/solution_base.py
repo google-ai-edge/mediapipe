@@ -441,7 +441,7 @@ class SolutionBase:
         else:
           field_label = calculator_options.DESCRIPTOR.fields_by_name[
               field_name].label
-          if field_label is descriptor.FieldDescriptor.LABEL_REPEATED:
+          if field_label == descriptor.FieldDescriptor.LABEL_REPEATED:
             if not isinstance(field_value, Iterable):
               raise ValueError(
                   f'{field_name} is a repeated proto field but the value '

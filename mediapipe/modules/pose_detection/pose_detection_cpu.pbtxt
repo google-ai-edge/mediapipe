@@ -72,9 +72,10 @@ node {
   options: {
     [mediapipe.InferenceCalculatorOptions.ext] {
       model_path: "mediapipe/modules/pose_detection/pose_detection.tflite"
-      delegate { xnnpack {} }
+      delegate {
+        xnnpack {}
+      }
     }
-    #
   }
 }
 

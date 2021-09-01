@@ -62,4 +62,7 @@ message LabelsToRenderDataCalculatorOptions {
 
   // Uses Classification.display_name field instead of Classification.label.
   optional bool use_display_name = 9 [default = false];
+
+  // Displays Classification score if enabled.
+  optional bool display_classification_score = 10 [default = false];
 }
