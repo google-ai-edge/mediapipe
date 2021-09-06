@@ -134,3 +134,17 @@ cc_test(
         "//mediapipe/framework/port:parse_text_proto",
     ],
 )
+
+cc_test(
+    name = "pytorch_inference_calculator_test",
+    srcs = ["pytorch_inference_calculator_test.cc"],
+    deps = [
+        ":pytorch_inference_calculator",
+        ":pytorch_inference_calculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/formats:image_frame",
+        "//mediapipe/framework/formats:image_frame_opencv",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:parse_text_proto",
+    ],
+)
