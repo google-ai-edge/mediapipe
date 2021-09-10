@@ -58,7 +58,7 @@ constexpr float kInitialZ = -10.0f;
 //  perspective matrix]
 //
 // Input streams:
-//  ANCHORS - Anchor data with x,y,z coordinates (x,y are in [0.0-1.0] range for
+//  ANCHORS - Anchor3d data with x,y,z coordinates (x,y are in [0.0-1.0] range for
 //    position on the device screen, while z is the scaling factor that changes
 //    in proportion to the distance from the tracked region) [REQUIRED]
 //  IMU_ROTATION - float[9] of row-major device rotation matrix [REQUIRED]
@@ -101,7 +101,7 @@ class MatricesManagerCalculator : public CalculatorBase {
   const Matrix4fCM GenerateEigenModelMatrix(
       const Vector3f& translation_vector,
       const Matrix3f& rotation_submatrix) const;
-  const Vector3f GenerateAnchorVector(const Anchor& tracked_anchor) const;
+  const Vector3f GenerateAnchorVector(const Anchor3d& tracked_anchor) const;
   DiagonalMatrix3f GetDefaultRenderScaleDiagonal(
       const int render_id, const float user_scale_factor,
       const float gif_aspect_ratio) const;
@@ -145,7 +145,7 @@ absl::Status MatricesManagerCalculator::GetContract(CalculatorContract* cc) {
             cc->InputSidePackets().HasTag(kFOVSidePacketTag) &&
             cc->InputSidePackets().HasTag(kAspectRatioSidePacketTag));
 
-  cc->Inputs().Tag(kAnchorsTag).Set<std::vector<Anchor>>();
+  cc->Inputs().Tag(kAnchorsTag).Set<std::vector<Anchor3d>>();
   cc->Inputs().Tag(kIMUMatrixTag).Set<float[]>();
   cc->Inputs().Tag(kUserScalingsTag).Set<std::vector<UserScaling>>();
   cc->Inputs().Tag(kUserRotationsTag).Set<std::vector<UserRotation>>();
@@ -193,8 +193,8 @@ absl::Status MatricesManagerCalculator::Process(CalculatorContext* cc) {
   const std::vector<int> render_data =
       cc->Inputs().Tag(kRendersTag).Get<std::vector<int>>();
 
-  const std::vector<Anchor> anchor_data =
-      cc->Inputs().Tag(kAnchorsTag).Get<std::vector<Anchor>>();
+  const std::vector<Anchor3d> anchor_data =
+      cc->Inputs().Tag(kAnchorsTag).Get<std::vector<Anchor3d>>();
   if (cc->Inputs().HasTag(kGifAspectRatioTag) &&
       !cc->Inputs().Tag(kGifAspectRatioTag).IsEmpty()) {
     gif_aspect_ratio_ = cc->Inputs().Tag(kGifAspectRatioTag).Get<float>();
@@ -213,7 +213,7 @@ absl::Status MatricesManagerCalculator::Process(CalculatorContext* cc) {
   }
 
   int render_idx = 0;
-  for (const Anchor& anchor : anchor_data) {
+  for (const Anchor3d& anchor : anchor_data) {
     const int id = anchor.sticker_id;
     mediapipe::TimedModelMatrixProto* model_matrix;
     // Add model matrix to matrices list for defined object render ID
@@ -302,7 +302,7 @@ const Matrix3f MatricesManagerCalculator::GenerateUserRotationMatrix(
 // screen Using the sticker anchor data, a translation vector can be generated
 // in OpenGL coordinate space
 const Vector3f MatricesManagerCalculator::GenerateAnchorVector(
-    const Anchor& tracked_anchor) const {
+    const Anchor3d& tracked_anchor) const {
   // Using an initial z-value in OpenGL space, generate a new base z-axis value
   // to mimic scaling by distance.
   const float z = kInitialZ * tracked_anchor.z;

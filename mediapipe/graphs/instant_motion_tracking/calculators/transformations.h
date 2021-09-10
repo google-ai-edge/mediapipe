@@ -30,7 +30,7 @@ struct UserScaling {
 };
 
 // The normalized anchor coordinates of a sticker
-struct Anchor {
+struct Anchor3d {
   float x;  // [0.0-1.0]
   float y;  // [0.0-1.0]
   float z;  // Centered around 1.0 [current_scale = z * initial_scale]

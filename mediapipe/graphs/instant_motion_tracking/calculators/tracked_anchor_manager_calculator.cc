@@ -68,7 +68,7 @@ constexpr float kUsToMs =
 class TrackedAnchorManagerCalculator : public CalculatorBase {
  private:
   // Previous graph iteration anchor data
-  std::vector<Anchor> previous_anchor_data_;
+  std::vector<Anchor3d> previous_anchor_data_;
 
  public:
   static absl::Status GetContract(CalculatorContract* cc) {
@@ -77,14 +77,14 @@ class TrackedAnchorManagerCalculator : public CalculatorBase {
     RET_CHECK(cc->Outputs().HasTag(kAnchorsTag) &&
               cc->Outputs().HasTag(kBoxesOutputTag));
 
-    cc->Inputs().Tag(kAnchorsTag).Set<std::vector<Anchor>>();
+    cc->Inputs().Tag(kAnchorsTag).Set<std::vector<Anchor3d>>();
     cc->Inputs().Tag(kSentinelTag).Set<int>();
 
     if (cc->Inputs().HasTag(kBoxesInputTag)) {
       cc->Inputs().Tag(kBoxesInputTag).Set<mediapipe::TimedBoxProtoList>();
     }
 
-    cc->Outputs().Tag(kAnchorsTag).Set<std::vector<Anchor>>();
+    cc->Outputs().Tag(kAnchorsTag).Set<std::vector<Anchor3d>>();
     cc->Outputs().Tag(kBoxesOutputTag).Set<mediapipe::TimedBoxProtoList>();
 
     if (cc->Outputs().HasTag(kCancelTag)) {
@@ -103,10 +103,10 @@ REGISTER_CALCULATOR(TrackedAnchorManagerCalculator);
 absl::Status TrackedAnchorManagerCalculator::Process(CalculatorContext* cc) {
   mediapipe::Timestamp timestamp = cc->InputTimestamp();
   const int sticker_sentinel = cc->Inputs().Tag(kSentinelTag).Get<int>();
-  std::vector<Anchor> current_anchor_data =
-      cc->Inputs().Tag(kAnchorsTag).Get<std::vector<Anchor>>();
+  std::vector<Anchor3d> current_anchor_data =
+      cc->Inputs().Tag(kAnchorsTag).Get<std::vector<Anchor3d>>();
   auto pos_boxes = absl::make_unique<mediapipe::TimedBoxProtoList>();
-  std::vector<Anchor> tracked_scaled_anchor_data;
+  std::vector<Anchor3d> tracked_scaled_anchor_data;
 
   // Delete any boxes being tracked without an associated anchor
   for (const mediapipe::TimedBoxProto& box :
@@ -115,7 +115,7 @@ absl::Status TrackedAnchorManagerCalculator::Process(CalculatorContext* cc) {
            .Get<mediapipe::TimedBoxProtoList>()
            .box()) {
     bool anchor_exists = false;
-    for (Anchor anchor : current_anchor_data) {
+    for (Anchor3d anchor : current_anchor_data) {
       if (box.id() == anchor.sticker_id) {
         anchor_exists = true;
         break;
@@ -129,8 +129,8 @@ absl::Status TrackedAnchorManagerCalculator::Process(CalculatorContext* cc) {
   }
 
   // Perform tracking or updating for each anchor position
-  for (const Anchor& anchor : current_anchor_data) {
-    Anchor output_anchor = anchor;
+  for (const Anchor3d& anchor : current_anchor_data) {
+    Anchor3d output_anchor = anchor;
     // Check if anchor position is being reset by user in this graph iteration
     if (sticker_sentinel == anchor.sticker_id) {
       // Delete associated tracking box
@@ -150,7 +150,7 @@ absl::Status TrackedAnchorManagerCalculator::Process(CalculatorContext* cc) {
       // Default value for normalized z (scale factor)
       output_anchor.z = 1.0f;
     } else {
-      // Anchor position was not reset by user
+      // Anchor3d position was not reset by user
       // Attempt to update anchor position from tracking subgraph
       // (TimedBoxProto)
       bool updated_from_tracker = false;
@@ -175,7 +175,7 @@ absl::Status TrackedAnchorManagerCalculator::Process(CalculatorContext* cc) {
       // stickers to be tracked at approximately last location even if
       // re-acquisitioning in the BoxTrackingSubgraph encounters errors
       if (!updated_from_tracker) {
-        for (const Anchor& prev_anchor : previous_anchor_data_) {
+        for (const Anchor3d& prev_anchor : previous_anchor_data_) {
           if (anchor.sticker_id == prev_anchor.sticker_id) {
             mediapipe::TimedBoxProto* box = pos_boxes->add_box();
             box->set_left(prev_anchor.x - kBoxEdgeSize * 0.5f);
@@ -199,7 +199,7 @@ absl::Status TrackedAnchorManagerCalculator::Process(CalculatorContext* cc) {
 
   cc->Outputs()
       .Tag(kAnchorsTag)
-      .AddPacket(MakePacket<std::vector<Anchor>>(tracked_scaled_anchor_data)
+      .AddPacket(MakePacket<std::vector<Anchor3d>>(tracked_scaled_anchor_data)
                      .At(cc->InputTimestamp()));
   cc->Outputs()
       .Tag(kBoxesOutputTag)

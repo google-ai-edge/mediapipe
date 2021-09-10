@@ -61,7 +61,7 @@ class StickerManagerCalculator : public CalculatorBase {
               cc->Outputs().HasTag(kRenderDescriptorsTag));
 
     cc->Inputs().Tag(kProtoDataString).Set<std::string>();
-    cc->Outputs().Tag(kAnchorsTag).Set<std::vector<Anchor>>();
+    cc->Outputs().Tag(kAnchorsTag).Set<std::vector<Anchor3d>>();
     cc->Outputs().Tag(kUserRotationsTag).Set<std::vector<UserRotation>>();
     cc->Outputs().Tag(kUserScalingsTag).Set<std::vector<UserScaling>>();
     cc->Outputs().Tag(kRenderDescriptorsTag).Set<std::vector<int>>();
@@ -78,7 +78,7 @@ class StickerManagerCalculator : public CalculatorBase {
     std::string sticker_proto_string =
         cc->Inputs().Tag(kProtoDataString).Get<std::string>();
 
-    std::vector<Anchor> initial_anchor_data;
+    std::vector<Anchor3d> initial_anchor_data;
     std::vector<UserRotation> user_rotation_data;
     std::vector<UserScaling> user_scaling_data;
     std::vector<int> render_data;
@@ -91,7 +91,7 @@ class StickerManagerCalculator : public CalculatorBase {
 
     for (int i = 0; i < sticker_roll.sticker().size(); ++i) {
       // Declare empty structures for sticker data
-      Anchor initial_anchor;
+      Anchor3d initial_anchor;
       UserRotation user_rotation;
       UserScaling user_scaling;
       // Get individual Sticker object as defined by Protobuffer
@@ -116,7 +116,7 @@ class StickerManagerCalculator : public CalculatorBase {
     if (cc->Outputs().HasTag(kAnchorsTag)) {
       cc->Outputs()
           .Tag(kAnchorsTag)
-          .AddPacket(MakePacket<std::vector<Anchor>>(initial_anchor_data)
+          .AddPacket(MakePacket<std::vector<Anchor3d>>(initial_anchor_data)
                          .At(cc->InputTimestamp()));
     }
     if (cc->Outputs().HasTag(kUserRotationsTag)) {
