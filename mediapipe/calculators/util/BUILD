@@ -58,6 +58,16 @@ mediapipe_proto_library(
 )
 
 mediapipe_proto_library(
+    name = "filter_detections_calculator_proto",
+    srcs = ["filter_detections_calculator.proto"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//mediapipe/framework:calculator_options_proto",
+        "//mediapipe/framework:calculator_proto",
+    ],
+)
+
+mediapipe_proto_library(
     name = "timed_box_list_id_to_label_calculator_proto",
     srcs = ["timed_box_list_id_to_label_calculator.proto"],
     visibility = ["//visibility:public"],
@@ -155,6 +165,21 @@ cc_test(
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/framework/port:parse_text_proto",
         "//mediapipe/framework/stream_handler:immediate_input_stream_handler",
+    ],
+)
+
+cc_test(
+    name = "filter_detections_calculator_test",
+    size = "small",
+    srcs = ["filter_detections_calculator_test.cc"],
+    deps = [
+        ":filter_detections_calculator",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:calculator_runner",
+        "//mediapipe/framework/deps:message_matchers",
+        "//mediapipe/framework/formats:detection_cc_proto",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:parse_text_proto",
     ],
 )
 
@@ -368,6 +393,20 @@ cc_library(
         "//mediapipe/framework/formats:location_data_cc_proto",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
+    ],
+    alwayslink = 1,
+)
+
+cc_library(
+    name = "filter_detections_calculator",
+    srcs = ["filter_detections_calculator.cc"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":filter_detections_calculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/formats:detection_cc_proto",
+        "//mediapipe/framework/port:status",
+        "@com_google_absl//absl/memory",
     ],
     alwayslink = 1,
 )

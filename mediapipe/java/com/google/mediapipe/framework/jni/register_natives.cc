@@ -225,6 +225,12 @@ void RegisterPacketCreatorNatives(JNIEnv *env) {
   AddJNINativeMethod(&packet_creator_methods, packet_creator,
                      "nativeCreateString", "(JLjava/lang/String;)J",
                      (void *)&PACKET_CREATOR_METHOD(nativeCreateString));
+  std::string serialized_message_name = class_registry.GetClassName(
+      mediapipe::android::ClassRegistry::kProtoUtilSerializedMessageClassName);
+  AddJNINativeMethod(&packet_creator_methods, packet_creator,
+                     "nativeCreateProto",
+                     "(JL" + serialized_message_name + ";)J",
+                     (void *)&PACKET_CREATOR_METHOD(nativeCreateProto));
   RegisterNativesVector(env, packet_creator_class, packet_creator_methods);
 }
 

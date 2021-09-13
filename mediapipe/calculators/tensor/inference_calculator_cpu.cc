@@ -50,11 +50,13 @@ int GetXnnpackDefaultNumThreads() {
 // Returns number of threads to configure XNNPACK delegate with.
 // Returns user provided value if specified. Otherwise, tries to choose optimal
 // number of threads depending on the device.
-int GetXnnpackNumThreads(const mediapipe::InferenceCalculatorOptions& opts) {
+int GetXnnpackNumThreads(
+    const bool opts_has_delegate,
+    const mediapipe::InferenceCalculatorOptions::Delegate& opts_delegate) {
   static constexpr int kDefaultNumThreads = -1;
-  if (opts.has_delegate() && opts.delegate().has_xnnpack() &&
-      opts.delegate().xnnpack().num_threads() != kDefaultNumThreads) {
-    return opts.delegate().xnnpack().num_threads();
+  if (opts_has_delegate && opts_delegate.has_xnnpack() &&
+      opts_delegate.xnnpack().num_threads() != kDefaultNumThreads) {
+    return opts_delegate.xnnpack().num_threads();
   }
   return GetXnnpackDefaultNumThreads();
 }
@@ -175,33 +177,40 @@ absl::Status InferenceCalculatorCpuImpl::LoadDelegateAndAllocateTensors(
 absl::Status InferenceCalculatorCpuImpl::LoadDelegate(CalculatorContext* cc) {
   const auto& calculator_opts =
       cc->Options<mediapipe::InferenceCalculatorOptions>();
-  if (calculator_opts.has_delegate() &&
-      calculator_opts.delegate().has_tflite()) {
+  auto opts_delegate = calculator_opts.delegate();
+  if (!kDelegate(cc).IsEmpty()) {
+    mediapipe::InferenceCalculatorOptions::Delegate input_side_packet_delegate =
+        kDelegate(cc).Get();
+    CHECK(input_side_packet_delegate.has_tflite() ||
+          input_side_packet_delegate.has_xnnpack() ||
+          input_side_packet_delegate.has_nnapi() ||
+          input_side_packet_delegate.delegate_case() ==
+              mediapipe::InferenceCalculatorOptions::Delegate::DELEGATE_NOT_SET)
+        << "inference_calculator_cpu only supports delegate input side packet "
+        << "for TFLite, XNNPack and Nnapi";
+    opts_delegate.MergeFrom(input_side_packet_delegate);
+  }
+  const bool opts_has_delegate =
+      calculator_opts.has_delegate() || !kDelegate(cc).IsEmpty();
+  if (opts_has_delegate && opts_delegate.has_tflite()) {
     // Default tflite inference requeqsted - no need to modify graph.
     return absl::OkStatus();
   }
 
 #if defined(MEDIAPIPE_ANDROID)
-  const bool nnapi_requested = calculator_opts.has_delegate()
-                                   ? calculator_opts.delegate().has_nnapi()
-                                   : calculator_opts.use_nnapi();
+  const bool nnapi_requested = opts_has_delegate ? opts_delegate.has_nnapi()
+                                                 : calculator_opts.use_nnapi();
   if (nnapi_requested) {
     // Attempt to use NNAPI.
     // If not supported, the default CPU delegate will be created and used.
     interpreter_->SetAllowFp16PrecisionForFp32(1);
     tflite::StatefulNnApiDelegate::Options options;
-    const auto& nnapi = calculator_opts.delegate().nnapi();
+    const auto& nnapi = opts_delegate.nnapi();
     // Set up cache_dir and model_token for NNAPI compilation cache.
     options.cache_dir =
         nnapi.has_cache_dir() ? nnapi.cache_dir().c_str() : nullptr;
-    if (!kNnApiDelegateCacheDir(cc).IsEmpty()) {
-      options.cache_dir = kNnApiDelegateCacheDir(cc).Get().c_str();
-    }
     options.model_token =
         nnapi.has_model_token() ? nnapi.model_token().c_str() : nullptr;
-    if (!kNnApiDelegateModelToken(cc).IsEmpty()) {
-      options.model_token = kNnApiDelegateModelToken(cc).Get().c_str();
-    }
     delegate_ = TfLiteDelegatePtr(new tflite::StatefulNnApiDelegate(options),
                                   [](TfLiteDelegate*) {});
     RET_CHECK_EQ(interpreter_->ModifyGraphWithDelegate(delegate_.get()),
@@ -213,13 +222,13 @@ absl::Status InferenceCalculatorCpuImpl::LoadDelegate(CalculatorContext* cc) {
 #if defined(__EMSCRIPTEN__)
   const bool use_xnnpack = true;
 #else
-  const bool use_xnnpack = calculator_opts.has_delegate() &&
-                           calculator_opts.delegate().has_xnnpack();
+  const bool use_xnnpack = opts_has_delegate && opts_delegate.has_xnnpack();
 #endif  // defined(__EMSCRIPTEN__)
 
   if (use_xnnpack) {
     TfLiteXNNPackDelegateOptions xnnpack_opts{};
-    xnnpack_opts.num_threads = GetXnnpackNumThreads(calculator_opts);
+    xnnpack_opts.num_threads =
+        GetXnnpackNumThreads(opts_has_delegate, opts_delegate);
     delegate_ = TfLiteDelegatePtr(TfLiteXNNPackDelegateCreate(&xnnpack_opts),
                                   &TfLiteXNNPackDelegateDelete);
     RET_CHECK_EQ(interpreter_->ModifyGraphWithDelegate(delegate_.get()),

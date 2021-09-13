@@ -95,19 +95,30 @@ absl::Status InferenceCalculatorGlImpl::UpdateContract(CalculatorContract* cc) {
 
 absl::Status InferenceCalculatorGlImpl::Open(CalculatorContext* cc) {
   const auto& options = cc->Options<::mediapipe::InferenceCalculatorOptions>();
-  use_advanced_gpu_api_ = options.has_delegate() &&
-                          options.delegate().has_gpu() &&
-                          options.delegate().gpu().use_advanced_gpu_api();
-  allow_precision_loss_ = options.delegate().gpu().allow_precision_loss();
-  tflite_gpu_runner_api_ = options.delegate().gpu().api();
-  tflite_gpu_runner_usage_ = options.delegate().gpu().usage();
-  use_kernel_caching_ = use_advanced_gpu_api_ &&
-                        options.delegate().gpu().has_cached_kernel_path();
+  mediapipe::InferenceCalculatorOptions::Delegate delegate = options.delegate();
+  if (!kDelegate(cc).IsEmpty()) {
+    mediapipe::InferenceCalculatorOptions::Delegate input_side_packet_delegate =
+        kDelegate(cc).Get();
+    CHECK(input_side_packet_delegate.has_gpu() ||
+          input_side_packet_delegate.delegate_case() ==
+              mediapipe::InferenceCalculatorOptions::Delegate::DELEGATE_NOT_SET)
+        << "inference_calculator_gl only supports delegate input side packet "
+        << "for Gpu";
+    delegate.MergeFrom(input_side_packet_delegate);
+  }
+  const bool has_delegate = options.has_delegate() || !kDelegate(cc).IsEmpty();
+  use_advanced_gpu_api_ = has_delegate && delegate.has_gpu() &&
+                          delegate.gpu().use_advanced_gpu_api();
+  allow_precision_loss_ = delegate.gpu().allow_precision_loss();
+  tflite_gpu_runner_api_ = delegate.gpu().api();
+  tflite_gpu_runner_usage_ = delegate.gpu().usage();
+  use_kernel_caching_ =
+      use_advanced_gpu_api_ && delegate.gpu().has_cached_kernel_path();
   use_gpu_delegate_ = !use_advanced_gpu_api_;
 
   if (use_kernel_caching_) {
 #ifdef MEDIAPIPE_ANDROID
-    cached_kernel_filename_ = options.delegate().gpu().cached_kernel_path() +
+    cached_kernel_filename_ = delegate.gpu().cached_kernel_path() +
                               mediapipe::File::Basename(options.model_path()) +
                               ".ker";
 #endif  // MEDIAPIPE_ANDROID

@@ -87,6 +87,7 @@ public class SolutionBase {
     } else {
       Log.e(TAG, message, e);
     }
+    throw e;
   }
 
   /**

@@ -92,11 +92,11 @@ class SolveEpnpTest : public Test {
     const float scale = output_3d_points[0].z() / expected_3d_points_[0].z();
     for (int i = 0; i < kNumKeypoints; ++i) {
       EXPECT_NEAR(output_3d_points[i].x(), expected_3d_points_[i].x() * scale,
-                  1.e-6f);
+                  2.e-6f);
       EXPECT_NEAR(output_3d_points[i].y(), expected_3d_points_[i].y() * scale,
-                  1.e-6f);
+                  2.e-6f);
       EXPECT_NEAR(output_3d_points[i].z(), expected_3d_points_[i].z() * scale,
-                  1.e-6f);
+                  2.e-6f);
     }
   }
 

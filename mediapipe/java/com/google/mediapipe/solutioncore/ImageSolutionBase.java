@@ -119,6 +119,18 @@ public class ImageSolutionBase extends SolutionBase {
               "Receving a frame with invalid timestamp."));
       return;
     }
+    if (!solutionGraphStarted.get()) {
+      if (imageObj instanceof TextureFrame) {
+        ((TextureFrame) imageObj).release();
+      }
+      throwException(
+          "The solution graph hasn't been successfully started or error occurs during graph"
+              + " initializaton.",
+          new MediaPipeException(
+              MediaPipeException.StatusCode.FAILED_PRECONDITION.ordinal(),
+              "Graph is not started."));
+      return;
+    }
     lastTimestamp = timestamp;
     Packet imagePacket = null;
     try {

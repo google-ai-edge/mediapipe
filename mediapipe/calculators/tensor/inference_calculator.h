@@ -99,13 +99,11 @@ class InferenceCalculator : public NodeIntf {
       kSideInCustomOpResolver{"CUSTOM_OP_RESOLVER"};
   static constexpr SideInput<TfLiteModelPtr>::Optional kSideInModel{"MODEL"};
   static constexpr Output<std::vector<Tensor>> kOutTensors{"TENSORS"};
-  static constexpr SideInput<std::string>::Optional kNnApiDelegateCacheDir{
-      "NNAPI_CACHE_DIR"};
-  static constexpr SideInput<std::string>::Optional kNnApiDelegateModelToken{
-      "NNAPI_MODEL_TOKEN"};
+  static constexpr SideInput<
+      mediapipe::InferenceCalculatorOptions::Delegate>::Optional kDelegate{
+      "DELEGATE"};
   MEDIAPIPE_NODE_CONTRACT(kInTensors, kSideInCustomOpResolver, kSideInModel,
-                          kOutTensors, kNnApiDelegateCacheDir,
-                          kNnApiDelegateModelToken);
+                          kOutTensors, kDelegate);
 
  protected:
   using TfLiteDelegatePtr =
