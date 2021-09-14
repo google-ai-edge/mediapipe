@@ -16,11 +16,11 @@ bazel_skylib_workspace()
 load("@bazel_skylib//lib:versions.bzl", "versions")
 versions.check(minimum_bazel_version = "3.7.2")
 
-# ABSL cpp library lts_2020_09_23
+# ABSL cpp library lts_2021_03_24.1
 http_archive(
     name = "com_google_absl",
     urls = [
-        "https://github.com/abseil/abseil-cpp/archive/20200923.tar.gz",
+        "https://github.com/abseil/abseil-cpp/archive/20210324.1.tar.gz",
     ],
     # Remove after https://github.com/abseil/abseil-cpp/issues/326 is solved.
     patches = [
@@ -29,8 +29,8 @@ http_archive(
     patch_args = [
         "-p1",
     ],
-    strip_prefix = "abseil-cpp-20200923",
-    sha256 = "b3744a4f7a249d5eaf2309daad597631ce77ea62e0fc6abffbab4b4c3dc0fc08"
+    strip_prefix = "abseil-cpp-20210324.1",
+    sha256 = "441db7c09a0565376ecacf0085b2d4c2bbedde6115d7773551bc116212c2a8d6"
 )
 
 http_archive(
