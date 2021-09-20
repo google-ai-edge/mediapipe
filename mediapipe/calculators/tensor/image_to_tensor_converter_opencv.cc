@@ -103,7 +103,7 @@ class OpenCvProcessor : public ImageToTensorConverter {
         GetValueRangeTransformation(kInputImageRangeMin, kInputImageRangeMax,
                                     range_min, range_max));
     transformed.convertTo(dst, CV_32FC3, transform.scale, transform.offset);
-    return tensor;
+    return absl::StatusOr<mediapipe::Tensor> ( mediapipe::Tensor(std::move(tensor)) ); 
   }
 
  private:

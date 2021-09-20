@@ -312,7 +312,7 @@ class GlProcessor : public ImageToTensorConverter {
       return absl::OkStatus();
     }));
 
-    return tensor;
+    return absl::StatusOr<mediapipe::Tensor> ( mediapipe::Tensor(std::move(tensor)) );
   }
 
   ~GlProcessor() override {
