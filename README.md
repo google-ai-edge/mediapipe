@@ -79,6 +79,48 @@ run code search using
 
 ### Build on MacOS
 
+#### Prepare
+1. install bazel/opencv/ffmpeg:
+```bash
+brew install bazel
+brew install opencv@3
+brew install ffmpeg
+```
+
+2. Set .bazelversion:
+Run 
+```bash
+brew list bazel
+```
+to get bazel version, which may print: 
+```
+/opt/homebrew/Cellar/bazel/4.1.0/bin/bazel
+/opt/homebrew/Cellar/bazel/4.1.0/bin/bazel-4.1.0
+/opt/homebrew/Cellar/bazel/4.1.0/etc/bash_completion.d/bazel-complete.bash
+/opt/homebrew/Cellar/bazel/4.1.0/libexec/bin/ (3 files)
+/opt/homebrew/Cellar/bazel/4.1.0/share/zsh/site-functions/_bazel```
+```
+
+Update .bazelversion:
+```bash
+echo 4.1.0 > .bazelversion
+```
+
+1. Set the right paths to opencv/ffmpeg in WORKSPACE (line 212~222), for example:
+```
+new_local_repository(
+    name = "macos_opencv",
+    build_file = "@//third_party:opencv_macos.BUILD",
+    path = "/opt/homebrew/Cellar/opencv@3/3.4.14_3",
+)
+
+new_local_repository(
+    name = "macos_ffmpeg",
+    build_file = "@//third_party:ffmpeg_macos.BUILD",
+    path = "/opt/homebrew/Cellar/ffmpeg/4.4_2",
+)
+```
+
 #### CPU: Apple Silicon M1
 1. Build "hello_world":
 ```bash
