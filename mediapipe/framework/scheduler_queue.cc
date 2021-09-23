@@ -26,7 +26,8 @@
 #include "mediapipe/framework/port/status.h"
 
 #ifdef __APPLE__
-#define AUTORELEASEPOOL @autoreleasepool
+// #define AUTORELEASEPOOL @autoreleasepool
+#define AUTORELEASEPOOL
 #else
 #define AUTORELEASEPOOL
 #endif  // __APPLE__

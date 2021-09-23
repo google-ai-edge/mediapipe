@@ -83,9 +83,15 @@ build:ios_fat --config=ios
 build:ios_fat --ios_multi_cpus=armv7,arm64
 build:ios_fat --watchos_cpus=armv7k
 
+# MacOS configs.
 build:darwin_x86_64 --apple_platform_type=macos
 build:darwin_x86_64 --macos_minimum_os=10.12
 build:darwin_x86_64 --cpu=darwin_x86_64
+
+# MacOS Big Sur with Apple Silicon M1
+build:darwin_arm64 --apple_platform_type=macos
+build:darwin_arm64 --macos_minimum_os=10.16
+build:darwin_arm64 --cpu=darwin_arm64
 
 # This bazelrc file is meant to be written by a setup script.
 try-import %workspace%/.configure.bazelrc

@@ -100,6 +100,71 @@ The source code is hosted in the
 run code search using
 [Google Open Source Code Search](https://cs.opensource.google/mediapipe/mediapipe).
 
+### Build on MacOS
+
+#### CPU: Apple Silicon M1
+1. Build "hello_world":
+```bash
+bazel build -c opt --define MEDIAPIPE_DISABLE_GPU=1 --cpu darwin_arm64 mediapipe/examples/desktop/hello_world:hello_world
+```
+and run:
+```bash
+export GLOG_logtostderr=1
+bazel-bin/mediapipe/examples/desktop/hello_world/hello_world
+```
+2. Build all available examples under mediapipe/examples/desktop:
+```bash
+bash build_macos_desktop_examples.sh --cpu m1 -b
+```
+
+3. Build and run one example app (e.g. mediapipe/examples/desktop/face_detection):
+```
+bash build_macos_desktop_examples.sh --cpu m1 --app face_detection -r
+```
+
+#### CPU: x86_64
+1. Build "hello_world":
+```bash
+bazel build -c opt --define MEDIAPIPE_DISABLE_GPU=1 --cpu darwin_x86_64 mediapipe/examples/desktop/hello_world:hello_world
+```
+and run:
+```bash
+export GLOG_logtostderr=1
+bazel-bin/mediapipe/examples/desktop/hello_world/hello_world
+```
+
+2. Build all available examples under mediapipe/examples/desktop:
+```bash
+bash build_macos_desktop_examples.sh --cpu x86_64 -b
+```
+
+3. Build and run one example app (e.g. mediapipe/examples/desktop/face_detection):
+```
+bash build_macos_desktop_examples.sh --cpu x86_64 --app face_detection -r
+```
+
+#### CPU: i386
+1. Build "hello_world":
+```bash
+bazel build -c opt --define MEDIAPIPE_DISABLE_GPU=1 --cpu darwin_i386 mediapipe/examples/desktop/hello_world:hello_world
+```
+
+and run:
+```bash
+export GLOG_logtostderr=1
+bazel-bin/mediapipe/examples/desktop/hello_world/hello_world
+```
+
+2. Build all available examples under mediapipe/examples/desktop:
+```bash
+bash build_macos_desktop_examples.sh --cpu i386 -b
+```
+
+3. Build and run one example app (e.g. mediapipe/examples/desktop/face_detection):
+```
+bash build_macos_desktop_examples.sh --cpu i386 --app face_detection -r
+```
+
 ## Publications
 
 *   [MediaPipe Holistic - Simultaneous Face, Hand and Pose Prediction, on Device](https://ai.googleblog.com/2020/12/mediapipe-holistic-simultaneous-face.html)
