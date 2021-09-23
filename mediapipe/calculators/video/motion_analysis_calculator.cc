@@ -38,6 +38,18 @@
 
 namespace mediapipe {
 
+constexpr char kDownsampleTag[] = "DOWNSAMPLE";
+constexpr char kCsvFileTag[] = "CSV_FILE";
+constexpr char kGrayVideoOutTag[] = "GRAY_VIDEO_OUT";
+constexpr char kVideoOutTag[] = "VIDEO_OUT";
+constexpr char kDenseFgTag[] = "DENSE_FG";
+constexpr char kVizTag[] = "VIZ";
+constexpr char kSaliencyTag[] = "SALIENCY";
+constexpr char kCameraTag[] = "CAMERA";
+constexpr char kFlowTag[] = "FLOW";
+constexpr char kSelectionTag[] = "SELECTION";
+constexpr char kVideoTag[] = "VIDEO";
+
 using mediapipe::AffineAdapter;
 using mediapipe::CameraMotion;
 using mediapipe::FrameSelectionResult;
@@ -190,55 +202,56 @@ class MotionAnalysisCalculator : public CalculatorBase {
 REGISTER_CALCULATOR(MotionAnalysisCalculator);
 
 absl::Status MotionAnalysisCalculator::GetContract(CalculatorContract* cc) {
-  if (cc->Inputs().HasTag("VIDEO")) {
-    cc->Inputs().Tag("VIDEO").Set<ImageFrame>();
+  if (cc->Inputs().HasTag(kVideoTag)) {
+    cc->Inputs().Tag(kVideoTag).Set<ImageFrame>();
   }
 
   // Optional input stream from frame selection calculator.
-  if (cc->Inputs().HasTag("SELECTION")) {
-    cc->Inputs().Tag("SELECTION").Set<FrameSelectionResult>();
+  if (cc->Inputs().HasTag(kSelectionTag)) {
+    cc->Inputs().Tag(kSelectionTag).Set<FrameSelectionResult>();
   }
 
-  RET_CHECK(cc->Inputs().HasTag("VIDEO") || cc->Inputs().HasTag("SELECTION"))
+  RET_CHECK(cc->Inputs().HasTag(kVideoTag) ||
+            cc->Inputs().HasTag(kSelectionTag))
       << "Either VIDEO, SELECTION must be specified.";
 
-  if (cc->Outputs().HasTag("FLOW")) {
-    cc->Outputs().Tag("FLOW").Set<RegionFlowFeatureList>();
+  if (cc->Outputs().HasTag(kFlowTag)) {
+    cc->Outputs().Tag(kFlowTag).Set<RegionFlowFeatureList>();
   }
 
-  if (cc->Outputs().HasTag("CAMERA")) {
-    cc->Outputs().Tag("CAMERA").Set<CameraMotion>();
+  if (cc->Outputs().HasTag(kCameraTag)) {
+    cc->Outputs().Tag(kCameraTag).Set<CameraMotion>();
   }
 
-  if (cc->Outputs().HasTag("SALIENCY")) {
-    cc->Outputs().Tag("SALIENCY").Set<SalientPointFrame>();
+  if (cc->Outputs().HasTag(kSaliencyTag)) {
+    cc->Outputs().Tag(kSaliencyTag).Set<SalientPointFrame>();
   }
 
-  if (cc->Outputs().HasTag("VIZ")) {
-    cc->Outputs().Tag("VIZ").Set<ImageFrame>();
+  if (cc->Outputs().HasTag(kVizTag)) {
+    cc->Outputs().Tag(kVizTag).Set<ImageFrame>();
   }
 
-  if (cc->Outputs().HasTag("DENSE_FG")) {
-    cc->Outputs().Tag("DENSE_FG").Set<ImageFrame>();
+  if (cc->Outputs().HasTag(kDenseFgTag)) {
+    cc->Outputs().Tag(kDenseFgTag).Set<ImageFrame>();
   }
 
-  if (cc->Outputs().HasTag("VIDEO_OUT")) {
-    cc->Outputs().Tag("VIDEO_OUT").Set<ImageFrame>();
+  if (cc->Outputs().HasTag(kVideoOutTag)) {
+    cc->Outputs().Tag(kVideoOutTag).Set<ImageFrame>();
   }
 
-  if (cc->Outputs().HasTag("GRAY_VIDEO_OUT")) {
+  if (cc->Outputs().HasTag(kGrayVideoOutTag)) {
     // We only output grayscale video if we're actually performing full region-
     // flow analysis on the video.
-    RET_CHECK(cc->Inputs().HasTag("VIDEO") &&
-              !cc->Inputs().HasTag("SELECTION"));
-    cc->Outputs().Tag("GRAY_VIDEO_OUT").Set<ImageFrame>();
+    RET_CHECK(cc->Inputs().HasTag(kVideoTag) &&
+              !cc->Inputs().HasTag(kSelectionTag));
+    cc->Outputs().Tag(kGrayVideoOutTag).Set<ImageFrame>();
   }
 
-  if (cc->InputSidePackets().HasTag("CSV_FILE")) {
-    cc->InputSidePackets().Tag("CSV_FILE").Set<std::string>();
+  if (cc->InputSidePackets().HasTag(kCsvFileTag)) {
+    cc->InputSidePackets().Tag(kCsvFileTag).Set<std::string>();
   }
-  if (cc->InputSidePackets().HasTag("DOWNSAMPLE")) {
-    cc->InputSidePackets().Tag("DOWNSAMPLE").Set<float>();
+  if (cc->InputSidePackets().HasTag(kDownsampleTag)) {
+    cc->InputSidePackets().Tag(kDownsampleTag).Set<float>();
   }
 
   if (cc->InputSidePackets().HasTag(kOptionsTag)) {
@@ -253,16 +266,16 @@ absl::Status MotionAnalysisCalculator::Open(CalculatorContext* cc) {
       tool::RetrieveOptions(cc->Options<MotionAnalysisCalculatorOptions>(),
                             cc->InputSidePackets(), kOptionsTag);
 
-  video_input_ = cc->Inputs().HasTag("VIDEO");
-  selection_input_ = cc->Inputs().HasTag("SELECTION");
-  region_flow_feature_output_ = cc->Outputs().HasTag("FLOW");
-  camera_motion_output_ = cc->Outputs().HasTag("CAMERA");
-  saliency_output_ = cc->Outputs().HasTag("SALIENCY");
-  visualize_output_ = cc->Outputs().HasTag("VIZ");
-  dense_foreground_output_ = cc->Outputs().HasTag("DENSE_FG");
-  video_output_ = cc->Outputs().HasTag("VIDEO_OUT");
-  grayscale_output_ = cc->Outputs().HasTag("GRAY_VIDEO_OUT");
-  csv_file_input_ = cc->InputSidePackets().HasTag("CSV_FILE");
+  video_input_ = cc->Inputs().HasTag(kVideoTag);
+  selection_input_ = cc->Inputs().HasTag(kSelectionTag);
+  region_flow_feature_output_ = cc->Outputs().HasTag(kFlowTag);
+  camera_motion_output_ = cc->Outputs().HasTag(kCameraTag);
+  saliency_output_ = cc->Outputs().HasTag(kSaliencyTag);
+  visualize_output_ = cc->Outputs().HasTag(kVizTag);
+  dense_foreground_output_ = cc->Outputs().HasTag(kDenseFgTag);
+  video_output_ = cc->Outputs().HasTag(kVideoOutTag);
+  grayscale_output_ = cc->Outputs().HasTag(kGrayVideoOutTag);
+  csv_file_input_ = cc->InputSidePackets().HasTag(kCsvFileTag);
   hybrid_meta_analysis_ = options_.meta_analysis() ==
                           MotionAnalysisCalculatorOptions::META_ANALYSIS_HYBRID;
 
@@ -310,7 +323,7 @@ absl::Status MotionAnalysisCalculator::Open(CalculatorContext* cc) {
   if (csv_file_input_) {
     // Read from file and parse.
     const std::string filename =
-        cc->InputSidePackets().Tag("CSV_FILE").Get<std::string>();
+        cc->InputSidePackets().Tag(kCsvFileTag).Get<std::string>();
 
     std::string file_contents;
     std::ifstream input_file(filename, std::ios::in);
@@ -327,11 +340,12 @@ absl::Status MotionAnalysisCalculator::Open(CalculatorContext* cc) {
 
   // Get video header from video or selection input if present.
   const VideoHeader* video_header = nullptr;
-  if (video_input_ && !cc->Inputs().Tag("VIDEO").Header().IsEmpty()) {
-    video_header = &(cc->Inputs().Tag("VIDEO").Header().Get<VideoHeader>());
+  if (video_input_ && !cc->Inputs().Tag(kVideoTag).Header().IsEmpty()) {
+    video_header = &(cc->Inputs().Tag(kVideoTag).Header().Get<VideoHeader>());
   } else if (selection_input_ &&
-             !cc->Inputs().Tag("SELECTION").Header().IsEmpty()) {
-    video_header = &(cc->Inputs().Tag("SELECTION").Header().Get<VideoHeader>());
+             !cc->Inputs().Tag(kSelectionTag).Header().IsEmpty()) {
+    video_header =
+        &(cc->Inputs().Tag(kSelectionTag).Header().Get<VideoHeader>());
   } else {
     LOG(WARNING) << "No input video header found. Downstream calculators "
                     "expecting video headers are likely to fail.";
@@ -339,7 +353,7 @@ absl::Status MotionAnalysisCalculator::Open(CalculatorContext* cc) {
 
   with_saliency_ = options_.analysis_options().compute_motion_saliency();
   // Force computation of saliency if requested as output.
-  if (cc->Outputs().HasTag("SALIENCY")) {
+  if (cc->Outputs().HasTag(kSaliencyTag)) {
     with_saliency_ = true;
     if (!options_.analysis_options().compute_motion_saliency()) {
       LOG(WARNING) << "Enable saliency computation. Set "
@@ -353,11 +367,11 @@ absl::Status MotionAnalysisCalculator::Open(CalculatorContext* cc) {
     cc->SetOffset(TimestampDiff(0));
   }
 
-  if (cc->InputSidePackets().HasTag("DOWNSAMPLE")) {
+  if (cc->InputSidePackets().HasTag(kDownsampleTag)) {
     options_.mutable_analysis_options()
         ->mutable_flow_options()
         ->set_downsample_factor(
-            cc->InputSidePackets().Tag("DOWNSAMPLE").Get<float>());
+            cc->InputSidePackets().Tag(kDownsampleTag).Get<float>());
   }
 
   // If no video header is provided, just return and initialize on the first
@@ -369,30 +383,33 @@ absl::Status MotionAnalysisCalculator::Open(CalculatorContext* cc) {
   ////////////// EARLY RETURN; ONLY HEADER OUTPUT SHOULD GO HERE ///////////////
 
   if (visualize_output_) {
-    cc->Outputs().Tag("VIZ").SetHeader(Adopt(new VideoHeader(*video_header)));
+    cc->Outputs().Tag(kVizTag).SetHeader(Adopt(new VideoHeader(*video_header)));
   }
 
   if (video_output_) {
     cc->Outputs()
-        .Tag("VIDEO_OUT")
+        .Tag(kVideoOutTag)
         .SetHeader(Adopt(new VideoHeader(*video_header)));
   }
 
-  if (cc->Outputs().HasTag("DENSE_FG")) {
+  if (cc->Outputs().HasTag(kDenseFgTag)) {
     std::unique_ptr<VideoHeader> foreground_header(
         new VideoHeader(*video_header));
     foreground_header->format = ImageFormat::GRAY8;
-    cc->Outputs().Tag("DENSE_FG").SetHeader(Adopt(foreground_header.release()));
-  }
-
-  if (cc->Outputs().HasTag("CAMERA")) {
-    cc->Outputs().Tag("CAMERA").SetHeader(
-        Adopt(new VideoHeader(*video_header)));
-  }
-
-  if (cc->Outputs().HasTag("SALIENCY")) {
     cc->Outputs()
-        .Tag("SALIENCY")
+        .Tag(kDenseFgTag)
+        .SetHeader(Adopt(foreground_header.release()));
+  }
+
+  if (cc->Outputs().HasTag(kCameraTag)) {
+    cc->Outputs()
+        .Tag(kCameraTag)
+        .SetHeader(Adopt(new VideoHeader(*video_header)));
+  }
+
+  if (cc->Outputs().HasTag(kSaliencyTag)) {
+    cc->Outputs()
+        .Tag(kSaliencyTag)
         .SetHeader(Adopt(new VideoHeader(*video_header)));
   }
 
@@ -405,9 +422,9 @@ absl::Status MotionAnalysisCalculator::Process(CalculatorContext* cc) {
   }
 
   InputStream* video_stream =
-      video_input_ ? &(cc->Inputs().Tag("VIDEO")) : nullptr;
+      video_input_ ? &(cc->Inputs().Tag(kVideoTag)) : nullptr;
   InputStream* selection_stream =
-      selection_input_ ? &(cc->Inputs().Tag("SELECTION")) : nullptr;
+      selection_input_ ? &(cc->Inputs().Tag(kSelectionTag)) : nullptr;
 
   // Checked on Open.
   CHECK(video_stream || selection_stream);
@@ -425,8 +442,9 @@ absl::Status MotionAnalysisCalculator::Process(CalculatorContext* cc) {
       CameraMotion output_motion = meta_motions_.front();
       meta_motions_.pop_front();
       output_motion.set_timestamp_usec(timestamp.Value());
-      cc->Outputs().Tag("CAMERA").Add(new CameraMotion(output_motion),
-                                      timestamp);
+      cc->Outputs()
+          .Tag(kCameraTag)
+          .Add(new CameraMotion(output_motion), timestamp);
     }
 
     if (region_flow_feature_output_) {
@@ -435,8 +453,8 @@ absl::Status MotionAnalysisCalculator::Process(CalculatorContext* cc) {
       meta_features_.pop_front();
 
       output_features.set_timestamp_usec(timestamp.Value());
-      cc->Outputs().Tag("FLOW").Add(new RegionFlowFeatureList(output_features),
-                                    timestamp);
+      cc->Outputs().Tag(kFlowTag).Add(
+          new RegionFlowFeatureList(output_features), timestamp);
     }
 
     ++frame_idx_;
@@ -478,16 +496,17 @@ absl::Status MotionAnalysisCalculator::Process(CalculatorContext* cc) {
           MotionAnalysisCalculatorOptions::NO_ANALYSIS_USE_SELECTION) {
     // Output concatenated results, nothing to compute here.
     if (camera_motion_output_) {
-      cc->Outputs().Tag("CAMERA").Add(
-          frame_selection_result->release_camera_motion(), timestamp);
+      cc->Outputs()
+          .Tag(kCameraTag)
+          .Add(frame_selection_result->release_camera_motion(), timestamp);
     }
     if (region_flow_feature_output_) {
-      cc->Outputs().Tag("FLOW").Add(frame_selection_result->release_features(),
-                                    timestamp);
+      cc->Outputs().Tag(kFlowTag).Add(
+          frame_selection_result->release_features(), timestamp);
     }
 
     if (video_output_) {
-      cc->Outputs().Tag("VIDEO_OUT").AddPacket(video_stream->Value());
+      cc->Outputs().Tag(kVideoOutTag).AddPacket(video_stream->Value());
     }
 
     return absl::OkStatus();
@@ -549,7 +568,7 @@ absl::Status MotionAnalysisCalculator::Process(CalculatorContext* cc) {
     timestamp_buffer_.push_back(timestamp);
     ++frame_idx_;
 
-    VLOG_EVERY_N(0, 100) << "Analyzed frame " << frame_idx_;
+    VLOG_EVERY_N(1, 100) << "Analyzed frame " << frame_idx_;
 
     // Buffer input frames only if visualization is requested.
     if (visualize_output_ || video_output_) {
@@ -565,7 +584,7 @@ absl::Status MotionAnalysisCalculator::Process(CalculatorContext* cc) {
       grayscale_mat.copyTo(image_frame_mat);
 
       cc->Outputs()
-          .Tag("GRAY_VIDEO_OUT")
+          .Tag(kGrayVideoOutTag)
           .Add(grayscale_image.release(), timestamp);
     }
 
@@ -640,7 +659,7 @@ void MotionAnalysisCalculator::OutputMotionAnalyzedFrames(
           *feature_list, *camera_motion,
           with_saliency_ ? saliency[k].get() : nullptr, &visualization);
 
-      cc->Outputs().Tag("VIZ").Add(visualization_frame.release(), timestamp);
+      cc->Outputs().Tag(kVizTag).Add(visualization_frame.release(), timestamp);
     }
 
     // Output dense foreground mask.
@@ -650,26 +669,26 @@ void MotionAnalysisCalculator::OutputMotionAnalyzedFrames(
       cv::Mat foreground = formats::MatView(foreground_frame.get());
       motion_analysis_->ComputeDenseForeground(*feature_list, *camera_motion,
                                                &foreground);
-      cc->Outputs().Tag("DENSE_FG").Add(foreground_frame.release(), timestamp);
+      cc->Outputs().Tag(kDenseFgTag).Add(foreground_frame.release(), timestamp);
     }
 
     // Output flow features if requested.
     if (region_flow_feature_output_) {
-      cc->Outputs().Tag("FLOW").Add(feature_list.release(), timestamp);
+      cc->Outputs().Tag(kFlowTag).Add(feature_list.release(), timestamp);
     }
 
     // Output camera motion.
     if (camera_motion_output_) {
-      cc->Outputs().Tag("CAMERA").Add(camera_motion.release(), timestamp);
+      cc->Outputs().Tag(kCameraTag).Add(camera_motion.release(), timestamp);
     }
 
     if (video_output_) {
-      cc->Outputs().Tag("VIDEO_OUT").AddPacket(packet_buffer_[k]);
+      cc->Outputs().Tag(kVideoOutTag).AddPacket(packet_buffer_[k]);
     }
 
     // Output saliency.
     if (saliency_output_) {
-      cc->Outputs().Tag("SALIENCY").Add(saliency[k].release(), timestamp);
+      cc->Outputs().Tag(kSaliencyTag).Add(saliency[k].release(), timestamp);
     }
   }
 

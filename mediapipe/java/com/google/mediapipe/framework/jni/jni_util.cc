@@ -156,10 +156,20 @@ bool ThrowIfError(JNIEnv* env, absl::Status status) {
 }
 
 SerializedMessageIds::SerializedMessageIds(JNIEnv* env, jobject data) {
-  jclass j_class = reinterpret_cast<jclass>(env->NewGlobalRef(env->FindClass(
-      "com/google/mediapipe/framework/ProtoUtil$SerializedMessage")));
-  type_name_id = env->GetFieldID(j_class, "typeName", "Ljava/lang/String;");
-  value_id = env->GetFieldID(j_class, "value", "[B");
+  auto& class_registry = mediapipe::android::ClassRegistry::GetInstance();
+  std::string serialized_message(
+      mediapipe::android::ClassRegistry::kProtoUtilSerializedMessageClassName);
+  std::string serialized_message_obfuscated =
+      class_registry.GetClassName(serialized_message);
+  std::string type_name_obfuscated =
+      class_registry.GetFieldName(serialized_message, "typeName");
+  std::string value_obfuscated =
+      class_registry.GetFieldName(serialized_message, "value");
+  jclass j_class = reinterpret_cast<jclass>(
+      env->NewGlobalRef(env->FindClass(serialized_message_obfuscated.c_str())));
+  type_name_id = env->GetFieldID(j_class, type_name_obfuscated.c_str(),
+                                 "Ljava/lang/String;");
+  value_id = env->GetFieldID(j_class, value_obfuscated.c_str(), "[B");
 }
 
 }  // namespace android

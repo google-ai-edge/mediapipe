@@ -16,7 +16,10 @@
 licenses(["notice"])
 
 package(default_visibility = [
+    "//research/aimatter/tflite:__subpackages__",
     "//mediapipe:__subpackages__",
+    # For automated benchmarking of Camera models by TFLite team.
+    "//learning/brain/models/app_benchmarks/camera_models:__subpackages__",
 ])
 
 cc_library(

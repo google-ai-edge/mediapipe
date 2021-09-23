@@ -32,6 +32,11 @@
 namespace mediapipe {
 namespace {
 
+constexpr char kTag[] = "";
+constexpr char kBTag[] = "B";
+constexpr char kATag[] = "A";
+constexpr char kSideOutputTag[] = "SIDE_OUTPUT";
+
 // Inputs: 2 streams with ints. Headers are strings.
 // Input side packets: 1.
 // Outputs: 3 streams with ints. #0 and #1 will contain the negated values from
@@ -48,7 +53,7 @@ class CalculatorRunnerTestCalculator : public CalculatorBase {
     cc->Outputs().Index(2).SetSameAs(&cc->InputSidePackets().Index(0));
     cc->InputSidePackets().Index(0).SetAny();
     cc->OutputSidePackets()
-        .Tag("SIDE_OUTPUT")
+        .Tag(kSideOutputTag)
         .SetSameAs(&cc->InputSidePackets().Index(0));
     return absl::OkStatus();
   }
@@ -64,7 +69,7 @@ class CalculatorRunnerTestCalculator : public CalculatorBase {
           Adopt(new std::string(absl::StrCat(input_header_string, i))));
     }
     cc->OutputSidePackets()
-        .Tag("SIDE_OUTPUT")
+        .Tag(kSideOutputTag)
         .Set(cc->InputSidePackets().Index(0));
     return absl::OkStatus();
   }
@@ -152,7 +157,7 @@ TEST(CalculatorRunner, RunsCalculator) {
         Adopt(new int(input_side_packet_content));
     MP_ASSERT_OK(runner.Run());
     EXPECT_EQ(input_side_packet_content,
-              runner.OutputSidePackets().Tag("SIDE_OUTPUT").Get<int>());
+              runner.OutputSidePackets().Tag(kSideOutputTag).Get<int>());
     const auto& outputs = runner.Outputs();
     ASSERT_EQ(3, outputs.NumEntries());
 
@@ -209,9 +214,9 @@ TEST(CalculatorRunner, MultiTagTestCalculatorOk) {
   const auto& outputs = runner.Outputs();
   ASSERT_EQ(3, outputs.NumEntries());
   for (int ts = 0; ts < 5; ++ts) {
-    const std::vector<Packet>& a_packets = outputs.Tag("A").packets;
-    const std::vector<Packet>& b_packets = outputs.Tag("B").packets;
-    const std::vector<Packet>& c_packets = outputs.Tag("").packets;
+    const std::vector<Packet>& a_packets = outputs.Tag(kATag).packets;
+    const std::vector<Packet>& b_packets = outputs.Tag(kBTag).packets;
+    const std::vector<Packet>& c_packets = outputs.Tag(kTag).packets;
     EXPECT_EQ(Timestamp(ts), a_packets[ts].Timestamp());
     EXPECT_EQ(Timestamp(ts), b_packets[ts].Timestamp());
     EXPECT_EQ(Timestamp(ts), c_packets[ts].Timestamp());

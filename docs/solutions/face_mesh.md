@@ -69,7 +69,7 @@ and renders using a dedicated
 The
 [face landmark subgraph](https://github.com/google/mediapipe/tree/master/mediapipe/modules/face_landmark/face_landmark_front_gpu.pbtxt)
 internally uses a
-[face_detection_subgraph](https://github.com/google/mediapipe/tree/master/mediapipe/modules/face_detection/face_detection_front_gpu.pbtxt)
+[face_detection_subgraph](https://github.com/google/mediapipe/tree/master/mediapipe/modules/face_detection/face_detection_short_range_gpu.pbtxt)
 from the
 [face detection module](https://github.com/google/mediapipe/tree/master/mediapipe/modules/face_detection).
 
@@ -265,7 +265,7 @@ magnitude of `z` uses roughly the same scale as `x`.
 
 Please first follow general [instructions](../getting_started/python.md) to
 install MediaPipe Python package, then learn more in the companion
-[Python Colab](#resources) and the following usage example.
+[Python Colab](#resources) and the usage example below.
 
 Supported configuration options:
 
@@ -278,15 +278,17 @@ Supported configuration options:
 import cv2
 import mediapipe as mp
 mp_drawing = mp.solutions.drawing_utils
+mp_drawing_styles = mp.solutions.drawing_styles
 mp_face_mesh = mp.solutions.face_mesh
 
 # For static images:
+IMAGE_FILES = []
 drawing_spec = mp_drawing.DrawingSpec(thickness=1, circle_radius=1)
 with mp_face_mesh.FaceMesh(
     static_image_mode=True,
     max_num_faces=1,
     min_detection_confidence=0.5) as face_mesh:
-  for idx, file in enumerate(file_list):
+  for idx, file in enumerate(IMAGE_FILES):
     image = cv2.imread(file)
     # Convert the BGR image to RGB before processing.
     results = face_mesh.process(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
@@ -300,9 +302,17 @@ with mp_face_mesh.FaceMesh(
       mp_drawing.draw_landmarks(
           image=annotated_image,
           landmark_list=face_landmarks,
-          connections=mp_face_mesh.FACE_CONNECTIONS,
-          landmark_drawing_spec=drawing_spec,
-          connection_drawing_spec=drawing_spec)
+          connections=mp_face_mesh.FACEMESH_TESSELATION,
+          landmark_drawing_spec=None,
+          connection_drawing_spec=mp_drawing_styles
+          .get_default_face_mesh_tesselation_style())
+      mp_drawing.draw_landmarks(
+          image=annotated_image,
+          landmark_list=face_landmarks,
+          connections=mp_face_mesh.FACEMESH_CONTOURS,
+          landmark_drawing_spec=None,
+          connection_drawing_spec=mp_drawing_styles
+          .get_default_face_mesh_contours_style())
     cv2.imwrite('/tmp/annotated_image' + str(idx) + '.png', annotated_image)
 
 # For webcam input:
@@ -334,9 +344,17 @@ with mp_face_mesh.FaceMesh(
         mp_drawing.draw_landmarks(
             image=image,
             landmark_list=face_landmarks,
-            connections=mp_face_mesh.FACE_CONNECTIONS,
-            landmark_drawing_spec=drawing_spec,
-            connection_drawing_spec=drawing_spec)
+            connections=mp_face_mesh.FACEMESH_TESSELATION,
+            landmark_drawing_spec=None,
+            connection_drawing_spec=mp_drawing_styles
+            .get_default_face_mesh_tesselation_style())
+        mp_drawing.draw_landmarks(
+            image=image,
+            landmark_list=face_landmarks,
+            connections=mp_face_mesh.FACEMESH_CONTOURS,
+            landmark_drawing_spec=None,
+            connection_drawing_spec=mp_drawing_styles
+            .get_default_face_mesh_contours_style())
     cv2.imshow('MediaPipe FaceMesh', image)
     if cv2.waitKey(5) & 0xFF == 27:
       break
@@ -420,6 +438,200 @@ const camera = new Camera(videoElement, {
 });
 camera.start();
 </script>
+```
+
+### Android Solution API
+
+Please first follow general
+[instructions](../getting_started/android_solutions.md#integrate-mediapipe-android-solutions-api)
+to add MediaPipe Gradle dependencies, then try the FaceMash solution API in the
+companion
+[example Android Studio project](https://github.com/google/mediapipe/tree/master/mediapipe/examples/android/solutions/facemesh)
+following
+[these instructions](../getting_started/android_solutions.md#build-solution-example-apps-in-android-studio)
+and learn more in the usage example below.
+
+Supported configuration options:
+
+*   [staticImageMode](#static_image_mode)
+*   [maxNumFaces](#max_num_faces)
+*   runOnGpu: Run the pipeline and the model inference on GPU or CPU.
+
+#### Camera Input
+
+```java
+// For camera input and result rendering with OpenGL.
+FaceMeshOptions faceMeshOptions =
+    FaceMeshOptions.builder()
+        .setMode(FaceMeshOptions.STREAMING_MODE)  // API soon to become
+        .setMaxNumFaces(1)                        // setStaticImageMode(false)
+        .setRunOnGpu(true).build();
+FaceMesh facemesh = new FaceMesh(this, faceMeshOptions);
+facemesh.setErrorListener(
+    (message, e) -> Log.e(TAG, "MediaPipe FaceMesh error:" + message));
+
+// Initializes a new CameraInput instance and connects it to MediaPipe FaceMesh.
+CameraInput cameraInput = new CameraInput(this);
+cameraInput.setNewFrameListener(
+    textureFrame -> facemesh.send(textureFrame));
+
+// Initializes a new GlSurfaceView with a ResultGlRenderer<FaceMeshResult> instance
+// that provides the interfaces to run user-defined OpenGL rendering code.
+// See mediapipe/examples/android/solutions/facemesh/src/main/java/com/google/mediapipe/examples/facemesh/FaceMeshResultGlRenderer.java
+// as an example.
+SolutionGlSurfaceView<FaceMeshResult> glSurfaceView =
+    new SolutionGlSurfaceView<>(
+        this, facemesh.getGlContext(), facemesh.getGlMajorVersion());
+glSurfaceView.setSolutionResultRenderer(new FaceMeshResultGlRenderer());
+glSurfaceView.setRenderInputImage(true);
+
+facemesh.setResultListener(
+    faceMeshResult -> {
+      NormalizedLandmark noseLandmark =
+          result.multiFaceLandmarks().get(0).getLandmarkList().get(1);
+      Log.i(
+          TAG,
+          String.format(
+              "MediaPipe FaceMesh nose normalized coordinates (value range: [0, 1]): x=%f, y=%f",
+              noseLandmark.getX(), noseLandmark.getY()));
+      // Request GL rendering.
+      glSurfaceView.setRenderData(faceMeshResult);
+      glSurfaceView.requestRender();
+    });
+
+// The runnable to start camera after the GLSurfaceView is attached.
+glSurfaceView.post(
+    () ->
+        cameraInput.start(
+            this,
+            facemesh.getGlContext(),
+            CameraInput.CameraFacing.FRONT,
+            glSurfaceView.getWidth(),
+            glSurfaceView.getHeight()));
+```
+
+#### Image Input
+
+```java
+// For reading images from gallery and drawing the output in an ImageView.
+FaceMeshOptions faceMeshOptions =
+    FaceMeshOptions.builder()
+        .setMode(FaceMeshOptions.STATIC_IMAGE_MODE)  // API soon to become
+        .setMaxNumFaces(1)                           // setStaticImageMode(true)
+        .setRunOnGpu(true).build();
+FaceMesh facemesh = new FaceMesh(this, faceMeshOptions);
+
+// Connects MediaPipe FaceMesh to the user-defined ImageView instance that allows
+// users to have the custom drawing of the output landmarks on it.
+// See mediapipe/examples/android/solutions/facemesh/src/main/java/com/google/mediapipe/examples/facemesh/FaceMeshResultImageView.java
+// as an example.
+FaceMeshResultImageView imageView = new FaceMeshResultImageView(this);
+facemesh.setResultListener(
+    faceMeshResult -> {
+      int width = faceMeshResult.inputBitmap().getWidth();
+      int height = faceMeshResult.inputBitmap().getHeight();
+      NormalizedLandmark noseLandmark =
+          result.multiFaceLandmarks().get(0).getLandmarkList().get(1);
+      Log.i(
+          TAG,
+          String.format(
+              "MediaPipe FaceMesh nose coordinates (pixel values): x=%f, y=%f",
+              noseLandmark.getX() * width, noseLandmark.getY() * height));
+      // Request canvas drawing.
+      imageView.setFaceMeshResult(faceMeshResult);
+      runOnUiThread(() -> imageView.update());
+    });
+facemesh.setErrorListener(
+    (message, e) -> Log.e(TAG, "MediaPipe FaceMesh error:" + message));
+
+// ActivityResultLauncher to get an image from the gallery as Bitmap.
+ActivityResultLauncher<Intent> imageGetter =
+    registerForActivityResult(
+        new ActivityResultContracts.StartActivityForResult(),
+        result -> {
+          Intent resultIntent = result.getData();
+          if (resultIntent != null && result.getResultCode() == RESULT_OK) {
+            Bitmap bitmap = null;
+            try {
+              bitmap =
+                  MediaStore.Images.Media.getBitmap(
+                      this.getContentResolver(), resultIntent.getData());
+            } catch (IOException e) {
+              Log.e(TAG, "Bitmap reading error:" + e);
+            }
+            if (bitmap != null) {
+              facemesh.send(bitmap);
+            }
+          }
+        });
+Intent gallery = new Intent(
+    Intent.ACTION_PICK, MediaStore.Images.Media.INTERNAL_CONTENT_URI);
+imageGetter.launch(gallery);
+```
+
+#### Video Input
+
+```java
+// For video input and result rendering with OpenGL.
+FaceMeshOptions faceMeshOptions =
+    FaceMeshOptions.builder()
+        .setMode(FaceMeshOptions.STREAMING_MODE)  // API soon to become
+        .setMaxNumFaces(1)                        // setStaticImageMode(false)
+        .setRunOnGpu(true).build();
+FaceMesh facemesh = new FaceMesh(this, faceMeshOptions);
+facemesh.setErrorListener(
+    (message, e) -> Log.e(TAG, "MediaPipe FaceMesh error:" + message));
+
+// Initializes a new VideoInput instance and connects it to MediaPipe FaceMesh.
+VideoInput videoInput = new VideoInput(this);
+videoInput.setNewFrameListener(
+    textureFrame -> facemesh.send(textureFrame));
+
+// Initializes a new GlSurfaceView with a ResultGlRenderer<FaceMeshResult> instance
+// that provides the interfaces to run user-defined OpenGL rendering code.
+// See mediapipe/examples/android/solutions/facemesh/src/main/java/com/google/mediapipe/examples/facemesh/FaceMeshResultGlRenderer.java
+// as an example.
+SolutionGlSurfaceView<FaceMeshResult> glSurfaceView =
+    new SolutionGlSurfaceView<>(
+        this, facemesh.getGlContext(), facemesh.getGlMajorVersion());
+glSurfaceView.setSolutionResultRenderer(new FaceMeshResultGlRenderer());
+glSurfaceView.setRenderInputImage(true);
+
+facemesh.setResultListener(
+    faceMeshResult -> {
+      NormalizedLandmark noseLandmark =
+          result.multiFaceLandmarks().get(0).getLandmarkList().get(1);
+      Log.i(
+          TAG,
+          String.format(
+              "MediaPipe FaceMesh nose normalized coordinates (value range: [0, 1]): x=%f, y=%f",
+              noseLandmark.getX(), noseLandmark.getY()));
+      // Request GL rendering.
+      glSurfaceView.setRenderData(faceMeshResult);
+      glSurfaceView.requestRender();
+    });
+
+ActivityResultLauncher<Intent> videoGetter =
+    registerForActivityResult(
+        new ActivityResultContracts.StartActivityForResult(),
+        result -> {
+          Intent resultIntent = result.getData();
+          if (resultIntent != null) {
+            if (result.getResultCode() == RESULT_OK) {
+              glSurfaceView.post(
+                  () ->
+                      videoInput.start(
+                          this,
+                          resultIntent.getData(),
+                          facemesh.getGlContext(),
+                          glSurfaceView.getWidth(),
+                          glSurfaceView.getHeight()));
+            }
+          }
+        });
+Intent gallery =
+    new Intent(Intent.ACTION_PICK, MediaStore.Video.Media.INTERNAL_CONTENT_URI);
+videoGetter.launch(gallery);
 ```
 
 ## Example Apps

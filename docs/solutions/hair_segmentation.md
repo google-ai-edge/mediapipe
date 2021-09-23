@@ -2,7 +2,7 @@
 layout: default
 title: Hair Segmentation
 parent: Solutions
-nav_order: 7
+nav_order: 8
 ---
 
 # MediaPipe Hair Segmentation
@@ -51,7 +51,14 @@ to visualize its associated subgraphs, please see
 
 ### Web
 
-Please refer to [these instructions](../index.md#mediapipe-on-the-web).
+Use [this link](https://viz.mediapipe.dev/demo/hair_segmentation) to load a demo
+in the MediaPipe Visualizer, and over there click the "Runner" icon in the top
+bar like shown below. The demos use your webcam video as input, which is
+processed all locally in real-time and never leaves your device. Please see
+[MediaPipe on the Web](https://developers.googleblog.com/2020/01/mediapipe-on-web.html)
+in Google Developers Blog for details.
+
+![visualizer_runner](../images/visualizer_runner.png)
 
 ## Resources
 

@@ -1,4 +1,4 @@
-# Calculates ROI from detections provided by `face_detection_front.tflite`
+# Calculates ROI from detections provided by `face_detection_short_range.tflite`
 # model.
 type: "FaceDetectionFrontDetectionsToRoi"
 

@@ -41,9 +41,9 @@ message LandmarksSmoothingCalculatorOptions {
     optional float min_allowed_object_scale = 3 [default = 1e-6];
 
     // Disable value scaling based on object size and use `1.0` instead.
-    // Value scale is calculated as inverse value of object size. Object size is
-    // calculated as maximum side of rectangular bounding box of the object in
-    // XY plane.
+    // If not disabled, value scale is calculated as inverse value of object
+    // size. Object size is calculated as maximum side of rectangular bounding
+    // box of the object in XY plane.
     optional bool disable_value_scaling = 4 [default = false];
   }
 
@@ -72,6 +72,12 @@ message LandmarksSmoothingCalculatorOptions {
     // If calculated object scale is less than given value smoothing will be
     // disabled and landmarks will be returned as is.
     optional float min_allowed_object_scale = 5 [default = 1e-6];
+
+    // Disable value scaling based on object size and use `1.0` instead.
+    // If not disabled, value scale is calculated as inverse value of object
+    // size. Object size is calculated as maximum side of rectangular bounding
+    // box of the object in XY plane.
+    optional bool disable_value_scaling = 6 [default = false];
   }
 
   oneof filter_options {

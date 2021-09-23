@@ -8,6 +8,17 @@ output_stream: "output_video"
 # Pose landmarks. (NormalizedLandmarkList)
 output_stream: "pose_landmarks"
 
+# Generates side packet to enable segmentation.
+node {
+  calculator: "ConstantSidePacketCalculator"
+  output_side_packet: "PACKET:enable_segmentation"
+  node_options: {
+    [type.googleapis.com/mediapipe.ConstantSidePacketCalculatorOptions]: {
+      packet { bool_value: true }
+    }
+  }
+}
+
 # Throttles the images flowing downstream for flow control. It passes through
 # the very first incoming image unaltered, and waits for downstream nodes
 # (calculators and subgraphs) in the graph to finish their tasks before it
@@ -32,8 +43,10 @@ node {
 # Subgraph that detects poses and corresponding landmarks.
 node {
   calculator: "PoseLandmarkGpu"
+  input_side_packet: "ENABLE_SEGMENTATION:enable_segmentation"
   input_stream: "IMAGE:throttled_input_video"
   output_stream: "LANDMARKS:pose_landmarks"
+  output_stream: "SEGMENTATION_MASK:segmentation_mask"
   output_stream: "DETECTION:pose_detection"
   output_stream: "ROI_FROM_LANDMARKS:roi_from_landmarks"
 }
@@ -43,7 +56,8 @@ node {
   calculator: "PoseRendererGpu"
   input_stream: "IMAGE:throttled_input_video"
   input_stream: "LANDMARKS:pose_landmarks"
-  input_stream: "ROI:roi_from_landmarks"
+  input_stream: "SEGMENTATION_MASK:segmentation_mask"
   input_stream: "DETECTION:pose_detection"
+  input_stream: "ROI:roi_from_landmarks"
   output_stream: "IMAGE:output_video"
 }

@@ -18,7 +18,6 @@
 
 #include "mediapipe/calculators/tensor/image_to_tensor_calculator.pb.h"
 #include "mediapipe/calculators/tensor/image_to_tensor_converter.h"
-#include "mediapipe/calculators/tensor/image_to_tensor_converter_opencv.h"
 #include "mediapipe/calculators/tensor/image_to_tensor_utils.h"
 #include "mediapipe/framework/api2/node.h"
 #include "mediapipe/framework/calculator_framework.h"
@@ -32,6 +31,10 @@
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/port/statusor.h"
 #include "mediapipe/gpu/gpu_origin.pb.h"
+
+#if !MEDIAPIPE_DISABLE_OPENCV
+#include "mediapipe/calculators/tensor/image_to_tensor_converter_opencv.h"
+#endif
 
 #if !MEDIAPIPE_DISABLE_GPU
 #include "mediapipe/gpu/gpu_buffer.h"
@@ -84,9 +87,9 @@ using GpuBuffer = mediapipe::GpuBuffer;
 //   TENSORS - std::vector<Tensor>
 //     Vector containing a single Tensor populated with an extrated RGB image.
 //   MATRIX - std::array<float, 16> @Optional
-//     An std::array<float, 16> representing a 4x4 row-major-order matrix which
-//     can be used to map a point on the output tensor to a point on the input
-//     image.
+//     An std::array<float, 16> representing a 4x4 row-major-order matrix that
+//     maps a point on the input image to a point on the output tensor, and
+//     can be used to reverse the mapping by inverting the matrix.
 //   LETTERBOX_PADDING - std::array<float, 4> @Optional
 //     An std::array<float, 4> representing the letterbox padding from the 4
 //     sides ([left, top, right, bottom]) of the output image, normalized to
@@ -301,8 +304,13 @@ class ImageToTensorCalculator : public Node {
       }
     } else {
       if (!cpu_converter_) {
+#if !MEDIAPIPE_DISABLE_OPENCV
         ASSIGN_OR_RETURN(cpu_converter_,
                          CreateOpenCvConverter(cc, GetBorderMode()));
+#else
+        LOG(FATAL) << "Cannot create image to tensor opencv converter since "
+                      "MEDIAPIPE_DISABLE_OPENCV is defined.";
+#endif  // !MEDIAPIPE_DISABLE_OPENCV
       }
     }
     return absl::OkStatus();

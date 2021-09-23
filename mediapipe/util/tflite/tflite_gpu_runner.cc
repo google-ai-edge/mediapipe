@@ -27,6 +27,7 @@
 #include "tensorflow/lite/core/api/op_resolver.h"
 #include "tensorflow/lite/delegates/gpu/api.h"
 #include "tensorflow/lite/delegates/gpu/common/model.h"
+#include "tensorflow/lite/delegates/gpu/common/model_builder.h"
 #include "tensorflow/lite/delegates/gpu/gl/api2.h"
 #include "tensorflow/lite/model.h"
 
@@ -35,7 +36,6 @@
 #ifdef __ANDROID__
 #include "tensorflow/lite/delegates/gpu/cl/api.h"
 #endif
-#include "tensorflow/lite/delegates/gpu/common/testing/tflite_model_reader.h"
 
 namespace tflite {
 namespace gpu {
@@ -85,7 +85,7 @@ ObjectDef GetSSBOObjectDef(int channels) {
 
 absl::Status TFLiteGPURunner::InitializeWithModel(
     const tflite::FlatBufferModel& flatbuffer,
-    const tflite::OpResolver& op_resolver) {
+    const tflite::OpResolver& op_resolver, bool allow_quant_ops) {
   // GraphFloat32 is created twice because, when OpenCL and OpenGL backends are
   // initialized, different backend-specific graph transformations happen
   // in-place. As GraphFloat32 is not copyable by design, we keep two copies of
@@ -94,10 +94,10 @@ absl::Status TFLiteGPURunner::InitializeWithModel(
   // in the end of the initialization stage.
   graph_gl_ = std::make_unique<GraphFloat32>();
   graph_cl_ = std::make_unique<GraphFloat32>();
-  MP_RETURN_IF_ERROR(
-      BuildFromFlatBuffer(flatbuffer, op_resolver, graph_gl_.get()));
-  MP_RETURN_IF_ERROR(
-      BuildFromFlatBuffer(flatbuffer, op_resolver, graph_cl_.get()));
+  MP_RETURN_IF_ERROR(BuildFromFlatBuffer(flatbuffer, op_resolver,
+                                         graph_gl_.get(), allow_quant_ops));
+  MP_RETURN_IF_ERROR(BuildFromFlatBuffer(flatbuffer, op_resolver,
+                                         graph_cl_.get(), allow_quant_ops));
 
   for (const auto& input : graph_gl_->inputs()) {
     input_shapes_.push_back(input->tensor.shape);

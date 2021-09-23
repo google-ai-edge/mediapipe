@@ -144,7 +144,7 @@ class DetectionLetterboxRemovalCalculator : public CalculatorBase {
     }
 
     cc->Outputs()
-        .Tag("DETECTIONS")
+        .Tag(kDetectionsTag)
         .Add(output_detections.release(), cc->InputTimestamp());
     return absl::OkStatus();
   }

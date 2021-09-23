@@ -18,6 +18,7 @@ import tempfile  # pylint: disable=unused-import
 from typing import NamedTuple
 
 from absl.testing import absltest
+from absl.testing import parameterized
 import cv2
 import numpy as np
 import numpy.testing as npt
@@ -28,12 +29,14 @@ from mediapipe.python.solutions import drawing_utils as mp_drawing
 from mediapipe.python.solutions import face_detection as mp_faces
 
 TEST_IMAGE_PATH = 'mediapipe/python/solutions/testdata'
-EXPECTED_FACE_KEY_POINTS = [[182, 363], [186, 460], [241, 420], [284, 417],
-                            [199, 295], [198, 502]]
+SHORT_RANGE_EXPECTED_FACE_KEY_POINTS = [[363, 182], [460, 186], [420, 241],
+                                        [417, 284], [295, 199], [502, 198]]
+FULL_RANGE_EXPECTED_FACE_KEY_POINTS = [[363, 181], [455, 181], [413, 233],
+                                       [411, 278], [306, 204], [499, 207]]
 DIFF_THRESHOLD = 5  # pixels
 
 
-class FaceDetectionTest(absltest.TestCase):
+class FaceDetectionTest(parameterized.TestCase):
 
   def _annotate(self, frame: np.ndarray, results: NamedTuple, idx: int):
     for detection in results.detections:
@@ -55,19 +58,30 @@ class FaceDetectionTest(absltest.TestCase):
       results = faces.process(image)
       self.assertIsNone(results.detections)
 
-  def test_face(self):
-    image_path = os.path.join(os.path.dirname(__file__), 'testdata/face.jpg')
+  @parameterized.named_parameters(('short_range_model', 0),
+                                  ('full_range_model', 1))
+  def test_face(self, model_selection):
+    image_path = os.path.join(os.path.dirname(__file__),
+                              'testdata/portrait.jpg')
     image = cv2.imread(image_path)
-    with mp_faces.FaceDetection(min_detection_confidence=0.5) as faces:
+    rows, cols, _ = image.shape
+    with mp_faces.FaceDetection(
+        min_detection_confidence=0.5, model_selection=model_selection) as faces:
       for idx in range(5):
         results = faces.process(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
         self._annotate(image.copy(), results, idx)
         location_data = results.detections[0].location_data
-        x = [keypoint.x for keypoint in location_data.relative_keypoints]
-        y = [keypoint.y for keypoint in location_data.relative_keypoints]
-        face_keypoints = np.transpose(np.stack((y, x))) * image.shape[0:2]
-        prediction_error = np.abs(
-            np.asarray(face_keypoints) - np.asarray(EXPECTED_FACE_KEY_POINTS))
+        x = [keypoint.x * cols for keypoint in location_data.relative_keypoints]
+        y = [keypoint.y * rows for keypoint in location_data.relative_keypoints]
+        face_keypoints = np.column_stack((x, y))
+        if model_selection == 0:
+          prediction_error = np.abs(
+              np.asarray(face_keypoints) -
+              np.asarray(SHORT_RANGE_EXPECTED_FACE_KEY_POINTS))
+        else:
+          prediction_error = np.abs(
+              np.asarray(face_keypoints) -
+              np.asarray(FULL_RANGE_EXPECTED_FACE_KEY_POINTS))
 
         self.assertLen(results.detections, 1)
         self.assertLen(location_data.relative_keypoints, 6)

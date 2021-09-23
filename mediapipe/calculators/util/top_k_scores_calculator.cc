@@ -39,6 +39,14 @@
 
 namespace mediapipe {
 
+constexpr char kTopKClassificationTag[] = "TOP_K_CLASSIFICATION";
+constexpr char kSummaryTag[] = "SUMMARY";
+constexpr char kClassificationsTag[] = "CLASSIFICATIONS";
+constexpr char kTopKLabelsTag[] = "TOP_K_LABELS";
+constexpr char kTopKScoresTag[] = "TOP_K_SCORES";
+constexpr char kTopKIndexesTag[] = "TOP_K_INDEXES";
+constexpr char kScoresTag[] = "SCORES";
+
 // A calculator that takes a vector of scores and returns the indexes, scores,
 // labels of the top k elements, classification protos, and summary std::string
 // (in csv format).
@@ -79,22 +87,22 @@ class TopKScoresCalculator : public CalculatorBase {
 REGISTER_CALCULATOR(TopKScoresCalculator);
 
 absl::Status TopKScoresCalculator::GetContract(CalculatorContract* cc) {
-  RET_CHECK(cc->Inputs().HasTag("SCORES"));
-  cc->Inputs().Tag("SCORES").Set<std::vector<float>>();
-  if (cc->Outputs().HasTag("TOP_K_INDEXES")) {
-    cc->Outputs().Tag("TOP_K_INDEXES").Set<std::vector<int>>();
+  RET_CHECK(cc->Inputs().HasTag(kScoresTag));
+  cc->Inputs().Tag(kScoresTag).Set<std::vector<float>>();
+  if (cc->Outputs().HasTag(kTopKIndexesTag)) {
+    cc->Outputs().Tag(kTopKIndexesTag).Set<std::vector<int>>();
   }
-  if (cc->Outputs().HasTag("TOP_K_SCORES")) {
-    cc->Outputs().Tag("TOP_K_SCORES").Set<std::vector<float>>();
+  if (cc->Outputs().HasTag(kTopKScoresTag)) {
+    cc->Outputs().Tag(kTopKScoresTag).Set<std::vector<float>>();
   }
-  if (cc->Outputs().HasTag("TOP_K_LABELS")) {
-    cc->Outputs().Tag("TOP_K_LABELS").Set<std::vector<std::string>>();
+  if (cc->Outputs().HasTag(kTopKLabelsTag)) {
+    cc->Outputs().Tag(kTopKLabelsTag).Set<std::vector<std::string>>();
   }
-  if (cc->Outputs().HasTag("CLASSIFICATIONS")) {
-    cc->Outputs().Tag("CLASSIFICATIONS").Set<ClassificationList>();
+  if (cc->Outputs().HasTag(kClassificationsTag)) {
+    cc->Outputs().Tag(kClassificationsTag).Set<ClassificationList>();
   }
-  if (cc->Outputs().HasTag("SUMMARY")) {
-    cc->Outputs().Tag("SUMMARY").Set<std::string>();
+  if (cc->Outputs().HasTag(kSummaryTag)) {
+    cc->Outputs().Tag(kSummaryTag).Set<std::string>();
   }
   return absl::OkStatus();
 }
@@ -114,7 +122,7 @@ absl::Status TopKScoresCalculator::Open(CalculatorContext* cc) {
   if (options.has_label_map_path()) {
     MP_RETURN_IF_ERROR(LoadLabelmap(options.label_map_path()));
   }
-  if (cc->Outputs().HasTag("TOP_K_LABELS")) {
+  if (cc->Outputs().HasTag(kTopKLabelsTag)) {
     RET_CHECK(!label_map_.empty());
   }
   return absl::OkStatus();
@@ -122,7 +130,7 @@ absl::Status TopKScoresCalculator::Open(CalculatorContext* cc) {
 
 absl::Status TopKScoresCalculator::Process(CalculatorContext* cc) {
   const std::vector<float>& input_vector =
-      cc->Inputs().Tag("SCORES").Get<std::vector<float>>();
+      cc->Inputs().Tag(kScoresTag).Get<std::vector<float>>();
   std::vector<int> top_k_indexes;
 
   std::vector<float> top_k_scores;
@@ -166,26 +174,26 @@ absl::Status TopKScoresCalculator::Process(CalculatorContext* cc) {
       top_k_labels.push_back(label_map_[index]);
     }
   }
-  if (cc->Outputs().HasTag("TOP_K_INDEXES")) {
+  if (cc->Outputs().HasTag(kTopKIndexesTag)) {
     cc->Outputs()
-        .Tag("TOP_K_INDEXES")
+        .Tag(kTopKIndexesTag)
         .AddPacket(MakePacket<std::vector<int>>(top_k_indexes)
                        .At(cc->InputTimestamp()));
   }
-  if (cc->Outputs().HasTag("TOP_K_SCORES")) {
+  if (cc->Outputs().HasTag(kTopKScoresTag)) {
     cc->Outputs()
-        .Tag("TOP_K_SCORES")
+        .Tag(kTopKScoresTag)
         .AddPacket(MakePacket<std::vector<float>>(top_k_scores)
                        .At(cc->InputTimestamp()));
   }
-  if (cc->Outputs().HasTag("TOP_K_LABELS")) {
+  if (cc->Outputs().HasTag(kTopKLabelsTag)) {
     cc->Outputs()
-        .Tag("TOP_K_LABELS")
+        .Tag(kTopKLabelsTag)
         .AddPacket(MakePacket<std::vector<std::string>>(top_k_labels)
                        .At(cc->InputTimestamp()));
   }
 
-  if (cc->Outputs().HasTag("SUMMARY")) {
+  if (cc->Outputs().HasTag(kSummaryTag)) {
     std::vector<std::string> results;
     for (int index = 0; index < top_k_indexes.size(); ++index) {
       if (label_map_loaded_) {
@@ -196,12 +204,13 @@ absl::Status TopKScoresCalculator::Process(CalculatorContext* cc) {
             absl::StrCat(top_k_indexes[index], ":", top_k_scores[index]));
       }
     }
-    cc->Outputs().Tag("SUMMARY").AddPacket(
-        MakePacket<std::string>(absl::StrJoin(results, ","))
-            .At(cc->InputTimestamp()));
+    cc->Outputs()
+        .Tag(kSummaryTag)
+        .AddPacket(MakePacket<std::string>(absl::StrJoin(results, ","))
+                       .At(cc->InputTimestamp()));
   }
 
-  if (cc->Outputs().HasTag("TOP_K_CLASSIFICATION")) {
+  if (cc->Outputs().HasTag(kTopKClassificationTag)) {
     auto classification_list = absl::make_unique<ClassificationList>();
     for (int index = 0; index < top_k_indexes.size(); ++index) {
       Classification* classification =

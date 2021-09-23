@@ -102,6 +102,10 @@ mediapipe::ScaleMode_Mode ParseScaleMode(
 //   IMAGE: ImageFrame representing the input image.
 //   IMAGE_GPU: GpuBuffer representing the input image.
 //
+//   OUTPUT_DIMENSIONS (optional): The output width and height in pixels as
+//   pair<int, int>. If set, it will override corresponding field in calculator
+//   options and input side packet.
+//
 //   ROTATION_DEGREES (optional): The counterclockwise rotation angle in
 //   degrees. This allows different rotation angles for different frames. It has
 //   to be a multiple of 90 degrees. If provided, it overrides the
@@ -221,6 +225,10 @@ absl::Status ImageTransformationCalculator::GetContract(
   }
 #endif  // !MEDIAPIPE_DISABLE_GPU
 
+  if (cc->Inputs().HasTag("OUTPUT_DIMENSIONS")) {
+    cc->Inputs().Tag("OUTPUT_DIMENSIONS").Set<std::pair<int, int>>();
+  }
+
   if (cc->Inputs().HasTag("ROTATION_DEGREES")) {
     cc->Inputs().Tag("ROTATION_DEGREES").Set<int>();
   }
@@ -328,6 +336,13 @@ absl::Status ImageTransformationCalculator::Process(CalculatorContext* cc) {
   if (cc->Inputs().HasTag("FLIP_VERTICALLY") &&
       !cc->Inputs().Tag("FLIP_VERTICALLY").IsEmpty()) {
     flip_vertically_ = cc->Inputs().Tag("FLIP_VERTICALLY").Get<bool>();
+  }
+  if (cc->Inputs().HasTag("OUTPUT_DIMENSIONS") &&
+      !cc->Inputs().Tag("OUTPUT_DIMENSIONS").IsEmpty()) {
+    const auto& image_size =
+        cc->Inputs().Tag("OUTPUT_DIMENSIONS").Get<std::pair<int, int>>();
+    output_width_ = image_size.first;
+    output_height_ = image_size.second;
   }
 
   if (use_gpu_) {

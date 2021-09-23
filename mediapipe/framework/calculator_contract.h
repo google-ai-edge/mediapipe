@@ -29,7 +29,7 @@
 #include "mediapipe/framework/port.h"
 #include "mediapipe/framework/port/any_proto.h"
 #include "mediapipe/framework/status_handler.pb.h"
-#include "mediapipe/framework/tool/options_util.h"
+#include "mediapipe/framework/tool/options_map.h"
 
 namespace mediapipe {
 
@@ -48,7 +48,8 @@ namespace mediapipe {
 class CalculatorContract {
  public:
   absl::Status Initialize(const CalculatorGraphConfig::Node& node);
-  absl::Status Initialize(const PacketGeneratorConfig& node);
+  absl::Status Initialize(const PacketGeneratorConfig& node,
+                          const std::string& package);
   absl::Status Initialize(const StatusHandlerConfig& node);
   void SetNodeName(const std::string& node_name) { node_name_ = node_name; }
 
@@ -163,7 +164,14 @@ class CalculatorContract {
   template <class T>
   void GetNodeOptions(T* result) const;
 
+  // When creating a contract for a PacketGenerator, we define a configuration
+  // for a wrapper calculator, for use by CalculatorNode.
+  const CalculatorGraphConfig::Node& GetWrapperConfig() const {
+    return *wrapper_config_;
+  }
+
   const CalculatorGraphConfig::Node* node_config_ = nullptr;
+  std::unique_ptr<CalculatorGraphConfig::Node> wrapper_config_;
   tool::OptionsMap options_;
   std::unique_ptr<PacketTypeSet> inputs_;
   std::unique_ptr<PacketTypeSet> outputs_;
@@ -175,6 +183,8 @@ class CalculatorContract {
   std::map<std::string, GraphServiceRequest> service_requests_;
   bool process_timestamps_ = false;
   TimestampDiff timestamp_offset_ = TimestampDiff::Unset();
+
+  friend class CalculatorNode;
 };
 
 }  // namespace mediapipe

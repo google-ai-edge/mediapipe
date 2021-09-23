@@ -39,7 +39,7 @@ mediapipe_simple_subgraph(
         "//mediapipe/calculators/core:concatenate_detection_vector_calculator",
         "//mediapipe/calculators/core:split_vector_calculator",
         "//mediapipe/calculators/image:image_properties_calculator",
-        "//mediapipe/modules/face_detection:face_detection_front_gpu",
+        "//mediapipe/modules/face_detection:face_detection_short_range_gpu",
         "//mediapipe/modules/face_geometry:face_geometry_from_detection",
     ],
 )

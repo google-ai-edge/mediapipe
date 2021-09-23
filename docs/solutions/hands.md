@@ -206,7 +206,7 @@ is not the case, please swap the handedness output in the application.
 
 Please first follow general [instructions](../getting_started/python.md) to
 install MediaPipe Python package, then learn more in the companion
-[Python Colab](#resources) and the following usage example.
+[Python Colab](#resources) and the usage example below.
 
 Supported configuration options:
 
@@ -219,14 +219,16 @@ Supported configuration options:
 import cv2
 import mediapipe as mp
 mp_drawing = mp.solutions.drawing_utils
+mp_drawing_styles = mp.solutions.drawing_styles
 mp_hands = mp.solutions.hands
 
 # For static images:
+IMAGE_FILES = []
 with mp_hands.Hands(
     static_image_mode=True,
     max_num_hands=2,
     min_detection_confidence=0.5) as hands:
-  for idx, file in enumerate(file_list):
+  for idx, file in enumerate(IMAGE_FILES):
     # Read an image, flip it around y-axis for correct handedness output (see
     # above).
     image = cv2.flip(cv2.imread(file), 1)
@@ -247,7 +249,11 @@ with mp_hands.Hands(
           f'{hand_landmarks.landmark[mp_hands.HandLandmark.INDEX_FINGER_TIP].y * image_height})'
       )
       mp_drawing.draw_landmarks(
-          annotated_image, hand_landmarks, mp_hands.HAND_CONNECTIONS)
+          annotated_image,
+          hand_landmarks,
+          mp_hands.HAND_CONNECTIONS,
+          mp_drawing_styles.get_default_hand_landmarks_style(),
+          mp_drawing_styles.get_default_hand_connections_style())
     cv2.imwrite(
         '/tmp/annotated_image' + str(idx) + '.png', cv2.flip(annotated_image, 1))
 
@@ -277,7 +283,11 @@ with mp_hands.Hands(
     if results.multi_hand_landmarks:
       for hand_landmarks in results.multi_hand_landmarks:
         mp_drawing.draw_landmarks(
-            image, hand_landmarks, mp_hands.HAND_CONNECTIONS)
+            image,
+            hand_landmarks,
+            mp_hands.HAND_CONNECTIONS,
+            mp_drawing_styles.get_default_hand_landmarks_style(),
+            mp_drawing_styles.get_default_hand_connections_style())
     cv2.imshow('MediaPipe Hands', image)
     if cv2.waitKey(5) & 0xFF == 27:
       break
@@ -356,6 +366,200 @@ const camera = new Camera(videoElement, {
 });
 camera.start();
 </script>
+```
+
+### Android Solution API
+
+Please first follow general
+[instructions](../getting_started/android_solutions.md#integrate-mediapipe-android-solutions-api)
+to add MediaPipe Gradle dependencies, then try the Hands solution API in the
+companion
+[example Android Studio project](https://github.com/google/mediapipe/tree/master/mediapipe/examples/android/solutions/hands)
+following
+[these instructions](../getting_started/android_solutions.md#build-solution-example-apps-in-android-studio)
+and learn more in usage example below.
+
+Supported configuration options:
+
+*   [staticImageMode](#static_image_mode)
+*   [maxNumHands](#max_num_hands)
+*   runOnGpu: Run the pipeline and the model inference on GPU or CPU.
+
+#### Camera Input
+
+```java
+// For camera input and result rendering with OpenGL.
+HandsOptions handsOptions =
+    HandsOptions.builder()
+        .setMode(HandsOptions.STREAMING_MODE)  // API soon to become
+        .setMaxNumHands(1)                     // setStaticImageMode(false)
+        .setRunOnGpu(true).build();
+Hands hands = new Hands(this, handsOptions);
+hands.setErrorListener(
+    (message, e) -> Log.e(TAG, "MediaPipe Hands error:" + message));
+
+// Initializes a new CameraInput instance and connects it to MediaPipe Hands.
+CameraInput cameraInput = new CameraInput(this);
+cameraInput.setNewFrameListener(
+    textureFrame -> hands.send(textureFrame));
+
+// Initializes a new GlSurfaceView with a ResultGlRenderer<HandsResult> instance
+// that provides the interfaces to run user-defined OpenGL rendering code.
+// See mediapipe/examples/android/solutions/hands/src/main/java/com/google/mediapipe/examples/hands/HandsResultGlRenderer.java
+// as an example.
+SolutionGlSurfaceView<HandsResult> glSurfaceView =
+    new SolutionGlSurfaceView<>(
+        this, hands.getGlContext(), hands.getGlMajorVersion());
+glSurfaceView.setSolutionResultRenderer(new HandsResultGlRenderer());
+glSurfaceView.setRenderInputImage(true);
+
+hands.setResultListener(
+    handsResult -> {
+      NormalizedLandmark wristLandmark = Hands.getHandLandmark(
+          handsResult, 0, HandLandmark.WRIST);
+      Log.i(
+          TAG,
+          String.format(
+              "MediaPipe Hand wrist normalized coordinates (value range: [0, 1]): x=%f, y=%f",
+              wristLandmark.getX(), wristLandmark.getY()));
+      // Request GL rendering.
+      glSurfaceView.setRenderData(handsResult);
+      glSurfaceView.requestRender();
+    });
+
+// The runnable to start camera after the GLSurfaceView is attached.
+glSurfaceView.post(
+    () ->
+        cameraInput.start(
+            this,
+            hands.getGlContext(),
+            CameraInput.CameraFacing.FRONT,
+            glSurfaceView.getWidth(),
+            glSurfaceView.getHeight()));
+```
+
+#### Image Input
+
+```java
+// For reading images from gallery and drawing the output in an ImageView.
+HandsOptions handsOptions =
+    HandsOptions.builder()
+        .setMode(HandsOptions.STATIC_IMAGE_MODE)  // API soon to become
+        .setMaxNumHands(1)                        // setStaticImageMode(true)
+        .setRunOnGpu(true).build();
+Hands hands = new Hands(this, handsOptions);
+
+// Connects MediaPipe Hands to the user-defined ImageView instance that allows
+// users to have the custom drawing of the output landmarks on it.
+// See mediapipe/examples/android/solutions/hands/src/main/java/com/google/mediapipe/examples/hands/HandsResultImageView.java
+// as an example.
+HandsResultImageView imageView = new HandsResultImageView(this);
+hands.setResultListener(
+    handsResult -> {
+      int width = handsResult.inputBitmap().getWidth();
+      int height = handsResult.inputBitmap().getHeight();
+      NormalizedLandmark wristLandmark = Hands.getHandLandmark(
+          handsResult, 0, HandLandmark.WRIST);
+      Log.i(
+          TAG,
+          String.format(
+              "MediaPipe Hand wrist coordinates (pixel values): x=%f, y=%f",
+              wristLandmark.getX() * width, wristLandmark.getY() * height));
+      // Request canvas drawing.
+      imageView.setHandsResult(handsResult);
+      runOnUiThread(() -> imageView.update());
+    });
+hands.setErrorListener(
+    (message, e) -> Log.e(TAG, "MediaPipe Hands error:" + message));
+
+// ActivityResultLauncher to get an image from the gallery as Bitmap.
+ActivityResultLauncher<Intent> imageGetter =
+    registerForActivityResult(
+        new ActivityResultContracts.StartActivityForResult(),
+        result -> {
+          Intent resultIntent = result.getData();
+          if (resultIntent != null && result.getResultCode() == RESULT_OK) {
+            Bitmap bitmap = null;
+            try {
+              bitmap =
+                  MediaStore.Images.Media.getBitmap(
+                      this.getContentResolver(), resultIntent.getData());
+            } catch (IOException e) {
+              Log.e(TAG, "Bitmap reading error:" + e);
+            }
+            if (bitmap != null) {
+              hands.send(bitmap);
+            }
+          }
+        });
+Intent gallery = new Intent(
+    Intent.ACTION_PICK, MediaStore.Images.Media.INTERNAL_CONTENT_URI);
+imageGetter.launch(gallery);
+```
+
+#### Video Input
+
+```java
+// For video input and result rendering with OpenGL.
+HandsOptions handsOptions =
+    HandsOptions.builder()
+        .setMode(HandsOptions.STREAMING_MODE)  // API soon to become
+        .setMaxNumHands(1)                     // setStaticImageMode(false)
+        .setRunOnGpu(true).build();
+Hands hands = new Hands(this, handsOptions);
+hands.setErrorListener(
+    (message, e) -> Log.e(TAG, "MediaPipe Hands error:" + message));
+
+// Initializes a new VideoInput instance and connects it to MediaPipe Hands.
+VideoInput videoInput = new VideoInput(this);
+videoInput.setNewFrameListener(
+    textureFrame -> hands.send(textureFrame));
+
+// Initializes a new GlSurfaceView with a ResultGlRenderer<HandsResult> instance
+// that provides the interfaces to run user-defined OpenGL rendering code.
+// See mediapipe/examples/android/solutions/hands/src/main/java/com/google/mediapipe/examples/hands/HandsResultGlRenderer.java
+// as an example.
+SolutionGlSurfaceView<HandsResult> glSurfaceView =
+    new SolutionGlSurfaceView<>(
+        this, hands.getGlContext(), hands.getGlMajorVersion());
+glSurfaceView.setSolutionResultRenderer(new HandsResultGlRenderer());
+glSurfaceView.setRenderInputImage(true);
+
+hands.setResultListener(
+    handsResult -> {
+      NormalizedLandmark wristLandmark = Hands.getHandLandmark(
+          handsResult, 0, HandLandmark.WRIST);
+      Log.i(
+          TAG,
+          String.format(
+              "MediaPipe Hand wrist normalized coordinates (value range: [0, 1]): x=%f, y=%f",
+              wristLandmark.getX(), wristLandmark.getY()));
+      // Request GL rendering.
+      glSurfaceView.setRenderData(handsResult);
+      glSurfaceView.requestRender();
+    });
+
+ActivityResultLauncher<Intent> videoGetter =
+    registerForActivityResult(
+        new ActivityResultContracts.StartActivityForResult(),
+        result -> {
+          Intent resultIntent = result.getData();
+          if (resultIntent != null) {
+            if (result.getResultCode() == RESULT_OK) {
+              glSurfaceView.post(
+                  () ->
+                      videoInput.start(
+                          this,
+                          resultIntent.getData(),
+                          hands.getGlContext(),
+                          glSurfaceView.getWidth(),
+                          glSurfaceView.getHeight()));
+            }
+          }
+        });
+Intent gallery =
+    new Intent(Intent.ACTION_PICK, MediaStore.Video.Media.INTERNAL_CONTENT_URI);
+videoGetter.launch(gallery);
 ```
 
 ## Example Apps

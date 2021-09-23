@@ -70,7 +70,7 @@ mediapipe_simple_subgraph(
         "//mediapipe/calculators/image:image_properties_calculator",
         "//mediapipe/calculators/util:association_norm_rect_calculator",
         "//mediapipe/calculators/util:collection_has_min_size_calculator",
-        "//mediapipe/modules/face_detection:face_detection_front_cpu",
+        "//mediapipe/modules/face_detection:face_detection_short_range_cpu",
     ],
 )
 
@@ -91,7 +91,29 @@ mediapipe_simple_subgraph(
         "//mediapipe/calculators/image:image_properties_calculator",
         "//mediapipe/calculators/util:association_norm_rect_calculator",
         "//mediapipe/calculators/util:collection_has_min_size_calculator",
-        "//mediapipe/modules/face_detection:face_detection_front_gpu",
+        "//mediapipe/modules/face_detection:face_detection_short_range_gpu",
+    ],
+)
+
+mediapipe_simple_subgraph(
+    name = "face_landmark_front_cpu_image",
+    graph = "face_landmark_front_cpu_image.pbtxt",
+    register_as = "FaceLandmarkFrontCpuImage",
+    deps = [
+        ":face_landmark_front_cpu",
+        "//mediapipe/calculators/image:image_transformation_calculator",
+        "//mediapipe/calculators/util:from_image_calculator",
+    ],
+)
+
+mediapipe_simple_subgraph(
+    name = "face_landmark_front_gpu_image",
+    graph = "face_landmark_front_gpu_image.pbtxt",
+    register_as = "FaceLandmarkFrontGpuImage",
+    deps = [
+        ":face_landmark_front_gpu",
+        "//mediapipe/calculators/image:image_transformation_calculator",
+        "//mediapipe/calculators/util:from_image_calculator",
     ],
 )
 

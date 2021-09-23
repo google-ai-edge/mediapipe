@@ -37,6 +37,10 @@ namespace {
 
 namespace tf = ::tensorflow;
 
+constexpr char kStringModelFilePathTag[] = "STRING_MODEL_FILE_PATH";
+constexpr char kStringModelTag[] = "STRING_MODEL";
+constexpr char kSessionTag[] = "SESSION";
+
 std::string GetGraphDefPath() {
   return mediapipe::file::JoinPath("./",
                                    "mediapipe/calculators/tensorflow/"
@@ -72,7 +76,7 @@ class TensorFlowSessionFromFrozenGraphGeneratorTest : public ::testing::Test {
 
   void VerifySignatureMap(PacketSet* output_side_packets) {
     const TensorFlowSession& session =
-        output_side_packets->Tag("SESSION").Get<TensorFlowSession>();
+        output_side_packets->Tag(kSessionTag).Get<TensorFlowSession>();
     // Session must be set.
     ASSERT_NE(session.session, nullptr);
 
@@ -179,7 +183,7 @@ TEST_F(TensorFlowSessionFromFrozenGraphGeneratorTest,
   MP_EXPECT_OK(mediapipe::file::GetContents(GetGraphDefPath(),
                                             &serialized_graph_contents));
   generator_options_->clear_graph_proto_path();
-  input_side_packets.Tag("STRING_MODEL") =
+  input_side_packets.Tag(kStringModelTag) =
       Adopt(new std::string(serialized_graph_contents));
   absl::Status run_status = tool::RunGenerateAndValidateTypes(
       "TensorFlowSessionFromFrozenGraphGenerator", extendable_options_,
@@ -196,7 +200,7 @@ TEST_F(
   PacketSet output_side_packets(
       tool::CreateTagMap({"SESSION:session"}).value());
   generator_options_->clear_graph_proto_path();
-  input_side_packets.Tag("STRING_MODEL_FILE_PATH") =
+  input_side_packets.Tag(kStringModelFilePathTag) =
       Adopt(new std::string(GetGraphDefPath()));
   absl::Status run_status = tool::RunGenerateAndValidateTypes(
       "TensorFlowSessionFromFrozenGraphGenerator", extendable_options_,
@@ -211,7 +215,7 @@ TEST_F(TensorFlowSessionFromFrozenGraphGeneratorTest,
       tool::CreateTagMap({"STRING_MODEL_FILE_PATH:model_path"}).value());
   PacketSet output_side_packets(
       tool::CreateTagMap({"SESSION:session"}).value());
-  input_side_packets.Tag("STRING_MODEL_FILE_PATH") =
+  input_side_packets.Tag(kStringModelFilePathTag) =
       Adopt(new std::string(GetGraphDefPath()));
   absl::Status run_status = tool::RunGenerateAndValidateTypes(
       "TensorFlowSessionFromFrozenGraphGenerator", extendable_options_,
@@ -233,9 +237,9 @@ TEST_F(TensorFlowSessionFromFrozenGraphGeneratorTest,
   std::string serialized_graph_contents;
   MP_EXPECT_OK(mediapipe::file::GetContents(GetGraphDefPath(),
                                             &serialized_graph_contents));
-  input_side_packets.Tag("STRING_MODEL") =
+  input_side_packets.Tag(kStringModelTag) =
       Adopt(new std::string(serialized_graph_contents));
-  input_side_packets.Tag("STRING_MODEL_FILE_PATH") =
+  input_side_packets.Tag(kStringModelFilePathTag) =
       Adopt(new std::string(GetGraphDefPath()));
 
   absl::Status run_status = tool::RunGenerateAndValidateTypes(
@@ -258,9 +262,9 @@ TEST_F(TensorFlowSessionFromFrozenGraphGeneratorTest,
   std::string serialized_graph_contents;
   MP_EXPECT_OK(mediapipe::file::GetContents(GetGraphDefPath(),
                                             &serialized_graph_contents));
-  input_side_packets.Tag("STRING_MODEL") =
+  input_side_packets.Tag(kStringModelTag) =
       Adopt(new std::string(serialized_graph_contents));
-  input_side_packets.Tag("STRING_MODEL_FILE_PATH") =
+  input_side_packets.Tag(kStringModelFilePathTag) =
       Adopt(new std::string(GetGraphDefPath()));
   generator_options_->clear_graph_proto_path();
 

@@ -58,6 +58,16 @@ mediapipe_proto_library(
 )
 
 mediapipe_proto_library(
+    name = "filter_detections_calculator_proto",
+    srcs = ["filter_detections_calculator.proto"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//mediapipe/framework:calculator_options_proto",
+        "//mediapipe/framework:calculator_proto",
+    ],
+)
+
+mediapipe_proto_library(
     name = "timed_box_list_id_to_label_calculator_proto",
     srcs = ["timed_box_list_id_to_label_calculator.proto"],
     visibility = ["//visibility:public"],
@@ -155,6 +165,21 @@ cc_test(
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/framework/port:parse_text_proto",
         "//mediapipe/framework/stream_handler:immediate_input_stream_handler",
+    ],
+)
+
+cc_test(
+    name = "filter_detections_calculator_test",
+    size = "small",
+    srcs = ["filter_detections_calculator_test.cc"],
+    deps = [
+        ":filter_detections_calculator",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:calculator_runner",
+        "//mediapipe/framework/deps:message_matchers",
+        "//mediapipe/framework/formats:detection_cc_proto",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:parse_text_proto",
     ],
 )
 
@@ -368,6 +393,20 @@ cc_library(
         "//mediapipe/framework/formats:location_data_cc_proto",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
+    ],
+    alwayslink = 1,
+)
+
+cc_library(
+    name = "filter_detections_calculator",
+    srcs = ["filter_detections_calculator.cc"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":filter_detections_calculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/formats:detection_cc_proto",
+        "//mediapipe/framework/port:status",
+        "@com_google_absl//absl/memory",
     ],
     alwayslink = 1,
 )
@@ -840,6 +879,20 @@ cc_test(
     ],
 )
 
+cc_library(
+    name = "world_landmark_projection_calculator",
+    srcs = ["world_landmark_projection_calculator.cc"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/formats:landmark_cc_proto",
+        "//mediapipe/framework/formats:rect_cc_proto",
+        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:status",
+    ],
+    alwayslink = 1,
+)
+
 mediapipe_proto_library(
     name = "landmarks_smoothing_calculator_proto",
     srcs = ["landmarks_smoothing_calculator.proto"],
@@ -859,6 +912,7 @@ cc_library(
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework:timestamp",
         "//mediapipe/framework/formats:landmark_cc_proto",
+        "//mediapipe/framework/formats:rect_cc_proto",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/util/filtering:one_euro_filter",
         "//mediapipe/util/filtering:relative_velocity_filter",
@@ -888,6 +942,31 @@ cc_library(
         "//mediapipe/framework/formats:landmark_cc_proto",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/util/filtering:low_pass_filter",
+        "@com_google_absl//absl/algorithm:container",
+    ],
+    alwayslink = 1,
+)
+
+mediapipe_proto_library(
+    name = "visibility_copy_calculator_proto",
+    srcs = ["visibility_copy_calculator.proto"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//mediapipe/framework:calculator_options_proto",
+        "//mediapipe/framework:calculator_proto",
+    ],
+)
+
+cc_library(
+    name = "visibility_copy_calculator",
+    srcs = ["visibility_copy_calculator.cc"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":visibility_copy_calculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:timestamp",
+        "//mediapipe/framework/formats:landmark_cc_proto",
+        "//mediapipe/framework/port:ret_check",
         "@com_google_absl//absl/algorithm:container",
     ],
     alwayslink = 1,
@@ -1311,5 +1390,36 @@ cc_test(
     deps = [
         ":refine_landmarks_from_heatmap_calculator",
         "//mediapipe/framework/port:gtest_main",
+    ],
+)
+
+cc_library(
+    name = "inverse_matrix_calculator",
+    srcs = ["inverse_matrix_calculator.cc"],
+    hdrs = ["inverse_matrix_calculator.h"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/api2:node",
+        "//mediapipe/framework/api2:port",
+        "@com_google_absl//absl/status",
+        "@eigen_archive//:eigen3",
+    ],
+    alwayslink = True,
+)
+
+cc_test(
+    name = "inverse_matrix_calculator_test",
+    srcs = ["inverse_matrix_calculator_test.cc"],
+    tags = ["desktop_only_test"],
+    deps = [
+        ":inverse_matrix_calculator",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:calculator_runner",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:integral_types",
+        "//mediapipe/framework/port:parse_text_proto",
+        "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/strings",
     ],
 )

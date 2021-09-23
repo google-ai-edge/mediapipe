@@ -203,6 +203,9 @@ absl::Status DetectionsToRectsCalculator::Process(CalculatorContext* cc) {
       cc->Inputs().Tag(kDetectionsTag).IsEmpty()) {
     return absl::OkStatus();
   }
+  if (rotate_ && !HasTagValue(cc, kImageSizeTag)) {
+    return absl::OkStatus();
+  }
 
   std::vector<Detection> detections;
   if (cc->Inputs().HasTag(kDetectionTag)) {
@@ -323,7 +326,7 @@ absl::Status DetectionsToRectsCalculator::ComputeRotation(
 DetectionSpec DetectionsToRectsCalculator::GetDetectionSpec(
     const CalculatorContext* cc) {
   absl::optional<std::pair<int, int>> image_size;
-  if (cc->Inputs().HasTag(kImageSizeTag)) {
+  if (HasTagValue(cc->Inputs(), kImageSizeTag)) {
     image_size = cc->Inputs().Tag(kImageSizeTag).Get<std::pair<int, int>>();
   }
 

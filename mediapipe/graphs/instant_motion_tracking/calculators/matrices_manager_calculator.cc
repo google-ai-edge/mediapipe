@@ -15,9 +15,9 @@
 #include <cmath>
 #include <memory>
 
+#include "Eigen/Core"
 #include "Eigen/Dense"
-#include "Eigen/src/Core/util/Constants.h"
-#include "Eigen/src/Geometry/Quaternion.h"
+#include "Eigen/Geometry"
 #include "absl/memory/memory.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"

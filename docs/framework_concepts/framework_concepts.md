@@ -111,11 +111,11 @@ component known as an InputStreamHandler.
 
 See [Synchronization](synchronization.md) for more details.
 
-### Realtime data streams
+### Real-time streams
 
 MediaPipe calculator graphs are often used to process streams of video or audio
 frames for interactive applications. Normally, each Calculator runs as soon as
 all of its input packets for a given timestamp become available. Calculators
-used in realtime graphs need to define output timestamp bounds based on input
+used in real-time graphs need to define output timestamp bounds based on input
 timestamp bounds in order to allow downstream calculators to be scheduled
-promptly. See [Realtime data streams](realtime.md) for details.
+promptly. See [Real-time Streams](realtime_streams.md) for details.

@@ -49,8 +49,32 @@ message FaceBoxAdjusterCalculatorOptions {
   optional float ipd_face_box_height_ratio = 7 [default = 0.3131];
 
   // The max look up angle before considering the eye distance unstable.
-  optional float max_head_tilt_angle_deg = 8 [default = 12.0];
+  optional float max_head_tilt_angle_deg = 8 [default = 5.0];
+  // The min look up angle (i.e. looking down) before considering the eye
+  // distance unstable.
+  optional float min_head_tilt_angle_deg = 10 [default = -18.0];
+  // The max look right angle before considering the eye distance unstable.
+  optional float max_head_pan_angle_deg = 11 [default = 25.0];
+  // The min look right angle (i.e. looking left) before considering the eye
+  // distance unstable.
+  optional float min_head_pan_angle_deg = 12 [default = -25.0];
+
+  // Update rate for motion history, valid values [0.0, 1.0].
+  optional float motion_history_alpha = 13 [default = 0.5];
+
+  // Max value of head motion (max of current or history) to be considered still
+  // stable.
+  optional float head_motion_threshold = 14 [default = 360.0];
+
   // The max amount of time to use an old eye distance when the face look angle
   // is unstable.
-  optional int32 max_facesize_history_us = 9 [default = 8000000];
+  optional int32 max_facesize_history_us = 9 [default = 300000000];
+
+  // Scale factor of face width to shift based on pan look angle.
+  optional float pan_position_shift_scale = 15
+      [default = 1.0, deprecated = true];
+  // Scale factor of face height to shift based on tilt look angle.
+  optional float tilt_position_shift_scale = 16 [default = 0.25];
+  // Scale factor of face width to shift based on roll look angle.
+  optional float roll_position_shift_scale = 17 [default = 0.7];
 }

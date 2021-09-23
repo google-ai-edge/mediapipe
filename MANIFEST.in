@@ -8,6 +8,7 @@ include README.md
 include requirements.txt
 
 recursive-include mediapipe/modules *.tflite *.txt *.binarypb
+exclude mediapipe/modules/face_detection/face_detection_full_range.tflite
 exclude mediapipe/modules/objectron/object_detection_3d_chair_1stage.tflite
 exclude mediapipe/modules/objectron/object_detection_3d_sneakers_1stage.tflite
 exclude mediapipe/modules/objectron/object_detection_3d_sneakers.tflite

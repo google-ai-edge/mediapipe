@@ -26,17 +26,20 @@ namespace {
 
 namespace test_ns {
 
+constexpr char kOutTag[] = "OUT";
+constexpr char kInTag[] = "IN";
+
 class TestSinkCalculator : public CalculatorBase {
  public:
   static absl::Status GetContract(CalculatorContract* cc) {
-    cc->Inputs().Tag("IN").Set<mediapipe::InputOnlyProto>();
-    cc->Outputs().Tag("OUT").Set<int>();
+    cc->Inputs().Tag(kInTag).Set<mediapipe::InputOnlyProto>();
+    cc->Outputs().Tag(kOutTag).Set<int>();
     return absl::OkStatus();
   }
 
   absl::Status Process(CalculatorContext* cc) override {
-    int x = cc->Inputs().Tag("IN").Get<mediapipe::InputOnlyProto>().x();
-    cc->Outputs().Tag("OUT").AddPacket(
+    int x = cc->Inputs().Tag(kInTag).Get<mediapipe::InputOnlyProto>().x();
+    cc->Outputs().Tag(kOutTag).AddPacket(
         MakePacket<int>(x).At(cc->InputTimestamp()));
     return absl::OkStatus();
   }

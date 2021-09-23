@@ -46,6 +46,7 @@ load("@build_bazel_rules_android//android:rules.bzl", "android_binary", "android
 def mediapipe_aar(
         name,
         srcs = [],
+        gen_libmediapipe = True,
         calculators = [],
         assets = [],
         assets_dir = ""):
@@ -54,17 +55,47 @@ def mediapipe_aar(
     Args:
       name: the name of the aar.
       srcs: the additional java source code to be added into the android library.
+      gen_libmediapipe: whether to generate libmediapipe_jni.so. Default to True.
       calculators: the calculator libraries to be compiled into the jni library.
       assets: additional assets to be included into the archive.
       assets_dir: path where the assets will the packaged.
     """
+
+    # When "--define EXCLUDE_OPENCV_SO_LIB=1" is set in the build command,
+    # the OpenCV so libraries will be excluded from the AAR package to
+    # save the package size.
+    native.config_setting(
+        name = "exclude_opencv_so_lib",
+        define_values = {
+            "EXCLUDE_OPENCV_SO_LIB": "1",
+        },
+        visibility = ["//visibility:public"],
+    )
+
     _mediapipe_jni(
         name = name + "_jni",
+        gen_libmediapipe = gen_libmediapipe,
         calculators = calculators,
     )
 
     _mediapipe_proto(
         name = name + "_proto",
+    )
+
+    native.genrule(
+        name = name + "_aar_manifest_generator",
+        outs = ["AndroidManifest.xml"],
+        cmd = """
+cat > $(OUTS) <<EOF
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.google.mediapipe">
+    <uses-sdk
+        android:minSdkVersion="21"
+        android:targetSdkVersion="27" />
+</manifest>
+EOF
+""",
     )
 
     android_library(
@@ -84,7 +115,6 @@ def mediapipe_aar(
         proguard_specs = ["//mediapipe/java/com/google/mediapipe/framework:proguard.pgcfg"],
         deps = [
             ":" + name + "_jni_cc_lib",
-            ":" + name + "_jni_opencv_cc_lib",
             "//mediapipe/framework:calculator_java_proto_lite",
             "//mediapipe/framework:calculator_profile_java_proto_lite",
             "//mediapipe/framework:calculator_options_java_proto_lite",
@@ -94,6 +124,10 @@ def mediapipe_aar(
             "//mediapipe/framework:status_handler_java_proto_lite",
             "//mediapipe/framework:stream_handler_java_proto_lite",
             "//mediapipe/framework/tool:calculator_graph_template_java_proto_lite",
+            "//mediapipe/java/com/google/mediapipe/components:android_components",
+            "//mediapipe/java/com/google/mediapipe/components:android_camerax_helper",
+            "//mediapipe/java/com/google/mediapipe/framework:android_framework",
+            "//mediapipe/java/com/google/mediapipe/glutil",
             "//third_party:androidx_annotation",
             "//third_party:androidx_appcompat",
             "//third_party:androidx_core",
@@ -108,7 +142,11 @@ def mediapipe_aar(
             "@maven//:com_google_flogger_flogger_system_backend",
             "@maven//:com_google_guava_guava",
             "@maven//:androidx_lifecycle_lifecycle_common",
-        ],
+        ] + select({
+            "//conditions:default": [":" + name + "_jni_opencv_cc_lib"],
+            "//mediapipe/framework/port:disable_opencv": [],
+            "exclude_opencv_so_lib": [],
+        }),
         assets = assets,
         assets_dir = assets_dir,
     )
@@ -121,22 +159,6 @@ def _mediapipe_proto(name):
     Args:
       name: the name of the target.
     """
-    native.genrule(
-        name = name + "_aar_manifest_generator",
-        outs = ["AndroidManifest.xml"],
-        cmd = """
-cat > $(OUTS) <<EOF
-<?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.google.mediapipe">
-    <uses-sdk
-        android:minSdkVersion="21"
-        android:targetSdkVersion="27" />
-    <application />
-</manifest>
-""",
-    )
-
     _proto_java_src_generator(
         name = "calculator_proto",
         proto_src = "mediapipe/framework/calculator.proto",
@@ -204,21 +226,23 @@ def _proto_java_src_generator(name, proto_src, java_lite_out, srcs = []):
         ],
     )
 
-def _mediapipe_jni(name, calculators = []):
+def _mediapipe_jni(name, gen_libmediapipe, calculators = []):
     """Generates MediaPipe jni library.
 
     Args:
       name: the name of the target.
+      gen_libmediapipe: whether to generate libmediapipe_jni.so. Default to True.
       calculators: the calculator libraries to be compiled into the jni library.
     """
-    native.cc_binary(
-        name = "libmediapipe_jni.so",
-        linkshared = 1,
-        linkstatic = 1,
-        deps = [
-            "//mediapipe/java/com/google/mediapipe/framework/jni:mediapipe_framework_jni",
-        ] + calculators,
-    )
+    if gen_libmediapipe:
+        native.cc_binary(
+            name = "libmediapipe_jni.so",
+            linkshared = 1,
+            linkstatic = 1,
+            deps = [
+                "//mediapipe/java/com/google/mediapipe/framework/jni:mediapipe_framework_jni",
+            ] + calculators,
+        )
 
     native.cc_library(
         name = name + "_cc_lib",
@@ -232,6 +256,8 @@ def _mediapipe_jni(name, calculators = []):
             "//mediapipe:android_arm64": ["@android_opencv//:libopencv_java3_so_arm64-v8a"],
             "//mediapipe:android_armeabi": ["@android_opencv//:libopencv_java3_so_armeabi-v7a"],
             "//mediapipe:android_arm": ["@android_opencv//:libopencv_java3_so_armeabi-v7a"],
+            "//mediapipe:android_x86": ["@android_opencv//:libopencv_java3_so_x86"],
+            "//mediapipe:android_x86_64": ["@android_opencv//:libopencv_java3_so_x86_64"],
             "//conditions:default": [],
         }),
         alwayslink = 1,
@@ -260,6 +286,7 @@ EOF
         name = name + "_dummy_app",
         manifest = name + "_generated_AndroidManifest.xml",
         custom_package = "dummy.package.for.so",
+        multidex = "native",
         deps = [android_library],
     )
 

@@ -2,7 +2,7 @@
 layout: default
 title: YouTube-8M Feature Extraction and Model Inference
 parent: Solutions
-nav_order: 15
+nav_order: 16
 ---
 
 # YouTube-8M Feature Extraction and Model Inference

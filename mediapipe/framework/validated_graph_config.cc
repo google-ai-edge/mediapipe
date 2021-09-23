@@ -279,7 +279,7 @@ absl::Status NodeTypeInfo::Initialize(
     const PacketGeneratorConfig& node, int node_index) {
   node_.type = NodeType::PACKET_GENERATOR;
   node_.index = node_index;
-  MP_RETURN_IF_ERROR(contract_.Initialize(node));
+  MP_RETURN_IF_ERROR(contract_.Initialize(node, validated_graph.Package()));
 
   // Run FillExpectations.
   const std::string& node_class = node.packet_generator();

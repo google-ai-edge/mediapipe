@@ -41,11 +41,12 @@ from mediapipe.modules.holistic_landmark.calculators import roi_tracking_calcula
 from mediapipe.python.solution_base import SolutionBase
 from mediapipe.python.solutions import download_utils
 # pylint: disable=unused-import
-from mediapipe.python.solutions.face_mesh import FACE_CONNECTIONS
-from mediapipe.python.solutions.hands import HAND_CONNECTIONS
+from mediapipe.python.solutions.face_mesh_connections import FACEMESH_CONTOURS
+from mediapipe.python.solutions.face_mesh_connections import FACEMESH_TESSELATION
 from mediapipe.python.solutions.hands import HandLandmark
-from mediapipe.python.solutions.pose import POSE_CONNECTIONS
+from mediapipe.python.solutions.hands_connections import HAND_CONNECTIONS
 from mediapipe.python.solutions.pose import PoseLandmark
+from mediapipe.python.solutions.pose_connections import POSE_CONNECTIONS
 # pylint: enable=unused-import
 
 BINARYPB_FILE_PATH = 'mediapipe/modules/holistic_landmark/holistic_landmark_cpu.binarypb'
@@ -103,6 +104,7 @@ class Holistic(SolutionBase):
         side_inputs={
             'model_complexity': model_complexity,
             'smooth_landmarks': smooth_landmarks and not static_image_mode,
+            'smooth_segmentation': not static_image_mode,
         },
         calculator_params={
             'poselandmarkcpu__ConstantSidePacketCalculator.packet': [
@@ -112,12 +114,12 @@ class Holistic(SolutionBase):
             ],
             'poselandmarkcpu__posedetectioncpu__TensorsToDetectionsCalculator.min_score_thresh':
                 min_detection_confidence,
-            'poselandmarkcpu__poselandmarkbyroicpu__ThresholdingCalculator.threshold':
+            'poselandmarkcpu__poselandmarkbyroicpu__tensorstoposelandmarksandsegmentation__ThresholdingCalculator.threshold':
                 min_tracking_confidence,
         },
         outputs=[
-            'pose_landmarks', 'left_hand_landmarks', 'right_hand_landmarks',
-            'face_landmarks'
+            'pose_landmarks', 'pose_world_landmarks', 'left_hand_landmarks',
+            'right_hand_landmarks', 'face_landmarks'
         ])
 
   def process(self, image: np.ndarray) -> NamedTuple:
@@ -131,17 +133,22 @@ class Holistic(SolutionBase):
       ValueError: If the input image is not three channel RGB.
 
     Returns:
-      A NamedTuple that has four fields:
-        1) "pose_landmarks" field that contains the pose landmarks on the most
-        prominent person detected.
-        2) "left_hand_landmarks" and "right_hand_landmarks" fields that contain
-        the left and right hand landmarks of the most prominent person detected.
-        3) "face_landmarks" field that contains the face landmarks of the most
-        prominent person detected.
+      A NamedTuple that has five fields describing the landmarks on the most
+      prominate person detected:
+        1) "pose_landmarks" field that contains the pose landmarks.
+        2) "pose_world_landmarks" field that contains the pose landmarks in
+        real-world 3D coordinates that are in meters with the origin at the
+        center between hips.
+        3) "left_hand_landmarks" field that contains the left-hand landmarks.
+        4) "right_hand_landmarks" field that contains the right-hand landmarks.
+        5) "face_landmarks" field that contains the face landmarks.
     """
 
     results = super().process(input_data={'image': image})
     if results.pose_landmarks:
       for landmark in results.pose_landmarks.landmark:
+        landmark.ClearField('presence')
+    if results.pose_world_landmarks:
+      for landmark in results.pose_world_landmarks.landmark:
         landmark.ClearField('presence')
     return results

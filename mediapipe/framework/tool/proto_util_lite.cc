@@ -196,6 +196,27 @@ absl::Status ProtoUtilLite::GetFieldRange(
   return absl::OkStatus();
 }
 
+// Returns the number of field values in a repeated protobuf field.
+absl::Status ProtoUtilLite::GetFieldCount(const FieldValue& message,
+                                          ProtoPath proto_path,
+                                          FieldType field_type,
+                                          int* field_count) {
+  int field_id, index;
+  std::tie(field_id, index) = proto_path.back();
+  proto_path.pop_back();
+  std::vector<std::string> parent;
+  if (proto_path.empty()) {
+    parent.push_back(std::string(message));
+  } else {
+    MP_RETURN_IF_ERROR(ProtoUtilLite::GetFieldRange(
+        message, proto_path, 1, WireFormatLite::TYPE_MESSAGE, &parent));
+  }
+  FieldAccess access(field_id, field_type);
+  MP_RETURN_IF_ERROR(access.SetMessage(parent[0]));
+  *field_count = access.mutable_field_values()->size();
+  return absl::OkStatus();
+}
+
 // If ok, returns OkStatus, otherwise returns InvalidArgumentError.
 template <typename T>
 absl::Status SyntaxStatus(bool ok, const std::string& text, T* result) {

@@ -33,6 +33,7 @@ namespace {
 constexpr char kImageFrameTag[] = "IMAGE_CPU";
 constexpr char kGpuBufferTag[] = "IMAGE_GPU";
 constexpr char kImageTag[] = "IMAGE";
+constexpr char kSourceOnGpuTag[] = "SOURCE_ON_GPU";
 }  // namespace
 
 // A calculator for converting the unified image container into
@@ -45,6 +46,8 @@ constexpr char kImageTag[] = "IMAGE";
 //   One of the following two tags:
 //   IMAGE_CPU:  An ImageFrame containing output image.
 //   IMAGE_GPU:  A GpuBuffer containing output image.
+//
+//   SOURCE_ON_GPU: The source Image is stored on GPU or CPU.
 //
 // Note:
 //   Data is automatically transferred to/from the CPU or GPU
@@ -66,6 +69,7 @@ class FromImageCalculator : public CalculatorBase {
   absl::Status RenderGpu(CalculatorContext* cc);
   absl::Status RenderCpu(CalculatorContext* cc);
 
+  bool check_image_source_ = false;
   bool gpu_output_ = false;
   bool gpu_initialized_ = false;
 #if !MEDIAPIPE_DISABLE_GPU
@@ -102,6 +106,9 @@ absl::Status FromImageCalculator::GetContract(CalculatorContract* cc) {
 #endif  // !MEDIAPIPE_DISABLE_GPU
   }
 
+  if (cc->Outputs().HasTag(kSourceOnGpuTag)) {
+    cc->Outputs().Tag(kSourceOnGpuTag).Set<bool>();
+  }
   return absl::OkStatus();
 }
 
@@ -111,7 +118,9 @@ absl::Status FromImageCalculator::Open(CalculatorContext* cc) {
   if (cc->Outputs().HasTag(kGpuBufferTag)) {
     gpu_output_ = true;
   }
-
+  if (cc->Outputs().HasTag(kSourceOnGpuTag)) {
+    check_image_source_ = true;
+  }
   if (gpu_output_) {
 #if !MEDIAPIPE_DISABLE_GPU
     MP_RETURN_IF_ERROR(gpu_helper_.Open(cc));
@@ -122,6 +131,13 @@ absl::Status FromImageCalculator::Open(CalculatorContext* cc) {
 }
 
 absl::Status FromImageCalculator::Process(CalculatorContext* cc) {
+  if (check_image_source_) {
+    auto& input = cc->Inputs().Tag(kImageTag).Get<mediapipe::Image>();
+    cc->Outputs()
+        .Tag(kSourceOnGpuTag)
+        .AddPacket(MakePacket<bool>(input.UsesGpu()).At(cc->InputTimestamp()));
+  }
+
   if (gpu_output_) {
 #if !MEDIAPIPE_DISABLE_GPU
     MP_RETURN_IF_ERROR(gpu_helper_.RunInGlContext([&cc]() -> absl::Status {

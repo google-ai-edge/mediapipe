@@ -40,11 +40,12 @@ Hair Segmentation                                                               
 [Hands](https://google.github.io/mediapipe/solutions/hands)                                     | ✅                                                               | ✅                                                       | ✅                                                       | ✅                                                             | ✅                                                             |
 [Pose](https://google.github.io/mediapipe/solutions/pose)                                       | ✅                                                               | ✅                                                       | ✅                                                       | ✅                                                             | ✅                                                             |
 [Holistic](https://google.github.io/mediapipe/solutions/holistic)                               | ✅                                                               | ✅                                                       | ✅                                                       | ✅                                                             | ✅                                                             |
+[Selfie Segmentation](https://google.github.io/mediapipe/solutions/selfie_segmentation)         | ✅                                                               | ✅                                                       | ✅                                                       | ✅                                                             | ✅                                                             |
 [Hair Segmentation](https://google.github.io/mediapipe/solutions/hair_segmentation)             | ✅                                                               |                                                         | ✅                                                       |                                                               |                                                               |
 [Object Detection](https://google.github.io/mediapipe/solutions/object_detection)               | ✅                                                               | ✅                                                       | ✅                                                       |                                                               |                                                               | ✅
 [Box Tracking](https://google.github.io/mediapipe/solutions/box_tracking)                       | ✅                                                               | ✅                                                       | ✅                                                       |                                                               |                                                               |
 [Instant Motion Tracking](https://google.github.io/mediapipe/solutions/instant_motion_tracking) | ✅                                                               |                                                         |                                                         |                                                               |                                                               |
-[Objectron](https://google.github.io/mediapipe/solutions/objectron)                             | ✅                                                               |                                                        | ✅                                                         | ✅                                                             |                                                               |
+[Objectron](https://google.github.io/mediapipe/solutions/objectron)                             | ✅                                                               |                                                         | ✅                                                       | ✅                                                             | ✅                                                             |
 [KNIFT](https://google.github.io/mediapipe/solutions/knift)                                     | ✅                                                               |                                                         |                                                         |                                                               |                                                               |
 [AutoFlip](https://google.github.io/mediapipe/solutions/autoflip)                               |                                                                 |                                                         | ✅                                                       |                                                               |                                                               |
 [MediaSequence](https://google.github.io/mediapipe/solutions/media_sequence)                    |                                                                 |                                                         | ✅                                                       |                                                               |                                                               |
@@ -54,46 +55,22 @@ See also
 [MediaPipe Models and Model Cards](https://google.github.io/mediapipe/solutions/models)
 for ML models released in MediaPipe.
 
-## MediaPipe in Python
-
-MediaPipe offers customizable Python solutions as a prebuilt Python package on
-[PyPI](https://pypi.org/project/mediapipe/), which can be installed simply with
-`pip install mediapipe`. It also provides tools for users to build their own
-solutions. Please see
-[MediaPipe in Python](https://google.github.io/mediapipe/getting_started/python)
-for more info.
-
-## MediaPipe on the Web
-
-MediaPipe on the Web is an effort to run the same ML solutions built for mobile
-and desktop also in web browsers. The official API is under construction, but
-the core technology has been proven effective. Please see
-[MediaPipe on the Web](https://developers.googleblog.com/2020/01/mediapipe-on-web.html)
-in Google Developers Blog for details.
-
-You can use the following links to load a demo in the MediaPipe Visualizer, and
-over there click the "Runner" icon in the top bar like shown below. The demos
-use your webcam video as input, which is processed all locally in real-time and
-never leaves your device.
-
-![visualizer_runner](images/visualizer_runner.png)
-
-*   [MediaPipe Face Detection](https://viz.mediapipe.dev/demo/face_detection)
-*   [MediaPipe Iris](https://viz.mediapipe.dev/demo/iris_tracking)
-*   [MediaPipe Iris: Depth-from-Iris](https://viz.mediapipe.dev/demo/iris_depth)
-*   [MediaPipe Hands](https://viz.mediapipe.dev/demo/hand_tracking)
-*   [MediaPipe Hands (palm/hand detection only)](https://viz.mediapipe.dev/demo/hand_detection)
-*   [MediaPipe Pose](https://viz.mediapipe.dev/demo/pose_tracking)
-*   [MediaPipe Hair Segmentation](https://viz.mediapipe.dev/demo/hair_segmentation)
-
 ## Getting started
 
-Learn how to [install](https://google.github.io/mediapipe/getting_started/install)
-MediaPipe and
-[build example applications](https://google.github.io/mediapipe/getting_started/building_examples),
-and start exploring our ready-to-use
-[solutions](https://google.github.io/mediapipe/solutions/solutions) that you can
-further extend and customize.
+To start using MediaPipe
+[solutions](https://google.github.io/mediapipe/solutions/solutions) with only a few
+lines code, see example code and demos in
+[MediaPipe in Python](https://google.github.io/mediapipe/getting_started/python) and
+[MediaPipe in JavaScript](https://google.github.io/mediapipe/getting_started/javascript).
+
+To use MediaPipe in C++, Android and iOS, which allow further customization of
+the [solutions](https://google.github.io/mediapipe/solutions/solutions) as well as
+building your own, learn how to
+[install](https://google.github.io/mediapipe/getting_started/install) MediaPipe and
+start building example applications in
+[C++](https://google.github.io/mediapipe/getting_started/cpp),
+[Android](https://google.github.io/mediapipe/getting_started/android) and
+[iOS](https://google.github.io/mediapipe/getting_started/ios).
 
 The source code is hosted in the
 [MediaPipe Github repository](https://github.com/google/mediapipe), and you can
@@ -102,6 +79,13 @@ run code search using
 
 ## Publications
 
+*   [Bringing artworks to life with AR](https://developers.googleblog.com/2021/07/bringing-artworks-to-life-with-ar.html)
+    in Google Developers Blog
+*   [Prosthesis control via Mirru App using MediaPipe hand tracking](https://developers.googleblog.com/2021/05/control-your-mirru-prosthesis-with-mediapipe-hand-tracking.html)
+    in Google Developers Blog
+*   [SignAll SDK: Sign language interface using MediaPipe is now available for
+    developers](https://developers.googleblog.com/2021/04/signall-sdk-sign-language-interface-using-mediapipe-now-available.html)
+    in Google Developers Blog
 *   [MediaPipe Holistic - Simultaneous Face, Hand and Pose Prediction, on Device](https://ai.googleblog.com/2020/12/mediapipe-holistic-simultaneous-face.html)
     in Google AI Blog
 *   [Background Features in Google Meet, Powered by Web ML](https://ai.googleblog.com/2020/10/background-features-in-google-meet.html)

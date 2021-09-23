@@ -69,7 +69,7 @@ and renders using a dedicated
 The
 [face landmark subgraph](https://github.com/google/mediapipe/tree/master/mediapipe/modules/face_landmark/face_landmark_front_gpu.pbtxt)
 internally uses a
-[face detection subgraph](https://github.com/google/mediapipe/tree/master/mediapipe/modules/face_detection/face_detection_front_gpu.pbtxt)
+[face detection subgraph](https://github.com/google/mediapipe/tree/master/mediapipe/modules/face_detection/face_detection_short_range_gpu.pbtxt)
 from the
 [face detection module](https://github.com/google/mediapipe/tree/master/mediapipe/modules/face_detection).
 
@@ -193,7 +193,17 @@ on how to build MediaPipe examples.
 
 ### Web
 
-Please refer to [these instructions](../index.md#mediapipe-on-the-web).
+You can use the following links to load a demo in the MediaPipe Visualizer, and
+over there click the "Runner" icon in the top bar like shown below. The demos
+use your webcam video as input, which is processed all locally in real-time and
+never leaves your device. Please see
+[MediaPipe on the Web](https://developers.googleblog.com/2020/01/mediapipe-on-web.html)
+in Google Developers Blog for details.
+
+![visualizer_runner](../images/visualizer_runner.png)
+
+*   [MediaPipe Iris](https://viz.mediapipe.dev/demo/iris_tracking)
+*   [MediaPipe Iris: Depth-from-Iris](https://viz.mediapipe.dev/demo/iris_depth)
 
 ## Resources
 

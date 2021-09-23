@@ -27,6 +27,8 @@
 
 namespace mediapipe {
 
+constexpr char kIterableTag[] = "ITERABLE";
+
 typedef CollectionHasMinSizeCalculator<std::vector<int>>
     TestIntCollectionHasMinSizeCalculator;
 REGISTER_CALCULATOR(TestIntCollectionHasMinSizeCalculator);
@@ -34,7 +36,7 @@ REGISTER_CALCULATOR(TestIntCollectionHasMinSizeCalculator);
 void AddInputVector(const std::vector<int>& input, int64 timestamp,
                     CalculatorRunner* runner) {
   runner->MutableInputs()
-      ->Tag("ITERABLE")
+      ->Tag(kIterableTag)
       .packets.push_back(
           MakePacket<std::vector<int>>(input).At(Timestamp(timestamp)));
 }

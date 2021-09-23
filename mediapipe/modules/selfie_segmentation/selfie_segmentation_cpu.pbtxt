@@ -1,0 +1,132 @@
+# MediaPipe graph to perform selfie segmentation. (CPU input, and all processing
+# and inference are also performed on CPU)
+#
+# It is required that "selfie_segmentation.tflite" or
+# "selfie_segmentation_landscape.tflite" is available at
+# "mediapipe/modules/selfie_segmentation/selfie_segmentation.tflite"
+# or
+# "mediapipe/modules/selfie_segmentation/selfie_segmentation_landscape.tflite"
+# path respectively during execution, depending on the specification in the
+# MODEL_SELECTION input side packet.
+#
+# EXAMPLE:
+#   node {
+#     calculator: "SelfieSegmentationCpu"
+#     input_side_packet: "MODEL_SELECTION:model_selection"
+#     input_stream: "IMAGE:image"
+#     output_stream: "SEGMENTATION_MASK:segmentation_mask"
+#   }
+
+type: "SelfieSegmentationCpu"
+
+# CPU image. (ImageFrame)
+input_stream: "IMAGE:image"
+
+# An integer 0 or 1. Use 0 to select a general-purpose model (operating on a
+# 256x256 tensor), and 1 to select a model (operating on a 256x144 tensor) more
+# optimized for landscape images. If unspecified, functions as set to 0. (int)
+input_side_packet: "MODEL_SELECTION:model_selection"
+
+# Segmentation mask. (ImageFrame in ImageFormat::VEC32F1)
+output_stream: "SEGMENTATION_MASK:segmentation_mask"
+
+# Resizes the input image into a tensor with a dimension desired by the model.
+node {
+  calculator: "SwitchContainer"
+  input_side_packet: "SELECT:model_selection"
+  input_stream: "IMAGE:image"
+  output_stream: "TENSORS:input_tensors"
+  options: {
+    [mediapipe.SwitchContainerOptions.ext] {
+      select: 0
+      contained_node: {
+        calculator: "ImageToTensorCalculator"
+        options: {
+          [mediapipe.ImageToTensorCalculatorOptions.ext] {
+            output_tensor_width: 256
+            output_tensor_height: 256
+            keep_aspect_ratio: false
+            output_tensor_float_range {
+              min: 0.0
+              max: 1.0
+            }
+            border_mode: BORDER_ZERO
+          }
+        }
+      }
+      contained_node: {
+        calculator: "ImageToTensorCalculator"
+        options: {
+          [mediapipe.ImageToTensorCalculatorOptions.ext] {
+            output_tensor_width: 256
+            output_tensor_height: 144
+            keep_aspect_ratio: false
+            output_tensor_float_range {
+              min: 0.0
+              max: 1.0
+            }
+            border_mode: BORDER_ZERO
+          }
+        }
+      }
+    }
+  }
+}
+
+# Generates a single side packet containing a TensorFlow Lite op resolver that
+# supports custom ops needed by the model used in this graph.
+node {
+  calculator: "TfLiteCustomOpResolverCalculator"
+  output_side_packet: "op_resolver"
+}
+
+# Loads the selfie segmentation TF Lite model.
+node {
+  calculator: "SelfieSegmentationModelLoader"
+  input_side_packet: "MODEL_SELECTION:model_selection"
+  output_side_packet: "MODEL:model"
+}
+
+# Runs model inference on CPU.
+node {
+  calculator: "InferenceCalculator"
+  input_stream: "TENSORS:input_tensors"
+  output_stream: "TENSORS:output_tensors"
+  input_side_packet: "MODEL:model"
+  input_side_packet: "CUSTOM_OP_RESOLVER:op_resolver"
+  options: {
+    [mediapipe.InferenceCalculatorOptions.ext] {
+      delegate {
+        xnnpack {}
+      }
+    }
+  }
+}
+
+# Retrieves the size of the input image.
+node {
+  calculator: "ImagePropertiesCalculator"
+  input_stream: "IMAGE_CPU:image"
+  output_stream: "SIZE:input_size"
+}
+
+# Processes the output tensors into a segmentation mask that has the same size
+# as the input image into the graph.
+node {
+  calculator: "TensorsToSegmentationCalculator"
+  input_stream: "TENSORS:output_tensors"
+  input_stream: "OUTPUT_SIZE:input_size"
+  output_stream: "MASK:mask_image"
+  options: {
+    [mediapipe.TensorsToSegmentationCalculatorOptions.ext] {
+      activation: NONE
+    }
+  }
+}
+
+# Converts the incoming Image into the corresponding ImageFrame type.
+node: {
+  calculator: "FromImageCalculator"
+  input_stream: "IMAGE:mask_image"
+  output_stream: "IMAGE_CPU:segmentation_mask"
+}

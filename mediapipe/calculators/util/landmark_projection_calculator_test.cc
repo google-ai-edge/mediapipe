@@ -16,6 +16,10 @@
 namespace mediapipe {
 namespace {
 
+constexpr char kProjectionMatrixTag[] = "PROJECTION_MATRIX";
+constexpr char kNormRectTag[] = "NORM_RECT";
+constexpr char kNormLandmarksTag[] = "NORM_LANDMARKS";
+
 absl::StatusOr<mediapipe::NormalizedLandmarkList> RunCalculator(
     mediapipe::NormalizedLandmarkList input, mediapipe::NormalizedRect rect) {
   mediapipe::CalculatorRunner runner(
@@ -26,17 +30,17 @@ absl::StatusOr<mediapipe::NormalizedLandmarkList> RunCalculator(
         output_stream: "NORM_LANDMARKS:projected_landmarks"
       )pb"));
   runner.MutableInputs()
-      ->Tag("NORM_LANDMARKS")
+      ->Tag(kNormLandmarksTag)
       .packets.push_back(
           MakePacket<mediapipe::NormalizedLandmarkList>(std::move(input))
               .At(Timestamp(1)));
   runner.MutableInputs()
-      ->Tag("NORM_RECT")
+      ->Tag(kNormRectTag)
       .packets.push_back(MakePacket<mediapipe::NormalizedRect>(std::move(rect))
                              .At(Timestamp(1)));
 
   MP_RETURN_IF_ERROR(runner.Run());
-  const auto& output_packets = runner.Outputs().Tag("NORM_LANDMARKS").packets;
+  const auto& output_packets = runner.Outputs().Tag(kNormLandmarksTag).packets;
   RET_CHECK_EQ(output_packets.size(), 1);
   return output_packets[0].Get<mediapipe::NormalizedLandmarkList>();
 }
@@ -104,17 +108,17 @@ absl::StatusOr<mediapipe::NormalizedLandmarkList> RunCalculator(
         output_stream: "NORM_LANDMARKS:projected_landmarks"
       )pb"));
   runner.MutableInputs()
-      ->Tag("NORM_LANDMARKS")
+      ->Tag(kNormLandmarksTag)
       .packets.push_back(
           MakePacket<mediapipe::NormalizedLandmarkList>(std::move(input))
               .At(Timestamp(1)));
   runner.MutableInputs()
-      ->Tag("PROJECTION_MATRIX")
+      ->Tag(kProjectionMatrixTag)
       .packets.push_back(MakePacket<std::array<float, 16>>(std::move(matrix))
                              .At(Timestamp(1)));
 
   MP_RETURN_IF_ERROR(runner.Run());
-  const auto& output_packets = runner.Outputs().Tag("NORM_LANDMARKS").packets;
+  const auto& output_packets = runner.Outputs().Tag(kNormLandmarksTag).packets;
   RET_CHECK_EQ(output_packets.size(), 1);
   return output_packets[0].Get<mediapipe::NormalizedLandmarkList>();
 }

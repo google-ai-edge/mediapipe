@@ -36,7 +36,7 @@ using GpuBuffer = mediapipe::GpuBuffer;
 // stored on the target storage (CPU vs GPU) specified in the calculator option.
 //
 // The clone shares ownership of the input pixel data on the existing storage.
-// If the target storage is diffrent from the existing one, then the data is
+// If the target storage is different from the existing one, then the data is
 // further copied there.
 //
 // Example usage:

@@ -39,6 +39,11 @@ namespace mediapipe {
 
 REGISTER_CALCULATOR(PacketResamplerCalculator);
 namespace {
+
+constexpr char kSeedTag[] = "SEED";
+constexpr char kVideoHeaderTag[] = "VIDEO_HEADER";
+constexpr char kOptionsTag[] = "OPTIONS";
+
 // Returns a TimestampDiff (assuming microseconds) corresponding to the
 // given time in seconds.
 TimestampDiff TimestampDiffFromSeconds(double seconds) {
@@ -50,16 +55,16 @@ TimestampDiff TimestampDiffFromSeconds(double seconds) {
 absl::Status PacketResamplerCalculator::GetContract(CalculatorContract* cc) {
   const auto& resampler_options =
       cc->Options<PacketResamplerCalculatorOptions>();
-  if (cc->InputSidePackets().HasTag("OPTIONS")) {
-    cc->InputSidePackets().Tag("OPTIONS").Set<CalculatorOptions>();
+  if (cc->InputSidePackets().HasTag(kOptionsTag)) {
+    cc->InputSidePackets().Tag(kOptionsTag).Set<CalculatorOptions>();
   }
   CollectionItemId input_data_id = cc->Inputs().GetId("DATA", 0);
   if (!input_data_id.IsValid()) {
     input_data_id = cc->Inputs().GetId("", 0);
   }
   cc->Inputs().Get(input_data_id).SetAny();
-  if (cc->Inputs().HasTag("VIDEO_HEADER")) {
-    cc->Inputs().Tag("VIDEO_HEADER").Set<VideoHeader>();
+  if (cc->Inputs().HasTag(kVideoHeaderTag)) {
+    cc->Inputs().Tag(kVideoHeaderTag).Set<VideoHeader>();
   }
 
   CollectionItemId output_data_id = cc->Outputs().GetId("DATA", 0);
@@ -67,15 +72,15 @@ absl::Status PacketResamplerCalculator::GetContract(CalculatorContract* cc) {
     output_data_id = cc->Outputs().GetId("", 0);
   }
   cc->Outputs().Get(output_data_id).SetSameAs(&cc->Inputs().Get(input_data_id));
-  if (cc->Outputs().HasTag("VIDEO_HEADER")) {
-    cc->Outputs().Tag("VIDEO_HEADER").Set<VideoHeader>();
+  if (cc->Outputs().HasTag(kVideoHeaderTag)) {
+    cc->Outputs().Tag(kVideoHeaderTag).Set<VideoHeader>();
   }
 
   if (resampler_options.jitter() != 0.0) {
     RET_CHECK_GT(resampler_options.jitter(), 0.0);
     RET_CHECK_LE(resampler_options.jitter(), 1.0);
-    RET_CHECK(cc->InputSidePackets().HasTag("SEED"));
-    cc->InputSidePackets().Tag("SEED").Set<std::string>();
+    RET_CHECK(cc->InputSidePackets().HasTag(kSeedTag));
+    cc->InputSidePackets().Tag(kSeedTag).Set<std::string>();
   }
   return absl::OkStatus();
 }
@@ -143,9 +148,9 @@ absl::Status PacketResamplerCalculator::Open(CalculatorContext* cc) {
 
 absl::Status PacketResamplerCalculator::Process(CalculatorContext* cc) {
   if (cc->InputTimestamp() == Timestamp::PreStream() &&
-      cc->Inputs().UsesTags() && cc->Inputs().HasTag("VIDEO_HEADER") &&
-      !cc->Inputs().Tag("VIDEO_HEADER").IsEmpty()) {
-    video_header_ = cc->Inputs().Tag("VIDEO_HEADER").Get<VideoHeader>();
+      cc->Inputs().UsesTags() && cc->Inputs().HasTag(kVideoHeaderTag) &&
+      !cc->Inputs().Tag(kVideoHeaderTag).IsEmpty()) {
+    video_header_ = cc->Inputs().Tag(kVideoHeaderTag).Get<VideoHeader>();
     video_header_.frame_rate = frame_rate_;
     if (cc->Inputs().Get(input_data_id_).IsEmpty()) {
       return absl::OkStatus();
@@ -234,7 +239,7 @@ absl::Status LegacyJitterWithReflectionStrategy::Open(CalculatorContext* cc) {
                     "ignored, because we are adding jitter.";
   }
 
-  const auto& seed = cc->InputSidePackets().Tag("SEED").Get<std::string>();
+  const auto& seed = cc->InputSidePackets().Tag(kSeedTag).Get<std::string>();
   random_ = CreateSecureRandom(seed);
   if (random_ == nullptr) {
     return absl::InvalidArgumentError(
@@ -357,7 +362,7 @@ absl::Status ReproducibleJitterWithReflectionStrategy::Open(
                     "ignored, because we are adding jitter.";
   }
 
-  const auto& seed = cc->InputSidePackets().Tag("SEED").Get<std::string>();
+  const auto& seed = cc->InputSidePackets().Tag(kSeedTag).Get<std::string>();
   random_ = CreateSecureRandom(seed);
   if (random_ == nullptr) {
     return absl::InvalidArgumentError(
@@ -504,7 +509,7 @@ absl::Status JitterWithoutReflectionStrategy::Open(CalculatorContext* cc) {
                     "ignored, because we are adding jitter.";
   }
 
-  const auto& seed = cc->InputSidePackets().Tag("SEED").Get<std::string>();
+  const auto& seed = cc->InputSidePackets().Tag(kSeedTag).Get<std::string>();
   random_ = CreateSecureRandom(seed);
   if (random_ == nullptr) {
     return absl::InvalidArgumentError(
@@ -635,9 +640,9 @@ absl::Status NoJitterStrategy::Process(CalculatorContext* cc) {
           base_timestamp_ +
           TimestampDiffFromSeconds(first_index / calculator_->frame_rate_);
     }
-    if (cc->Outputs().UsesTags() && cc->Outputs().HasTag("VIDEO_HEADER")) {
+    if (cc->Outputs().UsesTags() && cc->Outputs().HasTag(kVideoHeaderTag)) {
       cc->Outputs()
-          .Tag("VIDEO_HEADER")
+          .Tag(kVideoHeaderTag)
           .Add(new VideoHeader(calculator_->video_header_),
                Timestamp::PreStream());
     }

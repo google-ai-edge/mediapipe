@@ -99,6 +99,26 @@ const GLchar* const kScaledVertexShader = VERTEX_PREAMBLE _STRINGIFY(
       sample_coordinate = texture_coordinate.xy;
     });
 
+const GLchar* const kTransformedVertexShader = VERTEX_PREAMBLE _STRINGIFY(
+    in vec4 position; in mediump vec4 texture_coordinate;
+    out mediump vec2 sample_coordinate; uniform mat3 transform;
+    uniform vec2 viewport_size;
+
+    void main() {
+      // switch from clip to viewport aspect ratio in order to properly
+      // apply transformation
+      vec2 half_viewport_size = viewport_size * 0.5;
+      vec3 pos = vec3(position.xy * half_viewport_size, 1);
+
+      // apply transform
+      pos = transform * pos;
+
+      // switch back to clip space
+      gl_Position = vec4(pos.xy / half_viewport_size, 0, 1);
+
+      sample_coordinate = texture_coordinate.xy;
+    });
+
 const GLchar* const kBasicTexturedFragmentShader = FRAGMENT_PREAMBLE _STRINGIFY(
     DEFAULT_PRECISION(mediump, float)
 

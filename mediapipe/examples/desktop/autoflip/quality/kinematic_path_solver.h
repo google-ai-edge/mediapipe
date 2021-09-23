@@ -46,8 +46,12 @@ class KinematicPathSolver {
   absl::Status AddObservation(int position, const uint64 time_us);
   // Get the predicted position at a time.
   absl::Status UpdatePrediction(const int64 time_us);
-  // Get the state at a time.
+  // Get the state at a time, as an int.
   absl::Status GetState(int* position);
+  // Get the state at a time, as a float.
+  absl::Status GetState(float* position);
+  // Overwrite the current state value.
+  absl::Status SetState(const float position);
   // Update PixelPerDegree value.
   absl::Status UpdatePixelsPerDegree(const float pixels_per_degree);
   // Provide the current target position of the reframe action.
@@ -64,6 +68,8 @@ class KinematicPathSolver {
   // Clear any history buffer of positions that are used when
   // filtering_time_window_us is set to a non-zero value.
   void ClearHistory();
+  // Provides the change in position from last state.
+  absl::Status GetDeltaState(float* delta_position);
 
  private:
   // Tuning options.
@@ -75,6 +81,7 @@ class KinematicPathSolver {
   float pixels_per_degree_;
   // Current state values.
   double current_position_px_;
+  double prior_position_px_;
   double current_velocity_deg_per_s_;
   uint64 current_time_;
   // History of observations (second) and their time (first).

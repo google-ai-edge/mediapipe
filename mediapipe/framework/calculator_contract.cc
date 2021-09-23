@@ -14,15 +14,39 @@
 
 #include "mediapipe/framework/calculator_contract.h"
 
+#include <memory>
 #include <utility>
 #include <vector>
 
 #include "absl/memory/memory.h"
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/port/status_builder.h"
+#include "mediapipe/framework/port/status_macros.h"
+#include "mediapipe/framework/tool/packet_generator_wrapper_calculator.pb.h"
 #include "mediapipe/framework/tool/tag_map.h"
 
 namespace mediapipe {
+
+namespace {
+
+CalculatorGraphConfig::Node MakePacketGeneratorWrapperConfig(
+    const PacketGeneratorConfig& node, const std::string& package) {
+  CalculatorGraphConfig::Node wrapper_node;
+  wrapper_node.set_calculator("PacketGeneratorWrapperCalculator");
+  *wrapper_node.mutable_input_side_packet() = node.input_side_packet();
+  *wrapper_node.mutable_output_side_packet() = node.output_side_packet();
+
+  auto* wrapper_options = wrapper_node.mutable_options()->MutableExtension(
+      mediapipe::PacketGeneratorWrapperCalculatorOptions::ext);
+  wrapper_options->set_packet_generator(node.packet_generator());
+  wrapper_options->set_package(package);
+  if (node.has_options()) {
+    *wrapper_options->mutable_options() = node.options();
+  }
+  return wrapper_node;
+}
+
+}  // anonymous namespace
 
 absl::Status CalculatorContract::Initialize(
     const CalculatorGraphConfig::Node& node) {
@@ -74,7 +98,8 @@ absl::Status CalculatorContract::Initialize(
   return absl::OkStatus();
 }
 
-absl::Status CalculatorContract::Initialize(const PacketGeneratorConfig& node) {
+absl::Status CalculatorContract::Initialize(const PacketGeneratorConfig& node,
+                                            const std::string& package) {
   std::vector<absl::Status> statuses;
 
   auto input_side_packet_statusor =
@@ -101,6 +126,11 @@ absl::Status CalculatorContract::Initialize(const PacketGeneratorConfig& node) {
     return std::move(builder);
   }
 
+  wrapper_config_ = std::make_unique<CalculatorGraphConfig::Node>(
+      MakePacketGeneratorWrapperConfig(node, package));
+  options_.Initialize(*wrapper_config_);
+  inputs_ = absl::make_unique<PacketTypeSet>(0);
+  outputs_ = absl::make_unique<PacketTypeSet>(0);
   input_side_packets_ = absl::make_unique<PacketTypeSet>(
       std::move(input_side_packet_statusor).value());
   output_side_packets_ = absl::make_unique<PacketTypeSet>(

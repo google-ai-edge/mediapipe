@@ -397,7 +397,7 @@ void InternalPacketGetters(pybind11::module* m) {
       "_get_serialized_proto",
       [](const Packet& packet) {
         // By default, py::bytes is an extra copy of the original std::string
-        // object: https://github.com/pybind/pybind11/issues/1236 Howeover, when
+        // object: https://github.com/pybind/pybind11/issues/1236 However, when
         // Pybind11 performs the C++ to Python transition, it only increases the
         // py::bytes object's ref count. See the implmentation at line 1583 in
         // "pybind11/cast.h".

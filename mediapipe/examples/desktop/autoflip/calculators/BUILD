@@ -17,8 +17,10 @@ load("//mediapipe/framework/port:build_config.bzl", "mediapipe_cc_proto_library"
 licenses(["notice"])
 
 package(default_visibility = [
+    "//buzz/diffractor/mediapipe:__subpackages__",
     "//mediapipe/examples:__subpackages__",
     "//mediapipe/viz:__subpackages__",
+    "//mediapipe/web/solutions:__subpackages__",
 ])
 
 cc_library(

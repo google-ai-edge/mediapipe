@@ -32,10 +32,14 @@ typedef FilterCollectionCalculator<std::vector<::mediapipe::NormalizedRect>>
     FilterNormalizedRectCollectionCalculator;
 REGISTER_CALCULATOR(FilterNormalizedRectCollectionCalculator);
 
-typedef FilterCollectionCalculator<
-    std::vector<::mediapipe::NormalizedLandmarkList>>
+typedef FilterCollectionCalculator<std::vector<::mediapipe::LandmarkList>>
     FilterLandmarkListCollectionCalculator;
 REGISTER_CALCULATOR(FilterLandmarkListCollectionCalculator);
+
+typedef FilterCollectionCalculator<
+    std::vector<::mediapipe::NormalizedLandmarkList>>
+    FilterNormalizedLandmarkListCollectionCalculator;
+REGISTER_CALCULATOR(FilterNormalizedLandmarkListCollectionCalculator);
 
 typedef FilterCollectionCalculator<std::vector<::mediapipe::ClassificationList>>
     FilterClassificationListCollectionCalculator;

@@ -29,6 +29,7 @@ import os
 import plistlib
 import re
 import subprocess
+from typing import Optional
 import uuid
 
 # This script is meant to be located in the MediaPipe iOS examples directory
@@ -79,7 +80,7 @@ def configure_bundle_id_prefix(
   return bundle_id_prefix
 
 
-def get_app_id(profile_path) -> str:
+def get_app_id(profile_path) -> Optional[str]:
   try:
     plist = subprocess.check_output(
         ["security", "cms", "-D", "-i", profile_path])

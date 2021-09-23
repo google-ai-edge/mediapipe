@@ -69,6 +69,9 @@ public class GraphProfiler {
       checkContext();
       byte[][] profileBytes = nativeGetCalculatorProfiles(nativeProfilerHandle);
       List<CalculatorProfile> profileList = new ArrayList<>();
+      if (profileBytes == null) {
+        return profileList;
+      }
       for (byte[] element : profileBytes) {
         try {
           CalculatorProfile profile = CalculatorProfile.parseFrom(element);

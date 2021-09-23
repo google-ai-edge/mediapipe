@@ -26,33 +26,37 @@ import numpy.testing as npt
 
 # resources dependency
 # undeclared dependency
+from mediapipe.python.solutions import drawing_styles
 from mediapipe.python.solutions import drawing_utils as mp_drawing
 from mediapipe.python.solutions import hands as mp_hands
 
+
 TEST_IMAGE_PATH = 'mediapipe/python/solutions/testdata'
 DIFF_THRESHOLD = 15  # pixels
-EXPECTED_HAND_COORDINATES_PREDICTION = [[[345, 144], [323, 211], [286, 257],
-                                         [237, 289], [203, 322], [216, 219],
-                                         [138, 238], [90, 249], [51, 253],
-                                         [204, 177], [115, 184], [60, 187],
-                                         [19, 185], [208, 138], [127, 131],
-                                         [77, 124], [36, 117], [222, 106],
-                                         [159, 92], [124, 79], [93, 68]],
-                                        [[40, 577], [56, 504], [94, 459],
-                                         [146, 429], [182, 397], [167, 496],
-                                         [245, 479], [292, 469], [330, 464],
-                                         [177, 540], [265, 534], [319, 533],
-                                         [360, 536], [172, 581], [252, 587],
-                                         [304, 593], [346, 599], [157, 615],
-                                         [223, 628], [258, 638], [288, 648]]]
+EXPECTED_HAND_COORDINATES_PREDICTION = [[[144, 345], [211, 323], [257, 286],
+                                         [289, 237], [322, 203], [219, 216],
+                                         [238, 138], [249, 90], [253, 51],
+                                         [177, 204], [184, 115], [187, 60],
+                                         [185, 19], [138, 208], [131, 127],
+                                         [124, 77], [117, 36], [106, 222],
+                                         [92, 159], [79, 124], [68, 93]],
+                                        [[577, 37], [504, 56], [459, 94],
+                                         [429, 146], [397, 182], [496, 167],
+                                         [479, 245], [469, 292], [464, 330],
+                                         [540, 177], [534, 265], [533, 319],
+                                         [536, 360], [581, 172], [587, 252],
+                                         [593, 304], [599, 346], [615, 157],
+                                         [628, 223], [638, 258], [648, 288]]]
 
 
 class HandsTest(parameterized.TestCase):
 
   def _annotate(self, frame: np.ndarray, results: NamedTuple, idx: int):
     for hand_landmarks in results.multi_hand_landmarks:
-      mp_drawing.draw_landmarks(frame, hand_landmarks,
-                                mp_hands.HAND_CONNECTIONS)
+      mp_drawing.draw_landmarks(
+          frame, hand_landmarks, mp_hands.HAND_CONNECTIONS,
+          drawing_styles.get_default_hand_landmarks_style(),
+          drawing_styles.get_default_hand_connections_style())
     path = os.path.join(tempfile.gettempdir(), self.id().split('.')[-1] +
                                               '_frame_{}.png'.format(idx))
     cv2.imwrite(path, frame)
@@ -88,11 +92,12 @@ class HandsTest(parameterized.TestCase):
             for handedness in results.multi_handedness
         ]
         multi_hand_coordinates = []
+        rows, cols, _ = image.shape
         for landmarks in results.multi_hand_landmarks:
           self.assertLen(landmarks.landmark, 21)
-          x = [landmark.x for landmark in landmarks.landmark]
-          y = [landmark.y for landmark in landmarks.landmark]
-          hand_coordinates = np.transpose(np.stack((y, x))) * image.shape[0:2]
+          x = [landmark.x * cols for landmark in landmarks.landmark]
+          y = [landmark.y * rows for landmark in landmarks.landmark]
+          hand_coordinates = np.column_stack((x, y))
           multi_hand_coordinates.append(hand_coordinates)
         self.assertLen(handedness, 2)
         self.assertLen(multi_hand_coordinates, 2)

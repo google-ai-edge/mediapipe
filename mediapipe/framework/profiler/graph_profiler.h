@@ -97,18 +97,8 @@ class GraphProfilerTestPeer;
 // The client can overwrite this by calling SetClock().
 class GraphProfiler : public std::enable_shared_from_this<ProfilingContext> {
  public:
-  GraphProfiler()
-      : is_initialized_(false),
-        is_profiling_(false),
-        calculator_profiles_(1000),
-        packets_info_(1000),
-        is_running_(false),
-        previous_log_end_time_(absl::InfinitePast()),
-        previous_log_index_(-1),
-        validated_graph_(nullptr) {
-    clock_ = std::shared_ptr<mediapipe::Clock>(
-        mediapipe::MonotonicClock::CreateSynchronizedMonotonicClock());
-  }
+  GraphProfiler();
+  ~GraphProfiler();
 
   // Not copyable or movable.
   GraphProfiler(const GraphProfiler&) = delete;
@@ -230,6 +220,8 @@ class GraphProfiler : public std::enable_shared_from_this<ProfilingContext> {
     int64 start_time_usec_;
   };
 
+  const ProfilerConfig& profiler_config() { return profiler_config_; }
+
  private:
   // This can be used to add packet info for the input streams to the graph.
   // It treats the stream defined by |stream_name| as a stream produced by a
@@ -303,6 +295,7 @@ class GraphProfiler : public std::enable_shared_from_this<ProfilingContext> {
   // Helper method to get the clock time in microsecond.
   int64 TimeNowUsec() { return ToUnixMicros(clock_->TimeNow()); }
 
+ private:
   // The settings for this tracer.
   ProfilerConfig profiler_config_;
 
@@ -344,6 +337,10 @@ class GraphProfiler : public std::enable_shared_from_this<ProfilingContext> {
 
   // The configuration for the graph being profiled.
   const ValidatedGraphConfig* validated_graph_;
+
+  // A private resource for creating GraphProfiles.
+  class GraphProfileBuilder;
+  std::unique_ptr<GraphProfileBuilder> profile_builder_;
 
   // For testing.
   friend GraphProfilerTestPeer;

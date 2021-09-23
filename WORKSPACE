@@ -65,26 +65,19 @@ rules_foreign_cc_dependencies()
 all_content = """filegroup(name = "all", srcs = glob(["**"]), visibility = ["//visibility:public"])"""
 
 # GoogleTest/GoogleMock framework. Used by most unit-tests.
-# Last updated 2020-06-30.
+# Last updated 2021-07-02.
 http_archive(
     name = "com_google_googletest",
-    urls = ["https://github.com/google/googletest/archive/aee0f9d9b5b87796ee8a0ab26b7587ec30e8858e.zip"],
-    patches = [
-        # fix for https://github.com/google/googletest/issues/2817
-        "@//third_party:com_google_googletest_9d580ea80592189e6d44fa35bcf9cdea8bf620d6.diff"
-    ],
-    patch_args = [
-        "-p1",
-    ],
-    strip_prefix = "googletest-aee0f9d9b5b87796ee8a0ab26b7587ec30e8858e",
-    sha256 = "04a1751f94244307cebe695a69cc945f9387a80b0ef1af21394a490697c5c895",
+    urls = ["https://github.com/google/googletest/archive/4ec4cd23f486bf70efcc5d2caa40f24368f752e3.zip"],
+    strip_prefix = "googletest-4ec4cd23f486bf70efcc5d2caa40f24368f752e3",
+    sha256 = "de682ea824bfffba05b4e33b67431c247397d6175962534305136aa06f92e049",
 )
 
 # Google Benchmark library.
 http_archive(
     name = "com_google_benchmark",
-    urls = ["https://github.com/google/benchmark/archive/master.zip"],
-    strip_prefix = "benchmark-master",
+    urls = ["https://github.com/google/benchmark/archive/main.zip"],
+    strip_prefix = "benchmark-main",
     build_file = "@//third_party:benchmark.BUILD",
 )
 
@@ -176,11 +169,11 @@ http_archive(
 http_archive(
     name = "pybind11",
     urls = [
-        "https://storage.googleapis.com/mirror.tensorflow.org/github.com/pybind/pybind11/archive/v2.4.3.tar.gz",
-        "https://github.com/pybind/pybind11/archive/v2.4.3.tar.gz",
+        "https://storage.googleapis.com/mirror.tensorflow.org/github.com/pybind/pybind11/archive/v2.7.1.tar.gz",
+        "https://github.com/pybind/pybind11/archive/v2.7.1.tar.gz",
     ],
-    sha256 = "1eed57bc6863190e35637290f97a20c81cfe4d9090ac0a24f3bbf08f265eb71d",
-    strip_prefix = "pybind11-2.4.3",
+    sha256 = "616d1c42e4cf14fa27b2a4ff759d7d7b33006fdc5ad8fd603bb2c22622f27020",
+    strip_prefix = "pybind11-2.7.1",
     build_file = "@pybind11_bazel//:pybind11.BUILD",
 )
 
@@ -252,6 +245,20 @@ http_archive(
     build_file = "@//third_party:opencv_ios.BUILD",
     type = "zip",
     url = "https://github.com/opencv/opencv/releases/download/3.2.0/opencv-3.2.0-ios-framework.zip",
+)
+
+http_archive(
+    name = "stblib",
+    strip_prefix = "stb-b42009b3b9d4ca35bc703f5310eedc74f584be58",
+    sha256 = "13a99ad430e930907f5611325ec384168a958bf7610e63e60e2fd8e7b7379610",
+    urls = ["https://github.com/nothings/stb/archive/b42009b3b9d4ca35bc703f5310eedc74f584be58.tar.gz"],
+    build_file = "@//third_party:stblib.BUILD",
+    patches = [
+        "@//third_party:stb_image_impl.diff"
+    ],
+    patch_args = [
+        "-p1",
+    ],
 )
 
 # You may run setup_android.sh to install Android SDK and NDK.
@@ -336,7 +343,9 @@ load("@rules_jvm_external//:defs.bzl", "maven_install")
 maven_install(
     artifacts = [
         "androidx.concurrent:concurrent-futures:1.0.0-alpha03",
-        "androidx.lifecycle:lifecycle-common:2.2.0",
+        "androidx.lifecycle:lifecycle-common:2.3.1",
+        "androidx.activity:activity:1.2.2",
+        "androidx.fragment:fragment:1.3.4",
         "androidx.annotation:annotation:aar:1.1.0",
         "androidx.appcompat:appcompat:aar:1.1.0-rc01",
         "androidx.camera:camera-core:1.0.0-beta10",
@@ -349,11 +358,11 @@ maven_install(
         "androidx.test.espresso:espresso-core:3.1.1",
         "com.github.bumptech.glide:glide:4.11.0",
         "com.google.android.material:material:aar:1.0.0-rc01",
-        "com.google.auto.value:auto-value:1.6.4",
-        "com.google.auto.value:auto-value-annotations:1.6.4",
-        "com.google.code.findbugs:jsr305:3.0.2",
-        "com.google.flogger:flogger-system-backend:0.3.1",
-        "com.google.flogger:flogger:0.3.1",
+        "com.google.auto.value:auto-value:1.8.1",
+        "com.google.auto.value:auto-value-annotations:1.8.1",
+        "com.google.code.findbugs:jsr305:latest.release",
+        "com.google.flogger:flogger-system-backend:latest.release",
+        "com.google.flogger:flogger:latest.release",
         "com.google.guava:guava:27.0.1-android",
         "com.google.guava:listenablefuture:1.0",
         "junit:junit:4.12",
@@ -381,9 +390,9 @@ http_archive(
 )
 
 # Tensorflow repo should always go after the other external dependencies.
-# 2021-04-30
-_TENSORFLOW_GIT_COMMIT = "5bd3c57ef184543d22e34e36cff9d9bea608e06d"
-_TENSORFLOW_SHA256= "9a45862834221aafacf6fb275f92b3876bc89443cbecc51be93f13839a6609f0"
+# 2021-07-29
+_TENSORFLOW_GIT_COMMIT = "52a2905cbc21034766c08041933053178c5d10e3"
+_TENSORFLOW_SHA256 = "06d4691bcdb700f3275fa0971a1585221c2b9f3dffe867963be565a6643d7f56"
 http_archive(
     name = "org_tensorflow",
     urls = [
@@ -404,3 +413,18 @@ load("@org_tensorflow//tensorflow:workspace3.bzl", "tf_workspace3")
 tf_workspace3()
 load("@org_tensorflow//tensorflow:workspace2.bzl", "tf_workspace2")
 tf_workspace2()
+
+# Edge TPU
+http_archive(
+  name = "libedgetpu",
+  sha256 = "14d5527a943a25bc648c28a9961f954f70ba4d79c0a9ca5ae226e1831d72fe80",
+  strip_prefix = "libedgetpu-3164995622300286ef2bb14d7fdc2792dae045b7",
+  urls = [
+    "https://github.com/google-coral/libedgetpu/archive/3164995622300286ef2bb14d7fdc2792dae045b7.tar.gz"
+  ],
+)
+load("@libedgetpu//:workspace.bzl", "libedgetpu_dependencies")
+libedgetpu_dependencies()
+
+load("@coral_crosstool//:configure.bzl", "cc_crosstool")
+cc_crosstool(name = "crosstool")

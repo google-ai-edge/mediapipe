@@ -24,7 +24,7 @@ package(default_visibility = ["//visibility:public"])
 cc_library(
     name = "renderer_calculators",
     deps = [
-        "//mediapipe/calculators/core:split_normalized_landmark_list_calculator",
+        "//mediapipe/calculators/core:split_landmarks_calculator",
         "//mediapipe/calculators/util:annotation_overlay_calculator",
         "//mediapipe/calculators/util:detections_to_render_data_calculator",
         "//mediapipe/calculators/util:landmarks_to_render_data_calculator",

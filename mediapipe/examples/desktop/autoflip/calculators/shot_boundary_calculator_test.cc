@@ -43,6 +43,9 @@ namespace mediapipe {
 namespace autoflip {
 namespace {
 
+constexpr char kIsShotChangeTag[] = "IS_SHOT_CHANGE";
+constexpr char kVideoTag[] = "VIDEO";
+
 const char kConfig[] = R"(
     calculator: "ShotBoundaryCalculator"
     input_stream: "VIDEO:camera_frames"
@@ -70,7 +73,7 @@ void AddFrames(const int number_of_frames, const std::set<int>& skip_frames,
     if (skip_frames.count(i) < 1) {
       sub_image.copyTo(frame_area);
     }
-    runner->MutableInputs()->Tag("VIDEO").packets.push_back(
+    runner->MutableInputs()->Tag(kVideoTag).packets.push_back(
         Adopt(input_frame.release()).At(Timestamp(i * 1000000)));
   }
 }
@@ -97,7 +100,7 @@ TEST(ShotBoundaryCalculatorTest, NoShotChange) {
 
   AddFrames(10, {}, runner.get());
   MP_ASSERT_OK(runner->Run());
-  CheckOutput(10, {}, runner->Outputs().Tag("IS_SHOT_CHANGE").packets);
+  CheckOutput(10, {}, runner->Outputs().Tag(kIsShotChangeTag).packets);
 }
 
 TEST(ShotBoundaryCalculatorTest, ShotChangeSingle) {
@@ -110,7 +113,7 @@ TEST(ShotBoundaryCalculatorTest, ShotChangeSingle) {
 
   AddFrames(20, {10}, runner.get());
   MP_ASSERT_OK(runner->Run());
-  CheckOutput(20, {10}, runner->Outputs().Tag("IS_SHOT_CHANGE").packets);
+  CheckOutput(20, {10}, runner->Outputs().Tag(kIsShotChangeTag).packets);
 }
 
 TEST(ShotBoundaryCalculatorTest, ShotChangeDouble) {
@@ -123,7 +126,7 @@ TEST(ShotBoundaryCalculatorTest, ShotChangeDouble) {
 
   AddFrames(20, {14, 17}, runner.get());
   MP_ASSERT_OK(runner->Run());
-  CheckOutput(20, {14, 17}, runner->Outputs().Tag("IS_SHOT_CHANGE").packets);
+  CheckOutput(20, {14, 17}, runner->Outputs().Tag(kIsShotChangeTag).packets);
 }
 
 TEST(ShotBoundaryCalculatorTest, ShotChangeFiltered) {
@@ -140,7 +143,7 @@ TEST(ShotBoundaryCalculatorTest, ShotChangeFiltered) {
 
   AddFrames(24, {16, 19}, runner.get());
   MP_ASSERT_OK(runner->Run());
-  CheckOutput(24, {16}, runner->Outputs().Tag("IS_SHOT_CHANGE").packets);
+  CheckOutput(24, {16}, runner->Outputs().Tag(kIsShotChangeTag).packets);
 }
 
 TEST(ShotBoundaryCalculatorTest, ShotChangeSingleOnOnChange) {
@@ -153,7 +156,7 @@ TEST(ShotBoundaryCalculatorTest, ShotChangeSingleOnOnChange) {
 
   AddFrames(20, {15}, runner.get());
   MP_ASSERT_OK(runner->Run());
-  auto output_packets = runner->Outputs().Tag("IS_SHOT_CHANGE").packets;
+  auto output_packets = runner->Outputs().Tag(kIsShotChangeTag).packets;
   ASSERT_EQ(output_packets.size(), 1);
   ASSERT_EQ(output_packets[0].Get<bool>(), true);
   ASSERT_EQ(output_packets[0].Timestamp().Value(), 15000000);

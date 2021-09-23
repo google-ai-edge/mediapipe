@@ -31,6 +31,9 @@ namespace mediapipe {
 namespace autoflip {
 namespace {
 
+constexpr char kRegionsTag[] = "REGIONS";
+constexpr char kDetectionsTag[] = "DETECTIONS";
+
 const char kConfig[] = R"(
     calculator: "LocalizationToRegionCalculator"
     input_stream: "DETECTIONS:detections"
@@ -81,7 +84,7 @@ void SetInputs(CalculatorRunner* runner,
     inputs->push_back(ParseTextProtoOrDie<Detection>(detection));
   }
   runner->MutableInputs()
-      ->Tag("DETECTIONS")
+      ->Tag(kDetectionsTag)
       .packets.push_back(Adopt(inputs.release()).At(Timestamp::PostStream()));
 }
 
@@ -109,7 +112,7 @@ TEST(LocalizationToRegionCalculatorTest, StandardTypes) {
 
   // Check the output regions.
   const std::vector<Packet>& output_packets =
-      runner->Outputs().Tag("REGIONS").packets;
+      runner->Outputs().Tag(kRegionsTag).packets;
   ASSERT_EQ(1, output_packets.size());
   const auto& regions = output_packets[0].Get<DetectionSet>();
   ASSERT_EQ(2, regions.detections().size());
@@ -137,7 +140,7 @@ TEST(LocalizationToRegionCalculatorTest, AllTypes) {
 
   // Check the output regions.
   const std::vector<Packet>& output_packets =
-      runner->Outputs().Tag("REGIONS").packets;
+      runner->Outputs().Tag(kRegionsTag).packets;
   ASSERT_EQ(1, output_packets.size());
   const auto& regions = output_packets[0].Get<DetectionSet>();
   ASSERT_EQ(3, regions.detections().size());
@@ -153,7 +156,7 @@ TEST(LocalizationToRegionCalculatorTest, BothTypes) {
 
   // Check the output regions.
   const std::vector<Packet>& output_packets =
-      runner->Outputs().Tag("REGIONS").packets;
+      runner->Outputs().Tag(kRegionsTag).packets;
   ASSERT_EQ(1, output_packets.size());
   const auto& regions = output_packets[0].Get<DetectionSet>();
   ASSERT_EQ(5, regions.detections().size());

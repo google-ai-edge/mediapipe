@@ -24,7 +24,7 @@ output_stream: "MULTI_FACE_GEOMETRY:multi_face_geometry"
 # Subgraph that detects faces and corresponding landmarks using the face
 # detection pipeline.
 node {
-  calculator: "FaceDetectionFrontGpu"
+  calculator: "FaceDetectionShortRangeGpu"
   input_stream: "IMAGE:input_image"
   output_stream: "DETECTIONS:multi_face_detection"
 }

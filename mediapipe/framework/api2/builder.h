@@ -17,6 +17,14 @@ namespace mediapipe {
 namespace api2 {
 namespace builder {
 
+// Workaround for static_assert(false). Example:
+//   dependent_false<T>::value returns false.
+// For more information, see:
+// https://en.cppreference.com/w/cpp/language/if#Constexpr_If
+// TODO: migrate to a common utility when available.
+template <class T>
+struct dependent_false : std::false_type {};
+
 template <typename T>
 T& GetWithAutoGrow(std::vector<std::unique_ptr<T>>* vecp, int index) {
   auto& vec = *vecp;
@@ -140,18 +148,18 @@ class SourceImpl {
 
   explicit SourceImpl(std::vector<std::unique_ptr<Base>>* vec)
       : SourceImpl(&GetWithAutoGrow(vec, 0)) {}
-  explicit SourceImpl(SourceBase* base) : base_(*base) {}
+  explicit SourceImpl(SourceBase* base) : base_(base) {}
 
   template <typename U,
             typename std::enable_if<AllowConnection<U>{}, int>::type = 0>
   Src& AddTarget(const Dst<U>& dest) {
     CHECK(dest.base_.source == nullptr);
-    dest.base_.source = &base_;
-    base_.dests_.emplace_back(&dest.base_);
+    dest.base_.source = base_;
+    base_->dests_.emplace_back(&dest.base_);
     return *this;
   }
   Src& SetName(std::string name) {
-    base_.name_ = std::move(name);
+    base_->name_ = std::move(name);
     return *this;
   }
   template <typename U>
@@ -160,7 +168,8 @@ class SourceImpl {
   }
 
  private:
-  SourceBase& base_;
+  // Never null.
+  SourceBase* base_;
 };
 
 template <bool IsSide, typename T>
@@ -207,6 +216,21 @@ class NodeBase {
 
   SideDestination<true> SideIn(const std::string& tag) {
     return SideDestination<true>(&in_sides_[tag]);
+  }
+
+  template <typename B, typename T, bool kIsOptional, bool kIsMultiple>
+  auto operator[](const PortCommon<B, T, kIsOptional, kIsMultiple>& port) {
+    if constexpr (std::is_same_v<B, OutputBase>) {
+      return Source<kIsMultiple, T>(&out_streams_[port.Tag()]);
+    } else if constexpr (std::is_same_v<B, InputBase>) {
+      return Destination<kIsMultiple, T>(&in_streams_[port.Tag()]);
+    } else if constexpr (std::is_same_v<B, SideOutputBase>) {
+      return SideSource<kIsMultiple, T>(&out_sides_[port.Tag()]);
+    } else if constexpr (std::is_same_v<B, SideInputBase>) {
+      return SideDestination<kIsMultiple, T>(&in_sides_[port.Tag()]);
+    } else {
+      static_assert(dependent_false<B>::value, "Type not supported.");
+    }
   }
 
   // Convenience methods for accessing purely index-based ports.
@@ -427,6 +451,24 @@ class Graph {
             class Dst = SideDestination<PortT::kMultiple, Payload>>
   Dst SideOut(const PortT& graph_output) {
     return Dst(&graph_boundary_.in_sides_[graph_output.Tag()]);
+  }
+
+  template <typename B, typename T, bool kIsOptional, bool kIsMultiple>
+  auto operator[](const PortCommon<B, T, kIsOptional, kIsMultiple>& port) {
+    if constexpr (std::is_same_v<B, OutputBase>) {
+      return Destination<kIsMultiple, T>(
+          &graph_boundary_.in_streams_[port.Tag()]);
+    } else if constexpr (std::is_same_v<B, InputBase>) {
+      return Source<kIsMultiple, T>(&graph_boundary_.out_streams_[port.Tag()]);
+    } else if constexpr (std::is_same_v<B, SideOutputBase>) {
+      return SideDestination<kIsMultiple, T>(
+          &graph_boundary_.in_sides_[port.Tag()]);
+    } else if constexpr (std::is_same_v<B, SideInputBase>) {
+      return SideSource<kIsMultiple, T>(
+          &graph_boundary_.out_sides_[port.Tag()]);
+    } else {
+      static_assert(dependent_false<B>::value, "Type not supported.");
+    }
   }
 
   // Returns the graph config. This can be used to instantiate and run the

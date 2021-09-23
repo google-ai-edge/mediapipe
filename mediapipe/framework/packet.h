@@ -175,7 +175,7 @@ class Packet {
   // Note: This function is meant to be used internally within the MediaPipe
   // framework only.
   StatusOr<std::vector<const proto_ns::MessageLite*>>
-  GetVectorOfProtoMessageLitePtrs();
+  GetVectorOfProtoMessageLitePtrs() const;
 
   // Returns an error if the packet does not contain data of type T.
   template <typename T>
@@ -391,7 +391,7 @@ class HolderBase {
   // underlying object is a vector of protocol buffer objects, otherwise,
   // returns an error.
   virtual StatusOr<std::vector<const proto_ns::MessageLite*>>
-  GetVectorOfProtoMessageLite() = 0;
+  GetVectorOfProtoMessageLite() const = 0;
 
  private:
   size_t type_id_;
@@ -563,7 +563,7 @@ class Holder : public HolderBase {
   // underlying object is a vector of protocol buffer objects, otherwise,
   // returns an error.
   StatusOr<std::vector<const proto_ns::MessageLite*>>
-  GetVectorOfProtoMessageLite() override {
+  GetVectorOfProtoMessageLite() const override {
     return ConvertToVectorOfProtoMessageLitePtrs(ptr_, is_proto_vector<T>());
   }
 

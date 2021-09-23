@@ -15,28 +15,32 @@
 """MediaPipe solution drawing utils."""
 
 import math
-from typing import List, Tuple, Union
+from typing import List, Mapping, Optional, Tuple, Union
 
 import cv2
 import dataclasses
+import matplotlib.pyplot as plt
 import numpy as np
 
 from mediapipe.framework.formats import detection_pb2
 from mediapipe.framework.formats import location_data_pb2
 from mediapipe.framework.formats import landmark_pb2
 
-PRESENCE_THRESHOLD = 0.5
-RGB_CHANNELS = 3
+_PRESENCE_THRESHOLD = 0.5
+_VISIBILITY_THRESHOLD = 0.5
+_RGB_CHANNELS = 3
+
+WHITE_COLOR = (224, 224, 224)
+BLACK_COLOR = (0, 0, 0)
 RED_COLOR = (0, 0, 255)
 GREEN_COLOR = (0, 128, 0)
 BLUE_COLOR = (255, 0, 0)
-VISIBILITY_THRESHOLD = 0.5
 
 
 @dataclasses.dataclass
 class DrawingSpec:
-  # Color for drawing the annotation. Default to the green color.
-  color: Tuple[int, int, int] = (0, 255, 0)
+  # Color for drawing the annotation. Default to the white color.
+  color: Tuple[int, int, int] = WHITE_COLOR
   # Thickness for drawing the annotation. Default to 2 pixels.
   thickness: int = 2
   # Circle radius. Default to 2 pixels.
@@ -84,7 +88,7 @@ def draw_detection(
   """
   if not detection.location_data:
     return
-  if image.shape[2] != RGB_CHANNELS:
+  if image.shape[2] != _RGB_CHANNELS:
     raise ValueError('Input image must contain three channel rgb data.')
   image_rows, image_cols, _ = image.shape
 
@@ -107,7 +111,7 @@ def draw_detection(
       image_rows)
   rect_end_point = _normalized_to_pixel_coordinates(
       relative_bounding_box.xmin + relative_bounding_box.width,
-      relative_bounding_box.ymin + +relative_bounding_box.height, image_cols,
+      relative_bounding_box.ymin + relative_bounding_box.height, image_cols,
       image_rows)
   cv2.rectangle(image, rect_start_point, rect_end_point,
                 bbox_drawing_spec.color, bbox_drawing_spec.thickness)
@@ -116,9 +120,13 @@ def draw_detection(
 def draw_landmarks(
     image: np.ndarray,
     landmark_list: landmark_pb2.NormalizedLandmarkList,
-    connections: List[Tuple[int, int]] = None,
-    landmark_drawing_spec: DrawingSpec = DrawingSpec(color=RED_COLOR),
-    connection_drawing_spec: DrawingSpec = DrawingSpec()):
+    connections: Optional[List[Tuple[int, int]]] = None,
+    landmark_drawing_spec: Union[DrawingSpec,
+                                 Mapping[int, DrawingSpec]] = DrawingSpec(
+                                     color=RED_COLOR),
+    connection_drawing_spec: Union[DrawingSpec,
+                                   Mapping[Tuple[int, int],
+                                           DrawingSpec]] = DrawingSpec()):
   """Draws the landmarks and the connections on the image.
 
   Args:
@@ -127,9 +135,11 @@ def draw_landmarks(
       the image.
     connections: A list of landmark index tuples that specifies how landmarks to
       be connected in the drawing.
-    landmark_drawing_spec: A DrawingSpec object that specifies the landmarks'
-      drawing settings such as color, line thickness, and circle radius.
-    connection_drawing_spec: A DrawingSpec object that specifies the
+    landmark_drawing_spec: Either a DrawingSpec object or a mapping from
+      hand landmarks to the DrawingSpecs that specifies the landmarks' drawing
+      settings such as color, line thickness, and circle radius.
+    connection_drawing_spec: Either a DrawingSpec object or a mapping from
+      hand connections to the DrawingSpecs that specifies the
       connections' drawing settings such as color and line thickness.
 
   Raises:
@@ -139,15 +149,15 @@ def draw_landmarks(
   """
   if not landmark_list:
     return
-  if image.shape[2] != RGB_CHANNELS:
+  if image.shape[2] != _RGB_CHANNELS:
     raise ValueError('Input image must contain three channel rgb data.')
   image_rows, image_cols, _ = image.shape
   idx_to_coordinates = {}
   for idx, landmark in enumerate(landmark_list.landmark):
     if ((landmark.HasField('visibility') and
-         landmark.visibility < VISIBILITY_THRESHOLD) or
+         landmark.visibility < _VISIBILITY_THRESHOLD) or
         (landmark.HasField('presence') and
-         landmark.presence < PRESENCE_THRESHOLD)):
+         landmark.presence < _PRESENCE_THRESHOLD)):
       continue
     landmark_px = _normalized_to_pixel_coordinates(landmark.x, landmark.y,
                                                    image_cols, image_rows)
@@ -163,14 +173,25 @@ def draw_landmarks(
         raise ValueError(f'Landmark index is out of range. Invalid connection '
                          f'from landmark #{start_idx} to landmark #{end_idx}.')
       if start_idx in idx_to_coordinates and end_idx in idx_to_coordinates:
+        drawing_spec = connection_drawing_spec[connection] if isinstance(
+            connection_drawing_spec, Mapping) else connection_drawing_spec
         cv2.line(image, idx_to_coordinates[start_idx],
-                 idx_to_coordinates[end_idx], connection_drawing_spec.color,
-                 connection_drawing_spec.thickness)
+                 idx_to_coordinates[end_idx], drawing_spec.color,
+                 drawing_spec.thickness)
   # Draws landmark points after finishing the connection lines, which is
   # aesthetically better.
-  for landmark_px in idx_to_coordinates.values():
-    cv2.circle(image, landmark_px, landmark_drawing_spec.circle_radius,
-               landmark_drawing_spec.color, landmark_drawing_spec.thickness)
+  if landmark_drawing_spec:
+    for idx, landmark_px in idx_to_coordinates.items():
+      drawing_spec = landmark_drawing_spec[idx] if isinstance(
+          landmark_drawing_spec, Mapping) else landmark_drawing_spec
+      # White circle border
+      circle_border_radius = max(drawing_spec.circle_radius + 1,
+                                 int(drawing_spec.circle_radius * 1.2))
+      cv2.circle(image, landmark_px, circle_border_radius, WHITE_COLOR,
+                 drawing_spec.thickness)
+      # Fill color into the circle
+      cv2.circle(image, landmark_px, drawing_spec.circle_radius,
+                 drawing_spec.color, drawing_spec.thickness)
 
 
 def draw_axis(
@@ -197,7 +218,7 @@ def draw_axis(
     ValueError: If one of the followings:
       a) If the input image is not three channel RGB.
   """
-  if image.shape[2] != RGB_CHANNELS:
+  if image.shape[2] != _RGB_CHANNELS:
     raise ValueError('Input image must contain three channel rgb data.')
   image_rows, image_cols, _ = image.shape
   # Create axis points in camera coordinate frame.
@@ -219,9 +240,76 @@ def draw_axis(
   x_axis = (x_im[1], y_im[1])
   y_axis = (x_im[2], y_im[2])
   z_axis = (x_im[3], y_im[3])
-  cv2.arrowedLine(image, origin, x_axis, RED_COLOR,
-                  axis_drawing_spec.thickness)
+  cv2.arrowedLine(image, origin, x_axis, RED_COLOR, axis_drawing_spec.thickness)
   cv2.arrowedLine(image, origin, y_axis, GREEN_COLOR,
                   axis_drawing_spec.thickness)
   cv2.arrowedLine(image, origin, z_axis, BLUE_COLOR,
                   axis_drawing_spec.thickness)
+
+
+def _normalize_color(color):
+  return tuple(v / 255. for v in color)
+
+
+def plot_landmarks(landmark_list: landmark_pb2.NormalizedLandmarkList,
+                   connections: Optional[List[Tuple[int, int]]] = None,
+                   landmark_drawing_spec: DrawingSpec = DrawingSpec(
+                       color=RED_COLOR, thickness=5),
+                   connection_drawing_spec: DrawingSpec = DrawingSpec(
+                       color=BLACK_COLOR, thickness=5),
+                   elevation: int = 10,
+                   azimuth: int = 10):
+  """Plot the landmarks and the connections in matplotlib 3d.
+
+  Args:
+    landmark_list: A normalized landmark list proto message to be plotted.
+    connections: A list of landmark index tuples that specifies how landmarks to
+      be connected.
+    landmark_drawing_spec: A DrawingSpec object that specifies the landmarks'
+      drawing settings such as color and line thickness.
+    connection_drawing_spec: A DrawingSpec object that specifies the
+      connections' drawing settings such as color and line thickness.
+    elevation: The elevation from which to view the plot.
+    azimuth: the azimuth angle to rotate the plot.
+  Raises:
+    ValueError: If any connetions contain invalid landmark index.
+  """
+  if not landmark_list:
+    return
+  plt.figure(figsize=(10, 10))
+  ax = plt.axes(projection='3d')
+  ax.view_init(elev=elevation, azim=azimuth)
+  plotted_landmarks = {}
+  for idx, landmark in enumerate(landmark_list.landmark):
+    if ((landmark.HasField('visibility') and
+         landmark.visibility < _VISIBILITY_THRESHOLD) or
+        (landmark.HasField('presence') and
+         landmark.presence < _PRESENCE_THRESHOLD)):
+      continue
+    ax.scatter3D(
+        xs=[-landmark.z],
+        ys=[landmark.x],
+        zs=[-landmark.y],
+        color=_normalize_color(landmark_drawing_spec.color[::-1]),
+        linewidth=landmark_drawing_spec.thickness)
+    plotted_landmarks[idx] = (-landmark.z, landmark.x, -landmark.y)
+  if connections:
+    num_landmarks = len(landmark_list.landmark)
+    # Draws the connections if the start and end landmarks are both visible.
+    for connection in connections:
+      start_idx = connection[0]
+      end_idx = connection[1]
+      if not (0 <= start_idx < num_landmarks and 0 <= end_idx < num_landmarks):
+        raise ValueError(f'Landmark index is out of range. Invalid connection '
+                         f'from landmark #{start_idx} to landmark #{end_idx}.')
+      if start_idx in plotted_landmarks and end_idx in plotted_landmarks:
+        landmark_pair = [
+            plotted_landmarks[start_idx], plotted_landmarks[end_idx]
+        ]
+        ax.plot3D(
+            xs=[landmark_pair[0][0], landmark_pair[1][0]],
+            ys=[landmark_pair[0][1], landmark_pair[1][1]],
+            zs=[landmark_pair[0][2], landmark_pair[1][2]],
+            color=_normalize_color(connection_drawing_spec.color[::-1]),
+            linewidth=connection_drawing_spec.thickness)
+  plt.show()

@@ -30,7 +30,8 @@ overlay of digital content and information on top of the physical world in
 augmented reality.
 
 MediaPipe Pose is a ML solution for high-fidelity body pose tracking, inferring
-33 3D landmarks on the whole body from RGB video frames utilizing our
+33 3D landmarks and background segmentation mask on the whole body from RGB
+video frames utilizing our
 [BlazePose](https://ai.googleblog.com/2020/08/on-device-real-time-body-pose-tracking.html)
 research that also powers the
 [ML Kit Pose Detection API](https://developers.google.com/ml-kit/vision/pose-detection).
@@ -49,11 +50,11 @@ The solution utilizes a two-step detector-tracker ML pipeline, proven to be
 effective in our [MediaPipe Hands](./hands.md) and
 [MediaPipe Face Mesh](./face_mesh.md) solutions. Using a detector, the pipeline
 first locates the person/pose region-of-interest (ROI) within the frame. The
-tracker subsequently predicts the pose landmarks within the ROI using the
-ROI-cropped frame as input. Note that for video use cases the detector is
-invoked only as needed, i.e., for the very first frame and when the tracker
-could no longer identify body pose presence in the previous frame. For other
-frames the pipeline simply derives the ROI from the previous frame’s pose
+tracker subsequently predicts the pose landmarks and segmentation mask within
+the ROI using the ROI-cropped frame as input. Note that for video use cases the
+detector is invoked only as needed, i.e., for the very first frame and when the
+tracker could no longer identify body pose presence in the previous frame. For
+other frames the pipeline simply derives the ROI from the previous frame’s pose
 landmarks.
 
 The pipeline is implemented as a MediaPipe
@@ -87,11 +88,11 @@ from [COCO topology](https://cocodataset.org/#keypoints-2020).
 
 Method                                                                                                | Yoga <br/> [`mAP`] | Yoga <br/> [`PCK@0.2`] | Dance <br/> [`mAP`] | Dance <br/> [`PCK@0.2`] | HIIT <br/> [`mAP`] | HIIT <br/> [`PCK@0.2`]
 ----------------------------------------------------------------------------------------------------- | -----------------: | ---------------------: | ------------------: | ----------------------: | -----------------: | ---------------------:
-BlazePose.Heavy                                                                                       | 68.1               | **96.4**               | 73.0                | **97.2**                | 74.0               | **97.5**
-BlazePose.Full                                                                                        | 62.6               | **95.5**               | 67.4                | **96.3**                | 68.0               | **95.7**
-BlazePose.Lite                                                                                        | 45.0               | **90.2**               | 53.6                | **92.5**                | 53.8               | **93.5**
-[AlphaPose.ResNet50](https://github.com/MVIG-SJTU/AlphaPose)                                          | 63.4               | **96.0**               | 57.8                | **95.5**                | 63.4               | **96.0**
-[Apple.Vision](https://developer.apple.com/documentation/vision/detecting_human_body_poses_in_images) | 32.8               | **82.7**               | 36.4                | **91.4**                | 44.5               | **88.6**
+BlazePose GHUM Heavy                                                                                  | 68.1               | **96.4**               | 73.0                | **97.2**                | 74.0               | **97.5**
+BlazePose GHUM Full                                                                                   | 62.6               | **95.5**               | 67.4                | **96.3**                | 68.0               | **95.7**
+BlazePose GHUM Lite                                                                                   | 45.0               | **90.2**               | 53.6                | **92.5**                | 53.8               | **93.5**
+[AlphaPose ResNet50](https://github.com/MVIG-SJTU/AlphaPose)                                          | 63.4               | **96.0**               | 57.8                | **95.5**                | 63.4               | **96.0**
+[Apple Vision](https://developer.apple.com/documentation/vision/detecting_human_body_poses_in_images) | 32.8               | **82.7**               | 36.4                | **91.4**                | 44.5               | **88.6**
 
 ![pose_tracking_pck_chart.png](../images/mobile/pose_tracking_pck_chart.png) |
 :--------------------------------------------------------------------------: |
@@ -100,11 +101,11 @@ BlazePose.Lite                                                                  
 We designed our models specifically for live perception use cases, so all of
 them work in real-time on the majority of modern devices.
 
-Method          | Latency <br/> Pixel 3 [TFLite GPU](https://www.tensorflow.org/lite/performance/gpu_advanced) | Latency <br/> MacBook Pro (15-inch 2017)
---------------- | -------------------------------------------------------------------------------------------: | ---------------------------------------:
-BlazePose.Heavy | 53 ms                                                                                        | 38 ms
-BlazePose.Full  | 25 ms                                                                                        | 27 ms
-BlazePose.Lite  | 20 ms                                                                                        | 25 ms
+Method               | Latency <br/> Pixel 3 [TFLite GPU](https://www.tensorflow.org/lite/performance/gpu_advanced) | Latency <br/> MacBook Pro (15-inch 2017)
+-------------------- | -------------------------------------------------------------------------------------------: | ---------------------------------------:
+BlazePose GHUM Heavy | 53 ms                                                                                        | 38 ms
+BlazePose GHUM Full  | 25 ms                                                                                        | 27 ms
+BlazePose GHUM Lite  | 20 ms                                                                                        | 25 ms
 
 ## Models
 
@@ -129,15 +130,18 @@ hip midpoints.
 The landmark model in MediaPipe Pose predicts the location of 33 pose landmarks
 (see figure below).
 
-Please find more detail in the
-[BlazePose Google AI Blog](https://ai.googleblog.com/2020/08/on-device-real-time-body-pose-tracking.html),
-this [paper](https://arxiv.org/abs/2006.10204) and
-[the model card](./models.md#pose), and the attributes in each landmark
-[below](#pose_landmarks).
-
 ![pose_tracking_full_body_landmarks.png](../images/mobile/pose_tracking_full_body_landmarks.png) |
 :----------------------------------------------------------------------------------------------: |
 *Fig 4. 33 pose landmarks.*                                                                      |
+
+Optionally, MediaPipe Pose can predicts a full-body
+[segmentation mask](#segmentation_mask) represented as a two-class segmentation
+(human or background).
+
+Please find more detail in the
+[BlazePose Google AI Blog](https://ai.googleblog.com/2020/08/on-device-real-time-body-pose-tracking.html),
+this [paper](https://arxiv.org/abs/2006.10204),
+[the model card](./models.md#pose) and the [Output](#output) section below.
 
 ## Solution APIs
 
@@ -167,6 +171,18 @@ If set to `true`, the solution filters pose landmarks across different input
 images to reduce jitter, but ignored if [static_image_mode](#static_image_mode)
 is also set to `true`. Default to `true`.
 
+#### enable_segmentation
+
+If set to `true`, in addition to the pose landmarks the solution also generates
+the segmentation mask. Default to `false`.
+
+#### smooth_segmentation
+
+If set to `true`, the solution filters segmentation masks across different input
+images to reduce jitter. Ignored if [enable_segmentation](#enable_segmentation)
+is `false` or [static_image_mode](#static_image_mode) is `true`. Default to
+`true`.
+
 #### min_detection_confidence
 
 Minimum confidence value (`[0.0, 1.0]`) from the person-detection model for the
@@ -187,28 +203,56 @@ Naming style may differ slightly across platforms/languages.
 
 #### pose_landmarks
 
-A list of pose landmarks. Each lanmark consists of the following:
+A list of pose landmarks. Each landmark consists of the following:
 
 *   `x` and `y`: Landmark coordinates normalized to `[0.0, 1.0]` by the image
     width and height respectively.
 *   `z`: Represents the landmark depth with the depth at the midpoint of hips
     being the origin, and the smaller the value the closer the landmark is to
     the camera. The magnitude of `z` uses roughly the same scale as `x`.
-
 *   `visibility`: A value in `[0.0, 1.0]` indicating the likelihood of the
     landmark being visible (present and not occluded) in the image.
+
+#### pose_world_landmarks
+
+*Fig 5. Example of MediaPipe Pose real-world 3D coordinates.* |
+:-----------------------------------------------------------: |
+<video autoplay muted loop preload style="height: auto; width: 480px"><source src="../images/mobile/pose_world_landmarks.mp4" type="video/mp4"></video> |
+
+Another list of pose landmarks in world coordinates. Each landmark consists of
+the following:
+
+*   `x`, `y` and `z`: Real-world 3D coordinates in meters with the origin at the
+    center between hips.
+*   `visibility`: Identical to that defined in the corresponding
+    [pose_landmarks](#pose_landmarks).
+
+#### segmentation_mask
+
+The output segmentation mask, predicted only when
+[enable_segmentation](#enable_segmentation) is set to `true`. The mask has the
+same width and height as the input image, and contains values in `[0.0, 1.0]`
+where `1.0` and `0.0` indicate high certainty of a "human" and "background"
+pixel respectively. Please refer to the platform-specific usage examples below
+for usage details.
+
+*Fig 6. Example of MediaPipe Pose segmentation mask.* |
+:---------------------------------------------------: |
+<video autoplay muted loop preload style="height: auto; width: 480px"><source src="../images/mobile/pose_segmentation.mp4" type="video/mp4"></video> |
 
 ### Python Solution API
 
 Please first follow general [instructions](../getting_started/python.md) to
 install MediaPipe Python package, then learn more in the companion
-[Python Colab](#resources) and the following usage example.
+[Python Colab](#resources) and the usage example below.
 
 Supported configuration options:
 
 *   [static_image_mode](#static_image_mode)
 *   [model_complexity](#model_complexity)
 *   [smooth_landmarks](#smooth_landmarks)
+*   [enable_segmentation](#enable_segmentation)
+*   [smooth_segmentation](#smooth_segmentation)
 *   [min_detection_confidence](#min_detection_confidence)
 *   [min_tracking_confidence](#min_tracking_confidence)
 
@@ -216,14 +260,18 @@ Supported configuration options:
 import cv2
 import mediapipe as mp
 mp_drawing = mp.solutions.drawing_utils
+mp_drawing_styles = mp.solutions.drawing_styles
 mp_pose = mp.solutions.pose
 
 # For static images:
+IMAGE_FILES = []
+BG_COLOR = (192, 192, 192) # gray
 with mp_pose.Pose(
     static_image_mode=True,
     model_complexity=2,
+    enable_segmentation=True,
     min_detection_confidence=0.5) as pose:
-  for idx, file in enumerate(file_list):
+  for idx, file in enumerate(IMAGE_FILES):
     image = cv2.imread(file)
     image_height, image_width, _ = image.shape
     # Convert the BGR image to RGB before processing.
@@ -233,14 +281,28 @@ with mp_pose.Pose(
       continue
     print(
         f'Nose coordinates: ('
-        f'{results.pose_landmarks.landmark[mp_holistic.PoseLandmark.NOSE].x * image_width}, '
-        f'{results.pose_landmarks.landmark[mp_holistic.PoseLandmark.NOSE].y * image_height})'
+        f'{results.pose_landmarks.landmark[mp_pose.PoseLandmark.NOSE].x * image_width}, '
+        f'{results.pose_landmarks.landmark[mp_pose.PoseLandmark.NOSE].y * image_height})'
     )
-    # Draw pose landmarks on the image.
+
     annotated_image = image.copy()
+    # Draw segmentation on the image.
+    # To improve segmentation around boundaries, consider applying a joint
+    # bilateral filter to "results.segmentation_mask" with "image".
+    condition = np.stack((results.segmentation_mask,) * 3, axis=-1) > 0.1
+    bg_image = np.zeros(image.shape, dtype=np.uint8)
+    bg_image[:] = BG_COLOR
+    annotated_image = np.where(condition, annotated_image, bg_image)
+    # Draw pose landmarks on the image.
     mp_drawing.draw_landmarks(
-        annotated_image, results.pose_landmarks, mp_pose.POSE_CONNECTIONS)
+        annotated_image,
+        results.pose_landmarks,
+        mp_pose.POSE_CONNECTIONS,
+        landmark_drawing_spec=mp_drawing_styles.get_default_pose_landmarks_style())
     cv2.imwrite('/tmp/annotated_image' + str(idx) + '.png', annotated_image)
+    # Plot pose world landmarks.
+    mp_drawing.plot_landmarks(
+        results.pose_world_landmarks, mp_pose.POSE_CONNECTIONS)
 
 # For webcam input:
 cap = cv2.VideoCapture(0)
@@ -266,7 +328,10 @@ with mp_pose.Pose(
     image.flags.writeable = True
     image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
     mp_drawing.draw_landmarks(
-        image, results.pose_landmarks, mp_pose.POSE_CONNECTIONS)
+        image,
+        results.pose_landmarks,
+        mp_pose.POSE_CONNECTIONS,
+        landmark_drawing_spec=mp_drawing_styles.get_default_pose_landmarks_style())
     cv2.imshow('MediaPipe Pose', image)
     if cv2.waitKey(5) & 0xFF == 27:
       break
@@ -283,6 +348,8 @@ Supported configuration options:
 
 *   [modelComplexity](#model_complexity)
 *   [smoothLandmarks](#smooth_landmarks)
+*   [enableSegmentation](#enable_segmentation)
+*   [smoothSegmentation](#smooth_segmentation)
 *   [minDetectionConfidence](#min_detection_confidence)
 *   [minTrackingConfidence](#min_tracking_confidence)
 
@@ -293,6 +360,7 @@ Supported configuration options:
   <meta charset="utf-8">
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/control_utils_3d.js" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js" crossorigin="anonymous"></script>
 </head>
@@ -301,6 +369,7 @@ Supported configuration options:
   <div class="container">
     <video class="input_video"></video>
     <canvas class="output_canvas" width="1280px" height="720px"></canvas>
+    <div class="landmark-grid-container"></div>
   </div>
 </body>
 </html>
@@ -311,17 +380,38 @@ Supported configuration options:
 const videoElement = document.getElementsByClassName('input_video')[0];
 const canvasElement = document.getElementsByClassName('output_canvas')[0];
 const canvasCtx = canvasElement.getContext('2d');
+const landmarkContainer = document.getElementsByClassName('landmark-grid-container')[0];
+const grid = new LandmarkGrid(landmarkContainer);
 
 function onResults(results) {
+  if (!results.poseLandmarks) {
+    grid.updateLandmarks([]);
+    return;
+  }
+
   canvasCtx.save();
   canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+  canvasCtx.drawImage(results.segmentationMask, 0, 0,
+                      canvasElement.width, canvasElement.height);
+
+  // Only overwrite existing pixels.
+  canvasCtx.globalCompositeOperation = 'source-in';
+  canvasCtx.fillStyle = '#00FF00';
+  canvasCtx.fillRect(0, 0, canvasElement.width, canvasElement.height);
+
+  // Only overwrite missing pixels.
+  canvasCtx.globalCompositeOperation = 'destination-atop';
   canvasCtx.drawImage(
       results.image, 0, 0, canvasElement.width, canvasElement.height);
+
+  canvasCtx.globalCompositeOperation = 'source-over';
   drawConnectors(canvasCtx, results.poseLandmarks, POSE_CONNECTIONS,
                  {color: '#00FF00', lineWidth: 4});
   drawLandmarks(canvasCtx, results.poseLandmarks,
                 {color: '#FF0000', lineWidth: 2});
   canvasCtx.restore();
+
+  grid.updateLandmarks(results.poseWorldLandmarks);
 }
 
 const pose = new Pose({locateFile: (file) => {
@@ -330,6 +420,8 @@ const pose = new Pose({locateFile: (file) => {
 pose.setOptions({
   modelComplexity: 1,
   smoothLandmarks: true,
+  enableSegmentation: true,
+  smoothSegmentation: true,
   minDetectionConfidence: 0.5,
   minTrackingConfidence: 0.5
 });

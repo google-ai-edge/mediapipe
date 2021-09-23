@@ -49,6 +49,11 @@ namespace tf = ::tensorflow;
 namespace mediapipe {
 
 namespace {
+
+constexpr char kRecurrentInitTensorsTag[] = "RECURRENT_INIT_TENSORS";
+constexpr char kSessionTag[] = "SESSION";
+constexpr char kSessionBundleTag[] = "SESSION_BUNDLE";
+
 // This is a simple implementation of a semaphore using standard C++ libraries.
 // It is supposed to be used only by TensorflowInferenceCalculator to throttle
 // the concurrent calls of Tensorflow Session::Run. This is useful when multiple
@@ -252,10 +257,10 @@ class TensorFlowInferenceCalculator : public CalculatorBase {
     }
     // A mediapipe::TensorFlowSession with a model loaded and ready for use.
     // For this calculator it must include a tag_to_tensor_map.
-    cc->InputSidePackets().Tag("SESSION").Set<TensorFlowSession>();
-    if (cc->InputSidePackets().HasTag("RECURRENT_INIT_TENSORS")) {
+    cc->InputSidePackets().Tag(kSessionTag).Set<TensorFlowSession>();
+    if (cc->InputSidePackets().HasTag(kRecurrentInitTensorsTag)) {
       cc->InputSidePackets()
-          .Tag("RECURRENT_INIT_TENSORS")
+          .Tag(kRecurrentInitTensorsTag)
           .Set<std::unique_ptr<std::map<std::string, tf::Tensor>>>();
     }
     return absl::OkStatus();
@@ -265,11 +270,11 @@ class TensorFlowInferenceCalculator : public CalculatorBase {
       ABSL_EXCLUSIVE_LOCKS_REQUIRED(mutex_) {
     std::unique_ptr<InferenceState> inference_state =
         absl::make_unique<InferenceState>();
-    if (cc->InputSidePackets().HasTag("RECURRENT_INIT_TENSORS") &&
-        !cc->InputSidePackets().Tag("RECURRENT_INIT_TENSORS").IsEmpty()) {
+    if (cc->InputSidePackets().HasTag(kRecurrentInitTensorsTag) &&
+        !cc->InputSidePackets().Tag(kRecurrentInitTensorsTag).IsEmpty()) {
       std::map<std::string, tf::Tensor>* init_tensor_map;
       init_tensor_map = GetFromUniquePtr<std::map<std::string, tf::Tensor>>(
-          cc->InputSidePackets().Tag("RECURRENT_INIT_TENSORS"));
+          cc->InputSidePackets().Tag(kRecurrentInitTensorsTag));
       for (const auto& p : *init_tensor_map) {
         inference_state->input_tensor_batches_[p.first].emplace_back(p.second);
       }
@@ -280,13 +285,13 @@ class TensorFlowInferenceCalculator : public CalculatorBase {
   absl::Status Open(CalculatorContext* cc) override {
     options_ = cc->Options<TensorFlowInferenceCalculatorOptions>();
 
-    RET_CHECK(cc->InputSidePackets().HasTag("SESSION"));
+    RET_CHECK(cc->InputSidePackets().HasTag(kSessionTag));
     session_ = cc->InputSidePackets()
-                   .Tag("SESSION")
+                   .Tag(kSessionTag)
                    .Get<TensorFlowSession>()
                    .session.get();
     tag_to_tensor_map_ = cc->InputSidePackets()
-                             .Tag("SESSION")
+                             .Tag(kSessionTag)
                              .Get<TensorFlowSession>()
                              .tag_to_tensor_map;
 
@@ -490,7 +495,7 @@ class TensorFlowInferenceCalculator : public CalculatorBase {
               << keyed_tensors.first;
         }
       } else {
-        // Pad by replicating the first tens  or, then ignore the values.
+        // Pad by replicating the first tensor, then ignore the values.
         keyed_tensors.second.resize(options_.batch_size());
         std::fill(keyed_tensors.second.begin() +
                       inference_state->batch_timestamps_.size(),

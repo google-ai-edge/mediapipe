@@ -161,10 +161,10 @@ class NodeTypeInfo {
   //   all_input_streams
   //     [node_info.InputStreamBaseIndex() +
   //      node_info.InputStreamTypes().GetId("TAG", 2).value()];
-  int input_side_packet_base_index_ = -1;
-  int output_side_packet_base_index_ = -1;
-  int input_stream_base_index_ = -1;
-  int output_stream_base_index_ = -1;
+  int input_side_packet_base_index_ = 0;
+  int output_side_packet_base_index_ = 0;
+  int input_stream_base_index_ = 0;
+  int output_stream_base_index_ = 0;
 
   // The type and index of this node.
   NodeRef node_;

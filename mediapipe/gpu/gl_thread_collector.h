@@ -17,7 +17,7 @@
 
 #include <cstdlib>
 
-#if defined(MEDIAPIPE_USING_SWIFTSHADER) && !defined(NDEBUG)
+#if defined(MEDIAPIPE_USING_SWIFTSHADER)
 #define MEDIAPIPE_NEEDS_GL_THREAD_COLLECTOR 1
 #endif
 

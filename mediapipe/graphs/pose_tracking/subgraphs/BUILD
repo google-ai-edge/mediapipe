@@ -26,7 +26,8 @@ mediapipe_simple_subgraph(
     graph = "pose_renderer_gpu.pbtxt",
     register_as = "PoseRendererGpu",
     deps = [
-        "//mediapipe/calculators/core:split_normalized_landmark_list_calculator",
+        "//mediapipe/calculators/core:split_landmarks_calculator",
+        "//mediapipe/calculators/image:recolor_calculator",
         "//mediapipe/calculators/util:annotation_overlay_calculator",
         "//mediapipe/calculators/util:detections_to_render_data_calculator",
         "//mediapipe/calculators/util:landmarks_to_render_data_calculator",
@@ -40,7 +41,8 @@ mediapipe_simple_subgraph(
     graph = "pose_renderer_cpu.pbtxt",
     register_as = "PoseRendererCpu",
     deps = [
-        "//mediapipe/calculators/core:split_normalized_landmark_list_calculator",
+        "//mediapipe/calculators/core:split_landmarks_calculator",
+        "//mediapipe/calculators/image:recolor_calculator",
         "//mediapipe/calculators/util:annotation_overlay_calculator",
         "//mediapipe/calculators/util:detections_to_render_data_calculator",
         "//mediapipe/calculators/util:landmarks_to_render_data_calculator",

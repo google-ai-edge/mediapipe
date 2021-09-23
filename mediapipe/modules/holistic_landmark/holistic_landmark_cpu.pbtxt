@@ -1,8 +1,8 @@
 # Predicts pose + left/right hand + face landmarks.
 #
 # It is required that:
-# - "face_detection_front.tflite" is available at
-# "mediapipe/modules/face_detection/face_detection_front.tflite"
+# - "face_detection_short_range.tflite" is available at
+# "mediapipe/modules/face_detection/face_detection_short_range.tflite"
 #
 # - "face_landmark.tflite" is available at
 # "mediapipe/modules/face_landmark/face_landmark.tflite"
@@ -32,7 +32,9 @@
 #     calculator: "HolisticLandmarkCpu"
 #     input_stream: "IMAGE:input_video"
 #     input_side_packet: "MODEL_COMPLEXITY:model_complexity"
-#     input_side_packet: SMOOTH_LANDMARKS:smooth_landmarks
+#     input_side_packet: "SMOOTH_LANDMARKS:smooth_landmarks"
+#     input_side_packet: "ENABLE_SEGMENTATION:enable_segmentation"
+#     input_side_packet: "SMOOTH_SEGMENTATION:smooth_segmentation"
 #     output_stream: "POSE_LANDMARKS:pose_landmarks"
 #     output_stream: "FACE_LANDMARKS:face_landmarks"
 #     output_stream: "LEFT_HAND_LANDMARKS:left_hand_landmarks"
@@ -59,9 +61,19 @@ input_side_packet: "MODEL_COMPLEXITY:model_complexity"
 # If unspecified, functions as set to true. (bool)
 input_side_packet: "SMOOTH_LANDMARKS:smooth_landmarks"
 
+# Whether to predict the segmentation mask. If unspecified, functions as set to
+# false. (bool)
+input_side_packet: "ENABLE_SEGMENTATION:enable_segmentation"
+
+# Whether to filter segmentation mask across different input images to reduce
+# jitter. If unspecified, functions as set to true. (bool)
+input_side_packet: "SMOOTH_SEGMENTATION:smooth_segmentation"
+
 # Pose landmarks. (NormalizedLandmarkList)
 # 33 pose landmarks.
 output_stream: "POSE_LANDMARKS:pose_landmarks"
+# 33 pose world landmarks. (LandmarkList)
+output_stream: "WORLD_LANDMARKS:pose_world_landmarks"
 # 21 left hand landmarks. (NormalizedLandmarkList)
 output_stream: "LEFT_HAND_LANDMARKS:left_hand_landmarks"
 # 21 right hand landmarks. (NormalizedLandmarkList)
@@ -79,7 +91,10 @@ node {
   input_stream: "IMAGE:image"
   input_side_packet: "MODEL_COMPLEXITY:model_complexity"
   input_side_packet: "SMOOTH_LANDMARKS:smooth_landmarks"
+  input_side_packet: "ENABLE_SEGMENTATION:enable_segmentation"
+  input_side_packet: "SMOOTH_SEGMENTATION:smooth_segmentation"
   output_stream: "LANDMARKS:pose_landmarks"
+  output_stream: "WORLD_LANDMARKS:pose_world_landmarks"
   output_stream: "ROI_FROM_LANDMARKS:pose_landmarks_roi"
   output_stream: "DETECTION:pose_detection"
 }

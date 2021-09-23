@@ -217,7 +217,7 @@ absl::Status PacketLatencyCalculator::Open(CalculatorContext* cc) {
   // Initialize the clock.
   if (cc->InputSidePackets().HasTag(kClockTag)) {
     clock_ = cc->InputSidePackets()
-                 .Tag("CLOCK")
+                 .Tag(kClockTag)
                  .Get<std::shared_ptr<::mediapipe::Clock>>();
   } else {
     clock_ = std::shared_ptr<::mediapipe::Clock>(

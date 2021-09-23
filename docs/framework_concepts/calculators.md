@@ -248,12 +248,70 @@ absl::Status MyCalculator::Process() {
 }
 ```
 
+## Calculator options
+
+Calculators accept processing parameters through (1) input stream packets (2)
+input side packets, and (3) calculator options. Calculator options, if
+specified, appear as literal values in the `node_options` field of the
+`CalculatorGraphConfiguration.Node` message.
+
+```
+  node {
+    calculator: "TfLiteInferenceCalculator"
+    input_stream: "TENSORS:main_model_input"
+    output_stream: "TENSORS:main_model_output"
+    node_options: {
+      [type.googleapis.com/mediapipe.TfLiteInferenceCalculatorOptions] {
+        model_path: "mediapipe/models/detection_model.tflite"
+      }
+    }
+  }
+```
+
+The `node_options` field accepts the proto3 syntax.  Alternatively, calculator
+options can be specified in the `options` field using proto2 syntax.
+
+```
+  node {
+    calculator: "TfLiteInferenceCalculator"
+    input_stream: "TENSORS:main_model_input"
+    output_stream: "TENSORS:main_model_output"
+    node_options: {
+      [type.googleapis.com/mediapipe.TfLiteInferenceCalculatorOptions] {
+        model_path: "mediapipe/models/detection_model.tflite"
+      }
+    }
+  }
+```
+
+Not all calculators accept calcuator options. In order to accept options, a
+calculator will normally define a new protobuf message type to represent its
+options, such as `PacketClonerCalculatorOptions`. The calculator will then
+read that protobuf message in its `CalculatorBase::Open` method, and possibly
+also in its `CalculatorBase::GetContract` function or its
+`CalculatorBase::Process` method. Normally, the new protobuf message type will
+be defined as a protobuf schema using a ".proto" file and a
+`mediapipe_proto_library()` build rule.
+
+```
+  mediapipe_proto_library(
+      name = "packet_cloner_calculator_proto",
+      srcs = ["packet_cloner_calculator.proto"],
+      visibility = ["//visibility:public"],
+      deps = [
+          "//mediapipe/framework:calculator_options_proto",
+          "//mediapipe/framework:calculator_proto",
+      ],
+  )
+```
+
+
 ## Example calculator
 
 This section discusses the implementation of `PacketClonerCalculator`, which
 does a relatively simple job, and is used in many calculator graphs.
-`PacketClonerCalculator` simply produces a copy of its most recent input
-packets on demand.
+`PacketClonerCalculator` simply produces a copy of its most recent input packets
+on demand.
 
 `PacketClonerCalculator` is useful when the timestamps of arriving data packets
 are not aligned perfectly. Suppose we have a room with a microphone, light
@@ -279,8 +337,8 @@ input streams:
     imageframe of video data representing video collected from camera in the
     room with timestamp.
 
-Below is the implementation of the `PacketClonerCalculator`.  You can see
-the `GetContract()`, `Open()`, and `Process()` methods as well as the instance
+Below is the implementation of the `PacketClonerCalculator`. You can see the
+`GetContract()`, `Open()`, and `Process()` methods as well as the instance
 variable `current_` which holds the most recent input packets.
 
 ```c++
@@ -401,6 +459,6 @@ node {
 The diagram below shows how the `PacketClonerCalculator` defines its output
 packets (bottom) based on its series of input packets (top).
 
-| ![Graph using PacketClonerCalculator](../images/packet_cloner_calculator.png) |
-| :---------------------------------------------------------------------------: |
-| *Each time it receives a packet on its TICK input stream, the PacketClonerCalculator outputs the most recent packet from each of its input streams. The sequence of output packets (bottom) is determined by the sequence of input packets (top) and their timestamps. The timestamps are shown along the right side of the diagram.* |
+![Graph using PacketClonerCalculator](../images/packet_cloner_calculator.png)  |
+:--------------------------------------------------------------------------: |
+*Each time it receives a packet on its TICK input stream, the PacketClonerCalculator outputs the most recent packet from each of its input streams. The sequence of output packets (bottom) is determined by the sequence of input packets (top) and their timestamps. The timestamps are shown along the right side of the diagram.* |

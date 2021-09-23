@@ -176,6 +176,16 @@ A list of pose landmarks. Each landmark consists of the following:
 *   `visibility`: A value in `[0.0, 1.0]` indicating the likelihood of the
     landmark being visible (present and not occluded) in the image.
 
+#### pose_world_landmarks
+
+Another list of pose landmarks in world coordinates. Each landmark consists of
+the following:
+
+*   `x`, `y` and `z`: Real-world 3D coordinates in meters with the origin at the
+    center between hips.
+*   `visibility`: Identical to that defined in the corresponding
+    [pose_landmarks](#pose_landmarks).
+
 #### face_landmarks
 
 A list of 468 face landmarks. Each landmark consists of `x`, `y` and `z`. `x`
@@ -201,7 +211,7 @@ A list of 21 hand landmarks on the right hand, in the same representation as
 
 Please first follow general [instructions](../getting_started/python.md) to
 install MediaPipe Python package, then learn more in the companion
-[Python Colab](#resources) and the following usage example.
+[Python Colab](#resources) and the usage example below.
 
 Supported configuration options:
 
@@ -215,13 +225,15 @@ Supported configuration options:
 import cv2
 import mediapipe as mp
 mp_drawing = mp.solutions.drawing_utils
+mp_drawing_styles = mp.solutions.drawing_styles
 mp_holistic = mp.solutions.holistic
 
 # For static images:
+IMAGE_FILES = []
 with mp_holistic.Holistic(
     static_image_mode=True,
     model_complexity=2) as holistic:
-  for idx, file in enumerate(file_list):
+  for idx, file in enumerate(IMAGE_FILES):
     image = cv2.imread(file)
     image_height, image_width, _ = image.shape
     # Convert the BGR image to RGB before processing.
@@ -236,14 +248,22 @@ with mp_holistic.Holistic(
     # Draw pose, left and right hands, and face landmarks on the image.
     annotated_image = image.copy()
     mp_drawing.draw_landmarks(
-        annotated_image, results.face_landmarks, mp_holistic.FACE_CONNECTIONS)
+        annotated_image,
+        results.face_landmarks,
+        mp_holistic.FACEMESH_TESSELATION,
+        landmark_drawing_spec=None,
+        connection_drawing_spec=mp_drawing_styles
+        .get_default_face_mesh_tesselation_style())
     mp_drawing.draw_landmarks(
-        annotated_image, results.left_hand_landmarks, mp_holistic.HAND_CONNECTIONS)
-    mp_drawing.draw_landmarks(
-        annotated_image, results.right_hand_landmarks, mp_holistic.HAND_CONNECTIONS)
-    mp_drawing.draw_landmarks(
-        annotated_image, results.pose_landmarks, mp_holistic.POSE_CONNECTIONS)
+        annotated_image,
+        results.pose_landmarks,
+        mp_holistic.POSE_CONNECTIONS,
+        landmark_drawing_spec=mp_drawing_styles.
+        get_default_pose_landmarks_style())
     cv2.imwrite('/tmp/annotated_image' + str(idx) + '.png', annotated_image)
+    # Plot pose world landmarks.
+    mp_drawing.plot_landmarks(
+        results.pose_world_landmarks, mp_holistic.POSE_CONNECTIONS)
 
 # For webcam input:
 cap = cv2.VideoCapture(0)
@@ -269,13 +289,18 @@ with mp_holistic.Holistic(
     image.flags.writeable = True
     image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
     mp_drawing.draw_landmarks(
-        image, results.face_landmarks, mp_holistic.FACE_CONNECTIONS)
+        image,
+        results.face_landmarks,
+        mp_holistic.FACEMESH_CONTOURS,
+        landmark_drawing_spec=None,
+        connection_drawing_spec=mp_drawing_styles
+        .get_default_face_mesh_contours_style())
     mp_drawing.draw_landmarks(
-        image, results.left_hand_landmarks, mp_holistic.HAND_CONNECTIONS)
-    mp_drawing.draw_landmarks(
-        image, results.right_hand_landmarks, mp_holistic.HAND_CONNECTIONS)
-    mp_drawing.draw_landmarks(
-        image, results.pose_landmarks, mp_holistic.POSE_CONNECTIONS)
+        image,
+        results.pose_landmarks,
+        mp_holistic.POSE_CONNECTIONS,
+        landmark_drawing_spec=mp_drawing_styles
+        .get_default_pose_landmarks_style())
     cv2.imshow('MediaPipe Holistic', image)
     if cv2.waitKey(5) & 0xFF == 27:
       break

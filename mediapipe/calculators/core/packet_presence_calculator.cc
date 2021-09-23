@@ -17,6 +17,9 @@
 
 namespace mediapipe {
 
+constexpr char kPresenceTag[] = "PRESENCE";
+constexpr char kPacketTag[] = "PACKET";
+
 // For each non empty input packet, emits a single output packet containing a
 // boolean value "true", "false" in response to empty packets (a.k.a. timestamp
 // bound updates) This can be used to "flag" the presence of an arbitrary packet
@@ -58,8 +61,8 @@ namespace mediapipe {
 class PacketPresenceCalculator : public CalculatorBase {
  public:
   static absl::Status GetContract(CalculatorContract* cc) {
-    cc->Inputs().Tag("PACKET").SetAny();
-    cc->Outputs().Tag("PRESENCE").Set<bool>();
+    cc->Inputs().Tag(kPacketTag).SetAny();
+    cc->Outputs().Tag(kPresenceTag).Set<bool>();
     // Process() function is invoked in response to input stream timestamp
     // bound updates.
     cc->SetProcessTimestampBounds(true);
@@ -73,8 +76,8 @@ class PacketPresenceCalculator : public CalculatorBase {
 
   absl::Status Process(CalculatorContext* cc) final {
     cc->Outputs()
-        .Tag("PRESENCE")
-        .AddPacket(MakePacket<bool>(!cc->Inputs().Tag("PACKET").IsEmpty())
+        .Tag(kPresenceTag)
+        .AddPacket(MakePacket<bool>(!cc->Inputs().Tag(kPacketTag).IsEmpty())
                        .At(cc->InputTimestamp()));
     return absl::OkStatus();
   }

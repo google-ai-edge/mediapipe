@@ -32,6 +32,12 @@
 
 namespace mediapipe {
 
+constexpr char kRenderDataTag[] = "RENDER_DATA";
+constexpr char kVideoPrestreamTag[] = "VIDEO_PRESTREAM";
+constexpr char kScoresTag[] = "SCORES";
+constexpr char kLabelsTag[] = "LABELS";
+constexpr char kClassificationsTag[] = "CLASSIFICATIONS";
+
 constexpr float kFontHeightScale = 1.25f;
 
 // A calculator takes in pairs of labels and scores or classifications, outputs
@@ -74,20 +80,20 @@ class LabelsToRenderDataCalculator : public CalculatorBase {
 REGISTER_CALCULATOR(LabelsToRenderDataCalculator);
 
 absl::Status LabelsToRenderDataCalculator::GetContract(CalculatorContract* cc) {
-  if (cc->Inputs().HasTag("CLASSIFICATIONS")) {
-    cc->Inputs().Tag("CLASSIFICATIONS").Set<ClassificationList>();
+  if (cc->Inputs().HasTag(kClassificationsTag)) {
+    cc->Inputs().Tag(kClassificationsTag).Set<ClassificationList>();
   } else {
-    RET_CHECK(cc->Inputs().HasTag("LABELS"))
+    RET_CHECK(cc->Inputs().HasTag(kLabelsTag))
         << "Must provide input stream \"LABELS\"";
-    cc->Inputs().Tag("LABELS").Set<std::vector<std::string>>();
-    if (cc->Inputs().HasTag("SCORES")) {
-      cc->Inputs().Tag("SCORES").Set<std::vector<float>>();
+    cc->Inputs().Tag(kLabelsTag).Set<std::vector<std::string>>();
+    if (cc->Inputs().HasTag(kScoresTag)) {
+      cc->Inputs().Tag(kScoresTag).Set<std::vector<float>>();
     }
   }
-  if (cc->Inputs().HasTag("VIDEO_PRESTREAM")) {
-    cc->Inputs().Tag("VIDEO_PRESTREAM").Set<VideoHeader>();
+  if (cc->Inputs().HasTag(kVideoPrestreamTag)) {
+    cc->Inputs().Tag(kVideoPrestreamTag).Set<VideoHeader>();
   }
-  cc->Outputs().Tag("RENDER_DATA").Set<RenderData>();
+  cc->Outputs().Tag(kRenderDataTag).Set<RenderData>();
   return absl::OkStatus();
 }
 
@@ -100,10 +106,10 @@ absl::Status LabelsToRenderDataCalculator::Open(CalculatorContext* cc) {
 }
 
 absl::Status LabelsToRenderDataCalculator::Process(CalculatorContext* cc) {
-  if (cc->Inputs().HasTag("VIDEO_PRESTREAM") &&
+  if (cc->Inputs().HasTag(kVideoPrestreamTag) &&
       cc->InputTimestamp() == Timestamp::PreStream()) {
     const VideoHeader& video_header =
-        cc->Inputs().Tag("VIDEO_PRESTREAM").Get<VideoHeader>();
+        cc->Inputs().Tag(kVideoPrestreamTag).Get<VideoHeader>();
     video_width_ = video_header.width;
     video_height_ = video_header.height;
     return absl::OkStatus();
@@ -114,9 +120,9 @@ absl::Status LabelsToRenderDataCalculator::Process(CalculatorContext* cc) {
 
   std::vector<std::string> labels;
   std::vector<float> scores;
-  if (cc->Inputs().HasTag("CLASSIFICATIONS")) {
+  if (cc->Inputs().HasTag(kClassificationsTag)) {
     const ClassificationList& classifications =
-        cc->Inputs().Tag("CLASSIFICATIONS").Get<ClassificationList>();
+        cc->Inputs().Tag(kClassificationsTag).Get<ClassificationList>();
     labels.resize(classifications.classification_size());
     scores.resize(classifications.classification_size());
     for (int i = 0; i < classifications.classification_size(); ++i) {
@@ -129,15 +135,15 @@ absl::Status LabelsToRenderDataCalculator::Process(CalculatorContext* cc) {
     }
   } else {
     const std::vector<std::string>& label_vector =
-        cc->Inputs().Tag("LABELS").Get<std::vector<std::string>>();
+        cc->Inputs().Tag(kLabelsTag).Get<std::vector<std::string>>();
     labels.resize(label_vector.size());
     for (int i = 0; i < label_vector.size(); ++i) {
       labels[i] = label_vector[i];
     }
 
-    if (cc->Inputs().HasTag("SCORES")) {
+    if (cc->Inputs().HasTag(kScoresTag)) {
       std::vector<float> score_vector =
-          cc->Inputs().Tag("SCORES").Get<std::vector<float>>();
+          cc->Inputs().Tag(kScoresTag).Get<std::vector<float>>();
       CHECK_EQ(label_vector.size(), score_vector.size());
       scores.resize(label_vector.size());
       for (int i = 0; i < label_vector.size(); ++i) {
@@ -169,7 +175,8 @@ absl::Status LabelsToRenderDataCalculator::Process(CalculatorContext* cc) {
 
     auto* text = label_annotation->mutable_text();
     std::string display_text = labels[i];
-    if (cc->Inputs().HasTag("SCORES")) {
+    if (cc->Inputs().HasTag(kScoresTag) ||
+        options_.display_classification_score()) {
       absl::StrAppend(&display_text, ":", scores[i]);
     }
     text->set_display_text(display_text);
@@ -179,7 +186,7 @@ absl::Status LabelsToRenderDataCalculator::Process(CalculatorContext* cc) {
     text->set_font_face(options_.font_face());
   }
   cc->Outputs()
-      .Tag("RENDER_DATA")
+      .Tag(kRenderDataTag)
       .AddPacket(MakePacket<RenderData>(render_data).At(cc->InputTimestamp()));
 
   return absl::OkStatus();

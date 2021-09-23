@@ -19,6 +19,13 @@
 
 namespace mediapipe {
 
+constexpr char kIncrementTag[] = "INCREMENT";
+constexpr char kInitialValueTag[] = "INITIAL_VALUE";
+constexpr char kBatchSizeTag[] = "BATCH_SIZE";
+constexpr char kErrorCountTag[] = "ERROR_COUNT";
+constexpr char kMaxCountTag[] = "MAX_COUNT";
+constexpr char kErrorOnOpenTag[] = "ERROR_ON_OPEN";
+
 // Source calculator that produces MAX_COUNT*BATCH_SIZE int packets of
 // sequential numbers from INITIAL_VALUE (default 0) with a common
 // difference of INCREMENT (default 1) between successive numbers (with
@@ -33,53 +40,53 @@ class CountingSourceCalculator : public CalculatorBase {
   static absl::Status GetContract(CalculatorContract* cc) {
     cc->Outputs().Index(0).Set<int>();
 
-    if (cc->InputSidePackets().HasTag("ERROR_ON_OPEN")) {
-      cc->InputSidePackets().Tag("ERROR_ON_OPEN").Set<bool>();
+    if (cc->InputSidePackets().HasTag(kErrorOnOpenTag)) {
+      cc->InputSidePackets().Tag(kErrorOnOpenTag).Set<bool>();
     }
 
-    RET_CHECK(cc->InputSidePackets().HasTag("MAX_COUNT") ||
-              cc->InputSidePackets().HasTag("ERROR_COUNT"));
-    if (cc->InputSidePackets().HasTag("MAX_COUNT")) {
-      cc->InputSidePackets().Tag("MAX_COUNT").Set<int>();
+    RET_CHECK(cc->InputSidePackets().HasTag(kMaxCountTag) ||
+              cc->InputSidePackets().HasTag(kErrorCountTag));
+    if (cc->InputSidePackets().HasTag(kMaxCountTag)) {
+      cc->InputSidePackets().Tag(kMaxCountTag).Set<int>();
     }
-    if (cc->InputSidePackets().HasTag("ERROR_COUNT")) {
-      cc->InputSidePackets().Tag("ERROR_COUNT").Set<int>();
+    if (cc->InputSidePackets().HasTag(kErrorCountTag)) {
+      cc->InputSidePackets().Tag(kErrorCountTag).Set<int>();
     }
 
-    if (cc->InputSidePackets().HasTag("BATCH_SIZE")) {
-      cc->InputSidePackets().Tag("BATCH_SIZE").Set<int>();
+    if (cc->InputSidePackets().HasTag(kBatchSizeTag)) {
+      cc->InputSidePackets().Tag(kBatchSizeTag).Set<int>();
     }
-    if (cc->InputSidePackets().HasTag("INITIAL_VALUE")) {
-      cc->InputSidePackets().Tag("INITIAL_VALUE").Set<int>();
+    if (cc->InputSidePackets().HasTag(kInitialValueTag)) {
+      cc->InputSidePackets().Tag(kInitialValueTag).Set<int>();
     }
-    if (cc->InputSidePackets().HasTag("INCREMENT")) {
-      cc->InputSidePackets().Tag("INCREMENT").Set<int>();
+    if (cc->InputSidePackets().HasTag(kIncrementTag)) {
+      cc->InputSidePackets().Tag(kIncrementTag).Set<int>();
     }
     return absl::OkStatus();
   }
 
   absl::Status Open(CalculatorContext* cc) override {
-    if (cc->InputSidePackets().HasTag("ERROR_ON_OPEN") &&
-        cc->InputSidePackets().Tag("ERROR_ON_OPEN").Get<bool>()) {
+    if (cc->InputSidePackets().HasTag(kErrorOnOpenTag) &&
+        cc->InputSidePackets().Tag(kErrorOnOpenTag).Get<bool>()) {
       return absl::NotFoundError("expected error");
     }
-    if (cc->InputSidePackets().HasTag("ERROR_COUNT")) {
-      error_count_ = cc->InputSidePackets().Tag("ERROR_COUNT").Get<int>();
+    if (cc->InputSidePackets().HasTag(kErrorCountTag)) {
+      error_count_ = cc->InputSidePackets().Tag(kErrorCountTag).Get<int>();
       RET_CHECK_LE(0, error_count_);
     }
-    if (cc->InputSidePackets().HasTag("MAX_COUNT")) {
-      max_count_ = cc->InputSidePackets().Tag("MAX_COUNT").Get<int>();
+    if (cc->InputSidePackets().HasTag(kMaxCountTag)) {
+      max_count_ = cc->InputSidePackets().Tag(kMaxCountTag).Get<int>();
       RET_CHECK_LE(0, max_count_);
     }
-    if (cc->InputSidePackets().HasTag("BATCH_SIZE")) {
-      batch_size_ = cc->InputSidePackets().Tag("BATCH_SIZE").Get<int>();
+    if (cc->InputSidePackets().HasTag(kBatchSizeTag)) {
+      batch_size_ = cc->InputSidePackets().Tag(kBatchSizeTag).Get<int>();
       RET_CHECK_LT(0, batch_size_);
     }
-    if (cc->InputSidePackets().HasTag("INITIAL_VALUE")) {
-      counter_ = cc->InputSidePackets().Tag("INITIAL_VALUE").Get<int>();
+    if (cc->InputSidePackets().HasTag(kInitialValueTag)) {
+      counter_ = cc->InputSidePackets().Tag(kInitialValueTag).Get<int>();
     }
-    if (cc->InputSidePackets().HasTag("INCREMENT")) {
-      increment_ = cc->InputSidePackets().Tag("INCREMENT").Get<int>();
+    if (cc->InputSidePackets().HasTag(kIncrementTag)) {
+      increment_ = cc->InputSidePackets().Tag(kIncrementTag).Get<int>();
       RET_CHECK_LT(0, increment_);
     }
     RET_CHECK(error_count_ >= 0 || max_count_ >= 0);

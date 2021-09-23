@@ -26,7 +26,7 @@ cc_library(
     deps = [
         "//mediapipe/calculators/core:concatenate_normalized_landmark_list_calculator",
         "//mediapipe/calculators/core:concatenate_vector_calculator",
-        "//mediapipe/calculators/core:split_normalized_landmark_list_calculator",
+        "//mediapipe/calculators/core:split_landmarks_calculator",
         "//mediapipe/calculators/util:annotation_overlay_calculator",
         "//mediapipe/calculators/util:detection_label_id_to_text_calculator",
         "//mediapipe/calculators/util:detections_to_render_data_calculator",
