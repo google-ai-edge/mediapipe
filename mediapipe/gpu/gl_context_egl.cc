@@ -98,7 +98,7 @@ absl::Status GlContext::CreateContextInternal(EGLContext share_context,
 #ifdef MEDIAPIPE_OMIT_EGL_WINDOW_BIT
       EGL_PBUFFER_BIT,
 #else
-      EGL_PBUFFER_BIT | EGL_WINDOW_BIT,
+      EGL_WINDOW_BIT,
 #endif
       EGL_RED_SIZE, 8,
       EGL_GREEN_SIZE, 8,
@@ -169,13 +169,6 @@ absl::Status GlContext::CreateContext(EGLContext share_context) {
     status = CreateContextInternal(share_context, 2);
   }
   MP_RETURN_IF_ERROR(status);
-
-  EGLint pbuffer_attr[] = {EGL_WIDTH, 1, EGL_HEIGHT, 1, EGL_NONE};
-
-  surface_ = eglCreatePbufferSurface(display_, config_, pbuffer_attr);
-  RET_CHECK(surface_ != EGL_NO_SURFACE)
-      << "eglCreatePbufferSurface() returned error " << std::showbase
-      << std::hex << eglGetError();
 
   return absl::OkStatus();
 }
