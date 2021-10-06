@@ -24,14 +24,7 @@
 #include "mediapipe/gpu/gpu_buffer.h"
 #include "mediapipe/gpu/gpu_service.h"
 
-#ifdef __APPLE__
-#include "mediapipe/objc/util.h"
-#endif
-
 namespace mediapipe {
-
-GlTexture::GlTexture(GLuint name, int width, int height)
-    : name_(name), width_(width), height_(height), target_(GL_TEXTURE_2D) {}
 
 // The constructor and destructor need to be defined here so that
 // std::unique_ptr can see the full definition of GlCalculatorHelperImpl.

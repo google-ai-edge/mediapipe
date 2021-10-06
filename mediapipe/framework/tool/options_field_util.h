@@ -19,8 +19,15 @@ namespace tool {
 // Utility to read and write Packet data from protobuf fields.
 namespace options_field_util {
 
-// A chain of nested fields and indexes.
-using FieldPath = std::vector<std::pair<const FieldDescriptor*, int>>;
+// A protobuf field and index description.
+struct FieldPathEntry {
+  const FieldDescriptor* field = nullptr;
+  int index = -1;
+  std::string extension_type;
+};
+
+// A chain of nested protobuf fields and indexes.
+using FieldPath = std::vector<FieldPathEntry>;
 
 // Writes a field value into protobuf field.
 absl::Status SetField(const FieldPath& field_path, const FieldData& value,
@@ -39,20 +46,25 @@ absl::Status ReadMessage(const std::string& value, const std::string& type_name,
                          Packet* result);
 
 // Merge two options protobuf field values.
-absl::Status MergeOptionsMessages(const FieldData& base, const FieldData& over,
-                                  FieldData* result);
+absl::Status MergeMessages(const FieldData& base, const FieldData& over,
+                           FieldData* result);
 
-// Returns the options protobuf for a graph.
-absl::Status GetOptionsMessage(const CalculatorGraphConfig& config,
-                               FieldData* result);
+// Returns the requested options protobuf for a graph.
+absl::Status GetNodeOptions(const FieldData& message_data,
+                            const std::string& extension_type,
+                            FieldData* result);
 
-// Returns the options protobuf for a node.
-absl::Status GetOptionsMessage(const CalculatorGraphConfig::Node& node,
-                               FieldData* result);
+// Returns the requested options protobuf for a graph node.
+absl::Status GetGraphOptions(const FieldData& message_data,
+                             const std::string& extension_type,
+                             FieldData* result);
 
 // Sets the node_options field in a Node, and clears the options field.
 void SetOptionsMessage(const FieldData& node_options,
                        CalculatorGraphConfig::Node* node);
+
+// Serialize a MessageLite to a FieldData.
+FieldData AsFieldData(const proto_ns::MessageLite& message);
 
 // Constructs a Packet for a FieldData proto.
 absl::Status AsPacket(const FieldData& data, Packet* result);

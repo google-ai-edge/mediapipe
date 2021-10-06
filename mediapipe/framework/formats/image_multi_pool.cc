@@ -23,6 +23,7 @@
 #if !MEDIAPIPE_DISABLE_GPU
 #ifdef __APPLE__
 #include "mediapipe/objc/CFHolder.h"
+#include "mediapipe/objc/util.h"
 #endif  // __APPLE__
 #endif  // !MEDIAPIPE_DISABLE_GPU
 

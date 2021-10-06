@@ -175,18 +175,16 @@
   mediapipe::GlCalculatorHelper helper;
   helper.InitializeForTest(&gpuData);
 
-  std::vector<std::pair<int, int>> sizes{
-    {200, 300},
-    {200, 299},
-    {196, 300},
-    {194, 300},
-    {193, 300},
-  };
-  for (const auto& width_height : sizes) {
-    mediapipe::GlTexture texture =
-        helper.CreateDestinationTexture(width_height.first, width_height.second);
-    XCTAssertNotEqual(texture.name(), 0);
-  }
+  helper.RunInGlContext([&helper] {
+    std::vector<std::pair<int, int>> sizes{
+        {200, 300}, {200, 299}, {196, 300}, {194, 300}, {193, 300},
+    };
+    for (const auto& width_height : sizes) {
+      mediapipe::GlTexture texture =
+          helper.CreateDestinationTexture(width_height.first, width_height.second);
+      XCTAssertNotEqual(texture.name(), 0);
+    }
+  });
 }
 
 - (void)testSimpleConversionFromFormat:(OSType)cvPixelFormat {

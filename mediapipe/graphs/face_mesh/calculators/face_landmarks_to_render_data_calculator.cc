@@ -28,7 +28,7 @@ namespace mediapipe {
 
 namespace {
 
-constexpr int kNumFaceLandmarkConnections = 124;
+constexpr int kNumFaceLandmarkConnections = 132;
 // Pairs of landmark indices to be rendered with connections.
 constexpr int kFaceLandmarkConnections[] = {
     // Lips.
@@ -43,6 +43,8 @@ constexpr int kFaceLandmarkConnections[] = {
     133,
     // Left eyebrow.
     46, 53, 53, 52, 52, 65, 65, 55, 70, 63, 63, 105, 105, 66, 66, 107,
+    // Left iris.
+    474, 475, 475, 476, 476, 477, 477, 474,
     // Right eye.
     263, 249, 249, 390, 390, 373, 373, 374, 374, 380, 380, 381, 381, 382, 382,
     362, 263, 466, 466, 388, 388, 387, 387, 386, 386, 385, 385, 384, 384, 398,
@@ -50,6 +52,8 @@ constexpr int kFaceLandmarkConnections[] = {
     // Right eyebrow.
     276, 283, 283, 282, 282, 295, 295, 285, 300, 293, 293, 334, 334, 296, 296,
     336,
+    // Right iris.
+    469, 470, 470, 471, 471, 472, 472, 469,
     // Face oval.
     10, 338, 338, 297, 297, 332, 332, 284, 284, 251, 251, 389, 389, 356, 356,
     454, 454, 323, 323, 361, 361, 288, 288, 397, 397, 365, 365, 379, 379, 378,

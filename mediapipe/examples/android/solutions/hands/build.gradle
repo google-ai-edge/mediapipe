@@ -31,15 +31,16 @@ dependencies {
     implementation 'androidx.appcompat:appcompat:1.3.0'
     implementation 'com.google.android.material:material:1.3.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.0.4'
+    implementation 'androidx.exifinterface:exifinterface:1.3.3'
     testImplementation 'junit:junit:4.+'
     androidTestImplementation 'androidx.test.ext:junit:1.1.2'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
-    // MediaPipe hands solution API and solution-core.
+    // MediaPipe Hands Solution components.
     implementation 'com.google.mediapipe:solution-core:latest.release'
     implementation 'com.google.mediapipe:hands:latest.release'
     // MediaPipe deps
-    implementation 'com.google.flogger:flogger:latest.release'
-    implementation 'com.google.flogger:flogger-system-backend:latest.release'
+    implementation 'com.google.flogger:flogger:0.6'
+    implementation 'com.google.flogger:flogger-system-backend:0.6'
     implementation 'com.google.guava:guava:27.0.1-android'
     implementation 'com.google.protobuf:protobuf-java:3.11.4'
     // CameraX core library

@@ -8,8 +8,17 @@ input_stream: "IMAGE:image"
 # Max number of faces to detect/track. (int)
 input_side_packet: "NUM_FACES:num_faces"
 
-# The original input image. (Image)
-output_stream: "IMAGE:image"
+# Whether landmarks on the previous image should be used to help localize
+# landmarks on the current image. (bool)
+input_side_packet: "USE_PREV_LANDMARKS:use_prev_landmarks"
+
+# Whether to run face mesh model with attention on lips and eyes. (bool)
+# Attention provides more accuracy on lips and eye regions as well as iris
+# landmarks.
+input_side_packet: "WITH_ATTENTION:with_attention"
+
+# The throttled input image. (Image)
+output_stream: "IMAGE:throttled_image"
 # Collection of detected/predicted faces, each represented as a list of 468 face
 # landmarks. (std::vector<NormalizedLandmarkList>)
 # NOTE: there will not be an output packet in the LANDMARKS stream for this
@@ -28,10 +37,27 @@ output_stream: "ROIS_FROM_LANDMARKS:face_rects_from_landmarks"
 # (std::vector<NormalizedRect>)
 output_stream: "ROIS_FROM_DETECTIONS:face_rects_from_detections"
 
+node {
+  calculator: "FlowLimiterCalculator"
+  input_stream: "image"
+  input_stream: "FINISHED:multi_face_landmarks"
+  input_stream_info: {
+    tag_index: "FINISHED"
+    back_edge: true
+  }
+  output_stream: "throttled_image"
+  options: {
+    [mediapipe.FlowLimiterCalculatorOptions.ext] {
+      max_in_flight: 1
+      max_in_queue: 1
+    }
+  }
+}
+
 # Converts Image to GpuBuffer for FaceLandmarkFrontGpu to consume.
 node {
   calculator: "FromImageCalculator"
-  input_stream: "IMAGE:image"
+  input_stream: "IMAGE:throttled_image"
   output_stream: "IMAGE_GPU:raw_gpu_buffer"
   output_stream: "SOURCE_ON_GPU:is_gpu_image"
 }
@@ -52,6 +78,8 @@ node {
   calculator: "FaceLandmarkFrontGpu"
   input_stream: "IMAGE:gpu_buffer"
   input_side_packet: "NUM_FACES:num_faces"
+  input_side_packet: "USE_PREV_LANDMARKS:use_prev_landmarks"
+  input_side_packet: "WITH_ATTENTION:with_attention"
   output_stream: "LANDMARKS:multi_face_landmarks"
   output_stream: "DETECTIONS:face_detections"
   output_stream: "ROIS_FROM_LANDMARKS:face_rects_from_landmarks"

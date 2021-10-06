@@ -511,7 +511,7 @@ public class ExternalTextureConverter implements TextureFrameProducer {
                   frame.getHeight(),
                   frame.getTimestamp()));
         }
-        frame.waitUntilReleased();
+        frame.waitUntilReleasedWithGpuSync();
         if (Log.isLoggable(TAG, Log.VERBOSE)) {
           Log.v(
               TAG,

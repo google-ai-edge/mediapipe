@@ -8,13 +8,19 @@
 #
 # It is required that "face_landmark.tflite" is available at
 # "mediapipe/modules/face_landmark/face_landmark.tflite"
-# path during execution.
+# path during execution if `with_attention` is not set or set to `false`.
+#
+# It is required that "face_landmark_with_attention.tflite" is available at
+# "mediapipe/modules/face_landmark/face_landmark_with_attention.tflite"
+# path during execution if `with_attention` is set to `true`.
 #
 # EXAMPLE:
 #   node {
 #     calculator: "FaceLandmarkFrontGpu"
 #     input_stream: "IMAGE:image"
 #     input_side_packet: "NUM_FACES:num_faces"
+#     input_side_packet: "USE_PREV_LANDMARKS:use_prev_landmarks"
+#     input_side_packet: "WITH_ATTENTION:with_attention"
 #     output_stream: "LANDMARKS:multi_face_landmarks"
 #   }
 
@@ -25,6 +31,15 @@ input_stream: "IMAGE:image"
 
 # Max number of faces to detect/track. (int)
 input_side_packet: "NUM_FACES:num_faces"
+
+# Whether landmarks on the previous image should be used to help localize
+# landmarks on the current image. (bool)
+input_side_packet: "USE_PREV_LANDMARKS:use_prev_landmarks"
+
+# Whether to run face mesh model with attention on lips and eyes. (bool)
+# Attention provides more accuracy on lips and eye regions as well as iris
+# landmarks.
+input_side_packet: "WITH_ATTENTION:with_attention"
 
 # Collection of detected/predicted faces, each represented as a list of 468 face
 # landmarks. (std::vector<NormalizedLandmarkList>)
@@ -44,23 +59,19 @@ output_stream: "ROIS_FROM_LANDMARKS:face_rects_from_landmarks"
 # (std::vector<NormalizedRect>)
 output_stream: "ROIS_FROM_DETECTIONS:face_rects_from_detections"
 
-# Defines whether landmarks on the previous image should be used to help
-# localize landmarks on the current image.
-node {
-  name: "ConstantSidePacketCalculator"
-  calculator: "ConstantSidePacketCalculator"
-  output_side_packet: "PACKET:use_prev_landmarks"
-  options: {
-    [mediapipe.ConstantSidePacketCalculatorOptions.ext]: {
-      packet { bool_value: true }
-    }
-  }
-}
+# When the optional input side packet "use_prev_landmarks" is either absent or
+# set to true, uses the landmarks on the previous image to help localize
+# landmarks on the current image.
 node {
   calculator: "GateCalculator"
   input_side_packet: "ALLOW:use_prev_landmarks"
   input_stream: "prev_face_rects_from_landmarks"
   output_stream: "gated_prev_face_rects_from_landmarks"
+  options: {
+    [mediapipe.GateCalculatorOptions.ext] {
+      allow: true
+    }
+  }
 }
 
 # Determines if an input vector of NormalizedRect has a size greater than or
@@ -186,6 +197,7 @@ node {
   calculator: "FaceLandmarkGpu"
   input_stream: "IMAGE:landmarks_loop_image"
   input_stream: "ROI:face_rect"
+  input_side_packet: "WITH_ATTENTION:with_attention"
   output_stream: "LANDMARKS:face_landmarks"
 }
 

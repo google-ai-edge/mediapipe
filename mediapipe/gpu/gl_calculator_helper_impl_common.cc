@@ -25,17 +25,6 @@ GlCalculatorHelperImpl::GlCalculatorHelperImpl(CalculatorContext* cc,
                                                GpuResources* gpu_resources)
     : gpu_resources_(*gpu_resources) {
   gl_context_ = gpu_resources_.gl_context(cc);
-// GL_ES_VERSION_2_0 and up (at least through ES 3.2) may contain the extension.
-// Checking against one also checks against higher ES versions. So this checks
-// against GLES >= 2.0.
-#if GL_ES_VERSION_2_0
-  // No linear float filtering by default, check extensions.
-  can_linear_filter_float_textures_ =
-      gl_context_->HasGlExtension("OES_texture_float_linear");
-#else
-  // Any float32 texture we create should automatically have linear filtering.
-  can_linear_filter_float_textures_ = true;
-#endif  // GL_ES_VERSION_2_0
 }
 
 GlCalculatorHelperImpl::~GlCalculatorHelperImpl() {
@@ -101,98 +90,59 @@ void GlCalculatorHelperImpl::BindFramebuffer(const GlTexture& dst) {
 #endif
 }
 
-void GlCalculatorHelperImpl::SetStandardTextureParams(GLenum target,
-                                                      GLint internal_format) {
-  // Default to using linear filter everywhere. For float32 textures, fall back
-  // to GL_NEAREST if linear filtering unsupported.
-  GLint filter;
-  switch (internal_format) {
-    case GL_R32F:
-    case GL_RG32F:
-    case GL_RGBA32F:
-      // 32F (unlike 16f) textures do not always support texture filtering
-      // (According to OpenGL ES specification [TEXTURE IMAGE SPECIFICATION])
-      filter = can_linear_filter_float_textures_ ? GL_LINEAR : GL_NEAREST;
-      break;
-    default:
-      filter = GL_LINEAR;
-  }
-  glTexParameteri(target, GL_TEXTURE_MIN_FILTER, filter);
-  glTexParameteri(target, GL_TEXTURE_MAG_FILTER, filter);
-  glTexParameteri(target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-  glTexParameteri(target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-}
+GlTexture GlCalculatorHelperImpl::MapGpuBuffer(const GpuBuffer& gpu_buffer,
+                                               int plane, bool for_reading) {
+  GlTextureView view = gpu_buffer.GetGlTextureView(plane, for_reading);
 
-#if !MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
-GlTexture GlCalculatorHelperImpl::CreateSourceTexture(
-    const ImageFrame& image_frame) {
-  GlTexture texture = MapGlTextureBuffer(MakeGlTextureBuffer(image_frame));
-  texture.for_reading_ = true;
-  return texture;
+  if (gpu_buffer.format() != GpuBufferFormat::kUnknown) {
+    // TODO: do the params need to be reset here??
+    glBindTexture(view.target(), view.name());
+    GlTextureInfo info = GlTextureInfoForGpuBufferFormat(
+        gpu_buffer.format(), view.plane(), GetGlVersion());
+    gl_context_->SetStandardTextureParams(view.target(),
+                                          info.gl_internal_format);
+    glBindTexture(view.target(), 0);
+  }
+
+  return GlTexture(std::move(view));
 }
 
 GlTexture GlCalculatorHelperImpl::CreateSourceTexture(
     const GpuBuffer& gpu_buffer) {
-  GlTexture texture = MapGpuBuffer(gpu_buffer, 0);
-  texture.for_reading_ = true;
-  return texture;
+  return MapGpuBuffer(gpu_buffer, 0, true);
 }
 
 GlTexture GlCalculatorHelperImpl::CreateSourceTexture(
     const GpuBuffer& gpu_buffer, int plane) {
-  GlTexture texture = MapGpuBuffer(gpu_buffer, plane);
-  texture.for_reading_ = true;
-  return texture;
+  return MapGpuBuffer(gpu_buffer, plane, true);
 }
 
-GlTexture GlCalculatorHelperImpl::MapGpuBuffer(const GpuBuffer& gpu_buffer,
-                                               int plane) {
-  CHECK_EQ(plane, 0);
-  return MapGlTextureBuffer(gpu_buffer.GetGlTextureBufferSharedPtr());
-}
-
-GlTexture GlCalculatorHelperImpl::MapGlTextureBuffer(
-    const GlTextureBufferSharedPtr& texture_buffer) {
-  // Insert wait call to sync with the producer.
-  texture_buffer->WaitOnGpu();
-  GlTexture texture;
-  texture.helper_impl_ = this;
-  texture.gpu_buffer_ = GpuBuffer(texture_buffer);
-  texture.plane_ = 0;
-  texture.width_ = texture_buffer->width_;
-  texture.height_ = texture_buffer->height_;
-  texture.target_ = texture_buffer->target_;
-  texture.name_ = texture_buffer->name_;
-
-  if (texture_buffer->format() != GpuBufferFormat::kUnknown) {
-    // TODO: do the params need to be reset here??
-    glBindTexture(texture.target(), texture.name());
-    GlTextureInfo info = GlTextureInfoForGpuBufferFormat(
-        texture_buffer->format(), texture.plane_, GetGlVersion());
-    SetStandardTextureParams(texture.target(), info.gl_internal_format);
-    glBindTexture(texture.target(), 0);
-  }
-
-  return texture;
-}
-
-GlTextureBufferSharedPtr GlCalculatorHelperImpl::MakeGlTextureBuffer(
+GlTexture GlCalculatorHelperImpl::CreateSourceTexture(
     const ImageFrame& image_frame) {
-  CHECK(gl_context_->IsCurrent());
-
-  auto buffer = GlTextureBuffer::Create(image_frame);
-
-  if (buffer->format_ != GpuBufferFormat::kUnknown) {
-    glBindTexture(GL_TEXTURE_2D, buffer->name_);
-    GlTextureInfo info = GlTextureInfoForGpuBufferFormat(
-        buffer->format_, /*plane=*/0, GetGlVersion());
-    SetStandardTextureParams(buffer->target_, info.gl_internal_format);
-    glBindTexture(GL_TEXTURE_2D, 0);
-  }
-
-  return buffer;
+  GlTexture texture =
+      MapGpuBuffer(GpuBuffer::CopyingImageFrame(image_frame), 0, true);
+  return texture;
 }
-#endif  // !MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
+
+template <>
+std::unique_ptr<ImageFrame> GlTexture::GetFrame<ImageFrame>() const {
+  return view_.gpu_buffer().AsImageFrame();
+}
+
+template <>
+std::unique_ptr<GpuBuffer> GlTexture::GetFrame<GpuBuffer>() const {
+  auto gpu_buffer = view_.gpu_buffer();
+#ifdef __EMSCRIPTEN__
+  // When WebGL is used, the GL context may be spontaneously lost which can
+  // cause GpuBuffer allocations to fail. In that case, return a dummy buffer
+  // to allow processing of the current frame complete.
+  if (!gpu_buffer) {
+    return std::make_unique<GpuBuffer>();
+  }
+#endif  // __EMSCRIPTEN__
+  view_.DoneWriting();
+  return absl::make_unique<GpuBuffer>(gpu_buffer);
+}
 
 GlTexture GlCalculatorHelperImpl::CreateDestinationTexture(
     int width, int height, GpuBufferFormat format) {
@@ -202,44 +152,9 @@ GlTexture GlCalculatorHelperImpl::CreateDestinationTexture(
 
   GpuBuffer buffer =
       gpu_resources_.gpu_buffer_pool().GetBuffer(width, height, format);
-  GlTexture texture = MapGpuBuffer(buffer, 0);
+  GlTexture texture = MapGpuBuffer(buffer, 0, false);
 
   return texture;
-}
-
-void GlCalculatorHelperImpl::ReadTexture(const GlTexture& texture, void* output,
-                                         size_t size) {
-  CHECK_GE(size, texture.width_ * texture.height_ * 4);
-
-  GLint current_fbo;
-  glGetIntegerv(GL_FRAMEBUFFER_BINDING, &current_fbo);
-  CHECK_NE(current_fbo, 0);
-
-  GLint color_attachment_name;
-  glGetFramebufferAttachmentParameteriv(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
-                                        GL_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME,
-                                        &color_attachment_name);
-  if (color_attachment_name != texture.name_) {
-    // Save the viewport. Note that we assume that the color attachment is a
-    // GL_TEXTURE_2D texture.
-    GLint viewport[4];
-    glGetIntegerv(GL_VIEWPORT, viewport);
-
-    // Set the data from GLTexture object.
-    glViewport(0, 0, texture.width_, texture.height_);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
-                           texture.target_, texture.name_, 0);
-    glReadPixels(0, 0, texture.width_, texture.height_, GL_RGBA,
-                 GL_UNSIGNED_BYTE, output);
-
-    // Restore from the saved viewport and color attachment name.
-    glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D,
-                           color_attachment_name, 0);
-  } else {
-    glReadPixels(0, 0, texture.width_, texture.height_, GL_RGBA,
-                 GL_UNSIGNED_BYTE, output);
-  }
 }
 
 }  // namespace mediapipe

@@ -41,7 +41,10 @@ one over the other.
 *   Face landmark model:
     [TFLite model](https://github.com/google/mediapipe/tree/master/mediapipe/modules/face_landmark/face_landmark.tflite),
     [TF.js model](https://tfhub.dev/mediapipe/facemesh/1)
-*   [Model card](https://mediapipe.page.link/facemesh-mc)
+*   Face landmark model w/ attention (aka Attention Mesh):
+    [TFLite model](https://github.com/google/mediapipe/tree/master/mediapipe/modules/face_landmark/face_landmark_with_attention.tflite)
+*   [Model card](https://mediapipe.page.link/facemesh-mc),
+    [Model card (w/ attention)](https://mediapipe.page.link/attentionmesh-mc)
 
 ### [Iris](https://google.github.io/mediapipe/solutions/iris)
 

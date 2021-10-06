@@ -14,17 +14,21 @@
 
 package com.google.mediapipe.solutions.facemesh;
 
-import androidx.annotation.IntDef;
 import com.google.auto.value.AutoValue;
 
 /**
  * MediaPipe FaceMesh solution-specific options.
  *
- * <p>mode: Whether to treat the input images as a batch of static and possibly unrelated images, or
- * a video stream. See details in https://solutions.mediapipe.dev/face_mesh#static_image_mode.
+ * <p>staticImageMode: Whether to treat the input images as a batch of static and possibly unrelated
+ * images, or a video stream. Default to false. See details in
+ * https://solutions.mediapipe.dev/face_mesh#static_image_mode.
  *
  * <p>maxNumFaces: Maximum number of faces to detect. See details in
  * https://solutions.mediapipe.dev/face_mesh#max_num_faces.
+ *
+ * <p>refineLandmarks: Whether to further refine the landmark coordinates around the eyes, lips and
+ * face oval, and output additional landmarks around the irises. Default to False. See details in
+ * https://solutions.mediapipe.dev/face_mesh#refine_landmark.
  *
  * <p>minDetectionConfidence: Minimum confidence value ([0.0, 1.0]) for face detection to be
  * considered successful. See details in
@@ -39,25 +43,15 @@ import com.google.auto.value.AutoValue;
 @AutoValue
 public abstract class FaceMeshOptions {
 
-  // TODO: Switch to use boolean variable.
-  public static final int STREAMING_MODE = 1;
-  public static final int STATIC_IMAGE_MODE = 2;
-
-  /**
-   * Indicates whether to treat the input images as a batch of static and possibly unrelated images,
-   * or a video stream.
-   */
-  @IntDef({STREAMING_MODE, STATIC_IMAGE_MODE})
-  public @interface Mode {}
-
-  @Mode
-  public abstract int mode();
+  public abstract boolean staticImageMode();
 
   public abstract int maxNumFaces();
 
   public abstract float minDetectionConfidence();
 
   public abstract float minTrackingConfidence();
+
+  public abstract boolean refineLandmarks();
 
   public abstract boolean runOnGpu();
 
@@ -69,19 +63,23 @@ public abstract class FaceMeshOptions {
   @AutoValue.Builder
   public abstract static class Builder {
     public Builder withDefaultValues() {
-      return setMaxNumFaces(1)
+      return setStaticImageMode(false)
+          .setMaxNumFaces(1)
           .setMinDetectionConfidence(0.5f)
           .setMinTrackingConfidence(0.5f)
+          .setRefineLandmarks(false)
           .setRunOnGpu(true);
     }
 
-    public abstract Builder setMode(int value);
+    public abstract Builder setStaticImageMode(boolean value);
 
     public abstract Builder setMaxNumFaces(int value);
 
     public abstract Builder setMinDetectionConfidence(float value);
 
     public abstract Builder setMinTrackingConfidence(float value);
+
+    public abstract Builder setRefineLandmarks(boolean value);
 
     public abstract Builder setRunOnGpu(boolean value);
 

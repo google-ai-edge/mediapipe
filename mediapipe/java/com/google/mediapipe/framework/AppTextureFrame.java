@@ -66,7 +66,9 @@ public class AppTextureFrame implements TextureFrame {
 
   /**
    * Waits until the consumer is done with the texture.
-   * @throws InterruptedException
+   *
+   * <p>This does a CPU wait for the texture to be complete.
+   * Use {@link waitUntilReleasedWithGpuSync} whenever possible.
    */
   public void waitUntilReleased() throws InterruptedException {
     synchronized (this) {
@@ -75,6 +77,26 @@ public class AppTextureFrame implements TextureFrame {
       }
       if (releaseSyncToken != null) {
         releaseSyncToken.waitOnCpu();
+        releaseSyncToken.release();
+        inUse = false;
+        releaseSyncToken = null;
+      }
+    }
+  }
+
+  /**
+   * Waits until the consumer is done with the texture.
+   *
+   * <p>This method must be called within the application's GL context that will overwrite the
+   * TextureFrame.
+   */
+  public void waitUntilReleasedWithGpuSync() throws InterruptedException {
+    synchronized (this) {
+      while (inUse && releaseSyncToken == null) {
+        wait();
+      }
+      if (releaseSyncToken != null) {
+        releaseSyncToken.waitOnGpu();
         releaseSyncToken.release();
         inUse = false;
         releaseSyncToken = null;

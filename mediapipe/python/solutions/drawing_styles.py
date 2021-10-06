@@ -183,6 +183,23 @@ def get_default_face_mesh_tesselation_style() -> DrawingSpec:
   return DrawingSpec(color=_GRAY, thickness=_THICKNESS_TESSELATION)
 
 
+def get_default_face_mesh_iris_connections_style(
+) -> Mapping[Tuple[int, int], DrawingSpec]:
+  """Returns the default face mesh iris connections drawing style.
+
+  Returns:
+       A mapping from each iris connection to its default drawing spec.
+  """
+  face_mesh_iris_connections_style = {}
+  left_spec = DrawingSpec(color=_GREEN, thickness=_THICKNESS_CONTOURS)
+  for connection in face_mesh_connections.FACEMESH_LEFT_IRIS:
+    face_mesh_iris_connections_style[connection] = left_spec
+  right_spec = DrawingSpec(color=_RED, thickness=_THICKNESS_CONTOURS)
+  for connection in face_mesh_connections.FACEMESH_RIGHT_IRIS:
+    face_mesh_iris_connections_style[connection] = right_spec
+  return face_mesh_iris_connections_style
+
+
 def get_default_pose_landmarks_style() -> Mapping[int, DrawingSpec]:
   """Returns the default pose landmarks drawing style.
 

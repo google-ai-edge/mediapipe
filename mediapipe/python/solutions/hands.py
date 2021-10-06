@@ -19,8 +19,8 @@ from typing import NamedTuple
 
 import numpy as np
 
-from mediapipe.calculators.core import constant_side_packet_calculator_pb2
 # pylint: disable=unused-import
+from mediapipe.calculators.core import constant_side_packet_calculator_pb2
 from mediapipe.calculators.core import gate_calculator_pb2
 from mediapipe.calculators.core import split_vector_calculator_pb2
 from mediapipe.calculators.tensor import image_to_tensor_calculator_pb2
@@ -67,7 +67,7 @@ class HandLandmark(enum.IntEnum):
   PINKY_TIP = 20
 
 
-BINARYPB_FILE_PATH = 'mediapipe/modules/hand_landmark/hand_landmark_tracking_cpu.binarypb'
+_BINARYPB_FILE_PATH = 'mediapipe/modules/hand_landmark/hand_landmark_tracking_cpu.binarypb'
 
 
 class Hands(SolutionBase):
@@ -107,16 +107,12 @@ class Hands(SolutionBase):
         https://solutions.mediapipe.dev/hands#min_tracking_confidence.
     """
     super().__init__(
-        binary_graph_path=BINARYPB_FILE_PATH,
+        binary_graph_path=_BINARYPB_FILE_PATH,
         side_inputs={
             'num_hands': max_num_hands,
+            'use_prev_landmarks': not static_image_mode,
         },
         calculator_params={
-            'ConstantSidePacketCalculator.packet': [
-                constant_side_packet_calculator_pb2
-                .ConstantSidePacketCalculatorOptions.ConstantSidePacket(
-                    bool_value=not static_image_mode)
-            ],
             'palmdetectioncpu__TensorsToDetectionsCalculator.min_score_thresh':
                 min_detection_confidence,
             'handlandmarkcpu__ThresholdingCalculator.threshold':

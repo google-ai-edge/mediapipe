@@ -276,6 +276,9 @@ class GlContext : public std::enable_shared_from_this<GlContext> {
     }).IgnoreError();
   }
 
+  // Sets default texture filtering parameters.
+  void SetStandardTextureParams(GLenum target, GLint internal_format);
+
   // These are used for testing specific SyncToken implementations. Do not use
   // outside of tests.
   enum class SyncTokenTypeForTest {
@@ -342,11 +345,11 @@ class GlContext : public std::enable_shared_from_this<GlContext> {
   // This wraps a thread_local.
   static std::weak_ptr<GlContext>& CurrentContext();
 
-  static absl::Status SwitchContext(ContextBinding* old_context,
+  static absl::Status SwitchContext(ContextBinding* saved_context,
                                     const ContextBinding& new_context);
 
-  absl::Status EnterContext(ContextBinding* previous_context);
-  absl::Status ExitContext(const ContextBinding* previous_context);
+  absl::Status EnterContext(ContextBinding* saved_context);
+  absl::Status ExitContext(const ContextBinding* saved_context);
   void DestroyContext();
 
   bool HasContext() const;
@@ -383,7 +386,7 @@ class GlContext : public std::enable_shared_from_this<GlContext> {
   static void GetCurrentContextBinding(ContextBinding* binding);
   // Makes the context described by new_context current on this thread.
   static absl::Status SetCurrentContextBinding(
-      const ContextBinding& new_context);
+      const ContextBinding& new_binding);
 
   // If not null, a dedicated thread used to execute tasks on this context.
   // Used on Android due to expensive context switching on some configurations.
@@ -395,6 +398,10 @@ class GlContext : public std::enable_shared_from_this<GlContext> {
   // glGetString and glGetStringi both return pointers to static strings,
   // so we should be fine storing the extension pieces as string_view's.
   std::set<absl::string_view> gl_extensions_;
+
+  // Used by SetStandardTextureParams. Do we want several of these bools, or a
+  // better mechanism?
+  bool can_linear_filter_float_textures_;
 
   // Number of glFinish calls completed on the GL thread.
   // Changes should be guarded by mutex_. However, we use simple atomic

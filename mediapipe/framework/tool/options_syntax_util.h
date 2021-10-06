@@ -28,11 +28,14 @@ class OptionsSyntaxUtil {
   ~OptionsSyntaxUtil();
 
   // Converts slash-separated field names into a tag name.
-  std::string OptionFieldsTag(const std::string& option_names);
+  std::string OptionFieldsTag(absl::string_view option_names);
 
   // Returns the field-path for an option stream-tag.
-  FieldPath OptionFieldPath(const std::string& tag,
+  FieldPath OptionFieldPath(absl::string_view tag,
                             const Descriptor* descriptor);
+
+  // Splits a std::string into "tag" and "name" delimited by a single colon.
+  std::vector<absl::string_view> StrSplitTags(absl::string_view tag_and_name);
 
  private:
   class OptionsSyntaxHelper;

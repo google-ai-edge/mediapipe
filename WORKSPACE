@@ -16,11 +16,11 @@ bazel_skylib_workspace()
 load("@bazel_skylib//lib:versions.bzl", "versions")
 versions.check(minimum_bazel_version = "3.7.2")
 
-# ABSL cpp library lts_2020_09_23
+# ABSL cpp library lts_2021_03_24, patch 2.
 http_archive(
     name = "com_google_absl",
     urls = [
-        "https://github.com/abseil/abseil-cpp/archive/20200923.tar.gz",
+        "https://github.com/abseil/abseil-cpp/archive/refs/tags/20210324.2.tar.gz",
     ],
     # Remove after https://github.com/abseil/abseil-cpp/issues/326 is solved.
     patches = [
@@ -29,8 +29,8 @@ http_archive(
     patch_args = [
         "-p1",
     ],
-    strip_prefix = "abseil-cpp-20200923",
-    sha256 = "b3744a4f7a249d5eaf2309daad597631ce77ea62e0fc6abffbab4b4c3dc0fc08"
+    strip_prefix = "abseil-cpp-20210324.2",
+    sha256 = "59b862f50e710277f8ede96f083a5bb8d7c9595376146838b9580be90374ee1f"
 )
 
 http_archive(
@@ -333,6 +333,7 @@ maven_install(
         "androidx.concurrent:concurrent-futures:1.0.0-alpha03",
         "androidx.lifecycle:lifecycle-common:2.3.1",
         "androidx.activity:activity:1.2.2",
+        "androidx.exifinterface:exifinterface:1.3.3",
         "androidx.fragment:fragment:1.3.4",
         "androidx.annotation:annotation:aar:1.1.0",
         "androidx.appcompat:appcompat:aar:1.1.0-rc01",
@@ -349,8 +350,8 @@ maven_install(
         "com.google.auto.value:auto-value:1.8.1",
         "com.google.auto.value:auto-value-annotations:1.8.1",
         "com.google.code.findbugs:jsr305:latest.release",
-        "com.google.flogger:flogger-system-backend:latest.release",
-        "com.google.flogger:flogger:latest.release",
+        "com.google.flogger:flogger-system-backend:0.6",
+        "com.google.flogger:flogger:0.6",
         "com.google.guava:guava:27.0.1-android",
         "com.google.guava:listenablefuture:1.0",
         "junit:junit:4.12",
@@ -389,6 +390,8 @@ http_archive(
     patches = [
         "@//third_party:org_tensorflow_compatibility_fixes.diff",
         "@//third_party:org_tensorflow_objc_cxx17.diff",
+        # Diff is generated with a script, don't update it manually.
+        "@//third_party:org_tensorflow_custom_ops.diff",
     ],
     patch_args = [
         "-p1",

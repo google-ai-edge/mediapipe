@@ -22,6 +22,24 @@ package(default_visibility = [
     "//learning/brain/models/app_benchmarks/camera_models:__subpackages__",
 ])
 
+CUSTOM_OPS_PACKAGE = "@org_tensorflow//tensorflow/lite/delegates/gpu/common/mediapipe"
+
+cc_library(
+    name = "landmarks_to_transform_matrix",
+    srcs = ["landmarks_to_transform_matrix.cc"],
+    hdrs = ["landmarks_to_transform_matrix.h"],
+    deps = [
+        "@org_tensorflow//tensorflow/lite/delegates/gpu/common:types",
+        "@org_tensorflow//tensorflow/lite/kernels:kernel_util",
+        "@org_tensorflow//tensorflow/lite/kernels:padding",
+        "@org_tensorflow//tensorflow/lite/kernels/internal:common",
+        "@org_tensorflow//tensorflow/lite/kernels/internal:compatibility",
+        "@org_tensorflow//tensorflow/lite/kernels/internal:tensor",
+        "@org_tensorflow//tensorflow/lite/schema:schema_fbs",
+        CUSTOM_OPS_PACKAGE + ":landmarks_to_transform_matrix",
+    ],
+)
+
 cc_library(
     name = "max_pool_argmax",
     srcs = ["max_pool_argmax.cc"],
@@ -45,6 +63,38 @@ cc_library(
         "@org_tensorflow//tensorflow/lite/kernels/internal:common",
         "@org_tensorflow//tensorflow/lite/kernels/internal:tensor",
         "@org_tensorflow//tensorflow/lite/kernels/internal:tensor_utils",
+    ],
+)
+
+cc_library(
+    name = "transform_landmarks",
+    srcs = ["transform_landmarks.cc"],
+    hdrs = ["transform_landmarks.h"],
+    deps = [
+        "@org_tensorflow//tensorflow/lite/delegates/gpu/common:types",
+        "@org_tensorflow//tensorflow/lite/kernels:kernel_util",
+        "@org_tensorflow//tensorflow/lite/kernels:padding",
+        "@org_tensorflow//tensorflow/lite/kernels/internal:common",
+        "@org_tensorflow//tensorflow/lite/kernels/internal:compatibility",
+        "@org_tensorflow//tensorflow/lite/kernels/internal:tensor",
+        "@org_tensorflow//tensorflow/lite/schema:schema_fbs",
+        CUSTOM_OPS_PACKAGE + ":transform_landmarks",
+    ],
+)
+
+cc_library(
+    name = "transform_tensor_bilinear",
+    srcs = ["transform_tensor_bilinear.cc"],
+    hdrs = ["transform_tensor_bilinear.h"],
+    deps = [
+        "@org_tensorflow//tensorflow/lite/delegates/gpu/common:types",
+        "@org_tensorflow//tensorflow/lite/kernels:kernel_util",
+        "@org_tensorflow//tensorflow/lite/kernels:padding",
+        "@org_tensorflow//tensorflow/lite/kernels/internal:common",
+        "@org_tensorflow//tensorflow/lite/kernels/internal:compatibility",
+        "@org_tensorflow//tensorflow/lite/kernels/internal:tensor",
+        "@org_tensorflow//tensorflow/lite/schema:schema_fbs",
+        CUSTOM_OPS_PACKAGE + ":transform_tensor_bilinear",
     ],
 )
 

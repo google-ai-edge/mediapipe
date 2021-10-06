@@ -1384,6 +1384,32 @@ cc_library(
     alwayslink = 1,
 )
 
+mediapipe_proto_library(
+    name = "landmarks_refinement_calculator_proto",
+    srcs = ["landmarks_refinement_calculator.proto"],
+    deps = [
+        "//mediapipe/framework:calculator_options_proto",
+        "//mediapipe/framework:calculator_proto",
+    ],
+)
+
+cc_library(
+    name = "landmarks_refinement_calculator",
+    srcs = ["landmarks_refinement_calculator.cc"],
+    hdrs = ["landmarks_refinement_calculator.h"],
+    deps = [
+        ":landmarks_refinement_calculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/api2:node",
+        "//mediapipe/framework/api2:port",
+        "//mediapipe/framework/formats:landmark_cc_proto",
+        "//mediapipe/framework/port:core_proto",
+        "//mediapipe/framework/port:ret_check",
+        "@com_google_absl//absl/memory",
+    ],
+    alwayslink = 1,
+)
+
 cc_test(
     name = "refine_landmarks_from_heatmap_calculator_test",
     srcs = ["refine_landmarks_from_heatmap_calculator_test.cc"],

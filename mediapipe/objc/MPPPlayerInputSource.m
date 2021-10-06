@@ -31,6 +31,8 @@
   CVDisplayLinkRef _videoDisplayLink;
 #endif  // TARGET_OS_OSX
   id _videoEndObserver;
+  id _audioInterruptedObserver;
+  BOOL _playing;
 }
 
 - (instancetype)initWithAVAsset:(AVAsset*)video {
@@ -76,12 +78,19 @@
                                         usingBlock:^(NSNotification* note) {
                                           [weakSelf playerItemDidPlayToEnd:note];
                                         }];
+    _audioInterruptedObserver = [center addObserverForName:AVAudioSessionInterruptionNotification
+                                                    object:nil
+                                                     queue:nil
+                                                usingBlock:^(NSNotification* note) {
+                                                  [weakSelf audioSessionInterruption:note];
+                                                }];
   }
   return self;
 }
 
 - (void)start {
   [_videoPlayer play];
+  _playing = YES;
 #if !TARGET_OS_OSX
   _videoDisplayLink.paused = NO;
 #else
@@ -96,6 +105,7 @@
   CVDisplayLinkStop(_videoDisplayLink);
 #endif
   [_videoPlayer pause];
+  _playing = NO;
 }
 
 - (BOOL)isRunning {
@@ -154,6 +164,17 @@ static CVReturn renderCallback(CVDisplayLinkRef displayLink, const CVTimeStamp* 
       [_videoPlayer seekToTime:kCMTimeZero];
     }
   });
+}
+
+- (void)audioSessionInterruption:(NSNotification*)notification {
+  if ([notification.userInfo[AVAudioSessionInterruptionTypeKey] intValue] ==
+      AVAudioSessionInterruptionTypeEnded) {
+    if ([notification.userInfo[AVAudioSessionInterruptionOptionKey] intValue] ==
+        AVAudioSessionInterruptionOptionShouldResume && _playing) {
+      // AVVideoPlayer does not automatically resume on this notification.
+      [_videoPlayer play];
+    }
+  }
 }
 
 - (void)seekToTime:(CMTime)time tolerance:(CMTime)tolerance {

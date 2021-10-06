@@ -3,13 +3,18 @@
 #
 # It is required that "face_landmark.tflite" is available at
 # "mediapipe/modules/face_landmark/face_landmark.tflite"
-# path during execution.
+# path during execution if `with_attention` is not set or set to `false`.
+#
+# It is required that "face_landmark_with_attention.tflite" is available at
+# "mediapipe/modules/face_landmark/face_landmark_with_attention.tflite"
+# path during execution if `with_attention` is set to `true`.
 #
 # EXAMPLE:
 #   node {
 #     calculator: "FaceLandmarkCpu"
 #     input_stream: "IMAGE:image"
 #     input_stream: "ROI:face_roi"
+#     input_side_packet: "WITH_ATTENTION:with_attention"
 #     output_stream: "LANDMARKS:face_landmarks"
 #   }
 
@@ -20,8 +25,17 @@ input_stream: "IMAGE:image"
 # ROI (region of interest) within the given image where a face is located.
 # (NormalizedRect)
 input_stream: "ROI:roi"
+# Whether to run face mesh model with attention on lips and eyes. (bool)
+# Attention provides more accuracy on lips and eye regions as well as iris
+# landmarks.
+input_side_packet: "WITH_ATTENTION:with_attention"
 
-# 468 face landmarks within the given ROI. (NormalizedLandmarkList)
+# 468 or 478 facial landmarks within the given ROI. (NormalizedLandmarkList)
+#
+# Number of landmarks depends on the WITH_ATTENTION flag. If it's `true` - then
+# there will be 478 landmarks with refined lips, eyes and irises (10 extra
+# landmarks are for irises), otherwise 468 non-refined landmarks are returned.
+#
 # NOTE: if a face is not present within the given ROI, for this particular
 # timestamp there will not be an output packet in the LANDMARKS stream. However,
 # the MediaPipe framework will internally inform the downstream calculators of
@@ -46,31 +60,63 @@ node: {
   }
 }
 
+# Loads the face landmarks TF Lite model.
+node {
+  calculator: "FaceLandmarksModelLoader"
+  input_side_packet: "WITH_ATTENTION:with_attention"
+  output_side_packet: "MODEL:model"
+}
+
+# Generates a single side packet containing a TensorFlow Lite op resolver that
+# supports custom ops needed by the model used in this graph.
+node {
+  calculator: "TfLiteCustomOpResolverCalculator"
+  output_side_packet: "op_resolver"
+}
+
 # Runs a TensorFlow Lite model on CPU that takes an image tensor and outputs a
 # vector of tensors representing, for instance, detection boxes/keypoints and
 # scores.
 node {
   calculator: "InferenceCalculator"
   input_stream: "TENSORS:input_tensors"
+  input_side_packet: "MODEL:model"
+  input_side_packet: "CUSTOM_OP_RESOLVER:op_resolver"
   output_stream: "TENSORS:output_tensors"
   options: {
     [mediapipe.InferenceCalculatorOptions.ext] {
-      model_path: "mediapipe/modules/face_landmark/face_landmark.tflite"
       delegate { xnnpack {} }
     }
   }
 }
 
-# Splits a vector of tensors into multiple vectors.
+# Splits a vector of tensors into landmark tensors and face flag tensor.
 node {
-  calculator: "SplitTensorVectorCalculator"
+  calculator: "SwitchContainer"
+  input_side_packet: "ENABLE:with_attention"
   input_stream: "output_tensors"
   output_stream: "landmark_tensors"
   output_stream: "face_flag_tensor"
   options: {
-    [mediapipe.SplitVectorCalculatorOptions.ext] {
-      ranges: { begin: 0 end: 1 }
-      ranges: { begin: 1 end: 2 }
+    [mediapipe.SwitchContainerOptions.ext] {
+      contained_node: {
+        calculator: "SplitTensorVectorCalculator"
+        options: {
+          [mediapipe.SplitVectorCalculatorOptions.ext] {
+            ranges: { begin: 0 end: 1 }
+            ranges: { begin: 1 end: 2 }
+          }
+        }
+      }
+      contained_node: {
+        calculator: "SplitTensorVectorCalculator"
+        options: {
+          [mediapipe.SplitVectorCalculatorOptions.ext] {
+            ranges: { begin: 0 end: 6 }
+            ranges: { begin: 6 end: 7 }
+          }
+        }
+      }
     }
   }
 }
@@ -112,14 +158,18 @@ node {
 # Decodes the landmark tensors into a vector of landmarks, where the landmark
 # coordinates are normalized by the size of the input image to the model.
 node {
-  calculator: "TensorsToLandmarksCalculator"
+  calculator: "SwitchContainer"
+  input_side_packet: "ENABLE:with_attention"
   input_stream: "TENSORS:ensured_landmark_tensors"
-  output_stream: "NORM_LANDMARKS:landmarks"
+  output_stream: "LANDMARKS:landmarks"
   options: {
-    [mediapipe.TensorsToLandmarksCalculatorOptions.ext] {
-      num_landmarks: 468
-      input_image_width: 192
-      input_image_height: 192
+    [mediapipe.SwitchContainerOptions.ext] {
+      contained_node: {
+        calculator: "TensorsToFaceLandmarks"
+      }
+      contained_node: {
+        calculator: "TensorsToFaceLandmarksWithAttention"
+      }
     }
   }
 }

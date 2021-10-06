@@ -117,6 +117,30 @@ mediapipe_simple_subgraph(
     ],
 )
 
+mediapipe_simple_subgraph(
+    name = "face_detection_short_range_image",
+    graph = "face_detection_short_range_image.pbtxt",
+    register_as = "FaceDetectionShortRangeImage",
+    deps = [
+        ":face_detection_short_range_common",
+        "//mediapipe/calculators/core:flow_limiter_calculator",
+        "//mediapipe/calculators/tensor:image_to_tensor_calculator",
+        "//mediapipe/calculators/tensor:inference_calculator",
+    ],
+)
+
+mediapipe_simple_subgraph(
+    name = "face_detection_full_range_image",
+    graph = "face_detection_full_range_image.pbtxt",
+    register_as = "FaceDetectionFullRangeImage",
+    deps = [
+        ":face_detection_full_range_common",
+        "//mediapipe/calculators/core:flow_limiter_calculator",
+        "//mediapipe/calculators/tensor:image_to_tensor_calculator",
+        "//mediapipe/calculators/tensor:inference_calculator",
+    ],
+)
+
 exports_files(
     srcs = [
         "face_detection_full_range.tflite",

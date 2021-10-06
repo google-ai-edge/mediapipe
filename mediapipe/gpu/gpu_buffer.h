@@ -17,6 +17,7 @@
 
 #include <utility>
 
+#include "mediapipe/framework/formats/image_frame.h"
 #include "mediapipe/gpu/gl_base.h"
 #include "mediapipe/gpu/gpu_buffer_format.h"
 
@@ -31,6 +32,9 @@
 #endif  // MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
 
 namespace mediapipe {
+
+class GlContext;
+class GlTextureView;
 
 // This class wraps a platform-specific buffer of GPU data.
 // An instance of GpuBuffer acts as an opaque reference to the underlying
@@ -84,12 +88,70 @@ class GpuBuffer {
   // Allow assignment from nullptr.
   GpuBuffer& operator=(std::nullptr_t other);
 
+  // TODO: split into read and write, remove const from write.
+  GlTextureView GetGlTextureView(int plane, bool for_reading) const;
+
+  // Make a GpuBuffer copying the data from an ImageFrame.
+  static GpuBuffer CopyingImageFrame(const ImageFrame& image_frame);
+
+  // Make an ImageFrame, possibly sharing the same data. The data is shared if
+  // the GpuBuffer's storage supports memory sharing; otherwise, it is copied.
+  // In order to work correctly across platforms, callers should always treat
+  // the returned ImageFrame as if it shares memory with the GpuBuffer, i.e.
+  // treat it as immutable if the GpuBuffer must not be modified.
+  std::unique_ptr<ImageFrame> AsImageFrame() const;
+
  private:
 #if MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
   CFHolder<CVPixelBufferRef> pixel_buffer_;
 #else
   GlTextureBufferSharedPtr texture_buffer_;
 #endif  // MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
+};
+
+class GlTextureView {
+ public:
+  GlTextureView() {}
+  ~GlTextureView() { Release(); }
+  // TODO: make this class move-only.
+
+  GlContext* gl_context() const { return gl_context_; }
+  int width() const { return width_; }
+  int height() const { return height_; }
+  GLenum target() const { return target_; }
+  GLuint name() const { return name_; }
+  const GpuBuffer& gpu_buffer() const { return gpu_buffer_; }
+  int plane() const { return plane_; }
+
+ private:
+  friend class GpuBuffer;
+  using DetachFn = std::function<void(GlTextureView&)>;
+  GlTextureView(GlContext* context, GLenum target, GLuint name, int width,
+                int height, GpuBuffer gpu_buffer, int plane, DetachFn detach)
+      : gl_context_(context),
+        target_(target),
+        name_(name),
+        width_(width),
+        height_(height),
+        gpu_buffer_(std::move(gpu_buffer)),
+        plane_(plane),
+        detach_(std::move(detach)) {}
+
+  // TODO: remove this friend declaration.
+  friend class GlTexture;
+  void Release();
+  // TODO: make this non-const.
+  void DoneWriting() const;
+
+  GlContext* gl_context_ = nullptr;
+  GLenum target_ = GL_TEXTURE_2D;
+  GLuint name_ = 0;
+  // Note: when scale is not 1, we still give the nominal size of the image.
+  int width_ = 0;
+  int height_ = 0;
+  GpuBuffer gpu_buffer_;
+  int plane_ = 0;
+  DetachFn detach_;
 };
 
 #if MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER

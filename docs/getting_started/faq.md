@@ -103,7 +103,7 @@ monotonically increasing timestamps. By convention, realtime calculators and
 graphs use the recording time or the presentation time as the timestamp for each
 packet, with each timestamp representing microseconds since
 `Jan/1/1970:00:00:00`. This allows packets from various sources to be processed
-in a gloablly consistent order.
+in a globally consistent order.
 
 Normally for offline processing, every input packet is processed and processing
 continues as long as necessary. For online processing, it is often necessary to

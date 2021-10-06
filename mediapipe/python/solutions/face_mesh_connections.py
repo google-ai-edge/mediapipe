@@ -29,6 +29,9 @@ FACEMESH_LEFT_EYE = frozenset([(263, 249), (249, 390), (390, 373), (373, 374),
                                (263, 466), (466, 388), (388, 387), (387, 386),
                                (386, 385), (385, 384), (384, 398), (398, 362)])
 
+FACEMESH_LEFT_IRIS = frozenset([(474, 475), (475, 476), (476, 477),
+                                 (477, 474)])
+
 FACEMESH_LEFT_EYEBROW = frozenset([(276, 283), (283, 282), (282, 295),
                                    (295, 285), (300, 293), (293, 334),
                                    (334, 296), (296, 336)])
@@ -40,6 +43,9 @@ FACEMESH_RIGHT_EYE = frozenset([(33, 7), (7, 163), (163, 144), (144, 145),
 
 FACEMESH_RIGHT_EYEBROW = frozenset([(46, 53), (53, 52), (52, 65), (65, 55),
                                     (70, 63), (63, 105), (105, 66), (66, 107)])
+
+FACEMESH_RIGHT_IRIS = frozenset([(469, 470), (470, 471), (471, 472),
+                                 (472, 469)])
 
 FACEMESH_FACE_OVAL = frozenset([(10, 338), (338, 297), (297, 332), (332, 284),
                                 (284, 251), (251, 389), (389, 356), (356, 454),
@@ -55,6 +61,8 @@ FACEMESH_CONTOURS = frozenset().union(*[
     FACEMESH_LIPS, FACEMESH_LEFT_EYE, FACEMESH_LEFT_EYEBROW, FACEMESH_RIGHT_EYE,
     FACEMESH_RIGHT_EYEBROW, FACEMESH_FACE_OVAL
 ])
+
+FACEMESH_IRISES = frozenset().union(*[FACEMESH_LEFT_IRIS, FACEMESH_RIGHT_IRIS])
 
 FACEMESH_TESSELATION = frozenset([
     (127, 34),  (34, 139),  (139, 127), (11, 0),    (0, 37),    (37, 11),

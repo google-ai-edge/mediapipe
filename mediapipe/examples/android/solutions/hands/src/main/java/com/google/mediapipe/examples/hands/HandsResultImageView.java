@@ -27,7 +27,7 @@ import com.google.mediapipe.solutions.hands.Hands;
 import com.google.mediapipe.solutions.hands.HandsResult;
 import java.util.List;
 
-/** An ImageView implementation for displaying MediaPipe Hands results. */
+/** An ImageView implementation for displaying {@link HandsResult}. */
 public class HandsResultImageView extends AppCompatImageView {
   private static final String TAG = "HandsResultImageView";
 
@@ -66,7 +66,7 @@ public class HandsResultImageView extends AppCompatImageView {
     }
   }
 
-  /** Updates the image view with the latest hands result. */
+  /** Updates the image view with the latest {@link HandsResult}. */
   public void update() {
     postInvalidate();
     if (latest != null) {
@@ -74,7 +74,6 @@ public class HandsResultImageView extends AppCompatImageView {
     }
   }
 
-  // TODO: Better hand landmark and hand connection drawing.
   private void drawLandmarksOnCanvas(
       List<NormalizedLandmark> handLandmarkList, Canvas canvas, int width, int height) {
     // Draw connections.

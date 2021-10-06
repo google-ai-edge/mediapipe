@@ -19,10 +19,10 @@ from typing import NamedTuple
 
 import numpy as np
 
-from mediapipe.calculators.core import constant_side_packet_calculator_pb2
 # The following imports are needed because python pb2 silently discards
 # unknown protobuf fields.
 # pylint: disable=unused-import
+from mediapipe.calculators.core import constant_side_packet_calculator_pb2
 from mediapipe.calculators.core import gate_calculator_pb2
 from mediapipe.calculators.core import split_vector_calculator_pb2
 from mediapipe.calculators.image import warp_affine_calculator_pb2
@@ -87,7 +87,7 @@ class PoseLandmark(enum.IntEnum):
   RIGHT_FOOT_INDEX = 32
 
 
-BINARYPB_FILE_PATH = 'mediapipe/modules/pose_landmark/pose_landmark_cpu.binarypb'
+_BINARYPB_FILE_PATH = 'mediapipe/modules/pose_landmark/pose_landmark_cpu.binarypb'
 
 
 def _download_oss_pose_landmark_model(model_complexity):
@@ -144,20 +144,16 @@ class Pose(SolutionBase):
     """
     _download_oss_pose_landmark_model(model_complexity)
     super().__init__(
-        binary_graph_path=BINARYPB_FILE_PATH,
+        binary_graph_path=_BINARYPB_FILE_PATH,
         side_inputs={
             'model_complexity': model_complexity,
             'smooth_landmarks': smooth_landmarks and not static_image_mode,
             'enable_segmentation': enable_segmentation,
             'smooth_segmentation':
                 smooth_segmentation and not static_image_mode,
+            'use_prev_landmarks': not static_image_mode,
         },
         calculator_params={
-            'ConstantSidePacketCalculator.packet': [
-                constant_side_packet_calculator_pb2
-                .ConstantSidePacketCalculatorOptions.ConstantSidePacket(
-                    bool_value=not static_image_mode)
-            ],
             'posedetectioncpu__TensorsToDetectionsCalculator.min_score_thresh':
                 min_detection_confidence,
             'poselandmarkbyroicpu__tensorstoposelandmarksandsegmentation__ThresholdingCalculator.threshold':
@@ -176,12 +172,14 @@ class Pose(SolutionBase):
       ValueError: If the input image is not three channel RGB.
 
     Returns:
-      A NamedTuple that has two fields describing the landmarks on the most
-      prominate person detected:
+      A NamedTuple with fields describing the landmarks on the most prominate
+      person detected:
         1) "pose_landmarks" field that contains the pose landmarks.
         2) "pose_world_landmarks" field that contains the pose landmarks in
         real-world 3D coordinates that are in meters with the origin at the
         center between hips.
+        3) "segmentation_mask" field that contains the segmentation mask if
+           "enable_segmentation" is set to true.
     """
 
     results = super().process(input_data={'image': image})

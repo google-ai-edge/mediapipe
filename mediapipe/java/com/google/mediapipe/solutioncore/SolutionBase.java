@@ -73,21 +73,24 @@ public class SolutionBase {
             AndroidAssetUtil.getAssetBytes(context.getAssets(), solutionInfo.binaryGraphPath()));
       }
       solutionGraph.addMultiStreamCallback(
-          solutionInfo.outputStreamNames(), outputHandler::run, /*observeTimestampBounds=*/ true);
+          solutionInfo.outputStreamNames(),
+          outputHandler::run,
+          /*observeTimestampBounds=*/ outputHandler.handleTimestampBoundChanges());
       packetCreator = new AndroidPacketCreator(solutionGraph);
     } catch (MediaPipeException e) {
-      throwException("Error occurs when creating the MediaPipe solution graph. ", e);
+      reportError("Error occurs while creating the MediaPipe solution graph.", e);
     }
   }
 
-  /** Throws exception with error message. */
-  protected void throwException(String message, MediaPipeException e) {
+  /** Reports error with the detailed error message. */
+  protected void reportError(String message, MediaPipeException e) {
+    String detailedErrorMessage = String.format("%s Error details: %s", message, e.getMessage());
     if (errorListener != null) {
-      errorListener.onError(message, e);
+      errorListener.onError(detailedErrorMessage, e);
     } else {
-      Log.e(TAG, message, e);
+      Log.e(TAG, detailedErrorMessage, e);
+      throw e;
     }
-    throw e;
   }
 
   /**
@@ -114,7 +117,7 @@ public class SolutionBase {
         solutionGraph.startRunningGraph();
       }
     } catch (MediaPipeException e) {
-      throwException("Error occurs when starting the MediaPipe solution graph. ", e);
+      reportError("Error occurs while starting the MediaPipe solution graph.", e);
     }
   }
 
@@ -123,7 +126,7 @@ public class SolutionBase {
     try {
       solutionGraph.waitUntilGraphIdle();
     } catch (MediaPipeException e) {
-      throwException("Error occurs when waiting until the MediaPipe graph becomes idle. ", e);
+      reportError("Error occurs while waiting until the MediaPipe graph becomes idle.", e);
     }
   }
 
@@ -137,12 +140,12 @@ public class SolutionBase {
         // Note: errors during Process are reported at the earliest opportunity,
         // which may be addPacket or waitUntilDone, depending on timing. For consistency,
         // we want to always report them using the same async handler if installed.
-        throwException("Error occurs when closing the Mediapipe solution graph. ", e);
+        reportError("Error occurs while closing the Mediapipe solution graph.", e);
       }
       try {
         solutionGraph.tearDown();
       } catch (MediaPipeException e) {
-        throwException("Error occurs when closing the Mediapipe solution graph. ", e);
+        reportError("Error occurs while closing the Mediapipe solution graph.", e);
       }
     }
   }

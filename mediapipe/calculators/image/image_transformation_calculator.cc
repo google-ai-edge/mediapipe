@@ -337,12 +337,15 @@ absl::Status ImageTransformationCalculator::Process(CalculatorContext* cc) {
       !cc->Inputs().Tag("FLIP_VERTICALLY").IsEmpty()) {
     flip_vertically_ = cc->Inputs().Tag("FLIP_VERTICALLY").Get<bool>();
   }
-  if (cc->Inputs().HasTag("OUTPUT_DIMENSIONS") &&
-      !cc->Inputs().Tag("OUTPUT_DIMENSIONS").IsEmpty()) {
-    const auto& image_size =
-        cc->Inputs().Tag("OUTPUT_DIMENSIONS").Get<std::pair<int, int>>();
-    output_width_ = image_size.first;
-    output_height_ = image_size.second;
+  if (cc->Inputs().HasTag("OUTPUT_DIMENSIONS")) {
+    if (cc->Inputs().Tag("OUTPUT_DIMENSIONS").IsEmpty()) {
+      return absl::OkStatus();
+    } else {
+      const auto& image_size =
+          cc->Inputs().Tag("OUTPUT_DIMENSIONS").Get<std::pair<int, int>>();
+      output_width_ = image_size.first;
+      output_height_ = image_size.second;
+    }
   }
 
   if (use_gpu_) {
@@ -505,6 +508,14 @@ absl::Status ImageTransformationCalculator::RenderGpu(CalculatorContext* cc) {
   int output_height;
   ComputeOutputDimensions(input_width, input_height, &output_width,
                           &output_height);
+
+  if (scale_mode_ == mediapipe::ScaleMode_Mode_FILL_AND_CROP) {
+    const float scale =
+        std::min(static_cast<float>(output_width_) / input_width,
+                 static_cast<float>(output_height_) / input_height);
+    output_width = std::round(input_width * scale);
+    output_height = std::round(input_height * scale);
+  }
 
   if (cc->Outputs().HasTag("LETTERBOX_PADDING")) {
     auto padding = absl::make_unique<std::array<float, 4>>();

@@ -38,6 +38,7 @@ android_binary(
         "//third_party:opencv",
         "@maven//:androidx_activity_activity",
         "@maven//:androidx_concurrent_concurrent_futures",
+        "@maven//:androidx_exifinterface_exifinterface",
         "@maven//:androidx_fragment_fragment",
         "@maven//:com_google_guava_guava",
     ],

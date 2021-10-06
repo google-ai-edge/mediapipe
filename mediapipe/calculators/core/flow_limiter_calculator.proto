@@ -30,7 +30,7 @@ message FlowLimiterCalculatorOptions {
   optional int32 max_in_flight = 1 [default = 1];
 
   // The maximum number of frames queued waiting for processing.
-  // The default value limits to 1 frame awaiting processing.
+  // The default value limits to 0 frames awaiting processing.
   optional int32 max_in_queue = 2 [default = 0];
 
   // The maximum time in microseconds to wait for a frame to finish processing.

@@ -24,11 +24,12 @@ import androidx.appcompat.widget.AppCompatImageView;
 import android.util.Size;
 import com.google.common.collect.ImmutableSet;
 import com.google.mediapipe.formats.proto.LandmarkProto.NormalizedLandmark;
+import com.google.mediapipe.solutions.facemesh.FaceMesh;
 import com.google.mediapipe.solutions.facemesh.FaceMeshConnections;
 import com.google.mediapipe.solutions.facemesh.FaceMeshResult;
 import java.util.List;
 
-/** An ImageView implementation for displaying MediaPipe FaceMesh results. */
+/** An ImageView implementation for displaying {@link FaceMeshResult}. */
 public class FaceMeshResultImageView extends AppCompatImageView {
   private static final String TAG = "FaceMeshResultImageView";
 
@@ -103,7 +104,7 @@ public class FaceMeshResultImageView extends AppCompatImageView {
       drawLandmarksOnCanvas(
           canvas,
           result.multiFaceLandmarks().get(i).getLandmarkList(),
-          FaceMeshConnections.FACEMESH_LEFT_EYEBR0W,
+          FaceMeshConnections.FACEMESH_LEFT_EYEBROW,
           imageSize,
           LEFT_EYEBROW_COLOR,
           LEFT_EYEBROW_THICKNESS);
@@ -121,10 +122,27 @@ public class FaceMeshResultImageView extends AppCompatImageView {
           imageSize,
           LIPS_COLOR,
           LIPS_THICKNESS);
+      if (result.multiFaceLandmarks().get(i).getLandmarkCount()
+          == FaceMesh.FACEMESH_NUM_LANDMARKS_WITH_IRISES) {
+        drawLandmarksOnCanvas(
+            canvas,
+            result.multiFaceLandmarks().get(i).getLandmarkList(),
+            FaceMeshConnections.FACEMESH_RIGHT_IRIS,
+            imageSize,
+            RIGHT_EYE_COLOR,
+            RIGHT_EYE_THICKNESS);
+        drawLandmarksOnCanvas(
+            canvas,
+            result.multiFaceLandmarks().get(i).getLandmarkList(),
+            FaceMeshConnections.FACEMESH_LEFT_IRIS,
+            imageSize,
+            LEFT_EYE_COLOR,
+            LEFT_EYE_THICKNESS);
+      }
     }
   }
 
-  /** Updates the image view with the latest facemesh result. */
+  /** Updates the image view with the latest {@link FaceMeshResult}. */
   public void update() {
     postInvalidate();
     if (latest != null) {
@@ -132,7 +150,6 @@ public class FaceMeshResultImageView extends AppCompatImageView {
     }
   }
 
-  // TODO: Better hand landmark and hand connection drawing.
   private void drawLandmarksOnCanvas(
       Canvas canvas,
       List<NormalizedLandmark> faceLandmarkList,

@@ -123,6 +123,7 @@ cc_library(
             "//mediapipe/gpu:gpu_buffer",
             "//mediapipe/gpu:gpu_shared_data_internal",
             "//mediapipe/gpu:graph_support",
+            "//mediapipe/gpu:egl_surface_holder",
         ],
         "//mediapipe/gpu:disable_gpu": [
             "//mediapipe/gpu:gpu_shared_data_internal",

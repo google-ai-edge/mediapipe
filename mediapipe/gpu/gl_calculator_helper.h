@@ -31,8 +31,6 @@
 
 #ifdef __APPLE__
 #include <CoreVideo/CoreVideo.h>
-
-#include "mediapipe/objc/CFHolder.h"
 #endif  // __APPLE__
 
 namespace mediapipe {
@@ -41,14 +39,6 @@ class GlCalculatorHelperImpl;
 class GlTexture;
 class GpuResources;
 struct GpuSharedData;
-
-#ifdef __APPLE__
-#if TARGET_OS_OSX
-typedef CVOpenGLTextureRef CVTextureType;
-#else
-typedef CVOpenGLESTextureRef CVTextureType;
-#endif  // TARGET_OS_OSX
-#endif  // __APPLE__
 
 using ImageFrameSharedPtr = std::shared_ptr<ImageFrame>;
 
@@ -174,14 +164,12 @@ class GlCalculatorHelper {
 class GlTexture {
  public:
   GlTexture() {}
-  GlTexture(GLuint name, int width, int height);
-
   ~GlTexture() { Release(); }
 
-  int width() const { return width_; }
-  int height() const { return height_; }
-  GLenum target() const { return target_; }
-  GLuint name() const { return name_; }
+  int width() const { return view_.width(); }
+  int height() const { return view_.height(); }
+  GLenum target() const { return view_.target(); }
+  GLuint name() const { return view_.name(); }
 
   // Returns a buffer that can be sent to another calculator.
   // & manages sync token
@@ -190,26 +178,12 @@ class GlTexture {
   std::unique_ptr<T> GetFrame() const;
 
   // Releases texture memory & manages sync token
-  void Release();
+  void Release() { view_.Release(); }
 
  private:
+  explicit GlTexture(GlTextureView view) : view_(std::move(view)) {}
   friend class GlCalculatorHelperImpl;
-  GlCalculatorHelperImpl* helper_impl_ = nullptr;
-  GLuint name_ = 0;
-  int width_ = 0;
-  int height_ = 0;
-  GLenum target_ = GL_TEXTURE_2D;
-
-#ifdef MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
-  // For CVPixelBufferRef-based rendering
-  CFHolder<CVTextureType> cv_texture_;
-#else
-  // Keeps track of whether this texture mapping is for read access, so that
-  // we can create a consumer sync point when releasing it.
-  bool for_reading_ = false;
-#endif
-  GpuBuffer gpu_buffer_;
-  int plane_ = 0;
+  GlTextureView view_;
 };
 
 // Returns the entry with the given tag if the collection uses tags, with the

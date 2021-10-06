@@ -26,15 +26,17 @@ the following into the project's Gradle dependencies:
 
 ```
 dependencies {
-    // MediaPipe solution-core is the foundation of any MediaPipe solutions.
+    // MediaPipe solution-core is the foundation of any MediaPipe Solutions.
     implementation 'com.google.mediapipe:solution-core:latest.release'
-    // Optional: MediaPipe Hands solution.
-    implementation 'com.google.mediapipe:hands:latest.release'
-    // Optional: MediaPipe FaceMesh solution.
+    // Optional: MediaPipe Face Detection Solution.
+    implementation 'com.google.mediapipe:facedetection:latest.release'
+    // Optional: MediaPipe Face Mesh Solution.
     implementation 'com.google.mediapipe:facemesh:latest.release'
+    // Optional: MediaPipe Hands Solution.
+    implementation 'com.google.mediapipe:hands:latest.release'
     // MediaPipe deps
-    implementation 'com.google.flogger:flogger:latest.release'
-    implementation 'com.google.flogger:flogger-system-backend:latest.release'
+    implementation 'com.google.flogger:flogger:0.6'
+    implementation 'com.google.flogger:flogger-system-backend:0.6'
     implementation 'com.google.guava:guava:27.0.1-android'
     implementation 'com.google.protobuf:protobuf-java:3.11.4'
     // CameraX core library
@@ -45,7 +47,7 @@ dependencies {
 }
 ```
 
-See the detailed solutions API usage examples for different use cases in the
+See the detailed solution APIs usage examples for different use cases in the
 solution example apps'
 [source code](https://github.com/google/mediapipe/tree/master/mediapipe/examples/android/solutions).
 If the prebuilt maven packages are not sufficient, building the MediaPipe

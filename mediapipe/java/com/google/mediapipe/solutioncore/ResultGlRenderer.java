@@ -20,6 +20,16 @@ public interface ResultGlRenderer<T extends ImageSolutionResult> {
   /** Sets up OpenGL rendering when the surface is created or recreated. */
   void setupRendering();
 
-  /** Renders the solution result. */
-  void renderResult(T result, ResultGlBoundary boundary);
+  /**
+   * Renders the solution result.
+   *
+   * @param result a solution result object that contains the solution outputs.
+   * @param projectionMatrix a 4 x 4 column-vector matrix stored in column-major order (see also <a
+   *     href="https://developer.android.com/reference/android/opengl/Matrix">android.opengl.Matrix</a>).
+   *     It is an orthographic projection matrix that maps x and y coordinates in {@code result},
+   *     defined in [0, 1]x[0, 1] spanning the entire input image (with a top-left origin), to fit
+   *     into the {@link SolutionGlSurfaceView} (with a bottom-left origin) that the input image is
+   *     rendered into with potential cropping.
+   */
+  void renderResult(T result, float[] projectionMatrix);
 }

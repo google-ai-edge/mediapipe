@@ -35,6 +35,7 @@
 #     input_side_packet: "SMOOTH_LANDMARKS:smooth_landmarks"
 #     input_side_packet: "ENABLE_SEGMENTATION:enable_segmentation"
 #     input_side_packet: "SMOOTH_SEGMENTATION:smooth_segmentation"
+#     input_side_packet: "USE_PREV_LANDMARKS:use_prev_landmarks"
 #     output_stream: "POSE_LANDMARKS:pose_landmarks"
 #     output_stream: "FACE_LANDMARKS:face_landmarks"
 #     output_stream: "LEFT_HAND_LANDMARKS:left_hand_landmarks"
@@ -69,6 +70,10 @@ input_side_packet: "ENABLE_SEGMENTATION:enable_segmentation"
 # jitter. If unspecified, functions as set to true. (bool)
 input_side_packet: "SMOOTH_SEGMENTATION:smooth_segmentation"
 
+# Whether landmarks on the previous image should be used to help localize
+# landmarks on the current image. (bool)
+input_side_packet: "USE_PREV_LANDMARKS:use_prev_landmarks"
+
 # Pose landmarks. (NormalizedLandmarkList)
 # 33 pose landmarks.
 output_stream: "POSE_LANDMARKS:pose_landmarks"
@@ -80,6 +85,9 @@ output_stream: "LEFT_HAND_LANDMARKS:left_hand_landmarks"
 output_stream: "RIGHT_HAND_LANDMARKS:right_hand_landmarks"
 # 468 face landmarks. (NormalizedLandmarkList)
 output_stream: "FACE_LANDMARKS:face_landmarks"
+
+# Segmentation mask. (ImageFrame in ImageFormat::VEC32F1)
+output_stream: "SEGMENTATION_MASK:segmentation_mask"
 
 # Debug outputs
 output_stream: "POSE_ROI:pose_landmarks_roi"
@@ -93,8 +101,10 @@ node {
   input_side_packet: "SMOOTH_LANDMARKS:smooth_landmarks"
   input_side_packet: "ENABLE_SEGMENTATION:enable_segmentation"
   input_side_packet: "SMOOTH_SEGMENTATION:smooth_segmentation"
+  input_side_packet: "USE_PREV_LANDMARKS:use_prev_landmarks"
   output_stream: "LANDMARKS:pose_landmarks"
   output_stream: "WORLD_LANDMARKS:pose_world_landmarks"
+  output_stream: "SEGMENTATION_MASK:segmentation_mask"
   output_stream: "ROI_FROM_LANDMARKS:pose_landmarks_roi"
   output_stream: "DETECTION:pose_detection"
 }

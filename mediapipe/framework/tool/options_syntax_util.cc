@@ -5,16 +5,41 @@
 #include <tuple>
 #include <vector>
 
+#include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
+#include "absl/strings/string_view.h"
 #include "mediapipe/framework/packet.h"
 #include "mediapipe/framework/packet_type.h"
 #include "mediapipe/framework/port/advanced_proto_inc.h"
 #include "mediapipe/framework/port/any_proto.h"
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/tool/name_util.h"
+#include "mediapipe/framework/tool/options_registry.h"
 
 namespace mediapipe {
 namespace tool {
+
+namespace {
+
+// StrSplit Delimiter to split strings at single colon tokens, ignoring
+// double-colon tokens.
+class SingleColonDelimiter {
+ public:
+  SingleColonDelimiter() {}
+  absl::string_view Find(absl::string_view text, size_t pos) const {
+    while (pos < text.length()) {
+      size_t p = text.find(':', pos);
+      p = (p == absl::string_view::npos) ? text.length() : p;
+      if (p >= text.length() - 1 || text[p + 1] != ':') {
+        return text.substr(p, 1);
+      }
+      pos = p + 2;
+    }
+    return text.substr(text.length(), 0);
+  }
+};
+
+}  // namespace
 
 // Helper functions for parsing the graph options syntax.
 class OptionsSyntaxUtil::OptionsSyntaxHelper {
@@ -31,13 +56,32 @@ class OptionsSyntaxUtil::OptionsSyntaxHelper {
   // Returns the option protobuf field name for a tag or packet name.
   absl::string_view OptionFieldName(absl::string_view name) { return name; }
 
+  // Return the extension-type specified for an option field.
+  absl::string_view ExtensionType(absl::string_view option_name) {
+    constexpr absl::string_view kExt = "Ext::";
+    if (absl::StartsWithIgnoreCase(option_name, kExt)) {
+      return option_name.substr(kExt.size());
+    }
+    return "";
+  }
+
+  // Returns the field names encoded in an options tag.
+  std::vector<absl::string_view> OptionTagNames(absl::string_view tag) {
+    if (absl::StartsWith(tag, syntax_.tag_name)) {
+      tag = tag.substr(syntax_.tag_name.length());
+    } else if (absl::StartsWith(tag, syntax_.packet_name)) {
+      tag = tag.substr(syntax_.packet_name.length());
+    }
+    if (absl::StartsWith(tag, syntax_.separator)) {
+      tag = tag.substr(syntax_.separator.length());
+    }
+    return absl::StrSplit(tag, syntax_.separator);
+  }
+
   // Returns the field-path for an option stream-tag.
-  FieldPath OptionFieldPath(const std::string& tag,
+  FieldPath OptionFieldPath(absl::string_view tag,
                             const Descriptor* descriptor) {
-    int prefix = syntax_.tag_name.length() + syntax_.separator.length();
-    std::string suffix = tag.substr(prefix);
-    std::vector<absl::string_view> name_tags =
-        absl::StrSplit(suffix, syntax_.separator);
+    std::vector<absl::string_view> name_tags = OptionTagNames(tag);
     FieldPath result;
     for (absl::string_view name_tag : name_tags) {
       if (name_tag.empty()) {
@@ -46,8 +90,16 @@ class OptionsSyntaxUtil::OptionsSyntaxHelper {
       absl::string_view option_name = OptionFieldName(name_tag);
       int index;
       if (absl::SimpleAtoi(option_name, &index)) {
-        result.back().second = index;
+        result.back().index = index;
+      }
+      if (!ExtensionType(option_name).empty()) {
+        std::string extension_type = std::string(ExtensionType(option_name));
+        result.push_back({nullptr, 0, extension_type});
+        descriptor = OptionsRegistry::GetProtobufDescriptor(extension_type);
       } else {
+        if (descriptor == nullptr) {
+          break;
+        }
         auto field = descriptor->FindFieldByName(std::string(option_name));
         descriptor = field ? field->message_type() : nullptr;
         result.push_back({std::move(field), 0});
@@ -78,7 +130,7 @@ class OptionsSyntaxUtil::OptionsSyntaxHelper {
   }
 
   // Converts slash-separated field names into a tag name.
-  std::string OptionFieldsTag(const std::string& option_names) {
+  std::string OptionFieldsTag(absl::string_view option_names) {
     std::string tag_prefix = syntax_.tag_name + syntax_.separator;
     std::vector<absl::string_view> names = absl::StrSplit(option_names, '/');
     if (!names.empty() && names[0] == syntax_.tag_name) {
@@ -129,14 +181,17 @@ OptionsSyntaxUtil::OptionsSyntaxUtil(const std::string& tag_name,
 
 OptionsSyntaxUtil::~OptionsSyntaxUtil() {}
 
-std::string OptionsSyntaxUtil::OptionFieldsTag(
-    const std::string& option_names) {
+std::string OptionsSyntaxUtil::OptionFieldsTag(absl::string_view option_names) {
   return syntax_helper_->OptionFieldsTag(option_names);
 }
 
 OptionsSyntaxUtil::FieldPath OptionsSyntaxUtil::OptionFieldPath(
-    const std::string& tag, const Descriptor* descriptor) {
+    absl::string_view tag, const Descriptor* descriptor) {
   return syntax_helper_->OptionFieldPath(tag, descriptor);
+}
+std::vector<absl::string_view> OptionsSyntaxUtil::StrSplitTags(
+    absl::string_view tag_and_name) {
+  return absl::StrSplit(tag_and_name, SingleColonDelimiter());
 }
 
 }  // namespace tool

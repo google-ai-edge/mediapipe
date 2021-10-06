@@ -80,4 +80,7 @@ typedef SplitVectorCalculator<mediapipe::ClassificationList, false>
     SplitClassificationListVectorCalculator;
 REGISTER_CALCULATOR(SplitClassificationListVectorCalculator);
 
+typedef SplitVectorCalculator<uint64_t, false> SplitUint64tVectorCalculator;
+REGISTER_CALCULATOR(SplitUint64tVectorCalculator);
+
 }  // namespace mediapipe

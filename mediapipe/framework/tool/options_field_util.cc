@@ -8,11 +8,13 @@
 
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
+#include "absl/strings/string_view.h"
 #include "mediapipe/framework/packet.h"
 #include "mediapipe/framework/packet_type.h"
 #include "mediapipe/framework/port/advanced_proto_inc.h"
 #include "mediapipe/framework/port/any_proto.h"
 #include "mediapipe/framework/port/canonical_errors.h"
+#include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/tool/name_util.h"
 #include "mediapipe/framework/tool/proto_util_lite.h"
@@ -30,6 +32,9 @@ using ::mediapipe::proto_ns::io::StringOutputStream;
 
 // Utility functions for OptionsFieldUtil.
 namespace {
+
+// The type name for the proto3 "Any" type.
+constexpr absl::string_view kGoogleProtobufAny = "google.protobuf.Any";
 
 // Converts a FieldDescriptor::Type to the corresponding FieldType.
 FieldType AsFieldType(proto_ns::FieldDescriptorProto::Type type) {
@@ -81,7 +86,7 @@ absl::Status WriteValue(const FieldData& value, FieldType field_type,
       return absl::UnimplementedError(
           absl::StrCat("Cannot write type: ", field_type));
   }
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
 // Serializes a packet value.
@@ -167,6 +172,7 @@ absl::Status ReadValue(absl::string_view field_bytes, FieldType field_type,
 // Deserializes a packet from a protobuf field.
 absl::Status ReadField(absl::string_view bytes, const FieldDescriptor* field,
                        FieldData* result) {
+  RET_CHECK_NE(field, nullptr);
   FieldType field_type = AsFieldType(field->type());
   std::string message_type = (field_type == WireFormatLite::TYPE_MESSAGE)
                                  ? field->message_type()->full_name()
@@ -174,47 +180,137 @@ absl::Status ReadField(absl::string_view bytes, const FieldDescriptor* field,
   return ReadValue(bytes, field_type, message_type, result);
 }
 
-// Converts a chain of fields and indexes into field-numbers and indexes.
-ProtoUtilLite::ProtoPath AsProtoPath(const FieldPath& field_path) {
-  ProtoUtilLite::ProtoPath result;
-  for (auto field : field_path) {
-    result.push_back({field.first->number(), field.second});
+// Reads all values from a repeated field.
+absl::Status GetFieldValues(const FieldData& message_data,
+                            const FieldDescriptor& field,
+                            std::vector<FieldData>* result) {
+  const std::string& message_bytes = message_data.message_value().value();
+  FieldType field_type = AsFieldType(field.type());
+  ProtoUtilLite proto_util;
+  ProtoUtilLite::ProtoPath proto_path = {{field.number(), 0}};
+  int count;
+  MP_RETURN_IF_ERROR(
+      proto_util.GetFieldCount(message_bytes, proto_path, field_type, &count));
+  std::vector<std::string> field_values;
+  MP_RETURN_IF_ERROR(proto_util.GetFieldRange(message_bytes, proto_path, count,
+                                              field_type, &field_values));
+  for (int i = 0; i < count; ++i) {
+    FieldData r;
+    MP_RETURN_IF_ERROR(ReadField(field_values[i], &field, &r));
+    result->push_back(std::move(r));
   }
+  return absl::OkStatus();
+}
+
+// Reads one value from a field.
+absl::Status GetFieldValue(const FieldData& message_data,
+                           const FieldPathEntry& entry, FieldData* result) {
+  RET_CHECK_NE(entry.field, nullptr);
+  const std::string& message_bytes = message_data.message_value().value();
+  FieldType field_type = AsFieldType(entry.field->type());
+  ProtoUtilLite proto_util;
+  ProtoUtilLite::ProtoPath proto_path = {{entry.field->number(), entry.index}};
+  std::vector<std::string> field_values;
+  MP_RETURN_IF_ERROR(proto_util.GetFieldRange(message_bytes, proto_path, 1,
+                                              field_type, &field_values));
+  MP_RETURN_IF_ERROR(ReadField(field_values[0], entry.field, result));
+  return absl::OkStatus();
+}
+
+// Writes one value to a field.
+absl::Status SetFieldValue(const FieldPathEntry& entry, const FieldData& value,
+                           FieldData* result) {
+  std::vector<FieldData> field_values;
+  ProtoUtilLite proto_util;
+  FieldType field_type = AsFieldType(entry.field->type());
+  ProtoUtilLite::ProtoPath proto_path = {{entry.field->number(), entry.index}};
+  std::string* message_bytes = result->mutable_message_value()->mutable_value();
+  int field_count;
+  MP_RETURN_IF_ERROR(proto_util.GetFieldCount(*message_bytes, proto_path,
+                                              field_type, &field_count));
+  if (entry.index > field_count) {
+    return absl::OutOfRangeError(
+        absl::StrCat("Option field index out of range: ", entry.index));
+  }
+  int replace_length = entry.index < field_count ? 1 : 0;
+  std::string field_value;
+  MP_RETURN_IF_ERROR(WriteField(value, entry.field, &field_value));
+  MP_RETURN_IF_ERROR(proto_util.ReplaceFieldRange(
+      message_bytes, proto_path, replace_length, field_type, {field_value}));
+  return absl::OkStatus();
+}
+
+// Returns true for a field of type "google.protobuf.Any".
+bool IsProtobufAny(const FieldDescriptor* field) {
+  return AsFieldType(field->type()) == FieldType::TYPE_MESSAGE &&
+         field->message_type()->full_name() == kGoogleProtobufAny;
+}
+
+// Returns the message FieldData from a serialized protobuf.Any.
+FieldData ParseProtobufAny(const FieldData& data) {
+  protobuf::Any any;
+  any.ParseFromString(data.message_value().value());
+  FieldData result;
+  result.mutable_message_value()->set_value(std::string(any.value()));
+  result.mutable_message_value()->set_type_url(any.type_url());
   return result;
 }
 
-// Returns the options protobuf for a subgraph.
-// TODO: Ensure that this works with multiple options protobufs.
-absl::Status GetOptionsMessage(
-    const proto_ns::RepeatedPtrField<mediapipe::protobuf::Any>& options_any,
-    const proto_ns::MessageLite& options_ext, FieldData* result) {
-  // Read the "graph_options" or "node_options" field.
-  for (const auto& options : options_any) {
-    if (options.type_url().empty()) {
-      continue;
-    }
-    result->mutable_message_value()->set_type_url(options.type_url());
-    result->mutable_message_value()->set_value(std::string(options.value()));
-    return mediapipe::OkStatus();
-  }
+// Returns the serialized protobuf.Any containing a message FieldData.
+FieldData SerializeProtobufAny(const FieldData& data) {
+  protobuf::Any any;
+  any.set_value(data.message_value().value());
+  any.set_type_url(data.message_value().type_url());
+  FieldData result;
+  result.mutable_message_value()->set_value(any.SerializeAsString());
+  result.mutable_message_value()->set_type_url(TypeUrl(kGoogleProtobufAny));
+  return result;
+}
 
-  // Read the "options" field.
-  FieldData message_data;
-  *message_data.mutable_message_value()->mutable_value() =
-      options_ext.SerializeAsString();
-  message_data.mutable_message_value()->set_type_url(options_ext.GetTypeName());
-  std::vector<const FieldDescriptor*> ext_fields;
-  OptionsRegistry::FindAllExtensions(options_ext.GetTypeName(), &ext_fields);
-  for (auto ext_field : ext_fields) {
-    absl::Status status = GetField({{ext_field, 0}}, message_data, result);
-    if (!status.ok()) {
-      return status;
-    }
-    if (result->has_message_value()) {
-      return status;
+// Returns the field index of an extension type in a repeated field.
+StatusOr<int> FindExtensionIndex(const FieldData& message_data,
+                                 FieldPathEntry* entry) {
+  if (entry->field == nullptr || !IsProtobufAny(entry->field)) {
+    return -1;
+  }
+  std::string& extension_type = entry->extension_type;
+  std::vector<FieldData> field_values;
+  RET_CHECK_NE(entry->field, nullptr);
+  MP_RETURN_IF_ERROR(
+      GetFieldValues(message_data, *entry->field, &field_values));
+  for (int i = 0; i < field_values.size(); ++i) {
+    FieldData extension = ParseProtobufAny(field_values[i]);
+    if (extension_type == "*" ||
+        ParseTypeUrl(extension.message_value().type_url()) == extension_type) {
+      return i;
     }
   }
-  return mediapipe::OkStatus();
+  return -1;
+}
+
+// Returns true if the value of a field is available.
+bool HasField(const FieldPath& field_path, const FieldData& message_data) {
+  FieldData value;
+  return GetField(field_path, message_data, &value).ok() &&
+         value.value_case() != mediapipe::FieldData::VALUE_NOT_SET;
+}
+
+// Returns the extension field containing the specified extension-type.
+const FieldDescriptor* FindExtensionField(const FieldData& message_data,
+                                          absl::string_view extension_type) {
+  std::string message_type =
+      ParseTypeUrl(message_data.message_value().type_url());
+  std::vector<const FieldDescriptor*> extensions;
+  OptionsRegistry::FindAllExtensions(message_type, &extensions);
+  for (const FieldDescriptor* extension : extensions) {
+    if (extension->message_type()->full_name() == extension_type) {
+      return extension;
+    }
+    if (extension_type == "*" && HasField({{extension, 0}}, message_data)) {
+      return extension;
+    }
+  }
+  return nullptr;
 }
 
 // Sets a protobuf in a repeated protobuf::Any field.
@@ -234,6 +330,20 @@ void SetOptionsMessage(
   *options_any->mutable_value() = node_options.message_value().value();
 }
 
+// Returns the count of values in a repeated field.
+int FieldCount(const FieldData& message_data, const FieldDescriptor* field) {
+  const std::string& message_bytes = message_data.message_value().value();
+  FieldType field_type = AsFieldType(field->type());
+  ProtoUtilLite proto_util;
+  ProtoUtilLite::ProtoPath proto_path = {{field->number(), 0}};
+  int count;
+  if (proto_util.GetFieldCount(message_bytes, proto_path, field_type, &count)
+          .ok()) {
+    return count;
+  }
+  return 0;
+}
+
 }  // anonymous namespace
 
 // Deserializes a packet containing a MessageLite value.
@@ -247,8 +357,8 @@ absl::Status ReadMessage(const std::string& value, const std::string& type_name,
 }
 
 // Merge two options FieldData values.
-absl::Status MergeOptionsMessages(const FieldData& base, const FieldData& over,
-                                  FieldData* result) {
+absl::Status MergeMessages(const FieldData& base, const FieldData& over,
+                           FieldData* result) {
   absl::Status status;
   if (over.value_case() == FieldData::VALUE_NOT_SET) {
     *result = base;
@@ -278,28 +388,148 @@ absl::Status MergeOptionsMessages(const FieldData& base, const FieldData& over,
   return status;
 }
 
+// Returns either the extension field or the repeated protobuf.Any field index
+// holding the specified extension-type.
+absl::Status FindExtension(const FieldData& message_data,
+                           FieldPathEntry* entry) {
+  if (entry->extension_type.empty()) {
+    return absl::OkStatus();
+  }
+
+  // For repeated protobuf::Any, find the index for the extension_type.
+  ASSIGN_OR_RETURN(int index, FindExtensionIndex(message_data, entry));
+  if (index != -1) {
+    entry->index = index;
+    return absl::OkStatus();
+  }
+
+  // Returns the extension field containing the specified extension-type.
+  std::string& extension_type = entry->extension_type;
+  const FieldDescriptor* field =
+      FindExtensionField(message_data, extension_type);
+  if (field != nullptr) {
+    entry->field = field;
+    entry->index = 0;
+    return absl::OkStatus();
+  }
+  return absl::NotFoundError(
+      absl::StrCat("Option extension not found: ", extension_type));
+}
+
+// Return the FieldPath referencing an extension message.
+FieldPath GetExtensionPath(const std::string& parent_type,
+                           const std::string& extension_type,
+                           const std::string& field_name,
+                           bool is_protobuf_any) {
+  FieldPath result;
+  const tool::Descriptor* parent_descriptor =
+      tool::OptionsRegistry::GetProtobufDescriptor(parent_type);
+  FieldPathEntry field_entry;
+  field_entry.field = parent_descriptor->FindFieldByName(field_name);
+  if (is_protobuf_any) {
+    field_entry.extension_type = extension_type;
+    result = {std::move(field_entry)};
+  } else {
+    field_entry.index = 0;
+    FieldPathEntry extension_entry;
+    extension_entry.extension_type = extension_type;
+    result = {std::move(field_entry), std::move(extension_entry)};
+  }
+  return result;
+}
+
+// Returns the requested options protobuf for a graph node.
+absl::Status GetNodeOptions(const FieldData& message_data,
+                            const std::string& extension_type,
+                            FieldData* result) {
+  constexpr char kOptionsName[] = "options";
+  constexpr char kNodeOptionsName[] = "node_options";
+  std::string parent_type = options_field_util::ParseTypeUrl(
+      std::string(message_data.message_value().type_url()));
+  FieldPath path;
+  Status status;
+  path = GetExtensionPath(parent_type, extension_type, kOptionsName, false);
+  status = GetField(path, message_data, result);
+  if (status.ok()) {
+    return status;
+  }
+  path = GetExtensionPath(parent_type, extension_type, kNodeOptionsName, true);
+  status = GetField(path, message_data, result);
+  return status;
+}
+
+// Returns the requested options protobuf for a graph.
+absl::Status GetGraphOptions(const FieldData& message_data,
+                             const std::string& extension_type,
+                             FieldData* result) {
+  constexpr char kOptionsName[] = "options";
+  constexpr char kGraphOptionsName[] = "graph_options";
+  std::string parent_type = options_field_util::ParseTypeUrl(
+      std::string(message_data.message_value().type_url()));
+  FieldPath path;
+  Status status;
+  path = GetExtensionPath(parent_type, extension_type, kOptionsName, false);
+  status = GetField(path, message_data, result);
+  if (status.ok()) {
+    return status;
+  }
+  path = GetExtensionPath(parent_type, extension_type, kGraphOptionsName, true);
+  status = GetField(path, message_data, result);
+  return status;
+}
+
+// Reads a FieldData value from a protobuf field.
+absl::Status GetField(const FieldPath& field_path,
+                      const FieldData& message_data, FieldData* result) {
+  if (field_path.empty()) {
+    *result->mutable_message_value() = message_data.message_value();
+    return absl::OkStatus();
+  }
+  FieldPathEntry head = field_path.front();
+  FieldPath tail = field_path;
+  tail.erase(tail.begin());
+  if (!head.extension_type.empty()) {
+    MP_RETURN_IF_ERROR(FindExtension(message_data, &head));
+  }
+  if (tail.empty() && FieldCount(message_data, head.field) == 0) {
+    return absl::OkStatus();
+  }
+  MP_RETURN_IF_ERROR(GetFieldValue(message_data, head, result));
+  if (IsProtobufAny(head.field)) {
+    *result = ParseProtobufAny(*result);
+  }
+  if (!tail.empty()) {
+    FieldData child = *result;
+    MP_RETURN_IF_ERROR(GetField(tail, child, result));
+  }
+  return absl::OkStatus();
+}
+
 // Writes a FieldData value into protobuf field.
 absl::Status SetField(const FieldPath& field_path, const FieldData& value,
                       FieldData* message_data) {
   if (field_path.empty()) {
     *message_data->mutable_message_value() = value.message_value();
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
-  ProtoUtilLite proto_util;
-  const FieldDescriptor* field = field_path.back().first;
-  FieldType field_type = AsFieldType(field->type());
-  std::string field_value;
-  MP_RETURN_IF_ERROR(WriteField(value, field, &field_value));
-  ProtoUtilLite::ProtoPath proto_path = AsProtoPath(field_path);
-  std::string* message_bytes =
-      message_data->mutable_message_value()->mutable_value();
-  int field_count;
-  MP_RETURN_IF_ERROR(proto_util.GetFieldCount(*message_bytes, proto_path,
-                                              field_type, &field_count));
-  MP_RETURN_IF_ERROR(
-      proto_util.ReplaceFieldRange(message_bytes, AsProtoPath(field_path),
-                                   field_count, field_type, {field_value}));
-  return mediapipe::OkStatus();
+  FieldPathEntry head = field_path.front();
+  FieldPath tail = field_path;
+  tail.erase(tail.begin());
+  if (!head.extension_type.empty()) {
+    MP_RETURN_IF_ERROR(FindExtension(*message_data, &head));
+  }
+  if (tail.empty()) {
+    MP_RETURN_IF_ERROR(SetFieldValue(head, value, message_data));
+  } else {
+    FieldData child;
+    MP_RETURN_IF_ERROR(GetFieldValue(*message_data, head, &child));
+    MP_RETURN_IF_ERROR(SetField(tail, value, &child));
+    if (IsProtobufAny(head.field)) {
+      child = SerializeProtobufAny(child);
+    }
+    MP_RETURN_IF_ERROR(SetFieldValue(head, child, message_data));
+  }
+  return absl::OkStatus();
 }
 
 // Merges a packet value into nested protobuf Message.
@@ -308,7 +538,7 @@ absl::Status MergeField(const FieldPath& field_path, const FieldData& value,
   absl::Status status;
   FieldType field_type = field_path.empty()
                              ? FieldType::TYPE_MESSAGE
-                             : AsFieldType(field_path.back().first->type());
+                             : AsFieldType(field_path.back().field->type());
   std::string message_type =
       (value.has_message_value())
           ? ParseTypeUrl(std::string(value.message_value().type_url()))
@@ -317,47 +547,10 @@ absl::Status MergeField(const FieldPath& field_path, const FieldData& value,
   if (field_type == FieldType::TYPE_MESSAGE) {
     FieldData b;
     status.Update(GetField(field_path, *message_data, &b));
-    status.Update(MergeOptionsMessages(b, v, &v));
+    status.Update(MergeMessages(b, v, &v));
   }
   status.Update(SetField(field_path, v, message_data));
   return status;
-}
-
-// Reads a packet value from a protobuf field.
-absl::Status GetField(const FieldPath& field_path,
-                      const FieldData& message_data, FieldData* result) {
-  if (field_path.empty()) {
-    *result->mutable_message_value() = message_data.message_value();
-    return mediapipe::OkStatus();
-  }
-  ProtoUtilLite proto_util;
-  const FieldDescriptor* field = field_path.back().first;
-  FieldType field_type = AsFieldType(field->type());
-  std::vector<std::string> field_values;
-  ProtoUtilLite::ProtoPath proto_path = AsProtoPath(field_path);
-  const std::string& message_bytes = message_data.message_value().value();
-  int field_count;
-  MP_RETURN_IF_ERROR(proto_util.GetFieldCount(message_bytes, proto_path,
-                                              field_type, &field_count));
-  if (field_count == 0) {
-    return mediapipe::OkStatus();
-  }
-  MP_RETURN_IF_ERROR(proto_util.GetFieldRange(message_bytes, proto_path, 1,
-                                              field_type, &field_values));
-  MP_RETURN_IF_ERROR(ReadField(field_values.front(), field, result));
-  return mediapipe::OkStatus();
-}
-
-// Returns the options protobuf for a graph.
-absl::Status GetOptionsMessage(const CalculatorGraphConfig& config,
-                               FieldData* result) {
-  return GetOptionsMessage(config.graph_options(), config.options(), result);
-}
-
-// Returns the options protobuf for a node.
-absl::Status GetOptionsMessage(const CalculatorGraphConfig::Node& node,
-                               FieldData* result) {
-  return GetOptionsMessage(node.node_options(), node.options(), result);
 }
 
 // Sets the node_options field in a Node, and clears the options field.
@@ -365,6 +558,16 @@ void SetOptionsMessage(const FieldData& node_options,
                        CalculatorGraphConfig::Node* node) {
   SetOptionsMessage(node_options, node->mutable_node_options());
   node->clear_options();
+}
+
+// Serialize a MessageLite to a FieldData.
+FieldData AsFieldData(const proto_ns::MessageLite& message) {
+  FieldData result;
+  *result.mutable_message_value()->mutable_value() =
+      message.SerializePartialAsString();
+  *result.mutable_message_value()->mutable_type_url() =
+      TypeUrl(message.GetTypeName());
+  return result;
 }
 
 // Represents a protobuf enum value stored in a Packet.
@@ -415,7 +618,7 @@ absl::Status AsPacket(const FieldData& data, Packet* result) {
     case FieldData::VALUE_NOT_SET:
       *result = Packet();
   }
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
 absl::Status AsFieldData(Packet packet, FieldData* result) {
@@ -436,7 +639,7 @@ absl::Status AsFieldData(Packet packet, FieldData* result) {
         packet.GetProtoMessageLite().SerializeAsString());
     result->mutable_message_value()->set_type_url(
         TypeUrl(packet.GetProtoMessageLite().GetTypeName()));
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
   if (kTypeIds->count(packet.GetTypeId()) == 0) {
@@ -473,7 +676,7 @@ absl::Status AsFieldData(Packet packet, FieldData* result) {
       result->set_string_value(packet.Get<std::string>());
       break;
   }
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
 std::string TypeUrl(absl::string_view type_name) {

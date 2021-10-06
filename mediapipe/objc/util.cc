@@ -241,6 +241,44 @@ vImage_Error vImageConvertCVPixelBuffers(CVPixelBufferRef src,
   return error;
 }
 
+#if TARGET_IPHONE_SIMULATOR
+static void FreeRefConReleaseCallback(void* refCon, const void* baseAddress) {
+  free(refCon);
+}
+#endif
+
+CVReturn CreateCVPixelBufferWithoutPool(int width, int height, OSType cv_format,
+                                        CVPixelBufferRef* out_buffer) {
+#if TARGET_IPHONE_SIMULATOR
+  // On the simulator, syncing the texture with the pixelbuffer does not work,
+  // and we have to use glReadPixels. Since GL_UNPACK_ROW_LENGTH is not
+  // available in OpenGL ES 2, we should create the buffer so the pixels are
+  // contiguous.
+  //
+  // TODO: verify if we can use kIOSurfaceBytesPerRow to force
+  // CoreVideo to give us contiguous data.
+  size_t bytes_per_row = width * 4;
+  void* data = malloc(bytes_per_row * height);
+  return CVPixelBufferCreateWithBytes(
+      kCFAllocatorDefault, width, height, cv_format, data, bytes_per_row,
+      FreeRefConReleaseCallback, data,
+      GetCVPixelBufferAttributesForGlCompatibility(), out_buffer);
+#else
+  return CVPixelBufferCreate(kCFAllocatorDefault, width, height, cv_format,
+                             GetCVPixelBufferAttributesForGlCompatibility(),
+                             out_buffer);
+#endif
+}
+
+absl::StatusOr<CFHolder<CVPixelBufferRef>> CreateCVPixelBufferWithoutPool(
+    int width, int height, OSType cv_format) {
+  CVPixelBufferRef buffer;
+  CVReturn err =
+      CreateCVPixelBufferWithoutPool(width, height, cv_format, &buffer);
+  RET_CHECK(err == kCVReturnSuccess) << "Error creating pixel buffer: " << err;
+  return MakeCFHolderAdopting(buffer);
+}
+
 void ReleaseMediaPipePacket(void* refcon, const void* base_address) {
   auto packet = (mediapipe::Packet*)refcon;
   delete packet;
@@ -288,13 +326,9 @@ absl::Status CreateCVPixelBufferForImageFramePacket(
       if (can_overwrite) {
         v_dest = v_image;
       } else {
-        CVPixelBufferRef pixel_buffer_temp;
-        status = CVPixelBufferCreate(
-            kCFAllocatorDefault, frame.Width(), frame.Height(), pixel_format,
-            GetCVPixelBufferAttributesForGlCompatibility(), &pixel_buffer_temp);
-        RET_CHECK(status == kCVReturnSuccess)
-            << "CVPixelBufferCreate failed: " << status;
-        pixel_buffer.adopt(pixel_buffer_temp);
+        ASSIGN_OR_RETURN(pixel_buffer,
+                         CreateCVPixelBufferWithoutPool(
+                             frame.Width(), frame.Height(), pixel_format));
         status = CVPixelBufferLockBaseAddress(*pixel_buffer,
                                               kCVPixelBufferLock_ReadOnly);
         RET_CHECK(status == kCVReturnSuccess)
@@ -343,6 +377,83 @@ absl::Status CreateCVPixelBufferForImageFramePacket(
 
   *out_buffer = pixel_buffer;
   return absl::OkStatus();
+}
+
+absl::StatusOr<CFHolder<CVPixelBufferRef>> CreateCVPixelBufferCopyingImageFrame(
+    const mediapipe::ImageFrame& image_frame) {
+  CFHolder<CVPixelBufferRef> pixel_buffer;
+  OSType pixel_format = 0;
+  std::function<absl::Status(const vImage_Buffer&, vImage_Buffer&)> copy_fun =
+      [](const vImage_Buffer& src, vImage_Buffer& dst) -> absl::Status {
+    const char* src_row = reinterpret_cast<const char*>(src.data);
+    char* dst_row = reinterpret_cast<char*>(dst.data);
+    if (src.rowBytes == dst.rowBytes) {
+      memcpy(dst_row, src_row, src.height * src.rowBytes);
+    } else {
+      for (int i = src.height; i > 0; --i) {
+        memcpy(dst_row, src_row, src.rowBytes);
+        src_row += src.rowBytes;
+        dst_row += dst.rowBytes;
+      }
+    }
+    return {};
+  };
+
+  // TODO: unify some code with CreateCVPixelBufferForImageFramePacket?
+  mediapipe::ImageFormat::Format image_format = image_frame.Format();
+  switch (image_format) {
+    case mediapipe::ImageFormat::SRGBA:
+      pixel_format = kCVPixelFormatType_32BGRA;
+      copy_fun = [](const vImage_Buffer& src,
+                    vImage_Buffer& dst) -> absl::Status {
+        // Swap R and B channels.
+        const uint8_t permute_map[4] = {2, 1, 0, 3};
+        vImage_Error vError = vImagePermuteChannels_ARGB8888(
+            &src, &dst, permute_map, kvImageNoFlags);
+        RET_CHECK(vError == kvImageNoError)
+            << "vImagePermuteChannels failed: " << vError;
+        return {};
+      };
+      break;
+
+    case mediapipe::ImageFormat::GRAY8:
+      pixel_format = kCVPixelFormatType_OneComponent8;
+      break;
+
+    case mediapipe::ImageFormat::VEC32F1:
+      pixel_format = kCVPixelFormatType_OneComponent32Float;
+      break;
+
+    case mediapipe::ImageFormat::VEC32F2:
+      pixel_format = kCVPixelFormatType_TwoComponent32Float;
+      break;
+
+    default:
+      return ::mediapipe::UnknownErrorBuilder(MEDIAPIPE_LOC)
+             << "unsupported ImageFrame format: " << image_format;
+  }
+
+  CVReturn cv_err;
+  ASSIGN_OR_RETURN(pixel_buffer, CreateCVPixelBufferWithoutPool(
+                                     image_frame.Width(), image_frame.Height(),
+                                     pixel_format));
+  cv_err =
+      CVPixelBufferLockBaseAddress(*pixel_buffer, kCVPixelBufferLock_ReadOnly);
+  RET_CHECK(cv_err == kCVReturnSuccess)
+      << "CVPixelBufferLockBaseAddress failed: " << cv_err;
+
+  vImage_Buffer v_image = vImageForImageFrame(image_frame);
+  vImage_Buffer v_dest = vImageForCVPixelBuffer(*pixel_buffer);
+  auto status = copy_fun(v_image, v_dest);
+
+  cv_err = CVPixelBufferUnlockBaseAddress(*pixel_buffer,
+                                          kCVPixelBufferLock_ReadOnly);
+  RET_CHECK(cv_err == kCVReturnSuccess)
+      << "CVPixelBufferUnlockBaseAddress failed: " << cv_err;
+
+  MP_RETURN_IF_ERROR(status);
+
+  return pixel_buffer;
 }
 
 absl::Status CreateCGImageFromCVPixelBuffer(CVPixelBufferRef image_buffer,

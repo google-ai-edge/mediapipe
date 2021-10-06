@@ -437,9 +437,8 @@ JNIEXPORT jint JNICALL PACKET_GETTER_METHOD(nativeGetGpuBufferName)(
   return static_cast<jint>(gpu_buffer.GetGlTextureBufferSharedPtr()->name());
 }
 
-JNIEXPORT jlong JNICALL PACKET_GETTER_METHOD(nativeGetGpuBuffer)(JNIEnv* env,
-                                                                 jobject thiz,
-                                                                 jlong packet) {
+JNIEXPORT jlong JNICALL PACKET_GETTER_METHOD(nativeGetGpuBuffer)(
+    JNIEnv* env, jobject thiz, jlong packet, jboolean wait_on_cpu) {
   mediapipe::Packet mediapipe_packet =
       mediapipe::android::Graph::GetPacketFromHandle(packet);
   mediapipe::GlTextureBufferSharedPtr ptr;
@@ -459,7 +458,9 @@ JNIEXPORT jlong JNICALL PACKET_GETTER_METHOD(nativeGetGpuBuffer)(JNIEnv* env,
         mediapipe_packet.Get<mediapipe::GpuBuffer>();
     ptr = buffer.GetGlTextureBufferSharedPtr();
   }
-  ptr->WaitUntilComplete();
+  if (wait_on_cpu) {
+    ptr->WaitUntilComplete();
+  }
   return reinterpret_cast<intptr_t>(
       new mediapipe::GlTextureBufferSharedPtr(ptr));
 }

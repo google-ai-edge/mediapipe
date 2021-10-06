@@ -29,7 +29,7 @@ from mediapipe.framework.tool import switch_container_pb2
 
 from mediapipe.python.solution_base import SolutionBase
 
-BINARYPB_FILE_PATH = 'mediapipe/modules/selfie_segmentation/selfie_segmentation_cpu.binarypb'
+_BINARYPB_FILE_PATH = 'mediapipe/modules/selfie_segmentation/selfie_segmentation_cpu.binarypb'
 
 
 class SelfieSegmentation(SolutionBase):
@@ -52,7 +52,7 @@ class SelfieSegmentation(SolutionBase):
         https://solutions.mediapipe.dev/selfie_segmentation#model_selection.
     """
     super().__init__(
-        binary_graph_path=BINARYPB_FILE_PATH,
+        binary_graph_path=_BINARYPB_FILE_PATH,
         side_inputs={
             'model_selection': model_selection,
         },

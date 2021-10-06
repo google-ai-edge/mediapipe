@@ -1,3 +1,4 @@
 rootProject.name = "mediapipe-solutions-examples"
-include ':hands'
+include ':facedetection'
 include ':facemesh'
+include ':hands'

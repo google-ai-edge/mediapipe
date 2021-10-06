@@ -94,7 +94,7 @@ public final class FaceMeshConnections {
           Connection.create(384, 398),
           Connection.create(398, 362));
 
-  public static final ImmutableSet<Connection> FACEMESH_LEFT_EYEBR0W =
+  public static final ImmutableSet<Connection> FACEMESH_LEFT_EYEBROW =
       ImmutableSet.of(
           Connection.create(276, 283),
           Connection.create(283, 282),
@@ -104,6 +104,13 @@ public final class FaceMeshConnections {
           Connection.create(293, 334),
           Connection.create(334, 296),
           Connection.create(296, 336));
+
+  public static final ImmutableSet<Connection> FACEMESH_LEFT_IRIS =
+      ImmutableSet.of(
+          Connection.create(474, 475),
+          Connection.create(475, 476),
+          Connection.create(476, 477),
+          Connection.create(477, 474));
 
   public static final ImmutableSet<Connection> FACEMESH_RIGHT_EYE =
       ImmutableSet.of(
@@ -123,6 +130,7 @@ public final class FaceMeshConnections {
           Connection.create(158, 157),
           Connection.create(157, 173),
           Connection.create(173, 133));
+
   public static final ImmutableSet<Connection> FACEMESH_RIGHT_EYEBROW =
       ImmutableSet.of(
           Connection.create(46, 53),
@@ -133,6 +141,13 @@ public final class FaceMeshConnections {
           Connection.create(63, 105),
           Connection.create(105, 66),
           Connection.create(66, 107));
+
+  public static final ImmutableSet<Connection> FACEMESH_RIGHT_IRIS =
+      ImmutableSet.of(
+          Connection.create(469, 470),
+          Connection.create(470, 471),
+          Connection.create(471, 472),
+          Connection.create(472, 469));
 
   public static final ImmutableSet<Connection> FACEMESH_FACE_OVAL =
       ImmutableSet.of(
@@ -177,7 +192,7 @@ public final class FaceMeshConnections {
       ImmutableSet.<Connection>builder()
           .addAll(FACEMESH_LIPS)
           .addAll(FACEMESH_LEFT_EYE)
-          .addAll(FACEMESH_LEFT_EYEBR0W)
+          .addAll(FACEMESH_LEFT_EYEBROW)
           .addAll(FACEMESH_RIGHT_EYE)
           .addAll(FACEMESH_RIGHT_EYEBROW)
           .addAll(FACEMESH_FACE_OVAL)

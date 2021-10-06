@@ -71,6 +71,7 @@ mediapipe_simple_subgraph(
     register_as = "SelfieSegmentationCpuImage",
     deps = [
         ":selfie_segmentation_cpu",
+        "//mediapipe/calculators/core:flow_limiter_calculator",
         "//mediapipe/calculators/image:image_transformation_calculator",
         "//mediapipe/calculators/util:from_image_calculator",
         "//mediapipe/calculators/util:to_image_calculator",
@@ -83,6 +84,7 @@ mediapipe_simple_subgraph(
     register_as = "SelfieSegmentationGpuImage",
     deps = [
         ":selfie_segmentation_gpu",
+        "//mediapipe/calculators/core:flow_limiter_calculator",
         "//mediapipe/calculators/image:image_transformation_calculator",
         "//mediapipe/calculators/util:from_image_calculator",
         "//mediapipe/calculators/util:to_image_calculator",

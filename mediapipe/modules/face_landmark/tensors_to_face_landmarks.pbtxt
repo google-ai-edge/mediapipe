@@ -1,0 +1,24 @@
+# MediaPipe graph to transform single tensor into 468 facial landmarks.
+
+type: "TensorsToFaceLandmarks"
+
+# Vector with a single tensor that contains 468 landmarks. (std::vector<Tensor>)
+input_stream: "TENSORS:tensors"
+
+# 468 facial landmarks (NormalizedLandmarkList)
+output_stream: "LANDMARKS:landmarks"
+
+# Decodes the landmark tensors into a vector of lanmarks, where the landmark
+# coordinates are normalized by the size of the input image to the model.
+node {
+  calculator: "TensorsToLandmarksCalculator"
+  input_stream: "TENSORS:tensors"
+  output_stream: "NORM_LANDMARKS:landmarks"
+  options: {
+    [mediapipe.TensorsToLandmarksCalculatorOptions.ext] {
+      num_landmarks: 468
+      input_image_width: 192
+      input_image_height: 192
+    }
+  }
+}

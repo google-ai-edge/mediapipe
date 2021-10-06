@@ -16,6 +16,7 @@ package com.google.mediapipe.solutioncore;
 
 import android.graphics.SurfaceTexture;
 import android.opengl.GLES20;
+import android.opengl.Matrix;
 import com.google.mediapipe.components.GlSurfaceViewRenderer;
 import com.google.mediapipe.framework.TextureFrame;
 import com.google.mediapipe.glutil.ShaderUtil;
@@ -91,14 +92,18 @@ public class SolutionGlSurfaceViewRenderer<T extends ImageSolutionResult>
     if (nextSolutionResult != null) {
       solutionResult = nextSolutionResult.getAndSet(null);
       float[] textureBoundary = calculateTextureBoundary();
-      // Scales the values from [0, 1] to [-1, 1].
-      ResultGlBoundary resultGlBoundary =
-          ResultGlBoundary.create(
-              textureBoundary[0] * 2 - 1,
-              textureBoundary[1] * 2 - 1,
-              textureBoundary[2] * 2 - 1,
-              textureBoundary[3] * 2 - 1);
-      resultGlRenderer.renderResult(solutionResult, resultGlBoundary);
+      float[] projectionMatrix = new float[16];
+      // See {@link ResultGlRenderer#renderResult}.
+      Matrix.orthoM(
+          projectionMatrix, /* result */
+          0, /* offset */
+          textureBoundary[0], /* left */
+          textureBoundary[1], /* right */
+          textureBoundary[3], /* bottom */
+          textureBoundary[2], /* top */
+          -1, /* near */
+          1 /* far */);
+      resultGlRenderer.renderResult(solutionResult, projectionMatrix);
     }
     flush(frame);
     if (solutionResult != null) {

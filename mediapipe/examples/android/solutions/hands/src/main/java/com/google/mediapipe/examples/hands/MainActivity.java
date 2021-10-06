@@ -16,6 +16,7 @@ package com.google.mediapipe.examples.hands;
 
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.Matrix;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import androidx.appcompat.app.AppCompatActivity;
@@ -25,6 +26,8 @@ import android.widget.Button;
 import android.widget.FrameLayout;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.exifinterface.media.ExifInterface;
+// ContentResolver dependency
 import com.google.mediapipe.formats.proto.LandmarkProto.NormalizedLandmark;
 import com.google.mediapipe.solutioncore.CameraInput;
 import com.google.mediapipe.solutioncore.SolutionGlSurfaceView;
@@ -34,6 +37,7 @@ import com.google.mediapipe.solutions.hands.Hands;
 import com.google.mediapipe.solutions.hands.HandsOptions;
 import com.google.mediapipe.solutions.hands.HandsResult;
 import java.io.IOException;
+import java.io.InputStream;
 
 /** Main activity of MediaPipe Hands app. */
 public class MainActivity extends AppCompatActivity {
@@ -59,6 +63,7 @@ public class MainActivity extends AppCompatActivity {
   private ActivityResultLauncher<Intent> videoGetter;
   // Live camera demo UI and camera components.
   private CameraInput cameraInput;
+
   private SolutionGlSurfaceView<HandsResult> glSurfaceView;
 
   @Override
@@ -113,6 +118,35 @@ public class MainActivity extends AppCompatActivity {
                   } catch (IOException e) {
                     Log.e(TAG, "Bitmap reading error:" + e);
                   }
+                  try {
+                    InputStream imageData =
+                        this.getContentResolver().openInputStream(resultIntent.getData());
+                    int orientation =
+                        new ExifInterface(imageData)
+                            .getAttributeInt(
+                                ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL);
+                    if (orientation != ExifInterface.ORIENTATION_NORMAL) {
+                      Matrix matrix = new Matrix();
+                      switch (orientation) {
+                        case ExifInterface.ORIENTATION_ROTATE_90:
+                          matrix.postRotate(90);
+                          break;
+                        case ExifInterface.ORIENTATION_ROTATE_180:
+                          matrix.postRotate(180);
+                          break;
+                        case ExifInterface.ORIENTATION_ROTATE_270:
+                          matrix.postRotate(270);
+                          break;
+                        default:
+                          matrix.postRotate(0);
+                      }
+                      bitmap =
+                          Bitmap.createBitmap(
+                              bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
+                    }
+                  } catch (IOException e) {
+                    Log.e(TAG, "Bitmap rotation error:" + e);
+                  }
                   if (bitmap != null) {
                     hands.send(bitmap);
                   }
@@ -134,20 +168,20 @@ public class MainActivity extends AppCompatActivity {
     imageView = new HandsResultImageView(this);
   }
 
-  /** The core MediaPipe Hands setup workflow for its static image mode. */
+  /** Sets up core workflow for static image mode. */
   private void setupStaticImageModePipeline() {
     this.inputSource = InputSource.IMAGE;
-    // Initializes a new MediaPipe Hands instance in the static image mode.
+    // Initializes a new MediaPipe Hands solution instance in the static image mode.
     hands =
         new Hands(
             this,
             HandsOptions.builder()
-                .setMode(HandsOptions.STATIC_IMAGE_MODE)
+                .setStaticImageMode(true)
                 .setMaxNumHands(1)
                 .setRunOnGpu(RUN_ON_GPU)
                 .build());
 
-    // Connects MediaPipe Hands to the user-defined HandsResultImageView.
+    // Connects MediaPipe Hands solution to the user-defined HandsResultImageView.
     hands.setResultListener(
         handsResult -> {
           logWristLandmark(handsResult, /*showPixelValues=*/ true);
@@ -210,26 +244,24 @@ public class MainActivity extends AppCompatActivity {
         });
   }
 
-  /** The core MediaPipe Hands setup workflow for its streaming mode. */
+  /** Sets up core workflow for streaming mode. */
   private void setupStreamingModePipeline(InputSource inputSource) {
     this.inputSource = inputSource;
-    // Initializes a new MediaPipe Hands instance in the streaming mode.
+    // Initializes a new MediaPipe Hands solution instance in the streaming mode.
     hands =
         new Hands(
             this,
             HandsOptions.builder()
-                .setMode(HandsOptions.STREAMING_MODE)
+                .setStaticImageMode(false)
                 .setMaxNumHands(1)
                 .setRunOnGpu(RUN_ON_GPU)
                 .build());
     hands.setErrorListener((message, e) -> Log.e(TAG, "MediaPipe Hands error:" + message));
 
     if (inputSource == InputSource.CAMERA) {
-      // Initializes a new CameraInput instance and connects it to MediaPipe Hands.
       cameraInput = new CameraInput(this);
       cameraInput.setNewFrameListener(textureFrame -> hands.send(textureFrame));
     } else if (inputSource == InputSource.VIDEO) {
-      // Initializes a new VideoInput instance and connects it to MediaPipe Hands.
       videoInput = new VideoInput(this);
       videoInput.setNewFrameListener(textureFrame -> hands.send(textureFrame));
     }

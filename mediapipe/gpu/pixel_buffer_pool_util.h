@@ -63,11 +63,6 @@ CVReturn CreateCVPixelBufferWithPool(CVPixelBufferPoolRef pool,
 CFDictionaryRef CreateCVPixelBufferPoolAuxiliaryAttributesForThreshold(
     int allocationThreshold);
 
-// Create a CVPixelBuffer without using a pool.
-CVReturn CreateCVPixelBufferWithoutPool(int width, int height,
-                                        OSType pixelFormat,
-                                        CVPixelBufferRef* outBuffer);
-
 }  // namespace mediapipe
 
 #endif  // MEDIAPIPE_GPU_PIXEL_BUFFER_POOL_UTIL_H_

@@ -17,10 +17,10 @@ from typing import NamedTuple
 
 import numpy as np
 
-from mediapipe.calculators.core import constant_side_packet_calculator_pb2
 # The following imports are needed because python pb2 silently discards
 # unknown protobuf fields.
 # pylint: disable=unused-import
+from mediapipe.calculators.core import constant_side_packet_calculator_pb2
 from mediapipe.calculators.core import gate_calculator_pb2
 from mediapipe.calculators.core import split_vector_calculator_pb2
 from mediapipe.calculators.tensor import image_to_tensor_calculator_pb2
@@ -49,7 +49,7 @@ from mediapipe.python.solutions.pose import PoseLandmark
 from mediapipe.python.solutions.pose_connections import POSE_CONNECTIONS
 # pylint: enable=unused-import
 
-BINARYPB_FILE_PATH = 'mediapipe/modules/holistic_landmark/holistic_landmark_cpu.binarypb'
+_BINARYPB_FILE_PATH = 'mediapipe/modules/holistic_landmark/holistic_landmark_cpu.binarypb'
 
 
 def _download_oss_pose_landmark_model(model_complexity):
@@ -78,6 +78,8 @@ class Holistic(SolutionBase):
                static_image_mode=False,
                model_complexity=1,
                smooth_landmarks=True,
+               enable_segmentation=False,
+               smooth_segmentation=True,
                min_detection_confidence=0.5,
                min_tracking_confidence=0.5):
     """Initializes a MediaPipe Holistic object.
@@ -91,6 +93,11 @@ class Holistic(SolutionBase):
       smooth_landmarks: Whether to filter landmarks across different input
         images to reduce jitter. See details in
         https://solutions.mediapipe.dev/holistic#smooth_landmarks.
+      enable_segmentation: Whether to predict segmentation mask. See details in
+        https://solutions.mediapipe.dev/holistic#enable_segmentation.
+      smooth_segmentation: Whether to filter segmentation across different input
+        images to reduce jitter. See details in
+        https://solutions.mediapipe.dev/holistic#smooth_segmentation.
       min_detection_confidence: Minimum confidence value ([0.0, 1.0]) for person
         detection to be considered successful. See details in
         https://solutions.mediapipe.dev/holistic#min_detection_confidence.
@@ -100,18 +107,16 @@ class Holistic(SolutionBase):
     """
     _download_oss_pose_landmark_model(model_complexity)
     super().__init__(
-        binary_graph_path=BINARYPB_FILE_PATH,
+        binary_graph_path=_BINARYPB_FILE_PATH,
         side_inputs={
             'model_complexity': model_complexity,
             'smooth_landmarks': smooth_landmarks and not static_image_mode,
-            'smooth_segmentation': not static_image_mode,
+            'enable_segmentation': enable_segmentation,
+            'smooth_segmentation':
+                smooth_segmentation and not static_image_mode,
+            'use_prev_landmarks': not static_image_mode,
         },
         calculator_params={
-            'poselandmarkcpu__ConstantSidePacketCalculator.packet': [
-                constant_side_packet_calculator_pb2
-                .ConstantSidePacketCalculatorOptions.ConstantSidePacket(
-                    bool_value=not static_image_mode)
-            ],
             'poselandmarkcpu__posedetectioncpu__TensorsToDetectionsCalculator.min_score_thresh':
                 min_detection_confidence,
             'poselandmarkcpu__poselandmarkbyroicpu__tensorstoposelandmarksandsegmentation__ThresholdingCalculator.threshold':
@@ -119,7 +124,7 @@ class Holistic(SolutionBase):
         },
         outputs=[
             'pose_landmarks', 'pose_world_landmarks', 'left_hand_landmarks',
-            'right_hand_landmarks', 'face_landmarks'
+            'right_hand_landmarks', 'face_landmarks', 'segmentation_mask'
         ])
 
   def process(self, image: np.ndarray) -> NamedTuple:
@@ -133,8 +138,8 @@ class Holistic(SolutionBase):
       ValueError: If the input image is not three channel RGB.
 
     Returns:
-      A NamedTuple that has five fields describing the landmarks on the most
-      prominate person detected:
+      A NamedTuple with fields describing the landmarks on the most prominate
+      person detected:
         1) "pose_landmarks" field that contains the pose landmarks.
         2) "pose_world_landmarks" field that contains the pose landmarks in
         real-world 3D coordinates that are in meters with the origin at the
@@ -142,6 +147,8 @@ class Holistic(SolutionBase):
         3) "left_hand_landmarks" field that contains the left-hand landmarks.
         4) "right_hand_landmarks" field that contains the right-hand landmarks.
         5) "face_landmarks" field that contains the face landmarks.
+        6) "segmentation_mask" field that contains the segmentation mask if
+           "enable_segmentation" is set to true.
     """
 
     results = super().process(input_data={'image': image})

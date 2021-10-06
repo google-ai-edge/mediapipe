@@ -14,8 +14,12 @@ input_stream: "IMAGE:image"
 # Max number of hands to detect/track. (int)
 input_side_packet: "NUM_HANDS:num_hands"
 
-# The original input image. (Image)
-output_stream: "IMAGE:image"
+# Whether landmarks on the previous image should be used to help localize
+# landmarks on the current image. (bool)
+input_side_packet: "USE_PREV_LANDMARKS:use_prev_landmarks"
+
+# The throttled input image. (Image)
+output_stream: "IMAGE:throttled_image"
 # Collection of detected/predicted hands, each represented as a list of
 # landmarks. (std::vector<NormalizedLandmarkList>)
 # NOTE: there will not be an output packet in the LANDMARKS stream for this
@@ -40,10 +44,27 @@ output_stream: "HAND_ROIS_FROM_LANDMARKS:hand_rects"
 # (std::vector<NormalizedRect>)
 output_stream: "HAND_ROIS_FROM_PALM_DETECTIONS:hand_rects_from_palm_detections"
 
+node {
+  calculator: "FlowLimiterCalculator"
+  input_stream: "image"
+  input_stream: "FINISHED:multi_hand_landmarks"
+  input_stream_info: {
+    tag_index: "FINISHED"
+    back_edge: true
+  }
+  output_stream: "throttled_image"
+  options: {
+    [mediapipe.FlowLimiterCalculatorOptions.ext] {
+      max_in_flight: 1
+      max_in_queue: 1
+    }
+  }
+}
+
 # Converts Image to ImageFrame for HandLandmarkTrackingCpu to consume.
 node {
   calculator: "FromImageCalculator"
-  input_stream: "IMAGE:image"
+  input_stream: "IMAGE:throttled_image"
   output_stream: "IMAGE_CPU:raw_image_frame"
   output_stream: "SOURCE_ON_GPU:is_gpu_image"
 }
@@ -64,6 +85,7 @@ node {
   calculator: "HandLandmarkTrackingCpu"
   input_stream: "IMAGE:image_frame"
   input_side_packet: "NUM_HANDS:num_hands"
+  input_side_packet: "USE_PREV_LANDMARKS:use_prev_landmarks"
   output_stream: "LANDMARKS:multi_hand_landmarks"
   output_stream: "HANDEDNESS:multi_handedness"
   output_stream: "PALM_DETECTIONS:palm_detections"

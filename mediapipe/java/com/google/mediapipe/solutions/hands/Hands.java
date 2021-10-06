@@ -79,15 +79,16 @@ public class Hands extends ImageSolutionBase {
           Connection.create(HandLandmark.PINKY_DIP, HandLandmark.PINKY_TIP));
 
   private static final String NUM_HANDS = "num_hands";
+  private static final String USE_PREV_LANDMARKS = "use_prev_landmarks";
   private static final String GPU_GRAPH_NAME = "hand_landmark_tracking_gpu_image.binarypb";
   private static final String CPU_GRAPH_NAME = "hand_landmark_tracking_cpu_image.binarypb";
   private static final String IMAGE_INPUT_STREAM = "image";
   private static final ImmutableList<String> OUTPUT_STREAMS =
-      ImmutableList.of("multi_hand_landmarks", "multi_handedness", "image");
+      ImmutableList.of("multi_hand_landmarks", "multi_handedness", "throttled_image");
   private static final int LANDMARKS_INDEX = 0;
   private static final int HANDEDNESS_INDEX = 1;
   private static final int INPUT_IMAGE_INDEX = 2;
-  private final OutputHandler<HandsResult> graphOutputHandler;
+  private final OutputHandler<HandsResult> outputHandler;
 
   /**
    * Initializes MediaPipe Hands solution.
@@ -96,21 +97,21 @@ public class Hands extends ImageSolutionBase {
    * @param options the configuration options defined in {@link HandsOptions}.
    */
   public Hands(Context context, HandsOptions options) {
-    graphOutputHandler = new OutputHandler<>();
-    graphOutputHandler.setOutputConverter(
+    outputHandler = new OutputHandler<>();
+    outputHandler.setOutputConverter(
         packets -> {
           HandsResult.Builder handsResultBuilder = HandsResult.builder();
           try {
             handsResultBuilder.setMultiHandLandmarks(
                 getProtoVector(packets.get(LANDMARKS_INDEX), NormalizedLandmarkList.parser()));
           } catch (MediaPipeException e) {
-            throwException("Error occurs when getting MediaPipe hand landmarks. ", e);
+            reportError("Error occurs while getting MediaPipe hand landmarks.", e);
           }
           try {
             handsResultBuilder.setMultiHandedness(
                 getProtoVector(packets.get(HANDEDNESS_INDEX), Classification.parser()));
           } catch (MediaPipeException e) {
-            throwException("Error occurs when getting MediaPipe handedness data. ", e);
+            reportError("Error occurs while getting MediaPipe handedness data.", e);
           }
           return handsResultBuilder
               .setImagePacket(packets.get(INPUT_IMAGE_INDEX))
@@ -124,22 +125,23 @@ public class Hands extends ImageSolutionBase {
             .setBinaryGraphPath(options.runOnGpu() ? GPU_GRAPH_NAME : CPU_GRAPH_NAME)
             .setImageInputStreamName(IMAGE_INPUT_STREAM)
             .setOutputStreamNames(OUTPUT_STREAMS)
-            .setStaticImageMode(options.mode() == HandsOptions.STATIC_IMAGE_MODE)
+            .setStaticImageMode(options.staticImageMode())
             .build();
 
-    initialize(context, solutionInfo, graphOutputHandler);
+    initialize(context, solutionInfo, outputHandler);
     Map<String, Packet> inputSidePackets = new HashMap<>();
     inputSidePackets.put(NUM_HANDS, packetCreator.createInt32(options.maxNumHands()));
+    inputSidePackets.put(USE_PREV_LANDMARKS, packetCreator.createBool(!options.staticImageMode()));
     start(inputSidePackets);
   }
 
   /**
-   * Sets a callback to be invoked when the HandsResults become available.
+   * Sets a callback to be invoked when a {@link HandsResult} becomes available.
    *
    * @param listener the {@link ResultListener} callback.
    */
   public void setResultListener(ResultListener<HandsResult> listener) {
-    this.graphOutputHandler.setResultListener(listener);
+    this.outputHandler.setResultListener(listener);
   }
 
   /**
@@ -148,7 +150,7 @@ public class Hands extends ImageSolutionBase {
    * @param listener the {@link ErrorListener} callback.
    */
   public void setErrorListener(@Nullable ErrorListener listener) {
-    this.graphOutputHandler.setErrorListener(listener);
+    this.outputHandler.setErrorListener(listener);
     this.errorListener = listener;
   }
 

@@ -5,8 +5,8 @@ type: "SelfieSegmentationCpuImage"
 # Input image. (Image)
 input_stream: "IMAGE:image"
 
-# The original input image. (Image)
-output_stream: "IMAGE:image"
+# The throttled input image. (Image)
+output_stream: "IMAGE:throttled_image"
 
 # An integer 0 or 1. Use 0 to select a general-purpose model (operating on a
 # 256x256 tensor), and 1 to select a model (operating on a 256x144 tensor) more
@@ -16,10 +16,27 @@ input_side_packet: "MODEL_SELECTION:model_selection"
 # Segmentation mask. (Image)
 output_stream: "SEGMENTATION_MASK:segmentation_mask"
 
+node {
+  calculator: "FlowLimiterCalculator"
+  input_stream: "image"
+  input_stream: "FINISHED:segmentation_mask"
+  input_stream_info: {
+    tag_index: "FINISHED"
+    back_edge: true
+  }
+  output_stream: "throttled_image"
+  options: {
+    [mediapipe.FlowLimiterCalculatorOptions.ext] {
+      max_in_flight: 1
+      max_in_queue: 1
+    }
+  }
+}
+
 # Converts Image to ImageFrame for SelfieSegmentationCpu to consume.
 node {
   calculator: "FromImageCalculator"
-  input_stream: "IMAGE:image"
+  input_stream: "IMAGE:throttled_image"
   output_stream: "IMAGE_CPU:raw_image_frame"
   output_stream: "SOURCE_ON_GPU:is_gpu_image"
 }

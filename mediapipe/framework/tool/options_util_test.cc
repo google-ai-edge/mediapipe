@@ -15,6 +15,7 @@
 #include <memory>
 #include <vector>
 
+#include "absl/strings/string_view.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/deps/message_matchers.h"
 #include "mediapipe/framework/port/gtest.h"
@@ -22,6 +23,7 @@
 #include "mediapipe/framework/port/status_matchers.h"
 #include "mediapipe/framework/testdata/night_light_calculator.pb.h"
 #include "mediapipe/framework/tool/node_chain_subgraph.pb.h"
+#include "mediapipe/framework/tool/options_field_util.h"
 #include "mediapipe/framework/tool/options_registry.h"
 #include "mediapipe/framework/tool/options_syntax_util.h"
 
@@ -50,6 +52,35 @@ class NightLightCalculator : public CalculatorBase {
   NightLightCalculatorOptions options_;
 };
 REGISTER_CALCULATOR(NightLightCalculator);
+
+using tool::options_field_util::FieldPath;
+
+// Validates FieldPathEntry contents.
+bool Equals(const tool::options_field_util::FieldPathEntry& entry,
+            const std::string& field_name, int index,
+            const std::string& extension_type) {
+  const std::string& name = entry.field ? entry.field->name() : "";
+  return name == field_name && entry.index == index &&
+         entry.extension_type == extension_type;
+}
+
+// Serializes a MessageLite into FieldData.message_value.
+FieldData AsFieldData(const proto_ns::MessageLite& message) {
+  FieldData result;
+  *result.mutable_message_value()->mutable_value() =
+      message.SerializeAsString();
+  result.mutable_message_value()->set_type_url(message.GetTypeName());
+  return result;
+}
+
+// Returns the type for the root options message if specified.
+std::string ExtensionType(const std::string& option_fields_tag) {
+  tool::OptionsSyntaxUtil syntax_util;
+  tool::options_field_util::FieldPath field_path =
+      syntax_util.OptionFieldPath(option_fields_tag, nullptr);
+  std::string result = !field_path.empty() ? field_path[0].extension_type : "";
+  return !result.empty() ? result : "*";
+}
 
 // Tests for calculator and graph options.
 //
@@ -150,8 +181,8 @@ TEST_F(OptionsUtilTest, OptionsSyntaxUtil) {
     EXPECT_EQ(tag, "OPTIONS/sub_options/num_lights");
     field_path = syntax_util.OptionFieldPath(tag, descriptor);
     EXPECT_EQ(field_path.size(), 2);
-    EXPECT_EQ(field_path[0].first->name(), "sub_options");
-    EXPECT_EQ(field_path[1].first->name(), "num_lights");
+    EXPECT_EQ(field_path[0].field->name(), "sub_options");
+    EXPECT_EQ(field_path[1].field->name(), "num_lights");
   }
   {
     // A tag syntax with a text-coded separator.
@@ -160,9 +191,99 @@ TEST_F(OptionsUtilTest, OptionsSyntaxUtil) {
     EXPECT_EQ(tag, "OPTIONS_Z0Z_sub_options_Z0Z_num_lights");
     field_path = syntax_util.OptionFieldPath(tag, descriptor);
     EXPECT_EQ(field_path.size(), 2);
-    EXPECT_EQ(field_path[0].first->name(), "sub_options");
-    EXPECT_EQ(field_path[1].first->name(), "num_lights");
+    EXPECT_EQ(field_path[0].field->name(), "sub_options");
+    EXPECT_EQ(field_path[1].field->name(), "num_lights");
   }
+}
+
+TEST_F(OptionsUtilTest, OptionFieldPath) {
+  tool::OptionsSyntaxUtil syntax_util;
+  std::vector<absl::string_view> split;
+  split = syntax_util.StrSplitTags("a/graph/option:a/node/option");
+  EXPECT_EQ(2, split.size());
+  EXPECT_EQ(split[0], "a/graph/option");
+  EXPECT_EQ(split[1], "a/node/option");
+  split = syntax_util.StrSplitTags("Ext::a/graph/option:Ext::a/node/option");
+  EXPECT_EQ(2, split.size());
+  EXPECT_EQ(split[0], "Ext::a/graph/option");
+  EXPECT_EQ(split[1], "Ext::a/node/option");
+
+  split =
+      syntax_util.StrSplitTags("chain_length:options/sub_options/num_lights");
+  EXPECT_EQ(2, split.size());
+  EXPECT_EQ(split[0], "chain_length");
+  EXPECT_EQ(split[1], "options/sub_options/num_lights");
+  const tool::Descriptor* descriptor =
+      tool::OptionsRegistry::GetProtobufDescriptor(
+          "mediapipe.NightLightCalculatorOptions");
+  tool::options_field_util::FieldPath field_path =
+      syntax_util.OptionFieldPath(split[1], descriptor);
+  EXPECT_EQ(field_path.size(), 2);
+  EXPECT_EQ(field_path[0].field->name(), "sub_options");
+  EXPECT_EQ(field_path[1].field->name(), "num_lights");
+}
+
+TEST_F(OptionsUtilTest, FindOptionsMessage) {
+  tool::OptionsSyntaxUtil syntax_util;
+  std::vector<absl::string_view> split;
+  split =
+      syntax_util.StrSplitTags("chain_length:options/sub_options/num_lights");
+  EXPECT_EQ(2, split.size());
+  EXPECT_EQ(split[0], "chain_length");
+  EXPECT_EQ(split[1], "options/sub_options/num_lights");
+  const tool::Descriptor* descriptor =
+      tool::OptionsRegistry::GetProtobufDescriptor(
+          "mediapipe.NightLightCalculatorOptions");
+  tool::options_field_util::FieldPath field_path =
+      syntax_util.OptionFieldPath(split[1], descriptor);
+  EXPECT_EQ(field_path.size(), 2);
+  EXPECT_TRUE(Equals(field_path[0], "sub_options", 0, ""));
+  EXPECT_TRUE(Equals(field_path[1], "num_lights", 0, ""));
+
+  {
+    // NightLightCalculatorOptions in Node.options.
+    CalculatorGraphConfig::Node node;
+    NightLightCalculatorOptions* options =
+        node.mutable_options()->MutableExtension(
+            NightLightCalculatorOptions::ext);
+    options->mutable_sub_options()->add_num_lights(33);
+
+    // Retrieve the specified option.
+    FieldData node_data = AsFieldData(node);
+    auto path = field_path;
+    std::string node_extension_type = ExtensionType(std::string(split[1]));
+    FieldData node_options;
+    MP_EXPECT_OK(tool::options_field_util::GetNodeOptions(
+        node_data, node_extension_type, &node_options));
+    FieldData packet_data;
+    MP_EXPECT_OK(tool::options_field_util::GetField(field_path, node_options,
+                                                    &packet_data));
+    EXPECT_EQ(packet_data.value_case(), FieldData::kInt32Value);
+    EXPECT_EQ(packet_data.int32_value(), 33);
+  }
+
+  {
+    // NightLightCalculatorOptions in Node.node_options.
+    CalculatorGraphConfig::Node node;
+    NightLightCalculatorOptions options;
+    options.mutable_sub_options()->add_num_lights(33);
+    node.add_node_options()->PackFrom(options);
+
+    // Retrieve the specified option.
+    FieldData node_data = AsFieldData(node);
+    auto path = field_path;
+    std::string node_extension_type = ExtensionType(std::string(split[1]));
+    FieldData node_options;
+    MP_EXPECT_OK(tool::options_field_util::GetNodeOptions(
+        node_data, node_extension_type, &node_options));
+    FieldData packet_data;
+    MP_EXPECT_OK(tool::options_field_util::GetField(field_path, node_options,
+                                                    &packet_data));
+    EXPECT_EQ(packet_data.value_case(), FieldData::kInt32Value);
+    EXPECT_EQ(packet_data.int32_value(), 33);
+  }
+
+  // TODO: Test with specified extension_type.
 }
 
 }  // namespace

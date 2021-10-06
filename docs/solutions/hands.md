@@ -269,12 +269,10 @@ with mp_hands.Hands(
       # If loading a video, use 'break' instead of 'continue'.
       continue
 
-    # Flip the image horizontally for a later selfie-view display, and convert
-    # the BGR image to RGB.
-    image = cv2.cvtColor(cv2.flip(image, 1), cv2.COLOR_BGR2RGB)
     # To improve performance, optionally mark the image as not writeable to
     # pass by reference.
     image.flags.writeable = False
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     results = hands.process(image)
 
     # Draw the hand annotations on the image.
@@ -288,7 +286,8 @@ with mp_hands.Hands(
             mp_hands.HAND_CONNECTIONS,
             mp_drawing_styles.get_default_hand_landmarks_style(),
             mp_drawing_styles.get_default_hand_connections_style())
-    cv2.imshow('MediaPipe Hands', image)
+    # Flip the image horizontally for a selfie-view display.
+    cv2.imshow('MediaPipe Hands', cv2.flip(image, 1))
     if cv2.waitKey(5) & 0xFF == 27:
       break
 cap.release()
@@ -372,7 +371,7 @@ camera.start();
 
 Please first follow general
 [instructions](../getting_started/android_solutions.md#integrate-mediapipe-android-solutions-api)
-to add MediaPipe Gradle dependencies, then try the Hands solution API in the
+to add MediaPipe Gradle dependencies, then try the Hands Solution API in the
 companion
 [example Android Studio project](https://github.com/google/mediapipe/tree/master/mediapipe/examples/android/solutions/hands)
 following
@@ -391,14 +390,14 @@ Supported configuration options:
 // For camera input and result rendering with OpenGL.
 HandsOptions handsOptions =
     HandsOptions.builder()
-        .setMode(HandsOptions.STREAMING_MODE)  // API soon to become
-        .setMaxNumHands(1)                     // setStaticImageMode(false)
+        .setStaticImageMode(false)
+        .setMaxNumHands(1)
         .setRunOnGpu(true).build();
 Hands hands = new Hands(this, handsOptions);
 hands.setErrorListener(
     (message, e) -> Log.e(TAG, "MediaPipe Hands error:" + message));
 
-// Initializes a new CameraInput instance and connects it to MediaPipe Hands.
+// Initializes a new CameraInput instance and connects it to MediaPipe Hands Solution.
 CameraInput cameraInput = new CameraInput(this);
 cameraInput.setNewFrameListener(
     textureFrame -> hands.send(textureFrame));
@@ -444,13 +443,13 @@ glSurfaceView.post(
 // For reading images from gallery and drawing the output in an ImageView.
 HandsOptions handsOptions =
     HandsOptions.builder()
-        .setMode(HandsOptions.STATIC_IMAGE_MODE)  // API soon to become
-        .setMaxNumHands(1)                        // setStaticImageMode(true)
+        .setStaticImageMode(true)
+        .setMaxNumHands(1)
         .setRunOnGpu(true).build();
 Hands hands = new Hands(this, handsOptions);
 
-// Connects MediaPipe Hands to the user-defined ImageView instance that allows
-// users to have the custom drawing of the output landmarks on it.
+// Connects MediaPipe Hands Solution to the user-defined ImageView instance that
+// allows users to have the custom drawing of the output landmarks on it.
 // See mediapipe/examples/android/solutions/hands/src/main/java/com/google/mediapipe/examples/hands/HandsResultImageView.java
 // as an example.
 HandsResultImageView imageView = new HandsResultImageView(this);
@@ -484,6 +483,7 @@ ActivityResultLauncher<Intent> imageGetter =
               bitmap =
                   MediaStore.Images.Media.getBitmap(
                       this.getContentResolver(), resultIntent.getData());
+              // Please also rotate the Bitmap based on its orientation.
             } catch (IOException e) {
               Log.e(TAG, "Bitmap reading error:" + e);
             }
@@ -503,14 +503,14 @@ imageGetter.launch(gallery);
 // For video input and result rendering with OpenGL.
 HandsOptions handsOptions =
     HandsOptions.builder()
-        .setMode(HandsOptions.STREAMING_MODE)  // API soon to become
-        .setMaxNumHands(1)                     // setStaticImageMode(false)
+        .setStaticImageMode(false)
+        .setMaxNumHands(1)
         .setRunOnGpu(true).build();
 Hands hands = new Hands(this, handsOptions);
 hands.setErrorListener(
     (message, e) -> Log.e(TAG, "MediaPipe Hands error:" + message));
 
-// Initializes a new VideoInput instance and connects it to MediaPipe Hands.
+// Initializes a new VideoInput instance and connects it to MediaPipe Hands Solution.
 VideoInput videoInput = new VideoInput(this);
 videoInput.setNewFrameListener(
     textureFrame -> hands.send(textureFrame));

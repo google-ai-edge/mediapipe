@@ -138,9 +138,12 @@ def draw_landmarks(
     landmark_drawing_spec: Either a DrawingSpec object or a mapping from
       hand landmarks to the DrawingSpecs that specifies the landmarks' drawing
       settings such as color, line thickness, and circle radius.
+      If this argument is explicitly set to None, no landmarks will be drawn.
     connection_drawing_spec: Either a DrawingSpec object or a mapping from
       hand connections to the DrawingSpecs that specifies the
       connections' drawing settings such as color and line thickness.
+      If this argument is explicitly set to None, no landmark connections will
+      be drawn.
 
   Raises:
     ValueError: If one of the followings:

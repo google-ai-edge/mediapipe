@@ -207,16 +207,20 @@ cc_library(
 
 cc_library(
     name = "gpu_buffer",
+    srcs = ["gpu_buffer.cc"],
     hdrs = ["gpu_buffer.h"],
     visibility = ["//visibility:public"],
     deps = [
         ":gl_base",
+        ":gl_context",
         ":gpu_buffer_format",
+        "//mediapipe/framework/formats:image_frame",
     ] + select({
         "//conditions:default": [
             ":gl_texture_buffer",
         ],
         "//mediapipe:ios": [
+            "//mediapipe/objc:util",
             "//mediapipe/objc:CFHolder",
         ],
         "//mediapipe:macos": [
@@ -478,6 +482,7 @@ cc_library(
         "//mediapipe:ios": [
             ":pixel_buffer_pool_util",
             "//mediapipe/objc:CFHolder",
+            "//mediapipe/objc:util",
         ],
         "//mediapipe:macos": [
             ":pixel_buffer_pool_util",
@@ -498,55 +503,40 @@ cc_library(
     ],
 )
 
-HELPER_ANDROID_SRCS = [
-    "gl_calculator_helper_impl_android.cc",
-    "gl_calculator_helper_impl_common.cc",
-]
-
-HELPER_ANDROID_HDRS = [
-    "egl_surface_holder.h",
-]
-
-HELPER_COMMON_SRCS = [
-    "gl_calculator_helper.cc",
-]
-
-HELPER_COMMON_HDRS = [
-    "gl_calculator_helper.h",
-    "gl_calculator_helper_impl.h",
-]
-
-HELPER_IOS_SRCS = [
-    "gl_calculator_helper_impl_ios.mm",
-    "gl_calculator_helper_impl_common.cc",
-]
-
-HELPER_IOS_FRAMEWORKS = [
-    "AVFoundation",
-    "CoreVideo",
-    "CoreGraphics",
-    "CoreMedia",
-    "GLKit",
-    "QuartzCore",
-] + select({
-    "//conditions:default": [
-        "OpenGLES",
+cc_library(
+    name = "egl_surface_holder",
+    hdrs = ["egl_surface_holder.h"],
+    deps = [
+        ":gl_base",
+        "@com_google_absl//absl/synchronization",
     ],
-    "//mediapipe:macos": [
-        "OpenGL",
-        "AppKit",
-    ],
-})
+)
 
 cc_library(
     name = "gl_calculator_helper",
-    srcs = select({
-        "//conditions:default": HELPER_COMMON_SRCS + HELPER_ANDROID_SRCS,
-        "//mediapipe:apple": [],
-    }),
-    hdrs = HELPER_COMMON_HDRS + select({
-        "//conditions:default": HELPER_ANDROID_HDRS,
-        "//mediapipe:apple": [],
+    srcs = [
+        "gl_calculator_helper.cc",
+        "gl_calculator_helper_impl_common.cc",
+    ],
+    hdrs = [
+        "gl_calculator_helper.h",
+        "gl_calculator_helper_impl.h",
+    ],
+    linkopts = select({
+        "//conditions:default": [],
+        "//mediapipe:apple": [
+            "-framework AVFoundation",
+            "-framework CoreVideo",
+            "-framework CoreGraphics",
+            "-framework CoreMedia",
+            "-framework GLKit",
+            "-framework QuartzCore",
+        ],
+    }) + select({
+        "//conditions:default": [],
+        "//mediapipe:macos": [
+            "-framework AppKit",
+        ],
     }),
     visibility = ["//visibility:public"],
     deps = [
@@ -582,34 +572,20 @@ cc_library(
     ] + select({
         "//conditions:default": [
         ],
-        "//mediapipe:apple": [
-            ":gl_calculator_helper_ios",
-            "//mediapipe/objc:util",
-            "//mediapipe/objc:CFHolder",
-        ],
+        "//mediapipe:apple": [],
     }),
 )
 
+# TODO: remove
 objc_library(
     name = "gl_calculator_helper_ios",
-    srcs = HELPER_COMMON_SRCS + HELPER_IOS_SRCS,
-    hdrs = HELPER_COMMON_HDRS,
     copts = [
         "-Wno-shorten-64-to-32",
         "-std=c++17",
     ],
-    sdk_frameworks = HELPER_IOS_FRAMEWORKS,
     visibility = ["//visibility:public"],
     deps = [
-        ":gl_base",
-        ":gl_context",
-        ":gpu_buffer",
-        ":gpu_buffer_multi_pool",
-        ":gpu_service",
-        ":gpu_shared_data_internal",
-        ":shader_util",
-        "//mediapipe/framework:calculator_framework",
-        "//mediapipe/framework/formats:image",
+        ":gl_calculator_helper",
         "//mediapipe/objc:mediapipe_framework_ios",
         "//mediapipe/objc:util",
     ],
@@ -769,6 +745,7 @@ cc_library(
     srcs = ["gl_surface_sink_calculator.cc"],
     visibility = ["//visibility:public"],
     deps = [
+        ":egl_surface_holder",
         ":gl_calculator_helper",
         ":gl_quad_renderer",
         ":gpu_buffer",

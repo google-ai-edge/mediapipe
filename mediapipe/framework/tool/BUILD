@@ -202,6 +202,7 @@ cc_library(
         "//mediapipe/framework:packet_type",
         "//mediapipe/framework/port:advanced_proto",
         "//mediapipe/framework/port:any_proto",
+        "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
@@ -291,7 +292,9 @@ mediapipe_cc_test(
     data = [":node_chain_subgraph.proto"],
     requires_full_emulation = False,
     deps = [
+        ":options_field_util",
         ":options_registry",
+        ":options_syntax_util",
         ":options_util",
         "//mediapipe/calculators/core:flow_limiter_calculator",
         "//mediapipe/calculators/core:flow_limiter_calculator_cc_proto",
@@ -305,8 +308,8 @@ mediapipe_cc_test(
         "//mediapipe/framework/port:status",
         "//mediapipe/framework/testdata:night_light_calculator_options_lib",
         "//mediapipe/framework/tool:node_chain_subgraph_options_lib",
-        "//mediapipe/framework/tool:options_syntax_util",
         "//mediapipe/util:header_util",
+        "@com_google_absl//absl/strings",
     ],
 )
 
