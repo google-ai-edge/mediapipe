@@ -91,9 +91,7 @@ void GlCalculatorHelperImpl::BindFramebuffer(const GlTexture& dst) {
 }
 
 GlTexture GlCalculatorHelperImpl::MapGpuBuffer(const GpuBuffer& gpu_buffer,
-                                               int plane, bool for_reading) {
-  GlTextureView view = gpu_buffer.GetGlTextureView(plane, for_reading);
-
+                                               GlTextureView view) {
   if (gpu_buffer.format() != GpuBufferFormat::kUnknown) {
     // TODO: do the params need to be reset here??
     glBindTexture(view.target(), view.name());
@@ -109,19 +107,18 @@ GlTexture GlCalculatorHelperImpl::MapGpuBuffer(const GpuBuffer& gpu_buffer,
 
 GlTexture GlCalculatorHelperImpl::CreateSourceTexture(
     const GpuBuffer& gpu_buffer) {
-  return MapGpuBuffer(gpu_buffer, 0, true);
+  return CreateSourceTexture(gpu_buffer, 0);
 }
 
 GlTexture GlCalculatorHelperImpl::CreateSourceTexture(
     const GpuBuffer& gpu_buffer, int plane) {
-  return MapGpuBuffer(gpu_buffer, plane, true);
+  return MapGpuBuffer(gpu_buffer, gpu_buffer.GetGlTextureReadView(plane));
 }
 
 GlTexture GlCalculatorHelperImpl::CreateSourceTexture(
     const ImageFrame& image_frame) {
-  GlTexture texture =
-      MapGpuBuffer(GpuBuffer::CopyingImageFrame(image_frame), 0, true);
-  return texture;
+  auto gpu_buffer = GpuBuffer::CopyingImageFrame(image_frame);
+  return MapGpuBuffer(gpu_buffer, gpu_buffer.GetGlTextureReadView(0));
 }
 
 template <>
@@ -150,11 +147,9 @@ GlTexture GlCalculatorHelperImpl::CreateDestinationTexture(
     CreateFramebuffer();
   }
 
-  GpuBuffer buffer =
+  GpuBuffer gpu_buffer =
       gpu_resources_.gpu_buffer_pool().GetBuffer(width, height, format);
-  GlTexture texture = MapGpuBuffer(buffer, 0, false);
-
-  return texture;
+  return MapGpuBuffer(gpu_buffer, gpu_buffer.GetGlTextureWriteView(0));
 }
 
 }  // namespace mediapipe

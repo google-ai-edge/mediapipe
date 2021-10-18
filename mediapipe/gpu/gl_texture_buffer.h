@@ -25,13 +25,14 @@
 #include "mediapipe/gpu/gl_base.h"
 #include "mediapipe/gpu/gl_context.h"
 #include "mediapipe/gpu/gpu_buffer_format.h"
+#include "mediapipe/gpu/gpu_buffer_storage.h"
 
 namespace mediapipe {
 
 class GlCalculatorHelperImpl;
 
 // Implements a GPU memory buffer as an OpenGL texture. For internal use.
-class GlTextureBuffer {
+class GlTextureBuffer : public mediapipe::internal::GpuBufferStorage {
  public:
   // This is called when the texture buffer is deleted. It is passed a sync
   // token created at that time on the GlContext. If the GlTextureBuffer has
@@ -85,6 +86,13 @@ class GlTextureBuffer {
   int height() const { return height_; }
   GpuBufferFormat format() const { return format_; }
 
+  GlTextureView GetGlTextureReadView(std::shared_ptr<GpuBuffer> gpu_buffer,
+                                     int plane) const override;
+  GlTextureView GetGlTextureWriteView(std::shared_ptr<GpuBuffer> gpu_buffer,
+                                      int plane) override;
+  void ViewDoneWriting(const GlTextureView& view) override;
+  std::unique_ptr<ImageFrame> AsImageFrame() const override;
+
   // If this texture is going to be used outside of the context that produced
   // it, this method should be called to ensure that its updated contents are
   // available. When this method returns, all changed made before the call to
@@ -94,13 +102,13 @@ class GlTextureBuffer {
   // NOTE: This blocks the current CPU thread and makes the changes visible
   // to the CPU. If you want to access the data via OpenGL, use WaitOnGpu
   // instead.
-  void WaitUntilComplete();
+  void WaitUntilComplete() const;
 
   // Call this method to synchronize the current GL context with the texture's
   // producer. This will not block the current CPU thread, but will ensure that
   // subsequent GL commands see the texture in its complete status, with all
   // rendering done on the GPU by the generating context.
-  void WaitOnGpu();
+  void WaitOnGpu() const;
 
   // Informs the buffer that its contents are going to be overwritten.
   // This invalidates the current sync token.
@@ -114,7 +122,7 @@ class GlTextureBuffer {
   void Updated(std::shared_ptr<GlSyncPoint> prod_token);
 
   // Informs the buffer that a consumer has finished reading from it.
-  void DidRead(std::shared_ptr<GlSyncPoint> cons_token);
+  void DidRead(std::shared_ptr<GlSyncPoint> cons_token) const;
 
   // Waits for all pending consumers to finish accessing the current content
   // of the texture. This (preferably the OnGpu version) should be called
@@ -143,10 +151,11 @@ class GlTextureBuffer {
   const GLenum target_ = GL_TEXTURE_2D;
   // Token tracking changes to this texture. Used by WaitUntilComplete.
   std::shared_ptr<GlSyncPoint> producer_sync_;
-  absl::Mutex consumer_sync_mutex_;
+  mutable absl::Mutex consumer_sync_mutex_;
   // Tokens tracking the point when consumers finished using this texture.
-  std::unique_ptr<GlMultiSyncPoint> consumer_multi_sync_ ABSL_GUARDED_BY(
-      consumer_sync_mutex_) = absl::make_unique<GlMultiSyncPoint>();
+  mutable std::unique_ptr<GlMultiSyncPoint> consumer_multi_sync_
+      ABSL_GUARDED_BY(consumer_sync_mutex_) =
+          absl::make_unique<GlMultiSyncPoint>();
   DeletionCallback deletion_callback_;
   std::shared_ptr<GlContext> producer_context_;
 };

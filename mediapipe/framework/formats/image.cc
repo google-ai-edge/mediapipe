@@ -77,13 +77,6 @@ bool Image::ConvertToGpu() const {
 #else
   // GlCalculatorHelperImpl::MakeGlTextureBuffer (CreateSourceTexture)
   auto buffer = mediapipe::GlTextureBuffer::Create(*image_frame_);
-  glBindTexture(GL_TEXTURE_2D, buffer->name());
-  // See GlCalculatorHelperImpl::SetStandardTextureParams
-  glTexParameteri(buffer->target(), GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  glTexParameteri(buffer->target(), GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-  glTexParameteri(buffer->target(), GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-  glTexParameteri(buffer->target(), GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-  glBindTexture(GL_TEXTURE_2D, 0);
   glFlush();
   gpu_buffer_ = mediapipe::GpuBuffer(std::move(buffer));
 #endif  //  MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER

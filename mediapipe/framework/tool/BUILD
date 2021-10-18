@@ -724,6 +724,7 @@ cc_test(
     srcs = ["subgraph_expansion_test.cc"],
     deps = [
         ":node_chain_subgraph_cc_proto",
+        ":node_chain_subgraph_options_lib",
         ":subgraph_expansion",
         "//mediapipe/framework:calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",

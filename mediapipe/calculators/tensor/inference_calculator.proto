@@ -34,7 +34,6 @@ option java_outer_classname = "InferenceCalculatorProto";
 //     }
 //   }
 // }
-//
 message InferenceCalculatorOptions {
   extend mediapipe.CalculatorOptions {
     optional InferenceCalculatorOptions ext = 336783863;
@@ -69,7 +68,29 @@ message InferenceCalculatorOptions {
       // Load pre-compiled serialized binary cache to accelerate init process.
       // Only available for OpenCL delegate on Android.
       // Kernel caching will only be enabled if this path is set.
+      //
+      // NOTE: binary cache usage may be skipped if valid serialized model,
+      // specified by "serialized_model_dir", exists.
+      //
+      // TODO: update to cached_kernel_dir
       optional string cached_kernel_path = 2;
+
+      // A dir to load from and save to a pre-compiled serialized model used to
+      // accelerate init process.
+      //
+      // NOTE: available for OpenCL delegate on Android only when
+      // "use_advanced_gpu_api" is set to true and "model_token" is set
+      // properly.
+      //
+      // NOTE: serialized model takes precedence over binary cache
+      // specified by "cached_kernel_path", which still can be used if
+      // serialized model is invalid or missing.
+      optional string serialized_model_dir = 7;
+
+      // Unique token identifying the model. Used in conjunction with
+      // "serialized_model_dir". It is the caller's responsibility to ensure
+      // there is no clash of the tokens.
+      optional string model_token = 8;
 
       // Encapsulated compilation/runtime tradeoffs.
       enum InferenceUsage {

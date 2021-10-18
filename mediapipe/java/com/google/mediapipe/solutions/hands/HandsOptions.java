@@ -26,6 +26,10 @@ import com.google.auto.value.AutoValue;
  * <p>maxNumHands: Maximum number of hands to detect. See details in
  * https://solutions.mediapipe.dev/hands#max_num_hands.
  *
+ * <p>modelComplexity: Complexity of the hand landmark model: 0 or 1. Landmark accuracy as well as
+ * inference latency generally go up with the model complexity. See details in
+ * https://solutions.mediapipe.dev/hands#model_complexity.
+ *
  * <p>minDetectionConfidence: Minimum confidence value ([0.0, 1.0]) for hand detection to be
  * considered successful. See details in
  * https://solutions.mediapipe.dev/hands#min_detection_confidence.
@@ -43,6 +47,8 @@ public abstract class HandsOptions {
 
   public abstract int maxNumHands();
 
+  public abstract int modelComplexity();
+
   public abstract float minDetectionConfidence();
 
   public abstract float minTrackingConfidence();
@@ -59,6 +65,7 @@ public abstract class HandsOptions {
     public Builder withDefaultValues() {
       return setStaticImageMode(false)
           .setMaxNumHands(2)
+          .setModelComplexity(1)
           .setMinDetectionConfidence(0.5f)
           .setMinTrackingConfidence(0.5f)
           .setRunOnGpu(true);
@@ -67,6 +74,8 @@ public abstract class HandsOptions {
     public abstract Builder setStaticImageMode(boolean value);
 
     public abstract Builder setMaxNumHands(int value);
+
+    public abstract Builder setModelComplexity(int value);
 
     public abstract Builder setMinDetectionConfidence(float value);
 

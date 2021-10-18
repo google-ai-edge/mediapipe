@@ -427,7 +427,8 @@ absl::Status CalculatorGraph::Initialize(
     const std::map<std::string, Packet>& side_packets) {
   auto validated_graph = absl::make_unique<ValidatedGraphConfig>();
   MP_RETURN_IF_ERROR(validated_graph->Initialize(
-      input_config, /*graph_registry=*/nullptr, &service_manager_));
+      input_config, /*graph_registry=*/nullptr, /*graph_options=*/nullptr,
+      &service_manager_));
   return Initialize(std::move(validated_graph), side_packets);
 }
 

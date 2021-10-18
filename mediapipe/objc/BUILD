@@ -21,6 +21,9 @@ cc_library(
     features = ["-parse_headers"],
     linkopts = [
         "-framework Accelerate",
+        "-framework CoreFoundation",
+        "-framework CoreGraphics",
+        "-framework CoreVideo",
     ],
     visibility = ["//mediapipe/framework:mediapipe_internal"],
     deps = [

@@ -62,10 +62,7 @@ class GlCalculatorHelperImpl {
 
  private:
   // Makes a GpuBuffer accessible as a texture in the GL context.
-  GlTexture MapGpuBuffer(const GpuBuffer& gpu_buffer, int plane,
-                         bool for_reading);
-  void AttachGlTexture(GlTexture& texture, const GpuBuffer& gpu_buffer,
-                       int plane, bool for_reading);
+  GlTexture MapGpuBuffer(const GpuBuffer& gpu_buffer, GlTextureView view);
 
   // Create the framebuffer for rendering.
   void CreateFramebuffer();

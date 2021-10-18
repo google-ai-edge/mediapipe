@@ -26,12 +26,12 @@ message TfLiteTensorsToDetectionsCalculatorOptions {
   }
 
   // The number of output classes predicted by the detection model.
-  required int32 num_classes = 1;
+  optional int32 num_classes = 1;  // required
   // The number of output boxes predicted by the detection model.
-  required int32 num_boxes = 2;
+  optional int32 num_boxes = 2;  // required
   // The number of output values per boxes predicted by the detection model. The
   // values contain bounding boxes, keypoints, etc.
-  required int32 num_coords = 3;
+  optional int32 num_coords = 3;  // required
 
   // The offset of keypoint coordinates in the location tensor.
   optional int32 keypoint_coord_offset = 9;

@@ -64,6 +64,13 @@ public class AppTextureFrame implements TextureFrame {
     return timestamp;
   }
 
+  /** Returns true if a call to waitUntilReleased() would block waiting for release. */
+  public boolean isNotYetReleased() {
+    synchronized (this) {
+      return inUse && releaseSyncToken == null;
+    }
+  }
+
   /**
    * Waits until the consumer is done with the texture.
    *

@@ -7,8 +7,8 @@
 # - "face_landmark.tflite" is available at
 # "mediapipe/modules/face_landmark/face_landmark.tflite"
 #
-# - "hand_landmark.tflite" is available at
-# "mediapipe/modules/hand_landmark/hand_landmark.tflite"
+# - "hand_landmark_full.tflite" is available at
+# "mediapipe/modules/hand_landmark/hand_landmark_full.tflite"
 #
 # - "hand_recrop.tflite" is available at
 # "mediapipe/modules/holistic_landmark/hand_recrop.tflite"

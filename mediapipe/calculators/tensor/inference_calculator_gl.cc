@@ -20,6 +20,7 @@
 #include "absl/memory/memory.h"
 #include "absl/status/status.h"
 #include "mediapipe/calculators/tensor/inference_calculator.h"
+#include "mediapipe/framework/deps/file_path.h"
 #include "mediapipe/util/tflite/config.h"
 
 #if MEDIAPIPE_TFLITE_GL_INFERENCE
@@ -49,8 +50,8 @@ class InferenceCalculatorGlImpl
   absl::Status Close(CalculatorContext* cc) override;
 
  private:
-  absl::Status ReadKernelsFromFile();
-  absl::Status WriteKernelsToFile();
+  absl::Status ReadGpuCaches();
+  absl::Status SaveGpuCaches();
   absl::Status LoadModel(CalculatorContext* cc);
   absl::Status LoadDelegate(CalculatorContext* cc);
   absl::Status LoadDelegateAndAllocateTensors(CalculatorContext* cc);
@@ -82,6 +83,8 @@ class InferenceCalculatorGlImpl
 
   bool use_kernel_caching_ = false;
   std::string cached_kernel_filename_;
+  bool use_serialized_model_ = false;
+  std::string serialized_model_path_;
 };
 
 absl::Status InferenceCalculatorGlImpl::UpdateContract(CalculatorContract* cc) {
@@ -114,6 +117,9 @@ absl::Status InferenceCalculatorGlImpl::Open(CalculatorContext* cc) {
   tflite_gpu_runner_usage_ = delegate.gpu().usage();
   use_kernel_caching_ =
       use_advanced_gpu_api_ && delegate.gpu().has_cached_kernel_path();
+  use_serialized_model_ = use_advanced_gpu_api_ &&
+                          delegate.gpu().has_serialized_model_dir() &&
+                          delegate.gpu().has_model_token();
   use_gpu_delegate_ = !use_advanced_gpu_api_;
 
   if (use_kernel_caching_) {
@@ -121,6 +127,12 @@ absl::Status InferenceCalculatorGlImpl::Open(CalculatorContext* cc) {
     cached_kernel_filename_ = delegate.gpu().cached_kernel_path() +
                               mediapipe::File::Basename(options.model_path()) +
                               ".ker";
+#endif  // MEDIAPIPE_ANDROID
+  }
+  if (use_serialized_model_) {
+#ifdef MEDIAPIPE_ANDROID
+    serialized_model_path_ = mediapipe::file::JoinPath(
+        delegate.gpu().serialized_model_dir(), delegate.gpu().model_token());
 #endif  // MEDIAPIPE_ANDROID
   }
 
@@ -210,7 +222,7 @@ absl::Status InferenceCalculatorGlImpl::Process(CalculatorContext* cc) {
   return absl::OkStatus();
 }
 
-absl::Status InferenceCalculatorGlImpl::WriteKernelsToFile() {
+absl::Status InferenceCalculatorGlImpl::SaveGpuCaches() {
 #ifdef MEDIAPIPE_ANDROID
   if (use_kernel_caching_) {
     // Save kernel file.
@@ -220,12 +232,22 @@ absl::Status InferenceCalculatorGlImpl::WriteKernelsToFile() {
     MP_RETURN_IF_ERROR(
         mediapipe::file::SetContents(cached_kernel_filename_, cache_str));
   }
+  if (use_serialized_model_) {
+    // Save serialized model file.
+    ASSIGN_OR_RETURN(std::vector<uint8_t> serialized_model_vec,
+                     tflite_gpu_runner_->GetSerializedModel());
+    absl::string_view serialized_model(
+        reinterpret_cast<char*>(serialized_model_vec.data()),
+        serialized_model_vec.size());
+    MP_RETURN_IF_ERROR(
+        mediapipe::file::SetContents(serialized_model_path_, serialized_model));
+  }
 #endif  // MEDIAPIPE_ANDROID
   return absl::OkStatus();
 }
 
 absl::Status InferenceCalculatorGlImpl::Close(CalculatorContext* cc) {
-  MP_RETURN_IF_ERROR(WriteKernelsToFile());
+  MP_RETURN_IF_ERROR(SaveGpuCaches());
   if (use_gpu_delegate_) {
     MP_RETURN_IF_ERROR(gpu_helper_.RunInGlContext([this]() -> Status {
       gpu_buffers_in_.clear();
@@ -239,17 +261,24 @@ absl::Status InferenceCalculatorGlImpl::Close(CalculatorContext* cc) {
   return absl::OkStatus();
 }
 
-absl::Status InferenceCalculatorGlImpl::ReadKernelsFromFile() {
+absl::Status InferenceCalculatorGlImpl::ReadGpuCaches() {
 #ifdef MEDIAPIPE_ANDROID
-  if (use_kernel_caching_) {
+  if (use_kernel_caching_ && File::Exists(cached_kernel_filename_)) {
     // Load pre-compiled kernel file.
-    if (mediapipe::File::Exists(cached_kernel_filename_)) {
-      std::string cache_str;
-      MP_RETURN_IF_ERROR(
-          mediapipe::file::GetContents(cached_kernel_filename_, &cache_str));
-      std::vector<uint8_t> cache_vec(cache_str.begin(), cache_str.end());
-      tflite_gpu_runner_->SetSerializedBinaryCache(std::move(cache_vec));
-    }
+    std::string cache_str;
+    MP_RETURN_IF_ERROR(
+        mediapipe::file::GetContents(cached_kernel_filename_, &cache_str));
+    std::vector<uint8_t> cache_vec(cache_str.begin(), cache_str.end());
+    tflite_gpu_runner_->SetSerializedBinaryCache(std::move(cache_vec));
+  }
+  if (use_serialized_model_ && File::Exists(serialized_model_path_)) {
+    // Load serialized model file.
+    std::string serialized_model_str;
+    MP_RETURN_IF_ERROR(
+        file::GetContents(serialized_model_path_, &serialized_model_str));
+    std::vector<uint8_t> serialized_model_vec(serialized_model_str.begin(),
+                                              serialized_model_str.end());
+    tflite_gpu_runner_->SetSerializedModel(std::move(serialized_model_vec));
   }
 #endif  // MEDIAPIPE_ANDROID
   return absl::OkStatus();
@@ -313,7 +342,7 @@ absl::Status InferenceCalculatorGlImpl::InitTFLiteGPURunner(
                          tflite_gpu_runner_->GetOutputShapes()[i].c};
   }
 
-  MP_RETURN_IF_ERROR(ReadKernelsFromFile());
+  MP_RETURN_IF_ERROR(ReadGpuCaches());
 
   MP_RETURN_IF_ERROR(tflite_gpu_runner_->Build());
 

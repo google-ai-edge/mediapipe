@@ -78,6 +78,7 @@ public class Hands extends ImageSolutionBase {
           Connection.create(HandLandmark.PINKY_PIP, HandLandmark.PINKY_DIP),
           Connection.create(HandLandmark.PINKY_DIP, HandLandmark.PINKY_TIP));
 
+  private static final String MODEL_COMPLEXITY = "model_complexity";
   private static final String NUM_HANDS = "num_hands";
   private static final String USE_PREV_LANDMARKS = "use_prev_landmarks";
   private static final String GPU_GRAPH_NAME = "hand_landmark_tracking_gpu_image.binarypb";
@@ -131,6 +132,7 @@ public class Hands extends ImageSolutionBase {
     initialize(context, solutionInfo, outputHandler);
     Map<String, Packet> inputSidePackets = new HashMap<>();
     inputSidePackets.put(NUM_HANDS, packetCreator.createInt32(options.maxNumHands()));
+    inputSidePackets.put(MODEL_COMPLEXITY, packetCreator.createInt32(options.modelComplexity()));
     inputSidePackets.put(USE_PREV_LANDMARKS, packetCreator.createBool(!options.staticImageMode()));
     start(inputSidePackets);
   }

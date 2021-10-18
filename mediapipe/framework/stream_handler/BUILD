@@ -244,6 +244,8 @@ cc_test(
     srcs = ["mux_input_stream_handler_test.cc"],
     deps = [
         ":mux_input_stream_handler",
+        "//mediapipe/calculators/core:gate_calculator",
+        "//mediapipe/calculators/core:make_pair_calculator",
         "//mediapipe/calculators/core:mux_calculator",
         "//mediapipe/calculators/core:pass_through_calculator",
         "//mediapipe/calculators/core:round_robin_demux_calculator",

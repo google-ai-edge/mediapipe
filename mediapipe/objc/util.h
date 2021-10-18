@@ -17,6 +17,7 @@
 
 #import <Accelerate/Accelerate.h>
 #import <CoreFoundation/CoreFoundation.h>
+#import <CoreGraphics/CoreGraphics.h>
 #import <CoreVideo/CoreVideo.h>
 
 #include "mediapipe/framework/formats/image_frame.h"

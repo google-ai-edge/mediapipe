@@ -7,7 +7,7 @@ android {
     buildToolsVersion "30.0.3"
 
     defaultConfig {
-        applicationId "com.google.mediapipe.apps.hands"
+        applicationId "com.google.mediapipe.apps.facemesh"
         minSdkVersion 21
         targetSdkVersion 30
         versionCode 1

@@ -196,12 +196,25 @@ cc_library(
     deps = [
         ":gl_base",
         ":gl_context",
+        ":gl_texture_view",
         ":gpu_buffer_format",
+        ":gpu_buffer_storage",
         # TODO: remove this dependency. Some other teams' tests
         # depend on having an indirect image_frame dependency, need to be
         # fixed first.
         "//mediapipe/framework/formats:image_frame",
         "@com_google_absl//absl/memory",
+    ],
+)
+
+cc_library(
+    name = "gl_texture_view",
+    srcs = ["gl_texture_view.cc"],
+    hdrs = ["gl_texture_view.h"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_base",
+        ":gl_context",
     ],
 )
 
@@ -214,12 +227,15 @@ cc_library(
         ":gl_base",
         ":gl_context",
         ":gpu_buffer_format",
+        ":gpu_buffer_storage",
+        ":gl_texture_view",
         "//mediapipe/framework/formats:image_frame",
     ] + select({
         "//conditions:default": [
             ":gl_texture_buffer",
         ],
         "//mediapipe:ios": [
+            ":gpu_buffer_storage_cv_pixel_buffer",
             "//mediapipe/objc:util",
             "//mediapipe/objc:CFHolder",
         ],
@@ -241,6 +257,35 @@ cc_library(
         "//mediapipe/framework/formats:image_format_cc_proto",
         "//mediapipe/framework/port:logging",
         "@com_google_absl//absl/container:flat_hash_map",
+    ],
+)
+
+cc_library(
+    name = "gpu_buffer_storage",
+    hdrs = ["gpu_buffer_storage.h"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_base",
+        ":gpu_buffer_format",
+        "//mediapipe/framework/deps:no_destructor",
+        "//mediapipe/framework/formats:image_frame",
+        "//mediapipe/framework/port:logging",
+        "@com_google_absl//absl/container:flat_hash_map",
+    ],
+)
+
+cc_library(
+    name = "gpu_buffer_storage_cv_pixel_buffer",
+    srcs = ["gpu_buffer_storage_cv_pixel_buffer.cc"],
+    hdrs = ["gpu_buffer_storage_cv_pixel_buffer.h"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_base",
+        ":gl_context",
+        ":gl_texture_view",
+        ":gpu_buffer_storage",
+        "//mediapipe/objc:CFHolder",
+        "//mediapipe/objc:util",
     ],
 )
 

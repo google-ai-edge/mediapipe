@@ -120,7 +120,7 @@ just 86.22%.
 ### Hand Landmark Model
 
 After the palm detection over the whole image our subsequent hand landmark
-[model](https://github.com/google/mediapipe/tree/master/mediapipe/modules/hand_landmark/hand_landmark.tflite)
+[model](https://github.com/google/mediapipe/tree/master/mediapipe/modules/hand_landmark/hand_landmark_full.tflite)
 performs precise keypoint localization of 21 3D hand-knuckle coordinates inside
 the detected hand regions via regression, that is direct coordinate prediction.
 The model learns a consistent internal hand pose representation and is robust
@@ -162,6 +162,11 @@ unrelated, images. Default to `false`.
 #### max_num_hands
 
 Maximum number of hands to detect. Default to `2`.
+
+#### model_complexity
+
+Complexity of the hand landmark model: `0` or `1`. Landmark accuracy as well as
+inference latency generally go up with the model complexity. Default to `1`.
 
 #### min_detection_confidence
 
@@ -212,6 +217,7 @@ Supported configuration options:
 
 *   [static_image_mode](#static_image_mode)
 *   [max_num_hands](#max_num_hands)
+*   [model_complexity](#model_complexity)
 *   [min_detection_confidence](#min_detection_confidence)
 *   [min_tracking_confidence](#min_tracking_confidence)
 
@@ -260,6 +266,7 @@ with mp_hands.Hands(
 # For webcam input:
 cap = cv2.VideoCapture(0)
 with mp_hands.Hands(
+    model_complexity=0,
     min_detection_confidence=0.5,
     min_tracking_confidence=0.5) as hands:
   while cap.isOpened():
@@ -302,6 +309,7 @@ and a [fun application], and the following usage example.
 Supported configuration options:
 
 *   [maxNumHands](#max_num_hands)
+*   [modelComplexity](#model_complexity)
 *   [minDetectionConfidence](#min_detection_confidence)
 *   [minTrackingConfidence](#min_tracking_confidence)
 
@@ -351,6 +359,7 @@ const hands = new Hands({locateFile: (file) => {
 }});
 hands.setOptions({
   maxNumHands: 2,
+  modelComplexity: 1,
   minDetectionConfidence: 0.5,
   minTrackingConfidence: 0.5
 });

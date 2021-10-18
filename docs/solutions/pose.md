@@ -125,7 +125,7 @@ hip midpoints.
 :----------------------------------------------------------------------------------------------------: |
 *Fig 3. Vitruvian man aligned via two virtual keypoints predicted by BlazePose detector in addition to the face bounding box.* |
 
-### Pose Landmark Model (BlazePose GHUM 3D)
+### Pose Landmark Model (BlazePose [GHUM](https://github.com/google-research/google-research/tree/master/ghum) 3D)
 
 The landmark model in MediaPipe Pose predicts the location of 33 pose landmarks
 (see figure below).
@@ -486,6 +486,7 @@ on how to build MediaPipe examples.
     [BlazePose: On-device Real-time Body Pose Tracking](https://arxiv.org/abs/2006.10204)
     ([presentation](https://youtu.be/YPpUOTRn5tA))
 *   [Models and model cards](./models.md#pose)
+*   [GHUM & GHUML: Generative 3D Human Shape and Articulated Pose Models](https://github.com/google-research/google-research/tree/master/ghum)
 *   [Web demo](https://code.mediapipe.dev/codepen/pose)
 *   [Python Colab](https://mediapipe.page.link/pose_py_colab)
 

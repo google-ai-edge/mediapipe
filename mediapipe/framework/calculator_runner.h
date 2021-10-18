@@ -122,7 +122,7 @@ class CalculatorRunner {
   const StreamContentsSet& Outputs() const { return *outputs_; }
 
   // Returns the access to the output side packets.
-  const PacketSet& OutputSidePackets() { return *output_side_packets_.get(); }
+  const PacketSet& OutputSidePackets() { return *output_side_packets_; }
 
   // Returns a graph counter.
   mediapipe::Counter* GetCounter(const std::string& name);

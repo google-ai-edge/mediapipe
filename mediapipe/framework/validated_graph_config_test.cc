@@ -155,6 +155,7 @@ TEST(ValidatedGraphConfigTest, InitializeSubgraphWithServiceCalculatorB) {
         kStringTestService, std::make_shared<std::string>(calculator_name)));
     MP_EXPECT_OK(config.Initialize(graph,
                                    /*graph_registry=*/nullptr,
+                                   /*subgraph_options=*/nullptr,
                                    /*service_manager=*/&service_manager));
     ASSERT_TRUE(config.Initialized());
     EXPECT_THAT(config.Config(), EqualsProto(ExpectedConfigExpandedFromGraph(

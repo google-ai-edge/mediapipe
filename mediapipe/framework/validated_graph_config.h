@@ -195,18 +195,21 @@ class ValidatedGraphConfig {
   // Initializes the ValidatedGraphConfig.  This function must be called
   // before any other functions.  Subgraphs are specified through the
   // global graph registry or an optional local graph registry.
-  absl::Status Initialize(const CalculatorGraphConfig& input_config,
-                          const GraphRegistry* graph_registry = nullptr,
-                          const GraphServiceManager* service_manager = nullptr);
+  absl::Status Initialize(
+      const CalculatorGraphConfig& input_config,
+      const GraphRegistry* graph_registry = nullptr,
+      const Subgraph::SubgraphOptions* graph_options = nullptr,
+      const GraphServiceManager* service_manager = nullptr);
 
   // Initializes the ValidatedGraphConfig from registered graph and subgraph
   // configs.  Subgraphs are retrieved from the specified graph registry or from
   // the global graph registry.  A subgraph can be instantiated directly by
   // specifying its type in |graph_type|.
-  absl::Status Initialize(const std::string& graph_type,
-                          const Subgraph::SubgraphOptions* options = nullptr,
-                          const GraphRegistry* graph_registry = nullptr,
-                          const GraphServiceManager* service_manager = nullptr);
+  absl::Status Initialize(
+      const std::string& graph_type,
+      const GraphRegistry* graph_registry = nullptr,
+      const Subgraph::SubgraphOptions* graph_options = nullptr,
+      const GraphServiceManager* service_manager = nullptr);
 
   // Initializes the ValidatedGraphConfig from the specified graph and subgraph
   // configs.  Template graph and subgraph configs can be specified through
@@ -218,7 +221,7 @@ class ValidatedGraphConfig {
       const std::vector<CalculatorGraphConfig>& input_configs,
       const std::vector<CalculatorGraphTemplate>& input_templates,
       const std::string& graph_type = "",
-      const Subgraph::SubgraphOptions* arguments = nullptr,
+      const Subgraph::SubgraphOptions* graph_options = nullptr,
       const GraphServiceManager* service_manager = nullptr);
 
   // Returns true if the ValidatedGraphConfig has been initialized.

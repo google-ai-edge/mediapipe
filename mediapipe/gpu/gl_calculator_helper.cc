@@ -109,12 +109,10 @@ GlTexture GlCalculatorHelper::CreateSourceTexture(
   return impl_->CreateSourceTexture(image_frame);
 }
 
-#ifdef __APPLE__
 GlTexture GlCalculatorHelper::CreateSourceTexture(const GpuBuffer& pixel_buffer,
                                                   int plane) {
   return impl_->CreateSourceTexture(pixel_buffer, plane);
 }
-#endif
 
 void GlCalculatorHelper::GetGpuBufferDimensions(const GpuBuffer& pixel_buffer,
                                                 int* width, int* height) {

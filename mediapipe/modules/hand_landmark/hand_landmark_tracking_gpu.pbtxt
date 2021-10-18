@@ -14,6 +14,11 @@ input_stream: "IMAGE:image"
 # Max number of hands to detect/track. (int)
 input_side_packet: "NUM_HANDS:num_hands"
 
+# Complexity of the hand landmark model: 0 or 1. Landmark accuracy as well as
+# inference latency generally go up with the model complexity. If unspecified,
+# functions as set to 1. (int)
+input_side_packet: "MODEL_COMPLEXITY:model_complexity"
+
 # Whether landmarks on the previous image should be used to help localize
 # landmarks on the current image. (bool)
 input_side_packet: "USE_PREV_LANDMARKS:use_prev_landmarks"
@@ -178,6 +183,7 @@ node {
 # Detect hand landmarks for the specific hand rect.
 node {
   calculator: "HandLandmarkGpu"
+  input_side_packet: "MODEL_COMPLEXITY:model_complexity"
   input_stream: "IMAGE:image_for_landmarks"
   input_stream: "ROI:single_hand_rect"
   output_stream: "LANDMARKS:single_hand_landmarks"

@@ -8,6 +8,11 @@ input_stream: "IMAGE:image"
 # (NormalizedRect)
 input_stream: "ROI:hand_rect"
 
+# Complexity of the hand landmark model: 0 or 1. Landmark accuracy as well as
+# inference latency generally go up with the model complexity. If unspecified,
+# functions as set to 1. (int)
+input_side_packet: "MODEL_COMPLEXITY:model_complexity"
+
 # 21 hand landmarks within the given ROI. (NormalizedLandmarkList)
 # NOTE: if a hand is not present within the given ROI, for this particular
 # timestamp there will not be an output packet in the LANDMARKS stream. However,
@@ -41,18 +46,21 @@ node {
   }
 }
 
+# Loads the hand landmark TF Lite model.
+node {
+  calculator: "HandLandmarkModelLoader"
+  input_side_packet: "MODEL_COMPLEXITY:model_complexity"
+  output_side_packet: "MODEL:model"
+}
+
 # Runs a TensorFlow Lite model on GPU that takes an image tensor and outputs a
 # vector of tensors representing, for instance, detection boxes/keypoints and
 # scores.
 node {
   calculator: "InferenceCalculator"
+  input_side_packet: "MODEL:model"
   input_stream: "TENSORS:input_tensor"
   output_stream: "TENSORS:output_tensors"
-  options: {
-    [mediapipe.InferenceCalculatorOptions.ext] {
-      model_path: "mediapipe/modules/hand_landmark/hand_landmark.tflite"
-    }
-  }
 }
 
 # Splits a vector of tensors to multiple vectors according to the ranges

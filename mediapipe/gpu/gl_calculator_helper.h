@@ -29,10 +29,6 @@
 #include "mediapipe/gpu/gpu_buffer.h"
 #include "mediapipe/gpu/graph_support.h"
 
-#ifdef __APPLE__
-#include <CoreVideo/CoreVideo.h>
-#endif  // __APPLE__
-
 namespace mediapipe {
 
 class GlCalculatorHelperImpl;
@@ -111,24 +107,35 @@ class GlCalculatorHelper {
   // where it is supported (iOS, for now) they take advantage of memory sharing
   // between the CPU and GPU, avoiding memory copies.
 
-  // Creates a texture representing an input frame, and manages sync token.
+  // Gives access to an input frame as an OpenGL texture for reading (sampling).
+  //
+  // IMPORTANT: the returned GlTexture should be treated as a short-term view
+  // into the frame (typically for the duration of a Process call). Do not store
+  // it as a member in your calculator. If you need to keep a frame around,
+  // store the GpuBuffer instead, and call CreateSourceTexture again on each
+  // Process call.
+  //
+  // TODO: rename this; the use of "Create" makes this sound more expensive than
+  // it is.
   GlTexture CreateSourceTexture(const GpuBuffer& pixel_buffer);
-  GlTexture CreateSourceTexture(const ImageFrame& image_frame);
   GlTexture CreateSourceTexture(const mediapipe::Image& image);
 
-#ifdef __APPLE__
-  // Creates a texture from a plane of a planar buffer.
+  // Gives read access to a plane of a planar buffer.
   // The plane index is zero-based. The number of planes depends on the
   // internal format of the buffer.
+  // Note: multi-plane support is not available on all platforms.
   GlTexture CreateSourceTexture(const GpuBuffer& pixel_buffer, int plane);
-#endif
+
+  // Convenience function for converting an ImageFrame to GpuBuffer and then
+  // accessing it as a texture.
+  GlTexture CreateSourceTexture(const ImageFrame& image_frame);
 
   // Extracts GpuBuffer dimensions without creating a texture.
   ABSL_DEPRECATED("Use width and height methods on GpuBuffer instead")
   void GetGpuBufferDimensions(const GpuBuffer& pixel_buffer, int* width,
                               int* height);
 
-  // Creates a texture representing an output frame, and manages sync token.
+  // Gives access to an OpenGL texture for writing (rendering) a new frame.
   // TODO: This should either return errors or a status.
   GlTexture CreateDestinationTexture(
       int output_width, int output_height,

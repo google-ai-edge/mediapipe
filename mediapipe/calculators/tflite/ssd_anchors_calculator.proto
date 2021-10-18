@@ -24,20 +24,20 @@ message SsdAnchorsCalculatorOptions {
     optional SsdAnchorsCalculatorOptions ext = 247258239;
   }
   // Size of input images.
-  required int32 input_size_width = 1;
-  required int32 input_size_height = 2;
+  optional int32 input_size_width = 1;   // required
+  optional int32 input_size_height = 2;  // required
 
   // Min and max scales for generating anchor boxes on feature maps.
-  required float min_scale = 3;
-  required float max_scale = 4;
+  optional float min_scale = 3;  // required
+  optional float max_scale = 4;  // required
 
   // The offset for the center of anchors. The value is in the scale of stride.
   // E.g. 0.5 meaning 0.5 * |current_stride| in pixels.
-  required float anchor_offset_x = 5 [default = 0.5];
-  required float anchor_offset_y = 6 [default = 0.5];
+  optional float anchor_offset_x = 5 [default = 0.5];  // required
+  optional float anchor_offset_y = 6 [default = 0.5];  // required
 
   // Number of output feature maps to generate the anchors on.
-  required int32 num_layers = 7;
+  optional int32 num_layers = 7;  // required
   // Sizes of output feature maps to create anchors. Either feature_map size or
   // stride should be provided.
   repeated int32 feature_map_width = 8;
