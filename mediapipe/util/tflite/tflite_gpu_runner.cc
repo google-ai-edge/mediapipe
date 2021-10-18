@@ -213,8 +213,9 @@ absl::Status TFLiteGPURunner::InitializeOpenCL(
       cl::NewInferenceEnvironment(env_options, &cl_environment_, &properties));
   MP_RETURN_IF_ERROR(cl_environment_->NewInferenceBuilder(
       cl_options, std::move(*graph_cl_), builder));
-#endif
   return absl::OkStatus();
+#endif
+  return mediapipe::UnimplementedError("OpenCL is only supported on Android currently.");
 }
 
 }  // namespace gpu
