@@ -215,7 +215,7 @@ absl::Status TFLiteGPURunner::InitializeOpenCL(
       cl_options, std::move(*graph_cl_), builder));
   return absl::OkStatus();
 #endif
-  return mediapipe::UnimplementedError("OpenCL is only supported on Android currently.");
+  return mediapipe::UnimplementedError("OpenCL is currently only supported on Android.");
 }
 
 }  // namespace gpu
