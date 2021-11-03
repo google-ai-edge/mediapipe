@@ -5,6 +5,11 @@ type: "PalmDetectionGpu"
 # GPU image. (GpuBuffer)
 input_stream: "IMAGE:image"
 
+# Complexity of the palm detection model: 0 or 1. Accuracy as well as inference
+# latency generally go up with the model complexity. If unspecified, functions
+# as set to 1. (int)
+input_side_packet: "MODEL_COMPLEXITY:model_complexity"
+
 # Detected palms. (std::vector<Detection>)
 # NOTE: there will not be an output packet in the DETECTIONS stream for this
 # particular timestamp if none of palms detected. However, the MediaPipe
@@ -21,11 +26,11 @@ node {
   output_stream: "LETTERBOX_PADDING:letterbox_padding"
   options: {
     [mediapipe.ImageToTensorCalculatorOptions.ext] {
-      output_tensor_width: 128
-      output_tensor_height: 128
+      output_tensor_width: 192
+      output_tensor_height: 192
       keep_aspect_ratio: true
       output_tensor_float_range {
-        min: -1.0
+        min: 0.0
         max: 1.0
       }
       border_mode: BORDER_ZERO
@@ -45,6 +50,13 @@ node {
   }
 }
 
+# Loads the palm detection TF Lite model.
+node {
+  calculator: "PalmDetectionModelLoader"
+  input_side_packet: "MODEL_COMPLEXITY:model_complexity"
+  output_side_packet: "MODEL:model"
+}
+
 # Runs a TensorFlow Lite model on GPU that takes an image tensor and outputs a
 # vector of tensors representing, for instance, detection boxes/keypoints and
 # scores.
@@ -53,10 +65,10 @@ node {
   input_stream: "TENSORS:input_tensor"
   output_stream: "TENSORS:detection_tensors"
   input_side_packet: "CUSTOM_OP_RESOLVER:opresolver"
+  input_side_packet: "MODEL:model"
   options: {
     [mediapipe.InferenceCalculatorOptions.ext] {
-      model_path: "mediapipe/modules/palm_detection/palm_detection.tflite"
-      use_gpu: true
+      delegate { gpu {} }
     }
   }
 }
@@ -71,8 +83,8 @@ node {
       num_layers: 4
       min_scale: 0.1484375
       max_scale: 0.75
-      input_size_height: 128
-      input_size_width: 128
+      input_size_width: 192
+      input_size_height: 192
       anchor_offset_x: 0.5
       anchor_offset_y: 0.5
       strides: 8
@@ -96,7 +108,7 @@ node {
   options: {
     [mediapipe.TensorsToDetectionsCalculatorOptions.ext] {
       num_classes: 1
-      num_boxes: 896
+      num_boxes: 2016
       num_coords: 18
       box_coord_offset: 0
       keypoint_coord_offset: 4
@@ -106,10 +118,10 @@ node {
       score_clipping_thresh: 100.0
       reverse_output_order: true
 
-      x_scale: 128.0
-      y_scale: 128.0
-      h_scale: 128.0
-      w_scale: 128.0
+      x_scale: 192.0
+      y_scale: 192.0
+      w_scale: 192.0
+      h_scale: 192.0
       min_score_thresh: 0.5
     }
   }

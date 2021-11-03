@@ -17,7 +17,6 @@ package com.google.mediapipe.solutions.facedetection;
 import android.content.Context;
 import com.google.common.collect.ImmutableList;
 import com.google.mediapipe.formats.proto.DetectionProto.Detection;
-import com.google.mediapipe.formats.proto.LocationDataProto.LocationData.RelativeKeypoint;
 import com.google.mediapipe.framework.MediaPipeException;
 import com.google.mediapipe.framework.Packet;
 import com.google.mediapipe.solutioncore.ErrorListener;
@@ -103,28 +102,5 @@ public class FaceDetection extends ImageSolutionBase {
   public void setErrorListener(@Nullable ErrorListener listener) {
     this.outputHandler.setErrorListener(listener);
     this.errorListener = listener;
-  }
-
-  /**
-   * Gets a specific face keypoint by face index and face keypoint type.
-   *
-   * @param result the returned {@link FaceDetectionResult} object.
-   * @param faceIndex the face index. A smaller index maps to a detected face with a higher
-   *     confidence score.
-   * @param faceKeypointType the face keypoint type defined in {@link FaceKeypoint}.
-   */
-  public static RelativeKeypoint getFaceKeypoint(
-      FaceDetectionResult result,
-      int faceIndex,
-      @FaceKeypoint.FaceKeypointType int faceKeypointType) {
-    if (result == null
-        || faceIndex >= result.multiFaceDetections().size()
-        || faceKeypointType >= FaceKeypoint.NUM_KEY_POINTS) {
-      return RelativeKeypoint.getDefaultInstance();
-    }
-    Detection detection = result.multiFaceDetections().get(faceIndex);
-    float x = detection.getLocationData().getRelativeKeypoints(faceKeypointType).getX();
-    float y = detection.getLocationData().getRelativeKeypoints(faceKeypointType).getY();
-    return RelativeKeypoint.newBuilder().setX(x).setY(y).build();
   }
 }

@@ -32,7 +32,9 @@ namespace mediapipe {
 class GlCalculatorHelperImpl;
 
 // Implements a GPU memory buffer as an OpenGL texture. For internal use.
-class GlTextureBuffer : public mediapipe::internal::GpuBufferStorage {
+class GlTextureBuffer
+    : public mediapipe::internal::GpuBufferStorageImpl<
+          GlTextureBuffer, mediapipe::internal::ViewProvider<GlTextureView>> {
  public:
   // This is called when the texture buffer is deleted. It is passed a sync
   // token created at that time on the GlContext. If the GlTextureBuffer has
@@ -86,11 +88,12 @@ class GlTextureBuffer : public mediapipe::internal::GpuBufferStorage {
   int height() const { return height_; }
   GpuBufferFormat format() const { return format_; }
 
-  GlTextureView GetGlTextureReadView(std::shared_ptr<GpuBuffer> gpu_buffer,
-                                     int plane) const override;
-  GlTextureView GetGlTextureWriteView(std::shared_ptr<GpuBuffer> gpu_buffer,
-                                      int plane) override;
-  void ViewDoneWriting(const GlTextureView& view) override;
+  GlTextureView GetReadView(mediapipe::internal::types<GlTextureView>,
+                            std::shared_ptr<GpuBuffer> gpu_buffer,
+                            int plane) const override;
+  GlTextureView GetWriteView(mediapipe::internal::types<GlTextureView>,
+                             std::shared_ptr<GpuBuffer> gpu_buffer,
+                             int plane) override;
   std::unique_ptr<ImageFrame> AsImageFrame() const override;
 
   // If this texture is going to be used outside of the context that produced
@@ -141,6 +144,8 @@ class GlTextureBuffer : public mediapipe::internal::GpuBufferStorage {
   // provided later via glTexSubImage2D.
   // Returns true on success.
   bool CreateInternal(const void* data, int alignment = 4);
+
+  void ViewDoneWriting(const GlTextureView& view);
 
   friend class GlCalculatorHelperImpl;
 

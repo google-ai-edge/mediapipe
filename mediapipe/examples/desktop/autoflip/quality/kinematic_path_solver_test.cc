@@ -435,6 +435,23 @@ TEST(KinematicPathSolverTest, PassBorderTest) {
   EXPECT_FLOAT_EQ(state, 404.56668);
 }
 
+TEST(KinematicPathSolverTest, PassUpdateUpdateMinMaxLocationIfUninitialized) {
+  KinematicOptions options;
+  options.set_min_motion_to_reframe(2.0);
+  options.set_max_velocity(1000);
+  KinematicPathSolver solver(options, 0, 1000, 1000.0 / kWidthFieldOfView);
+  MP_EXPECT_OK(solver.UpdateMinMaxLocation(0, 500));
+}
+
+TEST(KinematicPathSolverTest, PassUpdateUpdateMinMaxLocationIfInitialized) {
+  KinematicOptions options;
+  options.set_min_motion_to_reframe(2.0);
+  options.set_max_velocity(1000);
+  KinematicPathSolver solver(options, 0, 1000, 1000.0 / kWidthFieldOfView);
+  MP_ASSERT_OK(solver.AddObservation(500, kMicroSecInSec * 0));
+  MP_EXPECT_OK(solver.UpdateMinMaxLocation(0, 500));
+}
+
 }  // namespace
 }  // namespace autoflip
 }  // namespace mediapipe

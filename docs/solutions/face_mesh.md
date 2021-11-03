@@ -612,9 +612,9 @@ ActivityResultLauncher<Intent> imageGetter =
             }
           }
         });
-Intent gallery = new Intent(
-    Intent.ACTION_PICK, MediaStore.Images.Media.INTERNAL_CONTENT_URI);
-imageGetter.launch(gallery);
+Intent pickImageIntent = new Intent(Intent.ACTION_PICK);
+pickImageIntent.setDataAndType(MediaStore.Images.Media.INTERNAL_CONTENT_URI, "image/*");
+imageGetter.launch(pickImageIntent);
 ```
 
 #### Video Input
@@ -678,9 +678,9 @@ ActivityResultLauncher<Intent> videoGetter =
             }
           }
         });
-Intent gallery =
-    new Intent(Intent.ACTION_PICK, MediaStore.Video.Media.INTERNAL_CONTENT_URI);
-videoGetter.launch(gallery);
+Intent pickVideoIntent = new Intent(Intent.ACTION_PICK);
+pickVideoIntent.setDataAndType(MediaStore.Video.Media.INTERNAL_CONTENT_URI, "video/*");
+videoGetter.launch(pickVideoIntent);
 ```
 
 ## Example Apps

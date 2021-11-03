@@ -32,9 +32,9 @@ public class FaceDetectionResultImageView extends AppCompatImageView {
   private static final String TAG = "FaceDetectionResultImageView";
 
   private static final int KEYPOINT_COLOR = Color.RED;
-  private static final int KEYPOINT_RADIUS = 15;
+  private static final int KEYPOINT_RADIUS = 8; // Pixels
   private static final int BBOX_COLOR = Color.GREEN;
-  private static final int BBOX_THICKNESS = 10;
+  private static final int BBOX_THICKNESS = 5; // Pixels
   private Bitmap latest;
 
   public FaceDetectionResultImageView(Context context) {

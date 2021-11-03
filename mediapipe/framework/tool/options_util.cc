@@ -65,9 +65,9 @@ absl::Status CopyLiteralOptions(CalculatorGraphConfig::Node parent_node,
 
   OptionsSyntaxUtil syntax_util;
   for (auto& node : *config->mutable_node()) {
-    FieldData node_data = options_field_util::AsFieldData(node);
-
     for (const std::string& option_def : node.option_value()) {
+      FieldData node_data = options_field_util::AsFieldData(node);
+
       std::vector<absl::string_view> tag_and_name =
           syntax_util.StrSplitTags(option_def);
       std::string graph_tag = syntax_util.OptionFieldsTag(tag_and_name[1]);
@@ -96,6 +96,7 @@ absl::Status CopyLiteralOptions(CalculatorGraphConfig::Node parent_node,
       status.Update(MergeField(node_path, packet_data, &node_options));
       options_field_util::SetOptionsMessage(node_options, &node);
     }
+    node.clear_option_value();
   }
   return status;
 }

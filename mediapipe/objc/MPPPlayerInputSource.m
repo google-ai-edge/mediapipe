@@ -127,6 +127,7 @@ static CVReturn renderCallback(CVDisplayLinkRef displayLink, const CVTimeStamp* 
 
 - (void)videoUpdateIfNeeded {
   CMTime timestamp = [_videoItem currentTime];
+
   if ([_videoOutput hasNewPixelBufferForItemTime:timestamp]) {
     CVPixelBufferRef pixelBuffer =
         [_videoOutput copyPixelBufferForItemTime:timestamp itemTimeForDisplay:nil];
@@ -139,6 +140,12 @@ static CVReturn renderCallback(CVDisplayLinkRef displayLink, const CVTimeStamp* 
         }
         CFRelease(pixelBuffer);
       });
+  } else if (!_videoDisplayLink.paused && _videoPlayer.rate == 0) {
+    // The video might be paused by the operating system fo other reasons not catched by the context
+    // of an interruption. If this condition happens the @c _videoDisplayLink will not have a
+    // paused state, while the _videoPlayer will have rate 0 AKA paused. In this scenario we restart
+    // the video playback.
+    [_videoPlayer play];
   }
 }
 

@@ -224,7 +224,8 @@ void GlTextureBuffer::WaitForConsumersOnGpu() {
   // precisely, on only one GL context.
 }
 
-GlTextureView GlTextureBuffer::GetGlTextureReadView(
+GlTextureView GlTextureBuffer::GetReadView(
+    mediapipe::internal::types<GlTextureView>,
     std::shared_ptr<GpuBuffer> gpu_buffer, int plane) const {
   auto gl_context = GlContext::GetCurrent();
   CHECK(gl_context);
@@ -241,7 +242,8 @@ GlTextureView GlTextureBuffer::GetGlTextureReadView(
                        nullptr);
 }
 
-GlTextureView GlTextureBuffer::GetGlTextureWriteView(
+GlTextureView GlTextureBuffer::GetWriteView(
+    mediapipe::internal::types<GlTextureView>,
     std::shared_ptr<GpuBuffer> gpu_buffer, int plane) {
   auto gl_context = GlContext::GetCurrent();
   CHECK(gl_context);
@@ -341,7 +343,8 @@ std::unique_ptr<ImageFrame> GlTextureBuffer::AsImageFrame() const {
   ImageFormat::Format image_format = ImageFormatForGpuBufferFormat(format());
   auto output = absl::make_unique<ImageFrame>(
       image_format, width(), height(), ImageFrame::kGlDefaultAlignmentBoundary);
-  auto view = GetGlTextureReadView(nullptr, 0);
+  auto view =
+      GetReadView(mediapipe::internal::types<GlTextureView>{}, nullptr, 0);
   ReadTexture(view, format(), output->MutablePixelData(),
               output->PixelDataSize());
   return output;

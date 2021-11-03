@@ -12,7 +12,9 @@ namespace mediapipe {
 class GlContext;
 
 class GpuBufferStorageCvPixelBuffer
-    : public mediapipe::internal::GpuBufferStorage,
+    : public mediapipe::internal::GpuBufferStorageImpl<
+          GpuBufferStorageCvPixelBuffer,
+          mediapipe::internal::ViewProvider<GlTextureView>>,
       public CFHolder<CVPixelBufferRef> {
  public:
   using CFHolder<CVPixelBufferRef>::CFHolder;
@@ -28,12 +30,16 @@ class GpuBufferStorageCvPixelBuffer
     return GpuBufferFormatForCVPixelFormat(
         CVPixelBufferGetPixelFormatType(**this));
   }
-  GlTextureView GetGlTextureReadView(std::shared_ptr<GpuBuffer> gpu_buffer,
-                                     int plane) const override;
-  GlTextureView GetGlTextureWriteView(std::shared_ptr<GpuBuffer> gpu_buffer,
-                                      int plane) override;
+  GlTextureView GetReadView(mediapipe::internal::types<GlTextureView>,
+                            std::shared_ptr<GpuBuffer> gpu_buffer,
+                            int plane) const override;
+  GlTextureView GetWriteView(mediapipe::internal::types<GlTextureView>,
+                             std::shared_ptr<GpuBuffer> gpu_buffer,
+                             int plane) override;
   std::unique_ptr<ImageFrame> AsImageFrame() const override;
-  void ViewDoneWriting(const GlTextureView& view) override;
+
+ private:
+  void ViewDoneWriting(const GlTextureView& view);
 };
 
 }  // namespace mediapipe

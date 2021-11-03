@@ -95,13 +95,12 @@ public class ImageSolutionResult implements SolutionResult {
     }
   }
 
-  // Releases image packet and the underlying data.
-  void releaseImagePackets() {
-    imagePacket.release();
+  // Clears the underlying image packets to prevent the callers from accessing the invalid packets
+  // outside of the output callback method.
+  void clearImagePackets() {
+    imagePacket = null;
     if (imageResultPackets != null) {
-      for (Packet p : imageResultPackets) {
-        p.release();
-      }
+      imageResultPackets.clear();
     }
   }
 }

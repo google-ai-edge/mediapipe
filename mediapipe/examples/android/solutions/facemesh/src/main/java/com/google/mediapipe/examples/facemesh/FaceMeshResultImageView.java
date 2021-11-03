@@ -34,19 +34,19 @@ public class FaceMeshResultImageView extends AppCompatImageView {
   private static final String TAG = "FaceMeshResultImageView";
 
   private static final int TESSELATION_COLOR = Color.parseColor("#70C0C0C0");
-  private static final int TESSELATION_THICKNESS = 5;
+  private static final int TESSELATION_THICKNESS = 3; // Pixels
   private static final int RIGHT_EYE_COLOR = Color.parseColor("#FF3030");
-  private static final int RIGHT_EYE_THICKNESS = 8;
+  private static final int RIGHT_EYE_THICKNESS = 5; // Pixels
   private static final int RIGHT_EYEBROW_COLOR = Color.parseColor("#FF3030");
-  private static final int RIGHT_EYEBROW_THICKNESS = 8;
+  private static final int RIGHT_EYEBROW_THICKNESS = 5; // Pixels
   private static final int LEFT_EYE_COLOR = Color.parseColor("#30FF30");
-  private static final int LEFT_EYE_THICKNESS = 8;
+  private static final int LEFT_EYE_THICKNESS = 5; // Pixels
   private static final int LEFT_EYEBROW_COLOR = Color.parseColor("#30FF30");
-  private static final int LEFT_EYEBROW_THICKNESS = 8;
+  private static final int LEFT_EYEBROW_THICKNESS = 5; // Pixels
   private static final int FACE_OVAL_COLOR = Color.parseColor("#E0E0E0");
-  private static final int FACE_OVAL_THICKNESS = 8;
+  private static final int FACE_OVAL_THICKNESS = 5; // Pixels
   private static final int LIPS_COLOR = Color.parseColor("#E0E0E0");
-  private static final int LIPS_THICKNESS = 8;
+  private static final int LIPS_THICKNESS = 5; // Pixels
   private Bitmap latest;
 
   public FaceMeshResultImageView(Context context) {

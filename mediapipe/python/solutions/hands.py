@@ -124,7 +124,10 @@ class Hands(SolutionBase):
             'handlandmarkcpu__ThresholdingCalculator.threshold':
                 min_tracking_confidence,
         },
-        outputs=['multi_hand_landmarks', 'multi_handedness'])
+        outputs=[
+            'multi_hand_landmarks', 'multi_hand_world_landmarks',
+            'multi_handedness'
+        ])
 
   def process(self, image: np.ndarray) -> NamedTuple:
     """Processes an RGB image and returns the hand landmarks and handedness of each detected hand.
@@ -137,10 +140,14 @@ class Hands(SolutionBase):
       ValueError: If the input image is not three channel RGB.
 
     Returns:
-      A NamedTuple object with two fields: a "multi_hand_landmarks" field that
-      contains the hand landmarks on each detected hand and a "multi_handedness"
-      field that contains the handedness (left v.s. right hand) of the detected
-      hand.
+      A NamedTuple object with the following fields:
+        1) a "multi_hand_landmarks" field that contains the hand landmarks on
+           each detected hand.
+        2) a "multi_hand_world_landmarks" field that contains the hand landmarks
+           on each detected hand in real-world 3D coordinates that are in meters
+           with the origin at the hand's approximate geometric center.
+        3) a "multi_handedness" field that contains the handedness (left v.s.
+           right hand) of the detected hand.
     """
 
     return super().process(input_data={'image': image})

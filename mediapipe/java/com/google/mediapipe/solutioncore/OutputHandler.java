@@ -90,12 +90,9 @@ public class OutputHandler<T extends SolutionResult> {
         Log.e(TAG, "Error occurs when getting MediaPipe solution result. " + e);
       }
     } finally {
-      for (Packet packet : packets) {
-        packet.release();
-      }
       if (solutionResult instanceof ImageSolutionResult) {
         ImageSolutionResult imageSolutionResult = (ImageSolutionResult) solutionResult;
-        imageSolutionResult.releaseImagePackets();
+        imageSolutionResult.clearImagePackets();
       }
     }
   }

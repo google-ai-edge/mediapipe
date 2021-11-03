@@ -11,7 +11,8 @@ typedef CVOpenGLTextureRef CVTextureType;
 typedef CVOpenGLESTextureRef CVTextureType;
 #endif  // TARGET_OS_OSX
 
-GlTextureView GpuBufferStorageCvPixelBuffer::GetGlTextureReadView(
+GlTextureView GpuBufferStorageCvPixelBuffer::GetReadView(
+    mediapipe::internal::types<GlTextureView>,
     std::shared_ptr<GpuBuffer> gpu_buffer, int plane) const {
   CVReturn err;
   auto gl_context = GlContext::GetCurrent();
@@ -58,11 +59,13 @@ GlTextureView GpuBufferStorageCvPixelBuffer::GetGlTextureReadView(
 #endif  // TARGET_OS_OSX
 }
 
-GlTextureView GpuBufferStorageCvPixelBuffer::GetGlTextureWriteView(
+GlTextureView GpuBufferStorageCvPixelBuffer::GetWriteView(
+    mediapipe::internal::types<GlTextureView>,
     std::shared_ptr<GpuBuffer> gpu_buffer, int plane) {
   // For this storage there is currently no difference between read and write
   // views, so we delegate to the read method.
-  return GetGlTextureReadView(std::move(gpu_buffer), plane);
+  return GetReadView(mediapipe::internal::types<GlTextureView>{},
+                     std::move(gpu_buffer), plane);
 }
 
 void GpuBufferStorageCvPixelBuffer::ViewDoneWriting(const GlTextureView& view) {

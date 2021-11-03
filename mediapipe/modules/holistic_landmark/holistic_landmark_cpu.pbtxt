@@ -35,6 +35,7 @@
 #     input_side_packet: "SMOOTH_LANDMARKS:smooth_landmarks"
 #     input_side_packet: "ENABLE_SEGMENTATION:enable_segmentation"
 #     input_side_packet: "SMOOTH_SEGMENTATION:smooth_segmentation"
+#     input_side_packet: "REFINE_FACE_LANDMARKS:refine_face_landmarks"
 #     input_side_packet: "USE_PREV_LANDMARKS:use_prev_landmarks"
 #     output_stream: "POSE_LANDMARKS:pose_landmarks"
 #     output_stream: "FACE_LANDMARKS:face_landmarks"
@@ -69,6 +70,11 @@ input_side_packet: "ENABLE_SEGMENTATION:enable_segmentation"
 # Whether to filter segmentation mask across different input images to reduce
 # jitter. If unspecified, functions as set to true. (bool)
 input_side_packet: "SMOOTH_SEGMENTATION:smooth_segmentation"
+
+# Whether to run the face landmark model with attention on lips and eyes to
+# provide more accuracy, and additionally output iris landmarks. If unspecified,
+# functions as set to false. (bool)
+input_side_packet: "REFINE_FACE_LANDMARKS:refine_face_landmarks"
 
 # Whether landmarks on the previous image should be used to help localize
 # landmarks on the current image. (bool)
@@ -135,5 +141,6 @@ node {
   calculator: "FaceLandmarksFromPoseCpu"
   input_stream: "IMAGE:image"
   input_stream: "FACE_LANDMARKS_FROM_POSE:face_landmarks_from_pose"
+  input_side_packet: "REFINE_LANDMARKS:refine_face_landmarks"
   output_stream: "FACE_LANDMARKS:face_landmarks"
 }

@@ -17,6 +17,7 @@ package com.google.mediapipe.solutions.hands;
 import android.graphics.Bitmap;
 import com.google.auto.value.AutoBuilder;
 import com.google.common.collect.ImmutableList;
+import com.google.mediapipe.formats.proto.LandmarkProto.LandmarkList;
 import com.google.mediapipe.formats.proto.LandmarkProto.NormalizedLandmarkList;
 import com.google.mediapipe.formats.proto.ClassificationProto.Classification;
 import com.google.mediapipe.framework.Packet;
@@ -31,14 +32,17 @@ import java.util.List;
  */
 public class HandsResult extends ImageSolutionResult {
   private final ImmutableList<NormalizedLandmarkList> multiHandLandmarks;
+  private final ImmutableList<LandmarkList> multiHandWorldLandmarks;
   private final ImmutableList<Classification> multiHandedness;
 
   HandsResult(
       ImmutableList<NormalizedLandmarkList> multiHandLandmarks,
+      ImmutableList<LandmarkList> multiHandWorldLandmarks,
       ImmutableList<Classification> multiHandedness,
       Packet imagePacket,
       long timestamp) {
     this.multiHandLandmarks = multiHandLandmarks;
+    this.multiHandWorldLandmarks = multiHandWorldLandmarks;
     this.multiHandedness = multiHandedness;
     this.timestamp = timestamp;
     this.imagePacket = imagePacket;
@@ -51,6 +55,12 @@ public class HandsResult extends ImageSolutionResult {
   // magnitude of z uses roughly the same scale as x.
   public ImmutableList<NormalizedLandmarkList> multiHandLandmarks() {
     return multiHandLandmarks;
+  }
+
+  // Collection of detected/tracked hands' landmarks in real-world 3D coordinates that are in meters
+  // with the origin at the hand's approximate geometric center.
+  public ImmutableList<LandmarkList> multiHandWorldLandmarks() {
+    return multiHandWorldLandmarks;
   }
 
   // Collection of handedness of the detected/tracked hands (i.e. is it a left or right hand). Each
@@ -69,6 +79,8 @@ public class HandsResult extends ImageSolutionResult {
   @AutoBuilder
   public abstract static class Builder {
     abstract Builder setMultiHandLandmarks(List<NormalizedLandmarkList> value);
+
+    abstract Builder setMultiHandWorldLandmarks(List<LandmarkList> value);
 
     abstract Builder setMultiHandedness(List<Classification> value);
 

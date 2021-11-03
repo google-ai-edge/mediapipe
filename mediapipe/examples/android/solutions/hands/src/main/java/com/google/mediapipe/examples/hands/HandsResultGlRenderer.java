@@ -28,7 +28,16 @@ import java.util.List;
 public class HandsResultGlRenderer implements ResultGlRenderer<HandsResult> {
   private static final String TAG = "HandsResultGlRenderer";
 
-  private static final float CONNECTION_THICKNESS = 20.0f;
+  private static final float[] LEFT_HAND_CONNECTION_COLOR = new float[] {0.2f, 1f, 0.2f, 1f};
+  private static final float[] RIGHT_HAND_CONNECTION_COLOR = new float[] {1f, 0.2f, 0.2f, 1f};
+  private static final float CONNECTION_THICKNESS = 25.0f;
+  private static final float[] LEFT_HAND_HOLLOW_CIRCLE_COLOR = new float[] {0.2f, 1f, 0.2f, 1f};
+  private static final float[] RIGHT_HAND_HOLLOW_CIRCLE_COLOR = new float[] {1f, 0.2f, 0.2f, 1f};
+  private static final float HOLLOW_CIRCLE_RADIUS = 0.01f;
+  private static final float[] LEFT_HAND_LANDMARK_COLOR = new float[] {1f, 0.2f, 0.2f, 1f};
+  private static final float[] RIGHT_HAND_LANDMARK_COLOR = new float[] {0.2f, 1f, 0.2f, 1f};
+  private static final float LANDMARK_RADIUS = 0.008f;
+  private static final int NUM_SEGMENTS = 120;
   private static final String VERTEX_SHADER =
       "uniform mat4 uProjectionMatrix;\n"
           + "attribute vec4 vPosition;\n"
@@ -37,12 +46,14 @@ public class HandsResultGlRenderer implements ResultGlRenderer<HandsResult> {
           + "}";
   private static final String FRAGMENT_SHADER =
       "precision mediump float;\n"
+          + "uniform vec4 uColor;\n"
           + "void main() {\n"
-          + "  gl_FragColor = vec4(0, 1, 0, 1);\n"
+          + "  gl_FragColor = uColor;\n"
           + "}";
   private int program;
   private int positionHandle;
   private int projectionMatrixHandle;
+  private int colorHandle;
 
   private int loadShader(int type, String shaderCode) {
     int shader = GLES20.glCreateShader(type);
@@ -61,6 +72,7 @@ public class HandsResultGlRenderer implements ResultGlRenderer<HandsResult> {
     GLES20.glLinkProgram(program);
     positionHandle = GLES20.glGetAttribLocation(program, "vPosition");
     projectionMatrixHandle = GLES20.glGetUniformLocation(program, "uProjectionMatrix");
+    colorHandle = GLES20.glGetUniformLocation(program, "uColor");
   }
 
   @Override
@@ -74,7 +86,22 @@ public class HandsResultGlRenderer implements ResultGlRenderer<HandsResult> {
 
     int numHands = result.multiHandLandmarks().size();
     for (int i = 0; i < numHands; ++i) {
-      drawLandmarks(result.multiHandLandmarks().get(i).getLandmarkList());
+      boolean isLeftHand = result.multiHandedness().get(i).getLabel().equals("Left");
+      drawConnections(
+          result.multiHandLandmarks().get(i).getLandmarkList(),
+          isLeftHand ? LEFT_HAND_CONNECTION_COLOR : RIGHT_HAND_CONNECTION_COLOR);
+      for (NormalizedLandmark landmark : result.multiHandLandmarks().get(i).getLandmarkList()) {
+        // Draws the landmark.
+        drawCircle(
+            landmark.getX(),
+            landmark.getY(),
+            isLeftHand ? LEFT_HAND_LANDMARK_COLOR : RIGHT_HAND_LANDMARK_COLOR);
+        // Draws a hollow circle around the landmark.
+        drawHollowCircle(
+            landmark.getX(),
+            landmark.getY(),
+            isLeftHand ? LEFT_HAND_HOLLOW_CIRCLE_COLOR : RIGHT_HAND_HOLLOW_CIRCLE_COLOR);
+      }
     }
   }
 
@@ -87,7 +114,8 @@ public class HandsResultGlRenderer implements ResultGlRenderer<HandsResult> {
     GLES20.glDeleteProgram(program);
   }
 
-  private void drawLandmarks(List<NormalizedLandmark> handLandmarkList) {
+  private void drawConnections(List<NormalizedLandmark> handLandmarkList, float[] colorArray) {
+    GLES20.glUniform4fv(colorHandle, 1, colorArray, 0);
     for (Hands.Connection c : Hands.HAND_CONNECTIONS) {
       NormalizedLandmark start = handLandmarkList.get(c.start());
       NormalizedLandmark end = handLandmarkList.get(c.end());
@@ -102,5 +130,52 @@ public class HandsResultGlRenderer implements ResultGlRenderer<HandsResult> {
       GLES20.glVertexAttribPointer(positionHandle, 2, GLES20.GL_FLOAT, false, 0, vertexBuffer);
       GLES20.glDrawArrays(GLES20.GL_LINES, 0, 2);
     }
+  }
+
+  private void drawCircle(float x, float y, float[] colorArray) {
+    GLES20.glUniform4fv(colorHandle, 1, colorArray, 0);
+    int vertexCount = NUM_SEGMENTS + 2;
+    float[] vertices = new float[vertexCount * 3];
+    vertices[0] = x;
+    vertices[1] = y;
+    vertices[2] = 0;
+    for (int i = 1; i < vertexCount; i++) {
+      float angle = 2.0f * i * (float) Math.PI / NUM_SEGMENTS;
+      int currentIndex = 3 * i;
+      vertices[currentIndex] = x + (float) (LANDMARK_RADIUS * Math.cos(angle));
+      vertices[currentIndex + 1] = y + (float) (LANDMARK_RADIUS * Math.sin(angle));
+      vertices[currentIndex + 2] = 0;
+    }
+    FloatBuffer vertexBuffer =
+        ByteBuffer.allocateDirect(vertices.length * 4)
+            .order(ByteOrder.nativeOrder())
+            .asFloatBuffer()
+            .put(vertices);
+    vertexBuffer.position(0);
+    GLES20.glEnableVertexAttribArray(positionHandle);
+    GLES20.glVertexAttribPointer(positionHandle, 3, GLES20.GL_FLOAT, false, 0, vertexBuffer);
+    GLES20.glDrawArrays(GLES20.GL_TRIANGLE_FAN, 0, vertexCount);
+  }
+
+  private void drawHollowCircle(float x, float y, float[] colorArray) {
+    GLES20.glUniform4fv(colorHandle, 1, colorArray, 0);
+    int vertexCount = NUM_SEGMENTS + 1;
+    float[] vertices = new float[vertexCount * 3];
+    for (int i = 0; i < vertexCount; i++) {
+      float angle = 2.0f * i * (float) Math.PI / NUM_SEGMENTS;
+      int currentIndex = 3 * i;
+      vertices[currentIndex] = x + (float) (HOLLOW_CIRCLE_RADIUS * Math.cos(angle));
+      vertices[currentIndex + 1] = y + (float) (HOLLOW_CIRCLE_RADIUS * Math.sin(angle));
+      vertices[currentIndex + 2] = 0;
+    }
+    FloatBuffer vertexBuffer =
+        ByteBuffer.allocateDirect(vertices.length * 4)
+            .order(ByteOrder.nativeOrder())
+            .asFloatBuffer()
+            .put(vertices);
+    vertexBuffer.position(0);
+    GLES20.glEnableVertexAttribArray(positionHandle);
+    GLES20.glVertexAttribPointer(positionHandle, 3, GLES20.GL_FLOAT, false, 0, vertexBuffer);
+    GLES20.glDrawArrays(GLES20.GL_LINE_STRIP, 0, vertexCount);
   }
 }

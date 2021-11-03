@@ -24,7 +24,6 @@ package(default_visibility = ["//visibility:public"])
 exports_files([
     "hand_landmark_full.tflite",
     "hand_landmark_lite.tflite",
-    "hand_landmark_sparse.tflite",
     "handedness.txt",
 ])
 
@@ -56,6 +55,7 @@ mediapipe_simple_subgraph(
         "//mediapipe/calculators/util:landmark_letterbox_removal_calculator",
         "//mediapipe/calculators/util:landmark_projection_calculator",
         "//mediapipe/calculators/util:thresholding_calculator",
+        "//mediapipe/calculators/util:world_landmark_projection_calculator",
     ],
 )
 
@@ -75,6 +75,7 @@ mediapipe_simple_subgraph(
         "//mediapipe/calculators/util:landmark_letterbox_removal_calculator",
         "//mediapipe/calculators/util:landmark_projection_calculator",
         "//mediapipe/calculators/util:thresholding_calculator",
+        "//mediapipe/calculators/util:world_landmark_projection_calculator",
     ],
 )
 

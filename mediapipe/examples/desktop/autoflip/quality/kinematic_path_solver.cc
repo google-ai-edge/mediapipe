@@ -282,8 +282,12 @@ absl::Status KinematicPathSolver::UpdatePixelsPerDegree(
 
 absl::Status KinematicPathSolver::UpdateMinMaxLocation(const int min_location,
                                                        const int max_location) {
-  RET_CHECK(initialized_)
-      << "UpdateMinMaxLocation called before first observation added.";
+  if (!initialized_) {
+    max_location_ = max_location;
+    min_location_ = min_location;
+    return absl::OkStatus();
+  }
+
   double prior_distance = max_location_ - min_location_;
   double updated_distance = max_location - min_location;
   double scale_change = updated_distance / prior_distance;

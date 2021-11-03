@@ -184,8 +184,11 @@ JNIEXPORT jobjectArray JNICALL PACKET_GETTER_METHOD(nativeGetProtoVector)(
   }
   const std::vector<const ::mediapipe::proto_ns::MessageLite*>& proto_vector =
       get_proto_vector.value();
+  // TODO: move to register natives.
+  jclass byte_array_cls = env->FindClass("[B");
   jobjectArray proto_array =
-      env->NewObjectArray(proto_vector.size(), env->FindClass("[B"), nullptr);
+      env->NewObjectArray(proto_vector.size(), byte_array_cls, nullptr);
+  env->DeleteLocalRef(byte_array_cls);
   for (int i = 0; i < proto_vector.size(); ++i) {
     const ::mediapipe::proto_ns::MessageLite* proto_message = proto_vector[i];
 

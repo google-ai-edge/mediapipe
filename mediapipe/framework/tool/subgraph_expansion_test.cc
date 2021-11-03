@@ -656,7 +656,6 @@ TEST(SubgraphExpansionTest, SimpleSubgraphOptionsUsage) {
               chain_length: 3
             }
           }
-          option_value: "chain_length:options/chain_length"
         }
         type: "MoonSubgraph"
         graph_options {
@@ -664,6 +663,85 @@ TEST(SubgraphExpansionTest, SimpleSubgraphOptionsUsage) {
         }
       )pb");
   EXPECT_THAT(moon_subgraph, mediapipe::EqualsProto(expected_graph));
+}
+
+// Shows ExpandSubgraphs applied twice. "option_value" fields are evaluated
+// and removed on the first ExpandSubgraphs call.  If "option_value" fields
+// are not removed during ExpandSubgraphs, they evaluate incorrectly on the
+// second ExpandSubgraphs call and this test fails on "expected_node_options".
+TEST(SubgraphExpansionTest, SimpleSubgraphOptionsTwice) {
+  GraphRegistry graph_registry;
+
+  // Register a simple-subgraph that accepts graph options.
+  auto moon_subgraph =
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
+        type: "MoonSubgraph"
+        graph_options: {
+          [type.googleapis.com/mediapipe.NodeChainSubgraphOptions] {}
+        }
+        node: {
+          calculator: "MoonCalculator"
+          node_options: {
+            [type.googleapis.com/mediapipe.NodeChainSubgraphOptions] {}
+          }
+          option_value: "chain_length:options/chain_length"
+        }
+      )pb");
+  graph_registry.Register("MoonSubgraph", moon_subgraph);
+
+  // Invoke the simple-subgraph with graph options.
+  // The empty NodeChainSubgraphOptions below allows "option_value" fields
+  // on "MoonCalculator" to evaluate incorrectly, if not removed.
+  auto sky_graph = mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
+    graph_options: {
+      [type.googleapis.com/mediapipe.NodeChainSubgraphOptions] {}
+    }
+    node: {
+      calculator: "MoonSubgraph"
+      options: {
+        [mediapipe.NodeChainSubgraphOptions.ext] {
+          node_type: "DoubleIntCalculator"
+          chain_length: 3
+        }
+      }
+    }
+  )pb");
+
+  // The first ExpandSubgraphs call evaluates and removes "option_value" fields.
+  MP_ASSERT_OK(tool::ExpandSubgraphs(&sky_graph, &graph_registry));
+  auto expanded_1 = sky_graph;
+
+  // The second ExpandSubgraphs call has no effect on the expanded graph.
+  MP_ASSERT_OK(tool::ExpandSubgraphs(&sky_graph, &graph_registry));
+
+  // Validate the expected node_options for the "MoonSubgraph".
+  // If the "option_value" fields are not removed during ExpandSubgraphs,
+  // this test fails with an incorrect value for "chain_length".
+  auto expected_node_options =
+      mediapipe::ParseTextProtoOrDie<mediapipe::NodeChainSubgraphOptions>(
+          "chain_length: 3");
+  mediapipe::NodeChainSubgraphOptions node_options;
+  sky_graph.node(0).node_options(0).UnpackTo(&node_options);
+  ASSERT_THAT(node_options, mediapipe::EqualsProto(expected_node_options));
+
+  // Validate the results from both ExpandSubgraphs() calls.
+  CalculatorGraphConfig expected_graph =
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
+        graph_options {
+          [type.googleapis.com/mediapipe.NodeChainSubgraphOptions] {}
+        }
+        node {
+          name: "moonsubgraph__MoonCalculator"
+          calculator: "MoonCalculator"
+          node_options {
+            [type.googleapis.com/mediapipe.NodeChainSubgraphOptions] {
+              chain_length: 3
+            }
+          }
+        }
+      )pb");
+  EXPECT_THAT(expanded_1, mediapipe::EqualsProto(expected_graph));
+  EXPECT_THAT(sky_graph, mediapipe::EqualsProto(expected_graph));
 }
 
 }  // namespace

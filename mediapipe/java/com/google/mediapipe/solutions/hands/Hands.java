@@ -18,9 +18,10 @@ import android.content.Context;
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import com.google.mediapipe.formats.proto.LandmarkProto.NormalizedLandmark;
+import com.google.mediapipe.formats.proto.LandmarkProto.LandmarkList;
 import com.google.mediapipe.formats.proto.LandmarkProto.NormalizedLandmarkList;
 import com.google.mediapipe.formats.proto.ClassificationProto.Classification;
+import com.google.mediapipe.formats.proto.ClassificationProto.ClassificationList;
 import com.google.mediapipe.framework.MediaPipeException;
 import com.google.mediapipe.framework.Packet;
 import com.google.mediapipe.solutioncore.ErrorListener;
@@ -28,7 +29,9 @@ import com.google.mediapipe.solutioncore.ImageSolutionBase;
 import com.google.mediapipe.solutioncore.OutputHandler;
 import com.google.mediapipe.solutioncore.ResultListener;
 import com.google.mediapipe.solutioncore.SolutionInfo;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
 
@@ -85,10 +88,15 @@ public class Hands extends ImageSolutionBase {
   private static final String CPU_GRAPH_NAME = "hand_landmark_tracking_cpu_image.binarypb";
   private static final String IMAGE_INPUT_STREAM = "image";
   private static final ImmutableList<String> OUTPUT_STREAMS =
-      ImmutableList.of("multi_hand_landmarks", "multi_handedness", "throttled_image");
+      ImmutableList.of(
+          "multi_hand_landmarks",
+          "multi_hand_world_landmarks",
+          "multi_handedness",
+          "throttled_image");
   private static final int LANDMARKS_INDEX = 0;
-  private static final int HANDEDNESS_INDEX = 1;
-  private static final int INPUT_IMAGE_INDEX = 2;
+  private static final int WORLD_LANDMARKS_INDEX = 1;
+  private static final int HANDEDNESS_INDEX = 2;
+  private static final int INPUT_IMAGE_INDEX = 3;
   private final OutputHandler<HandsResult> outputHandler;
 
   /**
@@ -109,8 +117,18 @@ public class Hands extends ImageSolutionBase {
             reportError("Error occurs while getting MediaPipe hand landmarks.", e);
           }
           try {
-            handsResultBuilder.setMultiHandedness(
-                getProtoVector(packets.get(HANDEDNESS_INDEX), Classification.parser()));
+            handsResultBuilder.setMultiHandWorldLandmarks(
+                getProtoVector(packets.get(WORLD_LANDMARKS_INDEX), LandmarkList.parser()));
+          } catch (MediaPipeException e) {
+            reportError("Error occurs while getting MediaPipe hand world landmarks.", e);
+          }
+          try {
+            List<Classification> handednessList = new ArrayList<>();
+            for (ClassificationList protolist :
+                getProtoVector(packets.get(HANDEDNESS_INDEX), ClassificationList.parser())) {
+              handednessList.add(protolist.getClassification(0));
+            }
+            handsResultBuilder.setMultiHandedness(handednessList);
           } catch (MediaPipeException e) {
             reportError("Error occurs while getting MediaPipe handedness data.", e);
           }
@@ -154,22 +172,5 @@ public class Hands extends ImageSolutionBase {
   public void setErrorListener(@Nullable ErrorListener listener) {
     this.outputHandler.setErrorListener(listener);
     this.errorListener = listener;
-  }
-
-  /**
-   * Gets a specific hand landmark by hand index and hand landmark type.
-   *
-   * @param result the returned {@link HandsResult} object.
-   * @param handIndex the hand index. The hand landmark lists are sorted by the confidence score.
-   * @param landmarkType the hand landmark type defined in {@link HandLandmark}.
-   */
-  public static NormalizedLandmark getHandLandmark(
-      HandsResult result, int handIndex, @HandLandmark.HandLandmarkType int landmarkType) {
-    if (result == null
-        || handIndex >= result.multiHandLandmarks().size()
-        || landmarkType >= HandLandmark.NUM_LANDMARKS) {
-      return NormalizedLandmark.getDefaultInstance();
-    }
-    return result.multiHandLandmarks().get(handIndex).getLandmarkList().get(landmarkType);
   }
 }

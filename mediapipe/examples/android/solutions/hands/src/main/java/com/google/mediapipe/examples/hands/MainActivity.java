@@ -28,6 +28,7 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.exifinterface.media.ExifInterface;
 // ContentResolver dependency
+import com.google.mediapipe.formats.proto.LandmarkProto.Landmark;
 import com.google.mediapipe.formats.proto.LandmarkProto.NormalizedLandmark;
 import com.google.mediapipe.solutioncore.CameraInput;
 import com.google.mediapipe.solutioncore.SolutionGlSurfaceView;
@@ -177,9 +178,9 @@ public class MainActivity extends AppCompatActivity {
             setupStaticImageModePipeline();
           }
           // Reads images from gallery.
-          Intent gallery =
-              new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.INTERNAL_CONTENT_URI);
-          imageGetter.launch(gallery);
+          Intent pickImageIntent = new Intent(Intent.ACTION_PICK);
+          pickImageIntent.setDataAndType(MediaStore.Images.Media.INTERNAL_CONTENT_URI, "image/*");
+          imageGetter.launch(pickImageIntent);
         });
     imageView = new HandsResultImageView(this);
   }
@@ -193,7 +194,7 @@ public class MainActivity extends AppCompatActivity {
             this,
             HandsOptions.builder()
                 .setStaticImageMode(true)
-                .setMaxNumHands(1)
+                .setMaxNumHands(2)
                 .setRunOnGpu(RUN_ON_GPU)
                 .build());
 
@@ -241,9 +242,9 @@ public class MainActivity extends AppCompatActivity {
           stopCurrentPipeline();
           setupStreamingModePipeline(InputSource.VIDEO);
           // Reads video from gallery.
-          Intent gallery =
-              new Intent(Intent.ACTION_PICK, MediaStore.Video.Media.INTERNAL_CONTENT_URI);
-          videoGetter.launch(gallery);
+          Intent pickVideoIntent = new Intent(Intent.ACTION_PICK);
+          pickVideoIntent.setDataAndType(MediaStore.Video.Media.INTERNAL_CONTENT_URI, "video/*");
+          videoGetter.launch(pickVideoIntent);
         });
   }
 
@@ -269,7 +270,7 @@ public class MainActivity extends AppCompatActivity {
             this,
             HandsOptions.builder()
                 .setStaticImageMode(false)
-                .setMaxNumHands(1)
+                .setMaxNumHands(2)
                 .setRunOnGpu(RUN_ON_GPU)
                 .build());
     hands.setErrorListener((message, e) -> Log.e(TAG, "MediaPipe Hands error:" + message));
@@ -336,7 +337,11 @@ public class MainActivity extends AppCompatActivity {
   }
 
   private void logWristLandmark(HandsResult result, boolean showPixelValues) {
-    NormalizedLandmark wristLandmark = Hands.getHandLandmark(result, 0, HandLandmark.WRIST);
+    if (result.multiHandLandmarks().isEmpty()) {
+      return;
+    }
+    NormalizedLandmark wristLandmark =
+        result.multiHandLandmarks().get(0).getLandmarkList().get(HandLandmark.WRIST);
     // For Bitmaps, show the pixel values. For texture inputs, show the normalized coordinates.
     if (showPixelValues) {
       int width = result.inputBitmap().getWidth();
@@ -353,5 +358,16 @@ public class MainActivity extends AppCompatActivity {
               "MediaPipe Hand wrist normalized coordinates (value range: [0, 1]): x=%f, y=%f",
               wristLandmark.getX(), wristLandmark.getY()));
     }
+    if (result.multiHandWorldLandmarks().isEmpty()) {
+      return;
+    }
+    Landmark wristWorldLandmark =
+        result.multiHandWorldLandmarks().get(0).getLandmarkList().get(HandLandmark.WRIST);
+    Log.i(
+        TAG,
+        String.format(
+            "MediaPipe Hand wrist world coordinates (in meters with the origin at the hand's"
+                + " approximate geometric center): x=%f m, y=%f m, z=%f m",
+            wristWorldLandmark.getX(), wristWorldLandmark.getY(), wristWorldLandmark.getZ()));
   }
 }

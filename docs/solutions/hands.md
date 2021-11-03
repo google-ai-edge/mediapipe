@@ -91,8 +91,10 @@ To detect initial hand locations, we designed a
 mobile real-time uses in a manner similar to the face detection model in
 [MediaPipe Face Mesh](./face_mesh.md). Detecting hands is a decidedly complex
 task: our
-[model](https://github.com/google/mediapipe/tree/master/mediapipe/modules/palm_detection/palm_detection.tflite)
-has to work across a variety of hand sizes with a large scale span (~20x)
+[lite model](https://github.com/google/mediapipe/tree/master/mediapipe/modules/palm_detection/palm_detection_lite.tflite)
+and
+[full model](https://github.com/google/mediapipe/tree/master/mediapipe/modules/palm_detection/palm_detection_full.tflite)
+have to work across a variety of hand sizes with a large scale span (~20x)
 relative to the image frame and be able to detect occluded and self-occluded
 hands. Whereas faces have high contrast patterns, e.g., in the eye and mouth
 region, the lack of such features in hands makes it comparatively difficult to
@@ -195,6 +197,17 @@ of 21 hand landmarks and each landmark is composed of `x`, `y` and `z`. `x` and
 and the smaller the value the closer the landmark is to the camera. The
 magnitude of `z` uses roughly the same scale as `x`.
 
+#### multi_hand_world_landmarks
+
+Collection of detected/tracked hands, where each hand is represented as a list
+of 21 hand landmarks in world coordinates. Each landmark consists of the
+following:
+
+*   `x`, `y` and `z`: Real-world 3D coordinates in meters with the origin at the
+    hand's approximate geometric center.
+*   `visibility`: Identical to that defined in the corresponding
+    [multi_hand_landmarks](#multi_hand_landmarks).
+
 #### multi_handedness
 
 Collection of handedness of the detected/tracked hands (i.e. is it a left or
@@ -262,6 +275,12 @@ with mp_hands.Hands(
           mp_drawing_styles.get_default_hand_connections_style())
     cv2.imwrite(
         '/tmp/annotated_image' + str(idx) + '.png', cv2.flip(annotated_image, 1))
+    # Draw hand world landmarks.
+    if not results.multi_hand_world_landmarks:
+      continue
+    for hand_world_landmarks in results.multi_hand_world_landmarks:
+      mp_drawing.plot_landmarks(
+        hand_world_landmarks, mp_hands.HAND_CONNECTIONS, azimuth=5)
 
 # For webcam input:
 cap = cv2.VideoCapture(0)
@@ -400,7 +419,7 @@ Supported configuration options:
 HandsOptions handsOptions =
     HandsOptions.builder()
         .setStaticImageMode(false)
-        .setMaxNumHands(1)
+        .setMaxNumHands(2)
         .setRunOnGpu(true).build();
 Hands hands = new Hands(this, handsOptions);
 hands.setErrorListener(
@@ -423,8 +442,11 @@ glSurfaceView.setRenderInputImage(true);
 
 hands.setResultListener(
     handsResult -> {
-      NormalizedLandmark wristLandmark = Hands.getHandLandmark(
-          handsResult, 0, HandLandmark.WRIST);
+      if (result.multiHandLandmarks().isEmpty()) {
+        return;
+      }
+      NormalizedLandmark wristLandmark =
+          handsResult.multiHandLandmarks().get(0).getLandmarkList().get(HandLandmark.WRIST);
       Log.i(
           TAG,
           String.format(
@@ -453,7 +475,7 @@ glSurfaceView.post(
 HandsOptions handsOptions =
     HandsOptions.builder()
         .setStaticImageMode(true)
-        .setMaxNumHands(1)
+        .setMaxNumHands(2)
         .setRunOnGpu(true).build();
 Hands hands = new Hands(this, handsOptions);
 
@@ -464,10 +486,13 @@ Hands hands = new Hands(this, handsOptions);
 HandsResultImageView imageView = new HandsResultImageView(this);
 hands.setResultListener(
     handsResult -> {
+      if (result.multiHandLandmarks().isEmpty()) {
+        return;
+      }
       int width = handsResult.inputBitmap().getWidth();
       int height = handsResult.inputBitmap().getHeight();
-      NormalizedLandmark wristLandmark = Hands.getHandLandmark(
-          handsResult, 0, HandLandmark.WRIST);
+      NormalizedLandmark wristLandmark =
+          handsResult.multiHandLandmarks().get(0).getLandmarkList().get(HandLandmark.WRIST);
       Log.i(
           TAG,
           String.format(
@@ -501,9 +526,9 @@ ActivityResultLauncher<Intent> imageGetter =
             }
           }
         });
-Intent gallery = new Intent(
-    Intent.ACTION_PICK, MediaStore.Images.Media.INTERNAL_CONTENT_URI);
-imageGetter.launch(gallery);
+Intent pickImageIntent = new Intent(Intent.ACTION_PICK);
+pickImageIntent.setDataAndType(MediaStore.Images.Media.INTERNAL_CONTENT_URI, "image/*");
+imageGetter.launch(pickImageIntent);
 ```
 
 #### Video Input
@@ -513,7 +538,7 @@ imageGetter.launch(gallery);
 HandsOptions handsOptions =
     HandsOptions.builder()
         .setStaticImageMode(false)
-        .setMaxNumHands(1)
+        .setMaxNumHands(2)
         .setRunOnGpu(true).build();
 Hands hands = new Hands(this, handsOptions);
 hands.setErrorListener(
@@ -536,8 +561,11 @@ glSurfaceView.setRenderInputImage(true);
 
 hands.setResultListener(
     handsResult -> {
-      NormalizedLandmark wristLandmark = Hands.getHandLandmark(
-          handsResult, 0, HandLandmark.WRIST);
+      if (result.multiHandLandmarks().isEmpty()) {
+        return;
+      }
+      NormalizedLandmark wristLandmark =
+          handsResult.multiHandLandmarks().get(0).getLandmarkList().get(HandLandmark.WRIST);
       Log.i(
           TAG,
           String.format(
@@ -566,9 +594,9 @@ ActivityResultLauncher<Intent> videoGetter =
             }
           }
         });
-Intent gallery =
-    new Intent(Intent.ACTION_PICK, MediaStore.Video.Media.INTERNAL_CONTENT_URI);
-videoGetter.launch(gallery);
+Intent pickVideoIntent = new Intent(Intent.ACTION_PICK);
+pickVideoIntent.setDataAndType(MediaStore.Video.Media.INTERNAL_CONTENT_URI, "video/*");
+videoGetter.launch(pickVideoIntent);
 ```
 
 ## Example Apps

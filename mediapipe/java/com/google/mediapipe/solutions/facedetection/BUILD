@@ -34,7 +34,6 @@ android_library(
     visibility = ["//visibility:public"],
     deps = [
         "//mediapipe/framework/formats:detection_java_proto_lite",
-        "//mediapipe/framework/formats:location_data_java_proto_lite",
         "//mediapipe/java/com/google/mediapipe/framework:android_framework",
         "//mediapipe/java/com/google/mediapipe/solutioncore:solution_base",
         "//third_party:autovalue",

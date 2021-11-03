@@ -112,13 +112,13 @@ GlTexture GlCalculatorHelperImpl::CreateSourceTexture(
 
 GlTexture GlCalculatorHelperImpl::CreateSourceTexture(
     const GpuBuffer& gpu_buffer, int plane) {
-  return MapGpuBuffer(gpu_buffer, gpu_buffer.GetGlTextureReadView(plane));
+  return MapGpuBuffer(gpu_buffer, gpu_buffer.GetReadView<GlTextureView>(plane));
 }
 
 GlTexture GlCalculatorHelperImpl::CreateSourceTexture(
     const ImageFrame& image_frame) {
   auto gpu_buffer = GpuBuffer::CopyingImageFrame(image_frame);
-  return MapGpuBuffer(gpu_buffer, gpu_buffer.GetGlTextureReadView(0));
+  return MapGpuBuffer(gpu_buffer, gpu_buffer.GetReadView<GlTextureView>(0));
 }
 
 template <>
@@ -149,7 +149,7 @@ GlTexture GlCalculatorHelperImpl::CreateDestinationTexture(
 
   GpuBuffer gpu_buffer =
       gpu_resources_.gpu_buffer_pool().GetBuffer(width, height, format);
-  return MapGpuBuffer(gpu_buffer, gpu_buffer.GetGlTextureWriteView(0));
+  return MapGpuBuffer(gpu_buffer, gpu_buffer.GetWriteView<GlTextureView>(0));
 }
 
 }  // namespace mediapipe

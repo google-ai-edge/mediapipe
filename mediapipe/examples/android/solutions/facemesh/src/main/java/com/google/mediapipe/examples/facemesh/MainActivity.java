@@ -176,9 +176,9 @@ public class MainActivity extends AppCompatActivity {
             setupStaticImageModePipeline();
           }
           // Reads images from gallery.
-          Intent gallery =
-              new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.INTERNAL_CONTENT_URI);
-          imageGetter.launch(gallery);
+          Intent pickImageIntent = new Intent(Intent.ACTION_PICK);
+          pickImageIntent.setDataAndType(MediaStore.Images.Media.INTERNAL_CONTENT_URI, "image/*");
+          imageGetter.launch(pickImageIntent);
         });
     imageView = new FaceMeshResultImageView(this);
   }
@@ -240,9 +240,9 @@ public class MainActivity extends AppCompatActivity {
           stopCurrentPipeline();
           setupStreamingModePipeline(InputSource.VIDEO);
           // Reads video from gallery.
-          Intent gallery =
-              new Intent(Intent.ACTION_PICK, MediaStore.Video.Media.INTERNAL_CONTENT_URI);
-          videoGetter.launch(gallery);
+          Intent pickVideoIntent = new Intent(Intent.ACTION_PICK);
+          pickVideoIntent.setDataAndType(MediaStore.Video.Media.INTERNAL_CONTENT_URI, "video/*");
+          videoGetter.launch(pickVideoIntent);
         });
   }
 

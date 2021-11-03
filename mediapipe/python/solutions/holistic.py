@@ -80,6 +80,7 @@ class Holistic(SolutionBase):
                smooth_landmarks=True,
                enable_segmentation=False,
                smooth_segmentation=True,
+               refine_face_landmarks=False,
                min_detection_confidence=0.5,
                min_tracking_confidence=0.5):
     """Initializes a MediaPipe Holistic object.
@@ -98,6 +99,10 @@ class Holistic(SolutionBase):
       smooth_segmentation: Whether to filter segmentation across different input
         images to reduce jitter. See details in
         https://solutions.mediapipe.dev/holistic#smooth_segmentation.
+      refine_face_landmarks: Whether to further refine the landmark coordinates
+        around the eyes and lips, and output additional landmarks around the
+        irises. Default to False. See details in
+        https://solutions.mediapipe.dev/holistic#refine_face_landmarks.
       min_detection_confidence: Minimum confidence value ([0.0, 1.0]) for person
         detection to be considered successful. See details in
         https://solutions.mediapipe.dev/holistic#min_detection_confidence.
@@ -114,6 +119,7 @@ class Holistic(SolutionBase):
             'enable_segmentation': enable_segmentation,
             'smooth_segmentation':
                 smooth_segmentation and not static_image_mode,
+            'refine_face_landmarks': refine_face_landmarks,
             'use_prev_landmarks': not static_image_mode,
         },
         calculator_params={
