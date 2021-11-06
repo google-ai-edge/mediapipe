@@ -168,6 +168,7 @@ void CalculatorGraphSubmodule(pybind11::module* module) {
         RaisePyErrorIfNotOk(
             self->AddPacketToInputStream(stream, packet.At(packet_timestamp)));
       },
+      py::call_guard<py::gil_scoped_release>(),
       R"doc(Add a packet to a graph input stream.
 
   If the graph input stream add mode is ADD_IF_NOT_FULL, the packet will not be
@@ -347,6 +348,7 @@ void CalculatorGraphSubmodule(pybind11::module* module) {
   calculator_graph.def(
       "wait_for_observed_output",
       [](CalculatorGraph* self) {
+        py::gil_scoped_release gil_release;
         RaisePyErrorIfNotOk(self->WaitForObservedOutput());
       },
       R"doc(Wait until a packet is emitted on one of the observed output streams.
