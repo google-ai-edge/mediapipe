@@ -11,6 +11,9 @@
   <!-- For using the camera -->
   <uses-permission android:name="android.permission.CAMERA" />
   <uses-feature android:name="android.hardware.camera" />
+  <!-- For logging solution events -->
+  <uses-permission android:name="android.permission.INTERNET" />
+  <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
   <application
       android:allowBackup="true"

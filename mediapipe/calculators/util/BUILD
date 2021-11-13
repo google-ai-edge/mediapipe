@@ -1169,6 +1169,7 @@ cc_library(
         "//mediapipe/framework:collection_item_id",
         "//mediapipe/framework/port:rectangle",
         "//mediapipe/framework/port:status",
+        "//mediapipe/util:rectangle_util",
         "@com_google_absl//absl/memory",
     ],
     alwayslink = 1,

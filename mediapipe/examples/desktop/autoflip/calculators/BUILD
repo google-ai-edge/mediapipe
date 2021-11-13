@@ -74,6 +74,7 @@ cc_library(
         ":content_zooming_calculator_state",
         "//mediapipe/examples/desktop/autoflip:autoflip_messages_cc_proto",
         "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:packet",
         "//mediapipe/framework/formats:detection_cc_proto",
         "//mediapipe/framework/formats:image_frame",
         "//mediapipe/framework/formats:location_data_cc_proto",

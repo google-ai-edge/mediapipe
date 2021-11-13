@@ -27,6 +27,8 @@ import com.google.mediapipe.framework.Graph;
 import com.google.mediapipe.framework.MediaPipeException;
 import com.google.mediapipe.framework.Packet;
 import com.google.mediapipe.framework.PacketGetter;
+import com.google.mediapipe.solutioncore.logging.SolutionStatsLogger;
+import com.google.mediapipe.solutioncore.logging.SolutionStatsDummyLogger;
 import com.google.protobuf.Parser;
 import java.io.File;
 import java.util.List;
@@ -35,7 +37,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import javax.annotation.Nullable;
 
 /** The base class of the MediaPipe solutions. */
-public class SolutionBase {
+public class SolutionBase implements AutoCloseable {
   private static final String TAG = "SolutionBase";
   protected Graph solutionGraph;
   protected AndroidPacketCreator packetCreator;
@@ -43,6 +45,7 @@ public class SolutionBase {
   protected String imageInputStreamName;
   protected long lastTimestamp = Long.MIN_VALUE;
   protected final AtomicBoolean solutionGraphStarted = new AtomicBoolean(false);
+  protected SolutionStatsLogger statsLogger;
 
   static {
     System.loadLibrary("mediapipe_jni");
@@ -63,6 +66,8 @@ public class SolutionBase {
       SolutionInfo solutionInfo,
       OutputHandler<? extends SolutionResult> outputHandler) {
     this.imageInputStreamName = solutionInfo.imageInputStreamName();
+    this.statsLogger =
+        new SolutionStatsDummyLogger(context, this.getClass().getSimpleName(), solutionInfo);
     try {
       AndroidAssetUtil.initializeNativeAssetManager(context);
       solutionGraph = new Graph();
@@ -72,12 +77,14 @@ public class SolutionBase {
         solutionGraph.loadBinaryGraph(
             AndroidAssetUtil.getAssetBytes(context.getAssets(), solutionInfo.binaryGraphPath()));
       }
+      outputHandler.setStatsLogger(statsLogger);
       solutionGraph.addMultiStreamCallback(
           solutionInfo.outputStreamNames(),
           outputHandler::run,
           /*observeTimestampBounds=*/ outputHandler.handleTimestampBoundChanges());
       packetCreator = new AndroidPacketCreator(solutionGraph);
     } catch (MediaPipeException e) {
+      statsLogger.logInitError();
       reportError("Error occurs while creating the MediaPipe solution graph.", e);
     }
   }
@@ -113,10 +120,15 @@ public class SolutionBase {
       if (inputSidePackets != null) {
         solutionGraph.setInputSidePackets(inputSidePackets);
       }
-      if (!solutionGraphStarted.getAndSet(true)) {
+      if (!solutionGraphStarted.get()) {
         solutionGraph.startRunningGraph();
+        // Wait until all calculators are opened and the graph is truly started.
+        solutionGraph.waitUntilGraphIdle();
+        solutionGraphStarted.set(true);
+        statsLogger.logSessionStart();
       }
     } catch (MediaPipeException e) {
+      statsLogger.logInitError();
       reportError("Error occurs while starting the MediaPipe solution graph.", e);
     }
   }
@@ -131,11 +143,13 @@ public class SolutionBase {
   }
 
   /** Closes and cleans up the solution graph. */
+  @Override
   public void close() {
     if (solutionGraphStarted.get()) {
       try {
         solutionGraph.closeAllPacketSources();
         solutionGraph.waitUntilGraphDone();
+        statsLogger.logSessionEnd();
       } catch (MediaPipeException e) {
         // Note: errors during Process are reported at the earliest opportunity,
         // which may be addPacket or waitUntilDone, depending on timing. For consistency,

@@ -373,14 +373,20 @@ inline const std::string* MediaPipeTypeString() {
   return MediaPipeTypeStringFromTypeId(tool::GetTypeHash<T>());
 }
 
-template <typename T>
-const std::string MediaPipeTypeStringOrDemangled() {
-  const std::string* type_string = MediaPipeTypeString<T>();
+inline std::string MediaPipeTypeStringOrDemangled(
+    const tool::TypeInfo& type_info) {
+  const std::string* type_string =
+      MediaPipeTypeStringFromTypeId(type_info.hash_code());
   if (type_string) {
     return *type_string;
   } else {
-    return mediapipe::Demangle(tool::TypeId<T>().name());
+    return mediapipe::Demangle(type_info.name());
   }
+}
+
+template <typename T>
+std::string MediaPipeTypeStringOrDemangled() {
+  return MediaPipeTypeStringOrDemangled(tool::TypeId<T>());
 }
 
 // Returns type hash id of type identified by type_string or NULL if not

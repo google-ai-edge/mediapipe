@@ -70,10 +70,26 @@ public class VideoInput {
     }
   }
 
+  /**
+   * The state of the MediaPlayer. See
+   * https://developer.android.com/reference/android/media/MediaPlayer#StateDiagram
+   */
+  private enum MediaPlayerState {
+    IDLE,
+    PREPARING,
+    PREPARED,
+    STARTED,
+    PAUSED,
+    STOPPED,
+    PLAYBACK_COMPLETE,
+    END,
+  }
+
   private static final String TAG = "VideoInput";
   private final SingleThreadHandlerExecutor executor;
   private TextureFrameConsumer newFrameListener;
   private MediaPlayer mediaPlayer;
+  private MediaPlayerState state = MediaPlayerState.IDLE;
   private boolean looping = false;
   private float audioVolume = 1.0f;
   // {@link SurfaceTexture} where the video frames can be accessed.
@@ -150,14 +166,19 @@ public class VideoInput {
     converter.setConsumer(newFrameListener);
     executor.execute(
         () -> {
+          if (state != MediaPlayerState.IDLE && state != MediaPlayerState.END) {
+            return;
+          }
           mediaPlayer = new MediaPlayer();
           mediaPlayer.setLooping(looping);
           mediaPlayer.setVolume(audioVolume, audioVolume);
           mediaPlayer.setOnPreparedListener(
-              mp -> {
-                surfaceTexture.setDefaultBufferSize(mp.getVideoWidth(), mp.getVideoHeight());
+              unused -> {
+                surfaceTexture.setDefaultBufferSize(
+                    mediaPlayer.getVideoWidth(), mediaPlayer.getVideoHeight());
                 // Calculates the optimal texture size by preserving the video aspect ratio.
-                float videoAspectRatio = (float) mp.getVideoWidth() / mp.getVideoHeight();
+                float videoAspectRatio =
+                    (float) mediaPlayer.getVideoWidth() / mediaPlayer.getVideoHeight();
                 float displayAspectRatio = (float) displayWidth / displayHeight;
                 int textureWidth =
                     displayAspectRatio > videoAspectRatio
@@ -168,22 +189,34 @@ public class VideoInput {
                         ? displayHeight
                         : (int) (displayWidth / videoAspectRatio);
                 converter.setSurfaceTexture(surfaceTexture, textureWidth, textureHeight);
-                executor.execute(mp::start);
+                state = MediaPlayerState.PREPARED;
+                executor.execute(
+                    () -> {
+                      if (mediaPlayer != null && state == MediaPlayerState.PREPARED) {
+                        mediaPlayer.start();
+                        state = MediaPlayerState.STARTED;
+                      }
+                    });
               });
           mediaPlayer.setOnErrorListener(
-              (mp, what, extra) -> {
+              (unused, what, extra) -> {
                 Log.e(
                     TAG,
                     String.format(
                         "Error during mediaPlayer initialization. what: %s extra: %s",
                         what, extra));
-                reset(mp);
+                executor.execute(this::close);
                 return true;
               });
-          mediaPlayer.setOnCompletionListener(this::reset);
+          mediaPlayer.setOnCompletionListener(
+              unused -> {
+                state = MediaPlayerState.PLAYBACK_COMPLETE;
+                executor.execute(this::close);
+              });
           try {
             mediaPlayer.setDataSource(activity, videoUri);
             mediaPlayer.setSurface(new Surface(surfaceTexture));
+            state = MediaPlayerState.PREPARING;
             mediaPlayer.prepareAsync();
           } catch (IOException e) {
             Log.e(TAG, "Failed to start MediaPlayer:", e);
@@ -196,8 +229,10 @@ public class VideoInput {
   public void pause() {
     executor.execute(
         () -> {
-          if (mediaPlayer != null) {
+          if (mediaPlayer != null
+              && (state == MediaPlayerState.STARTED || state == MediaPlayerState.PAUSED)) {
             mediaPlayer.pause();
+            state = MediaPlayerState.PAUSED;
           }
         });
   }
@@ -206,8 +241,9 @@ public class VideoInput {
   public void resume() {
     executor.execute(
         () -> {
-          if (mediaPlayer != null) {
+          if (mediaPlayer != null && state == MediaPlayerState.PAUSED) {
             mediaPlayer.start();
+            state = MediaPlayerState.STARTED;
           }
         });
   }
@@ -216,20 +252,38 @@ public class VideoInput {
   public void stop() {
     executor.execute(
         () -> {
-          if (mediaPlayer != null) {
+          if (mediaPlayer != null
+              && (state == MediaPlayerState.PREPARED
+                  || state == MediaPlayerState.STARTED
+                  || state == MediaPlayerState.PAUSED
+                  || state == MediaPlayerState.PLAYBACK_COMPLETE
+                  || state == MediaPlayerState.STOPPED)) {
             mediaPlayer.stop();
+            state = MediaPlayerState.STOPPED;
           }
         });
   }
 
-  /** Closes VideoInput and releases the {@link MediaPlayer} resources. */
+  /** Closes VideoInput and releases the resources. */
   public void close() {
+    if (converter != null) {
+      converter.close();
+      converter = null;
+    }
     executor.execute(
         () -> {
           if (mediaPlayer != null) {
             mediaPlayer.release();
+            state = MediaPlayerState.END;
+          }
+          if (eglManager != null) {
+            destorySurfaceTexture();
+            eglManager.release();
+            eglManager = null;
           }
         });
+    looping = false;
+    audioVolume = 1.0f;
   }
 
   private void createSurfaceTexture() {
@@ -259,21 +313,5 @@ public class VideoInput {
     eglManager.makeNothingCurrent();
     eglManager.releaseSurface(tempEglSurface);
     surfaceTexture = null;
-  }
-
-  private void reset(MediaPlayer mp) {
-    setNewFrameListener(null);
-    if (converter != null) {
-      converter.close();
-      converter = null;
-    }
-    if (eglManager != null) {
-      destorySurfaceTexture();
-      eglManager.release();
-      eglManager = null;
-    }
-    executor.execute(mp::release);
-    looping = false;
-    audioVolume = 1.0f;
   }
 }

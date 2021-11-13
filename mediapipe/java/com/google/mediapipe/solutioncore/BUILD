@@ -17,6 +17,15 @@ package(default_visibility = ["//visibility:public"])
 licenses(["notice"])
 
 android_library(
+    name = "solution_info",
+    srcs = ["SolutionInfo.java"],
+    deps = [
+        "//third_party:autovalue",
+        "@maven//:com_google_guava_guava",
+    ],
+)
+
+android_library(
     name = "solution_base",
     srcs = glob(
         ["*.java"],
@@ -30,6 +39,7 @@ android_library(
     ),
     visibility = ["//visibility:public"],
     deps = [
+        ":logging",
         "//mediapipe/java/com/google/mediapipe/framework:android_framework",
         "//mediapipe/java/com/google/mediapipe/glutil",
         "//third_party:autovalue",
@@ -80,6 +90,19 @@ android_library(
     ],
 )
 
+android_library(
+    name = "logging",
+    srcs = glob(
+        ["logging/*.java"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        ":solution_info",
+        "//third_party:autovalue",
+        "@maven//:com_google_guava_guava",
+    ],
+)
+
 # Native dependencies of all MediaPipe solutions.
 cc_binary(
     name = "libmediapipe_jni.so",
@@ -109,6 +132,6 @@ load("//mediapipe/java/com/google/mediapipe:mediapipe_aar.bzl", "mediapipe_aar")
 
 mediapipe_aar(
     name = "solution_core",
-    srcs = glob(["*.java"]),
+    srcs = glob(["**/*.java"]),
     gen_libmediapipe = False,
 )

@@ -75,6 +75,9 @@ class TagIndexMap {
   std::map<std::string, std::vector<std::unique_ptr<T>>> map_;
 };
 
+class Graph;
+class NodeBase;
+
 // These structs are used internally to store information about the endpoints
 // of a connection.
 struct SourceBase;
@@ -109,7 +112,7 @@ class MultiPort : public Single {
 
 // These classes wrap references to the underlying source/destination
 // endpoints, adding type information and the user-visible API.
-template <bool AllowMultiple, bool IsSide, typename T = internal::Generic>
+template <bool IsSide, typename T = internal::Generic>
 class DestinationImpl {
  public:
   using Base = DestinationBase;
@@ -121,13 +124,12 @@ class DestinationImpl {
 };
 
 template <bool IsSide, typename T>
-class DestinationImpl<true, IsSide, T>
-    : public MultiPort<DestinationImpl<false, IsSide, T>> {
+class MultiDestinationImpl : public MultiPort<DestinationImpl<IsSide, T>> {
  public:
-  using MultiPort<DestinationImpl<false, IsSide, T>>::MultiPort;
+  using MultiPort<DestinationImpl<IsSide, T>>::MultiPort;
 };
 
-template <bool AllowMultiple, bool IsSide, typename T = internal::Generic>
+template <bool IsSide, typename T = internal::Generic>
 class SourceImpl {
  public:
   using Base = SourceBase;
@@ -135,9 +137,9 @@ class SourceImpl {
   // Src is used as the return type of fluent methods below. Since these are
   // single-port methods, it is desirable to always decay to a reference to the
   // single-port superclass, even if they are called on a multiport.
-  using Src = SourceImpl<false, IsSide, T>;
+  using Src = SourceImpl<IsSide, T>;
   template <typename U>
-  using Dst = DestinationImpl<false, IsSide, U>;
+  using Dst = DestinationImpl<IsSide, U>;
 
   // clang-format off
   template <typename U>
@@ -173,10 +175,9 @@ class SourceImpl {
 };
 
 template <bool IsSide, typename T>
-class SourceImpl<true, IsSide, T>
-    : public MultiPort<SourceImpl<false, IsSide, T>> {
+class MultiSourceImpl : public MultiPort<SourceImpl<IsSide, T>> {
  public:
-  using MultiPort<SourceImpl<false, IsSide, T>>::MultiPort;
+  using MultiPort<SourceImpl<IsSide, T>>::MultiPort;
 };
 
 // A source and a destination correspond to an output/input stream on a node,
@@ -185,14 +186,23 @@ class SourceImpl<true, IsSide, T>
 // For graph inputs/outputs, however, the inputs are sources, and the outputs
 // are destinations. This is because graph ports are connected "from inside"
 // when building the graph.
-template <bool AllowMultiple = false, typename T = internal::Generic>
-using Source = SourceImpl<AllowMultiple, false, T>;
-template <bool AllowMultiple = false, typename T = internal::Generic>
-using SideSource = SourceImpl<AllowMultiple, true, T>;
-template <bool AllowMultiple = false, typename T = internal::Generic>
-using Destination = DestinationImpl<AllowMultiple, false, T>;
-template <bool AllowMultiple = false, typename T = internal::Generic>
-using SideDestination = DestinationImpl<AllowMultiple, true, T>;
+template <typename T = internal::Generic>
+using Source = SourceImpl<false, T>;
+template <typename T = internal::Generic>
+using MultiSource = MultiSourceImpl<false, T>;
+template <typename T = internal::Generic>
+using SideSource = SourceImpl<true, T>;
+template <typename T = internal::Generic>
+using MultiSideSource = MultiSourceImpl<true, T>;
+
+template <typename T = internal::Generic>
+using Destination = DestinationImpl<false, T>;
+template <typename T = internal::Generic>
+using SideDestination = DestinationImpl<true, T>;
+template <typename T = internal::Generic>
+using MultiDestination = MultiDestinationImpl<false, T>;
+template <typename T = internal::Generic>
+using MultiSideDestination = MultiDestinationImpl<true, T>;
 
 class NodeBase {
  public:
@@ -202,45 +212,67 @@ class NodeBase {
   // of its entries by index. However, for nodes without visible contracts we
   // can't know whether a tag is indexable or not, so we would need the
   // multi-port to also be usable as a port directly (representing index 0).
-  Source<true> Out(const std::string& tag) {
-    return Source<true>(&out_streams_[tag]);
+  MultiSource<> Out(const std::string& tag) {
+    return MultiSource<>(&out_streams_[tag]);
   }
 
-  Destination<true> In(const std::string& tag) {
-    return Destination<true>(&in_streams_[tag]);
+  MultiDestination<> In(const std::string& tag) {
+    return MultiDestination<>(&in_streams_[tag]);
   }
 
-  SideSource<true> SideOut(const std::string& tag) {
-    return SideSource<true>(&out_sides_[tag]);
+  MultiSideSource<> SideOut(const std::string& tag) {
+    return MultiSideSource<>(&out_sides_[tag]);
   }
 
-  SideDestination<true> SideIn(const std::string& tag) {
-    return SideDestination<true>(&in_sides_[tag]);
+  MultiSideDestination<> SideIn(const std::string& tag) {
+    return MultiSideDestination<>(&in_sides_[tag]);
   }
 
   template <typename B, typename T, bool kIsOptional, bool kIsMultiple>
   auto operator[](const PortCommon<B, T, kIsOptional, kIsMultiple>& port) {
+    using PayloadT =
+        typename PortCommon<B, T, kIsOptional, kIsMultiple>::PayloadT;
     if constexpr (std::is_same_v<B, OutputBase>) {
-      return Source<kIsMultiple, T>(&out_streams_[port.Tag()]);
+      auto* base = &out_streams_[port.Tag()];
+      if constexpr (kIsMultiple) {
+        return MultiSource<PayloadT>(base);
+      } else {
+        return Source<PayloadT>(base);
+      }
     } else if constexpr (std::is_same_v<B, InputBase>) {
-      return Destination<kIsMultiple, T>(&in_streams_[port.Tag()]);
+      auto* base = &in_streams_[port.Tag()];
+      if constexpr (kIsMultiple) {
+        return MultiDestination<PayloadT>(base);
+      } else {
+        return Destination<PayloadT>(base);
+      }
     } else if constexpr (std::is_same_v<B, SideOutputBase>) {
-      return SideSource<kIsMultiple, T>(&out_sides_[port.Tag()]);
+      auto* base = &out_sides_[port.Tag()];
+      if constexpr (kIsMultiple) {
+        return MultiSideSource<PayloadT>(base);
+      } else {
+        return SideSource<PayloadT>(base);
+      }
     } else if constexpr (std::is_same_v<B, SideInputBase>) {
-      return SideDestination<kIsMultiple, T>(&in_sides_[port.Tag()]);
+      auto* base = &in_sides_[port.Tag()];
+      if constexpr (kIsMultiple) {
+        return MultiSideDestination<PayloadT>(base);
+      } else {
+        return SideDestination<PayloadT>(base);
+      }
     } else {
       static_assert(dependent_false<B>::value, "Type not supported.");
     }
   }
 
   // Convenience methods for accessing purely index-based ports.
-  Source<false> Out(int index) { return Out("")[index]; }
+  Source<> Out(int index) { return Out("")[index]; }
 
-  Destination<false> In(int index) { return In("")[index]; }
+  Destination<> In(int index) { return In("")[index]; }
 
-  SideSource<false> SideOut(int index) { return SideOut("")[index]; }
+  SideSource<> SideOut(int index) { return SideOut("")[index]; }
 
-  SideDestination<false> SideIn(int index) { return SideIn("")[index]; }
+  SideDestination<> SideIn(int index) { return SideIn("")[index]; }
 
   template <typename T>
   T& GetOptions() {
@@ -277,11 +309,6 @@ class Node<internal::Generic> : public NodeBase {
 
 using GenericNode = Node<internal::Generic>;
 
-template <template <bool, class> class BP, class Port, class TagIndexMapT>
-auto MakeBuilderPort(const Port& port, TagIndexMapT& streams) {
-  return BP<Port::kMultiple, typename Port::PayloadT>(&streams[port.Tag()]);
-}
-
 template <class Calc>
 class Node : public NodeBase {
  public:
@@ -298,25 +325,25 @@ class Node : public NodeBase {
   template <class Tag>
   auto Out(Tag tag) {
     constexpr auto& port = Calc::Contract::TaggedOutputs::get(tag);
-    return MakeBuilderPort<Source>(port, out_streams_);
+    return NodeBase::operator[](port);
   }
 
   template <class Tag>
   auto In(Tag tag) {
     constexpr auto& port = Calc::Contract::TaggedInputs::get(tag);
-    return MakeBuilderPort<Destination>(port, in_streams_);
+    return NodeBase::operator[](port);
   }
 
   template <class Tag>
   auto SideOut(Tag tag) {
     constexpr auto& port = Calc::Contract::TaggedSideOutputs::get(tag);
-    return MakeBuilderPort<SideSource>(port, out_sides_);
+    return NodeBase::operator[](port);
   }
 
   template <class Tag>
   auto SideIn(Tag tag) {
     constexpr auto& port = Calc::Contract::TaggedSideInputs::get(tag);
-    return MakeBuilderPort<SideDestination>(port, in_sides_);
+    return NodeBase::operator[](port);
   }
 
   // We could allow using the non-checked versions with typed nodes too, but
@@ -332,17 +359,17 @@ class PacketGenerator {
  public:
   PacketGenerator(std::string type) : type_(std::move(type)) {}
 
-  SideSource<true> SideOut(const std::string& tag) {
-    return SideSource<true>(&out_sides_[tag]);
+  MultiSideSource<> SideOut(const std::string& tag) {
+    return MultiSideSource<>(&out_sides_[tag]);
   }
 
-  SideDestination<true> SideIn(const std::string& tag) {
-    return SideDestination<true>(&in_sides_[tag]);
+  MultiSideDestination<> SideIn(const std::string& tag) {
+    return MultiSideDestination<>(&in_sides_[tag]);
   }
 
   // Convenience methods for accessing purely index-based ports.
-  SideSource<false> SideOut(int index) { return SideOut("")[index]; }
-  SideDestination<false> SideIn(int index) { return SideIn("")[index]; }
+  SideSource<> SideOut(int index) { return SideOut("")[index]; }
+  SideDestination<> SideIn(int index) { return SideIn("")[index]; }
 
   template <typename T>
   T& GetOptions() {
@@ -402,70 +429,85 @@ class Graph {
   }
 
   // Graph ports, non-typed.
-  Source<true> In(const std::string& graph_input) {
+  MultiSource<> In(const std::string& graph_input) {
     return graph_boundary_.Out(graph_input);
   }
 
-  Destination<true> Out(const std::string& graph_output) {
+  MultiDestination<> Out(const std::string& graph_output) {
     return graph_boundary_.In(graph_output);
   }
 
-  SideSource<true> SideIn(const std::string& graph_input) {
+  MultiSideSource<> SideIn(const std::string& graph_input) {
     return graph_boundary_.SideOut(graph_input);
   }
 
-  SideDestination<true> SideOut(const std::string& graph_output) {
+  MultiSideDestination<> SideOut(const std::string& graph_output) {
     return graph_boundary_.SideIn(graph_output);
   }
 
   // Convenience methods for accessing purely index-based ports.
-  Source<false> In(int index) { return In("")[0]; }
+  Source<> In(int index) { return In("")[index]; }
 
-  Destination<false> Out(int index) { return Out("")[0]; }
+  Destination<> Out(int index) { return Out("")[index]; }
 
-  SideSource<false> SideIn(int index) { return SideIn("")[0]; }
+  SideSource<> SideIn(int index) { return SideIn("")[index]; }
 
-  SideDestination<false> SideOut(int index) { return SideOut("")[0]; }
+  SideDestination<> SideOut(int index) { return SideOut("")[index]; }
 
   // Graph ports, typed.
   // TODO: make graph_boundary_ a typed node!
-  template <class PortT, class Payload = typename PortT::PayloadT,
-            class Src = Source<PortT::kMultiple, Payload>>
-  Src In(const PortT& graph_input) {
-    return Src(&graph_boundary_.out_streams_[graph_input.Tag()]);
+  template <class PortT, class Payload = typename PortT::PayloadT>
+  auto In(const PortT& graph_input) {
+    return (*this)[graph_input];
   }
 
-  template <class PortT, class Payload = typename PortT::PayloadT,
-            class Dst = Destination<PortT::kMultiple, Payload>>
-  Dst Out(const PortT& graph_output) {
-    return Dst(&graph_boundary_.in_streams_[graph_output.Tag()]);
+  template <class PortT, class Payload = typename PortT::PayloadT>
+  auto Out(const PortT& graph_output) {
+    return (*this)[graph_output];
   }
 
-  template <class PortT, class Payload = typename PortT::PayloadT,
-            class Src = SideSource<PortT::kMultiple, Payload>>
-  Src SideIn(const PortT& graph_input) {
-    return Src(&graph_boundary_.out_sides_[graph_input.Tag()]);
+  template <class PortT, class Payload = typename PortT::PayloadT>
+  auto SideIn(const PortT& graph_input) {
+    return (*this)[graph_input];
   }
 
-  template <class PortT, class Payload = typename PortT::PayloadT,
-            class Dst = SideDestination<PortT::kMultiple, Payload>>
-  Dst SideOut(const PortT& graph_output) {
-    return Dst(&graph_boundary_.in_sides_[graph_output.Tag()]);
+  template <class PortT, class Payload = typename PortT::PayloadT>
+  auto SideOut(const PortT& graph_output) {
+    return (*this)[graph_output];
   }
 
   template <typename B, typename T, bool kIsOptional, bool kIsMultiple>
   auto operator[](const PortCommon<B, T, kIsOptional, kIsMultiple>& port) {
+    using PayloadT =
+        typename PortCommon<B, T, kIsOptional, kIsMultiple>::PayloadT;
     if constexpr (std::is_same_v<B, OutputBase>) {
-      return Destination<kIsMultiple, T>(
-          &graph_boundary_.in_streams_[port.Tag()]);
+      auto* base = &graph_boundary_.in_streams_[port.Tag()];
+      if constexpr (kIsMultiple) {
+        return MultiDestination<PayloadT>(base);
+      } else {
+        return Destination<PayloadT>(base);
+      }
     } else if constexpr (std::is_same_v<B, InputBase>) {
-      return Source<kIsMultiple, T>(&graph_boundary_.out_streams_[port.Tag()]);
+      auto* base = &graph_boundary_.out_streams_[port.Tag()];
+      if constexpr (kIsMultiple) {
+        return MultiSource<PayloadT>(base);
+      } else {
+        return Source<PayloadT>(base);
+      }
     } else if constexpr (std::is_same_v<B, SideOutputBase>) {
-      return SideDestination<kIsMultiple, T>(
-          &graph_boundary_.in_sides_[port.Tag()]);
+      auto* base = &graph_boundary_.in_sides_[port.Tag()];
+      if constexpr (kIsMultiple) {
+        return MultiSideDestination<PayloadT>(base);
+      } else {
+        return SideDestination<PayloadT>(base);
+      }
     } else if constexpr (std::is_same_v<B, SideInputBase>) {
-      return SideSource<kIsMultiple, T>(
-          &graph_boundary_.out_sides_[port.Tag()]);
+      auto* base = &graph_boundary_.out_sides_[port.Tag()];
+      if constexpr (kIsMultiple) {
+        return MultiSideSource<PayloadT>(base);
+      } else {
+        return SideSource<PayloadT>(base);
+      }
     } else {
       static_assert(dependent_false<B>::value, "Type not supported.");
     }

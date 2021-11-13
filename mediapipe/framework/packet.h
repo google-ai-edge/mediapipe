@@ -179,7 +179,9 @@ class Packet {
 
   // Returns an error if the packet does not contain data of type T.
   template <typename T>
-  absl::Status ValidateAsType() const;
+  absl::Status ValidateAsType() const {
+    return ValidateAsType(tool::TypeId<T>());
+  }
 
   // Returns an error if the packet is not an instance of
   // a protocol buffer message.
@@ -217,6 +219,8 @@ class Packet {
   packet_internal::GetHolderShared(const Packet& packet);
   friend std::shared_ptr<packet_internal::HolderBase>
   packet_internal::GetHolderShared(Packet&& packet);
+
+  absl::Status ValidateAsType(const tool::TypeInfo& type_info) const;
 
   std::shared_ptr<packet_internal::HolderBase> holder_;
   class Timestamp timestamp_;
@@ -768,21 +772,6 @@ inline const T& Packet::Get() const {
     LOG(FATAL) << "Packet::Get() failed: " << status.message();
   }
   return holder->data();
-}
-
-template <typename T>
-absl::Status Packet::ValidateAsType() const {
-  if (ABSL_PREDICT_FALSE(IsEmpty())) {
-    return absl::InternalError(absl::StrCat(
-        "Expected a Packet of type: ", MediaPipeTypeStringOrDemangled<T>(),
-        ", but received an empty Packet."));
-  }
-  if (ABSL_PREDICT_FALSE(holder_->As<T>() == nullptr)) {
-    return absl::InvalidArgumentError(absl::StrCat(
-        "The Packet stores \"", holder_->DebugTypeName(), "\", but \"",
-        MediaPipeTypeStringOrDemangled<T>(), "\" was requested."));
-  }
-  return absl::OkStatus();
 }
 
 inline Timestamp Packet::Timestamp() const { return timestamp_; }

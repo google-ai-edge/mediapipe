@@ -17,6 +17,7 @@ package com.google.mediapipe.solutioncore;
 import android.util.Log;
 import com.google.mediapipe.framework.MediaPipeException;
 import com.google.mediapipe.framework.Packet;
+import com.google.mediapipe.solutioncore.logging.SolutionStatsLogger;
 import java.util.List;
 
 /** Interface for handling MediaPipe solution graph outputs. */
@@ -33,6 +34,9 @@ public class OutputHandler<T extends SolutionResult> {
   private ResultListener<T> customResultListener;
   // The user-defined error listener.
   private ErrorListener customErrorListener;
+  // A logger that records the time when the output packets leave the graph or logs any error
+  // occurs.
+  private SolutionStatsLogger statsLogger;
   // Whether the output handler should react to timestamp-bound changes by outputting empty packets.
   private boolean handleTimestampBoundChanges = false;
 
@@ -52,6 +56,15 @@ public class OutputHandler<T extends SolutionResult> {
    */
   public void setResultListener(ResultListener<T> listener) {
     this.customResultListener = listener;
+  }
+
+  /**
+   * Sets a {@link SolutionStatsLogger} to report invocation end events.
+   *
+   * @param statsLogger a {@link SolutionStatsLogger}.
+   */
+  public void setStatsLogger(SolutionStatsLogger statsLogger) {
+    this.statsLogger = statsLogger;
   }
 
   /**
@@ -82,6 +95,7 @@ public class OutputHandler<T extends SolutionResult> {
     T solutionResult = null;
     try {
       solutionResult = outputConverter.convert(packets);
+      statsLogger.recordInvocationEnd(packets.get(0).getTimestamp());
       customResultListener.run(solutionResult);
     } catch (MediaPipeException e) {
       if (customErrorListener != null) {

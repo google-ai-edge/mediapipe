@@ -398,13 +398,10 @@ camera.start();
 ### Android Solution API
 
 Please first follow general
-[instructions](../getting_started/android_solutions.md#integrate-mediapipe-android-solutions-api)
-to add MediaPipe Gradle dependencies, then try the Hands Solution API in the
-companion
-[example Android Studio project](https://github.com/google/mediapipe/tree/master/mediapipe/examples/android/solutions/hands)
-following
-[these instructions](../getting_started/android_solutions.md#build-solution-example-apps-in-android-studio)
-and learn more in usage example below.
+[instructions](../getting_started/android_solutions.md) to add MediaPipe Gradle
+dependencies and try the Android Solution API in the companion
+[example Android Studio project](https://github.com/google/mediapipe/tree/master/mediapipe/examples/android/solutions/hands),
+and learn more in the usage example below.
 
 Supported configuration options:
 

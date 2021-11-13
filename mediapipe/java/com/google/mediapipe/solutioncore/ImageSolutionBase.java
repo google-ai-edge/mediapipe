@@ -137,8 +137,10 @@ public class ImageSolutionBase extends SolutionBase {
       if (imageObj instanceof TextureFrame) {
         imagePacket = packetCreator.createImage((TextureFrame) imageObj);
         imageObj = null;
+        statsLogger.recordGpuInputArrival(timestamp);
       } else if (imageObj instanceof Bitmap) {
         imagePacket = packetCreator.createRgbaImage((Bitmap) imageObj);
+        statsLogger.recordCpuInputArrival(timestamp);
       } else {
         reportError(
             "The input image type is not supported.",
@@ -146,7 +148,6 @@ public class ImageSolutionBase extends SolutionBase {
                 MediaPipeException.StatusCode.UNIMPLEMENTED.ordinal(),
                 "The input image type is not supported."));
       }
-
       try {
         // addConsumablePacketToInputStream allows the graph to take exclusive ownership of the
         // packet, which may allow for more memory optimizations.

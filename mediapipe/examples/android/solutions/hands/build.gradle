@@ -35,17 +35,7 @@ dependencies {
     testImplementation 'junit:junit:4.+'
     androidTestImplementation 'androidx.test.ext:junit:1.1.2'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
-    // MediaPipe Hands Solution components.
+    // MediaPipe Hands Solution.
     implementation 'com.google.mediapipe:solution-core:latest.release'
     implementation 'com.google.mediapipe:hands:latest.release'
-    // MediaPipe deps
-    implementation 'com.google.flogger:flogger:0.6'
-    implementation 'com.google.flogger:flogger-system-backend:0.6'
-    implementation 'com.google.guava:guava:27.0.1-android'
-    implementation 'com.google.protobuf:protobuf-java:3.11.4'
-    // CameraX core library
-    def camerax_version = "1.0.0-beta10"
-    implementation "androidx.camera:camera-core:$camerax_version"
-    implementation "androidx.camera:camera-camera2:$camerax_version"
-    implementation "androidx.camera:camera-lifecycle:$camerax_version"
 }

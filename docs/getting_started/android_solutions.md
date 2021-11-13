@@ -36,16 +36,6 @@ dependencies {
     implementation 'com.google.mediapipe:facemesh:latest.release'
     // Optional: MediaPipe Hands Solution.
     implementation 'com.google.mediapipe:hands:latest.release'
-    // MediaPipe deps
-    implementation 'com.google.flogger:flogger:0.6'
-    implementation 'com.google.flogger:flogger-system-backend:0.6'
-    implementation 'com.google.guava:guava:27.0.1-android'
-    implementation 'com.google.protobuf:protobuf-java:3.11.4'
-    // CameraX core library
-    def camerax_version = "1.0.0-beta10"
-    implementation "androidx.camera:camera-core:$camerax_version"
-    implementation "androidx.camera:camera-camera2:$camerax_version"
-    implementation "androidx.camera:camera-lifecycle:$camerax_version"
 }
 ```
 
@@ -84,3 +74,58 @@ To build these apps:
     by default. If needed, for example to run the apps on Android Emulator, set
     the `RUN_ON_GPU` boolean variable to `false` in the app's
     `MainActivity.java` to run the pipeline and model inference on CPU.
+
+## MediaPipe Solution APIs Terms of Service
+
+Last modified: November 12, 2021
+
+Use of MediaPipe Solution APIs is subject to the
+[Google APIs Terms of Service](https://developers.google.com/terms),
+[Google API Services User Data Policy](https://developers.google.com/terms/api-services-user-data-policy),
+and the terms below. Please check back from time to time as these terms and
+policies are occasionally updated.
+
+**Privacy**
+
+When you use MediaPipe Solution APIs, processing of the input data (e.g. images,
+video, text) fully happens on-device, and **MediaPipe does not send that input
+data to Google servers**. As a result, you can use our APIs for processing data
+that should not leave the device.
+
+MediaPipe Android Solution APIs will contact Google servers from time to time in
+order to receive things like bug fixes, updated models, and hardware accelerator
+compatibility information. MediaPipe Android Solution APIs also send metrics
+about the performance and utilization of the APIs in your app to Google. Google
+uses this metrics data to measure performance, API usage, debug, maintain and
+improve the APIs, and detect misuse or abuse, as further described in our
+[Privacy Policy](https://policies.google.com/privacy).
+
+**You are responsible for obtaining informed consent from your app users about
+Google’s processing of MediaPipe metrics data as required by applicable law.**
+
+Data we collect may include the following, across all MediaPipe Android Solution
+APIs:
+
+-   Device information (such as manufacturer, model, OS version and build) and
+    available ML hardware accelerators (GPU and DSP). Used for diagnostics and
+    usage analytics.
+
+-   App identification information (package name / bundle id, app version). Used
+    for diagnostics and usage analytics.
+
+-   API configuration (such as image format, resolution, and MediaPipe version
+    used). Used for diagnostics and usage analytics.
+
+-   Event type (such as initialize, download model, update, run, and detection).
+    Used for diagnostics and usage analytics.
+
+-   Error codes. Used for diagnostics.
+
+-   Performance metrics. Used for diagnostics.
+
+-   Per-installation identifiers that do not uniquely identify a user or
+    physical device. Used for operation of remote configuration and usage
+    analytics.
+
+-   Network request sender IP addresses. Used for remote configuration
+    diagnostics. Collected IP addresses are retained temporarily.

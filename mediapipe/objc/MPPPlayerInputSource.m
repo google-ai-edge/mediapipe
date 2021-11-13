@@ -140,7 +140,11 @@ static CVReturn renderCallback(CVDisplayLinkRef displayLink, const CVTimeStamp* 
         }
         CFRelease(pixelBuffer);
       });
-  } else if (!_videoDisplayLink.paused && _videoPlayer.rate == 0) {
+  } else if (
+#if !TARGET_OS_OSX
+             !_videoDisplayLink.paused &&
+#endif
+             _videoPlayer.rate == 0) {
     // The video might be paused by the operating system fo other reasons not catched by the context
     // of an interruption. If this condition happens the @c _videoDisplayLink will not have a
     // paused state, while the _videoPlayer will have rate 0 AKA paused. In this scenario we restart
