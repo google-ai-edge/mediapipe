@@ -716,7 +716,6 @@ cc_test(
     deps = [
         ":motion_estimation",
         ":motion_models",
-        "//mediapipe/framework/deps:message_matchers",
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/framework/port:parse_text_proto",
         "//mediapipe/framework/port:vector",

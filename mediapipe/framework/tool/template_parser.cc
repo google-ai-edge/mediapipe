@@ -37,7 +37,6 @@
 #include "mediapipe/framework/tool/proto_util_lite.h"
 
 using mediapipe::proto_ns::Descriptor;
-using mediapipe::proto_ns::DescriptorPool;
 using mediapipe::proto_ns::DynamicMessageFactory;
 using mediapipe::proto_ns::EnumDescriptor;
 using mediapipe::proto_ns::EnumValueDescriptor;
@@ -1666,7 +1665,6 @@ TemplateParser::Parser::Parser()
       allow_partial_(false),
       allow_case_insensitive_field_(false),
       allow_unknown_field_(false),
-      allow_unknown_extension_(true),
       allow_unknown_enum_(false),
       allow_field_number_(false),
       allow_relaxed_whitespace_(false),
@@ -1685,10 +1683,11 @@ bool TemplateParser::Parser::Parse(io::ZeroCopyInputStream* input,
                                  : ParserImpl::FORBID_SINGULAR_OVERWRITES;
 
   int recursion_limit = std::numeric_limits<int>::max();
+  bool allow_unknown_extension = false;
   MediaPipeParserImpl parser(
       output->GetDescriptor(), input, error_collector_, finder_,
       parse_info_tree_, overwrites_policy, allow_case_insensitive_field_,
-      allow_unknown_field_, allow_unknown_extension_, allow_unknown_enum_,
+      allow_unknown_field_, allow_unknown_extension, allow_unknown_enum_,
       allow_field_number_, allow_relaxed_whitespace_, allow_partial_,
       recursion_limit);
   return MergeUsingImpl(input, output, &parser);
@@ -1703,11 +1702,12 @@ bool TemplateParser::Parser::ParseFromString(const std::string& input,
 bool TemplateParser::Parser::Merge(io::ZeroCopyInputStream* input,
                                    Message* output) {
   int recursion_limit = std::numeric_limits<int>::max();
+  bool allow_unknown_extension = false;
   MediaPipeParserImpl parser(
       output->GetDescriptor(), input, error_collector_, finder_,
       parse_info_tree_, ParserImpl::ALLOW_SINGULAR_OVERWRITES,
       allow_case_insensitive_field_, allow_unknown_field_,
-      allow_unknown_extension_, allow_unknown_enum_, allow_field_number_,
+      allow_unknown_extension, allow_unknown_enum_, allow_field_number_,
       allow_relaxed_whitespace_, allow_partial_, recursion_limit);
   return MergeUsingImpl(input, output, &parser);
 }
@@ -1737,11 +1737,12 @@ bool TemplateParser::Parser::ParseFieldValueFromString(
     const std::string& input, const FieldDescriptor* field, Message* output) {
   io::ArrayInputStream input_stream(input.data(), input.size());
   int recursion_limit = std::numeric_limits<int>::max();
+  bool allow_unknown_extension = false;
   ParserImpl parser(
       output->GetDescriptor(), &input_stream, error_collector_, finder_,
       parse_info_tree_, ParserImpl::ALLOW_SINGULAR_OVERWRITES,
       allow_case_insensitive_field_, allow_unknown_field_,
-      allow_unknown_extension_, allow_unknown_enum_, allow_field_number_,
+      allow_unknown_extension, allow_unknown_enum_, allow_field_number_,
       allow_relaxed_whitespace_, allow_partial_, recursion_limit);
   return parser.ParseField(field, output);
 }

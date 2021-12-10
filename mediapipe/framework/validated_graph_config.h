@@ -96,7 +96,7 @@ class NodeTypeInfo {
 
   // Get the input/output side packet/stream index that is the first
   // for the PacketTypeSets.  Subsequent id's in the collection are
-  // guaranteed to be contiguous in the master flat array.
+  // guaranteed to be contiguous in the main flat array.
   int InputSidePacketBaseIndex() const { return input_side_packet_base_index_; }
   int OutputSidePacketBaseIndex() const {
     return output_side_packet_base_index_;
@@ -154,7 +154,7 @@ class NodeTypeInfo {
   CalculatorContract contract_;
 
   // The base indexes of the first entry belonging to this node in
-  // the master flat arrays of ValidatedGraphConfig.  Subsequent
+  // the main flat arrays of ValidatedGraphConfig.  Subsequent
   // entries are guaranteed to be sequential and in the order of the
   // CollectionItemIds.
   // Example:

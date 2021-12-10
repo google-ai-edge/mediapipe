@@ -45,6 +45,9 @@ namespace mediapipe {
 #if !MEDIAPIPE_DISABLE_GPU
 
 #endif  // !MEDIAPIPE_DISABLE_GPU
+#if defined(MEDIAPIPE_IOS)
+
+#endif  // defined(MEDIAPIPE_IOS)
 
 namespace {
 constexpr char kImageFrameTag[] = "IMAGE";

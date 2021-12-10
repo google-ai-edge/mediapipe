@@ -42,7 +42,11 @@ void RunTest(const std::array<float, 16>& matrix,
 
   const auto& inverse_matrix = output_packets[0].Get<std::array<float, 16>>();
 
-  EXPECT_THAT(inverse_matrix, testing::Eq(expected_inverse_matrix));
+  EXPECT_THAT(
+      inverse_matrix,
+      testing::Pointwise(testing::FloatEq(),
+                         absl::MakeSpan(expected_inverse_matrix.data(),
+                                        expected_inverse_matrix.size())));
 
   // Fully close graph at end, otherwise calculator+tensors are destroyed
   // after calling WaitUntilDone().
@@ -119,6 +123,26 @@ TEST(InverseMatrixCalculatorTest, Rotation90) {
      0.0f, 0.0f, 0.0f, 1.0f,
   };
   // clang-format on
+  RunTest(matrix, expected_inverse_matrix);
+}
+
+TEST(InverseMatrixCalculatorTest, CheckPrecision) {
+  // clang-format off
+  std::array<float, 16> matrix = {
+    0.00001f,  0.0f,      0.0f, 0.0f,
+    0.0f,      0.00001f,  0.0f, 0.0f,
+    0.0f,      0.0f,      1.0f, 0.0f,
+    0.0f,      0.0f,      0.0f, 1.0f,
+  };
+
+  std::array<float, 16> expected_inverse_matrix = {
+    100000.0f, 0.0f,      0.0f, 0.0f,
+    0.0f,      100000.0f, 0.0f, 0.0f,
+    0.0f,      0.0f,      1.0f, 0.0f,
+    0.0f,      0.0f,      0.0f, 1.0f,
+  };
+  // clang-format on
+
   RunTest(matrix, expected_inverse_matrix);
 }
 

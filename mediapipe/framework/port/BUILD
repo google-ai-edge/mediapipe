@@ -176,6 +176,7 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         ":status_matchers",
+        "//mediapipe/framework/deps:message_matchers",
         "@com_google_googletest//:gtest",
     ],
 )
@@ -192,6 +193,7 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         ":status_matchers",
+        "//mediapipe/framework/deps:message_matchers",
         "//mediapipe/framework/deps:status_matchers",
         "@com_google_googletest//:gtest_main",
     ],

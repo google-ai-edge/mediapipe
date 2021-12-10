@@ -85,7 +85,7 @@ void BasicTraceEventTypes(TraceEventRegistry* result) {
       {TraceEvent::PACKET_QUEUED, "An input queue size when a packet arrives.",
        true, true, false},
   };
-  for (TraceEventType t : basic_types) {
+  for (const TraceEventType& t : basic_types) {
     (*result)[t.event_type()] = t;
   }
 }

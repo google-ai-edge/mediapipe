@@ -28,7 +28,6 @@
 #include "mediapipe/framework/tool/simulation_clock.h"
 #include "mediapipe/framework/tool/tag_map_helper.h"
 
-using ::testing::EqualsProto;
 using ::testing::proto::Partially;
 
 namespace mediapipe {

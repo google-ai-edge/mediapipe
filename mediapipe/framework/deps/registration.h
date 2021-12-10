@@ -144,7 +144,7 @@ struct WrapStatusOr<absl::StatusOr<T>> {
 };
 }  // namespace registration_internal
 
-class NamespaceWhitelist {
+class NamespaceAllowlist {
  public:
   static const absl::flat_hash_set<std::string>& TopNamespaces();
 };
@@ -289,14 +289,14 @@ class FunctionRegistry {
   mutable absl::Mutex lock_;
   std::unordered_map<std::string, Function> functions_ ABSL_GUARDED_BY(lock_);
 
-  // For names included in NamespaceWhitelist, strips the namespace.
+  // For names included in NamespaceAllowlist, strips the namespace.
   std::string GetAdjustedName(const std::string& name) {
     constexpr auto kCxxSep = registration_internal::kCxxSep;
     std::vector<std::string> names = absl::StrSplit(name, kCxxSep);
     std::string base_name = names.back();
     names.pop_back();
     std::string ns = absl::StrJoin(names, kCxxSep);
-    if (NamespaceWhitelist::TopNamespaces().count(ns)) {
+    if (NamespaceAllowlist::TopNamespaces().count(ns)) {
       return base_name;
     }
     return name;

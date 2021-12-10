@@ -75,7 +75,6 @@ int GetMatType(const mediapipe::ImageFormat::Format format) {
 }  // namespace
 
 namespace mediapipe {
-
 namespace formats {
 
 cv::Mat MatView(const ImageFrame* image) {

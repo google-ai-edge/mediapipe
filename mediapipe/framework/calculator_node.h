@@ -236,21 +236,21 @@ class CalculatorNode {
   }
 
  private:
-  // Sets up the output side packets from the master flat array.
+  // Sets up the output side packets from the main flat array.
   absl::Status InitializeOutputSidePackets(
       const PacketTypeSet& output_side_packet_types,
       OutputSidePacketImpl* output_side_packets);
   // Connects the input side packets as mirrors on the output side packets.
-  // Output side packets are looked up in the master flat array which is
+  // Output side packets are looked up in the main flat array which is
   // provided.
   absl::Status InitializeInputSidePackets(
       OutputSidePacketImpl* output_side_packets);
-  // Sets up the output streams from the master flat array.
+  // Sets up the output streams from the main flat array.
   absl::Status InitializeOutputStreams(
       OutputStreamManager* output_stream_managers);
   // Sets up the input streams and connects them as mirrors on the
   // output streams.  Both input streams and output streams are looked
-  // up in the master flat arrays which are provided.
+  // up in the main flat arrays which are provided.
   absl::Status InitializeInputStreams(
       InputStreamManager* input_stream_managers,
       OutputStreamManager* output_stream_managers);

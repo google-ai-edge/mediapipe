@@ -14,6 +14,7 @@
 
 #include <memory>
 
+#include "mediapipe/framework/api2/node.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/calculator_options.pb.h"
 #include "mediapipe/framework/formats/image.h"
@@ -23,23 +24,23 @@
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/port/vector.h"
 
-#if !MEDIAPIPE_DISABLE_GPU
-#include "mediapipe/gpu/gl_calculator_helper.h"
-#endif  // !MEDIAPIPE_DISABLE_GPU
-
 namespace mediapipe {
+namespace api2 {
 
-namespace {
-constexpr char kImageFrameTag[] = "IMAGE_CPU";
-constexpr char kGpuBufferTag[] = "IMAGE_GPU";
-constexpr char kImageTag[] = "IMAGE";
-}  // namespace
+#if MEDIAPIPE_DISABLE_GPU
+// Just a placeholder to not have to depend on mediapipe::GpuBuffer.
+class Nothing {};
+using GpuBuffer = Nothing;
+#else
+using GpuBuffer = mediapipe::GpuBuffer;
+#endif  // MEDIAPIPE_DISABLE_GPU
 
 // A calculator for converting from legacy MediaPipe datatypes into a
 // unified image container.
 //
 // Inputs:
 //   One of the following two tags:
+//   IMAGE:  An Image, ImageFrame, or GpuBuffer containing input image.
 //   IMAGE_CPU:  An ImageFrame containing input image.
 //   IMAGE_GPU:  A GpuBuffer containing input image.
 //
@@ -49,107 +50,44 @@ constexpr char kImageTag[] = "IMAGE";
 // Note:
 //   No CPU/GPU conversion is done.
 //
-class ToImageCalculator : public CalculatorBase {
+class ToImageCalculator : public Node {
  public:
   ToImageCalculator() = default;
   ~ToImageCalculator() override = default;
 
-  static absl::Status GetContract(CalculatorContract* cc);
+  static constexpr Input<
+      OneOf<mediapipe::Image, mediapipe::ImageFrame, GpuBuffer>>::Optional kIn{
+      "IMAGE"};
+  static constexpr Input<mediapipe::ImageFrame>::Optional kInCpu{"IMAGE_CPU"};
+  static constexpr Input<GpuBuffer>::Optional kInGpu{"IMAGE_GPU"};
+  static constexpr Output<mediapipe::Image> kOut{"IMAGE"};
+  MEDIAPIPE_NODE_CONTRACT(kIn, kInCpu, kInGpu, kOut);
+
+  static absl::Status UpdateContract(CalculatorContract* cc);
 
   // From Calculator.
-  absl::Status Open(CalculatorContext* cc) override;
   absl::Status Process(CalculatorContext* cc) override;
   absl::Status Close(CalculatorContext* cc) override;
 
  private:
-  absl::Status RenderGpu(CalculatorContext* cc);
-  absl::Status RenderCpu(CalculatorContext* cc);
-
-  bool gpu_input_ = false;
-  bool gpu_initialized_ = false;
-#if !MEDIAPIPE_DISABLE_GPU
-  mediapipe::GlCalculatorHelper gpu_helper_;
-#endif  // !MEDIAPIPE_DISABLE_GPU
+  absl::StatusOr<Packet<Image>> GetInputImage(CalculatorContext* cc);
 };
-REGISTER_CALCULATOR(ToImageCalculator);
+MEDIAPIPE_REGISTER_NODE(ToImageCalculator);
 
-absl::Status ToImageCalculator::GetContract(CalculatorContract* cc) {
-  cc->Outputs().Tag(kImageTag).Set<mediapipe::Image>();
-
-  bool gpu_input = false;
-
-  if (cc->Inputs().HasTag(kImageFrameTag) &&
-      cc->Inputs().HasTag(kGpuBufferTag)) {
+absl::Status ToImageCalculator::UpdateContract(CalculatorContract* cc) {
+  int num_inputs = static_cast<int>(kIn(cc).IsConnected()) +
+                   static_cast<int>(kInCpu(cc).IsConnected()) +
+                   static_cast<int>(kInGpu(cc).IsConnected());
+  if (num_inputs != 1) {
     return absl::InternalError("Cannot have multiple inputs.");
   }
-
-  if (cc->Inputs().HasTag(kGpuBufferTag)) {
-#if !MEDIAPIPE_DISABLE_GPU
-    cc->Inputs().Tag(kGpuBufferTag).Set<mediapipe::GpuBuffer>();
-    gpu_input = true;
-#else
-    RET_CHECK_FAIL() << "GPU is disabled. Cannot use IMAGE_GPU stream.";
-#endif  // !MEDIAPIPE_DISABLE_GPU
-  }
-  if (cc->Inputs().HasTag(kImageFrameTag)) {
-    cc->Inputs().Tag(kImageFrameTag).Set<mediapipe::ImageFrame>();
-  }
-
-  if (gpu_input) {
-#if !MEDIAPIPE_DISABLE_GPU
-    MP_RETURN_IF_ERROR(mediapipe::GlCalculatorHelper::UpdateContract(cc));
-#endif  // !MEDIAPIPE_DISABLE_GPU
-  }
-
-  return absl::OkStatus();
-}
-
-absl::Status ToImageCalculator::Open(CalculatorContext* cc) {
-  cc->SetOffset(TimestampDiff(0));
-
-  if (cc->Inputs().HasTag(kGpuBufferTag)) {
-    gpu_input_ = true;
-  }
-
-  if (gpu_input_) {
-#if !MEDIAPIPE_DISABLE_GPU
-    MP_RETURN_IF_ERROR(gpu_helper_.Open(cc));
-#endif
-  }  //  !MEDIAPIPE_DISABLE_GPU
 
   return absl::OkStatus();
 }
 
 absl::Status ToImageCalculator::Process(CalculatorContext* cc) {
-  if (gpu_input_) {
-#if !MEDIAPIPE_DISABLE_GPU
-    MP_RETURN_IF_ERROR(gpu_helper_.RunInGlContext([&cc]() -> absl::Status {
-      auto& input = cc->Inputs().Tag(kGpuBufferTag).Get<mediapipe::GpuBuffer>();
-      // Wrap texture pointer; shallow copy.
-      auto output = std::make_unique<mediapipe::Image>(input);
-      cc->Outputs().Tag(kImageTag).Add(output.release(), cc->InputTimestamp());
-      return absl::OkStatus();
-    }));
-#endif  // !MEDIAPIPE_DISABLE_GPU
-  } else {
-    // The input ImageFrame.
-    auto& input = cc->Inputs().Tag(kImageFrameTag).Get<mediapipe::ImageFrame>();
-    // Make a copy of the input packet to co-own the input ImageFrame.
-    Packet* packet_copy_ptr =
-        new Packet(cc->Inputs().Tag(kImageFrameTag).Value());
-    // Create an output Image that (co-)owns a new ImageFrame that points to
-    // the same pixel data as the input ImageFrame and also owns the packet
-    // copy. As a result, the output Image indirectly co-owns the input
-    // ImageFrame. This ensures a correct life span of the shared pixel data.
-    std::unique_ptr<mediapipe::Image> output =
-        std::make_unique<mediapipe::Image>(
-            std::make_shared<mediapipe::ImageFrame>(
-                input.Format(), input.Width(), input.Height(),
-                input.WidthStep(), const_cast<uint8*>(input.PixelData()),
-                [packet_copy_ptr](uint8*) { delete packet_copy_ptr; }));
-    cc->Outputs().Tag(kImageTag).Add(output.release(), cc->InputTimestamp());
-  }
-
+  ASSIGN_OR_RETURN(auto output, GetInputImage(cc));
+  kOut(cc).Send(output.At(cc->InputTimestamp()));
   return absl::OkStatus();
 }
 
@@ -157,4 +95,43 @@ absl::Status ToImageCalculator::Close(CalculatorContext* cc) {
   return absl::OkStatus();
 }
 
+// Wrap ImageFrameSharedPtr; shallow copy.
+absl::StatusOr<Packet<Image>> FromImageFrame(Packet<ImageFrame> packet) {
+  return MakePacket<Image, std::shared_ptr<mediapipe::ImageFrame>>(
+      std::const_pointer_cast<mediapipe::ImageFrame>(
+          SharedPtrWithPacket<mediapipe::ImageFrame>(packet)));
+}
+
+// Wrap texture pointer; shallow copy.
+absl::StatusOr<Packet<Image>> FromGpuBuffer(Packet<GpuBuffer> packet) {
+#if !MEDIAPIPE_DISABLE_GPU
+  const GpuBuffer& buffer = *packet;
+  return MakePacket<Image, const GpuBuffer&>(buffer);
+#else
+  return absl::UnimplementedError("GPU processing is disabled in build flags");
+#endif  // !MEDIAPIPE_DISABLE_GPU
+}
+
+absl::StatusOr<Packet<Image>> ToImageCalculator::GetInputImage(
+    CalculatorContext* cc) {
+  if (kIn(cc).IsConnected()) {
+    return kIn(cc).Visit(
+        [&](const mediapipe::Image&) {
+          return absl::StatusOr<Packet<Image>>(kIn(cc).As<Image>());
+        },
+        [&](const mediapipe::ImageFrame&) {
+          return FromImageFrame(kIn(cc).As<ImageFrame>());
+        },
+        [&](const GpuBuffer&) {
+          return FromGpuBuffer(kIn(cc).As<GpuBuffer>());
+        });
+  } else if (kInCpu(cc).IsConnected()) {
+    return FromImageFrame(kInCpu(cc).As<ImageFrame>());
+  } else if (kInGpu(cc).IsConnected()) {
+    return FromGpuBuffer(kInGpu(cc).As<GpuBuffer>());
+  }
+  return absl::InvalidArgumentError("No input found.");
+}
+
+}  // namespace api2
 }  // namespace mediapipe

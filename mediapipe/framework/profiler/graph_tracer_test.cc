@@ -27,7 +27,6 @@
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/calculator_profile.pb.h"
 #include "mediapipe/framework/deps/clock.h"
-#include "mediapipe/framework/deps/message_matchers.h"
 #include "mediapipe/framework/port/advanced_proto_inc.h"
 #include "mediapipe/framework/port/file_helpers.h"
 #include "mediapipe/framework/port/gmock.h"

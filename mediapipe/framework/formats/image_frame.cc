@@ -242,7 +242,7 @@ bool ImageFrame::IsValidAlignmentNumber(uint32 alignment_boundary) {
 
 // static
 std::string ImageFrame::InvalidFormatString(ImageFormat::Format format) {
-#ifdef MEDIAPIPE_MOBILE
+#ifdef MEDIAPIPE_PROTO_LITE
   return "Invalid format.";
 #else
   const proto_ns::EnumValueDescriptor* enum_value_descriptor =

@@ -25,7 +25,6 @@
 #include "absl/strings/substitute.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/calculator_runner.h"
-#include "mediapipe/framework/deps/message_matchers.h"
 #include "mediapipe/framework/formats/matrix.h"
 #include "mediapipe/framework/formats/time_series_header.pb.h"
 #include "mediapipe/framework/port/gmock.h"

@@ -122,16 +122,16 @@ http_archive(
 # ...but the Java download is currently broken, so we use the "source" download.
 http_archive(
     name = "com_google_protobuf_javalite",
-    sha256 = "a79d19dcdf9139fa4b81206e318e33d245c4c9da1ffed21c87288ed4380426f9",
-    strip_prefix = "protobuf-3.11.4",
-    urls = ["https://github.com/protocolbuffers/protobuf/archive/v3.11.4.tar.gz"],
+    sha256 = "87407cd28e7a9c95d9f61a098a53cf031109d451a7763e7dd1253abf8b4df422",
+    strip_prefix = "protobuf-3.19.1",
+    urls = ["https://github.com/protocolbuffers/protobuf/archive/v3.19.1.tar.gz"],
 )
 
 http_archive(
     name = "com_google_protobuf",
-    sha256 = "a79d19dcdf9139fa4b81206e318e33d245c4c9da1ffed21c87288ed4380426f9",
-    strip_prefix = "protobuf-3.11.4",
-    urls = ["https://github.com/protocolbuffers/protobuf/archive/v3.11.4.tar.gz"],
+    sha256 = "87407cd28e7a9c95d9f61a098a53cf031109d451a7763e7dd1253abf8b4df422",
+    strip_prefix = "protobuf-3.19.1",
+    urls = ["https://github.com/protocolbuffers/protobuf/archive/v3.19.1.tar.gz"],
     patches = [
         "@//third_party:com_google_protobuf_fixes.diff"
     ],
@@ -154,28 +154,29 @@ http_archive(
     sha256 = "75922da3a1bdb417d820398eb03d4e9bd067c4905a4246d35a44c01d62154d91",
 )
 
+# Point to the commit that deprecates the usage of Eigen::MappedSparseMatrix.
 http_archive(
     name = "pybind11",
     urls = [
-        "https://storage.googleapis.com/mirror.tensorflow.org/github.com/pybind/pybind11/archive/v2.7.1.tar.gz",
-        "https://github.com/pybind/pybind11/archive/v2.7.1.tar.gz",
+        "https://github.com/pybind/pybind11/archive/70a58c577eaf067748c2ec31bfd0b0a614cffba6.zip",
     ],
-    sha256 = "616d1c42e4cf14fa27b2a4ff759d7d7b33006fdc5ad8fd603bb2c22622f27020",
-    strip_prefix = "pybind11-2.7.1",
+    sha256 = "b971842fab1b5b8f3815a2302331782b7d137fef0e06502422bc4bc360f4956c",
+    strip_prefix = "pybind11-70a58c577eaf067748c2ec31bfd0b0a614cffba6",
     build_file = "@pybind11_bazel//:pybind11.BUILD",
 )
 
+# Point to the commit that deprecates the usage of Eigen::MappedSparseMatrix.
 http_archive(
     name = "ceres_solver",
-    url = "https://github.com/ceres-solver/ceres-solver/archive/2.0.0.zip",
+    url = "https://github.com/ceres-solver/ceres-solver/archive/123fba61cf2611a3c8bddc9d91416db26b10b558.zip",
     patches = [
         "@//third_party:ceres_solver_compatibility_fixes.diff"
     ],
     patch_args = [
         "-p1",
     ],
-    strip_prefix = "ceres-solver-2.0.0",
-    sha256 = "db12d37b4cebb26353ae5b7746c7985e00877baa8e7b12dc4d3a1512252fff3b"
+    strip_prefix = "ceres-solver-123fba61cf2611a3c8bddc9d91416db26b10b558",
+    sha256 = "8b7b16ceb363420e0fd499576daf73fa338adb0b1449f58bea7862766baa1ac7"
 )
 
 http_archive(
@@ -249,21 +250,12 @@ http_archive(
     ],
 )
 
-# You may run setup_android.sh to install Android SDK and NDK.
-android_ndk_repository(
-    name = "androidndk",
-)
-
-android_sdk_repository(
-    name = "androidsdk",
-)
-
 # iOS basic build deps.
 
 http_archive(
     name = "build_bazel_rules_apple",
-    sha256 = "7a7afdd4869bb201c9352eed2daf37294d42b093579b70423490c1b4d4f6ce42",
-    url = "https://github.com/bazelbuild/rules_apple/releases/download/0.19.0/rules_apple.0.19.0.tar.gz",
+    sha256 = "77e8bf6fda706f420a55874ae6ee4df0c9d95da6c7838228b26910fc82eea5a2",
+    url = "https://github.com/bazelbuild/rules_apple/releases/download/0.32.0/rules_apple.0.32.0.tar.gz",
     patches = [
         # Bypass checking ios unit test runner when building MP ios applications.
         "@//third_party:build_bazel_rules_apple_bypass_test_runner_check.diff"
@@ -289,10 +281,9 @@ swift_rules_dependencies()
 
 http_archive(
     name = "build_bazel_apple_support",
-    sha256 = "122ebf7fe7d1c8e938af6aeaee0efe788a3a2449ece5a8d6a428cb18d6f88033",
+    sha256 = "741366f79d900c11e11d8efd6cc6c66a31bfb2451178b58e0b5edc6f1db17b35",
     urls = [
-        "https://storage.googleapis.com/mirror.tensorflow.org/github.com/bazelbuild/apple_support/releases/download/0.7.1/apple_support.0.7.1.tar.gz",
-        "https://github.com/bazelbuild/apple_support/releases/download/0.7.1/apple_support.0.7.1.tar.gz",
+        "https://github.com/bazelbuild/apple_support/releases/download/0.10.0/apple_support.0.10.0.tar.gz"
     ],
 )
 
@@ -382,9 +373,9 @@ http_archive(
 )
 
 # Tensorflow repo should always go after the other external dependencies.
-# 2021-07-29
-_TENSORFLOW_GIT_COMMIT = "52a2905cbc21034766c08041933053178c5d10e3"
-_TENSORFLOW_SHA256 = "06d4691bcdb700f3275fa0971a1585221c2b9f3dffe867963be565a6643d7f56"
+# 2021-12-02
+_TENSORFLOW_GIT_COMMIT = "18a1dc0ba806dc023808531f0373d9ec068e64bf"
+_TENSORFLOW_SHA256 = "85b90416f7a11339327777bccd634de00ca0de2cf334f5f0727edcb11ff9289a"
 http_archive(
     name = "org_tensorflow",
     urls = [

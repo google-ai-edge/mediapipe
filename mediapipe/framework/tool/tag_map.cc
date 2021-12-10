@@ -215,19 +215,16 @@ std::string TagMap::ShortDebugString() const {
   return output;
 }
 
-bool TagMap::HasTag(const std::string& tag) const {
-  return mapping_.find(tag) != mapping_.end();
+bool TagMap::HasTag(const absl::string_view tag) const {
+  return mapping_.contains(tag);
 }
 
-int TagMap::NumEntries(const std::string& tag) const {
+int TagMap::NumEntries(const absl::string_view tag) const {
   const auto it = mapping_.find(tag);
-  if (it == mapping_.end()) {
-    return 0;
-  }
-  return it->second.count;
+  return it != mapping_.end() ? it->second.count : 0;
 }
 
-CollectionItemId TagMap::GetId(const std::string& tag, int index) const {
+CollectionItemId TagMap::GetId(const absl::string_view tag, int index) const {
   const auto it = mapping_.find(tag);
   if (it == mapping_.end()) {
     return CollectionItemId::GetInvalid();
@@ -248,11 +245,11 @@ std::pair<std::string, int> TagMap::TagAndIndexFromId(
   return {"", -1};
 }
 
-CollectionItemId TagMap::BeginId(const std::string& tag) const {
+CollectionItemId TagMap::BeginId(const absl::string_view tag) const {
   return GetId(tag, 0);
 }
 
-CollectionItemId TagMap::EndId(const std::string& tag) const {
+CollectionItemId TagMap::EndId(const absl::string_view tag) const {
   const auto it = mapping_.find(tag);
   if (it == mapping_.end()) {
     return CollectionItemId::GetInvalid();

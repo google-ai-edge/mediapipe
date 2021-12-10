@@ -74,7 +74,7 @@ class OutputStreamHandler {
   // flat_output_stream_managers is expected to point to a contiguous
   // flat array with OutputStreamManagers corresponding to the id's in
   // OutputStreamHandler::output_stream_managers_ (meaning it should
-  // point to somewhere in the middle of the master flat array of all
+  // point to somewhere in the middle of the main flat array of all
   // output stream managers).
   absl::Status InitializeOutputStreamManagers(
       OutputStreamManager* flat_output_stream_managers);

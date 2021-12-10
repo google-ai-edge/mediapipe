@@ -200,13 +200,9 @@ magnitude of `z` uses roughly the same scale as `x`.
 #### multi_hand_world_landmarks
 
 Collection of detected/tracked hands, where each hand is represented as a list
-of 21 hand landmarks in world coordinates. Each landmark consists of the
-following:
-
-*   `x`, `y` and `z`: Real-world 3D coordinates in meters with the origin at the
-    hand's approximate geometric center.
-*   `visibility`: Identical to that defined in the corresponding
-    [multi_hand_landmarks](#multi_hand_landmarks).
+of 21 hand landmarks in world coordinates. Each landmark is composed of `x`, `y`
+and `z`: real-world 3D coordinates in meters with the origin at the hand's
+approximate geometric center.
 
 #### multi_handedness
 

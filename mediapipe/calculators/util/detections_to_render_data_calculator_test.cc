@@ -17,7 +17,6 @@
 #include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/calculator_runner.h"
-#include "mediapipe/framework/deps/message_matchers.h"
 #include "mediapipe/framework/formats/detection.pb.h"
 #include "mediapipe/framework/formats/location_data.pb.h"
 #include "mediapipe/framework/packet.h"
@@ -33,8 +32,6 @@ namespace mediapipe {
 constexpr char kDetectionsTag[] = "DETECTIONS";
 constexpr char kRenderDataTag[] = "RENDER_DATA";
 constexpr char kDetectionListTag[] = "DETECTION_LIST";
-
-using ::testing::DoubleNear;
 
 // Error tolerance for pixels, distances, etc.
 static constexpr double kErrorTolerance = 1e-5;

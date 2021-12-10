@@ -16,7 +16,6 @@
 #include "mediapipe/calculators/util/latency.pb.h"
 #include "mediapipe/framework/calculator_runner.h"
 #include "mediapipe/framework/deps/clock.h"
-#include "mediapipe/framework/deps/message_matchers.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/framework/port/parse_text_proto.h"

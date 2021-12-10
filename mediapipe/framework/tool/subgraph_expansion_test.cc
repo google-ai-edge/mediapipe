@@ -18,7 +18,6 @@
 #include "absl/strings/str_cat.h"
 #include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
-#include "mediapipe/framework/deps/message_matchers.h"
 #include "mediapipe/framework/graph_service_manager.h"
 #include "mediapipe/framework/packet.h"
 #include "mediapipe/framework/packet_set.h"

@@ -17,7 +17,7 @@
 # Script to setup Android SDK and NDK.
 # usage:
 # $ cd <mediapipe root dir>
-# $ bash ./setup_android_sdk_and_ndk.sh ~/Android/Sdk ~/Android/Ndk r19c
+# $ bash ./setup_android_sdk_and_ndk.sh ~/Android/Sdk ~/Android/Ndk r21
 
 set -e
 
@@ -54,8 +54,8 @@ fi
 
 if [ -z $3 ]
 then
-  echo "Warning: ndk_version (argument 3) is not specified. Fallback to r19c."
-  ndk_version="r19c"
+  echo "Warning: ndk_version (argument 3) is not specified. Fallback to r21."
+  ndk_version="r21"
 fi
 
 if [ -d "$android_sdk_path" ]
@@ -64,11 +64,11 @@ then
 else
   rm -rf /tmp/android_sdk/
   mkdir  /tmp/android_sdk/
-  curl https://dl.google.com/android/repository/commandlinetools-${platform_android_sdk}-6609375_latest.zip -o /tmp/android_sdk/commandline_tools.zip
+  curl https://dl.google.com/android/repository/commandlinetools-${platform_android_sdk}-7583922_latest.zip -o /tmp/android_sdk/commandline_tools.zip
   unzip /tmp/android_sdk/commandline_tools.zip -d /tmp/android_sdk/
   mkdir -p $android_sdk_path
-  /tmp/android_sdk/tools/bin/sdkmanager --update --sdk_root=${android_sdk_path}
-  /tmp/android_sdk/tools/bin/sdkmanager "build-tools;29.0.1" "platform-tools" "platforms;android-29" --sdk_root=${android_sdk_path}
+  /tmp/android_sdk/cmdline-tools/bin/sdkmanager --update --sdk_root=${android_sdk_path}
+  /tmp/android_sdk/cmdline-tools/bin/sdkmanager "build-tools;30.0.3" "platform-tools" "platforms;android-30" "extras;android;m2repository" --sdk_root=${android_sdk_path}
   rm -rf /tmp/android_sdk/
   echo "Android SDK is now installed. Consider setting \$ANDROID_HOME environment variable to be ${android_sdk_path}"
 fi
@@ -88,22 +88,6 @@ fi
 
 echo "Set android_ndk_repository and android_sdk_repository in WORKSPACE"
 workspace_file="$( cd "$(dirname "$0")" ; pwd -P )"/WORKSPACE
-
-ndk_block=$(grep -n 'android_ndk_repository(' $workspace_file | awk -F  ":" '{print $1}')
-ndk_path_line=$((ndk_block+2))'i'
-sdk_block=$(grep -n 'android_sdk_repository(' $workspace_file | awk -F  ":" '{print $1}')
-sdk_path_line=$((sdk_block+3))'i'
-
-if [ $platform == "darwin" ]; then
-  sed -i -e "$ndk_path_line\\
-  \ \ \ \ path = \"${android_ndk_path}/android-ndk-${ndk_version}\",
-  " $workspace_file
-  sed -i -e "$sdk_path_line\\
-  \ \ \ \ path = \"${android_sdk_path}\",
-  " $workspace_file
-elif [ $platform == "linux" ]; then
-  sed -i "$ndk_path_line \    path = \"${android_ndk_path}/android-ndk-${ndk_version}\"," $workspace_file
-  sed -i "$sdk_path_line \    path = \"${android_sdk_path}\"," $workspace_file
-fi
-
+echo "android_sdk_repository(name = \"androidsdk\", path = \"${android_sdk_path}\")" >> $workspace_file
+echo "android_ndk_repository(name = \"androidndk\", path = \"${android_ndk_path}/android-ndk-${ndk_version}\")" >> $workspace_file
 echo "Done"

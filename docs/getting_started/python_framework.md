@@ -249,12 +249,12 @@ three stages: initialization and setup, graph run, and graph shutdown.
     graph.start_run()
 
     graph.add_packet_to_input_stream(
-        'in_stream', mp.packet_creator.create_str('abc').at(0))
+        'in_stream', mp.packet_creator.create_string('abc').at(0))
 
     rgb_img = cv2.cvtColor(cv2.imread('/path/to/your/image.png'), cv2.COLOR_BGR2RGB)
     graph.add_packet_to_input_stream(
         'in_stream',
-        mp.packet_creator.create_image_frame(format=mp.ImageFormat.SRGB,
+        mp.packet_creator.create_image_frame(image_format=mp.ImageFormat.SRGB,
                                              data=rgb_img).at(1))
     ```
 

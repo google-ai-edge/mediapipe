@@ -154,7 +154,7 @@ EOF
             "//third_party:camerax_core",
             "//third_party:camerax_camera2",
             "//third_party:camerax_lifecycle",
-            "@com_google_protobuf//:protobuf_java",
+            "@com_google_protobuf//:protobuf_javalite",
             "@maven//:com_google_code_findbugs_jsr305",
             "@maven//:com_google_flogger_flogger",
             "@maven//:com_google_flogger_flogger_system_backend",
@@ -252,7 +252,7 @@ def _proto_java_src_generator(name, proto_src, java_lite_out, srcs = []):
     native.genrule(
         name = name + "_proto_java_src_generator",
         srcs = srcs + [
-            "@com_google_protobuf//:well_known_protos",
+            "@com_google_protobuf//:lite_well_known_protos",
         ],
         outs = [java_lite_out],
         cmd = "$(location @com_google_protobuf//:protoc) " +

@@ -5,7 +5,7 @@
 * Bug fixes
 * Documentation fixes
 
-For new feature additions (e.g., new graphs and calculators), we are currently not planning to accept new feature pull requests into the MediaPipe repository. Instead, we like to get contributors to create their own repositories of the new feature and list it at [Awesome MediaPipe](https://mediapipe.org). This will allow contributors to more quickly get their code out to the community.
+For new feature additions (e.g., new graphs and calculators), we are currently not planning to accept new feature pull requests into the MediaPipe repository. Instead, we like to get contributors to create their own repositories of the new feature and list it at [Awesome MediaPipe](https://mediapipe.page.link/awesome-mediapipe). This will allow contributors to more quickly get their code out to the community.
 
 Before sending your pull requests, make sure you followed this list.
 

@@ -291,6 +291,7 @@ cc_library(
         "//mediapipe/framework/formats:image_frame",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
+        "@com_google_absl//absl/container:btree",
     ],
     alwayslink = 1,
 )
@@ -390,6 +391,7 @@ cc_test(
         "//mediapipe/framework/port:parse_text_proto",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
+        "@com_google_absl//absl/container:btree",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/strings",
     ],

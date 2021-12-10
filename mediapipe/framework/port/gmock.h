@@ -16,5 +16,6 @@
 #define MEDIAPIPE_PORT_GMOCK_H_
 
 #include "gmock/gmock.h"
+#include "mediapipe/framework/deps/message_matchers.h"
 
 #endif  // MEDIAPIPE_PORT_GMOCK_H_

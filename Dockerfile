@@ -56,7 +56,7 @@ RUN pip3 install tf_slim
 RUN ln -s /usr/bin/python3 /usr/bin/python
 
 # Install bazel
-ARG BAZEL_VERSION=3.7.2
+ARG BAZEL_VERSION=4.2.1
 RUN mkdir /bazel && \
     wget --no-check-certificate -O /bazel/installer.sh "https://github.com/bazelbuild/bazel/releases/download/${BAZEL_VERSION}/b\
 azel-${BAZEL_VERSION}-installer-linux-x86_64.sh" && \

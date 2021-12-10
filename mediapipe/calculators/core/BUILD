@@ -1242,7 +1242,6 @@ cc_test(
         "//mediapipe/framework:calculator_profile_cc_proto",
         "//mediapipe/framework:test_calculators",
         "//mediapipe/framework/deps:clock",
-        "//mediapipe/framework/deps:message_matchers",
         "//mediapipe/framework/port:core_proto",
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/framework/port:integral_types",

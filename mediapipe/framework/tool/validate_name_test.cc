@@ -17,7 +17,6 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/substitute.h"
 #include "mediapipe/framework/calculator.pb.h"
-#include "mediapipe/framework/deps/message_matchers.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/framework/port/status_matchers.h"
