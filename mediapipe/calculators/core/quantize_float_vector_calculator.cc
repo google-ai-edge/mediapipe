@@ -41,11 +41,14 @@
 //   }
 namespace mediapipe {
 
+constexpr char kEncodedTag[] = "ENCODED";
+constexpr char kFloatVectorTag[] = "FLOAT_VECTOR";
+
 class QuantizeFloatVectorCalculator : public CalculatorBase {
  public:
   static absl::Status GetContract(CalculatorContract* cc) {
-    cc->Inputs().Tag("FLOAT_VECTOR").Set<std::vector<float>>();
-    cc->Outputs().Tag("ENCODED").Set<std::string>();
+    cc->Inputs().Tag(kFloatVectorTag).Set<std::vector<float>>();
+    cc->Outputs().Tag(kEncodedTag).Set<std::string>();
     return absl::OkStatus();
   }
 
@@ -70,7 +73,7 @@ class QuantizeFloatVectorCalculator : public CalculatorBase {
 
   absl::Status Process(CalculatorContext* cc) final {
     const std::vector<float>& float_vector =
-        cc->Inputs().Tag("FLOAT_VECTOR").Value().Get<std::vector<float>>();
+        cc->Inputs().Tag(kFloatVectorTag).Value().Get<std::vector<float>>();
     int feature_size = float_vector.size();
     std::string encoded_features;
     encoded_features.reserve(feature_size);
@@ -86,8 +89,10 @@ class QuantizeFloatVectorCalculator : public CalculatorBase {
           (old_value - min_quantized_value_) * (255.0 / range_));
       encoded_features += encoded;
     }
-    cc->Outputs().Tag("ENCODED").AddPacket(
-        MakePacket<std::string>(encoded_features).At(cc->InputTimestamp()));
+    cc->Outputs()
+        .Tag(kEncodedTag)
+        .AddPacket(
+            MakePacket<std::string>(encoded_features).At(cc->InputTimestamp()));
     return absl::OkStatus();
   }
 

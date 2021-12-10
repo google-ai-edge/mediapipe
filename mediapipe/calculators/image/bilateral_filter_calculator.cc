@@ -240,7 +240,7 @@ absl::Status BilateralFilterCalculator::RenderCpu(CalculatorContext* cc) {
   auto input_mat = mediapipe::formats::MatView(&input_frame);
 
   // Only 1 or 3 channel images supported by OpenCV.
-  if ((input_mat.channels() == 1 || input_mat.channels() == 3)) {
+  if (!(input_mat.channels() == 1 || input_mat.channels() == 3)) {
     return absl::InternalError(
         "CPU filtering supports only 1 or 3 channel input images.");
   }

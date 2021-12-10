@@ -44,28 +44,32 @@ using mediapipe::MakePacket;
 using mediapipe::OutputStreamShardSet;
 using mediapipe::Timestamp;
 namespace proto_ns = mediapipe::proto_ns;
+
+constexpr char kEventTag[] = "EVENT";
+constexpr char kOutTag[] = "OUT";
+
 using mediapipe::CalculatorGraph;
 using mediapipe::Packet;
 
 class InfiniteSequenceCalculator : public mediapipe::CalculatorBase {
  public:
   static absl::Status GetContract(mediapipe::CalculatorContract* cc) {
-    cc->Outputs().Tag("OUT").Set<int>();
-    cc->Outputs().Tag("EVENT").Set<int>();
+    cc->Outputs().Tag(kOutTag).Set<int>();
+    cc->Outputs().Tag(kEventTag).Set<int>();
     return absl::OkStatus();
   }
   absl::Status Open(CalculatorContext* cc) override {
-    cc->Outputs().Tag("EVENT").AddPacket(MakePacket<int>(1).At(Timestamp(1)));
+    cc->Outputs().Tag(kEventTag).AddPacket(MakePacket<int>(1).At(Timestamp(1)));
     return absl::OkStatus();
   }
   absl::Status Process(CalculatorContext* cc) override {
-    cc->Outputs().Tag("OUT").AddPacket(
+    cc->Outputs().Tag(kOutTag).AddPacket(
         MakePacket<int>(count_).At(Timestamp(count_)));
     count_++;
     return absl::OkStatus();
   }
   absl::Status Close(CalculatorContext* cc) override {
-    cc->Outputs().Tag("EVENT").AddPacket(MakePacket<int>(2).At(Timestamp(2)));
+    cc->Outputs().Tag(kEventTag).AddPacket(MakePacket<int>(2).At(Timestamp(2)));
     return absl::OkStatus();
   }
 
@@ -81,11 +85,11 @@ class StoppingPassThroughCalculator : public mediapipe::CalculatorBase {
       cc->Inputs().Get("", i).SetAny();
       cc->Outputs().Get("", i).SetSameAs(&cc->Inputs().Get("", i));
     }
-    cc->Outputs().Tag("EVENT").Set<int>();
+    cc->Outputs().Tag(kEventTag).Set<int>();
     return absl::OkStatus();
   }
   absl::Status Open(CalculatorContext* cc) override {
-    cc->Outputs().Tag("EVENT").AddPacket(MakePacket<int>(1).At(Timestamp(1)));
+    cc->Outputs().Tag(kEventTag).AddPacket(MakePacket<int>(1).At(Timestamp(1)));
     return absl::OkStatus();
   }
   absl::Status Process(CalculatorContext* cc) override {
@@ -98,7 +102,7 @@ class StoppingPassThroughCalculator : public mediapipe::CalculatorBase {
                                     : mediapipe::tool::StatusStop();
   }
   absl::Status Close(CalculatorContext* cc) override {
-    cc->Outputs().Tag("EVENT").AddPacket(MakePacket<int>(2).At(Timestamp(2)));
+    cc->Outputs().Tag(kEventTag).AddPacket(MakePacket<int>(2).At(Timestamp(2)));
     return absl::OkStatus();
   }
 

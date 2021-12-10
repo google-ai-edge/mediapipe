@@ -86,11 +86,11 @@ inline void GetMinMaxZ(const LandmarkListType& landmarks, float* z_min,
 }
 
 template <class LandmarkType>
-bool IsLandmarkVisibileAndPresent(const LandmarkType& landmark,
-                                  bool utilize_visibility,
-                                  float visibility_threshold,
-                                  bool utilize_presence,
-                                  float presence_threshold) {
+bool IsLandmarkVisibleAndPresent(const LandmarkType& landmark,
+                                 bool utilize_visibility,
+                                 float visibility_threshold,
+                                 bool utilize_presence,
+                                 float presence_threshold) {
   if (utilize_visibility && landmark.has_visibility() &&
       landmark.visibility() < visibility_threshold) {
     return false;
@@ -153,12 +153,16 @@ void AddConnectionsWithDepth(const LandmarkListType& landmarks,
                              const Color& max_depth_line_color,
                              RenderData* render_data) {
   for (int i = 0; i < landmark_connections.size(); i += 2) {
+    if (landmark_connections[i] >= landmarks.landmark_size() ||
+        landmark_connections[i + 1] >= landmarks.landmark_size()) {
+      continue;
+    }
     const auto& ld0 = landmarks.landmark(landmark_connections[i]);
     const auto& ld1 = landmarks.landmark(landmark_connections[i + 1]);
-    if (!IsLandmarkVisibileAndPresent<LandmarkType>(
+    if (!IsLandmarkVisibleAndPresent<LandmarkType>(
             ld0, utilize_visibility, visibility_threshold, utilize_presence,
             presence_threshold) ||
-        !IsLandmarkVisibileAndPresent<LandmarkType>(
+        !IsLandmarkVisibleAndPresent<LandmarkType>(
             ld1, utilize_visibility, visibility_threshold, utilize_presence,
             presence_threshold)) {
       continue;
@@ -196,12 +200,16 @@ void AddConnections(const LandmarkListType& landmarks,
                     const Color& connection_color, float thickness,
                     bool normalized, RenderData* render_data) {
   for (int i = 0; i < landmark_connections.size(); i += 2) {
+    if (landmark_connections[i] >= landmarks.landmark_size() ||
+        landmark_connections[i + 1] >= landmarks.landmark_size()) {
+      continue;
+    }
     const auto& ld0 = landmarks.landmark(landmark_connections[i]);
     const auto& ld1 = landmarks.landmark(landmark_connections[i + 1]);
-    if (!IsLandmarkVisibileAndPresent<LandmarkType>(
+    if (!IsLandmarkVisibleAndPresent<LandmarkType>(
             ld0, utilize_visibility, visibility_threshold, utilize_presence,
             presence_threshold) ||
-        !IsLandmarkVisibileAndPresent<LandmarkType>(
+        !IsLandmarkVisibleAndPresent<LandmarkType>(
             ld1, utilize_visibility, visibility_threshold, utilize_presence,
             presence_threshold)) {
       continue;
@@ -317,7 +325,7 @@ absl::Status LandmarksToRenderDataCalculator::Process(CalculatorContext* cc) {
     for (int i = 0; i < landmarks.landmark_size(); ++i) {
       const Landmark& landmark = landmarks.landmark(i);
 
-      if (!IsLandmarkVisibileAndPresent<Landmark>(
+      if (!IsLandmarkVisibleAndPresent<Landmark>(
               landmark, options_.utilize_visibility(),
               options_.visibility_threshold(), options_.utilize_presence(),
               options_.presence_threshold())) {
@@ -363,7 +371,7 @@ absl::Status LandmarksToRenderDataCalculator::Process(CalculatorContext* cc) {
     for (int i = 0; i < landmarks.landmark_size(); ++i) {
       const NormalizedLandmark& landmark = landmarks.landmark(i);
 
-      if (!IsLandmarkVisibileAndPresent<NormalizedLandmark>(
+      if (!IsLandmarkVisibleAndPresent<NormalizedLandmark>(
               landmark, options_.utilize_visibility(),
               options_.visibility_threshold(), options_.utilize_presence(),
               options_.presence_threshold())) {

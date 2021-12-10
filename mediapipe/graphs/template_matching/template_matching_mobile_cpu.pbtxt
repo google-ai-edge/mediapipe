@@ -25,7 +25,7 @@ node: {
   output_stream: "input_video_cpu"
 }
 
-# Transforms the input image on CPU to a 480x640 image.
+# Scale the image's longer side to 640, keeping aspect ratio.
 node: {
   calculator: "ImageTransformationCalculator"
   input_stream: "IMAGE:input_video_cpu"

@@ -75,13 +75,30 @@ class MuxInputStreamHandler : public InputStreamHandler {
     int control_value = control_packet.Get<int>();
     CHECK_LE(0, control_value);
     CHECK_LT(control_value, input_stream_managers_.NumEntries() - 1);
-
     const auto& data_stream = input_stream_managers_.Get(
         input_stream_managers_.BeginId() + control_value);
+
+    // Data stream may contain some outdated packets which failed to be popped
+    // out during "FillInputSet". (This handler doesn't sync input streams,
+    // hence "FillInputSet" can be triggerred before every input stream is
+    // filled with packets corresponding to the same timestamp.)
+    data_stream->ErasePacketsEarlierThan(*min_stream_timestamp);
     Timestamp stream_timestamp = data_stream->MinTimestampOrBound(&empty);
     if (empty) {
-      CHECK_LE(stream_timestamp, *min_stream_timestamp);
-      return NodeReadiness::kNotReady;
+      if (stream_timestamp <= *min_stream_timestamp) {
+        // "data_stream" didn't receive a packet corresponding to the current
+        // "control_stream" packet yet.
+        return NodeReadiness::kNotReady;
+      }
+      // "data_stream" timestamp bound update detected.
+      return NodeReadiness::kReadyForProcess;
+    }
+    if (stream_timestamp > *min_stream_timestamp) {
+      // The earliest packet "data_stream" holds corresponds to a control packet
+      // yet to arrive, which means there won't be a "data_stream" packet
+      // corresponding to the current "control_stream" packet, which should be
+      // indicated as timestamp boun update.
+      return NodeReadiness::kReadyForProcess;
     }
     CHECK_EQ(stream_timestamp, *min_stream_timestamp);
     return NodeReadiness::kReadyForProcess;

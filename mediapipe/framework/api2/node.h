@@ -223,24 +223,23 @@ class SubgraphImpl : public Subgraph, public Intf {
 
 // This macro is used to register a calculator that does not use automatic
 // registration. Deprecated.
-#define MEDIAPIPE_NODE_IMPLEMENTATION(Impl)                    \
-  static mediapipe::NoDestructor<mediapipe::RegistrationToken> \
-      REGISTRY_STATIC_VAR(calculator_registration, __LINE__)(  \
-          mediapipe::CalculatorBaseRegistry::Register(         \
-              Impl::kCalculatorName,                           \
-              absl::make_unique<                               \
-                  mediapipe::internal::CalculatorBaseFactoryFor<Impl>>))
+#define MEDIAPIPE_NODE_IMPLEMENTATION(Impl)                                  \
+  static mediapipe::NoDestructor<mediapipe::RegistrationToken>               \
+  REGISTRY_STATIC_VAR(calculator_registration,                               \
+                      __LINE__)(mediapipe::CalculatorBaseRegistry::Register( \
+      Impl::kCalculatorName,                                                 \
+      absl::make_unique<mediapipe::internal::CalculatorBaseFactoryFor<Impl>>))
 
 // This macro is used to register a non-split-contract calculator. Deprecated.
 #define MEDIAPIPE_REGISTER_NODE(name) REGISTER_CALCULATOR(name)
 
 // This macro is used to define a subgraph that does not use automatic
 // registration. Deprecated.
-#define MEDIAPIPE_SUBGRAPH_IMPLEMENTATION(Impl)                            \
-  static mediapipe::NoDestructor<mediapipe::RegistrationToken>             \
-      REGISTRY_STATIC_VAR(subgraph_registration,                           \
-                          __LINE__)(mediapipe::SubgraphRegistry::Register( \
-          Impl::kCalculatorName, absl::make_unique<Impl>))
+#define MEDIAPIPE_SUBGRAPH_IMPLEMENTATION(Impl)                        \
+  static mediapipe::NoDestructor<mediapipe::RegistrationToken>         \
+  REGISTRY_STATIC_VAR(subgraph_registration,                           \
+                      __LINE__)(mediapipe::SubgraphRegistry::Register( \
+      Impl::kCalculatorName, absl::make_unique<Impl>))
 
 }  // namespace api2
 }  // namespace mediapipe

@@ -1,0 +1,58 @@
+# MediaPipe graph to load a selected face landmarks TF Lite model.
+
+type: "FaceLandmarksModelLoader"
+
+# Whether to run face mesh model with attention on lips and eyes. (bool)
+# Attention provides more accuracy on lips and eye regions as well as iris
+# landmarks.
+input_side_packet: "WITH_ATTENTION:with_attention"
+
+# TF Lite model represented as a FlatBuffer.
+# (std::unique_ptr<tflite::FlatBufferModel, std::function<void(tflite::FlatBufferModel*)>>)
+output_side_packet: "MODEL:model"
+
+# Determines path to the desired face landmark model file based on specification
+# in the input side packet.
+node {
+  calculator: "SwitchContainer"
+  input_side_packet: "ENABLE:with_attention"
+  output_side_packet: "PACKET:model_path"
+  options: {
+    [mediapipe.SwitchContainerOptions.ext] {
+      contained_node: {
+        calculator: "ConstantSidePacketCalculator"
+        options: {
+          [mediapipe.ConstantSidePacketCalculatorOptions.ext]: {
+            packet {
+              string_value: "mediapipe/modules/face_landmark/face_landmark.tflite"
+            }
+          }
+        }
+      }
+      contained_node: {
+        calculator: "ConstantSidePacketCalculator"
+        options: {
+          [mediapipe.ConstantSidePacketCalculatorOptions.ext]: {
+            packet {
+              string_value: "mediapipe/modules/face_landmark/face_landmark_with_attention.tflite"
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+# Loads the file in the specified path into a blob.
+node {
+  calculator: "LocalFileContentsCalculator"
+  input_side_packet: "FILE_PATH:model_path"
+  output_side_packet: "CONTENTS:model_blob"
+}
+
+# Converts the input blob into a TF Lite model.
+node {
+  calculator: "TfLiteModelCalculator"
+  input_side_packet: "MODEL_BLOB:model_blob"
+  output_side_packet: "MODEL:model"
+}

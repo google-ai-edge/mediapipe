@@ -102,6 +102,10 @@ mediapipe::ScaleMode_Mode ParseScaleMode(
 //   IMAGE: ImageFrame representing the input image.
 //   IMAGE_GPU: GpuBuffer representing the input image.
 //
+//   OUTPUT_DIMENSIONS (optional): The output width and height in pixels as
+//   pair<int, int>. If set, it will override corresponding field in calculator
+//   options and input side packet.
+//
 //   ROTATION_DEGREES (optional): The counterclockwise rotation angle in
 //   degrees. This allows different rotation angles for different frames. It has
 //   to be a multiple of 90 degrees. If provided, it overrides the
@@ -221,6 +225,10 @@ absl::Status ImageTransformationCalculator::GetContract(
   }
 #endif  // !MEDIAPIPE_DISABLE_GPU
 
+  if (cc->Inputs().HasTag("OUTPUT_DIMENSIONS")) {
+    cc->Inputs().Tag("OUTPUT_DIMENSIONS").Set<std::pair<int, int>>();
+  }
+
   if (cc->Inputs().HasTag("ROTATION_DEGREES")) {
     cc->Inputs().Tag("ROTATION_DEGREES").Set<int>();
   }
@@ -328,6 +336,16 @@ absl::Status ImageTransformationCalculator::Process(CalculatorContext* cc) {
   if (cc->Inputs().HasTag("FLIP_VERTICALLY") &&
       !cc->Inputs().Tag("FLIP_VERTICALLY").IsEmpty()) {
     flip_vertically_ = cc->Inputs().Tag("FLIP_VERTICALLY").Get<bool>();
+  }
+  if (cc->Inputs().HasTag("OUTPUT_DIMENSIONS")) {
+    if (cc->Inputs().Tag("OUTPUT_DIMENSIONS").IsEmpty()) {
+      return absl::OkStatus();
+    } else {
+      const auto& image_size =
+          cc->Inputs().Tag("OUTPUT_DIMENSIONS").Get<std::pair<int, int>>();
+      output_width_ = image_size.first;
+      output_height_ = image_size.second;
+    }
   }
 
   if (use_gpu_) {
@@ -490,6 +508,14 @@ absl::Status ImageTransformationCalculator::RenderGpu(CalculatorContext* cc) {
   int output_height;
   ComputeOutputDimensions(input_width, input_height, &output_width,
                           &output_height);
+
+  if (scale_mode_ == mediapipe::ScaleMode_Mode_FILL_AND_CROP) {
+    const float scale =
+        std::min(static_cast<float>(output_width_) / input_width,
+                 static_cast<float>(output_height_) / input_height);
+    output_width = std::round(input_width * scale);
+    output_height = std::round(input_height * scale);
+  }
 
   if (cc->Outputs().HasTag("LETTERBOX_PADDING")) {
     auto padding = absl::make_unique<std::array<float, 4>>();

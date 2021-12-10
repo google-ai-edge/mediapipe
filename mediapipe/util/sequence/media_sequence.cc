@@ -361,17 +361,15 @@ absl::Status ReconcileMetadataBoxAnnotations(
 absl::Status ReconcileMetadataRegionAnnotations(
     tensorflow::SequenceExample* sequence) {
   // Copy keys for fixed iteration order while updating feature_lists.
-  std::vector<const std::string*> key_ptrs;
+  std::vector<std::string> keys;
   for (const auto& key_value : sequence->feature_lists().feature_list()) {
-    key_ptrs.push_back(&key_value.first);
+    keys.push_back(key_value.first);
   }
-  for (const std::string* key_ptr : key_ptrs) {
-    const std::string& key = *key_ptr;
+  for (const std::string& key : keys) {
     if (::absl::StrContains(key, kRegionTimestampKey)) {
-      std::string prefix =
-          key.substr(0, key.size() - sizeof(kRegionTimestampKey));
-      if (key == kRegionTimestampKey) {
-        prefix = "";
+      std::string prefix = "";
+      if (key != kRegionTimestampKey) {
+        prefix = key.substr(0, key.size() - sizeof(kRegionTimestampKey));
       }
       RET_CHECK_OK(ReconcileMetadataBoxAnnotations(prefix, sequence));
     }

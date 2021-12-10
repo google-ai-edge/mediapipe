@@ -31,6 +31,9 @@
 namespace mediapipe {
 namespace {
 
+constexpr char kProjectionMatrixTag[] = "PROJECTION_MATRIX";
+constexpr char kDetectionsTag[] = "DETECTIONS";
+
 using ::testing::ElementsAre;
 using ::testing::FloatNear;
 
@@ -74,19 +77,19 @@ absl::StatusOr<Detection> RunProjectionCalculator(
   )pb"));
 
   runner.MutableInputs()
-      ->Tag("DETECTIONS")
+      ->Tag(kDetectionsTag)
       .packets.push_back(MakePacket<std::vector<Detection>>(
                              std::vector<Detection>({std::move(detection)}))
                              .At(Timestamp::PostStream()));
   runner.MutableInputs()
-      ->Tag("PROJECTION_MATRIX")
+      ->Tag(kProjectionMatrixTag)
       .packets.push_back(
           MakePacket<std::array<float, 16>>(std::move(project_mat))
               .At(Timestamp::PostStream()));
 
   MP_RETURN_IF_ERROR(runner.Run());
   const std::vector<Packet>& output =
-      runner.Outputs().Tag("DETECTIONS").packets;
+      runner.Outputs().Tag(kDetectionsTag).packets;
   RET_CHECK_EQ(output.size(), 1);
   const auto& output_detections = output[0].Get<std::vector<Detection>>();
 

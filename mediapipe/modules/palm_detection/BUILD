@@ -21,13 +21,29 @@ licenses(["notice"])
 
 package(default_visibility = ["//visibility:public"])
 
-exports_files(["palm_detection.tflite"])
+exports_files([
+    "palm_detection_lite.tflite",
+    "palm_detection_full.tflite",
+])
+
+mediapipe_simple_subgraph(
+    name = "palm_detection_model_loader",
+    graph = "palm_detection_model_loader.pbtxt",
+    register_as = "PalmDetectionModelLoader",
+    deps = [
+        "//mediapipe/calculators/core:constant_side_packet_calculator",
+        "//mediapipe/calculators/tflite:tflite_model_calculator",
+        "//mediapipe/calculators/util:local_file_contents_calculator",
+        "//mediapipe/framework/tool:switch_container",
+    ],
+)
 
 mediapipe_simple_subgraph(
     name = "palm_detection_cpu",
     graph = "palm_detection_cpu.pbtxt",
     register_as = "PalmDetectionCpu",
     deps = [
+        ":palm_detection_model_loader",
         "//mediapipe/calculators/tensor:image_to_tensor_calculator",
         "//mediapipe/calculators/tensor:inference_calculator",
         "//mediapipe/calculators/tensor:tensors_to_detections_calculator",
@@ -43,6 +59,7 @@ mediapipe_simple_subgraph(
     graph = "palm_detection_gpu.pbtxt",
     register_as = "PalmDetectionGpu",
     deps = [
+        ":palm_detection_model_loader",
         "//mediapipe/calculators/tensor:image_to_tensor_calculator",
         "//mediapipe/calculators/tensor:inference_calculator",
         "//mediapipe/calculators/tensor:tensors_to_detections_calculator",
@@ -50,12 +67,5 @@ mediapipe_simple_subgraph(
         "//mediapipe/calculators/tflite:tflite_custom_op_resolver_calculator",
         "//mediapipe/calculators/util:detection_letterbox_removal_calculator",
         "//mediapipe/calculators/util:non_max_suppression_calculator",
-    ],
-)
-
-exports_files(
-    srcs = [
-        "palm_detection.tflite",
-        "palm_detection_labelmap.txt",
     ],
 )

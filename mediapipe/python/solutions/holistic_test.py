@@ -25,6 +25,7 @@ import numpy.testing as npt
 
 # resources dependency
 # undeclared dependency
+from mediapipe.python.solutions import drawing_styles
 from mediapipe.python.solutions import drawing_utils as mp_drawing
 from mediapipe.python.solutions import holistic as mp_holistic
 
@@ -69,17 +70,18 @@ class PoseTest(parameterized.TestCase):
     npt.assert_array_less(np.abs(array1 - array2), threshold)
 
   def _annotate(self, frame: np.ndarray, results: NamedTuple, idx: int):
-    drawing_spec = mp_drawing.DrawingSpec(thickness=1, circle_radius=1)
     mp_drawing.draw_landmarks(
-        image=frame,
-        landmark_list=results.face_landmarks,
-        landmark_drawing_spec=drawing_spec)
-    mp_drawing.draw_landmarks(frame, results.left_hand_landmarks,
-                              mp_holistic.HAND_CONNECTIONS)
-    mp_drawing.draw_landmarks(frame, results.right_hand_landmarks,
-                              mp_holistic.HAND_CONNECTIONS)
-    mp_drawing.draw_landmarks(frame, results.pose_landmarks,
-                              mp_holistic.POSE_CONNECTIONS)
+        frame,
+        results.face_landmarks,
+        mp_holistic.FACEMESH_TESSELATION,
+        landmark_drawing_spec=None,
+        connection_drawing_spec=drawing_styles
+        .get_default_face_mesh_tesselation_style())
+    mp_drawing.draw_landmarks(
+        frame,
+        results.pose_landmarks,
+        mp_holistic.POSE_CONNECTIONS,
+        landmark_drawing_spec=drawing_styles.get_default_pose_landmarks_style())
     path = os.path.join(tempfile.gettempdir(), self.id().split('.')[-1] +
                                               '_frame_{}.png'.format(idx))
     cv2.imwrite(path, frame)
@@ -97,18 +99,23 @@ class PoseTest(parameterized.TestCase):
       results = holistic.process(image)
       self.assertIsNone(results.pose_landmarks)
 
-  @parameterized.named_parameters(('static_lite', True, 0, 3),
-                                  ('static_full', True, 1, 3),
-                                  ('static_heavy', True, 2, 3),
-                                  ('video_lite', False, 0, 3),
-                                  ('video_full', False, 1, 3),
-                                  ('video_heavy', False, 2, 3))
-  def test_on_image(self, static_image_mode, model_complexity, num_frames):
+  @parameterized.named_parameters(('static_lite', True, 0, False, 3),
+                                  ('static_full', True, 1, False, 3),
+                                  ('static_heavy', True, 2, False, 3),
+                                  ('video_lite', False, 0, False, 3),
+                                  ('video_full', False, 1, False, 3),
+                                  ('video_heavy', False, 2, False, 3),
+                                  ('static_full_refine_face', True, 1, True, 3),
+                                  ('video_full_refine_face', False, 1, True, 3))
+  def test_on_image(self, static_image_mode, model_complexity,
+                    refine_face_landmarks, num_frames):
     image_path = os.path.join(os.path.dirname(__file__),
                               'testdata/holistic.jpg')
     image = cv2.imread(image_path)
-    with mp_holistic.Holistic(static_image_mode=static_image_mode,
-                              model_complexity=model_complexity) as holistic:
+    with mp_holistic.Holistic(
+        static_image_mode=static_image_mode,
+        model_complexity=model_complexity,
+        refine_face_landmarks=refine_face_landmarks) as holistic:
       for idx in range(num_frames):
         results = holistic.process(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
         self._annotate(image.copy(), results, idx)
@@ -127,7 +134,8 @@ class PoseTest(parameterized.TestCase):
             EXPECTED_RIGHT_HAND_LANDMARKS,
             HAND_DIFF_THRESHOLD)
         # TODO: Verify the correctness of the face landmarks.
-        self.assertLen(results.face_landmarks.landmark, 468)
+        self.assertLen(results.face_landmarks.landmark,
+                       478 if refine_face_landmarks else 468)
 
 
 if __name__ == '__main__':

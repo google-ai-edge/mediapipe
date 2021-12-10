@@ -661,3 +661,138 @@ cc_test(
         "//mediapipe/framework/port:parse_text_proto",
     ],
 )
+
+cc_library(
+    name = "affine_transformation",
+    hdrs = ["affine_transformation.h"],
+    deps = ["@com_google_absl//absl/status:statusor"],
+)
+
+cc_library(
+    name = "affine_transformation_runner_gl",
+    srcs = ["affine_transformation_runner_gl.cc"],
+    hdrs = ["affine_transformation_runner_gl.h"],
+    deps = [
+        ":affine_transformation",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/gpu:gl_calculator_helper",
+        "//mediapipe/gpu:gl_simple_shaders",
+        "//mediapipe/gpu:gpu_buffer",
+        "//mediapipe/gpu:gpu_origin_cc_proto",
+        "//mediapipe/gpu:shader_util",
+        "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+        "@eigen_archive//:eigen3",
+    ],
+)
+
+cc_library(
+    name = "affine_transformation_runner_opencv",
+    srcs = ["affine_transformation_runner_opencv.cc"],
+    hdrs = ["affine_transformation_runner_opencv.h"],
+    deps = [
+        ":affine_transformation",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/formats:image_frame",
+        "//mediapipe/framework/formats:image_frame_opencv",
+        "//mediapipe/framework/port:opencv_core",
+        "//mediapipe/framework/port:opencv_imgproc",
+        "//mediapipe/framework/port:ret_check",
+        "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/status:statusor",
+        "@eigen_archive//:eigen3",
+    ],
+)
+
+mediapipe_proto_library(
+    name = "warp_affine_calculator_proto",
+    srcs = ["warp_affine_calculator.proto"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//mediapipe/framework:calculator_options_proto",
+        "//mediapipe/framework:calculator_proto",
+        "//mediapipe/gpu:gpu_origin_proto",
+    ],
+)
+
+cc_library(
+    name = "warp_affine_calculator",
+    srcs = ["warp_affine_calculator.cc"],
+    hdrs = ["warp_affine_calculator.h"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":affine_transformation",
+        ":affine_transformation_runner_opencv",
+        ":warp_affine_calculator_cc_proto",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/api2:node",
+        "//mediapipe/framework/api2:port",
+        "//mediapipe/framework/formats:image",
+        "//mediapipe/framework/formats:image_frame",
+        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:status",
+    ] + select({
+        "//mediapipe/gpu:disable_gpu": [],
+        "//conditions:default": [
+            "//mediapipe/gpu:gl_calculator_helper",
+            "//mediapipe/gpu:gpu_buffer",
+            ":affine_transformation_runner_gl",
+        ],
+    }),
+    alwayslink = 1,
+)
+
+cc_test(
+    name = "warp_affine_calculator_test",
+    srcs = ["warp_affine_calculator_test.cc"],
+    data = [
+        "//mediapipe/calculators/tensor:testdata/image_to_tensor/input.jpg",
+        "//mediapipe/calculators/tensor:testdata/image_to_tensor/large_sub_rect.png",
+        "//mediapipe/calculators/tensor:testdata/image_to_tensor/large_sub_rect_border_zero.png",
+        "//mediapipe/calculators/tensor:testdata/image_to_tensor/large_sub_rect_keep_aspect.png",
+        "//mediapipe/calculators/tensor:testdata/image_to_tensor/large_sub_rect_keep_aspect_border_zero.png",
+        "//mediapipe/calculators/tensor:testdata/image_to_tensor/large_sub_rect_keep_aspect_with_rotation.png",
+        "//mediapipe/calculators/tensor:testdata/image_to_tensor/large_sub_rect_keep_aspect_with_rotation_border_zero.png",
+        "//mediapipe/calculators/tensor:testdata/image_to_tensor/medium_sub_rect_keep_aspect.png",
+        "//mediapipe/calculators/tensor:testdata/image_to_tensor/medium_sub_rect_keep_aspect_border_zero.png",
+        "//mediapipe/calculators/tensor:testdata/image_to_tensor/medium_sub_rect_keep_aspect_with_rotation.png",
+        "//mediapipe/calculators/tensor:testdata/image_to_tensor/medium_sub_rect_keep_aspect_with_rotation_border_zero.png",
+        "//mediapipe/calculators/tensor:testdata/image_to_tensor/medium_sub_rect_with_rotation.png",
+        "//mediapipe/calculators/tensor:testdata/image_to_tensor/medium_sub_rect_with_rotation_border_zero.png",
+        "//mediapipe/calculators/tensor:testdata/image_to_tensor/noop_except_range.png",
+    ],
+    tags = ["desktop_only_test"],
+    deps = [
+        ":affine_transformation",
+        ":warp_affine_calculator",
+        "//mediapipe/calculators/image:image_transformation_calculator",
+        "//mediapipe/calculators/tensor:image_to_tensor_converter",
+        "//mediapipe/calculators/tensor:image_to_tensor_utils",
+        "//mediapipe/calculators/util:from_image_calculator",
+        "//mediapipe/calculators/util:to_image_calculator",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:calculator_runner",
+        "//mediapipe/framework/deps:file_path",
+        "//mediapipe/framework/formats:image",
+        "//mediapipe/framework/formats:image_format_cc_proto",
+        "//mediapipe/framework/formats:image_frame",
+        "//mediapipe/framework/formats:image_frame_opencv",
+        "//mediapipe/framework/formats:rect_cc_proto",
+        "//mediapipe/framework/formats:tensor",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:integral_types",
+        "//mediapipe/framework/port:opencv_core",
+        "//mediapipe/framework/port:opencv_imgcodecs",
+        "//mediapipe/framework/port:opencv_imgproc",
+        "//mediapipe/framework/port:parse_text_proto",
+        "//mediapipe/gpu:gpu_buffer_to_image_frame_calculator",
+        "//mediapipe/gpu:image_frame_to_gpu_buffer_calculator",
+        "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/strings",
+    ],
+)

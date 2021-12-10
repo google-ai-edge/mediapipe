@@ -14,6 +14,8 @@
 
 package com.google.mediapipe.components;
 
+import static java.lang.Math.max;
+
 import android.graphics.SurfaceTexture;
 import android.opengl.GLES11Ext;
 import android.opengl.GLES20;
@@ -125,24 +127,11 @@ public class GlSurfaceViewRenderer implements GLSurfaceView.Renderer {
     GLES20.glVertexAttribPointer(
         ATTRIB_POSITION, 2, GLES20.GL_FLOAT, false, 0, CommonShaders.SQUARE_VERTICES);
 
-    // TODO: compute scale from surfaceTexture size.
-    float scaleWidth = frameWidth > 0 ? (float) surfaceWidth / (float) frameWidth : 1.0f;
-    float scaleHeight = frameHeight > 0 ? (float) surfaceHeight / (float) frameHeight : 1.0f;
-    // Whichever of the two scales is greater corresponds to the dimension where the image
-    // is proportionally smaller than the view. Dividing both scales by that number results
-    // in that dimension having scale 1.0, and thus touching the edges of the view, while the
-    // other is cropped proportionally.
-    float maxScale = Math.max(scaleWidth, scaleHeight);
-    scaleWidth /= maxScale;
-    scaleHeight /= maxScale;
-
-    // Alignment controls where the visible section is placed within the full camera frame, with
-    // (0, 0) being the bottom left, and (1, 1) being the top right.
-    float textureLeft = (1.0f - scaleWidth) * alignmentHorizontal;
-    float textureRight = textureLeft + scaleWidth;
-    float textureBottom = (1.0f - scaleHeight) * alignmentVertical;
-    float textureTop = textureBottom + scaleHeight;
-
+    float[] boundary = calculateTextureBoundary();
+    float textureLeft = boundary[0];
+    float textureRight = boundary[1];
+    float textureBottom = boundary[2];
+    float textureTop = boundary[3];
     // Unlike on iOS, there is no need to flip the surfaceTexture here.
     // But for regular textures, we will need to flip them.
     final FloatBuffer passThroughTextureVertices =
@@ -164,11 +153,34 @@ public class GlSurfaceViewRenderer implements GLSurfaceView.Renderer {
     return frame;
   }
 
+  /** Returns the texture left, right, bottom, and top visible boundaries. */
+  protected float[] calculateTextureBoundary() {
+    // TODO: compute scale from surfaceTexture size.
+    float scaleWidth = frameWidth > 0 ? (float) surfaceWidth / (float) frameWidth : 1.0f;
+    float scaleHeight = frameHeight > 0 ? (float) surfaceHeight / (float) frameHeight : 1.0f;
+    // Whichever of the two scales is greater corresponds to the dimension where the image
+    // is proportionally smaller than the view. Dividing both scales by that number results
+    // in that dimension having scale 1.0, and thus touching the edges of the view, while the
+    // other is cropped proportionally.
+    float maxScale = max(scaleWidth, scaleHeight);
+    scaleWidth /= maxScale;
+    scaleHeight /= maxScale;
+
+    // Alignment controls where the visible section is placed within the full camera frame, with
+    // (0, 0) being the bottom left, and (1, 1) being the top right.
+    float textureLeft = (1.0f - scaleWidth) * alignmentHorizontal;
+    float textureRight = textureLeft + scaleWidth;
+    float textureBottom = (1.0f - scaleHeight) * alignmentVertical;
+    float textureTop = textureBottom + scaleHeight;
+
+    return new float[] {textureLeft, textureRight, textureBottom, textureTop};
+  }
+
   /**
-   * Calls {@link #GLES20.glFlush} and releases the texture frame. Should be invoked after the
-   * {@link #renderFrame} method is called.
+   * Calls {@link GLES20.glFlush} and releases the texture frame. Should be invoked after the {@link
+   * #renderFrame} method is called.
    *
-   * @param frame the {@link TextureFrame} to be released after {@link #GLES20.glFlush}.
+   * @param frame the {@link TextureFrame} to be released after {@link GLES20.glFlush}.
    */
   protected void flush(TextureFrame frame) {
     GLES20.glFlush();

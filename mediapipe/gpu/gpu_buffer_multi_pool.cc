@@ -21,10 +21,11 @@
 #include "mediapipe/framework/port/logging.h"
 #include "mediapipe/gpu/gpu_shared_data_internal.h"
 
-#ifdef __APPLE__
+#if MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
 #include "CoreFoundation/CFBase.h"
 #include "mediapipe/objc/CFHolder.h"
-#endif  // __APPLE__
+#include "mediapipe/objc/util.h"
+#endif  // MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
 
 namespace mediapipe {
 

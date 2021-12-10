@@ -43,6 +43,9 @@ namespace mediapipe {
 namespace autoflip {
 namespace {
 
+constexpr char kDetectedBordersTag[] = "DETECTED_BORDERS";
+constexpr char kVideoTag[] = "VIDEO";
+
 const char kConfig[] = R"(
     calculator: "BorderDetectionCalculator"
     input_stream: "VIDEO:camera_frames"
@@ -81,14 +84,14 @@ TEST(BorderDetectionCalculatorTest, NoBorderTest) {
       ImageFormat::SRGB, kTestFrameWidth, kTestFrameHeight);
   cv::Mat input_mat = mediapipe::formats::MatView(input_frame.get());
   input_mat.setTo(cv::Scalar(0, 0, 0));
-  runner->MutableInputs()->Tag("VIDEO").packets.push_back(
+  runner->MutableInputs()->Tag(kVideoTag).packets.push_back(
       Adopt(input_frame.release()).At(Timestamp::PostStream()));
 
   // Run the calculator.
   MP_ASSERT_OK(runner->Run());
 
   const std::vector<Packet>& output_packets =
-      runner->Outputs().Tag("DETECTED_BORDERS").packets;
+      runner->Outputs().Tag(kDetectedBordersTag).packets;
   ASSERT_EQ(1, output_packets.size());
   const auto& static_features = output_packets[0].Get<StaticFeatures>();
   ASSERT_EQ(0, static_features.border().size());
@@ -115,14 +118,14 @@ TEST(BorderDetectionCalculatorTest, TopBorderTest) {
   cv::Mat sub_image =
       input_mat(cv::Rect(0, 0, kTestFrameWidth, kTopBorderHeight));
   sub_image.setTo(cv::Scalar(255, 0, 0));
-  runner->MutableInputs()->Tag("VIDEO").packets.push_back(
+  runner->MutableInputs()->Tag(kVideoTag).packets.push_back(
       Adopt(input_frame.release()).At(Timestamp::PostStream()));
 
   // Run the calculator.
   MP_ASSERT_OK(runner->Run());
 
   const std::vector<Packet>& output_packets =
-      runner->Outputs().Tag("DETECTED_BORDERS").packets;
+      runner->Outputs().Tag(kDetectedBordersTag).packets;
   ASSERT_EQ(1, output_packets.size());
   const auto& static_features = output_packets[0].Get<StaticFeatures>();
   ASSERT_EQ(1, static_features.border().size());
@@ -155,14 +158,14 @@ TEST(BorderDetectionCalculatorTest, TopBorderPadTest) {
   cv::Mat sub_image =
       input_mat(cv::Rect(0, 0, kTestFrameWidth, kTopBorderHeight));
   sub_image.setTo(cv::Scalar(255, 0, 0));
-  runner->MutableInputs()->Tag("VIDEO").packets.push_back(
+  runner->MutableInputs()->Tag(kVideoTag).packets.push_back(
       Adopt(input_frame.release()).At(Timestamp::PostStream()));
 
   // Run the calculator.
   MP_ASSERT_OK(runner->Run());
 
   const std::vector<Packet>& output_packets =
-      runner->Outputs().Tag("DETECTED_BORDERS").packets;
+      runner->Outputs().Tag(kDetectedBordersTag).packets;
   ASSERT_EQ(1, output_packets.size());
   const auto& static_features = output_packets[0].Get<StaticFeatures>();
   ASSERT_EQ(1, static_features.border().size());
@@ -197,14 +200,14 @@ TEST(BorderDetectionCalculatorTest, BottomBorderTest) {
       input_mat(cv::Rect(0, kTestFrameHeight - kBottomBorderHeight,
                          kTestFrameWidth, kBottomBorderHeight));
   bottom_image.setTo(cv::Scalar(255, 0, 0));
-  runner->MutableInputs()->Tag("VIDEO").packets.push_back(
+  runner->MutableInputs()->Tag(kVideoTag).packets.push_back(
       Adopt(input_frame.release()).At(Timestamp::PostStream()));
 
   // Run the calculator.
   MP_ASSERT_OK(runner->Run());
 
   const std::vector<Packet>& output_packets =
-      runner->Outputs().Tag("DETECTED_BORDERS").packets;
+      runner->Outputs().Tag(kDetectedBordersTag).packets;
   ASSERT_EQ(1, output_packets.size());
   const auto& static_features = output_packets[0].Get<StaticFeatures>();
   ASSERT_EQ(1, static_features.border().size());
@@ -238,14 +241,14 @@ TEST(BorderDetectionCalculatorTest, TopBottomBorderTest) {
       input_mat(cv::Rect(0, kTestFrameHeight - kBottomBorderHeight,
                          kTestFrameWidth, kBottomBorderHeight));
   bottom_image.setTo(cv::Scalar(255, 0, 0));
-  runner->MutableInputs()->Tag("VIDEO").packets.push_back(
+  runner->MutableInputs()->Tag(kVideoTag).packets.push_back(
       Adopt(input_frame.release()).At(Timestamp::PostStream()));
 
   // Run the calculator.
   MP_ASSERT_OK(runner->Run());
 
   const std::vector<Packet>& output_packets =
-      runner->Outputs().Tag("DETECTED_BORDERS").packets;
+      runner->Outputs().Tag(kDetectedBordersTag).packets;
   ASSERT_EQ(1, output_packets.size());
   const auto& static_features = output_packets[0].Get<StaticFeatures>();
   ASSERT_EQ(2, static_features.border().size());
@@ -291,14 +294,14 @@ TEST(BorderDetectionCalculatorTest, TopBottomBorderTestAspect2) {
       input_mat(cv::Rect(0, kTestFrameHeightTall - kBottomBorderHeight,
                          kTestFrameWidthTall, kBottomBorderHeight));
   bottom_image.setTo(cv::Scalar(255, 0, 0));
-  runner->MutableInputs()->Tag("VIDEO").packets.push_back(
+  runner->MutableInputs()->Tag(kVideoTag).packets.push_back(
       Adopt(input_frame.release()).At(Timestamp::PostStream()));
 
   // Run the calculator.
   MP_ASSERT_OK(runner->Run());
 
   const std::vector<Packet>& output_packets =
-      runner->Outputs().Tag("DETECTED_BORDERS").packets;
+      runner->Outputs().Tag(kDetectedBordersTag).packets;
   ASSERT_EQ(1, output_packets.size());
   const auto& static_features = output_packets[0].Get<StaticFeatures>();
   ASSERT_EQ(2, static_features.border().size());
@@ -352,14 +355,14 @@ TEST(BorderDetectionCalculatorTest, DominantColor) {
       input_mat(cv::Rect(0, 0, kTestFrameWidth / 2 + 50, kTestFrameHeight / 2));
   sub_image.setTo(cv::Scalar(255, 0, 0));
 
-  runner->MutableInputs()->Tag("VIDEO").packets.push_back(
+  runner->MutableInputs()->Tag(kVideoTag).packets.push_back(
       Adopt(input_frame.release()).At(Timestamp::PostStream()));
 
   // Run the calculator.
   MP_ASSERT_OK(runner->Run());
 
   const std::vector<Packet>& output_packets =
-      runner->Outputs().Tag("DETECTED_BORDERS").packets;
+      runner->Outputs().Tag(kDetectedBordersTag).packets;
   ASSERT_EQ(1, output_packets.size());
   const auto& static_features = output_packets[0].Get<StaticFeatures>();
   ASSERT_EQ(0, static_features.border().size());
@@ -383,7 +386,7 @@ void BM_Large(benchmark::State& state) {
     cv::Mat sub_image =
         input_mat(cv::Rect(0, 0, kTestFrameLargeWidth, kTopBorderHeight));
     sub_image.setTo(cv::Scalar(255, 0, 0));
-    runner->MutableInputs()->Tag("VIDEO").packets.push_back(
+    runner->MutableInputs()->Tag(kVideoTag).packets.push_back(
         Adopt(input_frame.release()).At(Timestamp::PostStream()));
 
     // Run the calculator.

@@ -196,7 +196,9 @@ cc_library(
     deps = [
         ":gl_base",
         ":gl_context",
+        ":gl_texture_view",
         ":gpu_buffer_format",
+        ":gpu_buffer_storage",
         # TODO: remove this dependency. Some other teams' tests
         # depend on having an indirect image_frame dependency, need to be
         # fixed first.
@@ -206,17 +208,35 @@ cc_library(
 )
 
 cc_library(
+    name = "gl_texture_view",
+    srcs = ["gl_texture_view.cc"],
+    hdrs = ["gl_texture_view.h"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_base",
+        ":gl_context",
+    ],
+)
+
+cc_library(
     name = "gpu_buffer",
+    srcs = ["gpu_buffer.cc"],
     hdrs = ["gpu_buffer.h"],
     visibility = ["//visibility:public"],
     deps = [
         ":gl_base",
+        ":gl_context",
         ":gpu_buffer_format",
+        ":gpu_buffer_storage",
+        ":gl_texture_view",
+        "//mediapipe/framework/formats:image_frame",
     ] + select({
         "//conditions:default": [
             ":gl_texture_buffer",
         ],
         "//mediapipe:ios": [
+            ":gpu_buffer_storage_cv_pixel_buffer",
+            "//mediapipe/objc:util",
             "//mediapipe/objc:CFHolder",
         ],
         "//mediapipe:macos": [
@@ -237,6 +257,35 @@ cc_library(
         "//mediapipe/framework/formats:image_format_cc_proto",
         "//mediapipe/framework/port:logging",
         "@com_google_absl//absl/container:flat_hash_map",
+    ],
+)
+
+cc_library(
+    name = "gpu_buffer_storage",
+    hdrs = ["gpu_buffer_storage.h"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_base",
+        ":gpu_buffer_format",
+        "//mediapipe/framework/deps:no_destructor",
+        "//mediapipe/framework/formats:image_frame",
+        "//mediapipe/framework/port:logging",
+        "@com_google_absl//absl/container:flat_hash_map",
+    ],
+)
+
+cc_library(
+    name = "gpu_buffer_storage_cv_pixel_buffer",
+    srcs = ["gpu_buffer_storage_cv_pixel_buffer.cc"],
+    hdrs = ["gpu_buffer_storage_cv_pixel_buffer.h"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_base",
+        ":gl_context",
+        ":gl_texture_view",
+        ":gpu_buffer_storage",
+        "//mediapipe/objc:CFHolder",
+        "//mediapipe/objc:util",
     ],
 )
 
@@ -478,6 +527,7 @@ cc_library(
         "//mediapipe:ios": [
             ":pixel_buffer_pool_util",
             "//mediapipe/objc:CFHolder",
+            "//mediapipe/objc:util",
         ],
         "//mediapipe:macos": [
             ":pixel_buffer_pool_util",
@@ -498,55 +548,40 @@ cc_library(
     ],
 )
 
-HELPER_ANDROID_SRCS = [
-    "gl_calculator_helper_impl_android.cc",
-    "gl_calculator_helper_impl_common.cc",
-]
-
-HELPER_ANDROID_HDRS = [
-    "egl_surface_holder.h",
-]
-
-HELPER_COMMON_SRCS = [
-    "gl_calculator_helper.cc",
-]
-
-HELPER_COMMON_HDRS = [
-    "gl_calculator_helper.h",
-    "gl_calculator_helper_impl.h",
-]
-
-HELPER_IOS_SRCS = [
-    "gl_calculator_helper_impl_ios.mm",
-    "gl_calculator_helper_impl_common.cc",
-]
-
-HELPER_IOS_FRAMEWORKS = [
-    "AVFoundation",
-    "CoreVideo",
-    "CoreGraphics",
-    "CoreMedia",
-    "GLKit",
-    "QuartzCore",
-] + select({
-    "//conditions:default": [
-        "OpenGLES",
+cc_library(
+    name = "egl_surface_holder",
+    hdrs = ["egl_surface_holder.h"],
+    deps = [
+        ":gl_base",
+        "@com_google_absl//absl/synchronization",
     ],
-    "//mediapipe:macos": [
-        "OpenGL",
-        "AppKit",
-    ],
-})
+)
 
 cc_library(
     name = "gl_calculator_helper",
-    srcs = select({
-        "//conditions:default": HELPER_COMMON_SRCS + HELPER_ANDROID_SRCS,
-        "//mediapipe:apple": [],
-    }),
-    hdrs = HELPER_COMMON_HDRS + select({
-        "//conditions:default": HELPER_ANDROID_HDRS,
-        "//mediapipe:apple": [],
+    srcs = [
+        "gl_calculator_helper.cc",
+        "gl_calculator_helper_impl_common.cc",
+    ],
+    hdrs = [
+        "gl_calculator_helper.h",
+        "gl_calculator_helper_impl.h",
+    ],
+    linkopts = select({
+        "//conditions:default": [],
+        "//mediapipe:apple": [
+            "-framework AVFoundation",
+            "-framework CoreVideo",
+            "-framework CoreGraphics",
+            "-framework CoreMedia",
+            "-framework GLKit",
+            "-framework QuartzCore",
+        ],
+    }) + select({
+        "//conditions:default": [],
+        "//mediapipe:macos": [
+            "-framework AppKit",
+        ],
     }),
     visibility = ["//visibility:public"],
     deps = [
@@ -582,34 +617,20 @@ cc_library(
     ] + select({
         "//conditions:default": [
         ],
-        "//mediapipe:apple": [
-            ":gl_calculator_helper_ios",
-            "//mediapipe/objc:util",
-            "//mediapipe/objc:CFHolder",
-        ],
+        "//mediapipe:apple": [],
     }),
 )
 
+# TODO: remove
 objc_library(
     name = "gl_calculator_helper_ios",
-    srcs = HELPER_COMMON_SRCS + HELPER_IOS_SRCS,
-    hdrs = HELPER_COMMON_HDRS,
     copts = [
         "-Wno-shorten-64-to-32",
         "-std=c++17",
     ],
-    sdk_frameworks = HELPER_IOS_FRAMEWORKS,
     visibility = ["//visibility:public"],
     deps = [
-        ":gl_base",
-        ":gl_context",
-        ":gpu_buffer",
-        ":gpu_buffer_multi_pool",
-        ":gpu_service",
-        ":gpu_shared_data_internal",
-        ":shader_util",
-        "//mediapipe/framework:calculator_framework",
-        "//mediapipe/framework/formats:image",
+        ":gl_calculator_helper",
         "//mediapipe/objc:mediapipe_framework_ios",
         "//mediapipe/objc:util",
     ],
@@ -769,6 +790,7 @@ cc_library(
     srcs = ["gl_surface_sink_calculator.cc"],
     visibility = ["//visibility:public"],
     deps = [
+        ":egl_surface_holder",
         ":gl_calculator_helper",
         ":gl_quad_renderer",
         ":gpu_buffer",

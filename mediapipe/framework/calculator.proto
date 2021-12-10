@@ -212,6 +212,9 @@ message ProfilerConfig {
   // False specifies an event for each calculator invocation.
   // True specifies a separate event for each start and finish time.
   bool trace_log_instant_events = 17;
+
+  // Limits calculator-profile histograms to a subset of calculators.
+  string calculator_filter = 18;
 }
 
 // Describes the topology and function of a MediaPipe Graph.  The graph of
@@ -318,6 +321,8 @@ message CalculatorGraphConfig {
     // The maximum number of invocations that can be executed in parallel.
     // If not specified, the limit is one invocation.
     int32 max_in_flight = 16;
+    // Defines an option value for this Node from graph options or packets.
+    repeated string option_value = 17;
     // DEPRECATED: For backwards compatibility we allow users to
     // specify the old name for "input_side_packet" in proto configs.
     // These are automatically converted to input_side_packets during

@@ -17,6 +17,7 @@ package com.google.mediapipe.solutioncore;
 import android.util.Log;
 import com.google.mediapipe.framework.MediaPipeException;
 import com.google.mediapipe.framework.Packet;
+import com.google.mediapipe.solutioncore.logging.SolutionStatsLogger;
 import java.util.List;
 
 /** Interface for handling MediaPipe solution graph outputs. */
@@ -33,6 +34,11 @@ public class OutputHandler<T extends SolutionResult> {
   private ResultListener<T> customResultListener;
   // The user-defined error listener.
   private ErrorListener customErrorListener;
+  // A logger that records the time when the output packets leave the graph or logs any error
+  // occurs.
+  private SolutionStatsLogger statsLogger;
+  // Whether the output handler should react to timestamp-bound changes by outputting empty packets.
+  private boolean handleTimestampBoundChanges = false;
 
   /**
    * Sets a callback to be invoked to convert a packet list to a solution result object.
@@ -53,6 +59,15 @@ public class OutputHandler<T extends SolutionResult> {
   }
 
   /**
+   * Sets a {@link SolutionStatsLogger} to report invocation end events.
+   *
+   * @param statsLogger a {@link SolutionStatsLogger}.
+   */
+  public void setStatsLogger(SolutionStatsLogger statsLogger) {
+    this.statsLogger = statsLogger;
+  }
+
+  /**
    * Sets a callback to be invoked when exceptions are thrown in the solution.
    *
    * @param listener the user-defined {@link ErrorListener} callback.
@@ -61,11 +76,26 @@ public class OutputHandler<T extends SolutionResult> {
     this.customErrorListener = listener;
   }
 
+  /**
+   * Sets whether the output handler should react to timestamp-bound changes by outputting empty
+   * packets.
+   *
+   * @param handleTimestampBoundChanges a boolean value.
+   */
+  public void setHandleTimestampBoundChanges(boolean handleTimestampBoundChanges) {
+    this.handleTimestampBoundChanges = handleTimestampBoundChanges;
+  }
+
+  public boolean handleTimestampBoundChanges() {
+    return handleTimestampBoundChanges;
+  }
+
   /** Handles a list of output packets. Invoked when packet lists become available. */
   public void run(List<Packet> packets) {
     T solutionResult = null;
     try {
       solutionResult = outputConverter.convert(packets);
+      statsLogger.recordInvocationEnd(packets.get(0).getTimestamp());
       customResultListener.run(solutionResult);
     } catch (MediaPipeException e) {
       if (customErrorListener != null) {
@@ -74,12 +104,9 @@ public class OutputHandler<T extends SolutionResult> {
         Log.e(TAG, "Error occurs when getting MediaPipe solution result. " + e);
       }
     } finally {
-      for (Packet packet : packets) {
-        packet.release();
-      }
       if (solutionResult instanceof ImageSolutionResult) {
         ImageSolutionResult imageSolutionResult = (ImageSolutionResult) solutionResult;
-        imageSolutionResult.releaseImagePacket();
+        imageSolutionResult.clearImagePackets();
       }
     }
   }

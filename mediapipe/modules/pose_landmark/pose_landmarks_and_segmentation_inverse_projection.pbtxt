@@ -1,0 +1,125 @@
+# MediaPipe graph projecting the landmarks and segmentation mask defined in a
+# local coordinate system within a (potentially letterboxed) ROI back to the
+# global coordinate system of the full image that contains the ROI.
+#
+# EXAMPLE:
+# node {
+#   calculator: "PoseLandmarksAndSegmentationInverseProjection"
+#   input_stream: "IMAGE_SIZE:image_size"
+#   input_stream: "NORM_RECT:roi"
+#   input_stream: "LETTERBOX_PADDING:letterbox_padding"
+#   input_stream: "MATRIX:transformation_matrix"
+#   input_stream: "LANDMARKS:roi_landmarks"
+#   input_stream: "AUXILIARY_LANDMARKS:roi_auxiliary_landmarks"
+#   input_stream: "WORLD_LANDMARKS:roi_world_landmarks"
+#   input_stream: "SEGMENTATION_MASK:roi_segmentation_mask"
+#   output_stream: "LANDMARKS:landmarks"
+#   output_stream: "AUXILIARY_LANDMARKS:auxiliary_landmarks"
+#   output_stream: "WORLD_LANDMARKS:world_landmarks"
+#   output_stream: "SEGMENTATION_MASK:segmentation_mask"
+# }
+
+type: "PoseLandmarksAndSegmentationInverseProjection"
+
+# Size of the full image (width & height). (std::pair<int, int>)
+input_stream: "IMAGE_SIZE:image_size"
+
+# ROI within the full image. (NormalizedRect)
+input_stream: "NORM_RECT:roi"
+
+# An array representing the letterbox padding around the ROI from the 4 sides:
+# [left, top, right, bottom]. The padding is normalized to [0.f, 1.f] by the
+# dimensions of the letterboxed/padded ROI. (std::array<float, 4>)
+input_stream: "LETTERBOX_PADDING:letterbox_padding"
+
+# An array representing a 4x4 row-major-order matrix that maps a point within
+# the ROI from the global coordinates of the full image to the local coordinates
+# within the letterboxed ROI. (std::array<float, 16>)
+input_stream: "MATRIX:transformation_matrix"
+
+# Input landmarks and segmentation mask in local coordinates within the
+# letterboxed ROI, and the corresponding outputs in global coordinates of the
+# full image.
+# LANDMARKS & AUXILIARY_LANDMARKS (NormalizedLandmarkList)
+# WORLD_LANDMARKS (LandmarkList)
+# SEGMENTATION_MASK (Image)
+input_stream: "LANDMARKS:roi_landmarks"
+input_stream: "AUXILIARY_LANDMARKS:roi_auxiliary_landmarks"
+input_stream: "WORLD_LANDMARKS:roi_world_landmarks"
+input_stream: "SEGMENTATION_MASK:roi_segmentation_mask"
+output_stream: "LANDMARKS:landmarks"
+output_stream: "AUXILIARY_LANDMARKS:auxiliary_landmarks"
+output_stream: "WORLD_LANDMARKS:world_landmarks"
+output_stream: "SEGMENTATION_MASK:segmentation_mask"
+
+# -----------------------------------------------------------------------------
+# LANDMARKS
+# -----------------------------------------------------------------------------
+
+# Adjusts landmarks (already normalized to [0.f, 1.f]) in the letterboxed ROI
+# to the corresponding coordinates with the letterbox removed.
+node {
+  calculator: "LandmarkLetterboxRemovalCalculator"
+  input_stream: "LANDMARKS:roi_landmarks"
+  input_stream: "LETTERBOX_PADDING:letterbox_padding"
+  output_stream: "LANDMARKS:adjusted_landmarks"
+}
+node {
+  calculator: "LandmarkLetterboxRemovalCalculator"
+  input_stream: "LANDMARKS:roi_auxiliary_landmarks"
+  input_stream: "LETTERBOX_PADDING:letterbox_padding"
+  output_stream: "LANDMARKS:adjusted_auxiliary_landmarks"
+}
+
+# Projects the landmarks from the letterbox-removed ROI back to the full image.
+node {
+  calculator: "LandmarkProjectionCalculator"
+  input_stream: "NORM_LANDMARKS:adjusted_landmarks"
+  input_stream: "NORM_RECT:roi"
+  output_stream: "NORM_LANDMARKS:landmarks"
+}
+node {
+  calculator: "LandmarkProjectionCalculator"
+  input_stream: "NORM_LANDMARKS:adjusted_auxiliary_landmarks"
+  input_stream: "NORM_RECT:roi"
+  output_stream: "NORM_LANDMARKS:auxiliary_landmarks"
+}
+
+# -----------------------------------------------------------------------------
+# WORLD_LANDMARKS
+# -----------------------------------------------------------------------------
+
+# Projects the world landmarks from the letterboxed ROI to the full image.
+node {
+  calculator: "WorldLandmarkProjectionCalculator"
+  input_stream: "LANDMARKS:roi_world_landmarks"
+  input_stream: "NORM_RECT:roi"
+  output_stream: "LANDMARKS:world_landmarks"
+}
+
+# -----------------------------------------------------------------------------
+# SEGMENTATION_MASK
+# -----------------------------------------------------------------------------
+
+# Calculates the inverse transformation matrix.
+node {
+  calculator: "InverseMatrixCalculator"
+  input_stream: "MATRIX:transformation_matrix"
+  output_stream: "MATRIX:inverse_transformation_matrix"
+}
+
+# Projects the segmentation mask from the letterboxed ROI back to the full
+# image.
+node {
+  calculator: "WarpAffineCalculator"
+  input_stream: "IMAGE:roi_segmentation_mask"
+  input_stream: "MATRIX:inverse_transformation_matrix"
+  input_stream: "OUTPUT_SIZE:image_size"
+  output_stream: "IMAGE:segmentation_mask"
+  options: {
+    [mediapipe.WarpAffineCalculatorOptions.ext] {
+      border_mode: BORDER_ZERO
+      gpu_origin: TOP_LEFT
+    }
+  }
+}

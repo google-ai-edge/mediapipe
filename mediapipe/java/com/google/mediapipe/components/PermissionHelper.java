@@ -17,6 +17,7 @@ package com.google.mediapipe.components;
 import android.Manifest;
 import android.app.Activity;
 import android.content.pm.PackageManager;
+import android.os.Build;
 import android.util.Log;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -28,6 +29,9 @@ public class PermissionHelper {
   private static final String AUDIO_PERMISSION = Manifest.permission.RECORD_AUDIO;
 
   private static final String CAMERA_PERMISSION = Manifest.permission.CAMERA;
+
+  private static final String READ_EXTERNAL_STORAGE_PERMISSION =
+      Manifest.permission.READ_EXTERNAL_STORAGE;
 
   private static final int REQUEST_CODE = 0;
 
@@ -69,6 +73,25 @@ public class PermissionHelper {
   public static void checkAndRequestAudioPermissions(Activity context) {
     Log.d(TAG, "checkAndRequestAudioPermissions");
     checkAndRequestPermissions(context, new String[] {AUDIO_PERMISSION});
+  }
+
+  /** Called by context to check if read external storage permissions have been granted. */
+  public static boolean readExternalStoragePermissionsGranted(Activity context) {
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN) {
+      return true;
+    }
+    return permissionsGranted(context, new String[] {READ_EXTERNAL_STORAGE_PERMISSION});
+  }
+
+  /**
+   * Called by context to check if read external storage permissions have been granted and if not,
+   * request them.
+   */
+  public static void checkAndRequestReadExternalStoragePermissions(Activity context) {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+      Log.d(TAG, "checkAndRequestReadExternalStoragePermissions");
+      checkAndRequestPermissions(context, new String[] {READ_EXTERNAL_STORAGE_PERMISSION});
+    }
   }
 
   /** Called by context when permissions request has been completed. */

@@ -34,6 +34,9 @@ namespace {
 
 namespace tf = ::tensorflow;
 
+constexpr char kStringSavedModelPathTag[] = "STRING_SAVED_MODEL_PATH";
+constexpr char kSessionTag[] = "SESSION";
+
 std::string GetSavedModelDir() {
   std::string out_path =
       file::JoinPath("./", "mediapipe/calculators/tensorflow/testdata/",
@@ -75,7 +78,7 @@ TEST_F(TensorFlowSessionFromSavedModelGeneratorTest,
       input_side_packets, &output_side_packets);
   MP_EXPECT_OK(run_status) << run_status.message();
   const TensorFlowSession& session =
-      output_side_packets.Tag("SESSION").Get<TensorFlowSession>();
+      output_side_packets.Tag(kSessionTag).Get<TensorFlowSession>();
   // Session must be set.
   ASSERT_NE(session.session, nullptr);
 
@@ -107,7 +110,7 @@ TEST_F(TensorFlowSessionFromSavedModelGeneratorTest,
   generator_options_->clear_saved_model_path();
   PacketSet input_side_packets(
       tool::CreateTagMap({"STRING_SAVED_MODEL_PATH:saved_model_dir"}).value());
-  input_side_packets.Tag("STRING_SAVED_MODEL_PATH") =
+  input_side_packets.Tag(kStringSavedModelPathTag) =
       Adopt(new std::string(GetSavedModelDir()));
   PacketSet output_side_packets(
       tool::CreateTagMap({"SESSION:session"}).value());
@@ -116,7 +119,7 @@ TEST_F(TensorFlowSessionFromSavedModelGeneratorTest,
       input_side_packets, &output_side_packets);
   MP_EXPECT_OK(run_status) << run_status.message();
   const TensorFlowSession& session =
-      output_side_packets.Tag("SESSION").Get<TensorFlowSession>();
+      output_side_packets.Tag(kSessionTag).Get<TensorFlowSession>();
   // Session must be set.
   ASSERT_NE(session.session, nullptr);
 }
@@ -192,7 +195,7 @@ TEST_F(TensorFlowSessionFromSavedModelGeneratorTest,
       input_side_packets, &output_side_packets);
   MP_EXPECT_OK(run_status) << run_status.message();
   const TensorFlowSession& session =
-      output_side_packets.Tag("SESSION").Get<TensorFlowSession>();
+      output_side_packets.Tag(kSessionTag).Get<TensorFlowSession>();
   // Session must be set.
   ASSERT_NE(session.session, nullptr);
 }
@@ -213,7 +216,7 @@ TEST_F(TensorFlowSessionFromSavedModelGeneratorTest,
       input_side_packets, &output_side_packets);
   MP_EXPECT_OK(run_status) << run_status.message();
   const TensorFlowSession& session =
-      output_side_packets.Tag("SESSION").Get<TensorFlowSession>();
+      output_side_packets.Tag(kSessionTag).Get<TensorFlowSession>();
   // Session must be set.
   ASSERT_NE(session.session, nullptr);
   std::vector<tensorflow::DeviceAttributes> devices;

@@ -31,8 +31,8 @@ stream on an iOS device.
 
 ## Setup
 
-1.  Install MediaPipe on your system, see [MediaPipe installation guide] for
-    details.
+1.  Install MediaPipe on your system, see
+    [MediaPipe installation guide](./install.md) for details.
 2.  Setup your iOS device for development.
 3.  Setup [Bazel] on your system to build and deploy the iOS app.
 
@@ -112,6 +112,10 @@ bazel to build the iOS application. The content of the
 4.  `Info.plist`
 5.  `Main.storyboard` and `Launch.storyboard`
 6.  `Assets.xcassets` directory.
+
+Note: In newer versions of Xcode, you may see additional files `SceneDelegate.h`
+and `SceneDelegate.m`. Make sure to copy them too and add them to the `BUILD`
+file mentioned below.
 
 Copy these files to a directory named `HelloWorld` to a location that can access
 the MediaPipe source code. For example, the source code of the application that
@@ -247,6 +251,12 @@ We need to get frames from the `_cameraSource` into our application
 `MPPInputSourceDelegate`. So our application `ViewController` can be a delegate
 of `_cameraSource`.
 
+Update the interface definition of `ViewController` accordingly:
+
+```
+@interface ViewController () <MPPInputSourceDelegate>
+```
+
 To handle camera setup and process incoming frames, we should use a queue
 different from the main queue. Add the following to the implementation block of
 the `ViewController`:
@@ -287,6 +297,12 @@ first set up a way to display the camera frames. MediaPipe provides another
 utility called `MPPLayerRenderer` to display images on the screen. This utility
 can be used to display `CVPixelBufferRef` objects, which is the type of the
 images provided by `MPPCameraInputSource` to its delegates.
+
+In `ViewController.m`, add the following import line:
+
+```
+#import "mediapipe/objc/MPPLayerRenderer.h"
+```
 
 To display images of the screen, we need to add a new `UIView` object called
 `_liveView` to the `ViewController`.
@@ -410,6 +426,12 @@ Finally, rename the file `ViewController.m` to `ViewController.mm` to support
 Objective-C++.
 
 ### Use the graph in `ViewController`
+
+In `ViewController.m`, add the following import line:
+
+```
+#import "mediapipe/objc/MPPGraph.h"
+```
 
 Declare a static constant with the name of the graph, the input stream and the
 output stream:
@@ -549,6 +571,12 @@ method to receive packets on this output stream and display them on the screen:
 }
 ```
 
+Update the interface definition of `ViewController` with `MPPGraphDelegate`:
+
+```
+@interface ViewController () <MPPGraphDelegate, MPPInputSourceDelegate>
+```
+
 And that is all! Build and run the app on your iOS device. You should see the
 results of running the edge detection graph on a live video feed. Congrats!
 
@@ -560,6 +588,5 @@ appropriate `BUILD` file dependencies for the edge detection graph.
 
 [Bazel]:https://bazel.build/
 [`edge_detection_mobile_gpu.pbtxt`]:https://github.com/google/mediapipe/tree/master/mediapipe/graphs/edge_detection/edge_detection_mobile_gpu.pbtxt
-[MediaPipe installation guide]:./install.md
-[common]:(https://github.com/google/mediapipe/tree/master/mediapipe/examples/ios/common)
-[helloworld]:(https://github.com/google/mediapipe/tree/master/mediapipe/examples/ios/helloworld)
+[common]:https://github.com/google/mediapipe/tree/master/mediapipe/examples/ios/common
+[helloworld]:https://github.com/google/mediapipe/tree/master/mediapipe/examples/ios/helloworld

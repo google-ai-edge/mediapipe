@@ -9,6 +9,9 @@ input_side_packet: "MODEL_PATH:box_landmark_model_path"
 input_side_packet: "LABELS_CSV:allowed_labels"
 # Max number of objects to detect/track. (int)
 input_side_packet: "MAX_NUM_OBJECTS:max_num_objects"
+# Whether landmarks on the previous image should be used to help localize
+# landmarks on the current image. (bool)
+input_side_packet: "USE_PREV_LANDMARKS:use_prev_landmarks"
 # Bounding box landmarks topology definition.
 # The numbers are indices in the box_landmarks list.
 #
@@ -48,24 +51,19 @@ node {
   output_side_packet: "MODEL:box_landmark_model"
 }
 
-# Defines whether landmarks from the previous video frame should be used to help
-# predict landmarks on the current video frame.
-node {
-  name: "ConstantSidePacketCalculator"
-  calculator: "ConstantSidePacketCalculator"
-  output_side_packet: "PACKET:use_prev_landmarks"
-  options: {
-    [mediapipe.ConstantSidePacketCalculatorOptions.ext]: {
-      packet { bool_value: true }
-    }
-  }
-}
-
+# When the optional input side packet "use_prev_landmarks" is either absent or
+# set to true, uses the landmarks on the previous image to help localize
+# landmarks on the current image.
 node {
   calculator: "GateCalculator"
   input_side_packet: "ALLOW:use_prev_landmarks"
   input_stream: "prev_box_rects_from_landmarks"
   output_stream: "gated_prev_box_rects_from_landmarks"
+  options: {
+    [mediapipe.GateCalculatorOptions.ext] {
+      allow: true
+    }
+  }
 }
 
 # Determines if an input vector of NormalizedRect has a size greater than or

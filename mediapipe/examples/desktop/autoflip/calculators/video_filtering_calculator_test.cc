@@ -31,6 +31,9 @@ namespace mediapipe {
 namespace autoflip {
 namespace {
 
+constexpr char kOutputFramesTag[] = "OUTPUT_FRAMES";
+constexpr char kInputFramesTag[] = "INPUT_FRAMES";
+
 // Default configuration of the calculator.
 CalculatorGraphConfig::Node GetCalculatorNode(
     const std::string& fail_if_any, const std::string& extra_options = "") {
@@ -65,10 +68,10 @@ TEST(VideoFilterCalculatorTest, UpperBoundNoPass) {
       ImageFormat::SRGB, kFixedWidth,
       static_cast<int>(kFixedWidth / kAspectRatio), 16);
   runner->MutableInputs()
-      ->Tag("INPUT_FRAMES")
+      ->Tag(kInputFramesTag)
       .packets.push_back(Adopt(input_frame.release()).At(Timestamp(1000)));
   MP_ASSERT_OK(runner->Run());
-  const auto& output_packet = runner->Outputs().Tag("OUTPUT_FRAMES").packets;
+  const auto& output_packet = runner->Outputs().Tag(kOutputFramesTag).packets;
   EXPECT_TRUE(output_packet.empty());
 }
 
@@ -88,10 +91,10 @@ TEST(VerticalFrameRemovalCalculatorTest, UpperBoundPass) {
   auto input_frame =
       ::absl::make_unique<ImageFrame>(ImageFormat::SRGB, kWidth, kHeight, 16);
   runner->MutableInputs()
-      ->Tag("INPUT_FRAMES")
+      ->Tag(kInputFramesTag)
       .packets.push_back(Adopt(input_frame.release()).At(Timestamp(1000)));
   MP_ASSERT_OK(runner->Run());
-  const auto& output_packet = runner->Outputs().Tag("OUTPUT_FRAMES").packets;
+  const auto& output_packet = runner->Outputs().Tag(kOutputFramesTag).packets;
   EXPECT_EQ(1, output_packet.size());
   auto& output_frame = output_packet[0].Get<ImageFrame>();
   EXPECT_EQ(kWidth, output_frame.Width());
@@ -114,10 +117,10 @@ TEST(VideoFilterCalculatorTest, LowerBoundNoPass) {
       ImageFormat::SRGB, kFixedWidth,
       static_cast<int>(kFixedWidth / kAspectRatio), 16);
   runner->MutableInputs()
-      ->Tag("INPUT_FRAMES")
+      ->Tag(kInputFramesTag)
       .packets.push_back(Adopt(input_frame.release()).At(Timestamp(1000)));
   MP_ASSERT_OK(runner->Run());
-  const auto& output_packet = runner->Outputs().Tag("OUTPUT_FRAMES").packets;
+  const auto& output_packet = runner->Outputs().Tag(kOutputFramesTag).packets;
   EXPECT_TRUE(output_packet.empty());
 }
 
@@ -137,10 +140,10 @@ TEST(VerticalFrameRemovalCalculatorTest, LowerBoundPass) {
   auto input_frame =
       ::absl::make_unique<ImageFrame>(ImageFormat::SRGB, kWidth, kHeight, 16);
   runner->MutableInputs()
-      ->Tag("INPUT_FRAMES")
+      ->Tag(kInputFramesTag)
       .packets.push_back(Adopt(input_frame.release()).At(Timestamp(1000)));
   MP_ASSERT_OK(runner->Run());
-  const auto& output_packet = runner->Outputs().Tag("OUTPUT_FRAMES").packets;
+  const auto& output_packet = runner->Outputs().Tag(kOutputFramesTag).packets;
   EXPECT_EQ(1, output_packet.size());
   auto& output_frame = output_packet[0].Get<ImageFrame>();
   EXPECT_EQ(kWidth, output_frame.Width());
@@ -164,7 +167,7 @@ TEST(VerticalFrameRemovalCalculatorTest, OutputError) {
       ImageFormat::SRGB, kFixedWidth,
       static_cast<int>(kFixedWidth / kAspectRatio), 16);
   runner->MutableInputs()
-      ->Tag("INPUT_FRAMES")
+      ->Tag(kInputFramesTag)
       .packets.push_back(Adopt(input_frame.release()).At(Timestamp(1000)));
   absl::Status status = runner->Run();
   EXPECT_EQ(status.code(), absl::StatusCode::kUnknown);

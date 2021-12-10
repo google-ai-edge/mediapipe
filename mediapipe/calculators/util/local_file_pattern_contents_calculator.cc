@@ -20,6 +20,11 @@
 #include "mediapipe/framework/port/status.h"
 
 namespace mediapipe {
+
+constexpr char kContentsTag[] = "CONTENTS";
+constexpr char kFileSuffixTag[] = "FILE_SUFFIX";
+constexpr char kFileDirectoryTag[] = "FILE_DIRECTORY";
+
 // The calculator takes the path to local directory and desired file suffix to
 // mach as input side packets, and outputs the contents of those files that
 // match the pattern. Those matched files will be sent sequentially through the
@@ -35,16 +40,16 @@ namespace mediapipe {
 class LocalFilePatternContentsCalculator : public CalculatorBase {
  public:
   static absl::Status GetContract(CalculatorContract* cc) {
-    cc->InputSidePackets().Tag("FILE_DIRECTORY").Set<std::string>();
-    cc->InputSidePackets().Tag("FILE_SUFFIX").Set<std::string>();
-    cc->Outputs().Tag("CONTENTS").Set<std::string>();
+    cc->InputSidePackets().Tag(kFileDirectoryTag).Set<std::string>();
+    cc->InputSidePackets().Tag(kFileSuffixTag).Set<std::string>();
+    cc->Outputs().Tag(kContentsTag).Set<std::string>();
     return absl::OkStatus();
   }
 
   absl::Status Open(CalculatorContext* cc) override {
     MP_RETURN_IF_ERROR(mediapipe::file::MatchFileTypeInDirectory(
-        cc->InputSidePackets().Tag("FILE_DIRECTORY").Get<std::string>(),
-        cc->InputSidePackets().Tag("FILE_SUFFIX").Get<std::string>(),
+        cc->InputSidePackets().Tag(kFileDirectoryTag).Get<std::string>(),
+        cc->InputSidePackets().Tag(kFileSuffixTag).Get<std::string>(),
         &filenames_));
     return absl::OkStatus();
   }
@@ -57,7 +62,7 @@ class LocalFilePatternContentsCalculator : public CalculatorBase {
           filenames_[current_output_], contents.get()));
       ++current_output_;
       cc->Outputs()
-          .Tag("CONTENTS")
+          .Tag(kContentsTag)
           .Add(contents.release(), Timestamp(current_output_));
     } else {
       return tool::StatusStop();

@@ -154,9 +154,8 @@ JNIEXPORT jint JNICALL PACKET_GETTER_METHOD(nativeGetGpuBufferName)(
 
 // Returns a mediapipe::GlTextureBufferSharedPtr*.
 // This will survive independently of the packet.
-JNIEXPORT jlong JNICALL PACKET_GETTER_METHOD(nativeGetGpuBuffer)(JNIEnv* env,
-                                                                 jobject thiz,
-                                                                 jlong packet);
+JNIEXPORT jlong JNICALL PACKET_GETTER_METHOD(nativeGetGpuBuffer)(
+    JNIEnv* env, jobject thiz, jlong packet, jboolean wait_on_cpu);
 
 #ifdef __cplusplus
 }  // extern "C"

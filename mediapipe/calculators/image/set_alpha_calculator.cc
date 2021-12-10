@@ -53,7 +53,7 @@ enum { ATTRIB_VERTEX, ATTRIB_TEXTURE_POSITION, NUM_ATTRIBUTES };
 // The alpha channel can be set to a single value, or come from an image mask.
 // If the input image has an alpha channel, it will be updated.
 // If the input image doesn't have an alpha channel, one will be added.
-// Adding alpha channel to a Grayscale (single channel) input is not suported.
+// Adding alpha channel to a Grayscale (single channel) input is not supported.
 //
 // Inputs:
 //   One of the following two IMAGE tags:

@@ -48,5 +48,14 @@ std::string ClassRegistry::GetMethodName(std::string cls, std::string method) {
   return method;
 }
 
+std::string ClassRegistry::GetFieldName(std::string cls, std::string field) {
+  std::string key = absl::StrFormat("%s##%s", cls, field);
+  auto match = renaming_map_.find(key);
+  if (match != renaming_map_.end()) {
+    return match->second;
+  }
+  return field;
+}
+
 }  // namespace android
 }  // namespace mediapipe

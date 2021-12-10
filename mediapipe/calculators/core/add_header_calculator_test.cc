@@ -24,6 +24,9 @@
 
 namespace mediapipe {
 
+constexpr char kDataTag[] = "DATA";
+constexpr char kHeaderTag[] = "HEADER";
+
 class AddHeaderCalculatorTest : public ::testing::Test {};
 
 TEST_F(AddHeaderCalculatorTest, HeaderStream) {
@@ -36,11 +39,11 @@ TEST_F(AddHeaderCalculatorTest, HeaderStream) {
   CalculatorRunner runner(node);
 
   // Set header and add 5 packets.
-  runner.MutableInputs()->Tag("HEADER").header =
+  runner.MutableInputs()->Tag(kHeaderTag).header =
       Adopt(new std::string("my_header"));
   for (int i = 0; i < 5; ++i) {
     Packet packet = Adopt(new int(i)).At(Timestamp(i * 1000));
-    runner.MutableInputs()->Tag("DATA").packets.push_back(packet);
+    runner.MutableInputs()->Tag(kDataTag).packets.push_back(packet);
   }
 
   // Run calculator.
@@ -85,13 +88,14 @@ TEST_F(AddHeaderCalculatorTest, NoPacketsOnHeaderStream) {
   CalculatorRunner runner(node);
 
   // Set header and add 5 packets.
-  runner.MutableInputs()->Tag("HEADER").header =
+  runner.MutableInputs()->Tag(kHeaderTag).header =
       Adopt(new std::string("my_header"));
-  runner.MutableInputs()->Tag("HEADER").packets.push_back(
-      Adopt(new std::string("not allowed")));
+  runner.MutableInputs()
+      ->Tag(kHeaderTag)
+      .packets.push_back(Adopt(new std::string("not allowed")));
   for (int i = 0; i < 5; ++i) {
     Packet packet = Adopt(new int(i)).At(Timestamp(i * 1000));
-    runner.MutableInputs()->Tag("DATA").packets.push_back(packet);
+    runner.MutableInputs()->Tag(kDataTag).packets.push_back(packet);
   }
 
   // Run calculator.
@@ -108,11 +112,11 @@ TEST_F(AddHeaderCalculatorTest, InputSidePacket) {
   CalculatorRunner runner(node);
 
   // Set header and add 5 packets.
-  runner.MutableSidePackets()->Tag("HEADER") =
+  runner.MutableSidePackets()->Tag(kHeaderTag) =
       Adopt(new std::string("my_header"));
   for (int i = 0; i < 5; ++i) {
     Packet packet = Adopt(new int(i)).At(Timestamp(i * 1000));
-    runner.MutableInputs()->Tag("DATA").packets.push_back(packet);
+    runner.MutableInputs()->Tag(kDataTag).packets.push_back(packet);
   }
 
   // Run calculator.
@@ -143,13 +147,13 @@ TEST_F(AddHeaderCalculatorTest, UsingBothSideInputAndStream) {
   CalculatorRunner runner(node);
 
   // Set both headers and add 5 packets.
-  runner.MutableSidePackets()->Tag("HEADER") =
+  runner.MutableSidePackets()->Tag(kHeaderTag) =
       Adopt(new std::string("my_header"));
-  runner.MutableSidePackets()->Tag("HEADER") =
+  runner.MutableSidePackets()->Tag(kHeaderTag) =
       Adopt(new std::string("my_header"));
   for (int i = 0; i < 5; ++i) {
     Packet packet = Adopt(new int(i)).At(Timestamp(i * 1000));
-    runner.MutableInputs()->Tag("DATA").packets.push_back(packet);
+    runner.MutableInputs()->Tag(kDataTag).packets.push_back(packet);
   }
 
   // Run should fail because header can only be provided one way.

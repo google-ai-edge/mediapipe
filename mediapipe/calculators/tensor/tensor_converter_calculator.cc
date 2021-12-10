@@ -517,8 +517,8 @@ absl::Status TensorConverterCalculator::InitGpu(CalculatorContext* cc) {
           uniform sampler2D frame;
 
           void main() {
-            $1  // flip
-            vec4 pixel = texture2D(frame, sample_coordinate);
+            vec2 coord = $1
+            vec4 pixel = texture2D(frame, coord);
             $2  // normalize [-1,1]
             fragColor.r = pixel.r;  // r channel
             $3  // g & b channels
@@ -526,8 +526,9 @@ absl::Status TensorConverterCalculator::InitGpu(CalculatorContext* cc) {
           })",
         /*$0=*/single_channel ? "vec1" : "vec4",
         /*$1=*/
-        flip_vertically_ ? "sample_coordinate.y = 1.0 - sample_coordinate.y;"
-                         : "",
+        flip_vertically_
+            ? "vec2(sample_coordinate.x, 1.0 - sample_coordinate.y);"
+            : "sample_coordinate;",
         /*$2=*/output_range_.has_value()
             ? absl::Substitute("pixel = pixel * float($0) + float($1);",
                                (output_range_->second - output_range_->first),

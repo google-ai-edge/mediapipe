@@ -51,4 +51,17 @@ message NightLightCalculatorOptions {
 
   // Format string used by string::Substitute to construct the output.
   optional string format_string = 9;
+
+  message LightBundle {
+    optional string room_id = 1;
+    repeated NightLightCalculatorOptions room_lights = 2;
+  }
+
+  repeated LightBundle bundle = 10;
+
+  // The number of night-lights.
+  repeated int32 num_lights = 11;
+
+  // Options for nested night-lights.
+  optional NightLightCalculatorOptions sub_options = 12;
 }

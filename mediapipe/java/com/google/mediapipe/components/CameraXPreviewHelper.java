@@ -15,7 +15,6 @@
 package com.google.mediapipe.components;
 
 import android.app.Activity;
-import androidx.lifecycle.LifecycleOwner;
 import android.content.Context;
 import android.graphics.SurfaceTexture;
 import android.hardware.camera2.CameraAccessException;
@@ -40,6 +39,7 @@ import androidx.camera.core.ImageCapture.OutputFileOptions;
 import androidx.camera.core.Preview;
 import androidx.camera.lifecycle.ProcessCameraProvider;
 import androidx.core.content.ContextCompat;
+import androidx.lifecycle.LifecycleOwner;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.mediapipe.glutil.EglManager;
 import java.io.File;
@@ -80,10 +80,6 @@ public class CameraXPreviewHelper extends CameraHelper {
       handler = new Handler(handlerThread.getLooper());
     }
 
-    Handler getHandler() {
-      return handler;
-    }
-
     @Override
     public void execute(Runnable command) {
       if (!handler.post(command)) {
@@ -100,7 +96,8 @@ public class CameraXPreviewHelper extends CameraHelper {
 
   // Target frame and view resolution size in landscape.
   private static final Size TARGET_SIZE = new Size(1280, 720);
-
+  private static final double ASPECT_TOLERANCE = 0.25;
+  private static final double ASPECT_PENALTY = 10000;
   // Number of attempts for calculating the offset between the camera's clock and MONOTONIC clock.
   private static final int CLOCK_OFFSET_CALIBRATION_ATTEMPTS = 3;
 
@@ -113,6 +110,7 @@ public class CameraXPreviewHelper extends CameraHelper {
   private ImageCapture.Builder imageCaptureBuilder;
   private ExecutorService imageCaptureExecutorService;
   private Camera camera;
+  private int[] textures = null;
 
   // Size of the camera-preview frames from the camera.
   private Size frameSize;
@@ -138,22 +136,22 @@ public class CameraXPreviewHelper extends CameraHelper {
    */
   @Override
   public void startCamera(
-      Activity activity, CameraFacing cameraFacing, SurfaceTexture unusedSurfaceTexture) {
-    startCamera(activity, (LifecycleOwner) activity, cameraFacing, TARGET_SIZE);
+      Activity activity, CameraFacing cameraFacing, @Nullable SurfaceTexture surfaceTexture) {
+    startCamera(activity, (LifecycleOwner) activity, cameraFacing, surfaceTexture, TARGET_SIZE);
   }
 
   /**
    * Initializes the camera and sets it up for accessing frames.
    *
    * @param targetSize the preview size to use. If set to {@code null}, the helper will default to
-   *        1280 * 720.
+   *     1280 * 720.
    */
   public void startCamera(
       Activity activity,
       CameraFacing cameraFacing,
-      SurfaceTexture unusedSurfaceTexture,
+      @Nullable SurfaceTexture surfaceTexture,
       @Nullable Size targetSize) {
-    startCamera(activity, (LifecycleOwner) activity, cameraFacing, targetSize);
+    startCamera(activity, (LifecycleOwner) activity, cameraFacing, surfaceTexture, targetSize);
   }
 
   /**
@@ -177,19 +175,45 @@ public class CameraXPreviewHelper extends CameraHelper {
   /**
    * Initializes the camera and sets it up for accessing frames.
    *
-   * @param targetSize the preview size to use. If set to {@code null}, the helper will default to
-   *     1280 * 720.
+   * @param targetSize a predefined constant {@link #TARGET_SIZE}. If set to {@code null}, the
+   *     helper will default to 1280 * 720.
    */
   public void startCamera(
       Context context,
       LifecycleOwner lifecycleOwner,
       CameraFacing cameraFacing,
       @Nullable Size targetSize) {
+    startCamera(context, lifecycleOwner, cameraFacing, null, targetSize);
+  }
+
+  /**
+   * Initializes the camera and sets it up for accessing frames.
+   *
+   * @param targetSize a predefined constant {@link #TARGET_SIZE}. If set to {@code null}, the
+   *     helper will default to 1280 * 720.
+   */
+  private void startCamera(
+      Context context,
+      LifecycleOwner lifecycleOwner,
+      CameraFacing cameraFacing,
+      @Nullable SurfaceTexture surfaceTexture,
+      @Nullable Size targetSize) {
     Executor mainThreadExecutor = ContextCompat.getMainExecutor(context);
     ListenableFuture<ProcessCameraProvider> cameraProviderFuture =
         ProcessCameraProvider.getInstance(context);
+    final boolean isSurfaceTextureProvided = surfaceTexture != null;
 
-    targetSize = (targetSize == null ? TARGET_SIZE : targetSize);
+    Integer selectedLensFacing =
+        cameraFacing == CameraHelper.CameraFacing.FRONT
+            ? CameraMetadata.LENS_FACING_FRONT
+            : CameraMetadata.LENS_FACING_BACK;
+    cameraCharacteristics = getCameraCharacteristics(context, selectedLensFacing);
+    targetSize = getOptimalViewSize(targetSize);
+    // Falls back to TARGET_SIZE if either targetSize is not set or getOptimalViewSize() can't
+    // determine the optimal view size.
+    if (targetSize == null) {
+      targetSize = TARGET_SIZE;
+    }
     // According to CameraX documentation
     // (https://developer.android.com/training/camerax/configuration#specify-resolution):
     // "Express the resolution Size in the coordinate frame after rotating the supported sizes by
@@ -221,24 +245,38 @@ public class CameraXPreviewHelper extends CameraHelper {
           preview.setSurfaceProvider(
               renderExecutor,
               request -> {
-                Size resolution = request.getResolution();
+                frameSize = request.getResolution();
                 Log.d(
                     TAG,
                     String.format(
                         "Received surface request for resolution %dx%d",
-                        resolution.getWidth(), resolution.getHeight()));
+                        frameSize.getWidth(), frameSize.getHeight()));
 
-                SurfaceTexture previewFrameTexture = createSurfaceTexture();
+                SurfaceTexture previewFrameTexture =
+                    isSurfaceTextureProvided ? surfaceTexture : createSurfaceTexture();
                 previewFrameTexture.setDefaultBufferSize(
-                    resolution.getWidth(), resolution.getHeight());
-                previewFrameTexture.setOnFrameAvailableListener(
-                    frameTexture -> {
-                      if (frameTexture != previewFrameTexture) {
-                        return;
+                    frameSize.getWidth(), frameSize.getHeight());
+
+                request.setTransformationInfoListener(
+                    renderExecutor,
+                    transformationInfo -> {
+                      frameRotation = transformationInfo.getRotationDegrees();
+                      updateCameraCharacteristics();
+
+                      if (!isSurfaceTextureProvided) {
+                        // Detach the SurfaceTexture from the GL context we created earlier so that
+                        // the MediaPipe pipeline can attach it.
+                        // Only needed if MediaPipe pipeline doesn't provide a SurfaceTexture.
+                        previewFrameTexture.detachFromGLContext();
                       }
-                      onInitialFrameReceived(context, frameTexture);
-                    },
-                    renderExecutor.getHandler());
+
+                      OnCameraStartedListener listener = onCameraStartedListener;
+                      if (listener != null) {
+                        ContextCompat.getMainExecutor(context)
+                            .execute(() -> listener.onCameraStarted(previewFrameTexture));
+                      }
+                    });
+
                 Surface surface = new Surface(previewFrameTexture);
                 Log.d(TAG, "Providing surface");
                 request.provideSurface(
@@ -246,6 +284,9 @@ public class CameraXPreviewHelper extends CameraHelper {
                     renderExecutor,
                     result -> {
                       Log.d(TAG, "Surface request result: " + result);
+                      if (textures != null) {
+                        GLES20.glDeleteTextures(1, textures, 0);
+                      }
                       // Per
                       // https://developer.android.com/reference/androidx/camera/core/SurfaceRequest.Result,
                       // the surface was either never used (RESULT_INVALID_SURFACE,
@@ -253,7 +294,9 @@ public class CameraXPreviewHelper extends CameraHelper {
                       // was used successfully and was eventually detached
                       // (RESULT_SURFACE_USED_SUCCESSFULLY) so we can release it now to free up
                       // resources.
-                      previewFrameTexture.release();
+                      if (!isSurfaceTextureProvided) {
+                        previewFrameTexture.release();
+                      }
                       surface.release();
                     });
               });
@@ -306,43 +349,49 @@ public class CameraXPreviewHelper extends CameraHelper {
   }
 
   @Nullable
-  // TODO: Compute optimal view size from available stream sizes.
-  // Currently, we create the preview stream before we know what size our preview SurfaceView is.
-  // Instead, we should determine our optimal stream size (based on resolution and aspect ratio
-  // difference with the preview SurfaceView) and open the preview stream then. Until we make that
-  // change, this method is unused.
-  private Size getOptimalViewSize(Size targetSize) {
-    if (cameraCharacteristics != null) {
-      StreamConfigurationMap map =
-          cameraCharacteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
-      Size[] outputSizes = map.getOutputSizes(SurfaceTexture.class);
+  private Size getOptimalViewSize(@Nullable Size targetSize) {
+    if (targetSize == null || cameraCharacteristics == null) {
+      return null;
+    }
+    StreamConfigurationMap map =
+        cameraCharacteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
+    Size[] outputSizes = map.getOutputSizes(SurfaceTexture.class);
 
-      int selectedWidth = -1;
-      int selectedHeight = -1;
-      float selectedAspectRatioDifference = 1e3f;
-      float targetAspectRatio = targetSize.getWidth() / (float) targetSize.getHeight();
-
-      // Find the smallest size >= target size with the closest aspect ratio.
-      for (Size size : outputSizes) {
-        float aspectRatio = (float) size.getWidth() / size.getHeight();
-        float aspectRatioDifference = Math.abs(aspectRatio - targetAspectRatio);
-        if (aspectRatioDifference <= selectedAspectRatioDifference) {
-          if ((selectedWidth == -1 && selectedHeight == -1)
-              || (size.getWidth() <= selectedWidth
-                  && size.getWidth() >= frameSize.getWidth()
-                  && size.getHeight() <= selectedHeight
-                  && size.getHeight() >= frameSize.getHeight())) {
-            selectedWidth = size.getWidth();
-            selectedHeight = size.getHeight();
-            selectedAspectRatioDifference = aspectRatioDifference;
-          }
-        }
-      }
-      if (selectedWidth != -1 && selectedHeight != -1) {
-        return new Size(selectedWidth, selectedHeight);
+    // Find the best matching size. We give a large penalty to sizes whose aspect
+    // ratio is too different from the desired one. That way we choose a size with
+    // an acceptable aspect ratio if available, otherwise we fall back to one that
+    // is close in width.
+    Size optimalSize = null;
+    double targetRatio = (double) targetSize.getWidth() / targetSize.getHeight();
+    Log.d(
+        TAG,
+        String.format(
+            "Camera target size ratio: %f width: %d", targetRatio, targetSize.getWidth()));
+    double minCost = Double.MAX_VALUE;
+    for (Size size : outputSizes) {
+      double aspectRatio = (double) size.getWidth() / size.getHeight();
+      double ratioDiff = Math.abs(aspectRatio - targetRatio);
+      double cost =
+          (ratioDiff > ASPECT_TOLERANCE ? ASPECT_PENALTY + ratioDiff * targetSize.getHeight() : 0)
+              + Math.abs(size.getWidth() - targetSize.getWidth());
+      Log.d(
+          TAG,
+          String.format(
+              "Camera size candidate width: %d height: %d ratio: %f cost: %f",
+              size.getWidth(), size.getHeight(), aspectRatio, cost));
+      if (cost < minCost) {
+        optimalSize = size;
+        minCost = cost;
       }
     }
-    return null;
+    if (optimalSize != null) {
+      Log.d(
+          TAG,
+          String.format(
+              "Optimal camera size width: %d height: %d",
+              optimalSize.getWidth(), optimalSize.getHeight()));
+    }
+    return optimalSize;
   }
 
   // Computes the difference between the camera's clock and MONOTONIC clock using camera's
@@ -394,40 +443,7 @@ public class CameraXPreviewHelper extends CameraHelper {
     return frameSize;
   }
 
-  private void onInitialFrameReceived(Context context, SurfaceTexture previewFrameTexture) {
-    // This method is called by the onFrameAvailableListener we install when opening the camera
-    // session, the first time we receive a frame. In this method, we remove our callback,
-    // acknowledge the frame (via updateTextImage()), detach the texture from the GL context we
-    // created earlier (so that the MediaPipe pipeline can attach it), and perform some other
-    // one-time initialization based on the newly opened camera device. Finally, we indicate the
-    // camera session is ready via the onCameraStartedListener.
-
-    // Remove our callback.
-    previewFrameTexture.setOnFrameAvailableListener(null);
-
-    // Update texture image so we don't stall callbacks.
-    previewFrameTexture.updateTexImage();
-
-    // Detach the SurfaceTexture from the GL context we created earlier so that the MediaPipe
-    // pipeline can attach it.
-    previewFrameTexture.detachFromGLContext();
-
-    if (!preview.getAttachedSurfaceResolution().equals(frameSize)) {
-      frameSize = preview.getAttachedSurfaceResolution();
-      frameRotation = camera.getCameraInfo().getSensorRotationDegrees();
-      if (frameSize.getWidth() == 0 || frameSize.getHeight() == 0) {
-        // Invalid frame size. Wait for valid input dimensions before updating
-        // display size.
-        Log.d(TAG, "Invalid frameSize.");
-        return;
-      }
-    }
-
-    Integer selectedLensFacing =
-        cameraFacing == CameraHelper.CameraFacing.FRONT
-            ? CameraMetadata.LENS_FACING_FRONT
-            : CameraMetadata.LENS_FACING_BACK;
-    cameraCharacteristics = getCameraCharacteristics(context, selectedLensFacing);
+  private void updateCameraCharacteristics() {
     if (cameraCharacteristics != null) {
       // Queries camera timestamp source. It should be one of REALTIME or UNKNOWN
       // as documented in
@@ -435,12 +451,6 @@ public class CameraXPreviewHelper extends CameraHelper {
       cameraTimestampSource =
           cameraCharacteristics.get(CameraCharacteristics.SENSOR_INFO_TIMESTAMP_SOURCE);
       focalLengthPixels = calculateFocalLengthInPixels();
-    }
-
-    OnCameraStartedListener listener = onCameraStartedListener;
-    if (listener != null) {
-      ContextCompat.getMainExecutor(context)
-          .execute(() -> listener.onCameraStarted(previewFrameTexture));
     }
   }
 
@@ -460,12 +470,12 @@ public class CameraXPreviewHelper extends CameraHelper {
     return frameSize.getWidth() * focalLengthMm / sensorWidthMm;
   }
 
-  private static SurfaceTexture createSurfaceTexture() {
+  private SurfaceTexture createSurfaceTexture() {
     // Create a temporary surface to make the context current.
     EglManager eglManager = new EglManager(null);
     EGLSurface tempEglSurface = eglManager.createOffscreenSurface(1, 1);
     eglManager.makeCurrent(tempEglSurface, tempEglSurface);
-    int[] textures = new int[1];
+    textures = new int[1];
     GLES20.glGenTextures(1, textures, 0);
     SurfaceTexture previewFrameTexture = new SurfaceTexture(textures[0]);
     return previewFrameTexture;

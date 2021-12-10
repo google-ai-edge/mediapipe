@@ -32,6 +32,12 @@ namespace mediapipe {
 
 using ::testing::ElementsAre;
 namespace {
+
+constexpr char kOptionsTag[] = "OPTIONS";
+constexpr char kSeedTag[] = "SEED";
+constexpr char kVideoHeaderTag[] = "VIDEO_HEADER";
+constexpr char kDataTag[] = "DATA";
+
 // A simple version of CalculatorRunner with built-in convenience
 // methods for setting inputs from a vector and checking outputs
 // against expected outputs (both timestamps and contents).
@@ -464,7 +470,7 @@ TEST(PacketResamplerCalculatorTest, SetVideoHeader) {
   )pb"));
 
   for (const int64 ts : {0, 5000, 10010, 15001, 19990}) {
-    runner.MutableInputs()->Tag("DATA").packets.push_back(
+    runner.MutableInputs()->Tag(kDataTag).packets.push_back(
         Adopt(new std::string(absl::StrCat("Frame #", ts))).At(Timestamp(ts)));
   }
   VideoHeader video_header_in;
@@ -474,16 +480,16 @@ TEST(PacketResamplerCalculatorTest, SetVideoHeader) {
   video_header_in.duration = 1.0;
   video_header_in.format = ImageFormat::SRGB;
   runner.MutableInputs()
-      ->Tag("VIDEO_HEADER")
+      ->Tag(kVideoHeaderTag)
       .packets.push_back(
           Adopt(new VideoHeader(video_header_in)).At(Timestamp::PreStream()));
   MP_ASSERT_OK(runner.Run());
 
-  ASSERT_EQ(1, runner.Outputs().Tag("VIDEO_HEADER").packets.size());
+  ASSERT_EQ(1, runner.Outputs().Tag(kVideoHeaderTag).packets.size());
   EXPECT_EQ(Timestamp::PreStream(),
-            runner.Outputs().Tag("VIDEO_HEADER").packets[0].Timestamp());
+            runner.Outputs().Tag(kVideoHeaderTag).packets[0].Timestamp());
   const VideoHeader& video_header_out =
-      runner.Outputs().Tag("VIDEO_HEADER").packets[0].Get<VideoHeader>();
+      runner.Outputs().Tag(kVideoHeaderTag).packets[0].Get<VideoHeader>();
   EXPECT_EQ(video_header_in.width, video_header_out.width);
   EXPECT_EQ(video_header_in.height, video_header_out.height);
   EXPECT_DOUBLE_EQ(50.0, video_header_out.frame_rate);
@@ -725,7 +731,7 @@ TEST(PacketResamplerCalculatorTest, OptionsSidePacket) {
               [mediapipe.PacketResamplerCalculatorOptions.ext] {
                 frame_rate: 30
               })pb"));
-    runner.MutableSidePackets()->Tag("OPTIONS") = Adopt(options);
+    runner.MutableSidePackets()->Tag(kOptionsTag) = Adopt(options);
     runner.SetInput({-222, 15000, 32000, 49999, 150000});
     MP_ASSERT_OK(runner.Run());
     EXPECT_EQ(6, runner.Outputs().Index(0).packets.size());
@@ -740,7 +746,7 @@ TEST(PacketResamplerCalculatorTest, OptionsSidePacket) {
             frame_rate: 30
             base_timestamp: 0
           })pb"));
-    runner.MutableSidePackets()->Tag("OPTIONS") = Adopt(options);
+    runner.MutableSidePackets()->Tag(kOptionsTag) = Adopt(options);
 
     runner.SetInput({-222, 15000, 32000, 49999, 150000});
     MP_ASSERT_OK(runner.Run());

@@ -39,3 +39,8 @@ message Classification {
 message ClassificationList {
   repeated Classification classification = 1;
 }
+
+// Group of ClassificationList protos.
+message ClassificationListCollection {
+  repeated ClassificationList classification_list = 1;
+}

@@ -138,7 +138,6 @@ using ::tflite::gpu::gl::GlShader;
 //   }
 // }
 //
-// Currently only OpenGLES 3.1 and CPU backends supported.
 // TODO Refactor and add support for other backends/platforms.
 //
 class TensorsToSegmentationCalculator : public CalculatorBase {

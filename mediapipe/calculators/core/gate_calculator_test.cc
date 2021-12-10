@@ -22,6 +22,9 @@ namespace mediapipe {
 
 namespace {
 
+constexpr char kDisallowTag[] = "DISALLOW";
+constexpr char kAllowTag[] = "ALLOW";
+
 class GateCalculatorTest : public ::testing::Test {
  protected:
   // Helper to run a graph and return status.
@@ -110,6 +113,68 @@ TEST_F(GateCalculatorTest, InvalidInputs) {
   )")));
 }
 
+TEST_F(GateCalculatorTest, AllowByALLOWOptionToTrue) {
+  SetRunner(R"(
+        calculator: "GateCalculator"
+        input_stream: "test_input"
+        output_stream: "test_output"
+        options: {
+          [mediapipe.GateCalculatorOptions.ext] {
+            allow: true
+          }
+        }
+  )");
+
+  constexpr int64 kTimestampValue0 = 42;
+  RunTimeStep(kTimestampValue0, true);
+  constexpr int64 kTimestampValue1 = 43;
+  RunTimeStep(kTimestampValue1, false);
+
+  const std::vector<Packet>& output = runner()->Outputs().Get("", 0).packets;
+  ASSERT_EQ(2, output.size());
+  EXPECT_EQ(kTimestampValue0, output[0].Timestamp().Value());
+  EXPECT_EQ(kTimestampValue1, output[1].Timestamp().Value());
+  EXPECT_EQ(true, output[0].Get<bool>());
+  EXPECT_EQ(false, output[1].Get<bool>());
+}
+
+TEST_F(GateCalculatorTest, DisallowByALLOWOptionSetToFalse) {
+  SetRunner(R"(
+        calculator: "GateCalculator"
+        input_stream: "test_input"
+        output_stream: "test_output"
+        options: {
+          [mediapipe.GateCalculatorOptions.ext] {
+            allow: false
+          }
+        }
+  )");
+
+  constexpr int64 kTimestampValue0 = 42;
+  RunTimeStep(kTimestampValue0, true);
+  constexpr int64 kTimestampValue1 = 43;
+  RunTimeStep(kTimestampValue1, false);
+
+  const std::vector<Packet>& output = runner()->Outputs().Get("", 0).packets;
+  ASSERT_EQ(0, output.size());
+}
+
+TEST_F(GateCalculatorTest, DisallowByALLOWOptionNotSet) {
+  SetRunner(R"(
+        calculator: "GateCalculator"
+        input_stream: "test_input"
+        output_stream: "test_output"
+  )");
+
+  constexpr int64 kTimestampValue0 = 42;
+  RunTimeStep(kTimestampValue0, true);
+  constexpr int64 kTimestampValue1 = 43;
+  RunTimeStep(kTimestampValue1, false);
+
+  const std::vector<Packet>& output = runner()->Outputs().Get("", 0).packets;
+  ASSERT_EQ(0, output.size());
+}
+
 TEST_F(GateCalculatorTest, AllowByALLOWSidePacketSetToTrue) {
   SetRunner(R"(
         calculator: "GateCalculator"
@@ -117,7 +182,7 @@ TEST_F(GateCalculatorTest, AllowByALLOWSidePacketSetToTrue) {
         input_stream: "test_input"
         output_stream: "test_output"
   )");
-  runner()->MutableSidePackets()->Tag("ALLOW") = Adopt(new bool(true));
+  runner()->MutableSidePackets()->Tag(kAllowTag) = Adopt(new bool(true));
 
   constexpr int64 kTimestampValue0 = 42;
   RunTimeStep(kTimestampValue0, true);
@@ -139,7 +204,7 @@ TEST_F(GateCalculatorTest, AllowByDisallowSidePacketSetToFalse) {
         input_stream: "test_input"
         output_stream: "test_output"
   )");
-  runner()->MutableSidePackets()->Tag("DISALLOW") = Adopt(new bool(false));
+  runner()->MutableSidePackets()->Tag(kDisallowTag) = Adopt(new bool(false));
 
   constexpr int64 kTimestampValue0 = 42;
   RunTimeStep(kTimestampValue0, true);
@@ -161,7 +226,7 @@ TEST_F(GateCalculatorTest, DisallowByALLOWSidePacketSetToFalse) {
         input_stream: "test_input"
         output_stream: "test_output"
   )");
-  runner()->MutableSidePackets()->Tag("ALLOW") = Adopt(new bool(false));
+  runner()->MutableSidePackets()->Tag(kAllowTag) = Adopt(new bool(false));
 
   constexpr int64 kTimestampValue0 = 42;
   RunTimeStep(kTimestampValue0, true);
@@ -179,7 +244,7 @@ TEST_F(GateCalculatorTest, DisallowByDISALLOWSidePacketSetToTrue) {
         input_stream: "test_input"
         output_stream: "test_output"
   )");
-  runner()->MutableSidePackets()->Tag("DISALLOW") = Adopt(new bool(true));
+  runner()->MutableSidePackets()->Tag(kDisallowTag) = Adopt(new bool(true));
 
   constexpr int64 kTimestampValue0 = 42;
   RunTimeStep(kTimestampValue0, true);

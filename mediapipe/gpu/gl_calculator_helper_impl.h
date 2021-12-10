@@ -58,19 +58,11 @@ class GlCalculatorHelperImpl {
   GlContext& GetGlContext() const;
 
   // For internal use.
-  void ReadTexture(const GlTexture& texture, void* output, size_t size);
+  static void ReadTexture(const GlTextureView& view, void* output, size_t size);
 
  private:
   // Makes a GpuBuffer accessible as a texture in the GL context.
-  GlTexture MapGpuBuffer(const GpuBuffer& gpu_buffer, int plane);
-
-#if !MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
-  GlTexture MapGlTextureBuffer(const GlTextureBufferSharedPtr& texture_buffer);
-  GlTextureBufferSharedPtr MakeGlTextureBuffer(const ImageFrame& image_frame);
-#endif  // !MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
-
-  // Sets default texture filtering parameters.
-  void SetStandardTextureParams(GLenum target, GLint internal_format);
+  GlTexture MapGpuBuffer(const GpuBuffer& gpu_buffer, GlTextureView view);
 
   // Create the framebuffer for rendering.
   void CreateFramebuffer();
@@ -80,10 +72,6 @@ class GlCalculatorHelperImpl {
   GLuint framebuffer_ = 0;
 
   GpuResources& gpu_resources_;
-
-  // Necessary to compute for a given GlContext in order to properly enforce the
-  // SetStandardTextureParams.
-  bool can_linear_filter_float_textures_;
 };
 
 }  // namespace mediapipe

@@ -47,6 +47,21 @@
 
 namespace mediapipe {
 
+constexpr char kFrameAlignmentTag[] = "FRAME_ALIGNMENT";
+constexpr char kOutputIndexFilenameTag[] = "OUTPUT_INDEX_FILENAME";
+constexpr char kIndexProtoStringTag[] = "INDEX_PROTO_STRING";
+constexpr char kVizTag[] = "VIZ";
+constexpr char kBoxesTag[] = "BOXES";
+constexpr char kReacqSwitchTag[] = "REACQ_SWITCH";
+constexpr char kCancelObjectIdTag[] = "CANCEL_OBJECT_ID";
+constexpr char kAddIndexTag[] = "ADD_INDEX";
+constexpr char kImageSizeTag[] = "IMAGE_SIZE";
+constexpr char kDescriptorsTag[] = "DESCRIPTORS";
+constexpr char kFeaturesTag[] = "FEATURES";
+constexpr char kVideoTag[] = "VIDEO";
+constexpr char kTrackedBoxesTag[] = "TRACKED_BOXES";
+constexpr char kTrackingTag[] = "TRACKING";
+
 // A calculator to detect reappeared box positions from single frame.
 //
 // Input stream:
@@ -110,66 +125,66 @@ class BoxDetectorCalculator : public CalculatorBase {
 REGISTER_CALCULATOR(BoxDetectorCalculator);
 
 absl::Status BoxDetectorCalculator::GetContract(CalculatorContract* cc) {
-  if (cc->Inputs().HasTag("TRACKING")) {
-    cc->Inputs().Tag("TRACKING").Set<TrackingData>();
+  if (cc->Inputs().HasTag(kTrackingTag)) {
+    cc->Inputs().Tag(kTrackingTag).Set<TrackingData>();
   }
 
-  if (cc->Inputs().HasTag("TRACKED_BOXES")) {
-    cc->Inputs().Tag("TRACKED_BOXES").Set<TimedBoxProtoList>();
+  if (cc->Inputs().HasTag(kTrackedBoxesTag)) {
+    cc->Inputs().Tag(kTrackedBoxesTag).Set<TimedBoxProtoList>();
   }
 
-  if (cc->Inputs().HasTag("VIDEO")) {
-    cc->Inputs().Tag("VIDEO").Set<ImageFrame>();
+  if (cc->Inputs().HasTag(kVideoTag)) {
+    cc->Inputs().Tag(kVideoTag).Set<ImageFrame>();
   }
 
-  if (cc->Inputs().HasTag("FEATURES")) {
-    RET_CHECK(cc->Inputs().HasTag("DESCRIPTORS"))
+  if (cc->Inputs().HasTag(kFeaturesTag)) {
+    RET_CHECK(cc->Inputs().HasTag(kDescriptorsTag))
         << "FEATURES and DESCRIPTORS need to be specified together.";
-    cc->Inputs().Tag("FEATURES").Set<std::vector<cv::KeyPoint>>();
+    cc->Inputs().Tag(kFeaturesTag).Set<std::vector<cv::KeyPoint>>();
   }
 
-  if (cc->Inputs().HasTag("DESCRIPTORS")) {
-    RET_CHECK(cc->Inputs().HasTag("FEATURES"))
+  if (cc->Inputs().HasTag(kDescriptorsTag)) {
+    RET_CHECK(cc->Inputs().HasTag(kFeaturesTag))
         << "FEATURES and DESCRIPTORS need to be specified together.";
-    cc->Inputs().Tag("DESCRIPTORS").Set<std::vector<float>>();
+    cc->Inputs().Tag(kDescriptorsTag).Set<std::vector<float>>();
   }
 
-  if (cc->Inputs().HasTag("IMAGE_SIZE")) {
-    cc->Inputs().Tag("IMAGE_SIZE").Set<std::pair<int, int>>();
+  if (cc->Inputs().HasTag(kImageSizeTag)) {
+    cc->Inputs().Tag(kImageSizeTag).Set<std::pair<int, int>>();
   }
 
-  if (cc->Inputs().HasTag("ADD_INDEX")) {
-    cc->Inputs().Tag("ADD_INDEX").Set<std::string>();
+  if (cc->Inputs().HasTag(kAddIndexTag)) {
+    cc->Inputs().Tag(kAddIndexTag).Set<std::string>();
   }
 
-  if (cc->Inputs().HasTag("CANCEL_OBJECT_ID")) {
-    cc->Inputs().Tag("CANCEL_OBJECT_ID").Set<int>();
+  if (cc->Inputs().HasTag(kCancelObjectIdTag)) {
+    cc->Inputs().Tag(kCancelObjectIdTag).Set<int>();
   }
 
-  if (cc->Inputs().HasTag("REACQ_SWITCH")) {
-    cc->Inputs().Tag("REACQ_SWITCH").Set<bool>();
+  if (cc->Inputs().HasTag(kReacqSwitchTag)) {
+    cc->Inputs().Tag(kReacqSwitchTag).Set<bool>();
   }
 
-  if (cc->Outputs().HasTag("BOXES")) {
-    cc->Outputs().Tag("BOXES").Set<TimedBoxProtoList>();
+  if (cc->Outputs().HasTag(kBoxesTag)) {
+    cc->Outputs().Tag(kBoxesTag).Set<TimedBoxProtoList>();
   }
 
-  if (cc->Outputs().HasTag("VIZ")) {
-    RET_CHECK(cc->Inputs().HasTag("VIDEO"))
+  if (cc->Outputs().HasTag(kVizTag)) {
+    RET_CHECK(cc->Inputs().HasTag(kVideoTag))
         << "Output stream VIZ requires VIDEO to be present.";
-    cc->Outputs().Tag("VIZ").Set<ImageFrame>();
+    cc->Outputs().Tag(kVizTag).Set<ImageFrame>();
   }
 
-  if (cc->InputSidePackets().HasTag("INDEX_PROTO_STRING")) {
-    cc->InputSidePackets().Tag("INDEX_PROTO_STRING").Set<std::string>();
+  if (cc->InputSidePackets().HasTag(kIndexProtoStringTag)) {
+    cc->InputSidePackets().Tag(kIndexProtoStringTag).Set<std::string>();
   }
 
-  if (cc->InputSidePackets().HasTag("OUTPUT_INDEX_FILENAME")) {
-    cc->InputSidePackets().Tag("OUTPUT_INDEX_FILENAME").Set<std::string>();
+  if (cc->InputSidePackets().HasTag(kOutputIndexFilenameTag)) {
+    cc->InputSidePackets().Tag(kOutputIndexFilenameTag).Set<std::string>();
   }
 
-  if (cc->InputSidePackets().HasTag("FRAME_ALIGNMENT")) {
-    cc->InputSidePackets().Tag("FRAME_ALIGNMENT").Set<int>();
+  if (cc->InputSidePackets().HasTag(kFrameAlignmentTag)) {
+    cc->InputSidePackets().Tag(kFrameAlignmentTag).Set<int>();
   }
 
   return absl::OkStatus();
@@ -179,10 +194,10 @@ absl::Status BoxDetectorCalculator::Open(CalculatorContext* cc) {
   options_ = cc->Options<BoxDetectorCalculatorOptions>();
   box_detector_ = BoxDetectorInterface::Create(options_.detector_options());
 
-  if (cc->InputSidePackets().HasTag("INDEX_PROTO_STRING")) {
+  if (cc->InputSidePackets().HasTag(kIndexProtoStringTag)) {
     BoxDetectorIndex predefined_index;
     if (!predefined_index.ParseFromString(cc->InputSidePackets()
-                                              .Tag("INDEX_PROTO_STRING")
+                                              .Tag(kIndexProtoStringTag)
                                               .Get<std::string>())) {
       LOG(FATAL) << "failed to parse BoxDetectorIndex from INDEX_PROTO_STRING";
     }
@@ -202,12 +217,13 @@ absl::Status BoxDetectorCalculator::Open(CalculatorContext* cc) {
     box_detector_->AddBoxDetectorIndex(predefined_index);
   }
 
-  if (cc->InputSidePackets().HasTag("OUTPUT_INDEX_FILENAME")) {
+  if (cc->InputSidePackets().HasTag(kOutputIndexFilenameTag)) {
     write_index_ = true;
   }
 
-  if (cc->InputSidePackets().HasTag("FRAME_ALIGNMENT")) {
-    frame_alignment_ = cc->InputSidePackets().Tag("FRAME_ALIGNMENT").Get<int>();
+  if (cc->InputSidePackets().HasTag(kFrameAlignmentTag)) {
+    frame_alignment_ =
+        cc->InputSidePackets().Tag(kFrameAlignmentTag).Get<int>();
   }
 
   return absl::OkStatus();
@@ -218,16 +234,16 @@ absl::Status BoxDetectorCalculator::Process(CalculatorContext* cc) {
   const int64 timestamp_msec = timestamp.Value() / 1000;
 
   InputStream* cancel_object_id_stream =
-      cc->Inputs().HasTag("CANCEL_OBJECT_ID")
-          ? &(cc->Inputs().Tag("CANCEL_OBJECT_ID"))
+      cc->Inputs().HasTag(kCancelObjectIdTag)
+          ? &(cc->Inputs().Tag(kCancelObjectIdTag))
           : nullptr;
   if (cancel_object_id_stream && !cancel_object_id_stream->IsEmpty()) {
     const int cancel_object_id = cancel_object_id_stream->Get<int>();
     box_detector_->CancelBoxDetection(cancel_object_id);
   }
 
-  InputStream* add_index_stream = cc->Inputs().HasTag("ADD_INDEX")
-                                      ? &(cc->Inputs().Tag("ADD_INDEX"))
+  InputStream* add_index_stream = cc->Inputs().HasTag(kAddIndexTag)
+                                      ? &(cc->Inputs().Tag(kAddIndexTag))
                                       : nullptr;
   if (add_index_stream && !add_index_stream->IsEmpty()) {
     BoxDetectorIndex predefined_index;
@@ -238,8 +254,8 @@ absl::Status BoxDetectorCalculator::Process(CalculatorContext* cc) {
     box_detector_->AddBoxDetectorIndex(predefined_index);
   }
 
-  InputStream* reacq_switch_stream = cc->Inputs().HasTag("REACQ_SWITCH")
-                                         ? &(cc->Inputs().Tag("REACQ_SWITCH"))
+  InputStream* reacq_switch_stream = cc->Inputs().HasTag(kReacqSwitchTag)
+                                         ? &(cc->Inputs().Tag(kReacqSwitchTag))
                                          : nullptr;
   if (reacq_switch_stream && !reacq_switch_stream->IsEmpty()) {
     detector_switch_ = reacq_switch_stream->Get<bool>();
@@ -249,16 +265,16 @@ absl::Status BoxDetectorCalculator::Process(CalculatorContext* cc) {
     return absl::OkStatus();
   }
 
-  InputStream* track_stream = cc->Inputs().HasTag("TRACKING")
-                                  ? &(cc->Inputs().Tag("TRACKING"))
+  InputStream* track_stream = cc->Inputs().HasTag(kTrackingTag)
+                                  ? &(cc->Inputs().Tag(kTrackingTag))
                                   : nullptr;
   InputStream* video_stream =
-      cc->Inputs().HasTag("VIDEO") ? &(cc->Inputs().Tag("VIDEO")) : nullptr;
-  InputStream* feature_stream = cc->Inputs().HasTag("FEATURES")
-                                    ? &(cc->Inputs().Tag("FEATURES"))
+      cc->Inputs().HasTag(kVideoTag) ? &(cc->Inputs().Tag(kVideoTag)) : nullptr;
+  InputStream* feature_stream = cc->Inputs().HasTag(kFeaturesTag)
+                                    ? &(cc->Inputs().Tag(kFeaturesTag))
                                     : nullptr;
-  InputStream* descriptor_stream = cc->Inputs().HasTag("DESCRIPTORS")
-                                       ? &(cc->Inputs().Tag("DESCRIPTORS"))
+  InputStream* descriptor_stream = cc->Inputs().HasTag(kDescriptorsTag)
+                                       ? &(cc->Inputs().Tag(kDescriptorsTag))
                                        : nullptr;
 
   CHECK(track_stream != nullptr || video_stream != nullptr ||
@@ -266,9 +282,10 @@ absl::Status BoxDetectorCalculator::Process(CalculatorContext* cc) {
       << "One and only one of {tracking_data, input image frame, "
          "feature/descriptor} need to be valid.";
 
-  InputStream* tracked_boxes_stream = cc->Inputs().HasTag("TRACKED_BOXES")
-                                          ? &(cc->Inputs().Tag("TRACKED_BOXES"))
-                                          : nullptr;
+  InputStream* tracked_boxes_stream =
+      cc->Inputs().HasTag(kTrackedBoxesTag)
+          ? &(cc->Inputs().Tag(kTrackedBoxesTag))
+          : nullptr;
   std::unique_ptr<TimedBoxProtoList> detected_boxes(new TimedBoxProtoList());
 
   if (track_stream != nullptr) {
@@ -309,7 +326,7 @@ absl::Status BoxDetectorCalculator::Process(CalculatorContext* cc) {
     }
 
     const auto& image_size =
-        cc->Inputs().Tag("IMAGE_SIZE").Get<std::pair<int, int>>();
+        cc->Inputs().Tag(kImageSizeTag).Get<std::pair<int, int>>();
     float inv_scale = 1.0f / std::max(image_size.first, image_size.second);
 
     TimedBoxProtoList tracked_boxes;
@@ -359,7 +376,7 @@ absl::Status BoxDetectorCalculator::Process(CalculatorContext* cc) {
         detected_boxes.get());
   }
 
-  if (cc->Outputs().HasTag("VIZ")) {
+  if (cc->Outputs().HasTag(kVizTag)) {
     cv::Mat viz_view;
     std::unique_ptr<ImageFrame> viz_frame;
     if (video_stream != nullptr && !video_stream->IsEmpty()) {
@@ -370,11 +387,11 @@ absl::Status BoxDetectorCalculator::Process(CalculatorContext* cc) {
     for (const auto& box : detected_boxes->box()) {
       RenderBox(box, &viz_view);
     }
-    cc->Outputs().Tag("VIZ").Add(viz_frame.release(), timestamp);
+    cc->Outputs().Tag(kVizTag).Add(viz_frame.release(), timestamp);
   }
 
-  if (cc->Outputs().HasTag("BOXES")) {
-    cc->Outputs().Tag("BOXES").Add(detected_boxes.release(), timestamp);
+  if (cc->Outputs().HasTag(kBoxesTag)) {
+    cc->Outputs().Tag(kBoxesTag).Add(detected_boxes.release(), timestamp);
   }
 
   return absl::OkStatus();
@@ -384,7 +401,7 @@ absl::Status BoxDetectorCalculator::Close(CalculatorContext* cc) {
   if (write_index_) {
     BoxDetectorIndex index = box_detector_->ObtainBoxDetectorIndex();
     MEDIAPIPE_CHECK_OK(mediapipe::file::SetContents(
-        cc->InputSidePackets().Tag("OUTPUT_INDEX_FILENAME").Get<std::string>(),
+        cc->InputSidePackets().Tag(kOutputIndexFilenameTag).Get<std::string>(),
         index.SerializeAsString()));
   }
   return absl::OkStatus();

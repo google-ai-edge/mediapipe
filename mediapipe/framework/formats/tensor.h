@@ -266,11 +266,15 @@ class Tensor {
   mutable GLuint frame_buffer_ = GL_INVALID_INDEX;
   mutable int texture_width_;
   mutable int texture_height_;
+#ifdef __EMSCRIPTEN__
+  mutable bool texture_is_half_float_ = false;
+#endif  // __EMSCRIPTEN__
   void AllocateOpenGlTexture2d() const;
 #if MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31
   mutable GLuint opengl_buffer_ = GL_INVALID_INDEX;
   void AllocateOpenGlBuffer() const;
 #endif  // MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31
+  bool NeedsHalfFloatRenderTarget() const;
 #endif  // MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30
 };
 

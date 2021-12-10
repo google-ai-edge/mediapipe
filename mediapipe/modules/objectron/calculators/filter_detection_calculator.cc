@@ -237,7 +237,7 @@ absl::Status FilterDetectionCalculator::Process(CalculatorContext* cc) {
 }
 
 bool FilterDetectionCalculator::IsValidLabel(const std::string& label) {
-  bool match = !limit_labels_ || ContainsKey(allowed_labels_, label);
+  bool match = !limit_labels_ || allowed_labels_.contains(label);
   if (!match) {
     // If no exact match is found, check for regular expression
     // comparions in the allowed_labels.

@@ -75,6 +75,11 @@ class ProtoUtilLite {
                                     FieldType field_type,
                                     std::vector<FieldValue>* field_values);
 
+  // Returns the number of field values in a repeated protobuf field.
+  static absl::Status GetFieldCount(const FieldValue& message,
+                                    ProtoPath proto_path, FieldType field_type,
+                                    int* field_count);
+
   // Serialize one or more protobuf field values from text.
   static absl::Status Serialize(const std::vector<std::string>& text_values,
                                 FieldType field_type,

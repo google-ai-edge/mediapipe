@@ -454,12 +454,12 @@ class OutputShardAccessBase {
     if (output_) output_->SetNextTimestampBound(timestamp);
   }
 
-  bool IsClosed() { return output_ ? output_->IsClosed() : true; }
+  bool IsClosed() const { return output_ ? output_->IsClosed() : true; }
   void Close() {
     if (output_) output_->Close();
   }
 
-  bool IsConnected() { return output_ != nullptr; }
+  bool IsConnected() const { return output_ != nullptr; }
 
  protected:
   const CalculatorContext& context_;
@@ -559,7 +559,7 @@ class InputShardAccess : public Packet<T> {
   PacketBase packet() const&& { return *this; }
 
   bool IsDone() const { return stream_->IsDone(); }
-  bool IsConnected() { return stream_ != nullptr; }
+  bool IsConnected() const { return stream_ != nullptr; }
 
   PacketBase Header() const { return FromOldPacket(stream_->Header()); }
 
@@ -619,7 +619,7 @@ class InputSidePacketAccess : public Packet<T> {
   const PacketBase& packet() const& { return *this; }
   PacketBase packet() const&& { return *this; }
 
-  bool IsConnected() { return connected_; }
+  bool IsConnected() const { return connected_; }
 
  private:
   InputSidePacketAccess(const mediapipe::Packet* packet)
@@ -639,8 +639,8 @@ class InputShardOrSideAccess : public Packet<T> {
   PacketBase packet() const&& { return *this; }
 
   bool IsDone() const { return stream_->IsDone(); }
-  bool IsConnected() { return connected_; }
-  bool IsStream() { return stream_ != nullptr; }
+  bool IsConnected() const { return connected_; }
+  bool IsStream() const { return stream_ != nullptr; }
 
   PacketBase Header() const { return FromOldPacket(stream_->Header()); }
 
@@ -662,7 +662,7 @@ class InputShardOrSideAccess : public Packet<T> {
 
 class PacketTypeAccess {
  public:
-  bool IsConnected() { return packet_type_ != nullptr; }
+  bool IsConnected() const { return packet_type_ != nullptr; }
 
  protected:
   PacketTypeAccess(PacketType* pt) : packet_type_(pt) {}
@@ -675,7 +675,7 @@ class PacketTypeAccess {
 
 class PacketTypeAccessFallback : public PacketTypeAccess {
  public:
-  bool IsStream() { return is_stream_; }
+  bool IsStream() const { return is_stream_; }
 
  private:
   PacketTypeAccessFallback(PacketType* pt, bool is_stream)

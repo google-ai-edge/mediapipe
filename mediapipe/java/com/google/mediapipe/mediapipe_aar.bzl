@@ -60,6 +60,29 @@ def mediapipe_aar(
       assets: additional assets to be included into the archive.
       assets_dir: path where the assets will the packaged.
     """
+
+    # When "--define EXCLUDE_OPENCV_SO_LIB=1" is set in the build command,
+    # the OpenCV so libraries will be excluded from the AAR package to
+    # save the package size.
+    native.config_setting(
+        name = "exclude_opencv_so_lib",
+        define_values = {
+            "EXCLUDE_OPENCV_SO_LIB": "1",
+        },
+        visibility = ["//visibility:public"],
+    )
+
+    # When "--define ENABLE_STATS_LOGGING=1" is set in the build command,
+    # the solution stats logging component will be added into the AAR.
+    # This flag is for internal use only.
+    native.config_setting(
+        name = "enable_stats_logging",
+        define_values = {
+            "ENABLE_STATS_LOGGING": "1",
+        },
+        visibility = ["//visibility:public"],
+    )
+
     _mediapipe_jni(
         name = name + "_jni",
         gen_libmediapipe = gen_libmediapipe,
@@ -89,16 +112,23 @@ EOF
     android_library(
         name = name + "_android_lib",
         srcs = srcs + [
-            "//mediapipe/java/com/google/mediapipe/components:java_src",
-            "//mediapipe/java/com/google/mediapipe/framework:java_src",
-            "//mediapipe/java/com/google/mediapipe/glutil:java_src",
-            "com/google/mediapipe/formats/annotation/proto/RasterizationProto.java",
-            "com/google/mediapipe/formats/proto/ClassificationProto.java",
-            "com/google/mediapipe/formats/proto/DetectionProto.java",
-            "com/google/mediapipe/formats/proto/LandmarkProto.java",
-            "com/google/mediapipe/formats/proto/LocationDataProto.java",
-            "com/google/mediapipe/proto/CalculatorProto.java",
-        ],
+                   "//mediapipe/java/com/google/mediapipe/components:java_src",
+                   "//mediapipe/java/com/google/mediapipe/framework:java_src",
+                   "//mediapipe/java/com/google/mediapipe/glutil:java_src",
+                   "com/google/mediapipe/formats/annotation/proto/RasterizationProto.java",
+                   "com/google/mediapipe/formats/proto/ClassificationProto.java",
+                   "com/google/mediapipe/formats/proto/DetectionProto.java",
+                   "com/google/mediapipe/formats/proto/LandmarkProto.java",
+                   "com/google/mediapipe/formats/proto/LocationDataProto.java",
+                   "com/google/mediapipe/proto/CalculatorProto.java",
+               ] +
+               select({
+                   "//conditions:default": [],
+                   "enable_stats_logging": [
+                       "com/google/mediapipe/proto/MediaPipeLoggingProto.java",
+                       "com/google/mediapipe/proto/MediaPipeLoggingEnumsProto.java",
+                   ],
+               }),
         manifest = "AndroidManifest.xml",
         proguard_specs = ["//mediapipe/java/com/google/mediapipe/framework:proguard.pgcfg"],
         deps = [
@@ -133,6 +163,14 @@ EOF
         ] + select({
             "//conditions:default": [":" + name + "_jni_opencv_cc_lib"],
             "//mediapipe/framework/port:disable_opencv": [],
+            "exclude_opencv_so_lib": [],
+        }) + select({
+            "//conditions:default": [],
+            "enable_stats_logging": [
+                "@maven//:com_google_android_datatransport_transport_api",
+                "@maven//:com_google_android_datatransport_transport_backend_cct",
+                "@maven//:com_google_android_datatransport_transport_runtime",
+            ],
         }),
         assets = assets,
         assets_dir = assets_dir,
@@ -146,6 +184,20 @@ def _mediapipe_proto(name):
     Args:
       name: the name of the target.
     """
+    _proto_java_src_generator(
+        name = "mediapipe_log_extension_proto",
+        proto_src = "mediapipe/util/analytics/mediapipe_log_extension.proto",
+        java_lite_out = "com/google/mediapipe/proto/MediaPipeLoggingProto.java",
+        srcs = ["//mediapipe/util/analytics:protos_src"],
+    )
+
+    _proto_java_src_generator(
+        name = "mediapipe_logging_enums_proto",
+        proto_src = "mediapipe/util/analytics/mediapipe_logging_enums.proto",
+        java_lite_out = "com/google/mediapipe/proto/MediaPipeLoggingEnumsProto.java",
+        srcs = ["//mediapipe/util/analytics:protos_src"],
+    )
+
     _proto_java_src_generator(
         name = "calculator_proto",
         proto_src = "mediapipe/framework/calculator.proto",
@@ -273,6 +325,7 @@ EOF
         name = name + "_dummy_app",
         manifest = name + "_generated_AndroidManifest.xml",
         custom_package = "dummy.package.for.so",
+        multidex = "native",
         deps = [android_library],
     )
 

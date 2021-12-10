@@ -169,6 +169,7 @@ public class MainActivity extends AppCompatActivity {
 
   public void startCamera() {
     cameraHelper = new CameraXPreviewHelper();
+    previewFrameTexture = converter.getSurfaceTexture();
     cameraHelper.setOnCameraStartedListener(
         surfaceTexture -> {
           onCameraStarted(surfaceTexture);
@@ -178,7 +179,7 @@ public class MainActivity extends AppCompatActivity {
             ? CameraHelper.CameraFacing.FRONT
             : CameraHelper.CameraFacing.BACK;
     cameraHelper.startCamera(
-        this, cameraFacing, /*unusedSurfaceTexture=*/ null, cameraTargetResolution());
+        this, cameraFacing, previewFrameTexture, cameraTargetResolution());
   }
 
   protected Size computeViewSize(int width, int height) {
@@ -194,11 +195,8 @@ public class MainActivity extends AppCompatActivity {
     Size displaySize = cameraHelper.computeDisplaySizeFromViewSize(viewSize);
     boolean isCameraRotated = cameraHelper.isCameraRotated();
 
-    // Connect the converter to the camera-preview frames as its input (via
-    // previewFrameTexture), and configure the output width and height as the computed
-    // display size.
-    converter.setSurfaceTextureAndAttachToGLContext(
-        previewFrameTexture,
+    // Configure the output width and height as the computed display size.
+    converter.setDestinationSize(
         isCameraRotated ? displaySize.getHeight() : displaySize.getWidth(),
         isCameraRotated ? displaySize.getWidth() : displaySize.getHeight());
   }

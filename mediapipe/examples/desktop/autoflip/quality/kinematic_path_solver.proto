@@ -6,8 +6,9 @@ message KinematicOptions {
   // Weighted update of new camera velocity (measurement) vs current state
   // (prediction).
   optional double update_rate = 1 [default = 0.5, deprecated = true];
-  // Max velocity (degrees per second) that the camera can move.
-  optional double max_velocity = 2 [default = 18];
+  // Max velocity (degrees per second) that the camera can move.  Cannot be used
+  // with max_velocity_scale or max_velocity_shift.
+  optional double max_velocity = 2;
   // Min motion (in degrees) to react for both upper and lower directions.  Must
   // not be set if using min_motion_to_reframe_lower and
   // min_motion_to_reframe_upper.
@@ -30,4 +31,12 @@ message KinematicOptions {
   optional int64 filtering_time_window_us = 7 [default = 0];
   // Weighted update of average period, used for motion updates.
   optional float mean_period_update_rate = 8 [default = 0.25];
+  // Scale factor for max velocity, to be multiplied by the distance from center
+  // in degrees.  Cannot be used with max_velocity and must be used with
+  // max_velocity_shift.
+  optional float max_velocity_scale = 11;
+  // Shift factor for max velocity, to be added to the scaled distance from
+  // center in degrees.  Cannot be used with max_velocity and must be used with
+  // max_velocity_scale.
+  optional float max_velocity_shift = 12;
 }

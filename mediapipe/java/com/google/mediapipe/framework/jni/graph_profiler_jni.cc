@@ -56,8 +56,11 @@ JNIEXPORT jobjectArray JNICALL GRAPH_PROFILER_METHOD(
     return nullptr;
   }
 
+  // TODO: move to register natives.
+  jclass byte_array_cls = env->FindClass("[B");
   jobjectArray profiles =
-      env->NewObjectArray(num_profiles, env->FindClass("[B"), nullptr);
+      env->NewObjectArray(num_profiles, byte_array_cls, nullptr);
+  env->DeleteLocalRef(byte_array_cls);
   for (int i = 0; i < num_profiles; i++) {
     const auto& profile = profiles_vec[i];
     int size = profile.ByteSize();

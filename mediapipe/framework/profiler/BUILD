@@ -113,6 +113,7 @@ cc_library(
         "//mediapipe/framework/port:advanced_proto_lite",
         "//mediapipe/framework/port:integral_types",
         "//mediapipe/framework/port:logging",
+        "//mediapipe/framework/port:re2",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
         "//mediapipe/framework/tool:name_util",

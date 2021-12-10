@@ -70,7 +70,9 @@ class CalculatorNode {
   CalculatorNode();
   CalculatorNode(const CalculatorNode&) = delete;
   CalculatorNode& operator=(const CalculatorNode&) = delete;
-  int Id() const { return node_id_; }
+  int Id() const {
+    return node_type_info_ ? node_type_info_->Node().index : -1;
+  }
 
   // Returns a value according to which the scheduler queue determines the
   // relative priority between runnable source nodes; a smaller value means
@@ -106,7 +108,7 @@ class CalculatorNode {
   // OutputSidePacketImpls corresponding to the output side packet indexes in
   // validated_graph.
   absl::Status Initialize(const ValidatedGraphConfig* validated_graph,
-                          int node_id,
+                          NodeTypeInfo::NodeRef node_ref,
                           InputStreamManager* input_stream_managers,
                           OutputStreamManager* output_stream_managers,
                           OutputSidePacketImpl* output_side_packets,
@@ -287,7 +289,6 @@ class CalculatorNode {
   // Keeps data which a Calculator subclass needs access to.
   std::unique_ptr<CalculatorState> calculator_state_;
 
-  int node_id_ = -1;
   std::string name_;  // Optional user-defined name
   // Name of the executor which the node will execute on. If empty, the node
   // will execute on the default executor.
@@ -372,6 +373,8 @@ class CalculatorNode {
   internal::SchedulerQueue* scheduler_queue_ = nullptr;
 
   const ValidatedGraphConfig* validated_graph_ = nullptr;
+
+  const NodeTypeInfo* node_type_info_ = nullptr;
 };
 
 }  // namespace mediapipe

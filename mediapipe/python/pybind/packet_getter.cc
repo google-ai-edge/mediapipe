@@ -189,7 +189,28 @@ void PublicPacketGetters(pybind11::module* m) {
 )doc");
 
   m->def(
-      "get_int_list", &GetContent<std::vector<int>>,
+      "get_int_list",
+      [](const Packet& packet) {
+        if (packet.ValidateAsType<std::vector<int>>().ok()) {
+          auto int_list = packet.Get<std::vector<int>>();
+          return std::vector<int64>(int_list.begin(), int_list.end());
+        } else if (packet.ValidateAsType<std::vector<int8>>().ok()) {
+          auto int_list = packet.Get<std::vector<int8>>();
+          return std::vector<int64>(int_list.begin(), int_list.end());
+        } else if (packet.ValidateAsType<std::vector<int16>>().ok()) {
+          auto int_list = packet.Get<std::vector<int16>>();
+          return std::vector<int64>(int_list.begin(), int_list.end());
+        } else if (packet.ValidateAsType<std::vector<int32>>().ok()) {
+          auto int_list = packet.Get<std::vector<int32>>();
+          return std::vector<int64>(int_list.begin(), int_list.end());
+        } else if (packet.ValidateAsType<std::vector<int64>>().ok()) {
+          auto int_list = packet.Get<std::vector<int64>>();
+          return std::vector<int64>(int_list.begin(), int_list.end());
+        }
+        throw RaisePyError(PyExc_ValueError,
+                           "Packet doesn't contain int, int8, int16, int32, or "
+                           "int64 containers.");
+      },
       R"doc(Get the content of a MediaPipe int vector Packet as an integer list.
 
   Args:

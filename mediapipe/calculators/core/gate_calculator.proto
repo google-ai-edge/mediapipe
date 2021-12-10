@@ -29,4 +29,8 @@ message GateCalculatorOptions {
   // disallowing the corresponding packets in the data input streams. Setting
   // this option to true inverts that, allowing the data packets to go through.
   optional bool empty_packets_as_allow = 1;
+
+  // Whether to allow or disallow the input streams to pass when no
+  // ALLOW/DISALLOW input or side input is specified.
+  optional bool allow = 2 [default = false];
 }

@@ -24,6 +24,7 @@
 #include "mediapipe/framework/port/canonical_errors.h"
 #include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/proto_ns.h"
+#include "mediapipe/framework/port/re2.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/profiler/profiler_resource_util.h"
@@ -71,6 +72,8 @@ bool IsTracerEnabled(const ProfilerConfig& profiler_config) {
 }
 
 // Returns true if trace events are written to a log file.
+// Note that for now, file output is only for graph-trace and not for
+// calculator-profile.
 bool IsTraceLogEnabled(const ProfilerConfig& profiler_config) {
   return IsTracerEnabled(profiler_config) &&
          !profiler_config.trace_log_disabled();
@@ -117,6 +120,39 @@ PacketInfo* GetPacketInfo(PacketInfoMap* map, const PacketId& packet_id) {
 
 }  // namespace
 
+// Builds GraphProfile records from profiler timing data.
+class GraphProfiler::GraphProfileBuilder {
+ public:
+  GraphProfileBuilder(GraphProfiler* profiler)
+      : profiler_(profiler), calculator_regex_(".*") {
+    auto& filter = profiler_->profiler_config().calculator_filter();
+    calculator_regex_ = filter.empty() ? calculator_regex_ : RE2(filter);
+  }
+
+  bool ProfileIncluded(const CalculatorProfile& p) {
+    return RE2::FullMatch(p.name(), calculator_regex_);
+  }
+
+ private:
+  GraphProfiler* profiler_;
+  RE2 calculator_regex_;
+};
+
+GraphProfiler::GraphProfiler()
+    : is_initialized_(false),
+      is_profiling_(false),
+      calculator_profiles_(1000),
+      packets_info_(1000),
+      is_running_(false),
+      previous_log_end_time_(absl::InfinitePast()),
+      previous_log_index_(-1),
+      validated_graph_(nullptr) {
+  clock_ = std::shared_ptr<mediapipe::Clock>(
+      mediapipe::MonotonicClock::CreateSynchronizedMonotonicClock());
+}
+
+GraphProfiler::~GraphProfiler() {}
+
 void GraphProfiler::Initialize(
     const ValidatedGraphConfig& validated_graph_config) {
   absl::WriterMutexLock lock(&profiler_mutex_);
@@ -156,6 +192,7 @@ void GraphProfiler::Initialize(
     CHECK(iter.second) << absl::Substitute(
         "Calculator \"$0\" has already been added.", node_name);
   }
+  profile_builder_ = std::make_unique<GraphProfileBuilder>(this);
   is_initialized_ = true;
 }
 
@@ -554,15 +591,43 @@ class OstreamStream : public proto_ns::io::ZeroCopyOutputStream {
 };
 
 // Sets the canonical node name in each CalculatorGraphConfig::Node
-// and also in GraphTrace.
+// and also in the GraphTrace if present.
 void AssignNodeNames(GraphProfile* profile) {
   CalculatorGraphConfig* graph_config = profile->mutable_config();
-  GraphTrace* graph_trace = profile->mutable_graph_trace(0);
-  graph_trace->clear_calculator_name();
+  GraphTrace* graph_trace = profile->graph_trace_size() > 0
+                                ? profile->mutable_graph_trace(0)
+                                : nullptr;
+  if (graph_trace) {
+    graph_trace->clear_calculator_name();
+  }
   for (int i = 0; i < graph_config->node().size(); ++i) {
     std::string node_name = CanonicalNodeName(*graph_config, i);
     graph_config->mutable_node(i)->set_name(node_name);
-    graph_trace->add_calculator_name(node_name);
+    if (graph_trace) {
+      graph_trace->add_calculator_name(node_name);
+    }
+  }
+}
+
+// Clears fields containing their default values.
+void CleanTimeHistogram(TimeHistogram* histogram) {
+  if (histogram->num_intervals() == 1) {
+    histogram->clear_num_intervals();
+  }
+  if (histogram->interval_size_usec() == 1000000) {
+    histogram->clear_interval_size_usec();
+  }
+}
+
+// Clears fields containing their default values.
+void CleanCalculatorProfiles(GraphProfile* profile) {
+  for (CalculatorProfile& p : *profile->mutable_calculator_profiles()) {
+    CleanTimeHistogram(p.mutable_process_runtime());
+    CleanTimeHistogram(p.mutable_process_input_latency());
+    CleanTimeHistogram(p.mutable_process_output_latency());
+    for (StreamProfile& s : *p.mutable_input_stream_profiles()) {
+      CleanTimeHistogram(s.mutable_latency());
+    }
   }
 }
 
@@ -588,11 +653,13 @@ absl::Status GraphProfiler::CaptureProfile(GraphProfile* result) {
   absl::Time end_time =
       clock_->TimeNow() -
       absl::Microseconds(profiler_config_.trace_log_margin_usec());
-  GraphTrace* trace = result->add_graph_trace();
-  if (!profiler_config_.trace_log_instant_events()) {
-    tracer()->GetTrace(previous_log_end_time_, end_time, trace);
-  } else {
-    tracer()->GetLog(previous_log_end_time_, end_time, trace);
+  if (tracer()) {
+    GraphTrace* trace = result->add_graph_trace();
+    if (!profiler_config_.trace_log_instant_events()) {
+      tracer()->GetTrace(previous_log_end_time_, end_time, trace);
+    } else {
+      tracer()->GetLog(previous_log_end_time_, end_time, trace);
+    }
   }
   previous_log_end_time_ = end_time;
 
@@ -601,9 +668,12 @@ absl::Status GraphProfiler::CaptureProfile(GraphProfile* result) {
   std::vector<CalculatorProfile> profiles;
   status.Update(GetCalculatorProfiles(&profiles));
   for (CalculatorProfile& p : profiles) {
-    *result->mutable_calculator_profiles()->Add() = std::move(p);
+    if (profile_builder_->ProfileIncluded(p)) {
+      *result->mutable_calculator_profiles()->Add() = std::move(p);
+    }
   }
   this->Reset();
+  CleanCalculatorProfiles(result);
   return status;
 }
 

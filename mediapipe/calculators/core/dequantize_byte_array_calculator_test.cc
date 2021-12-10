@@ -25,6 +25,9 @@
 
 namespace mediapipe {
 
+constexpr char kFloatVectorTag[] = "FLOAT_VECTOR";
+constexpr char kEncodedTag[] = "ENCODED";
+
 TEST(QuantizeFloatVectorCalculatorTest, WrongConfig) {
   CalculatorGraphConfig::Node node_config =
       ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"pb(
@@ -39,8 +42,10 @@ TEST(QuantizeFloatVectorCalculatorTest, WrongConfig) {
       )pb");
   CalculatorRunner runner(node_config);
   std::string empty_string;
-  runner.MutableInputs()->Tag("ENCODED").packets.push_back(
-      MakePacket<std::string>(empty_string).At(Timestamp(0)));
+  runner.MutableInputs()
+      ->Tag(kEncodedTag)
+      .packets.push_back(
+          MakePacket<std::string>(empty_string).At(Timestamp(0)));
   auto status = runner.Run();
   EXPECT_FALSE(status.ok());
   EXPECT_THAT(
@@ -64,8 +69,10 @@ TEST(QuantizeFloatVectorCalculatorTest, WrongConfig2) {
       )pb");
   CalculatorRunner runner(node_config);
   std::string empty_string;
-  runner.MutableInputs()->Tag("ENCODED").packets.push_back(
-      MakePacket<std::string>(empty_string).At(Timestamp(0)));
+  runner.MutableInputs()
+      ->Tag(kEncodedTag)
+      .packets.push_back(
+          MakePacket<std::string>(empty_string).At(Timestamp(0)));
   auto status = runner.Run();
   EXPECT_FALSE(status.ok());
   EXPECT_THAT(
@@ -89,8 +96,10 @@ TEST(QuantizeFloatVectorCalculatorTest, WrongConfig3) {
       )pb");
   CalculatorRunner runner(node_config);
   std::string empty_string;
-  runner.MutableInputs()->Tag("ENCODED").packets.push_back(
-      MakePacket<std::string>(empty_string).At(Timestamp(0)));
+  runner.MutableInputs()
+      ->Tag(kEncodedTag)
+      .packets.push_back(
+          MakePacket<std::string>(empty_string).At(Timestamp(0)));
   auto status = runner.Run();
   EXPECT_FALSE(status.ok());
   EXPECT_THAT(
@@ -114,14 +123,16 @@ TEST(DequantizeByteArrayCalculatorTest, TestDequantization) {
       )pb");
   CalculatorRunner runner(node_config);
   unsigned char input[4] = {0x7F, 0xFF, 0x00, 0x01};
-  runner.MutableInputs()->Tag("ENCODED").packets.push_back(
-      MakePacket<std::string>(
-          std::string(reinterpret_cast<char const*>(input), 4))
-          .At(Timestamp(0)));
+  runner.MutableInputs()
+      ->Tag(kEncodedTag)
+      .packets.push_back(
+          MakePacket<std::string>(
+              std::string(reinterpret_cast<char const*>(input), 4))
+              .At(Timestamp(0)));
   auto status = runner.Run();
   MP_ASSERT_OK(runner.Run());
   const std::vector<Packet>& outputs =
-      runner.Outputs().Tag("FLOAT_VECTOR").packets;
+      runner.Outputs().Tag(kFloatVectorTag).packets;
   EXPECT_EQ(1, outputs.size());
   const std::vector<float>& result = outputs[0].Get<std::vector<float>>();
   ASSERT_FALSE(result.empty());

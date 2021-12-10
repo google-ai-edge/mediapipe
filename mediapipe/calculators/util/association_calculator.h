@@ -26,19 +26,9 @@
 #include "mediapipe/framework/port/canonical_errors.h"
 #include "mediapipe/framework/port/rectangle.h"
 #include "mediapipe/framework/port/status.h"
+#include "mediapipe/util/rectangle_util.h"
 
 namespace mediapipe {
-
-// Computes the overlap similarity based on Intersection over Union (IoU) of
-// two rectangles.
-inline float OverlapSimilarity(const Rectangle_f& rect1,
-                               const Rectangle_f& rect2) {
-  if (!rect1.Intersects(rect2)) return 0.0f;
-  // Compute IoU similarity score.
-  const float intersection_area = Rectangle_f(rect1).Intersect(rect2).Area();
-  const float normalization = rect1.Area() + rect2.Area() - intersection_area;
-  return normalization > 0.0f ? intersection_area / normalization : 0.0f;
-}
 
 // AssocationCalculator<T> accepts multiple inputs of vectors of type T that can
 // be converted to Rectangle_f. The output is a vector of type T that contains
@@ -187,7 +177,7 @@ class AssociationCalculator : public CalculatorBase {
 
     for (auto uit = current->begin(); uit != current->end();) {
       ASSIGN_OR_RETURN(auto prev_rect, GetRectangle(*uit));
-      if (OverlapSimilarity(cur_rect, prev_rect) >
+      if (CalculateIou(cur_rect, prev_rect) >
           options_.min_similarity_threshold()) {
         std::pair<bool, int> prev_id = GetId(*uit);
         // If prev_id.first is false when some element doesn't have an ID,
@@ -232,7 +222,7 @@ class AssociationCalculator : public CalculatorBase {
         }
         const Rectangle_f& prev_rect = get_prev_rectangle.value();
 
-        if (OverlapSimilarity(cur_rect, prev_rect) >
+        if (CalculateIou(cur_rect, prev_rect) >
             options_.min_similarity_threshold()) {
           std::pair<bool, int> prev_id = GetId(prev_input_vec[ui]);
           // If prev_id.first is false when some element doesn't have an ID,

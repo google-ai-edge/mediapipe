@@ -53,7 +53,7 @@ absl::Status RunGeneratorFillExpectations(
         << " is not a registered packet generator.");
 
   CalculatorContract contract;
-  MP_RETURN_IF_ERROR(contract.Initialize(config));
+  MP_RETURN_IF_ERROR(contract.Initialize(config, ""));
 
   {
     LegacyCalculatorSupport::Scoped<CalculatorContract> s(&contract);

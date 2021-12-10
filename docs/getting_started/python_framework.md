@@ -74,7 +74,7 @@ Mapping\[str, Packet\]               | std::map<std::string, Packet> | create_st
 np.ndarray<br>(cv.mat and PIL.Image) | mp::ImageFrame                | create_image_frame(<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;format=ImageFormat.SRGB,<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;data=mat) | get_image_frame(packet)
 np.ndarray                           | mp::Matrix                    | create_matrix(data)                                                                                                                                          | get_matrix(packet)
 Google Proto Message                 | Google Proto Message          | create_proto(proto)                                                                                                                                          | get_proto(packet)
-List\[Proto\]                        | std::vector\<Proto\>          | create_proto_vector(proto_list)                                                                                                                              | get_proto_list(packet)
+List\[Proto\]                        | std::vector\<Proto\>          | n/a                                                                                                                                                          | get_proto_list(packet)
 
 It's not uncommon that users create custom C++ classes and and send those into
 the graphs and calculators. To allow the custom classes to be used in Python

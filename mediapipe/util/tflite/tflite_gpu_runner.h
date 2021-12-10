@@ -19,6 +19,7 @@
 #include <memory>
 #include <vector>
 
+#include "absl/status/status.h"
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/port/statusor.h"
 #include "tensorflow/lite/core/api/op_resolver.h"
@@ -29,7 +30,7 @@
 
 #ifdef __ANDROID__
 #include "tensorflow/lite/delegates/gpu/cl/api.h"
-#endif
+#endif  // __ANDROID__
 
 namespace tflite {
 namespace gpu {
@@ -90,11 +91,22 @@ class TFLiteGPURunner {
   std::vector<uint8_t> GetSerializedBinaryCache() {
     return cl_environment_->GetSerializedBinaryCache();
   }
-#endif
+
+  void SetSerializedModel(std::vector<uint8_t>&& serialized_model) {
+    serialized_model_ = std::move(serialized_model);
+    serialized_model_used_ = false;
+  }
+
+  absl::StatusOr<std::vector<uint8_t>> GetSerializedModel();
+#endif  // __ANDROID__
 
  private:
   absl::Status InitializeOpenGL(std::unique_ptr<InferenceBuilder>* builder);
   absl::Status InitializeOpenCL(std::unique_ptr<InferenceBuilder>* builder);
+#ifdef __ANDROID__
+  absl::Status InitializeOpenCLFromSerializedModel(
+      std::unique_ptr<InferenceBuilder>* builder);
+#endif  // __ANDROID__
 
   InferenceOptions options_;
   std::unique_ptr<gl::InferenceEnvironment> gl_environment_;
@@ -103,9 +115,12 @@ class TFLiteGPURunner {
   std::unique_ptr<cl::InferenceEnvironment> cl_environment_;
 
   std::vector<uint8_t> serialized_binary_cache_;
-#endif
+  std::vector<uint8_t> serialized_model_;
+  bool serialized_model_used_ = false;
+#endif  // __ANDROID__
 
-  // graph_ is maintained temporarily and becomes invalid after runner_ is ready
+  // graph_gl_ is maintained temporarily and becomes invalid after runner_ is
+  // ready
   std::unique_ptr<GraphFloat32> graph_gl_;
   std::unique_ptr<GraphFloat32> graph_cl_;
   std::unique_ptr<InferenceRunner> runner_;

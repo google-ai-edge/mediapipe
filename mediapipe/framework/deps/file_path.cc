@@ -45,7 +45,7 @@ std::string JoinPathImpl(bool honor_abs,
     // This size calculation is worst-case: it assumes one extra "/" for every
     // path other than the first.
     size_t total_size = paths.size() - 1;
-    for (const absl::string_view path : paths) total_size += path.size();
+    for (const absl::string_view& path : paths) total_size += path.size();
     result.resize(total_size);
 
     auto begin = result.begin();

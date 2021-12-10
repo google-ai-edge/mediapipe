@@ -31,7 +31,7 @@ message TfLiteTensorsToLandmarksCalculatorOptions {
   }
 
   // Number of landmarks from the output of the model.
-  required int32 num_landmarks = 1;
+  optional int32 num_landmarks = 1;  // required
 
   // Size of the input image for the model. These options are used only when
   // normalized landmarks are needed. Z coordinate is scaled as X assuming

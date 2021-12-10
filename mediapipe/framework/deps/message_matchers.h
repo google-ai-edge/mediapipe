@@ -15,48 +15,74 @@
 #ifndef MEDIAPIPE_DEPS_MESSAGE_MATCHERS_H_
 #define MEDIAPIPE_DEPS_MESSAGE_MATCHERS_H_
 
+#include <memory>
+
 #include "mediapipe/framework/port/core_proto_inc.h"
 #include "mediapipe/framework/port/gmock.h"
 
 namespace mediapipe {
 
-namespace internal {
-bool EqualsMessage(const proto_ns::MessageLite& m_1,
-                   const proto_ns::MessageLite& m_2) {
-  std::string s_1, s_2;
-  m_1.SerializeToString(&s_1);
-  m_2.SerializeToString(&s_2);
-  return s_1 == s_2;
-}
-}  // namespace internal
-
-template <typename MessageType>
-class ProtoMatcher : public testing::MatcherInterface<MessageType> {
-  using MatchResultListener = testing::MatchResultListener;
-
+class ProtoMatcher {
  public:
-  explicit ProtoMatcher(const MessageType& message) : message_(message) {}
-  virtual bool MatchAndExplain(MessageType m, MatchResultListener*) const {
-    return internal::EqualsMessage(message_, m);
+  using is_gtest_matcher = void;
+  using MessageType = proto_ns::MessageLite;
+
+  explicit ProtoMatcher(const MessageType& message)
+      : message_(CloneMessage(message)) {}
+
+  bool MatchAndExplain(const MessageType& m,
+                       testing::MatchResultListener*) const {
+    return EqualsMessage(*message_, m);
+  }
+  bool MatchAndExplain(const MessageType* m,
+                       testing::MatchResultListener*) const {
+    return EqualsMessage(*message_, *m);
   }
 
-  virtual void DescribeTo(::std::ostream* os) const {
-#if defined(MEDIAPIPE_PROTO_LITE)
-    *os << "Protobuf messages have identical serializations.";
-#else
-    *os << message_.DebugString();
-#endif
+  void DescribeTo(std::ostream* os) const {
+    *os << "has the same serialization as " << ExpectedMessageDescription();
+  }
+
+  void DescribeNegationTo(std::ostream* os) const {
+    *os << "does not have the same serialization as "
+        << ExpectedMessageDescription();
   }
 
  private:
-  const MessageType message_;
+  std::unique_ptr<MessageType> CloneMessage(const MessageType& message) {
+    std::unique_ptr<MessageType> clone(message.New());
+    clone->CheckTypeAndMergeFrom(message);
+    return clone;
+  }
+
+  bool EqualsMessage(const proto_ns::MessageLite& m_1,
+                     const proto_ns::MessageLite& m_2) const {
+    std::string s_1, s_2;
+    m_1.SerializeToString(&s_1);
+    m_2.SerializeToString(&s_2);
+    return s_1 == s_2;
+  }
+
+  std::string ExpectedMessageDescription() const {
+#if defined(MEDIAPIPE_PROTO_LITE)
+    return "the expected message";
+#else
+    return message_->DebugString();
+#endif
+  }
+
+  const std::shared_ptr<MessageType> message_;
 };
 
-template <typename MessageType>
-inline testing::PolymorphicMatcher<ProtoMatcher<MessageType>> EqualsProto(
-    const MessageType& message) {
-  return testing::PolymorphicMatcher<ProtoMatcher<MessageType>>(
-      ProtoMatcher<MessageType>(message));
+inline ProtoMatcher EqualsProto(const proto_ns::MessageLite& message) {
+  return ProtoMatcher(message);
+}
+
+// for Pointwise
+MATCHER(EqualsProto, "") {
+  const auto& a = ::testing::get<0>(arg);
+  const auto& b = ::testing::get<1>(arg);
+  return ::testing::ExplainMatchResult(EqualsProto(b), a, result_listener);
 }
 
 }  // namespace mediapipe

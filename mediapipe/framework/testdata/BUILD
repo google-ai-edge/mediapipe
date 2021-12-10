@@ -13,63 +13,40 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+load("//mediapipe/framework/port:build_config.bzl", "mediapipe_proto_library")
+
 licenses(["notice"])
 
 package(default_visibility = ["//visibility:private"])
 
-load("//mediapipe/framework/port:build_config.bzl", "mediapipe_cc_proto_library")
-
-proto_library(
+mediapipe_proto_library(
     name = "sky_light_calculator_proto",
     srcs = ["sky_light_calculator.proto"],
-    deps = ["//mediapipe/framework:calculator_proto"],
-)
-
-mediapipe_cc_proto_library(
-    name = "sky_light_calculator_cc_proto",
-    srcs = ["sky_light_calculator.proto"],
-    cc_deps = ["//mediapipe/framework:calculator_cc_proto"],
     visibility = ["//visibility:public"],
-    deps = [":sky_light_calculator_proto"],
 )
 
-proto_library(
+mediapipe_proto_library(
     name = "night_light_calculator_proto",
     srcs = ["night_light_calculator.proto"],
-    deps = ["//mediapipe/framework:calculator_proto"],
-)
-
-mediapipe_cc_proto_library(
-    name = "night_light_calculator_cc_proto",
-    srcs = ["night_light_calculator.proto"],
-    cc_deps = ["//mediapipe/framework:calculator_cc_proto"],
     visibility = ["//visibility:public"],
-    deps = [":night_light_calculator_proto"],
+    deps = [
+        "//mediapipe/framework:calculator_options_proto",
+        "//mediapipe/framework:calculator_proto",
+    ],
 )
 
-proto_library(
+mediapipe_proto_library(
     name = "zoo_mutator_proto",
     srcs = ["zoo_mutator.proto"],
     deps = ["@com_google_protobuf//:any_proto"],
 )
 
-mediapipe_cc_proto_library(
-    name = "zoo_mutator_cc_proto",
-    srcs = ["zoo_mutator.proto"],
-    cc_deps = ["@com_google_protobuf//:cc_wkt_protos"],
-    visibility = ["//mediapipe:__subpackages__"],
-    deps = [":zoo_mutator_proto"],
-)
-
-proto_library(
+mediapipe_proto_library(
     name = "zoo_mutation_calculator_proto",
     srcs = ["zoo_mutation_calculator.proto"],
-    features = ["-proto_dynamic_mode_static_link"],
     visibility = ["//mediapipe:__subpackages__"],
     deps = [
         ":zoo_mutator_proto",
-        "//mediapipe/framework:calculator_options_proto",
-        "//mediapipe/framework:packet_factory_proto",
         "//mediapipe/framework:packet_generator_proto",
     ],
 )

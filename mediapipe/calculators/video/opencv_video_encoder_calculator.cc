@@ -36,6 +36,11 @@
 
 namespace mediapipe {
 
+constexpr char kAudioFilePathTag[] = "AUDIO_FILE_PATH";
+constexpr char kOutputFilePathTag[] = "OUTPUT_FILE_PATH";
+constexpr char kVideoPrestreamTag[] = "VIDEO_PRESTREAM";
+constexpr char kVideoTag[] = "VIDEO";
+
 // Encodes the input video stream and produces a media file.
 // The media file can be output to the output_file_path specified as a side
 // packet. Currently, the calculator only supports one video stream (in
@@ -90,15 +95,15 @@ class OpenCvVideoEncoderCalculator : public CalculatorBase {
 };
 
 absl::Status OpenCvVideoEncoderCalculator::GetContract(CalculatorContract* cc) {
-  RET_CHECK(cc->Inputs().HasTag("VIDEO"));
-  cc->Inputs().Tag("VIDEO").Set<ImageFrame>();
-  if (cc->Inputs().HasTag("VIDEO_PRESTREAM")) {
-    cc->Inputs().Tag("VIDEO_PRESTREAM").Set<VideoHeader>();
+  RET_CHECK(cc->Inputs().HasTag(kVideoTag));
+  cc->Inputs().Tag(kVideoTag).Set<ImageFrame>();
+  if (cc->Inputs().HasTag(kVideoPrestreamTag)) {
+    cc->Inputs().Tag(kVideoPrestreamTag).Set<VideoHeader>();
   }
-  RET_CHECK(cc->InputSidePackets().HasTag("OUTPUT_FILE_PATH"));
-  cc->InputSidePackets().Tag("OUTPUT_FILE_PATH").Set<std::string>();
-  if (cc->InputSidePackets().HasTag("AUDIO_FILE_PATH")) {
-    cc->InputSidePackets().Tag("AUDIO_FILE_PATH").Set<std::string>();
+  RET_CHECK(cc->InputSidePackets().HasTag(kOutputFilePathTag));
+  cc->InputSidePackets().Tag(kOutputFilePathTag).Set<std::string>();
+  if (cc->InputSidePackets().HasTag(kAudioFilePathTag)) {
+    cc->InputSidePackets().Tag(kAudioFilePathTag).Set<std::string>();
   }
   return absl::OkStatus();
 }
@@ -116,7 +121,7 @@ absl::Status OpenCvVideoEncoderCalculator::Open(CalculatorContext* cc) {
       << "Video format must be specified in "
          "OpenCvVideoEncoderCalculatorOptions";
   output_file_path_ =
-      cc->InputSidePackets().Tag("OUTPUT_FILE_PATH").Get<std::string>();
+      cc->InputSidePackets().Tag(kOutputFilePathTag).Get<std::string>();
   std::vector<std::string> splited_file_path =
       absl::StrSplit(output_file_path_, '.');
   RET_CHECK(splited_file_path.size() >= 2 &&
@@ -126,7 +131,7 @@ absl::Status OpenCvVideoEncoderCalculator::Open(CalculatorContext* cc) {
   // If the video header will be available, the video metadata will be fetched
   // from the video header directly. The calculator will receive the video
   // header packet at timestamp prestream.
-  if (cc->Inputs().HasTag("VIDEO_PRESTREAM")) {
+  if (cc->Inputs().HasTag(kVideoPrestreamTag)) {
     return absl::OkStatus();
   }
   return SetUpVideoWriter(options.fps(), options.width(), options.height());
@@ -135,13 +140,13 @@ absl::Status OpenCvVideoEncoderCalculator::Open(CalculatorContext* cc) {
 absl::Status OpenCvVideoEncoderCalculator::Process(CalculatorContext* cc) {
   if (cc->InputTimestamp() == Timestamp::PreStream()) {
     const VideoHeader& video_header =
-        cc->Inputs().Tag("VIDEO_PRESTREAM").Get<VideoHeader>();
+        cc->Inputs().Tag(kVideoPrestreamTag).Get<VideoHeader>();
     return SetUpVideoWriter(video_header.frame_rate, video_header.width,
                             video_header.height);
   }
 
   const ImageFrame& image_frame =
-      cc->Inputs().Tag("VIDEO").Value().Get<ImageFrame>();
+      cc->Inputs().Tag(kVideoTag).Value().Get<ImageFrame>();
   ImageFormat::Format format = image_frame.Format();
   cv::Mat frame;
   if (format == ImageFormat::GRAY8) {
@@ -149,7 +154,7 @@ absl::Status OpenCvVideoEncoderCalculator::Process(CalculatorContext* cc) {
     if (frame.empty()) {
       return mediapipe::InvalidArgumentErrorBuilder(MEDIAPIPE_LOC)
              << "Receive empty frame at timestamp "
-             << cc->Inputs().Tag("VIDEO").Value().Timestamp()
+             << cc->Inputs().Tag(kVideoTag).Value().Timestamp()
              << " in OpenCvVideoEncoderCalculator::Process()";
     }
   } else {
@@ -157,7 +162,7 @@ absl::Status OpenCvVideoEncoderCalculator::Process(CalculatorContext* cc) {
     if (tmp_frame.empty()) {
       return mediapipe::InvalidArgumentErrorBuilder(MEDIAPIPE_LOC)
              << "Receive empty frame at timestamp "
-             << cc->Inputs().Tag("VIDEO").Value().Timestamp()
+             << cc->Inputs().Tag(kVideoTag).Value().Timestamp()
              << " in OpenCvVideoEncoderCalculator::Process()";
     }
     if (format == ImageFormat::SRGB) {
@@ -177,10 +182,10 @@ absl::Status OpenCvVideoEncoderCalculator::Close(CalculatorContext* cc) {
   if (writer_ && writer_->isOpened()) {
     writer_->release();
   }
-  if (cc->InputSidePackets().HasTag("AUDIO_FILE_PATH")) {
+  if (cc->InputSidePackets().HasTag(kAudioFilePathTag)) {
 #ifdef HAVE_FFMPEG
     const std::string& audio_file_path =
-        cc->InputSidePackets().Tag("AUDIO_FILE_PATH").Get<std::string>();
+        cc->InputSidePackets().Tag(kAudioFilePathTag).Get<std::string>();
     if (audio_file_path.empty()) {
       LOG(WARNING) << "OpenCvVideoEncoderCalculator isn't able to attach the "
                       "audio tracks to the generated video because the audio "
