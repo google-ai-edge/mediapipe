@@ -158,11 +158,11 @@ class CalculatorNodeTest : public ::testing::Test {
     input_side_packets_.emplace("input_a", Adopt(new int(42)));
     input_side_packets_.emplace("input_b", Adopt(new int(42)));
 
-    node_.reset(new CalculatorNode());
+    node_ = absl::make_unique<CalculatorNode>();
     MP_ASSERT_OK(node_->Initialize(
-        &validated_graph_, 2, input_stream_managers_.get(),
-        output_stream_managers_.get(), output_side_packets_.get(),
-        &buffer_size_hint_, graph_profiler_));
+        &validated_graph_, {NodeTypeInfo::NodeType::CALCULATOR, 2},
+        input_stream_managers_.get(), output_stream_managers_.get(),
+        output_side_packets_.get(), &buffer_size_hint_, graph_profiler_));
   }
 
   absl::Status PrepareNodeForRun() {

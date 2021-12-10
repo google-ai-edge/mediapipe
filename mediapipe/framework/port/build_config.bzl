@@ -4,6 +4,7 @@
 """.bzl file for mediapipe open source build configs."""
 
 load("@com_google_protobuf//:protobuf.bzl", "cc_proto_library", "py_proto_library")
+load("//mediapipe/framework/tool:mediapipe_graph.bzl", "mediapipe_options_library")
 
 def provided_args(**kwargs):
     """Returns the keyword arguments omitting None arguments."""
@@ -47,6 +48,7 @@ def mediapipe_proto_library(
         def_objc_proto = True,
         def_java_proto = True,
         def_jspb_proto = True,
+        def_options_lib = True,
         portable_deps = None):
     """Defines the proto_library targets needed for all mediapipe platforms.
 
@@ -67,6 +69,7 @@ def mediapipe_proto_library(
       def_objc_proto: define the objc_proto_library target
       def_java_proto: define the java_proto_library target
       def_jspb_proto: define the jspb_proto_library target
+      def_options_lib: define the mediapipe_options_library target
     """
     _ignore = [def_portable_proto, def_objc_proto, def_java_proto, def_jspb_proto, portable_deps]
 
@@ -111,6 +114,17 @@ def mediapipe_proto_library(
         native.java_lite_proto_library(**provided_args(
             name = replace_suffix(name, "_proto", "_java_proto_lite"),
             deps = proto_deps,
+            visibility = visibility,
+            testonly = testonly,
+            compatible_with = compatible_with,
+        ))
+
+    if def_options_lib:
+        cc_deps = replace_deps(deps, "_proto", "_cc_proto")
+        mediapipe_options_library(**provided_args(
+            name = replace_suffix(name, "_proto", "_options_lib"),
+            proto_lib = name,
+            deps = cc_deps,
             visibility = visibility,
             testonly = testonly,
             compatible_with = compatible_with,

@@ -370,6 +370,7 @@ void Graph::CallbackToJava(JNIEnv* env, jobject java_callback_obj,
   jmethodID processMethod = env->GetMethodID(
       callback_cls, process_method_name.c_str(), "(Ljava/util/List;)V");
 
+  // TODO: move to register natives.
   jclass list_cls = env->FindClass("java/util/ArrayList");
   jobject java_list =
       env->NewObject(list_cls, env->GetMethodID(list_cls, "<init>", "()V"));
@@ -392,6 +393,7 @@ void Graph::CallbackToJava(JNIEnv* env, jobject java_callback_obj,
     RemovePacket(packet_handle);
   }
   env->DeleteLocalRef(callback_cls);
+  env->DeleteLocalRef(list_cls);
   env->DeleteLocalRef(java_list);
   VLOG(2) << "Returned from java callback.";
 }

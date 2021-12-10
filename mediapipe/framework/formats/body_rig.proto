@@ -1,0 +1,40 @@
+// Copyright 2021 The MediaPipe Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto2";
+
+package mediapipe;
+
+// Joint of a 3D human model (e.g. elbow, knee, wrist). Contains 3D rotation of
+// the joint and its visibility.
+message Joint {
+  // Joint rotation in 6D contineous representation.
+  // Such representation is more sutable for NN model training and can be
+  // converted to quaternions and Euler angles if needed. Details can be found
+  // in https://arxiv.org/abs/1812.07035.
+  repeated float rotation_6d = 1;
+
+  // Joint visibility.
+  // Float score of whether joint is visible: present on the screen and not
+  // occluded by other objects. Depending on the model, visibility value is
+  // either a sigmoid or an argument of sigmoid, but in any case higher value
+  // indicates higher probability of joint being visible. Should stay unset if
+  // not supported.
+  optional float visibility = 2;
+}
+
+// Group of Joint protos.
+message JointList {
+  repeated Joint joint = 1;
+}

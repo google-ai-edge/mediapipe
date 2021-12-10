@@ -21,7 +21,6 @@
 #include "mediapipe/framework/packet_set.h"
 #include "mediapipe/framework/port/any_proto.h"
 #include "mediapipe/framework/tool/options_map.h"
-#include "mediapipe/framework/tool/type_util.h"
 
 namespace mediapipe {
 
@@ -75,8 +74,9 @@ inline T RetrieveOptions(const T& base, const InputStreamShardSet& stream_set,
   return base;
 }
 
-// Finds the descriptor for a protobuf.
-const proto_ns::Descriptor* GetProtobufDescriptor(const std::string& type_name);
+// Copy literal options from enclosing graphs.
+absl::Status DefineGraphOptions(const CalculatorGraphConfig::Node& parent_node,
+                                CalculatorGraphConfig* config);
 
 }  // namespace tool
 }  // namespace mediapipe

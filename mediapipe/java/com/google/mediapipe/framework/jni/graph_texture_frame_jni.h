@@ -31,6 +31,9 @@ JNIEXPORT void JNICALL GRAPH_TEXTURE_FRAME_METHOD(nativeReleaseBuffer)(
 JNIEXPORT jint JNICALL GRAPH_TEXTURE_FRAME_METHOD(nativeGetTextureName)(
     JNIEnv* env, jobject thiz, jlong nativeHandle);
 
+JNIEXPORT void JNICALL GRAPH_TEXTURE_FRAME_METHOD(nativeGpuWait)(
+    JNIEnv* env, jobject thiz, jlong nativeHandle);
+
 JNIEXPORT jint JNICALL GRAPH_TEXTURE_FRAME_METHOD(nativeGetWidth)(
     JNIEnv* env, jobject thiz, jlong nativeHandle);
 

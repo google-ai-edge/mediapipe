@@ -65,6 +65,16 @@ namespace mediapipe {
 
 namespace {
 
+constexpr char kCounter2Tag[] = "COUNTER2";
+constexpr char kCounter1Tag[] = "COUNTER1";
+constexpr char kExtraTag[] = "EXTRA";
+constexpr char kWaitSemTag[] = "WAIT_SEM";
+constexpr char kPostSemTag[] = "POST_SEM";
+constexpr char kErrorOnOpenTag[] = "ERROR_ON_OPEN";
+constexpr char kOutputTag[] = "OUTPUT";
+constexpr char kInputTag[] = "INPUT";
+constexpr char kSelectTag[] = "SELECT";
+
 using testing::ElementsAre;
 using testing::HasSubstr;
 
@@ -125,8 +135,8 @@ class DemuxTimedCalculator : public CalculatorBase {
  public:
   static absl::Status GetContract(CalculatorContract* cc) {
     RET_CHECK_EQ(cc->Inputs().NumEntries(), 2);
-    cc->Inputs().Tag("SELECT").Set<int>();
-    PacketType* data_input = &cc->Inputs().Tag("INPUT");
+    cc->Inputs().Tag(kSelectTag).Set<int>();
+    PacketType* data_input = &cc->Inputs().Tag(kInputTag);
     data_input->SetAny();
     for (CollectionItemId id = cc->Outputs().BeginId("OUTPUT");
          id < cc->Outputs().EndId("OUTPUT"); ++id) {
@@ -182,7 +192,7 @@ REGISTER_CALCULATOR(DemuxTimedCalculator);
 class MuxTimedCalculator : public CalculatorBase {
  public:
   static absl::Status GetContract(CalculatorContract* cc) {
-    cc->Inputs().Tag("SELECT").Set<int>();
+    cc->Inputs().Tag(kSelectTag).Set<int>();
     CollectionItemId data_input_id = cc->Inputs().BeginId("INPUT");
     PacketType* data_input0 = &cc->Inputs().Get(data_input_id);
     data_input0->SetAny();
@@ -191,7 +201,7 @@ class MuxTimedCalculator : public CalculatorBase {
       cc->Inputs().Get(data_input_id).SetSameAs(data_input0);
     }
     RET_CHECK_EQ(cc->Outputs().NumEntries(), 1);
-    cc->Outputs().Tag("OUTPUT").SetSameAs(data_input0);
+    cc->Outputs().Tag(kOutputTag).SetSameAs(data_input0);
     cc->SetTimestampOffset(TimestampDiff(0));
     return absl::OkStatus();
   }
@@ -598,12 +608,12 @@ class ErrorOnOpenCalculator : public CalculatorBase {
   static absl::Status GetContract(CalculatorContract* cc) {
     cc->Inputs().Index(0).SetAny();
     cc->Outputs().Index(0).SetSameAs(&cc->Inputs().Index(0));
-    cc->InputSidePackets().Tag("ERROR_ON_OPEN").Set<bool>();
+    cc->InputSidePackets().Tag(kErrorOnOpenTag).Set<bool>();
     return absl::OkStatus();
   }
 
   absl::Status Open(CalculatorContext* cc) final {
-    if (cc->InputSidePackets().Tag("ERROR_ON_OPEN").Get<bool>()) {
+    if (cc->InputSidePackets().Tag(kErrorOnOpenTag).Get<bool>()) {
       return absl::NotFoundError("expected error");
     }
     return absl::OkStatus();
@@ -920,8 +930,8 @@ class SemaphoreCalculator : public CalculatorBase {
   static absl::Status GetContract(CalculatorContract* cc) {
     cc->Inputs().Index(0).SetAny();
     cc->Outputs().Index(0).SetSameAs(&cc->Inputs().Index(0));
-    cc->InputSidePackets().Tag("POST_SEM").Set<Semaphore*>();
-    cc->InputSidePackets().Tag("WAIT_SEM").Set<Semaphore*>();
+    cc->InputSidePackets().Tag(kPostSemTag).Set<Semaphore*>();
+    cc->InputSidePackets().Tag(kWaitSemTag).Set<Semaphore*>();
     cc->SetTimestampOffset(TimestampDiff(0));
     return absl::OkStatus();
   }
@@ -929,8 +939,8 @@ class SemaphoreCalculator : public CalculatorBase {
   absl::Status Open(CalculatorContext* cc) override { return absl::OkStatus(); }
 
   absl::Status Process(CalculatorContext* cc) override {
-    cc->InputSidePackets().Tag("POST_SEM").Get<Semaphore*>()->Release(1);
-    cc->InputSidePackets().Tag("WAIT_SEM").Get<Semaphore*>()->Acquire(1);
+    cc->InputSidePackets().Tag(kPostSemTag).Get<Semaphore*>()->Release(1);
+    cc->InputSidePackets().Tag(kWaitSemTag).Get<Semaphore*>()->Acquire(1);
     cc->Outputs().Index(0).AddPacket(cc->Inputs().Index(0).Value());
     return absl::OkStatus();
   }
@@ -1133,24 +1143,6 @@ class CheckInputTimestamp2SinkCalculator : public CalculatorBase {
 };
 REGISTER_CALCULATOR(CheckInputTimestamp2SinkCalculator);
 
-// Takes an input stream packet and passes it (with timestamp removed) as an
-// output side packet.
-class OutputSidePacketInProcessCalculator : public CalculatorBase {
- public:
-  static absl::Status GetContract(CalculatorContract* cc) {
-    cc->Inputs().Index(0).SetAny();
-    cc->OutputSidePackets().Index(0).SetSameAs(&cc->Inputs().Index(0));
-    return absl::OkStatus();
-  }
-
-  absl::Status Process(CalculatorContext* cc) final {
-    cc->OutputSidePackets().Index(0).Set(
-        cc->Inputs().Index(0).Value().At(Timestamp::Unset()));
-    return absl::OkStatus();
-  }
-};
-REGISTER_CALCULATOR(OutputSidePacketInProcessCalculator);
-
 // A calculator checks if either of two input streams contains a packet and
 // sends the packet to the single output stream with the same timestamp.
 class SimpleMuxCalculator : public CalculatorBase {
@@ -1195,9 +1187,9 @@ class IncrementingStatusHandler : public StatusHandler {
   static absl::Status FillExpectations(
       const MediaPipeOptions& extendable_options,
       PacketTypeSet* input_side_packets) {
-    input_side_packets->Tag("EXTRA").SetAny().Optional();
-    input_side_packets->Tag("COUNTER1").Set<std::unique_ptr<int>>();
-    input_side_packets->Tag("COUNTER2").Set<std::unique_ptr<int>>();
+    input_side_packets->Tag(kExtraTag).SetAny().Optional();
+    input_side_packets->Tag(kCounter1Tag).Set<std::unique_ptr<int>>();
+    input_side_packets->Tag(kCounter2Tag).Set<std::unique_ptr<int>>();
     return absl::OkStatus();
   }
 
@@ -1205,7 +1197,7 @@ class IncrementingStatusHandler : public StatusHandler {
       const MediaPipeOptions& extendable_options,
       const PacketSet& input_side_packets,  //
       const absl::Status& pre_run_status) {
-    int* counter = GetFromUniquePtr<int>(input_side_packets.Tag("COUNTER1"));
+    int* counter = GetFromUniquePtr<int>(input_side_packets.Tag(kCounter1Tag));
     (*counter)++;
     return pre_run_status_result_;
   }
@@ -1213,7 +1205,7 @@ class IncrementingStatusHandler : public StatusHandler {
   static absl::Status HandleStatus(const MediaPipeOptions& extendable_options,
                                    const PacketSet& input_side_packets,  //
                                    const absl::Status& run_status) {
-    int* counter = GetFromUniquePtr<int>(input_side_packets.Tag("COUNTER2"));
+    int* counter = GetFromUniquePtr<int>(input_side_packets.Tag(kCounter2Tag));
     (*counter)++;
     return post_run_status_result_;
   }
@@ -2246,20 +2238,20 @@ class DemuxUntimedCalculator : public CalculatorBase {
  public:
   static absl::Status GetContract(CalculatorContract* cc) {
     RET_CHECK_EQ(cc->Inputs().NumEntries(), 2);
-    cc->Inputs().Tag("INPUT").SetAny();
-    cc->Inputs().Tag("SELECT").Set<int>();
+    cc->Inputs().Tag(kInputTag).SetAny();
+    cc->Inputs().Tag(kSelectTag).Set<int>();
     for (CollectionItemId id = cc->Outputs().BeginId("OUTPUT");
          id < cc->Outputs().EndId("OUTPUT"); ++id) {
-      cc->Outputs().Get(id).SetSameAs(&cc->Inputs().Tag("INPUT"));
+      cc->Outputs().Get(id).SetSameAs(&cc->Inputs().Tag(kInputTag));
     }
     return absl::OkStatus();
   }
   absl::Status Process(CalculatorContext* cc) final {
-    int index = cc->Inputs().Tag("SELECT").Get<int>();
-    if (!cc->Inputs().Tag("INPUT").IsEmpty()) {
+    int index = cc->Inputs().Tag(kSelectTag).Get<int>();
+    if (!cc->Inputs().Tag(kInputTag).IsEmpty()) {
       cc->Outputs()
           .Get("OUTPUT", index)
-          .AddPacket(cc->Inputs().Tag("INPUT").Value());
+          .AddPacket(cc->Inputs().Tag(kInputTag).Value());
     } else {
       cc->Outputs()
           .Get("OUTPUT", index)
@@ -4354,6 +4346,350 @@ TEST(CalculatorGraph, GraphInputStreamWithTag) {
   MP_ASSERT_OK(graph.CloseAllPacketSources());
   MP_ASSERT_OK(graph.WaitUntilDone());
   ASSERT_EQ(5, packet_dump.size());
+}
+
+TEST(CalculatorGraph, GraphInputStreamBeforeStartRun) {
+  CalculatorGraphConfig config =
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
+        input_stream: "VIDEO_METADATA:video_metadata"
+        input_stream: "max_count"
+        node {
+          calculator: "PassThroughCalculator"
+          input_stream: "FIRST_INPUT:video_metadata"
+          input_stream: "max_count"
+          output_stream: "FIRST_INPUT:output_0"
+          output_stream: "output_1"
+        }
+      )pb");
+  std::vector<Packet> packet_dump;
+  tool::AddVectorSink("output_0", &config, &packet_dump);
+  CalculatorGraph graph;
+  MP_ASSERT_OK(graph.Initialize(config));
+  ASSERT_EQ(graph
+                .AddPacketToInputStream("video_metadata",
+                                        MakePacket<int>(0).At(Timestamp(0)))
+                .code(),
+            absl::StatusCode::kFailedPrecondition);
+}
+
+// Returns the first packet of the input stream.
+class FirstPacketFilterCalculator : public CalculatorBase {
+ public:
+  FirstPacketFilterCalculator() {}
+  ~FirstPacketFilterCalculator() override {}
+
+  static absl::Status GetContract(CalculatorContract* cc) {
+    cc->Inputs().Index(0).SetAny();
+    cc->Outputs().Index(0).SetSameAs(&cc->Inputs().Index(0));
+    return absl::OkStatus();
+  }
+
+  absl::Status Process(CalculatorContext* cc) override {
+    if (!seen_first_packet_) {
+      cc->Outputs().Index(0).AddPacket(cc->Inputs().Index(0).Value());
+      cc->Outputs().Index(0).Close();
+      seen_first_packet_ = true;
+    }
+    return absl::OkStatus();
+  }
+
+ private:
+  bool seen_first_packet_ = false;
+};
+REGISTER_CALCULATOR(FirstPacketFilterCalculator);
+constexpr int kDefaultMaxCount = 1000;
+
+TEST(CalculatorGraph, TestPollPacket) {
+  CalculatorGraphConfig config;
+  CalculatorGraphConfig::Node* node = config.add_node();
+  node->set_calculator("CountingSourceCalculator");
+  node->add_output_stream("output");
+  node->add_input_side_packet("MAX_COUNT:max_count");
+
+  CalculatorGraph graph;
+  MP_ASSERT_OK(graph.Initialize(config));
+  auto status_or_poller = graph.AddOutputStreamPoller("output");
+  ASSERT_TRUE(status_or_poller.ok());
+  OutputStreamPoller poller = std::move(status_or_poller.value());
+  MP_ASSERT_OK(
+      graph.StartRun({{"max_count", MakePacket<int>(kDefaultMaxCount)}}));
+  Packet packet;
+  int num_packets = 0;
+  while (poller.Next(&packet)) {
+    EXPECT_EQ(num_packets, packet.Get<int>());
+    ++num_packets;
+  }
+  MP_ASSERT_OK(graph.CloseAllPacketSources());
+  MP_ASSERT_OK(graph.WaitUntilDone());
+  EXPECT_FALSE(poller.Next(&packet));
+  EXPECT_EQ(kDefaultMaxCount, num_packets);
+}
+
+TEST(CalculatorGraph, TestOutputStreamPollerDesiredQueueSize) {
+  CalculatorGraphConfig config;
+  CalculatorGraphConfig::Node* node = config.add_node();
+  node->set_calculator("CountingSourceCalculator");
+  node->add_output_stream("output");
+  node->add_input_side_packet("MAX_COUNT:max_count");
+
+  for (int queue_size = 1; queue_size < 10; ++queue_size) {
+    CalculatorGraph graph;
+    MP_ASSERT_OK(graph.Initialize(config));
+    auto status_or_poller = graph.AddOutputStreamPoller("output");
+    ASSERT_TRUE(status_or_poller.ok());
+    OutputStreamPoller poller = std::move(status_or_poller.value());
+    poller.SetMaxQueueSize(queue_size);
+    MP_ASSERT_OK(
+        graph.StartRun({{"max_count", MakePacket<int>(kDefaultMaxCount)}}));
+    Packet packet;
+    int num_packets = 0;
+    while (poller.Next(&packet)) {
+      EXPECT_EQ(num_packets, packet.Get<int>());
+      ++num_packets;
+    }
+    MP_ASSERT_OK(graph.CloseAllPacketSources());
+    MP_ASSERT_OK(graph.WaitUntilDone());
+    EXPECT_FALSE(poller.Next(&packet));
+    EXPECT_EQ(kDefaultMaxCount, num_packets);
+  }
+}
+
+TEST(CalculatorGraph, TestPollPacketsFromMultipleStreams) {
+  CalculatorGraphConfig config;
+  CalculatorGraphConfig::Node* node1 = config.add_node();
+  node1->set_calculator("CountingSourceCalculator");
+  node1->add_output_stream("stream1");
+  node1->add_input_side_packet("MAX_COUNT:max_count");
+  CalculatorGraphConfig::Node* node2 = config.add_node();
+  node2->set_calculator("PassThroughCalculator");
+  node2->add_input_stream("stream1");
+  node2->add_output_stream("stream2");
+
+  CalculatorGraph graph;
+  MP_ASSERT_OK(graph.Initialize(config));
+  auto status_or_poller1 = graph.AddOutputStreamPoller("stream1");
+  ASSERT_TRUE(status_or_poller1.ok());
+  OutputStreamPoller poller1 = std::move(status_or_poller1.value());
+  auto status_or_poller2 = graph.AddOutputStreamPoller("stream2");
+  ASSERT_TRUE(status_or_poller2.ok());
+  OutputStreamPoller poller2 = std::move(status_or_poller2.value());
+  MP_ASSERT_OK(
+      graph.StartRun({{"max_count", MakePacket<int>(kDefaultMaxCount)}}));
+  Packet packet1;
+  Packet packet2;
+  int num_packets1 = 0;
+  int num_packets2 = 0;
+  int running_pollers = 2;
+  while (running_pollers > 0) {
+    if (poller1.Next(&packet1)) {
+      EXPECT_EQ(num_packets1++, packet1.Get<int>());
+    } else {
+      --running_pollers;
+    }
+    if (poller2.Next(&packet2)) {
+      EXPECT_EQ(num_packets2++, packet2.Get<int>());
+    } else {
+      --running_pollers;
+    }
+  }
+  MP_ASSERT_OK(graph.CloseAllPacketSources());
+  MP_ASSERT_OK(graph.WaitUntilDone());
+  EXPECT_FALSE(poller1.Next(&packet1));
+  EXPECT_FALSE(poller2.Next(&packet2));
+  EXPECT_EQ(kDefaultMaxCount, num_packets1);
+  EXPECT_EQ(kDefaultMaxCount, num_packets2);
+}
+
+class TimestampBoundTestCalculator : public CalculatorBase {
+ public:
+  static absl::Status GetContract(CalculatorContract* cc) {
+    cc->Outputs().Index(0).Set<int>();
+    return absl::OkStatus();
+  }
+  absl::Status Open(CalculatorContext* cc) final { return absl::OkStatus(); }
+  absl::Status Process(CalculatorContext* cc) final {
+    if (count_ % 50 == 1) {
+      // Outputs packets at t10 and t60.
+      cc->Outputs().Index(0).AddPacket(
+          MakePacket<int>(count_).At(Timestamp(count_)));
+    } else if (count_ % 15 == 7) {
+      cc->Outputs().Index(0).SetNextTimestampBound(Timestamp(count_));
+    }
+    absl::SleepFor(absl::Milliseconds(3));
+    ++count_;
+    if (count_ == 110) {
+      return tool::StatusStop();
+    }
+    return absl::OkStatus();
+  }
+
+ private:
+  int count_ = 0;
+};
+REGISTER_CALCULATOR(TimestampBoundTestCalculator);
+
+TEST(CalculatorGraph, TestPollPacketsWithTimestampNotification) {
+  std::string config_str = R"(
+            node {
+              calculator: "TimestampBoundTestCalculator"
+              output_stream: "foo"
+            }
+          )";
+  CalculatorGraphConfig graph_config =
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(config_str);
+
+  CalculatorGraph graph;
+  MP_ASSERT_OK(graph.Initialize(graph_config));
+  auto status_or_poller =
+      graph.AddOutputStreamPoller("foo", /*observe_timestamp_bounds=*/true);
+  ASSERT_TRUE(status_or_poller.ok());
+  OutputStreamPoller poller = std::move(status_or_poller.value());
+  Packet packet;
+  std::vector<int> timestamps;
+  std::vector<int> values;
+  MP_ASSERT_OK(graph.StartRun({}));
+  while (poller.Next(&packet)) {
+    if (packet.IsEmpty()) {
+      timestamps.push_back(packet.Timestamp().Value());
+    } else {
+      values.push_back(packet.Get<int>());
+    }
+  }
+  MP_ASSERT_OK(graph.WaitUntilDone());
+  ASSERT_FALSE(poller.Next(&packet));
+  ASSERT_FALSE(timestamps.empty());
+  int prev_t = 0;
+  for (auto t : timestamps) {
+    EXPECT_TRUE(t > prev_t && t < 110);
+    prev_t = t;
+  }
+  ASSERT_EQ(3, values.size());
+  EXPECT_EQ(1, values[0]);
+  EXPECT_EQ(51, values[1]);
+  EXPECT_EQ(101, values[2]);
+}
+
+// Ensure that when a custom input stream handler is used to handle packets from
+// input streams, an error message is outputted with the appropriate link to
+// resolve the issue when the calculator doesn't handle inputs in monotonically
+// increasing order of timestamps.
+TEST(CalculatorGraph, SimpleMuxCalculatorWithCustomInputStreamHandler) {
+  CalculatorGraph graph;
+  CalculatorGraphConfig config =
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
+        input_stream: 'input0'
+        input_stream: 'input1'
+        node {
+          calculator: 'SimpleMuxCalculator'
+          input_stream: 'input0'
+          input_stream: 'input1'
+          input_stream_handler {
+            input_stream_handler: "ImmediateInputStreamHandler"
+          }
+          output_stream: 'output'
+        }
+      )pb");
+  std::vector<Packet> packet_dump;
+  tool::AddVectorSink("output", &config, &packet_dump);
+
+  MP_ASSERT_OK(graph.Initialize(config));
+  MP_ASSERT_OK(graph.StartRun({}));
+
+  // Send packets to input stream "input0" at timestamps 0 and 1 consecutively.
+  Timestamp input0_timestamp = Timestamp(0);
+  MP_EXPECT_OK(graph.AddPacketToInputStream(
+      "input0", MakePacket<int>(1).At(input0_timestamp)));
+  MP_ASSERT_OK(graph.WaitUntilIdle());
+  ASSERT_EQ(1, packet_dump.size());
+  EXPECT_EQ(1, packet_dump[0].Get<int>());
+
+  ++input0_timestamp;
+  MP_EXPECT_OK(graph.AddPacketToInputStream(
+      "input0", MakePacket<int>(3).At(input0_timestamp)));
+  MP_ASSERT_OK(graph.WaitUntilIdle());
+  ASSERT_EQ(2, packet_dump.size());
+  EXPECT_EQ(3, packet_dump[1].Get<int>());
+
+  // Send a packet to input stream "input1" at timestamp 0 after sending two
+  // packets at timestamps 0 and 1 to input stream "input0". This will result
+  // in a mismatch in timestamps as the SimpleMuxCalculator doesn't handle
+  // inputs from all streams in monotonically increasing order of timestamps.
+  Timestamp input1_timestamp = Timestamp(0);
+  MP_EXPECT_OK(graph.AddPacketToInputStream(
+      "input1", MakePacket<int>(2).At(input1_timestamp)));
+  absl::Status run_status = graph.WaitUntilIdle();
+  EXPECT_THAT(
+      run_status.ToString(),
+      testing::AllOf(
+          // The core problem.
+          testing::HasSubstr("timestamp mismatch on a calculator"),
+          testing::HasSubstr(
+              "timestamps that are not strictly monotonically increasing"),
+          // Link to the possible solution.
+          testing::HasSubstr("ImmediateInputStreamHandler class comment")));
+}
+
+void DoTestMultipleGraphRuns(absl::string_view input_stream_handler,
+                             bool select_packet) {
+  std::string graph_proto = absl::StrFormat(R"(
+    input_stream: 'input'
+    input_stream: 'select'
+    node {
+      calculator: 'PassThroughCalculator'
+      input_stream: 'input'
+      input_stream: 'select'
+      input_stream_handler {
+        input_stream_handler: "%s"
+      }
+      output_stream: 'output'
+      output_stream: 'select_out'
+    }
+  )",
+                                            input_stream_handler.data());
+  CalculatorGraphConfig config =
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(graph_proto);
+  std::vector<Packet> packet_dump;
+  tool::AddVectorSink("output", &config, &packet_dump);
+
+  CalculatorGraph graph;
+  MP_ASSERT_OK(graph.Initialize(config));
+
+  struct Run {
+    Timestamp timestamp;
+    int value;
+  };
+  std::vector<Run> runs = {{.timestamp = Timestamp(2000), .value = 2},
+                           {.timestamp = Timestamp(1000), .value = 1}};
+  for (const Run& run : runs) {
+    MP_ASSERT_OK(graph.StartRun({}));
+
+    if (select_packet) {
+      MP_EXPECT_OK(graph.AddPacketToInputStream(
+          "select", MakePacket<int>(0).At(run.timestamp)));
+    }
+    MP_EXPECT_OK(graph.AddPacketToInputStream(
+        "input", MakePacket<int>(run.value).At(run.timestamp)));
+    MP_ASSERT_OK(graph.WaitUntilIdle());
+    ASSERT_EQ(1, packet_dump.size());
+    EXPECT_EQ(run.value, packet_dump[0].Get<int>());
+    EXPECT_EQ(run.timestamp, packet_dump[0].Timestamp());
+
+    MP_ASSERT_OK(graph.CloseAllPacketSources());
+    MP_ASSERT_OK(graph.WaitUntilDone());
+
+    packet_dump.clear();
+  }
+}
+
+TEST(CalculatorGraph, MultipleRunsWithDifferentInputStreamHandlers) {
+  DoTestMultipleGraphRuns("BarrierInputStreamHandler", true);
+  DoTestMultipleGraphRuns("DefaultInputStreamHandler", true);
+  DoTestMultipleGraphRuns("EarlyCloseInputStreamHandler", true);
+  DoTestMultipleGraphRuns("FixedSizeInputStreamHandler", true);
+  DoTestMultipleGraphRuns("ImmediateInputStreamHandler", false);
+  DoTestMultipleGraphRuns("MuxInputStreamHandler", true);
+  DoTestMultipleGraphRuns("SyncSetInputStreamHandler", true);
+  DoTestMultipleGraphRuns("TimestampAlignInputStreamHandler", true);
 }
 
 }  // namespace

@@ -288,7 +288,18 @@ public final class PacketGetter {
    */
   public static GraphTextureFrame getTextureFrame(final Packet packet) {
     return new GraphTextureFrame(
-        nativeGetGpuBuffer(packet.getNativeHandle()), packet.getTimestamp());
+        nativeGetGpuBuffer(packet.getNativeHandle(), /* waitOnCpu= */ true), packet.getTimestamp());
+  }
+
+  /**
+   * Works like {@link #getTextureFrame(Packet)}, but does not insert a CPU wait for the texture's
+   * producer before returning. Instead, a GPU wait will automatically occur when
+   * GraphTextureFrame#getTextureName is called.
+   */
+  public static GraphTextureFrame getTextureFrameDeferredSync(final Packet packet) {
+    return new GraphTextureFrame(
+        nativeGetGpuBuffer(packet.getNativeHandle(), /* waitOnCpu= */ false),
+        packet.getTimestamp());
   }
 
   private static native long nativeGetPacketFromReference(long nativePacketHandle);
@@ -356,7 +367,7 @@ public final class PacketGetter {
 
   private static native int nativeGetGpuBufferName(long nativePacketHandle);
 
-  private static native long nativeGetGpuBuffer(long nativePacketHandle);
+  private static native long nativeGetGpuBuffer(long nativePacketHandle, boolean waitOnCpu);
 
   private PacketGetter() {}
 }

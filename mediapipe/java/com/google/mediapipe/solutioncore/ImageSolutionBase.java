@@ -54,7 +54,7 @@ public class ImageSolutionBase extends SolutionBase {
       eglManager = new EglManager(/*parentContext=*/ null);
       solutionGraph.setParentGlContext(eglManager.getNativeContext());
     } catch (MediaPipeException e) {
-      throwException("Error occurs when creating MediaPipe image solution graph. ", e);
+      reportError("Error occurs while creating MediaPipe image solution graph.", e);
     }
   }
 
@@ -72,8 +72,8 @@ public class ImageSolutionBase extends SolutionBase {
   /** Sends a {@link TextureFrame} into solution graph for processing. */
   public void send(TextureFrame textureFrame) {
     if (!staticImageMode && textureFrame.getTimestamp() == Long.MIN_VALUE) {
-      throwException(
-          "Error occurs when calling the solution send method. ",
+      reportError(
+          "Error occurs while calling the MediaPipe solution send method.",
           new MediaPipeException(
               MediaPipeException.StatusCode.FAILED_PRECONDITION.ordinal(),
               "TextureFrame's timestamp needs to be explicitly set if not in static image mode."));
@@ -98,8 +98,8 @@ public class ImageSolutionBase extends SolutionBase {
   /** Sends a {@link Bitmap} (static image) into solution graph for processing. */
   public void send(Bitmap inputBitmap) {
     if (!staticImageMode) {
-      throwException(
-          "Error occurs when calling the solution send method. ",
+      reportError(
+          "Error occurs while calling the solution send method.",
           new MediaPipeException(
               MediaPipeException.StatusCode.FAILED_PRECONDITION.ordinal(),
               "When not in static image mode, a timestamp associated with the image is required."
@@ -112,11 +112,23 @@ public class ImageSolutionBase extends SolutionBase {
   /** Internal implementation of sending Bitmap/TextureFrame into the MediaPipe solution. */
   private synchronized <T> void sendImage(T imageObj, long timestamp) {
     if (lastTimestamp >= timestamp) {
-      throwException(
+      reportError(
           "The received frame having a smaller timestamp than the processed timestamp.",
           new MediaPipeException(
               MediaPipeException.StatusCode.FAILED_PRECONDITION.ordinal(),
               "Receving a frame with invalid timestamp."));
+      return;
+    }
+    if (!solutionGraphStarted.get()) {
+      if (imageObj instanceof TextureFrame) {
+        ((TextureFrame) imageObj).release();
+      }
+      reportError(
+          "The solution graph hasn't been successfully started or error occurs during graph"
+              + " initializaton.",
+          new MediaPipeException(
+              MediaPipeException.StatusCode.FAILED_PRECONDITION.ordinal(),
+              "Graph is not started."));
       return;
     }
     lastTimestamp = timestamp;
@@ -125,16 +137,17 @@ public class ImageSolutionBase extends SolutionBase {
       if (imageObj instanceof TextureFrame) {
         imagePacket = packetCreator.createImage((TextureFrame) imageObj);
         imageObj = null;
+        statsLogger.recordGpuInputArrival(timestamp);
       } else if (imageObj instanceof Bitmap) {
         imagePacket = packetCreator.createRgbaImage((Bitmap) imageObj);
+        statsLogger.recordCpuInputArrival(timestamp);
       } else {
-        throwException(
-            "The input image type is not supported. ",
+        reportError(
+            "The input image type is not supported.",
             new MediaPipeException(
                 MediaPipeException.StatusCode.UNIMPLEMENTED.ordinal(),
                 "The input image type is not supported."));
       }
-
       try {
         // addConsumablePacketToInputStream allows the graph to take exclusive ownership of the
         // packet, which may allow for more memory optimizations.
@@ -152,7 +165,7 @@ public class ImageSolutionBase extends SolutionBase {
       }
     } catch (RuntimeException e) {
       if (errorListener != null) {
-        errorListener.onError("Mediapipe error: ", e);
+        errorListener.onError("MediaPipe packet creation error: " + e.getMessage(), e);
       } else {
         throw e;
       }

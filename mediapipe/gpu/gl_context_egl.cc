@@ -85,7 +85,7 @@ GlContext::StatusOrGlContext GlContext::Create(EGLContext share_context,
   return std::move(context);
 }
 
-absl::Status GlContext::CreateContextInternal(EGLContext external_context,
+absl::Status GlContext::CreateContextInternal(EGLContext share_context,
                                               int gl_version) {
   CHECK(gl_version == 2 || gl_version == 3);
 
@@ -131,8 +131,7 @@ absl::Status GlContext::CreateContextInternal(EGLContext external_context,
       // clang-format on
   };
 
-  context_ =
-      eglCreateContext(display_, config_, external_context, context_attr);
+  context_ = eglCreateContext(display_, config_, share_context, context_attr);
   int error = eglGetError();
   RET_CHECK(context_ != EGL_NO_CONTEXT)
       << "Could not create GLES " << gl_version << " context; "
@@ -149,7 +148,7 @@ absl::Status GlContext::CreateContextInternal(EGLContext external_context,
   return absl::OkStatus();
 }
 
-absl::Status GlContext::CreateContext(EGLContext external_context) {
+absl::Status GlContext::CreateContext(EGLContext share_context) {
   EGLint major = 0;
   EGLint minor = 0;
 
@@ -163,11 +162,11 @@ absl::Status GlContext::CreateContext(EGLContext external_context) {
   LOG(INFO) << "Successfully initialized EGL. Major : " << major
             << " Minor: " << minor;
 
-  auto status = CreateContextInternal(external_context, 3);
+  auto status = CreateContextInternal(share_context, 3);
   if (!status.ok()) {
     LOG(WARNING) << "Creating a context with OpenGL ES 3 failed: " << status;
     LOG(WARNING) << "Fall back on OpenGL ES 2.";
-    status = CreateContextInternal(external_context, 2);
+    status = CreateContextInternal(share_context, 2);
   }
   MP_RETURN_IF_ERROR(status);
 

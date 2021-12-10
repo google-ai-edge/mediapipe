@@ -72,6 +72,7 @@ absl::Status ConnectSubgraphStreams(
 absl::Status ExpandSubgraphs(
     CalculatorGraphConfig* config,
     const GraphRegistry* graph_registry = nullptr,
+    const Subgraph::SubgraphOptions* graph_options = nullptr,
     const GraphServiceManager* service_manager = nullptr);
 
 // Creates a graph wrapping the provided node and exposing all of its

@@ -20,8 +20,8 @@ from typing import List, Tuple, NamedTuple, Optional
 import attr
 import numpy as np
 
-from mediapipe.calculators.core import constant_side_packet_calculator_pb2
 # pylint: disable=unused-import
+from mediapipe.calculators.core import constant_side_packet_calculator_pb2
 from mediapipe.calculators.core import gate_calculator_pb2
 from mediapipe.calculators.core import split_vector_calculator_pb2
 from mediapipe.calculators.tensor import image_to_tensor_calculator_pb2
@@ -75,7 +75,7 @@ class BoxLandmark(enum.IntEnum):
   BACK_TOP_RIGHT = 7
   FRONT_TOP_RIGHT = 8
 
-BINARYPB_FILE_PATH = 'mediapipe/modules/objectron/objectron_cpu.binarypb'
+_BINARYPB_FILE_PATH = 'mediapipe/modules/objectron/objectron_cpu.binarypb'
 BOX_CONNECTIONS = frozenset([
     (BoxLandmark.BACK_BOTTOM_LEFT, BoxLandmark.FRONT_BOTTOM_LEFT),
     (BoxLandmark.BACK_BOTTOM_LEFT, BoxLandmark.BACK_TOP_LEFT),
@@ -216,18 +216,14 @@ class Objectron(SolutionBase):
     # Create and init model.
     model = get_model_by_name(model_name)
     super().__init__(
-        binary_graph_path=BINARYPB_FILE_PATH,
+        binary_graph_path=_BINARYPB_FILE_PATH,
         side_inputs={
             'box_landmark_model_path': model.model_path,
             'allowed_labels': model.label_name,
             'max_num_objects': max_num_objects,
+            'use_prev_landmarks': not static_image_mode,
         },
         calculator_params={
-            'ConstantSidePacketCalculator.packet': [
-                constant_side_packet_calculator_pb2
-                .ConstantSidePacketCalculatorOptions.ConstantSidePacket(
-                    bool_value=not static_image_mode)
-            ],
             ('objectdetectionoidv4subgraph'
              '__TensorsToDetectionsCalculator.min_score_thresh'):
                 min_detection_confidence,

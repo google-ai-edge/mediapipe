@@ -17,8 +17,10 @@ load("//mediapipe/framework/port:build_config.bzl", "mediapipe_cc_proto_library"
 licenses(["notice"])
 
 package(default_visibility = [
+    "//buzz/diffractor/mediapipe:__subpackages__",
     "//mediapipe/examples:__subpackages__",
     "//mediapipe/viz:__subpackages__",
+    "//mediapipe/web/solutions:__subpackages__",
 ])
 
 cc_library(
@@ -72,6 +74,7 @@ cc_library(
         ":content_zooming_calculator_state",
         "//mediapipe/examples/desktop/autoflip:autoflip_messages_cc_proto",
         "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:packet",
         "//mediapipe/framework/formats:detection_cc_proto",
         "//mediapipe/framework/formats:image_frame",
         "//mediapipe/framework/formats:location_data_cc_proto",

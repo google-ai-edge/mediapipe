@@ -62,9 +62,9 @@ objc_library(
     copts = ["-std=c++17"],
     data = [
         "//mediapipe/graphs/hand_tracking:hand_tracking_mobile_gpu.binarypb",
-        "//mediapipe/modules/hand_landmark:hand_landmark.tflite",
+        "//mediapipe/modules/hand_landmark:hand_landmark_full.tflite",
         "//mediapipe/modules/hand_landmark:handedness.txt",
-        "//mediapipe/modules/palm_detection:palm_detection.tflite",
+        "//mediapipe/modules/palm_detection:palm_detection_full.tflite",
     ],
     deps = [
         "//mediapipe/examples/ios/common:CommonMediaPipeAppLibrary",

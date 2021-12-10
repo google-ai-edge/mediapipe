@@ -670,7 +670,8 @@ absl::Status TensorsToDetectionsCalculator::ConvertToDetections(
         detection_boxes[box_offset + 2], detection_boxes[box_offset + 3],
         detection_scores[i], detection_classes[i], options_.flip_vertically());
     const auto& bbox = detection.location_data().relative_bounding_box();
-    if (bbox.width() < 0 || bbox.height() < 0) {
+    if (bbox.width() < 0 || bbox.height() < 0 || std::isnan(bbox.width()) ||
+        std::isnan(bbox.height())) {
       // Decoded detection boxes could have negative values for width/height due
       // to model prediction. Filter out those boxes since some downstream
       // calculators may assume non-negative values. (b/171391719)

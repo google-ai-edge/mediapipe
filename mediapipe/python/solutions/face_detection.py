@@ -28,8 +28,8 @@ from mediapipe.calculators.util import non_max_suppression_calculator_pb2
 # pylint: enable=unused-import
 from mediapipe.python.solution_base import SolutionBase
 
-SHORT_RANGE_GRAPH_FILE_PATH = 'mediapipe/modules/face_detection/face_detection_short_range_cpu.binarypb'
-FULL_RANGE_GRAPH_FILE_PATH = 'mediapipe/modules/face_detection/face_detection_full_range_cpu.binarypb'
+_SHORT_RANGE_GRAPH_FILE_PATH = 'mediapipe/modules/face_detection/face_detection_short_range_cpu.binarypb'
+_FULL_RANGE_GRAPH_FILE_PATH = 'mediapipe/modules/face_detection/face_detection_full_range_cpu.binarypb'
 
 
 def get_key_point(
@@ -83,7 +83,7 @@ class FaceDetection(SolutionBase):
         https://solutions.mediapipe.dev/face_detection#model_selection.
     """
 
-    binary_graph_path = FULL_RANGE_GRAPH_FILE_PATH if model_selection == 1 else SHORT_RANGE_GRAPH_FILE_PATH
+    binary_graph_path = _FULL_RANGE_GRAPH_FILE_PATH if model_selection == 1 else _SHORT_RANGE_GRAPH_FILE_PATH
     subgraph_name = 'facedetectionfullrangecommon' if model_selection == 1 else 'facedetectionshortrangecommon'
 
     super().__init__(

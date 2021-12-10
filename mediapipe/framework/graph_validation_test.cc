@@ -31,6 +31,11 @@ namespace mediapipe {
 
 namespace {
 
+constexpr char kOutputTag[] = "OUTPUT";
+constexpr char kEnableTag[] = "ENABLE";
+constexpr char kSelectTag[] = "SELECT";
+constexpr char kSideinputTag[] = "SIDEINPUT";
+
 // Shows validation success for a graph and a subgraph.
 TEST(GraphValidationTest, InitializeGraphFromProtos) {
   auto config_1 = ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
@@ -323,20 +328,21 @@ TEST(GraphValidationTest, OptionalSubgraphStreamsMismatched) {
 class OptionalSideInputTestCalculator : public CalculatorBase {
  public:
   static absl::Status GetContract(CalculatorContract* cc) {
-    cc->InputSidePackets().Tag("SIDEINPUT").Set<std::string>().Optional();
-    cc->Inputs().Tag("SELECT").Set<int>().Optional();
-    cc->Inputs().Tag("ENABLE").Set<bool>().Optional();
-    cc->Outputs().Tag("OUTPUT").Set<std::string>();
+    cc->InputSidePackets().Tag(kSideinputTag).Set<std::string>().Optional();
+    cc->Inputs().Tag(kSelectTag).Set<int>().Optional();
+    cc->Inputs().Tag(kEnableTag).Set<bool>().Optional();
+    cc->Outputs().Tag(kOutputTag).Set<std::string>();
     return absl::OkStatus();
   }
 
   absl::Status Process(CalculatorContext* cc) final {
     std::string value("default");
-    if (cc->InputSidePackets().HasTag("SIDEINPUT")) {
-      value = cc->InputSidePackets().Tag("SIDEINPUT").Get<std::string>();
+    if (cc->InputSidePackets().HasTag(kSideinputTag)) {
+      value = cc->InputSidePackets().Tag(kSideinputTag).Get<std::string>();
     }
-    cc->Outputs().Tag("OUTPUT").Add(new std::string(value),
-                                    cc->InputTimestamp());
+    cc->Outputs()
+        .Tag(kOutputTag)
+        .Add(new std::string(value), cc->InputTimestamp());
     return absl::OkStatus();
   }
 };

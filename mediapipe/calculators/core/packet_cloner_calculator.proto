@@ -28,4 +28,9 @@ message PacketClonerCalculatorOptions {
   // When true, this calculator will drop received TICK packets if any input
   // stream hasn't received a packet yet.
   optional bool output_only_when_all_inputs_received = 1 [default = false];
+
+  // Similar with above, but also transmit empty packet for all streams before
+  // all inputs are received.
+  optional bool output_packets_only_when_all_inputs_received = 2
+      [default = false];
 }

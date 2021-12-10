@@ -15,7 +15,9 @@
 
 import json
 import os
+# pylint: disable=unused-import
 import tempfile
+# pylint: enable=unused-import
 from typing import NamedTuple
 
 from absl.testing import absltest
@@ -23,9 +25,11 @@ from absl.testing import parameterized
 import cv2
 import numpy as np
 import numpy.testing as npt
+from PIL import Image
 
 # resources dependency
 # undeclared dependency
+from mediapipe.python.solutions import drawing_styles
 from mediapipe.python.solutions import drawing_utils as mp_drawing
 from mediapipe.python.solutions import pose as mp_pose
 
@@ -56,6 +60,7 @@ EXPECTED_POSE_WORLD_LANDMARKS = np.array([
     [0.69, 0.49, -0.04], [-0.48, 0.47, -0.02], [0.72, 0.52, -0.04],
     [-0.48, 0.51, -0.02], [0.8, 0.5, -0.14], [-0.59, 0.52, -0.11],
 ])
+IOU_THRESHOLD = 0.85  # percents
 
 
 class PoseTest(parameterized.TestCase):
@@ -72,12 +77,63 @@ class PoseTest(parameterized.TestCase):
   def _assert_diff_less(self, array1, array2, threshold):
     npt.assert_array_less(np.abs(array1 - array2), threshold)
 
+  def _get_output_path(self, name):
+    return os.path.join(tempfile.gettempdir(), self.id().split('.')[-1] + name)
+
   def _annotate(self, frame: np.ndarray, results: NamedTuple, idx: int):
-    mp_drawing.draw_landmarks(frame, results.pose_landmarks,
-                              mp_pose.POSE_CONNECTIONS)
-    path = os.path.join(tempfile.gettempdir(), self.id().split('.')[-1] +
-                                              '_frame_{}.png'.format(idx))
+    mp_drawing.draw_landmarks(
+        frame,
+        results.pose_landmarks,
+        mp_pose.POSE_CONNECTIONS,
+        landmark_drawing_spec=drawing_styles.get_default_pose_landmarks_style())
+    path = self._get_output_path('_frame_{}.png'.format(idx))
     cv2.imwrite(path, frame)
+
+  def _annotate_segmentation(self, segmentation, expected_segmentation,
+                             idx: int):
+    path = self._get_output_path('_segmentation_{}.png'.format(idx))
+    self._segmentation_to_rgb(segmentation).save(path)
+    path = self._get_output_path('_segmentation_diff_{}.png'.format(idx))
+    self._segmentation_diff_to_rgb(
+        expected_segmentation, segmentation).save(path)
+
+  def _rgb_to_segmentation(self, img, back_color=(255, 0, 0),
+                           front_color=(0, 0, 255)):
+    img = np.array(img)
+    # Check all pixels are either front or back.
+    is_back = (img == back_color).all(axis=2)
+    is_front = (img == front_color).all(axis=2)
+    np.logical_or(is_back, is_front).all()
+    segm = np.zeros(img.shape[:2], dtype=np.uint8)
+    segm[is_front] = 1
+    return segm
+
+  def _segmentation_to_rgb(self, segm, back_color=(255, 0, 0),
+                           front_color=(0, 0, 255)):
+    height, width = segm.shape
+    img = np.zeros((height, width, 3), dtype=np.uint8)
+    img[:, :] = back_color
+    img[segm == 1] = front_color
+    return Image.fromarray(img)
+
+  def _segmentation_iou(self, segm_expected, segm_actual):
+    intersection = segm_expected * segm_actual
+    expected_dot = segm_expected * segm_expected
+    actual_dot = segm_actual * segm_actual
+    eps = np.finfo(np.float32).eps
+    result = intersection.sum() / (expected_dot.sum() +
+                                   actual_dot.sum() -
+                                   intersection.sum() + eps)
+    return result
+
+  def _segmentation_diff_to_rgb(self, segm_expected, segm_actual,
+                                expected_color=(0, 255, 0),
+                                actual_color=(255, 0, 0)):
+    height, width = segm_expected.shape
+    img = np.zeros((height, width, 3), dtype=np.uint8)
+    img[np.logical_and(segm_expected == 1, segm_actual == 0)] = expected_color
+    img[np.logical_and(segm_expected == 0, segm_actual == 1)] = actual_color
+    return Image.fromarray(img)
 
   def test_invalid_image_shape(self):
     with mp_pose.Pose() as pose:
@@ -86,11 +142,12 @@ class PoseTest(parameterized.TestCase):
         pose.process(np.arange(36, dtype=np.uint8).reshape(3, 3, 4))
 
   def test_blank_image(self):
-    with mp_pose.Pose() as pose:
+    with mp_pose.Pose(enable_segmentation=True) as pose:
       image = np.zeros([100, 100, 3], dtype=np.uint8)
       image.fill(255)
       results = pose.process(image)
       self.assertIsNone(results.pose_landmarks)
+      self.assertIsNone(results.segmentation_mask)
 
   @parameterized.named_parameters(('static_lite', True, 0, 3),
                                   ('static_full', True, 1, 3),
@@ -100,13 +157,23 @@ class PoseTest(parameterized.TestCase):
                                   ('video_heavy', False, 2, 3))
   def test_on_image(self, static_image_mode, model_complexity, num_frames):
     image_path = os.path.join(os.path.dirname(__file__), 'testdata/pose.jpg')
+    expected_segmentation_path = os.path.join(
+        os.path.dirname(__file__), 'testdata/pose_segmentation.png')
     image = cv2.imread(image_path)
+    expected_segmentation = self._rgb_to_segmentation(
+        Image.open(expected_segmentation_path).convert('RGB'))
+
     with mp_pose.Pose(static_image_mode=static_image_mode,
-                      model_complexity=model_complexity) as pose:
+                      model_complexity=model_complexity,
+                      enable_segmentation=True) as pose:
       for idx in range(num_frames):
         results = pose.process(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
+        segmentation = results.segmentation_mask.round().astype(np.uint8)
+
         # TODO: Add rendering of world 3D when supported.
         self._annotate(image.copy(), results, idx)
+        self._annotate_segmentation(segmentation, expected_segmentation, idx)
+
         self._assert_diff_less(
             self._landmarks_list_to_array(results.pose_landmarks,
                                           image.shape)[:, :2],
@@ -114,13 +181,14 @@ class PoseTest(parameterized.TestCase):
         self._assert_diff_less(
             self._world_landmarks_list_to_array(results.pose_world_landmarks),
             EXPECTED_POSE_WORLD_LANDMARKS, WORLD_DIFF_THRESHOLD)
+        self.assertGreaterEqual(
+            self._segmentation_iou(expected_segmentation, segmentation),
+            IOU_THRESHOLD)
 
   @parameterized.named_parameters(
       ('full', 1, 'pose_squats.full.npz'))
   def test_on_video(self, model_complexity, expected_name):
     """Tests pose models on a video."""
-    # If set to `True` will dump actual predictions to .npz and JSON files.
-    dump_predictions = False
     # Set threshold for comparing actual and expected predictions in pixels.
     diff_threshold = 15
     world_diff_threshold = 0.1
@@ -160,21 +228,18 @@ class PoseTest(parameterized.TestCase):
     actual = np.array(actual_per_frame)
     actual_world = np.array(actual_world_per_frame)
 
-    if dump_predictions:
-      # Dump .npz
-      with tempfile.NamedTemporaryFile(delete=False) as tmp_file:
-        np.savez(tmp_file, predictions=actual, predictions_world=actual_world)
-        print('Predictions saved as .npz to {}'.format(tmp_file.name))
+    # Dump actual .npz.
+    npz_path = self._get_output_path(expected_name)
+    np.savez(npz_path, predictions=actual, predictions_world=actual_world)
 
-      # Dump JSON
-      with tempfile.NamedTemporaryFile(delete=False) as tmp_file:
-        with open(tmp_file.name, 'w') as fl:
-          dump_data = {
-              'predictions': np.around(actual, 3).tolist(),
-              'predictions_world': np.around(actual_world, 3).tolist()
-          }
-          fl.write(json.dumps(dump_data, indent=2, separators=(',', ': ')))
-          print('Predictions saved as JSON to {}'.format(tmp_file.name))
+    # Dump actual JSON.
+    json_path = self._get_output_path(expected_name.replace('.npz', '.json'))
+    with open(json_path, 'w') as fl:
+      dump_data = {
+          'predictions': np.around(actual, 3).tolist(),
+          'predictions_world': np.around(actual_world, 3).tolist()
+      }
+      fl.write(json.dumps(dump_data, indent=2, separators=(',', ': ')))
 
     # Validate actual vs. expected landmarks.
     expected = np.load(expected_path)['predictions']

@@ -35,11 +35,14 @@
 //   }
 namespace mediapipe {
 
+constexpr char kFloatVectorTag[] = "FLOAT_VECTOR";
+constexpr char kEncodedTag[] = "ENCODED";
+
 class DequantizeByteArrayCalculator : public CalculatorBase {
  public:
   static absl::Status GetContract(CalculatorContract* cc) {
-    cc->Inputs().Tag("ENCODED").Set<std::string>();
-    cc->Outputs().Tag("FLOAT_VECTOR").Set<std::vector<float>>();
+    cc->Inputs().Tag(kEncodedTag).Set<std::string>();
+    cc->Outputs().Tag(kFloatVectorTag).Set<std::vector<float>>();
     return absl::OkStatus();
   }
 
@@ -66,7 +69,7 @@ class DequantizeByteArrayCalculator : public CalculatorBase {
 
   absl::Status Process(CalculatorContext* cc) final {
     const std::string& encoded =
-        cc->Inputs().Tag("ENCODED").Value().Get<std::string>();
+        cc->Inputs().Tag(kEncodedTag).Value().Get<std::string>();
     std::vector<float> float_vector;
     float_vector.reserve(encoded.length());
     for (int i = 0; i < encoded.length(); ++i) {
@@ -74,7 +77,7 @@ class DequantizeByteArrayCalculator : public CalculatorBase {
           static_cast<unsigned char>(encoded.at(i)) * scalar_ + bias_);
     }
     cc->Outputs()
-        .Tag("FLOAT_VECTOR")
+        .Tag(kFloatVectorTag)
         .AddPacket(MakePacket<std::vector<float>>(float_vector)
                        .At(cc->InputTimestamp()));
     return absl::OkStatus();

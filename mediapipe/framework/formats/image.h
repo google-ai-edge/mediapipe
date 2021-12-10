@@ -109,8 +109,7 @@ class Image {
     return gpu_buffer_.GetCVPixelBufferRef();
   }
 #else
-  const mediapipe::GlTextureBufferSharedPtr& GetGlTextureBufferSharedPtr()
-      const {
+  mediapipe::GlTextureBufferSharedPtr GetGlTextureBufferSharedPtr() const {
     if (use_gpu_ == false) ConvertToGpu();
     return gpu_buffer_.GetGlTextureBufferSharedPtr();
   }

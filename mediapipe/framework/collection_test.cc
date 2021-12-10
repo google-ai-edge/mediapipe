@@ -24,6 +24,10 @@
 namespace mediapipe {
 namespace {
 
+constexpr char kTag2Tag[] = "TAG_2";
+constexpr char kTag0Tag[] = "TAG_0";
+constexpr char kTag1Tag[] = "TAG_1";
+
 TEST(CollectionTest, BasicByIndex) {
   tool::TagAndNameInfo info;
   info.names.push_back("name_1");
@@ -55,14 +59,14 @@ TEST(CollectionTest, BasicByTag) {
   info.names.push_back("name_2");
   info.tags.push_back("TAG_2");
   internal::Collection<int> collection(info);
-  collection.Tag("TAG_1") = 101;
-  collection.Tag("TAG_0") = 100;
-  collection.Tag("TAG_2") = 102;
+  collection.Tag(kTag1Tag) = 101;
+  collection.Tag(kTag0Tag) = 100;
+  collection.Tag(kTag2Tag) = 102;
 
   // Test the stored values.
-  EXPECT_EQ(100, collection.Tag("TAG_0"));
-  EXPECT_EQ(101, collection.Tag("TAG_1"));
-  EXPECT_EQ(102, collection.Tag("TAG_2"));
+  EXPECT_EQ(100, collection.Tag(kTag0Tag));
+  EXPECT_EQ(101, collection.Tag(kTag1Tag));
+  EXPECT_EQ(102, collection.Tag(kTag2Tag));
   // Test access using a range based for.
   int i = 0;
   for (int num : collection) {

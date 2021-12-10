@@ -24,9 +24,9 @@ message TfLiteTensorsToSegmentationCalculatorOptions {
   }
 
   // Dimensions of input segmentation tensor to process.
-  required int32 tensor_width = 1;
-  required int32 tensor_height = 2;
-  required int32 tensor_channels = 3;
+  optional int32 tensor_width = 1;     // required
+  optional int32 tensor_height = 2;    // required
+  optional int32 tensor_channels = 3;  // required
 
   // How much to use previous mask when computing current one; range [0-1].
   // This is a tradeoff between responsiveness (0.0) and accuracy (1.0).

@@ -38,6 +38,8 @@ enum class GpuBufferFormat : uint32_t {
   kGrayFloat32 = MEDIAPIPE_FOURCC('L', '0', '0', 'f'),
   kGrayHalf16 = MEDIAPIPE_FOURCC('L', '0', '0', 'h'),
   kOneComponent8 = MEDIAPIPE_FOURCC('L', '0', '0', '8'),
+  kOneComponent8Red = MEDIAPIPE_FOURCC('R', '0', '0', '8'),
+  kTwoComponent8 = MEDIAPIPE_FOURCC('2', 'C', '0', '8'),
   kTwoComponentHalf16 = MEDIAPIPE_FOURCC('2', 'C', '0', 'h'),
   kTwoComponentFloat32 = MEDIAPIPE_FOURCC('2', 'C', '0', 'f'),
   kBiPlanar420YpCbCr8VideoRange = MEDIAPIPE_FOURCC('4', '2', '0', 'v'),
@@ -82,6 +84,10 @@ inline OSType CVPixelFormatForGpuBufferFormat(GpuBufferFormat format) {
       return kCVPixelFormatType_OneComponent32Float;
     case GpuBufferFormat::kOneComponent8:
       return kCVPixelFormatType_OneComponent8;
+    case GpuBufferFormat::kOneComponent8Red:
+      return -1;
+    case GpuBufferFormat::kTwoComponent8:
+      return kCVPixelFormatType_TwoComponent8;
     case GpuBufferFormat::kTwoComponentHalf16:
       return kCVPixelFormatType_TwoComponent16Half;
     case GpuBufferFormat::kTwoComponentFloat32:
@@ -114,6 +120,8 @@ inline GpuBufferFormat GpuBufferFormatForCVPixelFormat(OSType format) {
       return GpuBufferFormat::kGrayFloat32;
     case kCVPixelFormatType_OneComponent8:
       return GpuBufferFormat::kOneComponent8;
+    case kCVPixelFormatType_TwoComponent8:
+      return GpuBufferFormat::kTwoComponent8;
     case kCVPixelFormatType_TwoComponent16Half:
       return GpuBufferFormat::kTwoComponentHalf16;
     case kCVPixelFormatType_TwoComponent32Float:

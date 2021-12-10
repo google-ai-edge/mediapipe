@@ -90,6 +90,18 @@ cc_library(
 )
 
 cc_library(
+    name = "commandlineflags",
+    hdrs = [
+        "commandlineflags.h",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//third_party:glog",
+        "@com_google_absl//absl/flags:flag",
+    ],
+)
+
+cc_library(
     name = "core_proto",
     hdrs = [
         "core_proto_inc.h",

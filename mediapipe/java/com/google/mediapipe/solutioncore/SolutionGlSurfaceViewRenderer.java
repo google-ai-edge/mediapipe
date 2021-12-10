@@ -15,8 +15,11 @@
 package com.google.mediapipe.solutioncore;
 
 import android.graphics.SurfaceTexture;
+import android.opengl.GLES20;
+import android.opengl.Matrix;
 import com.google.mediapipe.components.GlSurfaceViewRenderer;
 import com.google.mediapipe.framework.TextureFrame;
+import com.google.mediapipe.glutil.ShaderUtil;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
@@ -25,9 +28,10 @@ import javax.microedition.khronos.opengles.GL10;
  * MediaPipe Solution's GlSurfaceViewRenderer.
  *
  * <p>Users can provide a custom {@link ResultGlRenderer} for rendering MediaPipe solution results.
- * For setting the latest solution result, call {@link #setRenderData(ImageSolutionResult)}. By
- * default, the renderer renders the input images. Call {@link #setRenderInputImage(boolean)} to
- * explicitly set whether the input images should be rendered or not.
+ * For setting the latest solution result, call {@link #setRenderData(ImageSolutionResult,
+ * boolean)}. By default, the renderer renders the input images. Call {@link
+ * #setRenderInputImage(boolean)} to explicitly set whether the input images should be rendered or
+ * not.
  */
 public class SolutionGlSurfaceViewRenderer<T extends ImageSolutionResult>
     extends GlSurfaceViewRenderer {
@@ -47,14 +51,24 @@ public class SolutionGlSurfaceViewRenderer<T extends ImageSolutionResult>
   }
 
   /**
-   * Sets the next textureframe and solution result to render.
+   * Sets the next input {@link TextureFrame} and solution result to render.
    *
    * @param solutionResult a solution result object that contains the solution outputs and a
    *     textureframe.
+   * @param produceTextureFrames whether to produce and cache all the {@link TextureFrame}s for
+   *     further use.
    */
-  public void setRenderData(T solutionResult) {
-    setNextFrame(solutionResult.acquireTextureFrame());
-    nextSolutionResult.getAndSet(solutionResult);
+  public void setRenderData(T solutionResult, boolean produceTextureFrames) {
+    TextureFrame frame = solutionResult.acquireInputTextureFrame();
+    setFrameSize(frame.getWidth(), frame.getHeight());
+    setNextFrame(frame);
+    if (produceTextureFrames) {
+      solutionResult.produceAllTextureFrames();
+    }
+    T oldSolutionResult = nextSolutionResult.getAndSet(solutionResult);
+    if (oldSolutionResult != null) {
+      oldSolutionResult.releaseCachedTextureFrames();
+    }
   }
 
   @Override
@@ -68,12 +82,33 @@ public class SolutionGlSurfaceViewRenderer<T extends ImageSolutionResult>
     TextureFrame frame = null;
     if (renderInputImage) {
       frame = renderFrame();
+    } else {
+      GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
+      ShaderUtil.checkGlError("glClear");
+      GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
+      ShaderUtil.checkGlError("glActiveTexture");
     }
+    T solutionResult = null;
     if (nextSolutionResult != null) {
-      T solutionResult = nextSolutionResult.getAndSet(null);
-      resultGlRenderer.renderResult(solutionResult);
+      solutionResult = nextSolutionResult.getAndSet(null);
+      float[] textureBoundary = calculateTextureBoundary();
+      float[] projectionMatrix = new float[16];
+      // See {@link ResultGlRenderer#renderResult}.
+      Matrix.orthoM(
+          projectionMatrix, /* result */
+          0, /* offset */
+          textureBoundary[0], /* left */
+          textureBoundary[1], /* right */
+          textureBoundary[3], /* bottom */
+          textureBoundary[2], /* top */
+          -1, /* near */
+          1 /* far */);
+      resultGlRenderer.renderResult(solutionResult, projectionMatrix);
     }
     flush(frame);
+    if (solutionResult != null) {
+      solutionResult.releaseCachedTextureFrames();
+    }
   }
 
   @Override

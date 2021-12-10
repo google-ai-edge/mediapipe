@@ -8,6 +8,11 @@ input_stream: "IMAGE:input_video"
 # Face-related pose landmarks. (NormalizedLandmarkList)
 input_stream: "FACE_LANDMARKS_FROM_POSE:face_landmarks_from_pose"
 
+# Whether to run the face landmark model with attention on lips and eyes to
+# provide more accuracy, and additionally output iris landmarks. If unspecified,
+# functions as set to false. (bool)
+input_side_packet: "REFINE_LANDMARKS:refine_landmarks"
+
 # Face landmarks. (NormalizedLandmarkList)
 output_stream: "FACE_LANDMARKS:face_landmarks"
 
@@ -72,5 +77,6 @@ node {
   calculator: "FaceLandmarkGpu"
   input_stream: "IMAGE:input_video"
   input_stream: "ROI:face_tracking_roi"
+  input_side_packet: "WITH_ATTENTION:refine_landmarks"
   output_stream: "LANDMARKS:face_landmarks"
 }

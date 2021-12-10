@@ -17,6 +17,7 @@
 
 #import <Accelerate/Accelerate.h>
 #import <CoreFoundation/CoreFoundation.h>
+#import <CoreGraphics/CoreGraphics.h>
 #import <CoreVideo/CoreVideo.h>
 
 #include "mediapipe/framework/formats/image_frame.h"
@@ -63,6 +64,13 @@ vImage_Error vImageConvertCVPixelBuffers(CVPixelBufferRef src,
 /// alive while the CVPixelBuffer is in use.
 void ReleaseMediaPipePacket(void* refcon, const void* base_address);
 
+// Create a CVPixelBuffer without using a pool. See pixel_buffer_pool_util.h
+// for creation functions that use pools.
+CVReturn CreateCVPixelBufferWithoutPool(int width, int height, OSType cv_format,
+                                        CVPixelBufferRef* out_buffer);
+absl::StatusOr<CFHolder<CVPixelBufferRef>> CreateCVPixelBufferWithoutPool(
+    int width, int height, OSType cv_format);
+
 /// Returns a CVPixelBuffer that references the data inside the packet. The
 /// packet must contain an ImageFrame. The CVPixelBuffer manages a copy of
 /// the packet, so that the packet's data is kept alive as long as the
@@ -78,6 +86,8 @@ absl::Status CreateCVPixelBufferForImageFramePacket(
 absl::Status CreateCVPixelBufferForImageFramePacket(
     const mediapipe::Packet& image_frame_packet, bool can_overwrite,
     CFHolder<CVPixelBufferRef>* out_buffer);
+absl::StatusOr<CFHolder<CVPixelBufferRef>> CreateCVPixelBufferCopyingImageFrame(
+    const mediapipe::ImageFrame& image_frame);
 
 /// Creates a CVPixelBuffer with a copy of the contents of the CGImage.
 absl::Status CreateCVPixelBufferFromCGImage(

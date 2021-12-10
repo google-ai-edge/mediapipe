@@ -1,0 +1,3056 @@
+diff --git a/tensorflow/lite/delegates/gpu/common/BUILD b/tensorflow/lite/delegates/gpu/common/BUILD
+index c49f2ce731d..d72773c0a5b 100644
+--- a/tensorflow/lite/delegates/gpu/common/BUILD
++++ b/tensorflow/lite/delegates/gpu/common/BUILD
+@@ -173,7 +173,7 @@ cc_library(
+         "//tensorflow/lite/kernels:kernel_util",
+         "//tensorflow/lite/kernels/internal:reference_base",
+         "//tensorflow/lite/kernels/internal:tensor",
+-    ] + tf_platform_alias("custom_parsers", "//tensorflow/lite/delegates/gpu/common/"),
++    ] + ["//tensorflow/lite/delegates/gpu/common/mediapipe:custom_parsers"],
+ )
+ 
+ cc_test(
+diff --git a/tensorflow/lite/delegates/gpu/common/mediapipe/BUILD b/tensorflow/lite/delegates/gpu/common/mediapipe/BUILD
+new file mode 100644
+index 00000000000..58967ddbb66
+--- /dev/null
++++ b/tensorflow/lite/delegates/gpu/common/mediapipe/BUILD
+@@ -0,0 +1,93 @@
++package(
++    default_visibility = ["//visibility:public"],
++    licenses = ["notice"],
++)
++
++cc_library(
++    name = "custom_parsers",
++    srcs = ["custom_parsers.cc"],
++    hdrs = ["//tensorflow/lite/delegates/gpu/common:custom_parsers.h"],
++    deps = [
++        ":landmarks_to_transform_matrix",
++        ":transform_landmarks",
++        ":transform_tensor_bilinear",
++        "//tensorflow/lite/delegates/gpu/common:operation_parser",
++        "//tensorflow/lite/delegates/gpu/common:shape",
++        "//tensorflow/lite/delegates/gpu/common:status",
++        "//tensorflow/lite/delegates/gpu/common:unimplemented_operation_parser",
++        "@com_google_absl//absl/memory",
++        "@com_google_absl//absl/strings",
++        "@com_google_absl//absl/types:any",
++    ],
++)
++
++cc_library(
++    name = "custom_transformations",
++    srcs = ["custom_transformations.cc"],
++    hdrs = ["//tensorflow/lite/delegates/gpu/common:custom_transformations.h"],
++    deps = [
++        ":landmarks_to_transform_matrix",
++        ":transform_landmarks",
++        ":transform_tensor_bilinear",
++        "//tensorflow/lite/delegates/gpu/common:model_transformer",
++        "@com_google_absl//absl/memory",
++    ],
++)
++
++cc_library(
++    name = "landmarks_to_transform_matrix",
++    srcs = ["landmarks_to_transform_matrix.cc"],
++    hdrs = ["landmarks_to_transform_matrix.h"],
++    deps = [
++        "//tensorflow/lite/c:common",
++        "//tensorflow/lite/delegates/gpu/common:model",
++        "//tensorflow/lite/delegates/gpu/common:model_builder_helper",
++        "//tensorflow/lite/delegates/gpu/common:model_transformer",
++        "//tensorflow/lite/delegates/gpu/common:object_reader",
++        "//tensorflow/lite/delegates/gpu/common:operation_parser",
++        "//tensorflow/lite/delegates/gpu/common:shape",
++        "//tensorflow/lite/delegates/gpu/common:status",
++        "//tensorflow/lite/delegates/gpu/common:tensor",
++        "//tensorflow/lite/delegates/gpu/common:types",
++        "@com_google_absl//absl/types:any",
++        "@flatbuffers",
++    ],
++)
++
++cc_library(
++    name = "transform_landmarks",
++    srcs = ["transform_landmarks.cc"],
++    hdrs = ["transform_landmarks.h"],
++    deps = [
++        "//tensorflow/lite/c:common",
++        "//tensorflow/lite/delegates/gpu/common:model",
++        "//tensorflow/lite/delegates/gpu/common:model_builder_helper",
++        "//tensorflow/lite/delegates/gpu/common:model_transformer",
++        "//tensorflow/lite/delegates/gpu/common:object_reader",
++        "//tensorflow/lite/delegates/gpu/common:operation_parser",
++        "//tensorflow/lite/delegates/gpu/common:shape",
++        "//tensorflow/lite/delegates/gpu/common:status",
++        "//tensorflow/lite/delegates/gpu/common:tensor",
++        "@com_google_absl//absl/types:any",
++        "@flatbuffers",
++    ],
++)
++
++cc_library(
++    name = "transform_tensor_bilinear",
++    srcs = ["transform_tensor_bilinear.cc"],
++    hdrs = ["transform_tensor_bilinear.h"],
++    deps = [
++        "//tensorflow/lite/c:common",
++        "//tensorflow/lite/delegates/gpu/common:model",
++        "//tensorflow/lite/delegates/gpu/common:model_builder_helper",
++        "//tensorflow/lite/delegates/gpu/common:model_transformer",
++        "//tensorflow/lite/delegates/gpu/common:object_reader",
++        "//tensorflow/lite/delegates/gpu/common:operation_parser",
++        "//tensorflow/lite/delegates/gpu/common:shape",
++        "//tensorflow/lite/delegates/gpu/common:status",
++        "//tensorflow/lite/delegates/gpu/common:tensor",
++        "@com_google_absl//absl/types:any",
++        "@flatbuffers",
++    ],
++)
+diff --git a/tensorflow/lite/delegates/gpu/common/mediapipe/custom_parsers.cc b/tensorflow/lite/delegates/gpu/common/mediapipe/custom_parsers.cc
+new file mode 100644
+index 00000000000..52c11b90fc8
+--- /dev/null
++++ b/tensorflow/lite/delegates/gpu/common/mediapipe/custom_parsers.cc
+@@ -0,0 +1,34 @@
++#include "tensorflow/lite/delegates/gpu/common/custom_parsers.h"
++
++#include <memory>
++#include <string>
++
++#include "absl/memory/memory.h"
++#include "absl/strings/string_view.h"
++#include "tensorflow/lite/delegates/gpu/common/mediapipe/landmarks_to_transform_matrix.h"
++#include "tensorflow/lite/delegates/gpu/common/mediapipe/transform_landmarks.h"
++#include "tensorflow/lite/delegates/gpu/common/mediapipe/transform_tensor_bilinear.h"
++#include "tensorflow/lite/delegates/gpu/common/operation_parser.h"
++#include "tensorflow/lite/delegates/gpu/common/unimplemented_operation_parser.h"
++
++namespace tflite {
++namespace gpu {
++
++std::unique_ptr<TFLiteOperationParser> NewCustomOperationParser(
++    absl::string_view op_name) {
++  if (op_name == "Landmarks2TransformMatrix" ||
++      op_name == "Landmarks2TransformMatrixV2") {
++    return std::make_unique<LandmarksToTransformMatrixOperationParser>();
++  }
++  if (op_name == "TransformLandmarks") {
++    return std::make_unique<TransformLandmarksOperationParser>();
++  }
++  if (op_name == "TransformTensor" /*for version 1*/ ||
++      op_name == "TransformTensorBilinear" /*for version 2*/) {
++    return std::make_unique<TransformTensorBilinearOperationParser>();
++  }
++  return absl::make_unique<UnimplementedOperationParser>(op_name);
++}
++
++}  // namespace gpu
++}  // namespace tflite
+diff --git a/tensorflow/lite/delegates/gpu/common/mediapipe/custom_transformations.cc b/tensorflow/lite/delegates/gpu/common/mediapipe/custom_transformations.cc
+new file mode 100644
+index 00000000000..1509ea3bcf3
+--- /dev/null
++++ b/tensorflow/lite/delegates/gpu/common/mediapipe/custom_transformations.cc
+@@ -0,0 +1,24 @@
++#include "tensorflow/lite/delegates/gpu/common/custom_transformations.h"
++
++#include "absl/memory/memory.h"
++#include "tensorflow/lite/delegates/gpu/common/mediapipe/landmarks_to_transform_matrix.h"
++#include "tensorflow/lite/delegates/gpu/common/mediapipe/transform_landmarks.h"
++#include "tensorflow/lite/delegates/gpu/common/mediapipe/transform_tensor_bilinear.h"
++#include "tensorflow/lite/delegates/gpu/common/model_transformer.h"
++
++namespace tflite {
++namespace gpu {
++bool ApplyCustomTransformations(ModelTransformer* transformer) {
++  return transformer->Apply(
++             "transform_landmarks_v2_to_v1",
++             absl::make_unique<TransformLandmarksV2ToV1>().get()) &&
++         transformer->Apply(
++             "transform_tensor_bilinear_v2_to_v1",
++             absl::make_unique<TransformTensorBilinearV2ToV1>().get()) &&
++         transformer->Apply(
++             "landmarks_to_transform_matrix_v2_with_mul",
++             absl::make_unique<LandmarksToTransformMatrixV2ToV2WithMul>()
++                 .get());
++}
++}  // namespace gpu
++}  // namespace tflite
+diff --git a/tensorflow/lite/delegates/gpu/common/mediapipe/landmarks_to_transform_matrix.cc b/tensorflow/lite/delegates/gpu/common/mediapipe/landmarks_to_transform_matrix.cc
+new file mode 100644
+index 00000000000..4e73cf649e6
+--- /dev/null
++++ b/tensorflow/lite/delegates/gpu/common/mediapipe/landmarks_to_transform_matrix.cc
+@@ -0,0 +1,182 @@
++#include "tensorflow/lite/delegates/gpu/common/mediapipe/landmarks_to_transform_matrix.h"
++
++#include <cstdint>
++#include <string>
++#include <vector>
++
++#include "absl/types/any.h"
++#include "flatbuffers/flexbuffers.h"
++#include "tensorflow/lite/delegates/gpu/common/model.h"
++#include "tensorflow/lite/delegates/gpu/common/model_builder_helper.h"
++#include "tensorflow/lite/delegates/gpu/common/object_reader.h"
++#include "tensorflow/lite/delegates/gpu/common/operation_parser.h"
++#include "tensorflow/lite/delegates/gpu/common/shape.h"
++#include "tensorflow/lite/delegates/gpu/common/status.h"
++#include "tensorflow/lite/delegates/gpu/common/tensor.h"
++#include "tensorflow/lite/delegates/gpu/common/types.h"
++
++namespace tflite {
++namespace gpu {
++
++absl::Status LandmarksToTransformMatrixOperationParser::IsSupported(
++    const TfLiteContext* context, const TfLiteNode* tflite_node,
++    const TfLiteRegistration* registration) {
++  RETURN_IF_ERROR(CheckMaxSupportedOpVersion(registration, 2));
++  return CheckInputsOutputs(context, tflite_node, /*runtime_inputs=*/1,
++                            /*outputs=*/1);
++}
++
++absl::Status LandmarksToTransformMatrixOperationParser::Parse(
++    const TfLiteNode* tflite_node, const TfLiteRegistration* registration,
++    GraphFloat32* graph, ObjectReader* reader) {
++  Node* node = graph->NewNode();
++  RETURN_IF_ERROR(reader->AddInput(node, 0));  // landmarks
++  RETURN_IF_ERROR(reader->AddOutputs(node));   // transform matrix
++
++  node->operation.type = kLandmarksToTransformMatrixType;
++  BHWC output_shape;
++  if (registration->version == 2) {
++    LandmarksToTransformMatrixV2Attributes attr;
++    RETURN_IF_ERROR(ParseLandmarksToTransformMatrixV2Attributes(
++        tflite_node->custom_initial_data, tflite_node->custom_initial_data_size,
++        &attr, &output_shape));
++    node->operation.attributes = attr;
++  } else if (registration->version == 1) {
++    LandmarksToTransformMatrixV1Attributes attr;
++    RETURN_IF_ERROR(ParseLandmarksToTransformMatrixV1Attributes(
++        tflite_node->custom_initial_data, tflite_node->custom_initial_data_size,
++        &attr, &output_shape));
++    node->operation.attributes = attr;
++  } else {
++    return absl::UnimplementedError(
++        "Landmarks To Transform Matrix operation can be of version 1 or 2 "
++        "only.");
++  }
++
++  auto output_value = graph->FindOutputs(node->id)[0];
++  output_value->tensor.shape = output_shape;
++  return absl::OkStatus();
++}
++
++absl::Status ParseLandmarksToTransformMatrixV1Attributes(
++    const void* data, uint32_t data_size,
++    LandmarksToTransformMatrixV1Attributes* attr, BHWC* output_shape) {
++  const flexbuffers::Map m =
++      flexbuffers::GetRoot(reinterpret_cast<const uint8_t*>(data), data_size)
++          .AsMap();
++
++  const auto input_hw = m["input_hw"].AsTypedVector();
++  attr->input_hw = HW(input_hw[0].AsInt32(), input_hw[1].AsInt32());
++
++  const auto output_hw = m["output_hw"].AsTypedVector();
++  attr->output_hw = HW(output_hw[0].AsInt32(), output_hw[1].AsInt32());
++
++  attr->dimensions = m["dimensions"].AsInt32();
++  attr->landmarks_range = m["landmarks_range"].AsInt32();
++  attr->bbox_size_multiplier = m["bbox_size_multiplier"].AsFloat();
++  attr->left_rotation_idx = m["left_rotation_idx"].AsInt32();
++  attr->right_rotation_idx = m["right_rotation_idx"].AsInt32();
++
++  const auto subset = m["subset"].AsTypedVector();
++  for (int i = 0; i < subset.size() / 2; i++) {
++    attr->subset.emplace_back(subset[i * 2].AsInt32(),
++                              subset[i * 2 + 1].AsInt32());
++  }
++  if (subset.size() % 2 != 0) {
++    attr->subset.emplace_back(subset[subset.size() - 1].AsInt32(),
++                              subset[subset.size() - 1].AsInt32());
++  }
++  *output_shape = BHWC(1, 1, 4, 4);
++  return absl::OkStatus();
++}
++
++absl::Status ParseLandmarksToTransformMatrixV2Attributes(
++    const void* data, uint32_t data_size,
++    LandmarksToTransformMatrixV2Attributes* attr, BHWC* output_shape) {
++  const flexbuffers::Map m =
++      flexbuffers::GetRoot(reinterpret_cast<const uint8_t*>(data), data_size)
++          .AsMap();
++  const auto subset_idxs = m["subset_idxs"].AsTypedVector();
++  int amount = subset_idxs.size();
++  for (int i = 0; i < amount / 2; i++) {
++    attr->subset_idxs.emplace_back(subset_idxs[i * 2].AsInt32(),
++                                   subset_idxs[i * 2 + 1].AsInt32());
++  }
++  if (amount % 2 != 0) {
++    int previous = amount - 1;
++    attr->subset_idxs.emplace_back(subset_idxs[previous].AsInt32(),
++                                   subset_idxs[previous].AsInt32());
++  }
++  attr->left_rotation_idx = m["left_rotation_idx"].AsInt32();
++  attr->right_rotation_idx = m["right_rotation_idx"].AsInt32();
++  attr->target_rotation_radians = m["target_rotation_radians"].AsFloat();
++  attr->output_height = m["output_height"].AsInt32();
++  attr->output_width = m["output_width"].AsInt32();
++  attr->scale_x = m["scale_x"].AsFloat();
++  attr->scale_y = m["scale_y"].AsFloat();
++
++  *output_shape = BHWC(1, 1, 4, 4);
++  return absl::OkStatus();
++}
++
++TransformResult LandmarksToTransformMatrixV2ToV2WithMul::ApplyToNode(
++    Node* node, GraphFloat32* graph) {
++  // Recognize Landmarks2TransformMatrix.v2 as a root operation of this
++  // transformation.
++  if (node->operation.type != kLandmarksToTransformMatrixType) {
++    return {TransformStatus::SKIPPED, ""};
++  }
++  auto* landmarks2tm_attr =
++      absl::any_cast<LandmarksToTransformMatrixV2Attributes>(
++          &node->operation.attributes);
++  if (!landmarks2tm_attr) {
++    return {TransformStatus::SKIPPED, ""};
++  }
++  auto node_inputs = graph->FindInputs(node->id);
++  if (node_inputs.size() != 1) {
++    return {TransformStatus::SKIPPED, ""};
++  }
++  // Recognize preeceding scalar Mul operation and save the value.
++  auto mul = graph->FindProducer(node_inputs[0]->id);
++  if (mul->operation.type != ToString(OperationType::MUL)) {
++    return {TransformStatus::SKIPPED, ""};
++  }
++  const auto& mul_attr =
++      absl::any_cast<const ElementwiseAttributes&>(mul->operation.attributes);
++  float scalar = 0.0;
++  if (!absl::holds_alternative<float>(mul_attr.param)) {
++    return {TransformStatus::SKIPPED, ""};
++  } else {
++    scalar = absl::get<float>(mul_attr.param);
++  }
++  auto mul_inputs = graph->FindInputs(mul->id);
++  if (mul_inputs.size() != 1) {
++    return {TransformStatus::SKIPPED, ""};
++  }
++  // Recognize preceding reshape.
++  auto reshape = graph->FindProducer(mul_inputs[0]->id);
++  if (reshape->operation.type != ToString(OperationType::RESHAPE)) {
++    return {TransformStatus::SKIPPED, ""};
++  }
++  // Start modifying the graph.
++  {
++    absl::Status status = RemoveSimpleNodeKeepInput(graph, reshape);
++    if (!status.ok()) {
++      return {TransformStatus::INVALID,
++              "Unable to remove a node: " + std::string(status.message())};
++    }
++  }
++  {
++    absl::Status status = RemoveSimpleNodeKeepInput(graph, mul);
++    if (!status.ok()) {
++      return {TransformStatus::INVALID,
++              "Unable to remove a node: " + std::string(status.message())};
++    }
++  }
++  // Update LandmarksToTransformMatrix attributes with a stored multiplier.
++  landmarks2tm_attr->multiplier = scalar;
++  return {TransformStatus::APPLIED, ""};
++}
++
++}  // namespace gpu
++}  // namespace tflite
+diff --git a/tensorflow/lite/delegates/gpu/common/mediapipe/landmarks_to_transform_matrix.h b/tensorflow/lite/delegates/gpu/common/mediapipe/landmarks_to_transform_matrix.h
+new file mode 100644
+index 00000000000..78c72aea123
+--- /dev/null
++++ b/tensorflow/lite/delegates/gpu/common/mediapipe/landmarks_to_transform_matrix.h
+@@ -0,0 +1,96 @@
++#ifndef TENSORFLOW_LITE_DELEGATES_GPU_COMMON_MEDIAPIPE_LANDMARKS_TO_TRANSFORM_MATRIX_H_
++#define TENSORFLOW_LITE_DELEGATES_GPU_COMMON_MEDIAPIPE_LANDMARKS_TO_TRANSFORM_MATRIX_H_
++
++#include <cstdint>
++#include <vector>
++
++#include "absl/types/any.h"
++#include "tensorflow/lite/delegates/gpu/common/model.h"
++#include "tensorflow/lite/delegates/gpu/common/model_transformer.h"
++#include "tensorflow/lite/delegates/gpu/common/object_reader.h"
++#include "tensorflow/lite/delegates/gpu/common/operation_parser.h"
++#include "tensorflow/lite/delegates/gpu/common/shape.h"
++#include "tensorflow/lite/delegates/gpu/common/status.h"
++#include "tensorflow/lite/delegates/gpu/common/types.h"
++
++namespace tflite {
++namespace gpu {
++
++constexpr const char kLandmarksToTransformMatrixType[] =
++    "landmarks_to_transform_matrix";
++
++struct LandmarksToTransformMatrixV1Attributes {
++  int dimensions;
++  int landmarks_range;
++  int left_rotation_idx;
++  int right_rotation_idx;
++  float bbox_size_multiplier;
++  HW input_hw;
++  HW output_hw;
++  std::vector<int2> subset;
++};
++
++struct LandmarksToTransformMatrixV2Attributes {
++  std::vector<int2> subset_idxs;
++  int left_rotation_idx;
++  int right_rotation_idx;
++  float target_rotation_radians;
++  int output_height;
++  int output_width;
++  float scale_x;
++  float scale_y;
++  float multiplier = 1.0;
++};
++
++class LandmarksToTransformMatrixOperationParser : public TFLiteOperationParser {
++ public:
++  absl::Status IsSupported(const TfLiteContext* context,
++                           const TfLiteNode* tflite_node,
++                           const TfLiteRegistration* registration) final;
++  absl::Status Parse(const TfLiteNode* tflite_node,
++                     const TfLiteRegistration* registration,
++                     GraphFloat32* graph, ObjectReader* reader) final;
++};
++
++absl::Status ParseLandmarksToTransformMatrixV1Attributes(
++    const void* data, uint32_t data_size,
++    LandmarksToTransformMatrixV1Attributes* attr, BHWC* output_shape);
++
++absl::Status ParseLandmarksToTransformMatrixV2Attributes(
++    const void* data, uint32_t data_size,
++    LandmarksToTransformMatrixV2Attributes* attr, BHWC* output_shape);
++
++// Converts subgraph of Reshape + Mul + Landmarks2TransformMatrix.v2 into
++// Landmarks2TransformMatrix.v2 with multiplier:
++// Source subgraph:
++//
++//        Value_0 [1, 1, 1, 30]
++//                |
++//             Reshape
++//                |
++//        Value_1 [1, 10, 3]
++//                |
++//          Mul (* 0.25)
++//                |
++//        Value_2 [1, 10, 3]
++//                |
++//    Landmarks2TransformMatrix.v2
++//                |
++//        Value_3 [1, 1, 4]
++//
++// Resulting subgraph:
++//
++//        Value_0 [1, 1, 1, 30]
++//                |
++//    Landmarks2TransformMatrix.v2
++//                |
++//        Value_3 [1, 1, 4]
++class LandmarksToTransformMatrixV2ToV2WithMul : public NodeTransformation {
++ public:
++  TransformResult ApplyToNode(Node* node, GraphFloat32* graph) final;
++};
++
++}  // namespace gpu
++}  // namespace tflite
++
++#endif  // TENSORFLOW_LITE_DELEGATES_GPU_COMMON_MEDIAPIPE_LANDMARKS_TO_TRANSFORM_MATRIX_H_
+diff --git a/tensorflow/lite/delegates/gpu/common/mediapipe/transform_landmarks.cc b/tensorflow/lite/delegates/gpu/common/mediapipe/transform_landmarks.cc
+new file mode 100644
+index 00000000000..fba7e742998
+--- /dev/null
++++ b/tensorflow/lite/delegates/gpu/common/mediapipe/transform_landmarks.cc
+@@ -0,0 +1,169 @@
++#include "tensorflow/lite/delegates/gpu/common/mediapipe/transform_landmarks.h"
++
++#include <cstdint>
++#include <string>
++#include <vector>
++
++#include "absl/types/any.h"
++#include "flatbuffers/flexbuffers.h"
++#include "tensorflow/lite/delegates/gpu/common/model.h"
++#include "tensorflow/lite/delegates/gpu/common/model_builder_helper.h"
++#include "tensorflow/lite/delegates/gpu/common/object_reader.h"
++#include "tensorflow/lite/delegates/gpu/common/operation_parser.h"
++#include "tensorflow/lite/delegates/gpu/common/shape.h"
++#include "tensorflow/lite/delegates/gpu/common/status.h"
++#include "tensorflow/lite/delegates/gpu/common/tensor.h"
++
++namespace tflite {
++namespace gpu {
++
++absl::Status TransformLandmarksOperationParser::IsSupported(
++    const TfLiteContext* context, const TfLiteNode* tflite_node,
++    const TfLiteRegistration* registration) {
++  RETURN_IF_ERROR(CheckMaxSupportedOpVersion(registration, 2));
++  RETURN_IF_ERROR(CheckInputsOutputs(context, tflite_node,
++                                     /*runtime_inputs=*/2, /*outputs=*/1));
++  return absl::OkStatus();
++}
++
++absl::Status TransformLandmarksOperationParser::Parse(
++    const TfLiteNode* tflite_node, const TfLiteRegistration* registration,
++    GraphFloat32* graph, ObjectReader* reader) {
++  Node* node = graph->NewNode();
++  RETURN_IF_ERROR(reader->AddInput(node, 0));  // data
++  RETURN_IF_ERROR(reader->AddInput(node, 1));  // bbox
++  RETURN_IF_ERROR(reader->AddOutputs(node));
++  node->operation.type = kTransformLandmarksType;
++  BHWC output_shape = graph->FindOutputs(node->id)[0]->tensor.shape;
++  if (registration->version == 2) {
++    TransformLandmarksAttributes attr;
++    RETURN_IF_ERROR(ParseTransformLandmarksV2Attributes(
++        tflite_node->custom_initial_data, tflite_node->custom_initial_data_size,
++        &attr, &output_shape));
++    node->operation.attributes = attr;
++  } else if (registration->version == 1) {
++    TransformLandmarksAttributes attr;
++    RETURN_IF_ERROR(ParseTransformLandmarksV1Attributes(
++        tflite_node->custom_initial_data, tflite_node->custom_initial_data_size,
++        &attr, &output_shape));
++    node->operation.attributes = attr;
++  } else {
++    return absl::UnimplementedError(
++        "Transform Landmarks operation can be of version 1 or 2 only.");
++  }
++
++  auto output_value = graph->FindOutputs(node->id)[0];
++
++  output_value->tensor.shape = graph->FindInputs(node->id)[0]->tensor.shape;
++  return absl::OkStatus();
++}
++
++absl::Status ParseTransformLandmarksV1Attributes(
++    const void* data, uint32_t data_size, TransformLandmarksAttributes* attr,
++    BHWC* output_shape) {
++  attr->version = 1;
++
++  const flexbuffers::Map m =
++      flexbuffers::GetRoot(reinterpret_cast<const uint8_t*>(data), data_size)
++          .AsMap();
++  const flexbuffers::TypedVector keys = m.Keys();
++
++  for (int k = 0; k < keys.size(); ++k) {
++    const std::string key = keys[k].ToString();
++    const auto value = m[key];
++    if (key == "dimensions") {
++      attr->dimensions = value.AsInt32();
++    }
++    if (key == "scale") {
++      attr->scale = value.AsFloat();
++    }
++  }
++  return absl::OkStatus();
++}
++
++absl::Status ParseTransformLandmarksV2Attributes(
++    const void* data, uint32_t data_size, TransformLandmarksAttributes* attr,
++    BHWC* output_shape) {
++  attr->version = 2;
++  attr->dimensions = output_shape->c;
++  attr->scale = 1.0;
++
++  return absl::OkStatus();
++}
++
++TransformResult TransformLandmarksV2ToV1::ApplyToNode(Node* node,
++                                                      GraphFloat32* graph) {
++  // Recognize suitable Transform Landmarks operation.
++  if (node->operation.type != kTransformLandmarksType) {
++    return {TransformStatus::SKIPPED, ""};
++  }
++  TransformLandmarksAttributes transform_landmarks_attr =
++      absl::any_cast<TransformLandmarksAttributes>(node->operation.attributes);
++  if (transform_landmarks_attr.version != 2) {
++    return {TransformStatus::SKIPPED,
++            "Transform Landmarks operation should be of version 2."};
++  }
++
++  // Recognize suitable preceding Reshape.
++  std::vector<Value*> transform_landmarks_inputs = graph->FindInputs(node->id);
++  if (transform_landmarks_inputs.size() != 2) {
++    return {TransformStatus::SKIPPED,
++            "Transform Landmarks operation should have two inputs."};
++  }
++  Value* landmarks_input_tensor = transform_landmarks_inputs[1];
++  if (transform_landmarks_inputs[1]->tensor.shape == BHWC(1, 1, 4, 4)) {
++    landmarks_input_tensor = transform_landmarks_inputs[0];
++  }
++  Node* preceding_reshape = graph->FindProducer(landmarks_input_tensor->id);
++  if (preceding_reshape->operation.type != ToString(OperationType::RESHAPE)) {
++    return {TransformStatus::SKIPPED,
++            "Expected Reshape node to be a producer of the transformation "
++            "matrix input."};
++  }
++
++  // Recognize suitable succeeding Reshape.
++  std::vector<Value*> transform_landmarks_outputs =
++      graph->FindOutputs(node->id);
++  if (transform_landmarks_outputs.size() != 1) {
++    return {TransformStatus::SKIPPED,
++            "Transform Landmarks operation should have one output."};
++  }
++  Value* landmarks_output_tensor = transform_landmarks_outputs[0];
++  std::vector<Node*> landmarks__output_consumers =
++      graph->FindConsumers(landmarks_output_tensor->id);
++  if (landmarks__output_consumers.size() != 1) {
++    return {TransformStatus::SKIPPED,
++            "Transform Landmarks output should be consumed by one operation."};
++  }
++  Node* succeeding_reshape = landmarks__output_consumers[0];
++  if (succeeding_reshape->operation.type != ToString(OperationType::RESHAPE)) {
++    return {TransformStatus::SKIPPED,
++            "Expected Reshape node to be a consumer of the Transform "
++            "Landmarks operation's output value."};
++  }
++
++  // Delete preceding and succeding Reshape operations.
++  absl::Status removed_preceding =
++      RemoveSimpleNodeKeepInput(graph, preceding_reshape);
++  if (!removed_preceding.ok()) {
++    return {TransformStatus::INVALID,
++            "Unable to remove a preceding Reshape node: " +
++                std::string(removed_preceding.message())};
++  }
++  absl::Status removed_succeeding =
++      RemoveSimpleNodeKeepOutput(graph, succeeding_reshape);
++  if (!removed_succeeding.ok()) {
++    return {TransformStatus::INVALID,
++            "Unable to remove a succeeding Reshape node: " +
++                std::string(removed_succeeding.message())};
++  }
++
++  // Switch Transform Landmarks operation back to version 1.
++  transform_landmarks_attr.version = 1;
++  node->operation.attributes = transform_landmarks_attr;
++
++  return {TransformStatus::APPLIED, ""};
++}
++
++}  // namespace gpu
++}  // namespace tflite
+diff --git a/tensorflow/lite/delegates/gpu/common/mediapipe/transform_landmarks.h b/tensorflow/lite/delegates/gpu/common/mediapipe/transform_landmarks.h
+new file mode 100644
+index 00000000000..f804e14e55d
+--- /dev/null
++++ b/tensorflow/lite/delegates/gpu/common/mediapipe/transform_landmarks.h
+@@ -0,0 +1,74 @@
++#ifndef TENSORFLOW_LITE_DELEGATES_GPU_COMMON_MEDIAPIPE_TRANSFORM_LANDMARKS_H_
++#define TENSORFLOW_LITE_DELEGATES_GPU_COMMON_MEDIAPIPE_TRANSFORM_LANDMARKS_H_
++
++#include <cstdint>
++
++#include "absl/types/any.h"
++#include "tensorflow/lite/delegates/gpu/common/model.h"
++#include "tensorflow/lite/delegates/gpu/common/model_transformer.h"
++#include "tensorflow/lite/delegates/gpu/common/object_reader.h"
++#include "tensorflow/lite/delegates/gpu/common/operation_parser.h"
++#include "tensorflow/lite/delegates/gpu/common/shape.h"
++#include "tensorflow/lite/delegates/gpu/common/status.h"
++
++namespace tflite {
++namespace gpu {
++
++constexpr const char kTransformLandmarksType[] = "transform_landmarks";
++
++struct TransformLandmarksAttributes {
++  int dimensions = 3;
++  float scale = 1.0;
++  int version = 0;
++};
++
++class TransformLandmarksOperationParser : public TFLiteOperationParser {
++ public:
++  absl::Status IsSupported(const TfLiteContext* context,
++                           const TfLiteNode* tflite_node,
++                           const TfLiteRegistration* registration) final;
++  absl::Status Parse(const TfLiteNode* tflite_node,
++                     const TfLiteRegistration* registration,
++                     GraphFloat32* graph, ObjectReader* reader) final;
++};
++
++absl::Status ParseTransformLandmarksV1Attributes(
++    const void* data, uint32_t data_size, TransformLandmarksAttributes* attr,
++    BHWC* output_shape);
++
++absl::Status ParseTransformLandmarksV2Attributes(
++    const void* data, uint32_t data_size, TransformLandmarksAttributes* attr,
++    BHWC* output_shape);
++
++// Removes reshapes from subgraph:
++//
++//  Value_0 [1, 1, 1, 240]
++//           |
++//        Reshape
++//           |
++//  Value_1 [1, 1, 80, 3]   Value_2 [1, 1, 4, 4]
++//            \                      /
++//         TransformLandmarks.version_2
++//                       |
++//               Value_3 [1, 1, 80, 3]
++//                       |
++//                    Reshape
++//                       |
++//               Value_4 [1, 1, 1, 240]
++//
++// Resulting subgraph is:
++//
++//  Value_0 [1, 1, 1, 240]   Value_2 [1, 1, 4, 4]
++//            \                      /
++//         TransformLandmarks.version_1
++//                       |
++//               Value_4 [1, 1, 1, 240]
++class TransformLandmarksV2ToV1 : public NodeTransformation {
++ public:
++  TransformResult ApplyToNode(Node* node, GraphFloat32* graph) final;
++};
++
++}  // namespace gpu
++}  // namespace tflite
++
++#endif  // TENSORFLOW_LITE_DELEGATES_GPU_COMMON_MEDIAPIPE_TRANSFORM_LANDMARKS_H_
+diff --git a/tensorflow/lite/delegates/gpu/common/mediapipe/transform_tensor_bilinear.cc b/tensorflow/lite/delegates/gpu/common/mediapipe/transform_tensor_bilinear.cc
+new file mode 100644
+index 00000000000..704ce7d4a47
+--- /dev/null
++++ b/tensorflow/lite/delegates/gpu/common/mediapipe/transform_tensor_bilinear.cc
+@@ -0,0 +1,142 @@
++#include "tensorflow/lite/delegates/gpu/common/mediapipe/transform_tensor_bilinear.h"
++
++#include <cstdint>
++#include <string>
++#include <utility>
++#include <vector>
++
++#include "absl/types/any.h"
++#include "flatbuffers/flexbuffers.h"
++#include "tensorflow/lite/delegates/gpu/common/model.h"
++#include "tensorflow/lite/delegates/gpu/common/model_builder_helper.h"
++#include "tensorflow/lite/delegates/gpu/common/object_reader.h"
++#include "tensorflow/lite/delegates/gpu/common/operation_parser.h"
++#include "tensorflow/lite/delegates/gpu/common/shape.h"
++#include "tensorflow/lite/delegates/gpu/common/status.h"
++#include "tensorflow/lite/delegates/gpu/common/tensor.h"
++
++namespace tflite {
++namespace gpu {
++
++absl::Status TransformTensorBilinearOperationParser::IsSupported(
++    const TfLiteContext* context, const TfLiteNode* tflite_node,
++    const TfLiteRegistration* registration) {
++  RETURN_IF_ERROR(CheckMaxSupportedOpVersion(registration, 2));
++  RETURN_IF_ERROR(CheckInputsOutputs(context, tflite_node,
++                                     /*runtime_inputs=*/2, /*outputs=*/1));
++  return absl::OkStatus();
++}
++
++absl::Status TransformTensorBilinearOperationParser::Parse(
++    const TfLiteNode* tflite_node, const TfLiteRegistration* registration,
++    GraphFloat32* graph, ObjectReader* reader) {
++  Node* node = graph->NewNode();
++  RETURN_IF_ERROR(reader->AddInput(node, 0));  // data
++  RETURN_IF_ERROR(reader->AddInput(node, 1));  // bbox
++  RETURN_IF_ERROR(reader->AddOutputs(node));
++
++  node->operation.type = kTransformTensorBilinearType;
++  BHWC output_shape;
++  if (registration->version == 2) {
++    TransformTensorBilinearAttributes attr;
++    RETURN_IF_ERROR(ParseTransformTensorBilinearV2Attributes(
++        tflite_node->custom_initial_data, tflite_node->custom_initial_data_size,
++        &attr, &output_shape));
++    node->operation.attributes = attr;
++  } else if (registration->version == 1) {
++    TransformTensorBilinearAttributes attr;
++    RETURN_IF_ERROR(ParseTransformTensorBilinearV1Attributes(
++        tflite_node->custom_initial_data, tflite_node->custom_initial_data_size,
++        &attr, &output_shape));
++    node->operation.attributes = attr;
++  } else {
++    return absl::UnimplementedError(
++        "Transform Tensor Bilinear operation can be of version 1 or 2 only.");
++  }
++
++  auto output_value = graph->FindOutputs(node->id)[0];
++
++  output_value->tensor.shape =
++      BHWC(1, output_shape.h, output_shape.w,
++           graph->FindInputs(node->id)[0]->tensor.shape.c);
++  return absl::OkStatus();
++}
++
++absl::Status ParseTransformTensorBilinearV1Attributes(
++    const void* data, uint32_t data_size,
++    TransformTensorBilinearAttributes* attr, BHWC* output_shape) {
++  attr->version = 1;
++
++  const flexbuffers::Map m =
++      flexbuffers::GetRoot(reinterpret_cast<const uint8_t*>(data), data_size)
++          .AsMap();
++  const flexbuffers::TypedVector keys = m.Keys();
++
++  for (int k = 0; k < keys.size(); ++k) {
++    const std::string key = keys[k].ToString();
++    const auto value = m[key];
++    if (key == "mode") {
++      if (value.AsString().str() != "bilinear") {
++        return absl::UnimplementedError(
++            "TransformTensor operation supports only bilinear interpolation.");
++      }
++    }
++
++    if (key == "output_size") {
++      attr->output_size = HW(value.AsTypedVector()[0].AsInt32(),
++                             value.AsTypedVector()[1].AsInt32());
++    }
++  }
++  attr->align_corners = false;
++  *output_shape = BHWC(1, attr->output_size.h, attr->output_size.w, 1);
++  return absl::OkStatus();
++}
++
++absl::Status ParseTransformTensorBilinearV2Attributes(
++    const void* data, uint32_t data_size,
++    TransformTensorBilinearAttributes* attr, BHWC* output_shape) {
++  attr->version = 2;
++
++  const flexbuffers::Map m =
++      flexbuffers::GetRoot(reinterpret_cast<const uint8_t*>(data), data_size)
++          .AsMap();
++  const flexbuffers::TypedVector keys = m.Keys();
++  HW output_size;
++  for (int k = 0; k < keys.size(); ++k) {
++    const std::string key = keys[k].ToString();
++    const auto value = m[key];
++    if (key == "output_height") {
++      output_size.h = value.AsInt32();
++    }
++    if (key == "output_width") {
++      output_size.w = value.AsInt32();
++    }
++  }
++  attr->output_size = std::move(output_size);
++  attr->align_corners = true;
++  *output_shape = BHWC(1, attr->output_size.h, attr->output_size.w, 1);
++  return absl::OkStatus();
++}
++
++TransformResult TransformTensorBilinearV2ToV1::ApplyToNode(
++    Node* node, GraphFloat32* graph) {
++  if (node->operation.type != kTransformTensorBilinearType) {
++    return {TransformStatus::SKIPPED, ""};
++  }
++  TransformTensorBilinearAttributes transform_tensor_attr =
++      absl::any_cast<TransformTensorBilinearAttributes>(
++          node->operation.attributes);
++
++  if (transform_tensor_attr.version != 2) {
++    return {TransformStatus::SKIPPED,
++            "Transform Tensor Bilinear operation should be of version 2."};
++  }
++  transform_tensor_attr.version = 1;
++  transform_tensor_attr.align_corners = true;
++  node->operation.attributes = transform_tensor_attr;
++
++  return {TransformStatus::APPLIED, ""};
++}
++
++}  // namespace gpu
++}  // namespace tflite
+diff --git a/tensorflow/lite/delegates/gpu/common/mediapipe/transform_tensor_bilinear.h b/tensorflow/lite/delegates/gpu/common/mediapipe/transform_tensor_bilinear.h
+new file mode 100644
+index 00000000000..8a1f840c12f
+--- /dev/null
++++ b/tensorflow/lite/delegates/gpu/common/mediapipe/transform_tensor_bilinear.h
+@@ -0,0 +1,54 @@
++#ifndef TENSORFLOW_LITE_DELEGATES_GPU_COMMON_MEDIAPIPE_TRANSFORM_TENSOR_BILINEAR_H_
++#define TENSORFLOW_LITE_DELEGATES_GPU_COMMON_MEDIAPIPE_TRANSFORM_TENSOR_BILINEAR_H_
++
++#include <cstdint>
++
++#include "absl/types/any.h"
++#include "tensorflow/lite/delegates/gpu/common/model.h"
++#include "tensorflow/lite/delegates/gpu/common/model_transformer.h"
++#include "tensorflow/lite/delegates/gpu/common/object_reader.h"
++#include "tensorflow/lite/delegates/gpu/common/operation_parser.h"
++#include "tensorflow/lite/delegates/gpu/common/shape.h"
++#include "tensorflow/lite/delegates/gpu/common/status.h"
++
++namespace tflite {
++namespace gpu {
++
++constexpr const char kTransformTensorBilinearType[] =
++    "transform_tensor_bilinear";
++
++struct TransformTensorBilinearAttributes {
++  HW output_size;
++  bool align_corners = false;
++  int version = 0;
++};
++
++class TransformTensorBilinearOperationParser : public TFLiteOperationParser {
++ public:
++  absl::Status IsSupported(const TfLiteContext* context,
++                           const TfLiteNode* tflite_node,
++                           const TfLiteRegistration* registration) final;
++  absl::Status Parse(const TfLiteNode* tflite_node,
++                     const TfLiteRegistration* registration,
++                     GraphFloat32* graph, ObjectReader* reader) final;
++};
++
++absl::Status ParseTransformTensorBilinearV1Attributes(
++    const void* data, uint32_t data_size,
++    TransformTensorBilinearAttributes* attr, BHWC* output_shape);
++
++absl::Status ParseTransformTensorBilinearV2Attributes(
++    const void* data, uint32_t data_size,
++    TransformTensorBilinearAttributes* attr, BHWC* output_shape);
++
++// Converts Transform Tensor Bilinear operation of version 2 to version 1 with
++// align corners parameter set to true.
++class TransformTensorBilinearV2ToV1 : public NodeTransformation {
++ public:
++  TransformResult ApplyToNode(Node* node, GraphFloat32* graph) final;
++};
++
++}  // namespace gpu
++}  // namespace tflite
++
++#endif  // TENSORFLOW_LITE_DELEGATES_GPU_COMMON_MEDIAPIPE_TRANSFORM_TENSOR_BILINEAR_H_
+diff --git a/tensorflow/lite/delegates/gpu/common/selectors/BUILD b/tensorflow/lite/delegates/gpu/common/selectors/BUILD
+index ec6c2281b9e..26cf9aab1a9 100644
+--- a/tensorflow/lite/delegates/gpu/common/selectors/BUILD
++++ b/tensorflow/lite/delegates/gpu/common/selectors/BUILD
+@@ -45,9 +45,9 @@ cc_library(
+         "//tensorflow/lite/delegates/gpu/common:model",
+         "//tensorflow/lite/delegates/gpu/common:model_hints",
+         "//tensorflow/lite/delegates/gpu/common:status",
++        "//tensorflow/lite/delegates/gpu/common/selectors/mediapipe:default_selector",
+         "//tensorflow/lite/delegates/gpu/common/task:gpu_operation",
+         "//tensorflow/lite/delegates/gpu/common/task:tensor_desc",
+-        _selectors_package + ":default_selector",
+     ],
+ )
+ 
+diff --git a/tensorflow/lite/delegates/gpu/common/selectors/mediapipe/BUILD b/tensorflow/lite/delegates/gpu/common/selectors/mediapipe/BUILD
+new file mode 100644
+index 00000000000..d5a28d6f72e
+--- /dev/null
++++ b/tensorflow/lite/delegates/gpu/common/selectors/mediapipe/BUILD
+@@ -0,0 +1,21 @@
++package(
++    default_visibility = ["//visibility:public"],
++    licenses = ["notice"],
++)
++
++cc_library(
++    name = "default_selector",
++    srcs = ["default_selector.cc"],
++    deps = [
++        "//tensorflow/lite/delegates/gpu/common:model",
++        "//tensorflow/lite/delegates/gpu/common:model_hints",
++        "//tensorflow/lite/delegates/gpu/common:operations",
++        "//tensorflow/lite/delegates/gpu/common:status",
++        "//tensorflow/lite/delegates/gpu/common/selectors:subgraph",
++        "//tensorflow/lite/delegates/gpu/common/task:gpu_operation",
++        "//tensorflow/lite/delegates/gpu/common/tasks/mediapipe:landmarks_to_transform_matrix",
++        "//tensorflow/lite/delegates/gpu/common/tasks/mediapipe:transform_landmarks",
++        "//tensorflow/lite/delegates/gpu/common/tasks/mediapipe:transform_tensor_bilinear",
++        "@com_google_absl//absl/strings",
++    ],
++)
+diff --git a/tensorflow/lite/delegates/gpu/common/selectors/mediapipe/default_selector.cc b/tensorflow/lite/delegates/gpu/common/selectors/mediapipe/default_selector.cc
+new file mode 100644
+index 00000000000..9c93149f95b
+--- /dev/null
++++ b/tensorflow/lite/delegates/gpu/common/selectors/mediapipe/default_selector.cc
+@@ -0,0 +1,48 @@
++#include <memory>
++
++#include "absl/strings/str_cat.h"
++#include "tensorflow/lite/delegates/gpu/common/model.h"
++#include "tensorflow/lite/delegates/gpu/common/model_hints.h"
++#include "tensorflow/lite/delegates/gpu/common/operations.h"
++#include "tensorflow/lite/delegates/gpu/common/selectors/subgraph.h"
++#include "tensorflow/lite/delegates/gpu/common/status.h"
++#include "tensorflow/lite/delegates/gpu/common/task/gpu_operation.h"
++#include "tensorflow/lite/delegates/gpu/common/tasks/mediapipe/landmarks_to_transform_matrix.h"
++#include "tensorflow/lite/delegates/gpu/common/tasks/mediapipe/transform_landmarks.h"
++#include "tensorflow/lite/delegates/gpu/common/tasks/mediapipe/transform_tensor_bilinear.h"
++
++namespace tflite {
++namespace gpu {
++namespace {
++
++absl::Status CustomGPUOperationFromNode(
++    const GpuInfo& gpu_info, const OperationDef& op_def, ModelHints hints,
++    const std::vector<Value*>& inputs, const std::vector<Value*>& outputs,
++    const Node& node, GPUOperationsSubgraph* gpu_subgraph) {
++  std::unique_ptr<GPUOperation>* gpu_op =
++      InitSingleOpSubgraph(inputs, outputs, gpu_subgraph);
++  if (node.operation.type == kLandmarksToTransformMatrixType) {
++    return CreateLandmarksToTransformMatrixFromNode(op_def, node, gpu_op);
++  }
++  if (node.operation.type == kTransformLandmarksType) {
++    return CreateTransformLandmarksFromNode(op_def, node, gpu_op);
++  }
++  if (node.operation.type == kTransformTensorBilinearType) {
++    return CreateTransformTensorBilinearFromNode(op_def, node, gpu_op);
++  }
++
++  return absl::UnimplementedError(
++      absl::StrCat("No selector for ", node.operation.type));
++}
++}  // namespace
++
++absl::Status SelectDefault(const GpuInfo& gpu_info, const OperationDef& op_def,
++                           ModelHints hints, const std::vector<Value*>& inputs,
++                           const std::vector<Value*>& outputs, const Node& node,
++                           GPUOperationsSubgraph* gpu_subgraph) {
++  return CustomGPUOperationFromNode(gpu_info, op_def, hints, inputs, outputs,
++                                    node, gpu_subgraph);
++}
++
++}  // namespace gpu
++}  // namespace tflite
+diff --git a/tensorflow/lite/delegates/gpu/common/tasks/mediapipe/BUILD b/tensorflow/lite/delegates/gpu/common/tasks/mediapipe/BUILD
+new file mode 100644
+index 00000000000..9df0735f0eb
+--- /dev/null
++++ b/tensorflow/lite/delegates/gpu/common/tasks/mediapipe/BUILD
+@@ -0,0 +1,39 @@
++package(
++    default_visibility = ["//visibility:public"],
++    licenses = ["notice"],
++)
++
++cc_library(
++    name = "landmarks_to_transform_matrix",
++    srcs = ["landmarks_to_transform_matrix.cc"],
++    hdrs = ["landmarks_to_transform_matrix.h"],
++    deps = [
++        "//tensorflow/lite/delegates/gpu/common:status",
++        "//tensorflow/lite/delegates/gpu/common/mediapipe:landmarks_to_transform_matrix",
++        "//tensorflow/lite/delegates/gpu/common/task:gpu_operation",
++    ],
++)
++
++cc_library(
++    name = "transform_landmarks",
++    srcs = ["transform_landmarks.cc"],
++    hdrs = ["transform_landmarks.h"],
++    deps = [
++        "//tensorflow/lite/delegates/gpu/common:status",
++        "//tensorflow/lite/delegates/gpu/common/mediapipe:transform_landmarks",
++        "//tensorflow/lite/delegates/gpu/common/task:gpu_operation",
++        "//tensorflow/lite/delegates/gpu/common/task:work_group_picking",
++    ],
++)
++
++cc_library(
++    name = "transform_tensor_bilinear",
++    srcs = ["transform_tensor_bilinear.cc"],
++    hdrs = ["transform_tensor_bilinear.h"],
++    deps = [
++        "//tensorflow/lite/delegates/gpu/common:status",
++        "//tensorflow/lite/delegates/gpu/common/mediapipe:transform_tensor_bilinear",
++        "//tensorflow/lite/delegates/gpu/common/task:gpu_operation",
++        "//tensorflow/lite/delegates/gpu/common/task:work_group_picking",
++    ],
++)
+diff --git a/tensorflow/lite/delegates/gpu/common/tasks/mediapipe/landmarks_to_transform_matrix.cc b/tensorflow/lite/delegates/gpu/common/tasks/mediapipe/landmarks_to_transform_matrix.cc
+new file mode 100644
+index 00000000000..18f28b19361
+--- /dev/null
++++ b/tensorflow/lite/delegates/gpu/common/tasks/mediapipe/landmarks_to_transform_matrix.cc
+@@ -0,0 +1,368 @@
++#include "tensorflow/lite/delegates/gpu/common/tasks/mediapipe/landmarks_to_transform_matrix.h"
++
++#include <string>
++#include <utility>
++
++#include "tensorflow/lite/delegates/gpu/common/status.h"
++
++namespace tflite {
++namespace gpu {
++namespace {
++
++std::string GetLandmarksToTransformMatrixV1KernelCode(
++    const OperationDef& op_def,
++    const LandmarksToTransformMatrixV1Attributes& attr) {
++  const std::string batch_id = op_def.IsBatchSupported() ? "B" : "";
++  std::string c;
++  c += "#define MAT_MUL_3x3(R0, R1, R2, A0, A1, A2, B0, B1, B2) \\\n";
++  c += "  R0.x = A0.x * B0.x + A1.x * B0.y + A2.x * B0.z; \\\n";
++  c += "  R0.y = A0.y * B0.x + A1.y * B0.y + A2.y * B0.z; \\\n";
++  c += "  R0.z = A0.z * B0.x + A1.z * B0.y + A2.z * B0.z; \\\n";
++  c += "  R1.x = A0.x * B1.x + A1.x * B1.y + A2.x * B1.z; \\\n";
++  c += "  R1.y = A0.y * B1.x + A1.y * B1.y + A2.y * B1.z; \\\n";
++  c += "  R1.z = A0.z * B1.x + A1.z * B1.y + A2.z * B1.z; \\\n";
++  c += "  R2.x = A0.x * B2.x + A1.x * B2.y + A2.x * B2.z; \\\n";
++  c += "  R2.y = A0.y * B2.x + A1.y * B2.y + A2.y * B2.z; \\\n";
++  c += "  R2.z = A0.z * B2.x + A1.z * B2.y + A2.z * B2.z; \n";
++
++  c += "MAIN_FUNCTION($0) {\n";
++  // temporary
++  c += "  int dummy_var = GLOBAL_ID_0;\n";
++  if (op_def.IsBatchSupported()) {
++    c += "  int B = GLOBAL_ID_0;\n";
++    c += "  if (B >= args.dst_tensor.Batch()) return;\n";
++    c += "  args.dst_tensor.SetBatchRef(B);\n";
++    c += "  args.src_tensor.SetBatchRef(B);\n";
++  }
++  // reads x and y coords only.
++  auto read_landmark = [&](const std::string& result, const std::string& id) {
++    c += "  {\n";
++    c += "    int start = " + id + " * " + std::to_string(attr.dimensions) +
++         ";\n";
++    c += "    int ZC = start / 4;\n";
++    if (attr.dimensions == 2) {
++      c += "    float4 t_res = args.src_tensor.Read<float>(0, 0, ZC);\n";
++      c += "    " + result + ".xy = t_res.xy;\n";
++    } else if (attr.dimensions == 3) {
++      c += "    float4 t_res = args.src_tensor.Read<float>(0, 0, ZC);\n";
++      c += "    int rem = start % 4;\n";
++      c += "    if (rem == 0) {\n";
++      c += "      " + result + ".xy = t_res.xy;\n";
++      c += "    } else if (rem == 1) {\n";
++      c += "      " + result + ".xy = t_res.yz;\n";
++      c += "    } else if (rem == 2) {\n";
++      c += "      " + result + ".xy = t_res.zw;\n";
++      c += "    } else {\n";
++      c += "      float4 t_res_next = args.src_tensor.Read<float>(0, 0, ZC + "
++           "1);\n";
++      c += "      " + result + ".xy = INIT_FLOAT2v2(t_res.w, t_res_next.x);\n";
++      c += "    }\n";
++    }
++    c += "  }\n";
++  };
++  c += "  float2 l_pt, r_pt;\n";
++  read_landmark("l_pt", "args.rotations_idx_x");
++  read_landmark("r_pt", "args.rotations_idx_y");
++  c += "  float alpha = -atan2(r_pt.y - l_pt.y, r_pt.x - l_pt.x);\n";
++  c += "  float cosa = cos(alpha);\n";
++  c += "  float sina = sin(alpha);\n";
++  c += "  float2 max_value = INIT_FLOAT2v2(-100000.0f, -100000.0f);\n";
++  c += "  float2 min_value = INIT_FLOAT2v2(100000.0f, 100000.0f);\n";
++  c += "  for (int i = 0; i < args.subset_size; i++) {\n";
++  c += "    float2 p0, p1;\n";
++  c += "    int2 subset_v = args.subset.Read(i);\n";
++  read_landmark("p0", "subset_v.x");
++  read_landmark("p1", "subset_v.y");
++  c += "    // rotation\n";
++  c +=
++      "    p0 = INIT_FLOAT2v2(p0.x*cosa - p0.y*sina, p0.x*sina + p0.y*cosa);\n";
++  c +=
++      "    p1 = INIT_FLOAT2v2(p1.x*cosa - p1.y*sina, p1.x*sina + p1.y*cosa);\n";
++  c += "    max_value.x = max(max(p0.x, p1.x), max_value.x);\n";
++  c += "    max_value.y = max(max(p0.y, p1.y), max_value.y);\n";
++  c += "    min_value.x = min(min(p0.x, p1.x), min_value.x);\n";
++  c += "    min_value.y = min(min(p0.y, p1.y), min_value.y);\n";
++  c += "  }\n";
++  c += "  float2 bbox_size = (max_value - min_value) * "
++       "args.bbox_size_multiplier;\n";
++  c +=
++      "  float3 scale_mat_c0 = INIT_FLOAT3v3(bbox_size.x / args.l_range, 0.0f, "
++      "0.0f);\n";
++  c +=
++      "  float3 scale_mat_c1 = INIT_FLOAT3v3(0.0f, bbox_size.y / args.l_range, "
++      "0.0f);\n";
++  c += "  float3 scale_mat_c2 = INIT_FLOAT3v3(0.0f, 0.0f, 1.0f);\n";
++  c += "  float2 middle = (max_value + min_value) * 0.5f;\n";
++  c += "  float2 rotated_middle;\n";
++  c += "  float cosnega = cos(-alpha);\n";
++  c += "  float sinnega = sin(-alpha);\n";
++  c += "  rotated_middle.x = middle.x * cosnega - middle.y * sinnega;\n";
++  c += "  rotated_middle.y = middle.x * sinnega + middle.y * cosnega;\n";
++  c += "  float3 rot_mat_c0 = INIT_FLOAT3v3(cosnega, sinnega, 0.0f);\n";
++  c += "  float3 rot_mat_c1 = INIT_FLOAT3v3(-sinnega, cosnega, 0.0f);\n";
++  c += "  float3 rot_mat_c2 = INIT_FLOAT3v3(rotated_middle.x / args.l_range * "
++       "2.0f - "
++       "1.0f, rotated_middle.y / args.l_range * 2.0f - 1.0f, 1.0f);\n";
++  c += "  float3 to_relative_c0 = INIT_FLOAT3v3(2.0f / (args.output_size_x - "
++       "1.0f), 0.0f, 0.0f);\n";
++  c += "  float3 to_relative_c1 = INIT_FLOAT3v3(0.0f, 2.0f / "
++       "(args.output_size_y - 1.0f), 0.0f);\n";
++  c += "  float3 to_relative_c2 = INIT_FLOAT3v3(-1.0f, -1.0f, 1.0f);\n";
++  c += "  float3 to_absolute_c0 = INIT_FLOAT3v3((args.input_size_x - 1.0f) / "
++       "2.0f, 0.0f, 0.0f);\n";
++  c += "  float3 to_absolute_c1 = INIT_FLOAT3v3(0.0f, (args.input_size_y - "
++       "1.0f) / 2.0f, 0.0f);\n";
++  c += "  float3 to_absolute_c2 = INIT_FLOAT3v3((args.input_size_x - 1.0f) / "
++       "2.0f, (args.input_size_y - 1.0f) / 2.0f, 1.0f);\n";
++  c += "  float3 t0;\n";
++  c += "  float3 t1;\n";
++  c += "  float3 t2;\n";
++  c += "  // t0 = to_absolute * rotation_matrix\n";
++  c += "  MAT_MUL_3x3(t0, t1, t2, to_absolute_c0, to_absolute_c1, "
++       "to_absolute_c2, rot_mat_c0, rot_mat_c1, rot_mat_c2);\n";
++  c += "  float3 u0;\n";
++  c += "  float3 u1;\n";
++  c += "  float3 u2;\n";
++  c += "  // u0 = t0 * scale_matrix\n";
++  c += "  MAT_MUL_3x3(u0, u1, u2, t0, t1, t2, scale_mat_c0, scale_mat_c1, "
++       "scale_mat_c2);\n";
++  c += "  float3 res_c0;\n";
++  c += "  float3 res_c1;\n";
++  c += "  float3 res_c2;\n";
++  c += "  MAT_MUL_3x3(res_c0, res_c1, res_c2, u0, u1, u2, to_relative_c0, "
++       "to_relative_c1, to_relative_c2);\n";
++  c += "  FLT4 r0 = INIT_FLT4v4(res_c0.x, res_c1.x,     0.0f, res_c2.x);\n";
++  c += "  FLT4 r1 = INIT_FLT4v4(res_c0.y, res_c1.y,     0.0f, res_c2.y);\n";
++  c += "  FLT4 r2 = INIT_FLT4v4(res_c0.z, res_c1.z, res_c2.z,     0.0f);\n";
++  c += "  FLT4 r3 = INIT_FLT4v4(    0.0f,     0.0f,     0.0f,     1.0f);\n";
++  c += "  args.dst_tensor.Write(r0, 0, 0, 0);\n";
++  c += "  args.dst_tensor.Write(r1, 1, 0, 0);\n";
++  c += "  args.dst_tensor.Write(r2, 2, 0, 0);\n";
++  c += "  args.dst_tensor.Write(r3, 3, 0, 0);\n";
++  c += "}\n";
++  return c;
++}
++
++std::string GetLandmarksToTransformMatrixV2KernelCode(
++    const OperationDef& op_def,
++    const LandmarksToTransformMatrixV2Attributes& attr) {
++  std::string c;
++  c += "#define MAT_MUL_3x3(R0, R1, R2, A0, A1, A2, B0, B1, B2) \\\n";
++  c += "  R0.x = A0.x * B0.x + A1.x * B0.y + A2.x * B0.z; \\\n";
++  c += "  R0.y = A0.y * B0.x + A1.y * B0.y + A2.y * B0.z; \\\n";
++  c += "  R0.z = A0.z * B0.x + A1.z * B0.y + A2.z * B0.z; \\\n";
++  c += "  R1.x = A0.x * B1.x + A1.x * B1.y + A2.x * B1.z; \\\n";
++  c += "  R1.y = A0.y * B1.x + A1.y * B1.y + A2.y * B1.z; \\\n";
++  c += "  R1.z = A0.z * B1.x + A1.z * B1.y + A2.z * B1.z; \\\n";
++  c += "  R2.x = A0.x * B2.x + A1.x * B2.y + A2.x * B2.z; \\\n";
++  c += "  R2.y = A0.y * B2.x + A1.y * B2.y + A2.y * B2.z; \\\n";
++  c += "  R2.z = A0.z * B2.x + A1.z * B2.y + A2.z * B2.z; \n";
++
++  c += "MAIN_FUNCTION($0) {\n";
++  // temporary
++  c += "  int dummy_var = GLOBAL_ID_0;\n";
++  if (op_def.IsBatchSupported()) {
++    c += "  int B = GLOBAL_ID_0;\n";
++    c += "  if (B >= args.dst_tensor.Batch()) return;\n";
++    c += "  args.dst_tensor.SetBatchRef(B);\n";
++    c += "  args.src_tensor.SetBatchRef(B);\n";
++  }
++  // reads x and y coords only.
++  auto read_landmark = [&](const std::string& result, const std::string& id) {
++    c += "  {\n";
++    c += "    int start = " + id + " * 3; // only 3 dimensional landmarks\n";
++    c += "    int ZC = start / 4;\n";
++    c += "    float4 t_res = args.src_tensor.Read<float>(0, 0, ZC);\n";
++    c += "    int rem = start % 4;\n";
++    c += "    if (rem == 0) {\n";
++    c += "      " + result + ".xy = t_res.xy;\n";
++    c += "    } else if (rem == 1) {\n";
++    c += "      " + result + ".xy = t_res.yz;\n";
++    c += "    } else if (rem == 2) {\n";
++    c += "      " + result + ".xy = t_res.zw;\n";
++    c += "    } else {\n";
++    c += "      float4 t_res_next = args.src_tensor.Read<float>(0, 0, ZC + "
++         "1);\n";
++    c += "      " + result + ".xy = INIT_FLOAT2v2(t_res.w, t_res_next.x);\n";
++    c += "    }\n";
++    c += "    " + result + " *= args.multiplier;\n";
++    c += "  }\n";
++  };
++  c += "  float2 left_landmark, right_landmark;\n";
++  read_landmark("left_landmark", "args.left_rotation_idx");
++  read_landmark("right_landmark", "args.right_rotation_idx");
++  c += "  float diff_y = right_landmark.y - left_landmark.y;\n";
++  c += "  float diff_x = right_landmark.x - left_landmark.x;\n";
++  c += "  float rotation = 0.0;\n";
++  c += "  if (diff_y != 0.0 && diff_x != 0.0) {"
++       "    rotation = atan2(diff_y, diff_x);\n"
++       "   }";
++  c += "  float r = args.target_rotation_radians - rotation;\n";
++  c += "  float cosr = cos(r);\n";
++  c += "  float sinr = sin(r);\n";
++  c += "  float2 max_value = INIT_FLOAT2v2(-100000.0f, -100000.0f);\n";
++  c += "  float2 min_value = INIT_FLOAT2v2(100000.0f, 100000.0f);\n";
++  c += "  for (int i = 0; i < args.subset_idxs_size; i++) {\n";
++  c += "    float2 p0, p1;\n";
++  c += "    int2 subset_idxs_v = args.subset_idxs.Read(i);\n";
++  read_landmark("p0", "subset_idxs_v.x");
++  read_landmark("p1", "subset_idxs_v.y");
++  c += "    // rotation\n";
++  c +=
++      "    p0 = INIT_FLOAT2v2(p0.x*cosr - p0.y*sinr, p0.x*sinr + p0.y*cosr);\n";
++  c +=
++      "    p1 = INIT_FLOAT2v2(p1.x*cosr - p1.y*sinr, p1.x*sinr + p1.y*cosr);\n";
++  c += "    max_value.x = max(max(p0.x, p1.x), max_value.x);\n";
++  c += "    max_value.y = max(max(p0.y, p1.y), max_value.y);\n";
++  c += "    min_value.x = min(min(p0.x, p1.x), min_value.x);\n";
++  c += "    min_value.y = min(min(p0.y, p1.y), min_value.y);\n";
++  c += "  }\n";
++  c += "  float crop_width  = max_value.x - min_value.x;\n";
++  c += "  float crop_height = max_value.y - min_value.y;\n";
++  c += "  float2 crop_xy1 = (max_value + min_value) / 2.0f;\n";
++  c += "  float crop_x = cos(-r) * crop_xy1.x - sin(-r) * crop_xy1.y;\n";
++  c += "  float crop_y = sin(-r) * crop_xy1.x + cos(-r) * crop_xy1.y;\n";
++  c += "  float3 shift_c0 = INIT_FLOAT3v3(1.0,    0.0,    0.0);\n";
++  c += "  float3 shift_c1 = INIT_FLOAT3v3(0.0,   1.0,     0.0);\n";
++  c += "  float3 shift_c2 = INIT_FLOAT3v3(crop_x, crop_y,  1.0);\n";
++  c += "  r = -r;\n";
++  c += "  float3 rotation_c0 = INIT_FLOAT3v3(cos(r),  sin(r),  0.0);\n";
++  c += "  float3 rotation_c1 = INIT_FLOAT3v3(-sin(r), cos(r),  0.0);\n";
++  c += "  float3 rotation_c2 = INIT_FLOAT3v3(0.0,    0.0, 1.0);\n";
++  c += "  float3 t0;\n";
++  c += "  float3 t1;\n";
++  c += "  float3 t2;\n";
++  c += "  MAT_MUL_3x3(t0, t1, t2, shift_c0, shift_c1, shift_c2, "
++       "              rotation_c0, rotation_c1, rotation_c2);\n";
++  c += "  float cs_x = args.scale_x * crop_width / args.output_width;\n";
++  c += "  float cs_y = args.scale_y * crop_height / args.output_height;\n";
++  c += "  float3 scale_c0 = INIT_FLOAT3v3(cs_x, 0.0, 0.0);\n";
++  c += "  float3 scale_c1 = INIT_FLOAT3v3(0.0, cs_y, 0.0);\n";
++  c += "  float3 scale_c2 = INIT_FLOAT3v3(0.0, 0.0, 1.0);\n";
++  c += "  MAT_MUL_3x3(t0, t1, t2, t0, t1, t2, "
++       "              scale_c0, scale_c1, scale_c2);\n";
++  c += "  float shift_x = -1.0 * (args.output_width / 2.0);\n";
++  c += "  float shift_y = -1.0 * (args.output_height / 2.0);\n";
++  c += "  float3 shift2_c0 = INIT_FLOAT3v3(1.0,     0.0,    0.0);\n";
++  c += "  float3 shift2_c1 = INIT_FLOAT3v3(0.0,    1.0,     0.0);\n";
++  c += "  float3 shift2_c2 = INIT_FLOAT3v3(shift_x, shift_y, 1.0);\n";
++  c += "  MAT_MUL_3x3(t0, t1, t2, t0, t1, t2, "
++       "              shift2_c0, shift2_c1, shift2_c2);\n";
++  c += "  FLT4 r0 = INIT_FLT4v4(t0.x, t1.x, 0.0f, t2.x);\n";
++  c += "  FLT4 r1 = INIT_FLT4v4(t0.y, t1.y, 0.0f, t2.y);\n";
++  c += "  FLT4 r2 = INIT_FLT4v4(t0.z, t1.z, t2.z, 0.0f);\n";
++  c += "  FLT4 r3 = INIT_FLT4v4(0.0f, 0.0f, 0.0f, 1.0f);\n";
++  c += "  args.dst_tensor.Write(r0, 0, 0, 0);\n";
++  c += "  args.dst_tensor.Write(r1, 1, 0, 0);\n";
++  c += "  args.dst_tensor.Write(r2, 2, 0, 0);\n";
++  c += "  args.dst_tensor.Write(r3, 3, 0, 0);\n";
++  c += "}\n";
++  return c;
++}
++
++}  // namespace
++
++absl::Status CreateLandmarksToTransformMatrixFromNode(
++    const OperationDef& op_def, const Node& node,
++    std::unique_ptr<GPUOperation>* gpu_op) {
++  auto* attr_v1 = absl::any_cast<LandmarksToTransformMatrixV1Attributes>(
++      &node.operation.attributes);
++  if (attr_v1) {
++    GPUOperation operation =
++        CreateLandmarksToTransformMatrixV1(op_def, *attr_v1);
++    *gpu_op = absl::make_unique<GPUOperation>(std::move(operation));
++    return absl::OkStatus();
++  }
++  auto* attr_v2 = absl::any_cast<LandmarksToTransformMatrixV2Attributes>(
++      &node.operation.attributes);
++  if (attr_v2) {
++    GPUOperation operation =
++        CreateLandmarksToTransformMatrixV2(op_def, *attr_v2);
++    *gpu_op = absl::make_unique<GPUOperation>(std::move(operation));
++    return absl::OkStatus();
++  }
++  return absl::InvalidArgumentError(
++      "Landmarks To Transform Matrix operation supports only version 1 or "
++      "2.");
++}
++
++GPUOperation CreateLandmarksToTransformMatrixV1(
++    const OperationDef& definition,
++    const LandmarksToTransformMatrixV1Attributes& attr) {
++  std::vector<int32_t> data(attr.subset.size() * 2);
++  for (int i = 0; i < attr.subset.size(); ++i) {
++    data[i * 2 + 0] = attr.subset[i].x;
++    data[i * 2 + 1] = attr.subset[i].y;
++  }
++
++  BufferDescriptor desc;
++  desc.element_type = DataType::INT32;
++  desc.element_size = 2;
++  desc.memory_type = MemoryType::GLOBAL;
++  desc.size = attr.subset.size() * sizeof(int32_t) * 2;
++  desc.data.resize(desc.size);
++  memcpy(desc.data.data(), data.data(), desc.size);
++
++  GPUOperation result(definition);
++  result.AddSrcTensor("src_tensor", definition.src_tensors[0]);
++  result.AddDstTensor("dst_tensor", definition.dst_tensors[0]);
++  result.args_.AddFloat("l_range", attr.landmarks_range);
++  result.args_.AddFloat("bbox_size_multiplier", attr.bbox_size_multiplier);
++  result.args_.AddInt("rotations_idx_x", attr.left_rotation_idx);
++  result.args_.AddInt("rotations_idx_y", attr.right_rotation_idx);
++  result.args_.AddFloat("input_size_x", attr.input_hw.w);
++  result.args_.AddFloat("input_size_y", attr.input_hw.h);
++  result.args_.AddFloat("output_size_x", attr.output_hw.w);
++  result.args_.AddFloat("output_size_y", attr.output_hw.h);
++  result.args_.AddInt("subset_size", attr.subset.size());
++  result.args_.AddObject("subset",
++                         absl::make_unique<BufferDescriptor>(std::move(desc)));
++  result.code_ = GetLandmarksToTransformMatrixV1KernelCode(definition, attr);
++  result.work_group_size_ = int3(1, 1, 1);
++  result.tensor_to_grid_ = TensorToGrid::kBToX_YIs1_ZIs1;
++
++  return result;
++}
++
++GPUOperation CreateLandmarksToTransformMatrixV2(
++    const OperationDef& definition,
++    const LandmarksToTransformMatrixV2Attributes& attr) {
++  std::vector<int32_t> data(attr.subset_idxs.size() * 2);
++  for (int i = 0; i < attr.subset_idxs.size(); ++i) {
++    data[i * 2 + 0] = attr.subset_idxs[i].x;
++    data[i * 2 + 1] = attr.subset_idxs[i].y;
++  }
++
++  BufferDescriptor desc;
++  desc.element_type = DataType::INT32;
++  desc.element_size = 2;
++  desc.memory_type = MemoryType::GLOBAL;
++  desc.size = attr.subset_idxs.size() * sizeof(int32_t) * 2;
++  desc.data.resize(desc.size);
++  memcpy(desc.data.data(), data.data(), desc.size);
++
++  GPUOperation result(definition);
++  result.AddSrcTensor("src_tensor", definition.src_tensors[0]);
++  result.AddDstTensor("dst_tensor", definition.dst_tensors[0]);
++
++  result.args_.AddInt("left_rotation_idx", attr.left_rotation_idx);
++  result.args_.AddInt("right_rotation_idx", attr.right_rotation_idx);
++  result.args_.AddFloat("target_rotation_radians",
++                        attr.target_rotation_radians);
++  result.args_.AddFloat("output_height", attr.output_height);
++  result.args_.AddFloat("output_width", attr.output_width);
++  result.args_.AddFloat("scale_x", attr.scale_x);
++  result.args_.AddFloat("scale_y", attr.scale_y);
++  result.args_.AddFloat("multiplier", attr.multiplier);
++
++  result.args_.AddInt("subset_idxs_size", attr.subset_idxs.size());
++  result.args_.AddObject("subset_idxs",
++                         absl::make_unique<BufferDescriptor>(std::move(desc)));
++  result.code_ = GetLandmarksToTransformMatrixV2KernelCode(definition, attr);
++  result.work_group_size_ = int3(1, 1, 1);
++  result.tensor_to_grid_ = TensorToGrid::kBToX_YIs1_ZIs1;
++  return result;
++}
++
++}  // namespace gpu
++}  // namespace tflite
+diff --git a/tensorflow/lite/delegates/gpu/common/tasks/mediapipe/landmarks_to_transform_matrix.h b/tensorflow/lite/delegates/gpu/common/tasks/mediapipe/landmarks_to_transform_matrix.h
+new file mode 100644
+index 00000000000..2fd523df7c7
+--- /dev/null
++++ b/tensorflow/lite/delegates/gpu/common/tasks/mediapipe/landmarks_to_transform_matrix.h
+@@ -0,0 +1,26 @@
++#ifndef TENSORFLOW_LITE_DELEGATES_GPU_COMMON_TASKS_MEDIAPIPELANDMARKS_TO_TRANSFORM_MATRIX_H_
++#define TENSORFLOW_LITE_DELEGATES_GPU_COMMON_TASKS_MEDIAPIPELANDMARKS_TO_TRANSFORM_MATRIX_H_
++
++#include "tensorflow/lite/delegates/gpu/common/mediapipe/landmarks_to_transform_matrix.h"
++#include "tensorflow/lite/delegates/gpu/common/status.h"
++#include "tensorflow/lite/delegates/gpu/common/task/gpu_operation.h"
++
++namespace tflite {
++namespace gpu {
++
++absl::Status CreateLandmarksToTransformMatrixFromNode(
++    const OperationDef& op_def, const Node& node,
++    std::unique_ptr<GPUOperation>* gpu_op);
++
++GPUOperation CreateLandmarksToTransformMatrixV1(
++    const OperationDef& definition,
++    const LandmarksToTransformMatrixV1Attributes& attr);
++
++GPUOperation CreateLandmarksToTransformMatrixV2(
++    const OperationDef& definition,
++    const LandmarksToTransformMatrixV2Attributes& attr);
++
++}  // namespace gpu
++}  // namespace tflite
++
++#endif  // TENSORFLOW_LITE_DELEGATES_GPU_COMMON_TASKS_MEDIAPIPELANDMARKS_TO_TRANSFORM_MATRIX_H_
+diff --git a/tensorflow/lite/delegates/gpu/common/tasks/mediapipe/transform_landmarks.cc b/tensorflow/lite/delegates/gpu/common/tasks/mediapipe/transform_landmarks.cc
+new file mode 100644
+index 00000000000..999917a9251
+--- /dev/null
++++ b/tensorflow/lite/delegates/gpu/common/tasks/mediapipe/transform_landmarks.cc
+@@ -0,0 +1,116 @@
++#include "tensorflow/lite/delegates/gpu/common/tasks/mediapipe/transform_landmarks.h"
++
++#include <string>
++
++#include "tensorflow/lite/delegates/gpu/common/status.h"
++#include "tensorflow/lite/delegates/gpu/common/task/work_group_picking.h"
++
++namespace tflite {
++namespace gpu {
++namespace {
++
++std::string GetTransformLandmarksKernelCode(const OperationDef& op_def,
++                                            int dimension, float scale) {
++  std::string c;
++  c += "MAIN_FUNCTION($0) {\n";
++  if (op_def.IsBatchSupported()) {
++    c += "  int linear_id = GLOBAL_ID_0;\n";
++    c += "  int X = linear_id / args.dst_tensor.Batch();\n";
++    c += "  int B = linear_id % args.dst_tensor.Batch();\n";
++    c += "  args.dst_tensor.SetBatchRef(B);\n";
++    c += "  args.matrix_transform.SetBatchRef(B);\n";
++    c += "  args.src_tensor.SetBatchRef(B);\n";
++  } else {
++    c += "  int X = GLOBAL_ID_0;\n";
++  }
++  c += "  int Y = GLOBAL_ID_1;\n";
++  c += "  int Z = GLOBAL_ID_2;\n";
++  c += "  if (X >= args.dst_tensor.Width() || Y >= args.dst_tensor.Height() || "
++       "Z >= args.dst_tensor.Slices()) "
++       "return;\n";
++  c += "  float4 x_transform = args.matrix_transform.Read<float>(0, 0, 0);\n";
++  c += "  float4 y_transform = args.matrix_transform.Read<float>(1, 0, 0);\n";
++  if (scale != 1.0) {
++    c += "  x_transform.w *= args.scale;\n";
++    c += "  y_transform.w *= args.scale;\n";
++  }
++  c += "  float4 landmks = args.src_tensor.Read<float>(X, Y, Z);\n";
++  c += "  float4 result = INIT_FLOAT4(0.0f);\n";
++  if (dimension == 2) {
++    c += "  float4 l_pair1_ = INIT_FLOAT4v4(landmks.x, landmks.y, 0.0f, "
++         "1.0f);\n";
++    c += "  float4 l_pair2_ = INIT_FLOAT4v4(landmks.z, landmks.w, 0.0f, "
++         "1.0f);\n";
++    c += "  result.x = dot(x_transform, l_pair1_);\n";
++    c += "  result.y = dot(y_transform, l_pair1_);\n";
++    c += "  result.z = dot(x_transform, l_pair2_);\n";
++    c += "  result.w = dot(y_transform, l_pair2_);\n";
++  } else if (dimension == 3) {
++    c += "  int reminder = (Z * 4) % 3;\n";
++    c += "  if (reminder == 0) { // 0, 3, 6\n";
++    c += "    // x y z x\n";
++    c += "    float4 landmks_next = args.src_tensor.Read<float>(X, Y, Z+1);\n";
++    c += "    float4 l_= landmks;\n";
++    c += "    l_.z = 0.0f;\n";
++    c += "    l_.w = 1.0f;\n";
++    c += "    result.x = dot(x_transform, l_);\n";
++    c += "    result.y = dot(y_transform, l_);\n";
++    c += "    result.z = landmks.z;\n";
++    c += "    result.w = dot(x_transform, INIT_FLOAT4v4(landmks.w, "
++         "landmks_next.x, "
++         "0.0f, 1.0f));\n";
++    c += "  } else if (reminder == 1) { // 1, 4, 7\n";
++    c += "    // y z x y\n";
++    c += "    float4 landmks_prev = args.src_tensor.Read<float>(X, Y, Z-1);\n";
++    c += "    float4 l_ = INIT_FLOAT4v4(landmks.z, landmks.w, 0.0f, 1.0f);\n";
++    c += "    result.x = dot(y_transform, INIT_FLOAT4v4(landmks_prev.w, "
++         "landmks.x, "
++         "0.0f, 1.0f));\n";
++    c += "    result.y = landmks.y;\n";
++    c += "    result.z = dot(x_transform, l_);\n";
++    c += "    result.w = dot(y_transform, l_);\n";
++    c += "  } else { // reminder == 2; // 2, 5, 8\n";
++    c += "    // z, x, y, z\n";
++    c += "    float4 l_ = INIT_FLOAT4v4(landmks.y, landmks.z, 0.0f, 1.0f);\n";
++    c += "    result.x = landmks.x;\n";
++    c += "    result.y = dot(x_transform, l_);\n";
++    c += "    result.z = dot(y_transform, l_);\n";
++    c += "    result.w = landmks.w;\n";
++    c += "  }\n";
++  }
++  c += "  FLT4 res = TO_FLT4(result);\n";
++  c += "  args.dst_tensor.Write(res, X, Y, Z);\n";
++  c += "}\n";
++  return c;
++}
++}  // namespace
++
++absl::Status CreateTransformLandmarksFromNode(
++    const OperationDef& op_def, const Node& node,
++    std::unique_ptr<GPUOperation>* gpu_op) {
++  auto attr =
++      absl::any_cast<TransformLandmarksAttributes>(node.operation.attributes);
++  if (attr.version != 1) {
++    return absl::InvalidArgumentError(
++        "Transform Landmarks operation supports only version 1.");
++  }
++  GPUOperation operation = CreateTransformLandmarks(op_def, attr);
++  *gpu_op = absl::make_unique<GPUOperation>(std::move(operation));
++  return absl::OkStatus();
++}
++
++GPUOperation CreateTransformLandmarks(
++    const OperationDef& definition, const TransformLandmarksAttributes& attr) {
++  GPUOperation op(definition);
++  op.AddSrcTensor("src_tensor", definition.src_tensors[0]);
++  op.AddSrcTensor("matrix_transform", definition.src_tensors[1]);
++  op.AddDstTensor("dst_tensor", definition.dst_tensors[0]);
++  op.args_.AddFloat("scale", attr.scale);
++  op.code_ =
++      GetTransformLandmarksKernelCode(definition, attr.dimensions, attr.scale);
++  op.tensor_to_grid_ = TensorToGrid::kWBToX_HDToY_SToZ;
++  return op;
++}
++
++}  // namespace gpu
++}  // namespace tflite
+diff --git a/tensorflow/lite/delegates/gpu/common/tasks/mediapipe/transform_landmarks.h b/tensorflow/lite/delegates/gpu/common/tasks/mediapipe/transform_landmarks.h
+new file mode 100644
+index 00000000000..5c0be19033a
+--- /dev/null
++++ b/tensorflow/lite/delegates/gpu/common/tasks/mediapipe/transform_landmarks.h
+@@ -0,0 +1,21 @@
++#ifndef TENSORFLOW_LITE_DELEGATES_GPU_COMMON_TASKS_MEDIAPIPETRANSFORM_LANDMARKS_H_
++#define TENSORFLOW_LITE_DELEGATES_GPU_COMMON_TASKS_MEDIAPIPETRANSFORM_LANDMARKS_H_
++
++#include "tensorflow/lite/delegates/gpu/common/mediapipe/transform_landmarks.h"
++#include "tensorflow/lite/delegates/gpu/common/status.h"
++#include "tensorflow/lite/delegates/gpu/common/task/gpu_operation.h"
++
++namespace tflite {
++namespace gpu {
++
++absl::Status CreateTransformLandmarksFromNode(
++    const OperationDef& op_def, const Node& node,
++    std::unique_ptr<GPUOperation>* gpu_op);
++
++GPUOperation CreateTransformLandmarks(const OperationDef& definition,
++                                      const TransformLandmarksAttributes& attr);
++
++}  // namespace gpu
++}  // namespace tflite
++
++#endif  // TENSORFLOW_LITE_DELEGATES_GPU_COMMON_TASKS_MEDIAPIPETRANSFORM_LANDMARKS_H_
+diff --git a/tensorflow/lite/delegates/gpu/common/tasks/mediapipe/transform_tensor_bilinear.cc b/tensorflow/lite/delegates/gpu/common/tasks/mediapipe/transform_tensor_bilinear.cc
+new file mode 100644
+index 00000000000..2723216f324
+--- /dev/null
++++ b/tensorflow/lite/delegates/gpu/common/tasks/mediapipe/transform_tensor_bilinear.cc
+@@ -0,0 +1,133 @@
++#include "tensorflow/lite/delegates/gpu/common/tasks/mediapipe/transform_tensor_bilinear.h"
++
++#include <string>
++
++#include "tensorflow/lite/delegates/gpu/common/status.h"
++#include "tensorflow/lite/delegates/gpu/common/task/work_group_picking.h"
++
++namespace tflite {
++namespace gpu {
++namespace {
++
++std::string AlignCornersCorrection(bool align_corners) {
++  // Align corners correction: T -> S * ( T * A ), where T is a
++  // transformation matrix, and subtruction and addition matrices are:
++  // S            A
++  // 1 0 0 -0.5   1 0 0 0.5
++  // 0 1 0 -0.5   0 1 0 0.5
++  // 0 0 1 0      0 0 1 0
++  // 0 0 0 1      0 0 0 1
++  // Transformation matrix column 3 and rows 3, 4 are identity, which makes
++  // the final formula pretty simple and easy to get if doing a manual
++  // multiuplication.
++  return align_corners ? R"(
++    first_line.w += first_line.x * 0.5 + first_line.y * 0.5 - 0.5;
++    second_line.w += second_line.x * 0.5 + second_line.y * 0.5 - 0.5;
++    )"
++                       : "";
++}
++
++std::string GetTransformTensorBilinearKernelCode(const OperationDef& op_def,
++                                                 bool align_corners) {
++  std::string c;
++  c += "MAIN_FUNCTION($0) {\n";
++  c += "  int Y = GLOBAL_ID_1;\n";
++  c += "  int Z = GLOBAL_ID_2;\n";
++  if (op_def.IsBatchSupported()) {
++    c += "  int linear_id = GLOBAL_ID_0;\n";
++    c += "  int X = linear_id / args.dst_tensor.Batch();\n";
++    c += "  int B = linear_id % args.dst_tensor.Batch();\n";
++    c += "  args.dst_tensor.SetBatchRef(B);\n";
++    c += "  args.matrix_transform.SetBatchRef(B);\n";
++    c += "  args.src_tensor.SetBatchRef(B);\n";
++  } else {
++    c += "  int X = GLOBAL_ID_0;\n";
++  }
++  c += "  if (X >= args.dst_tensor.Width() || Y >= args.dst_tensor.Height() || "
++       "Z >= args.dst_tensor.Slices()) "
++       "return;\n";
++  c += "  float4 first_line = args.matrix_transform.Read<float>(0, 0, 0);\n";
++  c += "  float4 second_line = args.matrix_transform.Read<float>(1, 0, 0);\n";
++  c += AlignCornersCorrection(align_corners);
++  c += "  float4 before_transform_coord_2d = INIT_FLOAT4v4(INIT_FLOAT(X), "
++       "INIT_FLOAT(Y), "
++       "0.0f, 1.0f);\n";
++  c += "  // Get transformed coordinates\n";
++  c +=
++      "  float2 xy = INIT_FLOAT2v2(dot(first_line, before_transform_coord_2d), "
++      "dot(second_line, before_transform_coord_2d));\n";
++  c += "  float2 xy_floor = floor(xy);\n";
++  c += "  int4 st;\n";
++  c += "  st.xy = INIT_INT2v2(xy_floor.x, xy_floor.y);\n";
++  c += "  st.zw = INIT_INT2v2(xy_floor.x, xy_floor.y) + INIT_INT2v2(1, 1);\n";
++  c += "  // Apply interpolation if coordinate is in bounds.\n";
++  c += "  float4 result = INIT_FLOAT4(0.0f);\n";
++  c += "  float2 t = xy - xy_floor;\n";
++  c += "  if(xy.x >= 0.0 && xy.x <= INIT_FLOAT(args.src_tensor.Width() - 1) && "
++       "xy.y >= 0.0 && "
++       "xy.y <= INIT_FLOAT(args.src_tensor.Height() - 1)) {\n";
++  c += "    float4 p0 = INIT_FLOAT4(0.0f);\n";
++  c += "    float4 p1 = INIT_FLOAT4(0.0f);\n";
++  c += "    float4 p2 = INIT_FLOAT4(0.0f);\n";
++  c += "    float4 p3 = INIT_FLOAT4(0.0f);\n";
++  const auto src_tensor_type = op_def.src_tensors[0].storage_type;
++  const bool buffer_type = src_tensor_type == TensorStorageType::BUFFER ||
++                           src_tensor_type == TensorStorageType::IMAGE_BUFFER;
++  auto read_src = [&](const std::string& result, const std::string& xc,
++                      const std::string& yc, const std::string& zc) {
++    if (buffer_type) {
++      c += "    if(" + xc + " >= 0 && " + yc + " >= 0 && " + xc +
++           " < args.src_tensor.Width() && " + yc +
++           " < args.src_tensor.Height()) {\n";
++      c += "      " + result + " = args.src_tensor.Read<float>(" + xc + ", " +
++           yc + ", " + zc + ");\n";
++      c += "    }\n";
++    } else {
++      c += "    " + result + " = args.src_tensor.Read<float>(" + xc + ", " +
++           yc + ", " + zc + ");\n";
++    }
++  };
++  read_src("p0", "st.x", "st.y", "Z");
++  read_src("p1", "st.z", "st.y", "Z");
++  read_src("p2", "st.x", "st.w", "Z");
++  read_src("p3", "st.z", "st.w", "Z");
++  c += "    result = mix(mix(p0, p1, t.x), mix(p2, p3, t.x), t.y);\n";
++  c += "  }\n";
++  c += "  FLT4 res = TO_FLT4(result);\n";
++  c += "  args.dst_tensor.Write(res, X, Y, Z);\n";
++  c += "}\n";
++  return c;
++}
++}  // namespace
++
++absl::Status CreateTransformTensorBilinearFromNode(
++    const OperationDef& op_def, const Node& node,
++    std::unique_ptr<GPUOperation>* gpu_op) {
++  auto attr = absl::any_cast<TransformTensorBilinearAttributes>(
++      node.operation.attributes);
++  if (attr.version != 1) {
++    return absl::InvalidArgumentError(
++        "Transform Tensor Bilinear operation supports only version 1.");
++  }
++  GPUOperation operation = CreateTransformTensorBilinear(op_def, attr);
++  *gpu_op = absl::make_unique<GPUOperation>(std::move(operation));
++  return absl::OkStatus();
++}
++
++GPUOperation CreateTransformTensorBilinear(
++    const OperationDef& definition,
++    const TransformTensorBilinearAttributes& attr) {
++  GPUOperation op(definition);
++  auto src_desc = definition.src_tensors[0];
++  src_desc.SetAddressMode(AddressMode::kZero);
++  op.AddSrcTensor("src_tensor", src_desc);
++  op.AddSrcTensor("matrix_transform", definition.src_tensors[1]);
++  op.AddDstTensor("dst_tensor", definition.dst_tensors[0]);
++  op.code_ =
++      GetTransformTensorBilinearKernelCode(definition, attr.align_corners);
++  op.tensor_to_grid_ = TensorToGrid::kWBToX_HDToY_SToZ;
++  return op;
++}
++
++}  // namespace gpu
++}  // namespace tflite
+diff --git a/tensorflow/lite/delegates/gpu/common/tasks/mediapipe/transform_tensor_bilinear.h b/tensorflow/lite/delegates/gpu/common/tasks/mediapipe/transform_tensor_bilinear.h
+new file mode 100644
+index 00000000000..0251265cdf4
+--- /dev/null
++++ b/tensorflow/lite/delegates/gpu/common/tasks/mediapipe/transform_tensor_bilinear.h
+@@ -0,0 +1,22 @@
++#ifndef TENSORFLOW_LITE_DELEGATES_GPU_COMMON_TASKS_MEDIAPIPETRANSFORM_TENSOR_BILINEAR_H_
++#define TENSORFLOW_LITE_DELEGATES_GPU_COMMON_TASKS_MEDIAPIPETRANSFORM_TENSOR_BILINEAR_H_
++
++#include "tensorflow/lite/delegates/gpu/common/mediapipe/transform_tensor_bilinear.h"
++#include "tensorflow/lite/delegates/gpu/common/status.h"
++#include "tensorflow/lite/delegates/gpu/common/task/gpu_operation.h"
++
++namespace tflite {
++namespace gpu {
++
++absl::Status CreateTransformTensorBilinearFromNode(
++    const OperationDef& op_def, const Node& node,
++    std::unique_ptr<GPUOperation>* gpu_op);
++
++GPUOperation CreateTransformTensorBilinear(
++    const OperationDef& definition,
++    const TransformTensorBilinearAttributes& attr);
++
++}  // namespace gpu
++}  // namespace tflite
++
++#endif  // TENSORFLOW_LITE_DELEGATES_GPU_COMMON_TASKS_MEDIAPIPETRANSFORM_TENSOR_BILINEAR_H_
+diff --git a/tensorflow/lite/delegates/gpu/common/transformations/BUILD b/tensorflow/lite/delegates/gpu/common/transformations/BUILD
+index d26b4f807de..9596dbab7e6 100644
+--- a/tensorflow/lite/delegates/gpu/common/transformations/BUILD
++++ b/tensorflow/lite/delegates/gpu/common/transformations/BUILD
+@@ -287,7 +287,7 @@ cc_library(
+         ":merge_padding_with",
+         ":remove_noop",
+         "//tensorflow/lite/delegates/gpu/common:model_transformer",
+-    ] + tf_platform_alias("custom_transformations", "//tensorflow/lite/delegates/gpu/common/"),
++    ] + ["//tensorflow/lite/delegates/gpu/common/mediapipe:custom_transformations"],
+ )
+ 
+ cc_library(
+diff --git a/tensorflow/lite/delegates/gpu/gl/kernels/BUILD b/tensorflow/lite/delegates/gpu/gl/kernels/BUILD
+index b7860b44ede..30cc160d32c 100644
+--- a/tensorflow/lite/delegates/gpu/gl/kernels/BUILD
++++ b/tensorflow/lite/delegates/gpu/gl/kernels/BUILD
+@@ -153,10 +153,11 @@ cc_test(
+ 
+ cc_library(
+     name = "custom_registry",
+-    srcs = ["custom_registry.cc"],
++    srcs = ["//tensorflow/lite/delegates/gpu/gl/kernels/mediapipe:registry.cc"],
+     hdrs = ["custom_registry.h"],
+     deps = [
+         "//tensorflow/lite/delegates/gpu/gl:node_shader",
++        "//tensorflow/lite/delegates/gpu/gl/kernels/mediapipe:all_custom_ops",
+         "@com_google_absl//absl/container:flat_hash_map",
+     ],
+ )
+diff --git a/tensorflow/lite/delegates/gpu/gl/kernels/mediapipe/BUILD b/tensorflow/lite/delegates/gpu/gl/kernels/mediapipe/BUILD
+new file mode 100644
+index 00000000000..f5e696d0859
+--- /dev/null
++++ b/tensorflow/lite/delegates/gpu/gl/kernels/mediapipe/BUILD
+@@ -0,0 +1,85 @@
++load("//tensorflow/lite:special_rules.bzl", "tflite_portable_test_suite")
++
++package(
++    default_visibility = ["//visibility:public"],
++    licenses = ["notice"],
++)
++
++exports_files([
++    "registry.cc",
++    "landmarks_to_transform_matrix.h",
++    "transform_landmarks.h",
++    "transform_tensor_bilinear.h",
++])
++
++cc_library(
++    name = "all_custom_ops",
++    hdrs = [
++        "landmarks_to_transform_matrix.h",
++        "transform_landmarks.h",
++        "transform_tensor_bilinear.h",
++    ],
++    deps = [
++        ":landmarks_to_transform_matrix",
++        ":transform_landmarks",
++        ":transform_tensor_bilinear",
++        "//tensorflow/lite/delegates/gpu/common:operations",
++        "//tensorflow/lite/delegates/gpu/gl:node_shader",
++    ],
++)
++
++cc_library(
++    name = "landmarks_to_transform_matrix",
++    srcs = ["landmarks_to_transform_matrix.cc"],
++    hdrs = ["landmarks_to_transform_matrix.h"],
++    deps = [
++        "//tensorflow/lite/delegates/gpu/common:operations",
++        "//tensorflow/lite/delegates/gpu/common:shape",
++        "//tensorflow/lite/delegates/gpu/common:status",
++        "//tensorflow/lite/delegates/gpu/common:types",
++        "//tensorflow/lite/delegates/gpu/common:util",
++        "//tensorflow/lite/delegates/gpu/common/mediapipe:landmarks_to_transform_matrix",
++        "//tensorflow/lite/delegates/gpu/gl:node_shader",
++        "@com_google_absl//absl/memory",
++        "@com_google_absl//absl/strings",
++        "@com_google_absl//absl/types:any",
++    ],
++)
++
++cc_library(
++    name = "transform_tensor_bilinear",
++    srcs = ["transform_tensor_bilinear.cc"],
++    hdrs = ["transform_tensor_bilinear.h"],
++    deps = [
++        "//tensorflow/lite/delegates/gpu/common:operations",
++        "//tensorflow/lite/delegates/gpu/common:shape",
++        "//tensorflow/lite/delegates/gpu/common:status",
++        "//tensorflow/lite/delegates/gpu/common:types",
++        "//tensorflow/lite/delegates/gpu/common:util",
++        "//tensorflow/lite/delegates/gpu/common/mediapipe:transform_tensor_bilinear",
++        "//tensorflow/lite/delegates/gpu/gl:node_shader",
++        "@com_google_absl//absl/memory",
++        "@com_google_absl//absl/strings",
++        "@com_google_absl//absl/types:any",
++    ],
++)
++
++cc_library(
++    name = "transform_landmarks",
++    srcs = ["transform_landmarks.cc"],
++    hdrs = ["transform_landmarks.h"],
++    deps = [
++        "//tensorflow/lite/delegates/gpu/common:operations",
++        "//tensorflow/lite/delegates/gpu/common:shape",
++        "//tensorflow/lite/delegates/gpu/common:status",
++        "//tensorflow/lite/delegates/gpu/common:types",
++        "//tensorflow/lite/delegates/gpu/common:util",
++        "//tensorflow/lite/delegates/gpu/common/mediapipe:transform_landmarks",
++        "//tensorflow/lite/delegates/gpu/gl:node_shader",
++        "@com_google_absl//absl/memory",
++        "@com_google_absl//absl/strings",
++        "@com_google_absl//absl/types:any",
++    ],
++)
++
++tflite_portable_test_suite()
+diff --git a/tensorflow/lite/delegates/gpu/gl/kernels/mediapipe/landmarks_to_transform_matrix.cc b/tensorflow/lite/delegates/gpu/gl/kernels/mediapipe/landmarks_to_transform_matrix.cc
+new file mode 100644
+index 00000000000..de75dd7df2e
+--- /dev/null
++++ b/tensorflow/lite/delegates/gpu/gl/kernels/mediapipe/landmarks_to_transform_matrix.cc
+@@ -0,0 +1,356 @@
++#include "tensorflow/lite/delegates/gpu/gl/kernels/mediapipe/landmarks_to_transform_matrix.h"
++
++#include <algorithm>
++#include <cstdint>
++#include <cstring>
++#include <string>
++#include <vector>
++
++#include "absl/memory/memory.h"
++#include "absl/strings/substitute.h"
++#include "absl/types/any.h"
++#include "tensorflow/lite/delegates/gpu/common/mediapipe/landmarks_to_transform_matrix.h"
++#include "tensorflow/lite/delegates/gpu/common/shape.h"
++#include "tensorflow/lite/delegates/gpu/common/status.h"
++#include "tensorflow/lite/delegates/gpu/common/types.h"
++#include "tensorflow/lite/delegates/gpu/common/util.h"
++
++namespace tflite {
++namespace gpu {
++namespace gl {
++namespace {
++
++namespace v1 {
++
++std::string ReadLandmark(const std::string& landmark, const std::string& idx) {
++  std::string source = R"(
++     vec4 )" + landmark +
++                       R"(;
++     {
++       int z_coord = )" +
++                       idx +
++                       R"( * $dimensions$  / 4;
++       vec4 result = $input_data_0[0, 0, z_coord]$;
++       int rest = )" + idx +
++                       R"( * $dimensions$  % 4;
++       if (rest != 0) {
++         if (rest == 1) {
++          result.x = result.y;
++          result.y = result.z;
++         }
++         if (rest == 2) {
++          result.x = result.z;
++          result.y = result.w;
++         }
++         if (rest == 3) {
++         vec4 next_after_result = $input_data_0[0, 0, z_coord + 1]$;
++          result.x = result.w;
++          result.y = next_after_result.x;
++         }
++       }
++       )" + landmark + R"( = result;
++     }
++     )";
++  return source;
++}
++
++bool IsSupported(const LandmarksToTransformMatrixV1Attributes& attr) {
++  return attr.dimensions == 3;
++}
++
++absl::Status GenerateCode(const LandmarksToTransformMatrixV1Attributes& attr,
++                          const NodeShader::GenerationContext& ctx,
++                          GeneratedCode* generated_code) {
++  if (!IsSupported(attr)) {
++    return absl::InvalidArgumentError(
++        "This case is not supported by LandmarksToTransformMatrix v1");
++  }
++
++  std::vector<Variable> params = {
++      {"dimensions", static_cast<int>(attr.dimensions)},
++      {"landmarks_range", static_cast<int>(attr.landmarks_range)},
++      {"left_rotation_idx", static_cast<int>(attr.left_rotation_idx)},
++      {"right_rotation_idx", static_cast<int>(attr.right_rotation_idx)},
++      {"bbox_size_multiplier", static_cast<float>(attr.bbox_size_multiplier)},
++      {"input_h", static_cast<int>(attr.input_hw.h)},
++      {"input_w", static_cast<int>(attr.input_hw.w)},
++      {"output_h", static_cast<int>(attr.output_hw.h)},
++      {"output_w", static_cast<int>(attr.output_hw.w)},
++      {"subset", attr.subset},
++      {"subset_size", static_cast<int>(attr.subset.size())},
++  };
++
++  std::string source = R"(
++     )" + ReadLandmark("left_landmark", "$left_rotation_idx$") +
++                       R"(
++
++     )" + ReadLandmark("right_landmark", "$right_rotation_idx$") +
++                       R"(
++
++     float alpha = -atan(right_landmark.y - left_landmark.y,
++                         right_landmark.x - left_landmark.x);
++
++     vec4 max_value = vec4(-100000, -100000, 0.0, 0.0);
++     vec4 min_value = vec4(100000, 100000, 0.0, 0.0);
++     for (int i = 0; i < $subset_size$; i++) {
++       for (int j = 0; j < 2; j++) {
++         )" + ReadLandmark("landmark_current", "$subset$[i][j]") +
++                       R"(
++
++             vec4 rotated = vec4(landmark_current.x * cos(alpha) -
++                                                landmark_current.y * sin(alpha),
++                                 landmark_current.x * sin(alpha) +
++                                                landmark_current.y * cos(alpha),
++                                 0.0, 0.0);
++             // both by x and y
++             max_value = vec4(max(max_value.x, rotated.x),
++                              max(max_value.y, rotated.y),
++                              0.0, 0.0);
++             min_value = vec4(min(min_value.x, rotated.x),
++                              min(min_value.y, rotated.y),
++                              0.0, 0.0);
++       }
++     }
++
++    vec4 bbox_size = max_value - min_value;
++    bbox_size *= $bbox_size_multiplier$;
++
++    mat3 scale_matrix =
++        mat3(bbox_size.x / float($landmarks_range$), 0.0, 0.0,  // first column
++             0.0, bbox_size.y / float($landmarks_range$), 0.0,  // second column
++             0.0, 0.0, 1.0);                                    // third column
++
++    vec4 middle = (max_value + min_value) / 2.0;
++
++    vec4 rotated_middle =
++        vec4(middle.x * cos(-alpha) - middle.y * sin(-alpha),
++             middle.x * sin(-alpha) + middle.y * cos(-alpha), 0.0, 0.0);
++
++    mat3 rotation_matrix =
++        mat3(cos(-alpha), sin(-alpha), 0,   // first column
++             -sin(-alpha), cos(-alpha), 0,  // second column
++             // third column
++             (rotated_middle.x / float($landmarks_range$)) * 2.0 - 1.0,
++             (rotated_middle.y / float($landmarks_range$)) * 2.0 - 1.0, 1);
++
++    mat3 to_relative =
++        mat3(2.0 / (float($output_w$) - 1.0), 0.0, 0.0,  // first column
++             0.0, 2.0 / (float($output_h$) - 1.0), 0.0,  // second column
++             -1.0, -1.0, 1.0);                           // third column
++
++    mat3 to_absolute =
++        mat3((float($input_w$) - 1.0) / 2.0, 0.0, 0.0,  // first column
++             0.0, (float($input_h$) - 1.0) / 2.0, 0.0,  // second column
++             // third column
++             (float($input_w$) - 1.0) / 2.0, (float($input_h$) - 1.0)/2.0, 1.0);
++
++    // Transformstion Matrix
++    mat3 tm = to_absolute * rotation_matrix * scale_matrix * to_relative;
++
++    // Inverse Transformation Matrix
++    $output_data_0[0, 0, 0] = vec4(tm[0][0], tm[1][0],      0.0, tm[2][0])$;
++    $output_data_0[1, 0, 0] = vec4(tm[0][1], tm[1][1],      0.0, tm[2][1])$;
++    $output_data_0[2, 0, 0] = vec4(tm[0][2], tm[1][2], tm[2][2],      0.0)$;
++    $output_data_0[3, 0, 0] = vec4(       0,        0,        0,      1.0)$;
++    )";
++
++  *generated_code = {
++      /*parameters=*/params,
++      /*objects=*/{},
++      /*shared_variables=*/{},
++      /*workload=*/uint3(1, 1, 1),
++      /*workgroup=*/uint3(1, 1, 1),
++      /*source_code=*/std::move(source),
++      /*input=*/IOStructure::ONLY_DEFINITIONS,
++      /*output=*/IOStructure::ONLY_DEFINITIONS,
++  };
++  return absl::OkStatus();
++}
++
++}  // namespace v1
++
++namespace v2 {
++
++std::string ReadLandmark(const std::string& landmark, const std::string& idx) {
++  std::string source = R"(
++    vec4 )" + landmark +
++                       R"(;
++    {
++      int z_coord = )" +
++                       idx +
++                       R"( * $dimensions$  / 4;
++      vec4 result = $input_data_0[0, 0, z_coord]$;
++      int rest = )" + idx +
++                       R"( * $dimensions$  % 4;
++      if (rest != 0) {
++        if (rest == 1) {
++         result.x = result.y;
++         result.y = result.z;
++        }
++        if (rest == 2) {
++         result.x = result.z;
++         result.y = result.w;
++        }
++        if (rest == 3) {
++         vec4 next_after_result = $input_data_0[0, 0, z_coord + 1]$;
++         result.x = result.w;
++         result.y = next_after_result.x;
++        }
++      }
++      result *= $multiplier$;
++      )" + landmark + R"( = result;
++     } )";
++  return source;
++}
++
++static bool IsSupported(const NodeShader::GenerationContext& ctx) {
++  return ctx.input_shapes.size() == 1 && ctx.input_shapes[0][1] == 1 &&
++         ctx.input_shapes[0][2] == 1 && ctx.input_shapes[0][3] % 3 == 0;
++}
++
++absl::Status GenerateCode(const LandmarksToTransformMatrixV2Attributes& attr,
++                          const NodeShader::GenerationContext& ctx,
++                          GeneratedCode* generated_code) {
++  if (!IsSupported(ctx)) {
++    return absl::InvalidArgumentError(
++        "This case is not supported by LandmarksToTransformMatrixV2");
++  }
++
++  std::vector<Variable> params = {
++      {"dimensions", static_cast<int>(3)},
++      {"scale_x", static_cast<float>(attr.scale_x)},
++      {"scale_y", static_cast<float>(attr.scale_y)},
++      {"left_rotation_idx", static_cast<int>(attr.left_rotation_idx)},
++      {"right_rotation_idx", static_cast<int>(attr.right_rotation_idx)},
++      {"target_rotation_radians",
++       static_cast<float>(attr.target_rotation_radians)},
++      {"output_width", static_cast<float>(attr.output_width)},
++      {"output_height", static_cast<float>(attr.output_height)},
++      {"subset_idxs", attr.subset_idxs},
++      {"subset_idxs_size", static_cast<int>(attr.subset_idxs.size())},
++      {"multiplier", static_cast<float>(attr.multiplier)},
++  };
++
++  std::string source = R"(
++     )" + ReadLandmark("left_landmark", "$left_rotation_idx$") +
++                       R"(
++     )" + ReadLandmark("right_landmark", "$right_rotation_idx$") +
++                       R"(
++
++    float diff_y = right_landmark.y - left_landmark.y;
++    float diff_x = right_landmark.x - left_landmark.x;
++    float rotation = 0.0;
++    if (diff_y != 0.0 && diff_x != 0.0) rotation = atan(diff_y, diff_x);
++    float r = $target_rotation_radians$ - rotation;
++
++    vec4 max_value = vec4(-100000, -100000, 0.0, 0.0);
++    vec4 min_value = vec4(100000, 100000, 0.0, 0.0);
++    for (int i = 0; i < $subset_idxs_size$; i++) {
++      for (int j = 0; j < 2; j++) {
++         )" + ReadLandmark("landmark_current", "$subset_idxs$[i][j]") +
++                       R"(
++        vec4 rotated = vec4(landmark_current.x * cos(r) -
++                                                landmark_current.y * sin(r),
++                                 landmark_current.x * sin(r) +
++                                                landmark_current.y * cos(r),
++                                 0.0, 0.0);
++        // both by x and y
++        max_value = vec4(max(max_value.x, rotated.x),
++                         max(max_value.y, rotated.y),
++                         0.0, 0.0);
++        min_value = vec4(min(min_value.x, rotated.x),
++                         min(min_value.y, rotated.y),
++                         0.0, 0.0);
++      }
++    }
++
++    float crop_width = max_value.x - min_value.x;
++    float crop_height = max_value.y - min_value.y;
++
++    vec4 crop_xy1 = (max_value + min_value) / vec4(2.0);
++
++    float crop_x = cos(-r) * crop_xy1.x - sin(-r) * crop_xy1.y;
++    float crop_y = sin(-r) * crop_xy1.x + cos(-r) * crop_xy1.y;
++
++
++    mat4 t = mat4(1.0,  0.0,  0.0, 0.0,  // first  column
++                  0.0,  1.0,  0.0, 0.0,  // second column
++                  0.0,  0.0,  1.0, 0.0,  // third  column
++                  0.0,  0.0,  0.0, 1.0); // forth  column
++
++    mat4 t_shift = mat4(1.0,    0.0, 0.0, 0.0,  // first  column
++                        0.0,    1.0, 0.0, 0.0,  // second column
++                        0.0,    0.0, 1.0, 0.0,  // third  column
++                     crop_x, crop_y, 0.0, 1.0); // forth  column
++    t *= t_shift;
++
++    r = -r;
++
++    mat4 t_rotation = mat4(cos(r),  sin(r), 0.0, 0.0,  // first  column
++                          -sin(r),  cos(r), 0.0, 0.0,  // second column
++                              0.0,     0.0, 1.0, 0.0,  // third  column
++                              0.0,     0.0, 0.0, 1.0); // forth  column
++
++    t *= t_rotation;
++    // cropped scale for x and y
++    float cs_x = $scale_x$ * crop_width / $output_width$;
++    float cs_y = $scale_y$ * crop_height / $output_height$;
++    mat4 t_scale = mat4(cs_x,  0.0, 0.0, 0.0,  // first  column
++                         0.0, cs_y, 0.0, 0.0,  // second column
++                         0.0,  0.0, 1.0, 0.0,  // third  column
++                         0.0,  0.0, 0.0, 1.0); // forth  column
++    t *= t_scale;
++    float shift_x = -1.0 * ($output_width$ / 2.0);
++    float shift_y = -1.0 * ($output_height$ / 2.0);
++    mat4 t_shift2 = mat4(1.0,     0.0, 0.0, 0.0,  // first  column
++                         0.0,     1.0, 0.0, 0.0,  // second column
++                         0.0,     0.0, 1.0, 0.0,  // third  column
++                     shift_x, shift_y, 0.0, 1.0); // forth  column
++    t *= t_shift2;
++    // Inverse Transformation Matrix
++    $output_data_0[0, 0, 0] = vec4(t[0][0], t[1][0], t[2][0], t[3][0])$;
++    $output_data_0[1, 0, 0] = vec4(t[0][1], t[1][1], t[2][1], t[3][1])$;
++    $output_data_0[2, 0, 0] = vec4(t[0][2], t[1][2], t[2][2], t[3][2])$;
++    $output_data_0[3, 0, 0] = vec4(t[0][3], t[1][3], t[2][3], t[3][3])$;
++    )";
++
++  *generated_code = {
++      /*parameters=*/params,
++      /*objects=*/{},
++      /*shared_variables=*/{},
++      /*workload=*/uint3(1, 1, 1),
++      /*workgroup=*/uint3(1, 1, 1),
++      /*source_code=*/std::move(source),
++      /*input=*/IOStructure::ONLY_DEFINITIONS,
++      /*output=*/IOStructure::ONLY_DEFINITIONS,
++  };
++  return absl::OkStatus();
++}
++
++}  // namespace v2
++
++class LandmarksToTransformMatrix : public NodeShader {
++ public:
++  absl::Status GenerateCode(const GenerationContext& ctx,
++                            GeneratedCode* generated_code) const final {
++    auto* attr_v1 =
++        absl::any_cast<LandmarksToTransformMatrixV1Attributes>(&ctx.op_attr);
++    if (attr_v1) return v1::GenerateCode(*attr_v1, ctx, generated_code);
++
++    auto* attr_v2 =
++        absl::any_cast<LandmarksToTransformMatrixV2Attributes>(&ctx.op_attr);
++    if (attr_v2) return v2::GenerateCode(*attr_v2, ctx, generated_code);
++
++    return absl::InvalidArgumentError("Incorrect attributes' type.");
++  }
++};
++
++}  // namespace
++
++std::unique_ptr<NodeShader> NewLandmarksToTransformMatrixNodeShader() {
++  return absl::make_unique<LandmarksToTransformMatrix>();
++}
++
++}  // namespace gl
++}  // namespace gpu
++}  // namespace tflite
+diff --git a/tensorflow/lite/delegates/gpu/gl/kernels/mediapipe/landmarks_to_transform_matrix.cc.orig b/tensorflow/lite/delegates/gpu/gl/kernels/mediapipe/landmarks_to_transform_matrix.cc.orig
+new file mode 100644
+index 00000000000..3e884b643a5
+--- /dev/null
++++ b/tensorflow/lite/delegates/gpu/gl/kernels/mediapipe/landmarks_to_transform_matrix.cc.orig
+@@ -0,0 +1,356 @@
++#include "mediapipe/util/tflite/gpu/gl/kernels/mediapipe/landmarks_to_transform_matrix.h"
++
++#include <algorithm>
++#include <cstdint>
++#include <cstring>
++#include <string>
++#include <vector>
++
++#include "third_party/absl/memory/memory.h"
++#include "third_party/absl/strings/substitute.h"
++#include "third_party/absl/types/any.h"
++#include "mediapipe/util/tflite/gpu/common/mediapipe/landmarks_to_transform_matrix.h"
++#include "third_party/tensorflow/lite/delegates/gpu/common/shape.h"
++#include "third_party/tensorflow/lite/delegates/gpu/common/status.h"
++#include "third_party/tensorflow/lite/delegates/gpu/common/types.h"
++#include "third_party/tensorflow/lite/delegates/gpu/common/util.h"
++
++namespace tflite {
++namespace gpu {
++namespace gl {
++namespace {
++
++namespace v1 {
++
++std::string ReadLandmark(const std::string& landmark, const std::string& idx) {
++  std::string source = R"(
++     vec4 )" + landmark +
++                       R"(;
++     {
++       int z_coord = )" +
++                       idx +
++                       R"( * $dimensions$  / 4;
++       vec4 result = $input_data_0[0, 0, z_coord]$;
++       int rest = )" + idx +
++                       R"( * $dimensions$  % 4;
++       if (rest != 0) {
++         if (rest == 1) {
++          result.x = result.y;
++          result.y = result.z;
++         }
++         if (rest == 2) {
++          result.x = result.z;
++          result.y = result.w;
++         }
++         if (rest == 3) {
++         vec4 next_after_result = $input_data_0[0, 0, z_coord + 1]$;
++          result.x = result.w;
++          result.y = next_after_result.x;
++         }
++       }
++       )" + landmark + R"( = result;
++     }
++     )";
++  return source;
++}
++
++bool IsSupported(const LandmarksToTransformMatrixV1Attributes& attr) {
++  return attr.dimensions == 3;
++}
++
++absl::Status GenerateCode(const LandmarksToTransformMatrixV1Attributes& attr,
++                          const NodeShader::GenerationContext& ctx,
++                          GeneratedCode* generated_code) {
++  if (!IsSupported(attr)) {
++    return absl::InvalidArgumentError(
++        "This case is not supported by LandmarksToTransformMatrix v1");
++  }
++
++  std::vector<Variable> params = {
++      {"dimensions", static_cast<int>(attr.dimensions)},
++      {"landmarks_range", static_cast<int>(attr.landmarks_range)},
++      {"left_rotation_idx", static_cast<int>(attr.left_rotation_idx)},
++      {"right_rotation_idx", static_cast<int>(attr.right_rotation_idx)},
++      {"bbox_size_multiplier", static_cast<float>(attr.bbox_size_multiplier)},
++      {"input_h", static_cast<int>(attr.input_hw.h)},
++      {"input_w", static_cast<int>(attr.input_hw.w)},
++      {"output_h", static_cast<int>(attr.output_hw.h)},
++      {"output_w", static_cast<int>(attr.output_hw.w)},
++      {"subset", attr.subset},
++      {"subset_size", static_cast<int>(attr.subset.size())},
++  };
++
++  std::string source = R"(
++     )" + ReadLandmark("left_landmark", "$left_rotation_idx$") +
++                       R"(
++
++     )" + ReadLandmark("right_landmark", "$right_rotation_idx$") +
++                       R"(
++
++     float alpha = -atan(right_landmark.y - left_landmark.y,
++                         right_landmark.x - left_landmark.x);
++
++     vec4 max_value = vec4(-100000, -100000, 0.0, 0.0);
++     vec4 min_value = vec4(100000, 100000, 0.0, 0.0);
++     for (int i = 0; i < $subset_size$; i++) {
++       for (int j = 0; j < 2; j++) {
++         )" + ReadLandmark("landmark_current", "$subset$[i][j]") +
++                       R"(
++
++             vec4 rotated = vec4(landmark_current.x * cos(alpha) -
++                                                landmark_current.y * sin(alpha),
++                                 landmark_current.x * sin(alpha) +
++                                                landmark_current.y * cos(alpha),
++                                 0.0, 0.0);
++             // both by x and y
++             max_value = vec4(max(max_value.x, rotated.x),
++                              max(max_value.y, rotated.y),
++                              0.0, 0.0);
++             min_value = vec4(min(min_value.x, rotated.x),
++                              min(min_value.y, rotated.y),
++                              0.0, 0.0);
++       }
++     }
++
++    vec4 bbox_size = max_value - min_value;
++    bbox_size *= $bbox_size_multiplier$;
++
++    mat3 scale_matrix =
++        mat3(bbox_size.x / float($landmarks_range$), 0.0, 0.0,  // first column
++             0.0, bbox_size.y / float($landmarks_range$), 0.0,  // second column
++             0.0, 0.0, 1.0);                                    // third column
++
++    vec4 middle = (max_value + min_value) / 2.0;
++
++    vec4 rotated_middle =
++        vec4(middle.x * cos(-alpha) - middle.y * sin(-alpha),
++             middle.x * sin(-alpha) + middle.y * cos(-alpha), 0.0, 0.0);
++
++    mat3 rotation_matrix =
++        mat3(cos(-alpha), sin(-alpha), 0,   // first column
++             -sin(-alpha), cos(-alpha), 0,  // second column
++             // third column
++             (rotated_middle.x / float($landmarks_range$)) * 2.0 - 1.0,
++             (rotated_middle.y / float($landmarks_range$)) * 2.0 - 1.0, 1);
++
++    mat3 to_relative =
++        mat3(2.0 / (float($output_w$) - 1.0), 0.0, 0.0,  // first column
++             0.0, 2.0 / (float($output_h$) - 1.0), 0.0,  // second column
++             -1.0, -1.0, 1.0);                           // third column
++
++    mat3 to_absolute =
++        mat3((float($input_w$) - 1.0) / 2.0, 0.0, 0.0,  // first column
++             0.0, (float($input_h$) - 1.0) / 2.0, 0.0,  // second column
++             // third column
++             (float($input_w$) - 1.0) / 2.0, (float($input_h$) - 1.0)/2.0, 1.0);
++
++    // Transformstion Matrix
++    mat3 tm = to_absolute * rotation_matrix * scale_matrix * to_relative;
++
++    // Inverse Transformation Matrix
++    $output_data_0[0, 0, 0] = vec4(tm[0][0], tm[1][0],      0.0, tm[2][0])$;
++    $output_data_0[1, 0, 0] = vec4(tm[0][1], tm[1][1],      0.0, tm[2][1])$;
++    $output_data_0[2, 0, 0] = vec4(tm[0][2], tm[1][2], tm[2][2],      0.0)$;
++    $output_data_0[3, 0, 0] = vec4(       0,        0,        0,      1.0)$;
++    )";
++
++  *generated_code = {
++      /*parameters=*/params,
++      /*objects=*/{},
++      /*shared_variables=*/{},
++      /*workload=*/uint3(1, 1, 1),
++      /*workgroup=*/uint3(1, 1, 1),
++      /*source_code=*/std::move(source),
++      /*input=*/IOStructure::ONLY_DEFINITIONS,
++      /*output=*/IOStructure::ONLY_DEFINITIONS,
++  };
++  return absl::OkStatus();
++}
++
++}  // namespace v1
++
++namespace v2 {
++
++std::string ReadLandmark(const std::string& landmark, const std::string& idx) {
++  std::string source = R"(
++    vec4 )" + landmark +
++                       R"(;
++    {
++      int z_coord = )" +
++                       idx +
++                       R"( * $dimensions$  / 4;
++      vec4 result = $input_data_0[0, 0, z_coord]$;
++      int rest = )" + idx +
++                       R"( * $dimensions$  % 4;
++      if (rest != 0) {
++        if (rest == 1) {
++         result.x = result.y;
++         result.y = result.z;
++        }
++        if (rest == 2) {
++         result.x = result.z;
++         result.y = result.w;
++        }
++        if (rest == 3) {
++         vec4 next_after_result = $input_data_0[0, 0, z_coord + 1]$;
++         result.x = result.w;
++         result.y = next_after_result.x;
++        }
++      }
++      result *= $multiplier$;
++      )" + landmark + R"( = result;
++     } )";
++  return source;
++}
++
++static bool IsSupported(const NodeShader::GenerationContext& ctx) {
++  return ctx.input_shapes.size() == 1 && ctx.input_shapes[0][1] == 1 &&
++         ctx.input_shapes[0][2] == 1 && ctx.input_shapes[0][3] % 3 == 0;
++}
++
++absl::Status GenerateCode(const LandmarksToTransformMatrixV2Attributes& attr,
++                          const NodeShader::GenerationContext& ctx,
++                          GeneratedCode* generated_code) {
++  if (!IsSupported(ctx)) {
++    return absl::InvalidArgumentError(
++        "This case is not supported by LandmarksToTransformMatrixV2");
++  }
++
++  std::vector<Variable> params = {
++      {"dimensions", static_cast<int>(3)},
++      {"scale_x", static_cast<float>(attr.scale_x)},
++      {"scale_y", static_cast<float>(attr.scale_y)},
++      {"left_rotation_idx", static_cast<int>(attr.left_rotation_idx)},
++      {"right_rotation_idx", static_cast<int>(attr.right_rotation_idx)},
++      {"target_rotation_radians",
++       static_cast<float>(attr.target_rotation_radians)},
++      {"output_width", static_cast<float>(attr.output_width)},
++      {"output_height", static_cast<float>(attr.output_height)},
++      {"subset_idxs", attr.subset_idxs},
++      {"subset_idxs_size", static_cast<int>(attr.subset_idxs.size())},
++      {"multiplier", static_cast<float>(attr.multiplier)},
++  };
++
++  std::string source = R"(
++     )" + ReadLandmark("left_landmark", "$left_rotation_idx$") +
++                       R"(
++     )" + ReadLandmark("right_landmark", "$right_rotation_idx$") +
++                       R"(
++
++    float diff_y = right_landmark.y - left_landmark.y;
++    float diff_x = right_landmark.x - left_landmark.x;
++    float rotation = 0.0;
++    if (diff_y != 0.0 && diff_x != 0.0) rotation = atan(diff_y, diff_x);
++    float r = $target_rotation_radians$ - rotation;
++
++    vec4 max_value = vec4(-100000, -100000, 0.0, 0.0);
++    vec4 min_value = vec4(100000, 100000, 0.0, 0.0);
++    for (int i = 0; i < $subset_idxs_size$; i++) {
++      for (int j = 0; j < 2; j++) {
++         )" + ReadLandmark("landmark_current", "$subset_idxs$[i][j]") +
++                       R"(
++        vec4 rotated = vec4(landmark_current.x * cos(r) -
++                                                landmark_current.y * sin(r),
++                                 landmark_current.x * sin(r) +
++                                                landmark_current.y * cos(r),
++                                 0.0, 0.0);
++        // both by x and y
++        max_value = vec4(max(max_value.x, rotated.x),
++                         max(max_value.y, rotated.y),
++                         0.0, 0.0);
++        min_value = vec4(min(min_value.x, rotated.x),
++                         min(min_value.y, rotated.y),
++                         0.0, 0.0);
++      }
++    }
++
++    float crop_width = max_value.x - min_value.x;
++    float crop_height = max_value.y - min_value.y;
++
++    vec4 crop_xy1 = (max_value + min_value) / vec4(2.0);
++
++    float crop_x = cos(-r) * crop_xy1.x - sin(-r) * crop_xy1.y;
++    float crop_y = sin(-r) * crop_xy1.x + cos(-r) * crop_xy1.y;
++
++
++    mat4 t = mat4(1.0,  0.0,  0.0, 0.0,  // first  column
++                  0.0,  1.0,  0.0, 0.0,  // second column
++                  0.0,  0.0,  1.0, 0.0,  // third  column
++                  0.0,  0.0,  0.0, 1.0); // forth  column
++
++    mat4 t_shift = mat4(1.0,    0.0, 0.0, 0.0,  // first  column
++                        0.0,    1.0, 0.0, 0.0,  // second column
++                        0.0,    0.0, 1.0, 0.0,  // third  column
++                     crop_x, crop_y, 0.0, 1.0); // forth  column
++    t *= t_shift;
++
++    r = -r;
++
++    mat4 t_rotation = mat4(cos(r),  sin(r), 0.0, 0.0,  // first  column
++                          -sin(r),  cos(r), 0.0, 0.0,  // second column
++                              0.0,     0.0, 1.0, 0.0,  // third  column
++                              0.0,     0.0, 0.0, 1.0); // forth  column
++
++    t *= t_rotation;
++    // cropped scale for x and y
++    float cs_x = $scale_x$ * crop_width / $output_width$;
++    float cs_y = $scale_y$ * crop_height / $output_height$;
++    mat4 t_scale = mat4(cs_x,  0.0, 0.0, 0.0,  // first  column
++                         0.0, cs_y, 0.0, 0.0,  // second column
++                         0.0,  0.0, 1.0, 0.0,  // third  column
++                         0.0,  0.0, 0.0, 1.0); // forth  column
++    t *= t_scale;
++    float shift_x = -1.0 * ($output_width$ / 2.0);
++    float shift_y = -1.0 * ($output_height$ / 2.0);
++    mat4 t_shift2 = mat4(1.0,     0.0, 0.0, 0.0,  // first  column
++                         0.0,     1.0, 0.0, 0.0,  // second column
++                         0.0,     0.0, 1.0, 0.0,  // third  column
++                     shift_x, shift_y, 0.0, 1.0); // forth  column
++    t *= t_shift2;
++    // Inverse Transformation Matrix
++    $output_data_0[0, 0, 0] = vec4(t[0][0], t[1][0], t[2][0], t[3][0])$;
++    $output_data_0[1, 0, 0] = vec4(t[0][1], t[1][1], t[2][1], t[3][1])$;
++    $output_data_0[2, 0, 0] = vec4(t[0][2], t[1][2], t[2][2], t[3][2])$;
++    $output_data_0[3, 0, 0] = vec4(t[0][3], t[1][3], t[2][3], t[3][3])$;
++    )";
++
++  *generated_code = {
++      /*parameters=*/params,
++      /*objects=*/{},
++      /*shared_variables=*/{},
++      /*workload=*/uint3(1, 1, 1),
++      /*workgroup=*/uint3(1, 1, 1),
++      /*source_code=*/std::move(source),
++      /*input=*/IOStructure::ONLY_DEFINITIONS,
++      /*output=*/IOStructure::ONLY_DEFINITIONS,
++  };
++  return absl::OkStatus();
++}
++
++}  // namespace v2
++
++class LandmarksToTransformMatrix : public NodeShader {
++ public:
++  absl::Status GenerateCode(const GenerationContext& ctx,
++                            GeneratedCode* generated_code) const final {
++    auto* attr_v1 =
++        absl::any_cast<LandmarksToTransformMatrixV1Attributes>(&ctx.op_attr);
++    if (attr_v1) return v1::GenerateCode(*attr_v1, ctx, generated_code);
++
++    auto* attr_v2 =
++        absl::any_cast<LandmarksToTransformMatrixV2Attributes>(&ctx.op_attr);
++    if (attr_v2) return v2::GenerateCode(*attr_v2, ctx, generated_code);
++
++    return absl::InvalidArgumentError("Incorrect attributes' type.");
++  }
++};
++
++}  // namespace
++
++std::unique_ptr<NodeShader> NewLandmarksToTransformMatrixNodeShader() {
++  return absl::make_unique<LandmarksToTransformMatrix>();
++}
++
++}  // namespace gl
++}  // namespace gpu
++}  // namespace tflite
+diff --git a/tensorflow/lite/delegates/gpu/gl/kernels/mediapipe/landmarks_to_transform_matrix.h b/tensorflow/lite/delegates/gpu/gl/kernels/mediapipe/landmarks_to_transform_matrix.h
+new file mode 100644
+index 00000000000..d3949050578
+--- /dev/null
++++ b/tensorflow/lite/delegates/gpu/gl/kernels/mediapipe/landmarks_to_transform_matrix.h
+@@ -0,0 +1,19 @@
++#ifndef TENSORFLOW_LITE_DELEGATES_GPU_GL_KERNELS_MEDIAPIPE_LANDMARKS_TO_TRANSFORM_MATRIX_H_
++#define TENSORFLOW_LITE_DELEGATES_GPU_GL_KERNELS_MEDIAPIPE_LANDMARKS_TO_TRANSFORM_MATRIX_H_
++
++#include <memory>
++
++#include "tensorflow/lite/delegates/gpu/common/operations.h"
++#include "tensorflow/lite/delegates/gpu/gl/node_shader.h"
++
++namespace tflite {
++namespace gpu {
++namespace gl {
++
++std::unique_ptr<NodeShader> NewLandmarksToTransformMatrixNodeShader();
++
++}  // namespace gl
++}  // namespace gpu
++}  // namespace tflite
++
++#endif  // TENSORFLOW_LITE_DELEGATES_GPU_GL_KERNELS_MEDIAPIPE_LANDMARKS_TO_TRANSFORM_MATRIX_H_
+diff --git a/tensorflow/lite/delegates/gpu/gl/kernels/mediapipe/registry.cc b/tensorflow/lite/delegates/gpu/gl/kernels/mediapipe/registry.cc
+new file mode 100644
+index 00000000000..3ef02a248c3
+--- /dev/null
++++ b/tensorflow/lite/delegates/gpu/gl/kernels/mediapipe/registry.cc
+@@ -0,0 +1,28 @@
++#include <memory>
++#include <string>
++#include <vector>
++
++#include "absl/container/flat_hash_map.h"
++#include "tensorflow/lite/delegates/gpu/gl/kernels/custom_registry.h"
++#include "tensorflow/lite/delegates/gpu/gl/kernels/mediapipe/landmarks_to_transform_matrix.h"
++#include "tensorflow/lite/delegates/gpu/gl/kernels/mediapipe/transform_landmarks.h"
++#include "tensorflow/lite/delegates/gpu/gl/kernels/mediapipe/transform_tensor_bilinear.h"
++
++namespace tflite {
++namespace gpu {
++namespace gl {
++
++void RegisterCustomOps(
++    absl::flat_hash_map<std::string, std::vector<std::unique_ptr<NodeShader>>>*
++        shaders) {
++  (*shaders)["landmarks_to_transform_matrix"].push_back(
++      NewLandmarksToTransformMatrixNodeShader());
++  (*shaders)["transform_landmarks"].push_back(
++      NewTransformLandmarksNodeShader());
++  (*shaders)["transform_tensor_bilinear"].push_back(
++      NewTransformTensorBilinearNodeShader());
++}
++
++}  // namespace gl
++}  // namespace gpu
++}  // namespace tflite
+diff --git a/tensorflow/lite/delegates/gpu/gl/kernels/mediapipe/transform_landmarks.cc b/tensorflow/lite/delegates/gpu/gl/kernels/mediapipe/transform_landmarks.cc
+new file mode 100644
+index 00000000000..980e2aa99e6
+--- /dev/null
++++ b/tensorflow/lite/delegates/gpu/gl/kernels/mediapipe/transform_landmarks.cc
+@@ -0,0 +1,123 @@
++#include "tensorflow/lite/delegates/gpu/gl/kernels/mediapipe/transform_landmarks.h"
++
++#include <algorithm>
++#include <cstdint>
++#include <cstring>
++#include <string>
++#include <vector>
++
++#include "absl/memory/memory.h"
++#include "absl/strings/substitute.h"
++#include "absl/types/any.h"
++#include "tensorflow/lite/delegates/gpu/common/mediapipe/transform_landmarks.h"
++#include "tensorflow/lite/delegates/gpu/common/shape.h"
++#include "tensorflow/lite/delegates/gpu/common/status.h"
++#include "tensorflow/lite/delegates/gpu/common/types.h"
++#include "tensorflow/lite/delegates/gpu/common/util.h"
++
++namespace tflite {
++namespace gpu {
++namespace gl {
++namespace {
++
++class TransformLandmarks : public NodeShader {
++ public:
++  absl::Status GenerateCode(const GenerationContext& ctx,
++                            GeneratedCode* generated_code) const final {
++    if (!IsSupported(ctx)) {
++      return absl::InvalidArgumentError(
++          "This case is not supported by TransformLandmarks");
++    }
++
++    const auto& attr =
++        absl::any_cast<const TransformLandmarksAttributes&>(ctx.op_attr);
++
++    // For transformlandmarks v2 scale parameter is set to 1 when operation is
++    // parsed.
++    std::vector<Variable> params;
++    if (attr.scale != 1) {
++      params.push_back({"scale", static_cast<float>(attr.scale)});
++    }
++    std::string source = R"(
++          vec4 x_transform = $input_data_1[0, 0, 0]$;
++          vec4 y_transform = $input_data_1[1, 0, 0]$; )";
++    if (attr.scale != 1) {
++      source += R"(
++          x_transform.w *= $scale$;
++          y_transform.w *= $scale$;
++          )";
++    }
++    source += R"(
++          vec4 landmks = $input_data_0[gid.x, gid.y, gid.z]$;
++          vec4 transformed = vec4(0.0);
++    )";
++    switch (attr.dimensions) {
++      case 2:
++        source += R"(
++          // x y x y
++          vec4 l_pair1_ = vec4(landmks.x, landmks.y, 0.0, 1.0);
++          vec4 l_pair2_ = vec4(landmks.z, landmks.w, 0.0, 1.0);
++          transformed = vec4(dot(x_transform, l_pair1_), dot(y_transform, l_pair1_),
++                             dot(x_transform, l_pair2_), dot(y_transform, l_pair2_));
++
++          value_0 = transformed;
++        )";
++        break;
++      case 3:
++        source += R"(
++          if ((gid.z * 4) % 3 == 0) { // 0, 3, 6
++            // x y z x
++            vec4 landmks_next = $input_data_0[gid.x, gid.y, gid.z + 1]$;
++            vec4 l_= landmks;
++            l_.z = 0.0;
++            l_.w = 1.0;
++            transformed = vec4(dot(x_transform, l_),
++                                  dot(y_transform, l_),
++                                  landmks.z, dot(x_transform, vec4(landmks.w, landmks_next.x, 0.0, 1.0)));
++          } else if ((gid.z * 4) % 3 == 1) { // 1, 4, 7
++            // y z x y
++            vec4 landmks_prev = $input_data_0[gid.x, gid.y, gid.z - 1]$;
++            vec4 l_ = vec4(landmks.z, landmks.w, 0.0, 1.0);
++            transformed = vec4(dot(y_transform, vec4(landmks_prev.w, landmks.x, 0.0, 1.0)), landmks.y,
++                               dot(x_transform, l_), dot(y_transform, l_));
++          } else if ((gid.z * 4) % 3 == 2) { // 2, 5, 8
++            // z, x, y, z
++            vec4 l_ = vec4(landmks.y, landmks.z, 0.0, 1.0);
++            transformed = vec4(landmks.x, dot(x_transform, l_),
++                               dot(y_transform, l_), landmks.w);
++          }
++          value_0 = transformed;
++        )";
++        break;
++    }
++
++    *generated_code = {
++        /*parameters=*/params,
++        /*objects=*/{},
++        /*shared_variables=*/{},
++        /*workload=*/uint3(),
++        /*workgroup=*/uint3(),
++        /*source_code=*/std::move(source),
++        /*input=*/IOStructure::ONLY_DEFINITIONS,
++        /*output=*/IOStructure::AUTO,
++    };
++    return absl::OkStatus();
++  }
++
++ private:
++  static bool IsSupported(const GenerationContext& ctx) {
++    const auto& attr =
++        absl::any_cast<const TransformLandmarksAttributes&>(ctx.op_attr);
++    return (attr.dimensions == 2 || attr.dimensions == 3) && attr.version == 1;
++  }
++};
++
++}  // namespace
++
++std::unique_ptr<NodeShader> NewTransformLandmarksNodeShader() {
++  return absl::make_unique<TransformLandmarks>();
++}
++
++}  // namespace gl
++}  // namespace gpu
++}  // namespace tflite
+diff --git a/tensorflow/lite/delegates/gpu/gl/kernels/mediapipe/transform_landmarks.h b/tensorflow/lite/delegates/gpu/gl/kernels/mediapipe/transform_landmarks.h
+new file mode 100644
+index 00000000000..cfb656675e4
+--- /dev/null
++++ b/tensorflow/lite/delegates/gpu/gl/kernels/mediapipe/transform_landmarks.h
+@@ -0,0 +1,19 @@
++#ifndef TENSORFLOW_LITE_DELEGATES_GPU_GL_KERNELS_MEDIAPIPE_TRANSFORM_LANDMARKS_H_
++#define TENSORFLOW_LITE_DELEGATES_GPU_GL_KERNELS_MEDIAPIPE_TRANSFORM_LANDMARKS_H_
++
++#include <memory>
++
++#include "tensorflow/lite/delegates/gpu/common/operations.h"
++#include "tensorflow/lite/delegates/gpu/gl/node_shader.h"
++
++namespace tflite {
++namespace gpu {
++namespace gl {
++
++std::unique_ptr<NodeShader> NewTransformLandmarksNodeShader();
++
++}  // namespace gl
++}  // namespace gpu
++}  // namespace tflite
++
++#endif  // TENSORFLOW_LITE_DELEGATES_GPU_GL_KERNELS_MEDIAPIPE_TRANSFORM_LANDMARKS_H_
+diff --git a/tensorflow/lite/delegates/gpu/gl/kernels/mediapipe/transform_tensor_bilinear.cc b/tensorflow/lite/delegates/gpu/gl/kernels/mediapipe/transform_tensor_bilinear.cc
+new file mode 100644
+index 00000000000..8013b9b3505
+--- /dev/null
++++ b/tensorflow/lite/delegates/gpu/gl/kernels/mediapipe/transform_tensor_bilinear.cc
+@@ -0,0 +1,169 @@
++#include "tensorflow/lite/delegates/gpu/gl/kernels/mediapipe/transform_tensor_bilinear.h"
++
++#include <algorithm>
++#include <cstdint>
++#include <cstring>
++#include <string>
++#include <vector>
++
++#include "absl/memory/memory.h"
++#include "absl/strings/substitute.h"
++#include "absl/types/any.h"
++#include "tensorflow/lite/delegates/gpu/common/mediapipe/transform_tensor_bilinear.h"
++#include "tensorflow/lite/delegates/gpu/common/shape.h"
++#include "tensorflow/lite/delegates/gpu/common/status.h"
++#include "tensorflow/lite/delegates/gpu/common/types.h"
++#include "tensorflow/lite/delegates/gpu/common/util.h"
++
++namespace tflite {
++namespace gpu {
++namespace gl {
++namespace {
++
++class TransformTensorBilinear : public NodeShader {
++ public:
++  absl::Status GenerateCode(const GenerationContext& ctx,
++                            GeneratedCode* generated_code) const final {
++    if (!IsSupported(ctx)) {
++      return absl::InvalidArgumentError(
++          "This case is not supported by TransformTensorBilinear.");
++    }
++
++    std::vector<Variable> params = {
++        {"input_data_0_h", static_cast<int>(ctx.input_shapes[0][1])},
++        {"input_data_0_w", static_cast<int>(ctx.input_shapes[0][2])}};
++
++    // Only bilinear transformation is supported right now.
++    std::string source = R"(
++      vec4 first_line = $input_data_1[0, 0, 0]$;
++      vec4 second_line = $input_data_1[1, 0, 0]$;
++      )" + AlignCornersCorrection(ctx) +
++                         R"(
++      vec4 before_transform_coord_2d = vec4(gid.x, gid.y, 0.0, 1.0);
++
++      // Get transformed coordinates
++      vec2 xy = vec2(dot(first_line, before_transform_coord_2d),
++                     dot(second_line, before_transform_coord_2d));
++
++      // Get coordinates of corners to interpolate from.
++      int x1 = int(floor(xy.x)); // x2 is x1 + 1
++      int y1 = int(floor(xy.y)); // y2 is y1 + 1
++
++      // Apply interpolation if coordinate is in bounds.
++      vec4 result = vec4(0.0);
++
++      if(xy.x >= 0.0 && xy.x <= float($input_data_0_w$ -1) &&
++         xy.y >= 0.0 && xy.y <= float($input_data_0_h$ -1)) {
++
++        // Corners position:
++        // q_11 --- q_21
++        // ----     ----
++        // q_12 --- q_22
++)";
++    source += SampleFromInput0("q_11", "x1", "y1") +
++              SampleFromInput0("q_12", "x1", "y1 + 1") +
++              SampleFromInput0("q_21", "x1 + 1", "y1") +
++              SampleFromInput0("q_22", "x1 + 1", "y1 + 1") + R"(
++
++        float right_contrib = xy.x - float(x1);
++        float lower_contrib = xy.y - float(y1);
++
++        vec4 upper = (1.0 - right_contrib) * q_11 + right_contrib * q_21;
++        vec4 lower = (1.0 - right_contrib) * q_12 + right_contrib * q_22;
++
++        result = lower_contrib * lower + (1.0 - lower_contrib) * upper;
++
++      }
++      value_0 = result;
++    )";
++
++    *generated_code = {
++        /*parameters=*/params,
++        /*objects=*/{},
++        /*shared_variables=*/{},
++        /*workload=*/uint3(),
++        /*workgroup=*/uint3(),
++        /*source_code=*/std::move(source),
++        /*input=*/IOStructure::ONLY_DEFINITIONS,
++        /*output=*/IOStructure::AUTO,
++    };
++    return absl::OkStatus();
++  }
++
++ private:
++  std::string SampleFromInput0(absl::string_view variable,
++                               absl::string_view x_coord,
++                               absl::string_view y_coord) const {
++    // This function generates code, which samples data from the first input
++    // tensor and checks the coordinates' bounds:
++    //
++    // vec4 q = vec4(0.0);
++    // [0, H)
++    // if (x >= 0 && x < $input_data_0_w$ && y >= 0 && y < $input_data_0_h$) {
++    //   q = $input_data_0[x, y, gid.z]$;
++    // }
++
++    // Create zero initialized variable on stack
++    std::string result =
++        absl::Substitute("        vec4 $0 = vec4(0.0);\n", variable);
++    // If coordinates are not out of scope, load value from input_data_0
++    absl::SubstituteAndAppend(
++        &result,
++        "        if ($0 >= 0 && $1 < $$input_data_0_w$$ && "
++        "$2 >= 0 && $3 < $$input_data_0_h$$) {\n",
++        x_coord, x_coord, y_coord, y_coord);
++    absl::SubstituteAndAppend(
++        &result,
++        "          $0 = $$input_data_0[$1, $2, gid.z]$$;\n        }\n\n",
++        variable, x_coord, y_coord);
++    return result;
++  }
++
++  std::string AlignCornersCorrection(const GenerationContext& ctx) const {
++    const auto& attr =
++        absl::any_cast<const TransformTensorBilinearAttributes&>(ctx.op_attr);
++    // Align corners correction: T -> S * ( T * A ), where T is a
++    // transformation matrix, and subtruction and addition matrices are:
++    // S            A
++    // 1 0 0 -0.5   1 0 0 0.5
++    // 0 1 0 -0.5   0 1 0 0.5
++    // 0 0 1 0      0 0 1 0
++    // 0 0 0 1      0 0 0 1
++    // Transformation matrix column 3 and rows 3, 4 are identity, which makes
++    // the final formula pretty simple and easy to get if doing a manual
++    // multiuplication.
++    if (attr.align_corners) {
++      return R"(
++      first_line.w += first_line.x * 0.5 + first_line.y * 0.5 - 0.5;
++      second_line.w += second_line.x * 0.5 + second_line.y * 0.5 - 0.5;
++      )";
++    } else {
++      return "";
++    }
++  }
++
++  static bool IsSupported(const GenerationContext& ctx) {
++    // if version 2 - align corners is turned on.
++    // both versions expect transformation matrix as 1x1x1x16
++    if (ctx.input_shapes.size() != 2) return false;
++
++    if (ctx.input_shapes[1][0] != 1 || ctx.input_shapes[1][1] != 1 ||
++        ctx.input_shapes[1][2] != 4 || ctx.input_shapes[1][3] != 4)
++      return false;
++
++    const auto& attr =
++        absl::any_cast<const TransformTensorBilinearAttributes&>(ctx.op_attr);
++    return attr.output_size.h > 0 && attr.output_size.w > 0 &&
++           attr.version == 1;
++  }
++};
++
++}  // namespace
++
++std::unique_ptr<NodeShader> NewTransformTensorBilinearNodeShader() {
++  return absl::make_unique<TransformTensorBilinear>();
++}
++
++}  // namespace gl
++}  // namespace gpu
++}  // namespace tflite
+diff --git a/tensorflow/lite/delegates/gpu/gl/kernels/mediapipe/transform_tensor_bilinear.h b/tensorflow/lite/delegates/gpu/gl/kernels/mediapipe/transform_tensor_bilinear.h
+new file mode 100644
+index 00000000000..c62387a4b96
+--- /dev/null
++++ b/tensorflow/lite/delegates/gpu/gl/kernels/mediapipe/transform_tensor_bilinear.h
+@@ -0,0 +1,19 @@
++#ifndef TENSORFLOW_LITE_DELEGATES_GPU_GL_KERNELS_MEDIAPIPE_TRANSFORM_TENSOR_BILINEAR_H_
++#define TENSORFLOW_LITE_DELEGATES_GPU_GL_KERNELS_MEDIAPIPE_TRANSFORM_TENSOR_BILINEAR_H_
++
++#include <memory>
++
++#include "tensorflow/lite/delegates/gpu/common/operations.h"
++#include "tensorflow/lite/delegates/gpu/gl/node_shader.h"
++
++namespace tflite {
++namespace gpu {
++namespace gl {
++
++std::unique_ptr<NodeShader> NewTransformTensorBilinearNodeShader();
++
++}  // namespace gl
++}  // namespace gpu
++}  // namespace tflite
++
++#endif  // TENSORFLOW_LITE_DELEGATES_GPU_GL_KERNELS_MEDIAPIPE_TRANSFORM_TENSOR_BILINEAR_H_

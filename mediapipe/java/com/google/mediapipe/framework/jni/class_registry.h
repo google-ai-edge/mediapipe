@@ -33,6 +33,7 @@ class ClassRegistry {
       absl::node_hash_map<std::string, std::string> renaming_map);
   std::string GetClassName(std::string cls);
   std::string GetMethodName(std::string cls, std::string method);
+  std::string GetFieldName(std::string cls, std::string field);
 
   // TODO: Just have the prefix instead of all these constants.
   static constexpr char const* kAndroidAssetUtilClassName =
@@ -59,6 +60,8 @@ class ClassRegistry {
       "com/google/mediapipe/framework/PacketGetter";
   static constexpr char const* kPacketWithHeaderCallbackClassName =
       "com/google/mediapipe/framework/PacketWithHeaderCallback";
+  static constexpr char const* kProtoUtilSerializedMessageClassName =
+      "com/google/mediapipe/framework/ProtoUtil$SerializedMessage";
 
  private:
   ClassRegistry();

@@ -14,6 +14,18 @@ input_stream: "IMAGE:image"
 # Max number of hands to detect/track. (int)
 input_side_packet: "NUM_HANDS:num_hands"
 
+# Complexity of hand landmark and palm detection models: 0 or 1. Accuracy as
+# well as inference latency generally go up with the model complexity. If
+# unspecified, functions as set to 1. (int)
+input_side_packet: "MODEL_COMPLEXITY:model_complexity"
+
+# Whether landmarks on the previous image should be used to help localize
+# landmarks on the current image. (bool)
+input_side_packet: "USE_PREV_LANDMARKS:use_prev_landmarks"
+
+# The throttled input image. (Image)
+output_stream: "IMAGE:throttled_image"
+
 # Collection of detected/predicted hands, each represented as a list of
 # landmarks. (std::vector<NormalizedLandmarkList>)
 # NOTE: there will not be an output packet in the LANDMARKS stream for this
@@ -21,8 +33,22 @@ input_side_packet: "NUM_HANDS:num_hands"
 # framework will internally inform the downstream calculators of the absence of
 # this packet so that they don't wait for it unnecessarily.
 output_stream: "LANDMARKS:multi_hand_landmarks"
+
+# Collection of detected/predicted hand world landmarks.
+# (std::vector<LandmarkList>)
+#
+# World landmarks are real-world 3D coordinates in meters with the origin in the
+# center of the hand bounding box calculated from the landmarks.
+#
+# WORLD_LANDMARKS shares the same landmark topology as LANDMARKS. However,
+# LANDMARKS provides coordinates (in pixels) of a 3D object projected onto the
+# 2D image surface, while WORLD_LANDMARKS provides coordinates (in meters) of
+# the 3D object itself.
+output_stream: "WORLD_LANDMARKS:multi_hand_world_landmarks"
+
 # Collection of handedness of the detected hands (i.e. is hand left or right),
-# each represented as a Classification proto.
+# each represented as a ClassificationList proto with a single Classification
+# entry. (std::vector<ClassificationList>)
 # Note that handedness is determined assuming the input image is mirrored,
 # i.e., taken with a front-facing/selfie camera with images flipped
 # horizontally.
@@ -38,18 +64,51 @@ output_stream: "HAND_ROIS_FROM_LANDMARKS:hand_rects"
 # (std::vector<NormalizedRect>)
 output_stream: "HAND_ROIS_FROM_PALM_DETECTIONS:hand_rects_from_palm_detections"
 
-# Converts Image to GpuBuffer for HandLandmarkTrackingGpu to consume.
+node {
+  calculator: "FlowLimiterCalculator"
+  input_stream: "image"
+  input_stream: "FINISHED:multi_hand_landmarks"
+  input_stream_info: {
+    tag_index: "FINISHED"
+    back_edge: true
+  }
+  output_stream: "throttled_image"
+  options: {
+    [mediapipe.FlowLimiterCalculatorOptions.ext] {
+      max_in_flight: 1
+      max_in_queue: 1
+    }
+  }
+}
+
+# Converts Image to ImageFrame for HandLandmarkTrackingCpu to consume.
 node {
   calculator: "FromImageCalculator"
-  input_stream: "IMAGE:image"
-  output_stream: "IMAGE_CPU:image_frame"
+  input_stream: "IMAGE:throttled_image"
+  output_stream: "IMAGE_CPU:raw_image_frame"
+  output_stream: "SOURCE_ON_GPU:is_gpu_image"
+}
+
+# TODO: Remove the extra flipping once adopting MlImage.
+# If the source images are on gpu, flip the data vertically before sending them
+# into HandLandmarkTrackingCpu. This maybe needed because OpenGL represents
+# images assuming the image origin is at the bottom-left corner, whereas
+# MediaPipe in general assumes the image origin is at the top-left corner.
+node: {
+  calculator: "ImageTransformationCalculator"
+  input_stream: "IMAGE:raw_image_frame"
+  input_stream: "FLIP_VERTICALLY:is_gpu_image"
+  output_stream: "IMAGE:image_frame"
 }
 
 node {
   calculator: "HandLandmarkTrackingCpu"
   input_stream: "IMAGE:image_frame"
   input_side_packet: "NUM_HANDS:num_hands"
+  input_side_packet: "MODEL_COMPLEXITY:model_complexity"
+  input_side_packet: "USE_PREV_LANDMARKS:use_prev_landmarks"
   output_stream: "LANDMARKS:multi_hand_landmarks"
+  output_stream: "WORLD_LANDMARKS:multi_hand_world_landmarks"
   output_stream: "HANDEDNESS:multi_handedness"
   output_stream: "PALM_DETECTIONS:palm_detections"
   output_stream: "HAND_ROIS_FROM_LANDMARKS:hand_rects"

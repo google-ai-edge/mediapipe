@@ -1,0 +1,71 @@
+// Copyright 2021 The MediaPipe Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto2";
+
+package mediapipe;
+
+import "mediapipe/framework/calculator.proto";
+
+message LandmarksRefinementCalculatorOptions {
+  extend CalculatorOptions {
+    optional LandmarksRefinementCalculatorOptions ext = 381914658;
+  }
+
+  // Do nothing and keep those Z that are already present in the resulting set
+  // of landmarks.
+  message ZRefinementNone {}
+
+  // Simply copy Z values from the given set of landmarks to the resulting set
+  // of landmarks.
+  message ZRefinementCopy {}
+
+  // Calculate average of the specified set of landmarks in the resulting set
+  // and use it as Z for all given landmarks when assigning their values to the
+  // resulting set of landmarks.
+  message ZRefinementAssignAverage {
+    // Indexes of the resulting landmarks to use for average. Should be non
+    // empty.
+    repeated int32 indexes_for_average = 1;
+  }
+
+  // Specifies the set of instructions on assigning z value from the given set
+  // of landmarks to the resulting set of landmarks.
+  message ZRefinement {
+    // Exactly one Z refinement option should be specified.
+    oneof z_refinement_options {
+      ZRefinementNone none = 1;
+      ZRefinementCopy copy = 2;
+      ZRefinementAssignAverage assign_average = 3;
+    }
+  }
+
+  // Specifies the set of instructions of assigning values to the resulting set
+  // of landmarks.
+  message Refinement {
+    // Maps indexes of the given set of landmarks to indexes of the resulting
+    // set of landmarks. Should be non empty and contain the same amount of
+    // indexes as landmarks in the corresponding input stream.
+    repeated int32 indexes_mapping = 1;
+
+    // Z refinement instructions.
+    optional ZRefinement z_refinement = 2;
+  }
+
+  // Refinement instructions for every landmarks input stream. Applied in the
+  // same order as defined. Should be the same amount of refinements as landmark
+  // input streams in the calculator. Union of index mappings should start with
+  // 0 and cover a contineous range.
+  repeated Refinement refinement = 1;
+}

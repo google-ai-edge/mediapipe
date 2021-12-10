@@ -15,6 +15,9 @@
 package com.google.mediapipe.solutioncore;
 
 import android.app.Activity;
+import android.graphics.SurfaceTexture;
+import android.util.Log;
+import android.util.Size;
 import com.google.mediapipe.components.CameraHelper;
 import com.google.mediapipe.components.CameraXPreviewHelper;
 import com.google.mediapipe.components.ExternalTextureConverter;
@@ -38,7 +41,10 @@ public class CameraInput {
   };
 
   private final CameraXPreviewHelper cameraHelper;
-  private TextureFrameConsumer cameraNewFrameListener;
+  private CameraHelper.OnCameraStartedListener customOnCameraStartedListener;
+  private TextureFrameConsumer newFrameListener;
+  // {@link SurfaceTexture} where the camera-preview frames can be accessed.
+  private SurfaceTexture frameTexture;
   private ExternalTextureConverter converter;
 
   /**
@@ -56,8 +62,17 @@ public class CameraInput {
    *
    * @param listener the callback.
    */
-  public void setCameraNewFrameListener(TextureFrameConsumer listener) {
-    cameraNewFrameListener = listener;
+  public void setNewFrameListener(TextureFrameConsumer listener) {
+    newFrameListener = listener;
+  }
+
+  /**
+   * Sets a callback to be invoked when camera start is complete.
+   *
+   * @param listener the callback.
+   */
+  public void setOnCameraStartedListener(CameraHelper.OnCameraStartedListener listener) {
+    customOnCameraStartedListener = listener;
   }
 
   /**
@@ -77,26 +92,57 @@ public class CameraInput {
     if (converter == null) {
       converter = new ExternalTextureConverter(eglContext, 2);
     }
-    if (cameraNewFrameListener == null) {
+    if (newFrameListener == null) {
       throw new MediaPipeException(
           MediaPipeException.StatusCode.FAILED_PRECONDITION.ordinal(),
-          "cameraNewFrameListener is not set.");
+          "newFrameListener is not set.");
     }
-    converter.setConsumer(cameraNewFrameListener);
+    frameTexture = converter.getSurfaceTexture();
+    converter.setConsumer(newFrameListener);
     cameraHelper.setOnCameraStartedListener(
-        surfaceTexture ->
-            converter.setSurfaceTextureAndAttachToGLContext(surfaceTexture, width, height));
+        surfaceTexture -> {
+          if (width != 0 && height != 0) {
+            // Sets the size of the output texture frame.
+            updateOutputSize(width, height);
+          }
+          if (customOnCameraStartedListener != null) {
+            customOnCameraStartedListener.onCameraStarted(surfaceTexture);
+          }
+        });
     cameraHelper.startCamera(
         activity,
         cameraFacing == CameraFacing.FRONT
             ? CameraHelper.CameraFacing.FRONT
             : CameraHelper.CameraFacing.BACK,
-        /*unusedSurfaceTexture=*/ null,
-        null);
+        /*surfaceTexture=*/ frameTexture,
+        (width == 0 || height == 0) ? null : new Size(width, height));
   }
 
-  /** Stops the camera input. */
-  public void stop() {
+  /**
+   * Sets or updates the size of the output {@link TextureFrame}. Can be invoked by {@code
+   * SurfaceHolder.Callback.surfaceChanged} when the surface size is changed.
+   *
+   * @param width the desired width of the converted texture.
+   * @param height the desired height of the converted texture.
+   */
+  public void updateOutputSize(int width, int height) {
+    Size displaySize = cameraHelper.computeDisplaySizeFromViewSize(new Size(width, height));
+    boolean isCameraRotated = cameraHelper.isCameraRotated();
+    Log.i(
+        TAG,
+        "Set camera output texture frame size to width="
+            + displaySize.getWidth()
+            + " , height="
+            + displaySize.getHeight());
+    // Configure the output width and height as the computed
+    // display size.
+    converter.setDestinationSize(
+        isCameraRotated ? displaySize.getHeight() : displaySize.getWidth(),
+        isCameraRotated ? displaySize.getWidth() : displaySize.getHeight());
+  }
+
+  /** Closes the camera input. */
+  public void close() {
     if (converter != null) {
       converter.close();
     }

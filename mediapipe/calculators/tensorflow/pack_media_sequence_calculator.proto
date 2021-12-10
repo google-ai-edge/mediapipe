@@ -65,4 +65,7 @@ message PackMediaSequenceCalculatorOptions {
   // If true, will return an error status if an output sequence would be too
   // many bytes to serialize.
   optional bool skip_large_sequences = 7 [default = true];
+
+  // If true/false, outputs the SequenceExample at timestamp 0/PostStream.
+  optional bool output_as_zero_timestamp = 8 [default = false];
 }

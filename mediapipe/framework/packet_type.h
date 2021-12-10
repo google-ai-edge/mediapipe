@@ -84,6 +84,11 @@ class PacketType {
   // Returns true iff this and other are consistent, meaning they do
   // not expect different types.  IsAny() is consistent with anything.
   // IsNone() is only consistent with IsNone() and IsAny().
+  // Note: this is definied as a symmetric relationship, but within the
+  // framework, it is consistently invoked as:
+  //   input_port_type.IsConsistentWith(connected_output_port_type)
+  // TODO: consider making this explicitly directional, and
+  // sharing some logic with the packet validation check.
   bool IsConsistentWith(const PacketType& other) const;
 
   // Returns OK if the packet contains an object of the appropriate type.

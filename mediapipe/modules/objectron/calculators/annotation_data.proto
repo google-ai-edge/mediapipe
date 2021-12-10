@@ -42,6 +42,10 @@ message AnnotatedKeyPoint {
   int32 id = 1;
   Point3D point_3d = 2;
   NormalizedPoint2D point_2d = 3;
+  // Indicates whether this keypoint is hidden or not. The hidden attribute is
+  // determined from the object's skeleton. For box model, none of the keypoints
+  // are hidden.
+  bool hidden = 4;
 }
 
 message ObjectAnnotation {

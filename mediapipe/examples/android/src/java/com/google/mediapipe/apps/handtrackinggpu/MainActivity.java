@@ -14,6 +14,9 @@
 
 package com.google.mediapipe.apps.handtrackinggpu;
 
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
+import android.content.pm.PackageManager.NameNotFoundException;
 import android.os.Bundle;
 import android.util.Log;
 import com.google.mediapipe.formats.proto.LandmarkProto.NormalizedLandmark;
@@ -30,6 +33,7 @@ public class MainActivity extends com.google.mediapipe.apps.basic.MainActivity {
   private static final String TAG = "MainActivity";
 
   private static final String INPUT_NUM_HANDS_SIDE_PACKET_NAME = "num_hands";
+  private static final String INPUT_MODEL_COMPLEXITY = "model_complexity";
   private static final String OUTPUT_LANDMARKS_STREAM_NAME = "hand_landmarks";
   // Max number of hands to detect/process.
   private static final int NUM_HANDS = 2;
@@ -38,9 +42,22 @@ public class MainActivity extends com.google.mediapipe.apps.basic.MainActivity {
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
 
+    ApplicationInfo applicationInfo;
+    try {
+      applicationInfo =
+          getPackageManager().getApplicationInfo(getPackageName(), PackageManager.GET_META_DATA);
+    } catch (NameNotFoundException e) {
+      throw new AssertionError(e);
+    }
+
     AndroidPacketCreator packetCreator = processor.getPacketCreator();
     Map<String, Packet> inputSidePackets = new HashMap<>();
     inputSidePackets.put(INPUT_NUM_HANDS_SIDE_PACKET_NAME, packetCreator.createInt32(NUM_HANDS));
+    if (applicationInfo.metaData.containsKey("modelComplexity")) {
+      inputSidePackets.put(
+          INPUT_MODEL_COMPLEXITY,
+          packetCreator.createInt32(applicationInfo.metaData.getInt("modelComplexity")));
+    }
     processor.setInputSidePackets(inputSidePackets);
 
     // To show verbose logging, run:

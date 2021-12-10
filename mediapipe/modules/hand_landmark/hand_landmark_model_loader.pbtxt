@@ -1,0 +1,63 @@
+# MediaPipe graph to load a selected hand landmark TF Lite model.
+
+type: "HandLandmarkModelLoader"
+
+# Complexity of the hand landmark model: 0 or 1. Landmark accuracy as well as
+# inference latency generally go up with the model complexity. If unspecified,
+# functions as set to 1. (int)
+input_side_packet: "MODEL_COMPLEXITY:model_complexity"
+
+# TF Lite model represented as a FlatBuffer.
+# (std::unique_ptr<tflite::FlatBufferModel, std::function<void(tflite::FlatBufferModel*)>>)
+output_side_packet: "MODEL:model"
+
+# Determines path to the desired pose landmark model file.
+node {
+  calculator: "SwitchContainer"
+  input_side_packet: "SELECT:model_complexity"
+  output_side_packet: "PACKET:model_path"
+  options: {
+    [mediapipe.SwitchContainerOptions.ext] {
+      select: 1
+      contained_node: {
+        calculator: "ConstantSidePacketCalculator"
+        options: {
+          [mediapipe.ConstantSidePacketCalculatorOptions.ext]: {
+            packet {
+              string_value: "mediapipe/modules/hand_landmark/hand_landmark_lite.tflite"
+            }
+          }
+        }
+      }
+      contained_node: {
+        calculator: "ConstantSidePacketCalculator"
+        options: {
+          [mediapipe.ConstantSidePacketCalculatorOptions.ext]: {
+            packet {
+              string_value: "mediapipe/modules/hand_landmark/hand_landmark_full.tflite"
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+# Loads the file in the specified path into a blob.
+node {
+  calculator: "LocalFileContentsCalculator"
+  input_side_packet: "FILE_PATH:model_path"
+  output_side_packet: "CONTENTS:model_blob"
+  options: {
+    [mediapipe.LocalFileContentsCalculatorOptions.ext]: {
+      text_mode: false
+    }
+  }
+}
+
+# Converts the input blob into a TF Lite model.
+node {
+  calculator: "TfLiteModelCalculator"
+  input_side_packet: "MODEL_BLOB:model_blob"
+  output_side_packet: "MODEL:model"
+}

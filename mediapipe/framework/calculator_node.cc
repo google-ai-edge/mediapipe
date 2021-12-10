@@ -20,6 +20,7 @@
 #include <utility>
 
 #include "absl/memory/memory.h"
+#include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/string_view.h"
@@ -119,79 +120,92 @@ Timestamp CalculatorNode::SourceProcessOrder(
 }
 
 absl::Status CalculatorNode::Initialize(
-    const ValidatedGraphConfig* validated_graph, int node_id,
+    const ValidatedGraphConfig* validated_graph, NodeTypeInfo::NodeRef node_ref,
     InputStreamManager* input_stream_managers,
     OutputStreamManager* output_stream_managers,
     OutputSidePacketImpl* output_side_packets, int* buffer_size_hint,
     std::shared_ptr<ProfilingContext> profiling_context) {
   RET_CHECK(buffer_size_hint) << "buffer_size_hint is NULL";
-  node_id_ = node_id;
   validated_graph_ = validated_graph;
   profiling_context_ = profiling_context;
 
-  const CalculatorGraphConfig::Node& node_config =
-      validated_graph_->Config().node(node_id_);
-  name_ = tool::CanonicalNodeName(validated_graph_->Config(), node_id_);
-
-  max_in_flight_ = node_config.max_in_flight();
-  max_in_flight_ = max_in_flight_ ? max_in_flight_ : 1;
-  if (!node_config.executor().empty()) {
-    executor_ = node_config.executor();
+  const CalculatorGraphConfig::Node* node_config;
+  if (node_ref.type == NodeTypeInfo::NodeType::CALCULATOR) {
+    node_config = &validated_graph_->Config().node(node_ref.index);
+    name_ = tool::CanonicalNodeName(validated_graph_->Config(), node_ref.index);
+    node_type_info_ = &validated_graph_->CalculatorInfos()[node_ref.index];
+  } else if (node_ref.type == NodeTypeInfo::NodeType::PACKET_GENERATOR) {
+    const PacketGeneratorConfig& pg_config =
+        validated_graph_->Config().packet_generator(node_ref.index);
+    name_ = absl::StrCat("__pg_", node_ref.index, "_",
+                         pg_config.packet_generator());
+    node_type_info_ = &validated_graph_->GeneratorInfos()[node_ref.index];
+    node_config = &node_type_info_->Contract().GetWrapperConfig();
+  } else {
+    return absl::InvalidArgumentError(
+        "node_ref is not a calculator or packet generator");
   }
-  source_layer_ = node_config.source_layer();
 
-  const NodeTypeInfo& node_type_info =
-      validated_graph_->CalculatorInfos()[node_id_];
-  const CalculatorContract& contract = node_type_info.Contract();
+  max_in_flight_ = node_config->max_in_flight();
+  max_in_flight_ = max_in_flight_ ? max_in_flight_ : 1;
+  if (!node_config->executor().empty()) {
+    executor_ = node_config->executor();
+  }
+  source_layer_ = node_config->source_layer();
+
+  const CalculatorContract& contract = node_type_info_->Contract();
 
   uses_gpu_ =
-      node_type_info.InputSidePacketTypes().HasTag(kGpuSharedTagName) ||
-      ContainsKey(node_type_info.Contract().ServiceRequests(), kGpuService.key);
+      node_type_info_->InputSidePacketTypes().HasTag(kGpuSharedTagName) ||
+      ContainsKey(node_type_info_->Contract().ServiceRequests(),
+                  kGpuService.key);
 
   // TODO Propagate types between calculators when SetAny is used.
 
   MP_RETURN_IF_ERROR(InitializeOutputSidePackets(
-      node_type_info.OutputSidePacketTypes(), output_side_packets));
+      node_type_info_->OutputSidePacketTypes(), output_side_packets));
 
   MP_RETURN_IF_ERROR(InitializeInputSidePackets(output_side_packets));
 
-  MP_RETURN_IF_ERROR(InitializeOutputStreamHandler(
-      node_config.output_stream_handler(), node_type_info.OutputStreamTypes()));
+  MP_RETURN_IF_ERROR(
+      InitializeOutputStreamHandler(node_config->output_stream_handler(),
+                                    node_type_info_->OutputStreamTypes()));
   MP_RETURN_IF_ERROR(InitializeOutputStreams(output_stream_managers));
 
   calculator_state_ = absl::make_unique<CalculatorState>(
-      name_, node_id_, node_config.calculator(), node_config,
+      name_, node_ref.index, node_config->calculator(), *node_config,
       profiling_context_);
 
   // Inform the scheduler that this node has buffering behavior and that the
   // maximum input queue size should be adjusted accordingly.
-  *buffer_size_hint = node_config.buffer_size_hint();
+  *buffer_size_hint = node_config->buffer_size_hint();
 
   calculator_context_manager_.Initialize(
-      calculator_state_.get(), node_type_info.InputStreamTypes().TagMap(),
-      node_type_info.OutputStreamTypes().TagMap(),
+      calculator_state_.get(), node_type_info_->InputStreamTypes().TagMap(),
+      node_type_info_->OutputStreamTypes().TagMap(),
       /*calculator_run_in_parallel=*/max_in_flight_ > 1);
 
   // The graph specified InputStreamHandler takes priority.
   const bool graph_specified =
-      node_config.input_stream_handler().has_input_stream_handler();
-  const bool calc_specified = !(node_type_info.GetInputStreamHandler().empty());
+      node_config->input_stream_handler().has_input_stream_handler();
+  const bool calc_specified =
+      !(node_type_info_->GetInputStreamHandler().empty());
 
   // Only use calculator ISH if available, and if the graph ISH is not set.
   InputStreamHandlerConfig handler_config;
   const bool use_calc_specified = calc_specified && !graph_specified;
   if (use_calc_specified) {
     *(handler_config.mutable_input_stream_handler()) =
-        node_type_info.GetInputStreamHandler();
+        node_type_info_->GetInputStreamHandler();
     *(handler_config.mutable_options()) =
-        node_type_info.GetInputStreamHandlerOptions();
+        node_type_info_->GetInputStreamHandlerOptions();
   }
 
   // Use calculator or graph specified InputStreamHandler, or the default ISH
   // already set from graph.
   MP_RETURN_IF_ERROR(InitializeInputStreamHandler(
-      use_calc_specified ? handler_config : node_config.input_stream_handler(),
-      node_type_info.InputStreamTypes()));
+      use_calc_specified ? handler_config : node_config->input_stream_handler(),
+      node_type_info_->InputStreamTypes()));
 
   for (auto& stream : output_stream_handler_->OutputStreams()) {
     stream->Spec()->offset_enabled =
@@ -209,9 +223,7 @@ absl::Status CalculatorNode::InitializeOutputSidePackets(
     OutputSidePacketImpl* output_side_packets) {
   output_side_packets_ =
       absl::make_unique<OutputSidePacketSet>(output_side_packet_types.TagMap());
-  const NodeTypeInfo& node_type_info =
-      validated_graph_->CalculatorInfos()[node_id_];
-  int base_index = node_type_info.OutputSidePacketBaseIndex();
+  int base_index = node_type_info_->OutputSidePacketBaseIndex();
   RET_CHECK_LE(0, base_index);
   for (CollectionItemId id = output_side_packets_->BeginId();
        id < output_side_packets_->EndId(); ++id) {
@@ -223,13 +235,11 @@ absl::Status CalculatorNode::InitializeOutputSidePackets(
 
 absl::Status CalculatorNode::InitializeInputSidePackets(
     OutputSidePacketImpl* output_side_packets) {
-  const NodeTypeInfo& node_type_info =
-      validated_graph_->CalculatorInfos()[node_id_];
-  int base_index = node_type_info.InputSidePacketBaseIndex();
+  int base_index = node_type_info_->InputSidePacketBaseIndex();
   RET_CHECK_LE(0, base_index);
   // Set all the mirrors.
-  for (CollectionItemId id = node_type_info.InputSidePacketTypes().BeginId();
-       id < node_type_info.InputSidePacketTypes().EndId(); ++id) {
+  for (CollectionItemId id = node_type_info_->InputSidePacketTypes().BeginId();
+       id < node_type_info_->InputSidePacketTypes().EndId(); ++id) {
     int output_side_packet_index =
         validated_graph_->InputSidePacketInfos()[base_index + id.value()]
             .upstream;
@@ -252,11 +262,9 @@ absl::Status CalculatorNode::InitializeInputSidePackets(
 absl::Status CalculatorNode::InitializeOutputStreams(
     OutputStreamManager* output_stream_managers) {
   RET_CHECK(output_stream_managers) << "output_stream_managers is NULL";
-  const NodeTypeInfo& node_type_info =
-      validated_graph_->CalculatorInfos()[node_id_];
-  RET_CHECK_LE(0, node_type_info.OutputStreamBaseIndex());
+  RET_CHECK_LE(0, node_type_info_->OutputStreamBaseIndex());
   OutputStreamManager* current_output_stream_managers =
-      &output_stream_managers[node_type_info.OutputStreamBaseIndex()];
+      &output_stream_managers[node_type_info_->OutputStreamBaseIndex()];
   return output_stream_handler_->InitializeOutputStreamManagers(
       current_output_stream_managers);
 }
@@ -266,20 +274,18 @@ absl::Status CalculatorNode::InitializeInputStreams(
     OutputStreamManager* output_stream_managers) {
   RET_CHECK(input_stream_managers) << "input_stream_managers is NULL";
   RET_CHECK(output_stream_managers) << "output_stream_managers is NULL";
-  const NodeTypeInfo& node_type_info =
-      validated_graph_->CalculatorInfos()[node_id_];
-  RET_CHECK_LE(0, node_type_info.InputStreamBaseIndex());
+  RET_CHECK_LE(0, node_type_info_->InputStreamBaseIndex());
   InputStreamManager* current_input_stream_managers =
-      &input_stream_managers[node_type_info.InputStreamBaseIndex()];
+      &input_stream_managers[node_type_info_->InputStreamBaseIndex()];
   MP_RETURN_IF_ERROR(input_stream_handler_->InitializeInputStreamManagers(
       current_input_stream_managers));
 
   // Set all the mirrors.
-  for (CollectionItemId id = node_type_info.InputStreamTypes().BeginId();
-       id < node_type_info.InputStreamTypes().EndId(); ++id) {
+  for (CollectionItemId id = node_type_info_->InputStreamTypes().BeginId();
+       id < node_type_info_->InputStreamTypes().EndId(); ++id) {
     int output_stream_index =
         validated_graph_
-            ->InputStreamInfos()[node_type_info.InputStreamBaseIndex() +
+            ->InputStreamInfos()[node_type_info_->InputStreamBaseIndex() +
                                  id.value()]
             .upstream;
     RET_CHECK_LE(0, output_stream_index);
@@ -287,7 +293,7 @@ absl::Status CalculatorNode::InitializeInputStreams(
         &output_stream_managers[output_stream_index];
     VLOG(2) << "Adding mirror for input stream with id " << id.value()
             << " and flat index "
-            << node_type_info.InputStreamBaseIndex() + id.value()
+            << node_type_info_->InputStreamBaseIndex() + id.value()
             << " which will be connected to output stream with flat index "
             << output_stream_index;
     origin_output_stream_manager->AddMirror(input_stream_handler_.get(), id);
@@ -391,10 +397,9 @@ absl::Status CalculatorNode::PrepareForRun(
       std::move(schedule_callback), error_callback);
   output_stream_handler_->PrepareForRun(error_callback);
 
-  const PacketTypeSet* packet_types =
-      &validated_graph_->CalculatorInfos()[node_id_].InputSidePacketTypes();
+  const auto& contract = node_type_info_->Contract();
   input_side_packet_types_ = RemoveOmittedPacketTypes(
-      *packet_types, all_side_packets, validated_graph_);
+      contract.InputSidePackets(), all_side_packets, validated_graph_);
   MP_RETURN_IF_ERROR(input_side_packet_handler_.PrepareForRun(
       input_side_packet_types_.get(), all_side_packets,
       [this]() { CalculatorNode::InputSidePacketsReady(); },
@@ -404,8 +409,6 @@ absl::Status CalculatorNode::PrepareForRun(
   calculator_state_->SetOutputSidePackets(output_side_packets_.get());
   calculator_state_->SetCounterFactory(counter_factory);
 
-  const auto& contract =
-      validated_graph_->CalculatorInfos()[node_id_].Contract();
   for (const auto& svc_req : contract.ServiceRequests()) {
     const auto& req = svc_req.second;
     auto it = service_packets.find(req.Service().key);

@@ -26,33 +26,38 @@ import numpy.testing as npt
 
 # resources dependency
 # undeclared dependency
+from mediapipe.python.solutions import drawing_styles
 from mediapipe.python.solutions import drawing_utils as mp_drawing
 from mediapipe.python.solutions import hands as mp_hands
 
+
 TEST_IMAGE_PATH = 'mediapipe/python/solutions/testdata'
-DIFF_THRESHOLD = 15  # pixels
-EXPECTED_HAND_COORDINATES_PREDICTION = [[[144, 345], [211, 323], [257, 286],
+LITE_MODEL_DIFF_THRESHOLD = 25  # pixels
+FULL_MODEL_DIFF_THRESHOLD = 20  # pixels
+EXPECTED_HAND_COORDINATES_PREDICTION = [[[580, 34], [504, 50], [459, 94],
+                                         [429, 146], [397, 182], [507, 167],
+                                         [479, 245], [469, 292], [464, 330],
+                                         [545, 180], [534, 265], [533, 319],
+                                         [536, 360], [581, 172], [587, 252],
+                                         [593, 304], [599, 346], [615, 168],
+                                         [628, 223], [638, 258], [648, 288]],
+                                        [[138, 343], [211, 330], [257, 286],
                                          [289, 237], [322, 203], [219, 216],
                                          [238, 138], [249, 90], [253, 51],
                                          [177, 204], [184, 115], [187, 60],
                                          [185, 19], [138, 208], [131, 127],
                                          [124, 77], [117, 36], [106, 222],
-                                         [92, 159], [79, 124], [68, 93]],
-                                        [[577, 37], [504, 56], [459, 94],
-                                         [429, 146], [397, 182], [496, 167],
-                                         [479, 245], [469, 292], [464, 330],
-                                         [540, 177], [534, 265], [533, 319],
-                                         [536, 360], [581, 172], [587, 252],
-                                         [593, 304], [599, 346], [615, 157],
-                                         [628, 223], [638, 258], [648, 288]]]
+                                         [92, 159], [79, 124], [68, 93]]]
 
 
 class HandsTest(parameterized.TestCase):
 
   def _annotate(self, frame: np.ndarray, results: NamedTuple, idx: int):
     for hand_landmarks in results.multi_hand_landmarks:
-      mp_drawing.draw_landmarks(frame, hand_landmarks,
-                                mp_hands.HAND_CONNECTIONS)
+      mp_drawing.draw_landmarks(
+          frame, hand_landmarks, mp_hands.HAND_CONNECTIONS,
+          drawing_styles.get_default_hand_landmarks_style(),
+          drawing_styles.get_default_hand_connections_style())
     path = os.path.join(tempfile.gettempdir(), self.id().split('.')[-1] +
                                               '_frame_{}.png'.format(idx))
     cv2.imwrite(path, frame)
@@ -71,14 +76,18 @@ class HandsTest(parameterized.TestCase):
       self.assertIsNone(results.multi_hand_landmarks)
       self.assertIsNone(results.multi_handedness)
 
-  @parameterized.named_parameters(('static_image_mode', True, 1),
-                                  ('video_mode', False, 5))
-  def test_multi_hands(self, static_image_mode, num_frames):
+  @parameterized.named_parameters(
+      ('static_image_mode_with_lite_model', True, 0, 5),
+      ('video_mode_with_lite_model', False, 0, 10),
+      ('static_image_mode_with_full_model', True, 1, 5),
+      ('video_mode_with_full_model', False, 1, 10))
+  def test_multi_hands(self, static_image_mode, model_complexity, num_frames):
     image_path = os.path.join(os.path.dirname(__file__), 'testdata/hands.jpg')
     image = cv2.imread(image_path)
     with mp_hands.Hands(
         static_image_mode=static_image_mode,
         max_num_hands=2,
+        model_complexity=model_complexity,
         min_detection_confidence=0.5) as hands:
       for idx in range(num_frames):
         results = hands.process(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
@@ -100,7 +109,8 @@ class HandsTest(parameterized.TestCase):
         prediction_error = np.abs(
             np.asarray(multi_hand_coordinates) -
             np.asarray(EXPECTED_HAND_COORDINATES_PREDICTION))
-        npt.assert_array_less(prediction_error, DIFF_THRESHOLD)
+        diff_threshold = LITE_MODEL_DIFF_THRESHOLD if model_complexity == 0 else FULL_MODEL_DIFF_THRESHOLD
+        npt.assert_array_less(prediction_error, diff_threshold)
 
 
 if __name__ == '__main__':

@@ -121,33 +121,4 @@ CVReturn CreateCVPixelBufferWithPool(
   return err;
 }
 
-#if TARGET_IPHONE_SIMULATOR
-static void FreeRefConReleaseCallback(void* refCon, const void* baseAddress) {
-  free(refCon);
-}
-#endif
-
-CVReturn CreateCVPixelBufferWithoutPool(
-    int width, int height, OSType pixelFormat, CVPixelBufferRef* outBuffer) {
-#if TARGET_IPHONE_SIMULATOR
-  // On the simulator, syncing the texture with the pixelbuffer does not work,
-  // and we have to use glReadPixels. Since GL_UNPACK_ROW_LENGTH is not
-  // available in OpenGL ES 2, we should create the buffer so the pixels are
-  // contiguous.
-  //
-  // TODO: verify if we can use kIOSurfaceBytesPerRow to force
-  // CoreVideo to give us contiguous data.
-  size_t bytes_per_row = width * 4;
-  void* data = malloc(bytes_per_row * height);
-  return CVPixelBufferCreateWithBytes(
-      kCFAllocatorDefault, width, height, pixelFormat, data, bytes_per_row,
-      FreeRefConReleaseCallback, data, GetCVPixelBufferAttributesForGlCompatibility(),
-      outBuffer);
-#else
-  return CVPixelBufferCreate(
-      kCFAllocatorDefault, width, height, pixelFormat,
-      GetCVPixelBufferAttributesForGlCompatibility(), outBuffer);
-#endif
-}
-
 }  // namespace mediapipe

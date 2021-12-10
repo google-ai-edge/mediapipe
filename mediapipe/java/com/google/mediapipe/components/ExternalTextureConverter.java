@@ -169,6 +169,23 @@ public class ExternalTextureConverter implements TextureFrameProducer {
     thread.getHandler().post(() -> thread.setSurfaceTexture(texture, width, height));
   }
 
+  /**
+   * Returns the input surface texture.
+   *
+   * <p>If setSurfaceTexture has not been called, this will be a default SurfaceTexture created by
+   * this class.
+   */
+  public SurfaceTexture getSurfaceTexture() {
+    return thread.getInternalSurfaceTexture();
+  }
+
+  /**
+   * Sets width and height for the output frame.
+   */
+  public void setDestinationSize(int width, int height) {
+    thread.setDestinationSize(width, height);
+  }
+
   // TODO: Clean up setSurfaceTexture methods.
   public void setSurfaceTextureAndAttachToGLContext(SurfaceTexture texture, int width, int height) {
     if (texture != null && (width == 0 || height == 0)) {
@@ -216,7 +233,11 @@ public class ExternalTextureConverter implements TextureFrameProducer {
   protected static class RenderThread extends GlThread
       implements SurfaceTexture.OnFrameAvailableListener {
     private static final long NANOS_PER_MICRO = 1000; // Nanoseconds in one microsecond.
+    // SurfaceTexture that selected as render input
     private volatile SurfaceTexture surfaceTexture = null;
+    // SurfaceTexture that created internally with current EGLContext
+    private volatile SurfaceTexture internalSurfaceTexture = null;
+    private int[] textures = null;
     private final List<TextureFrameConsumer> consumers;
 
     private final Queue<PoolTextureFrame> framesAvailable = new ArrayDeque<>();
@@ -273,8 +294,12 @@ public class ExternalTextureConverter implements TextureFrameProducer {
       if (surfaceTexture != null) {
         surfaceTexture.setOnFrameAvailableListener(this);
       }
-      destinationWidth = width;
-      destinationHeight = height;
+      setDestinationSize(width, height);
+    }
+
+    public void setDestinationSize(int width, int height) {
+      this.destinationWidth = width;
+      this.destinationHeight = height;
     }
 
     public void setSurfaceTextureAndAttachToGLContext(
@@ -304,6 +329,10 @@ public class ExternalTextureConverter implements TextureFrameProducer {
       }
     }
 
+    public SurfaceTexture getInternalSurfaceTexture() {
+      return surfaceTexture != null ? surfaceTexture : internalSurfaceTexture;
+    }
+
     @Override
     public void onFrameAvailable(SurfaceTexture surfaceTexture) {
       handler.post(() -> renderNext(surfaceTexture));
@@ -316,6 +345,11 @@ public class ExternalTextureConverter implements TextureFrameProducer {
       GLES20.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
       renderer.setup();
+
+      textures = new int[1];
+      GLES20.glGenTextures(1, textures, 0);
+      internalSurfaceTexture = new SurfaceTexture(textures[0]);
+      setSurfaceTexture(internalSurfaceTexture, 0, 0);
     }
 
     @Override
@@ -323,6 +357,11 @@ public class ExternalTextureConverter implements TextureFrameProducer {
       setSurfaceTexture(null, 0, 0);
       while (!framesAvailable.isEmpty()) {
         teardownFrame(framesAvailable.remove());
+      }
+
+      internalSurfaceTexture.release();
+      if (textures != null) {
+        GLES20.glDeleteTextures(1, textures, 0);
       }
       renderer.release();
       super.releaseGl(); // This releases the EGL context, so must do it after any GL calls.
@@ -364,7 +403,7 @@ public class ExternalTextureConverter implements TextureFrameProducer {
               consumer.onNewFrame(outputFrame);
             }
           }
-          if (!frameUpdated) {  // Need to update the frame even if there are no consumers.
+          if (!frameUpdated) { // Need to update the frame even if there are no consumers.
             AppTextureFrame outputFrame = nextOutputFrame();
             // TODO: Switch to ref-counted single copy instead of making additional
             // copies blitting to separate textures each time.
@@ -391,12 +430,12 @@ public class ExternalTextureConverter implements TextureFrameProducer {
     }
 
     /**
-     * Gets next available frame or creates new one if next frame is not initialized
-     * or cannot be used with current surface texture.
+     * Gets next available frame or creates new one if next frame is not initialized or cannot be
+     * used with current surface texture.
      *
      * <ul>
-     *  <li>Makes sure frame width and height are same as current surface texture</li>
-     *  <li>Makes sure frame is not in use (blocks thread until frame is released)</li>
+     *   <li>Makes sure frame width and height are same as current surface texture
+     *   <li>Makes sure frame is not in use (blocks thread until frame is released)
      * </ul>
      *
      * NOTE: must be invoked on GL thread
@@ -439,8 +478,7 @@ public class ExternalTextureConverter implements TextureFrameProducer {
      * Updates output frame with current pixels of surface texture and corresponding timestamp.
      *
      * @param outputFrame {@link AppTextureFrame} to populate.
-     *
-     * NOTE: must be invoked on GL thread
+     *     <p>NOTE: must be invoked on GL thread
      */
     private void updateOutputFrame(AppTextureFrame outputFrame) {
       // Copy surface texture's pixels to output frame
@@ -473,7 +511,7 @@ public class ExternalTextureConverter implements TextureFrameProducer {
                   frame.getHeight(),
                   frame.getTimestamp()));
         }
-        frame.waitUntilReleased();
+        frame.waitUntilReleasedWithGpuSync();
         if (Log.isLoggable(TAG, Log.VERBOSE)) {
           Log.v(
               TAG,

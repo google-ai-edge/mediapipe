@@ -26,6 +26,11 @@ licenses(["notice"])
 
 package(default_visibility = ["//visibility:private"])
 
+exports_files(
+    glob(["testdata/image_to_tensor/*"]),
+    visibility = ["//mediapipe/calculators/image:__subpackages__"],
+)
+
 selects.config_setting_group(
     name = "compute_shader_unavailable",
     match_any = [
@@ -349,6 +354,57 @@ cc_library(
         "//mediapipe/framework/port:ret_check",
     ],
     alwayslink = 1,
+)
+
+mediapipe_proto_library(
+    name = "landmarks_to_tensor_calculator_proto",
+    srcs = ["landmarks_to_tensor_calculator.proto"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//mediapipe/framework:calculator_options_proto",
+        "//mediapipe/framework:calculator_proto",
+    ],
+)
+
+cc_library(
+    name = "landmarks_to_tensor_calculator",
+    srcs = ["landmarks_to_tensor_calculator.cc"],
+    hdrs = ["landmarks_to_tensor_calculator.h"],
+    copts = select({
+        "//mediapipe:apple": [
+            "-x objective-c++",
+            "-fobjc-arc",  # enable reference-counting
+        ],
+        "//conditions:default": [],
+    }),
+    visibility = ["//visibility:public"],
+    deps = [
+        ":landmarks_to_tensor_calculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/api2:node",
+        "//mediapipe/framework/formats:landmark_cc_proto",
+        "//mediapipe/framework/formats:tensor",
+        "//mediapipe/framework/port:ret_check",
+    ],
+    alwayslink = 1,
+)
+
+cc_test(
+    name = "landmarks_to_tensor_calculator_test",
+    srcs = ["landmarks_to_tensor_calculator_test.cc"],
+    deps = [
+        ":landmarks_to_tensor_calculator",
+        ":landmarks_to_tensor_calculator_cc_proto",
+        "//mediapipe/framework:calculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:calculator_runner",
+        "//mediapipe/framework/formats:landmark_cc_proto",
+        "//mediapipe/framework/formats:tensor",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:parse_text_proto",
+        "@com_google_absl//absl/memory",
+        "@com_google_googletest//:gtest_main",
+    ],
 )
 
 mediapipe_proto_library(

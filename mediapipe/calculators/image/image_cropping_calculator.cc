@@ -480,8 +480,7 @@ RectSpec ImageCroppingCalculator::GetCropSpecs(const CalculatorContext* cc,
   if (cc->Inputs().HasTag(kRectTag)) {
     const auto& rect = cc->Inputs().Tag(kRectTag).Get<Rect>();
     // Only use the rect if it is valid.
-    if (rect.width() > 0 && rect.height() > 0 && rect.x_center() >= 0 &&
-        rect.y_center() >= 0) {
+    if (rect.width() > 0 && rect.height() > 0) {
       x_center = rect.x_center();
       y_center = rect.y_center();
       crop_width = rect.width();

@@ -34,6 +34,9 @@
 
 - (void)displayLinkCallback:(CADisplayLink *)sender {
   __strong id target = _target;
+  if (target == nil) {
+    return;
+  }
   void (*display)(id, SEL, CADisplayLink *) = (void *)[target methodForSelector:_selector];
   display(target, _selector, sender);
 }

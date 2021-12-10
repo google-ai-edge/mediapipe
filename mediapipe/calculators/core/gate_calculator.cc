@@ -21,6 +21,11 @@
 namespace mediapipe {
 
 namespace {
+
+constexpr char kStateChangeTag[] = "STATE_CHANGE";
+constexpr char kDisallowTag[] = "DISALLOW";
+constexpr char kAllowTag[] = "ALLOW";
+
 enum GateState {
   GATE_UNINITIALIZED,
   GATE_ALLOW,
@@ -59,8 +64,9 @@ std::string ToString(GateState state) {
 // ALLOW or DISALLOW can also be specified as an input side packet. The rules
 // for evaluation remain the same as above.
 //
-// ALLOW/DISALLOW inputs must be specified either using input stream or
-// via input side packet but not both.
+// ALLOW/DISALLOW inputs must be specified either using input stream or via
+// input side packet but not both. If neither is specified, the behavior is then
+// determined by the "allow" field in the calculator options.
 //
 // Intended to be used with the default input stream handler, which synchronizes
 // all data input streams with the ALLOW/DISALLOW control input stream.
@@ -83,30 +89,33 @@ class GateCalculator : public CalculatorBase {
   GateCalculator() {}
 
   static absl::Status CheckAndInitAllowDisallowInputs(CalculatorContract* cc) {
-    bool input_via_side_packet = cc->InputSidePackets().HasTag("ALLOW") ||
-                                 cc->InputSidePackets().HasTag("DISALLOW");
+    bool input_via_side_packet = cc->InputSidePackets().HasTag(kAllowTag) ||
+                                 cc->InputSidePackets().HasTag(kDisallowTag);
     bool input_via_stream =
-        cc->Inputs().HasTag("ALLOW") || cc->Inputs().HasTag("DISALLOW");
-    // Only one of input_side_packet or input_stream may specify ALLOW/DISALLOW
-    // input.
-    RET_CHECK(input_via_side_packet ^ input_via_stream);
+        cc->Inputs().HasTag(kAllowTag) || cc->Inputs().HasTag(kDisallowTag);
 
+    // Only one of input_side_packet or input_stream may specify
+    // ALLOW/DISALLOW input.
     if (input_via_side_packet) {
-      RET_CHECK(cc->InputSidePackets().HasTag("ALLOW") ^
-                cc->InputSidePackets().HasTag("DISALLOW"));
+      RET_CHECK(!input_via_stream);
+      RET_CHECK(cc->InputSidePackets().HasTag(kAllowTag) ^
+                cc->InputSidePackets().HasTag(kDisallowTag));
 
-      if (cc->InputSidePackets().HasTag("ALLOW")) {
-        cc->InputSidePackets().Tag("ALLOW").Set<bool>();
+      if (cc->InputSidePackets().HasTag(kAllowTag)) {
+        cc->InputSidePackets().Tag(kAllowTag).Set<bool>().Optional();
       } else {
-        cc->InputSidePackets().Tag("DISALLOW").Set<bool>();
+        cc->InputSidePackets().Tag(kDisallowTag).Set<bool>().Optional();
       }
-    } else {
-      RET_CHECK(cc->Inputs().HasTag("ALLOW") ^ cc->Inputs().HasTag("DISALLOW"));
+    }
+    if (input_via_stream) {
+      RET_CHECK(!input_via_side_packet);
+      RET_CHECK(cc->Inputs().HasTag(kAllowTag) ^
+                cc->Inputs().HasTag(kDisallowTag));
 
-      if (cc->Inputs().HasTag("ALLOW")) {
-        cc->Inputs().Tag("ALLOW").Set<bool>();
+      if (cc->Inputs().HasTag(kAllowTag)) {
+        cc->Inputs().Tag(kAllowTag).Set<bool>();
       } else {
-        cc->Inputs().Tag("DISALLOW").Set<bool>();
+        cc->Inputs().Tag(kDisallowTag).Set<bool>();
       }
     }
     return absl::OkStatus();
@@ -125,23 +134,22 @@ class GateCalculator : public CalculatorBase {
       cc->Outputs().Get("", i).SetSameAs(&cc->Inputs().Get("", i));
     }
 
-    if (cc->Outputs().HasTag("STATE_CHANGE")) {
-      cc->Outputs().Tag("STATE_CHANGE").Set<bool>();
+    if (cc->Outputs().HasTag(kStateChangeTag)) {
+      cc->Outputs().Tag(kStateChangeTag).Set<bool>();
     }
 
     return absl::OkStatus();
   }
 
   absl::Status Open(CalculatorContext* cc) final {
-    use_side_packet_for_allow_disallow_ = false;
-    if (cc->InputSidePackets().HasTag("ALLOW")) {
+    if (cc->InputSidePackets().HasTag(kAllowTag)) {
       use_side_packet_for_allow_disallow_ = true;
       allow_by_side_packet_decision_ =
-          cc->InputSidePackets().Tag("ALLOW").Get<bool>();
-    } else if (cc->InputSidePackets().HasTag("DISALLOW")) {
+          cc->InputSidePackets().Tag(kAllowTag).Get<bool>();
+    } else if (cc->InputSidePackets().HasTag(kDisallowTag)) {
       use_side_packet_for_allow_disallow_ = true;
       allow_by_side_packet_decision_ =
-          !cc->InputSidePackets().Tag("DISALLOW").Get<bool>();
+          !cc->InputSidePackets().Tag(kDisallowTag).Get<bool>();
     }
 
     cc->SetOffset(TimestampDiff(0));
@@ -152,26 +160,34 @@ class GateCalculator : public CalculatorBase {
     const auto& options = cc->Options<::mediapipe::GateCalculatorOptions>();
     empty_packets_as_allow_ = options.empty_packets_as_allow();
 
+    if (!use_side_packet_for_allow_disallow_ &&
+        !cc->Inputs().HasTag(kAllowTag) && !cc->Inputs().HasTag(kDisallowTag)) {
+      use_option_for_allow_disallow_ = true;
+      allow_by_option_decision_ = options.allow();
+    }
+
     return absl::OkStatus();
   }
 
   absl::Status Process(CalculatorContext* cc) final {
     bool allow = empty_packets_as_allow_;
-    if (use_side_packet_for_allow_disallow_) {
+    if (use_option_for_allow_disallow_) {
+      allow = allow_by_option_decision_;
+    } else if (use_side_packet_for_allow_disallow_) {
       allow = allow_by_side_packet_decision_;
     } else {
-      if (cc->Inputs().HasTag("ALLOW") &&
-          !cc->Inputs().Tag("ALLOW").IsEmpty()) {
-        allow = cc->Inputs().Tag("ALLOW").Get<bool>();
+      if (cc->Inputs().HasTag(kAllowTag) &&
+          !cc->Inputs().Tag(kAllowTag).IsEmpty()) {
+        allow = cc->Inputs().Tag(kAllowTag).Get<bool>();
       }
-      if (cc->Inputs().HasTag("DISALLOW") &&
-          !cc->Inputs().Tag("DISALLOW").IsEmpty()) {
-        allow = !cc->Inputs().Tag("DISALLOW").Get<bool>();
+      if (cc->Inputs().HasTag(kDisallowTag) &&
+          !cc->Inputs().Tag(kDisallowTag).IsEmpty()) {
+        allow = !cc->Inputs().Tag(kDisallowTag).Get<bool>();
       }
     }
     const GateState new_gate_state = allow ? GATE_ALLOW : GATE_DISALLOW;
 
-    if (cc->Outputs().HasTag("STATE_CHANGE")) {
+    if (cc->Outputs().HasTag(kStateChangeTag)) {
       if (last_gate_state_ != GATE_UNINITIALIZED &&
           last_gate_state_ != new_gate_state) {
         VLOG(2) << "State transition in " << cc->NodeName() << " @ "
@@ -179,7 +195,7 @@ class GateCalculator : public CalculatorBase {
                 << ToString(last_gate_state_) << " to "
                 << ToString(new_gate_state);
         cc->Outputs()
-            .Tag("STATE_CHANGE")
+            .Tag(kStateChangeTag)
             .AddPacket(MakePacket<bool>(allow).At(cc->InputTimestamp()));
       }
     }
@@ -211,8 +227,10 @@ class GateCalculator : public CalculatorBase {
   GateState last_gate_state_ = GATE_UNINITIALIZED;
   int num_data_streams_;
   bool empty_packets_as_allow_;
-  bool use_side_packet_for_allow_disallow_;
+  bool use_side_packet_for_allow_disallow_ = false;
   bool allow_by_side_packet_decision_;
+  bool use_option_for_allow_disallow_ = false;
+  bool allow_by_option_decision_;
 };
 REGISTER_CALCULATOR(GateCalculator);
 

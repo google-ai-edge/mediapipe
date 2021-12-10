@@ -37,7 +37,7 @@ android_binary(
     srcs = glob(["*.java"]),
     assets = [
         "//mediapipe/graphs/face_mesh:face_mesh_mobile_gpu.binarypb",
-        "//mediapipe/modules/face_landmark:face_landmark.tflite",
+        "//mediapipe/modules/face_landmark:face_landmark_with_attention.tflite",
         "//mediapipe/modules/face_detection:face_detection_short_range.tflite",
     ],
     assets_dir = "",

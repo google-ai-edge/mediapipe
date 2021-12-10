@@ -28,6 +28,11 @@ message ScaleImageCalculatorOptions {
   optional int32 target_width = 1;
   optional int32 target_height = 2;
 
+  // If set, then automatically calculates a target_width and target_height that
+  // has an area below the target max area. Aspect ratio preservation cannot be
+  // disabled.
+  optional int32 target_max_area = 15;
+
   // If true, the image is scaled up or down proportionally so that it
   // fits inside the box represented by target_width and target_height.
   // Otherwise it is scaled to fit target_width and target_height

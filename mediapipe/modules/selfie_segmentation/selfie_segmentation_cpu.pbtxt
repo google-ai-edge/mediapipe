@@ -96,9 +96,10 @@ node {
   input_side_packet: "CUSTOM_OP_RESOLVER:op_resolver"
   options: {
     [mediapipe.InferenceCalculatorOptions.ext] {
-      delegate { xnnpack {} }
+      delegate {
+        xnnpack {}
+      }
     }
-    #
   }
 }
 

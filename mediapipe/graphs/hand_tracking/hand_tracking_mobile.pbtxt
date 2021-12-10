@@ -8,6 +8,9 @@ input_stream: "input_video"
 # Max number of hands to detect/process. (int)
 input_side_packet: "num_hands"
 
+# Model complexity (0 or 1). (int)
+input_side_packet: "model_complexity"
+
 # GPU image. (GpuBuffer)
 output_stream: "output_video"
 # Collection of detected/predicted hands, each represented as a list of
@@ -39,6 +42,7 @@ node {
 node {
   calculator: "HandLandmarkTrackingGpu"
   input_stream: "IMAGE:throttled_input_video"
+  input_side_packet: "MODEL_COMPLEXITY:model_complexity"
   input_side_packet: "NUM_HANDS:num_hands"
   output_stream: "LANDMARKS:hand_landmarks"
   output_stream: "HANDEDNESS:handedness"

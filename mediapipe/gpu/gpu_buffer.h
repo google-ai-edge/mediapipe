@@ -15,10 +15,18 @@
 #ifndef MEDIAPIPE_GPU_GPU_BUFFER_H_
 #define MEDIAPIPE_GPU_GPU_BUFFER_H_
 
+#include <memory>
 #include <utility>
 
+#include "mediapipe/framework/formats/image_frame.h"
 #include "mediapipe/gpu/gl_base.h"
+#include "mediapipe/gpu/gl_texture_view.h"
 #include "mediapipe/gpu/gpu_buffer_format.h"
+#include "mediapipe/gpu/gpu_buffer_storage.h"
+
+// Note: these headers are needed for the legacy storage APIs. Do not add more
+// storage-specific headers here. See WebGpuTextureBuffer/View for an example
+// of adding a new storage and view.
 
 #if defined(__APPLE__)
 #include <CoreVideo/CoreVideo.h>
@@ -26,11 +34,15 @@
 #include "mediapipe/objc/CFHolder.h"
 #endif  // defined(__APPLE__)
 
-#if !MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
+#if MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
+#include "mediapipe/gpu/gpu_buffer_storage_cv_pixel_buffer.h"
+#else
 #include "mediapipe/gpu/gl_texture_buffer.h"
 #endif  // MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
 
 namespace mediapipe {
+
+class GlContext;
 
 // This class wraps a platform-specific buffer of GPU data.
 // An instance of GpuBuffer acts as an opaque reference to the underlying
@@ -51,25 +63,34 @@ class GpuBuffer {
   // are not portable. Applications and calculators should normally obtain
   // GpuBuffers in a portable way from the framework, e.g. using
   // GpuBufferMultiPool.
+  explicit GpuBuffer(
+      std::shared_ptr<mediapipe::internal::GpuBufferStorage> storage)
+      : storage_(std::move(storage)) {}
+
+  // Note: these constructors and accessors for specific storage types exist
+  // for backwards compatibility reasons. Do not add new ones.
 #if MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
   explicit GpuBuffer(CFHolder<CVPixelBufferRef> pixel_buffer)
-      : pixel_buffer_(std::move(pixel_buffer)) {}
+      : storage_(std::make_shared<GpuBufferStorageCvPixelBuffer>(
+            std::move(pixel_buffer))) {}
   explicit GpuBuffer(CVPixelBufferRef pixel_buffer)
-      : pixel_buffer_(pixel_buffer) {}
+      : storage_(
+            std::make_shared<GpuBufferStorageCvPixelBuffer>(pixel_buffer)) {}
 
-  CVPixelBufferRef GetCVPixelBufferRef() const { return *pixel_buffer_; }
+  CVPixelBufferRef GetCVPixelBufferRef() const {
+    auto p = storage_->down_cast<GpuBufferStorageCvPixelBuffer>();
+    if (p) return **p;
+    return nullptr;
+  }
 #else
-  explicit GpuBuffer(GlTextureBufferSharedPtr texture_buffer)
-      : texture_buffer_(std::move(texture_buffer)) {}
-
-  const GlTextureBufferSharedPtr& GetGlTextureBufferSharedPtr() const {
-    return texture_buffer_;
+  GlTextureBufferSharedPtr GetGlTextureBufferSharedPtr() const {
+    return internal_storage<GlTextureBuffer>();
   }
 #endif  // MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
 
-  int width() const;
-  int height() const;
-  GpuBufferFormat format() const;
+  int width() const { return current_storage().width(); }
+  int height() const { return current_storage().height(); }
+  GpuBufferFormat format() const { return current_storage().format(); }
 
   // Converts to true iff valid.
   explicit operator bool() const { return operator!=(nullptr); }
@@ -84,66 +105,93 @@ class GpuBuffer {
   // Allow assignment from nullptr.
   GpuBuffer& operator=(std::nullptr_t other);
 
+  // Gets a read view of the specified type. The arguments depend on the
+  // specific view type; see the corresponding ViewProvider.
+  template <class View, class... Args>
+  auto GetReadView(Args... args) const {
+    return current_storage()
+        .down_cast<mediapipe::internal::ViewProvider<View>>()
+        ->GetReadView(mediapipe::internal::types<View>{},
+                      std::make_shared<GpuBuffer>(*this),
+                      std::forward<Args>(args)...);
+  }
+
+  // Gets a write view of the specified type. The arguments depend on the
+  // specific view type; see the corresponding ViewProvider.
+  template <class View, class... Args>
+  auto GetWriteView(Args... args) {
+    return current_storage()
+        .down_cast<mediapipe::internal::ViewProvider<View>>()
+        ->GetWriteView(mediapipe::internal::types<View>{},
+                       std::make_shared<GpuBuffer>(*this),
+                       std::forward<Args>(args)...);
+  }
+
+  // Make a GpuBuffer copying the data from an ImageFrame.
+  static GpuBuffer CopyingImageFrame(const ImageFrame& image_frame);
+
+  // Make an ImageFrame, possibly sharing the same data. The data is shared if
+  // the GpuBuffer's storage supports memory sharing; otherwise, it is copied.
+  // In order to work correctly across platforms, callers should always treat
+  // the returned ImageFrame as if it shares memory with the GpuBuffer, i.e.
+  // treat it as immutable if the GpuBuffer must not be modified.
+  std::unique_ptr<ImageFrame> AsImageFrame() const {
+    return current_storage().AsImageFrame();
+  }
+
+  // Attempts to access an underlying storage object of the specified type.
+  // This method is meant for internal use: user code should access the contents
+  // using views.
+  template <class T>
+  std::shared_ptr<T> internal_storage() const {
+    if (storage_->down_cast<T>()) return std::static_pointer_cast<T>(storage_);
+    return nullptr;
+  }
+
  private:
-#if MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
-  CFHolder<CVPixelBufferRef> pixel_buffer_;
-#else
-  GlTextureBufferSharedPtr texture_buffer_;
-#endif  // MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
+  class PlaceholderGpuBufferStorage
+      : public mediapipe::internal::GpuBufferStorageImpl<
+            PlaceholderGpuBufferStorage> {
+   public:
+    int width() const override { return 0; }
+    int height() const override { return 0; }
+    virtual GpuBufferFormat format() const override {
+      return GpuBufferFormat::kUnknown;
+    }
+    std::unique_ptr<ImageFrame> AsImageFrame() const override {
+      return nullptr;
+    }
+  };
+
+  std::shared_ptr<mediapipe::internal::GpuBufferStorage>& no_storage() const {
+    static auto placeholder =
+        std::static_pointer_cast<mediapipe::internal::GpuBufferStorage>(
+            std::make_shared<PlaceholderGpuBufferStorage>());
+    return placeholder;
+  }
+
+  const mediapipe::internal::GpuBufferStorage& current_storage() const {
+    return *storage_;
+  }
+
+  mediapipe::internal::GpuBufferStorage& current_storage() { return *storage_; }
+
+  std::shared_ptr<mediapipe::internal::GpuBufferStorage> storage_ =
+      no_storage();
 };
 
-#if MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
-
-inline int GpuBuffer::width() const {
-  return static_cast<int>(CVPixelBufferGetWidth(*pixel_buffer_));
-}
-
-inline int GpuBuffer::height() const {
-  return static_cast<int>(CVPixelBufferGetHeight(*pixel_buffer_));
-}
-
-inline GpuBufferFormat GpuBuffer::format() const {
-  return GpuBufferFormatForCVPixelFormat(
-      CVPixelBufferGetPixelFormatType(*pixel_buffer_));
-}
-
 inline bool GpuBuffer::operator==(std::nullptr_t other) const {
-  return pixel_buffer_ == other;
+  return storage_ == no_storage();
 }
 
 inline bool GpuBuffer::operator==(const GpuBuffer& other) const {
-  return pixel_buffer_ == other.pixel_buffer_;
+  return storage_ == other.storage_;
 }
 
 inline GpuBuffer& GpuBuffer::operator=(std::nullptr_t other) {
-  pixel_buffer_.reset(other);
+  storage_ = no_storage();
   return *this;
 }
-
-#else
-
-inline int GpuBuffer::width() const { return texture_buffer_->width(); }
-
-inline int GpuBuffer::height() const { return texture_buffer_->height(); }
-
-inline GpuBufferFormat GpuBuffer::format() const {
-  return texture_buffer_->format();
-}
-
-inline bool GpuBuffer::operator==(std::nullptr_t other) const {
-  return texture_buffer_ == other;
-}
-
-inline bool GpuBuffer::operator==(const GpuBuffer& other) const {
-  return texture_buffer_ == other.texture_buffer_;
-}
-
-inline GpuBuffer& GpuBuffer::operator=(std::nullptr_t other) {
-  texture_buffer_ = other;
-  return *this;
-}
-
-#endif  // MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
 
 }  // namespace mediapipe
 

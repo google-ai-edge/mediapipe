@@ -15,8 +15,11 @@
 #include "mediapipe/util/tflite/cpu_op_resolver.h"
 
 #include "mediapipe/framework/port/logging.h"
+#include "mediapipe/util/tflite/operations/landmarks_to_transform_matrix.h"
 #include "mediapipe/util/tflite/operations/max_pool_argmax.h"
 #include "mediapipe/util/tflite/operations/max_unpooling.h"
+#include "mediapipe/util/tflite/operations/transform_landmarks.h"
+#include "mediapipe/util/tflite/operations/transform_tensor_bilinear.h"
 #include "mediapipe/util/tflite/operations/transpose_conv_bias.h"
 #include "tensorflow/lite/builtin_op_data.h"
 #include "tensorflow/lite/mutable_op_resolver.h"
@@ -31,6 +34,16 @@ void MediaPipe_RegisterTfLiteOpResolver(tflite::MutableOpResolver *resolver) {
                       tflite_operations::RegisterMaxUnpooling2D());
   resolver->AddCustom("Convolution2DTransposeBias",
                       tflite_operations::RegisterConvolution2DTransposeBias());
+
+  resolver->AddCustom("TransformTensorBilinear",
+                      tflite_operations::RegisterTransformTensorBilinearV2(),
+                      /*version=*/2);
+  resolver->AddCustom("TransformLandmarks",
+                      tflite_operations::RegisterTransformLandmarksV2(),
+                      /*version=*/2);
+  resolver->AddCustom("Landmarks2TransformMatrix",
+                      tflite_operations::RegisterLandmarksToTransformMatrixV2(),
+                      /*version=*/2);
 }
 
 }  // namespace mediapipe

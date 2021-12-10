@@ -92,6 +92,7 @@ class InferenceCalculatorMetalImpl
  private:
   absl::Status LoadModel(CalculatorContext* cc);
   absl::Status LoadDelegate(CalculatorContext* cc);
+  absl::Status LoadDelegateAndAllocateTensors(CalculatorContext* cc);
 
   // TfLite requires us to keep the model alive as long as the interpreter is.
   Packet<TfLiteModelPtr> model_packet_;
@@ -130,8 +131,7 @@ absl::Status InferenceCalculatorMetalImpl::Open(CalculatorContext* cc) {
 
   gpu_helper_ = [[MPPMetalHelper alloc] initWithCalculatorContext:cc];
   RET_CHECK(gpu_helper_);
-  MP_RETURN_IF_ERROR(LoadDelegate(cc));
-  return absl::OkStatus();
+  return LoadDelegateAndAllocateTensors(cc);
 }
 
 absl::Status InferenceCalculatorMetalImpl::Process(CalculatorContext* cc) {
@@ -212,11 +212,19 @@ absl::Status InferenceCalculatorMetalImpl::LoadModel(CalculatorContext* cc) {
   interpreter_->SetNumThreads(
       cc->Options<mediapipe::InferenceCalculatorOptions>().cpu_num_thread());
 
+  return absl::OkStatus();
+}
+
+absl::Status InferenceCalculatorMetalImpl::LoadDelegateAndAllocateTensors(
+    CalculatorContext* cc) {
+  MP_RETURN_IF_ERROR(LoadDelegate(cc));
+
+  // AllocateTensors() can be called only after ModifyGraphWithDelegate.
   RET_CHECK_EQ(interpreter_->AllocateTensors(), kTfLiteOk);
   // TODO: Support quantized tensors.
-  CHECK(interpreter_->tensor(interpreter_->inputs()[0])->quantization.type !=
-        kTfLiteAffineQuantization);
-
+  RET_CHECK_NE(
+      interpreter_->tensor(interpreter_->inputs()[0])->quantization.type,
+      kTfLiteAffineQuantization);
   return absl::OkStatus();
 }
 
@@ -236,6 +244,7 @@ absl::Status InferenceCalculatorMetalImpl::LoadDelegate(CalculatorContext* cc) {
       TfLiteDelegatePtr(TFLGpuDelegateCreate(&options), &TFLGpuDelegateDelete);
   RET_CHECK_EQ(interpreter_->ModifyGraphWithDelegate(delegate_.get()),
                kTfLiteOk);
+
   id<MTLDevice> device = gpu_helper_.mtlDevice;
 
   // Get input image sizes.

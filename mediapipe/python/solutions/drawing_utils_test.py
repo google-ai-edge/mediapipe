@@ -29,6 +29,7 @@ DEFAULT_BBOX_DRAWING_SPEC = drawing_utils.DrawingSpec()
 DEFAULT_CONNECTION_DRAWING_SPEC = drawing_utils.DrawingSpec()
 DEFAULT_CIRCLE_DRAWING_SPEC = drawing_utils.DrawingSpec(color=(0, 0, 255))
 DEFAULT_AXIS_DRAWING_SPEC = drawing_utils.DrawingSpec()
+DEFAULT_CYCLE_BORDER_COLOR = (224, 224, 224)
 
 
 class DrawingUtilTest(parameterized.TestCase):
@@ -105,6 +106,10 @@ class DrawingUtilTest(parameterized.TestCase):
     image = np.zeros((100, 100, 3), np.uint8)
     expected_result = np.copy(image)
     cv2.circle(expected_result, (10, 10),
+               DEFAULT_CIRCLE_DRAWING_SPEC.circle_radius + 1,
+               DEFAULT_CYCLE_BORDER_COLOR,
+               DEFAULT_CIRCLE_DRAWING_SPEC.thickness)
+    cv2.circle(expected_result, (10, 10),
                DEFAULT_CIRCLE_DRAWING_SPEC.circle_radius,
                DEFAULT_CIRCLE_DRAWING_SPEC.color,
                DEFAULT_CIRCLE_DRAWING_SPEC.thickness)
@@ -127,6 +132,14 @@ class DrawingUtilTest(parameterized.TestCase):
     cv2.line(expected_result, start_point, end_point,
              DEFAULT_CONNECTION_DRAWING_SPEC.color,
              DEFAULT_CONNECTION_DRAWING_SPEC.thickness)
+    cv2.circle(expected_result, start_point,
+               DEFAULT_CIRCLE_DRAWING_SPEC.circle_radius + 1,
+               DEFAULT_CYCLE_BORDER_COLOR,
+               DEFAULT_CIRCLE_DRAWING_SPEC.thickness)
+    cv2.circle(expected_result, end_point,
+               DEFAULT_CIRCLE_DRAWING_SPEC.circle_radius + 1,
+               DEFAULT_CYCLE_BORDER_COLOR,
+               DEFAULT_CIRCLE_DRAWING_SPEC.thickness)
     cv2.circle(expected_result, start_point,
                DEFAULT_CIRCLE_DRAWING_SPEC.circle_radius,
                DEFAULT_CIRCLE_DRAWING_SPEC.color,
@@ -188,6 +201,14 @@ class DrawingUtilTest(parameterized.TestCase):
              DEFAULT_CONNECTION_DRAWING_SPEC.color,
              DEFAULT_CONNECTION_DRAWING_SPEC.thickness)
     cv2.circle(expected_result, start_point,
+               DEFAULT_CIRCLE_DRAWING_SPEC.circle_radius + 1,
+               DEFAULT_CYCLE_BORDER_COLOR,
+               DEFAULT_CIRCLE_DRAWING_SPEC.thickness)
+    cv2.circle(expected_result, end_point,
+               DEFAULT_CIRCLE_DRAWING_SPEC.circle_radius + 1,
+               DEFAULT_CYCLE_BORDER_COLOR,
+               DEFAULT_CIRCLE_DRAWING_SPEC.thickness)
+    cv2.circle(expected_result, start_point,
                DEFAULT_CIRCLE_DRAWING_SPEC.circle_radius,
                DEFAULT_CIRCLE_DRAWING_SPEC.color,
                DEFAULT_CIRCLE_DRAWING_SPEC.thickness)
@@ -213,6 +234,12 @@ class DrawingUtilTest(parameterized.TestCase):
     end_point = (80, 80)
     cv2.line(expected_result, start_point, end_point,
              connection_drawing_spec.color, connection_drawing_spec.thickness)
+    cv2.circle(expected_result, start_point,
+               landmark_drawing_spec.circle_radius + 1,
+               DEFAULT_CYCLE_BORDER_COLOR, landmark_drawing_spec.thickness)
+    cv2.circle(expected_result, end_point,
+               landmark_drawing_spec.circle_radius + 1,
+               DEFAULT_CYCLE_BORDER_COLOR, landmark_drawing_spec.thickness)
     cv2.circle(expected_result, start_point,
                landmark_drawing_spec.circle_radius, landmark_drawing_spec.color,
                landmark_drawing_spec.thickness)

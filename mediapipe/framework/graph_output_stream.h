@@ -143,7 +143,8 @@ class OutputStreamPollerImpl : public GraphOutputStream {
   absl::Status Initialize(
       const std::string& stream_name, const PacketType* packet_type,
       std::function<void(InputStreamManager*, bool*)> queue_size_callback,
-      OutputStreamManager* output_stream_manager);
+      OutputStreamManager* output_stream_manager,
+      bool observe_timestamp_bounds = false);
 
   void PrepareForRun(std::function<void()> notification_callback,
                      std::function<void(absl::Status)> error_callback) override;
@@ -170,6 +171,7 @@ class OutputStreamPollerImpl : public GraphOutputStream {
   absl::Mutex mutex_;
   absl::CondVar handler_condvar_ ABSL_GUARDED_BY(mutex_);
   bool graph_has_error_ ABSL_GUARDED_BY(mutex_);
+  Timestamp output_timestamp_ ABSL_GUARDED_BY(mutex_) = Timestamp::Min();
 };
 
 }  // namespace internal

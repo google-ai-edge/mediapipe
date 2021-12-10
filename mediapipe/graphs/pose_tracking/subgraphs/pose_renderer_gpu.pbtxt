@@ -6,6 +6,8 @@ type: "PoseRendererGpu"
 input_stream: "IMAGE:input_image"
 # Pose landmarks. (NormalizedLandmarkList)
 input_stream: "LANDMARKS:pose_landmarks"
+# Segmentation mask. (GpuBuffer in RGBA, with the same mask values in R and A)
+input_stream: "SEGMENTATION_MASK:segmentation_mask"
 # Region of interest calculated based on landmarks. (NormalizedRect)
 input_stream: "ROI:roi"
 # Detected pose. (Detection)
@@ -260,10 +262,26 @@ node {
   }
 }
 
+# Colors the segmentation mask with the color specified in the option.
+node {
+  calculator: "RecolorCalculator"
+  input_stream: "IMAGE_GPU:input_image"
+  input_stream: "MASK_GPU:segmentation_mask"
+  output_stream: "IMAGE_GPU:segmented_image"
+  node_options: {
+    [type.googleapis.com/mediapipe.RecolorCalculatorOptions] {
+      color { r: 0 g: 0 b: 255 }
+      mask_channel: RED
+      invert_mask: true
+      adjust_with_luminance: false
+    }
+  }
+}
+
 # Draws annotations and overlays them on top of the input images.
 node {
   calculator: "AnnotationOverlayCalculator"
-  input_stream: "IMAGE_GPU:input_image"
+  input_stream: "IMAGE_GPU:segmented_image"
   input_stream: "detection_render_data"
   input_stream: "landmarks_render_data"
   input_stream: "landmarks_background_joints_render_data"

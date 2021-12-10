@@ -56,7 +56,9 @@ class SubgraphContext {
     return options_map_.Get<T>();
   }
 
-  const CalculatorGraphConfig::Node& OriginalNode() { return original_node_; }
+  const CalculatorGraphConfig::Node& OriginalNode() const {
+    return original_node_;
+  }
 
   template <typename T>
   ServiceBinding<T> Service(const GraphService<T>& service) const {

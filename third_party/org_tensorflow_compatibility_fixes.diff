@@ -1,5 +1,5 @@
 diff --git a/tensorflow/core/lib/monitoring/percentile_sampler.cc b/tensorflow/core/lib/monitoring/percentile_sampler.cc
-index b7c22ae77b..d0ba7b48b4 100644
+index b7c22ae77ba..d0ba7b48b4b 100644
 --- a/tensorflow/core/lib/monitoring/percentile_sampler.cc
 +++ b/tensorflow/core/lib/monitoring/percentile_sampler.cc
 @@ -29,7 +29,8 @@ namespace monitoring {
@@ -24,22 +24,22 @@ index b7c22ae77b..d0ba7b48b4 100644
      }
    }
 diff --git a/tensorflow/core/platform/test.h b/tensorflow/core/platform/test.h
-index ba50783765..5de5ea01f0 100644
+index 94b4853a810..75589d04a60 100644
 --- a/tensorflow/core/platform/test.h
 +++ b/tensorflow/core/platform/test.h
-@@ -42,7 +42,6 @@ limitations under the License.
- #if defined(PLATFORM_GOOGLE) || defined(PLATFORM_GOOGLE_ANDROID)
- #include "testing/base/public/gmock.h"  // IWYU pragma: export
- #else
+@@ -40,7 +40,6 @@ limitations under the License.
+ // The advantages of using gmock matchers instead of self defined matchers are
+ // better error messages, more maintainable tests and more test coverage.
+ #if !defined(PLATFORM_GOOGLE) && !defined(PLATFORM_GOOGLE_ANDROID)
 -#include <gmock/gmock-generated-matchers.h>
  #include <gmock/gmock-matchers.h>
  #include <gmock/gmock-more-matchers.h>
- #include <gmock/gmock.h>
+ #endif
 diff --git a/third_party/eigen3/eigen_archive.BUILD b/third_party/eigen3/eigen_archive.BUILD
-index dad592bec48..670017c2c0f 100644
+index 5514f774c35..1a38f76f4e9 100644
 --- a/third_party/eigen3/eigen_archive.BUILD
 +++ b/third_party/eigen3/eigen_archive.BUILD
-@@ -49,6 +49,13 @@ cc_library(
+@@ -53,6 +53,13 @@ cc_library(
      visibility = ["//visibility:public"],
  )
 
@@ -52,4 +52,4 @@ index dad592bec48..670017c2c0f 100644
 +
  filegroup(
      name = "eigen_header_files",
-     srcs = EIGEN_MPL2_HEADER_FILES,
+     srcs = EIGEN_HEADERS,

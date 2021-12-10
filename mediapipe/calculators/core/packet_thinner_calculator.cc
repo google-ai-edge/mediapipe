@@ -217,6 +217,7 @@ absl::Status PacketThinnerCalculator::Open(CalculatorContext* cc) {
       header->format = video_header.format;
       header->width = video_header.width;
       header->height = video_header.height;
+      header->duration = video_header.duration;
       header->frame_rate = new_frame_rate;
       cc->Outputs().Index(0).SetHeader(Adopt(header.release()));
     } else {

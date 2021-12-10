@@ -23,6 +23,8 @@
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/type_map.h"
 
+#define RET_CHECK_NO_LOG(cond) RET_CHECK(cond).SetNoLogging()
+
 namespace mediapipe {
 namespace tool {
 
@@ -47,13 +49,13 @@ absl::Status ReadFieldValue(uint32 tag, CodedInputStream* in,
   WireFormatLite::WireType wire_type = WireFormatLite::GetTagWireType(tag);
   if (IsLengthDelimited(wire_type)) {
     uint32 length;
-    RET_CHECK(in->ReadVarint32(&length));
-    RET_CHECK(in->ReadString(result, length));
+    RET_CHECK_NO_LOG(in->ReadVarint32(&length));
+    RET_CHECK_NO_LOG(in->ReadString(result, length));
   } else {
     std::string field_data;
     StringOutputStream sos(&field_data);
     CodedOutputStream cos(&sos);
-    RET_CHECK(WireFormatLite::SkipField(in, tag, &cos));
+    RET_CHECK_NO_LOG(WireFormatLite::SkipField(in, tag, &cos));
     // Skip the tag written by SkipField.
     int tag_size = CodedOutputStream::VarintSize32(tag);
     cos.Trim();
@@ -67,13 +69,13 @@ absl::Status ReadPackedValues(WireFormatLite::WireType wire_type,
                               CodedInputStream* in,
                               std::vector<std::string>* field_values) {
   uint32 data_size;
-  RET_CHECK(in->ReadVarint32(&data_size));
+  RET_CHECK_NO_LOG(in->ReadVarint32(&data_size));
   // fake_tag encodes the wire-type for calls to WireFormatLite::SkipField.
   uint32 fake_tag = WireFormatLite::MakeTag(1, wire_type);
   while (data_size > 0) {
     std::string number;
     MP_RETURN_IF_ERROR(ReadFieldValue(fake_tag, in, &number));
-    RET_CHECK_LE(number.size(), data_size);
+    RET_CHECK_NO_LOG(number.size() <= data_size);
     field_values->push_back(number);
     data_size -= number.size();
   }
@@ -98,7 +100,7 @@ absl::Status GetFieldValues(uint32 field_id, WireFormatLite::WireType wire_type,
         field_values->push_back(value);
       }
     } else {
-      RET_CHECK(WireFormatLite::SkipField(in, tag, out));
+      RET_CHECK_NO_LOG(WireFormatLite::SkipField(in, tag, out));
     }
   }
   return absl::OkStatus();
@@ -157,12 +159,12 @@ absl::Status ProtoUtilLite::ReplaceFieldRange(
   MP_RETURN_IF_ERROR(access.SetMessage(*message));
   std::vector<std::string>& v = *access.mutable_field_values();
   if (!proto_path.empty()) {
-    RET_CHECK(index >= 0 && index < v.size());
+    RET_CHECK_NO_LOG(index >= 0 && index < v.size());
     MP_RETURN_IF_ERROR(ReplaceFieldRange(&v[index], proto_path, length,
                                          field_type, field_values));
   } else {
-    RET_CHECK(index >= 0 && index <= v.size());
-    RET_CHECK(index + length >= 0 && index + length <= v.size());
+    RET_CHECK_NO_LOG(index >= 0 && index <= v.size());
+    RET_CHECK_NO_LOG(index + length >= 0 && index + length <= v.size());
     v.erase(v.begin() + index, v.begin() + index + length);
     v.insert(v.begin() + index, field_values.begin(), field_values.end());
   }
@@ -184,15 +186,36 @@ absl::Status ProtoUtilLite::GetFieldRange(
   MP_RETURN_IF_ERROR(access.SetMessage(message));
   std::vector<std::string>& v = *access.mutable_field_values();
   if (!proto_path.empty()) {
-    RET_CHECK(index >= 0 && index < v.size());
+    RET_CHECK_NO_LOG(index >= 0 && index < v.size());
     MP_RETURN_IF_ERROR(
         GetFieldRange(v[index], proto_path, length, field_type, field_values));
   } else {
-    RET_CHECK(index >= 0 && index <= v.size());
-    RET_CHECK(index + length >= 0 && index + length <= v.size());
+    RET_CHECK_NO_LOG(index >= 0 && index <= v.size());
+    RET_CHECK_NO_LOG(index + length >= 0 && index + length <= v.size());
     field_values->insert(field_values->begin(), v.begin() + index,
                          v.begin() + index + length);
   }
+  return absl::OkStatus();
+}
+
+// Returns the number of field values in a repeated protobuf field.
+absl::Status ProtoUtilLite::GetFieldCount(const FieldValue& message,
+                                          ProtoPath proto_path,
+                                          FieldType field_type,
+                                          int* field_count) {
+  int field_id, index;
+  std::tie(field_id, index) = proto_path.back();
+  proto_path.pop_back();
+  std::vector<std::string> parent;
+  if (proto_path.empty()) {
+    parent.push_back(std::string(message));
+  } else {
+    MP_RETURN_IF_ERROR(ProtoUtilLite::GetFieldRange(
+        message, proto_path, 1, WireFormatLite::TYPE_MESSAGE, &parent));
+  }
+  FieldAccess access(field_id, field_type);
+  MP_RETURN_IF_ERROR(access.SetMessage(parent[0]));
+  *field_count = access.mutable_field_values()->size();
   return absl::OkStatus();
 }
 

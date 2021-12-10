@@ -26,6 +26,7 @@
 #include "absl/container/fixed_array.h"
 #include "absl/container/flat_hash_set.h"
 #include "absl/memory/memory.h"
+#include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/str_join.h"
@@ -84,9 +85,9 @@ void CalculatorGraph::ScheduleAllOpenableNodes() {
   // node->ReadyForOpen() only before any node or graph input stream has
   // propagated header packets or generated output side packets, either of
   // which may cause a downstream node to be scheduled for OpenNode().
-  for (CalculatorNode& node : *nodes_) {
-    if (node.ReadyForOpen()) {
-      scheduler_.ScheduleNodeForOpen(&node);
+  for (auto& node : nodes_) {
+    if (node->ReadyForOpen()) {
+      scheduler_.ScheduleNodeForOpen(node.get());
     }
   }
 }
@@ -234,15 +235,15 @@ absl::Status CalculatorGraph::InitializeCalculatorNodes() {
   std::vector<absl::Status> errors;
 
   // Create and initialize all the nodes in the graph.
-  nodes_ = absl::make_unique<absl::FixedArray<CalculatorNode>>(
-      validated_graph_->CalculatorInfos().size());
   for (int node_id = 0; node_id < validated_graph_->CalculatorInfos().size();
        ++node_id) {
     // buffer_size_hint will be positive if one was specified in
     // the graph proto.
     int buffer_size_hint = 0;
-    const absl::Status result = (*nodes_)[node_id].Initialize(
-        validated_graph_.get(), node_id, input_stream_managers_.get(),
+    NodeTypeInfo::NodeRef node_ref(NodeTypeInfo::NodeType::CALCULATOR, node_id);
+    nodes_.push_back(absl::make_unique<CalculatorNode>());
+    const absl::Status result = nodes_.back()->Initialize(
+        validated_graph_.get(), node_ref, input_stream_managers_.get(),
         output_stream_managers_.get(), output_side_packets_.get(),
         &buffer_size_hint, profiler_);
     if (buffer_size_hint > 0) {
@@ -260,6 +261,38 @@ absl::Status CalculatorGraph::InitializeCalculatorNodes() {
 
   VLOG(2) << "Maximum input stream queue size based on graph config: "
           << max_queue_size_;
+  return absl::OkStatus();
+}
+
+absl::Status CalculatorGraph::InitializePacketGeneratorNodes(
+    const std::vector<int>& non_scheduled_generators) {
+  // Do not add wrapper nodes again if we are running the graph multiple times.
+  if (packet_generator_nodes_added_) return absl::OkStatus();
+
+  packet_generator_nodes_added_ = true;
+  // Use a local variable to avoid needing to lock errors_.
+  std::vector<absl::Status> errors;
+
+  for (int index : non_scheduled_generators) {
+    // This is never used by the packet generator wrapper.
+    int buffer_size_hint = 0;
+    NodeTypeInfo::NodeRef node_ref(NodeTypeInfo::NodeType::PACKET_GENERATOR,
+                                   index);
+    nodes_.push_back(absl::make_unique<CalculatorNode>());
+    const absl::Status result = nodes_.back()->Initialize(
+        validated_graph_.get(), node_ref, input_stream_managers_.get(),
+        output_stream_managers_.get(), output_side_packets_.get(),
+        &buffer_size_hint, profiler_);
+    if (!result.ok()) {
+      // Collect as many errors as we can before failing.
+      errors.push_back(result);
+    }
+  }
+  if (!errors.empty()) {
+    return tool::CombinedStatus(
+        "CalculatorGraph::InitializePacketGeneratorNodes failed: ", errors);
+  }
+
   return absl::OkStatus();
 }
 
@@ -394,7 +427,8 @@ absl::Status CalculatorGraph::Initialize(
     const std::map<std::string, Packet>& side_packets) {
   auto validated_graph = absl::make_unique<ValidatedGraphConfig>();
   MP_RETURN_IF_ERROR(validated_graph->Initialize(
-      input_config, /*graph_registry=*/nullptr, &service_manager_));
+      input_config, /*graph_registry=*/nullptr, /*graph_options=*/nullptr,
+      &service_manager_));
   return Initialize(std::move(validated_graph), side_packets);
 }
 
@@ -432,7 +466,7 @@ absl::Status CalculatorGraph::ObserveOutputStream(
 }
 
 absl::StatusOr<OutputStreamPoller> CalculatorGraph::AddOutputStreamPoller(
-    const std::string& stream_name) {
+    const std::string& stream_name, bool observe_timestamp_bounds) {
   RET_CHECK(initialized_).SetNoLogging()
       << "CalculatorGraph is not initialized.";
   int output_stream_index = validated_graph_->OutputStreamIndex(stream_name);
@@ -446,7 +480,7 @@ absl::StatusOr<OutputStreamPoller> CalculatorGraph::AddOutputStreamPoller(
       stream_name, &any_packet_type_,
       std::bind(&CalculatorGraph::UpdateThrottledNodes, this,
                 std::placeholders::_1, std::placeholders::_2),
-      &output_stream_managers_[output_stream_index]));
+      &output_stream_managers_[output_stream_index], observe_timestamp_bounds));
   OutputStreamPoller poller(internal_poller);
   graph_output_streams_.push_back(std::move(internal_poller));
   return std::move(poller);
@@ -528,8 +562,8 @@ absl::StatusOr<std::map<std::string, Packet>> CalculatorGraph::PrepareGpu(
   std::map<std::string, Packet> additional_side_packets;
   bool update_sp = false;
   bool uses_gpu = false;
-  for (const auto& node : *nodes_) {
-    if (node.UsesGpu()) {
+  for (const auto& node : nodes_) {
+    if (node->UsesGpu()) {
       uses_gpu = true;
       break;
     }
@@ -571,9 +605,9 @@ absl::StatusOr<std::map<std::string, Packet>> CalculatorGraph::PrepareGpu(
     }
 
     // Set up executors.
-    for (auto& node : *nodes_) {
-      if (node.UsesGpu()) {
-        MP_RETURN_IF_ERROR(gpu_resources->PrepareGpuNode(&node));
+    for (auto& node : nodes_) {
+      if (node->UsesGpu()) {
+        MP_RETURN_IF_ERROR(gpu_resources->PrepareGpuNode(node.get()));
       }
     }
     for (const auto& name_executor : gpu_resources->GetGpuExecutors()) {
@@ -616,8 +650,10 @@ absl::Status CalculatorGraph::PrepareForRun(
   }
 
   current_run_side_packets_.clear();
+  std::vector<int> non_scheduled_generators;
   absl::Status generator_status = packet_generator_graph_.RunGraphSetup(
-      *input_side_packets, &current_run_side_packets_);
+      *input_side_packets, &current_run_side_packets_,
+      &non_scheduled_generators);
 
   CallStatusHandlers(GraphRunState::PRE_RUN, generator_status);
 
@@ -650,6 +686,8 @@ absl::Status CalculatorGraph::PrepareForRun(
   }
   scheduler_.Reset();
 
+  MP_RETURN_IF_ERROR(InitializePacketGeneratorNodes(non_scheduled_generators));
+
   {
     absl::MutexLock lock(&full_input_streams_mutex_);
     // Initialize a count per source node to store the number of input streams
@@ -671,22 +709,22 @@ absl::Status CalculatorGraph::PrepareForRun(
     output_side_packets_[index].PrepareForRun(
         std::bind(&CalculatorGraph::RecordError, this, std::placeholders::_1));
   }
-  for (CalculatorNode& node : *nodes_) {
+  for (auto& node : nodes_) {
     InputStreamManager::QueueSizeCallback queue_size_callback =
         std::bind(&CalculatorGraph::UpdateThrottledNodes, this,
                   std::placeholders::_1, std::placeholders::_2);
-    node.SetQueueSizeCallbacks(queue_size_callback, queue_size_callback);
-    scheduler_.AssignNodeToSchedulerQueue(&node);
+    node->SetQueueSizeCallbacks(queue_size_callback, queue_size_callback);
+    scheduler_.AssignNodeToSchedulerQueue(node.get());
     // TODO: update calculator node to use GraphServiceManager
     // instead of service packets?
-    const absl::Status result = node.PrepareForRun(
+    const absl::Status result = node->PrepareForRun(
         current_run_side_packets_, service_manager_.ServicePackets(),
         std::bind(&internal::Scheduler::ScheduleNodeForOpen, &scheduler_,
-                  &node),
+                  node.get()),
         std::bind(&internal::Scheduler::AddNodeToSourcesQueue, &scheduler_,
-                  &node),
+                  node.get()),
         std::bind(&internal::Scheduler::ScheduleNodeIfNotThrottled, &scheduler_,
-                  &node, std::placeholders::_1),
+                  node.get(), std::placeholders::_1),
         std::bind(&CalculatorGraph::RecordError, this, std::placeholders::_1),
         counter_factory_.get());
     if (!result.ok()) {
@@ -714,8 +752,8 @@ absl::Status CalculatorGraph::PrepareForRun(
 
   // Ensure that the latest value of max queue size is passed to all input
   // streams.
-  for (auto& node : *nodes_) {
-    node.SetMaxInputStreamQueueSize(max_queue_size_);
+  for (auto& node : nodes_) {
+    node->SetMaxInputStreamQueueSize(max_queue_size_);
   }
 
   // Allow graph input streams to override the global max queue size.
@@ -729,9 +767,9 @@ absl::Status CalculatorGraph::PrepareForRun(
     (*stream)->SetMaxQueueSize(name_max.second);
   }
 
-  for (CalculatorNode& node : *nodes_) {
-    if (node.IsSource()) {
-      scheduler_.AddUnopenedSourceNode(&node);
+  for (auto& node : nodes_) {
+    if (node->IsSource()) {
+      scheduler_.AddUnopenedSourceNode(node.get());
       has_sources_ = true;
     }
   }
@@ -1077,7 +1115,7 @@ void CalculatorGraph::UpdateThrottledNodes(InputStreamManager* stream,
           }
         } else {
           if (!is_throttled) {
-            CalculatorNode& node = (*nodes_)[node_id];
+            CalculatorNode& node = *nodes_[node_id];
             // Add this node to the scheduler queue if possible.
             if (node.Active() && !node.Closed()) {
               nodes_to_schedule.emplace_back(&node);
@@ -1244,8 +1282,8 @@ void CalculatorGraph::CleanupAfterRun(absl::Status* status) {
     MEDIAPIPE_CHECK_OK(*status);
   }
 
-  for (CalculatorNode& node : *nodes_) {
-    node.CleanupAfterRun(*status);
+  for (auto& node : nodes_) {
+    node->CleanupAfterRun(*status);
   }
 
   for (auto& graph_output_stream : graph_output_streams_) {

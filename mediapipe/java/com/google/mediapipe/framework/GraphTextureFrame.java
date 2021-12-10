@@ -37,9 +37,18 @@ public class GraphTextureFrame implements TextureFrame {
     this.timestamp = timestamp;
   }
 
-  /** Returns the name of the underlying OpenGL texture. */
+  /**
+   * Returns the name of the underlying OpenGL texture.
+   *
+   * <p>Note: if this texture has been obtained using getTextureFrameDeferredWait, a GPU wait on the
+   * producer sync will be done here. That means this method should be called on the GL context that
+   * will actually use the texture.
+   */
   @Override
   public int getTextureName() {
+    // Note that, if a CPU wait has already been done, the sync point will have been
+    // cleared and this will turn into a no-op. See GlFenceSyncPoint::Wait.
+    nativeGpuWait(nativeBufferHandle);
     return textureName;
   }
 
@@ -92,4 +101,6 @@ public class GraphTextureFrame implements TextureFrame {
   private native int nativeGetTextureName(long nativeHandle);
   private native int nativeGetWidth(long nativeHandle);
   private native int nativeGetHeight(long nativeHandle);
+
+  private native void nativeGpuWait(long nativeHandle);
 }

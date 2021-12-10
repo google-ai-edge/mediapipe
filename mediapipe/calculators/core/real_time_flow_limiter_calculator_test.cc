@@ -33,6 +33,9 @@
 namespace mediapipe {
 
 namespace {
+
+constexpr char kFinishedTag[] = "FINISHED";
+
 // A simple Semaphore for synchronizing test threads.
 class AtomicSemaphore {
  public:
@@ -112,7 +115,7 @@ TEST(RealTimeFlowLimiterCalculator, BasicTest) {
     Timestamp timestamp =
         Timestamp((i + 1) * Timestamp::kTimestampUnitsPerSecond);
     runner.MutableInputs()
-        ->Tag("FINISHED")
+        ->Tag(kFinishedTag)
         .packets.push_back(MakePacket<bool>(true).At(timestamp));
   }
 

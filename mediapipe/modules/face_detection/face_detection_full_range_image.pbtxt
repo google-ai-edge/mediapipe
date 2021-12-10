@@ -1,0 +1,86 @@
+# MediaPipe graph to detect faces. (GPU/CPU input, and inference is executed on
+# GPU.)
+#
+# It is required that "face_detection_full_range_sparse.tflite" is available at
+# "mediapipe/modules/face_detection/face_detection_full_range_sparse.tflite"
+# path during execution.
+
+type: "FaceDetectionFullRangeImage"
+
+# Image. (Image)
+input_stream: "IMAGE:image"
+
+# The throttled input image. (Image)
+output_stream: "IMAGE:throttled_image"
+# Detected faces. (std::vector<Detection>)
+# NOTE: there will not be an output packet in the DETECTIONS stream for this
+# particular timestamp if none of faces detected. However, the MediaPipe
+# framework will internally inform the downstream calculators of the absence of
+# this packet so that they don't wait for it unnecessarily.
+output_stream: "DETECTIONS:detections"
+
+node {
+  calculator: "FlowLimiterCalculator"
+  input_stream: "image"
+  input_stream: "FINISHED:detections"
+  input_stream_info: {
+    tag_index: "FINISHED"
+    back_edge: true
+  }
+  output_stream: "throttled_image"
+  options: {
+    [mediapipe.FlowLimiterCalculatorOptions.ext] {
+      max_in_flight: 1
+      max_in_queue: 1
+    }
+  }
+}
+
+# Transforms the input image into a 128x128 tensor while keeping the aspect
+# ratio (what is expected by the corresponding face detection model), resulting
+# in potential letterboxing in the transformed image.
+node: {
+  calculator: "ImageToTensorCalculator"
+  input_stream: "IMAGE:throttled_image"
+  output_stream: "TENSORS:input_tensors"
+  output_stream: "MATRIX:transform_matrix"
+  options: {
+    [mediapipe.ImageToTensorCalculatorOptions.ext] {
+      output_tensor_width: 192
+      output_tensor_height: 192
+      keep_aspect_ratio: true
+      output_tensor_float_range {
+        min: -1.0
+        max: 1.0
+      }
+      border_mode: BORDER_ZERO
+      gpu_origin: CONVENTIONAL
+    }
+  }
+}
+
+# Runs a TensorFlow Lite model on GPU that takes an image tensor and outputs a
+# vector of tensors representing, for instance, detection boxes/keypoints and
+# scores.
+# TODO: Use GraphOptions to modify the delegate field to be
+# `delegate { xnnpack {} }` for the CPU only use cases.
+node {
+  calculator: "InferenceCalculator"
+  input_stream: "TENSORS:input_tensors"
+  output_stream: "TENSORS:detection_tensors"
+  options: {
+    [mediapipe.InferenceCalculatorOptions.ext] {
+      model_path: "mediapipe/modules/face_detection/face_detection_full_range_sparse.tflite"
+      #
+      delegate: { gpu { use_advanced_gpu_api: true } }
+    }
+  }
+}
+
+# Performs tensor post processing to generate face detections.
+node {
+  calculator: "FaceDetectionFullRangeCommon"
+  input_stream: "TENSORS:detection_tensors"
+  input_stream: "MATRIX:transform_matrix"
+  output_stream: "DETECTIONS:detections"
+}

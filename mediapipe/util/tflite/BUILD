@@ -34,10 +34,12 @@ cc_library(
     hdrs = ["cpu_op_resolver.h"],
     visibility = ["//visibility:public"],
     deps = [
-        "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/port:logging",
+        "//mediapipe/util/tflite/operations:landmarks_to_transform_matrix",
         "//mediapipe/util/tflite/operations:max_pool_argmax",
         "//mediapipe/util/tflite/operations:max_unpooling",
+        "//mediapipe/util/tflite/operations:transform_landmarks",
+        "//mediapipe/util/tflite/operations:transform_tensor_bilinear",
         "//mediapipe/util/tflite/operations:transpose_conv_bias",
         "@org_tensorflow//tensorflow/lite:builtin_op_data",
         "@org_tensorflow//tensorflow/lite:framework",

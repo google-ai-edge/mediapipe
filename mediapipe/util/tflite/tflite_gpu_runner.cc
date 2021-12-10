@@ -18,6 +18,7 @@
 #include <memory>
 #include <utility>
 
+#include "absl/status/status.h"
 #include "absl/strings/substitute.h"
 #include "mediapipe/framework/port/canonical_errors.h"
 #include "mediapipe/framework/port/ret_check.h"
@@ -81,6 +82,32 @@ ObjectDef GetSSBOObjectDef(int channels) {
   return gpu_object_def;
 }
 
+#ifdef __ANDROID__
+
+cl::InferenceOptions GetClInferenceOptions(const InferenceOptions& options) {
+  cl::InferenceOptions result{};
+  result.priority1 = options.priority1;
+  result.priority2 = options.priority2;
+  result.priority3 = options.priority3;
+  result.usage = options.usage;
+  return result;
+}
+
+absl::Status VerifyShapes(const std::vector<TensorObjectDef>& actual,
+                          const std::vector<BHWC>& expected) {
+  RET_CHECK_EQ(actual.size(), expected.size());
+  const int size = actual.size();
+  for (int i = 0; i < size; ++i) {
+    const auto& dims = actual[i].dimensions;
+    const BHWC& bhwc = expected[i];
+    RET_CHECK(dims.b == bhwc.b && dims.h == bhwc.h && dims.w == bhwc.w &&
+              dims.c == bhwc.c);
+  }
+  return absl::OkStatus();
+}
+
+#endif  // __ANDROID__
+
 }  // namespace
 
 absl::Status TFLiteGPURunner::InitializeWithModel(
@@ -139,16 +166,16 @@ absl::Status TFLiteGPURunner::Build() {
     // try to build OpenCL first. If something goes wrong, fall back to OpenGL.
     absl::Status status = InitializeOpenCL(&builder);
     if (status.ok()) {
-      LOG(INFO) << "OpenCL backend is used.";
+      VLOG(2) << "OpenCL backend is used.";
     } else {
-      LOG(ERROR) << "Falling back to OpenGL: " << status.message();
+      VLOG(2) << "Falling back to OpenGL: " << status.message();
       MP_RETURN_IF_ERROR(InitializeOpenGL(&builder));
     }
   }
 
-  // Both graphs are not needed anymore. Make sure they are deleted.
+  // GL graph not needed anymore, CL graph maybe needed for serialized model
+  // calculation.
   graph_gl_.reset(nullptr);
-  graph_cl_.reset(nullptr);
 
   // 2. Describe output/input objects for created builder.
   for (int flow_index = 0; flow_index < input_shapes_.size(); ++flow_index) {
@@ -204,18 +231,57 @@ absl::Status TFLiteGPURunner::InitializeOpenCL(
     env_options.serialized_binary_cache = serialized_binary_cache_;
   }
   cl::InferenceEnvironmentProperties properties;
-  cl::InferenceOptions cl_options;
-  cl_options.priority1 = options_.priority1;
-  cl_options.priority2 = options_.priority2;
-  cl_options.priority3 = options_.priority3;
-  cl_options.usage = options_.usage;
   MP_RETURN_IF_ERROR(
       cl::NewInferenceEnvironment(env_options, &cl_environment_, &properties));
+
+  // Try to initialize from serialized model first.
+  if (!serialized_model_.empty()) {
+    absl::Status init_status = InitializeOpenCLFromSerializedModel(builder);
+    if (init_status.ok()) {
+      serialized_model_used_ = true;
+      return absl::OkStatus();
+    }
+    VLOG(2) << "Failed to init from serialized model: [" << init_status
+            << "]. Trying to init from scratch.";
+  }
+
+  // Initialize from scratch.
+  cl::InferenceOptions cl_options = GetClInferenceOptions(options_);
+  GraphFloat32 graph_cl;
+  MP_RETURN_IF_ERROR(graph_cl_->MakeExactCopy(&graph_cl));
   MP_RETURN_IF_ERROR(cl_environment_->NewInferenceBuilder(
-      cl_options, std::move(*graph_cl_), builder));
-#endif
+      cl_options, std::move(graph_cl), builder));
+
+#endif  // __ANDROID__
   return absl::OkStatus();
 }
+
+#ifdef __ANDROID__
+
+absl::Status TFLiteGPURunner::InitializeOpenCLFromSerializedModel(
+    std::unique_ptr<InferenceBuilder>* builder) {
+  MP_RETURN_IF_ERROR(
+      cl_environment_->NewInferenceBuilder(serialized_model_, builder));
+  MP_RETURN_IF_ERROR(VerifyShapes(builder->get()->inputs(), input_shapes_));
+  return VerifyShapes(builder->get()->outputs(), output_shapes_);
+}
+
+absl::StatusOr<std::vector<uint8_t>> TFLiteGPURunner::GetSerializedModel() {
+  RET_CHECK(runner_) << "Runner is in invalid state.";
+  if (serialized_model_used_) {
+    return serialized_model_;
+  }
+  RET_CHECK(graph_cl_) << "CL graph is not initialized.";
+  GraphFloat32 graph_cl;
+  MP_RETURN_IF_ERROR(graph_cl_->MakeExactCopy(&graph_cl));
+  cl::InferenceOptions cl_options = GetClInferenceOptions(options_);
+  std::vector<uint8_t> serialized_model;
+  MP_RETURN_IF_ERROR(cl_environment_->BuildSerializedModel(
+      cl_options, std::move(graph_cl), &serialized_model));
+  return serialized_model;
+}
+
+#endif  // __ANDROID__
 
 }  // namespace gpu
 }  // namespace tflite

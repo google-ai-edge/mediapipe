@@ -36,7 +36,7 @@ inline float NormalizeRadians(float angle) {
 }  // namespace
 
 // Performs geometric transformation to the input Rect or NormalizedRect,
-// correpsonding to input stream RECT or NORM_RECT respectively. When the input
+// corresponding to input stream RECT or NORM_RECT respectively. When the input
 // is NORM_RECT, an addition input stream IMAGE_SIZE is required, which is a
 // std::pair<int, int> representing the image width and height.
 //

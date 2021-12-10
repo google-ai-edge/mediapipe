@@ -14,6 +14,9 @@
 
 #include "mediapipe/gpu/gl_texture_buffer.h"
 
+#include "mediapipe/framework/formats/image_frame.h"
+#include "mediapipe/gpu/gl_texture_view.h"
+
 namespace mediapipe {
 
 std::unique_ptr<GlTextureBuffer> GlTextureBuffer::Wrap(
@@ -122,6 +125,15 @@ bool GlTextureBuffer::CreateInternal(const void* data, int alignment) {
 
   if (alignment != 4 && data) glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
 
+  // TODO: does this need to set the texture params? We set them again when the
+  // texture is actually acccessed via GlTexture[View]. Or should they always be
+  // set on creation?
+  if (format_ != GpuBufferFormat::kUnknown) {
+    GlTextureInfo info = GlTextureInfoForGpuBufferFormat(
+        format_, /*plane=*/0, context->GetGlVersion());
+    context->SetStandardTextureParams(target_, info.gl_internal_format);
+  }
+
   glBindTexture(target_, 0);
 
   // Use the deletion callback to delete the texture on the context
@@ -167,7 +179,7 @@ void GlTextureBuffer::Updated(std::shared_ptr<GlSyncPoint> prod_token) {
   producer_context_ = producer_sync_->GetContext();
 }
 
-void GlTextureBuffer::DidRead(std::shared_ptr<GlSyncPoint> cons_token) {
+void GlTextureBuffer::DidRead(std::shared_ptr<GlSyncPoint> cons_token) const {
   absl::MutexLock lock(&consumer_sync_mutex_);
   consumer_multi_sync_->Add(std::move(cons_token));
 }
@@ -181,7 +193,7 @@ GlTextureBuffer::~GlTextureBuffer() {
   }
 }
 
-void GlTextureBuffer::WaitUntilComplete() {
+void GlTextureBuffer::WaitUntilComplete() const {
   // Buffers created by the application (using the constructor that wraps an
   // existing texture) have no sync token and are assumed to be already
   // complete.
@@ -190,7 +202,7 @@ void GlTextureBuffer::WaitUntilComplete() {
   }
 }
 
-void GlTextureBuffer::WaitOnGpu() {
+void GlTextureBuffer::WaitOnGpu() const {
   // Buffers created by the application (using the constructor that wraps an
   // existing texture) have no sync token and are assumed to be already
   // complete.
@@ -210,6 +222,132 @@ void GlTextureBuffer::WaitForConsumersOnGpu() {
   // TODO: should we clear the consumer_multi_sync_ here?
   // It would mean that WaitForConsumersOnGpu can be called only once, or more
   // precisely, on only one GL context.
+}
+
+GlTextureView GlTextureBuffer::GetReadView(
+    mediapipe::internal::types<GlTextureView>,
+    std::shared_ptr<GpuBuffer> gpu_buffer, int plane) const {
+  auto gl_context = GlContext::GetCurrent();
+  CHECK(gl_context);
+  CHECK_EQ(plane, 0);
+  // Insert wait call to sync with the producer.
+  WaitOnGpu();
+  GlTextureView::DetachFn detach = [this](mediapipe::GlTextureView& texture) {
+    // Inform the GlTextureBuffer that we have finished accessing its
+    // contents, and create a consumer sync point.
+    DidRead(texture.gl_context()->CreateSyncToken());
+  };
+  return GlTextureView(gl_context.get(), target(), name(), width(), height(),
+                       std::move(gpu_buffer), plane, std::move(detach),
+                       nullptr);
+}
+
+GlTextureView GlTextureBuffer::GetWriteView(
+    mediapipe::internal::types<GlTextureView>,
+    std::shared_ptr<GpuBuffer> gpu_buffer, int plane) {
+  auto gl_context = GlContext::GetCurrent();
+  CHECK(gl_context);
+  CHECK_EQ(plane, 0);
+  // Insert wait call to sync with the producer.
+  WaitOnGpu();
+  Reuse();  // TODO: the producer wait should probably be part of Reuse in the
+            // case when there are no consumers.
+  GlTextureView::DoneWritingFn done_writing =
+      [this](const mediapipe::GlTextureView& texture) {
+        ViewDoneWriting(texture);
+      };
+  return GlTextureView(gl_context.get(), target(), name(), width(), height(),
+                       std::move(gpu_buffer), plane, nullptr,
+                       std::move(done_writing));
+}
+
+void GlTextureBuffer::ViewDoneWriting(const GlTextureView& view) {
+  // Inform the GlTextureBuffer that we have produced new content, and create
+  // a producer sync point.
+  Updated(view.gl_context()->CreateSyncToken());
+
+#ifdef __ANDROID__
+  // On (some?) Android devices, the texture may need to be explicitly
+  // detached from the current framebuffer.
+  // TODO: is this necessary even with the unbind in BindFramebuffer?
+  // It is not clear if this affected other contexts too, but let's keep it
+  // while in doubt.
+  GLint type = GL_NONE;
+  glGetFramebufferAttachmentParameteriv(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+                                        GL_FRAMEBUFFER_ATTACHMENT_OBJECT_TYPE,
+                                        &type);
+  if (type == GL_TEXTURE) {
+    GLint color_attachment = 0;
+    glGetFramebufferAttachmentParameteriv(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+                                          GL_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME,
+                                          &color_attachment);
+    if (color_attachment == name()) {
+      glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    }
+  }
+
+  // Some Android drivers log a GL_INVALID_ENUM error after the first
+  // glGetFramebufferAttachmentParameteriv call if there is no bound object,
+  // even though it should be ok to ask for the type and get back GL_NONE.
+  // Let's just ignore any pending errors here.
+  GLenum error;
+  while ((error = glGetError()) != GL_NO_ERROR) {
+  }
+
+#endif  // __ANDROID__
+}
+
+static void ReadTexture(const GlTextureView& view, GpuBufferFormat format,
+                        void* output, size_t size) {
+  // TODO: check buffer size? We could use glReadnPixels where available
+  // (OpenGL ES 3.2, i.e. nowhere). Note that, to fully check that the read
+  // won't overflow the buffer with glReadPixels, we'd also need to check or
+  // reset several glPixelStore parameters (e.g. what if someone had the
+  // ill-advised idea of setting GL_PACK_SKIP_PIXELS?).
+  CHECK(view.gl_context());
+  GlTextureInfo info = GlTextureInfoForGpuBufferFormat(
+      format, view.plane(), view.gl_context()->GetGlVersion());
+
+  GLint current_fbo;
+  glGetIntegerv(GL_FRAMEBUFFER_BINDING, &current_fbo);
+  CHECK_NE(current_fbo, 0);
+
+  GLint color_attachment_name;
+  glGetFramebufferAttachmentParameteriv(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+                                        GL_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME,
+                                        &color_attachment_name);
+  if (color_attachment_name != view.name()) {
+    // Save the viewport. Note that we assume that the color attachment is a
+    // GL_TEXTURE_2D texture.
+    GLint viewport[4];
+    glGetIntegerv(GL_VIEWPORT, viewport);
+
+    // Set the data from GLTextureView object.
+    glViewport(0, 0, view.width(), view.height());
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, view.target(),
+                           view.name(), 0);
+    glReadPixels(0, 0, view.width(), view.height(), info.gl_format,
+                 info.gl_type, output);
+
+    // Restore from the saved viewport and color attachment name.
+    glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D,
+                           color_attachment_name, 0);
+  } else {
+    glReadPixels(0, 0, view.width(), view.height(), info.gl_format,
+                 info.gl_type, output);
+  }
+}
+
+std::unique_ptr<ImageFrame> GlTextureBuffer::AsImageFrame() const {
+  ImageFormat::Format image_format = ImageFormatForGpuBufferFormat(format());
+  auto output = absl::make_unique<ImageFrame>(
+      image_format, width(), height(), ImageFrame::kGlDefaultAlignmentBoundary);
+  auto view =
+      GetReadView(mediapipe::internal::types<GlTextureView>{}, nullptr, 0);
+  ReadTexture(view, format(), output->MutablePixelData(),
+              output->PixelDataSize());
+  return output;
 }
 
 }  // namespace mediapipe

@@ -1,0 +1,67 @@
+# MediaPipe graph to perform selfie segmentation.
+
+type: "SelfieSegmentationCpuImage"
+
+# Input image. (Image)
+input_stream: "IMAGE:image"
+
+# The throttled input image. (Image)
+output_stream: "IMAGE:throttled_image"
+
+# An integer 0 or 1. Use 0 to select a general-purpose model (operating on a
+# 256x256 tensor), and 1 to select a model (operating on a 256x144 tensor) more
+# optimized for landscape images. If unspecified, functions as set to 0. (int)
+input_side_packet: "MODEL_SELECTION:model_selection"
+
+# Segmentation mask. (Image)
+output_stream: "SEGMENTATION_MASK:segmentation_mask"
+
+node {
+  calculator: "FlowLimiterCalculator"
+  input_stream: "image"
+  input_stream: "FINISHED:segmentation_mask"
+  input_stream_info: {
+    tag_index: "FINISHED"
+    back_edge: true
+  }
+  output_stream: "throttled_image"
+  options: {
+    [mediapipe.FlowLimiterCalculatorOptions.ext] {
+      max_in_flight: 1
+      max_in_queue: 1
+    }
+  }
+}
+
+# Converts Image to ImageFrame for SelfieSegmentationCpu to consume.
+node {
+  calculator: "FromImageCalculator"
+  input_stream: "IMAGE:throttled_image"
+  output_stream: "IMAGE_CPU:raw_image_frame"
+  output_stream: "SOURCE_ON_GPU:is_gpu_image"
+}
+
+# TODO: Remove the extra flipping once adopting MlImage.
+# If the source images are on gpu, flip the data vertically before sending them
+# into SelfieSegmentationCpu. This maybe needed because OpenGL represents images
+# assuming the image origin is at the bottom-left corner, whereas MediaPipe in
+# general assumes the image origin is at the top-left corner.
+node: {
+  calculator: "ImageTransformationCalculator"
+  input_stream: "IMAGE:raw_image_frame"
+  input_stream: "FLIP_VERTICALLY:is_gpu_image"
+  output_stream: "IMAGE:image_frame"
+}
+
+node {
+  calculator: "SelfieSegmentationCpu"
+  input_side_packet: "MODEL_SELECTION:model_selection"
+  input_stream: "IMAGE:image_frame"
+  output_stream: "SEGMENTATION_MASK:segmentation_mask_image_frame"
+}
+
+node {
+  calculator: "ToImageCalculator"
+  input_stream: "IMAGE_CPU:segmentation_mask_image_frame"
+  output_stream: "IMAGE:segmentation_mask"
+}

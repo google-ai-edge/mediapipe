@@ -34,6 +34,13 @@ JNIEXPORT jint JNICALL GRAPH_TEXTURE_FRAME_METHOD(nativeGetTextureName)(
   return (*buffer)->name();
 }
 
+JNIEXPORT void JNICALL GRAPH_TEXTURE_FRAME_METHOD(nativeGpuWait)(
+    JNIEnv* env, jobject thiz, jlong nativeHandle) {
+  GlTextureBufferSharedPtr* buffer =
+      reinterpret_cast<GlTextureBufferSharedPtr*>(nativeHandle);
+  (*buffer)->WaitOnGpu();
+}
+
 JNIEXPORT jint JNICALL GRAPH_TEXTURE_FRAME_METHOD(nativeGetWidth)(
     JNIEnv* env, jobject thiz, jlong nativeHandle) {
   GlTextureBufferSharedPtr* buffer =
