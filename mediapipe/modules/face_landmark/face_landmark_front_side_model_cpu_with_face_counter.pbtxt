@@ -31,8 +31,12 @@ input_side_packet: "MODEL:0:face_detection_model"
 # NOTE: mediapipe/modules/face_landmark/face_landmark.tflite model
 # only, can be passed here, otherwise - results are undefined.
 input_side_packet: "MODEL:1:face_landmark_model"
-
-# Collection of detected/predicted faces, each represented as a list of 468 face
+# Whether to run face mesh model with attention on lips and eyes. (bool)
+# Attention provides more accuracy on lips and eye regions as well as iris
+# landmarks.
+input_side_packet: "WITH_ATTENTION:with_attention"
+# Collection of detected/predicted faces depends on with_attention, if true : each represented as a list of 468 face
+# landmarks, if false:  each represented as a list of 478 face
 # landmarks. (std::vector<NormalizedLandmarkList>)
 # NOTE: there will not be an output packet in the LANDMARKS stream for this
 # particular timestamp if none of faces detected. However, the MediaPipe
@@ -207,6 +211,7 @@ node {
   input_stream: "IMAGE:landmarks_loop_image"
   input_stream: "ROI:face_rect"
   input_side_packet: "MODEL:face_landmark_model"
+  input_side_packet: "WITH_ATTENTION:with_attention"
   output_stream: "LANDMARKS:face_landmarks"
 }
 

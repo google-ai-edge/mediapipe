@@ -47,14 +47,18 @@ mediapipe_simple_subgraph(
     graph = "face_landmark_side_model_cpu.pbtxt",
     register_as = "FaceLandmarkSideModelCpu",
     deps = [
+		":tensors_to_face_landmarks",
+		":tensors_to_face_landmarks_with_attention",
         "//mediapipe/calculators/core:gate_calculator",
         "//mediapipe/calculators/core:split_vector_calculator",
         "//mediapipe/calculators/tensor:image_to_tensor_calculator",
         "//mediapipe/calculators/tensor:inference_calculator",
         "//mediapipe/calculators/tensor:tensors_to_floats_calculator",
         "//mediapipe/calculators/tensor:tensors_to_landmarks_calculator",
+		"//mediapipe/calculators/tflite:tflite_custom_op_resolver_calculator",
         "//mediapipe/calculators/util:landmark_projection_calculator",
         "//mediapipe/calculators/util:thresholding_calculator",
+		"//mediapipe/framework/tool:switch_container",
     ],
 )
 

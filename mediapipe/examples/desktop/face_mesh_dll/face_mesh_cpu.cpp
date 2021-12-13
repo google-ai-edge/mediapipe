@@ -27,9 +27,12 @@ int main(int argc, char **argv) {
       "mediapipe/modules/face_detection/face_detection_short_range.tflite";
   constexpr char face_landmark_model_path[] =
       "mediapipe/modules/face_landmark/face_landmark.tflite";
+  constexpr char face_landmark_with_attention_model_path[] =
+      "mediapipe/modules/face_landmark/face_landmark_with_attention.tflite";
+  constexpr bool with_attention = true;
 
   MPFaceMeshDetector *faceMeshDetector = MPFaceMeshDetectorConstruct(
-      maxNumFaces, face_detection_model_path, face_landmark_model_path);
+      maxNumFaces, face_detection_model_path, face_landmark_model_path, with_attention, face_landmark_with_attention_model_path);
 
   // Allocate memory for face landmarks.
   auto multiFaceLandmarks = new cv::Point2f *[maxNumFaces];
@@ -72,6 +75,10 @@ int main(int argc, char **argv) {
                                           &landmarksNum);
       auto &face_landmarks = multiFaceLandmarks[0];
       auto &landmark = face_landmarks[0];
+
+      for (auto i = 0; i < 478; ++i) {
+          cv::circle(camera_frame_raw, face_landmarks[i], 1.2, cv::Scalar(0, 0, 255));
+      }
 
       LOG(INFO) << "First landmark: x - " << landmark.x << ", y - "
                 << landmark.y;

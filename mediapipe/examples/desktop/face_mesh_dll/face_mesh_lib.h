@@ -31,25 +31,32 @@
 
 class MPFaceMeshDetector {
 public:
-  MPFaceMeshDetector(int numFaces, const char *face_detection_model_path,
-                     const char *face_landmark_model_path);
+  MPFaceMeshDetector(int numFaces,
+                     const char *face_detection_model_path,
+                     const char *face_landmark_model_path,
+                     bool with_attention,
+                     const char* face_landmark_model_with_attention_path);
 
   void DetectFaces(const cv::Mat &camera_frame,
                    cv::Rect *multi_face_bounding_boxes, int *numFaces);
-  
+
   void DetectLandmarks(cv::Point2f **multi_face_landmarks, int *numFaces);
   void DetectLandmarks(cv::Point3f **multi_face_landmarks, int *numFaces);
 
-  static constexpr auto kLandmarksNum = 468;
+  static constexpr auto kLandmarksNumWithoutAttention = 468;
+  static constexpr auto kLandmarksNumWithAttention = 478;
+  static int kLandmarksNum;
 
 private:
   absl::Status InitFaceMeshDetector(int numFaces,
                                     const char *face_detection_model_path,
-                                    const char *face_landmark_model_path);
+                                    const char *face_landmark_model_path,
+                                    bool with_attention,
+                                    const char* face_landmark_model_with_attention_path);
   absl::Status DetectFacesWithStatus(const cv::Mat &camera_frame,
                                      cv::Rect *multi_face_bounding_boxes,
                                      int *numFaces);
-  
+
   absl::Status DetectLandmarksWithStatus(cv::Point2f **multi_face_landmarks);
   absl::Status DetectLandmarksWithStatus(cv::Point3f **multi_face_landmarks);
 
@@ -79,8 +86,12 @@ extern "C" {
 #endif
 
 DLLEXPORT MPFaceMeshDetector *
-MPFaceMeshDetectorConstruct(int numFaces, const char *face_detection_model_path,
-                            const char *face_landmark_model_path);
+MPFaceMeshDetectorConstruct(int numFaces,
+    const char *face_detection_model_path,
+    const char *face_landmark_model_path,
+    bool with_attention = true,
+    const char* face_landmark_model_with_attention_path = "mediapipe/modules/face_landmark/face_landmark_with_attention.tflite"
+    );
 
 DLLEXPORT void MPFaceMeshDetectorDestruct(MPFaceMeshDetector *detector);
 
