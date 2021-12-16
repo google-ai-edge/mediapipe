@@ -17,7 +17,7 @@ input_side_packet: "MODEL_COMPLEXITY:model_complexity"
 # this packet so that they don't wait for it unnecessarily.
 output_stream: "DETECTIONS:detections"
 
-# Transforms an image into a 128x128 tensor while keeping the aspect ratio, and
+# Transforms an image into a 192x192 tensor while keeping the aspect ratio, and
 # therefore may result in potential letterboxing.
 node {
   calculator: "ImageToTensorCalculator"
