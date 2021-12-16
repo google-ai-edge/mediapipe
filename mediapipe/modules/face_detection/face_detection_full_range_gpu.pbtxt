@@ -32,7 +32,7 @@ node: {
   output_stream: "IMAGE:multi_backend_image"
 }
 
-# Transforms the input image into a 128x128 tensor while keeping the aspect
+# Transforms the input image into a 192x192 tensor while keeping the aspect
 # ratio (what is expected by the corresponding face detection model), resulting
 # in potential letterboxing in the transformed image.
 node: {
