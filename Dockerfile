@@ -29,6 +29,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         ffmpeg \
         git \
         wget \
+        zip \
         unzip \
         python3-dev \
         python3-opencv \
