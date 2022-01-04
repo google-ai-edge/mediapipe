@@ -4,7 +4,7 @@ The pose_tracking_dll module allows for building a dll library that can be used 
 Currently, the following features are supported:
 - Segmenting the person(s) of interest
 - Segmenting the skeleton(s)
-- Accessing the 3D coordinates of each node of the skeleton by name (using enum)
+- Accessing the 3D coordinates of each node of the skeleton
 
 ## Prerequisites
 Follow the guidelines on the official Mediapipe website: https://google.github.io/mediapipe/getting_started/install.html#installing-on-windows
