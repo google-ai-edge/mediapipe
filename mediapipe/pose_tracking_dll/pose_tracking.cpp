@@ -67,7 +67,7 @@ public:
 
 		// Send image packet into the graph.
 		size_t frameTimestampUs =
-			(double)cv::getTickCount() / (double)cv::getTickFrequency() * 1e6;
+			static_cast<double>(cv::getTickCount()) / static_cast<double>(cv::getTickFrequency()) * 1e6;
 		auto status = graph.AddPacketToInputStream(
 			kInputStream, mediapipe::Adopt(inputFrame.release())
 			.At(mediapipe::Timestamp(frameTimestampUs)));
