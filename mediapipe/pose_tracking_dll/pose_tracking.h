@@ -7,6 +7,8 @@
 #define DLLEXPORT __declspec(dllimport)
 #endif
 
+class PoseTrackingImpl;
+
 namespace nimagna {
     namespace cv_wrapper {
         struct Point2f {
@@ -85,14 +87,14 @@ namespace nimagna {
         };
 
         PoseTracking(const char* calculatorGraphConfigFile);
-        ~PoseTracking() { delete myInstance; }
+        ~PoseTracking() { delete mImplementation; }
 
         bool processFrame(const cv_wrapper::Mat& inputRGB8Bit);
         cv_wrapper::Mat lastSegmentedFrame();
         cv_wrapper::Point3f* lastDetectedLandmarks();
 
     private:
-        void* myInstance;
+        PoseTrackingImpl* mImplementation;
     };
 }
 

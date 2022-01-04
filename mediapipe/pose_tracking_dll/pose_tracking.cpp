@@ -155,23 +155,20 @@ private:
 
 namespace nimagna {
 	PoseTracking::PoseTracking(const char* calculatorGraphConfigFile) {
-		myInstance = new PoseTrackingImpl(calculatorGraphConfigFile);
+		mImplementation = new PoseTrackingImpl(calculatorGraphConfigFile);
 	}
 
 	bool PoseTracking::processFrame(const cv_wrapper::Mat& inputRGB8Bit) {
-		auto* instance = static_cast<PoseTrackingImpl*>(myInstance);
 		const auto frame = cv::Mat(inputRGB8Bit.rows, inputRGB8Bit.cols, CV_8UC3, inputRGB8Bit.data);
-		return instance->processFrame(frame);
+		return mImplementation->processFrame(frame);
 	}
 
 	cv_wrapper::Point3f* PoseTracking::lastDetectedLandmarks() {
-		auto* instance = static_cast<PoseTrackingImpl*>(myInstance);
-		return instance->lastDetectedLandmarks();
+		return mImplementation->lastDetectedLandmarks();
 	}
 
 	cv_wrapper::Mat PoseTracking::lastSegmentedFrame() {
-		auto* instance = static_cast<PoseTrackingImpl*>(myInstance);
-		const cv::Mat result = instance->lastSegmentedFrame();
+		const cv::Mat result = mImplementation->lastSegmentedFrame();
 
 		return cv_wrapper::Mat(result.rows, result.cols, result.data);
 	}
