@@ -22,7 +22,7 @@ windows_dll_library(
     name = "pose_tracking_lib",
     srcs = ["pose_tracking.cpp"],
     hdrs = ["pose_tracking.h"],
-    # Define COMPILING_DLL to export symbols during compiling the DLL.
+    # Define COMPILING_DLL to export symbols during the DLL compilation.
     copts = ["-DCOMPILING_DLL"],
     deps = [
         "//mediapipe/framework:calculator_framework",
