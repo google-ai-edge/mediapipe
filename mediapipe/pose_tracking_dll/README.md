@@ -1,5 +1,5 @@
 ## Description
-The pose_tracking_dll module allows for building a dll library that can be used with any C++ project. All the dependencies such as tensorflow are built statically into the dll. 
+The pose_tracking_dll module allows for building a Mediapipe-based pose tracking DLL library that can be used with any C++ project. All the dependencies such as tensorflow are built statically into the dll. 
 
 Currently, the following features are supported:
 - Segmenting the person(s) of interest
