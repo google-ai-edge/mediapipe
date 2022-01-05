@@ -30,4 +30,4 @@ Link pose_tracking_cpu.lib and pose_tracking_lib.dll.if.lib statically in your p
 
 Make sure the opencv_world3410.dll and pose_tracking_lib.dll are accessible in your working directory.
 
-Use mediapipe\pose_tracking_dll\pose_tracking.h header file to access the methods of the library.
+Use the mediapipe\pose_tracking_dll\pose_tracking.h header file to access the methods of the library.
