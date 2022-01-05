@@ -21,7 +21,7 @@ bazel build -c opt --define MEDIAPIPE_DISABLE_GPU=1 pose_tracking_dll:pose_track
 
 Alternatively `dbg` can be used in place of `opt` to build the library with debug symbols in Visual Studio pdb format.
 
-The results will be stored in bazel-bin\mediapipe\pose_tracking_dll folder.
+The results will be stored in the bazel-bin\mediapipe\pose_tracking_dll folder.
 
 ## How to use
 Go to bazel-bin\mediapipe\pose_tracking_dll
