@@ -14,9 +14,10 @@ IMPORTANT: The tutorial does not specify which version of Bazel to install. Inst
 ## How to build
 Assuming you're in the root of the repository:
 
-`cd mediapipe`
-
-`bazel build -c opt --define MEDIAPIPE_DISABLE_GPU=1 pose_tracking_dll:pose_tracking_cpu`
+```
+cd mediapipe
+bazel build -c opt --define MEDIAPIPE_DISABLE_GPU=1 pose_tracking_dll:pose_tracking_cpu
+```
 
 Alternatively `dbg` can be used in place of `opt` to build the library with debug symbols in Visual Studio pdb format.
 
