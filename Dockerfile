@@ -66,6 +66,33 @@ azel-${BAZEL_VERSION}-installer-linux-x86_64.sh" && \
     rm -f /bazel/installer.sh
 
 COPY . /mediapipe/
+WORKDIR /mediapipe/
 
+RUN mkdir /tmp/mediapipe
+WORKDIR /tmp/mediapipe
+RUN curl -O http://data.yt8m.org/pca_matrix_data/inception3_mean_matrix_data.pb
+RUN curl -O http://data.yt8m.org/pca_matrix_data/inception3_projection_matrix_data.pb
+RUN curl -O http://data.yt8m.org/pca_matrix_data/vggish_mean_matrix_data.pb
+RUN curl -O http://data.yt8m.org/pca_matrix_data/vggish_projection_matrix_data.pb
+RUN curl -O http://download.tensorflow.org/models/image/imagenet/inception-2015-12-05.tgz
+RUN tar -xvf /tmp/mediapipe/inception-2015-12-05.tgz
+
+WORKDIR /mediapipe/
+RUN python -m mediapipe.examples.desktop.youtube8m.generate_vggish_frozen_graph
+
+RUN bazel build -c opt --linkopt=-s \
+  --define MEDIAPIPE_DISABLE_GPU=1 --define no_aws_support=true \
+  mediapipe/examples/desktop/youtube8m:extract_yt8m_features
+
+RUN curl -o /tmp/mediapipe/yt8m_baseline_saved_model.tar.gz http://data.yt8m.org/models/baseline/saved_model.tar.gz
+
+RUN tar -xvf /tmp/mediapipe/yt8m_baseline_saved_model.tar.gz -C /tmp/mediapipe
+
+RUN bazel build -c opt --define='MEDIAPIPE_DISABLE_GPU=1' --linkopt=-s \
+  mediapipe/examples/desktop/youtube8m:model_inference
+
+
+RUN apt-get update
+RUN apt-get install nano
 # If we want the docker image to contain the pre-built object_detection_offline_demo binary, do the following
 # RUN bazel build -c opt --define MEDIAPIPE_DISABLE_GPU=1 mediapipe/examples/desktop/demo:object_detection_tensorflow_demo
