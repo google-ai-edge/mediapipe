@@ -84,7 +84,7 @@ The results will be stored in the `bazel-bin\mediapipe\pose_tracking_dll` folder
 
 - If bazel fails to download packages, run `bazel clean --expunge` and try again.
 - If bazel fails with an `fatal error C1083: Cannot open compiler generated file: '': Invalid argument`, your [path is too long](https://stackoverflow.com/questions/34074925/vs-2015-cannot-open-compiler-generated-file-invalid-argument). Actually, it is most probably the username... 
-  - Adapt the call to `bazel --output_base=E:\nim_output build build -c opt --define MEDIAPIPE_DISABLE_GPU=1 --action_env PYTHON_BIN_PATH=PYTHONDIR/python.exe pose_tracking_dll:pose_tracking_cpu` where `E:\nim_output build` can be replaced with some short path where bazel will store the packages and perform the build.
+  - Adapt the call to `bazel --output_base=E:\nim_output build -c opt --define MEDIAPIPE_DISABLE_GPU=1 --action_env PYTHON_BIN_PATH=PYTHONDIR/python.exe pose_tracking_dll:pose_tracking_cpu` where `E:\nim_output build` can be replaced with some short path where bazel will store the packages and perform the build.
 
 ## How to use
 
