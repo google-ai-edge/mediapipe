@@ -63,10 +63,9 @@ Install Mediapipe development environment as follows.
   )
   ```
 
-#### Installation/build issue handling
+#### Installation issue handling
 
 - If you are using a **different OpenCV version**, adapt the `OPENCV_VERSION` variable in the file `mediapipe/external/opencv_<platform>.BUILD` to the one installed in the system (https://github.com/google/mediapipe/issues/1926#issuecomment-825874197).
-- If bazel fails to download packages, run `bazel clean --expunge` and try again.
 
 ## How to build
 Assuming you're in `MEDIAPIPEDIR`, the root of the repository, run the following commands by replacing `PYTHONDIR` using forward slashes "/" in the path:
@@ -78,8 +77,14 @@ bazel build -c opt --define MEDIAPIPE_DISABLE_GPU=1 --action_env PYTHON_BIN_PATH
 
 The results will be stored in the `bazel-bin\mediapipe\pose_tracking_dll` folder.
 
-**Build debug symbols** 
+### Build debug symbols
 - `dbg` can be used in place of `opt` to build the library with debug symbols in Visual Studio pdb format.
+
+### Build issue handling
+
+- If bazel fails to download packages, run `bazel clean --expunge` and try again.
+- If bazel fails with an `fatal error C1083: Cannot open compiler generated file: '': Invalid argument`, your [path is too long](https://stackoverflow.com/questions/34074925/vs-2015-cannot-open-compiler-generated-file-invalid-argument). Actually, it is most probably the username... 
+  - Adapt the call to `bazel --output_base=E:\nim_output build build -c opt --define MEDIAPIPE_DISABLE_GPU=1 --action_env PYTHON_BIN_PATH=PYTHONDIR/python.exe pose_tracking_dll:pose_tracking_cpu` where `E:\nim_output build` can be replaced with some short path where bazel will store the packages and perform the build.
 
 ## How to use
 
