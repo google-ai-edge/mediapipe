@@ -63,9 +63,10 @@ Install Mediapipe development environment as follows.
   )
   ```
 
-#### OpenCV side note
+#### Installation/build issue handling
 
-If you are using a different OpenCV version, adapt the `OPENCV_VERSION` variable in the file `mediapipe/external/opencv_<platform>.BUILD` to the one installed in the system (https://github.com/google/mediapipe/issues/1926#issuecomment-825874197).
+- If you are using a **different OpenCV version**, adapt the `OPENCV_VERSION` variable in the file `mediapipe/external/opencv_<platform>.BUILD` to the one installed in the system (https://github.com/google/mediapipe/issues/1926#issuecomment-825874197).
+- If bazel fails to download packages, run `bazel clean --expunge` and try again.
 
 ## How to build
 Assuming you're in `MEDIAPIPEDIR`, the root of the repository, run the following commands by replacing `PYTHONDIR` using forward slashes "/" in the path:
