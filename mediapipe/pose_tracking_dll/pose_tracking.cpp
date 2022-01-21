@@ -50,21 +50,17 @@ class PoseTrackingImpl {
 
     MP_RETURN_IF_ERROR(graph.Initialize(config));
     ASSIGN_OR_RETURN(mediapipe::OutputStreamPoller poller,
-                     graph.AddOutputStreamPoller(kOutputSegmentationStream));
+                     graph.AddOutputStreamPoller(kOutputSegmentationStream, true));
 
     ASSIGN_OR_RETURN(mediapipe::OutputStreamPoller landmarksPoller,
-                     graph.AddOutputStreamPoller(kOutpuLandmarksStream));
+                     graph.AddOutputStreamPoller(kOutpuLandmarksStream, true));
 
-    ASSIGN_OR_RETURN(mediapipe::OutputStreamPoller posePresencePoller,
-                     graph.AddOutputStreamPoller(kOutpuPosePresenceStream));
 
     maskPollerPtr = std::make_unique<mediapipe::OutputStreamPoller>(std::move(poller));
 
     landmarksPollerPtr =
         std::make_unique<mediapipe::OutputStreamPoller>(std::move(landmarksPoller));
 
-    posePresencePollerPtr =
-        std::make_unique<mediapipe::OutputStreamPoller>(std::move(posePresencePoller));
 
     MP_RETURN_IF_ERROR(graph.StartRun({}));
   }
@@ -89,17 +85,9 @@ class PoseTrackingImpl {
       return false;
     }
 
-    mediapipe::Packet posePresencePacket;
-    if (!posePresencePollerPtr || !posePresencePollerPtr->Next(&posePresencePacket)) return false;
-    auto landmarksDetected = posePresencePacket.Get<bool>();
-
-    if (!landmarksDetected) {
-      return false;
-    }
-
     // Get the graph result packet, or stop if that fails.
     mediapipe::Packet maskPacket;
-    if (!maskPollerPtr || !maskPollerPtr->Next(&maskPacket)) return false;
+    if (!maskPollerPtr || !maskPollerPtr->Next(&maskPacket) || maskPacket.IsEmpty()) return false;
     auto& outputFrame = maskPacket.Get<mediapipe::ImageFrame>();
 
     // Get pose landmarks.
@@ -146,14 +134,12 @@ class PoseTrackingImpl {
   mediapipe::Packet poseLandmarksPacket;
   cv::Mat segmentedMask;
   nimagna::cv_wrapper::Point3f poseLandmarks[kLandmarksCount];
-  std::unique_ptr<mediapipe::OutputStreamPoller> posePresencePollerPtr;
   std::unique_ptr<mediapipe::OutputStreamPoller> maskPollerPtr;
   std::unique_ptr<mediapipe::OutputStreamPoller> landmarksPollerPtr;
   mediapipe::CalculatorGraph graph;
   const char* kInputStream = "input_video";
   const char* kOutputSegmentationStream = "segmentation_mask";
   const char* kOutpuLandmarksStream = "pose_landmarks";
-  const char* kOutpuPosePresenceStream = "pose_presence";
 };
 
 namespace nimagna {
