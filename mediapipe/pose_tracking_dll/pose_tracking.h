@@ -103,7 +103,7 @@ class DLLEXPORT PoseTracking {
   };
 
   PoseTracking(const char* calculatorGraphConfigFile);
-  ~PoseTracking() { delete mImplementation; }
+  ~PoseTracking();
 
   bool processFrame(const cv_wrapper::Mat& inputRGB8Bit);
   cv_wrapper::Mat lastSegmentedFrame();

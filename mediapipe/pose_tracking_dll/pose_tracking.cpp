@@ -36,9 +36,6 @@ class PoseTrackingImpl {
  public:
   PoseTrackingImpl(const std::string& calculatorGraphConfigFile) {
     auto status = initialize(calculatorGraphConfigFile);
-    if (!status.ok()) {
-      LOG(WARNING) << "Warning: " << status;
-    }
   }
 
   absl::Status initialize(const std::string& calculatorGraphConfigFile) {
@@ -160,6 +157,11 @@ cv_wrapper::Mat PoseTracking::lastSegmentedFrame() {
   const cv::Mat result = mImplementation->lastSegmentedFrame();
 
   return cv_wrapper::Mat(result.rows, result.cols, result.data);
+}
+
+PoseTracking::~PoseTracking()
+{
+	delete mImplementation;
 }
 
 }  // namespace nimagna
