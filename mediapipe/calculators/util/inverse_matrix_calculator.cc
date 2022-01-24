@@ -35,6 +35,15 @@ class InverseMatrixCalculatorImpl : public NodeImpl<InverseMatrixCalculator> {
     Eigen::Matrix<float, 4, 4, Eigen::RowMajor> inverse_matrix;
     bool inverse_check;
     matrix.computeInverseWithCheck(inverse_matrix, inverse_check);
+
+    if (!inverse_check){
+      std::array<float, 16> output = {1.0f, 0.0f, 0.0f, 0.0f,
+                                      0.0f, 1.0f, 0.0f, 0.0f,
+                                      0.0f, 0.0f, 1.0f, 0.0f,
+                                      0.0f, 0.0f, 0.0f, 1.0f} ;
+      kOutputMatrix(cc).Send(std::move(output));
+      return absl::OkStatus();
+    }
     RET_CHECK(inverse_check) << "Inverse matrix cannot be calculated.";
 
     std::array<float, 16> output;
