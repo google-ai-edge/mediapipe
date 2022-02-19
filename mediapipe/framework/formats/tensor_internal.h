@@ -1,3 +1,17 @@
+// Copyright 2021 The MediaPipe Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 #ifndef MEDIAPIPE_FRAMEWORK_FORMATS_TENSOR_INTERNAL_H_
 #define MEDIAPIPE_FRAMEWORK_FORMATS_TENSOR_INTERNAL_H_
 
@@ -6,7 +20,7 @@
 namespace mediapipe {
 
 // Generates unique view id at compile-time using FILE and LINE.
-#define TENSOR_UNIQUE_VIEW_ID()                               \
+#define TENSOR_UNIQUE_VIEW_TYPE_ID()                          \
   static constexpr uint64_t kId = tensor_internal::FnvHash64( \
       __FILE__, tensor_internal::FnvHash64(TENSOR_INT_TO_STRING(__LINE__)))
 

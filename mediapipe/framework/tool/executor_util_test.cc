@@ -14,7 +14,6 @@
 
 #include "mediapipe/framework/tool/executor_util.h"
 
-#include "mediapipe/framework/deps/message_matchers.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/framework/port/parse_text_proto.h"

@@ -27,6 +27,7 @@
 
 #include "absl/algorithm/container.h"
 #include "absl/flags/flag.h"
+#include "absl/strings/match.h"
 #include "absl/strings/numbers.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/substitute.h"
@@ -45,8 +46,7 @@ namespace {
 constexpr uint32 kBufferLength = 64;
 
 absl::StatusOr<std::string> GetFilePath(int cpu) {
-  if (absl::GetFlag(FLAGS_system_cpu_max_freq_file).find("$0") ==
-      std::string::npos) {
+  if (!absl::StrContains(absl::GetFlag(FLAGS_system_cpu_max_freq_file), "$0")) {
     return absl::InvalidArgumentError(
         absl::StrCat("Invalid frequency file: ",
                      absl::GetFlag(FLAGS_system_cpu_max_freq_file)));

@@ -121,6 +121,7 @@ pybind_library(
         "//mediapipe/framework/formats:image",
         "//mediapipe/framework/formats:matrix",
         "//mediapipe/framework/port:integral_types",
+        "@com_google_absl//absl/status:statusor",
     ],
 )
 

@@ -56,7 +56,7 @@ absl::Status GetTagAndNameInfo(
     }
     info->names.push_back(name);
   }
-  if (info->tags.size() > 0 && info->names.size() != info->tags.size()) {
+  if (!info->tags.empty() && info->names.size() != info->tags.size()) {
     info->tags.clear();
     info->names.clear();
     return absl::InvalidArgumentError(absl::StrCat(

@@ -39,8 +39,6 @@
 
 namespace mediapipe {
 
-using ::tflite::Interpreter;
-
 void DoSmokeTest(const std::string& graph_proto) {
   const int width = 8;
   const int height = 8;

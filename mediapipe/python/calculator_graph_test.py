@@ -211,6 +211,33 @@ class GraphTest(absltest.TestCase):
     self.assertEqual(
         mp.packet_getter.get_uint(graph.get_output_side_packet('number')), 42)
 
+  def test_sequence_input(self):
+    text_config = """
+      max_queue_size: 1
+      input_stream: 'in'
+      output_stream: 'out'
+      node {
+        calculator: 'PassThroughCalculator'
+        input_stream: 'in'
+        output_stream: 'out'
+      }
+    """
+    hello_world_packet = mp.packet_creator.create_string('hello world')
+    out = []
+    graph = mp.CalculatorGraph(graph_config=text_config)
+    graph.observe_output_stream('out', lambda _, packet: out.append(packet))
+    graph.start_run()
+
+    sequence_size = 1000
+    for i in range(sequence_size):
+      graph.add_packet_to_input_stream(
+          stream='in', packet=hello_world_packet, timestamp=i)
+    graph.wait_until_idle()
+    self.assertLen(out, sequence_size)
+    for i in range(sequence_size):
+      self.assertEqual(out[i].timestamp, i)
+      self.assertEqual(mp.packet_getter.get_str(out[i]), 'hello world')
+
 
 if __name__ == '__main__':
   absltest.main()

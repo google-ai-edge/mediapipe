@@ -569,7 +569,7 @@ next section.
 
     Option 1. Follow
     [the official Bazel documentation](https://docs.bazel.build/versions/master/install-windows.html)
-    to install Bazel 3.7.2 or higher.
+    to install Bazel 4.2.1 or higher.
 
     Option 2. Follow the official
     [Bazel documentation](https://docs.bazel.build/versions/master/install-bazelisk.html)
@@ -657,7 +657,7 @@ cameras. Alternatively, you use a video file as input.
 
     Note: Windows' and WSL’s adb versions must be the same version, e.g., if WSL
     has ADB 1.0.39, you need to download the corresponding Windows ADB from
-    [here](https://dl.google.com/android/repository/platform-tools_r26.0.1-windows.zip).
+    [here](https://dl.google.com/android/repository/platform-tools_r30.0.3-windows.zip).
 
 3.  Launch WSL.
 
@@ -796,7 +796,7 @@ This will use a Docker image that will isolate mediapipe's installation from the
     ```bash
     $ docker run -it --name mediapipe mediapipe:latest
 
-    root@bca08b91ff63:/mediapipe# GLOG_logtostderr=1 bazelisk run --define MEDIAPIPE_DISABLE_GPU=1 mediapipe/examples/desktop/hello_world:hello_world
+    root@bca08b91ff63:/mediapipe# GLOG_logtostderr=1 bazel run --define MEDIAPIPE_DISABLE_GPU=1 mediapipe/examples/desktop/hello_world
 
     # Should print:
     # Hello World!

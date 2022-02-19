@@ -21,7 +21,6 @@
 #include "mediapipe/framework/port/ret_check.h"
 
 namespace mediapipe {
-
 using SyncSet = InputStreamHandler::SyncSet;
 
 absl::Status InputStreamHandler::InitializeInputStreamManagers(

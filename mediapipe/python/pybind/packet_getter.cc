@@ -14,6 +14,7 @@
 
 #include "mediapipe/python/pybind/packet_getter.h"
 
+#include "absl/status/statusor.h"
 #include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/formats/matrix.h"
 #include "mediapipe/framework/packet.h"

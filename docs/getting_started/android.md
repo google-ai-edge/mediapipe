@@ -29,8 +29,8 @@ APIs (currently in alpha) that are now available in
 
 *   Install MediaPipe following these [instructions](./install.md).
 *   Setup Java Runtime.
-*   Setup Android SDK release 28.0.3 and above.
-*   Setup Android NDK version between 18 and 21.
+*   Setup Android SDK release 30.0.0 and above.
+*   Setup Android NDK version 18 and above.
 
 MediaPipe recommends setting up Android SDK and NDK via Android Studio (and see
 below for Android Studio setup). However, if you prefer using MediaPipe without
@@ -45,6 +45,15 @@ $ANDROID_HOME and $ANDROID_NDK_HOME to point to the installed SDK and NDK.
 ```bash
 export ANDROID_HOME=<path to the Android SDK>
 export ANDROID_NDK_HOME=<path to the Android NDK>
+```
+
+and add android_ndk_repository() and android_sdk_repository() rules into the
+[`WORKSPACE`](https://github.com/google/mediapipe/blob/master/WORKSPACE) file as
+the following:
+
+```bash
+$ echo "android_sdk_repository(name = \"androidsdk\")" >> WORKSPACE
+$ echo "android_ndk_repository(name = \"androidndk\")" >> WORKSPACE
 ```
 
 In order to use MediaPipe on earlier Android versions, MediaPipe needs to switch

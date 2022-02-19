@@ -234,7 +234,6 @@ cc_test(
         "//mediapipe/framework:calculator_profile_cc_proto",
         "//mediapipe/framework:test_calculators",
         "//mediapipe/framework/deps:clock",
-        "//mediapipe/framework/deps:message_matchers",
         "//mediapipe/framework/port:advanced_proto",
         "//mediapipe/framework/port:file_helpers",
         "//mediapipe/framework/port:gtest_main",

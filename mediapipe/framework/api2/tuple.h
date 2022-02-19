@@ -18,11 +18,10 @@ template <class Tuple>
 using tuple_index_sequence =
     std::make_index_sequence<std::tuple_size_v<std::decay_t<Tuple>>>;
 
-// Concatenates two std::index_sequences.
-template <std::size_t... I, std::size_t... J>
-constexpr auto index_sequence_cat(std::index_sequence<I...>,
-                                  std::index_sequence<J...>)
-    -> std::index_sequence<I..., J...> {
+// Concatenates multiple std::index_sequences.
+template <std::size_t... I>
+constexpr auto index_sequence_cat(std::index_sequence<I...>)
+    -> std::index_sequence<I...> {
   return {};
 }
 

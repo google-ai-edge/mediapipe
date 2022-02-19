@@ -87,10 +87,11 @@ cc_library(
     name = "message_matchers",
     testonly = True,
     hdrs = ["message_matchers.h"],
-    visibility = ["//visibility:public"],
+    # Use this library through "mediapipe/framework/port:gtest_main".
+    visibility = ["//mediapipe/framework/port:__pkg__"],
     deps = [
         "//mediapipe/framework/port:core_proto",
-        "//mediapipe/framework/port:gtest_main",
+        "@com_google_googletest//:gtest",
     ],
 )
 

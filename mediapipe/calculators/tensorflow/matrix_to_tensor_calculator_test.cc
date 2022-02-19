@@ -26,7 +26,6 @@
 #include "tensorflow/core/framework/types.h"
 
 namespace mediapipe {
-
 namespace {
 
 constexpr char kTransposeOptionsString[] =

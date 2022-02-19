@@ -33,9 +33,17 @@ class InverseMatrixCalculatorImpl : public NodeImpl<InverseMatrixCalculator> {
         kInputMatrix(cc).Get().data());
 
     Eigen::Matrix<float, 4, 4, Eigen::RowMajor> inverse_matrix;
-    bool inverse_check;
-    matrix.computeInverseWithCheck(inverse_matrix, inverse_check);
-    RET_CHECK(inverse_check) << "Inverse matrix cannot be calculated.";
+    bool inverse_check = false;
+    // The matrix is invertible if the absolute value of its determinant is
+    // greater than this threshold. Quite small threshold is selected to enable
+    // inverting valid matrices containing relatively small values resulting in
+    // a small determinant.
+    constexpr double kAbsDeterminantThreshold =
+        Eigen::NumTraits<double>::epsilon();
+    matrix.computeInverseWithCheck(inverse_matrix, inverse_check,
+                                   kAbsDeterminantThreshold);
+    RET_CHECK(inverse_check)
+        << "Inverse matrix cannot be calculated for: " << matrix;
 
     std::array<float, 16> output;
     Eigen::Map<Eigen::Matrix<float, 4, 4, Eigen::RowMajor>>(

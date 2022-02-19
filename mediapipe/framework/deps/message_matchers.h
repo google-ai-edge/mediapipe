@@ -17,8 +17,8 @@
 
 #include <memory>
 
+#include "gmock/gmock.h"
 #include "mediapipe/framework/port/core_proto_inc.h"
-#include "mediapipe/framework/port/gmock.h"
 
 namespace mediapipe {
 

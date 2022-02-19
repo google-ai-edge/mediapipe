@@ -21,7 +21,7 @@ namespace mediapipe {
 namespace {
 
 // List of namespaces that can register calculators inside the namespace
-// and still refer to them using an unqualified name.  This whitelist
+// and still refer to them using an unqualified name.  This allowlist
 // is meant to facilitate migration from unqualified to fully qualified
 // calculator names.
 constexpr char const* kTopNamespaces[] = {
@@ -36,7 +36,7 @@ inline size_t array_size(T (&arr)[SIZE]) {
 }  // namespace
 
 /*static*/
-const absl::flat_hash_set<std::string>& NamespaceWhitelist::TopNamespaces() {
+const absl::flat_hash_set<std::string>& NamespaceAllowlist::TopNamespaces() {
   static absl::flat_hash_set<std::string>* result =
       new absl::flat_hash_set<std::string>(
           kTopNamespaces, kTopNamespaces + array_size(kTopNamespaces));

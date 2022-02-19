@@ -24,6 +24,7 @@
 
 #include "absl/base/macros.h"
 #include "absl/strings/str_split.h"
+#include "absl/strings/string_view.h"
 #include "mediapipe/framework/collection.h"
 #include "mediapipe/framework/packet.h"
 #include "mediapipe/framework/packet_set.h"
@@ -133,7 +134,7 @@ class PacketTypeSetErrorHandler {
   // Returns a usable PacketType.  A different PacketType object is
   // returned for each different invalid location and the same object
   // is returned for multiple accesses to the same invalid location.
-  PacketType& GetFallback(const std::string& tag, int index) {
+  PacketType& GetFallback(const absl::string_view tag, int index) {
     if (!missing_) {
       missing_ = absl::make_unique<Missing>();
     }
@@ -143,7 +144,7 @@ class PacketTypeSetErrorHandler {
   }
 
   // In the const setting produce a FATAL error.
-  const PacketType& GetFallback(const std::string& tag, int index) const {
+  const PacketType& GetFallback(const absl::string_view tag, int index) const {
     LOG(FATAL) << "Failed to get tag \"" << tag << "\" index " << index
                << ".  Unable to defer error due to const specifier.";
     std::abort();

@@ -82,7 +82,7 @@ class InputStreamHandler {
   // flat_input_stream_managers is expected to point to a contiguous
   // flat array with InputStreamManagers corresponding to the id's in
   // InputStreamHandler::input_stream_managers_ (meaning it should point
-  // to somewhere in the middle of the master flat array of all input
+  // to somewhere in the middle of the main flat array of all input
   // stream managers).
   absl::Status InitializeInputStreamManagers(
       InputStreamManager* flat_input_stream_managers);

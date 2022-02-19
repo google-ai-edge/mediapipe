@@ -363,13 +363,8 @@ class HolderBase {
   HolderBase& operator=(const HolderBase&) = delete;
   virtual ~HolderBase();
   template <typename T>
-  void SetHolderTypeId() {
-    type_id_ = tool::GetTypeHash<T>();
-  }
-  size_t GetHolderTypeId() const { return type_id_; }
-  template <typename T>
-  bool HolderIsOfType() const {
-    return type_id_ == tool::GetTypeHash<T>();
+  bool PayloadIsOfType() const {
+    return GetTypeId() == tool::GetTypeHash<T>();
   }
   // Returns a printable std::string identifying the type stored in the holder.
   virtual const std::string DebugTypeName() const = 0;
@@ -397,8 +392,7 @@ class HolderBase {
   virtual StatusOr<std::vector<const proto_ns::MessageLite*>>
   GetVectorOfProtoMessageLite() const = 0;
 
- private:
-  size_t type_id_;
+  virtual bool HasForeignOwner() const { return false; }
 };
 
 // Two helper functions to get the proto base pointers.
@@ -505,7 +499,6 @@ class Holder : public HolderBase {
  public:
   explicit Holder(const T* ptr) : ptr_(ptr) {
     HolderSupport<T>::EnsureStaticInit();
-    SetHolderTypeId<Holder>();
   }
   ~Holder() override { delete_helper(); }
   const T& data() const {
@@ -521,9 +514,7 @@ class Holder : public HolderBase {
   absl::StatusOr<std::unique_ptr<T>> Release(
       typename std::enable_if<!std::is_array<U>::value ||
                               std::extent<U>::value != 0>::type* = 0) {
-    // Since C++ doesn't allow virtual, templated functions, check holder
-    // type here to make sure it's not upcasted from a ForeignHolder.
-    if (!HolderIsOfType<Holder<T>>()) {
+    if (HasForeignOwner()) {
       return InternalError(
           "Foreign holder can't release data ptr without ownership.");
     }
@@ -592,25 +583,19 @@ class Holder : public HolderBase {
 template <typename T>
 class ForeignHolder : public Holder<T> {
  public:
-  explicit ForeignHolder(const T* ptr) : Holder<T>(ptr) {
-    // Distinguishes between Holder and ForeignHolder since Consume() treats
-    // them differently.
-    this->template SetHolderTypeId<ForeignHolder>();
-  }
+  using Holder<T>::Holder;
   ~ForeignHolder() override {
     // Null out ptr_ so it doesn't get deleted by ~Holder.
+    // Note that ~Holder cannot call HasForeignOwner because the subclass's
+    // destructor runs first.
     this->ptr_ = nullptr;
   }
-  // Foreign holder can't release data pointer without ownership.
-  absl::StatusOr<std::unique_ptr<T>> Release() {
-    return absl::InternalError(
-        "Foreign holder can't release data ptr without ownership.");
-  }
+  bool HasForeignOwner() const final { return true; }
 };
 
 template <typename T>
 Holder<T>* HolderBase::As() {
-  if (HolderIsOfType<Holder<T>>() || HolderIsOfType<ForeignHolder<T>>()) {
+  if (PayloadIsOfType<T>()) {
     return static_cast<Holder<T>*>(this);
   }
   // Does not hold a T.
@@ -619,7 +604,7 @@ Holder<T>* HolderBase::As() {
 
 template <typename T>
 const Holder<T>* HolderBase::As() const {
-  if (HolderIsOfType<Holder<T>>() || HolderIsOfType<ForeignHolder<T>>()) {
+  if (PayloadIsOfType<T>()) {
     return static_cast<const Holder<T>*>(this);
   }
   // Does not hold a T.
@@ -648,7 +633,7 @@ inline absl::StatusOr<std::unique_ptr<T>> Packet::Consume() {
   MP_RETURN_IF_ERROR(ValidateAsType<T>());
   // Clients who use this function are responsible for ensuring that no
   // other thread is doing anything with this Packet.
-  if (holder_.unique()) {
+  if (!holder_->HasForeignOwner() && holder_.unique()) {
     VLOG(2) << "Consuming the data of " << DebugString();
     absl::StatusOr<std::unique_ptr<T>> release_result =
         holder_->As<T>()->Release();
@@ -670,8 +655,7 @@ inline absl::StatusOr<std::unique_ptr<T>> Packet::ConsumeOrCopy(
     typename std::enable_if<!std::is_array<T>::value>::type*) {
   MP_RETURN_IF_ERROR(ValidateAsType<T>());
   // If holder is the sole owner of the underlying data, consumes this packet.
-  if (!holder_->HolderIsOfType<packet_internal::ForeignHolder<T>>() &&
-      holder_.unique()) {
+  if (!holder_->HasForeignOwner() && holder_.unique()) {
     VLOG(2) << "Consuming the data of " << DebugString();
     absl::StatusOr<std::unique_ptr<T>> release_result =
         holder_->As<T>()->Release();
@@ -701,8 +685,7 @@ inline absl::StatusOr<std::unique_ptr<T>> Packet::ConsumeOrCopy(
                             std::extent<T>::value != 0>::type*) {
   MP_RETURN_IF_ERROR(ValidateAsType<T>());
   // If holder is the sole owner of the underlying data, consumes this packet.
-  if (!holder_->HolderIsOfType<packet_internal::ForeignHolder<T>>() &&
-      holder_.unique()) {
+  if (!holder_->HasForeignOwner() && holder_.unique()) {
     VLOG(2) << "Consuming the data of " << DebugString();
     absl::StatusOr<std::unique_ptr<T>> release_result =
         holder_->As<T>()->Release();

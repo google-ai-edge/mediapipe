@@ -501,7 +501,7 @@ bool BoxTracker::GetTimedPosition(int id, int64 time_msec, TimedBox* result,
 
   absl::MutexLock lock(&path_mutex_);
   const Path& path = paths_[id];
-  if (path.size() < 1) {
+  if (path.empty()) {
     LOG(ERROR) << "Empty path!";
     return false;
   }

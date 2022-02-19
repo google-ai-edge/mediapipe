@@ -21,7 +21,6 @@
 #include <vector>
 
 #include "absl/strings/str_cat.h"
-#include "mediapipe/framework/deps/message_matchers.h"
 #include "mediapipe/framework/packet_test.pb.h"
 #include "mediapipe/framework/port/core_proto_inc.h"
 #include "mediapipe/framework/port/gmock.h"
@@ -374,9 +373,9 @@ TEST(PacketTest, TestConsumeForeignHolder) {
   Packet packet = PointToForeign(data.get());
   absl::StatusOr<std::unique_ptr<int>> result = packet.Consume<int>();
   EXPECT_FALSE(result.ok());
-  EXPECT_EQ(result.status().code(), absl::StatusCode::kInternal);
+  EXPECT_EQ(result.status().code(), absl::StatusCode::kFailedPrecondition);
   EXPECT_EQ(result.status().message(),
-            "Foreign holder can't release data ptr without ownership.");
+            "Packet isn't the sole owner of the holder.");
   ASSERT_FALSE(packet.IsEmpty());
   EXPECT_EQ(33, packet.Get<int>());
 }

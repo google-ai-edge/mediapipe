@@ -14,6 +14,7 @@
 
 """Tests for mediapipe.python.solutions.hands."""
 
+import json
 import os
 import tempfile  # pylint: disable=unused-import
 from typing import NamedTuple
@@ -51,6 +52,21 @@ EXPECTED_HAND_COORDINATES_PREDICTION = [[[580, 34], [504, 50], [459, 94],
 
 
 class HandsTest(parameterized.TestCase):
+
+  def _get_output_path(self, name):
+    return os.path.join(tempfile.gettempdir(), self.id().split('.')[-1] + name)
+
+  def _landmarks_list_to_array(self, landmark_list, image_shape):
+    rows, cols, _ = image_shape
+    return np.asarray([(lmk.x * cols, lmk.y * rows, lmk.z * cols)
+                       for lmk in landmark_list.landmark])
+
+  def _world_landmarks_list_to_array(self, landmark_list):
+    return np.asarray([(lmk.x, lmk.y, lmk.z)
+                       for lmk in landmark_list.landmark])
+
+  def _assert_diff_less(self, array1, array2, threshold):
+    npt.assert_array_less(np.abs(array1 - array2), threshold)
 
   def _annotate(self, frame: np.ndarray, results: NamedTuple, idx: int):
     for hand_landmarks in results.multi_hand_landmarks:
@@ -111,6 +127,91 @@ class HandsTest(parameterized.TestCase):
             np.asarray(EXPECTED_HAND_COORDINATES_PREDICTION))
         diff_threshold = LITE_MODEL_DIFF_THRESHOLD if model_complexity == 0 else FULL_MODEL_DIFF_THRESHOLD
         npt.assert_array_less(prediction_error, diff_threshold)
+
+  def _process_video(self, model_complexity, video_path,
+                     max_num_hands=1,
+                     num_landmarks=21,
+                     num_dimensions=3):
+    # Predict pose landmarks for each frame.
+    video_cap = cv2.VideoCapture(video_path)
+    landmarks_per_frame = []
+    w_landmarks_per_frame = []
+    with mp_hands.Hands(
+        static_image_mode=False,
+        max_num_hands=max_num_hands,
+        model_complexity=model_complexity,
+        min_detection_confidence=0.5) as hands:
+      while True:
+        # Get next frame of the video.
+        success, input_frame = video_cap.read()
+        if not success:
+          break
+
+        # Run pose tracker.
+        input_frame = cv2.cvtColor(input_frame, cv2.COLOR_BGR2RGB)
+        frame_shape = input_frame.shape
+        result = hands.process(image=input_frame)
+        frame_landmarks = np.zeros([max_num_hands,
+                                    num_landmarks, num_dimensions]) * np.nan
+        frame_w_landmarks = np.zeros([max_num_hands,
+                                      num_landmarks, num_dimensions]) * np.nan
+
+        if result.multi_hand_landmarks:
+          for idx, landmarks in enumerate(result.multi_hand_landmarks):
+            landmarks = self._landmarks_list_to_array(landmarks, frame_shape)
+            frame_landmarks[idx] = landmarks
+        if result.multi_hand_world_landmarks:
+          for idx, w_landmarks in enumerate(result.multi_hand_world_landmarks):
+            w_landmarks = self._world_landmarks_list_to_array(w_landmarks)
+            frame_w_landmarks[idx] = w_landmarks
+
+        landmarks_per_frame.append(frame_landmarks)
+        w_landmarks_per_frame.append(frame_w_landmarks)
+    return (np.array(landmarks_per_frame), np.array(w_landmarks_per_frame))
+
+  @parameterized.named_parameters(
+      ('full', 1, 'asl_hand.full.npz'))
+  def test_on_video(self, model_complexity, expected_name):
+    """Tests hand models on a video."""
+
+    # Set threshold for comparing actual and expected predictions in pixels.
+    diff_threshold = 18
+    world_diff_threshold = 0.05
+
+    video_path = os.path.join(os.path.dirname(__file__),
+                              'testdata/asl_hand.25fps.mp4')
+    expected_path = os.path.join(os.path.dirname(__file__),
+                                 'testdata/{}'.format(expected_name))
+    actual, actual_world = self._process_video(model_complexity, video_path)
+
+    # Dump actual .npz.
+    npz_path = self._get_output_path(expected_name)
+    np.savez(npz_path, predictions=actual, w_predictions=actual_world)
+
+    # Dump actual JSON.
+    json_path = self._get_output_path(expected_name.replace('.npz', '.json'))
+    with open(json_path, 'w') as fl:
+      dump_data = {
+          'predictions': np.around(actual, 3).tolist(),
+          'predictions_world': np.around(actual_world, 3).tolist()
+      }
+      fl.write(json.dumps(dump_data, indent=2, separators=(',', ': ')))
+
+    # Validate actual vs. expected landmarks.
+    expected = np.load(expected_path)['predictions']
+    assert actual.shape == expected.shape, (
+        'Unexpected shape of predictions: {} instead of {}'.format(
+            actual.shape, expected.shape))
+    self._assert_diff_less(
+        actual[..., :2], expected[..., :2], threshold=diff_threshold)
+
+    # Validate actual vs. expected world landmarks.
+    expected_world = np.load(expected_path)['w_predictions']
+    assert actual_world.shape == expected_world.shape, (
+        'Unexpected shape of world predictions: {} instead of {}'.format(
+            actual_world.shape, expected_world.shape))
+    self._assert_diff_less(
+        actual_world, expected_world, threshold=world_diff_threshold)
 
 
 if __name__ == '__main__':

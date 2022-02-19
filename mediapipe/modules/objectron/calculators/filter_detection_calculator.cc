@@ -38,7 +38,6 @@ constexpr char kDetectionsTag[] = "DETECTIONS";
 constexpr char kLabelsTag[] = "LABELS";
 constexpr char kLabelsCsvTag[] = "LABELS_CSV";
 
-using mediapipe::ContainsKey;
 using mediapipe::RE2;
 using Detections = std::vector<Detection>;
 using Strings = std::vector<std::string>;
@@ -161,24 +160,24 @@ absl::Status FilterDetectionCalculator::Open(CalculatorContext* cc) {
   limit_labels_ = cc->InputSidePackets().HasTag(kLabelsTag) ||
                   cc->InputSidePackets().HasTag(kLabelsCsvTag);
   if (limit_labels_) {
-    Strings whitelist_labels;
+    Strings allowlist_labels;
     if (cc->InputSidePackets().HasTag(kLabelsCsvTag)) {
-      whitelist_labels = absl::StrSplit(
+      allowlist_labels = absl::StrSplit(
           cc->InputSidePackets().Tag(kLabelsCsvTag).Get<std::string>(), ',',
           absl::SkipWhitespace());
-      for (auto& e : whitelist_labels) {
+      for (auto& e : allowlist_labels) {
         absl::StripAsciiWhitespace(&e);
       }
     } else {
-      whitelist_labels = cc->InputSidePackets().Tag(kLabelsTag).Get<Strings>();
+      allowlist_labels = cc->InputSidePackets().Tag(kLabelsTag).Get<Strings>();
     }
-    allowed_labels_.insert(whitelist_labels.begin(), whitelist_labels.end());
+    allowed_labels_.insert(allowlist_labels.begin(), allowlist_labels.end());
   }
   if (limit_labels_ && allowed_labels_.empty()) {
     if (options_.fail_on_empty_labels()) {
-      cc->GetCounter("VideosWithEmptyLabelsWhitelist")->Increment();
+      cc->GetCounter("VideosWithEmptyLabelsAllowlist")->Increment();
       return tool::StatusFail(
-          "FilterDetectionCalculator received empty whitelist with "
+          "FilterDetectionCalculator received empty allowlist with "
           "fail_on_empty_labels = true.");
     }
     if (options_.empty_allowed_labels_means_allow_everything()) {

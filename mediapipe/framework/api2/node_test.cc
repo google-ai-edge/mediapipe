@@ -565,6 +565,19 @@ TEST(NodeTest, ConsumeInputs) {
   MP_EXPECT_OK(graph.WaitUntilDone());
 }
 
+// Just to test that single-port contracts work.
+struct LogSinkNode : public Node {
+  static constexpr Input<int> kIn{"IN"};
+
+  MEDIAPIPE_NODE_CONTRACT(kIn);
+
+  absl::Status Process(CalculatorContext* cc) override {
+    LOG(INFO) << "LogSinkNode received: " << kIn(cc).Get();
+    return {};
+  }
+};
+MEDIAPIPE_REGISTER_NODE(LogSinkNode);
+
 }  // namespace test
 }  // namespace api2
 }  // namespace mediapipe

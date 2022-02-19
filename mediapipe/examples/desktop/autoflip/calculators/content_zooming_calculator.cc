@@ -657,7 +657,10 @@ absl::Status ContentZoomingCalculator::Process(
   }
   const bool camera_active =
       is_animating || pan_state || tilt_state || zoom_state;
-  if (cc->Outputs().HasTag(kCameraActive)) {
+  // Waiting for first rect before setting any value of the camera active flag
+  // so we avoid setting it to false during initialization.
+  if (cc->Outputs().HasTag(kCameraActive) &&
+      first_rect_timestamp_ != Timestamp::Unset()) {
     cc->Outputs()
         .Tag(kCameraActive)
         .AddPacket(MakePacket<bool>(camera_active).At(cc->InputTimestamp()));

@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "absl/container/btree_set.h"
 #include "absl/flags/flag.h"
 #include "absl/strings/string_view.h"
 #include "mediapipe/examples/desktop/autoflip/calculators/shot_boundary_calculator.pb.h"
@@ -54,7 +55,8 @@ const char kConfig[] = R"(
 const int kTestFrameWidth = 640;
 const int kTestFrameHeight = 480;
 
-void AddFrames(const int number_of_frames, const std::set<int>& skip_frames,
+void AddFrames(const int number_of_frames,
+               const absl::btree_set<int>& skip_frames,
                CalculatorRunner* runner) {
   cv::Mat image =
       cv::imread(file::JoinPath("./",
@@ -78,7 +80,8 @@ void AddFrames(const int number_of_frames, const std::set<int>& skip_frames,
   }
 }
 
-void CheckOutput(const int number_of_frames, const std::set<int>& shot_frames,
+void CheckOutput(const int number_of_frames,
+                 const absl::btree_set<int>& shot_frames,
                  const std::vector<Packet>& output_packets) {
   ASSERT_EQ(number_of_frames, output_packets.size());
   for (int i = 0; i < number_of_frames; i++) {

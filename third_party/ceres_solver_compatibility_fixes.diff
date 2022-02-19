@@ -12,3 +12,15 @@ index ce170b2..bb5aa82 100644
 +            "@com_github_glog_glog//:glog",
          ],
      )
+diff --git a/bazel/ceres.bzl b/bazel/ceres.bzl
+index ce170b2..8dd62c5 100644
+--- a/bazel/ceres.bzl
++++ b/bazel/ceres.bzl
+@@ -116,7 +116,6 @@ CERES_SRCS = ["internal/ceres/" + filename for filename in [
+     "sparse_cholesky.cc",
+     "sparse_matrix.cc",
+     "sparse_normal_cholesky_solver.cc",
+-    "split.cc",
+     "stringprintf.cc",
+     "subset_preconditioner.cc",
+     "suitesparse.cc",

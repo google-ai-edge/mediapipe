@@ -174,7 +174,7 @@ TEST(CalculatorTest, CreateByName) {
 TEST(CalculatorTest, CreateByNameWhitelisted) {
   // Reset the registration namespace whitelist.
   *const_cast<absl::flat_hash_set<std::string>*>(
-      &NamespaceWhitelist::TopNamespaces()) = absl::flat_hash_set<std::string>{
+      &NamespaceAllowlist::TopNamespaces()) = absl::flat_hash_set<std::string>{
       "mediapipe::test_ns::whitelisted_ns",
       "mediapipe",
   };
