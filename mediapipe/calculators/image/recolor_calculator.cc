@@ -28,6 +28,7 @@
 #include "mediapipe/gpu/gl_calculator_helper.h"
 #include "mediapipe/gpu/gl_simple_shaders.h"
 #include "mediapipe/gpu/shader_util.h"
+#include "mediapipe/gpu/gpu_buffer.h"
 #endif  // !MEDIAPIPE_DISABLE_GPU
 
 namespace {
@@ -37,6 +38,7 @@ constexpr char kImageFrameTag[] = "IMAGE";
 constexpr char kMaskCpuTag[] = "MASK";
 constexpr char kGpuBufferTag[] = "IMAGE_GPU";
 constexpr char kMaskGpuTag[] = "MASK_GPU";
+constexpr char kRgbOutTag[] = "RGB_OUT";
 
 inline cv::Vec3b Blend(const cv::Vec3b& color1, const cv::Vec3b& color2,
                        float weight, int invert_mask,
@@ -69,6 +71,7 @@ namespace mediapipe {
 //   MASK: An ImageFrame input mask in ImageFormat::GRAY8, SRGB, SRGBA, or
 //         VEC32F1
 //   MASK_GPU: A GpuBuffer input mask, RGBA.
+//   RGB_OUT: A vector of RGB values
 // Output:
 //   One of the following IMAGE tags:
 //   IMAGE: An ImageFrame output image.
@@ -114,6 +117,7 @@ class RecolorCalculator : public CalculatorBase {
 
   bool initialized_ = false;
   std::vector<uint8> color_;
+  std::vector<uint8> my_color = {0,0,0};
   mediapipe::RecolorCalculatorOptions::MaskChannel mask_channel_;
 
   bool use_gpu_ = false;
@@ -151,6 +155,10 @@ absl::Status RecolorCalculator::GetContract(CalculatorContract* cc) {
 #endif  // !MEDIAPIPE_DISABLE_GPU
   if (cc->Inputs().HasTag(kMaskCpuTag)) {
     cc->Inputs().Tag(kMaskCpuTag).Set<ImageFrame>();
+  }
+
+  if (cc->Inputs().HasTag(kRgbOutTag)) {
+    cc->Inputs().Tag(kRgbOutTag).Set<std::array<int,3>>();
   }
 
 #if !MEDIAPIPE_DISABLE_GPU
@@ -308,9 +316,16 @@ absl::Status RecolorCalculator::RenderGpu(CalculatorContext* cc) {
   // Get inputs and setup output.
   const Packet& input_packet = cc->Inputs().Tag(kGpuBufferTag).Value();
   const Packet& mask_packet = cc->Inputs().Tag(kMaskGpuTag).Value();
+  const Packet& rgb_packet = cc->Inputs().Tag(kRgbOutTag).Value();
 
   const auto& input_buffer = input_packet.Get<mediapipe::GpuBuffer>();
   const auto& mask_buffer = mask_packet.Get<mediapipe::GpuBuffer>();
+  const auto& rgb_buffer = rgb_packet.Get<std::array<int,3>>();
+  
+  my_color[0] = rgb_buffer[0] / 255.0;
+  my_color[1] = rgb_buffer[1] / 255.0;
+  my_color[2] = rgb_buffer[2] / 255.0;
+
 
   auto img_tex = gpu_helper_.CreateSourceTexture(input_buffer);
   auto mask_tex = gpu_helper_.CreateSourceTexture(mask_buffer);
@@ -365,6 +380,7 @@ void RecolorCalculator::GlRender() {
 
   // program
   glUseProgram(program_);
+  glUniform3f(glGetUniformLocation(program_, "recolor"), my_color[0], my_color[1], my_color[2]);
 
   // vertex storage
   GLuint vbo[2];
@@ -492,8 +508,8 @@ absl::Status RecolorCalculator::InitGpu(CalculatorContext* cc) {
   glUseProgram(program_);
   glUniform1i(glGetUniformLocation(program_, "frame"), 1);
   glUniform1i(glGetUniformLocation(program_, "mask"), 2);
-  glUniform3f(glGetUniformLocation(program_, "recolor"), color_[0] / 255.0,
-              color_[1] / 255.0, color_[2] / 255.0);
+  glUniform3f(glGetUniformLocation(program_, "recolor"), my_color[0],
+              my_color[1], my_color[2]);
   glUniform1f(glGetUniformLocation(program_, "invert_mask"),
               invert_mask_ ? 1.0f : 0.0f);
   glUniform1f(glGetUniformLocation(program_, "adjust_with_luminance"),

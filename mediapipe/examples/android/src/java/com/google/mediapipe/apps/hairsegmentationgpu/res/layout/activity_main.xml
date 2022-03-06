@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity">
+
+    <FrameLayout
+        android:id="@+id/preview_display_layout"
+        android:layout_width="fill_parent"
+        android:layout_height="550dp"
+        tools:ignore="MissingConstraints">
+
+        <TextView
+            android:id="@+id/no_camera_access_view"
+            android:layout_width="fill_parent"
+            android:layout_height="match_parent"
+
+            android:gravity="center"
+            android:text="@string/no_camera_access" />
+
+
+    </FrameLayout>
+<RelativeLayout
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_below="@+id/preview_display_layout">
+    <SeekBar
+        android:id="@+id/red_seekbar"
+        android:progress="0"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:max="255" />
+
+
+    <SeekBar
+        android:id="@+id/green_seekbar"
+        android:progress="0"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:layout_below = "@+id/red_seekbar"
+        android:max="255" />
+
+    <SeekBar
+        android:id="@+id/blue_seekbar"
+        android:progress="255"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:layout_below="@+id/green_seekbar"
+        android:max="255" />
+
+</RelativeLayout>
+</RelativeLayout>
