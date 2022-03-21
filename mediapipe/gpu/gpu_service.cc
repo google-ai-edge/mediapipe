@@ -16,6 +16,6 @@
 
 namespace mediapipe {
 
-const GraphService<::mediapipe::GpuResources> kGpuService("kGpuService");
+const GraphService<GpuResources> kGpuService("kGpuService");
 
 }  // namespace mediapipe

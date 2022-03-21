@@ -18,6 +18,7 @@
 #include <atomic>
 
 #include "absl/memory/memory.h"
+#include "absl/synchronization/mutex.h"
 
 namespace mediapipe {
 
@@ -33,9 +34,13 @@ class LifetimeTracker {
   class Object {
    public:
     explicit Object(LifetimeTracker* tracker) : tracker_(tracker) {
+      absl::MutexLock lock(&tracker_->mutex_);
       ++tracker_->live_count_;
     }
-    ~Object() { --tracker_->live_count_; }
+    ~Object() {
+      absl::MutexLock lock(&tracker_->mutex_);
+      --tracker_->live_count_;
+    }
 
    private:
     LifetimeTracker* const tracker_;
@@ -47,10 +52,26 @@ class LifetimeTracker {
   }
 
   // Returns the number of tracked objects currently alive.
-  int live_count() { return live_count_; }
+  int live_count() {
+    absl::MutexLock lock(&mutex_);
+    return live_count_;
+  }
+
+  // Waits for all instances of Object to be destroyed / live_count to reach
+  // zero. Returns true if this occurred within the timeout, false otherwise.
+  bool WaitForAllObjectsToDie(
+      absl::Duration timeout = absl::InfiniteDuration()) {
+    // Condition takes a function pointer. Prefixing the lambda with a +
+    // resolves it to a pointer.
+    absl::Condition check_count(
+        +[](int* value) { return *value == 0; }, &live_count_);
+    absl::MutexLock lock(&mutex_);
+    return mutex_.AwaitWithTimeout(check_count, timeout);
+  }
 
  private:
-  std::atomic<int> live_count_ = ATOMIC_VAR_INIT(0);
+  absl::Mutex mutex_;
+  int live_count_ ABSL_GUARDED_BY(mutex_) = 0;
 };
 
 }  // namespace mediapipe

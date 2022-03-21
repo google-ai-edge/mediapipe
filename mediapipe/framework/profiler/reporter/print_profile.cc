@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-// This program takes one input file and encodes its contents as a C++
-// std::string, which can be included in a C++ source file. It is similar to
-// filewrapper (and borrows some of its code), but simpler.
+// This program takes one input file and encodes its contents as a C++ string,
+// which can be included in a C++ source file. It is similar to filewrapper
+// (and borrows some of its code), but simpler.
 
 #include <algorithm>
 #include <fstream>

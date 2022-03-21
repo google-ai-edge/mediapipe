@@ -40,8 +40,8 @@ typedef CVOpenGLTextureCacheRef CVTextureCacheType;
 typedef CVOpenGLESTextureCacheRef CVTextureCacheType;
 #endif  // TARGET_OS_OSX
 
-- (instancetype)initWithContext:(mediapipe::GlContext*)context
-                      multiPool:(mediapipe::GpuBufferMultiPool*)pool {
+- (instancetype)initWithContext:(mediapipe::GlContext *)context
+                      multiPool:(mediapipe::GpuBufferMultiPool *)pool {
   self = [super init];
   if (self) {
     _gpuBufferPool = pool;

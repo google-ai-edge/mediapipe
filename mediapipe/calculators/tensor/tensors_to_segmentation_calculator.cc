@@ -355,9 +355,10 @@ absl::Status TensorsToSegmentationCalculator::ProcessCpu(
   std::shared_ptr<ImageFrame> mask_frame = std::make_shared<ImageFrame>(
       ImageFormat::VEC32F1, output_width, output_height);
   std::unique_ptr<Image> output_mask = absl::make_unique<Image>(mask_frame);
-  cv::Mat output_mat = formats::MatView(output_mask.get());
+  auto output_mat = formats::MatView(output_mask.get());
   // Upsample small mask into output.
-  cv::resize(small_mask_mat, output_mat, cv::Size(output_width, output_height));
+  cv::resize(small_mask_mat, *output_mat,
+             cv::Size(output_width, output_height));
   cc->Outputs().Tag(kMaskTag).Add(output_mask.release(), cc->InputTimestamp());
 
   return absl::OkStatus();

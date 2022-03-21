@@ -172,9 +172,14 @@ inline void SetType<NoneType>(CalculatorContract* cc, PacketType& pt) {
   pt.SetNone();
 }
 
+template <typename... T>
+inline void SetTypeOneOf(OneOf<T...>, CalculatorContract* cc, PacketType& pt) {
+  pt.SetOneOf<T...>();
+}
+
 template <typename T, typename std::enable_if<IsOneOf<T>{}, int>::type = 0>
 inline void SetType(CalculatorContract* cc, PacketType& pt) {
-  pt.SetAny();
+  SetTypeOneOf(T{}, cc, pt);
 }
 
 template <typename ValueT>
@@ -294,14 +299,26 @@ struct SideBase<InputBase> {
   using type = SideInputBase;
 };
 
+// TODO: maybe return a PacketBase instead of a Packet<internal::Generic>?
+template <typename T, class = void>
+struct ActualPayloadType {
+  using type = T;
+};
+
+template <typename T>
+struct ActualPayloadType<
+    T, std::enable_if_t<std::is_base_of<DynamicType, T>{}, void>> {
+  using type = internal::Generic;
+};
+
 }  // namespace internal
 
-// TODO: maybe return a PacketBase instead of a Packet<internal::Generic>?
-template <typename T, typename std::enable_if<
-                          !std::is_base_of<DynamicType, T>{}, int>::type = 0>
-auto ActualValueT(T) -> T;
+// Maps special port value types, such as AnyType, to internal::Generic.
+template <typename T>
+using ActualPayloadT = typename internal::ActualPayloadType<T>::type;
 
-auto ActualValueT(DynamicType) -> internal::Generic;
+static_assert(std::is_same_v<ActualPayloadT<int>, int>, "");
+static_assert(std::is_same_v<ActualPayloadT<AnyType>, internal::Generic>, "");
 
 template <typename Base, typename ValueT, bool IsOptional = false,
           bool IsMultiple = false>
@@ -325,7 +342,7 @@ class PortCommon : public Base {
   explicit constexpr PortCommon(const char (&tag)[N])
       : Base(N, tag, &get_type_hash<ValueT>, IsOptionalV, IsMultipleV) {}
 
-  using PayloadT = decltype(ActualValueT(std::declval<ValueT>()));
+  using PayloadT = ActualPayloadT<ValueT>;
 
   auto operator()(CalculatorContext* cc) const {
     return internal::AccessPort<PayloadT>(
@@ -385,7 +402,7 @@ class SideFallbackT : public Base {
   static constexpr bool kOptional = IsOptionalV;
   static constexpr bool kMultiple = IsMultipleV;
   using Optional = SideFallbackT<Base, ValueT, true, IsMultipleV>;
-  using PayloadT = decltype(ActualValueT(std::declval<ValueT>()));
+  using PayloadT = ActualPayloadT<ValueT>;
 
   const char* Tag() const { return stream_port.Tag(); }
 
@@ -497,6 +514,10 @@ class OutputShardAccess : public OutputShardAccessBase {
 
   void Send(std::unique_ptr<T> payload) {
     Send(std::move(payload), context_.InputTimestamp());
+  }
+
+  void SetHeader(const PacketBase& header) {
+    if (output_) output_->SetHeader(ToOldPacket(header));
   }
 
  private:

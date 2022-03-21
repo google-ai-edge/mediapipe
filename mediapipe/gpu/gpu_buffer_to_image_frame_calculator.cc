@@ -76,7 +76,7 @@ absl::Status GpuBufferToImageFrameCalculator::Process(CalculatorContext* cc) {
     const auto& input = cc->Inputs().Index(0).Get<GpuBuffer>();
 #if MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
     std::unique_ptr<ImageFrame> frame =
-        CreateImageFrameForCVPixelBuffer(input.GetCVPixelBufferRef());
+        CreateImageFrameForCVPixelBuffer(GetCVPixelBufferRef(input));
     cc->Outputs().Index(0).Add(frame.release(), cc->InputTimestamp());
 #else
     helper_.RunInGlContext([this, &input, &cc]() {

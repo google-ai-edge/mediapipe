@@ -42,16 +42,16 @@ namespace py = pybind11;
 
 void PublicPacketGetters(pybind11::module* m) {
   m->def("get_str", &GetContent<std::string>,
-         R"doc(Get the content of a MediaPipe std::string Packet as a str.
+         R"doc(Get the content of a MediaPipe string Packet as a str.
 
   Args:
-    packet: A MediaPipe std::string Packet.
+    packet: A MediaPipe string Packet.
 
   Returns:
     A str.
 
   Raises:
-    ValueError: If the Packet doesn't contain std::string data.
+    ValueError: If the Packet doesn't contain string data.
 
   Examples:
     packet = mp.packet_creator.create_string('abc')
@@ -63,16 +63,16 @@ void PublicPacketGetters(pybind11::module* m) {
       [](const Packet& packet) {
         return py::bytes(GetContent<std::string>(packet));
       },
-      R"doc(Get the content of a MediaPipe std::string Packet as a bytes object.
+      R"doc(Get the content of a MediaPipe string Packet as a bytes object.
 
   Args:
-    packet: A MediaPipe std::string Packet.
+    packet: A MediaPipe string Packet.
 
   Returns:
     A bytes object.
 
   Raises:
-    ValueError: If the Packet doesn't contain std::string data.
+    ValueError: If the Packet doesn't contain string data.
 
   Examples:
     packet = mp.packet_creator.create_string(b'\xd0\xd0\xd0')
@@ -266,7 +266,7 @@ void PublicPacketGetters(pybind11::module* m) {
 
   m->def(
       "get_str_list", &GetContent<std::vector<std::string>>,
-      R"doc(Get the content of a MediaPipe std::string vector Packet as a str list.
+      R"doc(Get the content of a MediaPipe string vector Packet as a str list.
 
   Args:
     packet: A MediaPipe Packet that holds std:vector<std::string>.
@@ -322,7 +322,7 @@ void PublicPacketGetters(pybind11::module* m) {
     dict_packet = mp.packet_creator.create_string_to_packet_map({
         'float': packet_creator.create_float(0.1),
         'int': packet_creator.create_int(1),
-        'std::string': packet_creator.create_string('1')
+        'string': packet_creator.create_string('1')
     data = mp.packet_getter.get_str_to_packet_dict(dict_packet)
 )doc");
 
@@ -418,11 +418,11 @@ void InternalPacketGetters(pybind11::module* m) {
   m->def(
       "_get_serialized_proto",
       [](const Packet& packet) {
-        // By default, py::bytes is an extra copy of the original std::string
-        // object: https://github.com/pybind/pybind11/issues/1236 However, when
-        // Pybind11 performs the C++ to Python transition, it only increases the
-        // py::bytes object's ref count. See the implmentation at line 1583 in
-        // "pybind11/cast.h".
+        // By default, py::bytes is an extra copy of the original string object:
+        // https://github.com/pybind/pybind11/issues/1236
+        // However, when Pybind11 performs the C++ to Python transition, it
+        // only increases the py::bytes object's ref count. See the
+        // implmentation at line 1583 in "pybind11/cast.h".
         return py::bytes(packet.GetProtoMessageLite().SerializeAsString());
       },
       py::return_value_policy::move);

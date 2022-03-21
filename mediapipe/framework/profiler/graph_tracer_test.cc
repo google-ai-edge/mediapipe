@@ -1053,8 +1053,8 @@ TEST_F(GraphTracerE2ETest, DemuxGraphLogFiles) {
                   calculator_name: "LambdaCalculator_1"
                   calculator_name: "FlowLimiterCalculator"
                   calculator_name: "RoundRobinDemuxCalculator"
-                  calculator_name: "LambdaCalculator_1"
-                  calculator_name: "LambdaCalculator"
+                  calculator_name: "LambdaCalculator_2"
+                  calculator_name: "LambdaCalculator_3"
                   calculator_name: "ImmediateMuxCalculator"
                   stream_name: ""
                   stream_name: "input_packets_0"
@@ -1198,14 +1198,14 @@ TEST_F(GraphTracerE2ETest, DemuxGraphLogFiles) {
                     output_stream: "OUTPUT:1:input_1"
                   }
                   node {
-                    name: "LambdaCalculator_1"
+                    name: "LambdaCalculator_2"
                     calculator: "LambdaCalculator"
                     input_stream: "input_0"
                     output_stream: "output_0"
                     input_side_packet: "callback_0"
                   }
                   node {
-                    name: "LambdaCalculator"
+                    name: "LambdaCalculator_3"
                     calculator: "LambdaCalculator"
                     input_stream: "input_1"
                     output_stream: "output_1"

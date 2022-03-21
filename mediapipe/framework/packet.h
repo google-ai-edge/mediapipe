@@ -189,7 +189,11 @@ class Packet {
 
   // Get the type id for the underlying type stored in the Packet.
   // Crashes if IsEmpty() == true.
-  size_t GetTypeId() const;
+  size_t GetTypeId() const { return GetTypeInfo().hash_code(); }
+
+  // Get the type info for the underlying type stored in the Packet.
+  // Crashes if IsEmpty() == true.
+  const tool::TypeInfo& GetTypeInfo() const;
 
   // Returns the timestamp.
   class Timestamp Timestamp() const;
@@ -201,9 +205,9 @@ class Packet {
 
   // Returns the type name.  If the packet is empty or the type is not
   // registered (with MEDIAPIPE_REGISTER_TYPE or companion macros) then
-  // the empty std::string is returned.
+  // the empty string is returned.
   std::string RegisteredTypeName() const;
-  // Returns a std::string with the best guess at the type name.
+  // Returns a string with the best guess at the type name.
   std::string DebugTypeName() const;
 
  private:
@@ -220,6 +224,7 @@ class Packet {
   friend std::shared_ptr<packet_internal::HolderBase>
   packet_internal::GetHolderShared(Packet&& packet);
 
+  friend class PacketType;
   absl::Status ValidateAsType(const tool::TypeInfo& type_info) const;
 
   std::shared_ptr<packet_internal::HolderBase> holder_;
@@ -364,15 +369,15 @@ class HolderBase {
   virtual ~HolderBase();
   template <typename T>
   bool PayloadIsOfType() const {
-    return GetTypeId() == tool::GetTypeHash<T>();
+    return GetTypeInfo().hash_code() == tool::GetTypeHash<T>();
   }
-  // Returns a printable std::string identifying the type stored in the holder.
+  // Returns a printable string identifying the type stored in the holder.
   virtual const std::string DebugTypeName() const = 0;
   // Returns the registered type name if it's available, otherwise the
-  // empty std::string.
+  // empty string.
   virtual const std::string RegisteredTypeName() const = 0;
   // Get the type id of the underlying data type.
-  virtual size_t GetTypeId() const = 0;
+  virtual const tool::TypeInfo& GetTypeInfo() const = 0;
   // Downcasts this to Holder<T>.  Returns nullptr if deserialization
   // failed or if the requested type is not what is stored.
   template <typename T>
@@ -440,7 +445,7 @@ ConvertToVectorOfProtoMessageLitePtrs(const T* data,
 }
 
 // This registry is used to create Holders of the right concrete C++ type given
-// a proto type std::string (which is used as the registration key).
+// a proto type string (which is used as the registration key).
 class MessageHolderRegistry
     : public GlobalFactoryRegistry<std::unique_ptr<HolderBase>> {};
 
@@ -505,7 +510,7 @@ class Holder : public HolderBase {
     HolderSupport<T>::EnsureStaticInit();
     return *ptr_;
   }
-  size_t GetTypeId() const final { return tool::GetTypeHash<T>(); }
+  const tool::TypeInfo& GetTypeInfo() const final { return tool::TypeId<T>(); }
   // Releases the underlying data pointer and transfers the ownership to a
   // unique pointer.
   // This method is dangerous and is only used by Packet::Consume() if the
@@ -741,9 +746,9 @@ inline Packet& Packet::operator=(Packet&& packet) {
 
 inline bool Packet::IsEmpty() const { return holder_ == nullptr; }
 
-inline size_t Packet::GetTypeId() const {
+inline const tool::TypeInfo& Packet::GetTypeInfo() const {
   CHECK(holder_);
-  return holder_->GetTypeId();
+  return holder_->GetTypeInfo();
 }
 
 template <typename T>

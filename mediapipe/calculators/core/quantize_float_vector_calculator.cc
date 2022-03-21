@@ -23,8 +23,8 @@
 #include "mediapipe/framework/port/canonical_errors.h"
 #include "mediapipe/framework/port/status.h"
 
-// Quantizes a vector of floats to a std::string so that each float becomes a
-// byte in the [0, 255] range. Any value above max_quantized_value or below
+// Quantizes a vector of floats to a string so that each float becomes a byte
+// in the [0, 255] range. Any value above max_quantized_value or below
 // min_quantized_value will be saturated to '/xFF' or '/0'.
 //
 // Example config:

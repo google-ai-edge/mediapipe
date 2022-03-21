@@ -55,7 +55,8 @@ class SceneCameraMotionAnalyzer {
                                          scene_camera_motion_analyzer_options)
       : options_(scene_camera_motion_analyzer_options),
         time_since_last_salient_region_us_(0),
-        has_solid_color_background_(false) {}
+        has_solid_color_background_(false),
+        total_scene_frames_(0) {}
 
   ~SceneCameraMotionAnalyzer() {}
 

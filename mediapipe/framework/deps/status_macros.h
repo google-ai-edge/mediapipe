@@ -150,21 +150,28 @@
 #define STATUS_MACROS_IMPL_GET_VARIADIC_(args) \
   STATUS_MACROS_IMPL_GET_VARIADIC_HELPER_ args
 
-#define STATUS_MACROS_IMPL_ASSIGN_OR_RETURN_2_(lhs, rexpr) \
-  STATUS_MACROS_IMPL_ASSIGN_OR_RETURN_3_(lhs, rexpr, std::move(_))
+#define STATUS_MACROS_IMPL_ASSIGN_OR_RETURN_2_(lhs, rexpr)                  \
+  STATUS_MACROS_IMPL_ASSIGN_OR_RETURN_(                                     \
+      STATUS_MACROS_IMPL_CONCAT_(_status_or_value, __LINE__), lhs, rexpr,   \
+      return mediapipe::StatusBuilder(                                      \
+          std::move(STATUS_MACROS_IMPL_CONCAT_(_status_or_value, __LINE__)) \
+              .status(),                                                    \
+          __FILE__, __LINE__))
 #define STATUS_MACROS_IMPL_ASSIGN_OR_RETURN_3_(lhs, rexpr, error_expression) \
   STATUS_MACROS_IMPL_ASSIGN_OR_RETURN_(                                      \
       STATUS_MACROS_IMPL_CONCAT_(_status_or_value, __LINE__), lhs, rexpr,    \
-      error_expression)
-#define STATUS_MACROS_IMPL_ASSIGN_OR_RETURN_(statusor, lhs, rexpr,      \
-                                             error_expression)          \
-  auto statusor = (rexpr);                                              \
-  if (ABSL_PREDICT_FALSE(!statusor.ok())) {                             \
-    mediapipe::StatusBuilder _(std::move(statusor).status(), __FILE__,  \
-                               __LINE__);                               \
-    (void)_; /* error_expression is allowed to not use this variable */ \
-    return (error_expression);                                          \
-  }                                                                     \
+      mediapipe::StatusBuilder _(                                            \
+          std::move(STATUS_MACROS_IMPL_CONCAT_(_status_or_value, __LINE__))  \
+              .status(),                                                     \
+          __FILE__, __LINE__);                                               \
+      (void)_; /* error_expression is allowed to not use this variable */    \
+      return (error_expression))
+#define STATUS_MACROS_IMPL_ASSIGN_OR_RETURN_(statusor, lhs, rexpr, \
+                                             error_expression)     \
+  auto statusor = (rexpr);                                         \
+  if (ABSL_PREDICT_FALSE(!statusor.ok())) {                        \
+    error_expression;                                              \
+  }                                                                \
   lhs = std::move(statusor).value()
 
 // Internal helper for concatenating macro values.

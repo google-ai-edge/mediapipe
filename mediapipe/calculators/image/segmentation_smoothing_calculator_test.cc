@@ -116,8 +116,8 @@ void RunGraph(Packet curr_packet, Packet prev_packet, bool use_gpu, float ratio,
   ASSERT_EQ(1, output_packets.size());
 
   Image result_image = output_packets[0].Get<Image>();
-  cv::Mat result_mat = formats::MatView(&result_image);
-  result_mat.copyTo(*result);
+  auto result_mat = formats::MatView(&result_image);
+  result_mat->copyTo(*result);
 
   // Fully close graph at end, otherwise calculator+Images are destroyed
   // after calling WaitUntilDone().
@@ -135,10 +135,10 @@ void RunTest(bool use_gpu, float mix_ratio, cv::Mat& test_result) {
 
   Packet curr_packet = MakePacket<Image>(std::make_unique<ImageFrame>(
       ImageFormat::VEC32F1, curr_mat.size().width, curr_mat.size().height));
-  curr_mat.copyTo(formats::MatView(&(curr_packet.Get<Image>())));
+  curr_mat.copyTo(*formats::MatView(&(curr_packet.Get<Image>())));
   Packet prev_packet = MakePacket<Image>(std::make_unique<ImageFrame>(
       ImageFormat::VEC32F1, prev_mat.size().width, prev_mat.size().height));
-  prev_mat.copyTo(formats::MatView(&(prev_packet.Get<Image>())));
+  prev_mat.copyTo(*formats::MatView(&(prev_packet.Get<Image>())));
 
   cv::Mat result;
   RunGraph(curr_packet, prev_packet, use_gpu, mix_ratio, &result);

@@ -939,7 +939,7 @@ absl::Status TfLiteInferenceCalculator::LoadDelegate(CalculatorContext* cc) {
 
 #if !defined(MEDIAPIPE_EDGE_TPU)
     if (use_xnnpack) {
-      TfLiteXNNPackDelegateOptions xnnpack_opts{};
+      auto xnnpack_opts = TfLiteXNNPackDelegateOptionsDefault();
       xnnpack_opts.num_threads = GetXnnpackNumThreads(calculator_opts);
       delegate_ = TfLiteDelegatePtr(TfLiteXNNPackDelegateCreate(&xnnpack_opts),
                                     &TfLiteXNNPackDelegateDelete);

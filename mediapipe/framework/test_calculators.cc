@@ -279,7 +279,7 @@ class StdDevCalculator : public CalculatorBase {
 REGISTER_CALCULATOR(StdDevCalculator);
 
 // A calculator that receives some number of input streams carrying ints.
-// Outputs, for each input timestamp, a space separated std::string containing
+// Outputs, for each input timestamp, a space separated string containing
 // the timestamp and all the inputs for that timestamp (Empty inputs
 // will be denoted with "empty"). Sets the header to be a space-separated
 // concatenation of the input stream headers.
@@ -368,7 +368,7 @@ REGISTER_CALCULATOR(SaverCalculator);
 
 #ifndef MEDIAPIPE_MOBILE
 // Source Calculator that produces matrices on the output stream with
-// each coefficient from a normal gaussian.  A std::string seed must be given
+// each coefficient from a normal gaussian.  A string seed must be given
 // as an input side packet.
 class RandomMatrixCalculator : public CalculatorBase {
  public:

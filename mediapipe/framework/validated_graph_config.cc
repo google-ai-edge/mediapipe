@@ -49,7 +49,7 @@ namespace mediapipe {
 
 namespace {
 
-// Create a debug std::string name for a set of edge.  An edge can be either
+// Create a debug string name for a set of edge.  An edge can be either
 // a stream or a side packet.
 std::string DebugEdgeNames(
     const std::string& edge_type,
@@ -413,8 +413,11 @@ absl::Status ValidatedGraphConfig::Initialize(
 
   // Set Any types based on what they connect to.
   MP_RETURN_IF_ERROR(ResolveAnyTypes(&input_streams_, &output_streams_));
+  MP_RETURN_IF_ERROR(ResolveOneOfTypes(&input_streams_, &output_streams_));
   MP_RETURN_IF_ERROR(
       ResolveAnyTypes(&input_side_packets_, &output_side_packets_));
+  MP_RETURN_IF_ERROR(
+      ResolveOneOfTypes(&input_side_packets_, &output_side_packets_));
 
   // Validate consistency of side packets and streams.
   MP_RETURN_IF_ERROR(ValidateSidePacketTypes());
@@ -902,6 +905,29 @@ absl::Status ValidatedGraphConfig::ResolveAnyTypes(
     if (input_root->IsAny()) {
       input_root->SetSameAs(output_edge.packet_type);
     } else if (output_root->IsAny()) {
+      output_root->SetSameAs(input_edge.packet_type);
+    }
+  }
+  return absl::OkStatus();
+}
+
+absl::Status ValidatedGraphConfig::ResolveOneOfTypes(
+    std::vector<EdgeInfo>* input_edges, std::vector<EdgeInfo>* output_edges) {
+  for (EdgeInfo& input_edge : *input_edges) {
+    if (input_edge.upstream == -1) {
+      continue;
+    }
+    EdgeInfo& output_edge = (*output_edges)[input_edge.upstream];
+    PacketType* input_root = input_edge.packet_type->GetSameAs();
+    PacketType* output_root = output_edge.packet_type->GetSameAs();
+    if (!input_root->IsConsistentWith(*output_root)) continue;
+    // We narrow down OneOf types here if the other side is a single type.
+    // We do not currently intersect multiple OneOf types.
+    // Note that this is sensitive to the order edges are examined.
+    // TODO: we should be more thorough.
+    if (input_root->IsOneOf() && output_root->IsExactType()) {
+      input_root->SetSameAs(output_edge.packet_type);
+    } else if (output_root->IsOneOf() && input_root->IsExactType()) {
       output_root->SetSameAs(input_edge.packet_type);
     }
   }

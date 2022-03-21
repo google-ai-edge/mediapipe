@@ -29,7 +29,9 @@ namespace formats {
 // the const modifier is lost.  The caller must be careful
 // not to use the returned object to modify the data in a const Image,
 // even though the returned data is mutable.
-cv::Mat MatView(const mediapipe::Image* image);
+// Note: this returns a shared_ptr so it can keep the CPU memory referenced
+// by the Mat alive.
+std::shared_ptr<cv::Mat> MatView(const mediapipe::Image* image);
 
 }  // namespace formats
 }  // namespace mediapipe

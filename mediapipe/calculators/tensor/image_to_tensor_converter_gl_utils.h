@@ -3,7 +3,7 @@
 
 #include "mediapipe/framework/port.h"
 
-#if MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_20
+#if MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30
 
 #include <array>
 #include <memory>
@@ -40,6 +40,6 @@ bool IsGlClampToBorderSupported(const mediapipe::GlContext& gl_context);
 
 }  // namespace mediapipe
 
-#endif  // MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_20
+#endif  // MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30
 
 #endif  // MEDIAPIPE_CALCULATORS_TENSOR_IMAGE_TO_TENSOR_CONVERTER_GL_UTILS_H_

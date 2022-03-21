@@ -553,7 +553,6 @@ absl::Status ScaleImageCalculator::Process(CalculatorContext* cc) {
     }
   }
 
-  cc->GetCounter("Inputs")->Increment();
   const ImageFrame* image_frame;
   ImageFrame converted_image_frame;
   if (input_format_ == ImageFormat::YCBCR420P) {

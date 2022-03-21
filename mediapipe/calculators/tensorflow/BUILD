@@ -334,6 +334,7 @@ cc_library(
         ":image_frame_to_tensor_calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/formats:image_frame",
+        "//mediapipe/framework/port:core_proto",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
     ] + select({

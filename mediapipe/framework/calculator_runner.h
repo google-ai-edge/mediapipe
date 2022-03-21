@@ -62,7 +62,7 @@ class CalculatorRunner {
   //   )");
   explicit CalculatorRunner(const CalculatorGraphConfig::Node& node_config);
 #if !defined(MEDIAPIPE_PROTO_LITE)
-  // Convenience constructor which takes a node_config std::string directly.
+  // Convenience constructor which takes a node_config string directly.
   explicit CalculatorRunner(const std::string& node_config_string);
   // Convenience constructor to initialize a calculator which uses indexes
   // (not tags) for all its fields.

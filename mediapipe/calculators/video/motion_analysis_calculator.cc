@@ -15,6 +15,7 @@
 #include <cmath>
 #include <fstream>
 #include <memory>
+#include <string>
 
 #include "absl/strings/numbers.h"
 #include "absl/strings/str_split.h"

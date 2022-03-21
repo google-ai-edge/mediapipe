@@ -51,6 +51,7 @@ class LocalFilePatternContentsCalculator : public CalculatorBase {
         cc->InputSidePackets().Tag(kFileDirectoryTag).Get<std::string>(),
         cc->InputSidePackets().Tag(kFileSuffixTag).Get<std::string>(),
         &filenames_));
+    std::sort(filenames_.begin(), filenames_.end());
     return absl::OkStatus();
   }
 

@@ -313,8 +313,8 @@ template <class Calc>
 class Node : public NodeBase {
  public:
   Node() : NodeBase(Calc::kCalculatorName) {}
-  // Overrides the built-in calculator type std::string with the provided
-  // argument. Can be used to create nodes from pure interfaces.
+  // Overrides the built-in calculator type string with the provided argument.
+  // Can be used to create nodes from pure interfaces.
   // TODO: only use this for pure interfaces
   Node(const std::string& type_override) : NodeBase(type_override) {}
 
@@ -377,6 +377,29 @@ class PacketGenerator {
     return *options_.MutableExtension(T::ext);
   }
 
+  template <typename B, typename T, bool kIsOptional, bool kIsMultiple>
+  auto operator[](const PortCommon<B, T, kIsOptional, kIsMultiple>& port) {
+    using PayloadT =
+        typename PortCommon<B, T, kIsOptional, kIsMultiple>::PayloadT;
+    if constexpr (std::is_same_v<B, SideOutputBase>) {
+      auto* base = &out_sides_[port.Tag()];
+      if constexpr (kIsMultiple) {
+        return MultiSideSource<PayloadT>(base);
+      } else {
+        return SideSource<PayloadT>(base);
+      }
+    } else if constexpr (std::is_same_v<B, SideInputBase>) {
+      auto* base = &in_sides_[port.Tag()];
+      if constexpr (kIsMultiple) {
+        return MultiSideDestination<PayloadT>(base);
+      } else {
+        return SideDestination<PayloadT>(base);
+      }
+    } else {
+      static_assert(dependent_false<B>::value, "Type not supported.");
+    }
+  }
+
  private:
   std::string type_;
   TagIndexMap<DestinationBase> in_sides_;
@@ -402,7 +425,7 @@ class Graph {
   }
 
   // Creates a node of a specific type. Should be used for pure interfaces,
-  // which do not have a built-in type std::string.
+  // which do not have a built-in type string.
   template <class Calc>
   Node<Calc>& AddNode(const std::string& type) {
     auto node = std::make_unique<Node<Calc>>(type);

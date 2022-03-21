@@ -21,6 +21,7 @@ cc_library(
     name = "media_sequence_util",
     hdrs = ["media_sequence_util.h"],
     visibility = [
+        "//home/interaction:__subpackages__",
         "//mediapipe:__subpackages__",
     ],
     deps = [

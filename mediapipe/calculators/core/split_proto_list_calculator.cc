@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef MEDIAPIPE_CALCULATORS_CORE_SPLIT_LANDMARKS_CALCULATOR_H_  // NOLINT
-#define MEDIAPIPE_CALCULATORS_CORE_SPLIT_LANDMARKS_CALCULATOR_H_  // NOLINT
+#ifndef MEDIAPIPE_CALCULATORS_CORE_SPLIT_PROTO_LIST_CALCULATOR_H_  // NOLINT
+#define MEDIAPIPE_CALCULATORS_CORE_SPLIT_PROTO_LIST_CALCULATOR_H_  // NOLINT
 
 #include "mediapipe/calculators/core/split_vector_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
@@ -24,30 +24,30 @@
 
 namespace mediapipe {
 
-// Splits an input packet with LandmarkListType into
-// multiple LandmarkListType output packets using the [begin, end) ranges
+// Splits an input packet of ListType with a repeated field of ItemType
+// into multiple ListType output packets using the [begin, end) ranges
 // specified in SplitVectorCalculatorOptions. If the option "element_only" is
 // set to true, all ranges should be of size 1 and all outputs will be elements
-// of type LandmarkType. If "element_only" is false, ranges can be
-// non-zero in size and all outputs will be of type LandmarkListType.
+// of type ItemType. If "element_only" is false, ranges can be
+// non-zero in size and all outputs will be of type ListType.
 // If the option "combine_outputs" is set to true, only one output stream can be
 // specified and all ranges of elements will be combined into one
-// LandmarkListType.
-template <typename LandmarkType, typename LandmarkListType>
-class SplitLandmarksCalculator : public CalculatorBase {
+// ListType.
+template <typename ItemType, typename ListType>
+class SplitListsCalculator : public CalculatorBase {
  public:
   static absl::Status GetContract(CalculatorContract* cc) {
     RET_CHECK(cc->Inputs().NumEntries() == 1);
     RET_CHECK(cc->Outputs().NumEntries() != 0);
 
-    cc->Inputs().Index(0).Set<LandmarkListType>();
+    cc->Inputs().Index(0).Set<ListType>();
 
     const auto& options =
         cc->Options<::mediapipe::SplitVectorCalculatorOptions>();
 
     if (options.combine_outputs()) {
       RET_CHECK_EQ(cc->Outputs().NumEntries(), 1);
-      cc->Outputs().Index(0).Set<LandmarkListType>();
+      cc->Outputs().Index(0).Set<ListType>();
       for (int i = 0; i < options.ranges_size() - 1; ++i) {
         for (int j = i + 1; j < options.ranges_size(); ++j) {
           const auto& range_0 = options.ranges(i);
@@ -82,9 +82,9 @@ class SplitLandmarksCalculator : public CalculatorBase {
             return absl::InvalidArgumentError(
                 "Since element_only is true, all ranges should be of size 1.");
           }
-          cc->Outputs().Index(i).Set<LandmarkType>();
+          cc->Outputs().Index(i).Set<ItemType>();
         } else {
-          cc->Outputs().Index(i).Set<LandmarkListType>();
+          cc->Outputs().Index(i).Set<ListType>();
         }
       }
     }
@@ -111,45 +111,49 @@ class SplitLandmarksCalculator : public CalculatorBase {
   }
 
   absl::Status Process(CalculatorContext* cc) override {
-    const LandmarkListType& input =
-        cc->Inputs().Index(0).Get<LandmarkListType>();
-    RET_CHECK_GE(input.landmark_size(), max_range_end_)
-        << "Max range end " << max_range_end_ << " exceeds landmarks size "
-        << input.landmark_size();
+    const ListType& input = cc->Inputs().Index(0).Get<ListType>();
+    RET_CHECK_GE(ListSize(input), max_range_end_)
+        << "Max range end " << max_range_end_ << " exceeds list size "
+        << ListSize(input);
 
     if (combine_outputs_) {
-      LandmarkListType output;
+      ListType output;
       for (int i = 0; i < ranges_.size(); ++i) {
         for (int j = ranges_[i].first; j < ranges_[i].second; ++j) {
-          const LandmarkType& input_landmark = input.landmark(j);
-          *output.add_landmark() = input_landmark;
+          const ItemType& input_item = GetItem(input, j);
+          *AddItem(output) = input_item;
         }
       }
-      RET_CHECK_EQ(output.landmark_size(), total_elements_);
+      RET_CHECK_EQ(ListSize(output), total_elements_);
       cc->Outputs().Index(0).AddPacket(
-          MakePacket<LandmarkListType>(output).At(cc->InputTimestamp()));
+          MakePacket<ListType>(output).At(cc->InputTimestamp()));
     } else {
       if (element_only_) {
         for (int i = 0; i < ranges_.size(); ++i) {
           cc->Outputs().Index(i).AddPacket(
-              MakePacket<LandmarkType>(input.landmark(ranges_[i].first))
+              MakePacket<ItemType>(GetItem(input, ranges_[i].first))
                   .At(cc->InputTimestamp()));
         }
       } else {
         for (int i = 0; i < ranges_.size(); ++i) {
-          LandmarkListType output;
+          ListType output;
           for (int j = ranges_[i].first; j < ranges_[i].second; ++j) {
-            const LandmarkType& input_landmark = input.landmark(j);
-            *output.add_landmark() = input_landmark;
+            const ItemType& input_item = GetItem(input, j);
+            *AddItem(output) = input_item;
           }
           cc->Outputs().Index(i).AddPacket(
-              MakePacket<LandmarkListType>(output).At(cc->InputTimestamp()));
+              MakePacket<ListType>(output).At(cc->InputTimestamp()));
         }
       }
     }
 
     return absl::OkStatus();
   }
+
+ protected:
+  virtual int ListSize(const ListType& list) const = 0;
+  virtual const ItemType GetItem(const ListType& list, int idx) const = 0;
+  virtual ItemType* AddItem(ListType& list) const = 0;
 
  private:
   std::vector<std::pair<int32, int32>> ranges_;
@@ -159,15 +163,40 @@ class SplitLandmarksCalculator : public CalculatorBase {
   bool combine_outputs_ = false;
 };
 
-typedef SplitLandmarksCalculator<NormalizedLandmark, NormalizedLandmarkList>
-    SplitNormalizedLandmarkListCalculator;
+// TODO: Move calculators to separate *.cc files
+
+class SplitNormalizedLandmarkListCalculator
+    : public SplitListsCalculator<NormalizedLandmark, NormalizedLandmarkList> {
+ protected:
+  int ListSize(const NormalizedLandmarkList& list) const override {
+    return list.landmark_size();
+  }
+  const NormalizedLandmark GetItem(const NormalizedLandmarkList& list,
+                                   int idx) const override {
+    return list.landmark(idx);
+  }
+  NormalizedLandmark* AddItem(NormalizedLandmarkList& list) const override {
+    return list.add_landmark();
+  }
+};
 REGISTER_CALCULATOR(SplitNormalizedLandmarkListCalculator);
 
-typedef SplitLandmarksCalculator<Landmark, LandmarkList>
-    SplitLandmarkListCalculator;
+class SplitLandmarkListCalculator
+    : public SplitListsCalculator<Landmark, LandmarkList> {
+ protected:
+  int ListSize(const LandmarkList& list) const override {
+    return list.landmark_size();
+  }
+  const Landmark GetItem(const LandmarkList& list, int idx) const override {
+    return list.landmark(idx);
+  }
+  Landmark* AddItem(LandmarkList& list) const override {
+    return list.add_landmark();
+  }
+};
 REGISTER_CALCULATOR(SplitLandmarkListCalculator);
 
 }  // namespace mediapipe
 
 // NOLINTNEXTLINE
-#endif  // MEDIAPIPE_CALCULATORS_CORE_SPLIT_LANDMARKS_CALCULATOR_H_
+#endif  // MEDIAPIPE_CALCULATORS_CORE_SPLIT_PROTO_LIST_CALCULATOR_H_

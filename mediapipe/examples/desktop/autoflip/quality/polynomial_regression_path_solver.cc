@@ -83,7 +83,7 @@ void PolynomialRegressionPathSolver::AddCostFunctionToProblem(
     const double in, const double out, Problem* problem, double* a, double* b,
     double* c, double* d, double* k) {
   // Creating a cost function, with 1D residual and 5 1D parameter blocks. This
-  // is what the "1, 1, 1, 1, 1, 1" std::string below means.
+  // is what the "1, 1, 1, 1, 1, 1" string below means.
   CostFunction* cost_function =
       new AutoDiffCostFunction<PolynomialResidual, 1, 1, 1, 1, 1, 1>(
           new PolynomialResidual(in, out));

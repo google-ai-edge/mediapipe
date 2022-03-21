@@ -76,7 +76,7 @@ class Tensor {
 
  public:
   // No resources are allocated here.
-  enum class ElementType { kNone, kFloat16, kFloat32 };
+  enum class ElementType { kNone, kFloat16, kFloat32, kUInt8 };
   struct Shape {
     Shape() = default;
     Shape(std::initializer_list<int> dimensions) : dims(dimensions) {}
@@ -215,6 +215,8 @@ class Tensor {
         return 2;
       case ElementType::kFloat32:
         return sizeof(float);
+      case ElementType::kUInt8:
+        return 1;
     }
   }
   int bytes() const { return shape_.num_elements() * element_size(); }
@@ -277,6 +279,11 @@ class Tensor {
   bool NeedsHalfFloatRenderTarget() const;
 #endif  // MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30
 };
+
+int BhwcBatchFromShape(const Tensor::Shape& shape);
+int BhwcHeightFromShape(const Tensor::Shape& shape);
+int BhwcWidthFromShape(const Tensor::Shape& shape);
+int BhwcDepthFromShape(const Tensor::Shape& shape);
 
 }  // namespace mediapipe
 

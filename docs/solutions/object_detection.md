@@ -116,7 +116,7 @@ on how to build MediaPipe examples.
 
     Note: The following runs TensorFlow inference on CPU. If you would like to
     run inference on GPU (Linux only), please follow
-    [TensorFlow CUDA Support and Setup on Linux Desktop](gpu.md#tensorflow-cuda-support-and-setup-on-linux-desktop)
+    [TensorFlow CUDA Support and Setup on Linux Desktop](../getting_started/gpu_support.md#tensorflow-cuda-support-and-setup-on-linux-desktop)
     instead.
 
     To build the TensorFlow CPU inference example on desktop, run:

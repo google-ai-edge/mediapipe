@@ -355,8 +355,8 @@ TEST(GraphValidationTest, OptionalInputNotProvidedForSubgraphCalculator) {
     output_stream: "OUTPUT:output_0"
     node {
       calculator: "OptionalSideInputTestCalculator"
-      input_side_packet: "SIDEINPUT:input_0"  # std::string
-      output_stream: "OUTPUT:output_0"        # std::string
+      input_side_packet: "SIDEINPUT:input_0"  # string
+      output_stream: "OUTPUT:output_0"        # string
     }
   )pb");
 
@@ -366,7 +366,7 @@ TEST(GraphValidationTest, OptionalInputNotProvidedForSubgraphCalculator) {
     output_stream: "OUTPUT:foo_out"
     node {
       calculator: "PassThroughGraph"
-      output_stream: "OUTPUT:foo_out"  # std::string
+      output_stream: "OUTPUT:foo_out"  # string
     }
   )pb");
 
@@ -406,10 +406,10 @@ TEST(GraphValidationTest, MultipleOptionalInputsForSubgraph) {
     output_stream: "OUTPUT:output_0"
     node {
       calculator: "OptionalSideInputTestCalculator"
-      input_side_packet: "SIDEINPUT:input_0"  # std::string
+      input_side_packet: "SIDEINPUT:input_0"  # string
       input_stream: "SELECT:select"
       input_stream: "ENABLE:enable"
-      output_stream: "OUTPUT:output_0"  # std::string
+      output_stream: "OUTPUT:output_0"  # string
     }
   )pb");
 
@@ -421,7 +421,7 @@ TEST(GraphValidationTest, MultipleOptionalInputsForSubgraph) {
     node {
       calculator: "PassThroughGraph"
       input_stream: "SELECT:foo_select"
-      output_stream: "OUTPUT:foo_out"  # std::string
+      output_stream: "OUTPUT:foo_out"  # string
     }
   )pb");
 

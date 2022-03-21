@@ -2,9 +2,12 @@
 
 type: "SelfieSegmentationModelLoader"
 
-# An integer 0 or 1. Use 0 to select a general-purpose model (operating on a
-# 256x256 tensor), and 1 to select a model (operating on a 256x144 tensor) more
-# optimized for landscape images. If unspecified, functions as set to 0. (int)
+# model_selection is an integer.
+# Use 0 to select a general-purpose model (operating on a 256x256 tensor).
+# Use 1 to select a model (operating on a 256x144 tensor) more optimized for
+# landscape images.
+#
+# If unspecified, 0 is selected by default.
 input_side_packet: "MODEL_SELECTION:model_selection"
 
 # TF Lite model represented as a FlatBuffer.
@@ -39,6 +42,7 @@ node {
           }
         }
       }
+      #
     }
   }
 }

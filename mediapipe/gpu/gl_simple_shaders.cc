@@ -16,7 +16,7 @@
 
 namespace mediapipe {
 
-// This macro converts everything between its parentheses to a std::string.
+// This macro converts everything between its parentheses to a string.
 // Using this instead of R"()" preserves C-like syntax coloring in most
 // editors, which is desirable for shaders.
 #if !defined(_STRINGIFY)
@@ -28,15 +28,15 @@ namespace mediapipe {
 // for a type. The macro strips out the precision declaration on desktop GL,
 // where it's not supported.
 //
-// Note: this does not use a raw std::string because some compilers don't handle
-// raw strings inside macros correctly. It uses a macro because we want to be
-// able to concatenate strings by juxtaposition. We want to concatenate strings
-// by juxtaposition so we can export const char* static data containing the
+// Note: this does not use a raw string because some compilers don't handle raw
+// strings inside macros correctly. It uses a macro because we want to be able
+// to concatenate strings by juxtaposition. We want to concatenate strings by
+// juxtaposition so we can export const char* static data containing the
 // pre-expanded strings.
 //
 // TODO: this was written before we could rely on C++11 support.
-// Consider replacing it with constexpr std::string concatenation, or replacing
-// the static variables with functions.
+// Consider replacing it with constexpr string concatenation, or replacing the
+// static variables with functions.
 #define PRECISION_COMPAT                              \
   GLES_VERSION_COMPAT                                 \
   "#ifdef GL_ES \n"                                   \

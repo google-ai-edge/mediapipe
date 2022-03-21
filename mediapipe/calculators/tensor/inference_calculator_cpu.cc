@@ -81,6 +81,7 @@ class InferenceCalculatorCpuImpl
   Packet<TfLiteModelPtr> model_packet_;
   std::unique_ptr<tflite::Interpreter> interpreter_;
   TfLiteDelegatePtr delegate_;
+  bool has_quantized_input_;
 };
 
 absl::Status InferenceCalculatorCpuImpl::UpdateContract(
@@ -109,10 +110,18 @@ absl::Status InferenceCalculatorCpuImpl::Process(CalculatorContext* cc) {
   for (int i = 0; i < input_tensors.size(); ++i) {
     const Tensor* input_tensor = &input_tensors[i];
     auto input_tensor_view = input_tensor->GetCpuReadView();
-    auto input_tensor_buffer = input_tensor_view.buffer<float>();
-    float* local_tensor_buffer = interpreter_->typed_input_tensor<float>(i);
-    std::memcpy(local_tensor_buffer, input_tensor_buffer,
-                input_tensor->bytes());
+    if (has_quantized_input_) {
+      // TODO: Support more quantized tensor types.
+      auto input_tensor_buffer = input_tensor_view.buffer<uint8>();
+      uint8* local_tensor_buffer = interpreter_->typed_input_tensor<uint8>(i);
+      std::memcpy(local_tensor_buffer, input_tensor_buffer,
+                  input_tensor->bytes());
+    } else {
+      auto input_tensor_buffer = input_tensor_view.buffer<float>();
+      float* local_tensor_buffer = interpreter_->typed_input_tensor<float>(i);
+      std::memcpy(local_tensor_buffer, input_tensor_buffer,
+                  input_tensor->bytes());
+    }
   }
 
   // Run inference.
@@ -167,10 +176,9 @@ absl::Status InferenceCalculatorCpuImpl::LoadDelegateAndAllocateTensors(
 
   // AllocateTensors() can be called only after ModifyGraphWithDelegate.
   RET_CHECK_EQ(interpreter_->AllocateTensors(), kTfLiteOk);
-  // TODO: Support quantized tensors.
-  RET_CHECK_NE(
-      interpreter_->tensor(interpreter_->inputs()[0])->quantization.type,
-      kTfLiteAffineQuantization);
+  has_quantized_input_ =
+      interpreter_->tensor(interpreter_->inputs()[0])->quantization.type ==
+      kTfLiteAffineQuantization;
   return absl::OkStatus();
 }
 
@@ -226,7 +234,7 @@ absl::Status InferenceCalculatorCpuImpl::LoadDelegate(CalculatorContext* cc) {
 #endif  // defined(__EMSCRIPTEN__)
 
   if (use_xnnpack) {
-    TfLiteXNNPackDelegateOptions xnnpack_opts{};
+    auto xnnpack_opts = TfLiteXNNPackDelegateOptionsDefault();
     xnnpack_opts.num_threads =
         GetXnnpackNumThreads(opts_has_delegate, opts_delegate);
     delegate_ = TfLiteDelegatePtr(TfLiteXNNPackDelegateCreate(&xnnpack_opts),

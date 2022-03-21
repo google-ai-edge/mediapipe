@@ -24,6 +24,7 @@
 #include "mediapipe/framework/formats/image_frame.h"
 #include "mediapipe/gpu/gl_base.h"
 #include "mediapipe/gpu/gl_context.h"
+#include "mediapipe/gpu/gl_texture_view.h"
 #include "mediapipe/gpu/gpu_buffer_format.h"
 #include "mediapipe/gpu/gpu_buffer_storage.h"
 
@@ -33,8 +34,8 @@ class GlCalculatorHelperImpl;
 
 // Implements a GPU memory buffer as an OpenGL texture. For internal use.
 class GlTextureBuffer
-    : public mediapipe::internal::GpuBufferStorageImpl<
-          GlTextureBuffer, mediapipe::internal::ViewProvider<GlTextureView>> {
+    : public internal::GpuBufferStorageImpl<
+          GlTextureBuffer, internal::ViewProvider<GlTextureView>> {
  public:
   // This is called when the texture buffer is deleted. It is passed a sync
   // token created at that time on the GlContext. If the GlTextureBuffer has
@@ -88,13 +89,12 @@ class GlTextureBuffer
   int height() const { return height_; }
   GpuBufferFormat format() const { return format_; }
 
-  GlTextureView GetReadView(mediapipe::internal::types<GlTextureView>,
+  GlTextureView GetReadView(internal::types<GlTextureView>,
                             std::shared_ptr<GpuBuffer> gpu_buffer,
                             int plane) const override;
-  GlTextureView GetWriteView(mediapipe::internal::types<GlTextureView>,
+  GlTextureView GetWriteView(internal::types<GlTextureView>,
                              std::shared_ptr<GpuBuffer> gpu_buffer,
                              int plane) override;
-  std::unique_ptr<ImageFrame> AsImageFrame() const override;
 
   // If this texture is going to be used outside of the context that produced
   // it, this method should be called to ensure that its updated contents are

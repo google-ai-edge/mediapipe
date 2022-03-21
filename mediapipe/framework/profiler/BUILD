@@ -89,9 +89,11 @@ cc_library(
 cc_library(
     name = "graph_profiler_real",
     srcs = [
-        "gl_context_profiler.cc",
         "graph_profiler.cc",
-    ],
+    ] + select({
+        "//conditions:default": ["gl_context_profiler.cc"],
+        "//mediapipe/gpu:disable_gpu": [],
+    }),
     hdrs = [
         "graph_profiler.h",
     ],
@@ -100,31 +102,37 @@ cc_library(
     ],
     visibility = ["//visibility:private"],
     deps = [
-        ":graph_tracer",
         ":profiler_resource_util",
-        ":sharded_map",
+        ":graph_tracer",
         ":trace_buffer",
+        ":sharded_map",
         "//mediapipe/framework:calculator_cc_proto",
-        "//mediapipe/framework:calculator_context",
         "//mediapipe/framework:calculator_profile_cc_proto",
+        "//mediapipe/framework/port:integral_types",
+        "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/types:optional",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/synchronization",
+        "@com_google_absl//absl/time",
+        "//mediapipe/framework/deps:clock",
+        "//mediapipe/framework:calculator_context",
         "//mediapipe/framework:executor",
         "//mediapipe/framework:validated_graph_config",
-        "//mediapipe/framework/deps:clock",
-        "//mediapipe/framework/port:advanced_proto_lite",
-        "//mediapipe/framework/port:integral_types",
+        "//mediapipe/framework/tool:tag_map",
+        "//mediapipe/framework/tool:validate_name",
         "//mediapipe/framework/port:logging",
         "//mediapipe/framework/port:re2",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
+        "//mediapipe/framework/port:advanced_proto_lite",
         "//mediapipe/framework/tool:name_util",
-        "//mediapipe/framework/tool:tag_map",
-        "//mediapipe/framework/tool:validate_name",
-        "@com_google_absl//absl/memory",
-        "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/synchronization",
-        "@com_google_absl//absl/time",
-        "@com_google_absl//absl/types:optional",
-    ],
+    ] + select({
+        "//conditions:default": [],
+    }) + select({
+        "//conditions:default": [
+        ],
+        "//mediapipe/gpu:disable_gpu": [],
+    }),
 )
 
 cc_library(
@@ -270,6 +278,7 @@ cc_library(
     name = "profiler_resource_util",
     srcs = ["profiler_resource_util_common.cc"] + select({
         "//conditions:default": ["profiler_resource_util.cc"],
+        "//mediapipe/framework:android_no_jni": ["profiler_resource_util_android_hal.cc"],
         "//mediapipe:android": ["profiler_resource_util_android.cc"],
         "//mediapipe:ios": ["profiler_resource_util_ios.cc"],
     }),
@@ -293,6 +302,9 @@ cc_library(
         "//mediapipe/framework/deps:file_path",
     ] + select({
         "//conditions:default": [
+            "//mediapipe/framework/port:file_helpers",
+        ],
+        "//mediapipe/framework:android_no_jni": [
             "//mediapipe/framework/port:file_helpers",
         ],
         "//mediapipe:android": [

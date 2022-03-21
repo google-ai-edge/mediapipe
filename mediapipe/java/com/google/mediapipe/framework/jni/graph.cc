@@ -29,7 +29,6 @@
 #include "mediapipe/framework/port/threadpool.h"
 #include "mediapipe/framework/tool/executor_util.h"
 #include "mediapipe/framework/tool/name_util.h"
-#include "mediapipe/gpu/gpu_shared_data_internal.h"
 #include "mediapipe/gpu/graph_support.h"
 #include "mediapipe/java/com/google/mediapipe/framework/jni/class_registry.h"
 #include "mediapipe/java/com/google/mediapipe/framework/jni/jni_util.h"
@@ -41,6 +40,7 @@
 #endif  // __ANDROID__
 #if !MEDIAPIPE_DISABLE_GPU
 #include "mediapipe/gpu/egl_surface_holder.h"
+#include "mediapipe/gpu/gpu_shared_data_internal.h"
 #endif  // !MEDIAPIPE_DISABLE_GPU
 
 namespace mediapipe {
@@ -572,19 +572,21 @@ void Graph::SetGraphInputStreamAddMode(
   graph_input_stream_add_mode_ = mode;
 }
 
+#if !MEDIAPIPE_DISABLE_GPU
 mediapipe::GpuResources* Graph::GetGpuResources() const {
   return gpu_resources_.get();
 }
+#endif  // !MEDIAPIPE_DISABLE_GPU
 
 absl::Status Graph::SetParentGlContext(int64 java_gl_context) {
+#if MEDIAPIPE_DISABLE_GPU
+  LOG(FATAL) << "GPU support has been disabled in this build!";
+#else
   if (gpu_resources_) {
     return absl::AlreadyExistsError(
         "trying to set the parent GL context, but the gpu shared "
         "data has already been set up.");
   }
-#if MEDIAPIPE_DISABLE_GPU
-  LOG(FATAL) << "GPU support has been disabled in this build!";
-#else
   ASSIGN_OR_RETURN(gpu_resources_,
                    mediapipe::GpuResources::Create(
                        reinterpret_cast<EGLContext>(java_gl_context)));

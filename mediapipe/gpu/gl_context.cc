@@ -304,7 +304,7 @@ absl::Status GlContext::FinishInitialization(bool create_thread) {
       glGetIntegerv(GL_MINOR_VERSION, &gl_minor_version_);
     } else {
       // GL_MAJOR_VERSION is not supported on GL versions below 3. We have to
-      // parse the version std::string.
+      // parse the version string.
       if (!ParseGlVersion(version_string, &gl_major_version_,
                           &gl_minor_version_)) {
         LOG(WARNING) << "invalid GL_VERSION format: '" << version_string
@@ -344,7 +344,8 @@ absl::Status GlContext::FinishInitialization(bool create_thread) {
 #if GL_ES_VERSION_2_0  // This actually means "is GLES available".
     // No linear float filtering by default, check extensions.
     can_linear_filter_float_textures_ =
-        HasGlExtension("OES_texture_float_linear");
+        HasGlExtension("OES_texture_float_linear") ||
+        HasGlExtension("GL_OES_texture_float_linear");
 #else
     // Desktop GL should always allow linear filtering.
     can_linear_filter_float_textures_ = true;
@@ -548,7 +549,11 @@ class GlFenceSyncPoint : public GlSyncPoint {
       : GlSyncPoint(gl_context) {
     gl_context_->Run([this] {
       sync_ = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
+      // Defer the flush for WebGL until the glClientWaitSync call as it's a
+      // costly IPC call in Chrome's WebGL implementation.
+#ifndef __EMSCRIPTEN__
       glFlush();
+#endif
     });
   }
 
@@ -565,8 +570,17 @@ class GlFenceSyncPoint : public GlSyncPoint {
   void Wait() override {
     if (!sync_) return;
     gl_context_->Run([this] {
-      GLenum result =
-          glClientWaitSync(sync_, 0, std::numeric_limits<uint64_t>::max());
+      GLuint flags = 0;
+      uint64_t timeout = std::numeric_limits<uint64_t>::max();
+#ifdef __EMSCRIPTEN__
+      // Setting GL_SYNC_FLUSH_COMMANDS_BIT ensures flush happens before we wait
+      // on the fence. This is necessary since we defer the flush on WebGL.
+      flags = GL_SYNC_FLUSH_COMMANDS_BIT;
+      // WebGL only supports small implementation dependent timeout values. In
+      // particular, Chrome only supports a timeout of 0.
+      timeout = 0;
+#endif
+      GLenum result = glClientWaitSync(sync_, flags, timeout);
       if (result == GL_ALREADY_SIGNALED || result == GL_CONDITION_SATISFIED) {
         glDeleteSync(sync_);
         sync_ = nullptr;
@@ -592,7 +606,13 @@ class GlFenceSyncPoint : public GlSyncPoint {
     bool ready = false;
     // TODO: we should not block on the original context if possible.
     gl_context_->Run([this, &ready] {
-      GLenum result = glClientWaitSync(sync_, 0, 0);
+      GLuint flags = 0;
+#ifdef __EMSCRIPTEN__
+      // Setting GL_SYNC_FLUSH_COMMANDS_BIT ensures flush happens before we wait
+      // on the fence. This is necessary since we defer the flush on WebGL.
+      flags = GL_SYNC_FLUSH_COMMANDS_BIT;
+#endif
+      GLenum result = glClientWaitSync(sync_, flags, 0);
       if (result == GL_ALREADY_SIGNALED || result == GL_CONDITION_SATISFIED) {
         glDeleteSync(sync_);
         sync_ = nullptr;

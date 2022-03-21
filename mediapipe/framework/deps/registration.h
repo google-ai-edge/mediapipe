@@ -370,7 +370,7 @@ class GlobalFactoryRegistry {
   GlobalFactoryRegistry() = delete;
 };
 
-// Two levels of macros are required to convert __LINE__ into a std::string
+// Two levels of macros are required to convert __LINE__ into a string
 // containing the line number.
 #define REGISTRY_STATIC_VAR_INNER(var_name, line) var_name##_##line##__
 #define REGISTRY_STATIC_VAR(var_name, line) \

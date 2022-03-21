@@ -79,10 +79,9 @@ class CalculatorNode {
   // running first. If a node is not a source, this method is not called.
   Timestamp SourceProcessOrder(const CalculatorContext* cc) const;
 
-  // Retrieves a std::string name for the node.  If the node's name was set in
-  // the calculator graph config, it will be returned.  Otherwise, a
-  // human-readable std::string that uniquely identifies the node is returned,
-  // e.g.
+  // Retrieves a string name for the node.  If the node's name was set in the
+  // calculator graph config, it will be returned.  Otherwise, a human-readable
+  // string that uniquely identifies the node is returned, e.g.
   // "[FooBarCalculator with first output stream \"foo_bar_output\"]" for
   // non-sink nodes and "[FooBarCalculator with node ID: 42 and input streams:
   // \"foo_bar_input\"]" for sink nodes.  This name should be used in error
@@ -278,7 +277,7 @@ class CalculatorNode {
   void CloseInputStreams() ABSL_LOCKS_EXCLUDED(status_mutex_);
   void CloseOutputStreams(OutputStreamShardSet* outputs)
       ABSL_LOCKS_EXCLUDED(status_mutex_);
-  // Get a std::string describing the input streams.
+  // Get a string describing the input streams.
   std::string DebugInputStreamNames() const;
 
   // Returns true if all outputs will be identical to the previous graph run.

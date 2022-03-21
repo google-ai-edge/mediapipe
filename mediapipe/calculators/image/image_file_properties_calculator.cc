@@ -105,7 +105,7 @@ absl::StatusOr<ImageFileProperties> GetImageFileProperites(
 }  // namespace
 
 // Calculator to extract EXIF information from an image file. The input is
-// a std::string containing raw byte data from a file, and the output is an
+// a string containing raw byte data from a file, and the output is an
 // ImageFileProperties proto object with the relevant fields filled in.
 // The calculator accepts the input as a stream or a side packet, and can output
 // the result as a stream or a side packet. The calculator checks that if an

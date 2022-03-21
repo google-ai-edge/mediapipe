@@ -44,7 +44,7 @@ absl::Status PrintHelloWorld() {
   ASSIGN_OR_RETURN(OutputStreamPoller poller,
                    graph.AddOutputStreamPoller("out"));
   MP_RETURN_IF_ERROR(graph.StartRun({}));
-  // Give 10 input packets that contains the same std::string "Hello World!".
+  // Give 10 input packets that contains the same string "Hello World!".
   for (int i = 0; i < 10; ++i) {
     MP_RETURN_IF_ERROR(graph.AddPacketToInputStream(
         "in", MakePacket<std::string>("Hello World!").At(Timestamp(i))));
@@ -52,7 +52,7 @@ absl::Status PrintHelloWorld() {
   // Close the input stream "in".
   MP_RETURN_IF_ERROR(graph.CloseInputStream("in"));
   mediapipe::Packet packet;
-  // Get the output packets std::string.
+  // Get the output packets string.
   while (poller.Next(&packet)) {
     LOG(INFO) << packet.Get<std::string>();
   }

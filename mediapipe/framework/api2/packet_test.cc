@@ -1,5 +1,6 @@
 #include "mediapipe/framework/api2/packet.h"
 
+#include "absl/memory/memory.h"
 #include "absl/strings/str_cat.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
@@ -16,6 +17,17 @@ class LiveCheck {
 
  private:
   bool& alive_;
+};
+
+class Base {
+ public:
+  virtual ~Base() = default;
+  virtual absl::string_view name() const { return "Base"; }
+};
+
+class Derived : public Base {
+ public:
+  absl::string_view name() const override { return "Derived"; }
 };
 
 TEST(PacketTest, PacketBaseDefault) {
@@ -240,6 +252,16 @@ TEST(PacketTest, OneOfConsume) {
                                         [](std::unique_ptr<int> i) {});
   MP_EXPECT_OK(out2);
   EXPECT_TRUE(p.IsEmpty());
+}
+
+TEST(PacketTest, Polymorphism) {
+  Packet<Base> base = PacketAdopting<Base>(absl::make_unique<Derived>());
+  EXPECT_EQ(base->name(), "Derived");
+  // Since packet contents are implicitly immutable, if you need mutability the
+  // current recommendation is still to wrap the contents in a unique_ptr.
+  Packet<std::unique_ptr<Base>> mutable_base =
+      MakePacket<std::unique_ptr<Base>>(absl::make_unique<Derived>());
+  EXPECT_EQ((**mutable_base).name(), "Derived");
 }
 
 }  // namespace

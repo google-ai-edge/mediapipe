@@ -24,13 +24,21 @@ namespace mediapipe {
 
 namespace {
 
+// NORM_LANDMARKS is either the full set of landmarks for the hand, or
+// a subset of the hand landmarks (indices 0, 1, 2, 3, 5, 6, 9, 10, 13, 14,
+// 17 and 18). The latter is the legacy behavior, please just pass in
+// the full set of hand landmarks.
+//
+// TODO: update clients to just pass all the landmarks in.
 constexpr char kNormalizedLandmarksTag[] = "NORM_LANDMARKS";
 constexpr char kNormRectTag[] = "NORM_RECT";
 constexpr char kImageSizeTag[] = "IMAGE_SIZE";
+// Indices within the partial landmarks.
 constexpr int kWristJoint = 0;
 constexpr int kMiddleFingerPIPJoint = 6;
 constexpr int kIndexFingerPIPJoint = 4;
 constexpr int kRingFingerPIPJoint = 8;
+constexpr int kNumLandmarks = 21;
 constexpr float kTargetAngle = M_PI * 0.5f;
 
 inline float NormalizeRadians(float angle) {
@@ -150,8 +158,7 @@ class HandLandmarksToRectCalculator : public CalculatorBase {
 
     std::pair<int, int> image_size =
         cc->Inputs().Tag(kImageSizeTag).Get<std::pair<int, int>>();
-    const auto& landmarks =
-        cc->Inputs().Tag(kNormalizedLandmarksTag).Get<NormalizedLandmarkList>();
+    const auto landmarks = GetPartialLandmarks(cc);
     auto output_rect = absl::make_unique<NormalizedRect>();
     MP_RETURN_IF_ERROR(
         NormalizedLandmarkListToRect(landmarks, image_size, output_rect.get()));
@@ -160,6 +167,25 @@ class HandLandmarksToRectCalculator : public CalculatorBase {
         .Add(output_rect.release(), cc->InputTimestamp());
 
     return absl::OkStatus();
+  }
+
+ private:
+  NormalizedLandmarkList GetPartialLandmarks(CalculatorContext* cc) {
+    const auto& landmarks =
+        cc->Inputs().Tag(kNormalizedLandmarksTag).Get<NormalizedLandmarkList>();
+    if (landmarks.landmark_size() == kNumLandmarks) {
+      static constexpr int kPartialLandmarkIndices[]{0, 1,  2,  3,  5,  6,
+                                                     9, 10, 13, 14, 17, 18};
+      NormalizedLandmarkList partial_landmarks;
+      for (int i : kPartialLandmarkIndices) {
+        *partial_landmarks.add_landmark() = landmarks.landmark(i);
+      }
+      return partial_landmarks;
+    } else {
+      // Assume the calculator is receiving the partial landmarks directly.
+      // This is the legacy behavior.
+      return landmarks;
+    }
   }
 };
 REGISTER_CALCULATOR(HandLandmarksToRectCalculator);

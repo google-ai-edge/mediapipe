@@ -130,12 +130,17 @@ void RegisterGraphNatives(JNIEnv *env) {
   AddJNINativeMethod(&graph_methods, graph, "nativeCloseAllPacketSources",
                      "(J)V",
                      (void *)&GRAPH_METHOD(nativeCloseAllPacketSources));
+  AddJNINativeMethod(&graph_methods, graph, "nativeWaitUntilGraphIdle", "(J)V",
+                     (void *)&GRAPH_METHOD(nativeWaitUntilGraphIdle));
   AddJNINativeMethod(&graph_methods, graph, "nativeWaitUntilGraphDone", "(J)V",
                      (void *)&GRAPH_METHOD(nativeWaitUntilGraphDone));
   AddJNINativeMethod(&graph_methods, graph, "nativeReleaseGraph", "(J)V",
                      (void *)&GRAPH_METHOD(nativeReleaseGraph));
   AddJNINativeMethod(&graph_methods, graph, "nativeGetProfiler", "(J)J",
                      (void *)&GRAPH_METHOD(nativeGetProfiler));
+  AddJNINativeMethod(&graph_methods, graph, "nativeAddPacketToInputStream",
+                     "(JLjava/lang/String;JJ)V",
+                     (void *)&GRAPH_METHOD(nativeAddPacketToInputStream));
   RegisterNativesVector(env, graph_class, graph_methods);
   env->DeleteLocalRef(graph_class);
 }
@@ -229,6 +234,10 @@ void RegisterPacketCreatorNatives(JNIEnv *env) {
   AddJNINativeMethod(&packet_creator_methods, packet_creator,
                      "nativeCreateString", "(JLjava/lang/String;)J",
                      (void *)&PACKET_CREATOR_METHOD(nativeCreateString));
+  AddJNINativeMethod(
+      &packet_creator_methods, packet_creator,
+      "nativeCreateStringFromByteArray", "(J[B)J",
+      (void *)&PACKET_CREATOR_METHOD(nativeCreateStringFromByteArray));
   std::string serialized_message_name = class_registry.GetClassName(
       mediapipe::android::ClassRegistry::kProtoUtilSerializedMessageClassName);
   AddJNINativeMethod(&packet_creator_methods, packet_creator,

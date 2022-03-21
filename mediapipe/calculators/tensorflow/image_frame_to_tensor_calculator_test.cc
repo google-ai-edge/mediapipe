@@ -454,4 +454,32 @@ TEST_F(ImageFrameToTensorCalculatorTest, FixedRGBFrameWithMeanAndStddev) {
   EXPECT_EQ(actual[2], 127.0f / 128.0f);  // (255 - 128) / 128
 }
 
+TEST_F(ImageFrameToTensorCalculatorTest, FixedRGBFrameWithRepeatMeanAndStddev) {
+  runner_ = ::absl::make_unique<CalculatorRunner>(
+      "ImageFrameToTensorCalculator",
+      "[mediapipe.ImageFrameToTensorCalculatorOptions.ext]"
+      "{data_type:DT_FLOAT mean:128.0 mean:128.0 mean:128.0 "
+      " stddev:128.0 stddev:128.0 stddev:128.0}",
+      1, 1, 0);
+
+  // Create a single pixel image of fixed color #0080ff.
+  auto image_frame = ::absl::make_unique<ImageFrame>(ImageFormat::SRGB, 1, 1);
+  const uint8 color[] = {0, 128, 255};
+  SetToColor<uint8>(color, image_frame.get());
+
+  runner_->MutableInputs()->Index(0).packets.push_back(
+      Adopt(image_frame.release()).At(Timestamp(0)));
+  MP_ASSERT_OK(runner_->Run());
+
+  const auto& tensor = runner_->Outputs().Index(0).packets[0].Get<tf::Tensor>();
+  EXPECT_EQ(tensor.dtype(), tf::DT_FLOAT);
+  ASSERT_EQ(tensor.dims(), 3);
+  EXPECT_EQ(tensor.shape().dim_size(0), 1);
+  EXPECT_EQ(tensor.shape().dim_size(1), 1);
+  EXPECT_EQ(tensor.shape().dim_size(2), 3);
+  const float* actual = tensor.flat<float>().data();
+  EXPECT_EQ(actual[0], -1.0f);            // (  0 - 128) / 128
+  EXPECT_EQ(actual[1], 0.0f);             // (128 - 128) / 128
+  EXPECT_EQ(actual[2], 127.0f / 128.0f);  // (255 - 128) / 128
+}
 }  // namespace mediapipe

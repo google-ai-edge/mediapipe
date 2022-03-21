@@ -64,7 +64,7 @@ namespace mediapipe {
 // flow_packager.FinalizeTrackingContainerFormat(&container);
 // flow_packager.FinalizeTrackingProto(&proto);
 //
-// // Convert to binary std::string to stream out.
+// // Convert to binary string to stream out.
 // std::string output;
 // flow_packager.TrackingContainerFormatToBinary(container, &output);
 // // OR:
@@ -143,9 +143,8 @@ class FlowPackager {
   void SortRegionFlowFeatureList(float scale_x, float scale_y,
                                  RegionFlowFeatureList* feature_list) const;
 
-  // Removes binary encoded container from std::string and parses it to
-  // container. Returns header std::string of the parsed container. Useful for
-  // random seek.
+  // Removes binary encoded container from string and parses it to container.
+  // Returns header string of the parsed container. Useful for random seek.
   std::string SplitContainerFromString(absl::string_view* binary_data,
                                        TrackingContainer* container);
 
@@ -155,7 +154,7 @@ class FlowPackager {
                           const std::vector<int>& data_sizes,
                           MetaData* meta_data) const;
 
-  // Serializes container to binary std::string and adds it to binary_data.
+  // Serializes container to binary string and adds it to binary_data.
   void AddContainerToString(const TrackingContainer& container,
                             std::string* binary_data);
 

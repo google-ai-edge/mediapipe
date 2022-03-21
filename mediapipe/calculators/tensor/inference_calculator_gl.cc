@@ -59,8 +59,6 @@ class InferenceCalculatorGlImpl
 
   // TfLite requires us to keep the model alive as long as the interpreter is.
   Packet<TfLiteModelPtr> model_packet_;
-  std::unique_ptr<tflite::Interpreter> interpreter_;
-  TfLiteDelegatePtr delegate_;
 
 #if MEDIAPIPE_TFLITE_GL_INFERENCE
   mediapipe::GlCalculatorHelper gpu_helper_;
@@ -71,6 +69,9 @@ class InferenceCalculatorGlImpl
   mediapipe::InferenceCalculatorOptions::Delegate::Gpu::InferenceUsage
       tflite_gpu_runner_usage_;
 #endif  // MEDIAPIPE_TFLITE_GL_INFERENCE
+
+  TfLiteDelegatePtr delegate_;
+  std::unique_ptr<tflite::Interpreter> interpreter_;
 
 #if MEDIAPIPE_TFLITE_GPU_SUPPORTED
   std::vector<Tensor::Shape> output_shapes_;
@@ -252,12 +253,17 @@ absl::Status InferenceCalculatorGlImpl::Close(CalculatorContext* cc) {
     MP_RETURN_IF_ERROR(gpu_helper_.RunInGlContext([this]() -> Status {
       gpu_buffers_in_.clear();
       gpu_buffers_out_.clear();
+      // Delegate must outlive the interpreter, hence the order is important.
+      interpreter_ = nullptr;
+      delegate_ = nullptr;
       return absl::OkStatus();
     }));
+  } else {
+    // Delegate must outlive the interpreter, hence the order is important.
+    interpreter_ = nullptr;
+    delegate_ = nullptr;
   }
 
-  interpreter_ = nullptr;
-  delegate_ = nullptr;
   return absl::OkStatus();
 }
 

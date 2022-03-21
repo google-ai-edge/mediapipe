@@ -1267,5 +1267,49 @@ TEST(GraphProfilerTest, CalculatorProfileFilter) {
   EXPECT_EQ(GetCalculatorNames(config), expected_names);
 }
 
+TEST(GraphProfilerTest, CaptureProfilePopulateConfig) {
+  CalculatorGraphConfig config;
+  QCHECK(proto2::TextFormat::ParseFromString(R"(
+    profiler_config {
+      enable_profiler: true
+      trace_enabled: true
+    }
+    input_stream: "input_stream"
+    node {
+      calculator: "DummyTestCalculator"
+      input_stream: "input_stream"
+    }
+    node {
+      calculator: "DummyTestCalculator"
+      input_stream: "input_stream"
+    }
+    )",
+                                             &config));
+  CalculatorGraph graph;
+  MP_ASSERT_OK(graph.Initialize(config));
+  GraphProfile profile;
+  MP_ASSERT_OK(
+      graph.profiler()->CaptureProfile(&profile, PopulateGraphConfig::kFull));
+  EXPECT_THAT(profile.config(), Partially(EqualsProto(R"pb(
+                input_stream: "input_stream"
+                node {
+                  name: "DummyTestCalculator_1"
+                  calculator: "DummyTestCalculator"
+                  input_stream: "input_stream"
+                }
+                node {
+                  name: "DummyTestCalculator_2"
+                  calculator: "DummyTestCalculator"
+                  input_stream: "input_stream"
+                }
+              )pb")));
+  EXPECT_THAT(profile.graph_trace(),
+              ElementsAre(Partially(EqualsProto(
+                  R"pb(
+                    calculator_name: "DummyTestCalculator_1"
+                    calculator_name: "DummyTestCalculator_2"
+                  )pb"))));
+}
+
 }  // namespace
 }  // namespace mediapipe

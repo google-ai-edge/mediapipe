@@ -46,6 +46,8 @@ message RenderAnnotation {
     optional double bottom = 4;
     optional bool normalized = 5 [default = false];
     optional double rotation = 6;  // Rotation in radians.
+    // Radius of top left corner circle.
+    optional double top_left_thickness = 7;
   }
 
   message FilledRectangle {

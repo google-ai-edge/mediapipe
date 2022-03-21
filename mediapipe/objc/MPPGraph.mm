@@ -169,7 +169,7 @@ void CallFrameDelegate(void* wrapperVoid, const std::string& streamName,
       wrapper->_framesInFlight--;
       CVPixelBufferRef pixelBuffer;
       if (packetType == MPPPacketTypePixelBuffer)
-        pixelBuffer = packet.Get<mediapipe::GpuBuffer>().GetCVPixelBufferRef();
+        pixelBuffer = mediapipe::GetCVPixelBufferRef(packet.Get<mediapipe::GpuBuffer>());
       else
         pixelBuffer = packet.Get<mediapipe::Image>().GetCVPixelBufferRef();
 if ([wrapper.delegate

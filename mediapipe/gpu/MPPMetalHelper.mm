@@ -122,8 +122,7 @@ class MetalHelperLegacySupport {
 
 - (CVMetalTextureRef)copyCVMetalTextureWithGpuBuffer:(const mediapipe::GpuBuffer&)gpuBuffer
                                                plane:(size_t)plane {
-
-  CVPixelBufferRef pixel_buffer = gpuBuffer.GetCVPixelBufferRef();
+  CVPixelBufferRef pixel_buffer = mediapipe::GetCVPixelBufferRef(gpuBuffer);
   OSType pixel_format = CVPixelBufferGetPixelFormatType(pixel_buffer);
 
   MTLPixelFormat metalPixelFormat = MTLPixelFormatInvalid;
@@ -170,7 +169,7 @@ class MetalHelperLegacySupport {
 
   CVMetalTextureRef texture;
   CVReturn err = CVMetalTextureCacheCreateTextureFromImage(
-      NULL, _gpuShared.mtlTextureCache, gpuBuffer.GetCVPixelBufferRef(), NULL,
+      NULL, _gpuShared.mtlTextureCache, mediapipe::GetCVPixelBufferRef(gpuBuffer), NULL,
       metalPixelFormat, width, height, plane, &texture);
   CHECK_EQ(err, kCVReturnSuccess);
   return texture;

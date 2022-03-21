@@ -22,8 +22,6 @@
 #include "mediapipe/framework/port/canonical_errors.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status.h"
-#include "mediapipe/framework/stream_handler.pb.h"
-#include "mediapipe/framework/stream_handler/sync_set_input_stream_handler.pb.h"
 #include "mediapipe/framework/tool/container_util.h"
 #include "mediapipe/framework/tool/name_util.h"
 #include "mediapipe/framework/tool/subgraph_expansion.h"
@@ -88,12 +86,6 @@ CalculatorGraphConfig::Node* BuildDemuxNode(
     CalculatorGraphConfig* config) {
   CalculatorGraphConfig::Node* result = config->add_node();
   *result->mutable_calculator() = "SwitchDemuxCalculator";
-  *result->mutable_input_stream_handler()->mutable_input_stream_handler() =
-      "ImmediateInputStreamHandler";
-  if (container_node.has_input_stream_handler()) {
-    *result->mutable_input_stream_handler() =
-        container_node.input_stream_handler();
-  }
   return result;
 }
 
@@ -103,8 +95,6 @@ CalculatorGraphConfig::Node* BuildMuxNode(
     CalculatorGraphConfig* config) {
   CalculatorGraphConfig::Node* result = config->add_node();
   *result->mutable_calculator() = "SwitchMuxCalculator";
-  *result->mutable_input_stream_handler()->mutable_input_stream_handler() =
-      "ImmediateInputStreamHandler";
   return result;
 }
 

@@ -16,13 +16,21 @@
 #define MEDIAPIPE_FRAMEWORK_FORMATS_TENSOR_INTERNAL_H_
 
 #include <cstdint>
+#include <type_traits>
+
+#include "mediapipe/framework/tool/type_util.h"
 
 namespace mediapipe {
 
 // Generates unique view id at compile-time using FILE and LINE.
-#define TENSOR_UNIQUE_VIEW_TYPE_ID()                          \
-  static constexpr uint64_t kId = tensor_internal::FnvHash64( \
+#define TENSOR_UNIQUE_VIEW_TYPE_ID()                       \
+  static inline uint64_t kId = tensor_internal::FnvHash64( \
       __FILE__, tensor_internal::FnvHash64(TENSOR_INT_TO_STRING(__LINE__)))
+
+// Generates unique view id at compile-time using FILE and LINE and Type of the
+// template view's argument.
+#define TENSOR_UNIQUE_VIEW_TYPE_ID_T(T) \
+  static inline uint64_t kId = tool::GetTypeHash<T>();
 
 namespace tensor_internal {
 
@@ -36,6 +44,21 @@ constexpr uint64_t kFnvOffsetBias = 0xcbf29ce484222325;
 constexpr uint64_t FnvHash64(const char* str, uint64_t hash = kFnvOffsetBias) {
   return (str[0] == 0) ? hash : FnvHash64(str + 1, (hash ^ str[0]) * kFnvPrime);
 }
+
+template <typename... Ts>
+struct TypeList {
+  static constexpr std::size_t size{sizeof...(Ts)};
+};
+template <typename, typename>
+struct TypeInList {};
+template <typename T, typename... Ts>
+struct TypeInList<T, TypeList<T, Ts...>>
+    : std::integral_constant<std::size_t, 0> {};
+template <typename T, typename TOther, typename... Ts>
+struct TypeInList<T, TypeList<TOther, Ts...>>
+    : std::integral_constant<std::size_t,
+                             1 + TypeInList<T, TypeList<Ts...>>::value> {};
+
 }  // namespace tensor_internal
 }  // namespace mediapipe
 

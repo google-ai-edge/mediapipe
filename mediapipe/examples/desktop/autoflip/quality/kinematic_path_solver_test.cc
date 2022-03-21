@@ -419,6 +419,13 @@ TEST(KinematicPathSolverTest, PassSetPosition) {
   MP_ASSERT_OK(solver.SetState(400));
   MP_ASSERT_OK(solver.GetState(&state));
   EXPECT_FLOAT_EQ(state, 400);
+  // Expect to stay in bounds.
+  MP_ASSERT_OK(solver.SetState(600));
+  MP_ASSERT_OK(solver.GetState(&state));
+  EXPECT_FLOAT_EQ(state, 500);
+  MP_ASSERT_OK(solver.SetState(-100));
+  MP_ASSERT_OK(solver.GetState(&state));
+  EXPECT_FLOAT_EQ(state, 0);
 }
 TEST(KinematicPathSolverTest, PassBorderTest) {
   KinematicOptions options;

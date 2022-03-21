@@ -158,6 +158,7 @@ cc_library(
     ] + select({
         "//conditions:default": ["resource_util_default.cc"],
         "//mediapipe:android": ["resource_util_android.cc"],
+        "//mediapipe/framework:android_no_jni": ["resource_util_loonix.cc"],
         "//mediapipe:ios": ["resource_util_apple.cc"],
         "//mediapipe:macos": ["resource_util_default.cc"],
     }),
@@ -192,6 +193,7 @@ cc_library(
             "//mediapipe/util/android:asset_manager_util",
             "//mediapipe/util/android/file/base",
         ],
+        "//mediapipe/framework:android_no_jni": [],
         "//mediapipe:ios": [],
         "//mediapipe:macos": [
             "@com_google_absl//absl/flags:flag",

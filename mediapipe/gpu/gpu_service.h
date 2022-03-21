@@ -18,12 +18,9 @@
 #include "mediapipe/framework/graph_service.h"
 
 namespace mediapipe {
+
 class GpuResources;
-}  // namespace mediapipe
-
-namespace mediapipe {
-
-extern const GraphService<::mediapipe::GpuResources> kGpuService;
+extern const GraphService<GpuResources> kGpuService;
 
 }  // namespace mediapipe
 

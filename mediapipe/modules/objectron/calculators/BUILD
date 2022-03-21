@@ -383,6 +383,23 @@ cc_library(
 )
 
 cc_test(
+    name = "filter_detection_calculator_test",
+    srcs = ["filter_detection_calculator_test.cc"],
+    deps = [
+        ":filter_detection_calculator",  # build_cleaner: keep
+        "//mediapipe/framework:calculator_cc_proto",
+        "//mediapipe/framework:calculator_options_cc_proto",
+        "//mediapipe/framework:calculator_runner",
+        "//mediapipe/framework:packet",
+        "//mediapipe/framework:timestamp",
+        "//mediapipe/framework/formats:detection_cc_proto",
+        "//mediapipe/framework/port:parse_text_proto",
+        "//mediapipe/util:packet_test_util",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_test(
     name = "box_util_test",
     srcs = ["box_util_test.cc"],
     deps = [

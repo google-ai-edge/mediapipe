@@ -104,6 +104,24 @@ public class ExternalTextureConverter implements TextureFrameProducer {
   }
 
   /**
+   * Sets the new buffer pool size. This is safe to set at any time.
+   *
+   * This doesn't adjust the buffer pool right way. Instead, it behaves as follows:
+   *
+   * If the new size is smaller: Excess frames in pool are not de-allocated, but rather when frames
+   * are released, they wouldn't be added back to the pool until size restriction is met.
+   *
+   * If the new size is greater: New frames won't be created immediately. ETC anyway creates new
+   * frames when all frames in the pool are in-use, but they are only added back to the pool upon
+   * release if the size allows so.
+   *
+   * @param bufferPoolSize the number of camera frames that can enter processing simultaneously.
+   */
+  public void setBufferPoolSize(int bufferPoolSize) {
+    thread.setBufferPoolSize(bufferPoolSize);
+  }
+
+  /**
    * Sets vertical flipping of the texture, useful for conversion between coordinate systems with
    * top-left v.s. bottom-left origins. This should be called before {@link
    * #setSurfaceTexture(SurfaceTexture, int, int)} or {@link
@@ -242,7 +260,7 @@ public class ExternalTextureConverter implements TextureFrameProducer {
 
     private final Queue<PoolTextureFrame> framesAvailable = new ArrayDeque<>();
     private int framesInUse = 0;
-    private final int framesToKeep;
+    private int framesToKeep;
 
     private ExternalTextureRenderer renderer = null;
     private long nextFrameTimestampOffset = 0;
@@ -276,6 +294,10 @@ public class ExternalTextureConverter implements TextureFrameProducer {
       framesToKeep = numBuffers;
       renderer = new ExternalTextureRenderer();
       consumers = new ArrayList<>();
+    }
+
+    public void setBufferPoolSize(int bufferPoolSize) {
+      this.framesToKeep = bufferPoolSize;
     }
 
     public void setFlipY(boolean flip) {
@@ -408,6 +430,9 @@ public class ExternalTextureConverter implements TextureFrameProducer {
             // TODO: Switch to ref-counted single copy instead of making additional
             // copies blitting to separate textures each time.
             updateOutputFrame(outputFrame);
+            // Release immediately as this is not sent to a consumer so no release() would be
+            // called otherwise.
+            outputFrame.release();
           }
         }
       } finally {

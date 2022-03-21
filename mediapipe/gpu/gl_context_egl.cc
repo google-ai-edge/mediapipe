@@ -15,6 +15,8 @@
 #include <utility>
 
 #include "absl/memory/memory.h"
+#include "absl/status/status.h"
+#include "absl/status/statusor.h"
 #include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status.h"
@@ -29,6 +31,8 @@
 #if HAS_EGL
 
 namespace mediapipe {
+
+namespace {
 
 static pthread_key_t egl_release_thread_key;
 static pthread_once_t egl_release_key_once = PTHREAD_ONCE_INIT;
@@ -66,6 +70,29 @@ static void EnsureEglThreadRelease() {
   pthread_setspecific(egl_release_thread_key,
                       reinterpret_cast<void*>(0xDEADBEEF));
 }
+
+static absl::StatusOr<EGLDisplay> GetInitializedDefaultEglDisplay() {
+  EGLDisplay display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
+  RET_CHECK(display != EGL_NO_DISPLAY)
+      << "eglGetDisplay() returned error " << std::showbase << std::hex
+      << eglGetError();
+
+  EGLint major = 0;
+  EGLint minor = 0;
+  EGLBoolean egl_initialized = eglInitialize(display, &major, &minor);
+  RET_CHECK(egl_initialized) << "Unable to initialize EGL";
+  LOG(INFO) << "Successfully initialized EGL. Major : " << major
+            << " Minor: " << minor;
+
+  return display;
+}
+
+static absl::StatusOr<EGLDisplay> GetInitializedEglDisplay() {
+  auto status_or_display = GetInitializedDefaultEglDisplay();
+  return status_or_display;
+}
+
+}  // namespace
 
 GlContext::StatusOrGlContext GlContext::Create(std::nullptr_t nullp,
                                                bool create_thread) {
@@ -149,18 +176,7 @@ absl::Status GlContext::CreateContextInternal(EGLContext share_context,
 }
 
 absl::Status GlContext::CreateContext(EGLContext share_context) {
-  EGLint major = 0;
-  EGLint minor = 0;
-
-  display_ = eglGetDisplay(EGL_DEFAULT_DISPLAY);
-  RET_CHECK(display_ != EGL_NO_DISPLAY)
-      << "eglGetDisplay() returned error " << std::showbase << std::hex
-      << eglGetError();
-
-  EGLBoolean success = eglInitialize(display_, &major, &minor);
-  RET_CHECK(success) << "Unable to initialize EGL";
-  LOG(INFO) << "Successfully initialized EGL. Major : " << major
-            << " Minor: " << minor;
+  ASSIGN_OR_RETURN(display_, GetInitializedEglDisplay());
 
   auto status = CreateContextInternal(share_context, 3);
   if (!status.ok()) {

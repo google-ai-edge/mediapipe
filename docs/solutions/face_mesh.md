@@ -20,34 +20,34 @@ nav_order: 2
 
 ## Overview
 
-MediaPipe Face Mesh is a face geometry solution that estimates 468 3D face
-landmarks in real-time even on mobile devices. It employs machine learning (ML)
-to infer the 3D surface geometry, requiring only a single camera input without
-the need for a dedicated depth sensor. Utilizing lightweight model architectures
-together with GPU acceleration throughout the pipeline, the solution delivers
-real-time performance critical for live experiences.
+MediaPipe Face Mesh is a solution that estimates 468 3D face landmarks in
+real-time even on mobile devices. It employs machine learning (ML) to infer the
+3D facial surface, requiring only a single camera input without the need for a
+dedicated depth sensor. Utilizing lightweight model architectures together with
+GPU acceleration throughout the pipeline, the solution delivers real-time
+performance critical for live experiences.
 
-Additionally, the solution is bundled with the Face Geometry module that bridges
-the gap between the face landmark estimation and useful real-time augmented
-reality (AR) applications. It establishes a metric 3D space and uses the face
-landmark screen positions to estimate face geometry within that space. The face
-geometry data consists of common 3D geometry primitives, including a face pose
-transformation matrix and a triangular face mesh. Under the hood, a lightweight
-statistical analysis method called
+Additionally, the solution is bundled with the Face Transform module that
+bridges the gap between the face landmark estimation and useful real-time
+augmented reality (AR) applications. It establishes a metric 3D space and uses
+the face landmark screen positions to estimate a face transform within that
+space. The face transform data consists of common 3D primitives, including a
+face pose transformation matrix and a triangular face mesh. Under the hood, a
+lightweight statistical analysis method called
 [Procrustes Analysis](https://en.wikipedia.org/wiki/Procrustes_analysis) is
 employed to drive a robust, performant and portable logic. The analysis runs on
 CPU and has a minimal speed/memory footprint on top of the ML model inference.
 
 ![face_mesh_ar_effects.gif](../images/face_mesh_ar_effects.gif) |
 :-------------------------------------------------------------: |
-*Fig 1. AR effects utilizing facial surface geometry.*          |
+*Fig 1. AR effects utilizing the 3D facial surface.*            |
 
 ## ML Pipeline
 
 Our ML pipeline consists of two real-time deep neural network models that work
 together: A detector that operates on the full image and computes face locations
 and a 3D face landmark model that operates on those locations and predicts the
-approximate surface geometry via regression. Having the face accurately cropped
+approximate 3D surface via regression. Having the face accurately cropped
 drastically reduces the need for common data augmentations like affine
 transformations consisting of rotations, translation and scale changes. Instead
 it allows the network to dedicate most of its capacity towards coordinate
@@ -55,8 +55,8 @@ prediction accuracy. In addition, in our pipeline the crops can also be
 generated based on the face landmarks identified in the previous frame, and only
 when the landmark model could no longer identify face presence is the face
 detector invoked to relocalize the face. This strategy is similar to that
-employed in our [MediaPipe Hands](./hands.md) solution, which uses a palm detector
-together with a hand landmark model.
+employed in our [MediaPipe Hands](./hands.md) solution, which uses a palm
+detector together with a hand landmark model.
 
 The pipeline is implemented as a MediaPipe
 [graph](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/face_mesh/face_mesh_mobile.pbtxt)
@@ -128,7 +128,7 @@ about the model in this [paper](https://arxiv.org/abs/2006.10962).
 :---------------------------------------------------------------------------: |
 *Fig 3. Attention Mesh: Overview of model architecture.*                      |
 
-## Face Geometry Module
+## Face Transform Module
 
 The [Face Landmark Model](#face-landmark-model) performs a single-camera face landmark
 detection in the screen coordinate space: the X- and Y- coordinates are
@@ -140,7 +140,7 @@ enable the full spectrum of augmented reality (AR) features like aligning a
 virtual 3D object with a detected face.
 
 The
-[Face Geometry module](https://github.com/google/mediapipe/tree/master/mediapipe/modules/face_geometry)
+[Face Transform module](https://github.com/google/mediapipe/tree/master/mediapipe/modules/face_geometry)
 moves away from the screen coordinate space towards a metric 3D space and
 provides necessary primitives to handle a detected face as a regular 3D object.
 By design, you'll be able to use a perspective camera to project the final 3D
@@ -151,7 +151,7 @@ landmark positions are not changed.
 
 #### Metric 3D Space
 
-The **Metric 3D space** established within the Face Geometry module is a
+The **Metric 3D space** established within the Face Transform module is a
 right-handed orthonormal metric 3D coordinate space. Within the space, there is
 a **virtual perspective camera** located at the space origin and pointed in the
 negative direction of the Z-axis. In the current pipeline, it is assumed that
@@ -184,11 +184,11 @@ functions:
 
 ### Components
 
-#### Geometry Pipeline
+#### Transform Pipeline
 
-The **Geometry Pipeline** is a key component, which is responsible for
-estimating face geometry objects within the Metric 3D space. On each frame, the
-following steps are executed in the given order:
+The **Transform Pipeline** is a key component, which is responsible for
+estimating the face transform objects within the Metric 3D space. On each frame,
+the following steps are executed in the given order:
 
 -   Face landmark screen coordinates are converted into the Metric 3D space
     coordinates;
@@ -199,12 +199,12 @@ following steps are executed in the given order:
     positions (XYZ), while both the vertex texture coordinates (UV) and the
     triangular topology are inherited from the canonical face model.
 
-The geometry pipeline is implemented as a MediaPipe
+The transform pipeline is implemented as a MediaPipe
 [calculator](https://github.com/google/mediapipe/tree/master/mediapipe/modules/face_geometry/geometry_pipeline_calculator.cc).
-For your convenience, the face geometry pipeline calculator is bundled together
-with corresponding metadata into a unified MediaPipe
+For your convenience, this calculator is bundled together with corresponding
+metadata into a unified MediaPipe
 [subgraph](https://github.com/google/mediapipe/tree/master/mediapipe/modules/face_geometry/face_geometry_from_landmarks.pbtxt).
-The face geometry format is defined as a Protocol Buffer
+The face transform format is defined as a Protocol Buffer
 [message](https://github.com/google/mediapipe/tree/master/mediapipe/modules/face_geometry/protos/face_geometry.proto).
 
 #### Effect Renderer
@@ -227,7 +227,7 @@ The effect renderer is implemented as a MediaPipe
 
 | ![face_geometry_renderer.gif](../images/face_geometry_renderer.gif)     |
 | :---------------------------------------------------------------------: |
-| *Fig 5. An example of face effects rendered by the Face Geometry Effect Renderer.* |
+| *Fig 5. An example of face effects rendered by the Face Transform Effect Renderer.* |
 
 ## Solution APIs
 

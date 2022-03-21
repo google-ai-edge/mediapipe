@@ -59,7 +59,7 @@ cc_library(
         "//mediapipe/calculators/core:gate_calculator",
         "//mediapipe/calculators/core:pass_through_calculator",
         "//mediapipe/calculators/core:side_packet_to_stream_calculator",
-        "//mediapipe/calculators/core:split_landmarks_calculator",
+        "//mediapipe/calculators/core:split_proto_list_calculator",
         "//mediapipe/calculators/core:string_to_int_calculator",
         "//mediapipe/calculators/image:image_transformation_calculator",
         "//mediapipe/calculators/util:detection_unique_id_calculator",

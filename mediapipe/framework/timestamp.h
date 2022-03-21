@@ -86,7 +86,7 @@ class Timestamp {
   // in microseconds, but this function should be preferred over Value() in case
   // the underlying representation changes.
   int64 Microseconds() const { return Value(); }
-  // This provides a human readable std::string for the special values.
+  // This provides a human readable string for the special values.
   std::string DebugString() const;
 
   // For use by framework. Clients or Calculator implementations should not call

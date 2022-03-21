@@ -154,7 +154,7 @@ void BoxDetectorInterface::DetectAndAddBoxFromFeatures(
   }
 
   for (int idx = 0; idx < size_before_add; ++idx) {
-    if ((options_.has_detect_every_n_frame() > 0 &&
+    if ((options_.detect_every_n_frame() > 0 &&
          cnt_detect_called_ % options_.detect_every_n_frame() == 0) ||
         !tracked[idx] ||
         (options_.detect_out_of_fov() && has_been_out_of_fov_[idx])) {

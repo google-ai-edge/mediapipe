@@ -302,10 +302,9 @@ class TensorFlowInferenceCalculator : public CalculatorBase {
         << "To use recurrent_tag_pairs, batch_size must be 1.";
     for (const auto& tag_pair : options_.recurrent_tag_pair()) {
       const std::vector<std::string> tags = absl::StrSplit(tag_pair, ':');
-      RET_CHECK_EQ(tags.size(), 2)
-          << "recurrent_tag_pair must be a colon "
-             "separated std::string with two components: "
-          << tag_pair;
+      RET_CHECK_EQ(tags.size(), 2) << "recurrent_tag_pair must be a colon "
+                                      "separated string with two components: "
+                                   << tag_pair;
       RET_CHECK(mediapipe::ContainsKey(tag_to_tensor_map_, tags[0]))
           << "Can't find tag '" << tags[0] << "' in signature "
           << options_.signature_name();

@@ -23,7 +23,9 @@
 #endif  // defined(__APPLE__)
 
 #include "mediapipe/framework/formats/image_format.pb.h"
+#if !MEDIAPIPE_DISABLE_GPU
 #include "mediapipe/gpu/gl_base.h"
+#endif  // !MEDIAPIPE_DISABLE_GPU
 
 // The behavior of multi-char constants is implementation-defined, so out of an
 // excess of caution we define them in this portable way.
@@ -32,9 +34,12 @@
 
 namespace mediapipe {
 
+using mediapipe::ImageFormat;
+
 enum class GpuBufferFormat : uint32_t {
   kUnknown = 0,
   kBGRA32 = MEDIAPIPE_FOURCC('B', 'G', 'R', 'A'),
+  kRGBA32 = MEDIAPIPE_FOURCC('R', 'G', 'B', 'A'),
   kGrayFloat32 = MEDIAPIPE_FOURCC('L', '0', '0', 'f'),
   kGrayHalf16 = MEDIAPIPE_FOURCC('L', '0', '0', 'h'),
   kOneComponent8 = MEDIAPIPE_FOURCC('L', '0', '0', '8'),
@@ -49,6 +54,7 @@ enum class GpuBufferFormat : uint32_t {
   kRGBAFloat128 = MEDIAPIPE_FOURCC('R', 'G', 'f', 'A'),
 };
 
+#if !MEDIAPIPE_DISABLE_GPU
 // TODO: make this more generally applicable.
 enum class GlVersion {
   kGL = 1,
@@ -68,6 +74,7 @@ struct GlTextureInfo {
 const GlTextureInfo& GlTextureInfoForGpuBufferFormat(GpuBufferFormat format,
                                                      int plane,
                                                      GlVersion gl_version);
+#endif  // !MEDIAPIPE_DISABLE_GPU
 
 ImageFormat::Format ImageFormatForGpuBufferFormat(GpuBufferFormat format);
 GpuBufferFormat GpuBufferFormatForImageFormat(ImageFormat::Format format);
@@ -78,6 +85,8 @@ inline OSType CVPixelFormatForGpuBufferFormat(GpuBufferFormat format) {
   switch (format) {
     case GpuBufferFormat::kBGRA32:
       return kCVPixelFormatType_32BGRA;
+    case GpuBufferFormat::kRGBA32:
+      return kCVPixelFormatType_32RGBA;
     case GpuBufferFormat::kGrayHalf16:
       return kCVPixelFormatType_OneComponent16Half;
     case GpuBufferFormat::kGrayFloat32:
@@ -112,6 +121,8 @@ inline GpuBufferFormat GpuBufferFormatForCVPixelFormat(OSType format) {
   switch (format) {
     case kCVPixelFormatType_32BGRA:
       return GpuBufferFormat::kBGRA32;
+    case kCVPixelFormatType_32RGBA:
+      return GpuBufferFormat::kRGBA32;
     case kCVPixelFormatType_DepthFloat32:
       return GpuBufferFormat::kGrayFloat32;
     case kCVPixelFormatType_OneComponent16Half:

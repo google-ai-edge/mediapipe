@@ -24,4 +24,7 @@ message SwitchContainerOptions {
 
   // Activates channel 1 for enable = true, channel 0 otherwise.
   optional bool enable = 4;
+
+  // Use DefaultInputStreamHandler for muxing & demuxing.
+  optional bool synchronize_io = 5;
 }

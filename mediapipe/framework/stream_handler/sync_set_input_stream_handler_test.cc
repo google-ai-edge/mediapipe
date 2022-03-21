@@ -47,8 +47,8 @@ std::tuple<std::string, Timestamp, std::vector<std::string>> CommandTuple(
   return std::make_tuple(stream, timestamp, expected);
 }
 
-// Function to take the inputs and produce a diagnostic output std::string
-// and output a packet with a diagnostic output std::string which includes
+// Function to take the inputs and produce a diagnostic output string
+// and output a packet with a diagnostic output string which includes
 // the input timestamp and the ids of each input which is present.
 absl::Status InputsToDebugString(const InputStreamShardSet& inputs,
                                  OutputStreamShardSet* outputs) {

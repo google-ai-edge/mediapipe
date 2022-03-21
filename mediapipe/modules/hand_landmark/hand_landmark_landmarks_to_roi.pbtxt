@@ -11,35 +11,11 @@ input_stream: "IMAGE_SIZE:image_size"
 # ROI according to landmarks. (NormalizedRect)
 output_stream: "ROI:roi"
 
-# Extracts a subset of the hand landmarks that are relatively more stable across
-# frames (e.g. comparing to finger tips) for computing the bounding box. The box
-# will later be expanded to contain the entire hand. In this approach, it is
-# more robust to drastically changing hand size.
-# The landmarks extracted are: wrist, MCP/PIP of five fingers.
-node {
-  calculator: "SplitNormalizedLandmarkListCalculator"
-  input_stream: "landmarks"
-  output_stream: "partial_landmarks"
-  options: {
-    [mediapipe.SplitVectorCalculatorOptions.ext] {
-      ranges: { begin: 0 end: 4 }
-      ranges: { begin: 5 end: 7 }
-      ranges: { begin: 9 end: 11 }
-      ranges: { begin: 13 end: 15 }
-      ranges: { begin: 17 end: 19 }
-      combine_outputs: true
-    }
-  }
-}
-
 # Converts the hand landmarks into a rectangle (normalized by image size)
-# that encloses the hand. The calculator uses a subset of all hand landmarks
-# extracted from SplitNormalizedLandmarkListCalculator above to
-# calculate the bounding box and the rotation of the output rectangle. Please
-# see the comments in the calculator for more detail.
+# that encloses the hand.
 node {
   calculator: "HandLandmarksToRectCalculator"
-  input_stream: "NORM_LANDMARKS:partial_landmarks"
+  input_stream: "NORM_LANDMARKS:landmarks"
   input_stream: "IMAGE_SIZE:image_size"
   output_stream: "NORM_RECT:hand_rect_from_landmarks"
 }

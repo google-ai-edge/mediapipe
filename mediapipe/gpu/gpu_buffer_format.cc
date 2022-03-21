@@ -28,6 +28,7 @@ namespace mediapipe {
 #define GL_HALF_FLOAT 0x140B
 #endif  // GL_HALF_FLOAT
 
+#if !MEDIAPIPE_DISABLE_GPU
 #ifdef GL_ES_VERSION_2_0
 static void AdaptGlTextureInfoForGLES2(GlTextureInfo* info) {
   switch (info->gl_internal_format) {
@@ -184,6 +185,7 @@ const GlTextureInfo& GlTextureInfoForGpuBufferFormat(GpuBufferFormat format,
   CHECK_LT(plane, planes.size()) << "invalid plane number";
   return planes[plane];
 }
+#endif  // MEDIAPIPE_DISABLE_GPU
 
 ImageFormat::Format ImageFormatForGpuBufferFormat(GpuBufferFormat format) {
   switch (format) {
@@ -202,6 +204,8 @@ ImageFormat::Format ImageFormatForGpuBufferFormat(GpuBufferFormat format) {
       return ImageFormat::SRGB;
     case GpuBufferFormat::kTwoComponentFloat32:
       return ImageFormat::VEC32F2;
+    case GpuBufferFormat::kRGBA32:
+      // TODO: this likely maps to ImageFormat::SRGBA
     case GpuBufferFormat::kGrayHalf16:
     case GpuBufferFormat::kOneComponent8Red:
     case GpuBufferFormat::kTwoComponent8:

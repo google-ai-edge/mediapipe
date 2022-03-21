@@ -266,6 +266,7 @@ absl::Status TensorsToDetectionsCalculator::ProcessCPU(
     auto raw_box_tensor = &input_tensors[0];
     RET_CHECK_EQ(raw_box_tensor->shape().dims.size(), 3);
     RET_CHECK_EQ(raw_box_tensor->shape().dims[0], 1);
+    RET_CHECK_GT(num_boxes_, 0) << "Please set num_boxes in calculator options";
     RET_CHECK_EQ(raw_box_tensor->shape().dims[1], num_boxes_);
     RET_CHECK_EQ(raw_box_tensor->shape().dims[2], num_coords_);
     auto raw_score_tensor = &input_tensors[1];
@@ -385,6 +386,7 @@ absl::Status TensorsToDetectionsCalculator::ProcessGPU(
     CalculatorContext* cc, std::vector<Detection>* output_detections) {
   const auto& input_tensors = *kInTensors(cc);
   RET_CHECK_GE(input_tensors.size(), 2);
+  RET_CHECK_GT(num_boxes_, 0) << "Please set num_boxes in calculator options";
 #ifndef MEDIAPIPE_DISABLE_GL_COMPUTE
 
   MP_RETURN_IF_ERROR(gpu_helper_.RunInGlContext([this, &input_tensors, &cc,
@@ -563,7 +565,6 @@ absl::Status TensorsToDetectionsCalculator::LoadOptions(CalculatorContext* cc) {
   // Get calculator options specified in the graph.
   options_ = cc->Options<::mediapipe::TensorsToDetectionsCalculatorOptions>();
   RET_CHECK(options_.has_num_classes());
-  RET_CHECK(options_.has_num_boxes());
   RET_CHECK(options_.has_num_coords());
 
   num_classes_ = options_.num_classes();

@@ -14,10 +14,12 @@
 
 #include <memory>
 
+#include "absl/memory/memory.h"
 #include "mediapipe/framework/formats/image_frame.h"
 #include "mediapipe/gpu/gl_calculator_helper_impl.h"
 #include "mediapipe/gpu/gpu_buffer_format.h"
 #include "mediapipe/gpu/gpu_shared_data_internal.h"
+#include "mediapipe/gpu/image_frame_view.h"
 
 namespace mediapipe {
 
@@ -117,18 +119,42 @@ GlTexture GlCalculatorHelperImpl::CreateSourceTexture(
 
 GlTexture GlCalculatorHelperImpl::CreateSourceTexture(
     const ImageFrame& image_frame) {
-  auto gpu_buffer = GpuBuffer::CopyingImageFrame(image_frame);
+  auto gpu_buffer = GpuBufferCopyingImageFrame(image_frame);
   return MapGpuBuffer(gpu_buffer, gpu_buffer.GetReadView<GlTextureView>(0));
+}
+
+GpuBuffer GlCalculatorHelperImpl::GpuBufferWithImageFrame(
+    std::shared_ptr<ImageFrame> image_frame) {
+  return GpuBuffer(
+      std::make_shared<GpuBufferStorageImageFrame>(std::move(image_frame)));
+}
+
+GpuBuffer GlCalculatorHelperImpl::GpuBufferCopyingImageFrame(
+    const ImageFrame& image_frame) {
+#if MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
+  auto maybe_buffer = CreateCVPixelBufferCopyingImageFrame(image_frame);
+  // Converts absl::StatusOr to absl::Status since CHECK_OK() currently only
+  // deals with absl::Status in MediaPipe OSS.
+  CHECK_OK(maybe_buffer.status());
+  return GpuBuffer(std::move(maybe_buffer).value());
+#else
+  return GpuBuffer(GlTextureBuffer::Create(image_frame));
+#endif  // !MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
 }
 
 template <>
 std::unique_ptr<ImageFrame> GlTexture::GetFrame<ImageFrame>() const {
-  return view_.gpu_buffer().AsImageFrame();
+  view_->DoneWriting();
+  std::shared_ptr<const ImageFrame> view =
+      view_->gpu_buffer().GetReadView<ImageFrame>();
+  auto copy = absl::make_unique<ImageFrame>();
+  copy->CopyFrom(*view, ImageFrame::kDefaultAlignmentBoundary);
+  return copy;
 }
 
 template <>
 std::unique_ptr<GpuBuffer> GlTexture::GetFrame<GpuBuffer>() const {
-  auto gpu_buffer = view_.gpu_buffer();
+  auto gpu_buffer = view_->gpu_buffer();
 #ifdef __EMSCRIPTEN__
   // When WebGL is used, the GL context may be spontaneously lost which can
   // cause GpuBuffer allocations to fail. In that case, return a dummy buffer
@@ -137,7 +163,7 @@ std::unique_ptr<GpuBuffer> GlTexture::GetFrame<GpuBuffer>() const {
     return std::make_unique<GpuBuffer>();
   }
 #endif  // __EMSCRIPTEN__
-  view_.DoneWriting();
+  view_->DoneWriting();
   return absl::make_unique<GpuBuffer>(gpu_buffer);
 }
 

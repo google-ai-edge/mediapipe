@@ -71,6 +71,9 @@ struct PacketInfo {
 // For testing
 class GraphProfilerTestPeer;
 
+// GraphProfiler::CaptureProfile option, see the method for details.
+enum class PopulateGraphConfig { kNo, kFull };
+
 // GraphProfiler keeps track of the following in microseconds based on the
 // profiler clock, for each calculator
 // - Open(), Process(), and Close() runtime.
@@ -145,7 +148,14 @@ class GraphProfiler : public std::enable_shared_from_this<ProfilingContext> {
 
   // Records recent profiling and tracing data.  Includes events since the
   // previous call to CaptureProfile.
-  absl::Status CaptureProfile(GraphProfile* result);
+  //
+  // If `populate_config` is `kFull`, `config` field of the resulting profile
+  // will contain canonicalized config of the profiled graph, and
+  // `graph_trace.calculator_name` will contain node names referring to that
+  // config. Both fields are left empty if the option is set to `kNo`.
+  absl::Status CaptureProfile(
+      GraphProfile* result,
+      PopulateGraphConfig populate_config = PopulateGraphConfig::kNo);
 
   // Writes recent profiling and tracing data to a file specified in the
   // ProfilerConfig.  Includes events since the previous call to WriteProfile.
@@ -356,6 +366,85 @@ class ProfilingContext : public GraphProfiler {
 
 // For now, OSS always uses GlContextProfilerStub.
 // TODO: Switch to GlContextProfiler when GlContext is moved to OSS.
+#define MEDIAPIPE_DISABLE_GPU_PROFILER 1
+
+// GlContextProfiler keeps track of all timestamp queries within a specific
+// GlContext object. When created, the GlContextProfiler must be initialized
+// before marking timestamps. Finally, when GlContext is no longer interested
+// in marking timestamps or is about to be destroyed, Finish() must be called
+// to complete all pending time queries and detach the timer from the GlContext.
+// Note that the GlContextProfiler must be created and initialized within a
+// valid GlContext object.
+#if !MEDIAPIPE_DISABLE_GPU_PROFILER
+class GlContextProfiler {
+ public:
+  explicit GlContextProfiler(
+      std::shared_ptr<ProfilingContext> profiling_context)
+      : profiling_context_(profiling_context) {}
+
+  // Not copyable or movable.
+  GlContextProfiler(const GlContextProfiler&) = delete;
+  GlContextProfiler& operator=(const GlContextProfiler&) = delete;
+
+  // Add a GlTimingInfo object to the collection of pending timestamp queries
+  // associated with a specific graph node_id, packet input_timestamp and mark
+  // if it is a start or stop event. When a stop event is marked, this function
+  // blocks on the corresponding start event to complete.
+  void MarkTimestamp(int node_id, Timestamp input_timestamp, bool is_finish);
+
+  // Complete all pending timing queries and detach the timer from the
+  // GlContext.
+  void LogAllTimestamps();
+
+ private:
+  // Store GlTimeQuery and the corresponding TraceEvent object that should be
+  // populated when the query completes together.
+  struct GlTimingInfo {
+    GlTimeQuery time_query;
+    TraceEvent trace_event;
+  };
+
+  // Setup the timer for marking GPU timestamps. If successful in setup, return
+  // true otherwise return false to indicate that timing measurment is not
+  // supported.
+  bool Initialize();
+
+  absl::Time TimeNow();
+
+  // Calibrate the GPU timer w.r.t. the CPU clock. If calibration is fails,
+  // timing_measurement_supported_ is set to false.
+  void CalibrateTimer(bool recalibrate);
+
+  // Log a TraceEvent object to represent if the GPU calibration period has
+  // started or just ended.
+  void LogCalibrationEvent(bool started, absl::Time time);
+
+  // Log TraceEvent objects for completed time queries. If the parameter wait is
+  // set to true, wait for all time queries to complete before returning.
+  void RetireReadyGlTimings(bool wait = false);
+
+  // Get the TraceEvent object containing the timestamp recorded by the GPU if
+  // the provided query was fulfilled. If it is still pending and wait is false,
+  // return absl::nullopt.
+  absl::optional<TraceEvent> GetTimeFromQuery(
+      std::unique_ptr<GlTimingInfo>& query, bool wait);
+
+  std::shared_ptr<ProfilingContext> profiling_context_;
+  GlSimpleTimer gl_timer_;
+  bool checked_timing_supported_ = false;
+  bool timing_measurement_supported_ = false;
+  std::deque<std::unique_ptr<GlTimingInfo>> pending_gl_times_;
+  std::unique_ptr<GlTimingInfo> gl_start_query_;
+};
+
+// The API class used to access the preferred GlContext profiler, such as
+// GlContextProfiler or GlContextProfilerStub. GlProfilingHelper is defined as
+// a class rather than a typedef in order to support clients that refer
+// to it only as a forward declaration.
+class GlProfilingHelper : public GlContextProfiler {
+  using GlContextProfiler::GlContextProfiler;
+};
+#else   // MEDIAPIPE_DISABLE_GPU_PROFILER
 class GlContextProfilerStub {
  public:
   explicit GlContextProfilerStub(
@@ -370,7 +459,8 @@ class GlContextProfilerStub {
 class GlProfilingHelper : public GlContextProfilerStub {
   using GlContextProfilerStub::GlContextProfilerStub;
 };
-
+#endif  // !MEDIAPIPE_DISABLE_GPU_PROFILER
+#undef MEDIAPIPE_DISABLE_GPU_PROFILER
 }  // namespace mediapipe
 
 #endif  // MEDIAPIPE_FRAMEWORK_PROFILER_GRAPH_PROFILER_H_

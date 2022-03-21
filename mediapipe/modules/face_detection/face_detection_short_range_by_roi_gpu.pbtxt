@@ -1,5 +1,5 @@
-# MediaPipe graph to detect faces. (CPU input, and inference is executed on
-# CPU.)
+# MediaPipe graph to detect faces. (GPU input, and inference is executed on
+# GPU.)
 #
 # It is required that "face_detection_short_range.tflite" is available at
 # "mediapipe/modules/face_detection/face_detection_short_range.tflite"

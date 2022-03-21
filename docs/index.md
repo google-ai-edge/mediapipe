@@ -136,8 +136,8 @@ run code search using
 
 ## Community
 
-*   [Awesome MediaPipe](https://mediapipe.org) - A curated list of awesome
-    MediaPipe related frameworks, libraries and software
+*   [Awesome MediaPipe](https://mediapipe.page.link/awesome-mediapipe) - A
+    curated list of awesome MediaPipe related frameworks, libraries and software
 *   [Slack community](https://mediapipe.page.link/joinslack) for MediaPipe users
 *   [Discuss](https://groups.google.com/forum/#!forum/mediapipe) - General
     community discussion around MediaPipe

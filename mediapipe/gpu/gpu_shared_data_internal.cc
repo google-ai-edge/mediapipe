@@ -117,7 +117,8 @@ absl::Status GpuResources::PrepareGpuNode(CalculatorNode* node) {
                           (node_type == "GpuBufferToImageFrameCalculator") ||
                           (node_type == "GlSurfaceSinkCalculator");
 
-  const auto& options = node->GetCalculatorState().Options<GlContextOptions>();
+  const auto& options =
+      node->GetCalculatorState().Options<mediapipe::GlContextOptions>();
   if (options.has_gl_context_name() && !options.gl_context_name().empty()) {
     context_key = absl::StrCat("user:", options.gl_context_name());
   } else if (gets_own_context) {

@@ -71,6 +71,8 @@ const std::string MaybeConvertSignatureToTag(
                    [](unsigned char c) { return std::toupper(c); });
     output = absl::StrReplaceAll(output, {{"/", "_"}});
     output = absl::StrReplaceAll(output, {{"-", "_"}});
+    output = absl::StrReplaceAll(output, {{".", "_"}});
+    LOG(INFO) << "Renamed TAG from: " << name << " to " << output;
     return output;
   } else {
     return name;

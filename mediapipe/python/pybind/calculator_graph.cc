@@ -392,7 +392,7 @@ void CalculatorGraphSubmodule(pybind11::module* module) {
         }
         return std::string();
       },
-      R"doc(Combines error messages as a single std::string.
+      R"doc(Combines error messages as a single string.
 
   Examples:
     if graph.has_error():

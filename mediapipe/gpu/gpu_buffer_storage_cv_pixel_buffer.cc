@@ -1,6 +1,9 @@
 #include "mediapipe/gpu/gpu_buffer_storage_cv_pixel_buffer.h"
 
+#include <memory>
+
 #include "mediapipe/gpu/gl_context.h"
+#include "mediapipe/gpu/gpu_buffer_storage_image_frame.h"
 #include "mediapipe/objc/util.h"
 
 namespace mediapipe {
@@ -11,9 +14,20 @@ typedef CVOpenGLTextureRef CVTextureType;
 typedef CVOpenGLESTextureRef CVTextureType;
 #endif  // TARGET_OS_OSX
 
-GlTextureView GpuBufferStorageCvPixelBuffer::GetReadView(
-    mediapipe::internal::types<GlTextureView>,
-    std::shared_ptr<GpuBuffer> gpu_buffer, int plane) const {
+GpuBufferStorageCvPixelBuffer::GpuBufferStorageCvPixelBuffer(
+    int width, int height, GpuBufferFormat format) {
+  OSType cv_format = CVPixelFormatForGpuBufferFormat(format);
+  CHECK_NE(cv_format, -1) << "unsupported pixel format";
+  CVPixelBufferRef buffer;
+  CVReturn err =
+      CreateCVPixelBufferWithoutPool(width, height, cv_format, &buffer);
+  CHECK(!err) << "Error creating pixel buffer: " << err;
+  adopt(buffer);
+}
+
+GlTextureView GpuBufferStorageCvPixelBuffer::GetTexture(
+    std::shared_ptr<GpuBuffer> gpu_buffer, int plane,
+    GlTextureView::DoneWritingFn done_writing) const {
   CVReturn err;
   auto gl_context = GlContext::GetCurrent();
   CHECK(gl_context);
@@ -29,8 +43,8 @@ GlTextureView GpuBufferStorageCvPixelBuffer::GetReadView(
   return GlTextureView(
       gl_context.get(), CVOpenGLTextureGetTarget(*cv_texture),
       CVOpenGLTextureGetName(*cv_texture), width(), height(), *this, plane,
-      [cv_texture](
-          mediapipe::GlTextureView&) { /* only retains cv_texture */ });
+      [cv_texture](mediapipe::GlTextureView&) { /* only retains cv_texture */ },
+      done_writing);
 #else
   const GlTextureInfo info = GlTextureInfoForGpuBufferFormat(
       format(), plane, gl_context->GetGlVersion());
@@ -49,23 +63,31 @@ GlTextureView GpuBufferStorageCvPixelBuffer::GetReadView(
       CVOpenGLESTextureGetName(*cv_texture), width(), height(),
       std::move(gpu_buffer), plane,
       [cv_texture](mediapipe::GlTextureView&) { /* only retains cv_texture */ },
-      // TODO: make GetGlTextureView for write view non-const, remove cast
-      // Note: we have to copy *this here because this storage is currently
-      // stored in GpuBuffer by value, and so the this pointer becomes invalid
-      // if the GpuBuffer is moved/copied. TODO: fix this.
-      [me = *this](const mediapipe::GlTextureView& view) {
-        const_cast<GpuBufferStorageCvPixelBuffer*>(&me)->ViewDoneWriting(view);
-      });
+      done_writing);
 #endif  // TARGET_OS_OSX
 }
 
+GlTextureView GpuBufferStorageCvPixelBuffer::GetReadView(
+    internal::types<GlTextureView>, std::shared_ptr<GpuBuffer> gpu_buffer,
+    int plane) const {
+  return GetTexture(std::move(gpu_buffer), plane, nullptr);
+}
+
 GlTextureView GpuBufferStorageCvPixelBuffer::GetWriteView(
-    mediapipe::internal::types<GlTextureView>,
-    std::shared_ptr<GpuBuffer> gpu_buffer, int plane) {
-  // For this storage there is currently no difference between read and write
-  // views, so we delegate to the read method.
-  return GetReadView(mediapipe::internal::types<GlTextureView>{},
-                     std::move(gpu_buffer), plane);
+    internal::types<GlTextureView>, std::shared_ptr<GpuBuffer> gpu_buffer,
+    int plane) {
+  return GetTexture(
+      std::move(gpu_buffer), plane,
+      [this](const mediapipe::GlTextureView& view) { ViewDoneWriting(view); });
+}
+
+std::shared_ptr<const ImageFrame> GpuBufferStorageCvPixelBuffer::GetReadView(
+    internal::types<ImageFrame>, std::shared_ptr<GpuBuffer> gpu_buffer) const {
+  return CreateImageFrameForCVPixelBuffer(**this);
+}
+std::shared_ptr<ImageFrame> GpuBufferStorageCvPixelBuffer::GetWriteView(
+    internal::types<ImageFrame>, std::shared_ptr<GpuBuffer> gpu_buffer) {
+  return CreateImageFrameForCVPixelBuffer(**this);
 }
 
 void GpuBufferStorageCvPixelBuffer::ViewDoneWriting(const GlTextureView& view) {
@@ -111,9 +133,32 @@ void GpuBufferStorageCvPixelBuffer::ViewDoneWriting(const GlTextureView& view) {
 #endif
 }
 
-std::unique_ptr<ImageFrame> GpuBufferStorageCvPixelBuffer::AsImageFrame()
-    const {
-  return CreateImageFrameForCVPixelBuffer(**this);
+static std::shared_ptr<GpuBufferStorageCvPixelBuffer> ConvertFromImageFrame(
+    std::shared_ptr<GpuBufferStorageImageFrame> frame) {
+  auto status_or_buffer =
+      CreateCVPixelBufferForImageFrame(frame->image_frame());
+  CHECK(status_or_buffer.ok());
+  return std::make_shared<GpuBufferStorageCvPixelBuffer>(
+      std::move(status_or_buffer).value());
 }
+
+static auto kConverterFromImageFrameRegistration =
+    internal::GpuBufferStorageRegistry::Get()
+        .RegisterConverter<GpuBufferStorageImageFrame,
+                           GpuBufferStorageCvPixelBuffer>(
+            ConvertFromImageFrame);
+
+namespace internal {
+std::shared_ptr<internal::GpuBufferStorage> AsGpuBufferStorage(
+    CFHolder<CVPixelBufferRef> pixel_buffer) {
+  return std::make_shared<GpuBufferStorageCvPixelBuffer>(
+      std::move(pixel_buffer));
+}
+
+std::shared_ptr<internal::GpuBufferStorage> AsGpuBufferStorage(
+    CVPixelBufferRef pixel_buffer) {
+  return std::make_shared<GpuBufferStorageCvPixelBuffer>(pixel_buffer);
+}
+}  // namespace internal
 
 }  // namespace mediapipe

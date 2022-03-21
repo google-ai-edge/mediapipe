@@ -24,10 +24,6 @@
 
 @class MPPGraph;
 
-namespace mediapipe {
-struct GpuSharedData;
-}  // namespace mediapipe
-
 /// A delegate that can receive frames from a MediaPipe graph.
 @protocol MPPGraphDelegate <NSObject>
 

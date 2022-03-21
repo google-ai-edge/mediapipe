@@ -117,6 +117,7 @@ mediapipe_proto_library(
         "//mediapipe/framework:calculator_options_proto",
         "//mediapipe/framework:calculator_proto",
         "//mediapipe/framework/formats:classification_proto",
+        "//mediapipe/framework/formats:landmark_proto",
     ],
 )
 
@@ -309,8 +310,8 @@ cc_library(
 )
 
 cc_library(
-    name = "concatenate_normalized_landmark_list_calculator",
-    srcs = ["concatenate_normalized_landmark_list_calculator.cc"],
+    name = "concatenate_proto_list_calculator",
+    srcs = ["concatenate_proto_list_calculator.cc"],
     visibility = ["//visibility:public"],
     deps = [
         ":concatenate_vector_calculator_cc_proto",
@@ -324,10 +325,10 @@ cc_library(
 )
 
 cc_test(
-    name = "concatenate_normalized_landmark_list_calculator_test",
-    srcs = ["concatenate_normalized_landmark_list_calculator_test.cc"],
+    name = "concatenate_proto_list_calculator_test",
+    srcs = ["concatenate_proto_list_calculator_test.cc"],
     deps = [
-        ":concatenate_normalized_landmark_list_calculator",
+        ":concatenate_proto_list_calculator",
         ":concatenate_vector_calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework:calculator_runner",
@@ -964,8 +965,8 @@ cc_test(
 )
 
 cc_library(
-    name = "split_landmarks_calculator",
-    srcs = ["split_landmarks_calculator.cc"],
+    name = "split_proto_list_calculator",
+    srcs = ["split_proto_list_calculator.cc"],
     visibility = ["//visibility:public"],
     deps = [
         ":split_vector_calculator_cc_proto",
@@ -979,10 +980,10 @@ cc_library(
 )
 
 cc_test(
-    name = "split_landmarks_calculator_test",
-    srcs = ["split_landmarks_calculator_test.cc"],
+    name = "split_proto_list_calculator_test",
+    srcs = ["split_proto_list_calculator_test.cc"],
     deps = [
-        ":split_landmarks_calculator",
+        ":split_proto_list_calculator",
         ":split_vector_calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework:calculator_runner",
@@ -1195,6 +1196,7 @@ cc_library(
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework:collection_item_id",
         "//mediapipe/framework/formats:classification_cc_proto",
+        "//mediapipe/framework/formats:landmark_cc_proto",
         "//mediapipe/framework/port:integral_types",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",

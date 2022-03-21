@@ -150,6 +150,13 @@ mediapipe_proto_library(
     deps = ["//mediapipe/framework:mediapipe_options_proto"],
 )
 
+config_setting(
+    name = "android_no_jni",
+    define_values = {"MEDIAPIPE_NO_JNI": "1"},
+    values = {"crosstool_top": "//external:android/crosstool"},
+    visibility = ["//visibility:public"],
+)
+
 cc_library(
     name = "calculator_base",
     srcs = ["calculator_base.cc"],
@@ -712,6 +719,7 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/synchronization",
     ],
 )
 
@@ -916,15 +924,19 @@ cc_library(
         ":packet",
         ":packet_set",
         ":type_map",
+        "//mediapipe/framework/deps:no_destructor",
         "//mediapipe/framework/port:logging",
         "//mediapipe/framework/port:map_util",
-        "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:source_location",
         "//mediapipe/framework/port:status",
         "//mediapipe/framework/tool:status_util",
+        "//mediapipe/framework/tool:type_util",
         "//mediapipe/framework/tool:validate_name",
         "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/types:span",
+        "@com_google_absl//absl/types:variant",
     ],
 )
 

@@ -174,6 +174,18 @@ void AnnotationRenderer::DrawRectangle(const RenderAnnotation& annotation) {
     cv::Rect rect(left, top, right - left, bottom - top);
     cv::rectangle(mat_image_, rect, color, thickness);
   }
+  if (rectangle.has_top_left_thickness()) {
+    const auto& rect = RectangleToOpenCVRotatedRect(left, top, right, bottom,
+                                                    rectangle.rotation());
+    const int kNumVertices = 4;
+    cv::Point2f vertices[kNumVertices];
+    rect.points(vertices);
+    const int top_left_thickness =
+        ClampThickness(round(rectangle.top_left_thickness() * scale_factor_));
+    cv::ellipse(mat_image_, vertices[1],
+                cv::Size(top_left_thickness, top_left_thickness), 0.0, 0, 360,
+                color, -1);
+  }
 }
 
 void AnnotationRenderer::DrawFilledRectangle(

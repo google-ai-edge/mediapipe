@@ -120,7 +120,7 @@ namespace mediapipe {
 // Stores pair (tag, TypeId of type).
 typedef std::pair<std::string, size_t> TaggedType;
 
-// Returns TaggedType for type T* tagged with passed std::string.
+// Returns TaggedType for type T* tagged with passed string.
 template <class T>
 TaggedType TaggedPointerType(const std::string& tag);
 

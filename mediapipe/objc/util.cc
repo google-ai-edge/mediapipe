@@ -279,9 +279,12 @@ absl::StatusOr<CFHolder<CVPixelBufferRef>> CreateCVPixelBufferWithoutPool(
   return MakeCFHolderAdopting(buffer);
 }
 
-void ReleaseMediaPipePacket(void* refcon, const void* base_address) {
-  auto packet = (mediapipe::Packet*)refcon;
-  delete packet;
+/// When storing a shared_ptr in a CVPixelBuffer's refcon, this can be
+/// used as a CVPixelBufferReleaseBytesCallback. This keeps the data
+/// alive while the CVPixelBuffer is in use.
+static void ReleaseSharedPtr(void* refcon, const void* base_address) {
+  auto ptr = (std::shared_ptr<void>*)refcon;
+  delete ptr;
 }
 
 CVPixelBufferRef CreateCVPixelBufferForImageFramePacket(
@@ -307,10 +310,18 @@ absl::Status CreateCVPixelBufferForImageFramePacket(
     return ::mediapipe::InvalidArgumentErrorBuilder(MEDIAPIPE_LOC)
            << "out_buffer cannot be NULL";
   }
-  CFHolder<CVPixelBufferRef> pixel_buffer;
+  auto image_frame = std::const_pointer_cast<mediapipe::ImageFrame>(
+      mediapipe::SharedPtrWithPacket<mediapipe::ImageFrame>(
+          image_frame_packet));
+  ASSIGN_OR_RETURN(*out_buffer, CreateCVPixelBufferForImageFrame(
+                                    image_frame, can_overwrite));
+  return absl::OkStatus();
+}
 
-  auto packet_copy = absl::make_unique<mediapipe::Packet>(image_frame_packet);
-  const auto& frame = packet_copy->Get<mediapipe::ImageFrame>();
+absl::StatusOr<CFHolder<CVPixelBufferRef>> CreateCVPixelBufferForImageFrame(
+    std::shared_ptr<mediapipe::ImageFrame> image_frame, bool can_overwrite) {
+  CFHolder<CVPixelBufferRef> pixel_buffer;
+  const auto& frame = *image_frame;
   void* frame_data =
       const_cast<void*>(reinterpret_cast<const void*>(frame.PixelData()));
 
@@ -366,17 +377,18 @@ absl::Status CreateCVPixelBufferForImageFramePacket(
         << "CVPixelBufferUnlockBaseAddress failed: " << status;
   } else {
     CVPixelBufferRef pixel_buffer_temp;
+    auto holder = absl::make_unique<std::shared_ptr<void>>(image_frame);
     status = CVPixelBufferCreateWithBytes(
         NULL, frame.Width(), frame.Height(), pixel_format, frame_data,
-        frame.WidthStep(), ReleaseMediaPipePacket, packet_copy.release(),
+        frame.WidthStep(), ReleaseSharedPtr, holder.get(),
         GetCVPixelBufferAttributesForGlCompatibility(), &pixel_buffer_temp);
     RET_CHECK(status == kCVReturnSuccess)
         << "failed to create pixel buffer: " << status;
+    holder.release();  // will be deleted by ReleaseSharedPtr
     pixel_buffer.adopt(pixel_buffer_temp);
   }
 
-  *out_buffer = pixel_buffer;
-  return absl::OkStatus();
+  return pixel_buffer;
 }
 
 absl::StatusOr<CFHolder<CVPixelBufferRef>> CreateCVPixelBufferCopyingImageFrame(

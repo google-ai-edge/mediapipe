@@ -433,7 +433,7 @@ class TemplateExpanderImpl {
     return result;
   }
 
-  // Converts a TemplateArgument to std::string.
+  // Converts a TemplateArgument to string.
   std::string AsString(const TemplateArgument& value) {
     std::string result;
     if (value.has_num()) {

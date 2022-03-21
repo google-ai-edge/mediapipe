@@ -35,4 +35,8 @@ message RectToRenderDataCalculatorOptions {
 
   // Whether the rendered rectangle should be an oval.
   optional bool oval = 4 [default = false];
+
+  // Radius of top left corner circle. Only supported for oval=false,
+  // filled=false.
+  optional double top_left_thickness = 5;
 }

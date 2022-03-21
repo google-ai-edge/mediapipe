@@ -59,7 +59,7 @@ namespace mpms = mediapipe::mediasequence;
 // bounding boxes from vector<Detections>, and streams with the
 // "FLOAT_FEATURE_${NAME}" pattern, which stores the values from vector<float>'s
 // associated with the name ${NAME}. "KEYPOINTS" stores a map of 2D keypoints
-// from flat_hash_map<std::string, vector<pair<float, float>>>. "IMAGE_${NAME}",
+// from flat_hash_map<string, vector<pair<float, float>>>. "IMAGE_${NAME}",
 // "BBOX_${NAME}", and "KEYPOINTS_${NAME}" will also store prefixed versions of
 // each stream, which allows for multiple image streams to be included. However,
 // the default names are suppored by more tools.

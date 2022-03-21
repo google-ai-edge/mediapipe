@@ -332,15 +332,13 @@ cc_library(
         "//mediapipe/framework:port",
         "//mediapipe/framework:type_map",
         "//mediapipe/framework/port:logging",
+        "//mediapipe/gpu:gpu_buffer",
+        "//mediapipe/gpu:gpu_buffer_format",
     ] + select({
         "//conditions:default": [
-            "//mediapipe/gpu:gpu_buffer",
-            "//mediapipe/gpu:gpu_buffer_format",
             "//mediapipe/gpu:gl_texture_buffer",
         ],
         "//mediapipe:ios": [
-            "//mediapipe/gpu:gpu_buffer",
-            "//mediapipe/gpu:gpu_buffer_format",
         ],
         "//mediapipe/gpu:disable_gpu": [],
     }) + select({
@@ -430,7 +428,10 @@ cc_test(
 
 cc_library(
     name = "tensor",
-    srcs = ["tensor.cc"],
+    srcs =
+        [
+            "tensor.cc",
+        ],
     hdrs = ["tensor.h"],
     copts = select({
         "//mediapipe:apple": [

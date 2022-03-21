@@ -29,14 +29,14 @@
 // the most basic function prototypes for the name='MyFeature' are similar to:
 //
 // {BYTES,INT64,FLOAT}_CONTEXT_FEATURE:
-//   std::string GetMyFeatureKey(sequence)
+//   string GetMyFeatureKey(sequence)
 //   bool HasMyFeature(sequence)
 //   void ClearMyFeature(*sequence)
 //   void SetMyFeature(value, *sequence)
 //   TYPE GetMyFeature(sequence)
 //
 // VECTOR_{BYTES,INT64,FLOAT}_CONTEXT_FEATURE:
-//   std::string GetMyFeatureKey(sequence)
+//   string GetMyFeatureKey(sequence)
 //   bool HasMyFeature(sequence)
 //   void ClearMyFeature(*sequence)
 //   void SetMyFeature(repeated_value, *sequence)
@@ -46,7 +46,7 @@
 //   TYPE GetMyFeatureAt(sequence)
 //
 // {BYTES,INT64,FLOAT}_FEATURE_LIST:
-//   std::string GetMyFeatureKey(sequence)
+//   string GetMyFeatureKey(sequence)
 //   bool HasMyFeature(sequence)
 //   void ClearMyFeature(*sequence)
 //   void AddMyFeature(value, *sequence)
@@ -54,7 +54,7 @@
 //   TYPE GetMyFeatureAt(sequence)
 //
 // VECTOR_{BYTES,INT64,FLOAT}_FEATURE_LIST:
-//   std::string GetMyFeatureKey(sequence)
+//   string GetMyFeatureKey(sequence)
 //   bool HasMyFeature(sequence)
 //   void ClearMyFeature(*sequence)
 //   void AddMyFeature(repeated_value, *sequence)
@@ -236,8 +236,8 @@ inline const proto_ns::RepeatedField<int64>& GetInt64sAt(
   return fl.feature().Get(index).int64_list().value();
 }
 
-// Returns a refrerence to the std::string values for the feature list indicated
-// by key at the provided sequence index.
+// Returns a refrerence to the string values for the feature list indicated by
+// key at the provided sequence index.
 inline const proto_ns::RepeatedPtrField<std::string>& GetBytesAt(
     const tensorflow::SequenceExample& sequence, const std::string& key,
     const int index) {
@@ -279,17 +279,17 @@ void AddBytesContainer(const std::string& key, const TContainer& bytes_list,
 
 // The macros provided below are useful for creating getters and setters for
 // keys and values in a tf::SequenceExample. You only need to specify the C++
-// name to use in the functions and the std::string key used in the
-// SequenceExample proto maps. Macro versions exist for {strings, int64s, and
-// floats} for creating singular or repeated context features and singular or
-// repeated feature_list features.
+// name to use in the functions and the string key used in the SequenceExample
+// proto maps. Macro versions exist for {strings, int64s, and floats} for
+// creating singular or repeated context features and singular or repeated
+// feature_list features.
 
 // Helpers to create functions names in the macros below.
 #define CONCAT_STR2(a, b) a##b
 #define CONCAT_STR3(a, b, c) a##b##c
 
 // This macro creates functions for HasX, GetX, ClearX, and SetX where X is a
-// name and the value stored is a std::string in the context.
+// name and the value stored is a string in the context.
 #define PREFIXED_BYTES_CONTEXT_FEATURE(name, key)                             \
   inline const bool CONCAT_STR2(Has, name)(                                   \
       const std::string& prefix,                                              \
@@ -766,7 +766,7 @@ void AddBytesContainer(const std::string& key, const TContainer& bytes_list,
   FIXED_PREFIX_VECTOR_FLOAT_CONTEXT_FEATURE(name, key, "");
 
 // This macro creates functions for HasX, GetXSize, GetXAt, ClearX, and AddX
-// where X is a name and the value stored is a std::string in a feature_list.
+// where X is a name and the value stored is a string in a feature_list.
 #define PREFIXED_BYTES_FEATURE_LIST(name, key)                                \
   inline const bool CONCAT_STR2(Has, name)(                                   \
       const std::string& prefix,                                              \

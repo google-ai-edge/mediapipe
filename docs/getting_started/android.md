@@ -30,7 +30,7 @@ APIs (currently in alpha) that are now available in
 *   Install MediaPipe following these [instructions](./install.md).
 *   Setup Java Runtime.
 *   Setup Android SDK release 30.0.0 and above.
-*   Setup Android NDK version 18 and above.
+*   Setup Android NDK version between 18 and 21.
 
 MediaPipe recommends setting up Android SDK and NDK via Android Studio (and see
 below for Android Studio setup). However, if you prefer using MediaPipe without

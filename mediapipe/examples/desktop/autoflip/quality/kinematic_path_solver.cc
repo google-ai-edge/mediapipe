@@ -4,6 +4,7 @@ constexpr float kMinVelocity = 0.5;
 
 namespace mediapipe {
 namespace autoflip {
+
 namespace {
 int Median(const std::deque<std::pair<uint64, int>>& positions_raw) {
   std::deque<int> positions;
@@ -16,6 +17,7 @@ int Median(const std::deque<std::pair<uint64, int>>& positions_raw) {
   return positions[n];
 }
 }  // namespace
+
 bool KinematicPathSolver::IsMotionTooSmall(double delta_degs) {
   if (options_.has_min_motion_to_reframe()) {
     return abs(delta_degs) < options_.min_motion_to_reframe();
@@ -25,7 +27,9 @@ bool KinematicPathSolver::IsMotionTooSmall(double delta_degs) {
     return abs(delta_degs) < options_.min_motion_to_reframe_lower();
   }
 }
+
 void KinematicPathSolver::ClearHistory() { raw_positions_at_time_.clear(); }
+
 absl::Status KinematicPathSolver::PredictMotionState(int position,
                                                      const uint64 time_us,
                                                      bool* state) {
@@ -48,6 +52,9 @@ absl::Status KinematicPathSolver::PredictMotionState(int position,
   }
 
   int filtered_position = Median(raw_positions_at_time_copy);
+  filtered_position =
+      std::clamp(filtered_position, min_location_, max_location_);
+
   double delta_degs =
       (filtered_position - current_position_px_) / pixels_per_degree_;
 
@@ -59,6 +66,9 @@ absl::Status KinematicPathSolver::PredictMotionState(int position,
     // If the motion is smaller than the reframe_window and camera is moving,
     // don't use the update.
     *state = false;
+  } else if (prior_position_px_ == current_position_px_ && motion_state_) {
+    // Camera isn't actually moving. Likely face is past bounds.
+    *state = false;
   } else {
     // Apply new position, plus the reframe window size.
     *state = true;
@@ -66,6 +76,7 @@ absl::Status KinematicPathSolver::PredictMotionState(int position,
 
   return absl::OkStatus();
 }
+
 absl::Status KinematicPathSolver::AddObservation(int position,
                                                  const uint64 time_us) {
   if (!initialized_) {
@@ -181,18 +192,22 @@ absl::Status KinematicPathSolver::AddObservation(int position,
   }
 
   // Time and position updates.
-  double delta_t = (time_us - current_time_) / 1000000.0;
+  double delta_t_sec = (time_us - current_time_) / 1000000.0;
+  if (options_.max_delta_time_sec() > 0) {
+    // If updates are very infrequent, then limit the max time difference.
+    delta_t_sec = fmin(delta_t_sec, options_.max_delta_time_sec());
+  }
   // Time since last state/prediction update, smoothed by
   // mean_period_update_rate.
   if (mean_delta_t_ < 0) {
-    mean_delta_t_ = delta_t;
+    mean_delta_t_ = delta_t_sec;
   } else {
     mean_delta_t_ = mean_delta_t_ * (1 - options_.mean_period_update_rate()) +
-                    delta_t * options_.mean_period_update_rate();
+                    delta_t_sec * options_.mean_period_update_rate();
   }
 
-  // Observed velocity and then weighted update of this velocity.
-  double observed_velocity = delta_degs / delta_t;
+  // Observed velocity and then weighted update of this velocity (deg/sec).
+  double observed_velocity = delta_degs / delta_t_sec;
   double update_rate = std::min(mean_delta_t_ / options_.update_rate_seconds(),
                                 options_.max_update_rate());
   double updated_velocity = current_velocity_deg_per_s_ * (1 - update_rate) +
@@ -253,7 +268,8 @@ absl::Status KinematicPathSolver::GetDeltaState(float* delta_position) {
 
 absl::Status KinematicPathSolver::SetState(const float position) {
   RET_CHECK(initialized_) << "SetState called before first observation added.";
-  current_position_px_ = position;
+  current_position_px_ = std::clamp(position, static_cast<float>(min_location_),
+                                    static_cast<float>(max_location_));
   return absl::OkStatus();
 }
 

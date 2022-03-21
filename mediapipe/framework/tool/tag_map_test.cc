@@ -318,8 +318,8 @@ TEST(TagMapTest, SameAs) {
   }
 }
 
-// A helper function to test that a TagMap's debug std::string and short
-// debug std::string each satisfy a matcher.
+// A helper function to test that a TagMap's debug string and short
+// debug string each satisfy a matcher.
 template <typename Matcher>
 void TestDebugString(
     const absl::StatusOr<std::shared_ptr<tool::TagMap>>& statusor_tag_map,

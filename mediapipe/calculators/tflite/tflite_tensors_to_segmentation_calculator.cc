@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <string>
 #include <vector>
 
 #include "absl/strings/str_format.h"
@@ -558,7 +559,7 @@ uniform ivec2 out_size;
 const int output_layer_index = int($1);
 const float combine_with_previous_ratio = float($2);
 
-// Will be replaced with either '#define READ_PREVIOUS' or empty std::string
+// Will be replaced with either '#define READ_PREVIOUS' or empty string
 $3 //DEFINE_READ_PREVIOUS
 
 void main() {

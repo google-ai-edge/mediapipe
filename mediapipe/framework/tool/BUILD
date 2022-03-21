@@ -43,6 +43,7 @@ bzl_library(
         "//mediapipe/framework:transitive_protos_bzl",
         "//mediapipe/framework/deps:descriptor_set_bzl",
         "//mediapipe/framework/deps:expand_template_bzl",
+        "@org_tensorflow//tensorflow/lite/core/shims:cc_library_with_tflite_bzl",
     ],
 )
 
@@ -52,6 +53,7 @@ bzl_library(
         "build_defs.bzl",
     ],
     visibility = [
+        "//mediapipe/app/xeno/catalog:__subpackages__",
         "//mediapipe/framework:__subpackages__",
     ],
 )
@@ -286,6 +288,7 @@ cc_library(
 mediapipe_cc_test(
     name = "options_util_test",
     size = "small",
+    timeout = "moderate",
     srcs = ["options_util_test.cc"],
     # A non-empty "data" param is needed to build the "_test_wasm" target.
     data = [":node_chain_subgraph.proto"],
@@ -858,11 +861,9 @@ cc_library(
         "//mediapipe/framework:calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework:mediapipe_options_cc_proto",
-        "//mediapipe/framework:stream_handler_cc_proto",
         "//mediapipe/framework:subgraph",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
-        "//mediapipe/framework/stream_handler:sync_set_input_stream_handler_cc_proto",
         "//mediapipe/framework/tool:switch_container_cc_proto",
     ],
     alwayslink = 1,

@@ -61,11 +61,12 @@ http_archive(
     sha256 = "de682ea824bfffba05b4e33b67431c247397d6175962534305136aa06f92e049",
 )
 
-# Google Benchmark library.
+# Google Benchmark library v1.6.1 released on 2022-01-10.
 http_archive(
     name = "com_google_benchmark",
-    urls = ["https://github.com/google/benchmark/archive/main.zip"],
-    strip_prefix = "benchmark-main",
+    urls = ["https://github.com/google/benchmark/archive/refs/tags/v1.6.1.tar.gz"],
+    strip_prefix = "benchmark-1.6.1",
+    sha256 = "6132883bc8c9b0df5375b16ab520fac1a85dc9e4cf5be59480448ece74b278d4",
     build_file = "@//third_party:benchmark.BUILD",
 )
 
@@ -373,9 +374,9 @@ http_archive(
 )
 
 # Tensorflow repo should always go after the other external dependencies.
-# 2021-12-02
-_TENSORFLOW_GIT_COMMIT = "18a1dc0ba806dc023808531f0373d9ec068e64bf"
-_TENSORFLOW_SHA256 = "85b90416f7a11339327777bccd634de00ca0de2cf334f5f0727edcb11ff9289a"
+# 2022-02-15
+_TENSORFLOW_GIT_COMMIT = "a3419acc751dfc19caf4d34a1594e1f76810ec58"
+_TENSORFLOW_SHA256 = "b95b2a83632d4055742ae1a2dcc96b45da6c12a339462dbc76c8bca505308e3a"
 http_archive(
     name = "org_tensorflow",
     urls = [
@@ -383,7 +384,6 @@ http_archive(
     ],
     patches = [
         "@//third_party:org_tensorflow_compatibility_fixes.diff",
-        "@//third_party:org_tensorflow_objc_cxx17.diff",
         # Diff is generated with a script, don't update it manually.
         "@//third_party:org_tensorflow_custom_ops.diff",
     ],

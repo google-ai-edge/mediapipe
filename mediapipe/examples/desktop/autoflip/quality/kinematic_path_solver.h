@@ -71,6 +71,8 @@ class KinematicPathSolver {
   // Provides the change in position from last state.
   absl::Status GetDeltaState(float* delta_position);
 
+  bool IsInitialized() { return initialized_; }
+
  private:
   // Tuning options.
   KinematicOptions options_;

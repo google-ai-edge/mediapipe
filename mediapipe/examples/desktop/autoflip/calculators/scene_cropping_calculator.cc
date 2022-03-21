@@ -182,7 +182,7 @@ namespace {
 absl::Status ParseAspectRatioString(const std::string& aspect_ratio_string,
                                     double* aspect_ratio) {
   std::string error_msg =
-      "Aspect ratio std::string must be in the format of 'width:height', e.g. "
+      "Aspect ratio string must be in the format of 'width:height', e.g. "
       "'1:1' or '5:4', your input was " +
       aspect_ratio_string;
   auto pos = aspect_ratio_string.find(':');

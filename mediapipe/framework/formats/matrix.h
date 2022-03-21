@@ -39,7 +39,7 @@ void MatrixDataProtoFromMatrix(const Matrix& matrix, MatrixData* matrix_data);
 void MatrixFromMatrixDataProto(const MatrixData& matrix_data, Matrix* matrix);
 
 #if !defined(MEDIAPIPE_MOBILE) && !defined(MEDIAPIPE_LITE)
-// Produce a Text format MatrixData std::string.  Mainly useful for test code.
+// Produce a Text format MatrixData string.  Mainly useful for test code.
 std::string MatrixAsTextProto(const Matrix& matrix);
 // Produce a Matrix from a text format MatrixData proto representation.
 void MatrixFromTextProto(const std::string& text_proto, Matrix* matrix);

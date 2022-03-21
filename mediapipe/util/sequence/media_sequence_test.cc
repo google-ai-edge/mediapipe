@@ -15,6 +15,7 @@
 #include "mediapipe/util/sequence/media_sequence.h"
 
 #include <algorithm>
+#include <string>
 
 #include "mediapipe/framework/formats/location.h"
 #include "mediapipe/framework/port/gmock.h"

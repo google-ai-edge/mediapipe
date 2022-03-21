@@ -48,8 +48,8 @@ constexpr char kTopKIndexesTag[] = "TOP_K_INDEXES";
 constexpr char kScoresTag[] = "SCORES";
 
 // A calculator that takes a vector of scores and returns the indexes, scores,
-// labels of the top k elements, classification protos, and summary std::string
-// (in csv format).
+// labels of the top k elements, classification protos, and summary string (in
+// csv format).
 //
 // Usage example:
 // node {

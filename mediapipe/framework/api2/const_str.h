@@ -6,8 +6,8 @@
 namespace mediapipe {
 namespace api2 {
 
-// This class stores a constant std::string that can be inspected at compile
-// time in constexpr code.
+// This class stores a constant string that can be inspected at compile time
+// in constexpr code.
 class const_str {
  public:
   constexpr const_str(std::size_t size, const char* data)

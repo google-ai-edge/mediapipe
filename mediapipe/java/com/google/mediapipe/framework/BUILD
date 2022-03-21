@@ -49,6 +49,7 @@ android_library(
         "MediaPipeRunner.java",
     ],
     visibility = [
+        "//java/com/google/android/libraries/camera/effects:__subpackages__",
         "//mediapipe/java/com/google/mediapipe:__subpackages__",
     ],
     exports = [

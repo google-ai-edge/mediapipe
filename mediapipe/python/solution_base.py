@@ -79,9 +79,16 @@ CALCULATOR_TO_OPTIONS = {
 }
 
 
+def type_names_from_oneof(oneof_type_name: str) -> Optional[List[str]]:
+  if oneof_type_name.startswith('OneOf<') and oneof_type_name.endswith('>'):
+    comma_separated_types = oneof_type_name[len('OneOf<'):-len('>')]
+    return [n.strip() for n in comma_separated_types.split(',')]
+  return None
+
+
 # TODO: Support more packet data types, such as "Any" type.
 @enum.unique
-class _PacketDataType(enum.Enum):
+class PacketDataType(enum.Enum):
   """The packet data types supported by the SolutionBase class."""
   STRING = 'string'
   BOOL = 'bool'
@@ -96,79 +103,86 @@ class _PacketDataType(enum.Enum):
   PROTO_LIST = 'proto_list'
 
   @staticmethod
-  def from_registered_name(registered_name: str) -> '_PacketDataType':
-    return NAME_TO_TYPE[registered_name]
+  def from_registered_name(registered_name: str) -> 'PacketDataType':
+    try:
+      return NAME_TO_TYPE[registered_name]
+    except KeyError as e:
+      names = type_names_from_oneof(registered_name)
+      if names:
+        for n in names:
+          if n in NAME_TO_TYPE.keys():
+            return NAME_TO_TYPE[n]
+      raise e
 
-
-NAME_TO_TYPE: Mapping[str, '_PacketDataType'] = {
+NAME_TO_TYPE: Mapping[str, 'PacketDataType'] = {
     'string':
-        _PacketDataType.STRING,
+        PacketDataType.STRING,
     'bool':
-        _PacketDataType.BOOL,
+        PacketDataType.BOOL,
     '::std::vector<bool>':
-        _PacketDataType.BOOL_LIST,
+        PacketDataType.BOOL_LIST,
     'int':
-        _PacketDataType.INT,
+        PacketDataType.INT,
     'float':
-        _PacketDataType.FLOAT,
+        PacketDataType.FLOAT,
     '::std::vector<float>':
-        _PacketDataType.FLOAT_LIST,
+        PacketDataType.FLOAT_LIST,
     '::mediapipe::Matrix':
-        _PacketDataType.AUDIO,
+        PacketDataType.AUDIO,
     '::mediapipe::ImageFrame':
-        _PacketDataType.IMAGE_FRAME,
+        PacketDataType.IMAGE_FRAME,
     '::mediapipe::Classification':
-        _PacketDataType.PROTO,
+        PacketDataType.PROTO,
     '::mediapipe::ClassificationList':
-        _PacketDataType.PROTO,
+        PacketDataType.PROTO,
     '::mediapipe::ClassificationListCollection':
-        _PacketDataType.PROTO,
+        PacketDataType.PROTO,
     '::mediapipe::Detection':
-        _PacketDataType.PROTO,
+        PacketDataType.PROTO,
     '::mediapipe::DetectionList':
-        _PacketDataType.PROTO,
+        PacketDataType.PROTO,
     '::mediapipe::Landmark':
-        _PacketDataType.PROTO,
+        PacketDataType.PROTO,
     '::mediapipe::LandmarkList':
-        _PacketDataType.PROTO,
+        PacketDataType.PROTO,
     '::mediapipe::LandmarkListCollection':
-        _PacketDataType.PROTO,
+        PacketDataType.PROTO,
     '::mediapipe::NormalizedLandmark':
-        _PacketDataType.PROTO,
+        PacketDataType.PROTO,
     '::mediapipe::FrameAnnotation':
-        _PacketDataType.PROTO,
+        PacketDataType.PROTO,
     '::mediapipe::Trigger':
-        _PacketDataType.PROTO,
+        PacketDataType.PROTO,
     '::mediapipe::Rect':
-        _PacketDataType.PROTO,
+        PacketDataType.PROTO,
     '::mediapipe::NormalizedRect':
-        _PacketDataType.PROTO,
+        PacketDataType.PROTO,
     '::mediapipe::NormalizedLandmarkList':
-        _PacketDataType.PROTO,
+        PacketDataType.PROTO,
     '::mediapipe::NormalizedLandmarkListCollection':
-        _PacketDataType.PROTO,
+        PacketDataType.PROTO,
     '::mediapipe::Image':
-        _PacketDataType.IMAGE,
+        PacketDataType.IMAGE,
     '::std::vector<::mediapipe::Classification>':
-        _PacketDataType.PROTO_LIST,
+        PacketDataType.PROTO_LIST,
     '::std::vector<::mediapipe::ClassificationList>':
-        _PacketDataType.PROTO_LIST,
+        PacketDataType.PROTO_LIST,
     '::std::vector<::mediapipe::Detection>':
-        _PacketDataType.PROTO_LIST,
+        PacketDataType.PROTO_LIST,
     '::std::vector<::mediapipe::DetectionList>':
-        _PacketDataType.PROTO_LIST,
+        PacketDataType.PROTO_LIST,
     '::std::vector<::mediapipe::Landmark>':
-        _PacketDataType.PROTO_LIST,
+        PacketDataType.PROTO_LIST,
     '::std::vector<::mediapipe::LandmarkList>':
-        _PacketDataType.PROTO_LIST,
+        PacketDataType.PROTO_LIST,
     '::std::vector<::mediapipe::NormalizedLandmark>':
-        _PacketDataType.PROTO_LIST,
+        PacketDataType.PROTO_LIST,
     '::std::vector<::mediapipe::NormalizedLandmarkList>':
-        _PacketDataType.PROTO_LIST,
+        PacketDataType.PROTO_LIST,
     '::std::vector<::mediapipe::Rect>':
-        _PacketDataType.PROTO_LIST,
+        PacketDataType.PROTO_LIST,
     '::std::vector<::mediapipe::NormalizedRect>':
-        _PacketDataType.PROTO_LIST,
+        PacketDataType.PROTO_LIST,
 }
 
 
@@ -196,7 +210,8 @@ class SolutionBase:
       graph_config: Optional[calculator_pb2.CalculatorGraphConfig] = None,
       calculator_params: Optional[Mapping[str, Any]] = None,
       side_inputs: Optional[Mapping[str, Any]] = None,
-      outputs: Optional[List[str]] = None):
+      outputs: Optional[List[str]] = None,
+      stream_type_hints: Optional[Mapping[str, PacketDataType]] = None):
     """Initializes the SolutionBase object.
 
     Args:
@@ -209,6 +224,7 @@ class SolutionBase:
       outputs: A list of the graph output stream names to observe. If the list
         is empty, all the output streams listed in the graph config will be
         automatically observed by default.
+      stream_type_hints: A mapping from the stream name to its packet type hint.
 
     Raises:
       FileNotFoundError: If the binary graph file can't be found.
@@ -240,7 +256,7 @@ class SolutionBase:
       validated_graph.initialize(graph_config=graph_config)
 
     canonical_graph_config_proto = self._initialize_graph_interface(
-        validated_graph, side_inputs, outputs)
+        validated_graph, side_inputs, outputs, stream_type_hints)
     if calculator_params:
       self._modify_calculator_options(canonical_graph_config_proto,
                                       calculator_params)
@@ -310,15 +326,15 @@ class SolutionBase:
     self._simulated_timestamp += 33333
     for stream_name, data in input_dict.items():
       input_stream_type = self._input_stream_type_info[stream_name]
-      if (input_stream_type == _PacketDataType.PROTO_LIST or
-          input_stream_type == _PacketDataType.AUDIO):
+      if (input_stream_type == PacketDataType.PROTO_LIST or
+          input_stream_type == PacketDataType.AUDIO):
         # TODO: Support audio data.
         raise NotImplementedError(
             f'SolutionBase can only process non-audio and non-proto-list data. '
             f'{self._input_stream_type_info[stream_name].name} '
             f'type is not supported yet.')
-      elif (input_stream_type == _PacketDataType.IMAGE_FRAME or
-            input_stream_type == _PacketDataType.IMAGE):
+      elif (input_stream_type == PacketDataType.IMAGE_FRAME or
+            input_stream_type == PacketDataType.IMAGE):
         if data.shape[2] != RGB_CHANNELS:
           raise ValueError('Input image must contain three channel rgb data.')
         self._graph.add_packet_to_input_stream(
@@ -364,7 +380,8 @@ class SolutionBase:
       self,
       validated_graph: validated_graph_config.ValidatedGraphConfig,
       side_inputs: Optional[Mapping[str, Any]] = None,
-      outputs: Optional[List[str]] = None):
+      outputs: Optional[List[str]] = None,
+      stream_type_hints: Optional[Mapping[str, PacketDataType]] = None):
     """Gets graph interface type information and returns the canonical graph config proto."""
 
     canonical_graph_config_proto = calculator_pb2.CalculatorGraphConfig()
@@ -375,13 +392,16 @@ class SolutionBase:
       return tag_index_name.split(':')[-1]
 
     # Gets the packet type information of the input streams and output streams
-    # from the validated calculator graph. The mappings from the stream names to
-    # the packet data types is for deciding which packet creator and getter
-    # methods to call in the process() method.
+    # from the user provided stream_type_hints field or validated calculator
+    # graph. The mappings from the stream names to the packet data types is
+    # for deciding which packet creator and getter methods to call in the
+    # process() method.
     def get_stream_packet_type(packet_tag_index_name):
-      return _PacketDataType.from_registered_name(
-          validated_graph.registered_stream_type_name(
-              get_name(packet_tag_index_name)))
+      stream_name = get_name(packet_tag_index_name)
+      if stream_type_hints and stream_name in stream_type_hints.keys():
+        return stream_type_hints[stream_name]
+      return PacketDataType.from_registered_name(
+          validated_graph.registered_stream_type_name(stream_name))
 
     self._input_stream_type_info = {
         get_name(tag_index_name): get_stream_packet_type(tag_index_name)
@@ -402,7 +422,7 @@ class SolutionBase:
     # packet data types is for making the input_side_packets dict for graph
     # start_run().
     def get_side_packet_type(packet_tag_index_name):
-      return _PacketDataType.from_registered_name(
+      return PacketDataType.from_registered_name(
           validated_graph.registered_side_packet_type_name(
               get_name(packet_tag_index_name)))
 
@@ -503,16 +523,16 @@ class SolutionBase:
     if num_modified < len(nested_calculator_params):
       raise ValueError('Not all calculator params are valid.')
 
-  def _make_packet(self, packet_data_type: _PacketDataType,
+  def _make_packet(self, packet_data_type: PacketDataType,
                    data: Any) -> packet.Packet:
-    if (packet_data_type == _PacketDataType.IMAGE_FRAME or
-        packet_data_type == _PacketDataType.IMAGE):
+    if (packet_data_type == PacketDataType.IMAGE_FRAME or
+        packet_data_type == PacketDataType.IMAGE):
       return getattr(packet_creator, 'create_' + packet_data_type.value)(
           data, image_format=image_frame.ImageFormat.SRGB)
     else:
       return getattr(packet_creator, 'create_' + packet_data_type.value)(data)
 
-  def _get_packet_content(self, packet_data_type: _PacketDataType,
+  def _get_packet_content(self, packet_data_type: PacketDataType,
                           output_packet: packet.Packet) -> Any:
     """Gets packet content from a packet by type.
 
@@ -527,10 +547,10 @@ class SolutionBase:
 
     if output_packet.is_empty():
       return None
-    if packet_data_type == _PacketDataType.STRING:
+    if packet_data_type == PacketDataType.STRING:
       return packet_getter.get_str(output_packet)
-    elif (packet_data_type == _PacketDataType.IMAGE_FRAME or
-          packet_data_type == _PacketDataType.IMAGE):
+    elif (packet_data_type == PacketDataType.IMAGE_FRAME or
+          packet_data_type == PacketDataType.IMAGE):
       return getattr(packet_getter, 'get_' +
                      packet_data_type.value)(output_packet).numpy_view()
     else:

@@ -42,33 +42,6 @@ using mediapipe::RE2;
 using Detections = std::vector<Detection>;
 using Strings = std::vector<std::string>;
 
-}  // namespace
-
-// Filters the entries in a Detection to only those with valid scores
-// for the specified allowed labels. Allowed labels are provided as a
-// vector<std::string> in an optional input side packet. Allowed labels can
-// contain simple strings or regular expressions. The valid score range
-// can be set in the options.The allowed labels can be provided as
-// vector<std::string> (LABELS) or CSV std::string (LABELS_CSV) containing class
-// names of allowed labels. Note: Providing an empty vector in the input side
-// packet Packet causes this calculator to act as a sink if
-// empty_allowed_labels_means_allow_everything is set to false (default value).
-// To allow all labels, use the calculator with no input side packet stream, or
-// set empty_allowed_labels_means_allow_everything to true.
-//
-// Example config:
-// node {
-//   calculator: "FilterDetectionCalculator"
-//   input_stream: "DETECTIONS:detections"
-//   output_stream: "DETECTIONS:filtered_detections"
-//   input_side_packet: "LABELS:allowed_labels"
-//   options: {
-//     [mediapipe.FilterDetectionCalculatorOptions.ext]: {
-//       min_score: 0.5
-//     }
-//   }
-// }
-
 struct FirstGreaterComparator {
   bool operator()(const std::pair<float, int>& a,
                   const std::pair<float, int>& b) const {
@@ -111,6 +84,33 @@ absl::Status SortLabelsByDecreasingScore(const Detection& detection,
   }
   return absl::OkStatus();
 }
+
+}  // namespace
+
+// Filters the entries in a Detection to only those with valid scores
+// for the specified allowed labels. Allowed labels are provided as a
+// std::vector<std::string> in an optional input side packet. Allowed labels can
+// contain simple strings or regular expressions. The valid score range
+// can be set in the options.The allowed labels can be provided as
+// std::vector<std::string> (LABELS) or CSV string (LABELS_CSV) containing class
+// names of allowed labels. Note: Providing an empty vector in the input side
+// packet Packet causes this calculator to act as a sink if
+// empty_allowed_labels_means_allow_everything is set to false (default value).
+// To allow all labels, use the calculator with no input side packet stream, or
+// set empty_allowed_labels_means_allow_everything to true.
+//
+// Example config:
+// node {
+//   calculator: "FilterDetectionCalculator"
+//   input_stream: "DETECTIONS:detections"
+//   output_stream: "DETECTIONS:filtered_detections"
+//   input_side_packet: "LABELS:allowed_labels"
+//   options: {
+//     [mediapipe.FilterDetectionCalculatorOptions.ext]: {
+//       min_score: 0.5
+//     }
+//   }
+// }
 
 class FilterDetectionCalculator : public CalculatorBase {
  public:
@@ -196,7 +196,7 @@ absl::Status FilterDetectionCalculator::Process(CalculatorContext* cc) {
   if (cc->Inputs().HasTag(kDetectionsTag)) {
     detections = cc->Inputs().Tag(kDetectionsTag).Get<Detections>();
   } else if (cc->Inputs().HasTag(kDetectionTag)) {
-    detections.emplace_back(cc->Inputs().Tag(kDetectionsTag).Get<Detection>());
+    detections.emplace_back(cc->Inputs().Tag(kDetectionTag).Get<Detection>());
   }
   std::unique_ptr<Detections> outputs(new Detections);
   for (const auto& input : detections) {
@@ -229,7 +229,7 @@ absl::Status FilterDetectionCalculator::Process(CalculatorContext* cc) {
         .Add(outputs.release(), cc->InputTimestamp());
   } else if (!outputs->empty()) {
     cc->Outputs()
-        .Tag(kDetectionsTag)
+        .Tag(kDetectionTag)
         .Add(new Detection((*outputs)[0]), cc->InputTimestamp());
   }
   return absl::OkStatus();

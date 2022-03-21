@@ -20,6 +20,7 @@ load("//mediapipe/framework:transitive_protos.bzl", "transitive_protos")
 load("//mediapipe/framework/deps:expand_template.bzl", "expand_template")
 load("//mediapipe/framework/tool:build_defs.bzl", "clean_dep")
 load("//mediapipe/framework/deps:descriptor_set.bzl", "direct_descriptor_set", "transitive_descriptor_set")
+load("@org_tensorflow//tensorflow/lite/core/shims:cc_library_with_tflite.bzl", "cc_library_with_tflite")
 
 def mediapipe_binary_graph(name, graph = None, output_name = None, deps = [], testonly = False, **kwargs):
     """Converts a graph from text format to binary format."""
@@ -98,6 +99,7 @@ def mediapipe_simple_subgraph(
         register_as,
         graph,
         deps = [],
+        tflite_deps = None,
         visibility = None,
         testonly = None,
         **kwargs):
@@ -109,6 +111,7 @@ def mediapipe_simple_subgraph(
           CamelCase.
       graph: the BUILD label of a text-format MediaPipe graph.
       deps: any calculators or subgraphs used by this graph.
+      tflite_deps: any calculators or subgraphs used by this graph that may use different TFLite implementation.
       visibility: The list of packages the subgraph should be visible to.
       testonly: pass 1 if the graph is to be used only for tests.
       **kwargs: Remaining keyword args, forwarded to cc_library.
@@ -138,21 +141,39 @@ def mediapipe_simple_subgraph(
         },
         testonly = testonly,
     )
-    native.cc_library(
-        name = name,
-        srcs = [
-            name + "_linked.cc",
-            graph_base_name + ".inc",
-        ],
-        deps = [
-            clean_dep("//mediapipe/framework:calculator_framework"),
-            clean_dep("//mediapipe/framework:subgraph"),
-        ] + deps,
-        alwayslink = 1,
-        visibility = visibility,
-        testonly = testonly,
-        **kwargs
-    )
+    if not tflite_deps:
+        native.cc_library(
+            name = name,
+            srcs = [
+                name + "_linked.cc",
+                graph_base_name + ".inc",
+            ],
+            deps = [
+                clean_dep("//mediapipe/framework:calculator_framework"),
+                clean_dep("//mediapipe/framework:subgraph"),
+            ] + deps,
+            alwayslink = 1,
+            visibility = visibility,
+            testonly = testonly,
+            **kwargs
+        )
+    else:
+        cc_library_with_tflite(
+            name = name,
+            srcs = [
+                name + "_linked.cc",
+                graph_base_name + ".inc",
+            ],
+            tflite_deps = tflite_deps,
+            deps = [
+                clean_dep("//mediapipe/framework:calculator_framework"),
+                clean_dep("//mediapipe/framework:subgraph"),
+            ] + deps,
+            alwayslink = 1,
+            visibility = visibility,
+            testonly = testonly,
+            **kwargs
+        )
 
 def mediapipe_reexport_library(
         name,

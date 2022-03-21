@@ -93,11 +93,11 @@ float ForegroundMotion(const CameraMotion& camera_motion,
 void InitCameraMotionFromFeatureList(const RegionFlowFeatureList& feature_list,
                                      CameraMotion* camera_motion);
 
-// Converts Camera motion flag to std::string.
+// Converts Camera motion flag to string.
 std::string CameraMotionFlagToString(const CameraMotion& motion);
 
-// Converts Camera motion type to std::string. Used instead of builtin proto
-// function for mobile support.
+// Converts Camera motion type to string. Used instead of builtin proto function
+// for mobile support.
 std::string CameraMotionTypeToString(const CameraMotion& motion);
 
 // Returns inlier coverage either based on mixture (if present, in this case

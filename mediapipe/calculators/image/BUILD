@@ -239,10 +239,13 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         ":image_transformation_calculator_cc_proto",
+        "//mediapipe/framework:packet",
+        "//mediapipe/framework:timestamp",
         "//mediapipe/gpu:scale_mode_cc_proto",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/formats:image_frame",
         "//mediapipe/framework/formats:image_frame_opencv",
+        "//mediapipe/framework/formats:video_stream_header",
         "//mediapipe/framework/port:opencv_core",
         "//mediapipe/framework/port:opencv_imgproc",
         "//mediapipe/framework/port:ret_check",

@@ -40,7 +40,7 @@ absl::Status StatusInvalid(const std::string& error_message);
 ABSL_DEPRECATED("Use absl::UnknownError(error_message) instead.")
 absl::Status StatusFail(const std::string& error_message);
 
-// Prefixes the given std::string to the error message in status.
+// Prefixes the given string to the error message in status.
 // This function should be considered internal to the framework.
 // TODO Replace usage of AddStatusPrefix with util::Annotate().
 absl::Status AddStatusPrefix(const std::string& prefix,

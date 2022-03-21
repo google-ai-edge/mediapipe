@@ -34,7 +34,7 @@ class OptionsSyntaxUtil {
   FieldPath OptionFieldPath(absl::string_view tag,
                             const Descriptor* descriptor);
 
-  // Splits a std::string into "tag" and "name" delimited by a single colon.
+  // Splits a string into "tag" and "name" delimited by a single colon.
   std::vector<absl::string_view> StrSplitTags(absl::string_view tag_and_name);
 
  private:

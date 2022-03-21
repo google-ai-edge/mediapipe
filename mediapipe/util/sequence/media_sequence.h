@@ -37,8 +37,8 @@
 // The clip label group adds labels that apply to the entire media clip. To
 // annotate that a video clip has a particular label, set the clip metadata
 // above and also set the SetClipLabelIndex and SetClipLabelString. Most
-// training pipelines will only use the label index or std::string, but we
-// recommend storing both to improve readability while maintaining ease of use.
+// training pipelines will only use the label index or string, but we recommend
+// storing both to improve readability while maintaining ease of use.
 // Example:
 //   SetClipLabelString({"run", "jump"}, &sequence);
 //   SetClipLabelIndex({35, 47}, &sequence);
@@ -49,10 +49,11 @@
 // are called segments. To annotate that a video clip has time spans with labels
 // set the clip metadata above and use the functions SetSegmentStartTimestamp,
 // SetSegmentEndTimestamp, SetSegmentLabelIndex, and SetSegmentLabelString. Most
-// training pipelines will only use the label index or std::string, but we
-// recommend storing both to improve readability while maintaining ease of use.
-// By listing segments as times, the frame rate or other properties can change
-// without affecting the labels. Example:
+// training pipelines will only use the label index or string, but we recommend
+// storing both to improve readability while maintaining ease of use. By listing
+// segments as times, the frame rate or other properties can change without
+// affecting the labels.
+// Example:
 //   SetSegmentStartTimestamp({500000, 1000000}, &sequence);  // in microseconds
 //   SetSegmentEndTimestamp({2000000, 6000000}, &sequence);
 //   SetSegmentLabelIndex({35, 47}, &sequence);
@@ -63,7 +64,7 @@
 // needed can vary by task, but to annotate a video clip for detection set the
 // clip metadata above and use repeatedly call AddBBox, AddBBoxTimestamp,
 // AddBBoxLabelIndex, and AddBBoxLabelString. Most training pipelines will only
-// use the label index or std::string, but we recommend storing both to improve
+// use the label index or string, but we recommend storing both to improve
 // readability while maintaining ease of use. Because bounding boxes are
 // assigned to timepoints in a video, changing the image frame rate can can
 // change the alignment. The ReconcileMetadata function can align bounding boxes
@@ -100,7 +101,7 @@
 //   tensorflow::SequenceExample example;
 //   SetDataPath("data_path", &example);
 //   if (HasDataPath(example)) {
-//      std::string data_path = GetDataPath(example);
+//      string data_path = GetDataPath(example);
 //      ClearDataPath(&example);
 //   }
 //
@@ -146,13 +147,12 @@
 //   }
 //
 // As described in media_sequence_util.h, each of these functions can take an
-// additional std::string prefix argument as their first argument. The prefix
-// can be fixed with a new NAME by calling a FIXED_PREFIX_... macro. Prefixes
-// are used to identify common storage patterns (e.g. storing an image along
-// with the height and width) under different names (e.g. storing a left and
-// right image in a stereo pair.) An example creating functions such as
-// AddLeftImageEncoded that adds a std::string under the key
-// "LEFT/image/encoded":
+// additional string prefix argument as their first argument. The prefix can
+// be fixed with a new NAME by calling a FIXED_PREFIX_... macro. Prefixes are
+// used to identify common storage patterns (e.g. storing an image along with
+// the height and width) under different names (e.g. storing a left and right
+// image in a stereo pair.) An example creating functions such as
+// AddLeftImageEncoded that adds a string under the key "LEFT/image/encoded":
 //  FIXED_PREFIX_STRING_FEATURE_LIST("LEFT", LeftImageEncoded, "image/encoded");
 
 #ifndef MEDIAPIPE_TENSORFLOW_SEQUENCE_MEDIA_SEQUENCE_H_
@@ -230,7 +230,7 @@ const char kSegmentEndIndexKey[] = "segment/end/index";
 // A list with the label index for each segment.
 // Multiple labels for the same segment are encoded as repeated segments.
 const char kSegmentLabelIndexKey[] = "segment/label/index";
-// A list with the label std::string for each segment.
+// A list with the label string for each segment.
 // Multiple labels for the same segment are encoded as repeated segments.
 const char kSegmentLabelStringKey[] = "segment/label/string";
 // A list with the label confidence for each segment.
@@ -301,7 +301,7 @@ const char kRegionTimestampKey[] = "region/timestamp";
 // An embedding for each region. The length of each list must be the product of
 // the number of regions and the product of the embedding dimensions.
 const char kRegionEmbeddingFloatKey[] = "region/embedding/float";
-// A std::string encoded embedding for each region.
+// A string encoded embedding for each region.
 const char kRegionEmbeddingEncodedKey[] = "region/embedding/encoded";
 // The confidence of the embedding.
 const char kRegionEmbeddingConfidenceKey[] = "region/embedding/confidence";

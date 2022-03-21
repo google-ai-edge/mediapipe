@@ -27,12 +27,12 @@
 #include "mediapipe/framework/formats/video_stream_header.h"
 #include "mediapipe/framework/port/core_proto_inc.h"
 #include "mediapipe/framework/port/logging.h"
-#include "mediapipe/gpu/gpu_buffer.h"
 #include "mediapipe/java/com/google/mediapipe/framework/jni/colorspace.h"
 #include "mediapipe/java/com/google/mediapipe/framework/jni/graph.h"
 #include "mediapipe/java/com/google/mediapipe/framework/jni/jni_util.h"
 #if !MEDIAPIPE_DISABLE_GPU
 #include "mediapipe/gpu/gl_calculator_helper.h"
+#include "mediapipe/gpu/gpu_buffer.h"
 #endif  // !MEDIAPIPE_DISABLE_GPU
 
 namespace {
@@ -57,14 +57,15 @@ int64_t CreatePacketWithContext(jlong context,
 }
 
 #if !MEDIAPIPE_DISABLE_GPU
-mediapipe::GpuBuffer CreateGpuBuffer(JNIEnv* env, jobject thiz, jlong context,
-                                     jint name, jint width, jint height,
-                                     jobject texture_release_callback) {
+absl::StatusOr<mediapipe::GpuBuffer> CreateGpuBuffer(
+    JNIEnv* env, jobject thiz, jlong context, jint name, jint width,
+    jint height, jobject texture_release_callback) {
   mediapipe::android::Graph* mediapipe_graph =
       reinterpret_cast<mediapipe::android::Graph*>(context);
   auto* gpu_resources = mediapipe_graph->GetGpuResources();
-  CHECK(gpu_resources) << "Cannot create a mediapipe::GpuBuffer packet on a "
-                          "graph without GPU support";
+  RET_CHECK(gpu_resources)
+      << "Cannot create a mediapipe::GpuBuffer packet on a "
+         "graph without GPU support";
   mediapipe::GlTextureBuffer::DeletionCallback cc_callback;
 
   if (texture_release_callback) {
@@ -78,7 +79,7 @@ mediapipe::GpuBuffer CreateGpuBuffer(JNIEnv* env, jobject thiz, jlong context,
                          "(JL"
                          "com/google/mediapipe/framework/TextureReleaseCallback"
                          ";)V");
-    CHECK(release_method);
+    RET_CHECK(release_method);
     env->DeleteLocalRef(my_class);
 
     jobject java_callback = env->NewGlobalRef(texture_release_callback);
@@ -400,18 +401,22 @@ JNIEXPORT jlong JNICALL PACKET_CREATOR_METHOD(nativeCreateCpuImage)(
 JNIEXPORT jlong JNICALL PACKET_CREATOR_METHOD(nativeCreateGpuImage)(
     JNIEnv* env, jobject thiz, jlong context, jint name, jint width,
     jint height, jobject texture_release_callback) {
-  mediapipe::Packet image_packet =
-      mediapipe::MakePacket<mediapipe::Image>(CreateGpuBuffer(
-          env, thiz, context, name, width, height, texture_release_callback));
-  return CreatePacketWithContext(context, image_packet);
+  auto buffer_or = CreateGpuBuffer(env, thiz, context, name, width, height,
+                                   texture_release_callback);
+  if (ThrowIfError(env, buffer_or.status())) return 0L;
+  mediapipe::Packet packet =
+      mediapipe::MakePacket<mediapipe::Image>(std::move(buffer_or).value());
+  return CreatePacketWithContext(context, packet);
 }
 
 JNIEXPORT jlong JNICALL PACKET_CREATOR_METHOD(nativeCreateGpuBuffer)(
     JNIEnv* env, jobject thiz, jlong context, jint name, jint width,
     jint height, jobject texture_release_callback) {
+  auto buffer_or = CreateGpuBuffer(env, thiz, context, name, width, height,
+                                   texture_release_callback);
+  if (ThrowIfError(env, buffer_or.status())) return 0L;
   mediapipe::Packet packet =
-      mediapipe::MakePacket<mediapipe::GpuBuffer>(CreateGpuBuffer(
-          env, thiz, context, name, width, height, texture_release_callback));
+      mediapipe::MakePacket<mediapipe::GpuBuffer>(std::move(buffer_or).value());
   return CreatePacketWithContext(context, packet);
 }
 

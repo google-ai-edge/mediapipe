@@ -80,13 +80,13 @@ void PublicPacketCreators(pybind11::module* m) {
   m->def(
       "create_string",
       [](const std::string& data) { return MakePacket<std::string>(data); },
-      R"doc(Create a MediaPipe std::string Packet from a str.
+      R"doc(Create a MediaPipe string Packet from a str.
 
   Args:
     data: A str.
 
   Returns:
-    A MediaPipe std::string Packet.
+    A MediaPipe string Packet.
 
   Raises:
     TypeError: If the input is not a str.
@@ -100,13 +100,13 @@ void PublicPacketCreators(pybind11::module* m) {
   m->def(
       "create_string",
       [](const py::bytes& data) { return MakePacket<std::string>(data); },
-      R"doc(Create a MediaPipe std::string Packet from a bytes object.
+      R"doc(Create a MediaPipe string Packet from a bytes object.
 
   Args:
     data: A bytes object.
 
   Returns:
-    A MediaPipe std::string Packet.
+    A MediaPipe string Packet.
 
   Raises:
     TypeError: If the input is not a bytes object.
@@ -498,13 +498,13 @@ void PublicPacketCreators(pybind11::module* m) {
       [](const std::vector<std::string>& data) {
         return MakePacket<std::vector<std::string>>(data);
       },
-      R"doc(Create a MediaPipe std::string vector Packet from a list of str.
+      R"doc(Create a MediaPipe string vector Packet from a list of str.
 
   Args:
     data: A list of str.
 
   Returns:
-    A MediaPipe std::string vector Packet.
+    A MediaPipe string vector Packet.
 
   Raises:
     TypeError: If the input is not a list of str.
@@ -546,7 +546,7 @@ void PublicPacketCreators(pybind11::module* m) {
       [](const std::map<std::string, Packet>& data) {
         return MakePacket<std::map<std::string, Packet>>(data);
       },
-      R"doc(Create a MediaPipe std::string to packet map Packet from a dictionary.
+      R"doc(Create a MediaPipe string to packet map Packet from a dictionary.
 
   Args:
     data: A dictionary that has (str, Packet) pairs.
@@ -561,7 +561,7 @@ void PublicPacketCreators(pybind11::module* m) {
     dict_packet = mp.packet_creator.create_string_to_packet_map({
         'float': mp.packet_creator.create_float(0.1),
         'int': mp.packet_creator.create_int(1),
-        'std::string': mp.packet_creator.create_string('1')
+        'string': mp.packet_creator.create_string('1')
     data = mp.packet_getter.get_str_to_packet_dict(dict_packet)
 )doc",
       py::arg().noconvert(), py::return_value_policy::move);

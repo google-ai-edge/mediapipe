@@ -67,7 +67,7 @@ mediapipe_simple_subgraph(
     register_as = "TensorsToPoseLandmarksAndSegmentation",
     deps = [
         "//mediapipe/calculators/core:gate_calculator",
-        "//mediapipe/calculators/core:split_landmarks_calculator",
+        "//mediapipe/calculators/core:split_proto_list_calculator",
         "//mediapipe/calculators/core:split_vector_calculator",
         "//mediapipe/calculators/tensor:tensors_to_floats_calculator",
         "//mediapipe/calculators/tensor:tensors_to_landmarks_calculator",

@@ -59,11 +59,6 @@ vImage_Error vImageRGBAToGray(const vImage_Buffer* src, vImage_Buffer* dst);
 vImage_Error vImageConvertCVPixelBuffers(CVPixelBufferRef src,
                                          CVPixelBufferRef dst);
 
-/// When storing a mediapipe::Packet* in a CVPixelBuffer's refcon, this can be
-/// used as a CVPixelBufferReleaseBytesCallback. This keeps the packet's data
-/// alive while the CVPixelBuffer is in use.
-void ReleaseMediaPipePacket(void* refcon, const void* base_address);
-
 // Create a CVPixelBuffer without using a pool. See pixel_buffer_pool_util.h
 // for creation functions that use pools.
 CVReturn CreateCVPixelBufferWithoutPool(int width, int height, OSType cv_format,
@@ -88,6 +83,9 @@ absl::Status CreateCVPixelBufferForImageFramePacket(
     CFHolder<CVPixelBufferRef>* out_buffer);
 absl::StatusOr<CFHolder<CVPixelBufferRef>> CreateCVPixelBufferCopyingImageFrame(
     const mediapipe::ImageFrame& image_frame);
+absl::StatusOr<CFHolder<CVPixelBufferRef>> CreateCVPixelBufferForImageFrame(
+    std::shared_ptr<mediapipe::ImageFrame> image_frame,
+    bool can_overwrite = false);
 
 /// Creates a CVPixelBuffer with a copy of the contents of the CGImage.
 absl::Status CreateCVPixelBufferFromCGImage(

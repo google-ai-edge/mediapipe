@@ -20,8 +20,8 @@
 
 namespace mediapipe {
 
-// Takes in a std::string, draws the text std::string by cv::putText(), and
-// outputs an ImageFrame.
+// Takes in a string, draws the text string by cv::putText(), and outputs an
+// ImageFrame.
 //
 // Example config:
 // node {

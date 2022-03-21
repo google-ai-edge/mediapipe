@@ -126,6 +126,7 @@ following steps:
             }
             return packet.Get<MyType>();
           });
+    }
     }  // namespace mediapipe
     ```
 

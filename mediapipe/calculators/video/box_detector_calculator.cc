@@ -76,7 +76,7 @@ constexpr char kTrackingTag[] = "TRACKING";
 //   IMAGE_SIZE: Input image dimension.
 //   TRACKED_BOXES : input box tracking result (proto TimedBoxProtoList) from
 //             BoxTrackerCalculator.
-//   ADD_INDEX: Optional std::string containing binary format proto of type
+//   ADD_INDEX: Optional string containing binary format proto of type
 //             BoxDetectorIndex. Used for adding target index to the detector
 //             search index during runtime.
 //   CANCEL_OBJECT_ID: Optional id of box to be removed. This is recommended
@@ -91,8 +91,7 @@ constexpr char kTrackingTag[] = "TRACKING";
 //   BOXES: Optional output stream of type TimedBoxProtoList for each lost box.
 //
 // Imput side packets:
-//   INDEX_PROTO_STRING: Optional std::string containing binary format proto of
-//   type
+//   INDEX_PROTO_STRING: Optional string containing binary format proto of type
 //                       BoxDetectorIndex. Used for initializing box_detector
 //                       with predefined template images.
 //   FRAME_ALIGNMENT:    Optional integer to indicate alignment_boundary for

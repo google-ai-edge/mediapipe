@@ -79,7 +79,7 @@ ImageFormat::Format GetImageFormat(int num_channels) {
 // to be saved, specify an output side packet with tag "SAVED_AUDIO_PATH".
 // The calculator will call FFmpeg binary to save audio tracks as an aac file.
 // If the audio tracks can't be extracted by FFmpeg, the output side packet
-// will contain an empty std::string.
+// will contain an empty string.
 //
 // Example config:
 // node {

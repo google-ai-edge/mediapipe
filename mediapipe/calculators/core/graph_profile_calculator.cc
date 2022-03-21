@@ -29,6 +29,11 @@ namespace api2 {
 // This calculator periodically copies the GraphProfile from
 // mediapipe::GraphProfiler::CaptureProfile to the "PROFILE" output stream.
 //
+// Similarly to the log files saved by GraphProfiler::WriteProfile when trace
+// logging is enabled, the first captured profile contains the full
+// canonicalized graph config and, if tracing is enabled, calculator names in
+// graph traces. Subsequent profiles omit this information.
+//
 // Example config:
 // node {
 //   calculator: "GraphProfileCalculator"
@@ -50,11 +55,14 @@ class GraphProfileCalculator : public Node {
   absl::Status Process(CalculatorContext* cc) final {
     auto options = cc->Options<::mediapipe::GraphProfileCalculatorOptions>();
 
-    if (prev_profile_ts_ == Timestamp::Unset() ||
+    bool first_profile = prev_profile_ts_ == Timestamp::Unset();
+    if (first_profile ||
         cc->InputTimestamp() - prev_profile_ts_ >= options.profile_interval()) {
       prev_profile_ts_ = cc->InputTimestamp();
       GraphProfile result;
-      MP_RETURN_IF_ERROR(cc->GetProfilingContext()->CaptureProfile(&result));
+      MP_RETURN_IF_ERROR(cc->GetProfilingContext()->CaptureProfile(
+          &result, first_profile ? PopulateGraphConfig::kFull
+                                 : PopulateGraphConfig::kNo));
       kProfileOut(cc).Send(result);
     }
     return absl::OkStatus();

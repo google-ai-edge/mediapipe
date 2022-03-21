@@ -50,6 +50,9 @@ class GlCalculatorHelperImpl {
   GlTexture CreateDestinationTexture(int output_width, int output_height,
                                      GpuBufferFormat format);
 
+  GpuBuffer GpuBufferWithImageFrame(std::shared_ptr<ImageFrame> image_frame);
+  GpuBuffer GpuBufferCopyingImageFrame(const ImageFrame& image_frame);
+
   GLuint framebuffer() const { return framebuffer_; }
   void BindFramebuffer(const GlTexture& dst);
 

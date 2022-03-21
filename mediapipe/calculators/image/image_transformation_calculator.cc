@@ -16,10 +16,13 @@
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/image_frame.h"
 #include "mediapipe/framework/formats/image_frame_opencv.h"
+#include "mediapipe/framework/formats/video_stream_header.h"
+#include "mediapipe/framework/packet.h"
 #include "mediapipe/framework/port/opencv_core_inc.h"
 #include "mediapipe/framework/port/opencv_imgproc_inc.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status.h"
+#include "mediapipe/framework/timestamp.h"
 #include "mediapipe/gpu/scale_mode.pb.h"
 
 #if !MEDIAPIPE_DISABLE_GPU
@@ -52,6 +55,7 @@ namespace mediapipe {
 namespace {
 constexpr char kImageFrameTag[] = "IMAGE";
 constexpr char kGpuBufferTag[] = "IMAGE_GPU";
+constexpr char kVideoPrestreamTag[] = "VIDEO_PRESTREAM";
 
 int RotationModeToDegrees(mediapipe::RotationMode_Mode rotation) {
   switch (rotation) {
@@ -121,6 +125,12 @@ mediapipe::ScaleMode_Mode ParseScaleMode(
 //   FLIP_VERTICALLY (optional): Whether to flip image vertically or not. If
 //   provided, it overrides the FLIP_VERTICALLY input side packet and/or
 //   corresponding field in the calculator options.
+//
+//   VIDEO_PRESTREAM (optional): VideoHeader for the input ImageFrames, if
+//   rotating or scaling the frames, the header width and height will be updated
+//   appropriately. Note the header is updated only based on dimensions and
+//   rotations specified as side packets or options, input_stream
+//   transformations will not update the header.
 //
 // Output:
 //   One of the following tags:
@@ -242,6 +252,21 @@ absl::Status ImageTransformationCalculator::GetContract(
     cc->Inputs().Tag("FLIP_VERTICALLY").Set<bool>();
   }
 
+  RET_CHECK(cc->Inputs().HasTag(kVideoPrestreamTag) ==
+            cc->Outputs().HasTag(kVideoPrestreamTag))
+      << "If VIDEO_PRESTREAM is provided, it must be provided both as an "
+         "inputs and output stream.";
+  if (cc->Inputs().HasTag(kVideoPrestreamTag)) {
+    RET_CHECK(!(cc->Inputs().HasTag("OUTPUT_DIMENSIONS") ||
+                cc->Inputs().HasTag("ROTATION_DEGREES")))
+        << "If specifying VIDEO_PRESTREAM, the transformations that affect the "
+           "dimensions of the frames (OUTPUT_DIMENSIONS and ROTATION_DEGREES) "
+           "need to be constant for every frame, meaning they can only be "
+           "provided in the calculator options or side packets.";
+    cc->Inputs().Tag(kVideoPrestreamTag).Set<mediapipe::VideoHeader>();
+    cc->Outputs().Tag(kVideoPrestreamTag).Set<mediapipe::VideoHeader>();
+  }
+
   if (cc->InputSidePackets().HasTag("OUTPUT_DIMENSIONS")) {
     cc->InputSidePackets().Tag("OUTPUT_DIMENSIONS").Set<DimensionsPacketType>();
   }
@@ -326,6 +351,24 @@ absl::Status ImageTransformationCalculator::Open(CalculatorContext* cc) {
 }
 
 absl::Status ImageTransformationCalculator::Process(CalculatorContext* cc) {
+  // First update the video header if it is given, based on the rotation and
+  // dimensions specified as side packets or options. This will only be done
+  // once, so streaming transformation changes will not be reflected in
+  // the header.
+  if (cc->Inputs().HasTag(kVideoPrestreamTag) &&
+      !cc->Inputs().Tag(kVideoPrestreamTag).IsEmpty() &&
+      cc->Outputs().HasTag(kVideoPrestreamTag)) {
+    mediapipe::VideoHeader header =
+        cc->Inputs().Tag(kVideoPrestreamTag).Get<mediapipe::VideoHeader>();
+    // Update the header's width and height if needed.
+    ComputeOutputDimensions(header.width, header.height, &header.width,
+                            &header.height);
+    cc->Outputs()
+        .Tag(kVideoPrestreamTag)
+        .AddPacket(mediapipe::MakePacket<mediapipe::VideoHeader>(header).At(
+            mediapipe::Timestamp::PreStream()));
+  }
+
   // Override values if specified so.
   if (cc->Inputs().HasTag("ROTATION_DEGREES") &&
       !cc->Inputs().Tag("ROTATION_DEGREES").IsEmpty()) {

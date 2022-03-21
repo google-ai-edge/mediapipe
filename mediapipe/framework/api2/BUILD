@@ -134,6 +134,7 @@ cc_test(
     deps = [
         ":packet",
         "//mediapipe/framework/port:gtest_main",
+        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
     ],
 )

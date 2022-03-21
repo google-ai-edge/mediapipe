@@ -183,22 +183,22 @@ absl::Status SegmentationSmoothingCalculator::Close(CalculatorContext* cc) {
 absl::Status SegmentationSmoothingCalculator::RenderCpu(CalculatorContext* cc) {
   // Setup source images.
   const auto& current_frame = cc->Inputs().Tag(kCurrentMaskTag).Get<Image>();
-  const cv::Mat current_mat = mediapipe::formats::MatView(&current_frame);
-  RET_CHECK_EQ(current_mat.type(), CV_32FC1)
+  auto current_mat = mediapipe::formats::MatView(&current_frame);
+  RET_CHECK_EQ(current_mat->type(), CV_32FC1)
       << "Only 1-channel float input image is supported.";
 
   const auto& previous_frame = cc->Inputs().Tag(kPreviousMaskTag).Get<Image>();
-  const cv::Mat previous_mat = mediapipe::formats::MatView(&previous_frame);
-  RET_CHECK_EQ(previous_mat.type(), current_mat.type())
-      << "Warning: mixing input format types: " << previous_mat.type()
-      << " != " << previous_mat.type();
+  auto previous_mat = mediapipe::formats::MatView(&previous_frame);
+  RET_CHECK_EQ(previous_mat->type(), current_mat->type())
+      << "Warning: mixing input format types: " << previous_mat->type()
+      << " != " << previous_mat->type();
 
-  RET_CHECK_EQ(current_mat.rows, previous_mat.rows);
-  RET_CHECK_EQ(current_mat.cols, previous_mat.cols);
+  RET_CHECK_EQ(current_mat->rows, previous_mat->rows);
+  RET_CHECK_EQ(current_mat->cols, previous_mat->cols);
 
   // Setup destination image.
   auto output_frame = std::make_shared<ImageFrame>(
-      current_frame.image_format(), current_mat.cols, current_mat.rows);
+      current_frame.image_format(), current_mat->cols, current_mat->rows);
   cv::Mat output_mat = mediapipe::formats::MatView(output_frame.get());
   output_mat.setTo(cv::Scalar(0));
 
@@ -233,8 +233,8 @@ absl::Status SegmentationSmoothingCalculator::RenderCpu(CalculatorContext* cc) {
   // Write directly to the first channel of output.
   for (int i = 0; i < output_mat.rows; ++i) {
     float* out_ptr = output_mat.ptr<float>(i);
-    const float* curr_ptr = current_mat.ptr<float>(i);
-    const float* prev_ptr = previous_mat.ptr<float>(i);
+    const float* curr_ptr = current_mat->ptr<float>(i);
+    const float* prev_ptr = previous_mat->ptr<float>(i);
     for (int j = 0; j < output_mat.cols; ++j) {
       const float new_mask_value = curr_ptr[j];
       const float prev_mask_value = prev_ptr[j];

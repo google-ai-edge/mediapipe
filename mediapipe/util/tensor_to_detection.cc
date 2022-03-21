@@ -35,7 +35,7 @@ Detection TensorToDetection(
   detection.add_score(score);
 
   // According to mediapipe/framework/formats/detection.proto
-  // "Either std::string or integer labels must be used but not both at the
+  // "Either string or integer labels must be used but not both at the
   // same time."
   if (absl::holds_alternative<int>(class_label)) {
     detection.add_label_id(absl::get<int>(class_label));

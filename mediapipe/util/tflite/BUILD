@@ -98,7 +98,10 @@ cc_library(
             "@org_tensorflow//tensorflow/lite/delegates/gpu/common:model_builder",
             "@org_tensorflow//tensorflow/lite/delegates/gpu/gl:api2",
         ],
-    }) + ["@org_tensorflow//tensorflow/lite/core/api"],
+    }) + [
+        "@com_google_absl//absl/status",
+        "@org_tensorflow//tensorflow/lite/core/api",
+    ],
 )
 
 cc_library(

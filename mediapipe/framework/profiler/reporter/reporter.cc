@@ -215,7 +215,7 @@ void CompleteCalculatorData(
 }
 
 void Reporter::Accumulate(const mediapipe::GraphProfile& profile) {
-  // Cache nodeID to its std::string name.
+  // Cache nodeID to its string name.
   NameLookup name_lookup;
   CacheNodeNameLookup(profile, &name_lookup);
 
@@ -363,8 +363,8 @@ class ReportImpl : public Report {
   // Values for each calculator, corresponding to the label in headers().
   std::vector<std::vector<std::string>> lines_impl;
 
-  // The longest std::string of any value in a given column (including the
-  // header for that column). Used for formatting the output.
+  // The longest string of any value in a given column (including the header
+  // for that column). Used for formatting the output.
   std::vector<size_t> char_counts_impl;
   bool compact_flag = false;
 
@@ -377,7 +377,7 @@ void ReportImpl::Print(std::ostream& output) {
   // fill space up to char_counts[column] + 1. The strings in the output
   // are mutable to support padding, hence no const in the for loops.
   int column_number = 0;
-  // Make a copy of the column std::string because we might be adding spaces.
+  // Make a copy of the column string because we might be adding spaces.
   for (auto column : headers_impl) {
     int padding_needed = char_counts_impl[column_number] + 1 - column.length();
     if (compact_flag) {

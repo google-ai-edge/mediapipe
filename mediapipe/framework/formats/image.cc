@@ -16,48 +16,15 @@
 
 #include "mediapipe/framework/type_map.h"
 
+#if !MEDIAPIPE_DISABLE_GPU
+#include "mediapipe/gpu/gl_texture_view.h"
+#endif  // !MEDIAPIPE_DISABLE_GPU
+
 namespace mediapipe {
 
 // TODO Refactor common code from GpuBufferToImageFrameCalculator
 bool Image::ConvertToCpu() const {
-  if (!use_gpu_) return true;  // Already on CPU.
-#if !MEDIAPIPE_DISABLE_GPU
-#if MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
-  image_frame_ = CreateImageFrameForCVPixelBuffer(GetCVPixelBufferRef());
-#else
-  auto gl_texture = gpu_buffer_.GetGlTextureBufferSharedPtr();
-  if (!gl_texture->GetProducerContext()) return false;
-  gl_texture->GetProducerContext()->Run([this, &gl_texture]() {
-    gl_texture->WaitOnGpu();
-    const auto gpu_buf = mediapipe::GpuBuffer(GetGlTextureBufferSharedPtr());
-#ifdef __ANDROID__
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);  // b/32091368
-#endif
-    GLuint fb = 0;
-    glDisable(GL_DEPTH_TEST);
-    // TODO Re-use a shared framebuffer.
-    glGenFramebuffers(1, &fb);
-    glBindFramebuffer(GL_FRAMEBUFFER, fb);
-    glViewport(0, 0, gpu_buf.width(), gpu_buf.height());
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(gl_texture->target(), gl_texture->name());
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
-                           gl_texture->target(), gl_texture->name(), 0);
-    auto frame = std::make_shared<ImageFrame>(
-        mediapipe::ImageFormatForGpuBufferFormat(gpu_buf.format()),
-        gpu_buf.width(), gpu_buf.height(),
-        ImageFrame::kGlDefaultAlignmentBoundary);
-    const auto info = GlTextureInfoForGpuBufferFormat(
-        gpu_buf.format(), 0, gl_texture->GetProducerContext()->GetGlVersion());
-    glReadPixels(0, 0, gpu_buf.width(), gpu_buf.height(), info.gl_format,
-                 info.gl_type, frame->MutablePixelData());
-    glDeleteFramebuffers(1, &fb);
-    // Cleanup
-    gl_texture->DidRead(gl_texture->GetProducerContext()->CreateSyncToken());
-    image_frame_ = frame;
-  });
-#endif  //  MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
-#endif  // !MEDIAPIPE_DISABLE_GPU
+  auto view = gpu_buffer_.GetReadView<ImageFrame>();
   use_gpu_ = false;
   return true;
 }
@@ -67,19 +34,7 @@ bool Image::ConvertToGpu() const {
 #if MEDIAPIPE_DISABLE_GPU
   return false;
 #else
-  if (use_gpu_) return true;  // Already on GPU.
-#if MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
-  auto packet = PointToForeign<ImageFrame>(image_frame_.get());
-  CFHolder<CVPixelBufferRef> buffer;
-  auto status = CreateCVPixelBufferForImageFramePacket(packet, true, &buffer);
-  CHECK_OK(status);
-  gpu_buffer_ = mediapipe::GpuBuffer(std::move(buffer));
-#else
-  // GlCalculatorHelperImpl::MakeGlTextureBuffer (CreateSourceTexture)
-  auto buffer = mediapipe::GlTextureBuffer::Create(*image_frame_);
-  glFlush();
-  gpu_buffer_ = mediapipe::GpuBuffer(std::move(buffer));
-#endif  //  MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
+  auto view = gpu_buffer_.GetReadView<GlTextureView>(0);
   use_gpu_ = true;
   return true;
 #endif  // MEDIAPIPE_DISABLE_GPU

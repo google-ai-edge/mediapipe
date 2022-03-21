@@ -21,20 +21,18 @@
 #include "mediapipe/framework/formats/image_format.pb.h"
 #include "mediapipe/framework/formats/image_frame.h"
 #include "mediapipe/framework/port/logging.h"
-
-#if !MEDIAPIPE_DISABLE_GPU
-
 #include "mediapipe/gpu/gpu_buffer.h"
 #include "mediapipe/gpu/gpu_buffer_format.h"
+#include "mediapipe/gpu/gpu_buffer_storage_image_frame.h"
+#include "mediapipe/gpu/image_frame_view.h"
+
+#if !MEDIAPIPE_DISABLE_GPU
 
 #if defined(__APPLE__)
 #include <CoreVideo/CoreVideo.h>
 
 #include "mediapipe/objc/CFHolder.h"
 #include "mediapipe/objc/util.h"
-#if !TARGET_OS_OSX  // iOS, use CVPixelBuffer.
-#define MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER 1
-#endif  // TARGET_OS_OSX
 #endif  // defined(__APPLE__)
 
 #if !MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER  // OSX, use GL textures.
@@ -73,15 +71,15 @@ class Image {
   // Creates an Image representing the same image content as the ImageFrame
   // the input shared pointer points to, and retaining shared ownership.
   explicit Image(ImageFrameSharedPtr image_frame)
-      : image_frame_(std::move(image_frame)) {
+      : gpu_buffer_(std::make_shared<GpuBufferStorageImageFrame>(
+            std::move(image_frame))) {
     use_gpu_ = false;
-    pixel_mutex_ = std::make_shared<absl::Mutex>();
   }
 
   // CPU getters.
-  const ImageFrameSharedPtr& GetImageFrameSharedPtr() const {
-    if (use_gpu_ == true) ConvertToCpu();
-    return image_frame_;
+  ImageFrameSharedPtr GetImageFrameSharedPtr() const {
+    // Write view currently because the return type does not point to const IF.
+    return gpu_buffer_.GetWriteView<ImageFrame>();
   }
 
   // Creates an Image representing the same image content as the input GPU
@@ -99,19 +97,18 @@ class Image {
   explicit Image(mediapipe::GpuBuffer gpu_buffer) {
     use_gpu_ = true;
     gpu_buffer_ = gpu_buffer;
-    pixel_mutex_ = std::make_shared<absl::Mutex>();
   }
 
   // GPU getters.
 #if MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
   CVPixelBufferRef GetCVPixelBufferRef() const {
     if (use_gpu_ == false) ConvertToGpu();
-    return gpu_buffer_.GetCVPixelBufferRef();
+    return mediapipe::GetCVPixelBufferRef(gpu_buffer_);
   }
 #else
   mediapipe::GlTextureBufferSharedPtr GetGlTextureBufferSharedPtr() const {
     if (use_gpu_ == false) ConvertToGpu();
-    return gpu_buffer_.GetGlTextureBufferSharedPtr();
+    return gpu_buffer_.internal_storage<mediapipe::GlTextureBuffer>();
   }
 #endif  // MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
   // Get a GPU view. Automatically uploads from CPU if needed.
@@ -128,9 +125,7 @@ class Image {
   int step() const;  // Row size in bytes.
   bool UsesGpu() const { return use_gpu_; }
   ImageFormat::Format image_format() const;
-#if !MEDIAPIPE_DISABLE_GPU
   mediapipe::GpuBufferFormat format() const;
-#endif  // !MEDIAPIPE_DISABLE_GPU
 
   // Converts to true iff valid.
   explicit operator bool() const { return operator!=(nullptr); }
@@ -147,8 +142,8 @@ class Image {
 
   // Lock/Unlock pixel data.
   // Should be used exclusively by the PixelLock helper class.
-  void LockPixels() const ABSL_EXCLUSIVE_LOCK_FUNCTION(pixel_mutex_);
-  void UnlockPixels() const ABSL_UNLOCK_FUNCTION(pixel_mutex_);
+  void LockPixels() const ABSL_EXCLUSIVE_LOCK_FUNCTION();
+  void UnlockPixels() const ABSL_UNLOCK_FUNCTION();
 
   // Helper utility for GPU->CPU data transfer.
   bool ConvertToCpu() const;
@@ -157,75 +152,32 @@ class Image {
   bool ConvertToGpu() const;
 
  private:
-#if !MEDIAPIPE_DISABLE_GPU
   mutable mediapipe::GpuBuffer gpu_buffer_;
-#endif  // !MEDIAPIPE_DISABLE_GPU
-  mutable ImageFrameSharedPtr image_frame_;
   mutable bool use_gpu_ = false;
-  mutable std::shared_ptr<absl::Mutex> pixel_mutex_;  // ImageFrame only.
 };
 
-inline int Image::width() const {
-#if !MEDIAPIPE_DISABLE_GPU
-  if (use_gpu_)
-    return gpu_buffer_.width();
-  else
-#endif  // !MEDIAPIPE_DISABLE_GPU
-    return image_frame_->Width();
-}
+inline int Image::width() const { return gpu_buffer_.width(); }
 
-inline int Image::height() const {
-#if !MEDIAPIPE_DISABLE_GPU
-  if (use_gpu_)
-    return gpu_buffer_.height();
-  else
-#endif  // !MEDIAPIPE_DISABLE_GPU
-    return image_frame_->Height();
-}
+inline int Image::height() const { return gpu_buffer_.height(); }
 
 inline ImageFormat::Format Image::image_format() const {
-#if !MEDIAPIPE_DISABLE_GPU
-  if (use_gpu_)
-    return mediapipe::ImageFormatForGpuBufferFormat(gpu_buffer_.format());
-  else
-#endif  // !MEDIAPIPE_DISABLE_GPU
-    return image_frame_->Format();
+  return mediapipe::ImageFormatForGpuBufferFormat(gpu_buffer_.format());
 }
 
-#if !MEDIAPIPE_DISABLE_GPU
 inline mediapipe::GpuBufferFormat Image::format() const {
-  if (use_gpu_)
-    return gpu_buffer_.format();
-  else
-    return mediapipe::GpuBufferFormatForImageFormat(image_frame_->Format());
+  return gpu_buffer_.format();
 }
-#endif  // !MEDIAPIPE_DISABLE_GPU
 
 inline bool Image::operator==(std::nullptr_t other) const {
-#if !MEDIAPIPE_DISABLE_GPU
-  if (use_gpu_)
-    return gpu_buffer_ == other;
-  else
-#endif  // !MEDIAPIPE_DISABLE_GPU
-    return image_frame_ == other;
+  return gpu_buffer_ == other;
 }
 
 inline bool Image::operator==(const Image& other) const {
-#if !MEDIAPIPE_DISABLE_GPU
-  if (use_gpu_)
-    return gpu_buffer_ == other.gpu_buffer_;
-  else
-#endif  // !MEDIAPIPE_DISABLE_GPU
-    return image_frame_ == other.image_frame_;
+  return gpu_buffer_ == other.gpu_buffer_;
 }
 
 inline Image& Image::operator=(std::nullptr_t other) {
-#if !MEDIAPIPE_DISABLE_GPU
-  if (use_gpu_)
-    gpu_buffer_ = other;
-  else
-#endif  // !MEDIAPIPE_DISABLE_GPU
-    image_frame_ = other;
+  gpu_buffer_ = other;
   return *this;
 }
 
@@ -234,19 +186,14 @@ inline int Image::channels() const {
 }
 
 inline int Image::step() const {
-  if (use_gpu_)
-    return width() * channels() *
-           ImageFrame::ByteDepthForFormat(image_format());
-  else
-    return image_frame_->WidthStep();
+  return gpu_buffer_.GetReadView<ImageFrame>()->WidthStep();
 }
 
 inline void Image::LockPixels() const {
-  pixel_mutex_->Lock();
   ConvertToCpu();  // Download data if necessary.
 }
 
-inline void Image::UnlockPixels() const { pixel_mutex_->Unlock(); }
+inline void Image::UnlockPixels() const {}
 
 // Helper class for getting access to Image CPU data,
 // and handles automatically locking/unlocking CPU data access.
@@ -268,7 +215,10 @@ class PixelReadLock {
  public:
   explicit PixelReadLock(const Image& image) {
     buffer_ = &image;
-    if (buffer_) buffer_->LockPixels();
+    if (buffer_) {
+      buffer_->LockPixels();
+      frame_ = buffer_->GetImageFrameSharedPtr();
+    }
   }
   ~PixelReadLock() {
     if (buffer_) buffer_->UnlockPixels();
@@ -276,10 +226,7 @@ class PixelReadLock {
   PixelReadLock(const PixelReadLock&) = delete;
 
   const uint8* Pixels() const {
-    if (buffer_ && !buffer_->UsesGpu()) {
-      ImageFrame* frame = buffer_->GetImageFrameSharedPtr().get();
-      if (frame) return frame->PixelData();
-    }
+    if (frame_) return frame_->PixelData();
     return nullptr;
   }
 
@@ -287,13 +234,17 @@ class PixelReadLock {
 
  private:
   const Image* buffer_ = nullptr;
+  std::shared_ptr<ImageFrame> frame_;
 };
 
 class PixelWriteLock {
  public:
   explicit PixelWriteLock(Image* image) {
     buffer_ = image;
-    if (buffer_) buffer_->LockPixels();
+    if (buffer_) {
+      buffer_->LockPixels();
+      frame_ = buffer_->GetImageFrameSharedPtr();
+    }
   }
   ~PixelWriteLock() {
     if (buffer_) buffer_->UnlockPixels();
@@ -301,10 +252,7 @@ class PixelWriteLock {
   PixelWriteLock(const PixelWriteLock&) = delete;
 
   uint8* Pixels() {
-    if (buffer_ && !buffer_->UsesGpu()) {
-      ImageFrame* frame = buffer_->GetImageFrameSharedPtr().get();
-      if (frame) return frame->MutablePixelData();
-    }
+    if (frame_) return frame_->MutablePixelData();
     return nullptr;
   }
 
@@ -312,6 +260,7 @@ class PixelWriteLock {
 
  private:
   const Image* buffer_ = nullptr;
+  std::shared_ptr<ImageFrame> frame_;
 };
 
 }  // namespace mediapipe

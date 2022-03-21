@@ -54,14 +54,12 @@
 #include "mediapipe/framework/scheduler.h"
 #include "mediapipe/framework/thread_pool_executor.pb.h"
 
-#if !MEDIAPIPE_DISABLE_GPU
 namespace mediapipe {
+
+#if !MEDIAPIPE_DISABLE_GPU
 class GpuResources;
 struct GpuSharedData;
-}  // namespace mediapipe
 #endif  // !MEDIAPIPE_DISABLE_GPU
-
-namespace mediapipe {
 
 typedef absl::StatusOr<OutputStreamPoller> StatusOrPoller;
 
@@ -366,10 +364,9 @@ class CalculatorGraph {
 #if !MEDIAPIPE_DISABLE_GPU
   // Returns a pointer to the GpuResources in use, if any.
   // Only meant for internal use.
-  std::shared_ptr<::mediapipe::GpuResources> GetGpuResources() const;
+  std::shared_ptr<GpuResources> GetGpuResources() const;
 
-  absl::Status SetGpuResources(
-      std::shared_ptr<::mediapipe::GpuResources> resources);
+  absl::Status SetGpuResources(std::shared_ptr<GpuResources> resources);
 
   // Helper for PrepareForRun. If it returns a non-empty map, those packets
   // must be added to the existing side packets, replacing existing values
@@ -532,7 +529,7 @@ class CalculatorGraph {
 #if !MEDIAPIPE_DISABLE_GPU
   // Owns the legacy GpuSharedData if we need to create one for backwards
   // compatibility.
-  std::unique_ptr<::mediapipe::GpuSharedData> legacy_gpu_shared_;
+  std::unique_ptr<GpuSharedData> legacy_gpu_shared_;
 #endif  // !MEDIAPIPE_DISABLE_GPU
 
   // True if the graph was initialized.
@@ -598,7 +595,7 @@ class CalculatorGraph {
   std::unique_ptr<CounterFactory> counter_factory_;
 
   // Executors for the scheduler, keyed by the executor's name. The default
-  // executor's name is the empty std::string.
+  // executor's name is the empty string.
   std::map<std::string, std::shared_ptr<Executor>> executors_;
 
   // The processed input side packet map for this run.

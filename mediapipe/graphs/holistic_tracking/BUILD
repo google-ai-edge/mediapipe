@@ -27,10 +27,10 @@ mediapipe_simple_subgraph(
     graph = "holistic_tracking_to_render_data.pbtxt",
     register_as = "HolisticTrackingToRenderData",
     deps = [
-        "//mediapipe/calculators/core:concatenate_normalized_landmark_list_calculator",
+        "//mediapipe/calculators/core:concatenate_proto_list_calculator",
         "//mediapipe/calculators/core:concatenate_vector_calculator",
         "//mediapipe/calculators/core:merge_calculator",
-        "//mediapipe/calculators/core:split_landmarks_calculator",
+        "//mediapipe/calculators/core:split_proto_list_calculator",
         "//mediapipe/calculators/core:split_vector_calculator",
         "//mediapipe/calculators/util:detections_to_render_data_calculator",
         "//mediapipe/calculators/util:landmarks_to_render_data_calculator",

@@ -17,6 +17,7 @@
 #include "mediapipe/calculators/tensorflow/image_frame_to_tensor_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/image_frame.h"
+#include "mediapipe/framework/port/proto_ns.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/port/status_macros.h"
@@ -32,7 +33,10 @@ namespace {
 // Convert the ImageFrame into Tensor with floating point value type.
 // The value will be normalized based on mean and stddev.
 std::unique_ptr<tf::Tensor> ImageFrameToNormalizedTensor(
-    const ImageFrame& image_frame, float mean, float stddev) {
+    // const ImageFrame& image_frame, float mean, float stddev) {
+    const ImageFrame& image_frame,
+    const mediapipe::proto_ns::RepeatedField<float>& mean,
+    const mediapipe::proto_ns::RepeatedField<float>& stddev) {
   const int cols = image_frame.Width();
   const int rows = image_frame.Height();
   const int channels = image_frame.NumberOfChannels();
@@ -45,7 +49,20 @@ std::unique_ptr<tf::Tensor> ImageFrameToNormalizedTensor(
   for (int row = 0; row < rows; ++row) {
     for (int col = 0; col < cols; ++col) {
       for (int channel = 0; channel < channels; ++channel) {
-        tensor_data(row, col, channel) = (pixel[channel] - mean) / stddev;
+        float mean_value = 0;
+        if (mean.size() > 1) {
+          mean_value = mean[channel];
+        } else if (!mean.empty()) {
+          mean_value = mean[0];
+        }
+        float stddev_value = 1;
+        if (stddev.size() > 1) {
+          stddev_value = stddev[channel];
+        } else if (!stddev.empty()) {
+          stddev_value = stddev[0];
+        }
+        tensor_data(row, col, channel) =
+            (pixel[channel] - mean_value) / stddev_value;
       }
       pixel += channels;
     }
@@ -126,7 +143,18 @@ absl::Status ImageFrameToTensorCalculator::Process(CalculatorContext* cc) {
     const tf::DataType data_type = options_.data_type();
     RET_CHECK_EQ(data_type, tf::DT_FLOAT)
         << "Unsupported data type " << data_type;
-    RET_CHECK_GT(options_.stddev(), 0.0f);
+    RET_CHECK_GT(options_.stddev().size(), 0) << "You must set a stddev.";
+    RET_CHECK_GT(options_.stddev()[0], 0.0f) << "The stddev cannot be zero.";
+    if (options_.stddev().size() > 1) {
+      RET_CHECK_EQ(options_.stddev().size(), video_frame.NumberOfChannels())
+          << "If specifying multiple stddev normalization values, "
+          << "the number must match the number of image channels.";
+    }
+    if (options_.mean().size() > 1) {
+      RET_CHECK_EQ(options_.mean().size(), video_frame.NumberOfChannels())
+          << "If specifying multiple mean normalization values, "
+          << "the number must match the number of image channels.";
+    }
     tensor = ImageFrameToNormalizedTensor(video_frame, options_.mean(),
                                           options_.stddev());
   } else {

@@ -15,6 +15,8 @@
 #ifndef MEDIAPIPE_GPU_GL_CALCULATOR_HELPER_H_
 #define MEDIAPIPE_GPU_GL_CALCULATOR_HELPER_H_
 
+#include <memory>
+
 #include "absl/memory/memory.h"
 #include "mediapipe/framework/calculator_context.h"
 #include "mediapipe/framework/calculator_contract.h"
@@ -128,7 +130,18 @@ class GlCalculatorHelper {
 
   // Convenience function for converting an ImageFrame to GpuBuffer and then
   // accessing it as a texture.
+  // This is deprecated because: 1) it encourages the use of GlTexture as a
+  // long-lived object; 2) it requires copying the ImageFrame's contents,
+  // which may not always be necessary.
+  ABSL_DEPRECATED("Use `GpuBufferWithImageFrame`.")
   GlTexture CreateSourceTexture(const ImageFrame& image_frame);
+
+  // Creates a GpuBuffer sharing ownership of image_frame. The contents of
+  // image_frame should not be modified after calling this.
+  GpuBuffer GpuBufferWithImageFrame(std::shared_ptr<ImageFrame> image_frame);
+
+  // Creates a GpuBuffer copying the contents of image_frame.
+  GpuBuffer GpuBufferCopyingImageFrame(const ImageFrame& image_frame);
 
   // Extracts GpuBuffer dimensions without creating a texture.
   ABSL_DEPRECATED("Use width and height methods on GpuBuffer instead")
@@ -170,13 +183,13 @@ class GlCalculatorHelper {
 // memory.
 class GlTexture {
  public:
-  GlTexture() {}
-  ~GlTexture() { Release(); }
+  GlTexture() : view_(std::make_shared<GlTextureView>()) {}
+  ~GlTexture() = default;
 
-  int width() const { return view_.width(); }
-  int height() const { return view_.height(); }
-  GLenum target() const { return view_.target(); }
-  GLuint name() const { return view_.name(); }
+  int width() const { return view_->width(); }
+  int height() const { return view_->height(); }
+  GLenum target() const { return view_->target(); }
+  GLuint name() const { return view_->name(); }
 
   // Returns a buffer that can be sent to another calculator.
   // & manages sync token
@@ -185,12 +198,13 @@ class GlTexture {
   std::unique_ptr<T> GetFrame() const;
 
   // Releases texture memory & manages sync token
-  void Release() { view_.Release(); }
+  void Release() { view_ = std::make_shared<GlTextureView>(); }
 
  private:
-  explicit GlTexture(GlTextureView view) : view_(std::move(view)) {}
+  explicit GlTexture(GlTextureView view)
+      : view_(std::make_shared<GlTextureView>(std::move(view))) {}
   friend class GlCalculatorHelperImpl;
-  GlTextureView view_;
+  std::shared_ptr<GlTextureView> view_;
 };
 
 // Returns the entry with the given tag if the collection uses tags, with the

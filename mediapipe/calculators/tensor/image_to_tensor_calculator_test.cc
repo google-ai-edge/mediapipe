@@ -61,7 +61,8 @@ void RunTestWithInputImagePacket(const Packet& input_image_packet,
                                  float range_max, int tensor_width,
                                  int tensor_height, bool keep_aspect,
                                  absl::optional<BorderMode> border_mode,
-                                 const mediapipe::NormalizedRect& roi) {
+                                 const mediapipe::NormalizedRect& roi,
+                                 bool output_int_tensor) {
   std::string border_mode_str;
   if (border_mode) {
     switch (*border_mode) {
@@ -72,6 +73,21 @@ void RunTestWithInputImagePacket(const Packet& input_image_packet,
         border_mode_str = "border_mode: BORDER_ZERO";
         break;
     }
+  }
+  std::string output_tensor_range;
+  if (output_int_tensor) {
+    output_tensor_range = absl::Substitute(R"(output_tensor_int_range {
+                min: $0
+                max: $1
+              })",
+                                           static_cast<int>(range_min),
+                                           static_cast<int>(range_max));
+  } else {
+    output_tensor_range = absl::Substitute(R"(output_tensor_float_range {
+                min: $0
+                max: $1
+              })",
+                                           range_min, range_max);
   }
   auto graph_config = mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(
       absl::Substitute(R"(
@@ -86,22 +102,18 @@ void RunTestWithInputImagePacket(const Packet& input_image_packet,
             [mediapipe.ImageToTensorCalculatorOptions.ext] {
               output_tensor_width: $0
               output_tensor_height: $1
-              keep_aspect_ratio: $4
-              output_tensor_float_range {
-                min: $2
-                max: $3
-              }
-              $5 # border mode
+              keep_aspect_ratio: $2
+              $3 # output range
+              $4 # border mode
             }
           }
         }
         )",
                        /*$0=*/tensor_width,
                        /*$1=*/tensor_height,
-                       /*$2=*/range_min,
-                       /*$3=*/range_max,
-                       /*$4=*/keep_aspect ? "true" : "false",
-                       /*$5=*/border_mode_str));
+                       /*$2=*/keep_aspect ? "true" : "false",
+                       /*$3=*/output_tensor_range,
+                       /*$4=*/border_mode_str));
 
   std::vector<Packet> output_packets;
   tool::AddVectorSink("tensor", &graph_config, &output_packets);
@@ -126,11 +138,18 @@ void RunTestWithInputImagePacket(const Packet& input_image_packet,
   ASSERT_THAT(tensor_vec, testing::SizeIs(1));
 
   const Tensor& tensor = tensor_vec[0];
-  EXPECT_EQ(tensor.element_type(), Tensor::ElementType::kFloat32);
-
   auto view = tensor.GetCpuReadView();
-  cv::Mat tensor_mat(tensor_height, tensor_width, CV_32FC3,
-                     const_cast<float*>(view.buffer<float>()));
+  cv::Mat tensor_mat;
+  if (output_int_tensor) {
+    EXPECT_EQ(tensor.element_type(), Tensor::ElementType::kUInt8);
+    tensor_mat = cv::Mat(tensor_height, tensor_width, CV_8UC3,
+                         const_cast<uint8*>(view.buffer<uint8>()));
+  } else {
+    EXPECT_EQ(tensor.element_type(), Tensor::ElementType::kFloat32);
+    tensor_mat = cv::Mat(tensor_height, tensor_width, CV_32FC3,
+                         const_cast<float*>(view.buffer<float>()));
+  }
+
   cv::Mat result_rgb;
   auto transformation =
       GetValueRangeTransformation(range_min, range_max, 0.0f, 255.0f).value();
@@ -170,16 +189,26 @@ enum class InputType { kImageFrame, kImage };
 const std::vector<InputType> kInputTypesToTest = {InputType::kImageFrame,
                                                   InputType::kImage};
 
-void RunTest(cv::Mat input, cv::Mat expected_result, float range_min,
-             float range_max, int tensor_width, int tensor_height,
-             bool keep_aspect, absl::optional<BorderMode> border_mode,
+void RunTest(cv::Mat input, cv::Mat expected_result,
+             std::vector<float> float_range, std::vector<int> int_range,
+             int tensor_width, int tensor_height, bool keep_aspect,
+             absl::optional<BorderMode> border_mode,
              const mediapipe::NormalizedRect& roi) {
+  ASSERT_EQ(2, float_range.size());
+  ASSERT_EQ(2, int_range.size());
   for (auto input_type : kInputTypesToTest) {
     RunTestWithInputImagePacket(
         input_type == InputType::kImageFrame ? MakeImageFramePacket(input)
                                              : MakeImagePacket(input),
-        expected_result, range_min, range_max, tensor_width, tensor_height,
-        keep_aspect, border_mode, roi);
+        expected_result, float_range[0], float_range[1], tensor_width,
+        tensor_height, keep_aspect, border_mode, roi,
+        /*output_int_tensor=*/false);
+    RunTestWithInputImagePacket(
+        input_type == InputType::kImageFrame ? MakeImageFramePacket(input)
+                                             : MakeImagePacket(input),
+        expected_result, int_range[0], int_range[1], tensor_width,
+        tensor_height, keep_aspect, border_mode, roi,
+        /*output_int_tensor=*/true);
   }
 }
 
@@ -195,8 +224,8 @@ TEST(ImageToTensorCalculatorTest, MediumSubRectKeepAspect) {
              "tensor/testdata/image_to_tensor/input.jpg"),
       GetRgb("/mediapipe/calculators/"
              "tensor/testdata/image_to_tensor/medium_sub_rect_keep_aspect.png"),
-      /*range_min=*/0.0f,
-      /*range_max=*/1.0f,
+      /*float_range=*/{0.0f, 1.0f},
+      /*int_range=*/{0, 255},
       /*tensor_width=*/256, /*tensor_height=*/256, /*keep_aspect=*/true,
       /*border mode*/ {}, roi);
 }
@@ -213,8 +242,8 @@ TEST(ImageToTensorCalculatorTest, MediumSubRectKeepAspectBorderZero) {
           GetRgb("/mediapipe/calculators/"
                  "tensor/testdata/image_to_tensor/"
                  "medium_sub_rect_keep_aspect_border_zero.png"),
-          /*range_min=*/0.0f,
-          /*range_max=*/1.0f,
+          /*float_range=*/{0.0f, 1.0f},
+          /*int_range=*/{0, 255},
           /*tensor_width=*/256, /*tensor_height=*/256, /*keep_aspect=*/true,
           BorderMode::kZero, roi);
 }
@@ -231,7 +260,8 @@ TEST(ImageToTensorCalculatorTest, MediumSubRectKeepAspectWithRotation) {
           GetRgb("/mediapipe/calculators/"
                  "tensor/testdata/image_to_tensor/"
                  "medium_sub_rect_keep_aspect_with_rotation.png"),
-          /*range_min=*/0.0f, /*range_max=*/1.0f,
+          /*float_range=*/{0.0f, 1.0f},
+          /*int_range=*/{0, 255},
           /*tensor_width=*/256, /*tensor_height=*/256, /*keep_aspect=*/true,
           BorderMode::kReplicate, roi);
 }
@@ -249,7 +279,8 @@ TEST(ImageToTensorCalculatorTest,
           GetRgb("/mediapipe/calculators/"
                  "tensor/testdata/image_to_tensor/"
                  "medium_sub_rect_keep_aspect_with_rotation_border_zero.png"),
-          /*range_min=*/0.0f, /*range_max=*/1.0f,
+          /*float_range=*/{0.0f, 1.0f},
+          /*int_range=*/{0, 255},
           /*tensor_width=*/256, /*tensor_height=*/256, /*keep_aspect=*/true,
           BorderMode::kZero, roi);
 }
@@ -267,8 +298,8 @@ TEST(ImageToTensorCalculatorTest, MediumSubRectWithRotation) {
       GetRgb(
           "/mediapipe/calculators/"
           "tensor/testdata/image_to_tensor/medium_sub_rect_with_rotation.png"),
-      /*range_min=*/-1.0f,
-      /*range_max=*/1.0f,
+      /*float_range=*/{-1.0f, 1.0f},
+      /*int_range=*/{0, 255},
       /*tensor_width=*/256, /*tensor_height=*/256, /*keep_aspect=*/false,
       BorderMode::kReplicate, roi);
 }
@@ -285,8 +316,8 @@ TEST(ImageToTensorCalculatorTest, MediumSubRectWithRotationBorderZero) {
           GetRgb("/mediapipe/calculators/"
                  "tensor/testdata/image_to_tensor/"
                  "medium_sub_rect_with_rotation_border_zero.png"),
-          /*range_min=*/-1.0f,
-          /*range_max=*/1.0f,
+          /*float_range=*/{-1.0f, 1.0f},
+          /*int_range=*/{0, 255},
           /*tensor_width=*/256, /*tensor_height=*/256, /*keep_aspect=*/false,
           BorderMode::kZero, roi);
 }
@@ -302,8 +333,8 @@ TEST(ImageToTensorCalculatorTest, LargeSubRect) {
                  "tensor/testdata/image_to_tensor/input.jpg"),
           GetRgb("/mediapipe/calculators/"
                  "tensor/testdata/image_to_tensor/large_sub_rect.png"),
-          /*range_min=*/0.0f,
-          /*range_max=*/1.0f,
+          /*float_range=*/{0.0f, 1.0f},
+          /*int_range=*/{0, 255},
           /*tensor_width=*/128, /*tensor_height=*/128, /*keep_aspect=*/false,
           BorderMode::kReplicate, roi);
 }
@@ -320,8 +351,8 @@ TEST(ImageToTensorCalculatorTest, LargeSubRectBorderZero) {
              "tensor/testdata/image_to_tensor/input.jpg"),
       GetRgb("/mediapipe/calculators/"
              "tensor/testdata/image_to_tensor/large_sub_rect_border_zero.png"),
-      /*range_min=*/0.0f,
-      /*range_max=*/1.0f,
+      /*float_range=*/{0.0f, 1.0f},
+      /*int_range=*/{0, 255},
       /*tensor_width=*/128, /*tensor_height=*/128, /*keep_aspect=*/false,
       BorderMode::kZero, roi);
 }
@@ -338,8 +369,8 @@ TEST(ImageToTensorCalculatorTest, LargeSubRectKeepAspect) {
              "tensor/testdata/image_to_tensor/input.jpg"),
       GetRgb("/mediapipe/calculators/"
              "tensor/testdata/image_to_tensor/large_sub_rect_keep_aspect.png"),
-      /*range_min=*/0.0f,
-      /*range_max=*/1.0f,
+      /*float_range=*/{0.0f, 1.0f},
+      /*int_range=*/{0, 255},
       /*tensor_width=*/128, /*tensor_height=*/128, /*keep_aspect=*/true,
       BorderMode::kReplicate, roi);
 }
@@ -356,8 +387,8 @@ TEST(ImageToTensorCalculatorTest, LargeSubRectKeepAspectBorderZero) {
           GetRgb("/mediapipe/calculators/"
                  "tensor/testdata/image_to_tensor/"
                  "large_sub_rect_keep_aspect_border_zero.png"),
-          /*range_min=*/0.0f,
-          /*range_max=*/1.0f,
+          /*float_range=*/{0.0f, 1.0f},
+          /*int_range=*/{0, 255},
           /*tensor_width=*/128, /*tensor_height=*/128, /*keep_aspect=*/true,
           BorderMode::kZero, roi);
 }
@@ -374,8 +405,8 @@ TEST(ImageToTensorCalculatorTest, LargeSubRectKeepAspectWithRotation) {
           GetRgb("/mediapipe/calculators/"
                  "tensor/testdata/image_to_tensor/"
                  "large_sub_rect_keep_aspect_with_rotation.png"),
-          /*range_min=*/0.0f,
-          /*range_max=*/1.0f,
+          /*float_range=*/{0.0f, 1.0f},
+          /*int_range=*/{0, 255},
           /*tensor_width=*/128, /*tensor_height=*/128, /*keep_aspect=*/true,
           /*border_mode=*/{}, roi);
 }
@@ -393,8 +424,8 @@ TEST(ImageToTensorCalculatorTest,
           GetRgb("/mediapipe/calculators/"
                  "tensor/testdata/image_to_tensor/"
                  "large_sub_rect_keep_aspect_with_rotation_border_zero.png"),
-          /*range_min=*/0.0f,
-          /*range_max=*/1.0f,
+          /*float_range=*/{0.0f, 1.0f},
+          /*int_range=*/{0, 255},
           /*tensor_width=*/128, /*tensor_height=*/128, /*keep_aspect=*/true,
           /*border_mode=*/BorderMode::kZero, roi);
 }
@@ -410,8 +441,8 @@ TEST(ImageToTensorCalculatorTest, NoOpExceptRange) {
                   "tensor/testdata/image_to_tensor/input.jpg"),
           GetRgb("/mediapipe/calculators/"
                  "tensor/testdata/image_to_tensor/noop_except_range.png"),
-          /*range_min=*/0.0f,
-          /*range_max=*/1.0f,
+          /*float_range=*/{0.0f, 1.0f},
+          /*int_range=*/{0, 255},
           /*tensor_width=*/64, /*tensor_height=*/128, /*keep_aspect=*/true,
           BorderMode::kReplicate, roi);
 }
@@ -427,8 +458,8 @@ TEST(ImageToTensorCalculatorTest, NoOpExceptRangeBorderZero) {
                   "tensor/testdata/image_to_tensor/input.jpg"),
           GetRgb("/mediapipe/calculators/"
                  "tensor/testdata/image_to_tensor/noop_except_range.png"),
-          /*range_min=*/0.0f,
-          /*range_max=*/1.0f,
+          /*float_range=*/{0.0f, 1.0f},
+          /*int_range=*/{0, 255},
           /*tensor_width=*/64, /*tensor_height=*/128, /*keep_aspect=*/true,
           BorderMode::kZero, roi);
 }

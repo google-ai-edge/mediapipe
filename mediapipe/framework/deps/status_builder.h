@@ -15,7 +15,13 @@
 #ifndef MEDIAPIPE_DEPS_STATUS_BUILDER_H_
 #define MEDIAPIPE_DEPS_STATUS_BUILDER_H_
 
+#include <memory>
+#include <sstream>
+#include <utility>
+
 #include "absl/base/attributes.h"
+#include "absl/memory/memory.h"
+#include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "mediapipe/framework/deps/source_location.h"
@@ -27,6 +33,10 @@ class ABSL_MUST_USE_RESULT StatusBuilder {
  public:
   StatusBuilder(const StatusBuilder& sb);
   StatusBuilder& operator=(const StatusBuilder& sb);
+
+  StatusBuilder(StatusBuilder&&) = default;
+  StatusBuilder& operator=(StatusBuilder&&) = default;
+
   // Creates a `StatusBuilder` based on an original status.  If logging is
   // enabled, it will use `location` as the location from which the log message
   // occurs.  A typical user will call this with `MEDIAPIPE_LOC`.
@@ -35,14 +45,14 @@ class ABSL_MUST_USE_RESULT StatusBuilder {
       : status_(original_status),
         line_(location.line()),
         file_(location.file_name()),
-        stream_(new std::ostringstream) {}
+        stream_(InitStream(status_)) {}
 
   StatusBuilder(absl::Status&& original_status,
                 mediapipe::source_location location)
       : status_(std::move(original_status)),
         line_(location.line()),
         file_(location.file_name()),
-        stream_(new std::ostringstream) {}
+        stream_(InitStream(status_)) {}
 
   // Creates a `StatusBuilder` from a mediapipe status code.  If logging is
   // enabled, it will use `location` as the location from which the log message
@@ -51,27 +61,35 @@ class ABSL_MUST_USE_RESULT StatusBuilder {
       : status_(code, ""),
         line_(location.line()),
         file_(location.file_name()),
-        stream_(new std::ostringstream) {}
+        stream_(InitStream(status_)) {}
 
   StatusBuilder(const absl::Status& original_status, const char* file, int line)
       : status_(original_status),
         line_(line),
         file_(file),
-        stream_(new std::ostringstream) {}
+        stream_(InitStream(status_)) {}
 
   bool ok() const { return status_.ok(); }
 
-  StatusBuilder& SetAppend();
+  StatusBuilder& SetAppend() &;
+  StatusBuilder&& SetAppend() &&;
 
-  StatusBuilder& SetPrepend();
+  StatusBuilder& SetPrepend() &;
+  StatusBuilder&& SetPrepend() &&;
 
-  StatusBuilder& SetNoLogging();
+  StatusBuilder& SetNoLogging() &;
+  StatusBuilder&& SetNoLogging() &&;
 
   template <typename T>
-  StatusBuilder& operator<<(const T& msg) {
-    if (status_.ok()) return *this;
+  StatusBuilder& operator<<(const T& msg) & {
+    if (!stream_) return *this;
     *stream_ << msg;
     return *this;
+  }
+
+  template <typename T>
+  StatusBuilder&& operator<<(const T& msg) && {
+    return std::move(*this << msg);
   }
 
   operator Status() const&;
@@ -88,6 +106,15 @@ class ABSL_MUST_USE_RESULT StatusBuilder {
     kPrepend,
   };
 
+  // Conditionally creates an ostringstream if the status is not ok.
+  static std::unique_ptr<std::ostringstream> InitStream(
+      const absl::Status status) {
+    if (status.ok()) {
+      return nullptr;
+    }
+    return absl::make_unique<std::ostringstream>();
+  }
+
   // The status that the result will be based on.
   absl::Status status_;
   // The line to record if this file is logged.
@@ -95,7 +122,8 @@ class ABSL_MUST_USE_RESULT StatusBuilder {
   // Not-owned: The file to record if this status is logged.
   const char* file_;
   bool no_logging_ = false;
-  // The additional messages added with `<<`.
+  // The additional messages added with `<<`.  This is nullptr when status_ is
+  // ok.
   std::unique_ptr<std::ostringstream> stream_;
   // Specifies how to join the message in `status_` and `stream_`.
   MessageJoinStyle join_style_ = MessageJoinStyle::kAnnotate;

@@ -77,7 +77,16 @@ int GetMatType(const mediapipe::ImageFormat::Format format) {
 namespace mediapipe {
 namespace formats {
 
-cv::Mat MatView(const mediapipe::Image* image) {
+std::shared_ptr<cv::Mat> MatView(const mediapipe::Image* image) {
+  // Used to hold the lock through the Mat's lifetime.
+  struct MatWithPixelLock {
+    // Constructor needed because you cannot use aggregate initialization with
+    // std::make_shared.
+    MatWithPixelLock(mediapipe::Image* image) : lock(image) {}
+    mediapipe::PixelWriteLock lock;
+    cv::Mat mat;
+  };
+
   const int dims = 2;
   const int sizes[] = {image->height(), image->width()};
   const int type =
@@ -85,18 +94,22 @@ cv::Mat MatView(const mediapipe::Image* image) {
   const size_t steps[] = {static_cast<size_t>(image->step()),
                           static_cast<size_t>(ImageFrame::ByteDepthForFormat(
                               image->image_format()))};
-  mediapipe::PixelWriteLock dst_lock(const_cast<mediapipe::Image*>(image));
-  uint8* data_ptr = dst_lock.Pixels();
+  auto owner =
+      std::make_shared<MatWithPixelLock>(const_cast<mediapipe::Image*>(image));
+  uint8* data_ptr = owner->lock.Pixels();
   CHECK(data_ptr != nullptr);
   // Use Image to initialize in-place. Image still owns memory.
   if (steps[0] == sizes[1] * image->channels() *
                       ImageFrame::ByteDepthForFormat(image->image_format())) {
     // Contiguous memory optimization. See b/78570764
-    return cv::Mat(dims, sizes, type, data_ptr);
+    owner->mat = cv::Mat(dims, sizes, type, data_ptr);
   } else {
     // Custom width step.
-    return cv::Mat(dims, sizes, type, data_ptr, steps);
+    owner->mat = cv::Mat(dims, sizes, type, data_ptr, steps);
   }
+  // Aliasing constructor makes a shared_ptr<Mat> which keeps the whole
+  // MatWithPixelLock alive.
+  return std::shared_ptr<cv::Mat>(owner, &owner->mat);
 }
 }  // namespace formats
 }  // namespace mediapipe

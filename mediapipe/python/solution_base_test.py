@@ -22,6 +22,7 @@ from google.protobuf import text_format
 from mediapipe.framework import calculator_pb2
 from mediapipe.framework.formats import detection_pb2
 from mediapipe.python import solution_base
+from mediapipe.python.solution_base import PacketDataType
 
 CALCULATOR_OPTIONS_TEST_GRAPH_CONFIG = """
   input_stream: 'image_in'
@@ -347,6 +348,34 @@ class SolutionBaseTest(parameterized.TestCase):
         outputs = solution.process(input_image)
         self.assertTrue(np.array_equal(input_image, outputs.image_out))
         solution.reset()
+
+  def test_solution_stream_type_hints(self):
+    text_config = """
+      input_stream: 'union_type_image_in'
+      output_stream: 'image_type_out'
+      node {
+        calculator: 'ToImageCalculator'
+        input_stream: 'IMAGE:union_type_image_in'
+        output_stream: 'IMAGE:image_type_out'
+      }
+    """
+    config_proto = text_format.Parse(text_config,
+                                     calculator_pb2.CalculatorGraphConfig())
+    input_image = np.arange(27, dtype=np.uint8).reshape(3, 3, 3)
+    with solution_base.SolutionBase(
+        graph_config=config_proto,
+        stream_type_hints={'union_type_image_in': PacketDataType.IMAGE
+                          }) as solution:
+      for _ in range(20):
+        outputs = solution.process(input_image)
+        self.assertTrue(np.array_equal(input_image, outputs.image_type_out))
+    with solution_base.SolutionBase(
+        graph_config=config_proto,
+        stream_type_hints={'union_type_image_in': PacketDataType.IMAGE_FRAME
+                          }) as solution2:
+      for _ in range(20):
+        outputs = solution2.process(input_image)
+        self.assertTrue(np.array_equal(input_image, outputs.image_type_out))
 
   def _process_and_verify(self,
                           config_proto,

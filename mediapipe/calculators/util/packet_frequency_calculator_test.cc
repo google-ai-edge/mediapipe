@@ -129,8 +129,8 @@ TEST(PacketFrequencyCalculatorTest, MultiPacketTest) {
 // Tests packet frequency with multiple input/output streams.
 TEST(PacketFrequencyCalculatorTest, MultiStreamTest) {
   // Setup the calculator runner and provide strings as input on all streams
-  // (note that it doesn't have to be std::string; the calculator can take any
-  // type as input).
+  // (note that it doesn't have to be string; the calculator can take any type
+  // as input).
   CalculatorRunner runner(GetNodeWithMultipleStreams());
 
   // Packet 1 on stream 1.

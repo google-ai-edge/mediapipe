@@ -66,7 +66,7 @@ absl::Status SetFromTagAndNameInfo(
     const TagAndNameInfo& info,
     proto_ns::RepeatedPtrField<ProtoString>* tags_and_names);
 
-// The std::string is a valid name for an input stream, output stream,
+// The string is a valid name for an input stream, output stream,
 // side packet, and input collection.  Names use only lower case letters,
 // numbers, and underscores.
 //
@@ -77,18 +77,18 @@ absl::Status SetFromTagAndNameInfo(
 //     (3) Because input side packet names end up in model directory names,
 //         where lower case naming is the norm.
 absl::Status ValidateName(const std::string& name);
-// The std::string is a valid tag name.  Tags use only upper case letters,
+// The string is a valid tag name.  Tags use only upper case letters,
 // numbers, and underscores.
 absl::Status ValidateTag(const std::string& tag);
 
-// Parse a "Tag and Name" std::string into a tag and a name.
+// Parse a "Tag and Name" string into a tag and a name.
 // The format is an optional tag and colon, followed by a name.
 // Example 1: "VIDEO:frames2" -> tag: "VIDEO", name: "frames2"
 // Example 2: "video_frames_1" -> tag: "", name: "video_frames_1"
 absl::Status ParseTagAndName(const std::string& tag_and_name, std::string* tag,
                              std::string* name);
 
-// Parse a generic TAG:index:name std::string.  The format is a tag, then an
+// Parse a generic TAG:index:name string.  The format is a tag, then an
 // index, then a name.  The tag and index are optional.  If the index
 // is included, then the tag must be included.  If no tag is used then
 // index is set to -1 (and should be assigned by argument position).
@@ -99,7 +99,7 @@ absl::Status ParseTagAndName(const std::string& tag_and_name, std::string* tag,
 absl::Status ParseTagIndexName(const std::string& tag_and_name,
                                std::string* tag, int* index, std::string* name);
 
-// Parse a generic TAG:index std::string.  The format is a tag, then an index
+// Parse a generic TAG:index string.  The format is a tag, then an index
 // with both being optional.  If the tag is missing it is assumed to be
 // "" and if the index is missing then it is assumed to be 0.  If the
 // index is provided then a colon (':') must be used.

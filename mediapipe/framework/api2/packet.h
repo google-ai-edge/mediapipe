@@ -215,6 +215,7 @@ class Packet : public Packet<internal::Generic> {
     return typed_payload->data();
   }
   const T& operator*() const { return Get(); }
+  const T* operator->() const { return &Get(); }
 
   template <typename U>
   T GetOr(U&& v) const {

@@ -145,7 +145,7 @@ class Rectangle {
   void AddBorder(const T& border_size);
 
   // Debug printing.
-  friend std::ostream& operator<<<T>(std::ostream&, const Rectangle&);
+  friend std::ostream& operator<< <T>(std::ostream&, const Rectangle&);
 
  private:
   Point2<T> min_;

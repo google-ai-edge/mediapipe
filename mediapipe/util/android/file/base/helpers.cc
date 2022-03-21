@@ -42,7 +42,7 @@ class FdCloser {
 
 }  // namespace
 
-// Read contents of a file to a std::string.
+// Read contents of a file to a string.
 absl::Status GetContents(int fd, std::string* output) {
   // Determine the length of the file.
   struct stat buf;
@@ -69,7 +69,7 @@ absl::Status GetContents(int fd, std::string* output) {
   return absl::OkStatus();
 }
 
-// Read contents of a file to a std::string.
+// Read contents of a file to a string.
 absl::Status GetContents(absl::string_view file_name, std::string* output,
                          const file::Options& /*options*/) {
   int fd = open(std::string(file_name).c_str(), O_RDONLY);

@@ -31,6 +31,9 @@ message KinematicOptions {
   optional int64 filtering_time_window_us = 7 [default = 0];
   // Weighted update of average period, used for motion updates.
   optional float mean_period_update_rate = 8 [default = 0.25];
+  // When set, caps the maximum time difference (seconds) calculated between new
+  // updates/observations. Useful when updates come very infrequently.
+  optional double max_delta_time_sec = 13;
   // Scale factor for max velocity, to be multiplied by the distance from center
   // in degrees.  Cannot be used with max_velocity and must be used with
   // max_velocity_shift.

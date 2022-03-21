@@ -663,7 +663,7 @@ absl::Status GlAnimationOverlayCalculator::Process(CalculatorContext *cc) {
       if (result.ok()) {
         input_frame = std::move(result).value();
 #if !MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
-        input_frame->GetGlTextureBufferSharedPtr()->Reuse();
+        input_frame->internal_storage<GlTextureBuffer>()->Reuse();
 #endif
         width = input_frame->width();
         height = input_frame->height();

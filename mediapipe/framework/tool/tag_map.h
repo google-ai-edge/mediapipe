@@ -51,8 +51,8 @@ class TagMap {
     int count;
   };
 
-  // Create a TagMap from a repeated std::string proto field of
-  // TAG:<index>:name. This is the most common usage:
+  // Create a TagMap from a repeated string proto field of TAG:<index>:name.
+  // This is the most common usage:
   // ASSIGN_OR_RETURN(std::shared_ptr<TagMap> tag_map,
   //                  tool::TagMap::Create(node.input_streams()));
   static absl::StatusOr<std::shared_ptr<TagMap>> Create(
@@ -87,7 +87,7 @@ class TagMap {
 
   // Returns canonicalized strings describing the TagMap.
   proto_ns::RepeatedPtrField<ProtoString> CanonicalEntries() const;
-  // Returns a std::string description for debug purposes.
+  // Returns a string description for debug purposes.
   std::string DebugString() const;
   // Returns a shorter description for debug purposes (doesn't include
   // stream/side packet names).

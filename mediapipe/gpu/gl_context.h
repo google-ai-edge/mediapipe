@@ -228,6 +228,12 @@ class GlContext : public std::enable_shared_from_this<GlContext> {
   CVOpenGLTextureCacheRef cv_texture_cache() const { return *texture_cache_; }
 #endif  // HAS_EGL
 
+  // Returns whatever the current platform's native context handle is.
+  // Prefer the explicit *_context methods above, unless you're going to use
+  // this in a context that you are sure will work with whatever definition of
+  // PlatformGlContext is in use.
+  PlatformGlContext native_context() const { return context_; }
+
   // Check if the context is current on this thread. Mainly for test purposes.
   bool IsCurrent() const;
 
@@ -432,4 +438,5 @@ const GlTextureInfo& GlTextureInfoForGpuBufferFormat(GpuBufferFormat format,
                                                      int plane);
 
 }  // namespace mediapipe
+
 #endif  // MEDIAPIPE_GPU_GL_CONTEXT_H_

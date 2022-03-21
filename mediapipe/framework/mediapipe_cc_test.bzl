@@ -10,10 +10,17 @@ def mediapipe_cc_test(
         size = None,
         tags = [],
         timeout = None,
+        args = [],
         additional_deps = DEFAULT_ADDITIONAL_TEST_DEPS,
+        # ios_unit_test arguments
+        ios_minimum_os_version = "9.0",
+        # android_cc_test arguments
+        open_gl_driver = None,
+        emulator_mini_boot = True,
+        requires_full_emulation = True,
+        # wasm_web_test arguments
+        browsers = None,
         **kwargs):
-    # Note: additional_deps are MediaPipe-specific test support deps added by default.
-    # They are provided as a default argument so they can be disabled if desired.
     native.cc_library(
         name = name + "_lib",
         testonly = 1,

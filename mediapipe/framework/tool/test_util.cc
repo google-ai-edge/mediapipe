@@ -215,6 +215,11 @@ std::string GetTestRootDir() {
 std::string GetTestOutputsDir() {
   const char* output_dir = getenv("TEST_UNDECLARED_OUTPUTS_DIR");
   if (!output_dir) {
+#ifdef __APPLE__
+    char path[PATH_MAX];
+    size_t n = confstr(_CS_DARWIN_USER_TEMP_DIR, path, sizeof(path));
+    if (n > 0 && n < sizeof(path)) return path;
+#endif  // __APPLE__
     output_dir = "/tmp";
   }
   return output_dir;

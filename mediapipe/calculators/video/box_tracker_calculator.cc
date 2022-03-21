@@ -15,6 +15,7 @@
 #include <stdio.h>
 
 #include <memory>
+#include <string>
 #include <unordered_map>
 #include <unordered_set>
 
@@ -78,7 +79,7 @@ const char kOptionsTag[] = "OPTIONS";
 //             TrackingData and added to current set of tracked boxes.
 //             This is recommended to be used with SyncSetInputStreamHandler.
 //  START_POS_PROTO_STRING: Same as START_POS, but is in the form of serialized
-//             protobuffer std::string. When both START_POS and
+//             protobuffer string. When both START_POS and
 //             START_POS_PROTO_STRING are present, START_POS is used. Suggest
 //             to specify only one of them.
 //   RESTART_POS: Same as START_POS, but exclusively for receiving detection
@@ -99,7 +100,7 @@ const char kOptionsTag[] = "OPTIONS";
 //             can be in arbitrary order.
 //             Use with SyncSetInputStreamHandler in streaming mode only.
 //   RA_TRACK_PROTO_STRING: Same as RA_TRACK, but is in the form of serialized
-//             protobuffer std::string. When both RA_TRACK and
+//             protobuffer string. When both RA_TRACK and
 //             RA_TRACK_PROTO_STRING are present, RA_TRACK is used. Suggest
 //             to specify only one of them.
 //

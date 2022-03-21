@@ -26,6 +26,7 @@
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/port/status_macros.h"
 #include "mediapipe/framework/tool/container_util.h"
+#include "mediapipe/framework/tool/switch_container.pb.h"
 
 namespace mediapipe {
 
@@ -113,7 +114,10 @@ absl::Status SwitchDemuxCalculator::GetContract(CalculatorContract* cc) {
       }
     }
   }
-  cc->SetInputStreamHandler("ImmediateInputStreamHandler");
+  auto& options = cc->Options<mediapipe::SwitchContainerOptions>();
+  if (!options.synchronize_io()) {
+    cc->SetInputStreamHandler("ImmediateInputStreamHandler");
+  }
   cc->SetProcessTimestampBounds(true);
   return absl::OkStatus();
 }

@@ -31,6 +31,14 @@ message ImageToTensorCalculatorOptions {
     optional float max = 2;
   }
 
+  // Range of int values [min, max].
+  // min, must be strictly less than max.
+  // Please note that IntRange is supported for CPU tensors only.
+  message IntRange {
+    optional int64 min = 1;
+    optional int64 max = 2;
+  }
+
   // Pixel extrapolation methods. See @border_mode.
   enum BorderMode {
     BORDER_UNSPECIFIED = 0;
@@ -49,6 +57,7 @@ message ImageToTensorCalculatorOptions {
   // Output tensor element range/type image pixels are converted to.
   oneof range {
     FloatRange output_tensor_float_range = 4;
+    IntRange output_tensor_int_range = 7;
   }
 
   // For CONVENTIONAL mode for OpenGL, input image starts at bottom and needs

@@ -19,7 +19,7 @@ package mediapipe.autoflip;
 import "mediapipe/examples/desktop/autoflip/quality/kinematic_path_solver.proto";
 import "mediapipe/framework/calculator.proto";
 
-// NextTag: 18
+// NextTag: 19
 message ContentZoomingCalculatorOptions {
   extend mediapipe.CalculatorOptions {
     optional ContentZoomingCalculatorOptions ext = 313091992;
@@ -70,6 +70,12 @@ message ContentZoomingCalculatorOptions {
   // Used only if us_to_first_rect is set and is interpreted as part of the
   // us_to_first_rect time budget.
   optional int64 us_to_first_rect_delay = 16 [default = 0];
+
+  // When true, this flag disables animating camera motions,
+  // and cuts directly to final target position.
+  // Does not apply to the first instance (first detection will still animate).
+  // Use "ANIMATE_ZOOM" input stream to control the first animation.
+  optional bool disable_animations = 18;
 
   // Deprecated parameters
   optional KinematicOptions kinematic_options = 2 [deprecated = true];

@@ -29,7 +29,7 @@ std::string* MediaPipeCheckOpHelperOutOfLine(const absl::Status& v,
   r += msg;
   r += " status: ";
   r += v.ToString();
-  // Leaks std::string but this is only to be used in a fatal error message
+  // Leaks string but this is only to be used in a fatal error message
   return new std::string(r);
 }
 

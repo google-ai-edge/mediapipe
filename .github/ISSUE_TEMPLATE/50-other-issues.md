@@ -10,5 +10,3 @@ For questions on how to work with MediaPipe, or support for problems that are no
 
 If you are reporting a vulnerability, please use the [dedicated reporting process](https://github.com/google/mediapipe/security).
 
-For high-level discussions about MediaPipe, please post to discuss@mediapipe.org, for questions about the development or internal workings of MediaPipe, or if you would like to know how to contribute to MediaPipe, please post to developers@mediapipe.org.
-

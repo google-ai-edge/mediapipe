@@ -95,8 +95,8 @@ class CalculatorContract {
     input_stream_handler_options_ = options;
   }
 
-  // Returns the name of this Nodes's InputStreamHandler, or empty std::string
-  // if none is set.
+  // Returns the name of this Nodes's InputStreamHandler, or empty string if
+  // none is set.
   std::string GetInputStreamHandler() const { return input_stream_handler_; }
 
   // Returns the MediaPipeOptions of this Node's InputStreamHandler, or empty

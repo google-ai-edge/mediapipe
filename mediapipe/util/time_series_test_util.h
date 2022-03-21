@@ -152,7 +152,7 @@ class TimeSeriesCalculatorTest : public ::testing::Test {
   }
 
   // Makes the CalculatorGraphConfig used to initialize CalculatorRunner
-  // runner_. If no options are needed, pass the empty std::string for options.
+  // runner_. If no options are needed, pass the empty string for options.
   CalculatorGraphConfig::Node MakeNodeConfig(const std::string& calculator_name,
                                              const int num_side_packets,
                                              const CalculatorOptions& options) {

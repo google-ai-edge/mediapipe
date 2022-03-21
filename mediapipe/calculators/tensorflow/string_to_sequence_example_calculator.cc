@@ -28,7 +28,7 @@
 //   output_side_packet: "SEQUENCE_EXAMPLE:sequence_example"
 // }
 //
-// Example converting to std::string in Close():
+// Example converting to string in Close():
 // node {
 //   calculator: "StringToSequenceExampleCalculator"
 //   input_side_packet: "SEQUENCE_EXAMPLE:sequence_example"

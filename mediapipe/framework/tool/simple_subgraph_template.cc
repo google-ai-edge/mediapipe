@@ -31,7 +31,7 @@ class {{SUBGRAPH_CLASS_NAME}} : public Subgraph {
         const SubgraphOptions& /*options*/) {
     CalculatorGraphConfig config;
     // Note: this is a binary protobuf serialization, and may include NUL
-    // bytes. The trailing NUL added to the std::string literal should be excluded.
+    // bytes. The trailing NUL added to the string literal should be excluded.
     if (config.ParseFromArray(binary_graph, sizeof(binary_graph) - 1)) {
       return config;
     } else {

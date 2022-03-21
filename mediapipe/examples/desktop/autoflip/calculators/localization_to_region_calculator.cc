@@ -56,7 +56,7 @@ constexpr char kRegionsTag[] = "REGIONS";
 constexpr char kDetectionsTag[] = "DETECTIONS";
 
 // Converts an object detection to a autoflip SignalType.  Returns true if the
-// std::string label has a autoflip label.
+// string label has a autoflip label.
 bool MatchType(const std::string& label, SignalType* type) {
   if (label == "person") {
     type->set_standard(SignalType::HUMAN);

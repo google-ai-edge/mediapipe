@@ -164,7 +164,6 @@ mediapipe_simple_subgraph(
     graph = "hand_landmark_landmarks_to_roi.pbtxt",
     register_as = "HandLandmarkLandmarksToRoi",
     deps = [
-        "//mediapipe/calculators/core:split_landmarks_calculator",
         "//mediapipe/calculators/util:rect_transformation_calculator",
         "//mediapipe/modules/hand_landmark/calculators:hand_landmarks_to_rect_calculator",
     ],

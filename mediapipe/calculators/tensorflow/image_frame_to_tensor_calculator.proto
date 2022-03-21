@@ -32,6 +32,6 @@ message ImageFrameToTensorCalculatorOptions {
   // If set, the output tensor T is equal to (F - mean * J) / stddev, where F
   // and J are the input image frame and the all-ones matrix of the same size,
   // respectively.  Otherwise, T is equal to F.
-  optional float mean = 2;
-  optional float stddev = 3;
+  repeated float mean = 2;
+  repeated float stddev = 3;
 }

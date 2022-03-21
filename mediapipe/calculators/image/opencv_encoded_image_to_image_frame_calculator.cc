@@ -22,9 +22,9 @@
 
 namespace mediapipe {
 
-// Takes in an encoded image std::string, decodes it by OpenCV, and converts to
-// an ImageFrame. Note that this calculator only supports grayscale and RGB
-// images for now.
+// Takes in an encoded image string, decodes it by OpenCV, and converts to an
+// ImageFrame. Note that this calculator only supports grayscale and RGB images
+// for now.
 //
 // Example config:
 // node {

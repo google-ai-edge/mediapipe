@@ -48,6 +48,16 @@ each project.
     bazel build -c opt --strip=ALWAYS \
         --host_crosstool_top=@bazel_tools//tools/cpp:toolchain \
         --fat_apk_cpu=arm64-v8a,armeabi-v7a \
+        --legacy_whole_archive=0 \
+        --features=-legacy_whole_archive \
+        --copt=-fvisibility=hidden \
+        --copt=-ffunction-sections \
+        --copt=-fdata-sections \
+        --copt=-fstack-protector \
+        --copt=-Oz \
+        --copt=-fomit-frame-pointer \
+        --copt=-DABSL_MIN_LOG_LEVEL=2 \
+        --linkopt=-Wl,--gc-sections,--strip-all \
         //path/to/the/aar/build/file:aar_name.aar
     ```
 
@@ -57,6 +67,16 @@ each project.
     bazel build -c opt --strip=ALWAYS \
         --host_crosstool_top=@bazel_tools//tools/cpp:toolchain \
         --fat_apk_cpu=arm64-v8a,armeabi-v7a \
+        --legacy_whole_archive=0 \
+        --features=-legacy_whole_archive \
+        --copt=-fvisibility=hidden \
+        --copt=-ffunction-sections \
+        --copt=-fdata-sections \
+        --copt=-fstack-protector \
+        --copt=-Oz \
+        --copt=-fomit-frame-pointer \
+        --copt=-DABSL_MIN_LOG_LEVEL=2 \
+        --linkopt=-Wl,--gc-sections,--strip-all \
         //mediapipe/examples/android/src/java/com/google/mediapipe/apps/aar_example:mediapipe_face_detection.aar
 
     # It should print:

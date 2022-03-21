@@ -109,8 +109,7 @@ void StringReplace(absl::string_view s, absl::string_view oldsub,
                    absl::string_view newsub, bool replace_all,
                    std::string* res) {
   if (oldsub.empty()) {
-    res->append(s.data(),
-                s.length());  // If empty, append the given std::string.
+    res->append(s.data(), s.length());  // If empty, append the given string.
     return;
   }
 

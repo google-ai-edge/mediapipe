@@ -86,7 +86,7 @@ class TensorFlowSessionFromFrozenGraphCalculator : public CalculatorBase {
       cc->InputSidePackets()
           .Tag(kStringModelFilePathTag)
           .Set<std::string>(
-              // Filename of std::string model.
+              // Filename of string model.
           );
     }
     cc->OutputSidePackets()

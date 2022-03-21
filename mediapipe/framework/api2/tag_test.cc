@@ -26,8 +26,8 @@ TEST(TagTest, String) {
   EXPECT_EQ(kBAR.str(), "BAR");
 }
 
-// Separate invocations of MPP_TAG with the same std::string produce objects of
-// the same type.
+// Separate invocations of MPP_TAG with the same string produce objects of the
+// same type.
 TEST(TagTest, SameType) { EXPECT_TRUE(same_type(kFOO, kFOO2)); }
 
 // Different tags have different types.

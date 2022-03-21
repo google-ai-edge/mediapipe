@@ -70,10 +70,10 @@ const int kNumCoordsPerBox = 4;
 //   image/understanding/object_detection/export_inference_graph.py
 //
 // By default, the output Detections store label ids (integers) for each
-// detection.  Optionally, a label map (of the form std::map<int, std::string>
+// detection.  Optionally, a label map (of the form std::map<int, string>
 // mapping label ids to label names as strings) can be made available as an
 // input side packet, in which case the output Detections store
-// labels as their associated std::string provided by the label map.
+// labels as their associated string provided by the label map.
 //
 // Usage example:
 // node {

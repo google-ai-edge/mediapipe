@@ -16,6 +16,7 @@
 
 #include "mediapipe/framework/formats/image_frame.h"
 #include "mediapipe/gpu/gl_texture_view.h"
+#include "mediapipe/gpu/gpu_buffer_storage_image_frame.h"
 
 namespace mediapipe {
 
@@ -228,14 +229,14 @@ void GlTextureBuffer::WaitForConsumersOnGpu() {
 }
 
 GlTextureView GlTextureBuffer::GetReadView(
-    mediapipe::internal::types<GlTextureView>,
-    std::shared_ptr<GpuBuffer> gpu_buffer, int plane) const {
+    internal::types<GlTextureView>, std::shared_ptr<GpuBuffer> gpu_buffer,
+    int plane) const {
   auto gl_context = GlContext::GetCurrent();
   CHECK(gl_context);
   CHECK_EQ(plane, 0);
   // Insert wait call to sync with the producer.
   WaitOnGpu();
-  GlTextureView::DetachFn detach = [this](mediapipe::GlTextureView& texture) {
+  GlTextureView::DetachFn detach = [this](GlTextureView& texture) {
     // Inform the GlTextureBuffer that we have finished accessing its
     // contents, and create a consumer sync point.
     DidRead(texture.gl_context()->CreateSyncToken());
@@ -246,8 +247,8 @@ GlTextureView GlTextureBuffer::GetReadView(
 }
 
 GlTextureView GlTextureBuffer::GetWriteView(
-    mediapipe::internal::types<GlTextureView>,
-    std::shared_ptr<GpuBuffer> gpu_buffer, int plane) {
+    internal::types<GlTextureView>, std::shared_ptr<GpuBuffer> gpu_buffer,
+    int plane) {
   auto gl_context = GlContext::GetCurrent();
   CHECK(gl_context);
   CHECK_EQ(plane, 0);
@@ -256,9 +257,7 @@ GlTextureView GlTextureBuffer::GetWriteView(
   Reuse();  // TODO: the producer wait should probably be part of Reuse in the
             // case when there are no consumers.
   GlTextureView::DoneWritingFn done_writing =
-      [this](const mediapipe::GlTextureView& texture) {
-        ViewDoneWriting(texture);
-      };
+      [this](const GlTextureView& texture) { ViewDoneWriting(texture); };
   return GlTextureView(gl_context.get(), target(), name(), width(), height(),
                        std::move(gpu_buffer), plane, nullptr,
                        std::move(done_writing));
@@ -311,46 +310,52 @@ static void ReadTexture(const GlTextureView& view, GpuBufferFormat format,
   GlTextureInfo info = GlTextureInfoForGpuBufferFormat(
       format, view.plane(), view.gl_context()->GetGlVersion());
 
-  GLint current_fbo;
-  glGetIntegerv(GL_FRAMEBUFFER_BINDING, &current_fbo);
-  CHECK_NE(current_fbo, 0);
+  GLint previous_fbo;
+  glGetIntegerv(GL_FRAMEBUFFER_BINDING, &previous_fbo);
 
-  GLint color_attachment_name;
-  glGetFramebufferAttachmentParameteriv(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
-                                        GL_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME,
-                                        &color_attachment_name);
-  if (color_attachment_name != view.name()) {
-    // Save the viewport. Note that we assume that the color attachment is a
-    // GL_TEXTURE_2D texture.
-    GLint viewport[4];
-    glGetIntegerv(GL_VIEWPORT, viewport);
-
-    // Set the data from GLTextureView object.
-    glViewport(0, 0, view.width(), view.height());
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, view.target(),
-                           view.name(), 0);
-    glReadPixels(0, 0, view.width(), view.height(), info.gl_format,
-                 info.gl_type, output);
-
-    // Restore from the saved viewport and color attachment name.
-    glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D,
-                           color_attachment_name, 0);
-  } else {
-    glReadPixels(0, 0, view.width(), view.height(), info.gl_format,
-                 info.gl_type, output);
-  }
+  // We use a temp fbo to avoid depending on the app having an existing one.
+  // TODO: keep a utility fbo around in the context?
+  GLuint fbo = 0;
+  glGenFramebuffers(1, &fbo);
+  glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, view.target(),
+                         view.name(), 0);
+  glReadPixels(0, 0, view.width(), view.height(), info.gl_format, info.gl_type,
+               output);
+  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, 0,
+                         0);
+  // TODO: just set the binding to 0 to avoid the get call?
+  glBindFramebuffer(GL_FRAMEBUFFER, previous_fbo);
+  glDeleteFramebuffers(1, &fbo);
 }
 
-std::unique_ptr<ImageFrame> GlTextureBuffer::AsImageFrame() const {
-  ImageFormat::Format image_format = ImageFormatForGpuBufferFormat(format());
-  auto output = absl::make_unique<ImageFrame>(
-      image_format, width(), height(), ImageFrame::kGlDefaultAlignmentBoundary);
-  auto view =
-      GetReadView(mediapipe::internal::types<GlTextureView>{}, nullptr, 0);
-  ReadTexture(view, format(), output->MutablePixelData(),
-              output->PixelDataSize());
-  return output;
+static std::shared_ptr<GpuBufferStorageImageFrame> ConvertToImageFrame(
+    std::shared_ptr<GlTextureBuffer> buf) {
+  ImageFormat::Format image_format =
+      ImageFormatForGpuBufferFormat(buf->format());
+  auto output =
+      absl::make_unique<ImageFrame>(image_format, buf->width(), buf->height(),
+                                    ImageFrame::kGlDefaultAlignmentBoundary);
+  buf->GetProducerContext()->Run([buf, &output] {
+    auto view = buf->GetReadView(internal::types<GlTextureView>{}, nullptr, 0);
+    ReadTexture(view, buf->format(), output->MutablePixelData(),
+                output->PixelDataSize());
+  });
+  return std::make_shared<GpuBufferStorageImageFrame>(std::move(output));
 }
+
+static std::shared_ptr<GlTextureBuffer> ConvertFromImageFrame(
+    std::shared_ptr<GpuBufferStorageImageFrame> frame) {
+  return GlTextureBuffer::Create(*frame->image_frame());
+}
+
+static auto kConverterRegistration =
+    internal::GpuBufferStorageRegistry::Get()
+        .RegisterConverter<GlTextureBuffer, GpuBufferStorageImageFrame>(
+            ConvertToImageFrame);
+static auto kConverterRegistration2 =
+    internal::GpuBufferStorageRegistry::Get()
+        .RegisterConverter<GpuBufferStorageImageFrame, GlTextureBuffer>(
+            ConvertFromImageFrame);
 
 }  // namespace mediapipe

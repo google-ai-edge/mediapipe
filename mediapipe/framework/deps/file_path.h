@@ -51,7 +51,8 @@ std::string JoinPathImpl(bool honor_abs,
 //
 // Usage:
 // std::string path = file::JoinPath("/cns", dirname, filename);
-// std::string path = file::JoinPath("./", filename);
+// std::string path = file::JoinPath("./",
+//                                   filename);
 //
 // 0, 1, 2-path specializations exist to optimize common cases.
 inline std::string JoinPath() { return std::string(); }
@@ -69,7 +70,7 @@ inline std::string JoinPath(absl::string_view path1, absl::string_view path2,
 // * If there is a single leading "/" in the path, the result will be the
 //   leading "/".
 // * If there is no "/" in the path, the result is the empty prefix of the
-//   input std::string.
+//   input string.
 absl::string_view Dirname(absl::string_view path);
 
 // Return the parts of the path, split on the final "/".  If there is no
@@ -83,7 +84,7 @@ std::pair<absl::string_view, absl::string_view> SplitPath(
 // "/" in the path, the result is the same as the input.
 // Note that this function's behavior differs from the Unix basename
 // command if path ends with "/". For such paths, this function returns the
-// empty std::string.
+// empty string.
 absl::string_view Basename(absl::string_view path);
 
 // Returns the part of the basename of path after the final ".".  If

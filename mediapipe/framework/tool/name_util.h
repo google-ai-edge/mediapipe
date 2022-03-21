@@ -85,7 +85,7 @@ std::pair<std::string, int> ParseTagIndexFromStream(const std::string& stream);
 // Formats to "tag:index".
 std::string CatTag(const std::string& tag, int index);
 
-// Concatenates "tag:index:name" into a single std::string.
+// Concatenates "tag:index:name" into a single string.
 std::string CatStream(const std::pair<std::string, int>& tag_index,
                       const std::string& name);
 

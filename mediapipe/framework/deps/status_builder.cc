@@ -15,6 +15,7 @@
 #include "mediapipe/framework/deps/status_builder.h"
 
 #include "absl/memory/memory.h"
+#include "absl/status/status.h"
 
 namespace mediapipe {
 
@@ -23,7 +24,9 @@ StatusBuilder::StatusBuilder(const StatusBuilder& sb) {
   file_ = sb.file_;
   line_ = sb.line_;
   no_logging_ = sb.no_logging_;
-  stream_ = absl::make_unique<std::ostringstream>(sb.stream_->str());
+  stream_ = sb.stream_
+                ? absl::make_unique<std::ostringstream>(sb.stream_->str())
+                : nullptr;
   join_style_ = sb.join_style_;
 }
 
@@ -32,43 +35,58 @@ StatusBuilder& StatusBuilder::operator=(const StatusBuilder& sb) {
   file_ = sb.file_;
   line_ = sb.line_;
   no_logging_ = sb.no_logging_;
-  stream_ = absl::make_unique<std::ostringstream>(sb.stream_->str());
+  stream_ = sb.stream_
+                ? absl::make_unique<std::ostringstream>(sb.stream_->str())
+                : nullptr;
   join_style_ = sb.join_style_;
   return *this;
 }
 
-StatusBuilder& StatusBuilder::SetAppend() {
+StatusBuilder& StatusBuilder::SetAppend() & {
   if (status_.ok()) return *this;
   join_style_ = MessageJoinStyle::kAppend;
   return *this;
 }
 
-StatusBuilder& StatusBuilder::SetPrepend() {
+StatusBuilder&& StatusBuilder::SetAppend() && { return std::move(SetAppend()); }
+
+StatusBuilder& StatusBuilder::SetPrepend() & {
   if (status_.ok()) return *this;
   join_style_ = MessageJoinStyle::kPrepend;
   return *this;
 }
 
-StatusBuilder& StatusBuilder::SetNoLogging() {
+StatusBuilder&& StatusBuilder::SetPrepend() && {
+  return std::move(SetPrepend());
+}
+
+StatusBuilder& StatusBuilder::SetNoLogging() & {
   no_logging_ = true;
   return *this;
 }
 
+StatusBuilder&& StatusBuilder::SetNoLogging() && {
+  return std::move(SetNoLogging());
+}
+
 StatusBuilder::operator Status() const& {
-  if (stream_->str().empty() || no_logging_) {
+  if (!stream_ || stream_->str().empty() || no_logging_) {
     return status_;
   }
   return StatusBuilder(*this).JoinMessageToStatus();
 }
 
 StatusBuilder::operator Status() && {
-  if (stream_->str().empty() || no_logging_) {
+  if (!stream_ || stream_->str().empty() || no_logging_) {
     return status_;
   }
   return JoinMessageToStatus();
 }
 
 absl::Status StatusBuilder::JoinMessageToStatus() {
+  if (!stream_) {
+    return absl::OkStatus();
+  }
   std::string message;
   if (join_style_ == MessageJoinStyle::kAnnotate) {
     if (!status_.ok()) {

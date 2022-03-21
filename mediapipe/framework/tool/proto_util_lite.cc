@@ -228,7 +228,7 @@ absl::Status SyntaxStatus(bool ok, const std::string& text, T* result) {
                   " for type: ", MediaPipeTypeStringOrDemangled<T>(), "."));
 }
 
-// Templated parsing of a std::string value.
+// Templated parsing of a string value.
 template <typename T>
 absl::Status ParseValue(const std::string& text, T* result) {
   return SyntaxStatus(absl::SimpleAtoi(text, result), text, result);

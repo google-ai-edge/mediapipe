@@ -72,6 +72,7 @@ objc_library(
         "//mediapipe/modules/face_geometry/data:geometry_pipeline_metadata_landmarks.binarypb",
         "//mediapipe/modules/face_landmark:face_landmark.tflite",
     ],
+    features = ["-layering_check"],
     sdk_frameworks = [
         "AVFoundation",
         "CoreGraphics",

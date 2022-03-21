@@ -19,57 +19,55 @@
 #include <unordered_set>
 #include <utility>
 
+#include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
+#include "absl/types/span.h"
+#include "absl/types/variant.h"
 #include "mediapipe/framework/port/canonical_errors.h"
 #include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/map_util.h"
 #include "mediapipe/framework/port/source_location.h"
 #include "mediapipe/framework/port/status_builder.h"
 #include "mediapipe/framework/tool/status_util.h"
+#include "mediapipe/framework/tool/type_util.h"
 #include "mediapipe/framework/tool/validate_name.h"
+#include "mediapipe/framework/type_map.h"
 
 namespace mediapipe {
 
-PacketType::PacketType()
-    : initialized_(false),
-      no_packets_allowed_(true),
-      validate_method_(nullptr),
-      type_name_("[Undefined Type]"),
-      same_as_(nullptr) {}
+absl::Status PacketType::AcceptAny(const TypeSpec& type) {
+  return absl::OkStatus();
+}
+
+absl::Status PacketType::AcceptNone(const TypeSpec& type) {
+  auto* special = absl::get_if<SpecialType>(&type);
+  if (special &&
+      (special->accept_fn_ == AcceptNone || special->accept_fn_ == AcceptAny))
+    return absl::OkStatus();
+  return mediapipe::InvalidArgumentErrorBuilder(MEDIAPIPE_LOC)
+         << "No packets are allowed for type: [No Type]";
+}
 
 PacketType& PacketType::SetAny() {
-  no_packets_allowed_ = false;
-  validate_method_ = nullptr;
-  same_as_ = nullptr;
-  type_name_ = "[Any Type]";
-  initialized_ = true;
+  type_spec_ = SpecialType{"[Any Type]", &AcceptAny};
   return *this;
 }
 
 PacketType& PacketType::SetNone() {
-  no_packets_allowed_ = true;
-  validate_method_ = nullptr;
-  same_as_ = nullptr;
-  type_name_ = "[No Type]";
-  initialized_ = true;
+  type_spec_ = SpecialType{"[No Type]", &AcceptNone};
   return *this;
 }
 
 PacketType& PacketType::SetSameAs(const PacketType* type) {
   // TODO Union sets together when SetSameAs is called multiple times.
-  no_packets_allowed_ = false;
-  validate_method_ = nullptr;
-  same_as_ = type->GetSameAs();
-  type_name_ = "";
-
-  if (same_as_ == this) {
+  auto same_as = type->GetSameAs();
+  if (same_as == this) {
     // We're the root of the union-find tree.  There's a cycle, which
     // means we might as well be an "Any" type.
-    same_as_ = nullptr;
+    return SetAny();
   }
-
-  initialized_ = true;
+  type_spec_ = SameAs{same_as};
   return *this;
 }
 
@@ -78,10 +76,19 @@ PacketType& PacketType::Optional() {
   return *this;
 }
 
-bool PacketType::IsInitialized() const { return initialized_; }
+bool PacketType::IsInitialized() const {
+  return !absl::holds_alternative<absl::monostate>(type_spec_);
+}
+
+const PacketType* PacketType::SameAsPtr() const {
+  auto* same_as = absl::get_if<SameAs>(&type_spec_);
+  if (same_as) return same_as->other;
+  return nullptr;
+}
 
 PacketType* PacketType::GetSameAs() {
-  if (!same_as_) {
+  auto* same_as = SameAsPtr();
+  if (!same_as) {
     return this;
   }
   // Don't optimize the union-find algorithm, since updating the pointer
@@ -91,89 +98,174 @@ PacketType* PacketType::GetSameAs() {
   // make the current set point to the root of the other tree.
   // TODO Remove const_cast by making SetSameAs take a non-const
   // PacketType*.
-  return const_cast<PacketType*>(same_as_->GetSameAs());
+  return const_cast<PacketType*>(same_as->GetSameAs());
 }
 
 const PacketType* PacketType::GetSameAs() const {
-  if (!same_as_) {
+  auto* same_as = SameAsPtr();
+  if (!same_as) {
     return this;
   }
   // See comments in non-const variant.
-  return same_as_->GetSameAs();
+  return same_as->GetSameAs();
 }
 
 bool PacketType::IsAny() const {
-  return !no_packets_allowed_ && validate_method_ == nullptr &&
-         same_as_ == nullptr;
+  auto* special = absl::get_if<SpecialType>(&type_spec_);
+  return special && special->accept_fn_ == AcceptAny;
 }
 
-bool PacketType::IsNone() const { return no_packets_allowed_; }
+bool PacketType::IsNone() const {
+  auto* special = absl::get_if<SpecialType>(&type_spec_);
+  // The tests currently require that an uninitialized PacketType return true
+  // for IsNone. TODO: change it?
+  return !IsInitialized() || (special && special->accept_fn_ == AcceptNone);
+}
+
+bool PacketType::IsOneOf() const {
+  return absl::holds_alternative<MultiType>(type_spec_);
+}
+
+bool PacketType::IsExactType() const {
+  return absl::holds_alternative<const tool::TypeInfo*>(type_spec_);
+}
 
 const std::string* PacketType::RegisteredTypeName() const {
-  if (same_as_) {
-    return GetSameAs()->RegisteredTypeName();
-  }
-  return registered_type_name_ptr_;
+  if (auto* same_as = SameAsPtr()) return same_as->RegisteredTypeName();
+  if (auto* type_info = absl::get_if<const tool::TypeInfo*>(&type_spec_))
+    return MediaPipeTypeStringFromTypeId((**type_info).hash_code());
+  if (auto* multi_type = absl::get_if<MultiType>(&type_spec_))
+    return multi_type->registered_type_name;
+  return nullptr;
 }
 
-const std::string PacketType::DebugTypeName() const {
-  if (same_as_) {
+namespace internal {
+
+struct TypeInfoFormatter {
+  void operator()(std::string* out, const tool::TypeInfo& t) const {
+    absl::StrAppend(out, MediaPipeTypeStringOrDemangled(t));
+  }
+};
+
+template <class Formatter>
+class QuoteFormatter {
+ public:
+  explicit QuoteFormatter(Formatter&& f) : f_(std::forward<Formatter>(f)) {}
+
+  template <typename T>
+  void operator()(std::string* out, const T& t) const {
+    absl::StrAppend(out, "\"");
+    f_(out, t);
+    absl::StrAppend(out, "\"");
+  }
+
+ private:
+  Formatter f_;
+};
+template <class Formatter>
+explicit QuoteFormatter(Formatter f) -> QuoteFormatter<Formatter>;
+
+}  // namespace internal
+
+std::string PacketType::TypeNameForOneOf(TypeInfoSpan types) {
+  return absl::StrCat(
+      "OneOf<",
+      absl::StrJoin(types, ", ",
+                    absl::DereferenceFormatter(internal::TypeInfoFormatter())),
+      ">");
+}
+
+std::string PacketType::DebugTypeName() const {
+  if (auto* same_as = absl::get_if<SameAs>(&type_spec_)) {
     // Construct a name based on the current chain of same_as_ links
     // (which may change when the framework expands out Any-type).
-    return absl::StrCat("[Same Type As ", GetSameAs()->DebugTypeName(), "]");
+    return absl::StrCat("[Same Type As ",
+                        same_as->other->GetSameAs()->DebugTypeName(), "]");
   }
-  return type_name_;
+  if (auto* special = absl::get_if<SpecialType>(&type_spec_)) {
+    return special->name_;
+  }
+  if (auto* type_info = absl::get_if<const tool::TypeInfo*>(&type_spec_)) {
+    return MediaPipeTypeStringOrDemangled(**type_info);
+  }
+  if (auto* multi_type = absl::get_if<MultiType>(&type_spec_)) {
+    return TypeNameForOneOf(multi_type->types);
+  }
+  return "[Undefined Type]";
+}
+
+static bool HaveCommonType(absl::Span<const tool::TypeInfo* const> types1,
+                           absl::Span<const tool::TypeInfo* const> types2) {
+  for (const auto& first : types1) {
+    for (const auto& second : types2) {
+      if (first->hash_code() == second->hash_code()) {
+        return true;
+      }
+    }
+  }
+  return false;
 }
 
 absl::Status PacketType::Validate(const Packet& packet) const {
-  if (!initialized_) {
+  if (!IsInitialized()) {
     return absl::InvalidArgumentError(
         "Uninitialized PacketType was used for validation.");
   }
-  if (same_as_) {
+  if (SameAsPtr()) {
     // Cycles are impossible at this stage due to being checked for
     // in SetSameAs().
     return GetSameAs()->Validate(packet);
   }
-  if (no_packets_allowed_) {
-    return mediapipe::InvalidArgumentErrorBuilder(MEDIAPIPE_LOC)
-           << "No packets are allowed for type: " << type_name_;
+  if (auto* type_info = absl::get_if<const tool::TypeInfo*>(&type_spec_)) {
+    return packet.ValidateAsType(**type_info);
   }
-  if (validate_method_ != nullptr) {
-    return (packet.*validate_method_)();
-  }
-  // The PacketType is the Any Type.
   if (packet.IsEmpty()) {
     return mediapipe::InvalidArgumentErrorBuilder(MEDIAPIPE_LOC)
-           << "Empty packets are not allowed for type: " << type_name_;
+           << "Empty packets are not allowed for type: " << DebugTypeName();
+  }
+  if (auto* multi_type = absl::get_if<MultiType>(&type_spec_)) {
+    auto* packet_type = &packet.GetTypeInfo();
+    if (HaveCommonType(multi_type->types, absl::MakeSpan(&packet_type, 1))) {
+      return absl::OkStatus();
+    } else {
+      return absl::InvalidArgumentError(absl::StrCat(
+          "The Packet stores \"", packet.DebugTypeName(), "\", but one of ",
+          absl::StrJoin(multi_type->types, ", ",
+                        absl::DereferenceFormatter(internal::QuoteFormatter(
+                            internal::TypeInfoFormatter()))),
+          " was requested."));
+    }
+  }
+  if (auto* special = absl::get_if<SpecialType>(&type_spec_)) {
+    return special->accept_fn_(&packet.GetTypeInfo());
   }
   return absl::OkStatus();
+}
+
+PacketType::TypeInfoSpan PacketType::GetTypeSpan(const TypeSpec& type_spec) {
+  if (auto* type_info = absl::get_if<const tool::TypeInfo*>(&type_spec))
+    return absl::MakeSpan(type_info, 1);
+  if (auto* multi_type = absl::get_if<MultiType>(&type_spec))
+    return multi_type->types;
+  return {};
 }
 
 bool PacketType::IsConsistentWith(const PacketType& other) const {
   const PacketType* type1 = GetSameAs();
   const PacketType* type2 = other.GetSameAs();
 
-  if (type1->validate_method_ == nullptr ||
-      type2->validate_method_ == nullptr) {
-    // type1 or type2 either accepts anything or nothing.
-    if (type1->validate_method_ == nullptr && !type1->no_packets_allowed_) {
-      // type1 accepts anything.
-      return true;
-    }
-    if (type2->validate_method_ == nullptr && !type2->no_packets_allowed_) {
-      // type2 accepts anything.
-      return true;
-    }
-    if (type1->no_packets_allowed_ && type2->no_packets_allowed_) {
-      // type1 and type2 both accept nothing.
-      return true;
-    }
-    // The only special case left is that only one of "type1" or "type2"
-    // accepts nothing, which means there is no match.
-    return false;
+  TypeInfoSpan types1 = GetTypeSpan(type1->type_spec_);
+  TypeInfoSpan types2 = GetTypeSpan(type2->type_spec_);
+  if (!types1.empty() && !types2.empty()) {
+    return HaveCommonType(types1, types2);
   }
-  return type1->validate_method_ == type2->validate_method_;
+  if (auto* special1 = absl::get_if<SpecialType>(&type1->type_spec_)) {
+    return special1->accept_fn_(type2->type_spec_).ok();
+  }
+  if (auto* special2 = absl::get_if<SpecialType>(&type2->type_spec_)) {
+    return special2->accept_fn_(type1->type_spec_).ok();
+  }
+  return false;
 }
 
 absl::Status ValidatePacketTypeSet(const PacketTypeSet& packet_type_set) {

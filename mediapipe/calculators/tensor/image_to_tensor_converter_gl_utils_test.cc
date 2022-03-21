@@ -1,6 +1,6 @@
 #include "mediapipe/framework/port.h"
 
-#if MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_20
+#if MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30
 
 #include "mediapipe/calculators/tensor/image_to_tensor_converter_gl_utils.h"
 #include "mediapipe/framework/port/gtest.h"
@@ -46,4 +46,4 @@ TEST(ImageToTensorConverterGlUtilsTest, GlTexParameteriOverrider) {
 }  // namespace
 }  // namespace mediapipe
 
-#endif  // MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_20
+#endif  // MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30

@@ -14,7 +14,7 @@ The TFLite model is converted from the TensorFlow above. The steps needed to con
    * `model.ckpt.data-00000-of-00001`
    * `pipeline.config`
 
-Make sure you have installed these [python libraries](https://github.com/tensorflow/models/blob/master/research/object_detection/g3doc/installation.md). Then to get the frozen graph, run the `export_tflite_ssd_graph.py` script from the `models/research` directory with this command:
+Make sure you have installed these [python libraries](https://github.com/tensorflow/models/blob/master/research/object_detection/g3doc/tf1.md). Then to get the frozen graph, run the `export_tflite_ssd_graph.py` script from the `models/research` directory with this command:
 
 ```bash
 $ PATH_TO_MODEL=path/to/the/model
@@ -44,7 +44,7 @@ You should be able to see the input image size of the model is 320x320 and the o
    * `raw_outputs/box_encodings`
    * `raw_outputs/class_predictions`
 
-The last step is to convert the model to TFLite. You can look at [this guide](https://www.tensorflow.org/lite/convert/cmdline_examples) for more detail. For this example, you just need to run:
+The last step is to convert the model to TFLite. You can look at [this guide](https://github.com/tensorflow/tensorflow/blob/master/tensorflow/lite/g3doc/r1/convert/cmdline_examples.md) for more detail. For this example, you just need to run:
 
 ```bash
 $ tflite_convert --  \

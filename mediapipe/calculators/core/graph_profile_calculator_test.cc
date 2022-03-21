@@ -202,6 +202,8 @@ TEST_F(GraphProfileCalculatorTest, GraphProfile) {
           }
         })pb");
 
+  ASSERT_EQ(output_packets.size(), 2);
+  EXPECT_TRUE(output_packets[0].Get<GraphProfile>().has_config());
   EXPECT_THAT(output_packets[1].Get<GraphProfile>(),
               mediapipe::EqualsProto(expected_profile));
 }

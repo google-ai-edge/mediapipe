@@ -25,7 +25,7 @@ class Singleton {
  public:
   // Returns the pointer to the singleton of type |T|.
   // This method is thread-safe.
-  static T *get() LOCKS_EXCLUDED(mu_) {
+  static T *get() ABSL_LOCKS_EXCLUDED(mu_) {
     absl::MutexLock lock(&mu_);
     if (instance_) {
       return instance_;
@@ -46,7 +46,7 @@ class Singleton {
   // cannot be recreated. However, the callers of this method responsible for
   // making sure that no other threads are accessing (or plan to access) the
   // singleton any longer.
-  static void Destruct() LOCKS_EXCLUDED(mu_) {
+  static void Destruct() ABSL_LOCKS_EXCLUDED(mu_) {
     absl::MutexLock lock(&mu_);
     T *tmp_ptr = instance_;
     instance_ = nullptr;
@@ -55,8 +55,8 @@ class Singleton {
   }
 
  private:
-  static T *instance_ GUARDED_BY(mu_);
-  static bool destroyed_ GUARDED_BY(mu_);
+  static T *instance_ ABSL_GUARDED_BY(mu_);
+  static bool destroyed_ ABSL_GUARDED_BY(mu_);
   static absl::Mutex mu_;
 };
 
