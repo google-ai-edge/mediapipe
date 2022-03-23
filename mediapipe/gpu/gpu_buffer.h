@@ -74,6 +74,7 @@ class GpuBuffer {
     storages_.push_back(std::move(storage));
   }
 
+#if !MEDIAPIPE_DISABLE_GPU && MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
   // This is used to support backward-compatible construction of GpuBuffer from
   // some platform-specific types without having to make those types visible in
   // this header.
@@ -81,6 +82,7 @@ class GpuBuffer {
                          std::declval<T>()))>>
   explicit GpuBuffer(T&& storage_convertible)
       : GpuBuffer(internal::AsGpuBufferStorage(storage_convertible)) {}
+#endif  // !MEDIAPIPE_DISABLE_GPU && MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
 
   int width() const { return current_storage().width(); }
   int height() const { return current_storage().height(); }

@@ -61,7 +61,7 @@ constexpr auto tag_build(S) {
 #define MPP_TAG(s)                                      \
   ([] {                                                 \
     struct S {                                          \
-      const const_str tag{s};                           \
+      const ::mediapipe::api2::const_str tag{s};        \
     };                                                  \
     return ::mediapipe::api2::internal::tag_build(S()); \
   }())

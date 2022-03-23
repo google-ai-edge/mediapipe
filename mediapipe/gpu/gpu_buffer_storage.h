@@ -189,11 +189,13 @@ class GpuBufferStorageImpl : public GpuBufferStorage, public U... {
   using RequireStatics = ForceStaticInstantiation<&registration>;
 };
 
+#if !MEDIAPIPE_DISABLE_GPU && MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
 // This function can be overridden to enable construction of a GpuBuffer from
 // platform-specific types without having to expose that type in the GpuBuffer
 // definition. It is only needed for backward compatibility reasons; do not add
 // overrides for new types.
 std::shared_ptr<internal::GpuBufferStorage> AsGpuBufferStorage();
+#endif  // !MEDIAPIPE_DISABLE_GPU && MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
 
 }  // namespace internal
 }  // namespace mediapipe
