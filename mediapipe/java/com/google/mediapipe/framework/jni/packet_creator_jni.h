@@ -48,12 +48,12 @@ JNIEXPORT jlong JNICALL PACKET_CREATOR_METHOD(nativeCreateGrayscaleImage)(
     jint height);
 
 JNIEXPORT jlong JNICALL PACKET_CREATOR_METHOD(nativeCreateAudioPacketDirect)(
-    JNIEnv* env, jobject thiz, jlong context, jobject data, jint num_channels,
-    jint num_samples);
+    JNIEnv* env, jobject thiz, jlong context, jobject data,
+    jboolean is_little_endian, jint num_channels, jint num_samples);
 
 JNIEXPORT jlong JNICALL PACKET_CREATOR_METHOD(nativeCreateAudioPacket)(
     JNIEnv* env, jobject thiz, jlong context, jbyteArray data, jint offset,
-    jint num_channels, jint num_samples);
+    jboolean is_little_endian, jint num_channels, jint num_samples);
 
 JNIEXPORT jlong JNICALL PACKET_CREATOR_METHOD(nativeCreateInt16)(JNIEnv* env,
                                                                  jobject thiz,

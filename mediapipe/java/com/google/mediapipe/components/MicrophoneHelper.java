@@ -24,6 +24,7 @@ import android.util.Log;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 
 /** Provides access to audio data from a microphone. */
 public class MicrophoneHelper implements AudioDataProducer {
@@ -181,6 +182,7 @@ public class MicrophoneHelper implements AudioDataProducer {
 
                 // TODO: Fix audio data cloning.
                 ByteBuffer audioData = ByteBuffer.allocateDirect(audioPacketBufferSize);
+                audioData.order(ByteOrder.nativeOrder());
                 try {
                   readAudioPacket(audioData);
                 } catch (IOException ioException) {
