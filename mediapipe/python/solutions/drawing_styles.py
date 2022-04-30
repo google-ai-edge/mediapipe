@@ -40,7 +40,7 @@ _THICKNESS_DOT = -1
 _PALM_LANMARKS = (HandLandmark.WRIST, HandLandmark.THUMB_CMC,
                   HandLandmark.INDEX_FINGER_MCP, HandLandmark.MIDDLE_FINGER_MCP,
                   HandLandmark.RING_FINGER_MCP, HandLandmark.PINKY_MCP)
-_THUMP_LANDMARKS = (HandLandmark.THUMB_MCP, HandLandmark.THUMB_IP,
+_THUMB_LANDMARKS = (HandLandmark.THUMB_MCP, HandLandmark.THUMB_IP,
                     HandLandmark.THUMB_TIP)
 _INDEX_FINGER_LANDMARKS = (HandLandmark.INDEX_FINGER_PIP,
                            HandLandmark.INDEX_FINGER_DIP,
@@ -57,7 +57,7 @@ _HAND_LANDMARK_STYLE = {
     _PALM_LANMARKS:
         DrawingSpec(
             color=_RED, thickness=_THICKNESS_DOT, circle_radius=_RADIUS),
-    _THUMP_LANDMARKS:
+    _THUMB_LANDMARKS:
         DrawingSpec(
             color=_PEACH, thickness=_THICKNESS_DOT, circle_radius=_RADIUS),
     _INDEX_FINGER_LANDMARKS:
