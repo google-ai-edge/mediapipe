@@ -37,15 +37,15 @@ using FieldType = ::mediapipe::proto_ns::FieldDescriptorProto::Type;
 class NightLightCalculator : public CalculatorBase {
  public:
   static absl::Status GetContract(CalculatorContract* cc) {
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
   absl::Status Open(CalculatorContext* cc) final {
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
   absl::Status Process(CalculatorContext* cc) final {
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
  private:

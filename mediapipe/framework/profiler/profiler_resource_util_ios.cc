@@ -20,7 +20,7 @@
 
 namespace mediapipe {
 
-StatusOr<std::string> GetDefaultTraceLogDirectory() {
+absl::StatusOr<std::string> GetDefaultTraceLogDirectory() {
   // Get the Documents directory. iOS apps can write files to this directory.
   NSURL* documents_directory_url = [[[NSFileManager defaultManager]
       URLsForDirectory:NSDocumentDirectory

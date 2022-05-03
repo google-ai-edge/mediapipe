@@ -496,7 +496,7 @@ TEST(PacketTest, PacketFromSerializedProto) {
   original.add_value("foo");
   std::string serialized = original.SerializeAsString();
 
-  StatusOr<Packet> maybe_packet = packet_internal::PacketFromDynamicProto(
+  absl::StatusOr<Packet> maybe_packet = packet_internal::PacketFromDynamicProto(
       "mediapipe.SimpleProto", serialized);
   MP_ASSERT_OK(maybe_packet);
   Packet packet = maybe_packet.value();

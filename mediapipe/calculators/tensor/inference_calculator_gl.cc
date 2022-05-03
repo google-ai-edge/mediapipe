@@ -144,11 +144,10 @@ absl::Status InferenceCalculatorGlImpl::Open(CalculatorContext* cc) {
   }
 
   MP_RETURN_IF_ERROR(gpu_helper_.Open(cc));
-  MP_RETURN_IF_ERROR(
-      gpu_helper_.RunInGlContext([this, &cc]() -> ::mediapipe::Status {
-        return use_advanced_gpu_api_ ? InitTFLiteGPURunner(cc)
-                                     : LoadDelegateAndAllocateTensors(cc);
-      }));
+  MP_RETURN_IF_ERROR(gpu_helper_.RunInGlContext([this, &cc]() -> absl::Status {
+    return use_advanced_gpu_api_ ? InitTFLiteGPURunner(cc)
+                                 : LoadDelegateAndAllocateTensors(cc);
+  }));
   return absl::OkStatus();
 }
 
@@ -162,7 +161,7 @@ absl::Status InferenceCalculatorGlImpl::Process(CalculatorContext* cc) {
 
   if (use_advanced_gpu_api_) {
     MP_RETURN_IF_ERROR(gpu_helper_.RunInGlContext(
-        [this, &input_tensors, &output_tensors]() -> ::mediapipe::Status {
+        [this, &input_tensors, &output_tensors]() -> absl::Status {
           for (int i = 0; i < input_tensors.size(); ++i) {
             MP_RETURN_IF_ERROR(tflite_gpu_runner_->BindSSBOToInputTensor(
                 input_tensors[i].GetOpenGlBufferReadView().name(), i));
@@ -177,8 +176,8 @@ absl::Status InferenceCalculatorGlImpl::Process(CalculatorContext* cc) {
           return absl::OkStatus();
         }));
   } else {
-    MP_RETURN_IF_ERROR(gpu_helper_.RunInGlContext(
-        [this, &input_tensors]() -> ::mediapipe::Status {
+    MP_RETURN_IF_ERROR(
+        gpu_helper_.RunInGlContext([this, &input_tensors]() -> absl::Status {
           // Explicitly copy input.
           for (int i = 0; i < input_tensors.size(); ++i) {
             glBindBuffer(GL_COPY_READ_BUFFER,
@@ -200,8 +199,8 @@ absl::Status InferenceCalculatorGlImpl::Process(CalculatorContext* cc) {
   }
 
   if (use_gpu_delegate_) {
-    MP_RETURN_IF_ERROR(gpu_helper_.RunInGlContext(
-        [this, &output_tensors]() -> ::mediapipe::Status {
+    MP_RETURN_IF_ERROR(
+        gpu_helper_.RunInGlContext([this, &output_tensors]() -> absl::Status {
           output_tensors->reserve(output_shapes_.size());
           for (int i = 0; i < output_shapes_.size(); ++i) {
             const auto& t = gpu_buffers_out_[i];
@@ -250,7 +249,7 @@ absl::Status InferenceCalculatorGlImpl::SaveGpuCaches() {
 absl::Status InferenceCalculatorGlImpl::Close(CalculatorContext* cc) {
   MP_RETURN_IF_ERROR(SaveGpuCaches());
   if (use_gpu_delegate_) {
-    MP_RETURN_IF_ERROR(gpu_helper_.RunInGlContext([this]() -> Status {
+    MP_RETURN_IF_ERROR(gpu_helper_.RunInGlContext([this]() -> absl::Status {
       gpu_buffers_in_.clear();
       gpu_buffers_out_.clear();
       // Delegate must outlive the interpreter, hence the order is important.

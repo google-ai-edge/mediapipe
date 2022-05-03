@@ -94,7 +94,7 @@ const Packet& OutputStreamShard::Header() const {
 // binary.  This function can be defined in the .cc file because only two
 // versions are ever instantiated, and all call sites are within this .cc file.
 template <typename T>
-Status OutputStreamShard::AddPacketInternal(T&& packet) {
+absl::Status OutputStreamShard::AddPacketInternal(T&& packet) {
   if (IsClosed()) {
     return mediapipe::FailedPreconditionErrorBuilder(MEDIAPIPE_LOC)
            << "Packet sent to closed stream \"" << Name() << "\".";
@@ -113,7 +113,7 @@ Status OutputStreamShard::AddPacketInternal(T&& packet) {
            << timestamp.DebugString();
   }
 
-  Status result = output_stream_spec_->packet_type->Validate(packet);
+  absl::Status result = output_stream_spec_->packet_type->Validate(packet);
   if (!result.ok()) {
     return StatusBuilder(result, MEDIAPIPE_LOC).SetPrepend() << absl::StrCat(
                "Packet type mismatch on calculator outputting to stream \"",
@@ -132,14 +132,14 @@ Status OutputStreamShard::AddPacketInternal(T&& packet) {
 }
 
 void OutputStreamShard::AddPacket(const Packet& packet) {
-  Status status = AddPacketInternal(packet);
+  absl::Status status = AddPacketInternal(packet);
   if (!status.ok()) {
     output_stream_spec_->TriggerErrorCallback(status);
   }
 }
 
 void OutputStreamShard::AddPacket(Packet&& packet) {
-  Status status = AddPacketInternal(std::move(packet));
+  absl::Status status = AddPacketInternal(std::move(packet));
   if (!status.ok()) {
     output_stream_spec_->TriggerErrorCallback(status);
   }

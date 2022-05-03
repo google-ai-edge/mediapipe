@@ -50,7 +50,7 @@ TEST(VisualScorerTest, ScoresSharpness) {
   image_mat.setTo(cv::Scalar(0, 0, 0));
   float score_rect = 0;
   auto status = scorer.CalculateScore(image_mat, region, &score_rect);
-  EXPECT_EQ(status.code(), StatusCode::kInvalidArgument);
+  EXPECT_EQ(status.code(), absl::StatusCode::kInvalidArgument);
 }
 
 TEST(VisualScorerTest, ScoresColorfulness) {

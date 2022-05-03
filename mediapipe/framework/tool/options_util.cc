@@ -59,7 +59,7 @@ std::string MessageType(FieldData message) {
 // Copy literal options from graph_options to node_options.
 absl::Status CopyLiteralOptions(CalculatorGraphConfig::Node parent_node,
                                 CalculatorGraphConfig* config) {
-  Status status;
+  absl::Status status;
   FieldData graph_data = options_field_util::AsFieldData(*config);
   FieldData parent_data = options_field_util::AsFieldData(parent_node);
 
@@ -105,7 +105,7 @@ absl::Status CopyLiteralOptions(CalculatorGraphConfig::Node parent_node,
 absl::Status DefineGraphOptions(const CalculatorGraphConfig::Node& parent_node,
                                 CalculatorGraphConfig* config) {
   MP_RETURN_IF_ERROR(CopyLiteralOptions(parent_node, config));
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
 }  // namespace tool
