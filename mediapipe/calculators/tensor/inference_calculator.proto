@@ -116,6 +116,9 @@ message InferenceCalculatorOptions {
       // to ensure there is no clash of the tokens. If unspecified, NNAPI will
       // not try caching the compilation.
       optional string model_token = 2;
+      // The name of an accelerator to be used for NNAPI delegate, e.g.
+      // "google-edgetpu". When not specified, it will be selected by NNAPI.
+      optional string accelerator_name = 3;
     }
     message Xnnpack {
       // Number of threads for XNNPACK delegate. (By default, calculator tries

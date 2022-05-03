@@ -173,6 +173,25 @@ public class CameraXPreviewHelper extends CameraHelper {
   }
 
   /**
+   * Initializes the camera and sets it up for accessing frames. This constructor also enables the
+   * image capture use case from {@link CameraX}.
+   *
+   * @param imageCaptureBuilder Builder for an {@link ImageCapture}, this builder must contain the
+   *     desired configuration options for the image capture being build (e.g. target resolution).
+   * @param targetSize the preview size to use. If set to {@code null}, the helper will default to
+   *     1280 * 720.
+   */
+  public void startCamera(
+      Activity activity,
+      @Nonnull ImageCapture.Builder imageCaptureBuilder,
+      CameraFacing cameraFacing,
+      @Nullable SurfaceTexture surfaceTexture,
+      @Nullable Size targetSize) {
+    this.imageCaptureBuilder = imageCaptureBuilder;
+    startCamera(activity, (LifecycleOwner) activity, cameraFacing, surfaceTexture, targetSize);
+  }
+
+  /**
    * Initializes the camera and sets it up for accessing frames.
    *
    * @param targetSize a predefined constant {@link #TARGET_SIZE}. If set to {@code null}, the

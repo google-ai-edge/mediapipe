@@ -42,7 +42,7 @@ node {
 # supports custom ops needed by the model used in this graph.
 node {
   calculator: "TfLiteCustomOpResolverCalculator"
-  output_side_packet: "opresolver"
+  output_side_packet: "OP_RESOLVER:opresolver"
   options: {
     [mediapipe.TfLiteCustomOpResolverCalculatorOptions.ext] {
       use_gpu: true
@@ -64,7 +64,7 @@ node {
   calculator: "InferenceCalculator"
   input_stream: "TENSORS:input_tensor"
   output_stream: "TENSORS:detection_tensors"
-  input_side_packet: "CUSTOM_OP_RESOLVER:opresolver"
+  input_side_packet: "OP_RESOLVER:opresolver"
   input_side_packet: "MODEL:model"
   options: {
     [mediapipe.InferenceCalculatorOptions.ext] {

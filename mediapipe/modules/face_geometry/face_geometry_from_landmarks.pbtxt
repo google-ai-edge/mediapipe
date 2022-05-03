@@ -1,4 +1,4 @@
-# MediaPipe graph to extract geometry from face landmarks for multiple faces.
+# MediaPipe graph to extract 3D transform from face landmarks for multiple faces.
 #
 # It is required that "geometry_pipeline_metadata_from_landmark.binarypb" is
 # available at
@@ -34,11 +34,11 @@ input_stream: "MULTI_FACE_LANDMARKS:multi_face_landmarks"
 # (face_geometry::Environment)
 input_side_packet: "ENVIRONMENT:environment"
 
-# A list of geometry data for each detected face.
+# A list of 3D transform data for each detected face.
 # (std::vector<face_geometry::FaceGeometry>)
 output_stream: "MULTI_FACE_GEOMETRY:multi_face_geometry"
 
-# Extracts face geometry for multiple faces from a vector of face landmark
+# Extracts face 3D transform for multiple faces from a vector of face landmark
 # lists.
 node {
   calculator: "FaceGeometryPipelineCalculator"

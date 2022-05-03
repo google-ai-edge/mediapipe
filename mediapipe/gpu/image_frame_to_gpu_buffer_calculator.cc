@@ -16,7 +16,10 @@
 #include "mediapipe/framework/formats/image_frame.h"
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/gpu/gl_calculator_helper.h"
-#include "mediapipe/gpu/gpu_buffer_storage_image_frame.h"
+
+#ifdef __APPLE__
+#include "mediapipe/objc/util.h"
+#endif
 
 namespace mediapipe {
 
@@ -31,7 +34,9 @@ class ImageFrameToGpuBufferCalculator : public CalculatorBase {
   absl::Status Process(CalculatorContext* cc) override;
 
  private:
+#if !MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
   GlCalculatorHelper helper_;
+#endif  // !MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
 };
 REGISTER_CALCULATOR(ImageFrameToGpuBufferCalculator);
 
@@ -51,25 +56,28 @@ absl::Status ImageFrameToGpuBufferCalculator::Open(CalculatorContext* cc) {
   // Inform the framework that we always output at the same timestamp
   // as we receive a packet at.
   cc->SetOffset(TimestampDiff(0));
+#if !MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
   MP_RETURN_IF_ERROR(helper_.Open(cc));
+#endif  // !MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
   return absl::OkStatus();
 }
 
 absl::Status ImageFrameToGpuBufferCalculator::Process(CalculatorContext* cc) {
-  auto image_frame = std::const_pointer_cast<ImageFrame>(
-      mediapipe::SharedPtrWithPacket<ImageFrame>(
-          cc->Inputs().Index(0).Value()));
-  auto gpu_buffer = MakePacket<GpuBuffer>(
-                        std::make_shared<mediapipe::GpuBufferStorageImageFrame>(
-                            std::move(image_frame)))
-                        .At(cc->InputTimestamp());
-  // Request GPU access to ensure the data is available to the GPU.
-  // TODO: have a better way to do this, or defer until later.
-  helper_.RunInGlContext([&gpu_buffer] {
-    auto view = gpu_buffer.Get<GpuBuffer>().GetReadView<GlTextureView>(0);
+#if MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
+  CFHolder<CVPixelBufferRef> buffer;
+  MP_RETURN_IF_ERROR(CreateCVPixelBufferForImageFramePacket(
+      cc->Inputs().Index(0).Value(), &buffer));
+  cc->Outputs().Index(0).Add(new GpuBuffer(buffer), cc->InputTimestamp());
+#else
+  const auto& input = cc->Inputs().Index(0).Get<ImageFrame>();
+  helper_.RunInGlContext([this, &input, &cc]() {
+    auto src = helper_.CreateSourceTexture(input);
+    auto output = src.GetFrame<GpuBuffer>();
+    glFlush();
+    cc->Outputs().Index(0).Add(output.release(), cc->InputTimestamp());
+    src.Release();
   });
-  cc->Outputs().Index(0).AddPacket(std::move(gpu_buffer));
-
+#endif  // MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
   return absl::OkStatus();
 }
 

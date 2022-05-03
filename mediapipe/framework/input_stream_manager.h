@@ -87,12 +87,14 @@ class InputStreamManager {
   //   Timestamp::PostStream(), the packet must be the only packet in the
   //   stream.
   // Violation of any of these conditions causes an error status.
-  absl::Status AddPackets(const std::list<Packet>& container, bool* notify);
+  absl::Status AddPackets(const std::list<Packet>& container, bool* notify)
+      ABSL_LOCKS_EXCLUDED(stream_mutex_);
 
   // Move a list of timestamped packets. Sets "notify" to true if the queue
   // becomes non-empty. Does nothing if the input stream is closed. After the
   // move, all packets in the container must be empty.
-  absl::Status MovePackets(std::list<Packet>* container, bool* notify);
+  absl::Status MovePackets(std::list<Packet>* container, bool* notify)
+      ABSL_LOCKS_EXCLUDED(stream_mutex_);
 
   // Closes the input stream.  This function can be called multiple times.
   void Close() ABSL_LOCKS_EXCLUDED(stream_mutex_);
@@ -139,6 +141,9 @@ class InputStreamManager {
   // non-empty. Sets "stream_is_done" if  the next timestamp bound reaches
   // Timestamp::Done() after the pop.
   Packet PopQueueHead(bool* stream_is_done) ABSL_LOCKS_EXCLUDED(stream_mutex_);
+
+  // Returns the number of packets in the queue.
+  int NumPacketsAdded() const ABSL_LOCKS_EXCLUDED(stream_mutex_);
 
   // Returns the number of packets in the queue.
   int QueueSize() const ABSL_LOCKS_EXCLUDED(stream_mutex_);

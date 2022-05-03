@@ -12,13 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <memory>
+
 #include "mediapipe/calculators/tflite/tflite_custom_op_resolver_calculator.pb.h"
+#include "mediapipe/framework/api2/packet.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/util/tflite/cpu_op_resolver.h"
 #include "mediapipe/util/tflite/op_resolver.h"
+#include "tensorflow/lite/core/api/op_resolver.h"
 
 namespace mediapipe {
+
+namespace {
+constexpr char kOpResolverTag[] = "OP_RESOLVER";
+}  // namespace
 
 // This calculator creates a custom op resolver as a side packet that can be
 // used in TfLiteInferenceCalculator. Current custom op resolver supports the
@@ -27,7 +35,9 @@ namespace mediapipe {
 //   MaxPoolArgmax
 //   MaxUnpooling
 //
-// Usage example:
+// Usage examples:
+//
+// For using with TfliteInferenceCalculator:
 // node {
 //   calculator: "TfLiteCustomOpResolverCalculator"
 //   output_side_packet: "op_resolver"
@@ -37,12 +47,27 @@ namespace mediapipe {
 //     }
 //   }
 // }
+//
+// For using with InferenceCalculator:
+// node {
+//   calculator: "TfLiteCustomOpResolverCalculator"
+//   output_side_packet: "OP_RESOLVER:op_resolver"
+//   node_options: {
+//     [type.googleapis.com/mediapipe.TfLiteCustomOpResolverCalculatorOptions] {
+//       use_gpu: true
+//     }
+//   }
+// }
 class TfLiteCustomOpResolverCalculator : public CalculatorBase {
  public:
   static absl::Status GetContract(CalculatorContract* cc) {
-    cc->OutputSidePackets()
-        .Index(0)
-        .Set<tflite::ops::builtin::BuiltinOpResolver>();
+    if (cc->OutputSidePackets().HasTag(kOpResolverTag)) {
+      cc->OutputSidePackets().Tag(kOpResolverTag).Set<tflite::OpResolver>();
+    } else {
+      cc->OutputSidePackets()
+          .Index(0)
+          .Set<tflite::ops::builtin::BuiltinOpResolver>();
+    }
     return absl::OkStatus();
   }
 
@@ -59,7 +84,14 @@ class TfLiteCustomOpResolverCalculator : public CalculatorBase {
       op_resolver = absl::make_unique<mediapipe::CpuOpResolver>();
     }
 
-    cc->OutputSidePackets().Index(0).Set(Adopt(op_resolver.release()));
+    if (cc->OutputSidePackets().HasTag(kOpResolverTag)) {
+      cc->OutputSidePackets()
+          .Tag(kOpResolverTag)
+          .Set(mediapipe::api2::PacketAdopting<tflite::OpResolver>(
+              std::move(op_resolver)));
+    } else {
+      cc->OutputSidePackets().Index(0).Set(Adopt(op_resolver.release()));
+    }
     return absl::OkStatus();
   }
 

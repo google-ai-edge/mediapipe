@@ -76,7 +76,7 @@ class Tensor {
 
  public:
   // No resources are allocated here.
-  enum class ElementType { kNone, kFloat16, kFloat32, kUInt8 };
+  enum class ElementType { kNone, kFloat16, kFloat32, kUInt8, kInt8 };
   struct Shape {
     Shape() = default;
     Shape(std::initializer_list<int> dimensions) : dims(dimensions) {}
@@ -216,6 +216,8 @@ class Tensor {
       case ElementType::kFloat32:
         return sizeof(float);
       case ElementType::kUInt8:
+        return 1;
+      case ElementType::kInt8:
         return 1;
     }
   }

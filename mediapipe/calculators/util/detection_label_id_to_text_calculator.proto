@@ -17,6 +17,7 @@ syntax = "proto2";
 package mediapipe;
 
 import "mediapipe/framework/calculator.proto";
+import "mediapipe/util/label_map.proto";
 
 message DetectionLabelIdToTextCalculatorOptions {
   extend mediapipe.CalculatorOptions {
@@ -26,7 +27,7 @@ message DetectionLabelIdToTextCalculatorOptions {
   // Path to a label map file for getting the actual name of detected classes.
   optional string label_map_path = 1;
 
-  // Alternative way to specify label map
+  // Alternative way to specify label map.
   // label: "label for id 0"
   // label: "label for id 1"
   // ...
@@ -36,4 +37,7 @@ message DetectionLabelIdToTextCalculatorOptions {
   // could be found. By setting this field to true, it is always copied to the
   // output detections.
   optional bool keep_label_id = 3;
+
+  // Label map.
+  optional LabelMap label_map = 4;
 }

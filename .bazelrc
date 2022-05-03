@@ -32,6 +32,9 @@ build:macos --copt=-w
 # Sets the default Apple platform to macOS.
 build --apple_platform_type=macos
 
+# Compile ObjC++ files with C++17
+build --per_file_copt=.*\.mm\$@-std=c++17
+
 # Allow debugging with XCODE
 build --apple_generate_dsym
 
@@ -87,6 +90,10 @@ build:ios_fat --watchos_cpus=armv7k
 build:darwin_x86_64 --apple_platform_type=macos
 build:darwin_x86_64 --macos_minimum_os=10.12
 build:darwin_x86_64 --cpu=darwin_x86_64
+
+build:darwin_arm64 --apple_platform_type=macos
+build:darwin_arm64 --macos_minimum_os=10.16
+build:darwin_arm64 --cpu=darwin_arm64
 
 # This bazelrc file is meant to be written by a setup script.
 try-import %workspace%/.configure.bazelrc

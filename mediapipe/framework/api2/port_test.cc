@@ -40,6 +40,17 @@ TEST(PortTest, DeletedCopyConstructorInput) {
   EXPECT_EQ(std::string(kSideOutputPort.Tag()), "SIDE_OUTPUT");
 }
 
+class AbstractBase {
+ public:
+  virtual ~AbstractBase() = default;
+  virtual absl::string_view name() const = 0;
+};
+
+TEST(PortTest, Abstract) {
+  static constexpr Input<AbstractBase> kInputPort{"INPUT"};
+  EXPECT_EQ(std::string(kInputPort.Tag()), "INPUT");
+}
+
 }  // namespace
 }  // namespace api2
 }  // namespace mediapipe

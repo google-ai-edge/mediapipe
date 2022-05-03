@@ -57,7 +57,12 @@ message TensorsToDetectionsCalculatorOptions {
   optional bool reverse_output_order = 14 [default = false];
   // The ids of classes that should be ignored during decoding the score for
   // each predicted box. Can be overridden with IGNORE_CLASSES side packet.
+  // `ignore_classes` and `allow_classes` are mutually exclusive.
   repeated int32 ignore_classes = 8;
+  // The ids of classes that should be allowed during decoding the score for
+  // each predicted box. `ignore_classes` and `allow_classes` are mutually
+  // exclusive.
+  repeated int32 allow_classes = 21 [packed = true];
 
   optional bool sigmoid_score = 15 [default = false];
   optional float score_clipping_thresh = 16;
@@ -71,4 +76,40 @@ message TensorsToDetectionsCalculatorOptions {
 
   // Score threshold for perserving decoded detections.
   optional float min_score_thresh = 19;
+
+  // The maximum number of the detection results to return. If < 0, all
+  // available results will be returned.
+  // For the detection models that have built-in non max suppression op, the
+  // output detections are the top-scored results. Otherwise, the output
+  // detections are the first N results that have higher scores than
+  // `min_score_thresh`.
+  optional int32 max_results = 20 [default = -1];
+
+  // The custom model output tensor mapping.
+  // The indices of the "detections" tensor and the "scores" tensor are always
+  // required. If the model outputs an "anchors" tensor, `anchors_tensor_index`
+  // must be specified. If the model outputs both "classes" tensor and "number
+  // of detections" tensors, `classes_tensor_index` and
+  // `num_detections_tensor_index` must be set.
+  message TensorMapping {
+    optional int32 detections_tensor_index = 1;
+    optional int32 classes_tensor_index = 2;
+    optional int32 scores_tensor_index = 3;
+    optional int32 num_detections_tensor_index = 4;
+    optional int32 anchors_tensor_index = 5;
+  }
+  optional TensorMapping tensor_mapping = 22;
+
+  // Represents the bounding box by using the combination of boundaries,
+  // {ymin, xmin, ymax, xmax}.
+  // The default order is {ymin, xmin, ymax, xmax}.
+  message BoxBoundariesIndices {
+    optional int32 ymin = 1 [default = 0];
+    optional int32 xmin = 2 [default = 1];
+    optional int32 ymax = 3 [default = 2];
+    optional int32 xmax = 4 [default = 3];
+  }
+  oneof box_indices {
+    BoxBoundariesIndices box_boundaries_indices = 23;
+  }
 }

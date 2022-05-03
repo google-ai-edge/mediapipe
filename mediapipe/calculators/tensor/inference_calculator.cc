@@ -21,7 +21,9 @@
 
 #include "absl/memory/memory.h"
 #include "absl/strings/string_view.h"
+#include "mediapipe/framework/api2/packet.h"
 #include "mediapipe/framework/tool/subgraph_expansion.h"
+#include "tensorflow/lite/core/api/op_resolver.h"
 
 namespace mediapipe {
 namespace api2 {
@@ -65,6 +67,18 @@ absl::StatusOr<Packet<TfLiteModelPtr>> InferenceCalculator::GetModelAsPacket(
   if (!kSideInModel(cc).IsEmpty()) return kSideInModel(cc);
   return absl::Status(mediapipe::StatusCode::kNotFound,
                       "Must specify TFLite model as path or loaded model.");
+}
+
+absl::StatusOr<Packet<tflite::OpResolver>>
+InferenceCalculator::GetOpResolverAsPacket(CalculatorContext* cc) {
+  if (kSideInOpResolver(cc).IsConnected()) {
+    return kSideInOpResolver(cc).As<tflite::OpResolver>();
+  } else if (kSideInCustomOpResolver(cc).IsConnected()) {
+    return kSideInCustomOpResolver(cc).As<tflite::OpResolver>();
+  }
+  return PacketAdopting<tflite::OpResolver>(
+      std::make_unique<
+          tflite::ops::builtin::BuiltinOpResolverWithoutDefaultDelegates>());
 }
 
 }  // namespace api2

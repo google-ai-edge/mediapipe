@@ -94,7 +94,7 @@ class InputStreamHandler {
 
   // Returns a vector of pairs of stream name and queue size for monitoring
   // purpose.
-  std::vector<std::pair<std::string, int>> GetMonitoringInfo();
+  std::vector<std::tuple<std::string, int, int, Timestamp>> GetMonitoringInfo();
 
   // Resets the input stream handler and its underlying input streams for
   // another run of the graph.

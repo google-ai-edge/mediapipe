@@ -14,7 +14,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Lint as: python3
 """This script is used to set up automatic provisioning for iOS examples.
 
 It scans the provisioning profiles used by Xcode, looking for one matching the

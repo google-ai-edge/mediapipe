@@ -14,6 +14,8 @@
 
 package com.google.mediapipe.components;
 
+import static java.lang.Math.max;
+
 import android.media.AudioFormat;
 import android.media.AudioRecord;
 import android.media.AudioTimestamp;
@@ -24,6 +26,7 @@ import android.util.Log;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.concurrent.CopyOnWriteArraySet;
 
 /** Provides access to audio data from a microphone. */
 public class MicrophoneHelper implements AudioDataProducer {
@@ -88,10 +91,10 @@ public class MicrophoneHelper implements AudioDataProducer {
   // sent to the listener of this class.
   private boolean recording = false;
 
-  // The consumer is provided with the data read on every AudioRecord.read() call. If the consumer
-  // called stopRecording() while a call to AudioRecord.read() was blocked, the class will discard
+  // The consumers are provided with the data read on every AudioRecord.read() call. If the consumer
+  // called stopMicrophone() while a call to AudioRecord.read() was blocked, the class will discard
   // the data read after recording stopped.
-  private AudioDataConsumer consumer;
+  private final CopyOnWriteArraySet<AudioDataConsumer> consumers = new CopyOnWriteArraySet<>();
 
   // TODO: Add a constructor that takes an AudioFormat.
 
@@ -105,7 +108,6 @@ public class MicrophoneHelper implements AudioDataProducer {
   public MicrophoneHelper(int sampleRateInHz, int channelConfig) {
     this.sampleRateInHz = sampleRateInHz;
     this.channelConfig = channelConfig;
-
     // Number of channels of audio source, depending on channelConfig.
     final int numChannels = channelConfig == AudioFormat.CHANNEL_IN_STEREO ? 2 : 1;
 
@@ -140,7 +142,7 @@ public class MicrophoneHelper implements AudioDataProducer {
         (int) Math.ceil(1.0 * bytesPerFrame * sampleRateInHz * micros / MICROS_PER_SECOND);
     // The size of the internal buffer should be greater than the size of the audio packet read
     // and sent to the AudioDataConsumer so that AudioRecord.
-    audioRecordBufferSize = Math.max(audioPacketBufferSize, minBufferSize) * BUFFER_SIZE_MULTIPLIER;
+    audioRecordBufferSize = max(audioPacketBufferSize, minBufferSize) * BUFFER_SIZE_MULTIPLIER;
   }
 
   private void setupAudioRecord() {
@@ -210,8 +212,10 @@ public class MicrophoneHelper implements AudioDataProducer {
                 // Confirm that the consumer is still interested in receiving audio data and
                 // stopMicrophone() wasn't called. If the consumer called stopMicrophone(), discard
                 // the data read in the latest AudioRecord.read(...) function call.
-                if (recording && consumer != null) {
-                  consumer.onNewAudioData(audioData, timestampMicros, audioFormat);
+                if (recording) {
+                  for (AudioDataConsumer consumer : consumers) {
+                    consumer.onNewAudioData(audioData, timestampMicros, audioFormat);
+                  }
                 }
               }
             },
@@ -389,8 +393,24 @@ public class MicrophoneHelper implements AudioDataProducer {
     audioRecord.release();
   }
 
+  /*
+   * Clears all the old consumers and sets this as the new sole consumer.
+   */
   @Override
   public void setAudioConsumer(AudioDataConsumer consumer) {
-    this.consumer = consumer;
+    consumers.clear();
+    consumers.add(consumer);
+  }
+
+  public void addAudioConsumer(AudioDataConsumer consumer) {
+    consumers.add(consumer);
+  }
+
+  public void removeAudioConsumer(AudioDataConsumer consumer) {
+    consumers.remove(consumer);
+  }
+
+  public void removeAllAudioConsumers() {
+    consumers.clear();
   }
 }

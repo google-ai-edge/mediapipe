@@ -46,7 +46,6 @@
 #include "mediapipe/framework/tool/status_util.h"
 #include "mediapipe/framework/tool/tag_map.h"
 #include "mediapipe/framework/tool/validate_name.h"
-#include "mediapipe/gpu/graph_support.h"
 
 namespace mediapipe {
 
@@ -154,11 +153,6 @@ absl::Status CalculatorNode::Initialize(
   source_layer_ = node_config->source_layer();
 
   const CalculatorContract& contract = node_type_info_->Contract();
-
-  uses_gpu_ =
-      node_type_info_->InputSidePacketTypes().HasTag(kGpuSharedTagName) ||
-      ContainsKey(node_type_info_->Contract().ServiceRequests(),
-                  kGpuService.key);
 
   // TODO Propagate types between calculators when SetAny is used.
 
@@ -397,7 +391,7 @@ absl::Status CalculatorNode::PrepareForRun(
       std::move(schedule_callback), error_callback);
   output_stream_handler_->PrepareForRun(error_callback);
 
-  const auto& contract = node_type_info_->Contract();
+  const auto& contract = Contract();
   input_side_packet_types_ = RemoveOmittedPacketTypes(
       contract.InputSidePackets(), all_side_packets, validated_graph_);
   MP_RETURN_IF_ERROR(input_side_packet_handler_.PrepareForRun(

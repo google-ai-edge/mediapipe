@@ -121,10 +121,11 @@ cc_library(
     deps = [
         ":tflite_custom_op_resolver_calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/api2:packet",
         "//mediapipe/framework/port:ret_check",
-        "//mediapipe/framework/port:status",
         "//mediapipe/util/tflite:cpu_op_resolver",
         "//mediapipe/util/tflite:op_resolver",
+        "@org_tensorflow//tensorflow/lite/core/api:op_resolver",
     ],
     alwayslink = 1,
 )

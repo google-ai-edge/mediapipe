@@ -195,9 +195,6 @@ class CalculatorNode {
   // Called by SchedulerQueue when a node is opened.
   void NodeOpened() ABSL_LOCKS_EXCLUDED(status_mutex_);
 
-  // Returns whether this is a GPU calculator node.
-  bool UsesGpu() const { return uses_gpu_; }
-
   // Returns the scheduler queue the node is assigned to.
   internal::SchedulerQueue* GetSchedulerQueue() const {
     return scheduler_queue_;
@@ -232,6 +229,12 @@ class CalculatorNode {
 
   const CalculatorState& GetCalculatorState() const {
     return *calculator_state_;
+  }
+
+  // Returns the node's contract.
+  // Must not be called before the CalculatorNode is initialized.
+  const CalculatorContract& Contract() const {
+    return node_type_info_->Contract();
   }
 
  private:
@@ -362,9 +365,6 @@ class CalculatorNode {
   std::unique_ptr<InputStreamHandler> input_stream_handler_;
 
   std::unique_ptr<OutputStreamHandler> output_stream_handler_;
-
-  // Whether this is a GPU calculator.
-  bool uses_gpu_ = false;
 
   // True if CleanupAfterRun() needs to call CloseNode().
   bool needs_to_close_ = false;

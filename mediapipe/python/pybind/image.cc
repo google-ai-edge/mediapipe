@@ -14,6 +14,8 @@
 
 #include "mediapipe/framework/formats/image.h"
 
+#include <memory>
+
 #include "mediapipe/python/pybind/image_frame_util.h"
 #include "mediapipe/python/pybind/util.h"
 #include "pybind11/stl.h"
@@ -84,8 +86,8 @@ void ImageSubmodule(pybind11::module* module) {
                                  "uint8 image data should be one of the GRAY8, "
                                  "SRGB, and SRGBA MediaPipe image formats.");
             }
-            return Image(std::make_shared<ImageFrame>(
-                std::move(*CreateImageFrame<uint8>(format, data).release())));
+            return Image(std::shared_ptr<ImageFrame>(
+                CreateImageFrame<uint8>(format, data)));
           }),
           R"doc(For uint8 data type, valid ImageFormat are GRAY8, SGRB, and SRGBA.)doc",
           py::arg("image_format"), py::arg("data").noconvert())
@@ -100,8 +102,8 @@ void ImageSubmodule(pybind11::module* module) {
                   "uint16 image data should be one of the GRAY16, "
                   "SRGB48, and SRGBA64 MediaPipe image formats.");
             }
-            return Image(std::make_shared<ImageFrame>(
-                std::move(*CreateImageFrame<uint16>(format, data).release())));
+            return Image(std::shared_ptr<ImageFrame>(
+                CreateImageFrame<uint16>(format, data)));
           }),
           R"doc(For uint16 data type, valid ImageFormat are GRAY16, SRGB48, and SRGBA64.)doc",
           py::arg("image_format"), py::arg("data").noconvert())
@@ -115,8 +117,8 @@ void ImageSubmodule(pybind11::module* module) {
                   "float image data should be either VEC32F1 or VEC32F2 "
                   "MediaPipe image formats.");
             }
-            return Image(std::make_shared<ImageFrame>(
-                std::move(*CreateImageFrame<float>(format, data).release())));
+            return Image(std::shared_ptr<ImageFrame>(
+                CreateImageFrame<float>(format, data)));
           }),
           R"doc(For float data type, valid ImageFormat are VEC32F1 and VEC32F2.)doc",
           py::arg("image_format"), py::arg("data").noconvert());

@@ -767,6 +767,7 @@ TEST_F(InputStreamManagerTest, QueueSizeTest) {
   EXPECT_EQ(3, num_packets_dropped_);
   EXPECT_TRUE(input_stream_manager_->IsEmpty());
   EXPECT_FALSE(stream_is_done_);
+  EXPECT_EQ(3, input_stream_manager_->NumPacketsAdded());
 
   packets.clear();
   packets.push_back(MakePacket<std::string>("packet 4").At(Timestamp(60)));
@@ -776,6 +777,7 @@ TEST_F(InputStreamManagerTest, QueueSizeTest) {
       input_stream_manager_->AddPackets(packets, &notify_));  // Notification
   EXPECT_FALSE(input_stream_manager_->IsEmpty());
   EXPECT_TRUE(notify_);
+  EXPECT_EQ(5, input_stream_manager_->NumPacketsAdded());
 
   expected_queue_becomes_full_count_ = 2;
   expected_queue_becomes_not_full_count_ = 1;

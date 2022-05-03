@@ -150,5 +150,12 @@ TEST_F(GraphServiceTest, OptionalIsAvailable) {
   EXPECT_EQ(PacketValues<int>(output_packets_), (std::vector<int>{108}));
 }
 
+TEST_F(GraphServiceTest, CreateDefault) {
+  EXPECT_FALSE(kTestService.CreateDefaultObject().ok());
+  MP_EXPECT_OK(kAnotherService.CreateDefaultObject());
+  EXPECT_FALSE(kNoDefaultService.CreateDefaultObject().ok());
+  MP_EXPECT_OK(kNeedsCreateService.CreateDefaultObject());
+}
+
 }  // namespace
 }  // namespace mediapipe

@@ -72,7 +72,7 @@ class QuadRenderer {
   absl::Status GlRender(float frame_width, float frame_height, float view_width,
                         float view_height, FrameScaleMode scale_mode,
                         FrameRotation rotation, bool flip_horizontal,
-                        bool flip_vertical, bool flip_texture);
+                        bool flip_vertical, bool flip_texture) const;
   // Deletes the rendering program. Must be called withn the GL context where
   // it was created.
   void GlTeardown();

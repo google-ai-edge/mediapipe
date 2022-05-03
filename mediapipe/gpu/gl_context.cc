@@ -23,6 +23,7 @@
 
 #include "absl/base/dynamic_annotations.h"
 #include "absl/memory/memory.h"
+#include "absl/status/status.h"
 #include "absl/synchronization/mutex.h"
 #include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/ret_check.h"
@@ -358,6 +359,7 @@ absl::Status GlContext::FinishInitialization(bool create_thread) {
 GlContext::GlContext() {}
 
 GlContext::~GlContext() {
+  destructing_ = true;
   // Note: on Apple platforms, this object contains Objective-C objects.
   // The destructor will release them, but ARC must be on.
 #ifdef __OBJC__
@@ -366,17 +368,33 @@ GlContext::~GlContext() {
 #endif
 #endif  // __OBJC__
 
+  auto clear_attachments = [this] {
+    attachments_.clear();
+    if (profiling_helper_) {
+      profiling_helper_->LogAllTimestamps();
+    }
+  };
+
   if (thread_) {
-    auto status = thread_->Run([this] {
-      if (profiling_helper_) {
-        profiling_helper_->LogAllTimestamps();
-      }
+    auto status = thread_->Run([this, clear_attachments] {
+      clear_attachments();
       return ExitContext(nullptr);
     });
     LOG_IF(ERROR, !status.ok())
         << "Failed to deactivate context on thread: " << status;
     if (thread_->IsCurrentThread()) {
       thread_.release()->SelfDestruct();
+    }
+  } else {
+    if (IsCurrent()) {
+      clear_attachments();
+    } else {
+      ContextBinding saved_context;
+      auto status = SwitchContextAndRun([&clear_attachments] {
+        clear_attachments();
+        return absl::OkStatus();
+      });
+      LOG_IF(ERROR, !status.ok()) << status;
     }
   }
   DestroyContext();
@@ -499,6 +517,14 @@ absl::Status GlContext::SwitchContext(ContextBinding* saved_context,
   } else {
     return SetCurrentContextBinding(new_context);
   }
+}
+
+GlContext::ContextBinding GlContext::ThisContextBinding() {
+  GlContext::ContextBinding result = ThisContextBindingPlatform();
+  if (!destructing_) {
+    result.context_object = shared_from_this();
+  }
+  return result;
 }
 
 absl::Status GlContext::EnterContext(ContextBinding* saved_context) {

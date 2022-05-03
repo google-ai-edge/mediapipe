@@ -183,10 +183,10 @@ class Pose(SolutionBase):
     """
 
     results = super().process(input_data={'image': image})
-    if results.pose_landmarks:
-      for landmark in results.pose_landmarks.landmark:
+    if results.pose_landmarks:  # pytype: disable=attribute-error
+      for landmark in results.pose_landmarks.landmark:  # pytype: disable=attribute-error
         landmark.ClearField('presence')
-    if results.pose_world_landmarks:
-      for landmark in results.pose_world_landmarks.landmark:
+    if results.pose_world_landmarks:  # pytype: disable=attribute-error
+      for landmark in results.pose_world_landmarks.landmark:  # pytype: disable=attribute-error
         landmark.ClearField('presence')
     return results

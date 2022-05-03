@@ -53,7 +53,7 @@ the following:
 
 ```bash
 $ echo "android_sdk_repository(name = \"androidsdk\")" >> WORKSPACE
-$ echo "android_ndk_repository(name = \"androidndk\")" >> WORKSPACE
+$ echo "android_ndk_repository(name = \"androidndk\", api_level=21)" >> WORKSPACE
 ```
 
 In order to use MediaPipe on earlier Android versions, MediaPipe needs to switch

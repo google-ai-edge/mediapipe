@@ -225,7 +225,7 @@ std::string GetTestOutputsDir() {
   return output_dir;
 }
 
-std::string GetTestDataDir(const std::string& package_base_path) {
+std::string GetTestDataDir(absl::string_view package_base_path) {
   return file::JoinPath(GetTestRootDir(), package_base_path, "testdata/");
 }
 
@@ -270,7 +270,7 @@ absl::StatusOr<std::unique_ptr<ImageFrame>> LoadTestImage(
       format, width, height, width * output_channels, data, stbi_image_free);
 }
 
-std::unique_ptr<ImageFrame> LoadTestPng(const std::string& path,
+std::unique_ptr<ImageFrame> LoadTestPng(absl::string_view path,
                                         ImageFormat::Format format) {
   return nullptr;
 }

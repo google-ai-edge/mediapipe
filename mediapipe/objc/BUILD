@@ -67,7 +67,6 @@ objc_library(
     hdrs = MEDIAPIPE_IOS_HDRS,
     copts = [
         "-Wno-shorten-64-to-32",
-        "-std=c++17",
     ],
     sdk_frameworks = [
         # Needed for OpenCV.
@@ -146,7 +145,6 @@ objc_library(
     ],
     copts = [
         "-Wno-shorten-64-to-32",
-        "-std=c++17",
     ],
     visibility = ["//mediapipe/framework:mediapipe_internal"],
     deps = [
@@ -186,7 +184,6 @@ objc_library(
     ],
     copts = [
         "-Wno-shorten-64-to-32",
-        "-std=c++17",
     ],
     sdk_frameworks = [
         "CoreVideo",
@@ -209,7 +206,6 @@ objc_library(
     ],
     copts = [
         "-Wno-shorten-64-to-32",
-        "-std=c++17",
     ],
     sdk_frameworks = [
         "Accelerate",
@@ -241,7 +237,6 @@ objc_library(
     ],
     copts = [
         "-Wno-shorten-64-to-32",
-        "-std=c++17",
     ],
     data = [
         "testdata/googlelogo_color_272x92dp.png",

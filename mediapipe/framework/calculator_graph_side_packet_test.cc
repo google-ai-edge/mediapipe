@@ -732,11 +732,12 @@ TEST(CalculatorGraph, GetOutputSidePacket) {
     status_or_packet = graph.GetOutputSidePacket("unknown");
     EXPECT_FALSE(status_or_packet.ok());
     EXPECT_EQ(absl::StatusCode::kNotFound, status_or_packet.status().code());
-    // Should return UNAVAILABLE before graph is done for valid non-base
-    // packets.
+    // Should return the packet after the graph becomes idle.
+    MP_ASSERT_OK(graph.WaitUntilIdle());
     status_or_packet = graph.GetOutputSidePacket("num_of_packets");
-    EXPECT_FALSE(status_or_packet.ok());
-    EXPECT_EQ(absl::StatusCode::kUnavailable, status_or_packet.status().code());
+    MP_ASSERT_OK(status_or_packet);
+    EXPECT_EQ(max_count, status_or_packet.value().Get<int>());
+    EXPECT_EQ(Timestamp::Unset(), status_or_packet.value().Timestamp());
     // Should stil return a base even before graph is done.
     status_or_packet = graph.GetOutputSidePacket("output_uint64");
     MP_ASSERT_OK(status_or_packet);
@@ -894,6 +895,24 @@ TEST(CalculatorGraph, GeneratorAfterCalculatorProcess) {
     ASSERT_EQ(1, output_packets.size());
     EXPECT_EQ(100, output_packets[0].Get<TimestampDiff>().Value());
   }
+}
+
+TEST(CalculatorGraph, GetOutputSidePacketAfterCalculatorIsOpened) {
+  CalculatorGraph graph;
+  CalculatorGraphConfig config =
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
+        node {
+          calculator: "IntegerOutputSidePacketCalculator"
+          output_side_packet: "offset"
+        }
+      )pb");
+  MP_ASSERT_OK(graph.Initialize(config));
+  MP_ASSERT_OK(graph.StartRun({}));
+  // Must be called to ensure that the calculator is opened.
+  MP_ASSERT_OK(graph.WaitUntilIdle());
+  absl::StatusOr<Packet> status_or_packet = graph.GetOutputSidePacket("offset");
+  MP_ASSERT_OK(status_or_packet);
+  EXPECT_EQ(1, status_or_packet.value().Get<int>());
 }
 
 }  // namespace

@@ -111,7 +111,7 @@ absl::Status QuadRenderer::GlRender(float frame_width, float frame_height,
                                     FrameScaleMode scale_mode,
                                     FrameRotation rotation,
                                     bool flip_horizontal, bool flip_vertical,
-                                    bool flip_texture) {
+                                    bool flip_texture) const {
   RET_CHECK(program_) << "Must setup the program before rendering.";
 
   glUseProgram(program_);

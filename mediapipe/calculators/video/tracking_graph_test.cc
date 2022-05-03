@@ -181,7 +181,7 @@ class TrackingGraphTest : public Test {
   // Each image is shifted to the right and bottom by kTranslationStep
   // pixels compared with the previous image.
   static constexpr int kTranslationStep = 10;
-  static constexpr float kEqualityTolerance = 3e-4f;
+  static constexpr float kEqualityTolerance = 1e-3f;
 };
 
 void TrackingGraphTest::ExpectBoxAtFrame(const TimedBoxProto& box, float frame,

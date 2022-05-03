@@ -273,6 +273,9 @@ void RegisterPacketGetterNatives(JNIEnv *env) {
   AddJNINativeMethod(&packet_getter_methods, packet_getter,
                      "nativeGetFloat32Vector", "(J)[F",
                      (void *)&PACKET_GETTER_METHOD(nativeGetFloat32Vector));
+  AddJNINativeMethod(&packet_getter_methods, packet_getter,
+                     "nativeGetProtoVector", "(J)[[B",
+                     (void *)&PACKET_GETTER_METHOD(nativeGetProtoVector));
   RegisterNativesVector(env, packet_getter_class, packet_getter_methods);
   env->DeleteLocalRef(packet_getter_class);
 }

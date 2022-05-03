@@ -50,15 +50,18 @@ absl::Status InputStreamHandler::SetupInputShards(
   return absl::OkStatus();
 }
 
-std::vector<std::pair<std::string, int>>
+std::vector<std::tuple<std::string, int, int, Timestamp>>
 InputStreamHandler::GetMonitoringInfo() {
-  std::vector<std::pair<std::string, int>> monitoring_info_vector;
+  std::vector<std::tuple<std::string, int, int, Timestamp>>
+      monitoring_info_vector;
   for (auto& stream : input_stream_managers_) {
     if (!stream) {
       continue;
     }
     monitoring_info_vector.emplace_back(
-        std::pair<std::string, int>(stream->Name(), stream->QueueSize()));
+        std::tuple<std::string, int, int, Timestamp>(
+            stream->Name(), stream->QueueSize(), stream->NumPacketsAdded(),
+            stream->MinTimestampOrBound(nullptr)));
   }
   return monitoring_info_vector;
 }

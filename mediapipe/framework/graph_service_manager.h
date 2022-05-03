@@ -35,6 +35,8 @@ class GraphServiceManager {
   Packet GetServicePacket(const GraphServiceBase& service) const;
 
   std::map<std::string, Packet> service_packets_;
+
+  friend class CalculatorGraph;
 };
 
 }  // namespace mediapipe

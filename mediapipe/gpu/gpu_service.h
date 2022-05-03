@@ -17,9 +17,18 @@
 
 #include "mediapipe/framework/graph_service.h"
 
+#if !MEDIAPIPE_DISABLE_GPU
+#include "mediapipe/gpu/gpu_shared_data_internal.h"
+#endif  // !MEDIAPIPE_DISABLE_GPU
+
 namespace mediapipe {
 
-class GpuResources;
+#if MEDIAPIPE_DISABLE_GPU
+class GpuResources {
+  GpuResources() = delete;
+};
+#endif  // !MEDIAPIPE_DISABLE_GPU
+
 extern const GraphService<GpuResources> kGpuService;
 
 }  // namespace mediapipe

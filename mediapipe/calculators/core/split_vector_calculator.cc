@@ -83,4 +83,7 @@ REGISTER_CALCULATOR(SplitClassificationListVectorCalculator);
 typedef SplitVectorCalculator<uint64_t, false> SplitUint64tVectorCalculator;
 REGISTER_CALCULATOR(SplitUint64tVectorCalculator);
 
+typedef SplitVectorCalculator<float, false> SplitFloatVectorCalculator;
+REGISTER_CALCULATOR(SplitFloatVectorCalculator);
+
 }  // namespace mediapipe

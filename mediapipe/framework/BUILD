@@ -234,7 +234,9 @@ cc_library(
         "//mediapipe/framework/tool:options_map",
         "//mediapipe/framework/tool:packet_generator_wrapper_calculator_cc_proto",
         "//mediapipe/framework/tool:tag_map",
+        "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/strings",
     ],
 )
 
@@ -348,6 +350,7 @@ cc_library(
         "//mediapipe/framework/tool:validate",
         "//mediapipe/framework/tool:validate_name",
         "//mediapipe/gpu:graph_support",
+        "//mediapipe/gpu:gpu_service",
         "//mediapipe/util:cpu_util",
     ] + select({
         "//conditions:default": ["//mediapipe/gpu:gpu_shared_data_internal"],
@@ -416,7 +419,6 @@ cc_library(
         "//mediapipe/framework/tool:status_util",
         "//mediapipe/framework/tool:tag_map",
         "//mediapipe/framework/tool:validate_name",
-        "//mediapipe/gpu:graph_support",
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/status",
@@ -613,7 +615,11 @@ cc_library(
     hdrs = ["graph_service.h"],
     visibility = [":mediapipe_internal"],
     deps = [
+        ":packet",
+        "//mediapipe/framework/port:status",
+        "//mediapipe/framework/port:statusor",
         "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/strings",
     ],
 )
 

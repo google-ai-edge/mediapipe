@@ -84,9 +84,8 @@ void GlContext::DestroyContext() {
   }
 }
 
-GlContext::ContextBinding GlContext::ThisContextBinding() {
+GlContext::ContextBinding GlContext::ThisContextBindingPlatform() {
   GlContext::ContextBinding result;
-  result.context_object = shared_from_this();
   result.context = context_;
   return result;
 }

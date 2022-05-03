@@ -63,7 +63,7 @@ std::string GetTestFilePath(absl::string_view relative_path);
 // directory.
 // This handles the different paths where test data ends up when using
 // ion_cc_test on various platforms.
-std::string GetTestDataDir(const std::string& package_base_path);
+std::string GetTestDataDir(absl::string_view package_base_path);
 
 // Loads a binary graph from path. Returns true iff successful.
 bool LoadTestGraph(CalculatorGraphConfig* proto, const std::string& path);
@@ -75,7 +75,7 @@ absl::StatusOr<std::unique_ptr<ImageFrame>> LoadTestImage(
 // Loads a PNG image from path using the given ImageFormat. Returns nullptr in
 // case of failure.
 std::unique_ptr<ImageFrame> LoadTestPng(
-    const std::string& path, ImageFormat::Format format = ImageFormat::SRGBA);
+    absl::string_view path, ImageFormat::Format format = ImageFormat::SRGBA);
 
 // Returns the luminance image of |original_image|.
 // The format of |original_image| must be sRGB or sRGBA.

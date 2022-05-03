@@ -1,0 +1,40 @@
+// Copyright 2022 The MediaPipe Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto2";
+
+package mediapipe;
+
+// Mapping a numerical class index output to a Knowledge Graph entity
+// ID or any other string label representing this class. Optionally it is
+// possible to specify an additional display name (in a given language) which is
+// typically used for display purposes.
+message LabelMapItem {
+  // Label name.
+  // E.g. name = "/m/02xwb"
+  optional string name = 1;
+
+  // Display name.
+  // E.g. display_name = "Fruit"
+  optional string display_name = 2;
+
+  // Optional list of children (e.g. subcategories) used to represent a
+  // hierarchy.
+  repeated string child_name = 3;
+}
+
+// Mapping from index to a label map item.
+message LabelMap {
+  map<int64, LabelMapItem> index_to_item = 1;
+}

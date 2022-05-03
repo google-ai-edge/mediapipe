@@ -28,6 +28,10 @@ typedef BeginLoopCalculator<std::vector<::mediapipe::NormalizedLandmarkList>>
     BeginLoopNormalizedLandmarkListVectorCalculator;
 REGISTER_CALCULATOR(BeginLoopNormalizedLandmarkListVectorCalculator);
 
+// A calculator to process std::vector<int>.
+typedef BeginLoopCalculator<std::vector<int>> BeginLoopIntCalculator;
+REGISTER_CALCULATOR(BeginLoopIntCalculator);
+
 // A calculator to process std::vector<NormalizedRect>.
 typedef BeginLoopCalculator<std::vector<::mediapipe::NormalizedRect>>
     BeginLoopNormalizedRectCalculator;

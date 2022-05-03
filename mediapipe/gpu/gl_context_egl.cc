@@ -269,9 +269,8 @@ void GlContext::DestroyContext() {
 #endif  // __ANDROID__
 }
 
-GlContext::ContextBinding GlContext::ThisContextBinding() {
+GlContext::ContextBinding GlContext::ThisContextBindingPlatform() {
   GlContext::ContextBinding result;
-  result.context_object = shared_from_this();
   result.display = display_;
   result.draw_surface = surface_;
   result.read_surface = surface_;

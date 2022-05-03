@@ -21,6 +21,7 @@
 #include <functional>
 #include <memory>
 
+#include "absl/container/flat_hash_map.h"
 #include "absl/synchronization/mutex.h"
 #include "mediapipe/framework/executor.h"
 #include "mediapipe/framework/mediapipe_profiling.h"
@@ -285,6 +286,48 @@ class GlContext : public std::enable_shared_from_this<GlContext> {
   // Sets default texture filtering parameters.
   void SetStandardTextureParams(GLenum target, GLint internal_format);
 
+  template <class T>
+  using AttachmentPtr = std::unique_ptr<T, std::function<void(void*)>>;
+
+  template <class T, class... Args>
+  static std::enable_if_t<!std::is_array<T>::value, AttachmentPtr<T>>
+  MakeAttachmentPtr(Args&&... args) {
+    return {new T(std::forward<Args>(args)...),
+            [](void* ptr) { delete static_cast<T*>(ptr); }};
+  }
+
+  class AttachmentBase {};
+
+  template <class T>
+  class Attachment : public AttachmentBase {
+   public:
+    using FactoryT = std::function<AttachmentPtr<T>(GlContext&)>;
+    Attachment(FactoryT factory) : factory_(factory) {}
+
+    Attachment(const Attachment&) = delete;
+    Attachment(Attachment&&) = delete;
+    Attachment& operator=(const Attachment&) = delete;
+    Attachment& operator=(Attachment&&) = delete;
+
+    T& Get(GlContext& ctx) const { return ctx.GetCachedAttachment(*this); }
+
+    const FactoryT& factory() const { return factory_; }
+
+   private:
+    FactoryT factory_;
+  };
+
+  // TOOD: const result?
+  template <class T>
+  T& GetCachedAttachment(const Attachment<T>& attachment) {
+    DCHECK(IsCurrent());
+    AttachmentPtr<void>& entry = attachments_[&attachment];
+    if (entry == nullptr) {
+      entry = attachment.factory()(*this);
+    }
+    return *static_cast<T*>(entry.get());
+  }
+
   // These are used for testing specific SyncToken implementations. Do not use
   // outside of tests.
   enum class SyncTokenTypeForTest {
@@ -387,6 +430,8 @@ class GlContext : public std::enable_shared_from_this<GlContext> {
 
   // A binding that can be used to make this GlContext current.
   ContextBinding ThisContextBinding();
+  // Fill in platform-specific fields. Must _not_ set context_obj.
+  ContextBinding ThisContextBindingPlatform();
   // Fills in a ContextBinding with platform-specific information about which
   // context is current on this thread.
   static void GetCurrentContextBinding(ContextBinding* binding);
@@ -409,6 +454,8 @@ class GlContext : public std::enable_shared_from_this<GlContext> {
   // better mechanism?
   bool can_linear_filter_float_textures_;
 
+  absl::flat_hash_map<const AttachmentBase*, AttachmentPtr<void>> attachments_;
+
   // Number of glFinish calls completed on the GL thread.
   // Changes should be guarded by mutex_. However, we use simple atomic
   // loads for efficiency on the fast path.
@@ -428,6 +475,8 @@ class GlContext : public std::enable_shared_from_this<GlContext> {
   absl::CondVar wait_for_gl_finish_cv_ ABSL_GUARDED_BY(mutex_);
 
   std::unique_ptr<mediapipe::GlProfilingHelper> profiling_helper_ = nullptr;
+
+  bool destructing_ = false;
 };
 
 // For backward compatibility. TODO: migrate remaining callers.

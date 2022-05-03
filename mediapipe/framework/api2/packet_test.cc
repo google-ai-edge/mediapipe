@@ -264,6 +264,23 @@ TEST(PacketTest, Polymorphism) {
   EXPECT_EQ((**mutable_base).name(), "Derived");
 }
 
+class AbstractBase {
+ public:
+  virtual ~AbstractBase() = default;
+  virtual absl::string_view name() const = 0;
+};
+
+class ConcreteDerived : public AbstractBase {
+ public:
+  absl::string_view name() const override { return "ConcreteDerived"; }
+};
+
+TEST(PacketTest, PolymorphismAbstract) {
+  Packet<AbstractBase> base =
+      PacketAdopting<AbstractBase>(absl::make_unique<ConcreteDerived>());
+  EXPECT_EQ(base->name(), "ConcreteDerived");
+}
+
 }  // namespace
 }  // namespace api2
 }  // namespace mediapipe

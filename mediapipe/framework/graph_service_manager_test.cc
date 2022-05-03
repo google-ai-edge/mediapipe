@@ -6,11 +6,13 @@
 #include "mediapipe/framework/port/status_matchers.h"
 
 namespace mediapipe {
+namespace {
+const GraphService<int> kIntService("mediapipe::IntService");
+}  // namespace
 
 TEST(GraphServiceManager, SetGetServiceObject) {
   GraphServiceManager service_manager;
 
-  constexpr GraphService<int> kIntService("mediapipe::IntService");
   EXPECT_EQ(service_manager.GetServiceObject(kIntService), nullptr);
 
   MP_EXPECT_OK(service_manager.SetServiceObject(kIntService,
@@ -21,8 +23,6 @@ TEST(GraphServiceManager, SetGetServiceObject) {
 
 TEST(GraphServiceManager, SetServicePacket) {
   GraphServiceManager service_manager;
-
-  constexpr GraphService<int> kIntService("mediapipe::IntService");
 
   MP_EXPECT_OK(service_manager.SetServicePacket(
       kIntService,
@@ -35,8 +35,6 @@ TEST(GraphServiceManager, ServicePackets) {
   GraphServiceManager service_manager;
 
   EXPECT_TRUE(service_manager.ServicePackets().empty());
-
-  constexpr GraphService<int> kIntService("mediapipe::IntService");
 
   MP_EXPECT_OK(service_manager.SetServiceObject(kIntService,
                                                 std::make_shared<int>(100)));

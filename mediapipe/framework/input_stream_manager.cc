@@ -329,6 +329,11 @@ Packet InputStreamManager::PopQueueHead(bool* stream_is_done) {
   return packet;
 }
 
+int InputStreamManager::NumPacketsAdded() const {
+  absl::MutexLock lock(&stream_mutex_);
+  return num_packets_added_;
+}
+
 int InputStreamManager::QueueSize() const {
   absl::MutexLock lock(&stream_mutex_);
   return static_cast<int>(queue_.size());

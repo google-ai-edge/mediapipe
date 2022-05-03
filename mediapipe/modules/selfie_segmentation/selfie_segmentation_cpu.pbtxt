@@ -77,7 +77,7 @@ node {
 # supports custom ops needed by the model used in this graph.
 node {
   calculator: "TfLiteCustomOpResolverCalculator"
-  output_side_packet: "op_resolver"
+  output_side_packet: "OP_RESOLVER:op_resolver"
 }
 
 # Loads the selfie segmentation TF Lite model.
@@ -93,7 +93,7 @@ node {
   input_stream: "TENSORS:input_tensors"
   output_stream: "TENSORS:output_tensors"
   input_side_packet: "MODEL:model"
-  input_side_packet: "CUSTOM_OP_RESOLVER:op_resolver"
+  input_side_packet: "OP_RESOLVER:op_resolver"
   options: {
     [mediapipe.InferenceCalculatorOptions.ext] {
       delegate {

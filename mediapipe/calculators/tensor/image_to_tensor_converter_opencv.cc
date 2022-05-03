@@ -45,7 +45,19 @@ class OpenCvProcessor : public ImageToTensorConverter {
         border_mode_ = cv::BORDER_CONSTANT;
         break;
     }
-    mat_type_ = tensor_type == Tensor::ElementType::kUInt8 ? CV_8UC3 : CV_32FC3;
+    switch (tensor_type_) {
+      case Tensor::ElementType::kInt8:
+        mat_type_ = CV_8SC3;
+        break;
+      case Tensor::ElementType::kFloat32:
+        mat_type_ = CV_32FC3;
+        break;
+      case Tensor::ElementType::kUInt8:
+        mat_type_ = CV_8UC3;
+        break;
+      default:
+        mat_type_ = -1;
+    }
   }
 
   absl::StatusOr<Tensor> Convert(const mediapipe::Image& input,
@@ -65,12 +77,22 @@ class OpenCvProcessor : public ImageToTensorConverter {
                                               output_dims.width, kNumChannels});
     auto buffer_view = tensor.GetCpuWriteView();
     cv::Mat dst;
-    if (tensor_type_ == Tensor::ElementType::kUInt8) {
-      dst = cv::Mat(output_dims.height, output_dims.width, mat_type_,
-                    buffer_view.buffer<uint8>());
-    } else {
-      dst = cv::Mat(output_dims.height, output_dims.width, mat_type_,
-                    buffer_view.buffer<float>());
+    switch (tensor_type_) {
+      case Tensor::ElementType::kInt8:
+        dst = cv::Mat(output_dims.height, output_dims.width, mat_type_,
+                      buffer_view.buffer<int8>());
+        break;
+      case Tensor::ElementType::kFloat32:
+        dst = cv::Mat(output_dims.height, output_dims.width, mat_type_,
+                      buffer_view.buffer<float>());
+        break;
+      case Tensor::ElementType::kUInt8:
+        dst = cv::Mat(output_dims.height, output_dims.width, mat_type_,
+                      buffer_view.buffer<uint8>());
+        break;
+      default:
+        return InvalidArgumentError(
+            absl::StrCat("Unsupported tensor type: ", tensor_type_));
     }
 
     const cv::RotatedRect rotated_rect(cv::Point2f(roi.center_x, roi.center_y),
@@ -124,6 +146,13 @@ class OpenCvProcessor : public ImageToTensorConverter {
 absl::StatusOr<std::unique_ptr<ImageToTensorConverter>> CreateOpenCvConverter(
     CalculatorContext* cc, BorderMode border_mode,
     Tensor::ElementType tensor_type) {
+  if (tensor_type != Tensor::ElementType::kInt8 &&
+      tensor_type != Tensor::ElementType::kFloat32 &&
+      tensor_type != Tensor::ElementType::kUInt8) {
+    return absl::InvalidArgumentError(absl::StrCat(
+        "Tensor type is currently not supported by OpenCvProcessor, type: ",
+        tensor_type));
+  }
   return absl::make_unique<OpenCvProcessor>(border_mode, tensor_type);
 }
 

@@ -36,6 +36,12 @@ mediapipe_proto_library(
 )
 
 mediapipe_proto_library(
+    name = "label_map_proto",
+    srcs = ["label_map.proto"],
+    visibility = ["//visibility:public"],
+)
+
+mediapipe_proto_library(
     name = "render_data_proto",
     srcs = ["render_data.proto"],
     visibility = ["//visibility:public"],
@@ -121,6 +127,19 @@ cc_library(
         "//mediapipe/framework/tool:status_util",
         "@com_google_absl//absl/strings",
         "@libyuv",
+    ],
+)
+
+cc_library(
+    name = "label_map_util",
+    srcs = ["label_map_util.cc"],
+    hdrs = ["label_map_util.h"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":label_map_cc_proto",
+        "//mediapipe/framework/port:statusor",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:str_format",
     ],
 )
 

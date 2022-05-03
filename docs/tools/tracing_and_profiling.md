@@ -258,13 +258,14 @@ Many of the following settings are advanced and not recommended for general
 usage. Consult [Enabling tracing and profiling](#enabling-tracing-and-profiling)
 for a friendlier introduction.
 
-histogram_interval_size_usec :Specifies the size of the runtimes histogram
-intervals (in microseconds) to generate the histogram of the Process() time. The
-last interval extends to +inf. If not specified, the interval is 1000000 usec =
-1 sec.
+histogram_interval_size_usec
+:   Specifies the size of the runtimes histogram intervals (in microseconds) to
+    generate the histogram of the `Process()` time. The last interval extends to
+    +inf. If not specified, the interval is 1000000 usec = 1 sec.
 
-num_histogram_intervals :Specifies the number of intervals to generate the
-histogram of the `Process()` runtime. If not specified, one interval is used.
+num_histogram_intervals
+:   Specifies the number of intervals to generate the histogram of the
+    `Process()` runtime. If not specified, one interval is used.
 
 enable_profiler
 :   If true, the profiler starts profiling when graph is initialized.
@@ -288,7 +289,7 @@ trace_event_types_disabled
 
 trace_log_path
 :   The output directory and base-name prefix for trace log files. Log files are
-    written to: StrCat(trace_log_path, index, "`.binarypb`")
+    written to: `StrCat(trace_log_path, index, ".binarypb")`
 
 trace_log_count
 :   The number of trace log files retained. The trace log files are named
@@ -310,8 +311,8 @@ trace_log_instant_events
 
 trace_log_interval_count
 :   The number of trace log intervals per file. The total log duration is:
-    `trace_log_interval_usec * trace_log_file_count * trace_log_interval_count`.
-    The default value specifies 10 intervals per file.
+    `trace_log_interval_usec * trace_log_count * trace_log_interval_count`. The
+    default value specifies 10 intervals per file.
 
 trace_log_disabled
 :   An option to turn ON/OFF writing trace files to disk. Saving trace files to

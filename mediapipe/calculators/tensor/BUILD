@@ -28,7 +28,9 @@ package(default_visibility = ["//visibility:private"])
 
 exports_files(
     glob(["testdata/image_to_tensor/*"]),
-    visibility = ["//mediapipe/calculators/image:__subpackages__"],
+    visibility = [
+        "//mediapipe/calculators/image:__subpackages__",
+    ],
 )
 
 selects.config_setting_group(
@@ -64,15 +66,16 @@ cc_library(
         ":inference_calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/api2:node",
+        "//mediapipe/framework/api2:packet",
         "//mediapipe/framework/formats:tensor",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/stream_handler:fixed_size_input_stream_handler",
         "//mediapipe/framework/tool:subgraph_expansion",
-        "//mediapipe/util/tflite:config",
         "//mediapipe/util/tflite:tflite_model_loader",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
         "@org_tensorflow//tensorflow/lite:framework",
+        "@org_tensorflow//tensorflow/lite/core/api:op_resolver",
         "@org_tensorflow//tensorflow/lite/kernels:builtin_ops",
     ],
     alwayslink = 1,
@@ -91,6 +94,7 @@ cc_library(
         "//mediapipe/util/tflite:tflite_gpu_runner",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/status",
+        "@org_tensorflow//tensorflow/lite:framework_stable",
         "@org_tensorflow//tensorflow/lite/delegates/gpu:gl_delegate",
         "@org_tensorflow//tensorflow/lite/delegates/gpu/common:shape",
     ],
@@ -142,6 +146,8 @@ cc_library(
         ":inference_calculator_interface",
         "@com_google_absl//absl/memory",
         "@org_tensorflow//tensorflow/lite/delegates/xnnpack:xnnpack_delegate",
+        "@org_tensorflow//tensorflow/lite:framework_stable",
+        "@org_tensorflow//tensorflow/lite/c:c_api_types",
     ] + select({
         "//conditions:default": [
             "//mediapipe/util:cpu_util",

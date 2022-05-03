@@ -142,22 +142,35 @@ class ImageToTensorCalculator : public Node {
         cc->Options<mediapipe::ImageToTensorCalculatorOptions>();
 
     RET_CHECK(options.has_output_tensor_float_range() ||
-              options.has_output_tensor_int_range())
+              options.has_output_tensor_int_range() ||
+              options.has_output_tensor_uint_range())
         << "Output tensor range is required.";
     if (options.has_output_tensor_float_range()) {
       RET_CHECK_LT(options.output_tensor_float_range().min(),
                    options.output_tensor_float_range().max())
           << "Valid output float tensor range is required.";
     }
+    if (options.has_output_tensor_uint_range()) {
+      RET_CHECK_LT(options.output_tensor_uint_range().min(),
+                   options.output_tensor_uint_range().max())
+          << "Valid output uint tensor range is required.";
+      RET_CHECK_GE(options.output_tensor_uint_range().min(), 0)
+          << "The minimum of the output uint tensor range must be "
+             "non-negative.";
+      RET_CHECK_LE(options.output_tensor_uint_range().max(), 255)
+          << "The maximum of the output uint tensor range must be less than or "
+             "equal to 255.";
+    }
     if (options.has_output_tensor_int_range()) {
       RET_CHECK_LT(options.output_tensor_int_range().min(),
                    options.output_tensor_int_range().max())
           << "Valid output int tensor range is required.";
-      RET_CHECK_GE(options.output_tensor_int_range().min(), 0)
-          << "The minimum of the output int tensor range must be non-negative.";
-      RET_CHECK_LE(options.output_tensor_int_range().max(), 255)
+      RET_CHECK_GE(options.output_tensor_int_range().min(), -128)
+          << "The minimum of the output int tensor range must be greater than "
+             "or equal to -128.";
+      RET_CHECK_LE(options.output_tensor_int_range().max(), 127)
           << "The maximum of the output int tensor range must be less than or "
-             "equal to 255.";
+             "equal to 127.";
     }
     RET_CHECK_GT(options.output_tensor_width(), 0)
         << "Valid output tensor width is required.";
@@ -187,15 +200,19 @@ class ImageToTensorCalculator : public Node {
     options_ = cc->Options<mediapipe::ImageToTensorCalculatorOptions>();
     output_width_ = options_.output_tensor_width();
     output_height_ = options_.output_tensor_height();
-    is_int_output_ = options_.has_output_tensor_int_range();
-    range_min_ =
-        is_int_output_
-            ? static_cast<float>(options_.output_tensor_int_range().min())
-            : options_.output_tensor_float_range().min();
-    range_max_ =
-        is_int_output_
-            ? static_cast<float>(options_.output_tensor_int_range().max())
-            : options_.output_tensor_float_range().max();
+    is_float_output_ = options_.has_output_tensor_float_range();
+    if (options_.has_output_tensor_uint_range()) {
+      range_min_ =
+          static_cast<float>(options_.output_tensor_uint_range().min());
+      range_max_ =
+          static_cast<float>(options_.output_tensor_uint_range().max());
+    } else if (options_.has_output_tensor_int_range()) {
+      range_min_ = static_cast<float>(options_.output_tensor_int_range().min());
+      range_max_ = static_cast<float>(options_.output_tensor_int_range().max());
+    } else {
+      range_min_ = options_.output_tensor_float_range().min();
+      range_max_ = options_.output_tensor_float_range().max();
+    }
     return absl::OkStatus();
   }
 
@@ -275,6 +292,17 @@ class ImageToTensorCalculator : public Node {
     }
   }
 
+  Tensor::ElementType GetOutputTensorType() {
+    if (is_float_output_) {
+      return Tensor::ElementType::kFloat32;
+    }
+    if (range_min_ < 0) {
+      return Tensor::ElementType::kInt8;
+    } else {
+      return Tensor::ElementType::kUInt8;
+    }
+  }
+
   absl::StatusOr<std::shared_ptr<const mediapipe::Image>> GetInputImage(
       CalculatorContext* cc) {
     if (kIn(cc).IsConnected()) {
@@ -305,7 +333,7 @@ class ImageToTensorCalculator : public Node {
                                         const Image& image) {
     // Lazy initialization of the GPU or CPU converter.
     if (image.UsesGpu()) {
-      if (is_int_output_) {
+      if (!is_float_output_) {
         return absl::UnimplementedError(
             "ImageToTensorConverter for the input GPU image currently doesn't "
             "support quantization.");
@@ -337,11 +365,9 @@ class ImageToTensorCalculator : public Node {
     } else {
       if (!cpu_converter_) {
 #if !MEDIAPIPE_DISABLE_OPENCV
-        ASSIGN_OR_RETURN(cpu_converter_,
-                         CreateOpenCvConverter(
-                             cc, GetBorderMode(),
-                             is_int_output_ ? Tensor::ElementType::kUInt8
-                                            : Tensor::ElementType::kFloat32));
+        ASSIGN_OR_RETURN(
+            cpu_converter_,
+            CreateOpenCvConverter(cc, GetBorderMode(), GetOutputTensorType()));
 #else
         LOG(FATAL) << "Cannot create image to tensor opencv converter since "
                       "MEDIAPIPE_DISABLE_OPENCV is defined.";
@@ -356,7 +382,7 @@ class ImageToTensorCalculator : public Node {
   mediapipe::ImageToTensorCalculatorOptions options_;
   int output_width_ = 0;
   int output_height_ = 0;
-  bool is_int_output_ = false;
+  bool is_float_output_ = false;
   float range_min_ = 0.0f;
   float range_max_ = 1.0f;
 };

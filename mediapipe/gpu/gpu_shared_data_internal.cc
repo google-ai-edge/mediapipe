@@ -105,7 +105,7 @@ GpuResources::~GpuResources() {
 }
 
 absl::Status GpuResources::PrepareGpuNode(CalculatorNode* node) {
-  CHECK(node->UsesGpu());
+  CHECK(ContainsKey(node->Contract().ServiceRequests(), kGpuService.key));
   std::string node_id = node->GetCalculatorState().NodeName();
   std::string node_type = node->GetCalculatorState().CalculatorType();
   std::string context_key;

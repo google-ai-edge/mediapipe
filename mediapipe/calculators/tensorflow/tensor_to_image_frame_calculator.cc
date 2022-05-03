@@ -121,8 +121,12 @@ absl::Status TensorToImageFrameCalculator::Process(CalculatorContext* cc) {
       if (d > 255) d = 255;
       buffer[i] = d;
     }
-    output = ::absl::make_unique<ImageFrame>(format, width, height,
-                                             width * depth, buffer.release());
+    output = ::absl::make_unique<ImageFrame>(
+        format, width, height, width * depth, buffer.release(),
+        [total_size](uint8* ptr) {
+          ::operator delete[](ptr, total_size,
+                              std::align_val_t(EIGEN_MAX_ALIGN_BYTES));
+        });
   } else if (input_tensor.dtype() == tensorflow::DT_UINT8) {
     if (scale_factor_ != 1.0) {
       return absl::InvalidArgumentError("scale_factor_ given for uint8 tensor");

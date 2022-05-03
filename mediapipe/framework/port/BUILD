@@ -412,8 +412,7 @@ cc_library(
     name = "status_matchers",
     testonly = 1,
     hdrs = ["status_matchers.h"],
-    # Use this library through "mediapipe/framework/port:gtest_main".
-    visibility = ["//mediapipe/framework/port:__pkg__"],
+    visibility = ["//visibility:private"],
     deps = [
         ":status",
         "@com_google_googletest//:gtest",

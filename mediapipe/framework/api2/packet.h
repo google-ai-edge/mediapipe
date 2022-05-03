@@ -167,7 +167,6 @@ struct IsCompatibleType<V, OneOf<U...>>
 template <typename T>
 inline Packet<T> PacketBase::As() const {
   if (!payload_) return Packet<T>().At(timestamp_);
-  packet_internal::Holder<T>* typed_payload = payload_->As<T>();
   internal::CheckCompatibleType(*payload_, internal::Wrap<T>{});
   return Packet<T>(payload_).At(timestamp_);
 }
@@ -217,8 +216,8 @@ class Packet : public Packet<internal::Generic> {
   const T& operator*() const { return Get(); }
   const T* operator->() const { return &Get(); }
 
-  template <typename U>
-  T GetOr(U&& v) const {
+  template <typename U, typename TT = T>
+  std::enable_if_t<!std::is_abstract_v<TT>, TT> GetOr(U&& v) const {
     return IsEmpty() ? static_cast<T>(absl::forward<U>(v)) : **this;
   }
 

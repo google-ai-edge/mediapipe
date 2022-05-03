@@ -449,11 +449,13 @@ absl::Status Graph::StartRunningGraph(JNIEnv* env) {
   }
   absl::Status status;
 #if !MEDIAPIPE_DISABLE_GPU
-  status = running_graph_->SetGpuResources(gpu_resources_);
-  if (!status.ok()) {
-    LOG(ERROR) << status.message();
-    running_graph_.reset(nullptr);
-    return status;
+  if (gpu_resources_) {
+    status = running_graph_->SetGpuResources(gpu_resources_);
+    if (!status.ok()) {
+      LOG(ERROR) << status.message();
+      running_graph_.reset(nullptr);
+      return status;
+    }
   }
 #endif  // !MEDIAPIPE_DISABLE_GPU
 

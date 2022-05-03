@@ -268,10 +268,12 @@ class GlProcessor : public ImageToTensorConverter {
                                  const RotatedRect& roi,
                                  const Size& output_dims, float range_min,
                                  float range_max) override {
-    if (input.format() != mediapipe::GpuBufferFormat::kBGRA32) {
-      return InvalidArgumentError(
-          absl::StrCat("Only BGRA/RGBA textures are supported, passed format: ",
-                       static_cast<uint32_t>(input.format())));
+    if (input.format() != mediapipe::GpuBufferFormat::kBGRA32 &&
+        input.format() != mediapipe::GpuBufferFormat::kRGBAHalf64 &&
+        input.format() != mediapipe::GpuBufferFormat::kRGBAFloat128) {
+      return InvalidArgumentError(absl::StrCat(
+          "Only 4-channel texture input formats are supported, passed format: ",
+          static_cast<uint32_t>(input.format())));
     }
 
     constexpr int kNumChannels = 3;

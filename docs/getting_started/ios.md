@@ -32,9 +32,14 @@ example apps, start from, start from
     xcode-select --install
     ```
 
-3.  Install [Bazel](https://bazel.build/).
+3.  Install [Bazelisk](https://github.com/bazelbuild/bazelisk)
+.
 
-    We recommend using [Homebrew](https://brew.sh/) to get the latest version.
+    We recommend using [Homebrew](https://brew.sh/) to get the latest versions.
+
+    ```bash
+    brew install bazelisk
+    ```
 
 4.  Set Python 3.7 as the default Python version and install the Python "six"
     library. This is needed for TensorFlow.
@@ -186,6 +191,9 @@ with you own profile if you need a different profile for different apps.
 Note: When you ask Xcode to run an app, by default it will use the Debug
 configuration. Some of our demos are computationally heavy; you may want to use
 the Release configuration for better performance.
+
+Note: Due to an imcoptibility caused by one of our dependencies, MediaPipe
+cannot be used for apps running on the iPhone Simulator on Apple Silicon (M1).
 
 Tip: To switch build configuration in Xcode, click on the target menu, choose
 "Edit Scheme...", select the Run action, and switch the Build Configuration from

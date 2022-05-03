@@ -62,17 +62,27 @@ android_library(
     ],
 )
 
+# Interfaces for common Audio Consumer and Producers in MediaPipe.
 android_library(
-    name = "android_microphone_helper",
+    name = "android_audio_components",
     srcs = [
         "AudioDataConsumer.java",
         "AudioDataProcessor.java",
         "AudioDataProducer.java",
+    ],
+    visibility = ["//visibility:public"],
+    deps = ["@maven//:com_google_guava_guava"],
+)
+
+# MicrophoneHelper that provides access to audio data from a microphone
+android_library(
+    name = "android_microphone_helper",
+    srcs = [
         "MicrophoneHelper.java",
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "@maven//:com_google_code_findbugs_jsr305",
+        ":android_audio_components",
         "@maven//:com_google_guava_guava",
     ],
 )

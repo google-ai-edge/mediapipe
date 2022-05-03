@@ -16,8 +16,14 @@
 
 namespace mediapipe {
 
-const GraphService<TestServiceObject> kTestService("test_service");
-const GraphService<int> kAnotherService("another_service");
+const GraphService<TestServiceObject> kTestService(
+    "test_service", GraphServiceBase::kDisallowDefaultInitialization);
+const GraphService<int> kAnotherService(
+    "another_service", GraphServiceBase::kAllowDefaultInitialization);
+const GraphService<NoDefaultConstructor> kNoDefaultService(
+    "no_default_service", GraphServiceBase::kAllowDefaultInitialization);
+const GraphService<NeedsCreateMethod> kNeedsCreateService(
+    "needs_create_service", GraphServiceBase::kAllowDefaultInitialization);
 
 absl::Status TestServiceCalculator::GetContract(CalculatorContract* cc) {
   cc->Inputs().Index(0).Set<int>();

@@ -187,6 +187,21 @@ cc_library(
     ],
 )
 
+config_setting(
+    name = "opencv",
+    define_values = {
+        "use_opencv": "true",
+    },
+)
+
+config_setting(
+    name = "portable_opencv",
+    define_values = {
+        "use_portable_opencv": "true",
+        "use_opencv": "false",
+    },
+)
+
 cc_library(
     name = "location",
     srcs = ["location.cc"],
@@ -194,6 +209,8 @@ cc_library(
     defines = select({
         "//conditions:default": [],
         "//mediapipe:android": ["MEDIAPIPE_ANDROID_OPENCV"],
+        ":portable_opencv": ["MEDIAPIPE_ANDROID_OPENCV"],
+        ":opencv": [],
     }),
     visibility = ["//visibility:public"],
     deps = [

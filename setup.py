@@ -412,7 +412,8 @@ class RemoveGenerated(setuptools.Command):
       os.remove(MP_THIRD_PARTY_BUILD)
       shutil.move(_get_backup_file(MP_THIRD_PARTY_BUILD), MP_THIRD_PARTY_BUILD)
     for init_py in DIR_INIT_PY_FILES:
-      os.remove(init_py)
+      if os.path.exists(init_py):
+        os.remove(init_py)
 
 
 setuptools.setup(

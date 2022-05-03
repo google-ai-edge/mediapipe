@@ -55,17 +55,17 @@ Packet CreateImagePacket(mediapipe::ImageFormat::Format format,
   if (format == mediapipe::ImageFormat::SRGB ||
       format == mediapipe::ImageFormat::SRGBA ||
       format == mediapipe::ImageFormat::GRAY8) {
-    return MakePacket<Image>(std::make_shared<ImageFrame>(
-        std::move(*CreateImageFrame<uint8>(format, data, copy).release())));
+    return MakePacket<Image>(std::shared_ptr<ImageFrame>(
+        CreateImageFrame<uint8>(format, data, copy)));
   } else if (format == mediapipe::ImageFormat::GRAY16 ||
              format == mediapipe::ImageFormat::SRGB48 ||
              format == mediapipe::ImageFormat::SRGBA64) {
-    return MakePacket<Image>(std::make_shared<ImageFrame>(
-        std::move(*CreateImageFrame<uint16>(format, data, copy).release())));
+    return MakePacket<Image>(std::shared_ptr<ImageFrame>(
+        CreateImageFrame<uint16>(format, data, copy)));
   } else if (format == mediapipe::ImageFormat::VEC32F1 ||
              format == mediapipe::ImageFormat::VEC32F2) {
-    return MakePacket<Image>(std::make_shared<ImageFrame>(
-        std::move(*CreateImageFrame<float>(format, data, copy).release())));
+    return MakePacket<Image>(std::shared_ptr<ImageFrame>(
+        CreateImageFrame<float>(format, data, copy)));
   }
   throw RaisePyError(PyExc_RuntimeError,
                      absl::StrCat("Unsupported ImageFormat: ", format).c_str());
@@ -633,8 +633,9 @@ void InternalPacketCreators(pybind11::module* m) {
         // both GPU and CPU can process it.
         image_frame_copy->CopyFrom(*image.GetImageFrameSharedPtr(),
                                    ImageFrame::kGlDefaultAlignmentBoundary);
-        return MakePacket<Image>(std::make_shared<ImageFrame>(
-            std::move(*image_frame_copy.release())));
+        std::shared_ptr<ImageFrame> shared_image_frame =
+            std::move(image_frame_copy);
+        return MakePacket<Image>(shared_image_frame);
       },
       py::arg("image").noconvert(), py::return_value_policy::move);
 

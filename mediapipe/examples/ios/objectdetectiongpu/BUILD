@@ -24,7 +24,7 @@ load(
 
 licenses(["notice"])  # Apache 2.0
 
-MIN_IOS_VERSION = "10.0"
+MIN_IOS_VERSION = "11.0"
 
 alias(
     name = "objectdetectiongpu",

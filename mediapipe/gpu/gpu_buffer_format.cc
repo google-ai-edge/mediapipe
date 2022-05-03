@@ -144,7 +144,7 @@ const GlTextureInfo& GlTextureInfoForGpuBufferFormat(GpuBufferFormat format,
            }},
           {GpuBufferFormat::kRGBAFloat128,
            {
-               {GL_RGBA, GL_RGBA, GL_FLOAT, 1},
+               {GL_RGBA32F, GL_RGBA, GL_FLOAT, 1},
            }},
       }};
 

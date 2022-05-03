@@ -214,6 +214,7 @@ cc_library(
         "//mediapipe/framework:collection_item_id",
         "//mediapipe/framework:packet",
         "//mediapipe/framework/formats:classification_cc_proto",
+        "//mediapipe/framework/formats:detection_cc_proto",
         "//mediapipe/framework/formats:landmark_cc_proto",
         "//mediapipe/framework/formats:rect_cc_proto",
         "//mediapipe/framework/port:integral_types",
@@ -1256,4 +1257,37 @@ cc_test(
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/time",
     ],
+)
+
+cc_library(
+    name = "get_vector_item_calculator",
+    srcs = ["get_vector_item_calculator.cc"],
+    hdrs = ["get_vector_item_calculator.h"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:packet",
+        "//mediapipe/framework/api2:node",
+        "//mediapipe/framework/api2:port",
+        "//mediapipe/framework/formats:classification_cc_proto",
+        "//mediapipe/framework/formats:landmark_cc_proto",
+        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:status",
+    ],
+    alwayslink = 1,
+)
+
+cc_library(
+    name = "vector_size_calculator",
+    srcs = ["vector_size_calculator.cc"],
+    hdrs = ["vector_size_calculator.h"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/api2:node",
+        "//mediapipe/framework/formats:classification_cc_proto",
+        "//mediapipe/framework/formats:landmark_cc_proto",
+        "//mediapipe/framework/port:status",
+    ],
+    alwayslink = 1,
 )

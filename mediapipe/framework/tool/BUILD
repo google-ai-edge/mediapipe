@@ -134,7 +134,7 @@ cc_library(
     name = "name_util",
     srcs = ["name_util.cc"],
     hdrs = ["name_util.h"],
-    visibility = ["//mediapipe/framework:mediapipe_internal"],
+    visibility = ["//visibility:public"],
     deps = [
         ":validate_name",
         "//mediapipe/framework:calculator_cc_proto",

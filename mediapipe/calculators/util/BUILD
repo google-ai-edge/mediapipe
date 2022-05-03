@@ -54,6 +54,7 @@ mediapipe_proto_library(
     deps = [
         "//mediapipe/framework:calculator_options_proto",
         "//mediapipe/framework:calculator_proto",
+        "//mediapipe/util:label_map_proto",
     ],
 )
 
@@ -304,6 +305,7 @@ cc_library(
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework:packet",
         "//mediapipe/util:resource_util",
+        "//mediapipe/util:label_map_cc_proto",
     ] + select({
         "//mediapipe:android": [
             "//mediapipe/util/android/file/base",
@@ -348,6 +350,40 @@ cc_library(
         ],
     }),
     alwayslink = 1,
+)
+
+cc_library(
+    name = "detection_transformation_calculator",
+    srcs = ["detection_transformation_calculator.cc"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/api2:node",
+        "//mediapipe/framework/api2:packet",
+        "//mediapipe/framework/api2:port",
+        "//mediapipe/framework/formats:detection_cc_proto",
+        "//mediapipe/framework/formats:location_data_cc_proto",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+    ],
+    alwayslink = 1,
+)
+
+cc_test(
+    name = "detection_transformation_calculator_test",
+    size = "small",
+    srcs = ["detection_transformation_calculator_test.cc"],
+    deps = [
+        ":detection_transformation_calculator",
+        "//mediapipe/framework:calculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:calculator_runner",
+        "//mediapipe/framework:packet",
+        "//mediapipe/framework/formats:detection_cc_proto",
+        "//mediapipe/framework/formats:location_data_cc_proto",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:parse_text_proto",
+    ],
 )
 
 cc_library(

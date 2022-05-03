@@ -421,6 +421,10 @@ absl::Status ScaleImageCalculator::InitializeFromOptions() {
     alignment_boundary_ = options_.alignment_boundary();
   }
 
+  if (options_.has_output_format()) {
+    output_format_ = options_.output_format();
+  }
+
   downscaler_.reset(new ImageResizer(options_.post_sharpening_coefficient()));
 
   return absl::OkStatus();
@@ -433,13 +437,17 @@ absl::Status ScaleImageCalculator::ValidateImageFormats() const {
       << "The output image format was set to UNKNOWN.";
   // TODO Remove these conditions.
   RET_CHECK(output_format_ == ImageFormat::SRGB ||
+            output_format_ == ImageFormat::SRGBA ||
             (input_format_ == output_format_ &&
              output_format_ == ImageFormat::YCBCR420P))
       << "Outputting YCbCr420P images from SRGB input is not yet supported";
   RET_CHECK(input_format_ == output_format_ ||
-            input_format_ == ImageFormat::YCBCR420P)
+            (input_format_ == ImageFormat::YCBCR420P &&
+             output_format_ == ImageFormat::SRGB) ||
+            (input_format_ == ImageFormat::SRGB &&
+             output_format_ == ImageFormat::SRGBA))
       << "Conversion of the color space (except from "
-         "YCbCr420P to SRGB) is not yet supported.";
+         "YCbCr420P to SRGB or SRGB to SRBGA) is not yet supported.";
   return absl::OkStatus();
 }
 
@@ -604,6 +612,15 @@ absl::Status ScaleImageCalculator::Process(CalculatorContext* cc) {
           .Add(output_image.release(), cc->InputTimestamp());
       return absl::OkStatus();
     }
+  } else if (input_format_ == ImageFormat::SRGB &&
+             output_format_ == ImageFormat::SRGBA) {
+    image_frame = &cc->Inputs().Get(input_data_id_).Get<ImageFrame>();
+    cv::Mat input_mat = ::mediapipe::formats::MatView(image_frame);
+    converted_image_frame.Reset(ImageFormat::SRGBA, image_frame->Width(),
+                                image_frame->Height(), alignment_boundary_);
+    cv::Mat output_mat = ::mediapipe::formats::MatView(&converted_image_frame);
+    cv::cvtColor(input_mat, output_mat, cv::COLOR_RGB2RGBA, 4);
+    image_frame = &converted_image_frame;
   } else {
     image_frame = &cc->Inputs().Get(input_data_id_).Get<ImageFrame>();
     MP_RETURN_IF_ERROR(ValidateImageFrame(cc, *image_frame));

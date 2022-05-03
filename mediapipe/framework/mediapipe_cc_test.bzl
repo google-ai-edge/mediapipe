@@ -12,6 +12,8 @@ def mediapipe_cc_test(
         timeout = None,
         args = [],
         additional_deps = DEFAULT_ADDITIONAL_TEST_DEPS,
+        platforms = ["linux", "android", "ios", "wasm"],
+        exclude_platforms = None,
         # ios_unit_test arguments
         ios_minimum_os_version = "9.0",
         # android_cc_test arguments

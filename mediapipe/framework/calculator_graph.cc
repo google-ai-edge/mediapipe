@@ -226,6 +226,16 @@ absl::Status CalculatorGraph::InitializeStreams() {
   return absl::OkStatus();
 }
 
+// Hack for backwards compatibility with ancient GPU calculators. Can it
+// be retired yet?
+static void MaybeFixupLegacyGpuNodeContract(CalculatorNode& node) {
+#if !MEDIAPIPE_DISABLE_GPU
+  if (node.Contract().InputSidePackets().HasTag(kGpuSharedTagName)) {
+    const_cast<CalculatorContract&>(node.Contract()).UseService(kGpuService);
+  }
+#endif  // !MEDIAPIPE_DISABLE_GPU
+}
+
 absl::Status CalculatorGraph::InitializeCalculatorNodes() {
   // Check if the user has specified a maximum queue size for an input stream.
   max_queue_size_ = validated_graph_->Config().max_queue_size();
@@ -246,6 +256,7 @@ absl::Status CalculatorGraph::InitializeCalculatorNodes() {
         validated_graph_.get(), node_ref, input_stream_managers_.get(),
         output_stream_managers_.get(), output_side_packets_.get(),
         &buffer_size_hint, profiler_);
+    MaybeFixupLegacyGpuNodeContract(*nodes_.back());
     if (buffer_size_hint > 0) {
       max_queue_size_ = std::max(max_queue_size_, buffer_size_hint);
     }
@@ -283,6 +294,7 @@ absl::Status CalculatorGraph::InitializePacketGeneratorNodes(
         validated_graph_.get(), node_ref, input_stream_managers_.get(),
         output_stream_managers_.get(), output_side_packets_.get(),
         &buffer_size_hint, profiler_);
+    MaybeFixupLegacyGpuNodeContract(*nodes_.back());
     if (!result.ok()) {
       // Collect as many errors as we can before failing.
       errors.push_back(result);
@@ -495,9 +507,8 @@ absl::StatusOr<Packet> CalculatorGraph::GetOutputSidePacket(
            << "\" because it doesn't exist.";
   }
   Packet output_packet;
-  if (scheduler_.IsTerminated()) {
-    // Side-packets from calculators can be retrieved only after the graph is
-    // done.
+  if (!output_side_packets_[side_packet_index].GetPacket().IsEmpty() ||
+      scheduler_.IsTerminated()) {
     output_packet = output_side_packets_[side_packet_index].GetPacket();
   }
   if (output_packet.IsEmpty()) {
@@ -546,6 +557,7 @@ absl::Status CalculatorGraph::StartRun(
 #if !MEDIAPIPE_DISABLE_GPU
 absl::Status CalculatorGraph::SetGpuResources(
     std::shared_ptr<::mediapipe::GpuResources> resources) {
+  RET_CHECK_NE(resources, nullptr);
   auto gpu_service = service_manager_.GetServiceObject(kGpuService);
   RET_CHECK_EQ(gpu_service, nullptr)
       << "The GPU resources have already been configured.";
@@ -557,67 +569,88 @@ std::shared_ptr<::mediapipe::GpuResources> CalculatorGraph::GetGpuResources()
   return service_manager_.GetServiceObject(kGpuService);
 }
 
-absl::StatusOr<std::map<std::string, Packet>> CalculatorGraph::PrepareGpu(
+static Packet GetLegacyGpuSharedSidePacket(
     const std::map<std::string, Packet>& side_packets) {
-  std::map<std::string, Packet> additional_side_packets;
-  bool update_sp = false;
-  bool uses_gpu = false;
-  for (const auto& node : nodes_) {
-    if (node->UsesGpu()) {
-      uses_gpu = true;
-      break;
-    }
+  auto legacy_sp_iter = side_packets.find(kGpuSharedSidePacketName);
+  if (legacy_sp_iter == side_packets.end()) return {};
+  // Note that, because of b/116875321, the legacy side packet may be set but
+  // empty. But it's ok, because here we return an empty packet to indicate the
+  // missing case anyway.
+  return legacy_sp_iter->second;
+}
+
+absl::Status CalculatorGraph::MaybeSetUpGpuServiceFromLegacySidePacket(
+    Packet legacy_sp) {
+  if (legacy_sp.IsEmpty()) return absl::OkStatus();
+  auto gpu_resources = service_manager_.GetServiceObject(kGpuService);
+  if (gpu_resources) {
+    LOG(WARNING)
+        << "::mediapipe::GpuSharedData provided as a side packet while the "
+        << "graph already had one; ignoring side packet";
+    return absl::OkStatus();
   }
-  if (uses_gpu) {
-    auto gpu_resources = service_manager_.GetServiceObject(kGpuService);
+  gpu_resources = legacy_sp.Get<::mediapipe::GpuSharedData*>()->gpu_resources;
+  return service_manager_.SetServiceObject(kGpuService, gpu_resources);
+}
 
-    auto legacy_sp_iter = side_packets.find(kGpuSharedSidePacketName);
-    // Workaround for b/116875321: CalculatorRunner provides an empty packet,
-    // instead of just leaving it unset.
-    bool has_legacy_sp = legacy_sp_iter != side_packets.end() &&
-                         !legacy_sp_iter->second.IsEmpty();
-
-    if (gpu_resources) {
-      if (has_legacy_sp) {
-        LOG(WARNING)
-            << "::mediapipe::GpuSharedData provided as a side packet while the "
-            << "graph already had one; ignoring side packet";
-      }
-      update_sp = true;
-    } else {
-      if (has_legacy_sp) {
-        gpu_resources =
-            legacy_sp_iter->second.Get<::mediapipe::GpuSharedData*>()
-                ->gpu_resources;
-      } else {
-        ASSIGN_OR_RETURN(gpu_resources, ::mediapipe::GpuResources::Create());
-        update_sp = true;
-      }
-      MP_RETURN_IF_ERROR(
-          service_manager_.SetServiceObject(kGpuService, gpu_resources));
-    }
-
-    // Create or replace the legacy side packet if needed.
-    if (update_sp) {
-      legacy_gpu_shared_.reset(new ::mediapipe::GpuSharedData(gpu_resources));
-      additional_side_packets[kGpuSharedSidePacketName] =
-          MakePacket<::mediapipe::GpuSharedData*>(legacy_gpu_shared_.get());
-    }
-
-    // Set up executors.
-    for (auto& node : nodes_) {
-      if (node->UsesGpu()) {
-        MP_RETURN_IF_ERROR(gpu_resources->PrepareGpuNode(node.get()));
-      }
-    }
-    for (const auto& name_executor : gpu_resources->GetGpuExecutors()) {
-      MP_RETURN_IF_ERROR(
-          SetExecutorInternal(name_executor.first, name_executor.second));
-    }
+std::map<std::string, Packet> CalculatorGraph::MaybeCreateLegacyGpuSidePacket(
+    Packet legacy_sp) {
+  std::map<std::string, Packet> additional_side_packets;
+  auto gpu_resources = service_manager_.GetServiceObject(kGpuService);
+  if (gpu_resources &&
+      (legacy_sp.IsEmpty() ||
+       legacy_sp.Get<::mediapipe::GpuSharedData*>()->gpu_resources !=
+           gpu_resources)) {
+    legacy_gpu_shared_ =
+        absl::make_unique<mediapipe::GpuSharedData>(gpu_resources);
+    additional_side_packets[kGpuSharedSidePacketName] =
+        MakePacket<::mediapipe::GpuSharedData*>(legacy_gpu_shared_.get());
   }
   return additional_side_packets;
 }
+
+static bool UsesGpu(const CalculatorNode& node) {
+  return node.Contract().ServiceRequests().contains(kGpuService.key);
+}
+
+absl::Status CalculatorGraph::PrepareGpu() {
+  auto gpu_resources = service_manager_.GetServiceObject(kGpuService);
+  if (!gpu_resources) return absl::OkStatus();
+  // Set up executors.
+  for (auto& node : nodes_) {
+    if (UsesGpu(*node)) {
+      MP_RETURN_IF_ERROR(gpu_resources->PrepareGpuNode(node.get()));
+    }
+  }
+  for (const auto& name_executor : gpu_resources->GetGpuExecutors()) {
+    MP_RETURN_IF_ERROR(
+        SetExecutorInternal(name_executor.first, name_executor.second));
+  }
+  return absl::OkStatus();
+}
 #endif  // !MEDIAPIPE_DISABLE_GPU
+
+absl::Status CalculatorGraph::PrepareServices() {
+  for (const auto& node : nodes_) {
+    for (const auto& [key, request] : node->Contract().ServiceRequests()) {
+      auto packet = service_manager_.GetServicePacket(request.Service());
+      if (!packet.IsEmpty()) continue;
+      auto packet_or = request.Service().CreateDefaultObject();
+      if (packet_or.ok()) {
+        MP_RETURN_IF_ERROR(service_manager_.SetServicePacket(
+            request.Service(), std::move(packet_or).value()));
+      } else if (request.IsOptional()) {
+        continue;
+      } else {
+        return absl::InternalError(absl::StrCat(
+            "Service \"", request.Service().key, "\", required by node ",
+            node->DebugName(), ", was not provided and cannot be created: ",
+            std::move(packet_or).status().message()));
+      }
+    }
+  }
+  return absl::OkStatus();
+}
 
 absl::Status CalculatorGraph::PrepareForRun(
     const std::map<std::string, Packet>& extra_side_packets,
@@ -637,7 +670,13 @@ absl::Status CalculatorGraph::PrepareForRun(
 
   std::map<std::string, Packet> additional_side_packets;
 #if !MEDIAPIPE_DISABLE_GPU
-  ASSIGN_OR_RETURN(additional_side_packets, PrepareGpu(extra_side_packets));
+  auto legacy_sp = GetLegacyGpuSharedSidePacket(extra_side_packets);
+  MP_RETURN_IF_ERROR(MaybeSetUpGpuServiceFromLegacySidePacket(legacy_sp));
+#endif  // !MEDIAPIPE_DISABLE_GPU
+  MP_RETURN_IF_ERROR(PrepareServices());
+#if !MEDIAPIPE_DISABLE_GPU
+  MP_RETURN_IF_ERROR(PrepareGpu());
+  additional_side_packets = MaybeCreateLegacyGpuSidePacket(legacy_sp);
 #endif  // !MEDIAPIPE_DISABLE_GPU
 
   const std::map<std::string, Packet>* input_side_packets;
