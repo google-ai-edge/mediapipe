@@ -78,12 +78,6 @@ class TypeIndex {
   const TypeInfo& info_;
 };
 
-// Returns a unique identifier for type T.
-template <typename T>
-const TypeInfo& TypeId() {
-  return TypeInfo::Get<T>();
-}
-
 // Helper method that returns a hash code of the given type. This allows for
 // typeid testing across multiple binaries, unlike FastTypeId which used a
 // memory location that only works within the same binary. Moreover, we use this
@@ -94,7 +88,7 @@ const TypeInfo& TypeId() {
 // as much as possible.
 template <typename T>
 size_t GetTypeHash() {
-  return TypeId<T>().hash_code();
+  return TypeInfo::Get<T>().hash_code();
 }
 
 }  // namespace tool

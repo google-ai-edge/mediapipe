@@ -22,7 +22,6 @@
 #include "mediapipe/calculators/tensor/inference_calculator.h"
 #include "mediapipe/framework/deps/file_path.h"
 #include "mediapipe/util/tflite/config.h"
-#include "tensorflow/lite/interpreter_builder.h"
 
 #if MEDIAPIPE_TFLITE_GL_INFERENCE
 #include "mediapipe/gpu/gl_calculator_helper.h"
@@ -53,11 +52,9 @@ class InferenceCalculatorGlImpl
  private:
   absl::Status ReadGpuCaches();
   absl::Status SaveGpuCaches();
-  absl::Status InitInterpreter(CalculatorContext* cc);
-  absl::Status LoadDelegate(CalculatorContext* cc,
-                            tflite::InterpreterBuilder* interpreter_builder);
-  absl::Status BindBuffersToTensors();
-  absl::Status AllocateTensors();
+  absl::Status LoadModel(CalculatorContext* cc);
+  absl::Status LoadDelegate(CalculatorContext* cc);
+  absl::Status LoadDelegateAndAllocateTensors(CalculatorContext* cc);
   absl::Status InitTFLiteGPURunner(CalculatorContext* cc);
 
   // TfLite requires us to keep the model alive as long as the interpreter is.
@@ -140,11 +137,17 @@ absl::Status InferenceCalculatorGlImpl::Open(CalculatorContext* cc) {
 #endif  // MEDIAPIPE_ANDROID
   }
 
+  // When use_advanced_gpu_api_, model loading is handled in InitTFLiteGPURunner
+  // for everything.
+  if (!use_advanced_gpu_api_) {
+    MP_RETURN_IF_ERROR(LoadModel(cc));
+  }
+
   MP_RETURN_IF_ERROR(gpu_helper_.Open(cc));
   MP_RETURN_IF_ERROR(
       gpu_helper_.RunInGlContext([this, &cc]() -> ::mediapipe::Status {
         return use_advanced_gpu_api_ ? InitTFLiteGPURunner(cc)
-                                     : InitInterpreter(cc);
+                                     : LoadDelegateAndAllocateTensors(cc);
       }));
   return absl::OkStatus();
 }
@@ -289,6 +292,9 @@ absl::Status InferenceCalculatorGlImpl::ReadGpuCaches() {
 
 absl::Status InferenceCalculatorGlImpl::InitTFLiteGPURunner(
     CalculatorContext* cc) {
+  ASSIGN_OR_RETURN(model_packet_, GetModelAsPacket(cc));
+  const auto& model = *model_packet_.Get();
+
   // Create runner
   tflite::gpu::InferenceOptions options;
   options.priority1 = allow_precision_loss_
@@ -326,12 +332,17 @@ absl::Status InferenceCalculatorGlImpl::InitTFLiteGPURunner(
       break;
     }
   }
-  ASSIGN_OR_RETURN(model_packet_, GetModelAsPacket(cc));
-  const auto& model = *model_packet_.Get();
-  ASSIGN_OR_RETURN(auto op_resolver_packet, GetOpResolverAsPacket(cc));
-  const auto& op_resolver = op_resolver_packet.Get();
-  MP_RETURN_IF_ERROR(tflite_gpu_runner_->InitializeWithModel(
-      model, op_resolver, /*allow_quant_ops=*/true));
+  if (kSideInOpResolver(cc).IsConnected()) {
+    const tflite::OpResolver& op_resolver = kSideInOpResolver(cc).Get();
+    MP_RETURN_IF_ERROR(tflite_gpu_runner_->InitializeWithModel(
+        model, op_resolver, /*allow_quant_ops=*/true));
+  } else {
+    tflite::ops::builtin::BuiltinOpResolver op_resolver =
+        kSideInCustomOpResolver(cc).GetOr(
+            tflite::ops::builtin::BuiltinOpResolverWithoutDefaultDelegates());
+    MP_RETURN_IF_ERROR(tflite_gpu_runner_->InitializeWithModel(
+        model, op_resolver, /*allow_quant_ops=*/true));
+  }
 
   // Create and bind OpenGL buffers for outputs.
   // The buffers are created once and their ids are passed to calculator outputs
@@ -350,27 +361,35 @@ absl::Status InferenceCalculatorGlImpl::InitTFLiteGPURunner(
   return absl::OkStatus();
 }
 
-absl::Status InferenceCalculatorGlImpl::InitInterpreter(CalculatorContext* cc) {
+absl::Status InferenceCalculatorGlImpl::LoadModel(CalculatorContext* cc) {
   ASSIGN_OR_RETURN(model_packet_, GetModelAsPacket(cc));
   const auto& model = *model_packet_.Get();
-  ASSIGN_OR_RETURN(auto op_resolver_packet, GetOpResolverAsPacket(cc));
-  const auto& op_resolver = op_resolver_packet.Get();
-  tflite::InterpreterBuilder interpreter_builder(model, op_resolver);
-  MP_RETURN_IF_ERROR(LoadDelegate(cc, &interpreter_builder));
+  if (kSideInOpResolver(cc).IsConnected()) {
+    const tflite::OpResolver& op_resolver = kSideInOpResolver(cc).Get();
+    tflite::InterpreterBuilder(model, op_resolver)(&interpreter_);
+  } else {
+    tflite::ops::builtin::BuiltinOpResolver op_resolver =
+        kSideInCustomOpResolver(cc).GetOr(
+            tflite::ops::builtin::BuiltinOpResolverWithoutDefaultDelegates());
+    tflite::InterpreterBuilder(model, op_resolver)(&interpreter_);
+  }
+  RET_CHECK(interpreter_);
+
 #if defined(__EMSCRIPTEN__)
-  interpreter_builder.SetNumThreads(1);
+  interpreter_->SetNumThreads(1);
 #else
-  interpreter_builder.SetNumThreads(
+  interpreter_->SetNumThreads(
       cc->Options<mediapipe::InferenceCalculatorOptions>().cpu_num_thread());
 #endif  // __EMSCRIPTEN__
-  RET_CHECK_EQ(interpreter_builder(&interpreter_), kTfLiteOk);
-  RET_CHECK(interpreter_);
-  MP_RETURN_IF_ERROR(BindBuffersToTensors());
-  MP_RETURN_IF_ERROR(AllocateTensors());
+
   return absl::OkStatus();
 }
 
-absl::Status InferenceCalculatorGlImpl::AllocateTensors() {
+absl::Status InferenceCalculatorGlImpl::LoadDelegateAndAllocateTensors(
+    CalculatorContext* cc) {
+  MP_RETURN_IF_ERROR(LoadDelegate(cc));
+
+  // AllocateTensors() can be called only after ModifyGraphWithDelegate.
   RET_CHECK_EQ(interpreter_->AllocateTensors(), kTfLiteOk);
   // TODO: Support quantized tensors.
   RET_CHECK_NE(
@@ -379,8 +398,7 @@ absl::Status InferenceCalculatorGlImpl::AllocateTensors() {
   return absl::OkStatus();
 }
 
-absl::Status InferenceCalculatorGlImpl::LoadDelegate(
-    CalculatorContext* cc, tflite::InterpreterBuilder* interpreter_builder) {
+absl::Status InferenceCalculatorGlImpl::LoadDelegate(CalculatorContext* cc) {
   // Configure and create the delegate.
   TfLiteGpuDelegateOptions options = TfLiteGpuDelegateOptionsDefault();
   options.compile_options.precision_loss_allowed =
@@ -391,11 +409,7 @@ absl::Status InferenceCalculatorGlImpl::LoadDelegate(
   options.compile_options.inline_parameters = 1;
   delegate_ = TfLiteDelegatePtr(TfLiteGpuDelegateCreate(&options),
                                 &TfLiteGpuDelegateDelete);
-  interpreter_builder->AddDelegate(delegate_.get());
-  return absl::OkStatus();
-}
 
-absl::Status InferenceCalculatorGlImpl::BindBuffersToTensors() {
   // Get input image sizes.
   const auto& input_indices = interpreter_->inputs();
   for (int i = 0; i < input_indices.size(); ++i) {
@@ -427,6 +441,11 @@ absl::Status InferenceCalculatorGlImpl::BindBuffersToTensors() {
                      output_indices[i]),
                  kTfLiteOk);
   }
+
+  // Must call this last.
+  RET_CHECK_EQ(interpreter_->ModifyGraphWithDelegate(delegate_.get()),
+               kTfLiteOk);
+
   return absl::OkStatus();
 }
 

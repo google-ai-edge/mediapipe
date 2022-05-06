@@ -20,6 +20,7 @@
 #include <memory>
 #include <string>
 
+#include "absl/cleanup/cleanup.h"
 #include "absl/container/flat_hash_set.h"
 #include "absl/memory/memory.h"
 #include "absl/status/status.h"
@@ -33,6 +34,7 @@
 #include "mediapipe/framework/formats/image_format.pb.h"
 #include "mediapipe/framework/port/advanced_proto_inc.h"
 #include "mediapipe/framework/port/file_helpers.h"
+#include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/proto_ns.h"
 #include "mediapipe/framework/port/ret_check.h"
@@ -208,6 +210,27 @@ bool CompareImageFrames(const ImageFrame& image1, const ImageFrame& image2,
   return false;
 }
 
+absl::Status CompareAndSaveImageOutput(
+    absl::string_view golden_image_path, const ImageFrame& actual,
+    const ImageFrameComparisonOptions& options) {
+  ASSIGN_OR_RETURN(auto output_img_path, SavePngTestOutput(actual, "output"));
+
+  auto expected = LoadTestImage(GetTestFilePath(golden_image_path));
+  if (!expected.ok()) {
+    return expected.status();
+  }
+  ASSIGN_OR_RETURN(auto expected_img_path,
+                   SavePngTestOutput(**expected, "expected"));
+
+  std::unique_ptr<ImageFrame> diff_img;
+  auto status = CompareImageFrames(**expected, actual, options.max_color_diff,
+                                   options.max_alpha_diff, options.max_avg_diff,
+                                   diff_img);
+  ASSIGN_OR_RETURN(auto diff_img_path, SavePngTestOutput(*diff_img, "diff"));
+
+  return status;
+}
+
 std::string GetTestRootDir() {
   return file::JoinPath(std::getenv("TEST_SRCDIR"), "mediapipe");
 }
@@ -273,6 +296,23 @@ absl::StatusOr<std::unique_ptr<ImageFrame>> LoadTestImage(
 std::unique_ptr<ImageFrame> LoadTestPng(absl::string_view path,
                                         ImageFormat::Format format) {
   return nullptr;
+}
+
+// Write an ImageFrame as PNG to the test undeclared outputs directory.
+// The image's name will contain the given prefix and a timestamp.
+// Returns the path to the output if successful.
+absl::StatusOr<std::string> SavePngTestOutput(
+    const mediapipe::ImageFrame& image, absl::string_view prefix) {
+  std::string now_string = absl::FormatTime(absl::Now());
+  std::string output_relative_path =
+      absl::StrCat(prefix, "_", now_string, ".png");
+  std::string output_full_path =
+      file::JoinPath(GetTestOutputsDir(), output_relative_path);
+  RET_CHECK(stbi_write_png(output_full_path.c_str(), image.Width(),
+                           image.Height(), image.NumberOfChannels(),
+                           image.PixelData(), image.WidthStep()))
+      << " path: " << output_full_path;
+  return output_relative_path;
 }
 
 bool LoadTestGraph(CalculatorGraphConfig* proto, const std::string& path) {

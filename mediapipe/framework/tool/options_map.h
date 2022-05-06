@@ -58,14 +58,14 @@ class TypeMap {
  public:
   template <class T>
   bool Has() const {
-    return content_.count(TypeId<T>()) > 0;
+    return content_.count(TypeInfo::Get<T>()) > 0;
   }
   template <class T>
   T* Get() const {
     if (!Has<T>()) {
-      content_[TypeId<T>()] = std::make_shared<T>();
+      content_[TypeInfo::Get<T>()] = std::make_shared<T>();
     }
-    return static_cast<T*>(content_[TypeId<T>()].get());
+    return static_cast<T*>(content_[TypeInfo::Get<T>()].get());
   }
 
  private:

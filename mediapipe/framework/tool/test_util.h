@@ -22,20 +22,33 @@
 namespace mediapipe {
 using mediapipe::CalculatorGraphConfig;
 
+struct ImageFrameComparisonOptions {
+  // NOTE: these values are not normalized: use a value from 0 to 2^8-1
+  // for 8-bit data and a value from 0 to 2^16-1 for 16-bit data.
+  // Although these members are declared as floats,, all uint8/uint16
+  // values are exactly representable. (2^24 + 1 is the first non-representable
+  // positive integral value.)
+
+  // Maximum value difference allowed for non-alpha channels.
+  float max_color_diff;
+  // Maximum value difference allowed for alpha channel (if present).
+  float max_alpha_diff;
+  // Maximum difference for all channels, averaged across all pixels.
+  float max_avg_diff;
+};
+
+// Compares an output image with a golden file. Saves the output and difference
+// to the undeclared test outputs.
+// Returns ok if they are equal within the tolerances specified in options.
+absl::Status CompareAndSaveImageOutput(
+    absl::string_view golden_image_path, const ImageFrame& actual,
+    const ImageFrameComparisonOptions& options);
+
 // Checks if two image frames are equal within the specified tolerance.
 // image1 and image2 may be of different-but-compatible image formats (e.g.,
 // SRGB and SRGBA); in that case, only the channels available in both are
 // compared.
-// max_color_diff applies to the first 3 channels; i.e., R, G, B for sRGB and
-// sRGBA, and the single gray channel for GRAY8 and GRAY16. It is the maximum
-// pixel color value difference allowed; i.e., a value from 0 to 2^8-1 for 8-bit
-// data and a value from 0 to 2^16-1 for 16-bit data.
-// max_alpha_diff applies to the 4th (alpha) channel only, if present.
-// max_avg_diff applies to all channels, normalized across all pixels.
-//
-// Note: Although max_color_diff and max_alpha_diff are floats, all uint8/uint16
-// values are exactly representable. (2^24 + 1 is the first non-representable
-// positive integral value.)
+// The diff arguments are as in ImageFrameComparisonOptions.
 absl::Status CompareImageFrames(const ImageFrame& image1,
                                 const ImageFrame& image2,
                                 const float max_color_diff,
@@ -76,6 +89,13 @@ absl::StatusOr<std::unique_ptr<ImageFrame>> LoadTestImage(
 // case of failure.
 std::unique_ptr<ImageFrame> LoadTestPng(
     absl::string_view path, ImageFormat::Format format = ImageFormat::SRGBA);
+
+// Write an ImageFrame as PNG to the test undeclared outputs directory.
+// The image's name will contain the given prefix and a timestamp.
+// If successful, returns the path to the output file relative to the output
+// directory.
+absl::StatusOr<std::string> SavePngTestOutput(
+    const mediapipe::ImageFrame& image, absl::string_view prefix);
 
 // Returns the luminance image of |original_image|.
 // The format of |original_image| must be sRGB or sRGBA.

@@ -386,7 +386,7 @@ inline std::string MediaPipeTypeStringOrDemangled(
 
 template <typename T>
 std::string MediaPipeTypeStringOrDemangled() {
-  return MediaPipeTypeStringOrDemangled(tool::TypeId<T>());
+  return MediaPipeTypeStringOrDemangled(tool::TypeInfo::Get<T>());
 }
 
 // Returns type hash id of type identified by type_string or NULL if not

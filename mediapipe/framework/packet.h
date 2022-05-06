@@ -180,7 +180,7 @@ class Packet {
   // Returns an error if the packet does not contain data of type T.
   template <typename T>
   absl::Status ValidateAsType() const {
-    return ValidateAsType(tool::TypeId<T>());
+    return ValidateAsType(tool::TypeInfo::Get<T>());
   }
 
   // Returns an error if the packet is not an instance of
@@ -428,7 +428,7 @@ StatusOr<std::vector<const proto_ns::MessageLite*>>
 ConvertToVectorOfProtoMessageLitePtrs(const T* data,
                                       /*is_proto_vector=*/std::false_type) {
   return absl::InvalidArgumentError(absl::StrCat(
-      "The Packet stores \"", tool::TypeId<T>().name(), "\"",
+      "The Packet stores \"", tool::TypeInfo::Get<T>().name(), "\"",
       "which is not convertible to vector<proto_ns::MessageLite*>."));
 }
 
@@ -510,7 +510,9 @@ class Holder : public HolderBase {
     HolderSupport<T>::EnsureStaticInit();
     return *ptr_;
   }
-  const tool::TypeInfo& GetTypeInfo() const final { return tool::TypeId<T>(); }
+  const tool::TypeInfo& GetTypeInfo() const final {
+    return tool::TypeInfo::Get<T>();
+  }
   // Releases the underlying data pointer and transfers the ownership to a
   // unique pointer.
   // This method is dangerous and is only used by Packet::Consume() if the

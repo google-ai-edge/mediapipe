@@ -15,7 +15,6 @@
 package com.google.mediapipe.framework;
 
 import com.google.protobuf.ExtensionRegistryLite;
-import com.google.protobuf.Internal;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.MessageLite;
 import java.util.NoSuchElementException;
@@ -52,10 +51,8 @@ public final class ProtoUtil {
   }
 
   /** Deserializes a MessageLite from a SerializedMessage object. */
-  public static <T extends MessageLite> T unpack(
-      SerializedMessage serialized, java.lang.Class<T> clazz)
+  public static <T extends MessageLite> T unpack(SerializedMessage serialized, T defaultInstance)
       throws InvalidProtocolBufferException {
-    T defaultInstance = Internal.getDefaultInstance(clazz);
     String expectedType = ProtoUtil.getTypeName(defaultInstance.getClass());
     if (!serialized.typeName.equals(expectedType)) {
       throw new InvalidProtocolBufferException(

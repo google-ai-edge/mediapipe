@@ -259,14 +259,14 @@ absl::Status ValidatePacketTypeSet(const PacketTypeSet& packet_type_set);
 
 template <typename T>
 PacketType& PacketType::Set() {
-  type_spec_ = &tool::TypeId<T>();
+  type_spec_ = &tool::TypeInfo::Get<T>();
   return *this;
 }
 
 template <typename... T>
 PacketType& PacketType::SetOneOf() {
   static const NoDestructor<std::vector<const tool::TypeInfo*>> types{
-      {&tool::TypeId<T>()...}};
+      {&tool::TypeInfo::Get<T>()...}};
   static const NoDestructor<std::string> name{TypeNameForOneOf(*types)};
   type_spec_ = MultiType{*types, &*name};
   return *this;

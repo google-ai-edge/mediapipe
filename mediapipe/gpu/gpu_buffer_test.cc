@@ -26,22 +26,6 @@
 namespace mediapipe {
 namespace {
 
-// Write an ImageFrame as PNG to the test undeclared outputs directory.
-// The image's name will contain the given prefix and a timestamp.
-// Returns the path to the output if successful.
-std::string SavePngImage(const mediapipe::ImageFrame& image,
-                         absl::string_view prefix) {
-  std::string output_dir = mediapipe::GetTestOutputsDir();
-  std::string now_string = absl::FormatTime(absl::Now());
-  std::string out_file_path =
-      absl::StrCat(output_dir, "/", prefix, "_", now_string, ".png");
-  EXPECT_TRUE(stbi_write_png(out_file_path.c_str(), image.Width(),
-                             image.Height(), image.NumberOfChannels(),
-                             image.PixelData(), image.WidthStep()))
-      << " path: " << out_file_path;
-  return out_file_path;
-}
-
 void FillImageFrameRGBA(ImageFrame& image, uint8 r, uint8 g, uint8 b, uint8 a) {
   auto* data = image.MutablePixelData();
   for (int y = 0; y < image.Height(); ++y) {
@@ -143,8 +127,8 @@ TEST_F(GpuBufferTest, GlTextureView) {
   FillImageFrameRGBA(red, 255, 0, 0, 255);
 
   EXPECT_TRUE(mediapipe::CompareImageFrames(*view, red, 0.0, 0.0));
-  SavePngImage(red, "gltv_red_gold");
-  SavePngImage(*view, "gltv_red_view");
+  MP_EXPECT_OK(SavePngTestOutput(red, "gltv_red_gold"));
+  MP_EXPECT_OK(SavePngTestOutput(*view, "gltv_red_view"));
 }
 
 TEST_F(GpuBufferTest, ImageFrame) {
@@ -178,8 +162,8 @@ TEST_F(GpuBufferTest, ImageFrame) {
     FillImageFrameRGBA(red, 255, 0, 0, 255);
 
     EXPECT_TRUE(mediapipe::CompareImageFrames(*view, red, 0.0, 0.0));
-    SavePngImage(red, "if_red_gold");
-    SavePngImage(*view, "if_red_view");
+    MP_EXPECT_OK(SavePngTestOutput(red, "if_red_gold"));
+    MP_EXPECT_OK(SavePngTestOutput(*view, "if_red_view"));
   }
 }
 
@@ -212,8 +196,8 @@ TEST_F(GpuBufferTest, Overwrite) {
     FillImageFrameRGBA(red, 255, 0, 0, 255);
 
     EXPECT_TRUE(mediapipe::CompareImageFrames(*view, red, 0.0, 0.0));
-    SavePngImage(red, "ow_red_gold");
-    SavePngImage(*view, "ow_red_view");
+    MP_EXPECT_OK(SavePngTestOutput(red, "ow_red_gold"));
+    MP_EXPECT_OK(SavePngTestOutput(*view, "ow_red_view"));
   }
 
   {
@@ -246,8 +230,8 @@ TEST_F(GpuBufferTest, Overwrite) {
     FillImageFrameRGBA(green, 0, 255, 0, 255);
 
     EXPECT_TRUE(mediapipe::CompareImageFrames(*view, green, 0.0, 0.0));
-    SavePngImage(green, "ow_green_gold");
-    SavePngImage(*view, "ow_green_view");
+    MP_EXPECT_OK(SavePngTestOutput(green, "ow_green_gold"));
+    MP_EXPECT_OK(SavePngTestOutput(*view, "ow_green_view"));
   }
 
   {
@@ -256,8 +240,8 @@ TEST_F(GpuBufferTest, Overwrite) {
     FillImageFrameRGBA(blue, 0, 0, 255, 255);
 
     EXPECT_TRUE(mediapipe::CompareImageFrames(*view, blue, 0.0, 0.0));
-    SavePngImage(blue, "ow_blue_gold");
-    SavePngImage(*view, "ow_blue_view");
+    MP_EXPECT_OK(SavePngTestOutput(blue, "ow_blue_gold"));
+    MP_EXPECT_OK(SavePngTestOutput(*view, "ow_blue_view"));
   }
 }
 

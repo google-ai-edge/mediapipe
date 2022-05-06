@@ -17,6 +17,7 @@ package com.google.mediapipe.framework;
 import com.google.common.base.Preconditions;
 import com.google.common.flogger.FluentLogger;
 import com.google.mediapipe.framework.ProtoUtil.SerializedMessage;
+import com.google.protobuf.Internal;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.MessageLite;
 import com.google.protobuf.Parser;
@@ -119,11 +120,20 @@ public final class PacketGetter {
     return nativeGetProtoBytes(packet.getNativeHandle());
   }
 
-  public static <T extends MessageLite> T getProto(final Packet packet, Class<T> clazz)
+  public static <T extends MessageLite> T getProto(final Packet packet, T defaultInstance)
       throws InvalidProtocolBufferException {
     SerializedMessage result = new SerializedMessage();
     nativeGetProto(packet.getNativeHandle(), result);
-    return ProtoUtil.unpack(result, clazz);
+    return ProtoUtil.unpack(result, defaultInstance);
+  }
+
+  /**
+   * @deprecated {@link #getProto(Packet, MessageLite)} is safer to use in obfuscated builds.
+   */
+  @Deprecated
+  public static <T extends MessageLite> T getProto(final Packet packet, Class<T> clazz)
+      throws InvalidProtocolBufferException {
+    return getProto(packet, Internal.getDefaultInstance(clazz));
   }
 
   public static short[] getInt16Vector(final Packet packet) {
@@ -160,6 +170,13 @@ public final class PacketGetter {
     } catch (InvalidProtocolBufferException e) {
       throw new IllegalArgumentException(e);
     }
+  }
+
+  public static <T extends MessageLite> List<T> getProtoVector(
+      final Packet packet, T defaultInstance) {
+    @SuppressWarnings("unchecked")
+    Parser<T> parser = (Parser<T>) defaultInstance.getParserForType();
+    return getProtoVector(packet, parser);
   }
 
   public static int getImageWidth(final Packet packet) {
