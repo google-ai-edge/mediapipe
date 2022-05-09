@@ -69,14 +69,14 @@ StatusBuilder&& StatusBuilder::SetNoLogging() && {
   return std::move(SetNoLogging());
 }
 
-StatusBuilder::operator Status() const& {
+StatusBuilder::operator absl::Status() const& {
   if (!stream_ || stream_->str().empty() || no_logging_) {
     return status_;
   }
   return StatusBuilder(*this).JoinMessageToStatus();
 }
 
-StatusBuilder::operator Status() && {
+StatusBuilder::operator absl::Status() && {
   if (!stream_ || stream_->str().empty() || no_logging_) {
     return status_;
   }
@@ -97,7 +97,7 @@ absl::Status StatusBuilder::JoinMessageToStatus() {
                   ? absl::StrCat(stream_->str(), status_.message())
                   : absl::StrCat(status_.message(), stream_->str());
   }
-  return Status(status_.code(), message);
+  return absl::Status(status_.code(), message);
 }
 
 }  // namespace mediapipe

@@ -174,7 +174,7 @@ class Packet {
   // object type is a vector of MessageLite data, returns an error otherwise.
   // Note: This function is meant to be used internally within the MediaPipe
   // framework only.
-  StatusOr<std::vector<const proto_ns::MessageLite*>>
+  absl::StatusOr<std::vector<const proto_ns::MessageLite*>>
   GetVectorOfProtoMessageLitePtrs() const;
 
   // Returns an error if the packet does not contain data of type T.
@@ -394,7 +394,7 @@ class HolderBase {
   // Returns a vector<MessageLite*> for the data in the holder, if the
   // underlying object is a vector of protocol buffer objects, otherwise,
   // returns an error.
-  virtual StatusOr<std::vector<const proto_ns::MessageLite*>>
+  virtual absl::StatusOr<std::vector<const proto_ns::MessageLite*>>
   GetVectorOfProtoMessageLite() const = 0;
 
   virtual bool HasForeignOwner() const { return false; }
@@ -424,7 +424,7 @@ struct is_proto_vector<std::vector<ItemT, Allocator>>
 // Helper function to create and return a vector of pointers to proto message
 // elements of the vector passed into the function.
 template <typename T>
-StatusOr<std::vector<const proto_ns::MessageLite*>>
+absl::StatusOr<std::vector<const proto_ns::MessageLite*>>
 ConvertToVectorOfProtoMessageLitePtrs(const T* data,
                                       /*is_proto_vector=*/std::false_type) {
   return absl::InvalidArgumentError(absl::StrCat(
@@ -433,7 +433,7 @@ ConvertToVectorOfProtoMessageLitePtrs(const T* data,
 }
 
 template <typename T>
-StatusOr<std::vector<const proto_ns::MessageLite*>>
+absl::StatusOr<std::vector<const proto_ns::MessageLite*>>
 ConvertToVectorOfProtoMessageLitePtrs(const T* data,
                                       /*is_proto_vector=*/std::true_type) {
   std::vector<const proto_ns::MessageLite*> result;
@@ -564,7 +564,7 @@ class Holder : public HolderBase {
   // Returns a vector<MessageLite*> for the data in the holder, if the
   // underlying object is a vector of protocol buffer objects, otherwise,
   // returns an error.
-  StatusOr<std::vector<const proto_ns::MessageLite*>>
+  absl::StatusOr<std::vector<const proto_ns::MessageLite*>>
   GetVectorOfProtoMessageLite() const override {
     return ConvertToVectorOfProtoMessageLitePtrs(ptr_, is_proto_vector<T>());
   }

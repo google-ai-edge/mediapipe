@@ -367,7 +367,8 @@ absl::Status SceneCameraMotionAnalyzer::PopulateFocusPointFrames(
         scene_summary, focus_point_frame_type, scene_frame_timestamps,
         focus_point_frames);
   } else {
-    return absl::Status(StatusCode::kInvalidArgument, "Unknown motion type.");
+    return absl::Status(absl::StatusCode::kInvalidArgument,
+                        "Unknown motion type.");
   }
 }
 

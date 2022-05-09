@@ -149,7 +149,7 @@ absl::Status GpuResources::PrepareGpuNode(CalculatorNode* node) {
   context->SetProfilingContext(
       node->GetCalculatorState().GetSharedProfilingContext());
 
-  return OkStatus();
+  return absl::OkStatus();
 }
 
 // TODO: expose and use an actual ID instead of using the

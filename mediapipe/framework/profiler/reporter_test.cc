@@ -146,14 +146,14 @@ TEST(Reporter, PrintAllColumns) {
 TEST(Reporter, CanReportBadColumns) {
   auto reporter = loadReporter({"profile_opencv_0.binarypb"});
   auto result = reporter->set_columns({"il[leg]al"});
-  EXPECT_EQ(result.code(), StatusCode::kInvalidArgument);
+  EXPECT_EQ(result.code(), absl::StatusCode::kInvalidArgument);
   EXPECT_EQ(result.message(), "Column 'il[leg]al' is invalid.\n");
 }
 
 TEST(Reporter, CanReportNonMatchingColumns) {
   auto reporter = loadReporter({"profile_opencv_0.binarypb"});
   auto result = reporter->set_columns({"time_*", "il[leg]al"});
-  EXPECT_EQ(result.code(), StatusCode::kInvalidArgument);
+  EXPECT_EQ(result.code(), absl::StatusCode::kInvalidArgument);
   EXPECT_EQ(result.message(), "Column 'il[leg]al' is invalid.\n");
   // Should not affect active columns, which is currently still "*".
   auto report = reporter->Report();
@@ -164,7 +164,7 @@ TEST(Reporter, CanReportNonMatchingColumns) {
 TEST(Reporter, BadPatternsIgnored) {
   auto reporter = loadReporter({"profile_opencv_0.binarypb"});
   auto result = reporter->set_columns({"time_mean", "il[leg]al", "^bad"});
-  EXPECT_EQ(result.code(), StatusCode::kInvalidArgument);
+  EXPECT_EQ(result.code(), absl::StatusCode::kInvalidArgument);
   // Can report multiple errors at once, separated by newlines.
   EXPECT_EQ(result.message(),
             "Column 'il[leg]al' is invalid.\n"
@@ -177,7 +177,7 @@ TEST(Reporter, BadPatternsIgnored) {
 TEST(Reporter, NonMatchingColumnsIgnored) {
   auto reporter = loadReporter({"profile_opencv_0.binarypb"});
   auto result = reporter->set_columns({"koopa*"});
-  EXPECT_EQ(result.code(), StatusCode::kInvalidArgument);
+  EXPECT_EQ(result.code(), absl::StatusCode::kInvalidArgument);
   EXPECT_EQ(result.message(), "Column 'koopa*' did not match any columns.\n");
 }
 

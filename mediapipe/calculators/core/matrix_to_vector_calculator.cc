@@ -58,7 +58,7 @@ MEDIAPIPE_REGISTER_NODE(MatrixToVectorCalculator);
 
 absl::Status MatrixToVectorCalculator::Open(CalculatorContext* cc) {
   cc->SetOffset(0);
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
 absl::Status MatrixToVectorCalculator::Process(CalculatorContext* cc) {

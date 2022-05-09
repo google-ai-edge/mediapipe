@@ -56,12 +56,12 @@ Detection TensorToDetection(
   return detection;
 }
 
-Status TensorsToDetections(const ::tensorflow::Tensor& num_detections,
-                           const ::tensorflow::Tensor& boxes,
-                           const ::tensorflow::Tensor& scores,
-                           const ::tensorflow::Tensor& classes,
-                           const std::map<int, std::string>& label_map,
-                           std::vector<Detection>* detections) {
+absl::Status TensorsToDetections(const ::tensorflow::Tensor& num_detections,
+                                 const ::tensorflow::Tensor& boxes,
+                                 const ::tensorflow::Tensor& scores,
+                                 const ::tensorflow::Tensor& classes,
+                                 const std::map<int, std::string>& label_map,
+                                 std::vector<Detection>* detections) {
   const ::tensorflow::Tensor empty_keypoints = ::tensorflow::Tensor(
       ::tensorflow::DT_FLOAT, ::tensorflow::TensorShape({0, 0, 0}));
   const ::tensorflow::Tensor empty_masks = ::tensorflow::Tensor(
@@ -71,15 +71,15 @@ Status TensorsToDetections(const ::tensorflow::Tensor& num_detections,
                              /*mask_threshold=*/0.0f, label_map, detections);
 }
 
-Status TensorsToDetections(const ::tensorflow::Tensor& num_detections,
-                           const ::tensorflow::Tensor& boxes,
-                           const ::tensorflow::Tensor& scores,
-                           const ::tensorflow::Tensor& classes,
-                           const ::tensorflow::Tensor& keypoints,
-                           const ::tensorflow::Tensor& masks,
-                           float mask_threshold,
-                           const std::map<int, std::string>& label_map,
-                           std::vector<Detection>* detections) {
+absl::Status TensorsToDetections(const ::tensorflow::Tensor& num_detections,
+                                 const ::tensorflow::Tensor& boxes,
+                                 const ::tensorflow::Tensor& scores,
+                                 const ::tensorflow::Tensor& classes,
+                                 const ::tensorflow::Tensor& keypoints,
+                                 const ::tensorflow::Tensor& masks,
+                                 float mask_threshold,
+                                 const std::map<int, std::string>& label_map,
+                                 std::vector<Detection>* detections) {
   int num_boxes = -1;
   if (num_detections.dims() > 0 && num_detections.dim_size(0) != 0) {
     if (num_detections.dtype() != tf::DT_INT32) {

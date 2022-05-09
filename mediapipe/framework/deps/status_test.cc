@@ -30,7 +30,7 @@ TEST(Status, OK) {
 }
 
 TEST(DeathStatus, CheckOK) {
-  Status status(absl::StatusCode::kInvalidArgument, "Invalid");
+  absl::Status status(absl::StatusCode::kInvalidArgument, "Invalid");
   ASSERT_DEATH(MEDIAPIPE_CHECK_OK(status), "Invalid");
 }
 

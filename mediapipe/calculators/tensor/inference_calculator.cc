@@ -65,7 +65,7 @@ absl::StatusOr<Packet<TfLiteModelPtr>> InferenceCalculator::GetModelAsPacket(
     return TfLiteModelLoader::LoadFromPath(options.model_path());
   }
   if (!kSideInModel(cc).IsEmpty()) return kSideInModel(cc);
-  return absl::Status(mediapipe::StatusCode::kNotFound,
+  return absl::Status(absl::StatusCode::kNotFound,
                       "Must specify TFLite model as path or loaded model.");
 }
 

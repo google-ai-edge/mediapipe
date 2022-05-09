@@ -670,7 +670,7 @@ absl::Status GraphProfiler::CaptureProfile(
   previous_log_end_time_ = end_time;
 
   // Record the latest CalculatorProfiles.
-  Status status;
+  absl::Status status;
   std::vector<CalculatorProfile> profiles;
   status.Update(GetCalculatorProfiles(&profiles));
   for (CalculatorProfile& p : profiles) {

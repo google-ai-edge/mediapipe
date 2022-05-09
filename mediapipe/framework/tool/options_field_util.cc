@@ -268,7 +268,7 @@ FieldData SerializeProtobufAny(const FieldData& data) {
 }
 
 // Returns the field index of an extension type in a repeated field.
-StatusOr<int> FindExtensionIndex(const FieldData& message_data,
+absl::StatusOr<int> FindExtensionIndex(const FieldData& message_data,
                                  FieldPathEntry* entry) {
   if (entry->field == nullptr || !IsProtobufAny(entry->field)) {
     return -1;
@@ -447,7 +447,7 @@ absl::Status GetNodeOptions(const FieldData& message_data,
   std::string parent_type = options_field_util::ParseTypeUrl(
       std::string(message_data.message_value().type_url()));
   FieldPath path;
-  Status status;
+  absl::Status status;
   path = GetExtensionPath(parent_type, extension_type, kOptionsName, false);
   status = GetField(path, message_data, result);
   if (status.ok()) {
@@ -467,7 +467,7 @@ absl::Status GetGraphOptions(const FieldData& message_data,
   std::string parent_type = options_field_util::ParseTypeUrl(
       std::string(message_data.message_value().type_url()));
   FieldPath path;
-  Status status;
+  absl::Status status;
   path = GetExtensionPath(parent_type, extension_type, kOptionsName, false);
   status = GetField(path, message_data, result);
   if (status.ok()) {

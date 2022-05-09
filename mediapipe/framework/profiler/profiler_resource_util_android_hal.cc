@@ -2,7 +2,7 @@
 
 namespace mediapipe {
 
-StatusOr<std::string> GetDefaultTraceLogDirectory() {
+absl::StatusOr<std::string> GetDefaultTraceLogDirectory() {
   return "/data/local/tmp";
 }
 
