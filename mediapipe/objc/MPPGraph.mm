@@ -108,6 +108,7 @@ void CallFrameDelegate(void* wrapperVoid, const std::string& streamName,
   MPPGraph* wrapper = (__bridge MPPGraph*)wrapperVoid;
   @autoreleasepool {
     if (packetType == MPPPacketTypeRaw) {
+      wrapper->_framesInFlight--;
       [wrapper.delegate mediapipeGraph:wrapper
                      didOutputPacket:packet
                           fromStream:streamName];
