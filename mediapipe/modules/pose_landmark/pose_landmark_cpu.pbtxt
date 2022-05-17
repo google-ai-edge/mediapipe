@@ -130,10 +130,10 @@ node {
   }
 }
 
-# added by Akash
+# added by Akash for Image Flip Calculator
 
 node {
-  calculator: "AkashImageFlipCalculator"
+  calculator: "CustomImageFlipCalculator"
   input_stream: "IMAGE:image1"
   output_stream: "IMAGE:image"
 } 

@@ -59,7 +59,7 @@ using GpuBuffer = mediapipe::GpuBuffer;
 //     }
 //   }
 // }
-class AkashImageFlipCalculator : public Node {
+class CustomImageFlipCalculator : public Node {
  public:
   static constexpr Input<ImageFrame> kIn{"IMAGE"};
   static constexpr Output<ImageFrame> kOut{"IMAGE"};
@@ -125,7 +125,21 @@ class AkashImageFlipCalculator : public Node {
         input_mat = formats::MatView(&input);
         
         format = input.Format();
-            // code to flip
+        /*cv::Rect myROI(0, 0, output_width/2, output_height/2);
+        cv::Mat croppedRef(input_mat, myROI);
+        cv::Mat cropped;
+        croppedRef.copyTo(cropped);
+        cv::Mat imgPanel(480, 640, CV_8UC1, Scalar(0));
+        Mat imgPanelRoi(imgPanel, Rect(0, 0, imgSrc.cols, imgSrc.rows));
+        imgSrc.copyTo(imgPanelRoi);
+        cv::resize(cropped, input_mat, cv::Size(), 2, 2);
+        std::cout<<"size>>>>"<<input_mat.size;*/
+        
+
+
+
+            
+        // code to flip
         cv::flip(input_mat, flipped_mat, 1);
 // Use Flip code 0 to flip vertically
 
@@ -159,7 +173,7 @@ class AkashImageFlipCalculator : public Node {
   mediapipe::GlCalculatorHelper gpu_helper_;
 #endif  // !MEDIAPIPE_DISABLE_GPU
 };
-MEDIAPIPE_REGISTER_NODE(AkashImageFlipCalculator);
+MEDIAPIPE_REGISTER_NODE(CustomImageFlipCalculator);
 
 }  // namespace api2
 }  // namespace mediapipe
