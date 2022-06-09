@@ -132,7 +132,7 @@ class AnnotationRenderer {
   void WhitenTeeth(const RenderData &render_data);
 
   //
-  void smooth_face(const RenderData &render_data);
+  void SmoothFace(const RenderData &render_data);
 
   //
   cv::Mat FormFacePartMask(std::vector<int> orderList, const RenderData &render_data);

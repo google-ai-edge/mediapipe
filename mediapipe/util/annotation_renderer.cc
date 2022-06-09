@@ -108,7 +108,7 @@ void AnnotationRenderer::RenderDataOnImage(const RenderData &render_data)
   if (render_data.render_annotations().size()){
     DrawLipstick(render_data);
     WhitenTeeth(render_data);
-//    smooth_face(render_data);
+//    SmoothFace(render_data);
   }
   else
   {
@@ -288,7 +288,7 @@ cv::Mat AnnotationRenderer::predict_forehead_mask(const RenderData &render_data,
   return new_skin_mask;
 }
 
-void AnnotationRenderer::smooth_face(const RenderData &render_data)
+void AnnotationRenderer::SmoothFace(const RenderData &render_data)
 {
 
   cv::Mat not_full_face = cv::Mat(FormFacePartMask(FACE_OVAL, render_data)) +
