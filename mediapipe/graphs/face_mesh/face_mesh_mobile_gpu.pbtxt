@@ -44,13 +44,6 @@ node {
   }
 }
 
-# Defines side packets for further use in the graph.
-node {
-  calculator: "GpuBufferToImageFrameCalculator"
-  input_stream: "throttled_input_video"
-  output_stream: "throttled_input_video_cpu"
-}
-
 # Subgraph that detects faces and corresponding landmarks.
 node {
   calculator: "FaceLandmarkFrontGpu"
@@ -65,17 +58,10 @@ node {
 
 # Subgraph that renders face-landmark annotation onto the input image.
 node {
-  calculator: "FaceRendererCpu"
-  input_stream: "IMAGE:throttled_input_video_cpu"
+  calculator: "FaceRendererGpu"
+  input_stream: "IMAGE:throttled_input_video"
   input_stream: "LANDMARKS:multi_face_landmarks"
   input_stream: "NORM_RECTS:face_rects_from_landmarks"
   input_stream: "DETECTIONS:face_detections"
-  output_stream: "IMAGE:output_video_cpu"
-}
-
-# Defines side packets for further use in the graph.
-node {
-  calculator: "ImageFrameToGpuBufferCalculator"
-  input_stream: "output_video_cpu"
-  output_stream: "output_video"
+  output_stream: "IMAGE:output_video"
 }

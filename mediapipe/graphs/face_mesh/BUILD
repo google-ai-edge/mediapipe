@@ -55,8 +55,10 @@ cc_library(
 cc_library(
     name = "mobile_calculators",
     deps = [
+        "//mediapipe/gpu:gpu_buffer_to_image_frame_calculator",
+    	"//mediapipe/gpu:image_frame_to_gpu_buffer_calculator",
         "//mediapipe/calculators/core:flow_limiter_calculator",
-        "//mediapipe/graphs/face_mesh/subgraphs:face_renderer_gpu",
+        "//mediapipe/graphs/face_mesh/subgraphs:face_renderer_cpu",
         "//mediapipe/modules/face_landmark:face_landmark_front_gpu",
     ],
 )

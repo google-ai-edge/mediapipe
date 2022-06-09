@@ -125,6 +125,27 @@ class AnnotationRenderer {
   // Computes the font scale from font_face, size and thickness.
   double ComputeFontScale(int font_face, int font_size, int thickness);
 
+  // Draw lipstick on image based on facemensh points
+  void DrawLipstick(const RenderData& render_data);
+
+  //
+  void WhitenTeeth(const RenderData &render_data);
+
+  //
+  void smooth_face(const RenderData &render_data);
+
+  //
+  cv::Mat FormFacePartMask(std::vector<int> orderList, const RenderData &render_data);
+
+  //
+  cv::Mat matmul32F(cv::Mat& bgr, cv::Mat& mask);
+
+  //
+  cv::Mat predict_forehead_mask(const RenderData &render_data, double face_box_min_y);
+
+  //
+  std::tuple<double, double, double, double> GetFaceBox(const RenderData &render_data);
+
   // Width and Height of the image (in pixels).
   int image_width_ = -1;
   int image_height_ = -1;
