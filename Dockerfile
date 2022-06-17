@@ -50,6 +50,7 @@ RUN pip3 install --upgrade setuptools
 RUN pip3 install wheel
 RUN pip3 install future
 RUN pip3 install six==1.14.0
+RUN pip3 install protobuf==3.6.1
 RUN pip3 install tensorflow==1.14.0
 RUN pip3 install tf_slim
 
