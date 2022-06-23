@@ -28,7 +28,7 @@ from mediapipe.framework.formats import landmark_pb2
 
 _PRESENCE_THRESHOLD = 0.5
 _VISIBILITY_THRESHOLD = 0.5
-_RGB_CHANNELS = 3
+_BGR_CHANNELS = 3
 
 WHITE_COLOR = (224, 224, 224)
 BLACK_COLOR = (0, 0, 0)
@@ -74,7 +74,7 @@ def draw_detection(
   """Draws the detction bounding box and keypoints on the image.
 
   Args:
-    image: A three channel RGB image represented as numpy ndarray.
+    image: A three channel BGR image represented as numpy ndarray.
     detection: A detection proto message to be annotated on the image.
     keypoint_drawing_spec: A DrawingSpec object that specifies the keypoints'
       drawing settings such as color, line thickness, and circle radius.
@@ -83,13 +83,13 @@ def draw_detection(
 
   Raises:
     ValueError: If one of the followings:
-      a) If the input image is not three channel RGB.
+      a) If the input image is not three channel BGR.
       b) If the location data is not relative data.
   """
   if not detection.location_data:
     return
-  if image.shape[2] != _RGB_CHANNELS:
-    raise ValueError('Input image must contain three channel rgb data.')
+  if image.shape[2] != _BGR_CHANNELS:
+    raise ValueError('Input image must contain three channel bgr data.')
   image_rows, image_cols, _ = image.shape
 
   location = detection.location_data
@@ -130,7 +130,7 @@ def draw_landmarks(
   """Draws the landmarks and the connections on the image.
 
   Args:
-    image: A three channel RGB image represented as numpy ndarray.
+    image: A three channel BGR image represented as numpy ndarray.
     landmark_list: A normalized landmark list proto message to be annotated on
       the image.
     connections: A list of landmark index tuples that specifies how landmarks to
@@ -147,13 +147,13 @@ def draw_landmarks(
 
   Raises:
     ValueError: If one of the followings:
-      a) If the input image is not three channel RGB.
+      a) If the input image is not three channel BGR.
       b) If any connetions contain invalid landmark index.
   """
   if not landmark_list:
     return
-  if image.shape[2] != _RGB_CHANNELS:
-    raise ValueError('Input image must contain three channel rgb data.')
+  if image.shape[2] != _BGR_CHANNELS:
+    raise ValueError('Input image must contain three channel bgr data.')
   image_rows, image_cols, _ = image.shape
   idx_to_coordinates = {}
   for idx, landmark in enumerate(landmark_list.landmark):
@@ -208,7 +208,7 @@ def draw_axis(
   """Draws the 3D axis on the image.
 
   Args:
-    image: A three channel RGB image represented as numpy ndarray.
+    image: A three channel BGR image represented as numpy ndarray.
     rotation: Rotation matrix from object to camera coordinate frame.
     translation: Translation vector from object to camera coordinate frame.
     focal_length: camera focal length along x and y directions.
@@ -219,10 +219,10 @@ def draw_axis(
 
   Raises:
     ValueError: If one of the followings:
-      a) If the input image is not three channel RGB.
+      a) If the input image is not three channel BGR.
   """
-  if image.shape[2] != _RGB_CHANNELS:
-    raise ValueError('Input image must contain three channel rgb data.')
+  if image.shape[2] != _BGR_CHANNELS:
+    raise ValueError('Input image must contain three channel bgr data.')
   image_rows, image_cols, _ = image.shape
   # Create axis points in camera coordinate frame.
   axis_world = np.float32([[0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1]])

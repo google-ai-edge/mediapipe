@@ -400,12 +400,20 @@ TEST(MediaSequenceTest, RoundTripBBoxEmbedding) {
   tensorflow::SequenceExample sequence;
   std::vector<std::vector<std::string>> embeddings = {
       {"embedding00", "embedding01"}, {"embedding10", "embedding11"}};
+  std::vector<std::vector<float>> confidences = {{0.7, 0.8}, {0.9, 0.95}};
   for (int i = 0; i < embeddings.size(); ++i) {
     AddBBoxEmbeddingEncoded("GT_KEY", embeddings[i], &sequence);
     ASSERT_EQ(GetBBoxEmbeddingEncodedSize("GT_KEY", sequence), i + 1);
     const auto& sequence_embeddings =
         GetBBoxEmbeddingEncodedAt("GT_KEY", sequence, i);
     EXPECT_THAT(sequence_embeddings, testing::ElementsAreArray(embeddings[i]));
+
+    AddBBoxEmbeddingConfidence("GT_KEY", confidences[i], &sequence);
+    ASSERT_EQ(GetBBoxEmbeddingConfidenceSize("GT_KEY", sequence), i + 1);
+    const auto& sequence_confidences =
+        GetBBoxEmbeddingConfidenceAt("GT_KEY", sequence, i);
+    EXPECT_THAT(sequence_confidences,
+                testing::ElementsAreArray(confidences[i]));
   }
 }
 

@@ -19,7 +19,7 @@ package mediapipe.autoflip;
 import "mediapipe/examples/desktop/autoflip/quality/kinematic_path_solver.proto";
 import "mediapipe/framework/calculator.proto";
 
-// NextTag: 19
+// NextTag: 21
 message ContentZoomingCalculatorOptions {
   extend mediapipe.CalculatorOptions {
     optional ContentZoomingCalculatorOptions ext = 313091992;
@@ -45,12 +45,17 @@ message ContentZoomingCalculatorOptions {
     optional int64 height = 2;
   }
   optional Size target_size = 8;
-  // Amount to shift an input detection as a ratio of the size (positive:
+
+  // Amount to shift an input detection, as a ratio of its size (positive:
   // down/right, negative: up/left).  Use a negative value to increase padding
   // above/left of an object, positive to increase padding below/right of an
-  // object.
+  // object. (Applies to one side only)
   optional float detection_shift_vertical = 11 [default = 0.0];
   optional float detection_shift_horizontal = 12 [default = 0.0];
+  // Amount to pad around an input detection, as a ratio of its size.
+  // (Applies to both sides)
+  optional float extra_vertical_padding = 19 [default = 0.0];
+  optional float extra_horizontal_padding = 20 [default = 0.0];
 
   // Defines the smallest value in degrees the camera is permitted to zoom.
   optional float max_zoom_value_deg = 13 [default = 35];

@@ -168,6 +168,8 @@ void OutputStreamManager::PropagateUpdatesToMirrors(
     if (next_timestamp_bound != Timestamp::Unset()) {
       absl::MutexLock lock(&stream_mutex_);
       next_timestamp_bound_ = next_timestamp_bound;
+      VLOG(3) << "Next timestamp bound for output " << output_stream_spec_.name
+              << " is " << next_timestamp_bound_;
     }
   }
   std::list<Packet>* packets_to_propagate = output_stream_shard->OutputQueue();

@@ -38,6 +38,6 @@ message DetectionLabelIdToTextCalculatorOptions {
   // output detections.
   optional bool keep_label_id = 3;
 
-  // Label map.
-  optional LabelMap label_map = 4;
+  // Identifying information for each classification label.
+  map<int64, LabelMapItem> label_items = 4;
 }

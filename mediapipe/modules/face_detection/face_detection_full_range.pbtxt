@@ -1,0 +1,54 @@
+# MediaPipe graph to detect faces. (CPU input and inference by default.)
+#
+# It is required that "face_detection_full_range.tflite" is available at
+# "mediapipe/modules/face_detection/face_detection_full_range.tflite"
+# path during execution.
+#
+# EXAMPLE:
+#   node {
+#     calculator: "FaceDetectionShortRange"
+#     input_stream: "IMAGE:image_frame"
+#     output_stream: "DETECTIONS:face_detections"
+#   }
+
+type: "FaceDetectionFullRange"
+
+# The input image, either ImageFrame, GpuBuffer, or (multi-backend) Image.
+input_stream: "IMAGE:image"
+
+# ROI (region of interest) within the given image where faces should be
+# detected. (NormalizedRect)
+input_stream: "ROI:roi"
+
+# Detected faces. (std::vector<Detection>)
+output_stream: "DETECTIONS:detections"
+
+graph_options: {
+  [type.googleapis.com/mediapipe.FaceDetectionOptions] {}
+}
+
+node {
+  calculator: "FaceDetection"
+  input_stream: "IMAGE:image"
+  input_stream: "ROI:roi"
+  output_stream: "DETECTIONS:detections"
+  node_options: {
+    [type.googleapis.com/mediapipe.FaceDetectionOptions] {
+      model_path: "mediapipe/modules/face_detection/face_detection_full_range_sparse.tflite"
+      tensor_width: 192
+      tensor_height: 192
+
+      num_layers: 1
+      strides: 4
+      interpolated_scale_aspect_ratio: 0.0
+
+      num_boxes: 2304
+      x_scale: 192.0
+      y_scale: 192.0
+      h_scale: 192.0
+      w_scale: 192.0
+      min_score_thresh: 0.6
+    }
+  }
+  option_value: "OPTIONS:options"
+}

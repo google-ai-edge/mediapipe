@@ -300,17 +300,26 @@ class TensorFlowInferenceCalculator : public CalculatorBase {
     RET_CHECK(options_.batch_size() == 1 ||
               options_.recurrent_tag_pair().empty())
         << "To use recurrent_tag_pairs, batch_size must be 1.";
+
+    // Helper for StrJoin. Prints key (tag) of map<string, string>.
+    auto TagFormatter =
+        absl::PairFormatter(absl::StreamFormatter(), "",
+                            [](std::string* out, const std::string& second) {});
+
     for (const auto& tag_pair : options_.recurrent_tag_pair()) {
       const std::vector<std::string> tags = absl::StrSplit(tag_pair, ':');
       RET_CHECK_EQ(tags.size(), 2) << "recurrent_tag_pair must be a colon "
                                       "separated string with two components: "
                                    << tag_pair;
+
       RET_CHECK(mediapipe::ContainsKey(tag_to_tensor_map_, tags[0]))
           << "Can't find tag '" << tags[0] << "' in signature "
-          << options_.signature_name();
+          << options_.signature_name() << "; instead found tags "
+          << absl::StrJoin(tag_to_tensor_map_, ", ", TagFormatter);
       RET_CHECK(mediapipe::ContainsKey(tag_to_tensor_map_, tags[1]))
           << "Can't find tag '" << tags[1] << "' in signature "
-          << options_.signature_name();
+          << options_.signature_name() << " ; instead found tags "
+          << absl::StrJoin(tag_to_tensor_map_, ", ", TagFormatter);
       recurrent_feed_tags_.insert(tags[0]);
       recurrent_fetch_tags_to_feed_tags_[tags[1]] = tags[0];
     }
@@ -319,12 +328,14 @@ class TensorFlowInferenceCalculator : public CalculatorBase {
     for (const std::string& tag : cc->Inputs().GetTags()) {
       RET_CHECK(mediapipe::ContainsKey(tag_to_tensor_map_, tag))
           << "Can't find tag '" << tag << "' in signature "
-          << options_.signature_name();
+          << options_.signature_name() << "; instead found tags "
+          << absl::StrJoin(tag_to_tensor_map_, ", ", TagFormatter);
     }
     for (const std::string& tag : cc->Outputs().GetTags()) {
       RET_CHECK(mediapipe::ContainsKey(tag_to_tensor_map_, tag))
           << "Can't find tag '" << tag << "' in signature "
-          << options_.signature_name();
+          << options_.signature_name() << "; instead found tags "
+          << absl::StrJoin(tag_to_tensor_map_, ", ", TagFormatter);
     }
 
     {

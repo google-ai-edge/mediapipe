@@ -221,8 +221,7 @@ public class GlSurfaceViewRenderer implements GLSurfaceView.Renderer {
       Matrix.setIdentityM(textureTransformMatrix, 0 /* offset */);
     }
     TextureFrame oldFrame = nextFrame.getAndSet(frame);
-    if (oldFrame != null
-        && (frame == null || (oldFrame.getTextureName() != frame.getTextureName()))) {
+    if (oldFrame != null && oldFrame != frame) {
       oldFrame.release();
     }
     surfaceTexture = null;

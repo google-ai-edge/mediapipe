@@ -60,6 +60,7 @@
 #include "mediapipe/framework/tool/sink.h"
 #include "mediapipe/framework/tool/status_util.h"
 #include "mediapipe/framework/type_map.h"
+#include "mediapipe/gpu/graph_support.h"
 
 namespace mediapipe {
 
@@ -2057,6 +2058,26 @@ TEST(CalculatorGraph, HandlersRun) {
                    input_side_packets.at("unavailable_input_counter1")));
   EXPECT_EQ(1, *GetFromUniquePtr<int>(
                    input_side_packets.at("unavailable_input_counter2")));
+}
+
+TEST(CalculatorGraph, CalculatorGraphConfigCopyElision) {
+  CalculatorGraph graph;
+  CalculatorGraphConfig config =
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
+        input_stream: 'in'
+        node {
+          calculator: 'PassThroughCalculator'
+          input_stream: 'in'
+          output_stream: 'out'
+        }
+      )pb");
+  // config is consumed and never copied, which avoid copying data.
+  MP_ASSERT_OK(graph.Initialize(std::move(config)));
+  MP_EXPECT_OK(graph.StartRun({}));
+  MP_EXPECT_OK(
+      graph.AddPacketToInputStream("in", MakePacket<int>(1).At(Timestamp(1))));
+  MP_EXPECT_OK(graph.CloseInputStream("in"));
+  MP_EXPECT_OK(graph.WaitUntilDone());
 }
 
 // Test that calling SetOffset() in Calculator::Process() results in the

@@ -120,7 +120,7 @@ class OpenCvVideoDecoderCalculator : public CalculatorBase {
     // back. To get correct image format, we read the first frame from the video
     // and get the number of channels.
     cv::Mat frame;
-    cap_->read(frame);
+    ReadFrame(frame);
     if (frame.empty()) {
       return mediapipe::InvalidArgumentErrorBuilder(MEDIAPIPE_LOC)
              << "Fail to read any frames from the video file at "
@@ -193,13 +193,13 @@ class OpenCvVideoDecoderCalculator : public CalculatorBase {
     Timestamp timestamp(cap_->get(cv::CAP_PROP_POS_MSEC) * 1000);
     if (format_ == ImageFormat::GRAY8) {
       cv::Mat frame = formats::MatView(image_frame.get());
-      cap_->read(frame);
+      ReadFrame(frame);
       if (frame.empty()) {
         return tool::StatusStop();
       }
     } else {
       cv::Mat tmp_frame;
-      cap_->read(tmp_frame);
+      ReadFrame(tmp_frame);
       if (tmp_frame.empty()) {
         return tool::StatusStop();
       }
@@ -232,6 +232,14 @@ class OpenCvVideoDecoderCalculator : public CalculatorBase {
                    << ").";
     }
     return absl::OkStatus();
+  }
+
+  // Sometimes an empty frame is returned even though there are more frames.
+  void ReadFrame(cv::Mat& frame) {
+    cap_->read(frame);
+    if (frame.empty()) {
+      cap_->read(frame);  // Try again.
+    }
   }
 
  private:

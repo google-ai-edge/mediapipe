@@ -23,10 +23,12 @@
 #include "mediapipe/framework/port/integral_types.h"
 #include "mediapipe/framework/port/proto_ns.h"
 #include "mediapipe/framework/port/status.h"
+#include "mediapipe/framework/tool/field_data.pb.h"
 
 namespace mediapipe {
 namespace tool {
 
+// TODO: Replace this class with a namespace following Google style.
 class ProtoUtilLite {
  public:
   // Defines field types and tag formats.
@@ -89,6 +91,23 @@ class ProtoUtilLite {
   static absl::Status Deserialize(const std::vector<FieldValue>& field_values,
                                   FieldType field_type,
                                   std::vector<std::string>* result);
+
+  // Write a protobuf field value from a typed FieldData value.
+  static absl::Status WriteValue(const mediapipe::FieldData& value,
+                                 FieldType field_type,
+                                 std::string* field_bytes);
+
+  // Read a protobuf field value into a typed FieldData value.
+  static absl::Status ReadValue(absl::string_view field_bytes,
+                                FieldType field_type,
+                                absl::string_view message_type,
+                                mediapipe::FieldData* result);
+
+  // Returns the protobuf type-url for a protobuf type-name.
+  static std::string TypeUrl(absl::string_view type_name);
+
+  // Returns the protobuf type-name for a protobuf type-url.
+  static std::string ParseTypeUrl(absl::string_view type_url);
 };
 
 }  // namespace tool

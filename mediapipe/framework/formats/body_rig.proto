@@ -19,7 +19,9 @@ package mediapipe;
 // Joint of a 3D human model (e.g. elbow, knee, wrist). Contains 3D rotation of
 // the joint and its visibility.
 message Joint {
-  // Joint rotation in 6D contineous representation.
+  // Joint rotation in 6D contineous representation ordered as
+  // [a1, b1, a2, b2, a3, b3].
+  //
   // Such representation is more sutable for NN model training and can be
   // converted to quaternions and Euler angles if needed. Details can be found
   // in https://arxiv.org/abs/1812.07035.

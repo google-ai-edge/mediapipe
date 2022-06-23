@@ -21,7 +21,6 @@
 #include <memory>
 #include <string>
 #include <type_traits>
-#include <typeinfo>
 
 #include "absl/base/macros.h"
 #include "absl/memory/memory.h"
@@ -69,7 +68,7 @@ absl::StatusOr<Packet> PacketFromDynamicProto(const std::string& type_name,
 // The preferred method of creating a Packet is with MakePacket<T>().
 // The Packet typically owns the object that it contains, but
 // PointToForeign allows a Packet to be constructed which does not
-// own it's data.
+// own its data.
 //
 // This class is thread compatible.
 class Packet {
@@ -180,7 +179,7 @@ class Packet {
   // Returns an error if the packet does not contain data of type T.
   template <typename T>
   absl::Status ValidateAsType() const {
-    return ValidateAsType(tool::TypeInfo::Get<T>());
+    return ValidateAsType(kTypeId<T>);
   }
 
   // Returns an error if the packet is not an instance of
@@ -189,11 +188,7 @@ class Packet {
 
   // Get the type id for the underlying type stored in the Packet.
   // Crashes if IsEmpty() == true.
-  size_t GetTypeId() const { return GetTypeInfo().hash_code(); }
-
-  // Get the type info for the underlying type stored in the Packet.
-  // Crashes if IsEmpty() == true.
-  const tool::TypeInfo& GetTypeInfo() const;
+  TypeId GetTypeId() const;
 
   // Returns the timestamp.
   class Timestamp Timestamp() const;
@@ -225,7 +220,7 @@ class Packet {
   packet_internal::GetHolderShared(Packet&& packet);
 
   friend class PacketType;
-  absl::Status ValidateAsType(const tool::TypeInfo& type_info) const;
+  absl::Status ValidateAsType(TypeId type_id) const;
 
   std::shared_ptr<packet_internal::HolderBase> holder_;
   class Timestamp timestamp_;
@@ -369,7 +364,7 @@ class HolderBase {
   virtual ~HolderBase();
   template <typename T>
   bool PayloadIsOfType() const {
-    return GetTypeInfo().hash_code() == tool::GetTypeHash<T>();
+    return GetTypeId() == kTypeId<T>;
   }
   // Returns a printable string identifying the type stored in the holder.
   virtual const std::string DebugTypeName() const = 0;
@@ -377,7 +372,7 @@ class HolderBase {
   // empty string.
   virtual const std::string RegisteredTypeName() const = 0;
   // Get the type id of the underlying data type.
-  virtual const tool::TypeInfo& GetTypeInfo() const = 0;
+  virtual TypeId GetTypeId() const = 0;
   // Downcasts this to Holder<T>.  Returns nullptr if deserialization
   // failed or if the requested type is not what is stored.
   template <typename T>
@@ -428,7 +423,7 @@ StatusOr<std::vector<const proto_ns::MessageLite*>>
 ConvertToVectorOfProtoMessageLitePtrs(const T* data,
                                       /*is_proto_vector=*/std::false_type) {
   return absl::InvalidArgumentError(absl::StrCat(
-      "The Packet stores \"", tool::TypeInfo::Get<T>().name(), "\"",
+      "The Packet stores \"", kTypeId<T>.name(), "\"",
       "which is not convertible to vector<proto_ns::MessageLite*>."));
 }
 
@@ -510,9 +505,7 @@ class Holder : public HolderBase {
     HolderSupport<T>::EnsureStaticInit();
     return *ptr_;
   }
-  const tool::TypeInfo& GetTypeInfo() const final {
-    return tool::TypeInfo::Get<T>();
-  }
+  TypeId GetTypeId() const final { return kTypeId<T>; }
   // Releases the underlying data pointer and transfers the ownership to a
   // unique pointer.
   // This method is dangerous and is only used by Packet::Consume() if the
@@ -748,9 +741,9 @@ inline Packet& Packet::operator=(Packet&& packet) {
 
 inline bool Packet::IsEmpty() const { return holder_ == nullptr; }
 
-inline const tool::TypeInfo& Packet::GetTypeInfo() const {
+inline TypeId Packet::GetTypeId() const {
   CHECK(holder_);
-  return holder_->GetTypeInfo();
+  return holder_->GetTypeId();
 }
 
 template <typename T>

@@ -32,7 +32,11 @@ message SpectrogramCalculatorOptions {
 
   // Duration of overlap between adjacent windows.
   // Hence, frame_rate = 1/(frame_duration_seconds - frame_overlap_seconds).
-  // Required that 0 <= frame_overlap_seconds <  frame_duration_seconds.
+  // Note the frame_rate here is not the MediaPipe packet rate, the frame here
+  // means each Fourier transform analysis waveform frame, the output MediaPipe
+  // packet rate will the the same as input, if frame rate is lower than input
+  // packet rate, will result in intermittent empty output packets. Required
+  // that 0 <= frame_overlap_seconds <  frame_duration_seconds.
   optional double frame_overlap_seconds = 2 [default = 0.0];
 
   // Whether to pad the final packet with zeros.  If true, guarantees that
@@ -42,6 +46,11 @@ message SpectrogramCalculatorOptions {
 
   // Output value type can be squared-magnitude, linear-magnitude,
   // deciBels (dB, = 20*log10(linear_magnitude)), or std::complex.
+  // Their relationship:
+  // COMPLEX c = Re + Im*i;
+  // SQUARED_MAGNITUDE = Re^2 + Im^2;
+  // LINEAR_MAGNITUDE = sqrt(SQUARED_MAGNITUDE);
+  // DECIBELS = 20*log10(LINEAR_MAGNITUDE) = 10*log10(SQUARED_MAGNITUDE);
   enum OutputType {
     SQUARED_MAGNITUDE = 0;
     LINEAR_MAGNITUDE = 1;

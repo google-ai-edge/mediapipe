@@ -74,7 +74,7 @@ node {
 # Puts the single set of smoothed landmarks back into a collection to simplify
 # passing the result into the `FaceGeometryFromLandmarks` subgraph.
 node {
-  calculator: "ConcatenateLandmarListVectorCalculator"
+  calculator: "ConcatenateNormalizedLandmarkListVectorCalculator"
   input_stream: "smoothed_face_landmarks"
   output_stream: "multi_smoothed_face_landmarks"
 }

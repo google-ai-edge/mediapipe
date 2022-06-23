@@ -38,6 +38,9 @@
 
 namespace mediapipe {
 
+using ::testing::AllOf;
+using ::testing::HasSubstr;
+
 namespace tf = ::tensorflow;
 
 namespace {
@@ -199,8 +202,8 @@ TEST_F(TensorflowInferenceCalculatorTest, GetComputed) {
   auto run_status = runner_->Run();
   ASSERT_FALSE(run_status.ok());
   EXPECT_THAT(run_status.ToString(),
-              testing::HasSubstr("TensorFlowInferenceCalculator"));
-  EXPECT_THAT(run_status.ToString(), testing::HasSubstr("Tag B"));
+              HasSubstr("TensorFlowInferenceCalculator"));
+  EXPECT_THAT(run_status.ToString(), HasSubstr("Tag B"));
 }
 
 TEST_F(TensorflowInferenceCalculatorTest, GetComputed_MaxInFlight) {
@@ -238,8 +241,8 @@ TEST_F(TensorflowInferenceCalculatorTest, GetComputed_MaxInFlight) {
   auto run_status = runner_->Run();
   ASSERT_FALSE(run_status.ok());
   EXPECT_THAT(run_status.ToString(),
-              testing::HasSubstr("TensorFlowInferenceCalculator"));
-  EXPECT_THAT(run_status.ToString(), testing::HasSubstr("Tag B"));
+              HasSubstr("TensorFlowInferenceCalculator"));
+  EXPECT_THAT(run_status.ToString(), HasSubstr("Tag B"));
 }
 
 TEST_F(TensorflowInferenceCalculatorTest, BadTag) {
@@ -255,7 +258,12 @@ TEST_F(TensorflowInferenceCalculatorTest, BadTag) {
 
   runner_ = absl::make_unique<CalculatorRunner>(config);
   AddSessionInputSidePacket();
-  ASSERT_FALSE(runner_->Run().ok());
+  absl::Status status = runner_->Run();
+  ASSERT_FALSE(status.ok());
+  EXPECT_THAT(
+      status.message(),
+      AllOf(HasSubstr("Can't find tag 'BAD' in signature"),
+            HasSubstr("instead found tags A, B, EXPENSIVE, MULTIPLIED")));
 }
 
 TEST_F(TensorflowInferenceCalculatorTest, GetMultiBatchComputed) {
@@ -740,7 +748,7 @@ TEST_F(TensorflowInferenceCalculatorTest, BatchedInputTooBigBatch) {
   ASSERT_FALSE(status.ok());
   EXPECT_THAT(
       status.message(),
-      ::testing::HasSubstr(
+      HasSubstr(
           "has more packets than batch capacity. batch_size: 2 packets: 3"));
 }
 

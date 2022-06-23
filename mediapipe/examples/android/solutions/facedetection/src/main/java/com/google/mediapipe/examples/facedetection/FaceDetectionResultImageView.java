@@ -23,9 +23,9 @@ import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Paint;
 import androidx.appcompat.widget.AppCompatImageView;
-import com.google.mediapipe.formats.proto.DetectionProto.Detection;
 import com.google.mediapipe.solutions.facedetection.FaceDetectionResult;
 import com.google.mediapipe.solutions.facedetection.FaceKeypoint;
+import com.google.mediapipe.formats.proto.DetectionProto.Detection;
 
 /** An ImageView implementation for displaying {@link FaceDetectionResult}. */
 public class FaceDetectionResultImageView extends AppCompatImageView {

@@ -1,0 +1,59 @@
+// Copyright 2020 The MediaPipe Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto2";
+
+package mediapipe;
+
+import "mediapipe/calculators/tensor/inference_calculator.proto";
+import "mediapipe/framework/calculator_options.proto";
+import "mediapipe/gpu/gpu_origin.proto";
+
+option java_package = "com.google.mediapipe.modules.facedetection";
+option java_outer_classname = "FaceDetectionFrontProto";
+
+// Defines the face geometry pipeline estimation result format.
+message FaceDetectionOptions {
+  extend mediapipe.CalculatorOptions {
+    optional FaceDetectionOptions ext = 374290926;
+  }
+  // Path to the TF Lite model (ex: /path/to/modelname.tflite).
+  optional string model_path = 1;
+
+  // The coordinate origin corner, either CONVENTIONAL or TOP_LEFT.
+  optional GpuOrigin.Mode gpu_origin = 11;
+
+  // Size of the tensor provided to the face-detection model.
+  optional int32 tensor_width = 21;
+  optional int32 tensor_height = 22;
+  // Number of output feature maps to generate the anchors on.
+  optional int32 num_layers = 23;
+  // Strides of each output feature maps.
+  repeated int32 strides = 24;
+  // The aspect ratio of the interpolated anchor from the SsdAnchorsCalculator.
+  optional float interpolated_scale_aspect_ratio = 25 [default = 1.0];
+
+  // The number of output boxes predicted by the detection model.
+  optional int32 num_boxes = 31;
+  // Parameters for decoding SSD detection model.
+  optional float x_scale = 32 [default = 0.0];
+  optional float y_scale = 33 [default = 0.0];
+  optional float w_scale = 34 [default = 0.0];
+  optional float h_scale = 35 [default = 0.0];
+  // Score threshold for perserving from the SSD detections.
+  optional float min_score_thresh = 36;
+
+  // TfLite delegate to run inference.
+  optional InferenceCalculatorOptions.Delegate delegate = 6;
+}

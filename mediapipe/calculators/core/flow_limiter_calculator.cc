@@ -32,8 +32,8 @@ constexpr char kOptionsTag[] = "OPTIONS";
 // FlowLimiterCalculator is used to limit the number of frames in flight
 // by dropping input frames when necessary.
 //
-// The input stream "FINISH" is used to signal the FlowLimiterCalculator
-// when a frame is finished processing.  Either a non-empty "FINISH" packet
+// The input stream "FINISHED" is used to signal the FlowLimiterCalculator
+// when a frame is finished processing.  Either a non-empty "FINISHED" packet
 // or a timestamp bound should be received for each processed frame.
 //
 // The combination of `max_in_flight: 1` and `max_in_queue: 1` generally gives

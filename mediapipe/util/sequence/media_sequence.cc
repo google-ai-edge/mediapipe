@@ -161,7 +161,8 @@ absl::Status ReconcileMetadataFeatureFloats(
     if (absl::StrContains(key, kFeatureFloatsKey)) {
       const auto prefix = key.substr(0, key.find(kFeatureFloatsKey) - 1);
       int number_of_elements = GetFeatureFloatsAt(prefix, *sequence, 0).size();
-      if (HasFeatureDimensions(prefix, *sequence)) {
+      if (HasFeatureDimensions(prefix, *sequence) &&
+          !GetFeatureDimensions(prefix, *sequence).empty()) {
         int64 product = 1;
         for (int64 value : GetFeatureDimensions(prefix, *sequence)) {
           product *= value;

@@ -27,41 +27,34 @@
 #include "mediapipe/framework/calculator_contract.h"
 #include "mediapipe/framework/output_side_packet.h"
 #include "mediapipe/framework/port/logging.h"
+#include "mediapipe/framework/tool/type_util.h"
 
 namespace mediapipe {
 namespace api2 {
-
-// typeid is not constexpr, but a pointer to this is.
-template <typename T>
-size_t get_type_hash() {
-  return typeid(T).hash_code();
-}
-
-using type_id_fptr = size_t (*)();
 
 // This is a base class for various types of port. It is not meant to be used
 // directly by node code.
 class PortBase {
  public:
-  constexpr PortBase(std::size_t tag_size, const char* tag,
-                     type_id_fptr get_type_id, bool optional, bool multiple)
+  constexpr PortBase(std::size_t tag_size, const char* tag, TypeId type_id,
+                     bool optional, bool multiple)
       : tag_(tag_size, tag),
         optional_(optional),
         multiple_(multiple),
-        type_id_getter_(get_type_id) {}
+        type_id_(type_id) {}
 
   bool IsOptional() const { return optional_; }
   bool IsMultiple() const { return multiple_; }
   const char* Tag() const { return tag_.data(); }
 
-  size_t type_id() const { return type_id_getter_(); }
+  TypeId type_id() const { return type_id_; }
 
   const const_str tag_;
   const bool optional_;
   const bool multiple_;
 
  protected:
-  type_id_fptr type_id_getter_;
+  TypeId type_id_;
 };
 
 // These four base classes are used to distinguish between ports of different
@@ -340,7 +333,7 @@ class PortCommon : public Base {
 
   template <std::size_t N>
   explicit constexpr PortCommon(const char (&tag)[N])
-      : Base(N, tag, &get_type_hash<ValueT>, IsOptionalV, IsMultipleV) {}
+      : Base(N, tag, kTypeId<ValueT>, IsOptionalV, IsMultipleV) {}
 
   using PayloadT = ActualPayloadT<ValueT>;
 
@@ -428,7 +421,7 @@ class SideFallbackT : public Base {
 
   template <std::size_t N>
   explicit constexpr SideFallbackT(const char (&tag)[N])
-      : Base(N, tag, &get_type_hash<ValueT>, IsOptionalV, IsMultipleV),
+      : Base(N, tag, kTypeId<ValueT>, IsOptionalV, IsMultipleV),
         stream_port(tag),
         side_port(tag) {}
 

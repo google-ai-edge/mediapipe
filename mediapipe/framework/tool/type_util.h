@@ -16,79 +16,129 @@
 #define MEDIAPIPE_FRAMEWORK_TOOL_TYPE_UTIL_H_
 
 #include <cstddef>
+#include <string>
 #include <typeinfo>
+#include <utility>
 
+#include "absl/base/attributes.h"
+#include "mediapipe/framework/demangle.h"
 #include "mediapipe/framework/port.h"
 
 namespace mediapipe {
+
+// An identifier for a type. This class is lightweight and is meant to be passed
+// by value.
+// To get the TypeId for SomeType, write kTypeId<SomeType>.
+class TypeId {
+ public:
+  size_t hash_code() const { return impl_.hash_code(); }
+  std::string name() const { return impl_.name(); }
+  bool operator==(const TypeId& other) const { return impl_ == other.impl_; }
+  bool operator<(const TypeId& other) const { return impl_ < other.impl_; }
+
+  template <typename H>
+  friend H AbslHashValue(H h, const TypeId& r) {
+    return H::combine(std::move(h), r.hash_code());
+  }
+
+  template <class T>
+  static constexpr inline TypeId Of() {
+    return TypeId{Impl::Get<T>()};
+  }
+
+ private:
+  // This implementation uses no RTTI. It distinguishes types, but does not
+  // know their names.
+  // TODO: record compile-time type string for (some or all) types.
+  template <class T>
+  struct TypeTag {
+    static constexpr char dummy = 0;
+  };
+  struct NoRttiImpl {
+    template <class T>
+    static constexpr inline NoRttiImpl Get() {
+      return {&TypeTag<T>::dummy};
+    }
+    size_t hash_code() const { return reinterpret_cast<uintptr_t>(tag_); }
+    std::string name() const { return "<type name missing>"; }
+    bool operator==(const NoRttiImpl& other) const {
+      return tag_ == other.tag_;
+    }
+    bool operator<(const NoRttiImpl& other) const { return tag_ < other.tag_; }
+
+    const void* tag_;
+  };
+
+#if MEDIAPIPE_HAS_RTTI
+  template <class T>
+  static const std::type_info& GetTypeInfo() {
+    return typeid(T);
+  }
+  // This implementation uses RTTI, and delegates all operations to
+  // std::type_info. In order to support constexpr construction, we don't store
+  // a type_info directly (which is not constexpr), but a pointer to a function
+  // returning it (which is). This implementation is a bit slower than the
+  // others. The only potential advantage would be the ability to match types
+  // across multiple dynamic libraries, but we don't support that setup anyway.
+  // This is provided for completeness.
+  struct FullRttiImpl {
+    template <class T>
+    static constexpr inline FullRttiImpl Get() {
+      return {GetTypeInfo<T>};
+    }
+    size_t hash_code() const { return get_().hash_code(); }
+    std::string name() const { return Demangle(get_().name()); }
+    bool operator==(const FullRttiImpl& other) const {
+      return get_ == other.get_ || get_() == other.get_();
+    }
+    bool operator<(const FullRttiImpl& other) const {
+      return get_().before(other.get_());
+    }
+
+    decltype(&GetTypeInfo<void>) get_;
+  };
+
+  // This implementation also stores a pointer to a std::type_info getter
+  // function, but it only invokes it to get the type's name. It's equivalent to
+  // NoRttiImpl for most operations, but it allows getting the type's name.
+  struct FastRttiImpl {
+    template <class T>
+    static constexpr inline FastRttiImpl Get() {
+      return {GetTypeInfo<T>};
+    }
+    size_t hash_code() const { return reinterpret_cast<uintptr_t>(get_); }
+    std::string name() const { return Demangle(get_().name()); }
+    bool operator==(const FastRttiImpl& other) const {
+      return get_ == other.get_;
+    }
+    bool operator<(const FastRttiImpl& other) const {
+      return reinterpret_cast<uintptr_t>(get_) <
+             reinterpret_cast<uintptr_t>(other.get_);
+    }
+
+    decltype(&GetTypeInfo<void>) get_;
+  };
+
+  using Impl = FastRttiImpl;
+#else
+  using Impl = NoRttiImpl;
+#endif  // MEDIAPIPE_HAS_RTTI
+  constexpr explicit TypeId(Impl impl) : impl_(impl) {}
+
+  Impl impl_;
+};
+
+template <class T>
+static constexpr TypeId kTypeId = TypeId::Of<T>();
+
 namespace tool {
 
-#if !MEDIAPIPE_HAS_RTTI
-// A unique identifier for type T.
-class TypeInfo {
- public:
-  size_t hash_code() const { return reinterpret_cast<size_t>(this); }
-  bool operator==(const TypeInfo& other) const { return &other == this; }
-  bool operator<(const TypeInfo& other) const { return &other < this; }
-  const char* name() const { return "<unknown>"; }
-  template <typename T>
-  static const TypeInfo& Get() {
-    static TypeInfo* static_type_info = new TypeInfo;
-    return *static_type_info;
-  }
-
- private:
-  TypeInfo() {}
-  TypeInfo(const TypeInfo&) = delete;
-};
-
-#else  // MEDIAPIPE_HAS_RTTI
-// The std unique identifier for type T.
-class TypeInfo {
- public:
-  size_t hash_code() const { return info_.hash_code(); }
-  bool operator==(const TypeInfo& o) const { return info_ == o.info_; }
-  bool operator<(const TypeInfo& o) const { return info_.before(o.info_); }
-  const char* name() const { return info_.name(); }
-  template <typename T>
-  static const TypeInfo& Get() {
-    static TypeInfo* static_type_info = new TypeInfo(typeid(T));
-    return *static_type_info;
-  }
-
- private:
-  TypeInfo(const std::type_info& info) : info_(info) {}
-  TypeInfo(const TypeInfo&) = delete;
-
- private:
-  const std::type_info& info_;
-  friend class TypeIndex;
-};
-#endif
-
-// An associative key for TypeInfo.
-class TypeIndex {
- public:
-  TypeIndex(const TypeInfo& info) : info_(info) {}
-  size_t hash_code() const { return info_.hash_code(); }
-  bool operator==(const TypeIndex& other) const { return info_ == other.info_; }
-  bool operator<(const TypeIndex& other) const { return info_ < other.info_; }
-
- private:
-  const TypeInfo& info_;
-};
-
-// Helper method that returns a hash code of the given type. This allows for
-// typeid testing across multiple binaries, unlike FastTypeId which used a
-// memory location that only works within the same binary. Moreover, we use this
-// for supporting multiple .so binaries in a single Android app built using the
-// same compiler and C++ libraries.
-// Note that std::type_info may still generate the same hash code for different
-// types, although the c++ standard recommends that implementations avoid this
-// as much as possible.
+// Helper method that returns a hash code of the given type.
+// Superseded by TypeId.
 template <typename T>
+ABSL_DEPRECATED("Use TypeId directly instead.")
 size_t GetTypeHash() {
-  return TypeInfo::Get<T>().hash_code();
+  return kTypeId<T>.hash_code();
 }
 
 }  // namespace tool

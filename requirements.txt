@@ -3,4 +3,4 @@ attrs>=19.1.0
 matplotlib
 numpy
 opencv-contrib-python
-protobuf>=3.11.4
+protobuf>=3.11,<4

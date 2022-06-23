@@ -25,11 +25,12 @@ constexpr char kDescriptorContents[] =
 #include "{{DESCRIPTOR_INC_FILE_PATH}}"
     ;  // NOLINT(whitespace/semicolon)
 
-mediapipe::proto_ns::FileDescriptorSet ParseFileDescriptorSet(
-    const std::string& pb) {
-  mediapipe::proto_ns::FileDescriptorSet files;
-  files.ParseFromString(pb);
-  return files;
+mediapipe::FieldData ReadFileDescriptorSet(const std::string& pb) {
+  mediapipe::FieldData result;
+  *result.mutable_message_value()->mutable_type_url() =
+      "proto2.FileDescriptorSet";
+  *result.mutable_message_value()->mutable_value() = pb;
+  return result;
 }
 
 }  // namespace
@@ -39,6 +40,6 @@ namespace mediapipe {
 template <>
 const RegistrationToken tool::OptionsRegistry::registration_token<
     MP_OPTION_TYPE_NS::MP_OPTION_TYPE_NAME> =
-    tool::OptionsRegistry::Register(ParseFileDescriptorSet(
+    tool::OptionsRegistry::Register(ReadFileDescriptorSet(
         std::string(kDescriptorContents, sizeof(kDescriptorContents) - 1)));
 }  // namespace mediapipe

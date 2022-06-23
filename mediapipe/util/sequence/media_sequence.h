@@ -501,6 +501,9 @@ void Clear3dPoint(const std::string& prefix,
   FIXED_PREFIX_VECTOR_BYTES_FEATURE_LIST(                                      \
       CONCAT_STR2(identifier, EmbeddingEncoded), kRegionEmbeddingEncodedKey,   \
       prefix)                                                                  \
+  FIXED_PREFIX_VECTOR_FLOAT_FEATURE_LIST(                                      \
+      CONCAT_STR2(identifier, EmbeddingConfidence),                            \
+      kRegionEmbeddingConfidenceKey, prefix)                                   \
   FIXED_PREFIX_VECTOR_INT64_CONTEXT_FEATURE(                                   \
       CONCAT_STR2(identifier, EmbeddingDimensionsPerRegion),                   \
       kRegionEmbeddingDimensionsPerRegionKey, prefix)                          \

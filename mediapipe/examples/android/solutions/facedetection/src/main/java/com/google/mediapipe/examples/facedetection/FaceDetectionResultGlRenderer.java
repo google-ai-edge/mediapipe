@@ -15,10 +15,10 @@
 package com.google.mediapipe.examples.facedetection;
 
 import android.opengl.GLES20;
-import com.google.mediapipe.formats.proto.DetectionProto.Detection;
 import com.google.mediapipe.solutioncore.ResultGlRenderer;
 import com.google.mediapipe.solutions.facedetection.FaceDetectionResult;
 import com.google.mediapipe.solutions.facedetection.FaceKeypoint;
+import com.google.mediapipe.formats.proto.DetectionProto.Detection;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;

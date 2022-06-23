@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM ubuntu:18.04
+FROM ubuntu:20.04
 
 MAINTAINER <mediapipe@google.com>
 
@@ -42,6 +42,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         software-properties-common && \
     add-apt-repository -y ppa:openjdk-r/ppa && \
     apt-get update && apt-get install -y openjdk-8-jdk && \
+    apt-get install -y mesa-common-dev libegl1-mesa-dev libgles2-mesa-dev && \
+    apt-get install -y mesa-utils && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
@@ -50,13 +52,13 @@ RUN pip3 install --upgrade setuptools
 RUN pip3 install wheel
 RUN pip3 install future
 RUN pip3 install six==1.14.0
-RUN pip3 install tensorflow==1.14.0
+RUN pip3 install tensorflow==2.2.0
 RUN pip3 install tf_slim
 
 RUN ln -s /usr/bin/python3 /usr/bin/python
 
 # Install bazel
-ARG BAZEL_VERSION=5.0.0
+ARG BAZEL_VERSION=5.2.0
 RUN mkdir /bazel && \
     wget --no-check-certificate -O /bazel/installer.sh "https://github.com/bazelbuild/bazel/releases/download/${BAZEL_VERSION}/b\
 azel-${BAZEL_VERSION}-installer-linux-x86_64.sh" && \

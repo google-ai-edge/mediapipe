@@ -557,6 +557,22 @@ cc_library(
     alwayslink = 1,
 )
 
+cc_test(
+    name = "packet_cloner_calculator_test",
+    srcs = ["packet_cloner_calculator_test.cc"],
+    deps = [
+        ":packet_cloner_calculator",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:timestamp",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:parse_text_proto",
+        "//mediapipe/framework/port:status",
+        "//mediapipe/framework/stream_handler:immediate_input_stream_handler",
+        "//mediapipe/framework/tool:sink",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
 cc_library(
     name = "packet_inner_join_calculator",
     srcs = ["packet_inner_join_calculator.cc"],

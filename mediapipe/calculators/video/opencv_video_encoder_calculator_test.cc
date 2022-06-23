@@ -28,10 +28,14 @@
 #include "mediapipe/framework/port/opencv_video_inc.h"
 #include "mediapipe/framework/port/parse_text_proto.h"
 #include "mediapipe/framework/port/status_matchers.h"
+#include "mediapipe/framework/tool/test_util.h"
 
 namespace mediapipe {
 
 namespace {
+
+constexpr char kTestPackageRoot[] = "mediapipe/calculators/video";
+
 // Temporarily disable the test.
 // TODO: Investigate the “Could not open codec 'libx264'” error with
 // opencv2.
@@ -59,10 +63,9 @@ TEST(OpenCvVideoEncoderCalculatorTest, DISABLED_TestMp4Avc720pVideo) {
         }
       )pb");
   std::map<std::string, Packet> input_side_packets;
-  input_side_packets["input_file_path"] = MakePacket<std::string>(
-      file::JoinPath("./",
-                     "/mediapipe/calculators/video/"
-                     "testdata/format_MP4_AVC720P_AAC.video"));
+  input_side_packets["input_file_path"] =
+      MakePacket<std::string>(file::JoinPath(GetTestDataDir(kTestPackageRoot),
+                                             "format_MP4_AVC720P_AAC.video"));
   const std::string output_file_path = "/tmp/tmp_video.mp4";
   DeletingFile deleting_file(output_file_path, true);
   input_side_packets["output_file_path"] =
@@ -120,10 +123,9 @@ TEST(OpenCvVideoEncoderCalculatorTest, TestFlvH264Video) {
         }
       )pb");
   std::map<std::string, Packet> input_side_packets;
-  input_side_packets["input_file_path"] = MakePacket<std::string>(
-      file::JoinPath("./",
-                     "/mediapipe/calculators/video/"
-                     "testdata/format_FLV_H264_AAC.video"));
+  input_side_packets["input_file_path"] =
+      MakePacket<std::string>(file::JoinPath(GetTestDataDir(kTestPackageRoot),
+                                             "format_FLV_H264_AAC.video"));
   const std::string output_file_path = "/tmp/tmp_video.avi";
   DeletingFile deleting_file(output_file_path, true);
   input_side_packets["output_file_path"] =
@@ -183,10 +185,9 @@ TEST(OpenCvVideoEncoderCalculatorTest, TestMkvVp8Video) {
         }
       )pb");
   std::map<std::string, Packet> input_side_packets;
-  input_side_packets["input_file_path"] = MakePacket<std::string>(
-      file::JoinPath("./",
-                     "/mediapipe/calculators/video/"
-                     "testdata/format_MKV_VP8_VORBIS.video"));
+  input_side_packets["input_file_path"] =
+      MakePacket<std::string>(file::JoinPath(GetTestDataDir(kTestPackageRoot),
+                                             "format_MKV_VP8_VORBIS.video"));
   const std::string output_file_path = "/tmp/tmp_video.mkv";
   DeletingFile deleting_file(output_file_path, true);
   input_side_packets["output_file_path"] =

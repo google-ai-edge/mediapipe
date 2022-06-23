@@ -19,6 +19,7 @@ syntax = "proto2";
 package mediapipe;
 
 import "mediapipe/framework/calculator.proto";
+import "mediapipe/util/label_map.proto";
 
 message TensorsToClassificationCalculatorOptions {
   extend .mediapipe.CalculatorOptions {
@@ -38,11 +39,21 @@ message TensorsToClassificationCalculatorOptions {
   // Number of highest scoring labels to output.  If top_k is not positive then
   // all labels are used.
   optional int32 top_k = 2;
+  // Whether results should be sorted by descending score. By default, results
+  // may or may not be sorted: setting this to true guarantees that the returned
+  // results will be sorted by descending score.
+  optional bool sort_by_descending_score = 9;
   // Path to a label map file for getting the actual name of class ids.
   optional string label_map_path = 3;
   // Label map. (Can be used instead of label_map_path.)
-  // NOTE: "label_map_path", if specified, takes precedence over "label_map".
+  // NOTE: either "label_map_path" or "label_items", if specified, takes
+  // precedence over "label_map".
+  // Deprecated: please use `label_items` instead.
   optional LabelMap label_map = 5;
+
+  // Label items. (Can be used instead of label_map_path.)
+  // NOTE: "label_map_path", if specified, takes precedence over "label_items".
+  map<int64, LabelMapItem> label_items = 6;
 
   // Whether the input is a single float for binary classification.
   // When true, only a single float is expected in the input tensor and the
@@ -50,4 +61,15 @@ message TensorsToClassificationCalculatorOptions {
   // The single score(float) represent the probability of first label, and
   // 1 - score is the probabilility of the second label.
   optional bool binary_classification = 4;
+
+  // The ids of classes that should be ignored during decoding the score for
+  // each classification. If `ignore_classes` is specified, all the other
+  // classes that are not in the `ignore_class` field will be considered during
+  // decoding. `ignore_classes` and `allow_classes` are mutually  exclusive.
+  repeated int32 ignore_classes = 7 [packed = true];
+  // The ids of classes that will be allowed during decoding the score for
+  // each classification. If `allow_classes` is specified, all the other classes
+  // that are not in the `allow_classes` field will be completely ignored.
+  // `ignore_classes` and `allow_classes` are mutually exclusive.
+  repeated int32 allow_classes = 8 [packed = true];
 }

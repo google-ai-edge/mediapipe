@@ -29,6 +29,7 @@
 #include "mediapipe/framework/port/statusor.h"
 #include "mediapipe/framework/port/threadpool.h"
 #include "mediapipe/framework/timestamp.h"
+#include "mediapipe/gpu/attachments.h"
 #include "mediapipe/gpu/gl_base.h"
 #include "mediapipe/gpu/gpu_buffer_format.h"
 
@@ -286,42 +287,15 @@ class GlContext : public std::enable_shared_from_this<GlContext> {
   // Sets default texture filtering parameters.
   void SetStandardTextureParams(GLenum target, GLint internal_format);
 
+  using AttachmentBase = internal::AttachmentBase<GlContext>;
   template <class T>
-  using AttachmentPtr = std::unique_ptr<T, std::function<void(void*)>>;
-
-  template <class T, class... Args>
-  static std::enable_if_t<!std::is_array<T>::value, AttachmentPtr<T>>
-  MakeAttachmentPtr(Args&&... args) {
-    return {new T(std::forward<Args>(args)...),
-            [](void* ptr) { delete static_cast<T*>(ptr); }};
-  }
-
-  class AttachmentBase {};
-
-  template <class T>
-  class Attachment : public AttachmentBase {
-   public:
-    using FactoryT = std::function<AttachmentPtr<T>(GlContext&)>;
-    Attachment(FactoryT factory) : factory_(factory) {}
-
-    Attachment(const Attachment&) = delete;
-    Attachment(Attachment&&) = delete;
-    Attachment& operator=(const Attachment&) = delete;
-    Attachment& operator=(Attachment&&) = delete;
-
-    T& Get(GlContext& ctx) const { return ctx.GetCachedAttachment(*this); }
-
-    const FactoryT& factory() const { return factory_; }
-
-   private:
-    FactoryT factory_;
-  };
+  using Attachment = internal::Attachment<GlContext, T>;
 
   // TOOD: const result?
   template <class T>
   T& GetCachedAttachment(const Attachment<T>& attachment) {
     DCHECK(IsCurrent());
-    AttachmentPtr<void>& entry = attachments_[&attachment];
+    internal::AttachmentPtr<void>& entry = attachments_[&attachment];
     if (entry == nullptr) {
       entry = attachment.factory()(*this);
     }
@@ -454,7 +428,8 @@ class GlContext : public std::enable_shared_from_this<GlContext> {
   // better mechanism?
   bool can_linear_filter_float_textures_;
 
-  absl::flat_hash_map<const AttachmentBase*, AttachmentPtr<void>> attachments_;
+  absl::flat_hash_map<const AttachmentBase*, internal::AttachmentPtr<void>>
+      attachments_;
 
   // Number of glFinish calls completed on the GL thread.
   // Changes should be guarded by mutex_. However, we use simple atomic

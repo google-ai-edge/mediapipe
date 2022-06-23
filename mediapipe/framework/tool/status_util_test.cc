@@ -28,8 +28,11 @@ namespace mediapipe {
 namespace {
 
 using testing::ContainerEq;
+using testing::Eq;
 using testing::HasSubstr;
 using testing::IsEmpty;
+using testing::Matches;
+using testing::Pointwise;
 
 TEST(StatusTest, StatusStopIsNotOk) { EXPECT_FALSE(tool::StatusStop().ok()); }
 

@@ -22,6 +22,8 @@ package mediapipe;
 
 import "mediapipe/framework/calculator.proto";
 
+option objc_class_prefix = "MediaPipe";
+
 message RandomMatrixCalculatorOptions {
   extend CalculatorOptions {
     optional RandomMatrixCalculatorOptions ext = 52056136;

@@ -43,7 +43,7 @@ const int kDefaultLogFileCount = 2;
 const char kDefaultLogFilePrefix[] = "mediapipe_trace_";
 
 // The number of recent timestamps tracked for each input stream.
-const int kPacketInfoRecentCount = 100;
+const int kPacketInfoRecentCount = 400;
 
 std::string PacketIdToString(const PacketId& packet_id) {
   return absl::Substitute("stream_name: $0, timestamp_usec: $1",
@@ -507,8 +507,8 @@ int64 GraphProfiler::AddInputStreamTimeSamples(
       // This is a condition rather than a failure CHECK because
       // under certain conditions the consumer calculator's Process()
       // can start before the producer calculator's Process() is finished.
-      LOG_EVERY_N(WARNING, 100) << "Expected packet info is missing for: "
-                                << PacketIdToString(packet_id);
+      LOG_FIRST_N(WARNING, 10) << "Expected packet info is missing for: "
+                               << PacketIdToString(packet_id);
       continue;
     }
     AddTimeSample(

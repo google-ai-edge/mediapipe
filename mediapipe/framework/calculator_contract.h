@@ -59,7 +59,7 @@ class CalculatorContract {
   const CalculatorOptions& Options() const { return node_config_->options(); }
 
   // Returns the name given to this node.
-  const std::string& GetNodeName() { return node_name_; }
+  const std::string& GetNodeName() const { return node_name_; }
 
   // Returns the options given to this calculator.  Template argument T must
   // be the type of the protobuf extension message or the protobuf::Any

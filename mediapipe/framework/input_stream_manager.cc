@@ -204,6 +204,8 @@ absl::Status InputStreamManager::SetNextTimestampBound(const Timestamp bound,
     // untimed scheduling policies.
     if (bound > next_timestamp_bound_) {
       next_timestamp_bound_ = bound;
+      VLOG(3) << "Next timestamp bound for input " << name_ << " is "
+              << next_timestamp_bound_;
       if (queue_.empty()) {
         // If the queue was not empty then a change to the next_timestamp_bound_
         // is not detectable by the consumer.

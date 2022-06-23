@@ -33,39 +33,16 @@
 #include "mediapipe/framework/port/proto_ns.h"
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/port/status_matchers.h"
+#include "mediapipe/framework/tool/test_util.h"
 #include "mediapipe/util/tracking/box_tracker.pb.h"
 #include "mediapipe/util/tracking/tracking.pb.h"
-
-#ifdef __APPLE__
-#include <CoreFoundation/CoreFoundation.h>
-#endif  // defined(__APPLE__)
 
 namespace mediapipe {
 namespace {
 using ::testing::FloatNear;
 using ::testing::Test;
 
-std::string GetTestDir() {
-#ifdef __APPLE__
-  char path[1024];
-  CFURLRef bundle_url = CFBundleCopyBundleURL(CFBundleGetMainBundle());
-  CFURLGetFileSystemRepresentation(
-      bundle_url, true, reinterpret_cast<UInt8*>(path), sizeof(path));
-  CFRelease(bundle_url);
-  return mediapipe::file::JoinPath(path, "testdata");
-#elif defined(__ANDROID__)
-  char path[1024];
-  getcwd(path, sizeof(path));
-  return mediapipe::file::JoinPath(path,
-                                   "mediapipe/calculators/video/testdata");
-#else
-  return mediapipe::file::JoinPath(
-      "./",
-      // This should match the path of the output files
-      // of the genrule() that generates test model files.
-      "mediapipe/calculators/video/testdata");
-#endif  // defined(__APPLE__)
-}
+constexpr char kTestPackageRoot[] = "mediapipe/calculators/video";
 
 bool LoadBinaryTestGraph(const std::string& graph_path,
                          CalculatorGraphConfig* config) {
@@ -85,7 +62,7 @@ class TrackingGraphTest : public Test {
   TrackingGraphTest() {}
 
   void SetUp() override {
-    test_dir_ = GetTestDir();
+    test_dir_ = mediapipe::GetTestDataDir(kTestPackageRoot);
     const auto graph_path = file::JoinPath(test_dir_, "tracker.binarypb");
     ASSERT_TRUE(LoadBinaryTestGraph(graph_path, &config_));
 

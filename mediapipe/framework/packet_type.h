@@ -121,15 +121,15 @@ class PacketType {
     // We don't do union-find optimizations in order to avoid a mutex.
     const PacketType* other;
   };
-  using TypeInfoSpan = absl::Span<const tool::TypeInfo* const>;
+  using TypeIdSpan = absl::Span<const TypeId>;
   struct MultiType {
-    TypeInfoSpan types;
+    TypeIdSpan types;
     // TODO: refactor RegisteredTypeName, remove.
     const std::string* registered_type_name;
   };
   struct SpecialType;
-  using TypeSpec = absl::variant<absl::monostate, const tool::TypeInfo*,
-                                 MultiType, SameAs, SpecialType>;
+  using TypeSpec =
+      absl::variant<absl::monostate, TypeId, MultiType, SameAs, SpecialType>;
   typedef absl::Status (*AcceptsTypeFn)(const TypeSpec& type);
   struct SpecialType {
     std::string name_;
@@ -140,8 +140,8 @@ class PacketType {
   static absl::Status AcceptNone(const TypeSpec& type);
 
   const PacketType* SameAsPtr() const;
-  static TypeInfoSpan GetTypeSpan(const TypeSpec& type_spec);
-  static std::string TypeNameForOneOf(TypeInfoSpan types);
+  static TypeIdSpan GetTypeSpan(const TypeSpec& type_spec);
+  static std::string TypeNameForOneOf(TypeIdSpan types);
 
   TypeSpec type_spec_;
 
@@ -259,14 +259,13 @@ absl::Status ValidatePacketTypeSet(const PacketTypeSet& packet_type_set);
 
 template <typename T>
 PacketType& PacketType::Set() {
-  type_spec_ = &tool::TypeInfo::Get<T>();
+  type_spec_ = kTypeId<T>;
   return *this;
 }
 
 template <typename... T>
 PacketType& PacketType::SetOneOf() {
-  static const NoDestructor<std::vector<const tool::TypeInfo*>> types{
-      {&tool::TypeInfo::Get<T>()...}};
+  static const NoDestructor<std::vector<TypeId>> types{{kTypeId<T>...}};
   static const NoDestructor<std::string> name{TypeNameForOneOf(*types)};
   type_spec_ = MultiType{*types, &*name};
   return *this;

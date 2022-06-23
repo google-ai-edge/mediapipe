@@ -26,10 +26,9 @@ namespace mediapipe {
 namespace tool {
 
 using options_field_util::FieldPath;
-using options_field_util::GetField;
 using options_field_util::GetGraphOptions;
 using options_field_util::GetNodeOptions;
-using options_field_util::MergeField;
+using options_field_util::MergeFieldValues;
 using options_field_util::MergeMessages;
 
 // Returns the type for the root options message if specified.
@@ -56,10 +55,19 @@ std::string MessageType(FieldData message) {
       std::string(message.message_value().type_url()));
 }
 
+// Assigns the value from a StatusOr if avialable.
+#define ASSIGN_IF_OK(lhs, rexpr) \
+  {                              \
+    auto statusor = (rexpr);     \
+    if (statusor.ok()) {         \
+      lhs = statusor.value();    \
+    }                            \
+  }
+
 // Copy literal options from graph_options to node_options.
 absl::Status CopyLiteralOptions(CalculatorGraphConfig::Node parent_node,
                                 CalculatorGraphConfig* config) {
-  Status status;
+  absl::Status status;
   FieldData graph_data = options_field_util::AsFieldData(*config);
   FieldData parent_data = options_field_util::AsFieldData(parent_node);
 
@@ -75,25 +83,26 @@ absl::Status CopyLiteralOptions(CalculatorGraphConfig::Node parent_node,
       std::string node_tag = syntax_util.OptionFieldsTag(tag_and_name[0]);
       std::string node_extension_type = ExtensionType(node_tag);
       FieldData graph_options;
-      GetGraphOptions(graph_data, graph_extension_type, &graph_options)
-          .IgnoreError();
+      ASSIGN_IF_OK(graph_options,
+                   GetGraphOptions(graph_data, graph_extension_type));
       FieldData parent_options;
-      GetNodeOptions(parent_data, graph_extension_type, &parent_options)
-          .IgnoreError();
-      status.Update(
-          MergeMessages(graph_options, parent_options, &graph_options));
+      ASSIGN_IF_OK(parent_options,
+                   GetNodeOptions(parent_data, graph_extension_type));
+      ASSIGN_OR_RETURN(graph_options,
+                       MergeMessages(graph_options, parent_options));
       FieldData node_options;
-      status.Update(
-          GetNodeOptions(node_data, node_extension_type, &node_options));
+      ASSIGN_OR_RETURN(node_options,
+                       GetNodeOptions(node_data, node_extension_type));
       if (!node_options.has_message_value() ||
           !graph_options.has_message_value()) {
         continue;
       }
       FieldPath graph_path = GetPath(graph_tag, MessageType(graph_options));
       FieldPath node_path = GetPath(node_tag, MessageType(node_options));
-      FieldData packet_data;
-      status.Update(GetField(graph_path, graph_options, &packet_data));
-      status.Update(MergeField(node_path, packet_data, &node_options));
+      std::vector<FieldData> packet_data;
+      ASSIGN_OR_RETURN(packet_data, GetFieldValues(graph_options, graph_path));
+      MP_RETURN_IF_ERROR(
+          MergeFieldValues(node_options, node_path, packet_data));
       options_field_util::SetOptionsMessage(node_options, &node);
     }
     node.clear_option_value();
@@ -105,7 +114,7 @@ absl::Status CopyLiteralOptions(CalculatorGraphConfig::Node parent_node,
 absl::Status DefineGraphOptions(const CalculatorGraphConfig::Node& parent_node,
                                 CalculatorGraphConfig* config) {
   MP_RETURN_IF_ERROR(CopyLiteralOptions(parent_node, config));
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
 }  // namespace tool

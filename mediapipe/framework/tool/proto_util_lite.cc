@@ -16,11 +16,13 @@
 
 #include <tuple>
 
+#include "absl/strings/match.h"
 #include "absl/strings/numbers.h"
 #include "absl/strings/str_cat.h"
 #include "mediapipe/framework/port/canonical_errors.h"
 #include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/ret_check.h"
+#include "mediapipe/framework/tool/field_data.pb.h"
 #include "mediapipe/framework/type_map.h"
 
 #define RET_CHECK_NO_LOG(cond) RET_CHECK(cond).SetNoLogging()
@@ -37,6 +39,7 @@ using FieldAccess = ProtoUtilLite::FieldAccess;
 using FieldValue = ProtoUtilLite::FieldValue;
 using ProtoPath = ProtoUtilLite::ProtoPath;
 using FieldType = ProtoUtilLite::FieldType;
+using mediapipe::FieldData;
 
 // Returns true if a wire type includes a length indicator.
 bool IsLengthDelimited(WireFormatLite::WireType wire_type) {
@@ -406,6 +409,150 @@ absl::Status ProtoUtilLite::Deserialize(
     result->push_back(text_value);
   }
   return absl::OkStatus();
+}
+
+absl::Status ProtoUtilLite::WriteValue(const FieldData& value,
+                                       FieldType field_type,
+                                       std::string* field_bytes) {
+  StringOutputStream sos(field_bytes);
+  CodedOutputStream out(&sos);
+  switch (field_type) {
+    case WireFormatLite::TYPE_INT32:
+      WireFormatLite::WriteInt32NoTag(value.int32_value(), &out);
+      break;
+    case WireFormatLite::TYPE_SINT32:
+      WireFormatLite::WriteSInt32NoTag(value.int32_value(), &out);
+      break;
+    case WireFormatLite::TYPE_INT64:
+      WireFormatLite::WriteInt64NoTag(value.int64_value(), &out);
+      break;
+    case WireFormatLite::TYPE_SINT64:
+      WireFormatLite::WriteSInt64NoTag(value.int64_value(), &out);
+      break;
+    case WireFormatLite::TYPE_UINT32:
+      WireFormatLite::WriteUInt32NoTag(value.uint32_value(), &out);
+      break;
+    case WireFormatLite::TYPE_UINT64:
+      WireFormatLite::WriteUInt64NoTag(value.uint64_value(), &out);
+      break;
+    case WireFormatLite::TYPE_DOUBLE:
+      WireFormatLite::WriteDoubleNoTag(value.uint64_value(), &out);
+      break;
+    case WireFormatLite::TYPE_FLOAT:
+      WireFormatLite::WriteFloatNoTag(value.float_value(), &out);
+      break;
+    case WireFormatLite::TYPE_BOOL:
+      WireFormatLite::WriteBoolNoTag(value.bool_value(), &out);
+      break;
+    case WireFormatLite::TYPE_ENUM:
+      WireFormatLite::WriteEnumNoTag(value.enum_value(), &out);
+      break;
+    case WireFormatLite::TYPE_STRING:
+      out.WriteString(value.string_value());
+      break;
+    case WireFormatLite::TYPE_MESSAGE:
+      out.WriteString(value.message_value().value());
+      break;
+    default:
+      return absl::UnimplementedError(
+          absl::StrCat("Cannot write type: ", field_type));
+  }
+  return absl::OkStatus();
+}
+
+template <typename ValueT, FieldType kFieldType>
+static ValueT ReadValue(absl::string_view field_bytes, absl::Status* status) {
+  ArrayInputStream ais(field_bytes.data(), field_bytes.size());
+  CodedInputStream input(&ais);
+  ValueT result;
+  if (!WireFormatLite::ReadPrimitive<ValueT, kFieldType>(&input, &result)) {
+    status->Update(absl::InvalidArgumentError(absl::StrCat(
+        "Bad serialized value: ", MediaPipeTypeStringOrDemangled<ValueT>(),
+        ".")));
+  }
+  return result;
+}
+
+absl::Status ReadValue(absl::string_view field_bytes, FieldType field_type,
+                       absl::string_view message_type, FieldData* result) {
+  absl::Status status;
+  result->Clear();
+  switch (field_type) {
+    case WireFormatLite::TYPE_INT32:
+      result->set_int32_value(
+          ReadValue<int32, WireFormatLite::TYPE_INT32>(field_bytes, &status));
+      break;
+    case WireFormatLite::TYPE_SINT32:
+      result->set_int32_value(
+          ReadValue<int32, WireFormatLite::TYPE_SINT32>(field_bytes, &status));
+      break;
+    case WireFormatLite::TYPE_INT64:
+      result->set_int64_value(
+          ReadValue<int64, WireFormatLite::TYPE_INT64>(field_bytes, &status));
+      break;
+    case WireFormatLite::TYPE_SINT64:
+      result->set_int64_value(
+          ReadValue<int64, WireFormatLite::TYPE_SINT64>(field_bytes, &status));
+      break;
+    case WireFormatLite::TYPE_UINT32:
+      result->set_uint32_value(
+          ReadValue<uint32, WireFormatLite::TYPE_UINT32>(field_bytes, &status));
+      break;
+    case WireFormatLite::TYPE_UINT64:
+      result->set_uint64_value(
+          ReadValue<uint32, WireFormatLite::TYPE_UINT32>(field_bytes, &status));
+      break;
+    case WireFormatLite::TYPE_DOUBLE:
+      result->set_double_value(
+          ReadValue<double, WireFormatLite::TYPE_DOUBLE>(field_bytes, &status));
+      break;
+    case WireFormatLite::TYPE_FLOAT:
+      result->set_float_value(
+          ReadValue<float, WireFormatLite::TYPE_FLOAT>(field_bytes, &status));
+      break;
+    case WireFormatLite::TYPE_BOOL:
+      result->set_bool_value(
+          ReadValue<bool, WireFormatLite::TYPE_BOOL>(field_bytes, &status));
+      break;
+    case WireFormatLite::TYPE_ENUM:
+      result->set_enum_value(
+          ReadValue<int32, WireFormatLite::TYPE_ENUM>(field_bytes, &status));
+      break;
+    case WireFormatLite::TYPE_STRING:
+      result->set_string_value(std::string(field_bytes));
+      break;
+    case WireFormatLite::TYPE_MESSAGE:
+      result->mutable_message_value()->set_value(std::string(field_bytes));
+      result->mutable_message_value()->set_type_url(
+          ProtoUtilLite::TypeUrl(message_type));
+      break;
+    default:
+      status = absl::UnimplementedError(
+          absl::StrCat("Cannot read type: ", field_type));
+      break;
+  }
+  return status;
+}
+
+absl::Status ProtoUtilLite::ReadValue(absl::string_view field_bytes,
+                                      FieldType field_type,
+                                      absl::string_view message_type,
+                                      FieldData* result) {
+  return mediapipe::tool::ReadValue(field_bytes, field_type, message_type,
+                                    result);
+}
+
+std::string ProtoUtilLite::TypeUrl(absl::string_view type_name) {
+  constexpr std::string_view kTypeUrlPrefix = "type.googleapis.com/";
+  return absl::StrCat(std::string(kTypeUrlPrefix), std::string(type_name));
+}
+
+std::string ProtoUtilLite::ParseTypeUrl(absl::string_view type_url) {
+  constexpr std::string_view kTypeUrlPrefix = "type.googleapis.com/";
+  if (absl::StartsWith(std::string(type_url), std::string(kTypeUrlPrefix))) {
+    return std::string(type_url.substr(kTypeUrlPrefix.length()));
+  }
+  return std::string(type_url);
 }
 
 }  // namespace tool

@@ -88,7 +88,10 @@ cc_library(
     testonly = True,
     hdrs = ["message_matchers.h"],
     # Use this library through "mediapipe/framework/port:gtest_main".
-    visibility = ["//mediapipe/framework/port:__pkg__"],
+    visibility = [
+        "//mediapipe/framework/port:__pkg__",
+        "//third_party/visionai/algorithms/tracking:__pkg__",
+    ],
     deps = [
         "//mediapipe/framework/port:core_proto",
         "@com_google_googletest//:gtest",
@@ -137,7 +140,6 @@ cc_library(
     hdrs = ["image_resizer.h"],
     visibility = ["//visibility:public"],
     deps = [
-        "//mediapipe/framework/port:integral_types",
         "//mediapipe/framework/port:opencv_imgproc",
     ],
 )

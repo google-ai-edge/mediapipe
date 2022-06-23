@@ -361,32 +361,30 @@ DEFINE_MEDIAPIPE_TYPE_MAP(PacketTypeStringToMediaPipeTypeData, std::string);
 // End define MEDIAPIPE_REGISTER_TYPE_WITH_PROXY.
 
 // Helper functions's to retrieve registration data.
-inline const std::string* MediaPipeTypeStringFromTypeId(const size_t type_id) {
+inline const std::string* MediaPipeTypeStringFromTypeId(TypeId type_id) {
   const MediaPipeTypeData* value =
-      PacketTypeIdToMediaPipeTypeData::GetValue(type_id);
+      PacketTypeIdToMediaPipeTypeData::GetValue(type_id.hash_code());
   return (value) ? &value->type_string : nullptr;
 }
 
 // Returns string identifier of type or NULL if not registered.
 template <typename T>
 inline const std::string* MediaPipeTypeString() {
-  return MediaPipeTypeStringFromTypeId(tool::GetTypeHash<T>());
+  return MediaPipeTypeStringFromTypeId(kTypeId<T>);
 }
 
-inline std::string MediaPipeTypeStringOrDemangled(
-    const tool::TypeInfo& type_info) {
-  const std::string* type_string =
-      MediaPipeTypeStringFromTypeId(type_info.hash_code());
+inline std::string MediaPipeTypeStringOrDemangled(TypeId type_id) {
+  const std::string* type_string = MediaPipeTypeStringFromTypeId(type_id);
   if (type_string) {
     return *type_string;
   } else {
-    return mediapipe::Demangle(type_info.name());
+    return type_id.name();
   }
 }
 
 template <typename T>
 std::string MediaPipeTypeStringOrDemangled() {
-  return MediaPipeTypeStringOrDemangled(tool::TypeInfo::Get<T>());
+  return MediaPipeTypeStringOrDemangled(kTypeId<T>);
 }
 
 // Returns type hash id of type identified by type_string or NULL if not

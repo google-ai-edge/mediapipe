@@ -195,7 +195,7 @@ class ValidatedGraphConfig {
   // before any other functions.  Subgraphs are specified through the
   // global graph registry or an optional local graph registry.
   absl::Status Initialize(
-      const CalculatorGraphConfig& input_config,
+      CalculatorGraphConfig input_config,
       const GraphRegistry* graph_registry = nullptr,
       const Subgraph::SubgraphOptions* graph_options = nullptr,
       const GraphServiceManager* service_manager = nullptr);
@@ -302,6 +302,13 @@ class ValidatedGraphConfig {
   }
 
  private:
+  // Perform transforms such as converting legacy features, expanding
+  // subgraphs, and popluting input stream handler.
+  absl::Status PerformBasicTransforms(
+      const GraphRegistry* graph_registry,
+      const Subgraph::SubgraphOptions* graph_options,
+      const GraphServiceManager* service_manager);
+
   // Initialize the PacketGenerator information.
   absl::Status InitializeGeneratorInfo();
   // Initialize the Calculator information.

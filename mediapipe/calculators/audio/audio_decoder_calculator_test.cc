@@ -20,8 +20,12 @@
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/framework/port/parse_text_proto.h"
 #include "mediapipe/framework/port/status_matchers.h"
+#include "mediapipe/framework/tool/test_util.h"
 
 namespace mediapipe {
+namespace {
+
+constexpr char kTestPackageRoot[] = "mediapipe/calculators/audio";
 
 TEST(AudioDecoderCalculatorTest, TestWAV) {
   CalculatorGraphConfig::Node node_config =
@@ -37,9 +41,8 @@ TEST(AudioDecoderCalculatorTest, TestWAV) {
         })pb");
   CalculatorRunner runner(node_config);
   runner.MutableSidePackets()->Tag("INPUT_FILE_PATH") = MakePacket<std::string>(
-      file::JoinPath("./",
-                     "/mediapipe/calculators/audio/"
-                     "testdata/sine_wave_1k_44100_mono_2_sec_wav.audio"));
+      file::JoinPath(GetTestDataDir(kTestPackageRoot),
+                     "sine_wave_1k_44100_mono_2_sec_wav.audio"));
   MP_ASSERT_OK(runner.Run());
   MP_EXPECT_OK(runner.Outputs()
                    .Tag("AUDIO_HEADER")
@@ -68,9 +71,8 @@ TEST(AudioDecoderCalculatorTest, Test48KWAV) {
         })pb");
   CalculatorRunner runner(node_config);
   runner.MutableSidePackets()->Tag("INPUT_FILE_PATH") = MakePacket<std::string>(
-      file::JoinPath("./",
-                     "/mediapipe/calculators/audio/"
-                     "testdata/sine_wave_1k_48000_stereo_2_sec_wav.audio"));
+      file::JoinPath(GetTestDataDir(kTestPackageRoot),
+                     "sine_wave_1k_48000_stereo_2_sec_wav.audio"));
   MP_ASSERT_OK(runner.Run());
   MP_EXPECT_OK(runner.Outputs()
                    .Tag("AUDIO_HEADER")
@@ -99,9 +101,8 @@ TEST(AudioDecoderCalculatorTest, TestMP3) {
         })pb");
   CalculatorRunner runner(node_config);
   runner.MutableSidePackets()->Tag("INPUT_FILE_PATH") = MakePacket<std::string>(
-      file::JoinPath("./",
-                     "/mediapipe/calculators/audio/"
-                     "testdata/sine_wave_1k_44100_stereo_2_sec_mp3.audio"));
+      file::JoinPath(GetTestDataDir(kTestPackageRoot),
+                     "sine_wave_1k_44100_stereo_2_sec_mp3.audio"));
   MP_ASSERT_OK(runner.Run());
   MP_EXPECT_OK(runner.Outputs()
                    .Tag("AUDIO_HEADER")
@@ -130,9 +131,8 @@ TEST(AudioDecoderCalculatorTest, TestAAC) {
         })pb");
   CalculatorRunner runner(node_config);
   runner.MutableSidePackets()->Tag("INPUT_FILE_PATH") = MakePacket<std::string>(
-      file::JoinPath("./",
-                     "/mediapipe/calculators/audio/"
-                     "testdata/sine_wave_1k_44100_stereo_2_sec_aac.audio"));
+      file::JoinPath(GetTestDataDir(kTestPackageRoot),
+                     "sine_wave_1k_44100_stereo_2_sec_aac.audio"));
   MP_ASSERT_OK(runner.Run());
   MP_EXPECT_OK(runner.Outputs()
                    .Tag("AUDIO_HEADER")
@@ -147,4 +147,5 @@ TEST(AudioDecoderCalculatorTest, TestAAC) {
               std::ceil(44100.0 * 2 / 1024));
 }
 
+}  // namespace
 }  // namespace mediapipe

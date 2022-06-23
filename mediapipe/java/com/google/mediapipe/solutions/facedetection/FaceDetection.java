@@ -16,7 +16,6 @@ package com.google.mediapipe.solutions.facedetection;
 
 import android.content.Context;
 import com.google.common.collect.ImmutableList;
-import com.google.mediapipe.formats.proto.DetectionProto.Detection;
 import com.google.mediapipe.framework.MediaPipeException;
 import com.google.mediapipe.framework.Packet;
 import com.google.mediapipe.solutioncore.ErrorListener;
@@ -24,6 +23,7 @@ import com.google.mediapipe.solutioncore.ImageSolutionBase;
 import com.google.mediapipe.solutioncore.OutputHandler;
 import com.google.mediapipe.solutioncore.ResultListener;
 import com.google.mediapipe.solutioncore.SolutionInfo;
+import com.google.mediapipe.formats.proto.DetectionProto.Detection;
 import java.util.HashMap;
 import java.util.Map;
 import javax.annotation.Nullable;

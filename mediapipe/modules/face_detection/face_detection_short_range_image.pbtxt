@@ -43,52 +43,12 @@ node {
   }
 }
 
-# Transforms the input image into a 128x128 tensor while keeping the aspect
-# ratio (what is expected by the corresponding face detection model), resulting
-# in potential letterboxing in the transformed image.
-node: {
-  calculator: "ImageToTensorCalculator"
+node {
+  calculator: "FaceDetectionShortRange"
   input_stream: "IMAGE:throttled_image"
-  output_stream: "TENSORS:input_tensors"
-  output_stream: "MATRIX:transform_matrix"
-  options: {
-    [mediapipe.ImageToTensorCalculatorOptions.ext] {
-      output_tensor_width: 128
-      output_tensor_height: 128
-      keep_aspect_ratio: true
-      output_tensor_float_range {
-        min: -1.0
-        max: 1.0
-      }
-      border_mode: BORDER_ZERO
-      gpu_origin: CONVENTIONAL
-    }
-  }
-}
-
-# Runs a TensorFlow Lite model on GPU that takes an image tensor and outputs a
-# vector of tensors representing, for instance, detection boxes/keypoints and
-# scores.
-# TODO: Use GraphOptions to modify the delegate field to be
-# `delegate { xnnpack {} }` for the CPU only use cases.
-node {
-  calculator: "InferenceCalculator"
-  input_stream: "TENSORS:input_tensors"
-  output_stream: "TENSORS:detection_tensors"
-  options: {
-    [mediapipe.InferenceCalculatorOptions.ext] {
-      model_path: "mediapipe/modules/face_detection/face_detection_short_range.tflite"
-
-      #
-      delegate: { gpu { use_advanced_gpu_api: true } }
-    }
-  }
-}
-
-# Performs tensor post processing to generate face detections.
-node {
-  calculator: "FaceDetectionShortRangeCommon"
-  input_stream: "TENSORS:detection_tensors"
-  input_stream: "MATRIX:transform_matrix"
   output_stream: "DETECTIONS:detections"
+  node_options: {
+    [type.googleapis.com/mediapipe.FaceDetectionOptions] {}
+  }
+  option_value: "OPTIONS:options"
 }

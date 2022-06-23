@@ -648,7 +648,6 @@ bool MotionBoxLines(const MotionBoxState& state, const Vector2_f& scaling,
                     std::array<Vector3_f, 4>* box_lines) {
   CHECK(box_lines);
   std::array<Vector2_f, 4> corners = MotionBoxCorners(state, scaling);
-  std::array<Vector3_f, 4> lines;
   for (int k = 0; k < 4; ++k) {
     const Vector2_f diff = corners[(k + 1) % 4] - corners[k];
     const Vector2_f normal = diff.Ortho().Normalize();

@@ -316,7 +316,7 @@ public final class PacketGetter {
   public static GraphTextureFrame getTextureFrameDeferredSync(final Packet packet) {
     return new GraphTextureFrame(
         nativeGetGpuBuffer(packet.getNativeHandle(), /* waitOnCpu= */ false),
-        packet.getTimestamp());
+        packet.getTimestamp(), /* deferredSync= */true);
   }
 
   private static native long nativeGetPacketFromReference(long nativePacketHandle);

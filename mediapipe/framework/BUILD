@@ -115,7 +115,10 @@ mediapipe_proto_library(
     name = "packet_test_proto",
     testonly = 1,
     srcs = ["packet_test.proto"],
-    visibility = ["//mediapipe/framework:__subpackages__"],
+    visibility = [
+        ":mediapipe_internal",
+        "//mediapipe/framework:__subpackages__",
+    ],
 )
 
 mediapipe_proto_library(
@@ -973,6 +976,7 @@ cc_library(
         ],
     }),
     visibility = [
+        "//fitbit/research/sensing/mobisense:__subpackages__",
         "//mediapipe/calculators:__subpackages__",
         "//mediapipe/framework:__subpackages__",
         "//mediapipe/framework/port:__pkg__",
@@ -1427,6 +1431,7 @@ cc_test(
         "//mediapipe/framework/stream_handler:timestamp_align_input_stream_handler",
         "//mediapipe/framework/tool:sink",
         "//mediapipe/framework/tool:status_util",
+        "//mediapipe/gpu:graph_support",
         "@com_google_absl//absl/container:fixed_array",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",

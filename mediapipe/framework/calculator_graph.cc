@@ -120,10 +120,10 @@ CalculatorGraph::CalculatorGraph()
   counter_factory_ = absl::make_unique<BasicCounterFactory>();
 }
 
-CalculatorGraph::CalculatorGraph(const CalculatorGraphConfig& config)
+CalculatorGraph::CalculatorGraph(CalculatorGraphConfig config)
     : CalculatorGraph() {
   counter_factory_ = absl::make_unique<BasicCounterFactory>();
-  MEDIAPIPE_CHECK_OK(Initialize(config));
+  MEDIAPIPE_CHECK_OK(Initialize(std::move(config)));
 }
 
 // Defining the destructor here lets us use incomplete types in the header;
@@ -429,18 +429,17 @@ absl::Status CalculatorGraph::Initialize(
   return absl::OkStatus();
 }
 
-absl::Status CalculatorGraph::Initialize(
-    const CalculatorGraphConfig& input_config) {
-  return Initialize(input_config, {});
+absl::Status CalculatorGraph::Initialize(CalculatorGraphConfig input_config) {
+  return Initialize(std::move(input_config), {});
 }
 
 absl::Status CalculatorGraph::Initialize(
-    const CalculatorGraphConfig& input_config,
+    CalculatorGraphConfig input_config,
     const std::map<std::string, Packet>& side_packets) {
   auto validated_graph = absl::make_unique<ValidatedGraphConfig>();
   MP_RETURN_IF_ERROR(validated_graph->Initialize(
-      input_config, /*graph_registry=*/nullptr, /*graph_options=*/nullptr,
-      &service_manager_));
+      std::move(input_config), /*graph_registry=*/nullptr,
+      /*graph_options=*/nullptr, &service_manager_));
   return Initialize(std::move(validated_graph), side_packets);
 }
 
@@ -675,6 +674,7 @@ absl::Status CalculatorGraph::PrepareForRun(
 #endif  // !MEDIAPIPE_DISABLE_GPU
   MP_RETURN_IF_ERROR(PrepareServices());
 #if !MEDIAPIPE_DISABLE_GPU
+  // TODO: should we do this on each run, or only once?
   MP_RETURN_IF_ERROR(PrepareGpu());
   additional_side_packets = MaybeCreateLegacyGpuSidePacket(legacy_sp);
 #endif  // !MEDIAPIPE_DISABLE_GPU
@@ -1251,7 +1251,9 @@ void CalculatorGraph::Resume() { scheduler_.Resume(); }
 
 absl::Status CalculatorGraph::SetExecutorInternal(
     const std::string& name, std::shared_ptr<Executor> executor) {
-  if (!executors_.emplace(name, executor).second) {
+  auto [it, inserted] = executors_.emplace(name, executor);
+  if (!inserted) {
+    if (it->second == executor) return absl::OkStatus();
     return mediapipe::AlreadyExistsErrorBuilder(MEDIAPIPE_LOC)
            << "SetExecutor must be called only once for the executor \"" << name
            << "\"";

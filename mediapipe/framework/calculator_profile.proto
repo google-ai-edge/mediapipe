@@ -11,10 +11,6 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-//
-// Forked from mediapipe/framework/calculator_profile.proto.
-// The forked proto must remain identical to the original proto and should be
-// ONLY used by mediapipe open source project.
 
 syntax = "proto2";
 
@@ -24,6 +20,7 @@ import "mediapipe/framework/calculator.proto";
 
 option java_package = "com.google.mediapipe.proto";
 option java_outer_classname = "CalculatorProfileProto";
+option objc_class_prefix = "MediaPipe";
 
 // Stores the profiling information.
 //

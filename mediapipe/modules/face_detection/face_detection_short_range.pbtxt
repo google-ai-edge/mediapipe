@@ -1,0 +1,57 @@
+# MediaPipe graph to detect faces. (CPU input and inference by default.)
+#
+# It is required that "face_detection_short_range.tflite" is available at
+# "mediapipe/modules/face_detection/face_detection_short_range.tflite"
+# path during execution.
+#
+# EXAMPLE:
+#   node {
+#     calculator: "FaceDetectionShortRange"
+#     input_stream: "IMAGE:image_frame"
+#     output_stream: "DETECTIONS:face_detections"
+#   }
+
+type: "FaceDetectionShortRange"
+
+# The input image, either ImageFrame, GpuBuffer, or (multi-backend) Image.
+input_stream: "IMAGE:image"
+
+# ROI (region of interest) within the given image where faces should be
+# detected. (NormalizedRect)
+input_stream: "ROI:roi"
+
+# Detected faces. (std::vector<Detection>)
+output_stream: "DETECTIONS:detections"
+
+graph_options: {
+  [type.googleapis.com/mediapipe.FaceDetectionOptions] {}
+}
+
+node {
+  calculator: "FaceDetection"
+  input_stream: "IMAGE:image"
+  input_stream: "ROI:roi"
+  output_stream: "DETECTIONS:detections"
+  node_options: {
+    [type.googleapis.com/mediapipe.FaceDetectionOptions] {
+      model_path: "mediapipe/modules/face_detection/face_detection_short_range.tflite"
+      tensor_width: 128
+      tensor_height: 128
+
+      num_layers: 4
+      strides: 8
+      strides: 16
+      strides: 16
+      strides: 16
+      interpolated_scale_aspect_ratio: 1.0
+
+      num_boxes: 896
+      x_scale: 128.0
+      y_scale: 128.0
+      h_scale: 128.0
+      w_scale: 128.0
+      min_score_thresh: 0.5
+    }
+  }
+  option_value: "OPTIONS:options"
+}

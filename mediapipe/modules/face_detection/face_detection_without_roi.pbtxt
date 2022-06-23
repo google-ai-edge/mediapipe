@@ -1,0 +1,35 @@
+# MediaPipe graph to detect faces.
+# This graph omits the "ROI" input stream of the FaceDetection graph.
+# For now top level graph input streams can only be ommitted using an
+# enclosing graph, see b/202896911.
+# TODO: Remove this graph after b/202896911 is addressed.
+#
+# EXAMPLE:
+#   node {
+#     calculator: "FaceDetectionFrontCpu"
+#     input_stream: "IMAGE:image"
+#     output_stream: "DETECTIONS:face_detections"
+#   }
+
+type: "FaceDetectionWithoutRoi"
+
+# The input image, either ImageFrame, GpuBuffer, or (multi-backend) Image.
+input_stream: "IMAGE:image"
+
+# Detected faces. (std::vector<Detection>)
+output_stream: "DETECTIONS:detections"
+
+# The face detection graph options.
+graph_options: {
+  [type.googleapis.com/mediapipe.FaceDetectionOptions] {}
+}
+
+node {
+  calculator: "FaceDetection"
+  input_stream: "IMAGE:image"
+  output_stream: "DETECTIONS:detections"
+  node_options: {
+    [type.googleapis.com/mediapipe.FaceDetectionOptions] {}
+  }
+  option_value: "OPTIONS:options"
+}

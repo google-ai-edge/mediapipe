@@ -106,19 +106,17 @@ std::string Packet::DebugString() const {
   return result;
 }
 
-absl::Status Packet::ValidateAsType(const tool::TypeInfo& type_info) const {
+absl::Status Packet::ValidateAsType(TypeId type_id) const {
   if (ABSL_PREDICT_FALSE(IsEmpty())) {
-    return absl::InternalError(
-        absl::StrCat("Expected a Packet of type: ",
-                     MediaPipeTypeStringOrDemangled(type_info),
-                     ", but received an empty Packet."));
+    return absl::InternalError(absl::StrCat(
+        "Expected a Packet of type: ", MediaPipeTypeStringOrDemangled(type_id),
+        ", but received an empty Packet."));
   }
-  bool holder_is_right_type =
-      holder_->GetTypeInfo().hash_code() == type_info.hash_code();
+  bool holder_is_right_type = holder_->GetTypeId() == type_id;
   if (ABSL_PREDICT_FALSE(!holder_is_right_type)) {
     return absl::InvalidArgumentError(absl::StrCat(
         "The Packet stores \"", holder_->DebugTypeName(), "\", but \"",
-        MediaPipeTypeStringOrDemangled(type_info), "\" was requested."));
+        MediaPipeTypeStringOrDemangled(type_id), "\" was requested."));
   }
   return absl::OkStatus();
 }

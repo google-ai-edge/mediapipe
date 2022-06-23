@@ -198,6 +198,7 @@ cc_library(
         ":name_util",
         ":options_registry",
         ":proto_util_lite",
+        ":type_util",
         "//mediapipe/framework:calculator_cc_proto",
         "//mediapipe/framework:packet",
         "//mediapipe/framework:packet_type",
@@ -277,9 +278,12 @@ cc_library(
     hdrs = ["options_registry.h"],
     visibility = ["//visibility:public"],
     deps = [
+        ":field_data_cc_proto",
+        ":proto_util_lite",
         "//mediapipe/framework/deps:registration",
         "//mediapipe/framework/port:advanced_proto",
         "//mediapipe/framework/port:logging",
+        "//mediapipe/framework/port:ret_check",
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/synchronization",
     ],
@@ -334,6 +338,7 @@ cc_library(
     hdrs = ["proto_util_lite.h"],
     visibility = ["//visibility:public"],
     deps = [
+        ":field_data_cc_proto",
         "//mediapipe/framework:type_map",
         "//mediapipe/framework/port:advanced_proto_lite",
         "//mediapipe/framework/port:integral_types",
@@ -518,9 +523,11 @@ cc_library(
 cc_library(
     name = "type_util",
     hdrs = ["type_util.h"],
-    visibility = ["//mediapipe/framework:mediapipe_internal"],
+    visibility = ["//visibility:public"],
     deps = [
+        "//mediapipe/framework:demangle",
         "//mediapipe/framework:port",
+        "@com_google_absl//absl/base:core_headers",
     ],
 )
 

@@ -157,9 +157,7 @@ absl::Status PacketResamplerCalculator::Process(CalculatorContext* cc) {
     }
   }
 
-  if (absl::Status status = strategy_->Process(cc); !status.ok()) {
-    return status;  // Avoid MP_RETURN_IF_ERROR macro for external release.
-  }
+  MP_RETURN_IF_ERROR(strategy_->Process(cc));
 
   last_packet_ = cc->Inputs().Get(input_data_id_).Value();
 

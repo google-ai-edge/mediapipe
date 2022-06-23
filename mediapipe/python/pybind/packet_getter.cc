@@ -247,7 +247,22 @@ void PublicPacketGetters(pybind11::module* m) {
 )doc");
 
   m->def(
-      "get_float_list", &GetContent<std::vector<float>>,
+      "get_float_list",
+      [](const Packet& packet) {
+        if (packet.ValidateAsType<std::vector<float>>().ok()) {
+          return packet.Get<std::vector<float>>();
+        } else if (packet.ValidateAsType<std::array<float, 16>>().ok()) {
+          auto float_array = packet.Get<std::array<float, 16>>();
+          return std::vector<float>(float_array.begin(), float_array.end());
+        } else if (packet.ValidateAsType<std::array<float, 4>>().ok()) {
+          auto float_array = packet.Get<std::array<float, 4>>();
+          return std::vector<float>(float_array.begin(), float_array.end());
+        } else {
+          throw RaisePyError(PyExc_ValueError,
+                             "Packet doesn't contain std::vector<float> or "
+                             "std::array<float, 4 / 16> containers.");
+        }
+      },
       R"doc(Get the content of a MediaPipe float vector Packet as a float list.
 
   Args:

@@ -127,13 +127,13 @@ bool PacketType::IsOneOf() const {
 }
 
 bool PacketType::IsExactType() const {
-  return absl::holds_alternative<const tool::TypeInfo*>(type_spec_);
+  return absl::holds_alternative<TypeId>(type_spec_);
 }
 
 const std::string* PacketType::RegisteredTypeName() const {
   if (auto* same_as = SameAsPtr()) return same_as->RegisteredTypeName();
-  if (auto* type_info = absl::get_if<const tool::TypeInfo*>(&type_spec_))
-    return MediaPipeTypeStringFromTypeId((**type_info).hash_code());
+  if (auto* type_id = absl::get_if<TypeId>(&type_spec_))
+    return MediaPipeTypeStringFromTypeId(*type_id);
   if (auto* multi_type = absl::get_if<MultiType>(&type_spec_))
     return multi_type->registered_type_name;
   return nullptr;
@@ -141,8 +141,8 @@ const std::string* PacketType::RegisteredTypeName() const {
 
 namespace internal {
 
-struct TypeInfoFormatter {
-  void operator()(std::string* out, const tool::TypeInfo& t) const {
+struct TypeIdFormatter {
+  void operator()(std::string* out, TypeId t) const {
     absl::StrAppend(out, MediaPipeTypeStringOrDemangled(t));
   }
 };
@@ -167,12 +167,9 @@ explicit QuoteFormatter(Formatter f) -> QuoteFormatter<Formatter>;
 
 }  // namespace internal
 
-std::string PacketType::TypeNameForOneOf(TypeInfoSpan types) {
+std::string PacketType::TypeNameForOneOf(TypeIdSpan types) {
   return absl::StrCat(
-      "OneOf<",
-      absl::StrJoin(types, ", ",
-                    absl::DereferenceFormatter(internal::TypeInfoFormatter())),
-      ">");
+      "OneOf<", absl::StrJoin(types, ", ", internal::TypeIdFormatter()), ">");
 }
 
 std::string PacketType::DebugTypeName() const {
@@ -185,8 +182,8 @@ std::string PacketType::DebugTypeName() const {
   if (auto* special = absl::get_if<SpecialType>(&type_spec_)) {
     return special->name_;
   }
-  if (auto* type_info = absl::get_if<const tool::TypeInfo*>(&type_spec_)) {
-    return MediaPipeTypeStringOrDemangled(**type_info);
+  if (auto* type_id = absl::get_if<TypeId>(&type_spec_)) {
+    return MediaPipeTypeStringOrDemangled(*type_id);
   }
   if (auto* multi_type = absl::get_if<MultiType>(&type_spec_)) {
     return TypeNameForOneOf(multi_type->types);
@@ -194,11 +191,11 @@ std::string PacketType::DebugTypeName() const {
   return "[Undefined Type]";
 }
 
-static bool HaveCommonType(absl::Span<const tool::TypeInfo* const> types1,
-                           absl::Span<const tool::TypeInfo* const> types2) {
+static bool HaveCommonType(absl::Span<const TypeId> types1,
+                           absl::Span<const TypeId> types2) {
   for (const auto& first : types1) {
     for (const auto& second : types2) {
-      if (first->hash_code() == second->hash_code()) {
+      if (first == second) {
         return true;
       }
     }
@@ -216,35 +213,34 @@ absl::Status PacketType::Validate(const Packet& packet) const {
     // in SetSameAs().
     return GetSameAs()->Validate(packet);
   }
-  if (auto* type_info = absl::get_if<const tool::TypeInfo*>(&type_spec_)) {
-    return packet.ValidateAsType(**type_info);
+  if (auto* type_id = absl::get_if<TypeId>(&type_spec_)) {
+    return packet.ValidateAsType(*type_id);
   }
   if (packet.IsEmpty()) {
     return mediapipe::InvalidArgumentErrorBuilder(MEDIAPIPE_LOC)
            << "Empty packets are not allowed for type: " << DebugTypeName();
   }
   if (auto* multi_type = absl::get_if<MultiType>(&type_spec_)) {
-    auto* packet_type = &packet.GetTypeInfo();
+    auto packet_type = packet.GetTypeId();
     if (HaveCommonType(multi_type->types, absl::MakeSpan(&packet_type, 1))) {
       return absl::OkStatus();
     } else {
       return absl::InvalidArgumentError(absl::StrCat(
           "The Packet stores \"", packet.DebugTypeName(), "\", but one of ",
           absl::StrJoin(multi_type->types, ", ",
-                        absl::DereferenceFormatter(internal::QuoteFormatter(
-                            internal::TypeInfoFormatter()))),
+                        internal::QuoteFormatter(internal::TypeIdFormatter())),
           " was requested."));
     }
   }
   if (auto* special = absl::get_if<SpecialType>(&type_spec_)) {
-    return special->accept_fn_(&packet.GetTypeInfo());
+    return special->accept_fn_(packet.GetTypeId());
   }
   return absl::OkStatus();
 }
 
-PacketType::TypeInfoSpan PacketType::GetTypeSpan(const TypeSpec& type_spec) {
-  if (auto* type_info = absl::get_if<const tool::TypeInfo*>(&type_spec))
-    return absl::MakeSpan(type_info, 1);
+PacketType::TypeIdSpan PacketType::GetTypeSpan(const TypeSpec& type_spec) {
+  if (auto* type_id = absl::get_if<TypeId>(&type_spec))
+    return absl::MakeSpan(type_id, 1);
   if (auto* multi_type = absl::get_if<MultiType>(&type_spec))
     return multi_type->types;
   return {};
@@ -254,8 +250,8 @@ bool PacketType::IsConsistentWith(const PacketType& other) const {
   const PacketType* type1 = GetSameAs();
   const PacketType* type2 = other.GetSameAs();
 
-  TypeInfoSpan types1 = GetTypeSpan(type1->type_spec_);
-  TypeInfoSpan types2 = GetTypeSpan(type2->type_spec_);
+  TypeIdSpan types1 = GetTypeSpan(type1->type_spec_);
+  TypeIdSpan types2 = GetTypeSpan(type2->type_spec_);
   if (!types1.empty() && !types2.empty()) {
     return HaveCommonType(types1, types2);
   }

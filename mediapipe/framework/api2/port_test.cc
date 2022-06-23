@@ -8,7 +8,7 @@ namespace {
 
 TEST(PortTest, IntInput) {
   static constexpr auto port = Input<int>("FOO");
-  EXPECT_EQ(port.type_id(), typeid(int).hash_code());
+  EXPECT_EQ(port.type_id(), kTypeId<int>);
 }
 
 TEST(PortTest, OptionalInput) {

@@ -17,10 +17,10 @@ package com.google.mediapipe.solutions.facedetection;
 import android.graphics.Bitmap;
 import com.google.auto.value.AutoBuilder;
 import com.google.common.collect.ImmutableList;
-import com.google.mediapipe.formats.proto.DetectionProto.Detection;
 import com.google.mediapipe.framework.Packet;
 import com.google.mediapipe.framework.TextureFrame;
 import com.google.mediapipe.solutioncore.ImageSolutionResult;
+import com.google.mediapipe.formats.proto.DetectionProto.Detection;
 import java.util.List;
 
 /**

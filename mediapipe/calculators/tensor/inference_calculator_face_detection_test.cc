@@ -75,9 +75,10 @@ const std::vector<Param>& GetParams() {
 class InferenceCalculatorTest : public testing::TestWithParam<Param> {
  protected:
   void SetDelegateForParam(mediapipe::CalculatorGraphConfig_Node* node) {
-    *node->mutable_options()
-         ->MutableExtension(mediapipe::InferenceCalculatorOptions::ext)
-         ->mutable_delegate() = GetParam().delegate;
+    auto options_map = tool::MutableOptionsMap().Initialize(*node);
+    auto options = options_map.Get<mediapipe::InferenceCalculatorOptions>();
+    *options.mutable_delegate() = GetParam().delegate;
+    options_map.Set(options);
   }
 };
 

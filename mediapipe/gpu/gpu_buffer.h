@@ -130,8 +130,6 @@ class GpuBuffer {
   }
 
  private:
-  using TypeRef = internal::TypeRef;
-
   class PlaceholderGpuBufferStorage
       : public internal::GpuBufferStorageImpl<PlaceholderGpuBufferStorage> {
    public:
@@ -147,14 +145,13 @@ class GpuBuffer {
     GpuBufferFormat format_ = GpuBufferFormat::kUnknown;
   };
 
-  internal::GpuBufferStorage& GetStorageForView(TypeRef view_provider_type,
+  internal::GpuBufferStorage& GetStorageForView(TypeId view_provider_type,
                                                 bool for_writing) const;
 
   template <class View>
   internal::ViewProvider<View>* GetViewProvider(bool for_writing) const {
     using VP = internal::ViewProvider<View>;
-    return GetStorageForView(TypeRef::Get<VP>(), for_writing)
-        .template down_cast<VP>();
+    return GetStorageForView(kTypeId<VP>, for_writing).template down_cast<VP>();
   }
 
   std::shared_ptr<internal::GpuBufferStorage>& no_storage() const {

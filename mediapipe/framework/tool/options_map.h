@@ -30,15 +30,26 @@ struct IsExtension {
 
 template <class T,
           typename std::enable_if<IsExtension<T>::value, int>::type = 0>
-void GetExtension(const CalculatorOptions& options, T* result) {
+T* GetExtension(CalculatorOptions& options) {
   if (options.HasExtension(T::ext)) {
-    *result = options.GetExtension(T::ext);
+    return options.MutableExtension(T::ext);
   }
+  return nullptr;
 }
 
 template <class T,
           typename std::enable_if<!IsExtension<T>::value, int>::type = 0>
-void GetExtension(const CalculatorOptions& options, T* result) {}
+T* GetExtension(const CalculatorOptions& options) {
+  return nullptr;
+}
+
+template <class T>
+void GetExtension(const CalculatorOptions& options, T* result) {
+  T* r = GetExtension<T>(*const_cast<CalculatorOptions*>(&options));
+  if (r) {
+    *result = *r;
+  }
+}
 
 template <class T>
 void GetNodeOptions(const CalculatorGraphConfig::Node& node_config, T* result) {
@@ -53,23 +64,39 @@ void GetNodeOptions(const CalculatorGraphConfig::Node& node_config, T* result) {
 #endif
 }
 
+template <class T>
+void SetNodeOptions(CalculatorGraphConfig::Node& node_config, const T& value) {
+#if defined(MEDIAPIPE_PROTO_LITE) && defined(MEDIAPIPE_PROTO_THIRD_PARTY)
+  // protobuf::Any is unavailable with third_party/protobuf:protobuf-lite.
+#else
+  for (mediapipe::protobuf::Any& options :
+       *node_config.mutable_node_options()) {
+    if (options.Is<T>()) {
+      options.PackFrom(value);
+      return;
+    }
+  }
+  node_config.add_node_options()->PackFrom(value);
+#endif
+}
+
 // A map from object type to object.
 class TypeMap {
  public:
   template <class T>
   bool Has() const {
-    return content_.count(TypeInfo::Get<T>()) > 0;
+    return content_.count(kTypeId<T>) > 0;
   }
   template <class T>
   T* Get() const {
     if (!Has<T>()) {
-      content_[TypeInfo::Get<T>()] = std::make_shared<T>();
+      content_[kTypeId<T>] = std::make_shared<T>();
     }
-    return static_cast<T*>(content_[TypeInfo::Get<T>()].get());
+    return static_cast<T*>(content_[kTypeId<T>].get());
   }
 
  private:
-  mutable std::map<TypeIndex, std::shared_ptr<void>> content_;
+  mutable std::map<TypeId, std::shared_ptr<void>> content_;
 };
 
 // Extracts the options message of a specified type from a
@@ -77,7 +104,7 @@ class TypeMap {
 class OptionsMap {
  public:
   OptionsMap& Initialize(const CalculatorGraphConfig::Node& node_config) {
-    node_config_ = &node_config;
+    node_config_ = const_cast<CalculatorGraphConfig::Node*>(&node_config);
     return *this;
   }
 
@@ -97,8 +124,38 @@ class OptionsMap {
     return *result;
   }
 
-  const CalculatorGraphConfig::Node* node_config_;
+  CalculatorGraphConfig::Node* node_config_;
   TypeMap options_;
+};
+
+class MutableOptionsMap : public OptionsMap {
+ public:
+  MutableOptionsMap& Initialize(CalculatorGraphConfig::Node& node_config) {
+    node_config_ = &node_config;
+    return *this;
+  }
+  template <class T>
+  void Set(const T& value) const {
+    *options_.Get<T>() = value;
+    if (node_config_->has_options()) {
+      *GetExtension<T>(*node_config_->mutable_options()) = value;
+    } else {
+      SetNodeOptions(*node_config_, value);
+    }
+  }
+
+  template <class T>
+  T* GetMutable() const {
+    if (options_.Has<T>()) {
+      return options_.Get<T>();
+    }
+    if (node_config_->has_options()) {
+      return GetExtension<T>(*node_config_->mutable_options());
+    }
+    T* result = options_.Get<T>();
+    GetNodeOptions(*node_config_, result);
+    return result;
+  }
 };
 
 }  // namespace tool

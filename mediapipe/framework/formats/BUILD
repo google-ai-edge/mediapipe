@@ -448,6 +448,7 @@ cc_library(
     srcs =
         [
             "tensor.cc",
+            "tensor_ahwb.cc",
         ],
     hdrs = ["tensor.h"],
     copts = select({
@@ -463,6 +464,9 @@ cc_library(
             "-framework MetalKit",
         ],
         "//conditions:default": [],
+        "//mediapipe:android": [
+            "-landroid",
+        ],
     }),
     visibility = ["//visibility:public"],
     deps = [

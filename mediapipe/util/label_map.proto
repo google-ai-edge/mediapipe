@@ -33,8 +33,3 @@ message LabelMapItem {
   // hierarchy.
   repeated string child_name = 3;
 }
-
-// Mapping from index to a label map item.
-message LabelMap {
-  map<int64, LabelMapItem> index_to_item = 1;
-}

@@ -1,9 +1,11 @@
 #ifndef MEDIAPIPE_GPU_GPU_BUFFER_STORAGE_H_
 #define MEDIAPIPE_GPU_GPU_BUFFER_STORAGE_H_
 
+#include <cstdint>
 #include <functional>
 #include <memory>
 #include <sstream>
+#include <type_traits>
 
 #include "absl/container/flat_hash_map.h"
 #include "mediapipe/framework/deps/no_destructor.h"
@@ -20,31 +22,6 @@ struct types {};
 template <class V>
 class ViewProvider;
 
-// An identifier for a type. We have often used size_t holding a hash for this
-// purpose in MediaPipe, but a non-primitive type makes the code more readable.
-// Ideally we should clean up the various ways this is handled throughout the
-// framework and consolidate the utilities in type_util. When that is done, this
-// type can be replaced.
-class TypeRef {
- public:
-  template <class T>
-  static TypeRef Get() {
-    return TypeRef{tool::GetTypeHash<T>()};
-  }
-
-  bool operator==(const TypeRef& other) const { return hash_ == other.hash_; }
-
-  template <typename H>
-  friend H AbslHashValue(H h, const TypeRef& r) {
-    return H::combine(std::move(h), r.hash_);
-  }
-
- private:
-  explicit TypeRef(size_t hash) : hash_(hash) {}
-
-  size_t hash_;
-};
-
 // Interface for a backing storage for GpuBuffer.
 class GpuBufferStorage {
  public:
@@ -56,18 +33,18 @@ class GpuBufferStorage {
   // The public methods delegate to the type-erased private virtual method.
   template <class T>
   T* down_cast() {
-    return static_cast<T*>(const_cast<void*>(down_cast(TypeRef::Get<T>())));
+    return static_cast<T*>(const_cast<void*>(down_cast(kTypeId<T>)));
   }
   template <class T>
   const T* down_cast() const {
-    return static_cast<const T*>(down_cast(TypeRef::Get<T>()));
+    return static_cast<const T*>(down_cast(kTypeId<T>));
   }
 
-  bool can_down_cast_to(TypeRef to) const { return down_cast(to) != nullptr; }
-  virtual TypeRef storage_type() const = 0;
+  bool can_down_cast_to(TypeId to) const { return down_cast(to) != nullptr; }
+  virtual TypeId storage_type() const = 0;
 
  private:
-  virtual const void* down_cast(TypeRef to) const = 0;
+  virtual const void* down_cast(TypeId to) const = 0;
 };
 
 // Used to disambiguate between overloads by manually specifying their priority.
@@ -113,18 +90,18 @@ class GpuBufferStorageRegistry {
             -> std::shared_ptr<GpuBufferStorage> {
           return converter(std::static_pointer_cast<StorageFrom>(source));
         },
-        StorageTo::GetProviderTypes(), TypeRef::Get<StorageFrom>());
+        StorageTo::GetProviderTypes(), kTypeId<StorageFrom>);
   }
 
   // Returns a factory function for a storage that implements
   // view_provider_type.
-  StorageFactory StorageFactoryForViewProvider(TypeRef view_provider_type);
+  StorageFactory StorageFactoryForViewProvider(TypeId view_provider_type);
 
   // Returns a conversion function that, given a storage of
   // existing_storage_type, converts its contents to a new storage that
   // implements view_provider_type.
   StorageConverter StorageConverterForViewProvider(
-      TypeRef view_provider_type, TypeRef existing_storage_type);
+      TypeId view_provider_type, TypeId existing_storage_type);
 
  private:
   template <class Storage, class... Args>
@@ -139,13 +116,13 @@ class GpuBufferStorageRegistry {
   }
 
   RegistryToken Register(StorageFactory factory,
-                         std::vector<TypeRef> provider_hashes);
+                         std::vector<TypeId> provider_hashes);
   RegistryToken Register(StorageConverter converter,
-                         std::vector<TypeRef> provider_hashes,
-                         TypeRef source_storage);
+                         std::vector<TypeId> provider_hashes,
+                         TypeId source_storage);
 
-  absl::flat_hash_map<TypeRef, StorageFactory> factory_for_view_provider_;
-  absl::flat_hash_map<std::pair<TypeRef, TypeRef>, StorageConverter>
+  absl::flat_hash_map<TypeId, StorageFactory> factory_for_view_provider_;
+  absl::flat_hash_map<std::pair<TypeId, TypeId>, StorageConverter>
       converter_for_view_provider_and_existing_storage_;
 };
 
@@ -166,21 +143,21 @@ struct ForceStaticInstantiation {
 template <class T, class... U>
 class GpuBufferStorageImpl : public GpuBufferStorage, public U... {
  public:
-  static const std::vector<TypeRef>& GetProviderTypes() {
-    static std::vector<TypeRef> kHashes{TypeRef::Get<U>()...};
+  static const std::vector<TypeId>& GetProviderTypes() {
+    static std::vector<TypeId> kHashes{kTypeId<U>...};
     return kHashes;
   }
 
  private:
-  virtual const void* down_cast(TypeRef to) const override {
+  virtual const void* down_cast(TypeId to) const override {
     return down_cast_impl(to, types<T, U...>{});
   }
-  TypeRef storage_type() const override { return TypeRef::Get<T>(); }
+  TypeId storage_type() const override { return kTypeId<T>; }
 
-  const void* down_cast_impl(TypeRef to, types<>) const { return nullptr; }
+  const void* down_cast_impl(TypeId to, types<>) const { return nullptr; }
   template <class V, class... W>
-  const void* down_cast_impl(TypeRef to, types<V, W...>) const {
-    if (to == TypeRef::Get<V>()) return static_cast<const V*>(this);
+  const void* down_cast_impl(TypeId to, types<V, W...>) const {
+    if (to == kTypeId<V>) return static_cast<const V*>(this);
     return down_cast_impl(to, types<W...>{});
   }
 

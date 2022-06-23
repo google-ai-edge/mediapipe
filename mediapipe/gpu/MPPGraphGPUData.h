@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef MEDIAPIPE_GPU_DRISHTIGRAPHGPUDATA_H_
-#define MEDIAPIPE_GPU_DRISHTIGRAPHGPUDATA_H_
+#ifndef MEDIAPIPE_GPU_MPPGRAPHGPUDATA_H_
+#define MEDIAPIPE_GPU_MPPGRAPHGPUDATA_H_
 
 #import <CoreVideo/CVMetalTextureCache.h>
 #import <CoreVideo/CoreVideo.h>
@@ -68,4 +68,4 @@ class GpuBufferMultiPool;
 
 @end
 
-#endif  // MEDIAPIPE_GPU_DRISHTIGRAPHGPUDATA_H_
+#endif  // MEDIAPIPE_GPU_MPPGRAPHGPUDATA_H_

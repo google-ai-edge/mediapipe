@@ -244,6 +244,7 @@ cc_test(
         "//mediapipe/framework/formats:time_series_header_cc_proto",
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/framework/port:parse_text_proto",
+        "//mediapipe/framework/tool:test_util",
         "@com_google_absl//absl/flags:flag",
     ],
 )

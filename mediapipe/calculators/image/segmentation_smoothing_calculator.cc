@@ -21,10 +21,7 @@
 #include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/formats/image_format.pb.h"
 #include "mediapipe/framework/formats/image_frame.h"
-#include "mediapipe/framework/formats/image_frame_opencv.h"
-#include "mediapipe/framework/formats/image_opencv.h"
 #include "mediapipe/framework/port/logging.h"
-#include "mediapipe/framework/port/opencv_core_inc.h"
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/port/vector.h"
 
@@ -33,6 +30,12 @@
 #include "mediapipe/gpu/gl_simple_shaders.h"
 #include "mediapipe/gpu/shader_util.h"
 #endif  // !MEDIAPIPE_DISABLE_GPU
+
+#if !MEDIAPIPE_DISABLE_OPENCV
+#include "mediapipe/framework/formats/image_frame_opencv.h"
+#include "mediapipe/framework/formats/image_opencv.h"
+#include "mediapipe/framework/port/opencv_core_inc.h"
+#endif  // !MEDIAPIPE_DISABLE_OPENCV
 
 namespace mediapipe {
 
@@ -163,7 +166,11 @@ absl::Status SegmentationSmoothingCalculator::Process(CalculatorContext* cc) {
     return absl::InternalError("GPU processing is disabled.");
 #endif  // !MEDIAPIPE_DISABLE_GPU
   } else {
+#if !MEDIAPIPE_DISABLE_OPENCV
     MP_RETURN_IF_ERROR(RenderCpu(cc));
+#else
+    return absl::InternalError("OpenCV processing is disabled.");
+#endif  // !MEDIAPIPE_DISABLE_OPENCV
   }
 
   return absl::OkStatus();
@@ -181,6 +188,7 @@ absl::Status SegmentationSmoothingCalculator::Close(CalculatorContext* cc) {
 }
 
 absl::Status SegmentationSmoothingCalculator::RenderCpu(CalculatorContext* cc) {
+#if !MEDIAPIPE_DISABLE_OPENCV
   // Setup source images.
   const auto& current_frame = cc->Inputs().Tag(kCurrentMaskTag).Get<Image>();
   auto current_mat = mediapipe::formats::MatView(&current_frame);
@@ -245,6 +253,7 @@ absl::Status SegmentationSmoothingCalculator::RenderCpu(CalculatorContext* cc) {
   cc->Outputs()
       .Tag(kOutputMaskTag)
       .AddPacket(MakePacket<Image>(output_frame).At(cc->InputTimestamp()));
+#endif  // !MEDIAPIPE_DISABLE_OPENCV
 
   return absl::OkStatus();
 }

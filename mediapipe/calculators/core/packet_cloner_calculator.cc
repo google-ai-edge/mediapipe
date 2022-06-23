@@ -16,9 +16,10 @@
 // For every packet that appears in B, outputs the most recent packet from each
 // of the A_i on a separate stream.
 
+#include <string_view>
 #include <vector>
 
-#include "absl/strings/str_cat.h"
+#include "absl/strings/string_view.h"
 #include "mediapipe/calculators/core/packet_cloner_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
 
@@ -34,7 +35,18 @@ namespace mediapipe {
 //   calculator: "PacketClonerCalculator"
 //   input_stream: "first_base_signal"
 //   input_stream: "second_base_signal"
-//   input_stream: "tick_signal"
+//   input_stream: "tick_signal"  # or input_stream: "TICK:tick_signal"
+//   output_stream: "cloned_first_base_signal"
+//   output_stream: "cloned_second_base_signal"
+// }
+//
+// Or you can use "TICK" tag and put corresponding input stream at any location,
+// for example at the very beginning:
+// node {
+//   calculator: "PacketClonerCalculator"
+//   input_stream: "TICK:tick_signal"
+//   input_stream: "first_base_signal"
+//   input_stream: "second_base_signal"
 //   output_stream: "cloned_first_base_signal"
 //   output_stream: "cloned_second_base_signal"
 // }
@@ -46,12 +58,13 @@ namespace mediapipe {
 class PacketClonerCalculator : public CalculatorBase {
  public:
   static absl::Status GetContract(CalculatorContract* cc) {
-    const int tick_signal_index = cc->Inputs().NumEntries() - 1;
-    for (int i = 0; i < tick_signal_index; ++i) {
-      cc->Inputs().Index(i).SetAny();
-      cc->Outputs().Index(i).SetSameAs(&cc->Inputs().Index(i));
+    const Ids ids = GetIds(*cc);
+    for (const auto& in_out : ids.inputs_outputs) {
+      auto& input = cc->Inputs().Get(in_out.in);
+      input.SetAny();
+      cc->Outputs().Get(in_out.out).SetSameAs(&input);
     }
-    cc->Inputs().Index(tick_signal_index).SetAny();
+    cc->Inputs().Get(ids.tick_id).SetAny();
     return absl::OkStatus();
   }
 
@@ -65,13 +78,15 @@ class PacketClonerCalculator : public CalculatorBase {
     output_empty_packets_before_all_inputs_received_ =
         calculator_options.output_packets_only_when_all_inputs_received();
 
-    // Parse input streams.
-    tick_signal_index_ = cc->Inputs().NumEntries() - 1;
-    current_.resize(tick_signal_index_);
+    // Prepare input and output ids.
+    ids_ = GetIds(*cc);
+    current_.resize(ids_.inputs_outputs.size());
+
     // Pass along the header for each stream if present.
-    for (int i = 0; i < tick_signal_index_; ++i) {
-      if (!cc->Inputs().Index(i).Header().IsEmpty()) {
-        cc->Outputs().Index(i).SetHeader(cc->Inputs().Index(i).Header());
+    for (const auto& in_out : ids_.inputs_outputs) {
+      auto& input = cc->Inputs().Get(in_out.in);
+      if (!input.Header().IsEmpty()) {
+        cc->Outputs().Get(in_out.out).SetHeader(input.Header());
       }
     }
     return absl::OkStatus();
@@ -79,17 +94,18 @@ class PacketClonerCalculator : public CalculatorBase {
 
   absl::Status Process(CalculatorContext* cc) final {
     // Store input signals.
-    for (int i = 0; i < tick_signal_index_; ++i) {
-      if (!cc->Inputs().Index(i).Value().IsEmpty()) {
-        current_[i] = cc->Inputs().Index(i).Value();
+    for (int i = 0; i < ids_.inputs_outputs.size(); ++i) {
+      const auto& input = cc->Inputs().Get(ids_.inputs_outputs[i].in);
+      if (!input.IsEmpty()) {
+        current_[i] = input.Value();
       }
     }
 
     // Output according to the TICK signal.
-    if (!cc->Inputs().Index(tick_signal_index_).Value().IsEmpty()) {
+    if (!cc->Inputs().Get(ids_.tick_id).IsEmpty()) {
       if (output_only_when_all_inputs_received_) {
         // Return if one of the input is null.
-        for (int i = 0; i < tick_signal_index_; ++i) {
+        for (int i = 0; i < ids_.inputs_outputs.size(); ++i) {
           if (current_[i].IsEmpty()) {
             if (output_empty_packets_before_all_inputs_received_) {
               SetAllNextTimestampBounds(cc);
@@ -99,12 +115,12 @@ class PacketClonerCalculator : public CalculatorBase {
         }
       }
       // Output each stream.
-      for (int i = 0; i < tick_signal_index_; ++i) {
+      for (int i = 0; i < ids_.inputs_outputs.size(); ++i) {
+        auto& output = cc->Outputs().Get(ids_.inputs_outputs[i].out);
         if (!current_[i].IsEmpty()) {
-          cc->Outputs().Index(i).AddPacket(
-              current_[i].At(cc->InputTimestamp()));
+          output.AddPacket(current_[i].At(cc->InputTimestamp()));
         } else {
-          cc->Outputs().Index(i).SetNextTimestampBound(
+          output.SetNextTimestampBound(
               cc->InputTimestamp().NextAllowedInStream());
         }
       }
@@ -113,15 +129,44 @@ class PacketClonerCalculator : public CalculatorBase {
   }
 
  private:
+  struct Ids {
+    struct InputOutput {
+      CollectionItemId in;
+      CollectionItemId out;
+    };
+    CollectionItemId tick_id;
+    std::vector<InputOutput> inputs_outputs;
+  };
+
+  template <typename CC>
+  static Ids GetIds(CC& cc) {
+    Ids ids;
+    static constexpr absl::string_view kEmptyTag = "";
+    int num_inputs_to_clone = cc.Inputs().NumEntries(kEmptyTag);
+    static constexpr absl::string_view kTickTag = "TICK";
+    if (cc.Inputs().HasTag(kTickTag)) {
+      ids.tick_id = cc.Inputs().GetId(kTickTag, 0);
+    } else {
+      --num_inputs_to_clone;
+      ids.tick_id = cc.Inputs().GetId(kEmptyTag, num_inputs_to_clone);
+    }
+    for (int i = 0; i < num_inputs_to_clone; ++i) {
+      ids.inputs_outputs.push_back({.in = cc.Inputs().GetId(kEmptyTag, i),
+                                    .out = cc.Outputs().GetId(kEmptyTag, i)});
+    }
+    return ids;
+  }
+
   void SetAllNextTimestampBounds(CalculatorContext* cc) {
-    for (int j = 0; j < tick_signal_index_; ++j) {
-      cc->Outputs().Index(j).SetNextTimestampBound(
-          cc->InputTimestamp().NextAllowedInStream());
+    for (const auto& in_out : ids_.inputs_outputs) {
+      cc->Outputs()
+          .Get(in_out.out)
+          .SetNextTimestampBound(cc->InputTimestamp().NextAllowedInStream());
     }
   }
 
   std::vector<Packet> current_;
-  int tick_signal_index_;
+  Ids ids_;
   bool output_only_when_all_inputs_received_;
   bool output_empty_packets_before_all_inputs_received_;
 };

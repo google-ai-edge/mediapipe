@@ -59,7 +59,8 @@ absl::Status CombinedStatus(const std::string& general_comment,
     }
   }
   if (error_code == StatusCode::kOk) return OkStatus();
-  Status combined = absl::Status(
+  Status combined;
+  combined = absl::Status(
       error_code,
       absl::StrCat(general_comment, "\n", absl::StrJoin(errors, "\n")));
   return combined;

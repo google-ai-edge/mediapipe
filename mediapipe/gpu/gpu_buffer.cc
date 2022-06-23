@@ -11,7 +11,7 @@
 namespace mediapipe {
 
 internal::GpuBufferStorage& GpuBuffer::GetStorageForView(
-    TypeRef view_provider_type, bool for_writing) const {
+    TypeId view_provider_type, bool for_writing) const {
   const std::shared_ptr<internal::GpuBufferStorage>* chosen_storage = nullptr;
 
   // First see if any current storage supports the view.

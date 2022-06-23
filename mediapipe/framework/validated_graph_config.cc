@@ -14,6 +14,8 @@
 
 #include "mediapipe/framework/validated_graph_config.h"
 
+#include <memory>
+
 #include "absl/container/flat_hash_set.h"
 #include "absl/memory/memory.h"
 #include "absl/strings/str_cat.h"
@@ -137,35 +139,6 @@ absl::Status AddPredefinedExecutorConfigs(CalculatorGraphConfig* graph_config) {
       graph_config->clear_num_threads();
     }
   }
-  return absl::OkStatus();
-}
-
-absl::Status PerformBasicTransforms(
-    const CalculatorGraphConfig& input_graph_config,
-    const GraphRegistry* graph_registry,
-    const Subgraph::SubgraphOptions* graph_options,
-    const GraphServiceManager* service_manager,
-    CalculatorGraphConfig* output_graph_config) {
-  *output_graph_config = input_graph_config;
-  MP_RETURN_IF_ERROR(tool::ExpandSubgraphs(output_graph_config, graph_registry,
-                                           graph_options, service_manager));
-
-  MP_RETURN_IF_ERROR(AddPredefinedExecutorConfigs(output_graph_config));
-
-  // Populate each node with the graph level input stream handler if a
-  // stream handler wasn't explicitly provided.
-  // TODO Instead of pre-populating, handle the graph level
-  // default appropriately within CalculatorGraph.
-  if (output_graph_config->has_input_stream_handler()) {
-    const auto& graph_level_input_stream_handler =
-        output_graph_config->input_stream_handler();
-    for (auto& node : *output_graph_config->mutable_node()) {
-      if (!node.has_input_stream_handler()) {
-        *node.mutable_input_stream_handler() = graph_level_input_stream_handler;
-      }
-    }
-  }
-
   return absl::OkStatus();
 }
 
@@ -346,8 +319,7 @@ absl::Status NodeTypeInfo::Initialize(
 }
 
 absl::Status ValidatedGraphConfig::Initialize(
-    const CalculatorGraphConfig& input_config,
-    const GraphRegistry* graph_registry,
+    CalculatorGraphConfig input_config, const GraphRegistry* graph_registry,
     const Subgraph::SubgraphOptions* graph_options,
     const GraphServiceManager* service_manager) {
   RET_CHECK(!initialized_)
@@ -358,9 +330,9 @@ absl::Status ValidatedGraphConfig::Initialize(
           << input_config.DebugString();
 #endif
 
-  MP_RETURN_IF_ERROR(PerformBasicTransforms(
-      input_config, graph_registry, graph_options, service_manager, &config_));
-
+  config_ = std::move(input_config);
+  MP_RETURN_IF_ERROR(
+      PerformBasicTransforms(graph_registry, graph_options, service_manager));
   // Initialize the basic node information.
   MP_RETURN_IF_ERROR(InitializeGeneratorInfo());
   MP_RETURN_IF_ERROR(InitializeCalculatorInfo());
@@ -441,7 +413,12 @@ absl::Status ValidatedGraphConfig::Initialize(
     const GraphServiceManager* service_manager) {
   graph_registry =
       graph_registry ? graph_registry : &GraphRegistry::global_graph_registry;
-  SubgraphContext subgraph_context(graph_options, service_manager);
+  Subgraph::SubgraphOptions local_graph_options;
+  if (graph_options) {
+    local_graph_options = *graph_options;
+  }
+  SubgraphContext subgraph_context =
+      SubgraphContext(&local_graph_options, service_manager);
   auto status_or_config =
       graph_registry->CreateByName("", graph_type, &subgraph_context);
   MP_RETURN_IF_ERROR(status_or_config.status());
@@ -464,6 +441,32 @@ absl::Status ValidatedGraphConfig::Initialize(
   }
   return Initialize(graph_type, &graph_registry, graph_options,
                     service_manager);
+}
+
+absl::Status ValidatedGraphConfig::PerformBasicTransforms(
+    const GraphRegistry* graph_registry,
+    const Subgraph::SubgraphOptions* graph_options,
+    const GraphServiceManager* service_manager) {
+  MP_RETURN_IF_ERROR(tool::ExpandSubgraphs(&config_, graph_registry,
+                                           graph_options, service_manager));
+
+  MP_RETURN_IF_ERROR(AddPredefinedExecutorConfigs(&config_));
+
+  // Populate each node with the graph level input stream handler if a
+  // stream handler wasn't explicitly provided.
+  // TODO Instead of pre-populating, handle the graph level
+  // default appropriately within CalculatorGraph.
+  if (config_.has_input_stream_handler()) {
+    const auto& graph_level_input_stream_handler =
+        config_.input_stream_handler();
+    for (auto& node : *config_.mutable_node()) {
+      if (!node.has_input_stream_handler()) {
+        *node.mutable_input_stream_handler() = graph_level_input_stream_handler;
+      }
+    }
+  }
+
+  return absl::OkStatus();
 }
 
 absl::Status ValidatedGraphConfig::InitializeCalculatorInfo() {
@@ -690,6 +693,7 @@ absl::Status ValidatedGraphConfig::AddInputStreamsForNode(
         if (!need_sorting_ptr) {
           LOG(WARNING) << "Input Stream \"" << name
                        << "\" for node with sorted index " << node_index
+                       << " name " << node_type_info->Contract().GetNodeName()
                        << " is marked as a back edge, but its output stream is "
                           "already available.  This means it was not necessary "
                           "to mark it as a back edge.";
@@ -701,6 +705,7 @@ absl::Status ValidatedGraphConfig::AddInputStreamsForNode(
       if (edge_info.back_edge) {
         VLOG(1) << "Encountered expected behavior: the back edge \"" << name
                 << "\" for node with (possibly sorted) index " << node_index
+                << " name " << node_type_info->Contract().GetNodeName()
                 << " has an output stream which we have not yet seen.";
       } else if (need_sorting_ptr) {
         *need_sorting_ptr = true;
@@ -709,7 +714,9 @@ absl::Status ValidatedGraphConfig::AddInputStreamsForNode(
       } else {
         return mediapipe::UnknownErrorBuilder(MEDIAPIPE_LOC)
                << "Input Stream \"" << name << "\" for node with sorted index "
-               << node_index << " does not have a corresponding output stream.";
+               << node_index << " name "
+               << node_type_info->Contract().GetNodeName()
+               << " does not have a corresponding output stream.";
       }
     }
 

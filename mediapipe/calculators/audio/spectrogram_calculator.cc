@@ -20,24 +20,22 @@
 #include <memory>
 #include <string>
 
-#include "Eigen/Core"
 #include "absl/strings/string_view.h"
 #include "audio/dsp/spectrogram/spectrogram.h"
 #include "audio/dsp/window_functions.h"
 #include "mediapipe/calculators/audio/spectrogram_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/matrix.h"
-#include "mediapipe/framework/formats/time_series_header.pb.h"
-#include "mediapipe/framework/port/core_proto_inc.h"
-#include "mediapipe/framework/port/integral_types.h"
 #include "mediapipe/framework/port/logging.h"
-#include "mediapipe/framework/port/ret_check.h"
-#include "mediapipe/framework/port/source_location.h"
 #include "mediapipe/framework/port/status_builder.h"
 #include "mediapipe/util/time_series_util.h"
 
 namespace mediapipe {
 
+namespace {
+constexpr char kFrameDurationTag[] = "FRAME_DURATION";
+constexpr char kFrameOverlapTag[] = "FRAME_OVERLAP";
+}  // namespace
 // MediaPipe Calculator for computing the "spectrogram" (short-time Fourier
 // transform squared-magnitude, by default) of a multichannel input
 // time series, including optionally overlapping frames.  Options are
@@ -46,11 +44,14 @@ namespace mediapipe {
 //
 // Result is a MatrixData record (for single channel input and when the
 // allow_multichannel_input flag is false), or a vector of MatrixData records,
-// one for each channel (when the allow_multichannel_input flag is set). The
-// rows of each spectrogram matrix correspond to the n_fft/2+1 unique complex
-// values, or squared/linear/dB magnitudes, depending on the output_type option.
-// Each input packet will result in zero or one output packets, each containing
-// one Matrix for each channel of the input, where each Matrix has one or more
+// one for each channel (when the allow_multichannel_input flag is set). Each
+// waveform frame is converted to frequency by a fast Fourier transform whose
+// size, n_fft, is the smallest power of two large enough to enclose the frame
+// length of round(frame_duration_seconds * sample_rate).The rows of each
+// spectrogram matrix(result) correspond to the n_fft/2+1 unique complex values,
+// or squared/linear/dB magnitudes, depending on the output_type option. Each
+// input packet will result in zero or one output packets, each containing one
+// Matrix for each channel of the input, where each Matrix has one or more
 // columns of spectral values, one for each complete frame of input samples. If
 // the input packet contains too few samples to trigger a new output frame, no
 // output packet is generated (since zero-length packets are not legal since
@@ -70,6 +71,22 @@ class SpectrogramCalculator : public CalculatorBase {
     cc->Inputs().Index(0).Set<Matrix>(
         // Input stream with TimeSeriesHeader.
     );
+
+    if (cc->InputSidePackets().HasTag(kFrameDurationTag)) {
+      cc->InputSidePackets()
+          .Tag(kFrameDurationTag)
+          .Set<double>(
+              // Optional side packet for frame_duration_seconds if provided.
+          );
+    }
+
+    if (cc->InputSidePackets().HasTag(kFrameOverlapTag)) {
+      cc->InputSidePackets()
+          .Tag(kFrameOverlapTag)
+          .Set<double>(
+              // Optional side packet for frame_overlap_seconds if provided.
+          );
+    }
 
     SpectrogramCalculatorOptions spectrogram_options =
         cc->Options<SpectrogramCalculatorOptions>();
@@ -184,27 +201,47 @@ class SpectrogramCalculator : public CalculatorBase {
   // Fixed scale factor applied to output values (regardless of type).
   double output_scale_;
 
-  static const float kLnPowerToDb;
+  static const float kLnSquaredMagnitudeToDb;
 };
 REGISTER_CALCULATOR(SpectrogramCalculator);
 
-// Factor to convert ln(magnitude_squared) to deciBels = 10.0/ln(10.0).
-const float SpectrogramCalculator::kLnPowerToDb = 4.342944819032518;
+// DECIBELS = 20*log10(LINEAR_MAGNITUDE) = 10*Log10(SQUARED_MAGNITUDE)
+// =10/ln(10)*ln(SQUARED_MAGNITUDE).
+// Factor to convert ln(SQUARED_MAGNITUDE) to deciBels = 10.0/ln(10.0).
+const float SpectrogramCalculator::kLnSquaredMagnitudeToDb = 4.342944819032518;
 
 absl::Status SpectrogramCalculator::Open(CalculatorContext* cc) {
   SpectrogramCalculatorOptions spectrogram_options =
       cc->Options<SpectrogramCalculatorOptions>();
+  // Provide frame_duration_seconds and frame_overlap_seconds either from static
+  // options, or dynamically from a side packet, the side packet one will
+  // override the options one if provided.
+
+  double frame_duration_seconds = 0;
+  double frame_overlap_seconds = 0;
+  if (cc->InputSidePackets().HasTag(kFrameDurationTag)) {
+    frame_duration_seconds =
+        cc->InputSidePackets().Tag(kFrameDurationTag).Get<double>();
+  } else {
+    frame_duration_seconds = spectrogram_options.frame_duration_seconds();
+  }
+
+  if (cc->InputSidePackets().HasTag(kFrameOverlapTag)) {
+    frame_overlap_seconds =
+        cc->InputSidePackets().Tag(kFrameOverlapTag).Get<double>();
+  } else {
+    frame_overlap_seconds = spectrogram_options.frame_overlap_seconds();
+  }
 
   use_local_timestamp_ = spectrogram_options.use_local_timestamp();
 
-  if (spectrogram_options.frame_duration_seconds() <= 0.0) {
+  if (frame_duration_seconds <= 0.0) {
     // TODO: return an error.
   }
-  if (spectrogram_options.frame_overlap_seconds() >=
-      spectrogram_options.frame_duration_seconds()) {
+  if (frame_overlap_seconds >= frame_duration_seconds) {
     // TODO: return an error.
   }
-  if (spectrogram_options.frame_overlap_seconds() < 0.0) {
+  if (frame_overlap_seconds < 0.0) {
     // TODO: return an error.
   }
 
@@ -220,10 +257,8 @@ absl::Status SpectrogramCalculator::Open(CalculatorContext* cc) {
     // TODO: return an error.
   }
 
-  frame_duration_samples_ =
-      round(spectrogram_options.frame_duration_seconds() * input_sample_rate_);
-  frame_overlap_samples_ =
-      round(spectrogram_options.frame_overlap_seconds() * input_sample_rate_);
+  frame_duration_samples_ = round(frame_duration_seconds * input_sample_rate_);
+  frame_overlap_samples_ = round(frame_overlap_seconds * input_sample_rate_);
 
   pad_final_packet_ = spectrogram_options.pad_final_packet();
   output_type_ = spectrogram_options.output_type();
@@ -419,7 +454,7 @@ absl::Status SpectrogramCalculator::ProcessVector(const Matrix& input_stream,
       return ProcessVectorToOutput(
           input_stream,
           +[](const Matrix& col) -> const Matrix {
-            return kLnPowerToDb * col.array().log().matrix();
+            return kLnSquaredMagnitudeToDb * col.array().log().matrix();
           }, cc);
     }
     // clang-format on

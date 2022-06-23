@@ -15,7 +15,6 @@
 #ifndef MEDIAPIPE_DEPS_IMAGE_RESIZER_H_
 #define MEDIAPIPE_DEPS_IMAGE_RESIZER_H_
 
-#include "mediapipe/framework/port/integral_types.h"
 #include "mediapipe/framework/port/opencv_imgproc_inc.h"
 
 namespace mediapipe {

@@ -16,6 +16,8 @@
 #define MEDIAPIPE_UTIL_LABEL_MAP_UTIL_H_
 
 #include "absl/strings/string_view.h"
+#include "mediapipe/framework/port/integral_types.h"
+#include "mediapipe/framework/port/proto_ns.h"
 #include "mediapipe/framework/port/statusor.h"
 #include "mediapipe/util/label_map.pb.h"
 
@@ -25,9 +27,9 @@ namespace mediapipe {
 // both expected to contain one label per line.
 // Returns an error e.g. if there's a mismatch between the number of labels and
 // display names.
-absl::StatusOr<mediapipe::LabelMap> BuildLabelMapFromFiles(
-    absl::string_view labels_file_contents,
-    absl::string_view display_names_file);
+absl::StatusOr<proto_ns::Map<int64, ::mediapipe::LabelMapItem>>
+BuildLabelMapFromFiles(absl::string_view labels_file_contents,
+                       absl::string_view display_names_file);
 
 }  // namespace mediapipe
 

@@ -279,35 +279,45 @@ mediapipe::autoflip::RectF ShiftDetection(
 }
 absl::Status UpdateRanges(const SalientRegion& region,
                           const float shift_vertical,
-                          const float shift_horizontal, float* xmin,
-                          float* xmax, float* ymin, float* ymax) {
+                          const float shift_horizontal,
+                          const float pad_vertical, const float pad_horizontal,
+                          float* xmin, float* xmax, float* ymin, float* ymax) {
   if (!region.has_location_normalized()) {
     return mediapipe::UnknownErrorBuilder(MEDIAPIPE_LOC)
            << "SalientRegion did not have location normalized set.";
   }
   auto location = ShiftDetection(region.location_normalized(), shift_vertical,
                                  shift_horizontal);
-  *xmin = fmin(*xmin, location.x());
-  *xmax = fmax(*xmax, location.x() + location.width());
-  *ymin = fmin(*ymin, location.y());
-  *ymax = fmax(*ymax, location.y() + location.height());
+
+  const float x_padding = pad_horizontal * location.width();
+  const float y_padding = pad_vertical * location.height();
+
+  *xmin = fmin(*xmin, location.x() - x_padding);
+  *xmax = fmax(*xmax, location.x() + location.width() + x_padding);
+  *ymin = fmin(*ymin, location.y() - y_padding);
+  *ymax = fmax(*ymax, location.y() + location.height() + y_padding);
 
   return absl::OkStatus();
 }
 absl::Status UpdateRanges(const mediapipe::Detection& detection,
                           const float shift_vertical,
-                          const float shift_horizontal, float* xmin,
-                          float* xmax, float* ymin, float* ymax) {
+                          const float shift_horizontal,
+                          const float pad_vertical, const float pad_horizontal,
+                          float* xmin, float* xmax, float* ymin, float* ymax) {
   RET_CHECK(detection.location_data().format() ==
             mediapipe::LocationData::RELATIVE_BOUNDING_BOX)
       << "Face detection input is lacking required relative_bounding_box()";
   const auto& location =
       ShiftDetection(detection.location_data().relative_bounding_box(),
                      shift_vertical, shift_horizontal);
-  *xmin = fmin(*xmin, location.xmin());
-  *xmax = fmax(*xmax, location.xmin() + location.width());
-  *ymin = fmin(*ymin, location.ymin());
-  *ymax = fmax(*ymax, location.ymin() + location.height());
+
+  const float x_padding = pad_horizontal * location.width();
+  const float y_padding = pad_vertical * location.height();
+
+  *xmin = fmin(*xmin, location.xmin() - x_padding);
+  *xmax = fmax(*xmax, location.xmin() + location.width() + x_padding);
+  *ymin = fmin(*ymin, location.ymin() - y_padding);
+  *ymax = fmax(*ymax, location.ymin() + location.height() + y_padding);
 
   return absl::OkStatus();
 }
@@ -818,7 +828,9 @@ absl::Status ContentZoomingCalculator::GetDetectionsBox(
       *only_required_found = true;
       MP_RETURN_IF_ERROR(UpdateRanges(
           region, options_.detection_shift_vertical(),
-          options_.detection_shift_horizontal(), xmin, xmax, ymin, ymax));
+          options_.detection_shift_horizontal(),
+          options_.extra_vertical_padding(),
+          options_.extra_horizontal_padding(), xmin, xmax, ymin, ymax));
     }
   }
 
@@ -864,7 +876,9 @@ absl::Status ContentZoomingCalculator::GetDetectionsBox(
         *only_required_found = true;
         MP_RETURN_IF_ERROR(UpdateRanges(
             detection, options_.detection_shift_vertical(),
-            options_.detection_shift_horizontal(), xmin, xmax, ymin, ymax));
+            options_.detection_shift_horizontal(),
+            options_.extra_vertical_padding(),
+            options_.extra_horizontal_padding(), xmin, xmax, ymin, ymax));
       }
     }
   }

@@ -119,17 +119,17 @@ class CalculatorGraph {
 
   // Initializes the graph from its proto description (using Initialize())
   // and crashes if something goes wrong.
-  explicit CalculatorGraph(const CalculatorGraphConfig& config);
+  explicit CalculatorGraph(CalculatorGraphConfig config);
   virtual ~CalculatorGraph();
 
   // Initializes the graph from a its proto description.
   // side_packets that are provided at this stage are common across all Run()
   // invocations and could be used to execute PacketGenerators immediately.
-  absl::Status Initialize(const CalculatorGraphConfig& config,
+  absl::Status Initialize(CalculatorGraphConfig config,
                           const std::map<std::string, Packet>& side_packets);
 
   // Convenience version which does not take side packets.
-  absl::Status Initialize(const CalculatorGraphConfig& config);
+  absl::Status Initialize(CalculatorGraphConfig config);
 
   // Initializes the CalculatorGraph from the specified graph and subgraph
   // configs.  Template graph and subgraph configs can be specified through
@@ -272,7 +272,6 @@ class CalculatorGraph {
   absl::Status CloseInputStream(const std::string& stream_name);
 
   // Closes all the graph input streams.
-  // TODO: deprecate this function in favor of CloseAllPacketSources.
   absl::Status CloseAllInputStreams();
 
   // Closes all the graph input streams and source calculator nodes.

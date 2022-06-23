@@ -24,7 +24,9 @@
 #endif  // !MEDIAPIPE_DISABLE_GPU
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
+#if !MEDIAPIPE_DISABLE_OPENCV
 #include "mediapipe/calculators/image/affine_transformation_runner_opencv.h"
+#endif  // !MEDIAPIPE_DISABLE_OPENCV
 #include "mediapipe/calculators/image/warp_affine_calculator.pb.h"
 #include "mediapipe/framework/api2/node.h"
 #include "mediapipe/framework/calculator_framework.h"
@@ -54,6 +56,7 @@ AffineTransformation::BorderMode GetBorderMode(
 template <typename ImageT>
 class WarpAffineRunnerHolder {};
 
+#if !MEDIAPIPE_DISABLE_OPENCV
 template <>
 class WarpAffineRunnerHolder<ImageFrame> {
  public:
@@ -69,6 +72,7 @@ class WarpAffineRunnerHolder<ImageFrame> {
  private:
   std::unique_ptr<RunnerType> runner_;
 };
+#endif  // !MEDIAPIPE_DISABLE_OPENCV
 
 #if !MEDIAPIPE_DISABLE_GPU
 template <>
@@ -113,7 +117,9 @@ class WarpAffineRunnerHolder<mediapipe::Image> {
                                                      mediapipe::Image> {
    public:
     absl::Status Open(CalculatorContext* cc) {
+#if !MEDIAPIPE_DISABLE_OPENCV
       MP_RETURN_IF_ERROR(cpu_holder_.Open(cc));
+#endif  // !MEDIAPIPE_DISABLE_OPENCV
 #if !MEDIAPIPE_DISABLE_GPU
       MP_RETURN_IF_ERROR(gpu_holder_.Open(cc));
 #endif  // !MEDIAPIPE_DISABLE_GPU
@@ -133,20 +139,26 @@ class WarpAffineRunnerHolder<mediapipe::Image> {
         return absl::UnavailableError("GPU support is disabled");
 #endif  // !MEDIAPIPE_DISABLE_GPU
       }
+#if !MEDIAPIPE_DISABLE_OPENCV
       ASSIGN_OR_RETURN(auto* runner, cpu_holder_.GetRunner());
       const auto& frame_ptr = input.GetImageFrameSharedPtr();
       // Wrap image into image frame.
       const ImageFrame image_frame(frame_ptr->Format(), frame_ptr->Width(),
                                    frame_ptr->Height(), frame_ptr->WidthStep(),
                                    const_cast<uint8_t*>(frame_ptr->PixelData()),
-                                   [](uint8* data) {});
+                                   [](uint8* data){});
       ASSIGN_OR_RETURN(auto result,
                        runner->Run(image_frame, matrix, size, border_mode));
       return mediapipe::Image(std::make_shared<ImageFrame>(std::move(result)));
+#else
+      return absl::UnavailableError("OpenCV support is disabled");
+#endif  // !MEDIAPIPE_DISABLE_OPENCV
     }
 
    private:
+#if !MEDIAPIPE_DISABLE_OPENCV
     WarpAffineRunnerHolder<ImageFrame> cpu_holder_;
+#endif  // !MEDIAPIPE_DISABLE_OPENCV
 #if !MEDIAPIPE_DISABLE_GPU
     WarpAffineRunnerHolder<mediapipe::GpuBuffer> gpu_holder_;
 #endif  // !MEDIAPIPE_DISABLE_GPU
@@ -200,8 +212,10 @@ class WarpAffineCalculatorImpl : public mediapipe::api2::NodeImpl<InterfaceT> {
 
 }  // namespace
 
+#if !MEDIAPIPE_DISABLE_OPENCV
 MEDIAPIPE_NODE_IMPLEMENTATION(
     WarpAffineCalculatorImpl<WarpAffineCalculatorCpu>);
+#endif  // !MEDIAPIPE_DISABLE_OPENCV
 #if !MEDIAPIPE_DISABLE_GPU
 MEDIAPIPE_NODE_IMPLEMENTATION(
     WarpAffineCalculatorImpl<WarpAffineCalculatorGpu>);

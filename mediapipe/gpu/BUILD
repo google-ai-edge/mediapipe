@@ -53,6 +53,12 @@ cc_library(
     deps = ["//mediapipe/framework:graph_service"],
 )
 
+cc_library(
+    name = "attachments",
+    hdrs = ["attachments.h"],
+    visibility = ["//visibility:public"],
+)
+
 GL_BASE_LINK_OPTS = select({
     "//conditions:default": [],
     "//mediapipe:android": [
@@ -172,6 +178,7 @@ cc_library(
     }),
     visibility = ["//visibility:public"],
     deps = [
+        ":attachments",
         ":gl_base",
         ":gl_thread_collector",
         ":gpu_buffer_format",

@@ -24,6 +24,7 @@
 #include "mediapipe/framework/port/opencv_core_inc.h"
 #include "mediapipe/framework/port/parse_text_proto.h"
 #include "mediapipe/framework/port/status_matchers.h"
+#include "mediapipe/framework/tool/test_util.h"
 
 namespace mediapipe {
 
@@ -32,6 +33,7 @@ namespace {
 constexpr char kVideoTag[] = "VIDEO";
 constexpr char kVideoPrestreamTag[] = "VIDEO_PRESTREAM";
 constexpr char kInputFilePathTag[] = "INPUT_FILE_PATH";
+constexpr char kTestPackageRoot[] = "mediapipe/calculators/video";
 
 TEST(OpenCvVideoDecoderCalculatorTest, TestMp4Avc720pVideo) {
   CalculatorGraphConfig::Node node_config =
@@ -41,10 +43,9 @@ TEST(OpenCvVideoDecoderCalculatorTest, TestMp4Avc720pVideo) {
         output_stream: "VIDEO:video"
         output_stream: "VIDEO_PRESTREAM:video_prestream")pb");
   CalculatorRunner runner(node_config);
-  runner.MutableSidePackets()->Tag(kInputFilePathTag) = MakePacket<std::string>(
-      file::JoinPath("./",
-                     "/mediapipe/calculators/video/"
-                     "testdata/format_MP4_AVC720P_AAC.video"));
+  runner.MutableSidePackets()->Tag(kInputFilePathTag) =
+      MakePacket<std::string>(file::JoinPath(GetTestDataDir(kTestPackageRoot),
+                                             "format_MP4_AVC720P_AAC.video"));
   MP_EXPECT_OK(runner.Run());
 
   EXPECT_EQ(runner.Outputs().Tag(kVideoPrestreamTag).packets.size(), 1);
@@ -87,10 +88,9 @@ TEST(OpenCvVideoDecoderCalculatorTest, TestFlvH264Video) {
         output_stream: "VIDEO:video"
         output_stream: "VIDEO_PRESTREAM:video_prestream")pb");
   CalculatorRunner runner(node_config);
-  runner.MutableSidePackets()->Tag(kInputFilePathTag) = MakePacket<std::string>(
-      file::JoinPath("./",
-                     "/mediapipe/calculators/video/"
-                     "testdata/format_FLV_H264_AAC.video"));
+  runner.MutableSidePackets()->Tag(kInputFilePathTag) =
+      MakePacket<std::string>(file::JoinPath(GetTestDataDir(kTestPackageRoot),
+                                             "format_FLV_H264_AAC.video"));
   MP_EXPECT_OK(runner.Run());
 
   EXPECT_EQ(runner.Outputs().Tag(kVideoPrestreamTag).packets.size(), 1);
@@ -131,10 +131,9 @@ TEST(OpenCvVideoDecoderCalculatorTest, TestMkvVp8Video) {
         output_stream: "VIDEO:video"
         output_stream: "VIDEO_PRESTREAM:video_prestream")pb");
   CalculatorRunner runner(node_config);
-  runner.MutableSidePackets()->Tag(kInputFilePathTag) = MakePacket<std::string>(
-      file::JoinPath("./",
-                     "/mediapipe/calculators/video/"
-                     "testdata/format_MKV_VP8_VORBIS.video"));
+  runner.MutableSidePackets()->Tag(kInputFilePathTag) =
+      MakePacket<std::string>(file::JoinPath(GetTestDataDir(kTestPackageRoot),
+                                             "format_MKV_VP8_VORBIS.video"));
   MP_EXPECT_OK(runner.Run());
 
   EXPECT_EQ(runner.Outputs().Tag(kVideoPrestreamTag).packets.size(), 1);

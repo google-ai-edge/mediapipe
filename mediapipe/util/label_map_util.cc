@@ -25,7 +25,7 @@
 
 namespace mediapipe {
 
-absl::StatusOr<LabelMap> BuildLabelMapFromFiles(
+absl::StatusOr<proto_ns::Map<int64, LabelMapItem>> BuildLabelMapFromFiles(
     absl::string_view labels_file_contents,
     absl::string_view display_names_file) {
   if (labels_file_contents.empty()) {
@@ -68,9 +68,9 @@ absl::StatusOr<LabelMap> BuildLabelMapFromFiles(
       label_map_items[i].set_display_name(display_names[i]);
     }
   }
-  LabelMap label_map;
+  proto_ns::Map<int64, LabelMapItem> label_map;
   for (int i = 0; i < label_map_items.size(); ++i) {
-    (*label_map.mutable_index_to_item())[i] = label_map_items[i];
+    label_map[i] = label_map_items[i];
   }
   return label_map;
 }

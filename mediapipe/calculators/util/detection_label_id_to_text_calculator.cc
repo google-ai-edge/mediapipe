@@ -16,6 +16,8 @@
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/detection.pb.h"
 #include "mediapipe/framework/packet.h"
+#include "mediapipe/framework/port/integral_types.h"
+#include "mediapipe/framework/port/proto_ns.h"
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/util/label_map.pb.h"
 #include "mediapipe/util/resource_util.h"
@@ -55,9 +57,9 @@ class DetectionLabelIdToTextCalculator : public CalculatorBase {
  private:
   // Local label map built from the calculator options' `label_map_path` or
   // `label` field.
-  LabelMap local_label_map_;
+  proto_ns::Map<int64, LabelMapItem> local_label_map_;
   bool keep_label_id_;
-  const LabelMap& GetLabelMap(CalculatorContext* cc);
+  const proto_ns::Map<int64, LabelMapItem>& GetLabelMap(CalculatorContext* cc);
 };
 REGISTER_CALCULATOR(DetectionLabelIdToTextCalculator);
 
@@ -72,13 +74,12 @@ absl::Status DetectionLabelIdToTextCalculator::GetContract(
 absl::Status DetectionLabelIdToTextCalculator::Open(CalculatorContext* cc) {
   cc->SetOffset(TimestampDiff(0));
 
-  const auto& options =
-      cc->Options<::mediapipe::DetectionLabelIdToTextCalculatorOptions>();
+  const auto& options = cc->Options<DetectionLabelIdToTextCalculatorOptions>();
 
   if (options.has_label_map_path()) {
-    RET_CHECK(!options.has_label_map() && options.label().empty())
+    RET_CHECK(options.label_items().empty() && options.label().empty())
         << "Only can set one of the following fields in the CalculatorOptions: "
-           "label_map_path, label, and label_map.";
+           "label_map_path, label, and label_items.";
     std::string string_path;
     ASSIGN_OR_RETURN(string_path,
                      PathToResourceAsFile(options.label_map_path()));
@@ -91,16 +92,16 @@ absl::Status DetectionLabelIdToTextCalculator::Open(CalculatorContext* cc) {
     while (std::getline(stream, line)) {
       LabelMapItem item;
       item.set_name(line);
-      (*local_label_map_.mutable_index_to_item())[i++] = item;
+      local_label_map_[i++] = item;
     }
   } else if (!options.label().empty()) {
-    RET_CHECK(!options.has_label_map())
+    RET_CHECK(options.label_items().empty())
         << "Only can set one of the following fields in the CalculatorOptions: "
-           "label_map_path, label, and label_map.";
+           "label_map_path, label, and label_items.";
     for (int i = 0; i < options.label_size(); ++i) {
       LabelMapItem item;
       item.set_name(options.label(i));
-      (*local_label_map_.mutable_index_to_item())[i] = item;
+      local_label_map_[i] = item;
     }
   }
   keep_label_id_ = options.keep_label_id();
@@ -115,9 +116,8 @@ absl::Status DetectionLabelIdToTextCalculator::Process(CalculatorContext* cc) {
     Detection& output_detection = output_detections.back();
     bool has_text_label = false;
     for (const int32 label_id : output_detection.label_id()) {
-      if (GetLabelMap(cc).index_to_item().find(label_id) !=
-          GetLabelMap(cc).index_to_item().end()) {
-        auto item = GetLabelMap(cc).index_to_item().at(label_id);
+      if (GetLabelMap(cc).contains(label_id)) {
+        auto item = GetLabelMap(cc).at(label_id);
         output_detection.add_label(item.name());
         if (item.has_display_name()) {
           output_detection.add_display_name(item.display_name());
@@ -136,13 +136,12 @@ absl::Status DetectionLabelIdToTextCalculator::Process(CalculatorContext* cc) {
   return absl::OkStatus();
 }
 
-const LabelMap& DetectionLabelIdToTextCalculator::GetLabelMap(
-    CalculatorContext* cc) {
-  return !local_label_map_.index_to_item().empty()
+const proto_ns::Map<int64, LabelMapItem>&
+DetectionLabelIdToTextCalculator::GetLabelMap(CalculatorContext* cc) {
+  return !local_label_map_.empty()
              ? local_label_map_
-             : cc->Options<
-                     ::mediapipe::DetectionLabelIdToTextCalculatorOptions>()
-                   .label_map();
+             : cc->Options<DetectionLabelIdToTextCalculatorOptions>()
+                   .label_items();
 }
 
 }  // namespace mediapipe

@@ -91,8 +91,7 @@ class OptionsSyntaxUtil::OptionsSyntaxHelper {
       int index;
       if (absl::SimpleAtoi(option_name, &index)) {
         result.back().index = index;
-      }
-      if (!ExtensionType(option_name).empty()) {
+      } else if (!ExtensionType(option_name).empty()) {
         std::string extension_type = std::string(ExtensionType(option_name));
         result.push_back({nullptr, 0, extension_type});
         descriptor = OptionsRegistry::GetProtobufDescriptor(extension_type);
@@ -102,7 +101,7 @@ class OptionsSyntaxUtil::OptionsSyntaxHelper {
         }
         auto field = descriptor->FindFieldByName(std::string(option_name));
         descriptor = field ? field->message_type() : nullptr;
-        result.push_back({std::move(field), 0});
+        result.push_back({std::move(field), -1});
       }
     }
     return result;

@@ -422,7 +422,7 @@ tasks and tracking (or class) fields for tracking information.
 |`region/point/x`|feature list float list|`add_bbox_point_x` / `AddBBoxPointX`|A list of normalized x values for points in a frame.|
 |`region/point/y`|feature list float list|`add_bbox_point_y` / `AddBBoxPointY`|A list of normalized y values for points in a frame.|
 |`region/point/\*`| *special* |`add_bbox_point` / `AddBBoxPoint`|Operates on point/x,point/y with a single call.|
-|`region/point/radius`|feature list float list|`add_bbox_point_radius` / `AddBBoxPointRadius`|A list of radii for points in a frame.|
+|`region/radius`|feature list float list|`add_bbox_point_radius` / `AddBBoxRadius`|A list of radii for points in a frame.|
 |`region/3d_point/x`|feature list float list|`add_bbox_3d_point_x` / `AddBBox3dPointX`|A list of normalized x values for points in a frame.|
 |`region/3d_point/y`|feature list float list|`add_bbox_3d_point_y` / `AddBBox3dPointY`|A list of normalized y values for points in a frame.|
 |`region/3d_point/z`|feature list float list|`add_bbox_3d_point_z` / `AddBBox3dPointZ`|A list of normalized z values for points in a frame.|
@@ -460,6 +460,7 @@ tasks and tracking (or class) fields for tracking information.
 |`image/label/confidence`|feature list float list|`add_image_label_confidence` / `AddImageLabelConfidence`|If an image at a specific timestamp should have a label, use this. If a range of time, prefer Segments instead.|
 |`image/format`|context bytes|`set_image_format` / `SetImageFormat`|The encoding format of the images.|
 |`image/channels`|context int|`set_image_channels` / `SetImageChannels`|The number of channels in the image.|
+|`image/colorspace`|context bytes|`set_image_colorspace` / `SetColorspace`|The colorspace of the images.|
 |`image/height`|context int|`set_image_height` / `SetImageHeight`|The height of the image in pixels.|
 |`image/width`|context int|`set_image_width` / `SetImageWidth`|The width of the image in pixels.|
 |`image/frame_rate`|context float|`set_image_frame_rate` / `SetImageFrameRate`|The rate of images in frames per second.|

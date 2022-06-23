@@ -27,7 +27,8 @@ from mediapipe.python.solutions import drawing_utils
 
 DEFAULT_BBOX_DRAWING_SPEC = drawing_utils.DrawingSpec()
 DEFAULT_CONNECTION_DRAWING_SPEC = drawing_utils.DrawingSpec()
-DEFAULT_CIRCLE_DRAWING_SPEC = drawing_utils.DrawingSpec(color=(0, 0, 255))
+DEFAULT_CIRCLE_DRAWING_SPEC = drawing_utils.DrawingSpec(
+    color=drawing_utils.RED_COLOR)
 DEFAULT_AXIS_DRAWING_SPEC = drawing_utils.DrawingSpec()
 DEFAULT_CYCLE_BORDER_COLOR = (224, 224, 224)
 
@@ -37,13 +38,13 @@ class DrawingUtilTest(parameterized.TestCase):
   def test_invalid_input_image(self):
     image = np.arange(18, dtype=np.uint8).reshape(3, 3, 2)
     with self.assertRaisesRegex(
-        ValueError, 'Input image must contain three channel rgb data.'):
+        ValueError, 'Input image must contain three channel bgr data.'):
       drawing_utils.draw_landmarks(image, landmark_pb2.NormalizedLandmarkList())
     with self.assertRaisesRegex(
-        ValueError, 'Input image must contain three channel rgb data.'):
+        ValueError, 'Input image must contain three channel bgr data.'):
       drawing_utils.draw_detection(image, detection_pb2.Detection())
     with self.assertRaisesRegex(
-        ValueError, 'Input image must contain three channel rgb data.'):
+        ValueError, 'Input image must contain three channel bgr data.'):
       rotation = np.eye(3, dtype=np.float32)
       translation = np.array([0., 0., 1.])
       drawing_utils.draw_axis(image, rotation, translation)
