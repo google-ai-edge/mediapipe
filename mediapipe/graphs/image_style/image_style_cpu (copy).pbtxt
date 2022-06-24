@@ -1,0 +1,96 @@
+# MediaPipe graph that performs object detection on desktop with TensorFlow Lite
+# on CPU.
+# Used in the example in
+# mediapipe/examples/desktop/object_detection:object_detection_tflite.
+
+# max_queue_size limits the number of packets enqueued on any input stream
+# by throttling inputs to the graph. This makes the graph only process one
+# frame per time.
+max_queue_size: 1
+
+# Decodes an input video file into images and a video header.
+node {
+  calculator: "OpenCvVideoDecoderCalculator"
+  input_side_packet: "INPUT_FILE_PATH:input_video_path"
+  output_stream: "VIDEO:input_video"
+  output_stream: "VIDEO_PRESTREAM:input_video_header"
+}
+
+# Transforms the input image on CPU to a 320x320 image. To scale the image, by
+# default it uses the STRETCH scale mode that maps the entire input image to the
+# entire transformed image. As a result, image aspect ratio may be changed and
+# objects in the image may be deformed (stretched or squeezed), but the object
+# detection model used in this graph is agnostic to that deformation.
+node: {
+  calculator: "ImageTransformationCalculator"
+  input_stream: "IMAGE:input_video"
+  output_stream: "IMAGE:transformed_input_video"
+  node_options: {
+    [type.googleapis.com/mediapipe.ImageTransformationCalculatorOptions] {
+      output_width: 512
+      output_height: 512
+    }
+  }
+}
+
+# Converts the transformed input image on CPU into an image tensor as a
+# TfLiteTensor. The zero_center option is set to true to normalize the
+# pixel values to [-1.f, 1.f] as opposed to [0.f, 1.f].
+node {
+  calculator: "TfLiteConverterCalculator"
+  input_stream: "IMAGE:transformed_input_video"
+  output_stream: "TENSORS:image_tensor"
+  node_options: {
+    [type.googleapis.com/mediapipe.TfLiteConverterCalculatorOptions] {
+      zero_center: true
+    }
+  }
+}
+
+# Runs a TensorFlow Lite model on CPU that takes an image tensor and outputs a
+# vector of tensors representing, for instance, detection boxes/keypoints and
+# scores.
+node {
+  calculator: "TfLiteInferenceCalculator"
+  input_stream: "TENSORS:image_tensor"
+  output_stream: "TENSORS:stylized_tensor"
+  node_options: {
+    [type.googleapis.com/mediapipe.TfLiteInferenceCalculatorOptions] {
+           model_path: "mediapipe/models/metaf-512-mobile3.tflite"
+    }
+  }
+}
+
+node {
+  calculator: "TfliteTensorsToGpuImageCalculator"
+  input_stream: "TENSORS:stylized_tensor"
+  output_stream: "IMAGE:image"
+}
+
+#node {
+#  calculator: "TfLiteTensorsToSegmentationCalculator"
+#  input_stream: "TENSORS:stylized_tensor"
+#  output_stream: "MASK:mask_image"
+#  node_options: {
+#    [type.googleapis.com/mediapipe.TfLiteTensorsToSegmentationCalculatorOptions] {
+#      tensor_width: 512
+#      tensor_height: 512
+#      tensor_channels: 3
+#    }
+#  }
+#}
+
+# Encodes the annotated images into a video file, adopting properties specified
+# in the input video header, e.g., video framerate.
+node {
+  calculator: "OpenCvVideoEncoderCalculator"
+  input_stream: "VIDEO:image"
+  input_stream: "VIDEO_PRESTREAM:input_video_header"
+  input_side_packet: "OUTPUT_FILE_PATH:output_video_path"
+  node_options: {
+    [type.googleapis.com/mediapipe.OpenCvVideoEncoderCalculatorOptions]: {
+      codec: "avc1"
+      video_format: "mp4"
+    }
+  }
+}

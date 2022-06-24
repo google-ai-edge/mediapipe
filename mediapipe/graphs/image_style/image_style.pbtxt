@@ -1,0 +1,84 @@
+# MediaPipe graph that performs hair segmentation with TensorFlow Lite on GPU.
+# Used in the example in
+# mediapipie/examples/android/src/java/com/mediapipe/apps/hairsegmentationgpu.
+
+# Images on GPU coming into and out of the graph.
+input_stream: "input_video"
+output_stream: "output_video"
+
+
+node {
+  calculator: "FlowLimiterCalculator"
+  input_stream: "input_video"
+  input_stream: "FINISHED:output_video"
+  input_stream_info: {
+    tag_index: "FINISHED"
+    back_edge: true
+  }
+  output_stream: "throttled_input_video"
+}
+
+node: {
+  calculator: "ImageTransformationCalculator"
+  input_stream: "IMAGE_GPU:throttled_input_video"
+  output_stream: "IMAGE_GPU:transformed_input_video"
+  node_options: {
+    [type.googleapis.com/mediapipe.ImageTransformationCalculatorOptions] {
+      output_width: 256
+      output_height: 256
+    }
+  }
+}
+
+# Converts the transformed input image on GPU into an image tensor stored in
+# tflite::gpu::GlBuffer. The zero_center option is set to false to normalize the
+# pixel values to [0.f, 1.f] as opposed to [-1.f, 1.f]. With the
+# max_num_channels option set to 4, all 4 RGBA channels are contained in the
+# image tensor.
+node {
+  calculator: "TfLiteConverterCalculator"
+  input_stream: "IMAGE_GPU:transformed_input_video"
+  output_stream: "TENSORS_GPU:image_tensor"
+  options {
+            [mediapipe.TfLiteConverterCalculatorOptions.ext] {
+              output_tensor_float_range {
+                min: 0
+                max: 255
+              }
+            }
+        }
+}
+
+
+node {
+  calculator: "TfLiteInferenceCalculator"
+  input_stream: "TENSORS_GPU:image_tensor"
+  output_stream: "TENSORS:stylized_tensor"
+  node_options: {
+    [type.googleapis.com/mediapipe.TfLiteInferenceCalculatorOptions] {
+      model_path: "mediapipe/models/metaf-512-mobile3.tflite"
+      use_gpu: true
+    }
+  }
+}
+		
+node {
+  calculator: "TfLiteTensorsToSegmentationCalculator"
+  input_stream: "TENSORS:stylized_tensor"
+  output_stream: "MASK:mask_image"
+  node_options: {
+    [type.googleapis.com/mediapipe.TfLiteTensorsToSegmentationCalculatorOptions] {
+      tensor_width: 256
+      tensor_height: 256
+      tensor_channels: 3
+    }
+  }
+}
+
+# Transfers the annotated image from CPU back to GPU memory, to be sent out of
+# the graph.
+node: {
+  calculator: "ImageFrameToGpuBufferCalculator"
+  input_stream: "mask_image"
+  output_stream: "output_video"
+}

@@ -33,6 +33,7 @@ cc_library(
         "//mediapipe/calculators/beauty:whiten_teeth_calculator",
         "//mediapipe/calculators/util:detections_to_render_data_calculator",
         "//mediapipe/calculators/util:landmarks_to_render_data_calculator",
+        "//mediapipe/calculators/landmarks:landmarks_to_mask_calculator",
         "//mediapipe/calculators/util:rect_to_render_data_calculator",
         "//mediapipe/graphs/beauty/calculators:face_landmarks_to_render_data_calculator",
     ],
