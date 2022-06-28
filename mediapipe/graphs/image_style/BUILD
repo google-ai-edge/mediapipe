@@ -24,22 +24,14 @@ package(default_visibility = ["//visibility:public"])
 cc_library(
     name = "mobile_calculators",
     deps = [
-      "//mediapipe/calculators/tensorflow:tensor_to_image_frame_calculator",
-    "//mediapipe/calculators/tensorflow:vector_float_to_tensor_calculator",
-      "//mediapipe/calculators/tensor:tensors_to_floats_calculator",
-            "//mediapipe/calculators/tensor:tensors_to_segmentation_calculator",
-        "//mediapipe/calculators/util:from_image_calculator",
-    		"//mediapipe/calculators/tensor:image_to_tensor_calculator",
-        "//mediapipe/calculators/tensor:inference_calculator",
         "//mediapipe/calculators/core:flow_limiter_calculator",
-        "//mediapipe/calculators/image:image_transformation_calculator",
-        "//mediapipe/calculators/tflite:tflite_converter_calculator",
-        "//mediapipe/calculators/tflite:tflite_custom_op_resolver_calculator",
-        "//mediapipe/calculators/tflite:tflite_inference_calculator",
-        "//mediapipe/gpu:gpu_buffer_to_image_frame_calculator",
-        "//mediapipe/gpu:image_frame_to_gpu_buffer_calculator",
-        "//mediapipe/calculators/tflite:tflite_tensors_to_segmentation_calculator",
-        "//mediapipe/calculators/image:image_properties_calculator",
+        "//mediapipe/calculators/tensor:image_to_tensor_calculator",
+        "//mediapipe/calculators/tensor:inference_calculator",
+         "//mediapipe/calculators/tensor:tensors_to_segmentation_calculator",
+         "//mediapipe/calculators/util:to_image_calculator",
+         "//mediapipe/calculators/util:from_image_calculator",
+                 "//mediapipe/calculators/image:image_properties_calculator",
+         "//mediapipe/calculators/tflite:tflite_custom_op_resolver_calculator",
     ],
 )
 
@@ -47,18 +39,17 @@ cc_library(
     name = "desktop_calculators",
     deps = [
         "//mediapipe/calculators/core:flow_limiter_calculator",
-        "//mediapipe/calculators/image:image_transformation_calculator",
-        "//mediapipe/calculators/tflite:tflite_converter_calculator",
-        "//mediapipe/calculators/tflite:tflite_inference_calculator",
-        "//mediapipe/calculators/tflite:tflite_tensors_to_gpuimage_calculator",
-        "//mediapipe/calculators/tflite:tflite_custom_op_resolver_calculator",
-        "//mediapipe/calculators/tflite:tflite_tensors_to_segmentation_calculator",
+        "//mediapipe/calculators/tensor:image_to_tensor_calculator",
+        "//mediapipe/calculators/tensor:inference_calculator",
+         "//mediapipe/calculators/tensor:tensors_to_segmentation_calculator",
+         "//mediapipe/calculators/util:to_image_calculator",
+         "//mediapipe/calculators/util:from_image_calculator",
     ],
 )
 
 mediapipe_binary_graph(
     name = "mobile_gpu_binary_graph",
-    graph = "image_style.pbtxt",
+    graph = "image_style_gpu.pbtxt",
     output_name = "mobile_gpu.binarypb",
     deps = [":mobile_calculators"],
 )

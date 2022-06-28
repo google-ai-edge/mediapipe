@@ -19,29 +19,17 @@ node {
 }
 
 node: {
-  calculator: "ImageTransformationCalculator"
-  input_stream: "IMAGE_GPU:throttled_input_video"
-  output_stream: "IMAGE_GPU:transformed_input_video"
-  node_options: {
-    [type.googleapis.com/mediapipe.ImageTransformationCalculatorOptions] {
-      output_width: 512
-      output_height: 512
-    }
-  }
-}
-
-node: {
   calculator: "ImageToTensorCalculator"
-  input_stream: "IMAGE_GPU:transformed_input_video"
+  input_stream: "IMAGE_GPU:throttled_input_video"
   output_stream: "TENSORS:input_tensors"
   options {
     [mediapipe.ImageToTensorCalculatorOptions.ext] {
-              output_tensor_width: 512
-      	      output_tensor_height: 512
-      	      keep_aspect_ratio: true
+              output_tensor_width: 256
+      	      output_tensor_height: 256
+      	      keep_aspect_ratio: false
               output_tensor_float_range {
-                min: 0.0
-                max: 255.0
+                min: -1.0
+                max: 1.0
               }
               gpu_origin: TOP_LEFT
       	      border_mode: BORDER_REPLICATE
@@ -49,16 +37,25 @@ node: {
         }
 }
 
+
+
 node {
   calculator: "InferenceCalculator"
-  input_stream: "TENSORS_GPU:input_tensors"
-  output_stream: "TENSORS_GPU:output_tensors"
+  input_stream: "TENSORS:input_tensors"
+  output_stream: "TENSORS:output_tensors"
   options: {
     [mediapipe.InferenceCalculatorOptions.ext] {
-      model_path: "mediapipe/models/metaf-512-mobile3.tflite"
-      delegate { gpu {} }
+      model_path: "mediapipe/models/model_float32.tflite"
+     delegate { xnnpack {} }
     }
   }
+}
+
+# Retrieves the size of the input image.
+node {
+  calculator: "ImagePropertiesCalculator"
+  input_stream: "IMAGE_GPU:input_video"
+  output_stream: "SIZE:input_size"
 }
 
 # Processes the output tensors into a segmentation mask that has the same size
@@ -66,14 +63,15 @@ node {
 node {
   calculator: "TensorsToSegmentationCalculator"
   input_stream: "TENSORS:output_tensors"
+  input_stream: "OUTPUT_SIZE:input_size"
   output_stream: "MASK:mask_image"
   options: {
     [mediapipe.TensorsToSegmentationCalculatorOptions.ext] {
       activation: NONE
+      gpu_origin: TOP_LEFT
     }
  }
 }
-
 
 node: {
   calculator: "FromImageCalculator"

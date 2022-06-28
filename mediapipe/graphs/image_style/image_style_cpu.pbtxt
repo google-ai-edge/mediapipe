@@ -6,16 +6,7 @@ input_stream: "input_video"
 # Output image with rendered results. (ImageFrame)
 output_stream: "output_video"
 
-# Throttles the images flowing downstream for flow control. It passes through
-# the very first incoming image unaltered, and waits for downstream nodes
-# (calculators and subgraphs) in the graph to finish their tasks before it
-# passes through another image. All images that come in while waiting are
-# dropped, limiting the number of in-flight images in most part of the graph to
-# 1. This prevents the downstream nodes from queuing up incoming images and data
-# excessively, which leads to increased latency and memory usage, unwanted in
-# real-time mobile applications. It also eliminates unnecessarily computation,
-# e.g., the output produced by a node may get dropped downstream if the
-# subsequent nodes are still busy processing previous inputs.
+
 node {
   calculator: "FlowLimiterCalculator"
   input_stream: "input_video"
@@ -27,67 +18,59 @@ node {
   output_stream: "throttled_input_video"
 }
 
-# Transforms the input image on CPU to a 320x320 image. To scale the image, by
-# default it uses the STRETCH scale mode that maps the entire input image to the
-# entire transformed image. As a result, image aspect ratio may be changed and
-# objects in the image may be deformed (stretched or squeezed), but the object
-# detection model used in this graph is agnostic to that deformation.
+
 node: {
-  calculator: "ImageTransformationCalculator"
-  input_stream: "IMAGE:throttled_input_video"
-  output_stream: "IMAGE:transformed_input_video"
-  node_options: {
-    [type.googleapis.com/mediapipe.ImageTransformationCalculatorOptions] {
-      output_width: 256
-      output_height: 256
-    }
-  }
+  calculator: "ToImageCalculator"
+  input_stream: "IMAGE_CPU:throttled_input_video"
+  output_stream: "IMAGE:image_input_video"
 }
 
-# Converts the transformed input image on CPU into an image tensor as a
-# TfLiteTensor. The zero_center option is set to true to normalize the
-# pixel values to [-1.f, 1.f] as opposed to [0.f, 1.f].
 node {
-  calculator: "TfLiteConverterCalculator"
-  input_stream: "IMAGE:transformed_input_video"
-  output_stream: "TENSORS:input_tensors"
-  options {
-            [mediapipe.TfLiteConverterCalculatorOptions.ext] {
-              output_tensor_float_range {
-                min: 0
-                max: 255
-              }
-              max_num_channels: 3
-            }
-  }
-}
-
-
-# Runs a TensorFlow Lite model on CPU that takes an image tensor and outputs a
-# vector of tensors representing, for instance, detection boxes/keypoints and
-# scores.
-node {
-  calculator: "TfLiteInferenceCalculator"
-  input_stream: "TENSORS:input_tensors"
-  output_stream: "TENSORS:output_tensors"
-  node_options: {
-    [type.googleapis.com/mediapipe.TfLiteInferenceCalculatorOptions] {
-           model_path: "mediapipe/models/model_float32.tflite"
+  calculator: "ImageToTensorCalculator"
+  input_stream: "IMAGE:image_input_video"
+  output_stream: "TENSORS:input_tensor"
+  options: {
+    [mediapipe.ImageToTensorCalculatorOptions.ext] {
+      output_tensor_width: 256
+      output_tensor_height: 256
+      keep_aspect_ratio: true
+      output_tensor_float_range {
+        min: -1.0
+        max: 1.0
+      }
+      border_mode: BORDER_ZERO
     }
   }
 }
 
 
 node {
-  calculator: "TfLiteTensorsToSegmentationCalculator"
-  input_stream: "TENSORS:output_tensors"
-  output_stream: "MASK:output_video"
-  node_options: {
-   [type.googleapis.com/mediapipe.TfLiteTensorsToSegmentationCalculatorOptions] {
-     tensor_width: 256
-     tensor_height: 256
-     tensor_channels: 3
-   }
+  calculator: "InferenceCalculator"
+  input_stream: "TENSORS:input_tensor"
+  output_stream: "TENSORS:output_tensor"
+  options: {
+    [mediapipe.InferenceCalculatorOptions.ext] {
+      model_path: "mediapipe/models/model_float32.tflite"
+      delegate { xnnpack {} }
+    }
+  }
+}
+
+
+node {
+  calculator: "TensorsToSegmentationCalculator"
+  input_stream: "TENSORS:output_tensor"
+  output_stream: "MASK:output"
+  options: {
+    [mediapipe.TensorsToSegmentationCalculatorOptions.ext] {
+      activation: NONE
+    }
  }
+}
+
+node{
+  calculator: "FromImageCalculator"
+  input_stream: "IMAGE:output"
+  output_stream: "IMAGE_CPU:output_video"
 }
 
