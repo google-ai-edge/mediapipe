@@ -401,6 +401,7 @@ cc_library(
     hdrs = ["streaming_buffer.h"],
     deps = [
         "//mediapipe/framework/port:logging",
+        "//mediapipe/framework/tool:type_util",
         "@com_google_absl//absl/container:node_hash_map",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/types:any",

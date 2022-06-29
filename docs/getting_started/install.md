@@ -569,7 +569,7 @@ next section.
 
     Option 1. Follow
     [the official Bazel documentation](https://docs.bazel.build/versions/master/install-windows.html)
-    to install Bazel 5.0.0 or higher.
+    to install Bazel 5.2.0 or higher.
 
     Option 2. Follow the official
     [Bazel documentation](https://docs.bazel.build/versions/master/install-bazelisk.html)

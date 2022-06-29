@@ -170,13 +170,18 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         ":inference_calculator_interface",
+        "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/status",
         "//mediapipe/framework/deps:file_path",
         "//mediapipe/gpu:gl_calculator_helper",
         "//mediapipe/util/tflite:tflite_gpu_runner",
-        "@com_google_absl//absl/memory",
-        "@com_google_absl//absl/status",
         "@org_tensorflow//tensorflow/lite:framework_stable",
-    ],
+    ] + select({
+        "//conditions:default": [],
+        "//mediapipe:android": [
+            "//mediapipe/util/android/file/base",
+        ],
+    }),
     alwayslink = 1,
 )
 

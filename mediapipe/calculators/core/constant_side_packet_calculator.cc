@@ -82,6 +82,8 @@ class ConstantSidePacketCalculator : public CalculatorBase {
         packet.Set<ClassificationList>();
       } else if (packet_options.has_landmark_list_value()) {
         packet.Set<LandmarkList>();
+      } else if (packet_options.has_double_value()) {
+        packet.Set<double>();
       } else {
         return absl::InvalidArgumentError(
             "None of supported values were specified in options.");
@@ -114,6 +116,8 @@ class ConstantSidePacketCalculator : public CalculatorBase {
       } else if (packet_options.has_landmark_list_value()) {
         packet.Set(
             MakePacket<LandmarkList>(packet_options.landmark_list_value()));
+      } else if (packet_options.has_double_value()) {
+        packet.Set(MakePacket<double>(packet_options.double_value()));
       } else {
         return absl::InvalidArgumentError(
             "None of supported values were specified in options.");

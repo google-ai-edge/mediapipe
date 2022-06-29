@@ -30,6 +30,10 @@ mediapipe::FieldData ReadFileDescriptorSet(const std::string& pb) {
   *result.mutable_message_value()->mutable_type_url() =
       "proto2.FileDescriptorSet";
   *result.mutable_message_value()->mutable_value() = pb;
+
+  // Force linking of the generated options protobuf.
+  mediapipe::proto_ns::LinkMessageReflection<
+      MP_OPTION_TYPE_NS::MP_OPTION_TYPE_NAME>();
   return result;
 }
 

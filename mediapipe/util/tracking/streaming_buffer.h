@@ -25,6 +25,7 @@
 #include "absl/container/node_hash_map.h"
 #include "absl/types/any.h"
 #include "mediapipe/framework/port/logging.h"
+#include "mediapipe/framework/tool/type_util.h"
 
 namespace mediapipe {
 
@@ -127,14 +128,6 @@ TaggedType TaggedPointerType(const std::string& tag);
 // Helper function to create unique_ptr's until std::make_unique is allowed.
 template <class T>
 std::unique_ptr<T> MakeUnique(T* ptr);
-
-template <typename Type>
-inline size_t TypeId() {
-  static_assert(sizeof(char*) <= sizeof(size_t),
-                "ptr size too large for size_t");
-  static char dummy_var;
-  return reinterpret_cast<size_t>(&dummy_var);
-}
 
 // Note: If any of the function below are called with a tag not registered by
 // the constructor, the function will fail with CHECK.
@@ -318,7 +311,8 @@ class StreamingBuffer {
 //// Implementation details.
 template <class T>
 TaggedType TaggedPointerType(const std::string& tag) {
-  return std::make_pair(tag, TypeId<StreamingBuffer::PointerType<T>>());
+  return std::make_pair(tag,
+                        kTypeId<StreamingBuffer::PointerType<T>>.hash_code());
 }
 
 template <class T>
@@ -330,7 +324,7 @@ template <class T>
 void StreamingBuffer::AddDatum(const std::string& tag,
                                std::unique_ptr<T> pointer) {
   CHECK(HasTag(tag));
-  CHECK_EQ(data_config_[tag], TypeId<PointerType<T>>());
+  CHECK_EQ(data_config_[tag], kTypeId<PointerType<T>>.hash_code());
   auto& buffer = data_[tag];
   absl::any packet(PointerType<T>(CreatePointer(pointer.release())));
   buffer.push_back(packet);

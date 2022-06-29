@@ -243,6 +243,9 @@ std::string GetTestOutputsDir() {
     size_t n = confstr(_CS_DARWIN_USER_TEMP_DIR, path, sizeof(path));
     if (n > 0 && n < sizeof(path)) return path;
 #endif  // __APPLE__
+#ifdef __ANDROID__
+    return "/data/local/tmp/";
+#endif  // __ANDROID__
     output_dir = "/tmp";
   }
   return output_dir;
