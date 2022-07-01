@@ -16,6 +16,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <iostream>
 //#include <android/log.h>
 
 #include <memory>
@@ -119,7 +120,7 @@ namespace mediapipe
       std::string tag = tag_and_index.first;
       if (tag == kMaskTag)
       {
-        cc->Inputs().Get(id).Set<std::unordered_map<std::string, cv::Mat>>();
+        cc->Inputs().Get(id).Set<std::vector<std::unordered_map<std::string, cv::Mat>>>();
       }
       else if (tag.empty())
       {
@@ -129,7 +130,7 @@ namespace mediapipe
 
       if (tag == kFaceBoxTag)
       {
-        cc->Inputs().Get(id).Set<std::tuple<double, double, double, double>>();
+        cc->Inputs().Get(id).Set<std::vector<std::tuple<double, double, double, double>>>();
       }
     }
 
@@ -178,7 +179,6 @@ namespace mediapipe
     {
       return absl::OkStatus();
     }
-
     if (cc->Inputs().HasTag(kFaceBoxTag) &&
         cc->Inputs().Tag(kFaceBoxTag).IsEmpty())
     {
@@ -194,32 +194,18 @@ namespace mediapipe
       MP_RETURN_IF_ERROR(CreateRenderTargetCpu(cc, image_mat, &target_format));
     }
 
-    // Render streams onto render target.
-    for (CollectionItemId id = cc->Inputs().BeginId(); id < cc->Inputs().EndId();
-         ++id)
+    const std::vector<std::unordered_map<std::string, cv::Mat>> &mask_vec =
+        cc->Inputs().Tag(kMaskTag).Get<std::vector<std::unordered_map<std::string, cv::Mat>>>();
+
+    const std::vector<std::tuple<double, double, double, double>> &face_box =
+        cc->Inputs().Tag(kFaceBoxTag).Get<std::vector<std::tuple<double, double, double, double>>>();
+
+    if (mask_vec.size() > 0 && face_box.size() > 0)
     {
-      auto tag_and_index = cc->Inputs().TagAndIndexFromId(id);
-      std::string tag = tag_and_index.first;
-      if (!tag.empty() && (tag != kMaskTag || tag != kFaceBoxTag))
-      {
-        continue;
-      }
-      if (cc->Inputs().Get(id).IsEmpty())
-      {
-        continue;
-      }
-
-      RET_CHECK_EQ(kMaskTag, tag);
-      const std::unordered_map<std::string, cv::Mat> &mask_vec =
-          cc->Inputs().Get(id).Get<std::unordered_map<std::string, cv::Mat>>();
-
-      RET_CHECK_EQ(kFaceBoxTag, tag);
-      const std::tuple<double, double, double, double> &face_box =
-          cc->Inputs().Get(id).Get<std::tuple<double, double, double, double>>();
-
-      if (mask_vec.size() > 1)
-        MP_RETURN_IF_ERROR(SmoothFace(cc, image_mat, &target_format, mask_vec, face_box));
+      for (int i = 0; i < mask_vec.size(); i++)
+        MP_RETURN_IF_ERROR(SmoothFace(cc, image_mat, &target_format, mask_vec[i], face_box[i]));
     }
+
     // Copy the rendered image to output.
     uchar *image_mat_ptr = image_mat->data;
     MP_RETURN_IF_ERROR(RenderToCpu(cc, target_format, image_mat_ptr, image_mat));
@@ -315,6 +301,7 @@ namespace mediapipe
   cv::Mat SmoothFaceCalculator::predict_forehead_mask(std::unique_ptr<cv::Mat> &image_mat,
                                                       const std::unordered_map<std::string, cv::Mat> &mask_vec, double face_box_min_y)
   {
+
     cv::Mat mat_image__ = *image_mat.get();
     int image_width_ = image_mat->cols;
     int image_height_ = image_mat->rows;

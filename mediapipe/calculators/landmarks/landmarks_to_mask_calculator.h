@@ -24,22 +24,11 @@
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/util/color.pb.h"
 #include "mediapipe/util/render_data.pb.h"
-#include "absl/memory/memory.h"
-#include "absl/strings/str_cat.h"
-#include "absl/strings/str_join.h"
-#include "mediapipe/framework/calculator_framework.h"
-#include "mediapipe/framework/calculator_options.pb.h"
 #include "mediapipe/framework/formats/image_format.pb.h"
 #include "mediapipe/framework/formats/image_frame.h"
 #include "mediapipe/framework/formats/image_frame_opencv.h"
-#include "mediapipe/framework/formats/landmark.pb.h"
 #include "mediapipe/framework/port/opencv_core_inc.h"
 #include "mediapipe/framework/port/opencv_imgproc_inc.h"
-#include "mediapipe/framework/formats/location_data.pb.h"
-#include "mediapipe/framework/port/ret_check.h"
-#include "mediapipe/util/color.pb.h"
-#include "mediapipe/util/render_data.pb.h"
-#include "absl/strings/str_cat.h"
 #include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/port/vector.h"
@@ -85,8 +74,10 @@ namespace mediapipe
         absl::Status RenderToCpu(CalculatorContext *cc,
                                  std::unordered_map<std::string, cv::Mat> &all_masks);
 
-        absl::Status GetFaceBox(std::unique_ptr<cv::Mat> &image_mat,
-                                const RenderData &render_data);
+        absl::Status GetFaceBox(CalculatorContext *cc, std::unique_ptr<cv::Mat> &image_mat);
+
+        absl::Status GetMasks(CalculatorContext *cc, std::unordered_map<std::string, cv::Mat> &all_masks, std::unique_ptr<cv::Mat> &image_mat);
+
         absl::Status CreateRenderTargetCpu(
             CalculatorContext *cc, std::unique_ptr<cv::Mat> &image_mat,
             ImageFormat::Format *target_format);

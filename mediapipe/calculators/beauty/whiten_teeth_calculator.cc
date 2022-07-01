@@ -114,7 +114,7 @@ namespace mediapipe
       std::string tag = tag_and_index.first;
       if (tag == kMaskTag)
       {
-        cc->Inputs().Get(id).Set<std::unordered_map<std::string, cv::Mat>>();
+        cc->Inputs().Get(id).Set<std::vector<std::unordered_map<std::string, cv::Mat>>>();
       }
       else if (tag.empty())
       {
@@ -178,26 +178,12 @@ namespace mediapipe
       MP_RETURN_IF_ERROR(CreateRenderTargetCpu(cc, image_mat, &target_format));
     }
 
-    // Render streams onto render target.
-    for (CollectionItemId id = cc->Inputs().BeginId(); id < cc->Inputs().EndId();
-         ++id)
+    const std::vector<std::unordered_map<std::string, cv::Mat>> &mask_vec =
+        cc->Inputs().Tag(kMaskTag).Get<std::vector<std::unordered_map<std::string, cv::Mat>>>();
+    if (mask_vec.size() > 0)
     {
-      auto tag_and_index = cc->Inputs().TagAndIndexFromId(id);
-      std::string tag = tag_and_index.first;
-      if (!tag.empty() && tag != kMaskTag)
-      {
-        continue;
-      }
-      if (cc->Inputs().Get(id).IsEmpty())
-      {
-        continue;
-      }
-
-      RET_CHECK_EQ(kMaskTag, tag);
-      const std::unordered_map<std::string, cv::Mat> &mask_vec =
-          cc->Inputs().Get(id).Get<std::unordered_map<std::string, cv::Mat>>();
-      if (mask_vec.size() > 1)
-        MP_RETURN_IF_ERROR(WhitenTeeth(cc, image_mat, &target_format, mask_vec));
+      for (auto mask : mask_vec)
+        MP_RETURN_IF_ERROR(WhitenTeeth(cc, image_mat, &target_format, mask));
     }
 
     // Copy the rendered image to output.

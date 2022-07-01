@@ -26,12 +26,17 @@ cc_library(
     deps = [
         "//mediapipe/calculators/core:flow_limiter_calculator",
         "//mediapipe/calculators/tensor:image_to_tensor_calculator",
+        "//mediapipe/calculators/tensor:tensor_converter_calculator",
         "//mediapipe/calculators/tensor:inference_calculator",
+        "//mediapipe/calculators/image:image_transformation_calculator",
          "//mediapipe/calculators/tensor:tensors_to_segmentation_calculator",
          "//mediapipe/calculators/util:to_image_calculator",
          "//mediapipe/calculators/util:from_image_calculator",
-                 "//mediapipe/calculators/image:image_properties_calculator",
-         "//mediapipe/calculators/tflite:tflite_custom_op_resolver_calculator",
+         "//mediapipe/calculators/image:image_properties_calculator",
+         "//mediapipe/modules/face_landmark:face_landmark_front_gpu",
+          "//mediapipe/calculators/image_style:fast_utils_calculator",
+          "//mediapipe/gpu:gpu_buffer_to_image_frame_calculator",
+         "//mediapipe/calculators/core:constant_side_packet_calculator",
     ],
 )
 
@@ -40,10 +45,16 @@ cc_library(
     deps = [
         "//mediapipe/calculators/core:flow_limiter_calculator",
         "//mediapipe/calculators/tensor:image_to_tensor_calculator",
+            "//mediapipe/calculators/image:image_transformation_calculator",
         "//mediapipe/calculators/tensor:inference_calculator",
+        "//mediapipe/calculators/tensor:tensor_converter_calculator",
          "//mediapipe/calculators/tensor:tensors_to_segmentation_calculator",
          "//mediapipe/calculators/util:to_image_calculator",
          "//mediapipe/calculators/util:from_image_calculator",
+           "//mediapipe/modules/face_landmark:face_landmark_front_cpu",
+           "//mediapipe/calculators/image_style:fast_utils_calculator",
+           "//mediapipe/calculators/image:image_properties_calculator",
+              "//mediapipe/calculators/core:constant_side_packet_calculator",
     ],
 )
 

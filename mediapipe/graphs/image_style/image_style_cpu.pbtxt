@@ -6,7 +6,6 @@ input_stream: "input_video"
 # Output image with rendered results. (ImageFrame)
 output_stream: "output_video"
 
-
 node {
   calculator: "FlowLimiterCalculator"
   input_stream: "input_video"
@@ -19,30 +18,57 @@ node {
 }
 
 
-node: {
-  calculator: "ToImageCalculator"
-  input_stream: "IMAGE_CPU:throttled_input_video"
-  output_stream: "IMAGE:image_input_video"
-}
-
+# Defines side packets for further use in the graph.
 node {
-  calculator: "ImageToTensorCalculator"
-  input_stream: "IMAGE:image_input_video"
-  output_stream: "TENSORS:input_tensor"
-  options: {
-    [mediapipe.ImageToTensorCalculatorOptions.ext] {
-      output_tensor_width: 256
-      output_tensor_height: 256
-      keep_aspect_ratio: true
-      output_tensor_float_range {
-        min: -1.0
-        max: 1.0
-      }
-      border_mode: BORDER_ZERO
+  calculator: "ConstantSidePacketCalculator"
+  output_side_packet: "PACKET:0:num_faces"
+  output_side_packet: "PACKET:1:with_attention"
+  node_options: {
+    [type.googleapis.com/mediapipe.ConstantSidePacketCalculatorOptions]: {
+      packet { int_value: 1 }
+      packet { bool_value: true }
     }
   }
 }
 
+# Subgraph that detects faces and corresponding landmarks.
+node {
+  calculator: "FaceLandmarkFrontCpu"
+  input_stream: "IMAGE:throttled_input_video"
+  input_side_packet: "NUM_FACES:num_faces"
+  input_side_packet: "WITH_ATTENTION:with_attention"
+  output_stream: "LANDMARKS:multi_face_landmarks"
+}
+
+node {
+  calculator: "FastUtilsCalculator"
+  input_stream: "NORM_LANDMARKS:multi_face_landmarks"
+  input_stream: "IMAGE:throttled_input_video"
+  output_stream: "IMAGE:out_image_frame"
+}
+
+node: {
+  calculator: "ImageTransformationCalculator"
+  input_stream: "IMAGE:out_image_frame"
+  output_stream: "IMAGE:transformed_input_video"
+  node_options: {
+    [type.googleapis.com/mediapipe.ImageTransformationCalculatorOptions] {
+      output_width: 256
+      output_height: 256
+    }
+  }
+}
+
+node {
+   calculator: "TensorConverterCalculator"
+   input_stream: "IMAGE:transformed_input_video"
+   output_stream: "TENSORS:input_tensor"
+   options: {
+     [mediapipe.TensorConverterCalculatorOptions.ext] {
+       zero_center: true
+     }
+   }
+}
 
 node {
   calculator: "InferenceCalculator"
@@ -56,10 +82,16 @@ node {
   }
 }
 
+node {
+  calculator: "ImagePropertiesCalculator"
+  input_stream: "IMAGE:transformed_input_video"
+  output_stream: "SIZE:input_size"
+}
 
 node {
   calculator: "TensorsToSegmentationCalculator"
   input_stream: "TENSORS:output_tensor"
+  input_stream: "OUTPUT_SIZE:input_size"
   output_stream: "MASK:output"
   options: {
     [mediapipe.TensorsToSegmentationCalculatorOptions.ext] {

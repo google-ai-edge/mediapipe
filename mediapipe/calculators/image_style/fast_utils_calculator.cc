@@ -16,7 +16,6 @@
 
 #include <algorithm>
 #include <cmath>
-#include <map>
 #include <string>
 //#include <android/log.h>
 
@@ -29,21 +28,20 @@
 #include "mediapipe/framework/formats/image_frame.h"
 #include "mediapipe/framework/formats/image_frame_opencv.h"
 #include "mediapipe/framework/formats/video_stream_header.h"
+#include "mediapipe/framework/formats/landmark.pb.h"
 #include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/opencv_core_inc.h"
 #include "mediapipe/framework/port/opencv_imgproc_inc.h"
+#include "mediapipe/framework/port/opencv_highgui_inc.h"
 #include "mediapipe/framework/port/status.h"
-#include "mediapipe/util/annotation_renderer.h"
-#include "mediapipe/util/render_data.pb.h"
 #include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/vector.h"
-#include "mediapipe/util/color.pb.h"
 
 namespace mediapipe
 {
   namespace
   {
-    static const std::vector<cv::Point> FFHQ_NORM_LM = {
+    static const std::vector<cv::Point2f> FFHQ_NORM_LM = {
         {638.68525475 / 1024, 486.24604922 / 1024},
         {389.31496114 / 1024, 485.8921848 / 1024},
         {513.67979275 / 1024, 620.8915371 / 1024},
@@ -52,6 +50,8 @@ namespace mediapipe
 
     constexpr char kImageFrameTag[] = "IMAGE";
     constexpr char kVectorTag[] = "VECTOR";
+    constexpr char kLandmarksTag[] = "LANDMARKS";
+    constexpr char kNormLandmarksTag[] = "NORM_LANDMARKS";
 
     std::tuple<int, int> _normalized_to_pixel_coordinates(float normalized_x,
                                                           float normalized_y, int image_width, int image_height)
@@ -63,8 +63,8 @@ namespace mediapipe
       return {x_px, y_px};
     };
 
-    static const std::unordered_set<cv::Point> FACEMESH_FACE_OVAL =
-        {{10, 338}, {338, 297}, {297, 332}, {332, 284}, {284, 251}, {251, 389}, {389, 356}, {356, 454}, {454, 323}, {323, 361}, {361, 288}, {288, 397}, {397, 365}, {365, 379}, {379, 378}, {378, 400}, {400, 377}, {377, 152}, {152, 148}, {148, 176}, {176, 149}, {149, 150}, {150, 136}, {136, 172}, {172, 58}, {58, 132}, {132, 93}, {93, 234}, {234, 127}, {127, 162}, {162, 21}, {21, 54}, {54, 103}, {103, 67}, {67, 109}, {109, 10}};
+    static const std::vector<cv::Point> FACEMESH_FACE_OVAL{
+        {10, 338}, {338, 297}, {297, 332}, {332, 284}, {284, 251}, {251, 389}, {389, 356}, {356, 454}, {454, 323}, {323, 361}, {361, 288}, {288, 397}, {397, 365}, {365, 379}, {379, 378}, {378, 400}, {400, 377}, {377, 152}, {152, 148}, {148, 176}, {176, 149}, {149, 150}, {150, 136}, {136, 172}, {172, 58}, {58, 132}, {132, 93}, {93, 234}, {234, 127}, {127, 162}, {162, 21}, {21, 54}, {54, 103}, {103, 67}, {67, 109}, {109, 10}};
 
     enum
     {
@@ -76,8 +76,6 @@ namespace mediapipe
     // Round up n to next multiple of m.
     size_t RoundUp(size_t n, size_t m) { return ((n + m - 1) / m) * m; } // NOLINT
     inline bool HasImageTag(mediapipe::CalculatorContext *cc) { return false; }
-
-    using Point = RenderAnnotation::Point;
 
     bool NormalizedtoPixelCoordinates(double normalized_x, double normalized_y,
                                       int image_width, int image_height, int *x_px,
@@ -99,6 +97,115 @@ namespace mediapipe
 
       return true;
     }
+
+    template <class LandmarkType>
+    bool IsLandmarkVisibleAndPresent(const LandmarkType &landmark,
+                                     bool utilize_visibility,
+                                     float visibility_threshold,
+                                     bool utilize_presence,
+                                     float presence_threshold)
+    {
+      if (utilize_visibility && landmark.has_visibility() &&
+          landmark.visibility() < visibility_threshold)
+      {
+        return false;
+      }
+      if (utilize_presence && landmark.has_presence() &&
+          landmark.presence() < presence_threshold)
+      {
+        return false;
+      }
+      return true;
+    }
+
+    std::tuple<float, cv::Mat, cv::Mat> LandmarkTransform(
+        cv::Mat &source,
+        cv::Mat &target, float eps = 1e-7)
+    {
+      cv::Mat source_mean_mat, target_mean_mat, source1ch, target1ch;
+
+      cv::reduce(source, source_mean_mat, 0, CV_REDUCE_AVG, CV_32F);
+      cv::reduce(target, target_mean_mat, 0, CV_REDUCE_AVG, CV_32F);
+
+      source -= {source_mean_mat.at<float>(0, 0), source_mean_mat.at<float>(0, 1)};
+      target -= {target_mean_mat.at<float>(0, 0), target_mean_mat.at<float>(0, 1)};
+
+      source1ch = source.reshape(1, 5);
+      target1ch = target.reshape(1, 5);
+
+      cv::Mat source_std_mat, target_std_mat;
+      cv::meanStdDev(source1ch, cv::noArray(), source_std_mat);
+      cv::meanStdDev(target1ch, cv::noArray(), target_std_mat);
+      source_std_mat.convertTo(source_std_mat, CV_32F);
+      target_std_mat.convertTo(target_std_mat, CV_32F);
+
+      float source_std = source_std_mat.at<float>(0, 0);
+      float target_std = target_std_mat.at<float>(0, 0);
+
+      source /= source_std + eps;
+      target /= target_std + eps;
+
+      cv::Mat u, vt, rotation, w;
+
+      source1ch = source.reshape(1, 5);
+      target1ch = target.reshape(1, 5);
+
+      //std::cout << "R (numpy)   = " << std::endl << cv::format(source, cv::Formatter::FMT_NUMPY) << std::endl << std::endl;
+
+      cv::SVD::compute(source1ch.t() * target1ch, w, u, vt);
+
+      rotation = (u * vt).t();
+
+      float scale = target_std / source_std + eps;
+      cv::Mat translation;
+
+      cv::subtract(target_mean_mat.reshape(1, 2), scale * rotation * source_mean_mat.reshape(1, 2), translation);
+
+      return std::make_tuple(scale, rotation, translation);
+    }
+
+    std::tuple<float, float, float, float> Crop(
+        std::unique_ptr<cv::Mat> &image_mat,
+        std::tuple<float, float, float, float> roi, float extend = 1.0,
+        bool square = false, float shift_x = 0.0, float shift_y = 0.0)
+    {
+      cv::Mat image = *image_mat.get();
+
+      int width = image_mat->cols;
+      int height = image_mat->rows;
+
+      auto &[left, top, right, bottom] = roi;
+      int y = static_cast<int>((bottom + top) / 2);
+      int x = static_cast<int>((right + left) / 2);
+
+      int size_y = static_cast<int>(extend * (bottom - top) / 2);
+      int size_x = static_cast<int>(extend * (right - left) / 2);
+
+      if (square)
+        size_x = size_y = std::max(size_x, size_y);
+
+      x += static_cast<int>(shift_x * size_x);
+      y += static_cast<int>(shift_y * size_y);
+
+      roi = std::make_tuple(
+          std::max(0, x - size_x),
+          std::max(0, y - size_y),
+          std::min(x + size_x, width),
+          std::min(y + size_y, height));
+
+      image = image(cv::Range(bottom, top), cv::Range(left, right));
+
+      if (square)
+        cv::copyMakeBorder(
+            image, image, std::abs(std::min(0, y - size_y)),
+            std::abs(std::min(0, height - y - size_y)),
+            std::abs(std::min(0, x - size_x)),
+            std::abs(std::min(0, width - x - size_x)),
+            cv::BORDER_CONSTANT);
+
+      return roi;
+    }
+
   } // namespace
 
   class FastUtilsCalculator : public CalculatorBase
@@ -125,30 +232,26 @@ namespace mediapipe
 
     absl::Status Call(CalculatorContext *cc,
                       std::unique_ptr<cv::Mat> &image_mat,
-                      ImageFormat::Format *target_format,
-                      const RenderData &render_data,
-                      std::unordered_map<std::string, cv::Mat> &all_masks);
+                      ImageFormat::Format &target_format,
+                      std::vector<std::vector<cv::Point2f>> &lms_out);
+
+    absl::Status Align(std::unique_ptr<cv::Mat> &image_mat,
+                       cv::Mat source_lm,
+                       cv::Mat target_lm = cv::Mat(FFHQ_NORM_LM), cv::Size size = cv::Size(256, 256),
+                       float extend = NULL, std::tuple<float, float, float, float> roi = {NULL, NULL, NULL, NULL});
 
     // Indicates if image frame is available as input.
     bool image_frame_available_ = false;
-    std::unordered_map<std::string, const std::vector<int>> index_dict = {
+    std::vector<std::pair<std::string, const std::vector<int>>> index_dict = {
         {"leftEye", {384, 385, 386, 387, 388, 390, 263, 362, 398, 466, 373, 374, 249, 380, 381, 382}},
         {"rightEye", {160, 33, 161, 163, 133, 7, 173, 144, 145, 246, 153, 154, 155, 157, 158, 159}},
         {"nose", {4}},
-        {"lips", {0, 13, 14, 17, 84}},
+        //{"lips", {0, 13, 14, 17, 84}},
         {"leftLips", {61, 146}},
         {"rightLips", {291, 375}},
     };
 
-    int width_ = 0;
-    int height_ = 0;
-    int width_canvas_ = 0; // Size of overlay drawing texture canvas.
-    int height_canvas_ = 0;
-
-    int max_num_faces = 1;
-    bool refine_landmarks = True;
-    double min_detection_confidence = 0.5;
-    double min_tracking_confidence = 0.5;
+    std::unique_ptr<cv::Mat> image_mat;
   };
   REGISTER_CALCULATOR(FastUtilsCalculator);
 
@@ -160,6 +263,23 @@ namespace mediapipe
     {
       cc->Inputs().Tag(kImageFrameTag).Set<ImageFrame>();
       CHECK(cc->Outputs().HasTag(kImageFrameTag));
+    }
+
+    RET_CHECK(cc->Inputs().HasTag(kLandmarksTag) ||
+              cc->Inputs().HasTag(kNormLandmarksTag))
+        << "None of the input streams are provided.";
+    RET_CHECK(!(cc->Inputs().HasTag(kLandmarksTag) &&
+                cc->Inputs().HasTag(kNormLandmarksTag)))
+        << "Can only one type of landmark can be taken. Either absolute or "
+           "normalized landmarks.";
+
+    if (cc->Inputs().HasTag(kLandmarksTag))
+    {
+      cc->Inputs().Tag(kLandmarksTag).Set<std::vector<LandmarkList>>();
+    }
+    if (cc->Inputs().HasTag(kNormLandmarksTag))
+    {
+      cc->Inputs().Tag(kNormLandmarksTag).Set<std::vector<NormalizedLandmarkList>>();
     }
 
     if (cc->Outputs().HasTag(kImageFrameTag))
@@ -202,53 +322,32 @@ namespace mediapipe
     {
       return absl::OkStatus();
     }
+    if (cc->Inputs().HasTag(kLandmarksTag) &&
+        cc->Inputs().Tag(kLandmarksTag).IsEmpty())
+    {
+      return absl::OkStatus();
+    }
+    if (cc->Inputs().HasTag(kNormLandmarksTag) &&
+        cc->Inputs().Tag(kNormLandmarksTag).IsEmpty())
+    {
+      return absl::OkStatus();
+    }
 
     // Initialize render target, drawn with OpenCV.
-    std::unique_ptr<cv::Mat> image_mat;
     ImageFormat::Format target_format;
-    std::unordered_map<std::string, cv::Mat> all_masks;
+    std::vector<std::vector<cv::Point2f>> lms_out;
 
-    if (cc->Outputs().HasTag(kImageFrameTag))
-    {
-      MP_RETURN_IF_ERROR(CreateRenderTargetCpu(cc, image_mat, &target_format));
-    }
+    MP_RETURN_IF_ERROR(CreateRenderTargetCpu(cc, image_mat, &target_format));
 
-    // Render streams onto render target.
-    for (CollectionItemId id = cc->Inputs().BeginId(); id < cc->Inputs().EndId();
-         ++id)
-    {
-      auto tag_and_index = cc->Inputs().TagAndIndexFromId(id);
-      std::string tag = tag_and_index.first;
-      if (!tag.empty() && tag != kVectorTag)
-      {
-        continue;
-      }
-      if (cc->Inputs().Get(id).IsEmpty())
-      {
-        continue;
-      }
-      if (tag.empty())
-      {
-        // Empty tag defaults to accepting a single object of RenderData type.
-        const RenderData &render_data = cc->Inputs().Get(id).Get<RenderData>();
-        MP_RETURN_IF_ERROR(Call(cc, image_mat, &target_format, render_data, all_masks));
-      }
-      else
-      {
-        RET_CHECK_EQ(kVectorTag, tag);
-        const std::vector<RenderData> &render_data_vec =
-            cc->Inputs().Get(id).Get<std::vector<RenderData>>();
-        for (const RenderData &render_data : render_data_vec)
-        {
-          MP_RETURN_IF_ERROR(Call(cc, image_mat, &target_format, render_data, all_masks));
-        }
-      }
-    }
+    MP_RETURN_IF_ERROR(Call(cc, image_mat, target_format, lms_out));
 
-    // Copy the rendered image to output.
+    cv::Mat source_lm = cv::Mat(lms_out[0]);
+
+    MP_RETURN_IF_ERROR(Align(image_mat, source_lm));
+
     uchar *image_mat_ptr = image_mat->data;
     MP_RETURN_IF_ERROR(RenderToCpu(cc, target_format, image_mat_ptr, image_mat));
-
+    
     return absl::OkStatus();
   }
 
@@ -263,7 +362,7 @@ namespace mediapipe
   {
 
     cv::Mat mat_image_ = *image_mat.get();
-
+ 
     auto output_frame = absl::make_unique<ImageFrame>(
         target_format, mat_image_.cols, mat_image_.rows);
 
@@ -339,61 +438,99 @@ namespace mediapipe
 
   absl::Status FastUtilsCalculator::Call(CalculatorContext *cc,
                                          std::unique_ptr<cv::Mat> &image_mat,
-                                         ImageFormat::Format *target_format,
-                                         const RenderData &render_data,
-                                         std::unordered_map<std::string, cv::Mat> &all_masks)
+                                         ImageFormat::Format &target_format,
+                                         std::vector<std::vector<cv::Point2f>> &lms_out)
   {
     cv::Mat mat_image_ = *image_mat.get();
 
     int image_width_ = image_mat->cols;
     int image_height_ = image_mat->rows;
 
-    cv::Mat mask;
-    std::vector<cv::Point> kps, landmarks;
-    std::vector<std::vector<cv::Point>> lms_out;
-    
-    int c = 0;
-    
-    for (const auto &[key, value] : index_dict)
+    std::vector<cv::Point2f> kps, landmarks;
+
+    if (cc->Inputs().HasTag(kNormLandmarksTag))
     {
-      for (auto order : value)
-      {
-        c = 0;
-        for (auto &annotation : render_data.render_annotations())
+      const std::vector<NormalizedLandmarkList> &landmarkslist =
+          cc->Inputs().Tag(kNormLandmarksTag).Get<std::vector<NormalizedLandmarkList>>();
+
+      std::vector<cv::Point2f> point_array;
+      for (const auto &face : landmarkslist)
+      { 
+        for (const auto &[key, value] : index_dict)
         {
-          if (annotation.data_case() == RenderAnnotation::kPoint)
+          for (auto order : value)
           {
-            if (order == c)
+
+            const NormalizedLandmark &landmark = face.landmark(order);
+
+            if (!IsLandmarkVisibleAndPresent<NormalizedLandmark>(
+                    landmark, false,
+                    0.0, false,
+                    0.0))
             {
-              const auto &point = annotation.point();
-              int x = -1;
-              int y = -1;
-              CHECK(NormalizedtoPixelCoordinates(point.x(), point.y(), image_width_,
-                                                 image_height_, &x, &y));
-              kps.push_back(cv::Point(x, y));
+              continue;
             }
-            c += 1;
+
+            const auto &point = landmark;
+            int x = -1;
+            int y = -1;
+            CHECK(NormalizedtoPixelCoordinates(point.x(), point.y(), image_width_,
+                                               image_height_, &x, &y));
+            kps.push_back(cv::Point2f(x, y));
           }
+
+          cv::Mat mean;
+          cv::reduce(kps, mean, 1, CV_REDUCE_AVG, CV_32F);
+         
+          landmarks.push_back({mean.at<float>(0, 0), mean.at<float>(0, 1)});
+          
+          kps.clear();
         }
+        lms_out.push_back(landmarks);
+    
+        landmarks.clear();
       }
-      double sumx = 0, sumy = 0, meanx, meany;
-
-      for (auto p : kps)
-      {
-        sumx += p.x;
-        sumy += p.y;
-      }
-      meanx = sumx / kps.size();
-      meany = sumy / kps.size();
-
-      landmarks.push_back({meanx, meany});
-
-      kps.clear();
     }
-
-    lms_out.push_back(landmarks);
 
     return absl::OkStatus();
   }
 
+  absl::Status FastUtilsCalculator::Align(std::unique_ptr<cv::Mat> &image_mat,
+                                          cv::Mat source_lm,
+                                          cv::Mat target_lm, cv::Size size,
+                                          float extend, std::tuple<float, float, float, float> roi)
+  {
+    cv::Mat mat_image_ = *image_mat.get();
+
+    cv::Mat source, target;
+    source_lm.convertTo(source, CV_32F);
+    target_lm.convertTo(target, CV_32F);
+
+    if (target.at<float>(0, 0) < 1)
+    {
+      target *= size.width;
+    }
+
+    if (std::get<0>(roi) != NULL)
+    {
+      roi = Crop(image_mat, roi, extend);
+
+      auto [left, top, right, bottom] = roi;
+      source(cv::Range(cv::Range::all()), cv::Range(0, 1)) -= left;
+      source(cv::Range(cv::Range::all()), cv::Range(1, 2)) -= top;
+    }
+    auto [scale, rotation, translation] = LandmarkTransform(source, target);
+
+    std::vector<cv::Mat> vec_mat;
+
+    vec_mat.push_back(scale * rotation);
+    vec_mat.push_back(translation.reshape(1, {2, 1}));
+
+    cv::Mat transform, image;
+    cv::hconcat(vec_mat, transform);
+    
+    cv::warpAffine(mat_image_, *image_mat, transform, size, 1, 0, 0.0);
+
+    return absl::OkStatus();
+  }
 } // namespace mediapipe
