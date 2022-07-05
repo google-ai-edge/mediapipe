@@ -29,22 +29,10 @@ node {
   }
 }
 
-node: {
-  calculator: "ImageTransformationCalculator"
-  input_stream: "IMAGE_GPU:throttled_input_video"
-  output_stream: "IMAGE_GPU:transformed_input_video"
-  node_options: {
-    [type.googleapis.com/mediapipe.ImageTransformationCalculatorOptions] {
-      output_width: 256
-      output_height: 256
-    }
-  }
-}
-
 # Defines side packets for further use in the graph.
 node {
   calculator: "GpuBufferToImageFrameCalculator"
-  input_stream: "transformed_input_video"
+  input_stream: "throttled_input_video"
   output_stream: "throttled_input_video_cpu"
 }
 
@@ -63,6 +51,19 @@ node {
   output_stream: "IMAGE:out_image_frame"
 }
 
+#node: {
+#  calculator: "ImageTransformationCalculator"
+#  input_stream: "IMAGE:out_image_frame"
+#  output_stream: "IMAGE:out_image_frame1"
+#  node_options: {
+#    [type.googleapis.com/mediapipe.ImageTransformationCalculatorOptions] {
+#      output_width: 256
+#      output_height: 256
+#    }
+#  }
+#}
+
+
 node {
    calculator: "TensorConverterCalculator"
    input_stream: "IMAGE:out_image_frame"
@@ -74,52 +75,24 @@ node {
    }
 }
 
-#node: {
-#  calculator: "ImageToTensorCalculator"
-#  input_stream: "IMAGE_GPU:throttled_input_video"
-#  output_stream: "TENSORS:input_tensors"
-#  options {
-#    [mediapipe.ImageToTensorCalculatorOptions.ext] {
-#              output_tensor_width: 256
-#      	      output_tensor_height: 256
-#      	      keep_aspect_ratio: false
-#              output_tensor_float_range {
-#                min: -1.0
-#                max: 1.0
-#              }
-#              gpu_origin: TOP_LEFT
-#      	      border_mode: BORDER_REPLICATE
-#            }
-#        }
+#node {
+#  calculator: "InferenceCalculator"
+#  input_stream: "TENSORS:input_tensors"
+#  output_stream: "TENSORS:output_tensors"
+#  options: {
+#    [mediapipe.InferenceCalculatorOptions.ext] {
+#     model_path:"mediapipe/models/model_float32.tflite"
+#      delegate { gpu {} }
+#    }
+#  }
 #}
-
-
-
-node {
-  calculator: "InferenceCalculator"
-  input_stream: "TENSORS:input_tensors"
-  output_stream: "TENSORS:output_tensors"
-  options: {
-    [mediapipe.InferenceCalculatorOptions.ext] {
-      model_path:"mediapipe/models/model_float32.tflite"
-      delegate { gpu {} }
-    }
-  }
-}
-
-# Retrieves the size of the input image.
-node {
-  calculator: "ImagePropertiesCalculator"
-  input_stream: "IMAGE_GPU:input_video"
-  output_stream: "SIZE:input_size"
-}
 
 # Processes the output tensors into a segmentation mask that has the same size
 # as the input image into the graph.
 node {
   calculator: "TensorsToSegmentationCalculator"
-  input_stream: "TENSORS:output_tensors"
-  input_stream: "OUTPUT_SIZE:input_size"
+  input_stream: "TENSORS:input_tensors"
+  #input_stream: "OUTPUT_SIZE:input_size"
   output_stream: "MASK:mask_image"
   options: {
     [mediapipe.TensorsToSegmentationCalculatorOptions.ext] {
