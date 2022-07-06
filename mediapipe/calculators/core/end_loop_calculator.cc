@@ -17,11 +17,12 @@
 #include <vector>
 
 #include "mediapipe/framework/formats/classification.pb.h"
-#include "mediapipe/framework/formats/detection.pb.h"
 #include "mediapipe/framework/formats/landmark.pb.h"
 #include "mediapipe/framework/formats/rect.pb.h"
 #include "mediapipe/util/render_data.pb.h"
 #include "tensorflow/lite/interpreter.h"
+#include "mediapipe/framework/port/opencv_core_inc.h"
+#include "mediapipe/framework/port/opencv_imgproc_inc.h"
 
 namespace mediapipe {
 
@@ -48,11 +49,15 @@ typedef EndLoopCalculator<std::vector<::mediapipe::ClassificationList>>
     EndLoopClassificationListCalculator;
 REGISTER_CALCULATOR(EndLoopClassificationListCalculator);
 
+typedef EndLoopCalculator<std::vector<std::unordered_map<std::string, cv::Mat>>>
+    EndLoopMapMaskCalculator;
+REGISTER_CALCULATOR(EndLoopMapMaskCalculator);
+
+typedef EndLoopCalculator<std::vector<std::tuple<double, double, double, double>>>
+    EndLoopFaceBoxCalculator;
+REGISTER_CALCULATOR(EndLoopFaceBoxCalculator);
+
 typedef EndLoopCalculator<std::vector<TfLiteTensor>> EndLoopTensorCalculator;
 REGISTER_CALCULATOR(EndLoopTensorCalculator);
-
-typedef EndLoopCalculator<std::vector<::mediapipe::Detection>>
-    EndLoopDetectionCalculator;
-REGISTER_CALCULATOR(EndLoopDetectionCalculator);
 
 }  // namespace mediapipe
