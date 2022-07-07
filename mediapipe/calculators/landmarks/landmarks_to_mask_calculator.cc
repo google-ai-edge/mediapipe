@@ -17,28 +17,9 @@
 
 #include <algorithm>
 #include <cmath>
-#include <string>
-#include <map>
 #include <iostream>
 
-#include <memory>
-
 #include "absl/memory/memory.h"
-#include "absl/strings/str_cat.h"
-#include "absl/strings/str_join.h"
-#include "mediapipe/framework/calculator_framework.h"
-#include "mediapipe/framework/calculator_options.pb.h"
-#include "mediapipe/framework/formats/image_format.pb.h"
-#include "mediapipe/framework/formats/image_frame.h"
-#include "mediapipe/framework/formats/image_frame_opencv.h"
-#include "mediapipe/framework/formats/landmark.pb.h"
-#include "mediapipe/framework/port/opencv_core_inc.h"
-#include "mediapipe/framework/port/opencv_imgproc_inc.h"
-#include "mediapipe/framework/formats/location_data.pb.h"
-#include "mediapipe/framework/port/ret_check.h"
-#include "mediapipe/util/color.pb.h"
-#include "mediapipe/util/render_data.pb.h"
-#include "absl/strings/str_cat.h"
 #include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/port/vector.h"
@@ -49,7 +30,6 @@ namespace mediapipe
   {
     constexpr char kLandmarksTag[] = "LANDMARKS";
     constexpr char kNormLandmarksTag[] = "NORM_LANDMARKS";
-    constexpr char kLandmarkLabel[] = "KEYPOINT";
     constexpr char kVectorTag[] = "VECTOR";
     constexpr char kMaskTag[] = "MASK";
     constexpr char kFaceBoxTag[] = "FACEBOX";
@@ -111,6 +91,11 @@ namespace mediapipe
 
     std::tuple<double, double, double, double> face_box;
 
+    std::unique_ptr<cv::Mat> image_mat;
+
+    int image_width_;
+    int image_height_;
+
     float scale_factor_ = 1.0;
 
     bool image_frame_available_ = false;
@@ -161,9 +146,6 @@ namespace mediapipe
     {
       image_frame_available_ = true;
     }
-    else
-    {
-    }
 
     return absl::OkStatus();
   }
@@ -190,15 +172,18 @@ namespace mediapipe
 
     // Initialize render target, drawn with OpenCV.
 
-    std::unique_ptr<cv::Mat> image_mat;
     ImageFormat::Format target_format;
     std::unordered_map<std::string, cv::Mat> all_masks;
 
     MP_RETURN_IF_ERROR(CreateRenderTargetCpu(cc, image_mat, &target_format));
 
-    MP_RETURN_IF_ERROR(GetMasks(cc, all_masks, image_mat));
+    cv::Mat mat_image_ = *image_mat.get();
+    image_width_ = image_mat->cols;
+    image_height_ = image_mat->rows;
 
-    MP_RETURN_IF_ERROR(GetFaceBox(cc, image_mat));
+    MP_RETURN_IF_ERROR(GetMasks(cc, all_masks));
+
+    MP_RETURN_IF_ERROR(GetFaceBox(cc));
 
     MP_RETURN_IF_ERROR(RenderToCpu(cc, all_masks));
 
@@ -289,12 +274,8 @@ namespace mediapipe
   }
 
   absl::Status LandmarksToMaskCalculator::GetMasks(CalculatorContext *cc,
-                                                   std::unordered_map<std::string, cv::Mat> &all_masks, std::unique_ptr<cv::Mat> &image_mat)
+                                                   std::unordered_map<std::string, cv::Mat> &all_masks)
   {
-
-    int image_width_ = image_mat->cols;
-    int image_height_ = image_mat->rows;
-
     if (cc->Inputs().HasTag(kLandmarksTag))
     {
        const LandmarkList &landmarks =
@@ -326,10 +307,11 @@ namespace mediapipe
 
         std::vector<std::vector<cv::Point>> point_vec;
         point_vec.push_back(point_array);
+       
         mask = cv::Mat::zeros(image_mat->size(), CV_32FC1);
         cv::fillPoly(mask, point_vec, cv::Scalar::all(255), cv::LINE_AA);
         mask.convertTo(mask, CV_8U);
-        all_masks.insert(make_pair(key, mask));
+        all_masks.insert({key, mask});
         point_vec.clear();
         point_array.clear();
       }
@@ -377,13 +359,8 @@ namespace mediapipe
     return absl::OkStatus();
   }
 
-  absl::Status LandmarksToMaskCalculator::GetFaceBox(CalculatorContext *cc, std::unique_ptr<cv::Mat> &image_mat)
+  absl::Status LandmarksToMaskCalculator::GetFaceBox(CalculatorContext *cc)
   {
-    cv::Mat mat_image_ = *image_mat.get();
-
-    int image_width_ = image_mat->cols;
-    int image_height_ = image_mat->rows;
-
     std::vector<int> x_s, y_s;
     double box_min_y, box_max_y, box_max_x, box_min_x;
     if (cc->Inputs().HasTag(kLandmarksTag))

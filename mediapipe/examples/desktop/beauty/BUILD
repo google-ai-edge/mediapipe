@@ -17,7 +17,7 @@ licenses(["notice"])
 package(default_visibility = ["//mediapipe/examples:__subpackages__"])
 
 cc_binary(
-    name = "face_mesh_tflite",
+    name = "beauty_tflite",
     deps = [
         "//mediapipe/examples/desktop:simple_run_graph_main",
         "//mediapipe/graphs/beauty:desktop_calculators",
@@ -25,9 +25,25 @@ cc_binary(
 )
 
 cc_binary(
-    name = "face_mesh_cpu",
+    name = "beauty_cpu",
     deps = [
         "//mediapipe/examples/desktop:demo_run_graph_main",
         "//mediapipe/graphs/beauty:desktop_live_calculators",
+    ],
+)
+
+cc_binary(
+    name = "beauty_cpu_over",
+    deps = [
+        "//mediapipe/examples/desktop:demo_run_graph_main",
+        "//mediapipe/graphs/beauty:desktop_live_over_calculators",
+    ],
+)
+
+cc_binary(
+    name = "beauty_gpu_over",
+    deps = [
+        "//mediapipe/examples/desktop:demo_run_graph_main",
+        "//mediapipe/graphs/beauty:desktop_gpu_over",
     ],
 )

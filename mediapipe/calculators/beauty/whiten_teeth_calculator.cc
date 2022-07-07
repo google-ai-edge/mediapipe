@@ -31,11 +31,8 @@
 #include "mediapipe/framework/port/opencv_core_inc.h"
 #include "mediapipe/framework/port/opencv_imgproc_inc.h"
 #include "mediapipe/framework/port/status.h"
-#include "mediapipe/util/annotation_renderer.h"
-#include "mediapipe/util/render_data.pb.h"
 #include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/vector.h"
-#include "mediapipe/util/color.pb.h"
 
 namespace mediapipe
 {
@@ -52,12 +49,7 @@ namespace mediapipe
       NUM_ATTRIBUTES
     };
 
-    // Round up n to next multiple of m.
-    size_t RoundUp(size_t n, size_t m) { return ((n + m - 1) / m) * m; } // NOLINT
     inline bool HasImageTag(mediapipe::CalculatorContext *cc) { return false; }
-
-    using Point = RenderAnnotation::Point;
-
   } // namespace
 
   class WhitenTeethCalculator : public CalculatorBase
@@ -82,17 +74,15 @@ namespace mediapipe
         CalculatorContext *cc, const ImageFormat::Format &target_format,
         uchar *data_image, std::unique_ptr<cv::Mat> &image_mat);
 
-    absl::Status WhitenTeeth(CalculatorContext *cc, std::unique_ptr<cv::Mat> &image_mat,
-                             ImageFormat::Format *target_format,
+    absl::Status WhitenTeeth(CalculatorContext *cc, ImageFormat::Format *target_format,
                              const std::unordered_map<std::string, cv::Mat> &mask_vec);
 
     // Indicates if image frame is available as input.
     bool image_frame_available_ = false;
-    std::unordered_map<std::string, cv::Mat> all_masks;
-    int width_ = 0;
-    int height_ = 0;
-    int width_canvas_ = 0; // Size of overlay drawing texture canvas.
-    int height_canvas_ = 0;
+    std::unique_ptr<cv::Mat> image_mat;
+    cv::Mat mat_image_;
+    int image_width_;
+    int image_height_;
   };
   REGISTER_CALCULATOR(WhitenTeethCalculator);
 
@@ -170,20 +160,22 @@ namespace mediapipe
     }
 
     // Initialize render target, drawn with OpenCV.
-    std::unique_ptr<cv::Mat> image_mat;
     ImageFormat::Format target_format;
 
     if (cc->Outputs().HasTag(kImageFrameTag))
     {
       MP_RETURN_IF_ERROR(CreateRenderTargetCpu(cc, image_mat, &target_format));
     }
-
+    mat_image_ = *image_mat.get();
+    image_width_ = image_mat->cols;
+    image_height_ = image_mat->rows;
+    
     const std::vector<std::unordered_map<std::string, cv::Mat>> &mask_vec =
         cc->Inputs().Tag(kMaskTag).Get<std::vector<std::unordered_map<std::string, cv::Mat>>>();
     if (mask_vec.size() > 0)
     {
       for (auto mask : mask_vec)
-        MP_RETURN_IF_ERROR(WhitenTeeth(cc, image_mat, &target_format, mask));
+        MP_RETURN_IF_ERROR(WhitenTeeth(cc, &target_format, mask));
     }
 
     // Copy the rendered image to output.
@@ -206,9 +198,9 @@ namespace mediapipe
     cv::Mat mat_image_ = *image_mat.get();
 
     auto output_frame = absl::make_unique<ImageFrame>(
-        target_format, mat_image_.cols, mat_image_.rows);
+        target_format, image_width_, image_height_);
 
-    output_frame->CopyPixelData(target_format, mat_image_.cols, mat_image_.rows, data_image,
+    output_frame->CopyPixelData(target_format, image_width_, image_height_, data_image,
                                 ImageFrame::kDefaultAlignmentBoundary);
 
     if (cc->Outputs().HasTag(kImageFrameTag))
@@ -279,20 +271,15 @@ namespace mediapipe
   }
 
   absl::Status WhitenTeethCalculator::WhitenTeeth(CalculatorContext *cc,
-                                                  std::unique_ptr<cv::Mat> &image_mat,
                                                   ImageFormat::Format *target_format,
                                                   const std::unordered_map<std::string, cv::Mat> &mask_vec)
   {
-    cv::Mat mat_image__ = *image_mat.get();
-
     cv::Mat mouth_mask, mouth;
-    int image_width_ = image_mat->cols;
-    int image_height_ = image_mat->rows;
-    mouth_mask = cv::Mat::zeros(mat_image__.size(), CV_32F);
+    mouth_mask = cv::Mat::zeros(mat_image_.size(), CV_32F);
 
     mouth_mask = mask_vec.find("MOUTH_INSIDE")->second.clone();
 
-    cv::resize(mouth_mask, mouth, mat_image__.size(), cv::INTER_LINEAR);
+    cv::resize(mouth_mask, mouth, mat_image_.size(), cv::INTER_LINEAR);
 
     std::vector<int> x, y;
     std::vector<cv::Point> location;
@@ -323,7 +310,7 @@ namespace mediapipe
         mouth_max_x = static_cast<int>(std::min(mouth_max_x + mw * 0.1, (double)image_width_));
         mouth_crop_mask = mouth(cv::Range(mouth_min_y, mouth_max_y), cv::Range(mouth_min_x, mouth_max_x));
         cv::Mat img_hsv, tmp_mask, img_hls;
-        cv::cvtColor(mat_image__(cv::Range(mouth_min_y, mouth_max_y), cv::Range(mouth_min_x, mouth_max_x)), img_hsv,
+        cv::cvtColor(mat_image_(cv::Range(mouth_min_y, mouth_max_y), cv::Range(mouth_min_x, mouth_max_x)), img_hsv,
                      cv::COLOR_RGBA2RGB);
         cv::cvtColor(img_hsv, img_hsv,
                      cv::COLOR_RGB2HSV);
@@ -357,7 +344,7 @@ namespace mediapipe
         cv::cvtColor(img_hls, img_hls, cv::COLOR_HLS2RGB);
         cv::cvtColor(img_hls, img_hls, cv::COLOR_RGB2RGBA);
 
-        cv::Mat slice = mat_image__(cv::Range(mouth_min_y, mouth_max_y), cv::Range(mouth_min_x, mouth_max_x));
+        cv::Mat slice = mat_image_(cv::Range(mouth_min_y, mouth_max_y), cv::Range(mouth_min_x, mouth_max_x));
         img_hls.copyTo(slice);
       }
     }

@@ -53,57 +53,13 @@ node {
   output_stream: "ITERABLE:multi_face_landmarks_render_data"
 }
 
-# Converts normalized rects to drawing primitives for annotation overlay.
-#node {
-#  calculator: "RectToRenderDataCalculator"
-# input_stream: "NORM_RECTS:rects"
-#  output_stream: "RENDER_DATA:rects_render_data"
-#  node_options: {
-#    [type.googleapis.com/mediapipe.RectToRenderDataCalculatorOptions] {
-#      filled: false
-#      color { r: 255 g: 0 b: 0 }
-#      thickness: 4.0
-#    }
-#  }
-#}
-
+# Draws annotations and overlays them on top of the input images.
 node {
-  calculator: "FormFaceMaskCalculator"
+  calculator: "AnnotationOverlayCalculator"
   input_stream: "IMAGE:input_image"
   input_stream: "VECTOR:0:multi_face_landmarks_render_data"
-  output_stream: "FACEBOX:face_box"
-  output_stream: "MASK:multi_mask"
-}
-
-node {
-  calculator: "DrawLipstickCalculator"
-  input_stream: "IMAGE:input_image"
-  input_stream: "MASK:0:multi_mask"
-  output_stream: "IMAGE:input_image_1"
-}
-
-node {
-  calculator: "WhitenTeethCalculator"
-  input_stream: "IMAGE:input_image_1"
-  input_stream: "MASK:0:multi_mask"
-  output_stream: "IMAGE:input_image_2"
-}
-
-node {
-  calculator: "SmoothFaceCalculator"
-  input_stream: "IMAGE:input_image_2"
-  input_stream: "MASK:0:multi_mask"
-  input_stream: "FACEBOX:face_box"
   output_stream: "IMAGE:output_image"
 }
-
-# Draws annotations and overlays them on top of the input images.
-#node {
-#  calculator: "AnnotationOverlayCalculator"
-#  input_stream: "IMAGE:input_image"
-#  input_stream: "VECTOR:0:multi_face_landmarks_render_data"
-#  output_stream: "IMAGE:output_image"
-#}
 
 
 

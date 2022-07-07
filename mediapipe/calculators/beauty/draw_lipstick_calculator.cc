@@ -18,7 +18,6 @@
 #include <cmath>
 #include <map>
 #include <string>
-//#include <android/log.h>
 
 #include <memory>
 
@@ -33,17 +32,13 @@
 #include "mediapipe/framework/port/opencv_core_inc.h"
 #include "mediapipe/framework/port/opencv_imgproc_inc.h"
 #include "mediapipe/framework/port/status.h"
-#include "mediapipe/util/annotation_renderer.h"
-#include "mediapipe/util/render_data.pb.h"
 #include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/vector.h"
-#include "mediapipe/util/color.pb.h"
 
 namespace mediapipe
 {
   namespace
   {
-
     constexpr char kMaskTag[] = "MASK";
     constexpr char kImageFrameTag[] = "IMAGE";
 
@@ -54,12 +49,7 @@ namespace mediapipe
       NUM_ATTRIBUTES
     };
 
-    // Round up n to next multiple of m.
-    size_t RoundUp(size_t n, size_t m) { return ((n + m - 1) / m) * m; } // NOLINT
     inline bool HasImageTag(mediapipe::CalculatorContext *cc) { return false; }
-
-    using Point = RenderAnnotation::Point;
-
   } // namespace
 
   class DrawLipstickCalculator : public CalculatorBase
@@ -91,10 +81,6 @@ namespace mediapipe
     // Indicates if image frame is available as input.
     bool image_frame_available_ = false;
     std::unordered_map<std::string, cv::Mat> all_masks;
-    int width_ = 0;
-    int height_ = 0;
-    int width_canvas_ = 0; // Size of overlay drawing texture canvas.
-    int height_canvas_ = 0;
   };
   REGISTER_CALCULATOR(DrawLipstickCalculator);
 
@@ -140,9 +126,6 @@ namespace mediapipe
     if (cc->Inputs().HasTag(kImageFrameTag) || HasImageTag(cc))
     {
       image_frame_available_ = true;
-    }
-    else
-    {
     }
 
     // Set the output header based on the input header (if present).
@@ -204,7 +187,6 @@ namespace mediapipe
       CalculatorContext *cc, const ImageFormat::Format &target_format,
       uchar *data_image, std::unique_ptr<cv::Mat> &image_mat)
   {
-
     cv::Mat mat_image_ = *image_mat.get();
 
     auto output_frame = absl::make_unique<ImageFrame>(

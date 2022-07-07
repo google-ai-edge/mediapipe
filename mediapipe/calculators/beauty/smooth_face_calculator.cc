@@ -17,7 +17,6 @@
 #include <algorithm>
 #include <cmath>
 #include <iostream>
-//#include <android/log.h>
 
 #include <memory>
 
@@ -32,11 +31,8 @@
 #include "mediapipe/framework/port/opencv_core_inc.h"
 #include "mediapipe/framework/port/opencv_imgproc_inc.h"
 #include "mediapipe/framework/port/status.h"
-#include "mediapipe/util/annotation_renderer.h"
-#include "mediapipe/util/render_data.pb.h"
 #include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/vector.h"
-#include "mediapipe/util/color.pb.h"
 
 namespace mediapipe
 {
@@ -54,12 +50,7 @@ namespace mediapipe
       NUM_ATTRIBUTES
     };
 
-    // Round up n to next multiple of m.
-    size_t RoundUp(size_t n, size_t m) { return ((n + m - 1) / m) * m; } // NOLINT
     inline bool HasImageTag(mediapipe::CalculatorContext *cc) { return false; }
-
-    using Point = RenderAnnotation::Point;
-
   } // namespace
 
   class SmoothFaceCalculator : public CalculatorBase
@@ -82,23 +73,22 @@ namespace mediapipe
 
     absl::Status RenderToCpu(
         CalculatorContext *cc, const ImageFormat::Format &target_format,
-        uchar *data_image, std::unique_ptr<cv::Mat> &image_mat);
+        uchar *data_image);
 
-    absl::Status SmoothFace(CalculatorContext *cc, std::unique_ptr<cv::Mat> &image_mat,
+    absl::Status SmoothFace(CalculatorContext *cc,
                             ImageFormat::Format *target_format,
                             const std::unordered_map<std::string, cv::Mat> &mask_vec,
                             const std::tuple<double, double, double, double> &face_box);
 
-    cv::Mat predict_forehead_mask(std::unique_ptr<cv::Mat> &image_mat,
-                                  const std::unordered_map<std::string, cv::Mat> &mask_vec, double face_box_min_y);
+    cv::Mat predict_forehead_mask(const std::unordered_map<std::string, cv::Mat> &mask_vec, double face_box_min_y);
 
     // Indicates if image frame is available as input.
     bool image_frame_available_ = false;
-    std::unordered_map<std::string, cv::Mat> all_masks;
-    int width_ = 0;
-    int height_ = 0;
-    int width_canvas_ = 0; // Size of overlay drawing texture canvas.
-    int height_canvas_ = 0;
+
+    int image_width_;
+    int image_height_;
+    cv::Mat mat_image_;
+    std::unique_ptr<cv::Mat> image_mat;
   };
   REGISTER_CALCULATOR(SmoothFaceCalculator);
 
@@ -186,13 +176,16 @@ namespace mediapipe
     }
 
     // Initialize render target, drawn with OpenCV.
-    std::unique_ptr<cv::Mat> image_mat;
     ImageFormat::Format target_format;
 
     if (cc->Outputs().HasTag(kImageFrameTag))
     {
       MP_RETURN_IF_ERROR(CreateRenderTargetCpu(cc, image_mat, &target_format));
     }
+
+    mat_image_ = *image_mat.get();
+    image_width_ = image_mat->cols;
+    image_height_ = image_mat->rows;
 
     const std::vector<std::unordered_map<std::string, cv::Mat>> &mask_vec =
         cc->Inputs().Tag(kMaskTag).Get<std::vector<std::unordered_map<std::string, cv::Mat>>>();
@@ -203,12 +196,12 @@ namespace mediapipe
     if (mask_vec.size() > 0 && face_box.size() > 0)
     {
       for (int i = 0; i < mask_vec.size(); i++)
-        MP_RETURN_IF_ERROR(SmoothFace(cc, image_mat, &target_format, mask_vec[i], face_box[i]));
+        MP_RETURN_IF_ERROR(SmoothFace(cc, &target_format, mask_vec[i], face_box[i]));
     }
 
     // Copy the rendered image to output.
     uchar *image_mat_ptr = image_mat->data;
-    MP_RETURN_IF_ERROR(RenderToCpu(cc, target_format, image_mat_ptr, image_mat));
+    MP_RETURN_IF_ERROR(RenderToCpu(cc, target_format, image_mat_ptr));
 
     return absl::OkStatus();
   }
@@ -220,15 +213,12 @@ namespace mediapipe
 
   absl::Status SmoothFaceCalculator::RenderToCpu(
       CalculatorContext *cc, const ImageFormat::Format &target_format,
-      uchar *data_image, std::unique_ptr<cv::Mat> &image_mat)
+      uchar *data_image)
   {
-
-    cv::Mat mat_image__ = *image_mat.get();
-
     auto output_frame = absl::make_unique<ImageFrame>(
-        target_format, mat_image__.cols, mat_image__.rows);
+        target_format, image_width_, image_height_);
 
-    output_frame->CopyPixelData(target_format, mat_image__.cols, mat_image__.rows, data_image,
+    output_frame->CopyPixelData(target_format, image_width_, image_height_, data_image,
                                 ImageFrame::kDefaultAlignmentBoundary);
 
     if (cc->Outputs().HasTag(kImageFrameTag))
@@ -290,21 +280,15 @@ namespace mediapipe
     {
       image_mat = absl::make_unique<cv::Mat>(
           150, 150, CV_8UC4,
-          cv::Scalar(255, 255,
-                     255));
+          cv::Scalar::all(255));
       *target_format = ImageFormat::SRGBA;
     }
 
     return absl::OkStatus();
   }
 
-  cv::Mat SmoothFaceCalculator::predict_forehead_mask(std::unique_ptr<cv::Mat> &image_mat,
-                                                      const std::unordered_map<std::string, cv::Mat> &mask_vec, double face_box_min_y)
+  cv::Mat SmoothFaceCalculator::predict_forehead_mask(const std::unordered_map<std::string, cv::Mat> &mask_vec, double face_box_min_y)
   {
-
-    cv::Mat mat_image__ = *image_mat.get();
-    int image_width_ = image_mat->cols;
-    int image_height_ = image_mat->rows;
 
     cv::Mat part_forehead_mask = mask_vec.find("PART_FOREHEAD_B")->second.clone();
     part_forehead_mask.convertTo(part_forehead_mask, CV_32F, 1.0 / 255);
@@ -312,7 +296,7 @@ namespace mediapipe
 
     cv::Mat image_sm, image_sm_hsv, skinMask;
 
-    cv::resize(mat_image__, image_sm, cv::Size(mat_image__.size().width, mat_image__.size().height));
+    cv::resize(mat_image_, image_sm, cv::Size(image_width_, image_height_));
     cv::cvtColor(image_sm, image_sm_hsv, cv::COLOR_BGR2HSV);
 
     std::vector<int> x, y;
@@ -375,20 +359,14 @@ namespace mediapipe
   }
 
   absl::Status SmoothFaceCalculator::SmoothFace(CalculatorContext *cc,
-                                                std::unique_ptr<cv::Mat> &image_mat,
                                                 ImageFormat::Format *target_format,
                                                 const std::unordered_map<std::string, cv::Mat> &mask_vec,
                                                 const std::tuple<double, double, double, double> &face_box)
   {
-
-    cv::Mat mat_image__ = *image_mat.get();
-
     cv::Mat mouth_mask, mouth;
-    int image_width_ = image_mat->cols;
-    int image_height_ = image_mat->rows;
 
     cv::Mat not_full_face = mask_vec.find("FACE_OVAL")->second.clone() +
-                            predict_forehead_mask(image_mat, mask_vec, std::get<1>(face_box)) -
+                            predict_forehead_mask(mask_vec, std::get<1>(face_box)) -
                             mask_vec.find("LEFT_EYE")->second.clone() -
                             mask_vec.find("RIGHT_EYE")->second.clone() -
                             mask_vec.find("LEFT_BROW")->second.clone() -
@@ -397,7 +375,7 @@ namespace mediapipe
 
     cv::resize(not_full_face,
                not_full_face,
-               mat_image__.size(), 0, 0,
+               mat_image_.size(), 0, 0,
                cv::INTER_LINEAR);
 
     std::vector<int> x, y;
@@ -416,7 +394,7 @@ namespace mediapipe
     cv::minMaxLoc(x, &min_x, &max_x);
     cv::minMaxLoc(y, &min_y, &max_y);
 
-    cv::Mat patch_face = mat_image__(cv::Range(min_y, max_y), cv::Range(min_x, max_x));
+    cv::Mat patch_face = mat_image_(cv::Range(min_y, max_y), cv::Range(min_x, max_x));
     cv::Mat patch_nff = not_full_face(cv::Range(min_y, max_y), cv::Range(min_x, max_x));
     cv::Mat patch_new, patch_wow;
     cv::cvtColor(patch_face, patch_wow, cv::COLOR_RGBA2RGB);

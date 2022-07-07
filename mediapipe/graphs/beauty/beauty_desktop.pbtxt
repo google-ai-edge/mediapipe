@@ -1,0 +1,50 @@
+# MediaPipe graph that performs face mesh with TensorFlow Lite on CPU.
+
+# Input image. (ImageFrame)
+input_stream: "input_video"
+
+# Output image with rendered results. (ImageFrame)
+output_stream: "output_video"
+# Collection of detected/processed faces, each represented as a list of
+# landmarks. (std::vector<NormalizedLandmarkList>)
+output_stream: "multi_face_landmarks"
+
+node {
+  calculator: "FlowLimiterCalculator"
+  input_stream: "input_video"
+  input_stream: "FINISHED:output_video"
+  input_stream_info: {
+    tag_index: "FINISHED"
+    back_edge: true
+  }
+  output_stream: "throttled_input_video"
+}
+
+node {
+  calculator: "ConstantSidePacketCalculator"
+  output_side_packet: "PACKET:0:num_faces"
+  output_side_packet: "PACKET:1:with_attention"
+  node_options: {
+    [type.googleapis.com/mediapipe.ConstantSidePacketCalculatorOptions]: {
+      packet { int_value: 1 }
+      packet { bool_value: true }
+    }
+  }
+}
+
+# Subgraph that detects faces and corresponding landmarks.
+node {
+  calculator: "FaceLandmarkFrontCpu"
+  input_stream: "IMAGE:throttled_input_video"
+  input_side_packet: "NUM_FACES:num_faces"
+  input_side_packet: "WITH_ATTENTION:with_attention"
+  output_stream: "LANDMARKS:multi_face_landmarks"
+}
+
+# Subgraph that renders onto the input image.
+node {
+  calculator: "FaceRendererCpu"
+  input_stream: "IMAGE:throttled_input_video"
+  input_stream: "LANDMARKS:multi_face_landmarks"
+  output_stream: "IMAGE:output_video"
+}
