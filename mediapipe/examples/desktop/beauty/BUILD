@@ -17,14 +17,6 @@ licenses(["notice"])
 package(default_visibility = ["//mediapipe/examples:__subpackages__"])
 
 cc_binary(
-    name = "face_mesh_tflite",
-    deps = [
-        "//mediapipe/examples/desktop:simple_run_graph_main",
-        "//mediapipe/graphs/beauty:desktop_calculators",
-    ],
-)
-
-cc_binary(
     name = "face_mesh_cpu",
     deps = [
         "//mediapipe/examples/desktop:demo_run_graph_main",

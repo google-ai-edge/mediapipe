@@ -68,7 +68,8 @@ cc_library(
     	"//mediapipe/gpu:gpu_buffer_to_image_frame_calculator",
     	"//mediapipe/gpu:image_frame_to_gpu_buffer_calculator",
         "//mediapipe/calculators/core:flow_limiter_calculator",
-        "//mediapipe/graphs/beauty/subgraphs:face_renderer_cpu",
+        #"//mediapipe/graphs/beauty/subgraphs:face_renderer_cpu",
+        "//mediapipe/graphs/face_mesh/subgraphs:face_renderer_cpu",
         "//mediapipe/modules/face_landmark:face_landmark_front_gpu",
     ],
 )
@@ -87,7 +88,7 @@ cc_library(
 
 mediapipe_binary_graph(
     name = "beauty_mobile_gpu_binary_graph",
-    graph = "beauty_mobile.pbtxt",
+    graph = "beauty_mobile_gpu.pbtxt",
     output_name = "beauty_mobile_gpu.binarypb",
     deps = [":mobile_calculators"],
 )
