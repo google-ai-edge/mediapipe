@@ -4,6 +4,9 @@
 
 # Images on GPU coming into and out of the graph.
 input_stream: "input_video"
+input_stream: "red"
+input_stream: "green"
+input_stream: "blue"
 output_stream: "output_video"
 
 # Throttles the images flowing downstream for flow control. It passes through
@@ -111,7 +114,7 @@ node {
   input_side_packet: "CUSTOM_OP_RESOLVER:op_resolver"
   node_options: {
     [type.googleapis.com/mediapipe.TfLiteInferenceCalculatorOptions] {
-      model_path: "mediapipe/models/hair_segmentation.tflite"
+      model_path: "hair_segmentation.tflite"
       use_gpu: true
     }
   }
@@ -136,12 +139,21 @@ node {
     }
   }
 }
+# Feature : Color slider for sliding any color values(R:, G:, B:)  
+node{
+  calculator: "ColorSliderCalculator"
+  input_stream: "red"
+  input_stream: "green"
+  input_stream: "blue"
+  output_stream: "RGB_OUT:rgb_array"
+}
 
 # Colors the hair segmentation with the color specified in the option.
 node {
   calculator: "RecolorCalculator"
   input_stream: "IMAGE_GPU:throttled_input_video"
   input_stream: "MASK_GPU:hair_mask"
+  input_stream: "RGB_OUT:rgb_array"
   output_stream: "IMAGE_GPU:output_video"
   node_options: {
     [type.googleapis.com/mediapipe.RecolorCalculatorOptions] {
