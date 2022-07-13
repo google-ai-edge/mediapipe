@@ -9,6 +9,7 @@ output_stream: "output_video"
 # landmarks. (std::vector<NormalizedLandmarkList>)
 output_stream: "multi_face_landmarks"
 
+
 node {
   calculator: "FlowLimiterCalculator"
   input_stream: "input_video"
@@ -20,6 +21,7 @@ node {
   output_stream: "throttled_input_video"
 }
 
+# Defines side packets for further use in the graph.
 node {
   calculator: "ConstantSidePacketCalculator"
   output_side_packet: "PACKET:0:num_faces"
@@ -41,9 +43,9 @@ node {
   output_stream: "LANDMARKS:multi_face_landmarks"
 }
 
-# Subgraph that renders onto the input image.
+# Subgraph that renders face-landmark annotation onto the input image.
 node {
-  calculator: "FaceRendererCpu"
+  calculator: "FaceRendererCpuSingle"
   input_stream: "IMAGE:throttled_input_video"
   input_stream: "LANDMARKS:multi_face_landmarks"
   output_stream: "IMAGE:output_video"

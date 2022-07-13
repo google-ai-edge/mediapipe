@@ -22,17 +22,6 @@ licenses(["notice"])
 package(default_visibility = ["//visibility:public"])
 
 cc_library(
-    name = "desktop_calculators",
-    deps = [
-        "//mediapipe/calculators/core:constant_side_packet_calculator",
-        "//mediapipe/calculators/video:opencv_video_decoder_calculator",
-        "//mediapipe/calculators/video:opencv_video_encoder_calculator",
-        "//mediapipe/graphs/beauty/subgraphs:face_renderer_cpu",
-        "//mediapipe/modules/face_landmark:face_landmark_front_cpu",
-    ],
-)
-
-cc_library(
     name = "desktop_live_calculators",
     deps = [
         "//mediapipe/calculators/core:constant_side_packet_calculator",
@@ -43,12 +32,12 @@ cc_library(
 )
 
 cc_library(
-    name = "desktop_live_over_calculators",
+    name = "desktop_live_single_calculators",
     deps = [
         "//mediapipe/calculators/core:constant_side_packet_calculator",
         "//mediapipe/calculators/core:flow_limiter_calculator",
-        "//mediapipe/graphs/beauty/subgraphs:face_renderer_cpu_over",
-        "//mediapipe/modules/face_landmark:face_landmark_front_gpu",
+        "//mediapipe/graphs/beauty/subgraphs:face_renderer_cpu_single",
+        "//mediapipe/modules/face_landmark:face_landmark_front_cpu",
     ],
 )
 
@@ -68,19 +57,18 @@ cc_library(
     	"//mediapipe/gpu:gpu_buffer_to_image_frame_calculator",
     	"//mediapipe/gpu:image_frame_to_gpu_buffer_calculator",
         "//mediapipe/calculators/core:flow_limiter_calculator",
-        #"//mediapipe/graphs/beauty/subgraphs:face_renderer_cpu",
-        "//mediapipe/graphs/face_mesh/subgraphs:face_renderer_cpu",
+        "//mediapipe/graphs/beauty/subgraphs:face_renderer_cpu",
         "//mediapipe/modules/face_landmark:face_landmark_front_gpu",
     ],
 )
 
 cc_library(
-    name = "mobile_calculators_over",
+    name = "mobile_calculators_single",
     deps = [
     	"//mediapipe/gpu:gpu_buffer_to_image_frame_calculator",
     	"//mediapipe/gpu:image_frame_to_gpu_buffer_calculator",
         "//mediapipe/calculators/core:flow_limiter_calculator",
-        "//mediapipe/graphs/beauty/subgraphs:face_renderer_gpu_over",
+        "//mediapipe/graphs/beauty/subgraphs:face_renderer_cpu_single",
         "//mediapipe/modules/face_landmark:face_landmark_front_gpu",
     ],
 )
@@ -94,9 +82,9 @@ mediapipe_binary_graph(
 )
 
 mediapipe_binary_graph(
-    name = "beauty_mobile_over_binary_graph",
-    graph = "beauty_over.pbtxt",
-    output_name = "beauty_mobile_over.binarypb",
-    deps = [":mobile_calculators_over"],
+    name = "beauty_mobile_single_binary_graph",
+    graph = "beauty_mobile_single.pbtxt",
+    output_name = "beauty_mobile_single.binarypb",
+    deps = [":mobile_calculators_single"],
 )
 
