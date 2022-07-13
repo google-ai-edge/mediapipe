@@ -7,336 +7,391 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		77C791EB09E0EF9900000000 /* vec4.cpp in math */ = {isa = PBXBuildFile; fileRef = BE83F26009E0EF9900000000 /* vec4.cpp */; };
-		77C791EB09E0EF9900000001 /* vec4.cpp in math */ = {isa = PBXBuildFile; fileRef = BE83F26009E0EF9900000000 /* vec4.cpp */; };
-		77C791EB0EBACD2000000000 /* Filter.cpp in core */ = {isa = PBXBuildFile; fileRef = BE83F2600EBACD2000000000 /* Filter.cpp */; };
-		77C791EB0EBACD2000000001 /* Filter.cpp in core */ = {isa = PBXBuildFile; fileRef = BE83F2600EBACD2000000000 /* Filter.cpp */; };
-		77C791EB22880F3900000000 /* Target.cpp in core */ = {isa = PBXBuildFile; fileRef = BE83F26022880F3900000000 /* Target.cpp */; };
-		77C791EB22880F3900000001 /* Target.cpp in core */ = {isa = PBXBuildFile; fileRef = BE83F26022880F3900000000 /* Target.cpp */; };
-		77C791EB2414E52E00000000 /* mat4.cpp in math */ = {isa = PBXBuildFile; fileRef = BE83F2602414E52E00000000 /* mat4.cpp */; };
-		77C791EB2414E52E00000001 /* mat4.cpp in math */ = {isa = PBXBuildFile; fileRef = BE83F2602414E52E00000000 /* mat4.cpp */; };
-		77C791EB4625777700000000 /* Ref.cpp in core */ = {isa = PBXBuildFile; fileRef = BE83F2604625777700000000 /* Ref.cpp */; };
-		77C791EB4625777700000001 /* Ref.cpp in core */ = {isa = PBXBuildFile; fileRef = BE83F2604625777700000000 /* Ref.cpp */; };
-		77C791EB46414E3200000000 /* FilterGroup.cpp in core */ = {isa = PBXBuildFile; fileRef = BE83F26046414E3200000000 /* FilterGroup.cpp */; };
-		77C791EB46414E3200000001 /* FilterGroup.cpp in core */ = {isa = PBXBuildFile; fileRef = BE83F26046414E3200000000 /* FilterGroup.cpp */; };
-		77C791EB565883CD00000000 /* SourceCamera.cpp in core */ = {isa = PBXBuildFile; fileRef = BE83F260565883CD00000000 /* SourceCamera.cpp */; };
-		77C791EB565883CD00000001 /* SourceCamera.cpp in core */ = {isa = PBXBuildFile; fileRef = BE83F260565883CD00000000 /* SourceCamera.cpp */; };
-		77C791EB5B873D5000000000 /* math.cpp in core */ = {isa = PBXBuildFile; fileRef = BE83F2605B873D5000000000 /* math.cpp */; };
-		77C791EB5B873D5000000001 /* math.cpp in core */ = {isa = PBXBuildFile; fileRef = BE83F2605B873D5000000000 /* math.cpp */; };
-		77C791EB61D3917E00000000 /* FramebufferCache.cpp in core */ = {isa = PBXBuildFile; fileRef = BE83F26061D3917E00000000 /* FramebufferCache.cpp */; };
-		77C791EB61D3917E00000001 /* FramebufferCache.cpp in core */ = {isa = PBXBuildFile; fileRef = BE83F26061D3917E00000000 /* FramebufferCache.cpp */; };
-		77C791EB75F4B57700000000 /* SourceImage.cpp in core */ = {isa = PBXBuildFile; fileRef = BE83F26075F4B57700000000 /* SourceImage.cpp */; };
-		77C791EB75F4B57700000001 /* SourceImage.cpp in core */ = {isa = PBXBuildFile; fileRef = BE83F26075F4B57700000000 /* SourceImage.cpp */; };
-		77C791EB78D3B78100000000 /* GPUImageUtil.cpp in core */ = {isa = PBXBuildFile; fileRef = BE83F26078D3B78100000000 /* GPUImageUtil.cpp */; };
-		77C791EB78D3B78100000001 /* GPUImageUtil.cpp in core */ = {isa = PBXBuildFile; fileRef = BE83F26078D3B78100000000 /* GPUImageUtil.cpp */; };
-		77C791EB7F32F9BA00000000 /* math_utils.cpp in math */ = {isa = PBXBuildFile; fileRef = BE83F2607F32F9BA00000000 /* math_utils.cpp */; };
-		77C791EB7F32F9BA00000001 /* math_utils.cpp in math */ = {isa = PBXBuildFile; fileRef = BE83F2607F32F9BA00000000 /* math_utils.cpp */; };
-		77C791EBA47EBDE800000000 /* Framebuffer.cpp in core */ = {isa = PBXBuildFile; fileRef = BE83F260A47EBDE800000000 /* Framebuffer.cpp */; };
-		77C791EBA47EBDE800000001 /* Framebuffer.cpp in core */ = {isa = PBXBuildFile; fileRef = BE83F260A47EBDE800000000 /* Framebuffer.cpp */; };
-		77C791EBA565F13900000000 /* IOSTarget.cpp in core */ = {isa = PBXBuildFile; fileRef = BE83F260A565F13900000000 /* IOSTarget.cpp */; };
-		77C791EBA565F13900000001 /* IOSTarget.cpp in core */ = {isa = PBXBuildFile; fileRef = BE83F260A565F13900000000 /* IOSTarget.cpp */; };
-		77C791EBA7FA713900000000 /* vec2.cpp in math */ = {isa = PBXBuildFile; fileRef = BE83F260A7FA713900000000 /* vec2.cpp */; };
-		77C791EBA7FA713900000001 /* vec2.cpp in math */ = {isa = PBXBuildFile; fileRef = BE83F260A7FA713900000000 /* vec2.cpp */; };
-		77C791EBA89FC39300000000 /* GLProgram.cpp in core */ = {isa = PBXBuildFile; fileRef = BE83F260A89FC39300000000 /* GLProgram.cpp */; };
-		77C791EBA89FC39300000001 /* GLProgram.cpp in core */ = {isa = PBXBuildFile; fileRef = BE83F260A89FC39300000000 /* GLProgram.cpp */; };
-		77C791EBD09E347800000000 /* TargetView.cpp in core */ = {isa = PBXBuildFile; fileRef = BE83F260D09E347800000000 /* TargetView.cpp */; };
-		77C791EBD09E347800000001 /* TargetView.cpp in core */ = {isa = PBXBuildFile; fileRef = BE83F260D09E347800000000 /* TargetView.cpp */; };
-		77C791EBD0BDD41A00000000 /* Source.cpp in core */ = {isa = PBXBuildFile; fileRef = BE83F260D0BDD41A00000000 /* Source.cpp */; };
-		77C791EBD0BDD41A00000001 /* Source.cpp in core */ = {isa = PBXBuildFile; fileRef = BE83F260D0BDD41A00000000 /* Source.cpp */; };
-		77C791EBEBB084D800000000 /* Context.cpp in core */ = {isa = PBXBuildFile; fileRef = BE83F260EBB084D800000000 /* Context.cpp */; };
-		77C791EBEBB084D800000001 /* Context.cpp in core */ = {isa = PBXBuildFile; fileRef = BE83F260EBB084D800000000 /* Context.cpp */; };
-		77C791EBFF778F3400000000 /* vec3.cpp in math */ = {isa = PBXBuildFile; fileRef = BE83F260FF778F3400000000 /* vec3.cpp */; };
-		77C791EBFF778F3400000001 /* vec3.cpp in math */ = {isa = PBXBuildFile; fileRef = BE83F260FF778F3400000000 /* vec3.cpp */; };
+		A4C4B9A014E2297900000000 /* FilterGroup.cpp in core */ = {isa = PBXBuildFile; fileRef = 8411739114E2297900000000 /* FilterGroup.cpp */; };
+		A4C4B9A014E2297900000001 /* FilterGroup.cpp in core */ = {isa = PBXBuildFile; fileRef = 8411739114E2297900000000 /* FilterGroup.cpp */; };
+		A4C4B9A014E2297900000002 /* FilterGroup.cpp in core */ = {isa = PBXBuildFile; fileRef = 8411739114E2297900000000 /* FilterGroup.cpp */; };
+		A4C4B9A014E2297900000003 /* FilterGroup.cpp in core */ = {isa = PBXBuildFile; fileRef = 8411739114E2297900000000 /* FilterGroup.cpp */; };
+		A4C4B9A02B327FEC00000000 /* Context.cpp in core */ = {isa = PBXBuildFile; fileRef = 841173912B327FEC00000000 /* Context.cpp */; };
+		A4C4B9A02B327FEC00000001 /* Context.cpp in core */ = {isa = PBXBuildFile; fileRef = 841173912B327FEC00000000 /* Context.cpp */; };
+		A4C4B9A02B327FEC00000002 /* Context.cpp in core */ = {isa = PBXBuildFile; fileRef = 841173912B327FEC00000000 /* Context.cpp */; };
+		A4C4B9A02B327FEC00000003 /* Context.cpp in core */ = {isa = PBXBuildFile; fileRef = 841173912B327FEC00000000 /* Context.cpp */; };
+		A4C4B9A02D93015300000000 /* OlaRenderPlayground.mm in ios */ = {isa = PBXBuildFile; fileRef = 841173912D93015300000000 /* OlaRenderPlayground.mm */; };
+		A4C4B9A0358F769C00000000 /* GLProgram.cpp in core */ = {isa = PBXBuildFile; fileRef = 84117391358F769C00000000 /* GLProgram.cpp */; };
+		A4C4B9A0358F769C00000001 /* GLProgram.cpp in core */ = {isa = PBXBuildFile; fileRef = 84117391358F769C00000000 /* GLProgram.cpp */; };
+		A4C4B9A0358F769C00000002 /* GLProgram.cpp in core */ = {isa = PBXBuildFile; fileRef = 84117391358F769C00000000 /* GLProgram.cpp */; };
+		A4C4B9A0358F769C00000003 /* GLProgram.cpp in core */ = {isa = PBXBuildFile; fileRef = 84117391358F769C00000000 /* GLProgram.cpp */; };
+		A4C4B9A03E11734F00000000 /* IOSTarget.cpp in core */ = {isa = PBXBuildFile; fileRef = 841173913E11734F00000000 /* IOSTarget.cpp */; };
+		A4C4B9A03E11734F00000001 /* IOSTarget.cpp in core */ = {isa = PBXBuildFile; fileRef = 841173913E11734F00000000 /* IOSTarget.cpp */; };
+		A4C4B9A03E11734F00000002 /* IOSTarget.cpp in core */ = {isa = PBXBuildFile; fileRef = 841173913E11734F00000000 /* IOSTarget.cpp */; };
+		A4C4B9A03E11734F00000003 /* IOSTarget.cpp in core */ = {isa = PBXBuildFile; fileRef = 841173913E11734F00000000 /* IOSTarget.cpp */; };
+		A4C4B9A0448E4EFA00000000 /* Ref.cpp in core */ = {isa = PBXBuildFile; fileRef = 84117391448E4EFA00000000 /* Ref.cpp */; };
+		A4C4B9A0448E4EFA00000001 /* Ref.cpp in core */ = {isa = PBXBuildFile; fileRef = 84117391448E4EFA00000000 /* Ref.cpp */; };
+		A4C4B9A05549DC6700000000 /* TargetView.cpp in core */ = {isa = PBXBuildFile; fileRef = 841173915549DC6700000000 /* TargetView.cpp */; };
+		A4C4B9A05549DC6700000001 /* TargetView.cpp in core */ = {isa = PBXBuildFile; fileRef = 841173915549DC6700000000 /* TargetView.cpp */; };
+		A4C4B9A05549DC6700000002 /* TargetView.cpp in core */ = {isa = PBXBuildFile; fileRef = 841173915549DC6700000000 /* TargetView.cpp */; };
+		A4C4B9A05549DC6700000003 /* TargetView.cpp in core */ = {isa = PBXBuildFile; fileRef = 841173915549DC6700000000 /* TargetView.cpp */; };
+		A4C4B9A0558EE76A00000000 /* vec4.cpp in math */ = {isa = PBXBuildFile; fileRef = 84117391558EE76A00000000 /* vec4.cpp */; };
+		A4C4B9A0558EE76A00000001 /* vec4.cpp in math */ = {isa = PBXBuildFile; fileRef = 84117391558EE76A00000000 /* vec4.cpp */; };
+		A4C4B9A0583E698800000000 /* Source.cpp in core */ = {isa = PBXBuildFile; fileRef = 84117391583E698800000000 /* Source.cpp */; };
+		A4C4B9A0583E698800000001 /* Source.cpp in core */ = {isa = PBXBuildFile; fileRef = 84117391583E698800000000 /* Source.cpp */; };
+		A4C4B9A0583E698800000002 /* Source.cpp in core */ = {isa = PBXBuildFile; fileRef = 84117391583E698800000000 /* Source.cpp */; };
+		A4C4B9A0583E698800000003 /* Source.cpp in core */ = {isa = PBXBuildFile; fileRef = 84117391583E698800000000 /* Source.cpp */; };
+		A4C4B9A0844681E700000000 /* math.cpp in core */ = {isa = PBXBuildFile; fileRef = 84117391844681E700000000 /* math.cpp */; };
+		A4C4B9A0844681E700000001 /* math.cpp in core */ = {isa = PBXBuildFile; fileRef = 84117391844681E700000000 /* math.cpp */; };
+		A4C4B9A0940C901E00000000 /* Target.cpp in core */ = {isa = PBXBuildFile; fileRef = 84117391940C901E00000000 /* Target.cpp */; };
+		A4C4B9A0940C901E00000001 /* Target.cpp in core */ = {isa = PBXBuildFile; fileRef = 84117391940C901E00000000 /* Target.cpp */; };
+		A4C4B9A0940C901E00000002 /* Target.cpp in core */ = {isa = PBXBuildFile; fileRef = 84117391940C901E00000000 /* Target.cpp */; };
+		A4C4B9A0940C901E00000003 /* Target.cpp in core */ = {isa = PBXBuildFile; fileRef = 84117391940C901E00000000 /* Target.cpp */; };
+		A4C4B9A0943E14F100000000 /* GPUImageUtil.cpp in core */ = {isa = PBXBuildFile; fileRef = 84117391943E14F100000000 /* GPUImageUtil.cpp */; };
+		A4C4B9A0943E14F100000001 /* GPUImageUtil.cpp in core */ = {isa = PBXBuildFile; fileRef = 84117391943E14F100000000 /* GPUImageUtil.cpp */; };
+		A4C4B9A09DD0700600000000 /* SourceCamera.cpp in core */ = {isa = PBXBuildFile; fileRef = 841173919DD0700600000000 /* SourceCamera.cpp */; };
+		A4C4B9A09DD0700600000001 /* SourceCamera.cpp in core */ = {isa = PBXBuildFile; fileRef = 841173919DD0700600000000 /* SourceCamera.cpp */; };
+		A4C4B9A09DD0700600000002 /* SourceCamera.cpp in core */ = {isa = PBXBuildFile; fileRef = 841173919DD0700600000000 /* SourceCamera.cpp */; };
+		A4C4B9A09DD0700600000003 /* SourceCamera.cpp in core */ = {isa = PBXBuildFile; fileRef = 841173919DD0700600000000 /* SourceCamera.cpp */; };
+		A4C4B9A0A5059F2F00000000 /* vec2.cpp in math */ = {isa = PBXBuildFile; fileRef = 84117391A5059F2F00000000 /* vec2.cpp */; };
+		A4C4B9A0A5059F2F00000001 /* vec2.cpp in math */ = {isa = PBXBuildFile; fileRef = 84117391A5059F2F00000000 /* vec2.cpp */; };
+		A4C4B9A0BFC9FC5900000000 /* math_utils.cpp in math */ = {isa = PBXBuildFile; fileRef = 84117391BFC9FC5900000000 /* math_utils.cpp */; };
+		A4C4B9A0BFC9FC5900000001 /* math_utils.cpp in math */ = {isa = PBXBuildFile; fileRef = 84117391BFC9FC5900000000 /* math_utils.cpp */; };
+		A4C4B9A0C4AFB30800000000 /* vec3.cpp in math */ = {isa = PBXBuildFile; fileRef = 84117391C4AFB30800000000 /* vec3.cpp */; };
+		A4C4B9A0C4AFB30800000001 /* vec3.cpp in math */ = {isa = PBXBuildFile; fileRef = 84117391C4AFB30800000000 /* vec3.cpp */; };
+		A4C4B9A0D5BB249300000000 /* Filter.cpp in core */ = {isa = PBXBuildFile; fileRef = 84117391D5BB249300000000 /* Filter.cpp */; };
+		A4C4B9A0D5BB249300000001 /* Filter.cpp in core */ = {isa = PBXBuildFile; fileRef = 84117391D5BB249300000000 /* Filter.cpp */; };
+		A4C4B9A0D5BB249300000002 /* Filter.cpp in core */ = {isa = PBXBuildFile; fileRef = 84117391D5BB249300000000 /* Filter.cpp */; };
+		A4C4B9A0D5BB249300000003 /* Filter.cpp in core */ = {isa = PBXBuildFile; fileRef = 84117391D5BB249300000000 /* Filter.cpp */; };
+		A4C4B9A0E000B5E300000000 /* FramebufferCache.cpp in core */ = {isa = PBXBuildFile; fileRef = 84117391E000B5E300000000 /* FramebufferCache.cpp */; };
+		A4C4B9A0E000B5E300000001 /* FramebufferCache.cpp in core */ = {isa = PBXBuildFile; fileRef = 84117391E000B5E300000000 /* FramebufferCache.cpp */; };
+		A4C4B9A0E000B5E300000002 /* FramebufferCache.cpp in core */ = {isa = PBXBuildFile; fileRef = 84117391E000B5E300000000 /* FramebufferCache.cpp */; };
+		A4C4B9A0E000B5E300000003 /* FramebufferCache.cpp in core */ = {isa = PBXBuildFile; fileRef = 84117391E000B5E300000000 /* FramebufferCache.cpp */; };
+		A4C4B9A0EB5C647F00000000 /* mat4.cpp in math */ = {isa = PBXBuildFile; fileRef = 84117391EB5C647F00000000 /* mat4.cpp */; };
+		A4C4B9A0EB5C647F00000001 /* mat4.cpp in math */ = {isa = PBXBuildFile; fileRef = 84117391EB5C647F00000000 /* mat4.cpp */; };
+		A4C4B9A0F654002F00000000 /* SourceImage.cpp in core */ = {isa = PBXBuildFile; fileRef = 84117391F654002F00000000 /* SourceImage.cpp */; };
+		A4C4B9A0F654002F00000001 /* SourceImage.cpp in core */ = {isa = PBXBuildFile; fileRef = 84117391F654002F00000000 /* SourceImage.cpp */; };
+		A4C4B9A0F654002F00000002 /* SourceImage.cpp in core */ = {isa = PBXBuildFile; fileRef = 84117391F654002F00000000 /* SourceImage.cpp */; };
+		A4C4B9A0F654002F00000003 /* SourceImage.cpp in core */ = {isa = PBXBuildFile; fileRef = 84117391F654002F00000000 /* SourceImage.cpp */; };
+		A4C4B9A0FDA2AAB000000000 /* Framebuffer.cpp in core */ = {isa = PBXBuildFile; fileRef = 84117391FDA2AAB000000000 /* Framebuffer.cpp */; };
+		A4C4B9A0FDA2AAB000000001 /* Framebuffer.cpp in core */ = {isa = PBXBuildFile; fileRef = 84117391FDA2AAB000000000 /* Framebuffer.cpp */; };
+		A4C4B9A0FDA2AAB000000002 /* Framebuffer.cpp in core */ = {isa = PBXBuildFile; fileRef = 84117391FDA2AAB000000000 /* Framebuffer.cpp */; };
+		A4C4B9A0FDA2AAB000000003 /* Framebuffer.cpp in core */ = {isa = PBXBuildFile; fileRef = 84117391FDA2AAB000000000 /* Framebuffer.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
-		0EEB35C156E721E500000000 /* PBXContainerItemProxy */ = {
+		719AB4A400B3488B00000000 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
-			containerPortal = 82C5998AA8C9888400000000 /* Project object */;
+			containerPortal = B53CA7A33A8DB20A00000000 /* Project object */;
 			proxyType = 1;
-			remoteGlobalIDString = 6097400656E721E400000000;
+			remoteGlobalIDString = 9CE83D6E00B3488A00000000;
 		};
-		0EEB35C15CF3050B00000000 /* PBXContainerItemProxy */ = {
+		719AB4A41BF35CBD00000000 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
-			containerPortal = 82C5998AA8C9888400000000 /* Project object */;
+			containerPortal = B53CA7A33A8DB20A00000000 /* Project object */;
 			proxyType = 1;
-			remoteGlobalIDString = 609740065CF3050A00000000;
+			remoteGlobalIDString = C78506BA1BF35CBC00000000;
 		};
-		0EEB35C161E7E71B00000000 /* PBXContainerItemProxy */ = {
+		719AB4A42B4174ED00000000 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
-			containerPortal = 82C5998AA8C9888400000000 /* Project object */;
+			containerPortal = B53CA7A33A8DB20A00000000 /* Project object */;
 			proxyType = 1;
-			remoteGlobalIDString = 005FF21761E7E71A00000000;
+			remoteGlobalIDString = 9CE83D6E2B4174EC00000000;
 		};
-		0EEB35C1A1CF146B00000000 /* PBXContainerItemProxy */ = {
+		719AB4A43AA80DFB00000000 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
-			containerPortal = 82C5998AA8C9888400000000 /* Project object */;
+			containerPortal = B53CA7A33A8DB20A00000000 /* Project object */;
 			proxyType = 1;
-			remoteGlobalIDString = 60974006A1CF146A00000000;
+			remoteGlobalIDString = 9CE83D6E3AA80DFA00000000;
 		};
-		0EEB35C1EE42527100000000 /* PBXContainerItemProxy */ = {
+		719AB4A49210CC7300000000 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
-			containerPortal = 82C5998AA8C9888400000000 /* Project object */;
+			containerPortal = B53CA7A33A8DB20A00000000 /* Project object */;
 			proxyType = 1;
-			remoteGlobalIDString = 60974006EE42527000000000;
+			remoteGlobalIDString = 9CE83D6E9210CC7200000000;
+		};
+		719AB4A4E4F20AFB00000000 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = B53CA7A33A8DB20A00000000 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 9CE83D6EE4F20AFA00000000;
 		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		BE83F26009E0EF9900000000 /* vec4.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = vec4.cpp; path = mediapipe/render/core/math/vec4.cpp; sourceTree = "<group>"; };
-		BE83F2600AEFDE0400000000 /* lib_idx_math_702C098E_ios_min15.5.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; name = lib_idx_math_702C098E_ios_min15.5.a; path = lib_idx_math_702C098E_ios_min15.5.a; sourceTree = BUILT_PRODUCTS_DIR; };
-		BE83F2600EBACD2000000000 /* Filter.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = Filter.cpp; path = mediapipe/render/core/Filter.cpp; sourceTree = "<group>"; };
-		BE83F26010037B7D00000000 /* BUILD */ = {isa = PBXFileReference; lastKnownFileType = text; name = BUILD; path = mediapipe/render/core/BUILD; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.python; };
-		BE83F260129E264700000000 /* Framebuffer.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = Framebuffer.hpp; path = mediapipe/render/core/Framebuffer.hpp; sourceTree = "<group>"; };
-		BE83F26014BF740C00000000 /* lib_idx_ref_gpuimagemath_gpuimageutil_8DCE756C_ios_min11.0.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; name = lib_idx_ref_gpuimagemath_gpuimageutil_8DCE756C_ios_min11.0.a; path = lib_idx_ref_gpuimagemath_gpuimageutil_8DCE756C_ios_min11.0.a; sourceTree = BUILT_PRODUCTS_DIR; };
-		BE83F2601CC6405C00000000 /* vec2.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = vec2.hpp; path = mediapipe/render/core/math/vec2.hpp; sourceTree = "<group>"; };
-		BE83F2601F5DBCAE00000000 /* vec3.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = vec3.hpp; path = mediapipe/render/core/math/vec3.hpp; sourceTree = "<group>"; };
-		BE83F26022880F3900000000 /* Target.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = Target.cpp; path = mediapipe/render/core/Target.cpp; sourceTree = "<group>"; };
-		BE83F2602414E52E00000000 /* mat4.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = mat4.cpp; path = mediapipe/render/core/math/mat4.cpp; sourceTree = "<group>"; };
-		BE83F26025E591E800000000 /* mat4.inl */ = {isa = PBXFileReference; lastKnownFileType = "public.c-plus-plus-inline-header"; name = mat4.inl; path = mediapipe/render/core/math/mat4.inl; sourceTree = "<group>"; };
-		BE83F2602FB9B54500000000 /* TargetView.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = TargetView.hpp; path = mediapipe/render/core/TargetView.hpp; sourceTree = "<group>"; };
-		BE83F2603233472600000000 /* GPUImageTarget.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = GPUImageTarget.h; path = mediapipe/render/core/GPUImageTarget.h; sourceTree = "<group>"; };
-		BE83F260327B953400000000 /* Info.plist */ = {isa = PBXFileReference; explicitFileType = text.plist; name = Info.plist; path = "OlaVideo.xcodeproj/.tulsi/tulsi-execution-root/bazel-tulsi-includes/x/x/mediapipe/render/ios/OlaRenderDevelopFramework-intermediates/Info.plist"; sourceTree = SOURCE_ROOT; };
-		BE83F2603740DDC500000000 /* GPUImage-x.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "GPUImage-x.h"; path = "mediapipe/render/core/GPUImage-x.h"; sourceTree = "<group>"; };
-		BE83F2603D01E23E00000000 /* lib_idx_math_702C098E_ios_min11.0.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; name = lib_idx_math_702C098E_ios_min11.0.a; path = lib_idx_math_702C098E_ios_min11.0.a; sourceTree = BUILT_PRODUCTS_DIR; };
-		BE83F2604625777700000000 /* Ref.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = Ref.cpp; path = mediapipe/render/core/Ref.cpp; sourceTree = "<group>"; };
-		BE83F26046414E3200000000 /* FilterGroup.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = FilterGroup.cpp; path = mediapipe/render/core/FilterGroup.cpp; sourceTree = "<group>"; };
-		BE83F26046A498EB00000000 /* vec3.inl */ = {isa = PBXFileReference; lastKnownFileType = "public.c-plus-plus-inline-header"; name = vec3.inl; path = mediapipe/render/core/math/vec3.inl; sourceTree = "<group>"; };
-		BE83F26049A3E76000000000 /* mat4.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = mat4.hpp; path = mediapipe/render/core/math/mat4.hpp; sourceTree = "<group>"; };
-		BE83F2605074AFB000000000 /* FilterGroup.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = FilterGroup.hpp; path = mediapipe/render/core/FilterGroup.hpp; sourceTree = "<group>"; };
-		BE83F260565883CD00000000 /* SourceCamera.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = SourceCamera.cpp; path = mediapipe/render/core/SourceCamera.cpp; sourceTree = "<group>"; };
-		BE83F2605714B08E00000000 /* lib_idx_core_F3E5C6E5_ios_min15.5.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; name = lib_idx_core_F3E5C6E5_ios_min15.5.a; path = lib_idx_core_F3E5C6E5_ios_min15.5.a; sourceTree = BUILT_PRODUCTS_DIR; };
-		BE83F26057F9666A00000000 /* vec4.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = vec4.hpp; path = mediapipe/render/core/math/vec4.hpp; sourceTree = "<group>"; };
-		BE83F2605B873D5000000000 /* math.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = math.cpp; path = mediapipe/render/core/math.cpp; sourceTree = "<group>"; };
-		BE83F26061D3917E00000000 /* FramebufferCache.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = FramebufferCache.cpp; path = mediapipe/render/core/FramebufferCache.cpp; sourceTree = "<group>"; };
-		BE83F26064220C3000000000 /* SourceImage.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = SourceImage.hpp; path = mediapipe/render/core/SourceImage.hpp; sourceTree = "<group>"; };
-		BE83F26067DBE6C000000000 /* SourceCamera.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = SourceCamera.hpp; path = mediapipe/render/core/SourceCamera.hpp; sourceTree = "<group>"; };
-		BE83F26070F0323A00000000 /* math_utils.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = math_utils.hpp; path = mediapipe/render/core/math/math_utils.hpp; sourceTree = "<group>"; };
-		BE83F260736CAA4600000000 /* lib_idx_ref_gpuimagemath_gpuimageutil_8DCE756C_ios_min15.5.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; name = lib_idx_ref_gpuimagemath_gpuimageutil_8DCE756C_ios_min15.5.a; path = lib_idx_ref_gpuimagemath_gpuimageutil_8DCE756C_ios_min15.5.a; sourceTree = BUILT_PRODUCTS_DIR; };
-		BE83F26075F4B57700000000 /* SourceImage.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = SourceImage.cpp; path = mediapipe/render/core/SourceImage.cpp; sourceTree = "<group>"; };
-		BE83F26076C339A100000000 /* Context.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = Context.hpp; path = mediapipe/render/core/Context.hpp; sourceTree = "<group>"; };
-		BE83F26078D3B78100000000 /* GPUImageUtil.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = GPUImageUtil.cpp; path = mediapipe/render/core/GPUImageUtil.cpp; sourceTree = "<group>"; };
-		BE83F2607B3D0E0E00000000 /* IOSTarget.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = IOSTarget.hpp; path = mediapipe/render/core/IOSTarget.hpp; sourceTree = "<group>"; };
-		BE83F2607ECF732C00000000 /* OlaRenderDevelopFramework.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; name = OlaRenderDevelopFramework.framework; path = OlaRenderDevelopFramework.framework; sourceTree = BUILT_PRODUCTS_DIR; };
-		BE83F2607F32F9BA00000000 /* math_utils.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = math_utils.cpp; path = mediapipe/render/core/math/math_utils.cpp; sourceTree = "<group>"; };
-		BE83F2609165562200000000 /* GLProgram.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = GLProgram.hpp; path = mediapipe/render/core/GLProgram.hpp; sourceTree = "<group>"; };
-		BE83F260982EF2CE00000000 /* FramebufferCache.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = FramebufferCache.hpp; path = mediapipe/render/core/FramebufferCache.hpp; sourceTree = "<group>"; };
-		BE83F2609E99204100000000 /* GPUImageMacros.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = GPUImageMacros.h; path = mediapipe/render/core/GPUImageMacros.h; sourceTree = "<group>"; };
-		BE83F2609EE3A0DF00000000 /* math.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = math.hpp; path = mediapipe/render/core/math.hpp; sourceTree = "<group>"; };
-		BE83F260A2EF683C00000000 /* Target.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = Target.hpp; path = mediapipe/render/core/Target.hpp; sourceTree = "<group>"; };
-		BE83F260A47EBDE800000000 /* Framebuffer.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = Framebuffer.cpp; path = mediapipe/render/core/Framebuffer.cpp; sourceTree = "<group>"; };
-		BE83F260A565F13900000000 /* IOSTarget.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = IOSTarget.cpp; path = mediapipe/render/core/IOSTarget.cpp; sourceTree = "<group>"; };
-		BE83F260A7FA713900000000 /* vec2.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = vec2.cpp; path = mediapipe/render/core/math/vec2.cpp; sourceTree = "<group>"; };
-		BE83F260A89FC39300000000 /* GLProgram.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = GLProgram.cpp; path = mediapipe/render/core/GLProgram.cpp; sourceTree = "<group>"; };
-		BE83F260AB34087600000000 /* BUILD */ = {isa = PBXFileReference; lastKnownFileType = text; name = BUILD; path = mediapipe/render/ios/BUILD; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.python; };
-		BE83F260C321836600000000 /* vec4.inl */ = {isa = PBXFileReference; lastKnownFileType = "public.c-plus-plus-inline-header"; name = vec4.inl; path = mediapipe/render/core/math/vec4.inl; sourceTree = "<group>"; };
-		BE83F260CA6C912600000000 /* Filter.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = Filter.hpp; path = mediapipe/render/core/Filter.hpp; sourceTree = "<group>"; };
-		BE83F260CB8D4EA000000000 /* libmediapipe-render-ios-OlaRenderDevelop.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; name = "libmediapipe-render-ios-OlaRenderDevelop.a"; path = "libmediapipe-render-ios-OlaRenderDevelop.a"; sourceTree = BUILT_PRODUCTS_DIR; };
-		BE83F260D076320400000000 /* lib_idx_core_F3E5C6E5_ios_min11.0.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; name = lib_idx_core_F3E5C6E5_ios_min11.0.a; path = lib_idx_core_F3E5C6E5_ios_min11.0.a; sourceTree = BUILT_PRODUCTS_DIR; };
-		BE83F260D09E347800000000 /* TargetView.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = TargetView.cpp; path = mediapipe/render/core/TargetView.cpp; sourceTree = "<group>"; };
-		BE83F260D0BDD41A00000000 /* Source.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = Source.cpp; path = mediapipe/render/core/Source.cpp; sourceTree = "<group>"; };
-		BE83F260D665EA5D00000000 /* BUILD */ = {isa = PBXFileReference; lastKnownFileType = text; name = BUILD; path = mediapipe/render/core/math/BUILD; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.python; };
-		BE83F260DA67837000000000 /* OlaRenderDevelop.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = OlaRenderDevelop.h; path = mediapipe/render/ios/OlaRenderDevelop.h; sourceTree = "<group>"; };
-		BE83F260E0A815AA00000000 /* vec2.inl */ = {isa = PBXFileReference; lastKnownFileType = "public.c-plus-plus-inline-header"; name = vec2.inl; path = mediapipe/render/core/math/vec2.inl; sourceTree = "<group>"; };
-		BE83F260E139586700000000 /* GPUImageUtil.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = GPUImageUtil.h; path = mediapipe/render/core/GPUImageUtil.h; sourceTree = "<group>"; };
-		BE83F260E418640200000000 /* Source.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = Source.hpp; path = mediapipe/render/core/Source.hpp; sourceTree = "<group>"; };
-		BE83F260E83F673B00000000 /* CVFramebuffer.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = CVFramebuffer.hpp; path = mediapipe/render/core/CVFramebuffer.hpp; sourceTree = "<group>"; };
-		BE83F260EBB084D800000000 /* Context.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = Context.cpp; path = mediapipe/render/core/Context.cpp; sourceTree = "<group>"; };
-		BE83F260EC702CCC00000000 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; name = Info.plist; path = mediapipe/render/ios/Info.plist; sourceTree = "<group>"; };
-		BE83F260F4675D9E00000000 /* Ref.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = Ref.hpp; path = mediapipe/render/core/Ref.hpp; sourceTree = "<group>"; };
-		BE83F260FF778F3400000000 /* vec3.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = vec3.cpp; path = mediapipe/render/core/math/vec3.cpp; sourceTree = "<group>"; };
+		84117391012B248E00000000 /* CVFramebuffer.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = CVFramebuffer.hpp; path = mediapipe/render/core/CVFramebuffer.hpp; sourceTree = "<group>"; };
+		84117391028DA70C00000000 /* lib_idx_core_core-ios_8391CBD4_ios_min11.0.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; name = "lib_idx_core_core-ios_8391CBD4_ios_min11.0.a"; path = "lib_idx_core_core-ios_8391CBD4_ios_min11.0.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		841173910297C2A200000000 /* Ref.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = Ref.hpp; path = mediapipe/render/core/Ref.hpp; sourceTree = "<group>"; };
+		841173910CA5D55A00000000 /* libgpuimagemath.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; name = libgpuimagemath.a; path = libgpuimagemath.a; sourceTree = BUILT_PRODUCTS_DIR; };
+		841173910D371DAD00000000 /* vec2.inl */ = {isa = PBXFileReference; lastKnownFileType = "public.c-plus-plus-inline-header"; name = vec2.inl; path = mediapipe/render/core/math/vec2.inl; sourceTree = "<group>"; };
+		84117391137D926E00000000 /* libmediapipe-render-core-core.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; name = "libmediapipe-render-core-core.a"; path = "libmediapipe-render-core-core.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		8411739114E2297900000000 /* FilterGroup.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = FilterGroup.cpp; path = mediapipe/render/core/FilterGroup.cpp; sourceTree = "<group>"; };
+		841173911B1C97C000000000 /* libmediapipe-render-core-core-ios.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; name = "libmediapipe-render-core-core-ios.a"; path = "libmediapipe-render-core-core-ios.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		841173911FEA6FAA00000000 /* libgpuimageutil.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; name = libgpuimageutil.a; path = libgpuimageutil.a; sourceTree = BUILT_PRODUCTS_DIR; };
+		841173912B327FEC00000000 /* Context.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = Context.cpp; path = mediapipe/render/core/Context.cpp; sourceTree = "<group>"; };
+		841173912C87B2B200000000 /* math.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = math.hpp; path = mediapipe/render/core/math.hpp; sourceTree = "<group>"; };
+		841173912D93015300000000 /* OlaRenderPlayground.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; name = OlaRenderPlayground.mm; path = mediapipe/render/ios/OlaRenderPlayground.mm; sourceTree = "<group>"; };
+		841173913440742000000000 /* libcore.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; name = libcore.a; path = libcore.a; sourceTree = BUILT_PRODUCTS_DIR; };
+		84117391358F769C00000000 /* GLProgram.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = GLProgram.cpp; path = mediapipe/render/core/GLProgram.cpp; sourceTree = "<group>"; };
+		8411739138463C5A00000000 /* SourceCamera.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = SourceCamera.hpp; path = mediapipe/render/core/SourceCamera.hpp; sourceTree = "<group>"; };
+		84117391399F130600000000 /* libref.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; name = libref.a; path = libref.a; sourceTree = BUILT_PRODUCTS_DIR; };
+		841173913A96977400000000 /* FramebufferCache.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = FramebufferCache.hpp; path = mediapipe/render/core/FramebufferCache.hpp; sourceTree = "<group>"; };
+		841173913E11734F00000000 /* IOSTarget.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = IOSTarget.cpp; path = mediapipe/render/core/IOSTarget.cpp; sourceTree = "<group>"; };
+		841173913E63C5D400000000 /* libmediapipe-render-core-gpuimagemath.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; name = "libmediapipe-render-core-gpuimagemath.a"; path = "libmediapipe-render-core-gpuimagemath.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		841173913E967B7C00000000 /* OlaRenderPlayground.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = OlaRenderPlayground.h; path = mediapipe/render/ios/OlaRenderPlayground.h; sourceTree = "<group>"; };
+		841173913FB0A97B00000000 /* vec3.inl */ = {isa = PBXFileReference; lastKnownFileType = "public.c-plus-plus-inline-header"; name = vec3.inl; path = mediapipe/render/core/math/vec3.inl; sourceTree = "<group>"; };
+		841173913FE262B300000000 /* mat4.inl */ = {isa = PBXFileReference; lastKnownFileType = "public.c-plus-plus-inline-header"; name = mat4.inl; path = mediapipe/render/core/math/mat4.inl; sourceTree = "<group>"; };
+		84117391425791EB00000000 /* Context.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = Context.hpp; path = mediapipe/render/core/Context.hpp; sourceTree = "<group>"; };
+		841173914359B61800000000 /* vec2.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = vec2.hpp; path = mediapipe/render/core/math/vec2.hpp; sourceTree = "<group>"; };
+		84117391448E4EFA00000000 /* Ref.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = Ref.cpp; path = mediapipe/render/core/Ref.cpp; sourceTree = "<group>"; };
+		841173914AC5F98200000000 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; name = Info.plist; path = mediapipe/render/ios/Info.plist; sourceTree = "<group>"; };
+		84117391513D613E00000000 /* OlaRenderDevelopFramework.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; name = OlaRenderDevelopFramework.framework; path = OlaRenderDevelopFramework.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		841173915549DC6700000000 /* TargetView.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = TargetView.cpp; path = mediapipe/render/core/TargetView.cpp; sourceTree = "<group>"; };
+		84117391558EE76A00000000 /* vec4.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = vec4.cpp; path = mediapipe/render/core/math/vec4.cpp; sourceTree = "<group>"; };
+		84117391583E698800000000 /* Source.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = Source.cpp; path = mediapipe/render/core/Source.cpp; sourceTree = "<group>"; };
+		84117391598D0E5600000000 /* BUILD */ = {isa = PBXFileReference; lastKnownFileType = text; name = BUILD; path = mediapipe/render/ios/BUILD; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.python; };
+		84117391608F147400000000 /* libmediapipe-render-core-gpuimageutil.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; name = "libmediapipe-render-core-gpuimageutil.a"; path = "libmediapipe-render-core-gpuimageutil.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		841173916B1C98A000000000 /* BUILD */ = {isa = PBXFileReference; lastKnownFileType = text; name = BUILD; path = mediapipe/render/core/BUILD; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.python; };
+		841173916B887D9700000000 /* GPUImageUtil.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = GPUImageUtil.h; path = mediapipe/render/core/GPUImageUtil.h; sourceTree = "<group>"; };
+		841173916D1A165200000000 /* BUILD */ = {isa = PBXFileReference; lastKnownFileType = text; name = BUILD; path = mediapipe/render/core/math/BUILD; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.python; };
+		841173916EED533B00000000 /* Target.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = Target.hpp; path = mediapipe/render/core/Target.hpp; sourceTree = "<group>"; };
+		8411739170230D7700000000 /* Framebuffer.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = Framebuffer.hpp; path = mediapipe/render/core/Framebuffer.hpp; sourceTree = "<group>"; };
+		841173917035210300000000 /* GPUImage-x.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "GPUImage-x.h"; path = "mediapipe/render/core/GPUImage-x.h"; sourceTree = "<group>"; };
+		84117391723D36F000000000 /* SourceImage.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = SourceImage.hpp; path = mediapipe/render/core/SourceImage.hpp; sourceTree = "<group>"; };
+		8411739172B3385E00000000 /* Info.plist */ = {isa = PBXFileReference; explicitFileType = text.plist; name = Info.plist; path = "OlaVideo.xcodeproj/.tulsi/tulsi-execution-root/bazel-tulsi-includes/x/x/mediapipe/render/ios/OlaRenderDevelopFramework-intermediates/Info.plist"; sourceTree = SOURCE_ROOT; };
+		841173917C2F893300000000 /* Filter.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = Filter.hpp; path = mediapipe/render/core/Filter.hpp; sourceTree = "<group>"; };
+		841173917FAF43DE00000000 /* vec4.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = vec4.hpp; path = mediapipe/render/core/math/vec4.hpp; sourceTree = "<group>"; };
+		84117391844681E700000000 /* math.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = math.cpp; path = mediapipe/render/core/math.cpp; sourceTree = "<group>"; };
+		84117391870C42A400000000 /* lib_idx_math_744D87CF_ios_min15.5.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; name = lib_idx_math_744D87CF_ios_min15.5.a; path = lib_idx_math_744D87CF_ios_min15.5.a; sourceTree = BUILT_PRODUCTS_DIR; };
+		841173918F061B2400000000 /* lib_idx_core_core-ios_8391CBD4_ios_min15.5.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; name = "lib_idx_core_core-ios_8391CBD4_ios_min15.5.a"; path = "lib_idx_core_core-ios_8391CBD4_ios_min15.5.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		84117391940C901E00000000 /* Target.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = Target.cpp; path = mediapipe/render/core/Target.cpp; sourceTree = "<group>"; };
+		84117391943E14F100000000 /* GPUImageUtil.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = GPUImageUtil.cpp; path = mediapipe/render/core/GPUImageUtil.cpp; sourceTree = "<group>"; };
+		8411739196B3017800000000 /* libmediapipe-render-core-ref.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; name = "libmediapipe-render-core-ref.a"; path = "libmediapipe-render-core-ref.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		841173919DD0700600000000 /* SourceCamera.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = SourceCamera.cpp; path = mediapipe/render/core/SourceCamera.cpp; sourceTree = "<group>"; };
+		84117391A501711A00000000 /* libgpuimagemacros.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; name = libgpuimagemacros.a; path = libgpuimagemacros.a; sourceTree = BUILT_PRODUCTS_DIR; };
+		84117391A5059F2F00000000 /* vec2.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = vec2.cpp; path = mediapipe/render/core/math/vec2.cpp; sourceTree = "<group>"; };
+		84117391A8B1CBEA00000000 /* GLProgram.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = GLProgram.hpp; path = mediapipe/render/core/GLProgram.hpp; sourceTree = "<group>"; };
+		84117391AEE63A6E00000000 /* vec3.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = vec3.hpp; path = mediapipe/render/core/math/vec3.hpp; sourceTree = "<group>"; };
+		84117391AF03CB4800000000 /* mat4.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = mat4.hpp; path = mediapipe/render/core/math/mat4.hpp; sourceTree = "<group>"; };
+		84117391BC93AF6400000000 /* libcore-ios.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; name = "libcore-ios.a"; path = "libcore-ios.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		84117391BE76345D00000000 /* GPUImageMacros.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = GPUImageMacros.h; path = mediapipe/render/core/GPUImageMacros.h; sourceTree = "<group>"; };
+		84117391BFC9FC5900000000 /* math_utils.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = math_utils.cpp; path = mediapipe/render/core/math/math_utils.cpp; sourceTree = "<group>"; };
+		84117391C0ECB89C00000000 /* libmediapipe-render-core-gpuimagemacros.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; name = "libmediapipe-render-core-gpuimagemacros.a"; path = "libmediapipe-render-core-gpuimagemacros.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		84117391C4AFB30800000000 /* vec3.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = vec3.cpp; path = mediapipe/render/core/math/vec3.cpp; sourceTree = "<group>"; };
+		84117391C633842100000000 /* math_utils.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = math_utils.hpp; path = mediapipe/render/core/math/math_utils.hpp; sourceTree = "<group>"; };
+		84117391C731832B00000000 /* FilterGroup.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = FilterGroup.hpp; path = mediapipe/render/core/FilterGroup.hpp; sourceTree = "<group>"; };
+		84117391CCCC8EE000000000 /* lib_idx_math_OlaRenderPlayground_0128C2B8_ios_min11.0.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; name = lib_idx_math_OlaRenderPlayground_0128C2B8_ios_min11.0.a; path = lib_idx_math_OlaRenderPlayground_0128C2B8_ios_min11.0.a; sourceTree = BUILT_PRODUCTS_DIR; };
+		84117391CF209A3000000000 /* IOSTarget.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = IOSTarget.hpp; path = mediapipe/render/core/IOSTarget.hpp; sourceTree = "<group>"; };
+		84117391D5BB249300000000 /* Filter.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = Filter.cpp; path = mediapipe/render/core/Filter.cpp; sourceTree = "<group>"; };
+		84117391D6EE6D8200000000 /* lib_idx_ref_gpuimagemath_gpuimageutil_66945799_ios_min15.5.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; name = lib_idx_ref_gpuimagemath_gpuimageutil_66945799_ios_min15.5.a; path = lib_idx_ref_gpuimagemath_gpuimageutil_66945799_ios_min15.5.a; sourceTree = BUILT_PRODUCTS_DIR; };
+		84117391E000B5E300000000 /* FramebufferCache.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = FramebufferCache.cpp; path = mediapipe/render/core/FramebufferCache.cpp; sourceTree = "<group>"; };
+		84117391E8994E1700000000 /* GPUImageTarget.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = GPUImageTarget.h; path = mediapipe/render/core/GPUImageTarget.h; sourceTree = "<group>"; };
+		84117391E9B94ADE00000000 /* lib_idx_ref_gpuimagemath_gpuimageutil_66945799_ios_min11.0.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; name = lib_idx_ref_gpuimagemath_gpuimageutil_66945799_ios_min11.0.a; path = lib_idx_ref_gpuimagemath_gpuimageutil_66945799_ios_min11.0.a; sourceTree = BUILT_PRODUCTS_DIR; };
+		84117391EB5C647F00000000 /* mat4.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = mat4.cpp; path = mediapipe/render/core/math/mat4.cpp; sourceTree = "<group>"; };
+		84117391F2FC6CD100000000 /* vec4.inl */ = {isa = PBXFileReference; lastKnownFileType = "public.c-plus-plus-inline-header"; name = vec4.inl; path = mediapipe/render/core/math/vec4.inl; sourceTree = "<group>"; };
+		84117391F654002F00000000 /* SourceImage.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = SourceImage.cpp; path = mediapipe/render/core/SourceImage.cpp; sourceTree = "<group>"; };
+		84117391F950B4AC00000000 /* TargetView.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = TargetView.hpp; path = mediapipe/render/core/TargetView.hpp; sourceTree = "<group>"; };
+		84117391FCEEFE2A00000000 /* Source.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = Source.hpp; path = mediapipe/render/core/Source.hpp; sourceTree = "<group>"; };
+		84117391FDA2AAB000000000 /* Framebuffer.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = Framebuffer.cpp; path = mediapipe/render/core/Framebuffer.cpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
-		C84737C11F09D48F00000000 /* x */ = {
+		DAE25C8900142D4100000000 /* core */ = {
 			isa = PBXGroup;
 			children = (
-				C84737C11F09D48F00000001 /* x */,
-			);
-			name = x;
-			sourceTree = "<group>";
-		};
-		C84737C11F09D48F00000001 /* x */ = {
-			isa = PBXGroup;
-			children = (
-				C84737C1D37978B300000000 /* mediapipe */,
-			);
-			name = x;
-			sourceTree = "<group>";
-		};
-		C84737C123178F1D00000000 /* render */ = {
-			isa = PBXGroup;
-			children = (
-				C84737C164C84C8D00000000 /* ios */,
-			);
-			name = render;
-			sourceTree = "<group>";
-		};
-		C84737C123178F1D00000001 /* render */ = {
-			isa = PBXGroup;
-			children = (
-				C84737C1648F1D6E00000000 /* core */,
-				C84737C164C84C8D00000001 /* ios */,
-			);
-			name = render;
-			sourceTree = "<group>";
-		};
-		C84737C1648F1D6E00000000 /* core */ = {
-			isa = PBXGroup;
-			children = (
-				BE83F26010037B7D00000000 /* BUILD */,
-				BE83F260E83F673B00000000 /* CVFramebuffer.hpp */,
-				BE83F260EBB084D800000000 /* Context.cpp */,
-				BE83F26076C339A100000000 /* Context.hpp */,
-				BE83F2600EBACD2000000000 /* Filter.cpp */,
-				BE83F260CA6C912600000000 /* Filter.hpp */,
-				BE83F26046414E3200000000 /* FilterGroup.cpp */,
-				BE83F2605074AFB000000000 /* FilterGroup.hpp */,
-				BE83F260A47EBDE800000000 /* Framebuffer.cpp */,
-				BE83F260129E264700000000 /* Framebuffer.hpp */,
-				BE83F26061D3917E00000000 /* FramebufferCache.cpp */,
-				BE83F260982EF2CE00000000 /* FramebufferCache.hpp */,
-				BE83F260A89FC39300000000 /* GLProgram.cpp */,
-				BE83F2609165562200000000 /* GLProgram.hpp */,
-				BE83F2603740DDC500000000 /* GPUImage-x.h */,
-				BE83F2609E99204100000000 /* GPUImageMacros.h */,
-				BE83F2603233472600000000 /* GPUImageTarget.h */,
-				BE83F26078D3B78100000000 /* GPUImageUtil.cpp */,
-				BE83F260E139586700000000 /* GPUImageUtil.h */,
-				BE83F260A565F13900000000 /* IOSTarget.cpp */,
-				BE83F2607B3D0E0E00000000 /* IOSTarget.hpp */,
-				BE83F2604625777700000000 /* Ref.cpp */,
-				BE83F260F4675D9E00000000 /* Ref.hpp */,
-				BE83F260D0BDD41A00000000 /* Source.cpp */,
-				BE83F260E418640200000000 /* Source.hpp */,
-				BE83F260565883CD00000000 /* SourceCamera.cpp */,
-				BE83F26067DBE6C000000000 /* SourceCamera.hpp */,
-				BE83F26075F4B57700000000 /* SourceImage.cpp */,
-				BE83F26064220C3000000000 /* SourceImage.hpp */,
-				BE83F26022880F3900000000 /* Target.cpp */,
-				BE83F260A2EF683C00000000 /* Target.hpp */,
-				BE83F260D09E347800000000 /* TargetView.cpp */,
-				BE83F2602FB9B54500000000 /* TargetView.hpp */,
-				C84737C1C47DE28B00000000 /* math */,
-				BE83F2605B873D5000000000 /* math.cpp */,
-				BE83F2609EE3A0DF00000000 /* math.hpp */,
+				841173916B1C98A000000000 /* BUILD */,
+				84117391012B248E00000000 /* CVFramebuffer.hpp */,
+				841173912B327FEC00000000 /* Context.cpp */,
+				84117391425791EB00000000 /* Context.hpp */,
+				84117391D5BB249300000000 /* Filter.cpp */,
+				841173917C2F893300000000 /* Filter.hpp */,
+				8411739114E2297900000000 /* FilterGroup.cpp */,
+				84117391C731832B00000000 /* FilterGroup.hpp */,
+				84117391FDA2AAB000000000 /* Framebuffer.cpp */,
+				8411739170230D7700000000 /* Framebuffer.hpp */,
+				84117391E000B5E300000000 /* FramebufferCache.cpp */,
+				841173913A96977400000000 /* FramebufferCache.hpp */,
+				84117391358F769C00000000 /* GLProgram.cpp */,
+				84117391A8B1CBEA00000000 /* GLProgram.hpp */,
+				841173917035210300000000 /* GPUImage-x.h */,
+				84117391BE76345D00000000 /* GPUImageMacros.h */,
+				84117391E8994E1700000000 /* GPUImageTarget.h */,
+				84117391943E14F100000000 /* GPUImageUtil.cpp */,
+				841173916B887D9700000000 /* GPUImageUtil.h */,
+				841173913E11734F00000000 /* IOSTarget.cpp */,
+				84117391CF209A3000000000 /* IOSTarget.hpp */,
+				84117391448E4EFA00000000 /* Ref.cpp */,
+				841173910297C2A200000000 /* Ref.hpp */,
+				84117391583E698800000000 /* Source.cpp */,
+				84117391FCEEFE2A00000000 /* Source.hpp */,
+				841173919DD0700600000000 /* SourceCamera.cpp */,
+				8411739138463C5A00000000 /* SourceCamera.hpp */,
+				84117391F654002F00000000 /* SourceImage.cpp */,
+				84117391723D36F000000000 /* SourceImage.hpp */,
+				84117391940C901E00000000 /* Target.cpp */,
+				841173916EED533B00000000 /* Target.hpp */,
+				841173915549DC6700000000 /* TargetView.cpp */,
+				84117391F950B4AC00000000 /* TargetView.hpp */,
+				DAE25C8949E74A0400000000 /* math */,
+				84117391844681E700000000 /* math.cpp */,
+				841173912C87B2B200000000 /* math.hpp */,
 			);
 			name = core;
 			sourceTree = "<group>";
 		};
-		C84737C164C84C8D00000000 /* ios */ = {
+		DAE25C894782A6F700000000 /* mainGroup */ = {
 			isa = PBXGroup;
 			children = (
-				C84737C17207F09000000000 /* OlaRenderDevelopFramework-intermediates */,
-			);
-			name = ios;
-			sourceTree = "<group>";
-		};
-		C84737C164C84C8D00000001 /* ios */ = {
-			isa = PBXGroup;
-			children = (
-				BE83F260AB34087600000000 /* BUILD */,
-				BE83F260EC702CCC00000000 /* Info.plist */,
-				BE83F260DA67837000000000 /* OlaRenderDevelop.h */,
-			);
-			name = ios;
-			sourceTree = "<group>";
-		};
-		C84737C17207F09000000000 /* OlaRenderDevelopFramework-intermediates */ = {
-			isa = PBXGroup;
-			children = (
-				BE83F260327B953400000000 /* Info.plist */,
-			);
-			name = "OlaRenderDevelopFramework-intermediates";
-			sourceTree = "<group>";
-		};
-		C84737C175BCB0A500000000 /* mainGroup */ = {
-			isa = PBXGroup;
-			children = (
-				C84737C1AF5BE98B00000000 /* Products */,
-				C84737C1D37978B300000001 /* mediapipe */,
+				DAE25C89663FBF3500000000 /* Products */,
+				DAE25C896AA5AEEB00000001 /* mediapipe */,
 			);
 			name = mainGroup;
 			path = ../../..;
 			sourceTree = SOURCE_ROOT;
 		};
-		C84737C1A0D3B00600000000 /* bazel-tulsi-includes */ = {
+		DAE25C8949E74A0400000000 /* math */ = {
 			isa = PBXGroup;
 			children = (
-				C84737C11F09D48F00000000 /* x */,
-			);
-			name = "bazel-tulsi-includes";
-			sourceTree = "<group>";
-		};
-		C84737C1AF5BE98B00000000 /* Products */ = {
-			isa = PBXGroup;
-			children = (
-				C84737C1E5314F1C00000000 /* Indexer */,
-				BE83F2607ECF732C00000000 /* OlaRenderDevelopFramework.framework */,
-				C84737C1A0D3B00600000000 /* bazel-tulsi-includes */,
-				BE83F260CB8D4EA000000000 /* libmediapipe-render-ios-OlaRenderDevelop.a */,
-			);
-			name = Products;
-			sourceTree = "<group>";
-		};
-		C84737C1C47DE28B00000000 /* math */ = {
-			isa = PBXGroup;
-			children = (
-				BE83F260D665EA5D00000000 /* BUILD */,
-				BE83F2602414E52E00000000 /* mat4.cpp */,
-				BE83F26049A3E76000000000 /* mat4.hpp */,
-				BE83F26025E591E800000000 /* mat4.inl */,
-				BE83F2607F32F9BA00000000 /* math_utils.cpp */,
-				BE83F26070F0323A00000000 /* math_utils.hpp */,
-				BE83F260A7FA713900000000 /* vec2.cpp */,
-				BE83F2601CC6405C00000000 /* vec2.hpp */,
-				BE83F260E0A815AA00000000 /* vec2.inl */,
-				BE83F260FF778F3400000000 /* vec3.cpp */,
-				BE83F2601F5DBCAE00000000 /* vec3.hpp */,
-				BE83F26046A498EB00000000 /* vec3.inl */,
-				BE83F26009E0EF9900000000 /* vec4.cpp */,
-				BE83F26057F9666A00000000 /* vec4.hpp */,
-				BE83F260C321836600000000 /* vec4.inl */,
+				841173916D1A165200000000 /* BUILD */,
+				84117391EB5C647F00000000 /* mat4.cpp */,
+				84117391AF03CB4800000000 /* mat4.hpp */,
+				841173913FE262B300000000 /* mat4.inl */,
+				84117391BFC9FC5900000000 /* math_utils.cpp */,
+				84117391C633842100000000 /* math_utils.hpp */,
+				84117391A5059F2F00000000 /* vec2.cpp */,
+				841173914359B61800000000 /* vec2.hpp */,
+				841173910D371DAD00000000 /* vec2.inl */,
+				84117391C4AFB30800000000 /* vec3.cpp */,
+				84117391AEE63A6E00000000 /* vec3.hpp */,
+				841173913FB0A97B00000000 /* vec3.inl */,
+				84117391558EE76A00000000 /* vec4.cpp */,
+				841173917FAF43DE00000000 /* vec4.hpp */,
+				84117391F2FC6CD100000000 /* vec4.inl */,
 			);
 			name = math;
 			sourceTree = "<group>";
 		};
-		C84737C1D37978B300000000 /* mediapipe */ = {
+		DAE25C89663FBF3500000000 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				C84737C123178F1D00000000 /* render */,
+				DAE25C89F42B0B3000000000 /* Indexer */,
+				84117391513D613E00000000 /* OlaRenderDevelopFramework.framework */,
+				DAE25C89B6CEE21D00000000 /* bazel-tulsi-includes */,
+				84117391BC93AF6400000000 /* libcore-ios.a */,
+				841173913440742000000000 /* libcore.a */,
+				84117391A501711A00000000 /* libgpuimagemacros.a */,
+				841173910CA5D55A00000000 /* libgpuimagemath.a */,
+				841173911FEA6FAA00000000 /* libgpuimageutil.a */,
+				841173911B1C97C000000000 /* libmediapipe-render-core-core-ios.a */,
+				84117391137D926E00000000 /* libmediapipe-render-core-core.a */,
+				84117391C0ECB89C00000000 /* libmediapipe-render-core-gpuimagemacros.a */,
+				841173913E63C5D400000000 /* libmediapipe-render-core-gpuimagemath.a */,
+				84117391608F147400000000 /* libmediapipe-render-core-gpuimageutil.a */,
+				8411739196B3017800000000 /* libmediapipe-render-core-ref.a */,
+				84117391399F130600000000 /* libref.a */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		DAE25C896AA5AEEB00000000 /* mediapipe */ = {
+			isa = PBXGroup;
+			children = (
+				DAE25C89FE652D5000000000 /* render */,
 			);
 			name = mediapipe;
 			sourceTree = "<group>";
 		};
-		C84737C1D37978B300000001 /* mediapipe */ = {
+		DAE25C896AA5AEEB00000001 /* mediapipe */ = {
 			isa = PBXGroup;
 			children = (
-				C84737C123178F1D00000001 /* render */,
+				DAE25C89FE652D5000000001 /* render */,
 			);
 			name = mediapipe;
 			sourceTree = "<group>";
 		};
-		C84737C1E5314F1C00000000 /* Indexer */ = {
+		DAE25C896C43C6D300000000 /* OlaRenderDevelopFramework-intermediates */ = {
 			isa = PBXGroup;
 			children = (
-				BE83F260D076320400000000 /* lib_idx_core_F3E5C6E5_ios_min11.0.a */,
-				BE83F2605714B08E00000000 /* lib_idx_core_F3E5C6E5_ios_min15.5.a */,
-				BE83F2603D01E23E00000000 /* lib_idx_math_702C098E_ios_min11.0.a */,
-				BE83F2600AEFDE0400000000 /* lib_idx_math_702C098E_ios_min15.5.a */,
-				BE83F26014BF740C00000000 /* lib_idx_ref_gpuimagemath_gpuimageutil_8DCE756C_ios_min11.0.a */,
-				BE83F260736CAA4600000000 /* lib_idx_ref_gpuimagemath_gpuimageutil_8DCE756C_ios_min15.5.a */,
+				8411739172B3385E00000000 /* Info.plist */,
+			);
+			name = "OlaRenderDevelopFramework-intermediates";
+			sourceTree = "<group>";
+		};
+		DAE25C89B6CEE21D00000000 /* bazel-tulsi-includes */ = {
+			isa = PBXGroup;
+			children = (
+				DAE25C89E839069000000000 /* x */,
+			);
+			name = "bazel-tulsi-includes";
+			sourceTree = "<group>";
+		};
+		DAE25C89DCA2538B00000000 /* ios */ = {
+			isa = PBXGroup;
+			children = (
+				DAE25C896C43C6D300000000 /* OlaRenderDevelopFramework-intermediates */,
+			);
+			name = ios;
+			sourceTree = "<group>";
+		};
+		DAE25C89DCA2538B00000001 /* ios */ = {
+			isa = PBXGroup;
+			children = (
+				84117391598D0E5600000000 /* BUILD */,
+				841173914AC5F98200000000 /* Info.plist */,
+				841173913E967B7C00000000 /* OlaRenderPlayground.h */,
+				841173912D93015300000000 /* OlaRenderPlayground.mm */,
+			);
+			name = ios;
+			sourceTree = "<group>";
+		};
+		DAE25C89E839069000000000 /* x */ = {
+			isa = PBXGroup;
+			children = (
+				DAE25C89E839069000000001 /* x */,
+			);
+			name = x;
+			sourceTree = "<group>";
+		};
+		DAE25C89E839069000000001 /* x */ = {
+			isa = PBXGroup;
+			children = (
+				DAE25C896AA5AEEB00000000 /* mediapipe */,
+			);
+			name = x;
+			sourceTree = "<group>";
+		};
+		DAE25C89F42B0B3000000000 /* Indexer */ = {
+			isa = PBXGroup;
+			children = (
+				84117391028DA70C00000000 /* lib_idx_core_core-ios_8391CBD4_ios_min11.0.a */,
+				841173918F061B2400000000 /* lib_idx_core_core-ios_8391CBD4_ios_min15.5.a */,
+				84117391870C42A400000000 /* lib_idx_math_744D87CF_ios_min15.5.a */,
+				84117391CCCC8EE000000000 /* lib_idx_math_OlaRenderPlayground_0128C2B8_ios_min11.0.a */,
+				84117391E9B94ADE00000000 /* lib_idx_ref_gpuimagemath_gpuimageutil_66945799_ios_min11.0.a */,
+				84117391D6EE6D8200000000 /* lib_idx_ref_gpuimagemath_gpuimageutil_66945799_ios_min15.5.a */,
 			);
 			name = Indexer;
+			sourceTree = "<group>";
+		};
+		DAE25C89FE652D5000000000 /* render */ = {
+			isa = PBXGroup;
+			children = (
+				DAE25C89DCA2538B00000000 /* ios */,
+			);
+			name = render;
+			sourceTree = "<group>";
+		};
+		DAE25C89FE652D5000000001 /* render */ = {
+			isa = PBXGroup;
+			children = (
+				DAE25C8900142D4100000000 /* core */,
+				DAE25C89DCA2538B00000001 /* ios */,
+			);
+			name = render;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
 
 /* Begin PBXLegacyTarget section */
-		005FF21761E7E71A00000000 /* _bazel_clean_ */ = {
+		C78506BA1BF35CBC00000000 /* _bazel_clean_ */ = {
 			isa = PBXLegacyTarget;
 			buildArgumentsString = "\"/opt/homebrew/Cellar/bazelisk/1.12.0/bin/bazelisk\" \"bazel-bin\"";
-			buildConfigurationList = BA35A3F6A0C2EAAF00000000 /* Build configuration list for PBXLegacyTarget "_bazel_clean_" */;
+			buildConfigurationList = 56B317717A9CE71800000000 /* Build configuration list for PBXLegacyTarget "_bazel_clean_" */;
 			buildPhases = (
 			);
 			buildToolPath = "${PROJECT_FILE_PATH}/.tulsi/Scripts/bazel_clean.sh";
@@ -350,175 +405,363 @@
 /* End PBXLegacyTarget section */
 
 /* Begin PBXNativeTarget section */
-		6097400654A872A400000000 /* mediapipe-render-ios-OlaRenderDevelop */ = {
+		9CE83D6E00285A8200000000 /* core */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = BA35A3F630A77E2E00000000 /* Build configuration list for PBXNativeTarget "mediapipe-render-ios-OlaRenderDevelop" */;
+			buildConfigurationList = 56B317717D988B3F00000000 /* Build configuration list for PBXNativeTarget "core" */;
 			buildPhases = (
-				73F0E8C73E33318400000000 /* build //mediapipe/render/ios:OlaRenderDevelop */,
+				7B6E13ED1F6C3DC700000000 /* build //mediapipe/render/core:core */,
 			);
 			buildRules = (
 			);
 			dependencies = (
-				2557965D61E7E71B00000000 /* PBXTargetDependency */,
+				ADCF009E1BF35CBD00000000 /* PBXTargetDependency */,
 			);
-			name = "mediapipe-render-ios-OlaRenderDevelop";
-			productName = "mediapipe-render-ios-OlaRenderDevelop";
-			productReference = BE83F260CB8D4EA000000000 /* libmediapipe-render-ios-OlaRenderDevelop.a */;
+			name = core;
+			productName = core;
+			productReference = 841173913440742000000000 /* libcore.a */;
 			productType = "com.apple.product-type.library.static";
 		};
-		6097400656E721E400000000 /* _idx_ref_gpuimagemath_gpuimageutil_8DCE756C_ios_min11.0 */ = {
+		9CE83D6E00B3488A00000000 /* _idx_math_OlaRenderPlayground_0128C2B8_ios_min11.0 */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = BA35A3F6EB0434D400000000 /* Build configuration list for PBXNativeTarget "_idx_ref_gpuimagemath_gpuimageutil_8DCE756C_ios_min11.0" */;
+			buildConfigurationList = 56B3177149EDF3E100000000 /* Build configuration list for PBXNativeTarget "_idx_math_OlaRenderPlayground_0128C2B8_ios_min11.0" */;
 			buildPhases = (
-				FF659C6C0000000000000001 /* Sources */,
+				01D6522E0000000000000002 /* Sources */,
 			);
 			buildRules = (
 			);
 			dependencies = (
-				2557965D61E7E71B00000000 /* PBXTargetDependency */,
+				ADCF009E1BF35CBD00000000 /* PBXTargetDependency */,
+				ADCF009E3AA80DFB00000000 /* PBXTargetDependency */,
 			);
-			name = _idx_ref_gpuimagemath_gpuimageutil_8DCE756C_ios_min11.0;
-			productName = _idx_ref_gpuimagemath_gpuimageutil_8DCE756C_ios_min11.0;
-			productReference = BE83F26014BF740C00000000 /* lib_idx_ref_gpuimagemath_gpuimageutil_8DCE756C_ios_min11.0.a */;
+			name = _idx_math_OlaRenderPlayground_0128C2B8_ios_min11.0;
+			productName = _idx_math_OlaRenderPlayground_0128C2B8_ios_min11.0;
+			productReference = 84117391CCCC8EE000000000 /* lib_idx_math_OlaRenderPlayground_0128C2B8_ios_min11.0.a */;
 			productType = "com.apple.product-type.library.static";
 		};
-		609740065CF3050A00000000 /* _idx_math_702C098E_ios_min15.5 */ = {
+		9CE83D6E2B4174EC00000000 /* _idx_ref_gpuimagemath_gpuimageutil_66945799_ios_min15.5 */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = BA35A3F6AA12506300000000 /* Build configuration list for PBXNativeTarget "_idx_math_702C098E_ios_min15.5" */;
+			buildConfigurationList = 56B31771BE9D524200000000 /* Build configuration list for PBXNativeTarget "_idx_ref_gpuimagemath_gpuimageutil_66945799_ios_min15.5" */;
 			buildPhases = (
-				FF659C6C0000000000000004 /* Sources */,
+				01D6522E0000000000000004 /* Sources */,
 			);
 			buildRules = (
 			);
 			dependencies = (
-				2557965D61E7E71B00000000 /* PBXTargetDependency */,
+				ADCF009E1BF35CBD00000000 /* PBXTargetDependency */,
 			);
-			name = _idx_math_702C098E_ios_min15.5;
-			productName = _idx_math_702C098E_ios_min15.5;
-			productReference = BE83F2600AEFDE0400000000 /* lib_idx_math_702C098E_ios_min15.5.a */;
+			name = _idx_ref_gpuimagemath_gpuimageutil_66945799_ios_min15.5;
+			productName = _idx_ref_gpuimagemath_gpuimageutil_66945799_ios_min15.5;
+			productReference = 84117391D6EE6D8200000000 /* lib_idx_ref_gpuimagemath_gpuimageutil_66945799_ios_min15.5.a */;
 			productType = "com.apple.product-type.library.static";
 		};
-		609740068115297A00000000 /* _idx_core_F3E5C6E5_ios_min15.5 */ = {
+		9CE83D6E2F7665B800000000 /* mediapipe-render-core-core-ios */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = BA35A3F69A9D9AED00000000 /* Build configuration list for PBXNativeTarget "_idx_core_F3E5C6E5_ios_min15.5" */;
+			buildConfigurationList = 56B31771B122A43C00000000 /* Build configuration list for PBXNativeTarget "mediapipe-render-core-core-ios" */;
 			buildPhases = (
-				FF659C6C0000000000000003 /* Sources */,
+				7B6E13ED489A80AB00000001 /* build //mediapipe/render/core:core-ios */,
 			);
 			buildRules = (
 			);
 			dependencies = (
-				2557965D61E7E71B00000000 /* PBXTargetDependency */,
-				2557965D5CF3050B00000000 /* PBXTargetDependency */,
-				2557965DA1CF146B00000000 /* PBXTargetDependency */,
-				2557965DA1CF146B00000000 /* PBXTargetDependency */,
-				2557965DA1CF146B00000000 /* PBXTargetDependency */,
+				ADCF009E1BF35CBD00000000 /* PBXTargetDependency */,
 			);
-			name = _idx_core_F3E5C6E5_ios_min15.5;
-			productName = _idx_core_F3E5C6E5_ios_min15.5;
-			productReference = BE83F2605714B08E00000000 /* lib_idx_core_F3E5C6E5_ios_min15.5.a */;
+			name = "mediapipe-render-core-core-ios";
+			productName = "mediapipe-render-core-core-ios";
+			productReference = 841173911B1C97C000000000 /* libmediapipe-render-core-core-ios.a */;
 			productType = "com.apple.product-type.library.static";
 		};
-		60974006872FED6400000000 /* _idx_core_F3E5C6E5_ios_min11.0 */ = {
+		9CE83D6E3AA80DFA00000000 /* _idx_core_core-ios_8391CBD4_ios_min11.0 */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = BA35A3F679C39EDD00000000 /* Build configuration list for PBXNativeTarget "_idx_core_F3E5C6E5_ios_min11.0" */;
+			buildConfigurationList = 56B317715AF59CC800000000 /* Build configuration list for PBXNativeTarget "_idx_core_core-ios_8391CBD4_ios_min11.0" */;
 			buildPhases = (
-				FF659C6C0000000000000000 /* Sources */,
+				01D6522E0000000000000000 /* Sources */,
 			);
 			buildRules = (
 			);
 			dependencies = (
-				2557965D61E7E71B00000000 /* PBXTargetDependency */,
-				2557965D56E721E500000000 /* PBXTargetDependency */,
-				2557965DEE42527100000000 /* PBXTargetDependency */,
-				2557965D56E721E500000000 /* PBXTargetDependency */,
-				2557965D56E721E500000000 /* PBXTargetDependency */,
+				ADCF009E1BF35CBD00000000 /* PBXTargetDependency */,
+				ADCF009EE4F20AFB00000000 /* PBXTargetDependency */,
+				ADCF009E00B3488B00000000 /* PBXTargetDependency */,
+				ADCF009EE4F20AFB00000000 /* PBXTargetDependency */,
+				ADCF009EE4F20AFB00000000 /* PBXTargetDependency */,
 			);
-			name = _idx_core_F3E5C6E5_ios_min11.0;
-			productName = _idx_core_F3E5C6E5_ios_min11.0;
-			productReference = BE83F260D076320400000000 /* lib_idx_core_F3E5C6E5_ios_min11.0.a */;
+			name = "_idx_core_core-ios_8391CBD4_ios_min11.0";
+			productName = "_idx_core_core-ios_8391CBD4_ios_min11.0";
+			productReference = 84117391028DA70C00000000 /* lib_idx_core_core-ios_8391CBD4_ios_min11.0.a */;
 			productType = "com.apple.product-type.library.static";
 		};
-		60974006A1CF146A00000000 /* _idx_ref_gpuimagemath_gpuimageutil_8DCE756C_ios_min15.5 */ = {
+		9CE83D6E4304108C00000000 /* _idx_core_core-ios_8391CBD4_ios_min15.5 */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = BA35A3F6C741168500000000 /* Build configuration list for PBXNativeTarget "_idx_ref_gpuimagemath_gpuimageutil_8DCE756C_ios_min15.5" */;
+			buildConfigurationList = 56B31771A87FED1E00000000 /* Build configuration list for PBXNativeTarget "_idx_core_core-ios_8391CBD4_ios_min15.5" */;
 			buildPhases = (
-				FF659C6C0000000000000005 /* Sources */,
+				01D6522E0000000000000003 /* Sources */,
 			);
 			buildRules = (
 			);
 			dependencies = (
-				2557965D61E7E71B00000000 /* PBXTargetDependency */,
+				ADCF009E1BF35CBD00000000 /* PBXTargetDependency */,
+				ADCF009E2B4174ED00000000 /* PBXTargetDependency */,
+				ADCF009E2B4174ED00000000 /* PBXTargetDependency */,
+				ADCF009E9210CC7300000000 /* PBXTargetDependency */,
+				ADCF009E2B4174ED00000000 /* PBXTargetDependency */,
 			);
-			name = _idx_ref_gpuimagemath_gpuimageutil_8DCE756C_ios_min15.5;
-			productName = _idx_ref_gpuimagemath_gpuimageutil_8DCE756C_ios_min15.5;
-			productReference = BE83F260736CAA4600000000 /* lib_idx_ref_gpuimagemath_gpuimageutil_8DCE756C_ios_min15.5.a */;
+			name = "_idx_core_core-ios_8391CBD4_ios_min15.5";
+			productName = "_idx_core_core-ios_8391CBD4_ios_min15.5";
+			productReference = 841173918F061B2400000000 /* lib_idx_core_core-ios_8391CBD4_ios_min15.5.a */;
 			productType = "com.apple.product-type.library.static";
 		};
-		60974006CD5CD7AC00000000 /* OlaRenderDevelopFramework */ = {
+		9CE83D6E4A82D9F400000000 /* mediapipe-render-core-gpuimagemacros */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = BA35A3F6A53D5D0F00000000 /* Build configuration list for PBXNativeTarget "OlaRenderDevelopFramework" */;
+			buildConfigurationList = 56B3177111E20B7600000000 /* Build configuration list for PBXNativeTarget "mediapipe-render-core-gpuimagemacros" */;
 			buildPhases = (
-				73F0E8C7E97BD3B800000000 /* build //mediapipe/render/ios:OlaRenderDevelopFramework */,
+				7B6E13EDF034DD3B00000001 /* build //mediapipe/render/core:gpuimagemacros */,
 			);
 			buildRules = (
 			);
 			dependencies = (
-				2557965D61E7E71B00000000 /* PBXTargetDependency */,
+				ADCF009E1BF35CBD00000000 /* PBXTargetDependency */,
+			);
+			name = "mediapipe-render-core-gpuimagemacros";
+			productName = "mediapipe-render-core-gpuimagemacros";
+			productReference = 84117391C0ECB89C00000000 /* libmediapipe-render-core-gpuimagemacros.a */;
+			productType = "com.apple.product-type.library.static";
+		};
+		9CE83D6E4C5AE10800000000 /* core-ios */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 56B3177183B5A12700000000 /* Build configuration list for PBXNativeTarget "core-ios" */;
+			buildPhases = (
+				7B6E13ED489A80AB00000000 /* build //mediapipe/render/core:core-ios */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				ADCF009E1BF35CBD00000000 /* PBXTargetDependency */,
+			);
+			name = "core-ios";
+			productName = "core-ios";
+			productReference = 84117391BC93AF6400000000 /* libcore-ios.a */;
+			productType = "com.apple.product-type.library.static";
+		};
+		9CE83D6E5B65349A00000000 /* gpuimagemath */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 56B317711FD048A000000000 /* Build configuration list for PBXNativeTarget "gpuimagemath" */;
+			buildPhases = (
+				7B6E13ED5F5782DC00000000 /* build //mediapipe/render/core:gpuimagemath */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				ADCF009E1BF35CBD00000000 /* PBXTargetDependency */,
+			);
+			name = gpuimagemath;
+			productName = gpuimagemath;
+			productReference = 841173910CA5D55A00000000 /* libgpuimagemath.a */;
+			productType = "com.apple.product-type.library.static";
+		};
+		9CE83D6E82B3DFA800000000 /* ref */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 56B31771AD94878000000000 /* Build configuration list for PBXNativeTarget "ref" */;
+			buildPhases = (
+				7B6E13EDE94438F300000001 /* build //mediapipe/render/core:ref */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				ADCF009E1BF35CBD00000000 /* PBXTargetDependency */,
+			);
+			name = ref;
+			productName = ref;
+			productReference = 84117391399F130600000000 /* libref.a */;
+			productType = "com.apple.product-type.library.static";
+		};
+		9CE83D6E877B833600000000 /* gpuimagemacros */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 56B31771DEBD835200000000 /* Build configuration list for PBXNativeTarget "gpuimagemacros" */;
+			buildPhases = (
+				7B6E13EDF034DD3B00000000 /* build //mediapipe/render/core:gpuimagemacros */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				ADCF009E1BF35CBD00000000 /* PBXTargetDependency */,
+			);
+			name = gpuimagemacros;
+			productName = gpuimagemacros;
+			productReference = 84117391A501711A00000000 /* libgpuimagemacros.a */;
+			productType = "com.apple.product-type.library.static";
+		};
+		9CE83D6E9210CC7200000000 /* _idx_math_744D87CF_ios_min15.5 */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 56B31771A274AF7F00000000 /* Build configuration list for PBXNativeTarget "_idx_math_744D87CF_ios_min15.5" */;
+			buildPhases = (
+				01D6522E0000000000000005 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				ADCF009E1BF35CBD00000000 /* PBXTargetDependency */,
+			);
+			name = _idx_math_744D87CF_ios_min15.5;
+			productName = _idx_math_744D87CF_ios_min15.5;
+			productReference = 84117391870C42A400000000 /* lib_idx_math_744D87CF_ios_min15.5.a */;
+			productType = "com.apple.product-type.library.static";
+		};
+		9CE83D6EA18FFB5E00000000 /* OlaRenderDevelopFramework */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 56B3177129DABDB900000000 /* Build configuration list for PBXNativeTarget "OlaRenderDevelopFramework" */;
+			buildPhases = (
+				7B6E13ED5EC990AF00000000 /* build //mediapipe/render/ios:OlaRenderDevelopFramework */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				ADCF009E1BF35CBD00000000 /* PBXTargetDependency */,
 			);
 			name = OlaRenderDevelopFramework;
 			productName = OlaRenderDevelopFramework;
-			productReference = BE83F2607ECF732C00000000 /* OlaRenderDevelopFramework.framework */;
+			productReference = 84117391513D613E00000000 /* OlaRenderDevelopFramework.framework */;
 			productType = "com.apple.product-type.framework";
 		};
-		60974006EE42527000000000 /* _idx_math_702C098E_ios_min11.0 */ = {
+		9CE83D6EAD9FE3CC00000000 /* mediapipe-render-core-core */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = BA35A3F6759537C100000000 /* Build configuration list for PBXNativeTarget "_idx_math_702C098E_ios_min11.0" */;
+			buildConfigurationList = 56B3177156CB885D00000000 /* Build configuration list for PBXNativeTarget "mediapipe-render-core-core" */;
 			buildPhases = (
-				FF659C6C0000000000000002 /* Sources */,
+				7B6E13ED1F6C3DC700000001 /* build //mediapipe/render/core:core */,
 			);
 			buildRules = (
 			);
 			dependencies = (
-				2557965D61E7E71B00000000 /* PBXTargetDependency */,
+				ADCF009E1BF35CBD00000000 /* PBXTargetDependency */,
 			);
-			name = _idx_math_702C098E_ios_min11.0;
-			productName = _idx_math_702C098E_ios_min11.0;
-			productReference = BE83F2603D01E23E00000000 /* lib_idx_math_702C098E_ios_min11.0.a */;
+			name = "mediapipe-render-core-core";
+			productName = "mediapipe-render-core-core";
+			productReference = 84117391137D926E00000000 /* libmediapipe-render-core-core.a */;
+			productType = "com.apple.product-type.library.static";
+		};
+		9CE83D6EC213727E00000000 /* mediapipe-render-core-gpuimageutil */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 56B31771B82E927700000000 /* Build configuration list for PBXNativeTarget "mediapipe-render-core-gpuimageutil" */;
+			buildPhases = (
+				7B6E13ED0C81580300000001 /* build //mediapipe/render/core:gpuimageutil */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				ADCF009E1BF35CBD00000000 /* PBXTargetDependency */,
+			);
+			name = "mediapipe-render-core-gpuimageutil";
+			productName = "mediapipe-render-core-gpuimageutil";
+			productReference = 84117391608F147400000000 /* libmediapipe-render-core-gpuimageutil.a */;
+			productType = "com.apple.product-type.library.static";
+		};
+		9CE83D6EE4F20AFA00000000 /* _idx_ref_gpuimagemath_gpuimageutil_66945799_ios_min11.0 */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 56B3177112349BCE00000000 /* Build configuration list for PBXNativeTarget "_idx_ref_gpuimagemath_gpuimageutil_66945799_ios_min11.0" */;
+			buildPhases = (
+				01D6522E0000000000000001 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				ADCF009E1BF35CBD00000000 /* PBXTargetDependency */,
+			);
+			name = _idx_ref_gpuimagemath_gpuimageutil_66945799_ios_min11.0;
+			productName = _idx_ref_gpuimagemath_gpuimageutil_66945799_ios_min11.0;
+			productReference = 84117391E9B94ADE00000000 /* lib_idx_ref_gpuimagemath_gpuimageutil_66945799_ios_min11.0.a */;
+			productType = "com.apple.product-type.library.static";
+		};
+		9CE83D6EE606617600000000 /* mediapipe-render-core-ref */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 56B31771BB533E7D00000000 /* Build configuration list for PBXNativeTarget "mediapipe-render-core-ref" */;
+			buildPhases = (
+				7B6E13EDE94438F300000000 /* build //mediapipe/render/core:ref */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				ADCF009E1BF35CBD00000000 /* PBXTargetDependency */,
+			);
+			name = "mediapipe-render-core-ref";
+			productName = "mediapipe-render-core-ref";
+			productReference = 8411739196B3017800000000 /* libmediapipe-render-core-ref.a */;
+			productType = "com.apple.product-type.library.static";
+		};
+		9CE83D6EF5EB250800000000 /* mediapipe-render-core-gpuimagemath */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 56B31771083E369B00000000 /* Build configuration list for PBXNativeTarget "mediapipe-render-core-gpuimagemath" */;
+			buildPhases = (
+				7B6E13ED5F5782DC00000001 /* build //mediapipe/render/core:gpuimagemath */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				ADCF009E1BF35CBD00000000 /* PBXTargetDependency */,
+			);
+			name = "mediapipe-render-core-gpuimagemath";
+			productName = "mediapipe-render-core-gpuimagemath";
+			productReference = 841173913E63C5D400000000 /* libmediapipe-render-core-gpuimagemath.a */;
+			productType = "com.apple.product-type.library.static";
+		};
+		9CE83D6EF9ED3BAE00000000 /* gpuimageutil */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 56B317711804B95000000000 /* Build configuration list for PBXNativeTarget "gpuimageutil" */;
+			buildPhases = (
+				7B6E13ED0C81580300000000 /* build //mediapipe/render/core:gpuimageutil */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				ADCF009E1BF35CBD00000000 /* PBXTargetDependency */,
+			);
+			name = gpuimageutil;
+			productName = gpuimageutil;
+			productReference = 841173911FEA6FAA00000000 /* libgpuimageutil.a */;
 			productType = "com.apple.product-type.library.static";
 		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
-		82C5998AA8C9888400000000 /* Project object */ = {
+		B53CA7A33A8DB20A00000000 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
 				LastSwiftUpdateCheck = 0710;
 				LastUpgradeCheck = 1000;
 			};
-			buildConfigurationList = BA35A3F678E35B6B00000000 /* Build configuration list for PBXProject "OlaVideo" */;
+			buildConfigurationList = 56B317714F508F6A00000000 /* Build configuration list for PBXProject "OlaVideo" */;
 			compatibilityVersion = "Xcode 3.2";
 			developmentRegion = English;
 			hasScannedForEncodings = 0;
 			knownRegions = (
 				en,
 			);
-			mainGroup = C84737C175BCB0A500000000 /* mainGroup */;
+			mainGroup = DAE25C894782A6F700000000 /* mainGroup */;
 			targets = (
-				60974006CD5CD7AC00000000 /* OlaRenderDevelopFramework */,
-				005FF21761E7E71A00000000 /* _bazel_clean_ */,
-				60974006872FED6400000000 /* _idx_core_F3E5C6E5_ios_min11.0 */,
-				609740068115297A00000000 /* _idx_core_F3E5C6E5_ios_min15.5 */,
-				60974006EE42527000000000 /* _idx_math_702C098E_ios_min11.0 */,
-				609740065CF3050A00000000 /* _idx_math_702C098E_ios_min15.5 */,
-				6097400656E721E400000000 /* _idx_ref_gpuimagemath_gpuimageutil_8DCE756C_ios_min11.0 */,
-				60974006A1CF146A00000000 /* _idx_ref_gpuimagemath_gpuimageutil_8DCE756C_ios_min15.5 */,
-				6097400654A872A400000000 /* mediapipe-render-ios-OlaRenderDevelop */,
+				9CE83D6EA18FFB5E00000000 /* OlaRenderDevelopFramework */,
+				C78506BA1BF35CBC00000000 /* _bazel_clean_ */,
+				9CE83D6E3AA80DFA00000000 /* _idx_core_core-ios_8391CBD4_ios_min11.0 */,
+				9CE83D6E4304108C00000000 /* _idx_core_core-ios_8391CBD4_ios_min15.5 */,
+				9CE83D6E9210CC7200000000 /* _idx_math_744D87CF_ios_min15.5 */,
+				9CE83D6E00B3488A00000000 /* _idx_math_OlaRenderPlayground_0128C2B8_ios_min11.0 */,
+				9CE83D6EE4F20AFA00000000 /* _idx_ref_gpuimagemath_gpuimageutil_66945799_ios_min11.0 */,
+				9CE83D6E2B4174EC00000000 /* _idx_ref_gpuimagemath_gpuimageutil_66945799_ios_min15.5 */,
+				9CE83D6E00285A8200000000 /* core */,
+				9CE83D6E4C5AE10800000000 /* core-ios */,
+				9CE83D6E877B833600000000 /* gpuimagemacros */,
+				9CE83D6E5B65349A00000000 /* gpuimagemath */,
+				9CE83D6EF9ED3BAE00000000 /* gpuimageutil */,
+				9CE83D6EAD9FE3CC00000000 /* mediapipe-render-core-core */,
+				9CE83D6E2F7665B800000000 /* mediapipe-render-core-core-ios */,
+				9CE83D6E4A82D9F400000000 /* mediapipe-render-core-gpuimagemacros */,
+				9CE83D6EF5EB250800000000 /* mediapipe-render-core-gpuimagemath */,
+				9CE83D6EC213727E00000000 /* mediapipe-render-core-gpuimageutil */,
+				9CE83D6EE606617600000000 /* mediapipe-render-core-ref */,
+				9CE83D6E82B3DFA800000000 /* ref */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXShellScriptBuildPhase section */
-		73F0E8C73E33318400000000 /* build //mediapipe/render/ios:OlaRenderDevelop */ = {
+		7B6E13ED0C81580300000000 /* build //mediapipe/render/core:gpuimageutil */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 0;
 			files = (
@@ -526,15 +769,95 @@
 			inputPaths = (
 				"$(TARGET_BUILD_DIR)/$(INFOPLIST_PATH)",
 			);
-			name = "build //mediapipe/render/ios:OlaRenderDevelop";
+			name = "build //mediapipe/render/core:gpuimageutil";
 			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/bash;
-			shellScript = "set -e\ncd \"${SRCROOT}/../../..\"\nexec \"${PROJECT_FILE_PATH}/.tulsi/Scripts/bazel_build.py\" //mediapipe/render/ios:OlaRenderDevelop --bazel \"/opt/homebrew/Cellar/bazelisk/1.12.0/bin/bazelisk\" --bazel_bin_path \"bazel-bin\" --verbose ";
+			shellScript = "set -e\ncd \"${SRCROOT}/../../..\"\nexec \"${PROJECT_FILE_PATH}/.tulsi/Scripts/bazel_build.py\" //mediapipe/render/core:gpuimageutil --bazel \"/opt/homebrew/Cellar/bazelisk/1.12.0/bin/bazelisk\" --bazel_bin_path \"bazel-bin\" --verbose ";
 			showEnvVarsInLog = 1;
 		};
-		73F0E8C7E97BD3B800000000 /* build //mediapipe/render/ios:OlaRenderDevelopFramework */ = {
+		7B6E13ED0C81580300000001 /* build //mediapipe/render/core:gpuimageutil */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 0;
+			files = (
+			);
+			inputPaths = (
+				"$(TARGET_BUILD_DIR)/$(INFOPLIST_PATH)",
+			);
+			name = "build //mediapipe/render/core:gpuimageutil";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/bash;
+			shellScript = "set -e\ncd \"${SRCROOT}/../../..\"\nexec \"${PROJECT_FILE_PATH}/.tulsi/Scripts/bazel_build.py\" //mediapipe/render/core:gpuimageutil --bazel \"/opt/homebrew/Cellar/bazelisk/1.12.0/bin/bazelisk\" --bazel_bin_path \"bazel-bin\" --verbose ";
+			showEnvVarsInLog = 1;
+		};
+		7B6E13ED1F6C3DC700000000 /* build //mediapipe/render/core:core */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 0;
+			files = (
+			);
+			inputPaths = (
+				"$(TARGET_BUILD_DIR)/$(INFOPLIST_PATH)",
+			);
+			name = "build //mediapipe/render/core:core";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/bash;
+			shellScript = "set -e\ncd \"${SRCROOT}/../../..\"\nexec \"${PROJECT_FILE_PATH}/.tulsi/Scripts/bazel_build.py\" //mediapipe/render/core:core --bazel \"/opt/homebrew/Cellar/bazelisk/1.12.0/bin/bazelisk\" --bazel_bin_path \"bazel-bin\" --verbose ";
+			showEnvVarsInLog = 1;
+		};
+		7B6E13ED1F6C3DC700000001 /* build //mediapipe/render/core:core */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 0;
+			files = (
+			);
+			inputPaths = (
+				"$(TARGET_BUILD_DIR)/$(INFOPLIST_PATH)",
+			);
+			name = "build //mediapipe/render/core:core";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/bash;
+			shellScript = "set -e\ncd \"${SRCROOT}/../../..\"\nexec \"${PROJECT_FILE_PATH}/.tulsi/Scripts/bazel_build.py\" //mediapipe/render/core:core --bazel \"/opt/homebrew/Cellar/bazelisk/1.12.0/bin/bazelisk\" --bazel_bin_path \"bazel-bin\" --verbose ";
+			showEnvVarsInLog = 1;
+		};
+		7B6E13ED489A80AB00000000 /* build //mediapipe/render/core:core-ios */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 0;
+			files = (
+			);
+			inputPaths = (
+				"$(TARGET_BUILD_DIR)/$(INFOPLIST_PATH)",
+			);
+			name = "build //mediapipe/render/core:core-ios";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/bash;
+			shellScript = "set -e\ncd \"${SRCROOT}/../../..\"\nexec \"${PROJECT_FILE_PATH}/.tulsi/Scripts/bazel_build.py\" //mediapipe/render/core:core-ios --bazel \"/opt/homebrew/Cellar/bazelisk/1.12.0/bin/bazelisk\" --bazel_bin_path \"bazel-bin\" --verbose ";
+			showEnvVarsInLog = 1;
+		};
+		7B6E13ED489A80AB00000001 /* build //mediapipe/render/core:core-ios */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 0;
+			files = (
+			);
+			inputPaths = (
+				"$(TARGET_BUILD_DIR)/$(INFOPLIST_PATH)",
+			);
+			name = "build //mediapipe/render/core:core-ios";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/bash;
+			shellScript = "set -e\ncd \"${SRCROOT}/../../..\"\nexec \"${PROJECT_FILE_PATH}/.tulsi/Scripts/bazel_build.py\" //mediapipe/render/core:core-ios --bazel \"/opt/homebrew/Cellar/bazelisk/1.12.0/bin/bazelisk\" --bazel_bin_path \"bazel-bin\" --verbose ";
+			showEnvVarsInLog = 1;
+		};
+		7B6E13ED5EC990AF00000000 /* build //mediapipe/render/ios:OlaRenderDevelopFramework */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 0;
 			files = (
@@ -550,118 +873,243 @@
 			shellScript = "set -e\ncd \"${SRCROOT}/../../..\"\nexec \"${PROJECT_FILE_PATH}/.tulsi/Scripts/bazel_build.py\" //mediapipe/render/ios:OlaRenderDevelopFramework --bazel \"/opt/homebrew/Cellar/bazelisk/1.12.0/bin/bazelisk\" --bazel_bin_path \"bazel-bin\" --verbose ";
 			showEnvVarsInLog = 1;
 		};
+		7B6E13ED5F5782DC00000000 /* build //mediapipe/render/core:gpuimagemath */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 0;
+			files = (
+			);
+			inputPaths = (
+				"$(TARGET_BUILD_DIR)/$(INFOPLIST_PATH)",
+			);
+			name = "build //mediapipe/render/core:gpuimagemath";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/bash;
+			shellScript = "set -e\ncd \"${SRCROOT}/../../..\"\nexec \"${PROJECT_FILE_PATH}/.tulsi/Scripts/bazel_build.py\" //mediapipe/render/core:gpuimagemath --bazel \"/opt/homebrew/Cellar/bazelisk/1.12.0/bin/bazelisk\" --bazel_bin_path \"bazel-bin\" --verbose ";
+			showEnvVarsInLog = 1;
+		};
+		7B6E13ED5F5782DC00000001 /* build //mediapipe/render/core:gpuimagemath */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 0;
+			files = (
+			);
+			inputPaths = (
+				"$(TARGET_BUILD_DIR)/$(INFOPLIST_PATH)",
+			);
+			name = "build //mediapipe/render/core:gpuimagemath";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/bash;
+			shellScript = "set -e\ncd \"${SRCROOT}/../../..\"\nexec \"${PROJECT_FILE_PATH}/.tulsi/Scripts/bazel_build.py\" //mediapipe/render/core:gpuimagemath --bazel \"/opt/homebrew/Cellar/bazelisk/1.12.0/bin/bazelisk\" --bazel_bin_path \"bazel-bin\" --verbose ";
+			showEnvVarsInLog = 1;
+		};
+		7B6E13EDE94438F300000000 /* build //mediapipe/render/core:ref */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 0;
+			files = (
+			);
+			inputPaths = (
+				"$(TARGET_BUILD_DIR)/$(INFOPLIST_PATH)",
+			);
+			name = "build //mediapipe/render/core:ref";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/bash;
+			shellScript = "set -e\ncd \"${SRCROOT}/../../..\"\nexec \"${PROJECT_FILE_PATH}/.tulsi/Scripts/bazel_build.py\" //mediapipe/render/core:ref --bazel \"/opt/homebrew/Cellar/bazelisk/1.12.0/bin/bazelisk\" --bazel_bin_path \"bazel-bin\" --verbose ";
+			showEnvVarsInLog = 1;
+		};
+		7B6E13EDE94438F300000001 /* build //mediapipe/render/core:ref */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 0;
+			files = (
+			);
+			inputPaths = (
+				"$(TARGET_BUILD_DIR)/$(INFOPLIST_PATH)",
+			);
+			name = "build //mediapipe/render/core:ref";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/bash;
+			shellScript = "set -e\ncd \"${SRCROOT}/../../..\"\nexec \"${PROJECT_FILE_PATH}/.tulsi/Scripts/bazel_build.py\" //mediapipe/render/core:ref --bazel \"/opt/homebrew/Cellar/bazelisk/1.12.0/bin/bazelisk\" --bazel_bin_path \"bazel-bin\" --verbose ";
+			showEnvVarsInLog = 1;
+		};
+		7B6E13EDF034DD3B00000000 /* build //mediapipe/render/core:gpuimagemacros */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 0;
+			files = (
+			);
+			inputPaths = (
+				"$(TARGET_BUILD_DIR)/$(INFOPLIST_PATH)",
+			);
+			name = "build //mediapipe/render/core:gpuimagemacros";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/bash;
+			shellScript = "set -e\ncd \"${SRCROOT}/../../..\"\nexec \"${PROJECT_FILE_PATH}/.tulsi/Scripts/bazel_build.py\" //mediapipe/render/core:gpuimagemacros --bazel \"/opt/homebrew/Cellar/bazelisk/1.12.0/bin/bazelisk\" --bazel_bin_path \"bazel-bin\" --verbose ";
+			showEnvVarsInLog = 1;
+		};
+		7B6E13EDF034DD3B00000001 /* build //mediapipe/render/core:gpuimagemacros */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 0;
+			files = (
+			);
+			inputPaths = (
+				"$(TARGET_BUILD_DIR)/$(INFOPLIST_PATH)",
+			);
+			name = "build //mediapipe/render/core:gpuimagemacros";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/bash;
+			shellScript = "set -e\ncd \"${SRCROOT}/../../..\"\nexec \"${PROJECT_FILE_PATH}/.tulsi/Scripts/bazel_build.py\" //mediapipe/render/core:gpuimagemacros --bazel \"/opt/homebrew/Cellar/bazelisk/1.12.0/bin/bazelisk\" --bazel_bin_path \"bazel-bin\" --verbose ";
+			showEnvVarsInLog = 1;
+		};
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
-		FF659C6C0000000000000000 /* Sources */ = {
+		01D6522E0000000000000000 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 0;
 			files = (
-				77C791EB61D3917E00000000 /* FramebufferCache.cpp in core */,
-				77C791EBA47EBDE800000000 /* Framebuffer.cpp in core */,
-				77C791EB22880F3900000000 /* Target.cpp in core */,
-				77C791EBEBB084D800000000 /* Context.cpp in core */,
-				77C791EB0EBACD2000000000 /* Filter.cpp in core */,
-				77C791EBA89FC39300000000 /* GLProgram.cpp in core */,
-				77C791EBD0BDD41A00000000 /* Source.cpp in core */,
-				77C791EB75F4B57700000000 /* SourceImage.cpp in core */,
-				77C791EBA565F13900000000 /* IOSTarget.cpp in core */,
-				77C791EB565883CD00000000 /* SourceCamera.cpp in core */,
-				77C791EBD09E347800000000 /* TargetView.cpp in core */,
-				77C791EB46414E3200000000 /* FilterGroup.cpp in core */,
+				A4C4B9A0E000B5E300000000 /* FramebufferCache.cpp in core */,
+				A4C4B9A0FDA2AAB000000000 /* Framebuffer.cpp in core */,
+				A4C4B9A0940C901E00000000 /* Target.cpp in core */,
+				A4C4B9A02B327FEC00000000 /* Context.cpp in core */,
+				A4C4B9A0D5BB249300000000 /* Filter.cpp in core */,
+				A4C4B9A0358F769C00000000 /* GLProgram.cpp in core */,
+				A4C4B9A0583E698800000000 /* Source.cpp in core */,
+				A4C4B9A0F654002F00000000 /* SourceImage.cpp in core */,
+				A4C4B9A03E11734F00000000 /* IOSTarget.cpp in core */,
+				A4C4B9A09DD0700600000000 /* SourceCamera.cpp in core */,
+				A4C4B9A05549DC6700000000 /* TargetView.cpp in core */,
+				A4C4B9A014E2297900000000 /* FilterGroup.cpp in core */,
+				A4C4B9A0E000B5E300000001 /* FramebufferCache.cpp in core */,
+				A4C4B9A0FDA2AAB000000001 /* Framebuffer.cpp in core */,
+				A4C4B9A0940C901E00000001 /* Target.cpp in core */,
+				A4C4B9A02B327FEC00000001 /* Context.cpp in core */,
+				A4C4B9A0D5BB249300000001 /* Filter.cpp in core */,
+				A4C4B9A0358F769C00000001 /* GLProgram.cpp in core */,
+				A4C4B9A0583E698800000001 /* Source.cpp in core */,
+				A4C4B9A0F654002F00000001 /* SourceImage.cpp in core */,
+				A4C4B9A03E11734F00000001 /* IOSTarget.cpp in core */,
+				A4C4B9A09DD0700600000001 /* SourceCamera.cpp in core */,
+				A4C4B9A05549DC6700000001 /* TargetView.cpp in core */,
+				A4C4B9A014E2297900000001 /* FilterGroup.cpp in core */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		FF659C6C0000000000000001 /* Sources */ = {
+		01D6522E0000000000000001 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 0;
 			files = (
-				77C791EB4625777700000000 /* Ref.cpp in core */,
-				77C791EB5B873D5000000000 /* math.cpp in core */,
-				77C791EB78D3B78100000000 /* GPUImageUtil.cpp in core */,
+				A4C4B9A0448E4EFA00000000 /* Ref.cpp in core */,
+				A4C4B9A0844681E700000000 /* math.cpp in core */,
+				A4C4B9A0943E14F100000000 /* GPUImageUtil.cpp in core */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		FF659C6C0000000000000002 /* Sources */ = {
+		01D6522E0000000000000002 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 0;
 			files = (
-				77C791EB2414E52E00000000 /* mat4.cpp in math */,
-				77C791EB7F32F9BA00000000 /* math_utils.cpp in math */,
-				77C791EBA7FA713900000000 /* vec2.cpp in math */,
-				77C791EBFF778F3400000000 /* vec3.cpp in math */,
-				77C791EB09E0EF9900000000 /* vec4.cpp in math */,
+				A4C4B9A0EB5C647F00000000 /* mat4.cpp in math */,
+				A4C4B9A0BFC9FC5900000000 /* math_utils.cpp in math */,
+				A4C4B9A0A5059F2F00000000 /* vec2.cpp in math */,
+				A4C4B9A0C4AFB30800000000 /* vec3.cpp in math */,
+				A4C4B9A0558EE76A00000000 /* vec4.cpp in math */,
+				A4C4B9A02D93015300000000 /* OlaRenderPlayground.mm in ios */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		FF659C6C0000000000000003 /* Sources */ = {
+		01D6522E0000000000000003 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 0;
 			files = (
-				77C791EB61D3917E00000001 /* FramebufferCache.cpp in core */,
-				77C791EBA47EBDE800000001 /* Framebuffer.cpp in core */,
-				77C791EB22880F3900000001 /* Target.cpp in core */,
-				77C791EBEBB084D800000001 /* Context.cpp in core */,
-				77C791EB0EBACD2000000001 /* Filter.cpp in core */,
-				77C791EBA89FC39300000001 /* GLProgram.cpp in core */,
-				77C791EBD0BDD41A00000001 /* Source.cpp in core */,
-				77C791EB75F4B57700000001 /* SourceImage.cpp in core */,
-				77C791EBA565F13900000001 /* IOSTarget.cpp in core */,
-				77C791EB565883CD00000001 /* SourceCamera.cpp in core */,
-				77C791EBD09E347800000001 /* TargetView.cpp in core */,
-				77C791EB46414E3200000001 /* FilterGroup.cpp in core */,
+				A4C4B9A0E000B5E300000002 /* FramebufferCache.cpp in core */,
+				A4C4B9A0FDA2AAB000000002 /* Framebuffer.cpp in core */,
+				A4C4B9A0940C901E00000002 /* Target.cpp in core */,
+				A4C4B9A02B327FEC00000002 /* Context.cpp in core */,
+				A4C4B9A0D5BB249300000002 /* Filter.cpp in core */,
+				A4C4B9A0358F769C00000002 /* GLProgram.cpp in core */,
+				A4C4B9A0583E698800000002 /* Source.cpp in core */,
+				A4C4B9A0F654002F00000002 /* SourceImage.cpp in core */,
+				A4C4B9A03E11734F00000002 /* IOSTarget.cpp in core */,
+				A4C4B9A09DD0700600000002 /* SourceCamera.cpp in core */,
+				A4C4B9A05549DC6700000002 /* TargetView.cpp in core */,
+				A4C4B9A014E2297900000002 /* FilterGroup.cpp in core */,
+				A4C4B9A0E000B5E300000003 /* FramebufferCache.cpp in core */,
+				A4C4B9A0FDA2AAB000000003 /* Framebuffer.cpp in core */,
+				A4C4B9A0940C901E00000003 /* Target.cpp in core */,
+				A4C4B9A02B327FEC00000003 /* Context.cpp in core */,
+				A4C4B9A0D5BB249300000003 /* Filter.cpp in core */,
+				A4C4B9A0358F769C00000003 /* GLProgram.cpp in core */,
+				A4C4B9A0583E698800000003 /* Source.cpp in core */,
+				A4C4B9A0F654002F00000003 /* SourceImage.cpp in core */,
+				A4C4B9A03E11734F00000003 /* IOSTarget.cpp in core */,
+				A4C4B9A09DD0700600000003 /* SourceCamera.cpp in core */,
+				A4C4B9A05549DC6700000003 /* TargetView.cpp in core */,
+				A4C4B9A014E2297900000003 /* FilterGroup.cpp in core */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		FF659C6C0000000000000004 /* Sources */ = {
+		01D6522E0000000000000004 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 0;
 			files = (
-				77C791EB2414E52E00000001 /* mat4.cpp in math */,
-				77C791EB7F32F9BA00000001 /* math_utils.cpp in math */,
-				77C791EBA7FA713900000001 /* vec2.cpp in math */,
-				77C791EBFF778F3400000001 /* vec3.cpp in math */,
-				77C791EB09E0EF9900000001 /* vec4.cpp in math */,
+				A4C4B9A0448E4EFA00000001 /* Ref.cpp in core */,
+				A4C4B9A0844681E700000001 /* math.cpp in core */,
+				A4C4B9A0943E14F100000001 /* GPUImageUtil.cpp in core */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		FF659C6C0000000000000005 /* Sources */ = {
+		01D6522E0000000000000005 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 0;
 			files = (
-				77C791EB4625777700000001 /* Ref.cpp in core */,
-				77C791EB5B873D5000000001 /* math.cpp in core */,
-				77C791EB78D3B78100000001 /* GPUImageUtil.cpp in core */,
+				A4C4B9A0EB5C647F00000001 /* mat4.cpp in math */,
+				A4C4B9A0BFC9FC5900000001 /* math_utils.cpp in math */,
+				A4C4B9A0A5059F2F00000001 /* vec2.cpp in math */,
+				A4C4B9A0C4AFB30800000001 /* vec3.cpp in math */,
+				A4C4B9A0558EE76A00000001 /* vec4.cpp in math */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
-		2557965D56E721E500000000 /* PBXTargetDependency */ = {
+		ADCF009E00B3488B00000000 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			targetProxy = 0EEB35C156E721E500000000 /* PBXContainerItemProxy */;
+			targetProxy = 719AB4A400B3488B00000000 /* PBXContainerItemProxy */;
 		};
-		2557965D5CF3050B00000000 /* PBXTargetDependency */ = {
+		ADCF009E1BF35CBD00000000 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			targetProxy = 0EEB35C15CF3050B00000000 /* PBXContainerItemProxy */;
+			targetProxy = 719AB4A41BF35CBD00000000 /* PBXContainerItemProxy */;
 		};
-		2557965D61E7E71B00000000 /* PBXTargetDependency */ = {
+		ADCF009E2B4174ED00000000 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			targetProxy = 0EEB35C161E7E71B00000000 /* PBXContainerItemProxy */;
+			targetProxy = 719AB4A42B4174ED00000000 /* PBXContainerItemProxy */;
 		};
-		2557965DA1CF146B00000000 /* PBXTargetDependency */ = {
+		ADCF009E3AA80DFB00000000 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			targetProxy = 0EEB35C1A1CF146B00000000 /* PBXContainerItemProxy */;
+			targetProxy = 719AB4A43AA80DFB00000000 /* PBXContainerItemProxy */;
 		};
-		2557965DEE42527100000000 /* PBXTargetDependency */ = {
+		ADCF009E9210CC7300000000 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			targetProxy = 0EEB35C1EE42527100000000 /* PBXContainerItemProxy */;
+			targetProxy = 719AB4A49210CC7300000000 /* PBXContainerItemProxy */;
+		};
+		ADCF009EE4F20AFB00000000 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			targetProxy = 719AB4A4E4F20AFB00000000 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
-		7E41376205236FF600000000 /* __TulsiTestRunner_Release */ = {
+		BBE2A1FE19F2C0EE00000000 /* __TulsiTestRunner_Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -705,7 +1153,7 @@
 			};
 			name = __TulsiTestRunner_Release;
 		};
-		7E41376205236FF600000001 /* __TulsiTestRunner_Release */ = {
+		BBE2A1FE19F2C0EE00000001 /* __TulsiTestRunner_Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = "Stub Launch Image";
@@ -730,11 +1178,11 @@
 			};
 			name = __TulsiTestRunner_Release;
 		};
-		7E41376205236FF600000002 /* __TulsiTestRunner_Release */ = {
+		BBE2A1FE19F2C0EE00000002 /* __TulsiTestRunner_Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = "Stub Launch Image";
-				BAZEL_TARGET = "//mediapipe/render/ios:OlaRenderDevelop";
+				BAZEL_TARGET = "//mediapipe/render/core:core";
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				FRAMEWORK_SEARCH_PATHS = "";
 				GCC_PREPROCESSOR_DEFINITIONS = "NDEBUG=1";
@@ -745,16 +1193,963 @@
 				OTHER_CFLAGS = "--version";
 				OTHER_LDFLAGS = "--version";
 				OTHER_SWIFT_FLAGS = "--version";
-				PRODUCT_NAME = "mediapipe-render-ios-OlaRenderDevelop";
+				PRODUCT_NAME = core;
+				SDKROOT = iphoneos;
+				SWIFT_INSTALL_OBJC_HEADER = NO;
+				SWIFT_OBJC_INTERFACE_HEADER_NAME = "$(PRODUCT_NAME).h";
+				TULSI_BUILD_PATH = mediapipe/render/core;
+				TULSI_XCODE_VERSION = 13.4.1.13F100;
+			};
+			name = __TulsiTestRunner_Release;
+		};
+		BBE2A1FE19F2C0EE00000003 /* __TulsiTestRunner_Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = "Stub Launch Image";
+				BAZEL_TARGET = "//mediapipe/render/core:core-ios";
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				FRAMEWORK_SEARCH_PATHS = "";
+				GCC_PREPROCESSOR_DEFINITIONS = "NDEBUG=1";
+				HEADER_SEARCH_PATHS = "";
+				INFOPLIST_FILE = "${PROJECT_FILE_PATH}/.tulsi/Resources/StubInfoPlist.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
+				ONLY_ACTIVE_ARCH = YES;
+				OTHER_CFLAGS = "--version";
+				OTHER_LDFLAGS = "--version";
+				OTHER_SWIFT_FLAGS = "--version";
+				PRODUCT_NAME = "core-ios";
+				SDKROOT = iphoneos;
+				SWIFT_INSTALL_OBJC_HEADER = NO;
+				SWIFT_OBJC_INTERFACE_HEADER_NAME = "$(PRODUCT_NAME).h";
+				TULSI_BUILD_PATH = mediapipe/render/core;
+				TULSI_XCODE_VERSION = 13.4.1.13F100;
+			};
+			name = __TulsiTestRunner_Release;
+		};
+		BBE2A1FE19F2C0EE00000004 /* __TulsiTestRunner_Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = "Stub Launch Image";
+				BAZEL_TARGET = "//mediapipe/render/core:gpuimagemacros";
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				FRAMEWORK_SEARCH_PATHS = "";
+				GCC_PREPROCESSOR_DEFINITIONS = "NDEBUG=1";
+				HEADER_SEARCH_PATHS = "";
+				INFOPLIST_FILE = "${PROJECT_FILE_PATH}/.tulsi/Resources/StubInfoPlist.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
+				ONLY_ACTIVE_ARCH = YES;
+				OTHER_CFLAGS = "--version";
+				OTHER_LDFLAGS = "--version";
+				OTHER_SWIFT_FLAGS = "--version";
+				PRODUCT_NAME = gpuimagemacros;
+				SDKROOT = iphoneos;
+				SWIFT_INSTALL_OBJC_HEADER = NO;
+				SWIFT_OBJC_INTERFACE_HEADER_NAME = "$(PRODUCT_NAME).h";
+				TULSI_BUILD_PATH = mediapipe/render/core;
+				TULSI_XCODE_VERSION = 13.4.1.13F100;
+			};
+			name = __TulsiTestRunner_Release;
+		};
+		BBE2A1FE19F2C0EE00000005 /* __TulsiTestRunner_Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = "Stub Launch Image";
+				BAZEL_TARGET = "//mediapipe/render/core:gpuimagemath";
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				FRAMEWORK_SEARCH_PATHS = "";
+				GCC_PREPROCESSOR_DEFINITIONS = "NDEBUG=1";
+				HEADER_SEARCH_PATHS = "";
+				INFOPLIST_FILE = "${PROJECT_FILE_PATH}/.tulsi/Resources/StubInfoPlist.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 15.5;
+				ONLY_ACTIVE_ARCH = YES;
+				OTHER_CFLAGS = "--version";
+				OTHER_LDFLAGS = "--version";
+				OTHER_SWIFT_FLAGS = "--version";
+				PRODUCT_NAME = gpuimagemath;
+				SDKROOT = iphoneos;
+				SWIFT_INSTALL_OBJC_HEADER = NO;
+				SWIFT_OBJC_INTERFACE_HEADER_NAME = "$(PRODUCT_NAME).h";
+				TULSI_BUILD_PATH = mediapipe/render/core;
+				TULSI_XCODE_VERSION = 13.4.1.13F100;
+			};
+			name = __TulsiTestRunner_Release;
+		};
+		BBE2A1FE19F2C0EE00000006 /* __TulsiTestRunner_Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = "Stub Launch Image";
+				BAZEL_TARGET = "//mediapipe/render/core:gpuimageutil";
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				FRAMEWORK_SEARCH_PATHS = "";
+				GCC_PREPROCESSOR_DEFINITIONS = "NDEBUG=1";
+				HEADER_SEARCH_PATHS = "";
+				INFOPLIST_FILE = "${PROJECT_FILE_PATH}/.tulsi/Resources/StubInfoPlist.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
+				ONLY_ACTIVE_ARCH = YES;
+				OTHER_CFLAGS = "--version";
+				OTHER_LDFLAGS = "--version";
+				OTHER_SWIFT_FLAGS = "--version";
+				PRODUCT_NAME = gpuimageutil;
+				SDKROOT = iphoneos;
+				SWIFT_INSTALL_OBJC_HEADER = NO;
+				SWIFT_OBJC_INTERFACE_HEADER_NAME = "$(PRODUCT_NAME).h";
+				TULSI_BUILD_PATH = mediapipe/render/core;
+				TULSI_XCODE_VERSION = 13.4.1.13F100;
+			};
+			name = __TulsiTestRunner_Release;
+		};
+		BBE2A1FE19F2C0EE00000007 /* __TulsiTestRunner_Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = "Stub Launch Image";
+				BAZEL_TARGET = "//mediapipe/render/core:core";
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				FRAMEWORK_SEARCH_PATHS = "";
+				GCC_PREPROCESSOR_DEFINITIONS = "NDEBUG=1";
+				HEADER_SEARCH_PATHS = "";
+				INFOPLIST_FILE = "${PROJECT_FILE_PATH}/.tulsi/Resources/StubInfoPlist.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
+				ONLY_ACTIVE_ARCH = YES;
+				OTHER_CFLAGS = "--version";
+				OTHER_LDFLAGS = "--version";
+				OTHER_SWIFT_FLAGS = "--version";
+				PRODUCT_NAME = "mediapipe-render-core-core";
+				SDKROOT = iphoneos;
+				SWIFT_INSTALL_OBJC_HEADER = NO;
+				SWIFT_OBJC_INTERFACE_HEADER_NAME = "$(PRODUCT_NAME).h";
+				TULSI_BUILD_PATH = mediapipe/render/core;
+				TULSI_XCODE_VERSION = 13.4.1.13F100;
+			};
+			name = __TulsiTestRunner_Release;
+		};
+		BBE2A1FE19F2C0EE00000008 /* __TulsiTestRunner_Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = "Stub Launch Image";
+				BAZEL_TARGET = "//mediapipe/render/core:core-ios";
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				FRAMEWORK_SEARCH_PATHS = "";
+				GCC_PREPROCESSOR_DEFINITIONS = "NDEBUG=1";
+				HEADER_SEARCH_PATHS = "";
+				INFOPLIST_FILE = "${PROJECT_FILE_PATH}/.tulsi/Resources/StubInfoPlist.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 15.5;
+				ONLY_ACTIVE_ARCH = YES;
+				OTHER_CFLAGS = "--version";
+				OTHER_LDFLAGS = "--version";
+				OTHER_SWIFT_FLAGS = "--version";
+				PRODUCT_NAME = "mediapipe-render-core-core-ios";
+				SDKROOT = iphoneos;
+				SWIFT_INSTALL_OBJC_HEADER = NO;
+				SWIFT_OBJC_INTERFACE_HEADER_NAME = "$(PRODUCT_NAME).h";
+				TULSI_BUILD_PATH = mediapipe/render/core;
+				TULSI_XCODE_VERSION = 13.4.1.13F100;
+			};
+			name = __TulsiTestRunner_Release;
+		};
+		BBE2A1FE19F2C0EE00000009 /* __TulsiTestRunner_Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = "Stub Launch Image";
+				BAZEL_TARGET = "//mediapipe/render/core:gpuimagemacros";
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				FRAMEWORK_SEARCH_PATHS = "";
+				GCC_PREPROCESSOR_DEFINITIONS = "NDEBUG=1";
+				HEADER_SEARCH_PATHS = "";
+				INFOPLIST_FILE = "${PROJECT_FILE_PATH}/.tulsi/Resources/StubInfoPlist.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 15.5;
+				ONLY_ACTIVE_ARCH = YES;
+				OTHER_CFLAGS = "--version";
+				OTHER_LDFLAGS = "--version";
+				OTHER_SWIFT_FLAGS = "--version";
+				PRODUCT_NAME = "mediapipe-render-core-gpuimagemacros";
+				SDKROOT = iphoneos;
+				SWIFT_INSTALL_OBJC_HEADER = NO;
+				SWIFT_OBJC_INTERFACE_HEADER_NAME = "$(PRODUCT_NAME).h";
+				TULSI_BUILD_PATH = mediapipe/render/core;
+				TULSI_XCODE_VERSION = 13.4.1.13F100;
+			};
+			name = __TulsiTestRunner_Release;
+		};
+		BBE2A1FE19F2C0EE0000000A /* __TulsiTestRunner_Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = "Stub Launch Image";
+				BAZEL_TARGET = "//mediapipe/render/core:gpuimagemath";
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				FRAMEWORK_SEARCH_PATHS = "";
+				GCC_PREPROCESSOR_DEFINITIONS = "NDEBUG=1";
+				HEADER_SEARCH_PATHS = "";
+				INFOPLIST_FILE = "${PROJECT_FILE_PATH}/.tulsi/Resources/StubInfoPlist.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
+				ONLY_ACTIVE_ARCH = YES;
+				OTHER_CFLAGS = "--version";
+				OTHER_LDFLAGS = "--version";
+				OTHER_SWIFT_FLAGS = "--version";
+				PRODUCT_NAME = "mediapipe-render-core-gpuimagemath";
+				SDKROOT = iphoneos;
+				SWIFT_INSTALL_OBJC_HEADER = NO;
+				SWIFT_OBJC_INTERFACE_HEADER_NAME = "$(PRODUCT_NAME).h";
+				TULSI_BUILD_PATH = mediapipe/render/core;
+				TULSI_XCODE_VERSION = 13.4.1.13F100;
+			};
+			name = __TulsiTestRunner_Release;
+		};
+		BBE2A1FE19F2C0EE0000000B /* __TulsiTestRunner_Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = "Stub Launch Image";
+				BAZEL_TARGET = "//mediapipe/render/core:gpuimageutil";
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				FRAMEWORK_SEARCH_PATHS = "";
+				GCC_PREPROCESSOR_DEFINITIONS = "NDEBUG=1";
+				HEADER_SEARCH_PATHS = "";
+				INFOPLIST_FILE = "${PROJECT_FILE_PATH}/.tulsi/Resources/StubInfoPlist.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 15.5;
+				ONLY_ACTIVE_ARCH = YES;
+				OTHER_CFLAGS = "--version";
+				OTHER_LDFLAGS = "--version";
+				OTHER_SWIFT_FLAGS = "--version";
+				PRODUCT_NAME = "mediapipe-render-core-gpuimageutil";
+				SDKROOT = iphoneos;
+				SWIFT_INSTALL_OBJC_HEADER = NO;
+				SWIFT_OBJC_INTERFACE_HEADER_NAME = "$(PRODUCT_NAME).h";
+				TULSI_BUILD_PATH = mediapipe/render/core;
+				TULSI_XCODE_VERSION = 13.4.1.13F100;
+			};
+			name = __TulsiTestRunner_Release;
+		};
+		BBE2A1FE19F2C0EE0000000C /* __TulsiTestRunner_Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = "Stub Launch Image";
+				BAZEL_TARGET = "//mediapipe/render/core:ref";
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				FRAMEWORK_SEARCH_PATHS = "";
+				GCC_PREPROCESSOR_DEFINITIONS = "NDEBUG=1";
+				HEADER_SEARCH_PATHS = "";
+				INFOPLIST_FILE = "${PROJECT_FILE_PATH}/.tulsi/Resources/StubInfoPlist.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 15.5;
+				ONLY_ACTIVE_ARCH = YES;
+				OTHER_CFLAGS = "--version";
+				OTHER_LDFLAGS = "--version";
+				OTHER_SWIFT_FLAGS = "--version";
+				PRODUCT_NAME = "mediapipe-render-core-ref";
+				SDKROOT = iphoneos;
+				SWIFT_INSTALL_OBJC_HEADER = NO;
+				SWIFT_OBJC_INTERFACE_HEADER_NAME = "$(PRODUCT_NAME).h";
+				TULSI_BUILD_PATH = mediapipe/render/core;
+				TULSI_XCODE_VERSION = 13.4.1.13F100;
+			};
+			name = __TulsiTestRunner_Release;
+		};
+		BBE2A1FE19F2C0EE0000000D /* __TulsiTestRunner_Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = "Stub Launch Image";
+				BAZEL_TARGET = "//mediapipe/render/core:ref";
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				FRAMEWORK_SEARCH_PATHS = "";
+				GCC_PREPROCESSOR_DEFINITIONS = "NDEBUG=1";
+				HEADER_SEARCH_PATHS = "";
+				INFOPLIST_FILE = "${PROJECT_FILE_PATH}/.tulsi/Resources/StubInfoPlist.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
+				ONLY_ACTIVE_ARCH = YES;
+				OTHER_CFLAGS = "--version";
+				OTHER_LDFLAGS = "--version";
+				OTHER_SWIFT_FLAGS = "--version";
+				PRODUCT_NAME = ref;
+				SDKROOT = iphoneos;
+				SWIFT_INSTALL_OBJC_HEADER = NO;
+				SWIFT_OBJC_INTERFACE_HEADER_NAME = "$(PRODUCT_NAME).h";
+				TULSI_BUILD_PATH = mediapipe/render/core;
+				TULSI_XCODE_VERSION = 13.4.1.13F100;
+			};
+			name = __TulsiTestRunner_Release;
+		};
+		BBE2A1FE277D017100000000 /* __TulsiTestRunner_Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "c++17";
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGNING_REQUIRED = NO;
+				CODE_SIGN_IDENTITY = "";
+				DONT_RUN_SWIFT_STDLIB_TOOL = YES;
+				ENABLE_TESTABILITY = YES;
+				FRAMEWORK_SEARCH_PATHS = "";
+				GCC_PREPROCESSOR_DEFINITIONS = "DEBUG=1";
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = "";
+				ONLY_ACTIVE_ARCH = YES;
+				OTHER_CFLAGS = "--version";
+				OTHER_LDFLAGS = "--version";
+				OTHER_SWIFT_FLAGS = "--version";
+				PYTHONIOENCODING = utf8;
+				SDKROOT = iphoneos;
+				SWIFT_INSTALL_OBJC_HEADER = NO;
+				SWIFT_OBJC_INTERFACE_HEADER_NAME = "$(PRODUCT_NAME).h";
+				TULSI_BWRS = "$(PROJECT_FILE_PATH)/.tulsi/tulsi-execution-root";
+				TULSI_EXECUTION_ROOT = "$(PROJECT_FILE_PATH)/.tulsi/tulsi-execution-root";
+				TULSI_LLDBINIT_FILE = "$(PROJECT_FILE_PATH)/.tulsi/Utils/lldbinit";
+				TULSI_OUTPUT_BASE = "$(PROJECT_FILE_PATH)/.tulsi/tulsi-output-base";
+				TULSI_PROJECT = OlaVideo;
+				TULSI_VERSION = 0.20220209.88;
+				TULSI_WR = "${SRCROOT}/../../..";
+			};
+			name = __TulsiTestRunner_Debug;
+		};
+		BBE2A1FE277D017100000001 /* __TulsiTestRunner_Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = "Stub Launch Image";
+				BAZEL_TARGET = "//mediapipe/render/ios:OlaRenderDevelopFramework";
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				FRAMEWORK_SEARCH_PATHS = "";
+				GCC_PREPROCESSOR_DEFINITIONS = "DEBUG=1";
+				HEADER_SEARCH_PATHS = "";
+				INFOPLIST_FILE = "${PROJECT_FILE_PATH}/.tulsi/Resources/StubInfoPlist.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
+				ONLY_ACTIVE_ARCH = YES;
+				OTHER_CFLAGS = "--version";
+				OTHER_LDFLAGS = "--version";
+				OTHER_SWIFT_FLAGS = "--version";
+				PRODUCT_BUNDLE_IDENTIFIER = com.ola.olarender.develop;
+				PRODUCT_NAME = OlaRenderDevelopFramework;
 				SDKROOT = iphoneos;
 				SWIFT_INSTALL_OBJC_HEADER = NO;
 				SWIFT_OBJC_INTERFACE_HEADER_NAME = "$(PRODUCT_NAME).h";
 				TULSI_BUILD_PATH = mediapipe/render/ios;
 				TULSI_XCODE_VERSION = 13.4.1.13F100;
 			};
-			name = __TulsiTestRunner_Release;
+			name = __TulsiTestRunner_Debug;
 		};
-		7E4137623277CBB400000000 /* Debug */ = {
+		BBE2A1FE277D017100000002 /* __TulsiTestRunner_Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = "Stub Launch Image";
+				BAZEL_TARGET = "//mediapipe/render/core:core";
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				FRAMEWORK_SEARCH_PATHS = "";
+				GCC_PREPROCESSOR_DEFINITIONS = "DEBUG=1";
+				HEADER_SEARCH_PATHS = "";
+				INFOPLIST_FILE = "${PROJECT_FILE_PATH}/.tulsi/Resources/StubInfoPlist.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 15.5;
+				ONLY_ACTIVE_ARCH = YES;
+				OTHER_CFLAGS = "--version";
+				OTHER_LDFLAGS = "--version";
+				OTHER_SWIFT_FLAGS = "--version";
+				PRODUCT_NAME = core;
+				SDKROOT = iphoneos;
+				SWIFT_INSTALL_OBJC_HEADER = NO;
+				SWIFT_OBJC_INTERFACE_HEADER_NAME = "$(PRODUCT_NAME).h";
+				TULSI_BUILD_PATH = mediapipe/render/core;
+				TULSI_XCODE_VERSION = 13.4.1.13F100;
+			};
+			name = __TulsiTestRunner_Debug;
+		};
+		BBE2A1FE277D017100000003 /* __TulsiTestRunner_Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = "Stub Launch Image";
+				BAZEL_TARGET = "//mediapipe/render/core:core-ios";
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				FRAMEWORK_SEARCH_PATHS = "";
+				GCC_PREPROCESSOR_DEFINITIONS = "DEBUG=1";
+				HEADER_SEARCH_PATHS = "";
+				INFOPLIST_FILE = "${PROJECT_FILE_PATH}/.tulsi/Resources/StubInfoPlist.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
+				ONLY_ACTIVE_ARCH = YES;
+				OTHER_CFLAGS = "--version";
+				OTHER_LDFLAGS = "--version";
+				OTHER_SWIFT_FLAGS = "--version";
+				PRODUCT_NAME = "core-ios";
+				SDKROOT = iphoneos;
+				SWIFT_INSTALL_OBJC_HEADER = NO;
+				SWIFT_OBJC_INTERFACE_HEADER_NAME = "$(PRODUCT_NAME).h";
+				TULSI_BUILD_PATH = mediapipe/render/core;
+				TULSI_XCODE_VERSION = 13.4.1.13F100;
+			};
+			name = __TulsiTestRunner_Debug;
+		};
+		BBE2A1FE277D017100000004 /* __TulsiTestRunner_Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = "Stub Launch Image";
+				BAZEL_TARGET = "//mediapipe/render/core:gpuimagemacros";
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				FRAMEWORK_SEARCH_PATHS = "";
+				GCC_PREPROCESSOR_DEFINITIONS = "DEBUG=1";
+				HEADER_SEARCH_PATHS = "";
+				INFOPLIST_FILE = "${PROJECT_FILE_PATH}/.tulsi/Resources/StubInfoPlist.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
+				ONLY_ACTIVE_ARCH = YES;
+				OTHER_CFLAGS = "--version";
+				OTHER_LDFLAGS = "--version";
+				OTHER_SWIFT_FLAGS = "--version";
+				PRODUCT_NAME = gpuimagemacros;
+				SDKROOT = iphoneos;
+				SWIFT_INSTALL_OBJC_HEADER = NO;
+				SWIFT_OBJC_INTERFACE_HEADER_NAME = "$(PRODUCT_NAME).h";
+				TULSI_BUILD_PATH = mediapipe/render/core;
+				TULSI_XCODE_VERSION = 13.4.1.13F100;
+			};
+			name = __TulsiTestRunner_Debug;
+		};
+		BBE2A1FE277D017100000005 /* __TulsiTestRunner_Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = "Stub Launch Image";
+				BAZEL_TARGET = "//mediapipe/render/core:gpuimagemath";
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				FRAMEWORK_SEARCH_PATHS = "";
+				GCC_PREPROCESSOR_DEFINITIONS = "DEBUG=1";
+				HEADER_SEARCH_PATHS = "";
+				INFOPLIST_FILE = "${PROJECT_FILE_PATH}/.tulsi/Resources/StubInfoPlist.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 15.5;
+				ONLY_ACTIVE_ARCH = YES;
+				OTHER_CFLAGS = "--version";
+				OTHER_LDFLAGS = "--version";
+				OTHER_SWIFT_FLAGS = "--version";
+				PRODUCT_NAME = gpuimagemath;
+				SDKROOT = iphoneos;
+				SWIFT_INSTALL_OBJC_HEADER = NO;
+				SWIFT_OBJC_INTERFACE_HEADER_NAME = "$(PRODUCT_NAME).h";
+				TULSI_BUILD_PATH = mediapipe/render/core;
+				TULSI_XCODE_VERSION = 13.4.1.13F100;
+			};
+			name = __TulsiTestRunner_Debug;
+		};
+		BBE2A1FE277D017100000006 /* __TulsiTestRunner_Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = "Stub Launch Image";
+				BAZEL_TARGET = "//mediapipe/render/core:gpuimageutil";
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				FRAMEWORK_SEARCH_PATHS = "";
+				GCC_PREPROCESSOR_DEFINITIONS = "DEBUG=1";
+				HEADER_SEARCH_PATHS = "";
+				INFOPLIST_FILE = "${PROJECT_FILE_PATH}/.tulsi/Resources/StubInfoPlist.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
+				ONLY_ACTIVE_ARCH = YES;
+				OTHER_CFLAGS = "--version";
+				OTHER_LDFLAGS = "--version";
+				OTHER_SWIFT_FLAGS = "--version";
+				PRODUCT_NAME = gpuimageutil;
+				SDKROOT = iphoneos;
+				SWIFT_INSTALL_OBJC_HEADER = NO;
+				SWIFT_OBJC_INTERFACE_HEADER_NAME = "$(PRODUCT_NAME).h";
+				TULSI_BUILD_PATH = mediapipe/render/core;
+				TULSI_XCODE_VERSION = 13.4.1.13F100;
+			};
+			name = __TulsiTestRunner_Debug;
+		};
+		BBE2A1FE277D017100000007 /* __TulsiTestRunner_Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = "Stub Launch Image";
+				BAZEL_TARGET = "//mediapipe/render/core:core";
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				FRAMEWORK_SEARCH_PATHS = "";
+				GCC_PREPROCESSOR_DEFINITIONS = "DEBUG=1";
+				HEADER_SEARCH_PATHS = "";
+				INFOPLIST_FILE = "${PROJECT_FILE_PATH}/.tulsi/Resources/StubInfoPlist.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
+				ONLY_ACTIVE_ARCH = YES;
+				OTHER_CFLAGS = "--version";
+				OTHER_LDFLAGS = "--version";
+				OTHER_SWIFT_FLAGS = "--version";
+				PRODUCT_NAME = "mediapipe-render-core-core";
+				SDKROOT = iphoneos;
+				SWIFT_INSTALL_OBJC_HEADER = NO;
+				SWIFT_OBJC_INTERFACE_HEADER_NAME = "$(PRODUCT_NAME).h";
+				TULSI_BUILD_PATH = mediapipe/render/core;
+				TULSI_XCODE_VERSION = 13.4.1.13F100;
+			};
+			name = __TulsiTestRunner_Debug;
+		};
+		BBE2A1FE277D017100000008 /* __TulsiTestRunner_Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = "Stub Launch Image";
+				BAZEL_TARGET = "//mediapipe/render/core:core-ios";
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				FRAMEWORK_SEARCH_PATHS = "";
+				GCC_PREPROCESSOR_DEFINITIONS = "DEBUG=1";
+				HEADER_SEARCH_PATHS = "";
+				INFOPLIST_FILE = "${PROJECT_FILE_PATH}/.tulsi/Resources/StubInfoPlist.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 15.5;
+				ONLY_ACTIVE_ARCH = YES;
+				OTHER_CFLAGS = "--version";
+				OTHER_LDFLAGS = "--version";
+				OTHER_SWIFT_FLAGS = "--version";
+				PRODUCT_NAME = "mediapipe-render-core-core-ios";
+				SDKROOT = iphoneos;
+				SWIFT_INSTALL_OBJC_HEADER = NO;
+				SWIFT_OBJC_INTERFACE_HEADER_NAME = "$(PRODUCT_NAME).h";
+				TULSI_BUILD_PATH = mediapipe/render/core;
+				TULSI_XCODE_VERSION = 13.4.1.13F100;
+			};
+			name = __TulsiTestRunner_Debug;
+		};
+		BBE2A1FE277D017100000009 /* __TulsiTestRunner_Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = "Stub Launch Image";
+				BAZEL_TARGET = "//mediapipe/render/core:gpuimagemacros";
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				FRAMEWORK_SEARCH_PATHS = "";
+				GCC_PREPROCESSOR_DEFINITIONS = "DEBUG=1";
+				HEADER_SEARCH_PATHS = "";
+				INFOPLIST_FILE = "${PROJECT_FILE_PATH}/.tulsi/Resources/StubInfoPlist.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 15.5;
+				ONLY_ACTIVE_ARCH = YES;
+				OTHER_CFLAGS = "--version";
+				OTHER_LDFLAGS = "--version";
+				OTHER_SWIFT_FLAGS = "--version";
+				PRODUCT_NAME = "mediapipe-render-core-gpuimagemacros";
+				SDKROOT = iphoneos;
+				SWIFT_INSTALL_OBJC_HEADER = NO;
+				SWIFT_OBJC_INTERFACE_HEADER_NAME = "$(PRODUCT_NAME).h";
+				TULSI_BUILD_PATH = mediapipe/render/core;
+				TULSI_XCODE_VERSION = 13.4.1.13F100;
+			};
+			name = __TulsiTestRunner_Debug;
+		};
+		BBE2A1FE277D01710000000A /* __TulsiTestRunner_Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = "Stub Launch Image";
+				BAZEL_TARGET = "//mediapipe/render/core:gpuimagemath";
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				FRAMEWORK_SEARCH_PATHS = "";
+				GCC_PREPROCESSOR_DEFINITIONS = "DEBUG=1";
+				HEADER_SEARCH_PATHS = "";
+				INFOPLIST_FILE = "${PROJECT_FILE_PATH}/.tulsi/Resources/StubInfoPlist.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
+				ONLY_ACTIVE_ARCH = YES;
+				OTHER_CFLAGS = "--version";
+				OTHER_LDFLAGS = "--version";
+				OTHER_SWIFT_FLAGS = "--version";
+				PRODUCT_NAME = "mediapipe-render-core-gpuimagemath";
+				SDKROOT = iphoneos;
+				SWIFT_INSTALL_OBJC_HEADER = NO;
+				SWIFT_OBJC_INTERFACE_HEADER_NAME = "$(PRODUCT_NAME).h";
+				TULSI_BUILD_PATH = mediapipe/render/core;
+				TULSI_XCODE_VERSION = 13.4.1.13F100;
+			};
+			name = __TulsiTestRunner_Debug;
+		};
+		BBE2A1FE277D01710000000B /* __TulsiTestRunner_Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = "Stub Launch Image";
+				BAZEL_TARGET = "//mediapipe/render/core:gpuimageutil";
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				FRAMEWORK_SEARCH_PATHS = "";
+				GCC_PREPROCESSOR_DEFINITIONS = "DEBUG=1";
+				HEADER_SEARCH_PATHS = "";
+				INFOPLIST_FILE = "${PROJECT_FILE_PATH}/.tulsi/Resources/StubInfoPlist.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 15.5;
+				ONLY_ACTIVE_ARCH = YES;
+				OTHER_CFLAGS = "--version";
+				OTHER_LDFLAGS = "--version";
+				OTHER_SWIFT_FLAGS = "--version";
+				PRODUCT_NAME = "mediapipe-render-core-gpuimageutil";
+				SDKROOT = iphoneos;
+				SWIFT_INSTALL_OBJC_HEADER = NO;
+				SWIFT_OBJC_INTERFACE_HEADER_NAME = "$(PRODUCT_NAME).h";
+				TULSI_BUILD_PATH = mediapipe/render/core;
+				TULSI_XCODE_VERSION = 13.4.1.13F100;
+			};
+			name = __TulsiTestRunner_Debug;
+		};
+		BBE2A1FE277D01710000000C /* __TulsiTestRunner_Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = "Stub Launch Image";
+				BAZEL_TARGET = "//mediapipe/render/core:ref";
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				FRAMEWORK_SEARCH_PATHS = "";
+				GCC_PREPROCESSOR_DEFINITIONS = "DEBUG=1";
+				HEADER_SEARCH_PATHS = "";
+				INFOPLIST_FILE = "${PROJECT_FILE_PATH}/.tulsi/Resources/StubInfoPlist.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 15.5;
+				ONLY_ACTIVE_ARCH = YES;
+				OTHER_CFLAGS = "--version";
+				OTHER_LDFLAGS = "--version";
+				OTHER_SWIFT_FLAGS = "--version";
+				PRODUCT_NAME = "mediapipe-render-core-ref";
+				SDKROOT = iphoneos;
+				SWIFT_INSTALL_OBJC_HEADER = NO;
+				SWIFT_OBJC_INTERFACE_HEADER_NAME = "$(PRODUCT_NAME).h";
+				TULSI_BUILD_PATH = mediapipe/render/core;
+				TULSI_XCODE_VERSION = 13.4.1.13F100;
+			};
+			name = __TulsiTestRunner_Debug;
+		};
+		BBE2A1FE277D01710000000D /* __TulsiTestRunner_Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = "Stub Launch Image";
+				BAZEL_TARGET = "//mediapipe/render/core:ref";
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				FRAMEWORK_SEARCH_PATHS = "";
+				GCC_PREPROCESSOR_DEFINITIONS = "DEBUG=1";
+				HEADER_SEARCH_PATHS = "";
+				INFOPLIST_FILE = "${PROJECT_FILE_PATH}/.tulsi/Resources/StubInfoPlist.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
+				ONLY_ACTIVE_ARCH = YES;
+				OTHER_CFLAGS = "--version";
+				OTHER_LDFLAGS = "--version";
+				OTHER_SWIFT_FLAGS = "--version";
+				PRODUCT_NAME = ref;
+				SDKROOT = iphoneos;
+				SWIFT_INSTALL_OBJC_HEADER = NO;
+				SWIFT_OBJC_INTERFACE_HEADER_NAME = "$(PRODUCT_NAME).h";
+				TULSI_BUILD_PATH = mediapipe/render/core;
+				TULSI_XCODE_VERSION = 13.4.1.13F100;
+			};
+			name = __TulsiTestRunner_Debug;
+		};
+		BBE2A1FE8A1AA7E100000000 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "c++17";
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGNING_REQUIRED = NO;
+				CODE_SIGN_IDENTITY = "";
+				DONT_RUN_SWIFT_STDLIB_TOOL = YES;
+				ENABLE_TESTABILITY = YES;
+				FRAMEWORK_SEARCH_PATHS = "$(PLATFORM_DIR)/Developer/Library/Frameworks";
+				GCC_PREPROCESSOR_DEFINITIONS = "NDEBUG=1";
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = "$(TULSI_EXECUTION_ROOT) $(TULSI_WR)/bazel-bin $(TULSI_WR)/bazel-genfiles $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x";
+				ONLY_ACTIVE_ARCH = YES;
+				PYTHONIOENCODING = utf8;
+				SDKROOT = iphoneos;
+				TULSI_BWRS = "$(PROJECT_FILE_PATH)/.tulsi/tulsi-execution-root";
+				TULSI_EXECUTION_ROOT = "$(PROJECT_FILE_PATH)/.tulsi/tulsi-execution-root";
+				TULSI_LLDBINIT_FILE = "$(PROJECT_FILE_PATH)/.tulsi/Utils/lldbinit";
+				TULSI_OUTPUT_BASE = "$(PROJECT_FILE_PATH)/.tulsi/tulsi-output-base";
+				TULSI_PROJECT = OlaVideo;
+				TULSI_VERSION = 0.20220209.88;
+				TULSI_WR = "${SRCROOT}/../../..";
+			};
+			name = Release;
+		};
+		BBE2A1FE8A1AA7E100000001 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = "Stub Launch Image";
+				BAZEL_TARGET = "//mediapipe/render/ios:OlaRenderDevelopFramework";
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				GCC_PREPROCESSOR_DEFINITIONS = "NDEBUG=1";
+				INFOPLIST_FILE = "${PROJECT_FILE_PATH}/.tulsi/Resources/StubInfoPlist.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.ola.olarender.develop;
+				PRODUCT_NAME = OlaRenderDevelopFramework;
+				SDKROOT = iphoneos;
+				TULSI_BUILD_PATH = mediapipe/render/ios;
+				TULSI_XCODE_VERSION = 13.4.1.13F100;
+			};
+			name = Release;
+		};
+		BBE2A1FE8A1AA7E100000002 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				GCC_PREPROCESSOR_DEFINITIONS = "NDEBUG=1";
+				HEADER_SEARCH_PATHS = "$(inherited) $(TULSI_WR)/. $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/ $(TULSI_WR)/mediapipe/render/core/math $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/mediapipe/render/core/math ";
+				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
+				OTHER_CFLAGS = "-x objective-c++ -fobjc-arc -D_FORTIFY_SOURCE=1 -D__DATE__=\"redacted\" -D__TIMESTAMP__=\"redacted\" -D__TIME__=\"redacted\"";
+				PRODUCT_NAME = "_idx_core_core-ios_8391CBD4_ios_min11.0";
+				SDKROOT = iphoneos;
+				USER_HEADER_SEARCH_PATHS = "$(TULSI_WR)";
+			};
+			name = Release;
+		};
+		BBE2A1FE8A1AA7E100000003 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				GCC_PREPROCESSOR_DEFINITIONS = "NDEBUG=1";
+				HEADER_SEARCH_PATHS = "$(inherited) $(TULSI_WR)/. $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/ ";
+				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
+				OTHER_CFLAGS = "-D_FORTIFY_SOURCE=1 -D__DATE__=\"redacted\" -D__TIMESTAMP__=\"redacted\" -D__TIME__=\"redacted\"";
+				PRODUCT_NAME = _idx_ref_gpuimagemath_gpuimageutil_66945799_ios_min11.0;
+				SDKROOT = iphoneos;
+				USER_HEADER_SEARCH_PATHS = "$(TULSI_WR)";
+			};
+			name = Release;
+		};
+		BBE2A1FE8A1AA7E100000004 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				GCC_PREPROCESSOR_DEFINITIONS = "NDEBUG=1";
+				HEADER_SEARCH_PATHS = "$(inherited) $(TULSI_WR)/. $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/ $(TULSI_WR)/mediapipe/render/core/math $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/mediapipe/render/core/math ";
+				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
+				OTHER_CFLAGS = "-D_FORTIFY_SOURCE=1 -D__DATE__=\"redacted\" -D__TIMESTAMP__=\"redacted\" -D__TIME__=\"redacted\"";
+				PRODUCT_NAME = _idx_math_OlaRenderPlayground_0128C2B8_ios_min11.0;
+				SDKROOT = iphoneos;
+				USER_HEADER_SEARCH_PATHS = "$(TULSI_WR)";
+			};
+			name = Release;
+		};
+		BBE2A1FE8A1AA7E100000005 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				GCC_PREPROCESSOR_DEFINITIONS = "NDEBUG=1";
+				HEADER_SEARCH_PATHS = "$(inherited) $(TULSI_WR)/. $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/ $(TULSI_WR)/mediapipe/render/core/math $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/mediapipe/render/core/math ";
+				IPHONEOS_DEPLOYMENT_TARGET = 15.5;
+				OTHER_CFLAGS = "-x objective-c++ -fobjc-arc -D_FORTIFY_SOURCE=1 -D__DATE__=\"redacted\" -D__TIMESTAMP__=\"redacted\" -D__TIME__=\"redacted\"";
+				PRODUCT_NAME = "_idx_core_core-ios_8391CBD4_ios_min15.5";
+				SDKROOT = iphoneos;
+				USER_HEADER_SEARCH_PATHS = "$(TULSI_WR)";
+			};
+			name = Release;
+		};
+		BBE2A1FE8A1AA7E100000006 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				GCC_PREPROCESSOR_DEFINITIONS = "NDEBUG=1";
+				HEADER_SEARCH_PATHS = "$(inherited) $(TULSI_WR)/. $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/ ";
+				IPHONEOS_DEPLOYMENT_TARGET = 15.5;
+				OTHER_CFLAGS = "-D_FORTIFY_SOURCE=1 -D__DATE__=\"redacted\" -D__TIMESTAMP__=\"redacted\" -D__TIME__=\"redacted\"";
+				PRODUCT_NAME = _idx_ref_gpuimagemath_gpuimageutil_66945799_ios_min15.5;
+				SDKROOT = iphoneos;
+				USER_HEADER_SEARCH_PATHS = "$(TULSI_WR)";
+			};
+			name = Release;
+		};
+		BBE2A1FE8A1AA7E100000007 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				GCC_PREPROCESSOR_DEFINITIONS = "NDEBUG=1";
+				HEADER_SEARCH_PATHS = "$(inherited) $(TULSI_WR)/. $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/ $(TULSI_WR)/mediapipe/render/core/math $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/mediapipe/render/core/math ";
+				IPHONEOS_DEPLOYMENT_TARGET = 15.5;
+				OTHER_CFLAGS = "-D_FORTIFY_SOURCE=1 -D__DATE__=\"redacted\" -D__TIMESTAMP__=\"redacted\" -D__TIME__=\"redacted\"";
+				PRODUCT_NAME = _idx_math_744D87CF_ios_min15.5;
+				SDKROOT = iphoneos;
+				USER_HEADER_SEARCH_PATHS = "$(TULSI_WR)";
+			};
+			name = Release;
+		};
+		BBE2A1FE8A1AA7E100000008 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = "Stub Launch Image";
+				BAZEL_TARGET = "//mediapipe/render/core:core";
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				GCC_PREPROCESSOR_DEFINITIONS = "NDEBUG=1";
+				INFOPLIST_FILE = "${PROJECT_FILE_PATH}/.tulsi/Resources/StubInfoPlist.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 15.5;
+				PRODUCT_NAME = core;
+				SDKROOT = iphoneos;
+				TULSI_BUILD_PATH = mediapipe/render/core;
+				TULSI_XCODE_VERSION = 13.4.1.13F100;
+			};
+			name = Release;
+		};
+		BBE2A1FE8A1AA7E100000009 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = "Stub Launch Image";
+				BAZEL_TARGET = "//mediapipe/render/core:core-ios";
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				GCC_PREPROCESSOR_DEFINITIONS = "NDEBUG=1";
+				INFOPLIST_FILE = "${PROJECT_FILE_PATH}/.tulsi/Resources/StubInfoPlist.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
+				PRODUCT_NAME = "core-ios";
+				SDKROOT = iphoneos;
+				TULSI_BUILD_PATH = mediapipe/render/core;
+				TULSI_XCODE_VERSION = 13.4.1.13F100;
+			};
+			name = Release;
+		};
+		BBE2A1FE8A1AA7E10000000A /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = "Stub Launch Image";
+				BAZEL_TARGET = "//mediapipe/render/core:gpuimagemacros";
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				GCC_PREPROCESSOR_DEFINITIONS = "NDEBUG=1";
+				INFOPLIST_FILE = "${PROJECT_FILE_PATH}/.tulsi/Resources/StubInfoPlist.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
+				PRODUCT_NAME = gpuimagemacros;
+				SDKROOT = iphoneos;
+				TULSI_BUILD_PATH = mediapipe/render/core;
+				TULSI_XCODE_VERSION = 13.4.1.13F100;
+			};
+			name = Release;
+		};
+		BBE2A1FE8A1AA7E10000000B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = "Stub Launch Image";
+				BAZEL_TARGET = "//mediapipe/render/core:gpuimagemath";
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				GCC_PREPROCESSOR_DEFINITIONS = "NDEBUG=1";
+				INFOPLIST_FILE = "${PROJECT_FILE_PATH}/.tulsi/Resources/StubInfoPlist.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 15.5;
+				PRODUCT_NAME = gpuimagemath;
+				SDKROOT = iphoneos;
+				TULSI_BUILD_PATH = mediapipe/render/core;
+				TULSI_XCODE_VERSION = 13.4.1.13F100;
+			};
+			name = Release;
+		};
+		BBE2A1FE8A1AA7E10000000C /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = "Stub Launch Image";
+				BAZEL_TARGET = "//mediapipe/render/core:gpuimageutil";
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				GCC_PREPROCESSOR_DEFINITIONS = "NDEBUG=1";
+				INFOPLIST_FILE = "${PROJECT_FILE_PATH}/.tulsi/Resources/StubInfoPlist.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
+				PRODUCT_NAME = gpuimageutil;
+				SDKROOT = iphoneos;
+				TULSI_BUILD_PATH = mediapipe/render/core;
+				TULSI_XCODE_VERSION = 13.4.1.13F100;
+			};
+			name = Release;
+		};
+		BBE2A1FE8A1AA7E10000000D /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = "Stub Launch Image";
+				BAZEL_TARGET = "//mediapipe/render/core:core";
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				GCC_PREPROCESSOR_DEFINITIONS = "NDEBUG=1";
+				INFOPLIST_FILE = "${PROJECT_FILE_PATH}/.tulsi/Resources/StubInfoPlist.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
+				PRODUCT_NAME = "mediapipe-render-core-core";
+				SDKROOT = iphoneos;
+				TULSI_BUILD_PATH = mediapipe/render/core;
+				TULSI_XCODE_VERSION = 13.4.1.13F100;
+			};
+			name = Release;
+		};
+		BBE2A1FE8A1AA7E10000000E /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = "Stub Launch Image";
+				BAZEL_TARGET = "//mediapipe/render/core:core-ios";
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				GCC_PREPROCESSOR_DEFINITIONS = "NDEBUG=1";
+				INFOPLIST_FILE = "${PROJECT_FILE_PATH}/.tulsi/Resources/StubInfoPlist.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 15.5;
+				PRODUCT_NAME = "mediapipe-render-core-core-ios";
+				SDKROOT = iphoneos;
+				TULSI_BUILD_PATH = mediapipe/render/core;
+				TULSI_XCODE_VERSION = 13.4.1.13F100;
+			};
+			name = Release;
+		};
+		BBE2A1FE8A1AA7E10000000F /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = "Stub Launch Image";
+				BAZEL_TARGET = "//mediapipe/render/core:gpuimagemacros";
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				GCC_PREPROCESSOR_DEFINITIONS = "NDEBUG=1";
+				INFOPLIST_FILE = "${PROJECT_FILE_PATH}/.tulsi/Resources/StubInfoPlist.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 15.5;
+				PRODUCT_NAME = "mediapipe-render-core-gpuimagemacros";
+				SDKROOT = iphoneos;
+				TULSI_BUILD_PATH = mediapipe/render/core;
+				TULSI_XCODE_VERSION = 13.4.1.13F100;
+			};
+			name = Release;
+		};
+		BBE2A1FE8A1AA7E100000010 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = "Stub Launch Image";
+				BAZEL_TARGET = "//mediapipe/render/core:gpuimagemath";
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				GCC_PREPROCESSOR_DEFINITIONS = "NDEBUG=1";
+				INFOPLIST_FILE = "${PROJECT_FILE_PATH}/.tulsi/Resources/StubInfoPlist.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
+				PRODUCT_NAME = "mediapipe-render-core-gpuimagemath";
+				SDKROOT = iphoneos;
+				TULSI_BUILD_PATH = mediapipe/render/core;
+				TULSI_XCODE_VERSION = 13.4.1.13F100;
+			};
+			name = Release;
+		};
+		BBE2A1FE8A1AA7E100000011 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = "Stub Launch Image";
+				BAZEL_TARGET = "//mediapipe/render/core:gpuimageutil";
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				GCC_PREPROCESSOR_DEFINITIONS = "NDEBUG=1";
+				INFOPLIST_FILE = "${PROJECT_FILE_PATH}/.tulsi/Resources/StubInfoPlist.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 15.5;
+				PRODUCT_NAME = "mediapipe-render-core-gpuimageutil";
+				SDKROOT = iphoneos;
+				TULSI_BUILD_PATH = mediapipe/render/core;
+				TULSI_XCODE_VERSION = 13.4.1.13F100;
+			};
+			name = Release;
+		};
+		BBE2A1FE8A1AA7E100000012 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = "Stub Launch Image";
+				BAZEL_TARGET = "//mediapipe/render/core:ref";
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				GCC_PREPROCESSOR_DEFINITIONS = "NDEBUG=1";
+				INFOPLIST_FILE = "${PROJECT_FILE_PATH}/.tulsi/Resources/StubInfoPlist.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 15.5;
+				PRODUCT_NAME = "mediapipe-render-core-ref";
+				SDKROOT = iphoneos;
+				TULSI_BUILD_PATH = mediapipe/render/core;
+				TULSI_XCODE_VERSION = 13.4.1.13F100;
+			};
+			name = Release;
+		};
+		BBE2A1FE8A1AA7E100000013 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = "Stub Launch Image";
+				BAZEL_TARGET = "//mediapipe/render/core:ref";
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				GCC_PREPROCESSOR_DEFINITIONS = "NDEBUG=1";
+				INFOPLIST_FILE = "${PROJECT_FILE_PATH}/.tulsi/Resources/StubInfoPlist.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
+				PRODUCT_NAME = ref;
+				SDKROOT = iphoneos;
+				TULSI_BUILD_PATH = mediapipe/render/core;
+				TULSI_XCODE_VERSION = 13.4.1.13F100;
+			};
+			name = Release;
+		};
+		BBE2A1FEC5ED298500000000 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -793,7 +2188,7 @@
 			};
 			name = Debug;
 		};
-		7E4137623277CBB400000001 /* Debug */ = {
+		BBE2A1FEC5ED298500000001 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = "Stub Launch Image";
@@ -810,431 +2205,474 @@
 			};
 			name = Debug;
 		};
-		7E4137623277CBB400000002 /* Debug */ = {
+		BBE2A1FEC5ED298500000002 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				GCC_PREPROCESSOR_DEFINITIONS = "DEBUG=1";
 				HEADER_SEARCH_PATHS = "$(inherited) $(TULSI_WR)/. $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/ $(TULSI_WR)/mediapipe/render/core/math $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/mediapipe/render/core/math ";
 				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
 				OTHER_CFLAGS = "-x objective-c++ -fobjc-arc -D_FORTIFY_SOURCE=1 -D__DATE__=\"redacted\" -D__TIMESTAMP__=\"redacted\" -D__TIME__=\"redacted\"";
-				PRODUCT_NAME = _idx_core_F3E5C6E5_ios_min11.0;
+				PRODUCT_NAME = "_idx_core_core-ios_8391CBD4_ios_min11.0";
 				SDKROOT = iphoneos;
 				USER_HEADER_SEARCH_PATHS = "$(TULSI_WR)";
 			};
 			name = Debug;
 		};
-		7E4137623277CBB400000003 /* Debug */ = {
+		BBE2A1FEC5ED298500000003 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				GCC_PREPROCESSOR_DEFINITIONS = "DEBUG=1";
 				HEADER_SEARCH_PATHS = "$(inherited) $(TULSI_WR)/. $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/ ";
 				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
 				OTHER_CFLAGS = "-D_FORTIFY_SOURCE=1 -D__DATE__=\"redacted\" -D__TIMESTAMP__=\"redacted\" -D__TIME__=\"redacted\"";
-				PRODUCT_NAME = _idx_ref_gpuimagemath_gpuimageutil_8DCE756C_ios_min11.0;
+				PRODUCT_NAME = _idx_ref_gpuimagemath_gpuimageutil_66945799_ios_min11.0;
 				SDKROOT = iphoneos;
 				USER_HEADER_SEARCH_PATHS = "$(TULSI_WR)";
 			};
 			name = Debug;
 		};
-		7E4137623277CBB400000004 /* Debug */ = {
+		BBE2A1FEC5ED298500000004 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				GCC_PREPROCESSOR_DEFINITIONS = "DEBUG=1";
 				HEADER_SEARCH_PATHS = "$(inherited) $(TULSI_WR)/. $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/ $(TULSI_WR)/mediapipe/render/core/math $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/mediapipe/render/core/math ";
 				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
 				OTHER_CFLAGS = "-D_FORTIFY_SOURCE=1 -D__DATE__=\"redacted\" -D__TIMESTAMP__=\"redacted\" -D__TIME__=\"redacted\"";
-				PRODUCT_NAME = _idx_math_702C098E_ios_min11.0;
+				PRODUCT_NAME = _idx_math_OlaRenderPlayground_0128C2B8_ios_min11.0;
 				SDKROOT = iphoneos;
 				USER_HEADER_SEARCH_PATHS = "$(TULSI_WR)";
 			};
 			name = Debug;
 		};
-		7E4137623277CBB400000005 /* Debug */ = {
+		BBE2A1FEC5ED298500000005 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				GCC_PREPROCESSOR_DEFINITIONS = "DEBUG=1";
 				HEADER_SEARCH_PATHS = "$(inherited) $(TULSI_WR)/. $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/ $(TULSI_WR)/mediapipe/render/core/math $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/mediapipe/render/core/math ";
 				IPHONEOS_DEPLOYMENT_TARGET = 15.5;
 				OTHER_CFLAGS = "-x objective-c++ -fobjc-arc -D_FORTIFY_SOURCE=1 -D__DATE__=\"redacted\" -D__TIMESTAMP__=\"redacted\" -D__TIME__=\"redacted\"";
-				PRODUCT_NAME = _idx_core_F3E5C6E5_ios_min15.5;
+				PRODUCT_NAME = "_idx_core_core-ios_8391CBD4_ios_min15.5";
 				SDKROOT = iphoneos;
 				USER_HEADER_SEARCH_PATHS = "$(TULSI_WR)";
 			};
 			name = Debug;
 		};
-		7E4137623277CBB400000006 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				GCC_PREPROCESSOR_DEFINITIONS = "DEBUG=1";
-				HEADER_SEARCH_PATHS = "$(inherited) $(TULSI_WR)/. $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/ $(TULSI_WR)/mediapipe/render/core/math $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/mediapipe/render/core/math ";
-				IPHONEOS_DEPLOYMENT_TARGET = 15.5;
-				OTHER_CFLAGS = "-D_FORTIFY_SOURCE=1 -D__DATE__=\"redacted\" -D__TIMESTAMP__=\"redacted\" -D__TIME__=\"redacted\"";
-				PRODUCT_NAME = _idx_math_702C098E_ios_min15.5;
-				SDKROOT = iphoneos;
-				USER_HEADER_SEARCH_PATHS = "$(TULSI_WR)";
-			};
-			name = Debug;
-		};
-		7E4137623277CBB400000007 /* Debug */ = {
+		BBE2A1FEC5ED298500000006 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				GCC_PREPROCESSOR_DEFINITIONS = "DEBUG=1";
 				HEADER_SEARCH_PATHS = "$(inherited) $(TULSI_WR)/. $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/ ";
 				IPHONEOS_DEPLOYMENT_TARGET = 15.5;
 				OTHER_CFLAGS = "-D_FORTIFY_SOURCE=1 -D__DATE__=\"redacted\" -D__TIMESTAMP__=\"redacted\" -D__TIME__=\"redacted\"";
-				PRODUCT_NAME = _idx_ref_gpuimagemath_gpuimageutil_8DCE756C_ios_min15.5;
+				PRODUCT_NAME = _idx_ref_gpuimagemath_gpuimageutil_66945799_ios_min15.5;
 				SDKROOT = iphoneos;
 				USER_HEADER_SEARCH_PATHS = "$(TULSI_WR)";
 			};
 			name = Debug;
 		};
-		7E4137623277CBB400000008 /* Debug */ = {
+		BBE2A1FEC5ED298500000007 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				GCC_PREPROCESSOR_DEFINITIONS = "DEBUG=1";
+				HEADER_SEARCH_PATHS = "$(inherited) $(TULSI_WR)/. $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/ $(TULSI_WR)/mediapipe/render/core/math $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/mediapipe/render/core/math ";
+				IPHONEOS_DEPLOYMENT_TARGET = 15.5;
+				OTHER_CFLAGS = "-D_FORTIFY_SOURCE=1 -D__DATE__=\"redacted\" -D__TIMESTAMP__=\"redacted\" -D__TIME__=\"redacted\"";
+				PRODUCT_NAME = _idx_math_744D87CF_ios_min15.5;
+				SDKROOT = iphoneos;
+				USER_HEADER_SEARCH_PATHS = "$(TULSI_WR)";
+			};
+			name = Debug;
+		};
+		BBE2A1FEC5ED298500000008 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = "Stub Launch Image";
-				BAZEL_TARGET = "//mediapipe/render/ios:OlaRenderDevelop";
+				BAZEL_TARGET = "//mediapipe/render/core:core";
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				GCC_PREPROCESSOR_DEFINITIONS = "DEBUG=1";
 				INFOPLIST_FILE = "${PROJECT_FILE_PATH}/.tulsi/Resources/StubInfoPlist.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 15.5;
-				PRODUCT_NAME = "mediapipe-render-ios-OlaRenderDevelop";
+				PRODUCT_NAME = core;
 				SDKROOT = iphoneos;
-				TULSI_BUILD_PATH = mediapipe/render/ios;
+				TULSI_BUILD_PATH = mediapipe/render/core;
 				TULSI_XCODE_VERSION = 13.4.1.13F100;
 			};
 			name = Debug;
 		};
-		7E413762509ED3ED00000000 /* __TulsiTestRunner_Debug */ = {
+		BBE2A1FEC5ED298500000009 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
-				CLANG_CXX_LANGUAGE_STANDARD = "c++17";
-				CLANG_ENABLE_OBJC_ARC = YES;
-				CLANG_WARN_BOOL_CONVERSION = YES;
-				CLANG_WARN_CONSTANT_CONVERSION = YES;
-				CLANG_WARN_EMPTY_BODY = YES;
-				CLANG_WARN_ENUM_CONVERSION = YES;
-				CLANG_WARN_INT_CONVERSION = YES;
-				CLANG_WARN_UNREACHABLE_CODE = YES;
-				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
-				CODE_SIGNING_REQUIRED = NO;
-				CODE_SIGN_IDENTITY = "";
-				DONT_RUN_SWIFT_STDLIB_TOOL = YES;
-				ENABLE_TESTABILITY = YES;
-				FRAMEWORK_SEARCH_PATHS = "";
+				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = "Stub Launch Image";
+				BAZEL_TARGET = "//mediapipe/render/core:core-ios";
+				DEBUG_INFORMATION_FORMAT = dwarf;
 				GCC_PREPROCESSOR_DEFINITIONS = "DEBUG=1";
-				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
-				GCC_WARN_ABOUT_RETURN_TYPE = YES;
-				GCC_WARN_UNDECLARED_SELECTOR = YES;
-				GCC_WARN_UNINITIALIZED_AUTOS = YES;
-				GCC_WARN_UNUSED_FUNCTION = YES;
-				GCC_WARN_UNUSED_VARIABLE = YES;
-				HEADER_SEARCH_PATHS = "";
-				ONLY_ACTIVE_ARCH = YES;
-				OTHER_CFLAGS = "--version";
-				OTHER_LDFLAGS = "--version";
-				OTHER_SWIFT_FLAGS = "--version";
-				PYTHONIOENCODING = utf8;
+				INFOPLIST_FILE = "${PROJECT_FILE_PATH}/.tulsi/Resources/StubInfoPlist.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
+				PRODUCT_NAME = "core-ios";
 				SDKROOT = iphoneos;
-				SWIFT_INSTALL_OBJC_HEADER = NO;
-				SWIFT_OBJC_INTERFACE_HEADER_NAME = "$(PRODUCT_NAME).h";
-				TULSI_BWRS = "$(PROJECT_FILE_PATH)/.tulsi/tulsi-execution-root";
-				TULSI_EXECUTION_ROOT = "$(PROJECT_FILE_PATH)/.tulsi/tulsi-execution-root";
-				TULSI_LLDBINIT_FILE = "$(PROJECT_FILE_PATH)/.tulsi/Utils/lldbinit";
-				TULSI_OUTPUT_BASE = "$(PROJECT_FILE_PATH)/.tulsi/tulsi-output-base";
-				TULSI_PROJECT = OlaVideo;
-				TULSI_VERSION = 0.20220209.88;
-				TULSI_WR = "${SRCROOT}/../../..";
+				TULSI_BUILD_PATH = mediapipe/render/core;
+				TULSI_XCODE_VERSION = 13.4.1.13F100;
 			};
-			name = __TulsiTestRunner_Debug;
+			name = Debug;
 		};
-		7E413762509ED3ED00000001 /* __TulsiTestRunner_Debug */ = {
+		BBE2A1FEC5ED29850000000A /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = "Stub Launch Image";
-				BAZEL_TARGET = "//mediapipe/render/ios:OlaRenderDevelopFramework";
+				BAZEL_TARGET = "//mediapipe/render/core:gpuimagemacros";
 				DEBUG_INFORMATION_FORMAT = dwarf;
-				FRAMEWORK_SEARCH_PATHS = "";
 				GCC_PREPROCESSOR_DEFINITIONS = "DEBUG=1";
-				HEADER_SEARCH_PATHS = "";
 				INFOPLIST_FILE = "${PROJECT_FILE_PATH}/.tulsi/Resources/StubInfoPlist.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
-				ONLY_ACTIVE_ARCH = YES;
-				OTHER_CFLAGS = "--version";
-				OTHER_LDFLAGS = "--version";
-				OTHER_SWIFT_FLAGS = "--version";
-				PRODUCT_BUNDLE_IDENTIFIER = com.ola.olarender.develop;
-				PRODUCT_NAME = OlaRenderDevelopFramework;
+				PRODUCT_NAME = gpuimagemacros;
 				SDKROOT = iphoneos;
-				SWIFT_INSTALL_OBJC_HEADER = NO;
-				SWIFT_OBJC_INTERFACE_HEADER_NAME = "$(PRODUCT_NAME).h";
-				TULSI_BUILD_PATH = mediapipe/render/ios;
+				TULSI_BUILD_PATH = mediapipe/render/core;
 				TULSI_XCODE_VERSION = 13.4.1.13F100;
 			};
-			name = __TulsiTestRunner_Debug;
+			name = Debug;
 		};
-		7E413762509ED3ED00000002 /* __TulsiTestRunner_Debug */ = {
+		BBE2A1FEC5ED29850000000B /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = "Stub Launch Image";
-				BAZEL_TARGET = "//mediapipe/render/ios:OlaRenderDevelop";
+				BAZEL_TARGET = "//mediapipe/render/core:gpuimagemath";
 				DEBUG_INFORMATION_FORMAT = dwarf;
-				FRAMEWORK_SEARCH_PATHS = "";
 				GCC_PREPROCESSOR_DEFINITIONS = "DEBUG=1";
-				HEADER_SEARCH_PATHS = "";
 				INFOPLIST_FILE = "${PROJECT_FILE_PATH}/.tulsi/Resources/StubInfoPlist.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 15.5;
-				ONLY_ACTIVE_ARCH = YES;
-				OTHER_CFLAGS = "--version";
-				OTHER_LDFLAGS = "--version";
-				OTHER_SWIFT_FLAGS = "--version";
-				PRODUCT_NAME = "mediapipe-render-ios-OlaRenderDevelop";
+				PRODUCT_NAME = gpuimagemath;
 				SDKROOT = iphoneos;
-				SWIFT_INSTALL_OBJC_HEADER = NO;
-				SWIFT_OBJC_INTERFACE_HEADER_NAME = "$(PRODUCT_NAME).h";
-				TULSI_BUILD_PATH = mediapipe/render/ios;
+				TULSI_BUILD_PATH = mediapipe/render/core;
 				TULSI_XCODE_VERSION = 13.4.1.13F100;
 			};
-			name = __TulsiTestRunner_Debug;
+			name = Debug;
 		};
-		7E41376250C156B800000000 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
-				CLANG_CXX_LANGUAGE_STANDARD = "c++17";
-				CLANG_ENABLE_OBJC_ARC = YES;
-				CLANG_WARN_BOOL_CONVERSION = YES;
-				CLANG_WARN_CONSTANT_CONVERSION = YES;
-				CLANG_WARN_EMPTY_BODY = YES;
-				CLANG_WARN_ENUM_CONVERSION = YES;
-				CLANG_WARN_INT_CONVERSION = YES;
-				CLANG_WARN_UNREACHABLE_CODE = YES;
-				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
-				CODE_SIGNING_REQUIRED = NO;
-				CODE_SIGN_IDENTITY = "";
-				DONT_RUN_SWIFT_STDLIB_TOOL = YES;
-				ENABLE_TESTABILITY = YES;
-				FRAMEWORK_SEARCH_PATHS = "$(PLATFORM_DIR)/Developer/Library/Frameworks";
-				GCC_PREPROCESSOR_DEFINITIONS = "NDEBUG=1";
-				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
-				GCC_WARN_ABOUT_RETURN_TYPE = YES;
-				GCC_WARN_UNDECLARED_SELECTOR = YES;
-				GCC_WARN_UNINITIALIZED_AUTOS = YES;
-				GCC_WARN_UNUSED_FUNCTION = YES;
-				GCC_WARN_UNUSED_VARIABLE = YES;
-				HEADER_SEARCH_PATHS = "$(TULSI_EXECUTION_ROOT) $(TULSI_WR)/bazel-bin $(TULSI_WR)/bazel-genfiles $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x";
-				ONLY_ACTIVE_ARCH = YES;
-				PYTHONIOENCODING = utf8;
-				SDKROOT = iphoneos;
-				TULSI_BWRS = "$(PROJECT_FILE_PATH)/.tulsi/tulsi-execution-root";
-				TULSI_EXECUTION_ROOT = "$(PROJECT_FILE_PATH)/.tulsi/tulsi-execution-root";
-				TULSI_LLDBINIT_FILE = "$(PROJECT_FILE_PATH)/.tulsi/Utils/lldbinit";
-				TULSI_OUTPUT_BASE = "$(PROJECT_FILE_PATH)/.tulsi/tulsi-output-base";
-				TULSI_PROJECT = OlaVideo;
-				TULSI_VERSION = 0.20220209.88;
-				TULSI_WR = "${SRCROOT}/../../..";
-			};
-			name = Release;
-		};
-		7E41376250C156B800000001 /* Release */ = {
+		BBE2A1FEC5ED29850000000C /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = "Stub Launch Image";
-				BAZEL_TARGET = "//mediapipe/render/ios:OlaRenderDevelopFramework";
+				BAZEL_TARGET = "//mediapipe/render/core:gpuimageutil";
 				DEBUG_INFORMATION_FORMAT = dwarf;
-				GCC_PREPROCESSOR_DEFINITIONS = "NDEBUG=1";
+				GCC_PREPROCESSOR_DEFINITIONS = "DEBUG=1";
 				INFOPLIST_FILE = "${PROJECT_FILE_PATH}/.tulsi/Resources/StubInfoPlist.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.ola.olarender.develop;
-				PRODUCT_NAME = OlaRenderDevelopFramework;
+				PRODUCT_NAME = gpuimageutil;
 				SDKROOT = iphoneos;
-				TULSI_BUILD_PATH = mediapipe/render/ios;
+				TULSI_BUILD_PATH = mediapipe/render/core;
 				TULSI_XCODE_VERSION = 13.4.1.13F100;
 			};
-			name = Release;
+			name = Debug;
 		};
-		7E41376250C156B800000002 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				GCC_PREPROCESSOR_DEFINITIONS = "NDEBUG=1";
-				HEADER_SEARCH_PATHS = "$(inherited) $(TULSI_WR)/. $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/ $(TULSI_WR)/mediapipe/render/core/math $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/mediapipe/render/core/math ";
-				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
-				OTHER_CFLAGS = "-x objective-c++ -fobjc-arc -D_FORTIFY_SOURCE=1 -D__DATE__=\"redacted\" -D__TIMESTAMP__=\"redacted\" -D__TIME__=\"redacted\"";
-				PRODUCT_NAME = _idx_core_F3E5C6E5_ios_min11.0;
-				SDKROOT = iphoneos;
-				USER_HEADER_SEARCH_PATHS = "$(TULSI_WR)";
-			};
-			name = Release;
-		};
-		7E41376250C156B800000003 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				GCC_PREPROCESSOR_DEFINITIONS = "NDEBUG=1";
-				HEADER_SEARCH_PATHS = "$(inherited) $(TULSI_WR)/. $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/ ";
-				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
-				OTHER_CFLAGS = "-D_FORTIFY_SOURCE=1 -D__DATE__=\"redacted\" -D__TIMESTAMP__=\"redacted\" -D__TIME__=\"redacted\"";
-				PRODUCT_NAME = _idx_ref_gpuimagemath_gpuimageutil_8DCE756C_ios_min11.0;
-				SDKROOT = iphoneos;
-				USER_HEADER_SEARCH_PATHS = "$(TULSI_WR)";
-			};
-			name = Release;
-		};
-		7E41376250C156B800000004 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				GCC_PREPROCESSOR_DEFINITIONS = "NDEBUG=1";
-				HEADER_SEARCH_PATHS = "$(inherited) $(TULSI_WR)/. $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/ $(TULSI_WR)/mediapipe/render/core/math $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/mediapipe/render/core/math ";
-				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
-				OTHER_CFLAGS = "-D_FORTIFY_SOURCE=1 -D__DATE__=\"redacted\" -D__TIMESTAMP__=\"redacted\" -D__TIME__=\"redacted\"";
-				PRODUCT_NAME = _idx_math_702C098E_ios_min11.0;
-				SDKROOT = iphoneos;
-				USER_HEADER_SEARCH_PATHS = "$(TULSI_WR)";
-			};
-			name = Release;
-		};
-		7E41376250C156B800000005 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				GCC_PREPROCESSOR_DEFINITIONS = "NDEBUG=1";
-				HEADER_SEARCH_PATHS = "$(inherited) $(TULSI_WR)/. $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/ $(TULSI_WR)/mediapipe/render/core/math $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/mediapipe/render/core/math ";
-				IPHONEOS_DEPLOYMENT_TARGET = 15.5;
-				OTHER_CFLAGS = "-x objective-c++ -fobjc-arc -D_FORTIFY_SOURCE=1 -D__DATE__=\"redacted\" -D__TIMESTAMP__=\"redacted\" -D__TIME__=\"redacted\"";
-				PRODUCT_NAME = _idx_core_F3E5C6E5_ios_min15.5;
-				SDKROOT = iphoneos;
-				USER_HEADER_SEARCH_PATHS = "$(TULSI_WR)";
-			};
-			name = Release;
-		};
-		7E41376250C156B800000006 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				GCC_PREPROCESSOR_DEFINITIONS = "NDEBUG=1";
-				HEADER_SEARCH_PATHS = "$(inherited) $(TULSI_WR)/. $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/ $(TULSI_WR)/mediapipe/render/core/math $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/mediapipe/render/core/math ";
-				IPHONEOS_DEPLOYMENT_TARGET = 15.5;
-				OTHER_CFLAGS = "-D_FORTIFY_SOURCE=1 -D__DATE__=\"redacted\" -D__TIMESTAMP__=\"redacted\" -D__TIME__=\"redacted\"";
-				PRODUCT_NAME = _idx_math_702C098E_ios_min15.5;
-				SDKROOT = iphoneos;
-				USER_HEADER_SEARCH_PATHS = "$(TULSI_WR)";
-			};
-			name = Release;
-		};
-		7E41376250C156B800000007 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				GCC_PREPROCESSOR_DEFINITIONS = "NDEBUG=1";
-				HEADER_SEARCH_PATHS = "$(inherited) $(TULSI_WR)/. $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/ ";
-				IPHONEOS_DEPLOYMENT_TARGET = 15.5;
-				OTHER_CFLAGS = "-D_FORTIFY_SOURCE=1 -D__DATE__=\"redacted\" -D__TIMESTAMP__=\"redacted\" -D__TIME__=\"redacted\"";
-				PRODUCT_NAME = _idx_ref_gpuimagemath_gpuimageutil_8DCE756C_ios_min15.5;
-				SDKROOT = iphoneos;
-				USER_HEADER_SEARCH_PATHS = "$(TULSI_WR)";
-			};
-			name = Release;
-		};
-		7E41376250C156B800000008 /* Release */ = {
+		BBE2A1FEC5ED29850000000D /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = "Stub Launch Image";
-				BAZEL_TARGET = "//mediapipe/render/ios:OlaRenderDevelop";
+				BAZEL_TARGET = "//mediapipe/render/core:core";
 				DEBUG_INFORMATION_FORMAT = dwarf;
-				GCC_PREPROCESSOR_DEFINITIONS = "NDEBUG=1";
+				GCC_PREPROCESSOR_DEFINITIONS = "DEBUG=1";
 				INFOPLIST_FILE = "${PROJECT_FILE_PATH}/.tulsi/Resources/StubInfoPlist.plist";
-				IPHONEOS_DEPLOYMENT_TARGET = 15.5;
-				PRODUCT_NAME = "mediapipe-render-ios-OlaRenderDevelop";
+				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
+				PRODUCT_NAME = "mediapipe-render-core-core";
 				SDKROOT = iphoneos;
-				TULSI_BUILD_PATH = mediapipe/render/ios;
+				TULSI_BUILD_PATH = mediapipe/render/core;
 				TULSI_XCODE_VERSION = 13.4.1.13F100;
 			};
-			name = Release;
+			name = Debug;
+		};
+		BBE2A1FEC5ED29850000000E /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = "Stub Launch Image";
+				BAZEL_TARGET = "//mediapipe/render/core:core-ios";
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				GCC_PREPROCESSOR_DEFINITIONS = "DEBUG=1";
+				INFOPLIST_FILE = "${PROJECT_FILE_PATH}/.tulsi/Resources/StubInfoPlist.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 15.5;
+				PRODUCT_NAME = "mediapipe-render-core-core-ios";
+				SDKROOT = iphoneos;
+				TULSI_BUILD_PATH = mediapipe/render/core;
+				TULSI_XCODE_VERSION = 13.4.1.13F100;
+			};
+			name = Debug;
+		};
+		BBE2A1FEC5ED29850000000F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = "Stub Launch Image";
+				BAZEL_TARGET = "//mediapipe/render/core:gpuimagemacros";
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				GCC_PREPROCESSOR_DEFINITIONS = "DEBUG=1";
+				INFOPLIST_FILE = "${PROJECT_FILE_PATH}/.tulsi/Resources/StubInfoPlist.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 15.5;
+				PRODUCT_NAME = "mediapipe-render-core-gpuimagemacros";
+				SDKROOT = iphoneos;
+				TULSI_BUILD_PATH = mediapipe/render/core;
+				TULSI_XCODE_VERSION = 13.4.1.13F100;
+			};
+			name = Debug;
+		};
+		BBE2A1FEC5ED298500000010 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = "Stub Launch Image";
+				BAZEL_TARGET = "//mediapipe/render/core:gpuimagemath";
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				GCC_PREPROCESSOR_DEFINITIONS = "DEBUG=1";
+				INFOPLIST_FILE = "${PROJECT_FILE_PATH}/.tulsi/Resources/StubInfoPlist.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
+				PRODUCT_NAME = "mediapipe-render-core-gpuimagemath";
+				SDKROOT = iphoneos;
+				TULSI_BUILD_PATH = mediapipe/render/core;
+				TULSI_XCODE_VERSION = 13.4.1.13F100;
+			};
+			name = Debug;
+		};
+		BBE2A1FEC5ED298500000011 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = "Stub Launch Image";
+				BAZEL_TARGET = "//mediapipe/render/core:gpuimageutil";
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				GCC_PREPROCESSOR_DEFINITIONS = "DEBUG=1";
+				INFOPLIST_FILE = "${PROJECT_FILE_PATH}/.tulsi/Resources/StubInfoPlist.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 15.5;
+				PRODUCT_NAME = "mediapipe-render-core-gpuimageutil";
+				SDKROOT = iphoneos;
+				TULSI_BUILD_PATH = mediapipe/render/core;
+				TULSI_XCODE_VERSION = 13.4.1.13F100;
+			};
+			name = Debug;
+		};
+		BBE2A1FEC5ED298500000012 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = "Stub Launch Image";
+				BAZEL_TARGET = "//mediapipe/render/core:ref";
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				GCC_PREPROCESSOR_DEFINITIONS = "DEBUG=1";
+				INFOPLIST_FILE = "${PROJECT_FILE_PATH}/.tulsi/Resources/StubInfoPlist.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 15.5;
+				PRODUCT_NAME = "mediapipe-render-core-ref";
+				SDKROOT = iphoneos;
+				TULSI_BUILD_PATH = mediapipe/render/core;
+				TULSI_XCODE_VERSION = 13.4.1.13F100;
+			};
+			name = Debug;
+		};
+		BBE2A1FEC5ED298500000013 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = "Stub Launch Image";
+				BAZEL_TARGET = "//mediapipe/render/core:ref";
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				GCC_PREPROCESSOR_DEFINITIONS = "DEBUG=1";
+				INFOPLIST_FILE = "${PROJECT_FILE_PATH}/.tulsi/Resources/StubInfoPlist.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
+				PRODUCT_NAME = ref;
+				SDKROOT = iphoneos;
+				TULSI_BUILD_PATH = mediapipe/render/core;
+				TULSI_XCODE_VERSION = 13.4.1.13F100;
+			};
+			name = Debug;
 		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		BA35A3F630A77E2E00000000 /* Build configuration list for PBXNativeTarget "mediapipe-render-ios-OlaRenderDevelop" */ = {
+		56B31771083E369B00000000 /* Build configuration list for PBXNativeTarget "mediapipe-render-core-gpuimagemath" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				7E4137623277CBB400000008 /* Debug */,
-				7E41376250C156B800000008 /* Release */,
-				7E413762509ED3ED00000002 /* __TulsiTestRunner_Debug */,
-				7E41376205236FF600000002 /* __TulsiTestRunner_Release */,
+				BBE2A1FEC5ED298500000010 /* Debug */,
+				BBE2A1FE8A1AA7E100000010 /* Release */,
+				BBE2A1FE277D01710000000A /* __TulsiTestRunner_Debug */,
+				BBE2A1FE19F2C0EE0000000A /* __TulsiTestRunner_Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 		};
-		BA35A3F6759537C100000000 /* Build configuration list for PBXNativeTarget "_idx_math_702C098E_ios_min11.0" */ = {
+		56B3177111E20B7600000000 /* Build configuration list for PBXNativeTarget "mediapipe-render-core-gpuimagemacros" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				7E4137623277CBB400000004 /* Debug */,
-				7E41376250C156B800000004 /* Release */,
+				BBE2A1FEC5ED29850000000F /* Debug */,
+				BBE2A1FE8A1AA7E10000000F /* Release */,
+				BBE2A1FE277D017100000009 /* __TulsiTestRunner_Debug */,
+				BBE2A1FE19F2C0EE00000009 /* __TulsiTestRunner_Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 		};
-		BA35A3F678E35B6B00000000 /* Build configuration list for PBXProject "OlaVideo" */ = {
+		56B3177112349BCE00000000 /* Build configuration list for PBXNativeTarget "_idx_ref_gpuimagemath_gpuimageutil_66945799_ios_min11.0" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				7E4137623277CBB400000000 /* Debug */,
-				7E41376250C156B800000000 /* Release */,
-				7E413762509ED3ED00000000 /* __TulsiTestRunner_Debug */,
-				7E41376205236FF600000000 /* __TulsiTestRunner_Release */,
+				BBE2A1FEC5ED298500000003 /* Debug */,
+				BBE2A1FE8A1AA7E100000003 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 		};
-		BA35A3F679C39EDD00000000 /* Build configuration list for PBXNativeTarget "_idx_core_F3E5C6E5_ios_min11.0" */ = {
+		56B317711804B95000000000 /* Build configuration list for PBXNativeTarget "gpuimageutil" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				7E4137623277CBB400000002 /* Debug */,
-				7E41376250C156B800000002 /* Release */,
+				BBE2A1FEC5ED29850000000C /* Debug */,
+				BBE2A1FE8A1AA7E10000000C /* Release */,
+				BBE2A1FE277D017100000006 /* __TulsiTestRunner_Debug */,
+				BBE2A1FE19F2C0EE00000006 /* __TulsiTestRunner_Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 		};
-		BA35A3F69A9D9AED00000000 /* Build configuration list for PBXNativeTarget "_idx_core_F3E5C6E5_ios_min15.5" */ = {
+		56B317711FD048A000000000 /* Build configuration list for PBXNativeTarget "gpuimagemath" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				7E4137623277CBB400000005 /* Debug */,
-				7E41376250C156B800000005 /* Release */,
+				BBE2A1FEC5ED29850000000B /* Debug */,
+				BBE2A1FE8A1AA7E10000000B /* Release */,
+				BBE2A1FE277D017100000005 /* __TulsiTestRunner_Debug */,
+				BBE2A1FE19F2C0EE00000005 /* __TulsiTestRunner_Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 		};
-		BA35A3F6A0C2EAAF00000000 /* Build configuration list for PBXLegacyTarget "_bazel_clean_" */ = {
+		56B3177129DABDB900000000 /* Build configuration list for PBXNativeTarget "OlaRenderDevelopFramework" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				BBE2A1FEC5ED298500000001 /* Debug */,
+				BBE2A1FE8A1AA7E100000001 /* Release */,
+				BBE2A1FE277D017100000001 /* __TulsiTestRunner_Debug */,
+				BBE2A1FE19F2C0EE00000001 /* __TulsiTestRunner_Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+		};
+		56B3177149EDF3E100000000 /* Build configuration list for PBXNativeTarget "_idx_math_OlaRenderPlayground_0128C2B8_ios_min11.0" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				BBE2A1FEC5ED298500000004 /* Debug */,
+				BBE2A1FE8A1AA7E100000004 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+		};
+		56B317714F508F6A00000000 /* Build configuration list for PBXProject "OlaVideo" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				BBE2A1FEC5ED298500000000 /* Debug */,
+				BBE2A1FE8A1AA7E100000000 /* Release */,
+				BBE2A1FE277D017100000000 /* __TulsiTestRunner_Debug */,
+				BBE2A1FE19F2C0EE00000000 /* __TulsiTestRunner_Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+		};
+		56B3177156CB885D00000000 /* Build configuration list for PBXNativeTarget "mediapipe-render-core-core" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				BBE2A1FEC5ED29850000000D /* Debug */,
+				BBE2A1FE8A1AA7E10000000D /* Release */,
+				BBE2A1FE277D017100000007 /* __TulsiTestRunner_Debug */,
+				BBE2A1FE19F2C0EE00000007 /* __TulsiTestRunner_Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+		};
+		56B317715AF59CC800000000 /* Build configuration list for PBXNativeTarget "_idx_core_core-ios_8391CBD4_ios_min11.0" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				BBE2A1FEC5ED298500000002 /* Debug */,
+				BBE2A1FE8A1AA7E100000002 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+		};
+		56B317717A9CE71800000000 /* Build configuration list for PBXLegacyTarget "_bazel_clean_" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 			);
 			defaultConfigurationIsVisible = 0;
 		};
-		BA35A3F6A53D5D0F00000000 /* Build configuration list for PBXNativeTarget "OlaRenderDevelopFramework" */ = {
+		56B317717D988B3F00000000 /* Build configuration list for PBXNativeTarget "core" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				7E4137623277CBB400000001 /* Debug */,
-				7E41376250C156B800000001 /* Release */,
-				7E413762509ED3ED00000001 /* __TulsiTestRunner_Debug */,
-				7E41376205236FF600000001 /* __TulsiTestRunner_Release */,
+				BBE2A1FEC5ED298500000008 /* Debug */,
+				BBE2A1FE8A1AA7E100000008 /* Release */,
+				BBE2A1FE277D017100000002 /* __TulsiTestRunner_Debug */,
+				BBE2A1FE19F2C0EE00000002 /* __TulsiTestRunner_Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 		};
-		BA35A3F6AA12506300000000 /* Build configuration list for PBXNativeTarget "_idx_math_702C098E_ios_min15.5" */ = {
+		56B3177183B5A12700000000 /* Build configuration list for PBXNativeTarget "core-ios" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				7E4137623277CBB400000006 /* Debug */,
-				7E41376250C156B800000006 /* Release */,
+				BBE2A1FEC5ED298500000009 /* Debug */,
+				BBE2A1FE8A1AA7E100000009 /* Release */,
+				BBE2A1FE277D017100000003 /* __TulsiTestRunner_Debug */,
+				BBE2A1FE19F2C0EE00000003 /* __TulsiTestRunner_Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 		};
-		BA35A3F6C741168500000000 /* Build configuration list for PBXNativeTarget "_idx_ref_gpuimagemath_gpuimageutil_8DCE756C_ios_min15.5" */ = {
+		56B31771A274AF7F00000000 /* Build configuration list for PBXNativeTarget "_idx_math_744D87CF_ios_min15.5" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				7E4137623277CBB400000007 /* Debug */,
-				7E41376250C156B800000007 /* Release */,
+				BBE2A1FEC5ED298500000007 /* Debug */,
+				BBE2A1FE8A1AA7E100000007 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 		};
-		BA35A3F6EB0434D400000000 /* Build configuration list for PBXNativeTarget "_idx_ref_gpuimagemath_gpuimageutil_8DCE756C_ios_min11.0" */ = {
+		56B31771A87FED1E00000000 /* Build configuration list for PBXNativeTarget "_idx_core_core-ios_8391CBD4_ios_min15.5" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				7E4137623277CBB400000003 /* Debug */,
-				7E41376250C156B800000003 /* Release */,
+				BBE2A1FEC5ED298500000005 /* Debug */,
+				BBE2A1FE8A1AA7E100000005 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+		};
+		56B31771AD94878000000000 /* Build configuration list for PBXNativeTarget "ref" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				BBE2A1FEC5ED298500000013 /* Debug */,
+				BBE2A1FE8A1AA7E100000013 /* Release */,
+				BBE2A1FE277D01710000000D /* __TulsiTestRunner_Debug */,
+				BBE2A1FE19F2C0EE0000000D /* __TulsiTestRunner_Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+		};
+		56B31771B122A43C00000000 /* Build configuration list for PBXNativeTarget "mediapipe-render-core-core-ios" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				BBE2A1FEC5ED29850000000E /* Debug */,
+				BBE2A1FE8A1AA7E10000000E /* Release */,
+				BBE2A1FE277D017100000008 /* __TulsiTestRunner_Debug */,
+				BBE2A1FE19F2C0EE00000008 /* __TulsiTestRunner_Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+		};
+		56B31771B82E927700000000 /* Build configuration list for PBXNativeTarget "mediapipe-render-core-gpuimageutil" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				BBE2A1FEC5ED298500000011 /* Debug */,
+				BBE2A1FE8A1AA7E100000011 /* Release */,
+				BBE2A1FE277D01710000000B /* __TulsiTestRunner_Debug */,
+				BBE2A1FE19F2C0EE0000000B /* __TulsiTestRunner_Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+		};
+		56B31771BB533E7D00000000 /* Build configuration list for PBXNativeTarget "mediapipe-render-core-ref" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				BBE2A1FEC5ED298500000012 /* Debug */,
+				BBE2A1FE8A1AA7E100000012 /* Release */,
+				BBE2A1FE277D01710000000C /* __TulsiTestRunner_Debug */,
+				BBE2A1FE19F2C0EE0000000C /* __TulsiTestRunner_Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+		};
+		56B31771BE9D524200000000 /* Build configuration list for PBXNativeTarget "_idx_ref_gpuimagemath_gpuimageutil_66945799_ios_min15.5" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				BBE2A1FEC5ED298500000006 /* Debug */,
+				BBE2A1FE8A1AA7E100000006 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+		};
+		56B31771DEBD835200000000 /* Build configuration list for PBXNativeTarget "gpuimagemacros" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				BBE2A1FEC5ED29850000000A /* Debug */,
+				BBE2A1FE8A1AA7E10000000A /* Release */,
+				BBE2A1FE277D017100000004 /* __TulsiTestRunner_Debug */,
+				BBE2A1FE19F2C0EE00000004 /* __TulsiTestRunner_Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 		};
 /* End XCConfigurationList section */
 	};
-	rootObject = 82C5998AA8C9888400000000 /* Project object */;
+	rootObject = B53CA7A33A8DB20A00000000 /* Project object */;
 }

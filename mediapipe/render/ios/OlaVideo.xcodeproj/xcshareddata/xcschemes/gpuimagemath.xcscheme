@@ -1,0 +1,29 @@
+
+<Scheme LastUpgradeVersion="1000" version="1.3">
+    <BuildAction buildImplicitDependencies="YES" parallelizeBuildables="YES">
+        <BuildActionEntries>
+            <BuildActionEntry buildForTesting="YES" buildForAnalyzing="YES" buildForArchiving="YES" buildForProfiling="YES" buildForRunning="YES">
+                <BuildableReference BlueprintIdentifier="9CE83D6E5B65349A00000000" BuildableName="libgpuimagemath.a" BlueprintName="gpuimagemath" ReferencedContainer="container:OlaVideo.xcodeproj" BuildableIdentifier="primary"></BuildableReference>
+            </BuildActionEntry>
+        </BuildActionEntries>
+    </BuildAction>
+    <TestAction buildConfiguration="__TulsiTestRunner_Debug" customLLDBInitFile="$(PROJECT_FILE_PATH)/.tulsi/Utils/lldbinit" selectedLauncherIdentifier="Xcode.DebuggerFoundation.Launcher.LLDB" shouldUseLaunchSchemeArgsEnv="YES" selectedDebuggerIdentifier="Xcode.DebuggerFoundation.Debugger.LLDB">
+        <Testables></Testables>
+        <BuildableProductRunnable runnableDebuggingMode="0">
+            <BuildableReference BuildableIdentifier="primary" BlueprintName="gpuimagemath" BuildableName="libgpuimagemath.a" BlueprintIdentifier="9CE83D6E5B65349A00000000" ReferencedContainer="container:OlaVideo.xcodeproj"></BuildableReference>
+        </BuildableProductRunnable>
+    </TestAction>
+    <LaunchAction useCustomWorkingDirectory="NO" ignoresPersistentStateOnLaunch="NO" debugServiceExtension="internal" allowLocationSimulation="YES" customLLDBInitFile="$(PROJECT_FILE_PATH)/.tulsi/Utils/lldbinit" buildConfiguration="Debug" selectedDebuggerIdentifier="Xcode.DebuggerFoundation.Debugger.LLDB" debugDocumentVersioning="YES" launchStyle="0" selectedLauncherIdentifier="Xcode.DebuggerFoundation.Launcher.LLDB">
+        <EnvironmentVariables></EnvironmentVariables>
+        <MacroExpansion>
+            <BuildableReference BlueprintName="gpuimagemath" ReferencedContainer="container:OlaVideo.xcodeproj" BuildableIdentifier="primary" BlueprintIdentifier="9CE83D6E5B65349A00000000" BuildableName="libgpuimagemath.a"></BuildableReference>
+        </MacroExpansion>
+    </LaunchAction>
+    <ProfileAction buildConfiguration="__TulsiTestRunner_Release" shouldUseLaunchSchemeArgsEnv="YES" useCustomWorkingDirectory="NO" debugDocumentVersioning="YES">
+        <MacroExpansion>
+            <BuildableReference BlueprintIdentifier="9CE83D6E5B65349A00000000" BuildableName="libgpuimagemath.a" BuildableIdentifier="primary" BlueprintName="gpuimagemath" ReferencedContainer="container:OlaVideo.xcodeproj"></BuildableReference>
+        </MacroExpansion>
+    </ProfileAction>
+    <AnalyzeAction buildConfiguration="Debug"></AnalyzeAction>
+    <ArchiveAction buildConfiguration="Release" revealArchiveInOrganizer="YES"></ArchiveAction>
+</Scheme>

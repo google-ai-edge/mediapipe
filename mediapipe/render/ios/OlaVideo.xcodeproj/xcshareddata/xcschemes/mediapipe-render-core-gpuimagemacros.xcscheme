@@ -1,0 +1,29 @@
+
+<Scheme version="1.3" LastUpgradeVersion="1000">
+    <BuildAction parallelizeBuildables="YES" buildImplicitDependencies="YES">
+        <BuildActionEntries>
+            <BuildActionEntry buildForAnalyzing="YES" buildForRunning="YES" buildForArchiving="YES" buildForProfiling="YES" buildForTesting="YES">
+                <BuildableReference BlueprintName="mediapipe-render-core-gpuimagemacros" ReferencedContainer="container:OlaVideo.xcodeproj" BuildableIdentifier="primary" BlueprintIdentifier="9CE83D6E4A82D9F400000000" BuildableName="libmediapipe-render-core-gpuimagemacros.a"></BuildableReference>
+            </BuildActionEntry>
+        </BuildActionEntries>
+    </BuildAction>
+    <TestAction customLLDBInitFile="$(PROJECT_FILE_PATH)/.tulsi/Utils/lldbinit" buildConfiguration="__TulsiTestRunner_Debug" selectedDebuggerIdentifier="Xcode.DebuggerFoundation.Debugger.LLDB" selectedLauncherIdentifier="Xcode.DebuggerFoundation.Launcher.LLDB" shouldUseLaunchSchemeArgsEnv="YES">
+        <Testables></Testables>
+        <BuildableProductRunnable runnableDebuggingMode="0">
+            <BuildableReference BlueprintName="mediapipe-render-core-gpuimagemacros" ReferencedContainer="container:OlaVideo.xcodeproj" BlueprintIdentifier="9CE83D6E4A82D9F400000000" BuildableIdentifier="primary" BuildableName="libmediapipe-render-core-gpuimagemacros.a"></BuildableReference>
+        </BuildableProductRunnable>
+    </TestAction>
+    <LaunchAction buildConfiguration="Debug" launchStyle="0" allowLocationSimulation="YES" selectedLauncherIdentifier="Xcode.DebuggerFoundation.Launcher.LLDB" debugDocumentVersioning="YES" debugServiceExtension="internal" customLLDBInitFile="$(PROJECT_FILE_PATH)/.tulsi/Utils/lldbinit" useCustomWorkingDirectory="NO" selectedDebuggerIdentifier="Xcode.DebuggerFoundation.Debugger.LLDB" ignoresPersistentStateOnLaunch="NO">
+        <EnvironmentVariables></EnvironmentVariables>
+        <MacroExpansion>
+            <BuildableReference BuildableName="libmediapipe-render-core-gpuimagemacros.a" BlueprintIdentifier="9CE83D6E4A82D9F400000000" BlueprintName="mediapipe-render-core-gpuimagemacros" ReferencedContainer="container:OlaVideo.xcodeproj" BuildableIdentifier="primary"></BuildableReference>
+        </MacroExpansion>
+    </LaunchAction>
+    <ProfileAction buildConfiguration="__TulsiTestRunner_Release" debugDocumentVersioning="YES" useCustomWorkingDirectory="NO" shouldUseLaunchSchemeArgsEnv="YES">
+        <MacroExpansion>
+            <BuildableReference BlueprintIdentifier="9CE83D6E4A82D9F400000000" BuildableIdentifier="primary" BlueprintName="mediapipe-render-core-gpuimagemacros" ReferencedContainer="container:OlaVideo.xcodeproj" BuildableName="libmediapipe-render-core-gpuimagemacros.a"></BuildableReference>
+        </MacroExpansion>
+    </ProfileAction>
+    <AnalyzeAction buildConfiguration="Debug"></AnalyzeAction>
+    <ArchiveAction buildConfiguration="Release" revealArchiveInOrganizer="YES"></ArchiveAction>
+</Scheme>

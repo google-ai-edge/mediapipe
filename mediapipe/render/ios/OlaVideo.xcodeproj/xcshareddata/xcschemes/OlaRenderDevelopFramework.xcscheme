@@ -2,26 +2,26 @@
 <Scheme version="1.3" LastUpgradeVersion="1000">
     <BuildAction parallelizeBuildables="YES" buildImplicitDependencies="YES">
         <BuildActionEntries>
-            <BuildActionEntry buildForAnalyzing="YES" buildForRunning="YES" buildForProfiling="YES" buildForArchiving="YES" buildForTesting="YES">
-                <BuildableReference BlueprintName="OlaRenderDevelopFramework" ReferencedContainer="container:OlaVideo.xcodeproj" BuildableIdentifier="primary" BlueprintIdentifier="60974006CD5CD7AC00000000" BuildableName="OlaRenderDevelopFramework.framework"></BuildableReference>
+            <BuildActionEntry buildForProfiling="YES" buildForRunning="YES" buildForTesting="YES" buildForAnalyzing="YES" buildForArchiving="YES">
+                <BuildableReference BlueprintIdentifier="9CE83D6EA18FFB5E00000000" BuildableName="OlaRenderDevelopFramework.framework" ReferencedContainer="container:OlaVideo.xcodeproj" BuildableIdentifier="primary" BlueprintName="OlaRenderDevelopFramework"></BuildableReference>
             </BuildActionEntry>
         </BuildActionEntries>
     </BuildAction>
-    <TestAction buildConfiguration="__TulsiTestRunner_Debug" selectedLauncherIdentifier="Xcode.DebuggerFoundation.Launcher.LLDB" shouldUseLaunchSchemeArgsEnv="YES" selectedDebuggerIdentifier="Xcode.DebuggerFoundation.Debugger.LLDB" customLLDBInitFile="$(PROJECT_FILE_PATH)/.tulsi/Utils/lldbinit">
+    <TestAction customLLDBInitFile="$(PROJECT_FILE_PATH)/.tulsi/Utils/lldbinit" selectedDebuggerIdentifier="Xcode.DebuggerFoundation.Debugger.LLDB" shouldUseLaunchSchemeArgsEnv="YES" selectedLauncherIdentifier="Xcode.DebuggerFoundation.Launcher.LLDB" buildConfiguration="__TulsiTestRunner_Debug">
         <Testables></Testables>
         <BuildableProductRunnable runnableDebuggingMode="0">
-            <BuildableReference BuildableName="OlaRenderDevelopFramework.framework" BlueprintName="OlaRenderDevelopFramework" ReferencedContainer="container:OlaVideo.xcodeproj" BlueprintIdentifier="60974006CD5CD7AC00000000" BuildableIdentifier="primary"></BuildableReference>
+            <BuildableReference ReferencedContainer="container:OlaVideo.xcodeproj" BlueprintName="OlaRenderDevelopFramework" BuildableIdentifier="primary" BuildableName="OlaRenderDevelopFramework.framework" BlueprintIdentifier="9CE83D6EA18FFB5E00000000"></BuildableReference>
         </BuildableProductRunnable>
     </TestAction>
-    <LaunchAction debugDocumentVersioning="YES" buildConfiguration="Debug" launchStyle="0" ignoresPersistentStateOnLaunch="NO" allowLocationSimulation="YES" selectedLauncherIdentifier="Xcode.DebuggerFoundation.Launcher.LLDB" debugServiceExtension="internal" selectedDebuggerIdentifier="Xcode.DebuggerFoundation.Debugger.LLDB" customLLDBInitFile="$(PROJECT_FILE_PATH)/.tulsi/Utils/lldbinit" useCustomWorkingDirectory="NO">
+    <LaunchAction buildConfiguration="Debug" customLLDBInitFile="$(PROJECT_FILE_PATH)/.tulsi/Utils/lldbinit" selectedLauncherIdentifier="Xcode.DebuggerFoundation.Launcher.LLDB" launchStyle="0" selectedDebuggerIdentifier="Xcode.DebuggerFoundation.Debugger.LLDB" useCustomWorkingDirectory="NO" debugDocumentVersioning="YES" allowLocationSimulation="YES" ignoresPersistentStateOnLaunch="NO" debugServiceExtension="internal">
         <EnvironmentVariables></EnvironmentVariables>
         <BuildableProductRunnable runnableDebuggingMode="0">
-            <BuildableReference BuildableName="OlaRenderDevelopFramework.framework" BuildableIdentifier="primary" ReferencedContainer="container:OlaVideo.xcodeproj" BlueprintIdentifier="60974006CD5CD7AC00000000" BlueprintName="OlaRenderDevelopFramework"></BuildableReference>
+            <BuildableReference BuildableName="OlaRenderDevelopFramework.framework" BlueprintIdentifier="9CE83D6EA18FFB5E00000000" BuildableIdentifier="primary" ReferencedContainer="container:OlaVideo.xcodeproj" BlueprintName="OlaRenderDevelopFramework"></BuildableReference>
         </BuildableProductRunnable>
     </LaunchAction>
-    <ProfileAction shouldUseLaunchSchemeArgsEnv="YES" debugDocumentVersioning="YES" buildConfiguration="__TulsiTestRunner_Release" useCustomWorkingDirectory="NO">
+    <ProfileAction debugDocumentVersioning="YES" buildConfiguration="__TulsiTestRunner_Release" useCustomWorkingDirectory="NO" shouldUseLaunchSchemeArgsEnv="YES">
         <BuildableProductRunnable runnableDebuggingMode="0">
-            <BuildableReference BuildableName="OlaRenderDevelopFramework.framework" BlueprintIdentifier="60974006CD5CD7AC00000000" BuildableIdentifier="primary" ReferencedContainer="container:OlaVideo.xcodeproj" BlueprintName="OlaRenderDevelopFramework"></BuildableReference>
+            <BuildableReference BuildableIdentifier="primary" BlueprintIdentifier="9CE83D6EA18FFB5E00000000" ReferencedContainer="container:OlaVideo.xcodeproj" BlueprintName="OlaRenderDevelopFramework" BuildableName="OlaRenderDevelopFramework.framework"></BuildableReference>
         </BuildableProductRunnable>
     </ProfileAction>
     <AnalyzeAction buildConfiguration="Debug"></AnalyzeAction>

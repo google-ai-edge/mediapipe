@@ -1,0 +1,29 @@
+
+<Scheme version="1.3" LastUpgradeVersion="1000">
+    <BuildAction parallelizeBuildables="YES" buildImplicitDependencies="YES">
+        <BuildActionEntries>
+            <BuildActionEntry buildForTesting="YES" buildForProfiling="YES" buildForRunning="YES" buildForAnalyzing="YES" buildForArchiving="YES">
+                <BuildableReference ReferencedContainer="container:OlaVideo.xcodeproj" BuildableName="libmediapipe-render-core-core-ios.a" BlueprintName="mediapipe-render-core-core-ios" BuildableIdentifier="primary" BlueprintIdentifier="9CE83D6E2F7665B800000000"></BuildableReference>
+            </BuildActionEntry>
+        </BuildActionEntries>
+    </BuildAction>
+    <TestAction selectedDebuggerIdentifier="Xcode.DebuggerFoundation.Debugger.LLDB" buildConfiguration="__TulsiTestRunner_Debug" selectedLauncherIdentifier="Xcode.DebuggerFoundation.Launcher.LLDB" customLLDBInitFile="$(PROJECT_FILE_PATH)/.tulsi/Utils/lldbinit" shouldUseLaunchSchemeArgsEnv="YES">
+        <Testables></Testables>
+        <BuildableProductRunnable runnableDebuggingMode="0">
+            <BuildableReference BuildableIdentifier="primary" BlueprintName="mediapipe-render-core-core-ios" BlueprintIdentifier="9CE83D6E2F7665B800000000" BuildableName="libmediapipe-render-core-core-ios.a" ReferencedContainer="container:OlaVideo.xcodeproj"></BuildableReference>
+        </BuildableProductRunnable>
+    </TestAction>
+    <LaunchAction ignoresPersistentStateOnLaunch="NO" debugServiceExtension="internal" debugDocumentVersioning="YES" buildConfiguration="Debug" selectedLauncherIdentifier="Xcode.DebuggerFoundation.Launcher.LLDB" customLLDBInitFile="$(PROJECT_FILE_PATH)/.tulsi/Utils/lldbinit" selectedDebuggerIdentifier="Xcode.DebuggerFoundation.Debugger.LLDB" launchStyle="0" allowLocationSimulation="YES" useCustomWorkingDirectory="NO">
+        <EnvironmentVariables></EnvironmentVariables>
+        <MacroExpansion>
+            <BuildableReference BlueprintIdentifier="9CE83D6E2F7665B800000000" BlueprintName="mediapipe-render-core-core-ios" ReferencedContainer="container:OlaVideo.xcodeproj" BuildableName="libmediapipe-render-core-core-ios.a" BuildableIdentifier="primary"></BuildableReference>
+        </MacroExpansion>
+    </LaunchAction>
+    <ProfileAction debugDocumentVersioning="YES" buildConfiguration="__TulsiTestRunner_Release" useCustomWorkingDirectory="NO" shouldUseLaunchSchemeArgsEnv="YES">
+        <MacroExpansion>
+            <BuildableReference BuildableName="libmediapipe-render-core-core-ios.a" ReferencedContainer="container:OlaVideo.xcodeproj" BuildableIdentifier="primary" BlueprintName="mediapipe-render-core-core-ios" BlueprintIdentifier="9CE83D6E2F7665B800000000"></BuildableReference>
+        </MacroExpansion>
+    </ProfileAction>
+    <AnalyzeAction buildConfiguration="Debug"></AnalyzeAction>
+    <ArchiveAction revealArchiveInOrganizer="YES" buildConfiguration="Release"></ArchiveAction>
+</Scheme>

@@ -3,7 +3,12 @@
     "mediapipe/render/ios/BUILD"
   ],
   "buildTargets" : [
-    "//mediapipe/render/ios:OlaRenderDevelop",
+    "//mediapipe/render/core:core",
+    "//mediapipe/render/core:core-ios",
+    "//mediapipe/render/core:gpuimagemacros",
+    "//mediapipe/render/core:gpuimagemath",
+    "//mediapipe/render/core:gpuimageutil",
+    "//mediapipe/render/core:ref",
     "//mediapipe/render/ios:OlaRenderDevelopFramework"
   ],
   "optionSet" : {

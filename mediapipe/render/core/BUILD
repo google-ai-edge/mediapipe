@@ -108,42 +108,45 @@ cc_library(
     ],
 )
 
+OLARENDER_SRCS = [
+    "FramebufferCache.cpp",
+    "Framebuffer.cpp",
+    "Target.cpp",
+    "Context.cpp",
+    "Filter.cpp",
+    "GLProgram.cpp",
+    "Source.cpp",
+    "SourceImage.cpp",
+    "IOSTarget.cpp",
+    "SourceCamera.cpp",
+    "TargetView.cpp",
+    "FilterGroup.cpp"
+]
+
+OLARENDER_HDRS = [
+    "FramebufferCache.hpp",
+    "Framebuffer.hpp",
+    "Target.hpp",
+    "Filter.hpp",
+    "Context.hpp",
+    "GLProgram.hpp",
+    "Source.hpp",
+    "SourceImage.hpp",
+    "CVFramebuffer.hpp",
+    "GPUImageTarget.h",
+    "IOSTarget.hpp",
+    "GPUImage-x.h",
+    "SourceCamera.hpp",
+    "TargetView.hpp",
+    "FilterGroup.hpp",
+]
 
 
 
 cc_library(
     name = "core",
-    srcs = [
-        "FramebufferCache.cpp",
-        "Framebuffer.cpp",
-        "Target.cpp",
-        "Context.cpp",
-        "Filter.cpp",
-        "GLProgram.cpp",
-        "Source.cpp",
-        "SourceImage.cpp",
-        "IOSTarget.cpp",
-        "SourceCamera.cpp",
-        "TargetView.cpp",
-        "FilterGroup.cpp"
-        ],
-    hdrs = [
-        "FramebufferCache.hpp",
-        "Framebuffer.hpp",
-        "Target.hpp",
-        "Filter.hpp",
-        "Context.hpp",
-        "GLProgram.hpp",
-        "Source.hpp",
-        "SourceImage.hpp",
-        "CVFramebuffer.hpp",
-        "GPUImageTarget.h",
-        "IOSTarget.hpp",
-        "GPUImage-x.h",
-        "SourceCamera.hpp",
-        "TargetView.hpp",
-        "FilterGroup.hpp",
-        ],
+    srcs = OLARENDER_SRCS,
+    hdrs = OLARENDER_HDRS,
     visibility = ["//visibility:public"],
     deps = [
         ":gpuimageutil",
@@ -161,4 +164,26 @@ cc_library(
     }),
 )
 
-
+objc_library(
+    name = "core-ios",
+    hdrs = OLARENDER_HDRS,
+    srcs = OLARENDER_SRCS,
+    visibility = ["//visibility:public"],
+    deps = [
+        "//mediapipe/render/core:core",
+    ],
+    copts = select({
+        "//mediapipe:apple": [
+            "-x objective-c++",
+            "-fobjc-arc",  # enable reference-counting
+        ],
+        "//conditions:default": [],
+    }),
+    sdk_frameworks = [
+        "AVFoundation",
+        "CoreGraphics",
+        "CoreMedia",
+        "UIKit",
+        "OpenGLES",
+    ],
+)

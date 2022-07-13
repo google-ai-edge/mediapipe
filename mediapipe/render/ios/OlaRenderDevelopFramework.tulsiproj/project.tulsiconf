@@ -10,6 +10,7 @@
     }
   },
   "packages" : [
+    "mediapipe/render/core",
     "mediapipe/render/ios"
   ],
   "projectName" : "OlaVideo",

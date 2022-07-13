@@ -14,7 +14,32 @@
 			<key>isShown</key>
 			<false/>
 		</dict>
-		<key>mediapipe-render-ios-OlaRenderDevelop.xcscheme_^#shared#^_</key>
+		<key>core.xcscheme_^#shared#^_</key>
+		<dict>
+			<key>isShown</key>
+			<true/>
+		</dict>
+		<key>gpuimagemacros.xcscheme_^#shared#^_</key>
+		<dict>
+			<key>isShown</key>
+			<true/>
+		</dict>
+		<key>mediapipe-render-core-core-ios.xcscheme_^#shared#^_</key>
+		<dict>
+			<key>isShown</key>
+			<true/>
+		</dict>
+		<key>mediapipe-render-core-gpuimagemath.xcscheme_^#shared#^_</key>
+		<dict>
+			<key>isShown</key>
+			<true/>
+		</dict>
+		<key>mediapipe-render-core-gpuimageutil.xcscheme_^#shared#^_</key>
+		<dict>
+			<key>isShown</key>
+			<true/>
+		</dict>
+		<key>mediapipe-render-core-ref.xcscheme_^#shared#^_</key>
 		<dict>
 			<key>isShown</key>
 			<true/>

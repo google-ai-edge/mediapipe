@@ -1,0 +1,29 @@
+
+<Scheme version="1.3" LastUpgradeVersion="1000">
+    <BuildAction buildImplicitDependencies="YES" parallelizeBuildables="YES">
+        <BuildActionEntries>
+            <BuildActionEntry buildForRunning="YES" buildForProfiling="YES" buildForAnalyzing="YES" buildForArchiving="YES" buildForTesting="YES">
+                <BuildableReference BuildableIdentifier="primary" BlueprintIdentifier="9CE83D6E00285A8200000000" BuildableName="libcore.a" BlueprintName="core" ReferencedContainer="container:OlaVideo.xcodeproj"></BuildableReference>
+            </BuildActionEntry>
+        </BuildActionEntries>
+    </BuildAction>
+    <TestAction shouldUseLaunchSchemeArgsEnv="YES" selectedLauncherIdentifier="Xcode.DebuggerFoundation.Launcher.LLDB" selectedDebuggerIdentifier="Xcode.DebuggerFoundation.Debugger.LLDB" customLLDBInitFile="$(PROJECT_FILE_PATH)/.tulsi/Utils/lldbinit" buildConfiguration="__TulsiTestRunner_Debug">
+        <Testables></Testables>
+        <BuildableProductRunnable runnableDebuggingMode="0">
+            <BuildableReference BuildableName="libcore.a" BlueprintName="core" BlueprintIdentifier="9CE83D6E00285A8200000000" ReferencedContainer="container:OlaVideo.xcodeproj" BuildableIdentifier="primary"></BuildableReference>
+        </BuildableProductRunnable>
+    </TestAction>
+    <LaunchAction debugDocumentVersioning="YES" customLLDBInitFile="$(PROJECT_FILE_PATH)/.tulsi/Utils/lldbinit" ignoresPersistentStateOnLaunch="NO" buildConfiguration="Debug" debugServiceExtension="internal" selectedLauncherIdentifier="Xcode.DebuggerFoundation.Launcher.LLDB" useCustomWorkingDirectory="NO" allowLocationSimulation="YES" selectedDebuggerIdentifier="Xcode.DebuggerFoundation.Debugger.LLDB" launchStyle="0">
+        <EnvironmentVariables></EnvironmentVariables>
+        <MacroExpansion>
+            <BuildableReference BuildableIdentifier="primary" BlueprintIdentifier="9CE83D6E00285A8200000000" BuildableName="libcore.a" ReferencedContainer="container:OlaVideo.xcodeproj" BlueprintName="core"></BuildableReference>
+        </MacroExpansion>
+    </LaunchAction>
+    <ProfileAction buildConfiguration="__TulsiTestRunner_Release" shouldUseLaunchSchemeArgsEnv="YES" useCustomWorkingDirectory="NO" debugDocumentVersioning="YES">
+        <MacroExpansion>
+            <BuildableReference ReferencedContainer="container:OlaVideo.xcodeproj" BuildableName="libcore.a" BlueprintIdentifier="9CE83D6E00285A8200000000" BlueprintName="core" BuildableIdentifier="primary"></BuildableReference>
+        </MacroExpansion>
+    </ProfileAction>
+    <AnalyzeAction buildConfiguration="Debug"></AnalyzeAction>
+    <ArchiveAction revealArchiveInOrganizer="YES" buildConfiguration="Release"></ArchiveAction>
+</Scheme>

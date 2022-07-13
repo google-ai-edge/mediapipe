@@ -9,38 +9,23 @@ load("@build_bazel_rules_apple//apple:ios.bzl", "ios_framework")
 ios_framework(
     name = "OlaRenderDevelopFramework",
     hdrs = [
-        "OlaRenderDevelop.h",
+        "OlaRenderPlayground.h",
     ],
     infoplists = ["Info.plist"],
     bundle_id = "com.ola.olarender.develop",
     families = ["iphone", "ipad"],
     minimum_os_version = "11.0",
     deps = [
-        ":OlaRenderDevelop",
+         ":OlaRenderPlayground",
     ],
 )
 
 objc_library(
-    name = "OlaRenderDevelop",
-    hdrs = [
-        "OlaRenderDevelop.h",
-    ],
+    name = "OlaRenderPlayground",
+    hdrs = ["OlaRenderPlayground.h"],
+    srcs = ["OlaRenderPlayground.mm"],
     visibility = ["//visibility:public"],
     deps = [
-        "//mediapipe/render/core:core",
-    ],
-    copts = select({
-        "//mediapipe:apple": [
-            "-x objective-c++",
-            "-fobjc-arc",  # enable reference-counting
-        ],
-        "//conditions:default": [],
-    }),
-    sdk_frameworks = [
-        "AVFoundation",
-        "CoreGraphics",
-        "CoreMedia",
-        "UIKit",
-        "OpenGLES",
-    ],
+         "//mediapipe/render/core:core-ios",
+    ]
 )
