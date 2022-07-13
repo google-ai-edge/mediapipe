@@ -1,5 +1,5 @@
 //
-//  QuarameraShareTexture.h
+//  OlaShareTexture.h
 //  QuameraDemo
 //
 //  Created by wangrenzhu on 2021/1/21.
@@ -17,9 +17,9 @@ typedef struct {
     GLuint  glInternalFormat;
     GLuint  glFormat;
     GLuint  glType;
-} QuarameraTextureFormatInfo;
+} OlaTextureFormatInfo;
 
-@interface QuarameraShareTexture : NSObject
+@interface OlaShareTexture : NSObject
 
 - (nonnull instancetype)initWithMetalDevice:(nonnull id<MTLDevice>)mtlDevice
                               openGLContext:(nonnull EAGLContext*)glContext
@@ -40,7 +40,7 @@ typedef struct {
 
 @property (readonly, nonatomic) CGSize size;
 @property (strong, nullable, nonatomic) NSString *name;
-@property (readonly, nonnull, nonatomic) QuarameraTextureFormatInfo *formatInfo;
+@property (readonly, nonnull, nonatomic) OlaTextureFormatInfo *formatInfo;
 @property (readonly, nonatomic) IOSurfaceID surfaceID;
 
 @end

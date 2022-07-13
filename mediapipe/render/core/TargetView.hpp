@@ -20,11 +20,7 @@
 #define GPUIMAGE_X_TARGETVIEW_H
 
 #include "Target.hpp"
-#if defined(__APPLE__)
 #include "GLProgram.hpp"
-#else
-#include "GPUImage-x/GLProgram.hpp"
-#endif
 
 NS_GI_BEGIN
 class Context;

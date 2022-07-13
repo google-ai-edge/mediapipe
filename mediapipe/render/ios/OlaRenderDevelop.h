@@ -5,10 +5,5 @@
 // Copyright © 2022 Ola. All rights reserved.
 //
 
-#import "OlaRender.h"
-
-
-@implementation OlaRender
-
-
-@end
+#include "GPUImage-x.h"
+#include "Framebuffer.hpp"

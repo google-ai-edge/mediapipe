@@ -1,0 +1,10 @@
+{
+  "optionSet" : {
+    "BazelPath" : {
+      "p" : "/opt/homebrew/Cellar/bazelisk/1.12.0/bin/bazelisk"
+    },
+    "WorkspaceRootPath" : {
+      "p" : "/Users/wangrenzhu/Documents/github/mediapipe-render"
+    }
+  }
+}

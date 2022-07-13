@@ -1,35 +1,35 @@
 //
 //  WANativeMTLRenderView.m
-//  WebAR-iOS
+//  
 //
 //  Created by wangrenzhu on 2020/11/16.
 //  Copyright © 2020 Taobao lnc. All rights reserved.
 //
 
-#import "QuarameraMTLCameraRenderView.h"
-#import "QuarameraShareTexture.h"
-#import "QuarameraMTLCameraRender.h"
+#import "OlaMTLCameraRenderView.h"
+#import "OlaShareTexture.h"
+#import "OlaMTLCameraRender.h"
 #import <OpenGLES/EAGL.h>
 #import <OpenGLES/ES3/gl.h>
 
 static const NSUInteger MaxFramesInFlight = 3;
-static size_t const kQuarameraDynamicTextureByteAlignment = 16;
+static size_t const kOlaDynamicTextureByteAlignment = 16;
 
 NS_INLINE size_t QAAlignSize(size_t size)
 {
-    return ceil(size / (double)kQuarameraDynamicTextureByteAlignment) * kQuarameraDynamicTextureByteAlignment;
+    return ceil(size / (double)kOlaDynamicTextureByteAlignment) * kOlaDynamicTextureByteAlignment;
 }
 
-@interface QuarameraMTLCameraRenderView()
+@interface OlaMTLCameraRenderView()
 {
     
 }
 
-@property (nonatomic, strong) QuarameraMTLCameraRender *mtlRender;
+@property (nonatomic, strong) OlaMTLCameraRender *mtlRender;
 
 @property (nonatomic) NSTimeInterval frameTime;
-@property (nonatomic, strong) QuarameraShareTexture *shareTexture;
-@property (nonatomic, strong) QuarameraShareTexture *cameraTexture;
+@property (nonatomic, strong) OlaShareTexture *shareTexture;
+@property (nonatomic, strong) OlaShareTexture *cameraTexture;
 @property (nonatomic) id<MTLTexture> ioSurfaceTexture;
 @property (nonatomic) IOSurfaceID lastIOSurfaceID;
 @property (nonatomic, strong) EAGLContext *openGLContext;
@@ -39,11 +39,11 @@ NS_INLINE size_t QAAlignSize(size_t size)
 
 @property (nonatomic, assign) BOOL useRenderMode;
 
-@property (nonatomic, strong) NSMutableArray<QuarameraCameraRender *> *renders;
+@property (nonatomic, strong) NSMutableArray<OlaCameraRender *> *renders;
 @property (nonatomic) CGSize lastFrameSize;
 @end
 
-@implementation QuarameraMTLCameraRenderView
+@implementation OlaMTLCameraRenderView
 
 - (void)dealloc
 {
@@ -94,17 +94,17 @@ NS_INLINE size_t QAAlignSize(size_t size)
                                     frame.size.height * self.contentScaleFactor);
     
     
-    _shareTexture = [[QuarameraShareTexture alloc] initWithMetalDevice:self.device
+    _shareTexture = [[OlaShareTexture alloc] initWithMetalDevice:self.device
                                                          openGLContext:self.openGLContext
                                                       metalPixelFormat:self.colorPixelFormat
                                                                   size:textureSize];
     
-    _cameraTexture = [[QuarameraShareTexture alloc] initWithMetalDevice:self.device
+    _cameraTexture = [[OlaShareTexture alloc] initWithMetalDevice:self.device
                                                           openGLContext:self.openGLContext
                                                        metalPixelFormat:self.colorPixelFormat
                                                                    size:textureSize];
     
-    _mtlRender = [[QuarameraMTLCameraRender alloc] initWithRenderSize:textureSize
+    _mtlRender = [[OlaMTLCameraRender alloc] initWithRenderSize:textureSize
                                                                device:self.device
                                                         cameraTexture:self.cameraTexture
                                                    contentScaleFactor:self.contentScaleFactor];
@@ -116,7 +116,7 @@ NS_INLINE size_t QAAlignSize(size_t size)
     dispatch_queue_attr_make_with_qos_class(DISPATCH_QUEUE_SERIAL,
                                             QOS_CLASS_USER_INTERACTIVE, 0);
     self.displayFrameRenderingSemaphore = dispatch_semaphore_create(MaxFramesInFlight);
-    self.displayRenderQueue = dispatch_queue_create("quaramera.ios.displayRenderQueue",
+    self.displayRenderQueue = dispatch_queue_create("Ola.ios.displayRenderQueue",
                                                     interactive);
 
     self.cameraFrameRenderingSemaphore = dispatch_semaphore_create(1);
@@ -144,7 +144,7 @@ NS_INLINE size_t QAAlignSize(size_t size)
 
 			[self.mtlRender resize:textureSize];
 			
-			[self.renders enumerateObjectsUsingBlock:^(QuarameraCameraRender * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+			[self.renders enumerateObjectsUsingBlock:^(OlaCameraRender * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
 				[obj resize:textureSize];
 			}];
 			self.paused = NO;
@@ -177,7 +177,7 @@ NS_INLINE size_t QAAlignSize(size_t size)
     
     id<CAMetalDrawable> drawable = [((CAMetalLayer *)self.layer) nextDrawable];
     
-    __weak QuarameraMTLCameraRenderView *weakSelf = self;
+    __weak OlaMTLCameraRenderView *weakSelf = self;
     
 //    dispatch_semaphore_t block_camera_sema = self.cameraFrameRenderingSemaphore;
     dispatch_semaphore_t block_display_sema = self.displayFrameRenderingSemaphore;
@@ -188,14 +188,14 @@ NS_INLINE size_t QAAlignSize(size_t size)
         dispatch_semaphore_signal(block_display_sema);
     };
     
-    NSMutableArray<QuarameraCameraRender *> *renders = [self.renders copy];
+    NSMutableArray<OlaCameraRender *> *renders = [self.renders copy];
     
     dispatch_async(self.displayRenderQueue, ^{
         if (weakSelf == nil) {
             return;
         }
         
-        __strong QuarameraMTLCameraRenderView *strongSelf = weakSelf;
+        __strong OlaMTLCameraRenderView *strongSelf = weakSelf;
         
         strongSelf.frameTime += (1.0 / strongSelf.preferredFramesPerSecond) * 1000.0;
         if (dispatch_semaphore_wait(block_display_sema, DISPATCH_TIME_NOW) != 0)
@@ -218,7 +218,7 @@ NS_INLINE size_t QAAlignSize(size_t size)
             //quarkitRendre把相机渲染到shareTexture上
            
             glFlush();
-            [renders enumerateObjectsUsingBlock:^(QuarameraCameraRender * _Nonnull obj,
+            [renders enumerateObjectsUsingBlock:^(OlaCameraRender * _Nonnull obj,
                                                   NSUInteger idx, BOOL * _Nonnull stop) {
 				if (obj.enable) {
 					[obj render:weakSelf.frameTime];
@@ -311,7 +311,7 @@ NS_INLINE size_t QAAlignSize(size_t size)
     }
     
     dispatch_semaphore_t block_camera_sema = self.cameraFrameRenderingSemaphore;
-    __strong QuarameraMTLCameraRenderView *weakSelf = self;
+    __strong OlaMTLCameraRenderView *weakSelf = self;
     void (^renderCompleted)(id<MTLCommandBuffer> buffer) = ^(id<MTLCommandBuffer> buffer)
     {
         dispatch_semaphore_signal(block_camera_sema);
@@ -323,7 +323,7 @@ NS_INLINE size_t QAAlignSize(size_t size)
             CFRelease(sampleBuffer);
             return;
         }
-        __strong QuarameraMTLCameraRenderView *strongSelf = weakSelf;
+        __strong OlaMTLCameraRenderView *strongSelf = weakSelf;
         CVPixelBufferRef pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer);
         [strongSelf.mtlRender renderToCameraTextureWithPixelBuffer:pixelBuffer completedHandler:renderCompleted];
         
@@ -336,7 +336,7 @@ NS_INLINE size_t QAAlignSize(size_t size)
     return self.cameraTexture.renderTarget;
 }
 
-- (void)addRender:(QuarameraCameraRender *)render
+- (void)addRender:(OlaCameraRender *)render
 {
     NSAssert([NSThread isMainThread], @"call on main Thread");
     

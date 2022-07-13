@@ -1,0 +1,17 @@
+{
+  "configDefaults" : {
+    "optionSet" : {
+      "CLANG_CXX_LANGUAGE_STANDARD" : {
+        "p" : "c++17"
+      },
+      "ProjectGenerationPlatformConfiguration" : {
+        "p" : "ios_arm64"
+      }
+    }
+  },
+  "packages" : [
+    "mediapipe/render/ios"
+  ],
+  "projectName" : "OlaVideo",
+  "workspaceRoot" : "../../../.."
+}

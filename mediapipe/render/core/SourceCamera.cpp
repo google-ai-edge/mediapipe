@@ -17,15 +17,9 @@
  */
 
 #include <math.h>
-#if defined(__APPLE__)
 #include "SourceCamera.hpp"
 #include "Context.hpp"
 #include "GPUImageUtil.h"
-#else
-#include "GPUImage-x/source/SourceCamera.hpp"
-#include "GPUImage-x/Context.hpp"
-#include "GPUImage-x/util.h"
-#endif
 #if defined(__APPLE__)
 #include "CVFramebuffer.hpp"
 #endif

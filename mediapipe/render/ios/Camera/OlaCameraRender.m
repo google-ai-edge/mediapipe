@@ -1,18 +1,18 @@
 //
-//  QuarameraCameraRender.m
-//  QuarameraFramework
+//  OlaCameraRender.m
+//  OlaFramework
 //
 //  Created by wangrenzhu on 2021/1/25.
 //
 
-#import "QuarameraCameraRender.h"
+#import "OlaCameraRender.h"
 
-@implementation QuarameraCameraRender
+@implementation OlaCameraRender
 @synthesize renderSize = _renderSize;
 
 - (instancetype)initWithRenderSize:(CGSize)renderSize
                             device:(id<MTLDevice>)device
-                     cameraTexture:(QuarameraShareTexture *)cameraTexture
+                     cameraTexture:(OlaShareTexture *)cameraTexture
                     contentScaleFactor:(CGFloat)factor
 {
     NSAssert(NO, @"subclass must implement this method");
@@ -20,7 +20,7 @@
 }
 
 
-- (void)setupWithDevice:(id<MTLDevice>)device shareTexture:(QuarameraShareTexture *)shareTexture useRenderMode:(BOOL)useRenderMode;
+- (void)setupWithDevice:(id<MTLDevice>)device shareTexture:(OlaShareTexture *)shareTexture useRenderMode:(BOOL)useRenderMode;
 {
     
 }
@@ -40,7 +40,7 @@
     
 }
 
-- (void)updateCameraTexture:(QuarameraShareTexture *)cameraTexture
+- (void)updateCameraTexture:(OlaShareTexture *)cameraTexture
 {
 	
 }

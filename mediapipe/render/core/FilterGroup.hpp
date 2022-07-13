@@ -19,15 +19,9 @@
 #ifndef FilterGroup_hpp
 #define FilterGroup_hpp
 
-#if defined(__APPLE__)
 #include "GPUImageMacros.h"
 #include "Source.hpp"
 #include "Target.hpp"
-#else
-#include "GPUImage-x/GPUImageMacros.h"
-#include "GPUImage-x/source//Source.hpp"
-#include "GPUImage-x/target/Target.hpp"
-#endif
 #include <vector>
 #include "Filter.hpp"
 

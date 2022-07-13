@@ -1,6 +1,6 @@
 //
-//  QuarameraMTLRender.h
-//  QuameraDemo
+//  OlaMTLRender.h
+//  
 //
 //  Created by wangrenzhu on 2021/1/22.
 //  Copyright © 2021 alibaba. All rights reserved.
@@ -10,10 +10,10 @@
 #import <AVFoundation/AVFoundation.h>
 #import <UIKit/UIKit.h>
 #import <MetalKit/MetalKit.h>
-#import "QuarameraShareTexture.h"
-#import "QuarameraCameraRender.h"
+#import "OlaShareTexture.h"
+#import "OlaCameraRender.h"
 
-@protocol QuarameraMTLCameraRenderDelegate <NSObject>
+@protocol OlaMTLCameraRenderDelegate <NSObject>
 
 /// 闪电拍照准备完毕
 - (void)lightningModelPrepared;
@@ -25,7 +25,7 @@
 
 
 
-@interface QuarameraMTLCameraRender : QuarameraCameraRender
+@interface OlaMTLCameraRender : OlaCameraRender
 
 /// 输出CameraTexture
 @property (nonatomic) id<MTLTexture> outputTexture;
@@ -40,8 +40,8 @@
 @property (nonatomic, readonly) CVPixelBufferRef renderTarget;
 
 
-@property (nonatomic, weak) id<QuarameraMTLCameraRenderDelegate> renderDelegate;
-@property (nonatomic, strong) QuarameraShareTexture *offscreenCameraTexture;
+@property (nonatomic, weak) id<OlaMTLCameraRenderDelegate> renderDelegate;
+@property (nonatomic, strong) OlaShareTexture *offscreenCameraTexture;
 
 /// 渲染到纹理指令
 /// @param displayTexture displayTexture description

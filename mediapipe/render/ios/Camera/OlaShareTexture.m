@@ -1,12 +1,12 @@
 //
-//  QuarameraShareTexture.m
-//  QuameraDemo
+//  OlaShareTexture.m
+//  OlaCameraFramework
 //
 //  Created by wangrenzhu on 2021/1/21.
 //  Copyright © 2021 alibaba. All rights reserved.
 //
 
-#import "QuarameraShareTexture.h"
+#import "OlaShareTexture.h"
 #import <OpenGLES/ES2/gl.h>
 #import <OpenGLES/ES2/glext.h>
 #import <MetalKit/MetalKit.h>
@@ -18,7 +18,7 @@
  
 #define GL_UNSIGNED_INT_8_8_8_8_REV 0x8367
 
-__unused static QuarameraTextureFormatInfo formatTable[] =
+__unused static OlaTextureFormatInfo formatTable[] =
 {
     // Core Video Pixel Format,               Metal Pixel Format,            GL internalformat, GL format,   GL type
     { kCVPixelFormatType_32BGRA,              MTLPixelFormatBGRA8Unorm,      GL_RGBA,           GL_BGRA_EXT, GL_UNSIGNED_INT_8_8_8_8_REV },
@@ -38,9 +38,9 @@ static const float standardImageVertices[] = {
     1.0, -1.0
 };
 
-static const NSUInteger interopFormats = sizeof(formatTable) / sizeof(QuarameraTextureFormatInfo);
+static const NSUInteger interopFormats = sizeof(formatTable) / sizeof(OlaTextureFormatInfo);
 
-QuarameraTextureFormatInfo* textureFormatInfoFromMetalPixelFormat(MTLPixelFormat pixelFormat)
+OlaTextureFormatInfo* textureFormatInfoFromMetalPixelFormat(MTLPixelFormat pixelFormat)
 {
     for(int i = 0; i < interopFormats; i++) {
         if(pixelFormat == formatTable[i].mtlFormat) {
@@ -50,7 +50,7 @@ QuarameraTextureFormatInfo* textureFormatInfoFromMetalPixelFormat(MTLPixelFormat
     return NULL;
 }
 
-@interface QuarameraShareTexture() {
+@interface OlaShareTexture() {
     
 }
 
@@ -61,9 +61,9 @@ QuarameraTextureFormatInfo* textureFormatInfoFromMetalPixelFormat(MTLPixelFormat
 
 @end
 
-@implementation QuarameraShareTexture
+@implementation OlaShareTexture
 {
-    QuarameraTextureFormatInfo *_formatInfo;
+    OlaTextureFormatInfo *_formatInfo;
     CVPixelBufferRef _pixelBuffer;
     CVMetalTextureRef _mtlTexture;
     
@@ -290,9 +290,9 @@ QuarameraTextureFormatInfo* textureFormatInfoFromMetalPixelFormat(MTLPixelFormat
     return _pixelBuffer;
 }
 
-- (QuarameraTextureFormatInfo *)formatInfo
+- (OlaTextureFormatInfo *)formatInfo
 {
-    return (QuarameraTextureFormatInfo *)_formatInfo;
+    return (OlaTextureFormatInfo *)_formatInfo;
 }
 
 - (id<MTLTexture>)loadTextureFromImage:(UIImage *)image
@@ -319,13 +319,13 @@ QuarameraTextureFormatInfo* textureFormatInfoFromMetalPixelFormat(MTLPixelFormat
         
         NSError *error;
         NSBundle *bundle = [NSBundle mainBundle];
-        NSURL *shaderURL = [bundle URLForResource:@"QuarameraFramework" withExtension:@"metallib"];
+        NSURL *shaderURL = [bundle URLForResource:@"OlaFramework" withExtension:@"metallib"];
         if (@available(iOS 11.0, *)) {
             if (shaderURL) {
                 self.library = [self.metalDevice newLibraryWithURL:shaderURL error:&error];
             }
         } else {
-            NSString *lib = [[NSBundle mainBundle] pathForResource:@"QuarameraFramework" ofType:@"metallib"];
+            NSString *lib = [[NSBundle mainBundle] pathForResource:@"OlaFramework" ofType:@"metallib"];
             if (lib) {
                 _library = [_metalDevice newLibraryWithFile:lib error:nil];
             }

@@ -16,15 +16,10 @@
  * limitations under the License.
  */
 
-#if defined(__APPLE__)
 #include "SourceImage.hpp"
 #include "Context.hpp"
 #include "GPUImageUtil.h"
-#else
-#include "GPUImage-x/source/SourceImage.hpp"
-#include "GPUImage-x/Context.hpp"
-#include "GPUImage-x/util.h"
-#endif
+
 #if defined(__APPLE__)
 #include "CVFramebuffer.hpp"
 #endif

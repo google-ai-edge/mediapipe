@@ -1,13 +1,13 @@
 //
-//  QuarameraMTLRender.m
-//  QuameraDemo
+//  OlaMTLRender.m
+//  
 //
 //  Created by wangrenzhu on 2021/1/22.
 //  Copyright © 2021 alibaba. All rights reserved.
 //
 #import <MetalKit/MetalKit.h>
 #import <simd/simd.h>
-#import "QuarameraMTLCameraRender.h"
+#import "OlaMTLCameraRender.h"
 
 
 typedef struct
@@ -45,7 +45,7 @@ struct TextureScale {
     simd_float3 scaleFlip;
 };
 
-@interface QuarameraMTLCameraRender()
+@interface OlaMTLCameraRender()
 
 @property (nonatomic) id<MTLRenderPipelineState> colorConvertPipelineState;
 
@@ -79,12 +79,12 @@ struct TextureScale {
 @property (nonatomic) size_t cameraOutputWidth;
 @property (nonatomic) size_t cameraOutputHeight;
 
-@property (nonatomic, strong) QuarameraShareTexture *shareTexture;
+@property (nonatomic, strong) OlaShareTexture *shareTexture;
 
 
 @end
 
-@implementation QuarameraMTLCameraRender
+@implementation OlaMTLCameraRender
 @synthesize renderSize = _renderSize;
 
 - (void)dealloc
@@ -112,7 +112,7 @@ struct TextureScale {
 
 - (instancetype)initWithRenderSize:(CGSize)renderSize
                             device:(id<MTLDevice>)device
-                     cameraTexture:(QuarameraShareTexture *)cameraTexture
+                     cameraTexture:(OlaShareTexture *)cameraTexture
                     contentScaleFactor:(CGFloat)factor
 {
     self = [super init];
@@ -123,13 +123,13 @@ struct TextureScale {
         __unused NSError *error;
         _offscreenCameraTexture = cameraTexture;
         NSBundle *bundle = [NSBundle mainBundle];
-        NSURL *shaderURL = [bundle URLForResource:@"QuarameraFramework" withExtension:@"metallib"];
+        NSURL *shaderURL = [bundle URLForResource:@"OlaFramework" withExtension:@"metallib"];
         if (@available(iOS 11.0, *)) {
             if (shaderURL) {
                 self.library = [self.device newLibraryWithURL:shaderURL error:&error];
             }
         } else {
-            NSString *lib = [[NSBundle mainBundle] pathForResource:@"QuarameraFramework" ofType:@"metallib"];
+            NSString *lib = [[NSBundle mainBundle] pathForResource:@"OlaFramework" ofType:@"metallib"];
             if (lib) {
                 _library = [_device newLibraryWithFile:lib error:nil];
             }
@@ -346,13 +346,13 @@ struct TextureScale {
     [colorConversionEncoder drawPrimitives:MTLPrimitiveTypeTriangleStrip vertexStart:0 vertexCount:4];
     [colorConversionEncoder endEncoding];
     
-    __weak QuarameraMTLCameraRender *weakSelf = self;
+    __weak OlaMTLCameraRender *weakSelf = self;
 
     [commandBuffer addCompletedHandler:^(id<MTLCommandBuffer> commandBuffer) {
         if (weakSelf == nil) {
             return;
         }
-        __strong QuarameraMTLCameraRender *strongSelf = weakSelf;
+        __strong OlaMTLCameraRender *strongSelf = weakSelf;
         if (!strongSelf.firstFrameRender) {
             NSLog(@"相机首帧渲染完毕");
             //这里埋点时机和Android统一，收到相机帧时发送，但实际上还是渲染完后发送比较合适
@@ -445,7 +445,7 @@ struct TextureScale {
 	self.cameraOutputHeight = self.renderSize.height;
 }
 
-- (void)updateCameraTexture:(QuarameraShareTexture *)cameraTexture
+- (void)updateCameraTexture:(OlaShareTexture *)cameraTexture
 {
 	_offscreenCameraTexture = nil;
 	_offscreenCameraTexture = cameraTexture;

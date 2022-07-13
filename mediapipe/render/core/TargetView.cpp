@@ -16,17 +16,10 @@
  * limitations under the License.
  */
 
-#if defined(__APPLE__)
 #include "TargetView.hpp"
 #include "Context.hpp"
 #include "GPUImageUtil.h"
 #include "Filter.hpp"
-#else
-#include "GPUImage-x/target/TargetView.hpp"
-#include "GPUImage-x/Context.hpp"
-#include "GPUImage-x/util.h"
-#include "GPUImage-x/filter/Filter.hpp"
-#endif
 
 USING_NS_GI
 

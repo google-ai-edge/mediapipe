@@ -1,13 +1,13 @@
 //
-//  QuarameraCameraRender.h
-//  QuarameraFramework
+//  OlaCameraRender.h
+//  OlaFramework
 //
 //  Created by wangrenzhu on 2021/1/25.
 //
 
 #import <Foundation/Foundation.h>
 #import <AVFoundation/AVFoundation.h>
-#import "QuarameraShareTexture.h"
+#import "OlaShareTexture.h"
 
 @interface OlaCameraRender : NSObject
 @property (nonatomic, readonly) CGSize renderSize;
@@ -15,10 +15,10 @@
 
 - (instancetype)initWithRenderSize:(CGSize)renderSize
                             device:(id<MTLDevice>)device
-                     cameraTexture:(QuarameraShareTexture *)cameraTexture
+                     cameraTexture:(OlaShareTexture *)cameraTexture
                     contentScaleFactor:(CGFloat)factor;
 
-- (void)setupWithDevice:(id<MTLDevice>)device shareTexture:(QuarameraShareTexture *)shareTexture useRenderMode:(BOOL)useRenderMode;
+- (void)setupWithDevice:(id<MTLDevice>)device shareTexture:(OlaShareTexture *)shareTexture useRenderMode:(BOOL)useRenderMode;
 
 /// 重置画布大小
 /// @param renderSize 画布大小
@@ -33,7 +33,7 @@
 /// @param frameTime 帧时间
 - (void)render:(NSTimeInterval)frameTime;
 
-- (void)updateCameraTexture:(QuarameraShareTexture *)cameraTexture;
+- (void)updateCameraTexture:(OlaShareTexture *)cameraTexture;
 
 
 @end

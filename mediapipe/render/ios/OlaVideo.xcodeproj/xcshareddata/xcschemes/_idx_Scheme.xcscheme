@@ -1,0 +1,52 @@
+
+<Scheme LastUpgradeVersion="1000" version="1.3">
+    <BuildAction buildImplicitDependencies="YES" parallelizeBuildables="YES">
+        <BuildActionEntries>
+            <BuildActionEntry buildForAnalyzing="YES" buildForProfiling="YES" buildForArchiving="YES" buildForTesting="YES" buildForRunning="YES">
+                <BuildableReference BuildableName="lib_idx_ref_gpuimagemath_gpuimageutil_8DCE756C_ios_min11.0.a" BlueprintName="_idx_ref_gpuimagemath_gpuimageutil_8DCE756C_ios_min11.0" BuildableIdentifier="primary" ReferencedContainer="container:OlaVideo.xcodeproj" BlueprintIdentifier="6097400656E721E400000000"></BuildableReference>
+            </BuildActionEntry>
+            <BuildActionEntry buildForAnalyzing="YES" buildForProfiling="YES" buildForArchiving="YES" buildForRunning="YES" buildForTesting="YES">
+                <BuildableReference BuildableIdentifier="primary" BlueprintIdentifier="609740068115297A00000000" BuildableName="lib_idx_core_F3E5C6E5_ios_min15.5.a" BlueprintName="_idx_core_F3E5C6E5_ios_min15.5" ReferencedContainer="container:OlaVideo.xcodeproj"></BuildableReference>
+            </BuildActionEntry>
+            <BuildActionEntry buildForTesting="YES" buildForProfiling="YES" buildForRunning="YES" buildForArchiving="YES" buildForAnalyzing="YES">
+                <BuildableReference BuildableIdentifier="primary" ReferencedContainer="container:OlaVideo.xcodeproj" BuildableName="lib_idx_ref_gpuimagemath_gpuimageutil_8DCE756C_ios_min15.5.a" BlueprintIdentifier="60974006A1CF146A00000000" BlueprintName="_idx_ref_gpuimagemath_gpuimageutil_8DCE756C_ios_min15.5"></BuildableReference>
+            </BuildActionEntry>
+            <BuildActionEntry buildForTesting="YES" buildForRunning="YES" buildForProfiling="YES" buildForArchiving="YES" buildForAnalyzing="YES">
+                <BuildableReference BuildableName="lib_idx_ref_gpuimagemath_gpuimageutil_8DCE756C_ios_min11.0.a" BuildableIdentifier="primary" BlueprintIdentifier="6097400656E721E400000000" BlueprintName="_idx_ref_gpuimagemath_gpuimageutil_8DCE756C_ios_min11.0" ReferencedContainer="container:OlaVideo.xcodeproj"></BuildableReference>
+            </BuildActionEntry>
+            <BuildActionEntry buildForRunning="YES" buildForTesting="YES" buildForProfiling="YES" buildForArchiving="YES" buildForAnalyzing="YES">
+                <BuildableReference BlueprintName="_idx_ref_gpuimagemath_gpuimageutil_8DCE756C_ios_min15.5" ReferencedContainer="container:OlaVideo.xcodeproj" BuildableIdentifier="primary" BuildableName="lib_idx_ref_gpuimagemath_gpuimageutil_8DCE756C_ios_min15.5.a" BlueprintIdentifier="60974006A1CF146A00000000"></BuildableReference>
+            </BuildActionEntry>
+            <BuildActionEntry buildForAnalyzing="YES" buildForRunning="YES" buildForTesting="YES" buildForProfiling="YES" buildForArchiving="YES">
+                <BuildableReference BlueprintName="_idx_ref_gpuimagemath_gpuimageutil_8DCE756C_ios_min11.0" BuildableIdentifier="primary" ReferencedContainer="container:OlaVideo.xcodeproj" BuildableName="lib_idx_ref_gpuimagemath_gpuimageutil_8DCE756C_ios_min11.0.a" BlueprintIdentifier="6097400656E721E400000000"></BuildableReference>
+            </BuildActionEntry>
+            <BuildActionEntry buildForTesting="YES" buildForAnalyzing="YES" buildForProfiling="YES" buildForRunning="YES" buildForArchiving="YES">
+                <BuildableReference BlueprintIdentifier="60974006EE42527000000000" BuildableName="lib_idx_math_702C098E_ios_min11.0.a" BlueprintName="_idx_math_702C098E_ios_min11.0" ReferencedContainer="container:OlaVideo.xcodeproj" BuildableIdentifier="primary"></BuildableReference>
+            </BuildActionEntry>
+            <BuildActionEntry buildForAnalyzing="YES" buildForRunning="YES" buildForArchiving="YES" buildForTesting="YES" buildForProfiling="YES">
+                <BuildableReference BlueprintIdentifier="60974006A1CF146A00000000" BuildableIdentifier="primary" BlueprintName="_idx_ref_gpuimagemath_gpuimageutil_8DCE756C_ios_min15.5" BuildableName="lib_idx_ref_gpuimagemath_gpuimageutil_8DCE756C_ios_min15.5.a" ReferencedContainer="container:OlaVideo.xcodeproj"></BuildableReference>
+            </BuildActionEntry>
+            <BuildActionEntry buildForRunning="YES" buildForTesting="YES" buildForArchiving="YES" buildForAnalyzing="YES" buildForProfiling="YES">
+                <BuildableReference BlueprintIdentifier="60974006A1CF146A00000000" BlueprintName="_idx_ref_gpuimagemath_gpuimageutil_8DCE756C_ios_min15.5" BuildableIdentifier="primary" BuildableName="lib_idx_ref_gpuimagemath_gpuimageutil_8DCE756C_ios_min15.5.a" ReferencedContainer="container:OlaVideo.xcodeproj"></BuildableReference>
+            </BuildActionEntry>
+            <BuildActionEntry buildForTesting="YES" buildForAnalyzing="YES" buildForRunning="YES" buildForArchiving="YES" buildForProfiling="YES">
+                <BuildableReference BlueprintName="_idx_core_F3E5C6E5_ios_min11.0" BuildableIdentifier="primary" BlueprintIdentifier="60974006872FED6400000000" BuildableName="lib_idx_core_F3E5C6E5_ios_min11.0.a" ReferencedContainer="container:OlaVideo.xcodeproj"></BuildableReference>
+            </BuildActionEntry>
+            <BuildActionEntry buildForTesting="YES" buildForProfiling="YES" buildForAnalyzing="YES" buildForRunning="YES" buildForArchiving="YES">
+                <BuildableReference BlueprintIdentifier="6097400656E721E400000000" BuildableName="lib_idx_ref_gpuimagemath_gpuimageutil_8DCE756C_ios_min11.0.a" BuildableIdentifier="primary" ReferencedContainer="container:OlaVideo.xcodeproj" BlueprintName="_idx_ref_gpuimagemath_gpuimageutil_8DCE756C_ios_min11.0"></BuildableReference>
+            </BuildActionEntry>
+            <BuildActionEntry buildForArchiving="YES" buildForProfiling="YES" buildForAnalyzing="YES" buildForRunning="YES" buildForTesting="YES">
+                <BuildableReference BlueprintIdentifier="609740065CF3050A00000000" BuildableIdentifier="primary" ReferencedContainer="container:OlaVideo.xcodeproj" BuildableName="lib_idx_math_702C098E_ios_min15.5.a" BlueprintName="_idx_math_702C098E_ios_min15.5"></BuildableReference>
+            </BuildActionEntry>
+        </BuildActionEntries>
+    </BuildAction>
+    <TestAction selectedLauncherIdentifier="Xcode.DebuggerFoundation.Launcher.LLDB" shouldUseLaunchSchemeArgsEnv="YES" buildConfiguration="Debug" selectedDebuggerIdentifier="Xcode.DebuggerFoundation.Debugger.LLDB">
+        <Testables></Testables>
+    </TestAction>
+    <LaunchAction debugDocumentVersioning="YES" useCustomWorkingDirectory="NO" ignoresPersistentStateOnLaunch="NO" launchStyle="0" selectedDebuggerIdentifier="Xcode.DebuggerFoundation.Debugger.LLDB" allowLocationSimulation="YES" buildConfiguration="Debug" selectedLauncherIdentifier="Xcode.DebuggerFoundation.Launcher.LLDB" debugServiceExtension="internal">
+        <EnvironmentVariables></EnvironmentVariables>
+    </LaunchAction>
+    <ProfileAction useCustomWorkingDirectory="NO" debugDocumentVersioning="YES" shouldUseLaunchSchemeArgsEnv="YES" buildConfiguration="Release"></ProfileAction>
+    <AnalyzeAction buildConfiguration="Debug"></AnalyzeAction>
+    <ArchiveAction buildConfiguration="Release" revealArchiveInOrganizer="YES"></ArchiveAction>
+</Scheme>

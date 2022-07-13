@@ -18,13 +18,8 @@
 
 #include <assert.h>
 #include <algorithm>
-#if defined(__APPLE__)
 #include "FilterGroup.hpp"
 #include "Context.hpp"
-#else
-#include "../include/GPUImage-x/filter/FilterGroup.hpp"
-#include "../include/GPUImage-x/Context.hpp"
-#endif
 
 NS_GI_BEGIN
 

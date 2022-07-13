@@ -1,18 +1,17 @@
 //
 //  WANativeMTLCameraPreviewView.h
-//  WebAR-iOS
-//  基于Metal的相机预览视图，闪电拍照定制优化，具备相机预览的基础功能
+//  
 //  Created by wangrenzhu on 2020/11/16.
 //  Copyright © 2020 Taobao lnc. All rights reserved.
 //
 
 #import <MetalKit/MetalKit.h>
 #import <AVFoundation/AVFoundation.h>
-#import <QuarameraFramework/QuarameraCameraRender.h>
-#import <QuarameraFramework/QuarameraMTLCameraRender.h>
-#import <QuarameraFramework/QuarameraShareTexture.h>
+#import "OlaCameraRender.h"
+#import "OlaMTLCameraRender.h"
+#import "OlaShareTexture.h"
 
-@protocol QuarameraMTLCameraRenderViewDelegate
+@protocol OlaMTLCameraRenderViewDelegate
 
 - (void)draw:(NSTimeInterval)frameTime;
 
@@ -21,8 +20,8 @@
 /// @param texture texture description
 /// @param onScreenTexture 上屏纹理
 /// @param frameTime 帧时间
-- (IOSurfaceID)bgraCameraTextureReady:(QuarameraShareTexture *)texture
-               onScreenTexture:(QuarameraShareTexture *)onScreenTexture
+- (IOSurfaceID)bgraCameraTextureReady:(OlaShareTexture *)texture
+               onScreenTexture:(OlaShareTexture *)onScreenTexture
                      frameTime:(NSTimeInterval)frameTime;
 
 @optional
@@ -32,29 +31,29 @@
 /// @param targetTexture targetTexture description
 /// @param buffer MTL的CommandBuffer
 - (void)externalRender:(NSTimeInterval)frameTime
-         targetTexture:(QuarameraShareTexture *)targetTexture
+         targetTexture:(OlaShareTexture *)targetTexture
          commandBuffer:(id<MTLCommandBuffer>)buffer;
 
 
 /// YUV 相机纹理
 /// @param yTexture y纹理
 /// @param uvTexture yv纹理
-- (void)yuvTextureReady:(QuarameraShareTexture *)yTexture uvTexture:(QuarameraShareTexture *)uvTexture;
+- (void)yuvTextureReady:(OlaShareTexture *)yTexture uvTexture:(OlaShareTexture *)uvTexture;
 
 @end
 
-@interface QuarameraMTLCameraRenderView : MTKView
+@interface OlaMTLCameraRenderView : MTKView
 
 /// MetalRender
-@property (nonatomic, strong, readonly) QuarameraMTLCameraRender *mtlRender;
+@property (nonatomic, strong, readonly) OlaMTLCameraRender *mtlRender;
 
-@property (nonatomic, weak) id<QuarameraMTLCameraRenderViewDelegate> cameraDelegate;
+@property (nonatomic, weak) id<OlaMTLCameraRenderViewDelegate> cameraDelegate;
 
 @property (nonatomic) dispatch_queue_t displayRenderQueue;
 
 /// 原始相机纹理 可以快速读取
-@property (nonatomic, readonly, strong) QuarameraShareTexture *cameraTexture;
-@property (nonatomic, readonly, strong) QuarameraShareTexture *shareTexture;
+@property (nonatomic, readonly, strong) OlaShareTexture *cameraTexture;
+@property (nonatomic, readonly, strong) OlaShareTexture *shareTexture;
 
 /// 不带后处理的相机渲染的原始纹理
 @property (nonatomic, readonly) CVPixelBufferRef renderTarget;
@@ -72,10 +71,10 @@
 /// @param sampleBuffer 相机采集流
 - (void)cameraSampleBufferArrive:(CMSampleBufferRef)sampleBuffer;
 
-- (void)addRender:(QuarameraCameraRender *)render;
+- (void)addRender:(OlaCameraRender *)render;
 
 
-/// 是否开启Quaramera
+/// 是否开启Ola
 /// @param frame frame description
 - (instancetype)initWithFrame:(CGRect)frame;
 
