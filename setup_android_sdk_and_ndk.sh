@@ -44,13 +44,13 @@ licenses=$4
 if [ -z $1 ]
 then
   echo "Warning: android_sdk_path (argument 1) is not specified. Fallback to ~/Android/Sdk/"
-  android_sdk_path=$HOME"/Android/Sdk"
+  android_sdk_path=$HOME"/Android/sdk"
 fi
 
 if [ -z $2 ]
 then
   echo "Warning: android_ndk_path (argument 2) is not specified. Fallback to ~/Android/Sdk/ndk-bundle/android-ndk-<NDK_VERSION>/"
-  android_ndk_path=$HOME"/Android/Sdk/ndk-bundle"
+  android_ndk_path=$HOME"/Android/sdk/ndk"
 fi
 
 if [ -z $3 ]

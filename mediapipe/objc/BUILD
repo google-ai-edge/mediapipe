@@ -1,4 +1,5 @@
 load("//mediapipe/framework/tool:mediapipe_graph.bzl", "mediapipe_binary_graph")
+load("@build_bazel_rules_apple//apple:ios.bzl", "ios_framework")
 
 package(default_visibility = ["//visibility:private"])
 

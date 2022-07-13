@@ -1,0 +1,1 @@
+load("//mediapipe/gpu:metal.bzl", "metal_library")
