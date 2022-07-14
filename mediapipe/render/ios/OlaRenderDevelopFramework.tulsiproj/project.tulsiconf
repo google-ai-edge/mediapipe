@@ -10,8 +10,7 @@
     }
   },
   "packages" : [
-    "mediapipe/render/core",
-    "mediapipe/render/ios"
+    "mediapipe/render/ios/camera"
   ],
   "projectName" : "OlaVideo",
   "workspaceRoot" : "../../../.."

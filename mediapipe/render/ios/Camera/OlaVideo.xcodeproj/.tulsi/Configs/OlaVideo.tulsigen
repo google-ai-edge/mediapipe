@@ -1,0 +1,21 @@
+{
+  "additionalFilePaths" : [
+    "mediapipe/render/ios/camera/BUILD"
+  ],
+  "buildTargets" : [
+    "//mediapipe/render/ios/camera:OlaCamera",
+    "//mediapipe/render/ios/camera:OlaCameraFramework"
+  ],
+  "optionSet" : {
+    "CLANG_CXX_LANGUAGE_STANDARD" : {
+      "p" : "c++17"
+    },
+    "ProjectGenerationPlatformConfiguration" : {
+      "p" : "ios_arm64"
+    }
+  },
+  "projectName" : "OlaVideo",
+  "sourceFilters" : [
+    "mediapipe/render/ios/camera"
+  ]
+}

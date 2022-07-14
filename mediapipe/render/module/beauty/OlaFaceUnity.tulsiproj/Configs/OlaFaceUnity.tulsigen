@@ -1,0 +1,89 @@
+{
+  "additionalFilePaths" : [
+    "mediapipe/render/module/beauty/ios/BUILD"
+  ],
+  "buildTargets" : [
+    "//mediapipe/render/module/beauty/ios:OlaFaceUnityFramework",
+    "//mediapipe/render/module/beauty/ios:OlaFaceUnityLibrary"
+  ],
+  "optionSet" : {
+    "BazelBuildOptionsDebug" : {
+      "p" : "$(inherited)"
+    },
+    "BazelBuildOptionsRelease" : {
+      "p" : "$(inherited)"
+    },
+    "BazelBuildStartupOptionsDebug" : {
+      "p" : "$(inherited)"
+    },
+    "BazelBuildStartupOptionsRelease" : {
+      "p" : "$(inherited)"
+    },
+    "BuildActionPostActionScript" : {
+      "p" : "$(inherited)"
+    },
+    "BuildActionPreActionScript" : {
+      "p" : "$(inherited)"
+    },
+    "CLANG_CXX_LANGUAGE_STANDARD" : {
+      "p" : "c++17"
+    },
+    "CommandlineArguments" : {
+      "p" : "$(inherited)"
+    },
+    "EnvironmentVariables" : {
+      "p" : "$(inherited)"
+    },
+    "LaunchActionPostActionScript" : {
+      "p" : "$(inherited)"
+    },
+    "LaunchActionPreActionScript" : {
+      "p" : "$(inherited)"
+    },
+    "ProjectGenerationBazelStartupOptions" : {
+      "p" : "$(inherited)"
+    },
+    "ProjectGenerationPlatformConfiguration" : {
+      "p" : "ios_arm64"
+    },
+    "TestActionPostActionScript" : {
+      "p" : "$(inherited)"
+    },
+    "TestActionPreActionScript" : {
+      "p" : "$(inherited)"
+    }
+  },
+  "projectName" : "OlaFaceUnity",
+  "sourceFilters" : [
+    "mediapipe/calculators",
+    "mediapipe/calculators/core",
+    "mediapipe/calculators/image",
+    "mediapipe/calculators/internal",
+    "mediapipe/calculators/tensor",
+    "mediapipe/calculators/tflite",
+    "mediapipe/calculators/util",
+    "mediapipe/gpu",
+    "mediapipe/graphs",
+    "mediapipe/graphs/face_mesh",
+    "mediapipe/graphs/face_mesh/calculators",
+    "mediapipe/graphs/face_mesh/subgraphs",
+    "mediapipe/modules",
+    "mediapipe/modules/face_detection",
+    "mediapipe/modules/face_landmark",
+    "mediapipe/objc",
+    "mediapipe/render",
+    "mediapipe/render/core",
+    "mediapipe/render/core/math",
+    "mediapipe/render/module",
+    "mediapipe/render/module/beauty",
+    "mediapipe/render/module/beauty/ios",
+    "mediapipe/render/module/common",
+    "mediapipe/util",
+    "mediapipe/util/android",
+    "mediapipe/util/android/file",
+    "mediapipe/util/android/file/base",
+    "mediapipe/util/tflite",
+    "mediapipe/util/tflite/operations",
+    "third_party"
+  ]
+}

@@ -122,8 +122,10 @@ struct TextureScale {
         self.device = device;
         __unused NSError *error;
         _offscreenCameraTexture = cameraTexture;
-        NSBundle *bundle = [NSBundle mainBundle];
-        NSURL *shaderURL = [bundle URLForResource:@"OlaFramework" withExtension:@"metallib"];
+        NSBundle *bundle = [NSBundle bundleForClass:[OlaMTLCameraRender class]];
+        
+        
+        NSURL *shaderURL = [bundle URLForResource:@"OlaCameraMetalLibrary" withExtension:@"metallib"];
         if (@available(iOS 11.0, *)) {
             if (shaderURL) {
                 self.library = [self.device newLibraryWithURL:shaderURL error:&error];

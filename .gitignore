@@ -4,3 +4,13 @@ mediapipe/MediaPipe.tulsiproj/*.tulsiconf-user
 mediapipe/provisioning_profile.mobileprovision
 .configure.bazelrc
 .user.bazelrc
+mediapipe/render/demo/ios/OlapipeExample/OlapipeExample.xcodeproj/project.xcworkspace/xcuserdata/wangrenzhu.xcuserdatad/UserInterfaceState.xcuserstate
+mediapipe/render/demo/ios/OlapipeExample/OlapipeExample.xcodeproj/xcuserdata/wangrenzhu.xcuserdatad/xcschemes/xcschememanagement.plist
+mediapipe/render/ios/camera/OlaVideo.xcodeproj/.tulsi/Configs/wangrenzhu.tulsigen-user
+mediapipe/render/ios/camera/OlaVideo.xcodeproj/project.xcworkspace/xcuserdata/wangrenzhu.xcuserdatad/WorkspaceSettings.xcsettings
+mediapipe/render/ios/camera/OlaVideo.xcodeproj/xcuserdata/wangrenzhu.xcuserdatad/xcschemes/xcschememanagement.plist
+mediapipe/render/module/beauty/ios/OlaFaceUnity.xcodeproj/.tulsi/Configs/wangrenzhu.tulsigen-user
+mediapipe/render/module/beauty/ios/OlaFaceUnity.xcodeproj/project.xcworkspace/xcuserdata/wangrenzhu.xcuserdatad/UserInterfaceState.xcuserstate
+mediapipe/render/module/beauty/ios/OlaFaceUnity.xcodeproj/project.xcworkspace/xcuserdata/wangrenzhu.xcuserdatad/WorkspaceSettings.xcsettings
+mediapipe/render/module/beauty/ios/OlaFaceUnity.xcodeproj/xcuserdata/wangrenzhu.xcuserdatad/xcschemes/xcschememanagement.plist
+mediapipe/render/module/beauty/OlaFaceUnity.tulsiproj/wangrenzhu.tulsiconf-user

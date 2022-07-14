@@ -1,15 +1,10 @@
 {
   "additionalFilePaths" : [
-    "mediapipe/render/ios/BUILD"
+    "mediapipe/render/ios/camera/BUILD"
   ],
   "buildTargets" : [
-    "//mediapipe/render/core:core",
-    "//mediapipe/render/core:core-ios",
-    "//mediapipe/render/core:gpuimagemacros",
-    "//mediapipe/render/core:gpuimagemath",
-    "//mediapipe/render/core:gpuimageutil",
-    "//mediapipe/render/core:ref",
-    "//mediapipe/render/ios:OlaRenderDevelopFramework"
+    "//mediapipe/render/ios/camera:OlaCamera",
+    "//mediapipe/render/ios/camera:OlaCameraFramework"
   ],
   "optionSet" : {
     "BazelBuildOptionsDebug" : {
@@ -29,6 +24,9 @@
     },
     "BuildActionPreActionScript" : {
       "p" : "$(inherited)"
+    },
+    "CLANG_CXX_LANGUAGE_STANDARD" : {
+      "p" : "c++17"
     },
     "CommandlineArguments" : {
       "p" : "$(inherited)"
@@ -57,8 +55,6 @@
   },
   "projectName" : "OlaVideo",
   "sourceFilters" : [
-    "mediapipe/render/core",
-    "mediapipe/render/core/math",
-    "mediapipe/render/ios"
+    "mediapipe/render/ios/camera"
   ]
 }

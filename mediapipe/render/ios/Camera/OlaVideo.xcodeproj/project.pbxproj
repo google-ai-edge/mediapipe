@@ -1,0 +1,806 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 46;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		EC43C1642BFD843200000000 /* OlaMTLCameraRenderView.mm in camera */ = {isa = PBXBuildFile; fileRef = AED7A97F2BFD843200000000 /* OlaMTLCameraRenderView.mm */; };
+		EC43C1642BFD843200000001 /* OlaMTLCameraRenderView.mm in camera */ = {isa = PBXBuildFile; fileRef = AED7A97F2BFD843200000000 /* OlaMTLCameraRenderView.mm */; };
+		EC43C16432EC674300000000 /* OlaShareTexture.m in camera */ = {isa = PBXBuildFile; fileRef = AED7A97F32EC674300000000 /* OlaShareTexture.m */; };
+		EC43C16432EC674300000001 /* OlaShareTexture.m in camera */ = {isa = PBXBuildFile; fileRef = AED7A97F32EC674300000000 /* OlaShareTexture.m */; };
+		EC43C16459C1184100000000 /* OlaCameraRender.m in camera */ = {isa = PBXBuildFile; fileRef = AED7A97F59C1184100000000 /* OlaCameraRender.m */; };
+		EC43C16459C1184100000001 /* OlaCameraRender.m in camera */ = {isa = PBXBuildFile; fileRef = AED7A97F59C1184100000000 /* OlaCameraRender.m */; };
+		EC43C16491B5138700000000 /* OlaMTLCameraRender.mm in camera */ = {isa = PBXBuildFile; fileRef = AED7A97F91B5138700000000 /* OlaMTLCameraRender.mm */; };
+		EC43C16491B5138700000001 /* OlaMTLCameraRender.mm in camera */ = {isa = PBXBuildFile; fileRef = AED7A97F91B5138700000000 /* OlaMTLCameraRender.mm */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		79F19D9DB052EDC900000000 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = E8D406AA778D00B000000000 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = B0D91B25B052EDC800000000;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		AED7A97F09FFE58800000000 /* Info.plist */ = {isa = PBXFileReference; explicitFileType = text.plist; name = Info.plist; path = "OlaVideo.xcodeproj/.tulsi/tulsi-execution-root/bazel-tulsi-includes/x/x/mediapipe/render/ios/camera/OlaCameraFramework-intermediates/Info.plist"; sourceTree = SOURCE_ROOT; };
+		AED7A97F1037468800000000 /* lib_idx_OlaCamera_D4C1E04C_ios_min15.5.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; name = lib_idx_OlaCamera_D4C1E04C_ios_min15.5.a; path = lib_idx_OlaCamera_D4C1E04C_ios_min15.5.a; sourceTree = BUILT_PRODUCTS_DIR; };
+		AED7A97F22A8C25800000000 /* OlaMTLCameraRenderView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = OlaMTLCameraRenderView.h; path = mediapipe/render/ios/camera/OlaMTLCameraRenderView.h; sourceTree = "<group>"; };
+		AED7A97F2BFD843200000000 /* OlaMTLCameraRenderView.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; name = OlaMTLCameraRenderView.mm; path = mediapipe/render/ios/camera/OlaMTLCameraRenderView.mm; sourceTree = "<group>"; };
+		AED7A97F32EC674300000000 /* OlaShareTexture.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = OlaShareTexture.m; path = mediapipe/render/ios/camera/OlaShareTexture.m; sourceTree = "<group>"; };
+		AED7A97F59C1184100000000 /* OlaCameraRender.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = OlaCameraRender.m; path = mediapipe/render/ios/camera/OlaCameraRender.m; sourceTree = "<group>"; };
+		AED7A97F7683FBD400000000 /* lib_idx_OlaCamera_D4C1E04C_ios_min11.0.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; name = lib_idx_OlaCamera_D4C1E04C_ios_min11.0.a; path = lib_idx_OlaCamera_D4C1E04C_ios_min11.0.a; sourceTree = BUILT_PRODUCTS_DIR; };
+		AED7A97F7AA3D58000000000 /* OlaMTLCameraRender.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = OlaMTLCameraRender.h; path = mediapipe/render/ios/camera/OlaMTLCameraRender.h; sourceTree = "<group>"; };
+		AED7A97F86B67E0B00000000 /* OlaShareTexture.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = OlaShareTexture.h; path = mediapipe/render/ios/camera/OlaShareTexture.h; sourceTree = "<group>"; };
+		AED7A97F8D39733A00000000 /* BUILD */ = {isa = PBXFileReference; lastKnownFileType = text; name = BUILD; path = mediapipe/render/ios/camera/BUILD; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.python; };
+		AED7A97F91B5138700000000 /* OlaMTLCameraRender.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; name = OlaMTLCameraRender.mm; path = mediapipe/render/ios/camera/OlaMTLCameraRender.mm; sourceTree = "<group>"; };
+		AED7A97F9878980200000000 /* OlaCameraFramework.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; name = OlaCameraFramework.framework; path = OlaCameraFramework.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		AED7A97FAC2A7FD500000000 /* OlaCameraFramework.metal */ = {isa = PBXFileReference; lastKnownFileType = com.apple.metal; name = OlaCameraFramework.metal; path = mediapipe/render/ios/camera/OlaCameraFramework.metal; sourceTree = "<group>"; };
+		AED7A97FB5F5C90C00000000 /* libmediapipe-render-ios-camera-OlaCamera.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; name = "libmediapipe-render-ios-camera-OlaCamera.a"; path = "libmediapipe-render-ios-camera-OlaCamera.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		AED7A97FC098314C00000000 /* OlaCameraRender.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = OlaCameraRender.h; path = mediapipe/render/ios/camera/OlaCameraRender.h; sourceTree = "<group>"; };
+		AED7A97FCF62A51000000000 /* OlaCameraFramework.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = OlaCameraFramework.h; path = mediapipe/render/ios/camera/OlaCameraFramework.h; sourceTree = "<group>"; };
+		AED7A97FF942D3BE00000000 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; name = Info.plist; path = mediapipe/render/ios/camera/Info.plist; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		1A7E690D5270F98E00000000 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				1A7E690DA64DA2C200000000 /* Indexer */,
+				AED7A97F9878980200000000 /* OlaCameraFramework.framework */,
+				1A7E690D9974D8B500000000 /* bazel-tulsi-includes */,
+				AED7A97FB5F5C90C00000000 /* libmediapipe-render-ios-camera-OlaCamera.a */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		1A7E690D5A5561D100000000 /* camera */ = {
+			isa = PBXGroup;
+			children = (
+				1A7E690D7271214400000000 /* OlaCameraFramework-intermediates */,
+			);
+			name = camera;
+			sourceTree = "<group>";
+		};
+		1A7E690D5A5561D100000001 /* camera */ = {
+			isa = PBXGroup;
+			children = (
+				AED7A97F8D39733A00000000 /* BUILD */,
+				AED7A97FF942D3BE00000000 /* Info.plist */,
+				AED7A97FCF62A51000000000 /* OlaCameraFramework.h */,
+				AED7A97FAC2A7FD500000000 /* OlaCameraFramework.metal */,
+				AED7A97FC098314C00000000 /* OlaCameraRender.h */,
+				AED7A97F59C1184100000000 /* OlaCameraRender.m */,
+				AED7A97F7AA3D58000000000 /* OlaMTLCameraRender.h */,
+				AED7A97F91B5138700000000 /* OlaMTLCameraRender.mm */,
+				AED7A97F22A8C25800000000 /* OlaMTLCameraRenderView.h */,
+				AED7A97F2BFD843200000000 /* OlaMTLCameraRenderView.mm */,
+				AED7A97F86B67E0B00000000 /* OlaShareTexture.h */,
+				AED7A97F32EC674300000000 /* OlaShareTexture.m */,
+			);
+			name = camera;
+			sourceTree = "<group>";
+		};
+		1A7E690D7271214400000000 /* OlaCameraFramework-intermediates */ = {
+			isa = PBXGroup;
+			children = (
+				AED7A97F09FFE58800000000 /* Info.plist */,
+			);
+			name = "OlaCameraFramework-intermediates";
+			sourceTree = "<group>";
+		};
+		1A7E690D7839CC7000000000 /* render */ = {
+			isa = PBXGroup;
+			children = (
+				1A7E690D7B0977E900000000 /* ios */,
+			);
+			name = render;
+			sourceTree = "<group>";
+		};
+		1A7E690D7839CC7000000001 /* render */ = {
+			isa = PBXGroup;
+			children = (
+				1A7E690D7B0977E900000001 /* ios */,
+			);
+			name = render;
+			sourceTree = "<group>";
+		};
+		1A7E690D7B0977E900000000 /* ios */ = {
+			isa = PBXGroup;
+			children = (
+				1A7E690D5A5561D100000000 /* camera */,
+			);
+			name = ios;
+			sourceTree = "<group>";
+		};
+		1A7E690D7B0977E900000001 /* ios */ = {
+			isa = PBXGroup;
+			children = (
+				1A7E690D5A5561D100000001 /* camera */,
+			);
+			name = ios;
+			sourceTree = "<group>";
+		};
+		1A7E690D9974D8B500000000 /* bazel-tulsi-includes */ = {
+			isa = PBXGroup;
+			children = (
+				1A7E690DFF57D04D00000000 /* x */,
+			);
+			name = "bazel-tulsi-includes";
+			sourceTree = "<group>";
+		};
+		1A7E690DA64DA2C200000000 /* Indexer */ = {
+			isa = PBXGroup;
+			children = (
+				AED7A97F7683FBD400000000 /* lib_idx_OlaCamera_D4C1E04C_ios_min11.0.a */,
+				AED7A97F1037468800000000 /* lib_idx_OlaCamera_D4C1E04C_ios_min15.5.a */,
+			);
+			name = Indexer;
+			sourceTree = "<group>";
+		};
+		1A7E690DA6D1E65D00000000 /* mainGroup */ = {
+			isa = PBXGroup;
+			children = (
+				1A7E690D5270F98E00000000 /* Products */,
+				1A7E690DAFC71AAD00000001 /* mediapipe */,
+			);
+			name = mainGroup;
+			path = ../../../..;
+			sourceTree = SOURCE_ROOT;
+		};
+		1A7E690DAFC71AAD00000000 /* mediapipe */ = {
+			isa = PBXGroup;
+			children = (
+				1A7E690D7839CC7000000000 /* render */,
+			);
+			name = mediapipe;
+			sourceTree = "<group>";
+		};
+		1A7E690DAFC71AAD00000001 /* mediapipe */ = {
+			isa = PBXGroup;
+			children = (
+				1A7E690D7839CC7000000001 /* render */,
+			);
+			name = mediapipe;
+			sourceTree = "<group>";
+		};
+		1A7E690DFF57D04D00000000 /* x */ = {
+			isa = PBXGroup;
+			children = (
+				1A7E690DFF57D04D00000001 /* x */,
+			);
+			name = x;
+			sourceTree = "<group>";
+		};
+		1A7E690DFF57D04D00000001 /* x */ = {
+			isa = PBXGroup;
+			children = (
+				1A7E690DAFC71AAD00000000 /* mediapipe */,
+			);
+			name = x;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXLegacyTarget section */
+		B0D91B25B052EDC800000000 /* _bazel_clean_ */ = {
+			isa = PBXLegacyTarget;
+			buildArgumentsString = "\"/opt/homebrew/Cellar/bazelisk/1.12.0/bin/bazelisk\" \"bazel-bin\"";
+			buildConfigurationList = FA986D996551CEE700000000 /* Build configuration list for PBXLegacyTarget "_bazel_clean_" */;
+			buildPhases = (
+			);
+			buildToolPath = "${PROJECT_FILE_PATH}/.tulsi/Scripts/bazel_clean.sh";
+			buildWorkingDirectory = "${SRCROOT}/../../../..";
+			dependencies = (
+			);
+			name = _bazel_clean_;
+			passBuildSettingsInEnvironment = 1;
+			productName = _bazel_clean_;
+		};
+/* End PBXLegacyTarget section */
+
+/* Begin PBXNativeTarget section */
+		D807E5011D3F081800000000 /* _idx_OlaCamera_D4C1E04C_ios_min11.0 */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = FA986D99AFC9DC8A00000000 /* Build configuration list for PBXNativeTarget "_idx_OlaCamera_D4C1E04C_ios_min11.0" */;
+			buildPhases = (
+				20199D1C0000000000000000 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				EC2CE7DAB052EDC900000000 /* PBXTargetDependency */,
+			);
+			name = _idx_OlaCamera_D4C1E04C_ios_min11.0;
+			productName = _idx_OlaCamera_D4C1E04C_ios_min11.0;
+			productReference = AED7A97F7683FBD400000000 /* lib_idx_OlaCamera_D4C1E04C_ios_min11.0.a */;
+			productType = "com.apple.product-type.library.static";
+		};
+		D807E5015522F68E00000000 /* OlaCameraFramework */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = FA986D991B5CFFDE00000000 /* Build configuration list for PBXNativeTarget "OlaCameraFramework" */;
+			buildPhases = (
+				72D56B2C24A1839100000000 /* build //mediapipe/render/ios/camera:OlaCameraFramework */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				EC2CE7DAB052EDC900000000 /* PBXTargetDependency */,
+			);
+			name = OlaCameraFramework;
+			productName = OlaCameraFramework;
+			productReference = AED7A97F9878980200000000 /* OlaCameraFramework.framework */;
+			productType = "com.apple.product-type.framework";
+		};
+		D807E50193F26E1000000000 /* mediapipe-render-ios-camera-OlaCamera */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = FA986D99757981C400000000 /* Build configuration list for PBXNativeTarget "mediapipe-render-ios-camera-OlaCamera" */;
+			buildPhases = (
+				72D56B2CBF9D8E5C00000000 /* build //mediapipe/render/ios/camera:OlaCamera */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				EC2CE7DAB052EDC900000000 /* PBXTargetDependency */,
+			);
+			name = "mediapipe-render-ios-camera-OlaCamera";
+			productName = "mediapipe-render-ios-camera-OlaCamera";
+			productReference = AED7A97FB5F5C90C00000000 /* libmediapipe-render-ios-camera-OlaCamera.a */;
+			productType = "com.apple.product-type.library.static";
+		};
+		D807E501DA646DFC00000000 /* _idx_OlaCamera_D4C1E04C_ios_min15.5 */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = FA986D99157C737100000000 /* Build configuration list for PBXNativeTarget "_idx_OlaCamera_D4C1E04C_ios_min15.5" */;
+			buildPhases = (
+				20199D1C0000000000000001 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				EC2CE7DAB052EDC900000000 /* PBXTargetDependency */,
+			);
+			name = _idx_OlaCamera_D4C1E04C_ios_min15.5;
+			productName = _idx_OlaCamera_D4C1E04C_ios_min15.5;
+			productReference = AED7A97F1037468800000000 /* lib_idx_OlaCamera_D4C1E04C_ios_min15.5.a */;
+			productType = "com.apple.product-type.library.static";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		E8D406AA778D00B000000000 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastSwiftUpdateCheck = 0710;
+				LastUpgradeCheck = 1000;
+			};
+			buildConfigurationList = FA986D9935B6D51200000000 /* Build configuration list for PBXProject "OlaVideo" */;
+			compatibilityVersion = "Xcode 3.2";
+			developmentRegion = English;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+			);
+			mainGroup = 1A7E690DA6D1E65D00000000 /* mainGroup */;
+			targets = (
+				D807E5015522F68E00000000 /* OlaCameraFramework */,
+				B0D91B25B052EDC800000000 /* _bazel_clean_ */,
+				D807E5011D3F081800000000 /* _idx_OlaCamera_D4C1E04C_ios_min11.0 */,
+				D807E501DA646DFC00000000 /* _idx_OlaCamera_D4C1E04C_ios_min15.5 */,
+				D807E50193F26E1000000000 /* mediapipe-render-ios-camera-OlaCamera */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		72D56B2C24A1839100000000 /* build //mediapipe/render/ios/camera:OlaCameraFramework */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 0;
+			files = (
+			);
+			inputPaths = (
+				"$(TARGET_BUILD_DIR)/$(INFOPLIST_PATH)",
+			);
+			name = "build //mediapipe/render/ios/camera:OlaCameraFramework";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/bash;
+			shellScript = "set -e\ncd \"${SRCROOT}/../../../..\"\nexec \"${PROJECT_FILE_PATH}/.tulsi/Scripts/bazel_build.py\" //mediapipe/render/ios/camera:OlaCameraFramework --bazel \"/opt/homebrew/Cellar/bazelisk/1.12.0/bin/bazelisk\" --bazel_bin_path \"bazel-bin\" --verbose ";
+			showEnvVarsInLog = 1;
+		};
+		72D56B2CBF9D8E5C00000000 /* build //mediapipe/render/ios/camera:OlaCamera */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 0;
+			files = (
+			);
+			inputPaths = (
+				"$(TARGET_BUILD_DIR)/$(INFOPLIST_PATH)",
+			);
+			name = "build //mediapipe/render/ios/camera:OlaCamera";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/bash;
+			shellScript = "set -e\ncd \"${SRCROOT}/../../../..\"\nexec \"${PROJECT_FILE_PATH}/.tulsi/Scripts/bazel_build.py\" //mediapipe/render/ios/camera:OlaCamera --bazel \"/opt/homebrew/Cellar/bazelisk/1.12.0/bin/bazelisk\" --bazel_bin_path \"bazel-bin\" --verbose ";
+			showEnvVarsInLog = 1;
+		};
+/* End PBXShellScriptBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		20199D1C0000000000000000 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 0;
+			files = (
+				EC43C16459C1184100000000 /* OlaCameraRender.m in camera */,
+				EC43C16491B5138700000000 /* OlaMTLCameraRender.mm in camera */,
+				EC43C1642BFD843200000000 /* OlaMTLCameraRenderView.mm in camera */,
+				EC43C16432EC674300000000 /* OlaShareTexture.m in camera */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		20199D1C0000000000000001 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 0;
+			files = (
+				EC43C16459C1184100000001 /* OlaCameraRender.m in camera */,
+				EC43C16491B5138700000001 /* OlaMTLCameraRender.mm in camera */,
+				EC43C1642BFD843200000001 /* OlaMTLCameraRenderView.mm in camera */,
+				EC43C16432EC674300000001 /* OlaShareTexture.m in camera */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		EC2CE7DAB052EDC900000000 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			targetProxy = 79F19D9DB052EDC900000000 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		89A98AE65559229700000000 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "c++17";
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGNING_REQUIRED = NO;
+				CODE_SIGN_IDENTITY = "";
+				DONT_RUN_SWIFT_STDLIB_TOOL = YES;
+				ENABLE_TESTABILITY = YES;
+				FRAMEWORK_SEARCH_PATHS = "$(PLATFORM_DIR)/Developer/Library/Frameworks";
+				GCC_PREPROCESSOR_DEFINITIONS = "DEBUG=1";
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = "$(TULSI_EXECUTION_ROOT) $(TULSI_WR)/bazel-bin $(TULSI_WR)/bazel-genfiles $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x";
+				ONLY_ACTIVE_ARCH = YES;
+				PYTHONIOENCODING = utf8;
+				SDKROOT = iphoneos;
+				TULSI_BWRS = "$(PROJECT_FILE_PATH)/.tulsi/tulsi-execution-root";
+				TULSI_EXECUTION_ROOT = "$(PROJECT_FILE_PATH)/.tulsi/tulsi-execution-root";
+				TULSI_LLDBINIT_FILE = "$(PROJECT_FILE_PATH)/.tulsi/Utils/lldbinit";
+				TULSI_OUTPUT_BASE = "$(PROJECT_FILE_PATH)/.tulsi/tulsi-output-base";
+				TULSI_PROJECT = OlaVideo;
+				TULSI_VERSION = 0.20220209.88;
+				TULSI_WR = "${SRCROOT}/../../../..";
+			};
+			name = Debug;
+		};
+		89A98AE65559229700000001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = "Stub Launch Image";
+				BAZEL_TARGET = "//mediapipe/render/ios/camera:OlaCameraFramework";
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				GCC_PREPROCESSOR_DEFINITIONS = "DEBUG=1";
+				INFOPLIST_FILE = "${PROJECT_FILE_PATH}/.tulsi/Resources/StubInfoPlist.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.ola.cameraframework;
+				PRODUCT_NAME = OlaCameraFramework;
+				SDKROOT = iphoneos;
+				TULSI_BUILD_PATH = mediapipe/render/ios/camera;
+				TULSI_XCODE_VERSION = 13.4.1.13F100;
+			};
+			name = Debug;
+		};
+		89A98AE65559229700000002 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				GCC_PREPROCESSOR_DEFINITIONS = "DEBUG=1";
+				HEADER_SEARCH_PATHS = "$(inherited) $(TULSI_WR)/. $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/ ";
+				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
+				OTHER_CFLAGS = "-x objective-c++ -fobjc-arc -D_FORTIFY_SOURCE=1 -D__DATE__=\"redacted\" -D__TIMESTAMP__=\"redacted\" -D__TIME__=\"redacted\"";
+				PRODUCT_NAME = _idx_OlaCamera_D4C1E04C_ios_min11.0;
+				SDKROOT = iphoneos;
+				USER_HEADER_SEARCH_PATHS = "$(TULSI_WR)";
+			};
+			name = Debug;
+		};
+		89A98AE65559229700000003 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				GCC_PREPROCESSOR_DEFINITIONS = "DEBUG=1";
+				HEADER_SEARCH_PATHS = "$(inherited) $(TULSI_WR)/. $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/ ";
+				IPHONEOS_DEPLOYMENT_TARGET = 15.5;
+				OTHER_CFLAGS = "-x objective-c++ -fobjc-arc -D_FORTIFY_SOURCE=1 -D__DATE__=\"redacted\" -D__TIMESTAMP__=\"redacted\" -D__TIME__=\"redacted\"";
+				PRODUCT_NAME = _idx_OlaCamera_D4C1E04C_ios_min15.5;
+				SDKROOT = iphoneos;
+				USER_HEADER_SEARCH_PATHS = "$(TULSI_WR)";
+			};
+			name = Debug;
+		};
+		89A98AE65559229700000004 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = "Stub Launch Image";
+				BAZEL_TARGET = "//mediapipe/render/ios/camera:OlaCamera";
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				GCC_PREPROCESSOR_DEFINITIONS = "DEBUG=1";
+				INFOPLIST_FILE = "${PROJECT_FILE_PATH}/.tulsi/Resources/StubInfoPlist.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 15.5;
+				PRODUCT_NAME = "mediapipe-render-ios-camera-OlaCamera";
+				SDKROOT = iphoneos;
+				TULSI_BUILD_PATH = mediapipe/render/ios/camera;
+				TULSI_XCODE_VERSION = 13.4.1.13F100;
+			};
+			name = Debug;
+		};
+		89A98AE696F55C6100000000 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "c++17";
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGNING_REQUIRED = NO;
+				CODE_SIGN_IDENTITY = "";
+				DONT_RUN_SWIFT_STDLIB_TOOL = YES;
+				ENABLE_TESTABILITY = YES;
+				FRAMEWORK_SEARCH_PATHS = "$(PLATFORM_DIR)/Developer/Library/Frameworks";
+				GCC_PREPROCESSOR_DEFINITIONS = "NDEBUG=1";
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = "$(TULSI_EXECUTION_ROOT) $(TULSI_WR)/bazel-bin $(TULSI_WR)/bazel-genfiles $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x";
+				ONLY_ACTIVE_ARCH = YES;
+				PYTHONIOENCODING = utf8;
+				SDKROOT = iphoneos;
+				TULSI_BWRS = "$(PROJECT_FILE_PATH)/.tulsi/tulsi-execution-root";
+				TULSI_EXECUTION_ROOT = "$(PROJECT_FILE_PATH)/.tulsi/tulsi-execution-root";
+				TULSI_LLDBINIT_FILE = "$(PROJECT_FILE_PATH)/.tulsi/Utils/lldbinit";
+				TULSI_OUTPUT_BASE = "$(PROJECT_FILE_PATH)/.tulsi/tulsi-output-base";
+				TULSI_PROJECT = OlaVideo;
+				TULSI_VERSION = 0.20220209.88;
+				TULSI_WR = "${SRCROOT}/../../../..";
+			};
+			name = Release;
+		};
+		89A98AE696F55C6100000001 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = "Stub Launch Image";
+				BAZEL_TARGET = "//mediapipe/render/ios/camera:OlaCameraFramework";
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				GCC_PREPROCESSOR_DEFINITIONS = "NDEBUG=1";
+				INFOPLIST_FILE = "${PROJECT_FILE_PATH}/.tulsi/Resources/StubInfoPlist.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.ola.cameraframework;
+				PRODUCT_NAME = OlaCameraFramework;
+				SDKROOT = iphoneos;
+				TULSI_BUILD_PATH = mediapipe/render/ios/camera;
+				TULSI_XCODE_VERSION = 13.4.1.13F100;
+			};
+			name = Release;
+		};
+		89A98AE696F55C6100000002 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				GCC_PREPROCESSOR_DEFINITIONS = "NDEBUG=1";
+				HEADER_SEARCH_PATHS = "$(inherited) $(TULSI_WR)/. $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/ ";
+				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
+				OTHER_CFLAGS = "-x objective-c++ -fobjc-arc -D_FORTIFY_SOURCE=1 -D__DATE__=\"redacted\" -D__TIMESTAMP__=\"redacted\" -D__TIME__=\"redacted\"";
+				PRODUCT_NAME = _idx_OlaCamera_D4C1E04C_ios_min11.0;
+				SDKROOT = iphoneos;
+				USER_HEADER_SEARCH_PATHS = "$(TULSI_WR)";
+			};
+			name = Release;
+		};
+		89A98AE696F55C6100000003 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				GCC_PREPROCESSOR_DEFINITIONS = "NDEBUG=1";
+				HEADER_SEARCH_PATHS = "$(inherited) $(TULSI_WR)/. $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/ ";
+				IPHONEOS_DEPLOYMENT_TARGET = 15.5;
+				OTHER_CFLAGS = "-x objective-c++ -fobjc-arc -D_FORTIFY_SOURCE=1 -D__DATE__=\"redacted\" -D__TIMESTAMP__=\"redacted\" -D__TIME__=\"redacted\"";
+				PRODUCT_NAME = _idx_OlaCamera_D4C1E04C_ios_min15.5;
+				SDKROOT = iphoneos;
+				USER_HEADER_SEARCH_PATHS = "$(TULSI_WR)";
+			};
+			name = Release;
+		};
+		89A98AE696F55C6100000004 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = "Stub Launch Image";
+				BAZEL_TARGET = "//mediapipe/render/ios/camera:OlaCamera";
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				GCC_PREPROCESSOR_DEFINITIONS = "NDEBUG=1";
+				INFOPLIST_FILE = "${PROJECT_FILE_PATH}/.tulsi/Resources/StubInfoPlist.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 15.5;
+				PRODUCT_NAME = "mediapipe-render-ios-camera-OlaCamera";
+				SDKROOT = iphoneos;
+				TULSI_BUILD_PATH = mediapipe/render/ios/camera;
+				TULSI_XCODE_VERSION = 13.4.1.13F100;
+			};
+			name = Release;
+		};
+		89A98AE6ACBECA4500000000 /* __TulsiTestRunner_Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "c++17";
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGNING_REQUIRED = NO;
+				CODE_SIGN_IDENTITY = "";
+				DONT_RUN_SWIFT_STDLIB_TOOL = YES;
+				ENABLE_TESTABILITY = YES;
+				FRAMEWORK_SEARCH_PATHS = "";
+				GCC_PREPROCESSOR_DEFINITIONS = "DEBUG=1";
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = "";
+				ONLY_ACTIVE_ARCH = YES;
+				OTHER_CFLAGS = "--version";
+				OTHER_LDFLAGS = "--version";
+				OTHER_SWIFT_FLAGS = "--version";
+				PYTHONIOENCODING = utf8;
+				SDKROOT = iphoneos;
+				SWIFT_INSTALL_OBJC_HEADER = NO;
+				SWIFT_OBJC_INTERFACE_HEADER_NAME = "$(PRODUCT_NAME).h";
+				TULSI_BWRS = "$(PROJECT_FILE_PATH)/.tulsi/tulsi-execution-root";
+				TULSI_EXECUTION_ROOT = "$(PROJECT_FILE_PATH)/.tulsi/tulsi-execution-root";
+				TULSI_LLDBINIT_FILE = "$(PROJECT_FILE_PATH)/.tulsi/Utils/lldbinit";
+				TULSI_OUTPUT_BASE = "$(PROJECT_FILE_PATH)/.tulsi/tulsi-output-base";
+				TULSI_PROJECT = OlaVideo;
+				TULSI_VERSION = 0.20220209.88;
+				TULSI_WR = "${SRCROOT}/../../../..";
+			};
+			name = __TulsiTestRunner_Debug;
+		};
+		89A98AE6ACBECA4500000001 /* __TulsiTestRunner_Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = "Stub Launch Image";
+				BAZEL_TARGET = "//mediapipe/render/ios/camera:OlaCameraFramework";
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				FRAMEWORK_SEARCH_PATHS = "";
+				GCC_PREPROCESSOR_DEFINITIONS = "DEBUG=1";
+				HEADER_SEARCH_PATHS = "";
+				INFOPLIST_FILE = "${PROJECT_FILE_PATH}/.tulsi/Resources/StubInfoPlist.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
+				ONLY_ACTIVE_ARCH = YES;
+				OTHER_CFLAGS = "--version";
+				OTHER_LDFLAGS = "--version";
+				OTHER_SWIFT_FLAGS = "--version";
+				PRODUCT_BUNDLE_IDENTIFIER = com.ola.cameraframework;
+				PRODUCT_NAME = OlaCameraFramework;
+				SDKROOT = iphoneos;
+				SWIFT_INSTALL_OBJC_HEADER = NO;
+				SWIFT_OBJC_INTERFACE_HEADER_NAME = "$(PRODUCT_NAME).h";
+				TULSI_BUILD_PATH = mediapipe/render/ios/camera;
+				TULSI_XCODE_VERSION = 13.4.1.13F100;
+			};
+			name = __TulsiTestRunner_Debug;
+		};
+		89A98AE6ACBECA4500000002 /* __TulsiTestRunner_Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = "Stub Launch Image";
+				BAZEL_TARGET = "//mediapipe/render/ios/camera:OlaCamera";
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				FRAMEWORK_SEARCH_PATHS = "";
+				GCC_PREPROCESSOR_DEFINITIONS = "DEBUG=1";
+				HEADER_SEARCH_PATHS = "";
+				INFOPLIST_FILE = "${PROJECT_FILE_PATH}/.tulsi/Resources/StubInfoPlist.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 15.5;
+				ONLY_ACTIVE_ARCH = YES;
+				OTHER_CFLAGS = "--version";
+				OTHER_LDFLAGS = "--version";
+				OTHER_SWIFT_FLAGS = "--version";
+				PRODUCT_NAME = "mediapipe-render-ios-camera-OlaCamera";
+				SDKROOT = iphoneos;
+				SWIFT_INSTALL_OBJC_HEADER = NO;
+				SWIFT_OBJC_INTERFACE_HEADER_NAME = "$(PRODUCT_NAME).h";
+				TULSI_BUILD_PATH = mediapipe/render/ios/camera;
+				TULSI_XCODE_VERSION = 13.4.1.13F100;
+			};
+			name = __TulsiTestRunner_Debug;
+		};
+		89A98AE6D9581F9600000000 /* __TulsiTestRunner_Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "c++17";
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGNING_REQUIRED = NO;
+				CODE_SIGN_IDENTITY = "";
+				DONT_RUN_SWIFT_STDLIB_TOOL = YES;
+				ENABLE_TESTABILITY = YES;
+				FRAMEWORK_SEARCH_PATHS = "";
+				GCC_PREPROCESSOR_DEFINITIONS = "NDEBUG=1";
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = "";
+				ONLY_ACTIVE_ARCH = YES;
+				OTHER_CFLAGS = "--version";
+				OTHER_LDFLAGS = "--version";
+				OTHER_SWIFT_FLAGS = "--version";
+				PYTHONIOENCODING = utf8;
+				SDKROOT = iphoneos;
+				SWIFT_INSTALL_OBJC_HEADER = NO;
+				SWIFT_OBJC_INTERFACE_HEADER_NAME = "$(PRODUCT_NAME).h";
+				TULSI_BWRS = "$(PROJECT_FILE_PATH)/.tulsi/tulsi-execution-root";
+				TULSI_EXECUTION_ROOT = "$(PROJECT_FILE_PATH)/.tulsi/tulsi-execution-root";
+				TULSI_LLDBINIT_FILE = "$(PROJECT_FILE_PATH)/.tulsi/Utils/lldbinit";
+				TULSI_OUTPUT_BASE = "$(PROJECT_FILE_PATH)/.tulsi/tulsi-output-base";
+				TULSI_PROJECT = OlaVideo;
+				TULSI_VERSION = 0.20220209.88;
+				TULSI_WR = "${SRCROOT}/../../../..";
+			};
+			name = __TulsiTestRunner_Release;
+		};
+		89A98AE6D9581F9600000001 /* __TulsiTestRunner_Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = "Stub Launch Image";
+				BAZEL_TARGET = "//mediapipe/render/ios/camera:OlaCameraFramework";
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				FRAMEWORK_SEARCH_PATHS = "";
+				GCC_PREPROCESSOR_DEFINITIONS = "NDEBUG=1";
+				HEADER_SEARCH_PATHS = "";
+				INFOPLIST_FILE = "${PROJECT_FILE_PATH}/.tulsi/Resources/StubInfoPlist.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
+				ONLY_ACTIVE_ARCH = YES;
+				OTHER_CFLAGS = "--version";
+				OTHER_LDFLAGS = "--version";
+				OTHER_SWIFT_FLAGS = "--version";
+				PRODUCT_BUNDLE_IDENTIFIER = com.ola.cameraframework;
+				PRODUCT_NAME = OlaCameraFramework;
+				SDKROOT = iphoneos;
+				SWIFT_INSTALL_OBJC_HEADER = NO;
+				SWIFT_OBJC_INTERFACE_HEADER_NAME = "$(PRODUCT_NAME).h";
+				TULSI_BUILD_PATH = mediapipe/render/ios/camera;
+				TULSI_XCODE_VERSION = 13.4.1.13F100;
+			};
+			name = __TulsiTestRunner_Release;
+		};
+		89A98AE6D9581F9600000002 /* __TulsiTestRunner_Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = "Stub Launch Image";
+				BAZEL_TARGET = "//mediapipe/render/ios/camera:OlaCamera";
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				FRAMEWORK_SEARCH_PATHS = "";
+				GCC_PREPROCESSOR_DEFINITIONS = "NDEBUG=1";
+				HEADER_SEARCH_PATHS = "";
+				INFOPLIST_FILE = "${PROJECT_FILE_PATH}/.tulsi/Resources/StubInfoPlist.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 15.5;
+				ONLY_ACTIVE_ARCH = YES;
+				OTHER_CFLAGS = "--version";
+				OTHER_LDFLAGS = "--version";
+				OTHER_SWIFT_FLAGS = "--version";
+				PRODUCT_NAME = "mediapipe-render-ios-camera-OlaCamera";
+				SDKROOT = iphoneos;
+				SWIFT_INSTALL_OBJC_HEADER = NO;
+				SWIFT_OBJC_INTERFACE_HEADER_NAME = "$(PRODUCT_NAME).h";
+				TULSI_BUILD_PATH = mediapipe/render/ios/camera;
+				TULSI_XCODE_VERSION = 13.4.1.13F100;
+			};
+			name = __TulsiTestRunner_Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		FA986D99157C737100000000 /* Build configuration list for PBXNativeTarget "_idx_OlaCamera_D4C1E04C_ios_min15.5" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				89A98AE65559229700000003 /* Debug */,
+				89A98AE696F55C6100000003 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+		};
+		FA986D991B5CFFDE00000000 /* Build configuration list for PBXNativeTarget "OlaCameraFramework" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				89A98AE65559229700000001 /* Debug */,
+				89A98AE696F55C6100000001 /* Release */,
+				89A98AE6ACBECA4500000001 /* __TulsiTestRunner_Debug */,
+				89A98AE6D9581F9600000001 /* __TulsiTestRunner_Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+		};
+		FA986D9935B6D51200000000 /* Build configuration list for PBXProject "OlaVideo" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				89A98AE65559229700000000 /* Debug */,
+				89A98AE696F55C6100000000 /* Release */,
+				89A98AE6ACBECA4500000000 /* __TulsiTestRunner_Debug */,
+				89A98AE6D9581F9600000000 /* __TulsiTestRunner_Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+		};
+		FA986D996551CEE700000000 /* Build configuration list for PBXLegacyTarget "_bazel_clean_" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+			);
+			defaultConfigurationIsVisible = 0;
+		};
+		FA986D99757981C400000000 /* Build configuration list for PBXNativeTarget "mediapipe-render-ios-camera-OlaCamera" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				89A98AE65559229700000004 /* Debug */,
+				89A98AE696F55C6100000004 /* Release */,
+				89A98AE6ACBECA4500000002 /* __TulsiTestRunner_Debug */,
+				89A98AE6D9581F9600000002 /* __TulsiTestRunner_Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+		};
+		FA986D99AFC9DC8A00000000 /* Build configuration list for PBXNativeTarget "_idx_OlaCamera_D4C1E04C_ios_min11.0" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				89A98AE65559229700000002 /* Debug */,
+				89A98AE696F55C6100000002 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = E8D406AA778D00B000000000 /* Project object */;
+}
