@@ -16,9 +16,10 @@ licenses(["notice"])
 
 package(default_visibility = ["//mediapipe/examples:__subpackages__"])
 
-cc_binary(
-    name = "hello_world",
+cc_library(
+    name = "hello_world_library",
     srcs = ["hello_world.cc"],
+    hdrs = ["hello_world.hh"],
     visibility = ["//visibility:public"],
     deps = [
         "//mediapipe/calculators/core:pass_through_calculator",
@@ -26,5 +27,13 @@ cc_binary(
         "//mediapipe/framework/port:logging",
         "//mediapipe/framework/port:parse_text_proto",
         "//mediapipe/framework/port:status",
+    ],
+)
+
+cc_binary(
+    name = "hello-world-binary",
+    srcs = ["hello-world-main.cc"],
+    deps = [
+        ":hello_world_library",
     ],
 )
