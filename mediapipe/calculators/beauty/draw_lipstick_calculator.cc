@@ -148,11 +148,6 @@ namespace mediapipe
     {
       return absl::OkStatus();
     }
-    if (cc->Inputs().HasTag(kMaskTag) &&
-        cc->Inputs().Tag(kMaskTag).IsEmpty())
-    {
-      return absl::OkStatus();
-    }
 
     // Initialize render target, drawn with OpenCV.
     std::unique_ptr<cv::Mat> image_mat;
@@ -163,14 +158,17 @@ namespace mediapipe
       MP_RETURN_IF_ERROR(CreateRenderTargetCpu(cc, image_mat, &target_format));
     }
 
-    const std::vector<std::unordered_map<std::string, cv::Mat>> &mask_vec =
-        cc->Inputs().Tag(kMaskTag).Get<std::vector<std::unordered_map<std::string, cv::Mat>>>();
-    if (mask_vec.size() > 0)
+    if (cc->Inputs().HasTag(kMaskTag) &&
+        !cc->Inputs().Tag(kMaskTag).IsEmpty())
     {
-      for (auto mask : mask_vec)
-        MP_RETURN_IF_ERROR(DrawLipstick(cc, image_mat, &target_format, mask));
+      const std::vector<std::unordered_map<std::string, cv::Mat>> &mask_vec =
+          cc->Inputs().Tag(kMaskTag).Get<std::vector<std::unordered_map<std::string, cv::Mat>>>();
+      if (mask_vec.size() > 0)
+      {
+        for (auto mask : mask_vec)
+          MP_RETURN_IF_ERROR(DrawLipstick(cc, image_mat, &target_format, mask));
+      }
     }
-
     // Copy the rendered image to output.
     uchar *image_mat_ptr = image_mat->data;
     MP_RETURN_IF_ERROR(RenderToCpu(cc, target_format, image_mat_ptr, image_mat));
