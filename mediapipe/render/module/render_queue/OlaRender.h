@@ -21,7 +21,7 @@
 #define USE_NEED_RECREATE 0
 
 #include <stdio.h>
-#include "macros.h"
+// #include "macros.h"
 
 #if USE_OLARENDER
 #include <target/TargetView.h>
@@ -30,12 +30,12 @@
 #endif
 #endif
 
-#if PLATFORM == PLATFORM_IOS
-
+// #if PLATFORM == PLATFORM_IOS
+#ifdef __APPLE__
 #import <OpenGLES/ES3/gl.h>
 #import <OpenGLES/ES3/glext.h>
-#elif PLATFORM == PLATFORM_ANDROID
-
+// #elif PLATFORM == PLATFORM_ANDROID
+#else
 #include <GLES3/gl3.h>
 #include <GLES3/gl3ext.h>
 
