@@ -1,0 +1,59 @@
+# MediaPipe graph that performs hair segmentation with TensorFlow Lite on GPU.
+# Used in the example in
+# mediapipie/examples/android/src/java/com/mediapipe/apps/hairsegmentationgpu.
+
+# Images on GPU coming into and out of the graph.
+input_stream: "input_video"
+output_stream: "output_video"
+
+
+node {
+  calculator: "FlowLimiterCalculator"
+  input_stream: "input_video"
+  input_stream: "FINISHED:output_video"
+  input_stream_info: {
+    tag_index: "FINISHED"
+    back_edge: true
+  }
+  output_stream: "throttled_input_video"
+}
+
+# Defines side packets for further use in the graph.
+node {
+  calculator: "ConstantSidePacketCalculator"
+  output_side_packet: "PACKET:with_attention"
+  node_options: {
+    [type.googleapis.com/mediapipe.ConstantSidePacketCalculatorOptions]: {
+      packet { bool_value: true }
+    }
+  }
+}
+
+# Defines side packets for further use in the graph.
+node {
+  calculator: "GpuBufferToImageFrameCalculator"
+  input_stream: "throttled_input_video"
+  output_stream: "throttled_input_video_cpu"
+}
+
+# Subgraph that detects faces and corresponding landmarks.
+node {
+  calculator: "FaceLandmarkFrontGpu"
+  input_stream: "IMAGE:throttled_input_video"
+  input_side_packet: "WITH_ATTENTION:with_attention"
+  output_stream: "LANDMARKS:multi_face_landmarks"
+}
+
+node {
+  calculator: "FaceProcessorCalculator"
+  input_stream: "NORM_LANDMARKS:multi_face_landmarks"
+  input_stream: "IMAGE:throttled_input_video_cpu"
+  output_stream: "IMAGE:out_image_frame"
+}
+
+# Defines side packets for further use in the graph.
+node {
+  calculator: "ImageFrameToGpuBufferCalculator"
+  input_stream: "out_image_frame"
+  output_stream: "output_video"
+}
