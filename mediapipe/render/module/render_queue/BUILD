@@ -1,10 +1,5 @@
 load("@build_bazel_rules_apple//apple:ios.bzl", "ios_framework")
 
-load("@build_bazel_rules_android//android:rules.bzl", "android_library")
-
-
-
-
 GL_BASE_LINK_OPTS = select({
     "//conditions:default": [],
     "//mediapipe:android": [
@@ -108,8 +103,8 @@ cc_library(
         "OlaRenderIMP.h",
         ],
     # Use -Dverbose=-1 to turn off zlib's trace logging. (#3280)
-    linkstatic = True,
-    linkopts = GL_BASE_LINK_OPTS_OSS,
+    # linkstatic = True,
+    # linkopts = GL_BASE_LINK_OPTS_OSS,
     includes = ["."],
     visibility = ["//visibility:public"],
     deps = [
@@ -168,16 +163,5 @@ ios_framework(
     minimum_os_version = "10.0",
     deps = [
         "//mediapipe/render/module/render_queue:OlaRenderLibrary",
-    ],
-)
-
-####### android ########
-android_library(
-    name = "ola_render",
-    srcs = [
-        "src/com/ola/render/RenderJni.java"
-    ], 
-    deps = [
-        "//mediapipe/render/module/render_queue:olarender",
     ],
 )
