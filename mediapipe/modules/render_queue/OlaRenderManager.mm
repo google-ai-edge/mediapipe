@@ -9,6 +9,8 @@
 
 #include "mediapipe/modules/render_queue/OlaRender.hpp"
 #include "mediapipe/modules/render_queue/image_queue.h"
+#include "mediapipe/modules/render_queue/image.h"
+
 
 USING_NS_OLA
 
@@ -49,6 +51,18 @@ USING_NS_OLA
         olaRender = nullptr;
     }
     
+}
+
+// void addImageCache(const uint8_t *img, int len, double startX, double startY, double normalWidth, double normalHeight,
+                //    int width, int height, uint64_t javaTime, uint64_t startT, uint64_t beforeFFi, bool exportFlag);
+
++(void)addImg
+{
+    addImageCache(nullptr, 0, 0.0, 0.0, 0.0, 0.0, 0,0,0,0,0, false);
+}
++(void)disposeImg
+{
+    disposeImage();
 }
 
 - (int)render:(int64_t)frameTime textureId:(NSUInteger)inputTexture renderSize:(CGSize)size

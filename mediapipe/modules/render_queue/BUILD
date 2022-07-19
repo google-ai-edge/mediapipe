@@ -15,10 +15,11 @@ cc_library(
         "image_queue.h",
         "image.h",
         "LockFreeQueue.h",
-        "OlaRender.hpp",
-        "OlaRenderIMP.hpp",
+        "OlaRender.h",
+        "OlaRenderIMP.h",
         ],
     # Use -Dverbose=-1 to turn off zlib's trace logging. (#3280)
+    linkstatic = True,
     includes = ["."],
     visibility = ["//visibility:public"],
     deps = [
@@ -31,23 +32,13 @@ cc_library(
         ],
         "//conditions:default": [],
     }),
+    alwayslink = True,
 )
 
 
 
 objc_library(
     name = "OlaRenderLibrary",
-    srcs = [
-            "OlaRenderManager.mm",
-            "image_queue.cpp",
-            "image.cpp",
-            ],
-    hdrs = [
-            "OlaRenderManager.h",
-            "image_queue.h",
-            "image.h",
-            "LockFreeQueue.h",
-            ],
     visibility = ["//visibility:public"],
     deps = [   
         "//mediapipe/modules/render_queue:ios_olarender",
@@ -69,21 +60,26 @@ objc_library(
         "Foundation",
         "UIKit",
     ],
+    alwayslink = True,
 )
 
 
 ios_framework(
     name = "OlaRenderFramework",
     hdrs = [
-        "OlaRenderManager.h",
         "image.h",
         "image_queue.h",
         "LockFreeQueue.h",
+         "util.h", 
+        "macros.h",
+        "OlaRender.h",
+        "OlaRenderIMP.h",
     ],
+    # alwayslink=True,
     infoplists = ["Info.plist"],
     bundle_id = "com.ola.dartrenderplugin",
     families = ["iphone", "ipad"],
-    minimum_os_version = "11.0",
+    minimum_os_version = "10.0",
     deps = [
         "//mediapipe/modules/render_queue:OlaRenderLibrary",
     ],

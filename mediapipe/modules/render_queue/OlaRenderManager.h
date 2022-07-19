@@ -22,6 +22,10 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)setRenderView:(UIView *)renderView;
 
++ (void) addImg;
+
++(void) disposeImg;
+
 @end
 
 NS_ASSUME_NONNULL_END

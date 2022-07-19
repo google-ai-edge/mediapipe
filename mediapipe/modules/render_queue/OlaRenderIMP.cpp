@@ -6,7 +6,7 @@
 //
 
 
-#include "OlaRenderIMP.hpp"
+#include "OlaRenderIMP.h"
 #include "image_queue.h"
 
 #if USE_OLARENDER
@@ -564,13 +564,13 @@ void OLARenderIMP::_setROI(Vec4 roi) {
     _mvp_matrix.scale(_roi.z, _roi.w, 1.0);
 
 
-#if defined(__ANDROID__) || defined(ANDROID)
+// #if defined(__ANDROID__) || defined(ANDROID)
     _mvp_matrix.translate(-realXOffset, realYOffset, 0.0);
     _mvp_matrix.translate(roiAdjusted.x, -roiAdjusted.y, 0.0);
-#else
-    _mvp_matrix.translate(-realXOffset, -realYOffset, 0.0);
-    _mvp_matrix.translate(roiAdjusted.x, roiAdjusted.y, 0.0);
-#endif
+// #else
+//     _mvp_matrix.translate(-realXOffset, -realYOffset, 0.0);
+//     _mvp_matrix.translate(roiAdjusted.x, roiAdjusted.y, 0.0);
+// #endif
 }
 
 GLuint OLARenderIMP::_loadShader(GLenum shaderType, const std::string &shaderString) {

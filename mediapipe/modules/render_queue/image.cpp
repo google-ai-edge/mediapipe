@@ -35,7 +35,13 @@ void addImageCache(const uint8_t *img, int len, double startX, double startY, do
                                     startT, beforeFFi, exportFlag);
 }
 
+
 extern "C" __attribute__((visibility("default"))) __attribute__((used))
-void dispose() {
+void disposeImage() {
     ImageQueue::getInstance()->dispose();
+}
+
+extern "C" __attribute__((visibility("default"))) __attribute__((used))
+void test() {
+    
 }

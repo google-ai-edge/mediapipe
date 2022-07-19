@@ -10,7 +10,7 @@
 
 #include <stdio.h>
 #include "macros.h"
-#include "OlaRender.hpp"
+#include "OlaRender.h"
 #include <math/math_utils.hpp>
 
 #if USE_OLARENDER
