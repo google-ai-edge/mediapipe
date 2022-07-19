@@ -22,5 +22,25 @@ objc_library(
          "//mediapipe/render/core:core-ios",
          "//mediapipe/render/module/beauty:FaceMeshGPULibrary",
          "@ios_opencv//:OpencvFramework",
-    ]
+    ],
+     copts = select({
+        "//mediapipe:apple": [
+            "-x objective-c++",
+            "-fobjc-arc",  # enable reference-counting
+        ],
+        "//conditions:default": [],
+    }),
+    sdk_frameworks = [
+        "AVFoundation",
+        "CoreGraphics",
+        "CoreMedia",
+        "UIKit",
+        "OpenGLES",
+        "MetalKit",
+        "GLKit",
+        "Metal",
+        "CoreVideo",
+        "IOSurface",
+        "Foundation",
+    ],
 )

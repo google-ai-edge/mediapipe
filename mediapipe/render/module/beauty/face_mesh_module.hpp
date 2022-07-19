@@ -1,6 +1,6 @@
-#include "mediapipe/render/module/common/OlaGraph.hpp"
 
-namespace OlaPipe {
+
+namespace Opipe {
     class FaceMeshModule {
         public:
         FaceMeshModule();

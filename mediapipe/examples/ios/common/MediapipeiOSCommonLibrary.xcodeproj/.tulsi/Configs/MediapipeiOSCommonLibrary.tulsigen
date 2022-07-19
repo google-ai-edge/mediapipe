@@ -1,0 +1,34 @@
+{
+  "additionalFilePaths" : [
+    "mediapipe/examples/ios/common/BUILD"
+  ],
+  "buildTargets" : [
+    "//mediapipe/examples/ios/common:CommonMediaPipeAppLibrary",
+    "//mediapipe/examples/ios/common:CommonMediaPipeFramework"
+  ],
+  "optionSet" : {
+    "ProjectGenerationPlatformConfiguration" : {
+      "p" : "ios_arm64"
+    }
+  },
+  "projectName" : "MediapipeiOSCommonLibrary",
+  "sourceFilters" : [
+    "mediapipe",
+    "mediapipe/calculators",
+    "mediapipe/calculators/internal",
+    "mediapipe/examples",
+    "mediapipe/examples/ios",
+    "mediapipe/examples/ios/common",
+    "mediapipe/examples/ios/common/Base.lproj",
+    "mediapipe/framework",
+    "mediapipe/framework/deps",
+    "mediapipe/framework/formats",
+    "mediapipe/framework/port",
+    "mediapipe/framework/profiler",
+    "mediapipe/framework/stream_handler",
+    "mediapipe/framework/tool",
+    "mediapipe/gpu",
+    "mediapipe/objc",
+    "mediapipe/util"
+  ]
+}

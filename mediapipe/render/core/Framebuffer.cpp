@@ -169,7 +169,7 @@ namespace QImage {
     }
 
     void Framebuffer::resetRetainCount() {
-        _framebufferRetainCount = 0;
+        _framebufferRetainCount = 1;
     }
     
     void *Framebuffer::frameBufferGetBaseAddress() {

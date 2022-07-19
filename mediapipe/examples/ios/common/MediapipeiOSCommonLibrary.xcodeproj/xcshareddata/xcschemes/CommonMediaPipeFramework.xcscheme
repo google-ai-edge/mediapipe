@@ -1,0 +1,29 @@
+
+<Scheme version="1.3" LastUpgradeVersion="1000">
+    <BuildAction buildImplicitDependencies="YES" parallelizeBuildables="YES">
+        <BuildActionEntries>
+            <BuildActionEntry buildForTesting="YES" buildForRunning="YES" buildForArchiving="YES" buildForAnalyzing="YES" buildForProfiling="YES">
+                <BuildableReference BuildableIdentifier="primary" ReferencedContainer="container:MediapipeiOSCommonLibrary.xcodeproj" BuildableName="CommonMediaPipeFramework.framework" BlueprintIdentifier="D807E501A117EDB400000000" BlueprintName="CommonMediaPipeFramework"></BuildableReference>
+            </BuildActionEntry>
+        </BuildActionEntries>
+    </BuildAction>
+    <TestAction selectedLauncherIdentifier="Xcode.DebuggerFoundation.Launcher.LLDB" selectedDebuggerIdentifier="Xcode.DebuggerFoundation.Debugger.LLDB" customLLDBInitFile="$(PROJECT_FILE_PATH)/.tulsi/Utils/lldbinit" shouldUseLaunchSchemeArgsEnv="YES" buildConfiguration="__TulsiTestRunner_Debug">
+        <Testables></Testables>
+        <BuildableProductRunnable runnableDebuggingMode="0">
+            <BuildableReference BlueprintName="CommonMediaPipeFramework" ReferencedContainer="container:MediapipeiOSCommonLibrary.xcodeproj" BlueprintIdentifier="D807E501A117EDB400000000" BuildableIdentifier="primary" BuildableName="CommonMediaPipeFramework.framework"></BuildableReference>
+        </BuildableProductRunnable>
+    </TestAction>
+    <LaunchAction debugDocumentVersioning="YES" selectedLauncherIdentifier="Xcode.DebuggerFoundation.Launcher.LLDB" useCustomWorkingDirectory="NO" ignoresPersistentStateOnLaunch="NO" launchStyle="0" selectedDebuggerIdentifier="Xcode.DebuggerFoundation.Debugger.LLDB" debugServiceExtension="internal" allowLocationSimulation="YES" buildConfiguration="Debug" customLLDBInitFile="$(PROJECT_FILE_PATH)/.tulsi/Utils/lldbinit">
+        <EnvironmentVariables></EnvironmentVariables>
+        <BuildableProductRunnable runnableDebuggingMode="0">
+            <BuildableReference BlueprintIdentifier="D807E501A117EDB400000000" BuildableIdentifier="primary" BuildableName="CommonMediaPipeFramework.framework" BlueprintName="CommonMediaPipeFramework" ReferencedContainer="container:MediapipeiOSCommonLibrary.xcodeproj"></BuildableReference>
+        </BuildableProductRunnable>
+    </LaunchAction>
+    <ProfileAction shouldUseLaunchSchemeArgsEnv="YES" buildConfiguration="__TulsiTestRunner_Release" useCustomWorkingDirectory="NO" debugDocumentVersioning="YES">
+        <BuildableProductRunnable runnableDebuggingMode="0">
+            <BuildableReference BuildableIdentifier="primary" BuildableName="CommonMediaPipeFramework.framework" ReferencedContainer="container:MediapipeiOSCommonLibrary.xcodeproj" BlueprintName="CommonMediaPipeFramework" BlueprintIdentifier="D807E501A117EDB400000000"></BuildableReference>
+        </BuildableProductRunnable>
+    </ProfileAction>
+    <AnalyzeAction buildConfiguration="Debug"></AnalyzeAction>
+    <ArchiveAction buildConfiguration="Release" revealArchiveInOrganizer="YES"></ArchiveAction>
+</Scheme>

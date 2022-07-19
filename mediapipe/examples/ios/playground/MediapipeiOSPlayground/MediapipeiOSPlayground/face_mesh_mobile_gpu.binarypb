@@ -1,0 +1,8 @@
+
+`FlowLimiterCalculatorinput_videoFINISHED:output_video"throttled_input_videoj
+FINISHED
+€ConstantSidePacketCalculator2PACKET:with_attentionBI
+Atype.googleapis.com/mediapipe.ConstantSidePacketCalculatorOptions
+
+ƒFaceLandmarkFrontGpuIMAGE:throttled_input_video"LANDMARKS:multi_face_landmarks"-ROIS_FROM_LANDMARKS:face_rects_from_landmarks"DETECTIONS:face_detections"/ROIS_FROM_DETECTIONS:face_rects_from_detections*NUM_FACES:num_faces*WITH_ATTENTION:with_attention
+¤FaceRendererGpuIMAGE:throttled_input_videoLANDMARKS:multi_face_landmarks$NORM_RECTS:face_rects_from_landmarksDETECTIONS:face_detections"IMAGE:output_videoRinput_videozoutput_videozmulti_face_landmarks‚	num_faces

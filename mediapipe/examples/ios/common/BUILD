@@ -13,28 +13,61 @@
 # limitations under the License.
 
 licenses(["notice"])  # Apache 2.0
+load("@build_bazel_rules_apple//apple:ios.bzl", "ios_framework")
+
+ios_framework(
+    name = "CommonMediaPipeFramework",
+    hdrs = [
+        "CommonLibraryFactory.h",
+        "CommonViewController.h",
+    ],
+    infoplists = ["Info.plist"],
+    bundle_id = "com.ola.olarender.common",
+    families = ["iphone", "ipad"],
+    minimum_os_version = "11.0",
+    deps = [
+        ":CommonMediaPipeAppLibrary",
+        "@ios_opencv//:OpencvFramework",
+    ] + select({
+        "//mediapipe:ios_i386": [],
+        "//mediapipe:ios_x86_64": [],
+        "//conditions:default": [
+            "//mediapipe/graphs/face_mesh:mobile_calculators",
+            "//mediapipe/framework/formats:landmark_cc_proto",
+        ],
+    }),
+)
 
 objc_library(
     name = "CommonMediaPipeAppLibrary",
     srcs = [
-        "AppDelegate.mm",
+#        "AppDelegate.mm",
         "CommonViewController.mm",
-        "main.m",
+        "CommonLibraryFactory.mm",
+#        "main.m",
     ],
     hdrs = [
-        "AppDelegate.h",
+#        "AppDelegate.h",
         "CommonViewController.h",
+        "CommonLibraryFactory.h",
     ],
-    data = [
-        "Base.lproj/LaunchScreen.storyboard",
-        "Base.lproj/Main.storyboard",
-    ],
+#    data = [
+#        "Base.lproj/LaunchScreen.storyboard",
+#        "Base.lproj/Main.storyboard",
+#    ],
     sdk_frameworks = [
         "AVFoundation",
         "CoreGraphics",
         "CoreMedia",
         "UIKit",
     ],
+     copts = select({
+        "//mediapipe:apple": [
+            "-x objective-c++",
+            "-fobjc-arc",  # enable reference-counting
+        ],
+        "//conditions:default": [],
+    }),
     visibility = [
         "//mediapipe:__subpackages__",
     ],

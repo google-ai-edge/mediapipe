@@ -1,0 +1,12 @@
+{
+  "configDefaults" : {
+    "optionSet" : {
+
+    }
+  },
+  "packages" : [
+    "mediapipe/examples/ios/common"
+  ],
+  "projectName" : "MediapipeiOSCommonLibrary",
+  "workspaceRoot" : "../../../../.."
+}
