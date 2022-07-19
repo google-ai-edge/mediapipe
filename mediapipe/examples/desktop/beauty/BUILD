@@ -33,6 +33,14 @@ cc_binary(
 )
 
 cc_binary(
+    name = "beauty_mobile",
+    deps = [
+        "//mediapipe/examples/desktop:demo_run_graph_main",
+        "//mediapipe/graphs/beauty:mobile_calculators",
+    ],
+)
+
+cc_binary(
     name = "beauty_cpu_over",
     deps = [
         "//mediapipe/examples/desktop:demo_run_graph_main",
