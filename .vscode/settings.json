@@ -49,6 +49,19 @@
         "typeindex": "cpp",
         "typeinfo": "cpp",
         "utility": "cpp",
-        "variant": "cpp"
+        "variant": "cpp",
+        "gpuimagemacros.h": "c",
+        "math.hpp": "c",
+        "ref.hpp": "c",
+        "util.h": "c",
+        "math_utils.hpp": "c",
+        "condition_variable": "cpp",
+        "ctime": "cpp",
+        "mutex": "cpp",
+        "ratio": "cpp",
+        "semaphore": "cpp",
+        "stop_token": "cpp",
+        "thread": "cpp",
+        "target.hpp": "c"
     }
 }

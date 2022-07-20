@@ -19,7 +19,7 @@
 extern "C"
 JNIEXPORT jlong JNICALL
 Java_com_weatherfish_render_RenderJni_create(JNIEnv *env, jobject thiz) {
-    auto *render = OLARender::OlaRender::create();
+    auto *render = Opipe::OlaRender::create();
     return reinterpret_cast<int64_t>(render);
 }
 
@@ -27,8 +27,8 @@ extern "C"
 JNIEXPORT jint JNICALL
 Java_com_weatherfish_render_RenderJni_render(JNIEnv *env, jobject thiz, jlong render_context, jint texture_id,
                                              jint width, jint height, jlong timestamp, jboolean exportFlag) {
-    auto *render = reinterpret_cast<OLARender::OlaRender *>(render_context);
-    OLARender::TextureInfo info;
+    auto *render = reinterpret_cast<Opipe::OlaRender *>(render_context);
+    Opipe::TextureInfo info;
     info.textureId = texture_id;
     info.width = width;
     info.height = height;
@@ -40,6 +40,6 @@ Java_com_weatherfish_render_RenderJni_render(JNIEnv *env, jobject thiz, jlong re
 extern "C"
 JNIEXPORT void JNICALL
 Java_com_weatherfish_render_RenderJni_release(JNIEnv *env, jobject thiz, jlong renderId) {
-    auto *render = reinterpret_cast<OLARender::OlaRender *>(renderId);
+    auto *render = reinterpret_cast<Opipe::OlaRender *>(renderId);
     render->release();
 }

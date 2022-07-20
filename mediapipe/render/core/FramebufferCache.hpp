@@ -29,7 +29,7 @@
 #else
 #define useCVFramebuffer false
 #endif
-namespace QImage {
+namespace Opipe {
     
     class Context;
     class FramebufferCache {

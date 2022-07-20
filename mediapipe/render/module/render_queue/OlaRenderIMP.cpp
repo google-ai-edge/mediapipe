@@ -406,7 +406,7 @@ void OLARenderIMP::setCanvasPixels(int width, int height, const void *pixels, in
             glClear(GL_COLOR_BUFFER_BIT);
             glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_2D, _transformTexture);
-            Log("OLARender", "transformTexture :%d", _transformTexture);
+            Log("Opipe", "transformTexture :%d", _transformTexture);
             glUniform1i(_transformTextureSlot, 0);
             glUniformMatrix4fv(_transform_mvp, 1, GL_FALSE, (GLfloat * ) & _mvp_matrix);
 

@@ -20,9 +20,9 @@
 #define GPUImageMacros_h
 
 
-#define NS_GI_BEGIN                     namespace QImage {
+#define NS_GI_BEGIN                     namespace Opipe {
 #define NS_GI_END                       }
-#define USING_NS_GI                     using namespace QImage;
+#define USING_NS_GI                     using namespace Opipe;
 
 
 #define STRINGIZE(x) #x
@@ -53,7 +53,7 @@
             case GL_OUT_OF_MEMORY:      errorString = "GL_OUT_OF_MEMORY";       break; \
             default:                                                            break; \
             } \
-            QImage::Log("QuarameraGL", "GL ERROR 0x%04X %s in %s at line %i\n", e, \
+            Opipe::Log("QuarameraGL", "GL ERROR 0x%04X %s in %s at line %i\n", e, \
             errorString.c_str(), __PRETTY_FUNCTION__, __LINE__); \
             assert(0);\
         } \

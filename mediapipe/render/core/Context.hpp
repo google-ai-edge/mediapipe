@@ -53,7 +53,7 @@ public:
     void purge();
     void cleanupFramebuffers();
     
-    const GLfloat *textureCoordinatesForRotation(QImage::RotationMode rotationMode);
+    const GLfloat *textureCoordinatesForRotation(Opipe::RotationMode rotationMode);
     
     enum ContextType
     {

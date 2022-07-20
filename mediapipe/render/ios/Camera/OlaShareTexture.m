@@ -3,7 +3,7 @@
 //  OlaCameraFramework
 //
 //  Created by wangrenzhu on 2021/1/21.
-//  Copyright © 2021 alibaba. All rights reserved.
+//  Copyright © 2021 ola. All rights reserved.
 //
 
 #import "OlaShareTexture.h"

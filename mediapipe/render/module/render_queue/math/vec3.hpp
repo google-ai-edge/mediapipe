@@ -1,6 +1,6 @@
 //
 //  vec3.h
-//  OLARender
+//  Opipe
 //
 //  Created by Wang,Renzhu on 2018/11/20.
 //  Copyright © 2018年 Wang,Renzhu. All rights reserved.
@@ -9,7 +9,7 @@
 #ifndef VEC3_H
 #define VEC3_H
 
-namespace OLARender {
+namespace Opipe {
     
     class Vec3
     {

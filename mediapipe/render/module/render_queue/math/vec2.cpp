@@ -1,6 +1,6 @@
 //
 //  vec2.cpp
-//  OLARender
+//  Opipe
 //
 //  Created by Wang,Renzhu on 2018/11/20.
 //  Copyright © 2018年 Wang,Renzhu. All rights reserved.
@@ -13,7 +13,7 @@
 #include "vec2.hpp"
 #include "math_utils.hpp"
 #endif
-namespace OLARender {
+namespace Opipe {
     
     float Vec2::angle(const Vec2& v1, const Vec2& v2)
     {

@@ -86,9 +86,6 @@ void Target::unPrepear() {
          it != _inputFramebuffers.end(); ++it) {
         if (!it->second.ignoreForPrepare) {
             if (it->second.frameBuffer && !it->second.frameBuffer->isDealloc) {
-                Log("Target", "%s 渲染完毕 准备Unlock InputFramebuffers:%s",
-                    typeid(*this).name(),
-                    it->second.frameBuffer->_hashCode.c_str());
                 it->second.frameBuffer->unlock(typeid(*this).name());
                 it->second.frameBuffer = 0;
             }

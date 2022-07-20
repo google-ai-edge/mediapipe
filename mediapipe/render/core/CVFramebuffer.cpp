@@ -21,7 +21,7 @@ CVFramebuffer::CVFramebuffer(Context *context,
                              int width,
                              int height,
                              const TextureAttributes textureAttributes,
-                             GLuint textureId) : QImage::Framebuffer()
+                             GLuint textureId) : Opipe::Framebuffer()
 {
     _context = context;
     useTextureCache = true;
@@ -37,7 +37,7 @@ CVFramebuffer::CVFramebuffer(Context *context,
                              int width,
                              int height,
                              bool onlyGenerateTexture/* = false*/,
-                             const TextureAttributes textureAttributes) : QImage::Framebuffer()
+                             const TextureAttributes textureAttributes) : Opipe::Framebuffer()
 {
     _context = context;
     useTextureCache = true;
@@ -57,7 +57,7 @@ CVFramebuffer::CVFramebuffer(Context *context,
 CVFramebuffer::CVFramebuffer(Context *context,
                              int width, int height,
                              GLuint handle, IOSurfaceID surfaceID,
-                             const TextureAttributes textureAttributes) : QImage::Framebuffer() {
+                             const TextureAttributes textureAttributes) : Opipe::Framebuffer() {
     _context = context;
     useTextureCache = true;
     _width = width;
@@ -352,7 +352,7 @@ void CVFramebuffer::_bindFramebuffer() {
     
     CHECK_GL(glBindTexture(GL_TEXTURE_2D, 0));
     CHECK_GL(glBindFramebuffer(GL_FRAMEBUFFER, 0));
-    //    QImage::Log("Quaramera", "_generateFramebuffer %d ", _framebuffer);
+    //    Opipe::Log("Quaramera", "_generateFramebuffer %d ", _framebuffer);
     assert(_framebuffer < 100);
 }
 

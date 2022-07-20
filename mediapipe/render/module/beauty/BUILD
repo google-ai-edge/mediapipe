@@ -1,7 +1,6 @@
 package(default_visibility = ["//visibility:public"])
 cc_library(
     name = "FaceMeshGPULibrary",
-    copts = ["-std=c++17"],
     srcs = [
         "face_mesh_module.cc",
         "face_mesh_beauty_render.cc",
@@ -35,6 +34,6 @@ cc_library(
             "-x objective-c++",
             "-fobjc-arc",  # enable reference-counting
         ],
-        "//conditions:default": [],
+        "//conditions:default": ["-std=c++17"],
     }),
 )

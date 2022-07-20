@@ -12,7 +12,7 @@ NS_OLA_BEGIN
     std::string str_format(const char *fmt,...);
     void Log(const std::string& tag, const std::string& format, ...);
 
-#define rotationSwapsSize(rotation) ((rotation) == OLARender::RotateLeft || (rotation) == OLARender::RotateRight || (rotation) == OLARender::RotateRightFlipVertical || (rotation) == OLARender::RotateRightFlipHorizontal)
+#define rotationSwapsSize(rotation) ((rotation) == Opipe::RotateLeft || (rotation) == Opipe::RotateRight || (rotation) == Opipe::RotateRightFlipVertical || (rotation) == Opipe::RotateRightFlipHorizontal)
 
 NS_OLA_END
 

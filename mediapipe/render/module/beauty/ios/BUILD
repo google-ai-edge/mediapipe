@@ -19,7 +19,6 @@ objc_library(
     srcs = ["OlaFaceUnity.mm"],
     visibility = ["//visibility:public"],
     deps = [
-         "//mediapipe/render/core:core-ios",
          "//mediapipe/render/module/beauty:FaceMeshGPULibrary",
          "@ios_opencv//:OpencvFramework",
     ],

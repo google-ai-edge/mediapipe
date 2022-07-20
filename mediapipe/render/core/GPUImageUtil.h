@@ -22,12 +22,12 @@
 #include <stdlib.h>
 #include <string>
 
-namespace QImage {
+namespace Opipe {
 
     std::string str_format(const char *fmt,...);
     void Log(const std::string& tag, const std::string& format, ...);
     void LogE(const std::string& tag, const std::string& format, ...);
-#define rotationSwapsSize(rotation) ((rotation) == QImage::RotateLeft || (rotation) == QImage::RotateRight || (rotation) == QImage::RotateRightFlipVertical || (rotation) == QImage::RotateRightFlipHorizontal)
+#define rotationSwapsSize(rotation) ((rotation) == Opipe::RotateLeft || (rotation) == Opipe::RotateRight || (rotation) == Opipe::RotateRightFlipVertical || (rotation) == Opipe::RotateRightFlipHorizontal)
 
 };
 

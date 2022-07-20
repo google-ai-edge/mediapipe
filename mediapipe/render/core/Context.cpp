@@ -344,7 +344,7 @@ void Context::EAGLContext::useAsCurrent()
 
 #endif
 
-const GLfloat * Context::textureCoordinatesForRotation(QImage::RotationMode rotationMode)
+const GLfloat * Context::textureCoordinatesForRotation(Opipe::RotationMode rotationMode)
 {
     static const GLfloat noRotationTextureCoordinates[] = {
             0.0f, 0.0f,

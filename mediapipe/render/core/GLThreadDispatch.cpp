@@ -2,15 +2,11 @@
 // Created by  jormin on 2021/6/23.
 //
 
-#if defined(__APPLE__)
 #include "GLThreadDispatch.h"
-#else
-#include "QStream/Dispatcher/GLThreadDispatch.h"
-#endif
 #include <assert.h>
 
 
-using namespace QStream;
+using namespace Opipe;
 
 
 GLThreadDispatch::GLThreadDispatch(std::thread::id glThreadId, DispatchAsyncFunction dispatchAsyncFunction) : _glThreadId(glThreadId), _dispatchAsync(dispatchAsyncFunction) {

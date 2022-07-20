@@ -21,7 +21,7 @@
 #include "Context.hpp"
 #include "GPUImageUtil.h"
 
-namespace QImage {
+namespace Opipe {
     
     //std::vector<GLProgram*> GLProgram::_context->_programs;
     
@@ -89,8 +89,8 @@ namespace QImage {
                         } else if (shaderType == GL_VERTEX_SHADER) {
                             shaderTypeStr = std::string("GL_VERTEX_SHADER");
                         }
-                        QImage::LogE("GPUImage-x", "LoadShader Could not compile shader type : %s \n because of %s", shaderTypeStr.c_str(), buf);
-                        QImage::Log("GPUImage-x", "\n%s\n", pSource);
+                        Opipe::LogE("GPUImage-x", "LoadShader Could not compile shader type : %s \n because of %s", shaderTypeStr.c_str(), buf);
+                        Opipe::Log("GPUImage-x", "\n%s\n", pSource);
                         free(buf);
                     }
                     CHECK_GL(glDeleteShader(shader));
@@ -132,7 +132,7 @@ namespace QImage {
                 char *buf = (char *) malloc((size_t) bufLength);
                 if (buf) {
                     CHECK_GL(glGetProgramInfoLog(_program, bufLength, NULL, buf));
-                    QImage::LogE("GPUImage-x", "compile gl program error %s", buf);
+                    Opipe::LogE("GPUImage-x", "compile gl program error %s", buf);
                     free(buf);
                 }
             }

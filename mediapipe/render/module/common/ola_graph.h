@@ -29,17 +29,21 @@ namespace Opipe
     class MPPGraphDelegate
     {
     public:
+
+        MPPGraphDelegate() {};
+
+        ~MPPGraphDelegate() {};
 #if defined(__APPLE__)
         virtual void outputPixelbuffer(OlaGraph *graph, CVPixelBufferRef pixelbuffer,
                                        const std::string &streamName,
-                                       int64_t timstamp);
+                                       int64_t timstamp) = 0;
 
 #endif
 
         virtual void outputPacket(OlaGraph *graph,
                                   const mediapipe::Packet &packet,
                                   MPPPacketType packetType,
-                                  const std::string &streamName);
+                                  const std::string &streamName) = 0;
     };
 
     class OlaGraph

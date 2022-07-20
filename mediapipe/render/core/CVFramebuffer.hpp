@@ -16,10 +16,10 @@
 #include "Ref.hpp"
 #include "Framebuffer.hpp"
 
-namespace QImage {
+namespace Opipe {
     
     
-    class CVFramebuffer : public QImage::Framebuffer {
+    class CVFramebuffer : public Opipe::Framebuffer {
     public:
         
         CVFramebuffer(Context *context, int width, int height,

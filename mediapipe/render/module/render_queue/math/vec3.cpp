@@ -1,6 +1,6 @@
 //
 //  vec3.cpp
-//  OLARender
+//  Opipe
 //
 //  Created by Wang,Renzhu on 2018/11/20.
 //  Copyright © 2018年 Wang,Renzhu. All rights reserved.
@@ -14,7 +14,7 @@
 #include "math_utils.hpp"
 #endif
 
-namespace OLARender {
+namespace Opipe {
     
     Vec3::Vec3() : x(0.0f), y(0.0f), z(0.0f) {
     }

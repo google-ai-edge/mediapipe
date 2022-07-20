@@ -120,7 +120,10 @@ OLARENDER_SRCS = [
     "IOSTarget.cpp",
     "SourceCamera.cpp",
     "TargetView.cpp",
-    "FilterGroup.cpp"
+    "FilterGroup.cpp",
+    "dispatch_queue.cpp",
+    "GLThreadDispatch.cpp",
+    "OpipeDispatch.cpp",
 ]
 
 OLARENDER_HDRS = [
@@ -139,6 +142,9 @@ OLARENDER_HDRS = [
     "SourceCamera.hpp",
     "TargetView.hpp",
     "FilterGroup.hpp",
+    "dispatch_queue.h",
+    "GLThreadDispatch.h",
+    "OpipeDispatch.hpp",
 ]
 
 

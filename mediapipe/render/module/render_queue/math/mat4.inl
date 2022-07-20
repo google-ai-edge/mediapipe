@@ -8,7 +8,7 @@
 
 #include "mat4.hpp"
 
-namespace OLARender {
+namespace Opipe {
     
     inline Mat4 Mat4::operator+(const Mat4& mat) const
     {

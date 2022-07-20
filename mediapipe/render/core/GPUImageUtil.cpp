@@ -21,7 +21,7 @@
 
 
 
-namespace QImage {
+namespace Opipe {
 
 
     __attribute__((no_sanitize("address", "memory")))

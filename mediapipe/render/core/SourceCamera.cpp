@@ -81,7 +81,7 @@ void SourceCamera::setIORenderTexture(IOSurfaceID surfaceID,
                                       GLuint texture,
                                       int width,
                                       int height,
-                                      QImage::RotationMode outputRotation,
+                                      Opipe::RotationMode outputRotation,
                                       SourceType sourceType,
                                       TextureAttributes textureAttributes) {
     //纹理发生变化，使用新的framebuffer

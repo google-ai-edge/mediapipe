@@ -27,7 +27,7 @@
 #define useCVPB defined(__APPLE__)
 
 
-namespace QImage {
+namespace Opipe {
     TextureAttributes Framebuffer::defaultTextureAttribures =
     {
     .minFilter = GL_LINEAR,
@@ -88,7 +88,7 @@ namespace QImage {
         if (isDealloc) {
             return;
         }
-        QImage::Log("Framebuffer", "delete Framebuffer(%d,%d) ", _width, _height);
+        Opipe::Log("Framebuffer", "delete Framebuffer(%d,%d) ", _width, _height);
         bool bDeleteTex = (_texture != -1);
         bool bDeleteFB = (_framebuffer != -1);
         
@@ -229,7 +229,7 @@ namespace QImage {
         
         CHECK_GL(glBindTexture(GL_TEXTURE_2D, 0));
         CHECK_GL(glBindFramebuffer(GL_FRAMEBUFFER, 0));
-//        QImage::Log("QuarameraGL", "_generateFramebuffer %d ", _framebuffer);
+//        Opipe::Log("QuarameraGL", "_generateFramebuffer %d ", _framebuffer);
     }
     
     Context *Framebuffer::getContext() {

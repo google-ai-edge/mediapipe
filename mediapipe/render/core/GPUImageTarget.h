@@ -24,7 +24,7 @@
 
 @required
 - (void)update:(float)frameTime;
-- (void)setInputFramebuffer:(QImage::Framebuffer*)inputFramebuffer withRotation:(QImage::RotationMode)rotationMode atIndex:(NSInteger)texIdx;
+- (void)setInputFramebuffer:(Opipe::Framebuffer*)inputFramebuffer withRotation:(Opipe::RotationMode)rotationMode atIndex:(NSInteger)texIdx;
 @optional
 - (bool)isPrepared;
 - (void)unPrepared;

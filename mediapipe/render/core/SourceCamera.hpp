@@ -46,17 +46,17 @@ public:
     virtual void setRenderTexture(GLuint texture,
                                   int width,
                                   int height,
-                                  QImage::RotationMode outputRotation = QImage::RotationMode::NoRotation,
+                                  Opipe::RotationMode outputRotation = Opipe::RotationMode::NoRotation,
                                   SourceType sourceType = SourceType_RGBA,
-                                  const QImage::TextureAttributes textureAttributes = QImage::Framebuffer::defaultTextureAttribures);
+                                  const Opipe::TextureAttributes textureAttributes = Opipe::Framebuffer::defaultTextureAttribures);
 #if defined(__APPLE__)
     virtual void setIORenderTexture(IOSurfaceID surfaceID,
                                     GLuint texture,
                                     int width,
                                     int height,
-                                    QImage::RotationMode outputRotation = QImage::RotationMode::NoRotation,
+                                    Opipe::RotationMode outputRotation = Opipe::RotationMode::NoRotation,
                                     SourceType sourceType = SourceType_RGBA,
-                                    const QImage::TextureAttributes textureAttributes = QImage::Framebuffer::defaultTextureAttribures);
+                                    const Opipe::TextureAttributes textureAttributes = Opipe::Framebuffer::defaultTextureAttribures);
 #endif
 
     

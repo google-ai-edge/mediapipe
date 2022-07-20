@@ -1,6 +1,6 @@
 //
 //  Mat4.cpp
-//  OLARender
+//  Opipe
 //
 //  Created by Wang,Renzhu on 2018/11/20.
 //  Copyright © 2018年 Wang,Renzhu. All rights reserved.
@@ -15,7 +15,7 @@
 #endif
 #include <cstring>
 
-namespace OLARender {
+namespace Opipe {
     
     static const int MATRIX_SIZE = (sizeof(float) * 16);
     

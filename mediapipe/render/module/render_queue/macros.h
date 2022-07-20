@@ -17,9 +17,9 @@
 #define PLATFORM PLATFORM_IOS
 #endif
 
-#define NS_OLA_BEGIN                     namespace OLARender {
+#define NS_OLA_BEGIN                     namespace Opipe {
 #define NS_OLA_END                       }
-#define USING_NS_OLA                     using namespace OLARender;
+#define USING_NS_OLA                     using namespace Opipe;
 
 
 #define STRINGIZE(x) #x
@@ -47,7 +47,7 @@
             case GL_OUT_OF_MEMORY:      errorString = "GL_OUT_OF_MEMORY";       break; \
             default:                                                            break; \
             } \
-            OLARender::Log("ERROR", "GL ERROR 0x%04X %s in %s at line %i\n", e, \
+            Opipe::Log("ERROR", "GL ERROR 0x%04X %s in %s at line %i\n", e, \
             errorString.c_str(), __PRETTY_FUNCTION__, __LINE__); \
             assert(0);\
         } \
