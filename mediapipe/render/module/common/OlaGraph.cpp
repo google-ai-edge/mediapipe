@@ -32,8 +32,8 @@ OlaGraph::~OlaGraph() {
     
 }
 
-mediapipe::ProfilingContext OlaGraph::getProfiler() {
-    return _graph->getProfiler();
+mediapipe::ProfilingContext* OlaGraph::getProfiler() {
+    return _graph->profiler();
 }
 
 void OlaGraph::setHeaderPacket(const mediapipe::Packet &packet, std::string streamName) {
@@ -45,29 +45,61 @@ void OlaGraph::setSidePacket(const mediapipe::Packet &packet, std::string name) 
 }
 
 void OlaGraph::setServicePacket(mediapipe::Packet &packet,const mediapipe::GraphServiceBase &service) {
-    
+    _servicePackets[&service] = std::move(packet);
 }
 
 void OlaGraph::addSidePackets(const std::map<std::string, mediapipe::Packet> &extraSidePackets) {
-    
+    _inputSidePackets.insert(extraSidePackets.begin(), extraSidePackets.end());
 }
 
 void OlaGraph::addFrameOutputStream(const std::string &outputStreamName,
                                     MPPPacketType packetType) {
-    
+    std::string callbackInputName;
+      mediapipe::tool::AddCallbackCalculator(outputStreamName, &_config, &callbackInputName,
+                                           /*use_std_function=*/true);
+      // No matter what ownership qualifiers are put on the pointer, NewPermanentCallback will
+      // still end up with a strong pointer to MPPGraph*. That is why we use void* instead.
+    void* wrapperVoid = this;
+    _inputSidePackets[callbackInputName] =
+    mediapipe::MakePacket<std::function<void(const mediapipe::Packet&)>>( [wrapperVoid, outputStreamName, packetType]
+                                                                         (const mediapipe::Packet& packet) {
+                                                                             CallFrameDelegate(wrapperVoid, outputStreamName, packetType, packet);
+                                                                         });
 }
 
 bool OlaGraph::start() {
+    absl::Status status = performStart();
+    _started = true;
     return false;
+}
+
+absl::Status OlaGraph::performStart() {
+  absl::Status status = _graph->Initialize(_config);
+  if (!status.ok()) {
+    return status;
+  }
+  for (const auto& service_packet : _servicePackets) {
+    status = _graph->SetServicePacket(*service_packet.first, service_packet.second);
+    if (!status.ok()) {
+      return status;
+    }
+  }
+  status = _graph->StartRun(_inputSidePackets, _streamHeaders);
+  if (!status.ok()) {
+    return status;
+  }
+  return status;
 }
 
 bool OlaGraph::sendPacket(const mediapipe::Packet &packet,
                           const std::string &streamName) {
-    return false;
+    absl::Status status = _graph->AddPacketToInputStream(streamName, packet);
+    return status.ok();
 }
 
 bool OlaGraph::movePacket(mediapipe::Packet &&packet, const std::string &streamName) {
-    return false;
+    absl::Status status = _graph->AddPacketToInputStream(streamName, std::move(packet));
+    return status.ok();
 }
 
 /// Sets the maximum queue size for a stream. Experimental feature, currently
@@ -75,21 +107,45 @@ bool OlaGraph::movePacket(mediapipe::Packet &&packet, const std::string &streamN
 /// graph.
 bool OlaGraph::setMaxQueueSize(int maxQueueSize,
                                const std::string &streamName) {
-    
+    absl::Status status = _graph->SetInputStreamMaxQueueSize(streamName, maxQueueSize);
+    return status.ok();
 }
 
 #if defined(__APPLE__)
 /// Creates a MediaPipe packet wrapping the given pixelBuffer;
 mediapipe::Packet OlaGraph::packetWithPixelBuffer(CVPixelBufferRef pixelBuffer,
                                                   MPPPacketType packetType) {
-    return 0;
+    mediapipe::Packet packet;
+      if (packetType == MPPPacketTypeImageFrame || packetType == MPPPacketTypeImageFrameBGRANoSwap) {
+        auto frame = CreateImageFrameForCVPixelBuffer(
+                                                      pixelBuffer, /* canOverwrite = */ false,
+            /* bgrAsRgb = */ packetType == MPPPacketTypeImageFrameBGRANoSwap);
+        packet = mediapipe::Adopt(frame.release());
+    #if MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
+      } else if (packetType == MPPPacketTypePixelBuffer) {
+        packet = mediapipe::MakePacket<mediapipe::GpuBuffer>(pixelBuffer);
+    #endif  // MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
+      } else if (packetType == MPPPacketTypeImage) {
+    #if MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
+        // GPU
+        packet = mediapipe::MakePacket<mediapipe::Image>(pixelBuffer);
+    #else
+        // CPU
+        auto frame = CreateImageFrameForCVPixelBuffer(imageBuffer, /* canOverwrite = */ false,
+                                                      /* bgrAsRgb = */ false);
+        packet = mediapipe::MakePacket<mediapipe::Image>(std::move(frame));
+    #endif  // MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
+      } else {
+        assert(false);
+      }
+      return packet;
 }
 
 
 
 /// Creates a MediaPipe packet of type Image, wrapping the given CVPixelBufferRef.
 mediapipe::Packet OlaGraph::imagePacketWithPixelBuffer(CVPixelBufferRef pixelBuffer) {
-    return 0;
+    return packetWithPixelBuffer(pixelBuffer, MPPPacketTypeImage);
 }
 
 /// Sends a pixel buffer into a graph input stream, using the specified packet
@@ -102,7 +158,17 @@ bool OlaGraph::sendPixelBuffer(CVPixelBufferRef imageBuffer,
                                MPPPacketType packetType,
                                const mediapipe::Timestamp &timestamp,
                                bool allowOverwrite) {
-    return false;
+    if (_maxFramesInFlight && _framesInFlight >= _maxFramesInFlight) return false;
+    mediapipe::Packet packet = packetWithPixelBuffer(imageBuffer, packetType);
+    bool success;
+    if (allowOverwrite) {
+        packet = std::move(packet).At(timestamp);
+        success = movePacket(std::move(packet), inputName);
+    } else {
+        success = sendPacket(packet.At(timestamp), inputName);
+    }
+    if (success) _framesInFlight++;
+    return success;
 }
 
 /// Sends a pixel buffer into a graph input stream, using the specified packet
@@ -113,7 +179,7 @@ bool OlaGraph::sendPixelBuffer(CVPixelBufferRef imageBuffer,
                                const std::string & inputName,
                                MPPPacketType packetType,
                                const mediapipe::Timestamp &timestamp) {
-    return false;
+    return sendPixelBuffer(imageBuffer, inputName, packetType, timestamp, false);
 }
 
 /// Sends a pixel buffer into a graph input stream, using the specified packet
@@ -124,32 +190,39 @@ bool OlaGraph::sendPixelBuffer(CVPixelBufferRef imageBuffer,
 bool OlaGraph::sendPixelBuffer(CVPixelBufferRef imageBuffer,
                                const std::string & inputName,
                                MPPPacketType packetType) {
-    return false;
+    if (_frameTimestamp < mediapipe::Timestamp::Min()) {
+        _frameTimestamp = mediapipe::Timestamp::Min();
+    } else {
+        _frameTimestamp++;
+    }
+    return sendPixelBuffer(imageBuffer, inputName, packetType, _frameTimestamp);
 }
 
 #endif
 
 /// Cancels a graph run. You must still call waitUntilDoneWithError: after this.
 void OlaGraph::cancel() {
-    
+    _graph->Cancel();
 }
 
 /// Check if the graph contains this input stream
 bool OlaGraph::hasInputStream(const std::string &inputName) {
-    return false;
+    return _graph->HasInputStream(inputName);
 }
 
 /// Closes an input stream.
 /// You must close all graph input streams before stopping the graph.
 /// @return YES if successful.
 bool OlaGraph::closeInputStream(const std::string &inputName) {
-    return false;
+    absl::Status status = _graph->CloseInputStream(inputName);
+    return status.ok();
 }
 
 /// Closes all graph input streams.
 /// @return YES if successful.
 bool OlaGraph::closeAllInputStreams() {
-    return false;
+    absl::Status status = _graph->CloseAllInputStreams();
+      return status.ok();
 }
 
 /// Stops running the graph.
@@ -158,12 +231,15 @@ bool OlaGraph::closeAllInputStreams() {
 /// thread.
 /// @return YES if successful.
 bool OlaGraph::waitUntilDone() {
-    return false;
+    absl::Status status = _graph->WaitUntilDone();
+    _started = false;
+    return status.ok();
 }
 
 /// Waits for the graph to become idle.
 bool OlaGraph::waitUntilIdle() {
-    return false;
+    absl::Status status = _graph->WaitUntilIdle();
+    return status.ok();
 }
 
 

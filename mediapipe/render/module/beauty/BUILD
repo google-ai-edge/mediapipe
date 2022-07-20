@@ -2,7 +2,7 @@ cc_library(
     name = "FaceMeshGPULibrary",
     copts = ["-std=c++17"],
     srcs = [
-        "face_mesh_module.hpp",
+        "face_mesh_module.h",
     
     ],
     hdrs = ["face_mesh_module.cpp"],
@@ -14,6 +14,7 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         "//mediapipe/render/module/common:olamodule_common_library",
+        "//mediapipe/render/core:core",
     ] + select({
         "//mediapipe:ios_i386": [],
         "//mediapipe:ios_x86_64": [],

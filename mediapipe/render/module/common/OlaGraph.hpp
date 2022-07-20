@@ -58,7 +58,7 @@ public:
         _delegate = delegate;
     }
     
-    mediapipe::ProfilingContext *getProfiler();
+    mediapipe::ProfilingContext* getProfiler();
     
     int maxFramesInFlight;
     
@@ -161,13 +161,15 @@ public:
     bool waitUntilIdle();
     
     
+    
+    
 private:
     std::unique_ptr<mediapipe::CalculatorGraph> _graph;
     mediapipe::CalculatorGraphConfig _config;
     /// Input side packets that will be added to the graph when it is started.
     std::map<std::string, mediapipe::Packet> _inputSidePackets;
     /// Packet headers that will be added to the graph when it is started.
-    std::map<s td::string, mediapipe::Packet> _streamHeaders;
+    std::map<std::string, mediapipe::Packet> _streamHeaders;
     /// Service packets to be added to the graph when it is started.
     std::map<const mediapipe::GraphServiceBase*, mediapipe::Packet> _servicePackets;
     
@@ -181,6 +183,10 @@ private:
     bool _started;
     
     std::weak_ptr<MPPGraphDelegate> _delegate;
+    
+    absl::Status performStart();
+    
+    int _maxFramesInFlight = 0;
 };
 
 }

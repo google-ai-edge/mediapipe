@@ -102,6 +102,24 @@ cc_library(
         "OlaRender.h",
         "OlaRenderIMP.h",
         ],
+    linkopts = select({
+        "//conditions:default": [
+            "-lGLESv2",
+            "-lEGL",
+        ],
+        "//mediapipe:android": [
+            "-lGLESv2",
+            "-lEGL",
+        ],
+        "//mediapipe:ios": [
+            "-framework OpenGLES",
+            "-framework CoreVideo",
+        ],
+        "//mediapipe:macos": [
+            "-framework OpenGL",
+            "-framework CoreVideo",
+        ],
+    }),
     # Use -Dverbose=-1 to turn off zlib's trace logging. (#3280)
     # linkstatic = True,
     # linkopts = GL_BASE_LINK_OPTS_OSS,
