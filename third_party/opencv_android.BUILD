@@ -5,7 +5,7 @@ licenses(["notice"])  # BSD license
 
 exports_files(["LICENSE"])
 
-OPENCV_LIBRARY_NAME = "libopencv_java4.so"
+OPENCV_LIBRARY_NAME = "libopencv_java3.so"
 
 OPENCVANDROIDSDK_NATIVELIBS_PATH = "sdk/native/libs/"
 
