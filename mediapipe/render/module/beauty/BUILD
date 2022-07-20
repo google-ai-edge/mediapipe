@@ -1,11 +1,18 @@
+package(default_visibility = ["//visibility:public"])
 cc_library(
     name = "FaceMeshGPULibrary",
     copts = ["-std=c++17"],
     srcs = [
-        "face_mesh_module.h",
+        "face_mesh_module.cc",
+        "face_mesh_beauty_render.cc",
+        "face_mesh_module_imp.cc",
     
     ],
-    hdrs = ["face_mesh_module.cpp"],
+    hdrs = [
+        "face_mesh_module.h",
+        "face_mesh_beauty_render.h",
+        "face_mesh_module_imp.h",
+    ],
     data = [
         "//mediapipe/graphs/face_mesh:face_mesh_mobile_gpu.binarypb",
         "//mediapipe/modules/face_detection:face_detection_short_range.tflite",
@@ -22,5 +29,12 @@ cc_library(
             "//mediapipe/graphs/face_mesh:mobile_calculators",
             "//mediapipe/framework/formats:landmark_cc_proto",
         ],
+    }),
+    copts = select({
+        "//mediapipe:apple": [
+            "-x objective-c++",
+            "-fobjc-arc",  # enable reference-counting
+        ],
+        "//conditions:default": [],
     }),
 )

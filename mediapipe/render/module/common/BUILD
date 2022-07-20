@@ -2,8 +2,8 @@ load("//mediapipe/framework/tool:mediapipe_graph.bzl", "mediapipe_binary_graph")
 package(default_visibility = ["//visibility:private"])
 cc_library(
     name = "olamodule_common_library",
-    srcs = ["OlaGraph.cpp"],
-    hdrs = ["OlaGraph.hpp"],
+    srcs = ["ola_graph.cc"],
+    hdrs = ["ola_graph.h"],
     visibility = ["//mediapipe/framework:mediapipe_internal"],
     deps = [
         "//mediapipe/framework:calculator_framework",

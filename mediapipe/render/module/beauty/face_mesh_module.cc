@@ -1,4 +1,5 @@
-#include "face_mesh_module.h"
+#include "face_mesh_module_imp.h"
+
 
 namespace Opipe {
     FaceMeshModule::FaceMeshModule() {
