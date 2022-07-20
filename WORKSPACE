@@ -35,8 +35,8 @@ http_archive(
 
 http_archive(
     name = "rules_cc",
-    strip_prefix = "rules_cc-8bb0eb5c5ccd96b91753bb112096bb6993d16d13",
-    urls = ["https://github.com/bazelbuild/rules_cc/archive/8bb0eb5.zip"],
+    strip_prefix = "rules_cc-main",
+    urls = ["https://github.com/bazelbuild/rules_cc/archive/main.zip"],
 )
 
 http_archive(
@@ -190,7 +190,7 @@ http_archive(
 new_local_repository(
     name = "linux_opencv",
     build_file = "@//third_party:opencv_linux.BUILD",
-    path = "/usr/local",
+    path = "/usr",
 )
 
 new_local_repository(
@@ -225,7 +225,6 @@ http_archive(
     build_file = "@//third_party:opencv_android.BUILD",
     strip_prefix = "OpenCV-android-sdk",
     type = "zip",
-   # url = "https://github.com/opencv/opencv/releases/download/3.4.10/opencv-3.4.10-#android-sdk.zip",
     url = "https://github.com/opencv/opencv/releases/download/4.0.1/opencv-4.0.1-android-sdk.zip"
     )
 
@@ -417,5 +416,3 @@ libedgetpu_dependencies()
 
 load("@coral_crosstool//:configure.bzl", "cc_crosstool")
 cc_crosstool(name = "crosstool")
-android_sdk_repository(name = "androidsdk", build_tools_version = "30.0.1")
-android_ndk_repository(name = "androidndk", api_level=21)
