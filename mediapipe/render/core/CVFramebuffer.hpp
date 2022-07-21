@@ -7,7 +7,7 @@
 
 #ifndef CVFramebuffer_hpp
 #define CVFramebuffer_hpp
-
+#if defined(__APPLE__)
 #include <stdio.h>
 #include <OpenGLES/ES3/gl.h>
 #include <OpenGLES/ES3/glext.h>
@@ -56,5 +56,5 @@ namespace Opipe {
     
 }
 
-
+#endif
 #endif /* CVFramebuffer_hpp */

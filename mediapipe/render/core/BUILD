@@ -118,6 +118,7 @@ OLARENDER_SRCS = [
     "Source.cpp",
     "SourceImage.cpp",
     "IOSTarget.cpp",
+    "CVFramebuffer.cpp",
     "SourceCamera.cpp",
     "TargetView.cpp",
     "FilterGroup.cpp",

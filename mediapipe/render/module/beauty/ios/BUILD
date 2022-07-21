@@ -29,6 +29,7 @@ objc_library(
         ],
         "//conditions:default": [],
     }),
+    alwayslink = True,
     sdk_frameworks = [
         "AVFoundation",
         "CoreGraphics",
@@ -41,5 +42,7 @@ objc_library(
         "CoreVideo",
         "IOSurface",
         "Foundation",
+        "AssetsLibrary",
+        "QuartzCore",
     ],
 )

@@ -5,7 +5,6 @@ cc_library(
         "face_mesh_module.cc",
         "face_mesh_beauty_render.cc",
         "face_mesh_module_imp.cc",
-    
     ],
     hdrs = [
         "face_mesh_module.h",
@@ -20,11 +19,15 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         "//mediapipe/render/module/common:olamodule_common_library",
-        "//mediapipe/render/core:core",
+        
     ] + select({
         "//mediapipe:ios_i386": [],
         "//mediapipe:ios_x86_64": [],
+        "//mediapipe:apple": [
+            "//mediapipe/render/core:core-ios",
+         ],
         "//conditions:default": [
+            # "//mediapipe/render/core:core",
             "//mediapipe/graphs/face_mesh:mobile_calculators",
             "//mediapipe/framework/formats:landmark_cc_proto",
         ],

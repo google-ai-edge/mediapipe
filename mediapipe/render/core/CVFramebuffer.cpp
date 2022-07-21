@@ -4,6 +4,7 @@
 //
 //  Created by wangrenzhu on 2021/4/30.
 //
+#if defined(__APPLE__)
 #include "CVFramebuffer.hpp"
 #include <assert.h>
 #include <algorithm>
@@ -358,3 +359,4 @@ void CVFramebuffer::_bindFramebuffer() {
 
 
 NS_GI_END
+#endif

@@ -3,5 +3,4 @@
 platform settings -w "/Users/wangrenzhu/Documents/github/mediapipe-render/"
 # This enables implicitly loading Clang modules which can be disabled when a Swift module was built with explicit modules enabled.
 settings set -- target.swift-extra-clang-flags "-fimplicit-module-maps"
-# This maps the normalized root to that used by 'OlaFaceUnity.xcodeproj'.
-settings set target.source-map "./" "/Users/wangrenzhu/Documents/github/mediapipe-render/"
+settings clear target.source-map
