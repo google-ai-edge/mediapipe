@@ -13,7 +13,6 @@
 // limitations under the License.
 
 #include <vector>
-#include <chrono>
 #include <iostream>
 
 #include "absl/strings/str_format.h"
@@ -66,9 +65,6 @@ namespace
     NUM_ATTRIBUTES
   };
 
-  std::chrono::steady_clock::time_point begin;
-
-std::chrono::steady_clock::time_point end;
   // Commonly used to compute the number of blocks to launch in a kernel.
   int NumGroups(const int size, const int group_size)
   { // NOLINT
@@ -236,7 +232,7 @@ namespace mediapipe
   {
     cc->SetOffset(TimestampDiff(0));
     bool use_gpu = false;
-    begin = std::chrono::steady_clock::now();
+
     if (CanUseGpu())
     {
 #if !MEDIAPIPE_DISABLE_GPU
@@ -327,10 +323,6 @@ namespace mediapipe
 
   absl::Status TensorsToSegmentationCalculator::Close(CalculatorContext *cc)
   {
-    end = std::chrono::steady_clock::now();
-
-    std::cout << "Time difference = " << std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() << "[µs]" << std::endl;
-    std::cout << "Time difference = " << std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin).count() << "[ns]" << std::endl;
 
 #if !MEDIAPIPE_DISABLE_GPU
     gpu_helper_.RunInGlContext([this]

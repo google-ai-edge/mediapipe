@@ -66,15 +66,6 @@ namespace mediapipe
     static const std::vector<cv::Point> FACEMESH_FACE_OVAL{
         {10, 338}, {338, 297}, {297, 332}, {332, 284}, {284, 251}, {251, 389}, {389, 356}, {356, 454}, {454, 323}, {323, 361}, {361, 288}, {288, 397}, {397, 365}, {365, 379}, {379, 378}, {378, 400}, {400, 377}, {377, 152}, {152, 148}, {148, 176}, {176, 149}, {149, 150}, {150, 136}, {136, 172}, {172, 58}, {58, 132}, {132, 93}, {93, 234}, {234, 127}, {127, 162}, {162, 21}, {21, 54}, {54, 103}, {103, 67}, {67, 109}, {109, 10}};
 
-    enum
-    {
-      ATTRIB_VERTEX,
-      ATTRIB_TEXTURE_POSITION,
-      NUM_ATTRIBUTES
-    };
-
-    // Round up n to next multiple of m.
-    size_t RoundUp(size_t n, size_t m) { return ((n + m - 1) / m) * m; } // NOLINT
     inline bool HasImageTag(mediapipe::CalculatorContext *cc) { return false; }
 
     bool NormalizedtoPixelCoordinates(double normalized_x, double normalized_y,
@@ -149,8 +140,6 @@ namespace mediapipe
 
       source1ch = source.reshape(1, 5);
       target1ch = target.reshape(1, 5);
-
-      //std::cout << "R (numpy)   = " << std::endl << cv::format(source, cv::Formatter::FMT_NUMPY) << std::endl << std::endl;
 
       cv::SVD::compute(source1ch.t() * target1ch, w, u, vt);
 
@@ -252,6 +241,9 @@ namespace mediapipe
     };
 
     std::unique_ptr<cv::Mat> image_mat;
+    cv::Mat mat_image_;
+    int image_width_;
+    int image_height_;
   };
   REGISTER_CALCULATOR(FastUtilsCalculator);
 
@@ -298,9 +290,6 @@ namespace mediapipe
     {
       image_frame_available_ = true;
     }
-    else
-    {
-    }
 
     // Set the output header based on the input header (if present).
     const char *tag = kImageFrameTag;
@@ -322,32 +311,29 @@ namespace mediapipe
     {
       return absl::OkStatus();
     }
-    if (cc->Inputs().HasTag(kLandmarksTag) &&
-        cc->Inputs().Tag(kLandmarksTag).IsEmpty())
-    {
-      return absl::OkStatus();
-    }
-    if (cc->Inputs().HasTag(kNormLandmarksTag) &&
-        cc->Inputs().Tag(kNormLandmarksTag).IsEmpty())
-    {
-      return absl::OkStatus();
-    }
 
     // Initialize render target, drawn with OpenCV.
     ImageFormat::Format target_format;
     std::vector<std::vector<cv::Point2f>> lms_out;
 
     MP_RETURN_IF_ERROR(CreateRenderTargetCpu(cc, image_mat, &target_format));
+    mat_image_ = *image_mat.get();
+    image_width_ = image_mat->cols;
+    image_height_ = image_mat->rows;
 
-    MP_RETURN_IF_ERROR(Call(cc, image_mat, target_format, lms_out));
+    if (cc->Inputs().HasTag(kNormLandmarksTag) &&
+        !cc->Inputs().Tag(kNormLandmarksTag).IsEmpty())
+    {
+      MP_RETURN_IF_ERROR(Call(cc, image_mat, target_format, lms_out));
 
-    cv::Mat source_lm = cv::Mat(lms_out[0]);
+      cv::Mat source_lm = cv::Mat(lms_out[0]);
 
-    MP_RETURN_IF_ERROR(Align(image_mat, source_lm));
+      MP_RETURN_IF_ERROR(Align(image_mat, source_lm));
+    }
 
     uchar *image_mat_ptr = image_mat->data;
     MP_RETURN_IF_ERROR(RenderToCpu(cc, target_format, image_mat_ptr, image_mat));
-    
+
     return absl::OkStatus();
   }
 
@@ -360,13 +346,10 @@ namespace mediapipe
       CalculatorContext *cc, const ImageFormat::Format &target_format,
       uchar *data_image, std::unique_ptr<cv::Mat> &image_mat)
   {
-
-    cv::Mat mat_image_ = *image_mat.get();
- 
     auto output_frame = absl::make_unique<ImageFrame>(
-        target_format, mat_image_.cols, mat_image_.rows);
+        target_format, image_mat->cols, image_mat->rows);
 
-    output_frame->CopyPixelData(target_format, mat_image_.cols, mat_image_.rows, data_image,
+    output_frame->CopyPixelData(target_format, image_mat->cols, image_mat->rows, data_image,
                                 ImageFrame::kDefaultAlignmentBoundary);
 
     if (cc->Outputs().HasTag(kImageFrameTag))
@@ -441,11 +424,6 @@ namespace mediapipe
                                          ImageFormat::Format &target_format,
                                          std::vector<std::vector<cv::Point2f>> &lms_out)
   {
-    cv::Mat mat_image_ = *image_mat.get();
-
-    int image_width_ = image_mat->cols;
-    int image_height_ = image_mat->rows;
-
     std::vector<cv::Point2f> kps, landmarks;
 
     if (cc->Inputs().HasTag(kNormLandmarksTag))
@@ -455,7 +433,7 @@ namespace mediapipe
 
       std::vector<cv::Point2f> point_array;
       for (const auto &face : landmarkslist)
-      { 
+      {
         for (const auto &[key, value] : index_dict)
         {
           for (auto order : value)
@@ -481,13 +459,13 @@ namespace mediapipe
 
           cv::Mat mean;
           cv::reduce(kps, mean, 1, CV_REDUCE_AVG, CV_32F);
-         
+
           landmarks.push_back({mean.at<float>(0, 0), mean.at<float>(0, 1)});
-          
+
           kps.clear();
         }
         lms_out.push_back(landmarks);
-    
+
         landmarks.clear();
       }
     }
@@ -500,8 +478,6 @@ namespace mediapipe
                                           cv::Mat target_lm, cv::Size size,
                                           float extend, std::tuple<float, float, float, float> roi)
   {
-    cv::Mat mat_image_ = *image_mat.get();
-
     cv::Mat source, target;
     source_lm.convertTo(source, CV_32F);
     target_lm.convertTo(target, CV_32F);
@@ -528,7 +504,7 @@ namespace mediapipe
 
     cv::Mat transform, image;
     cv::hconcat(vec_mat, transform);
-    
+
     cv::warpAffine(mat_image_, *image_mat, transform, size, 1, 0, 0.0);
 
     return absl::OkStatus();

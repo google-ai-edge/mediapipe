@@ -42,13 +42,6 @@ namespace mediapipe
     constexpr char kMaskTag[] = "MASK";
     constexpr char kImageFrameTag[] = "IMAGE";
 
-    enum
-    {
-      ATTRIB_VERTEX,
-      ATTRIB_TEXTURE_POSITION,
-      NUM_ATTRIBUTES
-    };
-
     inline bool HasImageTag(mediapipe::CalculatorContext *cc) { return false; }
   } // namespace
 
@@ -252,8 +245,7 @@ namespace mediapipe
     {
       image_mat = absl::make_unique<cv::Mat>(
           150, 150, CV_8UC4,
-          cv::Scalar(255, 255,
-                     255));
+          cv::Scalar(cv::Scalar::all(255)));
       *target_format = ImageFormat::SRGBA;
     }
 
@@ -271,8 +263,6 @@ namespace mediapipe
     spec_lips_mask = cv::Mat::zeros(mat_image__.size(), CV_32F);
     upper_lips_mask = cv::Mat::zeros(mat_image__.size(), CV_32F);
     lower_lips_mask = cv::Mat::zeros(mat_image__.size(), CV_32F);
-
-    //__android_log_print(ANDROID_LOG_ERROR, "OVERSEAS", "%d ", mask_vec[1].size().height);
 
     upper_lips_mask = mask_vec.find("UPPER_LIP")->second;
     lower_lips_mask = mask_vec.find("LOWER_LIP")->second;
