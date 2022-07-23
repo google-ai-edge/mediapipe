@@ -289,71 +289,70 @@ namespace mediapipe
 
   cv::Mat SmoothFaceCalculator::predict_forehead_mask(const std::unordered_map<std::string, cv::Mat> &mask_vec, double face_box_min_y)
   {
-
     cv::Mat part_forehead_mask = mask_vec.find("PART_FOREHEAD_B")->second.clone();
     part_forehead_mask.convertTo(part_forehead_mask, CV_32F, 1.0 / 255);
     part_forehead_mask.convertTo(part_forehead_mask, CV_8U);
 
     cv::Mat image_sm, image_sm_hsv, skinMask;
-//
-//    cv::resize(mat_image_, image_sm, cv::Size(image_width_, image_height_));
-//    cv::cvtColor(image_sm, image_sm_hsv, cv::COLOR_BGR2HSV);
-//
-//    std::vector<int> x, y;
-//    std::vector<cv::Point> location;
-//
+
+    cv::resize(mat_image_, image_sm, cv::Size(image_width_, image_height_));
+    cv::cvtColor(image_sm, image_sm_hsv, cv::COLOR_BGR2HSV);
+
+    std::vector<int> x, y;
+    std::vector<cv::Point> location;
+
     cv::Vec3d hsv_min, hsv_max;
-//
-//    std::vector<cv::Mat> channels(3);
-//    cv::split(image_sm_hsv, channels);
-//    std::vector<std::vector<double>> minx(3), maxx(3);
-//    int c = 0;
-//    for (auto ch : channels)
-//    {
-//      cv::Mat row, mask_row;
-//      double min, max;
-//      for (int i = 0; i < ch.rows; i++)
-//      {
-//        row = ch.row(i);
-//        mask_row = part_forehead_mask.row(i);
-//        cv::minMaxLoc(row, &min, &max, 0, 0, mask_row);
-//        minx[c].push_back(min);
-//        maxx[c].push_back(max);
-//      }
-//      c++;
-//    }
-//    for (int i = 0; i < 3; i++)
-//    {
-//      hsv_min[i] = *std::min_element(minx[i].begin(), minx[i].end());
-//    }
-//    for (int i = 0; i < 3; i++)
-//    {
-//      hsv_max[i] = *std::max_element(maxx[i].begin(), maxx[i].end());
-//    }
-//
+
+    std::vector<cv::Mat> channels(3);
+    cv::split(image_sm_hsv, channels);
+    std::vector<std::vector<double>> minx(3), maxx(3);
+    int c = 0;
+    for (auto ch : channels)
+    {
+      cv::Mat row, mask_row;
+      double min, max;
+      for (int i = 0; i < ch.rows; i++)
+      {
+        row = ch.row(i);
+        mask_row = part_forehead_mask.row(i);
+        cv::minMaxLoc(row, &min, &max, 0, 0, mask_row);
+        minx[c].push_back(min);
+        maxx[c].push_back(max);
+      }
+      c++;
+    }
+    for (int i = 0; i < 3; i++)
+    {
+      hsv_min[i] = *std::min_element(minx[i].begin(), minx[i].end());
+    }
+    for (int i = 0; i < 3; i++)
+    {
+      hsv_max[i] = *std::max_element(maxx[i].begin(), maxx[i].end());
+    }
+
     cv::Mat _forehead_kernel = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(1, 1));
-//    cv::inRange(image_sm_hsv, hsv_min, hsv_max, skinMask);
+    cv::inRange(image_sm_hsv, hsv_min, hsv_max, skinMask);
     cv::erode(skinMask, skinMask, _forehead_kernel, cv::Point(-1, -1), 2);
     cv::dilate(skinMask, skinMask, _forehead_kernel, cv::Point(-1, -1), 2);
-//    skinMask.convertTo(skinMask, CV_8U, 1.0 / 255);
-//
-//    cv::findNonZero(skinMask, location);
-//
-//    double max_part_f, x_min_part, x_max_part;
-//
-//    for (auto &i : location)
-//    {
-//      x.push_back(i.x);
-//      y.push_back(i.y);
-//    }
-//
-//    cv::minMaxLoc(y, NULL, &max_part_f);
-//    cv::minMaxLoc(x, &x_min_part, &x_max_part);
+    skinMask.convertTo(skinMask, CV_8U, 1.0 / 255);
+
+    cv::findNonZero(skinMask, location);
+
+    double max_part_f, x_min_part, x_max_part;
+
+    for (auto &i : location)
+    {
+      x.push_back(i.x);
+      y.push_back(i.y);
+    }
+
+    cv::minMaxLoc(y, NULL, &max_part_f);
+    cv::minMaxLoc(x, &x_min_part, &x_max_part);
 
     cv::Mat new_skin_mask = cv::Mat::zeros(skinMask.size(), CV_8U);
 
-//    new_skin_mask(cv::Range(face_box_min_y, max_part_f), cv::Range(x_min_part, x_max_part)) =
-//        skinMask(cv::Range(face_box_min_y, max_part_f), cv::Range(x_min_part, x_max_part));
+    new_skin_mask(cv::Range(face_box_min_y, max_part_f), cv::Range(x_min_part, x_max_part)) =
+        skinMask(cv::Range(face_box_min_y, max_part_f), cv::Range(x_min_part, x_max_part));
 
     return new_skin_mask;
   }
@@ -365,8 +364,8 @@ namespace mediapipe
   {
     cv::Mat mouth_mask, mouth;
 
-    cv::Mat not_full_face = mask_vec.find("FACE_OVAL")->second.clone() +
-                            predict_forehead_mask(mask_vec, std::get<1>(face_box)) -
+    cv::Mat not_full_face = mask_vec.find("FACE_OVAL")->second.clone() -
+//                            predict_forehead_mask(mask_vec, std::get<1>(face_box)) -
                             mask_vec.find("LEFT_EYE")->second.clone() -
                             mask_vec.find("RIGHT_EYE")->second.clone() -
                             mask_vec.find("LEFT_BROW")->second.clone() -
