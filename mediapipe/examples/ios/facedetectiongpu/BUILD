@@ -14,7 +14,7 @@
 
 load(
     "@build_bazel_rules_apple//apple:ios.bzl",
-    "ios_application",
+    "ios_application", "ios_framework", "ios_static_framework"
 )
 load(
     "//mediapipe/examples/ios:bundle_id.bzl",
@@ -50,6 +50,24 @@ ios_application(
         "@ios_opencv//:OpencvFramework",
     ],
 )
+
+ios_framework(
+    name = "FaceDetectionGpuAppFramework",
+    bundle_id = "com.mediapipe.framework.facedetection",
+    infoplists = [
+        "Info.plist",
+    ],
+    minimum_os_version = "11.0",
+    families = [
+        "iphone",
+        "ipad",
+    ],
+    deps = [
+        ":FaceDetectionGpuAppLibrary",
+        "@ios_opencv//:OpencvFramework",
+    ]
+)
+
 
 objc_library(
     name = "FaceDetectionGpuAppLibrary",

@@ -62,6 +62,7 @@
         "semaphore": "cpp",
         "stop_token": "cpp",
         "thread": "cpp",
-        "target.hpp": "c"
+        "target.hpp": "c",
+        "calculator_framework.h": "c"
     }
 }

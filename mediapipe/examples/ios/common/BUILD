@@ -41,20 +41,20 @@ ios_framework(
 objc_library(
     name = "CommonMediaPipeAppLibrary",
     srcs = [
-#        "AppDelegate.mm",
+       "AppDelegate.mm",
         "CommonViewController.mm",
         "CommonLibraryFactory.mm",
-#        "main.m",
+       "main.m",
     ],
     hdrs = [
-#        "AppDelegate.h",
+       "AppDelegate.h",
         "CommonViewController.h",
         "CommonLibraryFactory.h",
     ],
-#    data = [
-#        "Base.lproj/LaunchScreen.storyboard",
-#        "Base.lproj/Main.storyboard",
-#    ],
+   data = [
+       "Base.lproj/LaunchScreen.storyboard",
+       "Base.lproj/Main.storyboard",
+   ],
     sdk_frameworks = [
         "AVFoundation",
         "CoreGraphics",

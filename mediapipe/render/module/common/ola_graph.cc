@@ -8,10 +8,7 @@
 
 #include "mediapipe/gpu/gl_base.h"
 #include "mediapipe/gpu/gpu_shared_data_internal.h"
-#if defined(__APPLE__)
-#include "mediapipe/gpu/MPPGraphGPUData.h"
-#include "mediapipe/objc/util.h"
-#endif
+
 
 using namespace mediapipe;
 
@@ -101,8 +98,8 @@ namespace Opipe
     bool OlaGraph::start()
     {
         absl::Status status = performStart();
-        _started = true;
-        return false;
+        _started = status.ok();
+        return status.ok();
     }
 
     absl::Status OlaGraph::performStart()
@@ -121,6 +118,7 @@ namespace Opipe
             }
         }
         status = _graph->StartRun(_inputSidePackets, _streamHeaders);
+        NSLog(@"errors:%@", [NSString stringWithUTF8String:status.ToString().c_str()]);
         if (!status.ok())
         {
             return status;
@@ -132,12 +130,14 @@ namespace Opipe
                               const std::string &streamName)
     {
         absl::Status status = _graph->AddPacketToInputStream(streamName, packet);
+        NSLog(@"errors:%@", [NSString stringWithUTF8String:status.ToString().c_str()]);
         return status.ok();
     }
 
     bool OlaGraph::movePacket(mediapipe::Packet &&packet, const std::string &streamName)
     {
         absl::Status status = _graph->AddPacketToInputStream(streamName, std::move(packet));
+        NSLog(@"errors:%@", [NSString stringWithUTF8String:status.ToString().c_str()]);
         return status.ok();
     }
 

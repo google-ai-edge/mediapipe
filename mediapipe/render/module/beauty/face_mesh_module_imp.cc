@@ -1,4 +1,9 @@
 #include "face_mesh_module_imp.h"
+#include "mediapipe/framework/formats/landmark.pb.h"
+
+static const char* kNumFacesInputSidePacket = "num_faces";
+static const char* kLandmarksOutputStream = "multi_face_landmarks";
+static const char* kOutputVideo = "output_video";
 
 namespace Opipe
 {
@@ -21,7 +26,25 @@ namespace Opipe
     void FaceMeshCallFrameDelegate::outputPacket(OlaGraph *graph, const mediapipe::Packet &packet,
                                                  MPPPacketType packetType, const std::string &streamName)
     {
-
+#if defined(__APPLE__)
+        if (streamName == kLandmarksOutputStream) {
+          if (packet.IsEmpty()) {
+            NSLog(@"[TS:%lld] No face landmarks", packet.Timestamp().Value());
+            return;
+          }
+          const auto& multi_face_landmarks = packet.Get<std::vector<::mediapipe::NormalizedLandmarkList>>();
+          NSLog(@"[TS:%lld] Number of face instances with landmarks: %lu", packet.Timestamp().Value(),
+                multi_face_landmarks.size());
+          for (int face_index = 0; face_index < multi_face_landmarks.size(); ++face_index) {
+            const auto& landmarks = multi_face_landmarks[face_index];
+            NSLog(@"\tNumber of landmarks for face[%d]: %d", face_index, landmarks.landmark_size());
+            for (int i = 0; i < landmarks.landmark_size(); ++i) {
+              NSLog(@"\t\tLandmark[%d]: (%f, %f, %f)", i, landmarks.landmark(i).x(),
+                    landmarks.landmark(i).y(), landmarks.landmark(i).z());
+            }
+          }
+        }
+#endif
     }
 
     FaceMeshModuleIMP::FaceMeshModuleIMP()
@@ -58,6 +81,12 @@ namespace Opipe
 
         _graph = std::make_unique<OlaGraph>(config);
         _graph->setDelegate(_delegate);
+        _graph->setSidePacket(mediapipe::MakePacket<int>(1), kNumFacesInputSidePacket);
+        _graph->addFrameOutputStream(kLandmarksOutputStream, MPPPacketTypeRaw);
+#if defined(__APPLE__)
+        _graph->addFrameOutputStream(kOutputVideo, MPPPacketTypePixelBuffer);
+#endif
+        _isInit = true;
 
         return true;
     }
@@ -68,9 +97,7 @@ namespace Opipe
         {
             return;
         }
-        _dispatch->runSync([&] {
-             _graph->start(); 
-        }, Context::IOContext);
+        _isInit = _graph->start(); 
     }
 
     void FaceMeshModuleIMP::stopModule()
@@ -79,12 +106,10 @@ namespace Opipe
         {
             return;
         }
-        _dispatch->runSync([&] {
-            _graph->setDelegate(nullptr);
-            _graph->cancel();
-            _graph->closeAllInputStreams();
-            _graph->waitUntilDone(); 
-        }, Context::IOContext);
+        _graph->setDelegate(nullptr);
+        _graph->cancel();
+        _graph->closeAllInputStreams();
+        _graph->waitUntilDone();
     }
 
 #if defined(__APPLE__)
@@ -95,12 +120,12 @@ namespace Opipe
         {
             return;
         }
-        _dispatch->runAsync([&] { 
-            Timestamp ts(timeStamp);
-            _graph->sendPixelBuffer(pixelbuffer, "input_video", 
-            MPPPacketTypePixelBuffer,
-            ts);
-        }, Context::IOContext);
+        Timestamp ts(timeStamp * 1000);
+        CVPixelBufferLockBaseAddress(pixelbuffer, 0);
+        _graph->sendPixelBuffer(pixelbuffer, "input_video",
+        MPPPacketTypePixelBuffer,
+        ts);
+        CVPixelBufferUnlockBaseAddress(pixelbuffer, 0);
     }
 #endif
 

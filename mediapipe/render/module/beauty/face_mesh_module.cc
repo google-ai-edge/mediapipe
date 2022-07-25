@@ -18,7 +18,5 @@ namespace Opipe {
         return instance;
     }
 
-    
-    
    
 }

@@ -19,7 +19,7 @@ namespace Opipe
         FaceMeshModule();
         virtual ~FaceMeshModule();
         
-        FaceMeshModule* create();
+        static FaceMeshModule* create();
         
 
         // 暂停渲染
