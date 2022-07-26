@@ -69,8 +69,52 @@ cc_library(
 
 
 cc_library(
-    name = "smooth_face_calculator",
-    srcs = ["smooth_face_calculator.cc"],
+    name = "smooth_face_calculator1",
+    srcs = ["smooth_face1_calculator.cc"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//mediapipe/framework:calculator_options_cc_proto",
+        "//mediapipe/framework/formats:image_format_cc_proto",
+        "//mediapipe/util:color_cc_proto",
+        "@com_google_absl//absl/strings",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/formats:image_frame",
+        "//mediapipe/framework/formats:image_frame_opencv",
+        "//mediapipe/framework/formats:video_stream_header",
+        "//mediapipe/framework/port:logging",
+        "//mediapipe/framework/port:opencv_core",
+        "//mediapipe/framework/port:opencv_imgproc",
+        "//mediapipe/framework/port:status",
+        "//mediapipe/framework/port:vector",
+    ],
+    alwayslink = 1,
+)
+
+cc_library(
+    name = "bilateral_filter_calculator",
+    srcs = ["bilateral_filter_calculator.cc"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//mediapipe/framework:calculator_options_cc_proto",
+        "//mediapipe/framework/formats:image_format_cc_proto",
+        "//mediapipe/util:color_cc_proto",
+        "@com_google_absl//absl/strings",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/formats:image_frame",
+        "//mediapipe/framework/formats:image_frame_opencv",
+        "//mediapipe/framework/formats:video_stream_header",
+        "//mediapipe/framework/port:logging",
+        "//mediapipe/framework/port:opencv_core",
+        "//mediapipe/framework/port:opencv_imgproc",
+        "//mediapipe/framework/port:status",
+        "//mediapipe/framework/port:vector",
+    ],
+    alwayslink = 1,
+)
+
+cc_library(
+    name = "smooth_face_calculator2",
+    srcs = ["smooth_face2_calculator.cc"],
     visibility = ["//visibility:public"],
     deps = [
         "//mediapipe/framework:calculator_options_cc_proto",
