@@ -1,16 +1,26 @@
 # MediaPipe face mesh rendering subgraph.
 
-type: "FaceRendererCpu"
+type: "FaceRendererGpu"
 
-# CPU image. (ImageFrame)
+# GPU image. (GpuBuffer)
 input_stream: "IMAGE:input_image"
 # Collection of detected/predicted faces, each represented as a list of
 # landmarks. (std::vector<NormalizedLandmarkList>)
 input_stream: "LANDMARKS:multi_face_landmarks"
+# Regions of interest calculated based on palm detections.
+# (std::vector<NormalizedRect>)
+input_stream: "NORM_RECTS:rects"
+# Detected palms. (std::vector<Detection>)
+input_stream: "DETECTIONS:detections"
 
-# CPU image with rendered data. (ImageFrame)
+# GPU image with rendered data. (GpuBuffer)
 output_stream: "IMAGE:output_image"
 
+node {
+  calculator: "ImagePropertiesCalculator"
+  input_stream: "IMAGE_GPU:input_image"
+  output_stream: "SIZE:image_size"
+}
 # Outputs each element of multi_face_landmarks at a fake timestamp for the rest
 # of the graph to process. At the end of the loop, outputs the BATCH_END
 # timestamp for downstream calculators to inform them that all elements in the
@@ -18,16 +28,16 @@ output_stream: "IMAGE:output_image"
 node {
   calculator: "BeginLoopNormalizedLandmarkListVectorCalculator"
   input_stream: "ITERABLE:multi_face_landmarks"
-  input_stream: "CLONE:input_image"
+  input_stream: "IMAGE_GPU:input_image"
   output_stream: "ITEM:face_landmarks"
-  output_stream: "CLONE:loop_image"
+  output_stream: "IMAGE_GPU:loop_image"
   output_stream: "BATCH_END:landmark_timestamp"
 }
 
 # Converts landmarks to face part masks.
 node {
   calculator: "LandmarksToMaskCalculator"
-  input_stream: "IMAGE:loop_image"
+  input_stream: "IMAGE_GPU:loop_image"
   input_stream: "NORM_LANDMARKS:face_landmarks"
   output_stream: "FACEBOX:face_box"
   output_stream: "MASK:mask"
@@ -53,24 +63,24 @@ node {
 #Applies lipstick to the face on the IMAGE using MASK.
 node {
   calculator: "DrawLipstickCalculator"
-  input_stream: "IMAGE:input_image"
+  input_stream: "IMAGE_GPU:input_image"
   input_stream: "MASK:0:multi_mask"
-  output_stream: "IMAGE:input_image_1"
+  output_stream: "IMAGE_GPU:input_image_1"
 }
 
 #Whitens teeth of the face on the IMAGE using MASK.
 node {
   calculator: "WhitenTeethCalculator"
-  input_stream: "IMAGE:input_image_1"
+  input_stream: "IMAGE_GPU:input_image_1"
   input_stream: "MASK:0:multi_mask"
-  output_stream: "IMAGE:input_image_2"
+  output_stream: "IMAGE_GPU:input_image_2"
 }
 
 #Smoothes face on the IMAGE using MASK.
 node {
   calculator: "SmoothFaceCalculator"
-  input_stream: "IMAGE:input_image_2"
+  input_stream: "IMAGE_GPU:input_image_2"
   input_stream: "MASK:0:multi_mask"
   input_stream: "FACEBOX:0:multi_face_box"
-  output_stream: "IMAGE:output_image"
+  output_stream: "IMAGE_GPU:output_image"
 }
