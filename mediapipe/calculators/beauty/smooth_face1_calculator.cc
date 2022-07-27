@@ -17,6 +17,7 @@
 #include <algorithm>
 #include <cmath>
 #include <iostream>
+#include <tuple>
 
 #include <memory>
 
@@ -53,11 +54,11 @@ namespace mediapipe
     inline bool HasImageTag(mediapipe::CalculatorContext *cc) { return false; }
   } // namespace
 
-  class SmoothFaceCalculator : public CalculatorBase
+  class SmoothFaceCalculator1 : public CalculatorBase
   {
   public:
-    SmoothFaceCalculator() = default;
-    ~SmoothFaceCalculator() override = default;
+    SmoothFaceCalculator1() = default;
+    ~SmoothFaceCalculator1() override = default;
 
     static absl::Status GetContract(CalculatorContract *cc);
 
@@ -76,7 +77,6 @@ namespace mediapipe
         uchar *data_image);
 
     absl::Status SmoothFace(CalculatorContext *cc,
-                            ImageFormat::Format *target_format,
                             const std::unordered_map<std::string, cv::Mat> &mask_vec,
                             const std::tuple<double, double, double, double> &face_box);
 
@@ -88,11 +88,13 @@ namespace mediapipe
     int image_width_;
     int image_height_;
     cv::Mat mat_image_;
+    cv::Mat not_full_face;
+    std::vector<double> face_box;
     std::unique_ptr<cv::Mat> image_mat;
   };
-  REGISTER_CALCULATOR(SmoothFaceCalculator);
+  REGISTER_CALCULATOR(SmoothFaceCalculator1);
 
-  absl::Status SmoothFaceCalculator::GetContract(CalculatorContract *cc)
+  absl::Status SmoothFaceCalculator1::GetContract(CalculatorContract *cc)
   {
     CHECK_GE(cc->Inputs().NumEntries(), 1);
 
@@ -100,6 +102,7 @@ namespace mediapipe
     {
       cc->Inputs().Tag(kImageFrameTag).Set<ImageFrame>();
       CHECK(cc->Outputs().HasTag(kImageFrameTag));
+      CHECK(cc->Outputs().HasTag(kMaskTag));
     }
 
     // Data streams to render.
@@ -128,20 +131,25 @@ namespace mediapipe
     {
       cc->Outputs().Tag(kImageFrameTag).Set<ImageFrame>();
     }
+    if (cc->Outputs().HasTag(kMaskTag))
+    {
+      cc->Outputs().Tag(kMaskTag).Set<cv::Mat>();
+    }
+    if (cc->Outputs().HasTag(kFaceBoxTag))
+    {
+      cc->Outputs().Tag(kFaceBoxTag).Set<std::vector<double>>();
+    }
 
     return absl::OkStatus();
   }
 
-  absl::Status SmoothFaceCalculator::Open(CalculatorContext *cc)
+  absl::Status SmoothFaceCalculator1::Open(CalculatorContext *cc)
   {
     cc->SetOffset(TimestampDiff(0));
 
     if (cc->Inputs().HasTag(kImageFrameTag) || HasImageTag(cc))
     {
       image_frame_available_ = true;
-    }
-    else
-    {
     }
 
     // Set the output header based on the input header (if present).
@@ -157,7 +165,7 @@ namespace mediapipe
     return absl::OkStatus();
   }
 
-  absl::Status SmoothFaceCalculator::Process(CalculatorContext *cc)
+  absl::Status SmoothFaceCalculator1::Process(CalculatorContext *cc)
   {
     if (cc->Inputs().HasTag(kImageFrameTag) &&
         cc->Inputs().Tag(kImageFrameTag).IsEmpty())
@@ -185,14 +193,13 @@ namespace mediapipe
       const std::vector<std::unordered_map<std::string, cv::Mat>> &mask_vec =
           cc->Inputs().Tag(kMaskTag).Get<std::vector<std::unordered_map<std::string, cv::Mat>>>();
 
-      const std::vector<std::tuple<double, double, double, double>> &face_box =
-          cc->Inputs().Tag(kFaceBoxTag).Get<std::vector<std::tuple<double, double, double, double>>>();
+    const std::vector<std::tuple<double, double, double, double>> &face_boxes =
+        cc->Inputs().Tag(kFaceBoxTag).Get<std::vector<std::tuple<double, double, double, double>>>();
 
-      if (mask_vec.size() > 0 && face_box.size() > 0)
-      {
-        for (int i = 0; i < mask_vec.size(); i++)
-          MP_RETURN_IF_ERROR(SmoothFace(cc, &target_format, mask_vec[i], face_box[i]));
-      }
+    if (mask_vec.size() > 0 && face_boxes.size() > 0)
+    {
+      for (int i = 0; i < mask_vec.size(); i++)
+        MP_RETURN_IF_ERROR(SmoothFace(cc, mask_vec[i], face_boxes[i]));
     }
     // Copy the rendered image to output.
     uchar *image_mat_ptr = image_mat->data;
@@ -201,32 +208,50 @@ namespace mediapipe
     return absl::OkStatus();
   }
 
-  absl::Status SmoothFaceCalculator::Close(CalculatorContext *cc)
+  absl::Status SmoothFaceCalculator1::Close(CalculatorContext *cc)
   {
     return absl::OkStatus();
   }
 
-  absl::Status SmoothFaceCalculator::RenderToCpu(
+  absl::Status SmoothFaceCalculator1::RenderToCpu(
       CalculatorContext *cc, const ImageFormat::Format &target_format,
       uchar *data_image)
   {
-    auto output_frame = absl::make_unique<ImageFrame>(
+    auto output_frame1 = absl::make_unique<ImageFrame>(
         target_format, image_width_, image_height_);
 
-    output_frame->CopyPixelData(target_format, image_width_, image_height_, data_image,
+    output_frame1->CopyPixelData(target_format, image_width_, image_height_, data_image,
                                 ImageFrame::kDefaultAlignmentBoundary);
 
     if (cc->Outputs().HasTag(kImageFrameTag))
     {
       cc->Outputs()
           .Tag(kImageFrameTag)
-          .Add(output_frame.release(), cc->InputTimestamp());
+          .Add(output_frame1.release(), cc->InputTimestamp());
+    }
+
+    auto output_frame2 = absl::make_unique<cv::Mat>(not_full_face);
+
+    if (cc->Outputs().HasTag(kMaskTag))
+    {
+      cc->Outputs()
+          .Tag(kMaskTag)
+          .Add(output_frame2.release(), cc->InputTimestamp());
+    }
+
+    auto output_frame3 = absl::make_unique<std::vector<double>>(face_box);
+
+    if (cc->Outputs().HasTag(kFaceBoxTag))
+    {
+      cc->Outputs()
+          .Tag(kFaceBoxTag)
+          .Add(output_frame3.release(), cc->InputTimestamp());
     }
 
     return absl::OkStatus();
   }
 
-  absl::Status SmoothFaceCalculator::CreateRenderTargetCpu(
+  absl::Status SmoothFaceCalculator1::CreateRenderTargetCpu(
       CalculatorContext *cc, std::unique_ptr<cv::Mat> &image_mat,
       ImageFormat::Format *target_format)
   {
@@ -282,9 +307,8 @@ namespace mediapipe
     return absl::OkStatus();
   }
 
-  cv::Mat SmoothFaceCalculator::predict_forehead_mask(const std::unordered_map<std::string, cv::Mat> &mask_vec, double face_box_min_y)
+  cv::Mat SmoothFaceCalculator1::predict_forehead_mask(const std::unordered_map<std::string, cv::Mat> &mask_vec, double face_box_min_y)
   {
-
     cv::Mat part_forehead_mask = mask_vec.find("PART_FOREHEAD_B")->second.clone();
     part_forehead_mask.convertTo(part_forehead_mask, CV_32F, 1.0 / 255);
     part_forehead_mask.convertTo(part_forehead_mask, CV_8U);
@@ -353,20 +377,17 @@ namespace mediapipe
     return new_skin_mask;
   }
 
-  absl::Status SmoothFaceCalculator::SmoothFace(CalculatorContext *cc,
-                                                ImageFormat::Format *target_format,
+  absl::Status SmoothFaceCalculator1::SmoothFace(CalculatorContext *cc,
                                                 const std::unordered_map<std::string, cv::Mat> &mask_vec,
-                                                const std::tuple<double, double, double, double> &face_box)
+                                                const std::tuple<double, double, double, double> &face_boxx)
   {
-    cv::Mat mouth_mask, mouth;
-
-    cv::Mat not_full_face = mask_vec.find("FACE_OVAL")->second.clone() +
-                            predict_forehead_mask(mask_vec, std::get<1>(face_box)) -
-                            mask_vec.find("LEFT_EYE")->second.clone() -
-                            mask_vec.find("RIGHT_EYE")->second.clone() -
-                            mask_vec.find("LEFT_BROW")->second.clone() -
-                            mask_vec.find("RIGHT_BROW")->second.clone() -
-                            mask_vec.find("LIPS")->second.clone();
+    not_full_face = mask_vec.find("FACE_OVAL")->second.clone() -
+//                    predict_forehead_mask(mask_vec, std::get<1>(face_boxx)) -
+                    mask_vec.find("LEFT_EYE")->second.clone() -
+                    mask_vec.find("RIGHT_EYE")->second.clone() -
+                    mask_vec.find("LEFT_BROW")->second.clone() -
+                    mask_vec.find("RIGHT_BROW")->second.clone() -
+                    mask_vec.find("LIPS")->second.clone();
 
     cv::resize(not_full_face,
                not_full_face,
@@ -388,27 +409,10 @@ namespace mediapipe
 
     cv::minMaxLoc(x, &min_x, &max_x);
     cv::minMaxLoc(y, &min_y, &max_y);
-
-    cv::Mat patch_face = mat_image_(cv::Range(min_y, max_y), cv::Range(min_x, max_x));
-    cv::Mat patch_nff = not_full_face(cv::Range(min_y, max_y), cv::Range(min_x, max_x));
-    cv::Mat patch_new, patch_wow;
-    cv::cvtColor(patch_face, patch_wow, cv::COLOR_RGBA2RGB);
-    cv::bilateralFilter(patch_wow, patch_new, 12, 50, 50);
-
-    cv::Mat patch_new_nff, patch_new_mask, patch, patch_face_nff;
-
-    patch_new.copyTo(patch_new_nff, patch_nff);
-
-    patch_face.copyTo(patch_face_nff, patch_nff);
-    cv::cvtColor(patch_face_nff, patch_face_nff, cv::COLOR_RGBA2RGB);
-
-    patch_new_mask = 0.85 * patch_new_nff + 0.15 * patch_face_nff;
-
-    patch = cv::min(255, patch_new_mask);
-
-    cv::cvtColor(patch, patch, cv::COLOR_RGB2RGBA);
-
-    patch.copyTo(patch_face, patch_nff);
+    face_box.push_back(min_x);
+    face_box.push_back(min_y);
+    face_box.push_back(max_x);
+    face_box.push_back(max_y);
 
     return absl::OkStatus();
   }
