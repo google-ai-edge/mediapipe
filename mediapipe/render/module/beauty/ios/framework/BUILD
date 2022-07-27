@@ -3,13 +3,13 @@ load("@build_bazel_rules_apple//apple:ios.bzl", "ios_framework", "ios_static_fra
 # 用上面这条指令build
 
 
-ios_static_framework(
+ios_framework(
     name = "OlaFaceUnityFramework",
     hdrs = [
         "OlaFaceUnity.h",
     ],
-    # infoplists = ["Info.plist"],
-    # bundle_id = "com.ola.olarender.develop",
+    infoplists = ["Info.plist"],
+    bundle_id = "com.ola.olarender.develop",
     families = ["iphone", "ipad"],
     minimum_os_version = "11.0",
     deps = [

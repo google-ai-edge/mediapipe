@@ -118,6 +118,16 @@ namespace Opipe {
         FilterGroup::update(frameTime);
     }
 
+    void OlaBeautyFilter::setLUTImage(SourceImage *lutImage) {
+        _lutImage = lutImage;
+        if (_lutFilter) {
+            auto *framebuffer = _lutFilter->getFramebuffer();
+            framebuffer->resetRetainCount();
+            _lutImage->retain();
+            _lutImage->addTarget(_lutFilter, 1, true);
+        }
+    }
+
 
     void OlaBeautyFilter::setInputFramebuffer(Framebuffer *framebuffer,
                                                         RotationMode rotationMode,

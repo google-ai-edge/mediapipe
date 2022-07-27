@@ -98,7 +98,7 @@ namespace Opipe {
         _blurFilter = GaussianBlurFilter::create(context);
         addFilter(_blurFilter);
         
-        _unsharpMaskFilter = UnSharpMaskFilter::create(context);
+        _unsharpMaskFilter = UnSharpFilter::create(context);
         addFilter(_unsharpMaskFilter);
         
         _blurFilter->addTarget(_unsharpMaskFilter,1);

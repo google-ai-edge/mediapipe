@@ -3,6 +3,7 @@
 #include "face_mesh_common.h"
 #include "mediapipe/render/module/beauty/filters/OlaBeautyFilter.hpp"
 #include "mediapipe/render/core/OlaShareTextureFilter.hpp"
+#include "mediapipe/render/core/SourceImage.hpp"
 
 namespace Opipe {
     class FaceMeshBeautyRender {
@@ -39,6 +40,7 @@ namespace Opipe {
             float _whitening = 0.0;
             bool _isRendering = false;
             Context *_context = nullptr;
+            SourceImage *_lutImage = nullptr;
 
     };
     
