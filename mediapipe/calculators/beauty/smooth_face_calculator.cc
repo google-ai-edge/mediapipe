@@ -284,6 +284,7 @@ namespace mediapipe
 
   cv::Mat SmoothFaceCalculator::predict_forehead_mask(const std::unordered_map<std::string, cv::Mat> &mask_vec, double face_box_min_y)
   {
+
     cv::Mat part_forehead_mask = mask_vec.find("PART_FOREHEAD_B")->second.clone();
     part_forehead_mask.convertTo(part_forehead_mask, CV_32F, 1.0 / 255);
     part_forehead_mask.convertTo(part_forehead_mask, CV_8U);
@@ -359,8 +360,8 @@ namespace mediapipe
   {
     cv::Mat mouth_mask, mouth;
 
-    cv::Mat not_full_face = mask_vec.find("FACE_OVAL")->second.clone() -
-//                            predict_forehead_mask(mask_vec, std::get<1>(face_box)) -
+    cv::Mat not_full_face = mask_vec.find("FACE_OVAL")->second.clone() +
+                            predict_forehead_mask(mask_vec, std::get<1>(face_box)) -
                             mask_vec.find("LEFT_EYE")->second.clone() -
                             mask_vec.find("RIGHT_EYE")->second.clone() -
                             mask_vec.find("LEFT_BROW")->second.clone() -
@@ -393,7 +394,6 @@ namespace mediapipe
     cv::Mat patch_new, patch_wow;
     cv::cvtColor(patch_face, patch_wow, cv::COLOR_RGBA2RGB);
     cv::bilateralFilter(patch_wow, patch_new, 12, 50, 50);
-    //patch_wow.copyTo(patch_new);
 
     cv::Mat patch_new_nff, patch_new_mask, patch, patch_face_nff;
 
