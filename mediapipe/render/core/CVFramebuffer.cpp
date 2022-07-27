@@ -1,6 +1,6 @@
 //
 //  CVFramebuffer.cpp
-//  Quaramera
+//  Opipe
 //
 //  Created by wangrenzhu on 2021/4/30.
 //
@@ -353,7 +353,7 @@ void CVFramebuffer::_bindFramebuffer() {
     
     CHECK_GL(glBindTexture(GL_TEXTURE_2D, 0));
     CHECK_GL(glBindFramebuffer(GL_FRAMEBUFFER, 0));
-    //    Opipe::Log("Quaramera", "_generateFramebuffer %d ", _framebuffer);
+    //    Opipe::Log("Opipe", "_generateFramebuffer %d ", _framebuffer);
     assert(_framebuffer < 100);
 }
 

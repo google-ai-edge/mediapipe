@@ -8,7 +8,7 @@
 
 #include "vec2.hpp"
 
-namespace Quaramera {
+namespace Opipe {
     
     inline Vec2::Vec2() : x(0.0f), y(0.0f)
     {

@@ -9,7 +9,7 @@
 #include "vec3.hpp"
 #include <cmath>
 
-namespace Quaramera {
+namespace Opipe {
     
     inline bool Vec3::is_zero() const
     {

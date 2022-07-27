@@ -1,6 +1,6 @@
 //
 //  CVFramebuffer.hpp
-//  Quaramera
+//  Opipe
 //
 //  Created by wangrenzhu on 2021/4/30.
 //

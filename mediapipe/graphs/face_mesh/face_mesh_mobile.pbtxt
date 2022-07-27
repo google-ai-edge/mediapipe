@@ -12,6 +12,8 @@ output_stream: "output_video"
 # landmarks. (std::vector<NormalizedLandmarkList>)
 output_stream: "multi_face_landmarks"
 
+# output_stream: "face_detections"
+
 # Throttles the images flowing downstream for flow control. It passes through
 # the very first incoming image unaltered, and waits for downstream nodes
 # (calculators and subgraphs) in the graph to finish their tasks before it
@@ -56,12 +58,22 @@ node {
   output_stream: "ROIS_FROM_DETECTIONS:face_rects_from_detections"
 }
 
-# Subgraph that renders face-landmark annotation onto the input image.
+# Subgraph that renders face-landmark annotation onto the input image.  //画标记 用于调试
+# node {
+#   calculator: "FaceRendererGpu"
+#   input_stream: "IMAGE:throttled_input_video"
+#   input_stream: "LANDMARKS:multi_face_landmarks"
+#   input_stream: "NORM_RECTS:face_rects_from_landmarks"
+#   input_stream: "DETECTIONS:face_detections"
+#   output_stream: "IMAGE:output_video"
+# }
+
+# Draws annotations and overlays them on top of the input images.
 node {
-  calculator: "FaceRendererGpu"
-  input_stream: "IMAGE:throttled_input_video"
-  input_stream: "LANDMARKS:multi_face_landmarks"
-  input_stream: "NORM_RECTS:face_rects_from_landmarks"
-  input_stream: "DETECTIONS:face_detections"
-  output_stream: "IMAGE:output_video"
+  calculator: "AnnotationOverlayCalculator"
+  input_stream: "IMAGE_GPU:throttled_input_video"
+  # input_stream: "detections_render_data"
+  # input_stream: "VECTOR:0:multi_face_landmarks_render_data"
+  # input_stream: "rects_render_data"
+  output_stream: "IMAGE_GPU:output_video"
 }

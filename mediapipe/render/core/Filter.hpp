@@ -248,7 +248,7 @@ protected:
     void generateVBOBuffers();
     bool _enable = true;
     bool _forceEnable = false;
-    Quaramera::Mat4 _mvp_matrix;
+    Opipe::Mat4 _mvp_matrix;
     Vector2 _scaleResolution = Vector2(0.0, 0.0);
     bool _useScaleResolution = false;
     

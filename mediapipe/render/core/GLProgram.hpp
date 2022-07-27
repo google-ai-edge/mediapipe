@@ -64,7 +64,7 @@ public:
     void setUniformValue(const std::string& uniformName, Vector2 value);
     void setUniformValue(const std::string& uniformName, Vector4 value);
     void setUniformValue(const std::string& uniformName, Matrix3 value);
-    void setUniformValue(const std::string& uniformName, Quaramera::Mat4 value);
+    void setUniformValue(const std::string& uniformName, Opipe::Mat4 value);
     
     void setUniformValue(int uniformLocation, int value);
     void setUniformValue(int uniformLocation, int count, int* value, int valueSize = 1);
@@ -73,7 +73,7 @@ public:
     void setUniformValue(int uniformLocation, Vector2 value);
     void setUniformValue(int uniformLocation, Vector4 value);
     void setUniformValue(int uniformLocation, Matrix3 value);
-    void setUniformValue(int uniformLocation, Quaramera::Mat4 value);
+    void setUniformValue(int uniformLocation, Opipe::Mat4 value);
 
     Context *getContext();
 private:

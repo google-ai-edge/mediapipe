@@ -39,6 +39,9 @@ NS_GI_BEGIN
 class Filter;
 class Context {
 public:
+#if defined(__APPLE__)
+    Context(EAGLContext *context);
+#endif
 
     Context();
     ~Context();
@@ -66,7 +69,6 @@ public:
 
 #if defined(__APPLE__)
     EAGLContext* getEglContext() const { return _eglContext; };
-    EAGLContext* getEglUpipeContext() const { return _eglUpipeContext; };
     void renewOfflineRenderContext();
     void presentBufferForDisplay();
 #else
@@ -126,11 +128,9 @@ private:
             EGLDisplay _eglDisplay;
         };
 #endif
-
     EAGLContext* _eglContext;
     EAGLContext* _eglOfflinerenderContext;
     EAGLContext* _eglContextIO;
-    EAGLContext* _eglUpipeContext;
 };
 
 NS_GI_END

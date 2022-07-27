@@ -1,6 +1,6 @@
 //
 //  vec4.h
-//  Quaramera
+//  Opipe
 //
 //  Created by Wang,Renzhu on 2018/11/20.
 //  Copyright © 2018年 Wang,Renzhu. All rights reserved.
@@ -9,7 +9,7 @@
 #ifndef VEC4_H
 #define VEC4_H
 
-namespace Quaramera {
+namespace Opipe {
     class Vec4
     {
     public:

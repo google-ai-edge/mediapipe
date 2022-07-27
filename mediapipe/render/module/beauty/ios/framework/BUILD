@@ -3,13 +3,13 @@ load("@build_bazel_rules_apple//apple:ios.bzl", "ios_framework", "ios_static_fra
 # 用上面这条指令build
 
 
-ios_framework(
+ios_static_framework(
     name = "OlaFaceUnityFramework",
     hdrs = [
         "OlaFaceUnity.h",
     ],
-    infoplists = ["Info.plist"],
-    bundle_id = "com.ola.olarender.develop",
+    # infoplists = ["Info.plist"],
+    # bundle_id = "com.ola.olarender.develop",
     families = ["iphone", "ipad"],
     minimum_os_version = "11.0",
     deps = [
@@ -31,6 +31,7 @@ objc_library(
         "//mediapipe/graphs/face_mesh:face_mesh_mobile_gpu.binarypb",
         "//mediapipe/modules/face_detection:face_detection_short_range.tflite",
         "//mediapipe/modules/face_landmark:face_landmark_with_attention.tflite",
+        "//mediapipe/render/module/beauty:whiten.png",
     ],
      copts = select({
         "//mediapipe:apple": [
@@ -39,7 +40,7 @@ objc_library(
         ],
         "//conditions:default": [],
     }),
-    alwayslink = True,
+    # alwayslink = True,
     sdk_frameworks = [
         "AVFoundation",
         "CoreGraphics",

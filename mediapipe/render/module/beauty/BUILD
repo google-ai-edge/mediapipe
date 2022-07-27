@@ -30,6 +30,7 @@ FACEUNITY_SRCS = [
 
 FACEUNITY_HDRS = [
         "face_mesh_module.h",
+        "face_mesh_common.h",
         "face_mesh_beauty_render.h",
         "face_mesh_module_imp.h",
 ]
@@ -50,11 +51,13 @@ cc_library(
             "//mediapipe/render/core:core-ios",
             "//mediapipe/graphs/face_mesh:mobile_calculators",
             "//mediapipe/framework/formats:landmark_cc_proto",
+            "//mediapipe/render/module/beauty/filters:BeautyFilters",
          ],
         "//conditions:default": [
             "//mediapipe/render/core:core",
             "//mediapipe/graphs/face_mesh:mobile_calculators",
             "//mediapipe/framework/formats:landmark_cc_proto",
+            "//mediapipe/render/module/beauty/filters:BeautyFilters",
         ],
     }),
     copts = select({
@@ -64,4 +67,11 @@ cc_library(
         ],
         "//conditions:default": ["-std=c++17"],
     }),
+)
+
+
+exports_files(
+    srcs = [
+        "whiten.png",
+    ],
 )

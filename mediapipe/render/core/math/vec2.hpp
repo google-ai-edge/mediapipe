@@ -1,6 +1,6 @@
 //
 //  vec2.h
-//  Quaramera
+//  Opipe
 //
 //  Created by Wang,Renzhu on 2018/11/20.
 //  Copyright © 2018年 Wang,Renzhu. All rights reserved.
@@ -12,7 +12,7 @@
 #include <algorithm>
 #include <cmath>
 
-namespace Quaramera {
+namespace Opipe {
     
     inline float clampf(float value, float min_inclusive, float max_inclusive) {
         if (min_inclusive > max_inclusive) {

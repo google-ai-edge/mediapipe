@@ -11,6 +11,11 @@
 			<key>orderHint</key>
 			<integer>5</integer>
 		</dict>
+		<key>_bazel_clean_.xcscheme_^#shared#^_</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>6</integer>
+		</dict>
 		<key>_idx_Scheme.xcscheme_^#shared#^_</key>
 		<dict>
 			<key>isShown</key>

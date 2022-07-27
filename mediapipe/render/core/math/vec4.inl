@@ -8,7 +8,7 @@
 
 #include "vec4.hpp"
 
-namespace Quaramera {
+namespace Opipe {
     
     inline Vec4 Vec4::operator+(const Vec4& v) const
     {

@@ -125,6 +125,14 @@ OLARENDER_SRCS = [
     "dispatch_queue.cpp",
     "GLThreadDispatch.cpp",
     "OpipeDispatch.cpp",
+    "OlaShareTextureFilter.cpp",
+    "AlphaBlendFilter.cpp",
+    "BilateralFilter.cpp",
+    "GaussianBlurFilter.cpp",
+    "GaussianBlurMonoFilter.cpp",
+    "LUTFilter.cpp",
+    "OlaContext.cpp",
+
 ]
 
 OLARENDER_HDRS = [
@@ -146,6 +154,13 @@ OLARENDER_HDRS = [
     "dispatch_queue.h",
     "GLThreadDispatch.h",
     "OpipeDispatch.hpp",
+    "OlaShareTextureFilter.hpp",
+    "AlphaBlendFilter.hpp",
+    "BilateralFilter.hpp",
+    "GaussianBlurFilter.hpp",
+    "GaussianBlurMonoFilter.hpp",
+    "LUTFilter.hpp",
+    "OlaContext.hpp",
 ]
 
 

@@ -63,6 +63,13 @@
         "stop_token": "cpp",
         "thread": "cpp",
         "target.hpp": "c",
-        "calculator_framework.h": "c"
+        "calculator_framework.h": "c",
+        "bitset": "cpp",
+        "complex": "cpp",
+        "cstdarg": "cpp",
+        "iostream": "cpp",
+        "numeric": "cpp",
+        "optional": "cpp",
+        "__config": "cpp"
     }
 }

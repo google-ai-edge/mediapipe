@@ -3,11 +3,14 @@
 
 #include "mediapipe/render/module/common/ola_graph.h"
 #include "mediapipe/render/core/OpipeDispatch.hpp"
-
+#include "mediapipe/framework/formats/landmark.pb.h"
+#include "mediapipe/render/core/Context.hpp"
 #include "face_mesh_module.h"
+#include "face_mesh_beauty_render.h"
 
 namespace Opipe
 {
+    class FaceMeshModuleIMP;
     class FaceMeshCallFrameDelegate : public MPPGraphDelegate
     {
     public:
@@ -19,6 +22,21 @@ namespace Opipe
 #endif
         void outputPacket(OlaGraph *graph, const mediapipe::Packet &packet,
                           MPPPacketType packetType, const std::string &streamName) override;
+        
+        void outputPacket(OlaGraph *graph, const mediapipe::Packet &packet,
+                          const std::string &streamName) override;
+        
+        void attach(FaceMeshModuleIMP *imp) {
+            _imp = imp;
+        }
+        
+    private:
+        int64_t _last_landmark_ts = 0;
+        int64_t _last_video_ts = 0;
+        bool _hasFace = false;
+        NormalizedLandmarkList _lastLandmark;
+        NormalizedLandmarkList _emptyLandmark;
+        FaceMeshModuleIMP *_imp = nullptr;
     };
 
     class FaceMeshModuleIMP : public FaceMeshModule
@@ -40,6 +58,11 @@ namespace Opipe
 
         virtual void stopModule() override;
 
+        // 外部共享Context用
+        virtual OlaContext* currentContext() override {
+            return _olaContext;
+        } 
+
 #if defined(__APPLE__)
 
         /// 算法流输入
@@ -54,14 +77,19 @@ namespace Opipe
                                        int step,
                                        int64_t timeStamp) override;
 
-        virtual GLuint renderTexture(GLuint textureId, int64_t timeStamp, int width, int height) override;
+        virtual TextureInfo renderTexture(TextureInfo inputTexture) override;
+        
+        virtual void setLandmark(NormalizedLandmarkList landmark);
 
     private:
         std::unique_ptr<OpipeDispatch> _dispatch;
         std::unique_ptr<OlaGraph> _graph;
-        std::unique_ptr<Context> _context;
+        Context *_context = nullptr;
         bool _isInit = false;
+        NormalizedLandmarkList _lastLandmark;
         std::shared_ptr<FaceMeshCallFrameDelegate> _delegate;
+        FaceMeshBeautyRender *_render = nullptr;
+        OlaContext *_olaContext = nullptr;
     };
 }
 #endif

@@ -190,7 +190,7 @@ namespace Opipe {
         }
     }
     
-    void GLProgram::setUniformValue(const std::string &uniformName, Quaramera::Mat4 value) {
+    void GLProgram::setUniformValue(const std::string &uniformName, Opipe::Mat4 value) {
         getContext()->setActiveShaderProgram(this);
         GLuint location = getUniformLocation(uniformName);
         if (location != -1) {
@@ -259,7 +259,7 @@ namespace Opipe {
         }
     }
     
-    void GLProgram::setUniformValue(int uniformLocation, Quaramera::Mat4 value) {
+    void GLProgram::setUniformValue(int uniformLocation, Opipe::Mat4 value) {
         getContext()->setActiveShaderProgram(this);
         CHECK_GL(glUniformMatrix4fv(uniformLocation, 1, GL_FALSE, (GLfloat *) &value));
     }

@@ -9,7 +9,8 @@
 @end
 @implementation OlaFaceUnity
 
-- (void)dealloc {
+- (void)dealloc
+{
     if (_face_module) {
         delete _face_module;
         _face_module = nullptr;
@@ -25,7 +26,8 @@
     return self;
 }
 
-- (void)initModule {
+- (void)initModule
+{
     _face_module = Opipe::FaceMeshModule::create();
     NSBundle *bundle = [NSBundle bundleForClass:[self class]];
     NSURL* graphURL = [bundle URLForResource:@"face_mesh_mobile_gpu" withExtension:@"binarypb"];
@@ -34,8 +36,6 @@
         _face_module->init(nullptr, (void *)data.bytes, data.length);
         _face_module->startModule();
     }
-    
-    
 }
 
 + (instancetype)sharedInstance {
@@ -47,6 +47,42 @@
     return sharedInstance;
 }
 
+- (FaceTextureInfo)render:(FaceTextureInfo)inputTexture
+{
+    TextureInfo rs;
+    rs.ioSurfaceId = inputTexture.ioSurfaceId;
+    if (_face_module) {
+        TextureInfo input;
+        input.width = inputTexture.width;
+        input.height = inputTexture.height;
+        input.ioSurfaceId = inputTexture.ioSurfaceId;
+        input.textureId = inputTexture.textureId;
+        input.frameTime = inputTexture.frameTime;
+
+        rs = _face_module->renderTexture(input);
+    }
+    FaceTextureInfo result;
+    result.width = rs.width;
+    result.height = rs.height;
+    result.ioSurfaceId = rs.ioSurfaceId;
+    result.textureId = rs.textureId;
+    result.frameTime = rs.frameTime;
+
+    return result;
+}
+
+// - (EAGLContext *)currentContext
+// {
+//     if (_face_module) {
+//         return _face_module->currentContext()->currentContext();
+//     }
+// }
+
+- (void)currentContext {
+    if (_face_module) {
+         _face_module->currentContext()->currentContext();
+    }
+}
 
 - (void)processVideoFrame:(CVPixelBufferRef)pixelbuffer
                 timeStamp:(int64_t)timeStamp;

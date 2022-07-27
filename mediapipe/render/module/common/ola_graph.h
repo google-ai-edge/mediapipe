@@ -44,6 +44,10 @@ namespace Opipe
                                   const mediapipe::Packet &packet,
                                   MPPPacketType packetType,
                                   const std::string &streamName) = 0;
+        
+        virtual void outputPacket(OlaGraph *graph,
+                                  const mediapipe::Packet &packet,
+                                  const std::string &streamName) = 0;
     };
 
     class OlaGraph
@@ -167,7 +171,7 @@ namespace Opipe
         bool waitUntilIdle();
 
         std::weak_ptr<MPPGraphDelegate> _delegate;
-        std::atomic<int32_t> _framesInFlight = 2;
+        std::atomic<int32_t> _framesInFlight = 0;
 
     private:
         std::unique_ptr<mediapipe::CalculatorGraph> _graph;
@@ -188,7 +192,7 @@ namespace Opipe
 
         absl::Status performStart();
 
-        int _maxFramesInFlight = 0;
+        int _maxFramesInFlight = 1;
     };
 
 }

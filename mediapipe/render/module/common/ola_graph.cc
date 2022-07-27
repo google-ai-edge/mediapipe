@@ -23,6 +23,9 @@ namespace Opipe
         {
             return;
         }
+        
+        graph->_delegate.lock()->outputPacket(graph, packet, streamName);
+        
         if (packetType == MPPPacketTypeRaw)
         {
             graph->_delegate.lock()->outputPacket(graph, packet, packetType, streamName);
@@ -41,9 +44,8 @@ namespace Opipe
             graph->_delegate.lock()->outputPixelbuffer(graph, pixelBuffer, streamName, packet.Timestamp().Value());
 #endif
         }
-        else
-        {
-        }
+        
+        
     }
 
     OlaGraph::OlaGraph(const mediapipe::CalculatorGraphConfig &config)

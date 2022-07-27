@@ -34,6 +34,27 @@ std::mutex Context::_mutex;
 std::string Context::activatedContextKey = "";
 std::map<std::string, Context*> Context::_ContextCache;
 
+Context::Context(EAGLContext *context)
+:_curShaderProgram(0)
+,isCapturingFrame(false)
+,captureUpToFilter(0)
+,capturedFrameData(0)
+,_eglContext(0)
+,_eglOfflinerenderContext(0)
+,_eglContextIO(0)
+,vertexArray(-1) {
+    _framebufferCache = new FramebufferCache(this);
+
+#if defined(__APPLE__)
+
+    _eglContext = context;
+    shareGroup = [_eglContext sharegroup];
+    _eglContextIO = [[EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES3 sharegroup:shareGroup];
+    _eglOfflinerenderContext = [[EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES3 sharegroup:shareGroup];
+    
+#endif
+}
+
 Context::Context()
 :_curShaderProgram(0)
 ,isCapturingFrame(false)
@@ -52,7 +73,6 @@ Context::Context()
     _eglContext = [[EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES3 sharegroup:shareGroup];
 
     _eglOfflinerenderContext = [[EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES3 sharegroup:shareGroup];
-    _eglUpipeContext = [[EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES3 sharegroup:shareGroup];
     
     NSDictionary * cacheAttributes = @{ (NSString *)kCVOpenGLESTextureCacheMaximumTextureAgeKey: @(0.0) };
 
@@ -92,7 +112,6 @@ Context::~Context() {
     _eglContextIO = NULL;
     _eglContext = NULL;
     _eglOfflinerenderContext = NULL;
-    _eglUpipeContext = NULL;
     shareGroup = NULL;
     
 #endif

@@ -1,6 +1,6 @@
 //
 //  vec2.cpp
-//  Quaramera
+//  Opipe
 //
 //  Created by Wang,Renzhu on 2018/11/20.
 //  Copyright © 2018年 Wang,Renzhu. All rights reserved.
@@ -8,7 +8,7 @@
 
 #include "vec2.hpp"
 #include "math_utils.hpp"
-namespace Quaramera {
+namespace Opipe {
     
     float Vec2::angle(const Vec2& v1, const Vec2& v2)
     {
