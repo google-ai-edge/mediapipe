@@ -164,16 +164,6 @@ namespace mediapipe
     {
       return absl::OkStatus();
     }
-    if (cc->Inputs().HasTag(kMaskTag) &&
-        cc->Inputs().Tag(kMaskTag).IsEmpty())
-    {
-      return absl::OkStatus();
-    }
-    if (cc->Inputs().HasTag(kFaceBoxTag) &&
-        cc->Inputs().Tag(kFaceBoxTag).IsEmpty())
-    {
-      return absl::OkStatus();
-    }
 
     // Initialize render target, drawn with OpenCV.
     ImageFormat::Format target_format;
@@ -187,18 +177,23 @@ namespace mediapipe
     image_width_ = image_mat->cols;
     image_height_ = image_mat->rows;
 
-    const std::vector<std::unordered_map<std::string, cv::Mat>> &mask_vec =
-        cc->Inputs().Tag(kMaskTag).Get<std::vector<std::unordered_map<std::string, cv::Mat>>>();
-
-    const std::vector<std::tuple<double, double, double, double>> &face_box =
-        cc->Inputs().Tag(kFaceBoxTag).Get<std::vector<std::tuple<double, double, double, double>>>();
-
-    if (mask_vec.size() > 0 && face_box.size() > 0)
+    if (cc->Inputs().HasTag(kMaskTag) &&
+        !cc->Inputs().Tag(kMaskTag).IsEmpty() &&
+        cc->Inputs().HasTag(kFaceBoxTag) &&
+        !cc->Inputs().Tag(kFaceBoxTag).IsEmpty())
     {
-      for (int i = 0; i < mask_vec.size(); i++)
-        MP_RETURN_IF_ERROR(SmoothFace(cc, &target_format, mask_vec[i], face_box[i]));
-    }
+      const std::vector<std::unordered_map<std::string, cv::Mat>> &mask_vec =
+          cc->Inputs().Tag(kMaskTag).Get<std::vector<std::unordered_map<std::string, cv::Mat>>>();
 
+      const std::vector<std::tuple<double, double, double, double>> &face_box =
+          cc->Inputs().Tag(kFaceBoxTag).Get<std::vector<std::tuple<double, double, double, double>>>();
+
+      if (mask_vec.size() > 0 && face_box.size() > 0)
+      {
+        for (int i = 0; i < mask_vec.size(); i++)
+          MP_RETURN_IF_ERROR(SmoothFace(cc, &target_format, mask_vec[i], face_box[i]));
+      }
+    }
     // Copy the rendered image to output.
     uchar *image_mat_ptr = image_mat->data;
     MP_RETURN_IF_ERROR(RenderToCpu(cc, target_format, image_mat_ptr));

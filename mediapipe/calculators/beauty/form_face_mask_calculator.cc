@@ -18,7 +18,6 @@
 #include <cmath>
 #include <string>
 #include <map>
-//#include <android/log.h>
 
 #include <memory>
 

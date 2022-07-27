@@ -30,27 +30,9 @@ cc_library(
         "//mediapipe/calculators/beauty:smooth_face_calculator",
         "//mediapipe/calculators/beauty:draw_lipstick_calculator",
         "//mediapipe/calculators/beauty:whiten_teeth_calculator",
-        "//mediapipe/calculators/util:detections_to_render_data_calculator",
         "//mediapipe/calculators/util:landmarks_to_render_data_calculator",
         "//mediapipe/calculators/landmarks:landmarks_to_mask_calculator",
-    ],
-)
-
-mediapipe_simple_subgraph(
-    name = "face_renderer_gpu",
-    graph = "face_renderer_gpu.pbtxt",
-    register_as = "FaceRendererGpu",
-    deps = [
-        ":renderer_calculators",
-    ],
-)
-
-mediapipe_simple_subgraph(
-    name = "face_renderer_gpu_over",
-    graph = "face_renderer_gpu_over.pbtxt",
-    register_as = "FaceRendererGpuOver",
-    deps = [
-        ":renderer_calculators",
+          "//mediapipe/graphs/face_mesh/calculators:face_landmarks_to_render_data_calculator",
     ],
 )
 
@@ -58,6 +40,15 @@ mediapipe_simple_subgraph(
     name = "face_renderer_cpu",
     graph = "face_renderer_cpu.pbtxt",
     register_as = "FaceRendererCpu",
+    deps = [
+        ":renderer_calculators",
+    ],
+)
+
+mediapipe_simple_subgraph(
+    name = "face_renderer_cpu_single",
+    graph = "face_renderer_cpu_single.pbtxt",
+    register_as = "FaceRendererCpuSingle",
     deps = [
         ":renderer_calculators",
     ],

@@ -11,12 +11,6 @@ input_stream: "LANDMARKS:multi_face_landmarks"
 # CPU image with rendered data. (ImageFrame)
 output_stream: "IMAGE:output_image"
 
-node {
-  calculator: "ImagePropertiesCalculator"
-  input_stream: "IMAGE:input_image"
-  output_stream: "SIZE:image_size"
-}
-
 # Outputs each element of multi_face_landmarks at a fake timestamp for the rest
 # of the graph to process. At the end of the loop, outputs the BATCH_END
 # timestamp for downstream calculators to inform them that all elements in the
