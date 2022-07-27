@@ -108,7 +108,7 @@ void AnnotationRenderer::RenderDataOnImage(const RenderData &render_data)
   if (render_data.render_annotations().size()){
     DrawLipstick(render_data);
     WhitenTeeth(render_data);
-    //SmoothFace(render_data);
+//    SmoothFace(render_data);
   }
   else
   {
@@ -170,7 +170,6 @@ cv::Mat AnnotationRenderer::FormFacePartMask(std::vector<int> orderList, const R
   }
 
   if (points_array.size() != orderList.size()){
-    mask.convertTo(mask, CV_8U);
     return mask;
   }
 
@@ -291,6 +290,7 @@ cv::Mat AnnotationRenderer::predict_forehead_mask(const RenderData &render_data,
 
 void AnnotationRenderer::SmoothFace(const RenderData &render_data)
 {
+
   cv::Mat not_full_face = cv::Mat(FormFacePartMask(FACE_OVAL, render_data)) +
                           cv::Mat(predict_forehead_mask(render_data, std::get<1>(GetFaceBox(render_data)))) -
                           cv::Mat(FormFacePartMask(LEFT_EYE, render_data)) -
@@ -324,9 +324,7 @@ void AnnotationRenderer::SmoothFace(const RenderData &render_data)
   cv::Mat patch_nff = not_full_face(cv::Range(min_y, max_y), cv::Range(min_x, max_x));
   cv::Mat patch_new, patch_wow;
   cv::cvtColor(patch_face, patch_wow, cv::COLOR_RGBA2RGB);
-  if (patch_wow.data != patch_new.data) {
-    cv::bilateralFilter(patch_wow, patch_new, 12, 50, 50);
-  }
+  cv::bilateralFilter(patch_wow, patch_new, 12, 50, 50);
 
   cv::Mat patch_new_nff, patch_new_mask, patch, patch_face_nff;
 

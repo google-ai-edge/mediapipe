@@ -10,14 +10,6 @@ output_stream: "output_video"
 output_stream: "multi_face_landmarks"
 
 
-profiler_config {
-  trace_enabled: true
-  enable_profiler: true
-  trace_log_interval_count: 200
-  trace_log_path: "/Users/alena/Workdir/mediapipe/logs/beauty/"
-}
-
-
 node {
   calculator: "FlowLimiterCalculator"
   input_stream: "input_video"

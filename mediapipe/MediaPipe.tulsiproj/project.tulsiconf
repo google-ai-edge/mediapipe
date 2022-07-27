@@ -3,9 +3,6 @@
     "optionSet" : {
       "CLANG_CXX_LANGUAGE_STANDARD" : {
         "p" : "c++14"
-      },
-      "EnvironmentVariables" : {
-        "p" : "MEDIAPIPE_PROFILING=1"
       }
     }
   },
@@ -13,7 +10,6 @@
     "",
     "mediapipe",
     "mediapipe/examples/ios",
-    "mediapipe/examples/ios/beauty",
     "mediapipe/examples/ios/facedetectioncpu",
     "mediapipe/examples/ios/facedetectiongpu",
     "mediapipe/examples/ios/faceeffect",
