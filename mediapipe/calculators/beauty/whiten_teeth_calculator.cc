@@ -16,7 +16,6 @@
 
 #include <algorithm>
 #include <cmath>
-//#include <android/log.h>
 
 #include <memory>
 
@@ -41,13 +40,6 @@ namespace mediapipe
 
     constexpr char kMaskTag[] = "MASK";
     constexpr char kImageFrameTag[] = "IMAGE";
-
-    enum
-    {
-      ATTRIB_VERTEX,
-      ATTRIB_TEXTURE_POSITION,
-      NUM_ATTRIBUTES
-    };
 
     inline bool HasImageTag(mediapipe::CalculatorContext *cc) { return false; }
   } // namespace
@@ -153,11 +145,6 @@ namespace mediapipe
     {
       return absl::OkStatus();
     }
-    if (cc->Inputs().HasTag(kMaskTag) &&
-        cc->Inputs().Tag(kMaskTag).IsEmpty())
-    {
-      return absl::OkStatus();
-    }
 
     // Initialize render target, drawn with OpenCV.
     ImageFormat::Format target_format;
@@ -169,15 +156,18 @@ namespace mediapipe
     mat_image_ = *image_mat.get();
     image_width_ = image_mat->cols;
     image_height_ = image_mat->rows;
-    
-    const std::vector<std::unordered_map<std::string, cv::Mat>> &mask_vec =
-        cc->Inputs().Tag(kMaskTag).Get<std::vector<std::unordered_map<std::string, cv::Mat>>>();
-    if (mask_vec.size() > 0)
-    {
-      for (auto mask : mask_vec)
-        MP_RETURN_IF_ERROR(WhitenTeeth(cc, &target_format, mask));
-    }
 
+    if (cc->Inputs().HasTag(kMaskTag) &&
+        !cc->Inputs().Tag(kMaskTag).IsEmpty())
+    {
+      const std::vector<std::unordered_map<std::string, cv::Mat>> &mask_vec =
+          cc->Inputs().Tag(kMaskTag).Get<std::vector<std::unordered_map<std::string, cv::Mat>>>();
+      if (mask_vec.size() > 0)
+      {
+        for (auto mask : mask_vec)
+          MP_RETURN_IF_ERROR(WhitenTeeth(cc, &target_format, mask));
+      }
+    }
     // Copy the rendered image to output.
     uchar *image_mat_ptr = image_mat->data;
     MP_RETURN_IF_ERROR(RenderToCpu(cc, target_format, image_mat_ptr, image_mat));

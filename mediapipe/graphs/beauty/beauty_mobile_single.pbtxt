@@ -1,21 +1,16 @@
-# MediaPipe graph that performs face mesh with TensorFlow Lite on CPU.
+# MediaPipe graph that performs face mesh with TensorFlow Lite on GPU.
 
-# Input image. (ImageFrame)
+# GPU buffer. (GpuBuffer)
 input_stream: "input_video"
 
-# Output image with rendered results. (ImageFrame)
+# Max number of faces to detect/process. (int)
+input_side_packet: "num_faces"
+
+# Output image with rendered results. (GpuBuffer)
 output_stream: "output_video"
 # Collection of detected/processed faces, each represented as a list of
 # landmarks. (std::vector<NormalizedLandmarkList>)
 output_stream: "multi_face_landmarks"
-
-
-profiler_config {
-  trace_enabled: true
-  enable_profiler: true
-  trace_log_interval_count: 200
-  trace_log_path: "/Users/alena/Workdir/mediapipe/logs/beauty/"
-}
 
 # Throttles the images flowing downstream for flow control. It passes through
 # the very first incoming image unaltered, and waits for downstream nodes
@@ -27,8 +22,6 @@ profiler_config {
 # real-time mobile applications. It also eliminates unnecessarily computation,
 # e.g., the output produced by a node may get dropped downstream if the
 # subsequent nodes are still busy processing previous inputs.
-
-
 node {
   calculator: "FlowLimiterCalculator"
   input_stream: "input_video"
@@ -43,19 +36,24 @@ node {
 # Defines side packets for further use in the graph.
 node {
   calculator: "ConstantSidePacketCalculator"
-  output_side_packet: "PACKET:0:num_faces"
-  output_side_packet: "PACKET:1:with_attention"
+  output_side_packet: "PACKET:with_attention"
   node_options: {
     [type.googleapis.com/mediapipe.ConstantSidePacketCalculatorOptions]: {
-      packet { int_value: 1 }
       packet { bool_value: true }
     }
   }
 }
 
+# Defines side packets for further use in the graph.
+node {
+  calculator: "GpuBufferToImageFrameCalculator"
+  input_stream: "throttled_input_video"
+  output_stream: "throttled_input_video_cpu"
+}
+
 # Subgraph that detects faces and corresponding landmarks.
 node {
-  calculator: "FaceLandmarkFrontCpu"
+  calculator: "FaceLandmarkFrontGpu"
   input_stream: "IMAGE:throttled_input_video"
   input_side_packet: "NUM_FACES:num_faces"
   input_side_packet: "WITH_ATTENTION:with_attention"
@@ -64,8 +62,15 @@ node {
 
 # Subgraph that renders face-landmark annotation onto the input image.
 node {
-  calculator: "FaceRendererCpu"
-  input_stream: "IMAGE:throttled_input_video"
+  calculator: "FaceRendererCpuSingle"
+  input_stream: "IMAGE:throttled_input_video_cpu"
   input_stream: "LANDMARKS:multi_face_landmarks"
-  output_stream: "IMAGE:output_video"
+  output_stream: "IMAGE:output_video_cpu"
+}
+
+# Defines side packets for further use in the graph.
+node {
+  calculator: "ImageFrameToGpuBufferCalculator"
+  input_stream: "output_video_cpu"
+  output_stream: "output_video"
 }
