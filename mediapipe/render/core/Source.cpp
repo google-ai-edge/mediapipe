@@ -141,7 +141,7 @@ void Source::updateTargets(float frameTime) {
         target->setInputFramebuffer(_framebuffer, _outputRotation, _targets[target]);
     }
 
-    for(auto& it : _targets){
+    for(auto& it : _targets) {
         Target* target = it.first;
         if (target == NULL) {
             return;

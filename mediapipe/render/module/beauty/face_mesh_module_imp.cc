@@ -1,4 +1,5 @@
 #include "face_mesh_module_imp.h"
+#include "mediapipe/render/core/Context.hpp"
 
 static const char* kNumFacesInputSidePacket = "num_faces";
 static const char* kLandmarksOutputStream = "multi_face_landmarks";
@@ -113,7 +114,7 @@ namespace Opipe
                 _render = nullptr;
             });
         }
-        
+        delete _context;
         _context = nullptr;
 
 
@@ -121,12 +122,16 @@ namespace Opipe
 
     void FaceMeshModuleIMP::suspend()
     {
-        _render->suspend();
+        if (_render) {
+            _render->suspend();
+        }
     }
 
     void FaceMeshModuleIMP::resume()
     {
-        _render->resume();
+        if (_render) {
+            _render->resume();
+        }
     }
 
     bool FaceMeshModuleIMP::init(void *env, void *binaryData,
@@ -139,11 +144,10 @@ namespace Opipe
         config.ParseFromArray(binaryData, size);
         _olaContext = new OlaContext();
         _context = _olaContext->glContext();
-        _render = new FaceMeshBeautyRender(_context);
-
-    #if defined(__ANDROID__)
-        _context->initEGLContext(env);
-    #endif
+#if defined(__ANDROID__)
+    _context->initEGLContext(env);
+#endif
+        
 
         _dispatch = std::make_unique<OpipeDispatch>(_context, nullptr, nullptr);
 
@@ -155,6 +159,13 @@ namespace Opipe
         _graph->addFrameOutputStream(kOutputVideo, MPPPacketTypePixelBuffer);
 #endif
         _isInit = true;
+        if (_render == nullptr) {
+            _dispatch->runSync([&] {
+                if (_render == nullptr) {
+                    _render = new FaceMeshBeautyRender(_context);
+                }
+            });
+        }
 
         return true;
     }
@@ -162,17 +173,17 @@ namespace Opipe
     void FaceMeshModuleIMP::setLandmark(NormalizedLandmarkList landmark)
     {
         _lastLandmark = std::move(landmark);
-        if (_lastLandmark.landmark_size() == 0) {
-#if defined(__APPLE__)
-            NSLog(@"没有人脸");
-#endif
-        }
-        for (int i = 0; i < _lastLandmark.landmark_size(); ++i) {
-#if defined(__APPLE__)
-            NSLog(@"######## Set Landmark[%d]: (%f, %f, %f)", i, _lastLandmark.landmark(i).x(),
-                  _lastLandmark.landmark(i).y(), _lastLandmark.landmark(i).z());
-#endif
-        }
+//        if (_lastLandmark.landmark_size() == 0) {
+//#if defined(__APPLE__)
+//            NSLog(@"没有人脸");
+//#endif
+//        }
+//        for (int i = 0; i < _lastLandmark.landmark_size(); ++i) {
+//#if defined(__APPLE__)
+//            NSLog(@"######## Set Landmark[%d]: (%f, %f, %f)", i, _lastLandmark.landmark(i).x(),
+//                  _lastLandmark.landmark(i).y(), _lastLandmark.landmark(i).z());
+//#endif
+//        }
     }
 
     void FaceMeshModuleIMP::startModule()
@@ -233,16 +244,29 @@ namespace Opipe
         {
             return textureInfo;
         }
-
+        if (_render == nullptr) {
+            _dispatch->runSync([&] {
+                if (_render == nullptr) {
+                    _render = new FaceMeshBeautyRender(_context);
+                }
+            });
+        }
+        
+        
         _dispatch->runSync([&] {
-            textureInfo = _render->renderTexture(inputTexture);
+//            GLsync sync;
+//            _dispatch->runAsync([&] {
+//                _render->renderTexture(inputTexture);
+//                sync = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
+//                glFlush();
+//            });
+//            glWaitSync(sync, 0, GL_TIMEOUT_IGNORED);
+//            glDeleteSync(sync);
+            _render->renderTexture(inputTexture);
         });
-
+        
+        textureInfo = _render->outputRenderTexture(inputTexture);
         return textureInfo;
     }
-
-    // OlaContext* currentContext() {
-    //     return _olaContext;
-    // }
 
 }

@@ -80,6 +80,30 @@ namespace Opipe
         virtual TextureInfo renderTexture(TextureInfo inputTexture) override;
         
         virtual void setLandmark(NormalizedLandmarkList landmark);
+        
+        /// 磨皮
+        float getSmoothing() override {
+            return _render->getSmoothing();
+        }
+        
+        /// 美白
+        float getWhitening() override {
+            return _render->getWhitening();
+        }
+        
+        
+        /// 磨皮
+        /// @param smoothing 磨皮 0.0 - 1.0
+        void setSmoothing(float smoothing) {
+            _render->setSmoothing(smoothing);
+        }
+        
+        
+        /// 美白
+        /// @param whitening 美白 0.0 - 1.0
+        void setWhitening(float whitening) {
+            _render->setWhitening(whitening);
+        }
 
     private:
         std::unique_ptr<OpipeDispatch> _dispatch;

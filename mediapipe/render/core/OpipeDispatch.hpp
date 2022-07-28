@@ -25,7 +25,7 @@ namespace Opipe {
     public:
         void runSync(std::function<void(void)> func, Context::ContextType type = Context::GPUImageContext);
         void runAsync(std::function<void(void)> func, Context::ContextType type = Context::GPUImageContext,
-                      bool async = false);
+                      bool async = true);
 
         void setGLThreadDispatch(GLThreadDispatch *glDispatch){
             _glThreadDispatch = glDispatch;

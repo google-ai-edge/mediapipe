@@ -14,10 +14,17 @@ typedef struct {
 
 @interface OlaFaceUnity : NSObject
 
+@property (nonatomic) CGFloat whiten;
+@property (nonatomic) CGFloat smooth;
+
 
 + (instancetype)sharedInstance;
 
-- (void)currentContext;
+- (EAGLContext *)currentContext;
+
+- (void)resume;
+
+- (void)suspend;
 
 // 算法输入
 - (void)processVideoFrame:(CVPixelBufferRef)pixelbuffer

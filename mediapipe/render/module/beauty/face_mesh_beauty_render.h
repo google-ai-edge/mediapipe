@@ -15,7 +15,9 @@ namespace Opipe {
 
             void resume();
 
-            TextureInfo renderTexture(TextureInfo inputTexture);
+            void renderTexture(TextureInfo inputTexture);
+        
+            TextureInfo outputRenderTexture(TextureInfo inputTexture);
 
             /// 磨皮
             float getSmoothing();

@@ -21,6 +21,10 @@ namespace Opipe {
             _mix = mix;
         }
         
+        void setInputFramebuffer(Framebuffer* framebuffer,
+                                 RotationMode rotationMode,
+                                 int texIdx, bool ignoreForPrepared) override;
+        
     public:
         AlphaBlendFilter(Context *context);
         virtual ~AlphaBlendFilter() {};

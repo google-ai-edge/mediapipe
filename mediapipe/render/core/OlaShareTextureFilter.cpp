@@ -97,36 +97,24 @@ namespace Opipe {
             rotatedFramebufferHeight = int(rotatedFramebufferHeight * _framebufferScale);
         }
         
-
+        
         if (_framebuffer != nullptr && (_framebuffer->getWidth() != rotatedFramebufferWidth ||
                                         _framebuffer->getHeight() != rotatedFramebufferHeight)) {
-            _framebuffer = nullptr;
+            _framebuffer = 0;
         }
         
-        if (_framebuffer == nullptr || (_framebuffer && _framebuffer->getTexture() != targetTextureId)) {
-            if (_framebuffer) {
-                delete _framebuffer;
-                _framebuffer = 0;
-            }
-            if (targetTextureId == -1) {
-                _framebuffer = getContext()->getFramebufferCache()->
-                fetchFramebuffer(_context,
-                                 rotatedFramebufferWidth,
-                                 rotatedFramebufferHeight);
-                _framebuffer->lock();
-                targetTextureId = _framebuffer->getTexture();
-            } else {
-                _framebuffer = getContext()->getFramebufferCache()->
-                fetchFramebufferUseTextureId(_context,
-                                             rotatedFramebufferWidth,
-                                             rotatedFramebufferHeight,
-                                             targetTextureId,
-                                             false,
-                                             targetTextureAttr);
-                _framebuffer->lock();
-                _targetFramebuffer = true;
-            }
-            
+        if (_framebuffer == nullptr || _framebuffer->isDealloc) {
+            _framebuffer = getContext()->getFramebufferCache()->
+            fetchFramebuffer(_context,
+                             rotatedFramebufferWidth,
+                             rotatedFramebufferHeight,
+                             false,
+                             targetTextureAttr);
+            _framebuffer->lock();
+        }
+
+        if (_framebuffer) {
+            targetTextureId = _framebuffer->getTexture();
         }
         
         proceed(frameTime);

@@ -29,11 +29,7 @@ namespace Opipe
 
     FaceMeshBeautyRender::~FaceMeshBeautyRender()
     {
-        if (_lutImage)
-        {
-            _lutImage->release();
-            _lutImage = nullptr;
-        }
+       
         _olaBeautyFilter->removeAllTargets();
         if (_olaBeautyFilter)
         {
@@ -46,22 +42,38 @@ namespace Opipe
             _outputFilter->release();
             _outputFilter = nullptr;
         }
+        
+        if (_lutImage)
+        {
+            auto *framebuffer = _lutImage->getFramebuffer();
+            delete framebuffer;
+            _lutImage->release();
+            _lutImage = nullptr;
+        }
+        
+        if (_inputFramebuffer) {
+            delete _inputFramebuffer;
+            _inputFramebuffer = nullptr;
+        }
+        
+        _context->getFramebufferCache()->purge();
     }
 
     void FaceMeshBeautyRender::suspend()
     {
-        _isRendering = true;
+        _isRendering = false;
     }
 
     void FaceMeshBeautyRender::resume()
     {
-        _isRendering = false;
+        _isRendering = true;
     }
 
-    TextureInfo FaceMeshBeautyRender::renderTexture(TextureInfo inputTexture)
-    {
-        TextureInfo outputTexture;
-        outputTexture.frameTime = inputTexture.frameTime;
+    void FaceMeshBeautyRender::renderTexture(TextureInfo inputTexture)
+    {   
+        if (!_isRendering) {
+            return;
+        }
         if (!_inputFramebuffer)
         {
             _inputFramebuffer = new Framebuffer(_context, inputTexture.width, inputTexture.height,
@@ -77,10 +89,20 @@ namespace Opipe
                                                 Framebuffer::defaultTextureAttribures,
                                                 inputTexture.textureId);
         }
-
-        _olaBeautyFilter->setInputFramebuffer(_inputFramebuffer);
+        _inputFramebuffer->lock();
+        _olaBeautyFilter->setInputFramebuffer(_inputFramebuffer, NoRotation, 0, true);
         _olaBeautyFilter->update(inputTexture.frameTime);
+        _inputFramebuffer->unlock();
+    }
 
+    TextureInfo FaceMeshBeautyRender::outputRenderTexture(TextureInfo inputTexture)
+    {
+        if (_outputFilter == nullptr) {
+            return inputTexture;
+        }
+        
+        TextureInfo outputTexture;
+        outputTexture.frameTime = inputTexture.frameTime;
         auto *outputFramebuffer = _outputFilter->getFramebuffer();
         if (outputFramebuffer) {
             outputTexture.width = outputFramebuffer->getWidth();
@@ -97,8 +119,6 @@ namespace Opipe
             outputTexture.textureId = inputTexture.textureId;
             outputTexture.ioSurfaceId = inputTexture.ioSurfaceId;
         }
-        
-
         return outputTexture;
     }
 

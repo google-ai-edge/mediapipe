@@ -14,10 +14,15 @@ namespace Opipe
         bool init(Context *context);
         void setStep(float step);
         virtual bool proceed(float frameTime = 0, bool bUpdateTargets = true) override;
+        virtual void update(float frameTime) override;
 
     public:
         LUTFilter(Context *context);
-        ~LUTFilter(){};
+        ~LUTFilter()
+        {
+            delete _framebuffer;
+            _framebuffer = nullptr;
+        };
         float _step;
     };
 

@@ -50,6 +50,10 @@ AVCaptureAudioDataOutputSampleBufferDelegate> {
 
 @implementation ViewController
 
+- (void)dealloc {
+    [[OlaFaceUnity sharedInstance] dispose];
+}
+
 - (void)viewDidLoad {
     [super viewDidLoad];
     self.pixelFormatType = kCVPixelFormatType_420YpCbCr8BiPlanarFullRange;
@@ -74,10 +78,15 @@ AVCaptureAudioDataOutputSampleBufferDelegate> {
 
 }
 
+- (void)viewWillDisappear:(BOOL)animated {
+    [[OlaFaceUnity sharedInstance] suspend];
+}
+
 - (void)viewWillAppear:(BOOL)animated
 {
     [super viewWillAppear:animated];
     [self startCapture];
+    [[OlaFaceUnity sharedInstance] resume];
 }
 
 - (void)setupSession {
@@ -132,8 +141,8 @@ AVCaptureAudioDataOutputSampleBufferDelegate> {
            dimensions.height ==[[outputSettings objectForKey:@"Height"]  intValue]) {
             if (YES == [self.captureDevice lockForConfiguration:NULL] ) {
                 self.captureDevice.activeFormat = vFormat;
-                [self.captureDevice setActiveVideoMinFrameDuration:CMTimeMake(1,24)];
-                [self.captureDevice setActiveVideoMaxFrameDuration:CMTimeMake(1,24)];
+                [self.captureDevice setActiveVideoMinFrameDuration:CMTimeMake(1,30)];
+                [self.captureDevice setActiveVideoMaxFrameDuration:CMTimeMake(1,30)];
                 [self.captureDevice unlockForConfiguration];
             }
         }
@@ -142,10 +151,12 @@ AVCaptureAudioDataOutputSampleBufferDelegate> {
 
 - (void)setupRenderView {
     if(!self.renderView){
-        _renderView = [[OlaMTLCameraRenderView alloc] initWithFrame:self.view.bounds];
+        _renderView = [[OlaMTLCameraRenderView alloc] initWithFrame:self.view.bounds shareContext:[[OlaFaceUnity sharedInstance] currentContext]];
         _renderView.cameraDelegate = self;
+        _renderView.preferredFramesPerSecond = 30;
         [self.renderView setBackgroundColor:[UIColor colorWithRed:0.9f green:0.9f blue:0.9f alpha:1.0f]];
         [self.view addSubview:self.renderView];
+        [self.view sendSubviewToBack:self.renderView];
     }
 }
 
@@ -249,8 +260,15 @@ AVCaptureAudioDataOutputSampleBufferDelegate> {
 {
     
     [[OlaFaceUnity sharedInstance] processVideoFrame:onScreenTexture.renderTarget timeStamp:frameTime];
-    
-    return onScreenTexture.surfaceID;
+    FaceTextureInfo inputTexture;
+    inputTexture.width = onScreenTexture.size.width;
+    inputTexture.height = onScreenTexture.size.height;
+    inputTexture.textureId = onScreenTexture.openGLTexture;
+    inputTexture.ioSurfaceId = onScreenTexture.surfaceID;
+    inputTexture.frameTime = frameTime;
+    FaceTextureInfo result = [[OlaFaceUnity sharedInstance] render:inputTexture];
+    NSLog(@"result ioSurfaceId:%d", result.ioSurfaceId);
+    return result.ioSurfaceId;
     
 }
 
@@ -269,6 +287,12 @@ AVCaptureAudioDataOutputSampleBufferDelegate> {
 - (void)draw:(NSTimeInterval)frameTime
 {
     
+}
+
+- (IBAction)beautyChanged:(UISlider *)sender
+{
+    [OlaFaceUnity sharedInstance].whiten = sender.value;
+    [OlaFaceUnity sharedInstance].smooth = sender.value;
 }
 
 @end

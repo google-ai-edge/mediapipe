@@ -38,11 +38,11 @@ namespace Opipe {
     .format = GL_RGBA,
     .type = GL_UNSIGNED_BYTE
     };
-    
+
     Framebuffer::Framebuffer() {
         
     }
-    
+
     Framebuffer::Framebuffer(Context *context, int width, int height,
                              const TextureAttributes textureAttributes, GLuint textureId)
     : _texture(-1), _hasFB(true), _framebuffer(-1), _context(context) {
@@ -56,7 +56,7 @@ namespace Opipe {
         _generateFramebuffer(false);
         _context->_framebuffers.push_back(this);
     }
-    
+
     Framebuffer::Framebuffer(Context *context, int width, int height,
                              bool onlyGenerateTexture/* = false*/,
                              const TextureAttributes textureAttributes) : _texture(-1),
@@ -74,7 +74,7 @@ namespace Opipe {
         
         _context->_framebuffers.push_back(this);
     }
-    
+
     Framebuffer::Framebuffer(Context *context, int width, int height, GLuint handle,
                              const TextureAttributes textureAttributes) : _texture(handle),
     _framebuffer(-1),
@@ -83,7 +83,7 @@ namespace Opipe {
         _height = height;
         _textureAttributes = textureAttributes;
     }
-    
+
     Framebuffer::~Framebuffer() {
         if (isDealloc) {
             return;
@@ -124,16 +124,16 @@ namespace Opipe {
         isDealloc = true;
         
     }
-    
+
     void Framebuffer::active() {
         CHECK_GL(glBindFramebuffer(GL_FRAMEBUFFER, _framebuffer));
         CHECK_GL(glViewport(0, 0, _width, _height));
     }
-    
+
     void Framebuffer::inactive() {
         CHECK_GL(glBindFramebuffer(GL_FRAMEBUFFER, 0));
     }
-    
+
     void Framebuffer::lock(std::string lockKey) {
         if (lockKey == "Unknow") {
             Log("Framebuffer LOCK", "未知锁 【hasCode :%s】", _hashCode.c_str());
@@ -142,17 +142,17 @@ namespace Opipe {
         }
         
         _lockKey = lockKey;
-        _framebufferRetainCount = 1;
+        _framebufferRetainCount++;
         Log("Framebuffer LOCK", "lock retainCount == :%d lockKey:%s 【framebufferCode:%s】",
             _framebufferRetainCount,
             lockKey.c_str(), _hashCode.c_str());
     }
-    
+
     void Framebuffer::unlock(std::string lockKey) {
         if (_framebufferRetainCount > 0) {
             _framebufferRetainCount--;
         } else {
-//            assert("过度释放 请检查"); 此处不要崩溃，引用计数管理Framebuffer不会导致过度释放。
+    //            assert("过度释放 请检查"); 此处不要崩溃，引用计数管理Framebuffer不会导致过度释放。
         }
         
         if (lockKey != _lockKey) {
@@ -169,26 +169,26 @@ namespace Opipe {
     }
 
     void Framebuffer::resetRetainCount() {
-        _framebufferRetainCount = 1;
+        _framebufferRetainCount = 0;
     }
-    
+
     void *Framebuffer::frameBufferGetBaseAddress() {
         //#if HARDWARE_BUFFER_ENABLE
         //        return _hardwareBufferReadData;
         //#endif
         return NULL;
     }
-    
+
     int Framebuffer::getBytesPerRow() {
         return _width * 4;
     }
-    
-    //#if defined(__ANDROID__) || defined(ANDROID)
+
+    //#if PLATFORM == PLATFORM_ANDROID
     //    AHardwareBuffer_Desc& Framebuffer::getAHardwareBufferDesc(){
     //        return _graphicBufDes;
     //    }
     //#endif
-    
+
     void Framebuffer::_generateTexture() {
         CHECK_GL(glGenTextures(1, &_texture));
         
@@ -203,8 +203,8 @@ namespace Opipe {
         // TODO: Handle mipmaps
         CHECK_GL(glBindTexture(GL_TEXTURE_2D, 0));
     }
-    
-    
+
+
     void Framebuffer::_generateFramebuffer(bool needGenerateTexture) {
         
         CHECK_GL(glGenFramebuffers(1, &_framebuffer));
@@ -229,9 +229,9 @@ namespace Opipe {
         
         CHECK_GL(glBindTexture(GL_TEXTURE_2D, 0));
         CHECK_GL(glBindFramebuffer(GL_FRAMEBUFFER, 0));
-//        Opipe::Log("QuarameraGL", "_generateFramebuffer %d ", _framebuffer);
+    //        Opipe::Log("QuarameraGL", "_generateFramebuffer %d ", _framebuffer);
     }
-    
+
     Context *Framebuffer::getContext() {
         if (_context) {
             return _context;

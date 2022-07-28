@@ -91,7 +91,6 @@ Framebuffer* FramebufferCache::fetchFramebuffer(Context *context,
                 Log("Framebuffer 【命中缓存】", "hashcode:%s count:%d",
                     framebufferHashCodeKey.first.c_str(),
                     framebuffer->framebufferRetainCount());
-                    framebuffer->resetRetainCount();
                 return framebuffer;
             }
         }

@@ -108,7 +108,7 @@ namespace Opipe {
     }
 
     void UnSharpMaskFilter::setIntensity(float intensity) {
-        ((UnSharpMaskFilter *)_unsharpMaskFilter)->setIntensity(intensity);
+        ((UnSharpFilter *)_unsharpMaskFilter)->setIntensity(intensity);
     }
 
     void UnSharpMaskFilter::setBlurRadiusInPixel(float blurRadius,

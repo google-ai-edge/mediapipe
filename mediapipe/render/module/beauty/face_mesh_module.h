@@ -109,8 +109,25 @@ namespace Opipe
                 virtual void startModule() = 0;
 
                 virtual void stopModule() = 0;
+            
+                /// 磨皮
+                virtual float getSmoothing() = 0;
+                
+                /// 美白
+                virtual float getWhitening() = 0;
+                
+                
+                /// 磨皮
+                /// @param smoothing 磨皮 0.0 - 1.0
+                virtual void setSmoothing(float smoothing) = 0;
+                
+                
+                /// 美白
+                /// @param whitening 美白 0.0 - 1.0
+                virtual void setWhitening(float whitening) = 0;
 
                 virtual TextureInfo renderTexture(TextureInfo inputTexture) = 0;
+            
 
 #if defined(__APPLE__)
                 virtual void processVideoFrame(CVPixelBufferRef pixelbuffer, int64_t timeStamp) = 0;

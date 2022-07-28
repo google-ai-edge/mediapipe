@@ -64,47 +64,79 @@ namespace Opipe {
         if (!FilterGroup::init(context)) {
             return false;
         }
+        _lutFilter = LUTFilter::create(context);
+        _unSharpMaskFilter = UnSharpMaskFilter::create(context);
+        _unSharpMaskFilter->addTarget(_lutFilter, 0);
         
-        _bilateralFilter = BilateralFilter::create(context);
-        addFilter(_bilateralFilter);
-
         _bilateralAdjustFilter = BilateralAdjustFilter::create(context);
         addFilter(_bilateralAdjustFilter);
-        
-        _unSharpMaskFilter = UnSharpMaskFilter::create(context);
-        addFilter(_unSharpMaskFilter);
-
-        _lutFilter = LUTFilter::create(context);
-        _unSharpMaskFilter->addTarget(_lutFilter, 0);
 
         _lookUpGroupFilter = FilterGroup::create(context);
         _lookUpGroupFilter->addFilter(_unSharpMaskFilter);
-
-        _alphaBlendFilter = AlphaBlendFilter::create(context);
-        _faceDistortFilter = FaceDistortionFilter::create(context);
         
-
-        _bilateralFilter->addTarget(_bilateralAdjustFilter, 1)->
-        addTarget(_alphaBlendFilter, 0);
-
-        _bilateralAdjustFilter->addTarget(_lookUpGroupFilter)->
-        addTarget(_alphaBlendFilter, 1)->addTarget(_faceDistortFilter);
- 
+        _alphaBlendFilter = AlphaBlendFilter::create(context);
+//        addFilter(_lookUpGroupFilter);
+//        addFilter(_lutFilter);
+        
+        
+//        setTerminalFilter(_lutFilter);
+        
+        _bilateralFilter = BilateralFilter::create(context);
+        addFilter(_bilateralFilter);
+        
+        _bilateralAdjustFilter->addTarget(_lookUpGroupFilter)->addTarget(_alphaBlendFilter, 1);
+        
+        _bilateralFilter->addTarget(_bilateralAdjustFilter, 1)->addTarget(_alphaBlendFilter, 0);
+        
         _alphaBlendFilter->setMix(0.0);
-
+        
+        setTerminalFilter(_alphaBlendFilter);
+        
+        _bilateralAdjustFilter->setOpacityLimit(0.6);
+        _bilateralFilter->setDistanceNormalizationFactor(2.746);
+        _bilateralFilter->setTexelSpacingMultiplier(2.7);
         _unSharpMaskFilter->setBlurRadiusInPixel(4.0f, true);
         _unSharpMaskFilter->setBlurRadiusInPixel(2.0f, false);
         _unSharpMaskFilter->setIntensity(1.365);
         
-        _bilateralAdjustFilter->setOpacityLimit(0.6);
-        
-        _bilateralFilter->setDistanceNormalizationFactor(2.746);
-        _bilateralFilter->setTexelSpacingMultiplier(2.7);
-
-        setTerminalFilter(_faceDistortFilter);
+//        _bilateralFilter = BilateralFilter::create(context);
+//        addFilter(_bilateralFilter);
+//
+//        _bilateralAdjustFilter = BilateralAdjustFilter::create(context);
+//        addFilter(_bilateralAdjustFilter);
+//
+//        _unSharpMaskFilter = UnSharpMaskFilter::create(context);
+//
+//        _lutFilter = LUTFilter::create(context);
+//        _unSharpMaskFilter->addTarget(_lutFilter, 0);
+//
+//        _lookUpGroupFilter = FilterGroup::create(context);
+//        _lookUpGroupFilter->addFilter(_unSharpMaskFilter);
+//
+//        _alphaBlendFilter = AlphaBlendFilter::create(context);
+//        _faceDistortFilter = FaceDistortionFilter::create(context);
+//
+//
+//        _bilateralFilter->addTarget(_bilateralAdjustFilter, 1)->
+//        addTarget(_alphaBlendFilter, 0);
+//
+//        _bilateralAdjustFilter->addTarget(_lookUpGroupFilter)->
+//        addTarget(_alphaBlendFilter, 1)->addTarget(_faceDistortFilter);
+//
+//        _alphaBlendFilter->setMix(0.8);
+//
+//        _unSharpMaskFilter->setBlurRadiusInPixel(4.0f, true);
+//        _unSharpMaskFilter->setBlurRadiusInPixel(2.0f, false);
+//        _unSharpMaskFilter->setIntensity(1.365);
+//
+//        _bilateralAdjustFilter->setOpacityLimit(0.6);
+//
+//        _bilateralFilter->setDistanceNormalizationFactor(2.746);
+//        _bilateralFilter->setTexelSpacingMultiplier(2.7);
+//
+//        setTerminalFilter(_faceDistortFilter);
 
         std::vector<Vec2> defaultFace;
-
         
         return true;
         
@@ -120,11 +152,10 @@ namespace Opipe {
 
     void OlaBeautyFilter::setLUTImage(SourceImage *lutImage) {
         _lutImage = lutImage;
+        _lutImage->retain();
         if (_lutFilter) {
-            auto *framebuffer = _lutFilter->getFramebuffer();
-            framebuffer->resetRetainCount();
-            _lutImage->retain();
-            _lutImage->addTarget(_lutFilter, 1, true);
+            auto *framebuffer = lutImage->getFramebuffer();
+            _lutFilter->setInputFramebuffer(framebuffer, NoRotation, 1, true);
         }
     }
 
@@ -139,21 +170,38 @@ namespace Opipe {
     }
 
     void OlaBeautyFilter::setSmoothing(float smoothing) {
-        smoothing = smoothing < -1 ? -1 : smoothing;
-        smoothing = smoothing > 1 ? 1 : smoothing;
-        _bilateralAdjustFilter->setOpacityLimit(smoothing);
+        if (_bilateralAdjustFilter == nullptr) {
+            return;
+        }
+        
+        if (smoothing == 0.0) {
+            _bilateralAdjustFilter->setEnable(false);
+        } else {
+            _bilateralAdjustFilter->setEnable(true);
+            _bilateralAdjustFilter->setOpacityLimit(smoothing);
+        }
     }
     
     float OlaBeautyFilter::getSmoothing() {
-        return _bilateralAdjustFilter->getOpacityLimit();
+        if (_bilateralAdjustFilter) {
+            return _bilateralAdjustFilter->getOpacityLimit();
+        }
+        return 0.0;
+        
     }
     
     void OlaBeautyFilter::setWhitening(float whitening) {
-        _alphaBlendFilter->setMix(whitening);
+        if (_alphaBlendFilter) {
+            _alphaBlendFilter->setMix(whitening);
+        }
+        _lutFilter->setStep(whitening);
     }
     
     float OlaBeautyFilter::getWhitening() {
-        return _alphaBlendFilter->getMix();
+        if (_alphaBlendFilter) {
+            return _alphaBlendFilter->getMix();
+        }
+        return 0.0;
     }
 
 }

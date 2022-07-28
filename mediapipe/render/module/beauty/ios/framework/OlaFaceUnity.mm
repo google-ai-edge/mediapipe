@@ -38,7 +38,8 @@
     }
 }
 
-+ (instancetype)sharedInstance {
++ (instancetype)sharedInstance
+{
     static OlaFaceUnity *sharedInstance = nil;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
@@ -49,40 +50,38 @@
 
 - (FaceTextureInfo)render:(FaceTextureInfo)inputTexture
 {
-    TextureInfo rs;
-    rs.ioSurfaceId = inputTexture.ioSurfaceId;
-    if (_face_module) {
-        TextureInfo input;
-        input.width = inputTexture.width;
-        input.height = inputTexture.height;
-        input.ioSurfaceId = inputTexture.ioSurfaceId;
-        input.textureId = inputTexture.textureId;
-        input.frameTime = inputTexture.frameTime;
+    @autoreleasepool {
+        TextureInfo rs;
+        rs.ioSurfaceId = inputTexture.ioSurfaceId;
+        if (_face_module) {
+            TextureInfo input;
+            input.width = inputTexture.width;
+            input.height = inputTexture.height;
+            input.ioSurfaceId = inputTexture.ioSurfaceId;
+            input.textureId = inputTexture.textureId;
+            input.frameTime = inputTexture.frameTime;
 
-        rs = _face_module->renderTexture(input);
-    }
-    FaceTextureInfo result;
-    result.width = rs.width;
-    result.height = rs.height;
-    result.ioSurfaceId = rs.ioSurfaceId;
-    result.textureId = rs.textureId;
-    result.frameTime = rs.frameTime;
-
-    return result;
-}
-
-// - (EAGLContext *)currentContext
-// {
-//     if (_face_module) {
-//         return _face_module->currentContext()->currentContext();
-//     }
-// }
-
-- (void)currentContext {
-    if (_face_module) {
-         _face_module->currentContext()->currentContext();
+            rs = _face_module->renderTexture(input);
+        }
+        FaceTextureInfo result;
+        result.width = rs.width;
+        result.height = rs.height;
+        result.ioSurfaceId = rs.ioSurfaceId;
+        result.textureId = rs.textureId;
+        result.frameTime = rs.frameTime;
+        return result;
     }
 }
+   
+
+   
+
+ - (EAGLContext *)currentContext
+ {
+     if (_face_module) {
+         return _face_module->currentContext()->currentContext();
+     }
+ }
 
 - (void)processVideoFrame:(CVPixelBufferRef)pixelbuffer
                 timeStamp:(int64_t)timeStamp;
@@ -92,6 +91,50 @@
     }
     
     _face_module->processVideoFrame(pixelbuffer, timeStamp);
+}
+
+- (CGFloat)whiten
+{
+    return _face_module->getWhitening();
+}
+
+- (CGFloat)smooth
+{
+    return _face_module->getSmoothing();
+}
+
+- (void)setWhiten:(CGFloat)whiten
+{
+    _face_module->setWhitening(whiten);
+}
+
+- (void)setSmooth:(CGFloat)smooth
+{
+    _face_module->setSmoothing(smooth);
+}
+
+- (void)resume
+{
+    if (!_face_module) {
+        [self initModule];
+    }
+    _face_module->resume();
+}
+
+- (void)suspend
+{
+    if (!_face_module) {
+        [self initModule];
+    }
+    _face_module->suspend();
+}
+
+- (void)dispose
+{
+    _face_module->stopModule();
+    _face_module->suspend();
+    delete _face_module;
+    _face_module = nullptr;
 }
 
 @end

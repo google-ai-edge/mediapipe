@@ -79,6 +79,7 @@ namespace Opipe
             if (factor7 < 0.999)
             {
                 lowp vec3 mix116Color = mix(inputColor.rgb, mix115Color.rgb, factor7);
+//                lowp vec3 mix116Color = vec3(1.0);
                 mix12Color = mix(mix116Color.rgb, blurColor.rgb, opacityLimit);
             }
             else

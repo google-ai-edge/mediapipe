@@ -36,6 +36,11 @@ namespace Opipe {
         return true;
     }
 
+    void AlphaBlendFilter::setInputFramebuffer(Framebuffer* framebuffer,
+                                               RotationMode rotationMode,
+                                               int texIdx, bool ignoreForPrepared) {
+        Filter::setInputFramebuffer(framebuffer, rotationMode, texIdx, ignoreForPrepared);
+    }
 
     bool AlphaBlendFilter::proceed(float frameTime,
                                           bool bUpdateTargets/* = true*/) {
