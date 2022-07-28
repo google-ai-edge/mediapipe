@@ -38,6 +38,17 @@ cc_library(
     ],
 )
 
+
+mediapipe_simple_subgraph(
+    name = "face_renderer_gpu",
+    graph = "face_renderer_gpu.pbtxt",
+    register_as = "FaceRendererGpu",
+    deps = [
+        ":renderer_calculators",
+    ],
+)
+
+
 mediapipe_simple_subgraph(
     name = "face_renderer_cpu",
     graph = "face_renderer_cpu.pbtxt",

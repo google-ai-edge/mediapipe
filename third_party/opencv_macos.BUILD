@@ -9,7 +9,7 @@ load("@bazel_skylib//lib:paths.bzl", "paths")
 
 # The path to OpenCV is a combination of the path set for "macos_opencv"
 # in the WORKSPACE file and the prefix here.
-PREFIX = "opencv@3/3.4.16_3/"
+PREFIX = "opt/opencv@3"
 
 cc_library(
     name = "opencv",

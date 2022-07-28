@@ -190,16 +190,17 @@ namespace mediapipe
         cc->Inputs().HasTag(kFaceBoxTag) &&
         !cc->Inputs().Tag(kFaceBoxTag).IsEmpty())
     {
-      const std::vector<std::unordered_map<std::string, cv::Mat>> &mask_vec =
-          cc->Inputs().Tag(kMaskTag).Get<std::vector<std::unordered_map<std::string, cv::Mat>>>();
+        const std::vector<std::unordered_map<std::string, cv::Mat>> &mask_vec =
+            cc->Inputs().Tag(kMaskTag).Get<std::vector<std::unordered_map<std::string, cv::Mat>>>();
 
-    const std::vector<std::tuple<double, double, double, double>> &face_boxes =
-        cc->Inputs().Tag(kFaceBoxTag).Get<std::vector<std::tuple<double, double, double, double>>>();
+        const std::vector<std::tuple<double, double, double, double>> &face_boxes =
+            cc->Inputs().Tag(kFaceBoxTag).Get<std::vector<std::tuple<double, double, double, double>>>();
 
-    if (mask_vec.size() > 0 && face_boxes.size() > 0)
-    {
-      for (int i = 0; i < mask_vec.size(); i++)
-        MP_RETURN_IF_ERROR(SmoothFace(cc, mask_vec[i], face_boxes[i]));
+        if (mask_vec.size() > 0 && face_boxes.size() > 0)
+        {
+          for (int i = 0; i < mask_vec.size(); i++)
+            MP_RETURN_IF_ERROR(SmoothFace(cc, mask_vec[i], face_boxes[i]));
+        }
     }
     // Copy the rendered image to output.
     uchar *image_mat_ptr = image_mat->data;
