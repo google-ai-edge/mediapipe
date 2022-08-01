@@ -341,8 +341,8 @@ bool Filter::proceed(float frameTime, bool bUpdateTargets/* = true*/) {
         CHECK_GL(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0));
         filter_externDraw();
         _framebuffer->inactive();
-        Log("Filter", "%s渲染完毕，准备开始Unlock Framebuffer:%s", typeid(*this).name(),
-            _framebuffer->_hashCode.c_str());
+//        Log("Filter", "%s渲染完毕，准备开始Unlock Framebuffer:%s", typeid(*this).name(),
+//            _framebuffer->_hashCode.c_str());
 #if DEBUG
 		_framebuffer->unlock(typeid(*this).name());
 #else
@@ -500,6 +500,43 @@ void Filter::update(float frameTime) {
     }
 //    _context->getFramebufferCache()->returnFramebuffer(_framebuffer);
     _framebuffer = 0;
+}
+
+bool Filter::getProperty(const std::string& name, std::vector<Vec2>& retValue) {
+    Property* property = _getProperty(name);
+    if (!property) return false;
+    retValue = ((Vec2ArrayProperty*)property)->value;
+    return true;
+}
+
+bool Filter::registerProperty(const std::string& name,
+                              std::vector<Vec2> defaultValue,
+                              const std::string& comment/* = ""*/,
+                              std::function<void(std::vector<Vec2>&)> setCallback/* = 0*/) {
+    if (hasProperty(name)) return false;
+    Vec2ArrayProperty property;
+    property.type = "vec2Array";
+    property.value = defaultValue;
+    property.comment = comment;
+    property.setCallback = setCallback;
+    _vec2ArrayProperties[name] = property;
+    return true;
+}
+
+bool Filter::setProperty(const std::string& name, std::vector<Vec2> value) {
+    Property* rawProperty = _getProperty(name);
+    if (!rawProperty) {
+        Log("WARNING", "Filter::setProperty invalid property %s", name.c_str());
+        return false;
+    } else if (rawProperty->type != "vec2Array") {
+        Log("WARNING", "Filter::setProperty The property type is expected to be %s", rawProperty->type.c_str());
+        return false;
+    }
+    Vec2ArrayProperty* property = ((Vec2ArrayProperty *)rawProperty);
+    property->value = value;
+    if (property->setCallback)
+        property->setCallback(value);
+    return true;
 }
 
 bool Filter::registerProperty(const std::string& name, int defaultValue, const std::string& comment/* = ""*/, std::function<void(int&)> setCallback/* = 0*/) {

@@ -18,6 +18,7 @@ namespace Opipe
         uniform int count;
         uniform float eye;
         uniform float slim;
+        uniform float nose;
         uniform int debug;
         void main() {
             vec2 uv = texCoord.xy;
@@ -52,6 +53,16 @@ namespace Opipe
                     {
                         float dist = 1.0 - d;
                         float delta = scale[i] * dist * slim;
+                        float deltaScale = smoothstep(u_min[i], u_max[i], dist);
+                        float directionX = cos(angle[i]) * deltaScale;
+                        float directionY = sin(angle[i]) * deltaScale / (3.0 / 4.0 * aspectRatio);
+                        uv = vec2(textureCoordinateToUse.x - (delta * directionX),
+                                  textureCoordinateToUse.y - (delta * directionY));
+                    }
+                    else if (types[i] == 3)
+                    {
+                        float dist = 1.0 - d;
+                        float delta = scale[i] * dist * nose;
                         float deltaScale = smoothstep(u_min[i], u_max[i], dist);
                         float directionX = cos(angle[i]) * deltaScale;
                         float directionY = sin(angle[i]) * deltaScale / (3.0 / 4.0 * aspectRatio);
@@ -228,12 +239,12 @@ namespace Opipe
 
             _filterProgram->setUniformValue("eye", _eye);
             _filterProgram->setUniformValue("slim", _slim);
-
+            _filterProgram->setUniformValue("nose", _nose);
             //左眼放大
             {
-                Vector2 point1 = Vector2(_facePoints[75].x, _facePoints[75].y);
-                Vector2 point2 = Vector2(_facePoints[79].x, _facePoints[79].y);
-                Vector2 point3 = Vector2(_facePoints[65].x, _facePoints[65].y);
+                Vector2 point1 = Vector2(_facePoints[362].x, _facePoints[362].y);
+                Vector2 point2 = Vector2(_facePoints[263].x, _facePoints[263].y);
+                Vector2 point3 = Vector2(_facePoints[417].x, _facePoints[417].y);
                 Vector2 center = point1.getCenter(point2);
                 float distance = center.distance(point3);
                 addPoint(center, distance / 2, distance / 2, 0.3, 1, 0.0f, 0.0f, 1);
@@ -241,9 +252,9 @@ namespace Opipe
 
             //右眼放大
             {
-                Vector2 point1 = Vector2(_facePoints[66].x, _facePoints[66].y);
-                Vector2 point2 = Vector2(_facePoints[70].x, _facePoints[70].y);
-                Vector2 point3 = Vector2(_facePoints[55].x, _facePoints[55].y);
+                Vector2 point1 = Vector2(_facePoints[33].x, _facePoints[33].y);
+                Vector2 point2 = Vector2(_facePoints[133].x, _facePoints[133].y);
+                Vector2 point3 = Vector2(_facePoints[193].x, _facePoints[193].y);
                 Vector2 center = point1.getCenter(point2);
                 float distance = center.distance(point3);
                 addPoint(center, distance / 2, distance / 2, 0.3, 1, 0.0f, 0.0f, 1);
@@ -251,10 +262,10 @@ namespace Opipe
             //瘦左脸
             {
 
-                Vector2 point1 = Vector2(_facePoints[11].x, _facePoints[11].y);
-                Vector2 point2 = Vector2(_facePoints[60].x, _facePoints[60].y);
-                Vector2 point3 = Vector2(_facePoints[4].x, _facePoints[4].y);
-                Vector2 point4 = Vector2(_facePoints[16].x, _facePoints[16].y);
+                Vector2 point1 = Vector2(_facePoints[136].x, _facePoints[136].y);
+                Vector2 point2 = Vector2(_facePoints[19].x, _facePoints[19].y);
+                Vector2 point3 = Vector2(_facePoints[234].x, _facePoints[234].y);
+                Vector2 point4 = Vector2(_facePoints[152].x, _facePoints[152].y);
 
                 float angle = getRadius(point2, point1);
                 addPoint(point1, point1.distance(point3), point1.distance(point4), 0.02, 2, angle,
@@ -263,10 +274,10 @@ namespace Opipe
             }
             //瘦右脸
             {
-                Vector2 point1 = Vector2(_facePoints[21].x, _facePoints[21].y);
-                Vector2 point2 = Vector2(_facePoints[60].x, _facePoints[60].y);
-                Vector2 point3 = Vector2(_facePoints[28].x, _facePoints[28].y);
-                Vector2 point4 = Vector2(_facePoints[16].x, _facePoints[16].y);
+                Vector2 point1 = Vector2(_facePoints[379].x, _facePoints[379].y);
+                Vector2 point2 = Vector2(_facePoints[19].x, _facePoints[19].y);
+                Vector2 point3 = Vector2(_facePoints[454].x, _facePoints[454].y);
+                Vector2 point4 = Vector2(_facePoints[152].x, _facePoints[152].y);
 
                 float angle = getRadius(point2, point1);
                 addPoint(point1, point1.distance(point3), point1.distance(point4), 0.02, 2, angle,

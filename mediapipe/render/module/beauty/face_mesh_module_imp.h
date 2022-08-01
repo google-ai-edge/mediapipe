@@ -8,6 +8,12 @@
 #include "face_mesh_module.h"
 #include "face_mesh_beauty_render.h"
 
+#define TestTemplateFace 0
+#if TestTemplateFace
+#include "mediapipe/render/core/SourceImage.hpp"
+#endif
+
+
 namespace Opipe
 {
     class FaceMeshModuleIMP;
@@ -32,7 +38,6 @@ namespace Opipe
         
     private:
         int64_t _last_landmark_ts = 0;
-        int64_t _last_video_ts = 0;
         bool _hasFace = false;
         NormalizedLandmarkList _lastLandmark;
         NormalizedLandmarkList _emptyLandmark;
@@ -79,7 +84,7 @@ namespace Opipe
 
         virtual TextureInfo renderTexture(TextureInfo inputTexture) override;
         
-        virtual void setLandmark(NormalizedLandmarkList landmark);
+        virtual void setLandmark(NormalizedLandmarkList landmark, int64_t timestamp);
         
         /// 磨皮
         float getSmoothing() override {
@@ -104,6 +109,10 @@ namespace Opipe
         void setWhitening(float whitening) {
             _render->setWhitening(whitening);
         }
+        
+        OpipeDispatch* currentDispatch() {
+            return _dispatch.get();
+        }
 
     private:
         std::unique_ptr<OpipeDispatch> _dispatch;
@@ -114,6 +123,10 @@ namespace Opipe
         std::shared_ptr<FaceMeshCallFrameDelegate> _delegate;
         FaceMeshBeautyRender *_render = nullptr;
         OlaContext *_olaContext = nullptr;
+        
+#if TestTemplateFace
+        SourceImage *_templateFace = nullptr;
+#endif
     };
 }
 #endif

@@ -122,9 +122,22 @@ public:
     virtual bool registerProperty(const std::string& name, int defaultValue, const std::string& comment = "", std::function<void(int&)> setCallback = 0);
     virtual bool registerProperty(const std::string& name, float defaultValue, const std::string& comment = "", std::function<void(float&)> setCallback = 0);
     virtual bool registerProperty(const std::string& name, const std::string& defaultValue, const std::string& comment = "", std::function<void(std::string&)> setCallback = 0);
+    bool registerProperty(const std::string& name,
+                          std::vector<Vec2> defaultValue,
+                          const std::string& comment = "",
+                          std::function<void(std::vector<Vec2>&)> setCallback = 0);
+    
+    bool registerProperty(const std::string& name,
+                          Vec2 defaultValue,
+                          const std::string& comment = "",
+                          std::function<void(Vec2&)> setCallback = 0);
+    bool setProperty(const std::string& name, Vec2 value);
+    
     bool setProperty(const std::string& name, int value);
     bool setProperty(const std::string& name, float value);
     bool setProperty(const std::string& name, std::string value);
+    bool setProperty(const std::string& name, std::vector<Vec2> retValue);
+    bool getProperty(const std::string& name, std::vector<Vec2>& retValue);
     bool getProperty(const std::string& name, int& retValue);
     bool getProperty(const std::string& name, float& retValue);
     bool getProperty(const std::string& name, std::string& retValue);
@@ -217,14 +230,33 @@ protected:
     Filter(Context *context);
     std::string _getVertexShaderString() const;
     const GLfloat* _getTexureCoordinate(const RotationMode& rotationMode) const;
-
+    
     // properties
     struct Property {
         std::string type;
         std::string comment;
     };
+    
+    struct Vec2ArrayProperty : Property {
+        std::vector<Vec2> value;
+        std::function<void(std::vector<Vec2>&)> setCallback;
+    };
+    std::map<std::string, Vec2ArrayProperty> _vec2ArrayProperties;
+    
+    struct Vec2Property : Property {
+        Vec2 value;
+        std::function<void(Vec2&)> setCallback;
+    };
+    
     virtual Property* _getProperty(const std::string& name);
 
+    std::map<std::string, Vec2Property> _vec2Properties;
+    
+    struct Vec3Property : Property {
+        Vec3 value;
+        std::function<void(Vec3&)> setCallback;
+    };
+    
     struct IntProperty : Property {
         int value;
         std::function<void(int&)> setCallback;

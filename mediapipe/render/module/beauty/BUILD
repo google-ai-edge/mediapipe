@@ -63,7 +63,7 @@ cc_library(
     copts = select({
         "//mediapipe:apple": [
             "-x objective-c++",
-            "-fobjc-arc",  # enable reference-counting
+            # "-fobjc-arc",  # enable reference-counting
         ],
         "//conditions:default": ["-std=c++17"],
     }),

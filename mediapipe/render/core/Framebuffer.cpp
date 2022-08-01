@@ -136,16 +136,16 @@ namespace Opipe {
 
     void Framebuffer::lock(std::string lockKey) {
         if (lockKey == "Unknow") {
-            Log("Framebuffer LOCK", "未知锁 【hasCode :%s】", _hashCode.c_str());
+//            Log("Framebuffer LOCK", "未知锁 【hasCode :%s】", _hashCode.c_str());
         } else if (lockKey != _lockKey) {
-            Log("Framebuffer LOCK", "Key变更:%s 【hasCode :%s】", lockKey.c_str(), _hashCode.c_str());
+//            Log("Framebuffer LOCK", "Key变更:%s 【hasCode :%s】", lockKey.c_str(), _hashCode.c_str());
         }
         
         _lockKey = lockKey;
         _framebufferRetainCount++;
-        Log("Framebuffer LOCK", "lock retainCount == :%d lockKey:%s 【framebufferCode:%s】",
-            _framebufferRetainCount,
-            lockKey.c_str(), _hashCode.c_str());
+//        Log("Framebuffer LOCK", "lock retainCount == :%d lockKey:%s 【framebufferCode:%s】",
+//            _framebufferRetainCount,
+//            lockKey.c_str(), _hashCode.c_str());
     }
 
     void Framebuffer::unlock(std::string lockKey) {
@@ -156,16 +156,16 @@ namespace Opipe {
         }
         
         if (lockKey != _lockKey) {
-            Log("Framebuffer UNLOCK", "可能是多次Lock后Unlock retainCount:%d lockKey:%s 【framebufferCode:%s】",
-                _framebufferRetainCount,
-                lockKey.c_str(),
-                _hashCode.c_str());
+//            Log("Framebuffer UNLOCK", "可能是多次Lock后Unlock retainCount:%d lockKey:%s 【framebufferCode:%s】",
+//                _framebufferRetainCount,
+//                lockKey.c_str(),
+//                _hashCode.c_str());
         }
         
-        Log("Framebuffer UNLOCK", "unlock retainCount == :%d lockKey:%s 【framebufferCode:%s】"
-            , _framebufferRetainCount,
-            lockKey.c_str(),
-            _hashCode.c_str());
+//        Log("Framebuffer UNLOCK", "unlock retainCount == :%d lockKey:%s 【framebufferCode:%s】"
+//            , _framebufferRetainCount,
+//            lockKey.c_str(),
+//            _hashCode.c_str());
     }
 
     void Framebuffer::resetRetainCount() {

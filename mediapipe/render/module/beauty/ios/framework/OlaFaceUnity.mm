@@ -30,7 +30,7 @@
 {
     _face_module = Opipe::FaceMeshModule::create();
     NSBundle *bundle = [NSBundle bundleForClass:[self class]];
-    NSURL* graphURL = [bundle URLForResource:@"face_mesh_mobile_gpu" withExtension:@"binarypb"];
+    NSURL* graphURL = [bundle URLForResource:@"face_mesh_mobile_landmark_gpu" withExtension:@"binarypb"];
     NSData* data = [NSData dataWithContentsOfURL:graphURL options:0 error:nil];
     if (data) {
         _face_module->init(nullptr, (void *)data.bytes, data.length);

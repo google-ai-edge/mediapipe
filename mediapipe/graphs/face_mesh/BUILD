@@ -67,3 +67,10 @@ mediapipe_binary_graph(
     output_name = "face_mesh_mobile_gpu.binarypb",
     deps = [":mobile_calculators"],
 )
+
+mediapipe_binary_graph(
+    name = "face_mesh_mobile_landmark_gpu_binary_graph",
+    graph = "face_mesh_mobile_landmark.pbtxt",
+    output_name = "face_mesh_mobile_landmark_gpu.binarypb",
+    deps = [":mobile_calculators"],
+)

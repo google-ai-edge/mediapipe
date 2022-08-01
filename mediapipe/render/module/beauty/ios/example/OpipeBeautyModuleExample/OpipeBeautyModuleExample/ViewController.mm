@@ -64,6 +64,7 @@ AVCaptureAudioDataOutputSampleBufferDelegate> {
     }
 
     [self setupSession];
+    [[OlaFaceUnity sharedInstance] resume];
 }
 
 - (void)viewDidLayoutSubviews
@@ -254,29 +255,26 @@ AVCaptureAudioDataOutputSampleBufferDelegate> {
     }
 }
 
-- (IOSurfaceID)bgraCameraTextureReady:(OlaShareTexture *)texture
+- (void)bgraCameraTextureReady:(OlaShareTexture *)texture
                       onScreenTexture:(OlaShareTexture *)onScreenTexture
                             frameTime:(NSTimeInterval)frameTime
 {
     
-    [[OlaFaceUnity sharedInstance] processVideoFrame:onScreenTexture.renderTarget timeStamp:frameTime];
-    FaceTextureInfo inputTexture;
-    inputTexture.width = onScreenTexture.size.width;
-    inputTexture.height = onScreenTexture.size.height;
-    inputTexture.textureId = onScreenTexture.openGLTexture;
-    inputTexture.ioSurfaceId = onScreenTexture.surfaceID;
-    inputTexture.frameTime = frameTime;
-    FaceTextureInfo result = [[OlaFaceUnity sharedInstance] render:inputTexture];
-    NSLog(@"result ioSurfaceId:%d", result.ioSurfaceId);
-    return result.ioSurfaceId;
-    
+    [[OlaFaceUnity sharedInstance] processVideoFrame:texture.renderTarget timeStamp:frameTime];
 }
 
-- (void)externalRender:(NSTimeInterval)frameTime
+- (IOSurfaceID)externalRender:(NSTimeInterval)frameTime
          targetTexture:(OlaShareTexture *)targetTexture
          commandBuffer:(id<MTLCommandBuffer>)buffer
 {
-    
+    FaceTextureInfo inputTexture;
+    inputTexture.width = targetTexture.size.width;
+    inputTexture.height = targetTexture.size.height;
+    inputTexture.textureId = targetTexture.openGLTexture;
+    inputTexture.ioSurfaceId = targetTexture.surfaceID;
+    inputTexture.frameTime = frameTime;
+    FaceTextureInfo result = [[OlaFaceUnity sharedInstance] render:inputTexture];
+    return result.ioSurfaceId;
 }
 
 - (void)yuvTextureReady:(OlaShareTexture *)yTexture uvTexture:(OlaShareTexture *)uvTexture

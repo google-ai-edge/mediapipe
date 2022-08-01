@@ -20,7 +20,7 @@
 /// @param texture texture description
 /// @param onScreenTexture 上屏纹理
 /// @param frameTime 帧时间
-- (IOSurfaceID)bgraCameraTextureReady:(OlaShareTexture *)texture
+- (void)bgraCameraTextureReady:(OlaShareTexture *)texture
                onScreenTexture:(OlaShareTexture *)onScreenTexture
                      frameTime:(NSTimeInterval)frameTime;
 
@@ -30,7 +30,7 @@
 /// @param frameTime frameTime description
 /// @param targetTexture targetTexture description
 /// @param buffer MTL的CommandBuffer
-- (void)externalRender:(NSTimeInterval)frameTime
+- (IOSurfaceID)externalRender:(NSTimeInterval)frameTime
          targetTexture:(OlaShareTexture *)targetTexture
          commandBuffer:(id<MTLCommandBuffer>)buffer;
 
@@ -70,6 +70,8 @@
 /// 处理相机采集流
 /// @param sampleBuffer 相机采集流
 - (void)cameraSampleBufferArrive:(CMSampleBufferRef)sampleBuffer;
+
+- (void)renderPixelbuffer:(CVPixelBufferRef)pixelbuffer;
 
 - (void)addRender:(OlaCameraRender *)render;
 
