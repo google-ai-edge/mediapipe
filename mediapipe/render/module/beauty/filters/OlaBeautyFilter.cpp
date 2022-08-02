@@ -67,33 +67,42 @@ namespace Opipe {
         }
         _lutFilter = LUTFilter::create(context);
         _unSharpMaskFilter = UnSharpMaskFilter::create(context);
-        _unSharpMaskFilter->addTarget(_lutFilter, 0);
+        
         _faceDistortFilter = FaceDistortionFilter::create(context);
         _bilateralAdjustFilter = BilateralAdjustFilter::create(context);
-        addFilter(_bilateralAdjustFilter);
-
-        _lookUpGroupFilter = FilterGroup::create(context);
-        _lookUpGroupFilter->addFilter(_unSharpMaskFilter);
-        
         _alphaBlendFilter = AlphaBlendFilter::create(context);
 
         _bilateralFilter = BilateralFilter::create(context);
+        _lookUpGroupFilter = FilterGroup::create(context);
+        
+        
+        
+        
+        addFilter(_bilateralAdjustFilter);
         addFilter(_bilateralFilter);
-        
+
+
+        _unSharpMaskFilter->addTarget(_lutFilter, 0);
+
+        _lookUpGroupFilter->addFilter(_unSharpMaskFilter);
+        _lookUpGroupFilter->setTerminalFilter(_lutFilter);
+
+
+
         _bilateralAdjustFilter->addTarget(_lookUpGroupFilter)->addTarget(_alphaBlendFilter, 1);
-        
+
         _bilateralFilter->addTarget(_bilateralAdjustFilter, 1)->addTarget(_alphaBlendFilter, 0);
-        
+
         _alphaBlendFilter->setMix(0.8);
-        
-        
+
+
         _bilateralAdjustFilter->setOpacityLimit(0.6);
         _bilateralFilter->setDistanceNormalizationFactor(2.746);
         _bilateralFilter->setTexelSpacingMultiplier(2.7);
         _unSharpMaskFilter->setBlurRadiusInPixel(4.0f, true);
         _unSharpMaskFilter->setBlurRadiusInPixel(2.0f, false);
         _unSharpMaskFilter->setIntensity(1.365);
-        
+
         _alphaBlendFilter->addTarget(_faceDistortFilter);
 
         setTerminalFilter(_faceDistortFilter);
@@ -120,12 +129,7 @@ namespace Opipe {
 
         registerProperty("skin", 0.0f, "磨皮 0.0 - 1.0",
                          [this](float skin) {
-            if (skin == 0.0) {
-                _bilateralAdjustFilter->setEnable(false);
-            } else {
-                _bilateralAdjustFilter->setEnable(true);
-                _bilateralAdjustFilter->setOpacityLimit(skin);
-            }
+            _bilateralAdjustFilter->setOpacityLimit(skin);
         });
 
         registerProperty("whiten", 0.0f, "美白 0.0 - 1.0",

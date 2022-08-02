@@ -18,7 +18,7 @@
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <slider opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" minValue="0.0" maxValue="1" translatesAutoresizingMaskIntoConstraints="NO" id="vhS-oS-Fej">
-                                <rect key="frame" x="55" y="632" width="304" height="31"/>
+                                <rect key="frame" x="55" y="532" width="304" height="31"/>
                                 <constraints>
                                     <constraint firstAttribute="width" constant="300" id="YLm-AJ-oyY"/>
                                 </constraints>
@@ -27,7 +27,7 @@
                                 </connections>
                             </slider>
                             <slider opaque="NO" tag="1" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" minValue="0.0" maxValue="1" translatesAutoresizingMaskIntoConstraints="NO" id="Qqv-lK-sGM">
-                                <rect key="frame" x="55" y="703" width="304" height="31"/>
+                                <rect key="frame" x="55" y="603" width="304" height="31"/>
                                 <constraints>
                                     <constraint firstAttribute="width" constant="300" id="RfD-NJ-btk"/>
                                     <constraint firstAttribute="width" relation="greaterThanOrEqual" constant="300" id="YrT-Ue-dTy"/>
@@ -37,31 +37,31 @@
                                 </connections>
                             </slider>
                             <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="美白磨皮" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="S8B-AB-YC8">
-                                <rect key="frame" x="172" y="601" width="70" height="21"/>
+                                <rect key="frame" x="172" y="501" width="70" height="21"/>
                                 <fontDescription key="fontDescription" type="system" pointSize="17"/>
                                 <nil key="textColor"/>
                                 <nil key="highlightedColor"/>
                             </label>
                             <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="瘦脸" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Xqq-mI-Nvq">
-                                <rect key="frame" x="189.5" y="672" width="35" height="21"/>
+                                <rect key="frame" x="189.5" y="572" width="35" height="21"/>
                                 <fontDescription key="fontDescription" type="system" pointSize="17"/>
                                 <nil key="textColor"/>
                                 <nil key="highlightedColor"/>
                             </label>
                             <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="大眼" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="vgF-XJ-zVO">
-                                <rect key="frame" x="189.5" y="743" width="35" height="21"/>
+                                <rect key="frame" x="189.5" y="643" width="35" height="21"/>
                                 <fontDescription key="fontDescription" type="system" pointSize="17"/>
                                 <nil key="textColor"/>
                                 <nil key="highlightedColor"/>
                             </label>
                             <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="整形-缩鼻翼" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Mom-9E-xEB">
-                                <rect key="frame" x="159.5" y="814" width="95" height="20.5"/>
+                                <rect key="frame" x="159.5" y="714" width="95" height="20.5"/>
                                 <fontDescription key="fontDescription" type="system" pointSize="17"/>
                                 <nil key="textColor"/>
                                 <nil key="highlightedColor"/>
                             </label>
                             <slider opaque="NO" tag="2" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" minValue="0.0" maxValue="1" translatesAutoresizingMaskIntoConstraints="NO" id="wEp-us-rWn">
-                                <rect key="frame" x="55" y="774" width="304" height="31"/>
+                                <rect key="frame" x="55" y="674" width="304" height="31"/>
                                 <constraints>
                                     <constraint firstAttribute="width" relation="greaterThanOrEqual" constant="300" id="SU3-lS-UVj"/>
                                     <constraint firstAttribute="width" constant="300" id="d1T-V2-Y4S"/>
@@ -71,7 +71,7 @@
                                 </connections>
                             </slider>
                             <slider opaque="NO" tag="3" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" minValue="0.0" maxValue="1" translatesAutoresizingMaskIntoConstraints="NO" id="axw-O5-vck">
-                                <rect key="frame" x="55" y="844.5" width="304" height="31"/>
+                                <rect key="frame" x="55" y="744.5" width="304" height="31"/>
                                 <constraints>
                                     <constraint firstAttribute="width" relation="lessThanOrEqual" constant="300" id="cWo-IZ-VC0"/>
                                     <constraint firstAttribute="width" relation="greaterThanOrEqual" constant="300" id="goO-a8-B8f"/>
@@ -93,7 +93,7 @@
                             <constraint firstItem="Mom-9E-xEB" firstAttribute="centerX" secondItem="8bC-Xf-vdC" secondAttribute="centerX" id="TYW-Gr-uFp"/>
                             <constraint firstItem="vgF-XJ-zVO" firstAttribute="top" secondItem="Qqv-lK-sGM" secondAttribute="bottom" constant="10" id="VIL-NW-R20"/>
                             <constraint firstItem="axw-O5-vck" firstAttribute="top" secondItem="Mom-9E-xEB" secondAttribute="bottom" constant="10" id="Vcm-Ek-dn6"/>
-                            <constraint firstItem="6Tk-OE-BBY" firstAttribute="bottom" secondItem="vhS-oS-Fej" secondAttribute="bottom" constant="200" id="cTV-Ue-aqY"/>
+                            <constraint firstItem="6Tk-OE-BBY" firstAttribute="bottom" secondItem="vhS-oS-Fej" secondAttribute="bottom" constant="300" id="cTV-Ue-aqY"/>
                             <constraint firstItem="Xqq-mI-Nvq" firstAttribute="top" secondItem="vhS-oS-Fej" secondAttribute="bottom" constant="10" id="d5V-Bk-AdN"/>
                             <constraint firstItem="axw-O5-vck" firstAttribute="centerX" secondItem="8bC-Xf-vdC" secondAttribute="centerX" id="dS4-8m-TsB"/>
                             <constraint firstItem="Xqq-mI-Nvq" firstAttribute="centerX" secondItem="8bC-Xf-vdC" secondAttribute="centerX" id="elq-CK-DpX"/>

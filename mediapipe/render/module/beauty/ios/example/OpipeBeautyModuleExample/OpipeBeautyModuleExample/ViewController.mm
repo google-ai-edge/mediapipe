@@ -269,6 +269,7 @@ AVCaptureAudioDataOutputSampleBufferDelegate> {
          targetTexture:(OlaShareTexture *)targetTexture
          commandBuffer:(id<MTLCommandBuffer>)buffer
 {
+//    [[OlaFaceUnity sharedInstance] processVideoFrame:targetTexture.renderTarget timeStamp:frameTime];
     FaceTextureInfo inputTexture;
     inputTexture.width = targetTexture.size.width;
     inputTexture.height = targetTexture.size.height;

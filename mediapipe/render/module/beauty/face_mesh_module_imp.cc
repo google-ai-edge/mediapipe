@@ -25,11 +25,11 @@ namespace Opipe
     void FaceMeshCallFrameDelegate::outputPixelbuffer(OlaGraph *graph, CVPixelBufferRef pixelbuffer,
                                                       const std::string &streamName, int64_t timestamp)
     {
-        _imp->currentDispatch()->runSync([&] {
-            IOSurfaceRef surface = CVPixelBufferGetIOSurface(pixelbuffer);
-            IOSurfaceID surfaceId = IOSurfaceGetID(surface);
-            Log("Opipe", "streamName %s timeStamp:%ld iosurfaceid:%d", streamName.c_str(), timestamp, surfaceId);
-        });
+//        _imp->currentDispatch()->runSync([&] {
+//            IOSurfaceRef surface = CVPixelBufferGetIOSurface(pixelbuffer);
+//            IOSurfaceID surfaceId = IOSurfaceGetID(surface);
+//            Log("Opipe", "streamName %s timeStamp:%ld iosurfaceid:%d", streamName.c_str(), timestamp, surfaceId);
+//        });
         
     }
 #endif

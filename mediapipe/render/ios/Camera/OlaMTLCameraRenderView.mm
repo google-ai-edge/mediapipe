@@ -12,7 +12,7 @@
 #import <OpenGLES/EAGL.h>
 #import <OpenGLES/ES3/gl.h>
 
-static const NSUInteger MaxFramesInFlight = 3;
+static const NSUInteger MaxFramesInFlight = 1;
 static size_t const kOlaDynamicTextureByteAlignment = 16;
 
 NS_INLINE size_t QAAlignSize(size_t size)
@@ -52,7 +52,7 @@ NS_INLINE size_t QAAlignSize(size_t size)
 	
 	_shareTexture = nil;
 	_cameraTexture = nil;
-  
+    _halfCameraTexture = nil;
 }
 
 - (instancetype)initWithFrame:(CGRect)frame
@@ -104,6 +104,11 @@ NS_INLINE size_t QAAlignSize(size_t size)
                                                        metalPixelFormat:self.colorPixelFormat
                                                                    size:textureSize];
     
+    _halfCameraTexture = [[OlaShareTexture alloc] initWithMetalDevice:self.device
+                                                        openGLContext:self.openGLContext
+                                                     metalPixelFormat:self.colorPixelFormat
+                                                                 size:CGSizeMake(textureSize.width * 0.25, textureSize.height * 0.25)];
+    
     _mtlRender = [[OlaMTLCameraRender alloc] initWithRenderSize:textureSize
                                                                device:self.device
                                                         cameraTexture:self.cameraTexture
@@ -118,6 +123,7 @@ NS_INLINE size_t QAAlignSize(size_t size)
     self.displayFrameRenderingSemaphore = dispatch_semaphore_create(MaxFramesInFlight);
     self.displayRenderQueue = dispatch_queue_create("Ola.ios.displayRenderQueue",
                                                     interactive);
+    self.offlineRenderQueue = dispatch_queue_create("Ola.ios.offlineRenderQueue", interactive);
 
     self.cameraFrameRenderingSemaphore = dispatch_semaphore_create(1);
 }
@@ -209,6 +215,10 @@ NS_INLINE size_t QAAlignSize(size_t size)
 		[strongSelf.mtlRender renderToShareTexture:strongSelf.shareTexture.metalTexture
 									 commandBuffer:commandBuffer
 										 frameTime:strongSelf.frameTime];
+        [strongSelf.mtlRender renderToTexture:strongSelf.halfCameraTexture.metalTexture
+                                         from:strongSelf.cameraTexture.metalTexture commandBuffer:commandBuffer
+                            textureCoordinate:strongSelf.mtlRender.noRotationBuffer];
+       
 		[commandBuffer commit];
         
         commandBuffer = [strongSelf.mtlRender.commandQueue commandBuffer];
@@ -234,14 +244,13 @@ NS_INLINE size_t QAAlignSize(size_t size)
                 [EAGLContext setCurrentContext:strongSelf.openGLContext];
                 
                 [strongSelf.cameraDelegate draw:strongSelf.frameTime];
-                
-                [strongSelf.cameraDelegate bgraCameraTextureReady:strongSelf.cameraTexture
-                                                  onScreenTexture:strongSelf.shareTexture
-                                                      frameTime:strongSelf.frameTime * 1000];
-                
+               
                 IOSurfaceID surfaceId = [strongSelf.cameraDelegate externalRender:strongSelf.frameTime
                                             targetTexture:strongSelf.cameraTexture
                                             commandBuffer:commandBuffer];
+                [strongSelf.cameraDelegate bgraCameraTextureReady:strongSelf.halfCameraTexture
+                                                  onScreenTexture:strongSelf.shareTexture
+                                                        frameTime:strongSelf.frameTime * 1000];
                 if (surfaceId != -1) {
                     //这里渲染surfaceId
                     IOSurfaceRef ioSurface = IOSurfaceLookup(surfaceId);
@@ -320,14 +329,14 @@ NS_INLINE size_t QAAlignSize(size_t size)
     };
     
     CFRetain(pixelbuffer);
-    dispatch_async(self.displayRenderQueue, ^{
+    dispatch_async(self.offlineRenderQueue, ^{
         if (weakSelf == nil) {
             CFRelease(pixelbuffer);
             return;
         }
         __strong OlaMTLCameraRenderView *strongSelf = weakSelf;
         [strongSelf.mtlRender renderToCameraTextureWithPixelBuffer:pixelbuffer completedHandler:renderCompleted];
-        
+
         CFRelease(pixelbuffer);
     });
 }
@@ -351,7 +360,7 @@ NS_INLINE size_t QAAlignSize(size_t size)
     };
     
     CFRetain(sampleBuffer);
-    dispatch_async(self.displayRenderQueue, ^{
+    dispatch_async(self.offlineRenderQueue, ^{
         if (weakSelf == nil) {
             CFRelease(sampleBuffer);
             return;
@@ -359,8 +368,9 @@ NS_INLINE size_t QAAlignSize(size_t size)
         __strong OlaMTLCameraRenderView *strongSelf = weakSelf;
         CVPixelBufferRef pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer);
         [strongSelf.mtlRender renderToCameraTextureWithPixelBuffer:pixelBuffer completedHandler:renderCompleted];
-        
+
         CFRelease(sampleBuffer);
+      
     });
 }
 

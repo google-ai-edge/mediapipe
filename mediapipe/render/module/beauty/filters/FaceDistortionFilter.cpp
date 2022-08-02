@@ -249,7 +249,7 @@ namespace Opipe
             {
                 Vector2 point1 = _positionAt(362);
                 Vector2 point2 = _positionAt(263);
-                Vector2 point3 = _positionAt(417);
+                Vector2 point3 = _positionAt(168);
                 Vector2 center = point1.getCenter(point2);
                 float distance = center.distance(point3);
                 addPoint(center, distance / 2, distance / 2, 0.3, 1, 0.0f, 0.0f, 1);
@@ -259,7 +259,7 @@ namespace Opipe
             {
                 Vector2 point1 = _positionAt(33);
                 Vector2 point2 = _positionAt(133);
-                Vector2 point3 = _positionAt(193);
+                Vector2 point3 = _positionAt(168);
                 Vector2 center = point1.getCenter(point2);
                 float distance = center.distance(point3);
                 addPoint(center, distance / 2, distance / 2, 0.3, 1, 0.0f, 0.0f, 1);

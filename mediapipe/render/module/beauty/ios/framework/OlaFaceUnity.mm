@@ -50,27 +50,29 @@
 
 - (FaceTextureInfo)render:(FaceTextureInfo)inputTexture
 {
-    @autoreleasepool {
-        TextureInfo rs;
-        rs.ioSurfaceId = inputTexture.ioSurfaceId;
-        if (_face_module) {
-            TextureInfo input;
-            input.width = inputTexture.width;
-            input.height = inputTexture.height;
-            input.ioSurfaceId = inputTexture.ioSurfaceId;
-            input.textureId = inputTexture.textureId;
-            input.frameTime = inputTexture.frameTime;
-
-            rs = _face_module->renderTexture(input);
-        }
-        FaceTextureInfo result;
-        result.width = rs.width;
-        result.height = rs.height;
-        result.ioSurfaceId = rs.ioSurfaceId;
-        result.textureId = rs.textureId;
-        result.frameTime = rs.frameTime;
-        return result;
+    TextureInfo rs;
+    rs.ioSurfaceId = inputTexture.ioSurfaceId;
+    rs.width = inputTexture.width;
+    rs.height = inputTexture.height;
+    rs.textureId = inputTexture.textureId;
+    rs.frameTime = inputTexture.frameTime;
+    if (_face_module) {
+        TextureInfo input;
+        input.width = inputTexture.width;
+        input.height = inputTexture.height;
+        input.ioSurfaceId = inputTexture.ioSurfaceId;
+        input.textureId = inputTexture.textureId;
+        input.frameTime = inputTexture.frameTime;
+        
+        rs = _face_module->renderTexture(input);
     }
+    FaceTextureInfo result;
+    result.width = rs.width;
+    result.height = rs.height;
+    result.ioSurfaceId = rs.ioSurfaceId;
+    result.textureId = rs.textureId;
+    result.frameTime = rs.frameTime;
+    return result;
 }
    
 
