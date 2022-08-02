@@ -170,6 +170,13 @@ namespace Opipe
             _olaBeautyFilter->setProperty("slim", slimFactor);
         }
     }
+
+    void FaceMeshBeautyRender::setEye(float eyeFactor) {
+        _eyeFactor = eyeFactor;
+        if (_olaBeautyFilter) {
+            _olaBeautyFilter->setProperty("eye", eyeFactor);
+        }
+    }
     
 
 }

@@ -290,9 +290,8 @@ namespace Opipe
                 facePoints.emplace_back( _lastLandmark.landmark(i).x(), _lastLandmark.landmark(i).y());
             }
             Log("FaceMeshModule", "检测到人脸输完毕");
-        } else {
-            _render->setFacePoints(facePoints);
         }
+        _render->setFacePoints(facePoints);
         return textureInfo;
     }
 

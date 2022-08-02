@@ -113,6 +113,36 @@
     _face_module->setSmoothing(smooth);
 }
 
+- (CGFloat)slim
+{
+    return _face_module->getSlim();
+}
+
+- (void)setSlim:(CGFloat)slim
+{
+    _face_module->setSlim(slim);
+}
+
+- (CGFloat)eyeFactor
+{
+    return _face_module->getEye();
+}
+
+- (void)setEyeFactor:(CGFloat)eyeFactor
+{
+    _face_module->setEye(eyeFactor);
+}
+
+- (CGFloat)nose
+{
+    return _face_module->getNose();
+}
+
+- (void)setNose:(CGFloat)nose
+{
+    _face_module->setNose(nose);
+}
+
 - (void)resume
 {
     if (!_face_module) {

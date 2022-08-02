@@ -88,6 +88,8 @@ AVCaptureAudioDataOutputSampleBufferDelegate> {
     [super viewWillAppear:animated];
     [self startCapture];
     [[OlaFaceUnity sharedInstance] resume];
+    [OlaFaceUnity sharedInstance].whiten = 0.0;
+    [OlaFaceUnity sharedInstance].smooth = 0.0;
 }
 
 - (void)setupSession {
@@ -289,8 +291,16 @@ AVCaptureAudioDataOutputSampleBufferDelegate> {
 
 - (IBAction)beautyChanged:(UISlider *)sender
 {
-    [OlaFaceUnity sharedInstance].whiten = sender.value;
-    [OlaFaceUnity sharedInstance].smooth = sender.value;
+    if (sender.tag == 0) {
+        [OlaFaceUnity sharedInstance].whiten = sender.value;
+        [OlaFaceUnity sharedInstance].smooth = sender.value;
+    } else if (sender.tag == 1) {
+        [OlaFaceUnity sharedInstance].slim = sender.value;
+    } else if (sender.tag == 2) {
+        [OlaFaceUnity sharedInstance].eyeFactor = sender.value;
+    } else if (sender.tag == 3) {
+        [OlaFaceUnity sharedInstance].nose = sender.value;
+    }
 }
 
 @end

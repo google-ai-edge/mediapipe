@@ -653,6 +653,14 @@ Filter::Property* Filter::_getProperty(const std::string& name) {
         return &_stringProperties[name];
     }
     
+    if (_vec2ArrayProperties.find(name) != _vec2ArrayProperties.end()) {
+        return &_vec2ArrayProperties[name];
+    }
+    
+    if (_vec2Properties.find(name) != _vec2Properties.end()) {
+        return &_vec2Properties[name];
+    }
+    
     return 0;
 }
 

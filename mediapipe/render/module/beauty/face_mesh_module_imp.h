@@ -96,18 +96,40 @@ namespace Opipe
             return _render->getWhitening();
         }
         
+        float getEye() override {
+            return _render->getEye();
+        }
+        
+        float getSlim() override {
+            return _render->getFace();
+        }
+        
+        float getNose() override {
+            return _render->getNose();
+        }
         
         /// 磨皮
         /// @param smoothing 磨皮 0.0 - 1.0
-        void setSmoothing(float smoothing) {
+        void setSmoothing(float smoothing) override {
             _render->setSmoothing(smoothing);
         }
         
-        
         /// 美白
         /// @param whitening 美白 0.0 - 1.0
-        void setWhitening(float whitening) {
+        void setWhitening(float whitening) override {
             _render->setWhitening(whitening);
+        }
+        
+        void setEye(float eye) override {
+            _render->setEye(eye);
+        }
+        
+        void setSlim(float slim) override {
+            _render->setFaceSlim(slim);
+        }
+        
+        void setNose(float nose) override {
+            _render->setNoseFactor(nose);
         }
         
         OpipeDispatch* currentDispatch() {

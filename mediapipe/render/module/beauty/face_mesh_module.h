@@ -115,7 +115,21 @@ namespace Opipe
                 
                 /// 美白
                 virtual float getWhitening() = 0;
-                
+            
+                /// 瘦脸
+                virtual float getSlim() = 0;
+            
+                virtual float getEye() = 0;
+            
+                /// 瘦鼻
+                virtual float getNose() = 0;
+            
+                virtual void setSlim(float slim) = 0;
+            
+            
+                virtual void setNose(float nose) = 0;
+            
+                virtual void setEye(float eye) = 0;
                 
                 /// 磨皮
                 /// @param smoothing 磨皮 0.0 - 1.0

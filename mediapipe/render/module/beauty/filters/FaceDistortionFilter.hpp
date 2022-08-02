@@ -70,7 +70,9 @@ namespace Opipe
         float _u_min[20];
         float _u_max[20];
         int _types[20];
-        float _u_facePoints[212];
+        float _u_facePoints[980];
+        
+        Vector2 _positionAt(int index);
 
     private:
         void generateDistoritionVBO(int numX, int numY, const GLfloat *imageTexUV);
