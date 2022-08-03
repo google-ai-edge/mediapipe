@@ -16,18 +16,6 @@ licenses(["notice"])
 
 package(default_visibility = ["//visibility:public"])
 
-load("//mediapipe/framework:encode_binary_proto.bzl", "encode_binary_proto")
-
-encode_binary_proto(
-    name = "triangles",
-    input = "triangles.pbtxt",
-    message_type = "mediapipe.face_geometry.Mesh3d",
-    output = "triangles.binarypb",
-    deps = [
-        "//mediapipe/modules/face_geometry/protos:mesh_3d_proto",
-    ],
-)
-
 exports_files(
 	srcs = glob(["**"]),
 )

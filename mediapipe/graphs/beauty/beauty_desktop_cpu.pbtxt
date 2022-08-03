@@ -14,7 +14,7 @@ profiler_config {
   trace_enabled: true
   enable_profiler: true
   trace_log_interval_count: 200
-  trace_log_path: "/Users/alena/Workdir/mediapipe/logs/beauty/"
+  trace_log_path: "/home/mslight/Work/clone/mediapipe/mediapipe/logs/beauty/"
 }
 
 # Throttles the images flowing downstream for flow control. It passes through

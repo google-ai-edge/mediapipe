@@ -19,7 +19,6 @@
 #include <string>
 #include <iostream>
 #include <fstream>
-//#include <android/log.h>
 
 #include <memory>
 #include "Tensor.h"

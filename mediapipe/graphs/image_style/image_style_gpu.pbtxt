@@ -36,6 +36,12 @@ node {
   output_stream: "throttled_input_video_cpu"
 }
 
+node {
+  calculator: "ImagePropertiesCalculator"
+  input_stream: "IMAGE_CPU:throttled_input_video_cpu"
+  output_stream: "SIZE:original_size"
+}
+
 # Subgraph that detects faces and corresponding landmarks.
 node {
   calculator: "FaceLandmarkFrontGpu"
@@ -48,26 +54,33 @@ node {
   calculator: "FastUtilsCalculator"
   input_stream: "NORM_LANDMARKS:multi_face_landmarks"
   input_stream: "IMAGE:throttled_input_video_cpu"
+  input_stream: "SIZE:original_size"
   output_stream: "IMAGE:out_image_frame"
+  output_stream: "LM_MASK:lm_mask"
+   options {
+     [mediapipe.FastUtilsCalculatorOptions.ext] {
+       back_to_image: false
+     }
+   }
 }
 
-#node: {
-#  calculator: "ImageTransformationCalculator"
-#  input_stream: "IMAGE:out_image_frame"
-#  output_stream: "IMAGE:out_image_frame1"
-#  node_options: {
-#    [type.googleapis.com/mediapipe.ImageTransformationCalculatorOptions] {
-#      output_width: 256
-#      output_height: 256
-#    }
-#  }
-#}
+node: {
+  calculator: "ImageTransformationCalculator"
+  input_stream: "IMAGE:out_image_frame"
+  output_stream: "IMAGE:image_frame"
+  node_options: {
+    [type.googleapis.com/mediapipe.ImageTransformationCalculatorOptions] {
+      output_width: 256
+      output_height: 256
+    }
+  }
+}
 
 
 node {
    calculator: "TensorConverterCalculator"
-   input_stream: "IMAGE:out_image_frame"
-   output_stream: "TENSORS:input_tensors"
+   input_stream: "IMAGE:image_frame"
+   output_stream: "TENSORS:input_tensor"
    options: {
      [mediapipe.TensorConverterCalculatorOptions.ext] {
        zero_center: true
@@ -75,35 +88,109 @@ node {
    }
 }
 
-#node {
-#  calculator: "InferenceCalculator"
-#  input_stream: "TENSORS:input_tensors"
-#  output_stream: "TENSORS:output_tensors"
-#  options: {
-#    [mediapipe.InferenceCalculatorOptions.ext] {
-#     model_path:"mediapipe/models/model_float32.tflite"
-#      delegate { gpu {} }
-#    }
-#  }
-#}
-
-# Processes the output tensors into a segmentation mask that has the same size
-# as the input image into the graph.
 node {
-  calculator: "TensorsToSegmentationCalculator"
-  input_stream: "TENSORS:input_tensors"
-  #input_stream: "OUTPUT_SIZE:input_size"
-  output_stream: "MASK:mask_image"
+  calculator: "InferenceCalculator"
+  input_stream: "TENSORS:input_tensor"
+  output_stream: "TENSORS:output_tensor"
   options: {
-    [mediapipe.TensorsToSegmentationCalculatorOptions.ext] {
-      activation: NONE
-      gpu_origin: TOP_LEFT
+    [mediapipe.InferenceCalculatorOptions.ext] {
+     model_path:"mediapipe/models/model_float32.tflite"
+      delegate { gpu {} }
     }
- }
+  }
+}
+
+node {
+  calculator: "TensorsToImageCalculator"
+  input_stream: "TENSORS:output_tensor"
+  output_stream: "IMAGE:fake_image"
 }
 
 node: {
   calculator: "FromImageCalculator"
-  input_stream: "IMAGE:mask_image"
-  output_stream: "IMAGE_GPU:output_video"
+  input_stream: "IMAGE:fake_image"
+  output_stream: "IMAGE_CPU:cpu_fake_image"
+}
+
+node: {
+  calculator: "ImageTransformationCalculator"
+  input_stream: "IMAGE:throttled_input_video_cpu"
+  output_stream: "IMAGE:transformed_input_img"
+  node_options: {
+    [type.googleapis.com/mediapipe.ImageTransformationCalculatorOptions] {
+      output_width: 256
+      output_height: 256
+    }
+  }
+}
+
+node {
+   calculator: "TensorConverterCalculator"
+   input_stream: "IMAGE:transformed_input_img"
+   output_stream: "TENSORS:input_tensor_img"
+   options: {
+     [mediapipe.TensorConverterCalculatorOptions.ext] {
+       zero_center: true
+     }
+   }
+}
+
+node {
+  calculator: "InferenceCalculator"
+  input_stream: "TENSORS:input_tensor_img"
+  output_stream: "TENSORS:output_tensor_img"
+  options: {
+    [mediapipe.InferenceCalculatorOptions.ext] {
+      model_path: "mediapipe/models/model_float32.tflite"
+      delegate { xnnpack {} }
+    }
+  }
+}
+
+
+node {
+  calculator: "ImagePropertiesCalculator"
+  input_stream: "IMAGE_CPU:transformed_input_img"
+  output_stream: "SIZE:input_size_img"
+}
+
+node {
+  calculator: "TensorsToImageCalculator"
+  input_stream: "TENSORS:output_tensor_img"
+  input_stream: "OUTPUT_SIZE:input_size_img"
+  output_stream: "IMAGE:fake_bg2"
+}
+
+node{
+  calculator: "FromImageCalculator"
+  input_stream: "IMAGE:fake_bg2"
+  output_stream: "IMAGE_CPU:fake_bg"
+}
+
+node {
+  calculator: "FastUtilsCalculator"
+  input_stream: "NORM_LANDMARKS:multi_face_landmarks"
+  input_stream: "IMAGE:cpu_fake_image"
+  input_stream: "SIZE:original_size"
+  output_stream: "IMAGE:back_image"
+   options {
+     [mediapipe.FastUtilsCalculatorOptions.ext] {
+       back_to_image: true
+     }
+   }
+}
+
+node {
+  calculator: "ApplyMaskCalculator"
+  input_stream: "IMAGE:back_image"
+  input_stream: "FAKE_BG:fake_bg"
+  input_stream: "LM_MASK:lm_mask"
+  output_stream: "IMAGE:out_image"
+}
+
+# Defines side packets for further use in the graph.
+node {
+  calculator: "ImageFrameToGpuBufferCalculator"
+  input_stream: "out_image"
+  output_stream: "output_video"
 }

@@ -18,14 +18,24 @@ licenses(["notice"])
 
 package(default_visibility = ["//visibility:public"])
 
+mediapipe_proto_library(
+    name = "fast_utils_calculator_proto",
+    srcs = ["fast_utils_calculator.proto"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//mediapipe/framework:calculator_options_proto",
+        "//mediapipe/framework:calculator_proto",
+    ],
+)
+
 cc_library(
     name = "fast_utils_calculator",
     srcs = ["fast_utils_calculator.cc"],
     visibility = ["//visibility:public"],
     deps = [
+   	 ":fast_utils_calculator_cc_proto",
         "//mediapipe/framework:calculator_options_cc_proto",
         "//mediapipe/framework/formats:image_format_cc_proto",
-        "//mediapipe/util:color_cc_proto",
         "@com_google_absl//absl/strings",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/formats:image_frame",
@@ -38,11 +48,37 @@ cc_library(
         "//mediapipe/framework/port:opencv_highgui",
         "//mediapipe/framework/port:status",
         "//mediapipe/framework/port:vector",
-        "//mediapipe/util:annotation_renderer",
-        "//mediapipe/util:render_data_cc_proto",
     ],
     alwayslink = 1,
 )
+
+cc_library(
+    name = "apply_mask_calculator",
+    srcs = ["apply_mask_calculator.cc"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//mediapipe/framework:calculator_options_cc_proto",
+        "//mediapipe/framework/formats:image_format_cc_proto",
+        "@com_google_absl//absl/strings",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/formats:image_frame",
+        "//mediapipe/framework/formats:image_frame_opencv",
+        "//mediapipe/framework/formats:video_stream_header",
+        "//mediapipe/framework/formats:landmark_cc_proto",
+        "//mediapipe/framework/port:logging",
+        "//mediapipe/framework/port:opencv_core",
+        "//mediapipe/framework/port:opencv_imgproc",
+        "//mediapipe/framework/port:opencv_highgui",
+        "//mediapipe/framework/port:status",
+        "//mediapipe/framework/port:vector",
+        "//mediapipe/framework/deps:file_path",
+        "//mediapipe/framework/port:file_helpers",
+               "//mediapipe/util:resource_util",
+    ],
+    alwayslink = 1,
+)
+
+
 
 
 

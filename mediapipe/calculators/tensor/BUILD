@@ -893,3 +893,34 @@ cc_library(
     }),
     alwayslink = 1,
 )
+
+cc_library(
+    name = "tensors_to_image_calculator",
+    srcs = ["tensors_to_image_calculator.cc"],
+    copts = select({
+        "//mediapipe:apple": [
+            "-x objective-c++",
+            "-fobjc-arc",  # enable reference-counting
+        ],
+        "//conditions:default": [],
+    }),
+    visibility = ["//visibility:public"],
+    deps = [
+        "@com_google_absl//absl/strings:str_format",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/types:span",
+        "//mediapipe/framework/formats:image",
+        "//mediapipe/framework/formats:image_frame",
+        "//mediapipe/framework/formats:image_opencv",
+        "//mediapipe/framework/formats:tensor",
+        "//mediapipe/framework/port:opencv_imgproc",
+        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework:calculator_context",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:port",
+        "//mediapipe/util:resource_util",
+        "@org_tensorflow//tensorflow/lite:framework",
+        "//mediapipe/framework/port:statusor",
+    ],
+    alwayslink = 1,
+)
