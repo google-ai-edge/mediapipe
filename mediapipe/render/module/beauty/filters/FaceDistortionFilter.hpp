@@ -19,15 +19,32 @@ namespace Opipe
         virtual bool proceed(float frameTime = 0.0, bool bUpdateTargets = true) override;
 
     public:
+        float eye() {
+            return _eye;
+        }
+        
+        float slim() {
+            return _slim;
+        }
+        
+        float nose() {
+            return _nose;
+        }
+        
         void setEye(float eye)
         {
             _eye = eye;
-        };
+        }
 
         void setSlim(float slim)
         {
             _slim = slim;
-        };
+        }
+        
+        void setNose(float nose)
+        {
+            _nose = nose;
+        }
 
         void setFacePoints(std::vector<Vec2> facePoints)
         {
@@ -53,7 +70,9 @@ namespace Opipe
         float _u_min[20];
         float _u_max[20];
         int _types[20];
-        float _u_facePoints[212];
+        float _u_facePoints[980];
+        
+        Vector2 _positionAt(int index);
 
     private:
         void generateDistoritionVBO(int numX, int numY, const GLfloat *imageTexUV);
@@ -62,6 +81,7 @@ namespace Opipe
     private:
         float _eye = 0.0;
         float _slim = 0.0;
+        float _nose = 0.0;
         std::vector<Vec2> _facePoints; //暂时支持单个人脸
         GLuint vao = -1;
         GLuint eao = -1;

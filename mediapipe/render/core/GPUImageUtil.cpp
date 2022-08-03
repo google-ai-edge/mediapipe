@@ -15,10 +15,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+#if defined(__APPLE__)
+#import <Foundation/Foundation.h>
+#endif
 
 #include "GPUImageUtil.h"
-
+#define openLog 1
 
 
 namespace Opipe {
@@ -39,7 +41,19 @@ namespace Opipe {
     }
 
     void Log(const std::string &tag, const std::string &format, ...) {
-
+#if openLog
+        char buffer[10240];
+        va_list args;
+        va_start(args, format);
+        vsprintf(buffer, format.c_str(), args);
+        va_end(args);
+#if defined(__APPLE__)
+        NSLog(@"%s: %s", tag.c_str(), buffer);
+#else
+        __android_log_print(ANDROID_LOG_INFO, tag.c_str(), "%s", buffer);
+        
+#endif
+#endif
     }
 
     /**

@@ -88,16 +88,16 @@ Framebuffer* FramebufferCache::fetchFramebuffer(Context *context,
                 forceCleanFramebuffer(framebuffer);
                 framebuffer = 0;
             } else if (framebuffer->framebufferRetainCount() == 0 && !framebuffer->isDealloc) {
-                Log("Framebuffer 【命中缓存】", "hashcode:%s count:%d",
-                    framebufferHashCodeKey.first.c_str(),
-                    framebuffer->framebufferRetainCount());
+//                Log("Framebuffer 【命中缓存】", "hashcode:%s count:%d",
+//                    framebufferHashCodeKey.first.c_str(),
+//                    framebuffer->framebufferRetainCount());
                 return framebuffer;
             }
         }
     }
-    Log("Framebuffer 所有缓存【未命中】", "hashcode:%s count:%d",
-        lookupHash.c_str(),
-        matchFramebuffersHashCode.size());
+//    Log("Framebuffer 所有缓存【未命中】", "hashcode:%s count:%d",
+//        lookupHash.c_str(),
+//        matchFramebuffersHashCode.size());
     // 如果都被占用了 或者找不到对应的Framebuffer 则需要创建一个新的
     
     if (useTextureCache) {

@@ -36,7 +36,7 @@ namespace Opipe
 #if defined(__APPLE__)
         virtual void outputPixelbuffer(OlaGraph *graph, CVPixelBufferRef pixelbuffer,
                                        const std::string &streamName,
-                                       int64_t timstamp) = 0;
+                                       int64_t timestamp) = 0;
 
 #endif
 
@@ -169,9 +169,18 @@ namespace Opipe
 
         /// Waits for the graph to become idle.
         bool waitUntilIdle();
+        
+        void setUseVideoOutput(bool useVideoOutput) {
+            _useVideoOutput = useVideoOutput;
+        }
+        
+        bool useVideoOutput() {
+            return _useVideoOutput;
+        }
 
         std::weak_ptr<MPPGraphDelegate> _delegate;
         std::atomic<int32_t> _framesInFlight = 0;
+        std::atomic<int32_t> _retryCount = 0;
 
     private:
         std::unique_ptr<mediapipe::CalculatorGraph> _graph;
@@ -189,6 +198,7 @@ namespace Opipe
         int64 _frameNumber;
 
         bool _started;
+        bool _useVideoOutput = true;
 
         absl::Status performStart();
 

@@ -29,8 +29,8 @@ namespace Opipe
 
     FaceMeshBeautyRender::~FaceMeshBeautyRender()
     {
-       
         _olaBeautyFilter->removeAllTargets();
+   
         if (_olaBeautyFilter)
         {
             _olaBeautyFilter->release();
@@ -122,6 +122,13 @@ namespace Opipe
         return outputTexture;
     }
 
+    void FaceMeshBeautyRender::setFacePoints(std::vector<Vec2> facePoints) {
+        if (_olaBeautyFilter) {
+            _olaBeautyFilter->setProperty("face", facePoints);
+
+        }
+    }
+
     float FaceMeshBeautyRender::getSmoothing()
     {
         return _smoothing;
@@ -137,7 +144,7 @@ namespace Opipe
         _smoothing = smoothing;
         if (_olaBeautyFilter)
         {
-            _olaBeautyFilter->setSmoothing(smoothing);
+            _olaBeautyFilter->setProperty("skin", smoothing);
         }
     }
 
@@ -146,8 +153,30 @@ namespace Opipe
         _whitening = whitening;
         if (_olaBeautyFilter)
         {
-            _olaBeautyFilter->setWhitening(whitening);
+            _olaBeautyFilter->setProperty("whiten", whitening);
         }
     }
+
+    void FaceMeshBeautyRender::setNoseFactor(float noseFactor) {
+        _noseFactor = noseFactor;
+        if (_olaBeautyFilter) {
+            _olaBeautyFilter->setProperty("nose", noseFactor);
+        }
+    }
+    
+    void FaceMeshBeautyRender::setFaceSlim(float slimFactor) {
+        _faceFactor = slimFactor;
+        if (_olaBeautyFilter) {
+            _olaBeautyFilter->setProperty("slim", slimFactor);
+        }
+    }
+
+    void FaceMeshBeautyRender::setEye(float eyeFactor) {
+        _eyeFactor = eyeFactor;
+        if (_olaBeautyFilter) {
+            _olaBeautyFilter->setProperty("eye", eyeFactor);
+        }
+    }
+    
 
 }

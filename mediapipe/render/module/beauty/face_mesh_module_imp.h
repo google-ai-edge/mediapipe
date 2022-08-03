@@ -8,6 +8,12 @@
 #include "face_mesh_module.h"
 #include "face_mesh_beauty_render.h"
 
+#define TestTemplateFace 0
+#if TestTemplateFace
+#include "mediapipe/render/core/SourceImage.hpp"
+#endif
+
+
 namespace Opipe
 {
     class FaceMeshModuleIMP;
@@ -32,7 +38,6 @@ namespace Opipe
         
     private:
         int64_t _last_landmark_ts = 0;
-        int64_t _last_video_ts = 0;
         bool _hasFace = false;
         NormalizedLandmarkList _lastLandmark;
         NormalizedLandmarkList _emptyLandmark;
@@ -79,7 +84,7 @@ namespace Opipe
 
         virtual TextureInfo renderTexture(TextureInfo inputTexture) override;
         
-        virtual void setLandmark(NormalizedLandmarkList landmark);
+        virtual void setLandmark(NormalizedLandmarkList landmark, int64_t timestamp);
         
         /// 磨皮
         float getSmoothing() override {
@@ -91,18 +96,44 @@ namespace Opipe
             return _render->getWhitening();
         }
         
+        float getEye() override {
+            return _render->getEye();
+        }
+        
+        float getSlim() override {
+            return _render->getFace();
+        }
+        
+        float getNose() override {
+            return _render->getNose();
+        }
         
         /// 磨皮
         /// @param smoothing 磨皮 0.0 - 1.0
-        void setSmoothing(float smoothing) {
+        void setSmoothing(float smoothing) override {
             _render->setSmoothing(smoothing);
         }
         
-        
         /// 美白
         /// @param whitening 美白 0.0 - 1.0
-        void setWhitening(float whitening) {
+        void setWhitening(float whitening) override {
             _render->setWhitening(whitening);
+        }
+        
+        void setEye(float eye) override {
+            _render->setEye(eye);
+        }
+        
+        void setSlim(float slim) override {
+            _render->setFaceSlim(slim);
+        }
+        
+        void setNose(float nose) override {
+            _render->setNoseFactor(nose);
+        }
+        
+        OpipeDispatch* currentDispatch() {
+            return _dispatch.get();
         }
 
     private:
@@ -114,6 +145,10 @@ namespace Opipe
         std::shared_ptr<FaceMeshCallFrameDelegate> _delegate;
         FaceMeshBeautyRender *_render = nullptr;
         OlaContext *_olaContext = nullptr;
+        
+#if TestTemplateFace
+        SourceImage *_templateFace = nullptr;
+#endif
     };
 }
 #endif

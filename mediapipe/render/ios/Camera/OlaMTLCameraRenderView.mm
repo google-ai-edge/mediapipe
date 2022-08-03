@@ -231,21 +231,23 @@ NS_INLINE size_t QAAlignSize(size_t size)
         if (strongSelf.cameraDelegate && !strongSelf.isPaused) {
             if (@available(iOS 11.0, *)) {
                 glFlush();
+                [EAGLContext setCurrentContext:strongSelf.openGLContext];
+                
                 [strongSelf.cameraDelegate draw:strongSelf.frameTime];
                 
-                [strongSelf.cameraDelegate externalRender:strongSelf.frameTime
-                                            targetTexture:strongSelf.shareTexture
-                                            commandBuffer:commandBuffer];
-                [EAGLContext setCurrentContext:self.openGLContext];
-                IOSurfaceID surfaceId = [strongSelf.cameraDelegate bgraCameraTextureReady:strongSelf.cameraTexture
+                [strongSelf.cameraDelegate bgraCameraTextureReady:strongSelf.cameraTexture
                                                   onScreenTexture:strongSelf.shareTexture
                                                       frameTime:strongSelf.frameTime * 1000];
+                
+                IOSurfaceID surfaceId = [strongSelf.cameraDelegate externalRender:strongSelf.frameTime
+                                            targetTexture:strongSelf.cameraTexture
+                                            commandBuffer:commandBuffer];
                 if (surfaceId != -1) {
                     //这里渲染surfaceId
                     IOSurfaceRef ioSurface = IOSurfaceLookup(surfaceId);
-                    IOSurfaceLock(ioSurface, kIOSurfaceLockReadOnly, nil);
+                
                     if (ioSurface) {
-                        if (self.lastIOSurfaceID != surfaceId || self.ioSurfaceTexture == nil) {
+                        if (strongSelf.lastIOSurfaceID != surfaceId || strongSelf.ioSurfaceTexture == nil) {
                             id<MTLTexture> texture;
                             MTLTextureDescriptor *textureDescriptor = [MTLTextureDescriptor
                                                                        texture2DDescriptorWithPixelFormat:MTLPixelFormatBGRA8Unorm
@@ -254,18 +256,16 @@ NS_INLINE size_t QAAlignSize(size_t size)
                                                                        mipmapped:NO];
                             textureDescriptor.storageMode = MTLStorageModeShared;
                             textureDescriptor.usage = MTLTextureUsageRenderTarget | MTLTextureUsageShaderRead;
-                            texture = [self.device newTextureWithDescriptor:textureDescriptor iosurface:ioSurface plane:0];
-                            self.ioSurfaceTexture = texture;
+                            texture = [strongSelf.device newTextureWithDescriptor:textureDescriptor iosurface:ioSurface plane:0];
+                            strongSelf.ioSurfaceTexture = texture;
                             textureDescriptor = nil;
                         }
                       
-                        IOSurfaceUnlock(ioSurface, kIOSurfaceLockReadOnly, nil);
-                        CFRelease(ioSurface);
-                        
-                        self.lastIOSurfaceID = surfaceId;
-                        if (self.ioSurfaceTexture) {
+                        strongSelf.lastIOSurfaceID = surfaceId;
+                        if (strongSelf.ioSurfaceTexture) {
+                            IOSurfaceLock(ioSurface, kIOSurfaceLockReadOnly, nil);
                             [strongSelf.mtlRender renderToTexture:drawable.texture
-                                                             from:self.ioSurfaceTexture
+                                                             from:strongSelf.ioSurfaceTexture
                                                     commandBuffer:commandBuffer
                                                 textureCoordinate:strongSelf.mtlRender.noRotationBuffer];
                             if (drawable) {
@@ -273,6 +273,8 @@ NS_INLINE size_t QAAlignSize(size_t size)
                                 [commandBuffer addCompletedHandler:renderCompleted];
                                 [commandBuffer commit];
                             }
+                            IOSurfaceUnlock(ioSurface, kIOSurfaceLockReadOnly, nil);
+                            CFRelease(ioSurface);
                             return;
                         }
                         
@@ -297,6 +299,37 @@ NS_INLINE size_t QAAlignSize(size_t size)
     });
 #endif
     
+}
+
+- (void)renderPixelbuffer:(CVPixelBufferRef)pixelbuffer
+{
+    if (self.isPaused) {
+        return;
+    }
+    
+    if (dispatch_semaphore_wait(self.cameraFrameRenderingSemaphore, DISPATCH_TIME_NOW) != 0)
+    {
+        return;
+    }
+    
+    dispatch_semaphore_t block_camera_sema = self.cameraFrameRenderingSemaphore;
+    __strong OlaMTLCameraRenderView *weakSelf = self;
+    void (^renderCompleted)(id<MTLCommandBuffer> buffer) = ^(id<MTLCommandBuffer> buffer)
+    {
+        dispatch_semaphore_signal(block_camera_sema);
+    };
+    
+    CFRetain(pixelbuffer);
+    dispatch_async(self.displayRenderQueue, ^{
+        if (weakSelf == nil) {
+            CFRelease(pixelbuffer);
+            return;
+        }
+        __strong OlaMTLCameraRenderView *strongSelf = weakSelf;
+        [strongSelf.mtlRender renderToCameraTextureWithPixelBuffer:pixelbuffer completedHandler:renderCompleted];
+        
+        CFRelease(pixelbuffer);
+    });
 }
 
 - (void)cameraSampleBufferArrive:(CMSampleBufferRef)sampleBuffer

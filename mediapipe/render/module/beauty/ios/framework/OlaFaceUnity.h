@@ -16,6 +16,9 @@ typedef struct {
 
 @property (nonatomic) CGFloat whiten;
 @property (nonatomic) CGFloat smooth;
+@property (nonatomic) CGFloat slim;
+@property (nonatomic) CGFloat nose;
+@property (nonatomic) CGFloat eyeFactor;
 
 
 + (instancetype)sharedInstance;

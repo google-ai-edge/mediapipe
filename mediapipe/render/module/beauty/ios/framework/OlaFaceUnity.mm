@@ -30,7 +30,7 @@
 {
     _face_module = Opipe::FaceMeshModule::create();
     NSBundle *bundle = [NSBundle bundleForClass:[self class]];
-    NSURL* graphURL = [bundle URLForResource:@"face_mesh_mobile_gpu" withExtension:@"binarypb"];
+    NSURL* graphURL = [bundle URLForResource:@"face_mesh_mobile_landmark_gpu" withExtension:@"binarypb"];
     NSData* data = [NSData dataWithContentsOfURL:graphURL options:0 error:nil];
     if (data) {
         _face_module->init(nullptr, (void *)data.bytes, data.length);
@@ -111,6 +111,36 @@
 - (void)setSmooth:(CGFloat)smooth
 {
     _face_module->setSmoothing(smooth);
+}
+
+- (CGFloat)slim
+{
+    return _face_module->getSlim();
+}
+
+- (void)setSlim:(CGFloat)slim
+{
+    _face_module->setSlim(slim);
+}
+
+- (CGFloat)eyeFactor
+{
+    return _face_module->getEye();
+}
+
+- (void)setEyeFactor:(CGFloat)eyeFactor
+{
+    _face_module->setEye(eyeFactor);
+}
+
+- (CGFloat)nose
+{
+    return _face_module->getNose();
+}
+
+- (void)setNose:(CGFloat)nose
+{
+    _face_module->setNose(nose);
 }
 
 - (void)resume

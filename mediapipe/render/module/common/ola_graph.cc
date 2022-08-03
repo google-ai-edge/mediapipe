@@ -40,10 +40,10 @@ namespace Opipe
                 pixelBuffer = mediapipe::GetCVPixelBufferRef(packet.Get<mediapipe::GpuBuffer>());
             else
                 pixelBuffer = packet.Get<mediapipe::Image>().GetCVPixelBufferRef();
-
+            
             graph->_delegate.lock()->outputPixelbuffer(graph, pixelBuffer, streamName, packet.Timestamp().Value());
-#endif
         }
+#endif
         
         
     }
@@ -120,7 +120,7 @@ namespace Opipe
             }
         }
         status = _graph->StartRun(_inputSidePackets, _streamHeaders);
-        NSLog(@"errors:%@", [NSString stringWithUTF8String:status.ToString().c_str()]);
+//        NSLog(@"errors:%@", [NSString stringWithUTF8String:status.ToString().c_str()]);
         if (!status.ok())
         {
             return status;
@@ -132,14 +132,14 @@ namespace Opipe
                               const std::string &streamName)
     {
         absl::Status status = _graph->AddPacketToInputStream(streamName, packet);
-        NSLog(@"errors:%@", [NSString stringWithUTF8String:status.ToString().c_str()]);
+//        NSLog(@"errors:%@", [NSString stringWithUTF8String:status.ToString().c_str()]);
         return status.ok();
     }
 
     bool OlaGraph::movePacket(mediapipe::Packet &&packet, const std::string &streamName)
     {
         absl::Status status = _graph->AddPacketToInputStream(streamName, std::move(packet));
-        NSLog(@"errors:%@", [NSString stringWithUTF8String:status.ToString().c_str()]);
+//        NSLog(@"errors:%@", [NSString stringWithUTF8String:status.ToString().c_str()]);
         return status.ok();
     }
 

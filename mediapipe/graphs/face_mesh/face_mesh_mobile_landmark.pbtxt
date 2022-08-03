@@ -1,5 +1,5 @@
 # MediaPipe graph that performs face mesh with TensorFlow Lite on GPU.
-max_queue_size: 2
+
 # GPU buffer. (GpuBuffer)
 input_stream: "input_video"
 
@@ -59,21 +59,11 @@ node {
 }
 
 # Subgraph that renders face-landmark annotation onto the input image.  //画标记 用于调试
-# node {
-#   calculator: "FaceRendererGpu"
-#   input_stream: "IMAGE:throttled_input_video"
-#   input_stream: "LANDMARKS:multi_face_landmarks"
-#   input_stream: "NORM_RECTS:face_rects_from_landmarks"
-#   input_stream: "DETECTIONS:face_detections"
-#   output_stream: "IMAGE:output_video"
-# }
-
-# Draws annotations and overlays them on top of the input images.
 node {
-  calculator: "AnnotationOverlayCalculator"
-  input_stream: "IMAGE_GPU:throttled_input_video"
-  # input_stream: "detections_render_data"
-  # input_stream: "VECTOR:0:multi_face_landmarks_render_data"
-  # input_stream: "rects_render_data"
-  output_stream: "IMAGE_GPU:output_video"
+  calculator: "FaceRendererGpu"
+  input_stream: "IMAGE:throttled_input_video"
+  input_stream: "LANDMARKS:multi_face_landmarks"
+  input_stream: "NORM_RECTS:face_rects_from_landmarks"
+  input_stream: "DETECTIONS:face_detections"
+  output_stream: "IMAGE:output_video"
 }
