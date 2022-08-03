@@ -19,7 +19,7 @@
 #include <math.h>
 #include "SourceCamera.hpp"
 #include "Context.hpp"
-#include "GPUImageUtil.h"
+#include "util.h"
 #if defined(__APPLE__)
 #include "CVFramebuffer.hpp"
 #endif
@@ -81,7 +81,7 @@ void SourceCamera::setIORenderTexture(IOSurfaceID surfaceID,
                                       GLuint texture,
                                       int width,
                                       int height,
-                                      Opipe::RotationMode outputRotation,
+                                      GPUImage::RotationMode outputRotation,
                                       SourceType sourceType,
                                       TextureAttributes textureAttributes) {
     //纹理发生变化，使用新的framebuffer
@@ -165,15 +165,11 @@ void SourceCamera::setFrameData(int width,
     this->setFramebuffer(framebuffer, outputRotation);
     CHECK_GL(glBindTexture(GL_TEXTURE_2D, this->getFramebuffer()->getTexture()));
 
-    float offset = 1.0;
-#ifdef  VERSION_LIMIT
-    offset = 1 - (texture * M_PI - floor(texture * M_PI));
-#endif
        
     switch (sourceType) {
         case SourceType_RGBA:
             if (pixels) {
-                CHECK_GL(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width * offset, height * offset, 0, pixelsType, GL_UNSIGNED_BYTE, pixels));
+                CHECK_GL(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, pixelsType, GL_UNSIGNED_BYTE, pixels));
             }
             break;
         case SourceType_YUV420SP:
@@ -182,7 +178,7 @@ void SourceCamera::setFrameData(int width,
                 
                 _UVFrameBuffer = getContext()->getFramebufferCache()->fetchFramebuffer(_context, width * 0.5, height * 0.5, true);
                 CHECK_GL(glBindTexture(GL_TEXTURE_2D, _UVFrameBuffer->getTexture()));
-                CHECK_GL(glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE_ALPHA, width * 0.5 * offset, height * 0.5 * offset, 0, GL_LUMINANCE_ALPHA, GL_UNSIGNED_BYTE, upixels));
+                CHECK_GL(glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE_ALPHA, width * 0.5, height * 0.5, 0, GL_LUMINANCE_ALPHA, GL_UNSIGNED_BYTE, upixels));
             }
             break;
         case SourceType_YUV420P:
@@ -193,10 +189,10 @@ void SourceCamera::setFrameData(int width,
                 _UVFrameBuffer = getContext()->getFramebufferCache()->fetchFramebuffer(_context, w, h, true);
                 CHECK_GL(glBindTexture(GL_TEXTURE_2D, _UVFrameBuffer->getTexture()));
 
-                CHECK_GL(glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, w * offset, h * offset, 0, GL_LUMINANCE, GL_UNSIGNED_BYTE, upixels));
+                CHECK_GL(glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, w, h, 0, GL_LUMINANCE, GL_UNSIGNED_BYTE, upixels));
                 _VFrameBuffer = getContext()->getFramebufferCache()->fetchFramebuffer(_context, w, h, true);
                 CHECK_GL(glBindTexture(GL_TEXTURE_2D, _VFrameBuffer->getTexture()));
-                CHECK_GL(glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, w * offset, h * offset, 0, GL_LUMINANCE, GL_UNSIGNED_BYTE, vpixels));
+                CHECK_GL(glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, w, h, 0, GL_LUMINANCE, GL_UNSIGNED_BYTE, vpixels));
             }
             break;
         default:

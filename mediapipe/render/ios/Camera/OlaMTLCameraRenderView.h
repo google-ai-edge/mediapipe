@@ -55,7 +55,6 @@
 /// 原始相机纹理 可以快速读取
 @property (nonatomic, readonly, strong) OlaShareTexture *cameraTexture;
 @property (nonatomic, readonly, strong) OlaShareTexture *halfCameraTexture;
-@property (nonatomic, readonly, strong) OlaShareTexture *shareTexture;
 
 /// 不带后处理的相机渲染的原始纹理
 @property (nonatomic, readonly) CVPixelBufferRef renderTarget;

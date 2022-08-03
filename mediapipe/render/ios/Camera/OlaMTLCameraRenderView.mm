@@ -28,7 +28,6 @@ NS_INLINE size_t QAAlignSize(size_t size)
 @property (nonatomic, strong) OlaMTLCameraRender *mtlRender;
 
 @property (nonatomic) NSTimeInterval frameTime;
-@property (nonatomic, strong) OlaShareTexture *shareTexture;
 @property (nonatomic, strong) OlaShareTexture *cameraTexture;
 @property (nonatomic) id<MTLTexture> ioSurfaceTexture;
 @property (nonatomic) IOSurfaceID lastIOSurfaceID;
@@ -50,7 +49,6 @@ NS_INLINE size_t QAAlignSize(size_t size)
 	_openGLContext = nil;
 	_mtlRender = nil;
 	
-	_shareTexture = nil;
 	_cameraTexture = nil;
     _halfCameraTexture = nil;
 }
@@ -93,12 +91,6 @@ NS_INLINE size_t QAAlignSize(size_t size)
     CGSize textureSize = CGSizeMake(float(alighWidth),
                                     frame.size.height * self.contentScaleFactor);
     
-    
-    _shareTexture = [[OlaShareTexture alloc] initWithMetalDevice:self.device
-                                                         openGLContext:self.openGLContext
-                                                      metalPixelFormat:self.colorPixelFormat
-                                                                  size:textureSize];
-    
     _cameraTexture = [[OlaShareTexture alloc] initWithMetalDevice:self.device
                                                           openGLContext:self.openGLContext
                                                        metalPixelFormat:self.colorPixelFormat
@@ -119,7 +111,7 @@ NS_INLINE size_t QAAlignSize(size_t size)
     
     dispatch_queue_attr_t interactive =
     dispatch_queue_attr_make_with_qos_class(DISPATCH_QUEUE_SERIAL,
-                                            QOS_CLASS_USER_INTERACTIVE, 0);
+                                            QOS_CLASS_DEFAULT, 0);
     self.displayFrameRenderingSemaphore = dispatch_semaphore_create(MaxFramesInFlight);
     self.displayRenderQueue = dispatch_queue_create("Ola.ios.displayRenderQueue",
                                                     interactive);
@@ -188,11 +180,7 @@ NS_INLINE size_t QAAlignSize(size_t size)
 //    dispatch_semaphore_t block_camera_sema = self.cameraFrameRenderingSemaphore;
     dispatch_semaphore_t block_display_sema = self.displayFrameRenderingSemaphore;
     
-    void (^renderCompleted)(id<MTLCommandBuffer> buffer) = ^(id<MTLCommandBuffer> buffer)
-    {
-//        dispatch_semaphore_signal(block_camera_sema);
-        dispatch_semaphore_signal(block_display_sema);
-    };
+
     
     NSMutableArray<OlaCameraRender *> *renders = [self.renders copy];
     
@@ -201,20 +189,25 @@ NS_INLINE size_t QAAlignSize(size_t size)
             return;
         }
         
+        void (^renderCompleted)(id<MTLCommandBuffer> buffer) = ^(id<MTLCommandBuffer> buffer)
+        {
+    //        dispatch_semaphore_signal(block_camera_sema);
+            dispatch_semaphore_signal(block_display_sema);
+        };
+        
         __strong OlaMTLCameraRenderView *strongSelf = weakSelf;
         
         strongSelf.frameTime += (1.0 / strongSelf.preferredFramesPerSecond) * 1000.0;
         if (dispatch_semaphore_wait(block_display_sema, DISPATCH_TIME_NOW) != 0)
         {
+            
+            NSLog(@"丢帧了:%f", strongSelf.frameTime);
             return;
         }
         
         id<MTLCommandBuffer> commandBuffer = nil;
         
 		commandBuffer = [strongSelf.mtlRender.commandQueue commandBuffer];
-		[strongSelf.mtlRender renderToShareTexture:strongSelf.shareTexture.metalTexture
-									 commandBuffer:commandBuffer
-										 frameTime:strongSelf.frameTime];
         [strongSelf.mtlRender renderToTexture:strongSelf.halfCameraTexture.metalTexture
                                          from:strongSelf.cameraTexture.metalTexture commandBuffer:commandBuffer
                             textureCoordinate:strongSelf.mtlRender.noRotationBuffer];
@@ -240,16 +233,18 @@ NS_INLINE size_t QAAlignSize(size_t size)
         
         if (strongSelf.cameraDelegate && !strongSelf.isPaused) {
             if (@available(iOS 11.0, *)) {
-                glFlush();
+              
                 [EAGLContext setCurrentContext:strongSelf.openGLContext];
                 
                 [strongSelf.cameraDelegate draw:strongSelf.frameTime];
                
+                glFlush();
                 IOSurfaceID surfaceId = [strongSelf.cameraDelegate externalRender:strongSelf.frameTime
                                             targetTexture:strongSelf.cameraTexture
                                             commandBuffer:commandBuffer];
+                
                 [strongSelf.cameraDelegate bgraCameraTextureReady:strongSelf.halfCameraTexture
-                                                  onScreenTexture:strongSelf.shareTexture
+                                                  onScreenTexture:strongSelf.cameraTexture
                                                         frameTime:strongSelf.frameTime * 1000];
                 if (surfaceId != -1) {
                     //这里渲染surfaceId
@@ -293,11 +288,8 @@ NS_INLINE size_t QAAlignSize(size_t size)
             }
         }
         
-        
-        glFlush();
-        //将混合渲染结果 渲染到屏幕
         [strongSelf.mtlRender renderToTexture:drawable.texture
-                                         from:strongSelf.shareTexture.metalTexture
+                                         from:strongSelf.cameraTexture.metalTexture
                                 commandBuffer:commandBuffer
                             textureCoordinate:strongSelf.mtlRender.noRotationBuffer];
         if (drawable) {
@@ -383,7 +375,7 @@ NS_INLINE size_t QAAlignSize(size_t size)
 {
     NSAssert([NSThread isMainThread], @"call on main Thread");
     
-    [render setupWithDevice:self.device shareTexture:self.shareTexture useRenderMode:self.useRenderMode];
+    [render setupWithDevice:self.device shareTexture:self.cameraTexture useRenderMode:self.useRenderMode];
 
     [self.renders addObject:render];
 }
