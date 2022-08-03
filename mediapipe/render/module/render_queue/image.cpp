@@ -30,9 +30,9 @@
 
 extern "C" __attribute__((visibility("default"))) __attribute__((used))
 void addImageCache(const uint8_t *img, int len, double startX, double startY, double normalWidth, double normalHeight,
-                   int width, int height, uint64_t javaTime, uint64_t startT, uint64_t beforeFFi, bool exportFlag) {
-    ImageQueue::getInstance()->push(img, len, startX, startY, normalWidth, normalHeight, width, height, javaTime,
-                                    startT, beforeFFi, exportFlag);
+                   int width, int height, bool exportFlag) {
+    ImageQueue::getInstance()->push(img, len, float(startX), float(startY), float(normalWidth), float(normalHeight),
+                                    width, height, exportFlag);
 }
 
 
@@ -43,5 +43,5 @@ void disposeImage() {
 
 extern "C" __attribute__((visibility("default"))) __attribute__((used))
 void test() {
-    
+
 }

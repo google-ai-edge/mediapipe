@@ -70,6 +70,12 @@
         "iostream": "cpp",
         "numeric": "cpp",
         "optional": "cpp",
-        "__config": "cpp"
-    }
+        "__config": "cpp",
+        "queue": "cpp",
+        "stack": "cpp",
+        "__mutex_base": "cpp",
+        "shared_mutex": "cpp",
+        "valarray": "cpp"
+    },
+    "C_Cpp.errorSquiggles": "Disabled"
 }

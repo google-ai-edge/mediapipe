@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="guava-27.0.1-android_f03a145b">
+    <CLASSES>
+      <root url="jar:///private/var/tmp/_bazel_weatherfish/a544868cc0efc639ec92cd3dff978586/external/maven/v1/https/repo1.maven.org/maven2/com/google/guava/guava/27.0.1-android/guava-27.0.1-android.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

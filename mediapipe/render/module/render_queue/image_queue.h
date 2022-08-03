@@ -18,50 +18,45 @@
 struct ImageInfo {
     uint8_t *data;
     int len;
-    double startX;
-    double startY;
-    double normalWidth;
-    double normalHeight;
+    float startX;
+    float startY;
+    float normalWidth;
+    float normalHeight;
     int width;
     int height;
-    uint64_t javaTime;
-    uint64_t startT;
-    uint64_t beforeFFi;
-    uint64_t afterFFi;
     int flag;
-
 };
 
 class ImageQueue : public LockFreeQueue<ImageInfo> {
 private:
     static ImageQueue *instance;
     // sem_t sem;
-    #if defined(__APPLE__)
-        dispatch_semaphore_t sem = 0;
-    #else
-        sem_t sem;
-    #endif
+#if defined(__APPLE__)
+    dispatch_semaphore_t sem = 0;
+#else
+    sem_t sem;
+#endif
     ImageInfo emptyInfo;
 
     ImageQueue(size_t capacity) : LockFreeQueue(capacity) {
         emptyInfo.data = nullptr;
         emptyInfo.len = 0;
-    #if defined(__APPLE__)
+#if defined(__APPLE__)
         sem = dispatch_semaphore_create(1);
-    #else
+#else
         sem_init(&sem, 0, 1);
         sem_wait(&sem);
-    #endif
+#endif
     };
 
     ~ImageQueue() {
-        #if defined(__APPLE__)
+#if defined(__APPLE__)
         dispatch_semaphore_signal(sem);
         // dispatch_release(sem);
         sem = 0;
-        #else
+#else
         sem_destroy(&sem);
-        #endif
+#endif
     };
 
     ImageQueue(const ImageQueue &);
@@ -83,8 +78,8 @@ public:
 //    void push(ImageInfo &imageInfo);
 
     void
-    push(const uint8_t *img, int len, double startX, double startY, double normalWidth, double normalHeight, int width,
-         int height, uint64_t javaTime, uint64_t startT, uint64_t beforeFFi, bool exportFlag);
+    push(const uint8_t *img, int len, float startX, float startY, float normalWidth, float normalHeight, int width,
+         int height, bool exportFlag);
 
     void pop(ImageInfo &info, bool exportFlag = false);
 

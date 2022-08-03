@@ -1,0 +1,14 @@
+# Additional flags to pass to Proguard when processing a binary that uses
+# MediaPipe.
+
+# Keep public members of our public interfaces. This also prevents the
+# obfuscation of the corresponding methods in classes implementing them,
+# such as implementations of PacketCallback#process.
+
+
+# This method is invoked by native code.
+-keep public class com.ola.render.RenderJni {
+  public static *** create();
+  public static *** render(***);
+  public static *** release(***);
+}

@@ -94,7 +94,8 @@ NS_OLA_BEGIN
         GLuint _transform_mvp = -1;
         GLuint _transformTexture = -1;
         Vec2 _lastTransformSize = Vec2(0.0, 0.0);
-
+        int _lastWidth = 0;
+        int _lastHeight = 0;
         Mat4 _mvp_matrix;
         Vec4 _roi;
 

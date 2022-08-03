@@ -58,7 +58,7 @@ USING_NS_OLA
 
 +(void)addImg
 {
-    addImageCache(nullptr, 0, 0.0, 0.0, 0.0, 0.0, 0,0,0,0,0, false);
+    addImageCache(nullptr, 0, 0.0, 0.0, 0.0, 0.0, 0,0, false);
 }
 +(void)disposeImg
 {

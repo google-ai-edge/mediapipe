@@ -1,0 +1,10 @@
+<component name="libraryTable">
+  <library name="camera-camera2-1.0.0-beta10_453d385d">
+    <CLASSES>
+      <root url="file://$PROJECT_DIR$/.blaze/aar_libraries/camera-camera2-1.0.0-beta10_565f3c65.aar/res" />
+      <root url="jar://$PROJECT_DIR$/.blaze/aar_libraries/camera-camera2-1.0.0-beta10_565f3c65.aar/jars/classes_and_libs_merged.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

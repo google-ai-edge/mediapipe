@@ -1,0 +1,10 @@
+<component name="libraryTable">
+  <library name="recyclerview-1.1.0-beta02_d4369d5f">
+    <CLASSES>
+      <root url="file://$PROJECT_DIR$/.blaze/aar_libraries/recyclerview-1.1.0-beta02_28c025ea.aar/res" />
+      <root url="jar://$PROJECT_DIR$/.blaze/aar_libraries/recyclerview-1.1.0-beta02_28c025ea.aar/jars/classes_and_libs_merged.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

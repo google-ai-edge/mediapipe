@@ -1,0 +1,17 @@
+style TextAppearance_Compat_Notification
+style TextAppearance_Compat_Notification_Info
+style TextAppearance_Compat_Notification_Line2
+style TextAppearance_Compat_Notification_Time
+style TextAppearance_Compat_Notification_Title
+attr alpha
+attr font
+attr fontProviderAuthority
+attr fontProviderCerts
+attr fontProviderFetchStrategy
+attr fontProviderFetchTimeout
+attr fontProviderPackage
+attr fontProviderQuery
+attr fontStyle
+attr fontVariationSettings
+attr fontWeight
+attr ttcIndex

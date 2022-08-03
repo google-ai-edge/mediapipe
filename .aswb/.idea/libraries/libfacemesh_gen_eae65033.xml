@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="libfacemesh-gen_eae65033">
+    <CLASSES>
+      <root url="jar:///private/var/tmp/_bazel_weatherfish/a544868cc0efc639ec92cd3dff978586/execroot/mediapipe/bazel-out/darwin-fastbuild/bin/mediapipe/java/com/google/mediapipe/solutions/facemesh/libfacemesh-gen.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

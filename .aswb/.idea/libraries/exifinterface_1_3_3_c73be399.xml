@@ -1,0 +1,10 @@
+<component name="libraryTable">
+  <library name="exifinterface-1.3.3_c73be399">
+    <CLASSES>
+      <root url="file://$PROJECT_DIR$/.blaze/aar_libraries/exifinterface-1.3.3_d381a201.aar/res" />
+      <root url="jar://$PROJECT_DIR$/.blaze/aar_libraries/exifinterface-1.3.3_d381a201.aar/jars/classes_and_libs_merged.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

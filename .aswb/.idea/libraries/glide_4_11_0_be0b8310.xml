@@ -1,0 +1,10 @@
+<component name="libraryTable">
+  <library name="glide-4.11.0_be0b8310">
+    <CLASSES>
+      <root url="file://$PROJECT_DIR$/.blaze/aar_libraries/glide-4.11.0_cd14c04b.aar/res" />
+      <root url="jar://$PROJECT_DIR$/.blaze/aar_libraries/glide-4.11.0_cd14c04b.aar/jars/classes_and_libs_merged.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

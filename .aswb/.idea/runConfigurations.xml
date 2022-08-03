@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="RunConfigurationProducerService">
+    <option name="ignoredProducers">
+      <set>
+        <option value="com.android.tools.idea.run.AndroidConfigurationProducer" />
+        <option value="com.android.tools.idea.run.configuration.AndroidComplicationRunConfigurationProducer" />
+        <option value="com.android.tools.idea.run.configuration.AndroidTileRunConfigurationProducer" />
+        <option value="com.android.tools.idea.run.configuration.AndroidWatchFaceRunConfigurationProducer" />
+        <option value="com.android.tools.idea.testartifacts.instrumented.AndroidTestConfigurationProducer" />
+        <option value="com.android.tools.idea.testartifacts.junit.TestClassAndroidConfigurationProducer" />
+        <option value="com.android.tools.idea.testartifacts.junit.TestDirectoryAndroidConfigurationProducer" />
+        <option value="com.android.tools.idea.testartifacts.junit.TestMethodAndroidConfigurationProducer" />
+        <option value="com.android.tools.idea.testartifacts.junit.TestPackageAndroidConfigurationProducer" />
+        <option value="com.android.tools.idea.testartifacts.junit.TestPatternConfigurationProducer" />
+        <option value="com.intellij.execution.application.ApplicationConfigurationProducer" />
+        <option value="com.intellij.execution.junit.AbstractAllInDirectoryConfigurationProducer" />
+        <option value="com.intellij.execution.junit.AllInDirectoryConfigurationProducer" />
+        <option value="com.intellij.execution.junit.AllInPackageConfigurationProducer" />
+        <option value="com.intellij.execution.junit.PatternConfigurationProducer" />
+        <option value="com.intellij.execution.junit.TestClassConfigurationProducer" />
+        <option value="com.intellij.execution.junit.TestInClassConfigurationProducer" />
+        <option value="com.intellij.execution.junit.UniqueIdConfigurationProducer" />
+        <option value="com.intellij.execution.junit.testDiscovery.JUnitTestDiscoveryConfigurationProducer" />
+        <option value="com.jetbrains.python.run.PythonRunConfigurationProducer" />
+        <option value="com.jetbrains.python.testing.PyTestsConfigurationProducer" />
+        <option value="com.jetbrains.python.testing.PythonTestLegacyConfigurationProducer" />
+        <option value="com.jetbrains.python.testing.doctest.PythonDocTestConfigurationProducer" />
+        <option value="com.jetbrains.python.testing.tox.PyToxConfigurationProducer" />
+        <option value="org.jetbrains.kotlin.idea.gradle.native.KotlinNativeRunConfigurationProducer" />
+        <option value="org.jetbrains.kotlin.idea.gradleJava.run.KotlinJvmTestClassGradleConfigurationProducer" />
+        <option value="org.jetbrains.kotlin.idea.gradleJava.run.KotlinJvmTestMethodGradleConfigurationProducer" />
+        <option value="org.jetbrains.kotlin.idea.gradleJava.run.KotlinMultiplatformJvmTestClassGradleConfigurationProducer" />
+        <option value="org.jetbrains.kotlin.idea.gradleJava.run.KotlinMultiplatformJvmTestMethodGradleConfigurationProducer" />
+        <option value="org.jetbrains.kotlin.idea.gradleJava.testing.KotlinMultiplatformAllInDirectoryConfigurationProducer" />
+        <option value="org.jetbrains.kotlin.idea.gradleJava.testing.KotlinMultiplatformAllInPackageConfigurationProducer" />
+        <option value="org.jetbrains.kotlin.idea.gradleJava.testing.common.KotlinMultiplatformCommonTestClassGradleConfigurationProducer" />
+        <option value="org.jetbrains.kotlin.idea.gradleJava.testing.common.KotlinMultiplatformCommonTestMethodGradleConfigurationProducer" />
+        <option value="org.jetbrains.kotlin.idea.gradleJava.testing.js.KotlinMultiplatformJsTestClassGradleConfigurationProducer" />
+        <option value="org.jetbrains.kotlin.idea.gradleJava.testing.js.KotlinMultiplatformJsTestMethodGradleConfigurationProducer" />
+        <option value="org.jetbrains.kotlin.idea.gradleJava.testing.native.KotlinMultiplatformNativeTestClassGradleConfigurationProducer" />
+        <option value="org.jetbrains.kotlin.idea.gradleJava.testing.native.KotlinMultiplatformNativeTestMethodGradleConfigurationProducer" />
+        <option value="org.jetbrains.kotlin.idea.junit.KotlinJUnitRunConfigurationProducer" />
+        <option value="org.jetbrains.kotlin.idea.junit.KotlinPatternConfigurationProducer" />
+        <option value="org.jetbrains.kotlin.idea.run.KotlinJUnitRunConfigurationProducer" />
+        <option value="org.jetbrains.kotlin.idea.run.KotlinJvmTestClassGradleConfigurationProducer" />
+        <option value="org.jetbrains.kotlin.idea.run.KotlinJvmTestMethodGradleConfigurationProducer" />
+        <option value="org.jetbrains.kotlin.idea.run.KotlinMultiplatformJvmTestClassGradleConfigurationProducer" />
+        <option value="org.jetbrains.kotlin.idea.run.KotlinMultiplatformJvmTestMethodGradleConfigurationProducer" />
+        <option value="org.jetbrains.kotlin.idea.run.KotlinPatternConfigurationProducer" />
+        <option value="org.jetbrains.kotlin.idea.run.KotlinRunConfigurationProducer" />
+        <option value="org.jetbrains.kotlin.idea.run.KotlinTestClassGradleConfigurationProducer" />
+        <option value="org.jetbrains.kotlin.idea.run.KotlinTestMethodGradleConfigurationProducer" />
+        <option value="org.jetbrains.plugins.gradle.execution.GradleGroovyScriptRunConfigurationProducer" />
+        <option value="org.jetbrains.plugins.gradle.execution.test.runner.AllInDirectoryGradleConfigurationProducer" />
+        <option value="org.jetbrains.plugins.gradle.execution.test.runner.PatternGradleConfigurationProducer" />
+        <option value="org.jetbrains.plugins.gradle.service.execution.GradleRuntimeConfigurationProducer" />
+      </set>
+    </option>
+  </component>
+</project>

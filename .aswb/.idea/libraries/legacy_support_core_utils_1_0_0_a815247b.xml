@@ -1,0 +1,10 @@
+<component name="libraryTable">
+  <library name="legacy-support-core-utils-1.0.0_a815247b">
+    <CLASSES>
+      <root url="file://$PROJECT_DIR$/.blaze/aar_libraries/legacy-support-core-utils-1.0.0_1ea904c1.aar/res" />
+      <root url="jar://$PROJECT_DIR$/.blaze/aar_libraries/legacy-support-core-utils-1.0.0_1ea904c1.aar/jars/classes_and_libs_merged.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

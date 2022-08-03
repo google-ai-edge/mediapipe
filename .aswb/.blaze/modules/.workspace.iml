@@ -1,0 +1,224 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module external.system.id="Blaze" type="JAVA_MODULE" version="4">
+  <component name="FacetManager">
+    <facet type="android" name="Android">
+      <configuration>
+        <option name="ALLOW_USER_CONFIGURATION" value="false" />
+        <option name="MANIFEST_FILE_RELATIVE_PATH" value="" />
+        <option name="RES_FOLDER_RELATIVE_PATH" value="" />
+        <option name="ASSETS_FOLDER_RELATIVE_PATH" value="" />
+        <option name="PROJECT_TYPE" value="1" />
+        <option name="ENABLE_SOURCES_AUTOGENERATION" value="false" />
+      </configuration>
+    </facet>
+  </component>
+  <component name="NewModuleRootManager">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$/../../..">
+      <sourceFolder url="file://$MODULE_DIR$/../../.." isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/../../../mediapipe/examples/android/solutions/facedetection/src/main/java" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/../../../mediapipe/examples/android/solutions/facemesh/src/main/java" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/../../../mediapipe/examples/android/solutions/hands/src/main/java" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/../../../mediapipe/examples/android/src/java" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/../../../mediapipe/java" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/../../../mediapipe/render/module/render_queue/src" isTestSource="false" />
+      <excludeFolder url="file://$MODULE_DIR$/../../../bazel-bin" />
+      <excludeFolder url="file://$MODULE_DIR$/../../../bazel-genfiles" />
+      <excludeFolder url="file://$MODULE_DIR$/../../../bazel-out" />
+      <excludeFolder url="file://$MODULE_DIR$/../../../bazel-testlogs" />
+      <excludeFolder url="file://$MODULE_DIR$/../../../bazel-Opipe" />
+      <excludeFolder url="file://$MODULE_DIR$/../.." />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="library" name="java_compiler_4896bf3a" level="project" />
+    <orderEntry type="library" name="jdk_compiler_4896bf3a" level="project" />
+    <orderEntry type="library" name="customview-1.0.0_219471bf" level="project" />
+    <orderEntry type="library" name="glide-4.11.0_be0b8310" level="project" />
+    <orderEntry type="library" name="drawerlayout-1.0.0_a10fea9f" level="project" />
+    <orderEntry type="library" name="annotation-experimental-1.0.0_9c2a9222" level="project" />
+    <orderEntry type="library" name="camera-camera2-1.0.0-beta10_453d385d" level="project" />
+    <orderEntry type="library" name="legacy-support-core-ui-1.0.0_4aed6556" level="project" />
+    <orderEntry type="library" name="exifinterface-1.3.3_c73be399" level="project" />
+    <orderEntry type="library" name="recyclerview-1.1.0-beta02_d4369d5f" level="project" />
+    <orderEntry type="library" name="media-1.0.0_9528109" level="project" />
+    <orderEntry type="library" name="lifecycle-runtime-2.3.1_283b2da5" level="project" />
+    <orderEntry type="library" name="legacy-support-v4-1.0.0_6a067bb6" level="project" />
+    <orderEntry type="library" name="cursoradapter-1.0.0_244b5e73" level="project" />
+    <orderEntry type="library" name="appcompat-resources-1.1.0-rc01_9d58ef3f" level="project" />
+    <orderEntry type="library" name="constraintlayout-1.1.3_9e0cdfe3" level="project" />
+    <orderEntry type="library" name="core-1.1.0-rc03_4e1e58c1" level="project" />
+    <orderEntry type="library" name="activity-1.2.2_2b540a3" level="project" />
+    <orderEntry type="library" name="lifecycle-livedata-2.1.0_9796945c" level="project" />
+    <orderEntry type="library" name="camera-lifecycle-1.0.0-beta10_c741f8c0" level="project" />
+    <orderEntry type="library" name="versionedparcelable-1.1.0_ecfcf876" level="project" />
+    <orderEntry type="library" name="legacy-support-core-utils-1.0.0_a815247b" level="project" />
+    <orderEntry type="library" name="fragment-1.3.4_47688586" level="project" />
+    <orderEntry type="library" name="appcompat-1.1.0-rc01_b94f2197" level="project" />
+    <orderEntry type="library" name="camera-core-1.0.0-beta10_786fd203" level="project" />
+    <orderEntry type="library" name="classes_and_libs_merged_844abb5e" level="project" />
+    <orderEntry type="library" name="classes_and_libs_merged_64341db9" level="project" />
+    <orderEntry type="library" name="auto-value-annotations-1.8.1_5f714b6a" level="project" />
+    <orderEntry type="library" name="classes_and_libs_merged_cc2babc4" level="project" />
+    <orderEntry type="library" name="annotation-1.1.0_77e8e3e0" level="project" />
+    <orderEntry type="library" name="flogger-0.6_d1ea8ed9" level="project" />
+    <orderEntry type="library" name="lifecycle-common-2.3.1_e2f216f4" level="project" />
+    <orderEntry type="library" name="jsr305-3.0.2_2518c51b" level="project" />
+    <orderEntry type="library" name="guava-27.0.1-android_f03a145b" level="project" />
+    <orderEntry type="library" name="liblite-hjar_19b6e84d" level="project" />
+    <orderEntry type="library" name="libpacket_factory_proto-lite-hjar_596e7aa2" level="project" />
+    <orderEntry type="library" name="libfilter_detection_calculator_proto-lite-hjar_b3ff3b70" level="project" />
+    <orderEntry type="library" name="libtensors_to_landmarks_calculator_proto-lite-hjar_1e776e53" level="project" />
+    <orderEntry type="library" name="libflow_limiter_calculator_proto-lite-hjar_78ad2819" level="project" />
+    <orderEntry type="library" name="libzoo_mutation_calculator_proto-lite-hjar_ecf15809" level="project" />
+    <orderEntry type="library" name="libquantize_float_vector_calculator_proto-lite-hjar_78ad2819" level="project" />
+    <orderEntry type="library" name="libzoo_mutator_proto-lite-hjar_ecf15809" level="project" />
+    <orderEntry type="library" name="libtensors_to_detections_calculator_proto-lite-hjar_1e776e53" level="project" />
+    <orderEntry type="library" name="libinference_calculator_proto-lite-hjar_1e776e53" level="project" />
+    <orderEntry type="library" name="libaudio_decoder_proto-lite-hjar_64490de" level="project" />
+    <orderEntry type="library" name="libvisibility_copy_calculator_proto-lite-hjar_78b5687c" level="project" />
+    <orderEntry type="library" name="libframe_annotation_tracker_calculator_proto-lite-hjar_b3ff3b70" level="project" />
+    <orderEntry type="library" name="libfacedetection-gen_ce9c0bff" level="project" />
+    <orderEntry type="library" name="libproto_descriptor_proto-lite-hjar_a1c42991" level="project" />
+    <orderEntry type="library" name="libsequence_shift_calculator_proto-lite-hjar_78ad2819" level="project" />
+    <orderEntry type="library" name="libtensors_to_floats_calculator_proto-lite-hjar_1e776e53" level="project" />
+    <orderEntry type="library" name="libpacket_frequency_proto-lite-hjar_78b5687c" level="project" />
+    <orderEntry type="library" name="libdequantize_byte_array_calculator_proto-lite-hjar_78ad2819" level="project" />
+    <orderEntry type="library" name="libcollection_has_min_size_calculator_proto-lite-hjar_78b5687c" level="project" />
+    <orderEntry type="library" name="libassociation_calculator_proto-lite-hjar_78b5687c" level="project" />
+    <orderEntry type="library" name="libsky_light_calculator_proto-lite-hjar_ecf15809" level="project" />
+    <orderEntry type="library" name="libaffine_transform_data_proto-lite-hjar_6598fcef" level="project" />
+    <orderEntry type="library" name="libannotations_to_render_data_calculator_proto-lite-hjar_90722ddf" level="project" />
+    <orderEntry type="library" name="libcolor_proto-lite-hjar_64490de" level="project" />
+    <orderEntry type="library" name="libcalculator_profile_proto-lite-hjar_a6c15240" level="project" />
+    <orderEntry type="library" name="libdetection_label_id_to_text_calculator_proto-lite-hjar_78b5687c" level="project" />
+    <orderEntry type="library" name="libimage_to_tensor_calculator_proto-lite-hjar_1e776e53" level="project" />
+    <orderEntry type="library" name="libnight_light_calculator_proto-lite-hjar_ecf15809" level="project" />
+    <orderEntry type="library" name="libpacket_frequency_calculator_proto-lite-hjar_78b5687c" level="project" />
+    <orderEntry type="library" name="libtflite_tensors_to_objects_calculator_proto-lite-hjar_b3ff3b70" level="project" />
+    <orderEntry type="library" name="libsticker_buffer_proto-lite-hjar_5795c596" level="project" />
+    <orderEntry type="library" name="libthread_pool_executor_proto-lite-hjar_596e7aa2" level="project" />
+    <orderEntry type="library" name="libaudio_to_tensor_calculator_proto-lite-hjar_1e776e53" level="project" />
+    <orderEntry type="library" name="libsolution_base-gen_c723d5ac" level="project" />
+    <orderEntry type="library" name="libenv_generator_calculator_proto-lite-hjar_80a6e230" level="project" />
+    <orderEntry type="library" name="liblocus_proto-lite-hjar_b257a44f" level="project" />
+    <orderEntry type="library" name="libimage_cropping_calculator_proto-lite-hjar_9d4b4021" level="project" />
+    <orderEntry type="library" name="libpacket_latency_calculator_proto-lite-hjar_78b5687c" level="project" />
+    <orderEntry type="library" name="libtest_calculators_proto-lite-hjar_596e7aa2" level="project" />
+    <orderEntry type="library" name="liblandmarks_to_tensor_calculator_proto-lite-hjar_1e776e53" level="project" />
+    <orderEntry type="library" name="libtime_series_header_proto-lite-hjar_6598fcef" level="project" />
+    <orderEntry type="library" name="libsolution_info-gen_c723d5ac" level="project" />
+    <orderEntry type="library" name="liblandmarks_smoothing_calculator_proto-lite-hjar_78b5687c" level="project" />
+    <orderEntry type="library" name="libsplit_vector_calculator_proto-lite-hjar_78ad2819" level="project" />
+    <orderEntry type="library" name="liblandmarks_refinement_calculator_proto-lite-hjar_78b5687c" level="project" />
+    <orderEntry type="library" name="libfield_data_proto-lite-hjar_a1cb94e5" level="project" />
+    <orderEntry type="library" name="libannotation_overlay_calculator_proto-lite-hjar_78b5687c" level="project" />
+    <orderEntry type="library" name="libenvironment_proto-lite-hjar_584d9c4a" level="project" />
+    <orderEntry type="library" name="liblandmarks_to_detection_calculator_proto-lite-hjar_78b5687c" level="project" />
+    <orderEntry type="library" name="libtflite_converter_calculator_proto-lite-hjar_1e84781a" level="project" />
+    <orderEntry type="library" name="libtimed_box_list_id_to_label_calculator_proto-lite-hjar_78b5687c" level="project" />
+    <orderEntry type="library" name="libnode_chain_subgraph_proto-lite-hjar_a1cb94e5" level="project" />
+    <orderEntry type="library" name="liblocation_data_proto-lite-hjar_3c61568d" level="project" />
+    <orderEntry type="library" name="libswitch_container_proto-lite-hjar_a1cb94e5" level="project" />
+    <orderEntry type="library" name="libgeometry_pipeline_metadata_proto-lite-hjar_584d9c4a" level="project" />
+    <orderEntry type="library" name="liba_r_capture_metadata_proto-lite-hjar_b3ff3b70" level="project" />
+    <orderEntry type="library" name="libfeature_detector_calculator_proto-lite-hjar_9d4b4021" level="project" />
+    <orderEntry type="library" name="libscale_mode_proto-lite-hjar_6b8e6450" level="project" />
+    <orderEntry type="library" name="libmodel_matrix_proto-lite-hjar_90722ddf" level="project" />
+    <orderEntry type="library" name="liblabels_to_render_data_calculator_proto-lite-hjar_78b5687c" level="project" />
+    <orderEntry type="library" name="libpacket_resampler_calculator_proto-lite-hjar_78ad2819" level="project" />
+    <orderEntry type="library" name="libface_geometry_proto-lite-hjar_584d9c4a" level="project" />
+    <orderEntry type="library" name="liblandmarks_to_floats_calculator_proto-lite-hjar_78b5687c" level="project" />
+    <orderEntry type="library" name="libgl_animation_overlay_calculator_proto-lite-hjar_90722ddf" level="project" />
+    <orderEntry type="library" name="libssd_anchors_calculator_proto-lite-hjar_1e84781a" level="project" />
+    <orderEntry type="library" name="librect_to_render_data_calculator_proto-lite-hjar_78b5687c" level="project" />
+    <orderEntry type="library" name="libstatus_handler_proto-lite-hjar_596e7aa2" level="project" />
+    <orderEntry type="library" name="liblogging-gen_c723d5ac" level="project" />
+    <orderEntry type="library" name="libstream_handler_proto-lite-hjar_596e7aa2" level="project" />
+    <orderEntry type="library" name="liblogic_calculator_proto-lite-hjar_78b5687c" level="project" />
+    <orderEntry type="library" name="libsolution_core_android_lib-gen_1c64ace" level="project" />
+    <orderEntry type="library" name="solution_core_android_lib-filtered-gen_1c64ace" level="project" />
+    <orderEntry type="library" name="libthresholding_calculator_proto-lite-hjar_78b5687c" level="project" />
+    <orderEntry type="library" name="libhands-gen_3beb41b" level="project" />
+    <orderEntry type="library" name="libtflite_tensors_to_detections_calculator_proto-lite-hjar_1e84781a" level="project" />
+    <orderEntry type="library" name="libtensor_converter_calculator_proto-lite-hjar_1e776e53" level="project" />
+    <orderEntry type="library" name="libannotations_to_model_matrices_calculator_proto-lite-hjar_90722ddf" level="project" />
+    <orderEntry type="library" name="liblift_2d_frame_annotation_to_3d_calculator_proto-lite-hjar_b3ff3b70" level="project" />
+    <orderEntry type="library" name="librender_data_proto-lite-hjar_64490de" level="project" />
+    <orderEntry type="library" name="libtflite_tensors_to_classification_calculator_proto-lite-hjar_1e84781a" level="project" />
+    <orderEntry type="library" name="liblandmark_proto-lite-hjar_3c61568d" level="project" />
+    <orderEntry type="library" name="libfacemesh-gen_eae65033" level="project" />
+    <orderEntry type="library" name="libmatrix_data_proto-lite-hjar_6598fcef" level="project" />
+    <orderEntry type="library" name="libclip_vector_size_calculator_proto-lite-hjar_78ad2819" level="project" />
+    <orderEntry type="library" name="libdetection_proto-lite-hjar_6598fcef" level="project" />
+    <orderEntry type="library" name="libset_alpha_calculator_proto-lite-hjar_9d4b4021" level="project" />
+    <orderEntry type="library" name="libimage_transformation_calculator_proto-lite-hjar_9d4b4021" level="project" />
+    <orderEntry type="library" name="libgate_calculator_proto-lite-hjar_78ad2819" level="project" />
+    <orderEntry type="library" name="libsource_proto-lite-hjar_a1cb94e5" level="project" />
+    <orderEntry type="library" name="libconcatenate_vector_calculator_proto-lite-hjar_78ad2819" level="project" />
+    <orderEntry type="library" name="libcalculator_contract_test_proto-lite-hjar_596e7aa2" level="project" />
+    <orderEntry type="library" name="libmediapipe_options_proto-lite-hjar_596e7aa2" level="project" />
+    <orderEntry type="library" name="libcalculator_graph_template_proto-lite-hjar_a1cb94e5" level="project" />
+    <orderEntry type="library" name="libannotation_proto-lite-hjar_b3ff3b70" level="project" />
+    <orderEntry type="library" name="libtflite_custom_op_resolver_calculator_proto-lite-hjar_1e84781a" level="project" />
+    <orderEntry type="library" name="libtflite_tensors_to_landmarks_calculator_proto-lite-hjar_1e84781a" level="project" />
+    <orderEntry type="library" name="libface_detection_proto-lite-hjar_d2242887" level="project" />
+    <orderEntry type="library" name="libfilter_detections_calculator_proto-lite-hjar_78b5687c" level="project" />
+    <orderEntry type="library" name="libopencv_image_encoder_calculator_proto-lite-hjar_9d4b4021" level="project" />
+    <orderEntry type="library" name="librect_to_render_scale_calculator_proto-lite-hjar_78b5687c" level="project" />
+    <orderEntry type="library" name="librefine_landmarks_from_heatmap_calculator_proto-lite-hjar_78b5687c" level="project" />
+    <orderEntry type="library" name="libpacket_generator_proto-lite-hjar_596e7aa2" level="project" />
+    <orderEntry type="library" name="libeffect_renderer_calculator_proto-lite-hjar_80a6e230" level="project" />
+    <orderEntry type="library" name="libpacket_cloner_calculator_proto-lite-hjar_78ad2819" level="project" />
+    <orderEntry type="library" name="libroi_tracking_calculator_proto-lite-hjar_4e067db6" level="project" />
+    <orderEntry type="library" name="libgeometry_pipeline_calculator_proto-lite-hjar_80a6e230" level="project" />
+    <orderEntry type="library" name="libdetections_to_rects_calculator_proto-lite-hjar_78b5687c" level="project" />
+    <orderEntry type="library" name="libdetections_to_render_data_calculator_proto-lite-hjar_78b5687c" level="project" />
+    <orderEntry type="library" name="libopencv_encoded_image_to_image_frame_calculator_proto-lite-hjar_9d4b4021" level="project" />
+    <orderEntry type="library" name="liblandmark_projection_calculator_proto-lite-hjar_78b5687c" level="project" />
+    <orderEntry type="library" name="libtimed_box_list_to_render_data_calculator_proto-lite-hjar_78b5687c" level="project" />
+    <orderEntry type="library" name="libbilateral_filter_calculator_proto-lite-hjar_9d4b4021" level="project" />
+    <orderEntry type="library" name="libmesh_3d_proto-lite-hjar_584d9c4a" level="project" />
+    <orderEntry type="library" name="libpacket_generator_wrapper_calculator_proto-lite-hjar_a1cb94e5" level="project" />
+    <orderEntry type="library" name="libbelief_decoder_config_proto-lite-hjar_b3ff3b70" level="project" />
+    <orderEntry type="library" name="libtop_k_scores_calculator_proto-lite-hjar_78b5687c" level="project" />
+    <orderEntry type="library" name="libtflite_tensors_to_segmentation_calculator_proto-lite-hjar_1e84781a" level="project" />
+    <orderEntry type="library" name="libgraph_profile_calculator_proto-lite-hjar_78ad2819" level="project" />
+    <orderEntry type="library" name="liblatency_proto-lite-hjar_78b5687c" level="project" />
+    <orderEntry type="library" name="libscale_image_calculator_proto-lite-hjar_9d4b4021" level="project" />
+    <orderEntry type="library" name="librecolor_calculator_proto-lite-hjar_9d4b4021" level="project" />
+    <orderEntry type="library" name="libconstant_side_packet_calculator_proto-lite-hjar_78ad2819" level="project" />
+    <orderEntry type="library" name="libtensors_to_segmentation_calculator_proto-lite-hjar_1e776e53" level="project" />
+    <orderEntry type="library" name="libimage_file_properties_proto-lite-hjar_6598fcef" level="project" />
+    <orderEntry type="library" name="librect_transformation_calculator_proto-lite-hjar_78b5687c" level="project" />
+    <orderEntry type="library" name="libcalculator_options_proto-lite-hjar_596e7aa2" level="project" />
+    <orderEntry type="library" name="liblabel_map_proto-lite-hjar_64490de" level="project" />
+    <orderEntry type="library" name="libnon_max_suppression_calculator_proto-lite-hjar_78b5687c" level="project" />
+    <orderEntry type="library" name="liblandmarks_to_render_data_calculator_proto-lite-hjar_78b5687c" level="project" />
+    <orderEntry type="library" name="libclassification_proto-lite-hjar_6598fcef" level="project" />
+    <orderEntry type="library" name="libmask_overlay_calculator_proto-lite-hjar_9d4b4021" level="project" />
+    <orderEntry type="library" name="libcalculator_proto-lite-hjar_596e7aa2" level="project" />
+    <orderEntry type="library" name="libvisibility_smoothing_calculator_proto-lite-hjar_78b5687c" level="project" />
+    <orderEntry type="library" name="libimage_clone_calculator_proto-lite-hjar_9d4b4021" level="project" />
+    <orderEntry type="library" name="libtensors_to_objects_calculator_proto-lite-hjar_b3ff3b70" level="project" />
+    <orderEntry type="library" name="libgpu_origin_proto-lite-hjar_6b8e6450" level="project" />
+    <orderEntry type="library" name="librasterization_proto-lite-hjar_b257a44f" level="project" />
+    <orderEntry type="library" name="libwarp_affine_calculator_proto-lite-hjar_9d4b4021" level="project" />
+    <orderEntry type="library" name="liblocal_file_contents_calculator_proto-lite-hjar_78b5687c" level="project" />
+    <orderEntry type="library" name="libimage_format_proto-lite-hjar_6598fcef" level="project" />
+    <orderEntry type="library" name="libsegmentation_smoothing_calculator_proto-lite-hjar_9d4b4021" level="project" />
+    <orderEntry type="library" name="libobject_proto-lite-hjar_b3ff3b70" level="project" />
+    <orderEntry type="library" name="libframe_annotation_to_rect_calculator_proto-lite-hjar_b3ff3b70" level="project" />
+    <orderEntry type="library" name="libtensors_to_classification_calculator_proto-lite-hjar_1e776e53" level="project" />
+    <orderEntry type="library" name="libpacket_thinner_calculator_proto-lite-hjar_78ad2819" level="project" />
+    <orderEntry type="library" name="libpacket_test_proto-lite-hjar_596e7aa2" level="project" />
+    <orderEntry type="library" name="libcamera_parameters_proto-lite-hjar_b3ff3b70" level="project" />
+    <orderEntry type="library" name="libtflite_inference_calculator_proto-lite-hjar_1e84781a" level="project" />
+    <orderEntry type="library" name="librect_proto-lite-hjar_6598fcef" level="project" />
+    <orderEntry type="module" module-name="mediapipe.examples.android.solutions.facedetection.src.main.facedetection" exported="" />
+    <orderEntry type="module" module-name="mediapipe.examples.android.solutions.facemesh.src.main.facemesh" exported="" />
+    <orderEntry type="module" module-name="mediapipe.examples.android.solutions.hands.src.main.hands" exported="" />
+    <orderEntry type="module" module-name="mediapipe.examples.android.src.java.com.google.mediapipe.apps.basic.basic_lib" exported="" />
+    <orderEntry type="module" module-name="mediapipe.examples.android.src.java.com.google.mediapipe.apps.instantmotiontracking.instantmotiontracking_lib" exported="" />
+  </component>
+</module>

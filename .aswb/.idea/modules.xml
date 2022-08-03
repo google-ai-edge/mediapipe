@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/.blaze/modules/.project-data-dir.iml" filepath="$PROJECT_DIR$/.blaze/modules/.project-data-dir.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.blaze/modules/.workspace.iml" filepath="$PROJECT_DIR$/.blaze/modules/.workspace.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.blaze/modules/mediapipe.examples.android.solutions.facedetection.src.main.facedetection.iml" filepath="$PROJECT_DIR$/.blaze/modules/mediapipe.examples.android.solutions.facedetection.src.main.facedetection.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.blaze/modules/mediapipe.examples.android.solutions.facemesh.src.main.facemesh.iml" filepath="$PROJECT_DIR$/.blaze/modules/mediapipe.examples.android.solutions.facemesh.src.main.facemesh.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.blaze/modules/mediapipe.examples.android.solutions.hands.src.main.hands.iml" filepath="$PROJECT_DIR$/.blaze/modules/mediapipe.examples.android.solutions.hands.src.main.hands.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.blaze/modules/mediapipe.examples.android.src.java.com.google.mediapipe.apps.basic.basic_lib.iml" filepath="$PROJECT_DIR$/.blaze/modules/mediapipe.examples.android.src.java.com.google.mediapipe.apps.basic.basic_lib.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.blaze/modules/mediapipe.examples.android.src.java.com.google.mediapipe.apps.instantmotiontracking.instantmotiontracking_lib.iml" filepath="$PROJECT_DIR$/.blaze/modules/mediapipe.examples.android.src.java.com.google.mediapipe.apps.instantmotiontracking.instantmotiontracking_lib.iml" />
+    </modules>
+  </component>
+</project>

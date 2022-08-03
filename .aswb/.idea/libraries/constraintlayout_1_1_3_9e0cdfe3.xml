@@ -1,0 +1,10 @@
+<component name="libraryTable">
+  <library name="constraintlayout-1.1.3_9e0cdfe3">
+    <CLASSES>
+      <root url="file://$PROJECT_DIR$/.blaze/aar_libraries/constraintlayout-1.1.3_26369647.aar/res" />
+      <root url="jar://$PROJECT_DIR$/.blaze/aar_libraries/constraintlayout-1.1.3_26369647.aar/jars/classes_and_libs_merged.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

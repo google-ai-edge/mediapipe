@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="libfacedetection-gen_ce9c0bff">
+    <CLASSES>
+      <root url="jar:///private/var/tmp/_bazel_weatherfish/a544868cc0efc639ec92cd3dff978586/execroot/mediapipe/bazel-out/darwin-fastbuild/bin/mediapipe/java/com/google/mediapipe/solutions/facedetection/libfacedetection-gen.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

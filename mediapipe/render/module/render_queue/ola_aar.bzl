@@ -39,8 +39,7 @@ EOF
         proguard_specs = proguard_specs,
         assets = assets,
         assets_dir = assets_dir,
-         deps = [
-            ":" + name + "_jni_cc_lib",]
+        deps = [":" + name + "_jni_cc_lib",]
     )
 
     _ola_aar_with_jni(name, name + "_android_lib")
@@ -48,18 +47,19 @@ EOF
 
 
 def _ola_jni(name):
-    native.cc_binary(
-        name = "libora_render_jni.so",
-        linkshared = 1,
-        linkstatic = 1,
-        deps = [
-            "//mediapipe/render/module/render_queue:olarender",
-        ],
-    )
+
+    # native.cc_binary(
+    #     name = "libola_render_jni.so",
+    #     linkshared = 1,
+    #     linkstatic = 1,
+    #     deps = [
+    #          "//mediapipe/render/module/render_queue:olarender_jni",
+    #     ]
+    # )
 
     native.cc_library(
         name = name + "_cc_lib",
-        srcs = [":libora_render_jni.so"],
+        srcs = [":libola_render_jni.so"],
         alwayslink = 1,
     )
 

@@ -8,7 +8,6 @@
 #include <atomic>
 
 #ifdef ANDROID
-
 #include <android/log.h>
 
 #define TAG    "LockFreeQueue" // 这个是自定义的LOG的标识
@@ -44,7 +43,7 @@ public:
     }
 
     void releaseNode(T &data) {
-        LOGE("~~~~~~~~~~releaseNode data: %ld", reinterpret_cast<int64_t>(data.data));
+        // LOGE("~~~~~~~~~~releaseNode data: %ld", reinterpret_cast<int64_t>(data.data));
         if (data.data)
             free(data.data);
     }
@@ -75,25 +74,25 @@ public:
                 break;
         }
         new(&node->data)T(data);
-        LOGE("~~~~~~~~~~rawPush data: %ld", reinterpret_cast<int64_t>(node->data.data));
+        // LOGE("~~~~~~~~~~rawPush data: %ld", reinterpret_cast<int64_t>(node->data.data));
         node->head.store(tail, std::memory_order_release);
         return true;
     }
 
     bool rawPop(T &result, bool exportFlag) {
-        LOGE("~~~~~~~~~~33");
+        // LOGE("~~~~~~~~~~33");
         Node *node;
         size_t head = _head.load(std::memory_order_acquire);
         for (;;) {
             node = &_queue[head & _capacityMask];
             if (node->data.len == 0) {
-                LOGE("~~~~~~~~~~33 len == 0 ");
+                // LOGE("~~~~~~~~~~33 len == 0 ");
                 continue;
             } else {
-                LOGE("~~~~~~~~~~33 node->data.len == %d ", node->data.len);
+                // LOGE("~~~~~~~~~~33 node->data.len == %d ", node->data.len);
             }
             if (node->head.load(std::memory_order_relaxed) != head) {
-                LOGE("~~~~~~~~~~33 return false ");
+                // LOGE("~~~~~~~~~~33 return false ");
                 return false;
             }
             if (_head.compare_exchange_weak(head, head + 1, std::memory_order_relaxed))
