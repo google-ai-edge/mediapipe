@@ -1,7 +1,5 @@
 package com.quark.quamera.camera.session;
 /*
- * Copyright (C) 2005-2019 UCWeb Inc. All rights reserved.
- *  Description :
  *
  *  Creation    :  20-11-23
  *  Author      : jiaming.wjm@

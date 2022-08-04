@@ -1,7 +1,5 @@
 package com.quark.quamera.util;
 /*
- * Copyright (C) 2005-2019 UCWeb Inc. All rights reserved.
- *  Description :
  *
  *  Creation    :  20-11-13
  *  Author      : jiaming.wjm@

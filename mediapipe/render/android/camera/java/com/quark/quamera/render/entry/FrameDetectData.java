@@ -1,7 +1,5 @@
 package com.quark.quamera.render.entry;
 /*
- * Copyright (C) 2005-2019 UCWeb Inc. All rights reserved.
- *  Description :
  *
  *  Creation    :  2021/3/15
  *  Author      : jiaming.wjm@

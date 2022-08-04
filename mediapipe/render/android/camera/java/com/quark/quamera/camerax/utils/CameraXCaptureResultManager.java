@@ -1,7 +1,5 @@
 package com.quark.quamera.camerax.utils;
 /*
- * Copyright (C) 2005-2019 UCWeb Inc. All rights reserved.
- *  Description :
  *
  *  Creation    :  2021/5/26
  *  Author      : jiaming.wjm@

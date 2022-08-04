@@ -1,9 +1,3 @@
-/*
- * Copyright (C) 2004 - 2016 UCWeb Inc. All Rights Reserved.
- * Creation    : 2016/5/5
- * Author      : lzm89888@
- */
-
 package com.quark.quamera.util;
 
 import android.text.TextUtils;

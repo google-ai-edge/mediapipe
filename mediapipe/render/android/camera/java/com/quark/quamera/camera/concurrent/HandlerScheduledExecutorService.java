@@ -1,7 +1,5 @@
 package com.quark.quamera.camera.concurrent;
 /*
- * Copyright (C) 2005-2019 UCWeb Inc. All rights reserved.
- *  Description :
  *
  *  Creation    :  2021/2/8
  *  Author      : jiaming.wjm@

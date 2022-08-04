@@ -1,7 +1,5 @@
 package com.quark.quamera.render.detector;
 /*
- * Copyright (C) 2005-2019 UCWeb Inc. All rights reserved.
- *  Description :
  *
  *  Creation    :  2021/1/29
  *  Author      : jiaming.wjm@

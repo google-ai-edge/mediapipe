@@ -1,7 +1,5 @@
 package com.quark.quamera.camera.preview;
 /*
- * Copyright (C) 2005-2019 UCWeb Inc. All rights reserved.
- *  Description :
  *
  *  Creation    :  2021/7/12
  *  Author      : jiaming.wjm@

@@ -1,7 +1,5 @@
 package com.quark.quamera.render.expansion;
 /*
- * Copyright (C) 2005-2019 UCWeb Inc. All rights reserved.
- *  Description :
  *
  *  Creation    :  2021/2/25
  *  Author      : jiaming.wjm@

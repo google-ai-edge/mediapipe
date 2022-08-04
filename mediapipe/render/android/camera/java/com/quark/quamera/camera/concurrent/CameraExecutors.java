@@ -2,16 +2,6 @@ package com.quark.quamera.camera.concurrent;
 
 import com.quark.quamera.util.SequentialExecutor;
 
-//package com.quark.quamera.camera.concurrent;
-///*
-// * Copyright (C) 2005-2019 UCWeb Inc. All rights reserved.
-// *  Description :
-// *
-// *  Creation    :  20-11-23
-// *  Author      : jiaming.wjm@
-// */
-//
-
 public class CameraExecutors {
 
     private static SequentialExecutor sCameraTaskExecutor;

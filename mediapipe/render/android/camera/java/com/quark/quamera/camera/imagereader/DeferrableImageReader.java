@@ -1,7 +1,5 @@
 package com.quark.quamera.camera.imagereader;
 /*
- * Copyright (C) 2005-2019 UCWeb Inc. All rights reserved.
- *  Description :
  *
  *  Creation    :  20-11-26
  *  Author      : jiaming.wjm@

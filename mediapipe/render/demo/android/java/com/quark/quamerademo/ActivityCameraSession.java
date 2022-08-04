@@ -1,7 +1,5 @@
 package com.quark.quamerademo;
 /*
- * Copyright (C) 2005-2019 UCWeb Inc. All rights reserved.
- *  Description :
  *
  *  Creation    :  20-11-25
  *  Author      : jiaming.wjm@
