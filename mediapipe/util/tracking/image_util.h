@@ -15,13 +15,12 @@
 #ifndef MEDIAPIPE_UTIL_TRACKING_IMAGE_UTIL_H_
 #define MEDIAPIPE_UTIL_TRACKING_IMAGE_UTIL_H_
 
-#include <vector>
-
 #include "mediapipe/framework/port/opencv_core_inc.h"
 #include "mediapipe/framework/port/opencv_imgproc_inc.h"
 #include "mediapipe/framework/port/vector.h"
 #include "mediapipe/util/tracking/motion_models.pb.h"
 #include "mediapipe/util/tracking/region_flow.pb.h"
+#include <vector>
 
 namespace mediapipe {
 
@@ -54,137 +53,137 @@ void CopyMatBorderY(cv::Mat* mat);
 
 template <typename T, int border, int channels>
 void CopyMatBorder(cv::Mat* mat) {
-  const int width = mat->cols - 2 * border;
-  const int height = mat->rows - 2 * border;
+    const int width = mat->cols - 2 * border;
+    const int height = mat->rows - 2 * border;
 
-  // Maximum values we clamp at to avoid going out of bound small images.
-  const int max_w = width - 1;
-  const int max_h = height - 1;
+    // Maximum values we clamp at to avoid going out of bound small images.
+    const int max_w = width - 1;
+    const int max_h = height - 1;
 
-  // Top rows.
-  for (int r = 0; r < border; ++r) {
-    const T* src_ptr =
-        mat->ptr<T>(border + std::min(r, max_h)) + border * channels;
-    T* dst_ptr = mat->ptr<T>(border - 1 - r);
+    // Top rows.
+    for (int r = 0; r < border; ++r) {
+        const T* src_ptr =
+            mat->ptr<T>(border + std::min(r, max_h)) + border * channels;
+        T* dst_ptr = mat->ptr<T>(border - 1 - r);
 
-    // Top left elems.
-    for (int i = 0; i < border; ++i, dst_ptr += channels) {
-      for (int j = 0; j < channels; ++j) {
-        dst_ptr[j] = src_ptr[std::min(max_w, border - 1 - i) * channels + j];
-      }
+        // Top left elems.
+        for (int i = 0; i < border; ++i, dst_ptr += channels) {
+            for (int j = 0; j < channels; ++j) {
+                dst_ptr[j] = src_ptr[std::min(max_w, border - 1 - i) * channels + j];
+            }
+        }
+
+        // src and dst should point to same column from here.
+        DCHECK_EQ(0, (src_ptr - dst_ptr) * sizeof(T) % mat->step[0]);
+
+        // Top row copy.
+        memcpy(dst_ptr, src_ptr, width * channels * sizeof(dst_ptr[0]));
+        src_ptr += width * channels;  // Points one behind end.
+        dst_ptr += width * channels;
+
+        // Top right elems.
+        for (int i = 0; i < border; ++i, dst_ptr += channels) {
+            if (i <= max_w) {
+                src_ptr -= channels;
+            }
+            for (int j = 0; j < channels; ++j) {
+                dst_ptr[j] = src_ptr[j];
+            }
+        }
     }
 
-    // src and dst should point to same column from here.
-    DCHECK_EQ(0, (src_ptr - dst_ptr) * sizeof(T) % mat->step[0]);
-
-    // Top row copy.
-    memcpy(dst_ptr, src_ptr, width * channels * sizeof(dst_ptr[0]));
-    src_ptr += width * channels;  // Points one behind end.
-    dst_ptr += width * channels;
-
-    // Top right elems.
-    for (int i = 0; i < border; ++i, dst_ptr += channels) {
-      if (i <= max_w) {
-        src_ptr -= channels;
-      }
-      for (int j = 0; j < channels; ++j) {
-        dst_ptr[j] = src_ptr[j];
-      }
-    }
-  }
-
-  // Left and right border.
-  for (int r = 0; r < height; ++r) {
-    // Get pointers to left most and right most column within image.
-    T* left_ptr = mat->ptr<T>(r + border) + border * channels;
-    T* right_ptr = left_ptr + (width - 1) * channels;
-    for (int i = 0; i < border; ++i) {
-      for (int j = 0; j < channels; ++j) {
-        left_ptr[-(i + 1) * channels + j] =
-            left_ptr[std::min(max_w, i) * channels + j];
-        right_ptr[(i + 1) * channels + j] =
-            right_ptr[-std::min(max_w, i) * channels + j];
-      }
-    }
-  }
-
-  // Bottom rows.
-  for (int r = 0; r < border; ++r) {
-    const T* src_ptr = mat->ptr<T>(border + height - 1 - std::min(r, max_h)) +
-                       border * channels;
-    T* dst_ptr = mat->ptr<T>(border + height + r);
-
-    // First elems.
-    for (int i = 0; i < border; ++i, dst_ptr += channels) {
-      for (int j = 0; j < channels; ++j) {
-        dst_ptr[j] = src_ptr[(border - 1 - std::min(max_w, i)) * channels + j];
-      }
+    // Left and right border.
+    for (int r = 0; r < height; ++r) {
+        // Get pointers to left most and right most column within image.
+        T* left_ptr = mat->ptr<T>(r + border) + border * channels;
+        T* right_ptr = left_ptr + (width - 1) * channels;
+        for (int i = 0; i < border; ++i) {
+            for (int j = 0; j < channels; ++j) {
+                left_ptr[-(i + 1) * channels + j] =
+                    left_ptr[std::min(max_w, i) * channels + j];
+                right_ptr[(i + 1) * channels + j] =
+                    right_ptr[-std::min(max_w, i) * channels + j];
+            }
+        }
     }
 
-    // src and dst should point to same column from here.
-    DCHECK_EQ(0, (dst_ptr - src_ptr) * sizeof(T) % mat->step[0]);
-    memcpy(dst_ptr, src_ptr, width * channels * sizeof(dst_ptr[0]));
-    src_ptr += width * channels;  // Points one behind the end.
-    dst_ptr += width * channels;
+    // Bottom rows.
+    for (int r = 0; r < border; ++r) {
+        const T* src_ptr = mat->ptr<T>(border + height - 1 - std::min(r, max_h)) +
+                           border * channels;
+        T* dst_ptr = mat->ptr<T>(border + height + r);
 
-    // Top right elems.
-    for (int i = 0; i < border; ++i, dst_ptr += channels) {
-      if (i <= max_w) {
-        src_ptr -= channels;
-      }
-      for (int j = 0; j < channels; ++j) {
-        dst_ptr[j] = src_ptr[j];
-      }
+        // First elems.
+        for (int i = 0; i < border; ++i, dst_ptr += channels) {
+            for (int j = 0; j < channels; ++j) {
+                dst_ptr[j] = src_ptr[(border - 1 - std::min(max_w, i)) * channels + j];
+            }
+        }
+
+        // src and dst should point to same column from here.
+        DCHECK_EQ(0, (dst_ptr - src_ptr) * sizeof(T) % mat->step[0]);
+        memcpy(dst_ptr, src_ptr, width * channels * sizeof(dst_ptr[0]));
+        src_ptr += width * channels;  // Points one behind the end.
+        dst_ptr += width * channels;
+
+        // Top right elems.
+        for (int i = 0; i < border; ++i, dst_ptr += channels) {
+            if (i <= max_w) {
+                src_ptr -= channels;
+            }
+            for (int j = 0; j < channels; ++j) {
+                dst_ptr[j] = src_ptr[j];
+            }
+        }
     }
-  }
 }
 
 template <typename T, int border, int channels>
 void CopyMatBorderX(cv::Mat* mat) {
-  const int width = mat->cols - 2 * border;
-  const int height = mat->rows - 2 * border;
+    const int width = mat->cols - 2 * border;
+    const int height = mat->rows - 2 * border;
 
-  // Maximum values we clamp at to avoid going out of bound small images.
-  const int max_w = width - 1;
+    // Maximum values we clamp at to avoid going out of bound small images.
+    const int max_w = width - 1;
 
-  // Left and right border.
-  for (int r = 0; r < height; ++r) {
-    T* left_ptr = mat->ptr<T>(r + border) + border * channels;
-    T* right_ptr = left_ptr + (width - 1) * channels;
-    for (int i = 0; i < border; ++i) {
-      for (int j = 0; j < channels; ++j) {
-        left_ptr[-(i + 1) * channels + j] =
-            left_ptr[std::min(i, max_w) * channels + j];
-        right_ptr[(i + 1) * channels + j] =
-            right_ptr[-std::min(max_w, i) * channels + j];
-      }
+    // Left and right border.
+    for (int r = 0; r < height; ++r) {
+        T* left_ptr = mat->ptr<T>(r + border) + border * channels;
+        T* right_ptr = left_ptr + (width - 1) * channels;
+        for (int i = 0; i < border; ++i) {
+            for (int j = 0; j < channels; ++j) {
+                left_ptr[-(i + 1) * channels + j] =
+                    left_ptr[std::min(i, max_w) * channels + j];
+                right_ptr[(i + 1) * channels + j] =
+                    right_ptr[-std::min(max_w, i) * channels + j];
+            }
+        }
     }
-  }
 }
 
 template <typename T, int border, int channels>
 void CopyMatBorderY(cv::Mat* mat) {
-  const int width = mat->cols - 2 * border;
-  const int height = mat->rows - 2 * border;
+    const int width = mat->cols - 2 * border;
+    const int height = mat->rows - 2 * border;
 
-  // Maximum values we clamp at to avoid going out of bound small images.
-  const int max_h = height - 1;
+    // Maximum values we clamp at to avoid going out of bound small images.
+    const int max_h = height - 1;
 
-  // Top rows.
-  for (int r = 0; r < border; ++r) {
-    const T* src_ptr =
-        mat->ptr<T>(border + std::min(max_h, r)) + border * channels;
-    T* dst_ptr = mat->ptr<T>(border - 1 - r) + border * channels;
-    memcpy(dst_ptr, src_ptr, width * channels * sizeof(dst_ptr[0]));
-  }
+    // Top rows.
+    for (int r = 0; r < border; ++r) {
+        const T* src_ptr =
+            mat->ptr<T>(border + std::min(max_h, r)) + border * channels;
+        T* dst_ptr = mat->ptr<T>(border - 1 - r) + border * channels;
+        memcpy(dst_ptr, src_ptr, width * channels * sizeof(dst_ptr[0]));
+    }
 
-  // Bottom rows.
-  for (int r = 0; r < border; ++r) {
-    const T* src_ptr = mat->ptr<T>(border + height - 1 - std::min(max_h, r)) +
-                       border * channels;
-    T* dst_ptr = mat->ptr<T>(border + height + r) + border * channels;
-    memcpy(dst_ptr, src_ptr, width * channels * sizeof(dst_ptr[0]));
-  }
+    // Bottom rows.
+    for (int r = 0; r < border; ++r) {
+        const T* src_ptr = mat->ptr<T>(border + height - 1 - std::min(max_h, r)) +
+                           border * channels;
+        T* dst_ptr = mat->ptr<T>(border + height + r) + border * channels;
+        memcpy(dst_ptr, src_ptr, width * channels * sizeof(dst_ptr[0]));
+    }
 }
 
 }  // namespace mediapipe

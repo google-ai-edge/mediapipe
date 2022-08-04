@@ -13,7 +13,6 @@
 // limitations under the License.
 
 #include "mediapipe/python/pybind/timestamp.h"
-
 #include "absl/strings/str_cat.h"
 #include "mediapipe/framework/timestamp.h"
 #include "mediapipe/python/pybind/util.h"
@@ -25,12 +24,12 @@ namespace python {
 namespace py = pybind11;
 
 void TimestampSubmodule(pybind11::module* module) {
-  py::module m =
-      module->def_submodule("timestamp", "MediaPipe timestamp module.");
+    py::module m =
+        module->def_submodule("timestamp", "MediaPipe timestamp module.");
 
-  py::class_<Timestamp> timestamp(
-      m, "Timestamp",
-      R"doc(A class which represents a timestamp in the MediaPipe framework.
+    py::class_<Timestamp> timestamp(
+        m, "Timestamp",
+        R"doc(A class which represents a timestamp in the MediaPipe framework.
 
   MediaPipe timestamps are in units of _microseconds_.
   There are several special values (All these values must be constructed using
@@ -55,56 +54,56 @@ void TimestampSubmodule(pybind11::module* module) {
                  This is the input timestamp during Calcultor::Close().
 )doc");
 
-  timestamp.def(py::init<const Timestamp&>())
-      .def(py::init<int64>())
-      .def_property_readonly("value", &Timestamp::Value)
-      .def_property_readonly_static(
-          "UNSET", [](py::object) { return Timestamp::Unset(); })
-      .def_property_readonly_static(
-          "UNSTARTED", [](py::object) { return Timestamp::Unstarted(); })
-      .def_property_readonly_static(
-          "PRESTREAM", [](py::object) { return Timestamp::PreStream(); })
-      .def_property_readonly_static("MIN",
-                                    [](py::object) { return Timestamp::Min(); })
-      .def_property_readonly_static("MAX",
-                                    [](py::object) { return Timestamp::Max(); })
-      .def_property_readonly_static(
-          "POSTSTREAM", [](py::object) { return Timestamp::PostStream(); })
-      .def_property_readonly_static(
-          "DONE", [](py::object) { return Timestamp::Done(); })
-      .def("__eq__",
-           [](const Timestamp& a, const Timestamp& b) { return a == b; })
-      .def("__lt__",
-           [](const Timestamp& a, const Timestamp& b) { return a < b; })
-      .def("__gt__",
-           [](const Timestamp& a, const Timestamp& b) { return a > b; })
-      .def("__le__",
-           [](const Timestamp& a, const Timestamp& b) { return a <= b; })
-      .def("__ge__",
-           [](const Timestamp& a, const Timestamp& b) { return a >= b; })
-      .def("__repr__", [](const Timestamp& self) {
-        return absl::StrCat("<mediapipe.Timestamp with value: ",
-                            TimestampValueString(self), ">");
-      });
+    timestamp.def(py::init<const Timestamp&>())
+        .def(py::init<int64>())
+        .def_property_readonly("value", &Timestamp::Value)
+        .def_property_readonly_static(
+            "UNSET", [](py::object) { return Timestamp::Unset(); })
+        .def_property_readonly_static(
+            "UNSTARTED", [](py::object) { return Timestamp::Unstarted(); })
+        .def_property_readonly_static(
+            "PRESTREAM", [](py::object) { return Timestamp::PreStream(); })
+        .def_property_readonly_static("MIN",
+                                      [](py::object) { return Timestamp::Min(); })
+        .def_property_readonly_static("MAX",
+                                      [](py::object) { return Timestamp::Max(); })
+        .def_property_readonly_static(
+            "POSTSTREAM", [](py::object) { return Timestamp::PostStream(); })
+        .def_property_readonly_static(
+            "DONE", [](py::object) { return Timestamp::Done(); })
+        .def("__eq__",
+             [](const Timestamp& a, const Timestamp& b) { return a == b; })
+        .def("__lt__",
+             [](const Timestamp& a, const Timestamp& b) { return a < b; })
+        .def("__gt__",
+             [](const Timestamp& a, const Timestamp& b) { return a > b; })
+        .def("__le__",
+             [](const Timestamp& a, const Timestamp& b) { return a <= b; })
+        .def("__ge__",
+             [](const Timestamp& a, const Timestamp& b) { return a >= b; })
+        .def("__repr__", [](const Timestamp& self) {
+            return absl::StrCat("<mediapipe.Timestamp with value: ",
+                                TimestampValueString(self), ">");
+        });
 
-  timestamp.def("seconds", &Timestamp::Seconds,
-                R"doc(Return the value in units of seconds as a float.)doc");
+    timestamp.def("seconds", &Timestamp::Seconds,
+                  R"doc(Return the value in units of seconds as a float.)doc");
 
-  timestamp.def(
-      "microseconds", &Timestamp::Microseconds,
-      R"doc(Return the value in units of microseconds as an int.)doc");
+    timestamp.def(
+        "microseconds", &Timestamp::Microseconds,
+        R"doc(Return the value in units of microseconds as an int.)doc");
 
-  timestamp.def("is_special_value", &Timestamp::IsSpecialValue,
-                R"doc(Check if the timestamp is a special value,
+    timestamp.def("is_special_value", &Timestamp::IsSpecialValue,
+                  R"doc(Check if the timestamp is a special value,
 
     A special value is any of the values which cannot be constructed directly
     but must be constructed using the static special value.
 
 )doc");
 
-  timestamp.def(
-      "is_range_value", &Timestamp::IsRangeValue,
-      R"doc(Check if the timestamp is a range value is anything between Min() and Max() (inclusive).
+    timestamp.def(
+        "is_range_value", &Timestamp::IsRangeValue,
+        R"doc(Check if the timestamp is a range value is anything between Min() and Max() (inclusive).
 
   Any number of packets with range values can be sent over a stream as long as
   they are sent in monotonically increasing order. is_range_value() isn't
@@ -115,17 +114,17 @@ void TimestampSubmodule(pybind11::module* module) {
   "range" timestamps).
 )doc");
 
-  timestamp.def(
-      "is_allowed_in_stream", &Timestamp::IsAllowedInStream,
-      R"doc(Returns true iff this can be the timestamp of a Packet in a stream.
+    timestamp.def(
+        "is_allowed_in_stream", &Timestamp::IsAllowedInStream,
+        R"doc(Returns true iff this can be the timestamp of a Packet in a stream.
 
   Any number of RangeValue timestamps may be in a stream (in monotonically
   increasing order).  Also, exactly one prestream, or one poststream packet is
   allowed.
 )doc");
 
-  timestamp.def_static("from_seconds", &Timestamp::FromSeconds,
-                       R"doc(Create a timestamp from a seconds value
+    timestamp.def_static("from_seconds", &Timestamp::FromSeconds,
+                         R"doc(Create a timestamp from a seconds value
 
   Args:
     seconds: A seconds value in float.
@@ -137,7 +136,7 @@ void TimestampSubmodule(pybind11::module* module) {
     timestamp_now = mp.Timestamp.from_seconds(time.time())
 )doc");
 
-  py::implicitly_convertible<int64, Timestamp>();
+    py::implicitly_convertible<int64, Timestamp>();
 }
 
 }  // namespace python

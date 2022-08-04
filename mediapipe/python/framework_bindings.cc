@@ -27,16 +27,16 @@ namespace mediapipe {
 namespace python {
 
 PYBIND11_MODULE(_framework_bindings, m) {
-  ResourceUtilSubmodule(&m);
-  ImageSubmodule(&m);
-  ImageFrameSubmodule(&m);
-  MatrixSubmodule(&m);
-  TimestampSubmodule(&m);
-  PacketSubmodule(&m);
-  PacketCreatorSubmodule(&m);
-  PacketGetterSubmodule(&m);
-  CalculatorGraphSubmodule(&m);
-  ValidatedGraphConfigSubmodule(&m);
+    ResourceUtilSubmodule(&m);
+    ImageSubmodule(&m);
+    ImageFrameSubmodule(&m);
+    MatrixSubmodule(&m);
+    TimestampSubmodule(&m);
+    PacketSubmodule(&m);
+    PacketCreatorSubmodule(&m);
+    PacketGetterSubmodule(&m);
+    CalculatorGraphSubmodule(&m);
+    ValidatedGraphConfigSubmodule(&m);
 }
 
 }  // namespace python

@@ -15,12 +15,11 @@
 #ifndef MEDIAPIPE_TENSORFLOW_UTIL_TENSOR_TO_DETECTION_H_
 #define MEDIAPIPE_TENSORFLOW_UTIL_TENSOR_TO_DETECTION_H_
 
-#include <map>
-
 #include "absl/types/variant.h"
 #include "mediapipe/framework/formats/detection.pb.h"
 #include "mediapipe/framework/port/status.h"
 #include "tensorflow/core/framework/tensor.h"
+#include <map>
 
 namespace mediapipe {
 

@@ -27,35 +27,35 @@ class ModelCvConvert {};
 // Specialized implementations, with additional functionality if needed.
 template <>
 class ModelCvConvert<TranslationModel> {
- public:
-  // Returns 2x3 floating point cv::Mat with model parameters.
-  static void ToCvMat(const TranslationModel& model, cv::Mat* matrix);
+public:
+    // Returns 2x3 floating point cv::Mat with model parameters.
+    static void ToCvMat(const TranslationModel& model, cv::Mat* matrix);
 };
 
 template <>
 class ModelCvConvert<LinearSimilarityModel> {
- public:
-  // Returns 2x3 floating point cv::Mat with model parameters.
-  static void ToCvMat(const LinearSimilarityModel& model, cv::Mat* matrix);
+public:
+    // Returns 2x3 floating point cv::Mat with model parameters.
+    static void ToCvMat(const LinearSimilarityModel& model, cv::Mat* matrix);
 };
 
 template <>
 class ModelCvConvert<AffineModel> {
- public:
-  // Returns 2x3 floating point cv::Mat with model parameters.
-  static void ToCvMat(const AffineModel& model, cv::Mat* matrix);
+public:
+    // Returns 2x3 floating point cv::Mat with model parameters.
+    static void ToCvMat(const AffineModel& model, cv::Mat* matrix);
 };
 
 template <>
 class ModelCvConvert<Homography> {
- public:
-  // Returns 3x3 floating point cv::Mat with model parameters.
-  static void ToCvMat(const Homography& model, cv::Mat* matrix);
+public:
+    // Returns 3x3 floating point cv::Mat with model parameters.
+    static void ToCvMat(const Homography& model, cv::Mat* matrix);
 };
 
 template <class Model>
 void ModelToCvMat(const Model& model, cv::Mat* matrix) {
-  ModelCvConvert<Model>::ToCvMat(model, matrix);
+    ModelCvConvert<Model>::ToCvMat(model, matrix);
 }
 
 }  // namespace mediapipe

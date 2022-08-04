@@ -158,9 +158,6 @@
 #ifndef MEDIAPIPE_TENSORFLOW_SEQUENCE_MEDIA_SEQUENCE_H_
 #define MEDIAPIPE_TENSORFLOW_SEQUENCE_MEDIA_SEQUENCE_H_
 
-#include <string>
-#include <vector>
-
 #include "absl/memory/memory.h"
 #include "mediapipe/framework/formats/location.h"
 #include "mediapipe/framework/formats/matrix.h"
@@ -169,6 +166,8 @@
 #include "mediapipe/util/sequence/media_sequence_util.h"
 #include "tensorflow/core/example/example.pb.h"
 #include "tensorflow/core/example/feature.pb.h"
+#include <string>
+#include <vector>
 
 namespace mediapipe {
 namespace mediasequence {
@@ -349,173 +348,173 @@ void Add3dPoint(const std::string& prefix,
                 tensorflow::SequenceExample* sequence);
 void Clear3dPoint(const std::string& prefix,
                   tensorflow::SequenceExample* sequence);
-#define FIXED_PREFIX_BBOX_ACCESSORS(identifier, prefix)                        \
-  inline int CONCAT_STR3(Get, identifier,                                      \
-                         Size)(const tensorflow::SequenceExample& sequence) {  \
-    return GetBBoxSize(prefix, sequence);                                      \
-  }                                                                            \
-  inline std::vector<::mediapipe::Location> CONCAT_STR3(Get, identifier, At)(  \
-      const tensorflow::SequenceExample& sequence, int index) {                \
-    return GetBBoxAt(prefix, sequence, index);                                 \
-  }                                                                            \
-  inline void CONCAT_STR2(Add, identifier)(                                    \
-      const std::vector<::mediapipe::Location>& bboxes,                        \
-      tensorflow::SequenceExample* sequence) {                                 \
-    return AddBBox(prefix, bboxes, sequence);                                  \
-  }                                                                            \
-  inline void CONCAT_STR2(                                                     \
-      Clear, identifier)(tensorflow::SequenceExample * sequence) {             \
-    return ClearBBox(prefix, sequence);                                        \
-  }                                                                            \
-  inline int CONCAT_STR3(Get, identifier, PointSize)(                          \
-      const tensorflow::SequenceExample& sequence) {                           \
-    return GetPointSize(prefix, sequence);                                     \
-  }                                                                            \
-  inline int CONCAT_STR3(Get, identifier, PointSize)(                          \
-      const std::string& name, const tensorflow::SequenceExample& sequence) {  \
-    return GetPointSize(name, sequence);                                       \
-  }                                                                            \
-  inline std::vector<std::pair<float, float>> CONCAT_STR3(                     \
-      Get, identifier, PointAt)(const tensorflow::SequenceExample& sequence,   \
-                                int index) {                                   \
-    return GetPointAt(prefix, sequence, index);                                \
-  }                                                                            \
-  inline std::vector<std::pair<float, float>> CONCAT_STR3(                     \
-      Get, identifier, PointAt)(const std::string& name,                       \
-                                const tensorflow::SequenceExample& sequence,   \
-                                int index) {                                   \
-    return GetPointAt(name, sequence, index);                                  \
-  }                                                                            \
-  inline void CONCAT_STR3(Add, identifier, Point)(                             \
-      const std::vector<std::pair<float, float>>& points,                      \
-      tensorflow::SequenceExample* sequence) {                                 \
-    return AddPoint(prefix, points, sequence);                                 \
-  }                                                                            \
-  inline void CONCAT_STR3(Add, identifier, Point)(                             \
-      const std::string& name,                                                 \
-      const std::vector<std::pair<float, float>>& points,                      \
-      tensorflow::SequenceExample* sequence) {                                 \
-    return AddPoint(name, points, sequence);                                   \
-  }                                                                            \
-  inline void CONCAT_STR3(Clear, identifier,                                   \
-                          Point)(tensorflow::SequenceExample * sequence) {     \
-    return ClearPoint(prefix, sequence);                                       \
-  }                                                                            \
-  inline void CONCAT_STR3(Clear, identifier, Point)(                           \
-      std::string name, tensorflow::SequenceExample * sequence) {              \
-    return ClearPoint(name, sequence);                                         \
-  }                                                                            \
-  inline int CONCAT_STR3(Get, identifier, 3dPointSize)(                        \
-      const tensorflow::SequenceExample& sequence) {                           \
-    return Get3dPointSize(prefix, sequence);                                   \
-  }                                                                            \
-  inline int CONCAT_STR3(Get, identifier, 3dPointSize)(                        \
-      const std::string& name, const tensorflow::SequenceExample& sequence) {  \
-    return Get3dPointSize(name, sequence);                                     \
-  }                                                                            \
-  inline std::vector<std::tuple<float, float, float>> CONCAT_STR3(             \
-      Get, identifier, 3dPointAt)(const tensorflow::SequenceExample& sequence, \
-                                  int index) {                                 \
-    return Get3dPointAt(prefix, sequence, index);                              \
-  }                                                                            \
-  inline std::vector<std::tuple<float, float, float>> CONCAT_STR3(             \
-      Get, identifier, 3dPointAt)(const std::string& name,                     \
-                                  const tensorflow::SequenceExample& sequence, \
-                                  int index) {                                 \
-    return Get3dPointAt(name, sequence, index);                                \
-  }                                                                            \
-  inline void CONCAT_STR3(Add, identifier, 3dPoint)(                           \
-      const std::vector<std::tuple<float, float, float>>& points,              \
-      tensorflow::SequenceExample* sequence) {                                 \
-    return Add3dPoint(prefix, points, sequence);                               \
-  }                                                                            \
-  inline void CONCAT_STR3(Add, identifier, 3dPoint)(                           \
-      const std::string& name,                                                 \
-      const std::vector<std::tuple<float, float, float>>& points,              \
-      tensorflow::SequenceExample* sequence) {                                 \
-    return Add3dPoint(name, points, sequence);                                 \
-  }                                                                            \
-  inline void CONCAT_STR3(Clear, identifier,                                   \
-                          3dPoint)(tensorflow::SequenceExample * sequence) {   \
-    return Clear3dPoint(prefix, sequence);                                     \
-  }                                                                            \
-  inline void CONCAT_STR3(Clear, identifier, 3dPoint)(                         \
-      std::string name, tensorflow::SequenceExample * sequence) {              \
-    return Clear3dPoint(name, sequence);                                       \
-  }
+#define FIXED_PREFIX_BBOX_ACCESSORS(identifier, prefix)                          \
+    inline int CONCAT_STR3(Get, identifier,                                      \
+                           Size)(const tensorflow::SequenceExample& sequence) {  \
+        return GetBBoxSize(prefix, sequence);                                    \
+    }                                                                            \
+    inline std::vector<::mediapipe::Location> CONCAT_STR3(Get, identifier, At)(  \
+        const tensorflow::SequenceExample& sequence, int index) {                \
+        return GetBBoxAt(prefix, sequence, index);                               \
+    }                                                                            \
+    inline void CONCAT_STR2(Add, identifier)(                                    \
+        const std::vector<::mediapipe::Location>& bboxes,                        \
+        tensorflow::SequenceExample* sequence) {                                 \
+        return AddBBox(prefix, bboxes, sequence);                                \
+    }                                                                            \
+    inline void CONCAT_STR2(                                                     \
+        Clear, identifier)(tensorflow::SequenceExample * sequence) {             \
+        return ClearBBox(prefix, sequence);                                      \
+    }                                                                            \
+    inline int CONCAT_STR3(Get, identifier, PointSize)(                          \
+        const tensorflow::SequenceExample& sequence) {                           \
+        return GetPointSize(prefix, sequence);                                   \
+    }                                                                            \
+    inline int CONCAT_STR3(Get, identifier, PointSize)(                          \
+        const std::string& name, const tensorflow::SequenceExample& sequence) {  \
+        return GetPointSize(name, sequence);                                     \
+    }                                                                            \
+    inline std::vector<std::pair<float, float>> CONCAT_STR3(                     \
+        Get, identifier, PointAt)(const tensorflow::SequenceExample& sequence,   \
+                                  int index) {                                   \
+        return GetPointAt(prefix, sequence, index);                              \
+    }                                                                            \
+    inline std::vector<std::pair<float, float>> CONCAT_STR3(                     \
+        Get, identifier, PointAt)(const std::string& name,                       \
+                                  const tensorflow::SequenceExample& sequence,   \
+                                  int index) {                                   \
+        return GetPointAt(name, sequence, index);                                \
+    }                                                                            \
+    inline void CONCAT_STR3(Add, identifier, Point)(                             \
+        const std::vector<std::pair<float, float>>& points,                      \
+        tensorflow::SequenceExample* sequence) {                                 \
+        return AddPoint(prefix, points, sequence);                               \
+    }                                                                            \
+    inline void CONCAT_STR3(Add, identifier, Point)(                             \
+        const std::string& name,                                                 \
+        const std::vector<std::pair<float, float>>& points,                      \
+        tensorflow::SequenceExample* sequence) {                                 \
+        return AddPoint(name, points, sequence);                                 \
+    }                                                                            \
+    inline void CONCAT_STR3(Clear, identifier,                                   \
+                            Point)(tensorflow::SequenceExample * sequence) {     \
+        return ClearPoint(prefix, sequence);                                     \
+    }                                                                            \
+    inline void CONCAT_STR3(Clear, identifier, Point)(                           \
+        std::string name, tensorflow::SequenceExample * sequence) {              \
+        return ClearPoint(name, sequence);                                       \
+    }                                                                            \
+    inline int CONCAT_STR3(Get, identifier, 3dPointSize)(                        \
+        const tensorflow::SequenceExample& sequence) {                           \
+        return Get3dPointSize(prefix, sequence);                                 \
+    }                                                                            \
+    inline int CONCAT_STR3(Get, identifier, 3dPointSize)(                        \
+        const std::string& name, const tensorflow::SequenceExample& sequence) {  \
+        return Get3dPointSize(name, sequence);                                   \
+    }                                                                            \
+    inline std::vector<std::tuple<float, float, float>> CONCAT_STR3(             \
+        Get, identifier, 3dPointAt)(const tensorflow::SequenceExample& sequence, \
+                                    int index) {                                 \
+        return Get3dPointAt(prefix, sequence, index);                            \
+    }                                                                            \
+    inline std::vector<std::tuple<float, float, float>> CONCAT_STR3(             \
+        Get, identifier, 3dPointAt)(const std::string& name,                     \
+                                    const tensorflow::SequenceExample& sequence, \
+                                    int index) {                                 \
+        return Get3dPointAt(name, sequence, index);                              \
+    }                                                                            \
+    inline void CONCAT_STR3(Add, identifier, 3dPoint)(                           \
+        const std::vector<std::tuple<float, float, float>>& points,              \
+        tensorflow::SequenceExample* sequence) {                                 \
+        return Add3dPoint(prefix, points, sequence);                             \
+    }                                                                            \
+    inline void CONCAT_STR3(Add, identifier, 3dPoint)(                           \
+        const std::string& name,                                                 \
+        const std::vector<std::tuple<float, float, float>>& points,              \
+        tensorflow::SequenceExample* sequence) {                                 \
+        return Add3dPoint(name, points, sequence);                               \
+    }                                                                            \
+    inline void CONCAT_STR3(Clear, identifier,                                   \
+                            3dPoint)(tensorflow::SequenceExample * sequence) {   \
+        return Clear3dPoint(prefix, sequence);                                   \
+    }                                                                            \
+    inline void CONCAT_STR3(Clear, identifier, 3dPoint)(                         \
+        std::string name, tensorflow::SequenceExample * sequence) {              \
+        return Clear3dPoint(name, sequence);                                     \
+    }
 
-#define PREFIXED_BBOX(identifier, prefix)                                      \
-  FIXED_PREFIX_BBOX_ACCESSORS(identifier, prefix)                              \
-  FIXED_PREFIX_VECTOR_BYTES_FEATURE_LIST(CONCAT_STR2(identifier, LabelString), \
-                                         kRegionLabelStringKey, prefix)        \
-  FIXED_PREFIX_VECTOR_BYTES_FEATURE_LIST(CONCAT_STR2(identifier, ClassString), \
-                                         kRegionClassStringKey, prefix)        \
-  FIXED_PREFIX_VECTOR_BYTES_FEATURE_LIST(CONCAT_STR2(identifier, TrackString), \
-                                         kRegionTrackStringKey, prefix)        \
-  FIXED_PREFIX_VECTOR_INT64_FEATURE_LIST(CONCAT_STR2(identifier, LabelIndex),  \
-                                         kRegionLabelIndexKey, prefix)         \
-  FIXED_PREFIX_VECTOR_INT64_FEATURE_LIST(CONCAT_STR2(identifier, ClassIndex),  \
-                                         kRegionClassIndexKey, prefix)         \
-  FIXED_PREFIX_VECTOR_INT64_FEATURE_LIST(CONCAT_STR2(identifier, TrackIndex),  \
-                                         kRegionTrackIndexKey, prefix)         \
-  FIXED_PREFIX_VECTOR_FLOAT_FEATURE_LIST(                                      \
-      CONCAT_STR2(identifier, LabelConfidence), kRegionLabelConfidenceKey,     \
-      prefix)                                                                  \
-  FIXED_PREFIX_VECTOR_FLOAT_FEATURE_LIST(                                      \
-      CONCAT_STR2(identifier, ClassConfidence), kRegionClassConfidenceKey,     \
-      prefix)                                                                  \
-  FIXED_PREFIX_VECTOR_FLOAT_FEATURE_LIST(                                      \
-      CONCAT_STR2(identifier, TrackConfidence), kRegionTrackConfidenceKey,     \
-      prefix)                                                                  \
-  FIXED_PREFIX_VECTOR_INT64_FEATURE_LIST(CONCAT_STR2(identifier, IsGenerated), \
-                                         kRegionIsGeneratedKey, prefix)        \
-  FIXED_PREFIX_VECTOR_INT64_FEATURE_LIST(CONCAT_STR2(identifier, IsOccluded),  \
-                                         kRegionIsOccludedKey, prefix)         \
-  FIXED_PREFIX_INT64_FEATURE_LIST(CONCAT_STR2(identifier, NumRegions),         \
-                                  kRegionNumRegionsKey, prefix)                \
-  FIXED_PREFIX_INT64_FEATURE_LIST(CONCAT_STR2(identifier, IsAnnotated),        \
-                                  kRegionIsAnnotatedKey, prefix)               \
-  FIXED_PREFIX_VECTOR_FLOAT_FEATURE_LIST(CONCAT_STR2(identifier, YMin),        \
-                                         kRegionBBoxYMinKey, prefix)           \
-  FIXED_PREFIX_VECTOR_FLOAT_FEATURE_LIST(CONCAT_STR2(identifier, XMin),        \
-                                         kRegionBBoxXMinKey, prefix)           \
-  FIXED_PREFIX_VECTOR_FLOAT_FEATURE_LIST(CONCAT_STR2(identifier, YMax),        \
-                                         kRegionBBoxYMaxKey, prefix)           \
-  FIXED_PREFIX_VECTOR_FLOAT_FEATURE_LIST(CONCAT_STR2(identifier, XMax),        \
-                                         kRegionBBoxXMaxKey, prefix)           \
-  FIXED_PREFIX_VECTOR_FLOAT_FEATURE_LIST(CONCAT_STR2(identifier, PointX),      \
-                                         kRegionPointXKey, prefix)             \
-  FIXED_PREFIX_VECTOR_FLOAT_FEATURE_LIST(CONCAT_STR2(identifier, PointY),      \
-                                         kRegionPointYKey, prefix)             \
-  FIXED_PREFIX_VECTOR_FLOAT_FEATURE_LIST(CONCAT_STR2(identifier, Radius),      \
-                                         kRegionRadiusKey, prefix)             \
-  FIXED_PREFIX_VECTOR_FLOAT_FEATURE_LIST(CONCAT_STR2(identifier, 3dPointX),    \
-                                         kRegion3dPointXKey, prefix)           \
-  FIXED_PREFIX_VECTOR_FLOAT_FEATURE_LIST(CONCAT_STR2(identifier, 3dPointY),    \
-                                         kRegion3dPointYKey, prefix)           \
-  FIXED_PREFIX_VECTOR_FLOAT_FEATURE_LIST(CONCAT_STR2(identifier, 3dPointZ),    \
-                                         kRegion3dPointZKey, prefix)           \
-  FIXED_PREFIX_VECTOR_FLOAT_FEATURE_LIST(                                      \
-      CONCAT_STR2(identifier, EmbeddingFloats), kRegionEmbeddingFloatKey,      \
-      prefix)                                                                  \
-  FIXED_PREFIX_VECTOR_BYTES_FEATURE_LIST(                                      \
-      CONCAT_STR2(identifier, EmbeddingEncoded), kRegionEmbeddingEncodedKey,   \
-      prefix)                                                                  \
-  FIXED_PREFIX_VECTOR_FLOAT_FEATURE_LIST(                                      \
-      CONCAT_STR2(identifier, EmbeddingConfidence),                            \
-      kRegionEmbeddingConfidenceKey, prefix)                                   \
-  FIXED_PREFIX_VECTOR_INT64_CONTEXT_FEATURE(                                   \
-      CONCAT_STR2(identifier, EmbeddingDimensionsPerRegion),                   \
-      kRegionEmbeddingDimensionsPerRegionKey, prefix)                          \
-  FIXED_PREFIX_BYTES_CONTEXT_FEATURE(CONCAT_STR2(identifier, EmbeddingFormat), \
-                                     kRegionEmbeddingFormatKey, prefix)        \
-  FIXED_PREFIX_VECTOR_BYTES_CONTEXT_FEATURE(CONCAT_STR2(identifier, Parts),    \
-                                            kRegionPartsKey, prefix)           \
-  FIXED_PREFIX_INT64_FEATURE_LIST(CONCAT_STR2(identifier, Timestamp),          \
-                                  kRegionTimestampKey, prefix)                 \
-  FIXED_PREFIX_INT64_FEATURE_LIST(                                             \
-      CONCAT_STR3(Unmodified, identifier, Timestamp),                          \
-      kUnmodifiedRegionTimestampKey, prefix)
+#define PREFIXED_BBOX(identifier, prefix)                                        \
+    FIXED_PREFIX_BBOX_ACCESSORS(identifier, prefix)                              \
+    FIXED_PREFIX_VECTOR_BYTES_FEATURE_LIST(CONCAT_STR2(identifier, LabelString), \
+                                           kRegionLabelStringKey, prefix)        \
+    FIXED_PREFIX_VECTOR_BYTES_FEATURE_LIST(CONCAT_STR2(identifier, ClassString), \
+                                           kRegionClassStringKey, prefix)        \
+    FIXED_PREFIX_VECTOR_BYTES_FEATURE_LIST(CONCAT_STR2(identifier, TrackString), \
+                                           kRegionTrackStringKey, prefix)        \
+    FIXED_PREFIX_VECTOR_INT64_FEATURE_LIST(CONCAT_STR2(identifier, LabelIndex),  \
+                                           kRegionLabelIndexKey, prefix)         \
+    FIXED_PREFIX_VECTOR_INT64_FEATURE_LIST(CONCAT_STR2(identifier, ClassIndex),  \
+                                           kRegionClassIndexKey, prefix)         \
+    FIXED_PREFIX_VECTOR_INT64_FEATURE_LIST(CONCAT_STR2(identifier, TrackIndex),  \
+                                           kRegionTrackIndexKey, prefix)         \
+    FIXED_PREFIX_VECTOR_FLOAT_FEATURE_LIST(                                      \
+        CONCAT_STR2(identifier, LabelConfidence), kRegionLabelConfidenceKey,     \
+        prefix)                                                                  \
+    FIXED_PREFIX_VECTOR_FLOAT_FEATURE_LIST(                                      \
+        CONCAT_STR2(identifier, ClassConfidence), kRegionClassConfidenceKey,     \
+        prefix)                                                                  \
+    FIXED_PREFIX_VECTOR_FLOAT_FEATURE_LIST(                                      \
+        CONCAT_STR2(identifier, TrackConfidence), kRegionTrackConfidenceKey,     \
+        prefix)                                                                  \
+    FIXED_PREFIX_VECTOR_INT64_FEATURE_LIST(CONCAT_STR2(identifier, IsGenerated), \
+                                           kRegionIsGeneratedKey, prefix)        \
+    FIXED_PREFIX_VECTOR_INT64_FEATURE_LIST(CONCAT_STR2(identifier, IsOccluded),  \
+                                           kRegionIsOccludedKey, prefix)         \
+    FIXED_PREFIX_INT64_FEATURE_LIST(CONCAT_STR2(identifier, NumRegions),         \
+                                    kRegionNumRegionsKey, prefix)                \
+    FIXED_PREFIX_INT64_FEATURE_LIST(CONCAT_STR2(identifier, IsAnnotated),        \
+                                    kRegionIsAnnotatedKey, prefix)               \
+    FIXED_PREFIX_VECTOR_FLOAT_FEATURE_LIST(CONCAT_STR2(identifier, YMin),        \
+                                           kRegionBBoxYMinKey, prefix)           \
+    FIXED_PREFIX_VECTOR_FLOAT_FEATURE_LIST(CONCAT_STR2(identifier, XMin),        \
+                                           kRegionBBoxXMinKey, prefix)           \
+    FIXED_PREFIX_VECTOR_FLOAT_FEATURE_LIST(CONCAT_STR2(identifier, YMax),        \
+                                           kRegionBBoxYMaxKey, prefix)           \
+    FIXED_PREFIX_VECTOR_FLOAT_FEATURE_LIST(CONCAT_STR2(identifier, XMax),        \
+                                           kRegionBBoxXMaxKey, prefix)           \
+    FIXED_PREFIX_VECTOR_FLOAT_FEATURE_LIST(CONCAT_STR2(identifier, PointX),      \
+                                           kRegionPointXKey, prefix)             \
+    FIXED_PREFIX_VECTOR_FLOAT_FEATURE_LIST(CONCAT_STR2(identifier, PointY),      \
+                                           kRegionPointYKey, prefix)             \
+    FIXED_PREFIX_VECTOR_FLOAT_FEATURE_LIST(CONCAT_STR2(identifier, Radius),      \
+                                           kRegionRadiusKey, prefix)             \
+    FIXED_PREFIX_VECTOR_FLOAT_FEATURE_LIST(CONCAT_STR2(identifier, 3dPointX),    \
+                                           kRegion3dPointXKey, prefix)           \
+    FIXED_PREFIX_VECTOR_FLOAT_FEATURE_LIST(CONCAT_STR2(identifier, 3dPointY),    \
+                                           kRegion3dPointYKey, prefix)           \
+    FIXED_PREFIX_VECTOR_FLOAT_FEATURE_LIST(CONCAT_STR2(identifier, 3dPointZ),    \
+                                           kRegion3dPointZKey, prefix)           \
+    FIXED_PREFIX_VECTOR_FLOAT_FEATURE_LIST(                                      \
+        CONCAT_STR2(identifier, EmbeddingFloats), kRegionEmbeddingFloatKey,      \
+        prefix)                                                                  \
+    FIXED_PREFIX_VECTOR_BYTES_FEATURE_LIST(                                      \
+        CONCAT_STR2(identifier, EmbeddingEncoded), kRegionEmbeddingEncodedKey,   \
+        prefix)                                                                  \
+    FIXED_PREFIX_VECTOR_FLOAT_FEATURE_LIST(                                      \
+        CONCAT_STR2(identifier, EmbeddingConfidence),                            \
+        kRegionEmbeddingConfidenceKey, prefix)                                   \
+    FIXED_PREFIX_VECTOR_INT64_CONTEXT_FEATURE(                                   \
+        CONCAT_STR2(identifier, EmbeddingDimensionsPerRegion),                   \
+        kRegionEmbeddingDimensionsPerRegionKey, prefix)                          \
+    FIXED_PREFIX_BYTES_CONTEXT_FEATURE(CONCAT_STR2(identifier, EmbeddingFormat), \
+                                       kRegionEmbeddingFormatKey, prefix)        \
+    FIXED_PREFIX_VECTOR_BYTES_CONTEXT_FEATURE(CONCAT_STR2(identifier, Parts),    \
+                                              kRegionPartsKey, prefix)           \
+    FIXED_PREFIX_INT64_FEATURE_LIST(CONCAT_STR2(identifier, Timestamp),          \
+                                    kRegionTimestampKey, prefix)                 \
+    FIXED_PREFIX_INT64_FEATURE_LIST(                                             \
+        CONCAT_STR3(Unmodified, identifier, Timestamp),                          \
+        kUnmodifiedRegionTimestampKey, prefix)
 
 // Provides suites of functions for working with bounding boxes and predicted
 // bounding boxes such as
@@ -563,45 +562,45 @@ const char kImageLabelIndexKey[] = "image/label/index";
 const char kImageLabelStringKey[] = "image/label/string";
 const char kImageLabelConfidenceKey[] = "image/label/confidence";
 
-#define PREFIXED_IMAGE(identifier, prefix)                                     \
-  FIXED_PREFIX_INT64_CONTEXT_FEATURE(CONCAT_STR2(identifier, Height),          \
-                                     kImageHeightKey, prefix)                  \
-  FIXED_PREFIX_INT64_CONTEXT_FEATURE(CONCAT_STR2(identifier, Width),           \
-                                     kImageWidthKey, prefix)                   \
-  FIXED_PREFIX_INT64_CONTEXT_FEATURE(CONCAT_STR2(identifier, Channels),        \
-                                     kImageChannelsKey, prefix)                \
-  FIXED_PREFIX_BYTES_CONTEXT_FEATURE(CONCAT_STR2(identifier, Format),          \
-                                     kImageFormatKey, prefix)                  \
-  FIXED_PREFIX_BYTES_CONTEXT_FEATURE(CONCAT_STR2(identifier, Colorspace),      \
-                                     kImageColorspaceKey, prefix)              \
-  FIXED_PREFIX_FLOAT_CONTEXT_FEATURE(CONCAT_STR2(identifier, FrameRate),       \
-                                     kImageFrameRateKey, prefix)               \
-  FIXED_PREFIX_FLOAT_CONTEXT_FEATURE(CONCAT_STR2(identifier, Saturation),      \
-                                     kImageSaturationKey, prefix)              \
-  FIXED_PREFIX_BYTES_CONTEXT_FEATURE(CONCAT_STR2(identifier, DataPath),        \
-                                     kImageDataPathKey, prefix)                \
-  FIXED_PREFIX_VECTOR_INT64_CONTEXT_FEATURE(                                   \
-      CONCAT_STR2(identifier, ClassLabelIndex), kImageClassLabelIndexKey,      \
-      prefix)                                                                  \
-  FIXED_PREFIX_VECTOR_BYTES_CONTEXT_FEATURE(                                   \
-      CONCAT_STR2(identifier, ClassLabelString), kImageClassLabelStringKey,    \
-      prefix)                                                                  \
-  FIXED_PREFIX_VECTOR_INT64_CONTEXT_FEATURE(                                   \
-      CONCAT_STR2(identifier, ObjectClassIndex), kImageObjectClassIndexKey,    \
-      prefix)                                                                  \
-  FIXED_PREFIX_BYTES_FEATURE_LIST(CONCAT_STR2(identifier, Encoded),            \
-                                  kImageEncodedKey, prefix)                    \
-  FIXED_PREFIX_VECTOR_BYTES_FEATURE_LIST(                                      \
-      CONCAT_STR2(identifier, MultiEncoded), kImageMultiEncodedKey, prefix)    \
-  FIXED_PREFIX_INT64_FEATURE_LIST(CONCAT_STR2(identifier, Timestamp),          \
-                                  kImageTimestampKey, prefix)                  \
-  FIXED_PREFIX_VECTOR_INT64_FEATURE_LIST(CONCAT_STR2(identifier, LabelIndex),  \
-                                         kImageLabelIndexKey, prefix)          \
-  FIXED_PREFIX_VECTOR_BYTES_FEATURE_LIST(CONCAT_STR2(identifier, LabelString), \
-                                         kImageLabelStringKey, prefix)         \
-  FIXED_PREFIX_VECTOR_FLOAT_FEATURE_LIST(                                      \
-      CONCAT_STR2(identifier, LabelConfidence), kImageLabelConfidenceKey,      \
-      prefix)
+#define PREFIXED_IMAGE(identifier, prefix)                                       \
+    FIXED_PREFIX_INT64_CONTEXT_FEATURE(CONCAT_STR2(identifier, Height),          \
+                                       kImageHeightKey, prefix)                  \
+    FIXED_PREFIX_INT64_CONTEXT_FEATURE(CONCAT_STR2(identifier, Width),           \
+                                       kImageWidthKey, prefix)                   \
+    FIXED_PREFIX_INT64_CONTEXT_FEATURE(CONCAT_STR2(identifier, Channels),        \
+                                       kImageChannelsKey, prefix)                \
+    FIXED_PREFIX_BYTES_CONTEXT_FEATURE(CONCAT_STR2(identifier, Format),          \
+                                       kImageFormatKey, prefix)                  \
+    FIXED_PREFIX_BYTES_CONTEXT_FEATURE(CONCAT_STR2(identifier, Colorspace),      \
+                                       kImageColorspaceKey, prefix)              \
+    FIXED_PREFIX_FLOAT_CONTEXT_FEATURE(CONCAT_STR2(identifier, FrameRate),       \
+                                       kImageFrameRateKey, prefix)               \
+    FIXED_PREFIX_FLOAT_CONTEXT_FEATURE(CONCAT_STR2(identifier, Saturation),      \
+                                       kImageSaturationKey, prefix)              \
+    FIXED_PREFIX_BYTES_CONTEXT_FEATURE(CONCAT_STR2(identifier, DataPath),        \
+                                       kImageDataPathKey, prefix)                \
+    FIXED_PREFIX_VECTOR_INT64_CONTEXT_FEATURE(                                   \
+        CONCAT_STR2(identifier, ClassLabelIndex), kImageClassLabelIndexKey,      \
+        prefix)                                                                  \
+    FIXED_PREFIX_VECTOR_BYTES_CONTEXT_FEATURE(                                   \
+        CONCAT_STR2(identifier, ClassLabelString), kImageClassLabelStringKey,    \
+        prefix)                                                                  \
+    FIXED_PREFIX_VECTOR_INT64_CONTEXT_FEATURE(                                   \
+        CONCAT_STR2(identifier, ObjectClassIndex), kImageObjectClassIndexKey,    \
+        prefix)                                                                  \
+    FIXED_PREFIX_BYTES_FEATURE_LIST(CONCAT_STR2(identifier, Encoded),            \
+                                    kImageEncodedKey, prefix)                    \
+    FIXED_PREFIX_VECTOR_BYTES_FEATURE_LIST(                                      \
+        CONCAT_STR2(identifier, MultiEncoded), kImageMultiEncodedKey, prefix)    \
+    FIXED_PREFIX_INT64_FEATURE_LIST(CONCAT_STR2(identifier, Timestamp),          \
+                                    kImageTimestampKey, prefix)                  \
+    FIXED_PREFIX_VECTOR_INT64_FEATURE_LIST(CONCAT_STR2(identifier, LabelIndex),  \
+                                           kImageLabelIndexKey, prefix)          \
+    FIXED_PREFIX_VECTOR_BYTES_FEATURE_LIST(CONCAT_STR2(identifier, LabelString), \
+                                           kImageLabelStringKey, prefix)         \
+    FIXED_PREFIX_VECTOR_FLOAT_FEATURE_LIST(                                      \
+        CONCAT_STR2(identifier, LabelConfidence), kImageLabelConfidenceKey,      \
+        prefix)
 
 // Provides suites of functions for working with images and data encoded in
 // images such as

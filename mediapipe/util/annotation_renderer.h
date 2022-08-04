@@ -15,11 +15,10 @@
 #ifndef MEDIAPIPE_UTIL_ANNOTATION_RENDERER_H_
 #define MEDIAPIPE_UTIL_ANNOTATION_RENDERER_H_
 
-#include <string>
-
 #include "mediapipe/framework/port/opencv_core_inc.h"
 #include "mediapipe/framework/port/opencv_imgproc_inc.h"
 #include "mediapipe/util/render_data.pb.h"
+#include <string>
 
 namespace mediapipe {
 
@@ -46,97 +45,97 @@ namespace mediapipe {
 //
 // UseRenderedImage(mat_image.get());
 class AnnotationRenderer {
- public:
-  explicit AnnotationRenderer() {}
+public:
+    explicit AnnotationRenderer() {}
 
-  explicit AnnotationRenderer(const cv::Mat& mat_image)
-      : image_width_(mat_image.cols),
-        image_height_(mat_image.rows),
-        mat_image_(mat_image.clone()) {}
+    explicit AnnotationRenderer(const cv::Mat& mat_image)
+        : image_width_(mat_image.cols),
+          image_height_(mat_image.rows),
+          mat_image_(mat_image.clone()) {}
 
-  // Renders the image with the input render data.
-  void RenderDataOnImage(const RenderData& render_data);
+    // Renders the image with the input render data.
+    void RenderDataOnImage(const RenderData& render_data);
 
-  // Resets the renderer with a new image. Does not own input_image. input_image
-  // must not be modified by caller during rendering.
-  void AdoptImage(cv::Mat* input_image);
+    // Resets the renderer with a new image. Does not own input_image. input_image
+    // must not be modified by caller during rendering.
+    void AdoptImage(cv::Mat* input_image);
 
-  // Gets image dimensions.
-  int GetImageWidth() const;
-  int GetImageHeight() const;
+    // Gets image dimensions.
+    int GetImageWidth() const;
+    int GetImageHeight() const;
 
-  // Sets whether text should be rendered upside down. This is default to false
-  // and text is rendered assuming the underlying image has its origin at the
-  // top-left corner. Set it to true if the image origin is at the bottom-left
-  // corner.
-  void SetFlipTextVertically(bool flip);
+    // Sets whether text should be rendered upside down. This is default to false
+    // and text is rendered assuming the underlying image has its origin at the
+    // top-left corner. Set it to true if the image origin is at the bottom-left
+    // corner.
+    void SetFlipTextVertically(bool flip);
 
-  // For GPU rendering optimization in AnnotationOverlayCalculator.
-  // Scale all incoming coordinates,sizes,thickness,etc. by this amount.
-  // Should be in the range (0-1].
-  // See 'gpu_scale_factor' in annotation_overlay_calculator.proto
-  void SetScaleFactor(float scale_factor);
-  float GetScaleFactor() { return scale_factor_; }
+    // For GPU rendering optimization in AnnotationOverlayCalculator.
+    // Scale all incoming coordinates,sizes,thickness,etc. by this amount.
+    // Should be in the range (0-1].
+    // See 'gpu_scale_factor' in annotation_overlay_calculator.proto
+    void SetScaleFactor(float scale_factor);
+    float GetScaleFactor() { return scale_factor_; }
 
- private:
-  // Draws a rectangle on the image as described in the annotation.
-  void DrawRectangle(const RenderAnnotation& annotation);
+private:
+    // Draws a rectangle on the image as described in the annotation.
+    void DrawRectangle(const RenderAnnotation& annotation);
 
-  // Draws a filled rectangle on the image as described in the annotation.
-  void DrawFilledRectangle(const RenderAnnotation& annotation);
+    // Draws a filled rectangle on the image as described in the annotation.
+    void DrawFilledRectangle(const RenderAnnotation& annotation);
 
-  // Draws an oval on the image as described in the annotation.
-  void DrawOval(const RenderAnnotation& annotation);
+    // Draws an oval on the image as described in the annotation.
+    void DrawOval(const RenderAnnotation& annotation);
 
-  // Draws a filled oval on the image as described in the annotation.
-  void DrawFilledOval(const RenderAnnotation& annotation);
+    // Draws a filled oval on the image as described in the annotation.
+    void DrawFilledOval(const RenderAnnotation& annotation);
 
-  // Draws an arrow on the image as described in the annotation.
-  void DrawArrow(const RenderAnnotation& annotation);
+    // Draws an arrow on the image as described in the annotation.
+    void DrawArrow(const RenderAnnotation& annotation);
 
-  // Draws a point on the image as described in the annotation.
-  void DrawPoint(const RenderAnnotation& annotation);
+    // Draws a point on the image as described in the annotation.
+    void DrawPoint(const RenderAnnotation& annotation);
 
-  // Draws a line segment on the image as described in the annotation.
-  void DrawLine(const RenderAnnotation& annotation);
+    // Draws a line segment on the image as described in the annotation.
+    void DrawLine(const RenderAnnotation& annotation);
 
-  // Draws a 2-tone line segment on the image as described in the annotation.
-  void DrawGradientLine(const RenderAnnotation& annotation);
+    // Draws a 2-tone line segment on the image as described in the annotation.
+    void DrawGradientLine(const RenderAnnotation& annotation);
 
-  // Draws a text on the image as described in the annotation.
-  void DrawText(const RenderAnnotation& annotation);
+    // Draws a text on the image as described in the annotation.
+    void DrawText(const RenderAnnotation& annotation);
 
-  // Draws a rounded rectangle on the image as described in the annotation.
-  void DrawRoundedRectangle(const RenderAnnotation& annotation);
+    // Draws a rounded rectangle on the image as described in the annotation.
+    void DrawRoundedRectangle(const RenderAnnotation& annotation);
 
-  // Draws a filled rounded rectangle on the image as described in the
-  // annotation.
-  void DrawFilledRoundedRectangle(const RenderAnnotation& annotation);
+    // Draws a filled rounded rectangle on the image as described in the
+    // annotation.
+    void DrawFilledRoundedRectangle(const RenderAnnotation& annotation);
 
-  // Helper function for drawing a rectangle with rounded corners. The
-  // parameters are the same as in the OpenCV function rectangle().
-  // corner_radius: A positive int value defining the radius of the round
-  // corners.
-  void DrawRoundedRectangle(cv::Mat src, cv::Point top_left,
-                            cv::Point bottom_right,
-                            const cv::Scalar& line_color, int thickness = 1,
-                            int line_type = 8, int corner_radius = 0);
+    // Helper function for drawing a rectangle with rounded corners. The
+    // parameters are the same as in the OpenCV function rectangle().
+    // corner_radius: A positive int value defining the radius of the round
+    // corners.
+    void DrawRoundedRectangle(cv::Mat src, cv::Point top_left,
+                              cv::Point bottom_right,
+                              const cv::Scalar& line_color, int thickness = 1,
+                              int line_type = 8, int corner_radius = 0);
 
-  // Computes the font scale from font_face, size and thickness.
-  double ComputeFontScale(int font_face, int font_size, int thickness);
+    // Computes the font scale from font_face, size and thickness.
+    double ComputeFontScale(int font_face, int font_size, int thickness);
 
-  // Width and Height of the image (in pixels).
-  int image_width_ = -1;
-  int image_height_ = -1;
+    // Width and Height of the image (in pixels).
+    int image_width_ = -1;
+    int image_height_ = -1;
 
-  // The image for rendering.
-  cv::Mat mat_image_;
+    // The image for rendering.
+    cv::Mat mat_image_;
 
-  // See SetFlipTextVertically(bool).
-  bool flip_text_vertically_ = false;
+    // See SetFlipTextVertically(bool).
+    bool flip_text_vertically_ = false;
 
-  // See SetScaleFactor(float)
-  float scale_factor_ = 1.0;
+    // See SetScaleFactor(float)
+    float scale_factor_ = 1.0;
 };
 }  // namespace mediapipe
 

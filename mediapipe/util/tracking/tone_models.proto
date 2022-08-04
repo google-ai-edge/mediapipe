@@ -25,16 +25,16 @@ package mediapipe;
 //    0          0    gain_c3  bias_c3 ]           c3
 //                                                  1 ]
 message GainBiasModel {
-  optional float gain_c1 = 1 [default = 1.0];
-  optional float bias_c1 = 2 [default = 0.0];
-  optional float gain_c2 = 3 [default = 1.0];
-  optional float bias_c2 = 4 [default = 0.0];
-  optional float gain_c3 = 5 [default = 1.0];
-  optional float bias_c3 = 6 [default = 0.0];
+    optional float gain_c1 = 1 [default = 1.0];
+    optional float bias_c1 = 2 [default = 0.0];
+    optional float gain_c2 = 3 [default = 1.0];
+    optional float bias_c2 = 4 [default = 0.0];
+    optional float gain_c3 = 5 [default = 1.0];
+    optional float bias_c3 = 6 [default = 0.0];
 }
 
 message MixtureGainBiasModel {
-  repeated GainBiasModel model = 1;
+    repeated GainBiasModel model = 1;
 }
 
 // Transforms a 3D color vector x = (c1, c2, c3) according to
@@ -43,22 +43,22 @@ message MixtureGainBiasModel {
 //    g_20    g_21      g_22      g_23 ]           c3
 //                                                 1 ]
 message AffineToneModel {
-  optional float g_00 = 1 [default = 1.0];
-  optional float g_01 = 2 [default = 0.0];
-  optional float g_02 = 3 [default = 0.0];
-  optional float g_03 = 4 [default = 0.0];
+    optional float g_00 = 1 [default = 1.0];
+    optional float g_01 = 2 [default = 0.0];
+    optional float g_02 = 3 [default = 0.0];
+    optional float g_03 = 4 [default = 0.0];
 
-  optional float g_10 = 5 [default = 0.0];
-  optional float g_11 = 6 [default = 1.0];
-  optional float g_12 = 7 [default = 0.0];
-  optional float g_13 = 8 [default = 0.0];
+    optional float g_10 = 5 [default = 0.0];
+    optional float g_11 = 6 [default = 1.0];
+    optional float g_12 = 7 [default = 0.0];
+    optional float g_13 = 8 [default = 0.0];
 
-  optional float g_20 = 9 [default = 0.0];
-  optional float g_21 = 10 [default = 0.0];
-  optional float g_22 = 11 [default = 1.0];
-  optional float g_23 = 12 [default = 0.0];
+    optional float g_20 = 9 [default = 0.0];
+    optional float g_21 = 10 [default = 0.0];
+    optional float g_22 = 11 [default = 1.0];
+    optional float g_23 = 12 [default = 0.0];
 }
 
 message MixtureAffineToneModel {
-  repeated AffineToneModel model = 1;
+    repeated AffineToneModel model = 1;
 }

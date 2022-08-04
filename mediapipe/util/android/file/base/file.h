@@ -17,7 +17,6 @@
 
 #include <sys/stat.h>
 #include <sys/types.h>
-
 #include <string>
 
 namespace mediapipe {
@@ -29,15 +28,15 @@ bool IsAbsolutePath(const std::string& path);
 Options CreationMode(mode_t permissions);
 
 class Options {
- public:
-  Options() = default;
+public:
+    Options() = default;
 
-  void set_permissions(mode_t permissions) { permissions_ = permissions; }
+    void set_permissions(mode_t permissions) { permissions_ = permissions; }
 
-  mode_t permissions() const { return permissions_; }
+    mode_t permissions() const { return permissions_; }
 
- private:
-  mode_t permissions_ = S_IRWXU | S_IRWXG | S_IRWXO;
+private:
+    mode_t permissions_ = S_IRWXU | S_IRWXG | S_IRWXO;
 };
 
 inline Options Defaults() { return Options(); }
@@ -45,19 +44,19 @@ inline Options Defaults() { return Options(); }
 }  // namespace file
 
 class File {
- public:
-  // Return the "basename" for "fname".  I.e. strip out everything
-  // up to and including the last "/" in the name.
-  static std::string Basename(const std::string& fname);
+public:
+    // Return the "basename" for "fname".  I.e. strip out everything
+    // up to and including the last "/" in the name.
+    static std::string Basename(const std::string& fname);
 
-  static std::string StripBasename(const std::string& fname);
+    static std::string StripBasename(const std::string& fname);
 
-  static bool IsLocalFile(const std::string& fname);
+    static bool IsLocalFile(const std::string& fname);
 
-  static bool Exists(const char* name);
-  static bool Exists(const std::string& name) { return Exists(name.c_str()); }
+    static bool Exists(const char* name);
+    static bool Exists(const std::string& name) { return Exists(name.c_str()); }
 
-  static const std::string CanonicalizeFileName(const char* fname);
+    static const std::string CanonicalizeFileName(const char* fname);
 };
 
 }  // namespace mediapipe

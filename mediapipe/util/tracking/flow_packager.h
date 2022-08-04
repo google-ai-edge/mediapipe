@@ -15,14 +15,13 @@
 #ifndef MEDIAPIPE_UTIL_TRACKING_FLOW_PACKAGER_H_
 #define MEDIAPIPE_UTIL_TRACKING_FLOW_PACKAGER_H_
 
-#include <string>
-#include <vector>
-
 #include "absl/strings/string_view.h"
 #include "mediapipe/framework/port/integral_types.h"
 #include "mediapipe/util/tracking/flow_packager.pb.h"
 #include "mediapipe/util/tracking/motion_estimation.pb.h"
 #include "mediapipe/util/tracking/region_flow.pb.h"
+#include <string>
+#include <vector>
 
 namespace mediapipe {
 
@@ -90,76 +89,76 @@ class CameraMotion;
 class RegionFlowFeatureList;
 
 class FlowPackager {
- public:
-  explicit FlowPackager(const FlowPackagerOptions& options);
-  FlowPackager(const FlowPackager&) = delete;
-  FlowPackager& operator=(const FlowPackager&) = delete;
+public:
+    explicit FlowPackager(const FlowPackagerOptions& options);
+    FlowPackager(const FlowPackager&) = delete;
+    FlowPackager& operator=(const FlowPackager&) = delete;
 
-  void PackFlow(const RegionFlowFeatureList& feature_list,
-                const CameraMotion* camera_motion,  // optional.
-                TrackingData* tracking_data) const;
+    void PackFlow(const RegionFlowFeatureList& feature_list,
+                  const CameraMotion* camera_motion,  // optional.
+                  TrackingData* tracking_data) const;
 
-  // Converts TrackingData to condensed binary representation.
-  void EncodeTrackingData(const TrackingData& tracking_data,
-                          BinaryTrackingData* binary_data) const;
+    // Converts TrackingData to condensed binary representation.
+    void EncodeTrackingData(const TrackingData& tracking_data,
+                            BinaryTrackingData* binary_data) const;
 
-  void DecodeTrackingData(const BinaryTrackingData& data,
-                          TrackingData* tracking_data) const;
+    void DecodeTrackingData(const BinaryTrackingData& data,
+                            TrackingData* tracking_data) const;
 
-  void BinaryTrackingDataToContainer(const BinaryTrackingData& binary_data,
-                                     TrackingContainer* container) const;
+    void BinaryTrackingDataToContainer(const BinaryTrackingData& binary_data,
+                                       TrackingContainer* container) const;
 
-  void BinaryTrackingDataFromContainer(const TrackingContainer& container,
-                                       BinaryTrackingData* binary_data) const;
+    void BinaryTrackingDataFromContainer(const TrackingContainer& container,
+                                         BinaryTrackingData* binary_data) const;
 
-  void DecodeMetaData(const TrackingContainer& data, MetaData* meta_ata) const;
+    void DecodeMetaData(const TrackingContainer& data, MetaData* meta_ata) const;
 
-  // Fills in meta (first container) and termination data (last container).
-  // Optionally, pass timestamps for each frame.
-  void FinalizeTrackingContainerFormat(
-      std::vector<uint32>* timestamps,  // optional, can be null.
-      TrackingContainerFormat* container_fromat);
-  void FinalizeTrackingContainerProto(
-      std::vector<uint32>* timestamps,  // optional, can be null.
-      TrackingContainerProto* proto);
+    // Fills in meta (first container) and termination data (last container).
+    // Optionally, pass timestamps for each frame.
+    void FinalizeTrackingContainerFormat(
+        std::vector<uint32>* timestamps,  // optional, can be null.
+        TrackingContainerFormat* container_fromat);
+    void FinalizeTrackingContainerProto(
+        std::vector<uint32>* timestamps,  // optional, can be null.
+        TrackingContainerProto* proto);
 
-  // Fast encode to binary representation.
-  void TrackingContainerFormatToBinary(
-      const TrackingContainerFormat& container_format, std::string* binary);
+    // Fast encode to binary representation.
+    void TrackingContainerFormatToBinary(
+        const TrackingContainerFormat& container_format, std::string* binary);
 
-  // Fast decode from binary representation.
-  void TrackingContainerFormatFromBinary(
-      const std::string& binary, TrackingContainerFormat* container_format);
+    // Fast decode from binary representation.
+    void TrackingContainerFormatFromBinary(
+        const std::string& binary, TrackingContainerFormat* container_format);
 
-  // Checks whether tracking data can be encoded in high profile mode without
-  // duplicating any features. This occurs if the horizonal distance between two
-  // features is less than 64.
-  bool CompatibleForEncodeWithoutDuplication(
-      const TrackingData& tracking_data) const;
+    // Checks whether tracking data can be encoded in high profile mode without
+    // duplicating any features. This occurs if the horizonal distance between two
+    // features is less than 64.
+    bool CompatibleForEncodeWithoutDuplication(
+        const TrackingData& tracking_data) const;
 
-  // Helper function for test. Sorts according to scaled, integer based
-  // lexicographical ordering.
-  // Declared public for access by test.
-  void SortRegionFlowFeatureList(float scale_x, float scale_y,
-                                 RegionFlowFeatureList* feature_list) const;
+    // Helper function for test. Sorts according to scaled, integer based
+    // lexicographical ordering.
+    // Declared public for access by test.
+    void SortRegionFlowFeatureList(float scale_x, float scale_y,
+                                   RegionFlowFeatureList* feature_list) const;
 
-  // Removes binary encoded container from string and parses it to container.
-  // Returns header string of the parsed container. Useful for random seek.
-  std::string SplitContainerFromString(absl::string_view* binary_data,
-                                       TrackingContainer* container);
+    // Removes binary encoded container from string and parses it to container.
+    // Returns header string of the parsed container. Useful for random seek.
+    std::string SplitContainerFromString(absl::string_view* binary_data,
+                                         TrackingContainer* container);
 
- private:
-  // Sets meta data for a set
-  void InitializeMetaData(int num_frames, const std::vector<uint32>& msecs,
-                          const std::vector<int>& data_sizes,
-                          MetaData* meta_data) const;
+private:
+    // Sets meta data for a set
+    void InitializeMetaData(int num_frames, const std::vector<uint32>& msecs,
+                            const std::vector<int>& data_sizes,
+                            MetaData* meta_data) const;
 
-  // Serializes container to binary string and adds it to binary_data.
-  void AddContainerToString(const TrackingContainer& container,
-                            std::string* binary_data);
+    // Serializes container to binary string and adds it to binary_data.
+    void AddContainerToString(const TrackingContainer& container,
+                              std::string* binary_data);
 
- private:
-  FlowPackagerOptions options_;
+private:
+    FlowPackagerOptions options_;
 };
 
 }  // namespace mediapipe

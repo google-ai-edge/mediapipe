@@ -21,15 +21,15 @@ package mediapipe;
 // possible to specify an additional display name (in a given language) which is
 // typically used for display purposes.
 message LabelMapItem {
-  // Label name.
-  // E.g. name = "/m/02xwb"
-  optional string name = 1;
+    // Label name.
+    // E.g. name = "/m/02xwb"
+    optional string name = 1;
 
-  // Display name.
-  // E.g. display_name = "Fruit"
-  optional string display_name = 2;
+    // Display name.
+    // E.g. display_name = "Fruit"
+    optional string display_name = 2;
 
-  // Optional list of children (e.g. subcategories) used to represent a
-  // hierarchy.
-  repeated string child_name = 3;
+    // Optional list of children (e.g. subcategories) used to represent a
+    // hierarchy.
+    repeated string child_name = 3;
 }

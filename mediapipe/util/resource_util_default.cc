@@ -32,12 +32,12 @@ namespace internal {
 absl::Status DefaultGetResourceContents(const std::string& path,
                                         std::string* output,
                                         bool read_as_binary) {
-  return GetContents(path, output, read_as_binary);
+    return GetContents(path, output, read_as_binary);
 }
 }  // namespace internal
 
 absl::StatusOr<std::string> PathToResourceAsFile(const std::string& path) {
-  return JoinPath(absl::GetFlag(FLAGS_resource_root_dir), path);
+    return JoinPath(absl::GetFlag(FLAGS_resource_root_dir), path);
 }
 
 }  // namespace mediapipe

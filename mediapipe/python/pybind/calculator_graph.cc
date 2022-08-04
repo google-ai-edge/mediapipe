@@ -13,7 +13,6 @@
 // limitations under the License.
 
 #include "mediapipe/python/pybind/calculator_graph.h"
-
 #include "absl/memory/memory.h"
 #include "absl/strings/str_cat.h"
 #include "mediapipe/framework/calculator.pb.h"
@@ -37,85 +36,85 @@ absl::Mutex callback_mutex;
 
 template <typename T>
 T ParseProto(const py::object& proto_object) {
-  T proto;
-  if (!ParseTextProto<T>(proto_object.str(), &proto)) {
-    throw RaisePyError(
-        PyExc_RuntimeError,
-        absl::StrCat("Failed to parse: ", std::string(proto_object.str()))
-            .c_str());
-  }
-  return proto;
+    T proto;
+    if (!ParseTextProto<T>(proto_object.str(), &proto)) {
+        throw RaisePyError(
+            PyExc_RuntimeError,
+            absl::StrCat("Failed to parse: ", std::string(proto_object.str()))
+                .c_str());
+    }
+    return proto;
 }
 
 namespace py = pybind11;
 
 void CalculatorGraphSubmodule(pybind11::module* module) {
-  py::module m = module->def_submodule("calculator_graph",
-                                       "MediaPipe calculator graph module.");
+    py::module m = module->def_submodule("calculator_graph",
+                                         "MediaPipe calculator graph module.");
 
-  using GraphInputStreamAddMode =
-      mediapipe::CalculatorGraph::GraphInputStreamAddMode;
+    using GraphInputStreamAddMode =
+        mediapipe::CalculatorGraph::GraphInputStreamAddMode;
 
-  py::enum_<GraphInputStreamAddMode>(m, "GraphInputStreamAddMode")
-      .value("WAIT_TILL_NOT_FULL", GraphInputStreamAddMode::WAIT_TILL_NOT_FULL)
-      .value("ADD_IF_NOT_FULL", GraphInputStreamAddMode::ADD_IF_NOT_FULL)
-      .export_values();
+    py::enum_<GraphInputStreamAddMode>(m, "GraphInputStreamAddMode")
+        .value("WAIT_TILL_NOT_FULL", GraphInputStreamAddMode::WAIT_TILL_NOT_FULL)
+        .value("ADD_IF_NOT_FULL", GraphInputStreamAddMode::ADD_IF_NOT_FULL)
+        .export_values();
 
-  // Calculator Graph
-  py::class_<CalculatorGraph> calculator_graph(
-      m, "CalculatorGraph", R"doc(The primary API for the MediaPipe Framework.
+    // Calculator Graph
+    py::class_<CalculatorGraph> calculator_graph(
+        m, "CalculatorGraph", R"doc(The primary API for the MediaPipe Framework.
 
   MediaPipe processing takes place inside a graph, which defines packet flow
   paths between nodes. A graph can have any number of inputs and outputs, and
   data flow can branch and merge. Generally data flows forward, but backward
   loops are possible.)doc");
 
-  // TODO: Support graph initialization with graph templates and
-  // subgraph.
-  calculator_graph.def(
-      py::init([](py::kwargs kwargs) {
-        bool init_with_binary_graph = false;
-        bool init_with_graph_proto = false;
-        bool init_with_validated_graph_config = false;
-        CalculatorGraphConfig graph_config_proto;
-        for (const auto& kw : kwargs) {
-          const std::string& key = kw.first.cast<std::string>();
-          if (key == "binary_graph_path") {
-            init_with_binary_graph = true;
-            std::string file_name(kw.second.cast<py::object>().str());
-            graph_config_proto = ReadCalculatorGraphConfigFromFile(file_name);
-          } else if (key == "graph_config") {
-            init_with_graph_proto = true;
-            graph_config_proto =
-                ParseProto<CalculatorGraphConfig>(kw.second.cast<py::object>());
-          } else if (key == "validated_graph_config") {
-            init_with_validated_graph_config = true;
-            graph_config_proto =
-                py::cast<ValidatedGraphConfig*>(kw.second)->Config();
-          } else {
-            throw RaisePyError(
-                PyExc_RuntimeError,
-                absl::StrCat("Unknown kwargs input argument: ", key).c_str());
-          }
-        }
+    // TODO: Support graph initialization with graph templates and
+    // subgraph.
+    calculator_graph.def(
+        py::init([](py::kwargs kwargs) {
+            bool init_with_binary_graph = false;
+            bool init_with_graph_proto = false;
+            bool init_with_validated_graph_config = false;
+            CalculatorGraphConfig graph_config_proto;
+            for (const auto& kw : kwargs) {
+                const std::string& key = kw.first.cast<std::string>();
+                if (key == "binary_graph_path") {
+                    init_with_binary_graph = true;
+                    std::string file_name(kw.second.cast<py::object>().str());
+                    graph_config_proto = ReadCalculatorGraphConfigFromFile(file_name);
+                } else if (key == "graph_config") {
+                    init_with_graph_proto = true;
+                    graph_config_proto =
+                        ParseProto<CalculatorGraphConfig>(kw.second.cast<py::object>());
+                } else if (key == "validated_graph_config") {
+                    init_with_validated_graph_config = true;
+                    graph_config_proto =
+                        py::cast<ValidatedGraphConfig*>(kw.second)->Config();
+                } else {
+                    throw RaisePyError(
+                        PyExc_RuntimeError,
+                        absl::StrCat("Unknown kwargs input argument: ", key).c_str());
+                }
+            }
 
-        if ((init_with_binary_graph ? 1 : 0) + (init_with_graph_proto ? 1 : 0) +
-                (init_with_validated_graph_config ? 1 : 0) !=
-            1) {
-          throw RaisePyError(PyExc_ValueError,
-                             "Please provide one of the following: "
-                             "\'binary_graph_path\' to initialize the graph "
-                             "with a binary graph file, or "
-                             "\'graph_config\' to initialize the graph with a "
-                             "graph config proto, or "
-                             "\'validated_graph_config\' to initialize the "
-                             "graph with a ValidatedGraphConfig object.");
-        }
-        auto calculator_graph = absl::make_unique<CalculatorGraph>();
-        RaisePyErrorIfNotOk(calculator_graph->Initialize(graph_config_proto));
-        return calculator_graph.release();
-      }),
-      R"doc(Initialize CalculatorGraph object.
+            if ((init_with_binary_graph ? 1 : 0) + (init_with_graph_proto ? 1 : 0) +
+                    (init_with_validated_graph_config ? 1 : 0) !=
+                1) {
+                throw RaisePyError(PyExc_ValueError,
+                                   "Please provide one of the following: "
+                                   "\'binary_graph_path\' to initialize the graph "
+                                   "with a binary graph file, or "
+                                   "\'graph_config\' to initialize the graph with a "
+                                   "graph config proto, or "
+                                   "\'validated_graph_config\' to initialize the "
+                                   "graph with a ValidatedGraphConfig object.");
+            }
+            auto calculator_graph = absl::make_unique<CalculatorGraph>();
+            RaisePyErrorIfNotOk(calculator_graph->Initialize(graph_config_proto));
+            return calculator_graph.release();
+        }),
+        R"doc(Initialize CalculatorGraph object.
 
   Args:
     binary_graph_path: The path to a binary mediapipe graph file (.binarypb).
@@ -129,48 +128,48 @@ void CalculatorGraphSubmodule(pybind11::module* module) {
       graph validation process contains error.
 )doc");
 
-  // TODO: Return a Python CalculatorGraphConfig instead.
-  calculator_graph.def_property_readonly(
-      "text_config",
-      [](const CalculatorGraph& self) { return self.Config().DebugString(); });
+    // TODO: Return a Python CalculatorGraphConfig instead.
+    calculator_graph.def_property_readonly(
+        "text_config",
+        [](const CalculatorGraph& self) { return self.Config().DebugString(); });
 
-  calculator_graph.def_property_readonly(
-      "binary_config", [](const CalculatorGraph& self) {
-        return py::bytes(self.Config().SerializeAsString());
-      });
+    calculator_graph.def_property_readonly(
+        "binary_config", [](const CalculatorGraph& self) {
+            return py::bytes(self.Config().SerializeAsString());
+        });
 
-  calculator_graph.def_property_readonly(
-      "max_queue_size",
-      [](CalculatorGraph* self) { return self->GetMaxInputStreamQueueSize(); });
+    calculator_graph.def_property_readonly(
+        "max_queue_size",
+        [](CalculatorGraph* self) { return self->GetMaxInputStreamQueueSize(); });
 
-  calculator_graph.def_property(
-      "graph_input_stream_add_mode",
-      [](const CalculatorGraph& self) {
-        return self.GetGraphInputStreamAddMode();
-      },
-      [](CalculatorGraph* self, CalculatorGraph::GraphInputStreamAddMode mode) {
-        self->SetGraphInputStreamAddMode(mode);
-      });
+    calculator_graph.def_property(
+        "graph_input_stream_add_mode",
+        [](const CalculatorGraph& self) {
+            return self.GetGraphInputStreamAddMode();
+        },
+        [](CalculatorGraph* self, CalculatorGraph::GraphInputStreamAddMode mode) {
+            self->SetGraphInputStreamAddMode(mode);
+        });
 
-  calculator_graph.def(
-      "add_packet_to_input_stream",
-      [](CalculatorGraph* self, const std::string& stream, const Packet& packet,
-         const Timestamp& timestamp) {
-        Timestamp packet_timestamp =
-            timestamp == Timestamp::Unset() ? packet.Timestamp() : timestamp;
-        if (!packet_timestamp.IsAllowedInStream()) {
-          throw RaisePyError(
-              PyExc_ValueError,
-              absl::StrCat(packet_timestamp.DebugString(),
-                           " can't be the timestamp of a Packet in a stream.")
-                  .c_str());
-        }
-        py::gil_scoped_release gil_release;
-        RaisePyErrorIfNotOk(
-            self->AddPacketToInputStream(stream, packet.At(packet_timestamp)),
-            /**acquire_gil=*/true);
-      },
-      R"doc(Add a packet to a graph input stream.
+    calculator_graph.def(
+        "add_packet_to_input_stream",
+        [](CalculatorGraph* self, const std::string& stream, const Packet& packet,
+           const Timestamp& timestamp) {
+            Timestamp packet_timestamp =
+                timestamp == Timestamp::Unset() ? packet.Timestamp() : timestamp;
+            if (!packet_timestamp.IsAllowedInStream()) {
+                throw RaisePyError(
+                    PyExc_ValueError,
+                    absl::StrCat(packet_timestamp.DebugString(),
+                                 " can't be the timestamp of a Packet in a stream.")
+                        .c_str());
+            }
+            py::gil_scoped_release gil_release;
+            RaisePyErrorIfNotOk(
+                self->AddPacketToInputStream(stream, packet.At(packet_timestamp)),
+                /**acquire_gil=*/true);
+        },
+        R"doc(Add a packet to a graph input stream.
 
   If the graph input stream add mode is ADD_IF_NOT_FULL, the packet will not be
   added if any queue exceeds the max queue size specified by the graph config
@@ -204,15 +203,15 @@ void CalculatorGraphSubmodule(pybind11::module* module) {
         packet=packet_creator.create_string('hello world'),
         timstamp=1)
 )doc",
-      py::arg("stream"), py::arg("packet"),
-      py::arg("timestamp") = Timestamp::Unset());
+        py::arg("stream"), py::arg("packet"),
+        py::arg("timestamp") = Timestamp::Unset());
 
-  calculator_graph.def(
-      "close_input_stream",
-      [](CalculatorGraph* self, const std::string& stream) {
-        RaisePyErrorIfNotOk(self->CloseInputStream(stream));
-      },
-      R"doc(Close the named graph input stream.
+    calculator_graph.def(
+        "close_input_stream",
+        [](CalculatorGraph* self, const std::string& stream) {
+            RaisePyErrorIfNotOk(self->CloseInputStream(stream));
+        },
+        R"doc(Close the named graph input stream.
 
   Args:
     stream: The name of the stream to be closed.
@@ -222,26 +221,26 @@ void CalculatorGraphSubmodule(pybind11::module* module) {
 
 )doc");
 
-  calculator_graph.def(
-      "close_all_packet_sources",
-      [](CalculatorGraph* self) {
-        RaisePyErrorIfNotOk(self->CloseAllPacketSources());
-      },
-      R"doc(Closes all the graph input streams and source calculator nodes.)doc");
+    calculator_graph.def(
+        "close_all_packet_sources",
+        [](CalculatorGraph* self) {
+            RaisePyErrorIfNotOk(self->CloseAllPacketSources());
+        },
+        R"doc(Closes all the graph input streams and source calculator nodes.)doc");
 
-  calculator_graph.def(
-      "start_run",
-      [](CalculatorGraph* self, const pybind11::dict& input_side_packets) {
-        std::map<std::string, Packet> input_side_packet_map;
-        for (const auto& kv_pair : input_side_packets) {
-          InsertIfNotPresent(&input_side_packet_map,
-                             kv_pair.first.cast<std::string>(),
-                             kv_pair.second.cast<Packet>());
-        }
-        RaisePyErrorIfNotOk(self->StartRun(input_side_packet_map));
-      },
+    calculator_graph.def(
+        "start_run",
+        [](CalculatorGraph* self, const pybind11::dict& input_side_packets) {
+            std::map<std::string, Packet> input_side_packet_map;
+            for (const auto& kv_pair : input_side_packets) {
+                InsertIfNotPresent(&input_side_packet_map,
+                                   kv_pair.first.cast<std::string>(),
+                                   kv_pair.second.cast<Packet>());
+            }
+            RaisePyErrorIfNotOk(self->StartRun(input_side_packet_map));
+        },
 
-      R"doc(Start a run of the calculator graph.
+        R"doc(Start a run of the calculator graph.
 
   A non-blocking call to start a run of the graph and will return when the graph
   is started. If input_side_packets is provided, the method will runs the graph
@@ -286,15 +285,15 @@ void CalculatorGraphSubmodule(pybind11::module* module) {
     graph.close()
 
 )doc",
-      py::arg("input_side_packets") = py::dict());
+        py::arg("input_side_packets") = py::dict());
 
-  calculator_graph.def(
-      "wait_until_done",
-      [](CalculatorGraph* self) {
-        py::gil_scoped_release gil_release;
-        RaisePyErrorIfNotOk(self->WaitUntilDone(), /**acquire_gil=*/true);
-      },
-      R"doc(Wait for the current run to finish.
+    calculator_graph.def(
+        "wait_until_done",
+        [](CalculatorGraph* self) {
+            py::gil_scoped_release gil_release;
+            RaisePyErrorIfNotOk(self->WaitUntilDone(), /**acquire_gil=*/true);
+        },
+        R"doc(Wait for the current run to finish.
 
   A blocking call to wait for the current run to finish (block the current
   thread until all source calculators are stopped, all graph input streams have
@@ -316,13 +315,13 @@ void CalculatorGraphSubmodule(pybind11::module* module) {
 
 )doc");
 
-  calculator_graph.def(
-      "wait_until_idle",
-      [](CalculatorGraph* self) {
-        py::gil_scoped_release gil_release;
-        RaisePyErrorIfNotOk(self->WaitUntilIdle(), /**acquire_gil=*/true);
-      },
-      R"doc(Wait until the running graph is in the idle mode.
+    calculator_graph.def(
+        "wait_until_idle",
+        [](CalculatorGraph* self) {
+            py::gil_scoped_release gil_release;
+            RaisePyErrorIfNotOk(self->WaitUntilIdle(), /**acquire_gil=*/true);
+        },
+        R"doc(Wait until the running graph is in the idle mode.
 
   Wait until the running graph is in the idle mode, which is when nothing can
   be scheduled and nothing is running in the worker threads. This function can
@@ -346,14 +345,14 @@ void CalculatorGraphSubmodule(pybind11::module* module) {
 
 )doc");
 
-  calculator_graph.def(
-      "wait_for_observed_output",
-      [](CalculatorGraph* self) {
-        py::gil_scoped_release gil_release;
-        RaisePyErrorIfNotOk(self->WaitForObservedOutput(),
-                            /**acquire_gil=*/true);
-      },
-      R"doc(Wait until a packet is emitted on one of the observed output streams.
+    calculator_graph.def(
+        "wait_for_observed_output",
+        [](CalculatorGraph* self) {
+            py::gil_scoped_release gil_release;
+            RaisePyErrorIfNotOk(self->WaitForObservedOutput(),
+                                /**acquire_gil=*/true);
+        },
+        R"doc(Wait until a packet is emitted on one of the observed output streams.
 
   Returns immediately if a packet has already been emitted since the last
   call to this function.
@@ -379,20 +378,20 @@ void CalculatorGraphSubmodule(pybind11::module* module) {
 
 )doc");
 
-  calculator_graph.def(
-      "has_error", [](const CalculatorGraph& self) { return self.HasError(); },
-      R"doc(Quick non-locking means of checking if the graph has encountered an error)doc");
+    calculator_graph.def(
+        "has_error", [](const CalculatorGraph& self) { return self.HasError(); },
+        R"doc(Quick non-locking means of checking if the graph has encountered an error)doc");
 
-  calculator_graph.def(
-      "get_combined_error_message",
-      [](CalculatorGraph* self) {
-        absl::Status error_status;
-        if (self->GetCombinedErrors(&error_status) && !error_status.ok()) {
-          return error_status.ToString();
-        }
-        return std::string();
-      },
-      R"doc(Combines error messages as a single string.
+    calculator_graph.def(
+        "get_combined_error_message",
+        [](CalculatorGraph* self) {
+            absl::Status error_status;
+            if (self->GetCombinedErrors(&error_status) && !error_status.ok()) {
+                return error_status.ToString();
+            }
+            return std::string();
+        },
+        R"doc(Combines error messages as a single string.
 
   Examples:
     if graph.has_error():
@@ -400,23 +399,23 @@ void CalculatorGraphSubmodule(pybind11::module* module) {
 
 )doc");
 
-  // TODO: Support passing a single-argument lambda for convenience.
-  calculator_graph.def(
-      "observe_output_stream",
-      [](CalculatorGraph* self, const std::string& stream_name,
-         pybind11::function callback_fn, bool observe_timestamp_bounds) {
-        RaisePyErrorIfNotOk(self->ObserveOutputStream(
-            stream_name,
-            [callback_fn, stream_name](const Packet& packet) {
-              absl::MutexLock lock(&callback_mutex);
-              // Acquires GIL before calling Python callback.
-              py::gil_scoped_acquire gil_acquire;
-              callback_fn(stream_name, packet);
-              return absl::OkStatus();
-            },
-            observe_timestamp_bounds));
-      },
-      R"doc(Observe the named output stream.
+    // TODO: Support passing a single-argument lambda for convenience.
+    calculator_graph.def(
+        "observe_output_stream",
+        [](CalculatorGraph* self, const std::string& stream_name,
+           pybind11::function callback_fn, bool observe_timestamp_bounds) {
+            RaisePyErrorIfNotOk(self->ObserveOutputStream(
+                stream_name,
+                [callback_fn, stream_name](const Packet& packet) {
+                    absl::MutexLock lock(&callback_mutex);
+                    // Acquires GIL before calling Python callback.
+                    py::gil_scoped_acquire gil_acquire;
+                    callback_fn(stream_name, packet);
+                    return absl::OkStatus();
+                },
+                observe_timestamp_bounds));
+        },
+        R"doc(Observe the named output stream.
 
   callback_fn will be invoked on every packet emitted by the output stream.
   This method can only be called before start_run().
@@ -439,26 +438,26 @@ void CalculatorGraphSubmodule(pybind11::module* module) {
                                 lambda stream_name, packet: out.append(packet))
 
 )doc",
-      py::arg("stream_name"), py::arg("callback_fn"),
-      py::arg("observe_timestamp_bounds") = false);
+        py::arg("stream_name"), py::arg("callback_fn"),
+        py::arg("observe_timestamp_bounds") = false);
 
-  calculator_graph.def(
-      "close",
-      [](CalculatorGraph* self) {
-        RaisePyErrorIfNotOk(self->CloseAllPacketSources());
-        py::gil_scoped_release gil_release;
-        RaisePyErrorIfNotOk(self->WaitUntilDone(), /**acquire_gil=*/true);
-      },
-      R"doc(Close all the input sources and shutdown the graph.)doc");
+    calculator_graph.def(
+        "close",
+        [](CalculatorGraph* self) {
+            RaisePyErrorIfNotOk(self->CloseAllPacketSources());
+            py::gil_scoped_release gil_release;
+            RaisePyErrorIfNotOk(self->WaitUntilDone(), /**acquire_gil=*/true);
+        },
+        R"doc(Close all the input sources and shutdown the graph.)doc");
 
-  calculator_graph.def(
-      "get_output_side_packet",
-      [](CalculatorGraph* self, const std::string& packet_name) {
-        auto status_or_packet = self->GetOutputSidePacket(packet_name);
-        RaisePyErrorIfNotOk(status_or_packet.status());
-        return status_or_packet.value();
-      },
-      R"doc(Get output side packet by name after the graph is done.
+    calculator_graph.def(
+        "get_output_side_packet",
+        [](CalculatorGraph* self, const std::string& packet_name) {
+            auto status_or_packet = self->GetOutputSidePacket(packet_name);
+            RaisePyErrorIfNotOk(status_or_packet.status());
+            return status_or_packet.value();
+        },
+        R"doc(Get output side packet by name after the graph is done.
 
   Args:
     stream: The name of the outnput stream.
@@ -474,7 +473,7 @@ void CalculatorGraphSubmodule(pybind11::module* module) {
     output_side_packet = graph.get_output_side_packet('packet_name')
 
 )doc",
-      py::return_value_policy::move);
+        py::return_value_policy::move);
 }
 
 }  // namespace python

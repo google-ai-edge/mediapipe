@@ -15,11 +15,10 @@
 #ifndef MEDIAPIPE_ANDROID_FILE_BASE_HELPERS_H_
 #define MEDIAPIPE_ANDROID_FILE_BASE_HELPERS_H_
 
-#include <string>
-
 #include "absl/strings/string_view.h"
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/util/android/file/base/file.h"
+#include <string>
 
 namespace mediapipe {
 namespace file {

@@ -29,8 +29,8 @@ extern "C" void MediaPipe_RegisterTfLiteOpResolver(tflite::MutableOpResolver*);
 // `MediaPipe_RegisterTfLiteOpResolver` (see above).
 class CpuOpResolver
     : public tflite::ops::builtin::BuiltinOpResolverWithoutDefaultDelegates {
- public:
-  CpuOpResolver() { MediaPipe_RegisterTfLiteOpResolver(this); }
+public:
+    CpuOpResolver() { MediaPipe_RegisterTfLiteOpResolver(this); }
 };
 
 }  // namespace mediapipe

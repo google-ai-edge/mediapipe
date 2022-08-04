@@ -15,10 +15,9 @@
 #ifndef MEDIAPIPE_UTIL_TFLITE_ERROR_REPORTER_H_
 #define MEDIAPIPE_UTIL_TFLITE_ERROR_REPORTER_H_
 
-#include <string>
-
 #include "tensorflow/lite/core/api/error_reporter.h"
 #include "tensorflow/lite/stateful_error_reporter.h"
+#include <string>
 
 namespace mediapipe {
 namespace util {
@@ -26,23 +25,23 @@ namespace tflite {
 
 // An ErrorReporter that logs to stderr and captures the last two messages.
 class ErrorReporter : public ::tflite::StatefulErrorReporter {
- public:
-  ErrorReporter();
+public:
+    ErrorReporter();
 
-  // We declared two functions with name 'Report', so that the variadic Report
-  // function in tflite::ErrorReporter is hidden.
-  // See https://isocpp.org/wiki/faq/strange-inheritance#hiding-rule.
-  using ::tflite::ErrorReporter::Report;
+    // We declared two functions with name 'Report', so that the variadic Report
+    // function in tflite::ErrorReporter is hidden.
+    // See https://isocpp.org/wiki/faq/strange-inheritance#hiding-rule.
+    using ::tflite::ErrorReporter::Report;
 
-  int Report(const char* format, std::va_list args) override;
+    int Report(const char* format, std::va_list args) override;
 
-  std::string message() override;
-  std::string previous_message();
+    std::string message() override;
+    std::string previous_message();
 
- private:
-  static constexpr int kBufferSize = 1024;
-  char message_[kBufferSize];
-  char previous_message_[kBufferSize];
+private:
+    static constexpr int kBufferSize = 1024;
+    char message_[kBufferSize];
+    char previous_message_[kBufferSize];
 };
 
 }  // namespace tflite

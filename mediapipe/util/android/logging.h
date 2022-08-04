@@ -19,21 +19,21 @@
 #include <stdlib.h>
 
 #define JNI_COMMON_LOG(priority, ...) \
-  __android_log_print(ANDROID_LOG_##priority, __FILE__, __VA_ARGS__)
+    __android_log_print(ANDROID_LOG_##priority, __FILE__, __VA_ARGS__)
 
-#define JNI_COMMON_CHECK(condition)                                        \
-  if (!(condition)) {                                                      \
-    JNI_COMMON_LOG(ERROR, "CHECK FAILED at %s:%d: %s", __FILE__, __LINE__, \
-                   #condition);                                            \
-    abort();                                                               \
-  }
+#define JNI_COMMON_CHECK(condition)                                            \
+    if (!(condition)) {                                                        \
+        JNI_COMMON_LOG(ERROR, "CHECK FAILED at %s:%d: %s", __FILE__, __LINE__, \
+                       #condition);                                            \
+        abort();                                                               \
+    }
 
-#define JNI_COMMON_CHECK_WITH_LOG(condition, message, ...)              \
-  if (!(condition)) {                                                   \
-    __android_log_print(ANDROID_LOG_ERROR, __FILE__,                    \
-                        "CHECK FAILED at %s:%d: %s " message, __FILE__, \
-                        __LINE__, #condition, ##__VA_ARGS__);           \
-    abort();                                                            \
-  }
+#define JNI_COMMON_CHECK_WITH_LOG(condition, message, ...)                  \
+    if (!(condition)) {                                                     \
+        __android_log_print(ANDROID_LOG_ERROR, __FILE__,                    \
+                            "CHECK FAILED at %s:%d: %s " message, __FILE__, \
+                            __LINE__, #condition, ##__VA_ARGS__);           \
+        abort();                                                            \
+    }
 
 #endif  // MEDIAPIPE_UTIL_ANDROID_JNI_COMMON_LOGGING_H_

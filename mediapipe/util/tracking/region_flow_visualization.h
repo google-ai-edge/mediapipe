@@ -16,6 +16,12 @@
 #ifndef MEDIAPIPE_UTIL_TRACKING_REGION_FLOW_VISUALIZATION_H_
 #define MEDIAPIPE_UTIL_TRACKING_REGION_FLOW_VISUALIZATION_H_
 
+#include "mediapipe/framework/port/logging.h"
+#include "mediapipe/framework/port/opencv_core_inc.h"
+#include "mediapipe/framework/port/opencv_imgproc_inc.h"
+#include "mediapipe/framework/port/vector.h"
+#include "mediapipe/util/tracking/motion_models.h"
+#include "mediapipe/util/tracking/region_flow.pb.h"  // NOLINT
 #include <algorithm>
 #include <cmath>
 #include <deque>
@@ -23,13 +29,6 @@
 #include <unordered_set>
 #include <utility>
 #include <vector>
-
-#include "mediapipe/framework/port/logging.h"
-#include "mediapipe/framework/port/opencv_core_inc.h"
-#include "mediapipe/framework/port/opencv_imgproc_inc.h"
-#include "mediapipe/framework/port/vector.h"
-#include "mediapipe/util/tracking/motion_models.h"
-#include "mediapipe/util/tracking/region_flow.pb.h"  // NOLINT
 
 namespace mediapipe {
 

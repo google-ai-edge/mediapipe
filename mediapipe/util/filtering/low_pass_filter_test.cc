@@ -13,24 +13,23 @@
 // limitations under the License.
 
 #include "mediapipe/util/filtering/low_pass_filter.h"
-
 #include "absl/memory/memory.h"
 #include "mediapipe/framework/port/gtest.h"
 
 namespace mediapipe {
 
 TEST(LowPassFilterTest, LowPassFilterBasicChecks) {
-  auto filter = absl::make_unique<LowPassFilter>(1.0f);
-  EXPECT_EQ(2.0f, filter->Apply(2.0f));
-  EXPECT_EQ(100.0f, filter->Apply(100.0f));
+    auto filter = absl::make_unique<LowPassFilter>(1.0f);
+    EXPECT_EQ(2.0f, filter->Apply(2.0f));
+    EXPECT_EQ(100.0f, filter->Apply(100.0f));
 
-  filter = absl::make_unique<LowPassFilter>(0.0f);
-  EXPECT_EQ(2.0f, filter->Apply(2.0f));
-  EXPECT_EQ(2.0f, filter->Apply(100.0f));
+    filter = absl::make_unique<LowPassFilter>(0.0f);
+    EXPECT_EQ(2.0f, filter->Apply(2.0f));
+    EXPECT_EQ(2.0f, filter->Apply(100.0f));
 
-  filter = absl::make_unique<LowPassFilter>(0.5f);
-  EXPECT_EQ(2.0f, filter->Apply(2.0f));
-  EXPECT_EQ(51.0f, filter->Apply(100.0f));
+    filter = absl::make_unique<LowPassFilter>(0.5f);
+    EXPECT_EQ(2.0f, filter->Apply(2.0f));
+    EXPECT_EQ(51.0f, filter->Apply(100.0f));
 }
 
 }  // namespace mediapipe

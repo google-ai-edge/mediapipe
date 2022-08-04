@@ -15,11 +15,10 @@
 #ifndef MEDIAPIPE_UTIL_TRACKING_CAMERA_MOTION_H_
 #define MEDIAPIPE_UTIL_TRACKING_CAMERA_MOTION_H_
 
-#include <vector>
-
 #include "mediapipe/util/tracking/camera_motion.pb.h"
 #include "mediapipe/util/tracking/motion_models.h"
 #include "mediapipe/util/tracking/region_flow.pb.h"
+#include <vector>
 
 namespace mediapipe {
 
@@ -145,29 +144,29 @@ CameraMotion FirstCameraMotionForLooping(
 template <class Model>
 Model UnstableCameraMotionToModel(const CameraMotion& camera_motion,
                                   CameraMotion::Type unstable_type) {
-  switch (unstable_type) {
-    case CameraMotion::INVALID:
-      return Model();  // Identity.
+    switch (unstable_type) {
+        case CameraMotion::INVALID:
+            return Model();  // Identity.
 
-    case CameraMotion::UNSTABLE: {
-      return ModelAdapter<Model>::Embed(
-          CameraMotionToModel<TranslationModel>(camera_motion));
+        case CameraMotion::UNSTABLE: {
+            return ModelAdapter<Model>::Embed(
+                CameraMotionToModel<TranslationModel>(camera_motion));
+        }
+
+        case CameraMotion::UNSTABLE_SIM: {
+            return ModelAdapter<Model>::Embed(
+                CameraMotionToModel<LinearSimilarityModel>(camera_motion));
+        }
+
+        case CameraMotion::UNSTABLE_HOMOG: {
+            return ModelAdapter<Model>::Embed(
+                CameraMotionToModel<Homography>(camera_motion));
+        }
+
+        case CameraMotion::VALID:
+            LOG(FATAL) << "Specify a type != VALID";
+            return Model();
     }
-
-    case CameraMotion::UNSTABLE_SIM: {
-      return ModelAdapter<Model>::Embed(
-          CameraMotionToModel<LinearSimilarityModel>(camera_motion));
-    }
-
-    case CameraMotion::UNSTABLE_HOMOG: {
-      return ModelAdapter<Model>::Embed(
-          CameraMotionToModel<Homography>(camera_motion));
-    }
-
-    case CameraMotion::VALID:
-      LOG(FATAL) << "Specify a type != VALID";
-      return Model();
-  }
 }
 
 template <>
@@ -175,58 +174,58 @@ inline TranslationModel ProjectToTypeModel(const TranslationModel& model,
                                            float frame_width,
                                            float frame_height,
                                            CameraMotion::Type type) {
-  switch (type) {
-    case CameraMotion::INVALID:
-      return TranslationModel();  // Identity.
-    default:
-      return model;
-  }
+    switch (type) {
+        case CameraMotion::INVALID:
+            return TranslationModel();  // Identity.
+        default:
+            return model;
+    }
 }
 
 template <>
 inline LinearSimilarityModel ProjectToTypeModel(
     const LinearSimilarityModel& model, float frame_width, float frame_height,
     CameraMotion::Type type) {
-  switch (type) {
-    case CameraMotion::INVALID:
-      return LinearSimilarityModel();  // Identity.
+    switch (type) {
+        case CameraMotion::INVALID:
+            return LinearSimilarityModel();  // Identity.
 
-    case CameraMotion::UNSTABLE:
-      return LinearSimilarityAdapter::Embed(
-          TranslationAdapter::ProjectFrom(model, frame_width, frame_height));
+        case CameraMotion::UNSTABLE:
+            return LinearSimilarityAdapter::Embed(
+                TranslationAdapter::ProjectFrom(model, frame_width, frame_height));
 
-    default:
-      return model;
-  }
+        default:
+            return model;
+    }
 }
 
 template <class Model>
 Model ProjectToTypeModel(const Model& model, float frame_width,
                          float frame_height, CameraMotion::Type type) {
-  switch (type) {
-    case CameraMotion::INVALID:
-      return Model();  // Identity.
+    switch (type) {
+        case CameraMotion::INVALID:
+            return Model();  // Identity.
 
-    case CameraMotion::UNSTABLE:
-      return ModelAdapter<Model>::Embed(
-          TranslationAdapter::ProjectFrom(model, frame_width, frame_height));
+        case CameraMotion::UNSTABLE:
+            return ModelAdapter<Model>::Embed(
+                TranslationAdapter::ProjectFrom(model, frame_width, frame_height));
 
-    case CameraMotion::UNSTABLE_SIM:
-      return ModelAdapter<Model>::Embed(LinearSimilarityAdapter::ProjectFrom(
-          model, frame_width, frame_height));
+        case CameraMotion::UNSTABLE_SIM:
+            return ModelAdapter<Model>::Embed(LinearSimilarityAdapter::ProjectFrom(
+                model, frame_width, frame_height));
 
-      // case UNSTABLE_HOMOG does not occur except for mixtures.
+            // case UNSTABLE_HOMOG does not occur except for mixtures.
 
-    default:
-      return model;
-  }
+        default:
+            return model;
+    }
 }
 
 template <>
 inline MixtureHomography ProjectToTypeModel(const MixtureHomography&, float,
                                             float, CameraMotion::Type) {
-  LOG(FATAL) << "Projection not supported for mixtures.";
-  return MixtureHomography();
+    LOG(FATAL) << "Projection not supported for mixtures.";
+    return MixtureHomography();
 }
 
 template <class Model>
@@ -235,100 +234,100 @@ void DownsampleMotionModels(
     const std::vector<CameraMotion::Type>* model_type, int downsample_scale,
     std::vector<Model>* downsampled_models,
     std::vector<CameraMotion::Type>* downsampled_types) {
-  if (model_type) {
-    CHECK_EQ(models.size(), model_type->size());
-    CHECK(downsampled_models) << "Expecting output models.";
-  }
-
-  CHECK(downsampled_models);
-  downsampled_models->clear();
-  if (downsampled_types) {
-    downsampled_types->clear();
-  }
-
-  const int num_models = models.size();
-
-  for (int model_idx = 0; model_idx < num_models;
-       model_idx += downsample_scale) {
-    const int last_idx =
-        std::min<int>(model_idx + downsample_scale, num_models) - 1;
-
-    CameraMotion::Type sampled_type = CameraMotion::VALID;
     if (model_type) {
-      // Get least stable model within downsample window (max operation).
-      for (int i = model_idx; i <= last_idx; ++i) {
-        sampled_type = std::max(sampled_type, model_type->at(i));
-      }
-      downsampled_types->push_back(sampled_type);
+        CHECK_EQ(models.size(), model_type->size());
+        CHECK(downsampled_models) << "Expecting output models.";
     }
 
-    // Concatenate models.
-    Model composed = models[last_idx];
-
-    for (int i = last_idx - 1; i >= model_idx; --i) {
-      composed = ModelCompose2(models[i], composed);
+    CHECK(downsampled_models);
+    downsampled_models->clear();
+    if (downsampled_types) {
+        downsampled_types->clear();
     }
 
-    downsampled_models->push_back(composed);
-  }
+    const int num_models = models.size();
+
+    for (int model_idx = 0; model_idx < num_models;
+         model_idx += downsample_scale) {
+        const int last_idx =
+            std::min<int>(model_idx + downsample_scale, num_models) - 1;
+
+        CameraMotion::Type sampled_type = CameraMotion::VALID;
+        if (model_type) {
+            // Get least stable model within downsample window (max operation).
+            for (int i = model_idx; i <= last_idx; ++i) {
+                sampled_type = std::max(sampled_type, model_type->at(i));
+            }
+            downsampled_types->push_back(sampled_type);
+        }
+
+        // Concatenate models.
+        Model composed = models[last_idx];
+
+        for (int i = last_idx - 1; i >= model_idx; --i) {
+            composed = ModelCompose2(models[i], composed);
+        }
+
+        downsampled_models->push_back(composed);
+    }
 }
 
 template <class Container>
 void SubsampleEntities(const Container& input, int downsample_factor,
                        Container* output) {
-  CHECK(output);
-  output->clear();
+    CHECK(output);
+    output->clear();
 
-  if (input.empty()) {
-    return;
-  }
+    if (input.empty()) {
+        return;
+    }
 
-  for (int k = downsample_factor - 1; k < input.size();
-       k += downsample_factor) {
-    output->push_back(input[k]);
-  }
+    for (int k = downsample_factor - 1; k < input.size();
+         k += downsample_factor) {
+        output->push_back(input[k]);
+    }
 
-  if (input.size() % downsample_factor != 0) {
-    // We need to add last constraint as termination.
-    output->push_back(input.back());
-  }
+    if (input.size() % downsample_factor != 0) {
+        // We need to add last constraint as termination.
+        output->push_back(input.back());
+    }
 }
 
 template <>
 inline TranslationModel CameraMotionToModel(const CameraMotion& camera_motion) {
-  TranslationModel model;
-  CameraMotionToTranslation(camera_motion, &model);
-  return model;
+    TranslationModel model;
+    CameraMotionToTranslation(camera_motion, &model);
+    return model;
 }
 
 template <>
 inline LinearSimilarityModel CameraMotionToModel(
     const CameraMotion& camera_motion) {
-  LinearSimilarityModel model;
-  CameraMotionToLinearSimilarity(camera_motion, &model);
-  return model;
+    LinearSimilarityModel model;
+    CameraMotionToLinearSimilarity(camera_motion, &model);
+    return model;
 }
 
 template <>
 inline AffineModel CameraMotionToModel(const CameraMotion& camera_motion) {
-  AffineModel model;
-  CameraMotionToAffine(camera_motion, &model);
-  return model;
+    AffineModel model;
+    CameraMotionToAffine(camera_motion, &model);
+    return model;
 }
 
 template <>
 inline Homography CameraMotionToModel(const CameraMotion& camera_motion) {
-  Homography model;
-  CameraMotionToHomography(camera_motion, &model);
-  return model;
+    Homography model;
+    CameraMotionToHomography(camera_motion, &model);
+    return model;
 }
 
 template <>
 inline MixtureHomography CameraMotionToModel(
     const CameraMotion& camera_motion) {
-  MixtureHomography model;
-  CameraMotionToMixtureHomography(camera_motion, &model);
-  return model;
+    MixtureHomography model;
+    CameraMotionToMixtureHomography(camera_motion, &model);
+    return model;
 }
 
 }  // namespace mediapipe

@@ -13,12 +13,10 @@
 // limitations under the License.
 
 #include "mediapipe/framework/formats/image.h"
-
-#include <memory>
-
 #include "mediapipe/python/pybind/image_frame_util.h"
 #include "mediapipe/python/pybind/util.h"
 #include "pybind11/stl.h"
+#include <memory>
 
 namespace mediapipe {
 namespace python {
@@ -26,15 +24,15 @@ namespace python {
 namespace py = pybind11;
 
 void ImageSubmodule(pybind11::module* module) {
-  py::module m = module->def_submodule("image", "MediaPipe image module");
+    py::module m = module->def_submodule("image", "MediaPipe image module");
 
-  py::options options;
-  options.disable_function_signatures();
+    py::options options;
+    options.disable_function_signatures();
 
-  // Image
-  py::class_<Image> image(
-      m, "Image",
-      R"doc(A container for storing an image or a video frame, in one of several formats.
+    // Image
+    py::class_<Image> image(
+        m, "Image",
+        R"doc(A container for storing an image or a video frame, in one of several formats.
 
   Formats supported by Image are listed in the ImageFormat enum.
   Pixels are encoded row-major in an interleaved fashion. Image supports
@@ -73,78 +71,78 @@ void ImageSubmodule(pybind11::module* module) {
     copied_ndarray = np.copy(output_ndarray)
     copied_ndarray[0,0,0] = 0
   )doc",
-      py::dynamic_attr());
+        py::dynamic_attr());
 
-  image
-      .def(
-          py::init([](mediapipe::ImageFormat::Format format,
-                      const py::array_t<uint8, py::array::c_style>& data) {
-            if (format != mediapipe::ImageFormat::GRAY8 &&
-                format != mediapipe::ImageFormat::SRGB &&
-                format != mediapipe::ImageFormat::SRGBA) {
-              throw RaisePyError(PyExc_RuntimeError,
-                                 "uint8 image data should be one of the GRAY8, "
-                                 "SRGB, and SRGBA MediaPipe image formats.");
-            }
-            return Image(std::shared_ptr<ImageFrame>(
-                CreateImageFrame<uint8>(format, data)));
-          }),
-          R"doc(For uint8 data type, valid ImageFormat are GRAY8, SGRB, and SRGBA.)doc",
-          py::arg("image_format"), py::arg("data").noconvert())
-      .def(
-          py::init([](mediapipe::ImageFormat::Format format,
-                      const py::array_t<uint16, py::array::c_style>& data) {
-            if (format != mediapipe::ImageFormat::GRAY16 &&
-                format != mediapipe::ImageFormat::SRGB48 &&
-                format != mediapipe::ImageFormat::SRGBA64) {
-              throw RaisePyError(
-                  PyExc_RuntimeError,
-                  "uint16 image data should be one of the GRAY16, "
-                  "SRGB48, and SRGBA64 MediaPipe image formats.");
-            }
-            return Image(std::shared_ptr<ImageFrame>(
-                CreateImageFrame<uint16>(format, data)));
-          }),
-          R"doc(For uint16 data type, valid ImageFormat are GRAY16, SRGB48, and SRGBA64.)doc",
-          py::arg("image_format"), py::arg("data").noconvert())
-      .def(
-          py::init([](mediapipe::ImageFormat::Format format,
-                      const py::array_t<float, py::array::c_style>& data) {
-            if (format != mediapipe::ImageFormat::VEC32F1 &&
-                format != mediapipe::ImageFormat::VEC32F2) {
-              throw RaisePyError(
-                  PyExc_RuntimeError,
-                  "float image data should be either VEC32F1 or VEC32F2 "
-                  "MediaPipe image formats.");
-            }
-            return Image(std::shared_ptr<ImageFrame>(
-                CreateImageFrame<float>(format, data)));
-          }),
-          R"doc(For float data type, valid ImageFormat are VEC32F1 and VEC32F2.)doc",
-          py::arg("image_format"), py::arg("data").noconvert());
+    image
+        .def(
+            py::init([](mediapipe::ImageFormat::Format format,
+                        const py::array_t<uint8, py::array::c_style>& data) {
+                if (format != mediapipe::ImageFormat::GRAY8 &&
+                    format != mediapipe::ImageFormat::SRGB &&
+                    format != mediapipe::ImageFormat::SRGBA) {
+                    throw RaisePyError(PyExc_RuntimeError,
+                                       "uint8 image data should be one of the GRAY8, "
+                                       "SRGB, and SRGBA MediaPipe image formats.");
+                }
+                return Image(std::shared_ptr<ImageFrame>(
+                    CreateImageFrame<uint8>(format, data)));
+            }),
+            R"doc(For uint8 data type, valid ImageFormat are GRAY8, SGRB, and SRGBA.)doc",
+            py::arg("image_format"), py::arg("data").noconvert())
+        .def(
+            py::init([](mediapipe::ImageFormat::Format format,
+                        const py::array_t<uint16, py::array::c_style>& data) {
+                if (format != mediapipe::ImageFormat::GRAY16 &&
+                    format != mediapipe::ImageFormat::SRGB48 &&
+                    format != mediapipe::ImageFormat::SRGBA64) {
+                    throw RaisePyError(
+                        PyExc_RuntimeError,
+                        "uint16 image data should be one of the GRAY16, "
+                        "SRGB48, and SRGBA64 MediaPipe image formats.");
+                }
+                return Image(std::shared_ptr<ImageFrame>(
+                    CreateImageFrame<uint16>(format, data)));
+            }),
+            R"doc(For uint16 data type, valid ImageFormat are GRAY16, SRGB48, and SRGBA64.)doc",
+            py::arg("image_format"), py::arg("data").noconvert())
+        .def(
+            py::init([](mediapipe::ImageFormat::Format format,
+                        const py::array_t<float, py::array::c_style>& data) {
+                if (format != mediapipe::ImageFormat::VEC32F1 &&
+                    format != mediapipe::ImageFormat::VEC32F2) {
+                    throw RaisePyError(
+                        PyExc_RuntimeError,
+                        "float image data should be either VEC32F1 or VEC32F2 "
+                        "MediaPipe image formats.");
+                }
+                return Image(std::shared_ptr<ImageFrame>(
+                    CreateImageFrame<float>(format, data)));
+            }),
+            R"doc(For float data type, valid ImageFormat are VEC32F1 and VEC32F2.)doc",
+            py::arg("image_format"), py::arg("data").noconvert());
 
-  image.def(
-      "numpy_view",
-      [](Image& self) {
-        py::object py_object =
-            py::cast(self, py::return_value_policy::reference);
-        // If the image data is contiguous, generates the data pyarray object
-        // on demand because 1) making a pyarray by referring to the existing
-        // image pixel data is relatively cheap and 2) caching the pyarray
-        // object in an attribute of the image is problematic: the image object
-        // and the data pyarray object refer to each other, which causes gc
-        // fails to free the pyarray after use.
-        // For the non-contiguous cases, gets a cached data pyarray object from
-        // the image pyobject attribute. This optimization is to avoid the
-        // expensive data realignment and copy operations happening more than
-        // once.
-        return self.GetImageFrameSharedPtr()->IsContiguous()
-                   ? GenerateDataPyArrayOnDemand(*self.GetImageFrameSharedPtr(),
-                                                 py_object)
-                   : GetCachedContiguousDataAttr(*self.GetImageFrameSharedPtr(),
-                                                 py_object);
-      },
-      R"doc(Return the image pixel data as an unwritable numpy ndarray.
+    image.def(
+        "numpy_view",
+        [](Image& self) {
+            py::object py_object =
+                py::cast(self, py::return_value_policy::reference);
+            // If the image data is contiguous, generates the data pyarray object
+            // on demand because 1) making a pyarray by referring to the existing
+            // image pixel data is relatively cheap and 2) caching the pyarray
+            // object in an attribute of the image is problematic: the image object
+            // and the data pyarray object refer to each other, which causes gc
+            // fails to free the pyarray after use.
+            // For the non-contiguous cases, gets a cached data pyarray object from
+            // the image pyobject attribute. This optimization is to avoid the
+            // expensive data realignment and copy operations happening more than
+            // once.
+            return self.GetImageFrameSharedPtr()->IsContiguous()
+                       ? GenerateDataPyArrayOnDemand(*self.GetImageFrameSharedPtr(),
+                                                     py_object)
+                       : GetCachedContiguousDataAttr(*self.GetImageFrameSharedPtr(),
+                                                     py_object);
+        },
+        R"doc(Return the image pixel data as an unwritable numpy ndarray.
 
   Realign the pixel data to be stored contiguously and return a reference to the
   unwritable numpy ndarray. If the callers want to modify the numpy array data,
@@ -159,31 +157,31 @@ void ImageSubmodule(pybind11::module* module) {
     copied_ndarray[0,0,0] = 0
 )doc");
 
-  image.def(
-      "__getitem__",
-      [](Image& self, const std::vector<int>& pos) {
-        if (pos.size() != 3 && !(pos.size() == 2 && self.channels() == 1)) {
-          throw RaisePyError(
-              PyExc_IndexError,
-              absl::StrCat("Invalid index dimension: ", pos.size()).c_str());
-        }
-        py::object py_object =
-            py::cast(self, py::return_value_policy::reference);
-        switch (self.GetImageFrameSharedPtr()->ByteDepth()) {
-          case 1:
-            return GetValue<uint8>(*self.GetImageFrameSharedPtr(), pos,
-                                   py_object);
-          case 2:
-            return GetValue<uint16>(*self.GetImageFrameSharedPtr(), pos,
-                                    py_object);
-          case 4:
-            return GetValue<float>(*self.GetImageFrameSharedPtr(), pos,
-                                   py_object);
-          default:
-            return py::object();
-        }
-      },
-      R"doc(Use the indexer operators to access pixel data.
+    image.def(
+        "__getitem__",
+        [](Image& self, const std::vector<int>& pos) {
+            if (pos.size() != 3 && !(pos.size() == 2 && self.channels() == 1)) {
+                throw RaisePyError(
+                    PyExc_IndexError,
+                    absl::StrCat("Invalid index dimension: ", pos.size()).c_str());
+            }
+            py::object py_object =
+                py::cast(self, py::return_value_policy::reference);
+            switch (self.GetImageFrameSharedPtr()->ByteDepth()) {
+                case 1:
+                    return GetValue<uint8>(*self.GetImageFrameSharedPtr(), pos,
+                                           py_object);
+                case 2:
+                    return GetValue<uint16>(*self.GetImageFrameSharedPtr(), pos,
+                                            py_object);
+                case 4:
+                    return GetValue<float>(*self.GetImageFrameSharedPtr(), pos,
+                                           py_object);
+                default:
+                    return py::object();
+            }
+        },
+        R"doc(Use the indexer operators to access pixel data.
 
   Raises:
     IndexError: If the index is invalid or out of bounds.
@@ -195,25 +193,25 @@ void ImageSubmodule(pybind11::module* module) {
           print(image[row, col, channel])
 )doc");
 
-  image
-      .def("uses_gpu", &Image::UsesGpu,
-           R"doc(Return True if data is currently on the GPU.)doc")
-      .def(
-          "is_contiguous",
-          [](Image& self) {
-            return self.GetImageFrameSharedPtr()->IsContiguous();
-          },
-          R"doc(Return True if the pixel data is stored contiguously (without any alignment padding areas).)doc")
-      .def(
-          "is_empty",
-          [](Image& self) { return self.GetImageFrameSharedPtr()->IsEmpty(); },
-          R"doc(Return True if the pixel data is unallocated.)doc")
-      .def(
-          "is_aligned",
-          [](Image& self, uint32 alignment_boundary) {
-            return self.GetImageFrameSharedPtr()->IsAligned(alignment_boundary);
-          },
-          R"doc(Return True if each row of the data is aligned to alignment boundary, which must be 1 or a power of 2.
+    image
+        .def("uses_gpu", &Image::UsesGpu,
+             R"doc(Return True if data is currently on the GPU.)doc")
+        .def(
+            "is_contiguous",
+            [](Image& self) {
+                return self.GetImageFrameSharedPtr()->IsContiguous();
+            },
+            R"doc(Return True if the pixel data is stored contiguously (without any alignment padding areas).)doc")
+        .def(
+            "is_empty",
+            [](Image& self) { return self.GetImageFrameSharedPtr()->IsEmpty(); },
+            R"doc(Return True if the pixel data is unallocated.)doc")
+        .def(
+            "is_aligned",
+            [](Image& self, uint32 alignment_boundary) {
+                return self.GetImageFrameSharedPtr()->IsAligned(alignment_boundary);
+            },
+            R"doc(Return True if each row of the data is aligned to alignment boundary, which must be 1 or a power of 2.
 
   Args:
     alignment_boundary: An integer.
@@ -225,11 +223,11 @@ void ImageSubmodule(pybind11::module* module) {
     image.is_aligned(16)
 )doc");
 
-  image.def_property_readonly("width", &Image::width)
-      .def_property_readonly("height", &Image::height)
-      .def_property_readonly("channels", &Image::channels)
-      .def_property_readonly("step", &Image::step)
-      .def_property_readonly("image_format", &Image::image_format);
+    image.def_property_readonly("width", &Image::width)
+        .def_property_readonly("height", &Image::height)
+        .def_property_readonly("channels", &Image::channels)
+        .def_property_readonly("step", &Image::step)
+        .def_property_readonly("image_format", &Image::image_format);
 }
 
 }  // namespace python

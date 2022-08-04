@@ -22,16 +22,16 @@ namespace python {
 namespace py = pybind11;
 
 void ImageFrameSubmodule(pybind11::module* module) {
-  py::module m =
-      module->def_submodule("image_frame", "MediaPipe image frame module");
+    py::module m =
+        module->def_submodule("image_frame", "MediaPipe image frame module");
 
-  py::options options;
-  options.disable_function_signatures();
+    py::options options;
+    options.disable_function_signatures();
 
-  // ImageFormat
-  py::enum_<mediapipe::ImageFormat::Format> image_format(
-      m, "ImageFormat",
-      R"doc(An enum describing supported raw image formats.
+    // ImageFormat
+    py::enum_<mediapipe::ImageFormat::Format> image_format(
+        m, "ImageFormat",
+        R"doc(An enum describing supported raw image formats.
 
   SRGB: sRGB, interleaved: one byte for R, then one byte for G, then one byte
     for B for each pixel.
@@ -55,21 +55,21 @@ void ImageFrameSubmodule(pybind11::module* module) {
   VEC32F2: Two floats per pixel.
 )doc");
 
-  image_format.value("SRGB", mediapipe::ImageFormat::SRGB)
-      .value("SRGBA", mediapipe::ImageFormat::SRGBA)
-      .value("SBGRA", mediapipe::ImageFormat::SBGRA)
-      .value("GRAY8", mediapipe::ImageFormat::GRAY8)
-      .value("GRAY16", mediapipe::ImageFormat::GRAY16)
-      .value("SRGB48", mediapipe::ImageFormat::SRGB48)
-      .value("SRGBA64", mediapipe::ImageFormat::SRGBA64)
-      .value("VEC32F1", mediapipe::ImageFormat::VEC32F1)
-      .value("VEC32F2", mediapipe::ImageFormat::VEC32F2)
-      .export_values();
+    image_format.value("SRGB", mediapipe::ImageFormat::SRGB)
+        .value("SRGBA", mediapipe::ImageFormat::SRGBA)
+        .value("SBGRA", mediapipe::ImageFormat::SBGRA)
+        .value("GRAY8", mediapipe::ImageFormat::GRAY8)
+        .value("GRAY16", mediapipe::ImageFormat::GRAY16)
+        .value("SRGB48", mediapipe::ImageFormat::SRGB48)
+        .value("SRGBA64", mediapipe::ImageFormat::SRGBA64)
+        .value("VEC32F1", mediapipe::ImageFormat::VEC32F1)
+        .value("VEC32F2", mediapipe::ImageFormat::VEC32F2)
+        .export_values();
 
-  // ImageFrame
-  py::class_<ImageFrame> image_frame(
-      m, "ImageFrame",
-      R"doc(A container for storing an image or a video frame, in one of several formats.
+    // ImageFrame
+    py::class_<ImageFrame> image_frame(
+        m, "ImageFrame",
+        R"doc(A container for storing an image or a video frame, in one of several formats.
 
   Formats supported by ImageFrame are listed in the ImageFormat enum.
   Pixels are encoded row-major in an interleaved fashion. ImageFrame supports
@@ -108,73 +108,73 @@ void ImageFrameSubmodule(pybind11::module* module) {
     copied_ndarray = np.copy(output_ndarray)
     copied_ndarray[0,0,0] = 0
   )doc",
-      py::dynamic_attr());
+        py::dynamic_attr());
 
-  image_frame
-      .def(
-          py::init([](mediapipe::ImageFormat::Format format,
-                      const py::array_t<uint8, py::array::c_style>& data) {
-            if (format != mediapipe::ImageFormat::GRAY8 &&
-                format != mediapipe::ImageFormat::SRGB &&
-                format != mediapipe::ImageFormat::SRGBA) {
-              throw RaisePyError(PyExc_RuntimeError,
-                                 "uint8 image data should be one of the GRAY8, "
-                                 "SRGB, and SRGBA MediaPipe image formats.");
-            }
-            return CreateImageFrame<uint8>(format, data);
-          }),
-          R"doc(For uint8 data type, valid ImageFormat are GRAY8, SGRB, and SRGBA.)doc",
-          py::arg("image_format"), py::arg("data").noconvert())
-      .def(
-          py::init([](mediapipe::ImageFormat::Format format,
-                      const py::array_t<uint16, py::array::c_style>& data) {
-            if (format != mediapipe::ImageFormat::GRAY16 &&
-                format != mediapipe::ImageFormat::SRGB48 &&
-                format != mediapipe::ImageFormat::SRGBA64) {
-              throw RaisePyError(
-                  PyExc_RuntimeError,
-                  "uint16 image data should be one of the GRAY16, "
-                  "SRGB48, and SRGBA64 MediaPipe image formats.");
-            }
-            return CreateImageFrame<uint16>(format, data);
-          }),
-          R"doc(For uint16 data type, valid ImageFormat are GRAY16, SRGB48, and SRGBA64.)doc",
-          py::arg("image_format"), py::arg("data").noconvert())
-      .def(
-          py::init([](mediapipe::ImageFormat::Format format,
-                      const py::array_t<float, py::array::c_style>& data) {
-            if (format != mediapipe::ImageFormat::VEC32F1 &&
-                format != mediapipe::ImageFormat::VEC32F2) {
-              throw RaisePyError(
-                  PyExc_RuntimeError,
-                  "float image data should be either VEC32F1 or VEC32F2 "
-                  "MediaPipe image formats.");
-            }
-            return CreateImageFrame<float>(format, data);
-          }),
-          R"doc(For float data type, valid ImageFormat are VEC32F1 and VEC32F2.)doc",
-          py::arg("image_format"), py::arg("data").noconvert());
+    image_frame
+        .def(
+            py::init([](mediapipe::ImageFormat::Format format,
+                        const py::array_t<uint8, py::array::c_style>& data) {
+                if (format != mediapipe::ImageFormat::GRAY8 &&
+                    format != mediapipe::ImageFormat::SRGB &&
+                    format != mediapipe::ImageFormat::SRGBA) {
+                    throw RaisePyError(PyExc_RuntimeError,
+                                       "uint8 image data should be one of the GRAY8, "
+                                       "SRGB, and SRGBA MediaPipe image formats.");
+                }
+                return CreateImageFrame<uint8>(format, data);
+            }),
+            R"doc(For uint8 data type, valid ImageFormat are GRAY8, SGRB, and SRGBA.)doc",
+            py::arg("image_format"), py::arg("data").noconvert())
+        .def(
+            py::init([](mediapipe::ImageFormat::Format format,
+                        const py::array_t<uint16, py::array::c_style>& data) {
+                if (format != mediapipe::ImageFormat::GRAY16 &&
+                    format != mediapipe::ImageFormat::SRGB48 &&
+                    format != mediapipe::ImageFormat::SRGBA64) {
+                    throw RaisePyError(
+                        PyExc_RuntimeError,
+                        "uint16 image data should be one of the GRAY16, "
+                        "SRGB48, and SRGBA64 MediaPipe image formats.");
+                }
+                return CreateImageFrame<uint16>(format, data);
+            }),
+            R"doc(For uint16 data type, valid ImageFormat are GRAY16, SRGB48, and SRGBA64.)doc",
+            py::arg("image_format"), py::arg("data").noconvert())
+        .def(
+            py::init([](mediapipe::ImageFormat::Format format,
+                        const py::array_t<float, py::array::c_style>& data) {
+                if (format != mediapipe::ImageFormat::VEC32F1 &&
+                    format != mediapipe::ImageFormat::VEC32F2) {
+                    throw RaisePyError(
+                        PyExc_RuntimeError,
+                        "float image data should be either VEC32F1 or VEC32F2 "
+                        "MediaPipe image formats.");
+                }
+                return CreateImageFrame<float>(format, data);
+            }),
+            R"doc(For float data type, valid ImageFormat are VEC32F1 and VEC32F2.)doc",
+            py::arg("image_format"), py::arg("data").noconvert());
 
-  image_frame.def(
-      "numpy_view",
-      [](ImageFrame& self) {
-        py::object py_object =
-            py::cast(self, py::return_value_policy::reference);
-        // If the image frame data is contiguous, generates the data pyarray
-        // object on demand because 1) making a pyarray by referring to the
-        // existing image frame pixel data is relatively cheap and 2) caching
-        // the pyarray object in an attribute of the image frame is problematic:
-        // the image frame object and the data pyarray object refer to each
-        // other, which causes gc fails to free the pyarray after use.
-        // For the non-contiguous cases, gets a cached data pyarray object from
-        // the image frame pyobject attribute. This optimization is to avoid the
-        // expensive data realignment and copy operations happening more than
-        // once.
-        return self.IsContiguous()
-                   ? GenerateDataPyArrayOnDemand(self, py_object)
-                   : GetCachedContiguousDataAttr(self, py_object);
-      },
-      R"doc(Return the image frame pixel data as an unwritable numpy ndarray.
+    image_frame.def(
+        "numpy_view",
+        [](ImageFrame& self) {
+            py::object py_object =
+                py::cast(self, py::return_value_policy::reference);
+            // If the image frame data is contiguous, generates the data pyarray
+            // object on demand because 1) making a pyarray by referring to the
+            // existing image frame pixel data is relatively cheap and 2) caching
+            // the pyarray object in an attribute of the image frame is problematic:
+            // the image frame object and the data pyarray object refer to each
+            // other, which causes gc fails to free the pyarray after use.
+            // For the non-contiguous cases, gets a cached data pyarray object from
+            // the image frame pyobject attribute. This optimization is to avoid the
+            // expensive data realignment and copy operations happening more than
+            // once.
+            return self.IsContiguous()
+                       ? GenerateDataPyArrayOnDemand(self, py_object)
+                       : GetCachedContiguousDataAttr(self, py_object);
+        },
+        R"doc(Return the image frame pixel data as an unwritable numpy ndarray.
 
   Realign the pixel data to be stored contiguously and return a reference to the
   unwritable numpy ndarray. If the callers want to modify the numpy array data,
@@ -189,29 +189,29 @@ void ImageFrameSubmodule(pybind11::module* module) {
     copied_ndarray[0,0,0] = 0
 )doc");
 
-  image_frame.def(
-      "__getitem__",
-      [](ImageFrame& self, const std::vector<int>& pos) {
-        if (pos.size() != 3 &&
-            !(pos.size() == 2 && self.NumberOfChannels() == 1)) {
-          throw RaisePyError(
-              PyExc_IndexError,
-              absl::StrCat("Invalid index dimension: ", pos.size()).c_str());
-        }
-        py::object py_object =
-            py::cast(self, py::return_value_policy::reference);
-        switch (self.ByteDepth()) {
-          case 1:
-            return GetValue<uint8>(self, pos, py_object);
-          case 2:
-            return GetValue<uint16>(self, pos, py_object);
-          case 4:
-            return GetValue<float>(self, pos, py_object);
-          default:
-            return py::object();
-        }
-      },
-      R"doc(Use the indexer operators to access pixel data.
+    image_frame.def(
+        "__getitem__",
+        [](ImageFrame& self, const std::vector<int>& pos) {
+            if (pos.size() != 3 &&
+                !(pos.size() == 2 && self.NumberOfChannels() == 1)) {
+                throw RaisePyError(
+                    PyExc_IndexError,
+                    absl::StrCat("Invalid index dimension: ", pos.size()).c_str());
+            }
+            py::object py_object =
+                py::cast(self, py::return_value_policy::reference);
+            switch (self.ByteDepth()) {
+                case 1:
+                    return GetValue<uint8>(self, pos, py_object);
+                case 2:
+                    return GetValue<uint16>(self, pos, py_object);
+                case 4:
+                    return GetValue<float>(self, pos, py_object);
+                default:
+                    return py::object();
+            }
+        },
+        R"doc(Use the indexer operators to access pixel data.
 
   Raises:
     IndexError: If the index is invalid or out of bounds.
@@ -224,15 +224,15 @@ void ImageFrameSubmodule(pybind11::module* module) {
 
 )doc");
 
-  image_frame
-      .def(
-          "is_contiguous", &ImageFrame::IsContiguous,
-          R"doc(Return True if the pixel data is stored contiguously (without any alignment padding areas).)doc")
-      .def("is_empty", &ImageFrame::IsEmpty,
-           R"doc(Return True if the pixel data is unallocated.)doc")
-      .def(
-          "is_aligned", &ImageFrame::IsAligned,
-          R"doc(Return True if each row of the data is aligned to alignment boundary, which must be 1 or a power of 2.
+    image_frame
+        .def(
+            "is_contiguous", &ImageFrame::IsContiguous,
+            R"doc(Return True if the pixel data is stored contiguously (without any alignment padding areas).)doc")
+        .def("is_empty", &ImageFrame::IsEmpty,
+             R"doc(Return True if the pixel data is unallocated.)doc")
+        .def(
+            "is_aligned", &ImageFrame::IsAligned,
+            R"doc(Return True if each row of the data is aligned to alignment boundary, which must be 1 or a power of 2.
 
   Args:
     alignment_boundary: An integer.
@@ -244,11 +244,11 @@ void ImageFrameSubmodule(pybind11::module* module) {
     image_frame.is_aligned(16)
 )doc");
 
-  image_frame.def_property_readonly("width", &ImageFrame::Width)
-      .def_property_readonly("height", &ImageFrame::Height)
-      .def_property_readonly("channels", &ImageFrame::NumberOfChannels)
-      .def_property_readonly("byte_depth", &ImageFrame::ByteDepth)
-      .def_property_readonly("image_format", &ImageFrame::Format);
+    image_frame.def_property_readonly("width", &ImageFrame::Width)
+        .def_property_readonly("height", &ImageFrame::Height)
+        .def_property_readonly("channels", &ImageFrame::NumberOfChannels)
+        .def_property_readonly("byte_depth", &ImageFrame::ByteDepth)
+        .def_property_readonly("image_format", &ImageFrame::Format);
 }
 
 }  // namespace python

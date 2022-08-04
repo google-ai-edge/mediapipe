@@ -23,13 +23,13 @@ namespace mediapipe {
 
 #if defined(PARALLEL_INVOKER_ACTIVE)
 ThreadPool* ParallelInvokerThreadPool() {
-  static ThreadPool* pool = []() -> ThreadPool* {
-    ThreadPool* new_pool =
-        new ThreadPool("ParallelInvoker", flags_parallel_invoker_max_threads);
-    new_pool->StartWorkers();
-    return new_pool;
-  }();
-  return pool;
+    static ThreadPool* pool = []() -> ThreadPool* {
+        ThreadPool* new_pool =
+            new ThreadPool("ParallelInvoker", flags_parallel_invoker_max_threads);
+        new_pool->StartWorkers();
+        return new_pool;
+    }();
+    return pool;
 }
 #endif
 

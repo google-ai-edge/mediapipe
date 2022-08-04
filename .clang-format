@@ -1,0 +1,39 @@
+# Use the Google style in this project.
+BasedOnStyle: Google
+
+IndentWidth: 4
+TabWidth: 4
+ColumnLimit: 0
+
+DerivePointerAlignment: false
+PointerAlignment: Left
+QualifierAlignment: Left
+
+IndentAccessModifiers: false
+AccessModifierOffset: -4
+
+IncludeBlocks: Merge
+IncludeCategories:
+- Regex: '^\"google/cloud/internal/disable_deprecation_warnings.inc\"$'
+  Priority: -1
+- Regex: '^\"google/cloud/(internal/|grpc_utils/|testing_util/|[^/]+\.h)'
+  Priority: 1000
+- Regex: '^\"google/cloud/'  # project includes should sort first
+  Priority: 500
+- Regex: '^\"'
+  Priority: 1500
+- Regex: '^<grpc/'
+  Priority: 2000
+- Regex: '^<google/*'
+  Priority: 3000
+- Regex: '^<.*/.*'
+  Priority: 4000
+- Regex: '^<[^/]*>'
+  Priority: 5000
+
+RawStringFormats:
+- Language: TextProto
+  Delimiters:
+  - 'pb'
+  - 'proto'
+  BasedOnStyle: Google

@@ -17,12 +17,12 @@ syntax = "proto2";
 package mediapipe;
 
 message TrackedDetectionManagerConfig {
-  // When we compare two detection boxes, if the ratio of the area is
-  // larger than is_same_detection_max_area_ratio, we consider them being
-  // different detections.
-  optional float is_same_detection_max_area_ratio = 1 [default = 3.0];
-  // When we compare two detection boxes, if the overlap ratio is larger
-  // than is_same_detection_min_overlap_ratio, we consider them being
-  // same detection.
-  optional float is_same_detection_min_overlap_ratio = 2 [default = 0.5];
+    // When we compare two detection boxes, if the ratio of the area is
+    // larger than is_same_detection_max_area_ratio, we consider them being
+    // different detections.
+    optional float is_same_detection_max_area_ratio = 1 [default = 3.0];
+    // When we compare two detection boxes, if the overlap ratio is larger
+    // than is_same_detection_min_overlap_ratio, we consider them being
+    // same detection.
+    optional float is_same_detection_min_overlap_ratio = 2 [default = 0.5];
 }

@@ -54,97 +54,97 @@ import "mediapipe/util/tracking/region_flow.proto";
 
 // Next flag: 9
 message TrackingData {
-  enum FrameFlags {
-    FLAG_PROFILE_BASELINE = 0;
-    FLAG_PROFILE_HIGH = 1;
-    FLAG_HIGH_FIDELITY_VECTORS = 2;
-    FLAG_BACKGROUND_UNSTABLE = 4;  // Background model could not be estimated.
-    FLAG_DUPLICATED = 8;           // Frame is duplicated, i.e. identical to
-                                   // previous one.
-    // Indicates the beginning of a new chunk. In this case the track_id's
-    // are not compatible w.r.t. previous one.
-    FLAG_CHUNK_BOUNDARY = 16;
-  }
+    enum FrameFlags {
+        FLAG_PROFILE_BASELINE = 0;
+        FLAG_PROFILE_HIGH = 1;
+        FLAG_HIGH_FIDELITY_VECTORS = 2;
+        FLAG_BACKGROUND_UNSTABLE = 4;  // Background model could not be estimated.
+        FLAG_DUPLICATED = 8;           // Frame is duplicated, i.e. identical to
+                                       // previous one.
+        // Indicates the beginning of a new chunk. In this case the track_id's
+        // are not compatible w.r.t. previous one.
+        FLAG_CHUNK_BOUNDARY = 16;
+    }
 
-  optional int32 frame_flags = 1 [default = 0];
+    optional int32 frame_flags = 1 [default = 0];
 
-  // Tracking data is resolution independent specified w.r.t.
-  // specified domain.
-  optional int32 domain_width = 2;
-  optional int32 domain_height = 3;
+    // Tracking data is resolution independent specified w.r.t.
+    // specified domain.
+    optional int32 domain_width = 2;
+    optional int32 domain_height = 3;
 
-  // Aspect ratio (w/h) of the original frame tracking data was computed from.
-  optional float frame_aspect = 6 [default = 1.0];
+    // Aspect ratio (w/h) of the original frame tracking data was computed from.
+    optional float frame_aspect = 6 [default = 1.0];
 
-  optional Homography background_model = 4;
+    optional Homography background_model = 4;
 
-  // Stores num_elements vectors of motion data. (x,y) position encoded via
-  // row_indices and col_starts, as compressed sparse column matrix storage
-  // format:
-  // (https://en.wikipedia.org/wiki/Sparse_matrix#Compressed_sparse_column_.28CSC_or_CCS.29),
-  // Vector data is stored as (dx, dy) position. Optionally we store the fitting
-  // error and track id for each feature.
-  message MotionData {
-    optional int32 num_elements = 1;
+    // Stores num_elements vectors of motion data. (x,y) position encoded via
+    // row_indices and col_starts, as compressed sparse column matrix storage
+    // format:
+    // (https://en.wikipedia.org/wiki/Sparse_matrix#Compressed_sparse_column_.28CSC_or_CCS.29),
+    // Vector data is stored as (dx, dy) position. Optionally we store the fitting
+    // error and track id for each feature.
+    message MotionData {
+        optional int32 num_elements = 1;
 
-    // #num_elements pairs (flow_x, flow_y) densely packed.
-    repeated float vector_data = 2 [packed = true];
+        // #num_elements pairs (flow_x, flow_y) densely packed.
+        repeated float vector_data = 2 [packed = true];
 
-    // Stores corresponding track index for each feature. Features belonging
-    // to the same track over time are assigned the same id.
-    // NOTE: Due to size, tracking ids are never stored as compressed binary
-    // tracking data.
-    repeated int32 track_id = 3 [packed = true];
+        // Stores corresponding track index for each feature. Features belonging
+        // to the same track over time are assigned the same id.
+        // NOTE: Due to size, tracking ids are never stored as compressed binary
+        // tracking data.
+        repeated int32 track_id = 3 [packed = true];
 
-    // # num_elements row indices.
-    repeated int32 row_indices = 4 [packed = true];
+        // # num_elements row indices.
+        repeated int32 row_indices = 4 [packed = true];
 
-    // Start index in above array for each column (#domain_width + 1 entries).
-    repeated int32 col_starts = 5 [packed = true];
+        // Start index in above array for each column (#domain_width + 1 entries).
+        repeated int32 col_starts = 5 [packed = true];
 
-    // Feature descriptors for num_elements feature points.
-    repeated BinaryFeatureDescriptor feature_descriptors = 6;
+        // Feature descriptors for num_elements feature points.
+        repeated BinaryFeatureDescriptor feature_descriptors = 6;
 
-    // Stores all the tracked ids that have been discarded actively. This
-    // information will be used by downstreaming to avoid misjudgement on
-    // tracking continuity.
-    repeated int32 actively_discarded_tracked_ids = 7;
-  }
+        // Stores all the tracked ids that have been discarded actively. This
+        // information will be used by downstreaming to avoid misjudgement on
+        // tracking continuity.
+        repeated int32 actively_discarded_tracked_ids = 7;
+    }
 
-  optional MotionData motion_data = 5;
+    optional MotionData motion_data = 5;
 
-  // Total number of features in our analysis
-  optional uint32 global_feature_count = 7;
+    // Total number of features in our analysis
+    optional uint32 global_feature_count = 7;
 
-  // Average of all motion vector magnitudes (without accounting for any motion
-  // model), within 10th to 90th percentile (to remove outliers).
-  optional float average_motion_magnitude = 8;
+    // Average of all motion vector magnitudes (without accounting for any motion
+    // model), within 10th to 90th percentile (to remove outliers).
+    optional float average_motion_magnitude = 8;
 }
 
 message TrackingDataChunk {
-  message Item {
-    optional TrackingData tracking_data = 1;
-    // Global frame index.
-    optional int32 frame_idx = 2;
-    // Corresponding timestamp.
-    optional int64 timestamp_usec = 3;
-    // Previous frame timestamp.
-    optional int64 prev_timestamp_usec = 4;
-  }
+    message Item {
+        optional TrackingData tracking_data = 1;
+        // Global frame index.
+        optional int32 frame_idx = 2;
+        // Corresponding timestamp.
+        optional int64 timestamp_usec = 3;
+        // Previous frame timestamp.
+        optional int64 prev_timestamp_usec = 4;
+    }
 
-  repeated Item item = 1;
+    repeated Item item = 1;
 
-  // Set as marker for last chunk.
-  optional bool last_chunk = 2 [default = false];
+    // Set as marker for last chunk.
+    optional bool last_chunk = 2 [default = false];
 
-  // Set as marker for first chunk.
-  optional bool first_chunk = 3 [default = false];
+    // Set as marker for first chunk.
+    optional bool first_chunk = 3 [default = false];
 }
 
 // TrackingData in compressed binary format. Obtainable via
 // FlowPackager::EncodeTrackingData. Details of binary encode are below.
 message BinaryTrackingData {  // TrackingContainer::header = "TRAK"
-  optional bytes data = 1;
+    optional bytes data = 1;
 }
 
 // Detailed explanation of binary Tracking data encode (LITTLE ENDIAN encode!)
@@ -230,17 +230,17 @@ message BinaryTrackingData {  // TrackingContainer::header = "TRAK"
 // (for TrackingContainerFormat) or BinaryTrackingData proto (for
 // TrackingContainerProto).
 message MetaData {  // TrackingContainer::header = "META"
-  optional fixed32 num_frames = 2;
+    optional fixed32 num_frames = 2;
 
-  message TrackOffset {
-    optional fixed32 msec = 1;           // Time offset of the metadata in msec.
-    optional fixed32 stream_offset = 2;  // Offset of TrackingContainer or
-                                         // respectively BinaryTrackingData
-                                         // in stream.
-                                         // Specifed w.r.t. end of the Metadata.
-  }
+    message TrackOffset {
+        optional fixed32 msec = 1;           // Time offset of the metadata in msec.
+        optional fixed32 stream_offset = 2;  // Offset of TrackingContainer or
+                                             // respectively BinaryTrackingData
+                                             // in stream.
+                                             // Specifed w.r.t. end of the Metadata.
+    }
 
-  repeated TrackOffset track_offsets = 3;
+    repeated TrackOffset track_offsets = 3;
 }
 
 // TrackingContainer is self-describing container format to store arbitrary
@@ -257,13 +257,13 @@ message MetaData {  // TrackingContainer::header = "META"
 // data       #size
 // SUM:       12 + #size.
 message TrackingContainer {
-  optional string header = 1;                  // 4 character header.
-  optional fixed32 version = 2 [default = 1];  // Version information.
-  optional fixed32 size = 3;  // Size of binary data held by container
-  optional bytes data = 4;    // Binary data encoded.
+    optional string header = 1;                  // 4 character header.
+    optional fixed32 version = 2 [default = 1];  // Version information.
+    optional fixed32 size = 3;                   // Size of binary data held by container
+    optional bytes data = 4;                     // Binary data encoded.
 
-  // DO NOT alter layout of TrackingContainer.
-  // Use version to extend or alter encoded binary data.
+    // DO NOT alter layout of TrackingContainer.
+    // Use version to extend or alter encoded binary data.
 }
 
 // Container format for clients without proto support (written via
@@ -275,50 +275,50 @@ message TrackingContainer {
 // positions) to arbitrary binary TrackinData. Termination container signals end
 // of stream.
 message TrackingContainerFormat {
-  optional TrackingContainer meta_data = 1;   // Wraps binary meta data, via
-                                              // custom encode.
-  repeated TrackingContainer track_data = 2;  // Wraps BinaryTrackingData.
+    optional TrackingContainer meta_data = 1;   // Wraps binary meta data, via
+                                                // custom encode.
+    repeated TrackingContainer track_data = 2;  // Wraps BinaryTrackingData.
 
-  // Add new TrackingContainers above before end of stream indicator.
-  // Zero sized termination container with TrackingContainer::header = "TERM".
-  optional TrackingContainer term_data = 3;
+    // Add new TrackingContainers above before end of stream indicator.
+    // Zero sized termination container with TrackingContainer::header = "TERM".
+    optional TrackingContainer term_data = 3;
 }
 
 // Simplified proto format of above TrackingContainerFormat. Instead of using
 // self-describing TrackingContainer's, we simply use the proto wire format for
 // encoding and decoding (proto format is typed and versioned via ids).
 message TrackingContainerProto {
-  optional MetaData meta_data = 1;
-  repeated BinaryTrackingData track_data = 2;
+    optional MetaData meta_data = 1;
+    repeated BinaryTrackingData track_data = 2;
 }
 
 // Options controlling compression and encoding.
 message FlowPackagerOptions {
-  // Tracking data is resolution independent specified w.r.t.
-  // specified domain. Only values <= 256 are supported if binary tracking data
-  // is requested to be supported (see below).
-  optional int32 domain_width = 1 [default = 256];
-  optional int32 domain_height = 2 [default = 192];
+    // Tracking data is resolution independent specified w.r.t.
+    // specified domain. Only values <= 256 are supported if binary tracking data
+    // is requested to be supported (see below).
+    optional int32 domain_width = 1 [default = 256];
+    optional int32 domain_height = 2 [default = 192];
 
-  // Needs to be set for calls to FlowPackager::EncodeTrackingData. If encoding
-  // is not required, can be set to false in which case a higher domain_width
-  // can be used.
-  optional bool binary_tracking_data_support = 6 [default = true];
+    // Needs to be set for calls to FlowPackager::EncodeTrackingData. If encoding
+    // is not required, can be set to false in which case a higher domain_width
+    // can be used.
+    optional bool binary_tracking_data_support = 6 [default = true];
 
-  optional bool use_high_profile = 3 [default = false];
+    optional bool use_high_profile = 3 [default = false];
 
-  // If set uses 16 bit encode for vector data, in BinaryTrackingData,
-  // otherwise only 8 bits are used.
-  optional bool high_fidelity_16bit_encode = 4 [default = true];
+    // If set uses 16 bit encode for vector data, in BinaryTrackingData,
+    // otherwise only 8 bits are used.
+    optional bool high_fidelity_16bit_encode = 4 [default = true];
 
-  // In high profile encode, re-use previously encoded vector when absolute
-  // difference to current vector is below threshold.
-  optional float high_profile_reuse_threshold = 5 [default = 0.5];
+    // In high profile encode, re-use previously encoded vector when absolute
+    // difference to current vector is below threshold.
+    optional float high_profile_reuse_threshold = 5 [default = 0.5];
 
-  // High profile encoding flags.
-  enum HighProfileEncoding {
-    ADVANCE_FLAG = 0x80;
-    DOUBLE_INDEX_ENCODE = 0x40;
-    INDEX_MASK = 0x3F;
-  }
+    // High profile encoding flags.
+    enum HighProfileEncoding {
+        ADVANCE_FLAG = 0x80;
+        DOUBLE_INDEX_ENCODE = 0x40;
+        INDEX_MASK = 0x3F;
+    }
 }

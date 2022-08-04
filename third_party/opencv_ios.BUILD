@@ -1,14 +1,14 @@
 # Description:
 #   OpenCV libraries for video/image processing on iOS
 
-licenses(["notice"])  # BSD license
-
-exports_files(["LICENSE"])
-
 load(
     "@build_bazel_rules_apple//apple:apple.bzl",
     "apple_static_framework_import",
 )
+
+licenses(["notice"])  # BSD license
+
+exports_files(["LICENSE"])
 
 apple_static_framework_import(
     name = "OpencvFramework",

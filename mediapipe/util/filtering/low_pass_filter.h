@@ -20,26 +20,26 @@
 namespace mediapipe {
 
 class LowPassFilter {
- public:
-  explicit LowPassFilter(float alpha);
+public:
+    explicit LowPassFilter(float alpha);
 
-  float Apply(float value);
+    float Apply(float value);
 
-  float ApplyWithAlpha(float value, float alpha);
+    float ApplyWithAlpha(float value, float alpha);
 
-  bool HasLastRawValue();
+    bool HasLastRawValue();
 
-  float LastRawValue();
+    float LastRawValue();
 
-  float LastValue();
+    float LastValue();
 
- private:
-  void SetAlpha(float alpha);
+private:
+    void SetAlpha(float alpha);
 
-  float raw_value_;
-  float alpha_;
-  float stored_value_;
-  bool initialized_;
+    float raw_value_;
+    float alpha_;
+    float stored_value_;
+    bool initialized_;
 };
 
 }  // namespace mediapipe

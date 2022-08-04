@@ -13,31 +13,29 @@
 // limitations under the License.
 
 #include "mediapipe/util/tflite/error_reporter.h"
-
+#include "tensorflow/lite/minimal_logging.h"
 #include <cstdarg>
 #include <cstdio>
 #include <cstring>
 #include <string>
-
-#include "tensorflow/lite/minimal_logging.h"
 
 namespace mediapipe {
 namespace util {
 namespace tflite {
 
 ErrorReporter::ErrorReporter() {
-  message_[0] = '\0';
-  previous_message_[0] = '\0';
+    message_[0] = '\0';
+    previous_message_[0] = '\0';
 }
 
 int ErrorReporter::Report(const char* format, va_list args) {
-  std::strcpy(previous_message_, message_);  // NOLINT
-  message_[0] = '\0';
-  int num_characters = vsnprintf(message_, kBufferSize, format, args);
-  // To mimic tflite::StderrReporter.
-  ::tflite::logging_internal::MinimalLogger::Log(::tflite::TFLITE_LOG_ERROR,
-                                                 "%s", message_);
-  return num_characters;
+    std::strcpy(previous_message_, message_);  // NOLINT
+    message_[0] = '\0';
+    int num_characters = vsnprintf(message_, kBufferSize, format, args);
+    // To mimic tflite::StderrReporter.
+    ::tflite::logging_internal::MinimalLogger::Log(::tflite::TFLITE_LOG_ERROR,
+                                                   "%s", message_);
+    return num_characters;
 }
 
 std::string ErrorReporter::message() { return message_; }

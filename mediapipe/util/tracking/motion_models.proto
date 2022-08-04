@@ -35,8 +35,8 @@ package mediapipe;
 // Simple translational model:
 // I * x + [dx; dy]   with I being 2x2 identity transform.
 message TranslationModel {
-  optional float dx = 1 [default = 0];
-  optional float dy = 2 [default = 0];
+    optional float dx = 1 [default = 0];
+    optional float dy = 2 [default = 0];
 }
 
 // Non-linear similarity model (w.r.t. to its parametrization).
@@ -46,32 +46,32 @@ message TranslationModel {
 // [scale 0;      * [c_r  -s_r;   * x  + [dx;
 //  0     scale]     s_r   c_r]           dy]
 message SimilarityModel {
-  optional float dx = 1 [default = 0];
-  optional float dy = 2 [default = 0];
-  optional float scale = 3 [default = 1];
-  optional float rotation = 4 [default = 0];  // angle in [-pi, pi].
+    optional float dx = 1 [default = 0];
+    optional float dy = 2 [default = 0];
+    optional float scale = 3 [default = 1];
+    optional float rotation = 4 [default = 0];  // angle in [-pi, pi].
 }
 
 // Linear similarity model:
 //  [a -b;   * x + [dx;
 //   b  a]          dy]
 message LinearSimilarityModel {
-  optional float dx = 1 [default = 0];
-  optional float dy = 2 [default = 0];
-  optional float a = 3 [default = 1];
-  optional float b = 4 [default = 0];
+    optional float dx = 1 [default = 0];
+    optional float dy = 2 [default = 0];
+    optional float a = 3 [default = 1];
+    optional float b = 4 [default = 0];
 }
 
 // Affine according to
 //  (  [a b  * x + [dx;
 //  (   c d]        dy]
 message AffineModel {
-  optional float dx = 1 [default = 0];
-  optional float dy = 2 [default = 0];
-  optional float a = 3 [default = 1];
-  optional float b = 4 [default = 0];
-  optional float c = 5 [default = 0];
-  optional float d = 6 [default = 1];
+    optional float dx = 1 [default = 0];
+    optional float dy = 2 [default = 0];
+    optional float a = 3 [default = 1];
+    optional float b = 4 [default = 0];
+    optional float c = 5 [default = 0];
+    optional float d = 6 [default = 1];
 }
 
 // Homography according to
@@ -86,37 +86,37 @@ message AffineModel {
 //        Therefore, all methods in motion_stabilization should not be
 //        used for general wide-baseline matching of frames.
 message Homography {
-  optional float h_00 = 1 [default = 1];
-  optional float h_01 = 2 [default = 0];
-  optional float h_02 = 3 [default = 0];
-  optional float h_10 = 4 [default = 0];
-  optional float h_11 = 5 [default = 1];
-  optional float h_12 = 6 [default = 0];
-  optional float h_20 = 7 [default = 0];
-  optional float h_21 = 8 [default = 0];
+    optional float h_00 = 1 [default = 1];
+    optional float h_01 = 2 [default = 0];
+    optional float h_02 = 3 [default = 0];
+    optional float h_10 = 4 [default = 0];
+    optional float h_11 = 5 [default = 1];
+    optional float h_12 = 6 [default = 0];
+    optional float h_20 = 7 [default = 0];
+    optional float h_21 = 8 [default = 0];
 }
 
 // Mixture models with higher degrees of freedom, according to
 // \sum_i model(i) * weight(i), where weights are passed during transform and
 // are expected to sum to one.
 message MixtureLinearSimilarity {
-  repeated LinearSimilarityModel model = 1;
+    repeated LinearSimilarityModel model = 1;
 }
 
 message MixtureAffine {
-  repeated AffineModel model = 1;
+    repeated AffineModel model = 1;
 }
 
 message MixtureHomography {
-  repeated Homography model = 1;
-  // Specifies which degree of freedom vary across mixture.
-  // Can be used to implement several transformation functions quicker.
-  enum VariableDOF {
-    ALL_DOF = 0;            // All dof are variable.
-    TRANSLATION_DOF = 1;    // Only translation (h_02, h_12) varies.
-    SKEW_ROTATION_DOF = 2;  // Translation (h_02, h_12), and skew-rotation
-                            // (h_01, h_10) vary.
-    CONST_DOF = 3;          // Mixture is constant.
-  }
-  optional VariableDOF dof = 2 [default = ALL_DOF];
+    repeated Homography model = 1;
+    // Specifies which degree of freedom vary across mixture.
+    // Can be used to implement several transformation functions quicker.
+    enum VariableDOF {
+        ALL_DOF = 0;            // All dof are variable.
+        TRANSLATION_DOF = 1;    // Only translation (h_02, h_12) varies.
+        SKEW_ROTATION_DOF = 2;  // Translation (h_02, h_12), and skew-rotation
+                                // (h_01, h_10) vary.
+        CONST_DOF = 3;          // Mixture is constant.
+    }
+    optional VariableDOF dof = 2 [default = ALL_DOF];
 }

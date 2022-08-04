@@ -16,6 +16,10 @@
 #ifndef MEDIAPIPE_UTIL_TRACKING_REGION_FLOW_H_
 #define MEDIAPIPE_UTIL_TRACKING_REGION_FLOW_H_
 
+#include "mediapipe/framework/port/logging.h"
+#include "mediapipe/framework/port/vector.h"
+#include "mediapipe/util/tracking/motion_models.h"
+#include "mediapipe/util/tracking/region_flow.pb.h"
 #include <algorithm>
 #include <cmath>
 #include <deque>
@@ -24,11 +28,6 @@
 #include <utility>
 #include <vector>
 
-#include "mediapipe/framework/port/logging.h"
-#include "mediapipe/framework/port/vector.h"
-#include "mediapipe/util/tracking/motion_models.h"
-#include "mediapipe/util/tracking/region_flow.pb.h"
-
 namespace mediapipe {
 
 typedef RegionFlowFrame::RegionFlow RegionFlow;
@@ -36,42 +35,42 @@ typedef std::vector<RegionFlowFeature*> RegionFlowFeatureView;
 
 inline RegionFlowFeature FeatureFromFloats(float x, float y, float dx,
                                            float dy) {
-  RegionFlowFeature feat;
-  feat.set_x(x);
-  feat.set_y(y);
-  feat.set_dx(dx);
-  feat.set_dy(dy);
-  return feat;
+    RegionFlowFeature feat;
+    feat.set_x(x);
+    feat.set_y(y);
+    feat.set_dx(dx);
+    feat.set_dy(dy);
+    return feat;
 }
 
 inline RegionFlowFeature FeatureFromVec2f(const Vector2_f& loc,
                                           const Vector2_f& flow) {
-  RegionFlowFeature feat;
-  feat.set_x(loc.x());
-  feat.set_y(loc.y());
-  feat.set_dx(flow.x());
-  feat.set_dy(flow.y());
-  return feat;
+    RegionFlowFeature feat;
+    feat.set_x(loc.x());
+    feat.set_y(loc.y());
+    feat.set_dx(flow.x());
+    feat.set_dy(flow.y());
+    return feat;
 }
 
 inline Vector2_f FeatureFlow(const RegionFlowFeature& feature) {
-  return Vector2_f(feature.dx(), feature.dy());
+    return Vector2_f(feature.dx(), feature.dy());
 }
 
 inline Vector2_f FeatureLocation(const RegionFlowFeature& feature) {
-  return Vector2_f(feature.x(), feature.y());
+    return Vector2_f(feature.x(), feature.y());
 }
 
 inline Vector2_f FeatureMatchLocation(const RegionFlowFeature& feature) {
-  return FeatureLocation(feature) + FeatureFlow(feature);
+    return FeatureLocation(feature) + FeatureFlow(feature);
 }
 
 inline Vector2_i FeatureIntLocation(const RegionFlowFeature& feature) {
-  return Vector2_i::Cast(FeatureLocation(feature) + Vector2_f(0.5f, 0.5f));
+    return Vector2_i::Cast(FeatureLocation(feature) + Vector2_f(0.5f, 0.5f));
 }
 
 inline Vector2_i FeatureMatchIntLocation(const RegionFlowFeature& feature) {
-  return Vector2_i::Cast(FeatureMatchLocation(feature) + Vector2_f(0.5, 0.5f));
+    return Vector2_i::Cast(FeatureMatchLocation(feature) + Vector2_f(0.5, 0.5f));
 }
 
 // Returns L1 norm of color standard deviation of feature descriptor,
@@ -79,20 +78,20 @@ inline Vector2_i FeatureMatchIntLocation(const RegionFlowFeature& feature) {
 // (e.g. if ComputeRegionFlowFeatureDescriptors was not called previously).
 // Specifically returns stdev_red + stdev_blue + stdev_green.
 inline float PatchDescriptorColorStdevL1(const PatchDescriptor& descriptor) {
-  constexpr int kRedIdx = 3;
-  constexpr int kGreenIdx = 6;
-  constexpr int kBlueIdx = 8;
-  DCHECK_GE(descriptor.data(kRedIdx), 0);
-  DCHECK_GE(descriptor.data(kGreenIdx), 0);
-  DCHECK_GE(descriptor.data(kBlueIdx), 0);
+    constexpr int kRedIdx = 3;
+    constexpr int kGreenIdx = 6;
+    constexpr int kBlueIdx = 8;
+    DCHECK_GE(descriptor.data(kRedIdx), 0);
+    DCHECK_GE(descriptor.data(kGreenIdx), 0);
+    DCHECK_GE(descriptor.data(kBlueIdx), 0);
 
-  if (descriptor.data_size() > kBlueIdx) {
-    return std::sqrt(descriptor.data(kRedIdx)) +
-           std::sqrt(descriptor.data(kGreenIdx)) +
-           std::sqrt(descriptor.data(kBlueIdx));
-  } else {
-    return -1.0f;
-  }
+    if (descriptor.data_size() > kBlueIdx) {
+        return std::sqrt(descriptor.data(kRedIdx)) +
+               std::sqrt(descriptor.data(kGreenIdx)) +
+               std::sqrt(descriptor.data(kBlueIdx));
+    } else {
+        return -1.0f;
+    }
 }
 
 // Extracts features from region flow. Set distance_from_border > 0 to ensure
@@ -195,16 +194,16 @@ void DeNormalizeRegionFlowFeatureList(RegionFlowFeatureList* feature_list);
 template <class Model>
 void TransformRegionFlowFeatureList(const Model& model,
                                     RegionFlowFeatureList* flow_feature_list) {
-  for (auto& feature : *flow_feature_list->mutable_feature()) {
-    Vector2_f pt =
-        ModelAdapter<Model>::TransformPoint(model, FeatureLocation(feature));
-    Vector2_f match = ModelAdapter<Model>::TransformPoint(
-        model, FeatureMatchLocation(feature));
-    feature.set_x(pt.x());
-    feature.set_y(pt.y());
-    feature.set_dx(match.x() - pt.x());
-    feature.set_dy(match.y() - pt.y());
-  }
+    for (auto& feature : *flow_feature_list->mutable_feature()) {
+        Vector2_f pt =
+            ModelAdapter<Model>::TransformPoint(model, FeatureLocation(feature));
+        Vector2_f match = ModelAdapter<Model>::TransformPoint(
+            model, FeatureMatchLocation(feature));
+        feature.set_x(pt.x());
+        feature.set_y(pt.y());
+        feature.set_dx(match.x() - pt.x());
+        feature.set_dy(match.y() - pt.y());
+    }
 }
 
 // Similar to above but applies transformation to each feature to derive
@@ -218,35 +217,35 @@ template <class Model>
 void RegionFlowFeatureListViaTransform(
     const Model& model, RegionFlowFeatureList* flow_feature_list, float a,
     float b, bool set_match, const MixtureRowWeights* row_weights = nullptr) {
-  for (auto& feature : *flow_feature_list->mutable_feature()) {
-    Vector2_f match =
-        ModelAdapter<Model>::TransformPoint(model, FeatureLocation(feature));
-    feature.set_dx(b * feature.dx() + a * (match.x() - feature.x()));
-    feature.set_dy(b * feature.dy() + a * (match.y() - feature.y()));
-    if (set_match) {
-      feature.set_x(match.x());
-      feature.set_y(match.y());
+    for (auto& feature : *flow_feature_list->mutable_feature()) {
+        Vector2_f match =
+            ModelAdapter<Model>::TransformPoint(model, FeatureLocation(feature));
+        feature.set_dx(b * feature.dx() + a * (match.x() - feature.x()));
+        feature.set_dy(b * feature.dy() + a * (match.y() - feature.y()));
+        if (set_match) {
+            feature.set_x(match.x());
+            feature.set_y(match.y());
+        }
     }
-  }
 }
 
 template <>
 inline void RegionFlowFeatureListViaTransform(
     const MixtureHomography& mix, RegionFlowFeatureList* flow_feature_list,
     float a, float b, bool set_match, const MixtureRowWeights* row_weights) {
-  CHECK(row_weights) << "Row weights required for mixtures.";
+    CHECK(row_weights) << "Row weights required for mixtures.";
 
-  for (auto& feature : *flow_feature_list->mutable_feature()) {
-    const float* weights = row_weights->RowWeights(feature.y());
-    Vector2_f match = MixtureHomographyAdapter::TransformPoint(
-        mix, weights, FeatureLocation(feature));
-    feature.set_dx(b * feature.dx() + a * (match.x() - feature.x()));
-    feature.set_dy(b * feature.dy() + a * (match.y() - feature.y()));
-    if (set_match) {
-      feature.set_x(match.x());
-      feature.set_y(match.y());
+    for (auto& feature : *flow_feature_list->mutable_feature()) {
+        const float* weights = row_weights->RowWeights(feature.y());
+        Vector2_f match = MixtureHomographyAdapter::TransformPoint(
+            mix, weights, FeatureLocation(feature));
+        feature.set_dx(b * feature.dx() + a * (match.x() - feature.x()));
+        feature.set_dy(b * feature.dy() + a * (match.y() - feature.y()));
+        if (set_match) {
+            feature.set_x(match.x());
+            feature.set_y(match.y());
+        }
     }
-  }
 }
 
 // Helper implementation function for functions below.
@@ -256,13 +255,13 @@ template <class Predicate>
 std::pair<float, bool> GetFilteredWeightImpl(const Predicate& predicate,
                                              float reset_value,
                                              const RegionFlowFeature& feature) {
-  if (feature.irls_weight() == 0.0f) {
-    return std::make_pair(0.0f, false);  // Zero is false by default.
-  } else if (!predicate(feature)) {
-    return std::make_pair(reset_value, false);
-  } else {
-    return std::make_pair(feature.irls_weight(), true);
-  }
+    if (feature.irls_weight() == 0.0f) {
+        return std::make_pair(0.0f, false);  // Zero is false by default.
+    } else if (!predicate(feature)) {
+        return std::make_pair(reset_value, false);
+    } else {
+        return std::make_pair(feature.irls_weight(), true);
+    }
 }
 
 // If predicate evaluates to false, corresponding irls weight is set to zero.
@@ -275,18 +274,18 @@ std::pair<float, bool> GetFilteredWeightImpl(const Predicate& predicate,
 template <class Predicate>
 int FilterRegionFlowFeatureList(const Predicate& predicate, float reset_value,
                                 RegionFlowFeatureList* flow_feature_list) {
-  CHECK(flow_feature_list != nullptr);
-  int num_passing_features = 0;
-  for (auto& feature : *flow_feature_list->mutable_feature()) {
-    std::pair<float, bool> filter_result =
-        GetFilteredWeightImpl(predicate, reset_value, feature);
-    feature.set_irls_weight(filter_result.first);
-    if (filter_result.second) {
-      ++num_passing_features;
+    CHECK(flow_feature_list != nullptr);
+    int num_passing_features = 0;
+    for (auto& feature : *flow_feature_list->mutable_feature()) {
+        std::pair<float, bool> filter_result =
+            GetFilteredWeightImpl(predicate, reset_value, feature);
+        feature.set_irls_weight(filter_result.first);
+        if (filter_result.second) {
+            ++num_passing_features;
+        }
     }
-  }
 
-  return num_passing_features;
+    return num_passing_features;
 }
 
 // Same function as above, but instead of setting the corresponding weights,
@@ -296,20 +295,20 @@ int FilterRegionFlowFeatureWeights(const Predicate& predicate,
                                    float reset_value,
                                    const RegionFlowFeatureList& feature_list,
                                    std::vector<float>* result_weights) {
-  CHECK(result_weights != nullptr);
-  result_weights->clear();
+    CHECK(result_weights != nullptr);
+    result_weights->clear();
 
-  int num_passing_features = 0;
-  for (auto feature : feature_list.feature()) {
-    std::pair<float, bool> filter_result =
-        GetFilteredWeightImpl(predicate, reset_value, feature);
-    result_weights->push_back(filter_result.first);
-    if (filter_result.second) {
-      ++num_passing_features;
+    int num_passing_features = 0;
+    for (auto feature : feature_list.feature()) {
+        std::pair<float, bool> filter_result =
+            GetFilteredWeightImpl(predicate, reset_value, feature);
+        result_weights->push_back(filter_result.first);
+        if (filter_result.second) {
+            ++num_passing_features;
+        }
     }
-  }
 
-  return num_passing_features;
+    return num_passing_features;
 }
 
 // Select features from the passed list for which the predicate is true.
@@ -318,22 +317,22 @@ template <class Predicate>
 void SelectFeaturesFromList(const Predicate& predicate,
                             RegionFlowFeatureList* feature_list,
                             RegionFlowFeatureView* feature_view) {
-  CHECK(feature_list != nullptr);
-  CHECK(feature_view != nullptr);
-  for (auto& feature : *feature_list->mutable_feature()) {
-    if (predicate(feature)) {
-      feature_view->push_back(&feature);
+    CHECK(feature_list != nullptr);
+    CHECK(feature_view != nullptr);
+    for (auto& feature : *feature_list->mutable_feature()) {
+        if (predicate(feature)) {
+            feature_view->push_back(&feature);
+        }
     }
-  }
 }
 
 inline void SelectAllFeaturesFromList(RegionFlowFeatureList* feature_list,
                                       RegionFlowFeatureView* feature_view) {
-  CHECK(feature_list != nullptr);
-  CHECK(feature_view != nullptr);
-  for (auto& feature : *feature_list->mutable_feature()) {
-    feature_view->push_back(&feature);
-  }
+    CHECK(feature_list != nullptr);
+    CHECK(feature_view != nullptr);
+    for (auto& feature : *feature_list->mutable_feature()) {
+        feature_view->push_back(&feature);
+    }
 }
 
 // Sorts region flow feature views, w.r.t. predicate. Predicate must define:
@@ -342,8 +341,8 @@ inline void SelectAllFeaturesFromList(RegionFlowFeatureList* feature_list,
 template <class Predicate>
 void SortRegionFlowFeatureView(const Predicate& predicate,
                                RegionFlowFeatureView* feature_view) {
-  CHECK(feature_view != nullptr);
-  std::sort(feature_view->begin(), feature_view->end(), predicate);
+    CHECK(feature_view != nullptr);
+    std::sort(feature_view->begin(), feature_view->end(), predicate);
 }
 
 // Clamps IRLS weight of each RegionFlowFeature to lie within [lower, upper].
@@ -402,74 +401,74 @@ void IntersectRegionFlowFeatureList(
 //     }
 //   }
 class LongFeatureStream {
- private:
-  // Buffers features according to their track id. Most recent region flow
-  // features are added last.
-  typedef std::unordered_map<int, std::vector<RegionFlowFeature>> TrackBuffer;
+private:
+    // Buffers features according to their track id. Most recent region flow
+    // features are added last.
+    typedef std::unordered_map<int, std::vector<RegionFlowFeature>> TrackBuffer;
 
- public:
-  // Default constructor for LongFeatureStream. The default long feature stream
-  // is backward.
-  LongFeatureStream() = default;
+public:
+    // Default constructor for LongFeatureStream. The default long feature stream
+    // is backward.
+    LongFeatureStream() = default;
 
-  // Constructor for LongFeatureStream. The param forward indicates if the long
-  // feature stream is forward or backward.
-  explicit LongFeatureStream(bool forward) : forward_(forward) {}
+    // Constructor for LongFeatureStream. The param forward indicates if the long
+    // feature stream is forward or backward.
+    explicit LongFeatureStream(bool forward) : forward_(forward) {}
 
-  // Adds new features for the current frame. Region flow must be computed
-  // w.r.t to previous or next frame (i.e. inter-frame distance = 1, CHECKED).
-  // If check_connectivity is specified, CHECKS if a feature's match location
-  // equals it last known location in the buffer.
-  // Optionally removes features from the buffer that are not present
-  // in the current list.
-  void AddFeatures(const RegionFlowFeatureList& feature_list,
-                   bool check_connectivity, bool purge_non_present_features);
+    // Adds new features for the current frame. Region flow must be computed
+    // w.r.t to previous or next frame (i.e. inter-frame distance = 1, CHECKED).
+    // If check_connectivity is specified, CHECKS if a feature's match location
+    // equals it last known location in the buffer.
+    // Optionally removes features from the buffer that are not present
+    // in the current list.
+    void AddFeatures(const RegionFlowFeatureList& feature_list,
+                     bool check_connectivity, bool purge_non_present_features);
 
-  // Traversal example:
-  // LongFeatureStream stream;
-  // for (auto track : stream) {
-  //   track.first    // Holds id.
-  //   track.second   // Holds vector<RegionFlowFeature>.
-  //                  // Note: These are always backward flow features
-  //                  //       even if you added forward ones. Ordered in time,
-  //                  //       oldest features come first.
-  //   vector<Vector2_f> poly_line;
-  //   stream.FlattenTrack(track.second, &poly_line, nullptr, nullptr);
-  // }
-  typename TrackBuffer::const_iterator begin() const { return tracks_.begin(); }
-  typename TrackBuffer::const_iterator end() const { return tracks_.end(); }
+    // Traversal example:
+    // LongFeatureStream stream;
+    // for (auto track : stream) {
+    //   track.first    // Holds id.
+    //   track.second   // Holds vector<RegionFlowFeature>.
+    //                  // Note: These are always backward flow features
+    //                  //       even if you added forward ones. Ordered in time,
+    //                  //       oldest features come first.
+    //   vector<Vector2_f> poly_line;
+    //   stream.FlattenTrack(track.second, &poly_line, nullptr, nullptr);
+    // }
+    typename TrackBuffer::const_iterator begin() const { return tracks_.begin(); }
+    typename TrackBuffer::const_iterator end() const { return tracks_.end(); }
 
-  // Extract track as poly-line (vector of positions).
-  // Specifically, tracks[0] is the beginning (oldest) and
-  // tracks[tracks.size() - 1] the end of the track (most recent point).
-  // Optionally, returns irls weight for each point pair along the track,
-  // i.e weight at position N, specifies weight of track between points
-  // N and N + 1. For convenience, weight at last position is replicated, i.e.
-  // length of tracks and irls_weight is identical.
-  // Optionally, returns the flow vector associated with each point on the
-  // track with a direction as requested by the flow direction of the
-  // constructor. Note: For N points, N - 1 flow vectors are returned.
-  void FlattenTrack(const std::vector<RegionFlowFeature>& features,
-                    std::vector<Vector2_f>* tracks,
-                    std::vector<float>* irls_weight,      // optional.
-                    std::vector<Vector2_f>* flow) const;  // optional.
+    // Extract track as poly-line (vector of positions).
+    // Specifically, tracks[0] is the beginning (oldest) and
+    // tracks[tracks.size() - 1] the end of the track (most recent point).
+    // Optionally, returns irls weight for each point pair along the track,
+    // i.e weight at position N, specifies weight of track between points
+    // N and N + 1. For convenience, weight at last position is replicated, i.e.
+    // length of tracks and irls_weight is identical.
+    // Optionally, returns the flow vector associated with each point on the
+    // track with a direction as requested by the flow direction of the
+    // constructor. Note: For N points, N - 1 flow vectors are returned.
+    void FlattenTrack(const std::vector<RegionFlowFeature>& features,
+                      std::vector<Vector2_f>* tracks,
+                      std::vector<float>* irls_weight,      // optional.
+                      std::vector<Vector2_f>* flow) const;  // optional.
 
-  // Random access. Returns nullptr if not found.
-  const std::vector<RegionFlowFeature>* TrackById(int id) const;
+    // Random access. Returns nullptr if not found.
+    const std::vector<RegionFlowFeature>* TrackById(int id) const;
 
-  // Convenience function calling TrackById and FlattenTrack. Returns empty
-  // vector if track id is not present.
-  std::vector<Vector2_f> FlattenedTrackById(int id) const;
+    // Convenience function calling TrackById and FlattenTrack. Returns empty
+    // vector if track id is not present.
+    std::vector<Vector2_f> FlattenedTrackById(int id) const;
 
- private:
-  // Long Feature tracks indexed by id.
-  TrackBuffer tracks_;
+private:
+    // Long Feature tracks indexed by id.
+    TrackBuffer tracks_;
 
-  // Stores old ids that have been removed. Used during check_connectivity.
-  std::unordered_set<int> old_ids_;
+    // Stores old ids that have been removed. Used during check_connectivity.
+    std::unordered_set<int> old_ids_;
 
-  // A flag indicating if the long feature stream is forward or backward.
-  bool forward_ = false;
+    // A flag indicating if the long feature stream is forward or backward.
+    bool forward_ = false;
 };
 
 // Helper class for testing which features are present, computing overall track
@@ -484,44 +483,44 @@ class LongFeatureStream {
 //     lfi.TrackLenghts(feature_list, &track_length);
 //  }
 class LongFeatureInfo {
- public:
-  // Adds features to current info state.
-  void AddFeatures(const RegionFlowFeatureList& feature_list);
+public:
+    // Adds features to current info state.
+    void AddFeatures(const RegionFlowFeatureList& feature_list);
 
-  // Adds a single feature. If used instead of above function, requires
-  // IncrementFrame to be called manually.
-  void AddFeature(const RegionFlowFeature& feature);
+    // Adds a single feature. If used instead of above function, requires
+    // IncrementFrame to be called manually.
+    void AddFeature(const RegionFlowFeature& feature);
 
-  // Returns track length for each passed feature.
-  // Note: If feature is not yet present, zero is returned as length.
-  void TrackLengths(const RegionFlowFeatureList& feature_list,
-                    std::vector<int>* track_lengths) const;
+    // Returns track length for each passed feature.
+    // Note: If feature is not yet present, zero is returned as length.
+    void TrackLengths(const RegionFlowFeatureList& feature_list,
+                      std::vector<int>* track_lengths) const;
 
-  // Same as above for an individual feature.
-  int TrackLength(const RegionFlowFeature& feature) const;
+    // Same as above for an individual feature.
+    int TrackLength(const RegionFlowFeature& feature) const;
 
-  // Returns starting frame for a feature.
-  int TrackStart(const RegionFlowFeature& feature) const;
+    // Returns starting frame for a feature.
+    int TrackStart(const RegionFlowFeature& feature) const;
 
-  int NumFrames() const { return num_frames_; }
+    int NumFrames() const { return num_frames_; }
 
-  void Reset();
+    void Reset();
 
-  // Returns track length at passed percentile across all tracks added so far.
-  int GlobalTrackLength(float percentile) const;
+    // Returns track length at passed percentile across all tracks added so far.
+    int GlobalTrackLength(float percentile) const;
 
-  void IncrementFrame() { ++num_frames_; }
+    void IncrementFrame() { ++num_frames_; }
 
- private:
-  struct TrackInfo {
-    int length = 0;
-    int start = 0;
-  };
+private:
+    struct TrackInfo {
+        int length = 0;
+        int start = 0;
+    };
 
-  // Maps track id to above info struct.
-  std::unordered_map<int, TrackInfo> track_info_;
+    // Maps track id to above info struct.
+    std::unordered_map<int, TrackInfo> track_info_;
 
-  int num_frames_ = 0;
+    int num_frames_ = 0;
 };
 
 // Scales a salient point in x and y by specified scales. For example, use to
@@ -590,45 +589,45 @@ void BuildFeatureGrid(
     std::vector<std::vector<int>>* feature_taps_5,  // Optional.
     Vector2_i* num_grid_bins,                       // Optional.
     std::vector<FeatureGrid<Feature>>* feature_grids) {
-  CHECK(feature_grids);
-  CHECK_GT(grid_resolution, 0.0f);
+    CHECK(feature_grids);
+    CHECK_GT(grid_resolution, 0.0f);
 
-  const int num_frames = feature_views.size();
-  const int grid_dim_x = std::ceil(frame_width / grid_resolution);
-  const int grid_dim_y = std::ceil(frame_height / grid_resolution);
-  const int grid_size = grid_dim_x * grid_dim_y;
-  const float grid_scale = 1.0f / grid_resolution;
+    const int num_frames = feature_views.size();
+    const int grid_dim_x = std::ceil(frame_width / grid_resolution);
+    const int grid_dim_y = std::ceil(frame_height / grid_resolution);
+    const int grid_size = grid_dim_x * grid_dim_y;
+    const float grid_scale = 1.0f / grid_resolution;
 
-  // Pre-compute neighbor grids.
-  feature_grids->clear();
-  feature_grids->resize(num_frames);
-  for (int f = 0; f < num_frames; ++f) {
-    // Populate.
-    auto& curr_grid = (*feature_grids)[f];
-    curr_grid.resize(grid_size);
-    const FeatureFrame<Feature>& curr_view = feature_views[f];
-    for (int i = 0, size = curr_view.size(); i < size; ++i) {
-      Feature* feature = curr_view[i];
-      Vector2_f feature_loc = evaluator(*feature);
-      const int x = feature_loc.x() * grid_scale;
-      const int y = feature_loc.y() * grid_scale;
-      DCHECK_LT(y, grid_dim_y);
-      DCHECK_LT(x, grid_dim_x);
-      const int grid_loc = y * grid_dim_x + x;
-      curr_grid[grid_loc].push_back(feature);
+    // Pre-compute neighbor grids.
+    feature_grids->clear();
+    feature_grids->resize(num_frames);
+    for (int f = 0; f < num_frames; ++f) {
+        // Populate.
+        auto& curr_grid = (*feature_grids)[f];
+        curr_grid.resize(grid_size);
+        const FeatureFrame<Feature>& curr_view = feature_views[f];
+        for (int i = 0, size = curr_view.size(); i < size; ++i) {
+            Feature* feature = curr_view[i];
+            Vector2_f feature_loc = evaluator(*feature);
+            const int x = feature_loc.x() * grid_scale;
+            const int y = feature_loc.y() * grid_scale;
+            DCHECK_LT(y, grid_dim_y);
+            DCHECK_LT(x, grid_dim_x);
+            const int grid_loc = y * grid_dim_x + x;
+            curr_grid[grid_loc].push_back(feature);
+        }
     }
-  }
 
-  if (feature_taps_3 != NULL) {
-    GridTaps(grid_dim_x, grid_dim_y, 1, feature_taps_3);
-  }
-  if (feature_taps_5 != NULL) {
-    GridTaps(grid_dim_x, grid_dim_y, 2, feature_taps_5);
-  }
+    if (feature_taps_3 != NULL) {
+        GridTaps(grid_dim_x, grid_dim_y, 1, feature_taps_3);
+    }
+    if (feature_taps_5 != NULL) {
+        GridTaps(grid_dim_x, grid_dim_y, 2, feature_taps_5);
+    }
 
-  if (num_grid_bins) {
-    *num_grid_bins = Vector2_i(grid_dim_x, grid_dim_y);
-  }
+    if (num_grid_bins) {
+        *num_grid_bins = Vector2_i(grid_dim_x, grid_dim_y);
+    }
 }
 
 }  // namespace mediapipe

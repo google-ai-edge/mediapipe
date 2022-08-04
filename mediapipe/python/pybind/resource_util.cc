@@ -13,7 +13,6 @@
 // limitations under the License.
 
 #include "mediapipe/python/pybind/resource_util.h"
-
 #include "absl/flags/declare.h"
 #include "absl/flags/flag.h"
 
@@ -25,15 +24,15 @@ namespace python {
 namespace py = pybind11;
 
 void ResourceUtilSubmodule(pybind11::module* module) {
-  py::module m =
-      module->def_submodule("resource_util", "MediaPipe resource util module.");
+    py::module m =
+        module->def_submodule("resource_util", "MediaPipe resource util module.");
 
-  m.def(
-      "set_resource_dir",
-      [](const std::string& str) {
-        absl::SetFlag(&FLAGS_resource_root_dir, str);
-      },
-      R"doc(Set resource root directory where can find necessary graph resources such as model files and label maps.
+    m.def(
+        "set_resource_dir",
+        [](const std::string& str) {
+            absl::SetFlag(&FLAGS_resource_root_dir, str);
+        },
+        R"doc(Set resource root directory where can find necessary graph resources such as model files and label maps.
 
   Args:
     str: A UTF-8 str.

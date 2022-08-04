@@ -13,47 +13,45 @@
 // limitations under the License.
 
 #include "mediapipe/util/tracking/parallel_invoker.h"
-
-#include <algorithm>
-#include <numeric>
-
 #include "absl/synchronization/mutex.h"
 #include "mediapipe/framework/port/gtest.h"
+#include <algorithm>
+#include <numeric>
 
 namespace mediapipe {
 namespace {
 
 void RunParallelTest() {
-  absl::Mutex numbers_mutex;
-  std::vector<int> numbers;
-  const int kArraySize = 5000;
+    absl::Mutex numbers_mutex;
+    std::vector<int> numbers;
+    const int kArraySize = 5000;
 
-  // Fill number array in parallel.
-  ParallelFor(0, kArraySize, 1,
-              [&numbers_mutex, &numbers](const BlockedRange& b) {
-                for (int k = b.begin(); k != b.end(); ++k) {
-                  absl::MutexLock lock(&numbers_mutex);
-                  numbers.push_back(k);
-                }
-              });
+    // Fill number array in parallel.
+    ParallelFor(0, kArraySize, 1,
+                [&numbers_mutex, &numbers](const BlockedRange& b) {
+                    for (int k = b.begin(); k != b.end(); ++k) {
+                        absl::MutexLock lock(&numbers_mutex);
+                        numbers.push_back(k);
+                    }
+                });
 
-  std::vector<int> expected(kArraySize);
-  std::iota(expected.begin(), expected.end(), 0);
-  EXPECT_TRUE(
-      std::is_permutation(expected.begin(), expected.end(), numbers.begin()));
+    std::vector<int> expected(kArraySize);
+    std::iota(expected.begin(), expected.end(), 0);
+    EXPECT_TRUE(
+        std::is_permutation(expected.begin(), expected.end(), numbers.begin()));
 }
 
 TEST(ParallelInvokerTest, PhotosTest) {
-  flags_parallel_invoker_mode = PARALLEL_INVOKER_OPENMP;
+    flags_parallel_invoker_mode = PARALLEL_INVOKER_OPENMP;
 
-  RunParallelTest();
+    RunParallelTest();
 }
 
 TEST(ParallelInvokerTest, ThreadPoolTest) {
-  flags_parallel_invoker_mode = PARALLEL_INVOKER_THREAD_POOL;
+    flags_parallel_invoker_mode = PARALLEL_INVOKER_THREAD_POOL;
 
-  // Needs to be run in opt mode to pass.
-  RunParallelTest();
+    // Needs to be run in opt mode to pass.
+    RunParallelTest();
 }
 
 }  // namespace

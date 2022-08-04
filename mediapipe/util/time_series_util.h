@@ -17,9 +17,6 @@
 #ifndef MEDIAPIPE_UTIL_TIME_SERIES_UTIL_H_
 #define MEDIAPIPE_UTIL_TIME_SERIES_UTIL_H_
 
-#include <string>
-#include <typeinfo>
-
 #include "absl/strings/str_cat.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/matrix.h"
@@ -27,6 +24,8 @@
 #include "mediapipe/framework/port/integral_types.h"
 #include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/status.h"
+#include <string>
+#include <typeinfo>
 
 namespace mediapipe {
 namespace time_series_util {
@@ -62,17 +61,17 @@ absl::Status FillMultiStreamTimeSeriesHeaderIfValid(
 // OptionsClass.
 template <typename OptionsClass>
 absl::Status HasOptionsExtension(const CalculatorOptions& options) {
-  if (options.HasExtension(OptionsClass::ext)) {
-    return absl::OkStatus();
-  }
-  std::string error_message = "Options proto does not contain extension ";
-  absl::StrAppend(&error_message,
-                  MediaPipeTypeStringOrDemangled<OptionsClass>());
+    if (options.HasExtension(OptionsClass::ext)) {
+        return absl::OkStatus();
+    }
+    std::string error_message = "Options proto does not contain extension ";
+    absl::StrAppend(&error_message,
+                    MediaPipeTypeStringOrDemangled<OptionsClass>());
 #ifndef MEDIAPIPE_MOBILE
-  // Avoid lite proto APIs on mobile targets.
-  absl::StrAppend(&error_message, " : ", options.DebugString());
+    // Avoid lite proto APIs on mobile targets.
+    absl::StrAppend(&error_message, " : ", options.DebugString());
 #endif
-  return absl::InvalidArgumentError(error_message);
+    return absl::InvalidArgumentError(error_message);
 }
 
 // Returnsabsl::Status::OK if the shape of 'matrix' is consistent
@@ -86,27 +85,27 @@ absl::Status IsMatrixShapeConsistentWithHeader(const Matrix& matrix,
 template <typename OptionsClass>
 void FillOptionsExtensionOrDie(const CalculatorOptions& options,
                                OptionsClass* extension) {
-  MEDIAPIPE_CHECK_OK(HasOptionsExtension<OptionsClass>(options));
-  extension->CopyFrom(options.GetExtension(OptionsClass::ext));
+    MEDIAPIPE_CHECK_OK(HasOptionsExtension<OptionsClass>(options));
+    extension->CopyFrom(options.GetExtension(OptionsClass::ext));
 }
 
 template <typename TimeSeriesHeaderExtensionClass>
 bool FillExtensionFromHeader(const TimeSeriesHeader& header,
                              TimeSeriesHeaderExtensionClass* extension) {
-  if (header.HasExtension(TimeSeriesHeaderExtensionClass::time_series_ext)) {
-    extension->CopyFrom(
-        header.GetExtension(TimeSeriesHeaderExtensionClass::time_series_ext));
-    return true;
-  } else {
-    return false;
-  }
+    if (header.HasExtension(TimeSeriesHeaderExtensionClass::time_series_ext)) {
+        extension->CopyFrom(
+            header.GetExtension(TimeSeriesHeaderExtensionClass::time_series_ext));
+        return true;
+    } else {
+        return false;
+    }
 }
 
 template <typename TimeSeriesHeaderExtensionClass>
 void SetExtensionInHeader(const TimeSeriesHeaderExtensionClass& extension,
                           TimeSeriesHeader* header) {
-  header->MutableExtension(TimeSeriesHeaderExtensionClass::time_series_ext)
-      ->CopyFrom(extension);
+    header->MutableExtension(TimeSeriesHeaderExtensionClass::time_series_ext)
+        ->CopyFrom(extension);
 }
 
 // Converts from a time_in_seconds to an integer number of samples.

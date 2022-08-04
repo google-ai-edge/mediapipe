@@ -17,12 +17,12 @@ syntax = "proto2";
 package mediapipe;
 
 message Color {
-  optional int32 r = 1;
-  optional int32 g = 2;
-  optional int32 b = 3;
+    optional int32 r = 1;
+    optional int32 g = 2;
+    optional int32 b = 3;
 }
 
 // Mapping from string label to a color.
 message ColorMap {
-  map<string, Color> label_to_color = 1;
+    map<string, Color> label_to_color = 1;
 }

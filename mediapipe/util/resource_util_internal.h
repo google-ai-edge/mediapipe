@@ -1,9 +1,8 @@
 #ifndef MEDIAPIPE_UTIL_RESOURCE_UTIL_INTERNAL_H_
 #define MEDIAPIPE_UTIL_RESOURCE_UTIL_INTERNAL_H_
 
-#include <string>
-
 #include "mediapipe/framework/port/status.h"
+#include <string>
 
 namespace mediapipe {
 namespace internal {

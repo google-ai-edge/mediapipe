@@ -13,7 +13,6 @@
 // limitations under the License.
 
 #include "mediapipe/python/pybind/packet.h"
-
 #include "mediapipe/framework/packet.h"
 #include "mediapipe/framework/timestamp.h"
 #include "mediapipe/python/pybind/util.h"
@@ -25,11 +24,11 @@ namespace python {
 namespace py = pybind11;
 
 void PacketSubmodule(pybind11::module* module) {
-  py::module m = module->def_submodule("packet", "MediaPipe packet module.");
+    py::module m = module->def_submodule("packet", "MediaPipe packet module.");
 
-  py::class_<Packet> packet(
-      m, "Packet",
-      R"doc(The basic data flow unit of MediaPipe. A generic container class which can hold data of any type.
+    py::class_<Packet> packet(
+        m, "Packet",
+        R"doc(The basic data flow unit of MediaPipe. A generic container class which can hold data of any type.
 
   A packet consists of a numeric timestamp and a shared pointer to an immutable
   payload. The payload can be of any C++ type (See packet_creator module for
@@ -43,29 +42,29 @@ void PacketSubmodule(pybind11::module* module) {
   the "packet_getter" module.
 )doc");
 
-  packet.def(py::init(),
-             R"doc(Create an empty Packet, for which is_empty() is True and
+    packet.def(py::init(),
+               R"doc(Create an empty Packet, for which is_empty() is True and
   timestamp() is Timestamp.unset. Calling packet getter methods on this Packet leads to runtime error.)doc");
 
-  packet.def(
-      "is_empty", &Packet::IsEmpty,
-      R"doc(Return true iff the Packet has been created using the default constructor Packet(), or is a copy of such a Packet.)doc");
+    packet.def(
+        "is_empty", &Packet::IsEmpty,
+        R"doc(Return true iff the Packet has been created using the default constructor Packet(), or is a copy of such a Packet.)doc");
 
-  packet.def(py::init<Packet const&>())
-      .def("at", [](Packet* self,
-                    int64 ts_value) { return self->At(Timestamp(ts_value)); })
-      .def("at", [](Packet* self, Timestamp ts) { return self->At(ts); })
-      .def_property(
-          "timestamp", &Packet::Timestamp,
-          [](Packet* p, int64 ts_value) { *p = p->At(Timestamp(ts_value)); })
-      .def("__repr__", [](const Packet& self) {
-        return absl::StrCat(
-            "<mediapipe.Packet with timestamp: ",
-            TimestampValueString(self.Timestamp()),
-            self.IsEmpty()
-                ? " and no data>"
-                : absl::StrCat(" and C++ type: ", self.DebugTypeName(), ">"));
-      });
+    packet.def(py::init<const Packet&>())
+        .def("at", [](Packet* self,
+                      int64 ts_value) { return self->At(Timestamp(ts_value)); })
+        .def("at", [](Packet* self, Timestamp ts) { return self->At(ts); })
+        .def_property(
+            "timestamp", &Packet::Timestamp,
+            [](Packet* p, int64 ts_value) { *p = p->At(Timestamp(ts_value)); })
+        .def("__repr__", [](const Packet& self) {
+            return absl::StrCat(
+                "<mediapipe.Packet with timestamp: ",
+                TimestampValueString(self.Timestamp()),
+                self.IsEmpty()
+                    ? " and no data>"
+                    : absl::StrCat(" and C++ type: ", self.DebugTypeName(), ">"));
+        });
 }
 
 }  // namespace python

@@ -13,7 +13,6 @@
 // limitations under the License.
 
 #include "mediapipe/python/pybind/matrix.h"
-
 #include "mediapipe/framework/formats/matrix.h"
 #include "pybind11/eigen.h"
 #include "pybind11/numpy.h"
@@ -25,12 +24,12 @@ namespace python {
 namespace py = pybind11;
 
 void MatrixSubmodule(pybind11::module* module) {
-  py::module m = module->def_submodule("matrix", "MediaPipe matrix module.");
+    py::module m = module->def_submodule("matrix", "MediaPipe matrix module.");
 
-  py::class_<mediapipe::Matrix>(m, "Matrix")
-      .def(py::init(
-          // Pass by reference.
-          [](const Eigen::Ref<const Eigen::MatrixXf>& m) { return m; }));
+    py::class_<mediapipe::Matrix>(m, "Matrix")
+        .def(py::init(
+            // Pass by reference.
+            [](const Eigen::Ref<const Eigen::MatrixXf>& m) { return m; }));
 }
 
 }  // namespace python
