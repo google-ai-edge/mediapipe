@@ -101,14 +101,6 @@ node {
   output_stream: "IMAGE:fake_image"
 }
 
-
-node{
-  calculator: "FromImageCalculator"
-  input_stream: "IMAGE:fake_image"
-  output_stream: "IMAGE_CPU:fake_image2"
-}
-
-
 node: {
   calculator: "ImageTransformationCalculator"
   input_stream: "IMAGE:input_video"
@@ -146,28 +138,16 @@ node {
 
 
 node {
-  calculator: "ImagePropertiesCalculator"
-  input_stream: "IMAGE:transformed_input_img"
-  output_stream: "SIZE:input_size_img"
-}
-
-node {
   calculator: "TensorsToImageCalculator"
   input_stream: "TENSORS:output_tensor_img"
-  input_stream: "OUTPUT_SIZE:input_size_img"
-  output_stream: "IMAGE:fake_bg2"
+  output_stream: "IMAGE:fake_bg"
 }
 
-node{
-  calculator: "FromImageCalculator"
-  input_stream: "IMAGE:fake_bg2"
-  output_stream: "IMAGE_CPU:fake_bg"
-}
 
 node {
   calculator: "FastUtilsCalculator"
   input_stream: "NORM_LANDMARKS:multi_face_landmarks"
-  input_stream: "IMAGE:fake_image2"
+  input_stream: "IMAGE:fake_image"
   input_stream: "SIZE:original_size"
   output_stream: "IMAGE:back_image"
   options {

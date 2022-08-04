@@ -14,7 +14,6 @@
 
 #include <math.h>
 #include <string>
-
 #include <memory>
 
 #include "absl/strings/str_cat.h"
@@ -23,7 +22,6 @@
 #include "mediapipe/framework/formats/image_frame.h"
 #include "mediapipe/framework/formats/image_frame_opencv.h"
 #include "mediapipe/framework/formats/video_stream_header.h"
-#include "mediapipe/framework/formats/landmark.pb.h"
 #include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/opencv_core_inc.h"
 #include "mediapipe/framework/port/opencv_imgproc_inc.h"
@@ -37,20 +35,13 @@ namespace mediapipe
 {
   namespace
   {
-    static const std::vector<cv::Point2f> FFHQ_NORM_LM = {
-        {638.68525475 / 1024, 486.24604922 / 1024},
-        {389.31496114 / 1024, 485.8921848 / 1024},
-        {513.67979275 / 1024, 620.8915371 / 1024},
-        {405.50932642 / 1024, 756.52797927 / 1024},
-        {622.55630397 / 1024, 756.15509499 / 1024}};
-
     constexpr char kImageFrameTag[] = "IMAGE";
     constexpr char kFakeBgTag[] = "FAKE_BG";
     constexpr char kLmMaskTag[] = "LM_MASK";
 
     inline bool HasImageTag(mediapipe::CalculatorContext *cc) { return false; }
 
-    cv::Mat blend_mask(cv::Mat mask_face, cv::Mat mask_bbox, int kernel_size = 33, int reduce_size = 128)
+    absl::StatusOr<cv::Mat> blend_mask(cv::Mat mask_face, cv::Mat mask_bbox, int kernel_size = 33, int reduce_size = 128)
     {
       int k_sz = kernel_size;
       auto [width, height] = mask_face.size();
@@ -71,20 +62,21 @@ namespace mediapipe
       mask_bbox.convertTo(mask_bbox, CV_32F);
       cv::GaussianBlur(mask_bbox, mask_bbox, {k_sz, k_sz}, 0);
 
-      cv::Mat mask_bbox_3ch;
-      cv::merge(std::vector{mask_bbox, mask_bbox, mask_bbox}, mask_bbox_3ch);
-
-      cv::Mat mask = mask_bbox_3ch.mul(mask_face);
+      cv::Mat mask = mask_bbox.mul(mask_face);
 
       cv::Mat img_out;
       cv::resize(mask, img_out, {width, height});
 
-      for (int i = 1; i < mask_face_0.rows; i++)
+      for (int i = 0; i < mask_face_0.rows; i++)
       {
-        for (int j = 1; j < mask_face_0.cols; j++)
+        const uchar *ptr_mask_face = mask_face_0.ptr<uchar>(i);
+        float *ptr_img_out = img_out.ptr<float>(i);
+        for (int j = 0; j < mask_face_0.cols; j++)
         {
-          if (mask_face_0.at<uchar>(i, j) > 0)
-            img_out.at<cv::Vec3b>(i, j) = 1;
+          if (ptr_mask_face[j] > 0)
+          {
+            ptr_img_out[j] = 1;
+          }
         }
       }
 
@@ -138,7 +130,7 @@ namespace mediapipe
     }
     if (cc->Inputs().HasTag(kLmMaskTag))
     {
-      cc->Inputs().Tag(kLmMaskTag).Set<ImageFrame>();
+      cc->Inputs().Tag(kLmMaskTag).Set<cv::Mat>();
     }
     if (cc->Outputs().HasTag(kImageFrameTag))
     {
@@ -181,23 +173,19 @@ namespace mediapipe
     ImageFormat::Format target_format;
     std::unique_ptr<cv::Mat> image_mat;
     MP_RETURN_IF_ERROR(CreateRenderTargetCpu(cc, image_mat, kImageFrameTag, &target_format));
-     
+
     if (((cc->Inputs().HasTag(kFakeBgTag) &&
           !cc->Inputs().Tag(kFakeBgTag).IsEmpty())) &&
         ((cc->Inputs().HasTag(kLmMaskTag) &&
           !cc->Inputs().Tag(kLmMaskTag).IsEmpty())))
     {
       // Initialize render target, drawn with OpenCV.
-      std::unique_ptr<cv::Mat> fake_bg;
-      std::unique_ptr<cv::Mat> lm_mask_ptr;
+      const auto &input_fake_bg = cc->Inputs().Tag(kFakeBgTag).Get<ImageFrame>();
+      auto mat_fake_bg_ = formats::MatView(&input_fake_bg);
 
-      MP_RETURN_IF_ERROR(CreateRenderTargetCpu(cc, fake_bg, kFakeBgTag, &target_format));
-      MP_RETURN_IF_ERROR(CreateRenderTargetCpu(cc, lm_mask_ptr, kLmMaskTag, &target_format));
-
-      cv::Mat mat_fake_bg_ = *fake_bg.get();
+      cv::Mat lm_mask = cc->Inputs().Tag(kLmMaskTag).Get<cv::Mat>();
+      
       cv::Mat mat_image_ = *image_mat.get();
-      cv::Mat lm_mask = *lm_mask_ptr.get();
-
       image_width_ = image_mat->cols;
       image_height_ = image_mat->rows;
 
@@ -206,11 +194,12 @@ namespace mediapipe
       cv::transform(roi_mask, roi_mask, cv::Matx13f(1, 1, 1));
       cv::threshold(roi_mask, roi_mask, 1, 255, CV_THRESH_TRUNC);
 
-      cv::Mat mask = blend_mask(lm_mask, roi_mask, 33);
+      ASSIGN_OR_RETURN(auto mask, blend_mask(lm_mask, roi_mask, 33));
 
       mat_image_.convertTo(mat_image_, CV_32F);
       mat_fake_bg_.convertTo(mat_fake_bg_, CV_32F);
       cv::resize(mat_fake_bg_, mat_fake_bg_, {image_width_, image_height_});
+      cv::merge(std::vector{mask, mask, mask}, mask);
 
       cv::Mat im_out = mat_fake_bg_.mul(cv::Scalar::all(1) - mask) + mat_image_.mul(mask);
 

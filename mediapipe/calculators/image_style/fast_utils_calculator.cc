@@ -49,6 +49,14 @@ namespace mediapipe
         {405.50932642 / 1024, 756.52797927 / 1024},
         {622.55630397 / 1024, 756.15509499 / 1024}};
 
+    const std::vector<std::pair<std::string, std::vector<int>>> index_dict = {
+        {"leftEye", {384, 385, 386, 387, 388, 390, 263, 362, 398, 466, 373, 374, 249, 380, 381, 382}},
+        {"rightEye", {160, 33, 161, 163, 133, 7, 173, 144, 145, 246, 153, 154, 155, 157, 158, 159}},
+        {"nose", {4}},
+        {"leftLips", {61, 146}},
+        {"rightLips", {291, 375}},
+    };
+
     constexpr char kImageFrameTag[] = "IMAGE";
     constexpr char kVectorTag[] = "VECTOR";
     constexpr char kLandmarksTag[] = "LANDMARKS";
@@ -202,9 +210,6 @@ namespace mediapipe
     absl::Status Process(CalculatorContext *cc) override;
     absl::Status Close(CalculatorContext *cc) override;
 
-  protected:
-    mediapipe::FastUtilsCalculatorOptions options_;
-
   private:
     absl::Status CreateRenderTargetCpu(CalculatorContext *cc,
                                        std::unique_ptr<cv::Mat> &image_mat,
@@ -224,22 +229,18 @@ namespace mediapipe
                        cv::Mat target_lm = cv::Mat(FFHQ_NORM_LM), cv::Size size = cv::Size(256, 256),
                        float extend = NULL, std::tuple<float, float, float, float> roi = {NULL, NULL, NULL, NULL});
 
+    absl::Status LoadOptions(CalculatorContext *cc);
     // Indicates if image frame is available as input.
     bool image_frame_available_ = false;
-
-    const std::vector<std::pair<std::string, std::vector<int>>> index_dict = {
-        {"leftEye", {384, 385, 386, 387, 388, 390, 263, 362, 398, 466, 373, 374, 249, 380, 381, 382}},
-        {"rightEye", {160, 33, 161, 163, 133, 7, 173, 144, 145, 246, 153, 154, 155, 157, 158, 159}},
-        {"nose", {4}},
-        {"leftLips", {61, 146}},
-        {"rightLips", {291, 375}},
-    }; 
- 
     cv::Mat mat_image_;
     cv::Mat lm_mask;
     int image_width_;
     int image_height_;
+    int orig_width;
+    int orig_height;
     bool back_to_im;
+
+    ::mediapipe::FastUtilsCalculatorOptions options_;
   };
   REGISTER_CALCULATOR(FastUtilsCalculator);
 
@@ -281,7 +282,7 @@ namespace mediapipe
 
     if (cc->Outputs().HasTag(kLmMaskTag))
     {
-      cc->Outputs().Tag(kLmMaskTag).Set<ImageFrame>();
+      cc->Outputs().Tag(kLmMaskTag).Set<cv::Mat>();
     }
 
     return absl::OkStatus();
@@ -290,8 +291,8 @@ namespace mediapipe
   absl::Status FastUtilsCalculator::Open(CalculatorContext *cc)
   {
     cc->SetOffset(TimestampDiff(0));
-    options_ = cc->Options<mediapipe::FastUtilsCalculatorOptions>();
-    back_to_im = options_.back_to_image();
+
+    MP_RETURN_IF_ERROR(LoadOptions(cc));
 
     if (cc->Inputs().HasTag(kImageFrameTag) || HasImageTag(cc))
     {
@@ -322,8 +323,13 @@ namespace mediapipe
     // Initialize render target, drawn with OpenCV.
     std::unique_ptr<cv::Mat> image_mat;
     ImageFormat::Format target_format;
-    ImageFormat::Format target_format2;
     std::vector<std::vector<cv::Point2f>> lms_out;
+
+    const auto size = cc->Inputs().Tag(kSizeTag).Get<std::pair<int, int>>();
+    orig_width = size.first;
+    orig_height = size.second;
+    CHECK_GT(size.first, 0);
+    CHECK_GT(orig_height, 0);
 
     MP_RETURN_IF_ERROR(CreateRenderTargetCpu(cc, image_mat, &target_format));
     mat_image_ = *image_mat.get();
@@ -335,33 +341,16 @@ namespace mediapipe
     {
       MP_RETURN_IF_ERROR(Call(cc, image_mat, target_format, lms_out));
 
-      if (cc->Outputs().HasTag(kLmMaskTag))
-      {
-        lm_mask.convertTo(lm_mask, CV_8U);
-
-        std::unique_ptr<cv::Mat> lm_mask_ptr = absl::make_unique<cv::Mat>(
-            mat_image_.size(), lm_mask.type());
-
-        lm_mask.copyTo(*lm_mask_ptr);
-
-        target_format2 = ImageFormat::GRAY8;
-        uchar *lm_mask_pt = lm_mask_ptr->data;
-
-        MP_RETURN_IF_ERROR(RenderToCpu(cc, target_format2, lm_mask_pt, lm_mask_ptr, kLmMaskTag));
-      }
-
       if (!back_to_im)
       {
         MP_RETURN_IF_ERROR(Align(image_mat, cv::Mat(lms_out[0])));
       }
       else
       {
-        const auto &size =
-            cc->Inputs().Tag(kSizeTag).Get<std::pair<int, int>>();
         cv::Mat tar = cv::Mat(FFHQ_NORM_LM) * 256;
 
         MP_RETURN_IF_ERROR(Align(image_mat, tar,
-                                 cv::Mat(lms_out[0]), {size.first, size.second}));
+                                 cv::Mat(lms_out[0]), {orig_width, orig_height}));
       }
       uchar *image_mat_ptr = image_mat->data;
       MP_RETURN_IF_ERROR(RenderToCpu(cc, target_format, image_mat_ptr, image_mat, kImageFrameTag));
@@ -396,6 +385,17 @@ namespace mediapipe
           .Add(output_frame.release(), cc->InputTimestamp());
     }
 
+    if (cc->Outputs().HasTag(kLmMaskTag) && !lm_mask.empty())
+    {
+      auto output_lmmask = absl::make_unique<cv::Mat>(lm_mask);
+
+      if (cc->Outputs().HasTag(kLmMaskTag))
+      {
+        cc->Outputs()
+            .Tag(kLmMaskTag)
+            .Add(output_lmmask.release(), cc->InputTimestamp());
+      }
+    }
     return absl::OkStatus();
   }
 
@@ -484,13 +484,11 @@ namespace mediapipe
               continue;
             }
 
-            const auto &size =
-                cc->Inputs().Tag(kSizeTag).Get<std::pair<int, int>>();
             const auto &point = landmark;
             int x = -1;
             int y = -1;
-            CHECK(NormalizedtoPixelCoordinates(point.x(), point.y(), size.first,
-                                               size.second, &x, &y));
+            CHECK(NormalizedtoPixelCoordinates(point.x(), point.y(), orig_width,
+                                               orig_height, &x, &y));
             kps.push_back(cv::Point2f(x, y));
           }
 
@@ -519,8 +517,9 @@ namespace mediapipe
         }
         std::vector<std::vector<cv::Point>> pts;
         pts.push_back(kpsint);
-        lm_mask = cv::Mat::zeros(image_mat->size(), CV_32FC1);
+        lm_mask = cv::Mat::zeros({orig_width, orig_height}, CV_32FC1);
         cv::fillPoly(lm_mask, pts, cv::Scalar::all(1), cv::LINE_AA);
+        lm_mask.convertTo(lm_mask, CV_8U);
       }
     }
 
@@ -562,6 +561,16 @@ namespace mediapipe
     cv::hconcat(vec_mat, transform);
 
     cv::warpAffine(mat_image_, *image_mat, transform, size, 1, 0, 0.0);
+
+    return absl::OkStatus();
+  }
+
+  absl::Status FastUtilsCalculator::LoadOptions(CalculatorContext *cc)
+  {
+    // Get calculator options specified in the graph.
+    options_ = cc->Options<::mediapipe::FastUtilsCalculatorOptions>();
+    RET_CHECK(options_.has_back_to_image());
+    back_to_im = options_.back_to_image();
 
     return absl::OkStatus();
   }

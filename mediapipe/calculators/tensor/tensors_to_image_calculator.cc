@@ -97,8 +97,7 @@ namespace mediapipe
 
   private:
     absl::Status ProcessCpu(CalculatorContext *cc);
-    
- };
+  };
   REGISTER_CALCULATOR(TensorsToImageCalculator);
 
   // static
@@ -116,7 +115,7 @@ namespace mediapipe
     }
 
     // Outputs.
-    cc->Outputs().Tag(kImageTag).Set<Image>();
+    cc->Outputs().Tag(kImageTag).Set<ImageFrame>();
 
     return absl::OkStatus();
   }
@@ -137,6 +136,7 @@ namespace mediapipe
 
     const auto &input_tensors =
         cc->Inputs().Tag(kTensorsTag).Get<std::vector<Tensor>>();
+    RET_CHECK(!input_tensors.empty());
 
     MP_RETURN_IF_ERROR(ProcessCpu(cc));
 
@@ -184,15 +184,18 @@ namespace mediapipe
     cv::merge(channels, tensor_mat);
 
     cv::convertScaleAbs(tensor_mat, tensor_mat);
+    cv::resize(tensor_mat, tensor_mat,
+               cv::Size(output_width, output_height));
 
     // Send out image as CPU packet.
-    std::shared_ptr<ImageFrame> image_frame = std::make_shared<ImageFrame>(
+    auto output_image = absl::make_unique<ImageFrame>(
         ImageFormat::SRGB, output_width, output_height);
-    std::unique_ptr<Image> output_image = absl::make_unique<Image>(image_frame);
-    auto output_mat = formats::MatView(output_image.get());
-    // Upsample image into output.
-    cv::resize(tensor_mat, *output_mat,
-               cv::Size(output_width, output_height));
+
+    uchar *data_image = tensor_mat.data;
+
+    output_image->CopyPixelData(ImageFormat::SRGB, tensor_mat.cols, tensor_mat.rows, data_image,
+                                ImageFrame::kDefaultAlignmentBoundary);
+
     cc->Outputs().Tag(kImageTag).Add(output_image.release(), cc->InputTimestamp());
 
     return absl::OkStatus();

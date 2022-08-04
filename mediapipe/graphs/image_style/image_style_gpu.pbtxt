@@ -103,13 +103,7 @@ node {
 node {
   calculator: "TensorsToImageCalculator"
   input_stream: "TENSORS:output_tensor"
-  output_stream: "IMAGE:fake_image"
-}
-
-node: {
-  calculator: "FromImageCalculator"
-  input_stream: "IMAGE:fake_image"
-  output_stream: "IMAGE_CPU:cpu_fake_image"
+  output_stream: "IMAGE:cpu_fake_image"
 }
 
 node: {
@@ -142,30 +136,17 @@ node {
   options: {
     [mediapipe.InferenceCalculatorOptions.ext] {
       model_path: "mediapipe/models/model_float32.tflite"
-      delegate { xnnpack {} }
+      delegate { gpu {} }
     }
   }
-}
-
-
-node {
-  calculator: "ImagePropertiesCalculator"
-  input_stream: "IMAGE_CPU:transformed_input_img"
-  output_stream: "SIZE:input_size_img"
 }
 
 node {
   calculator: "TensorsToImageCalculator"
   input_stream: "TENSORS:output_tensor_img"
-  input_stream: "OUTPUT_SIZE:input_size_img"
-  output_stream: "IMAGE:fake_bg2"
+  output_stream: "IMAGE:fake_bg"
 }
 
-node{
-  calculator: "FromImageCalculator"
-  input_stream: "IMAGE:fake_bg2"
-  output_stream: "IMAGE_CPU:fake_bg"
-}
 
 node {
   calculator: "FastUtilsCalculator"
