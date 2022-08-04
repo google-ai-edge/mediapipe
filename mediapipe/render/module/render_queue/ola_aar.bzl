@@ -9,10 +9,12 @@ load("@build_bazel_rules_android//android:rules.bzl", "android_binary", "android
 def ola_aar(name,
         srcs = [],
         assets = [],
+        gen_lib = True,
         proguard_specs = [],
         assets_dir = "" ):
 
     _ola_jni(
+        gen_lib = gen_lib,
         name = name + "_jni",
     )
 
@@ -46,16 +48,17 @@ EOF
 
 
 
-def _ola_jni(name):
+def _ola_jni(gen_lib, name):
 
-    # native.cc_binary(
-    #     name = "libola_render_jni.so",
-    #     linkshared = 1,
-    #     linkstatic = 1,
-    #     deps = [
-    #          "//mediapipe/render/module/render_queue:olarender_jni",
-    #     ]
-    # )
+    if gen_lib:
+        native.cc_binary(
+            name = "libola_render_jni.so",
+            linkshared = 1,
+            linkstatic = 1,
+            deps = [
+                "//mediapipe/render/module/render_queue:olarender",
+            ]
+        )
 
     native.cc_library(
         name = name + "_cc_lib",

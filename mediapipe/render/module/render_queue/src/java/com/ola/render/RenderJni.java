@@ -15,16 +15,16 @@ public class RenderJni{
         System.loadLibrary("ola_render_jni");
     }
 
-    public static native Long create();
+    public static native long create();
 
     public static native int render(
-            Long renderContext,
+            long renderContext,
             int textureId,
             int width,
             int height,
-            Long timestamp,
+            long timestamp,
             boolean export
      );
 
-    public static native void release(Long render);
+    public static native void release(long render);
 }

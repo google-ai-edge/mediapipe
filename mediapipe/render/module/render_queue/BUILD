@@ -1,8 +1,15 @@
 load("@build_bazel_rules_apple//apple:ios.bzl", "ios_framework")
 
+licenses(["notice"])
+
 package(
     default_visibility = ["//visibility:public"],
     features = ["no_layering_check"],
+)
+
+alias(
+    name = "olarender_jni",
+    actual = ":olarender",
 )
 
 cc_library(

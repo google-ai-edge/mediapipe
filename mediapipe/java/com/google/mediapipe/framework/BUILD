@@ -23,7 +23,7 @@ exports_files([
 android_library(
     name = "android_framework",
     proguard_specs = [":proguard.pgcfg"],
-    visibility = ["//visibility:public"],
+    visibility = ["//visibility:public"],    
     exports = [
         ":android_core",
         ":android_framework_no_mff",
