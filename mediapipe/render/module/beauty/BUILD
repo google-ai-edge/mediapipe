@@ -44,15 +44,19 @@ cc_library(
     linkstatic = True,
     deps = [
         "//mediapipe/render/module/common:olamodule_common_library",
-       
-        
     ] + select({
         "//mediapipe:apple": [
             "//mediapipe/render/core:core-ios",
             "//mediapipe/graphs/face_mesh:mobile_calculators",
             "//mediapipe/framework/formats:landmark_cc_proto",
             "//mediapipe/render/module/beauty/filters:BeautyFilters",
-         ],
+        ],
+        "//mediapipe:android": [
+            "//mediapipe/render/core:core",
+            "//mediapipe/graphs/face_mesh:mobile_calculators",
+            "//mediapipe/framework/formats:landmark_cc_proto",
+            "//mediapipe/render/module/beauty/filters:BeautyFilters",
+        ],
         "//conditions:default": [
             "//mediapipe/render/core:core",
             "//mediapipe/graphs/face_mesh:mobile_calculators",

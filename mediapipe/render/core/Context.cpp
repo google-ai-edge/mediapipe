@@ -23,6 +23,7 @@
 #import <OpenGLES/ES3/glext.h>
 
 #endif
+
 #include "Filter.hpp"
 #include "Context.hpp"
 #include "GPUImageUtil.h"
@@ -34,6 +35,7 @@ std::mutex Context::_mutex;
 std::string Context::activatedContextKey = "";
 std::map<std::string, Context*> Context::_ContextCache;
 
+#if defined(__APPLE__)
 Context::Context(EAGLContext *context)
 :_curShaderProgram(0)
 ,isCapturingFrame(false)
@@ -44,16 +46,13 @@ Context::Context(EAGLContext *context)
 ,_eglContextIO(0)
 ,vertexArray(-1) {
     _framebufferCache = new FramebufferCache(this);
-
-#if defined(__APPLE__)
-
     _eglContext = context;
     shareGroup = [_eglContext sharegroup];
     _eglContextIO = [[EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES3 sharegroup:shareGroup];
     _eglOfflinerenderContext = [[EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES3 sharegroup:shareGroup];
-    
-#endif
 }
+#endif
+
 
 Context::Context()
 :_curShaderProgram(0)

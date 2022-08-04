@@ -58,6 +58,12 @@ cc_library(
     srcs = ["GPUImageUtil.cpp"],
     hdrs = ["GPUImageUtil.h"],
     visibility = ["//path/to/package:__pkg__"],
+    linkopts = select({
+        "//conditions:default": [],
+        "//mediapipe:android": [
+            "-llog",
+        ],
+    }),
     deps = select({
         "//mediapipe:android": [],
         "//mediapipe:apple": [],

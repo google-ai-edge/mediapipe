@@ -36,13 +36,12 @@ cc_library(
             "//mediapipe/objc:util",
         ],
     }),
-     copts = select({
+    copts = select({
         "//mediapipe:apple": [
             "-x objective-c++",
             "-Wno-shorten-64-to-32",
             "-fobjc-arc",  # enable reference-counting
         ],
-         
         "//conditions:default": ["-std=c++17"],
     }),
     alwayslink = True,

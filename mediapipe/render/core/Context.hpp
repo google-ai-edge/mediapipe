@@ -30,8 +30,9 @@
 #import <OpenGLES/EAGL.h>
 #import <OpenGLES/ES3/gl.h>
 #import <CoreVideo/CoreVideo.h>
-#else
-#include <EGL/egl.h>
+#elif defined(__ANDROID__) 
+#include <GLES3/gl3.h>
+#include <GLES3/gl3ext.h>
 #endif
 
 

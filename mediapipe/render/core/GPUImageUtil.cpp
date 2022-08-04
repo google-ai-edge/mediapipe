@@ -17,11 +17,14 @@
  */
 #if defined(__APPLE__)
 #import <Foundation/Foundation.h>
+#elif defined(__ANDROID__)
+#include <android/log.h>
 #endif
+
 
 #include "GPUImageUtil.h"
 #define openLog 1
-
+#define ANDROID_LOG_INFO 'gpu_log_info'
 
 namespace Opipe {
 

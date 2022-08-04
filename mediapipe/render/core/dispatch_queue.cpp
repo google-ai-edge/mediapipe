@@ -13,7 +13,7 @@
 #if defined(__APPLE__)
 #include "GPUImageMacros.h"
 #else
-#include "GPUImage-x/GPUImageMacros.h"
+#include "GPUImageMacros.h"
 #endif
 #if defined(__APPLE__)
 #include <pthread.h>
