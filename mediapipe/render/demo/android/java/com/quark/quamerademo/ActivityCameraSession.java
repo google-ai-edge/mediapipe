@@ -4,7 +4,7 @@ package com.quark.quamerademo;
  *  Description :
  *
  *  Creation    :  20-11-25
- *  Author      : jiaming.wjm@alibaba-inc.com
+ *  Author      : jiaming.wjm@
  */
 
 import android.content.Context;

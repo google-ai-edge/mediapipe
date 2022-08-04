@@ -4,7 +4,7 @@ package com.quark.quamera.render.detector;
  *  Description :
  *
  *  Creation    :  2021/12/22
- *  Author      : jiaming.wjm@alibaba-inc.com
+ *  Author      : jiaming.wjm@
  */
 
 import static com.quark.quamera.render.detector.IAlgDetector.InputDataType.NV21;

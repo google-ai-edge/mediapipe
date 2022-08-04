@@ -4,7 +4,7 @@ package com.quark.quamera.render.expansion;
  *  Description :
  *
  *  Creation    :  2021/2/25
- *  Author      : jiaming.wjm@alibaba-inc.com
+ *  Author      : jiaming.wjm@
  */
 
 import androidx.annotation.NonNull;

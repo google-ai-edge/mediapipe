@@ -4,7 +4,7 @@ package com.quark.quamera.render.detector;
  *  Description :
  *
  *  Creation    :  2021/1/29
- *  Author      : jiaming.wjm@alibaba-inc.com
+ *  Author      : jiaming.wjm@
  */
 
 import android.content.Context;

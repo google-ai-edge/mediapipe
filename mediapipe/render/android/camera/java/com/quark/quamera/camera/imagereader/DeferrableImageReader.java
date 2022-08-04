@@ -4,7 +4,7 @@ package com.quark.quamera.camera.imagereader;
  *  Description :
  *
  *  Creation    :  20-11-26
- *  Author      : jiaming.wjm@alibaba-inc.com
+ *  Author      : jiaming.wjm@
  */
 
 import android.media.ImageReader;

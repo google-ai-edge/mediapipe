@@ -4,7 +4,7 @@ package com.quark.quamera.util;
  *  Description :
  *
  *  Creation    :  20-11-19
- *  Author      : jiaming.wjm@alibaba-inc.com
+ *  Author      : jiaming.wjm@
  */
 
 import android.hardware.camera2.CameraDevice;

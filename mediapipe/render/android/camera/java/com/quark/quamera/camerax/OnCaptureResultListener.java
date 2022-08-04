@@ -3,7 +3,7 @@ package com.quark.quamera.camerax;
 import androidx.camera.core.impl.CameraCaptureResult;
 
 /**
- * @author : yushan.lj@alibaba-inc.com
+ * @author : yushan.lj@
  * @date : 2022/3/14
  */
 public interface OnCaptureResultListener {

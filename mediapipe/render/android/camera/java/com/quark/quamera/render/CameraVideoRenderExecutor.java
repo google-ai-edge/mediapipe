@@ -4,7 +4,7 @@ package com.quark.quamera.render;
  *  Description :
  *
  *  Creation    :  2021/4/13
- *  Author      : jiaming.wjm@alibaba-inc.com
+ *  Author      : jiaming.wjm@
  */
 
 import com.quark.quamera.render.view.AndroidGLSurfaceView;

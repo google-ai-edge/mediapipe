@@ -4,7 +4,7 @@ package com.quark.quamera.util;
  *  Description :
  *
  *  Creation    :  2021/7/13
- *  Author      : jiaming.wjm@alibaba-inc.com
+ *  Author      : jiaming.wjm@
  */
 
 import android.graphics.ImageFormat;

@@ -4,7 +4,7 @@ package com.quark.quamera.camera.camera;
  *  Description :
  *
  *  Creation    :  20-11-18
- *  Author      : jiaming.wjm@alibaba-inc.com
+ *  Author      : jiaming.wjm@
  */
 
 public enum CameraState {

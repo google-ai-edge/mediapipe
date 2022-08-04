@@ -1,10 +1,4 @@
-//
-//  OlaMTLRender.h
-//  
-//
-//  Created by wangrenzhu on 2021/1/22.
-//  Copyright © 2021 alibaba. All rights reserved.
-//
+
 
 #import <Foundation/Foundation.h>
 #import <AVFoundation/AVFoundation.h>

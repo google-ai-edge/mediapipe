@@ -4,7 +4,6 @@ package com.quark.quamera.camera;
  *  Description :
  *
  *  Creation    :  20-11-23
- *  Author      : jiaming.wjm@alibaba-inc.com
  */
 
 import android.content.Context;

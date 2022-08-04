@@ -8,7 +8,7 @@ import com.quark.quamera.render.view.BasePreviewView;
 import androidx.annotation.NonNull;
 
 /**
- * @author : yushan.lj@alibaba-inc.com
+ * @author : yushan.lj@
  * @date : 2021/10/17
  */
 public interface ICameraManager<T extends BasePreviewView> {

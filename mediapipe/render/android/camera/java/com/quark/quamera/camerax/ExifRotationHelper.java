@@ -13,7 +13,7 @@ import androidx.camera.core.internal.compat.workaround.ExifRotationAvailability;
 /**
  * 华为一些特殊机型无法正确处理获取旋转信息，exif的旋转方向值错误。对于这些设备，我们应该根据最终输出图像的目标旋转设置计算旋转值
  *
- * @author : yushan.lj@alibaba-inc.com
+ * @author : yushan.lj@
  * @date : 2022/2/25
  */
 public class ExifRotationHelper {

@@ -1,11 +1,3 @@
-//
-//  OlaShareTexture.h
-//  QuameraDemo
-//
-//  Created by wangrenzhu on 2021/1/21.
-//  Copyright © 2021 alibaba. All rights reserved.
-//
-
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
 #import <Metal/Metal.h>

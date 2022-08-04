@@ -4,7 +4,7 @@ package com.quark.quamera.camerax.utils;
  *  Description :
  *
  *  Creation    :  2021/5/26
- *  Author      : jiaming.wjm@alibaba-inc.com
+ *  Author      : jiaming.wjm@
  */
 
 import android.annotation.SuppressLint;

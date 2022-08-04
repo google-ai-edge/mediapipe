@@ -4,7 +4,7 @@ package com.quark.quamera.camera.session;
  *  Description :
  *
  *  Creation    :  20-12-19
- *  Author      : jiaming.wjm@alibaba-inc.com
+ *  Author      : jiaming.wjm@
  */
 
 import android.os.Handler;

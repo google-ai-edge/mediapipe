@@ -4,7 +4,7 @@ package com.quark.quamera.camera.camera;
  *  Description :
  *
  *  Creation    :  2021/6/6
- *  Author      : jiaming.wjm@alibaba-inc.com
+ *  Author      : jiaming.wjm@
  */
 
 import java.lang.ref.SoftReference;

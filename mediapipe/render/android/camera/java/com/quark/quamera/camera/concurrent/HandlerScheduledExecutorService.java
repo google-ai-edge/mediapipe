@@ -4,7 +4,7 @@ package com.quark.quamera.camera.concurrent;
  *  Description :
  *
  *  Creation    :  2021/2/8
- *  Author      : jiaming.wjm@alibaba-inc.com
+ *  Author      : jiaming.wjm@
  */
 
 

@@ -4,7 +4,7 @@ package com.quark.quamera.camera.camera;
  *  Description :
  *
  *  Creation    :  2021/3/29
- *  Author      : jiaming.wjm@alibaba-inc.com
+ *  Author      : jiaming.wjm@
  */
 
 import android.hardware.camera2.CameraAccessException;

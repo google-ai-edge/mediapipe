@@ -4,7 +4,7 @@ package com.quark.quamera.camera.preview;
  *  Description :
  *
  *  Creation    :  2021/7/12
- *  Author      : jiaming.wjm@alibaba-inc.com
+ *  Author      : jiaming.wjm@
  */
 
 import android.graphics.RectF;

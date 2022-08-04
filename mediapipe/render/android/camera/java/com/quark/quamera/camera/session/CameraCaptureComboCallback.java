@@ -4,7 +4,7 @@ package com.quark.quamera.camera.session;
  *  Description :
  *
  *  Creation    :  2021/5/26
- *  Author      : jiaming.wjm@alibaba-inc.com
+ *  Author      : jiaming.wjm@
  */
 
 import androidx.annotation.NonNull;

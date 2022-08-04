@@ -1,11 +1,5 @@
 package com.quark.quamera.camera.session;
-/*
- * Copyright (C) 2005-2019 UCWeb Inc. All rights reserved.
- *  Description :
- *
- *  Creation    :  20-11-24
- *  Author      : jiaming.wjm@alibaba-inc.com
- */
+
 
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraMetadata;

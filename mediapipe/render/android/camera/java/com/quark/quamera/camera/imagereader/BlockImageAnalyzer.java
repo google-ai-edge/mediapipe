@@ -4,7 +4,7 @@ package com.quark.quamera.camera.imagereader;
  *  Description :
  *
  *  Creation    :  2021/4/22
- *  Author      : jiaming.wjm@alibaba-inc.com
+ *  Author      : jiaming.wjm@
  */
 
 class BlockImageAnalyzer {

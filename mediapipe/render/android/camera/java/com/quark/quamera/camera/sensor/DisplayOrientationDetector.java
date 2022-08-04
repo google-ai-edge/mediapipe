@@ -1,11 +1,5 @@
 package com.quark.quamera.camera.sensor;
-/*
- * Copyright (C) 2005-2019 UCWeb Inc. All rights reserved.
- *  Description :
- *
- *  Creation    :  20-12-14
- *  Author      : jiaming.wjm@alibaba-inc.com
- */
+
 
 import android.content.Context;
 import android.view.OrientationEventListener;

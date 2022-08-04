@@ -34,5 +34,11 @@ android_library(
     ),
     deps = [
         "@maven//:com_google_guava_guava",
+        "//third_party:androidx_annotation",
+        "//third_party:androidx_appcompat",
+        "//third_party:camerax_camera2",
+        "//third_party:camerax_core",
+        "//third_party:camerax_lifecycle",
+         "@maven//:androidx_exifinterface_exifinterface",
     ],
 )

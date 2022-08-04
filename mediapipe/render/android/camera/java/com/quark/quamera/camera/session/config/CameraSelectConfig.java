@@ -4,7 +4,7 @@ package com.quark.quamera.camera.session.config;
  *  Description :
  *
  *  Creation    :  2021/5/7
- *  Author      : jiaming.wjm@alibaba-inc.com
+ *  Author      : jiaming.wjm@
  */
 
 import android.hardware.camera2.CameraCharacteristics;

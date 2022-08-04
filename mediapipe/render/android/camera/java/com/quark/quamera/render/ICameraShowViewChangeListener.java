@@ -4,7 +4,7 @@ package com.quark.quamera.render;
  *  Description :
  *
  *  Creation    :  2021/7/27
- *  Author      : jiaming.wjm@alibaba-inc.com
+ *  Author      : jiaming.wjm@
  */
 
 public interface ICameraShowViewChangeListener {

@@ -8,7 +8,7 @@ import com.quark.quamera.util.SequentialExecutor;
 // *  Description :
 // *
 // *  Creation    :  20-11-23
-// *  Author      : jiaming.wjm@alibaba-inc.com
+// *  Author      : jiaming.wjm@
 // */
 //
 

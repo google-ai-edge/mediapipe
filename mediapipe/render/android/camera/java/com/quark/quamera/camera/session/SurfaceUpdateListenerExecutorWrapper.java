@@ -1,11 +1,5 @@
 package com.quark.quamera.camera.session;
-/*
- * Copyright (C) 2005-2019 UCWeb Inc. All rights reserved.
- *  Description :
- *
- *  Creation    :  20-12-18
- *  Author      : jiaming.wjm@alibaba-inc.com
- */
+
 
 import androidx.annotation.NonNull;
 

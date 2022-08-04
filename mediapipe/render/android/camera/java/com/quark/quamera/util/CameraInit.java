@@ -4,7 +4,7 @@ package com.quark.quamera.util;
  *  Description :
  *
  *  Creation    :  2021/4/15
- *  Author      : jiaming.wjm@alibaba-inc.com
+ *  Author      : jiaming.wjm@
  */
 
 import androidx.annotation.NonNull;

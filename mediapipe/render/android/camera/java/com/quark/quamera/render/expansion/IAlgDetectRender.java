@@ -4,7 +4,7 @@ package com.quark.quamera.render.expansion;
  *  Description :
  *
  *  Creation    :  2021/3/15
- *  Author      : jiaming.wjm@alibaba-inc.com
+ *  Author      : jiaming.wjm@
  */
 
 import com.quark.quamera.render.entry.FrameDetectData;

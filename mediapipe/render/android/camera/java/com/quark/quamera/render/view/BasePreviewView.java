@@ -43,7 +43,7 @@ import androidx.annotation.Nullable;
 /**
  * Camera2和CameraX PreviewView的基类
  *
- * @author : yushan.lj@alibaba-inc.com
+ * @author : yushan.lj@
  * @date : 2021/9/30
  */
 public abstract class BasePreviewView extends FrameLayout implements IPreviewView {
