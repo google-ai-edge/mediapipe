@@ -20,7 +20,7 @@ exports_files([
 
 android_library(
     name = "camera_framework",
-    proguard_specs = [":proguard.pgcfg"],
+    # proguard_specs = [":proguard.pgcfg"],
     visibility = ["//visibility:public"],    
     exports = [
         ":camera_core",
@@ -32,14 +32,14 @@ android_library(
     srcs = glob(
         ["**/*.java"],
     ),
-    assets = [
-        "//mediapipe/render/android/camera/java/com/ola/olamera:rbga_2_yuv_frag.frag",
-        "//mediapipe/render/android/camera/java/com/ola/olamera:rgba_2_yuv_vertex.vert",
-    ],
-    assets_dir = "",
+    # assets = [
+    #     "//mediapipe/render/android/camera/java/com/ola/olamera:rbga_2_yuv_frag.frag",
+    #     "//mediapipe/render/android/camera/java/com/ola/olamera:rgba_2_yuv_vertex.vert",
+    # ],
+    # assets_dir = "",
     # resource_files = glob(["res/**"]),
     javacopts = ["-Acom.google.auto.value.AutoBuilderIsUnstable"],
-    manifest = ":AndroidManifest.xml",
+    # manifest = ":AndroidManifest.xml",
     visibility = ["//visibility:public"],
     deps = [
         "@maven//:com_google_guava_guava",

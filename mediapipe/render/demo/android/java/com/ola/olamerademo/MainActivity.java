@@ -1,4 +1,4 @@
-package com.ola.quamerademo;
+package com.ola.olamerademo;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;

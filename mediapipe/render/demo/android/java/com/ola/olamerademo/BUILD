@@ -32,14 +32,26 @@ cc_library(
 )
 
 android_binary(
-    name = "quamerademo",
+    name = "olamerademo",
     srcs = glob(["*.java"]),
-    assets = [],
+    manifest = ":AndroidManifest.xml",
+    resource_files = glob(["res/**"]),
+    visibility = ["//visibility:public"],
+    assets = [
+        ":rbga_2_yuv_frag.frag",
+        ":rgba_2_yuv_vertex.vert",
+    ],
     assets_dir = "",
-    manifest = "//mediapipe/render/demo/android/java/com/ola/quamerademo:AndroidManifest.xml",
     multidex = "native",
     deps = [
-        ":ola_render_jni_lib",
-        "//mediapipe/java/com/google/mediapipe/framework:android_framework",
+        # ":ola_render_jni_lib",
+        "//mediapipe/render/android/camera/java/com/ola/olamera:camera_core",
+        "//third_party:androidx_annotation",
+        "//third_party:lifecycle_livedata",
+        "//third_party:androidx_appcompat",
+        "//third_party:lifecycle_livedata_core",
+        "//third_party:androidx_core",
+        "//third_party:androidx_lifecycle_common",
+        "//third_party:androidx_lifecycle_runtime",
     ],
 )

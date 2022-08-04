@@ -1,4 +1,4 @@
-package com.ola.quamerademo;
+package com.ola.olamerademo;
 /*
  *
  *  Creation    :  20-11-25

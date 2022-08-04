@@ -1,16 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.ola.quamerademo"
+    package="com.ola.olamerademo"
     xmlns:tools="http://schemas.android.com/tools">
 
 <!--    <uses-sdk tools:overrideLibrary="androidx.camera.core"/>-->
 <!--    <uses-sdk tools:overrideLibrary="androidx.camera.camera2"/>-->
-    <uses-sdk tools:overrideLibrary="androidx.camera.core,androidx.camera.camera2" />
+    <!-- <uses-sdk tools:overrideLibrary="androidx.camera.core,androidx.camera.camera2" /> -->
+    <uses-sdk android:minSdkVersion="16" tools:overrideLibrary="androidx.camera.core,androidx.camera.camera2,androidx.camera.lifecycle" />
 
     <uses-permission android:name="android.permission.CAMERA" />
-
-
-
 
     <application
         android:allowBackup="true"
@@ -18,7 +16,7 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.Quamera">
+        android:theme="@style/AppTheme">
         <activity android:name=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -26,10 +24,6 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
-
-
-<!--        <activity android:name=".CameraXActivity"></activity>-->
 
     </application>
 
