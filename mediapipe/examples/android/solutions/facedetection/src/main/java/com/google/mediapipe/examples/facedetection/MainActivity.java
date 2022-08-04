@@ -35,7 +35,6 @@ import com.google.mediapipe.solutions.facedetection.FaceDetection;
 import com.google.mediapipe.solutions.facedetection.FaceDetectionOptions;
 import com.google.mediapipe.solutions.facedetection.FaceDetectionResult;
 import com.google.mediapipe.solutions.facedetection.FaceKeypoint;
-import com.google.mediapipe.formats.proto.LocationDataProto.LocationData.RelativeKeypoint;
 import java.io.IOException;
 import java.io.InputStream;
 

@@ -246,6 +246,20 @@ android_library(
 )
 
 android_library(
+    name = "androidx_lifecycle_common",
+    exports = [
+        "@maven//:androidx_lifecycle_lifecycle_common",
+    ],
+)
+android_library(
+    name = "androidx_lifecycle_runtime",
+    exports = [
+        "@maven//:androidx_lifecycle_lifecycle_runtime",
+    ],
+)
+
+
+android_library(
     name = "androidx_legacy_support_v4",
     exports = [
         "@maven//:androidx_legacy_legacy_support_v4",
@@ -279,6 +293,21 @@ android_library(
         "@maven//:androidx_camera_camera_core",
     ],
 )
+
+android_library(
+    name = "lifecycle_livedata",
+    exports = [
+        "@maven//:androidx_lifecycle_lifecycle_livedata",
+    ],
+)
+
+android_library(
+    name = "lifecycle_livedata_core",
+    exports = [
+        "@maven//:androidx_lifecycle_lifecycle_livedata_core",
+    ],
+)
+
 
 android_library(
     name = "camerax_lifecycle",
