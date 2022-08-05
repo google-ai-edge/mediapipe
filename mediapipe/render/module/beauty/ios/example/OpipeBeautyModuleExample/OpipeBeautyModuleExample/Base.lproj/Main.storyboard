@@ -107,7 +107,107 @@
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="dkx-z0-nzr" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="28.985507246376812" y="83.705357142857139"/>
+            <point key="canvasLocation" x="-293" y="44"/>
+        </scene>
+        <!--Render View Controller-->
+        <scene sceneID="DoO-kv-g8V">
+            <objects>
+                <viewController id="yrz-vH-i0Q" customClass="GLRenderViewController" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="l81-mV-pGY">
+                        <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <slider opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" minValue="0.0" maxValue="1" translatesAutoresizingMaskIntoConstraints="NO" id="6xB-Eo-lBl">
+                                <rect key="frame" x="55" y="532" width="304" height="31"/>
+                                <constraints>
+                                    <constraint firstAttribute="width" constant="300" id="aF4-RK-Gdi"/>
+                                </constraints>
+                                <connections>
+                                    <action selector="beautyChanged:" destination="yrz-vH-i0Q" eventType="valueChanged" id="w5i-AE-is9"/>
+                                </connections>
+                            </slider>
+                            <slider opaque="NO" tag="1" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" minValue="0.0" maxValue="1" translatesAutoresizingMaskIntoConstraints="NO" id="2h0-fS-bnd">
+                                <rect key="frame" x="55" y="603" width="304" height="31"/>
+                                <constraints>
+                                    <constraint firstAttribute="width" relation="greaterThanOrEqual" constant="300" id="oVk-BF-bZJ"/>
+                                    <constraint firstAttribute="width" constant="300" id="tge-zJ-CkP"/>
+                                </constraints>
+                                <connections>
+                                    <action selector="beautyChanged:" destination="yrz-vH-i0Q" eventType="valueChanged" id="803-pS-Hzm"/>
+                                </connections>
+                            </slider>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="美白磨皮" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="eKK-cR-qWi">
+                                <rect key="frame" x="172" y="501" width="70" height="21"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                                <nil key="textColor"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="瘦脸" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Te0-GB-88y">
+                                <rect key="frame" x="189.5" y="572" width="35" height="21"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                                <nil key="textColor"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="大眼" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="J2z-bb-kLy">
+                                <rect key="frame" x="189.5" y="643" width="35" height="21"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                                <nil key="textColor"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="整形-缩鼻翼" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="cmM-JY-yOC">
+                                <rect key="frame" x="159.5" y="714" width="95" height="20.5"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                                <nil key="textColor"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                            <slider opaque="NO" tag="2" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" minValue="0.0" maxValue="1" translatesAutoresizingMaskIntoConstraints="NO" id="NuP-6R-LJf">
+                                <rect key="frame" x="55" y="674" width="304" height="31"/>
+                                <constraints>
+                                    <constraint firstAttribute="width" relation="greaterThanOrEqual" constant="300" id="8qv-lc-XX6"/>
+                                    <constraint firstAttribute="width" constant="300" id="kYL-qd-clS"/>
+                                </constraints>
+                                <connections>
+                                    <action selector="beautyChanged:" destination="yrz-vH-i0Q" eventType="valueChanged" id="BAB-tm-ceu"/>
+                                </connections>
+                            </slider>
+                            <slider opaque="NO" tag="3" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" minValue="0.0" maxValue="1" translatesAutoresizingMaskIntoConstraints="NO" id="J0f-oC-AR1">
+                                <rect key="frame" x="55" y="744.5" width="304" height="31"/>
+                                <constraints>
+                                    <constraint firstAttribute="width" relation="lessThanOrEqual" constant="300" id="7l9-Lg-K2t"/>
+                                    <constraint firstAttribute="width" relation="greaterThanOrEqual" constant="300" id="M44-1E-iYd"/>
+                                    <constraint firstAttribute="width" constant="300" id="Oju-uM-RdI"/>
+                                </constraints>
+                                <connections>
+                                    <action selector="beautyChanged:" destination="yrz-vH-i0Q" eventType="valueChanged" id="Q5q-Vw-rup"/>
+                                </connections>
+                            </slider>
+                        </subviews>
+                        <viewLayoutGuide key="safeArea" id="u5f-5F-W1h"/>
+                        <color key="backgroundColor" systemColor="systemBackgroundColor"/>
+                        <constraints>
+                            <constraint firstItem="J0f-oC-AR1" firstAttribute="centerX" secondItem="l81-mV-pGY" secondAttribute="centerX" id="2zh-ai-YOe"/>
+                            <constraint firstItem="6xB-Eo-lBl" firstAttribute="top" secondItem="eKK-cR-qWi" secondAttribute="bottom" constant="10" id="8Sg-Ny-bWO"/>
+                            <constraint firstItem="u5f-5F-W1h" firstAttribute="bottom" secondItem="6xB-Eo-lBl" secondAttribute="bottom" constant="300" id="8lL-qV-6tL"/>
+                            <constraint firstItem="J2z-bb-kLy" firstAttribute="top" secondItem="2h0-fS-bnd" secondAttribute="bottom" constant="10" id="EDF-0h-rrz"/>
+                            <constraint firstItem="2h0-fS-bnd" firstAttribute="top" secondItem="Te0-GB-88y" secondAttribute="bottom" constant="10" id="F3e-TP-K2Q"/>
+                            <constraint firstItem="eKK-cR-qWi" firstAttribute="centerX" secondItem="l81-mV-pGY" secondAttribute="centerX" id="PMC-Fg-LQU"/>
+                            <constraint firstItem="6xB-Eo-lBl" firstAttribute="centerX" secondItem="l81-mV-pGY" secondAttribute="centerX" id="Q1X-fl-6aY"/>
+                            <constraint firstItem="NuP-6R-LJf" firstAttribute="centerX" secondItem="l81-mV-pGY" secondAttribute="centerX" id="SHc-90-q9D"/>
+                            <constraint firstItem="NuP-6R-LJf" firstAttribute="top" secondItem="J2z-bb-kLy" secondAttribute="bottom" constant="10" id="W39-ic-wbt"/>
+                            <constraint firstItem="cmM-JY-yOC" firstAttribute="centerX" secondItem="l81-mV-pGY" secondAttribute="centerX" id="a8d-q3-rWA"/>
+                            <constraint firstItem="cmM-JY-yOC" firstAttribute="top" secondItem="NuP-6R-LJf" secondAttribute="bottom" constant="10" id="bBi-3C-d5E"/>
+                            <constraint firstItem="Te0-GB-88y" firstAttribute="top" secondItem="6xB-Eo-lBl" secondAttribute="bottom" constant="10" id="don-6B-EaW"/>
+                            <constraint firstItem="J0f-oC-AR1" firstAttribute="top" secondItem="cmM-JY-yOC" secondAttribute="bottom" constant="10" id="kAS-pi-lJc"/>
+                            <constraint firstItem="2h0-fS-bnd" firstAttribute="centerX" secondItem="l81-mV-pGY" secondAttribute="centerX" id="pdF-HV-7EA"/>
+                            <constraint firstItem="J2z-bb-kLy" firstAttribute="centerX" secondItem="l81-mV-pGY" secondAttribute="centerX" id="wWF-ie-2o1"/>
+                            <constraint firstItem="Te0-GB-88y" firstAttribute="centerX" secondItem="l81-mV-pGY" secondAttribute="centerX" id="ztZ-ra-4JJ"/>
+                        </constraints>
+                    </view>
+                    <navigationItem key="navigationItem" id="dUl-V3-HUr"/>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="Cxc-4S-S2k" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="717" y="-54"/>
         </scene>
         <!--Navigation Controller-->
         <scene sceneID="PGT-KT-KdN">
@@ -141,12 +241,22 @@
                                     <segue destination="BYZ-38-t0r" kind="show" id="Edd-MD-JL3"/>
                                 </connections>
                             </button>
+                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="DsX-BZ-98V">
+                                <rect key="frame" x="169" y="483.5" width="76" height="31"/>
+                                <state key="normal" title="Button"/>
+                                <buttonConfiguration key="configuration" style="plain" title="GLEntry"/>
+                                <connections>
+                                    <segue destination="yrz-vH-i0Q" kind="show" id="c1L-IN-lBH"/>
+                                </connections>
+                            </button>
                         </subviews>
                         <viewLayoutGuide key="safeArea" id="dBS-Ob-mDu"/>
                         <color key="backgroundColor" systemColor="systemBackgroundColor"/>
                         <constraints>
+                            <constraint firstItem="DsX-BZ-98V" firstAttribute="top" secondItem="pMS-dS-g14" secondAttribute="bottom" constant="20" id="Od2-F2-GJR"/>
                             <constraint firstItem="pMS-dS-g14" firstAttribute="centerX" secondItem="au5-nC-aHX" secondAttribute="centerX" id="eO1-cP-ncQ"/>
                             <constraint firstItem="pMS-dS-g14" firstAttribute="centerY" secondItem="au5-nC-aHX" secondAttribute="centerY" id="htf-Kl-MS7"/>
+                            <constraint firstItem="DsX-BZ-98V" firstAttribute="centerX" secondItem="au5-nC-aHX" secondAttribute="centerX" id="pkH-sJ-MzO"/>
                         </constraints>
                     </view>
                     <navigationItem key="navigationItem" id="QJY-wG-ojQ"/>

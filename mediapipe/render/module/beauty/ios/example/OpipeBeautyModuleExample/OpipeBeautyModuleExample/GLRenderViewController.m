@@ -1,17 +1,15 @@
 //
-//  ViewController.m
+//  GLRenderViewController.m
 //  OpipeBeautyModuleExample
 //
-//  Created by 王韧竹 on 2022/7/21.
+//  Created by 王韧竹 on 2022/8/4.
 //
 
-#import "ViewController.h"
-#import <OlaCameraFramework/OlaMTLCameraRenderView.h>
+#import "GLRenderViewController.h"
 #import <OlaFaceUnityFramework/OlaFaceUnity.h>
 
-@interface ViewController ()
+@interface GLRenderViewController ()
 <AVCaptureVideoDataOutputSampleBufferDelegate,
-OlaMTLCameraRenderViewDelegate,
 AVCaptureAudioDataOutputSampleBufferDelegate>
 {
     CFAbsoluteTime _startRunTime;
@@ -45,12 +43,12 @@ AVCaptureAudioDataOutputSampleBufferDelegate>
 @property (nonatomic, assign) CGSize previewSize;
 
 @property (nonatomic, assign) BOOL isCapturePaused;
-@property (nonatomic, strong) OlaMTLCameraRenderView *renderView;
+@property (nonatomic, strong) OlaFURenderView *renderView;
 
 
 @end
 
-@implementation ViewController
+@implementation GLRenderViewController
 
 - (void)dealloc {
     [[OlaFaceUnity sharedInstance] dispose];
@@ -60,27 +58,19 @@ AVCaptureAudioDataOutputSampleBufferDelegate>
     [super viewDidLoad];
     self.pixelFormatType = kCVPixelFormatType_420YpCbCr8BiPlanarFullRange;
     _cameraSize = CGSizeMake(1280, 720);
-    if (abs(_currentRunTIme - 0) < 0.0001) {
+    if (fabs(_currentRunTIme - 0) < 0.0001) {
         _startRunTime = CFAbsoluteTimeGetCurrent();
         _currentRunTIme = 0.;
     }
-    [OlaFaceUnity sharedInstance].useGLRender = NO;
+    [OlaFaceUnity sharedInstance].useGLRender = YES;
     [self setupSession];
     [[OlaFaceUnity sharedInstance] initModule];
     [[OlaFaceUnity sharedInstance] resume];
-    
-}
-
-- (void)viewDidLayoutSubviews
-{
-    [super viewDidLayoutSubviews];
     if (CGSizeEqualToSize(self.previewSize, self.view.bounds.size)) {
         return;
     }
     _previewSize = self.view.bounds.size;
     [self setupRenderView];
-    [self.renderView setNeedFlip:YES];
-    
 }
 
 - (void)viewWillDisappear:(BOOL)animated {
@@ -157,13 +147,15 @@ AVCaptureAudioDataOutputSampleBufferDelegate>
 }
 
 - (void)setupRenderView {
-    if(!self.renderView){
-        _renderView = [[OlaMTLCameraRenderView alloc] initWithFrame:self.view.bounds shareContext:[[OlaFaceUnity sharedInstance] currentContext]];
-        _renderView.cameraDelegate = self;
-        _renderView.preferredFramesPerSecond = 30;
+    if(!self.renderView) {
+        
+        void *glContext = [[OlaFaceUnity sharedInstance] currentGLContext];
+        _renderView = [[OlaFURenderView alloc] initWithFrame:self.view.bounds context:glContext];
         [self.renderView setBackgroundColor:[UIColor colorWithRed:0.9f green:0.9f blue:0.9f alpha:1.0f]];
         [self.view addSubview:self.renderView];
         [self.view sendSubviewToBack:self.renderView];
+        [[OlaFaceUnity sharedInstance] setRenderView:self.renderView];
+        
     }
 }
 
@@ -175,7 +167,7 @@ AVCaptureAudioDataOutputSampleBufferDelegate>
     }
     
     if (captureOutput == _videoOutput) {
-        [self.renderView cameraSampleBufferArrive:sampleBuffer];
+        [[OlaFaceUnity sharedInstance] renderSampleBuffer:sampleBuffer];
     }
 }
 
@@ -261,39 +253,6 @@ AVCaptureAudioDataOutputSampleBufferDelegate>
     }
 }
 
-- (void)bgraCameraTextureReady:(OlaShareTexture *)texture
-               onScreenTexture:(OlaShareTexture *)onScreenTexture
-                     frameTime:(NSTimeInterval)frameTime
-{
-    
-    [[OlaFaceUnity sharedInstance] processVideoFrame:texture.renderTarget timeStamp:frameTime];
-}
-
-- (IOSurfaceID)externalRender:(NSTimeInterval)frameTime
-                targetTexture:(OlaShareTexture *)targetTexture
-                commandBuffer:(id<MTLCommandBuffer>)buffer
-{
-    //    [[OlaFaceUnity sharedInstance] processVideoFrame:targetTexture.renderTarget timeStamp:frameTime];
-    FaceTextureInfo inputTexture;
-    inputTexture.width = targetTexture.size.width;
-    inputTexture.height = targetTexture.size.height;
-    inputTexture.textureId = targetTexture.openGLTexture;
-    inputTexture.ioSurfaceId = targetTexture.surfaceID;
-    inputTexture.frameTime = frameTime;
-    FaceTextureInfo result = [[OlaFaceUnity sharedInstance] render:inputTexture];
-    return result.ioSurfaceId;
-}
-
-- (void)yuvTextureReady:(OlaShareTexture *)yTexture uvTexture:(OlaShareTexture *)uvTexture
-{
-    
-}
-
-- (void)draw:(NSTimeInterval)frameTime
-{
-    
-}
-
 - (IBAction)beautyChanged:(UISlider *)sender
 {
     if (sender.tag == 0) {
@@ -309,3 +268,4 @@ AVCaptureAudioDataOutputSampleBufferDelegate>
 }
 
 @end
+

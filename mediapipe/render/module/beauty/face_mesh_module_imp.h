@@ -5,6 +5,7 @@
 #include "mediapipe/render/core/OpipeDispatch.hpp"
 #include "mediapipe/framework/formats/landmark.pb.h"
 #include "mediapipe/render/core/Context.hpp"
+#include "mediapipe/render/core/Source.hpp"
 #include "face_mesh_module.h"
 #include "face_mesh_beauty_render.h"
 
@@ -136,6 +137,14 @@ namespace Opipe
             return _dispatch.get();
         }
 
+        void runInContextSync(std::function<void()> func) override {
+            _dispatch->runSync(func);
+        }
+
+        virtual void setInputSource(Source *source) override;
+
+        Filter* getOutputFilter() override;
+
     private:
         std::unique_ptr<OpipeDispatch> _dispatch;
         std::unique_ptr<OlaGraph> _graph;
@@ -145,7 +154,6 @@ namespace Opipe
         std::shared_ptr<FaceMeshCallFrameDelegate> _delegate;
         FaceMeshBeautyRender *_render = nullptr;
         OlaContext *_olaContext = nullptr;
-        
 #if TestTemplateFace
         SourceImage *_templateFace = nullptr;
 #endif

@@ -55,6 +55,14 @@ namespace Opipe
             delete _inputFramebuffer;
             _inputFramebuffer = nullptr;
         }
+
+        if (_source)
+        {
+            _source->removeAllTargets();
+            _source->release();
+            _source = nullptr;
+        }
+        
         
         _context->getFramebufferCache()->purge();
     }
@@ -71,9 +79,10 @@ namespace Opipe
 
     void FaceMeshBeautyRender::renderTexture(TextureInfo inputTexture)
     {   
-        if (!_isRendering) {
+        if (!_isRendering || _source) {
             return;
         }
+        
         if (!_inputFramebuffer)
         {
             _inputFramebuffer = new Framebuffer(_context, inputTexture.width, inputTexture.height,
@@ -178,5 +187,10 @@ namespace Opipe
         }
     }
     
+    void FaceMeshBeautyRender::setInputSource(Source *source) {
+        source->addTarget(_olaBeautyFilter);
+        _source = source;
+        _source->retain();
+    }
 
 }

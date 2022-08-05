@@ -58,9 +58,15 @@ namespace Opipe {
         
             // 瘦鼻
             void setNoseFactor(float noseFactor);
+
+            Filter* outputFilter() {
+                return _outputFilter;
+            }
         
+            void setInputSource(Source *source);             
         
         private:
+            Source *_source = nullptr;
             OlaBeautyFilter *_olaBeautyFilter = nullptr;
             OlaShareTextureFilter *_outputFilter = nullptr;
             Framebuffer *_inputFramebuffer = nullptr;

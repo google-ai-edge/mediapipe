@@ -1,16 +1,29 @@
 #import "OlaFaceUnity.h"
-
+#import "OlaFURenderView+private.h"
 #include "mediapipe/render/module/beauty/face_mesh_module.h"
+#include "mediapipe/render/core/OlaCameraSource.hpp"
+#include "mediapipe/render/core/Context.hpp"
+#include "mediapipe/render/core/Filter.hpp"
 
+using namespace Opipe;
 @interface OlaFaceUnity() {
     Opipe::FaceMeshModule *_face_module;
+    OlaCameraSource *sourceCamera;
+    dispatch_queue_t videoQueue;
 }
+
+@property (nonatomic) dispatch_semaphore_t cameraFrameRenderingSemaphore;
 
 @end
 @implementation OlaFaceUnity
 
 - (void)dealloc
 {
+    if (sourceCamera) {
+        sourceCamera->release();
+        sourceCamera = nullptr;
+    }
+    
     if (_face_module) {
         delete _face_module;
         _face_module = nullptr;
@@ -21,7 +34,7 @@
 {
     self = [super init];
     if (self) {
-        [self initModule];
+       
     }
     return self;
 }
@@ -36,6 +49,21 @@
         _face_module->init(nullptr, (void *)data.bytes, data.length);
         _face_module->startModule();
     }
+    if (_useGLRender) {
+        _face_module->runInContextSync([&] {
+            OlaContext *context = _face_module->currentContext();
+
+            Context *glContext = context->glContext();
+
+            sourceCamera = new OlaCameraSource(glContext, Opipe::SourceCamera::SourceType_YUV420SP);
+
+            _face_module->setInputSource(sourceCamera);
+
+        });
+        self.cameraFrameRenderingSemaphore = dispatch_semaphore_create(1);
+        videoQueue = dispatch_queue_create("FaceUnity.videoQueue", 0);
+    }
+    
 }
 
 + (instancetype)sharedInstance
@@ -74,16 +102,65 @@
     result.frameTime = rs.frameTime;
     return result;
 }
-   
 
-   
+- (void)renderSampleBuffer:(CMSampleBufferRef)samplebuffer
+{
+    if (!self.cameraFrameRenderingSemaphore) {
+        return;
+    }
+    if (dispatch_semaphore_wait(self.cameraFrameRenderingSemaphore, DISPATCH_TIME_NOW) != 0)
+    {
+        return;
+    }
+    dispatch_semaphore_t block_camera_sema = self.cameraFrameRenderingSemaphore;
+    if (_face_module) {
+        
+        CVPixelBufferRef imagebuffer = CMSampleBufferGetImageBuffer(samplebuffer);
+        IOSurfaceRef iosurface = CVPixelBufferGetIOSurface(imagebuffer);
+        int surfaceId = IOSurfaceGetID(iosurface);
+        
+        CMTime time = CMSampleBufferGetOutputPresentationTimeStamp(samplebuffer);
+        Float64 frameTime = CMTimeGetSeconds(time) * 1000;
+        
+        int width = (int)CVPixelBufferGetWidth(imagebuffer);
+        int height = (int)CVPixelBufferGetHeight(imagebuffer);
+        
+        CFRetain(samplebuffer);
+        NSLog(@"surfaceId:%@", @(surfaceId));
+        dispatch_async(videoQueue, ^{
+            _face_module->runInContextSync([&] {
+                CVImageBufferRef imageBuffer = CMSampleBufferGetImageBuffer(samplebuffer);
+                CVPixelBufferLockBaseAddress(imageBuffer, 0);
+                
+                sourceCamera->setFrameData(width,
+                                           height,
+                                           CVPixelBufferGetBaseAddressOfPlane(imageBuffer, 0),
+                                           GL_RGBA,
+                                           -1,
+                                           RotationMode::RotateRightFlipVertical,
+                                           Opipe::SourceCamera::SourceType_YUV420SP,
+                                           CVPixelBufferGetBaseAddressOfPlane(imageBuffer, 1));
+                CVPixelBufferUnlockBaseAddress(imageBuffer, 0);
+                sourceCamera->updateTargets(frameTime);
+                dispatch_semaphore_signal(block_camera_sema);
+            });
+            CFRelease(samplebuffer);
+        });
+    }
+}
 
- - (EAGLContext *)currentContext
- {
-     if (_face_module) {
-         return _face_module->currentContext()->currentContext();
-     }
- }
+- (void *)currentGLContext {
+    if (_face_module) {
+        return _face_module->currentContext()->glContext();
+    }
+}
+
+- (EAGLContext *)currentContext
+{
+    if (_face_module) {
+        return _face_module->currentContext()->currentContext();
+    }
+}
 
 - (void)processVideoFrame:(CVPixelBufferRef)pixelbuffer
                 timeStamp:(int64_t)timeStamp;
@@ -168,5 +245,19 @@
     delete _face_module;
     _face_module = nullptr;
 }
+
+- (void)setRenderView:(OlaFURenderView *)renderView
+{
+    _renderView = renderView;
+
+    if (_face_module && _renderView) {
+        Opipe::Filter *filter = _face_module->getOutputFilter();
+        if (filter) {
+            filter->addTarget(_renderView);
+        }
+        
+    }
+}
+
 
 @end

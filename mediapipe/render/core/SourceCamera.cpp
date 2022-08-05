@@ -81,7 +81,7 @@ void SourceCamera::setIORenderTexture(IOSurfaceID surfaceID,
                                       GLuint texture,
                                       int width,
                                       int height,
-                                      GPUImage::RotationMode outputRotation,
+                                      Opipe::RotationMode outputRotation,
                                       SourceType sourceType,
                                       TextureAttributes textureAttributes) {
     //纹理发生变化，使用新的framebuffer
@@ -108,7 +108,7 @@ void SourceCamera::setIORenderTexture(IOSurfaceID surfaceID,
 //        Framebuffer *framebuffer =  getContext()->getFramebufferCache()->fetchFramebufferUseTextureId(
 //                _context, width, height, texture);
         _customTexture = true;
-        this->setFramebuffer(framebuffer);
+        this->setFramebuffer(framebuffer, outputRotation);
     }
 
     CHECK_GL(glBindTexture(GL_TEXTURE_2D, this->getFramebuffer()->getTexture()));
@@ -142,7 +142,7 @@ void SourceCamera::setRenderTexture(GLuint texture, int width, int height,
         Framebuffer *framebuffer =  getContext()->getFramebufferCache()->fetchFramebufferUseTextureId(
                 _context, width, height, texture);
         _customTexture = true;
-        this->setFramebuffer(framebuffer);
+        this->setFramebuffer(framebuffer, outputRotation);
     }
 
     CHECK_GL(glBindTexture(GL_TEXTURE_2D, this->getFramebuffer()->getTexture()));

@@ -145,6 +145,9 @@ OLARENDER_SRCS = [
     "GaussianBlurMonoFilter.cpp",
     "LUTFilter.cpp",
     "OlaContext.cpp",
+    "OlaYUVTexture.cpp",
+    "OlaYUVTexture420P.cpp",
+    "OlaCameraSource.cpp",
 
 ]
 
@@ -174,6 +177,9 @@ OLARENDER_HDRS = [
     "GaussianBlurMonoFilter.hpp",
     "LUTFilter.hpp",
     "OlaContext.hpp",
+    "OlaYUVTexture.hpp",
+    "OlaYUVTexture420P.hpp",
+    "OlaCameraSource.hpp",
 ]
 
 

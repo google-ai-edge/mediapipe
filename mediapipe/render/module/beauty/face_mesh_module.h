@@ -1,6 +1,7 @@
 #ifndef OPIPE_FaceMeshModule
 #define OPIPE_FaceMeshModule
 #include <stdio.h>
+#include <condition_variable>
 #include "mediapipe/render/core/OlaContext.hpp"
 #include "face_mesh_common.h"
 #if defined(__APPLE__)
@@ -14,6 +15,8 @@
 
 namespace Opipe
 {
+        class Source;
+        class Filter;
         struct OMat
         {
                 int width = 0;
@@ -152,6 +155,12 @@ namespace Opipe
                                                int height,
                                                int step,
                                                int64_t timeStamp) = 0;
+            
+                virtual void runInContextSync(std::function<void(void)> func) = 0;
+
+                virtual void setInputSource(Source *source) = 0;
+
+                virtual Filter* getOutputFilter() = 0;
         };
 }
 #endif

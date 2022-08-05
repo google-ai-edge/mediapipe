@@ -29,15 +29,15 @@ namespace Opipe
             
             graph->_delegate.lock()->outputPacket(graph, packet, streamName);
             
-            if (packetType == MPPPacketTypeRaw)
+            if (packetType == MPPPacketTypeRaw && !graph->_delegate.expired())
             {
                 graph->_delegate.lock()->outputPacket(graph, packet, packetType, streamName);
-            } else if (packetType == MPPPacketTypeImageFrame) {
+            } else if (packetType == MPPPacketTypeImageFrame && !graph->_delegate.expired()) {
                 graph->_framesInFlight--;
             }
     #if defined(__APPLE__)
-            else if (packetType == MPPPacketTypePixelBuffer ||
-                     packetType == MPPPacketTypeImage)
+            else if ((packetType == MPPPacketTypePixelBuffer ||
+                     packetType == MPPPacketTypeImage) && !graph->_delegate.expired())
             {
                 graph->_framesInFlight--;
                 CVPixelBufferRef pixelBuffer;

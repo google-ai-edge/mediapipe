@@ -25,6 +25,7 @@ namespace Opipe {
         
         GLuint targetTextureId;
         
+        
     public:
         OlaShareTextureFilter(Opipe::Context *context);
         virtual ~OlaShareTextureFilter() noexcept;

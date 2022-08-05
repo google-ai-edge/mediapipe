@@ -7,6 +7,7 @@ ios_framework(
     name = "OlaFaceUnityFramework",
     hdrs = [
         "OlaFaceUnity.h",
+        "OlaFURenderView.h",
     ],
     infoplists = ["Info.plist"],
     bundle_id = "com.ola.olarender.develop",
@@ -20,11 +21,19 @@ ios_framework(
 
 objc_library(
     name = "OlaFaceUnityLibrary",
-    hdrs = ["OlaFaceUnity.h"],
-    srcs = ["OlaFaceUnity.mm"],
+    hdrs = [
+        "OlaFaceUnity.h",
+        "OlaFURenderView.h",
+        "OlaFURenderView+private.h"
+    ],
+    srcs = [
+        "OlaFaceUnity.mm",
+        "OlaFURenderView.mm",
+    ],
     visibility = ["//visibility:public"],
     deps = [
          "//mediapipe/render/module/beauty:FaceMeshGPULibrary",
+         "//mediapipe/render/core:core-ios",
          "@ios_opencv//:OpencvFramework",
     ],
     data = [

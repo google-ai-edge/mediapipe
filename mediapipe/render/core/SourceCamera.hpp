@@ -1,5 +1,5 @@
 /*
- * GPUImage-x
+ * Opipe-x
  *
  * Copyright (C) 2017 Yijin Wang, Yiqian Wang
  *
@@ -16,8 +16,8 @@
  * limitations under the License.
  */
 
-#ifndef GPUIMAGE_X_SOURCECAMERA_H
-#define GPUIMAGE_X_SOURCECAMERA_H
+#ifndef Opipe_X_SOURCECAMERA_H
+#define Opipe_X_SOURCECAMERA_H
 
 #include "Source.hpp"
 #if defined(__APPLE__)
@@ -46,17 +46,17 @@ public:
     virtual void setRenderTexture(GLuint texture,
                                   int width,
                                   int height,
-                                  GPUImage::RotationMode outputRotation = GPUImage::RotationMode::NoRotation,
+                                  Opipe::RotationMode outputRotation = Opipe::RotationMode::NoRotation,
                                   SourceType sourceType = SourceType_RGBA,
-                                  const GPUImage::TextureAttributes textureAttributes = GPUImage::Framebuffer::defaultTextureAttribures);
+                                  const Opipe::TextureAttributes textureAttributes = Opipe::Framebuffer::defaultTextureAttribures);
 #if defined(__APPLE__)
     virtual void setIORenderTexture(IOSurfaceID surfaceID,
                                     GLuint texture,
                                     int width,
                                     int height,
-                                    GPUImage::RotationMode outputRotation = GPUImage::RotationMode::NoRotation,
+                                    Opipe::RotationMode outputRotation = Opipe::RotationMode::NoRotation,
                                     SourceType sourceType = SourceType_RGBA,
-                                    const GPUImage::TextureAttributes textureAttributes = GPUImage::Framebuffer::defaultTextureAttribures);
+                                    const Opipe::TextureAttributes textureAttributes = Opipe::Framebuffer::defaultTextureAttribures);
 #endif
 
     
@@ -81,6 +81,6 @@ protected:
 };
 NS_GI_END
 
-#endif //GPUIMAGE_X_SOURCECAMERA_H
+#endif //Opipe_X_SOURCECAMERA_H
 
 

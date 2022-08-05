@@ -258,12 +258,13 @@ namespace Opipe
         {
             return;
         }
+
     }
 
     TextureInfo FaceMeshModuleIMP::renderTexture(TextureInfo inputTexture)
     {
         TextureInfo textureInfo;
-
+        
         if (!_isInit)
         {
             return textureInfo;
@@ -295,4 +296,14 @@ namespace Opipe
         return textureInfo;
     }
 
+    Filter* FaceMeshModuleIMP::getOutputFilter()
+    {
+        return _render->outputFilter();
+    }
+
+    void FaceMeshModuleIMP::setInputSource(Source *source) {
+        _dispatch->runSync([&] {
+            _render->setInputSource(source);
+        });
+    }
 }
