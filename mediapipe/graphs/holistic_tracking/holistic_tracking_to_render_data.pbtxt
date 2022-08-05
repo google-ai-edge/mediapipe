@@ -709,6 +709,24 @@ node {
       landmark_connections: 109
       landmark_connections: 109
       landmark_connections: 10
+      # Left iris
+      landmark_connections: 469
+      landmark_connections: 470
+      landmark_connections: 470
+      landmark_connections: 471
+      landmark_connections: 471
+      landmark_connections: 472
+      landmark_connections: 472
+      landmark_connections: 469
+      # Right iris
+      landmark_connections: 474
+      landmark_connections: 475
+      landmark_connections: 475
+      landmark_connections: 476
+      landmark_connections: 476
+      landmark_connections: 477
+      landmark_connections: 477
+      landmark_connections: 474
       landmark_color { r: 255 g: 255 b: 255 }
       connection_color { r: 255 g: 255 b: 255 }
       thickness: 0.5
