@@ -145,6 +145,10 @@ struct InferenceCalculatorCpu : public InferenceCalculator {
     static constexpr char kCalculatorName[] = "InferenceCalculatorCpu";
 };
 
+struct InferenceCalculatorOnnxCUDA : public InferenceCalculator {
+    static constexpr char kCalculatorName[] = "InferenceCalculatorOnnxCUDA";
+};
+
 }  // namespace api2
 }  // namespace mediapipe
 

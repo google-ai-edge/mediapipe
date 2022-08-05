@@ -246,6 +246,38 @@ cc_library(
 )
 
 cc_library(
+    name = "inference_calculator_onnx_cuda",
+    srcs = [
+        "inference_calculator_onnx_cuda.cc",
+    ],
+    copts = select({
+        # TODO: fix tensor.h not to require this, if possible
+        "//mediapipe:apple": [
+            "-x objective-c++",
+            "-fobjc-arc",  # enable reference-counting
+        ],
+        "//conditions:default": [],
+    }),
+    visibility = ["//visibility:public"],
+    deps = [
+        ":inference_calculator_interface",
+        "@com_google_absl//absl/memory",
+        "@org_tensorflow//tensorflow/lite/delegates/xnnpack:xnnpack_delegate",
+        "@org_tensorflow//tensorflow/lite:framework_stable",
+        "@org_tensorflow//tensorflow/lite/c:c_api_types",
+        "@windows_onnxruntime//:onnxruntime",
+    ] + select({
+        "//conditions:default": [
+            "//mediapipe/util:cpu_util",
+        ],
+    }) + select({
+        "//conditions:default": [],
+        "//mediapipe:android": ["@org_tensorflow//tensorflow/lite/delegates/nnapi:nnapi_delegate"],
+    }),
+    alwayslink = 1,
+)
+
+cc_library(
     name = "inference_calculator_gl_if_compute_shader_available",
     visibility = ["//visibility:public"],
     deps = selects.with_or({

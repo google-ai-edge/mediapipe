@@ -226,6 +226,12 @@ new_local_repository(
     path = "D:\\opencv\\build",
 )
 
+new_local_repository(
+    name = "windows_onnxruntime",
+    build_file = "@//third_party:onnxruntime_windows.BUILD",
+    path = "D:\\onnxruntime\\onnxruntime-win-x64-gpu-1.12.0",
+)
+
 http_archive(
     name = "android_opencv",
     build_file = "@//third_party:opencv_android.BUILD",
