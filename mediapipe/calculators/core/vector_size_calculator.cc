@@ -13,7 +13,6 @@
 // limitations under the License.
 
 #include "mediapipe/calculators/core/vector_size_calculator.h"
-
 #include "mediapipe/framework/formats/classification.pb.h"
 #include "mediapipe/framework/formats/landmark.pb.h"
 

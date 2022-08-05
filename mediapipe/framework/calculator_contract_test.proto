@@ -23,8 +23,8 @@ package mediapipe;
 import "mediapipe/framework/calculator.proto";
 
 message CalculatorContractTestOptions {
-  extend CalculatorOptions {
-    optional CalculatorContractTestOptions ext = 188754615;
-  }
-  optional double test_field = 1 [default = -1.0];
+    extend CalculatorOptions {
+        optional CalculatorContractTestOptions ext = 188754615;
+    }
+    optional double test_field = 1 [default = -1.0];
 }

@@ -105,463 +105,463 @@ const char kConfigC[] = R"(
     })";
 
 TEST(SignalFusingCalculatorTest, TwoInputNoTracking) {
-  auto runner = absl::make_unique<CalculatorRunner>(
-      ParseTextProtoOrDie<CalculatorGraphConfig::Node>(kConfigA));
+    auto runner = absl::make_unique<CalculatorRunner>(
+        ParseTextProtoOrDie<CalculatorGraphConfig::Node>(kConfigA));
 
-  auto input_border = absl::make_unique<bool>(false);
-  runner->MutableInputs()->Index(0).packets.push_back(
-      Adopt(input_border.release()).At(Timestamp(0)));
+    auto input_border = absl::make_unique<bool>(false);
+    runner->MutableInputs()->Index(0).packets.push_back(
+        Adopt(input_border.release()).At(Timestamp(0)));
 
-  auto input_face =
-      absl::make_unique<DetectionSet>(ParseTextProtoOrDie<DetectionSet>(
-          R"pb(
-            detections {
-              score: 0.5
-              signal_type: { standard: FACE_FULL }
-            }
-            detections {
-              score: 0.3
-              signal_type: { standard: FACE_FULL }
-            }
-          )pb"));
+    auto input_face =
+        absl::make_unique<DetectionSet>(ParseTextProtoOrDie<DetectionSet>(
+            R"pb(
+                 detections {
+                   score: 0.5
+                   signal_type: { standard: FACE_FULL }
+                 }
+                 detections {
+                   score: 0.3
+                   signal_type: { standard: FACE_FULL }
+                 }
+            )pb"));
 
-  runner->MutableInputs()->Index(1).packets.push_back(
-      Adopt(input_face.release()).At(Timestamp(0)));
+    runner->MutableInputs()->Index(1).packets.push_back(
+        Adopt(input_face.release()).At(Timestamp(0)));
 
-  auto input_ocr =
-      absl::make_unique<DetectionSet>(ParseTextProtoOrDie<DetectionSet>(
-          R"pb(
-            detections {
-              score: 0.3
-              signal_type: { standard: TEXT }
-            }
-            detections {
-              score: 0.9
-              signal_type: { standard: TEXT }
-            }
-          )pb"));
+    auto input_ocr =
+        absl::make_unique<DetectionSet>(ParseTextProtoOrDie<DetectionSet>(
+            R"pb(
+                 detections {
+                   score: 0.3
+                   signal_type: { standard: TEXT }
+                 }
+                 detections {
+                   score: 0.9
+                   signal_type: { standard: TEXT }
+                 }
+            )pb"));
 
-  runner->MutableInputs()->Index(2).packets.push_back(
-      Adopt(input_ocr.release()).At(Timestamp(0)));
+    runner->MutableInputs()->Index(2).packets.push_back(
+        Adopt(input_ocr.release()).At(Timestamp(0)));
 
-  MP_ASSERT_OK(runner->Run());
+    MP_ASSERT_OK(runner->Run());
 
-  const std::vector<Packet>& output_packets =
-      runner->Outputs().Index(0).packets;
-  const auto& detection_set = output_packets[0].Get<DetectionSet>();
+    const std::vector<Packet>& output_packets =
+        runner->Outputs().Index(0).packets;
+    const auto& detection_set = output_packets[0].Get<DetectionSet>();
 
-  ASSERT_EQ(detection_set.detections().size(), 4);
-  EXPECT_FLOAT_EQ(detection_set.detections(0).score(), .55);
-  EXPECT_FLOAT_EQ(detection_set.detections(1).score(), .53);
-  EXPECT_FLOAT_EQ(detection_set.detections(2).score(), .93);
-  EXPECT_FLOAT_EQ(detection_set.detections(3).score(), .99);
+    ASSERT_EQ(detection_set.detections().size(), 4);
+    EXPECT_FLOAT_EQ(detection_set.detections(0).score(), .55);
+    EXPECT_FLOAT_EQ(detection_set.detections(1).score(), .53);
+    EXPECT_FLOAT_EQ(detection_set.detections(2).score(), .93);
+    EXPECT_FLOAT_EQ(detection_set.detections(3).score(), .99);
 }
 
 TEST(SignalFusingCalculatorTest, TwoInputShotLabeledTags) {
-  auto runner = absl::make_unique<CalculatorRunner>(
-      ParseTextProtoOrDie<CalculatorGraphConfig::Node>(kConfigC));
+    auto runner = absl::make_unique<CalculatorRunner>(
+        ParseTextProtoOrDie<CalculatorGraphConfig::Node>(kConfigC));
 
-  auto input_shot = absl::make_unique<bool>(false);
-  runner->MutableInputs()
-      ->Tag(kIsShotBoundaryTag)
-      .packets.push_back(Adopt(input_shot.release()).At(Timestamp(0)));
+    auto input_shot = absl::make_unique<bool>(false);
+    runner->MutableInputs()
+        ->Tag(kIsShotBoundaryTag)
+        .packets.push_back(Adopt(input_shot.release()).At(Timestamp(0)));
 
-  auto input_face =
-      absl::make_unique<DetectionSet>(ParseTextProtoOrDie<DetectionSet>(
-          R"pb(
-            detections {
-              score: 0.5
-              signal_type: { standard: FACE_FULL }
-            }
-            detections {
-              score: 0.3
-              signal_type: { standard: FACE_FULL }
-            }
-          )pb"));
+    auto input_face =
+        absl::make_unique<DetectionSet>(ParseTextProtoOrDie<DetectionSet>(
+            R"pb(
+                 detections {
+                   score: 0.5
+                   signal_type: { standard: FACE_FULL }
+                 }
+                 detections {
+                   score: 0.3
+                   signal_type: { standard: FACE_FULL }
+                 }
+            )pb"));
 
-  runner->MutableInputs()
-      ->Get("SIGNAL", 0)
-      .packets.push_back(Adopt(input_face.release()).At(Timestamp(0)));
+    runner->MutableInputs()
+        ->Get("SIGNAL", 0)
+        .packets.push_back(Adopt(input_face.release()).At(Timestamp(0)));
 
-  auto input_ocr =
-      absl::make_unique<DetectionSet>(ParseTextProtoOrDie<DetectionSet>(
-          R"pb(
-            detections {
-              score: 0.3
-              signal_type: { standard: TEXT }
-            }
-            detections {
-              score: 0.9
-              signal_type: { standard: TEXT }
-            }
-          )pb"));
+    auto input_ocr =
+        absl::make_unique<DetectionSet>(ParseTextProtoOrDie<DetectionSet>(
+            R"pb(
+                 detections {
+                   score: 0.3
+                   signal_type: { standard: TEXT }
+                 }
+                 detections {
+                   score: 0.9
+                   signal_type: { standard: TEXT }
+                 }
+            )pb"));
 
-  runner->MutableInputs()
-      ->Get("SIGNAL", 1)
-      .packets.push_back(Adopt(input_ocr.release()).At(Timestamp(0)));
+    runner->MutableInputs()
+        ->Get("SIGNAL", 1)
+        .packets.push_back(Adopt(input_ocr.release()).At(Timestamp(0)));
 
-  MP_ASSERT_OK(runner->Run());
+    MP_ASSERT_OK(runner->Run());
 
-  const std::vector<Packet>& output_packets =
-      runner->Outputs().Tag(kOutputTag).packets;
-  const auto& detection_set = output_packets[0].Get<DetectionSet>();
+    const std::vector<Packet>& output_packets =
+        runner->Outputs().Tag(kOutputTag).packets;
+    const auto& detection_set = output_packets[0].Get<DetectionSet>();
 
-  ASSERT_EQ(detection_set.detections().size(), 4);
-  EXPECT_FLOAT_EQ(detection_set.detections(0).score(), .55);
-  EXPECT_FLOAT_EQ(detection_set.detections(1).score(), .53);
-  EXPECT_FLOAT_EQ(detection_set.detections(2).score(), .93);
-  EXPECT_FLOAT_EQ(detection_set.detections(3).score(), .99);
+    ASSERT_EQ(detection_set.detections().size(), 4);
+    EXPECT_FLOAT_EQ(detection_set.detections(0).score(), .55);
+    EXPECT_FLOAT_EQ(detection_set.detections(1).score(), .53);
+    EXPECT_FLOAT_EQ(detection_set.detections(2).score(), .93);
+    EXPECT_FLOAT_EQ(detection_set.detections(3).score(), .99);
 }
 
 TEST(SignalFusingCalculatorTest, TwoInputNoShotLabeledTags) {
-  auto runner = absl::make_unique<CalculatorRunner>(
-      ParseTextProtoOrDie<CalculatorGraphConfig::Node>(kConfigC));
+    auto runner = absl::make_unique<CalculatorRunner>(
+        ParseTextProtoOrDie<CalculatorGraphConfig::Node>(kConfigC));
 
-  auto input_face =
-      absl::make_unique<DetectionSet>(ParseTextProtoOrDie<DetectionSet>(
-          R"pb(
-            detections {
-              score: 0.5
-              signal_type: { standard: FACE_FULL }
-            }
-            detections {
-              score: 0.3
-              signal_type: { standard: FACE_FULL }
-            }
-          )pb"));
+    auto input_face =
+        absl::make_unique<DetectionSet>(ParseTextProtoOrDie<DetectionSet>(
+            R"pb(
+                 detections {
+                   score: 0.5
+                   signal_type: { standard: FACE_FULL }
+                 }
+                 detections {
+                   score: 0.3
+                   signal_type: { standard: FACE_FULL }
+                 }
+            )pb"));
 
-  runner->MutableInputs()
-      ->Get("SIGNAL", 0)
-      .packets.push_back(Adopt(input_face.release()).At(Timestamp(0)));
+    runner->MutableInputs()
+        ->Get("SIGNAL", 0)
+        .packets.push_back(Adopt(input_face.release()).At(Timestamp(0)));
 
-  auto input_ocr =
-      absl::make_unique<DetectionSet>(ParseTextProtoOrDie<DetectionSet>(
-          R"pb(
-            detections {
-              score: 0.3
-              signal_type: { standard: TEXT }
-            }
-            detections {
-              score: 0.9
-              signal_type: { standard: TEXT }
-            }
-          )pb"));
+    auto input_ocr =
+        absl::make_unique<DetectionSet>(ParseTextProtoOrDie<DetectionSet>(
+            R"pb(
+                 detections {
+                   score: 0.3
+                   signal_type: { standard: TEXT }
+                 }
+                 detections {
+                   score: 0.9
+                   signal_type: { standard: TEXT }
+                 }
+            )pb"));
 
-  runner->MutableInputs()
-      ->Get("SIGNAL", 1)
-      .packets.push_back(Adopt(input_ocr.release()).At(Timestamp(0)));
+    runner->MutableInputs()
+        ->Get("SIGNAL", 1)
+        .packets.push_back(Adopt(input_ocr.release()).At(Timestamp(0)));
 
-  MP_ASSERT_OK(runner->Run());
+    MP_ASSERT_OK(runner->Run());
 
-  const std::vector<Packet>& output_packets =
-      runner->Outputs().Tag(kOutputTag).packets;
-  const auto& detection_set = output_packets[0].Get<DetectionSet>();
+    const std::vector<Packet>& output_packets =
+        runner->Outputs().Tag(kOutputTag).packets;
+    const auto& detection_set = output_packets[0].Get<DetectionSet>();
 
-  ASSERT_EQ(detection_set.detections().size(), 4);
-  EXPECT_FLOAT_EQ(detection_set.detections(0).score(), .55);
-  EXPECT_FLOAT_EQ(detection_set.detections(1).score(), .53);
-  EXPECT_FLOAT_EQ(detection_set.detections(2).score(), .93);
-  EXPECT_FLOAT_EQ(detection_set.detections(3).score(), .99);
+    ASSERT_EQ(detection_set.detections().size(), 4);
+    EXPECT_FLOAT_EQ(detection_set.detections(0).score(), .55);
+    EXPECT_FLOAT_EQ(detection_set.detections(1).score(), .53);
+    EXPECT_FLOAT_EQ(detection_set.detections(2).score(), .93);
+    EXPECT_FLOAT_EQ(detection_set.detections(3).score(), .99);
 }
 
 TEST(SignalFusingCalculatorTest, ThreeInputTracking) {
-  auto runner = absl::make_unique<CalculatorRunner>(
-      ParseTextProtoOrDie<CalculatorGraphConfig::Node>(kConfigB));
+    auto runner = absl::make_unique<CalculatorRunner>(
+        ParseTextProtoOrDie<CalculatorGraphConfig::Node>(kConfigB));
 
-  auto input_border_0 = absl::make_unique<bool>(false);
-  runner->MutableInputs()->Index(0).packets.push_back(
-      Adopt(input_border_0.release()).At(Timestamp(0)));
+    auto input_border_0 = absl::make_unique<bool>(false);
+    runner->MutableInputs()->Index(0).packets.push_back(
+        Adopt(input_border_0.release()).At(Timestamp(0)));
 
-  // Time zero.
-  auto input_face_0 =
-      absl::make_unique<DetectionSet>(ParseTextProtoOrDie<DetectionSet>(
-          R"pb(
-            detections {
-              score: 0.2
-              signal_type: { standard: FACE_FULL }
-              tracking_id: 0
-            }
-            detections {
-              score: 0.0
-              signal_type: { standard: FACE_FULL }
-              tracking_id: 1
-            }
-            detections {
-              score: 0.1
-              signal_type: { standard: FACE_FULL }
-            }
-          )pb"));
+    // Time zero.
+    auto input_face_0 =
+        absl::make_unique<DetectionSet>(ParseTextProtoOrDie<DetectionSet>(
+            R"pb(
+                 detections {
+                   score: 0.2
+                   signal_type: { standard: FACE_FULL }
+                   tracking_id: 0
+                 }
+                 detections {
+                   score: 0.0
+                   signal_type: { standard: FACE_FULL }
+                   tracking_id: 1
+                 }
+                 detections {
+                   score: 0.1
+                   signal_type: { standard: FACE_FULL }
+                 }
+            )pb"));
 
-  runner->MutableInputs()->Index(1).packets.push_back(
-      Adopt(input_face_0.release()).At(Timestamp(0)));
+    runner->MutableInputs()->Index(1).packets.push_back(
+        Adopt(input_face_0.release()).At(Timestamp(0)));
 
-  auto input_ocr_0 =
-      absl::make_unique<DetectionSet>(ParseTextProtoOrDie<DetectionSet>(
-          R"pb(
-            detections {
-              score: 0.2
-              signal_type: { custom: "text" }
-            }
-          )pb"));
+    auto input_ocr_0 =
+        absl::make_unique<DetectionSet>(ParseTextProtoOrDie<DetectionSet>(
+            R"pb(
+                 detections {
+                   score: 0.2
+                   signal_type: { custom: "text" }
+                 }
+            )pb"));
 
-  runner->MutableInputs()->Index(2).packets.push_back(
-      Adopt(input_ocr_0.release()).At(Timestamp(0)));
+    runner->MutableInputs()->Index(2).packets.push_back(
+        Adopt(input_ocr_0.release()).At(Timestamp(0)));
 
-  auto input_agn_0 =
-      absl::make_unique<DetectionSet>(ParseTextProtoOrDie<DetectionSet>(
-          R"pb(
-            detections {
-              score: 0.3
-              signal_type: { standard: LOGO }
-              tracking_id: 0
-            }
-          )pb"));
+    auto input_agn_0 =
+        absl::make_unique<DetectionSet>(ParseTextProtoOrDie<DetectionSet>(
+            R"pb(
+                 detections {
+                   score: 0.3
+                   signal_type: { standard: LOGO }
+                   tracking_id: 0
+                 }
+            )pb"));
 
-  runner->MutableInputs()->Index(3).packets.push_back(
-      Adopt(input_agn_0.release()).At(Timestamp(0)));
+    runner->MutableInputs()->Index(3).packets.push_back(
+        Adopt(input_agn_0.release()).At(Timestamp(0)));
 
-  // Time one
-  auto input_border_1 = absl::make_unique<bool>(false);
-  runner->MutableInputs()->Index(0).packets.push_back(
-      Adopt(input_border_1.release()).At(Timestamp(1)));
+    // Time one
+    auto input_border_1 = absl::make_unique<bool>(false);
+    runner->MutableInputs()->Index(0).packets.push_back(
+        Adopt(input_border_1.release()).At(Timestamp(1)));
 
-  auto input_face_1 =
-      absl::make_unique<DetectionSet>(ParseTextProtoOrDie<DetectionSet>(
-          R"pb(
-            detections {
-              score: 0.7
-              signal_type: { standard: FACE_FULL }
-              tracking_id: 0
-            }
-            detections {
-              score: 0.9
-              signal_type: { standard: FACE_FULL }
-              tracking_id: 1
-            }
-            detections {
-              score: 0.2
-              signal_type: { standard: FACE_FULL }
-            }
-          )pb"));
+    auto input_face_1 =
+        absl::make_unique<DetectionSet>(ParseTextProtoOrDie<DetectionSet>(
+            R"pb(
+                 detections {
+                   score: 0.7
+                   signal_type: { standard: FACE_FULL }
+                   tracking_id: 0
+                 }
+                 detections {
+                   score: 0.9
+                   signal_type: { standard: FACE_FULL }
+                   tracking_id: 1
+                 }
+                 detections {
+                   score: 0.2
+                   signal_type: { standard: FACE_FULL }
+                 }
+            )pb"));
 
-  runner->MutableInputs()->Index(1).packets.push_back(
-      Adopt(input_face_1.release()).At(Timestamp(1)));
+    runner->MutableInputs()->Index(1).packets.push_back(
+        Adopt(input_face_1.release()).At(Timestamp(1)));
 
-  auto input_ocr_1 =
-      absl::make_unique<DetectionSet>(ParseTextProtoOrDie<DetectionSet>(
-          R"pb(
-            detections {
-              score: 0.3
-              signal_type: { custom: "text" }
-            }
-          )pb"));
+    auto input_ocr_1 =
+        absl::make_unique<DetectionSet>(ParseTextProtoOrDie<DetectionSet>(
+            R"pb(
+                 detections {
+                   score: 0.3
+                   signal_type: { custom: "text" }
+                 }
+            )pb"));
 
-  runner->MutableInputs()->Index(2).packets.push_back(
-      Adopt(input_ocr_1.release()).At(Timestamp(1)));
+    runner->MutableInputs()->Index(2).packets.push_back(
+        Adopt(input_ocr_1.release()).At(Timestamp(1)));
 
-  auto input_agn_1 =
-      absl::make_unique<DetectionSet>(ParseTextProtoOrDie<DetectionSet>(
-          R"pb(
-            detections {
-              score: 0.3
-              signal_type: { standard: LOGO }
-              tracking_id: 0
-            }
-          )pb"));
+    auto input_agn_1 =
+        absl::make_unique<DetectionSet>(ParseTextProtoOrDie<DetectionSet>(
+            R"pb(
+                 detections {
+                   score: 0.3
+                   signal_type: { standard: LOGO }
+                   tracking_id: 0
+                 }
+            )pb"));
 
-  runner->MutableInputs()->Index(3).packets.push_back(
-      Adopt(input_agn_1.release()).At(Timestamp(1)));
+    runner->MutableInputs()->Index(3).packets.push_back(
+        Adopt(input_agn_1.release()).At(Timestamp(1)));
 
-  // Time two
-  auto input_border_2 = absl::make_unique<bool>(false);
-  runner->MutableInputs()->Index(0).packets.push_back(
-      Adopt(input_border_2.release()).At(Timestamp(2)));
+    // Time two
+    auto input_border_2 = absl::make_unique<bool>(false);
+    runner->MutableInputs()->Index(0).packets.push_back(
+        Adopt(input_border_2.release()).At(Timestamp(2)));
 
-  auto input_face_2 =
-      absl::make_unique<DetectionSet>(ParseTextProtoOrDie<DetectionSet>(
-          R"pb(
-            detections {
-              score: 0.8
-              signal_type: { standard: FACE_FULL }
-              tracking_id: 0
-            }
-            detections {
-              score: 0.9
-              signal_type: { standard: FACE_FULL }
-              tracking_id: 1
-            }
-            detections {
-              score: 0.3
-              signal_type: { standard: FACE_FULL }
-            }
-          )pb"));
+    auto input_face_2 =
+        absl::make_unique<DetectionSet>(ParseTextProtoOrDie<DetectionSet>(
+            R"pb(
+                 detections {
+                   score: 0.8
+                   signal_type: { standard: FACE_FULL }
+                   tracking_id: 0
+                 }
+                 detections {
+                   score: 0.9
+                   signal_type: { standard: FACE_FULL }
+                   tracking_id: 1
+                 }
+                 detections {
+                   score: 0.3
+                   signal_type: { standard: FACE_FULL }
+                 }
+            )pb"));
 
-  runner->MutableInputs()->Index(1).packets.push_back(
-      Adopt(input_face_2.release()).At(Timestamp(2)));
+    runner->MutableInputs()->Index(1).packets.push_back(
+        Adopt(input_face_2.release()).At(Timestamp(2)));
 
-  auto input_ocr_2 =
-      absl::make_unique<DetectionSet>(ParseTextProtoOrDie<DetectionSet>(
-          R"pb(
-            detections {
-              score: 0.3
-              signal_type: { custom: "text" }
-            }
-          )pb"));
+    auto input_ocr_2 =
+        absl::make_unique<DetectionSet>(ParseTextProtoOrDie<DetectionSet>(
+            R"pb(
+                 detections {
+                   score: 0.3
+                   signal_type: { custom: "text" }
+                 }
+            )pb"));
 
-  runner->MutableInputs()->Index(2).packets.push_back(
-      Adopt(input_ocr_2.release()).At(Timestamp(2)));
+    runner->MutableInputs()->Index(2).packets.push_back(
+        Adopt(input_ocr_2.release()).At(Timestamp(2)));
 
-  auto input_agn_2 =
-      absl::make_unique<DetectionSet>(ParseTextProtoOrDie<DetectionSet>(
-          R"pb(
-            detections {
-              score: 0.9
-              signal_type: { standard: LOGO }
-              tracking_id: 0
-            }
-          )pb"));
+    auto input_agn_2 =
+        absl::make_unique<DetectionSet>(ParseTextProtoOrDie<DetectionSet>(
+            R"pb(
+                 detections {
+                   score: 0.9
+                   signal_type: { standard: LOGO }
+                   tracking_id: 0
+                 }
+            )pb"));
 
-  runner->MutableInputs()->Index(3).packets.push_back(
-      Adopt(input_agn_2.release()).At(Timestamp(2)));
+    runner->MutableInputs()->Index(3).packets.push_back(
+        Adopt(input_agn_2.release()).At(Timestamp(2)));
 
-  // Time three (new scene)
-  auto input_border_3 = absl::make_unique<bool>(true);
-  runner->MutableInputs()->Index(0).packets.push_back(
-      Adopt(input_border_3.release()).At(Timestamp(3)));
+    // Time three (new scene)
+    auto input_border_3 = absl::make_unique<bool>(true);
+    runner->MutableInputs()->Index(0).packets.push_back(
+        Adopt(input_border_3.release()).At(Timestamp(3)));
 
-  auto input_face_3 =
-      absl::make_unique<DetectionSet>(ParseTextProtoOrDie<DetectionSet>(
-          R"pb(
-            detections {
-              score: 0.2
-              signal_type: { standard: FACE_FULL }
-              tracking_id: 0
-            }
-            detections {
-              score: 0.3
-              signal_type: { standard: FACE_FULL }
-              tracking_id: 1
-            }
-            detections {
-              score: 0.4
-              signal_type: { standard: FACE_FULL }
-            }
-          )pb"));
+    auto input_face_3 =
+        absl::make_unique<DetectionSet>(ParseTextProtoOrDie<DetectionSet>(
+            R"pb(
+                 detections {
+                   score: 0.2
+                   signal_type: { standard: FACE_FULL }
+                   tracking_id: 0
+                 }
+                 detections {
+                   score: 0.3
+                   signal_type: { standard: FACE_FULL }
+                   tracking_id: 1
+                 }
+                 detections {
+                   score: 0.4
+                   signal_type: { standard: FACE_FULL }
+                 }
+            )pb"));
 
-  runner->MutableInputs()->Index(1).packets.push_back(
-      Adopt(input_face_3.release()).At(Timestamp(3)));
+    runner->MutableInputs()->Index(1).packets.push_back(
+        Adopt(input_face_3.release()).At(Timestamp(3)));
 
-  auto input_ocr_3 =
-      absl::make_unique<DetectionSet>(ParseTextProtoOrDie<DetectionSet>(
-          R"pb(
-            detections {
-              score: 0.5
-              signal_type: { custom: "text" }
-            }
-          )pb"));
+    auto input_ocr_3 =
+        absl::make_unique<DetectionSet>(ParseTextProtoOrDie<DetectionSet>(
+            R"pb(
+                 detections {
+                   score: 0.5
+                   signal_type: { custom: "text" }
+                 }
+            )pb"));
 
-  runner->MutableInputs()->Index(2).packets.push_back(
-      Adopt(input_ocr_3.release()).At(Timestamp(3)));
+    runner->MutableInputs()->Index(2).packets.push_back(
+        Adopt(input_ocr_3.release()).At(Timestamp(3)));
 
-  auto input_agn_3 =
-      absl::make_unique<DetectionSet>(ParseTextProtoOrDie<DetectionSet>(
-          R"pb(
-            detections {
-              score: 0.6
-              signal_type: { standard: LOGO }
-              tracking_id: 0
-            }
-          )pb"));
+    auto input_agn_3 =
+        absl::make_unique<DetectionSet>(ParseTextProtoOrDie<DetectionSet>(
+            R"pb(
+                 detections {
+                   score: 0.6
+                   signal_type: { standard: LOGO }
+                   tracking_id: 0
+                 }
+            )pb"));
 
-  runner->MutableInputs()->Index(3).packets.push_back(
-      Adopt(input_agn_3.release()).At(Timestamp(3)));
+    runner->MutableInputs()->Index(3).packets.push_back(
+        Adopt(input_agn_3.release()).At(Timestamp(3)));
 
-  MP_ASSERT_OK(runner->Run());
+    MP_ASSERT_OK(runner->Run());
 
-  // Check time 0
-  std::vector<Packet> output_packets = runner->Outputs().Index(0).packets;
-  DetectionSet detection_set = output_packets[0].Get<DetectionSet>();
+    // Check time 0
+    std::vector<Packet> output_packets = runner->Outputs().Index(0).packets;
+    DetectionSet detection_set = output_packets[0].Get<DetectionSet>();
 
-  float face_id_0 = (.2 + .7 + .8) / 3;
-  face_id_0 = face_id_0 * .1 + .5;
-  float face_id_1 = (0.0 + .9 + .9) / 3;
-  face_id_1 = face_id_1 * .1 + .5;
-  float face_3 = 0.1;
-  face_3 = face_3 * .1 + .5;
-  float ocr_1 = 0.2;
-  ocr_1 = ocr_1 * .1 + .9;
-  float agn_1 = (.3 + .3 + .9) / 3;
-  agn_1 = agn_1 * .2 + .1;
+    float face_id_0 = (.2 + .7 + .8) / 3;
+    face_id_0 = face_id_0 * .1 + .5;
+    float face_id_1 = (0.0 + .9 + .9) / 3;
+    face_id_1 = face_id_1 * .1 + .5;
+    float face_3 = 0.1;
+    face_3 = face_3 * .1 + .5;
+    float ocr_1 = 0.2;
+    ocr_1 = ocr_1 * .1 + .9;
+    float agn_1 = (.3 + .3 + .9) / 3;
+    agn_1 = agn_1 * .2 + .1;
 
-  ASSERT_EQ(detection_set.detections().size(), 5);
-  EXPECT_FLOAT_EQ(detection_set.detections(0).score(), face_id_0);
-  EXPECT_FLOAT_EQ(detection_set.detections(1).score(), face_id_1);
-  EXPECT_FLOAT_EQ(detection_set.detections(2).score(), face_3);
-  EXPECT_FLOAT_EQ(detection_set.detections(3).score(), ocr_1);
-  EXPECT_FLOAT_EQ(detection_set.detections(4).score(), agn_1);
+    ASSERT_EQ(detection_set.detections().size(), 5);
+    EXPECT_FLOAT_EQ(detection_set.detections(0).score(), face_id_0);
+    EXPECT_FLOAT_EQ(detection_set.detections(1).score(), face_id_1);
+    EXPECT_FLOAT_EQ(detection_set.detections(2).score(), face_3);
+    EXPECT_FLOAT_EQ(detection_set.detections(3).score(), ocr_1);
+    EXPECT_FLOAT_EQ(detection_set.detections(4).score(), agn_1);
 
-  // Check time 1
-  detection_set = output_packets[1].Get<DetectionSet>();
+    // Check time 1
+    detection_set = output_packets[1].Get<DetectionSet>();
 
-  face_id_0 = (.2 + .7 + .8) / 3;
-  face_id_0 = face_id_0 * .1 + .5;
-  face_id_1 = (0.0 + .9 + .9) / 3;
-  face_id_1 = face_id_1 * .1 + .5;
-  face_3 = 0.2;
-  face_3 = face_3 * .1 + .5;
-  ocr_1 = 0.3;
-  ocr_1 = ocr_1 * .1 + .9;
-  agn_1 = (.3 + .3 + .9) / 3;
-  agn_1 = agn_1 * .2 + .1;
+    face_id_0 = (.2 + .7 + .8) / 3;
+    face_id_0 = face_id_0 * .1 + .5;
+    face_id_1 = (0.0 + .9 + .9) / 3;
+    face_id_1 = face_id_1 * .1 + .5;
+    face_3 = 0.2;
+    face_3 = face_3 * .1 + .5;
+    ocr_1 = 0.3;
+    ocr_1 = ocr_1 * .1 + .9;
+    agn_1 = (.3 + .3 + .9) / 3;
+    agn_1 = agn_1 * .2 + .1;
 
-  ASSERT_EQ(detection_set.detections().size(), 5);
-  EXPECT_FLOAT_EQ(detection_set.detections(0).score(), face_id_0);
-  EXPECT_FLOAT_EQ(detection_set.detections(1).score(), face_id_1);
-  EXPECT_FLOAT_EQ(detection_set.detections(2).score(), face_3);
-  EXPECT_FLOAT_EQ(detection_set.detections(3).score(), ocr_1);
-  EXPECT_FLOAT_EQ(detection_set.detections(4).score(), agn_1);
+    ASSERT_EQ(detection_set.detections().size(), 5);
+    EXPECT_FLOAT_EQ(detection_set.detections(0).score(), face_id_0);
+    EXPECT_FLOAT_EQ(detection_set.detections(1).score(), face_id_1);
+    EXPECT_FLOAT_EQ(detection_set.detections(2).score(), face_3);
+    EXPECT_FLOAT_EQ(detection_set.detections(3).score(), ocr_1);
+    EXPECT_FLOAT_EQ(detection_set.detections(4).score(), agn_1);
 
-  // Check time 2
-  detection_set = output_packets[2].Get<DetectionSet>();
+    // Check time 2
+    detection_set = output_packets[2].Get<DetectionSet>();
 
-  face_id_0 = (.2 + .7 + .8) / 3;
-  face_id_0 = face_id_0 * .1 + .5;
-  face_id_1 = (0.0 + .9 + .9) / 3;
-  face_id_1 = face_id_1 * .1 + .5;
-  face_3 = 0.3;
-  face_3 = face_3 * .1 + .5;
-  ocr_1 = 0.3;
-  ocr_1 = ocr_1 * .1 + .9;
-  agn_1 = (.3 + .3 + .9) / 3;
-  agn_1 = agn_1 * .2 + .1;
+    face_id_0 = (.2 + .7 + .8) / 3;
+    face_id_0 = face_id_0 * .1 + .5;
+    face_id_1 = (0.0 + .9 + .9) / 3;
+    face_id_1 = face_id_1 * .1 + .5;
+    face_3 = 0.3;
+    face_3 = face_3 * .1 + .5;
+    ocr_1 = 0.3;
+    ocr_1 = ocr_1 * .1 + .9;
+    agn_1 = (.3 + .3 + .9) / 3;
+    agn_1 = agn_1 * .2 + .1;
 
-  ASSERT_EQ(detection_set.detections().size(), 5);
-  EXPECT_FLOAT_EQ(detection_set.detections(0).score(), face_id_0);
-  EXPECT_FLOAT_EQ(detection_set.detections(1).score(), face_id_1);
-  EXPECT_FLOAT_EQ(detection_set.detections(2).score(), face_3);
-  EXPECT_FLOAT_EQ(detection_set.detections(3).score(), ocr_1);
-  EXPECT_FLOAT_EQ(detection_set.detections(4).score(), agn_1);
+    ASSERT_EQ(detection_set.detections().size(), 5);
+    EXPECT_FLOAT_EQ(detection_set.detections(0).score(), face_id_0);
+    EXPECT_FLOAT_EQ(detection_set.detections(1).score(), face_id_1);
+    EXPECT_FLOAT_EQ(detection_set.detections(2).score(), face_3);
+    EXPECT_FLOAT_EQ(detection_set.detections(3).score(), ocr_1);
+    EXPECT_FLOAT_EQ(detection_set.detections(4).score(), agn_1);
 
-  // Check time 3 (new scene)
-  detection_set = output_packets[3].Get<DetectionSet>();
+    // Check time 3 (new scene)
+    detection_set = output_packets[3].Get<DetectionSet>();
 
-  face_id_0 = 0.2;
-  face_id_0 = face_id_0 * .1 + .5;
-  face_id_1 = 0.3;
-  face_id_1 = face_id_1 * .1 + .5;
-  face_3 = 0.4;
-  face_3 = face_3 * .1 + .5;
-  ocr_1 = 0.5;
-  ocr_1 = ocr_1 * .1 + .9;
-  agn_1 = .6;
-  agn_1 = agn_1 * .2 + .1;
+    face_id_0 = 0.2;
+    face_id_0 = face_id_0 * .1 + .5;
+    face_id_1 = 0.3;
+    face_id_1 = face_id_1 * .1 + .5;
+    face_3 = 0.4;
+    face_3 = face_3 * .1 + .5;
+    ocr_1 = 0.5;
+    ocr_1 = ocr_1 * .1 + .9;
+    agn_1 = .6;
+    agn_1 = agn_1 * .2 + .1;
 
-  ASSERT_EQ(detection_set.detections().size(), 5);
-  EXPECT_FLOAT_EQ(detection_set.detections(0).score(), face_id_0);
-  EXPECT_FLOAT_EQ(detection_set.detections(1).score(), face_id_1);
-  EXPECT_FLOAT_EQ(detection_set.detections(2).score(), face_3);
-  EXPECT_FLOAT_EQ(detection_set.detections(3).score(), ocr_1);
-  EXPECT_FLOAT_EQ(detection_set.detections(4).score(), agn_1);
+    ASSERT_EQ(detection_set.detections().size(), 5);
+    EXPECT_FLOAT_EQ(detection_set.detections(0).score(), face_id_0);
+    EXPECT_FLOAT_EQ(detection_set.detections(1).score(), face_id_1);
+    EXPECT_FLOAT_EQ(detection_set.detections(2).score(), face_3);
+    EXPECT_FLOAT_EQ(detection_set.detections(3).score(), ocr_1);
+    EXPECT_FLOAT_EQ(detection_set.detections(4).score(), agn_1);
 }
 
 }  // namespace

@@ -15,11 +15,10 @@
 #ifndef MEDIAPIPE_FRAMEWORK_TOOL_STATUS_UTIL_H_
 #define MEDIAPIPE_FRAMEWORK_TOOL_STATUS_UTIL_H_
 
-#include <string>
-#include <vector>
-
 #include "absl/base/macros.h"
 #include "mediapipe/framework/port/status.h"
+#include <string>
+#include <vector>
 
 namespace mediapipe {
 namespace tool {

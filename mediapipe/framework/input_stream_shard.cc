@@ -17,11 +17,11 @@
 namespace mediapipe {
 
 void InputStreamShard::AddPacket(Packet&& value, bool is_done) {
-  // A packet can be added if the shard is still active or the packet being
-  // added is empty. An empty packet corresponds to absence of a packet.
-  CHECK(!is_done_ || value.IsEmpty());
-  packet_queue_.emplace(std::move(value));
-  is_done_ = is_done;
+    // A packet can be added if the shard is still active or the packet being
+    // added is empty. An empty packet corresponds to absence of a packet.
+    CHECK(!is_done_ || value.IsEmpty());
+    packet_queue_.emplace(std::move(value));
+    is_done_ = is_done;
 }
 
 }  // namespace mediapipe

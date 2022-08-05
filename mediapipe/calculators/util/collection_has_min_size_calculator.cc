@@ -14,12 +14,10 @@
 // limitations under the License.
 
 #include "mediapipe/calculators/util/collection_has_min_size_calculator.h"
-
-#include <vector>
-
 #include "mediapipe/framework/formats/classification.pb.h"
 #include "mediapipe/framework/formats/landmark.pb.h"
 #include "mediapipe/framework/formats/rect.pb.h"
+#include <vector>
 
 namespace mediapipe {
 

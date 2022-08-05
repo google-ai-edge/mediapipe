@@ -19,32 +19,32 @@ package mediapipe;
 import "mediapipe/framework/packet_generator.proto";
 
 message GraphTensorsPacketGeneratorOptions {
-  extend mediapipe.PacketGeneratorOptions {
-    optional GraphTensorsPacketGeneratorOptions ext = 142721046;
-  }
+    extend mediapipe.PacketGeneratorOptions {
+        optional GraphTensorsPacketGeneratorOptions ext = 142721046;
+    }
 
-  // Names of tensor tags for each of the generated tensors.
-  // Examples are: "STATE_C_0" or "STATE_M_0".
-  repeated string tensor_tag = 1;
+    // Names of tensor tags for each of the generated tensors.
+    // Examples are: "STATE_C_0" or "STATE_M_0".
+    repeated string tensor_tag = 1;
 
-  // Must be same length as tensor_tag. Each tensor tag must be paired with the
-  // number of nodes.
-  // Tags must be capitalized, matching regex [A-Z0-9_]+. Examples: "STATE_C_0"
-  // and "STATE_M_0". Then, those tags can be used as the MediaPipe tags of
-  // tensors to initialized in TensorflowInferenceCalculator consuming
-  // the packet produced by this generator. For example, a mediapipe graph
-  // can include the node:
-  // packet_generator {
-  //   packet_generator: "GraphTensorsPacketGenerator"
-  //   output_side_packet: "init_tensors"
-  //   options {
-  //     [mediapipe.StateTensorsPacketGeneratorOptions.ext]: {
-  //      tensor_tag: "STATE_C_0"
-  //       tensor_num_nodes:128
-  //       tensor_tag: "STATE_M_0"
-  //       tensor_num_nodes:128
-  //     }
-  //   }
-  // }
-  repeated int32 tensor_num_nodes = 2;
+    // Must be same length as tensor_tag. Each tensor tag must be paired with the
+    // number of nodes.
+    // Tags must be capitalized, matching regex [A-Z0-9_]+. Examples: "STATE_C_0"
+    // and "STATE_M_0". Then, those tags can be used as the MediaPipe tags of
+    // tensors to initialized in TensorflowInferenceCalculator consuming
+    // the packet produced by this generator. For example, a mediapipe graph
+    // can include the node:
+    // packet_generator {
+    //   packet_generator: "GraphTensorsPacketGenerator"
+    //   output_side_packet: "init_tensors"
+    //   options {
+    //     [mediapipe.StateTensorsPacketGeneratorOptions.ext]: {
+    //      tensor_tag: "STATE_C_0"
+    //       tensor_num_nodes:128
+    //       tensor_tag: "STATE_M_0"
+    //       tensor_num_nodes:128
+    //     }
+    //   }
+    // }
+    repeated int32 tensor_num_nodes = 2;
 }

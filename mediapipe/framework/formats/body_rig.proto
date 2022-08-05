@@ -19,24 +19,24 @@ package mediapipe;
 // Joint of a 3D human model (e.g. elbow, knee, wrist). Contains 3D rotation of
 // the joint and its visibility.
 message Joint {
-  // Joint rotation in 6D contineous representation ordered as
-  // [a1, b1, a2, b2, a3, b3].
-  //
-  // Such representation is more sutable for NN model training and can be
-  // converted to quaternions and Euler angles if needed. Details can be found
-  // in https://arxiv.org/abs/1812.07035.
-  repeated float rotation_6d = 1;
+    // Joint rotation in 6D contineous representation ordered as
+    // [a1, b1, a2, b2, a3, b3].
+    //
+    // Such representation is more sutable for NN model training and can be
+    // converted to quaternions and Euler angles if needed. Details can be found
+    // in https://arxiv.org/abs/1812.07035.
+    repeated float rotation_6d = 1;
 
-  // Joint visibility.
-  // Float score of whether joint is visible: present on the screen and not
-  // occluded by other objects. Depending on the model, visibility value is
-  // either a sigmoid or an argument of sigmoid, but in any case higher value
-  // indicates higher probability of joint being visible. Should stay unset if
-  // not supported.
-  optional float visibility = 2;
+    // Joint visibility.
+    // Float score of whether joint is visible: present on the screen and not
+    // occluded by other objects. Depending on the model, visibility value is
+    // either a sigmoid or an argument of sigmoid, but in any case higher value
+    // indicates higher probability of joint being visible. Should stay unset if
+    // not supported.
+    optional float visibility = 2;
 }
 
 // Group of Joint protos.
 message JointList {
-  repeated Joint joint = 1;
+    repeated Joint joint = 1;
 }

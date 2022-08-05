@@ -1,10 +1,9 @@
 #ifndef MEDIAPIPE_CALCULATORS_IMAGE_IMAGE_CROPPING_CALCULATOR_H_
 #define MEDIAPIPE_CALCULATORS_IMAGE_IMAGE_CROPPING_CALCULATOR_H_
 
-#include <float.h>
-
 #include "mediapipe/calculators/image/image_cropping_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
+#include <float.h>
 
 #if !MEDIAPIPE_DISABLE_GPU
 #include "mediapipe/gpu/gl_calculator_helper.h"
@@ -40,53 +39,53 @@
 namespace mediapipe {
 
 struct RectSpec {
-  int width;
-  int height;
-  int center_x;
-  int center_y;
-  float rotation;
+    int width;
+    int height;
+    int center_x;
+    int center_y;
+    float rotation;
 
-  bool operator==(const RectSpec& rect) const {
-    return (width == rect.width && height == rect.height &&
-            center_x == rect.center_x && center_y == rect.center_y &&
-            rotation == rect.rotation);
-  }
+    bool operator==(const RectSpec& rect) const {
+        return (width == rect.width && height == rect.height &&
+                center_x == rect.center_x && center_y == rect.center_y &&
+                rotation == rect.rotation);
+    }
 };
 
 class ImageCroppingCalculator : public CalculatorBase {
- public:
-  ImageCroppingCalculator() = default;
-  ~ImageCroppingCalculator() override = default;
+public:
+    ImageCroppingCalculator() = default;
+    ~ImageCroppingCalculator() override = default;
 
-  static absl::Status GetContract(CalculatorContract* cc);
-  absl::Status Open(CalculatorContext* cc) override;
-  absl::Status Process(CalculatorContext* cc) override;
-  absl::Status Close(CalculatorContext* cc) override;
-  static RectSpec GetCropSpecs(const CalculatorContext* cc, int src_width,
-                               int src_height);
+    static absl::Status GetContract(CalculatorContract* cc);
+    absl::Status Open(CalculatorContext* cc) override;
+    absl::Status Process(CalculatorContext* cc) override;
+    absl::Status Close(CalculatorContext* cc) override;
+    static RectSpec GetCropSpecs(const CalculatorContext* cc, int src_width,
+                                 int src_height);
 
- private:
-  absl::Status ValidateBorderModeForCPU(CalculatorContext* cc);
-  absl::Status ValidateBorderModeForGPU(CalculatorContext* cc);
-  absl::Status RenderCpu(CalculatorContext* cc);
-  absl::Status RenderGpu(CalculatorContext* cc);
-  absl::Status InitGpu(CalculatorContext* cc);
-  void GlRender();
-  void GetOutputDimensions(CalculatorContext* cc, int src_width, int src_height,
-                           int* dst_width, int* dst_height);
-  absl::Status GetBorderModeForOpenCV(CalculatorContext* cc, int* border_mode);
+private:
+    absl::Status ValidateBorderModeForCPU(CalculatorContext* cc);
+    absl::Status ValidateBorderModeForGPU(CalculatorContext* cc);
+    absl::Status RenderCpu(CalculatorContext* cc);
+    absl::Status RenderGpu(CalculatorContext* cc);
+    absl::Status InitGpu(CalculatorContext* cc);
+    void GlRender();
+    void GetOutputDimensions(CalculatorContext* cc, int src_width, int src_height,
+                             int* dst_width, int* dst_height);
+    absl::Status GetBorderModeForOpenCV(CalculatorContext* cc, int* border_mode);
 
-  mediapipe::ImageCroppingCalculatorOptions options_;
+    mediapipe::ImageCroppingCalculatorOptions options_;
 
-  bool use_gpu_ = false;
-  // Output texture corners (4) after transoformation in normalized coordinates.
-  float transformed_points_[8];
-  float output_max_width_ = FLT_MAX;
-  float output_max_height_ = FLT_MAX;
+    bool use_gpu_ = false;
+    // Output texture corners (4) after transoformation in normalized coordinates.
+    float transformed_points_[8];
+    float output_max_width_ = FLT_MAX;
+    float output_max_height_ = FLT_MAX;
 #if !MEDIAPIPE_DISABLE_GPU
-  bool gpu_initialized_ = false;
-  mediapipe::GlCalculatorHelper gpu_helper_;
-  GLuint program_ = 0;
+    bool gpu_initialized_ = false;
+    mediapipe::GlCalculatorHelper gpu_helper_;
+    GLuint program_ = 0;
 #endif  // !MEDIAPIPE_DISABLE_GPU
 };
 

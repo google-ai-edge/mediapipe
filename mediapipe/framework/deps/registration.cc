@@ -13,7 +13,6 @@
 // limitations under the License.
 
 #include "mediapipe/framework/deps/registration.h"
-
 #include "absl/container/flat_hash_set.h"
 
 namespace mediapipe {
@@ -24,23 +23,23 @@ namespace {
 // and still refer to them using an unqualified name.  This allowlist
 // is meant to facilitate migration from unqualified to fully qualified
 // calculator names.
-constexpr char const* kTopNamespaces[] = {
+constexpr const char* kTopNamespaces[] = {
     "mediapipe",
 };
 
 template <size_t SIZE, class T>
 inline size_t array_size(T (&arr)[SIZE]) {
-  return SIZE;
+    return SIZE;
 }
 
 }  // namespace
 
 /*static*/
 const absl::flat_hash_set<std::string>& NamespaceAllowlist::TopNamespaces() {
-  static absl::flat_hash_set<std::string>* result =
-      new absl::flat_hash_set<std::string>(
-          kTopNamespaces, kTopNamespaces + array_size(kTopNamespaces));
-  return *result;
+    static absl::flat_hash_set<std::string>* result =
+        new absl::flat_hash_set<std::string>(
+            kTopNamespaces, kTopNamespaces + array_size(kTopNamespaces));
+    return *result;
 }
 
 }  // namespace mediapipe

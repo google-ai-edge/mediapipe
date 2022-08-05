@@ -13,12 +13,10 @@
 // limitations under the License.
 
 #include "mediapipe/calculators/core/clip_vector_size_calculator.h"
-
-#include <vector>
-
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/detection.pb.h"
 #include "mediapipe/framework/formats/rect.pb.h"
+#include <vector>
 
 namespace mediapipe {
 

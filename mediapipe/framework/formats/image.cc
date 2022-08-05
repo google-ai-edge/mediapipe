@@ -13,7 +13,6 @@
 // limitations under the License.
 
 #include "mediapipe/framework/formats/image.h"
-
 #include "mediapipe/framework/type_map.h"
 
 #if !MEDIAPIPE_DISABLE_GPU
@@ -24,19 +23,19 @@ namespace mediapipe {
 
 // TODO Refactor common code from GpuBufferToImageFrameCalculator
 bool Image::ConvertToCpu() const {
-  auto view = gpu_buffer_.GetReadView<ImageFrame>();
-  use_gpu_ = false;
-  return true;
+    auto view = gpu_buffer_.GetReadView<ImageFrame>();
+    use_gpu_ = false;
+    return true;
 }
 
 // TODO Refactor common code from ImageFrameToGpuBufferCalculator
 bool Image::ConvertToGpu() const {
 #if MEDIAPIPE_DISABLE_GPU
-  return false;
+    return false;
 #else
-  auto view = gpu_buffer_.GetReadView<GlTextureView>(0);
-  use_gpu_ = true;
-  return true;
+    auto view = gpu_buffer_.GetReadView<GlTextureView>(0);
+    use_gpu_ = true;
+    return true;
 #endif  // MEDIAPIPE_DISABLE_GPU
 }
 

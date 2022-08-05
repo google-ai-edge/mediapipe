@@ -12,10 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <memory>
-#include <string>
-#include <vector>
-
 #include "absl/strings/str_replace.h"
 #include "absl/strings/string_view.h"
 #include "mediapipe/calculators/tensor/inference_calculator.pb.h"
@@ -32,6 +28,9 @@
 #include "tensorflow/lite/error_reporter.h"
 #include "tensorflow/lite/kernels/register.h"
 #include "tensorflow/lite/model.h"
+#include <memory>
+#include <string>
+#include <vector>
 
 #ifdef __APPLE__
 #include <CoreFoundation/CoreFoundation.h>
@@ -97,81 +96,81 @@ constexpr char kGraphWithModelAsInputSidePacket[] = R"(
   )";
 
 std::vector<Tensor> CreateInputs() {
-  std::vector<Tensor> input_vec;
-  // Prepare input tensor.
-  input_vec.emplace_back(
-      Tensor::ElementType::kFloat32,
-      Tensor::Shape{1, kTensorHeight, kTensorWidth, kTensorChannels});
-  {
-    auto view = input_vec.back().GetCpuWriteView();
-    auto num_elements = input_vec.back().shape().num_elements();
-    auto tensor_buffer = view.buffer<float>();
-    for (int i = 0; i < num_elements; i++) {
-      tensor_buffer[i] = 1;
+    std::vector<Tensor> input_vec;
+    // Prepare input tensor.
+    input_vec.emplace_back(
+        Tensor::ElementType::kFloat32,
+        Tensor::Shape{1, kTensorHeight, kTensorWidth, kTensorChannels});
+    {
+        auto view = input_vec.back().GetCpuWriteView();
+        auto num_elements = input_vec.back().shape().num_elements();
+        auto tensor_buffer = view.buffer<float>();
+        for (int i = 0; i < num_elements; i++) {
+            tensor_buffer[i] = 1;
+        }
     }
-  }
 
-  return input_vec;
+    return input_vec;
 }
 
 void RunGraphThenClose(CalculatorGraph& graph, std::vector<Tensor> input_vec) {
-  MP_ASSERT_OK(graph.StartRun({}));
+    MP_ASSERT_OK(graph.StartRun({}));
 
-  // Push the tensor into the graph.
-  MP_ASSERT_OK(graph.AddPacketToInputStream(
-      "tensor_in",
-      MakePacket<std::vector<Tensor>>(std::move(input_vec)).At(Timestamp(0))));
-  // Wait until the calculator done processing.
-  MP_ASSERT_OK(graph.WaitUntilIdle());
+    // Push the tensor into the graph.
+    MP_ASSERT_OK(graph.AddPacketToInputStream(
+        "tensor_in",
+        MakePacket<std::vector<Tensor>>(std::move(input_vec)).At(Timestamp(0))));
+    // Wait until the calculator done processing.
+    MP_ASSERT_OK(graph.WaitUntilIdle());
 
-  // Fully close graph at end, otherwise calculator+tensors are destroyed
-  // after calling WaitUntilDone().
-  MP_ASSERT_OK(graph.CloseInputStream("tensor_in"));
-  MP_ASSERT_OK(graph.WaitUntilDone());
+    // Fully close graph at end, otherwise calculator+tensors are destroyed
+    // after calling WaitUntilDone().
+    MP_ASSERT_OK(graph.CloseInputStream("tensor_in"));
+    MP_ASSERT_OK(graph.WaitUntilDone());
 }
 
 void DoSmokeTest(const std::string& graph_proto) {
-  auto input_vec = CreateInputs();
+    auto input_vec = CreateInputs();
 
-  // Prepare single calculator graph to and wait for packets.
-  CalculatorGraphConfig graph_config =
-      ParseTextProtoOrDie<CalculatorGraphConfig>(graph_proto);
-  std::vector<Packet> output_packets;
-  tool::AddVectorSink("tensor_out", &graph_config, &output_packets);
-  CalculatorGraph graph(graph_config);
+    // Prepare single calculator graph to and wait for packets.
+    CalculatorGraphConfig graph_config =
+        ParseTextProtoOrDie<CalculatorGraphConfig>(graph_proto);
+    std::vector<Packet> output_packets;
+    tool::AddVectorSink("tensor_out", &graph_config, &output_packets);
+    CalculatorGraph graph(graph_config);
 
-  RunGraphThenClose(graph, std::move(input_vec));
+    RunGraphThenClose(graph, std::move(input_vec));
 
-  ASSERT_EQ(1, output_packets.size());
+    ASSERT_EQ(1, output_packets.size());
 
-  // Get and process results.
-  const std::vector<Tensor>& result_vec =
-      output_packets[0].Get<std::vector<Tensor>>();
-  ASSERT_EQ(1, result_vec.size());
+    // Get and process results.
+    const std::vector<Tensor>& result_vec =
+        output_packets[0].Get<std::vector<Tensor>>();
+    ASSERT_EQ(1, result_vec.size());
 
-  const Tensor& result = result_vec[0];
-  auto view = result.GetCpuReadView();
-  auto result_buffer = view.buffer<float>();
-  ASSERT_NE(result_buffer, nullptr);
-  for (int i = 0; i < result.shape().num_elements(); i++) {
-    ASSERT_EQ(3, result_buffer[i]);
-  }
+    const Tensor& result = result_vec[0];
+    auto view = result.GetCpuReadView();
+    auto result_buffer = view.buffer<float>();
+    ASSERT_NE(result_buffer, nullptr);
+    for (int i = 0; i < result.shape().num_elements(); i++) {
+        ASSERT_EQ(3, result_buffer[i]);
+    }
 }
 
 // Tests a simple add model that adds an input tensor to itself.
 TEST(InferenceCalculatorTest, SmokeTest) {
-  // Test CPU inference only.
-  DoSmokeTest(/*graph_proto=*/absl::StrReplaceAll(
-      kGraphWithModelPathInOption, {{"$delegate", "delegate { tflite {} }"}}));
-  DoSmokeTest(absl::StrReplaceAll(kGraphWithModelPathInOption,
-                                  {{"$delegate", "delegate { xnnpack {} }"}}));
-  DoSmokeTest(absl::StrReplaceAll(
-      kGraphWithModelPathInOption,
-      {{"$delegate", "delegate { xnnpack { num_threads: 10 } }"}}));
+    // Test CPU inference only.
+    DoSmokeTest(/*graph_proto=*/absl::StrReplaceAll(
+        kGraphWithModelPathInOption, {{"$delegate", "delegate { tflite {} }"}}));
+    DoSmokeTest(absl::StrReplaceAll(kGraphWithModelPathInOption,
+                                    {{"$delegate", "delegate { xnnpack {} }"}}));
+    DoSmokeTest(absl::StrReplaceAll(
+        kGraphWithModelPathInOption,
+        {{"$delegate", "delegate { xnnpack { num_threads: 10 } }"}}));
 }
 
 TEST(InferenceCalculatorTest, ModelAsInputSidePacketSmokeTest) {
-  DoSmokeTest(kGraphWithModelAsInputSidePacket);
+    DoSmokeTest(kGraphWithModelAsInputSidePacket);
 }
 
 }  // namespace

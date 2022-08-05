@@ -12,10 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <memory>
-#include <string>
-#include <utility>
-
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/port/integral_types.h"
 #include "mediapipe/framework/port/logging.h"
@@ -26,6 +22,9 @@
 #include "tensorflow/core/lib/io/record_reader.h"
 #include "tensorflow/core/platform/env.h"
 #include "tensorflow/core/platform/file_system.h"
+#include <memory>
+#include <string>
+#include <utility>
 
 namespace mediapipe {
 
@@ -48,76 +47,76 @@ const char kSequenceExampleTag[] = "SEQUENCE_EXAMPLE";
 //   output_side_packet: "SEQUENCE_EXAMPLE:sequence_example"
 // }
 class TFRecordReaderCalculator : public CalculatorBase {
- public:
-  static absl::Status GetContract(CalculatorContract* cc);
+public:
+    static absl::Status GetContract(CalculatorContract* cc);
 
-  absl::Status Open(CalculatorContext* cc) override;
-  absl::Status Process(CalculatorContext* cc) override;
+    absl::Status Open(CalculatorContext* cc) override;
+    absl::Status Process(CalculatorContext* cc) override;
 };
 
 absl::Status TFRecordReaderCalculator::GetContract(CalculatorContract* cc) {
-  cc->InputSidePackets().Tag(kTFRecordPath).Set<std::string>();
-  if (cc->InputSidePackets().HasTag(kRecordIndex)) {
-    cc->InputSidePackets().Tag(kRecordIndex).Set<int>();
-  }
+    cc->InputSidePackets().Tag(kTFRecordPath).Set<std::string>();
+    if (cc->InputSidePackets().HasTag(kRecordIndex)) {
+        cc->InputSidePackets().Tag(kRecordIndex).Set<int>();
+    }
 
-  RET_CHECK(cc->OutputSidePackets().HasTag(kExampleTag) ||
-            cc->OutputSidePackets().HasTag(kSequenceExampleTag))
-      << "TFRecordReaderCalculator must output either Tensorflow example or "
-         "sequence example.";
-  if (cc->OutputSidePackets().HasTag(kExampleTag)) {
-    cc->OutputSidePackets().Tag(kExampleTag).Set<tensorflow::Example>();
-  } else {
-    cc->OutputSidePackets()
-        .Tag(kSequenceExampleTag)
-        .Set<tensorflow::SequenceExample>();
-  }
-  return absl::OkStatus();
+    RET_CHECK(cc->OutputSidePackets().HasTag(kExampleTag) ||
+              cc->OutputSidePackets().HasTag(kSequenceExampleTag))
+        << "TFRecordReaderCalculator must output either Tensorflow example or "
+           "sequence example.";
+    if (cc->OutputSidePackets().HasTag(kExampleTag)) {
+        cc->OutputSidePackets().Tag(kExampleTag).Set<tensorflow::Example>();
+    } else {
+        cc->OutputSidePackets()
+            .Tag(kSequenceExampleTag)
+            .Set<tensorflow::SequenceExample>();
+    }
+    return absl::OkStatus();
 }
 
 absl::Status TFRecordReaderCalculator::Open(CalculatorContext* cc) {
-  std::unique_ptr<tensorflow::RandomAccessFile> file;
-  auto tf_status = tensorflow::Env::Default()->NewRandomAccessFile(
-      cc->InputSidePackets().Tag(kTFRecordPath).Get<std::string>(), &file);
-  RET_CHECK(tf_status.ok())
-      << "Failed to open tfrecord file: " << tf_status.ToString();
-  tensorflow::io::RecordReader reader(file.get(),
-                                      tensorflow::io::RecordReaderOptions());
-  tensorflow::uint64 offset = 0;
-  tensorflow::tstring example_str;
-  const int target_idx =
-      cc->InputSidePackets().HasTag(kRecordIndex)
-          ? cc->InputSidePackets().Tag(kRecordIndex).Get<int>()
-          : 0;
-  int current_idx = 0;
-  while (current_idx <= target_idx) {
-    tf_status = reader.ReadRecord(&offset, &example_str);
+    std::unique_ptr<tensorflow::RandomAccessFile> file;
+    auto tf_status = tensorflow::Env::Default()->NewRandomAccessFile(
+        cc->InputSidePackets().Tag(kTFRecordPath).Get<std::string>(), &file);
     RET_CHECK(tf_status.ok())
-        << "Failed to read tfrecord: " << tf_status.ToString();
-    if (current_idx == target_idx) {
-      if (cc->OutputSidePackets().HasTag(kExampleTag)) {
-        tensorflow::Example tf_example;
-        tf_example.ParseFromArray(example_str.data(), example_str.size());
-        cc->OutputSidePackets()
-            .Tag(kExampleTag)
-            .Set(MakePacket<tensorflow::Example>(std::move(tf_example)));
-      } else {
-        tensorflow::SequenceExample tf_sequence_example;
-        tf_sequence_example.ParseFromString(example_str);
-        cc->OutputSidePackets()
-            .Tag(kSequenceExampleTag)
-            .Set(MakePacket<tensorflow::SequenceExample>(
-                std::move(tf_sequence_example)));
-      }
+        << "Failed to open tfrecord file: " << tf_status.ToString();
+    tensorflow::io::RecordReader reader(file.get(),
+                                        tensorflow::io::RecordReaderOptions());
+    tensorflow::uint64 offset = 0;
+    tensorflow::tstring example_str;
+    const int target_idx =
+        cc->InputSidePackets().HasTag(kRecordIndex)
+            ? cc->InputSidePackets().Tag(kRecordIndex).Get<int>()
+            : 0;
+    int current_idx = 0;
+    while (current_idx <= target_idx) {
+        tf_status = reader.ReadRecord(&offset, &example_str);
+        RET_CHECK(tf_status.ok())
+            << "Failed to read tfrecord: " << tf_status.ToString();
+        if (current_idx == target_idx) {
+            if (cc->OutputSidePackets().HasTag(kExampleTag)) {
+                tensorflow::Example tf_example;
+                tf_example.ParseFromArray(example_str.data(), example_str.size());
+                cc->OutputSidePackets()
+                    .Tag(kExampleTag)
+                    .Set(MakePacket<tensorflow::Example>(std::move(tf_example)));
+            } else {
+                tensorflow::SequenceExample tf_sequence_example;
+                tf_sequence_example.ParseFromString(example_str);
+                cc->OutputSidePackets()
+                    .Tag(kSequenceExampleTag)
+                    .Set(MakePacket<tensorflow::SequenceExample>(
+                        std::move(tf_sequence_example)));
+            }
+        }
+        ++current_idx;
     }
-    ++current_idx;
-  }
 
-  return absl::OkStatus();
+    return absl::OkStatus();
 }
 
 absl::Status TFRecordReaderCalculator::Process(CalculatorContext* cc) {
-  return absl::OkStatus();
+    return absl::OkStatus();
 }
 
 REGISTER_CALCULATOR(TFRecordReaderCalculator);

@@ -25,14 +25,14 @@ import "mediapipe/framework/mediapipe_options.proto";
 
 // See FixedSizeInputStreamHandler for documentation.
 message FixedSizeInputStreamHandlerOptions {
-  extend MediaPipeOptions {
-    optional FixedSizeInputStreamHandlerOptions ext = 125744319;
-  }
-  // The queue size at which input queues are truncated.
-  optional int32 trigger_queue_size = 1 [default = 2];
-  // The queue size to which input queues are truncated.
-  optional int32 target_queue_size = 2 [default = 1];
-  // If false, input queues are truncated to at most trigger_queue_size.
-  // If true, input queues are truncated to at least trigger_queue_size.
-  optional bool fixed_min_size = 3 [default = false];
+    extend MediaPipeOptions {
+        optional FixedSizeInputStreamHandlerOptions ext = 125744319;
+    }
+    // The queue size at which input queues are truncated.
+    optional int32 trigger_queue_size = 1 [default = 2];
+    // The queue size to which input queues are truncated.
+    optional int32 target_queue_size = 2 [default = 1];
+    // If false, input queues are truncated to at most trigger_queue_size.
+    // If true, input queues are truncated to at least trigger_queue_size.
+    optional bool fixed_min_size = 3 [default = false];
 }

@@ -15,13 +15,12 @@
 #ifndef MEDIAPIPE_CALCULATORS_UTIL_COLLECTION_HAS_MIN_SIZE_CALCULATOR_H_
 #define MEDIAPIPE_CALCULATORS_UTIL_COLLECTION_HAS_MIN_SIZE_CALCULATOR_H_
 
-#include <vector>
-
 #include "mediapipe/calculators/util/collection_has_min_size_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/port/canonical_errors.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status.h"
+#include <vector>
 
 namespace mediapipe {
 
@@ -41,53 +40,53 @@ namespace mediapipe {
 // calculator options.
 template <typename IterableT>
 class CollectionHasMinSizeCalculator : public CalculatorBase {
- public:
-  static absl::Status GetContract(CalculatorContract* cc) {
-    RET_CHECK(cc->Inputs().HasTag("ITERABLE"));
-    RET_CHECK_EQ(1, cc->Inputs().NumEntries());
+public:
+    static absl::Status GetContract(CalculatorContract* cc) {
+        RET_CHECK(cc->Inputs().HasTag("ITERABLE"));
+        RET_CHECK_EQ(1, cc->Inputs().NumEntries());
 
-    RET_CHECK_EQ(1, cc->Outputs().NumEntries());
+        RET_CHECK_EQ(1, cc->Outputs().NumEntries());
 
-    RET_CHECK_GE(
-        cc->Options<::mediapipe::CollectionHasMinSizeCalculatorOptions>()
-            .min_size(),
-        0);
+        RET_CHECK_GE(
+            cc->Options<::mediapipe::CollectionHasMinSizeCalculatorOptions>()
+                .min_size(),
+            0);
 
-    cc->Inputs().Tag("ITERABLE").Set<IterableT>();
-    cc->Outputs().Index(0).Set<bool>();
+        cc->Inputs().Tag("ITERABLE").Set<IterableT>();
+        cc->Outputs().Index(0).Set<bool>();
 
-    // Optional input side packet that determines `min_size_`.
-    if (cc->InputSidePackets().NumEntries() > 0) {
-      cc->InputSidePackets().Index(0).Set<int>();
+        // Optional input side packet that determines `min_size_`.
+        if (cc->InputSidePackets().NumEntries() > 0) {
+            cc->InputSidePackets().Index(0).Set<int>();
+        }
+        return absl::OkStatus();
     }
-    return absl::OkStatus();
-  }
 
-  absl::Status Open(CalculatorContext* cc) override {
-    cc->SetOffset(TimestampDiff(0));
-    min_size_ =
-        cc->Options<::mediapipe::CollectionHasMinSizeCalculatorOptions>()
-            .min_size();
-    // Override `min_size` if passed as side packet.
-    if (cc->InputSidePackets().NumEntries() > 0 &&
-        !cc->InputSidePackets().Index(0).IsEmpty()) {
-      min_size_ = cc->InputSidePackets().Index(0).Get<int>();
+    absl::Status Open(CalculatorContext* cc) override {
+        cc->SetOffset(TimestampDiff(0));
+        min_size_ =
+            cc->Options<::mediapipe::CollectionHasMinSizeCalculatorOptions>()
+                .min_size();
+        // Override `min_size` if passed as side packet.
+        if (cc->InputSidePackets().NumEntries() > 0 &&
+            !cc->InputSidePackets().Index(0).IsEmpty()) {
+            min_size_ = cc->InputSidePackets().Index(0).Get<int>();
+        }
+        return absl::OkStatus();
     }
-    return absl::OkStatus();
-  }
 
-  absl::Status Process(CalculatorContext* cc) override {
-    const IterableT& input = cc->Inputs().Tag("ITERABLE").Get<IterableT>();
-    bool has_min_size = input.size() >= min_size_;
+    absl::Status Process(CalculatorContext* cc) override {
+        const IterableT& input = cc->Inputs().Tag("ITERABLE").Get<IterableT>();
+        bool has_min_size = input.size() >= min_size_;
 
-    cc->Outputs().Index(0).AddPacket(
-        MakePacket<bool>(has_min_size).At(cc->InputTimestamp()));
+        cc->Outputs().Index(0).AddPacket(
+            MakePacket<bool>(has_min_size).At(cc->InputTimestamp()));
 
-    return absl::OkStatus();
-  }
+        return absl::OkStatus();
+    }
 
- private:
-  int min_size_ = 0;
+private:
+    int min_size_ = 0;
 };
 
 }  // namespace mediapipe

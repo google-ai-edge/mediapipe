@@ -16,9 +16,8 @@
 #ifndef MEDIAPIPE_IMAGE_SCALE_IMAGE_UTILS_H_
 #define MEDIAPIPE_IMAGE_SCALE_IMAGE_UTILS_H_
 
-#include <string>
-
 #include "mediapipe/framework/port/status.h"
+#include <string>
 
 namespace mediapipe {
 namespace scale_image {

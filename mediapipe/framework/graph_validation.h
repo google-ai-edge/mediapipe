@@ -26,31 +26,31 @@ namespace mediapipe {
 // Validates a CalculatorGraphConfig, including subgraphs, template graphs,
 // and side-packets.
 class GraphValidation {
- public:
-  // Validates the specified CalculatorGraphConfig.
-  absl::Status Validate(
-      const CalculatorGraphConfig& config,
-      const std::map<std::string, Packet>& side_packets = {}) {
-    return graph_.Initialize(config, side_packets);
-  }
+public:
+    // Validates the specified CalculatorGraphConfig.
+    absl::Status Validate(
+        const CalculatorGraphConfig& config,
+        const std::map<std::string, Packet>& side_packets = {}) {
+        return graph_.Initialize(config, side_packets);
+    }
 
-  // Validates the specified CalculatorGraphConfigs.
-  // Template graph and subgraph configs can be specified through
-  // |input_templates|.  Every subgraph must have its graph type specified in
-  // CalclatorGraphConfig.type.  A subgraph can be validated directly by
-  // specifying its type in |graph_type|.  A template graph can be validated
-  // directly by specifying its template arguments in |arguments|.
-  absl::Status Validate(const std::vector<CalculatorGraphConfig>& configs,
-                        const std::vector<CalculatorGraphTemplate>& templates,
-                        const std::map<std::string, Packet>& side_packets = {},
-                        const std::string& graph_type = "",
-                        const Subgraph::SubgraphOptions* options = nullptr) {
-    return graph_.Initialize(configs, templates, side_packets, graph_type,
-                             options);
-  }
+    // Validates the specified CalculatorGraphConfigs.
+    // Template graph and subgraph configs can be specified through
+    // |input_templates|.  Every subgraph must have its graph type specified in
+    // CalclatorGraphConfig.type.  A subgraph can be validated directly by
+    // specifying its type in |graph_type|.  A template graph can be validated
+    // directly by specifying its template arguments in |arguments|.
+    absl::Status Validate(const std::vector<CalculatorGraphConfig>& configs,
+                          const std::vector<CalculatorGraphTemplate>& templates,
+                          const std::map<std::string, Packet>& side_packets = {},
+                          const std::string& graph_type = "",
+                          const Subgraph::SubgraphOptions* options = nullptr) {
+        return graph_.Initialize(configs, templates, side_packets, graph_type,
+                                 options);
+    }
 
- private:
-  CalculatorGraph graph_;
+private:
+    CalculatorGraph graph_;
 };
 
 }  // namespace mediapipe

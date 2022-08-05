@@ -13,35 +13,34 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#import <Foundation/Foundation.h>
-
 #include "mediapipe/framework/port/canonical_errors.h"
 #include "mediapipe/framework/profiler/profiler_resource_util.h"
+#import <Foundation/Foundation.h>
 
 namespace mediapipe {
 
 StatusOr<std::string> GetDefaultTraceLogDirectory() {
-  // Get the Documents directory. iOS apps can write files to this directory.
-  NSURL* documents_directory_url = [[[NSFileManager defaultManager]
-      URLsForDirectory:NSDocumentDirectory
-             inDomains:NSUserDomainMask] lastObject];
+    // Get the Documents directory. iOS apps can write files to this directory.
+    NSURL* documents_directory_url = [[[NSFileManager defaultManager]
+        URLsForDirectory:NSDocumentDirectory
+               inDomains:NSUserDomainMask] lastObject];
 
-  // Note: "createDirectoryAtURL:..." method doesn't successfully create
-  // the directory, hence this code uses "createDirectoryAtPath:..".
-  NSString* ns_documents_directory = [documents_directory_url path];
-  NSError* error;
-  BOOL success = [[NSFileManager defaultManager]
-            createDirectoryAtPath:ns_documents_directory
-      withIntermediateDirectories:YES
-                       attributes:nil
-                            error:&error];
-  if (!success) {
-    // TODO: Use NSError+util_status to get status from NSError.
-    return absl::InternalError([[error localizedDescription] UTF8String]);
-  }
+    // Note: "createDirectoryAtURL:..." method doesn't successfully create
+    // the directory, hence this code uses "createDirectoryAtPath:..".
+    NSString* ns_documents_directory = [documents_directory_url path];
+    NSError* error;
+    BOOL success = [[NSFileManager defaultManager]
+              createDirectoryAtPath:ns_documents_directory
+        withIntermediateDirectories:YES
+                         attributes:nil
+                              error:&error];
+    if (!success) {
+        // TODO: Use NSError+util_status to get status from NSError.
+        return absl::InternalError([[error localizedDescription] UTF8String]);
+    }
 
-  std::string trace_log_directory = [ns_documents_directory UTF8String];
-  return trace_log_directory;
+    std::string trace_log_directory = [ns_documents_directory UTF8String];
+    return trace_log_directory;
 }
 
 }  // namespace mediapipe

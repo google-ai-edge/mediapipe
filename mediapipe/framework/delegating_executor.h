@@ -22,14 +22,14 @@ namespace internal {
 
 // An executor that delegates the running of tasks using a callback.
 class DelegatingExecutor : public Executor {
- public:
-  explicit DelegatingExecutor(
-      std::function<void(std::function<void()>)> callback)
-      : callback_(std::move(callback)) {}
-  void Schedule(std::function<void()> task) override;
+public:
+    explicit DelegatingExecutor(
+        std::function<void(std::function<void()>)> callback)
+        : callback_(std::move(callback)) {}
+    void Schedule(std::function<void()> task) override;
 
- private:
-  std::function<void(std::function<void()>)> callback_;
+private:
+    std::function<void(std::function<void()>)> callback_;
 };
 
 }  // namespace internal

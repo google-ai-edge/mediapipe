@@ -31,7 +31,6 @@
 #endif
 
 #include <stdlib.h>
-
 #include <string>
 #if MEDIAPIPE_HAS_CXA_DEMANGLE
 #include <cxxabi.h>
@@ -65,19 +64,19 @@ namespace mediapipe {
 // Prefer using MediaPipeTypeStringOrDemangled<T>() when possible (defined
 // in type_map.h).
 inline std::string Demangle(const char* mangled) {
-  int status = 0;
-  char* demangled = nullptr;
+    int status = 0;
+    char* demangled = nullptr;
 #if MEDIAPIPE_HAS_CXA_DEMANGLE
-  demangled = abi::__cxa_demangle(mangled, nullptr, nullptr, &status);
+    demangled = abi::__cxa_demangle(mangled, nullptr, nullptr, &status);
 #endif
-  std::string out;
-  if (status == 0 && demangled != nullptr) {  // Demangling succeeeded.
-    out.append(demangled);
-    free(demangled);
-  } else {
-    out.append(mangled);
-  }
-  return out;
+    std::string out;
+    if (status == 0 && demangled != nullptr) {  // Demangling succeeeded.
+        out.append(demangled);
+        free(demangled);
+    } else {
+        out.append(mangled);
+    }
+    return out;
 }
 
 }  // namespace mediapipe

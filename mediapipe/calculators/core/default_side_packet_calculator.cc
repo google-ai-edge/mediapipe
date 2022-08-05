@@ -54,51 +54,51 @@ constexpr char kValueTag[] = "VALUE";
 //     output_side_packet: "VALUE:segmentation_mask_enabled"
 //   }
 class DefaultSidePacketCalculator : public CalculatorBase {
- public:
-  static absl::Status GetContract(CalculatorContract* cc);
-  absl::Status Open(CalculatorContext* cc) override;
-  absl::Status Process(CalculatorContext* cc) override;
+public:
+    static absl::Status GetContract(CalculatorContract* cc);
+    absl::Status Open(CalculatorContext* cc) override;
+    absl::Status Process(CalculatorContext* cc) override;
 };
 REGISTER_CALCULATOR(DefaultSidePacketCalculator);
 
 absl::Status DefaultSidePacketCalculator::GetContract(CalculatorContract* cc) {
-  RET_CHECK(cc->InputSidePackets().HasTag(kDefaultValueTag))
-      << "Default value must be provided";
-  cc->InputSidePackets().Tag(kDefaultValueTag).SetAny();
+    RET_CHECK(cc->InputSidePackets().HasTag(kDefaultValueTag))
+        << "Default value must be provided";
+    cc->InputSidePackets().Tag(kDefaultValueTag).SetAny();
 
-  // Optional input side packet can be unspecified. In this case MediaPipe will
-  // remove it from the calculator config.
-  if (cc->InputSidePackets().HasTag(kOptionalValueTag)) {
-    cc->InputSidePackets()
-        .Tag(kOptionalValueTag)
-        .SetSameAs(&cc->InputSidePackets().Tag(kDefaultValueTag))
-        .Optional();
-  }
+    // Optional input side packet can be unspecified. In this case MediaPipe will
+    // remove it from the calculator config.
+    if (cc->InputSidePackets().HasTag(kOptionalValueTag)) {
+        cc->InputSidePackets()
+            .Tag(kOptionalValueTag)
+            .SetSameAs(&cc->InputSidePackets().Tag(kDefaultValueTag))
+            .Optional();
+    }
 
-  RET_CHECK(cc->OutputSidePackets().HasTag(kValueTag));
-  cc->OutputSidePackets().Tag(kValueTag).SetSameAs(
-      &cc->InputSidePackets().Tag(kDefaultValueTag));
+    RET_CHECK(cc->OutputSidePackets().HasTag(kValueTag));
+    cc->OutputSidePackets().Tag(kValueTag).SetSameAs(
+        &cc->InputSidePackets().Tag(kDefaultValueTag));
 
-  return absl::OkStatus();
+    return absl::OkStatus();
 }
 
 absl::Status DefaultSidePacketCalculator::Open(CalculatorContext* cc) {
-  // If optional value is provided it is returned as the calculator output.
-  if (cc->InputSidePackets().HasTag(kOptionalValueTag)) {
-    auto& packet = cc->InputSidePackets().Tag(kOptionalValueTag);
+    // If optional value is provided it is returned as the calculator output.
+    if (cc->InputSidePackets().HasTag(kOptionalValueTag)) {
+        auto& packet = cc->InputSidePackets().Tag(kOptionalValueTag);
+        cc->OutputSidePackets().Tag(kValueTag).Set(packet);
+        return absl::OkStatus();
+    }
+
+    // If no optional value
+    auto& packet = cc->InputSidePackets().Tag(kDefaultValueTag);
     cc->OutputSidePackets().Tag(kValueTag).Set(packet);
+
     return absl::OkStatus();
-  }
-
-  // If no optional value
-  auto& packet = cc->InputSidePackets().Tag(kDefaultValueTag);
-  cc->OutputSidePackets().Tag(kValueTag).Set(packet);
-
-  return absl::OkStatus();
 }
 
 absl::Status DefaultSidePacketCalculator::Process(CalculatorContext* cc) {
-  return absl::OkStatus();
+    return absl::OkStatus();
 }
 
 }  // namespace mediapipe

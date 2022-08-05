@@ -15,13 +15,12 @@
 #ifndef MEDIAPIPE_FRAMEWORK_TOOL_FILL_PACKET_SET_H_
 #define MEDIAPIPE_FRAMEWORK_TOOL_FILL_PACKET_SET_H_
 
-#include <map>
-#include <memory>
-#include <string>
-
 #include "mediapipe/framework/packet_set.h"
 #include "mediapipe/framework/packet_type.h"
 #include "mediapipe/framework/port/statusor.h"
+#include <map>
+#include <memory>
+#include <string>
 
 namespace mediapipe {
 namespace tool {

@@ -23,18 +23,18 @@ namespace mediapipe {
 using mediapipe::CalculatorGraphConfig;
 
 struct ImageFrameComparisonOptions {
-  // NOTE: these values are not normalized: use a value from 0 to 2^8-1
-  // for 8-bit data and a value from 0 to 2^16-1 for 16-bit data.
-  // Although these members are declared as floats,, all uint8/uint16
-  // values are exactly representable. (2^24 + 1 is the first non-representable
-  // positive integral value.)
+    // NOTE: these values are not normalized: use a value from 0 to 2^8-1
+    // for 8-bit data and a value from 0 to 2^16-1 for 16-bit data.
+    // Although these members are declared as floats,, all uint8/uint16
+    // values are exactly representable. (2^24 + 1 is the first non-representable
+    // positive integral value.)
 
-  // Maximum value difference allowed for non-alpha channels.
-  float max_color_diff;
-  // Maximum value difference allowed for alpha channel (if present).
-  float max_alpha_diff;
-  // Maximum difference for all channels, averaged across all pixels.
-  float max_avg_diff;
+    // Maximum value difference allowed for non-alpha channels.
+    float max_color_diff;
+    // Maximum value difference allowed for alpha channel (if present).
+    float max_alpha_diff;
+    // Maximum difference for all channels, averaged across all pixels.
+    float max_avg_diff;
 };
 
 // Compares an output image with a golden file. Saves the output and difference

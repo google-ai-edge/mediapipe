@@ -13,15 +13,13 @@
 // limitations under the License.
 
 #include "mediapipe/calculators/core/end_loop_calculator.h"
-
-#include <vector>
-
 #include "mediapipe/framework/formats/classification.pb.h"
 #include "mediapipe/framework/formats/detection.pb.h"
 #include "mediapipe/framework/formats/landmark.pb.h"
 #include "mediapipe/framework/formats/rect.pb.h"
 #include "mediapipe/util/render_data.pb.h"
 #include "tensorflow/lite/interpreter.h"
+#include <vector>
 
 namespace mediapipe {
 

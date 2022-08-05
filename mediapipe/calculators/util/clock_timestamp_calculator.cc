@@ -49,59 +49,59 @@ constexpr char kClockTag[] = "CLOCK";
 // }
 //
 class ClockTimestampCalculator : public CalculatorBase {
- public:
-  ClockTimestampCalculator() {}
+public:
+    ClockTimestampCalculator() {}
 
-  static absl::Status GetContract(CalculatorContract* cc);
+    static absl::Status GetContract(CalculatorContract* cc);
 
-  absl::Status Open(CalculatorContext* cc) override;
-  absl::Status Process(CalculatorContext* cc) override;
+    absl::Status Open(CalculatorContext* cc) override;
+    absl::Status Process(CalculatorContext* cc) override;
 
- private:
-  // Clock object.
-  std::shared_ptr<::mediapipe::Clock> clock_;
+private:
+    // Clock object.
+    std::shared_ptr<::mediapipe::Clock> clock_;
 };
 REGISTER_CALCULATOR(ClockTimestampCalculator);
 
 absl::Status ClockTimestampCalculator::GetContract(CalculatorContract* cc) {
-  RET_CHECK_EQ(cc->Inputs().NumEntries(), 1);
-  RET_CHECK_EQ(cc->Outputs().NumEntries(), 1);
+    RET_CHECK_EQ(cc->Inputs().NumEntries(), 1);
+    RET_CHECK_EQ(cc->Outputs().NumEntries(), 1);
 
-  cc->Inputs().Index(0).SetAny();
-  cc->Outputs().Index(0).Set<absl::Time>();
+    cc->Inputs().Index(0).SetAny();
+    cc->Outputs().Index(0).Set<absl::Time>();
 
-  // Optional Clock input side packet.
-  if (cc->InputSidePackets().HasTag(kClockTag)) {
-    cc->InputSidePackets()
-        .Tag(kClockTag)
-        .Set<std::shared_ptr<::mediapipe::Clock>>();
-  }
+    // Optional Clock input side packet.
+    if (cc->InputSidePackets().HasTag(kClockTag)) {
+        cc->InputSidePackets()
+            .Tag(kClockTag)
+            .Set<std::shared_ptr<::mediapipe::Clock>>();
+    }
 
-  return absl::OkStatus();
+    return absl::OkStatus();
 }
 
 absl::Status ClockTimestampCalculator::Open(CalculatorContext* cc) {
-  // Direct passthrough, as far as timestamp and bounds are concerned.
-  cc->SetOffset(TimestampDiff(0));
+    // Direct passthrough, as far as timestamp and bounds are concerned.
+    cc->SetOffset(TimestampDiff(0));
 
-  // Initialize the clock.
-  if (cc->InputSidePackets().HasTag(kClockTag)) {
-    clock_ = cc->InputSidePackets()
-                 .Tag(kClockTag)
-                 .Get<std::shared_ptr<::mediapipe::Clock>>();
-  } else {
-    clock_.reset(
-        ::mediapipe::MonotonicClock::CreateSynchronizedMonotonicClock());
-  }
+    // Initialize the clock.
+    if (cc->InputSidePackets().HasTag(kClockTag)) {
+        clock_ = cc->InputSidePackets()
+                     .Tag(kClockTag)
+                     .Get<std::shared_ptr<::mediapipe::Clock>>();
+    } else {
+        clock_.reset(
+            ::mediapipe::MonotonicClock::CreateSynchronizedMonotonicClock());
+    }
 
-  return absl::OkStatus();
+    return absl::OkStatus();
 }
 
 absl::Status ClockTimestampCalculator::Process(CalculatorContext* cc) {
-  // Push the Time packet to output.
-  auto timestamp_packet = MakePacket<absl::Time>(clock_->TimeNow());
-  cc->Outputs().Index(0).AddPacket(timestamp_packet.At(cc->InputTimestamp()));
-  return absl::OkStatus();
+    // Push the Time packet to output.
+    auto timestamp_packet = MakePacket<absl::Time>(clock_->TimeNow());
+    cc->Outputs().Index(0).AddPacket(timestamp_packet.At(cc->InputTimestamp()));
+    return absl::OkStatus();
 }
 
 }  // namespace mediapipe

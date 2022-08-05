@@ -19,7 +19,7 @@ namespace mediapipe {
 
 // Tests a simple add model that adds an input tensor to itself.
 TEST(TfLiteInferenceCalculatorTest, SmokeTest) {
-  std::string graph_proto = R"(
+    std::string graph_proto = R"(
     input_stream: "tensor_in"
     node {
       calculator: "TfLiteInferenceCalculator"
@@ -33,18 +33,18 @@ TEST(TfLiteInferenceCalculatorTest, SmokeTest) {
       }
     }
   )";
-  // Test CPU inference only.
-  DoSmokeTest<float>(/*graph_proto=*/absl::StrReplaceAll(
-      graph_proto, {{"$delegate", "delegate { tflite {} }"}}));
-  DoSmokeTest<float>(absl::StrReplaceAll(
-      graph_proto, {{"$delegate", "delegate { xnnpack {} }"}}));
-  DoSmokeTest<float>(absl::StrReplaceAll(
-      graph_proto,
-      {{"$delegate", "delegate { xnnpack { num_threads: 10 } }"}}));
+    // Test CPU inference only.
+    DoSmokeTest<float>(/*graph_proto=*/absl::StrReplaceAll(
+        graph_proto, {{"$delegate", "delegate { tflite {} }"}}));
+    DoSmokeTest<float>(absl::StrReplaceAll(
+        graph_proto, {{"$delegate", "delegate { xnnpack {} }"}}));
+    DoSmokeTest<float>(absl::StrReplaceAll(
+        graph_proto,
+        {{"$delegate", "delegate { xnnpack { num_threads: 10 } }"}}));
 }
 
 TEST(TfLiteInferenceCalculatorTest, SmokeTest_ModelAsInputSidePacket) {
-  std::string graph_proto = R"(
+    std::string graph_proto = R"(
     input_stream: "tensor_in"
 
     node {
@@ -82,7 +82,7 @@ TEST(TfLiteInferenceCalculatorTest, SmokeTest_ModelAsInputSidePacket) {
       }
     }
   )";
-  DoSmokeTest<float>(graph_proto);
+    DoSmokeTest<float>(graph_proto);
 }
 
 }  // namespace mediapipe

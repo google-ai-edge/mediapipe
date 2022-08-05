@@ -18,11 +18,11 @@ package mediapipe;
 
 // The anchor representation for object detection.
 message Anchor {
-  // Encoded anchor box center.
-  required float x_center = 1;
-  required float y_center = 2;
-  // Encoded anchor box height.
-  required float h = 3;
-  // Encoded anchor box width.
-  required float w = 4;
+    // Encoded anchor box center.
+    required float x_center = 1;
+    required float y_center = 2;
+    // Encoded anchor box height.
+    required float h = 3;
+    // Encoded anchor box width.
+    required float w = 4;
 }

@@ -13,56 +13,53 @@
 // limitations under the License.
 
 #include "mediapipe/examples/desktop/autoflip/quality/piecewise_linear_function.h"
-
-#include <stddef.h>
-
+#include "mediapipe/framework/port/status.h"
 #include <algorithm>
 #include <limits>
+#include <stddef.h>
 #include <vector>
-
-#include "mediapipe/framework/port/status.h"
 
 namespace mediapipe {
 namespace autoflip {
 
 void PiecewiseLinearFunction::AddPoint(double x, double y) {
-  if (!points_.empty()) {
-    CHECK_GE(x, points_.back().x)
-        << "Points must be provided in non-decreasing x order.";
-  }
-  points_.push_back(PiecewiseLinearFunction::Point(x, y));
+    if (!points_.empty()) {
+        CHECK_GE(x, points_.back().x)
+            << "Points must be provided in non-decreasing x order.";
+    }
+    points_.push_back(PiecewiseLinearFunction::Point(x, y));
 }
 
 std::vector<PiecewiseLinearFunction::Point>::const_iterator
 PiecewiseLinearFunction::GetIntervalIterator(double input) const {
-  PiecewiseLinearFunction::Point input_point(input, 0);
-  std::vector<PiecewiseLinearFunction::Point>::const_iterator iter =
-      std::lower_bound(points_.begin(), points_.end(), input_point,
-                       PointCompare());
-  return iter;
+    PiecewiseLinearFunction::Point input_point(input, 0);
+    std::vector<PiecewiseLinearFunction::Point>::const_iterator iter =
+        std::lower_bound(points_.begin(), points_.end(), input_point,
+                         PointCompare());
+    return iter;
 }
 
 double PiecewiseLinearFunction::Interpolate(
     const PiecewiseLinearFunction::Point& p1,
     const PiecewiseLinearFunction::Point& p2, double input) const {
-  CHECK_LT(p1.x, input);
-  CHECK_GE(p2.x, input);
+    CHECK_LT(p1.x, input);
+    CHECK_GE(p2.x, input);
 
-  return p2.y - (p2.x - input) / (p2.x - p1.x) * (p2.y - p1.y);
+    return p2.y - (p2.x - input) / (p2.x - p1.x) * (p2.y - p1.y);
 }
 
-double PiecewiseLinearFunction::Evaluate(double const input) const {
-  std::vector<PiecewiseLinearFunction::Point>::const_iterator i =
-      GetIntervalIterator(input);
-  if (i == points_.begin()) {
-    return points_.front().y;
-  }
-  if (i == points_.end()) {
-    return points_.back().y;
-  }
+double PiecewiseLinearFunction::Evaluate(const double input) const {
+    std::vector<PiecewiseLinearFunction::Point>::const_iterator i =
+        GetIntervalIterator(input);
+    if (i == points_.begin()) {
+        return points_.front().y;
+    }
+    if (i == points_.end()) {
+        return points_.back().y;
+    }
 
-  std::vector<PiecewiseLinearFunction::Point>::const_iterator prev = i - 1;
-  return Interpolate(*prev, *i, input);
+    std::vector<PiecewiseLinearFunction::Point>::const_iterator prev = i - 1;
+    return Interpolate(*prev, *i, input);
 }
 
 }  // namespace autoflip

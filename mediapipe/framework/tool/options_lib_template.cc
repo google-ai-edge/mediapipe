@@ -26,15 +26,15 @@ constexpr char kDescriptorContents[] =
     ;  // NOLINT(whitespace/semicolon)
 
 mediapipe::FieldData ReadFileDescriptorSet(const std::string& pb) {
-  mediapipe::FieldData result;
-  *result.mutable_message_value()->mutable_type_url() =
-      "proto2.FileDescriptorSet";
-  *result.mutable_message_value()->mutable_value() = pb;
+    mediapipe::FieldData result;
+    *result.mutable_message_value()->mutable_type_url() =
+        "proto2.FileDescriptorSet";
+    *result.mutable_message_value()->mutable_value() = pb;
 
-  // Force linking of the generated options protobuf.
-  mediapipe::proto_ns::LinkMessageReflection<
-      MP_OPTION_TYPE_NS::MP_OPTION_TYPE_NAME>();
-  return result;
+    // Force linking of the generated options protobuf.
+    mediapipe::proto_ns::LinkMessageReflection<
+        MP_OPTION_TYPE_NS::MP_OPTION_TYPE_NAME>();
+    return result;
 }
 
 }  // namespace

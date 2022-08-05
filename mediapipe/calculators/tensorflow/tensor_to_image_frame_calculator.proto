@@ -19,11 +19,11 @@ package mediapipe;
 import "mediapipe/framework/calculator.proto";
 
 message TensorToImageFrameCalculatorOptions {
-  extend mediapipe.CalculatorOptions {
-    optional TensorToImageFrameCalculatorOptions ext = 142032475;
-  }
+    extend mediapipe.CalculatorOptions {
+        optional TensorToImageFrameCalculatorOptions ext = 142032475;
+    }
 
-  // Multiples floating point tensor outputs by this value before converting to
-  // uint8. This is useful for converting from range [0, 1] to [0, 255]
-  optional float scale_factor = 1 [default = 1.0];
+    // Multiples floating point tensor outputs by this value before converting to
+    // uint8. This is useful for converting from range [0, 1] to [0, 255]
+    optional float scale_factor = 1 [default = 1.0];
 }

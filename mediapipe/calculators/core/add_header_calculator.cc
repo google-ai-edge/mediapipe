@@ -45,37 +45,37 @@ namespace api2 {
 // }
 //
 class AddHeaderCalculator : public Node {
- public:
-  static constexpr Input<NoneType>::Optional kHeader{"HEADER"};
-  static constexpr SideInput<AnyType>::Optional kHeaderSide{"HEADER"};
-  static constexpr Input<AnyType> kData{"DATA"};
-  static constexpr Output<SameType<kData>> kOut{""};
+public:
+    static constexpr Input<NoneType>::Optional kHeader{"HEADER"};
+    static constexpr SideInput<AnyType>::Optional kHeaderSide{"HEADER"};
+    static constexpr Input<AnyType> kData{"DATA"};
+    static constexpr Output<SameType<kData>> kOut{""};
 
-  MEDIAPIPE_NODE_CONTRACT(kHeader, kHeaderSide, kData, kOut);
+    MEDIAPIPE_NODE_CONTRACT(kHeader, kHeaderSide, kData, kOut);
 
-  static absl::Status UpdateContract(CalculatorContract* cc) {
-    if (kHeader(cc).IsConnected() == kHeaderSide(cc).IsConnected()) {
-      return absl::InvalidArgumentError(
-          "Header must be provided via exactly one of side input and input "
-          "stream");
+    static absl::Status UpdateContract(CalculatorContract* cc) {
+        if (kHeader(cc).IsConnected() == kHeaderSide(cc).IsConnected()) {
+            return absl::InvalidArgumentError(
+                "Header must be provided via exactly one of side input and input "
+                "stream");
+        }
+        return absl::OkStatus();
     }
-    return absl::OkStatus();
-  }
 
-  absl::Status Open(CalculatorContext* cc) override {
-    const PacketBase& header =
-        kHeader(cc).IsConnected() ? kHeader(cc).Header() : kHeaderSide(cc);
-    if (!header.IsEmpty()) {
-      kOut(cc).SetHeader(header);
+    absl::Status Open(CalculatorContext* cc) override {
+        const PacketBase& header =
+            kHeader(cc).IsConnected() ? kHeader(cc).Header() : kHeaderSide(cc);
+        if (!header.IsEmpty()) {
+            kOut(cc).SetHeader(header);
+        }
+        cc->SetOffset(0);
+        return absl::OkStatus();
     }
-    cc->SetOffset(0);
-    return absl::OkStatus();
-  }
 
-  absl::Status Process(CalculatorContext* cc) override {
-    kOut(cc).Send(kData(cc).packet());
-    return absl::OkStatus();
-  }
+    absl::Status Process(CalculatorContext* cc) override {
+        kOut(cc).Send(kData(cc).packet());
+        return absl::OkStatus();
+    }
 };
 
 MEDIAPIPE_REGISTER_NODE(AddHeaderCalculator);

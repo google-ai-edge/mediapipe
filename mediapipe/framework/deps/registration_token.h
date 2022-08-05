@@ -63,54 +63,54 @@ namespace mediapipe {
 //
 // This class is thread compatible.
 class RegistrationToken {
- public:
-  explicit RegistrationToken(std::function<void()> unregisterer);
+public:
+    explicit RegistrationToken(std::function<void()> unregisterer);
 
-  // It is useful to have an empty constructor for when we want to declare a
-  // token, and assign it later.
-  RegistrationToken() {}
+    // It is useful to have an empty constructor for when we want to declare a
+    // token, and assign it later.
+    RegistrationToken() {}
 
-  RegistrationToken(const RegistrationToken&) = delete;
-  RegistrationToken& operator=(const RegistrationToken&) = delete;
+    RegistrationToken(const RegistrationToken&) = delete;
+    RegistrationToken& operator=(const RegistrationToken&) = delete;
 
-  RegistrationToken(RegistrationToken&& rhs);
-  RegistrationToken& operator=(RegistrationToken&& rhs);
+    RegistrationToken(RegistrationToken&& rhs);
+    RegistrationToken& operator=(RegistrationToken&& rhs);
 
-  // Unregisters the registration for which this token is in charge, and voids
-  // the token. It is safe to call this more than once, but further calls are
-  // guaranteed to be noop.
-  void Unregister();
+    // Unregisters the registration for which this token is in charge, and voids
+    // the token. It is safe to call this more than once, but further calls are
+    // guaranteed to be noop.
+    void Unregister();
 
-  // Returns a token whose Unregister() will Unregister() all <tokens>.
-  static RegistrationToken Combine(std::vector<RegistrationToken> tokens);
+    // Returns a token whose Unregister() will Unregister() all <tokens>.
+    static RegistrationToken Combine(std::vector<RegistrationToken> tokens);
 
- private:
-  std::function<void()> unregister_function_ = nullptr;
+private:
+    std::function<void()> unregister_function_ = nullptr;
 };
 
 // RAII class for registration tokens: it calls Unregister() when it goes out
 // of scope.
 class Unregister {
- public:
-  // Useful to have an empty constructor for when we want to assign it later.
-  // The default is an empty token that does nothing.
-  Unregister() : token_() {}
-  explicit Unregister(RegistrationToken token);
-  ~Unregister();
+public:
+    // Useful to have an empty constructor for when we want to assign it later.
+    // The default is an empty token that does nothing.
+    Unregister() : token_() {}
+    explicit Unregister(RegistrationToken token);
+    ~Unregister();
 
-  Unregister(const Unregister&) = delete;
-  Unregister& operator=(const Unregister&) = delete;
+    Unregister(const Unregister&) = delete;
+    Unregister& operator=(const Unregister&) = delete;
 
-  Unregister(Unregister&& rhs);
-  Unregister& operator=(Unregister&& rhs);
+    Unregister(Unregister&& rhs);
+    Unregister& operator=(Unregister&& rhs);
 
-  // Similar to unique_ptr.reset() and the likes: this will unregister the
-  // current token if any, and then assume registration ownership of this new
-  // <token>.
-  void Reset(RegistrationToken token = RegistrationToken());
+    // Similar to unique_ptr.reset() and the likes: this will unregister the
+    // current token if any, and then assume registration ownership of this new
+    // <token>.
+    void Reset(RegistrationToken token = RegistrationToken());
 
- private:
-  RegistrationToken token_;
+private:
+    RegistrationToken token_;
 };
 }  // namespace mediapipe
 

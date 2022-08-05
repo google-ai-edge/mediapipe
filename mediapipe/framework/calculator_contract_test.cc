@@ -29,72 +29,72 @@ namespace mediapipe {
 namespace {
 
 TEST(CalculatorContractTest, Calculator) {
-  const CalculatorGraphConfig::Node node =
-      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"pb(
-        calculator: "MixtureOfExpertsFusionCalculator"
-        input_stream: "FRAME:fdense_pca_moe_aggregated_detection"
-        input_stream: "FNET:fnet_logreg_aggregated_detection"
-        input_stream: "EGRAPH:egraph_segment_aggregated_detection"
-        input_stream: "VIDEO:fdense_averaged_pca_moe_v2_detection"
-        input_side_packet: "FUSION_MODEL:egraph_topical_packet_factory"
-        output_stream: "egraph_topical_detection"
-      )pb");
-  CalculatorContract contract;
-  MP_EXPECT_OK(contract.Initialize(node));
-  EXPECT_EQ(contract.Inputs().NumEntries(), 4);
-  EXPECT_EQ(contract.Outputs().NumEntries(), 1);
-  EXPECT_EQ(contract.InputSidePackets().NumEntries(), 1);
-  EXPECT_EQ(contract.OutputSidePackets().NumEntries(), 0);
+    const CalculatorGraphConfig::Node node =
+        mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"pb(
+                                                                         calculator: "MixtureOfExpertsFusionCalculator"
+                                                                         input_stream: "FRAME:fdense_pca_moe_aggregated_detection"
+                                                                         input_stream: "FNET:fnet_logreg_aggregated_detection"
+                                                                         input_stream: "EGRAPH:egraph_segment_aggregated_detection"
+                                                                         input_stream: "VIDEO:fdense_averaged_pca_moe_v2_detection"
+                                                                         input_side_packet: "FUSION_MODEL:egraph_topical_packet_factory"
+                                                                         output_stream: "egraph_topical_detection"
+        )pb");
+    CalculatorContract contract;
+    MP_EXPECT_OK(contract.Initialize(node));
+    EXPECT_EQ(contract.Inputs().NumEntries(), 4);
+    EXPECT_EQ(contract.Outputs().NumEntries(), 1);
+    EXPECT_EQ(contract.InputSidePackets().NumEntries(), 1);
+    EXPECT_EQ(contract.OutputSidePackets().NumEntries(), 0);
 }
 
 TEST(CalculatorContractTest, CalculatorOptions) {
-  const CalculatorGraphConfig::Node node =
-      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"pb(
-        calculator: "CalculatorTestCalculator"
-        input_stream: "DATA:ycbcr_frames"
-        input_stream: "VIDEO_HEADER:ycbcr_frames_prestream"
-        output_stream: "DATA:ycbcr_downsampled"
-        output_stream: "VIDEO_HEADER:ycbcr_downsampled_prestream"
-        options {
-          [mediapipe.CalculatorContractTestOptions.ext] { test_field: 1.0 }
-        })pb");
-  CalculatorContract contract;
-  MP_EXPECT_OK(contract.Initialize(node));
-  const auto& test_options =
-      contract.Options().GetExtension(CalculatorContractTestOptions::ext);
-  EXPECT_EQ(test_options.test_field(), 1.0);
-  EXPECT_EQ(contract.Inputs().NumEntries(), 2);
-  EXPECT_EQ(contract.Outputs().NumEntries(), 2);
-  EXPECT_EQ(contract.InputSidePackets().NumEntries(), 0);
-  EXPECT_EQ(contract.OutputSidePackets().NumEntries(), 0);
+    const CalculatorGraphConfig::Node node =
+        mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"pb(
+                                                                         calculator: "CalculatorTestCalculator"
+                                                                         input_stream: "DATA:ycbcr_frames"
+                                                                         input_stream: "VIDEO_HEADER:ycbcr_frames_prestream"
+                                                                         output_stream: "DATA:ycbcr_downsampled"
+                                                                         output_stream: "VIDEO_HEADER:ycbcr_downsampled_prestream"
+                                                                         options {
+                                                                           [mediapipe.CalculatorContractTestOptions.ext] { test_field: 1.0 }
+                                                                         })pb");
+    CalculatorContract contract;
+    MP_EXPECT_OK(contract.Initialize(node));
+    const auto& test_options =
+        contract.Options().GetExtension(CalculatorContractTestOptions::ext);
+    EXPECT_EQ(test_options.test_field(), 1.0);
+    EXPECT_EQ(contract.Inputs().NumEntries(), 2);
+    EXPECT_EQ(contract.Outputs().NumEntries(), 2);
+    EXPECT_EQ(contract.InputSidePackets().NumEntries(), 0);
+    EXPECT_EQ(contract.OutputSidePackets().NumEntries(), 0);
 }
 
 TEST(CalculatorContractTest, PacketGenerator) {
-  const PacketGeneratorConfig node =
-      mediapipe::ParseTextProtoOrDie<PacketGeneratorConfig>(R"pb(
-        packet_generator: "DaredevilLabeledTimeSeriesGenerator"
-        input_side_packet: "labeled_time_series"
-        output_side_packet: "time_series_header"
-        output_side_packet: "input_matrix"
-        output_side_packet: "label_set"
-        output_side_packet: "content_fingerprint"
-      )pb");
-  CalculatorContract contract;
-  MP_EXPECT_OK(contract.Initialize(node, ""));
-  EXPECT_EQ(contract.InputSidePackets().NumEntries(), 1);
-  EXPECT_EQ(contract.OutputSidePackets().NumEntries(), 4);
+    const PacketGeneratorConfig node =
+        mediapipe::ParseTextProtoOrDie<PacketGeneratorConfig>(R"pb(
+                                                                   packet_generator: "DaredevilLabeledTimeSeriesGenerator"
+                                                                   input_side_packet: "labeled_time_series"
+                                                                   output_side_packet: "time_series_header"
+                                                                   output_side_packet: "input_matrix"
+                                                                   output_side_packet: "label_set"
+                                                                   output_side_packet: "content_fingerprint"
+        )pb");
+    CalculatorContract contract;
+    MP_EXPECT_OK(contract.Initialize(node, ""));
+    EXPECT_EQ(contract.InputSidePackets().NumEntries(), 1);
+    EXPECT_EQ(contract.OutputSidePackets().NumEntries(), 4);
 }
 
 TEST(CalculatorContractTest, StatusHandler) {
-  const StatusHandlerConfig node =
-      mediapipe::ParseTextProtoOrDie<StatusHandlerConfig>(R"pb(
-        status_handler: "TaskInjectorStatusHandler"
-        input_side_packet: "ROW:cid"
-        input_side_packet: "SPEC:task_specification"
-      )pb");
-  CalculatorContract contract;
-  MP_EXPECT_OK(contract.Initialize(node));
-  EXPECT_EQ(contract.InputSidePackets().NumEntries(), 2);
+    const StatusHandlerConfig node =
+        mediapipe::ParseTextProtoOrDie<StatusHandlerConfig>(R"pb(
+                                                                 status_handler: "TaskInjectorStatusHandler"
+                                                                 input_side_packet: "ROW:cid"
+                                                                 input_side_packet: "SPEC:task_specification"
+        )pb");
+    CalculatorContract contract;
+    MP_EXPECT_OK(contract.Initialize(node));
+    EXPECT_EQ(contract.InputSidePackets().NumEntries(), 2);
 }
 
 }  // namespace

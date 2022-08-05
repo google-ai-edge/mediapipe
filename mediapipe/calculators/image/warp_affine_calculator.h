@@ -61,34 +61,34 @@ namespace mediapipe {
 //   }
 template <typename ImageT>
 class WarpAffineCalculatorIntf : public mediapipe::api2::NodeIntf {
- public:
-  static constexpr mediapipe::api2::Input<ImageT> kInImage{"IMAGE"};
-  static constexpr mediapipe::api2::Input<std::array<float, 16>> kMatrix{
-      "MATRIX"};
-  static constexpr mediapipe::api2::Input<std::pair<int, int>> kOutputSize{
-      "OUTPUT_SIZE"};
-  static constexpr mediapipe::api2::Output<ImageT> kOutImage{"IMAGE"};
+public:
+    static constexpr mediapipe::api2::Input<ImageT> kInImage{"IMAGE"};
+    static constexpr mediapipe::api2::Input<std::array<float, 16>> kMatrix{
+        "MATRIX"};
+    static constexpr mediapipe::api2::Input<std::pair<int, int>> kOutputSize{
+        "OUTPUT_SIZE"};
+    static constexpr mediapipe::api2::Output<ImageT> kOutImage{"IMAGE"};
 };
 
 #if !MEDIAPIPE_DISABLE_OPENCV
 class WarpAffineCalculatorCpu : public WarpAffineCalculatorIntf<ImageFrame> {
- public:
-  MEDIAPIPE_NODE_INTERFACE(WarpAffineCalculatorCpu, kInImage, kMatrix,
-                           kOutputSize, kOutImage);
+public:
+    MEDIAPIPE_NODE_INTERFACE(WarpAffineCalculatorCpu, kInImage, kMatrix,
+                             kOutputSize, kOutImage);
 };
 #endif  // !MEDIAPIPE_DISABLE_OPENCV
 #if !MEDIAPIPE_DISABLE_GPU
 class WarpAffineCalculatorGpu
     : public WarpAffineCalculatorIntf<mediapipe::GpuBuffer> {
- public:
-  MEDIAPIPE_NODE_INTERFACE(WarpAffineCalculatorGpu, kInImage, kMatrix,
-                           kOutputSize, kOutImage);
+public:
+    MEDIAPIPE_NODE_INTERFACE(WarpAffineCalculatorGpu, kInImage, kMatrix,
+                             kOutputSize, kOutImage);
 };
 #endif  // !MEDIAPIPE_DISABLE_GPU
 class WarpAffineCalculator : public WarpAffineCalculatorIntf<mediapipe::Image> {
- public:
-  MEDIAPIPE_NODE_INTERFACE(WarpAffineCalculator, kInImage, kMatrix, kOutputSize,
-                           kOutImage);
+public:
+    MEDIAPIPE_NODE_INTERFACE(WarpAffineCalculator, kInImage, kMatrix, kOutputSize,
+                             kOutImage);
 };
 
 }  // namespace mediapipe

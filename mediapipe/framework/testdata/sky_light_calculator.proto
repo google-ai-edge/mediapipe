@@ -22,6 +22,6 @@ package mediapipe;
 
 // A proto3 calculator options for testing.
 message SkyLightCalculatorOptions {
-  string sky_color = 1;
-  repeated int32 sky_grid = 2;
+    string sky_color = 1;
+    repeated int32 sky_grid = 2;
 }

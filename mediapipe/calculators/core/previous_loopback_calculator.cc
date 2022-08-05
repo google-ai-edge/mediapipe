@@ -12,13 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <deque>
-
 #include "mediapipe/framework/api2/node.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/timestamp.h"
+#include <deque>
 
 namespace mediapipe {
 namespace api2 {
@@ -54,122 +53,122 @@ namespace api2 {
 //   output_stream: "TRACK:output"
 // }
 class PreviousLoopbackCalculator : public Node {
- public:
-  static constexpr Input<AnyType> kMain{"MAIN"};
-  static constexpr Input<AnyType> kLoop{"LOOP"};
-  static constexpr Output<SameType<kLoop>> kPrevLoop{"PREV_LOOP"};
-  // TODO: an optional PREV_TIMESTAMP output could be added to
-  // carry the original timestamp of the packet on PREV_LOOP.
+public:
+    static constexpr Input<AnyType> kMain{"MAIN"};
+    static constexpr Input<AnyType> kLoop{"LOOP"};
+    static constexpr Output<SameType<kLoop>> kPrevLoop{"PREV_LOOP"};
+    // TODO: an optional PREV_TIMESTAMP output could be added to
+    // carry the original timestamp of the packet on PREV_LOOP.
 
-  MEDIAPIPE_NODE_CONTRACT(kMain, kLoop, kPrevLoop,
-                          StreamHandler("ImmediateInputStreamHandler"),
-                          TimestampChange::Arbitrary());
+    MEDIAPIPE_NODE_CONTRACT(kMain, kLoop, kPrevLoop,
+                            StreamHandler("ImmediateInputStreamHandler"),
+                            TimestampChange::Arbitrary());
 
-  static absl::Status UpdateContract(CalculatorContract* cc) {
-    // Process() function is invoked in response to MAIN/LOOP stream timestamp
-    // bound updates.
-    cc->SetProcessTimestampBounds(true);
-    return absl::OkStatus();
-  }
-
-  absl::Status Open(CalculatorContext* cc) final {
-    kPrevLoop(cc).SetHeader(kLoop(cc).Header());
-    return absl::OkStatus();
-  }
-
-  absl::Status Process(CalculatorContext* cc) final {
-    // Non-empty packets and empty packets indicating timestamp bound updates
-    // are guaranteed to have timestamps greater than timestamps of previous
-    // packets within the same stream. Calculator tracks and operates on such
-    // packets.
-
-    const PacketBase& main_packet = kMain(cc).packet();
-    if (prev_main_ts_ < main_packet.timestamp()) {
-      Timestamp loop_timestamp;
-      if (!main_packet.IsEmpty()) {
-        loop_timestamp = prev_non_empty_main_ts_;
-        prev_non_empty_main_ts_ = main_packet.timestamp();
-      } else {
-        // Calculator advances PREV_LOOP timestamp bound in response to empty
-        // MAIN packet, hence not caring about corresponding loop packet.
-        loop_timestamp = Timestamp::Unset();
-      }
-      main_packet_specs_.push_back({main_packet.timestamp(), loop_timestamp});
-      prev_main_ts_ = main_packet.timestamp();
+    static absl::Status UpdateContract(CalculatorContract* cc) {
+        // Process() function is invoked in response to MAIN/LOOP stream timestamp
+        // bound updates.
+        cc->SetProcessTimestampBounds(true);
+        return absl::OkStatus();
     }
 
-    const PacketBase& loop_packet = kLoop(cc).packet();
-    if (prev_loop_ts_ < loop_packet.timestamp()) {
-      loop_packets_.push_back(loop_packet);
-      prev_loop_ts_ = loop_packet.timestamp();
+    absl::Status Open(CalculatorContext* cc) final {
+        kPrevLoop(cc).SetHeader(kLoop(cc).Header());
+        return absl::OkStatus();
     }
 
-    while (!main_packet_specs_.empty() && !loop_packets_.empty()) {
-      // The earliest MAIN packet.
-      MainPacketSpec main_spec = main_packet_specs_.front();
-      // The earliest LOOP packet.
-      const PacketBase& loop_candidate = loop_packets_.front();
-      // Match LOOP and MAIN packets.
-      if (main_spec.loop_timestamp < loop_candidate.timestamp()) {
-        // No LOOP packet can match the MAIN packet under review.
-        kPrevLoop(cc).SetNextTimestampBound(main_spec.timestamp + 1);
-        main_packet_specs_.pop_front();
-      } else if (main_spec.loop_timestamp > loop_candidate.timestamp()) {
-        // No MAIN packet can match the LOOP packet under review.
-        loop_packets_.pop_front();
-      } else {
-        // Exact match found.
-        if (loop_candidate.IsEmpty()) {
-          // However, LOOP packet is empty.
-          kPrevLoop(cc).SetNextTimestampBound(main_spec.timestamp + 1);
-        } else {
-          kPrevLoop(cc).Send(loop_candidate.At(main_spec.timestamp));
+    absl::Status Process(CalculatorContext* cc) final {
+        // Non-empty packets and empty packets indicating timestamp bound updates
+        // are guaranteed to have timestamps greater than timestamps of previous
+        // packets within the same stream. Calculator tracks and operates on such
+        // packets.
+
+        const PacketBase& main_packet = kMain(cc).packet();
+        if (prev_main_ts_ < main_packet.timestamp()) {
+            Timestamp loop_timestamp;
+            if (!main_packet.IsEmpty()) {
+                loop_timestamp = prev_non_empty_main_ts_;
+                prev_non_empty_main_ts_ = main_packet.timestamp();
+            } else {
+                // Calculator advances PREV_LOOP timestamp bound in response to empty
+                // MAIN packet, hence not caring about corresponding loop packet.
+                loop_timestamp = Timestamp::Unset();
+            }
+            main_packet_specs_.push_back({main_packet.timestamp(), loop_timestamp});
+            prev_main_ts_ = main_packet.timestamp();
         }
-        loop_packets_.pop_front();
-        main_packet_specs_.pop_front();
-      }
 
-      // We can close PREV_LOOP output stream as soon as we processed last
-      // possible MAIN packet. That can happen in two cases:
-      // a) Non-empty MAIN packet has been received with Timestamp::Max()
-      // b) Empty MAIN packet has been received with Timestamp::Max() indicating
-      //    MAIN is done.
-      if (main_spec.timestamp == Timestamp::Done().PreviousAllowedInStream()) {
-        kPrevLoop(cc).Close();
-      }
+        const PacketBase& loop_packet = kLoop(cc).packet();
+        if (prev_loop_ts_ < loop_packet.timestamp()) {
+            loop_packets_.push_back(loop_packet);
+            prev_loop_ts_ = loop_packet.timestamp();
+        }
+
+        while (!main_packet_specs_.empty() && !loop_packets_.empty()) {
+            // The earliest MAIN packet.
+            MainPacketSpec main_spec = main_packet_specs_.front();
+            // The earliest LOOP packet.
+            const PacketBase& loop_candidate = loop_packets_.front();
+            // Match LOOP and MAIN packets.
+            if (main_spec.loop_timestamp < loop_candidate.timestamp()) {
+                // No LOOP packet can match the MAIN packet under review.
+                kPrevLoop(cc).SetNextTimestampBound(main_spec.timestamp + 1);
+                main_packet_specs_.pop_front();
+            } else if (main_spec.loop_timestamp > loop_candidate.timestamp()) {
+                // No MAIN packet can match the LOOP packet under review.
+                loop_packets_.pop_front();
+            } else {
+                // Exact match found.
+                if (loop_candidate.IsEmpty()) {
+                    // However, LOOP packet is empty.
+                    kPrevLoop(cc).SetNextTimestampBound(main_spec.timestamp + 1);
+                } else {
+                    kPrevLoop(cc).Send(loop_candidate.At(main_spec.timestamp));
+                }
+                loop_packets_.pop_front();
+                main_packet_specs_.pop_front();
+            }
+
+            // We can close PREV_LOOP output stream as soon as we processed last
+            // possible MAIN packet. That can happen in two cases:
+            // a) Non-empty MAIN packet has been received with Timestamp::Max()
+            // b) Empty MAIN packet has been received with Timestamp::Max() indicating
+            //    MAIN is done.
+            if (main_spec.timestamp == Timestamp::Done().PreviousAllowedInStream()) {
+                kPrevLoop(cc).Close();
+            }
+        }
+
+        return absl::OkStatus();
     }
 
-    return absl::OkStatus();
-  }
+private:
+    struct MainPacketSpec {
+        Timestamp timestamp;
+        // Expected timestamp of the packet from LOOP stream that corresponds to the
+        // packet from MAIN stream descirbed by this spec.
+        Timestamp loop_timestamp;
+    };
 
- private:
-  struct MainPacketSpec {
-    Timestamp timestamp;
-    // Expected timestamp of the packet from LOOP stream that corresponds to the
-    // packet from MAIN stream descirbed by this spec.
-    Timestamp loop_timestamp;
-  };
+    // Contains specs for MAIN packets which only can be:
+    // - non-empty packets
+    // - empty packets indicating timestamp bound updates
+    //
+    // Sorted according to packet timestamps.
+    std::deque<MainPacketSpec> main_packet_specs_;
+    Timestamp prev_main_ts_ = Timestamp::Unstarted();
+    Timestamp prev_non_empty_main_ts_ = Timestamp::Unstarted();
 
-  // Contains specs for MAIN packets which only can be:
-  // - non-empty packets
-  // - empty packets indicating timestamp bound updates
-  //
-  // Sorted according to packet timestamps.
-  std::deque<MainPacketSpec> main_packet_specs_;
-  Timestamp prev_main_ts_ = Timestamp::Unstarted();
-  Timestamp prev_non_empty_main_ts_ = Timestamp::Unstarted();
-
-  // Contains LOOP packets which only can be:
-  // - the very first empty packet
-  // - non empty packets
-  // - empty packets indicating timestamp bound updates
-  //
-  // Sorted according to packet timestamps.
-  std::deque<PacketBase> loop_packets_;
-  // Using "Timestamp::Unset" instead of "Timestamp::Unstarted" in order to
-  // allow addition of the very first empty packet (which doesn't indicate
-  // timestamp bound change necessarily).
-  Timestamp prev_loop_ts_ = Timestamp::Unset();
+    // Contains LOOP packets which only can be:
+    // - the very first empty packet
+    // - non empty packets
+    // - empty packets indicating timestamp bound updates
+    //
+    // Sorted according to packet timestamps.
+    std::deque<PacketBase> loop_packets_;
+    // Using "Timestamp::Unset" instead of "Timestamp::Unstarted" in order to
+    // allow addition of the very first empty packet (which doesn't indicate
+    // timestamp bound change necessarily).
+    Timestamp prev_loop_ts_ = Timestamp::Unset();
 };
 MEDIAPIPE_REGISTER_NODE(PreviousLoopbackCalculator);
 

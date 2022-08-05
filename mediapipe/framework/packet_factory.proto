@@ -24,25 +24,25 @@ package mediapipe;
 
 // Options used by a PacketFactory to create the Packet.
 message PacketFactoryOptions {
-  extensions 20000 to max;
+    extensions 20000 to max;
 }
 
 // A PacketFactory creates a side packet.
 message PacketFactoryConfig {
-  // The name of the registered packet factory class.
-  optional string packet_factory = 1;
+    // The name of the registered packet factory class.
+    optional string packet_factory = 1;
 
-  // The name of the output side packet that this packet factory creates.
-  optional string output_side_packet = 2;
+    // The name of the output side packet that this packet factory creates.
+    optional string output_side_packet = 2;
 
-  // DEPRECATED: The old name for output_side_packet.
-  optional string external_output = 1002;
+    // DEPRECATED: The old name for output_side_packet.
+    optional string external_output = 1002;
 
-  // The options for the packet factory.
-  optional PacketFactoryOptions options = 3;
+    // The options for the packet factory.
+    optional PacketFactoryOptions options = 3;
 }
 
 // The configuration for a PacketManager.
 message PacketManagerConfig {
-  repeated PacketFactoryConfig packet = 1;
+    repeated PacketFactoryConfig packet = 1;
 }

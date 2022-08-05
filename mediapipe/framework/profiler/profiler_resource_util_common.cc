@@ -26,18 +26,18 @@ ABSL_FLAG(std::string, log_root_dir, "",
 namespace mediapipe {
 
 absl::StatusOr<std::string> GetLogDirectory() {
-  if (!absl::GetFlag(FLAGS_log_root_dir).empty()) {
-    return absl::GetFlag(FLAGS_log_root_dir);
-  }
-  return GetDefaultTraceLogDirectory();
+    if (!absl::GetFlag(FLAGS_log_root_dir).empty()) {
+        return absl::GetFlag(FLAGS_log_root_dir);
+    }
+    return GetDefaultTraceLogDirectory();
 }
 
 absl::StatusOr<std::string> PathToLogFile(const std::string& path) {
-  ASSIGN_OR_RETURN(std::string log_dir, GetLogDirectory());
-  std::string result = file::JoinPath(log_dir, path);
-  MP_RETURN_IF_ERROR(
-      mediapipe::file::RecursivelyCreateDir(file::Dirname(result)));
-  return result;
+    ASSIGN_OR_RETURN(std::string log_dir, GetLogDirectory());
+    std::string result = file::JoinPath(log_dir, path);
+    MP_RETURN_IF_ERROR(
+        mediapipe::file::RecursivelyCreateDir(file::Dirname(result)));
+    return result;
 }
 
 }  // namespace mediapipe

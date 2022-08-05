@@ -28,40 +28,40 @@ option java_package = "com.google.mediapipe.formats.proto";
 option java_outer_classname = "DetectionProto";
 
 message Detection {
-  // i-th label or label_id has a score encoded by the i-th element in score.
-  repeated string label = 1;
-  repeated int32 label_id = 2 [packed = true];
-  repeated float score = 3 [packed = true];
+    // i-th label or label_id has a score encoded by the i-th element in score.
+    repeated string label = 1;
+    repeated int32 label_id = 2 [packed = true];
+    repeated float score = 3 [packed = true];
 
-  // Location data corresponding to all detected labels above.
-  optional LocationData location_data = 4;
-  // Optional string to indicate the feature generation method. Useful in
-  // associating a name to the pipeline used to generate this detection.
-  optional string feature_tag = 5;
-  // Optional string to specify track_id if detection is part of a track.
-  optional string track_id = 6;
+    // Location data corresponding to all detected labels above.
+    optional LocationData location_data = 4;
+    // Optional string to indicate the feature generation method. Useful in
+    // associating a name to the pipeline used to generate this detection.
+    optional string feature_tag = 5;
+    // Optional string to specify track_id if detection is part of a track.
+    optional string track_id = 6;
 
-  // Optional unique id to help associate different Detections to each other.
-  optional int64 detection_id = 7;
-  // Useful for associating a detection with other detections based on the
-  // detection_id. For example, this could be used to associate a face detection
-  // with a body detection when they belong to the same person.
-  message AssociatedDetection {
-    optional int32 id = 1;
-    optional float confidence = 2;
-  }
-  repeated AssociatedDetection associated_detections = 8;
+    // Optional unique id to help associate different Detections to each other.
+    optional int64 detection_id = 7;
+    // Useful for associating a detection with other detections based on the
+    // detection_id. For example, this could be used to associate a face detection
+    // with a body detection when they belong to the same person.
+    message AssociatedDetection {
+        optional int32 id = 1;
+        optional float confidence = 2;
+    }
+    repeated AssociatedDetection associated_detections = 8;
 
-  // Human-readable string for display, intended for debugging purposes. The
-  // display name corresponds to the label (or label_id). This is optional.
-  repeated string display_name = 9;
+    // Human-readable string for display, intended for debugging purposes. The
+    // display name corresponds to the label (or label_id). This is optional.
+    repeated string display_name = 9;
 
-  // The timestamp (in microseconds) *at which* this detection was
-  // created/detected.
-  optional int64 timestamp_usec = 10;
+    // The timestamp (in microseconds) *at which* this detection was
+    // created/detected.
+    optional int64 timestamp_usec = 10;
 }
 
 // Group of Detection protos.
 message DetectionList {
-  repeated Detection detection = 1;
+    repeated Detection detection = 1;
 }

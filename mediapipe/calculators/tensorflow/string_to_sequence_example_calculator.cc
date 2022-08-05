@@ -43,54 +43,54 @@ constexpr char kSequenceExample[] = "SEQUENCE_EXAMPLE";
 }  // namespace
 
 class StringToSequenceExampleCalculator : public CalculatorBase {
- public:
-  static absl::Status GetContract(CalculatorContract* cc);
-  absl::Status Open(CalculatorContext* cc) override;
-  absl::Status Process(CalculatorContext* cc) override;
-  absl::Status Close(CalculatorContext* cc) override;
+public:
+    static absl::Status GetContract(CalculatorContract* cc);
+    absl::Status Open(CalculatorContext* cc) override;
+    absl::Status Process(CalculatorContext* cc) override;
+    absl::Status Close(CalculatorContext* cc) override;
 };
 
 REGISTER_CALCULATOR(StringToSequenceExampleCalculator);
 
 absl::Status StringToSequenceExampleCalculator::GetContract(
     CalculatorContract* cc) {
-  if (cc->InputSidePackets().HasTag(kString)) {
-    cc->InputSidePackets().Tag(kString).Set<std::string>();
-    cc->OutputSidePackets().Tag(kSequenceExample).Set<tf::SequenceExample>();
-  }
-  if (cc->InputSidePackets().HasTag(kSequenceExample)) {
-    cc->InputSidePackets().Tag(kSequenceExample).Set<tf::SequenceExample>();
-    cc->OutputSidePackets().Tag(kString).Set<std::string>();
-  }
-  return absl::OkStatus();
+    if (cc->InputSidePackets().HasTag(kString)) {
+        cc->InputSidePackets().Tag(kString).Set<std::string>();
+        cc->OutputSidePackets().Tag(kSequenceExample).Set<tf::SequenceExample>();
+    }
+    if (cc->InputSidePackets().HasTag(kSequenceExample)) {
+        cc->InputSidePackets().Tag(kSequenceExample).Set<tf::SequenceExample>();
+        cc->OutputSidePackets().Tag(kString).Set<std::string>();
+    }
+    return absl::OkStatus();
 }
 
 absl::Status StringToSequenceExampleCalculator::Open(CalculatorContext* cc) {
-  if (cc->InputSidePackets().HasTag(kString)) {
-    auto string_value = cc->InputSidePackets().Tag(kString).Get<std::string>();
-    auto example = absl::make_unique<tf::SequenceExample>();
-    example->ParseFromString(string_value);
-    cc->OutputSidePackets()
-        .Tag(kSequenceExample)
-        .Set(mediapipe::Adopt(example.release()));
-  }
-  return absl::OkStatus();
+    if (cc->InputSidePackets().HasTag(kString)) {
+        auto string_value = cc->InputSidePackets().Tag(kString).Get<std::string>();
+        auto example = absl::make_unique<tf::SequenceExample>();
+        example->ParseFromString(string_value);
+        cc->OutputSidePackets()
+            .Tag(kSequenceExample)
+            .Set(mediapipe::Adopt(example.release()));
+    }
+    return absl::OkStatus();
 }
 
 absl::Status StringToSequenceExampleCalculator::Process(CalculatorContext* cc) {
-  return absl::OkStatus();
+    return absl::OkStatus();
 }
 
 absl::Status StringToSequenceExampleCalculator::Close(CalculatorContext* cc) {
-  if (cc->InputSidePackets().HasTag(kSequenceExample)) {
-    const auto& example =
-        cc->InputSidePackets().Tag(kSequenceExample).Get<tf::SequenceExample>();
-    auto string_value = absl::make_unique<std::string>();
-    example.SerializeToString(string_value.get());
-    cc->OutputSidePackets().Tag(kString).Set(
-        mediapipe::Adopt(string_value.release()));
-  }
-  return absl::OkStatus();
+    if (cc->InputSidePackets().HasTag(kSequenceExample)) {
+        const auto& example =
+            cc->InputSidePackets().Tag(kSequenceExample).Get<tf::SequenceExample>();
+        auto string_value = absl::make_unique<std::string>();
+        example.SerializeToString(string_value.get());
+        cc->OutputSidePackets().Tag(kString).Set(
+            mediapipe::Adopt(string_value.release()));
+    }
+    return absl::OkStatus();
 }
 
 }  // namespace mediapipe

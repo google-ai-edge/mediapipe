@@ -45,22 +45,22 @@ namespace mediapipe {
 //   IsWeekend(&test_clock);
 //
 class Clock {
- public:
-  // Returns a pointer to the global realtime clock.  The caller does not
-  // own the returned pointer and should not delete it.  The returned clock
-  // is thread-safe.
-  static Clock* RealClock();
+public:
+    // Returns a pointer to the global realtime clock.  The caller does not
+    // own the returned pointer and should not delete it.  The returned clock
+    // is thread-safe.
+    static Clock* RealClock();
 
-  virtual ~Clock();
+    virtual ~Clock();
 
-  // Returns the current time.
-  virtual absl::Time TimeNow() = 0;
+    // Returns the current time.
+    virtual absl::Time TimeNow() = 0;
 
-  // Sleeps for the specified duration.
-  virtual void Sleep(absl::Duration d) = 0;
+    // Sleeps for the specified duration.
+    virtual void Sleep(absl::Duration d) = 0;
 
-  // Sleeps until the specified time.
-  virtual void SleepUntil(absl::Time wakeup_time) = 0;
+    // Sleeps until the specified time.
+    virtual void SleepUntil(absl::Time wakeup_time) = 0;
 };
 
 }  // namespace mediapipe

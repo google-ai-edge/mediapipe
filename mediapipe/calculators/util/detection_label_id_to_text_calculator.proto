@@ -20,24 +20,24 @@ import "mediapipe/framework/calculator.proto";
 import "mediapipe/util/label_map.proto";
 
 message DetectionLabelIdToTextCalculatorOptions {
-  extend mediapipe.CalculatorOptions {
-    optional DetectionLabelIdToTextCalculatorOptions ext = 251889072;
-  }
+    extend mediapipe.CalculatorOptions {
+        optional DetectionLabelIdToTextCalculatorOptions ext = 251889072;
+    }
 
-  // Path to a label map file for getting the actual name of detected classes.
-  optional string label_map_path = 1;
+    // Path to a label map file for getting the actual name of detected classes.
+    optional string label_map_path = 1;
 
-  // Alternative way to specify label map.
-  // label: "label for id 0"
-  // label: "label for id 1"
-  // ...
-  repeated string label = 2;
+    // Alternative way to specify label map.
+    // label: "label for id 0"
+    // label: "label for id 1"
+    // ...
+    repeated string label = 2;
 
-  // By default, the `label_id` field from the input is stripped if a text label
-  // could be found. By setting this field to true, it is always copied to the
-  // output detections.
-  optional bool keep_label_id = 3;
+    // By default, the `label_id` field from the input is stripped if a text label
+    // could be found. By setting this field to true, it is always copied to the
+    // output detections.
+    optional bool keep_label_id = 3;
 
-  // Identifying information for each classification label.
-  map<int64, LabelMapItem> label_items = 4;
+    // Identifying information for each classification label.
+    map<int64, LabelMapItem> label_items = 4;
 }

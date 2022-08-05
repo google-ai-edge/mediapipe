@@ -1,5 +1,6 @@
 """Build defs for Objectron."""
 
+
 def generate_manifest_values(application_id, app_name):
     manifest_values = {
         "applicationId": application_id,

@@ -21,11 +21,10 @@
 #ifndef MEDIAPIPE_FRAMEWORK_FORMATS_MATRIX_H_
 #define MEDIAPIPE_FRAMEWORK_FORMATS_MATRIX_H_
 
-#include <string>
-
 #include "Eigen/Core"
 #include "mediapipe/framework/formats/matrix_data.pb.h"
 #include "mediapipe/framework/port.h"
+#include <string>
 
 namespace mediapipe {
 
@@ -56,8 +55,9 @@ namespace Eigen {
 // (e.g. "EXPECT_EQ(sum, (a + b).eval())").
 template <typename S, int R, int C, int O, int MR, int MC>
 void PrintTo(const Eigen::Matrix<S, R, C, O, MR, MC>& m, std::ostream* os) {
-  // Log the matrix at new line.
-  *os << "\n" << m;
+    // Log the matrix at new line.
+    *os << "\n"
+        << m;
 }
 
 }  // namespace Eigen

@@ -19,10 +19,10 @@ package mediapipe;
 import "mediapipe/framework/calculator.proto";
 
 message LocalFileContentsCalculatorOptions {
-  extend CalculatorOptions {
-    optional LocalFileContentsCalculatorOptions ext = 346849340;
-  }
+    extend CalculatorOptions {
+        optional LocalFileContentsCalculatorOptions ext = 346849340;
+    }
 
-  // By default, set the file open mode to 'rb'. Otherwise, set the mode to 'r'.
-  optional bool text_mode = 1;
+    // By default, set the file open mode to 'rb'. Otherwise, set the mode to 'r'.
+    optional bool text_mode = 1;
 }

@@ -35,64 +35,64 @@ namespace mediapipe {
 //
 // All methods support concurrent access.
 class MonotonicClock : public Clock {
- public:
-  // The MonotonicClock state, which may be shared between MonotonicClocks.
-  struct State;
+public:
+    // The MonotonicClock state, which may be shared between MonotonicClocks.
+    struct State;
 
-  ~MonotonicClock() override {}
+    ~MonotonicClock() override {}
 
-  // The Clock interface (see util/time/clock.h).
-  //
-  // Return a monotonically non-decreasing time.
-  absl::Time TimeNow() override = 0;
-  // Sleep and SleepUntil guarantee only that the caller will sleep for at
-  // least as long as specified in monotonic time.  The caller may sleep for
-  // much longer (in monotonic time) if monotonic time jumps far into the
-  // future.  Whether or not this happens depends on the behavior of the raw
-  // clock.
-  void Sleep(absl::Duration d) override = 0;
-  void SleepUntil(absl::Time wakeup_time) override = 0;
+    // The Clock interface (see util/time/clock.h).
+    //
+    // Return a monotonically non-decreasing time.
+    absl::Time TimeNow() override = 0;
+    // Sleep and SleepUntil guarantee only that the caller will sleep for at
+    // least as long as specified in monotonic time.  The caller may sleep for
+    // much longer (in monotonic time) if monotonic time jumps far into the
+    // future.  Whether or not this happens depends on the behavior of the raw
+    // clock.
+    void Sleep(absl::Duration d) override = 0;
+    void SleepUntil(absl::Time wakeup_time) override = 0;
 
-  // Get metrics about time corrections.
-  virtual void GetCorrectionMetrics(int* correction_count,
-                                    double* max_correction) = 0;
-  // Reset values returned by GetCorrectionMetrics().
-  virtual void ResetCorrectionMetrics() = 0;
+    // Get metrics about time corrections.
+    virtual void GetCorrectionMetrics(int* correction_count,
+                                      double* max_correction) = 0;
+    // Reset values returned by GetCorrectionMetrics().
+    virtual void ResetCorrectionMetrics() = 0;
 
-  // Factory methods.
-  //
-  // Create a MonotonicClock based on the given raw_clock.  This clock will
-  // return monotonically non-decreasing values from Now(), but may not behave
-  // monotonically with respect to other instances created by this function,
-  // even if they are based on the same raw_clock.  Caller owns raw_clock.
-  static MonotonicClock* CreateMonotonicClock(Clock* raw_clock);
+    // Factory methods.
+    //
+    // Create a MonotonicClock based on the given raw_clock.  This clock will
+    // return monotonically non-decreasing values from Now(), but may not behave
+    // monotonically with respect to other instances created by this function,
+    // even if they are based on the same raw_clock.  Caller owns raw_clock.
+    static MonotonicClock* CreateMonotonicClock(Clock* raw_clock);
 
-  // Create an instance of MonotonicClock that is based on Clock::RealClock().
-  // All such instance are synced with each other such that return values from
-  // Now() are monotonic across instances.  This allows independently developed
-  // code bases to have private instances of the synchronized MonotonicClock
-  // and know that they will never see time anomalies when calling from one
-  // code base to another.  Each instance can have its own correction callback.
-  // Unlike Clock::RealClock(), caller owns this object and should delete it
-  // when no longer needed.
-  static MonotonicClock* CreateSynchronizedMonotonicClock();
+    // Create an instance of MonotonicClock that is based on Clock::RealClock().
+    // All such instance are synced with each other such that return values from
+    // Now() are monotonic across instances.  This allows independently developed
+    // code bases to have private instances of the synchronized MonotonicClock
+    // and know that they will never see time anomalies when calling from one
+    // code base to another.  Each instance can have its own correction callback.
+    // Unlike Clock::RealClock(), caller owns this object and should delete it
+    // when no longer needed.
+    static MonotonicClock* CreateSynchronizedMonotonicClock();
 };
 
 class MonotonicClockTest;
 
 // Provides access to MonotonicClock::State for unit-testing.
 class MonotonicClockAccess {
- private:
-  using State = MonotonicClock::State;
+private:
+    using State = MonotonicClock::State;
 
-  // Reset internal global state.  Should only be called by test code.
-  static void SynchronizedMonotonicClockReset();
-  static State* CreateMonotonicClockState(Clock* raw_clock);
-  static void DeleteMonotonicClockState(State* state);
-  // Create a monotonic clock based on the given state.  Caller owns state
-  // so that multiple such clocks can be created from the same state.
-  static MonotonicClock* CreateMonotonicClock(State* state);
-  friend class mediapipe::MonotonicClockTest;
+    // Reset internal global state.  Should only be called by test code.
+    static void SynchronizedMonotonicClockReset();
+    static State* CreateMonotonicClockState(Clock* raw_clock);
+    static void DeleteMonotonicClockState(State* state);
+    // Create a monotonic clock based on the given state.  Caller owns state
+    // so that multiple such clocks can be created from the same state.
+    static MonotonicClock* CreateMonotonicClock(State* state);
+    friend class mediapipe::MonotonicClockTest;
 };
 
 }  // namespace mediapipe

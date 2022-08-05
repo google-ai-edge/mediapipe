@@ -12,12 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <memory>
-
 #include "absl/memory/memory.h"
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
 #include "absl/types/optional.h"
 #include "mediapipe/framework/profiler/graph_profiler.h"
+#include <memory>
 
 namespace mediapipe {}  // namespace mediapipe

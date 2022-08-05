@@ -23,25 +23,25 @@ package mediapipe;
 // `MessageData`, like protobuf.Any, contains an arbitrary serialized protbuf
 // along with a URL that describes the type of the serialized message.
 message MessageData {
-  // A URL/resource name that identifies the type of serialized protbuf.
-  optional string type_url = 1;
+    // A URL/resource name that identifies the type of serialized protbuf.
+    optional string type_url = 1;
 
-  // Must be a valid serialized protocol buffer of the above specified type.
-  optional bytes value = 2;
+    // Must be a valid serialized protocol buffer of the above specified type.
+    optional bytes value = 2;
 }
 
 // Data for one Protobuf field or one MediaPipe packet.
 message FieldData {
-  oneof value {
-    sint32 int32_value = 1;
-    sint64 int64_value = 2;
-    uint32 uint32_value = 3;
-    uint64 uint64_value = 4;
-    double double_value = 5;
-    float float_value = 6;
-    bool bool_value = 7;
-    sint32 enum_value = 8;
-    string string_value = 9;
-    MessageData message_value = 10;
-  }
+    oneof value {
+        sint32 int32_value = 1;
+        sint64 int64_value = 2;
+        uint32 uint32_value = 3;
+        uint64 uint64_value = 4;
+        double double_value = 5;
+        float float_value = 6;
+        bool bool_value = 7;
+        sint32 enum_value = 8;
+        string string_value = 9;
+        MessageData message_value = 10;
+    }
 }

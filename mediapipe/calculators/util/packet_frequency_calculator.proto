@@ -20,15 +20,15 @@ import "mediapipe/framework/calculator.proto";
 
 // Options for PacketFrequencyCalculator.
 message PacketFrequencyCalculatorOptions {
-  extend mediapipe.CalculatorOptions {
-    optional PacketFrequencyCalculatorOptions ext = 168468918;
-  }
+    extend mediapipe.CalculatorOptions {
+        optional PacketFrequencyCalculatorOptions ext = 168468918;
+    }
 
-  // Time window (in seconds) over which the packet frequency is computed. Must
-  // be greater than 0 and less than 100 seconds (in order to limit memory
-  // usage).
-  optional double time_window_sec = 1 [default = 3.0];
+    // Time window (in seconds) over which the packet frequency is computed. Must
+    // be greater than 0 and less than 100 seconds (in order to limit memory
+    // usage).
+    optional double time_window_sec = 1 [default = 3.0];
 
-  // Text identifiers for the input streams.
-  repeated string label = 2;
+    // Text identifiers for the input streams.
+    repeated string label = 2;
 }

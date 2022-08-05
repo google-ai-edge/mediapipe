@@ -23,63 +23,62 @@
 #ifndef MEDIAPIPE_FRAMEWORK_FORMATS_AFFINE_TRANSFORM_H_
 #define MEDIAPIPE_FRAMEWORK_FORMATS_AFFINE_TRANSFORM_H_
 
-#include <memory>
-#include <vector>
-
 #include "mediapipe/framework/formats/affine_transform_data.pb.h"
 #include "mediapipe/framework/port.h"
 #include "mediapipe/framework/port/point2.h"
+#include <memory>
+#include <vector>
 
 namespace mediapipe {
 
 class AffineTransform {
- public:
-  // CREATION METHODS.
-  AffineTransform();
+public:
+    // CREATION METHODS.
+    AffineTransform();
 
-  // Constructs a affine transform wrapping the specified affine transform data.
-  // Checks the validity of the input and crashes upon failure.
-  explicit AffineTransform(const AffineTransformData& transform_data);
+    // Constructs a affine transform wrapping the specified affine transform data.
+    // Checks the validity of the input and crashes upon failure.
+    explicit AffineTransform(const AffineTransformData& transform_data);
 
-  static AffineTransform Create(const Point2_f& translation = Point2_f(0, 0),
-                                const Point2_f& scale = Point2_f(1, 1),
-                                float rotation = 0,
-                                const Point2_f& shear = Point2_f(0, 0));
+    static AffineTransform Create(const Point2_f& translation = Point2_f(0, 0),
+                                  const Point2_f& scale = Point2_f(1, 1),
+                                  float rotation = 0,
+                                  const Point2_f& shear = Point2_f(0, 0));
 
-  // ACCESSORS
-  // Accessor for the composition matrix
-  std::vector<float> GetCompositionMatrix();
+    // ACCESSORS
+    // Accessor for the composition matrix
+    std::vector<float> GetCompositionMatrix();
 
-  Point2_f GetScale() const;
-  Point2_f GetTranslation() const;
-  Point2_f GetShear() const;
-  float GetRotation() const;
+    Point2_f GetScale() const;
+    Point2_f GetTranslation() const;
+    Point2_f GetShear() const;
+    float GetRotation() const;
 
-  void SetScale(const Point2_f& scale);
-  void SetTranslation(const Point2_f& translation);
-  void SetShear(const Point2_f& shear);
-  void SetRotation(float rotation);
+    void SetScale(const Point2_f& scale);
+    void SetTranslation(const Point2_f& translation);
+    void SetShear(const Point2_f& shear);
+    void SetRotation(float rotation);
 
-  void AddScale(const Point2_f& scale);
-  void AddTranslation(const Point2_f& translation);
-  void AddShear(const Point2_f& shear);
-  void AddRotation(float rotation);
+    void AddScale(const Point2_f& scale);
+    void AddTranslation(const Point2_f& translation);
+    void AddShear(const Point2_f& shear);
+    void AddRotation(float rotation);
 
-  // Serializes and deserializes the affine transform object.
-  void ConvertToProto(AffineTransformData* proto) const;
-  AffineTransformData ConvertToProto() const;
-  void SetFromProto(const AffineTransformData& proto);
+    // Serializes and deserializes the affine transform object.
+    void ConvertToProto(AffineTransformData* proto) const;
+    AffineTransformData ConvertToProto() const;
+    void SetFromProto(const AffineTransformData& proto);
 
-  bool Equals(const AffineTransform& other, float epsilon = 0.001f) const;
+    bool Equals(const AffineTransform& other, float epsilon = 0.001f) const;
 
-  static bool Equal(const AffineTransform& lhs, const AffineTransform& rhs,
-                    float epsilon = 0.001f);
+    static bool Equal(const AffineTransform& lhs, const AffineTransform& rhs,
+                      float epsilon = 0.001f);
 
- private:
-  // The wrapped transform data.
-  AffineTransformData affine_transform_data_;
-  std::vector<float> matrix_ = {1, 0, 0, 0, 1, 0, 0, 0, 1};
-  bool is_dirty_ = false;
+private:
+    // The wrapped transform data.
+    AffineTransformData affine_transform_data_;
+    std::vector<float> matrix_ = {1, 0, 0, 0, 1, 0, 0, 0, 1};
+    bool is_dirty_ = false;
 };
 }  // namespace mediapipe
 

@@ -13,7 +13,6 @@
 // limitations under the License.
 
 #import "PoseTrackingViewController.h"
-
 #include "mediapipe/framework/formats/landmark.pb.h"
 
 static const char* kLandmarksOutputStream = "pose_landmarks";
@@ -23,31 +22,31 @@ static const char* kLandmarksOutputStream = "pose_landmarks";
 #pragma mark - UIViewController methods
 
 - (void)viewDidLoad {
-  [super viewDidLoad];
+    [super viewDidLoad];
 
-  [self.mediapipeGraph addFrameOutputStream:kLandmarksOutputStream
-                           outputPacketType:MPPPacketTypeRaw];
+    [self.mediapipeGraph addFrameOutputStream:kLandmarksOutputStream
+                             outputPacketType:MPPPacketTypeRaw];
 }
 
 #pragma mark - MPPGraphDelegate methods
 
 // Receives a raw packet from the MediaPipe graph. Invoked on a MediaPipe worker thread.
 - (void)mediapipeGraph:(MPPGraph*)graph
-     didOutputPacket:(const ::mediapipe::Packet&)packet
-          fromStream:(const std::string&)streamName {
-  if (streamName == kLandmarksOutputStream) {
-    if (packet.IsEmpty()) {
-      NSLog(@"[TS:%lld] No pose landmarks", packet.Timestamp().Value());
-      return;
+       didOutputPacket:(const ::mediapipe::Packet&)packet
+            fromStream:(const std::string&)streamName {
+    if (streamName == kLandmarksOutputStream) {
+        if (packet.IsEmpty()) {
+            NSLog(@"[TS:%lld] No pose landmarks", packet.Timestamp().Value());
+            return;
+        }
+        const auto& landmarks = packet.Get<::mediapipe::NormalizedLandmarkList>();
+        NSLog(@"[TS:%lld] Number of pose landmarks: %d", packet.Timestamp().Value(),
+              landmarks.landmark_size());
+        for (int i = 0; i < landmarks.landmark_size(); ++i) {
+            NSLog(@"\tLandmark[%d]: (%f, %f, %f)", i, landmarks.landmark(i).x(),
+                  landmarks.landmark(i).y(), landmarks.landmark(i).z());
+        }
     }
-    const auto& landmarks = packet.Get<::mediapipe::NormalizedLandmarkList>();
-    NSLog(@"[TS:%lld] Number of pose landmarks: %d", packet.Timestamp().Value(),
-          landmarks.landmark_size());
-    for (int i = 0; i < landmarks.landmark_size(); ++i) {
-      NSLog(@"\tLandmark[%d]: (%f, %f, %f)", i, landmarks.landmark(i).x(),
-            landmarks.landmark(i).y(), landmarks.landmark(i).z());
-    }
-  }
 }
 
 @end

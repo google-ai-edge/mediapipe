@@ -31,20 +31,20 @@ namespace api2 {
 //   input_side_packet: "multiplication_matrix"
 // }
 class MatrixMultiplyCalculator : public Node {
- public:
-  static constexpr Input<Matrix> kIn{""};
-  static constexpr Output<Matrix> kOut{""};
-  static constexpr SideInput<Matrix> kSide{""};
+public:
+    static constexpr Input<Matrix> kIn{""};
+    static constexpr Output<Matrix> kOut{""};
+    static constexpr SideInput<Matrix> kSide{""};
 
-  MEDIAPIPE_NODE_CONTRACT(kIn, kOut, kSide);
+    MEDIAPIPE_NODE_CONTRACT(kIn, kOut, kSide);
 
-  absl::Status Process(CalculatorContext* cc) override;
+    absl::Status Process(CalculatorContext* cc) override;
 };
 MEDIAPIPE_REGISTER_NODE(MatrixMultiplyCalculator);
 
 absl::Status MatrixMultiplyCalculator::Process(CalculatorContext* cc) {
-  kOut(cc).Send(*kSide(cc) * *kIn(cc));
-  return absl::OkStatus();
+    kOut(cc).Send(*kSide(cc) * *kIn(cc));
+    return absl::OkStatus();
 }
 
 }  // namespace api2

@@ -12,8 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <memory>
-
 #include "mediapipe/calculators/core/graph_profile_calculator.pb.h"
 #include "mediapipe/framework/api2/node.h"
 #include "mediapipe/framework/api2/packet.h"
@@ -22,6 +20,7 @@
 #include "mediapipe/framework/calculator_profile.pb.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status.h"
+#include <memory>
 
 namespace mediapipe {
 namespace api2 {
@@ -42,34 +41,34 @@ namespace api2 {
 // }
 //
 class GraphProfileCalculator : public Node {
- public:
-  static constexpr Input<AnyType>::Multiple kFrameIn{"FRAME"};
-  static constexpr Output<GraphProfile> kProfileOut{"PROFILE"};
+public:
+    static constexpr Input<AnyType>::Multiple kFrameIn{"FRAME"};
+    static constexpr Output<GraphProfile> kProfileOut{"PROFILE"};
 
-  MEDIAPIPE_NODE_CONTRACT(kFrameIn, kProfileOut);
+    MEDIAPIPE_NODE_CONTRACT(kFrameIn, kProfileOut);
 
-  static absl::Status UpdateContract(CalculatorContract* cc) {
-    return absl::OkStatus();
-  }
-
-  absl::Status Process(CalculatorContext* cc) final {
-    auto options = cc->Options<::mediapipe::GraphProfileCalculatorOptions>();
-
-    bool first_profile = prev_profile_ts_ == Timestamp::Unset();
-    if (first_profile ||
-        cc->InputTimestamp() - prev_profile_ts_ >= options.profile_interval()) {
-      prev_profile_ts_ = cc->InputTimestamp();
-      GraphProfile result;
-      MP_RETURN_IF_ERROR(cc->GetProfilingContext()->CaptureProfile(
-          &result, first_profile ? PopulateGraphConfig::kFull
-                                 : PopulateGraphConfig::kNo));
-      kProfileOut(cc).Send(result);
+    static absl::Status UpdateContract(CalculatorContract* cc) {
+        return absl::OkStatus();
     }
-    return absl::OkStatus();
-  }
 
- private:
-  Timestamp prev_profile_ts_;
+    absl::Status Process(CalculatorContext* cc) final {
+        auto options = cc->Options<::mediapipe::GraphProfileCalculatorOptions>();
+
+        bool first_profile = prev_profile_ts_ == Timestamp::Unset();
+        if (first_profile ||
+            cc->InputTimestamp() - prev_profile_ts_ >= options.profile_interval()) {
+            prev_profile_ts_ = cc->InputTimestamp();
+            GraphProfile result;
+            MP_RETURN_IF_ERROR(cc->GetProfilingContext()->CaptureProfile(
+                &result, first_profile ? PopulateGraphConfig::kFull
+                                       : PopulateGraphConfig::kNo));
+            kProfileOut(cc).Send(result);
+        }
+        return absl::OkStatus();
+    }
+
+private:
+    Timestamp prev_profile_ts_;
 };
 
 MEDIAPIPE_REGISTER_NODE(GraphProfileCalculator);

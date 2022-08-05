@@ -25,22 +25,22 @@ option java_package = "com.google.mediapipe.formats.proto";
 option java_outer_classname = "ClassificationProto";
 
 message Classification {
-  // The index of the class in the corresponding label map.
-  optional int32 index = 1;
-  // The probability score for this class.
-  optional float score = 2;
-  // Label or name of the class.
-  optional string label = 3;
-  // Optional human-readable string for display purposes.
-  optional string display_name = 4;
+    // The index of the class in the corresponding label map.
+    optional int32 index = 1;
+    // The probability score for this class.
+    optional float score = 2;
+    // Label or name of the class.
+    optional string label = 3;
+    // Optional human-readable string for display purposes.
+    optional string display_name = 4;
 }
 
 // Group of Classification protos.
 message ClassificationList {
-  repeated Classification classification = 1;
+    repeated Classification classification = 1;
 }
 
 // Group of ClassificationList protos.
 message ClassificationListCollection {
-  repeated ClassificationList classification_list = 1;
+    repeated ClassificationList classification_list = 1;
 }

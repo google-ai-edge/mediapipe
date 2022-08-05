@@ -19,10 +19,10 @@ package mediapipe.autoflip;
 // Options for the VisualScorer module.
 // Next tag: 6
 message VisualScorerOptions {
-  // Weights for the various cues. A larger weight means that the corresponding
-  // cue will be of higher importance when generating the combined score.
-  optional float area_weight = 1 [default = 1.0];
-  // Sharpness is not yet implemented.
-  optional float sharpness_weight = 2 [default = 0.0];
-  optional float colorfulness_weight = 3 [default = 0.0];
+    // Weights for the various cues. A larger weight means that the corresponding
+    // cue will be of higher importance when generating the combined score.
+    optional float area_weight = 1 [default = 1.0];
+    // Sharpness is not yet implemented.
+    optional float sharpness_weight = 2 [default = 0.0];
+    optional float colorfulness_weight = 3 [default = 0.0];
 }

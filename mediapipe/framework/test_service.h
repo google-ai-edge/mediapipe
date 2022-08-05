@@ -26,31 +26,31 @@ extern const GraphService<TestServiceObject> kTestService;
 extern const GraphService<int> kAnotherService;
 
 class NoDefaultConstructor {
- public:
-  NoDefaultConstructor() = delete;
+public:
+    NoDefaultConstructor() = delete;
 };
 extern const GraphService<NoDefaultConstructor> kNoDefaultService;
 
 class NeedsCreateMethod {
- public:
-  static absl::StatusOr<std::shared_ptr<NeedsCreateMethod>> Create() {
-    return std::shared_ptr<NeedsCreateMethod>(new NeedsCreateMethod());
-  }
+public:
+    static absl::StatusOr<std::shared_ptr<NeedsCreateMethod>> Create() {
+        return std::shared_ptr<NeedsCreateMethod>(new NeedsCreateMethod());
+    }
 
- private:
-  NeedsCreateMethod() = default;
+private:
+    NeedsCreateMethod() = default;
 };
 extern const GraphService<NeedsCreateMethod> kNeedsCreateService;
 
 // Use a service.
 class TestServiceCalculator : public CalculatorBase {
- public:
-  static absl::Status GetContract(CalculatorContract* cc);
-  absl::Status Open(CalculatorContext* cc) final;
-  absl::Status Process(CalculatorContext* cc) final;
+public:
+    static absl::Status GetContract(CalculatorContract* cc);
+    absl::Status Open(CalculatorContext* cc) final;
+    absl::Status Process(CalculatorContext* cc) final;
 
- private:
-  int optional_bias_ = 0;
+private:
+    int optional_bias_ = 0;
 };
 
 }  // namespace mediapipe

@@ -25,15 +25,15 @@
 namespace mediapipe {
 namespace {
 void SetColorChannel(int channel, uint8 value, cv::Mat* mat) {
-  CHECK(mat->depth() == CV_8U);
-  CHECK(channel < mat->channels());
-  const int step = mat->channels();
-  for (int r = 0; r < mat->rows; ++r) {
-    uint8* row_ptr = mat->ptr<uint8>(r);
-    for (int offset = channel; offset < mat->cols * step; offset += step) {
-      row_ptr[offset] = value;
+    CHECK(mat->depth() == CV_8U);
+    CHECK(channel < mat->channels());
+    const int step = mat->channels();
+    for (int r = 0; r < mat->rows; ++r) {
+        uint8* row_ptr = mat->ptr<uint8>(r);
+        for (int offset = channel; offset < mat->cols * step; offset += step) {
+            row_ptr[offset] = value;
+        }
     }
-  }
 }
 
 constexpr char kRgbaInTag[] = "RGBA_IN";
@@ -76,127 +76,127 @@ constexpr char kGrayOutTag[] = "GRAY_OUT";
 //   BGRA_OUT:      The output video stream (ImageFrame, SBGRA).
 //   GRAY_OUT:      The output video stream (ImageFrame, GRAY8).
 class ColorConvertCalculator : public CalculatorBase {
- public:
-  ~ColorConvertCalculator() override = default;
-  static absl::Status GetContract(CalculatorContract* cc);
-  absl::Status Process(CalculatorContext* cc) override;
+public:
+    ~ColorConvertCalculator() override = default;
+    static absl::Status GetContract(CalculatorContract* cc);
+    absl::Status Process(CalculatorContext* cc) override;
 
-  absl::Status Open(CalculatorContext* cc) override {
-    cc->SetOffset(TimestampDiff(0));
-    return absl::OkStatus();
-  }
+    absl::Status Open(CalculatorContext* cc) override {
+        cc->SetOffset(TimestampDiff(0));
+        return absl::OkStatus();
+    }
 
- private:
-  // Wrangles the appropriate inputs and outputs to perform the color
-  // conversion. The ImageFrame on input_tag is converted using the
-  // open_cv_convert_code provided and then output on the output_tag stream.
-  // Note that the output_format must match the destination conversion code.
-  absl::Status ConvertAndOutput(const std::string& input_tag,
-                                const std::string& output_tag,
-                                ImageFormat::Format output_format,
-                                int open_cv_convert_code,
-                                CalculatorContext* cc);
+private:
+    // Wrangles the appropriate inputs and outputs to perform the color
+    // conversion. The ImageFrame on input_tag is converted using the
+    // open_cv_convert_code provided and then output on the output_tag stream.
+    // Note that the output_format must match the destination conversion code.
+    absl::Status ConvertAndOutput(const std::string& input_tag,
+                                  const std::string& output_tag,
+                                  ImageFormat::Format output_format,
+                                  int open_cv_convert_code,
+                                  CalculatorContext* cc);
 };
 
 REGISTER_CALCULATOR(ColorConvertCalculator);
 
 absl::Status ColorConvertCalculator::GetContract(CalculatorContract* cc) {
-  RET_CHECK_EQ(cc->Inputs().NumEntries(), 1)
-      << "Only one input stream is allowed.";
-  RET_CHECK_EQ(cc->Outputs().NumEntries(), 1)
-      << "Only one output stream is allowed.";
+    RET_CHECK_EQ(cc->Inputs().NumEntries(), 1)
+        << "Only one input stream is allowed.";
+    RET_CHECK_EQ(cc->Outputs().NumEntries(), 1)
+        << "Only one output stream is allowed.";
 
-  if (cc->Inputs().HasTag(kRgbaInTag)) {
-    cc->Inputs().Tag(kRgbaInTag).Set<ImageFrame>();
-  }
+    if (cc->Inputs().HasTag(kRgbaInTag)) {
+        cc->Inputs().Tag(kRgbaInTag).Set<ImageFrame>();
+    }
 
-  if (cc->Inputs().HasTag(kGrayInTag)) {
-    cc->Inputs().Tag(kGrayInTag).Set<ImageFrame>();
-  }
+    if (cc->Inputs().HasTag(kGrayInTag)) {
+        cc->Inputs().Tag(kGrayInTag).Set<ImageFrame>();
+    }
 
-  if (cc->Inputs().HasTag(kRgbInTag)) {
-    cc->Inputs().Tag(kRgbInTag).Set<ImageFrame>();
-  }
+    if (cc->Inputs().HasTag(kRgbInTag)) {
+        cc->Inputs().Tag(kRgbInTag).Set<ImageFrame>();
+    }
 
-  if (cc->Inputs().HasTag(kBgraInTag)) {
-    cc->Inputs().Tag(kBgraInTag).Set<ImageFrame>();
-  }
+    if (cc->Inputs().HasTag(kBgraInTag)) {
+        cc->Inputs().Tag(kBgraInTag).Set<ImageFrame>();
+    }
 
-  if (cc->Outputs().HasTag(kRgbOutTag)) {
-    cc->Outputs().Tag(kRgbOutTag).Set<ImageFrame>();
-  }
+    if (cc->Outputs().HasTag(kRgbOutTag)) {
+        cc->Outputs().Tag(kRgbOutTag).Set<ImageFrame>();
+    }
 
-  if (cc->Outputs().HasTag(kGrayOutTag)) {
-    cc->Outputs().Tag(kGrayOutTag).Set<ImageFrame>();
-  }
+    if (cc->Outputs().HasTag(kGrayOutTag)) {
+        cc->Outputs().Tag(kGrayOutTag).Set<ImageFrame>();
+    }
 
-  if (cc->Outputs().HasTag(kRgbaOutTag)) {
-    cc->Outputs().Tag(kRgbaOutTag).Set<ImageFrame>();
-  }
+    if (cc->Outputs().HasTag(kRgbaOutTag)) {
+        cc->Outputs().Tag(kRgbaOutTag).Set<ImageFrame>();
+    }
 
-  if (cc->Outputs().HasTag(kBgraOutTag)) {
-    cc->Outputs().Tag(kBgraOutTag).Set<ImageFrame>();
-  }
+    if (cc->Outputs().HasTag(kBgraOutTag)) {
+        cc->Outputs().Tag(kBgraOutTag).Set<ImageFrame>();
+    }
 
-  return absl::OkStatus();
+    return absl::OkStatus();
 }
 
 absl::Status ColorConvertCalculator::ConvertAndOutput(
     const std::string& input_tag, const std::string& output_tag,
     ImageFormat::Format output_format, int open_cv_convert_code,
     CalculatorContext* cc) {
-  const cv::Mat& input_mat =
-      formats::MatView(&cc->Inputs().Tag(input_tag).Get<ImageFrame>());
-  std::unique_ptr<ImageFrame> output_frame(
-      new ImageFrame(output_format, input_mat.cols, input_mat.rows));
-  cv::Mat output_mat = formats::MatView(output_frame.get());
-  cv::cvtColor(input_mat, output_mat, open_cv_convert_code);
+    const cv::Mat& input_mat =
+        formats::MatView(&cc->Inputs().Tag(input_tag).Get<ImageFrame>());
+    std::unique_ptr<ImageFrame> output_frame(
+        new ImageFrame(output_format, input_mat.cols, input_mat.rows));
+    cv::Mat output_mat = formats::MatView(output_frame.get());
+    cv::cvtColor(input_mat, output_mat, open_cv_convert_code);
 
-  // cv::cvtColor will leave the alpha channel set to 0, which is a bizarre
-  // design choice. Instead, let's set alpha to 255.
-  if (open_cv_convert_code == cv::COLOR_RGB2RGBA) {
-    SetColorChannel(3, 255, &output_mat);
-  }
-  cc->Outputs()
-      .Tag(output_tag)
-      .Add(output_frame.release(), cc->InputTimestamp());
-  return absl::OkStatus();
+    // cv::cvtColor will leave the alpha channel set to 0, which is a bizarre
+    // design choice. Instead, let's set alpha to 255.
+    if (open_cv_convert_code == cv::COLOR_RGB2RGBA) {
+        SetColorChannel(3, 255, &output_mat);
+    }
+    cc->Outputs()
+        .Tag(output_tag)
+        .Add(output_frame.release(), cc->InputTimestamp());
+    return absl::OkStatus();
 }
 
 absl::Status ColorConvertCalculator::Process(CalculatorContext* cc) {
-  // RGBA -> RGB
-  if (cc->Inputs().HasTag(kRgbaInTag) && cc->Outputs().HasTag(kRgbOutTag)) {
-    return ConvertAndOutput(kRgbaInTag, kRgbOutTag, ImageFormat::SRGB,
-                            cv::COLOR_RGBA2RGB, cc);
-  }
-  // GRAY -> RGB
-  if (cc->Inputs().HasTag(kGrayInTag) && cc->Outputs().HasTag(kRgbOutTag)) {
-    return ConvertAndOutput(kGrayInTag, kRgbOutTag, ImageFormat::SRGB,
-                            cv::COLOR_GRAY2RGB, cc);
-  }
-  // RGB -> GRAY
-  if (cc->Inputs().HasTag(kRgbInTag) && cc->Outputs().HasTag(kGrayOutTag)) {
-    return ConvertAndOutput(kRgbInTag, kGrayOutTag, ImageFormat::GRAY8,
-                            cv::COLOR_RGB2GRAY, cc);
-  }
-  // RGB -> RGBA
-  if (cc->Inputs().HasTag(kRgbInTag) && cc->Outputs().HasTag(kRgbaOutTag)) {
-    return ConvertAndOutput(kRgbInTag, kRgbaOutTag, ImageFormat::SRGBA,
-                            cv::COLOR_RGB2RGBA, cc);
-  }
-  // BGRA -> RGBA
-  if (cc->Inputs().HasTag(kBgraInTag) && cc->Outputs().HasTag(kRgbaOutTag)) {
-    return ConvertAndOutput(kBgraInTag, kRgbaOutTag, ImageFormat::SRGBA,
-                            cv::COLOR_BGRA2RGBA, cc);
-  }
-  // RGBA -> BGRA
-  if (cc->Inputs().HasTag(kRgbaInTag) && cc->Outputs().HasTag(kBgraOutTag)) {
-    return ConvertAndOutput(kRgbaInTag, kBgraOutTag, ImageFormat::SBGRA,
-                            cv::COLOR_RGBA2BGRA, cc);
-  }
+    // RGBA -> RGB
+    if (cc->Inputs().HasTag(kRgbaInTag) && cc->Outputs().HasTag(kRgbOutTag)) {
+        return ConvertAndOutput(kRgbaInTag, kRgbOutTag, ImageFormat::SRGB,
+                                cv::COLOR_RGBA2RGB, cc);
+    }
+    // GRAY -> RGB
+    if (cc->Inputs().HasTag(kGrayInTag) && cc->Outputs().HasTag(kRgbOutTag)) {
+        return ConvertAndOutput(kGrayInTag, kRgbOutTag, ImageFormat::SRGB,
+                                cv::COLOR_GRAY2RGB, cc);
+    }
+    // RGB -> GRAY
+    if (cc->Inputs().HasTag(kRgbInTag) && cc->Outputs().HasTag(kGrayOutTag)) {
+        return ConvertAndOutput(kRgbInTag, kGrayOutTag, ImageFormat::GRAY8,
+                                cv::COLOR_RGB2GRAY, cc);
+    }
+    // RGB -> RGBA
+    if (cc->Inputs().HasTag(kRgbInTag) && cc->Outputs().HasTag(kRgbaOutTag)) {
+        return ConvertAndOutput(kRgbInTag, kRgbaOutTag, ImageFormat::SRGBA,
+                                cv::COLOR_RGB2RGBA, cc);
+    }
+    // BGRA -> RGBA
+    if (cc->Inputs().HasTag(kBgraInTag) && cc->Outputs().HasTag(kRgbaOutTag)) {
+        return ConvertAndOutput(kBgraInTag, kRgbaOutTag, ImageFormat::SRGBA,
+                                cv::COLOR_BGRA2RGBA, cc);
+    }
+    // RGBA -> BGRA
+    if (cc->Inputs().HasTag(kRgbaInTag) && cc->Outputs().HasTag(kBgraOutTag)) {
+        return ConvertAndOutput(kRgbaInTag, kBgraOutTag, ImageFormat::SBGRA,
+                                cv::COLOR_RGBA2BGRA, cc);
+    }
 
-  return mediapipe::InvalidArgumentErrorBuilder(MEDIAPIPE_LOC)
-         << "Unsupported image format conversion.";
+    return mediapipe::InvalidArgumentErrorBuilder(MEDIAPIPE_LOC)
+           << "Unsupported image format conversion.";
 }
 
 }  // namespace mediapipe

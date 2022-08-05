@@ -20,17 +20,17 @@ import "mediapipe/framework/calculator.proto";
 import "mediapipe/util/tracking/flow_packager.proto";
 
 message FlowPackagerCalculatorOptions {
-  extend CalculatorOptions {
-    optional FlowPackagerCalculatorOptions ext = 271236147;
-  }
+    extend CalculatorOptions {
+        optional FlowPackagerCalculatorOptions ext = 271236147;
+    }
 
-  optional mediapipe.FlowPackagerOptions flow_packager_options = 1;
+    optional mediapipe.FlowPackagerOptions flow_packager_options = 1;
 
-  // Chunk size for caching files that are written to the externally specified
-  // caching directory. Specified in msec.
-  // Note that each chunk always contains at its end the first frame of the
-  // next chunk (to enable forward tracking across chunk boundaries).
-  optional int32 caching_chunk_size_msec = 2 [default = 2500];
+    // Chunk size for caching files that are written to the externally specified
+    // caching directory. Specified in msec.
+    // Note that each chunk always contains at its end the first frame of the
+    // next chunk (to enable forward tracking across chunk boundaries).
+    optional int32 caching_chunk_size_msec = 2 [default = 2500];
 
-  optional string cache_file_format = 3 [default = "chunk_%04d"];
+    optional string cache_file_format = 3 [default = "chunk_%04d"];
 }

@@ -19,11 +19,10 @@
 
 #if MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31
 
-#include <memory>
-
 #include "mediapipe/calculators/tensor/image_to_tensor_converter.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/port/statusor.h"
+#include <memory>
 
 namespace mediapipe {
 

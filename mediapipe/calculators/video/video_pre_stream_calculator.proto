@@ -19,25 +19,25 @@ package mediapipe;
 import "mediapipe/framework/calculator.proto";
 
 message VideoPreStreamCalculatorOptions {
-  extend CalculatorOptions {
-    optional VideoPreStreamCalculatorOptions ext = 151386123;
-  }
-
-  // An arbitrary number of frames per second.
-  // Prefer the StandardFps enum to store industry-standard, safe FPS values.
-  message Fps {
-    // The possibly approximated value of the frame rate, in frames per second.
-    // Unsafe to use in accurate computations because prone to rounding errors.
-    // For example, the 23.976 FPS value has no exact representation as a
-    // double.
-    optional double value = 1;
-
-    message Rational32 {
-      optional int32 numerator = 1;
-      optional int32 denominator = 2;
+    extend CalculatorOptions {
+        optional VideoPreStreamCalculatorOptions ext = 151386123;
     }
-    // The exact value of the frame rate, as a rational number.
-    optional Rational32 ratio = 2;
-  }
-  optional Fps fps = 1;
+
+    // An arbitrary number of frames per second.
+    // Prefer the StandardFps enum to store industry-standard, safe FPS values.
+    message Fps {
+        // The possibly approximated value of the frame rate, in frames per second.
+        // Unsafe to use in accurate computations because prone to rounding errors.
+        // For example, the 23.976 FPS value has no exact representation as a
+        // double.
+        optional double value = 1;
+
+        message Rational32 {
+            optional int32 numerator = 1;
+            optional int32 denominator = 2;
+        }
+        // The exact value of the frame rate, as a rational number.
+        optional Rational32 ratio = 2;
+    }
+    optional Fps fps = 1;
 }

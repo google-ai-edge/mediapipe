@@ -14,10 +14,6 @@
 
 // Defines Helper functions.
 #include "mediapipe/framework/tool/validate_type.h"
-
-#include <memory>
-#include <vector>
-
 #include "absl/strings/str_cat.h"
 #include "mediapipe/framework/calculator_contract.h"
 #include "mediapipe/framework/calculator_framework.h"
@@ -29,6 +25,8 @@
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/tool/status_util.h"
+#include <memory>
+#include <vector>
 
 #if !defined(MEDIAPIPE_MOBILE) && !defined(MEDIAPIPE_LITE)
 #include "absl/synchronization/blocking_counter.h"
@@ -41,36 +39,36 @@ namespace mediapipe {
 namespace tool {
 absl::Status RunGeneratorFillExpectations(
     const PacketGeneratorConfig& input_config, const std::string& package) {
-  // TODO Remove conversion after everyone uses input/output
-  // side packet.
-  PacketGeneratorConfig config = input_config;
+    // TODO Remove conversion after everyone uses input/output
+    // side packet.
+    PacketGeneratorConfig config = input_config;
 
-  ASSIGN_OR_RETURN(
-      auto static_access,
-      internal::StaticAccessToGeneratorRegistry::CreateByNameInNamespace(
-          package, config.packet_generator()),
-      _ << config.packet_generator()
-        << " is not a registered packet generator.");
+    ASSIGN_OR_RETURN(
+        auto static_access,
+        internal::StaticAccessToGeneratorRegistry::CreateByNameInNamespace(
+            package, config.packet_generator()),
+        _ << config.packet_generator()
+          << " is not a registered packet generator.");
 
-  CalculatorContract contract;
-  MP_RETURN_IF_ERROR(contract.Initialize(config, ""));
+    CalculatorContract contract;
+    MP_RETURN_IF_ERROR(contract.Initialize(config, ""));
 
-  {
-    LegacyCalculatorSupport::Scoped<CalculatorContract> s(&contract);
-    MP_RETURN_IF_ERROR(static_access->FillExpectations(
-                           config.options(), &contract.InputSidePackets(),
-                           &contract.OutputSidePackets()))
-            .SetPrepend()
-        << config.packet_generator() << "::FillExpectations failed: ";
-  }
+    {
+        LegacyCalculatorSupport::Scoped<CalculatorContract> s(&contract);
+        MP_RETURN_IF_ERROR(static_access->FillExpectations(
+                               config.options(), &contract.InputSidePackets(),
+                               &contract.OutputSidePackets()))
+                .SetPrepend()
+            << config.packet_generator() << "::FillExpectations failed: ";
+    }
 
-  // Check that everything got initialized.
-  std::vector<absl::Status> statuses;
-  statuses.push_back(ValidatePacketTypeSet(contract.InputSidePackets()));
-  statuses.push_back(ValidatePacketTypeSet(contract.OutputSidePackets()));
-  return tool::CombinedStatus(
-      absl::StrCat(config.packet_generator(), "::FillExpectations failed: "),
-      statuses);
+    // Check that everything got initialized.
+    std::vector<absl::Status> statuses;
+    statuses.push_back(ValidatePacketTypeSet(contract.InputSidePackets()));
+    statuses.push_back(ValidatePacketTypeSet(contract.OutputSidePackets()));
+    return tool::CombinedStatus(
+        absl::StrCat(config.packet_generator(), "::FillExpectations failed: "),
+        statuses);
 }
 
 absl::Status RunGenerateAndValidateTypes(
@@ -78,48 +76,48 @@ absl::Status RunGenerateAndValidateTypes(
     const PacketGeneratorOptions& extendable_options,
     const PacketSet& input_side_packets, PacketSet* output_side_packets,
     const std::string& package) {
-  CHECK(output_side_packets);
-  // Get static access to functions.
-  ASSIGN_OR_RETURN(
-      auto static_access,
-      internal::StaticAccessToGeneratorRegistry::CreateByNameInNamespace(
-          package, packet_generator_name),
-      _ << packet_generator_name << " is not a registered packet generator.");
-  // Create PacketTypeSets.
-  PacketTypeSet input_side_packet_types(input_side_packets.TagMap());
-  PacketTypeSet output_side_packet_types(output_side_packets->TagMap());
+    CHECK(output_side_packets);
+    // Get static access to functions.
+    ASSIGN_OR_RETURN(
+        auto static_access,
+        internal::StaticAccessToGeneratorRegistry::CreateByNameInNamespace(
+            package, packet_generator_name),
+        _ << packet_generator_name << " is not a registered packet generator.");
+    // Create PacketTypeSets.
+    PacketTypeSet input_side_packet_types(input_side_packets.TagMap());
+    PacketTypeSet output_side_packet_types(output_side_packets->TagMap());
 
-  // Fill the PacketTypeSets with type information.
-  MP_RETURN_IF_ERROR(static_access->FillExpectations(extendable_options,
-                                                     &input_side_packet_types,
-                                                     &output_side_packet_types))
-          .SetPrepend()
-      << packet_generator_name << "::FillExpectations failed: ";
-  // Check that the types were filled well.
-  std::vector<absl::Status> statuses;
-  statuses.push_back(ValidatePacketTypeSet(input_side_packet_types));
-  statuses.push_back(ValidatePacketTypeSet(output_side_packet_types));
-  MP_RETURN_IF_ERROR(tool::CombinedStatus(
-      absl::StrCat(packet_generator_name, "::FillExpectations failed: "),
-      statuses));
+    // Fill the PacketTypeSets with type information.
+    MP_RETURN_IF_ERROR(static_access->FillExpectations(extendable_options,
+                                                       &input_side_packet_types,
+                                                       &output_side_packet_types))
+            .SetPrepend()
+        << packet_generator_name << "::FillExpectations failed: ";
+    // Check that the types were filled well.
+    std::vector<absl::Status> statuses;
+    statuses.push_back(ValidatePacketTypeSet(input_side_packet_types));
+    statuses.push_back(ValidatePacketTypeSet(output_side_packet_types));
+    MP_RETURN_IF_ERROR(tool::CombinedStatus(
+        absl::StrCat(packet_generator_name, "::FillExpectations failed: "),
+        statuses));
 
-  MP_RETURN_IF_ERROR(
-      ValidatePacketSet(input_side_packet_types, input_side_packets))
-          .SetPrepend()
-      << packet_generator_name
-      << "::FillExpectations expected different input type than those given: ";
-  MP_RETURN_IF_ERROR(static_access->Generate(extendable_options,
-                                             input_side_packets,
-                                             output_side_packets))
-          .SetPrepend()
-      << packet_generator_name << "::Generate failed: ";
-  MP_RETURN_IF_ERROR(
-      ValidatePacketSet(output_side_packet_types, *output_side_packets))
-          .SetPrepend()
-      << packet_generator_name
-      << "::FillExpectations expected different "
-         "output type than those produced: ";
-  return absl::OkStatus();
+    MP_RETURN_IF_ERROR(
+        ValidatePacketSet(input_side_packet_types, input_side_packets))
+            .SetPrepend()
+        << packet_generator_name
+        << "::FillExpectations expected different input type than those given: ";
+    MP_RETURN_IF_ERROR(static_access->Generate(extendable_options,
+                                               input_side_packets,
+                                               output_side_packets))
+            .SetPrepend()
+        << packet_generator_name << "::Generate failed: ";
+    MP_RETURN_IF_ERROR(
+        ValidatePacketSet(output_side_packet_types, *output_side_packets))
+            .SetPrepend()
+        << packet_generator_name
+        << "::FillExpectations expected different "
+           "output type than those produced: ";
+    return absl::OkStatus();
 }
 
 }  // namespace tool

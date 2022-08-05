@@ -19,22 +19,22 @@ package mediapipe;
 import "mediapipe/framework/calculator.proto";
 
 message CallbackPacketCalculatorOptions {
-  extend CalculatorOptions {
-    optional CallbackPacketCalculatorOptions ext = 245965803;
-  }
+    extend CalculatorOptions {
+        optional CallbackPacketCalculatorOptions ext = 245965803;
+    }
 
-  enum PointerType {
-    UNKNOWN = 0;
-    VECTOR_PACKET = 1;
-    POST_STREAM_PACKET = 2;
-  }
+    enum PointerType {
+        UNKNOWN = 0;
+        VECTOR_PACKET = 1;
+        POST_STREAM_PACKET = 2;
+    }
 
-  // The type of the data pointer that the callback will put data into.
-  optional PointerType type = 1;
-  // The location of the data stored as a string printed with
-  // snprintf(address, sizeof(address), "%p", pointer).
-  // This calculator only produces a reasonable callback if it is
-  // constructed on the same machine as the original pointer was created on and
-  // that pointer is still alive.
-  optional bytes pointer = 2;
+    // The type of the data pointer that the callback will put data into.
+    optional PointerType type = 1;
+    // The location of the data stored as a string printed with
+    // snprintf(address, sizeof(address), "%p", pointer).
+    // This calculator only produces a reasonable callback if it is
+    // constructed on the same machine as the original pointer was created on and
+    // that pointer is still alive.
+    optional bytes pointer = 2;
 }

@@ -12,9 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <memory>
-#include <vector>
-
 #include "Eigen/Core"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/calculator_runner.h"
@@ -25,6 +22,8 @@
 #include "mediapipe/framework/port/parse_text_proto.h"
 #include "mediapipe/framework/port/status_matchers.h"
 #include "mediapipe/framework/tool/validate_type.h"
+#include <memory>
+#include <vector>
 
 namespace mediapipe {
 namespace {
@@ -66,94 +65,94 @@ const char kMatrixText2[] =
     "packed_data: 300\n";
 
 TEST(MatrixSubtractCalculatorTest, WrongConfig) {
-  CalculatorGraphConfig::Node node_config =
-      ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"pb(
-        calculator: "MatrixSubtractCalculator"
-        input_stream: "input_matrix"
-        input_side_packet: "SUBTRAHEND:side_matrix"
-        input_side_packet: "MINUEND:side_matrix2"
-        output_stream: "output_matrix"
-      )pb");
-  CalculatorRunner runner(node_config);
-  auto status = runner.Run();
-  EXPECT_THAT(
-      status.message(),
-      testing::HasSubstr(
-          "only accepts exactly one input stream and one input side packet"));
+    CalculatorGraphConfig::Node node_config =
+        ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"pb(
+                                                              calculator: "MatrixSubtractCalculator"
+                                                              input_stream: "input_matrix"
+                                                              input_side_packet: "SUBTRAHEND:side_matrix"
+                                                              input_side_packet: "MINUEND:side_matrix2"
+                                                              output_stream: "output_matrix"
+        )pb");
+    CalculatorRunner runner(node_config);
+    auto status = runner.Run();
+    EXPECT_THAT(
+        status.message(),
+        testing::HasSubstr(
+            "only accepts exactly one input stream and one input side packet"));
 }
 
 TEST(MatrixSubtractCalculatorTest, WrongConfig2) {
-  CalculatorGraphConfig::Node node_config =
-      ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"pb(
-        calculator: "MatrixSubtractCalculator"
-        input_side_packet: "SUBTRAHEND:side_matrix"
-        input_stream: "SUBTRAHEND:side_matrix2"
-        output_stream: "output_matrix"
-      )pb");
-  CalculatorRunner runner(node_config);
-  auto status = runner.Run();
-  EXPECT_THAT(status.message(), testing::HasSubstr("must be connected"));
-  EXPECT_THAT(status.message(), testing::HasSubstr("not both"));
+    CalculatorGraphConfig::Node node_config =
+        ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"pb(
+                                                              calculator: "MatrixSubtractCalculator"
+                                                              input_side_packet: "SUBTRAHEND:side_matrix"
+                                                              input_stream: "SUBTRAHEND:side_matrix2"
+                                                              output_stream: "output_matrix"
+        )pb");
+    CalculatorRunner runner(node_config);
+    auto status = runner.Run();
+    EXPECT_THAT(status.message(), testing::HasSubstr("must be connected"));
+    EXPECT_THAT(status.message(), testing::HasSubstr("not both"));
 }
 
 TEST(MatrixSubtractCalculatorTest, SubtractFromInput) {
-  CalculatorGraphConfig::Node node_config =
-      ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"pb(
-        calculator: "MatrixSubtractCalculator"
-        input_stream: "MINUEND:input_matrix"
-        input_side_packet: "SUBTRAHEND:side_matrix"
-        output_stream: "output_matrix"
-      )pb");
-  CalculatorRunner runner(node_config);
-  Matrix* side_matrix = new Matrix();
-  MatrixFromTextProto(kMatrixText, side_matrix);
-  runner.MutableSidePackets()->Tag(kSubtrahendTag) = Adopt(side_matrix);
+    CalculatorGraphConfig::Node node_config =
+        ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"pb(
+                                                              calculator: "MatrixSubtractCalculator"
+                                                              input_stream: "MINUEND:input_matrix"
+                                                              input_side_packet: "SUBTRAHEND:side_matrix"
+                                                              output_stream: "output_matrix"
+        )pb");
+    CalculatorRunner runner(node_config);
+    Matrix* side_matrix = new Matrix();
+    MatrixFromTextProto(kMatrixText, side_matrix);
+    runner.MutableSidePackets()->Tag(kSubtrahendTag) = Adopt(side_matrix);
 
-  Matrix* input_matrix = new Matrix();
-  MatrixFromTextProto(kMatrixText2, input_matrix);
-  runner.MutableInputs()
-      ->Tag(kMinuendTag)
-      .packets.push_back(Adopt(input_matrix).At(Timestamp(0)));
+    Matrix* input_matrix = new Matrix();
+    MatrixFromTextProto(kMatrixText2, input_matrix);
+    runner.MutableInputs()
+        ->Tag(kMinuendTag)
+        .packets.push_back(Adopt(input_matrix).At(Timestamp(0)));
 
-  MP_ASSERT_OK(runner.Run());
-  EXPECT_EQ(1, runner.Outputs().Index(0).packets.size());
+    MP_ASSERT_OK(runner.Run());
+    EXPECT_EQ(1, runner.Outputs().Index(0).packets.size());
 
-  EXPECT_EQ(Timestamp(0), runner.Outputs().Index(0).packets[0].Timestamp());
-  const Eigen::MatrixXf& result =
-      runner.Outputs().Index(0).packets[0].Get<Matrix>();
-  ASSERT_EQ(3, result.rows());
-  ASSERT_EQ(4, result.cols());
-  EXPECT_NEAR(result.sum(), 12, 1e-5);
+    EXPECT_EQ(Timestamp(0), runner.Outputs().Index(0).packets[0].Timestamp());
+    const Eigen::MatrixXf& result =
+        runner.Outputs().Index(0).packets[0].Get<Matrix>();
+    ASSERT_EQ(3, result.rows());
+    ASSERT_EQ(4, result.cols());
+    EXPECT_NEAR(result.sum(), 12, 1e-5);
 }
 
 TEST(MatrixSubtractCalculatorTest, SubtractFromSideMatrix) {
-  CalculatorGraphConfig::Node node_config =
-      ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"pb(
-        calculator: "MatrixSubtractCalculator"
-        input_stream: "SUBTRAHEND:input_matrix"
-        input_side_packet: "MINUEND:side_matrix"
-        output_stream: "output_matrix"
-      )pb");
-  CalculatorRunner runner(node_config);
-  Matrix* side_matrix = new Matrix();
-  MatrixFromTextProto(kMatrixText, side_matrix);
-  runner.MutableSidePackets()->Tag(kMinuendTag) = Adopt(side_matrix);
+    CalculatorGraphConfig::Node node_config =
+        ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"pb(
+                                                              calculator: "MatrixSubtractCalculator"
+                                                              input_stream: "SUBTRAHEND:input_matrix"
+                                                              input_side_packet: "MINUEND:side_matrix"
+                                                              output_stream: "output_matrix"
+        )pb");
+    CalculatorRunner runner(node_config);
+    Matrix* side_matrix = new Matrix();
+    MatrixFromTextProto(kMatrixText, side_matrix);
+    runner.MutableSidePackets()->Tag(kMinuendTag) = Adopt(side_matrix);
 
-  Matrix* input_matrix = new Matrix();
-  MatrixFromTextProto(kMatrixText2, input_matrix);
-  runner.MutableInputs()
-      ->Tag(kSubtrahendTag)
-      .packets.push_back(Adopt(input_matrix).At(Timestamp(0)));
+    Matrix* input_matrix = new Matrix();
+    MatrixFromTextProto(kMatrixText2, input_matrix);
+    runner.MutableInputs()
+        ->Tag(kSubtrahendTag)
+        .packets.push_back(Adopt(input_matrix).At(Timestamp(0)));
 
-  MP_ASSERT_OK(runner.Run());
-  EXPECT_EQ(1, runner.Outputs().Index(0).packets.size());
+    MP_ASSERT_OK(runner.Run());
+    EXPECT_EQ(1, runner.Outputs().Index(0).packets.size());
 
-  EXPECT_EQ(Timestamp(0), runner.Outputs().Index(0).packets[0].Timestamp());
-  const Eigen::MatrixXf& result =
-      runner.Outputs().Index(0).packets[0].Get<Matrix>();
-  ASSERT_EQ(3, result.rows());
-  ASSERT_EQ(4, result.cols());
-  EXPECT_NEAR(result.sum(), -12, 1e-5);
+    EXPECT_EQ(Timestamp(0), runner.Outputs().Index(0).packets[0].Timestamp());
+    const Eigen::MatrixXf& result =
+        runner.Outputs().Index(0).packets[0].Get<Matrix>();
+    ASSERT_EQ(3, result.rows());
+    ASSERT_EQ(4, result.cols());
+    EXPECT_NEAR(result.sum(), -12, 1e-5);
 }
 
 }  // namespace

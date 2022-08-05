@@ -54,51 +54,51 @@ namespace mediapipe {
 // }
 template <typename IterableT>
 class EndLoopCalculator : public CalculatorBase {
-  using ItemT = typename IterableT::value_type;
+    using ItemT = typename IterableT::value_type;
 
- public:
-  static absl::Status GetContract(CalculatorContract* cc) {
-    RET_CHECK(cc->Inputs().HasTag("BATCH_END"))
-        << "Missing BATCH_END tagged input_stream.";
-    cc->Inputs().Tag("BATCH_END").Set<Timestamp>();
+public:
+    static absl::Status GetContract(CalculatorContract* cc) {
+        RET_CHECK(cc->Inputs().HasTag("BATCH_END"))
+            << "Missing BATCH_END tagged input_stream.";
+        cc->Inputs().Tag("BATCH_END").Set<Timestamp>();
 
-    RET_CHECK(cc->Inputs().HasTag("ITEM"));
-    cc->Inputs().Tag("ITEM").Set<ItemT>();
+        RET_CHECK(cc->Inputs().HasTag("ITEM"));
+        cc->Inputs().Tag("ITEM").Set<ItemT>();
 
-    RET_CHECK(cc->Outputs().HasTag("ITERABLE"));
-    cc->Outputs().Tag("ITERABLE").Set<IterableT>();
-    return absl::OkStatus();
-  }
-
-  absl::Status Process(CalculatorContext* cc) override {
-    if (!cc->Inputs().Tag("ITEM").IsEmpty()) {
-      if (!input_stream_collection_) {
-        input_stream_collection_.reset(new IterableT);
-      }
-      input_stream_collection_->push_back(
-          cc->Inputs().Tag("ITEM").template Get<ItemT>());
+        RET_CHECK(cc->Outputs().HasTag("ITERABLE"));
+        cc->Outputs().Tag("ITERABLE").Set<IterableT>();
+        return absl::OkStatus();
     }
 
-    if (!cc->Inputs().Tag("BATCH_END").Value().IsEmpty()) {  // flush signal
-      Timestamp loop_control_ts =
-          cc->Inputs().Tag("BATCH_END").template Get<Timestamp>();
-      if (input_stream_collection_) {
-        cc->Outputs()
-            .Tag("ITERABLE")
-            .Add(input_stream_collection_.release(), loop_control_ts);
-      } else {
-        // Since there is no collection, inform downstream calculators to not
-        // expect any packet by updating the timestamp bounds.
-        cc->Outputs()
-            .Tag("ITERABLE")
-            .SetNextTimestampBound(Timestamp(loop_control_ts.Value() + 1));
-      }
-    }
-    return absl::OkStatus();
-  }
+    absl::Status Process(CalculatorContext* cc) override {
+        if (!cc->Inputs().Tag("ITEM").IsEmpty()) {
+            if (!input_stream_collection_) {
+                input_stream_collection_.reset(new IterableT);
+            }
+            input_stream_collection_->push_back(
+                cc->Inputs().Tag("ITEM").template Get<ItemT>());
+        }
 
- private:
-  std::unique_ptr<IterableT> input_stream_collection_;
+        if (!cc->Inputs().Tag("BATCH_END").Value().IsEmpty()) {  // flush signal
+            Timestamp loop_control_ts =
+                cc->Inputs().Tag("BATCH_END").template Get<Timestamp>();
+            if (input_stream_collection_) {
+                cc->Outputs()
+                    .Tag("ITERABLE")
+                    .Add(input_stream_collection_.release(), loop_control_ts);
+            } else {
+                // Since there is no collection, inform downstream calculators to not
+                // expect any packet by updating the timestamp bounds.
+                cc->Outputs()
+                    .Tag("ITERABLE")
+                    .SetNextTimestampBound(Timestamp(loop_control_ts.Value() + 1));
+            }
+        }
+        return absl::OkStatus();
+    }
+
+private:
+    std::unique_ptr<IterableT> input_stream_collection_;
 };
 
 }  // namespace mediapipe

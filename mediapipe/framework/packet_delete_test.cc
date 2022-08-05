@@ -34,50 +34,50 @@ namespace mediapipe {
 namespace {
 
 class LiveObjectsCounter {
- public:
-  LiveObjectsCounter() { ++counter_; }
-  LiveObjectsCounter(const LiveObjectsCounter&) = delete;
-  LiveObjectsCounter& operator=(const LiveObjectsCounter&) = delete;
-  ~LiveObjectsCounter() { --counter_; }
-  static int counter() { return counter_; }
+public:
+    LiveObjectsCounter() { ++counter_; }
+    LiveObjectsCounter(const LiveObjectsCounter&) = delete;
+    LiveObjectsCounter& operator=(const LiveObjectsCounter&) = delete;
+    ~LiveObjectsCounter() { --counter_; }
+    static int counter() { return counter_; }
 
- private:
-  static int counter_;
+private:
+    static int counter_;
 };
 
 int LiveObjectsCounter::counter_ = 0;
 
 TEST(Packet, DeletesNonArray) {
-  ASSERT_EQ(0, LiveObjectsCounter::counter());
-  {
-    Packet packet = Adopt(new LiveObjectsCounter);
-    EXPECT_EQ(1, LiveObjectsCounter::counter());
-  }
-  EXPECT_EQ(0, LiveObjectsCounter::counter());
+    ASSERT_EQ(0, LiveObjectsCounter::counter());
+    {
+        Packet packet = Adopt(new LiveObjectsCounter);
+        EXPECT_EQ(1, LiveObjectsCounter::counter());
+    }
+    EXPECT_EQ(0, LiveObjectsCounter::counter());
 }
 
 TEST(Packet, DeletesBoundedArray) {
-  ASSERT_EQ(0, LiveObjectsCounter::counter());
-  {
-    // new T[3] returns a T*, so we must cast it to get the right type.
-    Packet packet = Adopt(
-        reinterpret_cast<LiveObjectsCounter(*)[3]>(new LiveObjectsCounter[3]));
-    EXPECT_EQ(3, LiveObjectsCounter::counter());
-  }
-  EXPECT_EQ(0, LiveObjectsCounter::counter());
+    ASSERT_EQ(0, LiveObjectsCounter::counter());
+    {
+        // new T[3] returns a T*, so we must cast it to get the right type.
+        Packet packet = Adopt(
+            reinterpret_cast<LiveObjectsCounter(*)[3]>(new LiveObjectsCounter[3]));
+        EXPECT_EQ(3, LiveObjectsCounter::counter());
+    }
+    EXPECT_EQ(0, LiveObjectsCounter::counter());
 }
 
 TEST(Packet, DeletesUnboundedArray) {
-  for (int size = 0; size < 10; ++size) {
-    ASSERT_EQ(0, LiveObjectsCounter::counter());
-    {
-      // new T[size] returns a T*, so we must cast it to get the right type.
-      Packet packet = Adopt(reinterpret_cast<LiveObjectsCounter(*)[]>(
-          new LiveObjectsCounter[size]));
-      EXPECT_EQ(size, LiveObjectsCounter::counter());
+    for (int size = 0; size < 10; ++size) {
+        ASSERT_EQ(0, LiveObjectsCounter::counter());
+        {
+            // new T[size] returns a T*, so we must cast it to get the right type.
+            Packet packet = Adopt(reinterpret_cast<LiveObjectsCounter(*)[]>(
+                new LiveObjectsCounter[size]));
+            EXPECT_EQ(size, LiveObjectsCounter::counter());
+        }
+        EXPECT_EQ(0, LiveObjectsCounter::counter());
     }
-    EXPECT_EQ(0, LiveObjectsCounter::counter());
-  }
 }
 
 }  // namespace

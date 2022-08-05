@@ -15,10 +15,9 @@
 #ifndef MEDIAPIPE_FRAMEWORK_TOOL_TEMPLATE_EXPANDER_H_
 #define MEDIAPIPE_FRAMEWORK_TOOL_TEMPLATE_EXPANDER_H_
 
-#include <vector>
-
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/tool/calculator_graph_template.pb.h"
+#include <vector>
 
 namespace mediapipe {
 
@@ -26,20 +25,20 @@ namespace tool {
 
 // The interpreter for mediapipe template rules.
 class TemplateExpander {
- public:
-  // Creates an interpreter to expand templates.
-  TemplateExpander();
+public:
+    // Creates an interpreter to expand templates.
+    TemplateExpander();
 
-  // Applies the rules specified in a CalculatorGraphTemplate to a
-  // CalculatorGraphConfig.  Each rule references a nested field-value or
-  // message and defines zero or more replacement values for it.
-  absl::Status ExpandTemplates(const TemplateDict& args,
-                               const CalculatorGraphTemplate& templ,
-                               CalculatorGraphConfig* output);
+    // Applies the rules specified in a CalculatorGraphTemplate to a
+    // CalculatorGraphConfig.  Each rule references a nested field-value or
+    // message and defines zero or more replacement values for it.
+    absl::Status ExpandTemplates(const TemplateDict& args,
+                                 const CalculatorGraphTemplate& templ,
+                                 CalculatorGraphConfig* output);
 
- private:
-  // List of errors found in template parameters.
-  std::vector<absl::Status> errors_;
+private:
+    // List of errors found in template parameters.
+    std::vector<absl::Status> errors_;
 };
 
 }  // namespace tool

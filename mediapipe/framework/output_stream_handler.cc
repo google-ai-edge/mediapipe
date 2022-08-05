@@ -13,7 +13,6 @@
 // limitations under the License.
 
 #include "mediapipe/framework/output_stream_handler.h"
-
 #include "absl/synchronization/mutex.h"
 #include "mediapipe/framework/collection_item_id.h"
 #include "mediapipe/framework/output_stream_shard.h"
@@ -22,148 +21,148 @@ namespace mediapipe {
 
 absl::Status OutputStreamHandler::InitializeOutputStreamManagers(
     OutputStreamManager* flat_output_stream_managers) {
-  for (CollectionItemId id = output_stream_managers_.BeginId();
-       id < output_stream_managers_.EndId(); ++id) {
-    output_stream_managers_.Get(id) = &flat_output_stream_managers[id.value()];
-  }
-  return absl::OkStatus();
+    for (CollectionItemId id = output_stream_managers_.BeginId();
+         id < output_stream_managers_.EndId(); ++id) {
+        output_stream_managers_.Get(id) = &flat_output_stream_managers[id.value()];
+    }
+    return absl::OkStatus();
 }
 
 absl::Status OutputStreamHandler::SetupOutputShards(
     OutputStreamShardSet* output_shards) {
-  CHECK(output_shards);
-  for (CollectionItemId id = output_stream_managers_.BeginId();
-       id < output_stream_managers_.EndId(); ++id) {
-    OutputStreamManager* manager = output_stream_managers_.Get(id);
-    output_shards->Get(id).SetSpec(manager->Spec());
-  }
-  return absl::OkStatus();
+    CHECK(output_shards);
+    for (CollectionItemId id = output_stream_managers_.BeginId();
+         id < output_stream_managers_.EndId(); ++id) {
+        OutputStreamManager* manager = output_stream_managers_.Get(id);
+        output_shards->Get(id).SetSpec(manager->Spec());
+    }
+    return absl::OkStatus();
 }
 
 void OutputStreamHandler::PrepareForRun(
     const std::function<void(absl::Status)>& error_callback) {
-  for (auto& manager : output_stream_managers_) {
-    manager->PrepareForRun(error_callback);
-  }
-  absl::MutexLock lock(&timestamp_mutex_);
-  completed_input_timestamps_.clear();
-  task_timestamp_bound_ = Timestamp::Unset();
-  propagation_state_ = kIdle;
+    for (auto& manager : output_stream_managers_) {
+        manager->PrepareForRun(error_callback);
+    }
+    absl::MutexLock lock(&timestamp_mutex_);
+    completed_input_timestamps_.clear();
+    task_timestamp_bound_ = Timestamp::Unset();
+    propagation_state_ = kIdle;
 }
 
 void OutputStreamHandler::Open(OutputStreamShardSet* output_shards) {
-  CHECK(output_shards);
-  PropagateOutputPackets(Timestamp::Unstarted(), output_shards);
-  for (auto& manager : output_stream_managers_) {
-    manager->PropagateHeader();
-    manager->LockIntroData();
-  }
+    CHECK(output_shards);
+    PropagateOutputPackets(Timestamp::Unstarted(), output_shards);
+    for (auto& manager : output_stream_managers_) {
+        manager->PropagateHeader();
+        manager->LockIntroData();
+    }
 }
 
 void OutputStreamHandler::PrepareOutputs(Timestamp input_timestamp,
                                          OutputStreamShardSet* output_shards) {
-  CHECK(output_shards);
-  for (CollectionItemId id = output_stream_managers_.BeginId();
-       id < output_stream_managers_.EndId(); ++id) {
-    output_stream_managers_.Get(id)->ResetShard(&output_shards->Get(id));
-  }
+    CHECK(output_shards);
+    for (CollectionItemId id = output_stream_managers_.BeginId();
+         id < output_stream_managers_.EndId(); ++id) {
+        output_stream_managers_.Get(id)->ResetShard(&output_shards->Get(id));
+    }
 }
 
 void OutputStreamHandler::UpdateTaskTimestampBound(Timestamp timestamp) {
-  if (!calculator_run_in_parallel_) {
-    TryPropagateTimestampBound(timestamp);
-    return;
-  }
-  {
-    absl::MutexLock lock(&timestamp_mutex_);
-    if (task_timestamp_bound_ == timestamp) {
-      return;
+    if (!calculator_run_in_parallel_) {
+        TryPropagateTimestampBound(timestamp);
+        return;
     }
-    CHECK_GT(timestamp, task_timestamp_bound_);
-    task_timestamp_bound_ = timestamp;
-    if (propagation_state_ == kPropagatingBound) {
-      propagation_state_ = kPropagationPending;
-      return;
+    {
+        absl::MutexLock lock(&timestamp_mutex_);
+        if (task_timestamp_bound_ == timestamp) {
+            return;
+        }
+        CHECK_GT(timestamp, task_timestamp_bound_);
+        task_timestamp_bound_ = timestamp;
+        if (propagation_state_ == kPropagatingBound) {
+            propagation_state_ = kPropagationPending;
+            return;
+        }
+        if (propagation_state_ != kIdle) {
+            return;
+        }
+        PropagationLoop();
     }
-    if (propagation_state_ != kIdle) {
-      return;
-    }
-    PropagationLoop();
-  }
 }
 
 void OutputStreamHandler::PostProcess(Timestamp input_timestamp) {
-  if (!calculator_run_in_parallel_) {
-    CalculatorContext* default_context =
-        calculator_context_manager_->GetDefaultCalculatorContext();
-    PropagateOutputPackets(input_timestamp, &default_context->Outputs());
-    return;
-  }
-  {
-    absl::MutexLock lock(&timestamp_mutex_);
-    completed_input_timestamps_.insert(input_timestamp);
-    if (propagation_state_ == kPropagatingBound) {
-      propagation_state_ = kPropagationPending;
-      return;
+    if (!calculator_run_in_parallel_) {
+        CalculatorContext* default_context =
+            calculator_context_manager_->GetDefaultCalculatorContext();
+        PropagateOutputPackets(input_timestamp, &default_context->Outputs());
+        return;
     }
-    if (propagation_state_ != kIdle) {
-      return;
+    {
+        absl::MutexLock lock(&timestamp_mutex_);
+        completed_input_timestamps_.insert(input_timestamp);
+        if (propagation_state_ == kPropagatingBound) {
+            propagation_state_ = kPropagationPending;
+            return;
+        }
+        if (propagation_state_ != kIdle) {
+            return;
+        }
+        PropagationLoop();
     }
-    PropagationLoop();
-  }
 }
 
 std::string OutputStreamHandler::FirstStreamName() const {
-  if (output_stream_managers_.NumEntries() == 0) {
-    return std::string();
-  }
-  return (*output_stream_managers_.begin())->Name();
+    if (output_stream_managers_.NumEntries() == 0) {
+        return std::string();
+    }
+    return (*output_stream_managers_.begin())->Name();
 }
 
 void OutputStreamHandler::TryPropagateTimestampBound(Timestamp input_bound) {
-  // TODO Some non-range values, such as PostStream(), should also be
-  // propagated.
-  if (!input_bound.IsRangeValue()) {
-    return;
-  }
-  OutputStreamShard empty_output;
-  for (OutputStreamManager* manager : output_stream_managers_) {
-    if (manager->OffsetEnabled() && !manager->IsClosed() &&
-        input_bound + manager->Offset() > manager->NextTimestampBound()) {
-      manager->PropagateUpdatesToMirrors(input_bound + manager->Offset(),
-                                         &empty_output);
+    // TODO Some non-range values, such as PostStream(), should also be
+    // propagated.
+    if (!input_bound.IsRangeValue()) {
+        return;
     }
-  }
+    OutputStreamShard empty_output;
+    for (OutputStreamManager* manager : output_stream_managers_) {
+        if (manager->OffsetEnabled() && !manager->IsClosed() &&
+            input_bound + manager->Offset() > manager->NextTimestampBound()) {
+            manager->PropagateUpdatesToMirrors(input_bound + manager->Offset(),
+                                               &empty_output);
+        }
+    }
 }
 
 void OutputStreamHandler::Close(OutputStreamShardSet* output_shards) {
-  for (CollectionItemId id = output_stream_managers_.BeginId();
-       id < output_stream_managers_.EndId(); ++id) {
-    if (output_shards) {
-      output_stream_managers_.Get(id)->PropagateUpdatesToMirrors(
-          Timestamp::Done(), &output_shards->Get(id));
+    for (CollectionItemId id = output_stream_managers_.BeginId();
+         id < output_stream_managers_.EndId(); ++id) {
+        if (output_shards) {
+            output_stream_managers_.Get(id)->PropagateUpdatesToMirrors(
+                Timestamp::Done(), &output_shards->Get(id));
+        }
+        output_stream_managers_.Get(id)->Close();
     }
-    output_stream_managers_.Get(id)->Close();
-  }
 }
 
 void OutputStreamHandler::PropagateOutputPackets(
     Timestamp input_timestamp, OutputStreamShardSet* output_shards) {
-  CHECK(output_shards);
-  for (CollectionItemId id = output_stream_managers_.BeginId();
-       id < output_stream_managers_.EndId(); ++id) {
-    OutputStreamManager* manager = output_stream_managers_.Get(id);
-    if (manager->IsClosed()) {
-      continue;
+    CHECK(output_shards);
+    for (CollectionItemId id = output_stream_managers_.BeginId();
+         id < output_stream_managers_.EndId(); ++id) {
+        OutputStreamManager* manager = output_stream_managers_.Get(id);
+        if (manager->IsClosed()) {
+            continue;
+        }
+        OutputStreamShard* output = &output_shards->Get(id);
+        const Timestamp output_bound =
+            manager->ComputeOutputTimestampBound(*output, input_timestamp);
+        manager->PropagateUpdatesToMirrors(output_bound, output);
+        if (output->IsClosed()) {
+            manager->Close();
+        }
     }
-    OutputStreamShard* output = &output_shards->Get(id);
-    const Timestamp output_bound =
-        manager->ComputeOutputTimestampBound(*output, input_timestamp);
-    manager->PropagateUpdatesToMirrors(output_bound, output);
-    if (output->IsClosed()) {
-      manager->Close();
-    }
-  }
 }
 
 }  // namespace mediapipe

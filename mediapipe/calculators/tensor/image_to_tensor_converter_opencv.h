@@ -15,11 +15,10 @@
 #ifndef MEDIAPIPE_CALCULATORS_TENSOR_IMAGE_TO_TENSOR_CONVERTER_OPENCV_H_
 #define MEDIAPIPE_CALCULATORS_TENSOR_IMAGE_TO_TENSOR_CONVERTER_OPENCV_H_
 
-#include <memory>
-
 #include "mediapipe/calculators/tensor/image_to_tensor_converter.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/port/statusor.h"
+#include <memory>
 
 namespace mediapipe {
 

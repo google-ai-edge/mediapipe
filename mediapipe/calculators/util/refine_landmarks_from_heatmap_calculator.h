@@ -15,26 +15,25 @@
 #ifndef MEDIAPIPE_CALCULATORS_UTIL_REFINE_LANDMARKS_FROM_HEATMAP_CALCULATOR_H_
 #define MEDIAPIPE_CALCULATORS_UTIL_REFINE_LANDMARKS_FROM_HEATMAP_CALCULATOR_H_
 
-#include <vector>
-
 #include "mediapipe/framework/api2/node.h"
 #include "mediapipe/framework/formats/landmark.pb.h"
 #include "mediapipe/framework/formats/tensor.h"
 #include "mediapipe/framework/port/statusor.h"
+#include <vector>
 
 namespace mediapipe {
 namespace api2 {
 
 class RefineLandmarksFromHeatmapCalculator : public NodeIntf {
- public:
-  static constexpr Input<mediapipe::NormalizedLandmarkList> kInLandmarks{
-      "NORM_LANDMARKS"};
-  static constexpr Input<std::vector<Tensor>> kInTensors{"TENSORS"};
-  static constexpr Output<mediapipe::NormalizedLandmarkList> kOutLandmarks{
-      "NORM_LANDMARKS"};
+public:
+    static constexpr Input<mediapipe::NormalizedLandmarkList> kInLandmarks{
+        "NORM_LANDMARKS"};
+    static constexpr Input<std::vector<Tensor>> kInTensors{"TENSORS"};
+    static constexpr Output<mediapipe::NormalizedLandmarkList> kOutLandmarks{
+        "NORM_LANDMARKS"};
 
-  MEDIAPIPE_NODE_INTERFACE(RefineLandmarksFromHeatmapCalculator, kInLandmarks,
-                           kInTensors, kOutLandmarks);
+    MEDIAPIPE_NODE_INTERFACE(RefineLandmarksFromHeatmapCalculator, kInLandmarks,
+                             kInTensors, kOutLandmarks);
 };
 
 }  // namespace api2

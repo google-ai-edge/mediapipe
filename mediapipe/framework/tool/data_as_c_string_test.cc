@@ -24,9 +24,9 @@ static const char my_graph[] =
     ;  // NOLINT(whitespace/semicolon)
 
 TEST(DataAsCString, CanDecodeCalculatorGraphConfig) {
-  CalculatorGraphConfig config;
-  bool success = config.ParseFromArray(my_graph, sizeof(my_graph) - 1);
-  EXPECT_TRUE(success);
+    CalculatorGraphConfig config;
+    bool success = config.ParseFromArray(my_graph, sizeof(my_graph) - 1);
+    EXPECT_TRUE(success);
 }
 
 }  // namespace

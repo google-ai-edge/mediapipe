@@ -15,13 +15,12 @@
 #ifndef MEDIAPIPE_FRAMEWORK_TOOL_SIMULATION_CLOCK_H_
 #define MEDIAPIPE_FRAMEWORK_TOOL_SIMULATION_CLOCK_H_
 
-#include <map>
-#include <set>
-
 #include "absl/base/thread_annotations.h"
 #include "absl/synchronization/mutex.h"
 #include "absl/time/time.h"
 #include "mediapipe/framework/deps/clock.h"
+#include <map>
+#include <set>
 
 namespace mediapipe {
 
@@ -37,43 +36,43 @@ namespace mediapipe {
 // The result is a single well-defined order of events.  Any desired
 // order of events can be defined by adjusting the precise sleep times.
 class SimulationClock : public mediapipe::Clock {
- public:
-  SimulationClock() {}
-  ~SimulationClock() override;
+public:
+    SimulationClock() {}
+    ~SimulationClock() override;
 
-  // Returns the simulated time.
-  absl::Time TimeNow() override;
+    // Returns the simulated time.
+    absl::Time TimeNow() override;
 
-  // Sleeps until the specified duration has elapsed according to this clock.
-  void Sleep(absl::Duration d) override;
+    // Sleeps until the specified duration has elapsed according to this clock.
+    void Sleep(absl::Duration d) override;
 
-  // Sleeps until the specifed wakeup_time.
-  void SleepUntil(absl::Time wakeup_time) override;
+    // Sleeps until the specifed wakeup_time.
+    void SleepUntil(absl::Time wakeup_time) override;
 
-  // Informs this clock that a woken thread has started running.
-  void ThreadStart();
+    // Informs this clock that a woken thread has started running.
+    void ThreadStart();
 
-  // Informs this clock that a woken thread has finished running.
-  void ThreadFinish();
+    // Informs this clock that a woken thread has finished running.
+    void ThreadFinish();
 
- protected:
-  // Queue up wake up waiter.
-  void SleepInternal(absl::Time wakeup_time)
-      ABSL_EXCLUSIVE_LOCKS_REQUIRED(time_mutex_);
-  // Advances to the next wake up time if no related threads are running.
-  void TryAdvanceTime() ABSL_EXCLUSIVE_LOCKS_REQUIRED(time_mutex_);
+protected:
+    // Queue up wake up waiter.
+    void SleepInternal(absl::Time wakeup_time)
+        ABSL_EXCLUSIVE_LOCKS_REQUIRED(time_mutex_);
+    // Advances to the next wake up time if no related threads are running.
+    void TryAdvanceTime() ABSL_EXCLUSIVE_LOCKS_REQUIRED(time_mutex_);
 
-  // Represents a thread blocked in SleepUntil.
-  struct Waiter {
-    bool sleeping = true;
-    absl::CondVar cond;
-  };
+    // Represents a thread blocked in SleepUntil.
+    struct Waiter {
+        bool sleeping = true;
+        absl::CondVar cond;
+    };
 
- protected:
-  absl::Mutex time_mutex_;
-  absl::Time time_ ABSL_GUARDED_BY(time_mutex_);
-  std::multimap<absl::Time, Waiter*> waiters_ ABSL_GUARDED_BY(time_mutex_);
-  int num_running_ ABSL_GUARDED_BY(time_mutex_) = 0;
+protected:
+    absl::Mutex time_mutex_;
+    absl::Time time_ ABSL_GUARDED_BY(time_mutex_);
+    std::multimap<absl::Time, Waiter*> waiters_ ABSL_GUARDED_BY(time_mutex_);
+    int num_running_ ABSL_GUARDED_BY(time_mutex_) = 0;
 };
 
 }  // namespace mediapipe

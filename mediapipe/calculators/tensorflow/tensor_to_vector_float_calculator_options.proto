@@ -19,15 +19,15 @@ package mediapipe;
 import "mediapipe/framework/calculator.proto";
 
 message TensorToVectorFloatCalculatorOptions {
-  extend mediapipe.CalculatorOptions {
-    optional TensorToVectorFloatCalculatorOptions ext = 120862965;
-  }
+    extend mediapipe.CalculatorOptions {
+        optional TensorToVectorFloatCalculatorOptions ext = 120862965;
+    }
 
-  // If true, unpack a 2d tensor (matrix) into a vector<vector<float>>. If
-  // false, convert a 1d tensor (vector) into a vector<float>.
-  optional bool tensor_is_2d = 1 [default = false];
+    // If true, unpack a 2d tensor (matrix) into a vector<vector<float>>. If
+    // false, convert a 1d tensor (vector) into a vector<float>.
+    optional bool tensor_is_2d = 1 [default = false];
 
-  // If true, an N-D tensor will be flattened to a vector<float>. This is
-  // exclusive with tensor_is_2d.
-  optional bool flatten_nd = 2 [default = false];
+    // If true, an N-D tensor will be flattened to a vector<float>. This is
+    // exclusive with tensor_is_2d.
+    optional bool flatten_nd = 2 [default = false];
 }

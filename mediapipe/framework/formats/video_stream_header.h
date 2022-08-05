@@ -23,21 +23,21 @@ namespace mediapipe {
 
 // This defines the format of a video stream header.
 struct VideoHeader {
-  // Video frame format.
-  ImageFormat::Format format = ImageFormat::UNKNOWN;
+    // Video frame format.
+    ImageFormat::Format format = ImageFormat::UNKNOWN;
 
-  // Dimensions of the video in pixels.
-  int width = 0;
-  int height = 0;
+    // Dimensions of the video in pixels.
+    int width = 0;
+    int height = 0;
 
-  // Video duration in seconds.
-  // NOTE: This field was introduced after the others, so it is not widely
-  // supported. If you use it, make sure that all intermediate calculators pass
-  // it through.
-  float duration = 0.0f;
+    // Video duration in seconds.
+    // NOTE: This field was introduced after the others, so it is not widely
+    // supported. If you use it, make sure that all intermediate calculators pass
+    // it through.
+    float duration = 0.0f;
 
-  // The frame rate in Hz at which the video frames are output.
-  double frame_rate = 0.0;
+    // The frame rate in Hz at which the video frames are output.
+    double frame_rate = 0.0;
 };
 
 }  // namespace mediapipe

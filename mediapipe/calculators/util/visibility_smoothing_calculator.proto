@@ -19,22 +19,22 @@ package mediapipe;
 import "mediapipe/framework/calculator_options.proto";
 
 message VisibilitySmoothingCalculatorOptions {
-  extend CalculatorOptions {
-    optional VisibilitySmoothingCalculatorOptions ext = 360207350;
-  }
+    extend CalculatorOptions {
+        optional VisibilitySmoothingCalculatorOptions ext = 360207350;
+    }
 
-  // Default behaviour and fast way to disable smoothing.
-  message NoFilter {}
+    // Default behaviour and fast way to disable smoothing.
+    message NoFilter {}
 
-  message LowPassFilter {
-    // Coefficient applied to a new value, whilte `1 - alpha` is applied to a
-    // stored value. Should be in [0, 1] range. The smaller the value - the
-    // smoother result and the bigger lag.
-    optional float alpha = 1 [default = 0.1];
-  }
+    message LowPassFilter {
+        // Coefficient applied to a new value, whilte `1 - alpha` is applied to a
+        // stored value. Should be in [0, 1] range. The smaller the value - the
+        // smoother result and the bigger lag.
+        optional float alpha = 1 [default = 0.1];
+    }
 
-  oneof filter_options {
-    NoFilter no_filter = 1;
-    LowPassFilter low_pass_filter = 2;
-  }
+    oneof filter_options {
+        NoFilter no_filter = 1;
+        LowPassFilter low_pass_filter = 2;
+    }
 }

@@ -21,9 +21,9 @@ import "mediapipe/framework/calculator.proto";
 // Specifies the maximum and minimum value to truncate when normalize optical
 // flow fields.
 message FlowToImageCalculatorOptions {
-  extend CalculatorOptions {
-    optional FlowToImageCalculatorOptions ext = 69508592;
-  }
-  optional float min_value = 1 [default = -40.0];
-  optional float max_value = 2 [default = 40.0];
+    extend CalculatorOptions {
+        optional FlowToImageCalculatorOptions ext = 69508592;
+    }
+    optional float min_value = 1 [default = -40.0];
+    optional float max_value = 2 [default = 40.0];
 }

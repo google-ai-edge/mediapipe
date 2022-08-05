@@ -24,25 +24,25 @@ namespace mediapipe {
 // A DeletingFile conveys the path to a file and takes care of cleanup
 // (generally deletion of a file if it is a local temporary).
 class DeletingFile {
- public:
-  DeletingFile(const DeletingFile&) = delete;
-  DeletingFile& operator=(const DeletingFile&) = delete;
+public:
+    DeletingFile(const DeletingFile&) = delete;
+    DeletingFile& operator=(const DeletingFile&) = delete;
 
-  // Provide the path to the file and whether the file should be deleted
-  // when this object is destroyed.
-  DeletingFile(const std::string& path, bool delete_on_destruction);
+    // Provide the path to the file and whether the file should be deleted
+    // when this object is destroyed.
+    DeletingFile(const std::string& path, bool delete_on_destruction);
 
-  // Takes care of cleaning up the file (deletes it if
-  // delete_on_destruction was true on construction, otherwise leaves
-  // it alone).
-  virtual ~DeletingFile();
+    // Takes care of cleaning up the file (deletes it if
+    // delete_on_destruction was true on construction, otherwise leaves
+    // it alone).
+    virtual ~DeletingFile();
 
-  // Return the path to the file.
-  const std::string& Path() const;
+    // Return the path to the file.
+    const std::string& Path() const;
 
- private:
-  std::string path_;
-  bool delete_on_destruction_;
+private:
+    std::string path_;
+    bool delete_on_destruction_;
 };
 
 }  // namespace mediapipe

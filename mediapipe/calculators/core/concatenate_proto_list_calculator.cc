@@ -31,50 +31,50 @@ namespace api2 {
 // order.
 template <typename ItemType, typename ListType>
 class ConcatenateListsCalculator : public Node {
- public:
-  static constexpr typename Input<ListType>::Multiple kIn{""};
-  static constexpr Output<ListType> kOut{""};
+public:
+    static constexpr typename Input<ListType>::Multiple kIn{""};
+    static constexpr Output<ListType> kOut{""};
 
-  MEDIAPIPE_NODE_CONTRACT(kIn, kOut);
+    MEDIAPIPE_NODE_CONTRACT(kIn, kOut);
 
-  static absl::Status UpdateContract(CalculatorContract* cc) {
-    RET_CHECK_GE(kIn(cc).Count(), 1);
-    return absl::OkStatus();
-  }
-
-  absl::Status Open(CalculatorContext* cc) override {
-    only_emit_if_all_present_ =
-        cc->Options<::mediapipe::ConcatenateVectorCalculatorOptions>()
-            .only_emit_if_all_present();
-    return absl::OkStatus();
-  }
-
-  absl::Status Process(CalculatorContext* cc) override {
-    if (only_emit_if_all_present_) {
-      for (const auto& input : kIn(cc)) {
-        if (input.IsEmpty()) return absl::OkStatus();
-      }
+    static absl::Status UpdateContract(CalculatorContract* cc) {
+        RET_CHECK_GE(kIn(cc).Count(), 1);
+        return absl::OkStatus();
     }
 
-    ListType output;
-    for (const auto& input : kIn(cc)) {
-      if (input.IsEmpty()) continue;
-      const ListType& list = *input;
-      for (int j = 0; j < ListSize(list); ++j) {
-        *AddItem(output) = GetItem(list, j);
-      }
+    absl::Status Open(CalculatorContext* cc) override {
+        only_emit_if_all_present_ =
+            cc->Options<::mediapipe::ConcatenateVectorCalculatorOptions>()
+                .only_emit_if_all_present();
+        return absl::OkStatus();
     }
-    kOut(cc).Send(std::move(output));
-    return absl::OkStatus();
-  }
 
- protected:
-  virtual int ListSize(const ListType& list) const = 0;
-  virtual const ItemType GetItem(const ListType& list, int idx) const = 0;
-  virtual ItemType* AddItem(ListType& list) const = 0;
+    absl::Status Process(CalculatorContext* cc) override {
+        if (only_emit_if_all_present_) {
+            for (const auto& input : kIn(cc)) {
+                if (input.IsEmpty()) return absl::OkStatus();
+            }
+        }
 
- private:
-  bool only_emit_if_all_present_;
+        ListType output;
+        for (const auto& input : kIn(cc)) {
+            if (input.IsEmpty()) continue;
+            const ListType& list = *input;
+            for (int j = 0; j < ListSize(list); ++j) {
+                *AddItem(output) = GetItem(list, j);
+            }
+        }
+        kOut(cc).Send(std::move(output));
+        return absl::OkStatus();
+    }
+
+protected:
+    virtual int ListSize(const ListType& list) const = 0;
+    virtual const ItemType GetItem(const ListType& list, int idx) const = 0;
+    virtual ItemType* AddItem(ListType& list) const = 0;
+
+private:
+    bool only_emit_if_all_present_;
 };
 
 // TODO: Move calculators to separate *.cc files
@@ -82,32 +82,32 @@ class ConcatenateListsCalculator : public Node {
 class ConcatenateNormalizedLandmarkListCalculator
     : public ConcatenateListsCalculator<NormalizedLandmark,
                                         NormalizedLandmarkList> {
- protected:
-  int ListSize(const NormalizedLandmarkList& list) const override {
-    return list.landmark_size();
-  }
-  const NormalizedLandmark GetItem(const NormalizedLandmarkList& list,
-                                   int idx) const override {
-    return list.landmark(idx);
-  }
-  NormalizedLandmark* AddItem(NormalizedLandmarkList& list) const override {
-    return list.add_landmark();
-  }
+protected:
+    int ListSize(const NormalizedLandmarkList& list) const override {
+        return list.landmark_size();
+    }
+    const NormalizedLandmark GetItem(const NormalizedLandmarkList& list,
+                                     int idx) const override {
+        return list.landmark(idx);
+    }
+    NormalizedLandmark* AddItem(NormalizedLandmarkList& list) const override {
+        return list.add_landmark();
+    }
 };
 MEDIAPIPE_REGISTER_NODE(ConcatenateNormalizedLandmarkListCalculator);
 
 class ConcatenateLandmarkListCalculator
     : public ConcatenateListsCalculator<Landmark, LandmarkList> {
- protected:
-  int ListSize(const LandmarkList& list) const override {
-    return list.landmark_size();
-  }
-  const Landmark GetItem(const LandmarkList& list, int idx) const override {
-    return list.landmark(idx);
-  }
-  Landmark* AddItem(LandmarkList& list) const override {
-    return list.add_landmark();
-  }
+protected:
+    int ListSize(const LandmarkList& list) const override {
+        return list.landmark_size();
+    }
+    const Landmark GetItem(const LandmarkList& list, int idx) const override {
+        return list.landmark(idx);
+    }
+    Landmark* AddItem(LandmarkList& list) const override {
+        return list.add_landmark();
+    }
 };
 MEDIAPIPE_REGISTER_NODE(ConcatenateLandmarkListCalculator);
 

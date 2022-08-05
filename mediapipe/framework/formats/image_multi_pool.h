@@ -22,13 +22,12 @@
 #ifndef MEDIAPIPE_FRAMEWORK_FORMATS_IMAGE_MULTI_POOL_H_
 #define MEDIAPIPE_FRAMEWORK_FORMATS_IMAGE_MULTI_POOL_H_
 
-#include <deque>
-#include <limits>
-#include <unordered_map>
-
 #include "absl/synchronization/mutex.h"
 #include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/formats/image_frame_pool.h"
+#include <deque>
+#include <limits>
+#include <unordered_map>
 
 #if !MEDIAPIPE_DISABLE_GPU
 #include "mediapipe/gpu/gpu_buffer.h"
@@ -48,92 +47,92 @@ using ImageFrameSharedPtr = std::shared_ptr<ImageFrame>;
 
 // TODO: Update to use new pool eviction policy.
 class ImageMultiPool {
- public:
-  ImageMultiPool() {}
-  explicit ImageMultiPool(void* ignored) {}
-  ~ImageMultiPool();
+public:
+    ImageMultiPool() {}
+    explicit ImageMultiPool(void* ignored) {}
+    ~ImageMultiPool();
 
-  // Obtains a buffer. May either be reused or created anew.
-  Image GetBuffer(int width, int height, bool use_gpu,
-                  ImageFormat::Format format /*= ImageFormat::SRGBA*/);
+    // Obtains a buffer. May either be reused or created anew.
+    Image GetBuffer(int width, int height, bool use_gpu,
+                    ImageFormat::Format format /*= ImageFormat::SRGBA*/);
 
 #if !MEDIAPIPE_DISABLE_GPU
 #ifdef __APPLE__
-  // TODO: add tests for the texture cache registration.
+    // TODO: add tests for the texture cache registration.
 
-  // Inform the pool of a cache that should be flushed when it is low on
-  // reusable buffers.
-  void RegisterTextureCache(mediapipe::CVTextureCacheType cache);
+    // Inform the pool of a cache that should be flushed when it is low on
+    // reusable buffers.
+    void RegisterTextureCache(mediapipe::CVTextureCacheType cache);
 
-  // Remove a texture cache from the list of caches to be flushed.
-  void UnregisterTextureCache(mediapipe::CVTextureCacheType cache);
+    // Remove a texture cache from the list of caches to be flushed.
+    void UnregisterTextureCache(mediapipe::CVTextureCacheType cache);
 
 #endif  // defined(__APPLE__)
 #endif  // !MEDIAPIPE_DISABLE_GPU
 
-  static std::size_t RotateLeftN(std::size_t x, int n) {
-    return (x << n) | (x >> (std::numeric_limits<size_t>::digits - n));
-  }
-
-  struct IBufferSpec {
-    IBufferSpec(int w, int h, mediapipe::ImageFormat::Format f)
-        : width(w), height(h), format(f) {}
-    int width;
-    int height;
-    mediapipe::ImageFormat::Format format;
-    // Note: alignment should be added here if ImageFrameBufferPool is changed
-    // to allow for customizable alignment sizes (currently fixed at 4 for best
-    // compatability with OpenGL).
-  };
-
-  struct IBufferSpecHash {
-    std::size_t operator()(const IBufferSpec& spec) const {
-      // Width and height are expected to be smaller than half the width of
-      // size_t. We can combine them into a single integer using std::hash.
-      constexpr int kWidth = std::numeric_limits<size_t>::digits;
-      return std::hash<std::size_t>{}(
-          spec.width ^ RotateLeftN(spec.height, kWidth / 2) ^
-          RotateLeftN(static_cast<uint32_t>(spec.format), kWidth / 4));
-      // Note: alignment should be added here if ImageFrameBufferPool is changed
-      // to allow for customizable alignment sizes (currently fixed at 4 for
-      // best compatability with OpenGL).
+    static std::size_t RotateLeftN(std::size_t x, int n) {
+        return (x << n) | (x >> (std::numeric_limits<size_t>::digits - n));
     }
-  };
 
- private:
+    struct IBufferSpec {
+        IBufferSpec(int w, int h, mediapipe::ImageFormat::Format f)
+            : width(w), height(h), format(f) {}
+        int width;
+        int height;
+        mediapipe::ImageFormat::Format format;
+        // Note: alignment should be added here if ImageFrameBufferPool is changed
+        // to allow for customizable alignment sizes (currently fixed at 4 for best
+        // compatability with OpenGL).
+    };
+
+    struct IBufferSpecHash {
+        std::size_t operator()(const IBufferSpec& spec) const {
+            // Width and height are expected to be smaller than half the width of
+            // size_t. We can combine them into a single integer using std::hash.
+            constexpr int kWidth = std::numeric_limits<size_t>::digits;
+            return std::hash<std::size_t>{}(
+                spec.width ^ RotateLeftN(spec.height, kWidth / 2) ^
+                RotateLeftN(static_cast<uint32_t>(spec.format), kWidth / 4));
+            // Note: alignment should be added here if ImageFrameBufferPool is changed
+            // to allow for customizable alignment sizes (currently fixed at 4 for
+            // best compatability with OpenGL).
+        }
+    };
+
+private:
 #if !MEDIAPIPE_DISABLE_GPU
 #if MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
-  typedef CFHolder<CVPixelBufferPoolRef> SimplePoolGpu;
+    typedef CFHolder<CVPixelBufferPoolRef> SimplePoolGpu;
 #else
-  typedef std::shared_ptr<mediapipe::GlTextureBufferPool> SimplePoolGpu;
+    typedef std::shared_ptr<mediapipe::GlTextureBufferPool> SimplePoolGpu;
 #endif  // MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
-  SimplePoolGpu MakeSimplePoolGpu(IBufferSpec spec);
-  Image GetBufferFromSimplePool(IBufferSpec spec, const SimplePoolGpu& pool);
+    SimplePoolGpu MakeSimplePoolGpu(IBufferSpec spec);
+    Image GetBufferFromSimplePool(IBufferSpec spec, const SimplePoolGpu& pool);
 
-  absl::Mutex mutex_gpu_;
-  std::unordered_map<IBufferSpec, SimplePoolGpu, IBufferSpecHash> pools_gpu_
-      ABSL_GUARDED_BY(mutex_gpu_);
-  // A queue of IBufferSpecs to keep track of the age of each IBufferSpec added
-  // to the pool.
-  std::deque<IBufferSpec> buffer_specs_gpu_;
+    absl::Mutex mutex_gpu_;
+    std::unordered_map<IBufferSpec, SimplePoolGpu, IBufferSpecHash> pools_gpu_
+        ABSL_GUARDED_BY(mutex_gpu_);
+    // A queue of IBufferSpecs to keep track of the age of each IBufferSpec added
+    // to the pool.
+    std::deque<IBufferSpec> buffer_specs_gpu_;
 #endif  // !MEDIAPIPE_DISABLE_GPU
 
-  typedef std::shared_ptr<ImageFramePool> SimplePoolCpu;
-  SimplePoolCpu MakeSimplePoolCpu(IBufferSpec spec);
-  Image GetBufferFromSimplePool(IBufferSpec spec, const SimplePoolCpu& pool);
+    typedef std::shared_ptr<ImageFramePool> SimplePoolCpu;
+    SimplePoolCpu MakeSimplePoolCpu(IBufferSpec spec);
+    Image GetBufferFromSimplePool(IBufferSpec spec, const SimplePoolCpu& pool);
 
-  absl::Mutex mutex_cpu_;
-  std::unordered_map<IBufferSpec, SimplePoolCpu, IBufferSpecHash> pools_cpu_
-      ABSL_GUARDED_BY(mutex_cpu_);
-  // A queue of IBufferSpecs to keep track of the age of each IBufferSpec added
-  // to the pool.
-  std::deque<IBufferSpec> buffer_specs_cpu_;
+    absl::Mutex mutex_cpu_;
+    std::unordered_map<IBufferSpec, SimplePoolCpu, IBufferSpecHash> pools_cpu_
+        ABSL_GUARDED_BY(mutex_cpu_);
+    // A queue of IBufferSpecs to keep track of the age of each IBufferSpec added
+    // to the pool.
+    std::deque<IBufferSpec> buffer_specs_cpu_;
 
 #if !MEDIAPIPE_DISABLE_GPU
 #ifdef __APPLE__
-  // Texture caches used with this pool.
-  std::vector<CFHolder<mediapipe::CVTextureCacheType>> texture_caches_
-      GUARDED_BY(mutex_gpu_);
+    // Texture caches used with this pool.
+    std::vector<CFHolder<mediapipe::CVTextureCacheType>> texture_caches_
+        GUARDED_BY(mutex_gpu_);
 #endif  // defined(__APPLE__)
 #endif  // !MEDIAPIPE_DISABLE_GPU
 };
@@ -141,12 +140,12 @@ class ImageMultiPool {
 // IBufferSpec equality operators
 inline bool operator==(const ImageMultiPool::IBufferSpec& lhs,
                        const ImageMultiPool::IBufferSpec& rhs) {
-  return lhs.width == rhs.width && lhs.height == rhs.height &&
-         lhs.format == rhs.format;
+    return lhs.width == rhs.width && lhs.height == rhs.height &&
+           lhs.format == rhs.format;
 }
 inline bool operator!=(const ImageMultiPool::IBufferSpec& lhs,
                        const ImageMultiPool::IBufferSpec& rhs) {
-  return !operator==(lhs, rhs);
+    return !operator==(lhs, rhs);
 }
 
 }  // namespace mediapipe

@@ -31,40 +31,40 @@ namespace autoflip {
 // your MediaPipe graph (not as a downstream node, because visual details may
 // lose after appling the padding effect).
 class PaddingEffectGenerator {
- public:
-  // Always outputs width and height that are divisible by 2 if
-  // scale_to_multiple_of_two is set to true.
-  PaddingEffectGenerator(const int input_width, const int input_height,
-                         const double target_aspect_ratio,
-                         bool scale_to_multiple_of_two = false);
+public:
+    // Always outputs width and height that are divisible by 2 if
+    // scale_to_multiple_of_two is set to true.
+    PaddingEffectGenerator(const int input_width, const int input_height,
+                           const double target_aspect_ratio,
+                           bool scale_to_multiple_of_two = false);
 
-  // Apply the padding effect on the input frame.
-  // - blur_cv_size: The cv::Size() parameter used in creating blurry effects
-  //   for padding backgrounds.
-  // - background_contrast: Contrast adjustment for padding background. This
-  //   value should between 0 and 1, and the smaller the value, the darker the
-  //   background.
-  // - overlay_opacity: In addition to adjusting the contrast, a translucent
-  //   black layer will be alpha blended with the background. This value defines
-  //   the opacity of the black layer.
-  // - background_color_in_rgb: If not null, uses this solid color as background
-  //   instead of blurring the image, and does not adjust contrast or opacity.
-  absl::Status Process(const ImageFrame& input_frame,
-                       const float background_contrast, const int blur_cv_size,
-                       const float overlay_opacity, ImageFrame* output_frame,
-                       const cv::Scalar* background_color_in_rgb = nullptr);
+    // Apply the padding effect on the input frame.
+    // - blur_cv_size: The cv::Size() parameter used in creating blurry effects
+    //   for padding backgrounds.
+    // - background_contrast: Contrast adjustment for padding background. This
+    //   value should between 0 and 1, and the smaller the value, the darker the
+    //   background.
+    // - overlay_opacity: In addition to adjusting the contrast, a translucent
+    //   black layer will be alpha blended with the background. This value defines
+    //   the opacity of the black layer.
+    // - background_color_in_rgb: If not null, uses this solid color as background
+    //   instead of blurring the image, and does not adjust contrast or opacity.
+    absl::Status Process(const ImageFrame& input_frame,
+                         const float background_contrast, const int blur_cv_size,
+                         const float overlay_opacity, ImageFrame* output_frame,
+                         const cv::Scalar* background_color_in_rgb = nullptr);
 
-  // Compute the "render location" on the output frame where the "crop from"
-  // location is to be placed.  For use with external rendering soutions.
-  cv::Rect ComputeOutputLocation();
+    // Compute the "render location" on the output frame where the "crop from"
+    // location is to be placed.  For use with external rendering soutions.
+    cv::Rect ComputeOutputLocation();
 
- private:
-  double target_aspect_ratio_;
-  int input_width_ = -1;
-  int input_height_ = -1;
-  int output_width_ = -1;
-  int output_height_ = -1;
-  bool is_vertical_padding_;
+private:
+    double target_aspect_ratio_;
+    int input_width_ = -1;
+    int input_height_ = -1;
+    int output_width_ = -1;
+    int output_height_ = -1;
+    bool is_vertical_padding_;
 };
 
 }  // namespace autoflip

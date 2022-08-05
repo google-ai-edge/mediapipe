@@ -12,14 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <functional>
-#include <memory>
-#include <string>
-
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/packet.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "tensorflow/lite/model.h"
+#include <functional>
+#include <memory>
+#include <string>
 
 namespace mediapipe {
 
@@ -46,40 +45,40 @@ namespace mediapipe {
 // }
 //
 class TfLiteModelCalculator : public CalculatorBase {
- public:
-  using TfLiteModelPtr =
-      std::unique_ptr<tflite::FlatBufferModel,
-                      std::function<void(tflite::FlatBufferModel*)>>;
+public:
+    using TfLiteModelPtr =
+        std::unique_ptr<tflite::FlatBufferModel,
+                        std::function<void(tflite::FlatBufferModel*)>>;
 
-  static absl::Status GetContract(CalculatorContract* cc) {
-    cc->InputSidePackets().Tag("MODEL_BLOB").Set<std::string>();
-    cc->OutputSidePackets().Tag("MODEL").Set<TfLiteModelPtr>();
-    return absl::OkStatus();
-  }
+    static absl::Status GetContract(CalculatorContract* cc) {
+        cc->InputSidePackets().Tag("MODEL_BLOB").Set<std::string>();
+        cc->OutputSidePackets().Tag("MODEL").Set<TfLiteModelPtr>();
+        return absl::OkStatus();
+    }
 
-  absl::Status Open(CalculatorContext* cc) override {
-    const Packet& model_packet = cc->InputSidePackets().Tag("MODEL_BLOB");
-    const std::string& model_blob = model_packet.Get<std::string>();
-    std::unique_ptr<tflite::FlatBufferModel> model =
-        tflite::FlatBufferModel::BuildFromBuffer(model_blob.data(),
-                                                 model_blob.size());
-    RET_CHECK(model) << "Failed to load TfLite model from blob.";
+    absl::Status Open(CalculatorContext* cc) override {
+        const Packet& model_packet = cc->InputSidePackets().Tag("MODEL_BLOB");
+        const std::string& model_blob = model_packet.Get<std::string>();
+        std::unique_ptr<tflite::FlatBufferModel> model =
+            tflite::FlatBufferModel::BuildFromBuffer(model_blob.data(),
+                                                     model_blob.size());
+        RET_CHECK(model) << "Failed to load TfLite model from blob.";
 
-    cc->OutputSidePackets().Tag("MODEL").Set(
-        MakePacket<TfLiteModelPtr>(TfLiteModelPtr(
-            model.release(), [model_packet](tflite::FlatBufferModel* model) {
-              // Keeping model_packet in order to keep underlying model blob
-              // which can be released only after TfLite model is not needed
-              // anymore (deleted).
-              delete model;
-            })));
+        cc->OutputSidePackets().Tag("MODEL").Set(
+            MakePacket<TfLiteModelPtr>(TfLiteModelPtr(
+                model.release(), [model_packet](tflite::FlatBufferModel* model) {
+                    // Keeping model_packet in order to keep underlying model blob
+                    // which can be released only after TfLite model is not needed
+                    // anymore (deleted).
+                    delete model;
+                })));
 
-    return absl::OkStatus();
-  }
+        return absl::OkStatus();
+    }
 
-  absl::Status Process(CalculatorContext* cc) override {
-    return absl::OkStatus();
-  }
+    absl::Status Process(CalculatorContext* cc) override {
+        return absl::OkStatus();
+    }
 };
 REGISTER_CALCULATOR(TfLiteModelCalculator);
 

@@ -21,29 +21,29 @@ package mediapipe;
 option objc_class_prefix = "MediaPipe";
 
 message PacketTestProto {
-  // Tests that the tags used to encode the timestamp do not interfere with
-  // proto tags.
-  repeated int32 x = 1777;
-  // The tag below = 1777 | (1 << 28).
-  repeated int32 y = 268437233;
+    // Tests that the tags used to encode the timestamp do not interfere with
+    // proto tags.
+    repeated int32 x = 1777;
+    // The tag below = 1777 | (1 << 28).
+    repeated int32 y = 268437233;
 }
 
 // A proto like InputCollection::Inputs which has embedded strings
 // within it.
 message SimpleProto {
-  repeated bytes value = 1;
+    repeated bytes value = 1;
 }
 
 // A proto that acts as the proxy of SerializationProxyTestClass for
 // serialization.
 message SerializationProxyProto {
-  optional bool bool_value = 1;
-  repeated float float_value = 2;
-  repeated string string_value = 3;
+    optional bool bool_value = 1;
+    repeated float float_value = 2;
+    repeated string string_value = 3;
 }
 
 // This proto should be used only as an input to a calculator, to verify that
 // that case is covered.
 message InputOnlyProto {
-  optional int32 x = 1;
+    optional int32 x = 1;
 }

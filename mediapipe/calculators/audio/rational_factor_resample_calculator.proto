@@ -21,27 +21,27 @@ import "mediapipe/framework/calculator.proto";
 // NOTE: This calculator uses QResampler, despite the name, which supersedes
 // RationalFactorResampler.
 message RationalFactorResampleCalculatorOptions {
-  extend CalculatorOptions {
-    optional RationalFactorResampleCalculatorOptions ext = 259760074;
-  }
+    extend CalculatorOptions {
+        optional RationalFactorResampleCalculatorOptions ext = 259760074;
+    }
 
-  // target_sample_rate is the sample rate, in Hertz, of the output
-  // stream.  Required.  Must be greater than 0.
-  optional double target_sample_rate = 1;
+    // target_sample_rate is the sample rate, in Hertz, of the output
+    // stream.  Required.  Must be greater than 0.
+    optional double target_sample_rate = 1;
 
-  // Parameters for initializing QResampler. See QResampler for more details.
-  message ResamplerRationalFactorOptions {
-    // Kernel radius in units of input samples.
-    optional double radius = 1;
-    // Anti-aliasing cutoff frequency in Hertz. A reasonable setting is
-    // 0.45 * min(input_sample_rate, output_sample_rate).
-    optional double cutoff = 2;
-    // The Kaiser beta parameter for the kernel window.
-    optional double kaiser_beta = 3 [default = 6.0];
-  }
-  optional ResamplerRationalFactorOptions resampler_rational_factor_options = 2;
+    // Parameters for initializing QResampler. See QResampler for more details.
+    message ResamplerRationalFactorOptions {
+        // Kernel radius in units of input samples.
+        optional double radius = 1;
+        // Anti-aliasing cutoff frequency in Hertz. A reasonable setting is
+        // 0.45 * min(input_sample_rate, output_sample_rate).
+        optional double cutoff = 2;
+        // The Kaiser beta parameter for the kernel window.
+        optional double kaiser_beta = 3 [default = 6.0];
+    }
+    optional ResamplerRationalFactorOptions resampler_rational_factor_options = 2;
 
-  // Set to false to disable checks for jitter in timestamp values. Useful with
-  // live audio input.
-  optional bool check_inconsistent_timestamps = 3 [default = true];
+    // Set to false to disable checks for jitter in timestamp values. Useful with
+    // live audio input.
+    optional bool check_inconsistent_timestamps = 3 [default = true];
 }

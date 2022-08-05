@@ -24,15 +24,15 @@ namespace mediapipe {
 // creates instances of the OutputSidePacketImpl subclass, which has other
 // methods used by the framework.
 class OutputSidePacket {
- public:
-  OutputSidePacket() = default;
-  virtual ~OutputSidePacket() = default;
+public:
+    OutputSidePacket() = default;
+    virtual ~OutputSidePacket() = default;
 
-  // Sets the output side packet. The Packet must contain the data.
-  //
-  // NOTE: Set() cannot report errors via the return value. It uses an error
-  // callback function to report errors.
-  virtual void Set(const Packet& packet) = 0;
+    // Sets the output side packet. The Packet must contain the data.
+    //
+    // NOTE: Set() cannot report errors via the return value. It uses an error
+    // callback function to report errors.
+    virtual void Set(const Packet& packet) = 0;
 };
 
 }  // namespace mediapipe

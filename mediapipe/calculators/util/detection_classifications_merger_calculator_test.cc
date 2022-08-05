@@ -50,270 +50,270 @@ constexpr char kInputDetection[] = R"(
 // Checks that the input Detection is returned unchanged if the input
 // ClassificationList does not contain any result.
 TEST(DetectionClassificationsMergerCalculator, SucceedsWithNoClassification) {
-  auto graph_config = ParseTextProtoOrDie<CalculatorGraphConfig>(kGraphConfig);
+    auto graph_config = ParseTextProtoOrDie<CalculatorGraphConfig>(kGraphConfig);
 
-  // Prepare input packets.
-  const Detection& input_detection =
-      ParseTextProtoOrDie<Detection>(kInputDetection);
-  Packet input_detection_packet =
-      MakePacket<Detection>(input_detection).At(Timestamp(0));
-  const ClassificationList& classification_list =
-      ParseTextProtoOrDie<ClassificationList>("");
-  Packet classification_list_packet =
-      MakePacket<ClassificationList>(classification_list).At(Timestamp(0));
+    // Prepare input packets.
+    const Detection& input_detection =
+        ParseTextProtoOrDie<Detection>(kInputDetection);
+    Packet input_detection_packet =
+        MakePacket<Detection>(input_detection).At(Timestamp(0));
+    const ClassificationList& classification_list =
+        ParseTextProtoOrDie<ClassificationList>("");
+    Packet classification_list_packet =
+        MakePacket<ClassificationList>(classification_list).At(Timestamp(0));
 
-  // Catch output.
-  std::vector<Packet> output_packets;
-  tool::AddVectorSink("output_detection", &graph_config, &output_packets);
+    // Catch output.
+    std::vector<Packet> output_packets;
+    tool::AddVectorSink("output_detection", &graph_config, &output_packets);
 
-  // Run the graph.
-  CalculatorGraph graph;
-  MP_ASSERT_OK(graph.Initialize(graph_config));
-  MP_ASSERT_OK(graph.StartRun({}));
-  MP_ASSERT_OK(
-      graph.AddPacketToInputStream("input_detection", input_detection_packet));
-  MP_ASSERT_OK(graph.AddPacketToInputStream("classification_list",
-                                            classification_list_packet));
-  MP_ASSERT_OK(graph.WaitUntilIdle());
+    // Run the graph.
+    CalculatorGraph graph;
+    MP_ASSERT_OK(graph.Initialize(graph_config));
+    MP_ASSERT_OK(graph.StartRun({}));
+    MP_ASSERT_OK(
+        graph.AddPacketToInputStream("input_detection", input_detection_packet));
+    MP_ASSERT_OK(graph.AddPacketToInputStream("classification_list",
+                                              classification_list_packet));
+    MP_ASSERT_OK(graph.WaitUntilIdle());
 
-  // Get and validate output.
-  EXPECT_THAT(output_packets, testing::SizeIs(1));
-  const Detection& output_detection = output_packets[0].Get<Detection>();
-  EXPECT_THAT(output_detection, mediapipe::EqualsProto(input_detection));
+    // Get and validate output.
+    EXPECT_THAT(output_packets, testing::SizeIs(1));
+    const Detection& output_detection = output_packets[0].Get<Detection>();
+    EXPECT_THAT(output_detection, mediapipe::EqualsProto(input_detection));
 }
 
 // Checks that merging succeeds when the input ClassificationList includes
 // labels and display names.
 TEST(DetectionClassificationsMergerCalculator,
      SucceedsWithLabelsAndDisplayNames) {
-  auto graph_config = ParseTextProtoOrDie<CalculatorGraphConfig>(kGraphConfig);
+    auto graph_config = ParseTextProtoOrDie<CalculatorGraphConfig>(kGraphConfig);
 
-  // Prepare input packets.
-  const Detection& input_detection =
-      ParseTextProtoOrDie<Detection>(kInputDetection);
-  Packet input_detection_packet =
-      MakePacket<Detection>(input_detection).At(Timestamp(0));
-  const ClassificationList& classification_list =
-      ParseTextProtoOrDie<ClassificationList>(R"pb(
-        classification { index: 11 score: 0.5 label: "dog" display_name: "Dog" }
-        classification { index: 12 score: 0.4 label: "fox" display_name: "Fox" }
-      )pb");
-  Packet classification_list_packet =
-      MakePacket<ClassificationList>(classification_list).At(Timestamp(0));
+    // Prepare input packets.
+    const Detection& input_detection =
+        ParseTextProtoOrDie<Detection>(kInputDetection);
+    Packet input_detection_packet =
+        MakePacket<Detection>(input_detection).At(Timestamp(0));
+    const ClassificationList& classification_list =
+        ParseTextProtoOrDie<ClassificationList>(R"pb(
+                                                     classification { index: 11 score: 0.5 label: "dog" display_name: "Dog" }
+                                                     classification { index: 12 score: 0.4 label: "fox" display_name: "Fox" }
+        )pb");
+    Packet classification_list_packet =
+        MakePacket<ClassificationList>(classification_list).At(Timestamp(0));
 
-  // Catch output.
-  std::vector<Packet> output_packets;
-  tool::AddVectorSink("output_detection", &graph_config, &output_packets);
+    // Catch output.
+    std::vector<Packet> output_packets;
+    tool::AddVectorSink("output_detection", &graph_config, &output_packets);
 
-  // Run the graph.
-  CalculatorGraph graph;
-  MP_ASSERT_OK(graph.Initialize(graph_config));
-  MP_ASSERT_OK(graph.StartRun({}));
-  MP_ASSERT_OK(
-      graph.AddPacketToInputStream("input_detection", input_detection_packet));
-  MP_ASSERT_OK(graph.AddPacketToInputStream("classification_list",
-                                            classification_list_packet));
-  MP_ASSERT_OK(graph.WaitUntilIdle());
+    // Run the graph.
+    CalculatorGraph graph;
+    MP_ASSERT_OK(graph.Initialize(graph_config));
+    MP_ASSERT_OK(graph.StartRun({}));
+    MP_ASSERT_OK(
+        graph.AddPacketToInputStream("input_detection", input_detection_packet));
+    MP_ASSERT_OK(graph.AddPacketToInputStream("classification_list",
+                                              classification_list_packet));
+    MP_ASSERT_OK(graph.WaitUntilIdle());
 
-  // Get and validate output.
-  EXPECT_THAT(output_packets, testing::SizeIs(1));
-  const Detection& output_detection = output_packets[0].Get<Detection>();
-  EXPECT_THAT(output_detection,
-              mediapipe::EqualsProto(ParseTextProtoOrDie<Detection>(R"pb(
-                label: "dog"
-                label: "fox"
-                label_id: 11
-                label_id: 12
-                score: 0.5
-                score: 0.4
-                location_data {
-                  format: BOUNDING_BOX
-                  bounding_box { xmin: 50 ymin: 60 width: 70 height: 80 }
-                }
-                display_name: "Dog"
-                display_name: "Fox"
-              )pb")));
+    // Get and validate output.
+    EXPECT_THAT(output_packets, testing::SizeIs(1));
+    const Detection& output_detection = output_packets[0].Get<Detection>();
+    EXPECT_THAT(output_detection,
+                mediapipe::EqualsProto(ParseTextProtoOrDie<Detection>(R"pb(
+                                                                           label: "dog"
+                                                                           label: "fox"
+                                                                           label_id: 11
+                                                                           label_id: 12
+                                                                           score: 0.5
+                                                                           score: 0.4
+                                                                           location_data {
+                                                                             format: BOUNDING_BOX
+                                                                             bounding_box { xmin: 50 ymin: 60 width: 70 height: 80 }
+                                                                           }
+                                                                           display_name: "Dog"
+                                                                           display_name: "Fox"
+                )pb")));
 }
 
 // Checks that merging succeeds when the input ClassificationList doesn't
 // include labels and display names.
 TEST(DetectionClassificationsMergerCalculator,
      SucceedsWithoutLabelsAndDisplayNames) {
-  auto graph_config = ParseTextProtoOrDie<CalculatorGraphConfig>(kGraphConfig);
+    auto graph_config = ParseTextProtoOrDie<CalculatorGraphConfig>(kGraphConfig);
 
-  // Prepare input packets.
-  const Detection& input_detection =
-      ParseTextProtoOrDie<Detection>(kInputDetection);
-  Packet input_detection_packet =
-      MakePacket<Detection>(input_detection).At(Timestamp(0));
-  const ClassificationList& classification_list =
-      ParseTextProtoOrDie<ClassificationList>(R"pb(
-        classification { index: 11 score: 0.5 }
-        classification { index: 12 score: 0.4 }
-      )pb");
-  Packet classification_list_packet =
-      MakePacket<ClassificationList>(classification_list).At(Timestamp(0));
+    // Prepare input packets.
+    const Detection& input_detection =
+        ParseTextProtoOrDie<Detection>(kInputDetection);
+    Packet input_detection_packet =
+        MakePacket<Detection>(input_detection).At(Timestamp(0));
+    const ClassificationList& classification_list =
+        ParseTextProtoOrDie<ClassificationList>(R"pb(
+                                                     classification { index: 11 score: 0.5 }
+                                                     classification { index: 12 score: 0.4 }
+        )pb");
+    Packet classification_list_packet =
+        MakePacket<ClassificationList>(classification_list).At(Timestamp(0));
 
-  // Catch output.
-  std::vector<Packet> output_packets;
-  tool::AddVectorSink("output_detection", &graph_config, &output_packets);
+    // Catch output.
+    std::vector<Packet> output_packets;
+    tool::AddVectorSink("output_detection", &graph_config, &output_packets);
 
-  // Run the graph.
-  CalculatorGraph graph;
-  MP_ASSERT_OK(graph.Initialize(graph_config));
-  MP_ASSERT_OK(graph.StartRun({}));
-  MP_ASSERT_OK(
-      graph.AddPacketToInputStream("input_detection", input_detection_packet));
-  MP_ASSERT_OK(graph.AddPacketToInputStream("classification_list",
-                                            classification_list_packet));
-  MP_ASSERT_OK(graph.WaitUntilIdle());
+    // Run the graph.
+    CalculatorGraph graph;
+    MP_ASSERT_OK(graph.Initialize(graph_config));
+    MP_ASSERT_OK(graph.StartRun({}));
+    MP_ASSERT_OK(
+        graph.AddPacketToInputStream("input_detection", input_detection_packet));
+    MP_ASSERT_OK(graph.AddPacketToInputStream("classification_list",
+                                              classification_list_packet));
+    MP_ASSERT_OK(graph.WaitUntilIdle());
 
-  // Get and validate output.
-  EXPECT_THAT(output_packets, testing::SizeIs(1));
-  const Detection& output_detection = output_packets[0].Get<Detection>();
-  EXPECT_THAT(output_detection,
-              mediapipe::EqualsProto(ParseTextProtoOrDie<Detection>(R"pb(
-                label_id: 11
-                label_id: 12
-                score: 0.5
-                score: 0.4
-                location_data {
-                  format: BOUNDING_BOX
-                  bounding_box { xmin: 50 ymin: 60 width: 70 height: 80 }
-                }
-              )pb")));
+    // Get and validate output.
+    EXPECT_THAT(output_packets, testing::SizeIs(1));
+    const Detection& output_detection = output_packets[0].Get<Detection>();
+    EXPECT_THAT(output_detection,
+                mediapipe::EqualsProto(ParseTextProtoOrDie<Detection>(R"pb(
+                                                                           label_id: 11
+                                                                           label_id: 12
+                                                                           score: 0.5
+                                                                           score: 0.4
+                                                                           location_data {
+                                                                             format: BOUNDING_BOX
+                                                                             bounding_box { xmin: 50 ymin: 60 width: 70 height: 80 }
+                                                                           }
+                )pb")));
 }
 
 // Checks that merging fails if the input ClassificationList misses mandatory
 // "index" field.
 TEST(DetectionClassificationsMergerCalculator, FailsWithMissingIndex) {
-  auto graph_config = ParseTextProtoOrDie<CalculatorGraphConfig>(kGraphConfig);
+    auto graph_config = ParseTextProtoOrDie<CalculatorGraphConfig>(kGraphConfig);
 
-  // Prepare input packets.
-  const Detection& input_detection =
-      ParseTextProtoOrDie<Detection>(kInputDetection);
-  Packet input_detection_packet =
-      MakePacket<Detection>(input_detection).At(Timestamp(0));
-  const ClassificationList& classification_list =
-      ParseTextProtoOrDie<ClassificationList>(R"pb(
-        classification { score: 0.5 label: "dog" }
-      )pb");
-  Packet classification_list_packet =
-      MakePacket<ClassificationList>(classification_list).At(Timestamp(0));
+    // Prepare input packets.
+    const Detection& input_detection =
+        ParseTextProtoOrDie<Detection>(kInputDetection);
+    Packet input_detection_packet =
+        MakePacket<Detection>(input_detection).At(Timestamp(0));
+    const ClassificationList& classification_list =
+        ParseTextProtoOrDie<ClassificationList>(R"pb(
+                                                     classification { score: 0.5 label: "dog" }
+        )pb");
+    Packet classification_list_packet =
+        MakePacket<ClassificationList>(classification_list).At(Timestamp(0));
 
-  // Catch output.
-  std::vector<Packet> output_packets;
-  tool::AddVectorSink("output_detection", &graph_config, &output_packets);
+    // Catch output.
+    std::vector<Packet> output_packets;
+    tool::AddVectorSink("output_detection", &graph_config, &output_packets);
 
-  // Run the graph.
-  CalculatorGraph graph;
-  MP_ASSERT_OK(graph.Initialize(graph_config));
-  MP_ASSERT_OK(graph.StartRun({}));
-  MP_ASSERT_OK(
-      graph.AddPacketToInputStream("input_detection", input_detection_packet));
-  MP_ASSERT_OK(graph.AddPacketToInputStream("classification_list",
-                                            classification_list_packet));
-  ASSERT_EQ(graph.WaitUntilIdle().code(), absl::StatusCode::kInvalidArgument);
+    // Run the graph.
+    CalculatorGraph graph;
+    MP_ASSERT_OK(graph.Initialize(graph_config));
+    MP_ASSERT_OK(graph.StartRun({}));
+    MP_ASSERT_OK(
+        graph.AddPacketToInputStream("input_detection", input_detection_packet));
+    MP_ASSERT_OK(graph.AddPacketToInputStream("classification_list",
+                                              classification_list_packet));
+    ASSERT_EQ(graph.WaitUntilIdle().code(), absl::StatusCode::kInvalidArgument);
 }
 
 // Checks that merging fails if the input ClassificationList misses mandatory
 // "score" field.
 TEST(DetectionClassificationsMergerCalculator, FailsWithMissingScore) {
-  auto graph_config = ParseTextProtoOrDie<CalculatorGraphConfig>(kGraphConfig);
+    auto graph_config = ParseTextProtoOrDie<CalculatorGraphConfig>(kGraphConfig);
 
-  // Prepare input packets.
-  const Detection& input_detection =
-      ParseTextProtoOrDie<Detection>(kInputDetection);
-  Packet input_detection_packet =
-      MakePacket<Detection>(input_detection).At(Timestamp(0));
-  const ClassificationList& classification_list =
-      ParseTextProtoOrDie<ClassificationList>(R"pb(
-        classification { index: 11 label: "dog" }
-      )pb");
-  Packet classification_list_packet =
-      MakePacket<ClassificationList>(classification_list).At(Timestamp(0));
+    // Prepare input packets.
+    const Detection& input_detection =
+        ParseTextProtoOrDie<Detection>(kInputDetection);
+    Packet input_detection_packet =
+        MakePacket<Detection>(input_detection).At(Timestamp(0));
+    const ClassificationList& classification_list =
+        ParseTextProtoOrDie<ClassificationList>(R"pb(
+                                                     classification { index: 11 label: "dog" }
+        )pb");
+    Packet classification_list_packet =
+        MakePacket<ClassificationList>(classification_list).At(Timestamp(0));
 
-  // Catch output.
-  std::vector<Packet> output_packets;
-  tool::AddVectorSink("output_detection", &graph_config, &output_packets);
+    // Catch output.
+    std::vector<Packet> output_packets;
+    tool::AddVectorSink("output_detection", &graph_config, &output_packets);
 
-  // Run the graph.
-  CalculatorGraph graph;
-  MP_ASSERT_OK(graph.Initialize(graph_config));
-  MP_ASSERT_OK(graph.StartRun({}));
-  MP_ASSERT_OK(
-      graph.AddPacketToInputStream("input_detection", input_detection_packet));
-  MP_ASSERT_OK(graph.AddPacketToInputStream("classification_list",
-                                            classification_list_packet));
-  ASSERT_EQ(graph.WaitUntilIdle().code(), absl::StatusCode::kInvalidArgument);
+    // Run the graph.
+    CalculatorGraph graph;
+    MP_ASSERT_OK(graph.Initialize(graph_config));
+    MP_ASSERT_OK(graph.StartRun({}));
+    MP_ASSERT_OK(
+        graph.AddPacketToInputStream("input_detection", input_detection_packet));
+    MP_ASSERT_OK(graph.AddPacketToInputStream("classification_list",
+                                              classification_list_packet));
+    ASSERT_EQ(graph.WaitUntilIdle().code(), absl::StatusCode::kInvalidArgument);
 }
 
 // Checks that merging fails if the input ClassificationList has an
 // inconsistent number of labels.
 TEST(DetectionClassificationsMergerCalculator,
      FailsWithInconsistentNumberOfLabels) {
-  auto graph_config = ParseTextProtoOrDie<CalculatorGraphConfig>(kGraphConfig);
+    auto graph_config = ParseTextProtoOrDie<CalculatorGraphConfig>(kGraphConfig);
 
-  // Prepare input packets.
-  const Detection& input_detection =
-      ParseTextProtoOrDie<Detection>(kInputDetection);
-  Packet input_detection_packet =
-      MakePacket<Detection>(input_detection).At(Timestamp(0));
-  const ClassificationList& classification_list =
-      ParseTextProtoOrDie<ClassificationList>(R"pb(
-        classification { index: 11 score: 0.5 label: "dog" display_name: "Dog" }
-        classification { index: 12 score: 0.4 display_name: "Fox" }
-      )pb");
-  Packet classification_list_packet =
-      MakePacket<ClassificationList>(classification_list).At(Timestamp(0));
+    // Prepare input packets.
+    const Detection& input_detection =
+        ParseTextProtoOrDie<Detection>(kInputDetection);
+    Packet input_detection_packet =
+        MakePacket<Detection>(input_detection).At(Timestamp(0));
+    const ClassificationList& classification_list =
+        ParseTextProtoOrDie<ClassificationList>(R"pb(
+                                                     classification { index: 11 score: 0.5 label: "dog" display_name: "Dog" }
+                                                     classification { index: 12 score: 0.4 display_name: "Fox" }
+        )pb");
+    Packet classification_list_packet =
+        MakePacket<ClassificationList>(classification_list).At(Timestamp(0));
 
-  // Catch output.
-  std::vector<Packet> output_packets;
-  tool::AddVectorSink("output_detection", &graph_config, &output_packets);
+    // Catch output.
+    std::vector<Packet> output_packets;
+    tool::AddVectorSink("output_detection", &graph_config, &output_packets);
 
-  // Run the graph.
-  CalculatorGraph graph;
-  MP_ASSERT_OK(graph.Initialize(graph_config));
-  MP_ASSERT_OK(graph.StartRun({}));
-  MP_ASSERT_OK(
-      graph.AddPacketToInputStream("input_detection", input_detection_packet));
-  MP_ASSERT_OK(graph.AddPacketToInputStream("classification_list",
-                                            classification_list_packet));
-  ASSERT_EQ(graph.WaitUntilIdle().code(), absl::StatusCode::kInvalidArgument);
+    // Run the graph.
+    CalculatorGraph graph;
+    MP_ASSERT_OK(graph.Initialize(graph_config));
+    MP_ASSERT_OK(graph.StartRun({}));
+    MP_ASSERT_OK(
+        graph.AddPacketToInputStream("input_detection", input_detection_packet));
+    MP_ASSERT_OK(graph.AddPacketToInputStream("classification_list",
+                                              classification_list_packet));
+    ASSERT_EQ(graph.WaitUntilIdle().code(), absl::StatusCode::kInvalidArgument);
 }
 
 // Checks that merging fails if the input ClassificationList has an
 // inconsistent number of display names.
 TEST(DetectionClassificationsMergerCalculator,
      FailsWithInconsistentNumberOfDisplayNames) {
-  auto graph_config = ParseTextProtoOrDie<CalculatorGraphConfig>(kGraphConfig);
+    auto graph_config = ParseTextProtoOrDie<CalculatorGraphConfig>(kGraphConfig);
 
-  // Prepare input packets.
-  const Detection& input_detection =
-      ParseTextProtoOrDie<Detection>(kInputDetection);
-  Packet input_detection_packet =
-      MakePacket<Detection>(input_detection).At(Timestamp(0));
-  const ClassificationList& classification_list =
-      ParseTextProtoOrDie<ClassificationList>(R"pb(
-        classification { index: 11 score: 0.5 label: "dog" }
-        classification { index: 12 score: 0.4 label: "fox" display_name: "Fox" }
-      )pb");
-  Packet classification_list_packet =
-      MakePacket<ClassificationList>(classification_list).At(Timestamp(0));
+    // Prepare input packets.
+    const Detection& input_detection =
+        ParseTextProtoOrDie<Detection>(kInputDetection);
+    Packet input_detection_packet =
+        MakePacket<Detection>(input_detection).At(Timestamp(0));
+    const ClassificationList& classification_list =
+        ParseTextProtoOrDie<ClassificationList>(R"pb(
+                                                     classification { index: 11 score: 0.5 label: "dog" }
+                                                     classification { index: 12 score: 0.4 label: "fox" display_name: "Fox" }
+        )pb");
+    Packet classification_list_packet =
+        MakePacket<ClassificationList>(classification_list).At(Timestamp(0));
 
-  // Catch output.
-  std::vector<Packet> output_packets;
-  tool::AddVectorSink("output_detection", &graph_config, &output_packets);
+    // Catch output.
+    std::vector<Packet> output_packets;
+    tool::AddVectorSink("output_detection", &graph_config, &output_packets);
 
-  // Run the graph.
-  CalculatorGraph graph;
-  MP_ASSERT_OK(graph.Initialize(graph_config));
-  MP_ASSERT_OK(graph.StartRun({}));
-  MP_ASSERT_OK(
-      graph.AddPacketToInputStream("input_detection", input_detection_packet));
-  MP_ASSERT_OK(graph.AddPacketToInputStream("classification_list",
-                                            classification_list_packet));
-  ASSERT_EQ(graph.WaitUntilIdle().code(), absl::StatusCode::kInvalidArgument);
+    // Run the graph.
+    CalculatorGraph graph;
+    MP_ASSERT_OK(graph.Initialize(graph_config));
+    MP_ASSERT_OK(graph.StartRun({}));
+    MP_ASSERT_OK(
+        graph.AddPacketToInputStream("input_detection", input_detection_packet));
+    MP_ASSERT_OK(graph.AddPacketToInputStream("classification_list",
+                                              classification_list_packet));
+    ASSERT_EQ(graph.WaitUntilIdle().code(), absl::StatusCode::kInvalidArgument);
 }
 
 }  // namespace

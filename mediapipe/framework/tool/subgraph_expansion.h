@@ -15,14 +15,13 @@
 #ifndef MEDIAPIPE_FRAMEWORK_TOOL_SUBGRAPH_EXPANSION_H_
 #define MEDIAPIPE_FRAMEWORK_TOOL_SUBGRAPH_EXPANSION_H_
 
-#include <functional>
-
 #include "absl/strings/string_view.h"
 #include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/framework/graph_service_manager.h"
 #include "mediapipe/framework/port/proto_ns.h"
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/subgraph.h"
+#include <functional>
 
 namespace mediapipe {
 

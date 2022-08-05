@@ -19,38 +19,38 @@ package mediapipe.autoflip;
 import "mediapipe/framework/calculator.proto";
 
 message VideoFilteringCalculatorOptions {
-  extend mediapipe.CalculatorOptions {
-    optional VideoFilteringCalculatorOptions ext = 278504113;
-  }
-
-  // If true, when an input frame needs be filtered out according to the filter
-  // type and conditions, the calculator would return a FAIL status. Otherwise,
-  // the calculator would simply skip the filtered frames and would not pass it
-  // down to downstream nodes.
-  optional bool fail_if_any = 1 [default = false];
-
-  message AspectRatioFilter {
-    // Target width and height, which define the aspect ratio
-    // (i.e. target_width / target_height) to compare input frames with. The
-    // actual values of these fields do not matter, only the ratio between them
-    // does. These values must be set to positive.
-    optional int32 target_width = 1 [default = -1];
-    optional int32 target_height = 2 [default = -1];
-    enum FilterType {
-      UNKNOWN_FILTER_TYPE = 0;
-      // Use this type when the target width and height defines an upper bound
-      // (inclusive) of the aspect ratio.
-      UPPER_ASPECT_RATIO_THRESHOLD = 1;
-      // Use this type when the target width and height defines a lower bound
-      // (inclusive) of the aspect ratio.
-      LOWER_ASPECT_RATIO_THRESHOLD = 2;
-      // Use this type to configure the calculator as a no-op pass-through node.
-      NO_FILTERING = 3;
+    extend mediapipe.CalculatorOptions {
+        optional VideoFilteringCalculatorOptions ext = 278504113;
     }
-    optional FilterType filter_type = 3;
-  }
 
-  oneof filter {
-    AspectRatioFilter aspect_ratio_filter = 2;
-  }
+    // If true, when an input frame needs be filtered out according to the filter
+    // type and conditions, the calculator would return a FAIL status. Otherwise,
+    // the calculator would simply skip the filtered frames and would not pass it
+    // down to downstream nodes.
+    optional bool fail_if_any = 1 [default = false];
+
+    message AspectRatioFilter {
+        // Target width and height, which define the aspect ratio
+        // (i.e. target_width / target_height) to compare input frames with. The
+        // actual values of these fields do not matter, only the ratio between them
+        // does. These values must be set to positive.
+        optional int32 target_width = 1 [default = -1];
+        optional int32 target_height = 2 [default = -1];
+        enum FilterType {
+            UNKNOWN_FILTER_TYPE = 0;
+            // Use this type when the target width and height defines an upper bound
+            // (inclusive) of the aspect ratio.
+            UPPER_ASPECT_RATIO_THRESHOLD = 1;
+            // Use this type when the target width and height defines a lower bound
+            // (inclusive) of the aspect ratio.
+            LOWER_ASPECT_RATIO_THRESHOLD = 2;
+            // Use this type to configure the calculator as a no-op pass-through node.
+            NO_FILTERING = 3;
+        }
+        optional FilterType filter_type = 3;
+    }
+
+    oneof filter {
+        AspectRatioFilter aspect_ratio_filter = 2;
+    }
 }

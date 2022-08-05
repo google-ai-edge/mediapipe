@@ -69,14 +69,14 @@ namespace api2 {
 //   }
 //
 class LandmarksRefinementCalculator : public NodeIntf {
- public:
-  static constexpr Input<::mediapipe::NormalizedLandmarkList>::Multiple
-      kLandmarks{"LANDMARKS"};
-  static constexpr Output<::mediapipe::NormalizedLandmarkList>
-      kRefinedLandmarks{"REFINED_LANDMARKS"};
+public:
+    static constexpr Input<::mediapipe::NormalizedLandmarkList>::Multiple
+        kLandmarks{"LANDMARKS"};
+    static constexpr Output<::mediapipe::NormalizedLandmarkList>
+        kRefinedLandmarks{"REFINED_LANDMARKS"};
 
-  MEDIAPIPE_NODE_INTERFACE(LandmarksRefinementCalculator, kLandmarks,
-                           kRefinedLandmarks);
+    MEDIAPIPE_NODE_INTERFACE(LandmarksRefinementCalculator, kLandmarks,
+                             kRefinedLandmarks);
 };
 
 }  // namespace api2

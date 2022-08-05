@@ -23,31 +23,31 @@ package mediapipe;
 import "mediapipe/framework/calculator.proto";
 
 message SidePacketsToStreamsCalculatorOptions {
-  extend CalculatorOptions {
-    optional SidePacketsToStreamsCalculatorOptions ext = 60982839;
-  }
+    extend CalculatorOptions {
+        optional SidePacketsToStreamsCalculatorOptions ext = 60982839;
+    }
 
-  // Number of side packets which are fed to graph internal streams.
-  optional int32 num_inputs = 1 [default = 1];
-  // We need to accommodate various timestamp modes depending on what
-  // we're connecting to.
-  enum SetTimestampMode {
-    // For vectors of packets, the timestamp is the index of the packet
-    // within the vector.  For single packets, the timestamp is zero.
-    VECTOR_INDEX = 0;
-    // Timestamps are always set to PreStream.
-    PRE_STREAM = 1;
-    // Timestamps are always set to PostStream.
-    // TODO Rename to POST_STREAM.
-    WHOLE_STREAM = 2;
-    // Do not set timestamp.  Can only be used if vectors_of_packets is
-    // true.  Will cause Timestamp::Unset() run-time errors if the inner
-    // packets in the vectors do not already have Timestamps.
-    NONE = 3;
-  }
-  // If true, then a timestamp is set for each packet.
-  optional SetTimestampMode set_timestamp = 2 [default = VECTOR_INDEX];
-  // If true, then side packets are vectors of packets; otherwise,
-  // they are single packets.
-  optional bool vectors_of_packets = 3 [default = true];
+    // Number of side packets which are fed to graph internal streams.
+    optional int32 num_inputs = 1 [default = 1];
+    // We need to accommodate various timestamp modes depending on what
+    // we're connecting to.
+    enum SetTimestampMode {
+        // For vectors of packets, the timestamp is the index of the packet
+        // within the vector.  For single packets, the timestamp is zero.
+        VECTOR_INDEX = 0;
+        // Timestamps are always set to PreStream.
+        PRE_STREAM = 1;
+        // Timestamps are always set to PostStream.
+        // TODO Rename to POST_STREAM.
+        WHOLE_STREAM = 2;
+        // Do not set timestamp.  Can only be used if vectors_of_packets is
+        // true.  Will cause Timestamp::Unset() run-time errors if the inner
+        // packets in the vectors do not already have Timestamps.
+        NONE = 3;
+    }
+    // If true, then a timestamp is set for each packet.
+    optional SetTimestampMode set_timestamp = 2 [default = VECTOR_INDEX];
+    // If true, then side packets are vectors of packets; otherwise,
+    // they are single packets.
+    optional bool vectors_of_packets = 3 [default = true];
 }

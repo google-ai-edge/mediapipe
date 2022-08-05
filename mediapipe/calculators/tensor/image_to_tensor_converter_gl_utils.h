@@ -5,13 +5,12 @@
 
 #if MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30
 
-#include <array>
-#include <memory>
-#include <vector>
-
 #include "mediapipe/framework/port/statusor.h"
 #include "mediapipe/gpu/gl_base.h"
 #include "mediapipe/gpu/gl_context.h"
+#include <array>
+#include <memory>
+#include <vector>
 
 namespace mediapipe {
 
@@ -19,8 +18,8 @@ namespace mediapipe {
 // (e.g. overriding texture parameters like GL_TEXTURE_MIN_FILTER,
 // GL_TEXTURE_MAG_FILTER, etc.)
 class GlOverride {
- public:
-  virtual ~GlOverride() = default;
+public:
+    virtual ~GlOverride() = default;
 };
 
 // Creates an object that overrides attributes using `glTexParameteri`

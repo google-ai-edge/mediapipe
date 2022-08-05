@@ -22,10 +22,10 @@
 namespace mediapipe {
 
 class Throttler {
- public:
-  Throttler() {}
-  virtual ~Throttler() {}
-  virtual void Wait() = 0;
+public:
+    Throttler() {}
+    virtual ~Throttler() {}
+    virtual void Wait() = 0;
 };
 
 }  // namespace mediapipe

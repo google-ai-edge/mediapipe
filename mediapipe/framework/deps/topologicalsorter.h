@@ -44,38 +44,38 @@ namespace mediapipe {
 //     }
 //   }
 class TopologicalSorter {
- public:
-  explicit TopologicalSorter(int num_nodes);
-  TopologicalSorter(const TopologicalSorter&) = delete;
-  TopologicalSorter& operator=(const TopologicalSorter&) = delete;
+public:
+    explicit TopologicalSorter(int num_nodes);
+    TopologicalSorter(const TopologicalSorter&) = delete;
+    TopologicalSorter& operator=(const TopologicalSorter&) = delete;
 
-  // Adds a directed edge with the given endpoints to the graph.
-  void AddEdge(int from, int to);
+    // Adds a directed edge with the given endpoints to the graph.
+    void AddEdge(int from, int to);
 
-  // Visits the least node in topological order over the current set of
-  // nodes and edges, and marks that node as visited.
-  // The repeated calls to GetNext() will visit all nodes in order.  Writes the
-  // newly visited node into *node_index and returns true with *cyclic set to
-  // false (assuming the graph has not yet been discovered to be cyclic).
-  // Returns false if all nodes have been visited, or if the graph is
-  // discovered to be cyclic, in which case *cyclic is also set to true.
-  bool GetNext(int* node_index, bool* cyclic,
-               std::vector<int>* output_cycle_nodes);
+    // Visits the least node in topological order over the current set of
+    // nodes and edges, and marks that node as visited.
+    // The repeated calls to GetNext() will visit all nodes in order.  Writes the
+    // newly visited node into *node_index and returns true with *cyclic set to
+    // false (assuming the graph has not yet been discovered to be cyclic).
+    // Returns false if all nodes have been visited, or if the graph is
+    // discovered to be cyclic, in which case *cyclic is also set to true.
+    bool GetNext(int* node_index, bool* cyclic,
+                 std::vector<int>* output_cycle_nodes);
 
- private:
-  // Finds the cycle.
-  void FindCycle(std::vector<int>* cycle_nodes);
+private:
+    // Finds the cycle.
+    void FindCycle(std::vector<int>* cycle_nodes);
 
-  const int num_nodes_;
-  // Outoging adjacency lists.
-  std::vector<std::vector<int>> adjacency_lists_;
+    const int num_nodes_;
+    // Outoging adjacency lists.
+    std::vector<std::vector<int>> adjacency_lists_;
 
-  // If true, no more AddEdge() can be called.
-  bool traversal_started_ = false;
-  int num_nodes_left_;
-  std::priority_queue<int, std::vector<int>, std::greater<int>>
-      nodes_with_zero_indegree_;
-  std::vector<int> indegree_;
+    // If true, no more AddEdge() can be called.
+    bool traversal_started_ = false;
+    int num_nodes_left_;
+    std::priority_queue<int, std::vector<int>, std::greater<int>>
+        nodes_with_zero_indegree_;
+    std::vector<int> indegree_;
 };
 
 }  // namespace mediapipe

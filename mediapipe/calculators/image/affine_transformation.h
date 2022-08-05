@@ -15,39 +15,39 @@
 #ifndef MEDIAPIPE_CALCULATORS_IMAGE_AFFINE_TRANSFORMATION_H_
 #define MEDIAPIPE_CALCULATORS_IMAGE_AFFINE_TRANSFORMATION_H_
 
-#include <array>
-
 #include "absl/status/statusor.h"
+#include <array>
 
 namespace mediapipe {
 
 class AffineTransformation {
- public:
-  // Pixel extrapolation method.
-  // When converting image to tensor it may happen that tensor needs to read
-  // pixels outside image boundaries. Border mode helps to specify how such
-  // pixels will be calculated.
-  enum class BorderMode { kZero, kReplicate };
+public:
+    // Pixel extrapolation method.
+    // When converting image to tensor it may happen that tensor needs to read
+    // pixels outside image boundaries. Border mode helps to specify how such
+    // pixels will be calculated.
+    enum class BorderMode { kZero,
+                            kReplicate };
 
-  struct Size {
-    int width;
-    int height;
-  };
+    struct Size {
+        int width;
+        int height;
+    };
 
-  template <typename InputT, typename OutputT>
-  class Runner {
-   public:
-    virtual ~Runner() = default;
+    template <typename InputT, typename OutputT>
+    class Runner {
+    public:
+        virtual ~Runner() = default;
 
-    // Transforms input into output using @matrix as following:
-    //   output(x, y) = input(matrix[0] * x + matrix[1] * y + matrix[3],
-    //                        matrix[4] * x + matrix[5] * y + matrix[7])
-    // where x and y ranges are defined by @output_size.
-    virtual absl::StatusOr<OutputT> Run(const InputT& input,
-                                        const std::array<float, 16>& matrix,
-                                        const Size& output_size,
-                                        BorderMode border_mode) = 0;
-  };
+        // Transforms input into output using @matrix as following:
+        //   output(x, y) = input(matrix[0] * x + matrix[1] * y + matrix[3],
+        //                        matrix[4] * x + matrix[5] * y + matrix[7])
+        // where x and y ranges are defined by @output_size.
+        virtual absl::StatusOr<OutputT> Run(const InputT& input,
+                                            const std::array<float, 16>& matrix,
+                                            const Size& output_size,
+                                            BorderMode border_mode) = 0;
+    };
 };
 
 }  // namespace mediapipe

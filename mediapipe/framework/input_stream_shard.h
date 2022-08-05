@@ -15,12 +15,11 @@
 #ifndef MEDIAPIPE_FRAMEWORK_INPUT_STREAM_SHARD_H_
 #define MEDIAPIPE_FRAMEWORK_INPUT_STREAM_SHARD_H_
 
+#include "mediapipe/framework/input_stream.h"
+#include "mediapipe/framework/packet.h"
 #include <queue>
 #include <string>
 #include <utility>
-
-#include "mediapipe/framework/input_stream.h"
-#include "mediapipe/framework/packet.h"
 
 namespace mediapipe {
 
@@ -38,49 +37,49 @@ class MediaPipeProfilerTestPeer;
 // call to ClearCurrentPacket() must remove a packet from the queue and every
 // call to Value() must successfully return the front element of the queue.
 class InputStreamShard : public InputStream {
- public:
-  InputStreamShard() : is_done_(false) {}
+public:
+    InputStreamShard() : is_done_(false) {}
 
-  // Returns the first packet in the queue if there is any, otherwise returns an
-  // empty packet.
-  const Packet& Value() const override {
-    return !packet_queue_.empty() ? packet_queue_.front() : empty_packet_;
-  }
-
-  Packet& Value() override {
-    return !packet_queue_.empty() ? packet_queue_.front() : empty_packet_;
-  }
-
-  // Returns a reference to the name string of the InputStreamManager.
-  const std::string& Name() const { return *name_; }
-
-  bool IsDone() const override { return is_done_; }
-
- private:
-  void SetName(const std::string* name) { name_ = name; }
-
-  int NumberOfPackets() const { return static_cast<int>(packet_queue_.size()); }
-
-  void ClearCurrentPacket() {
-    if (!packet_queue_.empty()) {
-      packet_queue_.pop();
+    // Returns the first packet in the queue if there is any, otherwise returns an
+    // empty packet.
+    const Packet& Value() const override {
+        return !packet_queue_.empty() ? packet_queue_.front() : empty_packet_;
     }
-  }
 
-  void SetHeader(const Packet& header) { header_ = header; }
+    Packet& Value() override {
+        return !packet_queue_.empty() ? packet_queue_.front() : empty_packet_;
+    }
 
-  void AddPacket(Packet&& value, bool is_done);
+    // Returns a reference to the name string of the InputStreamManager.
+    const std::string& Name() const { return *name_; }
 
-  // Packet storage for batch processing.
-  std::queue<Packet> packet_queue_;
-  Packet empty_packet_;
+    bool IsDone() const override { return is_done_; }
 
-  // Pointer to the name string of the InputStreamManager.
-  const std::string* name_;
-  bool is_done_;
+private:
+    void SetName(const std::string* name) { name_ = name; }
 
-  // Accesses InputStreamShard for setting data.
-  friend class InputStreamHandler;
+    int NumberOfPackets() const { return static_cast<int>(packet_queue_.size()); }
+
+    void ClearCurrentPacket() {
+        if (!packet_queue_.empty()) {
+            packet_queue_.pop();
+        }
+    }
+
+    void SetHeader(const Packet& header) { header_ = header; }
+
+    void AddPacket(Packet&& value, bool is_done);
+
+    // Packet storage for batch processing.
+    std::queue<Packet> packet_queue_;
+    Packet empty_packet_;
+
+    // Pointer to the name string of the InputStreamManager.
+    const std::string* name_;
+    bool is_done_;
+
+    // Accesses InputStreamShard for setting data.
+    friend class InputStreamHandler;
 };
 
 }  // namespace mediapipe

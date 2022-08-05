@@ -15,19 +15,18 @@
 #ifndef MEDIAPIPE_TENSORFLOW_CALCULATORS_TENSORFLOW_SESSION_H_
 #define MEDIAPIPE_TENSORFLOW_CALCULATORS_TENSORFLOW_SESSION_H_
 
-#include <memory>
-
 #include "tensorflow/core/public/session.h"
+#include <memory>
 
 namespace mediapipe {
 struct TensorFlowSession {
-  // TensorFlow session wrapper to get around the RTTI issue.
-  std::unique_ptr<tensorflow::Session> session;
+    // TensorFlow session wrapper to get around the RTTI issue.
+    std::unique_ptr<tensorflow::Session> session;
 
-  // Store an optional mapping to the between MediaPipe tags and TensorFlow
-  // tensor names. Creating this mapping when the session is loaded allows more
-  // flexible definition of mapping tags to tensors across platforms.
-  std::map<std::string, std::string> tag_to_tensor_map;
+    // Store an optional mapping to the between MediaPipe tags and TensorFlow
+    // tensor names. Creating this mapping when the session is loaded allows more
+    // flexible definition of mapping tags to tensors across platforms.
+    std::map<std::string, std::string> tag_to_tensor_map;
 };
 
 }  // namespace mediapipe

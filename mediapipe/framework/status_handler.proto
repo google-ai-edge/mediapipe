@@ -26,18 +26,18 @@ import "mediapipe/framework/mediapipe_options.proto";
 
 // The settings specifying a status handler and its required external inputs.
 message StatusHandlerConfig {
-  // The name of the registered status handler class.
-  optional string status_handler = 1;  // required
+    // The name of the registered status handler class.
+    optional string status_handler = 1;  // required
 
-  // The name of the input side packets.  The StatusHandler can access its
-  // input side packets by index or by tag.  A StatusHandler will only
-  // be called if all of its requested input side packets are available
-  // (and won't be called if a PacketFactory or PacketGenerator which
-  // produces one fails).
-  repeated string input_side_packet = 2;
-  // DEPRECATED(mgeorg) The old name for input_side_packet.
-  repeated string external_input = 1002;
+    // The name of the input side packets.  The StatusHandler can access its
+    // input side packets by index or by tag.  A StatusHandler will only
+    // be called if all of its requested input side packets are available
+    // (and won't be called if a PacketFactory or PacketGenerator which
+    // produces one fails).
+    repeated string input_side_packet = 2;
+    // DEPRECATED(mgeorg) The old name for input_side_packet.
+    repeated string external_input = 1002;
 
-  // The options for the status handler.
-  optional MediaPipeOptions options = 3;
+    // The options for the status handler.
+    optional MediaPipeOptions options = 3;
 }

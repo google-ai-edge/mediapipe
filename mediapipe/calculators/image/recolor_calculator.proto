@@ -20,27 +20,27 @@ import "mediapipe/framework/calculator.proto";
 import "mediapipe/util/color.proto";
 
 message RecolorCalculatorOptions {
-  extend CalculatorOptions {
-    optional RecolorCalculatorOptions ext = 252527117;
-  }
+    extend CalculatorOptions {
+        optional RecolorCalculatorOptions ext = 252527117;
+    }
 
-  enum MaskChannel {
-    UNKNOWN = 0;
-    RED = 1;
-    ALPHA = 2;
-  }
+    enum MaskChannel {
+        UNKNOWN = 0;
+        RED = 1;
+        ALPHA = 2;
+    }
 
-  // Selects which channel of the MASK input to use for masking.
-  optional MaskChannel mask_channel = 1 [default = RED];
+    // Selects which channel of the MASK input to use for masking.
+    optional MaskChannel mask_channel = 1 [default = RED];
 
-  // Color to blend into input image where mask is > 0.
-  // The blending is based on the input image luminosity.
-  optional Color color = 2;
+    // Color to blend into input image where mask is > 0.
+    // The blending is based on the input image luminosity.
+    optional Color color = 2;
 
-  // Swap the meaning of mask values for foreground/background.
-  optional bool invert_mask = 3 [default = false];
+    // Swap the meaning of mask values for foreground/background.
+    optional bool invert_mask = 3 [default = false];
 
-  // Whether to use the luminance of the input image to further adjust the
-  // blending weight, to help preserve image textures.
-  optional bool adjust_with_luminance = 4 [default = true];
+    // Whether to use the luminance of the input image to further adjust the
+    // blending weight, to help preserve image textures.
+    optional bool adjust_with_luminance = 4 [default = true];
 }

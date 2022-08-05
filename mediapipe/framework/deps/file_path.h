@@ -15,10 +15,9 @@
 #ifndef MEDIAPIPE_DEPS_FILE_PATH_H_
 #define MEDIAPIPE_DEPS_FILE_PATH_H_
 
+#include "absl/strings/string_view.h"
 #include <initializer_list>
 #include <string>
-
-#include "absl/strings/string_view.h"
 
 // A set of file pathname manipulation routines.
 namespace mediapipe {
@@ -57,13 +56,13 @@ std::string JoinPathImpl(bool honor_abs,
 // 0, 1, 2-path specializations exist to optimize common cases.
 inline std::string JoinPath() { return std::string(); }
 inline std::string JoinPath(absl::string_view path) {
-  return std::string(path.data(), path.size());
+    return std::string(path.data(), path.size());
 }
 std::string JoinPath(absl::string_view path1, absl::string_view path2);
 template <typename... T>
 inline std::string JoinPath(absl::string_view path1, absl::string_view path2,
                             absl::string_view path3, const T&... args) {
-  return internal::JoinPathImpl(false, {path1, path2, path3, args...});
+    return internal::JoinPathImpl(false, {path1, path2, path3, args...});
 }
 
 // Returns the part of the path before the final "/", EXCEPT:

@@ -39,39 +39,39 @@ constexpr char kStringSavedModelPathTag[] = "STRING_SAVED_MODEL_PATH";
 constexpr char kSessionTag[] = "SESSION";
 
 std::string GetSavedModelDir() {
-  std::string out_path =
-      file::JoinPath("./", "mediapipe/calculators/tensorflow/testdata/",
-                     "tensorflow_saved_model/00000000");
-  return out_path;
+    std::string out_path =
+        file::JoinPath("./", "mediapipe/calculators/tensorflow/testdata/",
+                       "tensorflow_saved_model/00000000");
+    return out_path;
 }
 
 // Helper function that creates Tensor INT32 matrix with size 1x3.
 tf::Tensor TensorMatrix1x3(const int v1, const int v2, const int v3) {
-  tf::Tensor tensor(tf::DT_INT32,
-                    tf::TensorShape(std::vector<tf::int64>({1, 3})));
-  auto matrix = tensor.matrix<int32>();
-  matrix(0, 0) = v1;
-  matrix(0, 1) = v2;
-  matrix(0, 2) = v3;
-  return tensor;
+    tf::Tensor tensor(tf::DT_INT32,
+                      tf::TensorShape(std::vector<tf::int64>({1, 3})));
+    auto matrix = tensor.matrix<int32>();
+    matrix(0, 0) = v1;
+    matrix(0, 1) = v2;
+    matrix(0, 2) = v3;
+    return tensor;
 }
 
 class TensorFlowSessionFromSavedModelCalculatorTest : public ::testing::Test {
- protected:
-  void SetUp() override {
-    extendable_options_.Clear();
-    options_ = extendable_options_.MutableExtension(
-        TensorFlowSessionFromSavedModelCalculatorOptions::ext);
-    options_->set_saved_model_path(GetSavedModelDir());
-  }
+protected:
+    void SetUp() override {
+        extendable_options_.Clear();
+        options_ = extendable_options_.MutableExtension(
+            TensorFlowSessionFromSavedModelCalculatorOptions::ext);
+        options_->set_saved_model_path(GetSavedModelDir());
+    }
 
-  CalculatorOptions extendable_options_;
-  TensorFlowSessionFromSavedModelCalculatorOptions* options_;
+    CalculatorOptions extendable_options_;
+    TensorFlowSessionFromSavedModelCalculatorOptions* options_;
 };
 
 TEST_F(TensorFlowSessionFromSavedModelCalculatorTest,
        CreatesPacketWithGraphAndBindings) {
-  CalculatorRunner runner(absl::Substitute(R"(
+    CalculatorRunner runner(absl::Substitute(R"(
         calculator: "TensorFlowSessionFromSavedModelCalculator"
         output_side_packet: "SESSION:tf_model"
         options {
@@ -79,40 +79,40 @@ TEST_F(TensorFlowSessionFromSavedModelCalculatorTest,
             $0
           }
         })",
-                                           options_->DebugString()));
-  MP_ASSERT_OK(runner.Run());
-  const TensorFlowSession& session =
-      runner.OutputSidePackets().Tag(kSessionTag).Get<TensorFlowSession>();
-  // Session must be set.
-  ASSERT_NE(session.session, nullptr);
+                                             options_->DebugString()));
+    MP_ASSERT_OK(runner.Run());
+    const TensorFlowSession& session =
+        runner.OutputSidePackets().Tag(kSessionTag).Get<TensorFlowSession>();
+    // Session must be set.
+    ASSERT_NE(session.session, nullptr);
 
-  // Bindings are inserted.
-  EXPECT_EQ(session.tag_to_tensor_map.size(), 4);
+    // Bindings are inserted.
+    EXPECT_EQ(session.tag_to_tensor_map.size(), 4);
 
-  // For some reason, EXPECT_EQ and EXPECT_NE are not working with iterators.
-  EXPECT_FALSE(session.tag_to_tensor_map.find("A") ==
-               session.tag_to_tensor_map.end());
-  EXPECT_FALSE(session.tag_to_tensor_map.find("B") ==
-               session.tag_to_tensor_map.end());
-  EXPECT_FALSE(session.tag_to_tensor_map.find("MULTIPLIED") ==
-               session.tag_to_tensor_map.end());
-  EXPECT_FALSE(session.tag_to_tensor_map.find("EXPENSIVE") ==
-               session.tag_to_tensor_map.end());
-  // Sanity: find() actually returns a reference to end() if element not
-  // found.
-  EXPECT_TRUE(session.tag_to_tensor_map.find("Z") ==
-              session.tag_to_tensor_map.end());
+    // For some reason, EXPECT_EQ and EXPECT_NE are not working with iterators.
+    EXPECT_FALSE(session.tag_to_tensor_map.find("A") ==
+                 session.tag_to_tensor_map.end());
+    EXPECT_FALSE(session.tag_to_tensor_map.find("B") ==
+                 session.tag_to_tensor_map.end());
+    EXPECT_FALSE(session.tag_to_tensor_map.find("MULTIPLIED") ==
+                 session.tag_to_tensor_map.end());
+    EXPECT_FALSE(session.tag_to_tensor_map.find("EXPENSIVE") ==
+                 session.tag_to_tensor_map.end());
+    // Sanity: find() actually returns a reference to end() if element not
+    // found.
+    EXPECT_TRUE(session.tag_to_tensor_map.find("Z") ==
+                session.tag_to_tensor_map.end());
 
-  EXPECT_EQ(session.tag_to_tensor_map.at("A"), "a:0");
-  EXPECT_EQ(session.tag_to_tensor_map.at("B"), "b:0");
-  EXPECT_EQ(session.tag_to_tensor_map.at("MULTIPLIED"), "multiplied:0");
-  EXPECT_EQ(session.tag_to_tensor_map.at("EXPENSIVE"), "expensive:0");
+    EXPECT_EQ(session.tag_to_tensor_map.at("A"), "a:0");
+    EXPECT_EQ(session.tag_to_tensor_map.at("B"), "b:0");
+    EXPECT_EQ(session.tag_to_tensor_map.at("MULTIPLIED"), "multiplied:0");
+    EXPECT_EQ(session.tag_to_tensor_map.at("EXPENSIVE"), "expensive:0");
 }
 
 TEST_F(TensorFlowSessionFromSavedModelCalculatorTest,
        CreateSessionFromSidePacket) {
-  options_->clear_saved_model_path();
-  CalculatorRunner runner(absl::Substitute(R"(
+    options_->clear_saved_model_path();
+    CalculatorRunner runner(absl::Substitute(R"(
         calculator: "TensorFlowSessionFromSavedModelCalculator"
         input_side_packet: "STRING_SAVED_MODEL_PATH:saved_model_dir"
         output_side_packet: "SESSION:tf_model"
@@ -121,23 +121,23 @@ TEST_F(TensorFlowSessionFromSavedModelCalculatorTest,
             $0
           }
         })",
-                                           options_->DebugString()));
-  runner.MutableSidePackets()->Tag(kStringSavedModelPathTag) =
-      MakePacket<std::string>(GetSavedModelDir());
-  MP_ASSERT_OK(runner.Run());
-  const TensorFlowSession& session =
-      runner.OutputSidePackets().Tag(kSessionTag).Get<TensorFlowSession>();
-  // Session must be set.
-  ASSERT_NE(session.session, nullptr);
+                                             options_->DebugString()));
+    runner.MutableSidePackets()->Tag(kStringSavedModelPathTag) =
+        MakePacket<std::string>(GetSavedModelDir());
+    MP_ASSERT_OK(runner.Run());
+    const TensorFlowSession& session =
+        runner.OutputSidePackets().Tag(kSessionTag).Get<TensorFlowSession>();
+    // Session must be set.
+    ASSERT_NE(session.session, nullptr);
 }
 
 // Integration test. Verifies that TensorFlowInferenceCalculator correctly
 // consumes the Packet emitted by this factory.
 TEST_F(TensorFlowSessionFromSavedModelCalculatorTest,
        ProducesPacketUsableByTensorFlowInferenceCalculator) {
-  CalculatorGraphConfig graph_config =
-      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(
-          absl::Substitute(R"(
+    CalculatorGraphConfig graph_config =
+        mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(
+            absl::Substitute(R"(
       node {
         calculator: "TensorFlowInferenceCalculator"
         input_side_packet: "SESSION:tf_model"
@@ -161,39 +161,39 @@ TEST_F(TensorFlowSessionFromSavedModelCalculatorTest,
       }
       input_stream: "a_tensor"
   )",
-                           options_->DebugString()));
+                             options_->DebugString()));
 
-  CalculatorGraph graph;
-  MP_ASSERT_OK(graph.Initialize(graph_config));
-  StatusOrPoller status_or_poller =
-      graph.AddOutputStreamPoller("multiplied_tensor");
-  ASSERT_TRUE(status_or_poller.ok());
-  OutputStreamPoller poller = std::move(status_or_poller.value());
+    CalculatorGraph graph;
+    MP_ASSERT_OK(graph.Initialize(graph_config));
+    StatusOrPoller status_or_poller =
+        graph.AddOutputStreamPoller("multiplied_tensor");
+    ASSERT_TRUE(status_or_poller.ok());
+    OutputStreamPoller poller = std::move(status_or_poller.value());
 
-  MP_ASSERT_OK(graph.StartRun({}));
-  MP_ASSERT_OK(graph.AddPacketToInputStream(
-      "a_tensor",
-      Adopt(new auto(TensorMatrix1x3(1, -1, 10))).At(Timestamp(0))));
-  MP_ASSERT_OK(graph.CloseInputStream("a_tensor"));
+    MP_ASSERT_OK(graph.StartRun({}));
+    MP_ASSERT_OK(graph.AddPacketToInputStream(
+        "a_tensor",
+        Adopt(new auto(TensorMatrix1x3(1, -1, 10))).At(Timestamp(0))));
+    MP_ASSERT_OK(graph.CloseInputStream("a_tensor"));
 
-  Packet packet;
-  ASSERT_TRUE(poller.Next(&packet));
-  // input tensor gets multiplied by [[3, 2, 1]]. Expected output:
-  tf::Tensor expected_multiplication = TensorMatrix1x3(3, -2, 10);
-  EXPECT_EQ(expected_multiplication.DebugString(),
-            packet.Get<tf::Tensor>().DebugString());
+    Packet packet;
+    ASSERT_TRUE(poller.Next(&packet));
+    // input tensor gets multiplied by [[3, 2, 1]]. Expected output:
+    tf::Tensor expected_multiplication = TensorMatrix1x3(3, -2, 10);
+    EXPECT_EQ(expected_multiplication.DebugString(),
+              packet.Get<tf::Tensor>().DebugString());
 
-  ASSERT_FALSE(poller.Next(&packet));
-  MP_ASSERT_OK(graph.WaitUntilDone());
+    ASSERT_FALSE(poller.Next(&packet));
+    MP_ASSERT_OK(graph.WaitUntilDone());
 }
 
 TEST_F(TensorFlowSessionFromSavedModelCalculatorTest,
        GetsBundleGivenParentDirectory) {
-  options_->set_saved_model_path(
-      std::string(file::SplitPath(GetSavedModelDir()).first));
-  options_->set_load_latest_model(true);
+    options_->set_saved_model_path(
+        std::string(file::SplitPath(GetSavedModelDir()).first));
+    options_->set_load_latest_model(true);
 
-  CalculatorRunner runner(absl::Substitute(R"(
+    CalculatorRunner runner(absl::Substitute(R"(
         calculator: "TensorFlowSessionFromSavedModelCalculator"
         output_side_packet: "SESSION:tf_model"
         options {
@@ -201,22 +201,22 @@ TEST_F(TensorFlowSessionFromSavedModelCalculatorTest,
             $0
           }
         })",
-                                           options_->DebugString()));
-  MP_ASSERT_OK(runner.Run());
-  const TensorFlowSession& session =
-      runner.OutputSidePackets().Tag(kSessionTag).Get<TensorFlowSession>();
-  // Session must be set.
-  ASSERT_NE(session.session, nullptr);
+                                             options_->DebugString()));
+    MP_ASSERT_OK(runner.Run());
+    const TensorFlowSession& session =
+        runner.OutputSidePackets().Tag(kSessionTag).Get<TensorFlowSession>();
+    // Session must be set.
+    ASSERT_NE(session.session, nullptr);
 }
 
 TEST_F(TensorFlowSessionFromSavedModelCalculatorTest,
        ConfiguresSessionGivenConfig) {
-  options_->set_saved_model_path(
-      std::string(file::SplitPath(GetSavedModelDir()).first));
-  options_->set_load_latest_model(true);
-  options_->mutable_session_config()->mutable_device_count()->insert(
-      {"CPU", 10});
-  CalculatorRunner runner(absl::Substitute(R"(
+    options_->set_saved_model_path(
+        std::string(file::SplitPath(GetSavedModelDir()).first));
+    options_->set_load_latest_model(true);
+    options_->mutable_session_config()->mutable_device_count()->insert(
+        {"CPU", 10});
+    CalculatorRunner runner(absl::Substitute(R"(
         calculator: "TensorFlowSessionFromSavedModelCalculator"
         output_side_packet: "SESSION:tf_model"
         options {
@@ -224,15 +224,15 @@ TEST_F(TensorFlowSessionFromSavedModelCalculatorTest,
             $0
           }
         })",
-                                           options_->DebugString()));
-  MP_ASSERT_OK(runner.Run());
-  const TensorFlowSession& session =
-      runner.OutputSidePackets().Tag(kSessionTag).Get<TensorFlowSession>();
-  // Session must be set.
-  ASSERT_NE(session.session, nullptr);
-  std::vector<tensorflow::DeviceAttributes> devices;
-  ASSERT_EQ(session.session->ListDevices(&devices), tensorflow::Status::OK());
-  EXPECT_THAT(devices.size(), 10);
+                                             options_->DebugString()));
+    MP_ASSERT_OK(runner.Run());
+    const TensorFlowSession& session =
+        runner.OutputSidePackets().Tag(kSessionTag).Get<TensorFlowSession>();
+    // Session must be set.
+    ASSERT_NE(session.session, nullptr);
+    std::vector<tensorflow::DeviceAttributes> devices;
+    ASSERT_EQ(session.session->ListDevices(&devices), tensorflow::Status::OK());
+    EXPECT_THAT(devices.size(), 10);
 }
 
 }  // namespace

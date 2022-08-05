@@ -15,11 +15,10 @@
 #ifndef MEDIAPIPE_FRAMEWORK_FORMATS_YUV_IMAGE_H_
 #define MEDIAPIPE_FRAMEWORK_FORMATS_YUV_IMAGE_H_
 
-#include <functional>
-#include <memory>
-
 #include "libyuv/video_common.h"
 #include "mediapipe/framework/port/integral_types.h"
+#include <functional>
+#include <memory>
 
 namespace mediapipe {
 
@@ -82,173 +81,173 @@ namespace mediapipe {
 // Please do not add new constructors unless it is unavoidable; the default
 // constructor followed by Initialize() should cover most of the use cases.
 class YUVImage {
- public:
-  // The matrix coefficients used (e.g., defines the conversion matrix from
-  // Ycbcr
-  // to RGB).
-  enum ColorMatrixCoefficients {
-    COLOR_MATRIX_COEFFICIENTS_RGB = 0,
-    // Also ITU-R BT1361 / IEC 61966-2-4 xvYCC709 / SMPTE RP177 Annex B.
-    COLOR_MATRIX_COEFFICIENTS_BT709 = 1,
-    COLOR_MATRIX_COEFFICIENTS_UNSPECIFIED = 2,
-    COLOR_MATRIX_COEFFICIENTS_FCC = 4,
-    // Also ITU-R BT601-6 625 / ITU-R BT1358 625 / ITU-R BT1700 625 PAL &
-    /// SECAM / IEC 61966-2-4 xvYCC601.
-    COLOR_MATRIX_COEFFICIENTS_BT470BG = 5,
-    // Also ITU-R BT601-6 525 / ITU-R BT1358 525 / ITU-R BT1700 NTSC /
-    /// functionally identical to above.
-    COLOR_MATRIX_COEFFICIENTS_SMPTE170M = 6,
-    COLOR_MATRIX_COEFFICIENTS_SMPTE240M = 7,
-    // Used by Dirac / VC-2 and H.264 FRext, see ITU-T SG16.
-    COLOR_MATRIX_COEFFICIENTS_YCOCG = 8,
-    // ITU-R BT2020 non-constant luminance system.
-    COLOR_MATRIX_COEFFICIENTS_BT2020_NCL = 9,
-    // ITU-R BT2020 constant luminance system.
-    COLOR_MATRIX_COEFFICIENTS_BT2020_CL = 10,
-    // SMPTE 2085, Y'D'zD'x
-    COLOR_MATRIX_COEFFICIENTS_SMPTE2085 = 11,
-    // Chromaticity-derived non-constant luminance.
-    COLOR_MATRIX_COEFFICIENTS_CHROMA_DERIVED_NCL = 12,
-    // Chromaticity-derived constant luminance.
-    COLOR_MATRIX_COEFFICIENTS_CHROMA_DERIVED_CL = 13,
-    // ITU-R BT.[HDR-TV] ICtCp
-    COLOR_MATRIX_COEFFICIENTS_ICTCP = 14,
-  };
-
-  YUVImage() = default;
-  ~YUVImage() { Clear(); }
-
-  // Convenience constructor
-  YUVImage(libyuv::FourCC fourcc,                   //
-           std::unique_ptr<uint8[]> data_location,  //
-           uint8* data0, int stride0,               //
-           uint8* data1, int stride1,               //
-           uint8* data2, int stride2,               //
-           int width, int height, int bit_depth = 8) {
-    uint8* tmp = data_location.release();
-    std::function<void()> deallocate = [tmp]() { delete[] tmp; };
-    Initialize(fourcc,          //
-               deallocate,      //
-               data0, stride0,  //
-               data1, stride1,  //
-               data2, stride2,  //
-               width, height, bit_depth);
-  }
-
-  // Convenience constructor to construct the YUVImage with data stored
-  // in three unique_ptrs.
-  YUVImage(libyuv::FourCC fourcc,                        //
-           std::unique_ptr<uint8[]> data0, int stride0,  //
-           std::unique_ptr<uint8[]> data1, int stride1,  //
-           std::unique_ptr<uint8[]> data2, int stride2,  //
-           int width, int height, int bit_depth = 8) {
-    uint8* tmp0 = data0.release();
-    uint8* tmp1 = data1.release();
-    uint8* tmp2 = data2.release();
-    std::function<void()> deallocate = [tmp0, tmp1, tmp2]() {
-      delete[] tmp0;
-      delete[] tmp1;
-      delete[] tmp2;
+public:
+    // The matrix coefficients used (e.g., defines the conversion matrix from
+    // Ycbcr
+    // to RGB).
+    enum ColorMatrixCoefficients {
+        COLOR_MATRIX_COEFFICIENTS_RGB = 0,
+        // Also ITU-R BT1361 / IEC 61966-2-4 xvYCC709 / SMPTE RP177 Annex B.
+        COLOR_MATRIX_COEFFICIENTS_BT709 = 1,
+        COLOR_MATRIX_COEFFICIENTS_UNSPECIFIED = 2,
+        COLOR_MATRIX_COEFFICIENTS_FCC = 4,
+        // Also ITU-R BT601-6 625 / ITU-R BT1358 625 / ITU-R BT1700 625 PAL &
+        /// SECAM / IEC 61966-2-4 xvYCC601.
+        COLOR_MATRIX_COEFFICIENTS_BT470BG = 5,
+        // Also ITU-R BT601-6 525 / ITU-R BT1358 525 / ITU-R BT1700 NTSC /
+        /// functionally identical to above.
+        COLOR_MATRIX_COEFFICIENTS_SMPTE170M = 6,
+        COLOR_MATRIX_COEFFICIENTS_SMPTE240M = 7,
+        // Used by Dirac / VC-2 and H.264 FRext, see ITU-T SG16.
+        COLOR_MATRIX_COEFFICIENTS_YCOCG = 8,
+        // ITU-R BT2020 non-constant luminance system.
+        COLOR_MATRIX_COEFFICIENTS_BT2020_NCL = 9,
+        // ITU-R BT2020 constant luminance system.
+        COLOR_MATRIX_COEFFICIENTS_BT2020_CL = 10,
+        // SMPTE 2085, Y'D'zD'x
+        COLOR_MATRIX_COEFFICIENTS_SMPTE2085 = 11,
+        // Chromaticity-derived non-constant luminance.
+        COLOR_MATRIX_COEFFICIENTS_CHROMA_DERIVED_NCL = 12,
+        // Chromaticity-derived constant luminance.
+        COLOR_MATRIX_COEFFICIENTS_CHROMA_DERIVED_CL = 13,
+        // ITU-R BT.[HDR-TV] ICtCp
+        COLOR_MATRIX_COEFFICIENTS_ICTCP = 14,
     };
-    Initialize(fourcc,         //
-               deallocate,     //
-               tmp0, stride0,  //
-               tmp1, stride1,  //
-               tmp2, stride2,  //
-               width, height, bit_depth);
-  }
 
-  // Clear and initialize member variables.
-  //
-  // First argument is an enum of FourCC (see http://www.fourcc.org/yuv.php)
-  // defined in libyuv/video_common.h
-  //
-  // A deallocation function is provided which will be called on the next
-  // Clear() or on destruction.
-  //
-  // The next three argument pairs are pointer to pixel data buffer for each
-  // plane and its image stride (http://en.wikipedia.org/wiki/Stride).
-  //
-  // The class is very generic and it is up to the user how they want
-  // to use this data holder class.  For example, if one intends to
-  // use this for NV21, one can ignore data2 and stride2 by giving
-  // nullptr and 0, respectively, and call the right libyuv functions
-  // for actual processing.  This class is agnostic of the data and the
-  // pixel format it holds.
-  void Initialize(libyuv::FourCC fourcc,                        //
-                  std::function<void()> deallocation_function,  //
-                  uint8* data0, int stride0,                    //
-                  uint8* data1, int stride1,                    //
-                  uint8* data2, int stride2,                    //
-                  int width, int height, int bit_depth = 8) {
-    Clear();
-    deallocation_function_ = deallocation_function;
-    fourcc_ = fourcc;
-    data_[0] = data0;
-    stride_[0] = stride0;
-    data_[1] = data1;
-    stride_[1] = stride1;
-    data_[2] = data2;
-    stride_[2] = stride2;
-    width_ = width;
-    height_ = height;
-    bit_depth_ = bit_depth;
-  }
+    YUVImage() = default;
+    ~YUVImage() { Clear(); }
 
-  void Clear() {
-    if (deallocation_function_) {
-      deallocation_function_();
-      deallocation_function_ = nullptr;
+    // Convenience constructor
+    YUVImage(libyuv::FourCC fourcc,                   //
+             std::unique_ptr<uint8[]> data_location,  //
+             uint8* data0, int stride0,               //
+             uint8* data1, int stride1,               //
+             uint8* data2, int stride2,               //
+             int width, int height, int bit_depth = 8) {
+        uint8* tmp = data_location.release();
+        std::function<void()> deallocate = [tmp]() { delete[] tmp; };
+        Initialize(fourcc,          //
+                   deallocate,      //
+                   data0, stride0,  //
+                   data1, stride1,  //
+                   data2, stride2,  //
+                   width, height, bit_depth);
     }
-    fourcc_ = libyuv::FOURCC_ANY;
-    data_[0] = nullptr;
-    data_[1] = nullptr;
-    data_[2] = nullptr;
-    stride_[0] = 0;
-    stride_[1] = 0;
-    stride_[2] = 0;
-    width_ = 0;
-    height_ = 0;
-    bit_depth_ = 0;
-  }
 
-  // Getters.
-  libyuv::FourCC fourcc() const { return fourcc_; }
-  const uint8* data(int index) const { return data_[index]; }
-  int stride(int index) const { return stride_[index]; }
-  int width() const { return width_; }
-  int height() const { return height_; }
-  int bit_depth() const { return bit_depth_; }
-  ColorMatrixCoefficients matrix_coefficients() const {
-    return matrix_coefficients_;
-  }
-  bool full_range() const { return full_range_; }
+    // Convenience constructor to construct the YUVImage with data stored
+    // in three unique_ptrs.
+    YUVImage(libyuv::FourCC fourcc,                        //
+             std::unique_ptr<uint8[]> data0, int stride0,  //
+             std::unique_ptr<uint8[]> data1, int stride1,  //
+             std::unique_ptr<uint8[]> data2, int stride2,  //
+             int width, int height, int bit_depth = 8) {
+        uint8* tmp0 = data0.release();
+        uint8* tmp1 = data1.release();
+        uint8* tmp2 = data2.release();
+        std::function<void()> deallocate = [tmp0, tmp1, tmp2]() {
+            delete[] tmp0;
+            delete[] tmp1;
+            delete[] tmp2;
+        };
+        Initialize(fourcc,         //
+                   deallocate,     //
+                   tmp0, stride0,  //
+                   tmp1, stride1,  //
+                   tmp2, stride2,  //
+                   width, height, bit_depth);
+    }
 
-  // Setters.
-  void set_fourcc(libyuv::FourCC fourcc) { fourcc_ = fourcc; }
-  uint8* mutable_data(int index) { return data_[index]; }
-  void set_stride(int index, int stride) { stride_[index] = stride; }
-  void set_width(int width) { width_ = width; }
-  void set_height(int height) { height_ = height; }
-  void set_matrix_coefficients(ColorMatrixCoefficients coeffs) {
-    matrix_coefficients_ = coeffs;
-  }
-  void set_full_range(bool full_range) { full_range_ = full_range; }
+    // Clear and initialize member variables.
+    //
+    // First argument is an enum of FourCC (see http://www.fourcc.org/yuv.php)
+    // defined in libyuv/video_common.h
+    //
+    // A deallocation function is provided which will be called on the next
+    // Clear() or on destruction.
+    //
+    // The next three argument pairs are pointer to pixel data buffer for each
+    // plane and its image stride (http://en.wikipedia.org/wiki/Stride).
+    //
+    // The class is very generic and it is up to the user how they want
+    // to use this data holder class.  For example, if one intends to
+    // use this for NV21, one can ignore data2 and stride2 by giving
+    // nullptr and 0, respectively, and call the right libyuv functions
+    // for actual processing.  This class is agnostic of the data and the
+    // pixel format it holds.
+    void Initialize(libyuv::FourCC fourcc,                        //
+                    std::function<void()> deallocation_function,  //
+                    uint8* data0, int stride0,                    //
+                    uint8* data1, int stride1,                    //
+                    uint8* data2, int stride2,                    //
+                    int width, int height, int bit_depth = 8) {
+        Clear();
+        deallocation_function_ = deallocation_function;
+        fourcc_ = fourcc;
+        data_[0] = data0;
+        stride_[0] = stride0;
+        data_[1] = data1;
+        stride_[1] = stride1;
+        data_[2] = data2;
+        stride_[2] = stride2;
+        width_ = width;
+        height_ = height;
+        bit_depth_ = bit_depth;
+    }
 
- private:
-  static constexpr int kMaxNumPlanes = 3;
+    void Clear() {
+        if (deallocation_function_) {
+            deallocation_function_();
+            deallocation_function_ = nullptr;
+        }
+        fourcc_ = libyuv::FOURCC_ANY;
+        data_[0] = nullptr;
+        data_[1] = nullptr;
+        data_[2] = nullptr;
+        stride_[0] = 0;
+        stride_[1] = 0;
+        stride_[2] = 0;
+        width_ = 0;
+        height_ = 0;
+        bit_depth_ = 0;
+    }
 
-  std::function<void()> deallocation_function_;
+    // Getters.
+    libyuv::FourCC fourcc() const { return fourcc_; }
+    const uint8* data(int index) const { return data_[index]; }
+    int stride(int index) const { return stride_[index]; }
+    int width() const { return width_; }
+    int height() const { return height_; }
+    int bit_depth() const { return bit_depth_; }
+    ColorMatrixCoefficients matrix_coefficients() const {
+        return matrix_coefficients_;
+    }
+    bool full_range() const { return full_range_; }
 
-  libyuv::FourCC fourcc_ = libyuv::FOURCC_ANY;
-  uint8* data_[kMaxNumPlanes];
-  int stride_[kMaxNumPlanes];
-  int width_ = 0;
-  int height_ = 0;
-  int bit_depth_ = 0;
-  ColorMatrixCoefficients matrix_coefficients_ =
-      ColorMatrixCoefficients::COLOR_MATRIX_COEFFICIENTS_UNSPECIFIED;
-  bool full_range_ = false;
+    // Setters.
+    void set_fourcc(libyuv::FourCC fourcc) { fourcc_ = fourcc; }
+    uint8* mutable_data(int index) { return data_[index]; }
+    void set_stride(int index, int stride) { stride_[index] = stride; }
+    void set_width(int width) { width_ = width; }
+    void set_height(int height) { height_ = height; }
+    void set_matrix_coefficients(ColorMatrixCoefficients coeffs) {
+        matrix_coefficients_ = coeffs;
+    }
+    void set_full_range(bool full_range) { full_range_ = full_range; }
+
+private:
+    static constexpr int kMaxNumPlanes = 3;
+
+    std::function<void()> deallocation_function_;
+
+    libyuv::FourCC fourcc_ = libyuv::FOURCC_ANY;
+    uint8* data_[kMaxNumPlanes];
+    int stride_[kMaxNumPlanes];
+    int width_ = 0;
+    int height_ = 0;
+    int bit_depth_ = 0;
+    ColorMatrixCoefficients matrix_coefficients_ =
+        ColorMatrixCoefficients::COLOR_MATRIX_COEFFICIENTS_UNSPECIFIED;
+    bool full_range_ = false;
 };
 
 }  // namespace mediapipe

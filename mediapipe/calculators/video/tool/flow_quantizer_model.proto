@@ -18,7 +18,7 @@ package mediapipe;
 
 // Message storing min value and max value for normalization in all channels.
 message QuantizerModelData {
-  // For all channels.
-  repeated float min_value = 1;
-  repeated float max_value = 2;
+    // For all channels.
+    repeated float min_value = 1;
+    repeated float max_value = 2;
 }

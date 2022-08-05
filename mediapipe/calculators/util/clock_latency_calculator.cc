@@ -57,59 +57,59 @@ constexpr char kReferenceTag[] = "REFERENCE";
 // }
 //
 class ClockLatencyCalculator : public CalculatorBase {
- public:
-  ClockLatencyCalculator() {}
+public:
+    ClockLatencyCalculator() {}
 
-  static absl::Status GetContract(CalculatorContract* cc);
+    static absl::Status GetContract(CalculatorContract* cc);
 
-  absl::Status Open(CalculatorContext* cc) override;
-  absl::Status Process(CalculatorContext* cc) override;
+    absl::Status Open(CalculatorContext* cc) override;
+    absl::Status Process(CalculatorContext* cc) override;
 
- private:
-  int64 num_packet_streams_ = -1;
+private:
+    int64 num_packet_streams_ = -1;
 };
 REGISTER_CALCULATOR(ClockLatencyCalculator);
 
 absl::Status ClockLatencyCalculator::GetContract(CalculatorContract* cc) {
-  RET_CHECK_GT(cc->Inputs().NumEntries(), 1);
+    RET_CHECK_GT(cc->Inputs().NumEntries(), 1);
 
-  int64 num_packet_streams = cc->Inputs().NumEntries() - 1;
-  RET_CHECK_EQ(cc->Outputs().NumEntries(), num_packet_streams);
+    int64 num_packet_streams = cc->Inputs().NumEntries() - 1;
+    RET_CHECK_EQ(cc->Outputs().NumEntries(), num_packet_streams);
 
-  for (int64 i = 0; i < num_packet_streams; ++i) {
-    cc->Inputs().Index(i).Set<absl::Time>();
-    cc->Outputs().Index(i).Set<absl::Duration>();
-  }
-  cc->Inputs().Tag(kReferenceTag).Set<absl::Time>();
+    for (int64 i = 0; i < num_packet_streams; ++i) {
+        cc->Inputs().Index(i).Set<absl::Time>();
+        cc->Outputs().Index(i).Set<absl::Duration>();
+    }
+    cc->Inputs().Tag(kReferenceTag).Set<absl::Time>();
 
-  return absl::OkStatus();
+    return absl::OkStatus();
 }
 
 absl::Status ClockLatencyCalculator::Open(CalculatorContext* cc) {
-  // Direct passthrough, as far as timestamp and bounds are concerned.
-  cc->SetOffset(TimestampDiff(0));
-  num_packet_streams_ = cc->Inputs().NumEntries() - 1;
-  return absl::OkStatus();
+    // Direct passthrough, as far as timestamp and bounds are concerned.
+    cc->SetOffset(TimestampDiff(0));
+    num_packet_streams_ = cc->Inputs().NumEntries() - 1;
+    return absl::OkStatus();
 }
 
 absl::Status ClockLatencyCalculator::Process(CalculatorContext* cc) {
-  // Get reference time.
-  RET_CHECK(!cc->Inputs().Tag(kReferenceTag).IsEmpty());
-  const absl::Time& reference_time =
-      cc->Inputs().Tag(kReferenceTag).Get<absl::Time>();
+    // Get reference time.
+    RET_CHECK(!cc->Inputs().Tag(kReferenceTag).IsEmpty());
+    const absl::Time& reference_time =
+        cc->Inputs().Tag(kReferenceTag).Get<absl::Time>();
 
-  // Push Duration packets for every input stream we have.
-  for (int64 i = 0; i < num_packet_streams_; ++i) {
-    if (!cc->Inputs().Index(i).IsEmpty()) {
-      const absl::Time& input_stream_time =
-          cc->Inputs().Index(i).Get<absl::Time>();
-      cc->Outputs().Index(i).AddPacket(
-          MakePacket<absl::Duration>(input_stream_time - reference_time)
-              .At(cc->InputTimestamp()));
+    // Push Duration packets for every input stream we have.
+    for (int64 i = 0; i < num_packet_streams_; ++i) {
+        if (!cc->Inputs().Index(i).IsEmpty()) {
+            const absl::Time& input_stream_time =
+                cc->Inputs().Index(i).Get<absl::Time>();
+            cc->Outputs().Index(i).AddPacket(
+                MakePacket<absl::Duration>(input_stream_time - reference_time)
+                    .At(cc->InputTimestamp()));
+        }
     }
-  }
 
-  return absl::OkStatus();
+    return absl::OkStatus();
 }
 
 }  // namespace mediapipe

@@ -26,17 +26,17 @@ using Any = google::protobuf::Any;
 #else
 // A dummy definition of protobuf::Any for third_party/protobuf:protobuf-lite.
 class Any {
- public:
-  bool UnpackTo(proto_ns::Message* message) const { return false; }
-  template <typename T>
-  bool Is() const {
-    return false;
-  }
-  absl::string_view type_url() const { return ""; }
-  static const Any& default_instance() {
-    static Any _Any_default_instance_;
-    return _Any_default_instance_;
-  }
+public:
+    bool UnpackTo(proto_ns::Message* message) const { return false; }
+    template <typename T>
+    bool Is() const {
+        return false;
+    }
+    absl::string_view type_url() const { return ""; }
+    static const Any& default_instance() {
+        static Any _Any_default_instance_;
+        return _Any_default_instance_;
+    }
 };
 #endif
 

@@ -30,30 +30,30 @@ constexpr char kOutTag[] = "OUT";
 constexpr char kInTag[] = "IN";
 
 class TestSinkCalculator : public CalculatorBase {
- public:
-  static absl::Status GetContract(CalculatorContract* cc) {
-    cc->Inputs().Tag(kInTag).Set<mediapipe::InputOnlyProto>();
-    cc->Outputs().Tag(kOutTag).Set<int>();
-    return absl::OkStatus();
-  }
+public:
+    static absl::Status GetContract(CalculatorContract* cc) {
+        cc->Inputs().Tag(kInTag).Set<mediapipe::InputOnlyProto>();
+        cc->Outputs().Tag(kOutTag).Set<int>();
+        return absl::OkStatus();
+    }
 
-  absl::Status Process(CalculatorContext* cc) override {
-    int x = cc->Inputs().Tag(kInTag).Get<mediapipe::InputOnlyProto>().x();
-    cc->Outputs().Tag(kOutTag).AddPacket(
-        MakePacket<int>(x).At(cc->InputTimestamp()));
-    return absl::OkStatus();
-  }
+    absl::Status Process(CalculatorContext* cc) override {
+        int x = cc->Inputs().Tag(kInTag).Get<mediapipe::InputOnlyProto>().x();
+        cc->Outputs().Tag(kOutTag).AddPacket(
+            MakePacket<int>(x).At(cc->InputTimestamp()));
+        return absl::OkStatus();
+    }
 };
 REGISTER_CALCULATOR(TestSinkCalculator);
 
 }  // namespace test_ns
 
 TEST(PacketTest, InputTypeRegistration) {
-  using testing::Contains;
-  ASSERT_EQ(mediapipe::InputOnlyProto{}.GetTypeName(),
-            "mediapipe.InputOnlyProto");
-  EXPECT_THAT(packet_internal::MessageHolderRegistry::GetRegisteredNames(),
-              Contains("mediapipe.InputOnlyProto"));
+    using testing::Contains;
+    ASSERT_EQ(mediapipe::InputOnlyProto{}.GetTypeName(),
+              "mediapipe.InputOnlyProto");
+    EXPECT_THAT(packet_internal::MessageHolderRegistry::GetRegisteredNames(),
+                Contains("mediapipe.InputOnlyProto"));
 }
 
 }  // namespace

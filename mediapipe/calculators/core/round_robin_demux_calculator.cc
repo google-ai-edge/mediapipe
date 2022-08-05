@@ -74,30 +74,30 @@ namespace api2 {
 // use it with MuxCalculator and later unpack, or can create new variants of
 // MuxCalculator/MuxInputStreamHandler.
 class RoundRobinDemuxCalculator : public Node {
- public:
-  static constexpr Input<AnyType> kIn{""};
-  static constexpr Output<int>::Optional kSelect{"SELECT"};
-  static constexpr Output<SameType<kIn>>::Multiple kOut{"OUTPUT"};
+public:
+    static constexpr Input<AnyType> kIn{""};
+    static constexpr Output<int>::Optional kSelect{"SELECT"};
+    static constexpr Output<SameType<kIn>>::Multiple kOut{"OUTPUT"};
 
-  MEDIAPIPE_NODE_CONTRACT(kIn, kSelect, kOut);
+    MEDIAPIPE_NODE_CONTRACT(kIn, kSelect, kOut);
 
-  absl::Status Open(CalculatorContext* cc) override {
-    output_data_stream_index_ = 0;
-    return absl::OkStatus();
-  }
-
-  absl::Status Process(CalculatorContext* cc) override {
-    kOut(cc)[output_data_stream_index_].Send(kIn(cc).packet());
-    if (kSelect(cc).IsConnected()) {
-      kSelect(cc).Send(output_data_stream_index_);
+    absl::Status Open(CalculatorContext* cc) override {
+        output_data_stream_index_ = 0;
+        return absl::OkStatus();
     }
-    output_data_stream_index_ =
-        (output_data_stream_index_ + 1) % kOut(cc).Count();
-    return absl::OkStatus();
-  }
 
- private:
-  int output_data_stream_index_;
+    absl::Status Process(CalculatorContext* cc) override {
+        kOut(cc)[output_data_stream_index_].Send(kIn(cc).packet());
+        if (kSelect(cc).IsConnected()) {
+            kSelect(cc).Send(output_data_stream_index_);
+        }
+        output_data_stream_index_ =
+            (output_data_stream_index_ + 1) % kOut(cc).Count();
+        return absl::OkStatus();
+    }
+
+private:
+    int output_data_stream_index_;
 };
 
 MEDIAPIPE_REGISTER_NODE(RoundRobinDemuxCalculator);

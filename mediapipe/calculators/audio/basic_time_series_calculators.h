@@ -27,20 +27,20 @@
 namespace mediapipe {
 
 class BasicTimeSeriesCalculatorBase : public CalculatorBase {
- public:
-  static absl::Status GetContract(CalculatorContract* cc);
-  absl::Status Open(CalculatorContext* cc) final;
-  absl::Status Process(CalculatorContext* cc) final;
+public:
+    static absl::Status GetContract(CalculatorContract* cc);
+    absl::Status Open(CalculatorContext* cc) final;
+    absl::Status Process(CalculatorContext* cc) final;
 
- protected:
-  // Open() calls this method to mutate the output stream header.  The input
-  // to this function will contain a copy of the input stream header, so
-  // subclasses that do not need to mutate the header do not need to override
-  // it.
-  virtual absl::Status MutateHeader(TimeSeriesHeader* output_header);
+protected:
+    // Open() calls this method to mutate the output stream header.  The input
+    // to this function will contain a copy of the input stream header, so
+    // subclasses that do not need to mutate the header do not need to override
+    // it.
+    virtual absl::Status MutateHeader(TimeSeriesHeader* output_header);
 
-  // Process() calls this method on each packet to compute the output matrix.
-  virtual Matrix ProcessMatrix(const Matrix& input_matrix) = 0;
+    // Process() calls this method on each packet to compute the output matrix.
+    virtual Matrix ProcessMatrix(const Matrix& input_matrix) = 0;
 };
 
 }  // namespace mediapipe

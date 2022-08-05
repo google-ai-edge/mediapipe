@@ -36,24 +36,24 @@ mediapipe::StatusBuilder RetCheckFailSlowPath(
 inline StatusBuilder RetCheckImpl(const absl::Status& status,
                                   const char* condition,
                                   mediapipe::source_location location) {
-  if (ABSL_PREDICT_TRUE(status.ok()))
-    return mediapipe::StatusBuilder(absl::OkStatus(), location);
-  return RetCheckFailSlowPath(location, condition, status);
+    if (ABSL_PREDICT_TRUE(status.ok()))
+        return mediapipe::StatusBuilder(absl::OkStatus(), location);
+    return RetCheckFailSlowPath(location, condition, status);
 }
 
 }  // namespace mediapipe
 
-#define RET_CHECK(cond)               \
-  while (ABSL_PREDICT_FALSE(!(cond))) \
-  return mediapipe::RetCheckFailSlowPath(MEDIAPIPE_LOC, #cond)
+#define RET_CHECK(cond)                 \
+    while (ABSL_PREDICT_FALSE(!(cond))) \
+    return mediapipe::RetCheckFailSlowPath(MEDIAPIPE_LOC, #cond)
 
 #define RET_CHECK_OK(status) \
-  MP_RETURN_IF_ERROR(mediapipe::RetCheckImpl((status), #status, MEDIAPIPE_LOC))
+    MP_RETURN_IF_ERROR(mediapipe::RetCheckImpl((status), #status, MEDIAPIPE_LOC))
 
 #define RET_CHECK_FAIL() return mediapipe::RetCheckFailSlowPath(MEDIAPIPE_LOC)
 
 #define MEDIAPIPE_INTERNAL_RET_CHECK_OP(name, op, lhs, rhs) \
-  RET_CHECK((lhs)op(rhs))
+    RET_CHECK((lhs)op(rhs))
 
 #define RET_CHECK_EQ(lhs, rhs) MEDIAPIPE_INTERNAL_RET_CHECK_OP(EQ, ==, lhs, rhs)
 #define RET_CHECK_NE(lhs, rhs) MEDIAPIPE_INTERNAL_RET_CHECK_OP(NE, !=, lhs, rhs)

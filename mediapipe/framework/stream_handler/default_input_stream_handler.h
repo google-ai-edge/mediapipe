@@ -27,33 +27,33 @@ namespace mediapipe {
 // Implementation of the "default" input stream handler that is applied on a
 // given CalculatorGraph when no input stream handler is explicitly specified.
 class DefaultInputStreamHandler : public InputStreamHandler {
- public:
-  DefaultInputStreamHandler() = delete;
-  DefaultInputStreamHandler(std::shared_ptr<tool::TagMap> tag_map,
-                            CalculatorContextManager* cc_manager,
-                            const MediaPipeOptions& options,
-                            bool calculator_run_in_parallel);
+public:
+    DefaultInputStreamHandler() = delete;
+    DefaultInputStreamHandler(std::shared_ptr<tool::TagMap> tag_map,
+                              CalculatorContextManager* cc_manager,
+                              const MediaPipeOptions& options,
+                              bool calculator_run_in_parallel);
 
- protected:
-  // Reinitializes this InputStreamHandler before each CalculatorGraph run.
-  void PrepareForRun(std::function<void()> headers_ready_callback,
-                     std::function<void()> notification_callback,
-                     std::function<void(CalculatorContext*)> schedule_callback,
-                     std::function<void(absl::Status)> error_callback) override;
+protected:
+    // Reinitializes this InputStreamHandler before each CalculatorGraph run.
+    void PrepareForRun(std::function<void()> headers_ready_callback,
+                       std::function<void()> notification_callback,
+                       std::function<void(CalculatorContext*)> schedule_callback,
+                       std::function<void(absl::Status)> error_callback) override;
 
-  // In DefaultInputStreamHandler, a node is "ready" if:
-  // - all streams are done (need to call Close() in this case), or
-  // - the minimum bound (over all empty streams) is greater than the smallest
-  //   timestamp of any stream, which means we have received all the packets
-  //   that will be available at the next timestamp.
-  NodeReadiness GetNodeReadiness(Timestamp* min_stream_timestamp) override;
+    // In DefaultInputStreamHandler, a node is "ready" if:
+    // - all streams are done (need to call Close() in this case), or
+    // - the minimum bound (over all empty streams) is greater than the smallest
+    //   timestamp of any stream, which means we have received all the packets
+    //   that will be available at the next timestamp.
+    NodeReadiness GetNodeReadiness(Timestamp* min_stream_timestamp) override;
 
-  // Only invoked when associated GetNodeReadiness() returned kReadyForProcess.
-  void FillInputSet(Timestamp input_timestamp,
-                    InputStreamShardSet* input_set) override;
+    // Only invoked when associated GetNodeReadiness() returned kReadyForProcess.
+    void FillInputSet(Timestamp input_timestamp,
+                      InputStreamShardSet* input_set) override;
 
-  // The packet-set builder.
-  SyncSet sync_set_;
+    // The packet-set builder.
+    SyncSet sync_set_;
 };
 
 }  // namespace mediapipe

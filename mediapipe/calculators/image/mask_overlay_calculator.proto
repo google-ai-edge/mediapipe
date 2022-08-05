@@ -19,16 +19,16 @@ package mediapipe;
 import "mediapipe/framework/calculator.proto";
 
 message MaskOverlayCalculatorOptions {
-  extend CalculatorOptions {
-    optional MaskOverlayCalculatorOptions ext = 252129282;
-  }
+    extend CalculatorOptions {
+        optional MaskOverlayCalculatorOptions ext = 252129282;
+    }
 
-  enum MaskChannel {
-    UNKNOWN = 0;
-    RED = 1;
-    ALPHA = 2;
-  }
+    enum MaskChannel {
+        UNKNOWN = 0;
+        RED = 1;
+        ALPHA = 2;
+    }
 
-  // Selects which channel of the MASK input to use for masking.
-  optional MaskChannel mask_channel = 1 [default = RED];
+    // Selects which channel of the MASK input to use for masking.
+    optional MaskChannel mask_channel = 1 [default = RED];
 }

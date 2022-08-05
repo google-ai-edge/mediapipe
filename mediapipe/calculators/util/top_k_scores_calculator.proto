@@ -19,15 +19,15 @@ package mediapipe;
 import "mediapipe/framework/calculator.proto";
 
 message TopKScoresCalculatorOptions {
-  extend CalculatorOptions {
-    optional TopKScoresCalculatorOptions ext = 271211788;
-  }
-  // How many highest scoring packets to output.
-  optional int32 top_k = 1;
+    extend CalculatorOptions {
+        optional TopKScoresCalculatorOptions ext = 271211788;
+    }
+    // How many highest scoring packets to output.
+    optional int32 top_k = 1;
 
-  // If set, only keep the scores that are greater than the threshold.
-  optional float threshold = 2;
+    // If set, only keep the scores that are greater than the threshold.
+    optional float threshold = 2;
 
-  // Path to a label map file for getting the actual name of classes.
-  optional string label_map_path = 3;
+    // Path to a label map file for getting the actual name of classes.
+    optional string label_map_path = 3;
 }

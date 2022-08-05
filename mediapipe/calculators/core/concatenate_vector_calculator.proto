@@ -21,11 +21,11 @@ import "mediapipe/framework/calculator.proto";
 option objc_class_prefix = "MediaPipe";
 
 message ConcatenateVectorCalculatorOptions {
-  extend CalculatorOptions {
-    optional ConcatenateVectorCalculatorOptions ext = 259397839;
-  }
+    extend CalculatorOptions {
+        optional ConcatenateVectorCalculatorOptions ext = 259397839;
+    }
 
-  // If true, the calculator will only emit a packet at the given timestamp if
-  // all input streams have a non-empty packet (AND operation on streams).
-  optional bool only_emit_if_all_present = 1 [default = false];
+    // If true, the calculator will only emit a packet at the given timestamp if
+    // all input streams have a non-empty packet (AND operation on streams).
+    optional bool only_emit_if_all_present = 1 [default = false];
 }

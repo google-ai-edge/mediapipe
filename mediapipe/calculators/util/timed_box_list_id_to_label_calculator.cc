@@ -47,58 +47,58 @@ using mediapipe::TimedBoxProtoList;
 //   }
 // }
 class TimedBoxListIdToLabelCalculator : public CalculatorBase {
- public:
-  static absl::Status GetContract(CalculatorContract* cc);
+public:
+    static absl::Status GetContract(CalculatorContract* cc);
 
-  absl::Status Open(CalculatorContext* cc) override;
-  absl::Status Process(CalculatorContext* cc) override;
+    absl::Status Open(CalculatorContext* cc) override;
+    absl::Status Process(CalculatorContext* cc) override;
 
- private:
-  absl::node_hash_map<int, std::string> label_map_;
+private:
+    absl::node_hash_map<int, std::string> label_map_;
 };
 REGISTER_CALCULATOR(TimedBoxListIdToLabelCalculator);
 
 absl::Status TimedBoxListIdToLabelCalculator::GetContract(
     CalculatorContract* cc) {
-  cc->Inputs().Index(0).Set<TimedBoxProtoList>();
-  cc->Outputs().Index(0).Set<TimedBoxProtoList>();
+    cc->Inputs().Index(0).Set<TimedBoxProtoList>();
+    cc->Outputs().Index(0).Set<TimedBoxProtoList>();
 
-  return absl::OkStatus();
+    return absl::OkStatus();
 }
 
 absl::Status TimedBoxListIdToLabelCalculator::Open(CalculatorContext* cc) {
-  cc->SetOffset(TimestampDiff(0));
+    cc->SetOffset(TimestampDiff(0));
 
-  const auto& options =
-      cc->Options<::mediapipe::TimedBoxListIdToLabelCalculatorOptions>();
+    const auto& options =
+        cc->Options<::mediapipe::TimedBoxListIdToLabelCalculatorOptions>();
 
-  std::string string_path;
-  ASSIGN_OR_RETURN(string_path, PathToResourceAsFile(options.label_map_path()));
-  std::string label_map_string;
-  MP_RETURN_IF_ERROR(file::GetContents(string_path, &label_map_string));
+    std::string string_path;
+    ASSIGN_OR_RETURN(string_path, PathToResourceAsFile(options.label_map_path()));
+    std::string label_map_string;
+    MP_RETURN_IF_ERROR(file::GetContents(string_path, &label_map_string));
 
-  std::istringstream stream(label_map_string);
-  std::string line;
-  int i = 0;
-  while (std::getline(stream, line)) {
-    label_map_[i++] = line;
-  }
-  return absl::OkStatus();
+    std::istringstream stream(label_map_string);
+    std::string line;
+    int i = 0;
+    while (std::getline(stream, line)) {
+        label_map_[i++] = line;
+    }
+    return absl::OkStatus();
 }
 
 absl::Status TimedBoxListIdToLabelCalculator::Process(CalculatorContext* cc) {
-  const auto& input_list = cc->Inputs().Index(0).Get<TimedBoxProtoList>();
-  auto output_list = absl::make_unique<TimedBoxProtoList>();
-  for (const auto& input_box : input_list.box()) {
-    TimedBoxProto* box_ptr = output_list->add_box();
-    *box_ptr = input_box;
+    const auto& input_list = cc->Inputs().Index(0).Get<TimedBoxProtoList>();
+    auto output_list = absl::make_unique<TimedBoxProtoList>();
+    for (const auto& input_box : input_list.box()) {
+        TimedBoxProto* box_ptr = output_list->add_box();
+        *box_ptr = input_box;
 
-    if (label_map_.find(input_box.id()) != label_map_.end()) {
-      box_ptr->set_label(label_map_[input_box.id()]);
+        if (label_map_.find(input_box.id()) != label_map_.end()) {
+            box_ptr->set_label(label_map_[input_box.id()]);
+        }
     }
-  }
-  cc->Outputs().Index(0).Add(output_list.release(), cc->InputTimestamp());
-  return absl::OkStatus();
+    cc->Outputs().Index(0).Add(output_list.release(), cc->InputTimestamp());
+    return absl::OkStatus();
 }
 
 }  // namespace mediapipe

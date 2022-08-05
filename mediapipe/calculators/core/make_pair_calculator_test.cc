@@ -28,43 +28,43 @@ namespace mediapipe {
 
 class MakePairCalculatorTest
     : public mediapipe::TimeSeriesCalculatorTest<mediapipe::NoOptions> {
- protected:
-  void SetUp() override {
-    calculator_name_ = "MakePairCalculator";
-    num_input_streams_ = 2;
-  }
+protected:
+    void SetUp() override {
+        calculator_name_ = "MakePairCalculator";
+        num_input_streams_ = 2;
+    }
 };
 
 TEST_F(MakePairCalculatorTest, ProducesExpectedPairs) {
-  InitializeGraph();
-  AppendInputPacket(new std::string("first packet"), Timestamp(1),
-                    /* input_index= */ 0);
-  AppendInputPacket(new std::string("second packet"), Timestamp(5),
-                    /* input_index= */ 0);
-  AppendInputPacket(new int(10), Timestamp(1), /* input_index= */ 1);
-  AppendInputPacket(new int(20), Timestamp(5), /* input_index= */ 1);
+    InitializeGraph();
+    AppendInputPacket(new std::string("first packet"), Timestamp(1),
+                      /* input_index= */ 0);
+    AppendInputPacket(new std::string("second packet"), Timestamp(5),
+                      /* input_index= */ 0);
+    AppendInputPacket(new int(10), Timestamp(1), /* input_index= */ 1);
+    AppendInputPacket(new int(20), Timestamp(5), /* input_index= */ 1);
 
-  MP_ASSERT_OK(RunGraph());
+    MP_ASSERT_OK(RunGraph());
 
-  EXPECT_THAT(
-      output().packets,
-      ::testing::ElementsAre(
-          mediapipe::PacketContainsTimestampAndPayload<
-              std::pair<Packet, Packet>>(
-              Timestamp(1),
-              ::testing::Pair(
-                  mediapipe::PacketContainsTimestampAndPayload<std::string>(
-                      Timestamp(1), std::string("first packet")),
-                  mediapipe::PacketContainsTimestampAndPayload<int>(
-                      Timestamp(1), 10))),
-          mediapipe::PacketContainsTimestampAndPayload<
-              std::pair<Packet, Packet>>(
-              Timestamp(5),
-              ::testing::Pair(
-                  mediapipe::PacketContainsTimestampAndPayload<std::string>(
-                      Timestamp(5), std::string("second packet")),
-                  mediapipe::PacketContainsTimestampAndPayload<int>(
-                      Timestamp(5), 20)))));
+    EXPECT_THAT(
+        output().packets,
+        ::testing::ElementsAre(
+            mediapipe::PacketContainsTimestampAndPayload<
+                std::pair<Packet, Packet>>(
+                Timestamp(1),
+                ::testing::Pair(
+                    mediapipe::PacketContainsTimestampAndPayload<std::string>(
+                        Timestamp(1), std::string("first packet")),
+                    mediapipe::PacketContainsTimestampAndPayload<int>(
+                        Timestamp(1), 10))),
+            mediapipe::PacketContainsTimestampAndPayload<
+                std::pair<Packet, Packet>>(
+                Timestamp(5),
+                ::testing::Pair(
+                    mediapipe::PacketContainsTimestampAndPayload<std::string>(
+                        Timestamp(5), std::string("second packet")),
+                    mediapipe::PacketContainsTimestampAndPayload<int>(
+                        Timestamp(5), 20)))));
 }
 
 }  // namespace mediapipe

@@ -64,60 +64,60 @@ constexpr char kRenderScaleTag[] = "RENDER_SCALE";
 //     }
 //   }
 class RectToRenderScaleCalculator : public CalculatorBase {
- public:
-  static absl::Status GetContract(CalculatorContract* cc);
-  absl::Status Open(CalculatorContext* cc) override;
-  absl::Status Process(CalculatorContext* cc) override;
+public:
+    static absl::Status GetContract(CalculatorContract* cc);
+    absl::Status Open(CalculatorContext* cc) override;
+    absl::Status Process(CalculatorContext* cc) override;
 
- private:
-  RectToRenderScaleCalculatorOptions options_;
+private:
+    RectToRenderScaleCalculatorOptions options_;
 };
 REGISTER_CALCULATOR(RectToRenderScaleCalculator);
 
 absl::Status RectToRenderScaleCalculator::GetContract(CalculatorContract* cc) {
-  cc->Inputs().Tag(kNormRectTag).Set<NormalizedRect>();
-  cc->Inputs().Tag(kImageSizeTag).Set<std::pair<int, int>>();
-  cc->Outputs().Tag(kRenderScaleTag).Set<float>();
+    cc->Inputs().Tag(kNormRectTag).Set<NormalizedRect>();
+    cc->Inputs().Tag(kImageSizeTag).Set<std::pair<int, int>>();
+    cc->Outputs().Tag(kRenderScaleTag).Set<float>();
 
-  return absl::OkStatus();
+    return absl::OkStatus();
 }
 
 absl::Status RectToRenderScaleCalculator::Open(CalculatorContext* cc) {
-  cc->SetOffset(TimestampDiff(0));
-  options_ = cc->Options<RectToRenderScaleCalculatorOptions>();
+    cc->SetOffset(TimestampDiff(0));
+    options_ = cc->Options<RectToRenderScaleCalculatorOptions>();
 
-  return absl::OkStatus();
+    return absl::OkStatus();
 }
 
 absl::Status RectToRenderScaleCalculator::Process(CalculatorContext* cc) {
-  if (cc->Inputs().Tag(kNormRectTag).IsEmpty()) {
+    if (cc->Inputs().Tag(kNormRectTag).IsEmpty()) {
+        cc->Outputs()
+            .Tag(kRenderScaleTag)
+            .AddPacket(
+                MakePacket<float>(options_.multiplier()).At(cc->InputTimestamp()));
+        return absl::OkStatus();
+    }
+
+    // Get image size.
+    int image_width;
+    int image_height;
+    std::tie(image_width, image_height) =
+        cc->Inputs().Tag(kImageSizeTag).Get<std::pair<int, int>>();
+
+    // Get rect size in absolute pixel coordinates.
+    const auto& rect = cc->Inputs().Tag(kNormRectTag).Get<NormalizedRect>();
+    const float rect_width = rect.width() * image_width;
+    const float rect_height = rect.height() * image_height;
+
+    // Calculate render scale.
+    const float rect_size = std::max(rect_width, rect_height);
+    const float render_scale = rect_size * options_.multiplier();
+
     cc->Outputs()
         .Tag(kRenderScaleTag)
-        .AddPacket(
-            MakePacket<float>(options_.multiplier()).At(cc->InputTimestamp()));
+        .AddPacket(MakePacket<float>(render_scale).At(cc->InputTimestamp()));
+
     return absl::OkStatus();
-  }
-
-  // Get image size.
-  int image_width;
-  int image_height;
-  std::tie(image_width, image_height) =
-      cc->Inputs().Tag(kImageSizeTag).Get<std::pair<int, int>>();
-
-  // Get rect size in absolute pixel coordinates.
-  const auto& rect = cc->Inputs().Tag(kNormRectTag).Get<NormalizedRect>();
-  const float rect_width = rect.width() * image_width;
-  const float rect_height = rect.height() * image_height;
-
-  // Calculate render scale.
-  const float rect_size = std::max(rect_width, rect_height);
-  const float render_scale = rect_size * options_.multiplier();
-
-  cc->Outputs()
-      .Tag(kRenderScaleTag)
-      .AddPacket(MakePacket<float>(render_scale).At(cc->InputTimestamp()));
-
-  return absl::OkStatus();
 }
 
 }  // namespace mediapipe

@@ -17,7 +17,7 @@
 namespace mediapipe {
 
 StatusOr<std::string> GetDefaultTraceLogDirectory() {
-  return std::string("/tmp");
+    return std::string("/tmp");
 }
 
 }  // namespace mediapipe

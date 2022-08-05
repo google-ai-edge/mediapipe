@@ -23,32 +23,33 @@
 namespace mediapipe {
 
 struct Size {
-  int width;
-  int height;
+    int width;
+    int height;
 };
 
 // Pixel extrapolation method.
 // When converting image to tensor it may happen that tensor needs to read
 // pixels outside image boundaries. Border mode helps to specify how such pixels
 // will be calculated.
-enum class BorderMode { kZero, kReplicate };
+enum class BorderMode { kZero,
+                        kReplicate };
 
 // Converts image to tensor.
 class ImageToTensorConverter {
- public:
-  virtual ~ImageToTensorConverter() = default;
+public:
+    virtual ~ImageToTensorConverter() = default;
 
-  // Converts image to tensor.
-  // @image contains image to extract from.
-  // @roi describes region of interest within the image to extract (absolute
-  // values).
-  // @output_dims dimensions of output tensor.
-  // @range_min/max describes output tensor range image pixels should converted
-  // to.
-  virtual absl::StatusOr<Tensor> Convert(const mediapipe::Image& input,
-                                         const RotatedRect& roi,
-                                         const Size& output_dims,
-                                         float range_min, float range_max) = 0;
+    // Converts image to tensor.
+    // @image contains image to extract from.
+    // @roi describes region of interest within the image to extract (absolute
+    // values).
+    // @output_dims dimensions of output tensor.
+    // @range_min/max describes output tensor range image pixels should converted
+    // to.
+    virtual absl::StatusOr<Tensor> Convert(const mediapipe::Image& input,
+                                           const RotatedRect& roi,
+                                           const Size& output_dims,
+                                           float range_min, float range_max) = 0;
 };
 
 }  // namespace mediapipe

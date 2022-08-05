@@ -17,7 +17,7 @@
 namespace mediapipe {
 
 std::ostream& operator<<(std::ostream& os, CollectionItemId arg) {
-  return os << arg.value();
+    return os << arg.value();
 }
 
 CollectionItemId operator+(int lhs, CollectionItemId rhs) { return rhs + lhs; }

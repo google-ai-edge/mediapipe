@@ -19,20 +19,20 @@ package mediapipe;
 import "mediapipe/framework/calculator.proto";
 
 message LogicCalculatorOptions {
-  extend CalculatorOptions {
-    optional LogicCalculatorOptions ext = 338731246;
-  }
-  // The logical operation to apply.
-  enum Operation {
-    AND = 0;
-    OR = 1;
-    XOR = 2;
-  }
-  optional Operation op = 1;
+    extend CalculatorOptions {
+        optional LogicCalculatorOptions ext = 338731246;
+    }
+    // The logical operation to apply.
+    enum Operation {
+        AND = 0;
+        OR = 1;
+        XOR = 2;
+    }
+    optional Operation op = 1;
 
-  // Whether to negate the result.
-  optional bool negate = 2;
+    // Whether to negate the result.
+    optional bool negate = 2;
 
-  // Optional bool input values.
-  repeated bool input_value = 3;
+    // Optional bool input values.
+    repeated bool input_value = 3;
 }

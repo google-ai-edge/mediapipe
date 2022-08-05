@@ -20,13 +20,13 @@ import "mediapipe/framework/calculator.proto";
 import "mediapipe/util/color.proto";
 
 message TimedBoxListToRenderDataCalculatorOptions {
-  extend CalculatorOptions {
-    optional TimedBoxListToRenderDataCalculatorOptions ext = 289899854;
-  }
+    extend CalculatorOptions {
+        optional TimedBoxListToRenderDataCalculatorOptions ext = 289899854;
+    }
 
-  // Color of boxes.
-  optional Color box_color = 1;
+    // Color of boxes.
+    optional Color box_color = 1;
 
-  // Thickness of the drawing of boxes.
-  optional double thickness = 2 [default = 1.0];
+    // Thickness of the drawing of boxes.
+    optional double thickness = 2 [default = 1.0];
 }

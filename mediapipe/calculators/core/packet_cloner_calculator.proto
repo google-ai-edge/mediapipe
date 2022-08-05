@@ -21,16 +21,16 @@ import "mediapipe/framework/calculator.proto";
 option objc_class_prefix = "MediaPipe";
 
 message PacketClonerCalculatorOptions {
-  extend CalculatorOptions {
-    optional PacketClonerCalculatorOptions ext = 258872085;
-  }
+    extend CalculatorOptions {
+        optional PacketClonerCalculatorOptions ext = 258872085;
+    }
 
-  // When true, this calculator will drop received TICK packets if any input
-  // stream hasn't received a packet yet.
-  optional bool output_only_when_all_inputs_received = 1 [default = false];
+    // When true, this calculator will drop received TICK packets if any input
+    // stream hasn't received a packet yet.
+    optional bool output_only_when_all_inputs_received = 1 [default = false];
 
-  // Similar with above, but also transmit empty packet for all streams before
-  // all inputs are received.
-  optional bool output_packets_only_when_all_inputs_received = 2
-      [default = false];
+    // Similar with above, but also transmit empty packet for all streams before
+    // all inputs are received.
+    optional bool output_packets_only_when_all_inputs_received = 2
+        [default = false];
 }

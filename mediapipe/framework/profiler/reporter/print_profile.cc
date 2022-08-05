@@ -16,9 +16,6 @@
 // which can be included in a C++ source file. It is similar to filewrapper
 // (and borrows some of its code), but simpler.
 
-#include <algorithm>
-#include <fstream>
-
 #include "absl/container/btree_map.h"
 #include "absl/flags/flag.h"
 #include "absl/flags/parse.h"
@@ -27,6 +24,8 @@
 #include "mediapipe/framework/port/file_helpers.h"
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/profiler/reporter/reporter.h"
+#include <algorithm>
+#include <fstream>
 
 ABSL_FLAG(std::vector<std::string>, logfiles, {},
           "comma-separated list of .binarypb files to process.");
@@ -41,28 +40,29 @@ using mediapipe::reporter::Reporter;
 // The command line utility to mine trace files of useful statistics to
 // determine bottlenecks and performance of a graph.
 int main(int argc, char** argv) {
-  absl::SetProgramUsageMessage("Display statistics from MediaPipe log files.");
-  absl::ParseCommandLine(argc, argv);
+    absl::SetProgramUsageMessage("Display statistics from MediaPipe log files.");
+    absl::ParseCommandLine(argc, argv);
 
-  Reporter reporter;
-  reporter.set_compact(absl::GetFlag(FLAGS_compact));
-  const auto result = reporter.set_columns(absl::GetFlag(FLAGS_cols));
-  if (result.message().length()) {
-    std::cout << "WARNING" << std::endl << result.message();
-  }
-
-  const auto& flags_logfiles = absl::GetFlag(FLAGS_logfiles);
-  for (const auto& file_name : flags_logfiles) {
-    std::ifstream ifs(file_name.c_str(), std::ifstream::in);
-    mediapipe::proto_ns::io::IstreamInputStream isis(&ifs);
-    mediapipe::proto_ns::io::CodedInputStream coded_input_stream(&isis);
-    mediapipe::GraphProfile proto;
-    if (!proto.ParseFromCodedStream(&coded_input_stream)) {
-      std::cerr << "Failed to parse proto.\n";
-    } else {
-      reporter.Accumulate(proto);
+    Reporter reporter;
+    reporter.set_compact(absl::GetFlag(FLAGS_compact));
+    const auto result = reporter.set_columns(absl::GetFlag(FLAGS_cols));
+    if (result.message().length()) {
+        std::cout << "WARNING" << std::endl
+                  << result.message();
     }
-  }
-  reporter.Report()->Print(std::cout);
-  return 1;
+
+    const auto& flags_logfiles = absl::GetFlag(FLAGS_logfiles);
+    for (const auto& file_name : flags_logfiles) {
+        std::ifstream ifs(file_name.c_str(), std::ifstream::in);
+        mediapipe::proto_ns::io::IstreamInputStream isis(&ifs);
+        mediapipe::proto_ns::io::CodedInputStream coded_input_stream(&isis);
+        mediapipe::GraphProfile proto;
+        if (!proto.ParseFromCodedStream(&coded_input_stream)) {
+            std::cerr << "Failed to parse proto.\n";
+        } else {
+            reporter.Accumulate(proto);
+        }
+    }
+    reporter.Report()->Print(std::cout);
+    return 1;
 }

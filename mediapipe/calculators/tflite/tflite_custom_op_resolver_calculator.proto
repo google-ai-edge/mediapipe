@@ -20,10 +20,10 @@ import "mediapipe/framework/calculator.proto";
 
 // Options to generate an op resolver for running TfLite inference.
 message TfLiteCustomOpResolverCalculatorOptions {
-  extend mediapipe.CalculatorOptions {
-    optional TfLiteCustomOpResolverCalculatorOptions ext = 252087553;
-  }
+    extend mediapipe.CalculatorOptions {
+        optional TfLiteCustomOpResolverCalculatorOptions ext = 252087553;
+    }
 
-  // Flag for using GPU inference which uses the correspondent op resolver.
-  optional bool use_gpu = 1 [default = false];
+    // Flag for using GPU inference which uses the correspondent op resolver.
+    optional bool use_gpu = 1 [default = false];
 }

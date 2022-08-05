@@ -16,14 +16,13 @@
 #ifndef MEDIAPIPE_EXAMPLES_DESKTOP_AUTOFLIP_QUALITY_SCENE_CROPPING_VIZ_H_
 #define MEDIAPIPE_EXAMPLES_DESKTOP_AUTOFLIP_QUALITY_SCENE_CROPPING_VIZ_H_
 
-#include <vector>
-
 #include "mediapipe/examples/desktop/autoflip/quality/cropping.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/image_format.pb.h"
 #include "mediapipe/framework/formats/image_frame.h"
 #include "mediapipe/framework/port/opencv_core_inc.h"
 #include "mediapipe/framework/port/status.h"
+#include <vector>
 
 namespace mediapipe {
 namespace autoflip {

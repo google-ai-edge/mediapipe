@@ -25,5 +25,5 @@ option java_outer_classname = "MediaPipeOptionsProto";
 
 // Options used by a MediaPipe object.
 message MediaPipeOptions {
-  extensions 20000 to max;
+    extensions 20000 to max;
 }

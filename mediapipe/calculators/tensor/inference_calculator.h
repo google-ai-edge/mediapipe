@@ -15,11 +15,6 @@
 #ifndef MEDIAPIPE_CALCULATORS_TENSOR_INFERENCE_CALCULATOR_H_
 #define MEDIAPIPE_CALCULATORS_TENSOR_INFERENCE_CALCULATOR_H_
 
-#include <cstring>
-#include <memory>
-#include <string>
-#include <vector>
-
 #include "absl/memory/memory.h"
 #include "mediapipe/calculators/tensor/inference_calculator.pb.h"
 #include "mediapipe/framework/api2/node.h"
@@ -32,6 +27,10 @@
 #include "tensorflow/lite/interpreter.h"
 #include "tensorflow/lite/kernels/register.h"
 #include "tensorflow/lite/model.h"
+#include <cstring>
+#include <memory>
+#include <string>
+#include <vector>
 
 namespace mediapipe {
 namespace api2 {
@@ -97,53 +96,53 @@ namespace api2 {
 //  Input tensors are assumed to be of the correct size and already normalized.
 
 class InferenceCalculator : public NodeIntf {
- public:
-  static constexpr Input<std::vector<Tensor>> kInTensors{"TENSORS"};
-  // Deprecated. Prefers to use "OP_RESOLVER" input side packet instead.
-  // TODO: Removes the "CUSTOM_OP_RESOLVER" side input after the
-  // migration.
-  static constexpr SideInput<tflite::ops::builtin::BuiltinOpResolver>::Optional
-      kSideInCustomOpResolver{"CUSTOM_OP_RESOLVER"};
-  static constexpr SideInput<tflite::OpResolver>::Optional kSideInOpResolver{
-      "OP_RESOLVER"};
-  static constexpr SideInput<TfLiteModelPtr>::Optional kSideInModel{"MODEL"};
-  static constexpr Output<std::vector<Tensor>> kOutTensors{"TENSORS"};
-  static constexpr SideInput<
-      mediapipe::InferenceCalculatorOptions::Delegate>::Optional kDelegate{
-      "DELEGATE"};
-  MEDIAPIPE_NODE_CONTRACT(kInTensors, kSideInCustomOpResolver,
-                          kSideInOpResolver, kSideInModel, kOutTensors,
-                          kDelegate);
+public:
+    static constexpr Input<std::vector<Tensor>> kInTensors{"TENSORS"};
+    // Deprecated. Prefers to use "OP_RESOLVER" input side packet instead.
+    // TODO: Removes the "CUSTOM_OP_RESOLVER" side input after the
+    // migration.
+    static constexpr SideInput<tflite::ops::builtin::BuiltinOpResolver>::Optional
+        kSideInCustomOpResolver{"CUSTOM_OP_RESOLVER"};
+    static constexpr SideInput<tflite::OpResolver>::Optional kSideInOpResolver{
+        "OP_RESOLVER"};
+    static constexpr SideInput<TfLiteModelPtr>::Optional kSideInModel{"MODEL"};
+    static constexpr Output<std::vector<Tensor>> kOutTensors{"TENSORS"};
+    static constexpr SideInput<
+        mediapipe::InferenceCalculatorOptions::Delegate>::Optional kDelegate{
+        "DELEGATE"};
+    MEDIAPIPE_NODE_CONTRACT(kInTensors, kSideInCustomOpResolver,
+                            kSideInOpResolver, kSideInModel, kOutTensors,
+                            kDelegate);
 
- protected:
-  using TfLiteDelegatePtr =
-      std::unique_ptr<TfLiteDelegate, std::function<void(TfLiteDelegate*)>>;
+protected:
+    using TfLiteDelegatePtr =
+        std::unique_ptr<TfLiteDelegate, std::function<void(TfLiteDelegate*)>>;
 
-  absl::StatusOr<Packet<TfLiteModelPtr>> GetModelAsPacket(
-      CalculatorContext* cc);
+    absl::StatusOr<Packet<TfLiteModelPtr>> GetModelAsPacket(
+        CalculatorContext* cc);
 
-  absl::StatusOr<Packet<tflite::OpResolver>> GetOpResolverAsPacket(
-      CalculatorContext* cc);
+    absl::StatusOr<Packet<tflite::OpResolver>> GetOpResolverAsPacket(
+        CalculatorContext* cc);
 };
 
 struct InferenceCalculatorSelector : public InferenceCalculator {
-  static constexpr char kCalculatorName[] = "InferenceCalculator";
+    static constexpr char kCalculatorName[] = "InferenceCalculator";
 };
 
 struct InferenceCalculatorGl : public InferenceCalculator {
-  static constexpr char kCalculatorName[] = "InferenceCalculatorGl";
+    static constexpr char kCalculatorName[] = "InferenceCalculatorGl";
 };
 
 struct InferenceCalculatorGlAdvanced : public InferenceCalculator {
-  static constexpr char kCalculatorName[] = "InferenceCalculatorGlAdvanced";
+    static constexpr char kCalculatorName[] = "InferenceCalculatorGlAdvanced";
 };
 
 struct InferenceCalculatorMetal : public InferenceCalculator {
-  static constexpr char kCalculatorName[] = "InferenceCalculatorMetal";
+    static constexpr char kCalculatorName[] = "InferenceCalculatorMetal";
 };
 
 struct InferenceCalculatorCpu : public InferenceCalculator {
-  static constexpr char kCalculatorName[] = "InferenceCalculatorCpu";
+    static constexpr char kCalculatorName[] = "InferenceCalculatorCpu";
 };
 
 }  // namespace api2

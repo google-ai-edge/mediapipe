@@ -12,15 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <sys/types.h>
-
-#include <memory>
-#include <string>
-
 #include "absl/strings/numbers.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/port/integral_types.h"
 #include "mediapipe/framework/port/status.h"
+#include <sys/types.h>
+#include <memory>
+#include <string>
 
 namespace mediapipe {
 
@@ -35,27 +33,27 @@ namespace mediapipe {
 // }
 template <typename IntType>
 class StringToIntCalculatorTemplate : public CalculatorBase {
- public:
-  static absl::Status GetContract(CalculatorContract* cc) {
-    cc->InputSidePackets().Index(0).Set<std::string>();
-    cc->OutputSidePackets().Index(0).Set<IntType>();
-    return absl::OkStatus();
-  }
-
-  absl::Status Open(CalculatorContext* cc) override {
-    IntType number;
-    if (!absl::SimpleAtoi(cc->InputSidePackets().Index(0).Get<std::string>(),
-                          &number)) {
-      return absl::InvalidArgumentError(
-          "The string could not be parsed as an integer.");
+public:
+    static absl::Status GetContract(CalculatorContract* cc) {
+        cc->InputSidePackets().Index(0).Set<std::string>();
+        cc->OutputSidePackets().Index(0).Set<IntType>();
+        return absl::OkStatus();
     }
-    cc->OutputSidePackets().Index(0).Set(MakePacket<IntType>(number));
-    return absl::OkStatus();
-  }
 
-  absl::Status Process(CalculatorContext* cc) override {
-    return absl::OkStatus();
-  }
+    absl::Status Open(CalculatorContext* cc) override {
+        IntType number;
+        if (!absl::SimpleAtoi(cc->InputSidePackets().Index(0).Get<std::string>(),
+                              &number)) {
+            return absl::InvalidArgumentError(
+                "The string could not be parsed as an integer.");
+        }
+        cc->OutputSidePackets().Index(0).Set(MakePacket<IntType>(number));
+        return absl::OkStatus();
+    }
+
+    absl::Status Process(CalculatorContext* cc) override {
+        return absl::OkStatus();
+    }
 };
 
 using StringToIntCalculator = StringToIntCalculatorTemplate<int>;

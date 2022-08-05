@@ -42,38 +42,38 @@ package mediapipe.autoflip;
 // Note: Choosing a too high weight can lead to
 // jerkiness as the stabilization essentially starts tracking the focus point.
 message FocusPoint {
-  // Normalized location of the point (within domain [0, 1] x [0, 1].
-  optional float norm_point_x = 1 [default = 0.0];
-  optional float norm_point_y = 2 [default = 0.0];
+    // Normalized location of the point (within domain [0, 1] x [0, 1].
+    optional float norm_point_x = 1 [default = 0.0];
+    optional float norm_point_y = 2 [default = 0.0];
 
-  enum FocusPointType {
-    TYPE_INCLUDE = 1;
-    TYPE_EXCLUDE_LEFT = 2;
-    TYPE_EXCLUDE_RIGHT = 3;
-  }
+    enum FocusPointType {
+        TYPE_INCLUDE = 1;
+        TYPE_EXCLUDE_LEFT = 2;
+        TYPE_EXCLUDE_RIGHT = 3;
+    }
 
-  // Focus point type. By default we try to frame the focus point within
-  // the bounding box specified by left, bottom, right, top. Alternatively, one
-  // can choose to exclude the point. For details, see discussion above.
-  optional FocusPointType type = 11 [default = TYPE_INCLUDE];
+    // Focus point type. By default we try to frame the focus point within
+    // the bounding box specified by left, bottom, right, top. Alternatively, one
+    // can choose to exclude the point. For details, see discussion above.
+    optional FocusPointType type = 11 [default = TYPE_INCLUDE];
 
-  // Bounds are specified in normalized coordinates [0, 1], FROM the specified
-  // border. Opposing bounds (e.g. left and right) may not add to values
-  // larger than 1.
-  // Default bounds center focus point within centering third of the frame.
-  optional float left = 3 [default = 0.3];
-  optional float bottom = 4 [default = 0.3];
-  optional float right = 9 [default = 0.3];
-  optional float top = 10 [default = 0.3];
+    // Bounds are specified in normalized coordinates [0, 1], FROM the specified
+    // border. Opposing bounds (e.g. left and right) may not add to values
+    // larger than 1.
+    // Default bounds center focus point within centering third of the frame.
+    optional float left = 3 [default = 0.3];
+    optional float bottom = 4 [default = 0.3];
+    optional float right = 9 [default = 0.3];
+    optional float top = 10 [default = 0.3];
 
-  optional float weight = 5 [default = 15];
+    optional float weight = 5 [default = 15];
 
-  extensions 20000 to max;
+    extensions 20000 to max;
 }
 
 // Aggregates FocusPoint's for a frame.
 message FocusPointFrame {
-  repeated FocusPoint point = 1;
+    repeated FocusPoint point = 1;
 
-  extensions 20000 to max;
+    extensions 20000 to max;
 }

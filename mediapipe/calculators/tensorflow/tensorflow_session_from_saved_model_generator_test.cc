@@ -38,99 +38,99 @@ constexpr char kStringSavedModelPathTag[] = "STRING_SAVED_MODEL_PATH";
 constexpr char kSessionTag[] = "SESSION";
 
 std::string GetSavedModelDir() {
-  std::string out_path =
-      file::JoinPath("./", "mediapipe/calculators/tensorflow/testdata/",
-                     "tensorflow_saved_model/00000000");
-  return out_path;
+    std::string out_path =
+        file::JoinPath("./", "mediapipe/calculators/tensorflow/testdata/",
+                       "tensorflow_saved_model/00000000");
+    return out_path;
 }
 
 // Helper function that creates Tensor INT32 matrix with size 1x3.
 tf::Tensor TensorMatrix1x3(const int v1, const int v2, const int v3) {
-  tf::Tensor tensor(tf::DT_INT32,
-                    tf::TensorShape(std::vector<tf::int64>({1, 3})));
-  auto matrix = tensor.matrix<int32>();
-  matrix(0, 0) = v1;
-  matrix(0, 1) = v2;
-  matrix(0, 2) = v3;
-  return tensor;
+    tf::Tensor tensor(tf::DT_INT32,
+                      tf::TensorShape(std::vector<tf::int64>({1, 3})));
+    auto matrix = tensor.matrix<int32>();
+    matrix(0, 0) = v1;
+    matrix(0, 1) = v2;
+    matrix(0, 2) = v3;
+    return tensor;
 }
 
 class TensorFlowSessionFromSavedModelGeneratorTest : public ::testing::Test {
- protected:
-  void SetUp() override {
-    extendable_options_.Clear();
-    generator_options_ = extendable_options_.MutableExtension(
-        TensorFlowSessionFromSavedModelGeneratorOptions::ext);
-    generator_options_->set_saved_model_path(GetSavedModelDir());
-  }
+protected:
+    void SetUp() override {
+        extendable_options_.Clear();
+        generator_options_ = extendable_options_.MutableExtension(
+            TensorFlowSessionFromSavedModelGeneratorOptions::ext);
+        generator_options_->set_saved_model_path(GetSavedModelDir());
+    }
 
-  PacketGeneratorOptions extendable_options_;
-  TensorFlowSessionFromSavedModelGeneratorOptions* generator_options_;
+    PacketGeneratorOptions extendable_options_;
+    TensorFlowSessionFromSavedModelGeneratorOptions* generator_options_;
 };
 
 TEST_F(TensorFlowSessionFromSavedModelGeneratorTest,
        CreatesPacketWithGraphAndBindings) {
-  PacketSet input_side_packets(tool::CreateTagMap({}).value());
-  PacketSet output_side_packets(
-      tool::CreateTagMap({"SESSION:session"}).value());
-  absl::Status run_status = tool::RunGenerateAndValidateTypes(
-      "TensorFlowSessionFromSavedModelGenerator", extendable_options_,
-      input_side_packets, &output_side_packets);
-  MP_EXPECT_OK(run_status) << run_status.message();
-  const TensorFlowSession& session =
-      output_side_packets.Tag(kSessionTag).Get<TensorFlowSession>();
-  // Session must be set.
-  ASSERT_NE(session.session, nullptr);
+    PacketSet input_side_packets(tool::CreateTagMap({}).value());
+    PacketSet output_side_packets(
+        tool::CreateTagMap({"SESSION:session"}).value());
+    absl::Status run_status = tool::RunGenerateAndValidateTypes(
+        "TensorFlowSessionFromSavedModelGenerator", extendable_options_,
+        input_side_packets, &output_side_packets);
+    MP_EXPECT_OK(run_status) << run_status.message();
+    const TensorFlowSession& session =
+        output_side_packets.Tag(kSessionTag).Get<TensorFlowSession>();
+    // Session must be set.
+    ASSERT_NE(session.session, nullptr);
 
-  // Bindings are inserted.
-  EXPECT_EQ(session.tag_to_tensor_map.size(), 4);
+    // Bindings are inserted.
+    EXPECT_EQ(session.tag_to_tensor_map.size(), 4);
 
-  // For some reason, EXPECT_EQ and EXPECT_NE are not working with iterators.
-  EXPECT_FALSE(session.tag_to_tensor_map.find("A") ==
-               session.tag_to_tensor_map.end());
-  EXPECT_FALSE(session.tag_to_tensor_map.find("B") ==
-               session.tag_to_tensor_map.end());
-  EXPECT_FALSE(session.tag_to_tensor_map.find("MULTIPLIED") ==
-               session.tag_to_tensor_map.end());
-  EXPECT_FALSE(session.tag_to_tensor_map.find("EXPENSIVE") ==
-               session.tag_to_tensor_map.end());
-  // Sanity: find() actually returns a reference to end() if element not
-  // found.
-  EXPECT_TRUE(session.tag_to_tensor_map.find("Z") ==
-              session.tag_to_tensor_map.end());
+    // For some reason, EXPECT_EQ and EXPECT_NE are not working with iterators.
+    EXPECT_FALSE(session.tag_to_tensor_map.find("A") ==
+                 session.tag_to_tensor_map.end());
+    EXPECT_FALSE(session.tag_to_tensor_map.find("B") ==
+                 session.tag_to_tensor_map.end());
+    EXPECT_FALSE(session.tag_to_tensor_map.find("MULTIPLIED") ==
+                 session.tag_to_tensor_map.end());
+    EXPECT_FALSE(session.tag_to_tensor_map.find("EXPENSIVE") ==
+                 session.tag_to_tensor_map.end());
+    // Sanity: find() actually returns a reference to end() if element not
+    // found.
+    EXPECT_TRUE(session.tag_to_tensor_map.find("Z") ==
+                session.tag_to_tensor_map.end());
 
-  EXPECT_EQ(session.tag_to_tensor_map.at("A"), "a:0");
-  EXPECT_EQ(session.tag_to_tensor_map.at("B"), "b:0");
-  EXPECT_EQ(session.tag_to_tensor_map.at("MULTIPLIED"), "multiplied:0");
-  EXPECT_EQ(session.tag_to_tensor_map.at("EXPENSIVE"), "expensive:0");
+    EXPECT_EQ(session.tag_to_tensor_map.at("A"), "a:0");
+    EXPECT_EQ(session.tag_to_tensor_map.at("B"), "b:0");
+    EXPECT_EQ(session.tag_to_tensor_map.at("MULTIPLIED"), "multiplied:0");
+    EXPECT_EQ(session.tag_to_tensor_map.at("EXPENSIVE"), "expensive:0");
 }
 
 TEST_F(TensorFlowSessionFromSavedModelGeneratorTest,
        CreateSessionFromSidePacket) {
-  generator_options_->clear_saved_model_path();
-  PacketSet input_side_packets(
-      tool::CreateTagMap({"STRING_SAVED_MODEL_PATH:saved_model_dir"}).value());
-  input_side_packets.Tag(kStringSavedModelPathTag) =
-      Adopt(new std::string(GetSavedModelDir()));
-  PacketSet output_side_packets(
-      tool::CreateTagMap({"SESSION:session"}).value());
-  absl::Status run_status = tool::RunGenerateAndValidateTypes(
-      "TensorFlowSessionFromSavedModelGenerator", extendable_options_,
-      input_side_packets, &output_side_packets);
-  MP_EXPECT_OK(run_status) << run_status.message();
-  const TensorFlowSession& session =
-      output_side_packets.Tag(kSessionTag).Get<TensorFlowSession>();
-  // Session must be set.
-  ASSERT_NE(session.session, nullptr);
+    generator_options_->clear_saved_model_path();
+    PacketSet input_side_packets(
+        tool::CreateTagMap({"STRING_SAVED_MODEL_PATH:saved_model_dir"}).value());
+    input_side_packets.Tag(kStringSavedModelPathTag) =
+        Adopt(new std::string(GetSavedModelDir()));
+    PacketSet output_side_packets(
+        tool::CreateTagMap({"SESSION:session"}).value());
+    absl::Status run_status = tool::RunGenerateAndValidateTypes(
+        "TensorFlowSessionFromSavedModelGenerator", extendable_options_,
+        input_side_packets, &output_side_packets);
+    MP_EXPECT_OK(run_status) << run_status.message();
+    const TensorFlowSession& session =
+        output_side_packets.Tag(kSessionTag).Get<TensorFlowSession>();
+    // Session must be set.
+    ASSERT_NE(session.session, nullptr);
 }
 
 // Integration test. Verifies that TensorFlowInferenceCalculator correctly
 // consumes the Packet emitted by this factory.
 TEST_F(TensorFlowSessionFromSavedModelGeneratorTest,
        ProducesPacketUsableByTensorFlowInferenceCalculator) {
-  CalculatorGraphConfig graph_config =
-      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(
-          absl::Substitute(R"(
+    CalculatorGraphConfig graph_config =
+        mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(
+            absl::Substitute(R"(
       node {
         calculator: "TensorFlowInferenceCalculator"
         input_side_packet: "SESSION:tf_model"
@@ -155,73 +155,73 @@ TEST_F(TensorFlowSessionFromSavedModelGeneratorTest,
       }
       input_stream: "a_tensor"
   )",
-                           generator_options_->DebugString()));
+                             generator_options_->DebugString()));
 
-  CalculatorGraph graph;
-  MP_ASSERT_OK(graph.Initialize(graph_config));
-  StatusOrPoller status_or_poller =
-      graph.AddOutputStreamPoller("multiplied_tensor");
-  ASSERT_TRUE(status_or_poller.ok());
-  OutputStreamPoller poller = std::move(status_or_poller.value());
+    CalculatorGraph graph;
+    MP_ASSERT_OK(graph.Initialize(graph_config));
+    StatusOrPoller status_or_poller =
+        graph.AddOutputStreamPoller("multiplied_tensor");
+    ASSERT_TRUE(status_or_poller.ok());
+    OutputStreamPoller poller = std::move(status_or_poller.value());
 
-  MP_ASSERT_OK(graph.StartRun({}));
-  MP_ASSERT_OK(graph.AddPacketToInputStream(
-      "a_tensor",
-      Adopt(new auto(TensorMatrix1x3(1, -1, 10))).At(Timestamp(0))));
-  MP_ASSERT_OK(graph.CloseInputStream("a_tensor"));
+    MP_ASSERT_OK(graph.StartRun({}));
+    MP_ASSERT_OK(graph.AddPacketToInputStream(
+        "a_tensor",
+        Adopt(new auto(TensorMatrix1x3(1, -1, 10))).At(Timestamp(0))));
+    MP_ASSERT_OK(graph.CloseInputStream("a_tensor"));
 
-  Packet packet;
-  ASSERT_TRUE(poller.Next(&packet));
-  // input tensor gets multiplied by [[3, 2, 1]]. Expected output:
-  tf::Tensor expected_multiplication = TensorMatrix1x3(3, -2, 10);
-  EXPECT_EQ(expected_multiplication.DebugString(),
-            packet.Get<tf::Tensor>().DebugString());
+    Packet packet;
+    ASSERT_TRUE(poller.Next(&packet));
+    // input tensor gets multiplied by [[3, 2, 1]]. Expected output:
+    tf::Tensor expected_multiplication = TensorMatrix1x3(3, -2, 10);
+    EXPECT_EQ(expected_multiplication.DebugString(),
+              packet.Get<tf::Tensor>().DebugString());
 
-  ASSERT_FALSE(poller.Next(&packet));
-  MP_ASSERT_OK(graph.WaitUntilDone());
+    ASSERT_FALSE(poller.Next(&packet));
+    MP_ASSERT_OK(graph.WaitUntilDone());
 }
 
 TEST_F(TensorFlowSessionFromSavedModelGeneratorTest,
        GetsBundleGivenParentDirectory) {
-  generator_options_->set_saved_model_path(
-      std::string(file::SplitPath(GetSavedModelDir()).first));
-  generator_options_->set_load_latest_model(true);
+    generator_options_->set_saved_model_path(
+        std::string(file::SplitPath(GetSavedModelDir()).first));
+    generator_options_->set_load_latest_model(true);
 
-  PacketSet input_side_packets(tool::CreateTagMap({}).value());
-  PacketSet output_side_packets(
-      tool::CreateTagMap({"SESSION:session"}).value());
-  absl::Status run_status = tool::RunGenerateAndValidateTypes(
-      "TensorFlowSessionFromSavedModelGenerator", extendable_options_,
-      input_side_packets, &output_side_packets);
-  MP_EXPECT_OK(run_status) << run_status.message();
-  const TensorFlowSession& session =
-      output_side_packets.Tag(kSessionTag).Get<TensorFlowSession>();
-  // Session must be set.
-  ASSERT_NE(session.session, nullptr);
+    PacketSet input_side_packets(tool::CreateTagMap({}).value());
+    PacketSet output_side_packets(
+        tool::CreateTagMap({"SESSION:session"}).value());
+    absl::Status run_status = tool::RunGenerateAndValidateTypes(
+        "TensorFlowSessionFromSavedModelGenerator", extendable_options_,
+        input_side_packets, &output_side_packets);
+    MP_EXPECT_OK(run_status) << run_status.message();
+    const TensorFlowSession& session =
+        output_side_packets.Tag(kSessionTag).Get<TensorFlowSession>();
+    // Session must be set.
+    ASSERT_NE(session.session, nullptr);
 }
 
 TEST_F(TensorFlowSessionFromSavedModelGeneratorTest,
        ConfiguresSessionGivenConfig) {
-  generator_options_->set_saved_model_path(
-      std::string(file::SplitPath(GetSavedModelDir()).first));
-  generator_options_->set_load_latest_model(true);
-  generator_options_->mutable_session_config()->mutable_device_count()->insert(
-      {"CPU", 10});
+    generator_options_->set_saved_model_path(
+        std::string(file::SplitPath(GetSavedModelDir()).first));
+    generator_options_->set_load_latest_model(true);
+    generator_options_->mutable_session_config()->mutable_device_count()->insert(
+        {"CPU", 10});
 
-  PacketSet input_side_packets(tool::CreateTagMap({}).value());
-  PacketSet output_side_packets(
-      tool::CreateTagMap({"SESSION:session"}).value());
-  absl::Status run_status = tool::RunGenerateAndValidateTypes(
-      "TensorFlowSessionFromSavedModelGenerator", extendable_options_,
-      input_side_packets, &output_side_packets);
-  MP_EXPECT_OK(run_status) << run_status.message();
-  const TensorFlowSession& session =
-      output_side_packets.Tag(kSessionTag).Get<TensorFlowSession>();
-  // Session must be set.
-  ASSERT_NE(session.session, nullptr);
-  std::vector<tensorflow::DeviceAttributes> devices;
-  ASSERT_EQ(session.session->ListDevices(&devices), tensorflow::Status::OK());
-  EXPECT_THAT(devices.size(), 10);
+    PacketSet input_side_packets(tool::CreateTagMap({}).value());
+    PacketSet output_side_packets(
+        tool::CreateTagMap({"SESSION:session"}).value());
+    absl::Status run_status = tool::RunGenerateAndValidateTypes(
+        "TensorFlowSessionFromSavedModelGenerator", extendable_options_,
+        input_side_packets, &output_side_packets);
+    MP_EXPECT_OK(run_status) << run_status.message();
+    const TensorFlowSession& session =
+        output_side_packets.Tag(kSessionTag).Get<TensorFlowSession>();
+    // Session must be set.
+    ASSERT_NE(session.session, nullptr);
+    std::vector<tensorflow::DeviceAttributes> devices;
+    ASSERT_EQ(session.session->ListDevices(&devices), tensorflow::Status::OK());
+    EXPECT_THAT(devices.size(), 10);
 }
 
 }  // namespace

@@ -12,17 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#import <UIKit/UIKit.h>
-
 #import "mediapipe/objc/MPPCameraInputSource.h"
 #import "mediapipe/objc/MPPGraph.h"
 #import "mediapipe/objc/MPPLayerRenderer.h"
 #import "mediapipe/objc/MPPPlayerInputSource.h"
 #import "mediapipe/objc/MPPTimestampConverter.h"
+#import <UIKit/UIKit.h>
 
 typedef NS_ENUM(NSInteger, MediaPipeDemoSourceMode) {
-  MediaPipeDemoSourceCamera,
-  MediaPipeDemoSourceVideo
+    MediaPipeDemoSourceCamera,
+    MediaPipeDemoSourceVideo
 };
 
 @interface CommonViewController : UIViewController <MPPGraphDelegate, MPPInputSourceDelegate>

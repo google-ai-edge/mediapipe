@@ -15,12 +15,11 @@
 #ifndef MEDIAPIPE_CALCULATORS_LANDMARKS_TO_TENSOR_CALCULATOR_H_
 #define MEDIAPIPE_CALCULATORS_LANDMARKS_TO_TENSOR_CALCULATOR_H_
 
-#include <memory>
-
 #include "mediapipe/framework/api2/node.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/landmark.pb.h"
 #include "mediapipe/framework/formats/tensor.h"
+#include <memory>
 
 namespace mediapipe {
 namespace api2 {
@@ -48,11 +47,11 @@ namespace api2 {
 //   }
 // }
 class LandmarksToTensorCalculator : public NodeIntf {
- public:
-  static constexpr Input<LandmarkList>::Optional kInLandmarkList{"LANDMARKS"};
-  static constexpr Output<std::vector<Tensor>> kOutTensors{"TENSORS"};
-  MEDIAPIPE_NODE_INTERFACE(LandmarksToTensorCalculator, kInLandmarkList,
-                           kOutTensors);
+public:
+    static constexpr Input<LandmarkList>::Optional kInLandmarkList{"LANDMARKS"};
+    static constexpr Output<std::vector<Tensor>> kOutTensors{"TENSORS"};
+    MEDIAPIPE_NODE_INTERFACE(LandmarksToTensorCalculator, kInLandmarkList,
+                             kOutTensors);
 };
 
 }  // namespace api2

@@ -24,22 +24,22 @@ option objc_class_prefix = "MediaPipe";
 // vector. A vector v is spliced to have elements v[begin:(end-1)], i.e., with
 // begin index inclusive and end index exclusive.
 message Range {
-  optional int32 begin = 1;
-  optional int32 end = 2;
+    optional int32 begin = 1;
+    optional int32 end = 2;
 }
 
 message SplitVectorCalculatorOptions {
-  extend mediapipe.CalculatorOptions {
-    optional SplitVectorCalculatorOptions ext = 259438222;
-  }
+    extend mediapipe.CalculatorOptions {
+        optional SplitVectorCalculatorOptions ext = 259438222;
+    }
 
-  repeated Range ranges = 1;
+    repeated Range ranges = 1;
 
-  // Specify if single element ranges should be outputted as std::vector<T> or
-  // just element of type T. By default, if a range specifies only one element,
-  // it is outputted as an std::vector<T>.
-  optional bool element_only = 2 [default = false];
+    // Specify if single element ranges should be outputted as std::vector<T> or
+    // just element of type T. By default, if a range specifies only one element,
+    // it is outputted as an std::vector<T>.
+    optional bool element_only = 2 [default = false];
 
-  // Combines output elements to one vector.
-  optional bool combine_outputs = 3 [default = false];
+    // Combines output elements to one vector.
+    optional bool combine_outputs = 3 [default = false];
 }

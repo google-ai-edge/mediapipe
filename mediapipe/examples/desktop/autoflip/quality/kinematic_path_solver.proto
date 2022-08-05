@@ -3,43 +3,43 @@ syntax = "proto2";
 package mediapipe.autoflip;
 
 message KinematicOptions {
-  // Weighted update of new camera velocity (measurement) vs current state
-  // (prediction).
-  optional double update_rate = 1 [default = 0.5, deprecated = true];
-  // Max velocity (degrees per second) that the camera can move.  Cannot be used
-  // with max_velocity_scale or max_velocity_shift.
-  optional double max_velocity = 2;
-  // Min motion (in degrees) to react for both upper and lower directions.  Must
-  // not be set if using min_motion_to_reframe_lower and
-  // min_motion_to_reframe_upper.
-  optional float min_motion_to_reframe = 3;
-  // Min motion (in degrees) for upper and lower direction to react.  Both must
-  // be set and min_motion_to_reframe cannot be set if these are specified.
-  optional float min_motion_to_reframe_lower = 9;
-  optional float min_motion_to_reframe_upper = 10;
-  // When motion exceeds min_motion_to_reframe, move within this distance of the
-  // camera from the starting direction.  Setting this value non-zero reduces
-  // total reframe distance on average.  Value cannot exceed
-  // min_motion_to_reframe value.
-  optional float reframe_window = 4 [default = 0];
-  // Calculation of internal velocity state is:
-  // min((delta_time_s / update_rate_seconds), max_update_rate)
-  // where delta_time_s is the time since the last frame.
-  optional double update_rate_seconds = 5 [default = 0.20];
-  optional double max_update_rate = 6 [default = 0.8];
-  // History time window of observations to be median filtered.
-  optional int64 filtering_time_window_us = 7 [default = 0];
-  // Weighted update of average period, used for motion updates.
-  optional float mean_period_update_rate = 8 [default = 0.25];
-  // When set, caps the maximum time difference (seconds) calculated between new
-  // updates/observations. Useful when updates come very infrequently.
-  optional double max_delta_time_sec = 13;
-  // Scale factor for max velocity, to be multiplied by the distance from center
-  // in degrees.  Cannot be used with max_velocity and must be used with
-  // max_velocity_shift.
-  optional float max_velocity_scale = 11;
-  // Shift factor for max velocity, to be added to the scaled distance from
-  // center in degrees.  Cannot be used with max_velocity and must be used with
-  // max_velocity_scale.
-  optional float max_velocity_shift = 12;
+    // Weighted update of new camera velocity (measurement) vs current state
+    // (prediction).
+    optional double update_rate = 1 [default = 0.5, deprecated = true];
+    // Max velocity (degrees per second) that the camera can move.  Cannot be used
+    // with max_velocity_scale or max_velocity_shift.
+    optional double max_velocity = 2;
+    // Min motion (in degrees) to react for both upper and lower directions.  Must
+    // not be set if using min_motion_to_reframe_lower and
+    // min_motion_to_reframe_upper.
+    optional float min_motion_to_reframe = 3;
+    // Min motion (in degrees) for upper and lower direction to react.  Both must
+    // be set and min_motion_to_reframe cannot be set if these are specified.
+    optional float min_motion_to_reframe_lower = 9;
+    optional float min_motion_to_reframe_upper = 10;
+    // When motion exceeds min_motion_to_reframe, move within this distance of the
+    // camera from the starting direction.  Setting this value non-zero reduces
+    // total reframe distance on average.  Value cannot exceed
+    // min_motion_to_reframe value.
+    optional float reframe_window = 4 [default = 0];
+    // Calculation of internal velocity state is:
+    // min((delta_time_s / update_rate_seconds), max_update_rate)
+    // where delta_time_s is the time since the last frame.
+    optional double update_rate_seconds = 5 [default = 0.20];
+    optional double max_update_rate = 6 [default = 0.8];
+    // History time window of observations to be median filtered.
+    optional int64 filtering_time_window_us = 7 [default = 0];
+    // Weighted update of average period, used for motion updates.
+    optional float mean_period_update_rate = 8 [default = 0.25];
+    // When set, caps the maximum time difference (seconds) calculated between new
+    // updates/observations. Useful when updates come very infrequently.
+    optional double max_delta_time_sec = 13;
+    // Scale factor for max velocity, to be multiplied by the distance from center
+    // in degrees.  Cannot be used with max_velocity and must be used with
+    // max_velocity_shift.
+    optional float max_velocity_scale = 11;
+    // Shift factor for max velocity, to be added to the scaled distance from
+    // center in degrees.  Cannot be used with max_velocity and must be used with
+    // max_velocity_scale.
+    optional float max_velocity_shift = 12;
 }

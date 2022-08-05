@@ -48,148 +48,148 @@ namespace mediapipe {
 //  cc->SetInputStreamHandlerOptions(options);
 //
 class CalculatorContract {
- public:
-  absl::Status Initialize(const CalculatorGraphConfig::Node& node);
-  absl::Status Initialize(const PacketGeneratorConfig& node,
-                          const std::string& package);
-  absl::Status Initialize(const StatusHandlerConfig& node);
-  void SetNodeName(const std::string& node_name) { node_name_ = node_name; }
+public:
+    absl::Status Initialize(const CalculatorGraphConfig::Node& node);
+    absl::Status Initialize(const PacketGeneratorConfig& node,
+                            const std::string& package);
+    absl::Status Initialize(const StatusHandlerConfig& node);
+    void SetNodeName(const std::string& node_name) { node_name_ = node_name; }
 
-  // Returns the options given to this node.
-  const CalculatorOptions& Options() const { return node_config_->options(); }
+    // Returns the options given to this node.
+    const CalculatorOptions& Options() const { return node_config_->options(); }
 
-  // Returns the name given to this node.
-  const std::string& GetNodeName() const { return node_name_; }
+    // Returns the name given to this node.
+    const std::string& GetNodeName() const { return node_name_; }
 
-  // Returns the options given to this calculator.  Template argument T must
-  // be the type of the protobuf extension message or the protobuf::Any
-  // message containing the options.
-  template <class T>
-  const T& Options() const {
-    return options_.Get<T>();
-  }
-
-  // Returns the PacketTypeSet for the input streams.
-  PacketTypeSet& Inputs() { return *inputs_; }
-  const PacketTypeSet& Inputs() const { return *inputs_; }
-
-  // Returns the PacketTypeSet for the output streams.
-  PacketTypeSet& Outputs() { return *outputs_; }
-  const PacketTypeSet& Outputs() const { return *outputs_; }
-
-  // Returns the PacketTypeSet for the input side packets.
-  PacketTypeSet& InputSidePackets() { return *input_side_packets_; }
-  const PacketTypeSet& InputSidePackets() const { return *input_side_packets_; }
-
-  // Returns the PacketTypeSet for the output side packets.
-  PacketTypeSet& OutputSidePackets() { return *output_side_packets_; }
-  const PacketTypeSet& OutputSidePackets() const {
-    return *output_side_packets_;
-  }
-
-  // Specifies the preferred InputStreamHandler for this Node.
-  // If there is an InputStreamHandler specified in the graph (.pbtxt) for this
-  // Node, then the graph's InputStreamHandler will take priority.
-  void SetInputStreamHandler(const std::string& name) {
-    input_stream_handler_ = name;
-  }
-  void SetInputStreamHandlerOptions(const MediaPipeOptions& options) {
-    input_stream_handler_options_ = options;
-  }
-
-  // Returns the name of this Nodes's InputStreamHandler, or empty string if
-  // none is set.
-  std::string GetInputStreamHandler() const { return input_stream_handler_; }
-
-  // Returns the MediaPipeOptions of this Node's InputStreamHandler, or empty
-  // options if none is set.
-  MediaPipeOptions GetInputStreamHandlerOptions() const {
-    return input_stream_handler_options_;
-  }
-
-  // The next few methods are concerned with timestamp bound propagation
-  // (see scheduling_sync.md#input-policies). Every calculator that processes
-  // live inputs should specify either ProcessTimestampBounds or
-  // TimestampOffset.  Calculators that produce output at the same timestamp as
-  // the input, or with a fixed offset, should declare this fact using
-  // SetTimestampOffset.  Calculators that require custom timestamp bound
-  // calculations should use SetProcessTimestampBounds.
-
-  // When true, Process is called for every new timestamp bound, with or without
-  // new packets. A call to Process with only an input timestamp bound is
-  // normally used to compute a new output timestamp bound.
-  // NOTE: Also, when true, Process is called when input streams become done,
-  // which means, Process needs to handle input streams in "done" state.
-  // (Usually, by closing calculators' outputs where and when appropriate.)
-  void SetProcessTimestampBounds(bool process_timestamps) {
-    process_timestamps_ = process_timestamps;
-  }
-  bool GetProcessTimestampBounds() const { return process_timestamps_; }
-
-  // Specifies the maximum difference between input and output timestamps.
-  // When specified, the mediapipe framework automatically computes output
-  // timestamp bounds based on input timestamps.  The special value
-  // TimestampDiff::Unset disables the timestamp offset.
-  void SetTimestampOffset(TimestampDiff offset) { timestamp_offset_ = offset; }
-  TimestampDiff GetTimestampOffset() const { return timestamp_offset_; }
-
-  class GraphServiceRequest {
-   public:
-    // APIs that should be used by calculators.
-    GraphServiceRequest& Optional() {
-      optional_ = true;
-      return *this;
+    // Returns the options given to this calculator.  Template argument T must
+    // be the type of the protobuf extension message or the protobuf::Any
+    // message containing the options.
+    template <class T>
+    const T& Options() const {
+        return options_.Get<T>();
     }
 
-    // Internal use.
-    GraphServiceRequest(const GraphServiceBase& service) : service_(service) {}
+    // Returns the PacketTypeSet for the input streams.
+    PacketTypeSet& Inputs() { return *inputs_; }
+    const PacketTypeSet& Inputs() const { return *inputs_; }
 
-    const GraphServiceBase& Service() const { return service_; }
+    // Returns the PacketTypeSet for the output streams.
+    PacketTypeSet& Outputs() { return *outputs_; }
+    const PacketTypeSet& Outputs() const { return *outputs_; }
 
-    bool IsOptional() const { return optional_; }
+    // Returns the PacketTypeSet for the input side packets.
+    PacketTypeSet& InputSidePackets() { return *input_side_packets_; }
+    const PacketTypeSet& InputSidePackets() const { return *input_side_packets_; }
 
-   private:
-    const GraphServiceBase& service_;
-    bool optional_ = false;
-  };
+    // Returns the PacketTypeSet for the output side packets.
+    PacketTypeSet& OutputSidePackets() { return *output_side_packets_; }
+    const PacketTypeSet& OutputSidePackets() const {
+        return *output_side_packets_;
+    }
 
-  GraphServiceRequest& UseService(const GraphServiceBase& service) {
-    auto it = service_requests_.emplace(service.key, service).first;
-    return it->second;
-  }
+    // Specifies the preferred InputStreamHandler for this Node.
+    // If there is an InputStreamHandler specified in the graph (.pbtxt) for this
+    // Node, then the graph's InputStreamHandler will take priority.
+    void SetInputStreamHandler(const std::string& name) {
+        input_stream_handler_ = name;
+    }
+    void SetInputStreamHandlerOptions(const MediaPipeOptions& options) {
+        input_stream_handler_options_ = options;
+    }
 
-  // A GraphService's key is always a static constant, so we can use string_view
-  // as the key type without lifetime issues.
-  using ServiceReqMap =
-      absl::flat_hash_map<absl::string_view, GraphServiceRequest>;
+    // Returns the name of this Nodes's InputStreamHandler, or empty string if
+    // none is set.
+    std::string GetInputStreamHandler() const { return input_stream_handler_; }
 
-  const ServiceReqMap& ServiceRequests() const { return service_requests_; }
+    // Returns the MediaPipeOptions of this Node's InputStreamHandler, or empty
+    // options if none is set.
+    MediaPipeOptions GetInputStreamHandlerOptions() const {
+        return input_stream_handler_options_;
+    }
 
- private:
-  template <class T>
-  void GetNodeOptions(T* result) const;
+    // The next few methods are concerned with timestamp bound propagation
+    // (see scheduling_sync.md#input-policies). Every calculator that processes
+    // live inputs should specify either ProcessTimestampBounds or
+    // TimestampOffset.  Calculators that produce output at the same timestamp as
+    // the input, or with a fixed offset, should declare this fact using
+    // SetTimestampOffset.  Calculators that require custom timestamp bound
+    // calculations should use SetProcessTimestampBounds.
 
-  // When creating a contract for a PacketGenerator, we define a configuration
-  // for a wrapper calculator, for use by CalculatorNode.
-  const CalculatorGraphConfig::Node& GetWrapperConfig() const {
-    return *wrapper_config_;
-  }
+    // When true, Process is called for every new timestamp bound, with or without
+    // new packets. A call to Process with only an input timestamp bound is
+    // normally used to compute a new output timestamp bound.
+    // NOTE: Also, when true, Process is called when input streams become done,
+    // which means, Process needs to handle input streams in "done" state.
+    // (Usually, by closing calculators' outputs where and when appropriate.)
+    void SetProcessTimestampBounds(bool process_timestamps) {
+        process_timestamps_ = process_timestamps;
+    }
+    bool GetProcessTimestampBounds() const { return process_timestamps_; }
 
-  const CalculatorGraphConfig::Node* node_config_ = nullptr;
-  std::unique_ptr<CalculatorGraphConfig::Node> wrapper_config_;
-  tool::OptionsMap options_;
-  std::unique_ptr<PacketTypeSet> inputs_;
-  std::unique_ptr<PacketTypeSet> outputs_;
-  std::unique_ptr<PacketTypeSet> input_side_packets_;
-  std::unique_ptr<PacketTypeSet> output_side_packets_;
-  std::string input_stream_handler_;
-  MediaPipeOptions input_stream_handler_options_;
-  std::string node_name_;
-  ServiceReqMap service_requests_;
-  bool process_timestamps_ = false;
-  TimestampDiff timestamp_offset_ = TimestampDiff::Unset();
+    // Specifies the maximum difference between input and output timestamps.
+    // When specified, the mediapipe framework automatically computes output
+    // timestamp bounds based on input timestamps.  The special value
+    // TimestampDiff::Unset disables the timestamp offset.
+    void SetTimestampOffset(TimestampDiff offset) { timestamp_offset_ = offset; }
+    TimestampDiff GetTimestampOffset() const { return timestamp_offset_; }
 
-  friend class CalculatorNode;
+    class GraphServiceRequest {
+    public:
+        // APIs that should be used by calculators.
+        GraphServiceRequest& Optional() {
+            optional_ = true;
+            return *this;
+        }
+
+        // Internal use.
+        GraphServiceRequest(const GraphServiceBase& service) : service_(service) {}
+
+        const GraphServiceBase& Service() const { return service_; }
+
+        bool IsOptional() const { return optional_; }
+
+    private:
+        const GraphServiceBase& service_;
+        bool optional_ = false;
+    };
+
+    GraphServiceRequest& UseService(const GraphServiceBase& service) {
+        auto it = service_requests_.emplace(service.key, service).first;
+        return it->second;
+    }
+
+    // A GraphService's key is always a static constant, so we can use string_view
+    // as the key type without lifetime issues.
+    using ServiceReqMap =
+        absl::flat_hash_map<absl::string_view, GraphServiceRequest>;
+
+    const ServiceReqMap& ServiceRequests() const { return service_requests_; }
+
+private:
+    template <class T>
+    void GetNodeOptions(T* result) const;
+
+    // When creating a contract for a PacketGenerator, we define a configuration
+    // for a wrapper calculator, for use by CalculatorNode.
+    const CalculatorGraphConfig::Node& GetWrapperConfig() const {
+        return *wrapper_config_;
+    }
+
+    const CalculatorGraphConfig::Node* node_config_ = nullptr;
+    std::unique_ptr<CalculatorGraphConfig::Node> wrapper_config_;
+    tool::OptionsMap options_;
+    std::unique_ptr<PacketTypeSet> inputs_;
+    std::unique_ptr<PacketTypeSet> outputs_;
+    std::unique_ptr<PacketTypeSet> input_side_packets_;
+    std::unique_ptr<PacketTypeSet> output_side_packets_;
+    std::string input_stream_handler_;
+    MediaPipeOptions input_stream_handler_options_;
+    std::string node_name_;
+    ServiceReqMap service_requests_;
+    bool process_timestamps_ = false;
+    TimestampDiff timestamp_offset_ = TimestampDiff::Unset();
+
+    friend class CalculatorNode;
 };
 
 }  // namespace mediapipe

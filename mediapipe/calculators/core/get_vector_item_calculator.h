@@ -15,14 +15,13 @@
 #ifndef MEDIAPIPE_CALCULATORS_CORE_GET_VECTOR_ITEM_CALCULATOR_H_
 #define MEDIAPIPE_CALCULATORS_CORE_GET_VECTOR_ITEM_CALCULATOR_H_
 
-#include <optional>
-
 #include "mediapipe/framework/api2/node.h"
 #include "mediapipe/framework/api2/port.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/packet.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status.h"
+#include <optional>
 
 namespace mediapipe {
 namespace api2 {
@@ -49,26 +48,26 @@ namespace api2 {
 //
 template <typename T>
 class GetVectorItemCalculator : public Node {
- public:
-  static constexpr Input<std::vector<T>> kIn{"VECTOR"};
-  static constexpr Input<int> kIdx{"INDEX"};
-  static constexpr Output<T> kOut{"ITEM"};
+public:
+    static constexpr Input<std::vector<T>> kIn{"VECTOR"};
+    static constexpr Input<int> kIdx{"INDEX"};
+    static constexpr Output<T> kOut{"ITEM"};
 
-  MEDIAPIPE_NODE_CONTRACT(kIn, kIdx, kOut);
+    MEDIAPIPE_NODE_CONTRACT(kIn, kIdx, kOut);
 
-  absl::Status Process(CalculatorContext* cc) final {
-    if (kIn(cc).IsEmpty() || kIdx(cc).IsEmpty()) {
-      return absl::OkStatus();
+    absl::Status Process(CalculatorContext* cc) final {
+        if (kIn(cc).IsEmpty() || kIdx(cc).IsEmpty()) {
+            return absl::OkStatus();
+        }
+
+        const std::vector<T>& items = kIn(cc).Get();
+        const int idx = kIdx(cc).Get();
+
+        RET_CHECK_LT(idx, items.size());
+        kOut(cc).Send(items[idx]);
+
+        return absl::OkStatus();
     }
-
-    const std::vector<T>& items = kIn(cc).Get();
-    const int idx = kIdx(cc).Get();
-
-    RET_CHECK_LT(idx, items.size());
-    kOut(cc).Send(items[idx]);
-
-    return absl::OkStatus();
-  }
 };
 
 }  // namespace api2

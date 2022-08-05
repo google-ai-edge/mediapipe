@@ -21,24 +21,24 @@ package mediapipe;
 import "mediapipe/framework/calculator.proto";
 
 message LandmarksToTensorCalculatorOptions {
-  extend mediapipe.CalculatorOptions {
-    optional LandmarksToTensorCalculatorOptions ext = 394810235;
-  }
+    extend mediapipe.CalculatorOptions {
+        optional LandmarksToTensorCalculatorOptions ext = 394810235;
+    }
 
-  enum Attribute {
-    X = 0;
-    Y = 1;
-    Z = 2;
-    VISIBILITY = 3;
-    PRESENCE = 4;
-  }
+    enum Attribute {
+        X = 0;
+        Y = 1;
+        Z = 2;
+        VISIBILITY = 3;
+        PRESENCE = 4;
+    }
 
-  // Subset and order of attributes as they should appear in the output Tensor.
-  // Should contain at least one attribute.
-  repeated Attribute attributes = 1;
+    // Subset and order of attributes as they should appear in the output Tensor.
+    // Should contain at least one attribute.
+    repeated Attribute attributes = 1;
 
-  // Collapses all landmark attributes into a one dimensional tensor (i.e.
-  // switches from (n_landmarks, n_attributes) to (n_landmarks * n_attributes)
-  // representation).
-  optional bool flatten = 2 [default = false];
+    // Collapses all landmark attributes into a one dimensional tensor (i.e.
+    // switches from (n_landmarks, n_attributes) to (n_landmarks * n_attributes)
+    // representation).
+    optional bool flatten = 2 [default = false];
 }

@@ -81,12 +81,12 @@
 //     MP_RETURN_IF_ERROR(foo.Method(args...));
 //     return absl::OkStatus();
 //   }
-#define MP_RETURN_IF_ERROR(expr)                                          \
-  STATUS_MACROS_IMPL_ELSE_BLOCKER_                                        \
-  if (mediapipe::status_macro_internal::StatusAdaptorForMacros            \
-          status_macro_internal_adaptor = {(expr), __FILE__, __LINE__}) { \
-  } else /* NOLINT */                                                     \
-    return status_macro_internal_adaptor.Consume()
+#define MP_RETURN_IF_ERROR(expr)                                            \
+    STATUS_MACROS_IMPL_ELSE_BLOCKER_                                        \
+    if (mediapipe::status_macro_internal::StatusAdaptorForMacros            \
+            status_macro_internal_adaptor = {(expr), __FILE__, __LINE__}) { \
+    } else /* NOLINT */                                                     \
+        return status_macro_internal_adaptor.Consume()
 
 // Executes an expression `rexpr` that returns a `absl::StatusOr<T>`. On
 // OK, extracts its value into the variable defined by `lhs`, otherwise returns
@@ -134,11 +134,11 @@
 // Example: Logging the error on failure.
 //   ASSIGN_OR_RETURN(ValueType value, MaybeGetValue(query), _.LogError());
 //
-#define ASSIGN_OR_RETURN(...)                                                \
-  STATUS_MACROS_IMPL_GET_VARIADIC_((__VA_ARGS__,                             \
-                                    STATUS_MACROS_IMPL_ASSIGN_OR_RETURN_3_,  \
-                                    STATUS_MACROS_IMPL_ASSIGN_OR_RETURN_2_)) \
-  (__VA_ARGS__)
+#define ASSIGN_OR_RETURN(...)                                                  \
+    STATUS_MACROS_IMPL_GET_VARIADIC_((__VA_ARGS__,                             \
+                                      STATUS_MACROS_IMPL_ASSIGN_OR_RETURN_3_,  \
+                                      STATUS_MACROS_IMPL_ASSIGN_OR_RETURN_2_)) \
+    (__VA_ARGS__)
 
 // =================================================================
 // == Implementation details, do not rely on anything below here. ==
@@ -148,31 +148,31 @@
 // work around the bug.
 #define STATUS_MACROS_IMPL_GET_VARIADIC_HELPER_(_1, _2, _3, NAME, ...) NAME
 #define STATUS_MACROS_IMPL_GET_VARIADIC_(args) \
-  STATUS_MACROS_IMPL_GET_VARIADIC_HELPER_ args
+    STATUS_MACROS_IMPL_GET_VARIADIC_HELPER_ args
 
-#define STATUS_MACROS_IMPL_ASSIGN_OR_RETURN_2_(lhs, rexpr)                  \
-  STATUS_MACROS_IMPL_ASSIGN_OR_RETURN_(                                     \
-      STATUS_MACROS_IMPL_CONCAT_(_status_or_value, __LINE__), lhs, rexpr,   \
-      return mediapipe::StatusBuilder(                                      \
-          std::move(STATUS_MACROS_IMPL_CONCAT_(_status_or_value, __LINE__)) \
-              .status(),                                                    \
-          __FILE__, __LINE__))
-#define STATUS_MACROS_IMPL_ASSIGN_OR_RETURN_3_(lhs, rexpr, error_expression) \
-  STATUS_MACROS_IMPL_ASSIGN_OR_RETURN_(                                      \
-      STATUS_MACROS_IMPL_CONCAT_(_status_or_value, __LINE__), lhs, rexpr,    \
-      mediapipe::StatusBuilder _(                                            \
-          std::move(STATUS_MACROS_IMPL_CONCAT_(_status_or_value, __LINE__))  \
-              .status(),                                                     \
-          __FILE__, __LINE__);                                               \
-      (void)_; /* error_expression is allowed to not use this variable */    \
-      return (error_expression))
+#define STATUS_MACROS_IMPL_ASSIGN_OR_RETURN_2_(lhs, rexpr)                    \
+    STATUS_MACROS_IMPL_ASSIGN_OR_RETURN_(                                     \
+        STATUS_MACROS_IMPL_CONCAT_(_status_or_value, __LINE__), lhs, rexpr,   \
+        return mediapipe::StatusBuilder(                                      \
+            std::move(STATUS_MACROS_IMPL_CONCAT_(_status_or_value, __LINE__)) \
+                .status(),                                                    \
+            __FILE__, __LINE__))
+#define STATUS_MACROS_IMPL_ASSIGN_OR_RETURN_3_(lhs, rexpr, error_expression)  \
+    STATUS_MACROS_IMPL_ASSIGN_OR_RETURN_(                                     \
+        STATUS_MACROS_IMPL_CONCAT_(_status_or_value, __LINE__), lhs, rexpr,   \
+        mediapipe::StatusBuilder _(                                           \
+            std::move(STATUS_MACROS_IMPL_CONCAT_(_status_or_value, __LINE__)) \
+                .status(),                                                    \
+            __FILE__, __LINE__);                                              \
+        (void)_; /* error_expression is allowed to not use this variable */   \
+        return (error_expression))
 #define STATUS_MACROS_IMPL_ASSIGN_OR_RETURN_(statusor, lhs, rexpr, \
                                              error_expression)     \
-  auto statusor = (rexpr);                                         \
-  if (ABSL_PREDICT_FALSE(!statusor.ok())) {                        \
-    error_expression;                                              \
-  }                                                                \
-  lhs = std::move(statusor).value()
+    auto statusor = (rexpr);                                       \
+    if (ABSL_PREDICT_FALSE(!statusor.ok())) {                      \
+        error_expression;                                          \
+    }                                                              \
+    lhs = std::move(statusor).value()
 
 // Internal helper for concatenating macro values.
 #define STATUS_MACROS_IMPL_CONCAT_INNER_(x, y) x##y
@@ -190,9 +190,9 @@
 //
 // The "switch (0) case 0:" idiom is used to suppress this.
 #define STATUS_MACROS_IMPL_ELSE_BLOCKER_ \
-  switch (0)                             \
-  case 0:                                \
-  default:  // NOLINT
+    switch (0)                           \
+    case 0:                              \
+    default:  // NOLINT
 
 namespace mediapipe {
 namespace status_macro_internal {
@@ -200,30 +200,30 @@ namespace status_macro_internal {
 // Provides a conversion to bool so that it can be used inside an if statement
 // that declares a variable.
 class StatusAdaptorForMacros {
- public:
-  StatusAdaptorForMacros(const absl::Status& status, const char* file, int line)
-      : builder_(status, file, line) {}
+public:
+    StatusAdaptorForMacros(const absl::Status& status, const char* file, int line)
+        : builder_(status, file, line) {}
 
-  StatusAdaptorForMacros(absl::Status&& status, const char* file, int line)
-      : builder_(std::move(status), file, line) {}
+    StatusAdaptorForMacros(absl::Status&& status, const char* file, int line)
+        : builder_(std::move(status), file, line) {}
 
-  StatusAdaptorForMacros(const StatusBuilder& builder, const char* /* file */,
-                         int /* line */)
-      : builder_(builder) {}
+    StatusAdaptorForMacros(const StatusBuilder& builder, const char* /* file */,
+                           int /* line */)
+        : builder_(builder) {}
 
-  StatusAdaptorForMacros(StatusBuilder&& builder, const char* /* file */,
-                         int /* line */)
-      : builder_(std::move(builder)) {}
+    StatusAdaptorForMacros(StatusBuilder&& builder, const char* /* file */,
+                           int /* line */)
+        : builder_(std::move(builder)) {}
 
-  StatusAdaptorForMacros(const StatusAdaptorForMacros&) = delete;
-  StatusAdaptorForMacros& operator=(const StatusAdaptorForMacros&) = delete;
+    StatusAdaptorForMacros(const StatusAdaptorForMacros&) = delete;
+    StatusAdaptorForMacros& operator=(const StatusAdaptorForMacros&) = delete;
 
-  explicit operator bool() const { return ABSL_PREDICT_TRUE(builder_.ok()); }
+    explicit operator bool() const { return ABSL_PREDICT_TRUE(builder_.ok()); }
 
-  StatusBuilder&& Consume() { return std::move(builder_); }
+    StatusBuilder&& Consume() { return std::move(builder_); }
 
- private:
-  StatusBuilder builder_;
+private:
+    StatusBuilder builder_;
 };
 
 }  // namespace status_macro_internal

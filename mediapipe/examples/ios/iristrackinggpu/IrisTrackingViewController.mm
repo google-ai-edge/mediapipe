@@ -13,51 +13,50 @@
 // limitations under the License.
 
 #import "IrisTrackingViewController.h"
-
 #include "mediapipe/framework/formats/landmark.pb.h"
 
 static const char* kLandmarksOutputStream = "iris_landmarks";
 
 @implementation IrisTrackingViewController {
-  /// Input side packet for focal length parameter.
-  std::map<std::string, mediapipe::Packet> _input_side_packets;
-  mediapipe::Packet _focal_length_side_packet;
+    /// Input side packet for focal length parameter.
+    std::map<std::string, mediapipe::Packet> _input_side_packets;
+    mediapipe::Packet _focal_length_side_packet;
 }
 
 #pragma mark - UIViewController methods
 
 - (void)viewDidLoad {
-  [super viewDidLoad];
+    [super viewDidLoad];
 
-  [self.mediapipeGraph addFrameOutputStream:kLandmarksOutputStream
-                           outputPacketType:MPPPacketTypeRaw];
-  _focal_length_side_packet =
-      mediapipe::MakePacket<std::unique_ptr<float>>(absl::make_unique<float>(0.0));
-  _input_side_packets = {
-      {"focal_length_pixel", _focal_length_side_packet},
-  };
-  [self.mediapipeGraph addSidePackets:_input_side_packets];
+    [self.mediapipeGraph addFrameOutputStream:kLandmarksOutputStream
+                             outputPacketType:MPPPacketTypeRaw];
+    _focal_length_side_packet =
+        mediapipe::MakePacket<std::unique_ptr<float>>(absl::make_unique<float>(0.0));
+    _input_side_packets = {
+        {"focal_length_pixel", _focal_length_side_packet},
+    };
+    [self.mediapipeGraph addSidePackets:_input_side_packets];
 }
 
 #pragma mark - MPPGraphDelegate methods
 
 // Receives a raw packet from the MediaPipe graph. Invoked on a MediaPipe worker thread.
 - (void)mediapipeGraph:(MPPGraph*)graph
-     didOutputPacket:(const ::mediapipe::Packet&)packet
-          fromStream:(const std::string&)streamName {
-  if (streamName == kLandmarksOutputStream) {
-    if (packet.IsEmpty()) {
-      NSLog(@"[TS:%lld] No iris landmarks", packet.Timestamp().Value());
-      return;
+       didOutputPacket:(const ::mediapipe::Packet&)packet
+            fromStream:(const std::string&)streamName {
+    if (streamName == kLandmarksOutputStream) {
+        if (packet.IsEmpty()) {
+            NSLog(@"[TS:%lld] No iris landmarks", packet.Timestamp().Value());
+            return;
+        }
+        const auto& landmarks = packet.Get<::mediapipe::NormalizedLandmarkList>();
+        NSLog(@"[TS:%lld] Number of landmarks on iris: %d", packet.Timestamp().Value(),
+              landmarks.landmark_size());
+        for (int i = 0; i < landmarks.landmark_size(); ++i) {
+            NSLog(@"\tLandmark[%d]: (%f, %f, %f)", i, landmarks.landmark(i).x(),
+                  landmarks.landmark(i).y(), landmarks.landmark(i).z());
+        }
     }
-    const auto& landmarks = packet.Get<::mediapipe::NormalizedLandmarkList>();
-    NSLog(@"[TS:%lld] Number of landmarks on iris: %d", packet.Timestamp().Value(),
-          landmarks.landmark_size());
-    for (int i = 0; i < landmarks.landmark_size(); ++i) {
-      NSLog(@"\tLandmark[%d]: (%f, %f, %f)", i, landmarks.landmark(i).x(),
-            landmarks.landmark(i).y(), landmarks.landmark(i).z());
-    }
-  }
 }
 
 #pragma mark - MPPInputSourceDelegate methods
@@ -66,18 +65,18 @@ static const char* kLandmarksOutputStream = "iris_landmarks";
 - (void)processVideoFrame:(CVPixelBufferRef)imageBuffer
                 timestamp:(CMTime)timestamp
                fromSource:(MPPInputSource*)source {
-  if (source != self.cameraSource) {
-    NSLog(@"Unknown source: %@", source);
-    return;
-  }
+    if (source != self.cameraSource) {
+        NSLog(@"Unknown source: %@", source);
+        return;
+    }
 
-  // TODO: This is a temporary solution. Need to verify whether the focal length is
-  // constant. In that case, we need to use input stream instead of using side packet.
-  *(_input_side_packets["focal_length_pixel"].Get<std::unique_ptr<float>>()) =
-      self.cameraSource.cameraIntrinsicMatrix.columns[0][0];
-  [self.mediapipeGraph sendPixelBuffer:imageBuffer
-                            intoStream:self.graphInputStream
-                            packetType:MPPPacketTypePixelBuffer];
+    // TODO: This is a temporary solution. Need to verify whether the focal length is
+    // constant. In that case, we need to use input stream instead of using side packet.
+    *(_input_side_packets["focal_length_pixel"].Get<std::unique_ptr<float>>()) =
+        self.cameraSource.cameraIntrinsicMatrix.columns[0][0];
+    [self.mediapipeGraph sendPixelBuffer:imageBuffer
+                              intoStream:self.graphInputStream
+                              packetType:MPPPacketTypePixelBuffer];
 }
 
 @end

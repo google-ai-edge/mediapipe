@@ -21,10 +21,10 @@ import "mediapipe/framework/calculator.proto";
 option objc_class_prefix = "MediaPipe";
 
 message QuantizeFloatVectorCalculatorOptions {
-  extend CalculatorOptions {
-    optional QuantizeFloatVectorCalculatorOptions ext = 259848061;
-  }
+    extend CalculatorOptions {
+        optional QuantizeFloatVectorCalculatorOptions ext = 259848061;
+    }
 
-  optional float max_quantized_value = 1;
-  optional float min_quantized_value = 2;
+    optional float max_quantized_value = 1;
+    optional float min_quantized_value = 2;
 }

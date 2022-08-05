@@ -26,18 +26,18 @@ namespace autoflip {
 // This class scores a SalientRegion within an image based on weighted averages
 // of various signals computed on the patch.
 class VisualScorer {
- public:
-  explicit VisualScorer(const VisualScorerOptions& options);
+public:
+    explicit VisualScorer(const VisualScorerOptions& options);
 
-  // Computes a score on a salientregion and returns a value [0...1].
-  absl::Status CalculateScore(const cv::Mat& image, const SalientRegion& region,
-                              float* score) const;
+    // Computes a score on a salientregion and returns a value [0...1].
+    absl::Status CalculateScore(const cv::Mat& image, const SalientRegion& region,
+                                float* score) const;
 
- private:
-  absl::Status CalculateColorfulness(const cv::Mat& image,
-                                     float* colorfulness) const;
+private:
+    absl::Status CalculateColorfulness(const cv::Mat& image,
+                                       float* colorfulness) const;
 
-  VisualScorerOptions options_;
+    VisualScorerOptions options_;
 };
 
 }  // namespace autoflip

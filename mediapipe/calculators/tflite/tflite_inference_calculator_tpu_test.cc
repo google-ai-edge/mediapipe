@@ -19,7 +19,7 @@ namespace mediapipe {
 
 // Tests a simple add model that adds an input tensor to itself.
 TEST(TfLiteInferenceCalculatorTpuTest, SmokeTest) {
-  std::string graph_proto = R"(
+    std::string graph_proto = R"(
     input_stream: "tensor_in"
     node {
       calculator: "TfLiteInferenceCalculator"
@@ -33,10 +33,10 @@ TEST(TfLiteInferenceCalculatorTpuTest, SmokeTest) {
       }
     }
   )";
-  DoSmokeTest<uint8>(
-      /*graph_proto=*/absl::StrReplaceAll(graph_proto, {{"$delegate", ""}}));
-  DoSmokeTest<uint8>(/*graph_proto=*/absl::StrReplaceAll(
-      graph_proto, {{"$delegate", "delegate { tflite {} }"}}));
+    DoSmokeTest<uint8>(
+        /*graph_proto=*/absl::StrReplaceAll(graph_proto, {{"$delegate", ""}}));
+    DoSmokeTest<uint8>(/*graph_proto=*/absl::StrReplaceAll(
+        graph_proto, {{"$delegate", "delegate { tflite {} }"}}));
 }
 
 }  // namespace mediapipe

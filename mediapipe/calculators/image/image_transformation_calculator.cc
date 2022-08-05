@@ -58,47 +58,47 @@ constexpr char kGpuBufferTag[] = "IMAGE_GPU";
 constexpr char kVideoPrestreamTag[] = "VIDEO_PRESTREAM";
 
 int RotationModeToDegrees(mediapipe::RotationMode_Mode rotation) {
-  switch (rotation) {
-    case mediapipe::RotationMode_Mode_UNKNOWN:
-    case mediapipe::RotationMode_Mode_ROTATION_0:
-      return 0;
-    case mediapipe::RotationMode_Mode_ROTATION_90:
-      return 90;
-    case mediapipe::RotationMode_Mode_ROTATION_180:
-      return 180;
-    case mediapipe::RotationMode_Mode_ROTATION_270:
-      return 270;
-  }
+    switch (rotation) {
+        case mediapipe::RotationMode_Mode_UNKNOWN:
+        case mediapipe::RotationMode_Mode_ROTATION_0:
+            return 0;
+        case mediapipe::RotationMode_Mode_ROTATION_90:
+            return 90;
+        case mediapipe::RotationMode_Mode_ROTATION_180:
+            return 180;
+        case mediapipe::RotationMode_Mode_ROTATION_270:
+            return 270;
+    }
 }
 mediapipe::RotationMode_Mode DegreesToRotationMode(int degrees) {
-  switch (degrees) {
-    case 0:
-      return mediapipe::RotationMode_Mode_ROTATION_0;
-    case 90:
-      return mediapipe::RotationMode_Mode_ROTATION_90;
-    case 180:
-      return mediapipe::RotationMode_Mode_ROTATION_180;
-    case 270:
-      return mediapipe::RotationMode_Mode_ROTATION_270;
-    default:
-      return mediapipe::RotationMode_Mode_UNKNOWN;
-  }
+    switch (degrees) {
+        case 0:
+            return mediapipe::RotationMode_Mode_ROTATION_0;
+        case 90:
+            return mediapipe::RotationMode_Mode_ROTATION_90;
+        case 180:
+            return mediapipe::RotationMode_Mode_ROTATION_180;
+        case 270:
+            return mediapipe::RotationMode_Mode_ROTATION_270;
+        default:
+            return mediapipe::RotationMode_Mode_UNKNOWN;
+    }
 }
 mediapipe::ScaleMode_Mode ParseScaleMode(
     mediapipe::ScaleMode_Mode scale_mode,
     mediapipe::ScaleMode_Mode default_mode) {
-  switch (scale_mode) {
-    case mediapipe::ScaleMode_Mode_DEFAULT:
-      return default_mode;
-    case mediapipe::ScaleMode_Mode_STRETCH:
-      return scale_mode;
-    case mediapipe::ScaleMode_Mode_FIT:
-      return scale_mode;
-    case mediapipe::ScaleMode_Mode_FILL_AND_CROP:
-      return scale_mode;
-    default:
-      return default_mode;
-  }
+    switch (scale_mode) {
+        case mediapipe::ScaleMode_Mode_DEFAULT:
+            return default_mode;
+        case mediapipe::ScaleMode_Mode_STRETCH:
+            return scale_mode;
+        case mediapipe::ScaleMode_Mode_FIT:
+            return scale_mode;
+        case mediapipe::ScaleMode_Mode_FILL_AND_CROP:
+            return scale_mode;
+        default:
+            return default_mode;
+    }
 }
 }  // namespace
 
@@ -176,41 +176,41 @@ mediapipe::ScaleMode_Mode ParseScaleMode(
 // IMAGE -> IMAGE  or  IMAGE_GPU -> IMAGE_GPU
 //
 class ImageTransformationCalculator : public CalculatorBase {
- public:
-  ImageTransformationCalculator() = default;
-  ~ImageTransformationCalculator() override = default;
+public:
+    ImageTransformationCalculator() = default;
+    ~ImageTransformationCalculator() override = default;
 
-  static absl::Status GetContract(CalculatorContract* cc);
+    static absl::Status GetContract(CalculatorContract* cc);
 
-  absl::Status Open(CalculatorContext* cc) override;
-  absl::Status Process(CalculatorContext* cc) override;
-  absl::Status Close(CalculatorContext* cc) override;
+    absl::Status Open(CalculatorContext* cc) override;
+    absl::Status Process(CalculatorContext* cc) override;
+    absl::Status Close(CalculatorContext* cc) override;
 
- private:
-  absl::Status RenderCpu(CalculatorContext* cc);
-  absl::Status RenderGpu(CalculatorContext* cc);
-  absl::Status GlSetup();
+private:
+    absl::Status RenderCpu(CalculatorContext* cc);
+    absl::Status RenderGpu(CalculatorContext* cc);
+    absl::Status GlSetup();
 
-  void ComputeOutputDimensions(int input_width, int input_height,
-                               int* output_width, int* output_height);
-  void ComputeOutputLetterboxPadding(int input_width, int input_height,
-                                     int output_width, int output_height,
-                                     std::array<float, 4>* padding);
+    void ComputeOutputDimensions(int input_width, int input_height,
+                                 int* output_width, int* output_height);
+    void ComputeOutputLetterboxPadding(int input_width, int input_height,
+                                       int output_width, int output_height,
+                                       std::array<float, 4>* padding);
 
-  ImageTransformationCalculatorOptions options_;
-  int output_width_ = 0;
-  int output_height_ = 0;
-  mediapipe::RotationMode_Mode rotation_;
-  mediapipe::ScaleMode_Mode scale_mode_;
-  bool flip_horizontally_ = false;
-  bool flip_vertically_ = false;
+    ImageTransformationCalculatorOptions options_;
+    int output_width_ = 0;
+    int output_height_ = 0;
+    mediapipe::RotationMode_Mode rotation_;
+    mediapipe::ScaleMode_Mode scale_mode_;
+    bool flip_horizontally_ = false;
+    bool flip_vertically_ = false;
 
-  bool use_gpu_ = false;
+    bool use_gpu_ = false;
 #if !MEDIAPIPE_DISABLE_GPU
-  GlCalculatorHelper gpu_helper_;
-  std::unique_ptr<QuadRenderer> rgb_renderer_;
-  std::unique_ptr<QuadRenderer> yuv_renderer_;
-  std::unique_ptr<QuadRenderer> ext_rgb_renderer_;
+    GlCalculatorHelper gpu_helper_;
+    std::unique_ptr<QuadRenderer> rgb_renderer_;
+    std::unique_ptr<QuadRenderer> yuv_renderer_;
+    std::unique_ptr<QuadRenderer> ext_rgb_renderer_;
 #endif  // !MEDIAPIPE_DISABLE_GPU
 };
 REGISTER_CALCULATOR(ImageTransformationCalculator);
@@ -218,467 +218,467 @@ REGISTER_CALCULATOR(ImageTransformationCalculator);
 // static
 absl::Status ImageTransformationCalculator::GetContract(
     CalculatorContract* cc) {
-  // Only one input can be set, and the output type must match.
-  RET_CHECK(cc->Inputs().HasTag(kImageFrameTag) ^
-            cc->Inputs().HasTag(kGpuBufferTag));
+    // Only one input can be set, and the output type must match.
+    RET_CHECK(cc->Inputs().HasTag(kImageFrameTag) ^
+              cc->Inputs().HasTag(kGpuBufferTag));
 
-  bool use_gpu = false;
+    bool use_gpu = false;
 
-  if (cc->Inputs().HasTag(kImageFrameTag)) {
-    RET_CHECK(cc->Outputs().HasTag(kImageFrameTag));
-    cc->Inputs().Tag(kImageFrameTag).Set<ImageFrame>();
-    cc->Outputs().Tag(kImageFrameTag).Set<ImageFrame>();
-  }
+    if (cc->Inputs().HasTag(kImageFrameTag)) {
+        RET_CHECK(cc->Outputs().HasTag(kImageFrameTag));
+        cc->Inputs().Tag(kImageFrameTag).Set<ImageFrame>();
+        cc->Outputs().Tag(kImageFrameTag).Set<ImageFrame>();
+    }
 #if !MEDIAPIPE_DISABLE_GPU
-  if (cc->Inputs().HasTag(kGpuBufferTag)) {
-    RET_CHECK(cc->Outputs().HasTag(kGpuBufferTag));
-    cc->Inputs().Tag(kGpuBufferTag).Set<GpuBuffer>();
-    cc->Outputs().Tag(kGpuBufferTag).Set<GpuBuffer>();
-    use_gpu |= true;
-  }
+    if (cc->Inputs().HasTag(kGpuBufferTag)) {
+        RET_CHECK(cc->Outputs().HasTag(kGpuBufferTag));
+        cc->Inputs().Tag(kGpuBufferTag).Set<GpuBuffer>();
+        cc->Outputs().Tag(kGpuBufferTag).Set<GpuBuffer>();
+        use_gpu |= true;
+    }
 #endif  // !MEDIAPIPE_DISABLE_GPU
 
-  if (cc->Inputs().HasTag("OUTPUT_DIMENSIONS")) {
-    cc->Inputs().Tag("OUTPUT_DIMENSIONS").Set<std::pair<int, int>>();
-  }
+    if (cc->Inputs().HasTag("OUTPUT_DIMENSIONS")) {
+        cc->Inputs().Tag("OUTPUT_DIMENSIONS").Set<std::pair<int, int>>();
+    }
 
-  if (cc->Inputs().HasTag("ROTATION_DEGREES")) {
-    cc->Inputs().Tag("ROTATION_DEGREES").Set<int>();
-  }
-  if (cc->Inputs().HasTag("FLIP_HORIZONTALLY")) {
-    cc->Inputs().Tag("FLIP_HORIZONTALLY").Set<bool>();
-  }
-  if (cc->Inputs().HasTag("FLIP_VERTICALLY")) {
-    cc->Inputs().Tag("FLIP_VERTICALLY").Set<bool>();
-  }
+    if (cc->Inputs().HasTag("ROTATION_DEGREES")) {
+        cc->Inputs().Tag("ROTATION_DEGREES").Set<int>();
+    }
+    if (cc->Inputs().HasTag("FLIP_HORIZONTALLY")) {
+        cc->Inputs().Tag("FLIP_HORIZONTALLY").Set<bool>();
+    }
+    if (cc->Inputs().HasTag("FLIP_VERTICALLY")) {
+        cc->Inputs().Tag("FLIP_VERTICALLY").Set<bool>();
+    }
 
-  RET_CHECK(cc->Inputs().HasTag(kVideoPrestreamTag) ==
-            cc->Outputs().HasTag(kVideoPrestreamTag))
-      << "If VIDEO_PRESTREAM is provided, it must be provided both as an "
-         "inputs and output stream.";
-  if (cc->Inputs().HasTag(kVideoPrestreamTag)) {
-    RET_CHECK(!(cc->Inputs().HasTag("OUTPUT_DIMENSIONS") ||
-                cc->Inputs().HasTag("ROTATION_DEGREES")))
-        << "If specifying VIDEO_PRESTREAM, the transformations that affect the "
-           "dimensions of the frames (OUTPUT_DIMENSIONS and ROTATION_DEGREES) "
-           "need to be constant for every frame, meaning they can only be "
-           "provided in the calculator options or side packets.";
-    cc->Inputs().Tag(kVideoPrestreamTag).Set<mediapipe::VideoHeader>();
-    cc->Outputs().Tag(kVideoPrestreamTag).Set<mediapipe::VideoHeader>();
-  }
+    RET_CHECK(cc->Inputs().HasTag(kVideoPrestreamTag) ==
+              cc->Outputs().HasTag(kVideoPrestreamTag))
+        << "If VIDEO_PRESTREAM is provided, it must be provided both as an "
+           "inputs and output stream.";
+    if (cc->Inputs().HasTag(kVideoPrestreamTag)) {
+        RET_CHECK(!(cc->Inputs().HasTag("OUTPUT_DIMENSIONS") ||
+                    cc->Inputs().HasTag("ROTATION_DEGREES")))
+            << "If specifying VIDEO_PRESTREAM, the transformations that affect the "
+               "dimensions of the frames (OUTPUT_DIMENSIONS and ROTATION_DEGREES) "
+               "need to be constant for every frame, meaning they can only be "
+               "provided in the calculator options or side packets.";
+        cc->Inputs().Tag(kVideoPrestreamTag).Set<mediapipe::VideoHeader>();
+        cc->Outputs().Tag(kVideoPrestreamTag).Set<mediapipe::VideoHeader>();
+    }
 
-  if (cc->InputSidePackets().HasTag("OUTPUT_DIMENSIONS")) {
-    cc->InputSidePackets().Tag("OUTPUT_DIMENSIONS").Set<DimensionsPacketType>();
-  }
-  if (cc->InputSidePackets().HasTag("ROTATION_DEGREES")) {
-    cc->InputSidePackets().Tag("ROTATION_DEGREES").Set<int>();
-  }
-  if (cc->InputSidePackets().HasTag("FLIP_HORIZONTALLY")) {
-    cc->InputSidePackets().Tag("FLIP_HORIZONTALLY").Set<bool>();
-  }
-  if (cc->InputSidePackets().HasTag("FLIP_VERTICALLY")) {
-    cc->InputSidePackets().Tag("FLIP_VERTICALLY").Set<bool>();
-  }
+    if (cc->InputSidePackets().HasTag("OUTPUT_DIMENSIONS")) {
+        cc->InputSidePackets().Tag("OUTPUT_DIMENSIONS").Set<DimensionsPacketType>();
+    }
+    if (cc->InputSidePackets().HasTag("ROTATION_DEGREES")) {
+        cc->InputSidePackets().Tag("ROTATION_DEGREES").Set<int>();
+    }
+    if (cc->InputSidePackets().HasTag("FLIP_HORIZONTALLY")) {
+        cc->InputSidePackets().Tag("FLIP_HORIZONTALLY").Set<bool>();
+    }
+    if (cc->InputSidePackets().HasTag("FLIP_VERTICALLY")) {
+        cc->InputSidePackets().Tag("FLIP_VERTICALLY").Set<bool>();
+    }
 
-  if (cc->Outputs().HasTag("LETTERBOX_PADDING")) {
-    cc->Outputs().Tag("LETTERBOX_PADDING").Set<std::array<float, 4>>();
-  }
+    if (cc->Outputs().HasTag("LETTERBOX_PADDING")) {
+        cc->Outputs().Tag("LETTERBOX_PADDING").Set<std::array<float, 4>>();
+    }
 
-  if (use_gpu) {
+    if (use_gpu) {
 #if !MEDIAPIPE_DISABLE_GPU
-    MP_RETURN_IF_ERROR(GlCalculatorHelper::UpdateContract(cc));
+        MP_RETURN_IF_ERROR(GlCalculatorHelper::UpdateContract(cc));
 #endif  // !MEDIAPIPE_DISABLE_GPU
-  }
+    }
 
-  return absl::OkStatus();
+    return absl::OkStatus();
 }
 
 absl::Status ImageTransformationCalculator::Open(CalculatorContext* cc) {
-  // Inform the framework that we always output at the same timestamp
-  // as we receive a packet at.
-  cc->SetOffset(TimestampDiff(0));
+    // Inform the framework that we always output at the same timestamp
+    // as we receive a packet at.
+    cc->SetOffset(TimestampDiff(0));
 
-  options_ = cc->Options<ImageTransformationCalculatorOptions>();
+    options_ = cc->Options<ImageTransformationCalculatorOptions>();
 
-  if (cc->Inputs().HasTag(kGpuBufferTag)) {
-    use_gpu_ = true;
-  }
+    if (cc->Inputs().HasTag(kGpuBufferTag)) {
+        use_gpu_ = true;
+    }
 
-  if (cc->InputSidePackets().HasTag("OUTPUT_DIMENSIONS")) {
-    const auto& dimensions = cc->InputSidePackets()
-                                 .Tag("OUTPUT_DIMENSIONS")
-                                 .Get<DimensionsPacketType>();
-    output_width_ = dimensions[0];
-    output_height_ = dimensions[1];
-  } else {
-    output_width_ = options_.output_width();
-    output_height_ = options_.output_height();
-  }
+    if (cc->InputSidePackets().HasTag("OUTPUT_DIMENSIONS")) {
+        const auto& dimensions = cc->InputSidePackets()
+                                     .Tag("OUTPUT_DIMENSIONS")
+                                     .Get<DimensionsPacketType>();
+        output_width_ = dimensions[0];
+        output_height_ = dimensions[1];
+    } else {
+        output_width_ = options_.output_width();
+        output_height_ = options_.output_height();
+    }
 
-  if (cc->InputSidePackets().HasTag("ROTATION_DEGREES")) {
-    rotation_ = DegreesToRotationMode(
-        cc->InputSidePackets().Tag("ROTATION_DEGREES").Get<int>());
-  } else {
-    rotation_ = options_.rotation_mode();
-  }
+    if (cc->InputSidePackets().HasTag("ROTATION_DEGREES")) {
+        rotation_ = DegreesToRotationMode(
+            cc->InputSidePackets().Tag("ROTATION_DEGREES").Get<int>());
+    } else {
+        rotation_ = options_.rotation_mode();
+    }
 
-  if (cc->InputSidePackets().HasTag("FLIP_HORIZONTALLY")) {
-    flip_horizontally_ =
-        cc->InputSidePackets().Tag("FLIP_HORIZONTALLY").Get<bool>();
-  } else {
-    flip_horizontally_ = options_.flip_horizontally();
-  }
+    if (cc->InputSidePackets().HasTag("FLIP_HORIZONTALLY")) {
+        flip_horizontally_ =
+            cc->InputSidePackets().Tag("FLIP_HORIZONTALLY").Get<bool>();
+    } else {
+        flip_horizontally_ = options_.flip_horizontally();
+    }
 
-  if (cc->InputSidePackets().HasTag("FLIP_VERTICALLY")) {
-    flip_vertically_ =
-        cc->InputSidePackets().Tag("FLIP_VERTICALLY").Get<bool>();
-  } else {
-    flip_vertically_ = options_.flip_vertically();
-  }
+    if (cc->InputSidePackets().HasTag("FLIP_VERTICALLY")) {
+        flip_vertically_ =
+            cc->InputSidePackets().Tag("FLIP_VERTICALLY").Get<bool>();
+    } else {
+        flip_vertically_ = options_.flip_vertically();
+    }
 
-  scale_mode_ = ParseScaleMode(options_.scale_mode(), DEFAULT_SCALE_MODE);
+    scale_mode_ = ParseScaleMode(options_.scale_mode(), DEFAULT_SCALE_MODE);
 
-  if (use_gpu_) {
+    if (use_gpu_) {
 #if !MEDIAPIPE_DISABLE_GPU
-    // Let the helper access the GL context information.
-    MP_RETURN_IF_ERROR(gpu_helper_.Open(cc));
+        // Let the helper access the GL context information.
+        MP_RETURN_IF_ERROR(gpu_helper_.Open(cc));
 #else
-    RET_CHECK_FAIL() << "GPU processing not enabled.";
+        RET_CHECK_FAIL() << "GPU processing not enabled.";
 #endif  // !MEDIAPIPE_DISABLE_GPU
-  }
+    }
 
-  return absl::OkStatus();
+    return absl::OkStatus();
 }
 
 absl::Status ImageTransformationCalculator::Process(CalculatorContext* cc) {
-  // First update the video header if it is given, based on the rotation and
-  // dimensions specified as side packets or options. This will only be done
-  // once, so streaming transformation changes will not be reflected in
-  // the header.
-  if (cc->Inputs().HasTag(kVideoPrestreamTag) &&
-      !cc->Inputs().Tag(kVideoPrestreamTag).IsEmpty() &&
-      cc->Outputs().HasTag(kVideoPrestreamTag)) {
-    mediapipe::VideoHeader header =
-        cc->Inputs().Tag(kVideoPrestreamTag).Get<mediapipe::VideoHeader>();
-    // Update the header's width and height if needed.
-    ComputeOutputDimensions(header.width, header.height, &header.width,
-                            &header.height);
-    cc->Outputs()
-        .Tag(kVideoPrestreamTag)
-        .AddPacket(mediapipe::MakePacket<mediapipe::VideoHeader>(header).At(
-            mediapipe::Timestamp::PreStream()));
-  }
-
-  // Override values if specified so.
-  if (cc->Inputs().HasTag("ROTATION_DEGREES") &&
-      !cc->Inputs().Tag("ROTATION_DEGREES").IsEmpty()) {
-    rotation_ =
-        DegreesToRotationMode(cc->Inputs().Tag("ROTATION_DEGREES").Get<int>());
-  }
-  if (cc->Inputs().HasTag("FLIP_HORIZONTALLY") &&
-      !cc->Inputs().Tag("FLIP_HORIZONTALLY").IsEmpty()) {
-    flip_horizontally_ = cc->Inputs().Tag("FLIP_HORIZONTALLY").Get<bool>();
-  }
-  if (cc->Inputs().HasTag("FLIP_VERTICALLY") &&
-      !cc->Inputs().Tag("FLIP_VERTICALLY").IsEmpty()) {
-    flip_vertically_ = cc->Inputs().Tag("FLIP_VERTICALLY").Get<bool>();
-  }
-  if (cc->Inputs().HasTag("OUTPUT_DIMENSIONS")) {
-    if (cc->Inputs().Tag("OUTPUT_DIMENSIONS").IsEmpty()) {
-      return absl::OkStatus();
-    } else {
-      const auto& image_size =
-          cc->Inputs().Tag("OUTPUT_DIMENSIONS").Get<std::pair<int, int>>();
-      output_width_ = image_size.first;
-      output_height_ = image_size.second;
+    // First update the video header if it is given, based on the rotation and
+    // dimensions specified as side packets or options. This will only be done
+    // once, so streaming transformation changes will not be reflected in
+    // the header.
+    if (cc->Inputs().HasTag(kVideoPrestreamTag) &&
+        !cc->Inputs().Tag(kVideoPrestreamTag).IsEmpty() &&
+        cc->Outputs().HasTag(kVideoPrestreamTag)) {
+        mediapipe::VideoHeader header =
+            cc->Inputs().Tag(kVideoPrestreamTag).Get<mediapipe::VideoHeader>();
+        // Update the header's width and height if needed.
+        ComputeOutputDimensions(header.width, header.height, &header.width,
+                                &header.height);
+        cc->Outputs()
+            .Tag(kVideoPrestreamTag)
+            .AddPacket(mediapipe::MakePacket<mediapipe::VideoHeader>(header).At(
+                mediapipe::Timestamp::PreStream()));
     }
-  }
 
-  if (use_gpu_) {
+    // Override values if specified so.
+    if (cc->Inputs().HasTag("ROTATION_DEGREES") &&
+        !cc->Inputs().Tag("ROTATION_DEGREES").IsEmpty()) {
+        rotation_ =
+            DegreesToRotationMode(cc->Inputs().Tag("ROTATION_DEGREES").Get<int>());
+    }
+    if (cc->Inputs().HasTag("FLIP_HORIZONTALLY") &&
+        !cc->Inputs().Tag("FLIP_HORIZONTALLY").IsEmpty()) {
+        flip_horizontally_ = cc->Inputs().Tag("FLIP_HORIZONTALLY").Get<bool>();
+    }
+    if (cc->Inputs().HasTag("FLIP_VERTICALLY") &&
+        !cc->Inputs().Tag("FLIP_VERTICALLY").IsEmpty()) {
+        flip_vertically_ = cc->Inputs().Tag("FLIP_VERTICALLY").Get<bool>();
+    }
+    if (cc->Inputs().HasTag("OUTPUT_DIMENSIONS")) {
+        if (cc->Inputs().Tag("OUTPUT_DIMENSIONS").IsEmpty()) {
+            return absl::OkStatus();
+        } else {
+            const auto& image_size =
+                cc->Inputs().Tag("OUTPUT_DIMENSIONS").Get<std::pair<int, int>>();
+            output_width_ = image_size.first;
+            output_height_ = image_size.second;
+        }
+    }
+
+    if (use_gpu_) {
 #if !MEDIAPIPE_DISABLE_GPU
-    if (cc->Inputs().Tag(kGpuBufferTag).IsEmpty()) {
-      return absl::OkStatus();
-    }
-    return gpu_helper_.RunInGlContext(
-        [this, cc]() -> absl::Status { return RenderGpu(cc); });
+        if (cc->Inputs().Tag(kGpuBufferTag).IsEmpty()) {
+            return absl::OkStatus();
+        }
+        return gpu_helper_.RunInGlContext(
+            [this, cc]() -> absl::Status { return RenderGpu(cc); });
 #endif  // !MEDIAPIPE_DISABLE_GPU
-  } else {
-    if (cc->Inputs().Tag(kImageFrameTag).IsEmpty()) {
-      return absl::OkStatus();
+    } else {
+        if (cc->Inputs().Tag(kImageFrameTag).IsEmpty()) {
+            return absl::OkStatus();
+        }
+        return RenderCpu(cc);
     }
-    return RenderCpu(cc);
-  }
-  return absl::OkStatus();
+    return absl::OkStatus();
 }
 
 absl::Status ImageTransformationCalculator::Close(CalculatorContext* cc) {
-  if (use_gpu_) {
+    if (use_gpu_) {
 #if !MEDIAPIPE_DISABLE_GPU
-    QuadRenderer* rgb_renderer = rgb_renderer_.release();
-    QuadRenderer* yuv_renderer = yuv_renderer_.release();
-    QuadRenderer* ext_rgb_renderer = ext_rgb_renderer_.release();
-    gpu_helper_.RunInGlContext([rgb_renderer, yuv_renderer, ext_rgb_renderer] {
-      if (rgb_renderer) {
-        rgb_renderer->GlTeardown();
-        delete rgb_renderer;
-      }
-      if (ext_rgb_renderer) {
-        ext_rgb_renderer->GlTeardown();
-        delete ext_rgb_renderer;
-      }
-      if (yuv_renderer) {
-        yuv_renderer->GlTeardown();
-        delete yuv_renderer;
-      }
-    });
+        QuadRenderer* rgb_renderer = rgb_renderer_.release();
+        QuadRenderer* yuv_renderer = yuv_renderer_.release();
+        QuadRenderer* ext_rgb_renderer = ext_rgb_renderer_.release();
+        gpu_helper_.RunInGlContext([rgb_renderer, yuv_renderer, ext_rgb_renderer] {
+            if (rgb_renderer) {
+                rgb_renderer->GlTeardown();
+                delete rgb_renderer;
+            }
+            if (ext_rgb_renderer) {
+                ext_rgb_renderer->GlTeardown();
+                delete ext_rgb_renderer;
+            }
+            if (yuv_renderer) {
+                yuv_renderer->GlTeardown();
+                delete yuv_renderer;
+            }
+        });
 #endif  // !MEDIAPIPE_DISABLE_GPU
-  }
+    }
 
-  return absl::OkStatus();
+    return absl::OkStatus();
 }
 
 absl::Status ImageTransformationCalculator::RenderCpu(CalculatorContext* cc) {
-  cv::Mat input_mat;
-  mediapipe::ImageFormat::Format format;
+    cv::Mat input_mat;
+    mediapipe::ImageFormat::Format format;
 
-  const auto& input = cc->Inputs().Tag(kImageFrameTag).Get<ImageFrame>();
-  input_mat = formats::MatView(&input);
-  format = input.Format();
+    const auto& input = cc->Inputs().Tag(kImageFrameTag).Get<ImageFrame>();
+    input_mat = formats::MatView(&input);
+    format = input.Format();
 
-  const int input_width = input_mat.cols;
-  const int input_height = input_mat.rows;
-  int output_width;
-  int output_height;
-  ComputeOutputDimensions(input_width, input_height, &output_width,
-                          &output_height);
+    const int input_width = input_mat.cols;
+    const int input_height = input_mat.rows;
+    int output_width;
+    int output_height;
+    ComputeOutputDimensions(input_width, input_height, &output_width,
+                            &output_height);
 
-  if (output_width_ > 0 && output_height_ > 0) {
-    cv::Mat scaled_mat;
-    if (scale_mode_ == mediapipe::ScaleMode_Mode_STRETCH) {
-      int scale_flag =
-          input_mat.cols > output_width_ && input_mat.rows > output_height_
-              ? cv::INTER_AREA
-              : cv::INTER_LINEAR;
-      cv::resize(input_mat, scaled_mat, cv::Size(output_width_, output_height_),
-                 0, 0, scale_flag);
+    if (output_width_ > 0 && output_height_ > 0) {
+        cv::Mat scaled_mat;
+        if (scale_mode_ == mediapipe::ScaleMode_Mode_STRETCH) {
+            int scale_flag =
+                input_mat.cols > output_width_ && input_mat.rows > output_height_
+                    ? cv::INTER_AREA
+                    : cv::INTER_LINEAR;
+            cv::resize(input_mat, scaled_mat, cv::Size(output_width_, output_height_),
+                       0, 0, scale_flag);
+        } else {
+            const float scale =
+                std::min(static_cast<float>(output_width_) / input_width,
+                         static_cast<float>(output_height_) / input_height);
+            const int target_width = std::round(input_width * scale);
+            const int target_height = std::round(input_height * scale);
+            int scale_flag = scale < 1.0f ? cv::INTER_AREA : cv::INTER_LINEAR;
+            if (scale_mode_ == mediapipe::ScaleMode_Mode_FIT) {
+                cv::Mat intermediate_mat;
+                cv::resize(input_mat, intermediate_mat,
+                           cv::Size(target_width, target_height), 0, 0, scale_flag);
+                const int top = (output_height_ - target_height) / 2;
+                const int bottom = output_height_ - target_height - top;
+                const int left = (output_width_ - target_width) / 2;
+                const int right = output_width_ - target_width - left;
+                cv::copyMakeBorder(intermediate_mat, scaled_mat, top, bottom, left,
+                                   right,
+                                   options_.constant_padding() ? cv::BORDER_CONSTANT
+                                                               : cv::BORDER_REPLICATE);
+            } else {
+                cv::resize(input_mat, scaled_mat, cv::Size(target_width, target_height),
+                           0, 0, scale_flag);
+                output_width = target_width;
+                output_height = target_height;
+            }
+        }
+        input_mat = scaled_mat;
+    }
+
+    if (cc->Outputs().HasTag("LETTERBOX_PADDING")) {
+        auto padding = absl::make_unique<std::array<float, 4>>();
+        ComputeOutputLetterboxPadding(input_width, input_height, output_width,
+                                      output_height, padding.get());
+        cc->Outputs()
+            .Tag("LETTERBOX_PADDING")
+            .Add(padding.release(), cc->InputTimestamp());
+    }
+
+    cv::Mat rotated_mat;
+    cv::Size rotated_size(output_width, output_height);
+    if (input_mat.size() == rotated_size) {
+        const int angle = RotationModeToDegrees(rotation_);
+        cv::Point2f src_center(input_mat.cols / 2.0, input_mat.rows / 2.0);
+        cv::Mat rotation_mat = cv::getRotationMatrix2D(src_center, angle, 1.0);
+        cv::warpAffine(input_mat, rotated_mat, rotation_mat, rotated_size);
     } else {
-      const float scale =
-          std::min(static_cast<float>(output_width_) / input_width,
-                   static_cast<float>(output_height_) / input_height);
-      const int target_width = std::round(input_width * scale);
-      const int target_height = std::round(input_height * scale);
-      int scale_flag = scale < 1.0f ? cv::INTER_AREA : cv::INTER_LINEAR;
-      if (scale_mode_ == mediapipe::ScaleMode_Mode_FIT) {
-        cv::Mat intermediate_mat;
-        cv::resize(input_mat, intermediate_mat,
-                   cv::Size(target_width, target_height), 0, 0, scale_flag);
-        const int top = (output_height_ - target_height) / 2;
-        const int bottom = output_height_ - target_height - top;
-        const int left = (output_width_ - target_width) / 2;
-        const int right = output_width_ - target_width - left;
-        cv::copyMakeBorder(intermediate_mat, scaled_mat, top, bottom, left,
-                           right,
-                           options_.constant_padding() ? cv::BORDER_CONSTANT
-                                                       : cv::BORDER_REPLICATE);
-      } else {
-        cv::resize(input_mat, scaled_mat, cv::Size(target_width, target_height),
-                   0, 0, scale_flag);
-        output_width = target_width;
-        output_height = target_height;
-      }
+        switch (rotation_) {
+            case mediapipe::RotationMode_Mode_UNKNOWN:
+            case mediapipe::RotationMode_Mode_ROTATION_0:
+                rotated_mat = input_mat;
+                break;
+            case mediapipe::RotationMode_Mode_ROTATION_90:
+                cv::rotate(input_mat, rotated_mat, cv::ROTATE_90_COUNTERCLOCKWISE);
+                break;
+            case mediapipe::RotationMode_Mode_ROTATION_180:
+                cv::rotate(input_mat, rotated_mat, cv::ROTATE_180);
+                break;
+            case mediapipe::RotationMode_Mode_ROTATION_270:
+                cv::rotate(input_mat, rotated_mat, cv::ROTATE_90_CLOCKWISE);
+                break;
+        }
     }
-    input_mat = scaled_mat;
-  }
 
-  if (cc->Outputs().HasTag("LETTERBOX_PADDING")) {
-    auto padding = absl::make_unique<std::array<float, 4>>();
-    ComputeOutputLetterboxPadding(input_width, input_height, output_width,
-                                  output_height, padding.get());
+    cv::Mat flipped_mat;
+    if (flip_horizontally_ || flip_vertically_) {
+        const int flip_code =
+            flip_horizontally_ && flip_vertically_ ? -1 : flip_horizontally_;
+        cv::flip(rotated_mat, flipped_mat, flip_code);
+    } else {
+        flipped_mat = rotated_mat;
+    }
+
+    std::unique_ptr<ImageFrame> output_frame(
+        new ImageFrame(format, output_width, output_height));
+    cv::Mat output_mat = formats::MatView(output_frame.get());
+    flipped_mat.copyTo(output_mat);
     cc->Outputs()
-        .Tag("LETTERBOX_PADDING")
-        .Add(padding.release(), cc->InputTimestamp());
-  }
+        .Tag(kImageFrameTag)
+        .Add(output_frame.release(), cc->InputTimestamp());
 
-  cv::Mat rotated_mat;
-  cv::Size rotated_size(output_width, output_height);
-  if (input_mat.size() == rotated_size) {
-    const int angle = RotationModeToDegrees(rotation_);
-    cv::Point2f src_center(input_mat.cols / 2.0, input_mat.rows / 2.0);
-    cv::Mat rotation_mat = cv::getRotationMatrix2D(src_center, angle, 1.0);
-    cv::warpAffine(input_mat, rotated_mat, rotation_mat, rotated_size);
-  } else {
-    switch (rotation_) {
-      case mediapipe::RotationMode_Mode_UNKNOWN:
-      case mediapipe::RotationMode_Mode_ROTATION_0:
-        rotated_mat = input_mat;
-        break;
-      case mediapipe::RotationMode_Mode_ROTATION_90:
-        cv::rotate(input_mat, rotated_mat, cv::ROTATE_90_COUNTERCLOCKWISE);
-        break;
-      case mediapipe::RotationMode_Mode_ROTATION_180:
-        cv::rotate(input_mat, rotated_mat, cv::ROTATE_180);
-        break;
-      case mediapipe::RotationMode_Mode_ROTATION_270:
-        cv::rotate(input_mat, rotated_mat, cv::ROTATE_90_CLOCKWISE);
-        break;
-    }
-  }
-
-  cv::Mat flipped_mat;
-  if (flip_horizontally_ || flip_vertically_) {
-    const int flip_code =
-        flip_horizontally_ && flip_vertically_ ? -1 : flip_horizontally_;
-    cv::flip(rotated_mat, flipped_mat, flip_code);
-  } else {
-    flipped_mat = rotated_mat;
-  }
-
-  std::unique_ptr<ImageFrame> output_frame(
-      new ImageFrame(format, output_width, output_height));
-  cv::Mat output_mat = formats::MatView(output_frame.get());
-  flipped_mat.copyTo(output_mat);
-  cc->Outputs()
-      .Tag(kImageFrameTag)
-      .Add(output_frame.release(), cc->InputTimestamp());
-
-  return absl::OkStatus();
+    return absl::OkStatus();
 }
 
 absl::Status ImageTransformationCalculator::RenderGpu(CalculatorContext* cc) {
 #if !MEDIAPIPE_DISABLE_GPU
-  const auto& input = cc->Inputs().Tag(kGpuBufferTag).Get<GpuBuffer>();
-  const int input_width = input.width();
-  const int input_height = input.height();
+    const auto& input = cc->Inputs().Tag(kGpuBufferTag).Get<GpuBuffer>();
+    const int input_width = input.width();
+    const int input_height = input.height();
 
-  int output_width;
-  int output_height;
-  ComputeOutputDimensions(input_width, input_height, &output_width,
-                          &output_height);
+    int output_width;
+    int output_height;
+    ComputeOutputDimensions(input_width, input_height, &output_width,
+                            &output_height);
 
-  if (scale_mode_ == mediapipe::ScaleMode_Mode_FILL_AND_CROP) {
-    const float scale =
-        std::min(static_cast<float>(output_width_) / input_width,
-                 static_cast<float>(output_height_) / input_height);
-    output_width = std::round(input_width * scale);
-    output_height = std::round(input_height * scale);
-  }
+    if (scale_mode_ == mediapipe::ScaleMode_Mode_FILL_AND_CROP) {
+        const float scale =
+            std::min(static_cast<float>(output_width_) / input_width,
+                     static_cast<float>(output_height_) / input_height);
+        output_width = std::round(input_width * scale);
+        output_height = std::round(input_height * scale);
+    }
 
-  if (cc->Outputs().HasTag("LETTERBOX_PADDING")) {
-    auto padding = absl::make_unique<std::array<float, 4>>();
-    ComputeOutputLetterboxPadding(input_width, input_height, output_width,
-                                  output_height, padding.get());
-    cc->Outputs()
-        .Tag("LETTERBOX_PADDING")
-        .Add(padding.release(), cc->InputTimestamp());
-  }
+    if (cc->Outputs().HasTag("LETTERBOX_PADDING")) {
+        auto padding = absl::make_unique<std::array<float, 4>>();
+        ComputeOutputLetterboxPadding(input_width, input_height, output_width,
+                                      output_height, padding.get());
+        cc->Outputs()
+            .Tag("LETTERBOX_PADDING")
+            .Add(padding.release(), cc->InputTimestamp());
+    }
 
-  QuadRenderer* renderer = nullptr;
-  GlTexture src1;
+    QuadRenderer* renderer = nullptr;
+    GlTexture src1;
 
 #if defined(MEDIAPIPE_IOS)
-  if (input.format() == GpuBufferFormat::kBiPlanar420YpCbCr8VideoRange ||
-      input.format() == GpuBufferFormat::kBiPlanar420YpCbCr8FullRange) {
-    if (!yuv_renderer_) {
-      yuv_renderer_ = absl::make_unique<QuadRenderer>();
-      MP_RETURN_IF_ERROR(
-          yuv_renderer_->GlSetup(::mediapipe::kYUV2TexToRGBFragmentShader,
-                                 {"video_frame_y", "video_frame_uv"}));
-    }
-    renderer = yuv_renderer_.get();
-    src1 = gpu_helper_.CreateSourceTexture(input, 0);
-  } else  // NOLINT(readability/braces)
-#endif    // iOS
-  {
-    src1 = gpu_helper_.CreateSourceTexture(input);
-#if defined(TEXTURE_EXTERNAL_OES)
-    if (src1.target() == GL_TEXTURE_EXTERNAL_OES) {
-      if (!ext_rgb_renderer_) {
-        ext_rgb_renderer_ = absl::make_unique<QuadRenderer>();
-        MP_RETURN_IF_ERROR(ext_rgb_renderer_->GlSetup(
-            ::mediapipe::kBasicTexturedFragmentShaderOES, {"video_frame"}));
-      }
-      renderer = ext_rgb_renderer_.get();
+    if (input.format() == GpuBufferFormat::kBiPlanar420YpCbCr8VideoRange ||
+        input.format() == GpuBufferFormat::kBiPlanar420YpCbCr8FullRange) {
+        if (!yuv_renderer_) {
+            yuv_renderer_ = absl::make_unique<QuadRenderer>();
+            MP_RETURN_IF_ERROR(
+                yuv_renderer_->GlSetup(::mediapipe::kYUV2TexToRGBFragmentShader,
+                                       {"video_frame_y", "video_frame_uv"}));
+        }
+        renderer = yuv_renderer_.get();
+        src1 = gpu_helper_.CreateSourceTexture(input, 0);
     } else  // NOLINT(readability/braces)
-#endif      // TEXTURE_EXTERNAL_OES
+#endif      // iOS
     {
-      if (!rgb_renderer_) {
-        rgb_renderer_ = absl::make_unique<QuadRenderer>();
-        MP_RETURN_IF_ERROR(rgb_renderer_->GlSetup());
-      }
-      renderer = rgb_renderer_.get();
+        src1 = gpu_helper_.CreateSourceTexture(input);
+#if defined(TEXTURE_EXTERNAL_OES)
+        if (src1.target() == GL_TEXTURE_EXTERNAL_OES) {
+            if (!ext_rgb_renderer_) {
+                ext_rgb_renderer_ = absl::make_unique<QuadRenderer>();
+                MP_RETURN_IF_ERROR(ext_rgb_renderer_->GlSetup(
+                    ::mediapipe::kBasicTexturedFragmentShaderOES, {"video_frame"}));
+            }
+            renderer = ext_rgb_renderer_.get();
+        } else  // NOLINT(readability/braces)
+#endif          // TEXTURE_EXTERNAL_OES
+        {
+            if (!rgb_renderer_) {
+                rgb_renderer_ = absl::make_unique<QuadRenderer>();
+                MP_RETURN_IF_ERROR(rgb_renderer_->GlSetup());
+            }
+            renderer = rgb_renderer_.get();
+        }
     }
-  }
-  RET_CHECK(renderer) << "Unsupported input texture type";
+    RET_CHECK(renderer) << "Unsupported input texture type";
 
-  mediapipe::FrameScaleMode scale_mode = mediapipe::FrameScaleModeFromProto(
-      scale_mode_, mediapipe::FrameScaleMode::kStretch);
-  mediapipe::FrameRotation rotation =
-      mediapipe::FrameRotationFromDegrees(RotationModeToDegrees(rotation_));
+    mediapipe::FrameScaleMode scale_mode = mediapipe::FrameScaleModeFromProto(
+        scale_mode_, mediapipe::FrameScaleMode::kStretch);
+    mediapipe::FrameRotation rotation =
+        mediapipe::FrameRotationFromDegrees(RotationModeToDegrees(rotation_));
 
-  auto dst = gpu_helper_.CreateDestinationTexture(output_width, output_height,
-                                                  input.format());
+    auto dst = gpu_helper_.CreateDestinationTexture(output_width, output_height,
+                                                    input.format());
 
-  gpu_helper_.BindFramebuffer(dst);
-  glActiveTexture(GL_TEXTURE1);
-  glBindTexture(src1.target(), src1.name());
+    gpu_helper_.BindFramebuffer(dst);
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(src1.target(), src1.name());
 
-  MP_RETURN_IF_ERROR(renderer->GlRender(
-      src1.width(), src1.height(), dst.width(), dst.height(), scale_mode,
-      rotation, flip_horizontally_, flip_vertically_,
-      /*flip_texture=*/false));
+    MP_RETURN_IF_ERROR(renderer->GlRender(
+        src1.width(), src1.height(), dst.width(), dst.height(), scale_mode,
+        rotation, flip_horizontally_, flip_vertically_,
+        /*flip_texture=*/false));
 
-  glActiveTexture(GL_TEXTURE1);
-  glBindTexture(src1.target(), 0);
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(src1.target(), 0);
 
-  // Execute GL commands, before getting result.
-  glFlush();
+    // Execute GL commands, before getting result.
+    glFlush();
 
-  auto output = dst.template GetFrame<GpuBuffer>();
-  cc->Outputs().Tag(kGpuBufferTag).Add(output.release(), cc->InputTimestamp());
+    auto output = dst.template GetFrame<GpuBuffer>();
+    cc->Outputs().Tag(kGpuBufferTag).Add(output.release(), cc->InputTimestamp());
 
 #endif  // !MEDIAPIPE_DISABLE_GPU
 
-  return absl::OkStatus();
+    return absl::OkStatus();
 }
 
 void ImageTransformationCalculator::ComputeOutputDimensions(
     int input_width, int input_height, int* output_width, int* output_height) {
-  if (output_width_ > 0 && output_height_ > 0) {
-    *output_width = output_width_;
-    *output_height = output_height_;
-  } else if (rotation_ == mediapipe::RotationMode_Mode_ROTATION_90 ||
-             rotation_ == mediapipe::RotationMode_Mode_ROTATION_270) {
-    *output_width = input_height;
-    *output_height = input_width;
-  } else {
-    *output_width = input_width;
-    *output_height = input_height;
-  }
+    if (output_width_ > 0 && output_height_ > 0) {
+        *output_width = output_width_;
+        *output_height = output_height_;
+    } else if (rotation_ == mediapipe::RotationMode_Mode_ROTATION_90 ||
+               rotation_ == mediapipe::RotationMode_Mode_ROTATION_270) {
+        *output_width = input_height;
+        *output_height = input_width;
+    } else {
+        *output_width = input_width;
+        *output_height = input_height;
+    }
 }
 
 void ImageTransformationCalculator::ComputeOutputLetterboxPadding(
     int input_width, int input_height, int output_width, int output_height,
     std::array<float, 4>* padding) {
-  padding->fill(0.f);
-  if (scale_mode_ == mediapipe::ScaleMode_Mode_FIT) {
-    if (rotation_ == mediapipe::RotationMode_Mode_ROTATION_90 ||
-        rotation_ == mediapipe::RotationMode_Mode_ROTATION_270) {
-      std::swap(input_width, input_height);
+    padding->fill(0.f);
+    if (scale_mode_ == mediapipe::ScaleMode_Mode_FIT) {
+        if (rotation_ == mediapipe::RotationMode_Mode_ROTATION_90 ||
+            rotation_ == mediapipe::RotationMode_Mode_ROTATION_270) {
+            std::swap(input_width, input_height);
+        }
+        const float input_aspect_ratio =
+            static_cast<float>(input_width) / input_height;
+        const float output_aspect_ratio =
+            static_cast<float>(output_width) / output_height;
+        if (input_aspect_ratio < output_aspect_ratio) {
+            // Compute left and right padding.
+            (*padding)[0] = (1.f - input_aspect_ratio / output_aspect_ratio) / 2.f;
+            (*padding)[2] = (*padding)[0];
+        } else if (output_aspect_ratio < input_aspect_ratio) {
+            // Compute top and bottom padding.
+            (*padding)[1] = (1.f - output_aspect_ratio / input_aspect_ratio) / 2.f;
+            (*padding)[3] = (*padding)[1];
+        }
     }
-    const float input_aspect_ratio =
-        static_cast<float>(input_width) / input_height;
-    const float output_aspect_ratio =
-        static_cast<float>(output_width) / output_height;
-    if (input_aspect_ratio < output_aspect_ratio) {
-      // Compute left and right padding.
-      (*padding)[0] = (1.f - input_aspect_ratio / output_aspect_ratio) / 2.f;
-      (*padding)[2] = (*padding)[0];
-    } else if (output_aspect_ratio < input_aspect_ratio) {
-      // Compute top and bottom padding.
-      (*padding)[1] = (1.f - output_aspect_ratio / input_aspect_ratio) / 2.f;
-      (*padding)[3] = (*padding)[1];
-    }
-  }
 }
 
 }  // namespace mediapipe

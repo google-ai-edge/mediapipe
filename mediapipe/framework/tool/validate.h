@@ -15,10 +15,9 @@
 #ifndef MEDIAPIPE_FRAMEWORK_TOOL_VALIDATE_H_
 #define MEDIAPIPE_FRAMEWORK_TOOL_VALIDATE_H_
 
-#include <string>
-
 #include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/framework/port/status.h"
+#include <string>
 
 namespace mediapipe {
 

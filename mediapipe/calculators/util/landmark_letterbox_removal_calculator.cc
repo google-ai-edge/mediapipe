@@ -12,12 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <cmath>
-#include <vector>
-
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/landmark.pb.h"
 #include "mediapipe/framework/port/ret_check.h"
+#include <cmath>
+#include <vector>
 
 namespace mediapipe {
 
@@ -63,79 +62,79 @@ constexpr char kLetterboxPaddingTag[] = "LETTERBOX_PADDING";
 //   output_stream: "LANDMARKS:1:adjusted_landmarks_1"
 // }
 class LandmarkLetterboxRemovalCalculator : public CalculatorBase {
- public:
-  static absl::Status GetContract(CalculatorContract* cc) {
-    RET_CHECK(cc->Inputs().HasTag(kLandmarksTag) &&
-              cc->Inputs().HasTag(kLetterboxPaddingTag))
-        << "Missing one or more input streams.";
+public:
+    static absl::Status GetContract(CalculatorContract* cc) {
+        RET_CHECK(cc->Inputs().HasTag(kLandmarksTag) &&
+                  cc->Inputs().HasTag(kLetterboxPaddingTag))
+            << "Missing one or more input streams.";
 
-    RET_CHECK_EQ(cc->Inputs().NumEntries(kLandmarksTag),
-                 cc->Outputs().NumEntries(kLandmarksTag))
-        << "Same number of input and output landmarks is required.";
+        RET_CHECK_EQ(cc->Inputs().NumEntries(kLandmarksTag),
+                     cc->Outputs().NumEntries(kLandmarksTag))
+            << "Same number of input and output landmarks is required.";
 
-    for (CollectionItemId id = cc->Inputs().BeginId(kLandmarksTag);
-         id != cc->Inputs().EndId(kLandmarksTag); ++id) {
-      cc->Inputs().Get(id).Set<NormalizedLandmarkList>();
+        for (CollectionItemId id = cc->Inputs().BeginId(kLandmarksTag);
+             id != cc->Inputs().EndId(kLandmarksTag); ++id) {
+            cc->Inputs().Get(id).Set<NormalizedLandmarkList>();
+        }
+        cc->Inputs().Tag(kLetterboxPaddingTag).Set<std::array<float, 4>>();
+
+        for (CollectionItemId id = cc->Outputs().BeginId(kLandmarksTag);
+             id != cc->Outputs().EndId(kLandmarksTag); ++id) {
+            cc->Outputs().Get(id).Set<NormalizedLandmarkList>();
+        }
+
+        return absl::OkStatus();
     }
-    cc->Inputs().Tag(kLetterboxPaddingTag).Set<std::array<float, 4>>();
 
-    for (CollectionItemId id = cc->Outputs().BeginId(kLandmarksTag);
-         id != cc->Outputs().EndId(kLandmarksTag); ++id) {
-      cc->Outputs().Get(id).Set<NormalizedLandmarkList>();
+    absl::Status Open(CalculatorContext* cc) override {
+        cc->SetOffset(TimestampDiff(0));
+
+        return absl::OkStatus();
     }
 
-    return absl::OkStatus();
-  }
+    absl::Status Process(CalculatorContext* cc) override {
+        if (cc->Inputs().Tag(kLetterboxPaddingTag).IsEmpty()) {
+            return absl::OkStatus();
+        }
+        const auto& letterbox_padding =
+            cc->Inputs().Tag(kLetterboxPaddingTag).Get<std::array<float, 4>>();
+        const float left = letterbox_padding[0];
+        const float top = letterbox_padding[1];
+        const float left_and_right = letterbox_padding[0] + letterbox_padding[2];
+        const float top_and_bottom = letterbox_padding[1] + letterbox_padding[3];
 
-  absl::Status Open(CalculatorContext* cc) override {
-    cc->SetOffset(TimestampDiff(0));
+        CollectionItemId input_id = cc->Inputs().BeginId(kLandmarksTag);
+        CollectionItemId output_id = cc->Outputs().BeginId(kLandmarksTag);
+        // Number of inputs and outpus is the same according to the contract.
+        for (; input_id != cc->Inputs().EndId(kLandmarksTag);
+             ++input_id, ++output_id) {
+            const auto& input_packet = cc->Inputs().Get(input_id);
+            if (input_packet.IsEmpty()) {
+                continue;
+            }
 
-    return absl::OkStatus();
-  }
+            const NormalizedLandmarkList& input_landmarks =
+                input_packet.Get<NormalizedLandmarkList>();
+            NormalizedLandmarkList output_landmarks;
+            for (int i = 0; i < input_landmarks.landmark_size(); ++i) {
+                const NormalizedLandmark& landmark = input_landmarks.landmark(i);
+                NormalizedLandmark* new_landmark = output_landmarks.add_landmark();
+                const float new_x = (landmark.x() - left) / (1.0f - left_and_right);
+                const float new_y = (landmark.y() - top) / (1.0f - top_and_bottom);
+                const float new_z =
+                    landmark.z() / (1.0f - left_and_right);  // Scale Z coordinate as X.
+                *new_landmark = landmark;
+                new_landmark->set_x(new_x);
+                new_landmark->set_y(new_y);
+                new_landmark->set_z(new_z);
+            }
 
-  absl::Status Process(CalculatorContext* cc) override {
-    if (cc->Inputs().Tag(kLetterboxPaddingTag).IsEmpty()) {
-      return absl::OkStatus();
+            cc->Outputs().Get(output_id).AddPacket(
+                MakePacket<NormalizedLandmarkList>(output_landmarks)
+                    .At(cc->InputTimestamp()));
+        }
+        return absl::OkStatus();
     }
-    const auto& letterbox_padding =
-        cc->Inputs().Tag(kLetterboxPaddingTag).Get<std::array<float, 4>>();
-    const float left = letterbox_padding[0];
-    const float top = letterbox_padding[1];
-    const float left_and_right = letterbox_padding[0] + letterbox_padding[2];
-    const float top_and_bottom = letterbox_padding[1] + letterbox_padding[3];
-
-    CollectionItemId input_id = cc->Inputs().BeginId(kLandmarksTag);
-    CollectionItemId output_id = cc->Outputs().BeginId(kLandmarksTag);
-    // Number of inputs and outpus is the same according to the contract.
-    for (; input_id != cc->Inputs().EndId(kLandmarksTag);
-         ++input_id, ++output_id) {
-      const auto& input_packet = cc->Inputs().Get(input_id);
-      if (input_packet.IsEmpty()) {
-        continue;
-      }
-
-      const NormalizedLandmarkList& input_landmarks =
-          input_packet.Get<NormalizedLandmarkList>();
-      NormalizedLandmarkList output_landmarks;
-      for (int i = 0; i < input_landmarks.landmark_size(); ++i) {
-        const NormalizedLandmark& landmark = input_landmarks.landmark(i);
-        NormalizedLandmark* new_landmark = output_landmarks.add_landmark();
-        const float new_x = (landmark.x() - left) / (1.0f - left_and_right);
-        const float new_y = (landmark.y() - top) / (1.0f - top_and_bottom);
-        const float new_z =
-            landmark.z() / (1.0f - left_and_right);  // Scale Z coordinate as X.
-        *new_landmark = landmark;
-        new_landmark->set_x(new_x);
-        new_landmark->set_y(new_y);
-        new_landmark->set_z(new_z);
-      }
-
-      cc->Outputs().Get(output_id).AddPacket(
-          MakePacket<NormalizedLandmarkList>(output_landmarks)
-              .At(cc->InputTimestamp()));
-    }
-    return absl::OkStatus();
-  }
 };
 REGISTER_CALCULATOR(LandmarkLetterboxRemovalCalculator);
 

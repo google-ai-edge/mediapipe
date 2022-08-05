@@ -20,14 +20,14 @@
 namespace mediapipe {
 
 class ImageResizer {
- public:
-  ImageResizer(double sharpen_coeff) {}
+public:
+    ImageResizer(double sharpen_coeff) {}
 
-  bool Resize(const cv::Mat& input_mat, cv::Mat* output_mat) {
-    cv::resize(input_mat, *output_mat, output_mat->size(), 0, 0,
-               cv::INTER_AREA);
-    return true;
-  }
+    bool Resize(const cv::Mat& input_mat, cv::Mat* output_mat) {
+        cv::resize(input_mat, *output_mat, output_mat->size(), 0, 0,
+                   cv::INTER_AREA);
+        return true;
+    }
 };
 
 }  // namespace mediapipe

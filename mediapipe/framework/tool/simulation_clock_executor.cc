@@ -13,7 +13,6 @@
 // limitations under the License.
 
 #include "mediapipe/framework/tool/simulation_clock_executor.h"
-
 #include "mediapipe/framework/tool/simulation_clock.h"
 
 namespace mediapipe {
@@ -22,16 +21,16 @@ SimulationClockExecutor::SimulationClockExecutor(int num_threads)
     : clock_(new SimulationClock()), executor_(num_threads) {}
 
 void SimulationClockExecutor::Schedule(std::function<void()> task) {
-  clock_->ThreadStart();
-  executor_.Schedule([this, task] {
-    clock_->Sleep(absl::ZeroDuration());
-    task();
-    clock_->ThreadFinish();
-  });
+    clock_->ThreadStart();
+    executor_.Schedule([this, task] {
+        clock_->Sleep(absl::ZeroDuration());
+        task();
+        clock_->ThreadFinish();
+    });
 }
 
 std::shared_ptr<SimulationClock> SimulationClockExecutor::GetClock() {
-  return clock_;
+    return clock_;
 }
 
 }  // namespace mediapipe

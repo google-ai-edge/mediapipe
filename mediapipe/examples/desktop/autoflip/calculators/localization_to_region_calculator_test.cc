@@ -78,88 +78,88 @@ const char kZebra[] = R"(
 
 void SetInputs(CalculatorRunner* runner,
                const std::vector<std::string>& detections) {
-  auto inputs = ::absl::make_unique<std::vector<Detection>>();
-  // A face with landmarks.
-  for (const auto& detection : detections) {
-    inputs->push_back(ParseTextProtoOrDie<Detection>(detection));
-  }
-  runner->MutableInputs()
-      ->Tag(kDetectionsTag)
-      .packets.push_back(Adopt(inputs.release()).At(Timestamp::PostStream()));
+    auto inputs = ::absl::make_unique<std::vector<Detection>>();
+    // A face with landmarks.
+    for (const auto& detection : detections) {
+        inputs->push_back(ParseTextProtoOrDie<Detection>(detection));
+    }
+    runner->MutableInputs()
+        ->Tag(kDetectionsTag)
+        .packets.push_back(Adopt(inputs.release()).At(Timestamp::PostStream()));
 }
 
 CalculatorGraphConfig::Node MakeConfig(bool output_standard, bool output_all) {
-  auto config = ParseTextProtoOrDie<CalculatorGraphConfig::Node>(kConfig);
+    auto config = ParseTextProtoOrDie<CalculatorGraphConfig::Node>(kConfig);
 
-  config.mutable_options()
-      ->MutableExtension(LocalizationToRegionCalculatorOptions::ext)
-      ->set_output_standard_signals(output_standard);
+    config.mutable_options()
+        ->MutableExtension(LocalizationToRegionCalculatorOptions::ext)
+        ->set_output_standard_signals(output_standard);
 
-  config.mutable_options()
-      ->MutableExtension(LocalizationToRegionCalculatorOptions::ext)
-      ->set_output_all_signals(output_all);
+    config.mutable_options()
+        ->MutableExtension(LocalizationToRegionCalculatorOptions::ext)
+        ->set_output_all_signals(output_all);
 
-  return config;
+    return config;
 }
 
 TEST(LocalizationToRegionCalculatorTest, StandardTypes) {
-  // Setup test
-  auto runner = ::absl::make_unique<CalculatorRunner>(MakeConfig(true, false));
-  SetInputs(runner.get(), {kCar, kDog, kZebra});
+    // Setup test
+    auto runner = ::absl::make_unique<CalculatorRunner>(MakeConfig(true, false));
+    SetInputs(runner.get(), {kCar, kDog, kZebra});
 
-  // Run the calculator.
-  MP_ASSERT_OK(runner->Run());
+    // Run the calculator.
+    MP_ASSERT_OK(runner->Run());
 
-  // Check the output regions.
-  const std::vector<Packet>& output_packets =
-      runner->Outputs().Tag(kRegionsTag).packets;
-  ASSERT_EQ(1, output_packets.size());
-  const auto& regions = output_packets[0].Get<DetectionSet>();
-  ASSERT_EQ(2, regions.detections().size());
-  const auto& detection = regions.detections(0);
-  EXPECT_EQ(detection.signal_type().standard(), SignalType::CAR);
-  EXPECT_FLOAT_EQ(detection.location_normalized().x(), -0.00375);
-  EXPECT_FLOAT_EQ(detection.location_normalized().y(), 0.003333);
-  EXPECT_FLOAT_EQ(detection.location_normalized().width(), 0.125);
-  EXPECT_FLOAT_EQ(detection.location_normalized().height(), 0.33333);
-  const auto& detection_1 = regions.detections(1);
-  EXPECT_EQ(detection_1.signal_type().standard(), SignalType::PET);
-  EXPECT_FLOAT_EQ(detection_1.location_normalized().x(), 0.0025);
-  EXPECT_FLOAT_EQ(detection_1.location_normalized().y(), 0.005);
-  EXPECT_FLOAT_EQ(detection_1.location_normalized().width(), 0.25);
-  EXPECT_FLOAT_EQ(detection_1.location_normalized().height(), 0.5);
+    // Check the output regions.
+    const std::vector<Packet>& output_packets =
+        runner->Outputs().Tag(kRegionsTag).packets;
+    ASSERT_EQ(1, output_packets.size());
+    const auto& regions = output_packets[0].Get<DetectionSet>();
+    ASSERT_EQ(2, regions.detections().size());
+    const auto& detection = regions.detections(0);
+    EXPECT_EQ(detection.signal_type().standard(), SignalType::CAR);
+    EXPECT_FLOAT_EQ(detection.location_normalized().x(), -0.00375);
+    EXPECT_FLOAT_EQ(detection.location_normalized().y(), 0.003333);
+    EXPECT_FLOAT_EQ(detection.location_normalized().width(), 0.125);
+    EXPECT_FLOAT_EQ(detection.location_normalized().height(), 0.33333);
+    const auto& detection_1 = regions.detections(1);
+    EXPECT_EQ(detection_1.signal_type().standard(), SignalType::PET);
+    EXPECT_FLOAT_EQ(detection_1.location_normalized().x(), 0.0025);
+    EXPECT_FLOAT_EQ(detection_1.location_normalized().y(), 0.005);
+    EXPECT_FLOAT_EQ(detection_1.location_normalized().width(), 0.25);
+    EXPECT_FLOAT_EQ(detection_1.location_normalized().height(), 0.5);
 }
 
 TEST(LocalizationToRegionCalculatorTest, AllTypes) {
-  // Setup test
-  auto runner = ::absl::make_unique<CalculatorRunner>(MakeConfig(false, true));
-  SetInputs(runner.get(), {kCar, kDog, kZebra});
+    // Setup test
+    auto runner = ::absl::make_unique<CalculatorRunner>(MakeConfig(false, true));
+    SetInputs(runner.get(), {kCar, kDog, kZebra});
 
-  // Run the calculator.
-  MP_ASSERT_OK(runner->Run());
+    // Run the calculator.
+    MP_ASSERT_OK(runner->Run());
 
-  // Check the output regions.
-  const std::vector<Packet>& output_packets =
-      runner->Outputs().Tag(kRegionsTag).packets;
-  ASSERT_EQ(1, output_packets.size());
-  const auto& regions = output_packets[0].Get<DetectionSet>();
-  ASSERT_EQ(3, regions.detections().size());
+    // Check the output regions.
+    const std::vector<Packet>& output_packets =
+        runner->Outputs().Tag(kRegionsTag).packets;
+    ASSERT_EQ(1, output_packets.size());
+    const auto& regions = output_packets[0].Get<DetectionSet>();
+    ASSERT_EQ(3, regions.detections().size());
 }
 
 TEST(LocalizationToRegionCalculatorTest, BothTypes) {
-  // Setup test
-  auto runner = ::absl::make_unique<CalculatorRunner>(MakeConfig(true, true));
-  SetInputs(runner.get(), {kCar, kDog, kZebra});
+    // Setup test
+    auto runner = ::absl::make_unique<CalculatorRunner>(MakeConfig(true, true));
+    SetInputs(runner.get(), {kCar, kDog, kZebra});
 
-  // Run the calculator.
-  MP_ASSERT_OK(runner->Run());
+    // Run the calculator.
+    MP_ASSERT_OK(runner->Run());
 
-  // Check the output regions.
-  const std::vector<Packet>& output_packets =
-      runner->Outputs().Tag(kRegionsTag).packets;
-  ASSERT_EQ(1, output_packets.size());
-  const auto& regions = output_packets[0].Get<DetectionSet>();
-  ASSERT_EQ(5, regions.detections().size());
+    // Check the output regions.
+    const std::vector<Packet>& output_packets =
+        runner->Outputs().Tag(kRegionsTag).packets;
+    ASSERT_EQ(1, output_packets.size());
+    const auto& regions = output_packets[0].Get<DetectionSet>();
+    ASSERT_EQ(5, regions.detections().size());
 }
 
 }  // namespace

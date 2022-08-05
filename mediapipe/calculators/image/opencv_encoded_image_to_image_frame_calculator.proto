@@ -19,12 +19,12 @@ package mediapipe;
 import "mediapipe/framework/calculator.proto";
 
 message OpenCvEncodedImageToImageFrameCalculatorOptions {
-  extend CalculatorOptions {
-    optional OpenCvEncodedImageToImageFrameCalculatorOptions ext = 303447308;
-  }
+    extend CalculatorOptions {
+        optional OpenCvEncodedImageToImageFrameCalculatorOptions ext = 303447308;
+    }
 
-  // If set, we will attempt to automatically apply the orientation specified by
-  // the image's EXIF data when loading the image. Otherwise, the image data
-  // will be loaded as-is.
-  optional bool apply_orientation_from_exif_data = 1 [default = false];
+    // If set, we will attempt to automatically apply the orientation specified by
+    // the image's EXIF data when loading the image. Otherwise, the image data
+    // will be loaded as-is.
+    optional bool apply_orientation_from_exif_data = 1 [default = false];
 }

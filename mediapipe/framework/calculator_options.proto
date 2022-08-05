@@ -35,9 +35,9 @@ option java_outer_classname = "CalculatorOptionsProto";
 //   // etc
 // }
 message CalculatorOptions {
-  // If true, this proto specifies a subset of field values,
-  // which should override corresponding field values.
-  optional bool merge_fields = 1 [deprecated = true];
+    // If true, this proto specifies a subset of field values,
+    // which should override corresponding field values.
+    optional bool merge_fields = 1 [deprecated = true];
 
-  extensions 20000 to max;
+    extensions 20000 to max;
 }

@@ -19,17 +19,17 @@ package mediapipe;
 import "mediapipe/framework/calculator.proto";
 
 message SegmentationSmoothingCalculatorOptions {
-  extend CalculatorOptions {
-    optional SegmentationSmoothingCalculatorOptions ext = 377425128;
-  }
+    extend CalculatorOptions {
+        optional SegmentationSmoothingCalculatorOptions ext = 377425128;
+    }
 
-  // How much to blend in previous mask, based on a probability estimate.
-  // Range: [0-1]
-  // 0 = Use only current frame (no blending).
-  // 1 = Blend in the previous mask based on uncertainty estimate.
-  //     With ratio at 1, the uncertainty estimate is trusted completely.
-  //     When uncertainty is high, the previous mask is given higher weight.
-  //     Therefore, if both ratio and uncertainty are 1, only old mask is used.
-  //   A pixel is 'uncertain' if its value is close to the middle (0.5 or 127).
-  optional float combine_with_previous_ratio = 1 [default = 0.0];
+    // How much to blend in previous mask, based on a probability estimate.
+    // Range: [0-1]
+    // 0 = Use only current frame (no blending).
+    // 1 = Blend in the previous mask based on uncertainty estimate.
+    //     With ratio at 1, the uncertainty estimate is trusted completely.
+    //     When uncertainty is high, the previous mask is given higher weight.
+    //     Therefore, if both ratio and uncertainty are 1, only old mask is used.
+    //   A pixel is 'uncertain' if its value is close to the middle (0.5 or 127).
+    optional float combine_with_previous_ratio = 1 [default = 0.0];
 }

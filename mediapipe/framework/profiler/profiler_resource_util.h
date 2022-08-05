@@ -15,10 +15,9 @@
 #ifndef MEDIAPIPE_FRAMEWORK_PROFILER_PROFILER_RESOURCE_UTIL_H_
 #define MEDIAPIPE_FRAMEWORK_PROFILER_PROFILER_RESOURCE_UTIL_H_
 
-#include <string>
-
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/port/statusor.h"
+#include <string>
 
 namespace mediapipe {
 

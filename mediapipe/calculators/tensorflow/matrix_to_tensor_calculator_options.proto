@@ -19,11 +19,11 @@ package mediapipe;
 import "mediapipe/framework/calculator.proto";
 
 message MatrixToTensorCalculatorOptions {
-  extend mediapipe.CalculatorOptions {
-    optional MatrixToTensorCalculatorOptions ext = 130781699;
-  }
+    extend mediapipe.CalculatorOptions {
+        optional MatrixToTensorCalculatorOptions ext = 130781699;
+    }
 
-  optional bool transpose = 1 [default = false];
-  // Adds a 3rd dimension of size 1 when this is set to true.
-  optional bool add_trailing_dimension = 2 [default = false];
+    optional bool transpose = 1 [default = false];
+    // Adds a 3rd dimension of size 1 when this is set to true.
+    optional bool add_trailing_dimension = 2 [default = false];
 }

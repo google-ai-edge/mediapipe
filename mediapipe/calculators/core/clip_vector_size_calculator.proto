@@ -21,10 +21,10 @@ import "mediapipe/framework/calculator.proto";
 option objc_class_prefix = "MediaPipe";
 
 message ClipVectorSizeCalculatorOptions {
-  extend CalculatorOptions {
-    optional ClipVectorSizeCalculatorOptions ext = 274674998;
-  }
+    extend CalculatorOptions {
+        optional ClipVectorSizeCalculatorOptions ext = 274674998;
+    }
 
-  // Maximum size of output vector.
-  optional int32 max_vec_size = 1 [default = 1];
+    // Maximum size of output vector.
+    optional int32 max_vec_size = 1 [default = 1];
 }

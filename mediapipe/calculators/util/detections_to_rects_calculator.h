@@ -14,8 +14,6 @@
 #ifndef MEDIAPIPE_CALCULATORS_UTIL_DETECTIONS_TO_RECTS_CALCULATOR_H_
 #define MEDIAPIPE_CALCULATORS_UTIL_DETECTIONS_TO_RECTS_CALCULATOR_H_
 
-#include <cmath>
-
 #include "absl/types/optional.h"
 #include "mediapipe/calculators/util/detections_to_rects_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
@@ -25,6 +23,7 @@
 #include "mediapipe/framework/formats/rect.pb.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status.h"
+#include <cmath>
 
 namespace mediapipe {
 
@@ -32,7 +31,7 @@ namespace mediapipe {
 // calculation of rectangle or rotation for given detection. Does not include
 // static calculator options which are available via private fields.
 struct DetectionSpec {
-  absl::optional<std::pair<int, int>> image_size;
+    absl::optional<std::pair<int, int>> image_size;
 };
 
 // A calculator that converts Detection proto to Rect proto.
@@ -82,34 +81,34 @@ struct DetectionSpec {
 //   }
 // }
 class DetectionsToRectsCalculator : public CalculatorBase {
- public:
-  static absl::Status GetContract(CalculatorContract* cc);
+public:
+    static absl::Status GetContract(CalculatorContract* cc);
 
-  absl::Status Open(CalculatorContext* cc) override;
-  absl::Status Process(CalculatorContext* cc) override;
+    absl::Status Open(CalculatorContext* cc) override;
+    absl::Status Process(CalculatorContext* cc) override;
 
- protected:
-  virtual absl::Status DetectionToRect(const ::mediapipe::Detection& detection,
-                                       const DetectionSpec& detection_spec,
-                                       ::mediapipe::Rect* rect);
-  virtual absl::Status DetectionToNormalizedRect(
-      const ::mediapipe::Detection& detection,
-      const DetectionSpec& detection_spec, ::mediapipe::NormalizedRect* rect);
-  virtual absl::Status ComputeRotation(const ::mediapipe::Detection& detection,
-                                       const DetectionSpec& detection_spec,
-                                       float* rotation);
-  virtual DetectionSpec GetDetectionSpec(const CalculatorContext* cc);
+protected:
+    virtual absl::Status DetectionToRect(const ::mediapipe::Detection& detection,
+                                         const DetectionSpec& detection_spec,
+                                         ::mediapipe::Rect* rect);
+    virtual absl::Status DetectionToNormalizedRect(
+        const ::mediapipe::Detection& detection,
+        const DetectionSpec& detection_spec, ::mediapipe::NormalizedRect* rect);
+    virtual absl::Status ComputeRotation(const ::mediapipe::Detection& detection,
+                                         const DetectionSpec& detection_spec,
+                                         float* rotation);
+    virtual DetectionSpec GetDetectionSpec(const CalculatorContext* cc);
 
-  static inline float NormalizeRadians(float angle) {
-    return angle - 2 * M_PI * std::floor((angle - (-M_PI)) / (2 * M_PI));
-  }
+    static inline float NormalizeRadians(float angle) {
+        return angle - 2 * M_PI * std::floor((angle - (-M_PI)) / (2 * M_PI));
+    }
 
-  ::mediapipe::DetectionsToRectsCalculatorOptions options_;
-  int start_keypoint_index_;
-  int end_keypoint_index_;
-  float target_angle_ = 0.0f;  // In radians.
-  bool rotate_;
-  bool output_zero_rect_for_empty_detections_;
+    ::mediapipe::DetectionsToRectsCalculatorOptions options_;
+    int start_keypoint_index_;
+    int end_keypoint_index_;
+    float target_angle_ = 0.0f;  // In radians.
+    bool rotate_;
+    bool output_zero_rect_for_empty_detections_;
 };
 
 }  // namespace mediapipe

@@ -13,9 +13,6 @@
 // limitations under the License.
 
 #include "mediapipe/calculators/core/split_vector_calculator.h"
-
-#include <vector>
-
 #include "mediapipe/framework/formats/classification.pb.h"
 #include "mediapipe/framework/formats/detection.pb.h"
 #include "mediapipe/framework/formats/landmark.pb.h"
@@ -23,6 +20,7 @@
 #include "mediapipe/framework/formats/rect.pb.h"
 #include "mediapipe/framework/formats/tensor.h"
 #include "tensorflow/lite/interpreter.h"
+#include <vector>
 
 #if !defined(MEDIAPIPE_DISABLE_GL_COMPUTE)
 #include "tensorflow/lite/delegates/gpu/gl/gl_buffer.h"

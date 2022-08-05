@@ -15,9 +15,8 @@
 #ifndef MEDIAPIPE_FRAMEWORK_TOOL_NAME_UTIL_H_
 #define MEDIAPIPE_FRAMEWORK_TOOL_NAME_UTIL_H_
 
-#include <string>
-
 #include "mediapipe/framework/calculator.pb.h"
+#include <string>
 
 namespace mediapipe {
 

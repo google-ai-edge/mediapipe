@@ -36,85 +36,85 @@ constexpr char kErrorOnOpenTag[] = "ERROR_ON_OPEN";
 // ERROR_COUNT must be provided and non-negative.  If BATCH_SIZE is not
 // provided, then batches are of size 1.
 class CountingSourceCalculator : public CalculatorBase {
- public:
-  static absl::Status GetContract(CalculatorContract* cc) {
-    cc->Outputs().Index(0).Set<int>();
+public:
+    static absl::Status GetContract(CalculatorContract* cc) {
+        cc->Outputs().Index(0).Set<int>();
 
-    if (cc->InputSidePackets().HasTag(kErrorOnOpenTag)) {
-      cc->InputSidePackets().Tag(kErrorOnOpenTag).Set<bool>();
+        if (cc->InputSidePackets().HasTag(kErrorOnOpenTag)) {
+            cc->InputSidePackets().Tag(kErrorOnOpenTag).Set<bool>();
+        }
+
+        RET_CHECK(cc->InputSidePackets().HasTag(kMaxCountTag) ||
+                  cc->InputSidePackets().HasTag(kErrorCountTag));
+        if (cc->InputSidePackets().HasTag(kMaxCountTag)) {
+            cc->InputSidePackets().Tag(kMaxCountTag).Set<int>();
+        }
+        if (cc->InputSidePackets().HasTag(kErrorCountTag)) {
+            cc->InputSidePackets().Tag(kErrorCountTag).Set<int>();
+        }
+
+        if (cc->InputSidePackets().HasTag(kBatchSizeTag)) {
+            cc->InputSidePackets().Tag(kBatchSizeTag).Set<int>();
+        }
+        if (cc->InputSidePackets().HasTag(kInitialValueTag)) {
+            cc->InputSidePackets().Tag(kInitialValueTag).Set<int>();
+        }
+        if (cc->InputSidePackets().HasTag(kIncrementTag)) {
+            cc->InputSidePackets().Tag(kIncrementTag).Set<int>();
+        }
+        return absl::OkStatus();
     }
 
-    RET_CHECK(cc->InputSidePackets().HasTag(kMaxCountTag) ||
-              cc->InputSidePackets().HasTag(kErrorCountTag));
-    if (cc->InputSidePackets().HasTag(kMaxCountTag)) {
-      cc->InputSidePackets().Tag(kMaxCountTag).Set<int>();
-    }
-    if (cc->InputSidePackets().HasTag(kErrorCountTag)) {
-      cc->InputSidePackets().Tag(kErrorCountTag).Set<int>();
+    absl::Status Open(CalculatorContext* cc) override {
+        if (cc->InputSidePackets().HasTag(kErrorOnOpenTag) &&
+            cc->InputSidePackets().Tag(kErrorOnOpenTag).Get<bool>()) {
+            return absl::NotFoundError("expected error");
+        }
+        if (cc->InputSidePackets().HasTag(kErrorCountTag)) {
+            error_count_ = cc->InputSidePackets().Tag(kErrorCountTag).Get<int>();
+            RET_CHECK_LE(0, error_count_);
+        }
+        if (cc->InputSidePackets().HasTag(kMaxCountTag)) {
+            max_count_ = cc->InputSidePackets().Tag(kMaxCountTag).Get<int>();
+            RET_CHECK_LE(0, max_count_);
+        }
+        if (cc->InputSidePackets().HasTag(kBatchSizeTag)) {
+            batch_size_ = cc->InputSidePackets().Tag(kBatchSizeTag).Get<int>();
+            RET_CHECK_LT(0, batch_size_);
+        }
+        if (cc->InputSidePackets().HasTag(kInitialValueTag)) {
+            counter_ = cc->InputSidePackets().Tag(kInitialValueTag).Get<int>();
+        }
+        if (cc->InputSidePackets().HasTag(kIncrementTag)) {
+            increment_ = cc->InputSidePackets().Tag(kIncrementTag).Get<int>();
+            RET_CHECK_LT(0, increment_);
+        }
+        RET_CHECK(error_count_ >= 0 || max_count_ >= 0);
+        return absl::OkStatus();
     }
 
-    if (cc->InputSidePackets().HasTag(kBatchSizeTag)) {
-      cc->InputSidePackets().Tag(kBatchSizeTag).Set<int>();
+    absl::Status Process(CalculatorContext* cc) override {
+        if (error_count_ >= 0 && batch_counter_ >= error_count_) {
+            return absl::InternalError("expected error");
+        }
+        if (max_count_ >= 0 && batch_counter_ >= max_count_) {
+            return tool::StatusStop();
+        }
+        for (int i = 0; i < batch_size_; ++i) {
+            cc->Outputs().Index(0).Add(new int(counter_), Timestamp(counter_));
+            counter_ += increment_;
+        }
+        ++batch_counter_;
+        return absl::OkStatus();
     }
-    if (cc->InputSidePackets().HasTag(kInitialValueTag)) {
-      cc->InputSidePackets().Tag(kInitialValueTag).Set<int>();
-    }
-    if (cc->InputSidePackets().HasTag(kIncrementTag)) {
-      cc->InputSidePackets().Tag(kIncrementTag).Set<int>();
-    }
-    return absl::OkStatus();
-  }
 
-  absl::Status Open(CalculatorContext* cc) override {
-    if (cc->InputSidePackets().HasTag(kErrorOnOpenTag) &&
-        cc->InputSidePackets().Tag(kErrorOnOpenTag).Get<bool>()) {
-      return absl::NotFoundError("expected error");
-    }
-    if (cc->InputSidePackets().HasTag(kErrorCountTag)) {
-      error_count_ = cc->InputSidePackets().Tag(kErrorCountTag).Get<int>();
-      RET_CHECK_LE(0, error_count_);
-    }
-    if (cc->InputSidePackets().HasTag(kMaxCountTag)) {
-      max_count_ = cc->InputSidePackets().Tag(kMaxCountTag).Get<int>();
-      RET_CHECK_LE(0, max_count_);
-    }
-    if (cc->InputSidePackets().HasTag(kBatchSizeTag)) {
-      batch_size_ = cc->InputSidePackets().Tag(kBatchSizeTag).Get<int>();
-      RET_CHECK_LT(0, batch_size_);
-    }
-    if (cc->InputSidePackets().HasTag(kInitialValueTag)) {
-      counter_ = cc->InputSidePackets().Tag(kInitialValueTag).Get<int>();
-    }
-    if (cc->InputSidePackets().HasTag(kIncrementTag)) {
-      increment_ = cc->InputSidePackets().Tag(kIncrementTag).Get<int>();
-      RET_CHECK_LT(0, increment_);
-    }
-    RET_CHECK(error_count_ >= 0 || max_count_ >= 0);
-    return absl::OkStatus();
-  }
-
-  absl::Status Process(CalculatorContext* cc) override {
-    if (error_count_ >= 0 && batch_counter_ >= error_count_) {
-      return absl::InternalError("expected error");
-    }
-    if (max_count_ >= 0 && batch_counter_ >= max_count_) {
-      return tool::StatusStop();
-    }
-    for (int i = 0; i < batch_size_; ++i) {
-      cc->Outputs().Index(0).Add(new int(counter_), Timestamp(counter_));
-      counter_ += increment_;
-    }
-    ++batch_counter_;
-    return absl::OkStatus();
-  }
-
- private:
-  int max_count_ = -1;
-  int error_count_ = -1;
-  int batch_size_ = 1;
-  int batch_counter_ = 0;
-  int counter_ = 0;
-  int increment_ = 1;
+private:
+    int max_count_ = -1;
+    int error_count_ = -1;
+    int batch_size_ = 1;
+    int batch_counter_ = 0;
+    int counter_ = 0;
+    int increment_ = 1;
 };
 REGISTER_CALCULATOR(CountingSourceCalculator);
 

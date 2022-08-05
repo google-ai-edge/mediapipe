@@ -19,11 +19,11 @@ package mediapipe;
 import "mediapipe/framework/calculator_options.proto";
 
 message VisibilityCopyCalculatorOptions {
-  extend CalculatorOptions {
-    optional VisibilityCopyCalculatorOptions ext = 363728421;
-  }
+    extend CalculatorOptions {
+        optional VisibilityCopyCalculatorOptions ext = 363728421;
+    }
 
-  optional bool copy_visibility = 1 [default = true];
+    optional bool copy_visibility = 1 [default = true];
 
-  optional bool copy_presence = 2 [default = true];
+    optional bool copy_presence = 2 [default = true];
 }

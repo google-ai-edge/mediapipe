@@ -46,23 +46,23 @@ namespace mediapipe {
 //   }
 // }
 class LandmarksToRenderDataCalculator : public CalculatorBase {
- public:
-  LandmarksToRenderDataCalculator() {}
-  ~LandmarksToRenderDataCalculator() override {}
-  LandmarksToRenderDataCalculator(const LandmarksToRenderDataCalculator&) =
-      delete;
-  LandmarksToRenderDataCalculator& operator=(
-      const LandmarksToRenderDataCalculator&) = delete;
+public:
+    LandmarksToRenderDataCalculator() {}
+    ~LandmarksToRenderDataCalculator() override {}
+    LandmarksToRenderDataCalculator(const LandmarksToRenderDataCalculator&) =
+        delete;
+    LandmarksToRenderDataCalculator& operator=(
+        const LandmarksToRenderDataCalculator&) = delete;
 
-  static absl::Status GetContract(CalculatorContract* cc);
+    static absl::Status GetContract(CalculatorContract* cc);
 
-  absl::Status Open(CalculatorContext* cc) override;
+    absl::Status Open(CalculatorContext* cc) override;
 
-  absl::Status Process(CalculatorContext* cc) override;
+    absl::Status Process(CalculatorContext* cc) override;
 
- protected:
-  ::mediapipe::LandmarksToRenderDataCalculatorOptions options_;
-  std::vector<int> landmark_connections_;
+protected:
+    ::mediapipe::LandmarksToRenderDataCalculatorOptions options_;
+    std::vector<int> landmark_connections_;
 };
 
 }  // namespace mediapipe

@@ -12,14 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <algorithm>
-#include <utility>
-#include <vector>
-
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/util/header_util.h"
+#include <algorithm>
+#include <utility>
+#include <vector>
 
 namespace mediapipe {
 
@@ -77,125 +76,125 @@ constexpr char kMaxInFlightTag[] = "MAX_IN_FLIGHT";
 //   output_stream: "gated_frames"
 // }
 class RealTimeFlowLimiterCalculator : public CalculatorBase {
- public:
-  static absl::Status GetContract(CalculatorContract* cc) {
-    int num_data_streams = cc->Inputs().NumEntries("");
-    RET_CHECK_GE(num_data_streams, 1);
-    RET_CHECK_EQ(cc->Outputs().NumEntries(""), num_data_streams)
-        << "Output streams must correspond input streams except for the "
-           "finish indicator input stream.";
-    for (int i = 0; i < num_data_streams; ++i) {
-      cc->Inputs().Get("", i).SetAny();
-      cc->Outputs().Get("", i).SetSameAs(&(cc->Inputs().Get("", i)));
-    }
-    cc->Inputs().Get("FINISHED", 0).SetAny();
-    if (cc->InputSidePackets().HasTag(kMaxInFlightTag)) {
-      cc->InputSidePackets().Tag(kMaxInFlightTag).Set<int>();
-    }
-    if (cc->Outputs().HasTag(kAllowTag)) {
-      cc->Outputs().Tag(kAllowTag).Set<bool>();
-    }
-
-    cc->SetInputStreamHandler("ImmediateInputStreamHandler");
-
-    return absl::OkStatus();
-  }
-
-  absl::Status Open(CalculatorContext* cc) final {
-    finished_id_ = cc->Inputs().GetId("FINISHED", 0);
-    max_in_flight_ = 1;
-    if (cc->InputSidePackets().HasTag(kMaxInFlightTag)) {
-      max_in_flight_ = cc->InputSidePackets().Tag(kMaxInFlightTag).Get<int>();
-    }
-    RET_CHECK_GE(max_in_flight_, 1);
-    num_in_flight_ = 0;
-
-    allowed_id_ = cc->Outputs().GetId("ALLOW", 0);
-    allow_ctr_ts_ = Timestamp(0);
-
-    num_data_streams_ = cc->Inputs().NumEntries("");
-    data_stream_bound_ts_.resize(num_data_streams_);
-    RET_CHECK_OK(CopyInputHeadersToOutputs(cc->Inputs(), &(cc->Outputs())));
-    return absl::OkStatus();
-  }
-
-  bool Allow() { return num_in_flight_ < max_in_flight_; }
-
-  absl::Status Process(CalculatorContext* cc) final {
-    bool old_allow = Allow();
-    Timestamp lowest_incomplete_ts = Timestamp::Done();
-
-    // Process FINISHED stream.
-    if (!cc->Inputs().Get(finished_id_).Value().IsEmpty()) {
-      RET_CHECK_GT(num_in_flight_, 0)
-          << "Received a FINISHED packet, but we had none in flight.";
-      --num_in_flight_;
-    }
-
-    // Process data streams.
-    for (int i = 0; i < num_data_streams_; ++i) {
-      auto& stream = cc->Inputs().Get("", i);
-      auto& out = cc->Outputs().Get("", i);
-      Packet& packet = stream.Value();
-      auto ts = packet.Timestamp();
-      if (ts.IsRangeValue() && data_stream_bound_ts_[i] <= ts) {
-        data_stream_bound_ts_[i] = ts + 1;
-        // Note: it's ok to update the output bound here, before sending the
-        // packet, because updates are batched during the Process function.
-        out.SetNextTimestampBound(data_stream_bound_ts_[i]);
-      }
-      lowest_incomplete_ts =
-          std::min(lowest_incomplete_ts, data_stream_bound_ts_[i]);
-
-      if (packet.IsEmpty()) {
-        // If the input stream is closed, close the corresponding output.
-        if (stream.IsDone() && !out.IsClosed()) {
-          out.Close();
+public:
+    static absl::Status GetContract(CalculatorContract* cc) {
+        int num_data_streams = cc->Inputs().NumEntries("");
+        RET_CHECK_GE(num_data_streams, 1);
+        RET_CHECK_EQ(cc->Outputs().NumEntries(""), num_data_streams)
+            << "Output streams must correspond input streams except for the "
+               "finish indicator input stream.";
+        for (int i = 0; i < num_data_streams; ++i) {
+            cc->Inputs().Get("", i).SetAny();
+            cc->Outputs().Get("", i).SetSameAs(&(cc->Inputs().Get("", i)));
         }
-        // TODO: if the packet is empty, the ts is unset, and we
-        // cannot read the timestamp bound, even though we'd like to propagate
-        // it.
-      } else if (mediapipe::ContainsKey(pending_ts_, ts)) {
-        // If we have already sent this timestamp (on another stream), send it
-        // on this stream too.
-        out.AddPacket(std::move(packet));
-      } else if (Allow() && (ts > last_dropped_ts_)) {
-        // If the in-flight is under the limit, and if we have not already
-        // dropped this or a later timestamp on another stream, then send
-        // the packet and add an in-flight timestamp.
-        out.AddPacket(std::move(packet));
-        pending_ts_.insert(ts);
-        ++num_in_flight_;
-      } else {
-        // Otherwise, we'll drop the packet.
-        last_dropped_ts_ = std::max(last_dropped_ts_, ts);
-      }
+        cc->Inputs().Get("FINISHED", 0).SetAny();
+        if (cc->InputSidePackets().HasTag(kMaxInFlightTag)) {
+            cc->InputSidePackets().Tag(kMaxInFlightTag).Set<int>();
+        }
+        if (cc->Outputs().HasTag(kAllowTag)) {
+            cc->Outputs().Tag(kAllowTag).Set<bool>();
+        }
+
+        cc->SetInputStreamHandler("ImmediateInputStreamHandler");
+
+        return absl::OkStatus();
     }
 
-    // Remove old pending_ts_ entries.
-    auto it = std::lower_bound(pending_ts_.begin(), pending_ts_.end(),
-                               lowest_incomplete_ts);
-    pending_ts_.erase(pending_ts_.begin(), it);
+    absl::Status Open(CalculatorContext* cc) final {
+        finished_id_ = cc->Inputs().GetId("FINISHED", 0);
+        max_in_flight_ = 1;
+        if (cc->InputSidePackets().HasTag(kMaxInFlightTag)) {
+            max_in_flight_ = cc->InputSidePackets().Tag(kMaxInFlightTag).Get<int>();
+        }
+        RET_CHECK_GE(max_in_flight_, 1);
+        num_in_flight_ = 0;
 
-    // Update ALLOW signal.
-    if ((old_allow != Allow()) && allowed_id_.IsValid()) {
-      cc->Outputs()
-          .Get(allowed_id_)
-          .AddPacket(MakePacket<bool>(Allow()).At(++allow_ctr_ts_));
+        allowed_id_ = cc->Outputs().GetId("ALLOW", 0);
+        allow_ctr_ts_ = Timestamp(0);
+
+        num_data_streams_ = cc->Inputs().NumEntries("");
+        data_stream_bound_ts_.resize(num_data_streams_);
+        RET_CHECK_OK(CopyInputHeadersToOutputs(cc->Inputs(), &(cc->Outputs())));
+        return absl::OkStatus();
     }
-    return absl::OkStatus();
-  }
 
- private:
-  std::set<Timestamp> pending_ts_;
-  Timestamp last_dropped_ts_;
-  int num_data_streams_;
-  int num_in_flight_;
-  int max_in_flight_;
-  CollectionItemId finished_id_;
-  CollectionItemId allowed_id_;
-  Timestamp allow_ctr_ts_;
-  std::vector<Timestamp> data_stream_bound_ts_;
+    bool Allow() { return num_in_flight_ < max_in_flight_; }
+
+    absl::Status Process(CalculatorContext* cc) final {
+        bool old_allow = Allow();
+        Timestamp lowest_incomplete_ts = Timestamp::Done();
+
+        // Process FINISHED stream.
+        if (!cc->Inputs().Get(finished_id_).Value().IsEmpty()) {
+            RET_CHECK_GT(num_in_flight_, 0)
+                << "Received a FINISHED packet, but we had none in flight.";
+            --num_in_flight_;
+        }
+
+        // Process data streams.
+        for (int i = 0; i < num_data_streams_; ++i) {
+            auto& stream = cc->Inputs().Get("", i);
+            auto& out = cc->Outputs().Get("", i);
+            Packet& packet = stream.Value();
+            auto ts = packet.Timestamp();
+            if (ts.IsRangeValue() && data_stream_bound_ts_[i] <= ts) {
+                data_stream_bound_ts_[i] = ts + 1;
+                // Note: it's ok to update the output bound here, before sending the
+                // packet, because updates are batched during the Process function.
+                out.SetNextTimestampBound(data_stream_bound_ts_[i]);
+            }
+            lowest_incomplete_ts =
+                std::min(lowest_incomplete_ts, data_stream_bound_ts_[i]);
+
+            if (packet.IsEmpty()) {
+                // If the input stream is closed, close the corresponding output.
+                if (stream.IsDone() && !out.IsClosed()) {
+                    out.Close();
+                }
+                // TODO: if the packet is empty, the ts is unset, and we
+                // cannot read the timestamp bound, even though we'd like to propagate
+                // it.
+            } else if (mediapipe::ContainsKey(pending_ts_, ts)) {
+                // If we have already sent this timestamp (on another stream), send it
+                // on this stream too.
+                out.AddPacket(std::move(packet));
+            } else if (Allow() && (ts > last_dropped_ts_)) {
+                // If the in-flight is under the limit, and if we have not already
+                // dropped this or a later timestamp on another stream, then send
+                // the packet and add an in-flight timestamp.
+                out.AddPacket(std::move(packet));
+                pending_ts_.insert(ts);
+                ++num_in_flight_;
+            } else {
+                // Otherwise, we'll drop the packet.
+                last_dropped_ts_ = std::max(last_dropped_ts_, ts);
+            }
+        }
+
+        // Remove old pending_ts_ entries.
+        auto it = std::lower_bound(pending_ts_.begin(), pending_ts_.end(),
+                                   lowest_incomplete_ts);
+        pending_ts_.erase(pending_ts_.begin(), it);
+
+        // Update ALLOW signal.
+        if ((old_allow != Allow()) && allowed_id_.IsValid()) {
+            cc->Outputs()
+                .Get(allowed_id_)
+                .AddPacket(MakePacket<bool>(Allow()).At(++allow_ctr_ts_));
+        }
+        return absl::OkStatus();
+    }
+
+private:
+    std::set<Timestamp> pending_ts_;
+    Timestamp last_dropped_ts_;
+    int num_data_streams_;
+    int num_in_flight_;
+    int max_in_flight_;
+    CollectionItemId finished_id_;
+    CollectionItemId allowed_id_;
+    Timestamp allow_ctr_ts_;
+    std::vector<Timestamp> data_stream_bound_ts_;
 };
 REGISTER_CALCULATOR(RealTimeFlowLimiterCalculator);
 

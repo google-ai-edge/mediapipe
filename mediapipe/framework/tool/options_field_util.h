@@ -1,9 +1,6 @@
 #ifndef MEDIAPIPE_FRAMEWORK_TOOL_OPTIONS_FIELD_UTIL_H_
 #define MEDIAPIPE_FRAMEWORK_TOOL_OPTIONS_FIELD_UTIL_H_
 
-#include <string>
-#include <vector>
-
 #include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/framework/packet.h"
 #include "mediapipe/framework/packet_type.h"
@@ -11,6 +8,8 @@
 #include "mediapipe/framework/port/proto_ns.h"
 #include "mediapipe/framework/tool/field_data.pb.h"
 #include "mediapipe/framework/tool/options_registry.h"
+#include <string>
+#include <vector>
 
 namespace mediapipe {
 
@@ -21,9 +20,9 @@ namespace options_field_util {
 
 // A protobuf field and index description.
 struct FieldPathEntry {
-  const FieldDescriptor* field = nullptr;
-  int index = -1;
-  std::string extension_type;
+    const FieldDescriptor* field = nullptr;
+    int index = -1;
+    std::string extension_type;
 };
 
 // A chain of nested protobuf fields and indexes.

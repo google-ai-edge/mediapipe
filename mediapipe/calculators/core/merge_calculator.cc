@@ -44,39 +44,39 @@ namespace api2 {
 // }
 //
 class MergeCalculator : public Node {
- public:
-  static constexpr Input<AnyType>::Multiple kIn{""};
-  static constexpr Output<AnyType> kOut{""};
+public:
+    static constexpr Input<AnyType>::Multiple kIn{""};
+    static constexpr Output<AnyType> kOut{""};
 
-  MEDIAPIPE_NODE_CONTRACT(kIn, kOut);
+    MEDIAPIPE_NODE_CONTRACT(kIn, kOut);
 
-  static absl::Status UpdateContract(CalculatorContract* cc) {
-    RET_CHECK_GT(kIn(cc).Count(), 0) << "Needs at least one input stream";
-    if (kIn(cc).Count() == 1) {
-      LOG(WARNING)
-          << "MergeCalculator expects multiple input streams to merge but is "
-             "receiving only one. Make sure the calculator is configured "
-             "correctly or consider removing this calculator to reduce "
-             "unnecessary overhead.";
-    }
-    return absl::OkStatus();
-  }
-
-  absl::Status Process(CalculatorContext* cc) final {
-    // Output the packet from the first input stream with a packet ready at this
-    // timestamp.
-    for (const auto& input : kIn(cc)) {
-      if (!input.IsEmpty()) {
-        kOut(cc).Send(input.packet());
+    static absl::Status UpdateContract(CalculatorContract* cc) {
+        RET_CHECK_GT(kIn(cc).Count(), 0) << "Needs at least one input stream";
+        if (kIn(cc).Count() == 1) {
+            LOG(WARNING)
+                << "MergeCalculator expects multiple input streams to merge but is "
+                   "receiving only one. Make sure the calculator is configured "
+                   "correctly or consider removing this calculator to reduce "
+                   "unnecessary overhead.";
+        }
         return absl::OkStatus();
-      }
     }
 
-    LOG(WARNING) << "Empty input packets at timestamp "
-                 << cc->InputTimestamp().Value();
+    absl::Status Process(CalculatorContext* cc) final {
+        // Output the packet from the first input stream with a packet ready at this
+        // timestamp.
+        for (const auto& input : kIn(cc)) {
+            if (!input.IsEmpty()) {
+                kOut(cc).Send(input.packet());
+                return absl::OkStatus();
+            }
+        }
 
-    return absl::OkStatus();
-  }
+        LOG(WARNING) << "Empty input packets at timestamp "
+                     << cc->InputTimestamp().Value();
+
+        return absl::OkStatus();
+    }
 };
 
 MEDIAPIPE_REGISTER_NODE(MergeCalculator);

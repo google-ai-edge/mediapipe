@@ -28,24 +28,24 @@ option objc_class_prefix = "MediaPipe";
 
 // Settings specifying an input stream handler.
 message InputStreamHandlerConfig {
-  // Name of the registered input stream handler class.
-  optional string input_stream_handler = 1
-      [default = "DefaultInputStreamHandler"];
+    // Name of the registered input stream handler class.
+    optional string input_stream_handler = 1
+        [default = "DefaultInputStreamHandler"];
 
-  // Options for the input stream handler.
-  optional MediaPipeOptions options = 3;
+    // Options for the input stream handler.
+    optional MediaPipeOptions options = 3;
 }
 
 // Settings specifying an output stream handler.
 message OutputStreamHandlerConfig {
-  // Name of the registered output stream handler class.
-  optional string output_stream_handler = 1
-      [default = "InOrderOutputStreamHandler"];
+    // Name of the registered output stream handler class.
+    optional string output_stream_handler = 1
+        [default = "InOrderOutputStreamHandler"];
 
-  // Names of the input side packets for the handler specifically and distinct
-  // from the side packets for the calculator (but could be shared).
-  repeated string input_side_packet = 2;
+    // Names of the input side packets for the handler specifically and distinct
+    // from the side packets for the calculator (but could be shared).
+    repeated string input_side_packet = 2;
 
-  // Options for the output stream handler.
-  optional MediaPipeOptions options = 3;
+    // Options for the output stream handler.
+    optional MediaPipeOptions options = 3;
 }

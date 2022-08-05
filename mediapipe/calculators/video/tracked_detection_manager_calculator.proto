@@ -20,9 +20,9 @@ import "mediapipe/framework/calculator.proto";
 import "mediapipe/util/tracking/tracked_detection_manager_config.proto";
 
 message TrackedDetectionManagerCalculatorOptions {
-  extend CalculatorOptions {
-    optional TrackedDetectionManagerCalculatorOptions ext = 301970230;
-  }
+    extend CalculatorOptions {
+        optional TrackedDetectionManagerCalculatorOptions ext = 301970230;
+    }
 
-  optional TrackedDetectionManagerConfig tracked_detection_manager_options = 1;
+    optional TrackedDetectionManagerConfig tracked_detection_manager_options = 1;
 }

@@ -36,40 +36,40 @@ namespace mediapipe {
 // }
 class AssociationDetectionCalculator
     : public AssociationCalculator<::mediapipe::Detection> {
- public:
-  static absl::Status GetContract(CalculatorContract* cc) {
-    return AssociationCalculator<::mediapipe::Detection>::GetContract(cc);
-  }
-
-  absl::Status Open(CalculatorContext* cc) override {
-    return AssociationCalculator<::mediapipe::Detection>::Open(cc);
-  }
-
-  absl::Status Process(CalculatorContext* cc) override {
-    return AssociationCalculator<::mediapipe::Detection>::Process(cc);
-  }
-
-  absl::Status Close(CalculatorContext* cc) override {
-    return AssociationCalculator<::mediapipe::Detection>::Close(cc);
-  }
-
- protected:
-  absl::StatusOr<Rectangle_f> GetRectangle(
-      const ::mediapipe::Detection& input) override {
-    if (!input.has_location_data()) {
-      return absl::InternalError("Missing location_data in Detection");
+public:
+    static absl::Status GetContract(CalculatorContract* cc) {
+        return AssociationCalculator<::mediapipe::Detection>::GetContract(cc);
     }
-    const Location location(input.location_data());
-    return location.GetRelativeBBox();
-  }
 
-  std::pair<bool, int> GetId(const ::mediapipe::Detection& input) override {
-    return {input.has_detection_id(), input.detection_id()};
-  }
+    absl::Status Open(CalculatorContext* cc) override {
+        return AssociationCalculator<::mediapipe::Detection>::Open(cc);
+    }
 
-  void SetId(::mediapipe::Detection* input, int id) override {
-    input->set_detection_id(id);
-  }
+    absl::Status Process(CalculatorContext* cc) override {
+        return AssociationCalculator<::mediapipe::Detection>::Process(cc);
+    }
+
+    absl::Status Close(CalculatorContext* cc) override {
+        return AssociationCalculator<::mediapipe::Detection>::Close(cc);
+    }
+
+protected:
+    absl::StatusOr<Rectangle_f> GetRectangle(
+        const ::mediapipe::Detection& input) override {
+        if (!input.has_location_data()) {
+            return absl::InternalError("Missing location_data in Detection");
+        }
+        const Location location(input.location_data());
+        return location.GetRelativeBBox();
+    }
+
+    std::pair<bool, int> GetId(const ::mediapipe::Detection& input) override {
+        return {input.has_detection_id(), input.detection_id()};
+    }
+
+    void SetId(::mediapipe::Detection* input, int id) override {
+        input->set_detection_id(id);
+    }
 };
 
 REGISTER_CALCULATOR(AssociationDetectionCalculator);

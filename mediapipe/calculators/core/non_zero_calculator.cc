@@ -21,31 +21,31 @@ namespace api2 {
 
 // A Calculator that returns 0 if INPUT is 0, and 1 otherwise.
 class NonZeroCalculator : public Node {
- public:
-  static constexpr Input<int>::SideFallback kIn{"INPUT"};
-  static constexpr Output<int>::Optional kOut{"OUTPUT"};
-  static constexpr Output<bool>::Optional kBooleanOut{"OUTPUT_BOOL"};
+public:
+    static constexpr Input<int>::SideFallback kIn{"INPUT"};
+    static constexpr Output<int>::Optional kOut{"OUTPUT"};
+    static constexpr Output<bool>::Optional kBooleanOut{"OUTPUT_BOOL"};
 
-  MEDIAPIPE_NODE_CONTRACT(kIn, kOut, kBooleanOut);
+    MEDIAPIPE_NODE_CONTRACT(kIn, kOut, kBooleanOut);
 
-  absl::Status UpdateContract(CalculatorContract* cc) {
-    RET_CHECK(kOut(cc).IsConnected() || kBooleanOut(cc).IsConnected())
-        << "At least one output stream is expected.";
-    return absl::OkStatus();
-  }
-
-  absl::Status Process(CalculatorContext* cc) final {
-    if (!kIn(cc).IsEmpty()) {
-      bool isNonZero = *kIn(cc) != 0;
-      if (kOut(cc).IsConnected()) {
-        kOut(cc).Send(std::make_unique<int>(isNonZero ? 1 : 0));
-      }
-      if (kBooleanOut(cc).IsConnected()) {
-        kBooleanOut(cc).Send(std::make_unique<bool>(isNonZero));
-      }
+    absl::Status UpdateContract(CalculatorContract* cc) {
+        RET_CHECK(kOut(cc).IsConnected() || kBooleanOut(cc).IsConnected())
+            << "At least one output stream is expected.";
+        return absl::OkStatus();
     }
-    return absl::OkStatus();
-  }
+
+    absl::Status Process(CalculatorContext* cc) final {
+        if (!kIn(cc).IsEmpty()) {
+            bool isNonZero = *kIn(cc) != 0;
+            if (kOut(cc).IsConnected()) {
+                kOut(cc).Send(std::make_unique<int>(isNonZero ? 1 : 0));
+            }
+            if (kBooleanOut(cc).IsConnected()) {
+                kBooleanOut(cc).Send(std::make_unique<bool>(isNonZero));
+            }
+        }
+        return absl::OkStatus();
+    }
 };
 
 MEDIAPIPE_REGISTER_NODE(NonZeroCalculator);

@@ -25,22 +25,22 @@
 namespace mediapipe {
 
 class FlowQuantizerModel {
- public:
-  // Initializes the model proto.
-  void Init();
-  // Quantizes flow field with the model.
-  uint8 Apply(const float val, const int channel) const;
-  // Loads model from proto.
-  void LoadFromProto(const QuantizerModelData& data);
-  // Gets proto from model.
-  const QuantizerModelData& GetModelData() const;
-  // Used in training. Updates the model proto by reading the flow fields.
-  // TODO: This model is currently manually set. Need to find a way to
-  // learn from flow fields directly.
-  void AddSampleFlowField(const OpticalFlowField& flow);
+public:
+    // Initializes the model proto.
+    void Init();
+    // Quantizes flow field with the model.
+    uint8 Apply(const float val, const int channel) const;
+    // Loads model from proto.
+    void LoadFromProto(const QuantizerModelData& data);
+    // Gets proto from model.
+    const QuantizerModelData& GetModelData() const;
+    // Used in training. Updates the model proto by reading the flow fields.
+    // TODO: This model is currently manually set. Need to find a way to
+    // learn from flow fields directly.
+    void AddSampleFlowField(const OpticalFlowField& flow);
 
- private:
-  QuantizerModelData model_;
+private:
+    QuantizerModelData model_;
 };
 }  // namespace mediapipe
 

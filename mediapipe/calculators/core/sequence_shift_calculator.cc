@@ -12,11 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <deque>
-
 #include "mediapipe/calculators/core/sequence_shift_calculator.pb.h"
 #include "mediapipe/framework/api2/node.h"
 #include "mediapipe/framework/calculator_framework.h"
+#include <deque>
 
 namespace mediapipe {
 namespace api2 {
@@ -31,84 +30,84 @@ namespace api2 {
 // output with the timestamp of the first, the third with the timestamp of the
 // second, and so on.
 class SequenceShiftCalculator : public Node {
- public:
-  static constexpr Input<AnyType> kIn{""};
-  static constexpr SideInput<int>::Optional kOffset{"PACKET_OFFSET"};
-  static constexpr Output<SameType<kIn>> kOut{""};
+public:
+    static constexpr Input<AnyType> kIn{""};
+    static constexpr SideInput<int>::Optional kOffset{"PACKET_OFFSET"};
+    static constexpr Output<SameType<kIn>> kOut{""};
 
-  MEDIAPIPE_NODE_CONTRACT(kIn, kOffset, kOut, TimestampChange::Arbitrary());
+    MEDIAPIPE_NODE_CONTRACT(kIn, kOffset, kOut, TimestampChange::Arbitrary());
 
-  // Reads from options to set cache_size_ and packet_offset_.
-  absl::Status Open(CalculatorContext* cc) override;
-  absl::Status Process(CalculatorContext* cc) override;
+    // Reads from options to set cache_size_ and packet_offset_.
+    absl::Status Open(CalculatorContext* cc) override;
+    absl::Status Process(CalculatorContext* cc) override;
 
- private:
-  // A positive offset means we want a packet to be output with the timestamp of
-  // a later packet. Stores packets waiting for their output timestamps and
-  // outputs a single packet when the cache fills.
-  void ProcessPositiveOffset(CalculatorContext* cc);
+private:
+    // A positive offset means we want a packet to be output with the timestamp of
+    // a later packet. Stores packets waiting for their output timestamps and
+    // outputs a single packet when the cache fills.
+    void ProcessPositiveOffset(CalculatorContext* cc);
 
-  // A negative offset means we want a packet to be output with the timestamp of
-  // an earlier packet. Stores timestamps waiting for the corresponding input
-  // packet and outputs a single packet when the cache fills.
-  void ProcessNegativeOffset(CalculatorContext* cc);
+    // A negative offset means we want a packet to be output with the timestamp of
+    // an earlier packet. Stores timestamps waiting for the corresponding input
+    // packet and outputs a single packet when the cache fills.
+    void ProcessNegativeOffset(CalculatorContext* cc);
 
-  // Storage for packets waiting to be output when packet_offset > 0. When cache
-  // is full, oldest packet is output with current timestamp.
-  std::deque<PacketBase> packet_cache_;
+    // Storage for packets waiting to be output when packet_offset > 0. When cache
+    // is full, oldest packet is output with current timestamp.
+    std::deque<PacketBase> packet_cache_;
 
-  // Storage for previous timestamps used when packet_offset < 0. When cache is
-  // full, oldest timestamp is used for current packet.
-  std::deque<Timestamp> timestamp_cache_;
+    // Storage for previous timestamps used when packet_offset < 0. When cache is
+    // full, oldest timestamp is used for current packet.
+    std::deque<Timestamp> timestamp_cache_;
 
-  // Copied from corresponding field in options.
-  int packet_offset_;
-  // The number of packets or timestamps we need to store to output packet[i] at
-  // the timestamp of packet[i + packet_offset]; equal to abs(packet_offset).
-  int cache_size_;
+    // Copied from corresponding field in options.
+    int packet_offset_;
+    // The number of packets or timestamps we need to store to output packet[i] at
+    // the timestamp of packet[i + packet_offset]; equal to abs(packet_offset).
+    int cache_size_;
 };
 MEDIAPIPE_REGISTER_NODE(SequenceShiftCalculator);
 
 absl::Status SequenceShiftCalculator::Open(CalculatorContext* cc) {
-  packet_offset_ = kOffset(cc).GetOr(
-      cc->Options<mediapipe::SequenceShiftCalculatorOptions>().packet_offset());
-  cache_size_ = abs(packet_offset_);
-  // An offset of zero is a no-op, but someone might still request it.
-  if (packet_offset_ == 0) {
-    cc->Outputs().Index(0).SetOffset(0);
-  }
-  return absl::OkStatus();
+    packet_offset_ = kOffset(cc).GetOr(
+        cc->Options<mediapipe::SequenceShiftCalculatorOptions>().packet_offset());
+    cache_size_ = abs(packet_offset_);
+    // An offset of zero is a no-op, but someone might still request it.
+    if (packet_offset_ == 0) {
+        cc->Outputs().Index(0).SetOffset(0);
+    }
+    return absl::OkStatus();
 }
 
 absl::Status SequenceShiftCalculator::Process(CalculatorContext* cc) {
-  if (packet_offset_ > 0) {
-    ProcessPositiveOffset(cc);
-  } else if (packet_offset_ < 0) {
-    ProcessNegativeOffset(cc);
-  } else {
-    kOut(cc).Send(kIn(cc).packet());
-  }
-  return absl::OkStatus();
+    if (packet_offset_ > 0) {
+        ProcessPositiveOffset(cc);
+    } else if (packet_offset_ < 0) {
+        ProcessNegativeOffset(cc);
+    } else {
+        kOut(cc).Send(kIn(cc).packet());
+    }
+    return absl::OkStatus();
 }
 
 void SequenceShiftCalculator::ProcessPositiveOffset(CalculatorContext* cc) {
-  if (packet_cache_.size() >= cache_size_) {
-    // Ready to output oldest packet with current timestamp.
-    kOut(cc).Send(packet_cache_.front().At(cc->InputTimestamp()));
-    packet_cache_.pop_front();
-  }
-  // Store current packet for later output.
-  packet_cache_.push_back(kIn(cc).packet());
+    if (packet_cache_.size() >= cache_size_) {
+        // Ready to output oldest packet with current timestamp.
+        kOut(cc).Send(packet_cache_.front().At(cc->InputTimestamp()));
+        packet_cache_.pop_front();
+    }
+    // Store current packet for later output.
+    packet_cache_.push_back(kIn(cc).packet());
 }
 
 void SequenceShiftCalculator::ProcessNegativeOffset(CalculatorContext* cc) {
-  if (timestamp_cache_.size() >= cache_size_) {
-    // Ready to output current packet with oldest timestamp.
-    kOut(cc).Send(kIn(cc).packet().At(timestamp_cache_.front()));
-    timestamp_cache_.pop_front();
-  }
-  // Store current timestamp for use by a future packet.
-  timestamp_cache_.push_back(cc->InputTimestamp());
+    if (timestamp_cache_.size() >= cache_size_) {
+        // Ready to output current packet with oldest timestamp.
+        kOut(cc).Send(kIn(cc).packet().At(timestamp_cache_.front()));
+        timestamp_cache_.pop_front();
+    }
+    // Store current timestamp for use by a future packet.
+    timestamp_cache_.push_back(cc->InputTimestamp());
 }
 
 }  // namespace api2

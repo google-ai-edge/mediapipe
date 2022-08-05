@@ -25,12 +25,12 @@ import "mediapipe/framework/calculator.proto";
 option objc_class_prefix = "MediaPipe";
 
 message RandomMatrixCalculatorOptions {
-  extend CalculatorOptions {
-    optional RandomMatrixCalculatorOptions ext = 52056136;
-  }
-  optional int32 rows = 1;
-  optional int32 cols = 2;
-  optional int64 start_timestamp = 3;
-  optional int64 limit_timestamp = 4;
-  optional int64 timestamp_step = 5;
+    extend CalculatorOptions {
+        optional RandomMatrixCalculatorOptions ext = 52056136;
+    }
+    optional int32 rows = 1;
+    optional int32 cols = 2;
+    optional int64 start_timestamp = 3;
+    optional int64 limit_timestamp = 4;
+    optional int64 timestamp_step = 5;
 }

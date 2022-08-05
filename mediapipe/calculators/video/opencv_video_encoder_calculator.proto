@@ -19,19 +19,19 @@ package mediapipe;
 import "mediapipe/framework/calculator.proto";
 
 message OpenCvVideoEncoderCalculatorOptions {
-  extend CalculatorOptions {
-    optional OpenCvVideoEncoderCalculatorOptions ext = 207936763;
-  }
-  // The 4-character code of the codec to encode the video.
-  optional string codec = 1;
+    extend CalculatorOptions {
+        optional OpenCvVideoEncoderCalculatorOptions ext = 207936763;
+    }
+    // The 4-character code of the codec to encode the video.
+    optional string codec = 1;
 
-  // The video format of the output video file.
-  optional string video_format = 2;
+    // The video format of the output video file.
+    optional string video_format = 2;
 
-  // The frame rate in Hz at which the video frames are output.
-  optional double fps = 3;
+    // The frame rate in Hz at which the video frames are output.
+    optional double fps = 3;
 
-  // Dimensions of the video in pixels.
-  optional int32 width = 4;
-  optional int32 height = 5;
+    // Dimensions of the video in pixels.
+    optional int32 width = 4;
+    optional int32 height = 5;
 }

@@ -15,13 +15,12 @@
 #ifndef MEDIAPIPE_CALCULATORS_IMAGE_AFFINE_TRANSFORMATION_RUNNER_GL_H_
 #define MEDIAPIPE_CALCULATORS_IMAGE_AFFINE_TRANSFORMATION_RUNNER_GL_H_
 
-#include <memory>
-
 #include "absl/status/statusor.h"
 #include "mediapipe/calculators/image/affine_transformation.h"
 #include "mediapipe/gpu/gl_calculator_helper.h"
 #include "mediapipe/gpu/gpu_buffer.h"
 #include "mediapipe/gpu/gpu_origin.pb.h"
+#include <memory>
 
 namespace mediapipe {
 

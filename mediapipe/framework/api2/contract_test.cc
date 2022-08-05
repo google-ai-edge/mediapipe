@@ -1,20 +1,18 @@
 #include "mediapipe/framework/api2/contract.h"
-
-#include <tuple>
-
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
+#include <tuple>
 
 namespace mediapipe {
 namespace api2 {
 namespace {
 
 struct ProcessItem {
-  absl::Status Process(CalculatorContext* cc) { return {}; }
+    absl::Status Process(CalculatorContext* cc) { return {}; }
 };
 
 struct ItemWithNested {
-  constexpr auto nested_items() { return std::make_tuple(Input<char>{"FWD"}); }
+    constexpr auto nested_items() { return std::make_tuple(Input<char>{"FWD"}); }
 };
 
 static constexpr auto kTestContract = internal::MakeContract(

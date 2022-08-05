@@ -19,15 +19,15 @@ package mediapipe.autoflip;
 import "mediapipe/framework/calculator.proto";
 
 message LocalizationToRegionCalculatorOptions {
-  extend mediapipe.CalculatorOptions {
-    optional LocalizationToRegionCalculatorOptions ext = 284226721;
-  }
+    extend mediapipe.CalculatorOptions {
+        optional LocalizationToRegionCalculatorOptions ext = 284226721;
+    }
 
-  // Output standard autoflip signals only (Human, Pet, Car, etc) and apply
-  // standard autoflip labels.
-  optional bool output_standard_signals = 1 [default = true];
-  // Output all signals (regardless of label) and set autoflip label as
-  // 'Object'.  Can be combined with output_standard_signals giving each
-  // detection a 'object' label and a autoflip sepcific label.
-  optional bool output_all_signals = 2 [default = false];
+    // Output standard autoflip signals only (Human, Pet, Car, etc) and apply
+    // standard autoflip labels.
+    optional bool output_standard_signals = 1 [default = true];
+    // Output all signals (regardless of label) and set autoflip label as
+    // 'Object'.  Can be combined with output_standard_signals giving each
+    // detection a 'object' label and a autoflip sepcific label.
+    optional bool output_all_signals = 2 [default = false];
 }

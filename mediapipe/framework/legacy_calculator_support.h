@@ -21,49 +21,49 @@
 namespace mediapipe {
 
 class LegacyCalculatorSupport {
- public:
-  // Scoped is a RAII helper for setting the current CC in the current scope,
-  // and unsetting it automatically (restoring the previous value) when
-  // leaving the scope.
-  //
-  // This allows the current CC to be accessed at any point deeper in the
-  // call stack of the current thread, until the scope is left. Creating
-  // another Scoped instance deeper in the call stack applies to calls branching
-  // from that point, and the previous value is restored when execution leaves
-  // that scope, as one would expect.
-  //
-  // This is only meant to be used where backwards compatibility reasons prevent
-  // passing the CC directly. Specifically, it can be used to access
-  // CalculatorContext and CalculatorContract from legacy calculator code.
-  template <class C>
-  class Scoped {
-   public:
-    // The constructor saves the current value of current_ in an instance
-    // member, which is then restored by the destructor.
-    explicit Scoped(C* cc) {
-      saved_ = current_;
-      current_ = cc;
-    }
-    ~Scoped() { current_ = saved_; }
-
-    // The current C* for this thread.
-    static C* current() { return current_; }
-
-   private:
-    // The value to restore after exiting this scope.
-    C* saved_;
-
-    // This needs NOLINT because, when included in Objective-C++ files,
-    // clang-tidy suggests using an Objective-C naming convention, which is
-    // inappropriate. (b/116015736) No category specifier because of b/71698089.
+public:
+    // Scoped is a RAII helper for setting the current CC in the current scope,
+    // and unsetting it automatically (restoring the previous value) when
+    // leaving the scope.
     //
-    // ABSL_CONST_INIT triggers b/155992786 with some versions of Clang on Apple
-    // platforms.
+    // This allows the current CC to be accessed at any point deeper in the
+    // call stack of the current thread, until the scope is left. Creating
+    // another Scoped instance deeper in the call stack applies to calls branching
+    // from that point, and the previous value is restored when execution leaves
+    // that scope, as one would expect.
+    //
+    // This is only meant to be used where backwards compatibility reasons prevent
+    // passing the CC directly. Specifically, it can be used to access
+    // CalculatorContext and CalculatorContract from legacy calculator code.
+    template <class C>
+    class Scoped {
+    public:
+        // The constructor saves the current value of current_ in an instance
+        // member, which is then restored by the destructor.
+        explicit Scoped(C* cc) {
+            saved_ = current_;
+            current_ = cc;
+        }
+        ~Scoped() { current_ = saved_; }
+
+        // The current C* for this thread.
+        static C* current() { return current_; }
+
+    private:
+        // The value to restore after exiting this scope.
+        C* saved_;
+
+        // This needs NOLINT because, when included in Objective-C++ files,
+        // clang-tidy suggests using an Objective-C naming convention, which is
+        // inappropriate. (b/116015736) No category specifier because of b/71698089.
+        //
+        // ABSL_CONST_INIT triggers b/155992786 with some versions of Clang on Apple
+        // platforms.
 #ifndef __APPLE__
-    ABSL_CONST_INIT
-#endif                                // !__APPLE__
-    static thread_local C* current_;  // NOLINT
-  };
+        ABSL_CONST_INIT
+#endif                                    // !__APPLE__
+        static thread_local C* current_;  // NOLINT
+    };
 };
 
 #if !defined(_MSC_VER)

@@ -10,21 +10,21 @@ option java_outer_classname = "SwitchContainerProto";
 // Options for a switch-container directing traffic to one of several
 // contained subgraph or calculator nodes.
 message SwitchContainerOptions {
-  extend mediapipe.CalculatorOptions {
-    optional SwitchContainerOptions ext = 345967970;
-  }
+    extend mediapipe.CalculatorOptions {
+        optional SwitchContainerOptions ext = 345967970;
+    }
 
-  reserved 1;
+    reserved 1;
 
-  // The contained registered subgraphs or calculators.
-  repeated CalculatorGraphConfig.Node contained_node = 2;
+    // The contained registered subgraphs or calculators.
+    repeated CalculatorGraphConfig.Node contained_node = 2;
 
-  // Activates the specified channel to receive input packets.
-  optional int32 select = 3;
+    // Activates the specified channel to receive input packets.
+    optional int32 select = 3;
 
-  // Activates channel 1 for enable = true, channel 0 otherwise.
-  optional bool enable = 4;
+    // Activates channel 1 for enable = true, channel 0 otherwise.
+    optional bool enable = 4;
 
-  // Use DefaultInputStreamHandler for muxing & demuxing.
-  optional bool synchronize_io = 5;
+    // Use DefaultInputStreamHandler for muxing & demuxing.
+    optional bool synchronize_io = 5;
 }

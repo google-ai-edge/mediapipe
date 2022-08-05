@@ -21,10 +21,10 @@ import "mediapipe/framework/calculator.proto";
 option objc_class_prefix = "MediaPipe";
 
 message GraphProfileCalculatorOptions {
-  extend mediapipe.CalculatorOptions {
-    optional GraphProfileCalculatorOptions ext = 367481815;
-  }
+    extend mediapipe.CalculatorOptions {
+        optional GraphProfileCalculatorOptions ext = 367481815;
+    }
 
-  // The interval in microseconds between successive reported GraphProfiles.
-  optional int64 profile_interval = 1 [default = 1000000];
+    // The interval in microseconds between successive reported GraphProfiles.
+    optional int64 profile_interval = 1 [default = 1000000];
 }

@@ -6,14 +6,14 @@ import "mediapipe/framework/calculator_options.proto";
 import "mediapipe/framework/packet_generator.proto";
 
 message PacketGeneratorWrapperCalculatorOptions {
-  extend CalculatorOptions {
-    optional PacketGeneratorWrapperCalculatorOptions ext = 381945445;
-  }
+    extend CalculatorOptions {
+        optional PacketGeneratorWrapperCalculatorOptions ext = 381945445;
+    }
 
-  // Same as the corresponding fields in PacketGeneratorConfig.
-  optional string packet_generator = 1;
-  optional PacketGeneratorOptions options = 2;
-  // Same as CalculatorGraphConfig.package. Copied here since the graph config
-  // is not available to the calculator.
-  optional string package = 3;
+    // Same as the corresponding fields in PacketGeneratorConfig.
+    optional string packet_generator = 1;
+    optional PacketGeneratorOptions options = 2;
+    // Same as CalculatorGraphConfig.package. Copied here since the graph config
+    // is not available to the calculator.
+    optional string package = 3;
 }

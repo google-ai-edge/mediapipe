@@ -43,67 +43,67 @@ inline int GetNextDetectionId() { return ++detection_id; }
 //   output_stream: "DETECTIONS:output_detections"
 // }
 class DetectionUniqueIdCalculator : public CalculatorBase {
- public:
-  static absl::Status GetContract(CalculatorContract* cc) {
-    RET_CHECK(cc->Inputs().HasTag(kDetectionListTag) ||
-              cc->Inputs().HasTag(kDetectionsTag))
-        << "None of the input streams are provided.";
+public:
+    static absl::Status GetContract(CalculatorContract* cc) {
+        RET_CHECK(cc->Inputs().HasTag(kDetectionListTag) ||
+                  cc->Inputs().HasTag(kDetectionsTag))
+            << "None of the input streams are provided.";
 
-    if (cc->Inputs().HasTag(kDetectionListTag)) {
-      RET_CHECK(cc->Outputs().HasTag(kDetectionListTag));
-      cc->Inputs().Tag(kDetectionListTag).Set<DetectionList>();
-      cc->Outputs().Tag(kDetectionListTag).Set<DetectionList>();
+        if (cc->Inputs().HasTag(kDetectionListTag)) {
+            RET_CHECK(cc->Outputs().HasTag(kDetectionListTag));
+            cc->Inputs().Tag(kDetectionListTag).Set<DetectionList>();
+            cc->Outputs().Tag(kDetectionListTag).Set<DetectionList>();
+        }
+        if (cc->Inputs().HasTag(kDetectionsTag)) {
+            RET_CHECK(cc->Outputs().HasTag(kDetectionsTag));
+            cc->Inputs().Tag(kDetectionsTag).Set<std::vector<Detection>>();
+            cc->Outputs().Tag(kDetectionsTag).Set<std::vector<Detection>>();
+        }
+
+        return absl::OkStatus();
     }
-    if (cc->Inputs().HasTag(kDetectionsTag)) {
-      RET_CHECK(cc->Outputs().HasTag(kDetectionsTag));
-      cc->Inputs().Tag(kDetectionsTag).Set<std::vector<Detection>>();
-      cc->Outputs().Tag(kDetectionsTag).Set<std::vector<Detection>>();
+
+    absl::Status Open(CalculatorContext* cc) override {
+        cc->SetOffset(mediapipe::TimestampDiff(0));
+        return absl::OkStatus();
     }
-
-    return absl::OkStatus();
-  }
-
-  absl::Status Open(CalculatorContext* cc) override {
-    cc->SetOffset(mediapipe::TimestampDiff(0));
-    return absl::OkStatus();
-  }
-  absl::Status Process(CalculatorContext* cc) override;
+    absl::Status Process(CalculatorContext* cc) override;
 };
 REGISTER_CALCULATOR(DetectionUniqueIdCalculator);
 
 absl::Status DetectionUniqueIdCalculator::Process(CalculatorContext* cc) {
-  if (cc->Inputs().HasTag(kDetectionListTag) &&
-      !cc->Inputs().Tag(kDetectionListTag).IsEmpty()) {
-    auto result =
-        cc->Inputs().Tag(kDetectionListTag).Value().Consume<DetectionList>();
-    if (result.ok()) {
-      auto detection_list = std::move(result).value();
-      for (Detection& detection : *detection_list->mutable_detection()) {
-        detection.set_detection_id(GetNextDetectionId());
-      }
-      cc->Outputs()
-          .Tag(kDetectionListTag)
-          .Add(detection_list.release(), cc->InputTimestamp());
+    if (cc->Inputs().HasTag(kDetectionListTag) &&
+        !cc->Inputs().Tag(kDetectionListTag).IsEmpty()) {
+        auto result =
+            cc->Inputs().Tag(kDetectionListTag).Value().Consume<DetectionList>();
+        if (result.ok()) {
+            auto detection_list = std::move(result).value();
+            for (Detection& detection : *detection_list->mutable_detection()) {
+                detection.set_detection_id(GetNextDetectionId());
+            }
+            cc->Outputs()
+                .Tag(kDetectionListTag)
+                .Add(detection_list.release(), cc->InputTimestamp());
+        }
     }
-  }
 
-  if (cc->Inputs().HasTag(kDetectionsTag) &&
-      !cc->Inputs().Tag(kDetectionsTag).IsEmpty()) {
-    auto result = cc->Inputs()
-                      .Tag(kDetectionsTag)
-                      .Value()
-                      .Consume<std::vector<Detection>>();
-    if (result.ok()) {
-      auto detections = std::move(result).value();
-      for (Detection& detection : *detections) {
-        detection.set_detection_id(GetNextDetectionId());
-      }
-      cc->Outputs()
-          .Tag(kDetectionsTag)
-          .Add(detections.release(), cc->InputTimestamp());
+    if (cc->Inputs().HasTag(kDetectionsTag) &&
+        !cc->Inputs().Tag(kDetectionsTag).IsEmpty()) {
+        auto result = cc->Inputs()
+                          .Tag(kDetectionsTag)
+                          .Value()
+                          .Consume<std::vector<Detection>>();
+        if (result.ok()) {
+            auto detections = std::move(result).value();
+            for (Detection& detection : *detections) {
+                detection.set_detection_id(GetNextDetectionId());
+            }
+            cc->Outputs()
+                .Tag(kDetectionsTag)
+                .Add(detections.release(), cc->InputTimestamp());
+        }
     }
-  }
-  return absl::OkStatus();
+    return absl::OkStatus();
 }
 
 }  // namespace mediapipe

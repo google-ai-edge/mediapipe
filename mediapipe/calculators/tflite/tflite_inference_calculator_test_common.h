@@ -15,10 +15,6 @@
 #ifndef MEDIAPIPE_CALCULATORS_TFLITE_TFLITE_INFERENCE_CALCULATOR_TEST_H_
 #define MEDIAPIPE_CALCULATORS_TFLITE_TFLITE_INFERENCE_CALCULATOR_TEST_H_
 
-#include <memory>
-#include <string>
-#include <vector>
-
 #include "absl/strings/str_replace.h"
 #include "absl/strings/string_view.h"
 #include "mediapipe/calculators/tflite/tflite_inference_calculator.pb.h"
@@ -37,6 +33,9 @@
 #include "tensorflow/lite/kernels/register.h"
 #include "tensorflow/lite/model.h"
 #include "tensorflow/lite/portable_type_to_tflitetype.h"
+#include <memory>
+#include <string>
+#include <vector>
 
 #ifdef __APPLE__
 #include <CoreFoundation/CoreFoundation.h>
@@ -48,79 +47,79 @@ using ::tflite::Interpreter;
 
 template <typename T>
 void DoSmokeTest(const std::string& graph_proto) {
-  const int width = 8;
-  const int height = 8;
-  const int channels = 3;
+    const int width = 8;
+    const int height = 8;
+    const int channels = 3;
 
-  static_assert(std::is_same_v<T, float> || std::is_same_v<T, uint8>,
-                "Only float & uint8 currently supported.");
+    static_assert(std::is_same_v<T, float> || std::is_same_v<T, uint8>,
+                  "Only float & uint8 currently supported.");
 
-  // Prepare interpreter and input tensor.
-  std::unique_ptr<Interpreter> interpreter(new Interpreter);
-  ASSERT_NE(interpreter, nullptr);
+    // Prepare interpreter and input tensor.
+    std::unique_ptr<Interpreter> interpreter(new Interpreter);
+    ASSERT_NE(interpreter, nullptr);
 
-  interpreter->AddTensors(1);
-  interpreter->SetInputs({0});
-  interpreter->SetOutputs({0});
-  TfLiteQuantization quant;
-  if (std::is_integral_v<T>) {
-    auto* affine_quant = static_cast<TfLiteAffineQuantization*>(
-        malloc(sizeof(TfLiteAffineQuantization)));
-    affine_quant->scale = TfLiteFloatArrayCreate(1);
-    affine_quant->zero_point = TfLiteIntArrayCreate(1);
-    affine_quant->scale->data[0] = 1.0;
-    affine_quant->zero_point->data[0] = 0;
-    quant.type = kTfLiteAffineQuantization;
-    quant.params = affine_quant;
-  }
-  interpreter->SetTensorParametersReadWrite(0, tflite::typeToTfLiteType<T>(),
-                                            "", {3}, quant);
+    interpreter->AddTensors(1);
+    interpreter->SetInputs({0});
+    interpreter->SetOutputs({0});
+    TfLiteQuantization quant;
+    if (std::is_integral_v<T>) {
+        auto* affine_quant = static_cast<TfLiteAffineQuantization*>(
+            malloc(sizeof(TfLiteAffineQuantization)));
+        affine_quant->scale = TfLiteFloatArrayCreate(1);
+        affine_quant->zero_point = TfLiteIntArrayCreate(1);
+        affine_quant->scale->data[0] = 1.0;
+        affine_quant->zero_point->data[0] = 0;
+        quant.type = kTfLiteAffineQuantization;
+        quant.params = affine_quant;
+    }
+    interpreter->SetTensorParametersReadWrite(0, tflite::typeToTfLiteType<T>(),
+                                              "", {3}, quant);
 
-  int t = interpreter->inputs()[0];
-  TfLiteTensor* input_tensor = interpreter->tensor(t);
-  interpreter->ResizeInputTensor(t, {width, height, channels});
-  interpreter->AllocateTensors();
+    int t = interpreter->inputs()[0];
+    TfLiteTensor* input_tensor = interpreter->tensor(t);
+    interpreter->ResizeInputTensor(t, {width, height, channels});
+    interpreter->AllocateTensors();
 
-  T* input_tensor_buffer = tflite::GetTensorData<T>(input_tensor);
-  ASSERT_NE(input_tensor_buffer, nullptr);
-  for (int i = 0; i < width * height * channels - 1; i++) {
-    input_tensor_buffer[i] = 1;
-  }
+    T* input_tensor_buffer = tflite::GetTensorData<T>(input_tensor);
+    ASSERT_NE(input_tensor_buffer, nullptr);
+    for (int i = 0; i < width * height * channels - 1; i++) {
+        input_tensor_buffer[i] = 1;
+    }
 
-  auto input_vec = absl::make_unique<std::vector<TfLiteTensor>>();
-  input_vec->emplace_back(*input_tensor);
+    auto input_vec = absl::make_unique<std::vector<TfLiteTensor>>();
+    input_vec->emplace_back(*input_tensor);
 
-  // Prepare single calculator graph to and wait for packets.
-  CalculatorGraphConfig graph_config =
-      ParseTextProtoOrDie<CalculatorGraphConfig>(graph_proto);
-  std::vector<Packet> output_packets;
-  tool::AddVectorSink("tensor_out", &graph_config, &output_packets);
-  CalculatorGraph graph(graph_config);
-  MP_ASSERT_OK(graph.StartRun({}));
+    // Prepare single calculator graph to and wait for packets.
+    CalculatorGraphConfig graph_config =
+        ParseTextProtoOrDie<CalculatorGraphConfig>(graph_proto);
+    std::vector<Packet> output_packets;
+    tool::AddVectorSink("tensor_out", &graph_config, &output_packets);
+    CalculatorGraph graph(graph_config);
+    MP_ASSERT_OK(graph.StartRun({}));
 
-  // Push the tensor into the graph.
-  MP_ASSERT_OK(graph.AddPacketToInputStream(
-      "tensor_in", Adopt(input_vec.release()).At(Timestamp(0))));
-  // Wait until the calculator done processing.
-  MP_ASSERT_OK(graph.WaitUntilIdle());
-  ASSERT_EQ(1, output_packets.size());
+    // Push the tensor into the graph.
+    MP_ASSERT_OK(graph.AddPacketToInputStream(
+        "tensor_in", Adopt(input_vec.release()).At(Timestamp(0))));
+    // Wait until the calculator done processing.
+    MP_ASSERT_OK(graph.WaitUntilIdle());
+    ASSERT_EQ(1, output_packets.size());
 
-  // Get and process results.
-  const std::vector<TfLiteTensor>& result_vec =
-      output_packets[0].Get<std::vector<TfLiteTensor>>();
-  ASSERT_EQ(1, result_vec.size());
+    // Get and process results.
+    const std::vector<TfLiteTensor>& result_vec =
+        output_packets[0].Get<std::vector<TfLiteTensor>>();
+    ASSERT_EQ(1, result_vec.size());
 
-  const TfLiteTensor* result = &result_vec[0];
-  const T* result_buffer = tflite::GetTensorData<T>(result);
-  ASSERT_NE(result_buffer, nullptr);
-  for (int i = 0; i < width * height * channels - 1; i++) {
-    ASSERT_EQ(3, result_buffer[i]);
-  }
+    const TfLiteTensor* result = &result_vec[0];
+    const T* result_buffer = tflite::GetTensorData<T>(result);
+    ASSERT_NE(result_buffer, nullptr);
+    for (int i = 0; i < width * height * channels - 1; i++) {
+        ASSERT_EQ(3, result_buffer[i]);
+    }
 
-  // Fully close graph at end, otherwise calculator+tensors are destroyed
-  // after calling WaitUntilDone().
-  MP_ASSERT_OK(graph.CloseInputStream("tensor_in"));
-  MP_ASSERT_OK(graph.WaitUntilDone());
+    // Fully close graph at end, otherwise calculator+tensors are destroyed
+    // after calling WaitUntilDone().
+    MP_ASSERT_OK(graph.CloseInputStream("tensor_in"));
+    MP_ASSERT_OK(graph.WaitUntilDone());
 }
 
 }  // namespace mediapipe

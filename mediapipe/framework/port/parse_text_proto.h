@@ -23,14 +23,14 @@ namespace mediapipe {
 
 template <typename T>
 bool ParseTextProto(const std::string& input, T* proto) {
-  return proto_ns::TextFormat::ParseFromString(input, proto);
+    return proto_ns::TextFormat::ParseFromString(input, proto);
 }
 
 template <typename T>
 T ParseTextProtoOrDie(const std::string& input) {
-  T result;
-  CHECK(ParseTextProto(input, &result));
-  return result;
+    T result;
+    CHECK(ParseTextProto(input, &result));
+    return result;
 }
 
 }  // namespace mediapipe

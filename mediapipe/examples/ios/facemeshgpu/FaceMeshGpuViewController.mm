@@ -13,7 +13,6 @@
 // limitations under the License.
 
 #import "FaceMeshGpuViewController.h"
-
 #include "mediapipe/framework/formats/landmark.pb.h"
 
 static NSString* const kGraphName = @"face_mesh_mobile_gpu";
@@ -29,37 +28,37 @@ static const int kNumFaces = 1;
 #pragma mark - UIViewController methods
 
 - (void)viewDidLoad {
-  [super viewDidLoad];
+    [super viewDidLoad];
 
-  [self.mediapipeGraph setSidePacket:(mediapipe::MakePacket<int>(kNumFaces))
-                               named:kNumFacesInputSidePacket];
-  [self.mediapipeGraph addFrameOutputStream:kLandmarksOutputStream
-                           outputPacketType:MPPPacketTypeRaw];
+    [self.mediapipeGraph setSidePacket:(mediapipe::MakePacket<int>(kNumFaces))
+                                 named:kNumFacesInputSidePacket];
+    [self.mediapipeGraph addFrameOutputStream:kLandmarksOutputStream
+                             outputPacketType:MPPPacketTypeRaw];
 }
 
 #pragma mark - MPPGraphDelegate methods
 
 // Receives a raw packet from the MediaPipe graph. Invoked on a MediaPipe worker thread.
 - (void)mediapipeGraph:(MPPGraph*)graph
-     didOutputPacket:(const ::mediapipe::Packet&)packet
-          fromStream:(const std::string&)streamName {
-  if (streamName == kLandmarksOutputStream) {
-    if (packet.IsEmpty()) {
-      NSLog(@"[TS:%lld] No face landmarks", packet.Timestamp().Value());
-      return;
+       didOutputPacket:(const ::mediapipe::Packet&)packet
+            fromStream:(const std::string&)streamName {
+    if (streamName == kLandmarksOutputStream) {
+        if (packet.IsEmpty()) {
+            NSLog(@"[TS:%lld] No face landmarks", packet.Timestamp().Value());
+            return;
+        }
+        const auto& multi_face_landmarks = packet.Get<std::vector<::mediapipe::NormalizedLandmarkList>>();
+        NSLog(@"[TS:%lld] Number of face instances with landmarks: %lu", packet.Timestamp().Value(),
+              multi_face_landmarks.size());
+        for (int face_index = 0; face_index < multi_face_landmarks.size(); ++face_index) {
+            const auto& landmarks = multi_face_landmarks[face_index];
+            NSLog(@"\tNumber of landmarks for face[%d]: %d", face_index, landmarks.landmark_size());
+            for (int i = 0; i < landmarks.landmark_size(); ++i) {
+                NSLog(@"\t\tLandmark[%d]: (%f, %f, %f)", i, landmarks.landmark(i).x(),
+                      landmarks.landmark(i).y(), landmarks.landmark(i).z());
+            }
+        }
     }
-    const auto& multi_face_landmarks = packet.Get<std::vector<::mediapipe::NormalizedLandmarkList>>();
-    NSLog(@"[TS:%lld] Number of face instances with landmarks: %lu", packet.Timestamp().Value(),
-          multi_face_landmarks.size());
-    for (int face_index = 0; face_index < multi_face_landmarks.size(); ++face_index) {
-      const auto& landmarks = multi_face_landmarks[face_index];
-      NSLog(@"\tNumber of landmarks for face[%d]: %d", face_index, landmarks.landmark_size());
-      for (int i = 0; i < landmarks.landmark_size(); ++i) {
-        NSLog(@"\t\tLandmark[%d]: (%f, %f, %f)", i, landmarks.landmark(i).x(),
-              landmarks.landmark(i).y(), landmarks.landmark(i).z());
-      }
-    }
-  }
 }
 
 @end

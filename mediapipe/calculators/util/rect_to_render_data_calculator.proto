@@ -20,23 +20,23 @@ import "mediapipe/framework/calculator.proto";
 import "mediapipe/util/color.proto";
 
 message RectToRenderDataCalculatorOptions {
-  extend CalculatorOptions {
-    optional RectToRenderDataCalculatorOptions ext = 262270380;
-  }
+    extend CalculatorOptions {
+        optional RectToRenderDataCalculatorOptions ext = 262270380;
+    }
 
-  // Whether the rendered rectangle should be filled.
-  optional bool filled = 1;
+    // Whether the rendered rectangle should be filled.
+    optional bool filled = 1;
 
-  // Line color or filled color of the rectangle.
-  optional Color color = 2;
+    // Line color or filled color of the rectangle.
+    optional Color color = 2;
 
-  // Thickness of the line (applicable when the rectangle is not filled).
-  optional double thickness = 3 [default = 1.0];
+    // Thickness of the line (applicable when the rectangle is not filled).
+    optional double thickness = 3 [default = 1.0];
 
-  // Whether the rendered rectangle should be an oval.
-  optional bool oval = 4 [default = false];
+    // Whether the rendered rectangle should be an oval.
+    optional bool oval = 4 [default = false];
 
-  // Radius of top left corner circle. Only supported for oval=false,
-  // filled=false.
-  optional double top_left_thickness = 5;
+    // Radius of top left corner circle. Only supported for oval=false,
+    // filled=false.
+    optional double top_left_thickness = 5;
 }

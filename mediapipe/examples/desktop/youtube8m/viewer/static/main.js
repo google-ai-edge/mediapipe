@@ -15,9 +15,9 @@
  * limitations under the License.
  */
 
-const STATE_PLAYER=0;
-const STATE_COVER=1;
-const STATE_SPINNER=2;
+const STATE_PLAYER = 0;
+const STATE_COVER = 1;
+const STATE_SPINNER = 2;
 
 /**
 * Looks up the value of a url parameter.
@@ -25,7 +25,7 @@ const STATE_SPINNER=2;
 * @param {string} param The name of the parameter.
 * @return {?string} The parameter value or null if there is no such parameter.
 */
-var getUrlParameter = function(param) {
+var getUrlParameter = function (param) {
     const url = decodeURIComponent(window.location.search.substring(1));
     const url_parts = url.split('&');
     for (var i = 0; i < url_parts.length; i++) {
@@ -39,18 +39,18 @@ var getUrlParameter = function(param) {
 /**
 * Sets the fields in the form to match the values of the URL parameters.
 */
-const updateFormFromURL = function() {
-  const form_elements = document.getElementById('form').elements;
-  const url = decodeURIComponent(window.location.search.substring(1));
-  const url_parts = url.split('&');
-  for (var i = 0; i < url_parts.length; i++) {
-    const p = url_parts[i].split(/=(.*)/);
-    if (p.length >= 2) {
-      if (form_elements[p[0]]) {
-        form_elements[p[0]].value = decodeURIComponent(p[1]);
-      }
+const updateFormFromURL = function () {
+    const form_elements = document.getElementById('form').elements;
+    const url = decodeURIComponent(window.location.search.substring(1));
+    const url_parts = url.split('&');
+    for (var i = 0; i < url_parts.length; i++) {
+        const p = url_parts[i].split(/=(.*)/);
+        if (p.length >= 2) {
+            if (form_elements[p[0]]) {
+                form_elements[p[0]].value = decodeURIComponent(p[1]);
+            }
+        }
     }
-  }
 };
 
 let player = null;
@@ -61,12 +61,12 @@ let entries = [];
  * Constructs the embedded YouTube player.
  */
 window.onYouTubeIframeAPIReady = () => {
-  player = new YT.Player('ytplayer', {
-    events: {
-      'onReady': onPlayerReady,
-      'onStateChange': onStateChange
-    }
-  });
+    player = new YT.Player('ytplayer', {
+        events: {
+            'onReady': onPlayerReady,
+            'onStateChange': onStateChange
+        }
+    });
 };
 
 
@@ -77,40 +77,40 @@ window.onYouTubeIframeAPIReady = () => {
  * @param {!Event} event YouTube API Event.
  */
 function onStateChange(event) {
-  if (event.data === 1) {
-    // Youtube switched to playing.
-    intervalID = setInterval(function(){
-      const currentTime = player.getCurrentTime();
-      let winner = undefined;
-      let first = undefined;
-      for (entry of entries) {
-        if (!first) {
-          first = entry.labels;
+    if (event.data === 1) {
+        // Youtube switched to playing.
+        intervalID = setInterval(function () {
+            const currentTime = player.getCurrentTime();
+            let winner = undefined;
+            let first = undefined;
+            for (entry of entries) {
+                if (!first) {
+                    first = entry.labels;
+                }
+                if (entry.time < currentTime) {
+                    winner = entry.labels;
+                } else {
+                    break;
+                }
+            }
+            if (!winner) {
+                winner = first;
+            }
+            const threshold =
+                document.getElementById('form').elements['threshold'].value;
+            let message = "";
+            for (var label of winner) {
+                if (label.score >= threshold) {
+                    message = `${message}${label.label} (score: ${label.score})\n`;
+                }
+            }
+            $("textarea#feedback").val(message);
+        });
+    } else {
+        if (intervalID) {
+            clearInterval(intervalID);
         }
-        if (entry.time < currentTime) {
-          winner = entry.labels;
-        } else {
-          break;
-        }
-      }
-      if (!winner) {
-        winner = first;
-      }
-      const threshold =
-          document.getElementById('form').elements['threshold'].value;
-      let message = "";
-      for (var label of winner) {
-        if (label.score >= threshold) {
-          message =  `${message}${label.label} (score: ${label.score})\n`;
-        }
-      }
-      $("textarea#feedback").val(message);
-    });
-  } else {
-    if (intervalID) {
-      clearInterval(intervalID);
     }
-  }
 }
 
 /**
@@ -118,31 +118,31 @@ function onStateChange(event) {
  * @param {number} state One of STATE_COVER | STATE_SPINNER | STATE_PLAYER.
  */
 function showState(state) {
-  switch(state) {
-    case STATE_COVER:
-      $('#cover').show();
-      $('#spinner').hide();
-      $('#ytplayer').hide();
-      break;
-    case STATE_SPINNER:
-      $('#cover').hide();
-      $('#spinner').show();
-      $('#ytplayer').hide();
-      break;
-    case STATE_PLAYER:
-    default:
-      $('#cover').hide();
-      $('#spinner').hide();
-      $('#ytplayer').show();
-      break;
-  }
+    switch (state) {
+        case STATE_COVER:
+            $('#cover').show();
+            $('#spinner').hide();
+            $('#ytplayer').hide();
+            break;
+        case STATE_SPINNER:
+            $('#cover').hide();
+            $('#spinner').show();
+            $('#ytplayer').hide();
+            break;
+        case STATE_PLAYER:
+        default:
+            $('#cover').hide();
+            $('#spinner').hide();
+            $('#ytplayer').show();
+            break;
+    }
 }
 
 /**
  * Hide error field and clear its message.
  */
 function hideError() {
-  $('#error_msg').css("visibility", "hidden").text('');
+    $('#error_msg').css("visibility", "hidden").text('');
 }
 
 /**
@@ -150,25 +150,25 @@ function hideError() {
  * @param {string} msg Error message as a string.
  */
 function showError(msg) {
-  $('#error_msg').css("visibility", "visible").text(msg);
+    $('#error_msg').css("visibility", "visible").text(msg);
 }
 
 /**
  * Privides numeric feedback for the slider.
  */
 function connectSlider() {
-  $('#threshold_label').text(
-      `Score Threshold (${$('#threshold')[0].value})`);
-  $('#threshold').on('input', () => {
     $('#threshold_label').text(
         `Score Threshold (${$('#threshold')[0].value})`);
-  });
-  $('#segments_label').text(
-      `Segment Size (${$('#segments')[0].value})`);
-  $('#segments').on('input', () => {
+    $('#threshold').on('input', () => {
+        $('#threshold_label').text(
+            `Score Threshold (${$('#threshold')[0].value})`);
+    });
     $('#segments_label').text(
         `Segment Size (${$('#segments')[0].value})`);
-  });
+    $('#segments').on('input', () => {
+        $('#segments_label').text(
+            `Segment Size (${$('#segments')[0].value})`);
+    });
 }
 
 /**
@@ -177,22 +177,22 @@ function connectSlider() {
  * @param {number} segments desired number of segments (1-300)
  */
 function fetchVideo(filePath, segments) {
-  const url = "/video?file=" + filePath + "&segments=" + segments;
-  $.ajax({
-    url: url,
-    success: function(result) {
-      const videoId = result["video_id"];
-      player.loadVideoById(videoId);
-      entries = result['entries'];
-      showState(STATE_PLAYER);
-    },
-    error: (err) => {
-      showState(STATE_COVER);
-      console.log(err);
-      showError(err.responseText);
-    },
-    datatype: "json"
-  });
+    const url = "/video?file=" + filePath + "&segments=" + segments;
+    $.ajax({
+        url: url,
+        success: function (result) {
+            const videoId = result["video_id"];
+            player.loadVideoById(videoId);
+            entries = result['entries'];
+            showState(STATE_PLAYER);
+        },
+        error: (err) => {
+            showState(STATE_COVER);
+            console.log(err);
+            showError(err.responseText);
+        },
+        datatype: "json"
+    });
 }
 
 /**
@@ -201,17 +201,17 @@ function fetchVideo(filePath, segments) {
  * the frame-level data for that video.
  */
 function onPlayerReady() {
-  const filePath = getUrlParameter('file') || "";
-  const segments = parseInt(getUrlParameter('segments')) || 0;
+    const filePath = getUrlParameter('file') || "";
+    const segments = parseInt(getUrlParameter('segments')) || 0;
 
-  updateFormFromURL();
-  hideError();
-  connectSlider();
+    updateFormFromURL();
+    hideError();
+    connectSlider();
 
-  if (!filePath) {
-    return;
-  }
+    if (!filePath) {
+        return;
+    }
 
-  showState(STATE_SPINNER);
-  fetchVideo(filePath, segments);
+    showState(STATE_SPINNER);
+    fetchVideo(filePath, segments);
 }

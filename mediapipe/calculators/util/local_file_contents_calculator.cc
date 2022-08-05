@@ -12,13 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <memory>
-#include <string>
-
 #include "mediapipe/calculators/util/local_file_contents_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/util/resource_util.h"
+#include <memory>
+#include <string>
 
 namespace mediapipe {
 
@@ -52,54 +51,54 @@ constexpr char kContentsTag[] = "CONTENTS";
 //   ...
 // }
 class LocalFileContentsCalculator : public CalculatorBase {
- public:
-  static absl::Status GetContract(CalculatorContract* cc) {
-    RET_CHECK(cc->InputSidePackets().HasTag(kFilePathTag))
-        << "Missing PATH input side packet(s)";
-    RET_CHECK(cc->OutputSidePackets().HasTag(kContentsTag))
-        << "Missing CONTENTS output side packet(s)";
+public:
+    static absl::Status GetContract(CalculatorContract* cc) {
+        RET_CHECK(cc->InputSidePackets().HasTag(kFilePathTag))
+            << "Missing PATH input side packet(s)";
+        RET_CHECK(cc->OutputSidePackets().HasTag(kContentsTag))
+            << "Missing CONTENTS output side packet(s)";
 
-    RET_CHECK_EQ(cc->InputSidePackets().NumEntries(kFilePathTag),
-                 cc->OutputSidePackets().NumEntries(kContentsTag))
-        << "Same number of input streams and output streams is required.";
+        RET_CHECK_EQ(cc->InputSidePackets().NumEntries(kFilePathTag),
+                     cc->OutputSidePackets().NumEntries(kContentsTag))
+            << "Same number of input streams and output streams is required.";
 
-    for (CollectionItemId id = cc->InputSidePackets().BeginId(kFilePathTag);
-         id != cc->InputSidePackets().EndId(kFilePathTag); ++id) {
-      cc->InputSidePackets().Get(id).Set<std::string>();
+        for (CollectionItemId id = cc->InputSidePackets().BeginId(kFilePathTag);
+             id != cc->InputSidePackets().EndId(kFilePathTag); ++id) {
+            cc->InputSidePackets().Get(id).Set<std::string>();
+        }
+
+        for (CollectionItemId id = cc->OutputSidePackets().BeginId(kContentsTag);
+             id != cc->OutputSidePackets().EndId(kContentsTag); ++id) {
+            cc->OutputSidePackets().Get(id).Set<std::string>();
+        }
+
+        return absl::OkStatus();
     }
 
-    for (CollectionItemId id = cc->OutputSidePackets().BeginId(kContentsTag);
-         id != cc->OutputSidePackets().EndId(kContentsTag); ++id) {
-      cc->OutputSidePackets().Get(id).Set<std::string>();
+    absl::Status Open(CalculatorContext* cc) override {
+        CollectionItemId input_id = cc->InputSidePackets().BeginId(kFilePathTag);
+        CollectionItemId output_id = cc->OutputSidePackets().BeginId(kContentsTag);
+        auto options = cc->Options<mediapipe::LocalFileContentsCalculatorOptions>();
+
+        // Number of inputs and outpus is the same according to the contract.
+        for (; input_id != cc->InputSidePackets().EndId(kFilePathTag);
+             ++input_id, ++output_id) {
+            std::string file_path =
+                cc->InputSidePackets().Get(input_id).Get<std::string>();
+            ASSIGN_OR_RETURN(file_path, PathToResourceAsFile(file_path));
+
+            std::string contents;
+            MP_RETURN_IF_ERROR(GetResourceContents(
+                file_path, &contents, /*read_as_binary=*/!options.text_mode()));
+            cc->OutputSidePackets().Get(output_id).Set(
+                MakePacket<std::string>(std::move(contents)));
+        }
+        return absl::OkStatus();
     }
 
-    return absl::OkStatus();
-  }
-
-  absl::Status Open(CalculatorContext* cc) override {
-    CollectionItemId input_id = cc->InputSidePackets().BeginId(kFilePathTag);
-    CollectionItemId output_id = cc->OutputSidePackets().BeginId(kContentsTag);
-    auto options = cc->Options<mediapipe::LocalFileContentsCalculatorOptions>();
-
-    // Number of inputs and outpus is the same according to the contract.
-    for (; input_id != cc->InputSidePackets().EndId(kFilePathTag);
-         ++input_id, ++output_id) {
-      std::string file_path =
-          cc->InputSidePackets().Get(input_id).Get<std::string>();
-      ASSIGN_OR_RETURN(file_path, PathToResourceAsFile(file_path));
-
-      std::string contents;
-      MP_RETURN_IF_ERROR(GetResourceContents(
-          file_path, &contents, /*read_as_binary=*/!options.text_mode()));
-      cc->OutputSidePackets().Get(output_id).Set(
-          MakePacket<std::string>(std::move(contents)));
+    absl::Status Process(CalculatorContext* cc) override {
+        return absl::OkStatus();
     }
-    return absl::OkStatus();
-  }
-
-  absl::Status Process(CalculatorContext* cc) override {
-    return absl::OkStatus();
-  }
 };
 
 REGISTER_CALCULATOR(LocalFileContentsCalculator);

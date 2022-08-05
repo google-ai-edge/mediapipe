@@ -19,9 +19,9 @@ package mediapipe;
 import "mediapipe/framework/calculator.proto";
 
 message ThresholdingCalculatorOptions {
-  extend CalculatorOptions {
-    optional ThresholdingCalculatorOptions ext = 259990498;
-  }
+    extend CalculatorOptions {
+        optional ThresholdingCalculatorOptions ext = 259990498;
+    }
 
-  optional double threshold = 1;
+    optional double threshold = 1;
 }

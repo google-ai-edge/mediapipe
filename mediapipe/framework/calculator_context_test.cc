@@ -34,7 +34,7 @@ namespace mediapipe {
 namespace test_ns {
 
 std::string Proto3GraphStr() {
-  static std::string kProto3GraphStr = R"(
+    static std::string kProto3GraphStr = R"(
       node {
         calculator: "NightLightCalculator"
         input_side_packet: "input_value"
@@ -87,59 +87,59 @@ std::string Proto3GraphStr() {
         output_stream: "timestamp_vectors"
       }
   )";
-  return kProto3GraphStr;
+    return kProto3GraphStr;
 }
 
 std::unique_ptr<CalculatorState> MakeCalculatorState(
     const CalculatorGraphConfig::Node& node_config, int node_id) {
-  auto result = absl::make_unique<CalculatorState>(
-      "Node", node_id, "Calculator", node_config, nullptr);
-  return result;
+    auto result = absl::make_unique<CalculatorState>(
+        "Node", node_id, "Calculator", node_config, nullptr);
+    return result;
 }
 
 std::unique_ptr<CalculatorContext> MakeCalculatorContext(
     CalculatorState* calculator_state) {
-  return absl::make_unique<CalculatorContext>(calculator_state,
-                                              tool::CreateTagMap({}).value(),
-                                              tool::CreateTagMap({}).value());
+    return absl::make_unique<CalculatorContext>(calculator_state,
+                                                tool::CreateTagMap({}).value(),
+                                                tool::CreateTagMap({}).value());
 }
 
 TEST(CalculatorTest, NodeId) {
-  mediapipe::CalculatorGraphConfig config =
-      ParseTextProtoOrDie<mediapipe::CalculatorGraphConfig>(Proto3GraphStr());
+    mediapipe::CalculatorGraphConfig config =
+        ParseTextProtoOrDie<mediapipe::CalculatorGraphConfig>(Proto3GraphStr());
 
-  auto calculator_state_0 = MakeCalculatorState(config.node(0), 0);
-  auto cc_0 = MakeCalculatorContext(&*calculator_state_0);
-  auto calculator_state_1 = MakeCalculatorState(config.node(1), 1);
-  auto cc_1 = MakeCalculatorContext(&*calculator_state_1);
-  auto calculator_state_3 = MakeCalculatorState(config.node(3), 3);
-  auto cc_3 = MakeCalculatorContext(&*calculator_state_3);
+    auto calculator_state_0 = MakeCalculatorState(config.node(0), 0);
+    auto cc_0 = MakeCalculatorContext(&*calculator_state_0);
+    auto calculator_state_1 = MakeCalculatorState(config.node(1), 1);
+    auto cc_1 = MakeCalculatorContext(&*calculator_state_1);
+    auto calculator_state_3 = MakeCalculatorState(config.node(3), 3);
+    auto cc_3 = MakeCalculatorContext(&*calculator_state_3);
 
-  EXPECT_EQ(cc_0->NodeId(), calculator_state_0->NodeId());
-  EXPECT_EQ(cc_1->NodeId(), calculator_state_1->NodeId());
-  EXPECT_EQ(cc_3->NodeId(), calculator_state_3->NodeId());
+    EXPECT_EQ(cc_0->NodeId(), calculator_state_0->NodeId());
+    EXPECT_EQ(cc_1->NodeId(), calculator_state_1->NodeId());
+    EXPECT_EQ(cc_3->NodeId(), calculator_state_3->NodeId());
 }
 
 TEST(CalculatorTest, GetOptions) {
-  mediapipe::CalculatorGraphConfig config =
-      ParseTextProtoOrDie<mediapipe::CalculatorGraphConfig>(Proto3GraphStr());
+    mediapipe::CalculatorGraphConfig config =
+        ParseTextProtoOrDie<mediapipe::CalculatorGraphConfig>(Proto3GraphStr());
 
-  auto calculator_state_0 = MakeCalculatorState(config.node(0), 0);
-  auto cc_0 = MakeCalculatorContext(&*calculator_state_0);
-  auto calculator_state_1 = MakeCalculatorState(config.node(1), 1);
-  auto cc_1 = MakeCalculatorContext(&*calculator_state_1);
-  auto calculator_state_3 = MakeCalculatorState(config.node(3), 3);
-  auto cc_3 = MakeCalculatorContext(&*calculator_state_3);
+    auto calculator_state_0 = MakeCalculatorState(config.node(0), 0);
+    auto cc_0 = MakeCalculatorContext(&*calculator_state_0);
+    auto calculator_state_1 = MakeCalculatorState(config.node(1), 1);
+    auto cc_1 = MakeCalculatorContext(&*calculator_state_1);
+    auto calculator_state_3 = MakeCalculatorState(config.node(3), 3);
+    auto cc_3 = MakeCalculatorContext(&*calculator_state_3);
 
-  // Get a proto2 options extension from Node::options.
-  EXPECT_EQ(cc_0->Options<NightLightCalculatorOptions>().jitter(), 0.123);
+    // Get a proto2 options extension from Node::options.
+    EXPECT_EQ(cc_0->Options<NightLightCalculatorOptions>().jitter(), 0.123);
 
-  // Get a proto2 options extension from Node::node_options.
-  EXPECT_EQ(cc_1->Options<NightLightCalculatorOptions>().jitter(), 0.123);
+    // Get a proto2 options extension from Node::node_options.
+    EXPECT_EQ(cc_1->Options<NightLightCalculatorOptions>().jitter(), 0.123);
 
-  // Get a proto3 options protobuf::Any from Node::node_options.
-  EXPECT_EQ(cc_3->Options<SkyLightCalculatorOptions>().sky_color(),
-            "light_blue");
+    // Get a proto3 options protobuf::Any from Node::node_options.
+    EXPECT_EQ(cc_3->Options<SkyLightCalculatorOptions>().sky_color(),
+              "light_blue");
 }
 
 }  // namespace test_ns

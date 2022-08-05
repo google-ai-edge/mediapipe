@@ -14,10 +14,8 @@
 //
 // Defines DeletingFile.
 #include "mediapipe/framework/formats/deleting_file.h"
-
-#include <stdio.h>
-
 #include "mediapipe/framework/port/logging.h"
+#include <stdio.h>
 
 namespace mediapipe {
 
@@ -25,11 +23,11 @@ DeletingFile::DeletingFile(const std::string& path, bool delete_on_destruction)
     : path_(path), delete_on_destruction_(delete_on_destruction) {}
 
 DeletingFile::~DeletingFile() {
-  if (delete_on_destruction_) {
-    if (remove(path_.c_str()) != 0) {
-      LOG(ERROR) << "Unable to delete file: " << path_;
+    if (delete_on_destruction_) {
+        if (remove(path_.c_str()) != 0) {
+            LOG(ERROR) << "Unable to delete file: " << path_;
+        }
     }
-  }
 }
 
 const std::string& DeletingFile::Path() const { return path_; }

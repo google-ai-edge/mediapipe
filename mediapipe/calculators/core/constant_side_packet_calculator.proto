@@ -23,22 +23,22 @@ import "mediapipe/framework/formats/landmark.proto";
 option objc_class_prefix = "MediaPipe";
 
 message ConstantSidePacketCalculatorOptions {
-  extend CalculatorOptions {
-    optional ConstantSidePacketCalculatorOptions ext = 291214597;
-  }
-
-  message ConstantSidePacket {
-    oneof value {
-      int32 int_value = 1;
-      float float_value = 2;
-      bool bool_value = 3;
-      string string_value = 4;
-      uint64 uint64_value = 5;
-      ClassificationList classification_list_value = 6;
-      LandmarkList landmark_list_value = 7;
-      double double_value = 9;
+    extend CalculatorOptions {
+        optional ConstantSidePacketCalculatorOptions ext = 291214597;
     }
-  }
 
-  repeated ConstantSidePacket packet = 1;
+    message ConstantSidePacket {
+        oneof value {
+            int32 int_value = 1;
+            float float_value = 2;
+            bool bool_value = 3;
+            string string_value = 4;
+            uint64 uint64_value = 5;
+            ClassificationList classification_list_value = 6;
+            LandmarkList landmark_list_value = 7;
+            double double_value = 9;
+        }
+    }
+
+    repeated ConstantSidePacket packet = 1;
 }

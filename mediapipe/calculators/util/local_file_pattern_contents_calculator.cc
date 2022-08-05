@@ -12,12 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <memory>
-#include <string>
-
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/port/file_helpers.h"
 #include "mediapipe/framework/port/status.h"
+#include <memory>
+#include <string>
 
 namespace mediapipe {
 
@@ -38,42 +37,42 @@ constexpr char kFileDirectoryTag[] = "FILE_DIRECTORY";
 //   output_stream: "CONTENTS:contents"
 // }
 class LocalFilePatternContentsCalculator : public CalculatorBase {
- public:
-  static absl::Status GetContract(CalculatorContract* cc) {
-    cc->InputSidePackets().Tag(kFileDirectoryTag).Set<std::string>();
-    cc->InputSidePackets().Tag(kFileSuffixTag).Set<std::string>();
-    cc->Outputs().Tag(kContentsTag).Set<std::string>();
-    return absl::OkStatus();
-  }
-
-  absl::Status Open(CalculatorContext* cc) override {
-    MP_RETURN_IF_ERROR(mediapipe::file::MatchFileTypeInDirectory(
-        cc->InputSidePackets().Tag(kFileDirectoryTag).Get<std::string>(),
-        cc->InputSidePackets().Tag(kFileSuffixTag).Get<std::string>(),
-        &filenames_));
-    std::sort(filenames_.begin(), filenames_.end());
-    return absl::OkStatus();
-  }
-
-  absl::Status Process(CalculatorContext* cc) override {
-    if (current_output_ < filenames_.size()) {
-      auto contents = absl::make_unique<std::string>();
-      LOG(INFO) << filenames_[current_output_];
-      MP_RETURN_IF_ERROR(mediapipe::file::GetContents(
-          filenames_[current_output_], contents.get()));
-      ++current_output_;
-      cc->Outputs()
-          .Tag(kContentsTag)
-          .Add(contents.release(), Timestamp(current_output_));
-    } else {
-      return tool::StatusStop();
+public:
+    static absl::Status GetContract(CalculatorContract* cc) {
+        cc->InputSidePackets().Tag(kFileDirectoryTag).Set<std::string>();
+        cc->InputSidePackets().Tag(kFileSuffixTag).Set<std::string>();
+        cc->Outputs().Tag(kContentsTag).Set<std::string>();
+        return absl::OkStatus();
     }
-    return absl::OkStatus();
-  }
 
- private:
-  std::vector<std::string> filenames_;
-  int current_output_ = 0;
+    absl::Status Open(CalculatorContext* cc) override {
+        MP_RETURN_IF_ERROR(mediapipe::file::MatchFileTypeInDirectory(
+            cc->InputSidePackets().Tag(kFileDirectoryTag).Get<std::string>(),
+            cc->InputSidePackets().Tag(kFileSuffixTag).Get<std::string>(),
+            &filenames_));
+        std::sort(filenames_.begin(), filenames_.end());
+        return absl::OkStatus();
+    }
+
+    absl::Status Process(CalculatorContext* cc) override {
+        if (current_output_ < filenames_.size()) {
+            auto contents = absl::make_unique<std::string>();
+            LOG(INFO) << filenames_[current_output_];
+            MP_RETURN_IF_ERROR(mediapipe::file::GetContents(
+                filenames_[current_output_], contents.get()));
+            ++current_output_;
+            cc->Outputs()
+                .Tag(kContentsTag)
+                .Add(contents.release(), Timestamp(current_output_));
+        } else {
+            return tool::StatusStop();
+        }
+        return absl::OkStatus();
+    }
+
+private:
+    std::vector<std::string> filenames_;
+    int current_output_ = 0;
 };
 
 REGISTER_CALCULATOR(LocalFilePatternContentsCalculator);

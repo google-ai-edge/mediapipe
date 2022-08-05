@@ -19,10 +19,10 @@ package mediapipe;
 import "mediapipe/framework/calculator.proto";
 
 message LandmarkProjectionCalculatorOptions {
-  extend CalculatorOptions {
-    optional LandmarkProjectionCalculatorOptions ext = 263371892;
-  }
+    extend CalculatorOptions {
+        optional LandmarkProjectionCalculatorOptions ext = 263371892;
+    }
 
-  // Ignore the rotation field of rect proto for projection.
-  optional bool ignore_rotation = 1 [default = false];
+    // Ignore the rotation field of rect proto for projection.
+    optional bool ignore_rotation = 1 [default = false];
 }

@@ -25,13 +25,13 @@ import "mediapipe/framework/mediapipe_options.proto";
 
 // See DefaultInputStreamHandler for documentation.
 message DefaultInputStreamHandlerOptions {
-  extend MediaPipeOptions {
-    optional DefaultInputStreamHandlerOptions ext = 164312821;
-  }
-  // batch_size determines how many input packets should be collected before
-  // a calculator can process them. Once there are enough packets, Process
-  // method of the Calculator is called sequentially. Currently, batching is not
-  // supported for source nodes but it may be supported in the future.
-  // Therefore, this field should not be specified for source nodes.
-  optional int32 batch_size = 1 [default = 1];
+    extend MediaPipeOptions {
+        optional DefaultInputStreamHandlerOptions ext = 164312821;
+    }
+    // batch_size determines how many input packets should be collected before
+    // a calculator can process them. Once there are enough packets, Process
+    // method of the Calculator is called sequentially. Currently, batching is not
+    // supported for source nodes but it may be supported in the future.
+    // Therefore, this field should not be specified for source nodes.
+    optional int32 batch_size = 1 [default = 1];
 }

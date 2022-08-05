@@ -28,13 +28,12 @@
 #ifndef MEDIAPIPE_FRAMEWORK_TOOL_SINK_H_
 #define MEDIAPIPE_FRAMEWORK_TOOL_SINK_H_
 
-#include <string>
-#include <vector>
-
 #include "absl/base/macros.h"
 #include "mediapipe/framework/calculator_base.h"
 #include "mediapipe/framework/packet_type.h"
 #include "mediapipe/framework/port/status.h"
+#include <string>
+#include <vector>
 
 namespace mediapipe {
 
@@ -165,44 +164,44 @@ void AddCallbackWithHeaderCalculator(const std::string& stream_name,
 //   ));
 // }
 class CallbackCalculator : public CalculatorBase {
- public:
-  CallbackCalculator() {}
-  CallbackCalculator(const CallbackCalculator&) = delete;
-  CallbackCalculator& operator=(const CallbackCalculator&) = delete;
+public:
+    CallbackCalculator() {}
+    CallbackCalculator(const CallbackCalculator&) = delete;
+    CallbackCalculator& operator=(const CallbackCalculator&) = delete;
 
-  ~CallbackCalculator() override {}
+    ~CallbackCalculator() override {}
 
-  static absl::Status GetContract(CalculatorContract* cc);
+    static absl::Status GetContract(CalculatorContract* cc);
 
-  absl::Status Open(CalculatorContext* cc) override;
-  absl::Status Process(CalculatorContext* cc) override;
+    absl::Status Open(CalculatorContext* cc) override;
+    absl::Status Process(CalculatorContext* cc) override;
 
- private:
-  std::function<void(const Packet&)> callback_;
-  std::function<void(const std::vector<Packet>&)> vector_callback_;
+private:
+    std::function<void(const Packet&)> callback_;
+    std::function<void(const std::vector<Packet>&)> vector_callback_;
 };
 
 class CallbackWithHeaderCalculator : public CalculatorBase {
- public:
-  CallbackWithHeaderCalculator() : callback_(nullptr) {}
-  CallbackWithHeaderCalculator(const CallbackWithHeaderCalculator&) = delete;
-  CallbackWithHeaderCalculator& operator=(const CallbackWithHeaderCalculator&) =
-      delete;
+public:
+    CallbackWithHeaderCalculator() : callback_(nullptr) {}
+    CallbackWithHeaderCalculator(const CallbackWithHeaderCalculator&) = delete;
+    CallbackWithHeaderCalculator& operator=(const CallbackWithHeaderCalculator&) =
+        delete;
 
-  ~CallbackWithHeaderCalculator() override {}
+    ~CallbackWithHeaderCalculator() override {}
 
-  static absl::Status GetContract(CalculatorContract* cc);
+    static absl::Status GetContract(CalculatorContract* cc);
 
-  absl::Status Open(CalculatorContext* cc) override;
-  absl::Status Process(CalculatorContext* cc) override;
+    absl::Status Open(CalculatorContext* cc) override;
+    absl::Status Process(CalculatorContext* cc) override;
 
- private:
-  std::function<void(const Packet&, const Packet&)> callback_;
-  // The header packet read from the stream.
-  // Header packet is only going to be read once, either during the Open() for
-  // the current implementation, or in the Process() call when the header stream
-  // has the packet.
-  Packet header_packet_;
+private:
+    std::function<void(const Packet&, const Packet&)> callback_;
+    // The header packet read from the stream.
+    // Header packet is only going to be read once, either during the Open() for
+    // the current implementation, or in the Process() call when the header stream
+    // has the packet.
+    Packet header_packet_;
 };
 
 }  // namespace tool

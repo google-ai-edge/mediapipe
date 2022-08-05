@@ -12,10 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <functional>
-#include <string>
-#include <vector>
-
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/calculator_runner.h"
 #include "mediapipe/framework/port/gmock.h"
@@ -25,6 +21,9 @@
 #include "mediapipe/framework/port/status_matchers.h"
 #include "mediapipe/framework/timestamp.h"
 #include "mediapipe/framework/tool/sink.h"
+#include <functional>
+#include <string>
+#include <vector>
 
 namespace mediapipe {
 using ::testing::ElementsAre;
@@ -33,52 +32,52 @@ using ::testing::Value;
 namespace {
 
 MATCHER_P2(BoolPacket, value, timestamp, "") {
-  return Value(arg.template Get<bool>(), Eq(value)) &&
-         Value(arg.Timestamp(), Eq(timestamp));
+    return Value(arg.template Get<bool>(), Eq(value)) &&
+           Value(arg.Timestamp(), Eq(timestamp));
 }
 
 TEST(PreviousLoopbackCalculator, CorrectTimestamps) {
-  std::vector<Packet> output_packets;
-  CalculatorGraphConfig graph_config =
-      ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
-        input_stream: 'allow'
-        input_stream: 'value'
-        node {
-          calculator: "GateCalculator"
-          input_stream: 'value'
-          input_stream: 'ALLOW:allow'
-          output_stream: 'gated_value'
-        }
-        node {
-          calculator: 'PacketPresenceCalculator'
-          input_stream: 'PACKET:gated_value'
-          output_stream: 'PRESENCE:presence'
-        }
-      )pb");
-  tool::AddVectorSink("presence", &graph_config, &output_packets);
+    std::vector<Packet> output_packets;
+    CalculatorGraphConfig graph_config =
+        ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
+                                                        input_stream: 'allow'
+                                                        input_stream: 'value'
+                                                        node {
+                                                          calculator: "GateCalculator"
+                                                          input_stream: 'value'
+                                                          input_stream: 'ALLOW:allow'
+                                                          output_stream: 'gated_value'
+                                                        }
+                                                        node {
+                                                          calculator: 'PacketPresenceCalculator'
+                                                          input_stream: 'PACKET:gated_value'
+                                                          output_stream: 'PRESENCE:presence'
+                                                        }
+        )pb");
+    tool::AddVectorSink("presence", &graph_config, &output_packets);
 
-  CalculatorGraph graph;
-  MP_ASSERT_OK(graph.Initialize(graph_config, {}));
-  MP_ASSERT_OK(graph.StartRun({}));
+    CalculatorGraph graph;
+    MP_ASSERT_OK(graph.Initialize(graph_config, {}));
+    MP_ASSERT_OK(graph.StartRun({}));
 
-  auto send_packet = [&graph](int value, bool allow, Timestamp timestamp) {
-    MP_ASSERT_OK(graph.AddPacketToInputStream(
-        "value", MakePacket<int>(value).At(timestamp)));
-    MP_ASSERT_OK(graph.AddPacketToInputStream(
-        "allow", MakePacket<bool>(allow).At(timestamp)));
-  };
+    auto send_packet = [&graph](int value, bool allow, Timestamp timestamp) {
+        MP_ASSERT_OK(graph.AddPacketToInputStream(
+            "value", MakePacket<int>(value).At(timestamp)));
+        MP_ASSERT_OK(graph.AddPacketToInputStream(
+            "allow", MakePacket<bool>(allow).At(timestamp)));
+    };
 
-  send_packet(10, false, Timestamp(10));
-  MP_EXPECT_OK(graph.WaitUntilIdle());
-  EXPECT_THAT(output_packets, ElementsAre(BoolPacket(false, Timestamp(10))));
+    send_packet(10, false, Timestamp(10));
+    MP_EXPECT_OK(graph.WaitUntilIdle());
+    EXPECT_THAT(output_packets, ElementsAre(BoolPacket(false, Timestamp(10))));
 
-  output_packets.clear();
-  send_packet(20, true, Timestamp(11));
-  MP_EXPECT_OK(graph.WaitUntilIdle());
-  EXPECT_THAT(output_packets, ElementsAre(BoolPacket(true, Timestamp(11))));
+    output_packets.clear();
+    send_packet(20, true, Timestamp(11));
+    MP_EXPECT_OK(graph.WaitUntilIdle());
+    EXPECT_THAT(output_packets, ElementsAre(BoolPacket(true, Timestamp(11))));
 
-  MP_EXPECT_OK(graph.CloseAllInputStreams());
-  MP_EXPECT_OK(graph.WaitUntilDone());
+    MP_EXPECT_OK(graph.CloseAllInputStreams());
+    MP_EXPECT_OK(graph.WaitUntilDone());
 }
 
 }  // namespace

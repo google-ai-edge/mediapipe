@@ -25,69 +25,69 @@
 namespace mediapipe {
 
 class NonZeroCalculatorTest : public ::testing::Test {
- protected:
-  NonZeroCalculatorTest()
-      : runner_(
-            R"pb(
-              calculator: "NonZeroCalculator"
-              input_stream: "INPUT:input"
-              output_stream: "OUTPUT:output"
-              output_stream: "OUTPUT_BOOL:output_bool"
-            )pb") {}
+protected:
+    NonZeroCalculatorTest()
+        : runner_(
+              R"pb(
+                   calculator: "NonZeroCalculator"
+                   input_stream: "INPUT:input"
+                   output_stream: "OUTPUT:output"
+                   output_stream: "OUTPUT_BOOL:output_bool"
+              )pb") {}
 
-  void SetInput(const std::vector<int>& inputs) {
-    int timestamp = 0;
-    for (const auto input : inputs) {
-      runner_.MutableInputs()
-          ->Get("INPUT", 0)
-          .packets.push_back(MakePacket<int>(input).At(Timestamp(timestamp++)));
+    void SetInput(const std::vector<int>& inputs) {
+        int timestamp = 0;
+        for (const auto input : inputs) {
+            runner_.MutableInputs()
+                ->Get("INPUT", 0)
+                .packets.push_back(MakePacket<int>(input).At(Timestamp(timestamp++)));
+        }
     }
-  }
 
-  std::vector<int> GetOutput() {
-    std::vector<int> result;
-    for (const auto output : runner_.Outputs().Get("OUTPUT", 0).packets) {
-      result.push_back(output.Get<int>());
+    std::vector<int> GetOutput() {
+        std::vector<int> result;
+        for (const auto output : runner_.Outputs().Get("OUTPUT", 0).packets) {
+            result.push_back(output.Get<int>());
+        }
+        return result;
     }
-    return result;
-  }
 
-  std::vector<bool> GetOutputBool() {
-    std::vector<bool> result;
-    for (const auto output : runner_.Outputs().Get("OUTPUT_BOOL", 0).packets) {
-      result.push_back(output.Get<bool>());
+    std::vector<bool> GetOutputBool() {
+        std::vector<bool> result;
+        for (const auto output : runner_.Outputs().Get("OUTPUT_BOOL", 0).packets) {
+            result.push_back(output.Get<bool>());
+        }
+        return result;
     }
-    return result;
-  }
 
-  CalculatorRunner runner_;
+    CalculatorRunner runner_;
 };
 
 TEST_F(NonZeroCalculatorTest, ProducesZeroOutputForZeroInput) {
-  SetInput({0});
+    SetInput({0});
 
-  MP_ASSERT_OK(runner_.Run());
+    MP_ASSERT_OK(runner_.Run());
 
-  EXPECT_THAT(GetOutput(), ::testing::ElementsAre(0));
-  EXPECT_THAT(GetOutputBool(), ::testing::ElementsAre(false));
+    EXPECT_THAT(GetOutput(), ::testing::ElementsAre(0));
+    EXPECT_THAT(GetOutputBool(), ::testing::ElementsAre(false));
 }
 
 TEST_F(NonZeroCalculatorTest, ProducesNonZeroOutputForNonZeroInput) {
-  SetInput({1, 2, 3, -4, 5});
+    SetInput({1, 2, 3, -4, 5});
 
-  MP_ASSERT_OK(runner_.Run());
+    MP_ASSERT_OK(runner_.Run());
 
-  EXPECT_THAT(GetOutput(), ::testing::ElementsAre(1, 1, 1, 1, 1));
-  EXPECT_THAT(GetOutputBool(),
-              ::testing::ElementsAre(true, true, true, true, true));
+    EXPECT_THAT(GetOutput(), ::testing::ElementsAre(1, 1, 1, 1, 1));
+    EXPECT_THAT(GetOutputBool(),
+                ::testing::ElementsAre(true, true, true, true, true));
 }
 
 TEST_F(NonZeroCalculatorTest, SwitchesBetweenNonZeroAndZeroOutput) {
-  SetInput({1, 0, 3, 0, 5});
-  MP_ASSERT_OK(runner_.Run());
-  EXPECT_THAT(GetOutput(), ::testing::ElementsAre(1, 0, 1, 0, 1));
-  EXPECT_THAT(GetOutputBool(),
-              ::testing::ElementsAre(true, false, true, false, true));
+    SetInput({1, 0, 3, 0, 5});
+    MP_ASSERT_OK(runner_.Run());
+    EXPECT_THAT(GetOutput(), ::testing::ElementsAre(1, 0, 1, 0, 1));
+    EXPECT_THAT(GetOutputBool(),
+                ::testing::ElementsAre(true, false, true, false, true));
 }
 
 }  // namespace mediapipe

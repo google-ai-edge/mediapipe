@@ -21,15 +21,15 @@ package mediapipe;
 import "mediapipe/framework/calculator.proto";
 
 message ObjectDetectionsTensorToDetectionsCalculatorOptions {
-  extend .mediapipe.CalculatorOptions {
-    optional ObjectDetectionsTensorToDetectionsCalculatorOptions ext =
-        192676232;
-  }
+    extend .mediapipe.CalculatorOptions {
+        optional ObjectDetectionsTensorToDetectionsCalculatorOptions ext =
+            192676232;
+    }
 
-  // The threshold used to compute the binary segmentation mask.
-  optional float mask_threshold = 1 [default = 0.0];
+    // The threshold used to compute the binary segmentation mask.
+    optional float mask_threshold = 1 [default = 0.0];
 
-  // The specific singleton dimensions to squeeze (remove). The calculator can
-  // only removes dimensions of size 1.
-  repeated int32 tensor_dim_to_squeeze = 2;
+    // The specific singleton dimensions to squeeze (remove). The calculator can
+    // only removes dimensions of size 1.
+    repeated int32 tensor_dim_to_squeeze = 2;
 }

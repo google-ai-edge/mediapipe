@@ -24,27 +24,27 @@ package mediapipe;
 
 // Options used by a PacketGenerator.
 message PacketGeneratorOptions {
-  extensions 20000 to max;
+    extensions 20000 to max;
 }
 
 // The settings specifying a packet generator and how it is connected.
 message PacketGeneratorConfig {
-  // The name of the registered packet generator class.
-  optional string packet_generator = 1;
+    // The name of the registered packet generator class.
+    optional string packet_generator = 1;
 
-  // The names of the input side packets.  The PacketGenerator can choose
-  // to access its input side packets either by index or by tag.
-  repeated string input_side_packet = 2;
-  // DEPRECATED(mgeorg) The old name for input_side_packet.
-  repeated string external_input = 1002;
+    // The names of the input side packets.  The PacketGenerator can choose
+    // to access its input side packets either by index or by tag.
+    repeated string input_side_packet = 2;
+    // DEPRECATED(mgeorg) The old name for input_side_packet.
+    repeated string external_input = 1002;
 
-  // The names of the output side packets that this generator produces.
-  // The PacketGenerator can choose to access its output side packets
-  // either by index or by tag.
-  repeated string output_side_packet = 3;
-  // DEPRECATED(mgeorg) The old name for output_side_packet.
-  repeated string external_output = 1003;
+    // The names of the output side packets that this generator produces.
+    // The PacketGenerator can choose to access its output side packets
+    // either by index or by tag.
+    repeated string output_side_packet = 3;
+    // DEPRECATED(mgeorg) The old name for output_side_packet.
+    repeated string external_output = 1003;
 
-  // The options for the packet generator.
-  optional PacketGeneratorOptions options = 4;
+    // The options for the packet generator.
+    optional PacketGeneratorOptions options = 4;
 }

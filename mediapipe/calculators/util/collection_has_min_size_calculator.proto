@@ -19,11 +19,11 @@ package mediapipe;
 import "mediapipe/framework/calculator.proto";
 
 message CollectionHasMinSizeCalculatorOptions {
-  extend CalculatorOptions {
-    optional CollectionHasMinSizeCalculatorOptions ext = 259397840;
-  }
+    extend CalculatorOptions {
+        optional CollectionHasMinSizeCalculatorOptions ext = 259397840;
+    }
 
-  // The minimum size an input iterable collection should have for the
-  // calculator to output true.
-  optional int32 min_size = 1 [default = 0];
+    // The minimum size an input iterable collection should have for the
+    // calculator to output true.
+    optional int32 min_size = 1 [default = 0];
 }

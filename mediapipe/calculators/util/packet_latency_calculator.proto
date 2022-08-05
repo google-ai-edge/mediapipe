@@ -19,23 +19,23 @@ package mediapipe;
 import "mediapipe/framework/calculator.proto";
 
 message PacketLatencyCalculatorOptions {
-  extend mediapipe.CalculatorOptions {
-    optional PacketLatencyCalculatorOptions ext = 172681421;
-  }
+    extend mediapipe.CalculatorOptions {
+        optional PacketLatencyCalculatorOptions ext = 172681421;
+    }
 
-  // Number of intervals for the latency histogram output.
-  optional int64 num_intervals = 1 [default = 10];
+    // Number of intervals for the latency histogram output.
+    optional int64 num_intervals = 1 [default = 10];
 
-  // Interval size (in microseconds) for the histogram.
-  optional int64 interval_size_usec = 2 [default = 10000];
+    // Interval size (in microseconds) for the histogram.
+    optional int64 interval_size_usec = 2 [default = 10000];
 
-  // Reset time (in microseconds) for histogram and average. The histogram and
-  // running average are initialized to zero periodically based on the specified
-  // duration. Negative value implies never resetting the statistics.
-  optional int64 reset_duration_usec = 3 [default = -1];
+    // Reset time (in microseconds) for histogram and average. The histogram and
+    // running average are initialized to zero periodically based on the specified
+    // duration. Negative value implies never resetting the statistics.
+    optional int64 reset_duration_usec = 3 [default = -1];
 
-  // Identifier labels for each input packet stream. The order of labels must
-  // correspond 1:1 with the input streams order. The labels are copied to the
-  // latency information output by the calculator.
-  repeated string packet_labels = 4;
+    // Identifier labels for each input packet stream. The order of labels must
+    // correspond 1:1 with the input streams order. The labels are copied to the
+    // latency information output by the calculator.
+    repeated string packet_labels = 4;
 }

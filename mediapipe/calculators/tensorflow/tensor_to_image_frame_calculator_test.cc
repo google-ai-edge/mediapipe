@@ -31,16 +31,16 @@ constexpr char kImage[] = "IMAGE";
 
 template <class TypeParam>
 class TensorToImageFrameCalculatorTest : public ::testing::Test {
- protected:
-  void SetUpRunner() {
-    CalculatorGraphConfig::Node config;
-    config.set_calculator("TensorToImageFrameCalculator");
-    config.add_input_stream("TENSOR:input_tensor");
-    config.add_output_stream("IMAGE:output_image");
-    runner_ = absl::make_unique<CalculatorRunner>(config);
-  }
+protected:
+    void SetUpRunner() {
+        CalculatorGraphConfig::Node config;
+        config.set_calculator("TensorToImageFrameCalculator");
+        config.add_input_stream("TENSOR:input_tensor");
+        config.add_output_stream("IMAGE:output_image");
+        runner_ = absl::make_unique<CalculatorRunner>(config);
+    }
 
-  std::unique_ptr<CalculatorRunner> runner_;
+    std::unique_ptr<CalculatorRunner> runner_;
 };
 
 using TensorToImageFrameCalculatorTestTypes = ::testing::Types<float, uint8_t>;
@@ -48,113 +48,113 @@ TYPED_TEST_CASE(TensorToImageFrameCalculatorTest,
                 TensorToImageFrameCalculatorTestTypes);
 
 TYPED_TEST(TensorToImageFrameCalculatorTest, Converts3DTensorToImageFrame) {
-  // TYPED_TEST requires explicit "this->"
-  this->SetUpRunner();
-  auto& runner = this->runner_;
-  constexpr int kWidth = 16;
-  constexpr int kHeight = 8;
-  const tf::TensorShape tensor_shape{kHeight, kWidth, 3};
-  auto tensor = absl::make_unique<tf::Tensor>(
-      tf::DataTypeToEnum<TypeParam>::v(), tensor_shape);
-  auto tensor_vec = tensor->template flat<TypeParam>().data();
+    // TYPED_TEST requires explicit "this->"
+    this->SetUpRunner();
+    auto& runner = this->runner_;
+    constexpr int kWidth = 16;
+    constexpr int kHeight = 8;
+    const tf::TensorShape tensor_shape{kHeight, kWidth, 3};
+    auto tensor = absl::make_unique<tf::Tensor>(
+        tf::DataTypeToEnum<TypeParam>::v(), tensor_shape);
+    auto tensor_vec = tensor->template flat<TypeParam>().data();
 
-  // Writing sequence of integers as floats which we want back (as they were
-  // written).
-  for (int i = 0; i < kWidth * kHeight * 3; ++i) {
-    tensor_vec[i] = i % 255;
-  }
+    // Writing sequence of integers as floats which we want back (as they were
+    // written).
+    for (int i = 0; i < kWidth * kHeight * 3; ++i) {
+        tensor_vec[i] = i % 255;
+    }
 
-  const int64 time = 1234;
-  runner->MutableInputs()->Tag(kTensor).packets.push_back(
-      Adopt(tensor.release()).At(Timestamp(time)));
+    const int64 time = 1234;
+    runner->MutableInputs()->Tag(kTensor).packets.push_back(
+        Adopt(tensor.release()).At(Timestamp(time)));
 
-  EXPECT_TRUE(runner->Run().ok());
-  const std::vector<Packet>& output_packets =
-      runner->Outputs().Tag(kImage).packets;
-  EXPECT_EQ(1, output_packets.size());
-  EXPECT_EQ(time, output_packets[0].Timestamp().Value());
-  const ImageFrame& output_image = output_packets[0].Get<ImageFrame>();
-  EXPECT_EQ(ImageFormat::SRGB, output_image.Format());
-  EXPECT_EQ(kWidth, output_image.Width());
-  EXPECT_EQ(kHeight, output_image.Height());
+    EXPECT_TRUE(runner->Run().ok());
+    const std::vector<Packet>& output_packets =
+        runner->Outputs().Tag(kImage).packets;
+    EXPECT_EQ(1, output_packets.size());
+    EXPECT_EQ(time, output_packets[0].Timestamp().Value());
+    const ImageFrame& output_image = output_packets[0].Get<ImageFrame>();
+    EXPECT_EQ(ImageFormat::SRGB, output_image.Format());
+    EXPECT_EQ(kWidth, output_image.Width());
+    EXPECT_EQ(kHeight, output_image.Height());
 
-  for (int i = 0; i < kWidth * kHeight * 3; ++i) {
-    const uint8 pixel_value = output_image.PixelData()[i];
-    EXPECT_EQ(i % 255, pixel_value);
-  }
+    for (int i = 0; i < kWidth * kHeight * 3; ++i) {
+        const uint8 pixel_value = output_image.PixelData()[i];
+        EXPECT_EQ(i % 255, pixel_value);
+    }
 }
 
 TYPED_TEST(TensorToImageFrameCalculatorTest, Converts3DTensorToImageFrameGray) {
-  this->SetUpRunner();
-  auto& runner = this->runner_;
-  constexpr int kWidth = 16;
-  constexpr int kHeight = 8;
-  const tf::TensorShape tensor_shape{kHeight, kWidth, 1};
-  auto tensor = absl::make_unique<tf::Tensor>(
-      tf::DataTypeToEnum<TypeParam>::v(), tensor_shape);
-  auto tensor_vec = tensor->template flat<TypeParam>().data();
+    this->SetUpRunner();
+    auto& runner = this->runner_;
+    constexpr int kWidth = 16;
+    constexpr int kHeight = 8;
+    const tf::TensorShape tensor_shape{kHeight, kWidth, 1};
+    auto tensor = absl::make_unique<tf::Tensor>(
+        tf::DataTypeToEnum<TypeParam>::v(), tensor_shape);
+    auto tensor_vec = tensor->template flat<TypeParam>().data();
 
-  // Writing sequence of integers as floats which we want back (as they were
-  // written).
-  for (int i = 0; i < kWidth * kHeight; ++i) {
-    tensor_vec[i] = i % 255;
-  }
+    // Writing sequence of integers as floats which we want back (as they were
+    // written).
+    for (int i = 0; i < kWidth * kHeight; ++i) {
+        tensor_vec[i] = i % 255;
+    }
 
-  const int64 time = 1234;
-  runner->MutableInputs()->Tag(kTensor).packets.push_back(
-      Adopt(tensor.release()).At(Timestamp(time)));
+    const int64 time = 1234;
+    runner->MutableInputs()->Tag(kTensor).packets.push_back(
+        Adopt(tensor.release()).At(Timestamp(time)));
 
-  EXPECT_TRUE(runner->Run().ok());
-  const std::vector<Packet>& output_packets =
-      runner->Outputs().Tag(kImage).packets;
-  EXPECT_EQ(1, output_packets.size());
-  EXPECT_EQ(time, output_packets[0].Timestamp().Value());
-  const ImageFrame& output_image = output_packets[0].Get<ImageFrame>();
-  EXPECT_EQ(ImageFormat::GRAY8, output_image.Format());
-  EXPECT_EQ(kWidth, output_image.Width());
-  EXPECT_EQ(kHeight, output_image.Height());
+    EXPECT_TRUE(runner->Run().ok());
+    const std::vector<Packet>& output_packets =
+        runner->Outputs().Tag(kImage).packets;
+    EXPECT_EQ(1, output_packets.size());
+    EXPECT_EQ(time, output_packets[0].Timestamp().Value());
+    const ImageFrame& output_image = output_packets[0].Get<ImageFrame>();
+    EXPECT_EQ(ImageFormat::GRAY8, output_image.Format());
+    EXPECT_EQ(kWidth, output_image.Width());
+    EXPECT_EQ(kHeight, output_image.Height());
 
-  for (int i = 0; i < kWidth * kHeight; ++i) {
-    const uint8 pixel_value = output_image.PixelData()[i];
-    EXPECT_EQ(i % 255, pixel_value);
-  }
+    for (int i = 0; i < kWidth * kHeight; ++i) {
+        const uint8 pixel_value = output_image.PixelData()[i];
+        EXPECT_EQ(i % 255, pixel_value);
+    }
 }
 
 TYPED_TEST(TensorToImageFrameCalculatorTest,
            Converts3DTensorToImageFrame2DGray) {
-  this->SetUpRunner();
-  auto& runner = this->runner_;
-  constexpr int kWidth = 16;
-  constexpr int kHeight = 8;
-  const tf::TensorShape tensor_shape{kHeight, kWidth};
-  auto tensor = absl::make_unique<tf::Tensor>(
-      tf::DataTypeToEnum<TypeParam>::v(), tensor_shape);
-  auto tensor_vec = tensor->template flat<TypeParam>().data();
+    this->SetUpRunner();
+    auto& runner = this->runner_;
+    constexpr int kWidth = 16;
+    constexpr int kHeight = 8;
+    const tf::TensorShape tensor_shape{kHeight, kWidth};
+    auto tensor = absl::make_unique<tf::Tensor>(
+        tf::DataTypeToEnum<TypeParam>::v(), tensor_shape);
+    auto tensor_vec = tensor->template flat<TypeParam>().data();
 
-  // Writing sequence of integers as floats which we want back (as they were
-  // written).
-  for (int i = 0; i < kWidth * kHeight; ++i) {
-    tensor_vec[i] = i % 255;
-  }
+    // Writing sequence of integers as floats which we want back (as they were
+    // written).
+    for (int i = 0; i < kWidth * kHeight; ++i) {
+        tensor_vec[i] = i % 255;
+    }
 
-  const int64 time = 1234;
-  runner->MutableInputs()->Tag(kTensor).packets.push_back(
-      Adopt(tensor.release()).At(Timestamp(time)));
+    const int64 time = 1234;
+    runner->MutableInputs()->Tag(kTensor).packets.push_back(
+        Adopt(tensor.release()).At(Timestamp(time)));
 
-  EXPECT_TRUE(runner->Run().ok());
-  const std::vector<Packet>& output_packets =
-      runner->Outputs().Tag(kImage).packets;
-  EXPECT_EQ(1, output_packets.size());
-  EXPECT_EQ(time, output_packets[0].Timestamp().Value());
-  const ImageFrame& output_image = output_packets[0].Get<ImageFrame>();
-  EXPECT_EQ(ImageFormat::GRAY8, output_image.Format());
-  EXPECT_EQ(kWidth, output_image.Width());
-  EXPECT_EQ(kHeight, output_image.Height());
+    EXPECT_TRUE(runner->Run().ok());
+    const std::vector<Packet>& output_packets =
+        runner->Outputs().Tag(kImage).packets;
+    EXPECT_EQ(1, output_packets.size());
+    EXPECT_EQ(time, output_packets[0].Timestamp().Value());
+    const ImageFrame& output_image = output_packets[0].Get<ImageFrame>();
+    EXPECT_EQ(ImageFormat::GRAY8, output_image.Format());
+    EXPECT_EQ(kWidth, output_image.Width());
+    EXPECT_EQ(kHeight, output_image.Height());
 
-  for (int i = 0; i < kWidth * kHeight; ++i) {
-    const uint8 pixel_value = output_image.PixelData()[i];
-    EXPECT_EQ(i % 255, pixel_value);
-  }
+    for (int i = 0; i < kWidth * kHeight; ++i) {
+        const uint8 pixel_value = output_image.PixelData()[i];
+        EXPECT_EQ(i % 255, pixel_value);
+    }
 }
 
 }  // namespace mediapipe

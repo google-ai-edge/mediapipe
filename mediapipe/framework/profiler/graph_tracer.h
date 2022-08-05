@@ -15,13 +15,12 @@
 #ifndef MEDIAPIPE_FRAMEWORK_PROFILER_GRAPH_TRACER_H_
 #define MEDIAPIPE_FRAMEWORK_PROFILER_GRAPH_TRACER_H_
 
-#include <string>
-
 #include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/framework/calculator_context.h"
 #include "mediapipe/framework/calculator_profile.pb.h"
 #include "mediapipe/framework/profiler/trace_buffer.h"
 #include "mediapipe/framework/profiler/trace_builder.h"
+#include <string>
 
 namespace mediapipe {
 
@@ -45,54 +44,54 @@ namespace mediapipe {
 //   end_time = current_time - max_packet_latency
 //
 class GraphTracer {
- public:
-  // Returns the interval between trace log output.
-  absl::Duration GetTraceLogInterval();
+public:
+    // Returns the interval between trace log output.
+    absl::Duration GetTraceLogInterval();
 
-  // Returns the maximum number of trace events buffered in memory.
-  int64 GetTraceLogCapacity();
+    // Returns the maximum number of trace events buffered in memory.
+    int64 GetTraceLogCapacity();
 
-  // Create a tracer to record up to |capacity| recent events.
-  GraphTracer(const ProfilerConfig& profiler_config);
+    // Create a tracer to record up to |capacity| recent events.
+    GraphTracer(const ProfilerConfig& profiler_config);
 
-  // Returns the registry of trace event types.
-  TraceEventRegistry* trace_event_registry();
+    // Returns the registry of trace event types.
+    TraceEventRegistry* trace_event_registry();
 
-  // Append a TraceEvent to the TraceBuffer.
-  void LogEvent(TraceEvent event);
+    // Append a TraceEvent to the TraceBuffer.
+    void LogEvent(TraceEvent event);
 
-  // Append TraceEvents to the TraceBuffer for task input.
-  void LogInputEvents(GraphTrace::EventType event_type,
-                      const CalculatorContext* context, absl::Time event_time);
+    // Append TraceEvents to the TraceBuffer for task input.
+    void LogInputEvents(GraphTrace::EventType event_type,
+                        const CalculatorContext* context, absl::Time event_time);
 
-  // Append TraceEvents to the TraceBuffer for task output.
-  void LogOutputEvents(GraphTrace::EventType event_type,
-                       const CalculatorContext* context, absl::Time event_time);
+    // Append TraceEvents to the TraceBuffer for task output.
+    void LogOutputEvents(GraphTrace::EventType event_type,
+                         const CalculatorContext* context, absl::Time event_time);
 
-  // Returns the earliest packet timestamp appearing only after begin_time.
-  Timestamp TimestampAfter(absl::Time begin_time);
+    // Returns the earliest packet timestamp appearing only after begin_time.
+    Timestamp TimestampAfter(absl::Time begin_time);
 
-  // Returns the graph of events between begin_time and end_time exclusive.
-  void GetTrace(absl::Time begin_time, absl::Time end_time, GraphTrace* result);
+    // Returns the graph of events between begin_time and end_time exclusive.
+    void GetTrace(absl::Time begin_time, absl::Time end_time, GraphTrace* result);
 
-  // Returns trace events between begin_time and end_time exclusive.
-  void GetLog(absl::Time begin_time, absl::Time end_time, GraphTrace* result);
+    // Returns trace events between begin_time and end_time exclusive.
+    void GetLog(absl::Time begin_time, absl::Time end_time, GraphTrace* result);
 
-  // Returns the logged TraceEvents.
-  const TraceBuffer& GetTraceBuffer();
+    // Returns the logged TraceEvents.
+    const TraceBuffer& GetTraceBuffer();
 
- private:
-  // Returns the timestamp of the first output packet.
-  Timestamp GetOutputTimestamp(const CalculatorContext* context);
+private:
+    // Returns the timestamp of the first output packet.
+    Timestamp GetOutputTimestamp(const CalculatorContext* context);
 
-  // The settings for this tracer.
-  ProfilerConfig profiler_config_;
+    // The settings for this tracer.
+    ProfilerConfig profiler_config_;
 
-  // The circular buffer of TraceEvents.
-  TraceBuffer trace_buffer_;
+    // The circular buffer of TraceEvents.
+    TraceBuffer trace_buffer_;
 
-  // The builder for the GraphTrace protobuf.
-  TraceBuilder trace_builder_;
+    // The builder for the GraphTrace protobuf.
+    TraceBuilder trace_builder_;
 };
 
 }  // namespace mediapipe

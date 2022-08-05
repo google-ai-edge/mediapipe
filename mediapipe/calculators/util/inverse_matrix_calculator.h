@@ -37,13 +37,13 @@ namespace mediapipe {
 //     output_stream: "MATRIX:output_matrix"
 //   }
 class InverseMatrixCalculator : public mediapipe::api2::NodeIntf {
- public:
-  static constexpr mediapipe::api2::Input<std::array<float, 16>> kInputMatrix{
-      "MATRIX"};
-  static constexpr mediapipe::api2::Output<std::array<float, 16>> kOutputMatrix{
-      "MATRIX"};
-  MEDIAPIPE_NODE_INTERFACE(InverseMatrixCalculator, kInputMatrix,
-                           kOutputMatrix);
+public:
+    static constexpr mediapipe::api2::Input<std::array<float, 16>> kInputMatrix{
+        "MATRIX"};
+    static constexpr mediapipe::api2::Output<std::array<float, 16>> kOutputMatrix{
+        "MATRIX"};
+    MEDIAPIPE_NODE_INTERFACE(InverseMatrixCalculator, kInputMatrix,
+                             kOutputMatrix);
 };
 
 }  // namespace mediapipe

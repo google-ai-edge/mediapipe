@@ -29,13 +29,13 @@ inline float Sigmoid(float value) { return 1.0f / (1.0f + std::exp(-value)); }
 float ApplyActivation(
     ::mediapipe::TensorsToLandmarksCalculatorOptions::Activation activation,
     float value) {
-  switch (activation) {
-    case ::mediapipe::TensorsToLandmarksCalculatorOptions::SIGMOID:
-      return Sigmoid(value);
-      break;
-    default:
-      return value;
-  }
+    switch (activation) {
+        case ::mediapipe::TensorsToLandmarksCalculatorOptions::SIGMOID:
+            return Sigmoid(value);
+            break;
+        default:
+            return value;
+    }
 }
 
 }  // namespace
@@ -88,132 +88,132 @@ float ApplyActivation(
 //   }
 // }
 class TensorsToLandmarksCalculator : public Node {
- public:
-  static constexpr Input<std::vector<Tensor>> kInTensors{"TENSORS"};
-  static constexpr Input<bool>::SideFallback::Optional kFlipHorizontally{
-      "FLIP_HORIZONTALLY"};
-  static constexpr Input<bool>::SideFallback::Optional kFlipVertically{
-      "FLIP_VERTICALLY"};
-  static constexpr Output<LandmarkList>::Optional kOutLandmarkList{"LANDMARKS"};
-  static constexpr Output<NormalizedLandmarkList>::Optional
-      kOutNormalizedLandmarkList{"NORM_LANDMARKS"};
-  MEDIAPIPE_NODE_CONTRACT(kInTensors, kFlipHorizontally, kFlipVertically,
-                          kOutLandmarkList, kOutNormalizedLandmarkList);
+public:
+    static constexpr Input<std::vector<Tensor>> kInTensors{"TENSORS"};
+    static constexpr Input<bool>::SideFallback::Optional kFlipHorizontally{
+        "FLIP_HORIZONTALLY"};
+    static constexpr Input<bool>::SideFallback::Optional kFlipVertically{
+        "FLIP_VERTICALLY"};
+    static constexpr Output<LandmarkList>::Optional kOutLandmarkList{"LANDMARKS"};
+    static constexpr Output<NormalizedLandmarkList>::Optional
+        kOutNormalizedLandmarkList{"NORM_LANDMARKS"};
+    MEDIAPIPE_NODE_CONTRACT(kInTensors, kFlipHorizontally, kFlipVertically,
+                            kOutLandmarkList, kOutNormalizedLandmarkList);
 
-  absl::Status Open(CalculatorContext* cc) override;
-  absl::Status Process(CalculatorContext* cc) override;
+    absl::Status Open(CalculatorContext* cc) override;
+    absl::Status Process(CalculatorContext* cc) override;
 
- private:
-  absl::Status LoadOptions(CalculatorContext* cc);
-  int num_landmarks_ = 0;
-  ::mediapipe::TensorsToLandmarksCalculatorOptions options_;
+private:
+    absl::Status LoadOptions(CalculatorContext* cc);
+    int num_landmarks_ = 0;
+    ::mediapipe::TensorsToLandmarksCalculatorOptions options_;
 };
 MEDIAPIPE_REGISTER_NODE(TensorsToLandmarksCalculator);
 
 absl::Status TensorsToLandmarksCalculator::Open(CalculatorContext* cc) {
-  MP_RETURN_IF_ERROR(LoadOptions(cc));
+    MP_RETURN_IF_ERROR(LoadOptions(cc));
 
-  if (kOutNormalizedLandmarkList(cc).IsConnected()) {
-    RET_CHECK(options_.has_input_image_height() &&
-              options_.has_input_image_width())
-        << "Must provide input width/height for getting normalized landmarks.";
-  }
-  if (kOutLandmarkList(cc).IsConnected() &&
-      (options_.flip_horizontally() || options_.flip_vertically() ||
-       kFlipHorizontally(cc).IsConnected() ||
-       kFlipVertically(cc).IsConnected())) {
-    RET_CHECK(options_.has_input_image_height() &&
-              options_.has_input_image_width())
-        << "Must provide input width/height for using flipping when outputing "
-           "landmarks in absolute coordinates.";
-  }
-  return absl::OkStatus();
+    if (kOutNormalizedLandmarkList(cc).IsConnected()) {
+        RET_CHECK(options_.has_input_image_height() &&
+                  options_.has_input_image_width())
+            << "Must provide input width/height for getting normalized landmarks.";
+    }
+    if (kOutLandmarkList(cc).IsConnected() &&
+        (options_.flip_horizontally() || options_.flip_vertically() ||
+         kFlipHorizontally(cc).IsConnected() ||
+         kFlipVertically(cc).IsConnected())) {
+        RET_CHECK(options_.has_input_image_height() &&
+                  options_.has_input_image_width())
+            << "Must provide input width/height for using flipping when outputing "
+               "landmarks in absolute coordinates.";
+    }
+    return absl::OkStatus();
 }
 
 absl::Status TensorsToLandmarksCalculator::Process(CalculatorContext* cc) {
-  if (kInTensors(cc).IsEmpty()) {
+    if (kInTensors(cc).IsEmpty()) {
+        return absl::OkStatus();
+    }
+    bool flip_horizontally =
+        kFlipHorizontally(cc).GetOr(options_.flip_horizontally());
+    bool flip_vertically = kFlipVertically(cc).GetOr(options_.flip_vertically());
+
+    const auto& input_tensors = *kInTensors(cc);
+    int num_values = input_tensors[0].shape().num_elements();
+    const int num_dimensions = num_values / num_landmarks_;
+    CHECK_GT(num_dimensions, 0);
+
+    auto view = input_tensors[0].GetCpuReadView();
+    auto raw_landmarks = view.buffer<float>();
+
+    LandmarkList output_landmarks;
+
+    for (int ld = 0; ld < num_landmarks_; ++ld) {
+        const int offset = ld * num_dimensions;
+        Landmark* landmark = output_landmarks.add_landmark();
+
+        if (flip_horizontally) {
+            landmark->set_x(options_.input_image_width() - raw_landmarks[offset]);
+        } else {
+            landmark->set_x(raw_landmarks[offset]);
+        }
+        if (num_dimensions > 1) {
+            if (flip_vertically) {
+                landmark->set_y(options_.input_image_height() -
+                                raw_landmarks[offset + 1]);
+            } else {
+                landmark->set_y(raw_landmarks[offset + 1]);
+            }
+        }
+        if (num_dimensions > 2) {
+            landmark->set_z(raw_landmarks[offset + 2]);
+        }
+        if (num_dimensions > 3) {
+            landmark->set_visibility(ApplyActivation(options_.visibility_activation(),
+                                                     raw_landmarks[offset + 3]));
+        }
+        if (num_dimensions > 4) {
+            landmark->set_presence(ApplyActivation(options_.presence_activation(),
+                                                   raw_landmarks[offset + 4]));
+        }
+    }
+
+    // Output normalized landmarks if required.
+    if (kOutNormalizedLandmarkList(cc).IsConnected()) {
+        NormalizedLandmarkList output_norm_landmarks;
+        for (int i = 0; i < output_landmarks.landmark_size(); ++i) {
+            const Landmark& landmark = output_landmarks.landmark(i);
+            NormalizedLandmark* norm_landmark = output_norm_landmarks.add_landmark();
+            norm_landmark->set_x(landmark.x() / options_.input_image_width());
+            norm_landmark->set_y(landmark.y() / options_.input_image_height());
+            // Scale Z coordinate as X + allow additional uniform normalization.
+            norm_landmark->set_z(landmark.z() / options_.input_image_width() /
+                                 options_.normalize_z());
+            if (landmark.has_visibility()) {  // Set only if supported in the model.
+                norm_landmark->set_visibility(landmark.visibility());
+            }
+            if (landmark.has_presence()) {  // Set only if supported in the model.
+                norm_landmark->set_presence(landmark.presence());
+            }
+        }
+        kOutNormalizedLandmarkList(cc).Send(std::move(output_norm_landmarks));
+    }
+
+    // Output absolute landmarks.
+    if (kOutLandmarkList(cc).IsConnected()) {
+        kOutLandmarkList(cc).Send(std::move(output_landmarks));
+    }
+
     return absl::OkStatus();
-  }
-  bool flip_horizontally =
-      kFlipHorizontally(cc).GetOr(options_.flip_horizontally());
-  bool flip_vertically = kFlipVertically(cc).GetOr(options_.flip_vertically());
-
-  const auto& input_tensors = *kInTensors(cc);
-  int num_values = input_tensors[0].shape().num_elements();
-  const int num_dimensions = num_values / num_landmarks_;
-  CHECK_GT(num_dimensions, 0);
-
-  auto view = input_tensors[0].GetCpuReadView();
-  auto raw_landmarks = view.buffer<float>();
-
-  LandmarkList output_landmarks;
-
-  for (int ld = 0; ld < num_landmarks_; ++ld) {
-    const int offset = ld * num_dimensions;
-    Landmark* landmark = output_landmarks.add_landmark();
-
-    if (flip_horizontally) {
-      landmark->set_x(options_.input_image_width() - raw_landmarks[offset]);
-    } else {
-      landmark->set_x(raw_landmarks[offset]);
-    }
-    if (num_dimensions > 1) {
-      if (flip_vertically) {
-        landmark->set_y(options_.input_image_height() -
-                        raw_landmarks[offset + 1]);
-      } else {
-        landmark->set_y(raw_landmarks[offset + 1]);
-      }
-    }
-    if (num_dimensions > 2) {
-      landmark->set_z(raw_landmarks[offset + 2]);
-    }
-    if (num_dimensions > 3) {
-      landmark->set_visibility(ApplyActivation(options_.visibility_activation(),
-                                               raw_landmarks[offset + 3]));
-    }
-    if (num_dimensions > 4) {
-      landmark->set_presence(ApplyActivation(options_.presence_activation(),
-                                             raw_landmarks[offset + 4]));
-    }
-  }
-
-  // Output normalized landmarks if required.
-  if (kOutNormalizedLandmarkList(cc).IsConnected()) {
-    NormalizedLandmarkList output_norm_landmarks;
-    for (int i = 0; i < output_landmarks.landmark_size(); ++i) {
-      const Landmark& landmark = output_landmarks.landmark(i);
-      NormalizedLandmark* norm_landmark = output_norm_landmarks.add_landmark();
-      norm_landmark->set_x(landmark.x() / options_.input_image_width());
-      norm_landmark->set_y(landmark.y() / options_.input_image_height());
-      // Scale Z coordinate as X + allow additional uniform normalization.
-      norm_landmark->set_z(landmark.z() / options_.input_image_width() /
-                           options_.normalize_z());
-      if (landmark.has_visibility()) {  // Set only if supported in the model.
-        norm_landmark->set_visibility(landmark.visibility());
-      }
-      if (landmark.has_presence()) {  // Set only if supported in the model.
-        norm_landmark->set_presence(landmark.presence());
-      }
-    }
-    kOutNormalizedLandmarkList(cc).Send(std::move(output_norm_landmarks));
-  }
-
-  // Output absolute landmarks.
-  if (kOutLandmarkList(cc).IsConnected()) {
-    kOutLandmarkList(cc).Send(std::move(output_landmarks));
-  }
-
-  return absl::OkStatus();
 }
 
 absl::Status TensorsToLandmarksCalculator::LoadOptions(CalculatorContext* cc) {
-  // Get calculator options specified in the graph.
-  options_ = cc->Options<::mediapipe::TensorsToLandmarksCalculatorOptions>();
-  RET_CHECK(options_.has_num_landmarks());
-  num_landmarks_ = options_.num_landmarks();
+    // Get calculator options specified in the graph.
+    options_ = cc->Options<::mediapipe::TensorsToLandmarksCalculatorOptions>();
+    RET_CHECK(options_.has_num_landmarks());
+    num_landmarks_ = options_.num_landmarks();
 
-  return absl::OkStatus();
+    return absl::OkStatus();
 }
 }  // namespace api2
 }  // namespace mediapipe

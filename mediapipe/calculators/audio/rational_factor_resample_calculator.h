@@ -15,10 +15,6 @@
 #ifndef MEDIAPIPE_CALCULATORS_AUDIO_RATIONAL_FACTOR_RESAMPLE_CALCULATOR_H_
 #define MEDIAPIPE_CALCULATORS_AUDIO_RATIONAL_FACTOR_RESAMPLE_CALCULATOR_H_
 
-#include <algorithm>
-#include <memory>
-#include <vector>
-
 #include "Eigen/Core"
 #include "absl/strings/str_cat.h"
 #include "audio/dsp/resampler.h"
@@ -29,6 +25,9 @@
 #include "mediapipe/framework/port/integral_types.h"
 #include "mediapipe/framework/port/logging.h"
 #include "mediapipe/util/time_series_util.h"
+#include <algorithm>
+#include <memory>
+#include <vector>
 
 namespace mediapipe {
 // MediaPipe Calculator for resampling a (vector-valued)
@@ -40,68 +39,68 @@ namespace mediapipe {
 // NOTE: This calculator uses QResampler, despite the name, which supersedes
 // RationalFactorResampler.
 class RationalFactorResampleCalculator : public CalculatorBase {
- public:
-  struct TestAccess;
+public:
+    struct TestAccess;
 
-  static absl::Status GetContract(CalculatorContract* cc) {
-    cc->Inputs().Index(0).Set<Matrix>(
-        // Single input stream with TimeSeriesHeader.
-    );
-    cc->Outputs().Index(0).Set<Matrix>(
-        // Resampled stream with TimeSeriesHeader.
-    );
-    return absl::OkStatus();
-  }
-  // Returns FAIL if the input stream header is invalid or if the
-  // resampler cannot be initialized.
-  absl::Status Open(CalculatorContext* cc) override;
-  // Resamples a packet of TimeSeries data.  Returns FAIL if the
-  // resampler state becomes inconsistent.
-  absl::Status Process(CalculatorContext* cc) override;
-  // Flushes any remaining state.  Returns FAIL if the resampler state
-  // becomes inconsistent.
-  absl::Status Close(CalculatorContext* cc) override;
+    static absl::Status GetContract(CalculatorContract* cc) {
+        cc->Inputs().Index(0).Set<Matrix>(
+            // Single input stream with TimeSeriesHeader.
+        );
+        cc->Outputs().Index(0).Set<Matrix>(
+            // Resampled stream with TimeSeriesHeader.
+        );
+        return absl::OkStatus();
+    }
+    // Returns FAIL if the input stream header is invalid or if the
+    // resampler cannot be initialized.
+    absl::Status Open(CalculatorContext* cc) override;
+    // Resamples a packet of TimeSeries data.  Returns FAIL if the
+    // resampler state becomes inconsistent.
+    absl::Status Process(CalculatorContext* cc) override;
+    // Flushes any remaining state.  Returns FAIL if the resampler state
+    // becomes inconsistent.
+    absl::Status Close(CalculatorContext* cc) override;
 
- protected:
-  typedef audio_dsp::Resampler<float> ResamplerType;
+protected:
+    typedef audio_dsp::Resampler<float> ResamplerType;
 
-  // Returns a Resampler<float> implementation specified by the
-  // RationalFactorResampleCalculatorOptions proto. Returns null if the options
-  // specify an invalid resampler.
-  static std::unique_ptr<ResamplerType> ResamplerFromOptions(
-      const double source_sample_rate, const double target_sample_rate,
-      const RationalFactorResampleCalculatorOptions& options);
+    // Returns a Resampler<float> implementation specified by the
+    // RationalFactorResampleCalculatorOptions proto. Returns null if the options
+    // specify an invalid resampler.
+    static std::unique_ptr<ResamplerType> ResamplerFromOptions(
+        const double source_sample_rate, const double target_sample_rate,
+        const RationalFactorResampleCalculatorOptions& options);
 
-  // Does Timestamp bookkeeping and resampling common to Process() and
-  // Close().  Returns FAIL if the resampler state becomes
-  // inconsistent.
-  absl::Status ProcessInternal(const Matrix& input_frame, bool should_flush,
-                               CalculatorContext* cc);
+    // Does Timestamp bookkeeping and resampling common to Process() and
+    // Close().  Returns FAIL if the resampler state becomes
+    // inconsistent.
+    absl::Status ProcessInternal(const Matrix& input_frame, bool should_flush,
+                                 CalculatorContext* cc);
 
-  // Uses the internal resampler_ objects to actually resample each
-  // row of the input TimeSeries.  Returns false if the resampler
-  // state becomes inconsistent.
-  bool Resample(const Matrix& input_frame, Matrix* output_frame,
-                bool should_flush);
+    // Uses the internal resampler_ objects to actually resample each
+    // row of the input TimeSeries.  Returns false if the resampler
+    // state becomes inconsistent.
+    bool Resample(const Matrix& input_frame, Matrix* output_frame,
+                  bool should_flush);
 
-  double source_sample_rate_;
-  double target_sample_rate_;
-  int64 cumulative_input_samples_;
-  int64 cumulative_output_samples_;
-  Timestamp initial_timestamp_;
-  bool check_inconsistent_timestamps_;
-  int num_channels_;
-  std::vector<std::unique_ptr<ResamplerType>> resampler_;
+    double source_sample_rate_;
+    double target_sample_rate_;
+    int64 cumulative_input_samples_;
+    int64 cumulative_output_samples_;
+    Timestamp initial_timestamp_;
+    bool check_inconsistent_timestamps_;
+    int num_channels_;
+    std::vector<std::unique_ptr<ResamplerType>> resampler_;
 };
 
 // Test-only access to RationalFactorResampleCalculator methods.
 struct RationalFactorResampleCalculator::TestAccess {
-  static std::unique_ptr<ResamplerType> ResamplerFromOptions(
-      const double source_sample_rate, const double target_sample_rate,
-      const RationalFactorResampleCalculatorOptions& options) {
-    return RationalFactorResampleCalculator::ResamplerFromOptions(
-        source_sample_rate, target_sample_rate, options);
-  }
+    static std::unique_ptr<ResamplerType> ResamplerFromOptions(
+        const double source_sample_rate, const double target_sample_rate,
+        const RationalFactorResampleCalculatorOptions& options) {
+        return RationalFactorResampleCalculator::ResamplerFromOptions(
+            source_sample_rate, target_sample_rate, options);
+    }
 };
 
 }  // namespace mediapipe

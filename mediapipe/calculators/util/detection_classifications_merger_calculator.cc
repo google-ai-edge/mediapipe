@@ -74,75 +74,75 @@ namespace {}  // namespace
 // Output:
 // OUTPUT_DETECTION: modified `Detection` proto.
 class DetectionClassificationsMergerCalculator : public Node {
- public:
-  static constexpr Input<Detection> kInputDetection{"INPUT_DETECTION"};
-  static constexpr Input<ClassificationList> kClassificationList{
-      "CLASSIFICATION_LIST"};
-  static constexpr Output<Detection> kOutputDetection{"OUTPUT_DETECTION"};
+public:
+    static constexpr Input<Detection> kInputDetection{"INPUT_DETECTION"};
+    static constexpr Input<ClassificationList> kClassificationList{
+        "CLASSIFICATION_LIST"};
+    static constexpr Output<Detection> kOutputDetection{"OUTPUT_DETECTION"};
 
-  MEDIAPIPE_NODE_CONTRACT(kInputDetection, kClassificationList,
-                          kOutputDetection);
+    MEDIAPIPE_NODE_CONTRACT(kInputDetection, kClassificationList,
+                            kOutputDetection);
 
-  absl::Status Process(CalculatorContext* cc) override;
+    absl::Status Process(CalculatorContext* cc) override;
 };
 MEDIAPIPE_REGISTER_NODE(DetectionClassificationsMergerCalculator);
 
 absl::Status DetectionClassificationsMergerCalculator::Process(
     CalculatorContext* cc) {
-  if (kInputDetection(cc).IsEmpty() && kClassificationList(cc).IsEmpty()) {
+    if (kInputDetection(cc).IsEmpty() && kClassificationList(cc).IsEmpty()) {
+        return absl::OkStatus();
+    }
+    RET_CHECK(!kInputDetection(cc).IsEmpty());
+    RET_CHECK(!kClassificationList(cc).IsEmpty());
+
+    Detection detection = *kInputDetection(cc);
+    const ClassificationList& classification_list = *kClassificationList(cc);
+
+    // Update input detection only if classification did return results.
+    if (classification_list.classification_size() != 0) {
+        detection.clear_label_id();
+        detection.clear_score();
+        detection.clear_label();
+        detection.clear_display_name();
+        for (const auto& classification : classification_list.classification()) {
+            if (!classification.has_index()) {
+                return absl::InvalidArgumentError(
+                    "Missing required 'index' field in Classification proto.");
+            }
+            detection.add_label_id(classification.index());
+            if (!classification.has_score()) {
+                return absl::InvalidArgumentError(
+                    "Missing required 'score' field in Classification proto.");
+            }
+            detection.add_score(classification.score());
+            if (classification.has_label()) {
+                detection.add_label(classification.label());
+            }
+            if (classification.has_display_name()) {
+                detection.add_display_name(classification.display_name());
+            }
+        }
+        // Post-conversion sanity checks.
+        if (detection.label_size() != 0 &&
+            detection.label_size() != detection.label_id_size()) {
+            return absl::InvalidArgumentError(absl::Substitute(
+                "Each input Classification is expected to either always or never "
+                "provide a 'label' field. Found $0 'label' fields for $1 "
+                "'Classification' objects.",
+                /*$0=*/detection.label_size(), /*$1=*/detection.label_id_size()));
+        }
+        if (detection.display_name_size() != 0 &&
+            detection.display_name_size() != detection.label_id_size()) {
+            return absl::InvalidArgumentError(absl::Substitute(
+                "Each input Classification is expected to either always or never "
+                "provide a 'display_name' field. Found $0 'display_name' fields for "
+                "$1 'Classification' objects.",
+                /*$0=*/detection.display_name_size(),
+                /*$1=*/detection.label_id_size()));
+        }
+    }
+    kOutputDetection(cc).Send(detection);
     return absl::OkStatus();
-  }
-  RET_CHECK(!kInputDetection(cc).IsEmpty());
-  RET_CHECK(!kClassificationList(cc).IsEmpty());
-
-  Detection detection = *kInputDetection(cc);
-  const ClassificationList& classification_list = *kClassificationList(cc);
-
-  // Update input detection only if classification did return results.
-  if (classification_list.classification_size() != 0) {
-    detection.clear_label_id();
-    detection.clear_score();
-    detection.clear_label();
-    detection.clear_display_name();
-    for (const auto& classification : classification_list.classification()) {
-      if (!classification.has_index()) {
-        return absl::InvalidArgumentError(
-            "Missing required 'index' field in Classification proto.");
-      }
-      detection.add_label_id(classification.index());
-      if (!classification.has_score()) {
-        return absl::InvalidArgumentError(
-            "Missing required 'score' field in Classification proto.");
-      }
-      detection.add_score(classification.score());
-      if (classification.has_label()) {
-        detection.add_label(classification.label());
-      }
-      if (classification.has_display_name()) {
-        detection.add_display_name(classification.display_name());
-      }
-    }
-    // Post-conversion sanity checks.
-    if (detection.label_size() != 0 &&
-        detection.label_size() != detection.label_id_size()) {
-      return absl::InvalidArgumentError(absl::Substitute(
-          "Each input Classification is expected to either always or never "
-          "provide a 'label' field. Found $0 'label' fields for $1 "
-          "'Classification' objects.",
-          /*$0=*/detection.label_size(), /*$1=*/detection.label_id_size()));
-    }
-    if (detection.display_name_size() != 0 &&
-        detection.display_name_size() != detection.label_id_size()) {
-      return absl::InvalidArgumentError(absl::Substitute(
-          "Each input Classification is expected to either always or never "
-          "provide a 'display_name' field. Found $0 'display_name' fields for "
-          "$1 'Classification' objects.",
-          /*$0=*/detection.display_name_size(),
-          /*$1=*/detection.label_id_size()));
-    }
-  }
-  kOutputDetection(cc).Send(detection);
-  return absl::OkStatus();
 }
 
 }  // namespace api2

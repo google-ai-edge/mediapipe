@@ -73,41 +73,41 @@ namespace mediapipe {
 //
 template <typename T>
 class NoDestructor {
- public:
-  typedef T element_type;
+public:
+    typedef T element_type;
 
-  // Forwards arguments to the T's constructor: calls T(args...).
-  template <typename... Ts,
-            // Disable this overload when it might collide with copy/move.
-            typename std::enable_if<
-                !std::is_same<void(typename std::decay<Ts>::type...),
-                              void(NoDestructor)>::value,
-                int>::type = 0>
-  explicit NoDestructor(Ts&&... args) {
-    new (&space_) T(std::forward<Ts>(args)...);
-  }
+    // Forwards arguments to the T's constructor: calls T(args...).
+    template <typename... Ts,
+              // Disable this overload when it might collide with copy/move.
+              typename std::enable_if<
+                  !std::is_same<void(typename std::decay<Ts>::type...),
+                                void(NoDestructor)>::value,
+                  int>::type = 0>
+    explicit NoDestructor(Ts&&... args) {
+        new (&space_) T(std::forward<Ts>(args)...);
+    }
 
-  // Forwards copy and move construction for T. Enables usage like this:
-  //   static NoDestructor<std::array<std::string, 3>> x{{{"1", "2", "3"}}};
-  //   static NoDestructor<std::vector<int>> x{{1, 2, 3}};
-  explicit NoDestructor(const T& x) { new (&space_) T(x); }
-  explicit NoDestructor(T&& x) { new (&space_) T(std::move(x)); }
+    // Forwards copy and move construction for T. Enables usage like this:
+    //   static NoDestructor<std::array<std::string, 3>> x{{{"1", "2", "3"}}};
+    //   static NoDestructor<std::vector<int>> x{{1, 2, 3}};
+    explicit NoDestructor(const T& x) { new (&space_) T(x); }
+    explicit NoDestructor(T&& x) { new (&space_) T(std::move(x)); }
 
-  // No copying.
-  NoDestructor(const NoDestructor&) = delete;
-  NoDestructor& operator=(const NoDestructor&) = delete;
+    // No copying.
+    NoDestructor(const NoDestructor&) = delete;
+    NoDestructor& operator=(const NoDestructor&) = delete;
 
-  // Pretend to be a smart pointer to T with deep constness.
-  // Never returns a null pointer.
-  T& operator*() { return *get(); }
-  T* operator->() { return get(); }
-  T* get() { return reinterpret_cast<T*>(&space_); }
-  const T& operator*() const { return *get(); }
-  const T* operator->() const { return get(); }
-  const T* get() const { return reinterpret_cast<const T*>(&space_); }
+    // Pretend to be a smart pointer to T with deep constness.
+    // Never returns a null pointer.
+    T& operator*() { return *get(); }
+    T* operator->() { return get(); }
+    T* get() { return reinterpret_cast<T*>(&space_); }
+    const T& operator*() const { return *get(); }
+    const T* operator->() const { return get(); }
+    const T* get() const { return reinterpret_cast<const T*>(&space_); }
 
- private:
-  typename std::aligned_storage<sizeof(T), alignof(T)>::type space_;
+private:
+    typename std::aligned_storage<sizeof(T), alignof(T)>::type space_;
 };
 
 }  // namespace mediapipe

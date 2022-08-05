@@ -25,22 +25,26 @@ FLAGS = flags.FLAGS
 
 
 def main(argv):
-  if len(argv) > 1:
-    raise app.UsageError('Too many command-line arguments.')
-  demo_data_path = '/tmp/demo_data/'
-  with tf.Graph().as_default():
-    d = DemoDataset(demo_data_path)
-    dataset = d.as_dataset('test')
-    # implement additional processing and batching here
-    dataset_output = dataset.make_one_shot_iterator().get_next()
-    images = dataset_output['images']
-    labels = dataset_output['labels']
+    if len(argv) > 1:
+        raise app.UsageError("Too many command-line arguments.")
+    demo_data_path = "/tmp/demo_data/"
+    with tf.Graph().as_default():
+        d = DemoDataset(demo_data_path)
+        dataset = d.as_dataset("test")
+        # implement additional processing and batching here
+        dataset_output = dataset.make_one_shot_iterator().get_next()
+        images = dataset_output["images"]
+        labels = dataset_output["labels"]
 
-    with tf.Session() as sess:
-      images_, labels_ = sess.run([images, labels])
-    print('The shape of images_ is %s' % str(images_.shape))  # pylint: disable=superfluous-parens
-    print('The shape of labels_ is %s' % str(labels_.shape))  # pylint: disable=superfluous-parens
+        with tf.Session() as sess:
+            images_, labels_ = sess.run([images, labels])
+        print(
+            "The shape of images_ is %s" % str(images_.shape)
+        )  # pylint: disable=superfluous-parens
+        print(
+            "The shape of labels_ is %s" % str(labels_.shape)
+        )  # pylint: disable=superfluous-parens
 
 
-if __name__ == '__main__':
-  app.run(main)
+if __name__ == "__main__":
+    app.run(main)

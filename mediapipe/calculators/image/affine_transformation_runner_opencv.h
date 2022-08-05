@@ -15,11 +15,10 @@
 #ifndef MEDIAPIPE_CALCULATORS_IMAGE_AFFINE_TRANSFORMATION_RUNNER_OPENCV_H_
 #define MEDIAPIPE_CALCULATORS_IMAGE_AFFINE_TRANSFORMATION_RUNNER_OPENCV_H_
 
-#include <memory>
-
 #include "absl/status/statusor.h"
 #include "mediapipe/calculators/image/affine_transformation.h"
 #include "mediapipe/framework/formats/image_frame.h"
+#include <memory>
 
 namespace mediapipe {
 

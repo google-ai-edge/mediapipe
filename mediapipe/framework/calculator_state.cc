@@ -15,11 +15,9 @@
 // Definitions for CalculatorNode.
 
 #include "mediapipe/framework/calculator_state.h"
-
-#include <string>
-
 #include "absl/strings/str_cat.h"
 #include "mediapipe/framework/port/logging.h"
+#include <string>
 
 namespace mediapipe {
 
@@ -34,36 +32,36 @@ CalculatorState::CalculatorState(
       node_config_(node_config),
       profiling_context_(profiling_context),
       counter_factory_(nullptr) {
-  options_.Initialize(node_config);
-  ResetBetweenRuns();
+    options_.Initialize(node_config);
+    ResetBetweenRuns();
 }
 
 CalculatorState::~CalculatorState() {}
 
 void CalculatorState::ResetBetweenRuns() {
-  input_side_packets_ = nullptr;
-  counter_factory_ = nullptr;
+    input_side_packets_ = nullptr;
+    counter_factory_ = nullptr;
 }
 
 void CalculatorState::SetInputSidePackets(const PacketSet* input_side_packets) {
-  CHECK(input_side_packets);
-  input_side_packets_ = input_side_packets;
+    CHECK(input_side_packets);
+    input_side_packets_ = input_side_packets;
 }
 
 void CalculatorState::SetOutputSidePackets(
     OutputSidePacketSet* output_side_packets) {
-  CHECK(output_side_packets);
-  output_side_packets_ = output_side_packets;
+    CHECK(output_side_packets);
+    output_side_packets_ = output_side_packets;
 }
 
 Counter* CalculatorState::GetCounter(const std::string& name) {
-  CHECK(counter_factory_);
-  return counter_factory_->GetCounter(absl::StrCat(NodeName(), "-", name));
+    CHECK(counter_factory_);
+    return counter_factory_->GetCounter(absl::StrCat(NodeName(), "-", name));
 }
 
 CounterFactory* CalculatorState::GetCounterFactory() {
-  CHECK(counter_factory_);
-  return counter_factory_;
+    CHECK(counter_factory_);
+    return counter_factory_;
 }
 
 }  // namespace mediapipe

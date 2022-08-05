@@ -19,22 +19,22 @@ package mediapipe;
 import "mediapipe/framework/calculator.proto";
 
 message TfLiteTensorsToSegmentationCalculatorOptions {
-  extend mediapipe.CalculatorOptions {
-    optional TfLiteTensorsToSegmentationCalculatorOptions ext = 252526026;
-  }
+    extend mediapipe.CalculatorOptions {
+        optional TfLiteTensorsToSegmentationCalculatorOptions ext = 252526026;
+    }
 
-  // Dimensions of input segmentation tensor to process.
-  optional int32 tensor_width = 1;     // required
-  optional int32 tensor_height = 2;    // required
-  optional int32 tensor_channels = 3;  // required
+    // Dimensions of input segmentation tensor to process.
+    optional int32 tensor_width = 1;     // required
+    optional int32 tensor_height = 2;    // required
+    optional int32 tensor_channels = 3;  // required
 
-  // How much to use previous mask when computing current one; range [0-1].
-  // This is a tradeoff between responsiveness (0.0) and accuracy (1.0).
-  optional float combine_with_previous_ratio = 4 [default = 1.0];
+    // How much to use previous mask when computing current one; range [0-1].
+    // This is a tradeoff between responsiveness (0.0) and accuracy (1.0).
+    optional float combine_with_previous_ratio = 4 [default = 1.0];
 
-  // Model specific: Channel to use for processing tensor.
-  optional int32 output_layer_index = 5 [default = 1];
+    // Model specific: Channel to use for processing tensor.
+    optional int32 output_layer_index = 5 [default = 1];
 
-  // Flip result image mask along y-axis.
-  optional bool flip_vertically = 6;
+    // Flip result image mask along y-axis.
+    optional bool flip_vertically = 6;
 }

@@ -20,18 +20,18 @@ import "mediapipe/framework/calculator.proto";
 import "tensorflow/core/framework/types.proto";
 
 message ImageFrameToTensorCalculatorOptions {
-  extend CalculatorOptions {
-    optional ImageFrameToTensorCalculatorOptions ext = 120603667;
-  }
+    extend CalculatorOptions {
+        optional ImageFrameToTensorCalculatorOptions ext = 120603667;
+    }
 
-  // If set, the output tensor will be of data type specified by this field.
-  // Otherwise, the output tensor data type is equal to that of the input image
-  // frame.
-  optional tensorflow.DataType data_type = 1;
+    // If set, the output tensor will be of data type specified by this field.
+    // Otherwise, the output tensor data type is equal to that of the input image
+    // frame.
+    optional tensorflow.DataType data_type = 1;
 
-  // If set, the output tensor T is equal to (F - mean * J) / stddev, where F
-  // and J are the input image frame and the all-ones matrix of the same size,
-  // respectively.  Otherwise, T is equal to F.
-  repeated float mean = 2;
-  repeated float stddev = 3;
+    // If set, the output tensor T is equal to (F - mean * J) / stddev, where F
+    // and J are the input image frame and the all-ones matrix of the same size,
+    // respectively.  Otherwise, T is equal to F.
+    repeated float mean = 2;
+    repeated float stddev = 3;
 }

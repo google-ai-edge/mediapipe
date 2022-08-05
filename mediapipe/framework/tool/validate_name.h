@@ -18,12 +18,11 @@
 #ifndef MEDIAPIPE_FRAMEWORK_TOOL_VALIDATE_NAME_H_
 #define MEDIAPIPE_FRAMEWORK_TOOL_VALIDATE_NAME_H_
 
-#include <string>
-#include <vector>
-
 #include "absl/base/macros.h"
 #include "mediapipe/framework/port/proto_ns.h"
 #include "mediapipe/framework/port/status.h"
+#include <string>
+#include <vector>
 
 namespace mediapipe {
 namespace internal {
@@ -36,12 +35,12 @@ struct ABSL_DEPRECATED(
     "Prefer using mediapipe::tool::TagMap instead, since this structure does "
     "not "
     "consider the TAG:INDEX:name notation.") TagAndNameInfo {
-  // The tag names.  If this is empty then the collection will use
-  // indexes.
-  std::vector<std::string> tags;
-  // Names of the streams or side packets.  If tags are used then
-  // tags.size() and names.size() must match.
-  std::vector<std::string> names;
+    // The tag names.  If this is empty then the collection will use
+    // indexes.
+    std::vector<std::string> tags;
+    // Names of the streams or side packets.  If tags are used then
+    // tags.size() and names.size() must match.
+    std::vector<std::string> names;
 };
 
 // Create a TagAndNameInfo from a list of strings in the form TAG:name.

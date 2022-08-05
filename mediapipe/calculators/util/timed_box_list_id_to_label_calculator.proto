@@ -19,10 +19,10 @@ package mediapipe;
 import "mediapipe/framework/calculator.proto";
 
 message TimedBoxListIdToLabelCalculatorOptions {
-  extend mediapipe.CalculatorOptions {
-    optional TimedBoxListIdToLabelCalculatorOptions ext = 297701606;
-  }
+    extend mediapipe.CalculatorOptions {
+        optional TimedBoxListIdToLabelCalculatorOptions ext = 297701606;
+    }
 
-  // Path to a label map file for getting the actual name of detected classes.
-  optional string label_map_path = 1;
+    // Path to a label map file for getting the actual name of detected classes.
+    optional string label_map_path = 1;
 }

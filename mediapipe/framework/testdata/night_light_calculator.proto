@@ -24,44 +24,44 @@ import "mediapipe/framework/calculator.proto";
 
 // A proto2 calculator options for testing.
 message NightLightCalculatorOptions {
-  extend CalculatorOptions {
-    optional NightLightCalculatorOptions ext = 190865679;
-  }
+    extend CalculatorOptions {
+        optional NightLightCalculatorOptions ext = 190865679;
+    }
 
-  // The output frame rate measured in frames per second.
-  optional double frame_rate = 1;
+    // The output frame rate measured in frames per second.
+    optional double frame_rate = 1;
 
-  enum OutputHeader {
-    NONE = 0;
-    PASS_HEADER = 1;
-    UPDATE_VIDEO_HEADER = 2;
-  }
+    enum OutputHeader {
+        NONE = 0;
+        PASS_HEADER = 1;
+        UPDATE_VIDEO_HEADER = 2;
+    }
 
-  // Whether and what kind of header to place on the output stream.
-  optional OutputHeader output_header = 2;
+    // Whether and what kind of header to place on the output stream.
+    optional OutputHeader output_header = 2;
 
-  // Adds jitter to resampling if set, so that Google's sampling is not
-  optional double jitter = 4;
+    // Adds jitter to resampling if set, so that Google's sampling is not
+    optional double jitter = 4;
 
-  // If specified, output timestamps are aligned with base_timestamp.
-  repeated int64 base_timestamp = 5;
+    // If specified, output timestamps are aligned with base_timestamp.
+    repeated int64 base_timestamp = 5;
 
-  // If set, the output timestamps nearest to start_time and end_time
-  optional bool round_limits = 8;
+    // If set, the output timestamps nearest to start_time and end_time
+    optional bool round_limits = 8;
 
-  // Format string used by string::Substitute to construct the output.
-  optional string format_string = 9;
+    // Format string used by string::Substitute to construct the output.
+    optional string format_string = 9;
 
-  message LightBundle {
-    optional string room_id = 1;
-    repeated NightLightCalculatorOptions room_lights = 2;
-  }
+    message LightBundle {
+        optional string room_id = 1;
+        repeated NightLightCalculatorOptions room_lights = 2;
+    }
 
-  repeated LightBundle bundle = 10;
+    repeated LightBundle bundle = 10;
 
-  // The number of night-lights.
-  repeated int32 num_lights = 11;
+    // The number of night-lights.
+    repeated int32 num_lights = 11;
 
-  // Options for nested night-lights.
-  optional NightLightCalculatorOptions sub_options = 12;
+    // Options for nested night-lights.
+    optional NightLightCalculatorOptions sub_options = 12;
 }

@@ -16,25 +16,25 @@
 #define MEDIAPIPE_EXAMPLES_DESKTOP_AUTOFLIP_QUALITY_MATH_UTILS_H_
 
 class MathUtil {
- public:
-  // Clamps value to the range [low, high].  Requires low <= high. Returns false
-  // if this check fails, otherwise returns true. Caller should first check the
-  // returned boolean.
-  template <typename T>  // T models LessThanComparable.
-  static bool Clamp(const T& low, const T& high, const T& value, T* result) {
-    // Prevents errors in ordering the arguments.
-    if (low > high) {
-      return false;
+public:
+    // Clamps value to the range [low, high].  Requires low <= high. Returns false
+    // if this check fails, otherwise returns true. Caller should first check the
+    // returned boolean.
+    template <typename T>  // T models LessThanComparable.
+    static bool Clamp(const T& low, const T& high, const T& value, T* result) {
+        // Prevents errors in ordering the arguments.
+        if (low > high) {
+            return false;
+        }
+        if (high < value) {
+            *result = high;
+        } else if (value < low) {
+            *result = low;
+        } else {
+            *result = value;
+        }
+        return true;
     }
-    if (high < value) {
-      *result = high;
-    } else if (value < low) {
-      *result = low;
-    } else {
-      *result = value;
-    }
-    return true;
-  }
 };
 
 #endif  // MEDIAPIPE_EXAMPLES_DESKTOP_AUTOFLIP_QUALITY_MATH_UTILS_H_

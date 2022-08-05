@@ -12,12 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <utility>
-#include <vector>
-
 #include "mediapipe/framework/api2/node.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/port/status.h"
+#include <utility>
+#include <vector>
 
 namespace mediapipe {
 namespace api2 {
@@ -33,23 +32,23 @@ namespace api2 {
 //   output_stream: "output_pair_a_b"
 // }
 class MakePairCalculator : public Node {
- public:
-  static constexpr Input<AnyType>::Multiple kIn{""};
-  // Note that currently api2::Packet is a different type from mediapipe::Packet
-  static constexpr Output<std::pair<mediapipe::Packet, mediapipe::Packet>>
-      kPair{""};
+public:
+    static constexpr Input<AnyType>::Multiple kIn{""};
+    // Note that currently api2::Packet is a different type from mediapipe::Packet
+    static constexpr Output<std::pair<mediapipe::Packet, mediapipe::Packet>>
+        kPair{""};
 
-  MEDIAPIPE_NODE_CONTRACT(kIn, kPair);
+    MEDIAPIPE_NODE_CONTRACT(kIn, kPair);
 
-  static absl::Status UpdateContract(CalculatorContract* cc) {
-    RET_CHECK_EQ(kIn(cc).Count(), 2);
-    return absl::OkStatus();
-  }
+    static absl::Status UpdateContract(CalculatorContract* cc) {
+        RET_CHECK_EQ(kIn(cc).Count(), 2);
+        return absl::OkStatus();
+    }
 
-  absl::Status Process(CalculatorContext* cc) override {
-    kPair(cc).Send({kIn(cc)[0].packet(), kIn(cc)[1].packet()});
-    return absl::OkStatus();
-  }
+    absl::Status Process(CalculatorContext* cc) override {
+        kPair(cc).Send({kIn(cc)[0].packet(), kIn(cc)[1].packet()});
+        return absl::OkStatus();
+    }
 };
 
 MEDIAPIPE_REGISTER_NODE(MakePairCalculator);

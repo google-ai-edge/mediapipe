@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+load("//mediapipe/framework/port:build_config.bzl", "mediapipe_cc_proto_library")
 
 licenses(["notice"])
 
@@ -19,8 +20,6 @@ package(
     default_visibility = ["//visibility:private"],
     features = ["-layering_check"],
 )
-
-load("//mediapipe/framework/port:build_config.bzl", "mediapipe_cc_proto_library")
 
 proto_library(
     name = "default_input_stream_handler_proto",

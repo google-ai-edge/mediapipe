@@ -24,15 +24,15 @@ option java_outer_classname = "RasterizationProto";
 // For each scanline with y-coordinate y, we save (possibly multiple) intervals
 // of occupied pixels represented as a pair [left_x, right_x].
 message Rasterization {
-  message Interval {
-    required int32 y = 1;
-    required int32 left_x = 2;
-    required int32 right_x = 3;
-  }
+    message Interval {
+        required int32 y = 1;
+        required int32 left_x = 2;
+        required int32 right_x = 3;
+    }
 
-  // Intervals are always sorted by y-coordinate.
-  // Therefore, a region occupies a set of scanlines ranging
-  // from interval(0).y() to interval(interval_size() - 1)).y().
-  // Note: In video, at some scanlines no interval might be present.
-  repeated Interval interval = 1;
+    // Intervals are always sorted by y-coordinate.
+    // Therefore, a region occupies a set of scanlines ranging
+    // from interval(0).y() to interval(interval_size() - 1)).y().
+    // Note: In video, at some scanlines no interval might be present.
+    repeated Interval interval = 1;
 }

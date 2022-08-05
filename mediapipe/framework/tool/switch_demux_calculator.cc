@@ -12,11 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <algorithm>
-#include <memory>
-#include <set>
-#include <string>
-
 #include "absl/strings/str_cat.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/collection_item_id.h"
@@ -27,6 +22,10 @@
 #include "mediapipe/framework/port/status_macros.h"
 #include "mediapipe/framework/tool/container_util.h"
 #include "mediapipe/framework/tool/switch_container.pb.h"
+#include <algorithm>
+#include <memory>
+#include <set>
+#include <string>
 
 namespace mediapipe {
 
@@ -54,115 +53,115 @@ namespace mediapipe {
 // contained subgraph or calculator nodes.
 //
 class SwitchDemuxCalculator : public CalculatorBase {
-  static constexpr char kSelectTag[] = "SELECT";
-  static constexpr char kEnableTag[] = "ENABLE";
+    static constexpr char kSelectTag[] = "SELECT";
+    static constexpr char kEnableTag[] = "ENABLE";
 
- public:
-  static absl::Status GetContract(CalculatorContract* cc);
+public:
+    static absl::Status GetContract(CalculatorContract* cc);
 
-  absl::Status Open(CalculatorContext* cc) override;
-  absl::Status Process(CalculatorContext* cc) override;
+    absl::Status Open(CalculatorContext* cc) override;
+    absl::Status Process(CalculatorContext* cc) override;
 
- private:
-  int channel_index_;
-  std::set<std::string> channel_tags_;
+private:
+    int channel_index_;
+    std::set<std::string> channel_tags_;
 };
 REGISTER_CALCULATOR(SwitchDemuxCalculator);
 
 absl::Status SwitchDemuxCalculator::GetContract(CalculatorContract* cc) {
-  // Allow any one of kSelectTag, kEnableTag.
-  cc->Inputs().Tag(kSelectTag).Set<int>().Optional();
-  cc->Inputs().Tag(kEnableTag).Set<bool>().Optional();
-  // Allow any one of kSelectTag, kEnableTag.
-  cc->InputSidePackets().Tag(kSelectTag).Set<int>().Optional();
-  cc->InputSidePackets().Tag(kEnableTag).Set<bool>().Optional();
+    // Allow any one of kSelectTag, kEnableTag.
+    cc->Inputs().Tag(kSelectTag).Set<int>().Optional();
+    cc->Inputs().Tag(kEnableTag).Set<bool>().Optional();
+    // Allow any one of kSelectTag, kEnableTag.
+    cc->InputSidePackets().Tag(kSelectTag).Set<int>().Optional();
+    cc->InputSidePackets().Tag(kEnableTag).Set<bool>().Optional();
 
-  // Set the types for all output channels to corresponding input types.
-  std::set<std::string> channel_tags = ChannelTags(cc->Outputs().TagMap());
-  int channel_count = ChannelCount(cc->Outputs().TagMap());
-  for (const std::string& tag : channel_tags) {
-    for (int index = 0; index < cc->Inputs().NumEntries(tag); ++index) {
-      auto input_id = cc->Inputs().GetId(tag, index);
-      if (input_id.IsValid()) {
-        cc->Inputs().Get(tag, index).SetAny();
-        for (int channel = 0; channel < channel_count; ++channel) {
-          auto output_id =
-              cc->Outputs().GetId(tool::ChannelTag(tag, channel), index);
-          if (output_id.IsValid()) {
-            cc->Outputs().Get(output_id).SetSameAs(&cc->Inputs().Get(input_id));
-          }
+    // Set the types for all output channels to corresponding input types.
+    std::set<std::string> channel_tags = ChannelTags(cc->Outputs().TagMap());
+    int channel_count = ChannelCount(cc->Outputs().TagMap());
+    for (const std::string& tag : channel_tags) {
+        for (int index = 0; index < cc->Inputs().NumEntries(tag); ++index) {
+            auto input_id = cc->Inputs().GetId(tag, index);
+            if (input_id.IsValid()) {
+                cc->Inputs().Get(tag, index).SetAny();
+                for (int channel = 0; channel < channel_count; ++channel) {
+                    auto output_id =
+                        cc->Outputs().GetId(tool::ChannelTag(tag, channel), index);
+                    if (output_id.IsValid()) {
+                        cc->Outputs().Get(output_id).SetSameAs(&cc->Inputs().Get(input_id));
+                    }
+                }
+            }
         }
-      }
     }
-  }
-  channel_tags = ChannelTags(cc->OutputSidePackets().TagMap());
-  channel_count = ChannelCount(cc->OutputSidePackets().TagMap());
-  for (const std::string& tag : channel_tags) {
-    int num_entries = cc->InputSidePackets().NumEntries(tag);
-    for (int index = 0; index < num_entries; ++index) {
-      auto input_id = cc->InputSidePackets().GetId(tag, index);
-      if (input_id.IsValid()) {
-        cc->InputSidePackets().Get(tag, index).SetAny();
-        for (int channel = 0; channel < channel_count; ++channel) {
-          auto output_id = cc->OutputSidePackets().GetId(
-              tool::ChannelTag(tag, channel), index);
-          if (output_id.IsValid()) {
-            cc->OutputSidePackets().Get(output_id).SetSameAs(
-                &cc->InputSidePackets().Get(input_id));
-          }
+    channel_tags = ChannelTags(cc->OutputSidePackets().TagMap());
+    channel_count = ChannelCount(cc->OutputSidePackets().TagMap());
+    for (const std::string& tag : channel_tags) {
+        int num_entries = cc->InputSidePackets().NumEntries(tag);
+        for (int index = 0; index < num_entries; ++index) {
+            auto input_id = cc->InputSidePackets().GetId(tag, index);
+            if (input_id.IsValid()) {
+                cc->InputSidePackets().Get(tag, index).SetAny();
+                for (int channel = 0; channel < channel_count; ++channel) {
+                    auto output_id = cc->OutputSidePackets().GetId(
+                        tool::ChannelTag(tag, channel), index);
+                    if (output_id.IsValid()) {
+                        cc->OutputSidePackets().Get(output_id).SetSameAs(
+                            &cc->InputSidePackets().Get(input_id));
+                    }
+                }
+            }
         }
-      }
     }
-  }
-  auto& options = cc->Options<mediapipe::SwitchContainerOptions>();
-  if (!options.synchronize_io()) {
-    cc->SetInputStreamHandler("ImmediateInputStreamHandler");
-  }
-  cc->SetProcessTimestampBounds(true);
-  return absl::OkStatus();
+    auto& options = cc->Options<mediapipe::SwitchContainerOptions>();
+    if (!options.synchronize_io()) {
+        cc->SetInputStreamHandler("ImmediateInputStreamHandler");
+    }
+    cc->SetProcessTimestampBounds(true);
+    return absl::OkStatus();
 }
 
 absl::Status SwitchDemuxCalculator::Open(CalculatorContext* cc) {
-  channel_index_ = tool::GetChannelIndex(*cc, channel_index_);
-  channel_tags_ = ChannelTags(cc->Outputs().TagMap());
+    channel_index_ = tool::GetChannelIndex(*cc, channel_index_);
+    channel_tags_ = ChannelTags(cc->Outputs().TagMap());
 
-  // Relay side packets to all channels.
-  // Note: This is necessary because Calculator::Open only proceeds when every
-  // anticipated side-packet arrives.
-  int channel_count = tool::ChannelCount(cc->OutputSidePackets().TagMap());
-  for (const std::string& tag : ChannelTags(cc->OutputSidePackets().TagMap())) {
-    int num_entries = cc->InputSidePackets().NumEntries(tag);
-    for (int index = 0; index < num_entries; ++index) {
-      Packet input = cc->InputSidePackets().Get(tag, index);
-      for (int channel = 0; channel < channel_count; ++channel) {
-        std::string output_tag = tool::ChannelTag(tag, channel);
-        auto output_id = cc->OutputSidePackets().GetId(output_tag, index);
-        if (output_id.IsValid()) {
-          cc->OutputSidePackets().Get(output_tag, index).Set(input);
+    // Relay side packets to all channels.
+    // Note: This is necessary because Calculator::Open only proceeds when every
+    // anticipated side-packet arrives.
+    int channel_count = tool::ChannelCount(cc->OutputSidePackets().TagMap());
+    for (const std::string& tag : ChannelTags(cc->OutputSidePackets().TagMap())) {
+        int num_entries = cc->InputSidePackets().NumEntries(tag);
+        for (int index = 0; index < num_entries; ++index) {
+            Packet input = cc->InputSidePackets().Get(tag, index);
+            for (int channel = 0; channel < channel_count; ++channel) {
+                std::string output_tag = tool::ChannelTag(tag, channel);
+                auto output_id = cc->OutputSidePackets().GetId(output_tag, index);
+                if (output_id.IsValid()) {
+                    cc->OutputSidePackets().Get(output_tag, index).Set(input);
+                }
+            }
         }
-      }
     }
-  }
-  return absl::OkStatus();
+    return absl::OkStatus();
 }
 
 absl::Status SwitchDemuxCalculator::Process(CalculatorContext* cc) {
-  // Update the input channel index if specified.
-  channel_index_ = tool::GetChannelIndex(*cc, channel_index_);
+    // Update the input channel index if specified.
+    channel_index_ = tool::GetChannelIndex(*cc, channel_index_);
 
-  // Relay packets and timestamps only to channel_index_.
-  for (const std::string& tag : channel_tags_) {
-    for (int index = 0; index < cc->Inputs().NumEntries(tag); ++index) {
-      auto& input = cc->Inputs().Get(tag, index);
-      std::string output_tag = tool::ChannelTag(tag, channel_index_);
-      auto output_id = cc->Outputs().GetId(output_tag, index);
-      if (output_id.IsValid()) {
-        auto& output = cc->Outputs().Get(output_tag, index);
-        tool::Relay(input, &output);
-      }
+    // Relay packets and timestamps only to channel_index_.
+    for (const std::string& tag : channel_tags_) {
+        for (int index = 0; index < cc->Inputs().NumEntries(tag); ++index) {
+            auto& input = cc->Inputs().Get(tag, index);
+            std::string output_tag = tool::ChannelTag(tag, channel_index_);
+            auto output_id = cc->Outputs().GetId(output_tag, index);
+            if (output_id.IsValid()) {
+                auto& output = cc->Outputs().Get(output_tag, index);
+                tool::Relay(input, &output);
+            }
+        }
     }
-  }
-  return absl::OkStatus();
+    return absl::OkStatus();
 }
 
 }  // namespace mediapipe

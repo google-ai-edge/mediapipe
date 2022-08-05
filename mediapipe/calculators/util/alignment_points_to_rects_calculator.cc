@@ -1,5 +1,3 @@
-#include <cmath>
-
 #include "mediapipe/calculators/util/detections_to_rects_calculator.h"
 #include "mediapipe/calculators/util/detections_to_rects_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
@@ -9,6 +7,7 @@
 #include "mediapipe/framework/formats/rect.pb.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status.h"
+#include <cmath>
 
 namespace mediapipe {
 
@@ -39,64 +38,64 @@ namespace {}  // namespace
 //     }
 //   }
 class AlignmentPointsRectsCalculator : public DetectionsToRectsCalculator {
- public:
-  absl::Status Open(CalculatorContext* cc) override {
-    RET_CHECK_OK(DetectionsToRectsCalculator::Open(cc));
+public:
+    absl::Status Open(CalculatorContext* cc) override {
+        RET_CHECK_OK(DetectionsToRectsCalculator::Open(cc));
 
-    // Make sure that start and end keypoints are provided.
-    // They are required for the rect size calculation and will also force base
-    // calculator to compute rotation.
-    options_ = cc->Options<DetectionsToRectsCalculatorOptions>();
-    RET_CHECK(options_.has_rotation_vector_start_keypoint_index())
-        << "Start keypoint is required to calculate rect size and rotation";
-    RET_CHECK(options_.has_rotation_vector_end_keypoint_index())
-        << "End keypoint is required to calculate rect size and rotation";
+        // Make sure that start and end keypoints are provided.
+        // They are required for the rect size calculation and will also force base
+        // calculator to compute rotation.
+        options_ = cc->Options<DetectionsToRectsCalculatorOptions>();
+        RET_CHECK(options_.has_rotation_vector_start_keypoint_index())
+            << "Start keypoint is required to calculate rect size and rotation";
+        RET_CHECK(options_.has_rotation_vector_end_keypoint_index())
+            << "End keypoint is required to calculate rect size and rotation";
 
-    return absl::OkStatus();
-  }
+        return absl::OkStatus();
+    }
 
- private:
-  absl::Status DetectionToNormalizedRect(
-      const ::mediapipe::Detection& detection,
-      const DetectionSpec& detection_spec,
-      ::mediapipe::NormalizedRect* rect) override;
+private:
+    absl::Status DetectionToNormalizedRect(
+        const ::mediapipe::Detection& detection,
+        const DetectionSpec& detection_spec,
+        ::mediapipe::NormalizedRect* rect) override;
 };
 REGISTER_CALCULATOR(AlignmentPointsRectsCalculator);
 
 absl::Status AlignmentPointsRectsCalculator::DetectionToNormalizedRect(
     const Detection& detection, const DetectionSpec& detection_spec,
     NormalizedRect* rect) {
-  const auto& location_data = detection.location_data();
-  const auto& image_size = detection_spec.image_size;
-  RET_CHECK(image_size) << "Image size is required to calculate the rect";
+    const auto& location_data = detection.location_data();
+    const auto& image_size = detection_spec.image_size;
+    RET_CHECK(image_size) << "Image size is required to calculate the rect";
 
-  const float x_center =
-      location_data.relative_keypoints(start_keypoint_index_).x() *
-      image_size->first;
-  const float y_center =
-      location_data.relative_keypoints(start_keypoint_index_).y() *
-      image_size->second;
+    const float x_center =
+        location_data.relative_keypoints(start_keypoint_index_).x() *
+        image_size->first;
+    const float y_center =
+        location_data.relative_keypoints(start_keypoint_index_).y() *
+        image_size->second;
 
-  const float x_scale =
-      location_data.relative_keypoints(end_keypoint_index_).x() *
-      image_size->first;
-  const float y_scale =
-      location_data.relative_keypoints(end_keypoint_index_).y() *
-      image_size->second;
+    const float x_scale =
+        location_data.relative_keypoints(end_keypoint_index_).x() *
+        image_size->first;
+    const float y_scale =
+        location_data.relative_keypoints(end_keypoint_index_).y() *
+        image_size->second;
 
-  // Bounding box size as double distance from center to scale point.
-  const float box_size =
-      std::sqrt((x_scale - x_center) * (x_scale - x_center) +
-                (y_scale - y_center) * (y_scale - y_center)) *
-      2.0;
+    // Bounding box size as double distance from center to scale point.
+    const float box_size =
+        std::sqrt((x_scale - x_center) * (x_scale - x_center) +
+                  (y_scale - y_center) * (y_scale - y_center)) *
+        2.0;
 
-  // Set resulting bounding box.
-  rect->set_x_center(x_center / image_size->first);
-  rect->set_y_center(y_center / image_size->second);
-  rect->set_width(box_size / image_size->first);
-  rect->set_height(box_size / image_size->second);
+    // Set resulting bounding box.
+    rect->set_x_center(x_center / image_size->first);
+    rect->set_y_center(y_center / image_size->second);
+    rect->set_width(box_size / image_size->first);
+    rect->set_height(box_size / image_size->second);
 
-  return absl::OkStatus();
+    return absl::OkStatus();
 }
 
 }  // namespace mediapipe

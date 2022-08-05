@@ -28,13 +28,13 @@ float ApplyActivation(
     ::mediapipe::TfLiteTensorsToLandmarksCalculatorOptions::Activation
         activation,
     float value) {
-  switch (activation) {
-    case ::mediapipe::TfLiteTensorsToLandmarksCalculatorOptions::SIGMOID:
-      return Sigmoid(value);
-      break;
-    default:
-      return value;
-  }
+    switch (activation) {
+        case ::mediapipe::TfLiteTensorsToLandmarksCalculatorOptions::SIGMOID:
+            return Sigmoid(value);
+            break;
+        default:
+            return value;
+    }
 }
 
 }  // namespace
@@ -88,195 +88,195 @@ float ApplyActivation(
 //   }
 // }
 class TfLiteTensorsToLandmarksCalculator : public CalculatorBase {
- public:
-  static absl::Status GetContract(CalculatorContract* cc);
+public:
+    static absl::Status GetContract(CalculatorContract* cc);
 
-  absl::Status Open(CalculatorContext* cc) override;
-  absl::Status Process(CalculatorContext* cc) override;
+    absl::Status Open(CalculatorContext* cc) override;
+    absl::Status Process(CalculatorContext* cc) override;
 
- private:
-  absl::Status LoadOptions(CalculatorContext* cc);
-  int num_landmarks_ = 0;
-  bool flip_vertically_ = false;
-  bool flip_horizontally_ = false;
+private:
+    absl::Status LoadOptions(CalculatorContext* cc);
+    int num_landmarks_ = 0;
+    bool flip_vertically_ = false;
+    bool flip_horizontally_ = false;
 
-  ::mediapipe::TfLiteTensorsToLandmarksCalculatorOptions options_;
+    ::mediapipe::TfLiteTensorsToLandmarksCalculatorOptions options_;
 };
 REGISTER_CALCULATOR(TfLiteTensorsToLandmarksCalculator);
 
 absl::Status TfLiteTensorsToLandmarksCalculator::GetContract(
     CalculatorContract* cc) {
-  RET_CHECK(!cc->Inputs().GetTags().empty());
-  RET_CHECK(!cc->Outputs().GetTags().empty());
+    RET_CHECK(!cc->Inputs().GetTags().empty());
+    RET_CHECK(!cc->Outputs().GetTags().empty());
 
-  if (cc->Inputs().HasTag("TENSORS")) {
-    cc->Inputs().Tag("TENSORS").Set<std::vector<TfLiteTensor>>();
-  }
+    if (cc->Inputs().HasTag("TENSORS")) {
+        cc->Inputs().Tag("TENSORS").Set<std::vector<TfLiteTensor>>();
+    }
 
-  if (cc->Inputs().HasTag("FLIP_HORIZONTALLY")) {
-    cc->Inputs().Tag("FLIP_HORIZONTALLY").Set<bool>();
-  }
+    if (cc->Inputs().HasTag("FLIP_HORIZONTALLY")) {
+        cc->Inputs().Tag("FLIP_HORIZONTALLY").Set<bool>();
+    }
 
-  if (cc->Inputs().HasTag("FLIP_VERTICALLY")) {
-    cc->Inputs().Tag("FLIP_VERTICALLY").Set<bool>();
-  }
+    if (cc->Inputs().HasTag("FLIP_VERTICALLY")) {
+        cc->Inputs().Tag("FLIP_VERTICALLY").Set<bool>();
+    }
 
-  if (cc->InputSidePackets().HasTag("FLIP_HORIZONTALLY")) {
-    cc->InputSidePackets().Tag("FLIP_HORIZONTALLY").Set<bool>();
-  }
+    if (cc->InputSidePackets().HasTag("FLIP_HORIZONTALLY")) {
+        cc->InputSidePackets().Tag("FLIP_HORIZONTALLY").Set<bool>();
+    }
 
-  if (cc->InputSidePackets().HasTag("FLIP_VERTICALLY")) {
-    cc->InputSidePackets().Tag("FLIP_VERTICALLY").Set<bool>();
-  }
+    if (cc->InputSidePackets().HasTag("FLIP_VERTICALLY")) {
+        cc->InputSidePackets().Tag("FLIP_VERTICALLY").Set<bool>();
+    }
 
-  if (cc->Outputs().HasTag("LANDMARKS")) {
-    cc->Outputs().Tag("LANDMARKS").Set<LandmarkList>();
-  }
+    if (cc->Outputs().HasTag("LANDMARKS")) {
+        cc->Outputs().Tag("LANDMARKS").Set<LandmarkList>();
+    }
 
-  if (cc->Outputs().HasTag("NORM_LANDMARKS")) {
-    cc->Outputs().Tag("NORM_LANDMARKS").Set<NormalizedLandmarkList>();
-  }
+    if (cc->Outputs().HasTag("NORM_LANDMARKS")) {
+        cc->Outputs().Tag("NORM_LANDMARKS").Set<NormalizedLandmarkList>();
+    }
 
-  return absl::OkStatus();
+    return absl::OkStatus();
 }
 
 absl::Status TfLiteTensorsToLandmarksCalculator::Open(CalculatorContext* cc) {
-  cc->SetOffset(TimestampDiff(0));
+    cc->SetOffset(TimestampDiff(0));
 
-  MP_RETURN_IF_ERROR(LoadOptions(cc));
+    MP_RETURN_IF_ERROR(LoadOptions(cc));
 
-  if (cc->Outputs().HasTag("NORM_LANDMARKS")) {
-    RET_CHECK(options_.has_input_image_height() &&
-              options_.has_input_image_width())
-        << "Must provide input width/height for getting normalized landmarks.";
-  }
-  if (cc->Outputs().HasTag("LANDMARKS") &&
-      (options_.flip_vertically() || options_.flip_horizontally() ||
-       cc->InputSidePackets().HasTag("FLIP_HORIZONTALLY") ||
-       cc->InputSidePackets().HasTag("FLIP_VERTICALLY"))) {
-    RET_CHECK(options_.has_input_image_height() &&
-              options_.has_input_image_width())
-        << "Must provide input width/height for using flip_vertically option "
-           "when outputing landmarks in absolute coordinates.";
-  }
+    if (cc->Outputs().HasTag("NORM_LANDMARKS")) {
+        RET_CHECK(options_.has_input_image_height() &&
+                  options_.has_input_image_width())
+            << "Must provide input width/height for getting normalized landmarks.";
+    }
+    if (cc->Outputs().HasTag("LANDMARKS") &&
+        (options_.flip_vertically() || options_.flip_horizontally() ||
+         cc->InputSidePackets().HasTag("FLIP_HORIZONTALLY") ||
+         cc->InputSidePackets().HasTag("FLIP_VERTICALLY"))) {
+        RET_CHECK(options_.has_input_image_height() &&
+                  options_.has_input_image_width())
+            << "Must provide input width/height for using flip_vertically option "
+               "when outputing landmarks in absolute coordinates.";
+    }
 
-  flip_horizontally_ =
-      cc->InputSidePackets().HasTag("FLIP_HORIZONTALLY")
-          ? cc->InputSidePackets().Tag("FLIP_HORIZONTALLY").Get<bool>()
-          : options_.flip_horizontally();
+    flip_horizontally_ =
+        cc->InputSidePackets().HasTag("FLIP_HORIZONTALLY")
+            ? cc->InputSidePackets().Tag("FLIP_HORIZONTALLY").Get<bool>()
+            : options_.flip_horizontally();
 
-  flip_vertically_ =
-      cc->InputSidePackets().HasTag("FLIP_VERTICALLY")
-          ? cc->InputSidePackets().Tag("FLIP_VERTICALLY").Get<bool>()
-          : options_.flip_vertically();
+    flip_vertically_ =
+        cc->InputSidePackets().HasTag("FLIP_VERTICALLY")
+            ? cc->InputSidePackets().Tag("FLIP_VERTICALLY").Get<bool>()
+            : options_.flip_vertically();
 
-  return absl::OkStatus();
+    return absl::OkStatus();
 }
 
 absl::Status TfLiteTensorsToLandmarksCalculator::Process(
     CalculatorContext* cc) {
-  // Override values if specified so.
-  if (cc->Inputs().HasTag("FLIP_HORIZONTALLY") &&
-      !cc->Inputs().Tag("FLIP_HORIZONTALLY").IsEmpty()) {
-    flip_horizontally_ = cc->Inputs().Tag("FLIP_HORIZONTALLY").Get<bool>();
-  }
-  if (cc->Inputs().HasTag("FLIP_VERTICALLY") &&
-      !cc->Inputs().Tag("FLIP_VERTICALLY").IsEmpty()) {
-    flip_vertically_ = cc->Inputs().Tag("FLIP_VERTICALLY").Get<bool>();
-  }
+    // Override values if specified so.
+    if (cc->Inputs().HasTag("FLIP_HORIZONTALLY") &&
+        !cc->Inputs().Tag("FLIP_HORIZONTALLY").IsEmpty()) {
+        flip_horizontally_ = cc->Inputs().Tag("FLIP_HORIZONTALLY").Get<bool>();
+    }
+    if (cc->Inputs().HasTag("FLIP_VERTICALLY") &&
+        !cc->Inputs().Tag("FLIP_VERTICALLY").IsEmpty()) {
+        flip_vertically_ = cc->Inputs().Tag("FLIP_VERTICALLY").Get<bool>();
+    }
 
-  if (cc->Inputs().Tag("TENSORS").IsEmpty()) {
+    if (cc->Inputs().Tag("TENSORS").IsEmpty()) {
+        return absl::OkStatus();
+    }
+
+    const auto& input_tensors =
+        cc->Inputs().Tag("TENSORS").Get<std::vector<TfLiteTensor>>();
+
+    const TfLiteTensor* raw_tensor = &input_tensors[0];
+
+    int num_values = 1;
+    for (int i = 0; i < raw_tensor->dims->size; ++i) {
+        num_values *= raw_tensor->dims->data[i];
+    }
+    const int num_dimensions = num_values / num_landmarks_;
+    CHECK_GT(num_dimensions, 0);
+
+    const float* raw_landmarks = raw_tensor->data.f;
+
+    LandmarkList output_landmarks;
+
+    for (int ld = 0; ld < num_landmarks_; ++ld) {
+        const int offset = ld * num_dimensions;
+        Landmark* landmark = output_landmarks.add_landmark();
+
+        if (flip_horizontally_) {
+            landmark->set_x(options_.input_image_width() - raw_landmarks[offset]);
+        } else {
+            landmark->set_x(raw_landmarks[offset]);
+        }
+        if (num_dimensions > 1) {
+            if (flip_vertically_) {
+                landmark->set_y(options_.input_image_height() -
+                                raw_landmarks[offset + 1]);
+            } else {
+                landmark->set_y(raw_landmarks[offset + 1]);
+            }
+        }
+        if (num_dimensions > 2) {
+            landmark->set_z(raw_landmarks[offset + 2]);
+        }
+        if (num_dimensions > 3) {
+            landmark->set_visibility(ApplyActivation(options_.visibility_activation(),
+                                                     raw_landmarks[offset + 3]));
+        }
+        if (num_dimensions > 4) {
+            landmark->set_presence(ApplyActivation(options_.presence_activation(),
+                                                   raw_landmarks[offset + 4]));
+        }
+    }
+
+    // Output normalized landmarks if required.
+    if (cc->Outputs().HasTag("NORM_LANDMARKS")) {
+        NormalizedLandmarkList output_norm_landmarks;
+        for (int i = 0; i < output_landmarks.landmark_size(); ++i) {
+            const Landmark& landmark = output_landmarks.landmark(i);
+            NormalizedLandmark* norm_landmark = output_norm_landmarks.add_landmark();
+            norm_landmark->set_x(landmark.x() / options_.input_image_width());
+            norm_landmark->set_y(landmark.y() / options_.input_image_height());
+            // Scale Z coordinate as X + allow additional uniform normalization.
+            norm_landmark->set_z(landmark.z() / options_.input_image_width() /
+                                 options_.normalize_z());
+            if (landmark.has_visibility()) {  // Set only if supported in the model.
+                norm_landmark->set_visibility(landmark.visibility());
+            }
+            if (landmark.has_presence()) {  // Set only if supported in the model.
+                norm_landmark->set_presence(landmark.presence());
+            }
+        }
+        cc->Outputs()
+            .Tag("NORM_LANDMARKS")
+            .AddPacket(MakePacket<NormalizedLandmarkList>(output_norm_landmarks)
+                           .At(cc->InputTimestamp()));
+    }
+
+    // Output absolute landmarks.
+    if (cc->Outputs().HasTag("LANDMARKS")) {
+        cc->Outputs()
+            .Tag("LANDMARKS")
+            .AddPacket(MakePacket<LandmarkList>(output_landmarks)
+                           .At(cc->InputTimestamp()));
+    }
+
     return absl::OkStatus();
-  }
-
-  const auto& input_tensors =
-      cc->Inputs().Tag("TENSORS").Get<std::vector<TfLiteTensor>>();
-
-  const TfLiteTensor* raw_tensor = &input_tensors[0];
-
-  int num_values = 1;
-  for (int i = 0; i < raw_tensor->dims->size; ++i) {
-    num_values *= raw_tensor->dims->data[i];
-  }
-  const int num_dimensions = num_values / num_landmarks_;
-  CHECK_GT(num_dimensions, 0);
-
-  const float* raw_landmarks = raw_tensor->data.f;
-
-  LandmarkList output_landmarks;
-
-  for (int ld = 0; ld < num_landmarks_; ++ld) {
-    const int offset = ld * num_dimensions;
-    Landmark* landmark = output_landmarks.add_landmark();
-
-    if (flip_horizontally_) {
-      landmark->set_x(options_.input_image_width() - raw_landmarks[offset]);
-    } else {
-      landmark->set_x(raw_landmarks[offset]);
-    }
-    if (num_dimensions > 1) {
-      if (flip_vertically_) {
-        landmark->set_y(options_.input_image_height() -
-                        raw_landmarks[offset + 1]);
-      } else {
-        landmark->set_y(raw_landmarks[offset + 1]);
-      }
-    }
-    if (num_dimensions > 2) {
-      landmark->set_z(raw_landmarks[offset + 2]);
-    }
-    if (num_dimensions > 3) {
-      landmark->set_visibility(ApplyActivation(options_.visibility_activation(),
-                                               raw_landmarks[offset + 3]));
-    }
-    if (num_dimensions > 4) {
-      landmark->set_presence(ApplyActivation(options_.presence_activation(),
-                                             raw_landmarks[offset + 4]));
-    }
-  }
-
-  // Output normalized landmarks if required.
-  if (cc->Outputs().HasTag("NORM_LANDMARKS")) {
-    NormalizedLandmarkList output_norm_landmarks;
-    for (int i = 0; i < output_landmarks.landmark_size(); ++i) {
-      const Landmark& landmark = output_landmarks.landmark(i);
-      NormalizedLandmark* norm_landmark = output_norm_landmarks.add_landmark();
-      norm_landmark->set_x(landmark.x() / options_.input_image_width());
-      norm_landmark->set_y(landmark.y() / options_.input_image_height());
-      // Scale Z coordinate as X + allow additional uniform normalization.
-      norm_landmark->set_z(landmark.z() / options_.input_image_width() /
-                           options_.normalize_z());
-      if (landmark.has_visibility()) {  // Set only if supported in the model.
-        norm_landmark->set_visibility(landmark.visibility());
-      }
-      if (landmark.has_presence()) {  // Set only if supported in the model.
-        norm_landmark->set_presence(landmark.presence());
-      }
-    }
-    cc->Outputs()
-        .Tag("NORM_LANDMARKS")
-        .AddPacket(MakePacket<NormalizedLandmarkList>(output_norm_landmarks)
-                       .At(cc->InputTimestamp()));
-  }
-
-  // Output absolute landmarks.
-  if (cc->Outputs().HasTag("LANDMARKS")) {
-    cc->Outputs()
-        .Tag("LANDMARKS")
-        .AddPacket(MakePacket<LandmarkList>(output_landmarks)
-                       .At(cc->InputTimestamp()));
-  }
-
-  return absl::OkStatus();
 }
 
 absl::Status TfLiteTensorsToLandmarksCalculator::LoadOptions(
     CalculatorContext* cc) {
-  // Get calculator options specified in the graph.
-  options_ =
-      cc->Options<::mediapipe::TfLiteTensorsToLandmarksCalculatorOptions>();
-  num_landmarks_ = options_.num_landmarks();
+    // Get calculator options specified in the graph.
+    options_ =
+        cc->Options<::mediapipe::TfLiteTensorsToLandmarksCalculatorOptions>();
+    num_landmarks_ = options_.num_landmarks();
 
-  return absl::OkStatus();
+    return absl::OkStatus();
 }
 }  // namespace mediapipe

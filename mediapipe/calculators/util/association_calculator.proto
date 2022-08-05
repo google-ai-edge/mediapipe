@@ -19,9 +19,9 @@ package mediapipe;
 import "mediapipe/framework/calculator.proto";
 
 message AssociationCalculatorOptions {
-  extend CalculatorOptions {
-    optional AssociationCalculatorOptions ext = 275124847;
-  }
+    extend CalculatorOptions {
+        optional AssociationCalculatorOptions ext = 275124847;
+    }
 
-  optional float min_similarity_threshold = 1 [default = 1.0];
+    optional float min_similarity_threshold = 1 [default = 1.0];
 }

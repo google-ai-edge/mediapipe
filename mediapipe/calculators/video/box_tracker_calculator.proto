@@ -20,36 +20,36 @@ import "mediapipe/framework/calculator.proto";
 import "mediapipe/util/tracking/box_tracker.proto";
 
 message BoxTrackerCalculatorOptions {
-  extend CalculatorOptions {
-    optional BoxTrackerCalculatorOptions ext = 268767860;
-  }
+    extend CalculatorOptions {
+        optional BoxTrackerCalculatorOptions ext = 268767860;
+    }
 
-  optional BoxTrackerOptions tracker_options = 1;
+    optional BoxTrackerOptions tracker_options = 1;
 
-  // Initial position to be tracked. Can also be supplied as side packet or
-  // as input stream.
-  optional TimedBoxProtoList initial_position = 2;
+    // Initial position to be tracked. Can also be supplied as side packet or
+    // as input stream.
+    optional TimedBoxProtoList initial_position = 2;
 
-  // If set and VIZ stream is present, renders tracking data into the
-  // visualization.
-  optional bool visualize_tracking_data = 3 [default = false];
+    // If set and VIZ stream is present, renders tracking data into the
+    // visualization.
+    optional bool visualize_tracking_data = 3 [default = false];
 
-  // If set and VIZ stream is present, renders the box state
-  // into the visualization.
-  optional bool visualize_state = 4 [default = false];
+    // If set and VIZ stream is present, renders the box state
+    // into the visualization.
+    optional bool visualize_state = 4 [default = false];
 
-  // If set and VIZ stream is present, renders the internal box state
-  // into the visualization.
-  optional bool visualize_internal_state = 5 [default = false];
+    // If set and VIZ stream is present, renders the internal box state
+    // into the visualization.
+    optional bool visualize_internal_state = 5 [default = false];
 
-  // Size of the track data cache during streaming mode. This allows to buffer
-  // track_data's for fast forward tracking, i.e. any TimedBox received
-  // via input stream START_POS can be tracked towards the current track head
-  // (i.e. last received TrackingData). Measured in number of frames.
-  optional int32 streaming_track_data_cache_size = 6 [default = 0];
+    // Size of the track data cache during streaming mode. This allows to buffer
+    // track_data's for fast forward tracking, i.e. any TimedBox received
+    // via input stream START_POS can be tracked towards the current track head
+    // (i.e. last received TrackingData). Measured in number of frames.
+    optional int32 streaming_track_data_cache_size = 6 [default = 0];
 
-  // Add a transition period of N frames to smooth the jump from original
-  // tracking to reset start pos with motion compensation. The transition will
-  // be a linear decay of original tracking result. 0 means no transition.
-  optional int32 start_pos_transition_frames = 7 [default = 0];
+    // Add a transition period of N frames to smooth the jump from original
+    // tracking to reset start pos with motion compensation. The transition will
+    // be a linear decay of original tracking result. 0 means no transition.
+    optional int32 start_pos_transition_frames = 7 [default = 0];
 }

@@ -36,14 +36,19 @@ load(
     "resources",
 )
 
-def _metal_compiler_args(ctx, src, obj, minimum_os_version, copts, diagnostics, deps_dump):
+
+def _metal_compiler_args(
+    ctx, src, obj, minimum_os_version, copts, diagnostics, deps_dump
+):
     """Returns arguments for metal compiler."""
     apple_fragment = ctx.fragments.apple
 
     platform = apple_fragment.single_arch_platform
 
     if not minimum_os_version:
-        minimum_os_version = ctx.attr._xcode_config[apple_common.XcodeVersionConfig].minimum_os_for_platform_type(
+        minimum_os_version = ctx.attr._xcode_config[
+            apple_common.XcodeVersionConfig
+        ].minimum_os_for_platform_type(
             platform.platform_type,
         )
 
@@ -71,17 +76,18 @@ def _metal_compiler_args(ctx, src, obj, minimum_os_version, copts, diagnostics, 
     ]
     return args
 
-def _metal_compiler_inputs(srcs, hdrs, deps = []):
+
+def _metal_compiler_inputs(srcs, hdrs, deps=[]):
     """Determines the list of inputs required for a compile action."""
 
     cc_infos = [dep[CcInfo] for dep in deps if CcInfo in dep]
 
-    dep_headers = depset(transitive = [
-        cc_info.compilation_context.headers
-        for cc_info in cc_infos
-    ])
+    dep_headers = depset(
+        transitive=[cc_info.compilation_context.headers for cc_info in cc_infos]
+    )
 
-    return depset(srcs + hdrs, transitive = [dep_headers])
+    return depset(srcs + hdrs, transitive=[dep_headers])
+
 
 def _metal_library_impl(ctx):
     """Implementation for metal_library Skylark rule."""
@@ -97,20 +103,28 @@ def _metal_library_impl(ctx):
         diagnostics = ctx.actions.declare_file(objs_outputs_path + basename + ".dia")
         deps_dump = ctx.actions.declare_file(objs_outputs_path + basename + ".dat")
 
-        args = (["metal"] +
-                _metal_compiler_args(ctx, src, obj, ctx.attr.minimum_os_version, ctx.attr.copts, diagnostics, deps_dump))
+        args = ["metal"] + _metal_compiler_args(
+            ctx,
+            src,
+            obj,
+            ctx.attr.minimum_os_version,
+            ctx.attr.copts,
+            diagnostics,
+            deps_dump,
+        )
 
         apple_support.run(
             ctx,
-            xcode_path_resolve_level = apple_support.xcode_path_resolve_level.args,
-            inputs = _metal_compiler_inputs(ctx.files.srcs, ctx.files.hdrs, ctx.attr.deps),
-            outputs = [obj, diagnostics, deps_dump],
-            mnemonic = "MetalCompile",
-            executable = "/usr/bin/xcrun",
-            arguments = args,
-            use_default_shell_env = False,
-            progress_message = ("Compiling Metal shader %s" %
-                                (basename)),
+            xcode_path_resolve_level=apple_support.xcode_path_resolve_level.args,
+            inputs=_metal_compiler_inputs(
+                ctx.files.srcs, ctx.files.hdrs, ctx.attr.deps
+            ),
+            outputs=[obj, diagnostics, deps_dump],
+            mnemonic="MetalCompile",
+            executable="/usr/bin/xcrun",
+            arguments=args,
+            use_default_shell_env=False,
+            progress_message=("Compiling Metal shader %s" % (basename)),
         )
 
     output_lib = ctx.actions.declare_file(ctx.label.name + ".metallib")
@@ -123,54 +137,60 @@ def _metal_library_impl(ctx):
 
     apple_support.run(
         ctx,
-        xcode_path_resolve_level = apple_support.xcode_path_resolve_level.args,
-        inputs = output_objs,
-        outputs = (output_lib,),
-        mnemonic = "MetalLink",
-        executable = "/usr/bin/xcrun",
-        arguments = args,
-        progress_message = (
-            "Linking Metal library %s" % ctx.label.name
-        ),
+        xcode_path_resolve_level=apple_support.xcode_path_resolve_level.args,
+        inputs=output_objs,
+        outputs=(output_lib,),
+        mnemonic="MetalLink",
+        executable="/usr/bin/xcrun",
+        arguments=args,
+        progress_message=("Linking Metal library %s" % ctx.label.name),
     )
 
     objc_provider = apple_common.new_objc_provider(
-        providers = [x[apple_common.Objc] for x in ctx.attr.deps if apple_common.Objc in x],
+        providers=[
+            x[apple_common.Objc] for x in ctx.attr.deps if apple_common.Objc in x
+        ],
     )
 
     cc_infos = [dep[CcInfo] for dep in ctx.attr.deps if CcInfo in dep]
     if ctx.files.hdrs:
         cc_infos.append(
             CcInfo(
-                compilation_context = cc_common.create_compilation_context(
-                    headers = depset([f for f in ctx.files.hdrs]),
+                compilation_context=cc_common.create_compilation_context(
+                    headers=depset([f for f in ctx.files.hdrs]),
                 ),
             ),
         )
 
     return [
         DefaultInfo(
-            files = depset([output_lib]),
+            files=depset([output_lib]),
         ),
         objc_provider,
-        cc_common.merge_cc_infos(cc_infos = cc_infos),
+        cc_common.merge_cc_infos(cc_infos=cc_infos),
         # Return the provider for the new bundling logic of rules_apple.
         resources.bucketize_typed([output_lib], "unprocessed"),
     ]
 
-METAL_LIBRARY_ATTRS = dicts.add(apple_support.action_required_attrs(), {
-    "srcs": attr.label_list(allow_files = [".metal"], allow_empty = False),
-    "hdrs": attr.label_list(allow_files = [".h"]),
-    "deps": attr.label_list(providers = [["objc", CcInfo], [apple_common.Objc, CcInfo]]),
-    "copts": attr.string_list(),
-    "minimum_os_version": attr.string(),
-})
+
+METAL_LIBRARY_ATTRS = dicts.add(
+    apple_support.action_required_attrs(),
+    {
+        "srcs": attr.label_list(allow_files=[".metal"], allow_empty=False),
+        "hdrs": attr.label_list(allow_files=[".h"]),
+        "deps": attr.label_list(
+            providers=[["objc", CcInfo], [apple_common.Objc, CcInfo]]
+        ),
+        "copts": attr.string_list(),
+        "minimum_os_version": attr.string(),
+    },
+)
 
 metal_library = rule(
-    implementation = _metal_library_impl,
-    attrs = METAL_LIBRARY_ATTRS,
-    fragments = ["apple", "objc", "swift"],
-    output_to_genfiles = True,
+    implementation=_metal_library_impl,
+    attrs=METAL_LIBRARY_ATTRS,
+    fragments=["apple", "objc", "swift"],
+    output_to_genfiles=True,
 )
 """
 Builds a Metal library.

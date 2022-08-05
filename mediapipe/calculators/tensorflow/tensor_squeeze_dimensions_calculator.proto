@@ -23,11 +23,11 @@ import "mediapipe/framework/calculator.proto";
 // dimensions of size 1.
 // The fields 'squeeze_all_single_dims' and 'dim' are mutually exclusive.
 message TensorSqueezeDimensionsCalculatorOptions {
-  extend mediapipe.CalculatorOptions {
-    optional TensorSqueezeDimensionsCalculatorOptions ext = 115619805;
-  }
-  // Remove all dimensions with size 1.
-  optional bool squeeze_all_single_dims = 1 [default = false];
-  // Remove specific singleton dimensions.
-  repeated int32 dim = 2;
+    extend mediapipe.CalculatorOptions {
+        optional TensorSqueezeDimensionsCalculatorOptions ext = 115619805;
+    }
+    // Remove all dimensions with size 1.
+    optional bool squeeze_all_single_dims = 1 [default = false];
+    // Remove specific singleton dimensions.
+    repeated int32 dim = 2;
 }

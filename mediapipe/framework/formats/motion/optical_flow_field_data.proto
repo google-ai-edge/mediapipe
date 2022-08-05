@@ -17,9 +17,9 @@ syntax = "proto2";
 package mediapipe;
 
 message OpticalFlowFieldData {
-  optional int32 width = 1;
-  optional int32 height = 2;
-  // Stores the two channels of the flow field in raster order.
-  repeated float dx = 3 [packed = true];
-  repeated float dy = 4 [packed = true];
+    optional int32 width = 1;
+    optional int32 height = 2;
+    // Stores the two channels of the flow field in raster order.
+    repeated float dx = 3 [packed = true];
+    repeated float dy = 4 [packed = true];
 }

@@ -20,12 +20,12 @@ import "mediapipe/framework/calculator.proto";
 import "mediapipe/util/tracking/box_detector.proto";
 
 message BoxDetectorCalculatorOptions {
-  extend CalculatorOptions {
-    optional BoxDetectorCalculatorOptions ext = 289746530;
-  }
+    extend CalculatorOptions {
+        optional BoxDetectorCalculatorOptions ext = 289746530;
+    }
 
-  optional BoxDetectorOptions detector_options = 1;
+    optional BoxDetectorOptions detector_options = 1;
 
-  // File path to the template index files.
-  repeated string index_proto_filename = 2;
+    // File path to the template index files.
+    repeated string index_proto_filename = 2;
 }

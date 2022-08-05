@@ -19,19 +19,19 @@ package mediapipe;
 import "mediapipe/framework/calculator.proto";
 
 message StabilizedLogCalculatorOptions {
-  extend CalculatorOptions {
-    optional StabilizedLogCalculatorOptions ext = 101978339;
-  }
+    extend CalculatorOptions {
+        optional StabilizedLogCalculatorOptions ext = 101978339;
+    }
 
-  // The calculator computes log(x + stabilizer). stabilizer must be >=
-  // 0, with 0 indicating a lack of stabilization.
-  optional float stabilizer = 1 [default = .00001];
+    // The calculator computes log(x + stabilizer). stabilizer must be >=
+    // 0, with 0 indicating a lack of stabilization.
+    optional float stabilizer = 1 [default = .00001];
 
-  // If true, CHECK that all input values in are >= 0. If false, the
-  // code will take the log of the potentially negative input values
-  // plus the stabilizer.
-  optional bool check_nonnegativity = 2 [default = true];
+    // If true, CHECK that all input values in are >= 0. If false, the
+    // code will take the log of the potentially negative input values
+    // plus the stabilizer.
+    optional bool check_nonnegativity = 2 [default = true];
 
-  // Support a fixed multiplicative scaling of the output.
-  optional double output_scale = 3 [default = 1.0];
+    // Support a fixed multiplicative scaling of the output.
+    optional double output_scale = 3 [default = 1.0];
 }

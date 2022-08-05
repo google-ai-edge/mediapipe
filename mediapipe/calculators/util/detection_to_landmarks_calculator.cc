@@ -12,8 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <memory>
-
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/detection.pb.h"
 #include "mediapipe/framework/formats/landmark.pb.h"
@@ -21,6 +19,7 @@
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/port/status_macros.h"
+#include <memory>
 
 namespace mediapipe {
 
@@ -31,16 +30,16 @@ constexpr char kLandmarksTag[] = "LANDMARKS";
 
 absl::Status ConvertDetectionToLandmarks(const Detection& detection,
                                          NormalizedLandmarkList* landmarks) {
-  const auto& location_data = detection.location_data();
-  for (int i = 0; i < location_data.relative_keypoints_size(); ++i) {
-    const auto& keypoint = location_data.relative_keypoints(i);
+    const auto& location_data = detection.location_data();
+    for (int i = 0; i < location_data.relative_keypoints_size(); ++i) {
+        const auto& keypoint = location_data.relative_keypoints(i);
 
-    auto* landmark = landmarks->add_landmark();
-    landmark->set_x(keypoint.x());
-    landmark->set_y(keypoint.y());
-  }
+        auto* landmark = landmarks->add_landmark();
+        landmark->set_x(keypoint.x());
+        landmark->set_y(keypoint.y());
+    }
 
-  return absl::OkStatus();
+    return absl::OkStatus();
 }
 
 }  // namespace
@@ -65,34 +64,34 @@ absl::Status ConvertDetectionToLandmarks(const Detection& detection,
 //   }
 //
 class DetectionToLandmarksCalculator : public CalculatorBase {
- public:
-  static absl::Status GetContract(CalculatorContract* cc) {
-    RET_CHECK(cc->Inputs().HasTag(kDetectionTag));
-    RET_CHECK(cc->Outputs().HasTag(kLandmarksTag));
+public:
+    static absl::Status GetContract(CalculatorContract* cc) {
+        RET_CHECK(cc->Inputs().HasTag(kDetectionTag));
+        RET_CHECK(cc->Outputs().HasTag(kLandmarksTag));
 
-    cc->Inputs().Tag(kDetectionTag).Set<Detection>();
-    cc->Outputs().Tag(kLandmarksTag).Set<NormalizedLandmarkList>();
+        cc->Inputs().Tag(kDetectionTag).Set<Detection>();
+        cc->Outputs().Tag(kLandmarksTag).Set<NormalizedLandmarkList>();
 
-    return absl::OkStatus();
-  }
+        return absl::OkStatus();
+    }
 
-  absl::Status Open(CalculatorContext* cc) override {
-    cc->SetOffset(TimestampDiff(0));
-    return absl::OkStatus();
-  }
+    absl::Status Open(CalculatorContext* cc) override {
+        cc->SetOffset(TimestampDiff(0));
+        return absl::OkStatus();
+    }
 
-  absl::Status Process(CalculatorContext* cc) override {
-    const auto& detection = cc->Inputs().Tag(kDetectionTag).Get<Detection>();
+    absl::Status Process(CalculatorContext* cc) override {
+        const auto& detection = cc->Inputs().Tag(kDetectionTag).Get<Detection>();
 
-    auto landmarks = absl::make_unique<NormalizedLandmarkList>();
-    MP_RETURN_IF_ERROR(ConvertDetectionToLandmarks(detection, landmarks.get()));
+        auto landmarks = absl::make_unique<NormalizedLandmarkList>();
+        MP_RETURN_IF_ERROR(ConvertDetectionToLandmarks(detection, landmarks.get()));
 
-    cc->Outputs()
-        .Tag(kLandmarksTag)
-        .Add(landmarks.release(), cc->InputTimestamp());
+        cc->Outputs()
+            .Tag(kLandmarksTag)
+            .Add(landmarks.release(), cc->InputTimestamp());
 
-    return absl::OkStatus();
-  }
+        return absl::OkStatus();
+    }
 };
 
 REGISTER_CALCULATOR(DetectionToLandmarksCalculator);

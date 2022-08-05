@@ -38,59 +38,59 @@ void PlatformSpecificTraceEventEnd(const char* name, int64 id,
 
 // Temporary object to profile entry and exit of events.
 class PlatformSpecificProfilingScope {
- public:
-  PlatformSpecificProfilingScope(const char* name, int64 id,
-                                 int64 packet_timestamp)
-      : method_name_(TraceEvent::UNKNOWN),
-        name_(name),
-        id_(id),
-        packet_timestamp_(packet_timestamp) {
-    PlatformSpecificTraceEventBegin(name_, id_, kProfilingCategory,
-                                    packet_timestamp_);
-  }
-
-  // Scope constructor that only starts profiling for Process method.
-  // Useful to limit automated profiling to only Process().
-  PlatformSpecificProfilingScope(const char* name, int64 id,
-                                 int64 packet_timestamp,
-                                 TraceEvent::EventType method_name)
-      : method_name_(method_name),
-        name_(name),
-        id_(id),
-        packet_timestamp_(packet_timestamp) {
-    if (method_name_ == TraceEvent::PROCESS) {
-      PlatformSpecificTraceEventBegin(name_, id_, kProfilingCategory,
-                                      packet_timestamp_);
+public:
+    PlatformSpecificProfilingScope(const char* name, int64 id,
+                                   int64 packet_timestamp)
+        : method_name_(TraceEvent::UNKNOWN),
+          name_(name),
+          id_(id),
+          packet_timestamp_(packet_timestamp) {
+        PlatformSpecificTraceEventBegin(name_, id_, kProfilingCategory,
+                                        packet_timestamp_);
     }
-  }
 
-  ~PlatformSpecificProfilingScope() {
-    if (method_name_ == TraceEvent::PROCESS ||
-        method_name_ == TraceEvent::UNKNOWN) {
-      PlatformSpecificTraceEventEnd(name_, id_, kProfilingCategory,
-                                    packet_timestamp_);
+    // Scope constructor that only starts profiling for Process method.
+    // Useful to limit automated profiling to only Process().
+    PlatformSpecificProfilingScope(const char* name, int64 id,
+                                   int64 packet_timestamp,
+                                   TraceEvent::EventType method_name)
+        : method_name_(method_name),
+          name_(name),
+          id_(id),
+          packet_timestamp_(packet_timestamp) {
+        if (method_name_ == TraceEvent::PROCESS) {
+            PlatformSpecificTraceEventBegin(name_, id_, kProfilingCategory,
+                                            packet_timestamp_);
+        }
     }
-  }
 
- private:
-  TraceEvent::EventType method_name_;
-  const char* name_;
-  int64 id_;
-  int64 packet_timestamp_;
+    ~PlatformSpecificProfilingScope() {
+        if (method_name_ == TraceEvent::PROCESS ||
+            method_name_ == TraceEvent::UNKNOWN) {
+            PlatformSpecificTraceEventEnd(name_, id_, kProfilingCategory,
+                                          packet_timestamp_);
+        }
+    }
+
+private:
+    TraceEvent::EventType method_name_;
+    const char* name_;
+    int64 id_;
+    int64 packet_timestamp_;
 };
 }  // namespace mediapipe
 
 // General profiling macro.
-#define PLATFORM_SPECIFIC_PROFILER(name, id, packet_timestamp)       \
-  mediapipe::PlatformSpecificProfilingScope platform_specific_scope( \
-      name, id, packet_timestamp);
+#define PLATFORM_SPECIFIC_PROFILER(name, id, packet_timestamp)         \
+    mediapipe::PlatformSpecificProfilingScope platform_specific_scope( \
+        name, id, packet_timestamp);
 
 // Automated profiling macro.
 // Filters out all methods except Calculator::Process().
-#define PLATFORM_SPECIFIC_PROCESS_PROFILER(name, id, method_name,    \
-                                           packet_timestamp)         \
-  mediapipe::PlatformSpecificProfilingScope platform_specific_scope( \
-      name, id, packet_timestamp, mediapipe::TraceEvent::method_name);
+#define PLATFORM_SPECIFIC_PROCESS_PROFILER(name, id, method_name,      \
+                                           packet_timestamp)           \
+    mediapipe::PlatformSpecificProfilingScope platform_specific_scope( \
+        name, id, packet_timestamp, mediapipe::TraceEvent::method_name);
 
 #else
 #define PLATFORM_SPECIFIC_PROFILER(name, id, packet_timestamp)

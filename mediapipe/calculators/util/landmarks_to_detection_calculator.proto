@@ -19,10 +19,10 @@ package mediapipe;
 import "mediapipe/framework/calculator.proto";
 
 message LandmarksToDetectionCalculatorOptions {
-  extend CalculatorOptions {
-    optional LandmarksToDetectionCalculatorOptions ext = 260199669;
-  }
+    extend CalculatorOptions {
+        optional LandmarksToDetectionCalculatorOptions ext = 260199669;
+    }
 
-  // A subset of indices to be included when creating the detection.
-  repeated int32 selected_landmark_indices = 1;
+    // A subset of indices to be included when creating the detection.
+    repeated int32 selected_landmark_indices = 1;
 }

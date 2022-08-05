@@ -43,43 +43,43 @@ constexpr char kVisibilityTag[] = "VISIBILITY";
 //   }
 //
 class LandmarkVisibilityCalculator : public CalculatorBase {
- public:
-  static absl::Status GetContract(CalculatorContract* cc);
-  absl::Status Open(CalculatorContext* cc) override;
-  absl::Status Process(CalculatorContext* cc) override;
+public:
+    static absl::Status GetContract(CalculatorContract* cc);
+    absl::Status Open(CalculatorContext* cc) override;
+    absl::Status Process(CalculatorContext* cc) override;
 };
 REGISTER_CALCULATOR(LandmarkVisibilityCalculator);
 
 absl::Status LandmarkVisibilityCalculator::GetContract(CalculatorContract* cc) {
-  cc->Inputs().Tag(kNormalizedLandmarksTag).Set<NormalizedLandmarkList>();
-  cc->Outputs().Tag(kVisibilityTag).Set<float>();
+    cc->Inputs().Tag(kNormalizedLandmarksTag).Set<NormalizedLandmarkList>();
+    cc->Outputs().Tag(kVisibilityTag).Set<float>();
 
-  return absl::OkStatus();
+    return absl::OkStatus();
 }
 
 absl::Status LandmarkVisibilityCalculator::Open(CalculatorContext* cc) {
-  cc->SetOffset(TimestampDiff(0));
+    cc->SetOffset(TimestampDiff(0));
 
-  return absl::OkStatus();
+    return absl::OkStatus();
 }
 
 absl::Status LandmarkVisibilityCalculator::Process(CalculatorContext* cc) {
-  // Check that landmark is not empty.
-  // Don't emit an empty packet for this timestamp.
-  if (cc->Inputs().Tag(kNormalizedLandmarksTag).IsEmpty()) {
+    // Check that landmark is not empty.
+    // Don't emit an empty packet for this timestamp.
+    if (cc->Inputs().Tag(kNormalizedLandmarksTag).IsEmpty()) {
+        return absl::OkStatus();
+    }
+
+    const auto& landmarks =
+        cc->Inputs().Tag(kNormalizedLandmarksTag).Get<NormalizedLandmarkList>();
+    RET_CHECK_EQ(landmarks.landmark_size(), 1);
+    float visibility = landmarks.landmark(0).visibility();
+
+    cc->Outputs()
+        .Tag(kVisibilityTag)
+        .AddPacket(MakePacket<float>(visibility).At(cc->InputTimestamp()));
+
     return absl::OkStatus();
-  }
-
-  const auto& landmarks =
-      cc->Inputs().Tag(kNormalizedLandmarksTag).Get<NormalizedLandmarkList>();
-  RET_CHECK_EQ(landmarks.landmark_size(), 1);
-  float visibility = landmarks.landmark(0).visibility();
-
-  cc->Outputs()
-      .Tag(kVisibilityTag)
-      .AddPacket(MakePacket<float>(visibility).At(cc->InputTimestamp()));
-
-  return absl::OkStatus();
 }
 
 }  // namespace mediapipe

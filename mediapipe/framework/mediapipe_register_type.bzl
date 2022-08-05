@@ -45,73 +45,82 @@ Args
 
 load("//mediapipe/framework/tool:build_defs.bzl", "clean_dep")
 
+
 def _mediapipe_register_type_generate_cc_impl(ctx):
     """Generate a cc file that registers types with mediapipe."""
-    file_data_template = '''
+    file_data_template = """
 {include_headers}
 #include "mediapipe/framework/type_map.h"
 
 {registration_commands}
-'''
+"""
     header_lines = []
     for header in ctx.attr.include_headers:
         header_lines.append('#include "{}"'.format(header))
     registration_lines = []
     for registration_type in ctx.attr.types:
         if " " in registration_type:
-            fail(('registration type "{}" should be fully qualified ' +
-                  "and must not include spaces").format(registration_type))
+            fail(
+                (
+                    'registration type "{}" should be fully qualified '
+                    + "and must not include spaces"
+                ).format(registration_type)
+            )
         registration_lines.append(
             "#define TEMP_MP_TYPE {}".format(registration_type),
         )
         registration_lines.append(
-            ("MEDIAPIPE_REGISTER_TYPE(\n" +
-             "    TEMP_MP_TYPE,\n" +
-             '    "{}",\n'.format(registration_type) +
-             "    nullptr, nullptr);\n"),
+            (
+                "MEDIAPIPE_REGISTER_TYPE(\n"
+                + "    TEMP_MP_TYPE,\n"
+                + '    "{}",\n'.format(registration_type)
+                + "    nullptr, nullptr);\n"
+            ),
         )
         registration_lines.append("#undef TEMP_MP_TYPE")
 
     file_data = file_data_template.format(
-        include_headers = "\n".join(header_lines),
-        registration_commands = "\n".join(registration_lines),
+        include_headers="\n".join(header_lines),
+        registration_commands="\n".join(registration_lines),
     )
 
     ctx.actions.write(ctx.outputs.output, file_data)
 
+
 mediapipe_register_type_generate_cc = rule(
-    implementation = _mediapipe_register_type_generate_cc_impl,
-    attrs = {
+    implementation=_mediapipe_register_type_generate_cc_impl,
+    attrs={
         "deps": attr.label_list(),
         "types": attr.string_list(
-            mandatory = True,
+            mandatory=True,
         ),
         "include_headers": attr.string_list(
-            mandatory = True,
+            mandatory=True,
         ),
         "output": attr.output(),
     },
 )
 
+
 def mediapipe_register_type(
-        base_name,
-        types,
-        deps = [],
-        include_headers = [],
-        visibility = ["//visibility:public"]):
+    base_name, types, deps=[], include_headers=[], visibility=["//visibility:public"]
+):
     mediapipe_register_type_generate_cc(
-        name = base_name + "_registration_cc",
-        types = types,
-        include_headers = include_headers,
-        output = base_name + "_registration.cc",
+        name=base_name + "_registration_cc",
+        types=types,
+        include_headers=include_headers,
+        output=base_name + "_registration.cc",
     )
 
     native.cc_library(
-        name = base_name + "_registration",
-        srcs = [base_name + "_registration.cc"],
-        deps = depset(deps + [
-            clean_dep("//mediapipe/framework:type_map"),
-        ]),
-        visibility = visibility,
-        alwayslink = 1,
+        name=base_name + "_registration",
+        srcs=[base_name + "_registration.cc"],
+        deps=depset(
+            deps
+            + [
+                clean_dep("//mediapipe/framework:type_map"),
+            ]
+        ),
+        visibility=visibility,
+        alwayslink=1,
     )

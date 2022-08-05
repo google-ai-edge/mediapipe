@@ -18,7 +18,6 @@
 // TODO: <sys/types.h> is not portable C. Take a close look at this when we add
 // mobile support.
 #include <sys/types.h>
-
 #include <cstdint>
 
 typedef signed char schar;

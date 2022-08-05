@@ -12,16 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <cfloat>
-#include <memory>
-#include <string>
-#include <vector>
-
 #include "mediapipe/calculators/core/quantize_float_vector_calculator.pb.h"
 #include "mediapipe/framework/calculator_context.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/port/canonical_errors.h"
 #include "mediapipe/framework/port/status.h"
+#include <cfloat>
+#include <memory>
+#include <string>
+#include <vector>
 
 // Quantizes a vector of floats to a string so that each float becomes a byte
 // in the [0, 255] range. Any value above max_quantized_value or below
@@ -45,61 +44,61 @@ constexpr char kEncodedTag[] = "ENCODED";
 constexpr char kFloatVectorTag[] = "FLOAT_VECTOR";
 
 class QuantizeFloatVectorCalculator : public CalculatorBase {
- public:
-  static absl::Status GetContract(CalculatorContract* cc) {
-    cc->Inputs().Tag(kFloatVectorTag).Set<std::vector<float>>();
-    cc->Outputs().Tag(kEncodedTag).Set<std::string>();
-    return absl::OkStatus();
-  }
-
-  absl::Status Open(CalculatorContext* cc) final {
-    const auto options =
-        cc->Options<::mediapipe::QuantizeFloatVectorCalculatorOptions>();
-    if (!options.has_max_quantized_value() ||
-        !options.has_min_quantized_value()) {
-      return absl::InvalidArgumentError(
-          "Both max_quantized_value and min_quantized_value must be provided "
-          "in QuantizeFloatVectorCalculatorOptions.");
+public:
+    static absl::Status GetContract(CalculatorContract* cc) {
+        cc->Inputs().Tag(kFloatVectorTag).Set<std::vector<float>>();
+        cc->Outputs().Tag(kEncodedTag).Set<std::string>();
+        return absl::OkStatus();
     }
-    max_quantized_value_ = options.max_quantized_value();
-    min_quantized_value_ = options.min_quantized_value();
-    if (max_quantized_value_ < min_quantized_value_ + FLT_EPSILON) {
-      return absl::InvalidArgumentError(
-          "max_quantized_value must be greater than min_quantized_value.");
-    }
-    range_ = max_quantized_value_ - min_quantized_value_;
-    return absl::OkStatus();
-  }
 
-  absl::Status Process(CalculatorContext* cc) final {
-    const std::vector<float>& float_vector =
-        cc->Inputs().Tag(kFloatVectorTag).Value().Get<std::vector<float>>();
-    int feature_size = float_vector.size();
-    std::string encoded_features;
-    encoded_features.reserve(feature_size);
-    for (int i = 0; i < feature_size; i++) {
-      float old_value = float_vector[i];
-      if (old_value < min_quantized_value_) {
-        old_value = min_quantized_value_;
-      }
-      if (old_value > max_quantized_value_) {
-        old_value = max_quantized_value_;
-      }
-      unsigned char encoded = static_cast<unsigned char>(
-          (old_value - min_quantized_value_) * (255.0 / range_));
-      encoded_features += encoded;
+    absl::Status Open(CalculatorContext* cc) final {
+        const auto options =
+            cc->Options<::mediapipe::QuantizeFloatVectorCalculatorOptions>();
+        if (!options.has_max_quantized_value() ||
+            !options.has_min_quantized_value()) {
+            return absl::InvalidArgumentError(
+                "Both max_quantized_value and min_quantized_value must be provided "
+                "in QuantizeFloatVectorCalculatorOptions.");
+        }
+        max_quantized_value_ = options.max_quantized_value();
+        min_quantized_value_ = options.min_quantized_value();
+        if (max_quantized_value_ < min_quantized_value_ + FLT_EPSILON) {
+            return absl::InvalidArgumentError(
+                "max_quantized_value must be greater than min_quantized_value.");
+        }
+        range_ = max_quantized_value_ - min_quantized_value_;
+        return absl::OkStatus();
     }
-    cc->Outputs()
-        .Tag(kEncodedTag)
-        .AddPacket(
-            MakePacket<std::string>(encoded_features).At(cc->InputTimestamp()));
-    return absl::OkStatus();
-  }
 
- private:
-  float max_quantized_value_;
-  float min_quantized_value_;
-  float range_;
+    absl::Status Process(CalculatorContext* cc) final {
+        const std::vector<float>& float_vector =
+            cc->Inputs().Tag(kFloatVectorTag).Value().Get<std::vector<float>>();
+        int feature_size = float_vector.size();
+        std::string encoded_features;
+        encoded_features.reserve(feature_size);
+        for (int i = 0; i < feature_size; i++) {
+            float old_value = float_vector[i];
+            if (old_value < min_quantized_value_) {
+                old_value = min_quantized_value_;
+            }
+            if (old_value > max_quantized_value_) {
+                old_value = max_quantized_value_;
+            }
+            unsigned char encoded = static_cast<unsigned char>(
+                (old_value - min_quantized_value_) * (255.0 / range_));
+            encoded_features += encoded;
+        }
+        cc->Outputs()
+            .Tag(kEncodedTag)
+            .AddPacket(
+                MakePacket<std::string>(encoded_features).At(cc->InputTimestamp()));
+        return absl::OkStatus();
+    }
+
+private:
+    float max_quantized_value_;
+    float min_quantized_value_;
+    float range_;
 };
 
 REGISTER_CALCULATOR(QuantizeFloatVectorCalculator);

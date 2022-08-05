@@ -44,37 +44,37 @@ namespace api2 {
 //   output_stream: "output_matrix"
 // }
 class MatrixSubtractCalculator : public Node {
- public:
-  static constexpr Input<Matrix>::SideFallback kMinuend{"MINUEND"};
-  static constexpr Input<Matrix>::SideFallback kSubtrahend{"SUBTRAHEND"};
-  static constexpr Output<Matrix> kOut{""};
+public:
+    static constexpr Input<Matrix>::SideFallback kMinuend{"MINUEND"};
+    static constexpr Input<Matrix>::SideFallback kSubtrahend{"SUBTRAHEND"};
+    static constexpr Output<Matrix> kOut{""};
 
-  MEDIAPIPE_NODE_CONTRACT(kMinuend, kSubtrahend, kOut);
-  static absl::Status UpdateContract(CalculatorContract* cc);
+    MEDIAPIPE_NODE_CONTRACT(kMinuend, kSubtrahend, kOut);
+    static absl::Status UpdateContract(CalculatorContract* cc);
 
-  absl::Status Process(CalculatorContext* cc) override;
+    absl::Status Process(CalculatorContext* cc) override;
 };
 MEDIAPIPE_REGISTER_NODE(MatrixSubtractCalculator);
 
 // static
 absl::Status MatrixSubtractCalculator::UpdateContract(CalculatorContract* cc) {
-  // TODO: the next restriction could be relaxed.
-  RET_CHECK(kMinuend(cc).IsStream() ^ kSubtrahend(cc).IsStream())
-      << "MatrixSubtractCalculator only accepts exactly one input stream and "
-         "one input side packet";
-  return absl::OkStatus();
+    // TODO: the next restriction could be relaxed.
+    RET_CHECK(kMinuend(cc).IsStream() ^ kSubtrahend(cc).IsStream())
+        << "MatrixSubtractCalculator only accepts exactly one input stream and "
+           "one input side packet";
+    return absl::OkStatus();
 }
 
 absl::Status MatrixSubtractCalculator::Process(CalculatorContext* cc) {
-  const Matrix& minuend = *kMinuend(cc);
-  const Matrix& subtrahend = *kSubtrahend(cc);
-  if (minuend.rows() != subtrahend.rows() ||
-      minuend.cols() != subtrahend.cols()) {
-    return absl::InvalidArgumentError(
-        "Minuend and subtrahend must have the same dimensions.");
-  }
-  kOut(cc).Send(minuend - subtrahend);
-  return absl::OkStatus();
+    const Matrix& minuend = *kMinuend(cc);
+    const Matrix& subtrahend = *kSubtrahend(cc);
+    if (minuend.rows() != subtrahend.rows() ||
+        minuend.cols() != subtrahend.cols()) {
+        return absl::InvalidArgumentError(
+            "Minuend and subtrahend must have the same dimensions.");
+    }
+    kOut(cc).Send(minuend - subtrahend);
+    return absl::OkStatus();
 }
 
 }  // namespace api2

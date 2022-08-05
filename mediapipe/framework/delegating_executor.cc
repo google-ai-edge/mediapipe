@@ -13,14 +13,13 @@
 // limitations under the License.
 
 #include "mediapipe/framework/delegating_executor.h"
-
 #include <utility>
 
 namespace mediapipe {
 namespace internal {
 
 void DelegatingExecutor::Schedule(std::function<void()> task) {
-  callback_(std::move(task));
+    callback_(std::move(task));
 }
 
 }  // namespace internal

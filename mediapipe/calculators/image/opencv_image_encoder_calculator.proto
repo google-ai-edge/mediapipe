@@ -19,31 +19,31 @@ package mediapipe;
 import "mediapipe/framework/calculator.proto";
 
 message OpenCvImageEncoderCalculatorOptions {
-  extend CalculatorOptions {
-    optional OpenCvImageEncoderCalculatorOptions ext = 227563646;
-  }
+    extend CalculatorOptions {
+        optional OpenCvImageEncoderCalculatorOptions ext = 227563646;
+    }
 
-  // Quality of the encoding. An integer between (0, 100].
-  optional int32 quality = 1;
+    // Quality of the encoding. An integer between (0, 100].
+    optional int32 quality = 1;
 }
 
 // TODO: Consider renaming it to EncodedImage.
 message OpenCvImageEncoderCalculatorResults {
-  // Pixel data encoded as JPEG.
-  optional bytes encoded_image = 1;
+    // Pixel data encoded as JPEG.
+    optional bytes encoded_image = 1;
 
-  // Height of the image data under #1 once decoded.
-  optional int32 height = 2;
+    // Height of the image data under #1 once decoded.
+    optional int32 height = 2;
 
-  // Width of the image data under #1 once decoded.
-  optional int32 width = 3;
+    // Width of the image data under #1 once decoded.
+    optional int32 width = 3;
 
-  enum ColorSpace {
-    UNKNOWN = 0;
-    GRAYSCALE = 1;
-    RGB = 2;
-  }
+    enum ColorSpace {
+        UNKNOWN = 0;
+        GRAYSCALE = 1;
+        RGB = 2;
+    }
 
-  // Color space used.
-  optional ColorSpace colorspace = 4;
+    // Color space used.
+    optional ColorSpace colorspace = 4;
 }

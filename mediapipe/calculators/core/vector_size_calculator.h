@@ -15,11 +15,10 @@
 #ifndef MEDIAPIPE_CALCULATORS_CORE_VECTOR_SIZE_CALCULATOR_H_
 #define MEDIAPIPE_CALCULATORS_CORE_VECTOR_SIZE_CALCULATOR_H_
 
-#include <optional>
-
 #include "mediapipe/framework/api2/node.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/port/status.h"
+#include <optional>
 
 namespace mediapipe {
 namespace api2 {
@@ -43,19 +42,19 @@ namespace api2 {
 //
 template <typename T>
 class VectorSizeCalculator : public Node {
- public:
-  static constexpr Input<std::vector<T>> kIn{"VECTOR"};
-  static constexpr Output<int> kOut{"SIZE"};
+public:
+    static constexpr Input<std::vector<T>> kIn{"VECTOR"};
+    static constexpr Output<int> kOut{"SIZE"};
 
-  MEDIAPIPE_NODE_CONTRACT(kIn, kOut);
+    MEDIAPIPE_NODE_CONTRACT(kIn, kOut);
 
-  absl::Status Process(CalculatorContext* cc) final {
-    if (kIn(cc).IsEmpty()) {
-      return absl::OkStatus();
+    absl::Status Process(CalculatorContext* cc) final {
+        if (kIn(cc).IsEmpty()) {
+            return absl::OkStatus();
+        }
+        kOut(cc).Send(kIn(cc).Get().size());
+        return absl::OkStatus();
     }
-    kOut(cc).Send(kIn(cc).Get().size());
-    return absl::OkStatus();
-  }
 };
 
 }  // namespace api2

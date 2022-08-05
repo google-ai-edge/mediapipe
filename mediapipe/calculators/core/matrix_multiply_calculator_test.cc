@@ -12,9 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <memory>
-#include <vector>
-
 #include "Eigen/Core"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/calculator_runner.h"
@@ -24,6 +21,8 @@
 #include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/status_matchers.h"
 #include "mediapipe/framework/tool/validate_type.h"
+#include <memory>
+#include <vector>
 
 namespace mediapipe {
 namespace {
@@ -200,39 +199,39 @@ const char kExpectedText[] =
 
 // Send a number of samples through the MatrixMultiplyCalculator.
 TEST(MatrixMultiplyCalculatorTest, Multiply) {
-  CalculatorRunner runner("MatrixMultiplyCalculator", "", 1, 1, 1);
-  Matrix* matrix = new Matrix();
-  MatrixFromTextProto(kMatrixText, matrix);
-  runner.MutableSidePackets()->Index(0) = Adopt(matrix);
+    CalculatorRunner runner("MatrixMultiplyCalculator", "", 1, 1, 1);
+    Matrix* matrix = new Matrix();
+    MatrixFromTextProto(kMatrixText, matrix);
+    runner.MutableSidePackets()->Index(0) = Adopt(matrix);
 
-  Matrix samples;
-  MatrixFromTextProto(kSamplesText, &samples);
-  Matrix expected;
-  MatrixFromTextProto(kExpectedText, &expected);
-  CHECK_EQ(samples.cols(), expected.cols());
+    Matrix samples;
+    MatrixFromTextProto(kSamplesText, &samples);
+    Matrix expected;
+    MatrixFromTextProto(kExpectedText, &expected);
+    CHECK_EQ(samples.cols(), expected.cols());
 
-  for (int i = 0; i < samples.cols(); ++i) {
-    // Take a column from samples and produce a packet with just that
-    // column in it as an input sample for the calculator.
-    Eigen::MatrixXf* sample = new Eigen::MatrixXf(samples.block(0, i, 4, 1));
-    runner.MutableInputs()->Index(0).packets.push_back(
-        Adopt(sample).At(Timestamp(i)));
-  }
+    for (int i = 0; i < samples.cols(); ++i) {
+        // Take a column from samples and produce a packet with just that
+        // column in it as an input sample for the calculator.
+        Eigen::MatrixXf* sample = new Eigen::MatrixXf(samples.block(0, i, 4, 1));
+        runner.MutableInputs()->Index(0).packets.push_back(
+            Adopt(sample).At(Timestamp(i)));
+    }
 
-  MP_ASSERT_OK(runner.Run());
-  EXPECT_EQ(runner.MutableInputs()->Index(0).packets.size(),
-            runner.Outputs().Index(0).packets.size());
+    MP_ASSERT_OK(runner.Run());
+    EXPECT_EQ(runner.MutableInputs()->Index(0).packets.size(),
+              runner.Outputs().Index(0).packets.size());
 
-  int i = 0;
-  for (const Packet& output : runner.Outputs().Index(0).packets) {
-    EXPECT_EQ(Timestamp(i), output.Timestamp());
-    const Eigen::MatrixXf& result = output.Get<Matrix>();
-    ASSERT_EQ(3, result.rows());
-    EXPECT_NEAR((expected.block(0, i, 3, 1) - result).cwiseAbs().sum(), 0.0,
-                1e-5);
-    ++i;
-  }
-  EXPECT_EQ(samples.cols(), i);
+    int i = 0;
+    for (const Packet& output : runner.Outputs().Index(0).packets) {
+        EXPECT_EQ(Timestamp(i), output.Timestamp());
+        const Eigen::MatrixXf& result = output.Get<Matrix>();
+        ASSERT_EQ(3, result.rows());
+        EXPECT_NEAR((expected.block(0, i, 3, 1) - result).cwiseAbs().sum(), 0.0,
+                    1e-5);
+        ++i;
+    }
+    EXPECT_EQ(samples.cols(), i);
 }
 
 }  // namespace

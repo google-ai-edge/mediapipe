@@ -14,13 +14,11 @@
 // limitations under the License.
 
 #include "mediapipe/calculators/util/filter_collection_calculator.h"
-
-#include <vector>
-
 #include "mediapipe/framework/formats/classification.pb.h"
 #include "mediapipe/framework/formats/landmark.pb.h"
 #include "mediapipe/framework/formats/rect.pb.h"
 #include "mediapipe/framework/port/integral_types.h"
+#include <vector>
 
 namespace mediapipe {
 

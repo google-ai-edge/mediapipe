@@ -19,11 +19,11 @@
 namespace absl {
 template <typename T>
 T GetFlag(const T& f) {
-  return f;
+    return f;
 }
 template <typename T, typename U>
 void SetFlag(T* f, const U& u) {
-  *f = u;
+    *f = u;
 }
 }  // namespace absl
 

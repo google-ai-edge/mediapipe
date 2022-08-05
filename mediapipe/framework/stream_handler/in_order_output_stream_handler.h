@@ -31,24 +31,24 @@ namespace mediapipe {
 // of input packets, and will deliver the output packets in increasing timestamp
 // order.
 class InOrderOutputStreamHandler : public OutputStreamHandler {
- public:
-  InOrderOutputStreamHandler(
-      std::shared_ptr<tool::TagMap> tag_map,
-      CalculatorContextManager* calculator_context_manager,
-      const MediaPipeOptions& options, bool calculator_run_in_parallel)
-      : OutputStreamHandler(std::move(tag_map), calculator_context_manager,
-                            options, calculator_run_in_parallel) {}
+public:
+    InOrderOutputStreamHandler(
+        std::shared_ptr<tool::TagMap> tag_map,
+        CalculatorContextManager* calculator_context_manager,
+        const MediaPipeOptions& options, bool calculator_run_in_parallel)
+        : OutputStreamHandler(std::move(tag_map), calculator_context_manager,
+                              options, calculator_run_in_parallel) {}
 
- private:
-  void PropagationLoop() ABSL_EXCLUSIVE_LOCKS_REQUIRED(timestamp_mutex_) final;
+private:
+    void PropagationLoop() ABSL_EXCLUSIVE_LOCKS_REQUIRED(timestamp_mutex_) final;
 
-  void PropagatePackets(CalculatorContext** calculator_context,
-                        Timestamp* context_timestamp)
-      ABSL_EXCLUSIVE_LOCKS_REQUIRED(timestamp_mutex_);
+    void PropagatePackets(CalculatorContext** calculator_context,
+                          Timestamp* context_timestamp)
+        ABSL_EXCLUSIVE_LOCKS_REQUIRED(timestamp_mutex_);
 
-  void PropagationBound(CalculatorContext** calculator_context,
-                        Timestamp* context_timestamp)
-      ABSL_EXCLUSIVE_LOCKS_REQUIRED(timestamp_mutex_);
+    void PropagationBound(CalculatorContext** calculator_context,
+                          Timestamp* context_timestamp)
+        ABSL_EXCLUSIVE_LOCKS_REQUIRED(timestamp_mutex_);
 };
 }  // namespace mediapipe
 

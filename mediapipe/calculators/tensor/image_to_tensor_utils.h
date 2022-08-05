@@ -15,20 +15,19 @@
 #ifndef MEDIAPIPE_CALCULATORS_TENSOR_IMAGE_TO_TENSOR_UTILS_H_
 #define MEDIAPIPE_CALCULATORS_TENSOR_IMAGE_TO_TENSOR_UTILS_H_
 
-#include <array>
-
 #include "absl/types/optional.h"
 #include "mediapipe/framework/formats/rect.pb.h"
 #include "mediapipe/framework/port/statusor.h"
+#include <array>
 
 namespace mediapipe {
 
 struct RotatedRect {
-  float center_x;
-  float center_y;
-  float width;
-  float height;
-  float rotation;
+    float center_x;
+    float center_y;
+    float width;
+    float height;
+    float rotation;
 };
 
 // Generates a new ROI or converts it from normalized rect.
@@ -47,8 +46,8 @@ absl::StatusOr<std::array<float, 4>> PadRoi(int input_tensor_width,
 // ValueTransformation transform = ...
 // float transformed_value = transform.scale * value + transfrom.offset;
 struct ValueTransformation {
-  float scale;
-  float offset;
+    float scale;
+    float offset;
 };
 
 // Returns value transformation to apply to a value in order to convert it from

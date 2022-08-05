@@ -30,24 +30,24 @@ namespace api2 {
 // with DefaultInputStreamHandler.
 // TODO: why would you need to use DefaultISH? Perhaps b/167596925?
 class MuxCalculator : public Node {
- public:
-  static constexpr Input<int>::SideFallback kSelect{"SELECT"};
-  // TODO: this currently sets them all to Any independently, instead
-  // of the first being Any and the others being SameAs.
-  static constexpr Input<AnyType>::Multiple kIn{"INPUT"};
-  static constexpr Output<SameType<kIn>> kOut{"OUTPUT"};
+public:
+    static constexpr Input<int>::SideFallback kSelect{"SELECT"};
+    // TODO: this currently sets them all to Any independently, instead
+    // of the first being Any and the others being SameAs.
+    static constexpr Input<AnyType>::Multiple kIn{"INPUT"};
+    static constexpr Output<SameType<kIn>> kOut{"OUTPUT"};
 
-  MEDIAPIPE_NODE_CONTRACT(kSelect, kIn, kOut,
-                          StreamHandler("MuxInputStreamHandler"));
+    MEDIAPIPE_NODE_CONTRACT(kSelect, kIn, kOut,
+                            StreamHandler("MuxInputStreamHandler"));
 
-  absl::Status Process(CalculatorContext* cc) final {
-    int select = *kSelect(cc);
-    RET_CHECK(0 <= select && select < kIn(cc).Count());
-    if (!kIn(cc)[select].IsEmpty()) {
-      kOut(cc).Send(kIn(cc)[select].packet());
+    absl::Status Process(CalculatorContext* cc) final {
+        int select = *kSelect(cc);
+        RET_CHECK(0 <= select && select < kIn(cc).Count());
+        if (!kIn(cc)[select].IsEmpty()) {
+            kOut(cc).Send(kIn(cc)[select].packet());
+        }
+        return absl::OkStatus();
     }
-    return absl::OkStatus();
-  }
 };
 
 MEDIAPIPE_REGISTER_NODE(MuxCalculator);

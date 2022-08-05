@@ -20,27 +20,27 @@ import "mediapipe/framework/calculator.proto";
 import "mediapipe/gpu/gpu_origin.proto";
 
 message WarpAffineCalculatorOptions {
-  extend CalculatorOptions {
-    optional WarpAffineCalculatorOptions ext = 373693895;
-  }
+    extend CalculatorOptions {
+        optional WarpAffineCalculatorOptions ext = 373693895;
+    }
 
-  // Pixel extrapolation methods. See @border_mode.
-  enum BorderMode {
-    BORDER_UNSPECIFIED = 0;
-    BORDER_ZERO = 1;
-    BORDER_REPLICATE = 2;
-  }
+    // Pixel extrapolation methods. See @border_mode.
+    enum BorderMode {
+        BORDER_UNSPECIFIED = 0;
+        BORDER_ZERO = 1;
+        BORDER_REPLICATE = 2;
+    }
 
-  // Pixel extrapolation method.
-  // When converting image to tensor it may happen that tensor needs to read
-  // pixels outside image boundaries. Border mode helps to specify how such
-  // pixels will be calculated.
-  //
-  // BORDER_REPLICATE is used by default.
-  optional BorderMode border_mode = 1;
+    // Pixel extrapolation method.
+    // When converting image to tensor it may happen that tensor needs to read
+    // pixels outside image boundaries. Border mode helps to specify how such
+    // pixels will be calculated.
+    //
+    // BORDER_REPLICATE is used by default.
+    optional BorderMode border_mode = 1;
 
-  // For CONVENTIONAL mode for OpenGL, input image starts at bottom and needs
-  // to be flipped vertically as tensors are expected to start at top.
-  // (DEFAULT or unset interpreted as CONVENTIONAL.)
-  optional GpuOrigin.Mode gpu_origin = 2;
+    // For CONVENTIONAL mode for OpenGL, input image starts at bottom and needs
+    // to be flipped vertically as tensors are expected to start at top.
+    // (DEFAULT or unset interpreted as CONVENTIONAL.)
+    optional GpuOrigin.Mode gpu_origin = 2;
 }

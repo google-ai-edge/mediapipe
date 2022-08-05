@@ -12,35 +12,35 @@ namespace mediapipe {
 namespace {
 
 TEST(ImageToTensorConverterGlUtilsTest, GlTexParameteriOverrider) {
-  auto status_or_context = mediapipe::GlContext::Create(nullptr, false);
-  MP_ASSERT_OK(status_or_context);
-  auto context = status_or_context.value();
+    auto status_or_context = mediapipe::GlContext::Create(nullptr, false);
+    MP_ASSERT_OK(status_or_context);
+    auto context = status_or_context.value();
 
-  std::vector<GLint> min_filter_changes;
-  context->Run([&min_filter_changes]() {
-    GLuint texture = 0;
-    glGenTextures(1, &texture);
-    glBindTexture(GL_TEXTURE_2D, texture);
+    std::vector<GLint> min_filter_changes;
+    context->Run([&min_filter_changes]() {
+        GLuint texture = 0;
+        glGenTextures(1, &texture);
+        glBindTexture(GL_TEXTURE_2D, texture);
 
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    GLint value = 0;
-    glGetTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, &value);
-    min_filter_changes.push_back(value);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        GLint value = 0;
+        glGetTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, &value);
+        min_filter_changes.push_back(value);
 
-    {
-      auto min_filter_linear =
-          OverrideGlTexParametri(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-      glGetTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, &value);
-      min_filter_changes.push_back(value);
+        {
+            auto min_filter_linear =
+                OverrideGlTexParametri(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            glGetTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, &value);
+            min_filter_changes.push_back(value);
 
-      // reverter is destroyed automatically reverting previously set value
-    }
-    glGetTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, &value);
-    min_filter_changes.push_back(value);
-  });
+            // reverter is destroyed automatically reverting previously set value
+        }
+        glGetTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, &value);
+        min_filter_changes.push_back(value);
+    });
 
-  EXPECT_THAT(min_filter_changes,
-              testing::ElementsAre(GL_NEAREST, GL_LINEAR, GL_NEAREST));
+    EXPECT_THAT(min_filter_changes,
+                testing::ElementsAre(GL_NEAREST, GL_LINEAR, GL_NEAREST));
 }
 
 }  // namespace

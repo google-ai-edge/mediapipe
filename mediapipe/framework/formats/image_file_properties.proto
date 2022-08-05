@@ -18,13 +18,13 @@ package mediapipe;
 
 // A list of properties extracted from EXIF metadata from an image file.
 message ImageFileProperties {
-  // Image dimensions.
-  optional uint32 image_width = 1;
-  optional uint32 image_height = 2;
-  // Focal length of camera lens in millimeters.
-  optional double focal_length_mm = 3;
-  // Focal length of camera lens in 35 mm equivalent.
-  optional double focal_length_35mm = 4;
-  // Focal length in pixels.
-  optional double focal_length_pixels = 5;
+    // Image dimensions.
+    optional uint32 image_width = 1;
+    optional uint32 image_height = 2;
+    // Focal length of camera lens in millimeters.
+    optional double focal_length_mm = 3;
+    // Focal length of camera lens in 35 mm equivalent.
+    optional double focal_length_35mm = 4;
+    // Focal length in pixels.
+    optional double focal_length_pixels = 5;
 }

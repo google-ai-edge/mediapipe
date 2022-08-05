@@ -16,38 +16,38 @@
 #define MEDIAPIPE_FRAMEWORK_CAMERA_INTRINSICS_H_
 
 class CameraIntrinsics {
- public:
-  CameraIntrinsics(float fx, float fy, float cx, float cy, float width,
-                   float height)
-      : fx_(fx), fy_(fy), cx_(cx), cy_(cy), width_(width), height_(height) {}
-  CameraIntrinsics(float fx, float fy, float cx, float cy)
-      : CameraIntrinsics(fx, fy, cx, cy, -1, -1) {}
+public:
+    CameraIntrinsics(float fx, float fy, float cx, float cy, float width,
+                     float height)
+        : fx_(fx), fy_(fy), cx_(cx), cy_(cy), width_(width), height_(height) {}
+    CameraIntrinsics(float fx, float fy, float cx, float cy)
+        : CameraIntrinsics(fx, fy, cx, cy, -1, -1) {}
 
-  float fx() const { return fx_; }
-  float fy() const { return fy_; }
-  float cx() const { return cx_; }
-  float cy() const { return cy_; }
-  float width() const { return width_; }
-  float height() const { return height_; }
+    float fx() const { return fx_; }
+    float fy() const { return fy_; }
+    float cx() const { return cx_; }
+    float cy() const { return cy_; }
+    float width() const { return width_; }
+    float height() const { return height_; }
 
- private:
-  // Lens focal length along the x-axis, in pixels.
-  const float fx_;
+private:
+    // Lens focal length along the x-axis, in pixels.
+    const float fx_;
 
-  // Lens focal length along the y-axis, in pixels.
-  const float fy_;
+    // Lens focal length along the y-axis, in pixels.
+    const float fy_;
 
-  // Principal point, x-coordinate on the image, in pixels.
-  const float cx_;
+    // Principal point, x-coordinate on the image, in pixels.
+    const float cx_;
 
-  // Principal point, y-coordinate on the image, in pixels.
-  const float cy_;
+    // Principal point, y-coordinate on the image, in pixels.
+    const float cy_;
 
-  // Image width, in pixels.
-  const float width_;
+    // Image width, in pixels.
+    const float width_;
 
-  // Image height, in pixels.
-  const float height_;
+    // Image height, in pixels.
+    const float height_;
 };
 
 #endif  // MEDIAPIPE_FRAMEWORK_CAMERA_INTRINSICS_H_

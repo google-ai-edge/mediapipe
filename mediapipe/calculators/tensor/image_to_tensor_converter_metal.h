@@ -19,11 +19,10 @@
 
 #if MEDIAPIPE_METAL_ENABLED
 
-#include <memory>
-
 #include "mediapipe/calculators/tensor/image_to_tensor_converter.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/port/statusor.h"
+#include <memory>
 
 namespace mediapipe {
 

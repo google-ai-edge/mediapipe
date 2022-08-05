@@ -14,9 +14,6 @@
 //
 // Declaration of PacketThinnerCalculator.
 
-#include <cmath>  // for ceil
-#include <memory>
-
 #include "mediapipe/calculators/core/packet_thinner_calculator.pb.h"
 #include "mediapipe/framework/calculator_context.h"
 #include "mediapipe/framework/calculator_framework.h"
@@ -25,6 +22,8 @@
 #include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/tool/options_util.h"
+#include <cmath>  // for ceil
+#include <memory>
 
 namespace mediapipe {
 
@@ -86,66 +85,66 @@ const char* const kPeriodTag = "PERIOD";
 //   }
 // }
 class PacketThinnerCalculator : public CalculatorBase {
- public:
-  PacketThinnerCalculator() {}
-  ~PacketThinnerCalculator() override {}
+public:
+    PacketThinnerCalculator() {}
+    ~PacketThinnerCalculator() override {}
 
-  static absl::Status GetContract(CalculatorContract* cc) {
-    if (cc->InputSidePackets().HasTag(kOptionsTag)) {
-      cc->InputSidePackets().Tag(kOptionsTag).Set<CalculatorOptions>();
+    static absl::Status GetContract(CalculatorContract* cc) {
+        if (cc->InputSidePackets().HasTag(kOptionsTag)) {
+            cc->InputSidePackets().Tag(kOptionsTag).Set<CalculatorOptions>();
+        }
+        cc->Inputs().Index(0).SetAny();
+        cc->Outputs().Index(0).SetSameAs(&cc->Inputs().Index(0));
+        if (cc->InputSidePackets().HasTag(kPeriodTag)) {
+            cc->InputSidePackets().Tag(kPeriodTag).Set<int64>();
+        }
+        return absl::OkStatus();
     }
-    cc->Inputs().Index(0).SetAny();
-    cc->Outputs().Index(0).SetSameAs(&cc->Inputs().Index(0));
-    if (cc->InputSidePackets().HasTag(kPeriodTag)) {
-      cc->InputSidePackets().Tag(kPeriodTag).Set<int64>();
+
+    absl::Status Open(CalculatorContext* cc) override;
+    absl::Status Close(CalculatorContext* cc) override;
+    absl::Status Process(CalculatorContext* cc) override {
+        if (cc->InputTimestamp() < start_time_) {
+            return absl::OkStatus();  // Drop packets before start_time_.
+        } else if (cc->InputTimestamp() >= end_time_) {
+            if (!cc->Outputs().Index(0).IsClosed()) {
+                cc->Outputs()
+                    .Index(0)
+                    .Close();  // No more Packets will be output after end_time_.
+            }
+            return absl::OkStatus();
+        } else {
+            return thinner_type_ == PacketThinnerCalculatorOptions::ASYNC
+                       ? AsyncThinnerProcess(cc)
+                       : SyncThinnerProcess(cc);
+        }
     }
-    return absl::OkStatus();
-  }
 
-  absl::Status Open(CalculatorContext* cc) override;
-  absl::Status Close(CalculatorContext* cc) override;
-  absl::Status Process(CalculatorContext* cc) override {
-    if (cc->InputTimestamp() < start_time_) {
-      return absl::OkStatus();  // Drop packets before start_time_.
-    } else if (cc->InputTimestamp() >= end_time_) {
-      if (!cc->Outputs().Index(0).IsClosed()) {
-        cc->Outputs()
-            .Index(0)
-            .Close();  // No more Packets will be output after end_time_.
-      }
-      return absl::OkStatus();
-    } else {
-      return thinner_type_ == PacketThinnerCalculatorOptions::ASYNC
-                 ? AsyncThinnerProcess(cc)
-                 : SyncThinnerProcess(cc);
-    }
-  }
+private:
+    // Implementation of ASYNC and SYNC versions of thinner algorithm.
+    absl::Status AsyncThinnerProcess(CalculatorContext* cc);
+    absl::Status SyncThinnerProcess(CalculatorContext* cc);
 
- private:
-  // Implementation of ASYNC and SYNC versions of thinner algorithm.
-  absl::Status AsyncThinnerProcess(CalculatorContext* cc);
-  absl::Status SyncThinnerProcess(CalculatorContext* cc);
+    // Cached option.
+    PacketThinnerCalculatorOptions::ThinnerType thinner_type_;
 
-  // Cached option.
-  PacketThinnerCalculatorOptions::ThinnerType thinner_type_;
+    // Given a Timestamp, finds the closest sync Timestamp
+    // based on start_time_ and period_.  This can be earlier or
+    // later than given Timestamp, but is guaranteed to be within
+    // half a period_.
+    Timestamp NearestSyncTimestamp(Timestamp now) const;
 
-  // Given a Timestamp, finds the closest sync Timestamp
-  // based on start_time_ and period_.  This can be earlier or
-  // later than given Timestamp, but is guaranteed to be within
-  // half a period_.
-  Timestamp NearestSyncTimestamp(Timestamp now) const;
+    // Cached option used by both async and sync thinners.
+    TimestampDiff period_;  // Interval during which only one packet is emitted.
+    Timestamp start_time_;  // Cached option - default Timestamp::Min()
+    Timestamp end_time_;    // Cached option - default Timestamp::Max()
 
-  // Cached option used by both async and sync thinners.
-  TimestampDiff period_;  // Interval during which only one packet is emitted.
-  Timestamp start_time_;  // Cached option - default Timestamp::Min()
-  Timestamp end_time_;    // Cached option - default Timestamp::Max()
+    // Only used by async thinner:
+    Timestamp next_valid_timestamp_;  // Suppress packets until this timestamp.
 
-  // Only used by async thinner:
-  Timestamp next_valid_timestamp_;  // Suppress packets until this timestamp.
-
-  // Only used by sync thinner:
-  Packet saved_packet_;          // Best packet not yet emitted.
-  bool sync_output_timestamps_;  // Cached option.
+    // Only used by sync thinner:
+    Packet saved_packet_;          // Best packet not yet emitted.
+    bool sync_output_timestamps_;  // Cached option.
 };
 REGISTER_CALCULATOR(PacketThinnerCalculator);
 
@@ -154,165 +153,165 @@ TimestampDiff abs(TimestampDiff t) { return t < 0 ? -t : t; }
 }  // namespace
 
 absl::Status PacketThinnerCalculator::Open(CalculatorContext* cc) {
-  PacketThinnerCalculatorOptions options = mediapipe::tool::RetrieveOptions(
-      cc->Options<PacketThinnerCalculatorOptions>(), cc->InputSidePackets(),
-      kOptionsTag);
+    PacketThinnerCalculatorOptions options = mediapipe::tool::RetrieveOptions(
+        cc->Options<PacketThinnerCalculatorOptions>(), cc->InputSidePackets(),
+        kOptionsTag);
 
-  thinner_type_ = options.thinner_type();
-  // This check enables us to assume only two thinner types exist in Process()
-  CHECK(thinner_type_ == PacketThinnerCalculatorOptions::ASYNC ||
-        thinner_type_ == PacketThinnerCalculatorOptions::SYNC)
-      << "Unsupported thinner type.";
+    thinner_type_ = options.thinner_type();
+    // This check enables us to assume only two thinner types exist in Process()
+    CHECK(thinner_type_ == PacketThinnerCalculatorOptions::ASYNC ||
+          thinner_type_ == PacketThinnerCalculatorOptions::SYNC)
+        << "Unsupported thinner type.";
 
-  if (thinner_type_ == PacketThinnerCalculatorOptions::ASYNC) {
-    // ASYNC thinner outputs packets with the same timestamp as their input so
-    // its safe to SetOffset(0). SYNC thinner manipulates timestamps of its
-    // output so we don't do this for that case.
-    cc->SetOffset(0);
-  }
-
-  if (cc->InputSidePackets().HasTag(kPeriodTag)) {
-    period_ =
-        TimestampDiff(cc->InputSidePackets().Tag(kPeriodTag).Get<int64>());
-  } else {
-    period_ = TimestampDiff(options.period());
-  }
-  CHECK_LT(TimestampDiff(0), period_) << "Specified period must be positive.";
-
-  if (options.has_start_time()) {
-    start_time_ = Timestamp(options.start_time());
-  } else if (thinner_type_ == PacketThinnerCalculatorOptions::ASYNC) {
-    start_time_ = Timestamp::Min();
-  } else {
-    start_time_ = Timestamp(0);
-  }
-
-  end_time_ =
-      options.has_end_time() ? Timestamp(options.end_time()) : Timestamp::Max();
-  CHECK_LT(start_time_, end_time_)
-      << "Invalid PacketThinner: start_time must be earlier than end_time";
-
-  sync_output_timestamps_ = options.sync_output_timestamps();
-
-  next_valid_timestamp_ = start_time_;
-  // Drop packets until this time.
-  cc->Outputs().Index(0).SetNextTimestampBound(start_time_);
-
-  if (!cc->Inputs().Index(0).Header().IsEmpty()) {
-    if (options.update_frame_rate()) {
-      const VideoHeader& video_header =
-          cc->Inputs().Index(0).Header().Get<VideoHeader>();
-      double new_frame_rate;
-      if (thinner_type_ == PacketThinnerCalculatorOptions::ASYNC) {
-        new_frame_rate =
-            video_header.frame_rate /
-            ceil(video_header.frame_rate * options.period() / kTimebaseUs);
-      } else {
-        const double sampling_rate = kTimebaseUs / options.period();
-        new_frame_rate = video_header.frame_rate < sampling_rate
-                             ? video_header.frame_rate
-                             : sampling_rate;
-      }
-      std::unique_ptr<VideoHeader> header(new VideoHeader);
-      header->format = video_header.format;
-      header->width = video_header.width;
-      header->height = video_header.height;
-      header->duration = video_header.duration;
-      header->frame_rate = new_frame_rate;
-      cc->Outputs().Index(0).SetHeader(Adopt(header.release()));
-    } else {
-      cc->Outputs().Index(0).SetHeader(cc->Inputs().Index(0).Header());
+    if (thinner_type_ == PacketThinnerCalculatorOptions::ASYNC) {
+        // ASYNC thinner outputs packets with the same timestamp as their input so
+        // its safe to SetOffset(0). SYNC thinner manipulates timestamps of its
+        // output so we don't do this for that case.
+        cc->SetOffset(0);
     }
-  }
 
-  return absl::OkStatus();
+    if (cc->InputSidePackets().HasTag(kPeriodTag)) {
+        period_ =
+            TimestampDiff(cc->InputSidePackets().Tag(kPeriodTag).Get<int64>());
+    } else {
+        period_ = TimestampDiff(options.period());
+    }
+    CHECK_LT(TimestampDiff(0), period_) << "Specified period must be positive.";
+
+    if (options.has_start_time()) {
+        start_time_ = Timestamp(options.start_time());
+    } else if (thinner_type_ == PacketThinnerCalculatorOptions::ASYNC) {
+        start_time_ = Timestamp::Min();
+    } else {
+        start_time_ = Timestamp(0);
+    }
+
+    end_time_ =
+        options.has_end_time() ? Timestamp(options.end_time()) : Timestamp::Max();
+    CHECK_LT(start_time_, end_time_)
+        << "Invalid PacketThinner: start_time must be earlier than end_time";
+
+    sync_output_timestamps_ = options.sync_output_timestamps();
+
+    next_valid_timestamp_ = start_time_;
+    // Drop packets until this time.
+    cc->Outputs().Index(0).SetNextTimestampBound(start_time_);
+
+    if (!cc->Inputs().Index(0).Header().IsEmpty()) {
+        if (options.update_frame_rate()) {
+            const VideoHeader& video_header =
+                cc->Inputs().Index(0).Header().Get<VideoHeader>();
+            double new_frame_rate;
+            if (thinner_type_ == PacketThinnerCalculatorOptions::ASYNC) {
+                new_frame_rate =
+                    video_header.frame_rate /
+                    ceil(video_header.frame_rate * options.period() / kTimebaseUs);
+            } else {
+                const double sampling_rate = kTimebaseUs / options.period();
+                new_frame_rate = video_header.frame_rate < sampling_rate
+                                     ? video_header.frame_rate
+                                     : sampling_rate;
+            }
+            std::unique_ptr<VideoHeader> header(new VideoHeader);
+            header->format = video_header.format;
+            header->width = video_header.width;
+            header->height = video_header.height;
+            header->duration = video_header.duration;
+            header->frame_rate = new_frame_rate;
+            cc->Outputs().Index(0).SetHeader(Adopt(header.release()));
+        } else {
+            cc->Outputs().Index(0).SetHeader(cc->Inputs().Index(0).Header());
+        }
+    }
+
+    return absl::OkStatus();
 }
 
 absl::Status PacketThinnerCalculator::Close(CalculatorContext* cc) {
-  // Emit any saved packets before quitting.
-  if (!saved_packet_.IsEmpty()) {
-    // Only sync thinner should have saved packets.
-    CHECK_EQ(PacketThinnerCalculatorOptions::SYNC, thinner_type_);
-    if (sync_output_timestamps_) {
-      cc->Outputs().Index(0).AddPacket(
-          saved_packet_.At(NearestSyncTimestamp(saved_packet_.Timestamp())));
-    } else {
-      cc->Outputs().Index(0).AddPacket(saved_packet_);
+    // Emit any saved packets before quitting.
+    if (!saved_packet_.IsEmpty()) {
+        // Only sync thinner should have saved packets.
+        CHECK_EQ(PacketThinnerCalculatorOptions::SYNC, thinner_type_);
+        if (sync_output_timestamps_) {
+            cc->Outputs().Index(0).AddPacket(
+                saved_packet_.At(NearestSyncTimestamp(saved_packet_.Timestamp())));
+        } else {
+            cc->Outputs().Index(0).AddPacket(saved_packet_);
+        }
     }
-  }
-  return absl::OkStatus();
+    return absl::OkStatus();
 }
 
 absl::Status PacketThinnerCalculator::AsyncThinnerProcess(
     CalculatorContext* cc) {
-  if (cc->InputTimestamp() >= next_valid_timestamp_) {
-    cc->Outputs().Index(0).AddPacket(
-        cc->Inputs().Index(0).Value());  // Emit current packet.
-    next_valid_timestamp_ = cc->InputTimestamp() + period_;
-    // Guaranteed not to emit packets seen during refractory period.
-    cc->Outputs().Index(0).SetNextTimestampBound(next_valid_timestamp_);
-  }
-  return absl::OkStatus();
+    if (cc->InputTimestamp() >= next_valid_timestamp_) {
+        cc->Outputs().Index(0).AddPacket(
+            cc->Inputs().Index(0).Value());  // Emit current packet.
+        next_valid_timestamp_ = cc->InputTimestamp() + period_;
+        // Guaranteed not to emit packets seen during refractory period.
+        cc->Outputs().Index(0).SetNextTimestampBound(next_valid_timestamp_);
+    }
+    return absl::OkStatus();
 }
 
 absl::Status PacketThinnerCalculator::SyncThinnerProcess(
     CalculatorContext* cc) {
-  if (saved_packet_.IsEmpty()) {
-    // If no packet has been saved, store the current packet.
-    saved_packet_ = cc->Inputs().Index(0).Value();
-    cc->Outputs().Index(0).SetNextTimestampBound(
-        sync_output_timestamps_ ? NearestSyncTimestamp(cc->InputTimestamp())
-                                : cc->InputTimestamp());
-  } else {
-    // Saved packet exists -- update or emit.
-    const Timestamp saved = saved_packet_.Timestamp();
-    const Timestamp saved_sync = NearestSyncTimestamp(saved);
-    const Timestamp now = cc->InputTimestamp();
-    const Timestamp now_sync = NearestSyncTimestamp(now);
-    CHECK_LE(saved_sync, now_sync);
-    if (saved_sync == now_sync) {
-      // Saved Packet is in same interval as current packet.
-      // Replace saved packet with current if it is at least as
-      // central as the saved packet wrt temporal interval.
-      // [We break ties in favor of fresher packets]
-      if (abs(now - now_sync) <= abs(saved - saved_sync)) {
+    if (saved_packet_.IsEmpty()) {
+        // If no packet has been saved, store the current packet.
         saved_packet_ = cc->Inputs().Index(0).Value();
-      }
+        cc->Outputs().Index(0).SetNextTimestampBound(
+            sync_output_timestamps_ ? NearestSyncTimestamp(cc->InputTimestamp())
+                                    : cc->InputTimestamp());
     } else {
-      // Saved packet is the best packet from earlier interval: emit!
-      if (sync_output_timestamps_) {
-        cc->Outputs().Index(0).AddPacket(saved_packet_.At(saved_sync));
-        cc->Outputs().Index(0).SetNextTimestampBound(now_sync);
-      } else {
-        cc->Outputs().Index(0).AddPacket(saved_packet_);
-        cc->Outputs().Index(0).SetNextTimestampBound(now);
-      }
-      // Current packet is the first one we've seen from new interval -- save!
-      saved_packet_ = cc->Inputs().Index(0).Value();
+        // Saved packet exists -- update or emit.
+        const Timestamp saved = saved_packet_.Timestamp();
+        const Timestamp saved_sync = NearestSyncTimestamp(saved);
+        const Timestamp now = cc->InputTimestamp();
+        const Timestamp now_sync = NearestSyncTimestamp(now);
+        CHECK_LE(saved_sync, now_sync);
+        if (saved_sync == now_sync) {
+            // Saved Packet is in same interval as current packet.
+            // Replace saved packet with current if it is at least as
+            // central as the saved packet wrt temporal interval.
+            // [We break ties in favor of fresher packets]
+            if (abs(now - now_sync) <= abs(saved - saved_sync)) {
+                saved_packet_ = cc->Inputs().Index(0).Value();
+            }
+        } else {
+            // Saved packet is the best packet from earlier interval: emit!
+            if (sync_output_timestamps_) {
+                cc->Outputs().Index(0).AddPacket(saved_packet_.At(saved_sync));
+                cc->Outputs().Index(0).SetNextTimestampBound(now_sync);
+            } else {
+                cc->Outputs().Index(0).AddPacket(saved_packet_);
+                cc->Outputs().Index(0).SetNextTimestampBound(now);
+            }
+            // Current packet is the first one we've seen from new interval -- save!
+            saved_packet_ = cc->Inputs().Index(0).Value();
+        }
     }
-  }
-  return absl::OkStatus();
+    return absl::OkStatus();
 }
 
 Timestamp PacketThinnerCalculator::NearestSyncTimestamp(Timestamp now) const {
-  CHECK_NE(start_time_, Timestamp::Unset())
-      << "Method only valid for sync thinner calculator.";
+    CHECK_NE(start_time_, Timestamp::Unset())
+        << "Method only valid for sync thinner calculator.";
 
-  // Computation is done using int64 arithmetic.  No easy way to avoid
-  // since Timestamps don't support div and multiply.
-  const int64 now64 = now.Value();
-  const int64 start64 = start_time_.Value();
-  const int64 period64 = period_.Value();
-  CHECK_LE(0, period64);
+    // Computation is done using int64 arithmetic.  No easy way to avoid
+    // since Timestamps don't support div and multiply.
+    const int64 now64 = now.Value();
+    const int64 start64 = start_time_.Value();
+    const int64 period64 = period_.Value();
+    CHECK_LE(0, period64);
 
-  // Round now64 to its closest interval (units of period64).
-  int64 sync64 =
-      (now64 - start64 + period64 / 2) / period64 * period64 + start64;
-  CHECK_LE(abs(now64 - sync64), period64 / 2)
-      << "start64: " << start64 << "; now64: " << now64
-      << "; sync64: " << sync64;
+    // Round now64 to its closest interval (units of period64).
+    int64 sync64 =
+        (now64 - start64 + period64 / 2) / period64 * period64 + start64;
+    CHECK_LE(abs(now64 - sync64), period64 / 2)
+        << "start64: " << start64 << "; now64: " << now64
+        << "; sync64: " << sync64;
 
-  return Timestamp(sync64);
+    return Timestamp(sync64);
 }
 
 }  // namespace mediapipe

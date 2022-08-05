@@ -41,70 +41,70 @@ constexpr char kBoxesTag[] = "BOXES";
 //   output_stream: "BOXES:boxes"
 // }
 class DetectionsToTimedBoxListCalculator : public CalculatorBase {
- public:
-  static absl::Status GetContract(CalculatorContract* cc) {
-    RET_CHECK(cc->Inputs().HasTag(kDetectionListTag) ||
-              cc->Inputs().HasTag(kDetectionsTag))
-        << "None of the input streams are provided.";
-    if (cc->Inputs().HasTag(kDetectionListTag)) {
-      cc->Inputs().Tag(kDetectionListTag).Set<DetectionList>();
+public:
+    static absl::Status GetContract(CalculatorContract* cc) {
+        RET_CHECK(cc->Inputs().HasTag(kDetectionListTag) ||
+                  cc->Inputs().HasTag(kDetectionsTag))
+            << "None of the input streams are provided.";
+        if (cc->Inputs().HasTag(kDetectionListTag)) {
+            cc->Inputs().Tag(kDetectionListTag).Set<DetectionList>();
+        }
+        if (cc->Inputs().HasTag(kDetectionsTag)) {
+            cc->Inputs().Tag(kDetectionsTag).Set<std::vector<Detection>>();
+        }
+        cc->Outputs().Tag(kBoxesTag).Set<TimedBoxProtoList>();
+        return absl::OkStatus();
     }
-    if (cc->Inputs().HasTag(kDetectionsTag)) {
-      cc->Inputs().Tag(kDetectionsTag).Set<std::vector<Detection>>();
+
+    absl::Status Open(CalculatorContext* cc) override {
+        cc->SetOffset(TimestampDiff(0));
+        return absl::OkStatus();
     }
-    cc->Outputs().Tag(kBoxesTag).Set<TimedBoxProtoList>();
-    return absl::OkStatus();
-  }
+    absl::Status Process(CalculatorContext* cc) override;
 
-  absl::Status Open(CalculatorContext* cc) override {
-    cc->SetOffset(TimestampDiff(0));
-    return absl::OkStatus();
-  }
-  absl::Status Process(CalculatorContext* cc) override;
-
- private:
-  void ConvertDetectionToTimedBox(const Detection& detection,
-                                  TimedBoxProto* box, CalculatorContext* cc);
+private:
+    void ConvertDetectionToTimedBox(const Detection& detection,
+                                    TimedBoxProto* box, CalculatorContext* cc);
 };
 REGISTER_CALCULATOR(DetectionsToTimedBoxListCalculator);
 
 absl::Status DetectionsToTimedBoxListCalculator::Process(
     CalculatorContext* cc) {
-  auto output_timed_box_list = absl::make_unique<TimedBoxProtoList>();
+    auto output_timed_box_list = absl::make_unique<TimedBoxProtoList>();
 
-  if (cc->Inputs().HasTag(kDetectionListTag)) {
-    const auto& detection_list =
-        cc->Inputs().Tag(kDetectionListTag).Get<DetectionList>();
-    for (const auto& detection : detection_list.detection()) {
-      TimedBoxProto* box = output_timed_box_list->add_box();
-      ConvertDetectionToTimedBox(detection, box, cc);
+    if (cc->Inputs().HasTag(kDetectionListTag)) {
+        const auto& detection_list =
+            cc->Inputs().Tag(kDetectionListTag).Get<DetectionList>();
+        for (const auto& detection : detection_list.detection()) {
+            TimedBoxProto* box = output_timed_box_list->add_box();
+            ConvertDetectionToTimedBox(detection, box, cc);
+        }
     }
-  }
-  if (cc->Inputs().HasTag(kDetectionsTag)) {
-    const auto& detections =
-        cc->Inputs().Tag(kDetectionsTag).Get<std::vector<Detection>>();
-    for (const auto& detection : detections) {
-      TimedBoxProto* box = output_timed_box_list->add_box();
-      ConvertDetectionToTimedBox(detection, box, cc);
+    if (cc->Inputs().HasTag(kDetectionsTag)) {
+        const auto& detections =
+            cc->Inputs().Tag(kDetectionsTag).Get<std::vector<Detection>>();
+        for (const auto& detection : detections) {
+            TimedBoxProto* box = output_timed_box_list->add_box();
+            ConvertDetectionToTimedBox(detection, box, cc);
+        }
     }
-  }
 
-  cc->Outputs().Tag(kBoxesTag).Add(output_timed_box_list.release(),
-                                   cc->InputTimestamp());
-  return absl::OkStatus();
+    cc->Outputs().Tag(kBoxesTag).Add(output_timed_box_list.release(),
+                                     cc->InputTimestamp());
+    return absl::OkStatus();
 }
 
 void DetectionsToTimedBoxListCalculator::ConvertDetectionToTimedBox(
     const Detection& detection, TimedBoxProto* box, CalculatorContext* cc) {
-  const auto& relative_bounding_box =
-      detection.location_data().relative_bounding_box();
-  box->set_left(relative_bounding_box.xmin());
-  box->set_right(relative_bounding_box.xmin() + relative_bounding_box.width());
-  box->set_top(relative_bounding_box.ymin());
-  box->set_bottom(relative_bounding_box.ymin() +
-                  relative_bounding_box.height());
-  box->set_id(detection.detection_id());
-  box->set_time_msec(cc->InputTimestamp().Microseconds() / 1000);
+    const auto& relative_bounding_box =
+        detection.location_data().relative_bounding_box();
+    box->set_left(relative_bounding_box.xmin());
+    box->set_right(relative_bounding_box.xmin() + relative_bounding_box.width());
+    box->set_top(relative_bounding_box.ymin());
+    box->set_bottom(relative_bounding_box.ymin() +
+                    relative_bounding_box.height());
+    box->set_id(detection.detection_id());
+    box->set_time_msec(cc->InputTimestamp().Microseconds() / 1000);
 }
 
 }  // namespace mediapipe
